@@ -414,6 +414,67 @@ UniValue omni_createpayload_contract_trade(const UniValue& params, bool fHelp)
     return HexStr(payload.begin(), payload.end());
 }
 
+UniValue omni_createpayload_cancelcontracttradesbyprice(const UniValue& params, bool fHelp)
+{
+    if (fHelp || params.size() != 6)
+        throw runtime_error(
+            "omni_createpayload_cancelcontracttradesbyprice propertyidforsale \"amountforsale\" propertiddesired \"amountdesired\"\n"
+
+            "\nCreates the payload to cancel offers on the distributed token exchange with the specified price.\n"
+
+            "\nArguments:\n"
+            "1. propertyidforsale    (number, required) the identifier of the tokens listed for sale\n"
+            "2. amountforsale        (string, required) the amount of tokens to listed for sale\n"
+            "3. propertiddesired     (number, required) the identifier of the tokens desired in exchange\n"
+            "4. amountdesired        (string, required) the amount of tokens desired in exchange\n"
+
+            "\nResult:\n"
+            "\"payload\"             (string) the hex-encoded payload\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("omni_createpayload_cancelcontracttradesbyprice", "31 \"100.0\" 1 \"5.0\" 100 1")
+            + HelpExampleRpc("omni_createpayload_cancelcontracttradesbyprice", "31 \"100.0\" 1 \"5.0\" 100 1")
+        );
+
+    uint32_t propertyIdForSale = ParsePropertyId(params[0]);
+    int64_t amountForSale = ParseAmountContract(params[1], isPropertyContract(propertyIdForSale));
+    uint32_t propertyIdDesired = ParsePropertyId(params[2]);
+    int64_t amountDesired = ParseAmountContract(params[3], isPropertyContract(propertyIdDesired));
+    uint64_t effective_price = ParseEffectivePrice(params[4]);
+    uint8_t trading_action = ParseContractDexAction(params[5]);
+    
+    std::vector<unsigned char> payload = CreatePayload_ContractDexCancelPrice(propertyIdForSale, amountForSale, propertyIdDesired, amountDesired, effective_price, trading_action);
+
+    return HexStr(payload.begin(), payload.end());
+}
+
+
+UniValue omni_createpayload_cancelalltradescontract(const UniValue& params, bool fHelp)
+{
+    if (fHelp || params.size() != 1)
+        throw runtime_error(
+            "omni_createpayload_cancelalltrades ecosystem\n"
+
+            "\nCreates the payload to cancel all offers on the distributed token exchange.\n"
+
+            "\nArguments:\n"
+            "1. ecosystem            (number, required) the ecosystem of the offers to cancel (1 for main ecosystem, 2 for test ecosystem)\n"
+
+            "\nResult:\n"
+            "\"payload\"             (string) the hex-encoded payload\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("omni_createpayload_cancelalltrades", "1")
+            + HelpExampleRpc("omni_createpayload_cancelalltrades", "1")
+        );
+
+    uint8_t ecosystem = ParseEcosystem(params[0]);
+
+    std::vector<unsigned char> payload = CreatePayload_ContractDexCancelEcosystem(ecosystem);
+
+    return HexStr(payload.begin(), payload.end());
+}
+
 static const CRPCCommand commands[] =
 { //  category                         name                                      actor (function)                         okSafeMode
   //  -------------------------------- ----------------------------------------- ---------------------------------------- ----------
@@ -428,6 +489,8 @@ static const CRPCCommand commands[] =
     { "omni layer (payload creation)", "omni_createpayload_closecrowdsale",      &omni_createpayload_closecrowdsale,      true },
     { "omni layer (payload creation)", "omni_createpayload_createcontract",      &omni_createpayload_createcontract,      true },
     { "omni layer (payload creation)", "omni_createpayload_contract_trade",      &omni_createpayload_contract_trade,      true },
+    { "omni layer (payload creation)", "omni_createpayload_cancelcontracttradesbyprice",&omni_createpayload_cancelcontracttradesbyprice,      true },
+    { "omni layer (payload creation)", "omni_createpayload_cancelalltradescontract",    &omni_createpayload_cancelalltradescontract,     true },
 };
 
 void RegisterOmniPayloadCreationRPCCommands(CRPCTable &tableRPC)

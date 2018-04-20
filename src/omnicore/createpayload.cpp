@@ -398,5 +398,49 @@ std::vector<unsigned char> CreatePayload_ContractDexTrade(uint32_t propertyIdFor
     return payload;
 }
 
+std::vector<unsigned char> CreatePayload_ContractDexCancelEcosystem(uint8_t ecosystem)
+{
+    std::vector<unsigned char> payload;
+
+    uint16_t messageType = 32;
+    uint16_t messageVer = 0;
+
+    mastercore::swapByteOrder16(messageVer);
+    mastercore::swapByteOrder16(messageType);
+
+    PUSH_BACK_BYTES(payload, messageVer);
+    PUSH_BACK_BYTES(payload, messageType);
+    PUSH_BACK_BYTES(payload, ecosystem);
+
+    return payload;
+}
+
+std::vector<unsigned char> CreatePayload_ContractDexCancelPrice(uint32_t propertyIdForSale, uint64_t amountForSale, uint32_t propertyIdDesired, uint64_t amountDesired, uint64_t effective_price, uint8_t trading_action)
+{
+    std::vector<unsigned char> payload;
+
+    uint16_t messageType = 30;
+    uint16_t messageVer = 0;
+
+    mastercore::swapByteOrder16(messageVer);
+    mastercore::swapByteOrder16(messageType);
+    mastercore::swapByteOrder32(propertyIdForSale);
+    mastercore::swapByteOrder64(amountForSale);
+    mastercore::swapByteOrder32(propertyIdDesired);
+    mastercore::swapByteOrder64(amountDesired);
+    mastercore::swapByteOrder64(effective_price);
+
+    PUSH_BACK_BYTES(payload, messageVer);
+    PUSH_BACK_BYTES(payload, messageType);
+    PUSH_BACK_BYTES(payload, propertyIdForSale);
+    PUSH_BACK_BYTES(payload, amountForSale);
+    PUSH_BACK_BYTES(payload, propertyIdDesired);
+    PUSH_BACK_BYTES(payload, amountDesired);
+    PUSH_BACK_BYTES(payload, effective_price);        
+    PUSH_BACK_BYTES(payload, trading_action);
+
+    return payload;
+}
+
 #undef PUSH_BACK_BYTES
 #undef PUSH_BACK_BYTES_PTR
