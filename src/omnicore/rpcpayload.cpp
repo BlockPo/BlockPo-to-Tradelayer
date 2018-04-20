@@ -315,6 +315,72 @@ UniValue omni_createpayload_changeissuer(const UniValue& params, bool fHelp)
     return HexStr(payload.begin(), payload.end());
 }
 
+///////////////////////////////////////////
+/** New things for future contracts */
+UniValue omni_createpayload_createcontract(const UniValue& params, bool fHelp)
+{
+    if (fHelp || params.size() != 17)
+        throw runtime_error(
+            "omni_createpayload_createcontract ecosystem type previousid \"category\" \"subcategory\" \"name\" \"url\" \"data\" propertyiddesired tokensperunit deadline earlybonus issuerpercentage\n"
+
+            "\nCreates the payload for a new tokens issuance with crowdsale.\n"
+
+            "\nArguments:\n"
+            "1. ecosystem            (string, required) the ecosystem to create the tokens in (1 for main ecosystem, 2 for test ecosystem)\n"
+            "2. type                 (number, required) the type of the tokens to create: (1 for indivisible tokens, 2 for divisible tokens)\n"
+            "3. previousid           (number, required) an identifier of a predecessor token (0 for new crowdsales)\n"
+            "4. category             (string, required) a category for the new tokens (can be \"\")\n"
+            "5. subcategory          (string, required) a subcategory for the new tokens  (can be \"\")\n"
+            "6. name                 (string, required) the name of the new tokens to create\n"
+            "7. url                  (string, required) an URL for further information about the new tokens (can be \"\")\n"
+            "8. data                 (string, required) a description for the new tokens (can be \"\")\n"
+            "9. propertyiddesired    (number, required) the identifier of a token eligible to participate in the crowdsale\n"
+            "10. tokensperunit       (string, required) the amount of tokens granted per unit invested in the crowdsale\n"
+            "11. deadline            (number, required) the deadline of the crowdsale as Unix timestamp\n"
+            "12. earlybonus          (number, required) an early bird bonus for participants in percent per week\n"
+            "13. issuerpercentage    (number, required) a percentage of tokens that will be granted to the issuer\n"
+            "14. blocks_until_expiration    (number, required) blocks until expiration\n"
+            "15. notional_size    (number, required) notional size\n"
+            "16. collateral_currency    (number, required) collateral currency\n"
+
+            "\nResult:\n"
+            "\"payload\"             (string) the hex-encoded payload\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("omni_createpayload_createcontract", "2 1 0 \"Companies\" \"Bitcoin Mining\" \"Quantum Miner\" \"\" \"\" 2 \"100\" 1483228800 30 2 4461 100 1 25")
+            + HelpExampleRpc("omni_createpayload_createcontract", "2, 1, 0, \"Companies\", \"Bitcoin Mining\", \"Quantum Miner\", \"\", \"\", 2, \"100\", 1483228800, 30, 2, 4461, 100, 1, 25")
+        );
+
+    uint8_t ecosystem = ParseEcosystem(params[0]);
+    uint16_t type = ParsePropertyType(params[1]);
+    uint32_t previousId = ParsePreviousPropertyId(params[2]);
+    std::string category = ParseText(params[3]);
+    std::string subcategory = ParseText(params[4]);
+    std::string name = ParseText(params[5]);
+    std::string url = ParseText(params[6]);
+    std::string data = ParseText(params[7]);
+    uint32_t propertyIdDesired = ParsePropertyId(params[8]);
+    int64_t numTokens = ParseAmountContract(params[9], type);
+    int64_t deadline = ParseDeadline(params[10]);
+    uint8_t earlyBonus = ParseEarlyBirdBonus(params[11]);
+    uint8_t issuerPercentage = ParseIssuerBonus(params[12]);
+    ////////////////////////////////////
+    /** New things for Contracts */
+    uint32_t blocks_until_expiration = ParseNewValues(params[13]);
+    uint32_t notional_size = ParseNewValues(params[14]);
+    uint32_t collateral_currency = ParseNewValues(params[15]);
+    uint32_t margin_requirement = ParseNewValues(params[16]);
+    ////////////////////////////////////
+    
+    RequirePropertyName(name);
+    RequireExistingProperty(propertyIdDesired);
+    RequireSameEcosystem(ecosystem, propertyIdDesired);
+
+    std::vector<unsigned char> payload = CreatePayload_CreateContract(ecosystem, type, previousId, category, subcategory, name, url, data, propertyIdDesired, numTokens, deadline, earlyBonus, issuerPercentage, blocks_until_expiration, notional_size, collateral_currency, margin_requirement);
+
+    return HexStr(payload.begin(), payload.end());
+}
+
 static const CRPCCommand commands[] =
 { //  category                         name                                      actor (function)                         okSafeMode
   //  -------------------------------- ----------------------------------------- ---------------------------------------- ----------
@@ -327,6 +393,7 @@ static const CRPCCommand commands[] =
     { "omni layer (payload creation)", "omni_createpayload_issuancecrowdsale",   &omni_createpayload_issuancecrowdsale,   true },
     { "omni layer (payload creation)", "omni_createpayload_issuancemanaged",     &omni_createpayload_issuancemanaged,     true },
     { "omni layer (payload creation)", "omni_createpayload_closecrowdsale",      &omni_createpayload_closecrowdsale,      true },
+    { "omni layer (payload creation)", "omni_createpayload_createcontract",      &omni_createpayload_createcontract,      true },
 };
 
 void RegisterOmniPayloadCreationRPCCommands(CRPCTable &tableRPC)

@@ -176,6 +176,17 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "omni_createpayload_revoke", 0 },
     { "omni_createpayload_changeissuer", 0 },
     { "omni_getposition", 1 },
+    { "omni_createpayload_createcontract", 0},
+    { "omni_createpayload_createcontract", 1},
+    { "omni_createpayload_createcontract", 2},
+    { "omni_createpayload_createcontract", 8},
+    { "omni_createpayload_createcontract", 10},
+    { "omni_createpayload_createcontract", 11},
+    { "omni_createpayload_createcontract", 12},
+    { "omni_createpayload_createcontract", 13},
+    { "omni_createpayload_createcontract", 14},
+    { "omni_createpayload_createcontract", 15},
+    { "omni_createpayload_createcontract", 16},
 };
 
 class CRPCConvertTable

@@ -203,3 +203,29 @@ std::vector<PrevTxsEntry> ParsePrevTxs(const UniValue& value)
 
     return prevTxsParsed;
 }
+
+/** New things for Future Contracts */
+int64_t ParseAmountContract(const UniValue& value, bool fContract)
+{   
+    /** Here we use getValStr() instead of get_str */
+    int64_t amount = mastercore::StrToInt64(value.getValStr(), fContract);
+    if (amount < 1) {
+        throw JSONRPCError(RPC_TYPE_ERROR, "Invalid amount");
+    }
+    return amount;
+}
+
+int64_t ParseAmountContract(const UniValue& value, int propertyType)
+{
+    bool fContract = (propertyType == 3);  // 3 = contract
+    return ParseAmountContract(value, fContract);
+}
+
+uint32_t ParseNewValues(const UniValue& value)
+{
+    int64_t Nvalue = value.get_int64();
+    if (Nvalue < 1 || 4294967295LL < Nvalue) {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "Value is out of range");
+    }
+    return static_cast<uint32_t>(Nvalue);
+}

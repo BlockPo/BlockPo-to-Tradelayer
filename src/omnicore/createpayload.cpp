@@ -309,5 +309,67 @@ std::vector<unsigned char> CreatePayload_OmniCoreAlert(uint16_t alertType, uint3
     return payload;
 }
 
+////////////////////////////////////////
+/** New things for Future Contracts */
+std::vector<unsigned char> CreatePayload_CreateContract(uint8_t ecosystem, uint16_t propertyType, uint32_t previousPropertyId, std::string category,
+                                                          std::string subcategory, std::string name, std::string url, std::string data, uint32_t propertyIdDesired,
+                                                          uint64_t amountPerUnit, uint64_t deadline, uint8_t earlyBonus, uint8_t issuerPercentage,
+                                                          uint32_t blocks_until_expiration, uint32_t notional_size, uint32_t collateral_currency, uint32_t margin_requirement)
+{
+    std::vector<unsigned char> payload;
+
+    uint16_t messageVer = 0;
+    uint16_t messageType = 40;
+
+    mastercore::swapByteOrder16(messageVer);
+    mastercore::swapByteOrder16(messageType);
+    mastercore::swapByteOrder16(propertyType);
+    mastercore::swapByteOrder32(previousPropertyId);
+    mastercore::swapByteOrder32(propertyIdDesired);
+    mastercore::swapByteOrder64(amountPerUnit);
+    mastercore::swapByteOrder64(deadline);
+    ////////////////////////////////////
+    mastercore::swapByteOrder32(blocks_until_expiration);
+    mastercore::swapByteOrder32(notional_size);
+    mastercore::swapByteOrder32(collateral_currency);
+    mastercore::swapByteOrder32(margin_requirement);
+    ////////////////////////////////////
+
+    if (category.size() > 255) category = category.substr(0,255);
+    if (subcategory.size() > 255) subcategory = subcategory.substr(0,255);
+    if (name.size() > 255) name = name.substr(0,255);
+    if (url.size() > 255) url = url.substr(0,255);
+    if (data.size() > 255) data = data.substr(0,255);
+
+    PUSH_BACK_BYTES(payload, messageVer);
+    PUSH_BACK_BYTES(payload, messageType);
+    PUSH_BACK_BYTES(payload, ecosystem);
+    PUSH_BACK_BYTES(payload, propertyType);
+    PUSH_BACK_BYTES(payload, previousPropertyId);
+    payload.insert(payload.end(), category.begin(), category.end());
+    payload.push_back('\0');
+    payload.insert(payload.end(), subcategory.begin(), subcategory.end());
+    payload.push_back('\0');
+    payload.insert(payload.end(), name.begin(), name.end());
+    payload.push_back('\0');
+    payload.insert(payload.end(), url.begin(), url.end());
+    payload.push_back('\0');
+    payload.insert(payload.end(), data.begin(), data.end());
+    payload.push_back('\0');
+    
+    PUSH_BACK_BYTES(payload, propertyIdDesired);
+    PUSH_BACK_BYTES(payload, amountPerUnit);
+    PUSH_BACK_BYTES(payload, deadline);
+    PUSH_BACK_BYTES(payload, earlyBonus);
+    PUSH_BACK_BYTES(payload, issuerPercentage);
+    ////////////////////////////////////
+    PUSH_BACK_BYTES(payload, blocks_until_expiration);
+    PUSH_BACK_BYTES(payload, notional_size);
+    PUSH_BACK_BYTES(payload, collateral_currency);
+    PUSH_BACK_BYTES(payload, margin_requirement);
+    ////////////////////////////////////
+    return payload;
+}
+
 #undef PUSH_BACK_BYTES
 #undef PUSH_BACK_BYTES_PTR
