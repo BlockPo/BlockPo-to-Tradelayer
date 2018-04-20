@@ -25,4 +25,5 @@ std::vector<unsigned char> CreatePayload_CreateContract(uint8_t ecosystem, uint1
                                                           std::string subcategory, std::string name, std::string url, std::string data, uint32_t propertyIdDesired,
                                                           uint64_t amountPerUnit, uint64_t deadline, uint8_t earlyBonus, uint8_t issuerPercentage,
                                                           uint32_t blocks_until_expiration, uint32_t notional_size, uint32_t collateral_currency, uint32_t margin_requirement);
+std::vector<unsigned char> CreatePayload_ContractDexTrade(uint32_t propertyIdForSale, uint64_t amountForSale, uint32_t propertyIdDesired, uint64_t amountDesired, uint64_t effective_price, uint8_t trading_action);
 #endif // OMNICORE_CREATEPAYLOAD_H

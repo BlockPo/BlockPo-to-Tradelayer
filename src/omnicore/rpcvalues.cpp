@@ -229,3 +229,19 @@ uint32_t ParseNewValues(const UniValue& value)
     }
     return static_cast<uint32_t>(Nvalue);
 }
+uint64_t ParseEffectivePrice(const UniValue& value)
+{
+    int64_t effPrice = StrToInt64(value.getValStr(), true);  // BTC is divisible
+    if (effPrice < 0) {
+        throw JSONRPCError(RPC_TYPE_ERROR, "Price should be positive");
+    }
+    return effPrice;
+}
+uint8_t ParseContractDexAction(const UniValue& value)
+{
+    int64_t action = value.get_int64();
+    if (action < 1 || 2 < action) {
+        throw JSONRPCError(RPC_TYPE_ERROR, "Invalid action (1=BUY, 2=SELL only)");
+    }
+    return static_cast<uint8_t>(action);
+}
