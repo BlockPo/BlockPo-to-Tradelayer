@@ -442,5 +442,7 @@ std::vector<unsigned char> CreatePayload_ContractDexCancelPrice(uint32_t propert
     return payload;
 }
 
+
+
 #undef PUSH_BACK_BYTES
 #undef PUSH_BACK_BYTES_PTR

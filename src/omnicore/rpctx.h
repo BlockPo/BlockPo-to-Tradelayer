@@ -15,5 +15,8 @@ UniValue omni_sendclosecrowdsale(const UniValue& params, bool fHelp);
 UniValue omni_sendchangeissuer(const UniValue& params, bool fHelp);
 UniValue omni_sendactivation(const UniValue& params, bool fHelp);
 UniValue omni_sendalert(const UniValue& params, bool fHelp);
+UniValue omni_createcontract(const UniValue& params, bool fHelp);
+UniValue omni_tradecontract(const UniValue& params, bool fHelp);
+
 
 #endif // OMNICORE_RPCTX
