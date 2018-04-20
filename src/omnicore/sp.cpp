@@ -896,3 +896,25 @@ std::string mastercore::strEcosystem(uint8_t ecosystem)
 
     return "unknown";
 }
+
+
+/** New things for futures contracts */
+bool mastercore::isPropertyContract(uint32_t propertyId)
+{
+    CMPSPInfo::Entry sp;
+
+    if (_my_sps->getSP(propertyId, sp)) return sp.isContract();
+
+    return true;
+}
+
+bool CMPSPInfo::Entry::isContract() const
+{
+    switch (prop_type) {
+        case MSC_PROPERTY_TYPE_CONTRACT:
+            return true;
+    }
+    return false;
+}
+
+

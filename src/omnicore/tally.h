@@ -8,6 +8,8 @@
 enum TallyType {
     BALANCE = 0,
     PENDING = 1,
+    POSSITIVE_BALANCE = 6,
+    NEGATIVE_BALANCE = 7,
     TALLY_TYPE_COUNT
 };
 

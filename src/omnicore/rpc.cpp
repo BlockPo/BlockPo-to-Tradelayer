@@ -1295,6 +1295,56 @@ UniValue omni_getcurrentconsensushash(const UniValue& params, bool fHelp)
     return response;
 }
 
+/** New things for Future Contract */
+bool PositionToJSON(const std::string& address, uint32_t property, UniValue& balance_obj, bool divisible)
+{
+    int64_t longPosition  = getMPbalance(address, property, POSSITIVE_BALANCE);
+    int64_t shortPosition = getMPbalance(address, property, NEGATIVE_BALANCE);
+
+    balance_obj.push_back(Pair("longPosition", FormatDivisibleMP(longPosition)));
+    balance_obj.push_back(Pair("shortPosition", FormatDivisibleMP(shortPosition)));
+
+    if (shortPosition == 0 && longPosition == 0) {
+        balance_obj.push_back(Pair("longPosition", FormatDivisibleMP(0)));
+        balance_obj.push_back(Pair("shortPosition", FormatDivisibleMP(0)));
+        return false;
+    } else {
+        return true;
+    }
+}
+
+
+UniValue omni_getposition(const UniValue& params, bool fHelp)
+{
+    if (fHelp || params.size() != 2)
+        throw runtime_error(
+            "omni_getbalance \"address\" propertyid\n"
+            "\nReturns the position for the future contract for a given address and property.\n"
+            "\nArguments:\n"
+            "1. address              (string, required) the address\n"
+            "2. propertyid           (number, required) the future contract identifier\n"
+            "\nResult:\n"
+            "{\n"
+            "  \"shortPosition\" : \"n.nnnnnnnn\",   (string) short position of the address \n"
+            "  \"longPosition\" : \"n.nnnnnnnn\"  (string) long position of the address\n"
+            "}\n"
+            "\nExamples:\n"
+            + HelpExampleCli("omni_getposition", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" 1")
+            + HelpExampleRpc("omni_getposition", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", 1")
+        );
+
+    std::string address = ParseAddress(params[0]);
+    uint32_t propertyId = ParsePropertyId(params[1]);
+
+    //RequireExistingProperty(propertyId);
+
+    UniValue balanceObj(UniValue::VOBJ);
+    PositionToJSON(address, propertyId, balanceObj,isPropertyContract(propertyId));
+
+    return balanceObj;
+}
+
+
 static const CRPCCommand commands[] =
 { //  category                             name                            actor (function)               okSafeMode
   //  ------------------------------------ ------------------------------- ------------------------------ ----------
@@ -1318,6 +1368,8 @@ static const CRPCCommand commands[] =
     { "omni layer (configuration)",  "omni_setautocommit",             &omni_setautocommit,              true  },
 #endif
     { "hidden",                      "mscrpc",                         &mscrpc,                          true  },
+    { "omni layer (data retrieval)", "omni_getposition",               &omni_getposition,                false },
+
 };
 
 void RegisterOmniDataRetrievalRPCCommands(CRPCTable &tableRPC)

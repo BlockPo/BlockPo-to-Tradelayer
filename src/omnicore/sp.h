@@ -126,6 +126,7 @@ public:
 
         bool isDivisible() const;
         void print() const;
+	bool isContract() const;
     };
 
 private:
@@ -235,6 +236,7 @@ void calculateFundraiser(bool inflateAmount, int64_t amtTransfer, uint8_t bonusP
 void eraseMaxedCrowdsale(const std::string& address, int64_t blockTime, int block);
 
 unsigned int eraseExpiredCrowdsale(const CBlockIndex* pBlockIndex);
+bool isPropertyContract(uint32_t propertyId);
 }
 
 
