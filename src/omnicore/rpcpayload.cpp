@@ -548,6 +548,65 @@ UniValue omni_createpayload_canceltradesbyprice(const UniValue& params, bool fHe
     return HexStr(payload.begin(), payload.end());
 }
 
+UniValue omni_createpayload_canceltradesbypair(const UniValue& params, bool fHelp)
+{
+    if (fHelp || params.size() != 2)
+        throw runtime_error(
+            "omni_createpayload_canceltradesbypair propertyidforsale propertiddesired\n"
+
+            "\nCreates the payload to cancel all offers on the distributed token exchange with the given currency pair.\n"
+
+            "\nArguments:\n"
+            "1. propertyidforsale    (number, required) the identifier of the tokens listed for sale\n"
+            "2. propertiddesired     (number, required) the identifier of the tokens desired in exchange\n"
+
+            "\nResult:\n"
+            "\"payload\"             (string) the hex-encoded payload\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("omni_createpayload_canceltradesbypair", "1 31")
+            + HelpExampleRpc("omni_createpayload_canceltradesbypair", "1, 31")
+        );
+
+    uint32_t propertyIdForSale = ParsePropertyId(params[0]);
+    RequireExistingProperty(propertyIdForSale);
+    uint32_t propertyIdDesired = ParsePropertyId(params[1]);
+    RequireExistingProperty(propertyIdDesired);
+    RequireSameEcosystem(propertyIdForSale, propertyIdDesired);
+    RequireDifferentIds(propertyIdForSale, propertyIdDesired);
+
+    std::vector<unsigned char> payload = CreatePayload_MetaDExCancelPair(propertyIdForSale, propertyIdDesired);
+
+    return HexStr(payload.begin(), payload.end());
+}
+
+UniValue omni_createpayload_cancelalltrades(const UniValue& params, bool fHelp)
+{
+    if (fHelp || params.size() != 1)
+        throw runtime_error(
+            "omni_createpayload_cancelalltrades ecosystem\n"
+
+            "\nCreates the payload to cancel all offers on the distributed token exchange.\n"
+
+            "\nArguments:\n"
+            "1. ecosystem            (number, required) the ecosystem of the offers to cancel (1 for main ecosystem, 2 for test ecosystem)\n"
+
+            "\nResult:\n"
+            "\"payload\"             (string) the hex-encoded payload\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("omni_createpayload_cancelalltrades", "1")
+            + HelpExampleRpc("omni_createpayload_cancelalltrades", "1")
+        );
+
+    uint8_t ecosystem = ParseEcosystem(params[0]);
+
+    std::vector<unsigned char> payload = CreatePayload_MetaDExCancelEcosystem(ecosystem);
+
+    return HexStr(payload.begin(), payload.end());
+}
+
+
 static const CRPCCommand commands[] =
 { //  category                         name                                      actor (function)                         okSafeMode
   //  -------------------------------- ----------------------------------------- ---------------------------------------- ----------
@@ -566,6 +625,8 @@ static const CRPCCommand commands[] =
     { "omni layer (payload creation)", "omni_createpayload_cancelalltradescontract",    &omni_createpayload_cancelalltradescontract,     true },
     { "omni layer (payload creation)", "omni_createpayload_trade",                      &omni_createpayload_trade,               true },
     { "omni layer (payload creation)", "omni_createpayload_canceltradesbyprice",        &omni_createpayload_canceltradesbyprice, true },
+    { "omni layer (payload creation)", "omni_createpayload_canceltradesbypair",         &omni_createpayload_canceltradesbypair,  true },
+    { "omni layer (payload creation)", "omni_createpayload_cancelalltrades",            &omni_createpayload_cancelalltrades,     true },
 };
 
 void RegisterOmniPayloadCreationRPCCommands(CRPCTable &tableRPC)
