@@ -218,6 +218,15 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "omni_tradecontract", 4},
     { "omni_tradecontract", 5},
     { "omni_tradecontract", 6},
+    { "omni_getcontract_orderbook", 0 },
+    { "omni_getcontract_orderbook", 1 },
+    { "omni_createpayload_trade", 0 },
+    { "omni_createpayload_trade", 2 },
+    { "omni_createpayload_canceltradesbyprice", 0 },
+    { "omni_createpayload_canceltradesbyprice", 2 },
+    { "omni_createpayload_canceltradesbypair", 0 },
+    { "omni_createpayload_canceltradesbypair", 1 },
+    { "omni_createpayload_cancelalltrades", 0 },
 
 };
 

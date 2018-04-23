@@ -26,6 +26,7 @@
 #include "omnicore/varint.h"
 #include "omnicore/version.h"
 #include "omnicore/wallettxs.h"
+//include "omnicore/mdex.h"
 
 #include "amount.h"
 #include "chainparams.h"
@@ -1344,6 +1345,71 @@ UniValue omni_getposition(const UniValue& params, bool fHelp)
     return balanceObj;
 }
 
+UniValue omni_getcontract_orderbook(const UniValue& params, bool fHelp)
+{
+    if (fHelp || params.size() < 2 || params.size() > 2)
+        throw runtime_error(
+            "omni_getcontract_orderbook propertyid tradingaction\n"
+            "\nList active offers on the distributed futures contracts exchange.\n"
+            "\nArguments:\n"
+            "1. propertyid           (number, required) filter orders by property identifier for sale\n"
+            "2. tradingaction        (number, required) filter orders by trading action desired (Buy = 1, Sell = 2)\n"
+            "\nResult:\n"
+            "[                                              (array of JSON objects)\n"
+            "  {\n"
+            "    \"address\" : \"address\",                         (string) the Bitcoin address of the trader\n"
+            "    \"txid\" : \"hash\",                               (string) the hex-encoded hash of the transaction of the order\n"
+            "    \"ecosystem\" : \"main\"|\"test\",                   (string) the ecosytem in which the order was made (if \"cancel-ecosystem\")\n"
+            "    \"propertyidforsale\" : n,                       (number) the identifier of the tokens put up for sale\n"
+            "    \"propertyidforsaleisdivisible\" : true|false,   (boolean) whether the tokens for sale are divisible\n"
+            "    \"amountforsale\" : \"n.nnnnnnnn\",                (string) the amount of tokens initially offered\n"
+            "    \"amountremaining\" : \"n.nnnnnnnn\",              (string) the amount of tokens still up for sale\n"
+            "    \"propertyiddesired\" : n,                       (number) the identifier of the tokens desired in exchange\n"
+            "    \"propertyiddesiredisdivisible\" : true|false,   (boolean) whether the desired tokens are divisible\n"
+            "    \"amountdesired\" : \"n.nnnnnnnn\",                (string) the amount of tokens initially desired\n"
+            "    \"amounttofill\" : \"n.nnnnnnnn\",                 (string) the amount of tokens still needed to fill the offer completely\n"
+            "    \"action\" : n,                                  (number) the action of the transaction: (1) \"trade\", (2) \"cancel-price\", (3) \"cancel-pair\", (4) \"cancel-ecosystem\"\n"
+            "    \"block\" : nnnnnn,                              (number) the index of the block that contains the transaction\n"
+            "    \"blocktime\" : nnnnnnnnnn                       (number) the timestamp of the block that contains the transaction\n"
+            "  },\n"
+            "  ...\n"
+            "]\n"
+            "\nExamples:\n"
+            + HelpExampleCli("omni_getcontract_orderbook", "2" "1")
+            + HelpExampleRpc("omni_getcontract_orderbook", "2" "1")
+        );
+
+
+    uint32_t propertyIdForSale = ParsePropertyId(params[0]);
+    // RequireExistingProperty(propertyIdForSale);
+    uint8_t tradingaction = ParseContractDexAction(params[1]);
+/*
+    std::vector<CMPContractDex> vecContractDexObjects;
+    {
+        LOCK(cs_tally);
+        for (cd_PropertiesMap::const_iterator my_it = contractdex.begin(); my_it != contractdex.end(); ++my_it) {
+            const cd_PricesMap& prices = my_it->second;
+            for (cd_PricesMap::const_iterator it = prices.begin(); it != prices.end(); ++it) {
+                const cd_Set& indexes = it->second;
+                for (cd_Set::const_iterator it = indexes.begin(); it != indexes.end(); ++it) {
+                    const CMPContractDex& obj = *it;
+                    if (obj.getProperty() != propertyIdForSale) continue;
+                    if (obj.getTradingAction() != tradingaction) continue;
+                    if (obj.getAmountForSale() <= 0) continue;
+                    vecContractDexObjects.push_back(obj);
+                }
+            }
+        }
+    }
+
+    UniValue response(UniValue::VARR);
+    ContractDexObjectsToJSON(vecContractDexObjects, response);
+    return response;
+*/
+
+
+return true;
+}
 
 static const CRPCCommand commands[] =
 { //  category                             name                            actor (function)               okSafeMode
@@ -1369,6 +1435,7 @@ static const CRPCCommand commands[] =
 #endif
     { "hidden",                      "mscrpc",                         &mscrpc,                          true  },
     { "omni layer (data retrieval)", "omni_getposition",               &omni_getposition,                false },
+    { "omni layer (data retrieval)", "omni_getcontract_orderbook",     &omni_getcontract_orderbook,      false },
 
 };
 

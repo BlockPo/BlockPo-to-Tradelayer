@@ -475,6 +475,79 @@ UniValue omni_createpayload_cancelalltradescontract(const UniValue& params, bool
     return HexStr(payload.begin(), payload.end());
 }
 
+UniValue omni_createpayload_trade(const UniValue& params, bool fHelp)
+{
+    if (fHelp || params.size() != 4)
+        throw runtime_error(
+            "omni_createpayload_trade propertyidforsale \"amountforsale\" propertiddesired \"amountdesired\"\n"
+
+            "\nCreates the payload to place a trade offer on the distributed token exchange.\n"
+
+            "\nArguments:\n"
+            "1. propertyidforsale    (number, required) the identifier of the tokens to list for sale\n"
+            "2. amountforsale        (string, required) the amount of tokens to list for sale\n"
+            "3. propertiddesired     (number, required) the identifier of the tokens desired in exchange\n"
+            "4. amountdesired        (string, required) the amount of tokens desired in exchange\n"
+
+            "\nResult:\n"
+            "\"payload\"             (string) the hex-encoded payload\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("omni_createpayload_trade", "31 \"250.0\" 1 \"10.0\"")
+            + HelpExampleRpc("omni_createpayload_trade", "31, \"250.0\", 1, \"10.0\"")
+        );
+
+    uint32_t propertyIdForSale = ParsePropertyId(params[0]);
+    RequireExistingProperty(propertyIdForSale);
+    int64_t amountForSale = ParseAmount(params[1], isPropertyDivisible(propertyIdForSale));
+    uint32_t propertyIdDesired = ParsePropertyId(params[2]);
+    RequireExistingProperty(propertyIdDesired);
+    int64_t amountDesired = ParseAmount(params[3], isPropertyDivisible(propertyIdDesired));
+    RequireSameEcosystem(propertyIdForSale, propertyIdDesired);
+    RequireDifferentIds(propertyIdForSale, propertyIdDesired);
+    RequireDifferentIds(propertyIdForSale, propertyIdDesired);
+
+    std::vector<unsigned char> payload = CreatePayload_MetaDExTrade(propertyIdForSale, amountForSale, propertyIdDesired, amountDesired);
+
+    return HexStr(payload.begin(), payload.end());
+}
+
+UniValue omni_createpayload_canceltradesbyprice(const UniValue& params, bool fHelp)
+{
+    if (fHelp || params.size() != 4)
+        throw runtime_error(
+            "omni_createpayload_canceltradesbyprice propertyidforsale \"amountforsale\" propertiddesired \"amountdesired\"\n"
+
+            "\nCreates the payload to cancel offers on the distributed token exchange with the specified price.\n"
+
+            "\nArguments:\n"
+            "1. propertyidforsale    (number, required) the identifier of the tokens listed for sale\n"
+            "2. amountforsale        (string, required) the amount of tokens to listed for sale\n"
+            "3. propertiddesired     (number, required) the identifier of the tokens desired in exchange\n"
+            "4. amountdesired        (string, required) the amount of tokens desired in exchange\n"
+
+            "\nResult:\n"
+            "\"payload\"             (string) the hex-encoded payload\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("omni_createpayload_canceltradesbyprice", "31 \"100.0\" 1 \"5.0\"")
+            + HelpExampleRpc("omni_createpayload_canceltradesbyprice", "31, \"100.0\", 1, \"5.0\"")
+        );
+
+    uint32_t propertyIdForSale = ParsePropertyId(params[0]);
+    RequireExistingProperty(propertyIdForSale);
+    int64_t amountForSale = ParseAmount(params[1], isPropertyDivisible(propertyIdForSale));
+    uint32_t propertyIdDesired = ParsePropertyId(params[2]);
+    RequireExistingProperty(propertyIdDesired);
+    int64_t amountDesired = ParseAmount(params[3], isPropertyDivisible(propertyIdDesired));
+    RequireSameEcosystem(propertyIdForSale, propertyIdDesired);
+    RequireDifferentIds(propertyIdForSale, propertyIdDesired);
+
+    std::vector<unsigned char> payload = CreatePayload_MetaDExCancelPrice(propertyIdForSale, amountForSale, propertyIdDesired, amountDesired);
+
+    return HexStr(payload.begin(), payload.end());
+}
+
 static const CRPCCommand commands[] =
 { //  category                         name                                      actor (function)                         okSafeMode
   //  -------------------------------- ----------------------------------------- ---------------------------------------- ----------
@@ -491,6 +564,8 @@ static const CRPCCommand commands[] =
     { "omni layer (payload creation)", "omni_createpayload_contract_trade",      &omni_createpayload_contract_trade,      true },
     { "omni layer (payload creation)", "omni_createpayload_cancelcontracttradesbyprice",&omni_createpayload_cancelcontracttradesbyprice,      true },
     { "omni layer (payload creation)", "omni_createpayload_cancelalltradescontract",    &omni_createpayload_cancelalltradescontract,     true },
+    { "omni layer (payload creation)", "omni_createpayload_trade",                      &omni_createpayload_trade,               true },
+    { "omni layer (payload creation)", "omni_createpayload_canceltradesbyprice",        &omni_createpayload_canceltradesbyprice, true },
 };
 
 void RegisterOmniPayloadCreationRPCCommands(CRPCTable &tableRPC)

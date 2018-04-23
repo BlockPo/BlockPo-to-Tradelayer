@@ -442,7 +442,53 @@ std::vector<unsigned char> CreatePayload_ContractDexCancelPrice(uint32_t propert
     return payload;
 }
 
+std::vector<unsigned char> CreatePayload_MetaDExTrade(uint32_t propertyIdForSale, uint64_t amountForSale, uint32_t propertyIdDesired, uint64_t amountDesired)
+{
+    std::vector<unsigned char> payload;
 
+    uint16_t messageType = 25;
+    uint16_t messageVer = 0;
+
+    mastercore::swapByteOrder16(messageVer);
+    mastercore::swapByteOrder16(messageType);
+    mastercore::swapByteOrder32(propertyIdForSale);
+    mastercore::swapByteOrder64(amountForSale);
+    mastercore::swapByteOrder32(propertyIdDesired);
+    mastercore::swapByteOrder64(amountDesired);
+
+    PUSH_BACK_BYTES(payload, messageVer);
+    PUSH_BACK_BYTES(payload, messageType);
+    PUSH_BACK_BYTES(payload, propertyIdForSale);
+    PUSH_BACK_BYTES(payload, amountForSale);
+    PUSH_BACK_BYTES(payload, propertyIdDesired);
+    PUSH_BACK_BYTES(payload, amountDesired);
+
+    return payload;
+}
+
+std::vector<unsigned char> CreatePayload_MetaDExCancelPrice(uint32_t propertyIdForSale, uint64_t amountForSale, uint32_t propertyIdDesired, uint64_t amountDesired)
+{
+    std::vector<unsigned char> payload;
+
+    uint16_t messageType = 26;
+    uint16_t messageVer = 0;
+
+    mastercore::swapByteOrder16(messageVer);
+    mastercore::swapByteOrder16(messageType);
+    mastercore::swapByteOrder32(propertyIdForSale);
+    mastercore::swapByteOrder64(amountForSale);
+    mastercore::swapByteOrder32(propertyIdDesired);
+    mastercore::swapByteOrder64(amountDesired);
+
+    PUSH_BACK_BYTES(payload, messageVer);
+    PUSH_BACK_BYTES(payload, messageType);
+    PUSH_BACK_BYTES(payload, propertyIdForSale);
+    PUSH_BACK_BYTES(payload, amountForSale);
+    PUSH_BACK_BYTES(payload, propertyIdDesired);
+    PUSH_BACK_BYTES(payload, amountDesired);
+
+    return payload;
+}
 
 #undef PUSH_BACK_BYTES
 #undef PUSH_BACK_BYTES_PTR

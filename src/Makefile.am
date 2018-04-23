@@ -185,7 +185,8 @@ BITCOIN_CORE_H = \
   omnicore/parse_string.h \
   omnicore/createpayload.h \
   omnicore/rpcpayload.h \
-  omnicore/varint.h
+  omnicore/varint.h \
+  omnicore/mdex.h
 
 obj/build.h: FORCE
 	@$(MKDIR_P) $(builddir)/obj
@@ -260,6 +261,7 @@ libbitcoin_server_a_SOURCES = \
   omnicore/createpayload.cpp \
   omnicore/rpcpayload.cpp \
   omnicore/varint.cpp \
+  omnicore/mdex.h \
   $(BITCOIN_CORE_H)
 
 if ENABLE_ZMQ
