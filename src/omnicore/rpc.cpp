@@ -26,7 +26,7 @@
 #include "omnicore/varint.h"
 #include "omnicore/version.h"
 #include "omnicore/wallettxs.h"
-//include "omnicore/mdex.h"
+#include "omnicore/mdex.h"
 
 #include "amount.h"
 #include "chainparams.h"
