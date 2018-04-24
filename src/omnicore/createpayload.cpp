@@ -490,5 +490,42 @@ std::vector<unsigned char> CreatePayload_MetaDExCancelPrice(uint32_t propertyIdF
     return payload;
 }
 
+std::vector<unsigned char> CreatePayload_MetaDExCancelEcosystem(uint8_t ecosystem)
+{
+    std::vector<unsigned char> payload;
+
+    uint16_t messageType = 28;
+    uint16_t messageVer = 0;
+
+    mastercore::swapByteOrder16(messageVer);
+    mastercore::swapByteOrder16(messageType);
+
+    PUSH_BACK_BYTES(payload, messageVer);
+    PUSH_BACK_BYTES(payload, messageType);
+    PUSH_BACK_BYTES(payload, ecosystem);
+
+    return payload;
+}
+
+std::vector<unsigned char> CreatePayload_MetaDExCancelPair(uint32_t propertyIdForSale, uint32_t propertyIdDesired)
+{
+    std::vector<unsigned char> payload;
+
+    uint16_t messageType = 27;
+    uint16_t messageVer = 0;
+
+    mastercore::swapByteOrder16(messageVer);
+    mastercore::swapByteOrder16(messageType);
+    mastercore::swapByteOrder32(propertyIdForSale);
+    mastercore::swapByteOrder32(propertyIdDesired);
+
+    PUSH_BACK_BYTES(payload, messageVer);
+    PUSH_BACK_BYTES(payload, messageType);
+    PUSH_BACK_BYTES(payload, propertyIdForSale);
+    PUSH_BACK_BYTES(payload, propertyIdDesired);
+
+    return payload;
+}
+
 #undef PUSH_BACK_BYTES
 #undef PUSH_BACK_BYTES_PTR

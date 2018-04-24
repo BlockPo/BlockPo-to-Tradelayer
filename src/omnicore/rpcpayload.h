@@ -18,6 +18,9 @@ UniValue omni_createpayload_cancelalltradescontract(const UniValue& params, bool
 UniValue omni_createpayload_cancelcontracttradesbyprice(const UniValue& params, bool fHelp);
 UniValue omni_createpayload_trade(const UniValue& params, bool fHelp);
 UniValue omni_createpayload_canceltradesbyprice(const UniValue& params, bool fHelp);
+UniValue omni_createpayload_canceltradesbypair(const UniValue& params, bool fHelp);
+UniValue omni_createpayload_cancelalltrades(const UniValue& params, bool fHelp);
+
 
 
 #endif // OMNICORE_RPCPAYLOAD_H
