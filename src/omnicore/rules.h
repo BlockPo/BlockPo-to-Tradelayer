@@ -69,6 +69,10 @@ public:
     int MSC_MANUALSP_BLOCK;
     //! Block to enable "send all" transactions
     int MSC_SEND_ALL_BLOCK;
+    ////////////////////////////////////
+    /** New things for Contract: ! Block to enable MetaDEx transactions */
+    int MSC_CONTRACTDEX_BLOCK;
+    ////////////////////////////////////
 
     /** Returns a mapping of transaction types, and the blocks at which they are enabled. */
     virtual std::vector<TransactionRestriction> GetRestrictions() const;

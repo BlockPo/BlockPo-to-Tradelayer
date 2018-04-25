@@ -1563,35 +1563,32 @@ int CMPTransaction::logicMath_CreateContractDex()
     blockHash = pindex->GetBlockHash();
   }
 
-// if (OMNI_PROPERTY_MSC != ecosystem && OMNI_PROPERTY_TMSC != ecosystem) {
-//     PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, (uint32_t) ecosystem);
-//     return (PKT_ERROR_SP -21);
-// }
-//
-// if (!IsTransactionTypeAllowed(block, ecosystem, type, version)) {
-//     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
-//             __func__,
-//             type,
-//             version,
-//             property,
-//             block);
-//     return (PKT_ERROR_SP -22);
-// }
-//
-// if (nValue <= 0 || MAX_INT_8_BYTES < nValue) {
-//     PrintToLog("%s(): rejected: value out of range or zero: %d\n", __func__, nValue);
-//     return (PKT_ERROR_SP -23);
-// }
-//
-// if (MSC_PROPERTY_TYPE_INDIVISIBLE != prop_type && MSC_PROPERTY_TYPE_DIVISIBLE != prop_type) {
-//     PrintToLog("%s(): rejected: invalid property type: %d\n", __func__, prop_type);
-//     return (PKT_ERROR_SP -36);
-// }
-//
-// if ('\0' == name[0]) {
-//     PrintToLog("%s(): rejected: property name must not be empty\n", __func__);
-//     return (PKT_ERROR_SP -37);
-// }
+if (OMNI_PROPERTY_MSC != ecosystem && OMNI_PROPERTY_TMSC != ecosystem) {
+    PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, (uint32_t) ecosystem);
+    return (PKT_ERROR_SP -21);
+}
+
+if (!IsTransactionTypeAllowed(block, ecosystem, type, version)) {
+    PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+            __func__,
+            type,
+            version,
+            property,
+            block);
+    return (PKT_ERROR_SP -22);
+}
+
+
+
+if (MSC_PROPERTY_TYPE_INDIVISIBLE != prop_type && MSC_PROPERTY_TYPE_DIVISIBLE != prop_type) {
+    PrintToLog("%s(): rejected: invalid property type: %d\n", __func__, prop_type);
+    return (PKT_ERROR_SP -36);
+}
+
+if ('\0' == name[0]) {
+    PrintToLog("%s(): rejected: property name must not be empty\n", __func__);
+    return (PKT_ERROR_SP -37);
+}
 
 // ------------------------------------------
 

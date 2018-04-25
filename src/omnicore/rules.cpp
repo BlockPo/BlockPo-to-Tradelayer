@@ -52,7 +52,7 @@ std::vector<TransactionRestriction> CConsensusParams::GetRestrictions() const
         { MSC_TYPE_GRANT_PROPERTY_TOKENS,     MP_TX_PKT_V0,  false,   MSC_MANUALSP_BLOCK },
         { MSC_TYPE_REVOKE_PROPERTY_TOKENS,    MP_TX_PKT_V0,  false,   MSC_MANUALSP_BLOCK },
         { MSC_TYPE_CHANGE_ISSUER_ADDRESS,     MP_TX_PKT_V0,  false,   MSC_MANUALSP_BLOCK },
-
+        { MSC_TYPE_CREATE_CONTRACT,           MP_TX_PKT_V0,  false,   MSC_CONTRACTDEX_BLOCK },
         { MSC_TYPE_SEND_ALL,                  MP_TX_PKT_V0,  false,   MSC_SEND_ALL_BLOCK },
     };
 
@@ -111,6 +111,10 @@ CMainConsensusParams::CMainConsensusParams()
     MSC_SP_BLOCK = 9999999;
     MSC_MANUALSP_BLOCK = 9999999;
     MSC_SEND_ALL_BLOCK = 9999999;
+    ///////////////////////////////
+    /** New things for Contract */
+    MSC_CONTRACTDEX_BLOCK = 999999;
+    ///////////////////////////////
 }
 
 /**
@@ -132,6 +136,10 @@ CTestNetConsensusParams::CTestNetConsensusParams()
     MSC_SP_BLOCK = 0;
     MSC_MANUALSP_BLOCK = 0;
     MSC_SEND_ALL_BLOCK = 0;
+    ///////////////////////////////
+    /** New things for Contract */
+    MSC_CONTRACTDEX_BLOCK = 0;
+    ///////////////////////////////
 }
 
 /**
@@ -153,6 +161,10 @@ CRegTestConsensusParams::CRegTestConsensusParams()
     MSC_SP_BLOCK = 0;
     MSC_MANUALSP_BLOCK = 0;
     MSC_SEND_ALL_BLOCK = 0;
+    ///////////////////////////////
+    /** New things for Contract */
+    MSC_CONTRACTDEX_BLOCK = 0;
+    ///////////////////////////////
 }
 
 //! Consensus parameters for mainnet
