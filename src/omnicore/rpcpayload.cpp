@@ -319,7 +319,7 @@ UniValue omni_createpayload_changeissuer(const UniValue& params, bool fHelp)
 /** New things for future contracts */
 UniValue omni_createpayload_createcontract(const UniValue& params, bool fHelp)
 {
-    if (fHelp || params.size() != 17)
+    if (fHelp || params.size() != 10)
         throw runtime_error(
             "omni_createpayload_createcontract ecosystem type previousid \"category\" \"subcategory\" \"name\" \"url\" \"data\" propertyiddesired tokensperunit deadline earlybonus issuerpercentage\n"
 
@@ -353,30 +353,24 @@ UniValue omni_createpayload_createcontract(const UniValue& params, bool fHelp)
 
     uint8_t ecosystem = ParseEcosystem(params[0]);
     uint16_t type = ParsePropertyType(params[1]);
-    uint32_t previousId = ParsePreviousPropertyId(params[2]);
-    std::string category = ParseText(params[3]);
-    std::string subcategory = ParseText(params[4]);
-    std::string name = ParseText(params[5]);
-    std::string url = ParseText(params[6]);
-    std::string data = ParseText(params[7]);
-    uint32_t propertyIdDesired = ParsePropertyId(params[8]);
-    int64_t numTokens = ParseAmountContract(params[9], type);
-    int64_t deadline = ParseDeadline(params[10]);
-    uint8_t earlyBonus = ParseEarlyBirdBonus(params[11]);
-    uint8_t issuerPercentage = ParseIssuerBonus(params[12]);
-    ////////////////////////////////////
+    // uint32_t previousId = ParsePreviousPropertyId(params[2]);
+    std::string category = ParseText(params[2]);
+    std::string subcategory = ParseText(params[3]);
+    std::string name = ParseText(params[4]);
+    uint32_t propertyIdDesired = ParsePropertyId(params[5]);
+
     /** New things for Contracts */
-    uint32_t blocks_until_expiration = ParseNewValues(params[13]);
-    uint32_t notional_size = ParseNewValues(params[14]);
-    uint32_t collateral_currency = ParseNewValues(params[15]);
-    uint32_t margin_requirement = ParseNewValues(params[16]);
+    uint32_t blocks_until_expiration = ParseNewValues(params[6]);
+    uint32_t notional_size = ParseNewValues(params[7]);
+    uint32_t collateral_currency = ParseNewValues(params[8]);
+    uint32_t margin_requirement = ParseNewValues(params[9]);
     ////////////////////////////////////
-    
+
     RequirePropertyName(name);
     RequireExistingProperty(propertyIdDesired);
     RequireSameEcosystem(ecosystem, propertyIdDesired);
 
-    std::vector<unsigned char> payload = CreatePayload_CreateContract(ecosystem, type, previousId, category, subcategory, name, url, data, propertyIdDesired, numTokens, deadline, earlyBonus, issuerPercentage, blocks_until_expiration, notional_size, collateral_currency, margin_requirement);
+    std::vector<unsigned char> payload = CreatePayload_CreateContract(ecosystem, type, category, subcategory, name, propertyIdDesired, blocks_until_expiration, notional_size, collateral_currency, margin_requirement);
 
     return HexStr(payload.begin(), payload.end());
 }
@@ -442,7 +436,7 @@ UniValue omni_createpayload_cancelcontracttradesbyprice(const UniValue& params, 
     int64_t amountDesired = ParseAmountContract(params[3], isPropertyContract(propertyIdDesired));
     uint64_t effective_price = ParseEffectivePrice(params[4]);
     uint8_t trading_action = ParseContractDexAction(params[5]);
-    
+
     std::vector<unsigned char> payload = CreatePayload_ContractDexCancelPrice(propertyIdForSale, amountForSale, propertyIdDesired, amountDesired, effective_price, trading_action);
 
     return HexStr(payload.begin(), payload.end());

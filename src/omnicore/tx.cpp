@@ -49,7 +49,9 @@ std::string mastercore::strTransactionType(uint16_t txType)
         case OMNICORE_MESSAGE_TYPE_ALERT: return "ALERT";
         case OMNICORE_MESSAGE_TYPE_DEACTIVATION: return "Feature Deactivation";
         case OMNICORE_MESSAGE_TYPE_ACTIVATION: return "Feature Activation";
-
+        /*New things for contracts *////////////////////////////////////////////
+        case MSC_TYPE_CREATE_CONTRACT: return "Create Contract";
+        ////////////////////////////////////////////////////////////////////////
         default: return "* unknown type *";
     }
 }
@@ -134,6 +136,10 @@ bool CMPTransaction::interpret_Transaction()
 
         case OMNICORE_MESSAGE_TYPE_ALERT:
             return interpret_Alert();
+      /*New things for contracts*///////////////////////////////////////////////
+        case MSC_TYPE_CREATE_CONTRACT:
+            return interpret_CreateContractDex();
+      //////////////////////////////////////////////////////////////////////////
     }
 
     return false;
@@ -580,6 +586,91 @@ bool CMPTransaction::interpret_Alert()
 
     return true;
 }
+/*New things for contracts*/////////////////////////////////////////////////////
+/** Tx  40*/
+bool CMPTransaction::interpret_CreateContractDex()
+{
+    int i = 0;
+
+    std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+
+    memcpy(&ecosystem, &pkt[i], 1);
+    i++;
+
+    std::vector<uint8_t> vecPropTypeBytes = GetNextVarIntBytes(i);
+
+
+    const char* p = i + (char*) &pkt;
+    std::vector<std::string> spstr;
+    for (int j = 0; j < 3; j++) {
+        spstr.push_back(std::string(p));
+        p += spstr.back().size() + 1;
+    }
+
+    if (isOverrun(p)) {
+        PrintToLog("%s(): rejected: malformed string value(s)\n", __func__);
+        return false;
+    }
+
+    int j = 0;
+    memcpy(name, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(name)-1)); j++;
+    memcpy(url, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(url)-1)); j++;
+    memcpy(data, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(data)-1)); j++;
+    i = i + strlen(name) + strlen(url) + strlen(data) + 3; // data sizes + 3 null terminators
+    std::vector<uint8_t> vecBlocksUntilExpiration = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecNotionalSize = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecCollateralCurrency = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecMarginRequirement = GetNextVarIntBytes(i);
+
+    if (!vecVersionBytes.empty()) {
+        version = DecompressInteger(vecVersionBytes);
+    } else return false;
+
+    if (!vecTypeBytes.empty()) {
+        type = DecompressInteger(vecTypeBytes);
+    } else return false;
+
+    if (!vecPropTypeBytes.empty()) {
+        prop_type = DecompressInteger(vecPropTypeBytes);
+    } else return false;
+
+    if (!vecBlocksUntilExpiration.empty()) {
+        blocks_until_expiration = DecompressInteger(vecBlocksUntilExpiration);
+    } else return false;
+
+    if (!vecNotionalSize.empty()) {
+        notional_size = DecompressInteger(vecNotionalSize);
+    } else return false;
+
+    if (!vecCollateralCurrency.empty()) {
+        collateral_currency = DecompressInteger(vecCollateralCurrency);
+    } else return false;
+
+    if (!vecMarginRequirement.empty()) {
+        margin_requirement = DecompressInteger(vecMarginRequirement);
+    } else return false;
+
+    PrintToConsole("version: %d\n", version);
+    PrintToConsole("messageType: %d\n",type);
+    PrintToConsole("ecosystem: %d\n", ecosystem);
+    PrintToConsole("property type: %d\n", prop_type);
+    PrintToConsole("name: %s\n", name);
+    PrintToConsole("url: %s\n", url);
+    PrintToConsole("data: %s\n", data);
+    PrintToConsole("blocks until expiration : %d\n", blocks_until_expiration);
+    PrintToConsole("notional size : %d\n", notional_size);
+    PrintToConsole("collateral currency: %d\n", collateral_currency);
+    PrintToConsole("margin requirement: %d\n", margin_requirement);
+
+    return true;
+}
+////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
 
 // ---------------------- CORE LOGIC -------------------------
 
@@ -638,6 +729,10 @@ int CMPTransaction::interpretPacket()
 
         case OMNICORE_MESSAGE_TYPE_ALERT:
             return logicMath_Alert();
+
+        case MSC_TYPE_CREATE_CONTRACT:
+            return logicMath_CreateContractDex();
+
     }
 
     return (PKT_ERROR -100);
@@ -1450,3 +1545,86 @@ int CMPTransaction::logicMath_Alert()
     return 0;
 }
 
+/*New things for contracts*/////////////////////////////////////////////////////
+
+
+/** Tx 40 */
+int CMPTransaction::logicMath_CreateContractDex()
+{
+  uint256 blockHash;
+  {
+    LOCK(cs_main);
+
+    CBlockIndex* pindex = chainActive[block];
+    if (pindex == NULL) {
+        PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
+        return (PKT_ERROR_SP -20);
+    }
+    blockHash = pindex->GetBlockHash();
+  }
+
+// if (OMNI_PROPERTY_MSC != ecosystem && OMNI_PROPERTY_TMSC != ecosystem) {
+//     PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, (uint32_t) ecosystem);
+//     return (PKT_ERROR_SP -21);
+// }
+//
+// if (!IsTransactionTypeAllowed(block, ecosystem, type, version)) {
+//     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+//             __func__,
+//             type,
+//             version,
+//             property,
+//             block);
+//     return (PKT_ERROR_SP -22);
+// }
+//
+// if (nValue <= 0 || MAX_INT_8_BYTES < nValue) {
+//     PrintToLog("%s(): rejected: value out of range or zero: %d\n", __func__, nValue);
+//     return (PKT_ERROR_SP -23);
+// }
+//
+// if (MSC_PROPERTY_TYPE_INDIVISIBLE != prop_type && MSC_PROPERTY_TYPE_DIVISIBLE != prop_type) {
+//     PrintToLog("%s(): rejected: invalid property type: %d\n", __func__, prop_type);
+//     return (PKT_ERROR_SP -36);
+// }
+//
+// if ('\0' == name[0]) {
+//     PrintToLog("%s(): rejected: property name must not be empty\n", __func__);
+//     return (PKT_ERROR_SP -37);
+// }
+
+// ------------------------------------------
+
+
+    CMPSPInfo::Entry newSP;
+    newSP.issuer = sender;
+    newSP.txid = txid;
+    newSP.prop_type = prop_type;
+    // newSP.num_tokens = nValue;
+    newSP.category.assign(category);
+    newSP.subcategory.assign(subcategory);
+    newSP.name.assign(name);
+    newSP.url.assign(url);
+    newSP.data.assign(data);
+    newSP.fixed = false;
+    newSP.property_desired = property;
+    // newSP.deadline = deadline;
+    // newSP.early_bird = early_bird;
+    // newSP.percentage = percentage;
+    newSP.creation_block = blockHash;
+    newSP.update_block = newSP.creation_block;
+
+    ////////////////////////////////////////
+    /** New things for Contracts */
+    newSP.blocks_until_expiration = blocks_until_expiration;
+    newSP.notional_size = notional_size;
+    newSP.collateral_currency = collateral_currency;
+    newSP.margin_requirement = margin_requirement;
+    newSP.init_block = block;
+
+    const uint32_t propertyId = _my_sps->putSP(ecosystem, newSP);
+    assert(propertyId > 0);
+    PrintToConsole("Contract id: %d\n",propertyId);
+
+    return 0;
+}

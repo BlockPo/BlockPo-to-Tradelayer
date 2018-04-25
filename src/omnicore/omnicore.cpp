@@ -341,7 +341,7 @@ bool mastercore::update_tally_map(const std::string& who, uint32_t propertyId, i
         PrintToLog("%s(%s, %u=0x%X, %+d, ttype=%d) ERROR: invalid tally type\n", __func__, who, propertyId, propertyId, amount, ttype);
         return false;
     }
-    
+
     bool bRet = false;
     int64_t before = 0;
     int64_t after = 0;
@@ -1658,7 +1658,7 @@ int mastercore::WalletTxBuilder(const std::string& senderAddress, const std::str
     + nulldata encoding must use compression (varint)
     **/
     int omniTxClass = OMNI_CLASS_D;
-
+    PrintToConsole("data+OmMarker size : %d\n",data.size()+GetOmMarker().size());
     if (nMaxDatacarrierBytes < (data.size()+GetOmMarker().size())) return MP_ERR_PAYLOAD_TOO_BIG;
 
     //TODO verify datacarrier is enabled at startup, otherwise won't be able to send transactions

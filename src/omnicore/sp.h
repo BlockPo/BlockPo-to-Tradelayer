@@ -86,6 +86,16 @@ public:
         bool fixed;
         bool manual;
 
+        ////////////////////////////
+        /** New things for Contracts */
+        uint32_t blocks_until_expiration;
+        uint32_t notional_size;
+        uint32_t collateral_currency;
+        uint32_t margin_requirement;
+        int64_t contracts_needed;
+        int init_block;
+        ////////////////////////////
+
         // For crowdsale properties:
         //   txid -> amount invested, crowdsale deadline, user issued tokens, issuer issued tokens
         // For managed properties:
@@ -122,6 +132,14 @@ public:
             READWRITE(fixed);
             READWRITE(manual);
             READWRITE(historicalData);
+            ////////////////////////////
+            /** New things for Contracts */
+            READWRITE(blocks_until_expiration);
+            READWRITE(notional_size);
+            READWRITE(collateral_currency);
+            READWRITE(margin_requirement);
+            READWRITE(init_block);
+            ////////////////////////////
         }
 
         bool isDivisible() const;

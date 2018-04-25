@@ -311,64 +311,41 @@ std::vector<unsigned char> CreatePayload_OmniCoreAlert(uint16_t alertType, uint3
 
 ////////////////////////////////////////
 /** New things for Future Contracts */
-std::vector<unsigned char> CreatePayload_CreateContract(uint8_t ecosystem, uint16_t propertyType, uint32_t previousPropertyId, std::string category,
-                                                          std::string subcategory, std::string name, std::string url, std::string data, uint32_t propertyIdDesired,
-                                                          uint64_t amountPerUnit, uint64_t deadline, uint8_t earlyBonus, uint8_t issuerPercentage,
-                                                          uint32_t blocks_until_expiration, uint32_t notional_size, uint32_t collateral_currency, uint32_t margin_requirement)
+std::vector<unsigned char> CreatePayload_CreateContract(uint8_t ecosystem, uint16_t propertyType, std::string category, std::string subcategory, std::string name, uint32_t propertyIdDesired, uint32_t blocks_until_expiration, uint32_t notional_size, uint32_t collateral_currency, uint32_t margin_requirement)
 {
     std::vector<unsigned char> payload;
+    uint64_t messageType = 40;
+    uint64_t messageVer = 0;
 
-    uint16_t messageVer = 0;
-    uint16_t messageType = 40;
-
-    mastercore::swapByteOrder16(messageVer);
-    mastercore::swapByteOrder16(messageType);
-    mastercore::swapByteOrder16(propertyType);
-    mastercore::swapByteOrder32(previousPropertyId);
-    mastercore::swapByteOrder32(propertyIdDesired);
-    mastercore::swapByteOrder64(amountPerUnit);
-    mastercore::swapByteOrder64(deadline);
-    ////////////////////////////////////
-    mastercore::swapByteOrder32(blocks_until_expiration);
-    mastercore::swapByteOrder32(notional_size);
-    mastercore::swapByteOrder32(collateral_currency);
-    mastercore::swapByteOrder32(margin_requirement);
-    ////////////////////////////////////
-
+    std::vector<uint8_t> vecMessageType = CompressInteger(messageType);
+    std::vector<uint8_t> vecMessageVer = CompressInteger(messageVer);
+    std::vector<uint8_t> vecEcosystem = CompressInteger(ecosystem);
+    std::vector<uint8_t> vecPropertyType = CompressInteger(propertyType);
+    std::vector<uint8_t> vecPropertyIdDesired = CompressInteger(propertyIdDesired);
+    std::vector<uint8_t> vecBlocksUntilExpiration = CompressInteger(blocks_until_expiration);
+    std::vector<uint8_t> vecNotionalSize = CompressInteger(notional_size);
+    std::vector<uint8_t> vecCollateralCurrency = CompressInteger(collateral_currency);
+    std::vector<uint8_t> vecMarginRequirement = CompressInteger(margin_requirement);
     if (category.size() > 255) category = category.substr(0,255);
     if (subcategory.size() > 255) subcategory = subcategory.substr(0,255);
     if (name.size() > 255) name = name.substr(0,255);
-    if (url.size() > 255) url = url.substr(0,255);
-    if (data.size() > 255) data = data.substr(0,255);
 
-    PUSH_BACK_BYTES(payload, messageVer);
-    PUSH_BACK_BYTES(payload, messageType);
-    PUSH_BACK_BYTES(payload, ecosystem);
-    PUSH_BACK_BYTES(payload, propertyType);
-    PUSH_BACK_BYTES(payload, previousPropertyId);
+    payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
+    payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
+    payload.insert(payload.end(), vecEcosystem.begin(), vecEcosystem.end());
+    payload.insert(payload.end(), vecPropertyIdDesired.begin(), vecPropertyIdDesired.end());
     payload.insert(payload.end(), category.begin(), category.end());
     payload.push_back('\0');
     payload.insert(payload.end(), subcategory.begin(), subcategory.end());
     payload.push_back('\0');
     payload.insert(payload.end(), name.begin(), name.end());
     payload.push_back('\0');
-    payload.insert(payload.end(), url.begin(), url.end());
-    payload.push_back('\0');
-    payload.insert(payload.end(), data.begin(), data.end());
-    payload.push_back('\0');
-    
-    PUSH_BACK_BYTES(payload, propertyIdDesired);
-    PUSH_BACK_BYTES(payload, amountPerUnit);
-    PUSH_BACK_BYTES(payload, deadline);
-    PUSH_BACK_BYTES(payload, earlyBonus);
-    PUSH_BACK_BYTES(payload, issuerPercentage);
-    ////////////////////////////////////
-    PUSH_BACK_BYTES(payload, blocks_until_expiration);
-    PUSH_BACK_BYTES(payload, notional_size);
-    PUSH_BACK_BYTES(payload, collateral_currency);
-    PUSH_BACK_BYTES(payload, margin_requirement);
-    ////////////////////////////////////
+    payload.insert(payload.end(), vecBlocksUntilExpiration.begin(), vecBlocksUntilExpiration.end());
+    payload.insert(payload.end(), vecNotionalSize.begin(), vecNotionalSize.end());
+    payload.insert(payload.end(), vecCollateralCurrency.begin(), vecCollateralCurrency.end());
+    payload.insert(payload.end(), vecMarginRequirement.begin(), vecMarginRequirement.end());
     return payload;
+
 }
 
 std::vector<unsigned char> CreatePayload_ContractDexTrade(uint32_t propertyIdForSale, uint64_t amountForSale, uint32_t propertyIdDesired, uint64_t amountDesired, uint64_t effective_price, uint8_t trading_action)
@@ -394,7 +371,7 @@ std::vector<unsigned char> CreatePayload_ContractDexTrade(uint32_t propertyIdFor
     PUSH_BACK_BYTES(payload, amountDesired);        /*vch[5]: 2+2+4+8+4+ 8 = 28 bytes*/
     PUSH_BACK_BYTES(payload, effective_price);      /*vch[6]: 2+2+4+8+4+8+ 8 = 36 bytes*/
     PUSH_BACK_BYTES(payload, trading_action);       /*vch[7]: 2+2+4+8+4+8+8 +1 = 37 bytes*/
-    
+
     return payload;
 }
 
@@ -436,7 +413,7 @@ std::vector<unsigned char> CreatePayload_ContractDexCancelPrice(uint32_t propert
     PUSH_BACK_BYTES(payload, amountForSale);
     PUSH_BACK_BYTES(payload, propertyIdDesired);
     PUSH_BACK_BYTES(payload, amountDesired);
-    PUSH_BACK_BYTES(payload, effective_price);        
+    PUSH_BACK_BYTES(payload, effective_price);
     PUSH_BACK_BYTES(payload, trading_action);
 
     return payload;

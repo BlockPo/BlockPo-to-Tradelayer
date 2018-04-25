@@ -75,7 +75,16 @@ enum TransactionType {
   OMNICORE_MESSAGE_TYPE_DEACTIVATION  = 65533,
   OMNICORE_MESSAGE_TYPE_ACTIVATION    = 65534,
   OMNICORE_MESSAGE_TYPE_ALERT         = 65535,
-  MSC_TYPE_CONTRACTDEX_TRADE          = 29
+
+  ////////////////////////////////////
+  /** New things for Contract */
+  MSC_TYPE_CONTRACTDEX_TRADE          = 29,
+  MSC_TYPE_CONTRACTDEX_CANCEL_PRICE   = 30,
+  MSC_TYPE_CONTRACTDEX_CANCEL_ECOSYSTEM   = 32,
+  /** !Here we changed "MSC_TYPE_OFFER_ACCEPT_A_BET = 40" */
+  MSC_TYPE_CREATE_CONTRACT            = 40,
+  ////////////////////////////////////
+
 };
 
 #define MSC_PROPERTY_TYPE_INDIVISIBLE             1

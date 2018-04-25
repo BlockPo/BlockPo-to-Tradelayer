@@ -709,10 +709,11 @@ UniValue omni_sendalert(const UniValue& params, bool fHelp)
         }
     }
 }
-
+//////////////////////////////////////
+/** New things for Contract */
 UniValue omni_createcontract(const UniValue& params, bool fHelp)
 {
-    if (fHelp || params.size() != 18)
+    if (fHelp || params.size() != 11)
         throw runtime_error(
             "omni_createcontract \"fromaddress\" ecosystem type previousid \"category\" \"subcategory\" \"name\" \"url\" \"data\" propertyiddesired tokensperunit deadline ( earlybonus issuerpercentage )\n"
 
@@ -741,34 +742,28 @@ UniValue omni_createcontract(const UniValue& params, bool fHelp)
             "\"payload\"             (string) the hex-encoded payload\n"
 
             "\nExamples:\n"
-            + HelpExampleCli("omni_createpayload_issuancecrowdsale", "2 1 0 \"Companies\" \"Bitcoin Mining\" \"Quantum Miner\" \"\" \"\" 2 \"100\" 1483228800 30 2 4461 100 1 25")
-            + HelpExampleRpc("omni_createpayload_issuancecrowdsale", "2, 1, 0, \"Companies\", \"Bitcoin Mining\", \"Quantum Miner\", \"\", \"\", 2, \"100\", 1483228800, 30, 2, 4461, 100, 1, 25")
+            + HelpExampleCli("omni_createcontract", "2 1 0 \"Companies\" \"Bitcoin Mining\" \"Quantum Miner\" \"\" \"\" 2 \"100\" 1483228800 30 2 4461 100 1 25")
+            + HelpExampleRpc("omni_createcontract", "2, 1, 0, \"Companies\", \"Bitcoin Mining\", \"Quantum Miner\", \"\", \"\", 2, \"100\", 1483228800, 30, 2, 4461, 100, 1, 25")
         );
 
     std::string fromAddress = ParseAddress(params[0]);
     uint8_t ecosystem = ParseEcosystem(params[1]);
     uint16_t type = ParsePropertyType(params[2]);
-    uint32_t previousId = ParsePropertyId(params[3]);
-    std::string category = ParseText(params[4]);
-    std::string subcategory = ParseText(params[5]);
-    std::string name = ParseText(params[6]);
-    std::string url = ParseText(params[7]);
-    std::string data = ParseText(params[8]);
-    uint32_t propertyIdDesired = ParsePropertyId(params[9]);
-    int64_t numTokens = ParseAmountContract(params[10], type);
-    int64_t deadline = ParseDeadline(params[11]);
-    uint8_t earlyBonus = ParseEarlyBirdBonus(params[12]);
-    uint8_t issuerPercentage = ParseIssuerBonus(params[13]);
- 
+    // uint32_t previousId = ParsePreviousPropertyId(params[3]);
+    std::string category = ParseText(params[3]);
+    std::string subcategory = ParseText(params[4]);
+    std::string name = ParseText(params[5]);
+    uint32_t propertyIdDesired = ParsePropertyId(params[6]);
+
     //////////////////////////////////////////
-    uint32_t blocks_until_expiration = ParseNewValues(params[14]);
-    uint32_t notional_size = ParseNewValues(params[15]);
-    uint32_t collateral_currency = ParseNewValues(params[16]);
-    uint32_t margin_requirement = ParseNewValues(params[17]);
+    uint32_t blocks_until_expiration = ParseNewValues(params[7]);
+    uint32_t notional_size = ParseNewValues(params[8]);
+    uint32_t collateral_currency = ParseNewValues(params[9]);
+    uint32_t margin_requirement = ParseNewValues(params[10]);
     //////////////////////////////////////////
 
     // create a payload for the transaction
-    std::vector<unsigned char> payload = CreatePayload_CreateContract(ecosystem, type, previousId, category, subcategory, name, url, data, propertyIdDesired, numTokens, deadline, earlyBonus, issuerPercentage, blocks_until_expiration, notional_size, collateral_currency, margin_requirement);
+    std::vector<unsigned char> payload = CreatePayload_CreateContract(ecosystem, type, category, subcategory, name, propertyIdDesired, blocks_until_expiration, notional_size, collateral_currency, margin_requirement);
 
     // request the wallet build the transaction (and if needed commit it)
     uint256 txid;
@@ -786,6 +781,7 @@ UniValue omni_createcontract(const UniValue& params, bool fHelp)
         }
     }
 }
+////////////////////////////////////////////////////////////////////////////////
 
 UniValue omni_tradecontract(const UniValue& params, bool fHelp)
 {
@@ -803,7 +799,7 @@ UniValue omni_tradecontract(const UniValue& params, bool fHelp)
             "5. amountdesired        (string, required) the amount of tokens desired in exchange\n"
             "6. effective_price      (string, required) the price of contract desired in exchange\n"
             "7. trading_action       (string, required) the price of contract desired in exchange\n"
-            
+
             "\nResult:\n"
             "\"payload\"             (string) the hex-encoded payload\n"
 

@@ -178,7 +178,7 @@ std::vector<PrevTxsEntry> ParsePrevTxs(const UniValue& value)
 
     std::vector<PrevTxsEntry> prevTxsParsed;
     prevTxsParsed.reserve(prevTxs.size());
-    
+
     for (size_t i = 0; i < prevTxs.size(); ++i) {
         const UniValue& p = prevTxs[i];
         if (p.type() != UniValue::VOBJ) {
@@ -206,7 +206,7 @@ std::vector<PrevTxsEntry> ParsePrevTxs(const UniValue& value)
 
 /** New things for Future Contracts */
 int64_t ParseAmountContract(const UniValue& value, bool fContract)
-{   
+{
     /** Here we use getValStr() instead of get_str */
     int64_t amount = mastercore::StrToInt64(value.getValStr(), fContract);
     if (amount < 1) {
