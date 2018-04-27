@@ -51,6 +51,7 @@ bool msc_debug_alerts                           = 1;
 bool msc_debug_metadex1                         = 0;
 bool msc_debug_metadex2                         = 0;
 bool msc_debug_metadex3                         = 0;
+bool msc_debug_tradedb                          = 0;
 /**
  * LogPrintf() has been broken a couple of times now
  * by well-meaning people adding mutexes in the most straightforward way.

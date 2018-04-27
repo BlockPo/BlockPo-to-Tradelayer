@@ -2357,13 +2357,388 @@ int mastercore_handler_disc_end(int nBlockNow, CBlockIndex const * pBlockIndex)
     return 0;
 }
 /* New things for contracts *///////////////////////////////////////////////////
+
+// obtains a vector of txids where the supplied address participated in a trade (needed for gettradehistory_MP)
+// optional property ID parameter will filter on propertyId transacted if supplied
+// sorted by block then index
+void CMPTradeList::getTradesForAddress(std::string address, std::vector<uint256>& vecTransactions, uint32_t propertyIdFilter)
+{
+  if (!pdb) return;
+  std::map<std::string,uint256> mapTrades;
+  leveldb::Iterator* it = NewIterator();
+  for(it->SeekToFirst(); it->Valid(); it->Next()) {
+      std::string strKey = it->key().ToString();
+      std::string strValue = it->value().ToString();
+      std::vector<std::string> vecValues;
+      if (strKey.size() != 64) continue; // only interested in trades
+      uint256 txid = uint256S(strKey);
+      size_t addressMatch = strValue.find(address);
+      if (addressMatch == std::string::npos) continue;
+      boost::split(vecValues, strValue, boost::is_any_of(":"), token_compress_on);
+      if (vecValues.size() != 5) {
+          PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
+          continue;
+      }
+      uint32_t propertyIdForSale = boost::lexical_cast<uint32_t>(vecValues[1]);
+      uint32_t propertyIdDesired = boost::lexical_cast<uint32_t>(vecValues[2]);
+      int64_t blockNum = boost::lexical_cast<uint32_t>(vecValues[3]);
+      int64_t txIndex = boost::lexical_cast<uint32_t>(vecValues[4]);
+      if (propertyIdFilter != 0 && propertyIdFilter != propertyIdForSale && propertyIdFilter != propertyIdDesired) continue;
+      std::string sortKey = strprintf("%06d%010d", blockNum, txIndex);
+      mapTrades.insert(std::make_pair(sortKey, txid));
+  }
+  delete it;
+  for (std::map<std::string,uint256>::iterator it = mapTrades.begin(); it != mapTrades.end(); it++) {
+      vecTransactions.push_back(it->second);
+  }
+}
+
 void CMPTradeList::recordNewTrade(const uint256& txid, const std::string& address, uint32_t propertyIdForSale, uint32_t propertyIdDesired, int blockNum, int blockIndex)
 {
   if (!pdb) return;
   std::string strValue = strprintf("%s:%d:%d:%d:%d", address, propertyIdForSale, propertyIdDesired, blockNum, blockIndex);
   Status status = pdb->Put(writeoptions, txid.ToString(), strValue);
   ++nWritten;
-  // if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
+  if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
+}
+
+void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, string address1, string address2, unsigned int prop1, unsigned int prop2, uint64_t amount1, uint64_t amount2, int blockNum, int64_t fee)
+{
+    if (!pdb) return;
+    const string key = txid1.ToString() + "+" + txid2.ToString();
+    const string value = strprintf("%s:%s:%u:%u:%lu:%lu:%d:%d", address1, address2, prop1, prop2, amount1, amount2, blockNum, fee);
+
+    Status status;
+    if (pdb)
+    {
+        status = pdb->Put(writeoptions, key, value);
+        ++nWritten;
+        // if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
+    }
+}
+
+/////////////////////////////////
+/** New things for Contract */
+void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, string address1, string address2, int64_t nCouldbuy, int64_t amountForsale, int64_t amountStillForsale, int blockNum1, int blockNum2, string s_status1, string s_status2, int64_t lives_maker, int64_t lives_taker, uint32_t property_traded, string tradeStatus, int64_t pricepold, int64_t pricepnew)
+{
+    if (!pdb) return;
+
+    const string key = txid1.ToString() + "+" + txid2.ToString();
+    const string value = strprintf("%s:%s:%lu:%lu:%lu:%d:%d:%s:%s:%d:%d:%d:%d", address1, address2, nCouldbuy, amountForsale, amountStillForsale, blockNum1, blockNum2, s_status1, s_status2, lives_maker, lives_taker, property_traded, pricepold);
+
+    PrintToConsole("________________________________________\n");
+    const string lineOutMaker = strprintf("%s %d %lu %s %s %s", address1, lives_maker , amountForsale, s_status1, txid1.ToString(), key);
+    PrintToConsole("%s\n", lineOutMaker);
+    const string lineOutTaker = strprintf("%s %d %lu %s %s %s", address2, lives_taker , amountStillForsale, s_status2, txid2.ToString(), key);
+    PrintToConsole("%s\n", lineOutTaker);
+
+    // std::fstream fileFirst;
+  	// fileFirst.open ("graphInfoFirst.txt", std::fstream::in | std::fstream::out | std::fstream::app);
+  	// saveDataGraphs(fileFirst, lineOutMaker, lineOutTaker);
+    // fileFirst.close();
+    //
+    // const string lineOutFileSecond = strprintf("%s\t %s", address1, address2);
+    // const string lineOutFileThird  = strprintf("%s\t %s\t %s", address1, key, address2);
+    //
+    // std::fstream fileSecond;
+  	// fileSecond.open ("graphInfoSecond.txt", std::fstream::in | std::fstream::out | std::fstream::app);
+  	// saveDataGraphs(fileSecond, lineOutFileSecond);
+    // fileSecond.close();
+    //
+    // std::fstream fileThird;
+  	// fileThird.open ("graphInfoThird.txt", std::fstream::in | std::fstream::out | std::fstream::app);
+  	// saveDataGraphs(fileThird, lineOutFileThird);
+    // fileThird.close();
+
+    Status status;
+    if (pdb)
+    {
+        status = pdb->Put(writeoptions, key, value);
+        ++nWritten;
+        // if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
+    }
+}
+// MPTradeList here
+bool CMPTradeList::getMatchingTrades(const uint256& txid, uint32_t propertyId, UniValue& tradeArray, int64_t& totalSold, int64_t& totalReceived)
+{
+  if (!pdb) return false;
+
+  int count = 0;
+  totalReceived = 0;
+  totalSold = 0;
+
+  std::vector<std::string> vstr;
+  string txidStr = txid.ToString();
+
+  leveldb::Iterator* it = NewIterator(); // Allocation proccess
+
+  for(it->SeekToFirst(); it->Valid(); it->Next()) {
+      // search key to see if this is a matching trade
+      std::string strKey = it->key().ToString();
+      std::string strValue = it->value().ToString();
+      std::string matchTxid;
+      size_t txidMatch = strKey.find(txidStr);
+      if (txidMatch == std::string::npos) continue; // no match
+
+      // sanity check key is the correct length for a matched trade
+      if (strKey.length() != 129) continue;
+
+      // obtain the txid of the match
+      if (txidMatch==0) { matchTxid = strKey.substr(65,64); } else { matchTxid = strKey.substr(0,64); }
+
+      // ensure correct amount of tokens in value string
+      boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
+      if (vstr.size() != 8) {
+          PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
+          continue;
+      }
+
+      // decode the details from the value string
+      std::string address1 = vstr[0];
+      std::string address2 = vstr[1];
+      uint32_t prop1 = boost::lexical_cast<uint32_t>(vstr[2]);
+      uint32_t prop2 = boost::lexical_cast<uint32_t>(vstr[3]);
+      int64_t amount1 = boost::lexical_cast<int64_t>(vstr[4]);
+      int64_t amount2 = boost::lexical_cast<int64_t>(vstr[5]);
+      int blockNum = atoi(vstr[6]);
+      int64_t tradingFee = boost::lexical_cast<int64_t>(vstr[7]);
+
+      std::string strAmount1 = FormatMP(prop1, amount1);
+      std::string strAmount2 = FormatMP(prop2, amount2);
+      std::string strTradingFee = FormatMP(prop2, tradingFee);
+      std::string strAmount2PlusFee = FormatMP(prop2, amount2+tradingFee);
+
+      // populate trade object and add to the trade array, correcting for orientation of trade
+      UniValue trade(UniValue::VOBJ);
+      trade.push_back(Pair("txid", matchTxid));
+      trade.push_back(Pair("block", blockNum));
+      if (prop1 == propertyId) {
+          trade.push_back(Pair("address", address1));
+          trade.push_back(Pair("amountsold", strAmount1));
+          trade.push_back(Pair("amountreceived", strAmount2));
+          trade.push_back(Pair("tradingfee", strTradingFee));
+          totalReceived += amount2;
+          totalSold += amount1;
+      } else {
+          trade.push_back(Pair("address", address2));
+          trade.push_back(Pair("amountsold", strAmount2PlusFee));
+          trade.push_back(Pair("amountreceived", strAmount1));
+          trade.push_back(Pair("tradingfee", FormatMP(prop1, 0))); // not the liquidity taker so no fee for this participant - include attribute for standardness
+          totalReceived += amount1;
+          totalSold += amount2;
+      }
+      tradeArray.push_back(trade);
+      ++count;
+  }
+  // clean up
+  delete it; // Desallocation proccess
+  if (count) { return true; } else { return false; }
+}
+
+/////////////////////////////////////////////
+/** New things for contracts */
+double CMPTradeList::getPNL(string address, int64_t contractsClosed, int64_t price, uint32_t property, uint32_t marginRequirementContract, uint32_t notionalSize, std::string Status)
+{
+    PrintToConsole("________________________________________\n");
+    PrintToConsole("Inside getPNL!!!\n");
+    PrintToConsole("Checking Extern Volatil Variable coming from x_Trade\n");
+    extern volatile uint64_t marketPrice;
+    PrintToConsole("Market Price in Omnicore: %d\n", marketPrice);
+
+    int count = 0;
+    int64_t totalAmount = 0;
+    const int64_t factor = 100000000;
+    int64_t totalContracts = 0;
+    int64_t totalAux = 0;
+    int64_t pCouldBuy = 0;
+    int64_t d_price = static_cast<int64_t>(price/factor);
+    int64_t d_contractsClosed = static_cast<int64_t>(contractsClosed/factor);
+    int64_t aux = getMPbalance(address, property, REMAINING);
+    std::vector<std::string> vstr;
+
+    leveldb::Iterator* it = NewIterator();
+    for(it->SeekToFirst(); it->Valid(); it->Next()) {
+
+        std::string strKey = it->key().ToString();
+        std::string strValue = it->value().ToString();
+
+        boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
+
+        if (vstr.size() != 13) {
+
+            PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
+            continue;
+        }
+        if (address != vstr[0] && address != vstr[1]) continue;
+        // Decode the details from the value string
+        std::string address1 = vstr[0];
+        std::string address2 = vstr[1];
+        int64_t effectivePrice = (boost::lexical_cast<int64_t>(vstr[12]))/factor;
+        int64_t nCouldBuy = (boost::lexical_cast<int64_t>(vstr[2]))/factor;;
+        PrintToConsole("aux: %d\n",aux);
+        PrintToConsole("nCouldBuy: %d\n",nCouldBuy);
+        PrintToConsole("EffectivePrice: %d\n",effectivePrice);
+        PrintToConsole("Contracts closed: %d\n",d_contractsClosed);
+        // making some calculations needed for PNL
+        if(aux > totalAux){
+          if (nCouldBuy > aux - totalAux){
+              pCouldBuy = nCouldBuy - (aux - totalAux);
+              totalAux = totalAux + aux - totalAux;
+          }else {
+              totalAux = totalAux + nCouldBuy;
+              continue;
+          }
+        }
+
+        if(d_contractsClosed > totalContracts){
+            if (pCouldBuy > 0){
+                nCouldBuy = pCouldBuy;
+            }
+            if (nCouldBuy > d_contractsClosed - totalContracts){
+                int64_t diff = d_contractsClosed - totalContracts;
+                totalAmount += effectivePrice*diff;
+                totalContracts += diff;
+            } else {
+                totalAmount += effectivePrice*nCouldBuy;
+                totalContracts += nCouldBuy;
+            }
+
+            PrintToConsole("totalAmount: %d\n",totalAmount);
+            PrintToConsole("totalContracts: %d\n",totalContracts);
+            pCouldBuy = 0;
+
+        } else {
+            if ( totalContracts > 0 ) {
+                //assert(update_tally_map(address, property, totalContracts, REMAINING));
+            }
+            break;
+        }
+        ++count;
+    }
+    // clean up
+    delete it;
+    double averagePrice = static_cast<double>(totalAmount/d_contractsClosed);
+    double PNL_num = static_cast<double>((d_price - averagePrice)*(notionalSize*d_contractsClosed));
+    double PNL_den = static_cast<double>(averagePrice*marginRequirementContract);
+    double PNL = 0;
+
+    if ((Status == "Long Netted") || (Status == "Netted_L")){
+       PNL = static_cast<double>(PNL_num/PNL_den);
+       PrintToConsole("Long Side\n");
+    } else if ((Status == "Short Netted") || (Status == "Netted_S")){
+       PNL = static_cast<double>(-PNL_num/PNL_den);
+       PrintToConsole("Short Side\n");
+    }
+
+    PrintToConsole("Total Amount : %d\n",totalAmount);
+    PrintToConsole("Contracts Remaining: %d\n",totalContracts);
+    PrintToConsole("Average Price Pi: %d\n",averagePrice);
+    PrintToConsole("marginRequirementContract : %d\n",marginRequirementContract);
+    PrintToConsole("notionalSize : %d\n",notionalSize);
+    PrintToConsole("contractsClosed : %d\n",d_contractsClosed);
+    PrintToConsole("PNL_num : %d\n",PNL_num);
+    PrintToConsole("PNL_den : %d\n",PNL_den);
+    PrintToConsole("________________________________________\n");
+    return PNL;
+}
+
+////////////////////////////////////////
+/** New things for Contracts */
+void CMPTradeList::marginLogic(uint32_t property) // Vector of matching address for a given contract traded
+{
+    PrintToConsole("___________________________________________________________\n");
+    PrintToConsole("Looking for Address in marginLogic function\n");
+
+    std::vector<std::string> vstr;
+    std::vector<std::string> addr;   // Address vector
+
+    extern volatile uint64_t marketPrice;
+    leveldb::Iterator* it = NewIterator();
+
+    for(it->SeekToFirst(); it->Valid(); it->Next()) {
+
+        std::string strKey = it->key().ToString();
+        std::string strValue = it->value().ToString();
+
+        boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
+
+        if (vstr.size() != 13) {
+
+            PrintToLog("TRADEDB error - unexpected size of vector (%s)\n", strValue);
+            continue;
+        }
+        std::string address1 = vstr[0];
+        std::string address2 = vstr[1];
+
+        if (std::find(addr.begin(), addr.end(), address1) == addr.end() ) {
+            addr.push_back(address1);
+        }
+        if ((std::find(addr.begin(), addr.end(), address2) == addr.end()) && (address1 != address2)) {
+            addr.push_back(address2);
+        }
+      }
+
+      for(std::vector<std::string>::iterator it = addr.begin() ; it != addr.end(); ++it){
+
+        PrintToConsole("Into for loop watching addres on vector addr\n");
+        PrintToConsole("Address in vector addr: %s\n", *it);
+
+        int64_t liqPrice = getMPbalance(*it,property, LIQUIDATION_PRICE);
+        int64_t shortBalance = getMPbalance(*it, property, NEGATIVE_BALANCE);
+        int64_t longBalance = getMPbalance(*it, property, POSSITIVE_BALANCE);
+        int64_t amountInOrder = 0;
+        int trading_action = shortBalance > 0 ? BUY : ( longBalance > 0 ? SELL : ACTIONINVALID );
+        amountInOrder = trading_action == BUY ? shortBalance : longBalance;
+        uint64_t nLiqPrice = static_cast<uint64_t> (liqPrice);
+
+        PrintToConsole("shortBalance: %d\n", shortBalance);
+        PrintToConsole("LiqPrice: %d\n", FormatContractShortMP(liqPrice));
+        PrintToConsole("longBalance: %d\n", longBalance);
+        PrintToConsole("trading action: %d\n", trading_action);
+        PrintToConsole("marketPrice in marginLogic function : %d\n", FormatContractShortMP(marketPrice));
+        PrintToConsole("String LiqPrice in marginLogic function: %d\n", FormatContractShortMP(nLiqPrice));
+
+        if( (FormatContractShortMP(marketPrice) <= FormatContractShortMP(nLiqPrice)) && (liqPrice > 0) && (trading_action == SELL)){
+
+           PrintToConsole("//////////////////////////////////////MARGIN CALL !!!!!!!!!!!\n");
+           PrintToConsole("marketPrice <= LiqPrice\n");
+           PrintToConsole("Liquidation price in marginLogic function: %s\n",nLiqPrice);
+          //  int rc = marginCall(*it, property, marketPrice, trading_action, amountInOrder);
+          //  assert(update_tally_map(*it, property,-liqPrice, LIQUIDATION_PRICE));
+          //  PrintToConsole("Margin call number rc %d\n", rc);
+
+        } else if( (FormatContractShortMP(marketPrice) >= FormatContractShortMP(nLiqPrice)) && (liqPrice > 0) && (trading_action == BUY)) {
+
+          PrintToConsole("//////////////////////////////////////MARGIN CALL !!!!!!!!!!!\n");
+          PrintToConsole("marketPrice >= LiqPrice\n");
+          PrintToConsole("Liquidation price in marginLogic function: %s\n",nLiqPrice);
+          // int rc = marginCall(*it, property, marketPrice, trading_action, amountInOrder);
+          // assert(update_tally_map(*it, property,-liqPrice, LIQUIDATION_PRICE));
+          // PrintToConsole("Margin call number rc %d\n", rc);
+
+        } else {
+           PrintToConsole("No margin call!\n");
+
+        }
+
+      }
+      delete it;
+
+}
+////////////////////////////////////////
+/** New things for Contracts */
+int marginCall(const std::string& address, uint32_t propertyId, uint64_t marketPrice, uint8_t trading_action, int64_t amountInOrder)
+{
+    int rc = 0;
+    PrintToConsole("____________________________________________________________\n");
+    PrintToConsole("Into the marginCall function\n");
+
+    const uint256 tx;
+    // int rc = ContractDex_ADD(address, propertyId, amountInOrder, tx, 1, marketPrice, trading_action,0);
+    if (rc == 0) {
+        PrintToConsole("return of ContractDex_ADD: %d\n",rc);
+    }
+    return rc;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

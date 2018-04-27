@@ -1744,8 +1744,8 @@ if (nBalance < amountToReserve) {
 
     t_tradelistdb->recordNewTrade(txid, sender, property, desired_property, block, tx_idx);
 
-    // int rc = ContractDex_ADD(sender, property, amount, block, txid, tx_idx, effective_price, trading_action,amountToReserve);
-    // return rc;
+    int rc = ContractDex_ADD(sender, contractId, amount, block, txid, tx_idx, effective_price, trading_action,amountToReserve);
+    return rc;
   }
   return 0;
 }
