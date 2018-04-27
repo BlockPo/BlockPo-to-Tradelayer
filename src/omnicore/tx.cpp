@@ -666,7 +666,6 @@ bool CMPTransaction::interpret_CreateContractDex()
     PrintToConsole("notional size : %d\n", notional_size);
     PrintToConsole("collateral currency: %d\n", collateral_currency);
     PrintToConsole("margin requirement: %d\n", margin_requirement);
-
     return true;
 }
 /**Tx 29 */
@@ -1727,7 +1726,9 @@ double percentLiqPrice = 0.8;
 int64_t nBalance = getMPbalance(sender, collateral_currency, BALANCE);
 uint32_t Sum = margin_requirement;
 int64_t amountToReserve = static_cast<int64_t>(amount*Sum);
-
+PrintToConsole("nBalance: %d\n",nBalance);
+PrintToConsole("margin requirement: %d\n",Sum);
+PrintToConsole("amountToReserve: %d\n",amountToReserve);
 if (nBalance < amountToReserve) {
     PrintToLog("%s(): rejected: sender %s has insufficient balance for contracts %d [%s < %s]\n",
             __func__,
