@@ -53,6 +53,7 @@ std::vector<TransactionRestriction> CConsensusParams::GetRestrictions() const
         { MSC_TYPE_REVOKE_PROPERTY_TOKENS,    MP_TX_PKT_V0,  false,   MSC_MANUALSP_BLOCK },
         { MSC_TYPE_CHANGE_ISSUER_ADDRESS,     MP_TX_PKT_V0,  false,   MSC_MANUALSP_BLOCK },
         { MSC_TYPE_CREATE_CONTRACT,           MP_TX_PKT_V0,  false,   MSC_CONTRACTDEX_BLOCK },
+        { MSC_TYPE_CONTRACTDEX_TRADE,         MP_TX_PKT_V0,  false,   MSC_CONTRACTDEX_BLOCK },
         { MSC_TYPE_SEND_ALL,                  MP_TX_PKT_V0,  false,   MSC_SEND_ALL_BLOCK },
     };
 

@@ -348,31 +348,28 @@ std::vector<unsigned char> CreatePayload_CreateContract(uint8_t ecosystem, uint1
 
 }
 
-std::vector<unsigned char> CreatePayload_ContractDexTrade(uint32_t propertyIdForSale, uint64_t amountForSale, uint32_t propertyIdDesired, uint64_t amountDesired, uint64_t effective_price, uint8_t trading_action)
+std::vector<unsigned char> CreatePayload_ContractDexTrade(uint32_t propertyIdForSale, uint64_t amountForSale, uint64_t effective_price, uint8_t trading_action)
 {
     std::vector<unsigned char> payload;
 
     uint16_t messageVer = 0;
     uint16_t messageType = 29;
 
-    mastercore::swapByteOrder16(messageVer);
-    mastercore::swapByteOrder16(messageType);
-    mastercore::swapByteOrder32(propertyIdForSale); /*pkt[4]*/
-    mastercore::swapByteOrder64(amountForSale);     /*pkt[8]*/
-    mastercore::swapByteOrder32(propertyIdDesired); /*pkt[16]*/
-    mastercore::swapByteOrder64(amountDesired);     /*pkt[20]*/
-    mastercore::swapByteOrder64(effective_price);   /*pkt[28]*/
 
-    PUSH_BACK_BYTES(payload, messageVer);           /*vch[0]: 2 = 2 bytes*/
-    PUSH_BACK_BYTES(payload, messageType);          /*vch[1]: 2+2 = 4 bytes*/
-    PUSH_BACK_BYTES(payload, propertyIdForSale);    /*vch[2]: 2+2+ 4 = 8 bytes*/
-    PUSH_BACK_BYTES(payload, amountForSale);        /*vch[3]: 2+2+4+ 8 = 16 bytes*/
-    PUSH_BACK_BYTES(payload, propertyIdDesired);    /*vch[4]: 2+2+4+8+ 4 = 20 bytes*/
-    PUSH_BACK_BYTES(payload, amountDesired);        /*vch[5]: 2+2+4+8+4+ 8 = 28 bytes*/
-    PUSH_BACK_BYTES(payload, effective_price);      /*vch[6]: 2+2+4+8+4+8+ 8 = 36 bytes*/
-    PUSH_BACK_BYTES(payload, trading_action);       /*vch[7]: 2+2+4+8+4+8+8 +1 = 37 bytes*/
+        std::vector<uint8_t> vecMessageType = CompressInteger(messageType);
+        std::vector<uint8_t> vecMessageVer = CompressInteger(messageVer);
+        std::vector<uint8_t> vecPropertyId = CompressInteger(propertyIdForSale);
+        std::vector<uint8_t> vecAmountForSale = CompressInteger(amountForSale);
+        std::vector<uint8_t> vecEffectivePrice = CompressInteger(effective_price);
+        std::vector<uint8_t> vecTradingAction = CompressInteger(trading_action);
+        payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
+        payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
+        payload.insert(payload.end(), vecPropertyId.begin(), vecPropertyId.end());
+        payload.insert(payload.end(), vecAmountForSale.begin(), vecAmountForSale.end());
+        payload.insert(payload.end(), vecEffectivePrice.begin(), vecEffectivePrice.end());
+        payload.insert(payload.end(), vecTradingAction.begin(), vecTradingAction.end());
 
-    return payload;
+        return payload;
 }
 
 std::vector<unsigned char> CreatePayload_ContractDexCancelEcosystem(uint8_t ecosystem)

@@ -10,6 +10,7 @@
 #include "omnicore/rules.h"
 #include "omnicore/sp.h"
 #include "omnicore/varint.h"
+#include "omnicore/mdex.h"
 
 #include "amount.h"
 #include "main.h"
@@ -51,6 +52,7 @@ std::string mastercore::strTransactionType(uint16_t txType)
         case OMNICORE_MESSAGE_TYPE_ACTIVATION: return "Feature Activation";
         /*New things for contracts *////////////////////////////////////////////
         case MSC_TYPE_CREATE_CONTRACT: return "Create Contract";
+        case MSC_TYPE_CONTRACTDEX_TRADE: return "Future Contract";
         ////////////////////////////////////////////////////////////////////////
         default: return "* unknown type *";
     }
@@ -139,6 +141,8 @@ bool CMPTransaction::interpret_Transaction()
       /*New things for contracts*///////////////////////////////////////////////
         case MSC_TYPE_CREATE_CONTRACT:
             return interpret_CreateContractDex();
+        case MSC_TYPE_CONTRACTDEX_TRADE:
+            return interpret_ContractDexTrade();
       //////////////////////////////////////////////////////////////////////////
     }
 
@@ -665,10 +669,54 @@ bool CMPTransaction::interpret_CreateContractDex()
 
     return true;
 }
+/**Tx 29 */
+bool CMPTransaction::interpret_ContractDexTrade()
+{
+  PrintToConsole("Inside of trade contractdexTrade function\n");
+  int i = 0;
+
+  std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecPropertyIdBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecAmountForSaleBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecEffectivePriceBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecTradingActionBytes = GetNextVarIntBytes(i);
+
+  if (!vecTypeBytes.empty()) {
+      type = DecompressInteger(vecTypeBytes);
+  } else return false;
+
+  if (!vecVersionBytes.empty()) {
+      version = DecompressInteger(vecVersionBytes);
+  } else return false;
+
+  if (!vecPropertyIdBytes.empty()) {
+      contractId = DecompressInteger(vecPropertyIdBytes);
+  } else return false;
+
+  if (!vecAmountForSaleBytes.empty()) {
+      amount = DecompressInteger(vecAmountForSaleBytes);
+  } else return false;
+
+  if (!vecEffectivePriceBytes.empty()) {
+      effective_price = DecompressInteger(vecEffectivePriceBytes);
+  } else return false;
+
+  if (!vecTradingActionBytes.empty()) {
+      trading_action = DecompressInteger(vecTradingActionBytes);
+  } else return false;
+
+  PrintToConsole("version: %d\n", version);
+  PrintToConsole("messageType: %d\n",type);
+  PrintToConsole("contractId: %d\n", contractId);
+  PrintToConsole("amount of contracts : %d\n", amount);
+  PrintToConsole("effective price : %d\n", effective_price);
+  PrintToConsole("trading action : %d\n", trading_action);
+
+  return true;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
-
-
-
 
 
 
@@ -692,7 +740,6 @@ int CMPTransaction::interpretPacket()
     }
 
     LOCK(cs_tally);
-
     switch (type) {
         case MSC_TYPE_SIMPLE_SEND:
             return logicMath_SimpleSend();
@@ -729,10 +776,13 @@ int CMPTransaction::interpretPacket()
 
         case OMNICORE_MESSAGE_TYPE_ALERT:
             return logicMath_Alert();
-
+     /*New things for contracts*////////////////////////////////////////////////
         case MSC_TYPE_CREATE_CONTRACT:
             return logicMath_CreateContractDex();
 
+        case MSC_TYPE_CONTRACTDEX_TRADE:
+            return logicMath_ContractDexTrade();
+    ////////////////////////////////////////////////////////////////////////////
     }
 
     return (PKT_ERROR -100);
@@ -1624,4 +1674,78 @@ if ('\0' == name[0]) {
     PrintToConsole("Contract id: %d\n",propertyId);
 
     return 0;
+}
+
+/** Tx 29 */
+int CMPTransaction::logicMath_ContractDexTrade()
+{
+  PrintToConsole("Inside of logicMath_ContractDexTrade\n");
+  uint256 blockHash;
+  {
+    LOCK(cs_main);
+
+    CBlockIndex* pindex = chainActive[block];
+    if (pindex == NULL) {
+        PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
+        return (PKT_ERROR_SP -20);
+    }
+    blockHash = pindex->GetBlockHash();
+  }
+//
+// if (OMNI_PROPERTY_MSC != ecosystem && OMNI_PROPERTY_TMSC != ecosystem) {
+//     PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, (uint32_t) ecosystem);
+//     return (PKT_ERROR_SP -21);
+// }
+//
+// if (!IsTransactionTypeAllowed(block, ecosystem, type, version)) {
+//     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+//             __func__,
+//             type,
+//             version,
+//             property,
+//             block);
+//     return (PKT_ERROR_SP -22);
+// }
+//
+//
+//
+// if (MSC_PROPERTY_TYPE_INDIVISIBLE != prop_type && MSC_PROPERTY_TYPE_DIVISIBLE != prop_type) {
+//     PrintToLog("%s(): rejected: invalid property type: %d\n", __func__, prop_type);
+//     return (PKT_ERROR_SP -36);
+// }
+
+CMPSPInfo::Entry sp;
+assert(_my_sps->getSP(contractId, sp));
+
+margin_requirement = sp.margin_requirement;
+collateral_currency = sp.collateral_currency;
+PrintToConsole("margin requirement of contract : %d\n",margin_requirement);
+PrintToConsole("collateral currency id of contract : %d\n",collateral_currency);
+// ------------------------------------------
+double percentLiqPrice = 0.8;
+
+int64_t nBalance = getMPbalance(sender, collateral_currency, BALANCE);
+uint32_t Sum = margin_requirement;
+int64_t amountToReserve = static_cast<int64_t>(amount*Sum);
+
+if (nBalance < amountToReserve) {
+    PrintToLog("%s(): rejected: sender %s has insufficient balance for contracts %d [%s < %s]\n",
+            __func__,
+            sender,
+            property,
+            FormatMP(property, nBalance),
+            FormatMP(property, amountToReserve));
+    PrintToConsole("rejected: sender has insufficient balance for contracts\n");
+    return (PKT_ERROR_SEND -25);
+} else {
+
+    assert(update_tally_map(sender, collateral_currency, -amountToReserve, BALANCE));
+    assert(update_tally_map(sender, collateral_currency,  amountToReserve, CONTRACTDEX_RESERVE));
+
+    t_tradelistdb->recordNewTrade(txid, sender, property, desired_property, block, tx_idx);
+
+    // int rc = ContractDex_ADD(sender, property, amount, block, txid, tx_idx, effective_price, trading_action,amountToReserve);
+    // return rc;
+  }
+  return 0;
 }

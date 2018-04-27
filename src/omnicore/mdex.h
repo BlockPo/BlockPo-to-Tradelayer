@@ -214,7 +214,7 @@ namespace mastercore
 	cd_PricesMap *get_PricesCd(uint32_t prop);
 	cd_Set *get_IndexesCd(cd_PricesMap *p, uint64_t price);
 
-    int ContractDex_ADD(const std::string& sender_addr, uint32_t prop, int64_t amount, int block, uint32_t property_desired, int64_t amount_desired, const uint256& txid, unsigned int idx, uint64_t effective_price, uint8_t trading_action, int64_t amount_to_reserve);
+    int ContractDex_ADD(const std::string& sender_addr, uint32_t prop, int64_t amount, int block, const uint256& txid, unsigned int idx, uint64_t effective_price, uint8_t trading_action, int64_t amount_to_reserve);
     bool ContractDex_INSERT(const CMPContractDex &objContractDex);
     void ContractDex_debug_print(bool bShowPriceLevel, bool bDisplay);
     const CMPContractDex *ContractDex_RetrieveTrade(const uint256& txid);

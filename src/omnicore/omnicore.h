@@ -107,11 +107,18 @@ enum FILETYPES {
 #define PKT_ERROR_SEND        (-60000)
 #define PKT_ERROR_TOKENS      (-82000)
 #define PKT_ERROR_SEND_ALL    (-83000)
+#define PKT_ERROR_METADEX     (-80000)
+#define METADEX_ERROR         (-81000)
 
 #define OMNI_PROPERTY_BTC             0
 #define OMNI_PROPERTY_MSC             1
 #define OMNI_PROPERTY_TMSC            2
-
+//////////////////////////////////////
+/** New things for Contracts */
+#define BUY   1
+#define SELL  2
+#define ACTIONINVALID  3
+//////////////////////////////////////
 
 /** New for future contracts port */
 #define MSC_PROPERTY_TYPE_CONTRACT    3
@@ -123,6 +130,7 @@ std::string FormatMP(uint32_t propertyId, int64_t amount, bool fSign = false);
 std::string FormatShortMP(uint32_t propertyId, int64_t amount);
 std::string FormatByType(int64_t amount, uint16_t propertyType);
 std::string FormatByDivisibility(int64_t amount, bool divisible);
+double FormatContractShortMP(int64_t n);
 
 /** Returns the marker for transactions. */
 const std::vector<unsigned char> GetOmMarker();
@@ -204,7 +212,68 @@ public:
     void printAll();
 
     bool isMPinBlockRange(int, int, bool);
+
+    void recordPaymentTX(const uint256 &txid, bool fValid, int nBlock, unsigned int vout, unsigned int propertyId, uint64_t nValue, string buyer, string seller);
+    void recordMetaDExCancelTX(const uint256 &txidMaster, const uint256 &txidSub, bool fValid, int nBlock, unsigned int propertyId, uint64_t nValue);
+
+    /////////////////////////////////////////////
+    /** New things for Contracts */
+    void recordContractDexCancelTX(const uint256 &txidMaster, const uint256 &txidSub, bool fValid, int nBlock, unsigned int propertyId, uint64_t nValue);
+    /////////////////////////////////////////////
+
+    uint256 findMetaDExCancel(const uint256 txid);
+    /** Returns the number of sub records. */
+    int getNumberOfMetaDExCancels(const uint256 txid);
+
+    //////////////////////////////////////
+    /** New things for Contracts */
+    int getNumberOfContractDexCancels(const uint256 txid);
+    //////////////////////////////////////
+
 };
+/** LevelDB based storage for the trade history. Trades are listed with key "txid1+txid2".
+ */
+class CMPTradeList : public CDBBase
+{
+public:
+    CMPTradeList(const boost::filesystem::path& path, bool fWipe)
+    {
+        leveldb::Status status = Open(path, fWipe);
+        PrintToConsole("Loading trades database: %s\n", status.ToString());
+    }
+
+    virtual ~CMPTradeList()
+    {
+        if (msc_debug_persistence) PrintToLog("CMPTradeList closed\n");
+    }
+
+    void recordMatchedTrade(const uint256 txid1, const uint256 txid2, string address1, string address2, unsigned int prop1, unsigned int prop2, uint64_t amount1, uint64_t amount2, int blockNum, int64_t fee);
+
+    /////////////////////////////////
+    /** New things for Contract */
+    void recordMatchedTrade(const uint256 txid1, const uint256 txid2, string address1, string address2, int64_t nCouldbuy, int64_t amountForsale, int64_t amountStillForsale, int blockNum1, int blockNum2, string s_status1, string s_status2, int64_t lives_maker, int64_t lives_taker, uint32_t property_traded, string tradeStatus, int64_t pricepold, int64_t pricepnew);
+    // void recordMatchedTrade(const uint256 txid1, const uint256 txid2, string address1, string address2, unsigned int prop1, unsigned int prop2, uint64_t amount1, uint64_t amount2, int blockNum, int64_t fee, string t_status, std::vector<uint256> &vecTxid);
+    /////////////////////////////////
+
+    void recordNewTrade(const uint256& txid, const std::string& address, uint32_t propertyIdForSale, uint32_t propertyIdDesired, int blockNum, int blockIndex);
+    int deleteAboveBlock(int blockNum);
+    bool exists(const uint256 &txid);
+    void printStats();
+    void printAll();
+    bool getMatchingTrades(const uint256& txid, uint32_t propertyId, UniValue& tradeArray, int64_t& totalSold, int64_t& totalBought);
+
+    ///////////////////////////////////////
+    /** New things for Contract */
+    double getPNL(string address, int64_t contractsClosed, int64_t price, uint32_t property, uint32_t marginRequirementContract, uint32_t notionalSize, std::string Status);
+    void marginLogic(uint32_t property);
+    //////////////////////////////////////
+
+    bool getMatchingTrades(const uint256& txid);
+    void getTradesForAddress(std::string address, std::vector<uint256>& vecTransactions, uint32_t propertyIdFilter = 0);
+    void getTradesForPair(uint32_t propertyIdSideA, uint32_t propertyIdSideB, UniValue& response, uint64_t count);
+    int getMPTradeCountTotal();
+};
+
 
 //! Available balances of wallet properties
 extern std::map<uint32_t, int64_t> global_balance_money;
@@ -238,6 +307,7 @@ namespace mastercore
 extern std::unordered_map<std::string, CMPTally> mp_tally_map;
 extern CMPTxList *p_txlistdb;
 extern COmniTransactionDB *p_OmniTXDB;
+extern CMPTradeList *t_tradelistdb;
 
 // TODO: move, rename
 extern CCoinsView viewDummy;

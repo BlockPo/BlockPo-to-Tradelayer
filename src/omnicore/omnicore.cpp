@@ -24,6 +24,7 @@
 #include "omnicore/version.h"
 #include "omnicore/walletcache.h"
 #include "omnicore/wallettxs.h"
+#include "omnicore/mdex.h"
 
 #include "base58.h"
 #include "chainparams.h"
@@ -112,6 +113,7 @@ static int reorgRecoveryMode = 0;
 static int reorgRecoveryMaxHeight = 0;
 
 CMPTxList *mastercore::p_txlistdb;
+CMPTradeList *mastercore::t_tradelistdb;
 COmniTransactionDB *mastercore::p_OmniTXDB;
 
 // indicate whether persistence is enabled at this point, or not
@@ -222,6 +224,26 @@ std::string FormatByDivisibility(int64_t amount, bool divisible)
         return FormatDivisibleMP(amount);
     }
 }
+
+/*New things for contracts*/////////////////////////////////////////////////////
+double FormatContractShortMP(int64_t n)
+{
+    int64_t n_abs = (n > 0 ? n : -n);
+    int64_t quotient = n_abs / COIN;
+    int64_t remainder = n_abs % COIN;
+    std::string str = strprintf("%d.%08d", quotient, remainder);
+    // clean up trailing zeros - good for RPC not so much for UI
+    str.erase(str.find_last_not_of('0') + 1, std::string::npos);
+    if (str.length() > 0) {
+        std::string::iterator it = str.end() - 1;
+        if (*it == '.') {
+            str.erase(it);
+        }
+    } //get rid of trailing dot if non decimal
+    double q = atof(str.c_str());
+    return q;
+}
+/////////////////////////////////////////
 
 CMPSPInfo *mastercore::_my_sps;
 CrowdMap mastercore::my_crowds;
@@ -1427,6 +1449,7 @@ void clear_all_state()
     _my_sps->Clear();
     p_txlistdb->Clear();
     p_OmniTXDB->Clear();
+    t_tradelistdb->Clear();
     assert(p_txlistdb->setDBVersion() == DB_VERSION); // new set of databases, set DB version
 }
 
@@ -1484,6 +1507,7 @@ int mastercore_init()
     p_txlistdb = new CMPTxList(GetDataDir() / "OCL_txlist", fReindex);
     _my_sps = new CMPSPInfo(GetDataDir() / "OCL_spinfo", fReindex);
     p_OmniTXDB = new COmniTransactionDB(GetDataDir() / "OCL_TXDB", fReindex);
+    t_tradelistdb = new CMPTradeList(GetDataDir()/"OCL_listdb", fReindex);
     MPPersistencePath = GetDataDir() / "OCL_persist";
     TryCreateDirectory(MPPersistencePath);
 
@@ -1554,6 +1578,10 @@ int mastercore_shutdown()
     if (p_txlistdb) {
         delete p_txlistdb;
         p_txlistdb = NULL;
+    }
+    if (t_tradelistdb) {
+        delete t_tradelistdb;
+        t_tradelistdb = NULL;
     }
     if (_my_sps) {
         delete _my_sps;
@@ -2328,7 +2356,17 @@ int mastercore_handler_disc_end(int nBlockNow, CBlockIndex const * pBlockIndex)
 
     return 0;
 }
+/* New things for contracts *///////////////////////////////////////////////////
+void CMPTradeList::recordNewTrade(const uint256& txid, const std::string& address, uint32_t propertyIdForSale, uint32_t propertyIdDesired, int blockNum, int blockIndex)
+{
+  if (!pdb) return;
+  std::string strValue = strprintf("%s:%d:%d:%d:%d", address, propertyIdForSale, propertyIdDesired, blockNum, blockIndex);
+  Status status = pdb->Put(writeoptions, txid.ToString(), strValue);
+  ++nWritten;
+  // if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
+}
 
+////////////////////////////////////////////////////////////////////////////////
 /**
  * @return The marker for class C transactions.
  */

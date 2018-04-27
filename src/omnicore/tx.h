@@ -173,7 +173,7 @@ private:
     int logicMath_ContractDexCancelPrice();
     int logicMath_ContractDexCancelEcosystem();
     int logicMath_CreatePeggedCurrency();
-      int logicMath_RedemptionPegged();
+    int logicMath_RedemptionPegged();
     ///////////////////////////////////////////////
 
     /**

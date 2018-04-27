@@ -352,7 +352,7 @@ UniValue omni_sendissuancemanaged(const UniValue& params, bool fHelp)
     uint256 txid;
     std::string rawHex;
     int result = WalletTxBuilder(fromAddress, "", 0, payload, txid, rawHex, autoCommit);
-
+    PrintToConsole("result of WalletTxBuilder: %d\n",result);
     // check error and return the txid (or raw hex depending on autocommit)
     if (result != 0) {
         throw JSONRPCError(result, error_str(result));
@@ -785,7 +785,7 @@ UniValue omni_createcontract(const UniValue& params, bool fHelp)
 
 UniValue omni_tradecontract(const UniValue& params, bool fHelp)
 {
-    if (fHelp || params.size() != 7)
+    if (fHelp || params.size() != 5)
         throw runtime_error(
             "omni_tradecontract \"fromaddress\" propertyidforsale \"amountforsale\" propertiddesired \"amountdesired\"\n"
 
@@ -793,13 +793,10 @@ UniValue omni_tradecontract(const UniValue& params, bool fHelp)
 
             "\nArguments:\n"
             "1. fromaddress          (string, required) the address to trade with\n"
-            "2. propertyidforsale    (number, required) the identifier of the tokens to list for sale\n"
-            "3. amountforsale        (string, required) the amount of tokens to list for sale\n"
-            "4. propertiddesired     (number, required) the identifier of the tokens desired in exchange\n"
-            "5. amountdesired        (string, required) the amount of tokens desired in exchange\n"
-            "6. effective_price      (string, required) the price of contract desired in exchange\n"
-            "7. trading_action       (string, required) the price of contract desired in exchange\n"
-
+            "2. propertyidforsale    (number, required) the identifier of the contract to list for trade\n"
+            "3. amountforsale        (number, required) the amount of contracts to trade\n"
+            "4. effective price     (number, required) limit price desired in exchange\n"
+            "5. trading action        (number, required) 1 to BUY contracts, 2 to SELL contracts \n"
             "\nResult:\n"
             "\"payload\"             (string) the hex-encoded payload\n"
 
@@ -812,19 +809,17 @@ UniValue omni_tradecontract(const UniValue& params, bool fHelp)
     std::string fromAddress = ParseAddress(params[0]);
     uint32_t propertyIdForSale = ParsePropertyId(params[1]);
     int64_t amountForSale = ParseAmountContract(params[2], isPropertyContract(propertyIdForSale));
-    uint32_t propertyIdDesired = ParsePropertyId(params[3]);
-    int64_t amountDesired = ParseAmountContract(params[4], isPropertyContract(propertyIdDesired));
-    uint64_t effective_price = ParseEffectivePrice(params[5]);
-    uint8_t trading_action = ParseContractDexAction(params[6]);
+    uint64_t effective_price = ParseEffectivePrice(params[3]);
+    uint8_t trading_action = ParseContractDexAction(params[4]);
 
     // create a payload for the transaction
-    std::vector<unsigned char> payload = CreatePayload_ContractDexTrade(propertyIdForSale, amountForSale, propertyIdDesired, amountDesired, effective_price, trading_action);
+    std::vector<unsigned char> payload = CreatePayload_ContractDexTrade(propertyIdForSale, amountForSale, effective_price, trading_action);
 
     // request the wallet build the transaction (and if needed commit it)
     uint256 txid;
     std::string rawHex;
     int result = WalletTxBuilder(fromAddress, "", 0, payload, txid, rawHex, autoCommit);
-
+    PrintToConsole("Result of WalletTxBuilder: %d\n",result);
     // check error and return the txid (or raw hex depending on autocommit)
     if (result != 0) {
         throw JSONRPCError(result, error_str(result));
@@ -835,7 +830,8 @@ UniValue omni_tradecontract(const UniValue& params, bool fHelp)
             PendingAdd(txid, fromAddress, MSC_TYPE_CONTRACTDEX_TRADE, propertyIdForSale, amountForSale);
             return txid.GetHex();
         }
-    }
+     }
+
 }
 
 static const CRPCCommand commands[] =

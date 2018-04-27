@@ -48,7 +48,9 @@ bool msc_debug_consensus_hash                   = 0;
 bool msc_debug_consensus_hash_every_block       = 0;
 bool msc_debug_consensus_hash_every_transaction = 0;
 bool msc_debug_alerts                           = 1;
-
+bool msc_debug_metadex1                         = 0;
+bool msc_debug_metadex2                         = 0;
+bool msc_debug_metadex3                         = 0;
 /**
  * LogPrintf() has been broken a couple of times now
  * by well-meaning people adding mutexes in the most straightforward way.
@@ -299,4 +301,3 @@ void ShrinkDebugLog()
         file = NULL;
     }
 }
-
