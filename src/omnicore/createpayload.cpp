@@ -379,12 +379,14 @@ std::vector<unsigned char> CreatePayload_ContractDexCancelEcosystem(uint8_t ecos
     uint16_t messageType = 32;
     uint16_t messageVer = 0;
 
-    mastercore::swapByteOrder16(messageVer);
-    mastercore::swapByteOrder16(messageType);
 
-    PUSH_BACK_BYTES(payload, messageVer);
-    PUSH_BACK_BYTES(payload, messageType);
-    PUSH_BACK_BYTES(payload, ecosystem);
+    std::vector<uint8_t> vecMessageType = CompressInteger(messageType);
+    std::vector<uint8_t> vecMessageVer = CompressInteger(messageVer);
+    std::vector<uint8_t> vecEcosystem = CompressInteger(ecosystem);
+    payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
+    payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
+    payload.insert(payload.end(), vecEcosystem.begin(), vecEcosystem.end());
+
 
     return payload;
 }

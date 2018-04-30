@@ -50,9 +50,16 @@ std::string mastercore::strTransactionType(uint16_t txType)
         case OMNICORE_MESSAGE_TYPE_ALERT: return "ALERT";
         case OMNICORE_MESSAGE_TYPE_DEACTIVATION: return "Feature Deactivation";
         case OMNICORE_MESSAGE_TYPE_ACTIVATION: return "Feature Activation";
-        /*New things for contracts *////////////////////////////////////////////
-        case MSC_TYPE_CREATE_CONTRACT: return "Create Contract";
+
+        /** New things for Contract */
         case MSC_TYPE_CONTRACTDEX_TRADE: return "Future Contract";
+        // case MSC_TYPE_CONTRACTDEX_CANCEL_PRICE: return "ContractDex cancel-price";
+        case MSC_TYPE_CONTRACTDEX_CANCEL_ECOSYSTEM: return "ContractDex cancel-ecosystem";
+        // case MSC_TYPE_CREATE_CONTRACT: return "Create Contract";
+        // case MSC_TYPE_PEGGED_CURRENCY: return "Pegged Currency";
+        // case MSC_TYPE_REDEMPTION_PEGGED: return "Redemption Pegged Currency";
+        // case MSC_TYPE_SEND_PEGGED_CURRENCY: return "Send Pegged Currency";
+
         ////////////////////////////////////////////////////////////////////////
         default: return "* unknown type *";
     }
@@ -141,8 +148,12 @@ bool CMPTransaction::interpret_Transaction()
       /*New things for contracts*///////////////////////////////////////////////
         case MSC_TYPE_CREATE_CONTRACT:
             return interpret_CreateContractDex();
+
         case MSC_TYPE_CONTRACTDEX_TRADE:
             return interpret_ContractDexTrade();
+
+        case MSC_TYPE_CONTRACTDEX_CANCEL_ECOSYSTEM:
+            return interpret_ContractDexCancelEcosystem();
       //////////////////////////////////////////////////////////////////////////
     }
 
@@ -715,6 +726,36 @@ bool CMPTransaction::interpret_ContractDexTrade()
   return true;
 }
 
+/** Tx 32 */
+bool CMPTransaction::interpret_ContractDexCancelEcosystem()
+{
+    PrintToConsole("Inside the interpret_ContractDexCancelEcosystem!!!!!\n");
+    int i = 0;
+
+    std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecEcosystemBytes = GetNextVarIntBytes(i);
+
+
+    if (!vecTypeBytes.empty()) {
+        type = DecompressInteger(vecTypeBytes);
+    } else return false;
+
+    if (!vecVersionBytes.empty()) {
+        version = DecompressInteger(vecVersionBytes);
+    } else return false;
+
+    if (!vecEcosystemBytes.empty()) {
+        ecosystem = DecompressInteger(vecEcosystemBytes);
+    } else return false;
+
+    PrintToConsole("version: %d\n", version);
+    PrintToConsole("messageType: %d\n",type);
+    PrintToConsole("ecosystem: %d\n", ecosystem);
+    return true;
+  }
+
+
 ////////////////////////////////////////////////////////////////////////////////
 
 
@@ -781,6 +822,9 @@ int CMPTransaction::interpretPacket()
 
         case MSC_TYPE_CONTRACTDEX_TRADE:
             return logicMath_ContractDexTrade();
+
+        case MSC_TYPE_CONTRACTDEX_CANCEL_ECOSYSTEM:
+            return logicMath_ContractDexCancelEcosystem();
     ////////////////////////////////////////////////////////////////////////////
     }
 
@@ -1678,6 +1722,8 @@ if ('\0' == name[0]) {
 /** Tx 29 */
 int CMPTransaction::logicMath_ContractDexTrade()
 {
+  const int64_t factor = 100000000;
+  PrintToConsole("----------------------------------------------------------\n");
   PrintToConsole("Inside of logicMath_ContractDexTrade\n");
   uint256 blockHash;
   {
@@ -1725,10 +1771,11 @@ double percentLiqPrice = 0.8;
 
 int64_t nBalance = getMPbalance(sender, collateral_currency, BALANCE);
 uint32_t Sum = margin_requirement;
-int64_t amountToReserve = static_cast<int64_t>(amount*Sum);
+int64_t amountToReserve = static_cast<int64_t>(amount*Sum*factor);
 PrintToConsole("nBalance: %d\n",nBalance);
 PrintToConsole("margin requirement: %d\n",Sum);
 PrintToConsole("amountToReserve: %d\n",amountToReserve);
+PrintToConsole("----------------------------------------------------------\n");
 if (nBalance < amountToReserve) {
     PrintToLog("%s(): rejected: sender %s has insufficient balance for contracts %d [%s < %s]\n",
             __func__,
@@ -1750,3 +1797,27 @@ if (nBalance < amountToReserve) {
   }
   return 0;
 }
+
+/** Tx 32 */
+int CMPTransaction::logicMath_ContractDexCancelEcosystem()
+{
+    // if (!IsTransactionTypeAllowed(block, ecosystem, type, version)) {
+    //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+    //             __func__,
+    //             type,
+    //             version,
+    //             property,
+    //             block);
+    //     return (PKT_ERROR_METADEX -22);
+    // }
+    //
+    // if (OMNI_PROPERTY_MSC != ecosystem && OMNI_PROPERTY_TMSC != ecosystem) {
+    //     PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, ecosystem);
+    //     return (PKT_ERROR_METADEX -21);
+    // }
+    PrintToConsole("Inside the logicMath_ContractDexCancelEcosystem!!!!!\n");
+    int rc = ContractDex_CANCEL_EVERYTHING(txid, block, sender, ecosystem);
+
+    return rc;
+}
+////////////////////////////////////////////////////////////////////////////////

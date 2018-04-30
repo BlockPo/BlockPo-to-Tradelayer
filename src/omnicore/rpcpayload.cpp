@@ -442,7 +442,7 @@ UniValue omni_createpayload_cancelcontracttradesbyprice(const UniValue& params, 
     return HexStr(payload.begin(), payload.end());
 }
 
-
+/*New things for contracts*/////////////////////////////////////////////////////
 UniValue omni_createpayload_cancelalltradescontract(const UniValue& params, bool fHelp)
 {
     if (fHelp || params.size() != 1)
@@ -468,6 +468,7 @@ UniValue omni_createpayload_cancelalltradescontract(const UniValue& params, bool
 
     return HexStr(payload.begin(), payload.end());
 }
+
 
 UniValue omni_createpayload_trade(const UniValue& params, bool fHelp)
 {
@@ -505,7 +506,7 @@ UniValue omni_createpayload_trade(const UniValue& params, bool fHelp)
 
     return HexStr(payload.begin(), payload.end());
 }
-
+//////////////////////////////////////////////////////////////////////////////////////
 UniValue omni_createpayload_canceltradesbyprice(const UniValue& params, bool fHelp)
 {
     if (fHelp || params.size() != 4)
@@ -620,7 +621,6 @@ static const CRPCCommand commands[] =
     { "omni layer (payload creation)", "omni_createpayload_trade",                      &omni_createpayload_trade,               true },
     { "omni layer (payload creation)", "omni_createpayload_canceltradesbyprice",        &omni_createpayload_canceltradesbyprice, true },
     { "omni layer (payload creation)", "omni_createpayload_canceltradesbypair",         &omni_createpayload_canceltradesbypair,  true },
-    { "omni layer (payload creation)", "omni_createpayload_cancelalltrades",            &omni_createpayload_cancelalltrades,     true },
 };
 
 void RegisterOmniPayloadCreationRPCCommands(CRPCTable &tableRPC)
