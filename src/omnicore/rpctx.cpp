@@ -781,8 +781,7 @@ UniValue omni_createcontract(const UniValue& params, bool fHelp)
         }
     }
 }
-////////////////////////////////////////////////
-/** New things for Contracts */
+
 UniValue omni_cancelallcontractsbyaddress(const UniValue& params, bool fHelp)
 {
     if (fHelp || params.size() != 2)
@@ -885,6 +884,84 @@ UniValue omni_tradecontract(const UniValue& params, bool fHelp)
      }
 
 }
+UniValue omni_sendissuance_pegged(const UniValue& params, bool fHelp)
+{
+    if (fHelp || params.size() != 12)
+        throw runtime_error(
+            "omni_sendissuance_pegged\"fromaddress\" ecosystem type previousid \"category\" \"subcategory\" \"name\" \"url\" \"data\"\n"
+
+            "\nCreate new pegged currency with manageable supply.\n"
+
+            "\nArguments:\n"
+            "1. fromaddress          (string, required) the address to send from\n"
+            "2. ecosystem            (string, required) the ecosystem to create the pegged currency in (1 for main ecosystem, 2 for test ecosystem)\n"
+            "3. type                 (number, required) the type of the pegged to create: (1 for indivisible tokens, 2 for divisible tokens)\n"
+            "4. previousid           (number, required) an identifier of a predecessor token (use 0 for new tokens)\n"
+            "5. category             (string, required) a category for the new pegged (can be \"\")\n"
+            "6. subcategory          (string, required) a subcategory for the new pegged (can be \"\")\n"
+            "7. name                 (string, required) the name of the new pegged to create\n"
+            "8. url                  (string, required) an URL for further information about the new pegged (can be \"\")\n"
+            "9. data                 (string, required) a description for the new pegged (can be \"\")\n"
+            "10. collateralcurrency  (number, required) the collateral currency for the new pegged \n"
+            "11. future contract id  (number, required) the future contract id for the new pegged \n"
+            "12. amount of pegged    (number, required) amount of pegged to create \n"
+            "\nResult:\n"
+            "\"hash\"                  (string) the hex-encoded transaction hash\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("omni_sendissuance_pegged", "\"3HsJvhr9qzgRe3ss97b1QHs38rmaLExLcH\" 2 1 0 \"Companies\" \"Bitcoin Mining\" \"Quantum Miner\" \"\" \"\"")
+            + HelpExampleRpc("omni_sendissuance_pegged", "\"3HsJvhr9qzgRe3ss97b1QHs38rmaLExLcH\", 2, 1, 0, \"Companies\", \"Bitcoin Mining\", \"Quantum Miner\", \"\", \"\"")
+        );
+
+    // obtain parameters & info
+    std::string fromAddress = ParseAddress(params[0]);
+    uint8_t ecosystem = ParseEcosystem(params[1]);
+    uint16_t type = ParsePropertyType(params[2]);
+    uint32_t previousId = ParsePreviousPropertyId(params[3]);
+    std::string category = ParseText(params[4]);
+    std::string subcategory = ParseText(params[5]);
+    std::string name = ParseText(params[6]);
+    std::string url = ParseText(params[7]);
+    std::string data = ParseText(params[8]);
+    uint32_t propertyId = ParsePropertyId(params[9]);
+    uint32_t contractId = ParseNewValues(params[10]);
+    uint64_t amount = ParseAmount(params[11], isPropertyDivisible(propertyId));
+
+    // perform checks
+    RequirePropertyName(name);
+
+     // Checking existing
+    RequireExistingProperty(propertyId);
+
+    // Property must not be a future contract
+    RequireNotContract(propertyId);
+
+    // Checking for future contract
+    RequireContract(contractId);
+
+    // checking for collateral balance, checking for short position in given contract
+    RequireForPegged(fromAddress, propertyId, contractId, amount);
+
+    // create a payload for the transaction
+    std::vector<unsigned char> payload = CreatePayload_IssuancePegged(ecosystem, type, previousId, category, subcategory, name, url, data, propertyId, contractId, amount);
+
+    // request the wallet build the transaction (and if needed commit it)
+    uint256 txid;
+    std::string rawHex;
+    int result = WalletTxBuilder(fromAddress, "", 0, payload, txid, rawHex, autoCommit);
+
+    // check error and return the txid (or raw hex depending on autocommit)
+    if (result != 0) {
+        throw JSONRPCError(result, error_str(result));
+    } else {
+        if (!autoCommit) {
+            return rawHex;
+        } else {
+            return txid.GetHex();
+        }
+    }
+}
+
 /////////////////////////////////////////////////////////////////////////////////
 static const CRPCCommand commands[] =
 { //  category                             name                            actor (function)               okSafeMode
@@ -906,6 +983,7 @@ static const CRPCCommand commands[] =
     { "omni layer (transaction creation)", "omni_createcontract",          &omni_createcontract,          false },
     { "omni layer (transaction creation)", "omni_tradecontract",           &omni_tradecontract,           false },
     { "omni layer (transaction creation)", "omni_cancelallcontractsbyaddress",  &omni_cancelallcontractsbyaddress, false },
+    { "omni layer (transaction creation)", "omni_sendissuance_pegged",       &omni_sendissuance_pegged,       false },
 #endif
 };
 

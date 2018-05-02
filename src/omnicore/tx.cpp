@@ -55,10 +55,10 @@ std::string mastercore::strTransactionType(uint16_t txType)
         case MSC_TYPE_CONTRACTDEX_TRADE: return "Future Contract";
         // case MSC_TYPE_CONTRACTDEX_CANCEL_PRICE: return "ContractDex cancel-price";
         case MSC_TYPE_CONTRACTDEX_CANCEL_ECOSYSTEM: return "ContractDex cancel-ecosystem";
-        // case MSC_TYPE_CREATE_CONTRACT: return "Create Contract";
-        // case MSC_TYPE_PEGGED_CURRENCY: return "Pegged Currency";
-        // case MSC_TYPE_REDEMPTION_PEGGED: return "Redemption Pegged Currency";
-        // case MSC_TYPE_SEND_PEGGED_CURRENCY: return "Send Pegged Currency";
+        case MSC_TYPE_CREATE_CONTRACT: return "Create Contract";
+        case MSC_TYPE_PEGGED_CURRENCY: return "Pegged Currency";
+        case MSC_TYPE_REDEMPTION_PEGGED: return "Redemption Pegged Currency";
+        case MSC_TYPE_SEND_PEGGED_CURRENCY: return "Send Pegged Currency";
 
         ////////////////////////////////////////////////////////////////////////
         default: return "* unknown type *";
@@ -154,6 +154,9 @@ bool CMPTransaction::interpret_Transaction()
 
         case MSC_TYPE_CONTRACTDEX_CANCEL_ECOSYSTEM:
             return interpret_ContractDexCancelEcosystem();
+
+        case MSC_TYPE_PEGGED_CURRENCY:
+            return interpret_CreatePeggedCurrency();
       //////////////////////////////////////////////////////////////////////////
     }
 
@@ -629,10 +632,10 @@ bool CMPTransaction::interpret_CreateContractDex()
     }
 
     int j = 0;
+    memcpy(category, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(category)-1)); j++;
+    memcpy(subcategory, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(subcategory)-1)); j++;
     memcpy(name, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(name)-1)); j++;
-    memcpy(url, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(url)-1)); j++;
-    memcpy(data, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(data)-1)); j++;
-    i = i + strlen(name) + strlen(url) + strlen(data) + 3; // data sizes + 3 null terminators
+    i = i + strlen(name) + strlen(subcategory) + strlen(category) + 3; // data sizes + 3 null terminators
     std::vector<uint8_t> vecBlocksUntilExpiration = GetNextVarIntBytes(i);
     std::vector<uint8_t> vecNotionalSize = GetNextVarIntBytes(i);
     std::vector<uint8_t> vecCollateralCurrency = GetNextVarIntBytes(i);
@@ -671,8 +674,8 @@ bool CMPTransaction::interpret_CreateContractDex()
     PrintToConsole("ecosystem: %d\n", ecosystem);
     PrintToConsole("property type: %d\n", prop_type);
     PrintToConsole("name: %s\n", name);
-    PrintToConsole("url: %s\n", url);
-    PrintToConsole("data: %s\n", data);
+    PrintToConsole("subcategory: %s\n", subcategory);
+    PrintToConsole("category: %s\n", category);
     PrintToConsole("blocks until expiration : %d\n", blocks_until_expiration);
     PrintToConsole("notional size : %d\n", notional_size);
     PrintToConsole("collateral currency: %d\n", collateral_currency);
@@ -755,6 +758,80 @@ bool CMPTransaction::interpret_ContractDexCancelEcosystem()
     return true;
   }
 
+  /** Tx 101 */
+  bool CMPTransaction::interpret_CreatePeggedCurrency()
+  {
+
+      PrintToConsole("Inside the interpret_CreatePeggedCurrency function!!! \n");
+
+      int i = 0;
+
+      std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+      std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+
+      memcpy(&ecosystem, &pkt[i], 1);
+
+      std::vector<uint8_t> vecPropTypeBytes = GetNextVarIntBytes(i);
+      std::vector<uint8_t> vecPrevPropIdBytes = GetNextVarIntBytes(i);
+      const char* p = i + (char*) &pkt;
+      std::vector<std::string> spstr;
+      for (int j = 0; j < 3; j++) {
+          spstr.push_back(std::string(p));
+          p += spstr.back().size() + 1;
+      }
+
+      if (isOverrun(p)) {
+          PrintToLog("%s(): rejected: malformed string value(s)\n", __func__);
+          return false;
+      }
+
+      int j = 0;
+      memcpy(name, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(name)-1)); j++;
+      memcpy(url, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(url)-1)); j++;
+      memcpy(data, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(data)-1)); j++;
+      i = i + strlen(name) + strlen(url) + strlen(data) + 3; // data sizes + 3 null terminators
+      std::vector<uint8_t> vecPropertyIdBytes = GetNextVarIntBytes(i);
+      std::vector<uint8_t> vecContractIdBytes = GetNextVarIntBytes(i);
+      std::vector<uint8_t> vecAmountBytes = GetNextVarIntBytes(i);
+
+      if (!vecPropTypeBytes.empty()) {
+          prop_type = DecompressInteger(vecPropTypeBytes);
+      } else return false;
+
+      if (!vecPrevPropIdBytes.empty()) {
+          prev_prop_id = DecompressInteger(vecPrevPropIdBytes);
+      } else return false;
+
+      if (!vecVersionBytes.empty()) {
+          version = DecompressInteger(vecVersionBytes);
+      } else return false;
+
+      if (!vecContractIdBytes.empty()) {
+          contractId = DecompressInteger(vecContractIdBytes);
+      } else return false;
+
+      if (!vecVersionBytes.empty()) {
+          amount = DecompressInteger(vecAmountBytes);
+      } else return false;
+
+      if (!vecPropertyIdBytes.empty()) {
+          propertyId = DecompressInteger(vecPropertyIdBytes);
+      } else return false;
+
+        PrintToConsole("version: %d\n", version);
+        PrintToConsole("messageType: %d\n",type);
+        PrintToConsole("property type: %d\n",prop_type);
+        PrintToConsole("prev prop id: %d\n",prev_prop_id);
+        PrintToConsole("contractId: %d\n", contractId);
+        PrintToConsole("propertyId: %d\n", propertyId);
+        PrintToConsole("amount of pegged currency : %d\n", amount);
+        PrintToConsole("name : %d\n", name);
+        PrintToConsole("url: %d\n", url);
+        PrintToConsole("data: %d\n", data);
+
+      return true;
+  }
+
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -825,6 +902,9 @@ int CMPTransaction::interpretPacket()
 
         case MSC_TYPE_CONTRACTDEX_CANCEL_ECOSYSTEM:
             return logicMath_ContractDexCancelEcosystem();
+
+        case MSC_TYPE_PEGGED_CURRENCY:
+            return logicMath_CreatePeggedCurrency();
     ////////////////////////////////////////////////////////////////////////////
     }
 
@@ -1751,9 +1831,9 @@ int CMPTransaction::logicMath_ContractDexTrade()
 //             block);
 //     return (PKT_ERROR_SP -22);
 // }
-//
-//
-//
+
+
+
 // if (MSC_PROPERTY_TYPE_INDIVISIBLE != prop_type && MSC_PROPERTY_TYPE_DIVISIBLE != prop_type) {
 //     PrintToLog("%s(): rejected: invalid property type: %d\n", __func__, prop_type);
 //     return (PKT_ERROR_SP -36);
@@ -1801,23 +1881,167 @@ if (nBalance < amountToReserve) {
 /** Tx 32 */
 int CMPTransaction::logicMath_ContractDexCancelEcosystem()
 {
-    // if (!IsTransactionTypeAllowed(block, ecosystem, type, version)) {
-    //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
-    //             __func__,
-    //             type,
-    //             version,
-    //             property,
-    //             block);
-    //     return (PKT_ERROR_METADEX -22);
-    // }
-    //
-    // if (OMNI_PROPERTY_MSC != ecosystem && OMNI_PROPERTY_TMSC != ecosystem) {
-    //     PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, ecosystem);
-    //     return (PKT_ERROR_METADEX -21);
-    // }
+    if (!IsTransactionTypeAllowed(block, ecosystem, type, version)) {
+        PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+                __func__,
+                type,
+                version,
+                property,
+                block);
+        return (PKT_ERROR_METADEX -22);
+    }
+
+    if (OMNI_PROPERTY_MSC != ecosystem && OMNI_PROPERTY_TMSC != ecosystem) {
+        PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, ecosystem);
+        PrintToConsole("rejected: invalid ecosystem %d\n",ecosystem);
+        return (PKT_ERROR_METADEX -21);
+    }
     PrintToConsole("Inside the logicMath_ContractDexCancelEcosystem!!!!!\n");
     int rc = ContractDex_CANCEL_EVERYTHING(txid, block, sender, ecosystem);
 
     return rc;
+}
+/** Tx 100 */
+int CMPTransaction::logicMath_CreatePeggedCurrency()
+{
+    PrintToConsole("____________________________________________________________\n");
+    PrintToConsole("Inside logicMath_CreatePeggedCurrency !!!!!\n");
+    uint256 blockHash;
+    {
+        LOCK(cs_main);
+
+        CBlockIndex* pindex = chainActive[block];
+        if (pindex == NULL) {
+            PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
+            return (PKT_ERROR_SP -20);
+        }
+        blockHash = pindex->GetBlockHash();
+    }
+//
+//
+//     if (OMNI_PROPERTY_MSC != ecosystem && OMNI_PROPERTY_TMSC != ecosystem) {
+//         PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, (uint32_t) ecosystem);
+//         return (PKT_ERROR_SP -21);
+//     }
+//
+//     if (!IsTransactionTypeAllowed(block, ecosystem, type, version)) {
+//         PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+//                 __func__,
+//                 type,
+//                 version,
+//                 property,
+//                 block);
+//         return (PKT_ERROR_SP -22);
+//     }
+//
+//     if (MSC_PROPERTY_TYPE_INDIVISIBLE != prop_type && MSC_PROPERTY_TYPE_DIVISIBLE != prop_type) {
+//         PrintToLog("%s(): rejected: invalid property type: %d\n", __func__, prop_type);
+//         return (PKT_ERROR_SP -36);
+//     }
+
+    if ('\0' == name[0]) {
+        PrintToLog("%s(): rejected: property name must not be empty\n", __func__);
+        PrintToConsole("rejected: property name must not be empty\n");
+        return (PKT_ERROR_SP -37);
+    }
+
+        // checking collateral currency
+    uint64_t nBalance = static_cast<uint64_t>(getMPbalance(sender, propertyId, BALANCE));
+    if (nBalance == 0) {
+        PrintToLog("%s(): rejected: sender %s has insufficient collateral currency in balance %d \n",
+           __func__,
+           sender,
+           propertyId);
+           PrintToConsole("rejected: sender has insufficient collateral currency in balance\n");
+           return (PKT_ERROR_SEND -25);
+        }
+
+    uint32_t marginReq = 0;
+    uint32_t notSize = 0;
+    CMPSPInfo::Entry sp;
+    {
+       LOCK(cs_tally);
+       if (!_my_sps->getSP(contractId, sp)) {
+          PrintToLog(" %s() : Property identifier %d does not exist\n",
+             __func__,
+             sender,
+             contractId);
+          return (PKT_ERROR_SEND -25);
+       } else if (sp.subcategory != "Futures Contracts") {
+          PrintToLog(" %s() : property identifier %d does not a future contract\n",
+             __func__,
+             sender,
+             contractId);
+          return (PKT_ERROR_SEND -25);
+       } else if (sp.collateral_currency != propertyId) {
+          PrintToLog(" %s() : Future contract has not this collateral currency %d\n",
+             __func__,
+             sender,
+             propertyId);
+          return (PKT_ERROR_SEND -25);
+       }
+       marginReq = sp.margin_requirement;
+       notSize = sp.notional_size;
+    }
+     int64_t position = getMPbalance(sender, contractId, NEGATIVE_BALANCE);
+     int64_t contractsNeeded = static_cast<int64_t> (amount/notSize); // We must check the role of marginReq here.
+
+
+     PrintToConsole("Address of sender : %s\n",sender);
+     PrintToConsole("Property type : %d\n",prop_type);
+     PrintToConsole("Collateral currency Id : %d\n",propertyId);
+     PrintToConsole("Contract Id : %d\n",contractId);
+     PrintToConsole("Amount of pegged currency created: %d\n",amount);
+     PrintToConsole("nBalance : %d\n",nBalance);
+     PrintToConsole("Contracts Needed : %d\n",contractsNeeded);
+     PrintToConsole("Notional Size : %d\n",notSize);
+     PrintToConsole("Short Position : %d\n",position);
+     PrintToConsole("Margin Requirement : %d\n",marginReq);
+
+
+     if ((nBalance < amount) || (position < contractsNeeded)) {
+        // PrintToLog("%s(): rejected:Sender has not required short position on this contract %d \n",
+        //        __func__,
+        //        sender,
+        //        propertyId);
+        PrintToConsole("rejected:Sender has not required short position on this contract\n");
+        return (PKT_ERROR_SEND -25);
+     }
+    // ------------------------------------------
+
+    CMPSPInfo::Entry newSP;
+    newSP.issuer = sender;
+    newSP.txid = txid;
+    newSP.prop_type = prop_type;
+    newSP.category.assign(category);
+    newSP.subcategory.assign(subcategory);
+    newSP.name.assign(name);
+    newSP.url.assign(url);
+    newSP.data.assign(data);
+    newSP.fixed = true;
+    newSP.manual = true;
+    newSP.creation_block = blockHash;
+    newSP.update_block = newSP.creation_block;
+    newSP.num_tokens = amount;
+    newSP.contracts_needed = contractsNeeded;
+
+    const uint32_t npropertyId = _my_sps->putSP(ecosystem, newSP);
+    assert(npropertyId > 0);
+    // PrintToConsole("Pegged currency Id: %d\n",npropertyId);
+    assert(update_tally_map(sender, npropertyId, amount, BALANCE));
+    // NotifyTotalTokensChanged(npropertyId, block);
+
+    // PrintToLog("CREATED MANUAL PROPERTY id: %d admin: %s\n", propertyId, sender);
+
+
+    //putting into reserve contracts and collateral currency
+    assert(update_tally_map(sender, contractId, -contractsNeeded, NEGATIVE_BALANCE));
+    assert(update_tally_map(sender, contractId, contractsNeeded, CONTRACTDEX_RESERVE));
+
+    assert(update_tally_map(sender, propertyId, -amount, BALANCE));
+    assert(update_tally_map(sender, propertyId, amount, CONTRACTDEX_RESERVE));
+ PrintToConsole("____________________________________________________________\n");
+    return 0;
+
 }
 ////////////////////////////////////////////////////////////////////////////////

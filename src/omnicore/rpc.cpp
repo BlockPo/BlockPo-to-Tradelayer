@@ -84,6 +84,8 @@ void PropertyToJSON(const CMPSPInfo::Entry& sProperty, UniValue& property_obj)
     property_obj.push_back(Pair("data", sProperty.data));
     property_obj.push_back(Pair("url", sProperty.url));
     property_obj.push_back(Pair("divisible", sProperty.isDivisible()));
+    property_obj.push_back(Pair("category", sProperty.category));
+    property_obj.push_back(Pair("subcategory", sProperty.subcategory));
 }
 
 bool BalanceToJSON(const std::string& address, uint32_t property, UniValue& balance_obj, bool divisible)
