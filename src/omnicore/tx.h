@@ -149,6 +149,7 @@ private:
     bool interpret_ContractDexCancelEcosystem();
     bool interpret_CreatePeggedCurrency();
     bool interpret_RedemptionPegged();
+    bool interpret_SendPeggedCurrency();
     ///////////////////////////////////////////////
 
     /**
@@ -174,6 +175,7 @@ private:
     int logicMath_ContractDexCancelEcosystem();
     int logicMath_CreatePeggedCurrency();
     int logicMath_RedemptionPegged();
+    int logicMath_SendPeggedCurrency();
     ///////////////////////////////////////////////
 
     /**

@@ -252,17 +252,17 @@ MatchReturnType x_Trade(CMPContractDex* const pnew)
             // get_LiquidationPrice(pnew->getEffectivePrice(), pnew->getAddr(), pnew->getProperty(), pnew->getTradingAction()); // setting liquidation prices
             //get_LiquidationPrice(pold->getEffectivePrice(), pold->getAddr(), pold->getProperty(), pold->getTradingAction());
 
-            // PrintToConsole("________________________________________________________\n");
-            // PrintToConsole("Inside x_trade:\n");
-            // PrintToConsole("Checking effective prices and trading actions:\n");
-            // PrintToConsole("Effective price pold: %d\n", FormatContractShortMP(pold->getEffectivePrice()) );
-            // PrintToConsole("Effective price pnew: %d\n", FormatContractShortMP(pnew->getEffectivePrice()) );
-            // PrintToConsole("Amount for sale pold: %d\n", pold->getAmountForSale() );
-            // PrintToConsole("Amount for sale pnew: %d\n", pnew->getAmountForSale() );
-            // PrintToConsole("Trading action pold: %d\n", pold->getTradingAction() );
-            // PrintToConsole("Trading action pnew: %d\n", pnew->getTradingAction() );
-            // PrintToConsole("________________________________________\n");
-            ///////////////////////////
+            PrintToConsole("________________________________________________________\n");
+            PrintToConsole("Inside x_trade:\n");
+            PrintToConsole("Checking effective prices and trading actions:\n");
+            PrintToConsole("Effective price pold: %d\n", FormatContractShortMP(pold->getEffectivePrice()) );
+            PrintToConsole("Effective price pnew: %d\n", FormatContractShortMP(pnew->getEffectivePrice()) );
+            PrintToConsole("Amount for sale pold: %d\n", pold->getAmountForSale() );
+            PrintToConsole("Amount for sale pnew: %d\n", pnew->getAmountForSale() );
+            PrintToConsole("Trading action pold: %d\n", pold->getTradingAction() );
+            PrintToConsole("Trading action pnew: %d\n", pnew->getTradingAction() );
+            PrintToConsole("________________________________________\n");
+            /////////////////////////
 
             int64_t possitive_sell = 0, difference_s = 0, seller_amount = 0, negative_sell = 0;
             int64_t possitive_buy  = 0, difference_b = 0, buyer_amount  = 0, negative_buy  = 0;

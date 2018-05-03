@@ -56,6 +56,7 @@ std::vector<TransactionRestriction> CConsensusParams::GetRestrictions() const
         { MSC_TYPE_CONTRACTDEX_TRADE,         MP_TX_PKT_V0,  false,   MSC_CONTRACTDEX_BLOCK },
         { MSC_TYPE_CONTRACTDEX_CANCEL_ECOSYSTEM, MP_TX_PKT_V0,  false, MSC_CONTRACTDEX_BLOCK },
         { MSC_TYPE_PEGGED_CURRENCY,           MP_TX_PKT_V0,  false,   MSC_CONTRACTDEX_BLOCK },
+        { MSC_TYPE_SEND_PEGGED_CURRENCY,           MP_TX_PKT_V0,  false,   MSC_CONTRACTDEX_BLOCK },
         { MSC_TYPE_SEND_ALL,                  MP_TX_PKT_V0,  false,   MSC_SEND_ALL_BLOCK },
     };
 
