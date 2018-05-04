@@ -1070,6 +1070,8 @@ UniValue omni_redemption_pegged(const UniValue& params, bool fHelp)
         }
     }
 }
+
+
 /////////////////////////////////////////////////////////////////////////////////
 static const CRPCCommand commands[] =
 { //  category                             name                            actor (function)               okSafeMode
@@ -1093,6 +1095,7 @@ static const CRPCCommand commands[] =
     { "omni layer (transaction creation)", "omni_cancelallcontractsbyaddress",  &omni_cancelallcontractsbyaddress, false },
     { "omni layer (transaction creation)", "omni_sendissuance_pegged",       &omni_sendissuance_pegged,       false },
     { "omni layer (transaction creation)", "omni_send_pegged",             &omni_send_pegged,             false },
+    { "omni layer (transaction creation)","omni_redemption_pegged",        &omni_redemption_pegged,       false },
 #endif
 };
 

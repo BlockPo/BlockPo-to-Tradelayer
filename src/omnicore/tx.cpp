@@ -161,6 +161,8 @@ bool CMPTransaction::interpret_Transaction()
 
         case MSC_TYPE_SEND_PEGGED_CURRENCY:
             return interpret_SendPeggedCurrency();
+        case MSC_TYPE_REDEMPTION_PEGGED:
+            return interpret_RedemptionPegged();
       //////////////////////////////////////////////////////////////////////////
     }
 
@@ -875,6 +877,46 @@ bool CMPTransaction::interpret_ContractDexCancelEcosystem()
     return true;
   }
 
+ bool CMPTransaction::interpret_RedemptionPegged(){
+
+    PrintToConsole("Inside the interpret_RedemptionPegged function!!! \n");
+
+    int i = 0;
+    std::vector<uint8_t> vecMessageVerBytes = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecMessageTypeBytes = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecPropertyIdBytes = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecContractIdBytes = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecAmountBytes = GetNextVarIntBytes(i);
+
+    if (!vecMessageVerBytes.empty()) {
+      version = DecompressInteger(vecMessageVerBytes);
+    } else return false;
+
+    if (!vecMessageTypeBytes.empty()) {
+        type = DecompressInteger(vecMessageTypeBytes);
+    } else return false;
+
+    if (!vecPropertyIdBytes.empty()) {
+        propertyId = DecompressInteger(vecPropertyIdBytes);
+    } else return false;
+
+    if (!vecContractIdBytes.empty()) {
+        contractId = DecompressInteger(vecContractIdBytes);
+    } else return false;
+
+    if (!vecAmountBytes.empty()) {
+        amount = DecompressInteger(vecAmountBytes);
+    } else return false;
+
+    PrintToConsole("version: %d\n", version);
+    PrintToConsole("messageType: %d\n",type);
+    PrintToConsole("propertyId: %d\n", propertyId);
+    PrintToConsole("contractId: %d\n", contractId);
+    PrintToConsole("amount of pegged currency : %d\n", amount);
+
+    return true;
+ }
+
 ////////////////////////////////////////////////////////////////////////////////
 
 
@@ -950,6 +992,9 @@ int CMPTransaction::interpretPacket()
 
         case MSC_TYPE_SEND_PEGGED_CURRENCY:
             return logicMath_SendPeggedCurrency();
+
+        case MSC_TYPE_REDEMPTION_PEGGED:
+            return logicMath_RedemptionPegged();
 
     ////////////////////////////////////////////////////////////////////////////
     }
@@ -2145,5 +2190,100 @@ int CMPTransaction::logicMath_SendPeggedCurrency()
     return 0;
 }
 
+int CMPTransaction::logicMath_RedemptionPegged()
+{
+    PrintToConsole("____________________________________________________________\n");
+    PrintToConsole("Inside logicMath_RedemptionPegged !!!!!\n");
+    // if (!IsTransactionTypeAllowed(block, propertyId, type, version)) {
+    //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+    //             __func__,
+    //             type,
+    //             version,
+    //             propertyId,
+    //             block);
+    //     PrintToConsole("rejected: type %d or version %d not permitted for property %d at block %d\n");
+    //     return (PKT_ERROR_SEND -22);
+    // }
+
+    if (!IsPropertyIdValid(propertyId)) {
+        PrintToLog("%s(): rejected: property %d does not exist\n", __func__, property);
+        return (PKT_ERROR_SEND -24);
+    }
+
+    int64_t nBalance = getMPbalance(sender, propertyId, BALANCE);
+    int64_t nContracts = getMPbalance(sender, contractId, CONTRACTDEX_RESERVE);
+    int64_t negContracts = getMPbalance(sender, contractId, NEGATIVE_BALANCE);
+    int64_t posContracts = getMPbalance(sender, contractId, POSSITIVE_BALANCE);
+    PrintToConsole("nBalance : %d\n",nBalance);
+    PrintToConsole("nContracts : %d\n",nContracts);
+    PrintToConsole("amount : %d\n",amount);
+    PrintToConsole("property : %d\n",propertyId);
+    PrintToConsole("contractId : %d\n",contractId);
+
+    if (nBalance < (int64_t) amount) {
+        PrintToLog("%s(): rejected: sender %s has insufficient balance of pegged currency %d [%s < %s]\n",
+                __func__,
+                sender,
+                propertyId,
+                FormatMP(propertyId, nBalance),
+                FormatMP(propertyId, amount));
+        return (PKT_ERROR_SEND -25);
+    }
+    uint32_t collateralId = 0;
+    uint32_t notSize = 0;
+    const int64_t factor = 100000000;
+    CMPSPInfo::Entry sp;
+    {
+        LOCK(cs_tally);
+        if (!_my_sps->getSP(contractId, sp)) {
+            PrintToLog(" %s() : Property identifier %d does not exist\n",
+            __func__,
+            sender,
+            contractId);
+            return (PKT_ERROR_SEND -25);
+        } else {
+           collateralId = sp.collateral_currency;
+           notSize = sp.notional_size;
+        }
+    }
+
+    int64_t contractsNeeded = static_cast<int64_t> (amount/(notSize*factor));
+
+    PrintToConsole("contracts needed : %d\n",contractsNeeded);
+    PrintToConsole("Notional Size : %d\n",notSize);
+    PrintToConsole("collateral id : %d\n",collateralId);
+
+    if ((contractsNeeded > 0) && (amount > 0)) {
+       // Delete the tokens
+       assert(update_tally_map(sender, propertyId, -amount, BALANCE));
+       // getting back from reserve contracts and collateral currency
+       assert(update_tally_map(sender, contractId, -contractsNeeded, CONTRACTDEX_RESERVE));
+        // getting back from reserve the collateral currency needed
+       if ((posContracts > 0) && (negContracts == 0)){
+          int64_t dif = posContracts - contractsNeeded;
+          PrintToConsole("Difference of contracts : %d\n",dif);
+          if (dif >= 0){
+             assert(update_tally_map(sender, contractId, -contractsNeeded, POSSITIVE_BALANCE));
+          }else {
+             assert(update_tally_map(sender, contractId, -posContracts, POSSITIVE_BALANCE));
+             assert(update_tally_map(sender, contractId, -dif, NEGATIVE_BALANCE));
+          }
+       } else if ((posContracts == 0) && (negContracts >= 0)) {
+          assert(update_tally_map(sender, contractId, contractsNeeded, NEGATIVE_BALANCE));
+       }
+       PrintToConsole("Contracts in long position : %d\n",posContracts);
+       PrintToConsole("Contracts in short position : %d\n",negContracts);
+       PrintToConsole("Contracts Needed : %d\n",contractsNeeded);
+
+       assert(update_tally_map(sender, propertyId, -amount, CONTRACTDEX_RESERVE));
+       assert(update_tally_map(sender, propertyId, amount, BALANCE));
+
+    } else {
+       PrintToLog("amount redeemed must be equal at least to value of one future contract \n");
+       PrintToConsole("amount redeemed must be equal at least to value of one future contract \n");
+       return (PKT_ERROR_SEND -25);
+    }
+    return 0;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
