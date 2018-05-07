@@ -233,7 +233,11 @@ extern CrowdMap my_crowds;
 
 std::string strPropertyType(uint16_t propertyType);
 std::string strEcosystem(uint8_t ecosystem);
-
+//////////////////////////////////////
+/** New things for Contracts */
+bool isPropertyContract(uint32_t propertyId);
+int addInterestPegged(int nBlockPrev, const CBlockIndex* pBlockIndex);
+//////////////////////////////////////
 std::string getPropertyName(uint32_t propertyId);
 bool isPropertyDivisible(uint32_t propertyId);
 bool IsPropertyIdValid(uint32_t propertyId);

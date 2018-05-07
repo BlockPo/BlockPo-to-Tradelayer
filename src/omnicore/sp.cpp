@@ -31,6 +31,9 @@
 #include <utility>
 
 using namespace mastercore;
+extern int64_t priceIndex;
+extern int64_t allPrice;
+extern volatile uint64_t marketPrice;
 
 CMPSPInfo::Entry::Entry()
   : prop_type(0), prev_prop_id(0), num_tokens(0), property_desired(0),
@@ -824,7 +827,101 @@ void mastercore::eraseMaxedCrowdsale(const std::string& address, int64_t blockTi
         my_crowds.erase(it);
     }
 }
+/* New things for contracts *///////////////////////////////////////////////////
+int mastercore::addInterestPegged(int nBlockPrev, const CBlockIndex* pBlockIndex)
+{
+    if (pBlockIndex == NULL) return 0;
+    uint32_t contractId = 2147483651;
+    uint32_t peggedId = 2147483653;
+    const int64_t factor = 100000000;
+    string sender = "";
+    const int64_t blockTime = pBlockIndex->GetBlockTime();
+    // int blockHeight = pBlockIndex->nHeight;
+    CMPSPInfo::Entry sp;
+    if (!_my_sps->getSP(contractId, sp)) {
+            // PrintToLog(" %s() : Property identifier %d does not exist\n",
+            //    __func__,
+            //    sender,
+            //    contractId);
+             return 0;
+       }
+     if (sp.subcategory != "Futures Contracts") {
+          // PrintToLog(" %s() : property identifier %d does not a future contract\n",
+          //    __func__,
+          //    sender,
+          //    contractId);
+             return 0;
+       }
+       uint32_t expiration = sp.blocks_until_expiration;
+       int init_block = sp.init_block;
+       uint32_t collateral = sp.collateral_currency;
+       int deadline = static_cast<int>(expiration + init_block);
+       int64_t nMarketPrice = static_cast<int64_t>(marketPrice/factor);
+       PrintToConsole("Inside addInterestPegged function-------------------\n");
+       PrintToConsole("Index value : %d\n",priceIndex);
+       PrintToConsole("Market price : %d\n",nMarketPrice);
+       PrintToConsole("blocks until expiration: %d\n",expiration);
+       PrintToConsole("Prev Block: %d\n",nBlockPrev);
+       PrintToConsole("creationblock: %d\n",init_block);
+       PrintToConsole("deadline block: %d\n",deadline);
+       PrintToConsole("collateral currency : %d\n",collateral);
+       CMPSPInfo::Entry newSp;
+       //LOCK(cs_tally);
+       if (!_my_sps->getSP(peggedId, newSp)) {
+               // PrintToLog(" %s() : Property identifier %d does not exist\n",
+               //    __func__,
+               //    sender,
+               //    contractId);
+                return 0;
+          }
+        if (newSp.subcategory != "Pegged Currency") {
+             // PrintToLog(" %s() : property identifier %d does not a future contract\n",
+             //    __func__,
+             //    sender,
+             //    contractId);
+                return 0;
+        }
+        int64_t num_tokens = newSp.num_tokens/factor;
 
+        double diff = static_cast<double>(priceIndex - nMarketPrice);
+        double interest = static_cast<double>(diff/nMarketPrice);
+        PrintToConsole("Difference betweeen priceIndex and marketPrice : %lf\n",diff);
+        PrintToConsole("interest: %lf\n",interest);
+        PrintToConsole("Amounts of pegged currency created : %d\n",num_tokens);
+
+        if(nBlockPrev == deadline){
+
+         PrintToConsole("This is the block of SETTLEMENT, then we include the interest!!!: %d\n",deadline);
+         LOCK(cs_tally);
+
+         for (std::unordered_map<std::string, CMPTally>::iterator it = mp_tally_map.begin(); it != mp_tally_map.end(); ++it) {
+             uint32_t id = 0;
+             bool includeAddress = false;
+             std::string address = it->first;
+             (it->second).init();
+             while (0 != (id = (it->second).next())) {
+                 if (id == peggedId) {
+                     includeAddress = true;
+                     int64_t nPegged = getMPbalance(address, peggedId, BALANCE);
+                     PrintToConsole("nPegged : %d\n",nPegged);
+                     double dAll = static_cast<double>((nPegged*interest)/allPrice);
+                     PrintToConsole("dAll : %lu\n",dAll);
+                     int64_t intAll = static_cast<int64_t>(dAll);
+                     PrintToConsole("intAll : %lu\n",intAll);
+                     assert(update_tally_map(address, collateral, intAll, BALANCE));
+                     break;
+                 }
+
+             }
+             if (!includeAddress) {
+                 continue; // ignore this address, has never transacted in this propertyId
+             }
+          }
+       }
+       PrintToConsole("----------------------------------------------------\n");
+        return 1;
+}
+////////////////////////////////////////////////////////////////////////////////
 unsigned int mastercore::eraseExpiredCrowdsale(const CBlockIndex* pBlockIndex)
 {
     if (pBlockIndex == NULL) return 0;
@@ -916,5 +1013,3 @@ bool CMPSPInfo::Entry::isContract() const
     }
     return false;
 }
-
-

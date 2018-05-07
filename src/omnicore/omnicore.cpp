@@ -2293,7 +2293,7 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
 
     // handle any features that go live with this block
     CheckLiveActivations(pBlockIndex->nHeight);
-
+    addInterestPegged(nBlockPrev,pBlockIndex);
     eraseExpiredCrowdsale(pBlockIndex);
 
     return 0;

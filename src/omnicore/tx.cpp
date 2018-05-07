@@ -2219,6 +2219,8 @@ int CMPTransaction::logicMath_RedemptionPegged()
     PrintToConsole("amount : %d\n",amount);
     PrintToConsole("property : %d\n",propertyId);
     PrintToConsole("contractId : %d\n",contractId);
+    PrintToConsole("Contracts in long position : %d\n",posContracts);
+    PrintToConsole("Contracts in short position : %d\n",negContracts);
 
     if (nBalance < (int64_t) amount) {
         PrintToLog("%s(): rejected: sender %s has insufficient balance of pegged currency %d [%s < %s]\n",
@@ -2249,17 +2251,18 @@ int CMPTransaction::logicMath_RedemptionPegged()
 
     int64_t contractsNeeded = static_cast<int64_t> (amount/(notSize*factor));
 
-    PrintToConsole("contracts needed : %d\n",contractsNeeded);
-    PrintToConsole("Notional Size : %d\n",notSize);
-    PrintToConsole("collateral id : %d\n",collateralId);
+       PrintToConsole("contracts needed : %d\n",contractsNeeded);
+       PrintToConsole("Notional Size : %d\n",notSize);
+       PrintToConsole("collateral id : %d\n",collateralId);
 
     if ((contractsNeeded > 0) && (amount > 0)) {
        // Delete the tokens
        assert(update_tally_map(sender, propertyId, -amount, BALANCE));
-       // getting back from reserve contracts and collateral currency
+       // get back the contracts
        assert(update_tally_map(sender, contractId, -contractsNeeded, CONTRACTDEX_RESERVE));
-        // getting back from reserve the collateral currency needed
+
        if ((posContracts > 0) && (negContracts == 0)){
+
           int64_t dif = posContracts - contractsNeeded;
           PrintToConsole("Difference of contracts : %d\n",dif);
           if (dif >= 0){
@@ -2271,18 +2274,13 @@ int CMPTransaction::logicMath_RedemptionPegged()
        } else if ((posContracts == 0) && (negContracts >= 0)) {
           assert(update_tally_map(sender, contractId, contractsNeeded, NEGATIVE_BALANCE));
        }
-       PrintToConsole("Contracts in long position : %d\n",posContracts);
-       PrintToConsole("Contracts in short position : %d\n",negContracts);
-       PrintToConsole("Contracts Needed : %d\n",contractsNeeded);
 
-       assert(update_tally_map(sender, propertyId, -amount, CONTRACTDEX_RESERVE));
-       assert(update_tally_map(sender, propertyId, amount, BALANCE));
-
-    } else {
+    }else {
        PrintToLog("amount redeemed must be equal at least to value of one future contract \n");
        PrintToConsole("amount redeemed must be equal at least to value of one future contract \n");
        return (PKT_ERROR_SEND -25);
     }
+
     return 0;
 }
 
