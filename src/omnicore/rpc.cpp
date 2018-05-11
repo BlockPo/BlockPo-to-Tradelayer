@@ -1433,6 +1433,47 @@ UniValue omni_getcontract_orderbook(const UniValue& params, bool fHelp)
     return response;
 }
 
+UniValue omni_gettradehistory(const UniValue& params, bool fHelp)
+{
+    if (fHelp || params.size() != 1)
+        throw runtime_error(
+            "omni_gettradehistory contractid propertyid ( count )\n"
+            "\nRetrieves the history of trades on the distributed contract exchange for the specified market.\n"
+            "\nArguments:\n"
+            "1. contractid           (number, required) the id of future contract\n"
+            "\nResult:\n"
+            "[                                      (array of JSON objects)\n"
+            "  {\n"
+            "    \"block\" : nnnnnn,                      (number) the index of the block that contains the trade match\n"
+            "    \"unitprice\" : \"n.nnnnnnnnnnn...\" ,     (string) the unit price used to execute this trade (received/sold)\n"
+            "    \"inverseprice\" : \"n.nnnnnnnnnnn...\",   (string) the inverse unit price (sold/received)\n"
+            "    \"sellertxid\" : \"hash\",                 (string) the hash of the transaction of the seller\n"
+            "    \"address\" : \"address\",                 (string) the Bitcoin address of the seller\n"
+            "    \"amountsold\" : \"n.nnnnnnnn\",           (string) the number of tokens sold in this trade\n"
+            "    \"amountreceived\" : \"n.nnnnnnnn\",       (string) the number of tokens traded in exchange\n"
+            "    \"matchingtxid\" : \"hash\",               (string) the hash of the transaction that was matched against\n"
+            "    \"matchingaddress\" : \"address\"          (string) the Bitcoin address of the other party of this trade\n"
+            "  },\n"
+            "  ...\n"
+            "]\n"
+            "\nExamples:\n"
+            + HelpExampleCli("omni_gettradehistoryforpair", "1 12 500")
+            + HelpExampleRpc("omni_gettradehistoryforpair", "1, 12, 500")
+        );
+
+    // obtain property identifiers for pair & check valid parameters
+    uint32_t contractId = ParsePropertyId(params[0]);
+
+    RequireContract(contractId);
+
+    // request pair trade history from trade db
+    UniValue response(UniValue::VARR);
+    LOCK(cs_tally);
+    PrintToConsole("Inside the rpc gettradehistory \n");
+    t_tradelistdb->getMatchingTrades(contractId,response);
+    return response;
+}
+////////////////////////////////////////////////////////////////////////////////
 static const CRPCCommand commands[] =
 { //  category                             name                            actor (function)               okSafeMode
   //  ------------------------------------ ------------------------------- ------------------------------ ----------
@@ -1458,7 +1499,7 @@ static const CRPCCommand commands[] =
     { "hidden",                      "mscrpc",                         &mscrpc,                          true  },
     { "omni layer (data retrieval)", "omni_getposition",               &omni_getposition,                false },
     { "omni layer (data retrieval)", "omni_getcontract_orderbook",     &omni_getcontract_orderbook,      false },
-
+    { "omni layer (data retrieval)", "omni_gettradehistory",           &omni_gettradehistory,            false },
 };
 
 void RegisterOmniDataRetrievalRPCCommands(CRPCTable &tableRPC)

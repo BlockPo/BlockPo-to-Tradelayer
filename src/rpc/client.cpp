@@ -118,6 +118,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "omni_listtransactions", 4 },
     { "omni_getallbalancesforid", 0 },
     { "omni_listblocktransactions", 0 },
+    { "omni_gettradehistory", 0 },
 
     /* Omni Core - transaction calls */
     { "omni_send", 2 },

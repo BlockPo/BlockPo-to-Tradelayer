@@ -467,7 +467,7 @@ MatchReturnType x_Trade(CMPContractDex* const pnew)
                 ///////////////////////////////////////
                 /** Remember: We have to  check how to add this later without any problem*/
                 if ( PNL_s != 0 ) {
-                    assert(update_tally_map(seller_address, collateralCurrency, amountToReserve, CONTRACTDEX_RESERVE));
+                    // assert(update_tally_map(seller_address, collateralCurrency, amountToReserve, CONTRACTDEX_RESERVE));
                 }
                 // PrintToConsole("PNL_s: %d, Basis: %d\n", PNL_s, basis_s);
             }
@@ -488,7 +488,7 @@ MatchReturnType x_Trade(CMPContractDex* const pnew)
                 ///////////////////////////////////////
                 /** Remember: We have to  check how to add this later without any problem*/
                 if ( PNL_b != 0 ) {
-                    assert(update_tally_map(buyer_address, collateralCurrency, amountToReserve, CONTRACTDEX_RESERVE));
+                    // assert(update_tally_map(buyer_address, collateralCurrency, amountToReserve, CONTRACTDEX_RESERVE));
                 }
             }
             ///////////////////////////////////////
@@ -519,8 +519,8 @@ MatchReturnType x_Trade(CMPContractDex* const pnew)
                                               property_traded,
                                               tradeStatus,
                                               pold->getEffectivePrice(),
-                                              pnew->getEffectivePrice()
-                                              );
+                                              pnew->getEffectivePrice(),
+                                              pnew->getTradingAction());
             ///////////////////////////////////////
             marketPrice = pold->getEffectivePrice();
             // PrintToConsole("marketPrice: %d\n", FormatContractShortMP(marketPrice));
@@ -809,7 +809,7 @@ MatchReturnType x_Trade(CMPContractDex* const pnew)
                 ///////////////////////////////////////
                 /** Remember: We have to  check how to add this later without any problem*/
                 if ( PNL_s != 0 ) {
-                    assert(update_tally_map(seller_address, collateralCurrency, amountToReserve, CONTRACTDEX_RESERVE));
+                    // assert(update_tally_map(seller_address, collateralCurrency, amountToReserve, CONTRACTDEX_RESERVE));
                 }
                 // PrintToConsole("PNL_s: %d, Basis: %d\n", PNL_s, basis_s);
             }
@@ -830,7 +830,7 @@ MatchReturnType x_Trade(CMPContractDex* const pnew)
                 ///////////////////////////////////////
                 /** Remember: We have to  check how to add this later without any problem*/
                 if ( PNL_b != 0 ) {
-                    assert(update_tally_map(buyer_address, collateralCurrency, amountToReserve, CONTRACTDEX_RESERVE));
+                    // assert(update_tally_map(buyer_address, collateralCurrency, amountToReserve, CONTRACTDEX_RESERVE));
                 }
             }
             ///////////////////////////////////////
@@ -861,7 +861,8 @@ MatchReturnType x_Trade(CMPContractDex* const pnew)
                                               property_traded,
                                               tradeStatus,
                                               pold->getEffectivePrice(),
-                                              pnew->getEffectivePrice()
+                                              pnew->getEffectivePrice(),
+                                              pnew->getTradingAction()
                                               );
             ///////////////////////////////////////
             marketPrice = pold->getEffectivePrice();
