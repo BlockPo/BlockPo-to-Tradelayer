@@ -622,7 +622,7 @@ bool CMPTransaction::interpret_CreateContractDex()
     memcpy(&ecosystem, &pkt[i], 1);
     i++;
     std::vector<uint8_t> vecPropTypeBytes = GetNextVarIntBytes(i);
-    
+
     const char* p = i + (char*) &pkt;
     std::vector<std::string> spstr;
     for (int j = 0; j < 2; j++) {
@@ -777,7 +777,7 @@ bool CMPTransaction::interpret_ContractDexCancelEcosystem()
       std::vector<uint8_t> vecPrevPropIdBytes = GetNextVarIntBytes(i);
       const char* p = i + (char*) &pkt;
       std::vector<std::string> spstr;
-      for (int j = 0; j < 5; j++){
+      for (int j = 0; j < 2; j++){
           spstr.push_back(std::string(p));
           p += spstr.back().size() + 1;
       }
@@ -788,12 +788,9 @@ bool CMPTransaction::interpret_ContractDexCancelEcosystem()
       }
 
       int j = 0;
-      memcpy(category, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(category)-1)); j++;
       memcpy(subcategory, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(subcategory)-1)); j++;
       memcpy(name, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(name)-1)); j++;
-      memcpy(url, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(url)-1)); j++;
-      memcpy(data, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(data)-1)); j++;
-      i = i + strlen(name) + strlen(category) + strlen(subcategory) + strlen(url) + strlen(data) + 5; // data sizes + 3 null terminators
+      i = i + strlen(name) + strlen(subcategory)  + 2; // data sizes + 3 null terminators
       std::vector<uint8_t> vecPropertyIdBytes = GetNextVarIntBytes(i);
       std::vector<uint8_t> vecContractIdBytes = GetNextVarIntBytes(i);
       std::vector<uint8_t> vecAmountBytes = GetNextVarIntBytes(i);
@@ -830,9 +827,6 @@ bool CMPTransaction::interpret_ContractDexCancelEcosystem()
         PrintToConsole("propertyId: %d\n", propertyId);
         PrintToConsole("amount of pegged currency : %d\n", amount);
         PrintToConsole("name : %d\n", name);
-        PrintToConsole("url: %d\n", url);
-        PrintToConsole("data: %d\n", data);
-        PrintToConsole("category: %d\n", category);
         PrintToConsole("subcategory: %d\n", subcategory);
 
       return true;
@@ -2098,18 +2092,18 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
     newSP.issuer = sender;
     newSP.txid = txid;
     newSP.prop_type = prop_type;
-    newSP.category.assign(category);
+    // newSP.category.assign(category);
     newSP.subcategory.assign(subcategory);
     newSP.name.assign(name);
-    newSP.url.assign(url);
-    newSP.data.assign(data);
+    // newSP.url.assign(url);
+    // newSP.data.assign(data);
     newSP.fixed = true;
     newSP.manual = true;
     newSP.creation_block = blockHash;
     newSP.update_block = newSP.creation_block;
     newSP.num_tokens = amount;
     newSP.contracts_needed = contractsNeeded;
-
+    ecosystem = 1;  // TODO : checking later this!!!
     const uint32_t npropertyId = _my_sps->putSP(ecosystem, newSP);
     assert(npropertyId > 0);
     PrintToConsole("Pegged currency Id: %d\n",npropertyId);

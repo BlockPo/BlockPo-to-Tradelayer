@@ -885,7 +885,7 @@ UniValue omni_tradecontract(const UniValue& params, bool fHelp)
 }
 UniValue omni_sendissuance_pegged(const UniValue& params, bool fHelp)
 {
-    if (fHelp || params.size() != 12)
+    if (fHelp || params.size() != 9)
         throw runtime_error(
             "omni_sendissuance_pegged\"fromaddress\" ecosystem type previousid \"category\" \"subcategory\" \"name\" \"url\" \"data\"\n"
 
@@ -917,14 +917,14 @@ UniValue omni_sendissuance_pegged(const UniValue& params, bool fHelp)
     uint8_t ecosystem = ParseEcosystem(params[1]);
     uint16_t type = ParsePropertyType(params[2]);
     uint32_t previousId = ParsePreviousPropertyId(params[3]);
-    std::string category = ParseText(params[4]);
-    std::string subcategory = ParseText(params[5]);
-    std::string name = ParseText(params[6]);
-    std::string url = ParseText(params[7]);
-    std::string data = ParseText(params[8]);
-    uint32_t propertyId = ParsePropertyId(params[9]);
-    uint32_t contractId = ParseNewValues(params[10]);
-    uint64_t amount = ParseAmount(params[11], isPropertyDivisible(propertyId));
+    // std::string category = ParseText(params[4]);
+    std::string subcategory = ParseText(params[4]);
+    std::string name = ParseText(params[5]);
+    // std::string url = ParseText(params[7]);
+    // std::string data = ParseText(params[8]);
+    uint32_t propertyId = ParsePropertyId(params[6]);
+    uint32_t contractId = ParseNewValues(params[7]);
+    uint64_t amount = ParseAmount(params[8], isPropertyDivisible(propertyId));
 
     // perform checks
     RequirePropertyName(name);
@@ -942,7 +942,7 @@ UniValue omni_sendissuance_pegged(const UniValue& params, bool fHelp)
     RequireForPegged(fromAddress, propertyId, contractId, amount);
 
     // create a payload for the transaction
-    std::vector<unsigned char> payload = CreatePayload_IssuancePegged(ecosystem, type, previousId, category, subcategory, name, url, data, propertyId, contractId, amount);
+    std::vector<unsigned char> payload = CreatePayload_IssuancePegged(ecosystem, type, previousId, subcategory, name, propertyId, contractId, amount);
 
     // request the wallet build the transaction (and if needed commit it)
     uint256 txid;

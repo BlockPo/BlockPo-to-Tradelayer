@@ -413,8 +413,7 @@ std::vector<unsigned char> CreatePayload_ContractDexCancelPrice(uint32_t propert
 
     return payload;
 }
-std::vector<unsigned char> CreatePayload_IssuancePegged(uint8_t ecosystem, uint16_t propertyType, uint32_t previousPropertyId, std::string category,
-                                                       std::string subcategory, std::string name, std::string url, std::string data, uint32_t propertyId, uint32_t contractId, uint64_t amount)
+std::vector<unsigned char> CreatePayload_IssuancePegged(uint8_t ecosystem, uint16_t propertyType, uint32_t previousPropertyId,std::string subcategory, std::string name, uint32_t propertyId, uint32_t contractId, uint64_t amount)
 {
     std::vector<unsigned char> payload;
     uint16_t messageType = 100;
@@ -428,24 +427,15 @@ std::vector<unsigned char> CreatePayload_IssuancePegged(uint8_t ecosystem, uint1
     std::vector<uint8_t> vecContractId = CompressInteger(contractId);
     std::vector<uint8_t> vecAmount = CompressInteger(amount);
     std::vector<uint8_t> vecPropertyId = CompressInteger(propertyId);
-    if (category.size() > 255) category = category.substr(0,255);
     if (subcategory.size() > 255) subcategory = subcategory.substr(0,255);
     if (name.size() > 255) name = name.substr(0,255);
-    if (url.size() > 255) url = url.substr(0,255);
-    if (data.size() > 255) data = data.substr(0,255);
     payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
     payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
     payload.insert(payload.end(), vecPropertyType.begin(), vecPropertyType.end());
     payload.insert(payload.end(), vecPrevPropertyId.begin(), vecPrevPropertyId.end());
-    payload.insert(payload.end(), category.begin(), category.end());
-    payload.push_back('\0');
     payload.insert(payload.end(), subcategory.begin(), subcategory.end());
     payload.push_back('\0');
     payload.insert(payload.end(), name.begin(), name.end());
-    payload.push_back('\0');
-    payload.insert(payload.end(), url.begin(), url.end());
-    payload.push_back('\0');
-    payload.insert(payload.end(), data.begin(), data.end());
     payload.push_back('\0');
     payload.insert(payload.end(), vecPropertyId.begin(), vecPropertyId.end());
     payload.insert(payload.end(), vecContractId.begin(), vecContractId.end());
