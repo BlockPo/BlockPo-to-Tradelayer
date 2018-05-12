@@ -2248,7 +2248,9 @@ int CMPTransaction::logicMath_RedemptionPegged()
        assert(update_tally_map(sender, propertyId, -amount, BALANCE));
        // get back the contracts
        assert(update_tally_map(sender, contractId, -contractsNeeded, CONTRACTDEX_RESERVE));
-
+        // get back the collateral
+       assert(update_tally_map(sender, collateralId, -amount, CONTRACTDEX_RESERVE));
+       assert(update_tally_map(sender, collateralId, amount, BALANCE));
        if ((posContracts > 0) && (negContracts == 0)){
 
           int64_t dif = posContracts - contractsNeeded;
