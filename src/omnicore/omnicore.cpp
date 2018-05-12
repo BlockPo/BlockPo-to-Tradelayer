@@ -2600,15 +2600,6 @@ double CMPTradeList::getPNL(string address, int64_t contractsClosed, int64_t pri
     // double PNL_num = static_cast<double>((d_price - averagePrice)*(notionalSize*d_contractsClosed));
     // double PNL_den = static_cast<double>(averagePrice*marginRequirementContract);
     double PNL = 0;
-    // PrintToConsole("PNL_num : %d\n",PNL_num);
-    // PrintToConsole("PNL_den : %d\n",PNL_den);
-    PrintToConsole("totalAmount: %d\n",totalAmount);
-    PrintToConsole("totalContracts: %d\n",totalContracts);
-    PrintToConsole("contractsClosed : %d\n",d_contractsClosed);
-    PrintToConsole("d_price : %d\n",d_price);
-    // PrintToConsole("averagePrice : %d\n",averagePrice);
-    PrintToConsole("marginRequirementContract : %d\n",marginRequirementContract);
-    PrintToConsole("notionalSize : %d\n",notionalSize);
 
     // if ((Status == "Long Netted") || (Status == "Netted_L")){
     //    PNL = static_cast<double>(PNL_num/PNL_den);

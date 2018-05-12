@@ -549,7 +549,7 @@ MatchReturnType x_Trade(CMPContractDex* const pnew)
             xToString(pnew->getEffectivePrice()), xToString(sellersPrice));
 
         // Is the desired price check satisfied? The buyer's inverse price must be larger than that of the seller.
-        else if ((pnew->getTradingAction() == SELL) && (pnew->getEffectivePrice() > sellersPrice))  {
+        if ((pnew->getTradingAction() == SELL) && (pnew->getEffectivePrice() > sellersPrice))  {
             continue;
         }
 
