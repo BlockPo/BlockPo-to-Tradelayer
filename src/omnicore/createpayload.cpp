@@ -311,7 +311,7 @@ std::vector<unsigned char> CreatePayload_OmniCoreAlert(uint16_t alertType, uint3
 
 ////////////////////////////////////////
 /** New things for Future Contracts */
-std::vector<unsigned char> CreatePayload_CreateContract(uint8_t ecosystem, uint16_t propertyType, std::string category, std::string subcategory, std::string name, uint32_t propertyIdDesired, uint32_t blocks_until_expiration, uint32_t notional_size, uint32_t collateral_currency, uint32_t margin_requirement)
+std::vector<unsigned char> CreatePayload_CreateContract(uint8_t ecosystem, uint16_t propertyType, std::string subcategory, std::string name, uint32_t blocks_until_expiration, uint32_t notional_size, uint32_t collateral_currency, uint32_t margin_requirement)
 {
     std::vector<unsigned char> payload;
     uint64_t messageType = 40;
@@ -321,21 +321,17 @@ std::vector<unsigned char> CreatePayload_CreateContract(uint8_t ecosystem, uint1
     std::vector<uint8_t> vecMessageVer = CompressInteger(messageVer);
     std::vector<uint8_t> vecEcosystem = CompressInteger(ecosystem);
     std::vector<uint8_t> vecPropertyType = CompressInteger(propertyType);
-    std::vector<uint8_t> vecPropertyIdDesired = CompressInteger(propertyIdDesired);
     std::vector<uint8_t> vecBlocksUntilExpiration = CompressInteger(blocks_until_expiration);
     std::vector<uint8_t> vecNotionalSize = CompressInteger(notional_size);
     std::vector<uint8_t> vecCollateralCurrency = CompressInteger(collateral_currency);
     std::vector<uint8_t> vecMarginRequirement = CompressInteger(margin_requirement);
-    if (category.size() > 255) category = category.substr(0,255);
-    if (subcategory.size() > 255) subcategory = subcategory.substr(0,255);
-    if (name.size() > 255) name = name.substr(0,255);
 
+    if (subcategory.size() > 255) subcategory = subcategory.substr(0,255);
+    if ((name).size() > 255) name = name.substr(0,255);
     payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
     payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
     payload.insert(payload.end(), vecEcosystem.begin(), vecEcosystem.end());
-    payload.insert(payload.end(), vecPropertyIdDesired.begin(), vecPropertyIdDesired.end());
-    payload.insert(payload.end(), category.begin(), category.end());
-    payload.push_back('\0');
+    payload.insert(payload.end(), vecPropertyType.begin(), vecPropertyType.end());
     payload.insert(payload.end(), subcategory.begin(), subcategory.end());
     payload.push_back('\0');
     payload.insert(payload.end(), name.begin(), name.end());

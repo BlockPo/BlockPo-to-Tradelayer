@@ -621,13 +621,11 @@ bool CMPTransaction::interpret_CreateContractDex()
 
     memcpy(&ecosystem, &pkt[i], 1);
     i++;
-
     std::vector<uint8_t> vecPropTypeBytes = GetNextVarIntBytes(i);
-
-
+    
     const char* p = i + (char*) &pkt;
     std::vector<std::string> spstr;
-    for (int j = 0; j < 3; j++) {
+    for (int j = 0; j < 2; j++) {
         spstr.push_back(std::string(p));
         p += spstr.back().size() + 1;
     }
@@ -638,10 +636,9 @@ bool CMPTransaction::interpret_CreateContractDex()
     }
 
     int j = 0;
-    memcpy(category, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(category)-1)); j++;
     memcpy(subcategory, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(subcategory)-1)); j++;
     memcpy(name, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(name)-1)); j++;
-    i = i + strlen(name) + strlen(subcategory) + strlen(category) + 3; // data sizes + 3 null terminators
+    i = i + strlen(subcategory) + strlen(name) + 2; // data sizes + 3 null terminators
     std::vector<uint8_t> vecBlocksUntilExpiration = GetNextVarIntBytes(i);
     std::vector<uint8_t> vecNotionalSize = GetNextVarIntBytes(i);
     std::vector<uint8_t> vecCollateralCurrency = GetNextVarIntBytes(i);
@@ -681,7 +678,6 @@ bool CMPTransaction::interpret_CreateContractDex()
     PrintToConsole("property type: %d\n", prop_type);
     PrintToConsole("name: %s\n", name);
     PrintToConsole("subcategory: %s\n", subcategory);
-    PrintToConsole("category: %s\n", category);
     PrintToConsole("blocks until expiration : %d\n", blocks_until_expiration);
     PrintToConsole("notional size : %d\n", notional_size);
     PrintToConsole("collateral currency: %d\n", collateral_currency);
@@ -1861,14 +1857,12 @@ if ('\0' == name[0]) {
     newSP.issuer = sender;
     newSP.txid = txid;
     newSP.prop_type = prop_type;
-    // newSP.num_tokens = nValue;
-    newSP.category.assign(category);
     newSP.subcategory.assign(subcategory);
     newSP.name.assign(name);
-    newSP.url.assign(url);
-    newSP.data.assign(data);
+    // newSP.url.assign(url);
+    // newSP.data.assign(data);
     newSP.fixed = false;
-    newSP.property_desired = property;
+    // newSP.property_desired = property;
     // newSP.deadline = deadline;
     // newSP.early_bird = early_bird;
     // newSP.percentage = percentage;

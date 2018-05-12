@@ -22,13 +22,11 @@ std::vector<unsigned char> CreatePayload_OmniCoreAlert(uint16_t alertType, uint3
 std::vector<unsigned char> CreatePayload_DeactivateFeature(uint16_t featureId);
 std::vector<unsigned char> CreatePayload_ActivateFeature(uint16_t featureId, uint32_t activationBlock, uint32_t minClientVersion);
 /*New things for contracts*/
-std::vector<unsigned char> CreatePayload_CreateContract(uint8_t ecosystem, uint16_t propertyType, std::string category,
-                                                          std::string subcategory, std::string name, uint32_t propertyIdDesired,
-                                                          uint32_t blocks_until_expiration, uint32_t notional_size, uint32_t collateral_currency, uint32_t margin_requirement);
+std::vector<unsigned char> CreatePayload_CreateContract(uint8_t ecosystem, uint16_t propertyType, std::string subcategory,std::string name, uint32_t blocks_until_expiration, uint32_t notional_size, uint32_t collateral_currency, uint32_t margin_requirement);
 std::vector<unsigned char> CreatePayload_ContractDexTrade(uint32_t propertyIdForSale, uint64_t amountForSale, uint64_t effective_price, uint8_t trading_action);
 std::vector<unsigned char> CreatePayload_ContractDexCancelEcosystem(uint8_t ecosystem);
 std::vector<unsigned char> CreatePayload_ContractDexCancelPrice(uint32_t propertyIdForSale, uint64_t amountForSale, uint32_t propertyIdDesired, uint64_t amountDesired, uint64_t effective_price, uint8_t trading_action);
-std::vector<unsigned char> CreatePayload_IssuancePegged(uint8_t ecosystem, uint16_t propertyType, uint32_t previousPropertyId, std::string category,std::string subcategory, std::string name, std::string url, std::string data, uint32_t propertyId, uint32_t contractId, uint64_t amount);                                                                                                              
+std::vector<unsigned char> CreatePayload_IssuancePegged(uint8_t ecosystem, uint16_t propertyType, uint32_t previousPropertyId, std::string category,std::string subcategory, std::string name, std::string url, std::string data, uint32_t propertyId, uint32_t contractId, uint64_t amount);
 std::vector<unsigned char> CreatePayload_RedemptionPegged(uint32_t propertyId, uint32_t contractId, uint64_t amount);
 std::vector<unsigned char> CreatePayload_SendPeggedCurrency(uint32_t propertyId, uint64_t amount);
 

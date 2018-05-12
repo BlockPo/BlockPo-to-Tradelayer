@@ -319,7 +319,7 @@ UniValue omni_createpayload_changeissuer(const UniValue& params, bool fHelp)
 /** New things for future contracts */
 UniValue omni_createpayload_createcontract(const UniValue& params, bool fHelp)
 {
-    if (fHelp || params.size() != 10)
+    if (fHelp || params.size() != 8)
         throw runtime_error(
             "omni_createpayload_createcontract ecosystem type previousid \"category\" \"subcategory\" \"name\" \"url\" \"data\" propertyiddesired tokensperunit deadline earlybonus issuerpercentage\n"
 
@@ -354,23 +354,19 @@ UniValue omni_createpayload_createcontract(const UniValue& params, bool fHelp)
     uint8_t ecosystem = ParseEcosystem(params[0]);
     uint16_t type = ParsePropertyType(params[1]);
     // uint32_t previousId = ParsePreviousPropertyId(params[2]);
-    std::string category = ParseText(params[2]);
-    std::string subcategory = ParseText(params[3]);
-    std::string name = ParseText(params[4]);
-    uint32_t propertyIdDesired = ParsePropertyId(params[5]);
+    // std::string category = ParseText(params[2]);
+    std::string subcategory = ParseText(params[2]);
+    std::string name = ParseText(params[3]);
 
     /** New things for Contracts */
-    uint32_t blocks_until_expiration = ParseNewValues(params[6]);
-    uint32_t notional_size = ParseNewValues(params[7]);
-    uint32_t collateral_currency = ParseNewValues(params[8]);
-    uint32_t margin_requirement = ParseNewValues(params[9]);
+    uint32_t blocks_until_expiration = ParseNewValues(params[4]);
+    uint32_t notional_size = ParseNewValues(params[5]);
+    uint32_t collateral_currency = ParseNewValues(params[6]);
+    uint32_t margin_requirement = ParseNewValues(params[7]);
     ////////////////////////////////////
 
-    RequirePropertyName(name);
-    RequireExistingProperty(propertyIdDesired);
-    RequireSameEcosystem(ecosystem, propertyIdDesired);
 
-    std::vector<unsigned char> payload = CreatePayload_CreateContract(ecosystem, type, category, subcategory, name, propertyIdDesired, blocks_until_expiration, notional_size, collateral_currency, margin_requirement);
+    std::vector<unsigned char> payload = CreatePayload_CreateContract(ecosystem, type, subcategory,name, blocks_until_expiration, notional_size, collateral_currency, margin_requirement);
 
     return HexStr(payload.begin(), payload.end());
 }

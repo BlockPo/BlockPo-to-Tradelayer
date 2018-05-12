@@ -713,7 +713,7 @@ UniValue omni_sendalert(const UniValue& params, bool fHelp)
 /** New things for Contract */
 UniValue omni_createcontract(const UniValue& params, bool fHelp)
 {
-    if (fHelp || params.size() != 11)
+    if (fHelp || params.size() != 9)
         throw runtime_error(
             "omni_createcontract \"fromaddress\" ecosystem type previousid \"category\" \"subcategory\" \"name\" \"url\" \"data\" propertyiddesired tokensperunit deadline ( earlybonus issuerpercentage )\n"
 
@@ -750,20 +750,19 @@ UniValue omni_createcontract(const UniValue& params, bool fHelp)
     uint8_t ecosystem = ParseEcosystem(params[1]);
     uint16_t type = ParsePropertyType(params[2]);
     // uint32_t previousId = ParsePreviousPropertyId(params[3]);
-    std::string category = ParseText(params[3]);
-    std::string subcategory = ParseText(params[4]);
-    std::string name = ParseText(params[5]);
-    uint32_t propertyIdDesired = ParsePropertyId(params[6]);
+    std::string subcategory = ParseText(params[3]);
+    std::string name = ParseText(params[4]);
+    // uint32_t propertyIdDesired = ParsePropertyId(params[6]);
 
     //////////////////////////////////////////
-    uint32_t blocks_until_expiration = ParseNewValues(params[7]);
-    uint32_t notional_size = ParseNewValues(params[8]);
-    uint32_t collateral_currency = ParseNewValues(params[9]);
-    uint32_t margin_requirement = ParseNewValues(params[10]);
+    uint32_t blocks_until_expiration = ParseNewValues(params[5]);
+    uint32_t notional_size = ParseNewValues(params[6]);
+    uint32_t collateral_currency = ParseNewValues(params[7]);
+    uint32_t margin_requirement = ParseNewValues(params[8]);
     //////////////////////////////////////////
 
     // create a payload for the transaction
-    std::vector<unsigned char> payload = CreatePayload_CreateContract(ecosystem, type, category, subcategory, name, propertyIdDesired, blocks_until_expiration, notional_size, collateral_currency, margin_requirement);
+    std::vector<unsigned char> payload = CreatePayload_CreateContract(ecosystem, type, subcategory,name, blocks_until_expiration, notional_size, collateral_currency, margin_requirement);
 
     // request the wallet build the transaction (and if needed commit it)
     uint256 txid;
