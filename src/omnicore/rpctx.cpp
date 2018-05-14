@@ -717,29 +717,21 @@ UniValue omni_createcontract(const UniValue& params, bool fHelp)
         throw runtime_error(
             "omni_createcontract \"fromaddress\" ecosystem type previousid \"category\" \"subcategory\" \"name\" \"url\" \"data\" propertyiddesired tokensperunit deadline ( earlybonus issuerpercentage )\n"
 
-            "Create new tokens as crowdsale."
+            "Create new Future Contract."
 
             "\nArguments:\n"
             "1. fromaddress          (string, required) the address to send from\n"
             "2. ecosystem            (string, required) the ecosystem to create the tokens in (1 for main ecosystem, 2 for test ecosystem)\n"
             "3. type                 (number, required) the type of the tokens to create: (1 for indivisible tokens, 2 for divisible tokens)\n"
-            "4. previousid           (number, required) an identifier of a predecessor token (0 for new crowdsales)\n"
-            "5. category             (string, required) a category for the new tokens (can be \"\")\n"
-            "6. subcategory          (string, required) a subcategory for the new tokens  (can be \"\")\n"
-            "7. name                 (string, required) the name of the new tokens to create\n"
-            "8. url                  (string, required) an URL for further information about the new tokens (can be \"\")\n"
-            "9. data                 (string, required) a description for the new tokens (can be \"\")\n"
-            "10. propertyiddesired   (number, required) the identifier of a token eligible to participate in the crowdsale\n"
-            "11. tokensperunit       (string, required) the amount of tokens granted per unit invested in the crowdsale\n"
-            "12. deadline            (number, required) the deadline of the crowdsale as Unix timestamp\n"
-            "13. earlybonus          (number, required) an early bird bonus for participants in percent per week\n"
-            "14. issuerpercentage    (number, required) a percentage of tokens that will be granted to the issuer\n"
-            "15. blocks_until_expiration    (number, required) blocks until expiration\n"
-            "16. notional_size    (number, required) notional size\n"
-            "17. collateral_currency    (number, required) collateral currency\n"
+            "4. subcategory          (string, required) a subcategory for the new tokens  (can be \"\")\n"
+            "5. name                 (string, required) the name of the new tokens to create\n"
+            "6. issuerpercentage    (number, required) a percentage of tokens that will be granted to the issuer\n"
+            "7. blocks_until_expiration    (number, required) blocks until expiration\n"
+            "8. notional_size    (number, required) notional size\n"
+            "9. collateral_currency    (number, required) collateral currency\n"
 
             "\nResult:\n"
-            "\"payload\"             (string) the hex-encoded payload\n"
+            "\"hash\"                  (string) the hex-encoded transaction hash\n"
 
             "\nExamples:\n"
             + HelpExampleCli("omni_createcontract", "2 1 0 \"Companies\" \"Bitcoin Mining\" \"Quantum Miner\" \"\" \"\" 2 \"100\" 1483228800 30 2 4461 100 1 25")
@@ -787,7 +779,7 @@ UniValue omni_cancelallcontractsbyaddress(const UniValue& params, bool fHelp)
         throw runtime_error(
             "omni_cancelallcontractsbyaddress \"fromaddress\" ecosystem\n"
 
-            "\nCancel all offers on the distributed token exchange.\n"
+            "\nCancel all offers on the distributed Futures Contracts exchange.\n"
 
             "\nArguments:\n"
             "1. fromaddress          (string, required) the address to trade with\n"
@@ -839,7 +831,7 @@ UniValue omni_tradecontract(const UniValue& params, bool fHelp)
         throw runtime_error(
             "omni_tradecontract \"fromaddress\" propertyidforsale \"amountforsale\" propertiddesired \"amountdesired\"\n"
 
-            "\nPlace a trade offer on the distributed token exchange.\n"
+            "\nPlace a trade offer on the distributed Futures Contracts exchange.\n"
 
             "\nArguments:\n"
             "1. fromaddress          (string, required) the address to trade with\n"
@@ -896,14 +888,11 @@ UniValue omni_sendissuance_pegged(const UniValue& params, bool fHelp)
             "2. ecosystem            (string, required) the ecosystem to create the pegged currency in (1 for main ecosystem, 2 for test ecosystem)\n"
             "3. type                 (number, required) the type of the pegged to create: (1 for indivisible tokens, 2 for divisible tokens)\n"
             "4. previousid           (number, required) an identifier of a predecessor token (use 0 for new tokens)\n"
-            "5. category             (string, required) a category for the new pegged (can be \"\")\n"
-            "6. subcategory          (string, required) a subcategory for the new pegged (can be \"\")\n"
-            "7. name                 (string, required) the name of the new pegged to create\n"
-            "8. url                  (string, required) an URL for further information about the new pegged (can be \"\")\n"
-            "9. data                 (string, required) a description for the new pegged (can be \"\")\n"
-            "10. collateralcurrency  (number, required) the collateral currency for the new pegged \n"
-            "11. future contract id  (number, required) the future contract id for the new pegged \n"
-            "12. amount of pegged    (number, required) amount of pegged to create \n"
+            "5. subcategory          (string, required) a subcategory for the new pegged (can be \"\")\n"
+            "6. name                 (string, required) the name of the new pegged to create\n"
+            "7. collateralcurrency  (number, required) the collateral currency for the new pegged \n"
+            "8. future contract id  (number, required) the future contract id for the new pegged \n"
+            "9. amount of pegged    (number, required) amount of pegged to create \n"
             "\nResult:\n"
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
 
@@ -967,7 +956,7 @@ UniValue omni_send_pegged(const UniValue& params, bool fHelp)
         throw runtime_error(
             "omni_send \"fromaddress\" \"toaddress\" propertyid \"amount\" ( \"redeemaddress\" \"referenceamount\" )\n"
 
-            "\nCreate and broadcast a simple send transaction.\n"
+            "\nSend the pegged currency to other addresses.\n"
 
             "\nArguments:\n"
             "1. fromaddress          (string, required) the address to send from\n"
