@@ -1033,6 +1033,38 @@ int input_mp_crowdsale_string(const std::string& s)
     return 0;
 }
 
+/* New things for contracts *///////////////////////////////////////////////////
+int input_mp_contractdexorder_string(const std::string& s)
+{
+    std::vector<std::string> vstr;
+    boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
+
+    if (12 != vstr.size()) return -1;
+
+    int i = 0;
+
+    std::string addr = vstr[i++];
+    int block = boost::lexical_cast<int>(vstr[i++]);
+    int64_t amount_forsale = boost::lexical_cast<int64_t>(vstr[i++]);
+    uint32_t property = boost::lexical_cast<uint32_t>(vstr[i++]);
+    int64_t amount_desired = boost::lexical_cast<int64_t>(vstr[i++]);
+    uint32_t desired_property = boost::lexical_cast<uint32_t>(vstr[i++]);
+    uint8_t subaction = boost::lexical_cast<unsigned int>(vstr[i++]); // lexical_cast can't handle char!
+    unsigned int idx = boost::lexical_cast<unsigned int>(vstr[i++]);
+    uint256 txid = uint256S(vstr[i++]);
+    int64_t amount_remaining = boost::lexical_cast<int64_t>(vstr[i++]);
+    uint64_t effective_price = boost::lexical_cast<uint64_t>(vstr[i++]);
+    uint8_t trading_action = boost::lexical_cast<unsigned int>(vstr[i++]);
+
+    CMPContractDex mdexObj(addr, block, property, amount_forsale, desired_property,
+            amount_desired, txid, idx, subaction, amount_remaining, effective_price, trading_action);
+
+    if (!ContractDex_INSERT(mdexObj)) return -1;
+
+    return 0;
+}
+////////////////////////////////////////////////////////////////////////////////
+
 static int msc_file_load(const string &filename, int what, bool verifyHash = false)
 {
   int lines = 0;
@@ -1056,6 +1088,11 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
       my_crowds.clear();
       inputLineFunc = input_mp_crowdsale_string;
       break;
+
+    case FILETYPE_CDEXORDERS:
+        contractdex.clear();
+        inputLineFunc = input_mp_contractdexorder_string;
+        break;
 
     default:
       return -1;
@@ -1133,6 +1170,8 @@ static char const * const statePrefix[NUM_FILETYPES] = {
     "balances",
     "globals",
     "crowdsales",
+    "cdexorders",
+
 };
 
 // returns the height of the state loaded
@@ -1310,6 +1349,27 @@ static int write_mp_crowdsales(std::ofstream& file, SHA256_CTX* shaCtx)
     return 0;
 }
 
+////////////////////////////
+/** New things for Contract */
+static int write_mp_contractdex(ofstream &file, SHA256_CTX *shaCtx)
+{
+  for (cd_PropertiesMap::iterator my_it = contractdex.begin(); my_it != contractdex.end(); ++my_it)
+  {
+    cd_PricesMap &prices = my_it->second;
+    for (cd_PricesMap::iterator it = prices.begin(); it != prices.end(); ++it)
+    {
+      cd_Set &indexes = (it->second);
+      for (cd_Set::iterator it = indexes.begin(); it != indexes.end(); ++it)
+      {
+        CMPContractDex contract = *it;
+        contract.saveOffer(file, shaCtx);
+      }
+    }
+  }
+  return 0;
+}
+////////////////////////////
+
 static int write_state_file( CBlockIndex const *pBlockIndex, int what )
 {
   boost::filesystem::path path = MPPersistencePath / strprintf("%s-%s.dat", statePrefix[what], pBlockIndex->GetBlockHash().ToString());
@@ -1335,6 +1395,10 @@ static int write_state_file( CBlockIndex const *pBlockIndex, int what )
   case FILETYPE_CROWDSALES:
     result = write_mp_crowdsales(file, &shaCtx);
     break;
+
+  case FILETYPE_CDEXORDERS:
+     result = write_mp_contractdex(file, &shaCtx);
+     break;
   }
 
   // generate and wite the double hash of all the contents written
@@ -1421,7 +1485,9 @@ int mastercore_save_state( CBlockIndex const *pBlockIndex )
     write_state_file(pBlockIndex, FILETYPE_BALANCES);
     write_state_file(pBlockIndex, FILETYPE_GLOBALS);
     write_state_file(pBlockIndex, FILETYPE_CROWDSALES);
-
+    /*New things for contracts*/////////////////////////////////////////////////
+    write_state_file(pBlockIndex, FILETYPE_CDEXORDERS);
+    ////////////////////////////////////////////////////////////////////////////
     // clean-up the directory
     prune_state_files(pBlockIndex);
 
@@ -1441,6 +1507,7 @@ void clear_all_state()
     mp_tally_map.clear();
     my_crowds.clear();
     my_pending.clear();
+    contractdex.clear();
     ResetConsensusParams();
     ClearActivations();
     ClearAlerts();

@@ -98,6 +98,7 @@ enum FILETYPES {
   FILETYPE_BALANCES = 0,
   FILETYPE_GLOBALS,
   FILETYPE_CROWDSALES,
+  FILETYPE_CDEXORDERS,
   NUM_FILETYPES
 };
 
@@ -311,6 +312,9 @@ int mastercore_save_state( CBlockIndex const *pBlockIndex );
 namespace mastercore
 {
 extern std::unordered_map<std::string, CMPTally> mp_tally_map;
+/*New things for contracts*///////////////////////////////////
+// extern std::unordered_map<std::string, CDexTally> cd_tally_map;
+//////////////////////////////////////////////////////////////
 extern CMPTxList *p_txlistdb;
 extern COmniTransactionDB *p_OmniTXDB;
 extern CMPTradeList *t_tradelistdb;
