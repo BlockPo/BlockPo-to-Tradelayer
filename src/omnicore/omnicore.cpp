@@ -1559,10 +1559,13 @@ int mastercore_init()
             boost::filesystem::path txlistPath = GetDataDir() / "OCL_txlist";
             boost::filesystem::path spPath = GetDataDir() / "OCL_spinfo";
             boost::filesystem::path omniTXDBPath = GetDataDir() / "OCL_TXDB";
+            boost::filesystem::path tradePath = GetDataDir() / "OCL_tradelist";
             if (boost::filesystem::exists(persistPath)) boost::filesystem::remove_all(persistPath);
             if (boost::filesystem::exists(txlistPath)) boost::filesystem::remove_all(txlistPath);
             if (boost::filesystem::exists(spPath)) boost::filesystem::remove_all(spPath);
             if (boost::filesystem::exists(omniTXDBPath)) boost::filesystem::remove_all(omniTXDBPath);
+            if (boost::filesystem::exists(tradePath)) boost::filesystem::remove_all(tradePath);
+
             PrintToLog("Success clearing persistence files in datadir %s\n", GetDataDir().string());
             startClean = true;
         } catch (const boost::filesystem::filesystem_error& e) {
@@ -1574,7 +1577,7 @@ int mastercore_init()
     p_txlistdb = new CMPTxList(GetDataDir() / "OCL_txlist", fReindex);
     _my_sps = new CMPSPInfo(GetDataDir() / "OCL_spinfo", fReindex);
     p_OmniTXDB = new COmniTransactionDB(GetDataDir() / "OCL_TXDB", fReindex);
-    t_tradelistdb = new CMPTradeList(GetDataDir()/"OCL_listdb", fReindex);
+    t_tradelistdb = new CMPTradeList(GetDataDir()/"OCL_tradelist", fReindex);
     MPPersistencePath = GetDataDir() / "OCL_persist";
     TryCreateDirectory(MPPersistencePath);
 
@@ -2604,7 +2607,7 @@ double CMPTradeList::getPNL(string address, int64_t contractsClosed, int64_t pri
     int64_t totalContracts = 0;
     int64_t totalAux = 0;
     int64_t pCouldBuy = 0;
-    int64_t d_price = static_cast<int64_t>(price/factor);
+    // int64_t d_price = static_cast<int64_t>(price/factor);
     int64_t d_contractsClosed = static_cast<int64_t>(contractsClosed/factor);
     int64_t aux = getMPbalance(address, property, REMAINING);
     std::vector<std::string> vstr;
