@@ -2095,50 +2095,54 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
 
 
      if ((nBalance < amount) || (position < contractsNeeded)) {
-        PrintToLog("%s(): rejected:Sender has not required short position on this contract %d \n",
-               __func__,
-               sender,
-               propertyId);
-        PrintToConsole("rejected:Sender has not required short position on this contract\n");
-        return (PKT_ERROR_SEND -25);
-     }
+   //PrintToLog("%s(): rejected:Sender has not required short position on this contract %d \n",
+   //       __func__,
+   //       sender,
+   //       propertyId);
+   PrintToConsole("rejected:Sender has not required short position on this contract\n");
+   return (PKT_ERROR_SEND -25);
+   }
+
     // ------------------------------------------
+   PrintToConsole("First test point\n");
+   CMPSPInfo::Entry newSP;
+   newSP.issuer = sender;
+   newSP.txid = txid;
+   newSP.prop_type = prop_type;
+   // newSP.category.assign(category);
+   newSP.subcategory.assign(subcategory);
+   newSP.name.assign(name);
+   // newSP.url.assign(url);
+   // newSP.data.assign(data);
+   newSP.fixed = true;
+   newSP.manual = true;
+   newSP.creation_block = blockHash;
+   newSP.update_block = newSP.creation_block;
+   newSP.num_tokens = amount;
+   newSP.contracts_needed = contractsNeeded;
+   ecosystem = 1;  // TODO : checking later this!!!
+   const uint32_t npropertyId = _my_sps->putSP(ecosystem, newSP);
+   assert(npropertyId > 0);
+   PrintToConsole("Second test point\n");
+   PrintToConsole("Pegged currency Id: %d\n",npropertyId);
+   assert(update_tally_map(sender, npropertyId, amount, BALANCE));
+  // NotifyTotalTokensChanged(npropertyId, block);
 
-    CMPSPInfo::Entry newSP;
-    newSP.issuer = sender;
-    newSP.txid = txid;
-    newSP.prop_type = prop_type;
-    // newSP.category.assign(category);
-    newSP.subcategory.assign(subcategory);
-    newSP.name.assign(name);
-    // newSP.url.assign(url);
-    // newSP.data.assign(data);
-    newSP.fixed = true;
-    newSP.manual = true;
-    newSP.creation_block = blockHash;
-    newSP.update_block = newSP.creation_block;
-    newSP.num_tokens = amount;
-    newSP.contracts_needed = contractsNeeded;
-    ecosystem = 1;  // TODO : checking later this!!!
-    const uint32_t npropertyId = _my_sps->putSP(ecosystem, newSP);
-    assert(npropertyId > 0);
-    // PrintToConsole("Pegged currency Id: %d\n",npropertyId);
-    assert(update_tally_map(sender, npropertyId, amount, BALANCE));
-    // NotifyTotalTokensChanged(npropertyId, block);
+  // PrintToLog("CREATED MANUAL PROPERTY id: %d admin: %s\n", propertyId, sender);
 
-    // PrintToLog("CREATED MANUAL PROPERTY id: %d admin: %s\n", propertyId, sender);
+
 
 
     //putting into reserve contracts and collateral currency
     assert(update_tally_map(sender, contractId, -contractsNeeded, NEGATIVE_BALANCE));
     assert(update_tally_map(sender, contractId, contractsNeeded, CONTRACTDEX_RESERVE));
-
+    PrintToConsole("Third test point\n");
     assert(update_tally_map(sender, propertyId, -amount, BALANCE));
     assert(update_tally_map(sender, propertyId, amount, CONTRACTDEX_RESERVE));
 
-
     PrintToConsole("------------------------------------------------------------\n");
     return 0;
+
 
 }
 
