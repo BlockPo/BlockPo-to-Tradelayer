@@ -962,10 +962,43 @@ int input_msc_balances_string(const std::string& s)
         std::vector<std::string> curProperty;
         boost::split(curProperty, *iter, boost::is_any_of(":"), boost::token_compress_on);
         if (curProperty.size() != 2) return -1;
+
+        /*New things for contracts: save contractdex tally *////////////////////
+        std::vector<std::string> curBalance;
+        boost::split(curBalance, curProperty[1], boost::is_any_of(","), boost::token_compress_on);
+        if (curBalance.size() != 12) return -1;
+
+
         uint32_t propertyId = boost::lexical_cast<uint32_t>(curProperty[0]);
-        int64_t balance = boost::lexical_cast<int64_t>(curProperty[1]);
+        int64_t balance = boost::lexical_cast<int64_t>(curBalance[0]);
+        int64_t sellReserved = boost::lexical_cast<int64_t>(curBalance[1]);
+        int64_t acceptReserved = boost::lexical_cast<int64_t>(curBalance[2]);
+        int64_t metadexReserved = boost::lexical_cast<int64_t>(curBalance[3]);
+        int64_t contractdexReserved = boost::lexical_cast<int64_t>(curBalance[4]);
+        int64_t positiveBalance = boost::lexical_cast<int64_t>(curBalance[5]);
+        int64_t negativeBalance = boost::lexical_cast<int64_t>(curBalance[6]);
+        int64_t realizeProfit = boost::lexical_cast<int64_t>(curBalance[7]);
+        int64_t realizeLosses = boost::lexical_cast<int64_t>(curBalance[8]);
+        int64_t count = boost::lexical_cast<int64_t>(curBalance[9]);
+        int64_t remaining = boost::lexical_cast<int64_t>(curBalance[10]);
+        int64_t liquidationPrice = boost::lexical_cast<int64_t>(curBalance[11]);
+
 
         if (balance) update_tally_map(strAddress, propertyId, balance, BALANCE);
+        if (sellReserved) update_tally_map(strAddress, propertyId, sellReserved, SELLOFFER_RESERVE);
+        if (acceptReserved) update_tally_map(strAddress, propertyId, acceptReserved, ACCEPT_RESERVE);
+        if (metadexReserved) update_tally_map(strAddress, propertyId, metadexReserved, METADEX_RESERVE);
+
+        if (contractdexReserved) update_tally_map(strAddress, propertyId, contractdexReserved, CONTRACTDEX_RESERVE);
+        if (positiveBalance) update_tally_map(strAddress, propertyId, positiveBalance, POSSITIVE_BALANCE);
+        if (negativeBalance) update_tally_map(strAddress, propertyId, negativeBalance, NEGATIVE_BALANCE);
+        if (realizeProfit) update_tally_map(strAddress, propertyId, realizeProfit, REALIZED_PROFIT);
+        if (realizeLosses) update_tally_map(strAddress, propertyId, realizeLosses, REALIZED_LOSSES);
+        if (count) update_tally_map(strAddress, propertyId, count, COUNT);
+        if (remaining) update_tally_map(strAddress, propertyId, remaining, REMAINING);
+        if (liquidationPrice) update_tally_map(strAddress, propertyId, liquidationPrice, LIQUIDATION_PRICE);
+
+       /////////////////////////////////////////////////////////////////////////
     }
 
     return 0;
@@ -1295,18 +1328,42 @@ static int write_msc_balances(std::ofstream& file, SHA256_CTX* shaCtx)
         uint32_t propertyId = 0;
         while (0 != (propertyId = curAddr.next())) {
             int64_t balance = (*iter).second.getMoney(propertyId, BALANCE);
+            int64_t sellReserved = (*iter).second.getMoney(propertyId, SELLOFFER_RESERVE);
+            int64_t acceptReserved = (*iter).second.getMoney(propertyId, ACCEPT_RESERVE);
+            int64_t metadexReserved = (*iter).second.getMoney(propertyId, METADEX_RESERVE);
+
+            int64_t contractdexReserved = (*iter).second.getMoney(propertyId, CONTRACTDEX_RESERVE);
+            int64_t positiveBalance = (*iter).second.getMoney(propertyId, POSSITIVE_BALANCE);
+            int64_t negativeBalance = (*iter).second.getMoney(propertyId, NEGATIVE_BALANCE);
+            int64_t realizedProfit = (*iter).second.getMoney(propertyId, REALIZED_PROFIT);
+            int64_t realizedLosses = (*iter).second.getMoney(propertyId, REALIZED_LOSSES);
+            int64_t count = (*iter).second.getMoney(propertyId, COUNT);
+            int64_t remaining = (*iter).second.getMoney(propertyId, REMAINING);
+            int64_t liquidationPrice = (*iter).second.getMoney(propertyId, LIQUIDATION_PRICE);
 
             // we don't allow 0 balances to read in, so if we don't write them
             // it makes things match up better between persisted state and processed state
-            if (0 == balance) {
+            if (0 == balance && 0 == sellReserved && 0 == acceptReserved && 0 == metadexReserved && contractdexReserved == 0 && positiveBalance == 0 && negativeBalance == 0 && realizedProfit == 0 && realizedLosses == 0 && count == 0 && remaining == 0 && liquidationPrice == 0) {
                 continue;
             }
 
+
             emptyWallet = false;
 
-            lineOut.append(strprintf("%d:%d;",
+            lineOut.append(strprintf("%d:%d,%d,%d,%d,%d:%d,%d,%d,%d,%d,%d,%d;",
                     propertyId,
-                    balance));
+                    balance,
+                    sellReserved,
+                    acceptReserved,
+                    metadexReserved,
+                    contractdexReserved,
+                    positiveBalance,
+                    negativeBalance,
+                    realizedProfit,
+                    realizedLosses,
+                    count,
+                    remaining,
+                    liquidationPrice));
         }
 
         if (false == emptyWallet) {
