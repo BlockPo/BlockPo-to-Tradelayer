@@ -983,7 +983,22 @@ int input_msc_balances_string(const std::string& s)
         int64_t remaining = boost::lexical_cast<int64_t>(curBalance[10]);
         int64_t liquidationPrice = boost::lexical_cast<int64_t>(curBalance[11]);
 
-
+        PrintToConsole("--------------------------------------------------------\n");
+        PrintToConsole("Inside of input_msc_balances_string function!\n");
+        PrintToConsole("Property Id : %d\n",propertyId);
+        PrintToConsole("balance : %d\n",balance);
+        PrintToConsole("sellReserved : %d\n",sellReserved);
+        PrintToConsole("acceptReserved: %d\n",acceptReserved);
+        PrintToConsole("metadexReserved: %d\n",metadexReserved);
+        PrintToConsole("contractdexReserved: %d\n",contractdexReserved);
+        PrintToConsole("positiveBalance : %d\n",positiveBalance);
+        PrintToConsole("negativeBalance: %d\n",negativeBalance);
+        PrintToConsole("realizeProfit : %d\n",realizeProfit);
+        PrintToConsole("realizedLosses: %d\n",realizeLosses);
+        PrintToConsole("count : %d\n",count);
+        PrintToConsole("remaining : %d\n",remaining);
+        PrintToConsole("liquidation Price: %d\n",liquidationPrice);
+        PrintToConsole("--------------------------------------------------------\n");
         if (balance) update_tally_map(strAddress, propertyId, balance, BALANCE);
         if (sellReserved) update_tally_map(strAddress, propertyId, sellReserved, SELLOFFER_RESERVE);
         if (acceptReserved) update_tally_map(strAddress, propertyId, acceptReserved, ACCEPT_RESERVE);
@@ -1364,6 +1379,7 @@ static int write_msc_balances(std::ofstream& file, SHA256_CTX* shaCtx)
                     count,
                     remaining,
                     liquidationPrice));
+           PrintToConsole("Inside write_msc_balances ...no problem with strprintf!!!\n");
         }
 
         if (false == emptyWallet) {

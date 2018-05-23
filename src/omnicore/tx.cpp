@@ -671,7 +671,8 @@ bool CMPTransaction::interpret_CreateContractDex()
     if (!vecMarginRequirement.empty()) {
         margin_requirement = DecompressInteger(vecMarginRequirement);
     } else return false;
-
+    PrintToConsole("------------------------------------------------------------\n");
+    PrintToConsole("Inside interpret_CreateContractDex function\n");
     PrintToConsole("version: %d\n", version);
     PrintToConsole("messageType: %d\n",type);
     PrintToConsole("ecosystem: %d\n", ecosystem);
@@ -682,6 +683,7 @@ bool CMPTransaction::interpret_CreateContractDex()
     PrintToConsole("notional size : %d\n", notional_size);
     PrintToConsole("collateral currency: %d\n", collateral_currency);
     PrintToConsole("margin requirement: %d\n", margin_requirement);
+    PrintToConsole("------------------------------------------------------------\n");
     return true;
 }
 /**Tx 29 */
@@ -1874,6 +1876,20 @@ if ('\0' == name[0]) {
     const uint32_t propertyId = _my_sps->putSP(ecosystem, newSP);
     assert(propertyId > 0);
     PrintToConsole("Contract id: %d\n",propertyId);
+    PrintToConsole("------------------------------------------------------------\n");
+    PrintToConsole("Inside logicMath_CreateContractDex function\n");
+    PrintToConsole("version: %d\n", version);
+    PrintToConsole("messageType: %d\n",type);
+    PrintToConsole("ecosystem: %d\n", ecosystem);
+    PrintToConsole("property type: %d\n", prop_type);
+    PrintToConsole("name: %s\n", name);
+    PrintToConsole("subcategory: %s\n", subcategory);
+    PrintToConsole("blocks until expiration : %d\n", blocks_until_expiration);
+    PrintToConsole("notional size : %d\n", notional_size);
+    PrintToConsole("collateral currency: %d\n", collateral_currency);
+    PrintToConsole("margin requirement: %d\n", margin_requirement);
+    PrintToConsole("------------------------------------------------------------\n");
+
 
     return 0;
 }
@@ -1982,7 +1998,7 @@ int CMPTransaction::logicMath_ContractDexCancelEcosystem()
 /** Tx 100 */
 int CMPTransaction::logicMath_CreatePeggedCurrency()
 {
-    PrintToConsole("____________________________________________________________\n");
+    PrintToConsole("------------------------------------------------------------\n");
     PrintToConsole("Inside logicMath_CreatePeggedCurrency !!!!!\n");
     uint256 blockHash;
     {
@@ -2106,11 +2122,11 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
     ecosystem = 1;  // TODO : checking later this!!!
     const uint32_t npropertyId = _my_sps->putSP(ecosystem, newSP);
     assert(npropertyId > 0);
-    PrintToConsole("Pegged currency Id: %d\n",npropertyId);
+    // PrintToConsole("Pegged currency Id: %d\n",npropertyId);
     assert(update_tally_map(sender, npropertyId, amount, BALANCE));
     // NotifyTotalTokensChanged(npropertyId, block);
 
-    PrintToLog("CREATED MANUAL PROPERTY id: %d admin: %s\n", propertyId, sender);
+    // PrintToLog("CREATED MANUAL PROPERTY id: %d admin: %s\n", propertyId, sender);
 
 
     //putting into reserve contracts and collateral currency
@@ -2121,10 +2137,11 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
     assert(update_tally_map(sender, propertyId, amount, CONTRACTDEX_RESERVE));
 
 
-    PrintToConsole("____________________________________________________________\n");
+    PrintToConsole("------------------------------------------------------------\n");
     return 0;
 
 }
+
 int CMPTransaction::logicMath_SendPeggedCurrency()
 {
 
