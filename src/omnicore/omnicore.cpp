@@ -2657,8 +2657,8 @@ bool CMPTradeList::getMatchingTrades(uint32_t propertyId, UniValue& tradeArray)
       trade.push_back(Pair("amount_traded", FormatByType(amountTraded,1)));
       trade.push_back(Pair("price", FormatByType(price,2)));
       trade.push_back(Pair("taker_action",takerAction));
-      }
       tradeArray.push_back(trade);
+      }
       ++count;
   }
   // clean up
