@@ -1379,7 +1379,7 @@ static int write_msc_balances(std::ofstream& file, SHA256_CTX* shaCtx)
                     count,
                     remaining,
                     liquidationPrice));
-           PrintToConsole("Inside write_msc_balances ...no problem with strprintf!!!\n");
+          //  PrintToConsole("Inside write_msc_balances ...no problem with strprintf!!!\n");
         }
 
         if (false == emptyWallet) {

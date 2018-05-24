@@ -774,7 +774,7 @@ bool CMPTransaction::interpret_ContractDexCancelEcosystem()
       std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
 
       memcpy(&ecosystem, &pkt[i], 1);
-
+      i++;
       std::vector<uint8_t> vecPropTypeBytes = GetNextVarIntBytes(i);
       std::vector<uint8_t> vecPrevPropIdBytes = GetNextVarIntBytes(i);
       const char* p = i + (char*) &pkt;
@@ -823,6 +823,7 @@ bool CMPTransaction::interpret_ContractDexCancelEcosystem()
 
         PrintToConsole("version: %d\n", version);
         PrintToConsole("messageType: %d\n",type);
+        PrintToConsole("ecosystem: %d\n", ecosystem);
         PrintToConsole("property type: %d\n",prop_type);
         PrintToConsole("prev prop id: %d\n",prev_prop_id);
         PrintToConsole("contractId: %d\n", contractId);
@@ -2120,11 +2121,11 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
    newSP.update_block = newSP.creation_block;
    newSP.num_tokens = amount;
    newSP.contracts_needed = contractsNeeded;
-   ecosystem = 1;  // TODO : checking later this!!!
+  //  ecosystem = 1;
    const uint32_t npropertyId = _my_sps->putSP(ecosystem, newSP);
    assert(npropertyId > 0);
-   PrintToConsole("Second test point\n");
-   PrintToConsole("Pegged currency Id: %d\n",npropertyId);
+  //  PrintToConsole("checking ecosystem \n",ecosystem);
+  //  PrintToConsole("Pegged currency Id: %d\n",npropertyId);
    assert(update_tally_map(sender, npropertyId, amount, BALANCE));
   // NotifyTotalTokensChanged(npropertyId, block);
 
@@ -2136,11 +2137,11 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
     //putting into reserve contracts and collateral currency
     assert(update_tally_map(sender, contractId, -contractsNeeded, NEGATIVE_BALANCE));
     assert(update_tally_map(sender, contractId, contractsNeeded, CONTRACTDEX_RESERVE));
-    PrintToConsole("Third test point\n");
+    // PrintToConsole("Third test point\n");
     assert(update_tally_map(sender, propertyId, -amount, BALANCE));
     assert(update_tally_map(sender, propertyId, amount, CONTRACTDEX_RESERVE));
 
-    PrintToConsole("------------------------------------------------------------\n");
+    // PrintToConsole("------------------------------------------------------------\n");
     return 0;
 
 

@@ -422,6 +422,7 @@ std::vector<unsigned char> CreatePayload_IssuancePegged(uint8_t ecosystem, uint1
 
     std::vector<uint8_t> vecMessageType = CompressInteger(messageType);
     std::vector<uint8_t> vecMessageVer = CompressInteger(messageVer);
+    std::vector<uint8_t> vecEcosystem = CompressInteger(ecosystem);
     std::vector<uint8_t> vecPropertyType = CompressInteger(propertyType);
     std::vector<uint8_t> vecPrevPropertyId = CompressInteger(previousPropertyId);
     std::vector<uint8_t> vecContractId = CompressInteger(contractId);
@@ -431,6 +432,7 @@ std::vector<unsigned char> CreatePayload_IssuancePegged(uint8_t ecosystem, uint1
     if (name.size() > 255) name = name.substr(0,255);
     payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
     payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
+    payload.insert(payload.end(), vecEcosystem.begin(), vecEcosystem.end());
     payload.insert(payload.end(), vecPropertyType.begin(), vecPropertyType.end());
     payload.insert(payload.end(), vecPrevPropertyId.begin(), vecPrevPropertyId.end());
     payload.insert(payload.end(), subcategory.begin(), subcategory.end());
