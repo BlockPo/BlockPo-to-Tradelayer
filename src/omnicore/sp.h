@@ -94,6 +94,7 @@ public:
         uint32_t margin_requirement;
         int64_t contracts_needed;
         int init_block;
+        uint32_t contract_associated; // for pegged currency
         ////////////////////////////
 
         // For crowdsale properties:
@@ -139,6 +140,7 @@ public:
             READWRITE(collateral_currency);
             READWRITE(margin_requirement);
             READWRITE(init_block);
+            READWRITE(contract_associated);
             ////////////////////////////
         }
 
@@ -177,6 +179,8 @@ public:
     bool getWatermark(uint256& watermark) const;
 
     void printAll() const;
+
+    int rollingContractsBlock(const CBlockIndex* pBlockIndex);
 };
 
 /** A live crowdsale.

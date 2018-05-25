@@ -2121,6 +2121,7 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
    newSP.update_block = newSP.creation_block;
    newSP.num_tokens = amount;
    newSP.contracts_needed = contractsNeeded;
+   newSP.contract_associated = contractId;
   //  ecosystem = 1;
    const uint32_t npropertyId = _my_sps->putSP(ecosystem, newSP);
    assert(npropertyId > 0);

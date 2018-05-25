@@ -29,6 +29,7 @@
 #include <string>
 #include <vector>
 #include <utility>
+#include <math.h>
 
 using namespace mastercore;
 extern int64_t priceIndex;
@@ -835,7 +836,7 @@ int mastercore::addInterestPegged(int nBlockPrev, const CBlockIndex* pBlockIndex
     uint32_t peggedId = 2147483653;
     const int64_t factor = 100000000;
     string sender = "";
-    const int64_t blockTime = pBlockIndex->GetBlockTime();
+    // const int64_t blockTime = pBlockIndex->GetBlockTime();
     // int blockHeight = pBlockIndex->nHeight;
     CMPSPInfo::Entry sp;
     if (!_my_sps->getSP(contractId, sp)) {
@@ -920,6 +921,75 @@ int mastercore::addInterestPegged(int nBlockPrev, const CBlockIndex* pBlockIndex
        }
        PrintToConsole("----------------------------------------------------\n");
         return 1;
+}
+
+int CMPSPInfo::rollingContractsBlock(const CBlockIndex* pBlockIndex)
+{
+
+
+      leveldb::Iterator* iter = NewIterator();
+
+      CDataStream ssSpKeyPrefix(SER_DISK, CLIENT_VERSION);
+      ssSpKeyPrefix << 's';
+      leveldb::Slice slSpKeyPrefix(&ssSpKeyPrefix[0], ssSpKeyPrefix.size());
+
+      for (iter->Seek(slSpKeyPrefix); iter->Valid() && iter->key().starts_with(slSpKeyPrefix); iter->Next()) {
+          leveldb::Slice slSpKey = iter->key();
+          uint32_t propertyId = 0;
+          try {
+              CDataStream ssValue(1+slSpKey.data(), 1+slSpKey.data()+slSpKey.size(), SER_DISK, CLIENT_VERSION);
+              ssValue >> propertyId;
+          } catch (const std::exception& e) {
+              PrintToLog("%s(): ERROR: %s\n", __func__, e.what());
+              PrintToConsole("<Malformed key in DB>\n");
+              continue;
+          }
+
+       // deserialize the persisted data
+          leveldb::Slice slSpValue = iter->value();
+          Entry info;
+          try {
+              CDataStream ssSpValue(slSpValue.data(), slSpValue.data() + slSpValue.size(), SER_DISK, CLIENT_VERSION);
+              ssSpValue >> info;
+          } catch (const std::exception& e) {
+              PrintToConsole("<Malformed value in DB>\n");
+              PrintToLog("%s(): ERROR: %s\n", __func__, e.what());
+              continue;
+          }
+          if (info.subcategory == "Pegged Currency"){
+             PrintToConsole("---------------------------------------------------\n");
+             PrintToConsole("Inside if of rollingContractsBlock\n");
+             PrintToConsole("contract Id : %d\n",propertyId);
+             PrintToConsole("subcategory : %s\n",info.subcategory);
+             PrintToConsole("Owned address : %s\n",info.issuer);
+             PrintToConsole("contractId associated : %d\n",info.contract_associated);
+             int64_t contractsReserved = getMPbalance(info.issuer,info.contract_associated,CONTRACTDEX_RESERVE);
+             PrintToConsole("contracts Reserved : %d\n",contractsReserved);
+             Entry sp;
+             uint32_t contractId = info.contract_associated;
+             _my_sps->getSP(contractId, sp);
+             uint32_t expiration = sp.blocks_until_expiration;
+             int init_block = sp.init_block;
+             int actualBlock = static_cast<int>(pBlockIndex->nHeight);
+            //  uint32_t collateral = info.collateral_currency;
+             int deadline = static_cast<int>(expiration + init_block);
+             int rollingBlock = static_cast<int>(trunc(0.872*deadline));  //80% of deadline blocks
+             PrintToConsole("init block : %d\n",init_block);
+             PrintToConsole("deadline : %d\n",deadline);
+             PrintToConsole("blocks until expiration : %d\n",expiration);
+             PrintToConsole("rollingBlock : %d\n",rollingBlock);
+             PrintToConsole("Actual Block: %d\n",actualBlock);
+             if (rollingBlock == actualBlock){
+                 PrintToConsole("Generate the Rolling!\n");
+             }
+            //  int64_t contractsReserved = getMPbalance(info.issuer,propertyId,CONTRACTDEX_RESERVE);
+            //  PrintToConsole("Contracts in reserve : %s\n",contractsReserved);
+             PrintToConsole("---------------------------------------------------\n");
+          }
+        }
+       delete iter;
+
+    return 1;
 }
 ////////////////////////////////////////////////////////////////////////////////
 unsigned int mastercore::eraseExpiredCrowdsale(const CBlockIndex* pBlockIndex)

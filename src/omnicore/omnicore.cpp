@@ -2438,7 +2438,7 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
     CheckLiveActivations(pBlockIndex->nHeight);
     addInterestPegged(nBlockPrev,pBlockIndex);
     eraseExpiredCrowdsale(pBlockIndex);
-
+    _my_sps->rollingContractsBlock(pBlockIndex);
     return 0;
 }
 
