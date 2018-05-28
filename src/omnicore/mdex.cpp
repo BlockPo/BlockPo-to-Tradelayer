@@ -230,12 +230,12 @@ MatchReturnType x_Trade(CMPContractDex* const pnew)
             }
 
             // If someone is matching with himself
-            if (pold->getAddr() == pnew->getAddr())
-            {
-              PrintToConsole("Mathching with yourself!, Please choose another order\n");
-              ++offerIt;
-              return CANCELLED; // the new order must be cancelled
-            }
+            // if (pold->getAddr() == pnew->getAddr())
+            // {
+            //   PrintToConsole("Mathching with yourself!, Please choose another order\n");
+            //   ++offerIt;
+            //   return CANCELLED; // the new order must be cancelled
+            // }
 
             CMPSPInfo::Entry sp;
             assert(_my_sps->getSP(propertyForSale, sp));
@@ -572,12 +572,12 @@ MatchReturnType x_Trade(CMPContractDex* const pnew)
             }
 
             // If someone is matching with himself
-            if (pold->getAddr() == pnew->getAddr())
-            {
-              PrintToConsole("Mathching with yourself!, Please choose another order\n");
-              ++offerIt;
-              return CANCELLED; // the new order must be cancelled
-            }
+            // if (pold->getAddr() == pnew->getAddr())
+            // {
+            //   PrintToConsole("Mathching with yourself!, Please choose another order\n");
+            //   ++offerIt;
+            //   return CANCELLED; // the new order must be cancelled
+            // }
 
             CMPSPInfo::Entry sp;
             assert(_my_sps->getSP(propertyForSale, sp));
