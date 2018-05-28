@@ -44,6 +44,8 @@ using namespace mastercore;
 //! Global map for price and order data
 md_PropertiesMap mastercore::metadex;
 extern volatile uint64_t marketPrice;
+extern uint64_t ask [10];
+extern uint64_t bid [10];
 const int64_t factor = 100000000;
 md_PricesMap* mastercore::get_Prices(uint32_t prop)
 {
@@ -188,13 +190,13 @@ MatchReturnType x_Trade(CMPContractDex* const pnew)
                                        propertyForSale, xToString(pnew->getEffectivePrice()), pnew->ToString());
 
     cd_PricesMap* const ppriceMap = get_PricesCd(propertyForSale);
-
     // nothing for the desired property exists in the market, sorry!
     if (!ppriceMap) {
         PrintToLog("%s()=%d:%s NOT FOUND ON THE MARKET\n", __FUNCTION__, NewReturn, getTradeReturnType(NewReturn));
         return NewReturn;
     }
 
+    PrintToConsole("Bid price: %d\n",bid);
     // TODO: search for a better way to use iterators into the FOR loop.
     if(tradAction == BUY){
 

@@ -5,6 +5,7 @@
 #include "omnicore/log.h"
 #include "omnicore/omnicore.h"
 #include "omnicore/uint256_extensions.h"
+#include "omnicore/mdex.h"
 
 #include "arith_uint256.h"
 #include "base58.h"
@@ -959,7 +960,7 @@ int CMPSPInfo::rollingContractsBlock(const CBlockIndex* pBlockIndex)
           if (info.subcategory == "Pegged Currency"){
              PrintToConsole("---------------------------------------------------\n");
              PrintToConsole("Inside if of rollingContractsBlock\n");
-             PrintToConsole("contract Id : %d\n",propertyId);
+             PrintToConsole("peggedId : %d\n",propertyId);
              PrintToConsole("subcategory : %s\n",info.subcategory);
              PrintToConsole("Owned address : %s\n",info.issuer);
              PrintToConsole("contractId associated : %d\n",info.contract_associated);
@@ -973,17 +974,29 @@ int CMPSPInfo::rollingContractsBlock(const CBlockIndex* pBlockIndex)
              int actualBlock = static_cast<int>(pBlockIndex->nHeight);
             //  uint32_t collateral = info.collateral_currency;
              int deadline = static_cast<int>(expiration + init_block);
-             int rollingBlock = static_cast<int>(trunc(0.872*deadline));  //80% of deadline blocks
+             int rollingBlock = static_cast<int>(trunc(0.95*deadline));  //80% of deadline blocks
              PrintToConsole("init block : %d\n",init_block);
              PrintToConsole("deadline : %d\n",deadline);
              PrintToConsole("blocks until expiration : %d\n",expiration);
              PrintToConsole("rollingBlock : %d\n",rollingBlock);
              PrintToConsole("Actual Block: %d\n",actualBlock);
+             PrintToConsole("Contract Id : %d\n",contractId);
              if (rollingBlock == actualBlock){
-                 PrintToConsole("Generate the Rolling!\n");
+                 PrintToConsole("Generate the Rolling\n");
+                 update_tally_map(info.issuer, contractId, -contractsReserved, CONTRACTDEX_RESERVE);
+                 uint256 txid;
+                 unsigned int idx = 0;
+                 int result = ContractDex_ADD(info.issuer, contractId, contractsReserved, actualBlock, txid, idx, marketPrice, 1, 0);
+                 int64_t contractsNow = getMPbalance(info.issuer,contractId, CONTRACTDEX_RESERVE);
+                 if (result == 0){
+                 PrintToConsole("Order Inserted!!!!!!\n");
+                 PrintToConsole("Market Price: %d\n",marketPrice);
+                 }
+                 PrintToConsole("Contracts in reserve now: %d\n",contractsNow);
+                 // then we must rolling the contracts A to contracts B  (selling the contracts and then putting them into RESERVE)
+
              }
-            //  int64_t contractsReserved = getMPbalance(info.issuer,propertyId,CONTRACTDEX_RESERVE);
-            //  PrintToConsole("Contracts in reserve : %s\n",contractsReserved);
+
              PrintToConsole("---------------------------------------------------\n");
           }
         }
