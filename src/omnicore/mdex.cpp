@@ -195,8 +195,6 @@ MatchReturnType x_Trade(CMPContractDex* const pnew)
         PrintToLog("%s()=%d:%s NOT FOUND ON THE MARKET\n", __FUNCTION__, NewReturn, getTradeReturnType(NewReturn));
         return NewReturn;
     }
-
-    PrintToConsole("Bid price: %d\n",bid);
     // TODO: search for a better way to use iterators into the FOR loop.
     if(tradAction == BUY){
 

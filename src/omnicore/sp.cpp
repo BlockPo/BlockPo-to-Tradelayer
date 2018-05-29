@@ -36,6 +36,8 @@ using namespace mastercore;
 extern int64_t priceIndex;
 extern int64_t allPrice;
 extern volatile uint64_t marketPrice;
+extern uint64_t ask [10];
+extern uint64_t bid [10];
 
 CMPSPInfo::Entry::Entry()
   : prop_type(0), prev_prop_id(0), num_tokens(0), property_desired(0),
@@ -927,7 +929,6 @@ int mastercore::addInterestPegged(int nBlockPrev, const CBlockIndex* pBlockIndex
 int CMPSPInfo::rollingContractsBlock(const CBlockIndex* pBlockIndex)
 {
 
-
       leveldb::Iterator* iter = NewIterator();
 
       CDataStream ssSpKeyPrefix(SER_DISK, CLIENT_VERSION);
@@ -946,7 +947,7 @@ int CMPSPInfo::rollingContractsBlock(const CBlockIndex* pBlockIndex)
               continue;
           }
 
-       // deserialize the persisted data
+         // deserialize the persisted data
           leveldb::Slice slSpValue = iter->value();
           Entry info;
           try {
@@ -972,9 +973,8 @@ int CMPSPInfo::rollingContractsBlock(const CBlockIndex* pBlockIndex)
              uint32_t expiration = sp.blocks_until_expiration;
              int init_block = sp.init_block;
              int actualBlock = static_cast<int>(pBlockIndex->nHeight);
-            //  uint32_t collateral = info.collateral_currency;
              int deadline = static_cast<int>(expiration + init_block);
-             int rollingBlock = static_cast<int>(trunc(0.95*deadline));  //80% of deadline blocks
+             int rollingBlock = static_cast<int>(trunc(1.088*deadline));  //80% of deadline blocks
              PrintToConsole("init block : %d\n",init_block);
              PrintToConsole("deadline : %d\n",deadline);
              PrintToConsole("blocks until expiration : %d\n",expiration);
@@ -982,19 +982,43 @@ int CMPSPInfo::rollingContractsBlock(const CBlockIndex* pBlockIndex)
              PrintToConsole("Actual Block: %d\n",actualBlock);
              PrintToConsole("Contract Id : %d\n",contractId);
              if (rollingBlock == actualBlock){
-                 PrintToConsole("Generate the Rolling\n");
+                 PrintToConsole("Generate the Rolling!!!!!!!!!!!!!!!!!!!!!!!!\n");
+                 // then we must rolling the contracts A to contracts B  (selling the contracts and then putting them into RESERVE)
+                 std::vector<uint64_t> vecContractDexPrices;
+                 cd_PricesMap* const ppriceMap = get_PricesCd(contractId);
+                 for (cd_PricesMap::iterator it = ppriceMap->begin(); it != ppriceMap->end(); ++it) {
+                     const cd_Set& indexes = it->second;
+                     for (cd_Set::const_iterator it = indexes.begin(); it != indexes.end(); ++it) {
+                         const CMPContractDex& obj = *it;
+                         if (obj.getTradingAction() == 1) continue;
+                         if (obj.getAmountForSale() <= 0) continue;
+                         uint64_t price = obj.getEffectivePrice();
+                         PrintToConsole("Price of offer in sell side: %d\n",price);
+                         vecContractDexPrices.push_back(price);
+                     }
+                 }
+                 uint64_t ask = vecContractDexPrices.front();
+                 PrintToConsole("Price of ask: %d\n",ask);
+                 int64_t positiveBalance = getMPbalance(info.issuer,contractId, POSSITIVE_BALANCE);
+                 int64_t negativeBalance = getMPbalance(info.issuer,contractId, NEGATIVE_BALANCE);
+                 PrintToConsole("Long position before: %d\n",positiveBalance);
+                 PrintToConsole("Short position before: %d\n",negativeBalance);
                  update_tally_map(info.issuer, contractId, -contractsReserved, CONTRACTDEX_RESERVE);
                  uint256 txid;
                  unsigned int idx = 0;
-                 int result = ContractDex_ADD(info.issuer, contractId, contractsReserved, actualBlock, txid, idx, marketPrice, 1, 0);
+                 int result = ContractDex_ADD(info.issuer, contractId, contractsReserved, actualBlock, txid, idx, ask, 1, 0);
                  int64_t contractsNow = getMPbalance(info.issuer,contractId, CONTRACTDEX_RESERVE);
+                 update_tally_map(info.issuer, contractId, negativeBalance, NEGATIVE_BALANCE); // adding the short position
+                 int64_t positiveBalanceAf = getMPbalance(info.issuer,contractId, POSSITIVE_BALANCE);
+                 int64_t negativeBalanceAf = getMPbalance(info.issuer,contractId, NEGATIVE_BALANCE);
+                 // int result = ContractDex_ADD(); // shorting in the future contract B
+                  //update_tally_map(info.issuer, contractId2, contractsReserved, CONTRACTDEX_RESERVE) // rolling
                  if (result == 0){
-                 PrintToConsole("Order Inserted!!!!!!\n");
-                 PrintToConsole("Market Price: %d\n",marketPrice);
+                 PrintToConsole("Order Added!!!!!!\n");
                  }
                  PrintToConsole("Contracts in reserve now: %d\n",contractsNow);
-                 // then we must rolling the contracts A to contracts B  (selling the contracts and then putting them into RESERVE)
-
+                 PrintToConsole("Long position after: %d\n",positiveBalanceAf);
+                 PrintToConsole("Short position after: %d\n",negativeBalanceAf);
              }
 
              PrintToConsole("---------------------------------------------------\n");
