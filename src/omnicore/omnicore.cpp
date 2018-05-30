@@ -2696,7 +2696,7 @@ double CMPTradeList::getPNL(string address, int64_t contractsClosed, int64_t pri
         if (vstr.size() != 16) {
 
             PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
-            PrintToConsole("TRADEDB error - unexpected number of tokens in value : %d \n",vstr.size());
+            // PrintToConsole("TRADEDB error - unexpected number of tokens in value : (%s) \n",strValue);
             continue;
         }
         if (address != vstr[0] && address != vstr[1]) continue;

@@ -984,46 +984,55 @@ int CMPSPInfo::rollingContractsBlock(const CBlockIndex* pBlockIndex)
              if (rollingBlock == actualBlock){
                  PrintToConsole("Generate the Rolling!!!!!!!!!!!!!!!!!!!!!!!!\n");
                  // then we must rolling the contracts A to contracts B  (selling the contracts and then putting them into RESERVE)
-                 std::vector<uint64_t> vecContractDexPrices;
-                 cd_PricesMap* const ppriceMap = get_PricesCd(contractId);
-                 for (cd_PricesMap::iterator it = ppriceMap->begin(); it != ppriceMap->end(); ++it) {
-                     const cd_Set& indexes = it->second;
-                     for (cd_Set::const_iterator it = indexes.begin(); it != indexes.end(); ++it) {
-                         const CMPContractDex& obj = *it;
-                         if (obj.getTradingAction() == 1) continue;
-                         if (obj.getAmountForSale() <= 0) continue;
-                         uint64_t price = obj.getEffectivePrice();
-                         PrintToConsole("Price of offer in sell side: %d\n",price);
-                         vecContractDexPrices.push_back(price);
-                     }
-                 }
-                 uint64_t ask = vecContractDexPrices.front();
+                 uint64_t ask = edgeOrderbook(contractId,1);
                  PrintToConsole("Price of ask: %d\n",ask);
                  int64_t positiveBalance = getMPbalance(info.issuer,contractId, POSSITIVE_BALANCE);
                  int64_t negativeBalance = getMPbalance(info.issuer,contractId, NEGATIVE_BALANCE);
                  PrintToConsole("Long position before: %d\n",positiveBalance);
                  PrintToConsole("Short position before: %d\n",negativeBalance);
-                 update_tally_map(info.issuer, contractId, -contractsReserved, CONTRACTDEX_RESERVE);
+                 assert(update_tally_map(info.issuer, contractId, -contractsReserved, CONTRACTDEX_RESERVE));
                  uint256 txid;
                  unsigned int idx = 0;
                  int result = ContractDex_ADD(info.issuer, contractId, contractsReserved, actualBlock, txid, idx, ask, 1, 0);
                  int64_t contractsNow = getMPbalance(info.issuer,contractId, CONTRACTDEX_RESERVE);
-                 update_tally_map(info.issuer, contractId, negativeBalance, NEGATIVE_BALANCE); // adding the short position
+                 assert(update_tally_map(info.issuer, contractId, negativeBalance, NEGATIVE_BALANCE)); // adding the short position
                  int64_t positiveBalanceAf = getMPbalance(info.issuer,contractId, POSSITIVE_BALANCE);
                  int64_t negativeBalanceAf = getMPbalance(info.issuer,contractId, NEGATIVE_BALANCE);
-                 // int result = ContractDex_ADD(); // shorting in the future contract B
-                  //update_tally_map(info.issuer, contractId2, contractsReserved, CONTRACTDEX_RESERVE) // rolling
-                 if (result == 0){
-                 PrintToConsole("Order Added!!!!!!\n");
+                 // checking the bid price for Contract B:
+                 uint32_t contractId2 = 5; // only for test
+                 uint64_t bid = edgeOrderbook(contractId2,2);
+                 PrintToConsole("Price of bid: %d\n",bid);
+                 int result2 = ContractDex_ADD(info.issuer,contractId2, contractsReserved, actualBlock, txid, idx,bid,2,0); // shorting in the future contract B
+                 int64_t positiveBalanceB = getMPbalance(info.issuer,contractId2, POSSITIVE_BALANCE);
+                 int64_t negativeBalanceB = getMPbalance(info.issuer,contractId2, NEGATIVE_BALANCE);
+                 if(positiveBalanceB >= 0 && negativeBalanceB == 0){
+                        assert(update_tally_map(info.issuer, contractId2, contractsReserved, POSSITIVE_BALANCE));
+                 } else if (positiveBalanceB == 0 && negativeBalanceB >= 0) {
+                        int64_t diffn = contractsReserved - negativeBalanceB;
+                        PrintToConsole("diffn : %d <-------------------------------\n",diffn);
+                     if (diffn >= 0){
+                         assert(update_tally_map(info.issuer, contractId2, diffn, POSSITIVE_BALANCE));
+                         assert(update_tally_map(info.issuer, contractId2, -negativeBalanceB, NEGATIVE_BALANCE));
+                     } else {
+                         assert(update_tally_map(info.issuer, contractId2, -contractsReserved, NEGATIVE_BALANCE));
+                     }
+
+                    }
+                    assert(update_tally_map(info.issuer, contractId2, contractsReserved, CONTRACTDEX_RESERVE));
+                    int64_t contractsReservedB = getMPbalance(info.issuer,contractId2, CONTRACTDEX_RESERVE);
+                    PrintToConsole("Contracts Reserved in Contract B : %d\n", contractsReservedB);
+                    if (result == 0){
+                    PrintToConsole("Order Added in Contract A!!!!!!\n");
+                    }
+                    if (result2 == 0){
+                    PrintToConsole("Order Added in Contract B!!!!!!\n");
+                    }
                  }
-                 PrintToConsole("Contracts in reserve now: %d\n",contractsNow);
-                 PrintToConsole("Long position after: %d\n",positiveBalanceAf);
-                 PrintToConsole("Short position after: %d\n",negativeBalanceAf);
+
              }
 
              PrintToConsole("---------------------------------------------------\n");
           }
-        }
        delete iter;
 
     return 1;
@@ -1119,4 +1128,33 @@ bool CMPSPInfo::Entry::isContract() const
             return true;
     }
     return false;
+}
+
+uint64_t mastercore::edgeOrderbook(uint32_t contractId, uint8_t tradingAction)
+{
+  uint64_t price = 0;
+  uint64_t result = 0;
+  std::vector<uint64_t> vecContractDexPrices;
+  cd_PricesMap* const ppriceMap = get_PricesCd(contractId); // checking the ask price of contract A
+  for (cd_PricesMap::iterator it = ppriceMap->begin(); it != ppriceMap->end(); ++it) {
+      const cd_Set& indexes = it->second;
+      for (cd_Set::const_iterator it = indexes.begin(); it != indexes.end(); ++it) {
+          const CMPContractDex& obj = *it;
+          if (obj.getTradingAction() == tradingAction) continue;
+          if (obj.getAmountForSale() <= 0) continue;
+          price = obj.getEffectivePrice();
+          vecContractDexPrices.push_back(price);
+          if (tradingAction == BUY){
+             PrintToConsole("Price of offer in sell side: %d\n",price);
+          } else {
+            PrintToConsole("Price of offer in buy side: %d\n",price);
+          }
+      }
+    }
+    if (tradingAction == BUY){
+       result = vecContractDexPrices.front();
+    } else {
+       result = vecContractDexPrices.back();
+    }
+    return result;
 }
