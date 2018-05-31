@@ -26,6 +26,15 @@
 #include <algorithm>
 #include <utility>
 #include <vector>
+#include<arpa/inet.h>
+#include<unistd.h>
+#include<sys/socket.h>
+#include<sys/types.h>
+#include<stdio.h>
+#include<string.h>
+#include<stdlib.h>
+#include <inttypes.h>
+
 
 using boost::algorithm::token_compress_on;
 
@@ -1968,6 +1977,46 @@ if (nBalance < amountToReserve) {
     t_tradelistdb->recordNewTrade(txid, sender, property, desired_property, block, tx_idx);
 
     int rc = ContractDex_ADD(sender, contractId, amount, block, txid, tx_idx, effective_price, trading_action,amountToReserve);
+    //SOCKET
+    char buffAction[10];
+    char buffTradingAction[3];
+    char buffQuantity[21];
+    char buffPrice[21];
+    char buffEnd[10];
+    char buffProperty[10];
+    char buffSeparator[10];
+    char buffer[512];
+
+    sprintf(buffAction, "%s", "trade");
+    sprintf(buffTradingAction, "%u", trading_action);
+    sprintf(buffQuantity, "%" PRIu64, nValue);
+    sprintf(buffPrice, "%" PRIu64, effective_price);
+    sprintf(buffProperty, "%u", contractId);
+    sprintf(buffEnd, "%s", "<<<");
+    sprintf(buffSeparator, "%s", "-");
+
+    strcpy(buffer,buffAction);
+    strcat(buffer,buffSeparator);
+    strcat(buffer,buffQuantity);
+    strcat(buffer,buffSeparator);
+    strcat(buffer,buffPrice);
+    strcat(buffer,buffSeparator);
+    strcat(buffer,buffProperty);
+    strcat(buffer,buffSeparator);
+    strcat(buffer,buffTradingAction);
+    strcat(buffer,buffEnd);
+
+    int sockfd;
+
+    sockfd = socket(AF_INET,SOCK_DGRAM,0);
+    struct sockaddr_in serv;
+    serv.sin_family = AF_INET;
+    serv.sin_port = htons(666);
+    serv.sin_addr.s_addr = inet_addr("127.0.0.1");
+    socklen_t m = sizeof(serv);
+    sendto(sockfd,buffer,sizeof(buffer),0,(struct sockaddr *)&serv,m);
+
+
     return rc;
   }
   return 0;
