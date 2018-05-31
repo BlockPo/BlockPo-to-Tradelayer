@@ -296,6 +296,14 @@ public:
         alert_type = 0;
         alert_expiry = 0;
         distribution_property = 0;
+        ////////////////////////////////////
+        /** New things for Contracts */
+        effective_price = 0;
+        trading_action = 0;
+        propertyId = 0;
+        contractId = 0;
+        amount = 0;
+        ////////////////////////////////////
     }
 
     /** Sets the given values. */

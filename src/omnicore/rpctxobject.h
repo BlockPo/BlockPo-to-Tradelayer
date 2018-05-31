@@ -24,7 +24,9 @@ void populateRPCTypeGrant(CMPTransaction& omniObj, UniValue& txobj);
 void populateRPCTypeRevoke(CMPTransaction& omniOobj, UniValue& txobj);
 void populateRPCTypeChangeIssuer(CMPTransaction& omniObj, UniValue& txobj);
 void populateRPCTypeActivation(CMPTransaction& omniObj, UniValue& txobj);
-
+/*New things for contracts*/////////////////////////////////////////////////////
+void populateRPCTypeContractDexTrade(CMPTransaction& omniObj, UniValue& txobj);
+////////////////////////////////////////////////////////////////////////////////
 int populateRPCSendAllSubSends(const uint256& txid, UniValue& subSends);
 
 bool showRefForTx(uint32_t txType);

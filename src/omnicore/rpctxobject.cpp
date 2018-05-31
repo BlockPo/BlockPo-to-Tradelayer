@@ -14,6 +14,7 @@
 #include "omnicore/tx.h"
 #include "omnicore/utilsbitcoin.h"
 #include "omnicore/wallettxs.h"
+#include "omnicore/mdex.h"
 
 #include "chainparams.h"
 #include "main.h"
@@ -163,6 +164,9 @@ void populateRPCTypeInfo(CMPTransaction& mp_obj, UniValue& txobj, uint32_t txTyp
         case OMNICORE_MESSAGE_TYPE_ACTIVATION:
             populateRPCTypeActivation(mp_obj, txobj);
             break;
+        case MSC_TYPE_CONTRACTDEX_TRADE:
+            populateRPCTypeContractDexTrade(mp_obj, txobj);
+            break;
     }
 }
 
@@ -181,6 +185,7 @@ bool showRefForTx(uint32_t txType)
         case MSC_TYPE_CHANGE_ISSUER_ADDRESS: return true;
         case MSC_TYPE_SEND_ALL: return true;
         case OMNICORE_MESSAGE_TYPE_ACTIVATION: return false;
+        case MSC_TYPE_CONTRACTDEX_TRADE: return false;
     }
     return true; // default to true, shouldn't be needed but just in case
 }
@@ -343,3 +348,18 @@ int populateRPCSendAllSubSends(const uint256& txid, UniValue& subSends)
     return subSends.size();
 }
 
+/**New things for contracts*////////////////////////////////////////////////////
+void populateRPCTypeContractDexTrade(CMPTransaction& omniObj, UniValue& txobj)
+{
+    CMPContractDex ContractObj(omniObj);
+
+    // populate
+    int64_t amount = ContractObj.getAmountForSale();
+    PrintToConsole("amount : %d\n",amount);
+    // txobj.push_back(Pair("contractid", (uint64_t) omniObj.getProperty()));
+    // txobj.push_back(Pair("amount", ContractObj.getAmountForSale()));
+    txobj.push_back(Pair("price", FormatMP(1,ContractObj.getEffectivePrice())));
+    txobj.push_back(Pair("trading action",(uint64_t)ContractObj.getTradingAction()));
+
+}
+////////////////////////////////////////////////////////////////////////////////
