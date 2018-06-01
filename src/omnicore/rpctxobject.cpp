@@ -94,6 +94,12 @@ int populateRPCTransactionObject(const CTransaction& tx, const uint256& blockHas
         positionInBlock = p_OmniTXDB->FetchTransactionPosition(txid);
     }
 
+    /*New things for contracts*/////////////
+    // PrintToConsole("Checking the contract Id in the CMPTransaction object---------->: %d\n",mp_obj.getContractId());
+    // PrintToConsole("Checking the amount in the CMPTransaction object---------->: %d\n",mp_obj.getContractAmount());
+    // PrintToConsole("Checking the sender in the CMPTransaction object---------->: %d\n",mp_obj.getSender());
+    /////////////////////////////////////////
+
     // populate some initial info for the transaction
     bool fMine = false;
     if (IsMyAddress(mp_obj.getSender()) || IsMyAddress(mp_obj.getReceiver())) fMine = true;
@@ -355,9 +361,8 @@ void populateRPCTypeContractDexTrade(CMPTransaction& omniObj, UniValue& txobj)
 
     // populate
     int64_t amount = ContractObj.getAmountForSale();
-    PrintToConsole("amount : %d\n",amount);
-    // txobj.push_back(Pair("contractid", (uint64_t) omniObj.getProperty()));
-    // txobj.push_back(Pair("amount", ContractObj.getAmountForSale()));
+    txobj.push_back(Pair("contractid", (uint64_t)omniObj.getContractId()));
+    txobj.push_back(Pair("amount", (uint64_t)omniObj.getContractAmount()));
     txobj.push_back(Pair("price", FormatMP(1,ContractObj.getEffectivePrice())));
     txobj.push_back(Pair("trading action",(uint64_t)ContractObj.getTradingAction()));
 

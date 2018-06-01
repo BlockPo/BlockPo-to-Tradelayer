@@ -236,6 +236,8 @@ public:
     /** New things for Contracts */
     uint32_t getMarginRequirement() const { return margin_requirement; }
     uint32_t getNotionalSize() const { return notional_size; }
+    uint32_t getContractId() const { return contractId; }
+    uint64_t getContractAmount() const { return amount; }
     ////////////////////////////////
 
     ///////////////////////////////////////////////
