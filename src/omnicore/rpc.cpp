@@ -1333,9 +1333,11 @@ bool PositionToJSON(const std::string& address, uint32_t property, UniValue& bal
 {
     int64_t longPosition  = getMPbalance(address, property, POSSITIVE_BALANCE);
     int64_t shortPosition = getMPbalance(address, property, NEGATIVE_BALANCE);
+    int64_t liqPrice = getMPbalance(address, property, LIQUIDATION_PRICE);
 
     balance_obj.push_back(Pair("longPosition", FormatByType(longPosition,1)));
     balance_obj.push_back(Pair("shortPosition", FormatByType(shortPosition,1)));
+    balance_obj.push_back(Pair("liquidationPrice", FormatByType(liqPrice,2)));
 
     return true;
 }

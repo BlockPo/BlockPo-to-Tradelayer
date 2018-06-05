@@ -251,8 +251,8 @@ MatchReturnType x_Trade(CMPContractDex* const pnew)
             // Preconditions
             assert(pold->getProperty() == pnew->getProperty());
 
-            // get_LiquidationPrice(pnew->getEffectivePrice(), pnew->getAddr(), pnew->getProperty(), pnew->getTradingAction()); // setting liquidation prices
-            //get_LiquidationPrice(pold->getEffectivePrice(), pold->getAddr(), pold->getProperty(), pold->getTradingAction());
+            get_LiquidationPrice(pold->getEffectivePrice(), pnew->getAddr(), pnew->getProperty(), pnew->getTradingAction()); // setting liquidation prices
+            get_LiquidationPrice(pold->getEffectivePrice(), pold->getAddr(), pold->getProperty(), pold->getTradingAction());
 
             PrintToConsole("________________________________________________________\n");
             PrintToConsole("Inside x_trade:\n");
@@ -597,8 +597,8 @@ MatchReturnType x_Trade(CMPContractDex* const pnew)
             // Preconditions
             assert(pold->getProperty() == pnew->getProperty());
 
-            // get_LiquidationPrice(pnew->getEffectivePrice(), pnew->getAddr(), pnew->getProperty(), pnew->getTradingAction()); // setting liquidation prices
-            //get_LiquidationPrice(pold->getEffectivePrice(), pold->getAddr(), pold->getProperty(), pold->getTradingAction());
+            get_LiquidationPrice(pold->getEffectivePrice(), pnew->getAddr(), pnew->getProperty(), pnew->getTradingAction()); // setting liquidation prices
+            get_LiquidationPrice(pold->getEffectivePrice(), pold->getAddr(), pold->getProperty(), pold->getTradingAction());
 
             PrintToConsole("________________________________________________________\n");
             PrintToConsole("Inside x_trade:\n");
@@ -906,9 +906,13 @@ void get_LiquidationPrice(int64_t effectivePrice, string address, uint32_t prope
     PrintToConsole ("Effective price : %g\n", liqPrice);
 
     int64_t liq64 = static_cast<int64_t>(liqPrice);
-    assert(update_tally_map(address, property, liq64, LIQUIDATION_PRICE));
+    int64_t oldLiqPrice = getMPbalance (address, property,LIQUIDATION_PRICE);
+    int64_t newLiqPrice = static_cast<int64_t>((liq64+oldLiqPrice)/2);
+    PrintToConsole ("Precio de liquidación antiguo : %d\n", FormatContractShortMP(oldLiqPrice));
+    PrintToConsole ("Precio de liquidación actual : %d\n", FormatContractShortMP(liq64));
+    PrintToConsole ("Precio de liquidación Nuevo : %d\n", FormatContractShortMP(newLiqPrice));
+    assert(update_tally_map(address, property, newLiqPrice, LIQUIDATION_PRICE));
 
-    PrintToConsole ("Precio de liquidación: %d\n", FormatContractShortMP(liq64));
 }
 ////////////////////////////////////////
 /**
