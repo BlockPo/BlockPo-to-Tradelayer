@@ -81,7 +81,8 @@ bool CheckFee(const std::string& fromAddress, size_t nDataSize)
 
     // if there is not enough data (and zero is estimated) then base minimum on a fairly high/safe 50,000 satoshi fee per KB
     if (feeRate == CFeeRate(0)) {
-        feePerKB = 50000;
+        // feePerKB = 50000;
+           feePerKB = 1; /*New things for contracts*/
     } else {
         feePerKB = feeRate.GetFeePerK();
     }
@@ -93,10 +94,12 @@ bool CheckFee(const std::string& fromAddress, size_t nDataSize)
         //   - under 2% of Class B transactions are over 2KB, under 0.6% of transactions are over 3KB.
         // Thus if created transaction will be over 3KB (rare as per above) warning may not be sufficient.
         minFee = feePerKB * 3;
+
     } else {
         // Averages for Class C transactions are not yet available, Calculation based on a 2KB transaction due to:
         //   - Class B values but considering Class C removes outputs for both data and Exodus (reduces size).
         minFee = feePerKB * 2;
+
     }
 #endif
     return inputTotal >= minFee;

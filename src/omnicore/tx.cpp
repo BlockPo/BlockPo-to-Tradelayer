@@ -1982,12 +1982,14 @@ if (nBalance < amountToReserve) {
     char buffTradingAction[3];
     char buffQuantity[21];
     char buffPrice[21];
+    char buffAddress[21];
     char buffEnd[10];
     char buffProperty[10];
     char buffSeparator[10];
     char buffer[512];
 
     sprintf(buffAction, "%s", "trade");
+    sprintf(buffAddress, "%s", sender);
     sprintf(buffTradingAction, "%u", trading_action);
     sprintf(buffQuantity, "%" PRIu64, nValue);
     sprintf(buffPrice, "%" PRIu64, effective_price);
@@ -2004,7 +2006,10 @@ if (nBalance < amountToReserve) {
     strcat(buffer,buffProperty);
     strcat(buffer,buffSeparator);
     strcat(buffer,buffTradingAction);
+    strcat(buffer,buffSeparator);
+    strcat(buffer,buffAddress);
     strcat(buffer,buffEnd);
+
 
     int sockfd;
 

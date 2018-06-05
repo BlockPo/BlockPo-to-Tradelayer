@@ -258,6 +258,7 @@ public:
     /** New things for Contract */
     /** New things for Contract */
     void recordMatchedTrade(const uint256 txid1, const uint256 txid2, string address1, string address2, int64_t nCouldbuy, int64_t amountForsale, int64_t amountStillForsale, int blockNum1, int blockNum2, string s_status1, string s_status2, int64_t lives_maker, int64_t lives_taker, uint32_t property_traded, string tradeStatus, int64_t pricepold, int64_t pricepnew, uint8_t pnewAction);
+    void recordForUPNL(const uint256 txid, string address, uint32_t property_traded, int64_t effectivePrice);
     // void recordMatchedTrade(const uint256 txid1, const uint256 txid2, string address1, string address2, unsigned int prop1, unsigned int prop2, uint64_t amount1, uint64_t amount2, int blockNum, int64_t fee, string t_status, std::vector<uint256> &vecTxid);
     /////////////////////////////////
 
@@ -273,6 +274,7 @@ public:
     bool getMatchingTrades(uint32_t propertyId, UniValue& tradeArray);
     double getPNL(string address, int64_t contractsClosed, int64_t price, uint32_t property, uint32_t marginRequirementContract, uint32_t notionalSize, std::string Status);
     void marginLogic(uint32_t property);
+    double getUPNL(string address, uint32_t contractId);
     //////////////////////////////////////
 
     bool getMatchingTrades(const uint256& txid);

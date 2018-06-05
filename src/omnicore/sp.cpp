@@ -1002,15 +1002,18 @@ int CMPSPInfo::rollingContractsBlock(const CBlockIndex* pBlockIndex)
                  uint32_t contractId2 = 5; // only for test
                  uint64_t bid = edgeOrderbook(contractId2,2);
                  PrintToConsole("Price of bid: %d\n",bid);
-                 int result2 = ContractDex_ADD(info.issuer,contractId2, contractsReserved, actualBlock, txid, idx,bid,2,0); // shorting in the future contract B
                  int64_t positiveBalanceB = getMPbalance(info.issuer,contractId2, POSSITIVE_BALANCE);
                  int64_t negativeBalanceB = getMPbalance(info.issuer,contractId2, NEGATIVE_BALANCE);
+                 int result2 = ContractDex_ADD(info.issuer,contractId2, contractsReserved, actualBlock, txid, idx,bid,2,0); // shorting in the future contract B
+                 PrintToConsole("positiveBalance contract B: %d <------------------------\n",positiveBalanceB);
+                 PrintToConsole("negativeBalance contract B: %d <------------------------\n",negativeBalanceB);
                  if(positiveBalanceB >= 0 && negativeBalanceB == 0){
                         assert(update_tally_map(info.issuer, contractId2, contractsReserved, POSSITIVE_BALANCE));
                  } else if (positiveBalanceB == 0 && negativeBalanceB >= 0) {
                         int64_t diffn = contractsReserved - negativeBalanceB;
                         PrintToConsole("diffn : %d <-------------------------------\n",diffn);
-                     if (diffn >= 0){
+
+                     if (diffn > 0){
                          assert(update_tally_map(info.issuer, contractId2, diffn, POSSITIVE_BALANCE));
                          assert(update_tally_map(info.issuer, contractId2, -negativeBalanceB, NEGATIVE_BALANCE));
                      } else {

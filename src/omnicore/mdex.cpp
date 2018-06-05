@@ -44,9 +44,8 @@ using namespace mastercore;
 //! Global map for price and order data
 md_PropertiesMap mastercore::metadex;
 extern volatile uint64_t marketPrice;
-extern uint64_t ask [10];
-extern uint64_t bid [10];
 const int64_t factor = 100000000;
+extern volatile uint64_t marketP[10];
 md_PricesMap* mastercore::get_Prices(uint32_t prop)
 {
     md_PropertiesMap::iterator it = metadex.find(prop);
@@ -461,13 +460,14 @@ MatchReturnType x_Trade(CMPContractDex* const pnew)
                 }
                 PrintToConsole("Status_s %s\n",Status_s);
                 double PNL_s = t_tradelistdb->getPNL(seller_address, countClosedSeller,pold->getEffectivePrice(), property_traded, marginRequirementContract, notionalSize, Status_s);
-                int64_t amountToReserve = static_cast<int64_t> (PNL_s*factor);
+                // int64_t amountToReserve = static_cast<int64_t> (PNL_s*factor);
+                int64_t amountToReserve = 879;
                 PrintToConsole("Amount to Reserve: %d\n",amountToReserve);
                 PrintToConsole("PNL_s  : %d\n",PNL_s);
                 ///////////////////////////////////////
                 /** Remember: We have to  check how to add this later without any problem*/
                 if ( PNL_s != 0 ) {
-                    // assert(update_tally_map(seller_address, collateralCurrency, amountToReserve, CONTRACTDEX_RESERVE));
+                    assert(update_tally_map(seller_address, collateralCurrency, amountToReserve, UPNL));
                 }
                 // PrintToConsole("PNL_s: %d, Basis: %d\n", PNL_s, basis_s);
             }
@@ -482,13 +482,14 @@ MatchReturnType x_Trade(CMPContractDex* const pnew)
     	         }
                PrintToConsole("Status_b %s\n",Status_b);
                double PNL_b = t_tradelistdb->getPNL(buyer_address, countClosedBuyer,pold->getEffectivePrice(), property_traded, marginRequirementContract, notionalSize, Status_b);
-               int64_t amountToReserve = static_cast<int64_t>  (PNL_b*factor);
+              //  int64_t amountToReserve = static_cast<int64_t>  (PNL_b*factor);
+              int64_t amountToReserve = 879;
                PrintToConsole("Amount to Reserve: %d\n",amountToReserve);
                PrintToConsole("PNL_b  : %d\n",PNL_b);
                 ///////////////////////////////////////
                 /** Remember: We have to  check how to add this later without any problem*/
                 if ( PNL_b != 0 ) {
-                    // assert(update_tally_map(buyer_address, collateralCurrency, amountToReserve, CONTRACTDEX_RESERVE));
+                    assert(update_tally_map(buyer_address, collateralCurrency, amountToReserve, UPNL));
                 }
             }
             ///////////////////////////////////////
@@ -522,8 +523,10 @@ MatchReturnType x_Trade(CMPContractDex* const pnew)
                                               pnew->getEffectivePrice(),
                                               pnew->getTradingAction());
             ///////////////////////////////////////
-            marketPrice = pold->getEffectivePrice();
-            // PrintToConsole("marketPrice: %d\n", FormatContractShortMP(marketPrice));
+            int index = static_cast<unsigned int>(property_traded);
+            marketP[index] = pold->getEffectivePrice();
+
+            t_tradelistdb->recordForUPNL(pnew->getHash(),pnew->getAddr(),property_traded,pold->getEffectivePrice());
 
             //t_tradelistdb->marginLogic(property_traded); //checking margin
 
@@ -803,13 +806,14 @@ MatchReturnType x_Trade(CMPContractDex* const pnew)
                 }
                 PrintToConsole("Status_s %s\n",Status_s);
                 double PNL_s = t_tradelistdb->getPNL(seller_address, countClosedSeller,pold->getEffectivePrice(), property_traded, marginRequirementContract, notionalSize, Status_s);
-                int64_t amountToReserve = static_cast<int64_t> (PNL_s*factor);
+                // int64_t amountToReserve = static_cast<int64_t> (PNL_s*factor);
+                int64_t amountToReserve = 879;
                 PrintToConsole("Amount to Reserve: %d\n",amountToReserve);
                 PrintToConsole("PNL_s  : %d\n",PNL_s);
                 ///////////////////////////////////////
                 /** Remember: We have to  check how to add this later without any problem*/
                 if ( PNL_s != 0 ) {
-                    // assert(update_tally_map(seller_address, collateralCurrency, amountToReserve, CONTRACTDEX_RESERVE));
+                    assert(update_tally_map(seller_address, collateralCurrency, amountToReserve, UPNL));
                 }
                 // PrintToConsole("PNL_s: %d, Basis: %d\n", PNL_s, basis_s);
             }
@@ -824,13 +828,14 @@ MatchReturnType x_Trade(CMPContractDex* const pnew)
     	         }
                PrintToConsole("Status_b %s\n",Status_b);
                double PNL_b = t_tradelistdb->getPNL(buyer_address, countClosedBuyer,pold->getEffectivePrice(), property_traded, marginRequirementContract, notionalSize, Status_b);
-               int64_t amountToReserve = static_cast<int64_t>  (PNL_b*factor);
+              //  int64_t amountToReserve = static_cast<int64_t>  (PNL_b*factor);
+              int64_t amountToReserve = 879;
                PrintToConsole("Amount to Reserve: %d\n",amountToReserve);
                PrintToConsole("PNL_b  : %d\n",PNL_b);
                 ///////////////////////////////////////
                 /** Remember: We have to  check how to add this later without any problem*/
                 if ( PNL_b != 0 ) {
-                    // assert(update_tally_map(buyer_address, collateralCurrency, amountToReserve, CONTRACTDEX_RESERVE));
+                    assert(update_tally_map(buyer_address, collateralCurrency, amountToReserve, UPNL));
                 }
             }
             ///////////////////////////////////////
@@ -865,9 +870,12 @@ MatchReturnType x_Trade(CMPContractDex* const pnew)
                                               pnew->getTradingAction()
                                               );
             ///////////////////////////////////////
-            marketPrice = pold->getEffectivePrice();
+            int index = static_cast<unsigned int>(property_traded);
+            marketP[index] = pold->getEffectivePrice();
             // PrintToConsole("marketPrice: %d\n", FormatContractShortMP(marketPrice));
+            // PrintToConsole("marketP[index]: %d\n", marketP[index]);
 
+            t_tradelistdb->recordForUPNL(pnew->getHash(),pnew->getAddr(),property_traded,pold->getEffectivePrice());
             //t_tradelistdb->marginLogic(property_traded); //checking margin
 
             if (msc_debug_metadex1) PrintToLog("++ erased old: %s\n", offerIt->ToString());

@@ -11,3 +11,4 @@ uint32_t marginRequirementContract;
 int64_t priceIndex = 110; // an index price (USDs) to calculate the interest in pegg currencies (10% more)
 int64_t allPrice = 10;  // the ALLs is gonna cost $10 USDs
 double percentLiqPrice;
+volatile uint64_t marketP [10];

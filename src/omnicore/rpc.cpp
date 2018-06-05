@@ -1473,6 +1473,63 @@ UniValue omni_gettradehistory(const UniValue& params, bool fHelp)
     t_tradelistdb->getMatchingTrades(contractId,response);
     return response;
 }
+
+UniValue omni_getupnl(const UniValue& params, bool fHelp)
+{
+    if (fHelp || params.size() != 2)
+        throw runtime_error(
+            "omni_getpnl addres contractid\n"
+            "\nRetrieves the history of trades on the distributed contract exchange for the specified market.\n"
+            "\nArguments:\n"
+            "1. address           (string, required) address of owner\n"
+            "2. contractid           (number, required) the id of future contract\n"
+            "\nResult:\n"
+            "[                                      (array of JSON objects)\n"
+            "  {\n"
+            "    \"block\" : nnnnnn,                      (number) the index of the block that contains the trade match\n"
+            "    \"unitprice\" : \"n.nnnnnnnnnnn...\" ,     (string) the unit price used to execute this trade (received/sold)\n"
+            "    \"inverseprice\" : \"n.nnnnnnnnnnn...\",   (string) the inverse unit price (sold/received)\n"
+            "    \"sellertxid\" : \"hash\",                 (string) the hash of the transaction of the seller\n"
+            "    \"address\" : \"address\",                 (string) the Bitcoin address of the seller\n"
+            "    \"amountsold\" : \"n.nnnnnnnn\",           (string) the number of tokens sold in this trade\n"
+            "    \"amountreceived\" : \"n.nnnnnnnn\",       (string) the number of tokens traded in exchange\n"
+            "    \"matchingtxid\" : \"hash\",               (string) the hash of the transaction that was matched against\n"
+            "    \"matchingaddress\" : \"address\"          (string) the Bitcoin address of the other party of this trade\n"
+            "  },\n"
+            "  ...\n"
+            "]\n"
+            "\nExamples:\n"
+            + HelpExampleCli("omni_getupnl", "address 12 ")
+            + HelpExampleRpc("omni_getupnl", "address, 500")
+        );
+
+        std::string address = ParseAddress(params[0]);
+        uint32_t contractId = ParsePropertyId(params[1]);
+
+        //RequireExistingProperty(propertyId);
+
+        UniValue balanceObj(UniValue::VOBJ);
+        // int64_t upnl  = getMPbalance(address, contractId, UPNL);
+        LOCK(cs_tally);
+        double dupnl = t_tradelistdb->getUPNL(address, contractId);
+        const int64_t factor = 100000000;
+        int64_t upnl = dupnl*factor;
+        PrintToConsole("unrealized PNL: %d\n",upnl);
+        // double averagePrice = static_cast<double>(totalAmount/d_contractsClosed);
+        // double PNL_num = static_cast<double>((d_price - averagePrice)*(notionalSize*d_contractsClosed));
+        // double PNL_den = static_cast<double>(averagePrice*marginRequirementContract);
+       if (upnl >= 0){
+        balanceObj.push_back(Pair("positiveupnl", FormatByType(upnl,2)));
+        balanceObj.push_back(Pair("negativeupnl", FormatByType(0,2)));
+      } else {
+        uint64_t upnl1 = static_cast<uint64_t>(upnl);
+        balanceObj.push_back(Pair("positiveupnl", FormatByType(0,2)));
+        balanceObj.push_back(Pair("negativeupnl", FormatByType(upnl1,2)));
+
+      }
+
+        return balanceObj;
+}
 ////////////////////////////////////////////////////////////////////////////////
 static const CRPCCommand commands[] =
 { //  category                             name                            actor (function)               okSafeMode
@@ -1500,6 +1557,7 @@ static const CRPCCommand commands[] =
     { "omni layer (data retrieval)", "omni_getposition",               &omni_getposition,                false },
     { "omni layer (data retrieval)", "omni_getcontract_orderbook",     &omni_getcontract_orderbook,      false },
     { "omni layer (data retrieval)", "omni_gettradehistory",           &omni_gettradehistory,            false },
+    { "omni layer (data retrieval)", "omni_getupnl",                    &omni_getupnl,                   false },
 };
 
 void RegisterOmniDataRetrievalRPCCommands(CRPCTable &tableRPC)

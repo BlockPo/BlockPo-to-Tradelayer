@@ -22,6 +22,7 @@ enum TallyType {
         COUNT = 10,
         REMAINING = 11,
         LIQUIDATION_PRICE = 12,
+        UPNL = 13,
         //////////////////////////////////////
 
         TALLY_TYPE_COUNT
