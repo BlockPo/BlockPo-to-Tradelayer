@@ -796,7 +796,7 @@ UniValue omni_cancelallcontractsbyaddress(const UniValue& params, bool fHelp)
     // obtain parameters & info
     std::string fromAddress = ParseAddress(params[0]);
     uint8_t ecosystem = ParseEcosystem(params[1]);
-    uint32_t contractId = ParseEcosystem(params[2]);
+    uint32_t contractId = ParsePropertyId(params[2]);
     // perform checks
     // TODO: check, if there are matching offers to cancel
 
