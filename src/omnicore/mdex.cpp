@@ -597,7 +597,7 @@ MatchReturnType x_Trade(CMPContractDex* const pnew)
             // Preconditions
             assert(pold->getProperty() == pnew->getProperty());
 
-            get_LiquidationPrice(pold->getEffectivePrice(), pnew->getAddr(), pnew->getProperty(), pnew->getTradingAction()); // setting liquidation prices
+            get_LiquidationPrice(pold->getEffectivePrice(), pnew->getAddr(), pnew->getProperty(), pnew->getTradingAction()); // setting liquidation price
             get_LiquidationPrice(pold->getEffectivePrice(), pold->getAddr(), pold->getProperty(), pold->getTradingAction());
 
             PrintToConsole("________________________________________________________\n");
@@ -807,14 +807,14 @@ MatchReturnType x_Trade(CMPContractDex* const pnew)
                 PrintToConsole("Status_s %s\n",Status_s);
                 double PNL_s = t_tradelistdb->getPNL(seller_address, countClosedSeller,pold->getEffectivePrice(), property_traded, marginRequirementContract, notionalSize, Status_s);
                 // int64_t amountToReserve = static_cast<int64_t> (PNL_s*factor);
-                int64_t amountToReserve = 879;
-                PrintToConsole("Amount to Reserve: %d\n",amountToReserve);
-                PrintToConsole("PNL_s  : %d\n",PNL_s);
+                // int64_t amountToReserve = 879;
+                // PrintToConsole("Amount to Reserve: %d\n",amountToReserve);
+                // PrintToConsole("PNL_s  : %d\n",PNL_s);
                 ///////////////////////////////////////
                 /** Remember: We have to  check how to add this later without any problem*/
-                if ( PNL_s != 0 ) {
-                    assert(update_tally_map(seller_address, collateralCurrency, amountToReserve, UPNL));
-                }
+                // if ( PNL_s != 0 ) {
+                    // assert(update_tally_map(seller_address, collateralCurrency, amountToReserve, UPNL));
+                // }
                 // PrintToConsole("PNL_s: %d, Basis: %d\n", PNL_s, basis_s);
             }
 
@@ -829,14 +829,14 @@ MatchReturnType x_Trade(CMPContractDex* const pnew)
                PrintToConsole("Status_b %s\n",Status_b);
                double PNL_b = t_tradelistdb->getPNL(buyer_address, countClosedBuyer,pold->getEffectivePrice(), property_traded, marginRequirementContract, notionalSize, Status_b);
               //  int64_t amountToReserve = static_cast<int64_t>  (PNL_b*factor);
-              int64_t amountToReserve = 879;
-               PrintToConsole("Amount to Reserve: %d\n",amountToReserve);
-               PrintToConsole("PNL_b  : %d\n",PNL_b);
+              // int64_t amountToReserve = 879;
+              //  PrintToConsole("Amount to Reserve: %d\n",amountToReserve);
+              //  PrintToConsole("PNL_b  : %d\n",PNL_b);
                 ///////////////////////////////////////
                 /** Remember: We have to  check how to add this later without any problem*/
-                if ( PNL_b != 0 ) {
-                    assert(update_tally_map(buyer_address, collateralCurrency, amountToReserve, UPNL));
-                }
+                // if ( PNL_b != 0 ) {
+                //     assert(update_tally_map(buyer_address, collateralCurrency, amountToReserve, UPNL));
+                // }
             }
             ///////////////////////////////////////
             std::string Status_maker = "";
@@ -899,19 +899,30 @@ MatchReturnType x_Trade(CMPContractDex* const pnew)
 void get_LiquidationPrice(int64_t effectivePrice, string address, uint32_t property, uint8_t trading_action)
 {
     /** Remember: percentLiqPrice is defined in tx.cpp ContractDexTrade */
-    extern double percentLiqPrice;
-    double liqFactor = (trading_action == BUY) ? (1 - percentLiqPrice) : (1 + percentLiqPrice);
-    double liqPrice = effectivePrice*liqFactor;
+    double percentLiqPrice = 0.95;
+    double liqFactor = 0;
+    if (trading_action == BUY) {
+       liqFactor = 1 - percentLiqPrice;
+    }else {
+       liqFactor = 1 + percentLiqPrice;
+    }
 
-    PrintToConsole ("Effective price : %g\n", liqPrice);
+    double liqPrice = static_cast<double>(effectivePrice*liqFactor);
 
+    PrintToConsole ("double Liquidation price : %d\n", liqPrice);
+    PrintToConsole ("trading action : %d\n", trading_action);
+    PrintToConsole ("LiqFactor : %d\n", liqFactor);
     int64_t liq64 = static_cast<int64_t>(liqPrice);
     int64_t oldLiqPrice = getMPbalance (address, property,LIQUIDATION_PRICE);
     int64_t newLiqPrice = static_cast<int64_t>((liq64+oldLiqPrice)/2);
-    PrintToConsole ("Precio de liquidación antiguo : %d\n", FormatContractShortMP(oldLiqPrice));
-    PrintToConsole ("Precio de liquidación actual : %d\n", FormatContractShortMP(liq64));
-    PrintToConsole ("Precio de liquidación Nuevo : %d\n", FormatContractShortMP(newLiqPrice));
-    assert(update_tally_map(address, property, newLiqPrice, LIQUIDATION_PRICE));
+    PrintToConsole ("Precio de liquidación antiguo : %d\n", oldLiqPrice);
+    PrintToConsole ("Precio de liquidación actual : %d\n", liq64);
+    PrintToConsole ("Precio de liquidación Nuevo : %d\n", newLiqPrice);
+    if (oldLiqPrice > 0) {
+      assert(update_tally_map(address, property, -oldLiqPrice, LIQUIDATION_PRICE));
+    }
+      assert(update_tally_map(address, property, newLiqPrice, LIQUIDATION_PRICE));
+
 
 }
 ////////////////////////////////////////

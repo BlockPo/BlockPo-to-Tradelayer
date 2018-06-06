@@ -1954,7 +1954,7 @@ collateral_currency = sp.collateral_currency;
 PrintToConsole("margin requirement of contract : %d\n",margin_requirement);
 PrintToConsole("collateral currency id of contract : %d\n",collateral_currency);
 // ------------------------------------------
-double percentLiqPrice = 0.8;
+double percentLiqPrice = 0.95;
 
 int64_t nBalance = getMPbalance(sender, collateral_currency, BALANCE);
 uint32_t Sum = margin_requirement;
