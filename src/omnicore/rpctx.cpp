@@ -775,33 +775,33 @@ UniValue omni_createcontract(const UniValue& params, bool fHelp)
 
 UniValue omni_cancelallcontractsbyaddress(const UniValue& params, bool fHelp)
 {
-    if (fHelp || params.size() != 2)
+    if (fHelp || params.size() != 3)
         throw runtime_error(
             "omni_cancelallcontractsbyaddress \"fromaddress\" ecosystem\n"
 
-            "\nCancel all offers on the distributed Futures Contracts exchange.\n"
+            "\nCancel all offers on a given Futures Contract .\n"
 
             "\nArguments:\n"
             "1. fromaddress          (string, required) the address to trade with\n"
             "2. ecosystem            (number, required) the ecosystem of the offers to cancel (1 for main ecosystem, 2 for test ecosystem)\n"
-
+            "3. contractId           (number, required) the Id of Future Contract \n"
             "\nResult:\n"
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
 
             "\nExamples:\n"
-            + HelpExampleCli("omni_cancelallcontractsbyaddress", "\"3BydPiSLPP3DR5cf726hDQ89fpqWLxPKLR\" 1")
-            + HelpExampleRpc("omni_cancelallcontractsbyaddress", "\"3BydPiSLPP3DR5cf726hDQ89fpqWLxPKLR\", 1")
+            + HelpExampleCli("omni_cancelallcontractsbyaddress", "\"3BydPiSLPP3DR5cf726hDQ89fpqWLxPKLR\" 1, 3")
+            + HelpExampleRpc("omni_cancelallcontractsbyaddress", "\"3BydPiSLPP3DR5cf726hDQ89fpqWLxPKLR\", 1, 3")
         );
 
     // obtain parameters & info
     std::string fromAddress = ParseAddress(params[0]);
     uint8_t ecosystem = ParseEcosystem(params[1]);
-
+    uint32_t contractId = ParseEcosystem(params[2]);
     // perform checks
     // TODO: check, if there are matching offers to cancel
 
     // create a payload for the transaction
-    std::vector<unsigned char> payload = CreatePayload_ContractDexCancelEcosystem(ecosystem);
+    std::vector<unsigned char> payload = CreatePayload_ContractDexCancelEcosystem(ecosystem, contractId);
 
     // request the wallet build the transaction (and if needed commit it)
     uint256 txid;

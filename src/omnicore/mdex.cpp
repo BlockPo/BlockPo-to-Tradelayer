@@ -1542,7 +1542,7 @@ int mastercore::ContractDex_ADD(const std::string& sender_addr, uint32_t prop, i
 //  */
 // //////////////////////////////////////
 // /** New things for Contracts */
-int mastercore::ContractDex_CANCEL_EVERYTHING(const uint256& txid, unsigned int block, const std::string& sender_addr, unsigned char ecosystem)
+int mastercore::ContractDex_CANCEL_EVERYTHING(const uint256& txid, unsigned int block, const std::string& sender_addr, unsigned char ecosystem, uint32_t contractId)
 {
     int rc = METADEX_ERROR -40;
     bool bValid = false;
@@ -1576,11 +1576,14 @@ int mastercore::ContractDex_CANCEL_EVERYTHING(const uint256& txid, unsigned int 
                     ++it;
                     continue;
                 }
+                if (it->getProperty() != contractId) {
+                    ++it;
+                    continue;
+                }
                 if (it->getAmountForSale()== 0) {
                     ++it;
                     continue;
                 }
-
                 rc = 0;
                 // PrintToLog("%s(): REMOVING %s\n", __FUNCTION__, it->ToString());
 

@@ -368,7 +368,7 @@ std::vector<unsigned char> CreatePayload_ContractDexTrade(uint32_t propertyIdFor
         return payload;
 }
 
-std::vector<unsigned char> CreatePayload_ContractDexCancelEcosystem(uint8_t ecosystem)
+std::vector<unsigned char> CreatePayload_ContractDexCancelEcosystem(uint8_t ecosystem, uint32_t contractId)
 {
     std::vector<unsigned char> payload;
 
@@ -379,10 +379,11 @@ std::vector<unsigned char> CreatePayload_ContractDexCancelEcosystem(uint8_t ecos
     std::vector<uint8_t> vecMessageType = CompressInteger(messageType);
     std::vector<uint8_t> vecMessageVer = CompressInteger(messageVer);
     std::vector<uint8_t> vecEcosystem = CompressInteger(ecosystem);
+    std::vector<uint8_t> vecContractId = CompressInteger(contractId);
     payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
     payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
     payload.insert(payload.end(), vecEcosystem.begin(), vecEcosystem.end());
-
+    payload.insert(payload.end(), vecContractId.begin(), vecContractId.end());
 
     return payload;
 }

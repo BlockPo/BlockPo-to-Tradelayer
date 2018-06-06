@@ -441,7 +441,7 @@ UniValue omni_createpayload_cancelcontracttradesbyprice(const UniValue& params, 
 /*New things for contracts*/////////////////////////////////////////////////////
 UniValue omni_createpayload_cancelalltradescontract(const UniValue& params, bool fHelp)
 {
-    if (fHelp || params.size() != 1)
+    if (fHelp || params.size() != 2)
         throw runtime_error(
             "omni_createpayload_cancelalltrades ecosystem\n"
 
@@ -449,7 +449,7 @@ UniValue omni_createpayload_cancelalltradescontract(const UniValue& params, bool
 
             "\nArguments:\n"
             "1. ecosystem            (number, required) the ecosystem of the offers to cancel (1 for main ecosystem, 2 for test ecosystem)\n"
-
+            "2. contractId           (number, required) Id of Future Contract\n"
             "\nResult:\n"
             "\"payload\"             (string) the hex-encoded payload\n"
 
@@ -459,8 +459,8 @@ UniValue omni_createpayload_cancelalltradescontract(const UniValue& params, bool
         );
 
     uint8_t ecosystem = ParseEcosystem(params[0]);
-
-    std::vector<unsigned char> payload = CreatePayload_ContractDexCancelEcosystem(ecosystem);
+    uint32_t contractId = ParseEcosystem(params[1]);
+    std::vector<unsigned char> payload = CreatePayload_ContractDexCancelEcosystem(ecosystem,contractId);
 
     return HexStr(payload.begin(), payload.end());
 }

@@ -147,6 +147,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "omni_sendalert", 1 },
     { "omni_sendalert", 2 },
     {"omni_cancelallcontractsbyaddress",1},
+    {"omni_cancelallcontractsbyaddress",2},
 
     /* Omni Core - raw transaction calls */
     { "omni_decodetransaction", 1 },
@@ -196,6 +197,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "omni_createpayload_cancelcontracttradesbyprice", 4},
     { "omni_createpayload_cancelcontracttradesbyprice", 5},
     { "omni_createpayload_cancelalltradescontract", 0},
+    { "omni_createpayload_cancelalltradescontract", 1},
     { "omni_createcontract", 1},
     { "omni_createcontract", 2},
     { "omni_createcontract", 5},

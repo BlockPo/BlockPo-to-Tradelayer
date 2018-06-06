@@ -751,7 +751,7 @@ bool CMPTransaction::interpret_ContractDexCancelEcosystem()
     std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
     std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
     std::vector<uint8_t> vecEcosystemBytes = GetNextVarIntBytes(i);
-
+    std::vector<uint8_t> vecContractIdBytes = GetNextVarIntBytes(i);
 
     if (!vecTypeBytes.empty()) {
         type = DecompressInteger(vecTypeBytes);
@@ -763,6 +763,9 @@ bool CMPTransaction::interpret_ContractDexCancelEcosystem()
 
     if (!vecEcosystemBytes.empty()) {
         ecosystem = DecompressInteger(vecEcosystemBytes);
+    } else return false;
+    if (!vecContractIdBytes.empty()) {
+        contractId = DecompressInteger(vecContractIdBytes);
     } else return false;
 
     PrintToConsole("version: %d\n", version);
@@ -2046,7 +2049,7 @@ int CMPTransaction::logicMath_ContractDexCancelEcosystem()
         return (PKT_ERROR_METADEX -21);
     }
     PrintToConsole("Inside the logicMath_ContractDexCancelEcosystem!!!!!\n");
-    int rc = ContractDex_CANCEL_EVERYTHING(txid, block, sender, ecosystem);
+    int rc = ContractDex_CANCEL_EVERYTHING(txid, block, sender, ecosystem, contractId);
 
     return rc;
 }
