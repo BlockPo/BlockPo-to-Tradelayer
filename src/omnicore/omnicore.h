@@ -81,11 +81,13 @@ enum TransactionType {
   MSC_TYPE_CONTRACTDEX_TRADE          = 29,
   MSC_TYPE_CONTRACTDEX_CANCEL_PRICE   = 30,
   MSC_TYPE_CONTRACTDEX_CANCEL_ECOSYSTEM   = 32,
+  MSC_TYPE_CONTRACTDEX_CLOSE_POSITION   = 33,
   /** !Here we changed "MSC_TYPE_OFFER_ACCEPT_A_BET = 40" */
   MSC_TYPE_CREATE_CONTRACT            = 40,
   MSC_TYPE_PEGGED_CURRENCY            = 100,
   MSC_TYPE_REDEMPTION_PEGGED          = 101,
   MSC_TYPE_SEND_PEGGED_CURRENCY       = 102,
+
 
   ////////////////////////////////////
 

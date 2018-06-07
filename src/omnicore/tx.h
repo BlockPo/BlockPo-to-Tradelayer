@@ -150,6 +150,7 @@ private:
     bool interpret_CreatePeggedCurrency();
     bool interpret_RedemptionPegged();
     bool interpret_SendPeggedCurrency();
+    bool interpret_ContractDexClosePosition();
     ///////////////////////////////////////////////
 
     /**
@@ -176,6 +177,7 @@ private:
     int logicMath_CreatePeggedCurrency();
     int logicMath_RedemptionPegged();
     int logicMath_SendPeggedCurrency();
+    int logicMath_ContractDexClosePosition();
     ///////////////////////////////////////////////
 
     /**

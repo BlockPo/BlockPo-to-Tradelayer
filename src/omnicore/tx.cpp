@@ -69,6 +69,7 @@ std::string mastercore::strTransactionType(uint16_t txType)
         case MSC_TYPE_PEGGED_CURRENCY: return "Pegged Currency";
         case MSC_TYPE_REDEMPTION_PEGGED: return "Redemption Pegged Currency";
         case MSC_TYPE_SEND_PEGGED_CURRENCY: return "Send Pegged Currency";
+        case MSC_TYPE_CONTRACTDEX_CLOSE_POSITION: return "Close Position";
 
         ////////////////////////////////////////////////////////////////////////
         default: return "* unknown type *";
@@ -172,6 +173,8 @@ bool CMPTransaction::interpret_Transaction()
             return interpret_SendPeggedCurrency();
         case MSC_TYPE_REDEMPTION_PEGGED:
             return interpret_RedemptionPegged();
+        case MSC_TYPE_CONTRACTDEX_CLOSE_POSITION:
+            return interpret_ContractDexClosePosition();
       //////////////////////////////////////////////////////////////////////////
     }
 
@@ -774,6 +777,38 @@ bool CMPTransaction::interpret_ContractDexCancelEcosystem()
     return true;
   }
 
+  /** Tx 32 */
+  bool CMPTransaction::interpret_ContractDexClosePosition()
+  {
+      PrintToConsole("Inside the interpret_ContractDexClosePosition!!!!!\n");
+      int i = 0;
+
+      std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+      std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+      std::vector<uint8_t> vecEcosystemBytes = GetNextVarIntBytes(i);
+      std::vector<uint8_t> vecContractIdBytes = GetNextVarIntBytes(i);
+
+      if (!vecTypeBytes.empty()) {
+          type = DecompressInteger(vecTypeBytes);
+      } else return false;
+
+      if (!vecVersionBytes.empty()) {
+          version = DecompressInteger(vecVersionBytes);
+      } else return false;
+
+      if (!vecEcosystemBytes.empty()) {
+          ecosystem = DecompressInteger(vecEcosystemBytes);
+      } else return false;
+      if (!vecContractIdBytes.empty()) {
+          contractId = DecompressInteger(vecContractIdBytes);
+      } else return false;
+
+      PrintToConsole("version: %d\n", version);
+      PrintToConsole("messageType: %d\n",type);
+      PrintToConsole("ecosystem: %d\n", ecosystem);
+      return true;
+    }
+
   /** Tx 101 */
   bool CMPTransaction::interpret_CreatePeggedCurrency()
   {
@@ -1000,6 +1035,9 @@ int CMPTransaction::interpretPacket()
 
         case MSC_TYPE_REDEMPTION_PEGGED:
             return logicMath_RedemptionPegged();
+
+        case MSC_TYPE_CONTRACTDEX_CLOSE_POSITION:
+            return logicMath_ContractDexClosePosition();
 
     ////////////////////////////////////////////////////////////////////////////
     }
@@ -2053,6 +2091,31 @@ int CMPTransaction::logicMath_ContractDexCancelEcosystem()
 
     return rc;
 }
+
+/** Tx 32 */
+int CMPTransaction::logicMath_ContractDexClosePosition()
+{
+    if (!IsTransactionTypeAllowed(block, ecosystem, type, version)) {
+        PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+                __func__,
+                type,
+                version,
+                property,
+                block);
+        return (PKT_ERROR_METADEX -22);
+    }
+
+    if (OMNI_PROPERTY_MSC != ecosystem && OMNI_PROPERTY_TMSC != ecosystem) {
+        PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, ecosystem);
+        PrintToConsole("rejected: invalid ecosystem %d\n",ecosystem);
+        return (PKT_ERROR_METADEX -21);
+    }
+    PrintToConsole("Inside the logicMath_ContractDexClosePosition !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+    // int rc = ContractDex_CLOSE_POSITION(txid, block, sender, ecosystem, contractId);
+    int rc = 0;
+    return rc;
+}
+
 /** Tx 100 */
 int CMPTransaction::logicMath_CreatePeggedCurrency()
 {

@@ -2809,7 +2809,8 @@ double CMPTradeList::getUPNL(string address, uint32_t contractId)
     int count = 0;
     int64_t sumPrice = 0;
     const double factor = 100000000;
-    double marketPrice = static_cast<double>((marketP [contractId])/factor);
+    int index = static_cast<int>(contractId);
+    double marketPrice = static_cast<double>((marketP [index])/factor);
     CMPSPInfo::Entry sp;
     _my_sps->getSP(contractId, sp);
     uint32_t notionalSize = sp.notional_size;
@@ -2847,14 +2848,18 @@ double CMPTradeList::getUPNL(string address, uint32_t contractId)
       }
     // // clean up
      delete it;
-     double averagePrice = static_cast<double>(sumPrice/count);
+     double averagePrice = 0;
+     if(count > 0){
+        averagePrice = static_cast<double>(sumPrice/count);
+     }
      PrintToConsole("averagePrice: %d\n",averagePrice);
      PrintToConsole("sumPrice: %d\n",sumPrice);
      PrintToConsole("final count: %d\n",count);
 
      int64_t longPosition = getMPbalance(address, contractId, POSSITIVE_BALANCE);
      int64_t shortPosition = getMPbalance(address, contractId, NEGATIVE_BALANCE);
-      double PNL_num = 0;
+     double PNL_num = 0;
+     double PNL = 0;
      if (longPosition > 0 && shortPosition == 0) {
         PNL_num = static_cast<double>((marketPrice - averagePrice)*(notionalSize*longPosition));
      } else if (longPosition == 0 && shortPosition > 0) {
@@ -2862,7 +2867,9 @@ double CMPTradeList::getUPNL(string address, uint32_t contractId)
      }
 
     double PNL_den = static_cast<double>(averagePrice*marginRequirement);
-    double PNL = static_cast<double>(PNL_num/PNL_den);
+    if (PNL_den != 0){
+       PNL = static_cast<double>(PNL_num/PNL_den);
+    }
     PrintToConsole("shortPosition : %d\n",shortPosition);
     PrintToConsole("longPosition : %d\n",longPosition);
     PrintToConsole("PNL_num : %d\n",PNL_num);

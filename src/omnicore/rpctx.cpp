@@ -824,6 +824,56 @@ UniValue omni_cancelallcontractsbyaddress(const UniValue& params, bool fHelp)
     }
 }
 
+UniValue omni_closeposition(const UniValue& params, bool fHelp)
+{
+    if (fHelp || params.size() != 3)
+        throw runtime_error(
+            "omni_closeposition \"fromaddress\" ecosystem\n"
+
+            "\nClose the position on a given Futures Contract .\n"
+
+            "\nArguments:\n"
+            "1. fromaddress          (string, required) the address to trade with\n"
+            "2. ecosystem            (number, required) the ecosystem of the offers to cancel (1 for main ecosystem, 2 for test ecosystem)\n"
+            "3. contractId           (number, required) the Id of Future Contract \n"
+            "\nResult:\n"
+            "\"hash\"                  (string) the hex-encoded transaction hash\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("omni_closeposition", "\"3BydPiSLPP3DR5cf726hDQ89fpqWLxPKLR\" 1, 3")
+            + HelpExampleRpc("omni_closeposition", "\"3BydPiSLPP3DR5cf726hDQ89fpqWLxPKLR\", 1, 3")
+        );
+
+    // obtain parameters & info
+    std::string fromAddress = ParseAddress(params[0]);
+    uint8_t ecosystem = ParseEcosystem(params[1]);
+    uint32_t contractId = ParsePropertyId(params[2]);
+    // perform checks
+    // TODO: check, if there are matching offers to cancel
+
+    // create a payload for the transaction
+    std::vector<unsigned char> payload = CreatePayload_ContractDexClosePosition(ecosystem, contractId);
+
+    // request the wallet build the transaction (and if needed commit it)
+    uint256 txid;
+    std::string rawHex;
+    int result = WalletTxBuilder(fromAddress, "", 0, payload, txid, rawHex, autoCommit);
+
+    PrintToConsole("WalletTxBuilder result: %d\n", result);
+    PrintToConsole("rawHex: %s\n", rawHex);
+    PrintToConsole("txid: %s\n", txid.GetHex());
+    // check error and return the txid (or raw hex depending on autocommit)
+    if (result != 0) {
+        throw JSONRPCError(result, error_str(result));
+    } else {
+        if (!autoCommit) {
+            return rawHex;
+        } else {
+            PendingAdd(txid, fromAddress, MSC_TYPE_CONTRACTDEX_CANCEL_ECOSYSTEM, ecosystem, 0, false);
+            return txid.GetHex();
+        }
+    }
+}
 
 UniValue omni_tradecontract(const UniValue& params, bool fHelp)
 {
@@ -1084,6 +1134,7 @@ static const CRPCCommand commands[] =
     { "omni layer (transaction creation)", "omni_sendissuance_pegged",       &omni_sendissuance_pegged,       false },
     { "omni layer (transaction creation)", "omni_send_pegged",             &omni_send_pegged,             false },
     { "omni layer (transaction creation)","omni_redemption_pegged",        &omni_redemption_pegged,       false },
+    { "omni layer (transaction creation)","omni_closeposition",            &omni_closeposition,           false },
 #endif
 };
 

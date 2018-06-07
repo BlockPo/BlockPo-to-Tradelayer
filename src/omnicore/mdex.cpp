@@ -1631,6 +1631,38 @@ int mastercore::ContractDex_CANCEL_EVERYTHING(const uint256& txid, unsigned int 
 
     return rc;
 }
+int mastercore::ContractDex_CLOSE_POSITION(const uint256& txid, unsigned int block, const std::string& sender_addr, unsigned char ecosystem, uint32_t contractId)
+{
+   int64_t shortPosition = getMPbalance(sender_addr,contractId, NEGATIVE_BALANCE);
+   int64_t longPosition = getMPbalance(sender_addr,contractId, POSSITIVE_BALANCE);
+   // Clearing the position
+   if (shortPosition > 0){
+      update_tally_map(sender_addr, contractId, -shortPosition, NEGATIVE_BALANCE);
+   }
+
+   if (longPosition > 0){
+      update_tally_map(sender_addr, contractId, -longPosition, NEGATIVE_BALANCE);
+   }
+
+   LOCK(cs_tally);   // realized the PNL
+   double dupnl = t_tradelistdb->getUPNL(sender_addr, contractId);
+   int64_t pnl = static_cast<double>(dupnl);
+   if (pnl > 0){
+      int64_t proffit = getMPbalance(sender_addr, contractId, REALIZED_PROFIT);
+      if (proffit > 0){
+         update_tally_map(sender_addr, contractId, -proffit, REALIZED_PROFIT);
+         update_tally_map(sender_addr, contractId, pnl, REALIZED_PROFIT);
+      }
+   }else if (pnl < 0){
+     int64_t losses = getMPbalance(sender_addr, contractId, REALIZED_LOSSES);
+     if (losses > 0){
+        update_tally_map(sender_addr, contractId, -losses, REALIZED_LOSSES);
+        update_tally_map(sender_addr, contractId, pnl, REALIZED_LOSSES);
+     }
+   }
+
+
+}
 // //////////////////////////////////////
 //
 // /**
