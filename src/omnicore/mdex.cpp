@@ -521,7 +521,9 @@ MatchReturnType x_Trade(CMPContractDex* const pnew)
                                               tradeStatus,
                                               pold->getEffectivePrice(),
                                               pnew->getEffectivePrice(),
-                                              pnew->getTradingAction());
+                                              pnew->getTradingAction(),
+                                              pold->getIdx()
+                                              );
             ///////////////////////////////////////
             int index = static_cast<unsigned int>(property_traded);
             marketP[index] = pold->getEffectivePrice();
@@ -867,7 +869,8 @@ MatchReturnType x_Trade(CMPContractDex* const pnew)
                                               tradeStatus,
                                               pold->getEffectivePrice(),
                                               pnew->getEffectivePrice(),
-                                              pnew->getTradingAction()
+                                              pnew->getTradingAction(),
+                                              pold->getIdx()
                                               );
             ///////////////////////////////////////
             int index = static_cast<unsigned int>(property_traded);
