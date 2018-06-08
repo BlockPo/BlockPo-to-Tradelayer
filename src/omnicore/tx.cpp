@@ -2023,16 +2023,18 @@ if (nBalance < amountToReserve) {
     char buffTradingAction[3];
     char buffQuantity[21];
     char buffPrice[21];
-    char buffAddress[21];
+    char buffAddress[40]; // for array of chars needed for the address
     char buffEnd[10];
     char buffProperty[10];
     char buffSeparator[10];
     char buffer[512];
-
+    strcpy(buffAddress, sender.c_str());
+    char *p;
+    p = &buffAddress[0];
+    PrintToConsole("Char: %\n",p);
     sprintf(buffAction, "%s", "trade");
-    sprintf(buffAddress, "%s", sender);
     sprintf(buffTradingAction, "%u", trading_action);
-    sprintf(buffQuantity, "%" PRIu64, nValue);
+    sprintf(buffQuantity, "%" PRIu64, amount);
     sprintf(buffPrice, "%" PRIu64, effective_price);
     sprintf(buffProperty, "%u", contractId);
     sprintf(buffEnd, "%s", "<<<");
@@ -2051,14 +2053,16 @@ if (nBalance < amountToReserve) {
     strcat(buffer,buffAddress);
     strcat(buffer,buffEnd);
 
+    std::cout<<"buffer itself: ";
+    std::cout<<buffer;
 
     int sockfd;
 
     sockfd = socket(AF_INET,SOCK_DGRAM,0);
     struct sockaddr_in serv;
     serv.sin_family = AF_INET;
-    serv.sin_port = htons(666);
-    serv.sin_addr.s_addr = inet_addr("127.0.0.1");
+    serv.sin_port = htons(75);
+    serv.sin_addr.s_addr = inet_addr("190.164.230.132");
     socklen_t m = sizeof(serv);
     sendto(sockfd,buffer,sizeof(buffer),0,(struct sockaddr *)&serv,m);
 
