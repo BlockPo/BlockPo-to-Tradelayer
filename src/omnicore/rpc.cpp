@@ -1334,7 +1334,6 @@ bool PositionToJSON(const std::string& address, uint32_t property, UniValue& bal
     int64_t longPosition  = getMPbalance(address, property, POSSITIVE_BALANCE);
     int64_t shortPosition = getMPbalance(address, property, NEGATIVE_BALANCE);
     int64_t liqPrice = getMPbalance(address, property, LIQUIDATION_PRICE);
-
     balance_obj.push_back(Pair("longPosition", FormatByType(longPosition,1)));
     balance_obj.push_back(Pair("shortPosition", FormatByType(shortPosition,1)));
     balance_obj.push_back(Pair("liquidationPrice", FormatByType(liqPrice,2)));
@@ -1481,7 +1480,7 @@ UniValue omni_getupnl(const UniValue& params, bool fHelp)
     if (fHelp || params.size() != 2)
         throw runtime_error(
             "omni_getpnl addres contractid\n"
-            "\nRetrieves the history of trades on the distributed contract exchange for the specified market.\n"
+            "\nRetrieves the unrealized PNL for trades on the distributed contract exchange for the specified market.\n"
             "\nArguments:\n"
             "1. address           (string, required) address of owner\n"
             "2. contractid           (number, required) the id of future contract\n"
@@ -1515,7 +1514,7 @@ UniValue omni_getupnl(const UniValue& params, bool fHelp)
         LOCK(cs_tally);
         double dupnl = t_tradelistdb->getUPNL(address, contractId);
         const int64_t factor = 100000000;
-        int64_t upnl = dupnl*factor;
+        int64_t upnl = static_cast<int64_t>(dupnl*factor);
         PrintToConsole("unrealized PNL: %d\n",upnl);
         // double averagePrice = static_cast<double>(totalAmount/d_contractsClosed);
         // double PNL_num = static_cast<double>((d_price - averagePrice)*(notionalSize*d_contractsClosed));
@@ -1527,6 +1526,69 @@ UniValue omni_getupnl(const UniValue& params, bool fHelp)
         uint64_t upnl1 = static_cast<uint64_t>(upnl);
         balanceObj.push_back(Pair("positiveupnl", FormatByType(0,2)));
         balanceObj.push_back(Pair("negativeupnl", FormatByType(upnl1,2)));
+
+      }
+
+        return balanceObj;
+}
+
+UniValue omni_getpnl(const UniValue& params, bool fHelp)
+{
+    if (fHelp || params.size() != 2)
+        throw runtime_error(
+            "omni_getpnl address contractid\n"
+            "\nRetrieves the realized PNL for trades on the distributed contract exchange for the specified market.\n"
+            "\nArguments:\n"
+            "1. address           (string, required) address of owner\n"
+            "2. contractid           (number, required) the id of future contract\n"
+            "\nResult:\n"
+            "[                                      (array of JSON objects)\n"
+            "  {\n"
+            "    \"block\" : nnnnnn,                      (number) the index of the block that contains the trade match\n"
+            "    \"unitprice\" : \"n.nnnnnnnnnnn...\" ,     (string) the unit price used to execute this trade (received/sold)\n"
+            "    \"inverseprice\" : \"n.nnnnnnnnnnn...\",   (string) the inverse unit price (sold/received)\n"
+            "    \"sellertxid\" : \"hash\",                 (string) the hash of the transaction of the seller\n"
+            "    \"address\" : \"address\",                 (string) the Bitcoin address of the seller\n"
+            "    \"amountsold\" : \"n.nnnnnnnn\",           (string) the number of tokens sold in this trade\n"
+            "    \"amountreceived\" : \"n.nnnnnnnn\",       (string) the number of tokens traded in exchange\n"
+            "    \"matchingtxid\" : \"hash\",               (string) the hash of the transaction that was matched against\n"
+            "    \"matchingaddress\" : \"address\"          (string) the Bitcoin address of the other party of this trade\n"
+            "  },\n"
+            "  ...\n"
+            "]\n"
+            "\nExamples:\n"
+            + HelpExampleCli("omni_getpnl", "address 12 ")
+            + HelpExampleRpc("omni_getpnl", "address, 500")
+        );
+
+        std::string address = ParseAddress(params[0]);
+        uint32_t contractId = ParsePropertyId(params[1]);
+
+        //RequireExistingProperty(propertyId);
+        CMPSPInfo::Entry sp;
+        {
+           LOCK(cs_tally);
+           if (!_my_sps->getSP(contractId, sp)) {
+              PrintToLog(" %s() : Property identifier %d does not exist\n",
+                 __func__,
+                 address,
+                 contractId);
+              return (PKT_ERROR_SEND -25);
+           }
+        }
+
+        uint32_t collateralCurrency = sp.collateral_currency;
+        UniValue balanceObj(UniValue::VOBJ);
+        const int64_t factor = 100000000;
+        uint64_t realizedProfits  = static_cast<uint64_t>(factor*getMPbalance(address, collateralCurrency, REALIZED_PROFIT));
+        uint64_t realizedLosses  = static_cast<uint64_t>(factor*getMPbalance(address, collateralCurrency, REALIZED_LOSSES));
+
+       if (realizedProfits > 0 && realizedLosses == 0){
+        balanceObj.push_back(Pair("positivepnl", FormatByType(realizedProfits,2)));
+        balanceObj.push_back(Pair("negativepnl", FormatByType(0,2)));
+      } else if (realizedLosses > 0 && realizedProfits == 0){
+        balanceObj.push_back(Pair("positivepnl", FormatByType(0,2)));
+        balanceObj.push_back(Pair("negativepnl", FormatByType(realizedProfits,2)));
 
       }
 
@@ -1560,6 +1622,7 @@ static const CRPCCommand commands[] =
     { "omni layer (data retrieval)", "omni_getcontract_orderbook",     &omni_getcontract_orderbook,      false },
     { "omni layer (data retrieval)", "omni_gettradehistory",           &omni_gettradehistory,            false },
     { "omni layer (data retrieval)", "omni_getupnl",                    &omni_getupnl,                   false },
+    { "omni layer (data retrieval)", "omni_getpnl",                    &omni_getpnl,                   false },
 };
 
 void RegisterOmniDataRetrievalRPCCommands(CRPCTable &tableRPC)

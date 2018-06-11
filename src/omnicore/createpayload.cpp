@@ -395,7 +395,6 @@ std::vector<unsigned char> CreatePayload_ContractDexClosePosition(uint8_t ecosys
     uint16_t messageType = 33;
     uint16_t messageVer = 0;
 
-
     std::vector<uint8_t> vecMessageType = CompressInteger(messageType);
     std::vector<uint8_t> vecMessageVer = CompressInteger(messageVer);
     std::vector<uint8_t> vecEcosystem = CompressInteger(ecosystem);

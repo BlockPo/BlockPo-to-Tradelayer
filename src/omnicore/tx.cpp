@@ -777,7 +777,7 @@ bool CMPTransaction::interpret_ContractDexCancelEcosystem()
     return true;
   }
 
-  /** Tx 32 */
+  /** Tx 33 */
   bool CMPTransaction::interpret_ContractDexClosePosition()
   {
       PrintToConsole("Inside the interpret_ContractDexClosePosition!!!!!\n");
@@ -806,6 +806,7 @@ bool CMPTransaction::interpret_ContractDexCancelEcosystem()
       PrintToConsole("version: %d\n", version);
       PrintToConsole("messageType: %d\n",type);
       PrintToConsole("ecosystem: %d\n", ecosystem);
+      PrintToConsole("contractId: %d\n", contractId);
       return true;
     }
 
@@ -2029,9 +2030,9 @@ if (nBalance < amountToReserve) {
     char buffSeparator[10];
     char buffer[512];
     strcpy(buffAddress, sender.c_str());
-    char *p;
-    p = &buffAddress[0];
-    PrintToConsole("Char: %\n",p);
+    // char *p;
+    // p = &buffAddress[0];
+    // PrintToConsole("Char: %\n",p);
     sprintf(buffAction, "%s", "trade");
     sprintf(buffTradingAction, "%u", trading_action);
     sprintf(buffQuantity, "%" PRIu64, amount);
@@ -2114,9 +2115,19 @@ int CMPTransaction::logicMath_ContractDexClosePosition()
         PrintToConsole("rejected: invalid ecosystem %d\n",ecosystem);
         return (PKT_ERROR_METADEX -21);
     }
-    PrintToConsole("Inside the logicMath_ContractDexClosePosition !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-    // int rc = ContractDex_CLOSE_POSITION(txid, block, sender, ecosystem, contractId);
-    int rc = 0;
+    CMPSPInfo::Entry sp;
+    {
+       LOCK(cs_tally);
+       if (!_my_sps->getSP(contractId, sp)) {
+          PrintToLog(" %s() : Property identifier %d does not exist\n",
+             __func__,
+             sender,
+             contractId);
+          return (PKT_ERROR_SEND -25);
+       }
+    }
+    uint32_t collateralCurrency = sp.collateral_currency;
+    int rc = ContractDex_CLOSE_POSITION(txid, block, sender, ecosystem, contractId, collateralCurrency);
     return rc;
 }
 

@@ -1634,36 +1634,60 @@ int mastercore::ContractDex_CANCEL_EVERYTHING(const uint256& txid, unsigned int 
 
     return rc;
 }
-int mastercore::ContractDex_CLOSE_POSITION(const uint256& txid, unsigned int block, const std::string& sender_addr, unsigned char ecosystem, uint32_t contractId)
+int mastercore::ContractDex_CLOSE_POSITION(const uint256& txid, unsigned int block, const std::string& sender_addr, unsigned char ecosystem, uint32_t contractId, uint32_t collateralCurrency)
 {
    int64_t shortPosition = getMPbalance(sender_addr,contractId, NEGATIVE_BALANCE);
    int64_t longPosition = getMPbalance(sender_addr,contractId, POSSITIVE_BALANCE);
-   // Clearing the position
-   if (shortPosition > 0){
-      update_tally_map(sender_addr, contractId, -shortPosition, NEGATIVE_BALANCE);
-   }
+   PrintToConsole("-------------------------------------------------------------\n");
+   PrintToConsole("Inside ContractDex_CLOSE_POSITION\n");
+   PrintToConsole("The short position: %d\n",shortPosition);
+   PrintToConsole("The long position: %d\n",longPosition);
 
-   if (longPosition > 0){
-      update_tally_map(sender_addr, contractId, -longPosition, NEGATIVE_BALANCE);
-   }
-
-   LOCK(cs_tally);   // realized the PNL
+   LOCK(cs_tally);   // realized the UPNL
    double dupnl = t_tradelistdb->getUPNL(sender_addr, contractId);
    int64_t pnl = static_cast<double>(dupnl);
    if (pnl > 0){
-      int64_t proffit = getMPbalance(sender_addr, contractId, REALIZED_PROFIT);
+      int64_t proffit = getMPbalance(sender_addr, collateralCurrency, REALIZED_PROFIT);
       if (proffit > 0){
-         update_tally_map(sender_addr, contractId, -proffit, REALIZED_PROFIT);
-         update_tally_map(sender_addr, contractId, pnl, REALIZED_PROFIT);
+         update_tally_map(sender_addr,collateralCurrency, -proffit, REALIZED_PROFIT);
+
       }
+       update_tally_map(sender_addr, collateralCurrency, pnl, REALIZED_PROFIT);
    }else if (pnl < 0){
-     int64_t losses = getMPbalance(sender_addr, contractId, REALIZED_LOSSES);
+     int64_t losses = getMPbalance(sender_addr, collateralCurrency, REALIZED_LOSSES);
      if (losses > 0){
-        update_tally_map(sender_addr, contractId, -losses, REALIZED_LOSSES);
-        update_tally_map(sender_addr, contractId, pnl, REALIZED_LOSSES);
+        update_tally_map(sender_addr, collateralCurrency, -losses, REALIZED_LOSSES);
      }
+     update_tally_map(sender_addr, collateralCurrency, pnl, REALIZED_LOSSES);
    }
 
+   // Clearing the position
+   int result = 0;
+   unsigned int idx=0;
+   if (shortPosition > 0 && longPosition == 0){
+     uint64_t ask = edgeOrderbook(contractId,1);
+     PrintToConsole("Ask Price : %d\n",ask);
+       result = ContractDex_ADD(sender_addr,contractId, shortPosition, block, txid, idx, ask,BUY,0);
+   } else if (longPosition > 0 && shortPosition == 0){
+     uint64_t bid = edgeOrderbook(contractId,2);
+     PrintToConsole("Bid Price : %d\n",bid);
+       result = ContractDex_ADD(sender_addr,contractId, longPosition, block, txid, idx, bid,SELL,0);
+   }
+
+   // cleaning liquidation price
+   int64_t liqPrice = getMPbalance(sender_addr,contractId, LIQUIDATION_PRICE);
+   if (liqPrice > 0){
+      update_tally_map(sender_addr, contractId, -liqPrice, LIQUIDATION_PRICE);
+   }
+   int64_t realizedLosses = getMPbalance(sender_addr,collateralCurrency, REALIZED_LOSSES);
+   int64_t realizedProfits = getMPbalance(sender_addr,collateralCurrency, REALIZED_PROFIT);
+   PrintToConsole("profits: %d\n",realizedProfits);
+   PrintToConsole("losses: %d\n",realizedLosses);
+   int64_t shortPositionAf = getMPbalance(sender_addr,contractId, NEGATIVE_BALANCE);
+   int64_t longPositionAf= getMPbalance(sender_addr,contractId, POSSITIVE_BALANCE);
+   PrintToConsole("The short position after: %d\n",shortPositionAf);
+   PrintToConsole("The long position after: %d\n",longPositionAf);
+   PrintToConsole("-------------------------------------------------------------\n");
 
 }
 // //////////////////////////////////////

@@ -1154,9 +1154,9 @@ uint64_t mastercore::edgeOrderbook(uint32_t contractId, uint8_t tradingAction)
           }
       }
     }
-    if (tradingAction == BUY){
+    if (tradingAction == BUY && !vecContractDexPrices.empty()){
        result = vecContractDexPrices.front();
-    } else {
+    } else if (tradingAction == SELL && !vecContractDexPrices.empty()){
        result = vecContractDexPrices.back();
     }
     return result;
