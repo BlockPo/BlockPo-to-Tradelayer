@@ -2097,7 +2097,7 @@ int CMPTransaction::logicMath_ContractDexCancelEcosystem()
     return rc;
 }
 
-/** Tx 32 */
+/** Tx 33 */
 int CMPTransaction::logicMath_ContractDexClosePosition()
 {
     if (!IsTransactionTypeAllowed(block, ecosystem, type, version)) {

@@ -1590,9 +1590,11 @@ UniValue omni_getpnl(const UniValue& params, bool fHelp)
         balanceObj.push_back(Pair("positivepnl", FormatByType(0,2)));
         balanceObj.push_back(Pair("negativepnl", FormatByType(realizedProfits,2)));
 
+      } else if (realizedLosses == 0 && realizedProfits == 0){
+          balanceObj.push_back(Pair("positivepnl", FormatByType(0,2)));
+          balanceObj.push_back(Pair("negativepnl", FormatByType(0,2)));
       }
-
-        return balanceObj;
+      return balanceObj;
 }
 ////////////////////////////////////////////////////////////////////////////////
 static const CRPCCommand commands[] =

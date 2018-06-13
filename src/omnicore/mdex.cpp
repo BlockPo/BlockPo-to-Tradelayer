@@ -1032,6 +1032,12 @@ void CMPMetaDEx::setAmountForsale(int64_t amount, const std::string& label)
     amount_forsale = amount;
     PrintToLog("update remaining amount still up for sale (%ld %s):%s\n", amount, label, ToString());
 }
+
+void CMPContractDex::setPrice(int64_t price)
+{
+    effective_price = price;
+    // PrintToLog("update price still up for sale (%ld):%s\n", price, ToString());
+}
 ///////////////////////////////////////////
 
 std::string CMPMetaDEx::ToString() const
@@ -1250,15 +1256,6 @@ int mastercore::ContractDex_ADD(const std::string& sender_addr, uint32_t prop, i
   //  Ensure this is not a badly priced trade (for example due to zero amounts)
     if (0 >= new_cdex.getEffectivePrice()) return METADEX_ERROR -66;
 
-      PrintToConsole("Id of Contract: %d\n",new_cdex.getProperty());
-      PrintToConsole("AmountForSale: %d\n",new_cdex.getAmountForSale());
-      PrintToConsole("Address: %d \n",new_cdex.getAddr());
-      PrintToConsole("Effective Price: %d \n",new_cdex.getEffectivePrice());
-      PrintToConsole("Trading Action: %d \n",new_cdex.getTradingAction());
-      PrintToConsole("------------------------------------------------------------\n");
-
-    //Match against existing trades, remainder of the order will be put into the order book
-    // if (msc_debug_metadex3) MetaDEx_debug_print();
     x_Trade(&new_cdex);
     // if (msc_debug_metadex3) MetaDEx_debug_print();
 
@@ -1272,6 +1269,79 @@ int mastercore::ContractDex_ADD(const std::string& sender_addr, uint32_t prop, i
             if (msc_debug_metadex1) PrintToLog("==== INSERTED: %s= %s\n", xToString(new_cdex.getEffectivePrice()), new_cdex.ToString());
             // if (msc_debug_metadex3) MetaDEx_debug_print();
         }
+    }
+
+    rc = 0;
+    return rc;
+}
+
+/////////////////////////////////////////
+/** New things for Contract */
+int mastercore::ContractDex_ADD_MARKET_PRICE(const std::string& sender_addr, uint32_t contractId, int64_t amount, int block, const uint256& txid, unsigned int idx, uint8_t trading_action, int64_t amount_to_reserve)
+{
+    int rc = METADEX_ERROR -1;
+    PrintToConsole("------------------------------------------------------------\n");
+    PrintToConsole("Inside ContractDex_ADD_MARKET_PRICE\n");
+    PrintToConsole("Id of contract after create a CMPContractDex object: \n");
+
+    /*Remember: Here CMPTransaction::ADD is the subaction coming from CMPMetaDEx*/
+
+    if (trading_action == BUY){
+       uint64_t ask = edgeOrderbook(contractId,BUY);
+       CMPContractDex new_cdex(sender_addr, block, contractId, amount, 0, 0, txid, idx, CMPTransaction::ADD, ask, trading_action);
+
+       //  Ensure this is not a badly priced trade (for example due to zero amounts)
+       PrintToConsole("effective price of new_cdex: %d\n",new_cdex.getEffectivePrice());
+       if (0 >= new_cdex.getEffectivePrice()) return METADEX_ERROR -66;
+
+       // Insert the remaining order into the ContractDex maps
+       uint64_t oldvalue;
+       uint64_t newvalue;
+       uint64_t diff;
+       while (0 < diff) {
+           oldvalue = new_cdex.getAmountForSale();
+           PrintToConsole("amountforsale after x_trade: %d\n",oldvalue);
+           x_Trade(&new_cdex);
+           uint64_t price =  edgeOrderbook(contractId,BUY);
+           new_cdex.setPrice(price);
+           newvalue = new_cdex.getAmountForSale();
+           diff = oldvalue - newvalue;
+           PrintToConsole("diff : %d\n",diff);
+           PrintToConsole("--------------------------------------------------\n");
+           PrintToConsole("BUY SIDE in while loop<-------\n");
+           PrintToConsole("ask now: %d\n",price);
+           PrintToConsole("amountforsale now: %d\n",newvalue);
+           PrintToConsole("--------------------------------------------------\n");
+       }
+    } else if (trading_action == SELL){
+       uint64_t bid = edgeOrderbook(contractId,SELL);
+       CMPContractDex new_cdex(sender_addr, block, contractId, amount, 0, 0, txid, idx, CMPTransaction::ADD, bid, trading_action);
+       //  Ensure this is not a badly priced trade (for example due to zero amounts
+
+       PrintToConsole("effective price of new_cdex: %d\n",new_cdex.getEffectivePrice());
+       if (0 >= new_cdex.getEffectivePrice()) return METADEX_ERROR -66;
+
+       // Insert the remaining order into the ContractDex maps
+       uint64_t oldvalue;
+       uint64_t newvalue;
+       uint64_t diff;
+       while (0 < diff) {
+           oldvalue = new_cdex.getAmountForSale();
+           PrintToConsole("amountforsale after x_trade: %d\n",oldvalue);
+           x_Trade(&new_cdex);
+           uint64_t price =  edgeOrderbook(contractId,SELL);
+           new_cdex.setPrice(price);
+           newvalue = new_cdex.getAmountForSale();
+           diff = oldvalue - newvalue;
+           PrintToConsole("diff : %d\n",diff);
+           PrintToConsole("--------------------------------------------------\n");
+           PrintToConsole("SELL SIDE in while loop<-------\n");
+           PrintToConsole("Inside the while loop...\n");
+           PrintToConsole("bid now: %d\n",price);
+           PrintToConsole("amountforsale now: %d\n",newvalue);
+           PrintToConsole("--------------------------------------------------\n");
+
+       }
     }
 
     rc = 0;
@@ -1634,16 +1704,16 @@ int mastercore::ContractDex_CANCEL_EVERYTHING(const uint256& txid, unsigned int 
 
     return rc;
 }
+
 int mastercore::ContractDex_CLOSE_POSITION(const uint256& txid, unsigned int block, const std::string& sender_addr, unsigned char ecosystem, uint32_t contractId, uint32_t collateralCurrency)
 {
    int64_t shortPosition = getMPbalance(sender_addr,contractId, NEGATIVE_BALANCE);
    int64_t longPosition = getMPbalance(sender_addr,contractId, POSSITIVE_BALANCE);
    PrintToConsole("-------------------------------------------------------------\n");
-   PrintToConsole("Inside ContractDex_CLOSE_POSITION\n");
-   PrintToConsole("The short position: %d\n",shortPosition);
-   PrintToConsole("The long position: %d\n",longPosition);
 
-   LOCK(cs_tally);   // realized the UPNL
+   LOCK(cs_tally);
+
+   // realized the UPNL
    double dupnl = t_tradelistdb->getUPNL(sender_addr, contractId);
    int64_t pnl = static_cast<double>(dupnl);
    if (pnl > 0){
@@ -1665,13 +1735,11 @@ int mastercore::ContractDex_CLOSE_POSITION(const uint256& txid, unsigned int blo
    int result = 0;
    unsigned int idx=0;
    if (shortPosition > 0 && longPosition == 0){
-     uint64_t ask = edgeOrderbook(contractId,1);
-     PrintToConsole("Ask Price : %d\n",ask);
-       result = ContractDex_ADD(sender_addr,contractId, shortPosition, block, txid, idx, ask,BUY,0);
+       PrintToConsole("Short Position closing...\n");
+       result = ContractDex_ADD_MARKET_PRICE(sender_addr,contractId, shortPosition, block, txid, idx,BUY,0);
    } else if (longPosition > 0 && shortPosition == 0){
-     uint64_t bid = edgeOrderbook(contractId,2);
-     PrintToConsole("Bid Price : %d\n",bid);
-       result = ContractDex_ADD(sender_addr,contractId, longPosition, block, txid, idx, bid,SELL,0);
+       PrintToConsole("Long Position closing...\n");
+       result = ContractDex_ADD_MARKET_PRICE(sender_addr,contractId, longPosition, block, txid, idx,SELL,0);
    }
 
    // cleaning liquidation price
@@ -1685,8 +1753,11 @@ int mastercore::ContractDex_CLOSE_POSITION(const uint256& txid, unsigned int blo
    PrintToConsole("losses: %d\n",realizedLosses);
    int64_t shortPositionAf = getMPbalance(sender_addr,contractId, NEGATIVE_BALANCE);
    int64_t longPositionAf= getMPbalance(sender_addr,contractId, POSSITIVE_BALANCE);
-   PrintToConsole("The short position after: %d\n",shortPositionAf);
-   PrintToConsole("The long position after: %d\n",longPositionAf);
+   if ( shortPositionAf == 0 && longPositionAf == 0){
+       PrintToConsole("POSITION CLOSED!!!\n");
+   } else {
+       PrintToConsole("ERROR: Position partialy Closed\n");
+   }
    PrintToConsole("-------------------------------------------------------------\n");
 
 }
