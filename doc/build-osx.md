@@ -16,9 +16,10 @@ Then install [Homebrew](http://brew.sh).
 Dependencies
 ----------------------
 
-    brew install automake berkeley-db4 libtool boost --c++11 miniupnpc openssl pkg-config homebrew/versions/protobuf260 --c++11 qt5 libevent
+    brew install automake berkeley-db4 libtool boost  miniupnpc openssl pkg-config homebrew/versions/protobuf260 --c++11 qt5 libevent
 
 NOTE: Building with Qt4 is still supported, however, could result in a broken UI. Building with Qt5 is recommended.
+Note: removed --c++11 because brew doesn't have that flag anymore
 
 Build Litecoin Core
 ------------------------
@@ -27,6 +28,9 @@ Build Litecoin Core
 
         git clone https://github.com/litecoin-project/litecoin
         cd litecoin
+
+1.1 Ensure this merge/code updates are done on ./src/txmempool.h ./src/miner.h
+https://github.com/bitcoin/bitcoin/commit/cb7ef312ff34db20db4234ed5ea68378cf2e9559
 
 2.  Build litecoin-core:
 
