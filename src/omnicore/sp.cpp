@@ -835,9 +835,9 @@ void mastercore::eraseMaxedCrowdsale(const std::string& address, int64_t blockTi
 int mastercore::addInterestPegged(int nBlockPrev, const CBlockIndex* pBlockIndex)
 {
     if (pBlockIndex == NULL) return 0;
-    uint32_t contractId = 2147483651;
+    uint32_t contractId = 2147483651;  //TODO: add data from Smart Properties saved in db
     uint32_t peggedId = 2147483653;
-    const int64_t factor = 100000000;
+    const double factor = 100000000;
     string sender = "";
     // const int64_t blockTime = pBlockIndex->GetBlockTime();
     // int blockHeight = pBlockIndex->nHeight;
@@ -860,7 +860,7 @@ int mastercore::addInterestPegged(int nBlockPrev, const CBlockIndex* pBlockIndex
        int init_block = sp.init_block;
        uint32_t collateral = sp.collateral_currency;
        int deadline = static_cast<int>(expiration + init_block);
-       int64_t nMarketPrice = static_cast<int64_t>(marketPrice/factor);
+       double nMarketPrice = static_cast<double>(marketPrice/factor);
        PrintToConsole("Inside addInterestPegged function-------------------\n");
        PrintToConsole("Index value : %d\n",priceIndex);
        PrintToConsole("Market price : %d\n",nMarketPrice);
@@ -994,12 +994,12 @@ int CMPSPInfo::rollingContractsBlock(const CBlockIndex* pBlockIndex)
                  uint256 txid;
                  unsigned int idx = 0;
                  int result = ContractDex_ADD(info.issuer, contractId, contractsReserved, actualBlock, txid, idx, ask, 1, 0);
-                 int64_t contractsNow = getMPbalance(info.issuer,contractId, CONTRACTDEX_RESERVE);
+                //  int64_t contractsNow = getMPbalance(info.issuer,contractId, CONTRACTDEX_RESERVE);
                  assert(update_tally_map(info.issuer, contractId, negativeBalance, NEGATIVE_BALANCE)); // adding the short position
-                 int64_t positiveBalanceAf = getMPbalance(info.issuer,contractId, POSSITIVE_BALANCE);
-                 int64_t negativeBalanceAf = getMPbalance(info.issuer,contractId, NEGATIVE_BALANCE);
+                //  int64_t positiveBalanceAf = getMPbalance(info.issuer,contractId, POSSITIVE_BALANCE);
+                //  int64_t negativeBalanceAf = getMPbalance(info.issuer,contractId, NEGATIVE_BALANCE);
                  // checking the bid price for Contract B:
-                 uint32_t contractId2 = 5; // only for test
+                 uint32_t contractId2 = 5; // only for test, TODO: adding info from Smart Properties saved in db
                  uint64_t bid = edgeOrderbook(contractId2,2);
                  PrintToConsole("Price of bid: %d\n",bid);
                  int64_t positiveBalanceB = getMPbalance(info.issuer,contractId2, POSSITIVE_BALANCE);

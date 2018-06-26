@@ -93,6 +93,7 @@ void RequireManagedProperty(uint32_t propertyId)
     }
 }
 
+
 void RequireTokenIssuer(const std::string& address, uint32_t propertyId)
 {
     LOCK(cs_tally);

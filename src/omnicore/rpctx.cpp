@@ -903,6 +903,7 @@ UniValue omni_tradecontract(const UniValue& params, bool fHelp)
     int64_t amountForSale = ParseAmountContract(params[2], isPropertyContract(propertyIdForSale));
     uint64_t effective_price = ParseEffectivePrice(params[3]);
     uint8_t trading_action = ParseContractDexAction(params[4]);
+    RequireContract(propertyIdForSale);
 
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_ContractDexTrade(propertyIdForSale, amountForSale, effective_price, trading_action);
@@ -1108,7 +1109,56 @@ UniValue omni_redemption_pegged(const UniValue& params, bool fHelp)
         }
     }
 }
+UniValue omni_cancelorderbyblock(const UniValue& params, bool fHelp)
+{
+    if (fHelp || params.size() != 3)
+        throw runtime_error(
+            "omni_cancelorderbyblock \"fromaddress\" ecosystem\n"
 
+            "\nCancel all offers on the distributed token exchange.\n"
+
+            "\nArguments:\n"
+            "1. address         (string, required) the txid of order to cancel\n"
+            "2. block           (number, required) the block of order to cancel\n"
+            "2. idx             (number, required) the idx in block of order to cancel\n"
+
+            "\nResult:\n"
+            "\"hash\"                  (string) the hex-encoded transaction hash\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("omni_cancelorderbyblock", "\"3BydPiSLPP3DR5cf726hDQ89fpqWLxPKLR\" 1, 2")
+            + HelpExampleRpc("omni_cancelorderbyblock", "\"3BydPiSLPP3DR5cf726hDQ89fpqWLxPKLR\", 1, 2")
+        );
+
+    // obtain parameters & info
+       std::string fromAddress = ParseAddress(params[0]);
+       int block = static_cast<int>(ParseNewValues(params[1]));
+       int idx = static_cast<int>(ParseNewValues(params[2]));
+       printf ("block: %d\n",block);
+       printf ("idx: %d\n",idx);
+
+    // create a payload for the transaction
+    std::vector<unsigned char> payload = CreatePayload_ContractDexCancelOrderByTxId(block,idx);
+
+    // request the wallet build the transaction (and if needed commit it)
+    uint256 txid;
+    std::string rawHex;
+    int result = WalletTxBuilder(fromAddress, "", 0, payload, txid, rawHex, autoCommit);
+
+    PrintToConsole("WalletTxBuilder result: %d\n", result);
+    PrintToConsole("rawHex: %s\n", rawHex);
+    PrintToConsole("txid: %s\n", txid.GetHex());
+    //check error and return the txid (or raw hex depending on autocommit)
+    if (result != 0) {
+        throw JSONRPCError(result, error_str(result));
+    } else {
+        if (!autoCommit) {
+            return rawHex;
+        } else {
+            return txid.GetHex();
+        }
+    }
+}
 
 /////////////////////////////////////////////////////////////////////////////////
 static const CRPCCommand commands[] =
@@ -1131,6 +1181,7 @@ static const CRPCCommand commands[] =
     { "omni layer (transaction creation)", "omni_createcontract",          &omni_createcontract,          false },
     { "omni layer (transaction creation)", "omni_tradecontract",           &omni_tradecontract,           false },
     { "omni layer (transaction creation)", "omni_cancelallcontractsbyaddress",  &omni_cancelallcontractsbyaddress, false },
+    { "omni layer (transaction creation)", "omni_cancelorderbyblock"         , &omni_cancelorderbyblock,    false},
     { "omni layer (transaction creation)", "omni_sendissuance_pegged",       &omni_sendissuance_pegged,       false },
     { "omni layer (transaction creation)", "omni_send_pegged",             &omni_send_pegged,             false },
     { "omni layer (transaction creation)","omni_redemption_pegged",        &omni_redemption_pegged,       false },

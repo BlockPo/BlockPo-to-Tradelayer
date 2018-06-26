@@ -118,6 +118,7 @@ void ContractDexObjectToJSON(const CMPContractDex& obj, UniValue& contractdex_ob
     contractdex_obj.push_back(Pair("tradingaction", obj.getTradingAction()));
     contractdex_obj.push_back(Pair("effectiveprice",  FormatMP(1,obj.getEffectivePrice())));
     contractdex_obj.push_back(Pair("block", obj.getBlock()));
+    contractdex_obj.push_back(Pair("idx", static_cast<uint64_t>(obj.getIdx())));
     contractdex_obj.push_back(Pair("blocktime", obj.getBlockTime()));
 }
 
@@ -578,6 +579,12 @@ UniValue omni_getproperty(const UniValue& params, bool fHelp)
     response.push_back(Pair("creationtxid", strCreationHash));
     response.push_back(Pair("fixedissuance", sp.fixed));
     response.push_back(Pair("totaltokens", strTotalTokens));
+    if (sp.subcategory == "Futures Contracts"){
+        response.push_back(Pair("notional size",(uint64_t) sp.notional_size));
+        response.push_back(Pair("collateral currency",(uint64_t) sp.collateral_currency));
+        response.push_back(Pair("margin requirement",(uint64_t) sp.margin_requirement));
+        response.push_back(Pair("blocks until expiration",(uint64_t) sp.blocks_until_expiration));
+    }
 
     return response;
 }

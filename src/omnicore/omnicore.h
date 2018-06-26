@@ -82,6 +82,7 @@ enum TransactionType {
   MSC_TYPE_CONTRACTDEX_CANCEL_PRICE   = 30,
   MSC_TYPE_CONTRACTDEX_CANCEL_ECOSYSTEM   = 32,
   MSC_TYPE_CONTRACTDEX_CLOSE_POSITION   = 33,
+  MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK = 34,
   /** !Here we changed "MSC_TYPE_OFFER_ACCEPT_A_BET = 40" */
   MSC_TYPE_CREATE_CONTRACT            = 40,
   MSC_TYPE_PEGGED_CURRENCY            = 100,
@@ -125,6 +126,15 @@ enum FILETYPES {
 #define BUY   1
 #define SELL  2
 #define ACTIONINVALID  3
+
+uint32_t const CONTRACT_ALL_DUSD = 4;
+uint32_t const CONTRACT_ALL_LTC = 5;
+uint32_t const CONTRACT_LTC_DJPY = 6;
+uint32_t const CONTRACT_LTC_DUSD = 7;
+uint32_t const CONTRACT_LTC_DEUR = 8;
+
+
+
 //////////////////////////////////////
 
 /** New for future contracts port */
@@ -330,6 +340,10 @@ extern CCoinsViewCache view;
 extern CCriticalSection cs_tx_cache;
 
 std::string strMPProperty(uint32_t propertyId);
+
+/* New things for contracts *///////////////////////////////////////////////////
+double notionalChange(uint32_t contractId, uint64_t marketPrice);
+////////////////////////////////////////////////////////////////////////////////
 
 bool isMPinBlockRange(int starting_block, int ending_block, bool bDeleteFound);
 

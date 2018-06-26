@@ -90,6 +90,7 @@ using std::vector;
 using namespace mastercore;
 
 extern volatile uint64_t marketP [10];
+const double factor = 100000000;
 
 CCriticalSection cs_tally;
 
@@ -2692,8 +2693,9 @@ void CMPTradeList::recordForUPNL(const uint256 txid, string address, uint32_t pr
   PrintToConsole("address : %s\n",address);
   PrintToConsole("contract traded: %d\n",property_traded);
   PrintToConsole("effective price: %d\n",effectivePrice);
-  const int64_t factor = 100000000;
-  int64_t effPrice = effectivePrice/factor;
+  double factor = 100000000;
+  double effPr = static_cast<double>(effectivePrice/factor);
+  int64_t effPrice = static_cast<int64_t>(effPr);
   // PrintToConsole("pnewAction inside recordMatchedTrade: %hhu",pnewAction);
   const string key = txid.ToString();
   const string value = strprintf("%s:%d:%d", address , property_traded, effPrice);
@@ -2987,6 +2989,55 @@ int marginCall(const std::string& address, uint32_t propertyId, uint64_t marketP
         PrintToConsole("return of ContractDex_ADD: %d\n",rc);
     }
     return rc;
+}
+
+double mastercore::notionalChange(uint32_t contractId, uint64_t marketPrice)
+{
+    PrintToConsole("____________________________________________________________\n");
+    PrintToConsole("Into the notionalChange function\n");
+    double uPrice = 1;
+    double den = static_cast<double>(marketPrice);
+    PrintToConsole("den: %d\n",den);
+
+    if (den > 0) {
+        if(contractId == CONTRACT_ALL_DUSD) {
+            uPrice = (factor / den);
+            PrintToConsole("marketPrice of ALL/dUSD: %d\n",den);
+            PrintToConsole("price of 1 Usd in Alls: %d ALLs\n",uPrice);
+            if (uPrice > 0){
+                return uPrice;
+            }
+
+        } else if (contractId == CONTRACT_ALL_LTC) {
+              uPrice = (factor / den);
+              PrintToConsole("price of 1 LTC in Alls: %d ALLs\n",uPrice);
+              if (uPrice > 0){
+                  return uPrice;
+              }
+
+        } else if (contractId == CONTRACT_LTC_DJPY) {
+             double dLTC = static_cast<double>(marketP [5]);
+             uPrice = (factor / den)*(factor / dLTC);
+             PrintToConsole("dLTC: %d\n",dLTC);
+             PrintToConsole("price of 1 DJPY in Alls: %d ALLs\n",uPrice);
+             return uPrice;
+
+        } else if (contractId == CONTRACT_LTC_DUSD) {
+             uPrice = (factor / den);
+             PrintToConsole("price of 1 dUSD in LTC: %d LTC",uPrice);
+             return uPrice;
+
+        } else if (contractId == CONTRACT_LTC_DEUR) {
+             uPrice = (factor / den);
+             PrintToConsole("price of 1 dEUR in LTC: %d LTC",uPrice);
+             return uPrice;
+        }
+
+    }
+    
+    PrintToConsole("____________________________________________________________\n");
+    return uPrice;
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////

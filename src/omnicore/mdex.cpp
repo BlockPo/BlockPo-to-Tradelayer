@@ -44,8 +44,9 @@ using namespace mastercore;
 //! Global map for price and order data
 md_PropertiesMap mastercore::metadex;
 extern volatile uint64_t marketPrice;
-const int64_t factor = 100000000;
+int64_t factor = 100000000;
 extern volatile uint64_t marketP[10];
+
 md_PricesMap* mastercore::get_Prices(uint32_t prop)
 {
     md_PropertiesMap::iterator it = metadex.find(prop);
@@ -160,6 +161,22 @@ std::string xToString(const uint32_t &value)
 {
     return strprintf("%s", boost::lexical_cast<std::string>(value));
 }
+
+ui128 multiply_int64_t(int64_t &m, int64_t &n)
+{
+    ui128 product;
+    multiply(product, m, n);
+
+    return product;
+}
+
+ui128 multiply_uint64_t(uint64_t &m, uint64_t &n)
+{
+    ui128 product;
+    multiply(product, m, n);
+
+    return product;
+}
 ///////////////////////////////
 
 // find the best match on the market
@@ -240,6 +257,7 @@ MatchReturnType x_Trade(CMPContractDex* const pnew)
             assert(_my_sps->getSP(propertyForSale, sp));
 
             uint32_t marginRequirementContract = sp.margin_requirement;
+            int64_t marginRequirement = static_cast<int64_t>(marginRequirementContract);
             uint32_t collateralCurrency = sp.collateral_currency;
             uint32_t notionalSize = sp.notional_size;
             PrintToConsole("---------------------------------------------------\n");
@@ -451,8 +469,8 @@ MatchReturnType x_Trade(CMPContractDex* const pnew)
             // PrintToConsole("________________________________________\n");
 
             if ( Status_s != "None") {
-
-                int64_t freedReserverExPNLMaker = static_cast<int64_t>(marginRequirementContract*countClosedSeller);
+                ui128 freedResExPNLMaker = multiply_int64_t(marginRequirement, countClosedSeller);
+                int64_t freedReserverExPNLMaker = static_cast<int64_t>(freedResExPNLMaker);
                 PrintToConsole("freedReserverExPNLMaker : %d\n",freedReserverExPNLMaker);
 				    if (freedReserverExPNLMaker != 0) {
                 	assert(update_tally_map(seller_address, collateralCurrency, -freedReserverExPNLMaker, CONTRACTDEX_RESERVE));
@@ -467,14 +485,14 @@ MatchReturnType x_Trade(CMPContractDex* const pnew)
                 ///////////////////////////////////////
                 /** Remember: We have to  check how to add this later without any problem*/
                 if ( PNL_s != 0 ) {
-                    assert(update_tally_map(seller_address, collateralCurrency, amountToReserve, UPNL));
+                    // assert(update_tally_map(seller_address, collateralCurrency, amountToReserve, UPNL));
                 }
                 // PrintToConsole("PNL_s: %d, Basis: %d\n", PNL_s, basis_s);
             }
 
             if ( Status_b != "None" ) {
-
-                int64_t freedReserverExPNLTaker = static_cast<int64_t>(marginRequirementContract*countClosedBuyer);
+                ui128 freedResExPNLTaker = multiply_int64_t(marginRequirement, countClosedBuyer);
+                int64_t freedReserverExPNLTaker = static_cast<int64_t>(freedResExPNLTaker);
                 PrintToConsole("freedReserverExPNLTaker : %d\n",freedReserverExPNLTaker);
                 if (freedReserverExPNLTaker != 0) {
 	                assert(update_tally_map(buyer_address, collateralCurrency, -freedReserverExPNLTaker, CONTRACTDEX_RESERVE));
@@ -489,7 +507,7 @@ MatchReturnType x_Trade(CMPContractDex* const pnew)
                 ///////////////////////////////////////
                 /** Remember: We have to  check how to add this later without any problem*/
                 if ( PNL_b != 0 ) {
-                    assert(update_tally_map(buyer_address, collateralCurrency, amountToReserve, UPNL));
+                    // assert(update_tally_map(buyer_address, collateralCurrency, amountToReserve, UPNL));
                 }
             }
             ///////////////////////////////////////
@@ -527,6 +545,8 @@ MatchReturnType x_Trade(CMPContractDex* const pnew)
             ///////////////////////////////////////
             int index = static_cast<unsigned int>(property_traded);
             marketP[index] = pold->getEffectivePrice();
+            uint64_t marketPriceNow = marketP[index];
+            PrintToConsole("marketPrice Now : %d\n", marketPriceNow);
 
             t_tradelistdb->recordForUPNL(pnew->getHash(),pnew->getAddr(),property_traded,pold->getEffectivePrice());
 
@@ -588,6 +608,7 @@ MatchReturnType x_Trade(CMPContractDex* const pnew)
             assert(_my_sps->getSP(propertyForSale, sp));
 
             uint32_t marginRequirementContract = sp.margin_requirement;
+            int64_t marginRequirement = static_cast<int64_t>(marginRequirementContract);
             uint32_t collateralCurrency = sp.collateral_currency;
             uint32_t notionalSize = sp.notional_size;
             PrintToConsole("---------------------------------------------------\n");
@@ -799,8 +820,8 @@ MatchReturnType x_Trade(CMPContractDex* const pnew)
             // PrintToConsole("________________________________________\n");
 
             if ( Status_s != "None") {
-
-                int64_t freedReserverExPNLMaker = static_cast<int64_t>(marginRequirementContract*countClosedSeller);
+                ui128 freedResExPNLMaker = multiply_int64_t(marginRequirement, countClosedSeller);
+                int64_t freedReserverExPNLMaker = static_cast<int64_t>(freedResExPNLMaker);
                 PrintToConsole("freedReserverExPNLMaker : %d\n",freedReserverExPNLMaker);
 				    if (freedReserverExPNLMaker != 0) {
                 	assert(update_tally_map(seller_address, collateralCurrency, -freedReserverExPNLMaker, CONTRACTDEX_RESERVE));
@@ -821,8 +842,8 @@ MatchReturnType x_Trade(CMPContractDex* const pnew)
             }
 
             if ( Status_b != "None" ) {
-
-                int64_t freedReserverExPNLTaker = static_cast<int64_t>(marginRequirementContract*countClosedBuyer);
+                ui128 freedResExPNLTaker = multiply_int64_t(marginRequirement, countClosedBuyer);
+                int64_t freedReserverExPNLTaker = static_cast<int64_t>(freedResExPNLTaker);
                 PrintToConsole("freedReserverExPNLTaker : %d\n",freedReserverExPNLTaker);
                 if (freedReserverExPNLTaker != 0) {
 	                assert(update_tally_map(buyer_address, collateralCurrency, -freedReserverExPNLTaker, CONTRACTDEX_RESERVE));
@@ -875,6 +896,8 @@ MatchReturnType x_Trade(CMPContractDex* const pnew)
             ///////////////////////////////////////
             int index = static_cast<unsigned int>(property_traded);
             marketP[index] = pold->getEffectivePrice();
+            uint64_t marketPriceNow = marketP[index];
+            PrintToConsole("marketPrice Now : %d\n", marketPriceNow);
             // PrintToConsole("marketPrice: %d\n", FormatContractShortMP(marketPrice));
             // PrintToConsole("marketP[index]: %d\n", marketP[index]);
 
@@ -915,11 +938,12 @@ void get_LiquidationPrice(int64_t effectivePrice, string address, uint32_t prope
     PrintToConsole ("double Liquidation price : %d\n", liqPrice);
     PrintToConsole ("trading action : %d\n", trading_action);
     PrintToConsole ("LiqFactor : %d\n", liqFactor);
-    int64_t liq64 = static_cast<int64_t>(liqPrice);
+    int64_t liqPr = static_cast<int64_t>(liqPrice);
     int64_t oldLiqPrice = getMPbalance (address, property,LIQUIDATION_PRICE);
-    int64_t newLiqPrice = static_cast<int64_t>((liq64+oldLiqPrice)/2);
+    double dnLiqPrice = static_cast<double>((liqPr+oldLiqPrice)/2);
+    int64_t newLiqPrice = static_cast<int64_t>(dnLiqPrice);
     PrintToConsole ("Precio de liquidación antiguo : %d\n", oldLiqPrice);
-    PrintToConsole ("Precio de liquidación actual : %d\n", liq64);
+    PrintToConsole ("Precio de liquidación actual : %d\n", liqPr);
     PrintToConsole ("Precio de liquidación Nuevo : %d\n", newLiqPrice);
     if (oldLiqPrice > 0) {
       assert(update_tally_map(address, property, -oldLiqPrice, LIQUIDATION_PRICE));
@@ -1263,7 +1287,7 @@ int mastercore::ContractDex_ADD(const std::string& sender_addr, uint32_t prop, i
     if (0 < new_cdex.getAmountForSale()) { //switch to getAmounForSale() when ready
         if (!ContractDex_INSERT(new_cdex)) {
             PrintToLog("%s() ERROR: ALREADY EXISTS, line %d, file: %s\n", __FUNCTION__, __LINE__, __FILE__);
-            return METADEX_ERROR -70;
+            return METADEX_ERROR -70;  // TODO: create new numbers for our errors.
         } else {
             PrintToConsole("Inserted in the orderbook!\n");
             if (msc_debug_metadex1) PrintToLog("==== INSERTED: %s= %s\n", xToString(new_cdex.getEffectivePrice()), new_cdex.ToString());
@@ -1631,12 +1655,6 @@ int mastercore::ContractDex_CANCEL_EVERYTHING(const uint256& txid, unsigned int 
     int rc = METADEX_ERROR -40;
     bool bValid = false;
 
-    // PrintToLog("%s()\n", __FUNCTION__);
-
-    // if (msc_debug_metadex2) MetaDEx_debug_print();
-
-    // PrintToLog("<<<<<<\n");
-
     for (cd_PropertiesMap::iterator my_it = contractdex.begin(); my_it != contractdex.end(); ++my_it) {
         unsigned int prop = my_it->first;
 
@@ -1648,7 +1666,7 @@ int mastercore::ContractDex_CANCEL_EVERYTHING(const uint256& txid, unsigned int 
         cd_PricesMap &prices = my_it->second;
 
         for (cd_PricesMap::iterator it = prices.begin(); it != prices.end(); ++it) {
-            uint64_t price = it->first;
+            // uint64_t price = it->first;
             cd_Set &indexes = it->second;
 
             // PrintToLog("  # Price Level: %s\n", xToString(price));
@@ -1673,12 +1691,14 @@ int mastercore::ContractDex_CANCEL_EVERYTHING(const uint256& txid, unsigned int 
 
                 CMPSPInfo::Entry sp;
                 assert(_my_sps->getSP(it->getProperty(), sp));
-
-                uint32_t collateralCurrency = sp.collateral_currency;
-                uint32_t marginRequirement = sp.margin_requirement;
-                int64_t amountForSale = it->getAmountForSale();
                 string addr = it->getAddr();
-                int64_t getback = static_cast<int64_t>(amountForSale*marginRequirement*factor);
+                uint32_t collateralCurrency = sp.collateral_currency;
+                int64_t marginRequirement = static_cast<int64_t>(sp.margin_requirement);
+                int64_t amountForSale = it->getAmountForSale();
+                ui128 amount_margin = multiply_int64_t(amountForSale,marginRequirement);
+                int64_t am_mar = static_cast<int64_t>(amount_margin);
+                ui128 getbk = multiply_int64_t(am_mar,factor);
+                int64_t getback = static_cast<int64_t>(getbk);
                 PrintToConsole("collateral currency id of contract : %d\n",collateralCurrency);
                 PrintToConsole("margin requirement of contract : %d\n",marginRequirement);
                 PrintToConsole("amountForSale: %d\n",amountForSale);
@@ -1698,9 +1718,77 @@ int mastercore::ContractDex_CANCEL_EVERYTHING(const uint256& txid, unsigned int 
     if (bValid == false){
        PrintToConsole("You don't have active orders\n");
     }
-    // PrintToLog(">>>>>>\n");
 
-    // if (msc_debug_metadex2) MetaDEx_debug_print();
+    return rc;
+}
+
+int mastercore::ContractDex_CANCEL_FOR_BLOCK(const uint256& txid,  int block,unsigned int idx, const std::string& sender_addr, unsigned char ecosystem)
+{
+    int rc = METADEX_ERROR -40;
+    bool bValid = false;
+    for (cd_PropertiesMap::iterator my_it = contractdex.begin(); my_it != contractdex.end(); ++my_it) {
+        // unsigned int prop = my_it->first;
+
+        // skip property, if it is not in the expected ecosystem  TODO: check the ecosystem stuff!
+        // if (isMainEcosystemProperty(ecosystem) && !isMainEcosystemProperty(prop)) continue;
+        // if (isTestEcosystemProperty(ecosystem) && !isTestEcosystemProperty(prop)) continue;
+
+        // PrintToLog(" ## property: %u\n", prop);
+        cd_PricesMap &prices = my_it->second;
+
+        for (cd_PricesMap::iterator it = prices.begin(); it != prices.end(); ++it) {
+            // uint64_t price = it->first;
+            cd_Set &indexes = it->second;
+
+            // PrintToLog("  # Price Level: %s\n", xToString(price));
+
+            for (cd_Set::iterator it = indexes.begin(); it != indexes.end();) {
+
+                if (it->getAddr() != sender_addr || it->getBlock()!= block || it->getIdx()!= idx) {
+                   ++it;
+                   continue;
+               }
+               rc = 0;
+                // PrintToLog("%s(): REMOVING %s\n", __FUNCTION__, it->ToString());
+                PrintToConsole("Inside 2nd for loop\n");
+                PrintToConsole("Sender address: %s\n",it->getAddr());
+                PrintToConsole("Contract Id: %d\n",it->getProperty());
+                PrintToConsole("Amount for sale: %d\n",it->getAmountForSale());
+                PrintToConsole("Block: %d\n",it->getBlock());
+                PrintToConsole("Idx: %d\n",it->getIdx());
+                CMPSPInfo::Entry sp;
+                assert(_my_sps->getSP(it->getProperty(), sp));
+                uint32_t collateralCurrency = sp.collateral_currency;
+                uint32_t marginRequirement = sp.margin_requirement;
+                int64_t amountForSale = it->getAmountForSale();
+                string addr = it->getAddr();
+                const double denMargin = 100;
+                int index = static_cast<int>(it->getProperty());
+                double marginRe = marginRequirement/denMargin;
+                double conv = notionalChange(it->getProperty(),marketP[index]);
+                int64_t getback = static_cast<int64_t>(amountForSale*marginRe*factor*conv);
+                PrintToConsole("collateral currency id of contract : %d\n",collateralCurrency);
+                PrintToConsole("margin requirement of contract : %d\n",marginRequirement);
+                PrintToConsole("amountForSale: %d\n",amountForSale);
+                PrintToConsole("Address: %d\n",addr);
+                PrintToConsole("amount from reserve to balance: %d\n",getback);
+                PrintToConsole("--------------------------------------------\n");
+                // move from reserve to balance the collateral
+                if (marketP[index] > 0) {
+                assert(update_tally_map(addr, collateralCurrency, getback, BALANCE));
+                assert(update_tally_map(addr, collateralCurrency,  -getback, CONTRACTDEX_RESERVE));
+                }
+                // // record the cancellation
+                bValid = true;
+                // p_txlistdb->recordContractDexCancelTX(txid, it->getHash(), bValid, block, it->getProperty(), it->getAmountForSale
+                indexes.erase(it++);
+
+            }
+       }
+    }
+    if (bValid == false){
+       PrintToConsole("You don't have active orders\n");
+    }
 
     return rc;
 }
@@ -1732,14 +1820,13 @@ int mastercore::ContractDex_CLOSE_POSITION(const uint256& txid, unsigned int blo
    }
 
    // Clearing the position
-   int result = 0;
    unsigned int idx=0;
    if (shortPosition > 0 && longPosition == 0){
        PrintToConsole("Short Position closing...\n");
-       result = ContractDex_ADD_MARKET_PRICE(sender_addr,contractId, shortPosition, block, txid, idx,BUY,0);
+       ContractDex_ADD_MARKET_PRICE(sender_addr,contractId, shortPosition, block, txid, idx,BUY,0);
    } else if (longPosition > 0 && shortPosition == 0){
        PrintToConsole("Long Position closing...\n");
-       result = ContractDex_ADD_MARKET_PRICE(sender_addr,contractId, longPosition, block, txid, idx,SELL,0);
+       ContractDex_ADD_MARKET_PRICE(sender_addr,contractId, longPosition, block, txid, idx,SELL,0);
    }
 
    // cleaning liquidation price
@@ -1760,6 +1847,7 @@ int mastercore::ContractDex_CLOSE_POSITION(const uint256& txid, unsigned int blo
    }
    PrintToConsole("-------------------------------------------------------------\n");
 
+   return 0;
 }
 // //////////////////////////////////////
 //

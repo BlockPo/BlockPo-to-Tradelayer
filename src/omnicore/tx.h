@@ -69,6 +69,9 @@ private:
     unsigned int prev_prop_id;
     char category[SP_STRING_FIELD_LEN];
     char subcategory[SP_STRING_FIELD_LEN];
+    /* New things for contracts */
+    char stxid[SP_STRING_FIELD_LEN];
+    //////////////////////////////////
     char name[SP_STRING_FIELD_LEN];
     char url[SP_STRING_FIELD_LEN];
     char data[SP_STRING_FIELD_LEN];
@@ -151,6 +154,7 @@ private:
     bool interpret_RedemptionPegged();
     bool interpret_SendPeggedCurrency();
     bool interpret_ContractDexClosePosition();
+    bool interpret_ContractDex_Cancel_Orders_By_Block();
     ///////////////////////////////////////////////
 
     /**
@@ -178,6 +182,7 @@ private:
     int logicMath_RedemptionPegged();
     int logicMath_SendPeggedCurrency();
     int logicMath_ContractDexClosePosition();
+    int logicMath_ContractDex_Cancel_Orders_By_Block();
     ///////////////////////////////////////////////
 
     /**
@@ -218,6 +223,7 @@ public:
     uint32_t getPreviousId() const { return prev_prop_id; }
     std::string getSPCategory() const { return category; }
     std::string getSPSubCategory() const { return subcategory; }
+    std::string getSPTxId() const { return stxid; }
     std::string getSPName() const { return name; }
     std::string getSPUrl() const { return url; }
     std::string getSPData() const { return data; }
@@ -280,6 +286,7 @@ public:
         memset(&name, 0, sizeof(name));
         memset(&url, 0, sizeof(url));
         memset(&data, 0, sizeof(data));
+        memset(&stxid, 0, sizeof(stxid));
         deadline = 0;
         early_bird = 0;
         percentage = 0;

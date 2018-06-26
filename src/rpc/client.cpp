@@ -148,6 +148,8 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "omni_sendalert", 2 },
     {"omni_cancelallcontractsbyaddress",1},
     {"omni_cancelallcontractsbyaddress",2},
+    {"omni_cancelorderbyblock",1},
+    {"omni_cancelorderbyblock",2},
 
     /* Omni Core - raw transaction calls */
     { "omni_decodetransaction", 1 },

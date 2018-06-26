@@ -407,6 +407,25 @@ std::vector<unsigned char> CreatePayload_ContractDexClosePosition(uint8_t ecosys
     return payload;
 }
 
+std::vector<unsigned char> CreatePayload_ContractDexCancelOrderByTxId(int block, unsigned int idx)
+{
+    std::vector<unsigned char> payload;
+
+    uint16_t messageType = 34;
+    uint16_t messageVer = 0;
+    uint32_t tblock = static_cast<uint32_t>(block);
+    uint32_t tidx = static_cast<uint32_t>(idx);
+    std::vector<uint8_t> vecMessageType = CompressInteger(messageType);
+    std::vector<uint8_t> vecMessageVer = CompressInteger(messageVer);
+    std::vector<uint8_t> vecBlock = CompressInteger(tblock);
+    std::vector<uint8_t> vecIdx = CompressInteger(tidx);
+    payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
+    payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
+    payload.insert(payload.end(), vecBlock.begin(), vecBlock.end());
+    payload.insert(payload.end(), vecIdx.begin(), vecIdx.end());
+    return payload;
+}
+
 std::vector<unsigned char> CreatePayload_ContractDexCancelPrice(uint32_t propertyIdForSale, uint64_t amountForSale, uint32_t propertyIdDesired, uint64_t amountDesired, uint64_t effective_price, uint8_t trading_action)
 {
     std::vector<unsigned char> payload;

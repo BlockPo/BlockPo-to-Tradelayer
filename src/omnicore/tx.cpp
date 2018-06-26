@@ -40,6 +40,7 @@ using boost::algorithm::token_compress_on;
 
 using namespace mastercore;
 const int64_t factor = 100000000;
+extern volatile uint64_t marketP [10];
 
 /** Returns a label for the given transaction type. */
 std::string mastercore::strTransactionType(uint16_t txType)
@@ -70,6 +71,7 @@ std::string mastercore::strTransactionType(uint16_t txType)
         case MSC_TYPE_REDEMPTION_PEGGED: return "Redemption Pegged Currency";
         case MSC_TYPE_SEND_PEGGED_CURRENCY: return "Send Pegged Currency";
         case MSC_TYPE_CONTRACTDEX_CLOSE_POSITION: return "Close Position";
+        case MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK: return "Cancel Orders by Block";
 
         ////////////////////////////////////////////////////////////////////////
         default: return "* unknown type *";
@@ -171,10 +173,15 @@ bool CMPTransaction::interpret_Transaction()
 
         case MSC_TYPE_SEND_PEGGED_CURRENCY:
             return interpret_SendPeggedCurrency();
+
         case MSC_TYPE_REDEMPTION_PEGGED:
             return interpret_RedemptionPegged();
+
         case MSC_TYPE_CONTRACTDEX_CLOSE_POSITION:
             return interpret_ContractDexClosePosition();
+
+        case MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK:
+            return interpret_ContractDex_Cancel_Orders_By_Block();
       //////////////////////////////////////////////////////////////////////////
     }
 
@@ -808,7 +815,42 @@ bool CMPTransaction::interpret_ContractDexCancelEcosystem()
       PrintToConsole("ecosystem: %d\n", ecosystem);
       PrintToConsole("contractId: %d\n", contractId);
       return true;
-    }
+}
+
+/** Tx 34 */
+bool CMPTransaction::interpret_ContractDex_Cancel_Orders_By_Block()
+{
+
+  int i = 0;
+
+  std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecBlockBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecIdxBytes = GetNextVarIntBytes(i);
+
+  PrintToConsole("Inside of interpret function of cancel orders by txid\n");
+
+  if (!vecVersionBytes.empty()) {
+    version = DecompressInteger(vecVersionBytes);
+  } else return false;
+
+  if (!vecTypeBytes.empty()) {
+      type = DecompressInteger(vecTypeBytes);
+  } else return false;
+
+  if (!vecBlockBytes.empty()) {
+      block = DecompressInteger(vecBlockBytes);
+      PrintToConsole("block : %d\n",block);
+  } else return false;
+
+  if (!vecIdxBytes.empty()) {
+      tx_idx = DecompressInteger(vecIdxBytes);
+      PrintToConsole("idx : %d\n",tx_idx);
+  } else return false;
+
+  return true;
+
+}
 
   /** Tx 101 */
   bool CMPTransaction::interpret_CreatePeggedCurrency()
@@ -1040,6 +1082,8 @@ int CMPTransaction::interpretPacket()
         case MSC_TYPE_CONTRACTDEX_CLOSE_POSITION:
             return logicMath_ContractDexClosePosition();
 
+        case MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK:
+            return logicMath_ContractDex_Cancel_Orders_By_Block();
     ////////////////////////////////////////////////////////////////////////////
     }
 
@@ -1949,19 +1993,19 @@ if ('\0' == name[0]) {
 /** Tx 29 */
 int CMPTransaction::logicMath_ContractDexTrade()
 {
-  PrintToConsole("----------------------------------------------------------\n");
-  PrintToConsole("Inside of logicMath_ContractDexTrade\n");
-  uint256 blockHash;
-  {
-    LOCK(cs_main);
+   PrintToConsole("----------------------------------------------------------\n");
+   PrintToConsole("Inside of logicMath_ContractDexTrade\n");
+   uint256 blockHash;
+   {
+      LOCK(cs_main);
 
-    CBlockIndex* pindex = chainActive[block];
-    if (pindex == NULL) {
-        PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
-        return (PKT_ERROR_SP -20);
-    }
+      CBlockIndex* pindex = chainActive[block];
+      if (pindex == NULL) {
+          PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
+          return (PKT_ERROR_SP -20);
+      }
     blockHash = pindex->GetBlockHash();
-  }
+    }
 //
 // if (OMNI_PROPERTY_MSC != ecosystem && OMNI_PROPERTY_TMSC != ecosystem) {
 //     PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, (uint32_t) ecosystem);
@@ -1985,39 +2029,50 @@ int CMPTransaction::logicMath_ContractDexTrade()
 //     return (PKT_ERROR_SP -36);
 // }
 
-CMPSPInfo::Entry sp;
-assert(_my_sps->getSP(contractId, sp));
+     CMPSPInfo::Entry sp;
+     int index = static_cast<int>(contractId);
+     const double factor = 100000000;
+     const double denMargin = 100;
+     const double percentLiqPrice = 0.95;
+     assert(_my_sps->getSP(contractId, sp));
+     margin_requirement = sp.margin_requirement;
+     double marginRe = margin_requirement/denMargin;
+     collateral_currency = sp.collateral_currency;
+     PrintToConsole("margin requirement of contract : %d\n",margin_requirement);
+     PrintToConsole("collateral currency id of contract : %d\n",collateral_currency);
+     int64_t nBalance = getMPbalance(sender, collateral_currency, BALANCE);
+     double conv = notionalChange(contractId,marketP[index]);
+     int64_t amountToReserve = static_cast<int64_t>(amount*marginRe*factor*conv);
+     PrintToConsole("margin Requirement: %d\n",marginRe);
+     PrintToConsole("amount: %d\n",amount);
+     PrintToConsole("conv: %d\n",conv);
+     PrintToConsole("nBalance: %d\n",nBalance);
+     PrintToConsole("amountToReserve------->: %d\n",amountToReserve);
+     PrintToConsole("----------------------------------------------------------\n");
 
-margin_requirement = sp.margin_requirement;
-collateral_currency = sp.collateral_currency;
-PrintToConsole("margin requirement of contract : %d\n",margin_requirement);
-PrintToConsole("collateral currency id of contract : %d\n",collateral_currency);
-// ------------------------------------------
-double percentLiqPrice = 0.95;
+     if (nBalance < amountToReserve || amountToReserve <= 0) {
 
-int64_t nBalance = getMPbalance(sender, collateral_currency, BALANCE);
-uint32_t Sum = margin_requirement;
-int64_t amountToReserve = static_cast<int64_t>(amount*Sum*factor);
-PrintToConsole("nBalance: %d\n",nBalance);
-PrintToConsole("margin requirement: %d\n",Sum);
-PrintToConsole("amountToReserve: %d\n",amountToReserve);
-PrintToConsole("----------------------------------------------------------\n");
-if (nBalance < amountToReserve) {
-    PrintToLog("%s(): rejected: sender %s has insufficient balance for contracts %d [%s < %s]\n",
+        PrintToLog("%s(): rejected: sender %s has insufficient balance for contracts %d [%s < %s] or amountToReserve is zero\n",
             __func__,
             sender,
             property,
             FormatMP(property, nBalance),
             FormatMP(property, amountToReserve));
-    PrintToConsole("rejected: sender has insufficient balance for contracts\n");
-    return (PKT_ERROR_SEND -25);
-} else {
+        PrintToConsole("rejected: sender has insufficient balance for contracts or amountToReserve is zero\n");
+        return (PKT_ERROR_SEND -25);
 
-    assert(update_tally_map(sender, collateral_currency, -amountToReserve, BALANCE));
-    assert(update_tally_map(sender, collateral_currency,  amountToReserve, CONTRACTDEX_RESERVE));
+    } else if (marketP[index] != 0){
+        PrintToConsole("Market Price != 0 : %d\n",marketP[index]);
+        assert(update_tally_map(sender, collateral_currency, -amountToReserve, BALANCE));
+        assert(update_tally_map(sender, collateral_currency,  amountToReserve, CONTRACTDEX_RESERVE));
+        int64_t reserva = getMPbalance(sender,collateral_currency,CONTRACTDEX_RESERVE);
+        std::string reserved = FormatDivisibleMP(reserva,false);
+        PrintToConsole("In reserve: %s<-----------------------------------------\n",reserved);
+    }else {
+       PrintToConsole("Market Price == 0\n");
+    }
 
-    t_tradelistdb->recordNewTrade(txid, sender, property, desired_property, block, tx_idx);
-
+    t_tradelistdb->recordNewTrade(txid, sender, contractId, desired_property, block, tx_idx);
     int rc = ContractDex_ADD(sender, contractId, amount, block, txid, tx_idx, effective_price, trading_action,amountToReserve);
     //SOCKET
     char buffAction[10];
@@ -2069,8 +2124,6 @@ if (nBalance < amountToReserve) {
 
 
     return rc;
-  }
-  return 0;
 }
 
 /** Tx 32 */
@@ -2096,6 +2149,7 @@ int CMPTransaction::logicMath_ContractDexCancelEcosystem()
 
     return rc;
 }
+
 
 /** Tx 33 */
 int CMPTransaction::logicMath_ContractDexClosePosition()
@@ -2123,12 +2177,42 @@ int CMPTransaction::logicMath_ContractDexClosePosition()
              __func__,
              sender,
              contractId);
+             PrintToConsole("Property identifier no exist\n");
           return (PKT_ERROR_SEND -25);
        }
     }
     uint32_t collateralCurrency = sp.collateral_currency;
     int rc = ContractDex_CLOSE_POSITION(txid, block, sender, ecosystem, contractId, collateralCurrency);
     return rc;
+}
+
+int CMPTransaction::logicMath_ContractDex_Cancel_Orders_By_Block()
+{
+  // if (!IsTransactionTypeAllowed(block, ecosystem, type, version)) {
+  //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+  //             __func__,
+  //             type,
+  //             version,
+  //             property,
+  //             block);
+  //     return (PKT_ERROR_METADEX -22);
+  // }
+  //
+  // if (OMNI_PROPERTY_MSC != ecosystem && OMNI_PROPERTY_TMSC != ecosystem) {
+  //     PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, ecosystem);
+  //     PrintToConsole("rejected: invalid ecosystem %d\n",ecosystem);
+  //     return (PKT_ERROR_METADEX -21);
+  // }
+
+  PrintToConsole("Inside the logicMath_ContractDex_Cancel_Orders_By_Block function !!!\n");
+  PrintToConsole("sender address : %s\n",sender);
+  PrintToConsole("ecosystem: %d",ecosystem);
+  ContractDex_CANCEL_FOR_BLOCK(txid, block, tx_idx, sender, ecosystem);
+  int rc = 0;
+  return rc;
+
+
+
 }
 
 /** Tx 100 */
@@ -2379,7 +2463,6 @@ int CMPTransaction::logicMath_RedemptionPegged()
     }
     uint32_t collateralId = 0;
     uint32_t notSize = 0;
-    const int64_t factor = 100000000;
     CMPSPInfo::Entry sp;
     {
         LOCK(cs_tally);

@@ -18,7 +18,7 @@
 #include <map>
 #include <set>
 #include <string>
-
+typedef boost::multiprecision::uint128_t ui128;
 typedef boost::rational<boost::multiprecision::checked_int128_t> rational_t;
 
 // MetaDEx trade statuses
@@ -38,6 +38,8 @@ std::string xToString(const uint64_t &value);
 std::string xToString(const int64_t  &price);
 std::string xToString(const uint32_t &value);
 void saveDataGraphs(std::ofstream& file, std::string lineOut);
+ui128 multiply_uint64_t(uint64_t &m, uint64_t &n);
+ui128 multiply_int64_t(int64_t &m, int64_t &n);
 ///////////////////////////////
 
 enum MatchReturnType
@@ -233,6 +235,7 @@ namespace mastercore
     int ContractDex_CLOSE_POSITION(const uint256& txid, unsigned int block, const std::string& sender_addr, unsigned char ecosystem, uint32_t contractId, uint32_t collateralCurrency);
     int ContractDex_CANCEL_AT_PRICE(const uint256& txid, unsigned int block, const std::string& sender_addr, uint32_t prop, int64_t amount, uint32_t property_desired, int64_t amount_desired, uint64_t effective_price, uint8_t trading_action);
     int ContractDex_ADD_MARKET_PRICE(const std::string& sender_addr, uint32_t contractId, int64_t amount, int block, const uint256& txid, unsigned int idx, uint8_t trading_action, int64_t amount_to_reserve);
+    int ContractDex_CANCEL_FOR_BLOCK(const uint256& txid, int block,unsigned int idx, const std::string& sender_addr, unsigned char ecosystem);
 	///////////////////////////////////
 
   int MetaDEx_ADD(const std::string& sender_addr, uint32_t, int64_t, int block, uint32_t property_desired, int64_t amount_desired, const uint256& txid, unsigned int idx);
