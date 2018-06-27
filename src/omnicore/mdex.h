@@ -22,7 +22,7 @@ typedef boost::multiprecision::uint128_t ui128;
 typedef boost::rational<boost::multiprecision::checked_int128_t> rational_t;
 
 // MetaDEx trade statuses
-#define TRADE_INVALID                 -1
+#define TRADE_INVALID                -1
 #define TRADE_OPEN                    1
 #define TRADE_OPEN_PART_FILLED        2
 #define TRADE_FILLED                  3

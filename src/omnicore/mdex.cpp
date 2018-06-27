@@ -1727,7 +1727,6 @@ int mastercore::ContractDex_CANCEL_FOR_BLOCK(const uint256& txid,  int block,uns
     int rc = METADEX_ERROR -40;
     bool bValid = false;
     for (cd_PropertiesMap::iterator my_it = contractdex.begin(); my_it != contractdex.end(); ++my_it) {
-        // unsigned int prop = my_it->first;
 
         // skip property, if it is not in the expected ecosystem  TODO: check the ecosystem stuff!
         // if (isMainEcosystemProperty(ecosystem) && !isMainEcosystemProperty(prop)) continue;
@@ -1740,8 +1739,6 @@ int mastercore::ContractDex_CANCEL_FOR_BLOCK(const uint256& txid,  int block,uns
             // uint64_t price = it->first;
             cd_Set &indexes = it->second;
 
-            // PrintToLog("  # Price Level: %s\n", xToString(price));
-
             for (cd_Set::iterator it = indexes.begin(); it != indexes.end();) {
 
                 if (it->getAddr() != sender_addr || it->getBlock()!= block || it->getIdx()!= idx) {
@@ -1749,35 +1746,26 @@ int mastercore::ContractDex_CANCEL_FOR_BLOCK(const uint256& txid,  int block,uns
                    continue;
                }
                rc = 0;
-                // PrintToLog("%s(): REMOVING %s\n", __FUNCTION__, it->ToString());
-                PrintToConsole("Inside 2nd for loop\n");
-                PrintToConsole("Sender address: %s\n",it->getAddr());
-                PrintToConsole("Contract Id: %d\n",it->getProperty());
-                PrintToConsole("Amount for sale: %d\n",it->getAmountForSale());
-                PrintToConsole("Block: %d\n",it->getBlock());
-                PrintToConsole("Idx: %d\n",it->getIdx());
-                CMPSPInfo::Entry sp;
-                assert(_my_sps->getSP(it->getProperty(), sp));
-                uint32_t collateralCurrency = sp.collateral_currency;
-                uint32_t marginRequirement = sp.margin_requirement;
-                int64_t amountForSale = it->getAmountForSale();
-                string addr = it->getAddr();
-                const double denMargin = 100;
-                int index = static_cast<int>(it->getProperty());
-                double marginRe = marginRequirement/denMargin;
-                double conv = notionalChange(it->getProperty(),marketP[index]);
-                int64_t getback = static_cast<int64_t>(amountForSale*marginRe*factor*conv);
-                PrintToConsole("collateral currency id of contract : %d\n",collateralCurrency);
-                PrintToConsole("margin requirement of contract : %d\n",marginRequirement);
-                PrintToConsole("amountForSale: %d\n",amountForSale);
-                PrintToConsole("Address: %d\n",addr);
-                PrintToConsole("amount from reserve to balance: %d\n",getback);
-                PrintToConsole("--------------------------------------------\n");
+               uint256 otxid = it->getHash();
+               int64_t getback = t_tradelistdb->getTradeAllsByTxId(otxid);
+               CMPSPInfo::Entry sp;
+               assert(_my_sps->getSP(it->getProperty(), sp));
+               uint32_t collateralCurrency = sp.collateral_currency;
+               uint32_t marginRequirement = sp.margin_requirement;
+               int64_t amountForSale = it->getAmountForSale();
+               string addr = it->getAddr();
+               int64_t balance = getMPbalance(addr,collateralCurrency,BALANCE);
+               PrintToConsole("collateral currency id of contract : %d\n",collateralCurrency);
+               PrintToConsole("margin requirement of contract : %d\n",marginRequirement);
+               PrintToConsole("amountForSale: %d\n",amountForSale);
+               PrintToConsole("Address: %d\n",addr);
+               PrintToConsole("amount from reserve to balance: %d\n",getback);
+               PrintToConsole("--------------------------------------------\n");
                 // move from reserve to balance the collateral
-                if (marketP[index] > 0) {
+               if (balance > getback && balance > 0) {
                 assert(update_tally_map(addr, collateralCurrency, getback, BALANCE));
                 assert(update_tally_map(addr, collateralCurrency,  -getback, CONTRACTDEX_RESERVE));
-                }
+               }
                 // // record the cancellation
                 bValid = true;
                 // p_txlistdb->recordContractDexCancelTX(txid, it->getHash(), bValid, block, it->getProperty(), it->getAmountForSale
@@ -1789,7 +1777,6 @@ int mastercore::ContractDex_CANCEL_FOR_BLOCK(const uint256& txid,  int block,uns
     if (bValid == false){
        PrintToConsole("You don't have active orders\n");
     }
-
     return rc;
 }
 

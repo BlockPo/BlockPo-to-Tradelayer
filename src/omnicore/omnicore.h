@@ -274,7 +274,7 @@ public:
     // void recordMatchedTrade(const uint256 txid1, const uint256 txid2, string address1, string address2, unsigned int prop1, unsigned int prop2, uint64_t amount1, uint64_t amount2, int blockNum, int64_t fee, string t_status, std::vector<uint256> &vecTxid);
     /////////////////////////////////
 
-    void recordNewTrade(const uint256& txid, const std::string& address, uint32_t propertyIdForSale, uint32_t propertyIdDesired, int blockNum, int blockIndex);
+    void recordNewTrade(const uint256& txid, const std::string& address, uint32_t propertyIdForSale, uint32_t propertyIdDesired, int blockNum, int blockIndex, int64_t reserva);
     int deleteAboveBlock(int blockNum);
     bool exists(const uint256 &txid);
     void printStats();
@@ -287,6 +287,7 @@ public:
     double getPNL(string address, int64_t contractsClosed, int64_t price, uint32_t property, uint32_t marginRequirementContract, uint32_t notionalSize, std::string Status);
     void marginLogic(uint32_t property);
     double getUPNL(string address, uint32_t contractId);
+    int64_t getTradeAllsByTxId(uint256& txid);
     //////////////////////////////////////
 
     bool getMatchingTrades(const uint256& txid);

@@ -2030,6 +2030,7 @@ int CMPTransaction::logicMath_ContractDexTrade()
 // }
 
      CMPSPInfo::Entry sp;
+     int64_t reserva = 0;
      int index = static_cast<int>(contractId);
      const double factor = 100000000;
      const double denMargin = 100;
@@ -2065,14 +2066,14 @@ int CMPTransaction::logicMath_ContractDexTrade()
         PrintToConsole("Market Price != 0 : %d\n",marketP[index]);
         assert(update_tally_map(sender, collateral_currency, -amountToReserve, BALANCE));
         assert(update_tally_map(sender, collateral_currency,  amountToReserve, CONTRACTDEX_RESERVE));
-        int64_t reserva = getMPbalance(sender,collateral_currency,CONTRACTDEX_RESERVE);
+        reserva = getMPbalance(sender,collateral_currency,CONTRACTDEX_RESERVE);
         std::string reserved = FormatDivisibleMP(reserva,false);
         PrintToConsole("In reserve: %s<-----------------------------------------\n",reserved);
     }else {
        PrintToConsole("Market Price == 0\n");
     }
 
-    t_tradelistdb->recordNewTrade(txid, sender, contractId, desired_property, block, tx_idx);
+    t_tradelistdb->recordNewTrade(txid, sender, contractId, desired_property, block, tx_idx, reserva);
     int rc = ContractDex_ADD(sender, contractId, amount, block, txid, tx_idx, effective_price, trading_action,amountToReserve);
     //SOCKET
     char buffAction[10];

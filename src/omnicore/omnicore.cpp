@@ -2542,10 +2542,10 @@ void CMPTradeList::getTradesForAddress(std::string address, std::vector<uint256>
   }
 }
 
-void CMPTradeList::recordNewTrade(const uint256& txid, const std::string& address, uint32_t propertyIdForSale, uint32_t propertyIdDesired, int blockNum, int blockIndex)
+void CMPTradeList::recordNewTrade(const uint256& txid, const std::string& address, uint32_t propertyIdForSale, uint32_t propertyIdDesired, int blockNum, int blockIndex, int64_t reserva)
 {
   if (!pdb) return;
-  std::string strValue = strprintf("%s:%d:%d:%d:%d", address, propertyIdForSale, propertyIdDesired, blockNum, blockIndex);
+  std::string strValue = strprintf("%s:%d:%d:%d:%d:%d", address, propertyIdForSale, propertyIdDesired, blockNum, blockIndex,reserva);
   Status status = pdb->Put(writeoptions, txid.ToString(), strValue);
   ++nWritten;
   if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
@@ -2684,6 +2684,47 @@ bool CMPTradeList::getMatchingTrades(uint32_t propertyId, UniValue& tradeArray)
   delete it; // Desallocation proccess
   if (count) { return true; } else { return false; }
 }
+
+int64_t CMPTradeList::getTradeAllsByTxId(uint256& txid)  // function that return the initial margin (ALLs) for a trade txid
+{
+  if (!pdb) return false;
+
+  int count = 0;
+  int64_t alls = 0;
+  std::string txidStr = txid.ToString();
+  PrintToConsole("txid from argument : %s \n",txidStr);
+  std::vector<std::string> vstr;
+
+  leveldb::Iterator* it = NewIterator(); // Allocation proccess
+
+  for(it->SeekToFirst(); it->Valid(); it->Next()) {
+      // search key to see if this is a matching trade
+      std::string strKey = it->key().ToString();
+      std::string strValue = it->value().ToString();
+
+      // ensure correct amount of tokens in value string
+      boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
+      if (vstr.size() != 6) {
+          PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
+          // PrintToConsole("TRADEDB error - unexpected number of tokens in value %d \n",vstr.size());
+          continue;
+      }
+      if (strKey != txidStr){
+          continue;
+      }
+
+     // decode the details from the value string
+      alls = boost::lexical_cast<int64_t>(vstr[5]);
+      PrintToConsole("txid from db: %s<------------------------------\n",strKey);
+      PrintToConsole("alls for margin: %s<------------------------------\n",alls);
+      PrintToConsole("count : %d\n",count);
+      ++count;
+  }
+  // clean up
+  delete it; // Desallocation proccess
+  return alls;
+}
+
 void CMPTradeList::recordForUPNL(const uint256 txid, string address, uint32_t property_traded, int64_t effectivePrice)
 {
 
@@ -3017,24 +3058,32 @@ double mastercore::notionalChange(uint32_t contractId, uint64_t marketPrice)
 
         } else if (contractId == CONTRACT_LTC_DJPY) {
              double dLTC = static_cast<double>(marketP [5]);
-             uPrice = (factor / den)*(factor / dLTC);
              PrintToConsole("dLTC: %d\n",dLTC);
-             PrintToConsole("price of 1 DJPY in Alls: %d ALLs\n",uPrice);
-             return uPrice;
+             if (dLTC > 0){
+                 uPrice = (factor / den)*(factor / dLTC);
+                 PrintToConsole("price of 1 DJPY in Alls: %d ALLs\n",uPrice);
+                 if (uPrice > 0){
+                     return uPrice;
+                 }
+             }
 
         } else if (contractId == CONTRACT_LTC_DUSD) {
              uPrice = (factor / den);
              PrintToConsole("price of 1 dUSD in LTC: %d LTC",uPrice);
-             return uPrice;
+             if (uPrice > 0){
+                 return uPrice;
+             }
 
         } else if (contractId == CONTRACT_LTC_DEUR) {
              uPrice = (factor / den);
              PrintToConsole("price of 1 dEUR in LTC: %d LTC",uPrice);
-             return uPrice;
+             if (uPrice > 0){
+                 return uPrice;
+             }
         }
 
     }
-    
+
     PrintToConsole("____________________________________________________________\n");
     return uPrice;
 
