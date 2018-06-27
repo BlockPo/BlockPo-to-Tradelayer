@@ -3036,7 +3036,7 @@ double mastercore::notionalChange(uint32_t contractId, uint64_t marketPrice)
 {
     PrintToConsole("____________________________________________________________\n");
     PrintToConsole("Into the notionalChange function\n");
-    double uPrice = 1;
+    double uPrice = 0;
     double den = static_cast<double>(marketPrice);
     PrintToConsole("den: %d\n",den);
 
@@ -3083,7 +3083,7 @@ double mastercore::notionalChange(uint32_t contractId, uint64_t marketPrice)
         }
 
     }
-
+    PrintToConsole("market price is 0 \n");
     PrintToConsole("____________________________________________________________\n");
     return uPrice;
 

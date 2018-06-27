@@ -39,6 +39,7 @@
 using boost::algorithm::token_compress_on;
 
 using namespace mastercore;
+const double denMargin = 100;
 const int64_t factor = 100000000;
 extern volatile uint64_t marketP [10];
 
@@ -2030,12 +2031,11 @@ int CMPTransaction::logicMath_ContractDexTrade()
 // }
 
      CMPSPInfo::Entry sp;
+     assert(_my_sps->getSP(contractId, sp));
      int64_t reserva = 0;
      int index = static_cast<int>(contractId);
-     const double factor = 100000000;
-     const double denMargin = 100;
      const double percentLiqPrice = 0.95;
-     assert(_my_sps->getSP(contractId, sp));
+     const double factor = 100000000;
      margin_requirement = sp.margin_requirement;
      double marginRe = margin_requirement/denMargin;
      collateral_currency = sp.collateral_currency;
@@ -2051,9 +2051,9 @@ int CMPTransaction::logicMath_ContractDexTrade()
      PrintToConsole("amountToReserve------->: %d\n",amountToReserve);
      PrintToConsole("----------------------------------------------------------\n");
 
-     if (nBalance < amountToReserve || amountToReserve <= 0) {
+     if (nBalance < amountToReserve) {
 
-        PrintToLog("%s(): rejected: sender %s has insufficient balance for contracts %d [%s < %s] or amountToReserve is zero\n",
+        PrintToLog("%s(): rejected: sender %s has insufficient balance for contracts %d [%s < %s] \n",
             __func__,
             sender,
             property,
@@ -2062,15 +2062,13 @@ int CMPTransaction::logicMath_ContractDexTrade()
         PrintToConsole("rejected: sender has insufficient balance for contracts or amountToReserve is zero\n");
         return (PKT_ERROR_SEND -25);
 
-    } else if (marketP[index] != 0){
-        PrintToConsole("Market Price != 0 : %d\n",marketP[index]);
+    } else if (conv != 0){
+        PrintToConsole("market prices involved are different to zero\n");
         assert(update_tally_map(sender, collateral_currency, -amountToReserve, BALANCE));
         assert(update_tally_map(sender, collateral_currency,  amountToReserve, CONTRACTDEX_RESERVE));
         reserva = getMPbalance(sender,collateral_currency,CONTRACTDEX_RESERVE);
         std::string reserved = FormatDivisibleMP(reserva,false);
         PrintToConsole("In reserve: %s<-----------------------------------------\n",reserved);
-    }else {
-       PrintToConsole("Market Price == 0\n");
     }
 
     t_tradelistdb->recordNewTrade(txid, sender, contractId, desired_property, block, tx_idx, reserva);

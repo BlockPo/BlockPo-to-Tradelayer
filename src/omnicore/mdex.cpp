@@ -1746,20 +1746,23 @@ int mastercore::ContractDex_CANCEL_FOR_BLOCK(const uint256& txid,  int block,uns
                    continue;
                }
                rc = 0;
-               uint256 otxid = it->getHash();
-               int64_t getback = t_tradelistdb->getTradeAllsByTxId(otxid);
                CMPSPInfo::Entry sp;
                assert(_my_sps->getSP(it->getProperty(), sp));
                uint32_t collateralCurrency = sp.collateral_currency;
                uint32_t marginRequirement = sp.margin_requirement;
-               int64_t amountForSale = it->getAmountForSale();
+
                string addr = it->getAddr();
+               uint256 otxid = it->getHash();
                int64_t balance = getMPbalance(addr,collateralCurrency,BALANCE);
+               int64_t getback = t_tradelistdb->getTradeAllsByTxId(otxid);
+               int64_t amountForSale = it->getAmountForSale();
+
                PrintToConsole("collateral currency id of contract : %d\n",collateralCurrency);
                PrintToConsole("margin requirement of contract : %d\n",marginRequirement);
                PrintToConsole("amountForSale: %d\n",amountForSale);
                PrintToConsole("Address: %d\n",addr);
-               PrintToConsole("amount from reserve to balance: %d\n",getback);
+               std::string sgetback = FormatDivisibleMP(getback,false);
+               PrintToConsole("amount returned to balance: %d\n",sgetback);
                PrintToConsole("--------------------------------------------\n");
                 // move from reserve to balance the collateral
                if (balance > getback && balance > 0) {
@@ -1775,66 +1778,69 @@ int mastercore::ContractDex_CANCEL_FOR_BLOCK(const uint256& txid,  int block,uns
        }
     }
     if (bValid == false){
-       PrintToConsole("You don't have active orders\n");
+       PrintToConsole("Incorrect block or idx\n");
     }
     return rc;
 }
 
 int mastercore::ContractDex_CLOSE_POSITION(const uint256& txid, unsigned int block, const std::string& sender_addr, unsigned char ecosystem, uint32_t contractId, uint32_t collateralCurrency)
 {
-   int64_t shortPosition = getMPbalance(sender_addr,contractId, NEGATIVE_BALANCE);
-   int64_t longPosition = getMPbalance(sender_addr,contractId, POSSITIVE_BALANCE);
-   PrintToConsole("-------------------------------------------------------------\n");
+    int64_t shortPosition = getMPbalance(sender_addr,contractId, NEGATIVE_BALANCE);
+    int64_t longPosition = getMPbalance(sender_addr,contractId, POSSITIVE_BALANCE);
+    PrintToConsole("-------------------------------------------------------------\n");
 
-   LOCK(cs_tally);
+    LOCK(cs_tally);
 
    // realized the UPNL
-   double dupnl = t_tradelistdb->getUPNL(sender_addr, contractId);
-   int64_t pnl = static_cast<double>(dupnl);
-   if (pnl > 0){
-      int64_t proffit = getMPbalance(sender_addr, collateralCurrency, REALIZED_PROFIT);
-      if (proffit > 0){
-         update_tally_map(sender_addr,collateralCurrency, -proffit, REALIZED_PROFIT);
+    double dupnl = t_tradelistdb->getUPNL(sender_addr, contractId);
+    int64_t pnl = static_cast<double>(dupnl);
+    if (pnl > 0){
+        int64_t proffit = getMPbalance(sender_addr, collateralCurrency, REALIZED_PROFIT);
+        if (proffit > 0){
+            update_tally_map(sender_addr,collateralCurrency, -proffit, REALIZED_PROFIT);
 
-      }
-       update_tally_map(sender_addr, collateralCurrency, pnl, REALIZED_PROFIT);
-   }else if (pnl < 0){
-     int64_t losses = getMPbalance(sender_addr, collateralCurrency, REALIZED_LOSSES);
-     if (losses > 0){
-        update_tally_map(sender_addr, collateralCurrency, -losses, REALIZED_LOSSES);
-     }
-     update_tally_map(sender_addr, collateralCurrency, pnl, REALIZED_LOSSES);
-   }
+        }
+        update_tally_map(sender_addr, collateralCurrency, pnl, REALIZED_PROFIT);
+    }else if (pnl < 0){
+        int64_t losses = getMPbalance(sender_addr, collateralCurrency, REALIZED_LOSSES);
+        if (losses > 0){
+            update_tally_map(sender_addr, collateralCurrency, -losses, REALIZED_LOSSES);
+        }
+        update_tally_map(sender_addr, collateralCurrency, pnl, REALIZED_LOSSES);
+    }
 
-   // Clearing the position
-   unsigned int idx=0;
-   if (shortPosition > 0 && longPosition == 0){
-       PrintToConsole("Short Position closing...\n");
-       ContractDex_ADD_MARKET_PRICE(sender_addr,contractId, shortPosition, block, txid, idx,BUY,0);
-   } else if (longPosition > 0 && shortPosition == 0){
-       PrintToConsole("Long Position closing...\n");
-       ContractDex_ADD_MARKET_PRICE(sender_addr,contractId, longPosition, block, txid, idx,SELL,0);
-   }
+    // Clearing the position
+    unsigned int idx=0;
+    if (shortPosition > 0 && longPosition == 0){
+        PrintToConsole("Short Position closing...\n");
+        ContractDex_ADD_MARKET_PRICE(sender_addr,contractId, shortPosition, block, txid, idx,BUY,0);
+    } else if (longPosition > 0 && shortPosition == 0){
+        PrintToConsole("Long Position closing...\n");
+        ContractDex_ADD_MARKET_PRICE(sender_addr,contractId, longPosition, block, txid, idx,SELL,0);
+    }
 
-   // cleaning liquidation price
-   int64_t liqPrice = getMPbalance(sender_addr,contractId, LIQUIDATION_PRICE);
-   if (liqPrice > 0){
-      update_tally_map(sender_addr, contractId, -liqPrice, LIQUIDATION_PRICE);
-   }
-   int64_t realizedLosses = getMPbalance(sender_addr,collateralCurrency, REALIZED_LOSSES);
-   int64_t realizedProfits = getMPbalance(sender_addr,collateralCurrency, REALIZED_PROFIT);
-   PrintToConsole("profits: %d\n",realizedProfits);
-   PrintToConsole("losses: %d\n",realizedLosses);
-   int64_t shortPositionAf = getMPbalance(sender_addr,contractId, NEGATIVE_BALANCE);
-   int64_t longPositionAf= getMPbalance(sender_addr,contractId, POSSITIVE_BALANCE);
-   if ( shortPositionAf == 0 && longPositionAf == 0){
-       PrintToConsole("POSITION CLOSED!!!\n");
-   } else {
-       PrintToConsole("ERROR: Position partialy Closed\n");
-   }
-   PrintToConsole("-------------------------------------------------------------\n");
+    // cleaning liquidation price
+    int64_t liqPrice = getMPbalance(sender_addr,contractId, LIQUIDATION_PRICE);
+    if (liqPrice > 0){
+        update_tally_map(sender_addr, contractId, -liqPrice, LIQUIDATION_PRICE);
+    }
 
-   return 0;
+    int64_t realizedLosses = getMPbalance(sender_addr,collateralCurrency, REALIZED_LOSSES);
+    int64_t realizedProfits = getMPbalance(sender_addr,collateralCurrency, REALIZED_PROFIT);
+    PrintToConsole("profits: %d\n",realizedProfits);
+    PrintToConsole("losses: %d\n",realizedLosses);
+    int64_t shortPositionAf = getMPbalance(sender_addr,contractId, NEGATIVE_BALANCE);
+    int64_t longPositionAf= getMPbalance(sender_addr,contractId, POSSITIVE_BALANCE);
+
+    if ( shortPositionAf == 0 && longPositionAf == 0){
+        PrintToConsole("POSITION CLOSED!!!\n");
+    } else {
+        PrintToConsole("ERROR: Position partialy Closed\n");
+    }
+
+    PrintToConsole("-------------------------------------------------------------\n");
+
+    return 0;
 }
 // //////////////////////////////////////
 //
