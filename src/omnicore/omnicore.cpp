@@ -472,7 +472,7 @@ int mastercore::GetEncodingClass(const CTransaction& tx, int nBlock)
      * Perform a string comparison on hex for each scriptPubKey & look directly for omni marker bytes
      * This allows to drop non-Omni transactions with less work
      */
-    std::string strClassD = "6f6c";
+    std::string strClassD = "7070"; /*the pepe marker*/
     bool examineClosely = false;
     for (unsigned int n = 0; n < tx.vout.size(); ++n) {
         const CTxOut& output = tx.vout[n];
@@ -3095,7 +3095,7 @@ double mastercore::notionalChange(uint32_t contractId, uint64_t marketPrice)
  */
 const std::vector<unsigned char> GetOmMarker()
 {
-    static unsigned char pch[] = {0x6f, 0x6c}; // Hex-encoded: "ol"
+    static unsigned char pch[] = {0x70, 0x70}; // Hex-encoded: "pp"
 
     return std::vector<unsigned char>(pch, pch + sizeof(pch) / sizeof(pch[0]));
 }

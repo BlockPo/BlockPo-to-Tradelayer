@@ -473,8 +473,8 @@ MatchReturnType x_Trade(CMPContractDex* const pnew)
                 int64_t freedReserverExPNLMaker = static_cast<int64_t>(freedResExPNLMaker);
                 PrintToConsole("freedReserverExPNLMaker : %d\n",freedReserverExPNLMaker);
 				    if (freedReserverExPNLMaker != 0) {
-                	assert(update_tally_map(seller_address, collateralCurrency, -freedReserverExPNLMaker, CONTRACTDEX_RESERVE));
-                	assert(update_tally_map(seller_address, collateralCurrency,  freedReserverExPNLMaker, BALANCE));
+                	// assert(update_tally_map(seller_address, collateralCurrency, -freedReserverExPNLMaker, CONTRACTDEX_RESERVE));
+                	// assert(update_tally_map(seller_address, collateralCurrency,  freedReserverExPNLMaker, BALANCE));
                 }
                 PrintToConsole("Status_s %s\n",Status_s);
                 double PNL_s = t_tradelistdb->getPNL(seller_address, countClosedSeller,pold->getEffectivePrice(), property_traded, marginRequirementContract, notionalSize, Status_s);
@@ -495,8 +495,8 @@ MatchReturnType x_Trade(CMPContractDex* const pnew)
                 int64_t freedReserverExPNLTaker = static_cast<int64_t>(freedResExPNLTaker);
                 PrintToConsole("freedReserverExPNLTaker : %d\n",freedReserverExPNLTaker);
                 if (freedReserverExPNLTaker != 0) {
-	                assert(update_tally_map(buyer_address, collateralCurrency, -freedReserverExPNLTaker, CONTRACTDEX_RESERVE));
-    	            assert(update_tally_map(buyer_address, collateralCurrency,  freedReserverExPNLTaker, BALANCE));
+	                // assert(update_tally_map(buyer_address, collateralCurrency, -freedReserverExPNLTaker, CONTRACTDEX_RESERVE));
+    	            // assert(update_tally_map(buyer_address, collateralCurrency,  freedReserverExPNLTaker, BALANCE));
     	         }
                PrintToConsole("Status_b %s\n",Status_b);
                double PNL_b = t_tradelistdb->getPNL(buyer_address, countClosedBuyer,pold->getEffectivePrice(), property_traded, marginRequirementContract, notionalSize, Status_b);
@@ -824,8 +824,8 @@ MatchReturnType x_Trade(CMPContractDex* const pnew)
                 int64_t freedReserverExPNLMaker = static_cast<int64_t>(freedResExPNLMaker);
                 PrintToConsole("freedReserverExPNLMaker : %d\n",freedReserverExPNLMaker);
 				    if (freedReserverExPNLMaker != 0) {
-                	assert(update_tally_map(seller_address, collateralCurrency, -freedReserverExPNLMaker, CONTRACTDEX_RESERVE));
-                	assert(update_tally_map(seller_address, collateralCurrency,  freedReserverExPNLMaker, BALANCE));
+                	// assert(update_tally_map(seller_address, collateralCurrency, -freedReserverExPNLMaker, CONTRACTDEX_RESERVE));
+                	// assert(update_tally_map(seller_address, collateralCurrency,  freedReserverExPNLMaker, BALANCE));
                 }
                 PrintToConsole("Status_s %s\n",Status_s);
                 double PNL_s = t_tradelistdb->getPNL(seller_address, countClosedSeller,pold->getEffectivePrice(), property_traded, marginRequirementContract, notionalSize, Status_s);
@@ -846,8 +846,8 @@ MatchReturnType x_Trade(CMPContractDex* const pnew)
                 int64_t freedReserverExPNLTaker = static_cast<int64_t>(freedResExPNLTaker);
                 PrintToConsole("freedReserverExPNLTaker : %d\n",freedReserverExPNLTaker);
                 if (freedReserverExPNLTaker != 0) {
-	                assert(update_tally_map(buyer_address, collateralCurrency, -freedReserverExPNLTaker, CONTRACTDEX_RESERVE));
-    	            assert(update_tally_map(buyer_address, collateralCurrency,  freedReserverExPNLTaker, BALANCE));
+	                // assert(update_tally_map(buyer_address, collateralCurrency, -freedReserverExPNLTaker, CONTRACTDEX_RESERVE));
+    	            // assert(update_tally_map(buyer_address, collateralCurrency,  freedReserverExPNLTaker, BALANCE));
     	         }
                PrintToConsole("Status_b %s\n",Status_b);
                double PNL_b = t_tradelistdb->getPNL(buyer_address, countClosedBuyer,pold->getEffectivePrice(), property_traded, marginRequirementContract, notionalSize, Status_b);
@@ -1324,7 +1324,7 @@ int mastercore::ContractDex_ADD_MARKET_PRICE(const std::string& sender_addr, uin
        uint64_t diff;
        while (0 < diff) {
            oldvalue = new_cdex.getAmountForSale();
-           PrintToConsole("amountforsale after x_trade: %d\n",oldvalue);
+           PrintToConsole("amountforsale before x_trade: %d\n",oldvalue);
            x_Trade(&new_cdex);
            uint64_t price =  edgeOrderbook(contractId,BUY);
            new_cdex.setPrice(price);
@@ -1334,7 +1334,7 @@ int mastercore::ContractDex_ADD_MARKET_PRICE(const std::string& sender_addr, uin
            PrintToConsole("--------------------------------------------------\n");
            PrintToConsole("BUY SIDE in while loop<-------\n");
            PrintToConsole("ask now: %d\n",price);
-           PrintToConsole("amountforsale now: %d\n",newvalue);
+           PrintToConsole("amountforsale after: %d\n",newvalue);
            PrintToConsole("--------------------------------------------------\n");
        }
     } else if (trading_action == SELL){
@@ -1351,7 +1351,7 @@ int mastercore::ContractDex_ADD_MARKET_PRICE(const std::string& sender_addr, uin
        uint64_t diff;
        while (0 < diff) {
            oldvalue = new_cdex.getAmountForSale();
-           PrintToConsole("amountforsale after x_trade: %d\n",oldvalue);
+           PrintToConsole("amountforsale before x_trade: %d\n",oldvalue);
            x_Trade(&new_cdex);
            uint64_t price =  edgeOrderbook(contractId,SELL);
            new_cdex.setPrice(price);
@@ -1362,7 +1362,7 @@ int mastercore::ContractDex_ADD_MARKET_PRICE(const std::string& sender_addr, uin
            PrintToConsole("SELL SIDE in while loop<-------\n");
            PrintToConsole("Inside the while loop...\n");
            PrintToConsole("bid now: %d\n",price);
-           PrintToConsole("amountforsale now: %d\n",newvalue);
+           PrintToConsole("amountforsale after: %d\n",newvalue);
            PrintToConsole("--------------------------------------------------\n");
 
        }
@@ -1765,7 +1765,7 @@ int mastercore::ContractDex_CANCEL_FOR_BLOCK(const uint256& txid,  int block,uns
                PrintToConsole("amount returned to balance: %d\n",sgetback);
                PrintToConsole("--------------------------------------------\n");
                 // move from reserve to balance the collateral
-               if (balance > getback && balance > 0) {
+               if (balance > getback && balance > 0 && getback > 0) {
                 assert(update_tally_map(addr, collateralCurrency, getback, BALANCE));
                 assert(update_tally_map(addr, collateralCurrency,  -getback, CONTRACTDEX_RESERVE));
                }
@@ -1812,9 +1812,11 @@ int mastercore::ContractDex_CLOSE_POSITION(const uint256& txid, unsigned int blo
     // Clearing the position
     unsigned int idx=0;
     if (shortPosition > 0 && longPosition == 0){
+        PrintToLog("Short Position closing...\n");
         PrintToConsole("Short Position closing...\n");
         ContractDex_ADD_MARKET_PRICE(sender_addr,contractId, shortPosition, block, txid, idx,BUY,0);
     } else if (longPosition > 0 && shortPosition == 0){
+        PrintToLog("Long Position closing...\n");
         PrintToConsole("Long Position closing...\n");
         ContractDex_ADD_MARKET_PRICE(sender_addr,contractId, longPosition, block, txid, idx,SELL,0);
     }
@@ -1827,14 +1829,18 @@ int mastercore::ContractDex_CLOSE_POSITION(const uint256& txid, unsigned int blo
 
     int64_t realizedLosses = getMPbalance(sender_addr,collateralCurrency, REALIZED_LOSSES);
     int64_t realizedProfits = getMPbalance(sender_addr,collateralCurrency, REALIZED_PROFIT);
+    PrintToLog("profits: %d\n",realizedProfits);
+    PrintToLog("losses: %d\n",realizedLosses);
     PrintToConsole("profits: %d\n",realizedProfits);
     PrintToConsole("losses: %d\n",realizedLosses);
     int64_t shortPositionAf = getMPbalance(sender_addr,contractId, NEGATIVE_BALANCE);
     int64_t longPositionAf= getMPbalance(sender_addr,contractId, POSSITIVE_BALANCE);
 
     if ( shortPositionAf == 0 && longPositionAf == 0){
+        PrintToLog("POSITION CLOSED!!!\n");
         PrintToConsole("POSITION CLOSED!!!\n");
     } else {
+        PrintToLog("ERROR: Position partialy Closed\n");
         PrintToConsole("ERROR: Position partialy Closed\n");
     }
 
