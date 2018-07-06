@@ -11,6 +11,8 @@ namespace mastercore
 {
 //! Feature identifier placeholder
 const uint16_t FEATURE_NA = 9999;
+const uint16_t FEATURE_DEXMATH = 5;
+//! Feature identifier to enable Send All transactions
 
 /** A structure to represent transaction restrictions.
  */

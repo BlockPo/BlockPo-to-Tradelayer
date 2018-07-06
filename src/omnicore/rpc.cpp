@@ -9,6 +9,7 @@
 #include "omnicore/activation.h"
 #include "omnicore/consensushash.h"
 #include "omnicore/convert.h"
+#include "omnicore/dex.h"
 #include "omnicore/errors.h"
 #include "omnicore/fetchwallettx.h"
 #include "omnicore/log.h"
@@ -1603,6 +1604,130 @@ UniValue omni_getpnl(const UniValue& params, bool fHelp)
       }
       return balanceObj;
 }
+
+
+UniValue omni_getactivedexsells(const UniValue& params, bool fHelp)
+{
+    if (fHelp || params.size() > 1)
+        throw runtime_error(
+            "omni_getactivedexsells ( address )\n"
+            "\nReturns currently active offers on the distributed exchange.\n"
+            "\nArguments:\n"
+            "1. address              (string, optional) address filter (default: include any)\n"
+            "\nResult:\n"
+            "[                                   (array of JSON objects)\n"
+            "  {\n"
+            "    \"txid\" : \"hash\",                    (string) the hash of the transaction of this offer\n"
+            "    \"propertyid\" : n,                   (number) the identifier of the tokens for sale\n"
+            "    \"seller\" : \"address\",               (string) the Bitcoin address of the seller\n"
+            "    \"amountavailable\" : \"n.nnnnnnnn\",   (string) the number of tokens still listed for sale and currently available\n"
+            "    \"bitcoindesired\" : \"n.nnnnnnnn\",    (string) the number of bitcoins desired in exchange\n"
+            "    \"unitprice\" : \"n.nnnnnnnn\" ,        (string) the unit price (BTC/token)\n"
+            "    \"timelimit\" : nn,                   (number) the time limit in blocks a buyer has to pay following a successful accept\n"
+            "    \"minimumfee\" : \"n.nnnnnnnn\",        (string) the minimum mining fee a buyer has to pay to accept this offer\n"
+            "    \"amountaccepted\" : \"n.nnnnnnnn\",    (string) the number of tokens currently reserved for pending \"accept\" orders\n"
+            "    \"accepts\": [                        (array of JSON objects) a list of pending \"accept\" orders\n"
+            "      {\n"
+            "        \"buyer\" : \"address\",                (string) the Bitcoin address of the buyer\n"
+            "        \"block\" : nnnnnn,                   (number) the index of the block that contains the \"accept\" order\n"
+            "        \"blocksleft\" : nn,                  (number) the number of blocks left to pay\n"
+            "        \"amount\" : \"n.nnnnnnnn\"             (string) the amount of tokens accepted and reserved\n"
+            "        \"amounttopay\" : \"n.nnnnnnnn\"        (string) the amount in bitcoins needed finalize the trade\n"
+            "      },\n"
+            "      ...\n"
+            "    ]\n"
+            "  },\n"
+            "  ...\n"
+            "]\n"
+            "\nExamples:\n"
+            + HelpExampleCli("omni_getactivedexsells", "")
+            + HelpExampleRpc("omni_getactivedexsells", "")
+        );
+
+    std::string addressFilter;
+
+    if (params.size() > 0) {
+        addressFilter = ParseAddressOrEmpty(params[0]);
+    }
+
+    UniValue response(UniValue::VARR);
+
+    int curBlock = GetHeight();
+
+    LOCK(cs_tally);
+
+    for (OfferMap::iterator it = my_offers.begin(); it != my_offers.end(); ++it) {
+        const CMPOffer& selloffer = it->second;
+        const std::string& sellCombo = it->first;
+        std::string seller = sellCombo.substr(0, sellCombo.size() - 2);
+
+        // filtering
+        if (!addressFilter.empty() && seller != addressFilter) continue;
+
+        std::string txid = selloffer.getHash().GetHex();
+        uint32_t propertyId = selloffer.getProperty();
+        int64_t minFee = selloffer.getMinFee();
+        uint8_t timeLimit = selloffer.getBlockTimeLimit();
+        int64_t sellOfferAmount = selloffer.getOfferAmountOriginal(); //badly named - "Original" implies off the wire, but is amended amount
+        int64_t sellBitcoinDesired = selloffer.getBTCDesiredOriginal(); //badly named - "Original" implies off the wire, but is amended amount
+        int64_t amountAvailable = getMPbalance(seller, propertyId, SELLOFFER_RESERVE);
+        int64_t amountAccepted = getMPbalance(seller, propertyId, ACCEPT_RESERVE);
+
+        // TODO: no math, and especially no rounding here (!)
+        // TODO: no math, and especially no rounding here (!)
+        // TODO: no math, and especially no rounding here (!)
+
+        // calculate unit price and updated amount of bitcoin desired
+        double unitPriceFloat = 0.0;
+        if ((sellOfferAmount > 0) && (sellBitcoinDesired > 0)) {
+            unitPriceFloat = (double) sellBitcoinDesired / (double) sellOfferAmount; // divide by zero protection
+        }
+        int64_t unitPrice = rounduint64(unitPriceFloat * COIN);
+        int64_t bitcoinDesired = calculateDesiredBTC(sellOfferAmount, sellBitcoinDesired, amountAvailable);
+
+        UniValue responseObj(UniValue::VOBJ);
+        responseObj.push_back(Pair("txid", txid));
+        responseObj.push_back(Pair("propertyid", (uint64_t) propertyId));
+        responseObj.push_back(Pair("seller", seller));
+        responseObj.push_back(Pair("amountavailable", FormatDivisibleMP(amountAvailable)));
+        responseObj.push_back(Pair("bitcoindesired", FormatDivisibleMP(bitcoinDesired)));
+        responseObj.push_back(Pair("unitprice", FormatDivisibleMP(unitPrice)));
+        responseObj.push_back(Pair("timelimit", timeLimit));
+        responseObj.push_back(Pair("minimumfee", FormatDivisibleMP(minFee)));
+
+        // display info about accepts related to sell
+        responseObj.push_back(Pair("amountaccepted", FormatDivisibleMP(amountAccepted)));
+        UniValue acceptsMatched(UniValue::VARR);
+        for (AcceptMap::const_iterator ait = my_accepts.begin(); ait != my_accepts.end(); ++ait) {
+            UniValue matchedAccept(UniValue::VOBJ);
+            const CMPAccept& accept = ait->second;
+            const std::string& acceptCombo = ait->first;
+
+            // does this accept match the sell?
+            if (accept.getHash() == selloffer.getHash()) {
+                // split acceptCombo out to get the buyer address
+                std::string buyer = acceptCombo.substr((acceptCombo.find("+") + 1), (acceptCombo.size()-(acceptCombo.find("+") + 1)));
+                int blockOfAccept = accept.getAcceptBlock();
+                int blocksLeftToPay = (blockOfAccept + selloffer.getBlockTimeLimit()) - curBlock;
+                int64_t amountAccepted = accept.getAcceptAmountRemaining();
+                // TODO: don't recalculate!
+                int64_t amountToPayInBTC = calculateDesiredBTC(accept.getOfferAmountOriginal(), accept.getBTCDesiredOriginal(), amountAccepted);
+                matchedAccept.push_back(Pair("buyer", buyer));
+                matchedAccept.push_back(Pair("block", blockOfAccept));
+                matchedAccept.push_back(Pair("blocksleft", blocksLeftToPay));
+                matchedAccept.push_back(Pair("amount", FormatDivisibleMP(amountAccepted)));
+                matchedAccept.push_back(Pair("amounttopay", FormatDivisibleMP(amountToPayInBTC)));
+                acceptsMatched.push_back(matchedAccept);
+            }
+        }
+        responseObj.push_back(Pair("accepts", acceptsMatched));
+
+        // add sell object into response array
+        response.push_back(responseObj);
+    }
+
+    return response;
+}
 ////////////////////////////////////////////////////////////////////////////////
 static const CRPCCommand commands[] =
 { //  category                             name                            actor (function)               okSafeMode
@@ -1631,7 +1756,8 @@ static const CRPCCommand commands[] =
     { "omni layer (data retrieval)", "omni_getcontract_orderbook",     &omni_getcontract_orderbook,      false },
     { "omni layer (data retrieval)", "omni_gettradehistory",           &omni_gettradehistory,            false },
     { "omni layer (data retrieval)", "omni_getupnl",                    &omni_getupnl,                   false },
-    { "omni layer (data retrieval)", "omni_getpnl",                    &omni_getpnl,                   false },
+    { "omni layer (data retrieval)", "omni_getpnl",                    &omni_getpnl,                     false },
+    { "omni layer (data retieval)", "omni_getactivedexsells",          &omni_getactivedexsells ,         false },
 };
 
 void RegisterOmniDataRetrievalRPCCommands(CRPCTable &tableRPC)

@@ -4,6 +4,7 @@
 
 #include "omnicore/activation.h"
 #include "omnicore/convert.h"
+#include "omnicore/dex.h"
 #include "omnicore/log.h"
 #include "omnicore/notifications.h"
 #include "omnicore/omnicore.h"
@@ -62,6 +63,7 @@ std::string mastercore::strTransactionType(uint16_t txType)
         case OMNICORE_MESSAGE_TYPE_ALERT: return "ALERT";
         case OMNICORE_MESSAGE_TYPE_DEACTIVATION: return "Feature Deactivation";
         case OMNICORE_MESSAGE_TYPE_ACTIVATION: return "Feature Activation";
+        case MSC_TYPE_METADEX_TRADE: return "Metadex Order";
 
         /** New things for Contract */
         case MSC_TYPE_CONTRACTDEX_TRADE: return "Future Contract";
@@ -73,7 +75,7 @@ std::string mastercore::strTransactionType(uint16_t txType)
         case MSC_TYPE_SEND_PEGGED_CURRENCY: return "Send Pegged Currency";
         case MSC_TYPE_CONTRACTDEX_CLOSE_POSITION: return "Close Position";
         case MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK: return "Cancel Orders by Block";
-
+        case MSC_TYPE_TRADE_OFFER: return "DEx Sell Offer";
         ////////////////////////////////////////////////////////////////////////
         default: return "* unknown type *";
     }
@@ -160,6 +162,9 @@ bool CMPTransaction::interpret_Transaction()
         case OMNICORE_MESSAGE_TYPE_ALERT:
             return interpret_Alert();
       /*New things for contracts*///////////////////////////////////////////////
+        case MSC_TYPE_METADEX_TRADE:
+            return interpret_MetaDExTrade();
+
         case MSC_TYPE_CREATE_CONTRACT:
             return interpret_CreateContractDex();
 
@@ -183,6 +188,12 @@ bool CMPTransaction::interpret_Transaction()
 
         case MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK:
             return interpret_ContractDex_Cancel_Orders_By_Block();
+
+        case MSC_TYPE_TRADE_OFFER:
+            return interpret_TradeOffer();
+
+        case MSC_TYPE_ACCEPT_OFFER_BTC:
+            return interpret_AcceptOfferBTC();
       //////////////////////////////////////////////////////////////////////////
     }
 
@@ -631,6 +642,146 @@ bool CMPTransaction::interpret_Alert()
     return true;
 }
 /*New things for contracts*/////////////////////////////////////////////////////
+/*Tx 20*/
+bool CMPTransaction::interpret_TradeOffer()
+{
+  PrintToConsole("Inside of interpret_TradeOffer function!!!!!!!!!\n");
+  int i = 0;
+
+  std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecPropertyIdBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecAmountForSaleBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecAmountDesiredBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecTimeLimitBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecMinFeeBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecSubActionBytes = GetNextVarIntBytes(i);
+
+  if (!vecTypeBytes.empty()) {
+      type = DecompressInteger(vecTypeBytes);
+  } else return false;
+
+  if (!vecVersionBytes.empty()) {
+      version = DecompressInteger(vecVersionBytes);
+  } else return false;
+  //
+  if (!vecPropertyIdBytes.empty()) {
+      propertyId = DecompressInteger(vecPropertyIdBytes);
+  } else return false;
+
+  if (!vecAmountForSaleBytes.empty()) {
+      nValue = DecompressInteger(vecAmountForSaleBytes);
+      nNewValue = nValue;
+  } else return false;
+
+  if (!vecAmountDesiredBytes.empty()) {
+      amountDesired = DecompressInteger(vecAmountDesiredBytes);
+  } else return false;
+
+  if (!vecTimeLimitBytes.empty()) {
+      timeLimit = DecompressInteger(vecTimeLimitBytes);
+  } else return false;
+
+  if (!vecMinFeeBytes.empty()) {
+      minFee = DecompressInteger(vecMinFeeBytes);
+  } else return false;
+
+  if (!vecSubActionBytes.empty()) {
+      subAction = DecompressInteger(vecSubActionBytes);
+  } else return false;
+
+  PrintToConsole("version: %d\n", version);
+  PrintToConsole("messageType: %d\n",type);
+  PrintToConsole("property: %d\n", propertyId);
+  PrintToConsole("amount : %d\n", nValue);
+  PrintToConsole("amount desired : %d\n", amountDesired);
+  PrintToConsole("block limit : %d\n", timeLimit);
+  PrintToConsole("min fees : %d\n", minFee);
+  PrintToConsole("subaction : %d\n", subAction);
+  return true;
+
+}
+
+bool CMPTransaction::interpret_AcceptOfferBTC()
+{
+  PrintToConsole("Inside of interpret_AcceptOfferBTC function!!!!!!!!!\n");
+  int i = 0;
+  std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecPropertyIdForSaleBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecAmountForSaleBytes = GetNextVarIntBytes(i);
+
+  if (!vecTypeBytes.empty()) {
+      type = DecompressInteger(vecTypeBytes);
+  } else return false;
+
+  if (!vecVersionBytes.empty()) {
+      version = DecompressInteger(vecVersionBytes);
+  } else return false;
+  //
+  if (!vecPropertyIdForSaleBytes.empty()) {
+      property = DecompressInteger(vecPropertyIdForSaleBytes);
+  } else return false;
+
+  if (!vecAmountForSaleBytes.empty()) {
+      nValue = DecompressInteger(vecAmountForSaleBytes);
+      nNewValue = nValue;
+  } else return false;
+    PrintToConsole("version: %d\n", version);
+    PrintToConsole("messageType: %d\n",type);
+    PrintToConsole("property: %d\n", propertyId);
+    PrintToConsole("amount : %d\n", nValue);
+    return true;
+}
+
+/** Tx  25*/
+bool CMPTransaction::interpret_MetaDExTrade()
+{
+  PrintToConsole("Inside of interpret_MetaDExTrade function!!!!!!!!!\n");
+  int i = 0;
+
+  std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecPropertyIdForSaleBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecAmountForSaleBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecPropertyIdDesiredBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecAmountDesiredBytes = GetNextVarIntBytes(i);
+
+  if (!vecTypeBytes.empty()) {
+      type = DecompressInteger(vecTypeBytes);
+  } else return false;
+
+  if (!vecVersionBytes.empty()) {
+      version = DecompressInteger(vecVersionBytes);
+  } else return false;
+  //
+  if (!vecPropertyIdForSaleBytes.empty()) {
+      property = DecompressInteger(vecPropertyIdForSaleBytes);
+  } else return false;
+
+  if (!vecAmountForSaleBytes.empty()) {
+      amount_forsale = DecompressInteger(vecAmountForSaleBytes);
+  } else return false;
+
+  if (!vecPropertyIdDesiredBytes.empty()) {
+      desired_property = DecompressInteger(vecPropertyIdDesiredBytes);
+  } else return false;
+
+  if (!vecAmountDesiredBytes.empty()) {
+      amount_desired = DecompressInteger(vecAmountDesiredBytes);
+  } else return false;
+
+  PrintToConsole("version: %d\n", version);
+  PrintToConsole("messageType: %d\n",type);
+  PrintToConsole("property: %d\n", property);
+  PrintToConsole("amount : %d\n", amount_forsale);
+  PrintToConsole("property desired : %d\n", desired_property);
+  PrintToConsole("amount desired : %d\n", amount_desired);
+
+  return true;
+
+}
+
 /** Tx  40*/
 bool CMPTransaction::interpret_CreateContractDex()
 {
@@ -1085,6 +1236,12 @@ int CMPTransaction::interpretPacket()
 
         case MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK:
             return logicMath_ContractDex_Cancel_Orders_By_Block();
+
+        case MSC_TYPE_TRADE_OFFER:
+            return logicMath_TradeOffer();
+
+        case MSC_TYPE_ACCEPT_OFFER_BTC:
+            return logicMath_AcceptOffer_BTC();
     ////////////////////////////////////////////////////////////////////////////
     }
 
@@ -1899,7 +2056,15 @@ int CMPTransaction::logicMath_Alert()
 }
 
 /*New things for contracts*/////////////////////////////////////////////////////
+int CMPTransaction::logicMath_MetaDExTrade()
+{
 
+
+
+
+
+
+}
 
 /** Tx 40 */
 int CMPTransaction::logicMath_CreateContractDex()
@@ -2512,6 +2677,132 @@ int CMPTransaction::logicMath_RedemptionPegged()
     }
 
     return 0;
+}
+
+int CMPTransaction::logicMath_TradeOffer()
+{
+  if (!IsTransactionTypeAllowed(block, propertyId, type, version)) {
+      PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+              __func__,
+              type,
+              version,
+              propertyId,
+              block);
+      // return (PKT_ERROR_TRADEOFFER -22);
+  }
+
+  if (MAX_INT_8_BYTES < nValue) {
+      PrintToLog("%s(): rejected: value out of range or zero: %d\n", __func__, nValue);
+      // return (PKT_ERROR_TRADEOFFER -23);
+  }
+
+  // if (OMNI_PROPERTY_TMSC != property && OMNI_PROPERTY_MSC != property) {
+  //     PrintToLog("%s(): rejected: property for sale %d must be OMNI or TOMNI\n", __func__, property);
+  //     return (PKT_ERROR_TRADEOFFER -47);
+  // }
+
+  // ------------------------------------------
+
+  int rc = PKT_ERROR_TRADEOFFER;
+  PrintToConsole("Inside logicMath_TradeOffer <----------------------------\n");
+  // figure out which Action this is based on amount for sale, version & etc.
+  switch (version)
+  {
+      case MP_TX_PKT_V0:
+      {
+          if (0 != nValue) {
+
+              if (!DEx_offerExists(sender, property)) {
+                  PrintToConsole("Dex offer doesn't exist\n");
+                  rc = DEx_offerCreate(sender, propertyId, nValue, block, amountDesired, minFee, timeLimit, txid, &nNewValue);
+              } else {
+                  rc = DEx_offerUpdate(sender, propertyId, nValue, block, amountDesired, minFee, timeLimit, txid, &nNewValue);
+              }
+          } else {
+              // what happens if nValue is 0 for V0 ?  ANSWER: check if exists and it does -- cancel, otherwise invalid
+              if (DEx_offerExists(sender, propertyId)) {
+                  rc = DEx_offerDestroy(sender, propertyId);
+              } else {
+                  PrintToLog("%s(): rejected: sender %s has no active sell offer for property: %d\n", __func__, sender, propertyId);
+                  rc = (PKT_ERROR_TRADEOFFER -49);
+              }
+          }
+
+          break;
+      }
+
+  //     case MP_TX_PKT_V1:
+  //     {
+  //         PrintToConsole("Case MP_TX_PKT_V1\n");
+  //         if (DEx_offerExists(sender, property)) {
+  //             if (CANCEL != subaction && UPDATE != subaction) {
+  //                 PrintToLog("%s(): rejected: sender %s has an active sell offer for property: %d\n", __func__, sender, property);
+  //                 rc = (PKT_ERROR_TRADEOFFER -48);
+  //                 break;
+  //             }
+  //         } else {
+  //             // Offer does not exist
+  //             if (NEW != subaction) {
+  //                 PrintToLog("%s(): rejected: sender %s has no active sell offer for property: %d\n", __func__, sender, property);
+  //                 rc = (PKT_ERROR_TRADEOFFER -49);
+  //                 break;
+  //             }
+  //         }
+  //
+  //         switch (subaction) {
+  //             case NEW:
+  //                 PrintToConsole("Subaction: NEW\n");
+  //                 rc = DEx_offerCreate(sender, property, nValue, block, amount_desired, min_fee, blocktimelimit, txid, &nNewValue);
+  //                 break;
+  //
+  //             case UPDATE:
+  //                 rc = DEx_offerUpdate(sender, property, nValue, block, amount_desired, min_fee, blocktimelimit, txid, &nNewValue);
+  //                 break;
+  //
+  //             case CANCEL:
+  //                 rc = DEx_offerDestroy(sender, property);
+  //                 break;
+  //
+  //             default:
+  //                 rc = (PKT_ERROR -999);
+  //                 break;
+  //         }
+  //         break;
+  //     }
+  //
+  //     default:
+  //         rc = (PKT_ERROR -500); // neither V0 nor V1
+  //         break;
+  };
+
+  return rc;
+}
+
+int CMPTransaction::logicMath_AcceptOffer_BTC()
+{
+   PrintToConsole("Inside logicMath_AcceptOffer_BTC <----------------------------\n");
+  //  if (!IsTransactionTypeAllowed(block, propertyId, type, version)) {
+  //      PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+  //              __func__,
+  //              type,
+  //              version,
+  //              propertyId,
+  //              block);
+  //      return (DEX_ERROR_ACCEPT -22);
+  //  }
+
+  //  if (nValue <= 0 || MAX_INT_8_BYTES < nValue) {
+  //      PrintToLog("%s(): rejected: value out of range or zero: %d\n", __func__, nValue);
+  //      return (DEX_ERROR_ACCEPT -23);
+  //  }
+
+   // ------------------------------------------
+
+   // the min fee spec requirement is checked in the following function
+   int rc = DEx_acceptCreate(sender, receiver, property, nValue, block, tx_fee_paid, &nNewValue);
+
+   return rc;
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////

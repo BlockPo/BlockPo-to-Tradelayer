@@ -7,6 +7,8 @@
 
 std::vector<unsigned char> CreatePayload_SimpleSend(uint32_t propertyId, uint64_t amount);
 std::vector<unsigned char> CreatePayload_SendAll(uint8_t ecosystem);
+std::vector<unsigned char> CreatePayload_DExSell(uint32_t propertyId, uint64_t amountForSale, uint64_t amountDesired, uint8_t timeLimit, uint64_t minFee, uint8_t subAction);
+std::vector<unsigned char> CreatePayload_DExAccept(uint32_t propertyId, uint64_t amount);
 std::vector<unsigned char> CreatePayload_IssuanceFixed(uint8_t ecosystem, uint16_t propertyType, uint32_t previousPropertyId, std::string name, std::string url,
                                                        std::string data, uint64_t amount);
 std::vector<unsigned char> CreatePayload_IssuanceVariable(uint8_t ecosystem, uint16_t propertyType, uint32_t previousPropertyId,

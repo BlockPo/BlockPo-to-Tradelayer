@@ -78,6 +78,9 @@ enum TransactionType {
 
   ////////////////////////////////////
   /** New things for Contract */
+  MSC_TYPE_TRADE_OFFER                = 20,
+  MSC_TYPE_ACCEPT_OFFER_BTC           = 22,
+  MSC_TYPE_METADEX_TRADE              = 25,
   MSC_TYPE_CONTRACTDEX_TRADE          = 29,
   MSC_TYPE_CONTRACTDEX_CANCEL_PRICE   = 30,
   MSC_TYPE_CONTRACTDEX_CANCEL_ECOSYSTEM   = 32,
@@ -117,6 +120,12 @@ enum FILETYPES {
 #define PKT_ERROR_SEND_ALL    (-83000)
 #define PKT_ERROR_METADEX     (-80000)
 #define METADEX_ERROR         (-81000)
+
+#define PKT_ERROR             ( -9000)
+#define DEX_ERROR_SELLOFFER   (-10000)
+#define DEX_ERROR_ACCEPT      (-20000)
+#define DEX_ERROR_PAYMENT     (-30000)
+#define PKT_ERROR_TRADEOFFER  (-70000)
 
 #define OMNI_PROPERTY_BTC             0
 #define OMNI_PROPERTY_MSC             1

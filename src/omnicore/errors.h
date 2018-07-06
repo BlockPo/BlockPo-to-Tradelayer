@@ -32,6 +32,10 @@ enum MPRPCErrorCode
     MP_CROWDSALE_WITHOUT_PROPERTY = -3334,  // Potential database corruption: "Crowdsale Purchase" without valid property identifier.
     MP_INVALID_TX_IN_DB_FOUND     = -3335,  // Potential database corruption: Invalid transaction found.
     MP_TX_IS_NOT_MASTER_PROTOCOL  = -3336,  // Not a Master Protocol transaction.
+
+
+
+
 };
 
 inline std::string error_str(int ec) {
@@ -158,8 +162,42 @@ inline std::string error_str(int ec) {
           case PKT_ERROR_METADEX -34:
               ec_str = "Amount desired out of range or zero";
               break;
+
           case PKT_ERROR_METADEX -35:
               ec_str = "One side of the trade must be OMNI or TOMNI";
+              break;
+          case DEX_ERROR_SELLOFFER -101:
+              ec_str = "Value out of range or zero";
+              break;
+          case DEX_ERROR_SELLOFFER -10:
+              ec_str = "Sender already has an active sell offer for the property";
+              break;
+          case DEX_ERROR_SELLOFFER -25:
+              ec_str = "Sender has insufficient balance";
+              break;
+          case DEX_ERROR_SELLOFFER -11:
+              ec_str = "Sender has no active sell offer for the property";
+              break;
+          case DEX_ERROR_SELLOFFER -12:
+              ec_str = "Sender has no active sell offer for the property";
+              break;
+          case DEX_ERROR_ACCEPT -15:
+              ec_str = "No matching sell offer for accept order found";
+              break;
+          case DEX_ERROR_ACCEPT -20:
+              ec_str = "Cannot locate accept to destroy";
+              break;
+          case DEX_ERROR_ACCEPT -22:
+              ec_str = "Transaction type or version not permitted";
+              break;
+          case DEX_ERROR_ACCEPT -23:
+              ec_str = "Value out of range or zero";
+              break;
+          case DEX_ERROR_ACCEPT -205:
+              ec_str = "An accept from the sender to the recipient already exists";
+              break;
+          case DEX_ERROR_ACCEPT -105:
+              ec_str = "Transaction fee too small";
               break;
 
           case METADEX_ERROR -1:

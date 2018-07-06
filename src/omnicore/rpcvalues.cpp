@@ -3,7 +3,7 @@
 #include "omnicore/createtx.h"
 #include "omnicore/parse_string.h"
 #include "omnicore/wallettxs.h"
-
+#include "omnicore/log.h"
 #include "base58.h"
 #include "core_io.h"
 #include "primitives/transaction.h"
@@ -244,4 +244,31 @@ uint8_t ParseContractDexAction(const UniValue& value)
         throw JSONRPCError(RPC_TYPE_ERROR, "Invalid action (1=BUY, 2=SELL only)");
     }
     return static_cast<uint8_t>(action);
+}
+
+int64_t ParseDExFee(const UniValue& value)
+{
+    int64_t fee = StrToInt64(value.get_str(), true);  // BTC is divisible
+    if (fee < 0) {
+        throw JSONRPCError(RPC_TYPE_ERROR, "Mininmum accept fee must be positive");
+    }
+    return fee;
+}
+
+uint8_t ParseDExAction(const UniValue& value)
+{
+    int64_t action = value.get_int64();
+    if (action <= 0 || 3 < action) {
+        throw JSONRPCError(RPC_TYPE_ERROR, "Invalid action (1 = new, 2 = update, 3 = cancel only)");
+    }
+    return static_cast<uint8_t>(action);
+}
+
+uint8_t ParseDExPaymentWindow(const UniValue& value)
+{
+    int64_t blocks = value.get_int64();
+    if (blocks < 1 || 255 < blocks) {
+        throw JSONRPCError(RPC_TYPE_ERROR, "Payment window must be within 1-255 blocks");
+    }
+    return static_cast<uint8_t>(blocks);
 }

@@ -9,6 +9,7 @@
 #include "omnicore/activation.h"
 #include "omnicore/consensushash.h"
 #include "omnicore/convert.h"
+#include "omnicore/dex.h"
 #include "omnicore/encoding.h"
 #include "omnicore/errors.h"
 #include "omnicore/log.h"
@@ -247,7 +248,8 @@ double FormatContractShortMP(int64_t n)
     return q;
 }
 /////////////////////////////////////////
-
+OfferMap mastercore::my_offers;
+AcceptMap mastercore::my_accepts;
 CMPSPInfo *mastercore::_my_sps;
 CrowdMap mastercore::my_crowds;
 // this is the master list of all amounts for all addresses for all properties, map is unsorted
@@ -2250,21 +2252,6 @@ Status status;
   }
 }
 
-bool CMPTxList::exists(const uint256 &txid)
-{
-  if (!pdb) return false;
-
-string strValue;
-Status status = pdb->Get(readoptions, txid.ToString(), &strValue);
-
-  if (!status.ok())
-  {
-    if (status.IsNotFound()) return false;
-  }
-
-  return true;
-}
-
 bool CMPTxList::getTX(const uint256 &txid, string &value)
 {
 Status status = pdb->Get(readoptions, txid.ToString(), &value);
@@ -2345,6 +2332,81 @@ unsigned int n_found = 0;
   delete it;
 
   return (n_found);
+}
+
+void CMPTxList::recordPaymentTX(const uint256 &txid, bool fValid, int nBlock, unsigned int vout, unsigned int propertyId, uint64_t nValue, string buyer, string seller)
+{
+  if (!pdb) return;
+
+       // Prep - setup vars
+       unsigned int type = 99999999;
+       uint64_t numberOfPayments = 1;
+       unsigned int paymentNumber = 1;
+       uint64_t existingNumberOfPayments = 0;
+
+       // Step 1 - Check TXList to see if this payment TXID exists
+       bool paymentEntryExists = p_txlistdb->exists(txid);
+
+       // Step 2a - If doesn't exist leave number of payments & paymentNumber set to 1
+       // Step 2b - If does exist add +1 to existing number of payments and set this paymentNumber as new numberOfPayments
+       if (paymentEntryExists)
+       {
+           //retrieve old numberOfPayments
+           std::vector<std::string> vstr;
+           string strValue;
+           Status status = pdb->Get(readoptions, txid.ToString(), &strValue);
+           if (status.ok())
+           {
+               // parse the string returned
+               boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
+
+               // obtain the existing number of payments
+               if (4 <= vstr.size())
+               {
+                   existingNumberOfPayments = atoi(vstr[3]);
+                   paymentNumber = existingNumberOfPayments + 1;
+                   numberOfPayments = existingNumberOfPayments + 1;
+               }
+           }
+       }
+
+       // Step 3 - Create new/update master record for payment tx in TXList
+       const string key = txid.ToString();
+       const string value = strprintf("%u:%d:%u:%lu", fValid ? 1:0, nBlock, type, numberOfPayments);
+       Status status;
+       PrintToLog("DEXPAYDEBUG : Writing master record %s(%s, valid=%s, block= %d, type= %d, number of payments= %lu)\n", __FUNCTION__, txid.ToString(), fValid ? "YES":"NO", nBlock, type, numberOfPayments);
+       if (pdb)
+       {
+           status = pdb->Put(writeoptions, key, value);
+           PrintToLog("DEXPAYDEBUG : %s(): %s, line %d, file: %s\n", __FUNCTION__, status.ToString(), __LINE__, __FILE__);
+       }
+
+       // Step 4 - Write sub-record with payment details
+       const string txidStr = txid.ToString();
+       const string subKey = STR_PAYMENT_SUBKEY_TXID_PAYMENT_COMBO(txidStr, paymentNumber);
+       const string subValue = strprintf("%d:%s:%s:%d:%lu", vout, buyer, seller, propertyId, nValue);
+       Status subStatus;
+       PrintToLog("DEXPAYDEBUG : Writing sub-record %s with value %s\n", subKey, subValue);
+       if (pdb)
+       {
+           subStatus = pdb->Put(writeoptions, subKey, subValue);
+           PrintToLog("DEXPAYDEBUG : %s(): %s, line %d, file: %s\n", __FUNCTION__, subStatus.ToString(), __LINE__, __FILE__);
+       }
+}
+
+bool CMPTxList::exists(const uint256 &txid)
+{
+  if (!pdb) return false;
+
+string strValue;
+Status status = pdb->Get(readoptions, txid.ToString(), &strValue);
+
+  if (!status.ok())
+  {
+    if (status.IsNotFound()) return false;
+  }
+
+  return true;
 }
 
 // global wrapper, block numbers are inclusive, if ending_block is 0 top of the chain will be used

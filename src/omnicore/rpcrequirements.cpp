@@ -1,5 +1,6 @@
 #include "omnicore/rpcrequirements.h"
 
+#include "omnicore/dex.h"
 #include "omnicore/omnicore.h"
 #include "omnicore/sp.h"
 #include "omnicore/utilsbitcoin.h"
@@ -177,5 +178,45 @@ void RequireForPegged(const std::string& address, uint32_t propertyId, uint32_t 
     // }
 
 
+}
+
+void RequireMatchingDExOffer(const std::string& address, uint32_t propertyId)
+{
+    LOCK(cs_tally);
+    if (!mastercore::DEx_offerExists(address, propertyId)) {
+        throw JSONRPCError(RPC_TYPE_ERROR, "No matching sell offer on the distributed exchange");
+    }
+}
+
+void RequireNoOtherDExOffer(const std::string& address, uint32_t propertyId)
+{
+    LOCK(cs_tally);
+    if (mastercore::DEx_offerExists(address, propertyId)) {
+        throw JSONRPCError(RPC_TYPE_ERROR, "Another active sell offer from the given address already exists on the distributed exchange");
+    }
+}
+
+void RequireSaneDExFee(const std::string& address, uint32_t propertyId)
+{
+    LOCK(cs_tally);
+    const CMPOffer* poffer = mastercore::DEx_getOffer(address, propertyId);
+    if (poffer == NULL) {
+        throw JSONRPCError(RPC_DATABASE_ERROR, "Unable to load sell offer from the distributed exchange");
+    }
+    if (poffer->getMinFee() > 1000000) {
+        throw JSONRPCError(RPC_TYPE_ERROR, "Minimum accept fee is higher than 0.01 BTC (use override = true to continue)");
+    }
+}
+
+void RequireSaneDExPaymentWindow(const std::string& address, uint32_t propertyId)
+{
+    LOCK(cs_tally);
+    const CMPOffer* poffer = mastercore::DEx_getOffer(address, propertyId);
+    if (poffer == NULL) {
+        throw JSONRPCError(RPC_DATABASE_ERROR, "Unable to load sell offer from the distributed exchange");
+    }
+    if (poffer->getBlockTimeLimit() < 10) {
+        throw JSONRPCError(RPC_TYPE_ERROR, "Payment window is less than 10 blocks (use override = true to continue)");
+    }
 }
 ////////////////////////////////////////////////////////////////////////////////

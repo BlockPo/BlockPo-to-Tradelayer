@@ -518,30 +518,70 @@ std::vector<unsigned char> CreatePayload_RedemptionPegged(uint32_t propertyId, u
 
 }
 
-////////////////////////////////////////////////////////////////////////////////
+std::vector<unsigned char> CreatePayload_DExSell(uint32_t propertyId, uint64_t amountForSale, uint64_t amountDesired, uint8_t timeLimit, uint64_t minFee, uint8_t subAction)
+{
+
+  std::vector<unsigned char> payload;
+  uint16_t messageType = 20;
+  uint16_t messageVer = 0;
+  std::vector<uint8_t> vecMessageType = CompressInteger(messageType);
+  std::vector<uint8_t> vecMessageVer = CompressInteger(messageVer);
+  std::vector<uint8_t> vecPropertyId = CompressInteger(propertyId);
+  std::vector<uint8_t> vecAmountForSale = CompressInteger(amountForSale);
+  std::vector<uint8_t> vecAmountDesired = CompressInteger(amountDesired);
+  std::vector<uint8_t> vecTimeLimit = CompressInteger(timeLimit);
+  std::vector<uint8_t> vecMinFee = CompressInteger(minFee);
+  std::vector<uint8_t> vecSubAction = CompressInteger(subAction);
+  payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
+  payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
+  payload.insert(payload.end(), vecPropertyId.begin(), vecPropertyId.end());
+  payload.insert(payload.end(), vecAmountForSale.begin(), vecAmountForSale.end());
+  payload.insert(payload.end(), vecAmountDesired.begin(), vecAmountDesired.end());
+  payload.insert(payload.end(), vecTimeLimit.begin(), vecTimeLimit.end());
+  payload.insert(payload.end(), vecMinFee.begin(), vecMinFee.end());
+  payload.insert(payload.end(), vecSubAction.begin(), vecSubAction.end());
+
+  return payload;
+}
+
+std::vector<unsigned char> CreatePayload_DExAccept(uint32_t propertyId, uint64_t amount)
+{
+
+  std::vector<unsigned char> payload;
+  uint16_t messageType = 22;
+  uint16_t messageVer = 0;
+  std::vector<uint8_t> vecMessageType = CompressInteger(messageType);
+  std::vector<uint8_t> vecMessageVer = CompressInteger(messageVer);
+  std::vector<uint8_t> vecPropertyId = CompressInteger(propertyId);
+  std::vector<uint8_t> vecAmount = CompressInteger(amount);
+  payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
+  payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
+  payload.insert(payload.end(), vecPropertyId.begin(), vecPropertyId.end());
+  payload.insert(payload.end(), vecAmount.begin(), vecAmount.end());
+  return payload;
+}
+
 std::vector<unsigned char> CreatePayload_MetaDExTrade(uint32_t propertyIdForSale, uint64_t amountForSale, uint32_t propertyIdDesired, uint64_t amountDesired)
 {
-    std::vector<unsigned char> payload;
 
+    std::vector<unsigned char> payload;
     uint16_t messageType = 25;
     uint16_t messageVer = 0;
-
-    mastercore::swapByteOrder16(messageVer);
-    mastercore::swapByteOrder16(messageType);
-    mastercore::swapByteOrder32(propertyIdForSale);
-    mastercore::swapByteOrder64(amountForSale);
-    mastercore::swapByteOrder32(propertyIdDesired);
-    mastercore::swapByteOrder64(amountDesired);
-
-    PUSH_BACK_BYTES(payload, messageVer);
-    PUSH_BACK_BYTES(payload, messageType);
-    PUSH_BACK_BYTES(payload, propertyIdForSale);
-    PUSH_BACK_BYTES(payload, amountForSale);
-    PUSH_BACK_BYTES(payload, propertyIdDesired);
-    PUSH_BACK_BYTES(payload, amountDesired);
-
+    std::vector<uint8_t> vecMessageType = CompressInteger(messageType);
+    std::vector<uint8_t> vecMessageVer = CompressInteger(messageVer);
+    std::vector<uint8_t> vecPropertyIdForSale = CompressInteger(propertyIdForSale);
+    std::vector<uint8_t> vecAmountForSale = CompressInteger(amountForSale);
+    std::vector<uint8_t> vecPropertyIdDesired = CompressInteger(propertyIdDesired);
+    std::vector<uint8_t> vecAmountDesired = CompressInteger(amountDesired);
+    payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
+    payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
+    payload.insert(payload.end(), vecPropertyIdForSale.begin(), vecPropertyIdForSale.end());
+    payload.insert(payload.end(), vecAmountForSale.begin(), vecAmountForSale.end());
+    payload.insert(payload.end(), vecPropertyIdDesired.begin(), vecPropertyIdDesired.end());
+    payload.insert(payload.end(), vecAmountDesired.begin(), vecAmountDesired.end());
     return payload;
 }
+////////////////////////////////////////////////////////////////////////////////
 
 std::vector<unsigned char> CreatePayload_MetaDExCancelPrice(uint32_t propertyIdForSale, uint64_t amountForSale, uint32_t propertyIdDesired, uint64_t amountDesired)
 {
@@ -550,19 +590,19 @@ std::vector<unsigned char> CreatePayload_MetaDExCancelPrice(uint32_t propertyIdF
     uint16_t messageType = 26;
     uint16_t messageVer = 0;
 
-    mastercore::swapByteOrder16(messageVer);
-    mastercore::swapByteOrder16(messageType);
-    mastercore::swapByteOrder32(propertyIdForSale);
-    mastercore::swapByteOrder64(amountForSale);
-    mastercore::swapByteOrder32(propertyIdDesired);
-    mastercore::swapByteOrder64(amountDesired);
-
-    PUSH_BACK_BYTES(payload, messageVer);
-    PUSH_BACK_BYTES(payload, messageType);
-    PUSH_BACK_BYTES(payload, propertyIdForSale);
-    PUSH_BACK_BYTES(payload, amountForSale);
-    PUSH_BACK_BYTES(payload, propertyIdDesired);
-    PUSH_BACK_BYTES(payload, amountDesired);
+    // mastercore::swapByteOrder16(messageVer);
+    // mastercore::swapByteOrder16(messageType);
+    // mastercore::swapByteOrder32(propertyIdForSale);
+    // mastercore::swapByteOrder64(amountForSale);
+    // mastercore::swapByteOrder32(propertyIdDesired);
+    // mastercore::swapByteOrder64(amountDesired);
+    //
+    // PUSH_BACK_BYTES(payload, messageVer);
+    // PUSH_BACK_BYTES(payload, messageType);
+    // PUSH_BACK_BYTES(payload, propertyIdForSale);
+    // PUSH_BACK_BYTES(payload, amountForSale);
+    // PUSH_BACK_BYTES(payload, propertyIdDesired);
+    // PUSH_BACK_BYTES(payload, amountDesired);
 
     return payload;
 }
@@ -573,13 +613,13 @@ std::vector<unsigned char> CreatePayload_MetaDExCancelEcosystem(uint8_t ecosyste
 
     uint16_t messageType = 28;
     uint16_t messageVer = 0;
-
-    mastercore::swapByteOrder16(messageVer);
-    mastercore::swapByteOrder16(messageType);
-
-    PUSH_BACK_BYTES(payload, messageVer);
-    PUSH_BACK_BYTES(payload, messageType);
-    PUSH_BACK_BYTES(payload, ecosystem);
+    //
+    // mastercore::swapByteOrder16(messageVer);
+    // mastercore::swapByteOrder16(messageType);
+    //
+    // PUSH_BACK_BYTES(payload, messageVer);
+    // PUSH_BACK_BYTES(payload, messageType);
+    // PUSH_BACK_BYTES(payload, ecosystem);
 
     return payload;
 }
@@ -590,16 +630,16 @@ std::vector<unsigned char> CreatePayload_MetaDExCancelPair(uint32_t propertyIdFo
 
     uint16_t messageType = 27;
     uint16_t messageVer = 0;
-
-    mastercore::swapByteOrder16(messageVer);
-    mastercore::swapByteOrder16(messageType);
-    mastercore::swapByteOrder32(propertyIdForSale);
-    mastercore::swapByteOrder32(propertyIdDesired);
-
-    PUSH_BACK_BYTES(payload, messageVer);
-    PUSH_BACK_BYTES(payload, messageType);
-    PUSH_BACK_BYTES(payload, propertyIdForSale);
-    PUSH_BACK_BYTES(payload, propertyIdDesired);
+    //
+    // mastercore::swapByteOrder16(messageVer);
+    // mastercore::swapByteOrder16(messageType);
+    // mastercore::swapByteOrder32(propertyIdForSale);
+    // mastercore::swapByteOrder32(propertyIdDesired);
+    //
+    // PUSH_BACK_BYTES(payload, messageVer);
+    // PUSH_BACK_BYTES(payload, messageType);
+    // PUSH_BACK_BYTES(payload, propertyIdForSale);
+    // PUSH_BACK_BYTES(payload, propertyIdDesired);
 
     return payload;
 }

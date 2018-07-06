@@ -36,6 +36,8 @@ int64_t ParseAmountContract(const UniValue& value, bool fContract);
 uint32_t ParseNewValues(const UniValue& value);
 uint64_t ParseEffectivePrice(const UniValue& value);
 uint8_t ParseContractDexAction(const UniValue& value);
-
+uint8_t ParseDExPaymentWindow(const UniValue& value);
+int64_t ParseDExFee(const UniValue& value);
+uint8_t ParseDExAction(const UniValue& value);
 
 #endif // OMNICORE_RPCVALUES_H

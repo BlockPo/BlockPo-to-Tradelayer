@@ -82,8 +82,14 @@ private:
     // MetaDEx
     unsigned int desired_property;
     uint64_t desired_value;
+    int64_t amount_forsale;
     unsigned char action; // depreciated
 
+    // DEX 1
+    uint64_t amountDesired;
+    uint8_t timeLimit;
+    uint64_t minFee;
+    uint8_t subAction;
     ////////////////////////////////////
     /** New things Contract */
     uint64_t effective_price;
@@ -144,6 +150,7 @@ private:
     bool interpret_Activation();
     bool interpret_Deactivation();
     bool interpret_Alert();
+    bool interpret_AcceptOfferBTC();
     ///////////////////////////////////////////////
     /** New things for Contract */
     bool interpret_ContractDexTrade();
@@ -155,6 +162,8 @@ private:
     bool interpret_SendPeggedCurrency();
     bool interpret_ContractDexClosePosition();
     bool interpret_ContractDex_Cancel_Orders_By_Block();
+    bool interpret_MetaDExTrade();
+    bool interpret_TradeOffer();
     ///////////////////////////////////////////////
 
     /**
@@ -183,6 +192,9 @@ private:
     int logicMath_SendPeggedCurrency();
     int logicMath_ContractDexClosePosition();
     int logicMath_ContractDex_Cancel_Orders_By_Block();
+    int logicMath_MetaDExTrade();
+    int logicMath_TradeOffer();
+    int logicMath_AcceptOffer_BTC();
     ///////////////////////////////////////////////
 
     /**
@@ -314,6 +326,8 @@ public:
         propertyId = 0;
         contractId = 0;
         amount = 0;
+        amountDesired = 0;
+        timeLimit = 0;
         ////////////////////////////////////
     }
 

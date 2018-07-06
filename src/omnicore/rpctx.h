@@ -21,6 +21,7 @@ UniValue omni_createcontract(const UniValue& params, bool fHelp);
 UniValue omni_sendissuance_pegged(const UniValue& params, bool fHelp);
 UniValue omni_redemption_pegged(const UniValue& params, bool fHelp);
 UniValue omni_send_pegged(const UniValue& params, bool fHelp);
+UniValue omni_senddexsell(const UniValue& params, bool fHelp);
 /////////////////////////////////////////
 
 #endif // OMNICORE_RPCTX

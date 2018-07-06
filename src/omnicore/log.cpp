@@ -52,6 +52,7 @@ bool msc_debug_metadex1                         = 0;
 bool msc_debug_metadex2                         = 0;
 bool msc_debug_metadex3                         = 0;
 bool msc_debug_tradedb                          = 0;
+bool msc_debug_dex                              = 1;
 /**
  * LogPrintf() has been broken a couple of times now
  * by well-meaning people adding mutexes in the most straightforward way.
@@ -243,6 +244,7 @@ void InitDebugLogLevels()
         if (*it == "consensus_hash_every_block") msc_debug_consensus_hash_every_block = true;
         if (*it == "consensus_hash_every_transaction") msc_debug_consensus_hash_every_transaction = true;
         if (*it == "alerts") msc_debug_alerts = true;
+        if (*it == "dex") msc_debug_dex = true;
         if (*it == "none" || *it == "all") {
             bool allDebugState = false;
             if (*it == "all") allDebugState = true;
@@ -268,6 +270,7 @@ void InitDebugLogLevels()
             msc_debug_packets_readonly =  allDebugState;
             msc_debug_walletcache = allDebugState;
             msc_debug_alerts = allDebugState;
+            msc_debug_dex = allDebugState;
         }
     }
 }
