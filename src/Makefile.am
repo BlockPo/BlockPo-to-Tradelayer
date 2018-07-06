@@ -186,6 +186,7 @@ BITCOIN_CORE_H = \
   omnicore/createpayload.h \
   omnicore/rpcpayload.h \
   omnicore/varint.h \
+	omnicore/dex.h \
 	omnicore/mdex.h
 
 obj/build.h: FORCE
@@ -262,6 +263,7 @@ libbitcoin_server_a_SOURCES = \
   omnicore/rpcpayload.cpp \
   omnicore/varint.cpp \
 	omnicore/mdex.cpp \
+	omnicore/dex.cpp \
 	omnicore/globals.cpp\
   $(BITCOIN_CORE_H)
 
