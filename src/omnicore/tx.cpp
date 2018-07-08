@@ -720,7 +720,7 @@ bool CMPTransaction::interpret_AcceptOfferBTC()
   } else return false;
   //
   if (!vecPropertyIdForSaleBytes.empty()) {
-      property = DecompressInteger(vecPropertyIdForSaleBytes);
+      propertyId = DecompressInteger(vecPropertyIdForSaleBytes);
   } else return false;
 
   if (!vecAmountForSaleBytes.empty()) {
@@ -2731,48 +2731,48 @@ int CMPTransaction::logicMath_TradeOffer()
           break;
       }
 
-  //     case MP_TX_PKT_V1:
-  //     {
-  //         PrintToConsole("Case MP_TX_PKT_V1\n");
-  //         if (DEx_offerExists(sender, property)) {
-  //             if (CANCEL != subaction && UPDATE != subaction) {
-  //                 PrintToLog("%s(): rejected: sender %s has an active sell offer for property: %d\n", __func__, sender, property);
-  //                 rc = (PKT_ERROR_TRADEOFFER -48);
-  //                 break;
-  //             }
-  //         } else {
-  //             // Offer does not exist
-  //             if (NEW != subaction) {
-  //                 PrintToLog("%s(): rejected: sender %s has no active sell offer for property: %d\n", __func__, sender, property);
-  //                 rc = (PKT_ERROR_TRADEOFFER -49);
-  //                 break;
-  //             }
-  //         }
-  //
-  //         switch (subaction) {
-  //             case NEW:
-  //                 PrintToConsole("Subaction: NEW\n");
-  //                 rc = DEx_offerCreate(sender, property, nValue, block, amount_desired, min_fee, blocktimelimit, txid, &nNewValue);
-  //                 break;
-  //
-  //             case UPDATE:
-  //                 rc = DEx_offerUpdate(sender, property, nValue, block, amount_desired, min_fee, blocktimelimit, txid, &nNewValue);
-  //                 break;
-  //
-  //             case CANCEL:
-  //                 rc = DEx_offerDestroy(sender, property);
-  //                 break;
-  //
-  //             default:
-  //                 rc = (PKT_ERROR -999);
-  //                 break;
-  //         }
-  //         break;
-  //     }
-  //
-  //     default:
-  //         rc = (PKT_ERROR -500); // neither V0 nor V1
-  //         break;
+      case MP_TX_PKT_V1:
+      {
+          PrintToConsole("Case MP_TX_PKT_V1\n");
+          if (DEx_offerExists(sender, property)) {
+              if (CANCEL != subaction && UPDATE != subaction) {
+                  PrintToLog("%s(): rejected: sender %s has an active sell offer for property: %d\n", __func__, sender, property);
+                  rc = (PKT_ERROR_TRADEOFFER -48);
+                  break;
+              }
+          } else {
+              // Offer does not exist
+              if (NEW != subaction) {
+                  PrintToLog("%s(): rejected: sender %s has no active sell offer for property: %d\n", __func__, sender, property);
+                  rc = (PKT_ERROR_TRADEOFFER -49);
+                  break;
+              }
+          }
+
+          switch (subaction) {
+              case NEW:
+                  PrintToConsole("Subaction: NEW\n");
+                  rc = DEx_offerCreate(sender, propertyId, nValue, block, amountDesired, minFee, timeLimit, txid, &nNewValue);
+                  break;
+
+              case UPDATE:
+                  rc = DEx_offerUpdate(sender, propertyId, nValue, block, amountDesired, minFee, timeLimit, txid, &nNewValue);
+                  break;
+
+              case CANCEL:
+                  rc = DEx_offerDestroy(sender, propertyId);
+                  break;
+
+              default:
+                  rc = (PKT_ERROR -999);
+                  break;
+          }
+          break;
+      }
+
+      default:
+          rc = (PKT_ERROR -500); // neither V0 nor V1
+          break;
   };
 
   return rc;
@@ -2799,7 +2799,7 @@ int CMPTransaction::logicMath_AcceptOffer_BTC()
    // ------------------------------------------
 
    // the min fee spec requirement is checked in the following function
-   int rc = DEx_acceptCreate(sender, receiver, property, nValue, block, tx_fee_paid, &nNewValue);
+   int rc = DEx_acceptCreate(sender, receiver, propertyId, nValue, block, tx_fee_paid, &nNewValue);
 
    return rc;
 
