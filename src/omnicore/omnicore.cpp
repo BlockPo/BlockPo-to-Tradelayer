@@ -1026,6 +1026,36 @@ int input_msc_balances_string(const std::string& s)
     return 0;
 }
 
+int input_mp_offers_string(const std::string& s)
+{
+    std::vector<std::string> vstr;
+    boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
+
+    if (9 != vstr.size()) return -1;
+
+    int i = 0;
+
+    std::string sellerAddr = vstr[i++];
+    int offerBlock = boost::lexical_cast<int>(vstr[i++]);
+    int64_t amountOriginal = boost::lexical_cast<int64_t>(vstr[i++]);
+    uint32_t prop = boost::lexical_cast<uint32_t>(vstr[i++]);
+    int64_t btcDesired = boost::lexical_cast<int64_t>(vstr[i++]);
+    uint32_t prop_desired = boost::lexical_cast<uint32_t>(vstr[i++]);
+    int64_t minFee = boost::lexical_cast<int64_t>(vstr[i++]);
+    uint8_t blocktimelimit = boost::lexical_cast<unsigned int>(vstr[i++]); // lexical_cast can't handle char!
+    uint256 txid = uint256S(vstr[i++]);
+
+    // TODO: should this be here? There are usually no sanity checks..
+      // if (OMNI_PROPERTY_BTC != prop_desired) return -1;
+
+    const std::string combo = STR_SELLOFFER_ADDR_PROP_COMBO(sellerAddr, prop);
+    CMPOffer newOffer(offerBlock, amountOriginal, prop, btcDesired, minFee, blocktimelimit, txid);
+
+    if (!my_offers.insert(std::make_pair(combo, newOffer)).second) return -1;
+
+    return 0;
+}
+
 int input_globals_state_string(const string &s)
 {
   unsigned int nextSPID, nextTestSPID;
@@ -1149,6 +1179,11 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
         inputLineFunc = input_mp_contractdexorder_string;
         break;
 
+    case FILETYPE_OFFERS:
+      my_offers.clear();
+      inputLineFunc = input_mp_offers_string;
+      break;
+
     default:
       return -1;
   }
@@ -1226,6 +1261,7 @@ static char const * const statePrefix[NUM_FILETYPES] = {
     "globals",
     "crowdsales",
     "cdexorders",
+    "offers",
 
 };
 
@@ -1449,6 +1485,19 @@ static int write_mp_contractdex(ofstream &file, SHA256_CTX *shaCtx)
   }
   return 0;
 }
+
+static int write_mp_offers(ofstream &file, SHA256_CTX *shaCtx)
+{
+  OfferMap::const_iterator iter;
+  for (iter = my_offers.begin(); iter != my_offers.end(); ++iter) {
+    // decompose the key for address
+    std::vector<std::string> vstr;
+    boost::split(vstr, (*iter).first, boost::is_any_of("-"), token_compress_on);
+    CMPOffer const &offer = (*iter).second;
+    offer.saveOffer(file, shaCtx, vstr[0]);
+  }
+  return 0;
+}
 ////////////////////////////
 
 static int write_state_file( CBlockIndex const *pBlockIndex, int what )
@@ -1479,6 +1528,10 @@ static int write_state_file( CBlockIndex const *pBlockIndex, int what )
 
   case FILETYPE_CDEXORDERS:
      result = write_mp_contractdex(file, &shaCtx);
+     break;
+
+  case FILETYPE_OFFERS:
+     result = write_mp_offers(file, &shaCtx);
      break;
   }
 
@@ -1568,6 +1621,7 @@ int mastercore_save_state( CBlockIndex const *pBlockIndex )
     write_state_file(pBlockIndex, FILETYPE_CROWDSALES);
     /*New things for contracts*/////////////////////////////////////////////////
     write_state_file(pBlockIndex, FILETYPE_CDEXORDERS);
+    write_state_file(pBlockIndex, FILETYPE_OFFERS);
     ////////////////////////////////////////////////////////////////////////////
     // clean-up the directory
     prune_state_files(pBlockIndex);
@@ -1589,6 +1643,7 @@ void clear_all_state()
     my_crowds.clear();
     my_pending.clear();
     contractdex.clear();
+    my_offers.clear();
     ResetConsensusParams();
     ClearActivations();
     ClearAlerts();

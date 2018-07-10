@@ -61,8 +61,8 @@ std::vector<TransactionRestriction> CConsensusParams::GetRestrictions() const
         { MSC_TYPE_CONTRACTDEX_CLOSE_POSITION,MP_TX_PKT_V0,  false,         MSC_CONTRACTDEX_BLOCK },
         {MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK,MP_TX_PKT_V0,  false,   MSC_CONTRACTDEX_BLOCK},
         {MSC_TYPE_METADEX_TRADE,              MP_TX_PKT_V0,  false,          MSC_CONTRACTDEX_BLOCK},
-        {MSC_TYPE_TRADE_OFFER,                MP_TX_PKT_V0,  false,          MSC_CONTRACTDEX_BLOCK},
-        {MSC_TYPE_ACCEPT_OFFER_BTC,           MP_TX_PKT_V0,  false,          MSC_CONTRACTDEX_BLOCK}          
+        {MSC_TYPE_TRADE_OFFER,                MP_TX_PKT_V1,  false,          MSC_CONTRACTDEX_BLOCK},
+        {MSC_TYPE_ACCEPT_OFFER_BTC,           MP_TX_PKT_V1,  false,          MSC_CONTRACTDEX_BLOCK}          
 
     };
 

@@ -1690,7 +1690,7 @@ UniValue omni_getactivedexsells(const UniValue& params, bool fHelp)
         responseObj.push_back(Pair("propertyid", (uint64_t) propertyId));
         responseObj.push_back(Pair("seller", seller));
         responseObj.push_back(Pair("amountavailable", FormatDivisibleMP(amountAvailable)));
-        responseObj.push_back(Pair("bitcoindesired", FormatDivisibleMP(bitcoinDesired)));
+        responseObj.push_back(Pair("litecoindesired", FormatDivisibleMP(bitcoinDesired)));
         responseObj.push_back(Pair("unitprice", FormatDivisibleMP(unitPrice)));
         responseObj.push_back(Pair("timelimit", timeLimit));
         responseObj.push_back(Pair("minimumfee", FormatDivisibleMP(minFee)));
