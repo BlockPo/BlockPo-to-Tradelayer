@@ -47,6 +47,8 @@ int const MAX_STATE_HISTORY = 50;
 
 // Omni Layer Transaction Class
 #define NO_MARKER    0
+#define OMNI_CLASS_A 1
+#define OMNI_CLASS_B 2
 #define OMNI_CLASS_C 3 // uncompressed OP_RETURN
 #define OMNI_CLASS_D 4 // compressed OP_RETURN
 

@@ -447,7 +447,7 @@ int64_t calculateDExPurchase(const int64_t amountOffered, const int64_t amountDe
 int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addressSeller, const std::string& addressBuyer, int64_t amountPaid, int block, uint64_t* nAmended)
 {
     if (msc_debug_dex) PrintToLog("%s(%s, %s)\n", __func__, addressSeller, addressBuyer);
-
+    PrintToConsole("Inside DEx_payment function <<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
     int rc = DEX_ERROR_PAYMENT;
 
     uint32_t propertyId = 3; // using ALLs for testing
@@ -499,7 +499,7 @@ int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addre
     const int64_t amountRemaining = p_accept->getAcceptAmountRemaining(); // actual amount desired, in the Accept
 
     if (msc_debug_dex) PrintToLog(
-            "%s: BTC desired: %s, offered amount: %s, amount to purchase: %s, amount remaining: %s\n", __func__,
+            "%s: LTC desired: %s, offered amount: %s, amount to purchase: %s, amount remaining: %s\n", __func__,
             FormatDivisibleMP(amountDesired), FormatDivisibleMP(amountOffered),
             FormatDivisibleMP(amountPurchased), FormatDivisibleMP(amountRemaining));
 
@@ -518,7 +518,7 @@ int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addre
 
         assert(update_tally_map(addressSeller, propertyId, -amountPurchased, ACCEPT_RESERVE));
         assert(update_tally_map(addressBuyer, propertyId, amountPurchased, BALANCE));
-
+        PrintToConsole("AmountPurchased : %d\n",amountPurchased);
         bool valid = true;
         p_txlistdb->recordPaymentTX(txid, valid, block, vout, propertyId, amountPurchased, addressBuyer, addressSeller);
 

@@ -474,7 +474,10 @@ void CheckWalletUpdate(bool forceUpdate)
  */
 int mastercore::GetEncodingClass(const CTransaction& tx, int nBlock)
 {
+    bool hasExodus = false;
+    bool hasMultisig = false;
     bool hasOpReturn = false;
+    bool hasMoney = false;
 
     /* Fast Search
      * Perform a string comparison on hex for each scriptPubKey & look directly for omni marker bytes
@@ -508,7 +511,19 @@ int mastercore::GetEncodingClass(const CTransaction& tx, int nBlock)
         if (!IsAllowedOutputType(outType, nBlock)) {
             continue;
         }
+/*New things for DEX implementation *///////////////////////////////////////////
 
+        if (outType == TX_PUBKEYHASH) {
+            CTxDestination dest;
+            if (ExtractDestination(output.scriptPubKey, dest)) {
+                CBitcoinAddress address(dest);
+                if (address == ExodusAddress()) {
+                    hasExodus = true;
+                }
+            }
+        }
+
+////////////////////////////////////////////////////////////////////////////////
         if (outType == TX_NULL_DATA) {
             // Ensure there is a payload, and the first pushed element equals,
             // or starts with the "ol" marker
@@ -532,7 +547,13 @@ int mastercore::GetEncodingClass(const CTransaction& tx, int nBlock)
     if (hasOpReturn) {
         return OMNI_CLASS_D;
     }
+/* New things for DEX implementation*///////////////////////////////////////////
 
+    if (hasExodus) {
+        return OMNI_CLASS_A;
+    }
+
+////////////////////////////////////////////////////////////////////////////////
     return NO_MARKER;
 }
 
@@ -784,6 +805,10 @@ static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, 
     if (msc_debug_verbose) PrintToLog("single_pkt: %s\n", HexStr(single_pkt, packet_size + single_pkt));
     mp_tx.Set(strSender, strReference, 0, wtx.GetHash(), nBlock, idx, (unsigned char *)&single_pkt, packet_size, omniClass, (inAll-outAll));
 
+
+    if (omniClass == OMNI_CLASS_A && packet_size == 0) {
+        return 1;
+    }
     return 0;
 }
 
@@ -806,7 +831,7 @@ int ParseTransaction(const CTransaction& tx, int nBlock, unsigned int idx, CMPTr
 static bool HandleDExPayments(const CTransaction& tx, int nBlock, const std::string& strSender)
 {
     int count = 0;
-
+    PrintToConsole("Inside HandleDExPayments function <<<<<<<<<<<<<<<<<<<<<\n");
     for (unsigned int n = 0; n < tx.vout.size(); ++n) {
         CTxDestination dest;
         if (ExtractDestination(tx.vout[n].scriptPubKey, dest)) {
@@ -1888,7 +1913,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
         }
         fFoundTx |= (interp_ret == 0);
     } else if (pop_ret > 0){
-
+        PrintToConsole("pop_ret > 0 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
         fFoundTx |= HandleDExPayments(tx, nBlock, mp_obj.getSender()); // testing the payment handler
 
     }
@@ -3255,6 +3280,7 @@ const CBitcoinAddress ExodusAddress()
         static CBitcoinAddress mainAddress(exodus_mainnet);
         return mainAddress;
     }
+
 }
 /**
  * @return The marker for class C transactions.
