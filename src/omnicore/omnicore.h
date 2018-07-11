@@ -159,6 +159,9 @@ std::string FormatByType(int64_t amount, uint16_t propertyType);
 std::string FormatByDivisibility(int64_t amount, bool divisible);
 double FormatContractShortMP(int64_t n);
 
+/** Returns the Exodus address. */
+const CBitcoinAddress ExodusAddress();
+
 /** Returns the marker for transactions. */
 const std::vector<unsigned char> GetOmMarker();
 

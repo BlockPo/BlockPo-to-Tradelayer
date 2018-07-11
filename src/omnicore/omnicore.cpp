@@ -95,6 +95,12 @@ const double factor = 100000000;
 
 CCriticalSection cs_tally;
 
+static string exodus_address = "1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P";
+
+static const string exodus_mainnet = "1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P";
+static const string exodus_testnet = "mfjQ3ow4STCqW2zMeUeBWvs4y9Fgx7Gxfh";  // one of our litecoin testnet addresses
+// static const string getmoney_testnet = "moneyqMan7uh8FqdCA2BV5yZ8qVrc9ikLP";
+
 static int nWaterlineBlock = 0;
 
 //! Available balances of wallet properties
@@ -789,6 +795,35 @@ int ParseTransaction(const CTransaction& tx, int nBlock, unsigned int idx, CMPTr
     return parseTransaction(true, tx, nBlock, idx, mptx, nTime);
 }
 
+/**
+ * Handles potential DEx payments.
+ *
+ * Note: must *not* be called outside of the transaction handler, and it does not
+ * check, if a transaction marker exists.
+ *
+ * @return True, if valid
+ */
+static bool HandleDExPayments(const CTransaction& tx, int nBlock, const std::string& strSender)
+{
+    int count = 0;
+
+    for (unsigned int n = 0; n < tx.vout.size(); ++n) {
+        CTxDestination dest;
+        if (ExtractDestination(tx.vout[n].scriptPubKey, dest)) {
+            CBitcoinAddress address(dest);
+            if (address == ExodusAddress()) {
+                continue;
+            }
+            std::string strAddress = address.ToString();
+            // if (msc_debug_parser_dex) PrintToLog("payment #%d %s %s\n", count, strAddress, FormatIndivisibleMP(tx.vout[n].nValue));
+
+            // check everything and pay BTC for the property we are buying here...
+            if (0 == DEx_payment(tx.GetHash(), n, strAddress, strSender, tx.vout[n].nValue, nBlock)) ++count;
+        }
+    }
+
+    return (count > 0);
+}
 /**
  * Reports the progress of the initial transaction scanning.
  *
@@ -1852,6 +1887,10 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
             p_OmniTXDB->RecordTransaction(tx.GetHash(), idx);
         }
         fFoundTx |= (interp_ret == 0);
+    } else if (pop_ret > 0){
+
+        fFoundTx |= HandleDExPayments(tx, nBlock, mp_obj.getSender()); // testing the payment handler
+
     }
 
     if (fFoundTx && msc_debug_consensus_hash_every_transaction) {
@@ -3207,6 +3246,16 @@ double mastercore::notionalChange(uint32_t contractId, uint64_t marketPrice)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+const CBitcoinAddress ExodusAddress()
+{
+    if (isNonMainNet()) {
+        static CBitcoinAddress testAddress(exodus_testnet);
+        return testAddress;
+    } else {
+        static CBitcoinAddress mainAddress(exodus_mainnet);
+        return mainAddress;
+    }
+}
 /**
  * @return The marker for class C transactions.
  */

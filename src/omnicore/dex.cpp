@@ -441,7 +441,7 @@ int64_t calculateDExPurchase(const int64_t amountOffered, const int64_t amountDe
 }
 
 /**
- * Handles incoming BTC payment for the offer.
+ * Handles incoming BTC payment for the offer in omnicore.cpp
  * TODO: change nAmended: uint64_t -> int64_t
  */
 int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addressSeller, const std::string& addressBuyer, int64_t amountPaid, int block, uint64_t* nAmended)
@@ -450,13 +450,13 @@ int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addre
 
     int rc = DEX_ERROR_PAYMENT;
 
-    uint32_t propertyId = OMNI_PROPERTY_MSC; // test for MSC accept first
+    uint32_t propertyId = 3; // using ALLs for testing
     CMPAccept* p_accept = DEx_getAccept(addressSeller, propertyId, addressBuyer);
 
-    if (!p_accept) {
-        propertyId = OMNI_PROPERTY_TMSC; // test for TMSC accept second
-        p_accept = DEx_getAccept(addressSeller, propertyId, addressBuyer);
-    }
+    // if (!p_accept) {
+    //     propertyId = 3; // test for TMSC accept second
+    //     p_accept = DEx_getAccept(addressSeller, propertyId, addressBuyer);
+    // }
 
     if (!p_accept) {
         // there must be an active accept order for this payment

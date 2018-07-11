@@ -419,6 +419,7 @@ UniValue omni_getbalance(const UniValue& params, bool fHelp)
     uint32_t propertyId = ParsePropertyId(params[1]);
 
     RequireExistingProperty(propertyId);
+    RequireNotContract(propertyId);
 
     UniValue balanceObj(UniValue::VOBJ);
     BalanceToJSON(address, propertyId, balanceObj, isPropertyDivisible(propertyId));
@@ -585,8 +586,9 @@ UniValue omni_getproperty(const UniValue& params, bool fHelp)
         response.push_back(Pair("collateral currency",(uint64_t) sp.collateral_currency));
         response.push_back(Pair("margin requirement",(uint64_t) sp.margin_requirement));
         response.push_back(Pair("blocks until expiration",(uint64_t) sp.blocks_until_expiration));
+    } else if (sp.subcategory == "Pegged Currency") {
+        response.push_back(Pair("contract associated",(uint64_t) sp.contract_associated));
     }
-
     return response;
 }
 
@@ -1372,7 +1374,7 @@ UniValue omni_getposition(const UniValue& params, bool fHelp)
     std::string address = ParseAddress(params[0]);
     uint32_t propertyId = ParsePropertyId(params[1]);
 
-    //RequireExistingProperty(propertyId);
+    RequireContract(propertyId);
 
     UniValue balanceObj(UniValue::VOBJ);
     PositionToJSON(address, propertyId, balanceObj,isPropertyContract(propertyId));
