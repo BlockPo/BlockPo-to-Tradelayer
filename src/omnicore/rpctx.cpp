@@ -104,6 +104,7 @@ UniValue omni_send(const UniValue& params, bool fHelp)
 
     // perform checks
     RequireExistingProperty(propertyId);
+    RequireNotContract(propertyId);
     RequireBalance(fromAddress, propertyId, amount);
     RequireSaneReferenceAmount(referenceAmount);
 
@@ -227,6 +228,7 @@ UniValue omni_sendissuancecrowdsale(const UniValue& params, bool fHelp)
     // perform checks
     RequirePropertyName(name);
     RequireExistingProperty(propertyIdDesired);
+    RequireNotContract(propertyIdDesired);
     RequireSameEcosystem(ecosystem, propertyIdDesired);
 
     // create a payload for the transaction
@@ -280,6 +282,7 @@ UniValue omni_sendissuancefixed(const UniValue& params, bool fHelp)
     uint8_t ecosystem = ParseEcosystem(params[1]);
     uint16_t type = ParsePropertyType(params[2]);
     uint32_t previousId = ParsePreviousPropertyId(params[3]);
+    RequireNotContract(previousId);
     std::string name = ParseText(params[4]);
     std::string url = ParseText(params[5]);
     std::string data = ParseText(params[6]);
@@ -338,6 +341,7 @@ UniValue omni_sendissuancemanaged(const UniValue& params, bool fHelp)
     uint8_t ecosystem = ParseEcosystem(params[1]);
     uint16_t type = ParsePropertyType(params[2]);
     uint32_t previousId = ParsePreviousPropertyId(params[3]);
+    RequireNotContract(previousId);
     std::string name = ParseText(params[4]);
     std::string url = ParseText(params[5]);
     std::string data = ParseText(params[6]);
@@ -396,6 +400,7 @@ UniValue omni_sendgrant(const UniValue& params, bool fHelp)
     // perform checks
     RequireExistingProperty(propertyId);
     RequireManagedProperty(propertyId);
+    RequireNotContract(propertyId);
     RequireTokenIssuer(fromAddress, propertyId);
 
     // create a payload for the transaction
@@ -447,6 +452,7 @@ UniValue omni_sendrevoke(const UniValue& params, bool fHelp)
     // perform checks
     RequireExistingProperty(propertyId);
     RequireManagedProperty(propertyId);
+    RequireNotContract(propertyId);
     RequireTokenIssuer(fromAddress, propertyId);
     RequireBalance(fromAddress, propertyId, amount);
 
@@ -549,6 +555,7 @@ UniValue omni_sendchangeissuer(const UniValue& params, bool fHelp)
     // perform checks
     RequireExistingProperty(propertyId);
     RequireManagedProperty(propertyId);
+    RequireNotContract(propertyId);
     RequireTokenIssuer(fromAddress, propertyId);
 
     // create a payload for the transaction
@@ -743,8 +750,10 @@ UniValue omni_sendtrade(const UniValue& params, bool fHelp)
     int64_t amountDesired = ParseAmount(params[4], isPropertyDivisible(propertyIdDesired));
 
     // perform checks
-    // RequireExistingProperty(propertyIdForSale);
-    // RequireExistingProperty(propertyIdDesired);
+    RequireExistingProperty(propertyIdForSale);
+    RequireNotContract(propertyIdForSale);
+    RequireExistingProperty(propertyIdDesired);
+    RequireNotContract(propertyIdDesired);
     // RequireBalance(fromAddress, propertyIdForSale, amountForSale);
     // RequireSameEcosystem(propertyIdForSale, propertyIdDesired);
     // RequireDifferentIds(propertyIdForSale, propertyIdDesired);
@@ -857,6 +866,7 @@ UniValue omni_cancelallcontractsbyaddress(const UniValue& params, bool fHelp)
     uint8_t ecosystem = ParseEcosystem(params[1]);
     uint32_t contractId = ParsePropertyId(params[2]);
     // perform checks
+    RequireContract(contractId);
     // TODO: check, if there are matching offers to cancel
 
     // create a payload for the transaction
@@ -908,6 +918,7 @@ UniValue omni_closeposition(const UniValue& params, bool fHelp)
     uint8_t ecosystem = ParseEcosystem(params[1]);
     uint32_t contractId = ParsePropertyId(params[2]);
     // perform checks
+    RequireContract(contractId);
     // TODO: check, if there are matching offers to cancel
 
     // create a payload for the transaction

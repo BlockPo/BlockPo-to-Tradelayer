@@ -56,6 +56,9 @@ int const MAX_STATE_HISTORY = 50;
 #define MP_TX_PKT_V0  0
 #define MP_TX_PKT_V1  1
 
+// Alls
+#define ALL_PROPERTY_MSC   3
+
 #define MIN_PAYLOAD_SIZE     5
 
 #define MAX_CLASS_D_SEARCH_BYTES   200

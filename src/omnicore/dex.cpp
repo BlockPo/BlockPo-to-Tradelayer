@@ -450,13 +450,8 @@ int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addre
     PrintToConsole("Inside DEx_payment function <<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
     int rc = DEX_ERROR_PAYMENT;
 
-    uint32_t propertyId = 3; // using ALLs for testing
+    uint32_t propertyId = ALL_PROPERTY_MSC; // using ALLs for testing
     CMPAccept* p_accept = DEx_getAccept(addressSeller, propertyId, addressBuyer);
-
-    // if (!p_accept) {
-    //     propertyId = 3; // test for TMSC accept second
-    //     p_accept = DEx_getAccept(addressSeller, propertyId, addressBuyer);
-    // }
 
     if (!p_accept) {
         // there must be an active accept order for this payment

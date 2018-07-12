@@ -49,6 +49,8 @@ extern bool msc_debug_metadex2;
 extern bool msc_debug_metadex3;
 extern bool msc_debug_tradedb;
 extern bool msc_debug_dex;
+extern bool msc_debug_fees;
+extern bool msc_debug_sto;
 
 /* When we switch to C++11, this can be switched to variadic templates instead
  * of this macro-based construction (see tinyformat.h).

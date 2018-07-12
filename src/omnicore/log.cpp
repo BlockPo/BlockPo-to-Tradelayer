@@ -53,6 +53,8 @@ bool msc_debug_metadex2                         = 0;
 bool msc_debug_metadex3                         = 0;
 bool msc_debug_tradedb                          = 0;
 bool msc_debug_dex                              = 1;
+bool msc_debug_fees                             = 1;
+bool msc_debug_sto                              = 1;
 /**
  * LogPrintf() has been broken a couple of times now
  * by well-meaning people adding mutexes in the most straightforward way.
@@ -271,6 +273,8 @@ void InitDebugLogLevels()
             msc_debug_walletcache = allDebugState;
             msc_debug_alerts = allDebugState;
             msc_debug_dex = allDebugState;
+            msc_debug_fees = allDebugState;
+            msc_debug_sto = allDebugState;
         }
     }
 }
