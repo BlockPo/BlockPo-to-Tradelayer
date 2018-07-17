@@ -1276,6 +1276,15 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
       inputLineFunc = input_mp_offers_string;
       break;
 
+    case FILETYPE_MDEXORDERS:
+        // FIXME
+        // memory leak ... gotta unallocate inner layers first....
+        // TODO
+        // ...
+        metadex.clear();
+        inputLineFunc = input_mp_mdexorder_string;
+        break;
+
     default:
       return -1;
   }
@@ -1644,8 +1653,11 @@ static int write_state_file( CBlockIndex const *pBlockIndex, int what )
   case FILETYPE_OFFERS:
      result = write_mp_offers(file, &shaCtx);
      break;
+     
+  case FILETYPE_MDEXORDERS:
+      result = write_mp_metadex(file, &shaCtx);
+      break;
   }
-
   // generate and wite the double hash of all the contents written
   uint256 hash1;
   SHA256_Final((unsigned char*)&hash1, &shaCtx);
@@ -1733,6 +1745,7 @@ int mastercore_save_state( CBlockIndex const *pBlockIndex )
     /*New things for contracts*/////////////////////////////////////////////////
     write_state_file(pBlockIndex, FILETYPE_CDEXORDERS);
     write_state_file(pBlockIndex, FILETYPE_OFFERS);
+    write_state_file(pBlockIndex, FILETYPE_MDEXORDERS);
     ////////////////////////////////////////////////////////////////////////////
     // clean-up the directory
     prune_state_files(pBlockIndex);
