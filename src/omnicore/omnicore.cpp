@@ -1213,6 +1213,35 @@ int input_mp_contractdexorder_string(const std::string& s)
 }
 ////////////////////////////////////////////////////////////////////////////////
 
+// address, block, amount for sale, property, amount desired, property desired, subaction, idx, txid, amount remaining
+int input_mp_mdexorder_string(const std::string& s)
+{
+    std::vector<std::string> vstr;
+    boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
+
+    if (10 != vstr.size()) return -1;
+
+    int i = 0;
+
+    std::string addr = vstr[i++];
+    int block = boost::lexical_cast<int>(vstr[i++]);
+    int64_t amount_forsale = boost::lexical_cast<int64_t>(vstr[i++]);
+    uint32_t property = boost::lexical_cast<uint32_t>(vstr[i++]);
+    int64_t amount_desired = boost::lexical_cast<int64_t>(vstr[i++]);
+    uint32_t desired_property = boost::lexical_cast<uint32_t>(vstr[i++]);
+    uint8_t subaction = boost::lexical_cast<unsigned int>(vstr[i++]); // lexical_cast can't handle char!
+    unsigned int idx = boost::lexical_cast<unsigned int>(vstr[i++]);
+    uint256 txid = uint256S(vstr[i++]);
+    int64_t amount_remaining = boost::lexical_cast<int64_t>(vstr[i++]);
+
+    CMPMetaDEx mdexObj(addr, block, property, amount_forsale, desired_property,
+            amount_desired, txid, idx, subaction, amount_remaining);
+
+    if (!MetaDEx_INSERT(mdexObj)) return -1;
+
+    return 0;
+}
+
 static int msc_file_load(const string &filename, int what, bool verifyHash = false)
 {
   int lines = 0;
@@ -1546,6 +1575,25 @@ static int write_mp_contractdex(ofstream &file, SHA256_CTX *shaCtx)
       }
     }
   }
+  return 0;
+}
+
+static int write_mp_metadex(ofstream &file, SHA256_CTX *shaCtx)
+{
+  for (md_PropertiesMap::iterator my_it = metadex.begin(); my_it != metadex.end(); ++my_it)
+  {
+    md_PricesMap & prices = my_it->second;
+    for (md_PricesMap::iterator it = prices.begin(); it != prices.end(); ++it)
+    {
+      md_Set & indexes = (it->second);
+      for (md_Set::iterator it = indexes.begin(); it != indexes.end(); ++it)
+      {
+        CMPMetaDEx meta = *it;
+        meta.saveOffer(file, shaCtx);
+      }
+    }
+  }
+
   return 0;
 }
 
