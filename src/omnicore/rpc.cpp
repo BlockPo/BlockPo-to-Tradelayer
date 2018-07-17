@@ -108,6 +108,27 @@ bool BalanceToJSON(const std::string& address, uint32_t property, UniValue& bala
 }
 ///////////////////////////////////////////////
 /** New things for Contract */
+void MetaDexObjectToJSON(const CMPMetaDEx& obj, UniValue& metadex_obj)
+{
+    bool propertyIdForSaleIsDivisible = isPropertyDivisible(obj.getProperty());
+    bool propertyIdDesiredIsDivisible = isPropertyDivisible(obj.getDesProperty());
+    // add data to JSON object
+    metadex_obj.push_back(Pair("address", obj.getAddr()));
+    metadex_obj.push_back(Pair("txid", obj.getHash().GetHex()));
+    if (obj.getAction() == 4) metadex_obj.push_back(Pair("ecosystem", isTestEcosystemProperty(obj.getProperty()) ? "test" : "main"));
+    metadex_obj.push_back(Pair("propertyidforsale", (uint64_t) obj.getProperty()));
+    metadex_obj.push_back(Pair("propertyidforsaleisdivisible", propertyIdForSaleIsDivisible));
+    metadex_obj.push_back(Pair("amountforsale", FormatMP(obj.getProperty(), obj.getAmountForSale())));
+    metadex_obj.push_back(Pair("amountremaining", FormatMP(obj.getProperty(), obj.getAmountRemaining())));
+    metadex_obj.push_back(Pair("propertyiddesired", (uint64_t) obj.getDesProperty()));
+    metadex_obj.push_back(Pair("propertyiddesiredisdivisible", propertyIdDesiredIsDivisible));
+    metadex_obj.push_back(Pair("amountdesired", FormatMP(obj.getDesProperty(), obj.getAmountDesired())));
+    metadex_obj.push_back(Pair("amounttofill", FormatMP(obj.getDesProperty(), obj.getAmountToFill())));
+    metadex_obj.push_back(Pair("action", (int) obj.getAction()));
+    metadex_obj.push_back(Pair("block", obj.getBlock()));
+    metadex_obj.push_back(Pair("blocktime", obj.getBlockTime()));
+}
+
 void ContractDexObjectToJSON(const CMPContractDex& obj, UniValue& contractdex_obj)
 {
 
@@ -121,6 +142,21 @@ void ContractDexObjectToJSON(const CMPContractDex& obj, UniValue& contractdex_ob
     contractdex_obj.push_back(Pair("block", obj.getBlock()));
     contractdex_obj.push_back(Pair("idx", static_cast<uint64_t>(obj.getIdx())));
     contractdex_obj.push_back(Pair("blocktime", obj.getBlockTime()));
+}
+
+void MetaDexObjectsToJSON(std::vector<CMPMetaDEx>& vMetaDexObjs, UniValue& response)
+{
+    MetaDEx_compare compareByHeight;
+
+    // sorts metadex objects based on block height and position in block
+    std::sort (vMetaDexObjs.begin(), vMetaDexObjs.end(), compareByHeight);
+
+    for (std::vector<CMPMetaDEx>::const_iterator it = vMetaDexObjs.begin(); it != vMetaDexObjs.end(); ++it) {
+        UniValue metadex_obj(UniValue::VOBJ);
+        MetaDexObjectToJSON(*it, metadex_obj);
+
+        response.push_back(metadex_obj);
+    }
 }
 
 void ContractDexObjectsToJSON(std::vector<CMPContractDex>& vContractDexObjs, UniValue& response)
@@ -1382,6 +1418,77 @@ UniValue omni_getposition(const UniValue& params, bool fHelp)
     return balanceObj;
 }
 
+UniValue omni_getorderbook(const UniValue& params, bool fHelp)
+{
+    if (fHelp || params.size() < 1 || params.size() > 2)
+        throw runtime_error(
+            "omni_getorderbook propertyid ( propertyid )\n"
+            "\nList active offers on the distributed token exchange.\n"
+            "\nArguments:\n"
+            "1. propertyid           (number, required) filter orders by property identifier for sale\n"
+            "2. propertyid           (number, optional) filter orders by property identifier desired\n"
+            "\nResult:\n"
+            "[                                              (array of JSON objects)\n"
+            "  {\n"
+            "    \"address\" : \"address\",                         (string) the Bitcoin address of the trader\n"
+            "    \"txid\" : \"hash\",                               (string) the hex-encoded hash of the transaction of the order\n"
+            "    \"ecosystem\" : \"main\"|\"test\",                   (string) the ecosytem in which the order was made (if \"cancel-ecosystem\")\n"
+            "    \"propertyidforsale\" : n,                       (number) the identifier of the tokens put up for sale\n"
+            "    \"propertyidforsaleisdivisible\" : true|false,   (boolean) whether the tokens for sale are divisible\n"
+            "    \"amountforsale\" : \"n.nnnnnnnn\",                (string) the amount of tokens initially offered\n"
+            "    \"amountremaining\" : \"n.nnnnnnnn\",              (string) the amount of tokens still up for sale\n"
+            "    \"propertyiddesired\" : n,                       (number) the identifier of the tokens desired in exchange\n"
+            "    \"propertyiddesiredisdivisible\" : true|false,   (boolean) whether the desired tokens are divisible\n"
+            "    \"amountdesired\" : \"n.nnnnnnnn\",                (string) the amount of tokens initially desired\n"
+            "    \"amounttofill\" : \"n.nnnnnnnn\",                 (string) the amount of tokens still needed to fill the offer completely\n"
+            "    \"action\" : n,                                  (number) the action of the transaction: (1) \"trade\", (2) \"cancel-price\", (3) \"cancel-pair\", (4) \"cancel-ecosystem\"\n"
+            "    \"block\" : nnnnnn,                              (number) the index of the block that contains the transaction\n"
+            "    \"blocktime\" : nnnnnnnnnn                       (number) the timestamp of the block that contains the transaction\n"
+            "  },\n"
+            "  ...\n"
+            "]\n"
+            "\nExamples:\n"
+            + HelpExampleCli("omni_getorderbook", "2")
+            + HelpExampleRpc("omni_getorderbook", "2")
+        );
+
+    bool filterDesired = (params.size() > 1);
+    uint32_t propertyIdForSale = ParsePropertyId(params[0]);
+    uint32_t propertyIdDesired = 0;
+
+    RequireExistingProperty(propertyIdForSale);
+    RequireNotContract(propertyIdForSale);
+
+    if (filterDesired) {
+        propertyIdDesired = ParsePropertyId(params[1]);
+
+        RequireExistingProperty(propertyIdDesired);
+        RequireNotContract(propertyIdDesired);
+        RequireSameEcosystem(propertyIdForSale, propertyIdDesired);
+        RequireDifferentIds(propertyIdForSale, propertyIdDesired);
+    }
+
+    std::vector<CMPMetaDEx> vecMetaDexObjects;
+    {
+        LOCK(cs_tally);
+        for (md_PropertiesMap::const_iterator my_it = metadex.begin(); my_it != metadex.end(); ++my_it) {
+            const md_PricesMap& prices = my_it->second;
+            for (md_PricesMap::const_iterator it = prices.begin(); it != prices.end(); ++it) {
+                const md_Set& indexes = it->second;
+                for (md_Set::const_iterator it = indexes.begin(); it != indexes.end(); ++it) {
+                    const CMPMetaDEx& obj = *it;
+                    if (obj.getProperty() != propertyIdForSale) continue;
+                    if (!filterDesired || obj.getDesProperty() == propertyIdDesired) vecMetaDexObjects.push_back(obj);
+                }
+            }
+        }
+    }
+
+    UniValue response(UniValue::VARR);
+    MetaDexObjectsToJSON(vecMetaDexObjects, response);
+    return response;
+}
+
 UniValue omni_getcontract_orderbook(const UniValue& params, bool fHelp)
 {
     if (fHelp || params.size() < 2 || params.size() > 2)
@@ -1760,6 +1867,7 @@ static const CRPCCommand commands[] =
     { "omni layer (data retrieval)", "omni_getupnl",                    &omni_getupnl,                   false },
     { "omni layer (data retrieval)", "omni_getpnl",                    &omni_getpnl,                     false },
     { "omni layer (data retieval)", "omni_getactivedexsells",          &omni_getactivedexsells ,         false },
+    {"omni layer (data retieval)" , "omni_getorderbook",               &omni_getorderbook,               false },
 };
 
 void RegisterOmniDataRetrievalRPCCommands(CRPCTable &tableRPC)
