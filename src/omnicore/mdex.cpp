@@ -1440,7 +1440,8 @@ bool mastercore::ContractDex_INSERT(const CMPContractDex &objContractDex)
 int mastercore::MetaDEx_ADD(const std::string& sender_addr, uint32_t prop, int64_t amount, int block, uint32_t property_desired, int64_t amount_desired, const uint256& txid, unsigned int idx)
 {
     int rc = METADEX_ERROR -1;
-
+    PrintToConsole("------------------------------------------------------------\n");
+    PrintToConsole("Inside MetaDEx_ADD\n");
     // Create a MetaDEx object from paremeters
     CMPMetaDEx new_mdex(sender_addr, block, prop, amount, property_desired, amount_desired, txid, idx, CMPTransaction::ADD);
     if (msc_debug_metadex1) PrintToLog("%s(); buyer obj: %s\n", __FUNCTION__, new_mdex.ToString());
@@ -1452,7 +1453,7 @@ int mastercore::MetaDEx_ADD(const std::string& sender_addr, uint32_t prop, int64
     // if (msc_debug_metadex3) MetaDEx_debug_print();
     x_Trade(&new_mdex);
     // if (msc_debug_metadex3) MetaDEx_debug_print();
-
+    
     // Insert the remaining order into the MetaDEx maps
     if (0 < new_mdex.getAmountRemaining()) { //switch to getAmountRemaining() when ready
         if (!MetaDEx_INSERT(new_mdex)) {
