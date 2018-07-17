@@ -326,8 +326,8 @@ MatchReturnType x_Trade(CMPMetaDEx* const pnew)
                     // subtract the fee from the amount the seller will receive
                     buyer_amountGotAfterFee = buyer_amountGot - tradingFee;
 
-                    // add the fee to the fee cache
-                    p_feecache->AddFee(pnew->getDesProperty(), pnew->getBlock(), tradingFee);
+                    // add the fee to the fee cache  TODO: check the fees file
+                    // p_feecache->AddFee(pnew->getDesProperty(), pnew->getBlock(), tradingFee);
                 } else {
                     if (msc_debug_fees) PrintToLog("Skipping fee reduction for trade match %s:%s as one of the properties is Omni\n", pold->getHash().GetHex(), pnew->getHash().GetHex());
                 }
@@ -1359,40 +1359,40 @@ bool ContractDex_compare::operator()(const CMPContractDex &lhs, const CMPContrac
 }
 ///////////////////////////////////////////
 
-// bool mastercore::MetaDEx_INSERT(const CMPMetaDEx& objMetaDEx)
-// {
-//     // Create an empty price map (to use in case price map for this property does not already exist)
-//     md_PricesMap temp_prices;
-//     // Attempt to obtain the price map for the property
-//     md_PricesMap *p_prices = get_Prices(objMetaDEx.getProperty());
-//
-//     // Create an empty set of metadex objects (to use in case no set currently exists at this price)
-//     md_Set temp_indexes;
-//     md_Set *p_indexes = NULL;
-//
-//     // Prepare for return code
-//     std::pair <md_Set::iterator, bool> ret;
-//
-//     // Attempt to obtain a set of metadex objects for this price from the price map
-//     if (p_prices) p_indexes = get_Indexes(p_prices, objMetaDEx.unitPrice());
-//     // See if the set was populated, if not no set exists at this price level, use the empty set that we created earlier
-//     if (!p_indexes) p_indexes = &temp_indexes;
-//
-//     // Attempt to insert the metadex object into the set
-//     ret = p_indexes->insert(objMetaDEx);
-//     if (false == ret.second) return false;
-//
-//     // If a prices map did not exist for this property, set p_prices to the temp empty price map
-//     if (!p_prices) p_prices = &temp_prices;
-//
-//     // Update the prices map with the new set at this price
-//     (*p_prices)[objMetaDEx.unitPrice()] = *p_indexes;
-//
-//     // Set the metadex map for the property to the updated (or new if it didn't exist) price map
-//     metadex[objMetaDEx.getProperty()] = *p_prices;
-//
-//     return true;
-// }
+bool mastercore::MetaDEx_INSERT(const CMPMetaDEx& objMetaDEx)
+{
+    // Create an empty price map (to use in case price map for this property does not already exist)
+    md_PricesMap temp_prices;
+    // Attempt to obtain the price map for the property
+    md_PricesMap *p_prices = get_Prices(objMetaDEx.getProperty());
+
+    // Create an empty set of metadex objects (to use in case no set currently exists at this price)
+    md_Set temp_indexes;
+    md_Set *p_indexes = NULL;
+
+    // Prepare for return code
+    std::pair <md_Set::iterator, bool> ret;
+
+    // Attempt to obtain a set of metadex objects for this price from the price map
+    if (p_prices) p_indexes = get_Indexes(p_prices, objMetaDEx.unitPrice());
+    // See if the set was populated, if not no set exists at this price level, use the empty set that we created earlier
+    if (!p_indexes) p_indexes = &temp_indexes;
+
+    // Attempt to insert the metadex object into the set
+    ret = p_indexes->insert(objMetaDEx);
+    if (false == ret.second) return false;
+
+    // If a prices map did not exist for this property, set p_prices to the temp empty price map
+    if (!p_prices) p_prices = &temp_prices;
+
+    // Update the prices map with the new set at this price
+    (*p_prices)[objMetaDEx.unitPrice()] = *p_indexes;
+
+    // Set the metadex map for the property to the updated (or new if it didn't exist) price map
+    metadex[objMetaDEx.getProperty()] = *p_prices;
+
+    return true;
+}
 
 ///////////////////////////////////////////
 /** New things for Contracts */
@@ -1437,39 +1437,39 @@ bool mastercore::ContractDex_INSERT(const CMPContractDex &objContractDex)
 ///////////////////////////////////////////
 
 // pretty much directly linked to the ADD TX21 command off the wire
-// int mastercore::MetaDEx_ADD(const std::string& sender_addr, uint32_t prop, int64_t amount, int block, uint32_t property_desired, int64_t amount_desired, const uint256& txid, unsigned int idx)
-// {
-//     int rc = METADEX_ERROR -1;
-//
-//     // Create a MetaDEx object from paremeters
-//     CMPMetaDEx new_mdex(sender_addr, block, prop, amount, property_desired, amount_desired, txid, idx, CMPTransaction::ADD);
-//     if (msc_debug_metadex1) PrintToLog("%s(); buyer obj: %s\n", __FUNCTION__, new_mdex.ToString());
-//
-//     // Ensure this is not a badly priced trade (for example due to zero amounts)
-//     if (0 >= new_mdex.unitPrice()) return METADEX_ERROR -66;
-//
-//     // Match against existing trades, remainder of the order will be put into the order book
-//     if (msc_debug_metadex3) MetaDEx_debug_print();
-//     x_Trade(&new_mdex);
-//     if (msc_debug_metadex3) MetaDEx_debug_print();
-//
-//     // Insert the remaining order into the MetaDEx maps
-//     if (0 < new_mdex.getAmountRemaining()) { //switch to getAmountRemaining() when ready
-//         if (!MetaDEx_INSERT(new_mdex)) {
-//             PrintToLog("%s() ERROR: ALREADY EXISTS, line %d, file: %s\n", __FUNCTION__, __LINE__, __FILE__);
-//             return METADEX_ERROR -70;
-//         } else {
-//             // move tokens into reserve
-//             assert(update_tally_map(sender_addr, prop, -new_mdex.getAmountRemaining(), BALANCE));
-//             assert(update_tally_map(sender_addr, prop, new_mdex.getAmountRemaining(), METADEX_RESERVE));
-//
-//             if (msc_debug_metadex1) PrintToLog("==== INSERTED: %s= %s\n", xToString(new_mdex.unitPrice()), new_mdex.ToString());
-//             if (msc_debug_metadex3) MetaDEx_debug_print();
-//         }
-//     }
-//     rc = 0;
-//     return rc;
-// }
+int mastercore::MetaDEx_ADD(const std::string& sender_addr, uint32_t prop, int64_t amount, int block, uint32_t property_desired, int64_t amount_desired, const uint256& txid, unsigned int idx)
+{
+    int rc = METADEX_ERROR -1;
+
+    // Create a MetaDEx object from paremeters
+    CMPMetaDEx new_mdex(sender_addr, block, prop, amount, property_desired, amount_desired, txid, idx, CMPTransaction::ADD);
+    if (msc_debug_metadex1) PrintToLog("%s(); buyer obj: %s\n", __FUNCTION__, new_mdex.ToString());
+
+    // Ensure this is not a badly priced trade (for example due to zero amounts)
+    if (0 >= new_mdex.unitPrice()) return METADEX_ERROR -66;
+
+    // Match against existing trades, remainder of the order will be put into the order book
+    // if (msc_debug_metadex3) MetaDEx_debug_print();
+    x_Trade(&new_mdex);
+    // if (msc_debug_metadex3) MetaDEx_debug_print();
+
+    // Insert the remaining order into the MetaDEx maps
+    if (0 < new_mdex.getAmountRemaining()) { //switch to getAmountRemaining() when ready
+        if (!MetaDEx_INSERT(new_mdex)) {
+            PrintToLog("%s() ERROR: ALREADY EXISTS, line %d, file: %s\n", __FUNCTION__, __LINE__, __FILE__);
+            return METADEX_ERROR -70;
+        } else {
+            // move tokens into reserve
+            assert(update_tally_map(sender_addr, prop, -new_mdex.getAmountRemaining(), BALANCE));
+            assert(update_tally_map(sender_addr, prop, new_mdex.getAmountRemaining(), METADEX_RESERVE));
+
+            if (msc_debug_metadex1) PrintToLog("==== INSERTED: %s= %s\n", xToString(new_mdex.unitPrice()), new_mdex.ToString());
+            // if (msc_debug_metadex3) MetaDEx_debug_print();
+        }
+    }
+    rc = 0;
+    return rc;
+}
 
 /////////////////////////////////////////
 /** New things for Contract */

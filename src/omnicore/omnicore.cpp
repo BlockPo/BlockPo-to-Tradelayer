@@ -2728,6 +2728,15 @@ void CMPTradeList::getTradesForAddress(std::string address, std::vector<uint256>
   }
 }
 
+void CMPTradeList::recordNewTrade(const uint256& txid, const std::string& address, uint32_t propertyIdForSale, uint32_t propertyIdDesired, int blockNum, int blockIndex)
+{
+  if (!pdb) return;
+  std::string strValue = strprintf("%s:%d:%d:%d:%d:%d", address, propertyIdForSale, propertyIdDesired, blockNum, blockIndex);
+  Status status = pdb->Put(writeoptions, txid.ToString(), strValue);
+  ++nWritten;
+  if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
+}
+
 void CMPTradeList::recordNewTrade(const uint256& txid, const std::string& address, uint32_t propertyIdForSale, uint32_t propertyIdDesired, int blockNum, int blockIndex, int64_t reserva)
 {
   if (!pdb) return;

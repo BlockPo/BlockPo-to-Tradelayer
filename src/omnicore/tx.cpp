@@ -761,6 +761,7 @@ bool CMPTransaction::interpret_MetaDExTrade()
 
   if (!vecAmountForSaleBytes.empty()) {
       amount_forsale = DecompressInteger(vecAmountForSaleBytes);
+      nNewValue = amount_forsale;
   } else return false;
 
   if (!vecPropertyIdDesiredBytes.empty()) {
@@ -2059,10 +2060,69 @@ int CMPTransaction::logicMath_Alert()
 int CMPTransaction::logicMath_MetaDExTrade()
 {
 
+  if (!IsTransactionTypeAllowed(block, property, type, version)) {
+      PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+              __func__,
+              type,
+              version,
+              property,
+              block);
+      return (PKT_ERROR_METADEX -22);
+  }
+
+  if (property == desired_property) {
+      PrintToLog("%s(): rejected: property for sale %d and desired property %d must not be equal\n",
+              __func__,
+              property,
+              desired_property);
+      return (PKT_ERROR_METADEX -29);
+  }
+
+  if (isTestEcosystemProperty(property) != isTestEcosystemProperty(desired_property)) {
+      PrintToLog("%s(): rejected: property for sale %d and desired property %d not in same ecosystem\n",
+              __func__,
+              property,
+              desired_property);
+      return (PKT_ERROR_METADEX -30);
+  }
+
+  if (!IsPropertyIdValid(property)) {
+      PrintToLog("%s(): rejected: property for sale %d does not exist\n", __func__, property);
+      return (PKT_ERROR_METADEX -31);
+  }
+
+  if (!IsPropertyIdValid(desired_property)) {
+      PrintToLog("%s(): rejected: desired property %d does not exist\n", __func__, desired_property);
+      return (PKT_ERROR_METADEX -32);
+  }
+
+  if (nNewValue <= 0 || MAX_INT_8_BYTES < nNewValue) {
+      PrintToLog("%s(): rejected: amount for sale out of range or zero: %d\n", __func__, nNewValue);
+      return (PKT_ERROR_METADEX -33);
+  }
+
+  if (desired_value <= 0 || MAX_INT_8_BYTES < desired_value) {
+      PrintToLog("%s(): rejected: desired amount out of range or zero: %d\n", __func__, desired_value);
+      return (PKT_ERROR_METADEX -34);
+  }
 
 
+  int64_t nBalance = getMPbalance(sender, property, BALANCE);
+  if (nBalance < (int64_t) nNewValue) {
+      PrintToLog("%s(): rejected: sender %s has insufficient balance of property %d [%s < %s]\n",
+              __func__,
+              sender,
+              property,
+              FormatMP(property, nBalance),
+              FormatMP(property, nNewValue));
+      return (PKT_ERROR_METADEX -25);
+  }
 
+  // ------------------------------------------
 
+  t_tradelistdb->recordNewTrade(txid, sender, property, desired_property, block, tx_idx);
+  int rc = MetaDEx_ADD(sender, property, nNewValue, block, desired_property, desired_value, txid, tx_idx);
+  return rc;
 
 }
 
