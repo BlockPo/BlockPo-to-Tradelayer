@@ -1362,6 +1362,7 @@ static char const * const statePrefix[NUM_FILETYPES] = {
     "globals",
     "crowdsales",
     "cdexorders",
+    "mdexorders",
     "offers",
 
 };
@@ -1653,7 +1654,7 @@ static int write_state_file( CBlockIndex const *pBlockIndex, int what )
   case FILETYPE_OFFERS:
      result = write_mp_offers(file, &shaCtx);
      break;
-     
+
   case FILETYPE_MDEXORDERS:
       result = write_mp_metadex(file, &shaCtx);
       break;
@@ -1767,6 +1768,7 @@ void clear_all_state()
     my_crowds.clear();
     my_pending.clear();
     contractdex.clear();
+    metadex.clear();
     my_offers.clear();
     ResetConsensusParams();
     ClearActivations();
