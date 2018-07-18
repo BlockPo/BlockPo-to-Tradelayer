@@ -186,8 +186,9 @@ BITCOIN_CORE_H = \
   omnicore/createpayload.h \
   omnicore/rpcpayload.h \
   omnicore/varint.h \
-	omnicore/dex.h \
-	omnicore/mdex.h
+  omnicore/dex.h \
+  omnicore/mdex.h \
+  omnicore/globals.h
 
 obj/build.h: FORCE
 	@$(MKDIR_P) $(builddir)/obj

@@ -12,7 +12,6 @@
 #include "omnicore/dex.h"
 #include "omnicore/encoding.h"
 #include "omnicore/errors.h"
-#include "omnicore/fees.h"
 #include "omnicore/log.h"
 #include "omnicore/notifications.h"
 #include "omnicore/pending.h"
@@ -126,8 +125,8 @@ static int reorgRecoveryMaxHeight = 0;
 CMPTxList *mastercore::p_txlistdb;
 CMPTradeList *mastercore::t_tradelistdb;
 COmniTransactionDB *mastercore::p_OmniTXDB;
-COmniFeeCache *mastercore::p_feecache;
-COmniFeeHistory *mastercore::p_feehistory;
+// COmniFeeCache *mastercore::p_feecache;
+// COmniFeeHistory *mastercore::p_feehistory;
 
 // indicate whether persistence is enabled at this point, or not
 // used to write/read files, for breakout mode, debugging, etc.
@@ -1362,8 +1361,8 @@ static char const * const statePrefix[NUM_FILETYPES] = {
     "globals",
     "crowdsales",
     "cdexorders",
-    "mdexorders",
     "offers",
+    "mdexorders",
 
 };
 
@@ -1768,8 +1767,8 @@ void clear_all_state()
     my_crowds.clear();
     my_pending.clear();
     contractdex.clear();
-    metadex.clear();
     my_offers.clear();
+    metadex.clear();
     ResetConsensusParams();
     ClearActivations();
     ClearAlerts();
@@ -1779,8 +1778,8 @@ void clear_all_state()
     p_txlistdb->Clear();
     p_OmniTXDB->Clear();
     t_tradelistdb->Clear();
-    p_feecache->Clear();
-    p_feehistory->Clear();
+    // p_feecache->Clear();
+    // p_feehistory->Clear();
     assert(p_txlistdb->setDBVersion() == DB_VERSION); // new set of databases, set DB version
 }
 

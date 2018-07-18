@@ -1,7 +1,6 @@
 #include "omnicore/mdex.h"
 
 #include "omnicore/errors.h"
-#include "omnicore/fees.h"
 #include "omnicore/log.h"
 #include "omnicore/omnicore.h"
 #include "omnicore/rules.h"
@@ -1453,7 +1452,7 @@ int mastercore::MetaDEx_ADD(const std::string& sender_addr, uint32_t prop, int64
     // if (msc_debug_metadex3) MetaDEx_debug_print();
     x_Trade(&new_mdex);
     // if (msc_debug_metadex3) MetaDEx_debug_print();
-    
+
     // Insert the remaining order into the MetaDEx maps
     if (0 < new_mdex.getAmountRemaining()) { //switch to getAmountRemaining() when ready
         if (!MetaDEx_INSERT(new_mdex)) {
