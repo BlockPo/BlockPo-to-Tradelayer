@@ -769,7 +769,7 @@ bool CMPTransaction::interpret_MetaDExTrade()
   } else return false;
 
   if (!vecAmountDesiredBytes.empty()) {
-      amount_desired = DecompressInteger(vecAmountDesiredBytes);
+      desired_value = DecompressInteger(vecAmountDesiredBytes);
   } else return false;
 
   PrintToConsole("version: %d\n", version);
@@ -777,7 +777,7 @@ bool CMPTransaction::interpret_MetaDExTrade()
   PrintToConsole("property: %d\n", property);
   PrintToConsole("amount : %d\n", amount_forsale);
   PrintToConsole("property desired : %d\n", desired_property);
-  PrintToConsole("amount desired : %d\n", amount_desired);
+  PrintToConsole("amount desired : %d\n", desired_value);
 
   return true;
 

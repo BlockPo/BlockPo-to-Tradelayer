@@ -157,6 +157,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "omni_senddexsell", 6 },
     { "omni_senddexaccept", 2 },
     { "omni_senddexaccept", 4 },
+    { "omni_getorderbook", 0 },
 
     /* Omni Core - raw transaction calls */
     { "omni_decodetransaction", 1 },
