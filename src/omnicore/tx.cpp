@@ -1243,6 +1243,8 @@ int CMPTransaction::interpretPacket()
 
         case MSC_TYPE_ACCEPT_OFFER_BTC:
             return logicMath_AcceptOffer_BTC();
+        case MSC_TYPE_METADEX_TRADE:
+            return logicMath_MetaDExTrade();    
     ////////////////////////////////////////////////////////////////////////////
     }
 
