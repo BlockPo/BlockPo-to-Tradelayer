@@ -1244,7 +1244,7 @@ int CMPTransaction::interpretPacket()
         case MSC_TYPE_ACCEPT_OFFER_BTC:
             return logicMath_AcceptOffer_BTC();
         case MSC_TYPE_METADEX_TRADE:
-            return logicMath_MetaDExTrade();    
+            return logicMath_MetaDExTrade();
     ////////////////////////////////////////////////////////////////////////////
     }
 
@@ -2278,7 +2278,7 @@ int CMPTransaction::logicMath_ContractDexTrade()
      PrintToConsole("amountToReserve------->: %d\n",amountToReserve);
      PrintToConsole("----------------------------------------------------------\n");
 
-     if (nBalance < amountToReserve) {
+     if (nBalance < amountToReserve || nBalance == 0) {
 
         PrintToLog("%s(): rejected: sender %s has insufficient balance for contracts %d [%s < %s] \n",
             __func__,
