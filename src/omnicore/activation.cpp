@@ -11,7 +11,6 @@
 #include "omnicore/log.h"
 #include "omnicore/version.h"
 
-#include "main.h"
 #include "ui_interface.h"
 
 #include <stdint.h>
@@ -48,9 +47,9 @@ static void DeletePendingActivation(uint16_t featureId)
  */
 static void PendingActivationCompleted(const FeatureActivation& activation)
 {
-    DeletePendingActivation(activation.featureId);
-    vecCompletedActivations.push_back(activation);
-    uiInterface.OmniStateChanged();
+    // DeletePendingActivation(activation.featureId);
+    // vecCompletedActivations.push_back(activation);
+    // uiInterface.OmniStateChanged();
 }
 
 /**
@@ -88,7 +87,7 @@ void CheckLiveActivations(int blockHeight)
             std::string msgText = strprintf("Shutting down due to unsupported feature activation (%d: %s)", liveActivation.featureId, liveActivation.featureName);
             PrintToLog(msgText);
             PrintToConsole(msgText);
-            if (!GetBoolArg("-overrideforcedshutdown", false)) {
+            if (!gArgs.GetBoolArg("-overrideforcedshutdown", false)) {
                 //AbortNode(msgText, msgText);  TODO FIX AbortNode
             }
         }
@@ -122,7 +121,7 @@ void ClearActivations()
 {
     vecPendingActivations.clear();
     vecCompletedActivations.clear();
-    uiInterface.OmniStateChanged();
+    // uiInterface.OmniStateChanged();
 }
 
 /**

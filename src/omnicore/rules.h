@@ -11,16 +11,9 @@ namespace mastercore
 {
 //! Feature identifier placeholder
 const uint16_t FEATURE_NA = 9999;
-const uint16_t FEATURE_DEXMATH = 5;
-//! Feature identifier to enable the fee cache and strip 0.05% fees from non-Omni pairs
-const uint16_t FEATURE_FEES = 9;
-//! Feature identifier to enable Send All transactions
-const uint16_t FEATURE_CONTRACTDEX = 11;
-/** A structure to represent transaction restrictions*/
 
-//! When (propertyTotalTokens / OMNI_FEE_THRESHOLD) is reached fee distribution will occur
-const int64_t OMNI_FEE_THRESHOLD = 100000; // 0.001%
-
+/** A structure to represent transaction restrictions.
+ */
 struct TransactionRestriction
 {
     //! Transaction type
@@ -76,10 +69,6 @@ public:
     int MSC_MANUALSP_BLOCK;
     //! Block to enable "send all" transactions
     int MSC_SEND_ALL_BLOCK;
-    ////////////////////////////////////
-    /** New things for Contract: ! Block to enable MetaDEx transactions */
-    int MSC_CONTRACTDEX_BLOCK;
-    ////////////////////////////////////
 
     /** Returns a mapping of transaction types, and the blocks at which they are enabled. */
     virtual std::vector<TransactionRestriction> GetRestrictions() const;

@@ -19,29 +19,31 @@ void RegisterMiscRPCCommands(CRPCTable &tableRPC);
 void RegisterMiningRPCCommands(CRPCTable &tableRPC);
 /** Register raw transaction RPC commands */
 void RegisterRawTransactionRPCCommands(CRPCTable &tableRPC);
+
+// /** Register raw transaction RPC commands */
+// void RegisterRawTransactionRPCCommands(CRPCTable &tableRPC);
 /** Register Omni data retrieval RPC commands */
 void RegisterOmniDataRetrievalRPCCommands(CRPCTable &tableRPC);
 /** Register Omni transaction creation RPC commands */
 void RegisterOmniTransactionCreationRPCCommands(CRPCTable &tableRPC);
 /** Register Omni payload creation RPC commands */
-void RegisterOmniPayloadCreationRPCCommands(CRPCTable &tableRPC);
-/** Register Omni raw transaction RPC commands */
-void RegisterOmniRawTransactionRPCCommands(CRPCTable &tableRPC);
+// void RegisterOmniPayloadCreationRPCCommands(CRPCTable &tableRPC);
+// /** Register Omni raw transaction RPC commands */
+// void RegisterOmniRawTransactionRPCCommands(CRPCTable &tableRPC);
 
-static inline void RegisterAllCoreRPCCommands(CRPCTable &tableRPC)
+static inline void RegisterAllCoreRPCCommands(CRPCTable &t)
 {
-    RegisterBlockchainRPCCommands(tableRPC);
-    RegisterNetRPCCommands(tableRPC);
-    RegisterMiscRPCCommands(tableRPC);
-    RegisterMiningRPCCommands(tableRPC);
-    RegisterRawTransactionRPCCommands(tableRPC);
+    RegisterBlockchainRPCCommands(t);
+    RegisterNetRPCCommands(t);
+    RegisterMiscRPCCommands(t);
+    RegisterMiningRPCCommands(t);
+    RegisterRawTransactionRPCCommands(t);
 
     /* Omni Core RPCs: */
-    RegisterOmniDataRetrievalRPCCommands(tableRPC);
-    RegisterOmniTransactionCreationRPCCommands(tableRPC);
-    RegisterOmniPayloadCreationRPCCommands(tableRPC);
-    RegisterOmniRawTransactionRPCCommands(tableRPC);
+    RegisterOmniDataRetrievalRPCCommands(t);
+    RegisterOmniTransactionCreationRPCCommands(t);
+    // RegisterOmniPayloadCreationRPCCommands(t);
+    // RegisterOmniRawTransactionRPCCommands(t);
 }
 
 #endif
-

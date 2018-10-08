@@ -17,18 +17,6 @@ void RequireTokenIssuer(const std::string& address, uint32_t propertyId);
 void RequireSaneReferenceAmount(int64_t amount);
 void RequireHeightInChain(int blockHeight);
 
-/*New things for contracts *///////////////////////////////////////////////////
-void RequireForPegged(const std::string& address, uint32_t propertyId, uint32_t contractId, uint64_t amount);
-void RequireNotContract(uint32_t propertyId);
-void RequireContract(uint32_t propertyId);
-void RequirePeggedCurrency(uint32_t propertyId);
-void RequireMatchingDExOffer(const std::string& address, uint32_t propertyId);
-void RequireNoOtherDExOffer(const std::string& address, uint32_t propertyId);
-void RequireSaneDExPaymentWindow(const std::string& address, uint32_t propertyId);
-void RequireSaneDExFee(const std::string& address, uint32_t propertyId);
-////////////////////////////////////////////////////////////////////////////////
-
-
 // TODO:
 // Checks for MetaDEx orders for cancel operations
 

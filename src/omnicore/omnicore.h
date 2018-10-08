@@ -1,7 +1,7 @@
 #ifndef OMNICORE_OMNICORE_H
 #define OMNICORE_OMNICORE_H
 
-class CBitcoinAddress;
+
 class CBlockIndex;
 class CCoinsView;
 class CCoinsViewCache;
@@ -47,17 +47,12 @@ int const MAX_STATE_HISTORY = 50;
 
 // Omni Layer Transaction Class
 #define NO_MARKER    0
-#define OMNI_CLASS_A 1
-#define OMNI_CLASS_B 2
 #define OMNI_CLASS_C 3 // uncompressed OP_RETURN
 #define OMNI_CLASS_D 4 // compressed OP_RETURN
 
 // Omni Layer Transaction (Packet) Version
 #define MP_TX_PKT_V0  0
 #define MP_TX_PKT_V1  1
-
-// Alls
-#define ALL_PROPERTY_MSC   3
 
 #define MIN_PAYLOAD_SIZE     5
 
@@ -79,27 +74,7 @@ enum TransactionType {
   MSC_TYPE_CHANGE_ISSUER_ADDRESS      = 70,
   OMNICORE_MESSAGE_TYPE_DEACTIVATION  = 65533,
   OMNICORE_MESSAGE_TYPE_ACTIVATION    = 65534,
-  OMNICORE_MESSAGE_TYPE_ALERT         = 65535,
-
-  ////////////////////////////////////
-  /** New things for Contract */
-  MSC_TYPE_TRADE_OFFER                = 20,
-  MSC_TYPE_ACCEPT_OFFER_BTC           = 22,
-  MSC_TYPE_METADEX_TRADE              = 25,
-  MSC_TYPE_CONTRACTDEX_TRADE          = 29,
-  MSC_TYPE_CONTRACTDEX_CANCEL_PRICE   = 30,
-  MSC_TYPE_CONTRACTDEX_CANCEL_ECOSYSTEM   = 32,
-  MSC_TYPE_CONTRACTDEX_CLOSE_POSITION   = 33,
-  MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK = 34,
-  /** !Here we changed "MSC_TYPE_OFFER_ACCEPT_A_BET = 40" */
-  MSC_TYPE_CREATE_CONTRACT            = 40,
-  MSC_TYPE_PEGGED_CURRENCY            = 100,
-  MSC_TYPE_REDEMPTION_PEGGED          = 101,
-  MSC_TYPE_SEND_PEGGED_CURRENCY       = 102,
-
-
-  ////////////////////////////////////
-
+  OMNICORE_MESSAGE_TYPE_ALERT         = 65535
 };
 
 #define MSC_PROPERTY_TYPE_INDIVISIBLE             1
@@ -109,9 +84,6 @@ enum FILETYPES {
   FILETYPE_BALANCES = 0,
   FILETYPE_GLOBALS,
   FILETYPE_CROWDSALES,
-  FILETYPE_CDEXORDERS,
-  FILETYPE_MDEXORDERS,
-  FILETYPE_OFFERS,
   NUM_FILETYPES
 };
 
@@ -125,36 +97,10 @@ enum FILETYPES {
 #define PKT_ERROR_SEND        (-60000)
 #define PKT_ERROR_TOKENS      (-82000)
 #define PKT_ERROR_SEND_ALL    (-83000)
-#define PKT_ERROR_METADEX     (-80000)
-#define METADEX_ERROR         (-81000)
-
-#define PKT_ERROR             ( -9000)
-#define DEX_ERROR_SELLOFFER   (-10000)
-#define DEX_ERROR_ACCEPT      (-20000)
-#define DEX_ERROR_PAYMENT     (-30000)
-#define PKT_ERROR_TRADEOFFER  (-70000)
 
 #define OMNI_PROPERTY_BTC             0
 #define OMNI_PROPERTY_MSC             1
 #define OMNI_PROPERTY_TMSC            2
-//////////////////////////////////////
-/** New things for Contracts */
-#define BUY   1
-#define SELL  2
-#define ACTIONINVALID  3
-
-uint32_t const CONTRACT_ALL_DUSD = 4;
-uint32_t const CONTRACT_ALL_LTC = 5;
-uint32_t const CONTRACT_LTC_DJPY = 6;
-uint32_t const CONTRACT_LTC_DUSD = 7;
-uint32_t const CONTRACT_LTC_DEUR = 8;
-
-
-
-//////////////////////////////////////
-
-/** New for future contracts port */
-#define MSC_PROPERTY_TYPE_CONTRACT    3
 
 // forward declarations
 std::string FormatDivisibleMP(int64_t amount, bool fSign = false);
@@ -163,10 +109,6 @@ std::string FormatMP(uint32_t propertyId, int64_t amount, bool fSign = false);
 std::string FormatShortMP(uint32_t propertyId, int64_t amount);
 std::string FormatByType(int64_t amount, uint16_t propertyType);
 std::string FormatByDivisibility(int64_t amount, bool divisible);
-double FormatContractShortMP(int64_t n);
-
-/** Returns the Exodus address. */
-const CBitcoinAddress ExodusAddress();
 
 /** Returns the marker for transactions. */
 const std::vector<unsigned char> GetOmMarker();
@@ -248,74 +190,7 @@ public:
     void printAll();
 
     bool isMPinBlockRange(int, int, bool);
-
-    void recordPaymentTX(const uint256 &txid, bool fValid, int nBlock, unsigned int vout, unsigned int propertyId, uint64_t nValue, string buyer, string seller);
-    void recordMetaDExCancelTX(const uint256 &txidMaster, const uint256 &txidSub, bool fValid, int nBlock, unsigned int propertyId, uint64_t nValue);
-
-    /////////////////////////////////////////////
-    /** New things for Contracts */
-    void recordContractDexCancelTX(const uint256 &txidMaster, const uint256 &txidSub, bool fValid, int nBlock, unsigned int propertyId, uint64_t nValue);
-    /////////////////////////////////////////////
-
-    uint256 findMetaDExCancel(const uint256 txid);
-    /** Returns the number of sub records. */
-    int getNumberOfMetaDExCancels(const uint256 txid);
-
-    //////////////////////////////////////
-    /** New things for Contracts */
-    int getNumberOfContractDexCancels(const uint256 txid);
-    //////////////////////////////////////
-
 };
-/** LevelDB based storage for the trade history. Trades are listed with key "txid1+txid2".
- */
-class CMPTradeList : public CDBBase
-{
-public:
-    CMPTradeList(const boost::filesystem::path& path, bool fWipe)
-    {
-        leveldb::Status status = Open(path, fWipe);
-        PrintToConsole("Loading trades database: %s\n", status.ToString());
-    }
-
-    virtual ~CMPTradeList()
-    {
-        if (msc_debug_persistence) PrintToLog("CMPTradeList closed\n");
-    }
-
-    void recordMatchedTrade(const uint256 txid1, const uint256 txid2, string address1, string address2, unsigned int prop1, unsigned int prop2, uint64_t amount1, uint64_t amount2, int blockNum, int64_t fee);
-
-    /////////////////////////////////
-    /** New things for Contract */
-    /** New things for Contract */
-    void recordMatchedTrade(const uint256 txid1, const uint256 txid2, string address1, string address2, int64_t nCouldbuy, int64_t amountForsale, int64_t amountStillForsale, int blockNum1, int blockNum2, string s_status1, string s_status2, int64_t lives_maker, int64_t lives_taker, uint32_t property_traded, string tradeStatus, int64_t pricepold, int64_t pricepnew, uint8_t pnewAction, unsigned int idx);
-    void recordForUPNL(const uint256 txid, string address, uint32_t property_traded, int64_t effectivePrice);
-    // void recordMatchedTrade(const uint256 txid1, const uint256 txid2, string address1, string address2, unsigned int prop1, unsigned int prop2, uint64_t amount1, uint64_t amount2, int blockNum, int64_t fee, string t_status, std::vector<uint256> &vecTxid);
-    /////////////////////////////////
-
-    void recordNewTrade(const uint256& txid, const std::string& address, uint32_t propertyIdForSale, uint32_t propertyIdDesired, int blockNum, int blockIndex);
-    void recordNewTrade(const uint256& txid, const std::string& address, uint32_t propertyIdForSale, uint32_t propertyIdDesired, int blockNum, int blockIndex, int64_t reserva);
-    int deleteAboveBlock(int blockNum);
-    bool exists(const uint256 &txid);
-    void printStats();
-    void printAll();
-    bool getMatchingTrades(const uint256& txid, uint32_t propertyId, UniValue& tradeArray, int64_t& totalSold, int64_t& totalBought);
-
-    ///////////////////////////////////////
-    /** New things for Contract */
-    bool getMatchingTrades(uint32_t propertyId, UniValue& tradeArray);
-    double getPNL(string address, int64_t contractsClosed, int64_t price, uint32_t property, uint32_t marginRequirementContract, uint32_t notionalSize, std::string Status);
-    void marginLogic(uint32_t property);
-    double getUPNL(string address, uint32_t contractId);
-    int64_t getTradeAllsByTxId(uint256& txid);
-    //////////////////////////////////////
-
-    bool getMatchingTrades(const uint256& txid);
-    void getTradesForAddress(std::string address, std::vector<uint256>& vecTransactions, uint32_t propertyIdFilter = 0);
-    void getTradesForPair(uint32_t propertyIdSideA, uint32_t propertyIdSideB, UniValue& response, uint64_t count);
-    int getMPTradeCountTotal();
-};
-
 
 //! Available balances of wallet properties
 extern std::map<uint32_t, int64_t> global_balance_money;
@@ -347,12 +222,8 @@ int mastercore_save_state( CBlockIndex const *pBlockIndex );
 namespace mastercore
 {
 extern std::unordered_map<std::string, CMPTally> mp_tally_map;
-/*New things for contracts*///////////////////////////////////
-// extern std::unordered_map<std::string, CDexTally> cd_tally_map;
-//////////////////////////////////////////////////////////////
 extern CMPTxList *p_txlistdb;
 extern COmniTransactionDB *p_OmniTXDB;
-extern CMPTradeList *t_tradelistdb;
 
 // TODO: move, rename
 extern CCoinsView viewDummy;
@@ -361,10 +232,6 @@ extern CCoinsViewCache view;
 extern CCriticalSection cs_tx_cache;
 
 std::string strMPProperty(uint32_t propertyId);
-
-/* New things for contracts *///////////////////////////////////////////////////
-double notionalChange(uint32_t contractId, uint64_t marketPrice);
-////////////////////////////////////////////////////////////////////////////////
 
 bool isMPinBlockRange(int starting_block, int ending_block, bool bDeleteFound);
 

@@ -4,10 +4,7 @@
 class CMPMetaDEx;
 class CMPOffer;
 class CTransaction;
-////////////////////////////
-/** New things for Contracts */
-class CMPContractDex;
-////////////////////////////
+
 #include "omnicore/omnicore.h"
 
 #include "uint256.h"
@@ -29,9 +26,6 @@ class CMPTransaction
 {
     friend class CMPMetaDEx;
     friend class CMPOffer;
-    ////////////////////////////
-    /** New things for Contracts */
-    friend class CMPContractDex;
 
 private:
     uint256 txid;
@@ -62,50 +56,18 @@ private:
 
     // CreatePropertyFixed, CreatePropertyVariable, CreatePropertyMananged, MetaDEx, SendAll
     unsigned char ecosystem;
-    unsigned int distribution_property;
 
     // CreatePropertyFixed, CreatePropertyVariable, CreatePropertyMananged
     unsigned short prop_type;
     unsigned int prev_prop_id;
     char category[SP_STRING_FIELD_LEN];
     char subcategory[SP_STRING_FIELD_LEN];
-    /* New things for contracts */
-    char stxid[SP_STRING_FIELD_LEN];
-    //////////////////////////////////
     char name[SP_STRING_FIELD_LEN];
     char url[SP_STRING_FIELD_LEN];
     char data[SP_STRING_FIELD_LEN];
     uint64_t deadline;
     unsigned char early_bird;
     unsigned char percentage;
-
-    // MetaDEx
-    unsigned int desired_property;
-    uint64_t desired_value;
-    int64_t amount_forsale;
-    unsigned char action; // depreciated
-
-    // DEX 1
-    uint64_t amountDesired;
-    uint8_t timeLimit;
-    uint64_t minFee;
-    uint8_t subAction;
-    ////////////////////////////////////
-    /** New things Contract */
-    uint64_t effective_price;
-    uint8_t trading_action;
-    uint32_t propertyId;
-    uint32_t contractId;
-    uint64_t amount;
-    ////////////////////////////////////
-
-    /** New things for Contracts */
-    uint32_t blocks_until_expiration;
-    uint32_t notional_size;
-    uint32_t collateral_currency;
-    uint32_t margin_requirement;
-    // int block;
-    ////////////////////////////
 
     // Alert
     uint16_t alert_type;
@@ -116,12 +78,6 @@ private:
     uint16_t feature_id;
     uint32_t activation_block;
     uint32_t min_client_version;
-
-    // TradeOffer
-    uint64_t amount_desired;
-    unsigned char blocktimelimit;
-    uint64_t min_fee;
-    unsigned char subaction;
 
     // Indicates whether the transaction can be used to execute logic
     bool rpcOnly;
@@ -150,21 +106,6 @@ private:
     bool interpret_Activation();
     bool interpret_Deactivation();
     bool interpret_Alert();
-    bool interpret_AcceptOfferBTC();
-    ///////////////////////////////////////////////
-    /** New things for Contract */
-    bool interpret_ContractDexTrade();
-    bool interpret_CreateContractDex();
-    bool interpret_ContractDexCancelPrice();
-    bool interpret_ContractDexCancelEcosystem();
-    bool interpret_CreatePeggedCurrency();
-    bool interpret_RedemptionPegged();
-    bool interpret_SendPeggedCurrency();
-    bool interpret_ContractDexClosePosition();
-    bool interpret_ContractDex_Cancel_Orders_By_Block();
-    bool interpret_MetaDExTrade();
-    bool interpret_TradeOffer();
-    ///////////////////////////////////////////////
 
     /**
      * Logic and "effects"
@@ -181,21 +122,6 @@ private:
     int logicMath_Activation();
     int logicMath_Deactivation();
     int logicMath_Alert();
-    ///////////////////////////////////////////////
-    /** New things for Contract */
-    int logicMath_ContractDexTrade();
-    int logicMath_CreateContractDex();
-    int logicMath_ContractDexCancelPrice();
-    int logicMath_ContractDexCancelEcosystem();
-    int logicMath_CreatePeggedCurrency();
-    int logicMath_RedemptionPegged();
-    int logicMath_SendPeggedCurrency();
-    int logicMath_ContractDexClosePosition();
-    int logicMath_ContractDex_Cancel_Orders_By_Block();
-    int logicMath_MetaDExTrade();
-    int logicMath_TradeOffer();
-    int logicMath_AcceptOffer_BTC();
-    ///////////////////////////////////////////////
 
     /**
      * Logic helpers
@@ -203,22 +129,6 @@ private:
     int logicHelper_CrowdsaleParticipation();
 
 public:
-  //! DEx and MetaDEx action values
-  enum ActionTypes
-  {
-      INVALID = 0,
-
-      // DEx
-      NEW = 1,
-      UPDATE = 2,
-      CANCEL = 3,
-
-      // MetaDEx
-      ADD                 = 1,
-      CANCEL_AT_PRICE     = 2,
-      CANCEL_ALL_FOR_PAIR = 3,
-      CANCEL_EVERYTHING   = 4,
-  };
     uint256 getHash() const { return txid; }
     unsigned int getType() const { return type; }
     std::string getTypeString() const { return strTransactionType(getType()); }
@@ -235,7 +145,6 @@ public:
     uint32_t getPreviousId() const { return prev_prop_id; }
     std::string getSPCategory() const { return category; }
     std::string getSPSubCategory() const { return subcategory; }
-    std::string getSPTxId() const { return stxid; }
     std::string getSPName() const { return name; }
     std::string getSPUrl() const { return url; }
     std::string getSPData() const { return data; }
@@ -252,19 +161,6 @@ public:
     uint32_t getActivationBlock() const { return activation_block; }
     uint32_t getMinClientVersion() const { return min_client_version; }
     unsigned int getIndexInBlock() const { return tx_idx; }
-    ////////////////////////////////
-    /** New things for Contracts */
-    uint32_t getMarginRequirement() const { return margin_requirement; }
-    uint32_t getNotionalSize() const { return notional_size; }
-    uint32_t getContractId() const { return contractId; }
-    uint64_t getContractAmount() const { return amount; }
-    ////////////////////////////////
-
-    ///////////////////////////////////////////////
-    /** New things for Contract */
-    int getLogicMath_ContractDexTrade() { return logicMath_ContractDexTrade(); }
-    int getLogicMath_CreateContractDex() { return logicMath_CreateContractDex(); }
-    ///////////////////////////////////////////////
 
     /** Creates a new CMPTransaction object. */
     CMPTransaction()
@@ -298,7 +194,6 @@ public:
         memset(&name, 0, sizeof(name));
         memset(&url, 0, sizeof(url));
         memset(&data, 0, sizeof(data));
-        memset(&stxid, 0, sizeof(stxid));
         deadline = 0;
         early_bird = 0;
         percentage = 0;
@@ -309,26 +204,6 @@ public:
         feature_id = 0;
         activation_block = 0;
         min_client_version = 0;
-        desired_property = 0;
-        desired_value = 0;
-        action = 0;
-        amount_desired = 0;
-        blocktimelimit = 0;
-        min_fee = 0;
-        subaction = 0;
-        alert_type = 0;
-        alert_expiry = 0;
-        distribution_property = 0;
-        ////////////////////////////////////
-        /** New things for Contracts */
-        effective_price = 0;
-        trading_action = 0;
-        propertyId = 0;
-        contractId = 0;
-        amount = 0;
-        amountDesired = 0;
-        timeLimit = 0;
-        ////////////////////////////////////
     }
 
     /** Sets the given values. */

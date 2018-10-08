@@ -1,5 +1,5 @@
-Litecoin Core 0.13.2
-=====================
+Litecoin Core
+=============
 
 Intro
 -----

@@ -1,6 +1,5 @@
 #include "omnicore/rpcrequirements.h"
 
-#include "omnicore/dex.h"
 #include "omnicore/omnicore.h"
 #include "omnicore/sp.h"
 #include "omnicore/utilsbitcoin.h"
@@ -94,7 +93,6 @@ void RequireManagedProperty(uint32_t propertyId)
     }
 }
 
-
 void RequireTokenIssuer(const std::string& address, uint32_t propertyId)
 {
     LOCK(cs_tally);
@@ -120,103 +118,3 @@ void RequireHeightInChain(int blockHeight)
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Block height is out of range");
     }
 }
-
-
-void RequireNotContract(uint32_t propertyId)
-{
-    LOCK(cs_tally);
-    CMPSPInfo::Entry sp;
-    if (!mastercore::_my_sps->getSP(propertyId, sp)) {
-        throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
-    }
-    if (sp.subcategory == "Futures Contracts") {
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "Property must not be future contract\n");
-    }
-}
-
-void RequireContract(uint32_t propertyId)
-{
-    LOCK(cs_tally);
-    CMPSPInfo::Entry sp;
-    if (!mastercore::_my_sps->getSP(propertyId, sp)) {
-        throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
-    }
-    if (sp.subcategory != "Futures Contracts") {
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "contractId must be future contract\n");
-    }
-}
-
-void RequirePeggedCurrency(uint32_t propertyId)
-{
-    LOCK(cs_tally);
-    CMPSPInfo::Entry sp;
-    if (!mastercore::_my_sps->getSP(propertyId, sp)) {
-        throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
-    }
-    if (sp.subcategory != "Pegged Currency") {
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "propertyId must be a pegged currency\n");
-    }
-}
-
-void RequireForPegged(const std::string& address, uint32_t propertyId, uint32_t contractId, uint64_t amount)
-{
-    uint64_t balance = static_cast<uint64_t>(getMPbalance(address, propertyId, BALANCE));
-    PrintToConsole("PropertyId : %d\n",propertyId);
-    PrintToConsole("Balance : %d\n",balance);
-    int64_t position = getMPbalance(address, contractId, NEGATIVE_BALANCE);
-    PrintToConsole("Position : %d\n",position);
-    PrintToConsole("Amount : %d\n",amount);
-    if (balance < amount) {
-        throw JSONRPCError(RPC_TYPE_ERROR, "Sender has not enough amount of collateral currency");
-    }
-    if (position == 0) {
-        throw JSONRPCError(RPC_TYPE_ERROR, "Sender has not the short position required on this contract");
-    }
-    // int64_t balanceUnconfirmed = getUserAvailableMPbalance(address, propertyId); // check the pending amounts
-    // if (balanceUnconfirmed > 0) {
-    //     throw JSONRPCError(RPC_TYPE_ERROR, "Sender has insufficient balance (due to pending transactions)");
-    // }
-
-
-}
-
-void RequireMatchingDExOffer(const std::string& address, uint32_t propertyId)
-{
-    LOCK(cs_tally);
-    if (!mastercore::DEx_offerExists(address, propertyId)) {
-        throw JSONRPCError(RPC_TYPE_ERROR, "No matching sell offer on the distributed exchange");
-    }
-}
-
-void RequireNoOtherDExOffer(const std::string& address, uint32_t propertyId)
-{
-    LOCK(cs_tally);
-    if (mastercore::DEx_offerExists(address, propertyId)) {
-        throw JSONRPCError(RPC_TYPE_ERROR, "Another active sell offer from the given address already exists on the distributed exchange");
-    }
-}
-
-void RequireSaneDExFee(const std::string& address, uint32_t propertyId)
-{
-    LOCK(cs_tally);
-    const CMPOffer* poffer = mastercore::DEx_getOffer(address, propertyId);
-    if (poffer == NULL) {
-        throw JSONRPCError(RPC_DATABASE_ERROR, "Unable to load sell offer from the distributed exchange");
-    }
-    if (poffer->getMinFee() > 1000000) {
-        throw JSONRPCError(RPC_TYPE_ERROR, "Minimum accept fee is higher than 0.01 BTC (use override = true to continue)");
-    }
-}
-
-void RequireSaneDExPaymentWindow(const std::string& address, uint32_t propertyId)
-{
-    LOCK(cs_tally);
-    const CMPOffer* poffer = mastercore::DEx_getOffer(address, propertyId);
-    if (poffer == NULL) {
-        throw JSONRPCError(RPC_DATABASE_ERROR, "Unable to load sell offer from the distributed exchange");
-    }
-    if (poffer->getBlockTimeLimit() < 10) {
-        throw JSONRPCError(RPC_TYPE_ERROR, "Payment window is less than 10 blocks (use override = true to continue)");
-    }
-}
-////////////////////////////////////////////////////////////////////////////////

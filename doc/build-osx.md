@@ -11,15 +11,38 @@ Install the OS X command line tools:
 
 When the popup appears, click `Install`.
 
-Then install [Homebrew](http://brew.sh).
+Then install [Homebrew](https://brew.sh).
 
 Dependencies
 ----------------------
 
-    brew install automake berkeley-db4 libtool boost  miniupnpc openssl pkg-config homebrew/versions/protobuf260 --c++11 qt5 libevent
+    brew install automake berkeley-db4 libtool boost miniupnpc openssl pkg-config protobuf python3 qt libevent
+
+See [dependencies.md](dependencies.md) for a complete overview.
+
+If you want to build the disk image with `make deploy` (.dmg / optional), you need RSVG
+
+    brew install librsvg
+
+If you want to build with ZeroMQ support
+    
+    brew install zeromq
 
 NOTE: Building with Qt4 is still supported, however, could result in a broken UI. Building with Qt5 is recommended.
-Note: removed --c++11 because brew doesn't have that flag anymore
+
+Berkeley DB
+-----------
+It is recommended to use Berkeley DB 4.8. If you have to build it yourself,
+you can use [the installation script included in contrib/](/contrib/install_db4.sh)
+like so
+
+```shell
+./contrib/install_db4.sh .
+```
+
+from the root of the repository.
+
+**Note**: You only need Berkeley DB if the wallet is enabled (see the section *Disable-Wallet mode* below).
 
 Build Litecoin Core
 ------------------------
@@ -28,9 +51,6 @@ Build Litecoin Core
 
         git clone https://github.com/litecoin-project/litecoin
         cd litecoin
-
-1.1 Ensure this merge/code updates are done on ./src/txmempool.h ./src/miner.h
-https://github.com/bitcoin/bitcoin/commit/cb7ef312ff34db20db4234ed5ea68378cf2e9559
 
 2.  Build litecoin-core:
 
@@ -49,6 +69,16 @@ https://github.com/bitcoin/bitcoin/commit/cb7ef312ff34db20db4234ed5ea68378cf2e95
 4.  You can also create a .dmg that contains the .app bundle (optional):
 
         make deploy
+
+5.  Installation into user directories (optional):
+
+        make install
+
+    or
+
+        cd ~/litecoin/src
+        cp litecoind /usr/local/bin/
+        cp litecoin-cli /usr/local/bin/
 
 Running
 -------
@@ -94,6 +124,6 @@ Uncheck everything except Qt Creator during the installation process.
 Notes
 -----
 
-* Tested on OS X 10.8 through 10.12 on 64-bit Intel processors only.
+* Tested on OS X 10.8 through 10.13 on 64-bit Intel processors only.
 
 * Building with downloaded Qt binaries is not officially supported. See the notes in [#7714](https://github.com/bitcoin/bitcoin/issues/7714)

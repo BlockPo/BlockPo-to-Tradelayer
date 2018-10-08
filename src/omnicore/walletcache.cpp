@@ -56,6 +56,11 @@ void WalletTXIDCacheInit()
 {
     if (msc_debug_walletcache) PrintToLog("WALLETTXIDCACHE: WalletTXIDCacheInit requested\n");
 #ifdef ENABLE_WALLET
+    CWalletRef pwalletMain = NULL;
+    if (vpwallets.size() > 0){
+        pwalletMain = vpwallets[0];
+    }
+    
     LOCK2(cs_tally, pwalletMain->cs_wallet);
 
     std::list<CAccountingEntry> acentries;

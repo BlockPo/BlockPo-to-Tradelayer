@@ -15,7 +15,6 @@
 #include "omnicore/version.h"
 
 #include "chainparams.h"
-#include "main.h"
 #include "script/standard.h"
 #include "uint256.h"
 #include "ui_interface.h"
@@ -37,33 +36,23 @@ std::vector<TransactionRestriction> CConsensusParams::GetRestrictions() const
     const TransactionRestriction vTxRestrictions[] =
     { //  transaction type                    version        allow 0  activation block
       //  ----------------------------------  -------------  -------  ------------------
-        { OMNICORE_MESSAGE_TYPE_ALERT,        0xFFFF,        true,             MSC_ALERT_BLOCK    },
-        { OMNICORE_MESSAGE_TYPE_ACTIVATION,   0xFFFF,        true,             MSC_ALERT_BLOCK    },
-        { OMNICORE_MESSAGE_TYPE_DEACTIVATION, 0xFFFF,        true,             MSC_ALERT_BLOCK    },
+        { OMNICORE_MESSAGE_TYPE_ALERT,        0xFFFF,        true,    MSC_ALERT_BLOCK    },
+        { OMNICORE_MESSAGE_TYPE_ACTIVATION,   0xFFFF,        true,    MSC_ALERT_BLOCK    },
+        { OMNICORE_MESSAGE_TYPE_DEACTIVATION, 0xFFFF,        true,    MSC_ALERT_BLOCK    },
 
-        { MSC_TYPE_SIMPLE_SEND,               MP_TX_PKT_V0,  false,            MSC_SEND_BLOCK     },
+        { MSC_TYPE_SIMPLE_SEND,               MP_TX_PKT_V0,  false,   MSC_SEND_BLOCK     },
 
-        { MSC_TYPE_CREATE_PROPERTY_FIXED,     MP_TX_PKT_V0,  false,            MSC_SP_BLOCK       },
-        { MSC_TYPE_CREATE_PROPERTY_VARIABLE,  MP_TX_PKT_V0,  false,            MSC_SP_BLOCK       },
-        { MSC_TYPE_CREATE_PROPERTY_VARIABLE,  MP_TX_PKT_V1,  false,            MSC_SP_BLOCK       },
-        { MSC_TYPE_CLOSE_CROWDSALE,           MP_TX_PKT_V0,  false,            MSC_SP_BLOCK       },
+        { MSC_TYPE_CREATE_PROPERTY_FIXED,     MP_TX_PKT_V0,  false,   MSC_SP_BLOCK       },
+        { MSC_TYPE_CREATE_PROPERTY_VARIABLE,  MP_TX_PKT_V0,  false,   MSC_SP_BLOCK       },
+        { MSC_TYPE_CREATE_PROPERTY_VARIABLE,  MP_TX_PKT_V1,  false,   MSC_SP_BLOCK       },
+        { MSC_TYPE_CLOSE_CROWDSALE,           MP_TX_PKT_V0,  false,   MSC_SP_BLOCK       },
 
-        { MSC_TYPE_CREATE_PROPERTY_MANUAL,    MP_TX_PKT_V0,  false,            MSC_MANUALSP_BLOCK },
-        { MSC_TYPE_GRANT_PROPERTY_TOKENS,     MP_TX_PKT_V0,  false,            MSC_MANUALSP_BLOCK },
-        { MSC_TYPE_REVOKE_PROPERTY_TOKENS,    MP_TX_PKT_V0,  false,            MSC_MANUALSP_BLOCK },
-        { MSC_TYPE_CHANGE_ISSUER_ADDRESS,     MP_TX_PKT_V0,  false,            MSC_MANUALSP_BLOCK },
-        { MSC_TYPE_CREATE_CONTRACT,           MP_TX_PKT_V0,  false,         MSC_CONTRACTDEX_BLOCK },
-        { MSC_TYPE_CONTRACTDEX_TRADE,         MP_TX_PKT_V0,  false,         MSC_CONTRACTDEX_BLOCK },
-        { MSC_TYPE_CONTRACTDEX_CANCEL_ECOSYSTEM, MP_TX_PKT_V0,  false,      MSC_CONTRACTDEX_BLOCK },
-        { MSC_TYPE_PEGGED_CURRENCY,           MP_TX_PKT_V0,  false,         MSC_CONTRACTDEX_BLOCK },
-        { MSC_TYPE_SEND_PEGGED_CURRENCY,           MP_TX_PKT_V0,  false,    MSC_CONTRACTDEX_BLOCK },
-        { MSC_TYPE_SEND_ALL,                  MP_TX_PKT_V0,  false,            MSC_SEND_ALL_BLOCK },
-        { MSC_TYPE_CONTRACTDEX_CLOSE_POSITION,MP_TX_PKT_V0,  false,         MSC_CONTRACTDEX_BLOCK },
-        {MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK,MP_TX_PKT_V0,  false,   MSC_CONTRACTDEX_BLOCK},
-        {MSC_TYPE_METADEX_TRADE,              MP_TX_PKT_V0,  false,          MSC_CONTRACTDEX_BLOCK},
-        {MSC_TYPE_TRADE_OFFER,                MP_TX_PKT_V1,  false,          MSC_CONTRACTDEX_BLOCK},
-        {MSC_TYPE_ACCEPT_OFFER_BTC,           MP_TX_PKT_V1,  false,          MSC_CONTRACTDEX_BLOCK}          
+        { MSC_TYPE_CREATE_PROPERTY_MANUAL,    MP_TX_PKT_V0,  false,   MSC_MANUALSP_BLOCK },
+        { MSC_TYPE_GRANT_PROPERTY_TOKENS,     MP_TX_PKT_V0,  false,   MSC_MANUALSP_BLOCK },
+        { MSC_TYPE_REVOKE_PROPERTY_TOKENS,    MP_TX_PKT_V0,  false,   MSC_MANUALSP_BLOCK },
+        { MSC_TYPE_CHANGE_ISSUER_ADDRESS,     MP_TX_PKT_V0,  false,   MSC_MANUALSP_BLOCK },
 
+        { MSC_TYPE_SEND_ALL,                  MP_TX_PKT_V0,  false,   MSC_SEND_ALL_BLOCK },
     };
 
     const size_t nSize = sizeof(vTxRestrictions) / sizeof(vTxRestrictions[0]);
@@ -121,10 +110,6 @@ CMainConsensusParams::CMainConsensusParams()
     MSC_SP_BLOCK = 9999999;
     MSC_MANUALSP_BLOCK = 9999999;
     MSC_SEND_ALL_BLOCK = 9999999;
-    ///////////////////////////////
-    /** New things for Contract */
-    MSC_CONTRACTDEX_BLOCK = 999999;
-    ///////////////////////////////
 }
 
 /**
@@ -132,7 +117,7 @@ CMainConsensusParams::CMainConsensusParams()
  */
 CTestNetConsensusParams::CTestNetConsensusParams()
 {
-    GENESIS_BLOCK = 620000;
+    GENESIS_BLOCK = 9999999;
     // Notice range for feature activations:
     MIN_ACTIVATION_BLOCKS = 0;
     MAX_ACTIVATION_BLOCKS = 999999;
@@ -146,10 +131,6 @@ CTestNetConsensusParams::CTestNetConsensusParams()
     MSC_SP_BLOCK = 0;
     MSC_MANUALSP_BLOCK = 0;
     MSC_SEND_ALL_BLOCK = 0;
-    ///////////////////////////////
-    /** New things for Contract */
-    MSC_CONTRACTDEX_BLOCK = 0;
-    ///////////////////////////////
 }
 
 /**
@@ -171,10 +152,6 @@ CRegTestConsensusParams::CRegTestConsensusParams()
     MSC_SP_BLOCK = 0;
     MSC_MANUALSP_BLOCK = 0;
     MSC_SEND_ALL_BLOCK = 0;
-    ///////////////////////////////
-    /** New things for Contract */
-    MSC_CONTRACTDEX_BLOCK = 0;
-    ///////////////////////////////
 }
 
 //! Consensus parameters for mainnet
@@ -308,13 +285,13 @@ bool ActivateFeature(uint16_t featureId, int activationBlock, uint32_t minClient
     }
 
     PrintToLog("Feature activation of ID %d processed. %s will be enabled at block %d.\n", featureId, featureName, activationBlock);
-    AddPendingActivation(featureId, activationBlock, minClientVersion, featureName);
+    // AddPendingActivation(featureId, activationBlock, minClientVersion, featureName);
 
     if (!supported) {
         PrintToLog("WARNING!!! AS OF BLOCK %d THIS CLIENT WILL BE OUT OF CONSENSUS AND WILL AUTOMATICALLY SHUTDOWN.\n", activationBlock);
         std::string alertText = strprintf("Your client must be updated and will shutdown at block %d (unsupported feature %d ('%s') activated)\n",
                                           activationBlock, featureId, featureName);
-        AddAlert("omnicore", ALERT_BLOCK_EXPIRY, activationBlock, alertText);
+        // AddAlert("omnicore", ALERT_BLOCK_EXPIRY, activationBlock, alertText);
         //TODO AlertNotify(alertText);
     }
 

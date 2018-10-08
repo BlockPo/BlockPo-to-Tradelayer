@@ -1,12 +1,11 @@
-// Copyright (c) 2011-2015 The Bitcoin Core developers
+// Copyright (c) 2011-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef BITCOIN_QT_OVERVIEWPAGE_H
 #define BITCOIN_QT_OVERVIEWPAGE_H
 
-#include "amount.h"
-#include "uint256.h"
+#include <amount.h>
 
 #include <QWidget>
 #include <memory>
@@ -37,17 +36,14 @@ public:
     void setClientModel(ClientModel *clientModel);
     void setWalletModel(WalletModel *walletModel);
     void showOutOfSyncWarning(bool fShow);
-    void UpdatePropertyBalance(unsigned int propertyId, uint64_t available, uint64_t pending = 0);
 
 public Q_SLOTS:
     void setBalance(const CAmount& balance, const CAmount& unconfirmedBalance, const CAmount& immatureBalance,
                     const CAmount& watchOnlyBalance, const CAmount& watchUnconfBalance, const CAmount& watchImmatureBalance);
-    void updateOmni();
-    void reinitOmni();
 
 Q_SIGNALS:
     void transactionClicked(const QModelIndex &index);
-    void omniTransactionClicked(const uint256& txid);
+    void outOfSyncWarningClicked();
 
 private:
     Ui::OverviewPage *ui;
@@ -68,6 +64,7 @@ private Q_SLOTS:
     void handleTransactionClicked(const QModelIndex &index);
     void updateAlerts(const QString &warnings);
     void updateWatchOnlyLabels(bool showWatchOnly);
+    void handleOutOfSyncWarningClicks();
 };
 
 #endif // BITCOIN_QT_OVERVIEWPAGE_H

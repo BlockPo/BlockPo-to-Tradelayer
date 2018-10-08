@@ -15,13 +15,5 @@ UniValue omni_sendclosecrowdsale(const UniValue& params, bool fHelp);
 UniValue omni_sendchangeissuer(const UniValue& params, bool fHelp);
 UniValue omni_sendactivation(const UniValue& params, bool fHelp);
 UniValue omni_sendalert(const UniValue& params, bool fHelp);
-/** New things for Contract */
-UniValue omni_tradecontract(const UniValue& params, bool fHelp);
-UniValue omni_createcontract(const UniValue& params, bool fHelp);
-UniValue omni_sendissuance_pegged(const UniValue& params, bool fHelp);
-UniValue omni_redemption_pegged(const UniValue& params, bool fHelp);
-UniValue omni_send_pegged(const UniValue& params, bool fHelp);
-UniValue omni_senddexsell(const UniValue& params, bool fHelp);
-/////////////////////////////////////////
 
 #endif // OMNICORE_RPCTX

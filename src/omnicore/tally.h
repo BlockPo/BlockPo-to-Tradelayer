@@ -6,26 +6,9 @@
 
 //! Balance record types
 enum TallyType {
-        BALANCE = 0,
-        SELLOFFER_RESERVE = 1,
-        ACCEPT_RESERVE = 2,
-        PENDING = 3,
-        METADEX_RESERVE = 4,
-
-        //////////////////////////////////////
-        /** New things for Contracts */
-        CONTRACTDEX_RESERVE = 5,
-        POSSITIVE_BALANCE = 6,
-        NEGATIVE_BALANCE = 7,
-        REALIZED_PROFIT = 8,
-        REALIZED_LOSSES = 9,
-        COUNT = 10,
-        REMAINING = 11,
-        LIQUIDATION_PRICE = 12,
-        UPNL = 13,
-        //////////////////////////////////////
-
-        TALLY_TYPE_COUNT
+    BALANCE = 0,
+    PENDING = 1,
+    TALLY_TYPE_COUNT
 };
 
 /** Balance records of a single entity.

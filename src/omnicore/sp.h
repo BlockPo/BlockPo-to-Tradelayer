@@ -86,17 +86,6 @@ public:
         bool fixed;
         bool manual;
 
-        ////////////////////////////
-        /** New things for Contracts */
-        uint32_t blocks_until_expiration;
-        uint32_t notional_size;
-        uint32_t collateral_currency;
-        uint32_t margin_requirement;
-        int64_t contracts_needed;
-        int init_block;
-        uint32_t contract_associated; // for pegged currency
-        ////////////////////////////
-
         // For crowdsale properties:
         //   txid -> amount invested, crowdsale deadline, user issued tokens, issuer issued tokens
         // For managed properties:
@@ -108,7 +97,7 @@ public:
         ADD_SERIALIZE_METHODS;
 
         template <typename Stream, typename Operation>
-        inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
+        inline void SerializationOp(Stream& s, Operation ser_action) {
             READWRITE(issuer);
             READWRITE(prop_type);
             READWRITE(prev_prop_id);
@@ -133,20 +122,10 @@ public:
             READWRITE(fixed);
             READWRITE(manual);
             READWRITE(historicalData);
-            ////////////////////////////
-            /** New things for Contracts */
-            READWRITE(blocks_until_expiration);
-            READWRITE(notional_size);
-            READWRITE(collateral_currency);
-            READWRITE(margin_requirement);
-            READWRITE(init_block);
-            READWRITE(contract_associated);
-            ////////////////////////////
         }
 
         bool isDivisible() const;
         void print() const;
-	bool isContract() const;
     };
 
 private:
@@ -179,8 +158,6 @@ public:
     bool getWatermark(uint256& watermark) const;
 
     void printAll() const;
-
-    int rollingContractsBlock(const CBlockIndex* pBlockIndex);
 };
 
 /** A live crowdsale.
@@ -237,12 +214,7 @@ extern CrowdMap my_crowds;
 
 std::string strPropertyType(uint16_t propertyType);
 std::string strEcosystem(uint8_t ecosystem);
-//////////////////////////////////////
-/** New things for Contracts */
-bool isPropertyContract(uint32_t propertyId);
-int addInterestPegged(int nBlockPrev, const CBlockIndex* pBlockIndex);
-uint64_t edgeOrderbook(uint32_t contractId, uint8_t tradingAction);
-//////////////////////////////////////
+
 std::string getPropertyName(uint32_t propertyId);
 bool isPropertyDivisible(uint32_t propertyId);
 bool IsPropertyIdValid(uint32_t propertyId);
@@ -263,7 +235,6 @@ void calculateFundraiser(bool inflateAmount, int64_t amtTransfer, uint8_t bonusP
 void eraseMaxedCrowdsale(const std::string& address, int64_t blockTime, int block);
 
 unsigned int eraseExpiredCrowdsale(const CBlockIndex* pBlockIndex);
-bool isPropertyContract(uint32_t propertyId);
 }
 
 

@@ -1,16 +1,13 @@
-// Copyright (c) 2011-2015 The Bitcoin Core developers
+// Copyright (c) 2011-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef BITCOIN_QT_WALLETVIEW_H
 #define BITCOIN_QT_WALLETVIEW_H
 
-#include "amount.h"
+#include <amount.h>
 
 #include <QStackedWidget>
-
-class BalancesDialog;
-class SendMPDialog;
 
 class BitcoinGUI;
 class ClientModel;
@@ -22,12 +19,10 @@ class SendCoinsRecipient;
 class TransactionView;
 class WalletModel;
 class AddressBookPage;
-class TXHistoryDialog;
 
 QT_BEGIN_NAMESPACE
 class QModelIndex;
 class QProgressDialog;
-class QTabWidget;
 QT_END_NAMESPACE
 
 /*
@@ -64,39 +59,22 @@ private:
     WalletModel *walletModel;
 
     OverviewPage *overviewPage;
-    BalancesDialog *balancesPage;
     QWidget *transactionsPage;
     ReceiveCoinsDialog *receiveCoinsPage;
-
-    QWidget *sendCoinsPage;
-    SendCoinsDialog *sendCoinsTab;
-    SendMPDialog *sendMPTab;
-
+    SendCoinsDialog *sendCoinsPage;
     AddressBookPage *usedSendingAddressesPage;
     AddressBookPage *usedReceivingAddressesPage;
 
     TransactionView *transactionView;
 
-    TXHistoryDialog *mpTXTab;
-    QWidget *litecoinTXTab;
-
     QProgressDialog *progressDialog;
     const PlatformStyle *platformStyle;
-
-    QTabWidget *txTabHolder;
-    QTabWidget *sendTabHolder;
 
 public Q_SLOTS:
     /** Switch to overview (home) page */
     void gotoOverviewPage();
-    /** Switch to balances page */
-    void gotoBalancesPage();
     /** Switch to history (transactions) page */
     void gotoHistoryPage();
-    /** Switch specifically to omni tx history tab */
-    void gotoOmniHistoryTab();
-    /** Switch specifically to litecoin tx history tab */
-    void gotoLitecoinHistoryTab();
     /** Switch to receive coins page */
     void gotoReceiveCoinsPage();
     /** Switch to send coins page */
@@ -132,6 +110,9 @@ public Q_SLOTS:
     /** Show progress dialog e.g. for rescan */
     void showProgress(const QString &title, int nProgress);
 
+    /** User has requested more information about the out of sync state */
+    void requestedSyncWarningInfo();
+
 Q_SIGNALS:
     /** Signal that we want to show the main window */
     void showNormalIfMinimized();
@@ -139,8 +120,12 @@ Q_SIGNALS:
     void message(const QString &title, const QString &message, unsigned int style);
     /** Encryption status of wallet changed */
     void encryptionStatusChanged(int status);
+    /** HD-Enabled status of wallet changed (only possible during startup) */
+    void hdEnabledStatusChanged(int hdEnabled);
     /** Notify that a new transaction appeared */
     void incomingTransaction(const QString& date, int unit, const CAmount& amount, const QString& type, const QString& address, const QString& label);
+    /** Notify that the out of sync warning icon has been pressed */
+    void outOfSyncWarningClicked();
 };
 
 #endif // BITCOIN_QT_WALLETVIEW_H

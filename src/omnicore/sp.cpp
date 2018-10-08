@@ -5,12 +5,11 @@
 #include "omnicore/log.h"
 #include "omnicore/omnicore.h"
 #include "omnicore/uint256_extensions.h"
-#include "omnicore/mdex.h"
 
 #include "arith_uint256.h"
 #include "base58.h"
 #include "clientversion.h"
-#include "main.h"
+#include "validation.h"
 #include "serialize.h"
 #include "streams.h"
 #include "tinyformat.h"
@@ -30,14 +29,8 @@
 #include <string>
 #include <vector>
 #include <utility>
-#include <math.h>
 
 using namespace mastercore;
-extern int64_t priceIndex;
-extern int64_t allPrice;
-extern volatile uint64_t marketPrice;
-extern uint64_t ask [10];
-extern uint64_t bid [10];
 
 CMPSPInfo::Entry::Entry()
   : prop_type(0), prev_prop_id(0), num_tokens(0), property_desired(0),
@@ -49,6 +42,7 @@ bool CMPSPInfo::Entry::isDivisible() const
 {
     switch (prop_type) {
         case MSC_PROPERTY_TYPE_DIVISIBLE:
+        case MSC_PROPERTY_TYPE_INDIVISIBLE:
             return true;
     }
     return false;
@@ -71,22 +65,21 @@ CMPSPInfo::CMPSPInfo(const boost::filesystem::path& path, bool fWipe)
     PrintToConsole("Loading smart property database: %s\n", status.ToString());
 
     // special cases for constant SPs OMNI and TOMNI
-    implied_omni.issuer = "NA";
+    // implied_omni.issuer = ExodusAddress().ToString();
     implied_omni.prop_type = MSC_PROPERTY_TYPE_DIVISIBLE;
-    implied_omni.num_tokens = 0;
+    implied_omni.num_tokens = 700000;
     implied_omni.category = "N/A";
     implied_omni.subcategory = "N/A";
-    implied_omni.name = "Reserved";
-    implied_omni.url = "N/A";
-    implied_omni.data = "This property ID is reserved.";
-    implied_tomni.issuer = "NA";
+    implied_omni.name = "ALL";
+    implied_omni.url = "";
+    implied_omni.data = "https://tradelayer.io";
     implied_tomni.prop_type = MSC_PROPERTY_TYPE_DIVISIBLE;
-    implied_tomni.num_tokens = 0;
+    implied_tomni.num_tokens = 700000;
     implied_tomni.category = "N/A";
     implied_tomni.subcategory = "N/A";
-    implied_tomni.name = "Reserved";
-    implied_tomni.url = "N/A";
-    implied_tomni.data = "This property ID is reserved.";
+    implied_tomni.name = "ALL";
+    implied_tomni.url = "";
+    implied_tomni.data = "";
 
     init();
 }
@@ -142,7 +135,7 @@ bool CMPSPInfo::updateSP(uint32_t propertyId, const Entry& info)
 
     // DB value for property entry
     CDataStream ssSpValue(SER_DISK, CLIENT_VERSION);
-    ssSpValue.reserve(ssSpValue.GetSerializeSize(info));
+    // ssSpValue.reserve(GetSerializeSize(info, ssSpValue.GetType(), ssSpValue.GetVersion()));
     ssSpValue << info;
     leveldb::Slice slSpValue(&ssSpValue[0], ssSpValue.size());
 
@@ -193,7 +186,7 @@ uint32_t CMPSPInfo::putSP(uint8_t ecosystem, const Entry& info)
 
     // DB value for property entry
     CDataStream ssSpValue(SER_DISK, CLIENT_VERSION);
-    ssSpValue.reserve(ssSpValue.GetSerializeSize(info));
+    ssSpValue.reserve(GetSerializeSize(info, ssSpValue.GetType(), ssSpValue.GetVersion()));
     ssSpValue << info;
     leveldb::Slice slSpValue(&ssSpValue[0], ssSpValue.size());
 
@@ -204,7 +197,7 @@ uint32_t CMPSPInfo::putSP(uint8_t ecosystem, const Entry& info)
 
     // DB value for identifier
     CDataStream ssTxValue(SER_DISK, CLIENT_VERSION);
-    ssTxValue.reserve(ssSpValue.GetSerializeSize(propertyId));
+    ssTxValue.reserve(GetSerializeSize(propertyId, ssSpValue.GetType(), ssSpValue.GetVersion()));
     ssTxValue << propertyId;
     leveldb::Slice slTxValue(&ssTxValue[0], ssTxValue.size());
 
@@ -286,6 +279,7 @@ bool CMPSPInfo::hasSP(uint32_t propertyId) const
     leveldb::Status status = pdb->Get(readoptions, slSpKey, &strSpValue);
 
     return status.ok();
+    return true;
 }
 
 uint32_t CMPSPInfo::findSPByTX(const uint256& txid) const
@@ -404,7 +398,7 @@ void CMPSPInfo::setWatermark(const uint256& watermark)
     leveldb::Slice slKey(&ssKey[0], ssKey.size());
 
     CDataStream ssValue(SER_DISK, CLIENT_VERSION);
-    ssValue.reserve(ssValue.GetSerializeSize(watermark));
+    ssValue.reserve(GetSerializeSize(watermark, ssValue.GetType(), ssValue.GetVersion()));
     ssValue << watermark;
     leveldb::Slice slValue(&ssValue[0], ssValue.size());
 
@@ -489,7 +483,7 @@ void CMPSPInfo::printAll() const
         info.print();
     }
 
-    // clean up the iterator
+    //clean up the iterator
     delete iter;
 }
 
@@ -590,9 +584,9 @@ bool mastercore::IsPropertyIdValid(uint32_t propertyId)
 bool mastercore::isPropertyDivisible(uint32_t propertyId)
 {
     // TODO: is a lock here needed
-    CMPSPInfo::Entry sp;
-
-    if (_my_sps->getSP(propertyId, sp)) return sp.isDivisible();
+    // CMPSPInfo::Entry sp;
+    //
+    // if (_my_sps->getSP(propertyId, sp)) return sp.isDivisible();
 
     return true;
 }
@@ -831,216 +825,7 @@ void mastercore::eraseMaxedCrowdsale(const std::string& address, int64_t blockTi
         my_crowds.erase(it);
     }
 }
-/* New things for contracts *///////////////////////////////////////////////////
-int mastercore::addInterestPegged(int nBlockPrev, const CBlockIndex* pBlockIndex)
-{
-    if (pBlockIndex == NULL) return 0;
-    uint32_t contractId = 2147483651;  //TODO: add data from Smart Properties saved in db
-    uint32_t peggedId = 2147483653;
-    const double factor = 100000000;
-    string sender = "";
-    // const int64_t blockTime = pBlockIndex->GetBlockTime();
-    // int blockHeight = pBlockIndex->nHeight;
-    CMPSPInfo::Entry sp;
-    if (!_my_sps->getSP(contractId, sp)) {
-            // PrintToLog(" %s() : Property identifier %d does not exist\n",
-            //    __func__,
-            //    sender,
-            //    contractId);
-             return 0;
-       }
-     if (sp.subcategory != "Futures Contracts") {
-          // PrintToLog(" %s() : property identifier %d does not a future contract\n",
-          //    __func__,
-          //    sender,
-          //    contractId);
-             return 0;
-       }
-       uint32_t expiration = sp.blocks_until_expiration;
-       int init_block = sp.init_block;
-       uint32_t collateral = sp.collateral_currency;
-       int deadline = static_cast<int>(expiration + init_block);
-       double nMarketPrice = static_cast<double>(marketPrice/factor);
-       PrintToConsole("Inside addInterestPegged function-------------------\n");
-       PrintToConsole("Index value : %d\n",priceIndex);
-       PrintToConsole("Market price : %d\n",nMarketPrice);
-       PrintToConsole("blocks until expiration: %d\n",expiration);
-       PrintToConsole("Prev Block: %d\n",nBlockPrev);
-       PrintToConsole("creationblock: %d\n",init_block);
-       PrintToConsole("deadline block: %d\n",deadline);
-       PrintToConsole("collateral currency : %d\n",collateral);
-       CMPSPInfo::Entry newSp;
-       //LOCK(cs_tally);
-       if (!_my_sps->getSP(peggedId, newSp)) {
-               // PrintToLog(" %s() : Property identifier %d does not exist\n",
-               //    __func__,
-               //    sender,
-               //    contractId);
-                return 0;
-          }
-        if (newSp.subcategory != "Pegged Currency") {
-             // PrintToLog(" %s() : property identifier %d does not a future contract\n",
-             //    __func__,
-             //    sender,
-             //    contractId);
-                return 0;
-        }
-        int64_t num_tokens = newSp.num_tokens/factor;
 
-        double diff = static_cast<double>(priceIndex - nMarketPrice);
-        double interest = static_cast<double>(diff/nMarketPrice);
-        PrintToConsole("Difference betweeen priceIndex and marketPrice : %lf\n",diff);
-        PrintToConsole("interest: %lf\n",interest);
-        PrintToConsole("Amounts of pegged currency created : %d\n",num_tokens);
-
-        if(nBlockPrev == deadline){
-
-         PrintToConsole("This is the block of SETTLEMENT, then we include the interest!!!: %d\n",deadline);
-         LOCK(cs_tally);
-
-         for (std::unordered_map<std::string, CMPTally>::iterator it = mp_tally_map.begin(); it != mp_tally_map.end(); ++it) {
-             uint32_t id = 0;
-             bool includeAddress = false;
-             std::string address = it->first;
-             (it->second).init();
-             while (0 != (id = (it->second).next())) {
-                 if (id == peggedId) {
-                     includeAddress = true;
-                     int64_t nPegged = getMPbalance(address, peggedId, BALANCE);
-                     PrintToConsole("nPegged : %d\n",nPegged);
-                     double dAll = static_cast<double>((nPegged*interest)/allPrice);
-                     PrintToConsole("dAll : %lu\n",dAll);
-                     int64_t intAll = static_cast<int64_t>(dAll);
-                     PrintToConsole("intAll : %lu\n",intAll);
-                     assert(update_tally_map(address, collateral, intAll, BALANCE));
-                     break;
-                 }
-
-             }
-             if (!includeAddress) {
-                 continue; // ignore this address, has never transacted in this propertyId
-             }
-          }
-       }
-       PrintToConsole("----------------------------------------------------\n");
-        return 1;
-}
-
-int CMPSPInfo::rollingContractsBlock(const CBlockIndex* pBlockIndex)
-{
-
-      leveldb::Iterator* iter = NewIterator();
-
-      CDataStream ssSpKeyPrefix(SER_DISK, CLIENT_VERSION);
-      ssSpKeyPrefix << 's';
-      leveldb::Slice slSpKeyPrefix(&ssSpKeyPrefix[0], ssSpKeyPrefix.size());
-
-      for (iter->Seek(slSpKeyPrefix); iter->Valid() && iter->key().starts_with(slSpKeyPrefix); iter->Next()) {
-          leveldb::Slice slSpKey = iter->key();
-          uint32_t propertyId = 0;
-          try {
-              CDataStream ssValue(1+slSpKey.data(), 1+slSpKey.data()+slSpKey.size(), SER_DISK, CLIENT_VERSION);
-              ssValue >> propertyId;
-          } catch (const std::exception& e) {
-              PrintToLog("%s(): ERROR: %s\n", __func__, e.what());
-              PrintToConsole("<Malformed key in DB>\n");
-              continue;
-          }
-
-         // deserialize the persisted data
-          leveldb::Slice slSpValue = iter->value();
-          Entry info;
-          try {
-              CDataStream ssSpValue(slSpValue.data(), slSpValue.data() + slSpValue.size(), SER_DISK, CLIENT_VERSION);
-              ssSpValue >> info;
-          } catch (const std::exception& e) {
-              PrintToConsole("<Malformed value in DB>\n");
-              PrintToLog("%s(): ERROR: %s\n", __func__, e.what());
-              continue;
-          }
-          if (info.subcategory == "Pegged Currency"){
-             PrintToConsole("---------------------------------------------------\n");
-             PrintToConsole("Inside if of rollingContractsBlock\n");
-             PrintToConsole("peggedId : %d\n",propertyId);
-             PrintToConsole("subcategory : %s\n",info.subcategory);
-             PrintToConsole("Owned address : %s\n",info.issuer);
-             PrintToConsole("contractId associated : %d\n",info.contract_associated);
-             int64_t contractsReserved = getMPbalance(info.issuer,info.contract_associated,CONTRACTDEX_RESERVE);
-             PrintToConsole("contracts Reserved : %d\n",contractsReserved);
-             Entry sp;
-             uint32_t contractId = info.contract_associated;
-             _my_sps->getSP(contractId, sp);
-             uint32_t expiration = sp.blocks_until_expiration;
-             int init_block = sp.init_block;
-             int actualBlock = static_cast<int>(pBlockIndex->nHeight);
-             int deadline = static_cast<int>(expiration + init_block);
-             int rollingBlock = static_cast<int>(trunc(1.088*deadline));  //80% of deadline blocks
-             PrintToConsole("init block : %d\n",init_block);
-             PrintToConsole("deadline : %d\n",deadline);
-             PrintToConsole("blocks until expiration : %d\n",expiration);
-             PrintToConsole("rollingBlock : %d\n",rollingBlock);
-             PrintToConsole("Actual Block: %d\n",actualBlock);
-             PrintToConsole("Contract Id : %d\n",contractId);
-             if (rollingBlock == actualBlock){
-                 PrintToConsole("Generate the Rolling!!!!!!!!!!!!!!!!!!!!!!!!\n");
-                 // then we must rolling the contracts A to contracts B  (selling the contracts and then putting them into RESERVE)
-                 uint64_t ask = edgeOrderbook(contractId,1);
-                 PrintToConsole("Price of ask: %d\n",ask);
-                 int64_t positiveBalance = getMPbalance(info.issuer,contractId, POSSITIVE_BALANCE);
-                 int64_t negativeBalance = getMPbalance(info.issuer,contractId, NEGATIVE_BALANCE);
-                 PrintToConsole("Long position before: %d\n",positiveBalance);
-                 PrintToConsole("Short position before: %d\n",negativeBalance);
-                 assert(update_tally_map(info.issuer, contractId, -contractsReserved, CONTRACTDEX_RESERVE));
-                 uint256 txid;
-                 unsigned int idx = 0;
-                 int result = ContractDex_ADD(info.issuer, contractId, contractsReserved, actualBlock, txid, idx, ask, 1, 0);
-                //  int64_t contractsNow = getMPbalance(info.issuer,contractId, CONTRACTDEX_RESERVE);
-                 assert(update_tally_map(info.issuer, contractId, negativeBalance, NEGATIVE_BALANCE)); // adding the short position
-                //  int64_t positiveBalanceAf = getMPbalance(info.issuer,contractId, POSSITIVE_BALANCE);
-                //  int64_t negativeBalanceAf = getMPbalance(info.issuer,contractId, NEGATIVE_BALANCE);
-                 // checking the bid price for Contract B:
-                 uint32_t contractId2 = 5; // only for test, TODO: adding info from Smart Properties saved in db
-                 uint64_t bid = edgeOrderbook(contractId2,2);
-                 PrintToConsole("Price of bid: %d\n",bid);
-                 int64_t positiveBalanceB = getMPbalance(info.issuer,contractId2, POSSITIVE_BALANCE);
-                 int64_t negativeBalanceB = getMPbalance(info.issuer,contractId2, NEGATIVE_BALANCE);
-                 int result2 = ContractDex_ADD(info.issuer,contractId2, contractsReserved, actualBlock, txid, idx,bid,2,0); // shorting in the future contract B
-                 PrintToConsole("positiveBalance contract B: %d <------------------------\n",positiveBalanceB);
-                 PrintToConsole("negativeBalance contract B: %d <------------------------\n",negativeBalanceB);
-                 if(positiveBalanceB >= 0 && negativeBalanceB == 0){
-                        assert(update_tally_map(info.issuer, contractId2, contractsReserved, POSSITIVE_BALANCE));
-                 } else if (positiveBalanceB == 0 && negativeBalanceB >= 0) {
-                        int64_t diffn = contractsReserved - negativeBalanceB;
-                        PrintToConsole("diffn : %d <-------------------------------\n",diffn);
-
-                     if (diffn > 0){
-                         assert(update_tally_map(info.issuer, contractId2, diffn, POSSITIVE_BALANCE));
-                         assert(update_tally_map(info.issuer, contractId2, -negativeBalanceB, NEGATIVE_BALANCE));
-                     } else {
-                         assert(update_tally_map(info.issuer, contractId2, -contractsReserved, NEGATIVE_BALANCE));
-                     }
-
-                    }
-                    assert(update_tally_map(info.issuer, contractId2, contractsReserved, CONTRACTDEX_RESERVE));
-                    int64_t contractsReservedB = getMPbalance(info.issuer,contractId2, CONTRACTDEX_RESERVE);
-                    PrintToConsole("Contracts Reserved in Contract B : %d\n", contractsReservedB);
-                    if (result == 0){
-                    PrintToConsole("Order Added in Contract A!!!!!!\n");
-                    }
-                    if (result2 == 0){
-                    PrintToConsole("Order Added in Contract B!!!!!!\n");
-                    }
-                 }
-
-             }
-
-             PrintToConsole("---------------------------------------------------\n");
-          }
-       delete iter;
-
-    return 1;
-}
-////////////////////////////////////////////////////////////////////////////////
 unsigned int mastercore::eraseExpiredCrowdsale(const CBlockIndex* pBlockIndex)
 {
     if (pBlockIndex == NULL) return 0;
@@ -1111,53 +896,4 @@ std::string mastercore::strEcosystem(uint8_t ecosystem)
     }
 
     return "unknown";
-}
-
-
-/** New things for futures contracts */
-bool mastercore::isPropertyContract(uint32_t propertyId)
-{
-    CMPSPInfo::Entry sp;
-
-    if (_my_sps->getSP(propertyId, sp)) return sp.isContract();
-
-    return true;
-}
-
-bool CMPSPInfo::Entry::isContract() const
-{
-    switch (prop_type) {
-        case MSC_PROPERTY_TYPE_CONTRACT:
-            return true;
-    }
-    return false;
-}
-
-uint64_t mastercore::edgeOrderbook(uint32_t contractId, uint8_t tradingAction)
-{
-  uint64_t price = 0;
-  uint64_t result = 0;
-  std::vector<uint64_t> vecContractDexPrices;
-  cd_PricesMap* const ppriceMap = get_PricesCd(contractId); // checking the ask price of contract A
-  for (cd_PricesMap::iterator it = ppriceMap->begin(); it != ppriceMap->end(); ++it) {
-      const cd_Set& indexes = it->second;
-      for (cd_Set::const_iterator it = indexes.begin(); it != indexes.end(); ++it) {
-          const CMPContractDex& obj = *it;
-          if (obj.getTradingAction() == tradingAction) continue;
-          if (obj.getAmountForSale() <= 0) continue;
-          price = obj.getEffectivePrice();
-          vecContractDexPrices.push_back(price);
-          if (tradingAction == BUY){
-             PrintToConsole("Price of offer in sell side: %d\n",price);
-          } else {
-            PrintToConsole("Price of offer in buy side: %d\n",price);
-          }
-      }
-    }
-    if (tradingAction == BUY && !vecContractDexPrices.empty()){
-       result = vecContractDexPrices.front();
-    } else if (tradingAction == SELL && !vecContractDexPrices.empty()){
-       result = vecContractDexPrices.back();
-    }
-    return result;
 }

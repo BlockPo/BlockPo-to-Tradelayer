@@ -48,13 +48,7 @@ bool msc_debug_consensus_hash                   = 0;
 bool msc_debug_consensus_hash_every_block       = 0;
 bool msc_debug_consensus_hash_every_transaction = 0;
 bool msc_debug_alerts                           = 1;
-bool msc_debug_metadex1                         = 0;
-bool msc_debug_metadex2                         = 0;
-bool msc_debug_metadex3                         = 0;
-bool msc_debug_tradedb                          = 0;
-bool msc_debug_dex                              = 1;
-bool msc_debug_fees                             = 1;
-bool msc_debug_sto                              = 1;
+
 /**
  * LogPrintf() has been broken a couple of times now
  * by well-meaning people adding mutexes in the most straightforward way.
@@ -83,7 +77,7 @@ extern std::atomic<bool> fReopenOmniCoreLiteLog;
 static boost::filesystem::path GetLogPath()
 {
     boost::filesystem::path pathLogFile;
-    std::string strLogPath = GetArg("-omnilogfile", "");
+    std::string strLogPath = gArgs.GetArg("-omnilogfile", "");
 
     if (!strLogPath.empty()) {
         pathLogFile = boost::filesystem::path(strLogPath);
@@ -138,11 +132,12 @@ static std::string GetTimestamp()
 int LogFilePrint(const std::string& str)
 {
     int ret = 0; // Number of characters written
-    if (fPrintToConsole) {
-        // Print to console
-        ret = ConsolePrint(str);
-    }
-    else if (fPrintToDebugLog && AreBaseParamsConfigured()) {
+    // if (fPrintToConsole) {
+    //     // Print to console
+    //     ret = ConsolePrint(str);
+    // }
+      if (true) {
+    // else if (fPrintToDebugLog && AreBaseParamsConfigured()) {
         static bool fStartedNewLine = true;
         boost::call_once(&DebugLogInit, debugLogInitFlag);
 
@@ -187,19 +182,19 @@ int LogFilePrint(const std::string& str)
 int ConsolePrint(const std::string& str)
 {
     int ret = 0; // Number of characters written
-    static bool fStartedNewLine = true;
-
-    if (fLogTimestamps && fStartedNewLine) {
-        ret = fprintf(stdout, "%s %s", GetTimestamp().c_str(), str.c_str());
-    } else {
-        ret = fwrite(str.data(), 1, str.size(), stdout);
-    }
-    if (!str.empty() && str[str.size()-1] == '\n') {
-        fStartedNewLine = true;
-    } else {
-        fStartedNewLine = false;
-    }
-    fflush(stdout);
+    // static bool fStartedNewLine = true;
+    //
+    // if (fLogTimestamps && fStartedNewLine) {
+    //     ret = fprintf(stdout, "%s %s", GetTimestamp().c_str(), str.c_str());
+    // } else {
+    //     ret = fwrite(str.data(), 1, str.size(), stdout);
+    // }
+    // if (!str.empty() && str[str.size()-1] == '\n') {
+    //     fStartedNewLine = true;
+    // } else {
+    //     fStartedNewLine = false;
+    // }
+    // fflush(stdout);
 
     return ret;
 }
@@ -214,69 +209,65 @@ int ConsolePrint(const std::string& str)
  */
 void InitDebugLogLevels()
 {
-    if (!mapArgs.count("-omnidebug")) {
-        return;
-    }
+  if (!gArgs.IsArgSet("-omnidebug")) {
+      return;
+  }
 
-    const std::vector<std::string>& debugLevels = mapMultiArgs["-omnidebug"];
+  const std::vector<std::string>& debugLevels = gArgs.GetArgs("-omnidebug");
 
-    for (std::vector<std::string>::const_iterator it = debugLevels.begin(); it != debugLevels.end(); ++it) {
-        if (*it == "parser_data") msc_debug_parser_data = true;
-        if (*it == "parser_readonly") msc_debug_parser_readonly = true;
-        if (*it == "parser") msc_debug_parser = true;
-        if (*it == "verbose") msc_debug_verbose = true;
-        if (*it == "verbose2") msc_debug_verbose2 = true;
-        if (*it == "verbose3") msc_debug_verbose3 = true;
-        if (*it == "vin") msc_debug_vin = true;
-        if (*it == "script") msc_debug_script = true;
-        if (*it == "send") msc_debug_send = true;
-        if (*it == "tokens") msc_debug_tokens = true;
-        if (*it == "spec") msc_debug_spec = true;
-        if (*it == "exo") msc_debug_exo = true;
-        if (*it == "tally") msc_debug_tally = true;
-        if (*it == "sp") msc_debug_sp = true;
-        if (*it == "txdb") msc_debug_txdb = true;
-        if (*it == "persistence") msc_debug_persistence = true;
-        if (*it == "ui") msc_debug_ui = true;
-        if (*it == "pending") msc_debug_pending = true;
-        if (*it == "packets") msc_debug_packets = true;
-        if (*it == "packets_readonly") msc_debug_packets_readonly = true;
-        if (*it == "walletcache") msc_debug_walletcache = true;
-        if (*it == "consensus_hash") msc_debug_consensus_hash = true;
-        if (*it == "consensus_hash_every_block") msc_debug_consensus_hash_every_block = true;
-        if (*it == "consensus_hash_every_transaction") msc_debug_consensus_hash_every_transaction = true;
-        if (*it == "alerts") msc_debug_alerts = true;
-        if (*it == "dex") msc_debug_dex = true;
-        if (*it == "none" || *it == "all") {
-            bool allDebugState = false;
-            if (*it == "all") allDebugState = true;
-            msc_debug_parser_data = allDebugState;
-            msc_debug_parser_readonly = allDebugState;
-            msc_debug_parser = allDebugState;
-            msc_debug_verbose = allDebugState;
-            msc_debug_verbose2 = allDebugState;
-            msc_debug_verbose3 = allDebugState;
-            msc_debug_vin = allDebugState;
-            msc_debug_script = allDebugState;
-            msc_debug_send = allDebugState;
-            msc_debug_tokens = allDebugState;
-            msc_debug_spec = allDebugState;
-            msc_debug_exo = allDebugState;
-            msc_debug_tally = allDebugState;
-            msc_debug_sp = allDebugState;
-            msc_debug_txdb = allDebugState;
-            msc_debug_persistence = allDebugState;
-            msc_debug_ui = allDebugState;
-            msc_debug_pending = allDebugState;
-            msc_debug_packets =  allDebugState;
-            msc_debug_packets_readonly =  allDebugState;
-            msc_debug_walletcache = allDebugState;
-            msc_debug_alerts = allDebugState;
-            msc_debug_dex = allDebugState;
-            msc_debug_fees = allDebugState;
-            msc_debug_sto = allDebugState;
-        }
-    }
+  for (std::vector<std::string>::const_iterator it = debugLevels.begin(); it != debugLevels.end(); ++it) {
+          if (*it == "parser_data") msc_debug_parser_data = true;
+          if (*it == "parser_readonly") msc_debug_parser_readonly = true;
+          if (*it == "parser") msc_debug_parser = true;
+          if (*it == "verbose") msc_debug_verbose = true;
+          if (*it == "verbose2") msc_debug_verbose2 = true;
+          if (*it == "verbose3") msc_debug_verbose3 = true;
+          if (*it == "vin") msc_debug_vin = true;
+          if (*it == "script") msc_debug_script = true;
+          if (*it == "send") msc_debug_send = true;
+          if (*it == "tokens") msc_debug_tokens = true;
+          if (*it == "spec") msc_debug_spec = true;
+          if (*it == "exo") msc_debug_exo = true;
+          if (*it == "tally") msc_debug_tally = true;
+          if (*it == "sp") msc_debug_sp = true;
+          if (*it == "txdb") msc_debug_txdb = true;
+          if (*it == "persistence") msc_debug_persistence = true;
+          if (*it == "ui") msc_debug_ui = true;
+          if (*it == "pending") msc_debug_pending = true;
+          if (*it == "packets") msc_debug_packets = true;
+          if (*it == "packets_readonly") msc_debug_packets_readonly = true;
+          if (*it == "walletcache") msc_debug_walletcache = true;
+          if (*it == "consensus_hash") msc_debug_consensus_hash = true;
+          if (*it == "consensus_hash_every_block") msc_debug_consensus_hash_every_block = true;
+          if (*it == "consensus_hash_every_transaction") msc_debug_consensus_hash_every_transaction = true;
+          if (*it == "alerts") msc_debug_alerts = true;
+          if (*it == "none" || *it == "all") {
+              bool allDebugState = false;
+              if (*it == "all") allDebugState = true;
+              msc_debug_parser_data = allDebugState;
+              msc_debug_parser_readonly = allDebugState;
+              msc_debug_parser = allDebugState;
+              msc_debug_verbose = allDebugState;
+              msc_debug_verbose2 = allDebugState;
+              msc_debug_verbose3 = allDebugState;
+              msc_debug_vin = allDebugState;
+              msc_debug_script = allDebugState;
+              msc_debug_send = allDebugState;
+              msc_debug_tokens = allDebugState;
+              msc_debug_spec = allDebugState;
+              msc_debug_exo = allDebugState;
+              msc_debug_tally = allDebugState;
+              msc_debug_sp = allDebugState;
+              msc_debug_txdb = allDebugState;
+              msc_debug_persistence = allDebugState;
+              msc_debug_ui = allDebugState;
+              msc_debug_pending = allDebugState;
+              msc_debug_packets =  allDebugState;
+              msc_debug_packets_readonly =  allDebugState;
+              msc_debug_walletcache = allDebugState;
+              msc_debug_alerts = allDebugState;
+          }
+      }
 }
 
 /**

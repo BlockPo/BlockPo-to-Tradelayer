@@ -8,9 +8,9 @@
 
 #include "amount.h"
 #include "base58.h"
-#include "coincontrol.h"
+#include "wallet/coincontrol.h"
 #include "init.h"
-#include "main.h"
+#include "validation.h"
 #include "pubkey.h"
 #include "script/standard.h"
 #include "sync.h"
@@ -26,6 +26,8 @@
 #include <map>
 #include <string>
 
+
+
 namespace mastercore
 {
 /**
@@ -33,31 +35,36 @@ namespace mastercore
  */
 bool AddressToPubKey(const std::string& key, CPubKey& pubKey)
 {
-#ifdef ENABLE_WALLET
-    // Case 1: Bitcoin address and the key is in the wallet
-    CBitcoinAddress address(key);
-    if (pwalletMain && address.IsValid()) {
-        CKeyID keyID;
-        if (!address.GetKeyID(keyID)) {
-            PrintToLog("%s() ERROR: redemption address %s does not refer to a public key\n", __func__, key);
-            return false;
-        }
-        if (!pwalletMain->GetPubKey(keyID, pubKey)) {
-            PrintToLog("%s() ERROR: no public key in wallet for redemption address %s\n", __func__, key);
-            return false;
-        }
-    }
-    // Case 2: Hex-encoded public key
-    else
-#endif
-    if (IsHex(key)) {
-        pubKey = CPubKey(ParseHex(key));
-    }
-
-    if (!pubKey.IsFullyValid()) {
-        PrintToLog("%s() ERROR: invalid redemption key %s\n", __func__, key);
-        return false;
-    }
+// #ifdef ENABLE_WALLET
+//     // Case 1: Bitcoin address and the key is in the wallet
+//     CBitcoinAddress address(key); // TODO: FIX THIS!
+//     CWalletRef pwalletMain = NULL;
+//     if (vpwallets.size() > 0){
+//         pwalletMain = vpwallets[0];
+//     }
+//
+//     if (pwalletMain && address.IsValid()) {
+//         CKeyID keyID;
+//         if (!address.GetKeyID(keyID)) {
+//             PrintToLog("%s() ERROR: redemption address %s does not refer to a public key\n", __func__, key);
+//             return false;
+//         }
+//         if (!pwalletMain->GetPubKey(keyID, pubKey)) {
+//             PrintToLog("%s() ERROR: no public key in wallet for redemption address %s\n", __func__, key);
+//             return false;
+//         }
+//     }
+//     // Case 2: Hex-encoded public key
+//     else
+// #endif
+//     if (IsHex(key)) {
+//         pubKey = CPubKey(ParseHex(key));
+//     }
+//
+//     if (!pubKey.IsFullyValid()) {
+//         PrintToLog("%s() ERROR: invalid redemption key %s\n", __func__, key);
+//         return false;
+//     }
 
     return true;
 }
@@ -77,12 +84,12 @@ bool CheckFee(const std::string& fromAddress, size_t nDataSize)
     inputTotal = SelectCoins(fromAddress, coinControl, 0);
 
     // calculate the estimated fee per KB based on the currently set confirm target
-    CFeeRate feeRate = mempool.estimateFee(nTxConfirmTarget);
+    // CFeeRate feeRate = mempool.estimateFee(nTxConfirmTarget);
+    CFeeRate feeRate = CFeeRate(0); // NOTE: just for testing
 
     // if there is not enough data (and zero is estimated) then base minimum on a fairly high/safe 50,000 satoshi fee per KB
     if (feeRate == CFeeRate(0)) {
-        // feePerKB = 50000;
-           feePerKB = 1; /*New things for contracts*/
+        feePerKB = 50000;
     } else {
         feePerKB = feeRate.GetFeePerK();
     }
@@ -94,12 +101,10 @@ bool CheckFee(const std::string& fromAddress, size_t nDataSize)
         //   - under 2% of Class B transactions are over 2KB, under 0.6% of transactions are over 3KB.
         // Thus if created transaction will be over 3KB (rare as per above) warning may not be sufficient.
         minFee = feePerKB * 3;
-
     } else {
         // Averages for Class C transactions are not yet available, Calculation based on a 2KB transaction due to:
         //   - Class B values but considering Class C removes outputs for both data and Exodus (reduces size).
         minFee = feePerKB * 2;
-
     }
 #endif
     return inputTotal >= minFee;
@@ -131,17 +136,22 @@ bool CheckInput(const CTxOut& txOut, int nHeight, CTxDestination& dest)
 std::string GetAddressLabel(const std::string& address)
 {
     std::string addressLabel;
-#ifdef ENABLE_WALLET
-    if (pwalletMain) {
-        LOCK(pwalletMain->cs_wallet);
-
-        CBitcoinAddress addressParsed(address);
-        std::map<CTxDestination, CAddressBookData>::const_iterator mi = pwalletMain->mapAddressBook.find(addressParsed.Get());
-        if (mi != pwalletMain->mapAddressBook.end()) {
-            addressLabel = mi->second.name;
-        }
-    }
-#endif
+// #ifdef ENABLE_WALLET
+//     CWalletRef pwalletMain = NULL;
+//     if (vpwallets.size() > 0){
+//         pwalletMain = vpwallets[0];
+//     }
+//
+//     if (pwalletMain) {
+//         LOCK(pwalletMain->cs_wallet);
+//
+//         CBitcoinAddress addressParsed(address);
+//         std::map<CTxDestination, CAddressBookData>::const_iterator mi = pwalletMain->mapAddressBook.find(addressParsed.Get());
+//         if (mi != pwalletMain->mapAddressBook.end()) {
+//             addressLabel = mi->second.name;
+//         }
+//     }
+// #endif
     return addressLabel;
 }
 
@@ -150,16 +160,21 @@ std::string GetAddressLabel(const std::string& address)
  */
 int IsMyAddress(const std::string& address)
 {
-#ifdef ENABLE_WALLET
-    if (pwalletMain) {
-        // TODO: resolve deadlock caused cs_tally, cs_wallet
-        // LOCK(pwalletMain->cs_wallet);
-        CBitcoinAddress parsedAddress(address);
-        isminetype isMine = IsMine(*pwalletMain, parsedAddress.Get());
-
-        return static_cast<int>(isMine);
-    }
-#endif
+// #ifdef ENABLE_WALLET
+//     CWalletRef pwalletMain = NULL;
+//     if (vpwallets.size() > 0){
+//         pwalletMain = vpwallets[0];
+//     }
+//
+//     if (pwalletMain) {
+//         // TODO: resolve deadlock caused cs_tally, cs_wallet
+//         // LOCK(pwalletMain->cs_wallet);
+//         CBitcoinAddress parsedAddress(address);
+//         isminetype isMine = IsMine(*pwalletMain, parsedAddress.Get());
+//
+//         return static_cast<int>(isMine);
+//     }
+// #endif
     return 0;
 }
 
@@ -175,6 +190,11 @@ int64_t SelectCoins(const std::string& fromAddress, CCoinControl& coinControl, i
     unsigned int nNumOutputs = 0;
 
 #ifdef ENABLE_WALLET
+    CWalletRef pwalletMain = NULL;
+    if (vpwallets.size() > 0){
+        pwalletMain = vpwallets[0];
+    }
+
     if (NULL == pwalletMain) {
         return 0;
     }
@@ -200,8 +220,8 @@ int64_t SelectCoins(const std::string& fromAddress, CCoinControl& coinControl, i
             continue;
         }
 
-        for (unsigned int n = 0; n < wtx.vout.size(); n++) {
-            const CTxOut& txOut = wtx.vout[n];
+        for (unsigned int n = 0; n < wtx.tx->vout.size(); n++) {
+            const CTxOut& txOut = wtx.tx->vout[n];
 
             CTxDestination dest;
             if (!CheckInput(txOut, nHeight, dest)) {
@@ -214,7 +234,7 @@ int64_t SelectCoins(const std::string& fromAddress, CCoinControl& coinControl, i
                 continue;
             }
 
-            std::string sAddress = CBitcoinAddress(dest).ToString();
+            std::string sAddress = EncodeDestination(dest); // new change
             if (msc_debug_tokens)
                 PrintToLog("%s(): sender: %s, outpoint: %s:%d, value: %d\n", __func__, sAddress, txid.GetHex(), n, txOut.nValue);
 
