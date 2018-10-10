@@ -114,8 +114,8 @@ bool CMPTransaction::interpret_Transaction()
        // case MSC_TYPE_CLOSE_CROWDSALE:
        //     return interpret_CloseCrowdsale();
        //
-       // case MSC_TYPE_CREATE_PROPERTY_MANUAL:
-       //     return interpret_CreatePropertyManaged();
+       case MSC_TYPE_CREATE_PROPERTY_MANUAL:
+            return interpret_CreatePropertyManaged();
        //
        // case MSC_TYPE_GRANT_PROPERTY_TOKENS:
        //     return interpret_GrantTokens();
@@ -370,7 +370,7 @@ bool CMPTransaction::interpret_CloseCrowdsale()
 /** Tx 54 */
 bool CMPTransaction::interpret_CreatePropertyManaged()
 {
-   /* int i = 0;
+    int i = 0;
 
     std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
     std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
@@ -415,7 +415,7 @@ bool CMPTransaction::interpret_CreatePropertyManaged()
         PrintToLog("\t             url: %s\n", url);
         PrintToLog("\t            data: %s\n", data);
     }
-*/
+
     return true;
 }
 
@@ -617,10 +617,10 @@ int CMPTransaction::interpretPacket()
 
         case MSC_TYPE_CLOSE_CROWDSALE:
             return logicMath_CloseCrowdsale();
-
+        */
         case MSC_TYPE_CREATE_PROPERTY_MANUAL:
             return logicMath_CreatePropertyManaged();
-
+        /*
         case MSC_TYPE_GRANT_PROPERTY_TOKENS:
             return logicMath_GrantTokens();
 
@@ -1066,10 +1066,10 @@ int CMPTransaction::logicMath_CloseCrowdsale()
 
     return 0;
 }
-
+*/
 int CMPTransaction::logicMath_CreatePropertyManaged()
 {
-    uint256 blockHash;
+     uint256 blockHash;
     {
         LOCK(cs_main);
 
@@ -1080,7 +1080,7 @@ int CMPTransaction::logicMath_CreatePropertyManaged()
         }
         blockHash = pindex->GetBlockHash();
     }
-
+    /*
     if (OMNI_PROPERTY_MSC != ecosystem && OMNI_PROPERTY_TMSC != ecosystem) {
         PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, (uint32_t) ecosystem);
         return (PKT_ERROR_SP -21);
@@ -1105,9 +1105,10 @@ int CMPTransaction::logicMath_CreatePropertyManaged()
         PrintToLog("%s(): rejected: property name must not be empty\n", __func__);
         return (PKT_ERROR_SP -37);
     }
-
+    */
     // ------------------------------------------
-
+   
+    PrintToConsole("inside logic_math function \n");
     CMPSPInfo::Entry newSP;
     newSP.issuer = sender;
     newSP.txid = txid;
@@ -1119,9 +1120,10 @@ int CMPTransaction::logicMath_CreatePropertyManaged()
     newSP.data.assign(data);
     newSP.fixed = false;
     newSP.manual = true;
-    newSP.creation_block = blockHash;
+   // newSP.creation_block = blockHash;
     newSP.update_block = newSP.creation_block;
-
+   
+    PrintToLog("First checkpoint\n");
     uint32_t propertyId = _my_sps->putSP(ecosystem, newSP);
     assert(propertyId > 0);
 
@@ -1130,6 +1132,7 @@ int CMPTransaction::logicMath_CreatePropertyManaged()
     return 0;
 }
 
+/*
 int CMPTransaction::logicMath_GrantTokens()
 {
     uint256 blockHash;

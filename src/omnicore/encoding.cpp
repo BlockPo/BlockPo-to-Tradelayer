@@ -30,8 +30,7 @@ bool OmniCore_Encode_ClassD(const std::vector<unsigned char>& vchPayload,
     vchData.insert(vchData.end(), vchPayload.begin(), vchPayload.end());
     if (vchData.size() > nMaxDatacarrierBytes) { return false; }
 
-    CScript script;
-    script  << OP_RETURN << vchData;
+    CScript script = CScript() << OP_RETURN << vchData;
     vecOutputs.push_back(std::make_pair(script, 0));
 
     return true;

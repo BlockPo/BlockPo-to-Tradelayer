@@ -225,7 +225,7 @@ const CTxOut &CCoinsViewCache::GetOutputFor(const CTxIn& input) const
 {
     const Coin& coin = AccessCoin(input.prevout);
     assert(!coin.IsSpent());
-    return coin.out;
+    return coin.GetTxOut();
 }
 
 CAmount CCoinsViewCache::GetValueIn(const CTransaction& tx) const

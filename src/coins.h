@@ -79,6 +79,9 @@ public:
     size_t DynamicMemoryUsage() const {
         return memusage::DynamicUsage(out.scriptPubKey);
     }
+
+    CTxOut &GetTxOut() { return out; }
+    const CTxOut &GetTxOut() const { return out; }
 };
 
 class SaltedOutpointHasher

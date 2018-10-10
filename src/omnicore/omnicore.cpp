@@ -237,12 +237,12 @@ CrowdMap mastercore::my_crowds;
 // this is the master list of all amounts for all addresses for all properties, map is unsorted
 std::unordered_map<std::string, CMPTally> mastercore::mp_tally_map;
 
-// CMPTally* mastercore::getTally(const std::string& address)
-// {
-//     std::unordered_map<std::string, CMPTally>::iterator it = mp_tally_map.find(address);
-//     if (it != mp_tally_map.end()) return &(it->second);
-//     return (CMPTally *) NULL;
-// }
+ CMPTally* mastercore::getTally(const std::string& address)
+{
+     std::unordered_map<std::string, CMPTally>::iterator it = mp_tally_map.find(address);
+     if (it != mp_tally_map.end()) return &(it->second);
+     return (CMPTally *) NULL;
+}
 
 // look at balance for an address
 int64_t getMPbalance(const std::string& address, uint32_t propertyId, TallyType ttype)
@@ -388,14 +388,14 @@ bool mastercore::update_tally_map(const std::string& who, uint32_t propertyId, i
 // 10) need a locking mechanism between Core & Qt -- to retrieve the tally, for instance, this and similar to this: LOCK(wallet->cs_wallet);
 //
 
-// uint32_t mastercore::GetNextPropertyId(bool maineco)
-// {
-//     if (maineco) {
-//         return _my_sps->peekNextSPID(1);
-//     } else {
-//         return _my_sps->peekNextSPID(2);
-//     }
-// }
+ uint32_t mastercore::GetNextPropertyId(bool maineco)
+{
+     if (maineco) {
+         return _my_sps->peekNextSPID(1);
+     } else {
+         return _my_sps->peekNextSPID(2);
+     }
+ }
 
 // Perform any actions that need to be taken when the total number of tokens for a property ID changes
 void NotifyTotalTokensChanged(uint32_t propertyId)
@@ -405,8 +405,8 @@ void NotifyTotalTokensChanged(uint32_t propertyId)
 
 void CheckWalletUpdate(bool forceUpdate)
 {
-//     if (!WalletCacheUpdate()) {
-//         // no balance changes were detected that affect wallet addresses, signal a generic change to overall Omni state
+  //   if (!WalletCacheUpdate()) {
+         // no balance changes were detected that affect wallet addresses, signal a generic change to overall Omni state
 //         if (!forceUpdate) {
 //             // uiInterface.OmniStateChanged();
 //             return;
@@ -461,7 +461,7 @@ int mastercore::GetEncodingClass(const CTransaction& tx, int nBlock)
     for (unsigned int n = 0; n < tx.vout.size(); ++n) {
         const CTxOut& output = tx.vout[n];
         std::string strSPB = HexStr(output.scriptPubKey.begin(), output.scriptPubKey.end());
-        PrintToLog("strSPB: %s",strSPB);
+        PrintToLog("strSPB: %s\n",strSPB);
         if (strSPB.find(strClassD) != std::string::npos) {
             examineClosely = true;
             PrintToLog("examineClosely = true 1\n");
@@ -485,7 +485,7 @@ int mastercore::GetEncodingClass(const CTransaction& tx, int nBlock)
             continue;
         }
         if (!IsAllowedOutputType(outType, nBlock)) {
-            continue;
+           // continue;
         }
 
         if (outType == TX_NULL_DATA) {
@@ -498,6 +498,8 @@ int mastercore::GetEncodingClass(const CTransaction& tx, int nBlock)
             if (!scriptPushes.empty()) {
                 std::vector<unsigned char> vchMarker = GetOmMarker();
                 std::vector<unsigned char> vchPushed = ParseHex(scriptPushes[0]);
+                PrintToLog("vchPushed size : %d",vchPushed.size());
+                PrintToLog("vchMarker size : %d",vchMarker.size());
                 if (vchPushed.size() < vchMarker.size()) {
                     continue;
                 }
@@ -509,7 +511,7 @@ int mastercore::GetEncodingClass(const CTransaction& tx, int nBlock)
     }
 
     if (hasOpReturn) {
-        PrintToLog("OP_RETURN FOUND\n");
+        PrintToLog("OP_RETURN FOUND \n");
         return OMNI_CLASS_D;
     }
 
@@ -534,39 +536,39 @@ static unsigned int nCacheMiss = 0;
  */
 static bool FillTxInputCache(const CTransaction& tx)
 {
-    // LOCK(cs_tx_cache);
-    // static unsigned int nCacheSize = gArgs.GetArg("-omnitxcache", 500000);
-    //
-    // if (view.GetCacheSize() > nCacheSize) {
-    //     PrintToLog("%s(): clearing cache before insertion [size=%d, hit=%d, miss=%d]\n",
-    //             __func__, view.GetCacheSize(), nCacheHits, nCacheMiss);
-    //     view.Flush();
-    // }
-    //
-    // for (std::vector<CTxIn>::const_iterator it = tx.vin.begin(); it != tx.vin.end(); ++it) {
-    //     const CTxIn& txIn = *it;
-    //     unsigned int nOut = txIn.prevout.n;
-    //     CCoinsModifier coins = view.ModifyCoins(txIn.prevout.hash);
-    //
-    //     if (coins->IsAvailable(nOut)) {
-    //         ++nCacheHits;
-    //         continue;
-    //     } else {
-    //         ++nCacheMiss;
-    //     }
-    //
-    //     CTransaction txPrev;
-    //     uint256 hashBlock;
-    //     if (!GetTransaction(txIn.prevout.hash, txPrev, Params().GetConsensus(), hashBlock, true)) {
-    //         return false;
-    //     }
-    //
-    //     if (nOut >= coins->vout.size()) {
-    //         coins->vout.resize(nOut+1);
-    //     }
-    //     coins->vout[nOut].scriptPubKey = txPrev.vout[nOut].scriptPubKey;
-    //     coins->vout[nOut].nValue = txPrev.vout[nOut].nValue;
-    // }
+        static unsigned int nCacheSize = gArgs.GetArg("-omnitxcache", 500000);
+
+    if (view.GetCacheSize() > nCacheSize) {
+        PrintToLog("%s(): clearing cache before insertion [size=%d, hit=%d, miss=%d]\n",
+                __func__, view.GetCacheSize(), nCacheHits, nCacheMiss);
+        view.Flush();
+    }
+
+    for (std::vector<CTxIn>::const_iterator it = tx.vin.begin(); it != tx.vin.end(); ++it) {
+        const CTxIn& txIn = *it;
+        unsigned int nOut = txIn.prevout.n;
+
+        if (view.HaveCoin(txIn.prevout)){
+             ++nCacheHits;
+             continue;
+        }else{
+            ++nCacheMiss;
+        }
+        CTransactionRef txPrev;
+        uint256 hashBlock = uint256();
+
+        if (!GetTransaction(txIn.prevout.hash, txPrev, Params().GetConsensus(), hashBlock, true)) {
+           return false;
+        }
+
+        if (txPrev.get()->vout.size() <= nOut){
+            return false;
+        }
+
+        Coin newCoin(txPrev.get()->vout[nOut], 0, tx.IsCoinBase());
+        view.AddCoin(txIn.prevout, std::move(newCoin), false);
+    }
+
 
     return true;
 }
@@ -595,37 +597,42 @@ static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, 
     }
 
     // Add previous transaction inputs to the cache
-    //if (!FillTxInputCache(wtx)) {
-    //    PrintToLog("%s() ERROR: failed to get inputs for %s\n", __func__, wtx.GetHash().GetHex());
-    //    return -101;
-    //}
+    if (!FillTxInputCache(wtx)) {
+        PrintToLog("%s() ERROR: failed to get inputs for %s\n", __func__, wtx.GetHash().GetHex());
+        return -101;
+    }
 
     assert(view.HaveInputs(wtx));
 
     // ### SENDER IDENTIFICATION ###
+    PrintToLog("First checkpoint \n");
     std::string strSender;
 
     // determine the sender, but invalidate transaction, if the input is not accepted
     unsigned int vin_n = 0; // the first input
-    if (msc_debug_vin) PrintToLog("vin=%d:%s\n", vin_n, ScriptToAsmStr(wtx.vin[vin_n].scriptSig));
+   // if (true) PrintToLog("vin=%d:%s\n", vin_n, ScriptToAsmStr(wtx.vin[vin_n].scriptSig));
 
     const CTxIn& txIn = wtx.vin[vin_n];
+    PrintToLog("Special checkpoint\n");
     const CTxOut& txOut = view.GetOutputFor(txIn);
-
     assert(!txOut.IsNull());
+
+    PrintToLog("Second checkpoint \n");
 
     txnouttype whichType;
     if (!GetOutputType(txOut.scriptPubKey, whichType)) {
         return -108;
     }
-    if (!IsAllowedInputType(whichType, nBlock)) {
-        return -109;
-    }
+    //if (!IsAllowedInputType(whichType, nBlock)) {
+       // return -109;
+    //}
     CTxDestination source;
     if (ExtractDestination(txOut.scriptPubKey, source)) {
         strSender = EncodeDestination(source);
         PrintToLog("destination: %s\n",strSender);
     } else return -110;
+   
+    PrintToLog("3rd checkpoint \n");
 
     int64_t inAll = view.GetValueIn(wtx);
     int64_t outAll = wtx.GetValueOut();
@@ -635,7 +642,7 @@ static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, 
         if (msc_debug_verbose) PrintToLog("The Sender: %s : fee= %s\n", strSender, FormatDivisibleMP(txFee));
     } else {
         PrintToLog("The sender is still EMPTY !!! txid: %s\n", wtx.GetHash().GetHex());
-        return -5;
+       // return -5;
     }
 
     // ### DATA POPULATION ### - save output addresses, values and scripts
@@ -785,72 +792,71 @@ int ParseTransaction(const CTransaction& tx, int nBlock, unsigned int idx, CMPTr
  *
  * @see msc_initial_scan()
  */
-// class ProgressReporter
-// {
-// private:
-//     const CBlockIndex* m_pblockFirst;
-//     const CBlockIndex* m_pblockLast;
-//     const int64_t m_timeStart;
-//
-//     /** Returns the estimated remaining time in milliseconds. */
-//     int64_t estimateRemainingTime(double progress) const
-//     {
-//         int64_t timeSinceStart = GetTimeMillis() - m_timeStart;
-//
-//         double timeRemaining = 3600000.0; // 1 hour
-//         if (progress > 0.0 && timeSinceStart > 0) {
-//             timeRemaining = (100.0 - progress) / progress * timeSinceStart;
-//         }
-//
-//         return static_cast<int64_t>(timeRemaining);
-//     }
-//
-//     /** Converts a time span to a human readable string. */
-//     std::string remainingTimeAsString(int64_t remainingTime) const
-//     {
-//         int64_t secondsTotal = 0.001 * remainingTime;
-//         int64_t hours = secondsTotal / 3600;
-//         int64_t minutes = secondsTotal / 60;
-//         int64_t seconds = secondsTotal % 60;
-//
-//         if (hours > 0) {
-//             return strprintf("%d:%02d:%02d hours", hours, minutes, seconds);
-//         } else if (minutes > 0) {
-//             return strprintf("%d:%02d minutes", minutes, seconds);
-//         } else {
-//             return strprintf("%d seconds", seconds);
-//         }
-//     }
-//
-// public:
-//     ProgressReporter(const CBlockIndex* pblockFirst, const CBlockIndex* pblockLast)
-//     : m_pblockFirst(pblockFirst), m_pblockLast(pblockLast), m_timeStart(GetTimeMillis())
-//     {
-//     }
-//
-//     /** Prints the current progress to the console and notifies the UI. */
-//     void update(const CBlockIndex* pblockNow) const
-//     {
-//         int nLastBlock = m_pblockLast->nHeight;
-//         int nCurrentBlock = pblockNow->nHeight;
-//         unsigned int nFirst = m_pblockFirst->nChainTx;
-//         unsigned int nCurrent = pblockNow->nChainTx;
-//         unsigned int nLast = m_pblockLast->nChainTx;
-//
-//         double dProgress = 100.0 * (nCurrent - nFirst) / (nLast - nFirst);
-//         int64_t nRemainingTime = estimateRemainingTime(dProgress);
-//
-//         std::string strProgress = strprintf(
-//                 "Still scanning.. at block %d of %d. Progress: %.2f %%, about %s remaining..\n",
-//                 nCurrentBlock, nLastBlock, dProgress, remainingTimeAsString(nRemainingTime));
-//         std::string strProgressUI = strprintf(
-//                 "Still scanning.. at block %d of %d.\nProgress: %.2f %% (about %s remaining)",
-//                 nCurrentBlock, nLastBlock, dProgress, remainingTimeAsString(nRemainingTime));
-//
-//         PrintToConsole(strProgress);
-//         // uiInterface.InitMessage(strProgressUI);
-//     }
-// };
+ class ProgressReporter
+ {
+  private:
+     const CBlockIndex* m_pblockFirst;
+     const CBlockIndex* m_pblockLast;
+     const int64_t m_timeStart;
+
+     /** Returns the estimated remaining time in milliseconds. */
+     int64_t estimateRemainingTime(double progress) const
+     {
+         int64_t timeSinceStart = GetTimeMillis() - m_timeStart;
+
+         double timeRemaining = 3600000.0; // 1 hour
+         if (progress > 0.0 && timeSinceStart > 0) {
+             timeRemaining = (100.0 - progress) / progress * timeSinceStart;
+         }
+
+         return static_cast<int64_t>(timeRemaining);
+     }
+
+     /** Converts a time span to a human readable string. */
+     std::string remainingTimeAsString(int64_t remainingTime) const
+     {
+         int64_t secondsTotal = 0.001 * remainingTime;
+         int64_t hours = secondsTotal / 3600;
+         int64_t minutes = secondsTotal / 60;
+         int64_t seconds = secondsTotal % 60;
+
+         if (hours > 0) {
+             return strprintf("%d:%02d:%02d hours", hours, minutes, seconds);
+         } else if (minutes > 0) {
+             return strprintf("%d:%02d minutes", minutes, seconds);
+         } else {
+             return strprintf("%d seconds", seconds);
+         }
+     }
+
+ public:
+     ProgressReporter(const CBlockIndex* pblockFirst, const CBlockIndex* pblockLast)
+     : m_pblockFirst(pblockFirst), m_pblockLast(pblockLast), m_timeStart(GetTimeMillis())
+     {
+     }
+
+     /** Prints the current progress to the console and notifies the UI. */
+     void update(const CBlockIndex* pblockNow) const
+     {
+         int nLastBlock = m_pblockLast->nHeight;
+         int nCurrentBlock = pblockNow->nHeight;
+         unsigned int nFirst = m_pblockFirst->nChainTx;
+         unsigned int nCurrent = pblockNow->nChainTx;
+         unsigned int nLast = m_pblockLast->nChainTx;
+
+         double dProgress = 100.0 * (nCurrent - nFirst) / (nLast - nFirst);
+         int64_t nRemainingTime = estimateRemainingTime(dProgress);
+         std::string strProgress = strprintf(
+                 "Still scanning.. at block %d of %d. Progress: %.2f %%, about %s remaining..\n",
+                 nCurrentBlock, nLastBlock, dProgress, remainingTimeAsString(nRemainingTime));
+         std::string strProgressUI = strprintf(
+                 "Still scanning.. at block %d of %d.\nProgress: %.2f %% (about %s remaining)",
+                 nCurrentBlock, nLastBlock, dProgress, remainingTimeAsString(nRemainingTime));
+
+         PrintToConsole(strProgress);
+         // uiInterface.InitMessage(strProgressUI);
+     }
+ };
 
 /**
  * Scans the blockchain for meta transactions.
@@ -912,11 +918,10 @@ static int msc_initial_scan(int nFirstBlock)
 
         CBlock block;
         if (!ReadBlockFromDisk(block, pblockindex, Params().GetConsensus())) break;
-
-        // BOOST_FOREACH(const CTransaction&tx, block.vtx) {
-        //     if (mastercore_handler_tx(tx, nBlock, nTxNum, pblockindex)) ++nTxsFoundInBlock;
-        //     ++nTxNum;
-        // }
+          for(const auto tx : block.vtx) {
+             if (mastercore_handler_tx(*(tx), nBlock, nTxNum, pblockindex)) ++nTxsFoundInBlock;
+             ++nTxNum;
+          }
 
         nTxsFoundTotal += nTxsFoundInBlock;
         nTxsTotal += nTxNum;
@@ -1429,16 +1434,16 @@ int mastercore_save_state( CBlockIndex const *pBlockIndex )
 void clear_all_state()
 {
     // LOCK2(cs_tally, cs_pending);
-    //
-    // // Memory based storage
+    
+    // Memory based storage
     // mp_tally_map.clear();
     // my_crowds.clear();
-    // my_pending.clear();
+    /// my_pending.clear();
     // ResetConsensusParams();
     // ClearActivations();
     // ClearAlerts();
     //
-    // // LevelDB based storage
+    // LevelDB based storage
     // _my_sps->Clear();
     // p_txlistdb->Clear();
     // p_OmniTXDB->Clear();
@@ -1476,78 +1481,78 @@ int mastercore_init()
      }
 
     // check for --startclean option and delete MP_ folders if present
-    // bool startClean = false;
-    // if (gArgs.GetBoolArg("-startclean", false)) {
-    //     PrintToLog("Process was started with --startclean option, attempting to clear persistence files..\n");
-    //     try {
-    //         boost::filesystem::path persistPath = GetDataDir() / "OCL_persist";
-    //         boost::filesystem::path txlistPath = GetDataDir() / "OCL_txlist";
-    //         boost::filesystem::path spPath = GetDataDir() / "OCL_spinfo";
-    //         boost::filesystem::path omniTXDBPath = GetDataDir() / "OCL_TXDB";
-    //         if (boost::filesystem::exists(persistPath)) boost::filesystem::remove_all(persistPath);
-    //         if (boost::filesystem::exists(txlistPath)) boost::filesystem::remove_all(txlistPath);
-    //         if (boost::filesystem::exists(spPath)) boost::filesystem::remove_all(spPath);
-    //         if (boost::filesystem::exists(omniTXDBPath)) boost::filesystem::remove_all(omniTXDBPath);
-    //         PrintToLog("Success clearing persistence files in datadir %s\n", GetDataDir().string());
-    //         startClean = true;
-    //     } catch (const boost::filesystem::filesystem_error& e) {
-    //         PrintToLog("Failed to delete persistence folders: %s\n", e.what());
-    //         PrintToConsole("Failed to delete persistence folders: %s\n", e.what());
-    //     }
-    // }
+     bool startClean = false;
+    if (gArgs.GetBoolArg("-startclean", false)) {
+         PrintToLog("Process was started with --startclean option, attempting to clear persistence files..\n");
+         try {
+             boost::filesystem::path persistPath = GetDataDir() / "OCL_persist";
+             boost::filesystem::path txlistPath = GetDataDir() / "OCL_txlist";
+             boost::filesystem::path spPath = GetDataDir() / "OCL_spinfo";
+             boost::filesystem::path omniTXDBPath = GetDataDir() / "OCL_TXDB";
+             if (boost::filesystem::exists(persistPath)) boost::filesystem::remove_all(persistPath);
+             if (boost::filesystem::exists(txlistPath)) boost::filesystem::remove_all(txlistPath);
+             if (boost::filesystem::exists(spPath)) boost::filesystem::remove_all(spPath);
+             if (boost::filesystem::exists(omniTXDBPath)) boost::filesystem::remove_all(omniTXDBPath);
+             PrintToLog("Success clearing persistence files in datadir %s\n", GetDataDir().string());
+             startClean = true;
+         } catch (const boost::filesystem::filesystem_error& e) {
+             PrintToLog("Failed to delete persistence folders: %s\n", e.what());
+             PrintToConsole("Failed to delete persistence folders: %s\n", e.what());
+         }
+    }
 
-    // p_txlistdb = new CMPTxList(GetDataDir() / "OCL_txlist", fReindex);
-    // _my_sps = new CMPSPInfo(GetDataDir() / "OCL_spinfo", fReindex);
-    //p_OmniTXDB = new COmniTransactionDB(GetDataDir() / "OCL_TXDB", fReindex);
+    p_txlistdb = new CMPTxList(GetDataDir() / "OCL_txlist", fReindex);
+    _my_sps = new CMPSPInfo(GetDataDir() / "OCL_spinfo", fReindex);
+    p_OmniTXDB = new COmniTransactionDB(GetDataDir() / "OCL_TXDB", fReindex);
     MPPersistencePath = GetDataDir() / "OCL_persist";
     TryCreateDirectory(MPPersistencePath);
-    //
-    // bool wrongDBVersion = (p_txlistdb->getDBVersion() != DB_VERSION);
+    
+     //bool wrongDBVersion = (p_txlistdb->getDBVersion() != DB_VERSION);
     
      ++mastercoreInitialized;
-    //
+    
     // nWaterlineBlock = load_most_relevant_state();
     // bool noPreviousState = (nWaterlineBlock <= 0);
-    //
-    // if (startClean) {
-    //     assert(p_txlistdb->setDBVersion() == DB_VERSION); // new set of databases, set DB version
-    // } else if (wrongDBVersion) {
-    //     nWaterlineBlock = -1; // force a clear_all_state and parse from start
+    
+     /*if (startClean) {
+         assert(p_txlistdb->setDBVersion() == DB_VERSION); // new set of databases, set DB version
+     } else if (wrongDBVersion) {
+          nWaterlineBlock = -1; // force a clear_all_state and parse from start
+     }*/
+    
+    /* if (nWaterlineBlock > 0) {
+         PrintToConsole("Loading persistent state: OK [block %d]\n", nWaterlineBlock);
+     } else {
+         std::string strReason = "unknown";
+         if (wrongDBVersion) strReason = "client version changed";
+         if (noPreviousState) strReason = "no usable previous state found";
+         if (startClean) strReason = "-startclean parameter used";
+         PrintToConsole("Loading persistent state: NONE (%s)\n", strReason);
+     }*/
+    
+     //if (nWaterlineBlock < 0) {
+         // persistence says we reparse!, nuke some stuff in case the partial loads left stale bits
+        // clear_all_state();
     // }
-    //
-    // if (nWaterlineBlock > 0) {
-    //     PrintToConsole("Loading persistent state: OK [block %d]\n", nWaterlineBlock);
-    // } else {
-    //     std::string strReason = "unknown";
-    //     if (wrongDBVersion) strReason = "client version changed";
-    //     if (noPreviousState) strReason = "no usable previous state found";
-    //     if (startClean) strReason = "-startclean parameter used";
-    //     PrintToConsole("Loading persistent state: NONE (%s)\n", strReason);
-    // }
-    //
-    // if (nWaterlineBlock < 0) {
-    //     // persistence says we reparse!, nuke some stuff in case the partial loads left stale bits
-    //     clear_all_state();
-    // }
-    //
-    // // legacy code, setting to pre-genesis-block
-    // int snapshotHeight = ConsensusParams().GENESIS_BLOCK - 1;
-    //
-    // if (nWaterlineBlock < snapshotHeight) {
-    //     nWaterlineBlock = snapshotHeight;
-    // }
-    //
-    // // advance the waterline so that we start on the next unaccounted for block
-    // nWaterlineBlock += 1;
+    
+     // legacy code, setting to pre-genesis-block
+     //int snapshotHeight = ConsensusParams().GENESIS_BLOCK - 1;
+    
+     //if (nWaterlineBlock < snapshotHeight) {
+     //    nWaterlineBlock = snapshotHeight;
+     // }
+    
+     // advance the waterline so that we start on the next unaccounted for block
+     // nWaterlineBlock += 1;
 
-    // // load feature activation messages from txlistdb and process them accordingly
-    // p_txlistdb->LoadActivations(nWaterlineBlock);
-    //
-    // // load all alerts from levelDB (and immediately expire old ones)
-    // p_txlistdb->LoadAlerts(nWaterlineBlock);
+     // load feature activation messages from txlistdb and process them accordingly
+     //p_txlistdb->LoadActivations(nWaterlineBlock);
+    
+    // load all alerts from levelDB (and immediately expire old ones)
+    //p_txlistdb->LoadAlerts(nWaterlineBlock);
 
     // initial scan
-    // msc_initial_scan(nWaterlineBlock);
+    //msc_initial_scan(nWaterlineBlock);
 
     PrintToLog("Omni Core Lite initialization completed\n");
 
@@ -1601,15 +1606,15 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
      if (!mastercoreInitialized) {
          mastercore_init();
     }
-    //
-    // // clear pending, if any
-    // // NOTE1: Every incoming TX is checked, not just MP-ones because:
-    // // if for some reason the incoming TX doesn't pass our parser validation steps successfuly, I'd still want to clear pending amounts for that TX.
-    // // NOTE2: Plus I wanna clear the amount before that TX is parsed by our protocol, in case we ever consider pending amounts in internal calculations.
-    // // PendingDelete(tx.GetHash());
-    //
-    // // we do not care about parsing blocks prior to our waterline (empty blockchain defense)
-    // if (nBlock < nWaterlineBlock) return false;
+    
+     // clear pending, if any
+     // NOTE1: Every incoming TX is checked, not just MP-ones because:
+     // if for some reason the incoming TX doesn't pass our parser validation steps successfuly, I'd still want to clear pending amounts for that TX.
+     // NOTE2: Plus I wanna clear the amount before that TX is parsed by our protocol, in case we ever consider pending amounts in internal calculations.
+     // PendingDelete(tx.GetHash());
+     //
+     // we do not care about parsing blocks prior to our waterline (empty blockchain defense)
+     if (nBlock < nWaterlineBlock) return false;
      int64_t nBlockTime = pBlockIndex->GetBlockTime();
     
      CMPTransaction mp_obj;
@@ -1625,21 +1630,20 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
          int interp_ret = mp_obj.interpretPacket();
          if (interp_ret) PrintToLog("!!! interpretPacket() returned %d !!!\n", interp_ret);
    
-    //     // Only structurally valid transactions get recorded in levelDB
-    //     // PKT_ERROR - 2 = interpret_Transaction failed, structurally invalid payload
-    //     if (interp_ret != PKT_ERROR - 2) {
-    //         bool bValid = (0 <= interp_ret);
-    //         p_txlistdb->recordTX(tx.GetHash(), bValid, nBlock, mp_obj.getType(), mp_obj.getNewAmount());
-    //         p_OmniTXDB->RecordTransaction(tx.GetHash(), idx);
-    //     }
-    //     fFoundTx |= (interp_ret == 0);
+        // Only structurally valid transactions get recorded in levelDB
+        // PKT_ERROR - 2 = interpret_Transaction failed, structurally invalid payload
+        // if (interp_ret != PKT_ERROR - 2) {
+        //     bool bValid = (0 <= interp_ret);
+             // p_txlistdb->recordTX(tx.GetHash(), bValid, nBlock, mp_obj.getType(), mp_obj.getNewAmount());
+             // p_OmniTXDB->RecordTransaction(tx.GetHash(), idx);
+         // }
+          fFoundTx |= (interp_ret == 0);
      }
-    //
+    
     // if (fFoundTx && msc_debug_consensus_hash_every_transaction) {
     //     uint256 consensusHash = GetConsensusHash();
     //     PrintToLog("Consensus hash for transaction %s: %s\n", tx.GetHash().GetHex(), consensusHash.GetHex());
     // }
-    //
      if (fFoundTx == false ) { PrintToLog("Omni marker not found!");}
      return fFoundTx;
 }
@@ -1728,37 +1732,36 @@ int mastercore::WalletTxBuilder(const std::string& senderAddress, const std::str
 
     // Ask the wallet to create the transaction (note mining fee determined by Bitcoin Core params)
     if (!pwalletMain->CreateTransaction(vecRecipients, wtxNew, reserveKey, nFeeRet, nChangePosInOut, strFailReason, coinControl, true)) { 
-        PrintToLog("strFailReason: %s ###########################################################\n",strFailReason);
         return MP_ERR_CREATE_TX; }
-      
-    PrintToLog("4th check point\n");
+
     // Workaround for SigOps limit
-     //{
-        // if (!FillTxInputCache(wtxNew)) {
-        //     PrintToLog("%s ERROR: failed to get inputs for %s\n", __func__, wtxNew.GetHash().GetHex());
-        // }
-        //
-        //unsigned int nBytesPerSigOp = 20; // default of Bitcoin Core 12.1
-        //unsigned int nSize = ::GetSerializeSize(wtxNew, SER_NETWORK, PROTOCOL_VERSION);
-        //unsigned int nSigOps = GetLegacySigOpCount(*(wtxNew.tx));
-        //nSigOps += GetP2SHSigOpCount(*(wtxNew.tx), view);
+/*    {
+         if (!FillTxInputCache(wtxNew)) {
+             PrintToLog("%s ERROR: failed to get inputs for %s\n", __func__, wtxNew.GetHash().GetHex());
+         }
+        
+        unsigned int nBytesPerSigOp = 20; // default of Bitcoin Core 12.1
+        unsigned int nSize = ::GetSerializeSize(wtxNew, SER_NETWORK, PROTOCOL_VERSION);
+        unsigned int nSigOps = GetLegacySigOpCount(*(wtxNew.tx));
+        nSigOps += GetP2SHSigOpCount(*(wtxNew.tx), view);
 
-        //if (nSigOps > nSize / nBytesPerSigOp) {
-        //     std::vector<COutPoint> vInputs;
-        //     coinControl.ListSelected(vInputs);
+        if (nSigOps > nSize / nBytesPerSigOp) {
+             std::vector<COutPoint> vInputs;
+             coinControl.ListSelected(vInputs);
 
-            // Ensure the requested number of inputs was available, so there may be more
-          //  if (vInputs.size() >= minInputs) {
-                // Build a new transaction and try to select one additional input to
-                // shift the bytes per sigops ratio in our favor
-           //      ++minInputs;
-               //  return WalletTxBuilder(senderAddress, receiverAddress, referenceAmount, data, txid, rawHex, commit, minInputs);
-             //} else {
-        //         PrintToLog("%s WARNING: %s has %d sigops, and may not confirm in time\n",
-        //                 __func__, wtxNew.GetHash().GetHex(), nSigOps);
-        // }
-       //  }
-   // }
+             // Ensure the requested number of inputs was available, so there may be more
+             if (vInputs.size() >= minInputs) {
+                 Build a new transaction and try to select one additional input to
+                 shift the bytes per sigops ratio in our favor
+                 ++minInputs;
+                 return WalletTxBuilder(senderAddress, receiverAddress, referenceAmount, data, txid, rawHex, commit, minInputs);
+             } else {
+                 PrintToLog("%s WARNING: %s has %d sigops, and may not confirm in time\n",
+                         __func__, wtxNew.GetHash().GetHex(), nSigOps);
+             }
+         }
+     }
+*/
     // If this request is only to create, but not commit the transaction then display it and exit
     if (!commit) {
         rawHex = EncodeHexTx(*(wtxNew.tx));
@@ -1766,7 +1769,6 @@ int mastercore::WalletTxBuilder(const std::string& senderAddress, const std::str
     } else {
         PrintToLog("6th checkpoint\n");
         // Commit the transaction to the wallet and broadcast)
-        // PrintToLog("%s: %s; nFeeRet = %d\n", __func__, wtxNew.ToString(), nFeeRet);
         CValidationState state;
         if (!pwalletMain->CommitTransaction(wtxNew, reserveKey, g_connman.get(), state)) return MP_ERR_COMMIT_TX;
         txid = wtxNew.GetHash();
@@ -1780,13 +1782,13 @@ int mastercore::WalletTxBuilder(const std::string& senderAddress, const std::str
 
 void COmniTransactionDB::RecordTransaction(const uint256& txid, uint32_t posInBlock)
 {
-    // assert(pdb);
-    //
-    // const std::string key = txid.ToString();
-    // const std::string value = strprintf("%d", posInBlock);
-    //
-    // Status status = pdb->Put(writeoptions, key, value);
-    // ++nWritten;
+     /*assert(pdb);
+    
+     const std::string key = txid.ToString();
+     const std::string value = strprintf("%d", posInBlock);
+    
+     Status status = pdb->Put(writeoptions, key, value);
+     ++nWritten;*/
 }
 
 uint32_t COmniTransactionDB::FetchTransactionPosition(const uint256& txid)
@@ -2155,48 +2157,46 @@ int CMPTxList::setDBVersion()
 // figure out if there was at least 1 Master Protocol transaction within the block range, or a block if starting equals ending
 // block numbers are inclusive
 // pass in bDeleteFound = true to erase each entry found within the block range
-// bool CMPTxList::isMPinBlockRange(int starting_block, int ending_block, bool bDeleteFound)
-// {
-// leveldb::Slice skey, svalue;
-// unsigned int count = 0;
-// std::vector<std::string> vstr;
-// int block;
-// unsigned int n_found = 0;
-//
-//   leveldb::Iterator* it = NewIterator();
-//
-//   for(it->SeekToFirst(); it->Valid(); it->Next())
-//   {
-//     skey = it->key();
-//     svalue = it->value();
-//
-//     ++count;
-//
-//     string strvalue = it->value().ToString();
-//
-//     // parse the string returned, find the validity flag/bit & other parameters
-//     boost::split(vstr, strvalue, boost::is_any_of(":"), token_compress_on);
-//
-//     // only care about the block number/height here
-//     if (2 <= vstr.size())
-//     {
-//       block = atoi(vstr[1]);
-//
-//       if ((starting_block <= block) && (block <= ending_block))
-//       {
-//         ++n_found;
-//         PrintToLog("%s() DELETING: %s=%s\n", __FUNCTION__, skey.ToString(), svalue.ToString());
-//         if (bDeleteFound) pdb->Delete(writeoptions, skey);
-//       }
-//     }
-//   }
-//
-//   PrintToLog("%s(%d, %d); n_found= %d\n", __FUNCTION__, starting_block, ending_block, n_found);
-//
-//   delete it;
-//
-//   return (n_found);
-// }
+ bool CMPTxList::isMPinBlockRange(int starting_block, int ending_block, bool bDeleteFound)
+{
+    leveldb::Slice skey, svalue; 
+    unsigned int count = 0;
+    std::vector<std::string> vstr;
+    int block;
+    unsigned int n_found = 0;
+
+    leveldb::Iterator* it = NewIterator();
+
+    for(it->SeekToFirst(); it->Valid(); it->Next())
+    {
+        skey = it->key();
+        svalue = it->value();
+
+       ++count;
+ 
+       string strvalue = it->value().ToString();
+
+       // parse the string returned, find the validity flag/bit & other parameters
+       boost::split(vstr, strvalue, boost::is_any_of(":"), token_compress_on);
+
+       // only care about the block number/height here
+       if (2 <= vstr.size())
+       {
+           block = atoi(vstr[1]);
+
+           if ((starting_block <= block) && (block <= ending_block))
+           {
+               ++n_found;
+               PrintToLog("%s() DELETING: %s=%s\n", __FUNCTION__, skey.ToString(), svalue.ToString());
+               if (bDeleteFound) pdb->Delete(writeoptions, skey);
+           }
+        }
+    }
+    PrintToLog("%s(%d, %d); n_found= %d\n", __FUNCTION__, starting_block, ending_block, n_found);
+    delete it;
+
+    return (n_found);
+ }
 
 // global wrapper, block numbers are inclusive, if ending_block is 0 top of the chain will be used
 // bool mastercore::isMPinBlockRange(int starting_block, int ending_block, bool bDeleteFound)
@@ -2261,41 +2261,41 @@ bool mastercore::getValidMPTX(const uint256 &txid, int *block, unsigned int *typ
 
 int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockIndex)
 {
-    // LOCK(cs_tally);
-    //
-    // if (reorgRecoveryMode > 0) {
-    //     reorgRecoveryMode = 0; // clear reorgRecovery here as this is likely re-entrant
-    //
-    //     // NOTE: The blockNum parameter is inclusive, so deleteAboveBlock(1000) will delete records in block 1000 and above.
-    //     p_txlistdb->isMPinBlockRange(pBlockIndex->nHeight, reorgRecoveryMaxHeight, true);
-    //     reorgRecoveryMaxHeight = 0;
-    //
-    //     nWaterlineBlock = ConsensusParams().GENESIS_BLOCK - 1;
-    //
-    //     int best_state_block = load_most_relevant_state();
-    //     if (best_state_block < 0) {
-    //         // unable to recover easily, remove stale stale state bits and reparse from the beginning.
-    //         clear_all_state();
-    //     } else {
-    //         nWaterlineBlock = best_state_block;
-    //     }
-    //
-    //     // clear the global wallet property list, perform a forced wallet update and tell the UI that state is no longer valid, and UI views need to be reinit
-    //     global_wallet_property_list.clear();
-    //     CheckWalletUpdate(true);
-    //     // uiInterface.OmniStateInvalidated();
-    //
-    //     if (nWaterlineBlock < nBlockPrev) {
-    //         // scan from the block after the best active block to catch up to the active chain
-    //         msc_initial_scan(nWaterlineBlock + 1);
-    //     }
-    // }
+   /*  LOCK(cs_tally);
+    
+     if (reorgRecoveryMode > 0) {
+         reorgRecoveryMode = 0; // clear reorgRecovery here as this is likely re-entrant
+    
+         // NOTE: The blockNum parameter is inclusive, so deleteAboveBlock(1000) will delete records in block 1000 and above.
+         p_txlistdb->isMPinBlockRange(pBlockIndex->nHeight, reorgRecoveryMaxHeight, true);
+         reorgRecoveryMaxHeight = 0;
+    
+         nWaterlineBlock = ConsensusParams().GENESIS_BLOCK - 1;
+      */
+       //  int best_state_block = load_most_relevant_state();
+       /*  if (best_state_block < 0) {
+             // unable to recover easily, remove stale stale state bits and reparse from the beginning.
+             clear_all_state();
+         } else {
+             nWaterlineBlock = best_state_block;
+         }
+    
+         // clear the global wallet property list, perform a forced wallet update and tell the UI that state is no longer valid, and UI views need to be reinit
+         global_wallet_property_list.clear();
+         CheckWalletUpdate(true);
+          uiInterface.OmniStateInvalidated();
+    
+         if (nWaterlineBlock < nBlockPrev) {
+             // scan from the block after the best active block to catch up to the active chain
+             msc_initial_scan(nWaterlineBlock + 1);
+         }
+     }
 
     // handle any features that go live with this block
-    // CheckLiveActivations(pBlockIndex->nHeight);
+    CheckLiveActivations(pBlockIndex->nHeight);
 
-    // eraseExpiredCrowdsale(pBlockIndex);
-
+     eraseExpiredCrowdsale(pBlockIndex);
+    */
     return 0;
 }
 
@@ -2305,16 +2305,16 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
 int mastercore_handler_block_end(int nBlockNow, CBlockIndex const * pBlockIndex,
         unsigned int countMP)
 {
-    LOCK(cs_tally);
+    //LOCK(cs_tally);
 
-    if (!mastercoreInitialized) {
-        mastercore_init();
-    }
+    //if (!mastercoreInitialized) {
+    //    mastercore_init();
+    //}
 //
 //     // check the alert status, do we need to do anything else here?
 //     CheckExpiredAlerts(nBlockNow, pBlockIndex->GetBlockTime());
 //
-//     // transactions were found in the block, signal the UI accordingly
+     // transactions were found in the block, signal the UI accordingly
 //     if (countMP > 0) CheckWalletUpdate(true);
 //
 //     // calculate and print a consensus hash if required

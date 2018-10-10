@@ -1,3 +1,21 @@
+Omni-lite (upgrading Litecoin Core 0.16.3)
+==========================================
+
+WORK DONE:
+----------
+
+- OP_RETURN data embbeded (wallet transactions)
+- Simple send RPC working on regtest
+
+
+TODO LIST:
+----------
+
+- Upgrade Database stuff ( to save the states of omnicore)
+- Port tradelayer code
+- Test on testnet
+ 
+
 Litecoin Core integration/staging tree
 =====================================
 

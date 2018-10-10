@@ -148,7 +148,10 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "omni_createpayload_simplesend", 0, "arg0" },
 
     /* Omni Core - transaction calls */
-    { "omni_send", 2, "arg0" },
+    { "omni_send", 2, "arg2" },
+    { "omni_sendissuancemanaged", 1, "arg1" },
+    { "omni_sendissuancemanaged", 2, "arg2" },
+    { "omni_sendissuancemanaged", 3, "arg3" },
 
     /* Omni Core - data retrieval calls */
     { "omni_getbalance", 1, "arg0" },
