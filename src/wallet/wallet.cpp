@@ -2809,7 +2809,7 @@ bool CWallet::CreateTransaction(const std::vector<CRecipient>& vecSend, CWalletT
                         }
                         else
                             strFailReason = _("Transaction amount too small");
-                        return false;
+                            return false;
                     }
                     txNew.vout.push_back(txout);
                 }
@@ -2821,7 +2821,7 @@ bool CWallet::CreateTransaction(const std::vector<CRecipient>& vecSend, CWalletT
                     if (!SelectCoins(vAvailableCoins, nValueToSelect, setCoins, nValueIn, &coin_control))
                     {
                         strFailReason = _("Insufficient funds");
-                        return false;
+                       // return false;  TODO: FIX THIS LATER!!!!
                     }
                 }
 

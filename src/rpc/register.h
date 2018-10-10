@@ -27,7 +27,7 @@ void RegisterOmniDataRetrievalRPCCommands(CRPCTable &tableRPC);
 /** Register Omni transaction creation RPC commands */
 void RegisterOmniTransactionCreationRPCCommands(CRPCTable &tableRPC);
 /** Register Omni payload creation RPC commands */
-// void RegisterOmniPayloadCreationRPCCommands(CRPCTable &tableRPC);
+void RegisterOmniPayloadCreationRPCCommands(CRPCTable &tableRPC);
 // /** Register Omni raw transaction RPC commands */
 // void RegisterOmniRawTransactionRPCCommands(CRPCTable &tableRPC);
 
@@ -42,7 +42,7 @@ static inline void RegisterAllCoreRPCCommands(CRPCTable &t)
     /* Omni Core RPCs: */
     RegisterOmniDataRetrievalRPCCommands(t);
     RegisterOmniTransactionCreationRPCCommands(t);
-    // RegisterOmniPayloadCreationRPCCommands(t);
+    RegisterOmniPayloadCreationRPCCommands(t);
     // RegisterOmniRawTransactionRPCCommands(t);
 }
 

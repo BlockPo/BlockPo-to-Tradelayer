@@ -48,10 +48,13 @@
 #include "validation.h"
 #include "consensus/validation.h"
 #include "consensus/params.h"
+#include "consensus/tx_verify.h"
+
 #include "net.h" // for g_connman.get()
 #ifdef ENABLE_WALLET
 #include "script/ismine.h"
 #include "wallet/wallet.h"
+#include "serialize.h"
 #endif
 
 #include <univalue.h>
@@ -458,14 +461,17 @@ int mastercore::GetEncodingClass(const CTransaction& tx, int nBlock)
     for (unsigned int n = 0; n < tx.vout.size(); ++n) {
         const CTxOut& output = tx.vout[n];
         std::string strSPB = HexStr(output.scriptPubKey.begin(), output.scriptPubKey.end());
+        PrintToLog("strSPB: %s",strSPB);
         if (strSPB.find(strClassD) != std::string::npos) {
             examineClosely = true;
+            PrintToLog("examineClosely = true 1\n");
             break;
         }
     }
 
     // Examine everything when not on mainnet
     if (isNonMainNet()) {
+        PrintToLog("examineClosely = true  2\n");
         examineClosely = true;
     }
 
@@ -503,6 +509,7 @@ int mastercore::GetEncodingClass(const CTransaction& tx, int nBlock)
     }
 
     if (hasOpReturn) {
+        PrintToLog("OP_RETURN FOUND\n");
         return OMNI_CLASS_D;
     }
 
@@ -588,10 +595,10 @@ static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, 
     }
 
     // Add previous transaction inputs to the cache
-    if (!FillTxInputCache(wtx)) {
-        PrintToLog("%s() ERROR: failed to get inputs for %s\n", __func__, wtx.GetHash().GetHex());
-        return -101;
-    }
+    //if (!FillTxInputCache(wtx)) {
+    //    PrintToLog("%s() ERROR: failed to get inputs for %s\n", __func__, wtx.GetHash().GetHex());
+    //    return -101;
+    //}
 
     assert(view.HaveInputs(wtx));
 
@@ -617,6 +624,7 @@ static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, 
     CTxDestination source;
     if (ExtractDestination(txOut.scriptPubKey, source)) {
         strSender = EncodeDestination(source);
+        PrintToLog("destination: %s\n",strSender);
     } else return -110;
 
     int64_t inAll = view.GetValueIn(wtx);
@@ -1453,7 +1461,7 @@ int mastercore_init()
 
     // PrintToConsole("Initializing Omni Core Lite v%s [%s]\n", OmniCoreVersion(), Params().NetworkIDString());
     //
-    // PrintToLog("\nInitializing Omni Core Lite v%s [%s]\n", OmniCoreVersion(), Params().NetworkIDString());
+    PrintToLog("\nInitializing Omni Core Lite\n");
     PrintToLog("Startup time: %s\n", DateTimeStrFormat("%Y-%m-%d %H:%M:%S", GetTime()));
     // PrintToLog("Build date: %s, based on commit: %s\n", BuildDate(), BuildCommit());
 
@@ -1461,11 +1469,11 @@ int mastercore_init()
     ShrinkDebugLog();
 
     // check for --autocommit option and set transaction commit flag accordingly
-    // if (!gArgs.GetBoolArg("-autocommit", true)) {
-    //     PrintToLog("Process was started with --autocommit set to false. "
-    //             "Created Omni transactions will not be committed to wallet or broadcast.\n");
-    //     autoCommit = false;
-    // }
+     if (!gArgs.GetBoolArg("-autocommit", true)) {
+         PrintToLog("Process was started with --autocommit set to false. "
+                 "Created Omni transactions will not be committed to wallet or broadcast.\n");
+         autoCommit = false;
+     }
 
     // check for --startclean option and delete MP_ folders if present
     // bool startClean = false;
@@ -1490,13 +1498,13 @@ int mastercore_init()
 
     // p_txlistdb = new CMPTxList(GetDataDir() / "OCL_txlist", fReindex);
     // _my_sps = new CMPSPInfo(GetDataDir() / "OCL_spinfo", fReindex);
-    // p_OmniTXDB = new COmniTransactionDB(GetDataDir() / "OCL_TXDB", fReindex);
+    //p_OmniTXDB = new COmniTransactionDB(GetDataDir() / "OCL_TXDB", fReindex);
     MPPersistencePath = GetDataDir() / "OCL_persist";
     TryCreateDirectory(MPPersistencePath);
     //
     // bool wrongDBVersion = (p_txlistdb->getDBVersion() != DB_VERSION);
-    //
-    // ++mastercoreInitialized;
+    
+     ++mastercoreInitialized;
     //
     // nWaterlineBlock = load_most_relevant_state();
     // bool noPreviousState = (nWaterlineBlock <= 0);
@@ -1541,7 +1549,7 @@ int mastercore_init()
     // initial scan
     // msc_initial_scan(nWaterlineBlock);
 
-    PrintToConsole("Omni Core Lite initialization completed\n");
+    PrintToLog("Omni Core Lite initialization completed\n");
 
     return 0;
 }
@@ -1588,11 +1596,11 @@ int mastercore_shutdown()
  */
 bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx, const CBlockIndex* pBlockIndex)
 {
-    // LOCK(cs_tally);
-    //
-    // if (!mastercoreInitialized) {
-    //     mastercore_init();
-    // }
+     LOCK(cs_tally);
+    PrintToLog("Inside mastercore_handler_tx\n");
+     if (!mastercoreInitialized) {
+         mastercore_init();
+    }
     //
     // // clear pending, if any
     // // NOTE1: Every incoming TX is checked, not just MP-ones because:
@@ -1602,21 +1610,21 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
     //
     // // we do not care about parsing blocks prior to our waterline (empty blockchain defense)
     // if (nBlock < nWaterlineBlock) return false;
-    // int64_t nBlockTime = pBlockIndex->GetBlockTime();
-    //
-    // CMPTransaction mp_obj;
-    // mp_obj.unlockLogic();
-    //
-    // bool fFoundTx = false;
-    // int pop_ret = parseTransaction(false, tx, nBlock, idx, mp_obj, nBlockTime);
-    //
-    // if (0 == pop_ret) {
-    //     assert(mp_obj.getEncodingClass() != NO_MARKER);
-    //     assert(mp_obj.getSender().empty() == false);
-    //
-    //     int interp_ret = mp_obj.interpretPacket();
-    //     if (interp_ret) PrintToLog("!!! interpretPacket() returned %d !!!\n", interp_ret);
-    //
+     int64_t nBlockTime = pBlockIndex->GetBlockTime();
+    
+     CMPTransaction mp_obj;
+     mp_obj.unlockLogic();
+    
+     bool fFoundTx = false;
+     int pop_ret = parseTransaction(false, tx, nBlock, idx, mp_obj, nBlockTime);
+     PrintToLog("pop_ret : %d\n",pop_ret);
+     if (0 == pop_ret) {
+         assert(mp_obj.getEncodingClass() != NO_MARKER);
+         assert(mp_obj.getSender().empty() == false);
+    
+         int interp_ret = mp_obj.interpretPacket();
+         if (interp_ret) PrintToLog("!!! interpretPacket() returned %d !!!\n", interp_ret);
+   
     //     // Only structurally valid transactions get recorded in levelDB
     //     // PKT_ERROR - 2 = interpret_Transaction failed, structurally invalid payload
     //     if (interp_ret != PKT_ERROR - 2) {
@@ -1625,14 +1633,15 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
     //         p_OmniTXDB->RecordTransaction(tx.GetHash(), idx);
     //     }
     //     fFoundTx |= (interp_ret == 0);
-    // }
+     }
     //
     // if (fFoundTx && msc_debug_consensus_hash_every_transaction) {
     //     uint256 consensusHash = GetConsensusHash();
     //     PrintToLog("Consensus hash for transaction %s: %s\n", tx.GetHash().GetHex(), consensusHash.GetHex());
     // }
     //
-    // return fFoundTx;
+     if (fFoundTx == false ) { PrintToLog("Omni marker not found!");}
+     return fFoundTx;
 }
 
 /**
@@ -1669,7 +1678,7 @@ int mastercore::WalletTxBuilder(const std::string& senderAddress, const std::str
     + multisig and plain address encoding are banned
     + nulldata encoding must use compression (varint)
     **/
-    int omniTxClass = OMNI_CLASS_D;
+    //int omniTxClass = OMNI_CLASS_D;
 
     if (nMaxDatacarrierBytes < (data.size()+GetOmMarker().size())) return MP_ERR_PAYLOAD_TOO_BIG;
 
@@ -1677,6 +1686,7 @@ int mastercore::WalletTxBuilder(const std::string& senderAddress, const std::str
 
     // Prepare the transaction - first setup some vars
     CCoinControl coinControl;
+    coinControl.fAllowOtherInputs = true;
     CWalletTx wtxNew;
     CAmount nFeeRet = 0;
     int nChangePosInOut = -1;
@@ -1690,22 +1700,24 @@ int mastercore::WalletTxBuilder(const std::string& senderAddress, const std::str
     // Select the inputs
     if (0 > SelectCoins(senderAddress, coinControl, referenceAmount, minInputs)) { return MP_INPUTS_INVALID; }
 
+    PrintToConsole("First check point\n");
     // Encode the data outputs
-    switch(omniTxClass) {
-        case OMNI_CLASS_D:
-            if(!OmniCore_Encode_ClassD(data,vecSend)) { return MP_ENCODING_ERROR; }
-        break;
-    }
+
+    if(!OmniCore_Encode_ClassD(data,vecSend)) { return MP_ENCODING_ERROR; }
+ 
 
     // Then add a paytopubkeyhash output for the recipient (if needed) - note we do this last as we want this to be the highest vout
     if (!receiverAddress.empty()) {
         CScript scriptPubKey = GetScriptForDestination(DecodeDestination(receiverAddress));
-        vecSend.push_back(std::make_pair(scriptPubKey, 0 < referenceAmount ? referenceAmount : GetDust(scriptPubKey)));
+        vecSend.push_back(std::make_pair(scriptPubKey, 0 < referenceAmount ? referenceAmount : 50000));
     }
-
+   
+    PrintToLog("Second check point\n");
     // Now we have what we need to pass to the wallet to create the transaction, perform some checks first
 
     if (!coinControl.HasSelected()) return MP_ERR_INPUTSELECT_FAIL;
+
+    PrintToLog("3rd check point\n");
 
     std::vector<CRecipient> vecRecipients;
     for (size_t i = 0; i < vecSend.size(); ++i) {
@@ -1715,41 +1727,44 @@ int mastercore::WalletTxBuilder(const std::string& senderAddress, const std::str
     }
 
     // Ask the wallet to create the transaction (note mining fee determined by Bitcoin Core params)
-    if (!pwalletMain->CreateTransaction(vecRecipients, wtxNew, reserveKey, nFeeRet, nChangePosInOut, strFailReason, coinControl, true)) { return MP_ERR_CREATE_TX; }
-
+    if (!pwalletMain->CreateTransaction(vecRecipients, wtxNew, reserveKey, nFeeRet, nChangePosInOut, strFailReason, coinControl, true)) { 
+        PrintToLog("strFailReason: %s ###########################################################\n",strFailReason);
+        return MP_ERR_CREATE_TX; }
+      
+    PrintToLog("4th check point\n");
     // Workaround for SigOps limit
-    // {
+     //{
         // if (!FillTxInputCache(wtxNew)) {
         //     PrintToLog("%s ERROR: failed to get inputs for %s\n", __func__, wtxNew.GetHash().GetHex());
         // }
         //
-        // unsigned int nBytesPerSigOp = 20; // default of Bitcoin Core 12.1
-        // unsigned int nSize = ::GetSerializeSize(wtxNew, SER_NETWORK, PROTOCOL_VERSION);
-        // unsigned int nSigOps = GetLegacySigOpCount(wtxNew);
-        // nSigOps += GetP2SHSigOpCount(wtxNew, view);
+        //unsigned int nBytesPerSigOp = 20; // default of Bitcoin Core 12.1
+        //unsigned int nSize = ::GetSerializeSize(wtxNew, SER_NETWORK, PROTOCOL_VERSION);
+        //unsigned int nSigOps = GetLegacySigOpCount(*(wtxNew.tx));
+        //nSigOps += GetP2SHSigOpCount(*(wtxNew.tx), view);
 
-        // if (nSigOps > nSize / nBytesPerSigOp) {
+        //if (nSigOps > nSize / nBytesPerSigOp) {
         //     std::vector<COutPoint> vInputs;
         //     coinControl.ListSelected(vInputs);
 
             // Ensure the requested number of inputs was available, so there may be more
-            // if (vInputs.size() >= minInputs) {
+          //  if (vInputs.size() >= minInputs) {
                 // Build a new transaction and try to select one additional input to
                 // shift the bytes per sigops ratio in our favor
-        //         ++minInputs;
-        //         return WalletTxBuilder(senderAddress, receiverAddress, referenceAmount, data, txid, rawHex, commit, minInputs);
-        //     } else {
+           //      ++minInputs;
+               //  return WalletTxBuilder(senderAddress, receiverAddress, referenceAmount, data, txid, rawHex, commit, minInputs);
+             //} else {
         //         PrintToLog("%s WARNING: %s has %d sigops, and may not confirm in time\n",
         //                 __func__, wtxNew.GetHash().GetHex(), nSigOps);
-        //     }
         // }
-    // }
-
+       //  }
+   // }
     // If this request is only to create, but not commit the transaction then display it and exit
     if (!commit) {
         rawHex = EncodeHexTx(*(wtxNew.tx));
         return 0;
     } else {
+        PrintToLog("6th checkpoint\n");
         // Commit the transaction to the wallet and broadcast)
         // PrintToLog("%s: %s; nFeeRet = %d\n", __func__, wtxNew.ToString(), nFeeRet);
         CValidationState state;

@@ -102,38 +102,38 @@ bool CMPTransaction::interpret_Transaction()
         case MSC_TYPE_SIMPLE_SEND:
             return interpret_SimpleSend();
 
-        case MSC_TYPE_SEND_ALL:
-            return interpret_SendAll();
-
-        case MSC_TYPE_CREATE_PROPERTY_FIXED:
-            return interpret_CreatePropertyFixed();
-
-        case MSC_TYPE_CREATE_PROPERTY_VARIABLE:
-            return interpret_CreatePropertyVariable();
-
-        case MSC_TYPE_CLOSE_CROWDSALE:
-            return interpret_CloseCrowdsale();
-
-        case MSC_TYPE_CREATE_PROPERTY_MANUAL:
-            return interpret_CreatePropertyManaged();
-
-        case MSC_TYPE_GRANT_PROPERTY_TOKENS:
-            return interpret_GrantTokens();
-
-        case MSC_TYPE_REVOKE_PROPERTY_TOKENS:
-            return interpret_RevokeTokens();
-
-        case MSC_TYPE_CHANGE_ISSUER_ADDRESS:
-            return interpret_ChangeIssuer();
-
-        case OMNICORE_MESSAGE_TYPE_DEACTIVATION:
-            return interpret_Deactivation();
-
-        case OMNICORE_MESSAGE_TYPE_ACTIVATION:
-            return interpret_Activation();
-
-        case OMNICORE_MESSAGE_TYPE_ALERT:
-            return interpret_Alert();
+       // case MSC_TYPE_SEND_ALL:
+       //     return interpret_SendAll();
+       //
+       // case MSC_TYPE_CREATE_PROPERTY_FIXED:
+       //     return interpret_CreatePropertyFixed();
+       //
+       // case MSC_TYPE_CREATE_PROPERTY_VARIABLE:
+       //     return interpret_CreatePropertyVariable();
+       //
+       // case MSC_TYPE_CLOSE_CROWDSALE:
+       //     return interpret_CloseCrowdsale();
+       //
+       // case MSC_TYPE_CREATE_PROPERTY_MANUAL:
+       //     return interpret_CreatePropertyManaged();
+       //
+       // case MSC_TYPE_GRANT_PROPERTY_TOKENS:
+       //     return interpret_GrantTokens();
+       //
+       // case MSC_TYPE_REVOKE_PROPERTY_TOKENS:
+       //     return interpret_RevokeTokens();
+       //
+       // case MSC_TYPE_CHANGE_ISSUER_ADDRESS:
+       //     return interpret_ChangeIssuer();
+       //
+       // case OMNICORE_MESSAGE_TYPE_DEACTIVATION:
+       //     return interpret_Deactivation();
+       //
+       // case OMNICORE_MESSAGE_TYPE_ACTIVATION:
+       //     return interpret_Activation();
+       //
+       // case OMNICORE_MESSAGE_TYPE_ALERT:
+       //     return interpret_Alert();
     }
 
     return false;
@@ -194,17 +194,17 @@ bool CMPTransaction::interpret_SimpleSend()
 /** Tx 4 */
 bool CMPTransaction::interpret_SendAll()
 {
-    int i = 0;
+    //int i = 0;
 
-    std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
-    std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
-    memcpy(&ecosystem, &pkt[i], 1);
+    //std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+    //std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+    //memcpy(&ecosystem, &pkt[i], 1);
 
-    property = ecosystem; // provide a hint for the UI, TODO: better handling!
+   // property = ecosystem; // provide a hint for the UI, TODO: better handling!
 
-    if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly) {
-        PrintToLog("\t       ecosystem: %d\n", (int)ecosystem);
-    }
+    //if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly) {
+    //    PrintToLog("\t       ecosystem: %d\n", (int)ecosystem);
+    //}
 
     return true;
 }
@@ -212,59 +212,59 @@ bool CMPTransaction::interpret_SendAll()
 /** Tx 50 */
 bool CMPTransaction::interpret_CreatePropertyFixed()
 {
-    int i = 0;
+    //int i = 0;
 
-    std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
-    std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+    //std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+    //std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
 
-    memcpy(&ecosystem, &pkt[i], 1);
-    i++;
+    //memcpy(&ecosystem, &pkt[i], 1);
+    //i++;
 
-    std::vector<uint8_t> vecPropTypeBytes = GetNextVarIntBytes(i);
-    std::vector<uint8_t> vecPrevPropIdBytes = GetNextVarIntBytes(i);
+    //std::vector<uint8_t> vecPropTypeBytes = GetNextVarIntBytes(i);
+    //std::vector<uint8_t> vecPrevPropIdBytes = GetNextVarIntBytes(i);
 
-    const char* p = i + (char*) &pkt;
-    std::vector<std::string> spstr;
-    for (int j = 0; j < 3; j++) {
-        spstr.push_back(std::string(p));
-        p += spstr.back().size() + 1;
-    }
+    //const char* p = i + (char*) &pkt;
+    //std::vector<std::string> spstr;
+    //for (int j = 0; j < 3; j++) {
+    //    spstr.push_back(std::string(p));
+    //    p += spstr.back().size() + 1;
+    //}
 
-    if (isOverrun(p)) {
-        PrintToLog("%s(): rejected: malformed string value(s)\n", __func__);
-        return false;
-    }
+    //if (isOverrun(p)) {
+    //    PrintToLog("%s(): rejected: malformed string value(s)\n", __func__);
+    //    return false;
+    //}
 
-    int j = 0;
-    memcpy(name, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(name)-1)); j++;
-    memcpy(url, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(url)-1)); j++;
-    memcpy(data, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(data)-1)); j++;
-    i = i + strlen(name) + strlen(url) + strlen(data) + 3; // data sizes + 3 null terminators
+    //int j = 0;
+    //memcpy(name, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(name)-1)); j++;
+    //memcpy(url, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(url)-1)); j++;
+    //memcpy(data, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(data)-1)); j++;
+    //i = i + strlen(name) + strlen(url) + strlen(data) + 3; // data sizes + 3 null terminators
 
-    std::vector<uint8_t> vecAmountBytes = GetNextVarIntBytes(i);
+    //std::vector<uint8_t> vecAmountBytes = GetNextVarIntBytes(i);
 
-    if (!vecPropTypeBytes.empty()) {
-        prop_type = DecompressInteger(vecPropTypeBytes);
-    } else return false;
+    //if (!vecPropTypeBytes.empty()) {
+    //    prop_type = DecompressInteger(vecPropTypeBytes);
+    //} else return false;
 
-    if (!vecPrevPropIdBytes.empty()) {
-        prev_prop_id = DecompressInteger(vecPrevPropIdBytes);
-    } else return false;
+    //if (!vecPrevPropIdBytes.empty()) {
+    //    prev_prop_id = DecompressInteger(vecPrevPropIdBytes);
+    //} else return false;
 
-    if (!vecAmountBytes.empty()) {
-        nValue = DecompressInteger(vecAmountBytes);
-        nNewValue = nValue;
-    } else return false;
+    //if (!vecAmountBytes.empty()) {
+    //    nValue = DecompressInteger(vecAmountBytes);
+    //    nNewValue = nValue;
+    //} else return false;
 
-    if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly) {
-        PrintToLog("\t       ecosystem: %d\n", ecosystem);
-        PrintToLog("\t   property type: %d (%s)\n", prop_type, strPropertyType(prop_type));
-        PrintToLog("\tprev property id: %d\n", prev_prop_id);
-        PrintToLog("\t            name: %s\n", name);
-        PrintToLog("\t             url: %s\n", url);
-        PrintToLog("\t            data: %s\n", data);
-        PrintToLog("\t           value: %s\n", FormatByType(nValue, prop_type));
-    }
+    //if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly) {
+    //    PrintToLog("\t       ecosystem: %d\n", ecosystem);
+    //    PrintToLog("\t   property type: %d (%s)\n", prop_type, strPropertyType(prop_type));
+    //    PrintToLog("\tprev property id: %d\n", prev_prop_id);
+    //    PrintToLog("\t            name: %s\n", name);
+    //    PrintToLog("\t             url: %s\n", url);
+    //    PrintToLog("\t            data: %s\n", data);
+    //    PrintToLog("\t           value: %s\n", FormatByType(nValue, prop_type));
+    //}
 
     return true;
 }
@@ -272,77 +272,77 @@ bool CMPTransaction::interpret_CreatePropertyFixed()
 /** Tx 51 */
 bool CMPTransaction::interpret_CreatePropertyVariable()
 {
-    int i = 0;
+    //int i = 0;
 
-    std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
-    std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+    //std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+    //std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
 
-    memcpy(&ecosystem, &pkt[i], 1);
-    i++;
+    //memcpy(&ecosystem, &pkt[i], 1);
+    //i++;
 
-    std::vector<uint8_t> vecPropTypeBytes = GetNextVarIntBytes(i);
-    std::vector<uint8_t> vecPrevPropIdBytes = GetNextVarIntBytes(i);
+    //std::vector<uint8_t> vecPropTypeBytes = GetNextVarIntBytes(i);
+    //std::vector<uint8_t> vecPrevPropIdBytes = GetNextVarIntBytes(i);
 
-    const char* p = i + (char*) &pkt;
-    std::vector<std::string> spstr;
-    for (int j = 0; j < 3; j++) {
-        spstr.push_back(std::string(p));
-        p += spstr.back().size() + 1;
-    }
+    //const char* p = i + (char*) &pkt;
+    //std::vector<std::string> spstr;
+    //for (int j = 0; j < 3; j++) {
+    //    spstr.push_back(std::string(p));
+    //    p += spstr.back().size() + 1;
+    //}
 
-    if (isOverrun(p)) {
-        PrintToLog("%s(): rejected: malformed string value(s)\n", __func__);
-        return false;
-    }
+    //if (isOverrun(p)) {
+    //    PrintToLog("%s(): rejected: malformed string value(s)\n", __func__);
+    //    return false;
+    //}
 
-    int j = 0;
-    memcpy(name, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(name)-1)); j++;
-    memcpy(url, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(url)-1)); j++;
-    memcpy(data, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(data)-1)); j++;
-    i = i + strlen(name) + strlen(url) + strlen(data) + 3; // data sizes + 3 null terminators
+    //int j = 0;
+    //memcpy(name, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(name)-1)); j++;
+    //memcpy(url, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(url)-1)); j++;
+    //memcpy(data, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(data)-1)); j++;
+    //i = i + strlen(name) + strlen(url) + strlen(data) + 3; // data sizes + 3 null terminators
 
-    std::vector<uint8_t> vecPropertyIdDesiredBytes = GetNextVarIntBytes(i);
-    std::vector<uint8_t> vecAmountPerUnitBytes = GetNextVarIntBytes(i);
-    std::vector<uint8_t> vecDeadlineBytes = GetNextVarIntBytes(i);
-    memcpy(&early_bird, &pkt[i], 1);
-    i++;
-    memcpy(&percentage, &pkt[i], 1);
-    i++;
+    //std::vector<uint8_t> vecPropertyIdDesiredBytes = GetNextVarIntBytes(i);
+    //std::vector<uint8_t> vecAmountPerUnitBytes = GetNextVarIntBytes(i);
+    //std::vector<uint8_t> vecDeadlineBytes = GetNextVarIntBytes(i);
+    //memcpy(&early_bird, &pkt[i], 1);
+    //i++;
+    //memcpy(&percentage, &pkt[i], 1);
+    //i++;
 
-    if (!vecPropTypeBytes.empty()) {
-        prop_type = DecompressInteger(vecPropTypeBytes);
-    } else return false;
+    //if (!vecPropTypeBytes.empty()) {
+    //    prop_type = DecompressInteger(vecPropTypeBytes);
+    //} else return false;
 
-    if (!vecPrevPropIdBytes.empty()) {
-        prev_prop_id = DecompressInteger(vecPrevPropIdBytes);
-    } else return false;
+    //if (!vecPrevPropIdBytes.empty()) {
+    //    prev_prop_id = DecompressInteger(vecPrevPropIdBytes);
+    //} else return false;
 
-    if (!vecPropertyIdDesiredBytes.empty()) {
-        property = DecompressInteger(vecPropertyIdDesiredBytes);
-    } else return false;
+    //if (!vecPropertyIdDesiredBytes.empty()) {
+    //    property = DecompressInteger(vecPropertyIdDesiredBytes);
+   // } else return false;
 
-    if (!vecAmountPerUnitBytes.empty()) {
-        nValue = DecompressInteger(vecAmountPerUnitBytes);
-        nNewValue = nValue;
-    } else return false;
+    //if (!vecAmountPerUnitBytes.empty()) {
+    //    nValue = DecompressInteger(vecAmountPerUnitBytes);
+    //    nNewValue = nValue;
+    //} else return false;
 
-    if (!vecDeadlineBytes.empty()) {
-        deadline = DecompressInteger(vecDeadlineBytes);
-    } else return false;
+    //if (!vecDeadlineBytes.empty()) {
+    //    deadline = DecompressInteger(vecDeadlineBytes);
+    //} else return false;
 
-    if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly) {
-        PrintToLog("\t       ecosystem: %d\n", ecosystem);
-        PrintToLog("\t   property type: %d (%s)\n", prop_type, strPropertyType(prop_type));
-        PrintToLog("\tprev property id: %d\n", prev_prop_id);
-        PrintToLog("\t            name: %s\n", name);
-        PrintToLog("\t             url: %s\n", url);
-        PrintToLog("\t            data: %s\n", data);
-        PrintToLog("\tproperty desired: %d (%s)\n", property, strMPProperty(property));
-        PrintToLog("\t tokens per unit: %s\n", FormatByType(nValue, prop_type));
-        PrintToLog("\t        deadline: %s (%x)\n", DateTimeStrFormat("%Y-%m-%d %H:%M:%S", deadline), deadline);
-        PrintToLog("\tearly bird bonus: %d\n", early_bird);
-        PrintToLog("\t    issuer bonus: %d\n", percentage);
-    }
+    //if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly) {
+    //    PrintToLog("\t       ecosystem: %d\n", ecosystem);
+    //    PrintToLog("\t   property type: %d (%s)\n", prop_type, strPropertyType(prop_type));
+    //    PrintToLog("\tprev property id: %d\n", prev_prop_id);
+    //    PrintToLog("\t            name: %s\n", name);
+    //    PrintToLog("\t             url: %s\n", url);
+    //    PrintToLog("\t            data: %s\n", data);
+    //    PrintToLog("\tproperty desired: %d (%s)\n", property, strMPProperty(property));
+    //    PrintToLog("\t tokens per unit: %s\n", FormatByType(nValue, prop_type));
+    //    PrintToLog("\t        deadline: %s (%x)\n", DateTimeStrFormat("%Y-%m-%d %H:%M:%S", deadline), deadline);
+    //    PrintToLog("\tearly bird bonus: %d\n", early_bird);
+    //    PrintToLog("\t    issuer bonus: %d\n", percentage);
+    //}
 
     return true;
 }
@@ -350,19 +350,19 @@ bool CMPTransaction::interpret_CreatePropertyVariable()
 /** Tx 53 */
 bool CMPTransaction::interpret_CloseCrowdsale()
 {
-    int i = 0;
-
-    std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
-    std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
-    std::vector<uint8_t> vecPropIdBytes = GetNextVarIntBytes(i);
-
-    if (!vecPropIdBytes.empty()) {
-        property = DecompressInteger(vecPropIdBytes);
-    } else return false;
-
-    if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly) {
-        PrintToLog("\t        property: %d (%s)\n", property, strMPProperty(property));
-    }
+   // int i = 0;
+   //
+   // std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+   // std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+   // std::vector<uint8_t> vecPropIdBytes = GetNextVarIntBytes(i);
+   //
+   // if (!vecPropIdBytes.empty()) {
+   //     property = DecompressInteger(vecPropIdBytes);
+   // } else return false;
+   //
+   // if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly) {
+   //     PrintToLog("\t        property: %d (%s)\n", property, strMPProperty(property));
+   // }
 
     return true;
 }
@@ -370,7 +370,7 @@ bool CMPTransaction::interpret_CloseCrowdsale()
 /** Tx 54 */
 bool CMPTransaction::interpret_CreatePropertyManaged()
 {
-    int i = 0;
+   /* int i = 0;
 
     std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
     std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
@@ -415,14 +415,14 @@ bool CMPTransaction::interpret_CreatePropertyManaged()
         PrintToLog("\t             url: %s\n", url);
         PrintToLog("\t            data: %s\n", data);
     }
-
+*/
     return true;
 }
 
 /** Tx 55 */
 bool CMPTransaction::interpret_GrantTokens()
 {
-    int i = 0;
+  /*  int i = 0;
 
     std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
     std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
@@ -442,14 +442,14 @@ bool CMPTransaction::interpret_GrantTokens()
         PrintToLog("\t        property: %d (%s)\n", property, strMPProperty(property));
         PrintToLog("\t           value: %s\n", FormatMP(property, nValue));
     }
-
+*/
     return true;
 }
 
 /** Tx 56 */
 bool CMPTransaction::interpret_RevokeTokens()
 {
-    int i = 0;
+   /* int i = 0;
 
     std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
     std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
@@ -469,14 +469,14 @@ bool CMPTransaction::interpret_RevokeTokens()
         PrintToLog("\t        property: %d (%s)\n", property, strMPProperty(property));
         PrintToLog("\t           value: %s\n", FormatMP(property, nValue));
     }
-
+*/
     return true;
 }
 
 /** Tx 70 */
 bool CMPTransaction::interpret_ChangeIssuer()
 {
-    int i = 0;
+  /*  int i = 0;
 
     std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
     std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
@@ -489,14 +489,14 @@ bool CMPTransaction::interpret_ChangeIssuer()
     if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly) {
         PrintToLog("\t        property: %d (%s)\n", property, strMPProperty(property));
     }
-
+*/
     return true;
 }
 
 /** Tx 65533 */
 bool CMPTransaction::interpret_Deactivation()
 {
-    int i = 0;
+  /*  int i = 0;
 
     std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
     std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
@@ -509,14 +509,14 @@ bool CMPTransaction::interpret_Deactivation()
     if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly) {
         PrintToLog("\t      feature id: %d\n", feature_id);
     }
-
+*/
     return true;
 }
 
 /** Tx 65534 */
 bool CMPTransaction::interpret_Activation()
 {
-    int i = 0;
+  /*  int i = 0;
 
     std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
     std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
@@ -541,14 +541,14 @@ bool CMPTransaction::interpret_Activation()
         PrintToLog("\tactivation block: %d\n", activation_block);
         PrintToLog("\t minimum version: %d\n", min_client_version);
     }
-
+*/
     return true;
 }
 
 /** Tx 65535 */
 bool CMPTransaction::interpret_Alert()
 {
-    int i = 0;
+   /* int i = 0;
 
     std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
     std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
@@ -577,7 +577,7 @@ bool CMPTransaction::interpret_Alert()
         PrintToLog("\t    expiry value: %d\n", alert_expiry);
         PrintToLog("\t   alert message: %s\n", alert_text);
     }
-
+*/
     return true;
 }
 
@@ -605,7 +605,7 @@ int CMPTransaction::interpretPacket()
     switch (type) {
         case MSC_TYPE_SIMPLE_SEND:
             return logicMath_SimpleSend();
-
+    /*
         case MSC_TYPE_SEND_ALL:
             return logicMath_SendAll();
 
@@ -637,17 +637,21 @@ int CMPTransaction::interpretPacket()
             return logicMath_Activation();
 
         case OMNICORE_MESSAGE_TYPE_ALERT:
-            return logicMath_Alert();
+            return logicMath_Alert();*/
     }
 
     return (PKT_ERROR -100);
 }
 
+
+
 /** Passive effect of crowdsale participation. */
+
+/*
 int CMPTransaction::logicHelper_CrowdsaleParticipation()
 {
-    CMPCrowd* pcrowdsale = getCrowd(receiver);
-
+     CMPCrowd* pcrowdsale = getCrowd(receiver);
+   
     // No active crowdsale
     if (pcrowdsale == NULL) {
         return (PKT_ERROR_CROWD -1);
@@ -722,7 +726,8 @@ int CMPTransaction::logicHelper_CrowdsaleParticipation()
     return 0;
 }
 
-/** Tx 0 */
+*/
+
 int CMPTransaction::logicMath_SimpleSend()
 {
     // if (!IsTransactionTypeAllowed(block, property, type, version)) {
@@ -768,12 +773,13 @@ int CMPTransaction::logicMath_SimpleSend()
     assert(update_tally_map(receiver, property, nValue, BALANCE));
 
     // Is there an active crowdsale running from this recepient?
-    logicHelper_CrowdsaleParticipation();
+   // logicHelper_CrowdsaleParticipation();
 
     return 0;
 }
 
-/** Tx 4 */
+
+/*
 int CMPTransaction::logicMath_SendAll()
 {
     if (!IsTransactionTypeAllowed(block, ecosystem, type, version)) {
@@ -830,7 +836,6 @@ int CMPTransaction::logicMath_SendAll()
     return 0;
 }
 
-/** Tx 50 */
 int CMPTransaction::logicMath_CreatePropertyFixed()
 {
     uint256 blockHash;
@@ -900,7 +905,6 @@ int CMPTransaction::logicMath_CreatePropertyFixed()
     return 0;
 }
 
-/** Tx 51 */
 int CMPTransaction::logicMath_CreatePropertyVariable()
 {
     uint256 blockHash;
@@ -997,7 +1001,6 @@ int CMPTransaction::logicMath_CreatePropertyVariable()
     return 0;
 }
 
-/** Tx 53 */
 int CMPTransaction::logicMath_CloseCrowdsale()
 {
     uint256 blockHash;
@@ -1064,7 +1067,6 @@ int CMPTransaction::logicMath_CloseCrowdsale()
     return 0;
 }
 
-/** Tx 54 */
 int CMPTransaction::logicMath_CreatePropertyManaged()
 {
     uint256 blockHash;
@@ -1128,7 +1130,6 @@ int CMPTransaction::logicMath_CreatePropertyManaged()
     return 0;
 }
 
-/** Tx 55 */
 int CMPTransaction::logicMath_GrantTokens()
 {
     uint256 blockHash;
@@ -1211,7 +1212,6 @@ int CMPTransaction::logicMath_GrantTokens()
     return 0;
 }
 
-/** Tx 56 */
 int CMPTransaction::logicMath_RevokeTokens()
 {
     uint256 blockHash;
@@ -1281,7 +1281,6 @@ int CMPTransaction::logicMath_RevokeTokens()
     return 0;
 }
 
-/** Tx 70 */
 int CMPTransaction::logicMath_ChangeIssuer()
 {
     uint256 blockHash;
@@ -1344,7 +1343,6 @@ int CMPTransaction::logicMath_ChangeIssuer()
     return 0;
 }
 
-/** Tx 65533 */
 int CMPTransaction::logicMath_Deactivation()
 {
     if (!IsTransactionTypeAllowed(block, property, type, version)) {
@@ -1379,7 +1377,6 @@ int CMPTransaction::logicMath_Deactivation()
     return 0;
 }
 
-/** Tx 65534 */
 int CMPTransaction::logicMath_Activation()
 {
     if (!IsTransactionTypeAllowed(block, property, type, version)) {
@@ -1414,7 +1411,6 @@ int CMPTransaction::logicMath_Activation()
     return 0;
 }
 
-/** Tx 65535 */
 int CMPTransaction::logicMath_Alert()
 {
     if (!IsTransactionTypeAllowed(block, property, type, version)) {
@@ -1449,3 +1445,5 @@ int CMPTransaction::logicMath_Alert()
 
     return 0;
 }
+
+*/

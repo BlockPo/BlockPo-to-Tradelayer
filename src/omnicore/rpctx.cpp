@@ -101,6 +101,13 @@ UniValue omni_send(const JSONRPCRequest& request)
     int64_t amount = ParseAmount(request.params[3], isPropertyDivisible(propertyId));
     int64_t referenceAmount = (request.params.size() > 4) ? ParseAmount(request.params[4], true): 0;
 
+    PrintToLog("Checking the rpc arguments \n");
+    PrintToLog("fromAddress : %s\n",fromAddress);
+    PrintToLog("toAddress : %s\n",toAddress);
+    PrintToLog("propertyId : %d\n",propertyId);
+    PrintToLog("amount : %d\n",amount);
+    
+
     // perform checks
     // RequireExistingProperty(propertyId);
     // RequireBalance(fromAddress, propertyId, amount);
@@ -113,7 +120,7 @@ UniValue omni_send(const JSONRPCRequest& request)
     uint256 txid;
     std::string rawHex;
     int result = WalletTxBuilder(fromAddress, toAddress, referenceAmount, payload, txid, rawHex, autoCommit);
-
+    PrintToLog("result walletTxBuilder function : %d\n",result);
     // check error and return the txid (or raw hex depending on autocommit)
     if (result != 0) {
         throw JSONRPCError(result, error_str(result));

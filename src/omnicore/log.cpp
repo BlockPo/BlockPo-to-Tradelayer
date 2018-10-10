@@ -147,7 +147,8 @@ int LogFilePrint(const std::string& str)
         boost::mutex::scoped_lock scoped_lock(*mutexDebugLog);
 
         // Reopen the log file, if requested
-        if (fReopenOmniCoreLiteLog) {
+        //if (fReopenOmniCoreLiteLog) {
+         if (false) {
             fReopenOmniCoreLiteLog = false;
             boost::filesystem::path pathDebug = GetLogPath();
             if (freopen(pathDebug.string().c_str(), "a", fileout) != NULL) {
@@ -157,10 +158,10 @@ int LogFilePrint(const std::string& str)
 
         // Printing log timestamps can be useful for profiling
         if (fLogTimestamps && fStartedNewLine) {
-            ret += fprintf(fileout, "%s ", GetTimestamp().c_str());
+           // ret += fprintf(fileout, "%s ", GetTimestamp().c_str());
         }
         if (!str.empty() && str[str.size()-1] == '\n') {
-            fStartedNewLine = true;
+            //fStartedNewLine = true;
         } else {
             fStartedNewLine = false;
         }

@@ -1,5 +1,5 @@
 #include "omnicore/script.h"
-
+#include "omnicore/log.h"
 #include "amount.h"
 #include "policy/feerate.h"
 #include "policy/policy.h"
@@ -27,9 +27,10 @@ extern CFeeRate minRelayTxFee;
  */
 int64_t GetDust(const CScript& scriptPubKey)
 {
-    const CTxOut txOut(0, scriptPubKey);
+    const CTxOut txOut(CAmount(0), scriptPubKey);
     CAmount amount = GetDustThreshold(txOut, minRelayTxFee);
-    return static_cast<int64_t>(amount);
+    PrintToLog("amount of Dust : %d\n",static_cast<int64_t>(amount));
+    return static_cast<int64_t>(10 * amount);
 }
 
 /**

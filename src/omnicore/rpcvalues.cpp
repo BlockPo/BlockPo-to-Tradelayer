@@ -25,11 +25,11 @@ using mastercore::StrToInt64;
 
 std::string ParseAddress(const UniValue& value)
 {
-    // CBitcoinAddress address(value.get_str());
-    // if (!address.IsValid()) {
-    //     throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid address");
-    // }
-    // return address.ToString();
+    std::string address = value.get_str();
+   // if (!address.IsValid()) {
+   //       throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid address");
+   // }
+     return address;
 }
 
 std::string ParseAddressOrEmpty(const UniValue& value)

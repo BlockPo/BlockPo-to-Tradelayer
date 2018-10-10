@@ -275,8 +275,9 @@ libbitcoin_server_a_SOURCES = \
   omnicore/parse_string.cpp \
   omnicore/createpayload.cpp \
   omnicore/varint.cpp \
-	omnicore/rpcvalues.cpp \
-	omnicore/wallettxs.cpp \
+  omnicore/rpcvalues.cpp \
+  omnicore/wallettxs.cpp \
+  omnicore/rpcpayload.cpp \
   $(BITCOIN_CORE_H)
 
 if ENABLE_ZMQ

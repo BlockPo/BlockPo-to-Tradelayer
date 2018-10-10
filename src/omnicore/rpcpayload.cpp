@@ -17,7 +17,7 @@ using namespace mastercore;
 
 UniValue omni_createpayload_simplesend(const JSONRPCRequest& request)
 {
-   if (fHelp || request.params.size() != 2)
+   if (request.params.size() != 2)
         throw runtime_error(
             "omni_createpayload_simplesend propertyid \"amount\"\n"
 
@@ -45,6 +45,7 @@ UniValue omni_createpayload_simplesend(const JSONRPCRequest& request)
     return HexStr(payload.begin(), payload.end());
 }
 
+/*
 UniValue omni_createpayload_sendall(const JSONRPCRequest& request)
 {
     if (fHelp || request.params.size() != 1)
@@ -315,18 +316,19 @@ UniValue omni_createpayload_changeissuer(const JSONRPCRequest& request)
     return HexStr(payload.begin(), payload.end());
 }
 
+*/
 static const CRPCCommand commands[] =
 { //  category                         name                                      actor (function)                         okSafeMode
   //  -------------------------------- ----------------------------------------- ---------------------------------------- ----------
-    { "omni layer (payload creation)", "omni_createpayload_simplesend",          &omni_createpayload_simplesend,          true },
-    { "omni layer (payload creation)", "omni_createpayload_sendall",             &omni_createpayload_sendall,             true },
+    { "omni layer (payload creation)", "omni_createpayload_simplesend",          &omni_createpayload_simplesend,          {} },
+   /* { "omni layer (payload creation)", "omni_createpayload_sendall",             &omni_createpayload_sendall,             true },
     { "omni layer (payload creation)", "omni_createpayload_grant",               &omni_createpayload_grant,               true },
     { "omni layer (payload creation)", "omni_createpayload_revoke",              &omni_createpayload_revoke,              true },
     { "omni layer (payload creation)", "omni_createpayload_changeissuer",        &omni_createpayload_changeissuer,        true },
     { "omni layer (payload creation)", "omni_createpayload_issuancefixed",       &omni_createpayload_issuancefixed,       true },
     { "omni layer (payload creation)", "omni_createpayload_issuancecrowdsale",   &omni_createpayload_issuancecrowdsale,   true },
     { "omni layer (payload creation)", "omni_createpayload_issuancemanaged",     &omni_createpayload_issuancemanaged,     true },
-    { "omni layer (payload creation)", "omni_createpayload_closecrowdsale",      &omni_createpayload_closecrowdsale,      true },
+    { "omni layer (payload creation)", "omni_createpayload_closecrowdsale",      &omni_createpayload_closecrowdsale,      true },*/
 };
 
 void RegisterOmniPayloadCreationRPCCommands(CRPCTable &tableRPC)

@@ -143,12 +143,15 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "echojson", 9, "arg9" },
     { "rescanblockchain", 0, "start_height"},
     { "rescanblockchain", 1, "stop_height"},
+    
+     /* Omni Core - payload creation */
+    { "omni_createpayload_simplesend", 0, "arg0" },
 
     /* Omni Core - transaction calls */
-    { "omni_send", 2, "" },
+    { "omni_send", 2, "arg0" },
 
     /* Omni Core - data retrieval calls */
-    { "omni_getbalance", 1, "" },
+    { "omni_getbalance", 1, "arg0" },
 
 
 

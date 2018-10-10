@@ -118,13 +118,16 @@ bool CheckInput(const CTxOut& txOut, int nHeight, CTxDestination& dest)
     txnouttype whichType;
 
     if (!GetOutputType(txOut.scriptPubKey, whichType)) {
-        return false;
+       //PrintToLog("!GetOutputType\n");
+       //return false;
     }
     if (!IsAllowedInputType(whichType, nHeight)) {
-        return false;
+       //PrintToLog("!IsAllowedInputType\n");
+       //return false;
     }
     if (!ExtractDestination(txOut.scriptPubKey, dest)) {
-        return false;
+       PrintToLog("!ExtractDestination \n");
+       return false;
     }
 
     return true;
@@ -214,10 +217,12 @@ int64_t SelectCoins(const std::string& fromAddress, CCoinControl& coinControl, i
         const CWalletTx& wtx = it->second;
 
         if (!wtx.IsTrusted()) {
-            continue;
+            PrintToLog("!wtx.IsTrusted\n");
+            //continue;
         }
         if (!wtx.GetAvailableCredit()) {
-            continue;
+            PrintToLog("!wtx.GetAvailabeCredit \n");
+            //continue;
         }
 
         for (unsigned int n = 0; n < wtx.tx->vout.size(); n++) {
@@ -225,21 +230,27 @@ int64_t SelectCoins(const std::string& fromAddress, CCoinControl& coinControl, i
 
             CTxDestination dest;
             if (!CheckInput(txOut, nHeight, dest)) {
+                PrintToLog("!CheckInput \n");
                 continue;
-            }
+            } 
             if (!IsMine(*pwalletMain, dest)) {
+                PrintToLog("!IsMine \n");
                 continue;
             }
             if (pwalletMain->IsSpent(txid, n)) {
-                continue;
+               PrintToLog("pwalletMain->IsSpent \n");
+               continue;
             }
 
-            std::string sAddress = EncodeDestination(dest); // new change
-            if (msc_debug_tokens)
-                PrintToLog("%s(): sender: %s, outpoint: %s:%d, value: %d\n", __func__, sAddress, txid.GetHex(), n, txOut.nValue);
+            CTxDestination cfromAddress = DecodeDestination(fromAddress); // new change 
+            //if (msc_debug_tokens)
+            //PrintToLog("%s(): sender: %s, outpoint: %s:%d, value: %d\n", __func__, sAddress, txid.GetHex(), n, txOut.nValue);
+            PrintToLog("fromAddress: %s\n", fromAddress);
+            PrintToLog("destAddress: %s\n", EncodeDestination(dest));
 
             // only use funds from the sender's address
-            if (fromAddress == sAddress) {
+            if (cfromAddress == dest) {
+                PrintToLog("fromAddress == sAddress \n");
                 COutPoint outpoint(txid, n);
                 coinControl.Select(outpoint);
 
@@ -253,7 +264,7 @@ int64_t SelectCoins(const std::string& fromAddress, CCoinControl& coinControl, i
         if (nMax <= nTotal && nNumOutputs >= minOutputs) break;
     }
 #endif
-
+    PrintToLog("nTotal: %d\n", nTotal);
     return nTotal;
 }
 
