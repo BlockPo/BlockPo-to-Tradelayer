@@ -6,7 +6,8 @@ WORK DONE:
 
 - OP_RETURN data embbeded (wallet transactions)
 - Simple send RPC working on regtest
-
+- Create isuance managed RPC working on regtest
+- leveldb working 
 
 TODO LIST:
 ----------
