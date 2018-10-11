@@ -179,45 +179,43 @@ uint32_t CMPSPInfo::putSP(uint8_t ecosystem, const Entry& info)
             propertyId = 0;
     }
 
-    PrintToLog("inside putSP function 1\n");
     // DB key for property entry
     CDataStream ssSpKey(SER_DISK, CLIENT_VERSION);
     ssSpKey << std::make_pair('s', propertyId);
     leveldb::Slice slSpKey(&ssSpKey[0], ssSpKey.size());
-     PrintToLog("inside putSP function 2\n");
+
     // DB value for property entry
     CDataStream ssSpValue(SER_DISK, CLIENT_VERSION);
     ssSpValue.reserve(GetSerializeSize(info, ssSpValue.GetType(), ssSpValue.GetVersion()));
     ssSpValue << info;
     leveldb::Slice slSpValue(&ssSpValue[0], ssSpValue.size());
-    PrintToLog("inside putSP function 3\n");
+
     // DB key for identifier lookup entry
     CDataStream ssTxIndexKey(SER_DISK, CLIENT_VERSION);
     ssTxIndexKey << std::make_pair('t', info.txid);
     leveldb::Slice slTxIndexKey(&ssTxIndexKey[0], ssTxIndexKey.size());
-    PrintToLog("inside putSP function 4\n");
+
     // DB value for identifier
     CDataStream ssTxValue(SER_DISK, CLIENT_VERSION);
     ssTxValue.reserve(GetSerializeSize(propertyId, ssSpValue.GetType(), ssSpValue.GetVersion()));
     ssTxValue << propertyId;
     leveldb::Slice slTxValue(&ssTxValue[0], ssTxValue.size());
-    PrintToLog("inside putSP function 5\n");
 
     // sanity checking
- /*   std::string existingEntry;
+    std::string existingEntry;
     if (!pdb->Get(readoptions, slSpKey, &existingEntry).IsNotFound() && slSpValue.compare(existingEntry) != 0) {
         std::string strError = strprintf("writing SP %d to DB, when a different SP already exists for that identifier", propertyId);
         PrintToLog("%s() ERROR: %s\n", __func__, strError);
     } else if (!pdb->Get(readoptions, slTxIndexKey, &existingEntry).IsNotFound() && slTxValue.compare(existingEntry) != 0) {
         std::string strError = strprintf("writing index txid %s : SP %d is overwriting a different value", info.txid.ToString(), propertyId);
         PrintToLog("%s() ERROR: %s\n", __func__, strError);
-    }*/
-    PrintToLog("inside putSP function 6\n");
+    }
+
     // atomically write both the the SP and the index to the database
     leveldb::WriteBatch batch;
     batch.Put(slSpKey, slSpValue);
     batch.Put(slTxIndexKey, slTxValue);
-    PrintToLog("inside putSP function 7\n");
+
     leveldb::Status status = pdb->Write(syncoptions, &batch);
 
     if (!status.ok()) {

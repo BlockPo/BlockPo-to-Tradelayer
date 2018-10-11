@@ -76,13 +76,13 @@ using namespace mastercore;
 //     throw JSONRPCError(RPC_INTERNAL_ERROR, "Generic transaction population failure");
 // }
 //
-// void PropertyToJSON(const CMPSPInfo::Entry& sProperty, UniValue& property_obj)
-// {
-//     property_obj.push_back(Pair("name", sProperty.name));
-//     property_obj.push_back(Pair("data", sProperty.data));
-//     property_obj.push_back(Pair("url", sProperty.url));
-//     property_obj.push_back(Pair("divisible", sProperty.isDivisible()));
-// }
+ void PropertyToJSON(const CMPSPInfo::Entry& sProperty, UniValue& property_obj)
+ {
+     property_obj.push_back(Pair("name", sProperty.name));
+     property_obj.push_back(Pair("data", sProperty.data));
+     property_obj.push_back(Pair("url", sProperty.url));
+     property_obj.push_back(Pair("divisible", sProperty.isDivisible()));
+ }
 
 bool BalanceToJSON(const std::string& address, uint32_t property, UniValue& balance_obj, bool divisible)
 {
@@ -548,58 +548,57 @@ UniValue omni_getbalance(const JSONRPCRequest& request)
 //     return response;
 // }
 //
-// UniValue omni_listproperties(const JSONRPCRequest& request)
-// {
-//     if (fHelp)
-//         throw runtime_error(
-//             "omni_listproperties\n"
-//             "\nLists all tokens or smart properties.\n"
-//             "\nResult:\n"
-//             "[                                (array of JSON objects)\n"
-//             "  {\n"
-//             "    \"propertyid\" : n,                (number) the identifier of the tokens\n"
-//             "    \"name\" : \"name\",                 (string) the name of the tokens\n"
-//             "    \"data\" : \"information\",          (string) additional information or a description\n"
-//             "    \"url\" : \"uri\",                   (string) an URI, for example pointing to a website\n"
-//             "    \"divisible\" : true|false         (boolean) whether the tokens are divisible\n"
-//             "  },\n"
-//             "  ...\n"
-//             "]\n"
-//             "\nExamples:\n"
-//             + HelpExampleCli("omni_listproperties", "")
-//             + HelpExampleRpc("omni_listproperties", "")
-//         );
-//
-//     UniValue response(UniValue::VARR);
-//
-//     LOCK(cs_tally);
-//
-//     uint32_t nextSPID = _my_sps->peekNextSPID(1);
-//     for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++) {
-//         CMPSPInfo::Entry sp;
-//         if (_my_sps->getSP(propertyId, sp)) {
-//             UniValue propertyObj(UniValue::VOBJ);
-//             propertyObj.push_back(Pair("propertyid", (uint64_t) propertyId));
-//             PropertyToJSON(sp, propertyObj); // name, data, url, divisible
-//
-//             response.push_back(propertyObj);
-//         }
-//     }
-//
-//     uint32_t nextTestSPID = _my_sps->peekNextSPID(2);
-//     for (uint32_t propertyId = TEST_ECO_PROPERTY_1; propertyId < nextTestSPID; propertyId++) {
-//         CMPSPInfo::Entry sp;
-//         if (_my_sps->getSP(propertyId, sp)) {
-//             UniValue propertyObj(UniValue::VOBJ);
-//             propertyObj.push_back(Pair("propertyid", (uint64_t) propertyId));
-//             PropertyToJSON(sp, propertyObj); // name, data, url, divisible
-//
-//             response.push_back(propertyObj);
-//         }
-//     }
-//
-//     return response;
-// }
+UniValue omni_listproperties(const JSONRPCRequest& request)
+{
+     if (false)
+         throw runtime_error(
+             "omni_listproperties\n"
+             "\nLists all tokens or smart properties.\n"
+             "\nResult:\n"
+             "[                                (array of JSON objects)\n"
+             "  {\n"
+             "    \"propertyid\" : n,                (number) the identifier of the tokens\n"
+             "    \"name\" : \"name\",                 (string) the name of the tokens\n"
+             "    \"data\" : \"information\",          (string) additional information or a description\n"
+             "    \"url\" : \"uri\",                   (string) an URI, for example pointing to a website\n"
+             "    \"divisible\" : true|false         (boolean) whether the tokens are divisible\n"
+             "  },\n"
+             "  ...\n"
+             "]\n"
+             "\nExamples:\n"
+             + HelpExampleCli("omni_listproperties", "")
+             + HelpExampleRpc("omni_listproperties", "")
+         );
+
+     UniValue response(UniValue::VARR);
+
+     LOCK(cs_tally);
+
+     uint32_t nextSPID = _my_sps->peekNextSPID(1);
+     for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++) {
+         CMPSPInfo::Entry sp;
+         if (_my_sps->getSP(propertyId, sp)) {
+             UniValue propertyObj(UniValue::VOBJ);
+             propertyObj.push_back(Pair("propertyid", (uint64_t) propertyId));
+             PropertyToJSON(sp, propertyObj); // name, data, url, divisible
+             response.push_back(propertyObj);
+         }
+     }
+
+     uint32_t nextTestSPID = _my_sps->peekNextSPID(2);
+     for (uint32_t propertyId = TEST_ECO_PROPERTY_1; propertyId < nextTestSPID; propertyId++) {
+         CMPSPInfo::Entry sp;
+         if (_my_sps->getSP(propertyId, sp)) {
+             UniValue propertyObj(UniValue::VOBJ);
+             propertyObj.push_back(Pair("propertyid", (uint64_t) propertyId));
+             PropertyToJSON(sp, propertyObj); // name, data, url, divisible
+
+             response.push_back(propertyObj);
+         }
+     }
+
+     return response;
+ }
 //
 // UniValue omni_getcrowdsale(const JSONRPCRequest& request)
 // {
@@ -1303,7 +1302,7 @@ static const CRPCCommand commands[] =
     { "omni layer (data retrieval)", "omni_getbalance",                &omni_getbalance,                 {} },
     // { "omni layer (data retrieval)", "omni_gettransaction",            &omni_gettransaction,             {} },
     // { "omni layer (data retrieval)", "omni_getproperty",               &omni_getproperty,                {} },
-    // { "omni layer (data retrieval)", "omni_listproperties",            &omni_listproperties,             {} },
+     { "omni layer (data retrieval)", "omni_listproperties",            &omni_listproperties,             {} },
     // { "omni layer (data retrieval)", "omni_getcrowdsale",              &omni_getcrowdsale,               {} },
     // { "omni layer (data retrieval)", "omni_getgrants",                 &omni_getgrants,                  {} },
     // { "omni layer (data retrieval)", "omni_getactivecrowdsales",       &omni_getactivecrowdsales,        {} },
