@@ -1,7 +1,7 @@
 Omni-lite (upgrading Litecoin Core 0.16.3)
 ==========================================
 
-WORK DONE:
+Work done:
 ----------
 
 - OP_RETURN data embbeded (wallet transactions)
@@ -9,7 +9,7 @@ WORK DONE:
 - Create isuance managed RPC working on regtest
 - leveldb working 
 
-TODO LIST:
+ToDo list:
 ----------
 
 - Upgrade Database stuff ( to save the states of omnicore)
