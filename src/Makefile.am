@@ -206,6 +206,7 @@ BITCOIN_CORE_H = \
 	omnicore/parse_string.h \
 	omnicore/createpayload.h \
 	omnicore/rpcpayload.h \
+        omnicore/activation.h \
 	omnicore/varint.h
 
 obj/build.h: FORCE
@@ -278,6 +279,8 @@ libbitcoin_server_a_SOURCES = \
   omnicore/rpcvalues.cpp \
   omnicore/wallettxs.cpp \
   omnicore/rpcpayload.cpp \
+  omnicore/activation.cpp \
+  omnicore/notifications.cpp \
   $(BITCOIN_CORE_H)
 
 if ENABLE_ZMQ

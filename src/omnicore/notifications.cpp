@@ -6,7 +6,7 @@
 #include "omnicore/utilsbitcoin.h"
 #include "omnicore/version.h"
 
-#include "main.h"
+#include "validation.h"
 #include "util.h"
 #include "ui_interface.h"
 
@@ -36,7 +36,7 @@ void DeleteAlerts(const std::string& sender)
             PrintToLog("Removing deleted alert (from:%s type:%d expiry:%d message:%s)\n", alert.alert_sender,
                 alert.alert_type, alert.alert_expiry, alert.alert_message);
             it = currentOmniAlerts.erase(it);
-            uiInterface.OmniStateChanged();
+            //uiInterface.OmniStateChanged();
         } else {
             it++;
         }
@@ -51,7 +51,7 @@ void DeleteAlerts(const std::string& sender)
 void ClearAlerts()
 {
     currentOmniAlerts.clear();
-    uiInterface.OmniStateChanged();
+    //uiInterface.OmniStateChanged();
 }
 
 /**
@@ -92,7 +92,7 @@ bool CheckAlertAuthorization(const std::string& sender)
     // TODO : NEW ALERT USERS
 
     // Add manually whitelisted sources
-    if (mapArgs.count("-omnialertallowsender")) {
+    /*if (mapArgs.count("-omnialertallowsender")) {
         const std::vector<std::string>& sources = mapMultiArgs["-omnialertallowsender"];
 
         for (std::vector<std::string>::const_iterator it = sources.begin(); it != sources.end(); ++it) {
@@ -107,11 +107,12 @@ bool CheckAlertAuthorization(const std::string& sender)
         for (std::vector<std::string>::const_iterator it = sources.begin(); it != sources.end(); ++it) {
             whitelisted.erase(*it);
         }
-    }
-
-    bool fAuthorized = (whitelisted.count(sender) ||
-                        whitelisted.count("any"));
-
+    }*/
+     
+    //bool fAuthorized = (whitelisted.count(sender) ||
+    //                    whitelisted.count("any"));
+   
+    bool fAuthorized = false;
     return fAuthorized;
 }
 
@@ -148,7 +149,7 @@ bool CheckExpiredAlerts(unsigned int curBlock, uint64_t curTime)
                     PrintToLog("Expiring alert (from %s: type:%d expiry:%d message:%s)\n", alert.alert_sender,
                         alert.alert_type, alert.alert_expiry, alert.alert_message);
                     it = currentOmniAlerts.erase(it);
-                    uiInterface.OmniStateChanged();
+                    //uiInterface.OmniStateChanged();
                 } else {
                     it++;
                 }
@@ -158,7 +159,7 @@ bool CheckExpiredAlerts(unsigned int curBlock, uint64_t curTime)
                     PrintToLog("Expiring alert (from %s: type:%d expiry:%d message:%s)\n", alert.alert_sender,
                         alert.alert_type, alert.alert_expiry, alert.alert_message);
                     it = currentOmniAlerts.erase(it);
-                    uiInterface.OmniStateChanged();
+                    //uiInterface.OmniStateChanged();
                 } else {
                     it++;
                 }
@@ -168,7 +169,7 @@ bool CheckExpiredAlerts(unsigned int curBlock, uint64_t curTime)
                     PrintToLog("Expiring alert (form: %s type:%d expiry:%d message:%s)\n", alert.alert_sender,
                         alert.alert_type, alert.alert_expiry, alert.alert_message);
                     it = currentOmniAlerts.erase(it);
-                    uiInterface.OmniStateChanged();
+                    //uiInterface.OmniStateChanged();
                 } else {
                     it++;
                 }
@@ -177,7 +178,7 @@ bool CheckExpiredAlerts(unsigned int curBlock, uint64_t curTime)
                     PrintToLog("Removing invalid alert (from:%s type:%d expiry:%d message:%s)\n", alert.alert_sender,
                         alert.alert_type, alert.alert_expiry, alert.alert_message);
                     it = currentOmniAlerts.erase(it);
-                    uiInterface.OmniStateChanged();
+                    //uiInterface.OmniStateChanged();
             break;
         }
     }

@@ -13,6 +13,7 @@
 
 #include "ui_interface.h"
 
+#include <set>
 #include <stdint.h>
 #include <string>
 #include <vector>
@@ -69,7 +70,7 @@ void AddPendingActivation(uint16_t featureId, int activationBlock, uint32_t minC
 
     vecPendingActivations.push_back(featureActivation);
 
-    uiInterface.OmniStateChanged();
+    //uiInterface.OmniStateChanged();
 }
 
 /**
@@ -135,17 +136,17 @@ void ClearActivations()
  */
 bool CheckActivationAuthorization(const std::string& sender)
 {
-    std::set<std::string> whitelisted;
+   // std::set<std::string> whitelisted;
 
     // Mainnet - 4 out of 5 signatures required from developers & board members
     // TODO: New key is required for Omni Lite
-    whitelisted.insert("LZKEY");
+    //whitelisted.insert("LZKEY");
 
     // Testnet / Regtest
     // use -omniactivationallowsender for testing
 
     // Add manually whitelisted sources
-    if (mapArgs.count("-omniactivationallowsender")) {
+    /*if (mapArgs.count("-omniactivationallowsender")) {
         const std::vector<std::string>& sources = mapMultiArgs["-omniactivationallowsender"];
 
         for (std::vector<std::string>::const_iterator it = sources.begin(); it != sources.end(); ++it) {
@@ -160,11 +161,11 @@ bool CheckActivationAuthorization(const std::string& sender)
         for (std::vector<std::string>::const_iterator it = sources.begin(); it != sources.end(); ++it) {
             whitelisted.erase(*it);
         }
-    }
+    }*/
 
-    bool fAuthorized = (whitelisted.count(sender) ||
-                        whitelisted.count("any"));
-
+    //bool fAuthorized = (whitelisted.count(sender) ||
+    //                    whitelisted.count("any"));
+    bool fAuthorized = false;
     return fAuthorized;
 }
 
@@ -175,18 +176,18 @@ bool CheckActivationAuthorization(const std::string& sender)
  */
 bool CheckDeactivationAuthorization(const std::string& sender)
 {
-    std::set<std::string> whitelisted;
+   // std::set<std::string> whitelisted;
 
     // Mainnet - 3 out of 5 signatures required from developers & board members
     // TODO: New key is required for Omni Lite
-    whitelisted.insert("LZKEY");
+    //whitelisted.insert("LZKEY");
 
     // Testnet / Regtest
     // use -omniactivationallowsender for testing
 
     // Add manually whitelisted sources - custom sources affect both activation and deactivation
-    if (mapArgs.count("-omniactivationallowsender")) {
-        const std::vector<std::string>& sources = mapMultiArgs["-omniactivationallowsender"];
+    /*if (mapArgs.count("-omniactivationallowsender")) {
+        const std::vector<std::string>& sources = gArgs.Args["-omniactivationallowsender"];
 
         for (std::vector<std::string>::const_iterator it = sources.begin(); it != sources.end(); ++it) {
             whitelisted.insert(*it);
@@ -200,12 +201,12 @@ bool CheckDeactivationAuthorization(const std::string& sender)
         for (std::vector<std::string>::const_iterator it = sources.begin(); it != sources.end(); ++it) {
             whitelisted.erase(*it);
         }
-    }
+    }*/
 
-    bool fAuthorized = (whitelisted.count(sender) ||
-                        whitelisted.count("any"));
-
-    return fAuthorized;
+//    bool fAuthorized = (whitelisted.count(sender) ||
+//                      whitelisted.count("any"));
+     bool fAuthorized = false;
+     return fAuthorized;
 }
 
 } // namespace mastercore
