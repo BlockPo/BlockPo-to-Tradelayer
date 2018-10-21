@@ -3,7 +3,8 @@
 #include "omnicore/createtx.h"
 #include "omnicore/parse_string.h"
 #include "omnicore/wallettxs.h"
-
+#include "omnicore/log.h"
+#include "omnicore/sp.h"
 #include "base58.h"
 #include "core_io.h"
 #include "primitives/transaction.h"
@@ -25,11 +26,12 @@ using mastercore::StrToInt64;
 
 std::string ParseAddress(const UniValue& value)
 {
-    std::string address = value.get_str();
-   // if (!address.IsValid()) {
-   //       throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid address");
-   // }
-     return address;
+    CTxDestination dest = DecodeDestination(value.get_str());
+    if (!IsValidDestination(dest)) {
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid address");
+    }
+
+    return EncodeDestination(dest);
 }
 
 std::string ParseAddressOrEmpty(const UniValue& value)
@@ -61,7 +63,7 @@ int64_t ParseAmount(const UniValue& value, bool isDivisible)
 {
     int64_t amount = mastercore::StrToInt64(value.get_str(), isDivisible);
     if (amount < 1) {
-        throw JSONRPCError(RPC_TYPE_ERROR, "Invalid amount");
+        throw JSONRPCError(RPC_TYPE_ERROR, "Invalid amount ???");
     }
     return amount;
 }
@@ -137,13 +139,15 @@ uint8_t ParseIssuerBonus(const UniValue& value)
 
 CTransaction ParseTransaction(const UniValue& value)
 {
-    CTransaction tx;
-    // if (value.isNull() || value.get_str().empty()) {
-    //     return tx;
-    // }
-    // if (!DecodeHexTx(tx, value.get_str())) {
-    //     throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "Transaction deserialization failed");
-    // }
+    const CTransaction tx;
+    CMutableTransaction mutableTx(tx);
+    if (value.isNull() || value.get_str().empty()) {
+        return tx;
+    }
+
+    if (!DecodeHexTx(mutableTx, value.get_str())) {
+        throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "Transaction deserialization failed");
+    }
     return tx;
 }
 
@@ -197,9 +201,124 @@ std::vector<PrevTxsEntry> ParsePrevTxs(const UniValue& value)
         int64_t nValue = AmountFromValue(outputValue);
         CScript scriptPubKey(pkData.begin(), pkData.end());
 
-        // PrevTxsEntry entry(txid, nOut, nValue, scriptPubKey);
-        // prevTxsParsed.push_back(entry);
+        PrevTxsEntry entry(txid, nOut, nValue, scriptPubKey);
+        prevTxsParsed.push_back(entry);
     }
 
     return prevTxsParsed;
+}
+
+/** New things for Future Contracts */
+int64_t ParseAmountContract(const UniValue& value)
+{
+    /** Here we use getValStr() instead of get_str */
+    int64_t amount = mastercore::StrToInt64(value.get_str(),true);
+    if (amount < 1) {
+        throw JSONRPCError(RPC_TYPE_ERROR, "Invalid amount");
+    }
+    return amount;
+}
+
+int64_t ParseAmountContract(const UniValue& value, int propertyType)
+{
+    bool fContract = (propertyType == 3);  // 3 = contract
+    return ParseAmountContract(value, fContract);
+}
+
+uint32_t ParseNewValues(const UniValue& value)
+{
+    int64_t Nvalue = value.get_int64();
+    if (Nvalue < 1 || 4294967295LL < Nvalue) {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "Value is out of range");
+    }
+    return static_cast<uint32_t>(Nvalue);
+}
+
+uint64_t ParseEffectivePrice(const UniValue& value, uint32_t contractId)
+{
+    int64_t effPrice = StrToInt64(value.getValStr(), true);  // BTC is divisible
+    if (effPrice < 0) {
+        throw JSONRPCError(RPC_TYPE_ERROR, "Price should be positive");
+    }
+
+    LOCK(cs_tally);
+    CMPSPInfo::Entry sp;
+    if (!mastercore::_my_sps->getSP(contractId, sp)) {
+        throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
+    }
+
+    int64_t result = effPrice % sp.ticksize;
+
+    PrintToConsole("ticksize: %d\n",sp.ticksize);
+    PrintToConsole("effPrice: %d\n",effPrice);
+    PrintToConsole("result: %d\n",result);
+
+    if (result != 0) {
+        throw JSONRPCError(RPC_TYPE_ERROR, "Incorrect tick used in price");
+    }
+    return effPrice;
+}
+
+uint8_t ParseContractDexAction(const UniValue& value)
+{
+    int64_t action = value.get_int64();
+    if (action < 1 || 2 < action) {
+        throw JSONRPCError(RPC_TYPE_ERROR, "Invalid action (1=BUY, 2=SELL only)");
+    }
+    return static_cast<uint8_t>(action);
+}
+
+int64_t ParseDExFee(const UniValue& value)
+{
+    int64_t fee = StrToInt64(value.get_str(), true);  // BTC is divisible
+    if (fee < 0) {
+        throw JSONRPCError(RPC_TYPE_ERROR, "Mininmum accept fee must be positive");
+    }
+    return fee;
+}
+
+uint8_t ParseDExAction(const UniValue& value)
+{
+    int64_t action = value.get_int64();
+    if (action <= 0 || 3 < action) {
+        throw JSONRPCError(RPC_TYPE_ERROR, "Invalid action (1 = new, 2 = update, 3 = cancel only)");
+    }
+    return static_cast<uint8_t>(action);
+}
+
+uint8_t ParseDExPaymentWindow(const UniValue& value)
+{
+    int64_t blocks = value.get_int64();
+    if (blocks < 1 || 255 < blocks) {
+        throw JSONRPCError(RPC_TYPE_ERROR, "Payment window must be within 1-255 blocks");
+    }
+    return static_cast<uint8_t>(blocks);
+}
+
+uint32_t ParseContractType(const UniValue& value)
+{
+    int64_t Nvalue = value.get_int64();
+
+    if (Nvalue != 1 && Nvalue != 2) {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "option no valid");
+    }
+
+    if(Nvalue == 1){
+        return weekly;
+    } else {
+        return monthly;
+    }
+
+    return 0;
+}
+
+uint32_t ParseContractDen(const UniValue& value)
+{
+    int64_t Nvalue = value.get_int64();
+    PrintToConsole(" Nvalue: %d\n",Nvalue);
+    if (Nvalue != 1 && Nvalue != 2 && Nvalue != 3 && Nvalue != 4 && Nvalue != 5 && Nvalue != 6) {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "denomination no valid");
+    }
+
+    return static_cast<uint32_t>(Nvalue);
 }

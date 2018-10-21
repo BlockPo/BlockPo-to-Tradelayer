@@ -5,9 +5,9 @@
 
 #include <string>
 
-#ifdef HAVE_BUILD_INFO
-#    include "build.h"
-#endif
+// #ifdef HAVE_BUILD_INFO FIXME: build.h doesnt exist
+// #    include "build.h"
+// #endif
 
 #ifndef COMMIT_ID
 #   ifdef GIT_ARCHIVE

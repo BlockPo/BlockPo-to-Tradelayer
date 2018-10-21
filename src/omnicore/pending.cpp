@@ -47,7 +47,7 @@ void PendingAdd(const uint256& txid, const std::string& sendingAddress, uint16_t
     }
     // after adding a transaction to pending the available balance may now be reduced, refresh wallet totals
     CheckWalletUpdate(true); // force an update since some outbound pending (eg MetaDEx cancel) may not change balances
-    uiInterface.OmniPendingChanged(true);
+    // uiInterface.OmniPendingChanged(true);
 }
 
 /**
@@ -68,7 +68,7 @@ void PendingDelete(const uint256& txid)
         my_pending.erase(it);
 
         // if pending map is now empty following deletion, trigger a status change
-        if (my_pending.empty()) uiInterface.OmniPendingChanged(false);
+        // if (my_pending.empty()) uiInterface.OmniPendingChanged(false);
     }
 }
 
@@ -81,4 +81,3 @@ void CMPPending::print(const uint256& txid) const
 {
     PrintToConsole("%s : %s %d %d %d %s\n", txid.GetHex(), src, prop, amount, type);
 }
-

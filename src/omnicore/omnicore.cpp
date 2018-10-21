@@ -9,6 +9,7 @@
 #include "omnicore/activation.h"
 #include "omnicore/consensushash.h"
 #include "omnicore/convert.h"
+#include "omnicore/dex.h"
 #include "omnicore/encoding.h"
 #include "omnicore/errors.h"
 #include "omnicore/log.h"
@@ -20,11 +21,14 @@
 #include "omnicore/sp.h"
 #include "omnicore/tally.h"
 #include "omnicore/tx.h"
+#include "omnicore/uint256_extensions.h"
 #include "omnicore/utilsbitcoin.h"
 #include "omnicore/version.h"
 #include "omnicore/walletcache.h"
 #include "omnicore/wallettxs.h"
+#include "omnicore/mdex.h"
 
+#include "arith_uint256.h"
 #include "base58.h"
 #include "chainparams.h"
 // #include "coincontrol.h"
@@ -63,6 +67,7 @@
 #include <boost/exception/to_string.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
+#include <boost/multiprecision/cpp_int.hpp>
 #include <boost/lexical_cast.hpp>
 
 #include <openssl/sha.h>
@@ -79,6 +84,8 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include "tradelayer_matrices.h"
+#include "externfns.h"
 
 using boost::algorithm::token_compress_on;
 using boost::to_string;
@@ -98,6 +105,12 @@ using std::vector;
 using namespace mastercore;
 
 CCriticalSection cs_tally;
+
+static string exodus_address = "1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P";
+
+static const string exodus_mainnet = "1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P";
+static const string exodus_testnet = "mfjQ3ow4STCqW2zMeUeBWvs4y9Fgx7Gxfh";  // one of our litecoin testnet addresses
+// static const string getmoney_testnet = "moneyqMan7uh8FqdCA2BV5yZ8qVrc9ikLP";
 
 static int nWaterlineBlock = 0;
 
@@ -120,7 +133,14 @@ static int mastercoreInitialized = 0;
 static int reorgRecoveryMode = 0;
 static int reorgRecoveryMaxHeight = 0;
 
+extern int64_t factorE;
+extern double denMargin;
+extern uint64_t marketP[NPTYPES];
+extern std::vector<std::map<std::string, std::string>> path_ele;
+extern volatile int expirationAchieve;
+
 CMPTxList *mastercore::p_txlistdb;
+CMPTradeList *mastercore::t_tradelistdb;
 COmniTransactionDB *mastercore::p_OmniTXDB;
 
 // indicate whether persistence is enabled at this point, or not
@@ -232,16 +252,44 @@ std::string FormatByDivisibility(int64_t amount, bool divisible)
     }
 }
 
+/////////////////////////////////////////
+/*New property type No 3 Contract*/
+std::string mastercore::FormatContractMP(int64_t n)
+{
+    return strprintf("%d", n);
+}
+/////////////////////////////////////////
+/*New things for contracts*/////////////////////////////////////////////////////
+double FormatContractShortMP(int64_t n)
+{
+    int64_t n_abs = (n > 0 ? n : -n);
+    int64_t quotient = n_abs / COIN;
+    int64_t remainder = n_abs % COIN;
+    std::string str = strprintf("%d.%08d", quotient, remainder);
+    // clean up trailing zeros - good for RPC not so much for UI
+    str.erase(str.find_last_not_of('0') + 1, std::string::npos);
+    if (str.length() > 0) {
+        std::string::iterator it = str.end() - 1;
+        if (*it == '.') {
+            str.erase(it);
+        }
+    } //get rid of trailing dot if non decimal
+    double q = atof(str.c_str());
+    return q;
+}
+/////////////////////////////////////////
+OfferMap mastercore::my_offers;
+AcceptMap mastercore::my_accepts;
 CMPSPInfo *mastercore::_my_sps;
 CrowdMap mastercore::my_crowds;
 // this is the master list of all amounts for all addresses for all properties, map is unsorted
 std::unordered_map<std::string, CMPTally> mastercore::mp_tally_map;
 
- CMPTally* mastercore::getTally(const std::string& address)
+CMPTally* mastercore::getTally(const std::string& address)
 {
-     std::unordered_map<std::string, CMPTally>::iterator it = mp_tally_map.find(address);
-     if (it != mp_tally_map.end()) return &(it->second);
-     return (CMPTally *) NULL;
+    std::unordered_map<std::string, CMPTally>::iterator it = mp_tally_map.find(address);
+    if (it != mp_tally_map.end()) return &(it->second);
+    return (CMPTally *) NULL;
 }
 
 // look at balance for an address
@@ -280,27 +328,27 @@ bool mastercore::isTestEcosystemProperty(uint32_t propertyId)
     return false;
 }
 
- bool mastercore::isMainEcosystemProperty(uint32_t propertyId)
+bool mastercore::isMainEcosystemProperty(uint32_t propertyId)
 {
-     if ((OMNI_PROPERTY_BTC != propertyId) && !isTestEcosystemProperty(propertyId)) return true;
+    if ((OMNI_PROPERTY_BTC != propertyId) && !isTestEcosystemProperty(propertyId)) return true;
 
-     return false;
- }
+    return false;
+}
 
- std::string mastercore::getTokenLabel(uint32_t propertyId)
- {
-     std::string tokenStr;
-     if (propertyId < 3) {
-         if (propertyId == 1) {
-             tokenStr = " OMNI";
-         } else {
-             tokenStr = " TOMNI";
-         }
-     } else {
-         tokenStr = strprintf(" SPT#%d", propertyId);
-     }
-     return tokenStr;
- }
+std::string mastercore::getTokenLabel(uint32_t propertyId)
+{
+    std::string tokenStr;
+    if (propertyId < 3) {
+        if (propertyId == 1) {
+            tokenStr = " OMNI";
+        } else {
+            tokenStr = " TOMNI";
+        }
+    } else {
+        tokenStr = strprintf(" SPT#%d", propertyId);
+    }
+    return tokenStr;
+}
 
 // get total tokens for a property
 // optionally counts the number of addresses who own that property: n_owners_total
@@ -388,19 +436,38 @@ bool mastercore::update_tally_map(const std::string& who, uint32_t propertyId, i
 // 10) need a locking mechanism between Core & Qt -- to retrieve the tally, for instance, this and similar to this: LOCK(wallet->cs_wallet);
 //
 
- uint32_t mastercore::GetNextPropertyId(bool maineco)
+uint32_t mastercore::GetNextPropertyId(bool maineco)
 {
-     if (maineco) {
-         return _my_sps->peekNextSPID(1);
-     } else {
-         return _my_sps->peekNextSPID(2);
-     }
- }
+    if (maineco) {
+        return _my_sps->peekNextSPID(1);
+    } else {
+        return _my_sps->peekNextSPID(2);
+    }
+}
 
 // Perform any actions that need to be taken when the total number of tokens for a property ID changes
 void NotifyTotalTokensChanged(uint32_t propertyId)
 {
   //
+}
+
+// The idea is have tools to see the origin of pegged currency created !!!
+void CMPTradeList::NotifyPeggedCurrency(const uint256& txid, string address, uint32_t propertyId, uint64_t amount, std::string series)
+{
+    PrintToConsole("Inside of NotifyPeggedCurrency function -------------------\n");
+    if (!pdb) return;
+    const string key = txid.ToString();
+    const string value = strprintf("%s:%d:%d:%d:%s",address, propertyId, GetHeight(), amount, series);
+    PrintToConsole ("saved: s% : %s\n",key,value);
+    Status status;
+    if (pdb)
+    {
+        status = pdb->Put(writeoptions, key, value);
+        ++ nWritten;
+        // if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
+    }
+
+
 }
 
 void CheckWalletUpdate(bool forceUpdate)
@@ -450,13 +517,14 @@ void CheckWalletUpdate(bool forceUpdate)
  */
 int mastercore::GetEncodingClass(const CTransaction& tx, int nBlock)
 {
+    bool hasExodus = false;
     bool hasOpReturn = false;
 
     /* Fast Search
      * Perform a string comparison on hex for each scriptPubKey & look directly for omni marker bytes
      * This allows to drop non-Omni transactions with less work
      */
-    std::string strClassD = "6f6c";
+    std::string strClassD = "7071"; /*the pepe marker*/
     bool examineClosely = false;
     for (unsigned int n = 0; n < tx.vout.size(); ++n) {
         const CTxOut& output = tx.vout[n];
@@ -487,7 +555,19 @@ int mastercore::GetEncodingClass(const CTransaction& tx, int nBlock)
         if (!IsAllowedOutputType(outType, nBlock)) {
            // continue;
         }
+/*New things for DEX implementation *///////////////////////////////////////////
 
+        if (outType == TX_PUBKEYHASH) {
+            CTxDestination dest;
+            if (ExtractDestination(output.scriptPubKey, dest)) {
+                std::string address = EncodeDestination(dest);
+                if (address == ExodusAddress()) {
+                    hasExodus = true;
+                }
+            }
+        }
+
+////////////////////////////////////////////////////////////////////////////////
         if (outType == TX_NULL_DATA) {
             // Ensure there is a payload, and the first pushed element equals,
             // or starts with the "ol" marker
@@ -514,7 +594,13 @@ int mastercore::GetEncodingClass(const CTransaction& tx, int nBlock)
         PrintToLog("OP_RETURN FOUND \n");
         return OMNI_CLASS_D;
     }
+/* New things for DEX implementation*///////////////////////////////////////////
 
+    if (hasExodus) {
+        return OMNI_CLASS_A;
+    }
+
+////////////////////////////////////////////////////////////////////////////////
     return NO_MARKER;
 }
 
@@ -631,7 +717,7 @@ static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, 
         strSender = EncodeDestination(source);
         PrintToLog("destination: %s\n",strSender);
     } else return -110;
-   
+
     PrintToLog("3rd checkpoint \n");
 
     int64_t inAll = view.GetValueIn(wtx);
@@ -772,6 +858,10 @@ static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, 
     if (msc_debug_verbose) PrintToLog("single_pkt: %s\n", HexStr(single_pkt, packet_size + single_pkt));
     mp_tx.Set(strSender, strReference, 0, wtx.GetHash(), nBlock, idx, (unsigned char *)&single_pkt, packet_size, omniClass, (inAll-outAll));
 
+
+    if (omniClass == OMNI_CLASS_A && packet_size == 0) {
+        return 1;
+    }
     return 0;
 }
 
@@ -783,6 +873,35 @@ int ParseTransaction(const CTransaction& tx, int nBlock, unsigned int idx, CMPTr
     return parseTransaction(true, tx, nBlock, idx, mptx, nTime);
 }
 
+/**
+ * Handles potential DEx payments.
+ *
+ * Note: must *not* be called outside of the transaction handler, and it does not
+ * check, if a transaction marker exists.
+ *
+ * @return True, if valid
+ */
+static bool HandleDExPayments(const CTransaction& tx, int nBlock, const std::string& strSender)
+{
+    int count = 0;
+    PrintToConsole("Inside HandleDExPayments function <<<<<<<<<<<<<<<<<<<<<\n");
+    for (unsigned int n = 0; n < tx.vout.size(); ++n) {
+        CTxDestination dest;
+        if (ExtractDestination(tx.vout[n].scriptPubKey, dest)) {
+            std::string address = EncodeDestination(dest);
+            if (address == ExodusAddress() || address == strSender) {
+                continue;
+            }
+
+            // if (msc_debug_parser_dex) PrintToLog("payment #%d %s %s\n", count, strAddress, FormatIndivisibleMP(tx.vout[n].nValue));
+
+            // check everything and pay BTC for the property we are buying here...
+            if (0 == DEx_payment(tx.GetHash(), n, address, strSender, tx.vout[n].nValue, nBlock)) ++count;
+        }
+    }
+
+    return (count > 0);
+}
 /**
  * Reports the progress of the initial transaction scanning.
  *
@@ -959,11 +1078,91 @@ int input_msc_balances_string(const std::string& s)
         std::vector<std::string> curProperty;
         boost::split(curProperty, *iter, boost::is_any_of(":"), boost::token_compress_on);
         if (curProperty.size() != 2) return -1;
-        uint32_t propertyId = boost::lexical_cast<uint32_t>(curProperty[0]);
-        int64_t balance = boost::lexical_cast<int64_t>(curProperty[1]);
 
+        /*New things for contracts: save contractdex tally *////////////////////
+        std::vector<std::string> curBalance;
+        boost::split(curBalance, curProperty[1], boost::is_any_of(","), boost::token_compress_on);
+        if (curBalance.size() != 13) return -1;
+
+
+        uint32_t propertyId = boost::lexical_cast<uint32_t>(curProperty[0]);
+        int64_t balance = boost::lexical_cast<int64_t>(curBalance[0]);
+        int64_t sellReserved = boost::lexical_cast<int64_t>(curBalance[1]);
+        int64_t acceptReserved = boost::lexical_cast<int64_t>(curBalance[2]);
+        int64_t metadexReserved = boost::lexical_cast<int64_t>(curBalance[3]);
+        int64_t contractdexReserved = boost::lexical_cast<int64_t>(curBalance[4]);
+        int64_t positiveBalance = boost::lexical_cast<int64_t>(curBalance[5]);
+        int64_t negativeBalance = boost::lexical_cast<int64_t>(curBalance[6]);
+        int64_t realizeProfit = boost::lexical_cast<int64_t>(curBalance[7]);
+        int64_t realizeLosses = boost::lexical_cast<int64_t>(curBalance[8]);
+        int64_t count = boost::lexical_cast<int64_t>(curBalance[9]);
+        int64_t remaining = boost::lexical_cast<int64_t>(curBalance[10]);
+        int64_t liquidationPrice = boost::lexical_cast<int64_t>(curBalance[11]);
+        int64_t upnl = boost::lexical_cast<int64_t>(curBalance[12]);
+
+        PrintToConsole("--------------------------------------------------------\n");
+        PrintToConsole("Inside of input_msc_balances_string function!\n");
+        PrintToConsole("Property Id : %d\n",propertyId);
+        PrintToConsole("balance : %d\n",balance);
+        PrintToConsole("sellReserved : %d\n",sellReserved);
+        PrintToConsole("acceptReserved: %d\n",acceptReserved);
+        PrintToConsole("metadexReserved: %d\n",metadexReserved);
+        PrintToConsole("contractdexReserved: %d\n",contractdexReserved);
+        PrintToConsole("positiveBalance : %d\n",positiveBalance);
+        PrintToConsole("negativeBalance: %d\n",negativeBalance);
+        PrintToConsole("realizeProfit : %d\n",realizeProfit);
+        PrintToConsole("realizedLosses: %d\n",realizeLosses);
+        PrintToConsole("count : %d\n",count);
+        PrintToConsole("remaining : %d\n",remaining);
+        PrintToConsole("liquidation Price: %d\n",liquidationPrice);
+        PrintToConsole("upnl: %d\n",upnl);
+        PrintToConsole("--------------------------------------------------------\n");
         if (balance) update_tally_map(strAddress, propertyId, balance, BALANCE);
+        if (sellReserved) update_tally_map(strAddress, propertyId, sellReserved, SELLOFFER_RESERVE);
+        if (acceptReserved) update_tally_map(strAddress, propertyId, acceptReserved, ACCEPT_RESERVE);
+        if (metadexReserved) update_tally_map(strAddress, propertyId, metadexReserved, METADEX_RESERVE);
+
+        if (contractdexReserved) update_tally_map(strAddress, propertyId, contractdexReserved, CONTRACTDEX_RESERVE);
+        if (positiveBalance) update_tally_map(strAddress, propertyId, positiveBalance, POSSITIVE_BALANCE);
+        if (negativeBalance) update_tally_map(strAddress, propertyId, negativeBalance, NEGATIVE_BALANCE);
+        if (realizeProfit) update_tally_map(strAddress, propertyId, realizeProfit, REALIZED_PROFIT);
+        if (realizeLosses) update_tally_map(strAddress, propertyId, realizeLosses, REALIZED_LOSSES);
+        if (count) update_tally_map(strAddress, propertyId, count, COUNT);
+        if (remaining) update_tally_map(strAddress, propertyId, remaining, REMAINING);
+        if (liquidationPrice) update_tally_map(strAddress, propertyId, liquidationPrice, LIQUIDATION_PRICE);
+        if (upnl) update_tally_map(strAddress, propertyId, upnl, UPNL);
+       /////////////////////////////////////////////////////////////////////////
     }
+
+    return 0;
+}
+
+int input_mp_offers_string(const std::string& s)
+{
+    std::vector<std::string> vstr;
+    boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
+
+    if (9 != vstr.size()) return -1;
+
+    int i = 0;
+
+    std::string sellerAddr = vstr[i++];
+    int offerBlock = boost::lexical_cast<int>(vstr[i++]);
+    int64_t amountOriginal = boost::lexical_cast<int64_t>(vstr[i++]);
+    uint32_t prop = boost::lexical_cast<uint32_t>(vstr[i++]);
+    int64_t btcDesired = boost::lexical_cast<int64_t>(vstr[i++]);
+    // uint32_t prop_desired = boost::lexical_cast<uint32_t>(vstr[i++]);
+    int64_t minFee = boost::lexical_cast<int64_t>(vstr[i++]);
+    uint8_t blocktimelimit = boost::lexical_cast<unsigned int>(vstr[i++]); // lexical_cast can't handle char!
+    uint256 txid = uint256S(vstr[i++]);
+    uint8_t option = 2;
+    // TODO: should this be here? There are usually no sanity checks..
+      // if (OMNI_PROPERTY_BTC != prop_desired) return -1;
+
+    const std::string combo = STR_SELLOFFER_ADDR_PROP_COMBO(sellerAddr, prop);
+    CMPOffer newOffer(offerBlock, amountOriginal, prop, btcDesired, minFee, blocktimelimit, txid, option);
+
+    if (!my_offers.insert(std::make_pair(combo, newOffer)).second) return -1;
 
     return 0;
 }
@@ -1030,6 +1229,78 @@ int input_mp_crowdsale_string(const std::string& s)
     return 0;
 }
 
+/* New things for contracts *///////////////////////////////////////////////////
+int input_mp_contractdexorder_string(const std::string& s)
+{
+    std::vector<std::string> vstr;
+    boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
+
+    if (12 != vstr.size()) return -1;
+
+    int i = 0;
+
+    std::string addr = vstr[i++];
+    int block = boost::lexical_cast<int>(vstr[i++]);
+    int64_t amount_forsale = boost::lexical_cast<int64_t>(vstr[i++]);
+    uint32_t property = boost::lexical_cast<uint32_t>(vstr[i++]);
+    int64_t amount_desired = boost::lexical_cast<int64_t>(vstr[i++]);
+    uint32_t desired_property = boost::lexical_cast<uint32_t>(vstr[i++]);
+    uint8_t subaction = boost::lexical_cast<unsigned int>(vstr[i++]); // lexical_cast can't handle char!
+    unsigned int idx = boost::lexical_cast<unsigned int>(vstr[i++]);
+    uint256 txid = uint256S(vstr[i++]);
+    int64_t amount_remaining = boost::lexical_cast<int64_t>(vstr[i++]);
+    uint64_t effective_price = boost::lexical_cast<uint64_t>(vstr[i++]);
+    uint8_t trading_action = boost::lexical_cast<unsigned int>(vstr[i++]);
+
+    CMPContractDex mdexObj(addr, block, property, amount_forsale, desired_property,
+            amount_desired, txid, idx, subaction, amount_remaining, effective_price, trading_action);
+
+    if (!ContractDex_INSERT(mdexObj)) return -1;
+
+    return 0;
+}
+
+int input_market_prices_string(const std::string& s)
+{
+   std::vector<std::string> vstr;
+   boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
+
+   if (NPTYPES != vstr.size()) return -1;
+   for (int i = 0; i < NPTYPES; i++) marketP[i] = boost::lexical_cast<uint64_t>(vstr[i]);
+
+   return 0;
+}
+////////////////////////////////////////////////////////////////////////////////
+
+// address, block, amount for sale, property, amount desired, property desired, subaction, idx, txid, amount remaining
+int input_mp_mdexorder_string(const std::string& s)
+{
+    std::vector<std::string> vstr;
+    boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
+
+    if (10 != vstr.size()) return -1;
+
+    int i = 0;
+
+    std::string addr = vstr[i++];
+    int block = boost::lexical_cast<int>(vstr[i++]);
+    int64_t amount_forsale = boost::lexical_cast<int64_t>(vstr[i++]);
+    uint32_t property = boost::lexical_cast<uint32_t>(vstr[i++]);
+    int64_t amount_desired = boost::lexical_cast<int64_t>(vstr[i++]);
+    uint32_t desired_property = boost::lexical_cast<uint32_t>(vstr[i++]);
+    uint8_t subaction = boost::lexical_cast<unsigned int>(vstr[i++]); // lexical_cast can't handle char!
+    unsigned int idx = boost::lexical_cast<unsigned int>(vstr[i++]);
+    uint256 txid = uint256S(vstr[i++]);
+    int64_t amount_remaining = boost::lexical_cast<int64_t>(vstr[i++]);
+
+    CMPMetaDEx mdexObj(addr, block, property, amount_forsale, desired_property,
+            amount_desired, txid, idx, subaction, amount_remaining);
+
+    if (!MetaDEx_INSERT(mdexObj)) return -1;
+
+    return 0;
+}
+
 static int msc_file_load(const string &filename, int what, bool verifyHash = false)
 {
   int lines = 0;
@@ -1053,6 +1324,29 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
       my_crowds.clear();
       inputLineFunc = input_mp_crowdsale_string;
       break;
+
+    case FILETYPE_CDEXORDERS:
+        contractdex.clear();
+        inputLineFunc = input_mp_contractdexorder_string;
+        break;
+
+    case FILETYPE_MARKETPRICES:
+        inputLineFunc = input_market_prices_string;
+        break;
+
+    case FILETYPE_OFFERS:
+      my_offers.clear();
+      inputLineFunc = input_mp_offers_string;
+      break;
+
+    case FILETYPE_MDEXORDERS:
+        // FIXME
+        // memory leak ... gotta unallocate inner layers first....
+        // TODO
+        // ...
+        metadex.clear();
+        inputLineFunc = input_mp_mdexorder_string;
+        break;
 
     default:
       return -1;
@@ -1130,6 +1424,11 @@ static char const * const statePrefix[NUM_FILETYPES] = {
     "balances",
     "globals",
     "crowdsales",
+    "cdexorders",
+    "marketprices",
+    "offers",
+    "mdexorders",
+
 };
 
 // returns the height of the state loaded
@@ -1253,18 +1552,43 @@ static int write_msc_balances(std::ofstream& file, SHA256_CTX* shaCtx)
         uint32_t propertyId = 0;
         while (0 != (propertyId = curAddr.next())) {
             int64_t balance = (*iter).second.getMoney(propertyId, BALANCE);
+            int64_t sellReserved = (*iter).second.getMoney(propertyId, SELLOFFER_RESERVE);
+            int64_t acceptReserved = (*iter).second.getMoney(propertyId, ACCEPT_RESERVE);
+            int64_t metadexReserved = (*iter).second.getMoney(propertyId, METADEX_RESERVE);
 
+            int64_t contractdexReserved = (*iter).second.getMoney(propertyId, CONTRACTDEX_RESERVE);
+            int64_t positiveBalance = (*iter).second.getMoney(propertyId, POSSITIVE_BALANCE);
+            int64_t negativeBalance = (*iter).second.getMoney(propertyId, NEGATIVE_BALANCE);
+            int64_t realizedProfit = (*iter).second.getMoney(propertyId, REALIZED_PROFIT);
+            int64_t realizedLosses = (*iter).second.getMoney(propertyId, REALIZED_LOSSES);
+            int64_t count = (*iter).second.getMoney(propertyId, COUNT);
+            int64_t remaining = (*iter).second.getMoney(propertyId, REMAINING);
+            int64_t liquidationPrice = (*iter).second.getMoney(propertyId, LIQUIDATION_PRICE);
+            int64_t upnl = (*iter).second.getMoney(propertyId, UPNL);
             // we don't allow 0 balances to read in, so if we don't write them
             // it makes things match up better between persisted state and processed state
-            if (0 == balance) {
+            if (0 == balance && 0 == sellReserved && 0 == acceptReserved && 0 == metadexReserved && contractdexReserved == 0 && positiveBalance == 0 && negativeBalance == 0 && realizedProfit == 0 && realizedLosses == 0 && count == 0 && remaining == 0 && liquidationPrice == 0 && upnl == 0) {
                 continue;
             }
 
             emptyWallet = false;
 
-            lineOut.append(strprintf("%d:%d;",
+            lineOut.append(strprintf("%d:%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d;",
                     propertyId,
-                    balance));
+                    balance,
+                    sellReserved,
+                    acceptReserved,
+                    metadexReserved,
+                    contractdexReserved,
+                    positiveBalance,
+                    negativeBalance,
+                    realizedProfit,
+                    realizedLosses,
+                    count,
+                    remaining,
+                    liquidationPrice,
+                    upnl));
+          //  PrintToConsole("Inside write_msc_balances ...no problem with strprintf!!!\n");
         }
 
         if (false == emptyWallet) {
@@ -1307,6 +1631,72 @@ static int write_mp_crowdsales(std::ofstream& file, SHA256_CTX* shaCtx)
     return 0;
 }
 
+////////////////////////////
+/** New things for Contract */
+static int write_mp_contractdex(ofstream &file, SHA256_CTX *shaCtx)
+{
+  for (cd_PropertiesMap::iterator my_it = contractdex.begin(); my_it != contractdex.end(); ++my_it)
+  {
+    cd_PricesMap &prices = my_it->second;
+    for (cd_PricesMap::iterator it = prices.begin(); it != prices.end(); ++it)
+    {
+      cd_Set &indexes = (it->second);
+      for (cd_Set::iterator it = indexes.begin(); it != indexes.end(); ++it)
+      {
+        CMPContractDex contract = *it;
+        contract.saveOffer(file, shaCtx);
+      }
+    }
+  }
+  return 0;
+}
+
+static int write_market_pricescd(ofstream &file, SHA256_CTX *shaCtx)
+{
+  std::string lineOut;
+
+  for (int i = 0; i < NPTYPES; i++) lineOut.append(strprintf("%d", marketP[i]));
+  // add the line to the hash
+  SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
+  // write the line
+  file << lineOut << endl;
+
+  return 0;
+}
+
+static int write_mp_metadex(ofstream &file, SHA256_CTX *shaCtx)
+{
+  for (md_PropertiesMap::iterator my_it = metadex.begin(); my_it != metadex.end(); ++my_it)
+  {
+    md_PricesMap & prices = my_it->second;
+    for (md_PricesMap::iterator it = prices.begin(); it != prices.end(); ++it)
+    {
+      md_Set & indexes = (it->second);
+      for (md_Set::iterator it = indexes.begin(); it != indexes.end(); ++it)
+      {
+        CMPMetaDEx meta = *it;
+        meta.saveOffer(file, shaCtx);
+      }
+    }
+  }
+
+  return 0;
+}
+
+static int write_mp_offers(ofstream &file, SHA256_CTX *shaCtx)
+{
+  OfferMap::const_iterator iter;
+  for (iter = my_offers.begin(); iter != my_offers.end(); ++iter) {
+    // decompose the key for address
+    std::vector<std::string> vstr;
+    boost::split(vstr, (*iter).first, boost::is_any_of("-"), token_compress_on);
+    CMPOffer const &offer = (*iter).second;
+    offer.saveOffer(file, shaCtx, vstr[0]);
+  }
+  return 0;
+}
+////////////////////////////
+
 static int write_state_file( CBlockIndex const *pBlockIndex, int what )
 {
   boost::filesystem::path path = MPPersistencePath / strprintf("%s-%s.dat", statePrefix[what], pBlockIndex->GetBlockHash().ToString());
@@ -1332,6 +1722,23 @@ static int write_state_file( CBlockIndex const *pBlockIndex, int what )
   case FILETYPE_CROWDSALES:
     result = write_mp_crowdsales(file, &shaCtx);
     break;
+
+  case FILETYPE_CDEXORDERS:
+     result = write_mp_contractdex(file, &shaCtx);
+     break;
+
+  case FILETYPE_MARKETPRICES:
+     result = write_market_pricescd(file, &shaCtx);
+     break;
+
+  case FILETYPE_OFFERS:
+     result = write_mp_offers(file, &shaCtx);
+     break;
+
+  case FILETYPE_MDEXORDERS:
+      result = write_mp_metadex(file, &shaCtx);
+      break;
+
   }
 
   // generate and wite the double hash of all the contents written
@@ -1418,7 +1825,13 @@ int mastercore_save_state( CBlockIndex const *pBlockIndex )
     write_state_file(pBlockIndex, FILETYPE_BALANCES);
     write_state_file(pBlockIndex, FILETYPE_GLOBALS);
     write_state_file(pBlockIndex, FILETYPE_CROWDSALES);
+    /*New things for contracts*/////////////////////////////////////////////////
+    write_state_file(pBlockIndex, FILETYPE_CDEXORDERS);
+    write_state_file(pBlockIndex, FILETYPE_MARKETPRICES);
+    write_state_file(pBlockIndex, FILETYPE_OFFERS);
+    write_state_file(pBlockIndex, FILETYPE_MDEXORDERS);
 
+    ////////////////////////////////////////////////////////////////////////////
     // clean-up the directory
     prune_state_files(pBlockIndex);
 
@@ -1433,7 +1846,7 @@ int mastercore_save_state( CBlockIndex const *pBlockIndex )
 void clear_all_state()
 {
     // LOCK2(cs_tally, cs_pending);
-    
+
     // Memory based storage
     // mp_tally_map.clear();
     // my_crowds.clear();
@@ -1503,22 +1916,23 @@ int mastercore_init()
     p_txlistdb = new CMPTxList(GetDataDir() / "OCL_txlist", fReindex);
     _my_sps = new CMPSPInfo(GetDataDir() / "OCL_spinfo", fReindex);
     p_OmniTXDB = new COmniTransactionDB(GetDataDir() / "OCL_TXDB", fReindex);
+    t_tradelistdb = new CMPTradeList(GetDataDir()/"OCL_tradelist", fReindex);
     MPPersistencePath = GetDataDir() / "OCL_persist";
     TryCreateDirectory(MPPersistencePath);
-    
+
      bool wrongDBVersion = (p_txlistdb->getDBVersion() != DB_VERSION);
-    
+
      ++mastercoreInitialized;
-    
+
     nWaterlineBlock = load_most_relevant_state();
     bool noPreviousState = (nWaterlineBlock <= 0);
-    
+
      if (startClean) {
          assert(p_txlistdb->setDBVersion() == DB_VERSION); // new set of databases, set DB version
      } else if (wrongDBVersion) {
           nWaterlineBlock = -1; // force a clear_all_state and parse from start
      }
-    
+
      if (nWaterlineBlock > 0) {
          PrintToConsole("Loading persistent state: OK [block %d]\n", nWaterlineBlock);
      } else {
@@ -1528,25 +1942,25 @@ int mastercore_init()
          if (startClean) strReason = "-startclean parameter used";
          PrintToConsole("Loading persistent state: NONE (%s)\n", strReason);
      }
-    
+
     if (nWaterlineBlock < 0) {
         //persistence says we reparse!, nuke some stuff in case the partial loads left stale bits
         clear_all_state();
     }
-    
+
     // legacy code, setting to pre-genesis-block
     int snapshotHeight = ConsensusParams().GENESIS_BLOCK - 1;
-    
+
     if (nWaterlineBlock < snapshotHeight) {
         nWaterlineBlock = snapshotHeight;
     }
-    
+
     // advance the waterline so that we start on the next unaccounted for block
     nWaterlineBlock += 1;
 
     // load feature activation messages from txlistdb and process them accordingly
     p_txlistdb->LoadActivations(nWaterlineBlock);
-    
+
     // load all alerts from levelDB (and immediately expire old ones)
     p_txlistdb->LoadAlerts(nWaterlineBlock);
 
@@ -1574,6 +1988,10 @@ int mastercore_shutdown()
         delete p_txlistdb;
         p_txlistdb = NULL;
     }
+    if (t_tradelistdb) {
+        delete t_tradelistdb;
+        t_tradelistdb = NULL;
+    }
     if (_my_sps) {
         delete _my_sps;
         _my_sps = NULL;
@@ -1600,52 +2018,82 @@ int mastercore_shutdown()
  */
 bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx, const CBlockIndex* pBlockIndex)
 {
-     LOCK(cs_tally);
-    PrintToLog("Inside mastercore_handler_tx\n");
-     if (!mastercoreInitialized) {
-         mastercore_init();
-    }
-    
-     // clear pending, if any
-     // NOTE1: Every incoming TX is checked, not just MP-ones because:
-     // if for some reason the incoming TX doesn't pass our parser validation steps successfuly, I'd still want to clear pending amounts for that TX.
-     // NOTE2: Plus I wanna clear the amount before that TX is parsed by our protocol, in case we ever consider pending amounts in internal calculations.
-     // PendingDelete(tx.GetHash());
-     //
-     // we do not care about parsing blocks prior to our waterline (empty blockchain defense)
-     //if (nBlock < nWaterlineBlock) return false; TODO: see why this return always false!
-     int64_t nBlockTime = pBlockIndex->GetBlockTime();
-    
-     CMPTransaction mp_obj;
-     mp_obj.unlockLogic();
-    
-     bool fFoundTx = false;
-     int pop_ret = parseTransaction(false, tx, nBlock, idx, mp_obj, nBlockTime);
-     PrintToLog("pop_ret : %d\n",pop_ret);
-     if (0 == pop_ret) {
-         assert(mp_obj.getEncodingClass() != NO_MARKER);
-         assert(mp_obj.getSender().empty() == false);
-    
-         int interp_ret = mp_obj.interpretPacket();
-         if (interp_ret) PrintToLog("!!! interpretPacket() returned %d !!!\n", interp_ret);
-   
-        // Only structurally valid transactions get recorded in levelDB
-        // PKT_ERROR - 2 = interpret_Transaction failed, structurally invalid payload
-        if (interp_ret != PKT_ERROR - 2) {
-            bool bValid = (0 <= interp_ret);
-            //p_txlistdb->recordTX(tx.GetHash(), bValid, nBlock, mp_obj.getType(), mp_obj.getNewAmount());
-             // p_OmniTXDB->RecordTransaction(tx.GetHash(), idx);
-        }
-        fFoundTx |= (interp_ret == 0);
-     }
-    
-     if (fFoundTx && msc_debug_consensus_hash_every_transaction) {
-         uint256 consensusHash = GetConsensusHash();
-        // PrintToLog("Consensus hash for transaction %s: %s\n", tx.GetHash().GetHex(), consensusHash.GetHex());
-     }
+  extern volatile int id_contract;
 
-     if (fFoundTx == false ) { PrintToLog("Omni marker not found!");}
-     return fFoundTx;
+  LOCK(cs_tally);
+
+  if (!mastercoreInitialized)
+    {
+      mastercore_init();
+    }
+
+    // clear pending, if any
+    // NOTE1: Every incoming TX is checked, not just MP-ones because:
+    // if for some reason the incoming TX doesn't pass our parser validation steps successfuly, I'd still want to clear pending amounts for that TX.
+    // NOTE2: Plus I wanna clear the amount before that TX is parsed by our protocol, in case we ever consider pending amounts in internal calculations.
+  PendingDelete(tx.GetHash());
+
+  // we do not care about parsing blocks prior to our waterline (empty blockchain defense)
+  if (nBlock < nWaterlineBlock) return false;
+  int64_t nBlockTime = pBlockIndex->GetBlockTime();
+
+  PrintToConsole("nBlockTime: %d\n", static_cast<int>(nBlockTime));
+  CMPTransaction mp_obj;
+  mp_obj.unlockLogic();
+
+  int expirationBlock = 0, actualBlock = 0;
+  CMPSPInfo::Entry sp;
+  if ( id_contract != 0 )
+    {
+      if (_my_sps->getSP(id_contract, sp) && sp.subcategory ==  "Futures Contracts")
+	{
+	  expirationBlock = static_cast<int>(sp.blocks_until_expiration);
+	  actualBlock = static_cast<int>(pBlockIndex->nHeight);
+        }
+    }
+  int deadline = sp.init_block + expirationBlock;
+  if ( actualBlock != 0 && deadline != 0 )
+    {
+      PrintToConsole("actualBlock: %d\n", actualBlock);
+      PrintToConsole("deadline: %d\n", deadline);
+      expirationAchieve = actualBlock == deadline ? 1 : 0;
+    }
+
+  if (expirationAchieve)
+    {
+      PrintToConsole("\nExpiration Date Achieve\n");
+    }
+  bool fFoundTx = false;
+  int pop_ret = parseTransaction(false, tx, nBlock, idx, mp_obj, nBlockTime);
+
+  if (0 == pop_ret)
+    {
+      assert(mp_obj.getEncodingClass() != NO_MARKER);
+      assert(mp_obj.getSender().empty() == false);
+
+      int interp_ret = mp_obj.interpretPacket();
+      if (interp_ret) PrintToLog("!!! interpretPacket() returned %d !!!\n", interp_ret);
+
+      // Only structurally valid transactions get recorded in levelDB
+      // PKT_ERROR - 2 = interpret_Transaction failed, structurally invalid payload
+      if (interp_ret != PKT_ERROR - 2)
+	{
+	  bool bValid = (0 <= interp_ret);
+	  p_txlistdb->recordTX(tx.GetHash(), bValid, nBlock, mp_obj.getType(), mp_obj.getNewAmount());
+	  p_OmniTXDB->RecordTransaction(tx.GetHash(), idx);
+        }
+      fFoundTx |= (interp_ret == 0);
+    }
+  else if (pop_ret > 0)
+    fFoundTx |= HandleDExPayments(tx, nBlock, mp_obj.getSender()); // testing the payment handler
+
+  if (fFoundTx && msc_debug_consensus_hash_every_transaction)
+    {
+      uint256 consensusHash = GetConsensusHash();
+      PrintToLog("Consensus hash for transaction %s: %s\n", tx.GetHash().GetHex(), consensusHash.GetHex());
+    }
+
+  return fFoundTx;
 }
 
 /**
@@ -1708,14 +2156,14 @@ int mastercore::WalletTxBuilder(const std::string& senderAddress, const std::str
     // Encode the data outputs
 
     if(!OmniCore_Encode_ClassD(data,vecSend)) { return MP_ENCODING_ERROR; }
- 
+
 
     // Then add a paytopubkeyhash output for the recipient (if needed) - note we do this last as we want this to be the highest vout
     if (!receiverAddress.empty()) {
         CScript scriptPubKey = GetScriptForDestination(DecodeDestination(receiverAddress));
         vecSend.push_back(std::make_pair(scriptPubKey, 0 < referenceAmount ? referenceAmount : 50000));
     }
-   
+
     PrintToLog("Second check point\n");
     // Now we have what we need to pass to the wallet to create the transaction, perform some checks first
 
@@ -1731,7 +2179,7 @@ int mastercore::WalletTxBuilder(const std::string& senderAddress, const std::str
     }
 
     // Ask the wallet to create the transaction (note mining fee determined by Bitcoin Core params)
-    if (!pwalletMain->CreateTransaction(vecRecipients, wtxNew, reserveKey, nFeeRet, nChangePosInOut, strFailReason, coinControl, true)) { 
+    if (!pwalletMain->CreateTransaction(vecRecipients, wtxNew, reserveKey, nFeeRet, nChangePosInOut, strFailReason, coinControl, true)) {
         return MP_ERR_CREATE_TX; }
 
     // Workaround for SigOps limit
@@ -1739,7 +2187,7 @@ int mastercore::WalletTxBuilder(const std::string& senderAddress, const std::str
          if (!FillTxInputCache(wtxNew)) {
              PrintToLog("%s ERROR: failed to get inputs for %s\n", __func__, wtxNew.GetHash().GetHex());
          }
-        
+
         unsigned int nBytesPerSigOp = 20; // default of Bitcoin Core 12.1
         unsigned int nSize = ::GetSerializeSize(wtxNew, SER_NETWORK, PROTOCOL_VERSION);
         unsigned int nSigOps = GetLegacySigOpCount(*(wtxNew.tx));
@@ -1783,10 +2231,10 @@ int mastercore::WalletTxBuilder(const std::string& senderAddress, const std::str
 void COmniTransactionDB::RecordTransaction(const uint256& txid, uint32_t posInBlock)
 {
      assert(pdb);
-    
+
      const std::string key = txid.ToString();
      const std::string value = strprintf("%d", posInBlock);
-    
+
      Status status = pdb->Put(writeoptions, key, value);
      ++nWritten;
 }
@@ -1794,30 +2242,30 @@ void COmniTransactionDB::RecordTransaction(const uint256& txid, uint32_t posInBl
 uint32_t COmniTransactionDB::FetchTransactionPosition(const uint256& txid)
 {
     assert(pdb);
-    
+
     const std::string key = txid.ToString();
     std::string strValue;
     uint32_t posInBlock = 999999; // setting an initial arbitrarily high value will ensure transaction is always "last" in event of bug/exploit
-    
+
     Status status = pdb->Get(readoptions, key, &strValue);
     if (status.ok()) {
         posInBlock = boost::lexical_cast<uint32_t>(strValue);
     }
-    
+
     return posInBlock;
 }
 
 void CMPTxList::LoadActivations(int blockHeight)
 {
      if (!pdb) return;
-    
+
      Slice skey, svalue;
      Iterator* it = NewIterator();
-    
+
      PrintToLog("Loading feature activations from levelDB\n");
-    
+
      std::vector<std::pair<int64_t, uint256> > loadOrder;
-    
+
      for (it->SeekToFirst(); it->Valid(); it->Next()) {
          std::string itData = it->value().ToString();
          std::vector<std::string> vstr;
@@ -1827,15 +2275,15 @@ void CMPTxList::LoadActivations(int blockHeight)
          uint256 txid = uint256S(it->key().ToString());;
          loadOrder.push_back(std::make_pair(atoi(vstr[1]), txid));
      }
-    
+
      std::sort (loadOrder.begin(), loadOrder.end());
-    
+
      for (std::vector<std::pair<int64_t, uint256> >::iterator it = loadOrder.begin(); it != loadOrder.end(); ++it) {
          uint256 hash = (*it).second;
          uint256 blockHash;
          CTransaction wtx;
          CMPTransaction mp_obj;
-    
+
         /* if (!GetTransaction(hash, wtx, Params().GetConsensus(), blockHash, true)) {
               PrintToLog("ERROR: While loading activation transaction %s: tx in levelDB but does not exist.\n", hash.GetHex());
               continue;
@@ -1885,9 +2333,9 @@ void CMPTxList::LoadAlerts(int blockHeight)
      if (!pdb) return;
     Slice skey, svalue;
     Iterator* it = NewIterator();
-    
+
     std::vector<std::pair<int64_t, uint256> > loadOrder;
-    
+
     for (it->SeekToFirst(); it->Valid(); it->Next()) {
          std::string itData = it->value().ToString();
          std::vector<std::string> vstr;
@@ -1897,9 +2345,9 @@ void CMPTxList::LoadAlerts(int blockHeight)
          uint256 txid = uint256S(it->key().ToString());;
          loadOrder.push_back(std::make_pair(atoi(vstr[1]), txid));
      }
-    
+
      std::sort (loadOrder.begin(), loadOrder.end());
-    
+
      for (std::vector<std::pair<int64_t, uint256> >::iterator it = loadOrder.begin(); it != loadOrder.end(); ++it) {
          uint256 txid = (*it).second;
          uint256 blockHash;
@@ -1925,14 +2373,14 @@ void CMPTxList::LoadAlerts(int blockHeight)
              PrintToLog("ERROR: While loading alert %s: sender is not authorized to send alerts.\n", txid.GetHex());
              continue;
          }
-    
+
          if (mp_obj.getAlertType() == 65535) { // set alert type to FFFF to clear previously sent alerts
              DeleteAlerts(mp_obj.getSender());
          } else {
              AddAlert(mp_obj.getSender(), mp_obj.getAlertType(), mp_obj.getAlertExpiry(), mp_obj.getAlertMessage());
          }
      }
-    
+
      delete it;
      int64_t blockTime = 0;
      {
@@ -2155,12 +2603,72 @@ bool CMPTxList::getTX(const uint256 &txid, string &value)
    delete it;
  }
 
+ void CMPTxList::recordPaymentTX(const uint256 &txid, bool fValid, int nBlock, unsigned int vout, unsigned int propertyId, uint64_t nValue, string buyer, string seller)
+ {
+   if (!pdb) return;
+
+        // Prep - setup vars
+        unsigned int type = 99999999;
+        uint64_t numberOfPayments = 1;
+        unsigned int paymentNumber = 1;
+        uint64_t existingNumberOfPayments = 0;
+
+        // Step 1 - Check TXList to see if this payment TXID exists
+        bool paymentEntryExists = p_txlistdb->exists(txid);
+
+        // Step 2a - If doesn't exist leave number of payments & paymentNumber set to 1
+        // Step 2b - If does exist add +1 to existing number of payments and set this paymentNumber as new numberOfPayments
+        if (paymentEntryExists)
+        {
+            //retrieve old numberOfPayments
+            std::vector<std::string> vstr;
+            string strValue;
+            Status status = pdb->Get(readoptions, txid.ToString(), &strValue);
+            if (status.ok())
+            {
+                // parse the string returned
+                boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
+
+                // obtain the existing number of payments
+                if (4 <= vstr.size())
+                {
+                    existingNumberOfPayments = atoi(vstr[3]);
+                    paymentNumber = existingNumberOfPayments + 1;
+                    numberOfPayments = existingNumberOfPayments + 1;
+                }
+            }
+        }
+
+        // Step 3 - Create new/update master record for payment tx in TXList
+        const string key = txid.ToString();
+        const string value = strprintf("%u:%d:%u:%lu", fValid ? 1:0, nBlock, type, numberOfPayments);
+        Status status;
+        PrintToLog("DEXPAYDEBUG : Writing master record %s(%s, valid=%s, block= %d, type= %d, number of payments= %lu)\n", __FUNCTION__, txid.ToString(), fValid ? "YES":"NO", nBlock, type, numberOfPayments);
+        if (pdb)
+        {
+            status = pdb->Put(writeoptions, key, value);
+            PrintToLog("DEXPAYDEBUG : %s(): %s, line %d, file: %s\n", __FUNCTION__, status.ToString(), __LINE__, __FILE__);
+        }
+
+        // Step 4 - Write sub-record with payment details
+        const string txidStr = txid.ToString();
+        const string subKey = STR_PAYMENT_SUBKEY_TXID_PAYMENT_COMBO(txidStr, paymentNumber);
+        const string subValue = strprintf("%d:%s:%s:%d:%lu", vout, buyer, seller, propertyId, nValue);
+        Status subStatus;
+        PrintToLog("DEXPAYDEBUG : Writing sub-record %s with value %s\n", subKey, subValue);
+        if (pdb)
+        {
+            subStatus = pdb->Put(writeoptions, subKey, subValue);
+            PrintToLog("DEXPAYDEBUG : %s(): %s, line %d, file: %s\n", __FUNCTION__, subStatus.ToString(), __LINE__, __FILE__);
+        }
+ }
+
 // figure out if there was at least 1 Master Protocol transaction within the block range, or a block if starting equals ending
 // block numbers are inclusive
 // pass in bDeleteFound = true to erase each entry found within the block range
  bool CMPTxList::isMPinBlockRange(int starting_block, int ending_block, bool bDeleteFound)
 {
-    leveldb::Slice skey, svalue; 
+    leveldb::Slice skey, svalue;
     unsigned int count = 0;
     std::vector<std::string> vstr;
     int block;
@@ -2174,7 +2682,7 @@ bool CMPTxList::getTX(const uint256 &txid, string &value)
         svalue = it->value();
 
        ++count;
- 
+
        string strvalue = it->value().ToString();
 
        // parse the string returned, find the validity flag/bit & other parameters
@@ -2263,16 +2771,16 @@ bool mastercore::getValidMPTX(const uint256 &txid, int *block, unsigned int *typ
 int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockIndex)
 {
      LOCK(cs_tally);
-    
+
      if (reorgRecoveryMode > 0) {
          reorgRecoveryMode = 0; // clear reorgRecovery here as this is likely re-entrant
-    
+
          // NOTE: The blockNum parameter is inclusive, so deleteAboveBlock(1000) will delete records in block 1000 and above.
          p_txlistdb->isMPinBlockRange(pBlockIndex->nHeight, reorgRecoveryMaxHeight, true);
          reorgRecoveryMaxHeight = 0;
-    
+
          nWaterlineBlock = ConsensusParams().GENESIS_BLOCK - 1;
-      
+
          int best_state_block = load_most_relevant_state();
          if (best_state_block < 0) {
              // unable to recover easily, remove stale stale state bits and reparse from the beginning.
@@ -2280,12 +2788,12 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
          } else {
              nWaterlineBlock = best_state_block;
          }
-    
+
          // clear the global wallet property list, perform a forced wallet update and tell the UI that state is no longer valid, and UI views need to be reinit
          global_wallet_property_list.clear();
          CheckWalletUpdate(true);
          //uiInterface.OmniStateInvalidated();
-    
+
          if (nWaterlineBlock < nBlockPrev) {
              // scan from the block after the best active block to catch up to the active chain
              msc_initial_scan(nWaterlineBlock + 1);
@@ -2294,9 +2802,9 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
 
      // handle any features that go live with this block
     CheckLiveActivations(pBlockIndex->nHeight);
-
+    addInterestPegged(nBlockPrev,pBlockIndex);
     eraseExpiredCrowdsale(pBlockIndex);
-    
+    _my_sps->rollingContractsBlock(pBlockIndex); // NOTE: we are checking every contract expiration
     return 0;
 }
 
@@ -2312,8 +2820,8 @@ int mastercore_handler_block_end(int nBlockNow, CBlockIndex const * pBlockIndex,
         mastercore_init();
     }
 
-     // check the alert status, do we need to do anything else here?
-     CheckExpiredAlerts(nBlockNow, pBlockIndex->GetBlockTime());
+    // check the alert status, do we need to do anything else here?
+    CheckExpiredAlerts(nBlockNow, pBlockIndex->GetBlockTime());
 
      // transactions were found in the block, signal the UI accordingly
      if (countMP > 0) CheckWalletUpdate(true);
@@ -2357,13 +2865,879 @@ int mastercore_handler_disc_end(int nBlockNow, CBlockIndex const * pBlockIndex)
 
     return 0;
 }
+/* New things for contracts *///////////////////////////////////////////////////
 
+// obtains a vector of txids where the supplied address participated in a trade (needed for gettradehistory_MP)
+// optional property ID parameter will filter on propertyId transacted if supplied
+// sorted by block then index
+void CMPTradeList::getTradesForAddress(std::string address, std::vector<uint256>& vecTransactions, uint32_t propertyIdFilter)
+{
+  if (!pdb) return;
+  std::map<std::string,uint256> mapTrades;
+  leveldb::Iterator* it = NewIterator();
+  for(it->SeekToFirst(); it->Valid(); it->Next()) {
+      std::string strKey = it->key().ToString();
+      std::string strValue = it->value().ToString();
+      std::vector<std::string> vecValues;
+      if (strKey.size() != 64) continue; // only interested in trades
+      uint256 txid = uint256S(strKey);
+      size_t addressMatch = strValue.find(address);
+      if (addressMatch == std::string::npos) continue;
+      boost::split(vecValues, strValue, boost::is_any_of(":"), token_compress_on);
+      if (vecValues.size() != 5) {
+          PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
+          continue;
+      }
+      uint32_t propertyIdForSale = boost::lexical_cast<uint32_t>(vecValues[1]);
+      uint32_t propertyIdDesired = boost::lexical_cast<uint32_t>(vecValues[2]);
+      int64_t blockNum = boost::lexical_cast<uint32_t>(vecValues[3]);
+      int64_t txIndex = boost::lexical_cast<uint32_t>(vecValues[4]);
+      if (propertyIdFilter != 0 && propertyIdFilter != propertyIdForSale && propertyIdFilter != propertyIdDesired) continue;
+      std::string sortKey = strprintf("%06d%010d", blockNum, txIndex);
+      mapTrades.insert(std::make_pair(sortKey, txid));
+  }
+  delete it;
+  for (std::map<std::string,uint256>::iterator it = mapTrades.begin(); it != mapTrades.end(); it++) {
+      vecTransactions.push_back(it->second);
+  }
+}
+
+void CMPTradeList::recordNewTrade(const uint256& txid, const std::string& address, uint32_t propertyIdForSale, uint32_t propertyIdDesired, int blockNum, int blockIndex)
+{
+  if (!pdb) return;
+  std::string strValue = strprintf("%s:%d:%d:%d:%d", address, propertyIdForSale, propertyIdDesired, blockNum, blockIndex);
+  Status status = pdb->Put(writeoptions, txid.ToString(), strValue);
+  ++nWritten;
+  // if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
+}
+
+void CMPTradeList::recordNewTrade(const uint256& txid, const std::string& address, uint32_t propertyIdForSale, uint32_t propertyIdDesired, int blockNum, int blockIndex, int64_t reserva)
+{
+  if (!pdb) return;
+  std::string strValue = strprintf("%s:%d:%d:%d:%d:%d", address, propertyIdForSale, propertyIdDesired, blockNum, blockIndex,reserva);
+  Status status = pdb->Put(writeoptions, txid.ToString(), strValue);
+  ++nWritten;
+  // if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
+}
+
+void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, string address1, string address2, unsigned int prop1, unsigned int prop2, uint64_t amount1, uint64_t amount2, int blockNum, int64_t fee)
+{
+    if (!pdb) return;
+    const string key = txid1.ToString() + "+" + txid2.ToString();
+    const string value = strprintf("%s:%s:%u:%u:%lu:%lu:%d:%d", address1, address2, prop1, prop2, amount1, amount2, blockNum, fee);
+
+    Status status;
+    if (pdb)
+    {
+        status = pdb->Put(writeoptions, key, value);
+        ++nWritten;
+        // if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
+    }
+}
+/********************************************************/
+/** New things for Contract */
+void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, string address1, string address2, uint64_t effective_price, uint64_t amount_maker, uint64_t amount_taker, int blockNum1, int blockNum2, uint32_t property_traded, string tradeStatus, int64_t lives_s0, int64_t lives_s1, int64_t lives_s2, int64_t lives_s3, int64_t lives_b0, int64_t lives_b1, int64_t lives_b2, int64_t lives_b3, string s_maker0, string s_taker0, string s_maker1, string s_taker1, string s_maker2, string s_taker2, string s_maker3, string s_taker3, int64_t nCouldBuy0, int64_t nCouldBuy1, int64_t nCouldBuy2, int64_t nCouldBuy3)
+{
+  if (!pdb) return;
+
+  extern volatile int idx_q;
+  extern volatile int path_length;
+  std::map<std::string, std::string> edgeEle;
+  std::vector<std::map<std::string, std::string>>::iterator it_path_ele;
+  bool savedata_bool = false;
+
+  double UPNL1 = 0, UPNL2 = 0;
+  extern volatile int expirationAchieve;
+  /********************************************************************/
+  const string key = txid1.ToString() + "+" + txid2.ToString();
+  const string value = strprintf("%s:%s:%lu:%lu:%lu:%d:%d:%s:%s:%d:%d:%d", address1, address2, effective_price, amount_maker, amount_taker, blockNum1, blockNum2, s_maker0, s_taker0, lives_s0, lives_b0, property_traded);
+
+  const string line0 = gettingLineOut(address1, s_maker0, lives_s0, address2, s_taker0, lives_b0, nCouldBuy0, effective_price);
+  const string line1 = gettingLineOut(address1, s_maker1, lives_s1, address2, s_taker1, lives_b1, nCouldBuy1, effective_price);
+  const string line2 = gettingLineOut(address1, s_maker2, lives_s2, address2, s_taker2, lives_b2, nCouldBuy2, effective_price);
+  const string line3 = gettingLineOut(address1, s_maker3, lives_s3, address2, s_taker3, lives_b3, nCouldBuy3, effective_price);
+
+  bool status_bool1 = s_maker0 == "OpenShortPosByLongPosNetted" || s_maker0 == "OpenLongPosByShortPosNetted";
+  bool status_bool2 = s_taker0 == "OpenShortPosByLongPosNetted" || s_taker0 == "OpenLongPosByShortPosNetted";
+
+  std::fstream fileSixth;
+  fileSixth.open ("graphInfoSixth.txt", std::fstream::in | std::fstream::out | std::fstream::app);
+  if ( status_bool1 || status_bool2 )
+    {
+      if ( s_maker3 == "EmptyStr" && s_taker3 == "EmptyStr" ) savedata_bool = true;
+      saveDataGraphs(fileSixth, line1, line2, line3, savedata_bool);
+    }
+  else saveDataGraphs(fileSixth, line0);
+  fileSixth.close();
+  /********************************************************************/
+  if ( status_bool1 || status_bool2 )
+    {
+      buildingEdge(edgeEle, address1, address2, s_maker1, s_taker1, lives_s1, lives_b1, nCouldBuy1, effective_price, idx_q, 0);
+      path_ele.push_back(edgeEle);
+      buildingEdge(edgeEle, address1, address2, s_maker2, s_taker2, lives_s2, lives_b2, nCouldBuy2, effective_price, idx_q, 0);
+      path_ele.push_back(edgeEle);
+      if ( s_maker3 != "EmptyStr" && s_taker3 != "EmptyStr" )
+	{
+	  buildingEdge(edgeEle, address1, address2, s_maker3, s_taker3, lives_s3, lives_b3,nCouldBuy3,effective_price,idx_q,0);
+	  path_ele.push_back(edgeEle);
+	}
+    }
+  else
+    {
+      buildingEdge(edgeEle, address1, address2, s_maker0, s_taker0, lives_s0, lives_b0, nCouldBuy0, effective_price, idx_q, 0);
+      path_ele.push_back(edgeEle);
+    }
+
+  loopForEntryPrice(path_ele, path_length, address1, address2, UPNL1, UPNL2, effective_price);
+  path_length = path_ele.size();
+  PrintToConsole("UPNL1 = %d, UPNL2 = %d\n", UPNL1, UPNL2);
+
+  Status status;
+  if (pdb)
+    {
+      status = pdb->Put(writeoptions, key, value);
+      ++nWritten;
+      // if (msc_debug_tradedb) PrintToLog("\n%s(): %s\n", __FUNCTION__, status.ToString());
+    }
+  PrintToConsole("\n\nEnd of recordMatchedTrade <------------------------------\n");
+  if ( expirationAchieve )
+    {
+      PrintToConsole("Path for Settlement:\n");
+      for (it_path_ele = path_ele.begin(); it_path_ele != path_ele.end(); ++it_path_ele) printing_edges(*it_path_ele);
+    }
+}
+
+double PNL_function(uint64_t entry_price, uint64_t exit_price, int64_t amount_trd, std::string netted_status)
+{
+  double PNL = 0;
+
+  if ( finding_string("Long", netted_status) )
+    PNL = (double)amount_trd*(1/(double)entry_price-1/(double)exit_price);
+  else if ( finding_string("Short", netted_status) )
+    PNL = (double)amount_trd*(1/(double)exit_price-1/(double)entry_price);
+
+  return PNL;
+}
+
+void loopForEntryPrice(std::vector<std::map<std::string, std::string>> path_ele, unsigned int path_length, std::string address1, std::string address2, double &UPNL1, double &UPNL2, uint64_t exit_price)
+{
+  std::vector<std::map<std::string, std::string>>::iterator it_path_ele;
+  std::vector<std::map<std::string, std::string>>::reverse_iterator reit_path_ele;
+  std::string addrs_srch;
+  std::string addrs_trkh;
+
+  int idx_pathh = 0;
+  PrintToConsole("______________________________________________\n");
+  for (it_path_ele = path_ele.begin(); it_path_ele != path_ele.end(); ++it_path_ele)
+    {
+      idx_pathh += 1;
+      PrintToConsole("idx_pathh: %d", idx_pathh);
+      printing_edges(*it_path_ele);
+    }
+  PrintToConsole("______________________________________________\n");
+
+  int idx_path = 0;
+  unsigned int limInf = 0;
+  uint64_t entry_pricesrc = 0, entry_pricetrk = 0;
+  double UPNLSRC, UPNLTRK;
+  double UPNLSRC_sum = 0, UPNLTRK_sum = 0;
+  PrintToConsole("New Loop:\n");
+
+  for (it_path_ele = path_ele.begin()+path_length; it_path_ele != path_ele.end(); ++it_path_ele)
+    {
+      idx_path += 1;
+      if ( finding_string("Netted", (*it_path_ele)["status_src"]) )
+      	{
+      	  addrs_srch = (*it_path_ele)["addrs_src"];
+	  limInf = path_ele.size()-(path_length+idx_path)+1;
+
+      	  for (reit_path_ele = path_ele.rbegin()+limInf; reit_path_ele != path_ele.rend(); ++reit_path_ele)
+      	    {
+      	      if ( addrs_srch == (*reit_path_ele)["addrs_src"] && finding_string("Open", (*reit_path_ele)["status_src"]) )
+      	      	{
+		  printing_edges(*reit_path_ele);
+		  entry_pricesrc = static_cast<uint64_t>(stol((*reit_path_ele)["matched_price"]));
+		  break;
+		}
+      	      else if ( addrs_srch == (*reit_path_ele)["addrs_trk"] && finding_string("Open", (*reit_path_ele)["status_trk"]) )
+      	      	{
+      	      	  printing_edges(*reit_path_ele);
+		  entry_pricesrc = static_cast<uint64_t>(stol((*reit_path_ele)["matched_price"]));
+		  break;
+      	      	}
+      	    }
+	  UPNLSRC = PNL_function(entry_pricesrc, exit_price, static_cast<uint64_t>(stol((*it_path_ele)["amount_trd"])), (*it_path_ele)["status_src"]);
+	  UPNLSRC_sum += UPNLSRC;
+      	}
+      if ( finding_string("Netted", (*it_path_ele)["status_trk"]) )
+      	{
+      	  addrs_trkh = (*it_path_ele)["addrs_trk"];
+	  limInf = path_ele.size()-(path_length+idx_path)+1;
+	  PrintToConsole("Exit Price: %d\n", (*it_path_ele)["matched_price"]);
+
+	  for (reit_path_ele = path_ele.rbegin()+limInf; reit_path_ele != path_ele.rend(); ++reit_path_ele)
+      	    {
+      	      if ( addrs_trkh == (*reit_path_ele)["addrs_src"] && finding_string("Open", (*reit_path_ele)["status_src"]) )
+      	      	{
+		  printing_edges(*reit_path_ele);
+		  entry_pricetrk = static_cast<uint64_t>(stol((*reit_path_ele)["matched_price"]));
+		  break;
+		}
+	      else if ( addrs_trkh == (*reit_path_ele)["addrs_trk"] && finding_string("Open", (*reit_path_ele)["status_trk"]) )
+		{
+	      	  printing_edges(*reit_path_ele);
+		  entry_pricetrk = static_cast<uint64_t>(stol((*reit_path_ele)["matched_price"]));
+		  break;
+	      	}
+      	    }
+	  UPNLTRK = PNL_function(entry_pricetrk, exit_price, static_cast<uint64_t>(stol((*it_path_ele)["amount_trd"])), (*it_path_ele)["status_trk"]);
+	  UPNLTRK_sum += UPNLTRK;
+      	}
+    }
+  UPNL1 = UPNLSRC_sum;
+  UPNL2 = UPNLTRK_sum;
+}
+
+const string gettingLineOut(std::string address1, std::string s_status1, int64_t lives_maker, std::string address2, std::string s_status2, int64_t lives_taker, int64_t nCouldBuy, uint64_t effective_price)
+{
+  const string lineOut = strprintf("%s\t %s\t %d\t %s\t %s\t %d\t %d\t %d",
+				   address1, s_status1, FormatContractShortMP(lives_maker),
+				   address2, s_status2, FormatContractShortMP(lives_taker),
+				   FormatContractShortMP(nCouldBuy), FormatContractShortMP(effective_price));
+  return lineOut;
+}
+
+void buildingEdge(std::map<std::string, std::string> &edgeEle, std::string addrs_src, std::string addrs_trk, std::string status_src, std::string status_trk, int64_t lives_src, int64_t lives_trk, int64_t amount_path, int64_t matched_price, int idx_q, int ghost_edge)
+{
+  edgeEle["addrs_src"]     = addrs_src;
+  edgeEle["addrs_trk"]     = addrs_trk;
+  edgeEle["status_src"]    = status_src;
+  edgeEle["status_trk"]    = status_trk;
+  edgeEle["lives_src"]     = std::to_string(lives_src);
+  edgeEle["lives_trk"]     = std::to_string(lives_trk);
+  edgeEle["amount_trd"]    = std::to_string(amount_path);
+  edgeEle["matched_price"] = std::to_string(matched_price);
+  edgeEle["edge_row"]      = std::to_string(idx_q);
+  edgeEle["ghost_edge"]    = std::to_string(ghost_edge);
+}
+
+void printing_edges(std::map<std::string, std::string> &path_ele)
+{
+  cout <<"\n{ "<<"addrs_src : "<<path_ele["addrs_src"]<<", status_src : "<<path_ele["status_src"]<<", lives_src : "<<path_ele["lives_src"]<<", addrs_trk : "<<path_ele["addrs_trk"]<<", status_trk : "<<path_ele["status_trk"]<<", lives_trk : "<<path_ele["lives_trk"]<<", amount_trd : "<<path_ele["amount_trd"]<<", matched_price : "<<path_ele["matched_price"]<<", edge_row : "<<path_ele["edge_row"]<<", ghost_edge : "<<path_ele["ghost_edge"]<<" }\n";
+}
+/********************************************************/
+/** New things for contracts */
+bool CMPTradeList::getMatchingTrades(uint32_t propertyId, UniValue& tradeArray)
+{
+  if (!pdb) return false;
+
+  int count = 0;
+
+  std::vector<std::string> vstr;
+  // string txidStr = txid.ToString();
+
+  leveldb::Iterator* it = NewIterator(); // Allocation proccess
+
+  for(it->SeekToFirst(); it->Valid(); it->Next()) {
+      // search key to see if this is a matching trade
+      std::string strKey = it->key().ToString();
+      std::string strValue = it->value().ToString();
+
+      // ensure correct amount of tokens in value string
+      boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
+      if (vstr.size() != 17) {
+          PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
+          // PrintToConsole("TRADEDB error - unexpected number of tokens in value %d \n",vstr.size());
+          continue;
+      }
+
+     // decode the details from the value string
+      uint32_t prop1 = boost::lexical_cast<uint32_t>(vstr[11]);
+      std::string address1 = vstr[0];
+      std::string address2 = vstr[1];
+      int64_t amountTraded = boost::lexical_cast<int64_t>(vstr[2]);
+      int block = boost::lexical_cast<int>(vstr[6]);
+      int64_t price = boost::lexical_cast<int64_t>(vstr[12]);
+      int64_t takerAction = boost::lexical_cast<int64_t>(vstr[13]);
+      std::string txidmaker = vstr[14];
+      std::string txidtaker = vstr[15];
+      int idx = boost::lexical_cast<int>(vstr[16]);
+      PrintToConsole("amount traded: %d\n",amountTraded);
+      PrintToConsole("price: %d\n",price);
+      PrintToConsole("contract id: %d\n",prop1);
+      PrintToConsole("taker action: %d\n",takerAction);
+      PrintToConsole("maker txid: %d\n",txidmaker);
+      PrintToConsole("maker txid: %d\n",txidmaker);
+      PrintToConsole("block: %d\n",block);
+      PrintToConsole("block index: %d\n",idx);
+
+      // populate trade object and add to the trade array, correcting for orientation of trade
+
+      if (prop1 != propertyId) {
+         continue;
+      }
+
+      UniValue trade(UniValue::VOBJ);
+
+      trade.push_back(Pair("maker_address", address1));
+      trade.push_back(Pair("maker_txid", txidmaker));
+      trade.push_back(Pair("taker_address", address2));
+      trade.push_back(Pair("taker_txid", txidtaker));
+      trade.push_back(Pair("amount_traded", FormatByType(amountTraded,1)));
+      trade.push_back(Pair("price", FormatByType(price,2)));
+      trade.push_back(Pair("taker_action",takerAction));
+      trade.push_back(Pair("taker_block",block));
+      trade.push_back(Pair("taker_index_block",idx));
+      tradeArray.push_back(trade);
+      ++count;
+      PrintToConsole("count : %d\n",count);
+  }
+  // clean up
+  delete it; // Desallocation proccess
+  if (count) { return true; } else { return false; }
+}
+
+bool CMPTradeList::getCreatedPegged(uint32_t propertyId, UniValue& tradeArray)
+{
+  if (!pdb) return false;
+
+  int count = 0;
+
+  std::vector<std::string> vstr;
+  // string txidStr = txid.ToString();
+
+  leveldb::Iterator* it = NewIterator(); // Allocation proccess
+
+  for(it->SeekToFirst(); it->Valid(); it->Next()) {
+      // search key to see if this is a matching trade
+      std::string strKey = it->key().ToString();
+      std::string strValue = it->value().ToString();
+
+      // ensure correct amount of tokens in value string
+      boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
+      if (vstr.size() != 5) {
+          PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
+          continue;
+      }
+
+     // decode the details from the value string
+
+      uint32_t propId = boost::lexical_cast<uint32_t>(vstr[1]);
+
+      if (propId != propertyId) {
+         continue;
+      }
+      std::string address = vstr[0];
+      int64_t height = boost::lexical_cast<int64_t>(vstr[2]);
+      int64_t amount = (boost::lexical_cast<int64_t>(vstr[3]) / factorE);
+      std::string series = vstr[4];
+      PrintToConsole("address who create: %s\n",address);
+      PrintToConsole("height: %d\n",height);
+      PrintToConsole("amount created: %d\n",amount);
+      PrintToConsole("property id: %d\n",propId);
+      PrintToConsole("series: %s\n",series);
+      // populate trade object and add to the trade array, correcting for orientation of trade
+
+
+      UniValue trade(UniValue::VOBJ);
+
+      trade.push_back(Pair("creator address", address));
+      trade.push_back(Pair("height", height));
+      trade.push_back(Pair("txid", strKey));
+      trade.push_back(Pair("amount created", amount));
+      trade.push_back(Pair("series", series));
+      tradeArray.push_back(trade);
+      ++count;
+      PrintToConsole("count : %d\n",count);
+  }
+  // clean up
+  delete it; // Desallocation proccess
+  if (count) { return true; } else { return false; }
+}
+
+int64_t CMPTradeList::getTradeAllsByTxId(uint256& txid)  // function that return the initial margin (ALLs) for a trade txid
+{
+  if (!pdb) return false;
+
+  int count = 0;
+  int64_t alls = 0;
+  std::string txidStr = txid.ToString();
+  PrintToConsole("txid from argument : %s \n",txidStr);
+  std::vector<std::string> vstr;
+
+  leveldb::Iterator* it = NewIterator(); // Allocation proccess
+
+  for(it->SeekToFirst(); it->Valid(); it->Next()) {
+      // search key to see if this is a matching trade
+      std::string strKey = it->key().ToString();
+      std::string strValue = it->value().ToString();
+
+      // ensure correct amount of tokens in value string
+      boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
+      if (vstr.size() != 6) {
+          PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
+          // PrintToConsole("TRADEDB error - unexpected number of tokens in value %d \n",vstr.size());
+          continue;
+      }
+      if (strKey != txidStr){
+          continue;
+      }
+
+     // decode the details from the value string
+      alls = boost::lexical_cast<int64_t>(vstr[5]);
+      PrintToConsole("txid from db: %s<------------------------------\n",strKey);
+      PrintToConsole("alls for margin: %s<------------------------------\n",alls);
+      PrintToConsole("count : %d\n",count);
+      ++count;
+  }
+  // clean up
+  delete it; // Desallocation proccess
+  return alls;
+}
+
+void CMPTradeList::recordForUPNL(const uint256 txid, string address, uint32_t property_traded, int64_t effectivePrice)
+{
+
+  if (!pdb) return;
+  PrintToConsole("address : %s\n",address);
+  PrintToConsole("contract traded: %d\n",property_traded);
+  PrintToConsole("effective price: %d\n",effectivePrice);
+  arith_uint256 effPr = mastercore::ConvertTo256(effectivePrice) / mastercore::ConvertTo256(factorE);
+  const string key = txid.ToString();
+  const string value = strprintf("%s:%d:%d", address , property_traded, mastercore::ConvertTo64(effPr));
+
+  Status status;
+  if (pdb)
+  {
+      status = pdb->Put(writeoptions, key, value);
+      ++nWritten;
+      // if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
+  }
+  PrintToConsole("Exit the recordForUPNL function <--------------------------\n");
+
+}
+
+double CMPTradeList::getPNL(string address, int64_t contractsClosed, int64_t price, uint32_t property, uint32_t marginRequirementContract, uint32_t notionalSize, std::string Status)
+{
+    PrintToConsole("________________________________________\n");
+    PrintToConsole("Inside getPNL!!!\n");
+    PrintToConsole("Checking Extern Volatil Variable coming from x_Trade\n");
+    extern volatile uint64_t marketPrice;
+    // PrintToConsole("Market Price in Omnicore: %d\n", marketPrice);
+
+    int count = 0;
+    int64_t totalAmount = 0;
+
+    int64_t totalContracts = 0;
+    int64_t totalAux = 0;
+    int64_t pCouldBuy = 0;
+
+    int64_t d_contractsClosed = static_cast<int64_t>(contractsClosed/factorE);
+    int64_t aux = getMPbalance(address, property, REMAINING);
+    std::vector<std::string> vstr;
+
+    leveldb::Iterator* it = NewIterator();
+    for(it->SeekToFirst(); it->Valid(); it->Next()) {
+
+        std::string strKey = it->key().ToString();
+        std::string strValue = it->value().ToString();
+
+        boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
+
+        if (vstr.size() != 17) {
+
+            PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
+            // PrintToConsole("TRADEDB error - unexpected number of tokens in value : (%s) \n",strValue);
+            continue;
+        }
+        if (address != vstr[0] && address != vstr[1]) continue;
+        // Decode the details from the value string
+        std::string address1 = vstr[0];
+        std::string address2 = vstr[1];
+        int64_t effectivePrice = (boost::lexical_cast<int64_t>(vstr[12]))/factorE;
+        int64_t nCouldBuy = (boost::lexical_cast<int64_t>(vstr[2]))/factorE;
+        PrintToConsole("aux: %d\n",aux);
+        PrintToConsole("nCouldBuy: %d\n",nCouldBuy);
+        PrintToConsole("EffectivePrice: %d\n",effectivePrice);
+        PrintToConsole("Contracts closed: %d\n",d_contractsClosed);
+        // making some calculations needed for PNL
+        if(aux > totalAux){
+          if (nCouldBuy > aux - totalAux){
+              pCouldBuy = nCouldBuy - (aux - totalAux);
+              totalAux = totalAux + aux - totalAux;
+          }else {
+              totalAux = totalAux + nCouldBuy;
+              continue;
+          }
+        }
+
+        if(d_contractsClosed > totalContracts){
+            if (pCouldBuy > 0){
+                nCouldBuy = pCouldBuy;
+            }
+            if (nCouldBuy > d_contractsClosed - totalContracts){
+                int64_t diff = d_contractsClosed - totalContracts;
+                totalAmount += effectivePrice*diff;
+                totalContracts += diff;
+            } else {
+                totalAmount += effectivePrice*nCouldBuy;
+                totalContracts += nCouldBuy;
+            }
+
+            PrintToConsole("totalAmount: %d\n",totalAmount);
+            PrintToConsole("totalContracts: %d\n",totalContracts);
+            pCouldBuy = 0;
+         } else {
+            if ( totalContracts > 0 ) {
+                //assert(update_tally_map(address, property, totalContracts, REMAINING));
+            }
+            break;
+        }
+        ++count;
+    }
+
+    // // clean up
+    delete it;
+    // double averagePrice = static_cast<double>(totalAmount/d_contractsClosed);
+    // double PNL_num = static_cast<double>((d_price - averagePrice)*(notionalSize*d_contractsClosed));
+    // double PNL_den = static_cast<double>(averagePrice*marginRequirementContract);
+    double PNL = 1;
+
+    // if ((Status == "Long Netted") || (Status == "Netted_L")){
+    //    PNL = static_cast<double>(PNL_num/PNL_den);
+    //    PrintToConsole("Long Side\n");
+    // } else if ((Status == "Short Netted") || (Status == "Netted_S")){
+    //    PNL = static_cast<double>(-PNL_num/PNL_den);
+    //    PrintToConsole("Short Side\n");
+    // }
+    //
+    // PrintToConsole("Total Amount : %d\n",totalAmount);
+    // PrintToConsole("Contracts Remaining: %d\n",totalContracts);
+    // PrintToConsole("Average Price Pi: %d\n",averagePrice);
+    // PrintToConsole("marginRequirementContract : %d\n",marginRequirementContract);
+    // PrintToConsole("notionalSize : %d\n",notionalSize);
+    // PrintToConsole("contractsClosed : %d\n",d_contractsClosed);
+    // PrintToConsole("PNL_num : %d\n",PNL_num);
+    // PrintToConsole("PNL_den : %d\n",PNL_den);
+    // PrintToConsole("________________________________________\n");
+    return PNL;
+}
+
+double CMPTradeList::getUPNL(string address, uint32_t contractId)
+{
+   // int count = 0;
+   // int64_t sumPrice = 0;
+   // const double factor = 100000000;
+   // int index = static_cast<int>(contractId);
+   // double marketPrice = static_cast<double>((marketP [index])/factor);
+   // CMPSPInfo::Entry sp;
+   // _my_sps->getSP(contractId, sp);
+   // uint32_t notionalSize = sp.notional_size;
+   // uint32_t marginRequirement = sp.margin_requirement;
+   // PrintToConsole("------------------------------------------------------------\n");
+   // PrintToConsole("Inside getUPNL\n");
+   // PrintToConsole("marketPrice for this contract : %d\n",marketPrice);
+   // PrintToConsole("notionalSize : %d\n",notionalSize);
+   // PrintToConsole("marginRequirement : %d\n",marginRequirement);
+   // std::vector<std::string> vstr;
+   // leveldb::Iterator* it = NewIterator();
+   // for(it->SeekToFirst(); it->Valid(); it->Next()) {
+   //
+   //     std::string strKey = it->key().ToString();
+   //     std::string strValue = it->value().ToString();
+   //
+   //      boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
+
+   //     if (vstr.size() != 3) {
+
+   //         PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
+            // PrintToConsole("TRADEDB error - unexpected number of tokens in value : (%s) \n",strValue);
+   //         continue;
+   //     }
+   //     if (address != vstr[0]) continue;
+        // Decode the details from the value string
+   //     std::string address1 = vstr[0];
+   //     uint32_t property_traded = boost::lexical_cast<uint32_t>(vstr[1]);
+   //     int64_t effectivePrice = boost::lexical_cast<int64_t>(vstr[2]);
+   //     sumPrice += effectivePrice;
+   //     PrintToConsole("address1: %s\n",address1);
+   //     PrintToConsole("property_traded: %d\n",property_traded);
+   //     PrintToConsole("EffectivePrice: %d\n",effectivePrice);
+   //     ++count;
+   //   }
+    // // clean up
+   //  delete it;
+   //  double averagePrice = 0;
+   //  if(count > 0){
+   //     averagePrice = static_cast<double>(sumPrice/count);
+   //  }
+   //  PrintToConsole("averagePrice: %d\n",averagePrice);
+   //  PrintToConsole("sumPrice: %d\n",sumPrice);
+   //  PrintToConsole("final count: %d\n",count);
+
+   //  int64_t longPosition = getMPbalance(address, contractId, POSSITIVE_BALANCE);
+   //  int64_t shortPosition = getMPbalance(address, contractId, NEGATIVE_BALANCE);
+   //  double PNL_num = 0;
+     double PNL = 0;
+   //  if (longPosition > 0 && shortPosition == 0) {
+   //     PNL_num = static_cast<double>((marketPrice - averagePrice)*(notionalSize*longPosition));
+   //  } else if (longPosition == 0 && shortPosition > 0) {
+   //     PNL_num = static_cast<double>((averagePrice - marketPrice)*(notionalSize*shortPosition));
+   //  }
+
+   // double PNL_den = static_cast<double>(averagePrice*marginRequirement);
+    //if (PNL_den != 0){
+    //   PNL = static_cast<double>(PNL_num/PNL_den);
+    //}
+   // PrintToConsole("shortPosition : %d\n",shortPosition);
+   // PrintToConsole("longPosition : %d\n",longPosition);
+   // PrintToConsole("PNL_num : %d\n",PNL_num);
+   // PrintToConsole("PNL_den : %d\n",PNL_den);
+   // PrintToConsole("PNL : %d\n",PNL);
+   // PrintToConsole("Exit the getUPNL function <--------------------------\n");
+    return PNL;
+
+}
+////////////////////////////////////////
+/** New things for Contracts */
+void CMPTradeList::marginLogic(uint32_t property) // Vector of matching address for a given contract traded
+{
+    PrintToConsole("___________________________________________________________\n");
+    PrintToConsole("Looking for Address in marginLogic function\n");
+
+    std::vector<std::string> vstr;
+    std::vector<std::string> addr;   // Address vector
+
+    extern volatile uint64_t marketPrice;
+    leveldb::Iterator* it = NewIterator();
+
+    for(it->SeekToFirst(); it->Valid(); it->Next()) {
+
+        std::string strKey = it->key().ToString();
+        std::string strValue = it->value().ToString();
+
+        boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
+
+        if (vstr.size() != 17) {
+
+            PrintToLog("TRADEDB error - unexpected size of vector (%s)\n", strValue);
+            continue;
+        }
+        std::string address1 = vstr[0];
+        std::string address2 = vstr[1];
+
+        if (std::find(addr.begin(), addr.end(), address1) == addr.end() ) {
+            addr.push_back(address1);
+        }
+        if ((std::find(addr.begin(), addr.end(), address2) == addr.end()) && (address1 != address2)) {
+            addr.push_back(address2);
+        }
+      }
+
+      for(std::vector<std::string>::iterator it = addr.begin() ; it != addr.end(); ++it){
+
+        PrintToConsole("Into for loop watching addres on vector addr\n");
+        PrintToConsole("Address in vector addr: %s\n", *it);
+
+        int64_t liqPrice = getMPbalance(*it,property, LIQUIDATION_PRICE);
+        int64_t shortBalance = getMPbalance(*it, property, NEGATIVE_BALANCE);
+        int64_t longBalance = getMPbalance(*it, property, POSSITIVE_BALANCE);
+        int trading_action = shortBalance > 0 ? BUY : ( longBalance > 0 ? SELL : ACTIONINVALID );
+        // int64_t amountInOrder = trading_action == BUY ? shortBalance : longBalance;
+        uint64_t nLiqPrice = static_cast<uint64_t> (liqPrice);
+
+        PrintToConsole("shortBalance: %d\n", shortBalance);
+        PrintToConsole("LiqPrice: %d\n", FormatContractShortMP(liqPrice));
+        PrintToConsole("longBalance: %d\n", longBalance);
+        PrintToConsole("trading action: %d\n", trading_action);
+        PrintToConsole("marketPrice in marginLogic function : %d\n", FormatContractShortMP(marketPrice));
+        PrintToConsole("String LiqPrice in marginLogic function: %d\n", FormatContractShortMP(nLiqPrice));
+
+        if( (FormatContractShortMP(marketPrice) <= FormatContractShortMP(nLiqPrice)) && (liqPrice > 0) && (trading_action == SELL)){
+
+           PrintToConsole("//////////////////////////////////////MARGIN CALL !!!!!!!!!!!\n");
+           PrintToConsole("marketPrice <= LiqPrice\n");
+           PrintToConsole("Liquidation price in marginLogic function: %s\n",nLiqPrice);
+          //  int rc = marginCall(*it, property, marketPrice, trading_action, amountInOrder);
+          //  assert(update_tally_map(*it, property,-liqPrice, LIQUIDATION_PRICE));
+          //  PrintToConsole("Margin call number rc %d\n", rc);
+
+        } else if( (FormatContractShortMP(marketPrice) >= FormatContractShortMP(nLiqPrice)) && (liqPrice > 0) && (trading_action == BUY)) {
+
+          PrintToConsole("//////////////////////////////////////MARGIN CALL !!!!!!!!!!!\n");
+          PrintToConsole("marketPrice >= LiqPrice\n");
+          PrintToConsole("Liquidation price in marginLogic function: %s\n",nLiqPrice);
+          // int rc = marginCall(*it, property, marketPrice, trading_action, amountInOrder);
+          // assert(update_tally_map(*it, property,-liqPrice, LIQUIDATION_PRICE));
+          // PrintToConsole("Margin call number rc %d\n", rc);
+
+        } else {
+           PrintToConsole("No margin call!\n");
+
+        }
+
+      }
+      delete it;
+
+}
+////////////////////////////////////////
+/** New things for Contracts */
+int marginCall(const std::string& address, uint32_t propertyId, uint64_t marketPrice, uint8_t trading_action, int64_t amountInOrder)
+{
+    int rc = 0;
+    PrintToConsole("____________________________________________________________\n");
+    PrintToConsole("Into the marginCall function\n");
+
+    const uint256 tx;
+    // int rc = ContractDex_ADD(address, propertyId, amountInOrder, tx, 1, marketPrice, trading_action,0);
+    if (rc == 0) {
+        PrintToConsole("return of ContractDex_ADD: %d\n",rc);
+    }
+    return rc;
+}
+
+rational_t mastercore::notionalChange(uint32_t contractId)
+{
+    int index = static_cast<unsigned int>(contractId);
+    int64_t den = static_cast<int64_t>(marketP[index]);
+    if (den == 0) {
+        PrintToConsole("returning 1\n");
+        return rational_t(1,1);
+    }
+
+    rational_t uPrice = rational_t(1,den);
+
+    switch (contractId) {
+            case CONTRACT_ALL_DUSD:
+                if (uPrice > 0){
+                    return uPrice;
+                }
+            break;
+            case CONTRACT_ALL_LTC:
+                if (uPrice > 0){
+                    return uPrice;
+                }
+            break;
+
+            default: return rational_t(1,1);
+        }
+        return rational_t(1,1);
+}
+
+bool mastercore::marginNeeded(const std::string address, int64_t amountTraded, uint32_t contractId)
+{
+    // CMPSPInfo::Entry sp;
+    // assert(_my_sps->getSP(contractId, sp));
+    // double marginRe = static_cast<double>(sp.margin_requirement) / denMargin ;
+    // int64_t nBalance = getMPbalance(address, sp.collateral_currency, BALANCE);
+    // double conv = notionalChange(contractId,marketP[static_cast<int>(contractId)]);
+    // double amountToReserve = amountTraded * marginRe * factor * conv ;
+    // int64_t toReserve = static_cast<int64_t>(amountToReserve);
+    // PrintToConsole("#######################################################\n");
+    // PrintToConsole(" Inside marginNeeded function\n");
+    // PrintToConsole("amount to Reserve: %d\n", amountToReserve);
+    // PrintToConsole("Balance: %d\n", nBalance);
+    // PrintToConsole("amountTraded: %d\n", amountTraded);
+    // PrintToConsole("marginRe: %s\n", marginRe);
+    // PrintToConsole("conv: %d\n", conv);
+    // if (nBalance >= toReserve && nBalance != 0 && toReserve != 0){
+    //     update_tally_map(address, sp.collateral_currency, -toReserve, BALANCE);
+    //     update_tally_map(address, sp.collateral_currency, toReserve, CONTRACTDEX_RESERVE);
+    // } else {
+    //     // do we need upnl?
+    //     LOCK(cs_tally);
+    //     uint32_t nextSPID = _my_sps->peekNextSPID(1);
+    //     for (uint32_t contractId = 1; contractId < nextSPID; contractId++) {  // looping on the properties
+    //         CMPSPInfo::Entry sp;
+    //         assert(_my_sps->getSP(contractId, sp));
+    //         if (sp.subcategory != "Futures Contracts") {
+    //             continue;
+    //         }
+    //
+    //         int64_t amountTaken = getMPbalance(address, contractId, UPNL); // Collecting money!
+    //         if (amountTaken >= toReserve) {
+    //             PrintToConsole(" Ready with amountToReserve\n");
+    //             update_tally_map(address, contractId, -toReserve, UPNL);
+    //             update_tally_map(address, sp.collateral_currency, toReserve, CONTRACTDEX_RESERVE);
+    //             break;   // ready with amountToReserve
+    //         } else {
+    //             PrintToConsole(" we need more money\n");
+    //             update_tally_map(address, contractId, -amountTaken, UPNL); // we need more
+    //             update_tally_map(address, sp.collateral_currency, amountTaken, CONTRACTDEX_RESERVE);
+    //             toReserve -= amountTaken;
+    //         }
+    //
+    //     }
+    //
+    //     if (toReserve > 0) { //  If we still need money, use fractional liquidation when closing to the threshold.
+    //         PrintToConsole("fractional liquidation\n");
+    //         PrintToConsole("Remaining amount: %d\n",toReserve);
+    //         return false;
+    //     }
+    //
+    // }
+    // PrintToConsole("#######################################################\n");
+    return true;
+
+}
+
+bool mastercore::marginBack(const std::string address, int64_t amountTraded, uint32_t contractId)
+{
+    // PrintToConsole("#######################################################\n");
+    // PrintToConsole(" Inside marginBack function\n");
+    // CMPSPInfo::Entry sp;
+    // double percent = 0;
+    // assert(_my_sps->getSP(contractId, sp));
+    // double marginRe = sp.margin_requirement / denMargin;
+    // int64_t longs = getMPbalance(address, contractId, POSSITIVE_BALANCE);
+    // int64_t shorts = getMPbalance(address, contractId, NEGATIVE_BALANCE);
+    // PrintToConsole("longs: %d\n", longs);
+    // PrintToConsole("short: %d\n", shorts);
+    // PrintToConsole("amountTraded: %d\n", amountTraded);
+    // if (longs > 0 && shorts == 0) {
+    //     PrintToConsole("Enter in the long side\n");
+    //     percent = static_cast<double> (amountTraded) / longs;
+    //     // boost::multiprecision::backends::divide_unsigned_helper() // TODO: improve the math!
+    // } else if (longs == 0 && shorts > 0) {
+    //     PrintToConsole("Enter in the short side\n");
+    //     percent = static_cast<double> (amountTraded) / shorts;
+    // }
+    //
+    // int64_t margin = getMPbalance(address, sp.collateral_currency, CONTRACTDEX_RESERVE);
+    // double product = static_cast<double> (margin * percent);
+    // int64_t amountBack = static_cast<int64_t>(product);
+    // PrintToConsole("amount Back: %d\n",amountBack);
+    // PrintToConsole("margin: %d\n", margin);
+    // PrintToConsole("marginRe: %d\n", marginRe);
+    // PrintToConsole("percent: %d\n", percent);
+    // PrintToConsole("product: %d\n", product);
+    // if (margin >= amountBack && amountBack > 0) {
+    //    update_tally_map(address, sp.collateral_currency, -amountBack, CONTRACTDEX_RESERVE);
+    //    update_tally_map(address, sp.collateral_currency, amountBack, BALANCE);
+    // } else {
+    //     PrintToConsole("wrong amount of margin: %d\n",margin);
+    //     return false;
+    // }
+    // PrintToConsole("#######################################################\n");
+    return true;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+const std::string ExodusAddress()
+{
+    if (isNonMainNet()) {
+        return exodus_testnet;
+    } else {
+        return exodus_mainnet;
+    }
+
+}
 /**
  * @return The marker for class C transactions.
  */
 const std::vector<unsigned char> GetOmMarker()
 {
-    static unsigned char pch[] = {0x6f, 0x6c}; // Hex-encoded: "ol"
+    static unsigned char pch[] = {0x70, 0x71}; // Hex-encoded: "pq"
 
     return std::vector<unsigned char>(pch, pch + sizeof(pch) / sizeof(pch[0]));
 }

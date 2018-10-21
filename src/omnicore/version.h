@@ -1,9 +1,9 @@
 #ifndef OMNICORE_VERSION_H
 #define OMNICORE_VERSION_H
 
-//#if defined(HAVE_CONFIG_H)
-//#include "config/bitcoin-config.h"
-//#else
+/* #if defined(HAVE_CONFIG_H) */
+/* #include "config/bitcoin-config.h" */
+/* #else */
 
 //
 // Omni Core version information are also to be defined in configure.ac.

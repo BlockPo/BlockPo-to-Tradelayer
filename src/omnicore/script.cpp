@@ -25,7 +25,7 @@ extern CFeeRate minRelayTxFee;
  * @param scriptPubKey[in]  The scriptPubKey
  * @return The dust threshold value
  */
-int64_t GetDust(const CScript& scriptPubKey)
+int64_t GetDustThld(const CScript& scriptPubKey)
 {
     const CTxOut txOut(CAmount(0), scriptPubKey);
     CAmount amount = GetDustThreshold(txOut, minRelayTxFee);
@@ -98,19 +98,19 @@ bool SafeSolver(const CScript& scriptPubKey, txnouttype& typeRet, std::vector<st
      {
          // Standard tx, sender provides pubkey, receiver adds signature
          mTemplates.insert(std::make_pair(TX_PUBKEY, CScript() << OP_PUBKEY << OP_CHECKSIG));
-    
+
          // Bitcoin address tx, sender provides hash of pubkey, receiver provides signature and pubkey
          mTemplates.insert(std::make_pair(TX_PUBKEYHASH, CScript() << OP_DUP << OP_HASH160 << OP_PUBKEYHASH << OP_EQUALVERIFY << OP_CHECKSIG));
-    
+
          // Sender provides N pubkeys, receivers provides M signatures
          mTemplates.insert(std::make_pair(TX_MULTISIG, CScript() << OP_SMALLINTEGER << OP_PUBKEYS << OP_SMALLINTEGER << OP_CHECKMULTISIG));
-    
+
          // Empty, provably prunable, data-carrying output
          mTemplates.insert(std::make_pair(TX_NULL_DATA, CScript() << OP_RETURN));
      }
-    
+
      vSolutionsRet.clear();
-    
+
      // Shortcut for pay-to-script-hash, which are more constrained than the other types:
      // it is always OP_HASH160 20 [20 byte hash] OP_EQUAL
      if (scriptPubKey.IsPayToScriptHash())
@@ -120,7 +120,7 @@ bool SafeSolver(const CScript& scriptPubKey, txnouttype& typeRet, std::vector<st
          vSolutionsRet.push_back(hashBytes);
          return true;
      }
-    
+
      // Provably prunable, data-carrying output
      //
      // So long as script passes the IsUnspendable() test and all but the first
@@ -134,17 +134,17 @@ bool SafeSolver(const CScript& scriptPubKey, txnouttype& typeRet, std::vector<st
              return true;
          }
       }
-    
+
      // Scan templates
      const CScript& script1 = scriptPubKey;
      for(const auto &tplate : mTemplates)
      {
          const CScript& script2 = tplate.second;
          vSolutionsRet.clear();
-    
+
          opcodetype opcode1, opcode2;
          std::vector<unsigned char> vch1, vch2;
-    
+
          // Compare
          CScript::const_iterator pc1 = script1.begin();
          CScript::const_iterator pc2 = script2.begin();
@@ -168,7 +168,7 @@ bool SafeSolver(const CScript& scriptPubKey, txnouttype& typeRet, std::vector<st
                  break;
              if (!script2.GetOp(pc2, opcode2, vch2))
                  break;
-    
+
              // Template matching opcodes:
              if (opcode2 == OP_PUBKEYS)
              {
@@ -183,7 +183,7 @@ bool SafeSolver(const CScript& scriptPubKey, txnouttype& typeRet, std::vector<st
                  // Normal situation is to fall through
                  // to other if/else statements
              }
-    
+
              if (opcode2 == OP_PUBKEY)
              {
                  if (vch1.size() < 33 || vch1.size() > 65)

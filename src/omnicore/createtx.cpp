@@ -82,7 +82,7 @@ TxBuilder& TxBuilder::addChange(const CTxDestination& destination, const CCoinsV
     CScript scriptPubKey = GetScriptForDestination(destination);
 
     int64_t txChange = view.GetValueIn(tx) - tx.GetValueOut() - txFee;
-    int64_t minValue = GetDustThreshold(scriptPubKey);
+    int64_t minValue = GetDustThld(scriptPubKey);
 
     if (txChange < minValue) {
         return *this;
@@ -129,47 +129,45 @@ OmniTxBuilder& OmniTxBuilder::addInputs(const std::vector<PrevTxsEntry>& prevTxs
 }
 
 /** Adds an output for the reference address. */
-OmniTxBuilder& OmniTxBuilder::addReference(const std::string& destination, int64_t value)
-{
-    CBitcoinAddress addr(destination);
-    CScript scriptPubKey = GetScriptForDestination(addr.Get());
-
-    int64_t minValue = GetDustThreshold(scriptPubKey);
-    value = std::max(minValue, value);
-
-    return (OmniTxBuilder&) TxBuilder::addOutput(scriptPubKey, value);
-}
+// OmniTxBuilder& OmniTxBuilder::addReference(const std::string& destination, int64_t value)
+// {
+//     CScript scriptPubKey = GetScriptForDestination(destination);
+//
+//     int64_t minValue = GetDustThld(scriptPubKey);
+//     value = std::max(minValue, value);
+//
+//     return (OmniTxBuilder&) TxBuilder::addOutput(scriptPubKey, value);
+// }
 
 /** Embeds a payload with class C (op-return) encoding. */
-OmniTxBuilder& OmniTxBuilder::addOpReturn(const std::vector<unsigned char>& data)
-{
-    std::vector<std::pair<CScript, int64_t> > outputs;
-
-    if (!OmniCore_Encode_ClassD(data, outputs)) {
-        return *this;
-    }
-
-    return (OmniTxBuilder&) TxBuilder::addOutputs(outputs);
-}
+// OmniTxBuilder& OmniTxBuilder::addOpReturn(const std::vector<unsigned char>& data)
+// {
+    // std::vector<std::pair<CScript, int64_t> > outputs;
+    //
+    // if (!OmniCore_Encode_ClassD(data, outputs)) {
+    //     return *this;
+    // }
+    //
+    // return (OmniTxBuilder&) TxBuilder::addOutputs(outputs);
+// }
 
 /** Adds an output for change. */
-OmniTxBuilder& OmniTxBuilder::addChange(const std::string& destination, const CCoinsViewCache& view, int64_t txFee, uint32_t position)
-{
-    CBitcoinAddress addr(destination);
-
-    return (OmniTxBuilder&) TxBuilder::addChange(addr.Get(), view, txFee, position);
-}
-
-/** Adds previous transaction outputs to coins view. */
-void InputsToView(const std::vector<PrevTxsEntry>& prevTxs, CCoinsViewCache& view)
-{
-    for (std::vector<PrevTxsEntry>::const_iterator it = prevTxs.begin(); it != prevTxs.end(); ++it) {
-        CCoinsModifier coins = view.ModifyCoins(it->outPoint.hash);
-        if ((size_t) it->outPoint.n >= coins->vout.size()) {
-            coins->vout.resize(it->outPoint.n+1);
-        }
-        coins->vout[it->outPoint.n].scriptPubKey = it->txOut.scriptPubKey;
-        coins->vout[it->outPoint.n].nValue = it->txOut.nValue;
-    }
-}
-
+// OmniTxBuilder& OmniTxBuilder::addChange(const std::string& destination, const CCoinsViewCache& view, int64_t txFee, uint32_t position)
+// {
+//     CBitcoinAddress addr(destination);
+//
+//     return (OmniTxBuilder&) TxBuilder::addChange(addr.Get(), view, txFee, position);
+// }
+//
+// /** Adds previous transaction outputs to coins view. */
+// void InputsToView(const std::vector<PrevTxsEntry>& prevTxs, CCoinsViewCache& view)
+// {
+//     for (std::vector<PrevTxsEntry>::const_iterator it = prevTxs.begin(); it != prevTxs.end(); ++it) {
+//         CCoinsModifier coins = view.ModifyCoins(it->outPoint.hash);
+//         if ((size_t) it->outPoint.n >= coins->vout.size()) {
+//             coins->vout.resize(it->outPoint.n+1);
+//         }
+//         coins->vout[it->outPoint.n].scriptPubKey = it->txOut.scriptPubKey;
+//         coins->vout[it->outPoint.n].nValue = it->txOut.nValue;
+//     }
+// }

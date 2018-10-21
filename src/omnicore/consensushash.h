@@ -5,9 +5,8 @@
 
 namespace mastercore
 {
-/** Obtains a hash of all balances to use for consensus verification and checkpointing. */
-uint256 GetConsensusHash();
-
+  /** Obtains a hash of all balances to use for consensus verification and checkpointing. */
+  uint256 GetConsensusHash();
 }
 
 #endif // OMNICORE_CONSENSUSHASH_H
