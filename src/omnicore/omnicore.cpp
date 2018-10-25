@@ -550,10 +550,10 @@ int mastercore::GetEncodingClass(const CTransaction& tx, int nBlock)
 
         txnouttype outType;
         if (!GetOutputType(output.scriptPubKey, outType)) {
-            continue;
+            //continue;
         }
         if (!IsAllowedOutputType(outType, nBlock)) {
-           // continue;
+            //continue;
         }
 /*New things for DEX implementation *///////////////////////////////////////////
 
@@ -622,7 +622,7 @@ static unsigned int nCacheMiss = 0;
  */
 static bool FillTxInputCache(const CTransaction& tx)
 {
-        static unsigned int nCacheSize = gArgs.GetArg("-omnitxcache", 500000);
+    static unsigned int nCacheSize = gArgs.GetArg("-omnitxcache", 500000);
 
     if (view.GetCacheSize() > nCacheSize) {
         PrintToLog("%s(): clearing cache before insertion [size=%d, hit=%d, miss=%d]\n",
@@ -633,13 +633,14 @@ static bool FillTxInputCache(const CTransaction& tx)
     for (std::vector<CTxIn>::const_iterator it = tx.vin.begin(); it != tx.vin.end(); ++it) {
         const CTxIn& txIn = *it;
         unsigned int nOut = txIn.prevout.n;
-
+        PrintToLog("prevout.n : %s\n",txIn.prevout.n);
         if (view.HaveCoin(txIn.prevout)){
              ++nCacheHits;
              continue;
         }else{
             ++nCacheMiss;
         }
+
         CTransactionRef txPrev;
         uint256 hashBlock = uint256();
 
@@ -2079,13 +2080,13 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
       if (interp_ret != PKT_ERROR - 2)
 	{
 	  bool bValid = (0 <= interp_ret);
-	  p_txlistdb->recordTX(tx.GetHash(), bValid, nBlock, mp_obj.getType(), mp_obj.getNewAmount());
-	  p_OmniTXDB->RecordTransaction(tx.GetHash(), idx);
+	 // p_txlistdb->recordTX(tx.GetHash(), bValid, nBlock, mp_obj.getType(), mp_obj.getNewAmount());
+	 // p_OmniTXDB->RecordTransaction(tx.GetHash(), idx);
         }
       fFoundTx |= (interp_ret == 0);
     }
   else if (pop_ret > 0)
-    fFoundTx |= HandleDExPayments(tx, nBlock, mp_obj.getSender()); // testing the payment handler
+    //fFoundTx |= HandleDExPayments(tx, nBlock, mp_obj.getSender()); // testing the payment handler
 
   if (fFoundTx && msc_debug_consensus_hash_every_transaction)
     {
@@ -2152,7 +2153,6 @@ int mastercore::WalletTxBuilder(const std::string& senderAddress, const std::str
     // Select the inputs
     if (0 > SelectCoins(senderAddress, coinControl, referenceAmount, minInputs)) { return MP_INPUTS_INVALID; }
 
-    PrintToConsole("First check point\n");
     // Encode the data outputs
 
     if(!OmniCore_Encode_ClassD(data,vecSend)) { return MP_ENCODING_ERROR; }
@@ -2164,12 +2164,9 @@ int mastercore::WalletTxBuilder(const std::string& senderAddress, const std::str
         vecSend.push_back(std::make_pair(scriptPubKey, 0 < referenceAmount ? referenceAmount : 50000));
     }
 
-    PrintToLog("Second check point\n");
     // Now we have what we need to pass to the wallet to create the transaction, perform some checks first
 
     if (!coinControl.HasSelected()) return MP_ERR_INPUTSELECT_FAIL;
-
-    PrintToLog("3rd check point\n");
 
     std::vector<CRecipient> vecRecipients;
     for (size_t i = 0; i < vecSend.size(); ++i) {
@@ -2183,11 +2180,11 @@ int mastercore::WalletTxBuilder(const std::string& senderAddress, const std::str
         return MP_ERR_CREATE_TX; }
 
     // Workaround for SigOps limit
-/*    {
-         if (!FillTxInputCache(wtxNew)) {
-             PrintToLog("%s ERROR: failed to get inputs for %s\n", __func__, wtxNew.GetHash().GetHex());
+      //{
+         if (!FillTxInputCache(*(wtxNew.tx))) {
+             PrintToLog("%s ERROR: failed to get inputs for %s after createtransaction\n", __func__, wtxNew.GetHash().GetHex());
          }
-
+     /*
         unsigned int nBytesPerSigOp = 20; // default of Bitcoin Core 12.1
         unsigned int nSize = ::GetSerializeSize(wtxNew, SER_NETWORK, PROTOCOL_VERSION);
         unsigned int nSigOps = GetLegacySigOpCount(*(wtxNew.tx));
@@ -2215,7 +2212,6 @@ int mastercore::WalletTxBuilder(const std::string& senderAddress, const std::str
         rawHex = EncodeHexTx(*(wtxNew.tx));
         return 0;
     } else {
-        PrintToLog("6th checkpoint\n");
         // Commit the transaction to the wallet and broadcast)
         CValidationState state;
         if (!pwalletMain->CommitTransaction(wtxNew, reserveKey, g_connman.get(), state)) return MP_ERR_COMMIT_TX;
@@ -2281,13 +2277,13 @@ void CMPTxList::LoadActivations(int blockHeight)
      for (std::vector<std::pair<int64_t, uint256> >::iterator it = loadOrder.begin(); it != loadOrder.end(); ++it) {
          uint256 hash = (*it).second;
          uint256 blockHash;
-         CTransaction wtx;
+         CTransactionRef wtx;
          CMPTransaction mp_obj;
 
-        /* if (!GetTransaction(hash, wtx, Params().GetConsensus(), blockHash, true)) {
+         if (!GetTransaction(hash, wtx, Params().GetConsensus(), blockHash, true)) {
               PrintToLog("ERROR: While loading activation transaction %s: tx in levelDB but does not exist.\n", hash.GetHex());
               continue;
-         }*/
+         }
 
          if (blockHash.IsNull() || (NULL == GetBlockIndex(blockHash))) {
              PrintToLog("ERROR: While loading activation transaction %s: failed to retrieve block hash.\n", hash.GetHex());
@@ -2299,7 +2295,7 @@ void CMPTxList::LoadActivations(int blockHeight)
              continue;
          }
          int blockHeight = pBlockIndex->nHeight;
-         if (0 != ParseTransaction(wtx, blockHeight, 0, mp_obj)) {
+         if (0 != ParseTransaction(*(wtx), blockHeight, 0, mp_obj)) {
              PrintToLog("ERROR: While loading activation transaction %s: failed ParseTransaction.\n", hash.GetHex());
              continue;
          }
@@ -2353,10 +2349,11 @@ void CMPTxList::LoadAlerts(int blockHeight)
          uint256 blockHash;
          CTransaction wtx;
          CMPTransaction mp_obj;
-         /*if (!GetTransaction(txid, wtx, Params().GetConsensus(), blockHash, true)) {
-              PrintToLog("ERROR: While loading alert %s: tx in levelDB but does not exist.\n", txid.GetHex());
-              continue;
-          }*/
+         // if (!GetTransaction(txid, wtx, Params().GetConsensus(), blockHash, true)) {
+         //      PrintToLog("ERROR: While loading alert %s: tx in levelDB but does not exist.\n", txid.GetHex());
+         //      continue;
+         // }
+
          if (0 != ParseTransaction(wtx, blockHeight, 0, mp_obj)) {
              PrintToLog("ERROR: While loading alert %s: failed ParseTransaction.\n", txid.GetHex());
              continue;

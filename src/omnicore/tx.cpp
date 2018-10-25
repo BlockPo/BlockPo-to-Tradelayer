@@ -2235,7 +2235,7 @@ int CMPTransaction::logicMath_CreateContractDex()
             __func__,
             type,
             version,
-            property,
+            propertyId,
             block);
         return (PKT_ERROR_SP -22);
     }

@@ -61,7 +61,7 @@ std::map<std::string, uint256> FetchWalletOmniTransactions(unsigned int count, i
     if (vpwallets.size() > 0){
         pwalletMain = vpwallets[0];
     }
-    
+
     if (pwalletMain == NULL) {
         return mapResponse;
     }

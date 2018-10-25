@@ -429,6 +429,8 @@ bool getValidMPTX(const uint256 &txid, int *block = NULL, unsigned int *type = N
 bool update_tally_map(const std::string& who, uint32_t propertyId, int64_t amount, TallyType ttype);
 
 std::string getTokenLabel(uint32_t propertyId);
+
+
 }
 
 

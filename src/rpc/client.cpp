@@ -143,7 +143,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "echojson", 9, "arg9" },
     { "rescanblockchain", 0, "start_height"},
     { "rescanblockchain", 1, "stop_height"},
-    
+
      /* Omni Core - payload creation */
     { "omni_createpayload_simplesend", 0, "arg0" },
 
@@ -152,11 +152,29 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "omni_sendissuancemanaged", 1, "arg1" },
     { "omni_sendissuancemanaged", 2, "arg2" },
     { "omni_sendissuancemanaged", 3, "arg3" },
+    { "omni_createcontract", 1, "arg1"},
+    { "omni_createcontract", 2, "arg2"},
+    { "omni_createcontract", 3, "arg3"},
+    { "omni_createcontract", 5, "arg5"},
+    { "omni_createcontract", 6, "arg6"},
+    { "omni_createcontract", 7, "arg7"},
 
     /* Omni Core - data retrieval calls */
-    { "omni_getbalance", 1, "arg0" },
-
-
+    { "omni_setautocommit", 0, "arg0" },
+    { "omni_getcrowdsale", 0, "arg0" },
+    { "omni_getcrowdsale", 1, "arg1" },
+    { "omni_getgrants", 0, "arg0"},
+    { "omni_getbalance", 1, "arg1" },
+    { "omni_getmargin", 1, "arg1" },
+    { "omni_getproperty", 0, "arg0" },
+    { "omni_listtransactions", 1, "arg1" },
+    { "omni_listtransactions", 2, "arg2" },
+    { "omni_listtransactions", 3, "arg3" },
+    { "omni_listtransactions", 4, "arg4" },
+    { "omni_getallbalancesforid", 0, "arg0" },
+    { "omni_listblocktransactions", 0, "arg0" },
+    { "omni_gettradehistory", 0, "arg0" },
+    { "omni_getpeggedhistory",0, "arg0" },
 
 };
 
