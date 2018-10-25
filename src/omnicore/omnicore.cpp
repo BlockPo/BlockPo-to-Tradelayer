@@ -1696,7 +1696,6 @@ static int write_mp_offers(ofstream &file, SHA256_CTX *shaCtx)
   }
   return 0;
 }
-////////////////////////////
 
 static int write_state_file( CBlockIndex const *pBlockIndex, int what )
 {
@@ -1849,18 +1848,18 @@ void clear_all_state()
     // LOCK2(cs_tally, cs_pending);
 
     // Memory based storage
-    // mp_tally_map.clear();
-    // my_crowds.clear();
-    /// my_pending.clear();
-    // ResetConsensusParams();
+    mp_tally_map.clear();
+    my_crowds.clear();
+    my_pending.clear();
+    ResetConsensusParams();
     // ClearActivations();
     // ClearAlerts();
     //
     // LevelDB based storage
-    // _my_sps->Clear();
-    // p_txlistdb->Clear();
-    // p_OmniTXDB->Clear();
-    // assert(p_txlistdb->setDBVersion() == DB_VERSION); // new set of databases, set DB version
+     _my_sps->Clear();
+     p_txlistdb->Clear();
+     p_OmniTXDB->Clear();
+     //assert(p_txlistdb->setDBVersion() == DB_VERSION); // new set of databases, set DB version
 }
 
 /**
@@ -2086,7 +2085,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
       fFoundTx |= (interp_ret == 0);
     }
   else if (pop_ret > 0)
-    //fFoundTx |= HandleDExPayments(tx, nBlock, mp_obj.getSender()); // testing the payment handler
+    fFoundTx |= HandleDExPayments(tx, nBlock, mp_obj.getSender()); // testing the payment handler
 
   if (fFoundTx && msc_debug_consensus_hash_every_transaction)
     {
@@ -2835,7 +2834,7 @@ int mastercore_handler_block_end(int nBlockNow, CBlockIndex const * pBlockIndex,
          // failed checkpoint, can't be trusted to provide valid data - shutdown client
          const std::string& msg = strprintf("Shutting down due to failed checkpoint for block %d (hash %s)\n", nBlockNow, pBlockIndex->GetBlockHash().GetHex());
          PrintToLog(msg);
- //        if (!GetBoolArg("-overrideforcedshutdown", false)) AbortNode(msg, msg);
+  //     if (!GetBoolArg("-overrideforcedshutdown", false)) AbortNode(msg, msg);
   // TODO: fix AbortNode
      } else {
          // save out the state after this block
