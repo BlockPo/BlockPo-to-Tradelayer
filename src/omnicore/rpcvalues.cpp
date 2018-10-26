@@ -247,15 +247,15 @@ uint64_t ParseEffectivePrice(const UniValue& value, uint32_t contractId)
         throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
     }
 
-    int64_t result = effPrice % sp.ticksize;
-
-    PrintToConsole("ticksize: %d\n",sp.ticksize);
+    // int64_t result = effPrice % sp.ticksize;
+    
+    // PrintToConsole("ticksize: %d\n",sp.ticksize);
     PrintToConsole("effPrice: %d\n",effPrice);
-    PrintToConsole("result: %d\n",result);
-
-    if (result != 0) {
-        throw JSONRPCError(RPC_TYPE_ERROR, "Incorrect tick used in price");
-    }
+    // PrintToConsole("result: %d\n",result);
+    
+    // if (result != 0) {
+    //     throw JSONRPCError(RPC_TYPE_ERROR, "Incorrect tick used in price");
+    // }
     return effPrice;
 }
 

@@ -814,13 +814,14 @@ UniValue omni_createcontract(const JSONRPCRequest& request)
     uint32_t notional_size = ParseNewValues(request.params[6]);
     uint32_t collateral_currency = ParseNewValues(request.params[7]);
     uint32_t margin_requirement = ParseAmount(request.params[8], true);
-    uint64_t ticksize = ParseAmount(request.params[9], true);  // we can put decimals
+    // uint64_t ticksize = ParseAmount(request.params[9], true);  // we can put decimals
 
     RequirePropertyName(name);
     RequireSaneName(name);
 
     // create a payload for the transaction
-    std::vector<unsigned char> payload = CreatePayload_CreateContract(ecosystem, numerator, denomination, name, blocks_until_expiration, notional_size, collateral_currency, margin_requirement, ticksize);
+    // std::vector<unsigned char> payload = CreatePayload_CreateContract(ecosystem, numerator, denomination, name, blocks_until_expiration, notional_size, collateral_currency, margin_requirement, ticksize);
+    std::vector<unsigned char> payload = CreatePayload_CreateContract(ecosystem, numerator, denomination, name, blocks_until_expiration, notional_size, collateral_currency, margin_requirement);
 
     // request the wallet build the transaction (and if needed commit it)
     uint256 txid;

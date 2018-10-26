@@ -99,7 +99,7 @@ private:
     uint32_t propertyId;
     uint32_t contractId;
     uint64_t amount;
-    uint64_t ticksize;
+    /* uint64_t ticksize; */
     uint32_t nextContractId;
     uint32_t blocks_until_expiration;
     uint32_t notional_size;

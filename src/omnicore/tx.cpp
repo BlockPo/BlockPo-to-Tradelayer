@@ -886,7 +886,7 @@ bool CMPTransaction::interpret_CreateContractDex()
     std::vector<uint8_t> vecNotionalSize = GetNextVarIntBytes(i);
     std::vector<uint8_t> vecCollateralCurrency = GetNextVarIntBytes(i);
     std::vector<uint8_t> vecMarginRequirement = GetNextVarIntBytes(i);
-    std::vector<uint8_t> vecTickSize = GetNextVarIntBytes(i);
+    // std::vector<uint8_t> vecTickSize = GetNextVarIntBytes(i);
 
     if (!vecVersionBytes.empty()) {
         version = DecompressInteger(vecVersionBytes);
@@ -920,9 +920,9 @@ bool CMPTransaction::interpret_CreateContractDex()
         margin_requirement = DecompressInteger(vecMarginRequirement);
     } else return false;
 
-    if (!vecTickSize.empty()) {
-        ticksize = DecompressInteger(vecTickSize);
-    } else return false;
+    // if (!vecTickSize.empty()) {
+    //     ticksize = DecompressInteger(vecTickSize);
+    // } else return false;
 
     std::string sub = "Futures Contracts";
     strcpy(subcategory, sub.c_str());
@@ -941,7 +941,7 @@ bool CMPTransaction::interpret_CreateContractDex()
     PrintToLog("notional size : %d\n", notional_size);
     PrintToLog("collateral currency: %d\n", collateral_currency);
     PrintToLog("margin requirement: %d\n", margin_requirement);
-    PrintToLog("ticksize: %d\n", ticksize);
+    // PrintToLog("ticksize: %d\n", ticksize);
     PrintToLog("------------------------------------------------------------\n");
 
     return true;
@@ -2272,7 +2272,7 @@ int CMPTransaction::logicMath_CreateContractDex()
     newSP.collateral_currency = collateral_currency;
     newSP.margin_requirement = margin_requirement;
     newSP.init_block = block;
-    newSP.ticksize = ticksize;
+    // newSP.ticksize = ticksize;
     newSP.denomination = denomination;
     newSP.numerator = numerator;
 
@@ -2294,7 +2294,7 @@ int CMPTransaction::logicMath_CreateContractDex()
     PrintToLog("notional size : %d\n", notional_size);
     PrintToLog("collateral currency: %d\n", collateral_currency);
     PrintToLog("margin requirement: %d\n", margin_requirement);
-    PrintToLog("ticksize: %d\n", ticksize);
+    // PrintToLog("ticksize: %d\n", ticksize);
     PrintToLog("------------------------------------------------------------\n");
 
     return 0;
