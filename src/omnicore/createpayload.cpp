@@ -54,7 +54,7 @@ std::vector<unsigned char> CreatePayload_SendAll(uint8_t ecosystem)
 
     std::vector<uint8_t> vecMessageType = CompressInteger(messageType);
     std::vector<uint8_t> vecMessageVer = CompressInteger(messageVer);
-    std::vector<uint8_t> vecEcosystem = CompressInteger(ecosystem);
+    std::vector<uint8_t> vecEcosystem = CompressInteger((uint64_t)ecosystem);
 
     payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
     payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
@@ -63,8 +63,7 @@ std::vector<unsigned char> CreatePayload_SendAll(uint8_t ecosystem)
     return payload;
 }
 
-std::vector<unsigned char> CreatePayload_IssuanceFixed(uint8_t ecosystem, uint16_t propertyType, uint32_t previousPropertyId, std::string name,
-                                                       std::string url, std::string data, uint64_t amount)
+std::vector<unsigned char> CreatePayload_IssuanceFixed(uint8_t ecosystem, uint16_t propertyType, uint32_t previousPropertyId, std::string name, std::string url, std::string data, uint64_t amount)
 {
     std::vector<unsigned char> payload;
 
@@ -73,8 +72,8 @@ std::vector<unsigned char> CreatePayload_IssuanceFixed(uint8_t ecosystem, uint16
 
     std::vector<uint8_t> vecMessageType = CompressInteger(messageType);
     std::vector<uint8_t> vecMessageVer = CompressInteger(messageVer);
-    std::vector<uint8_t> vecPropertyType = CompressInteger(propertyType);
-    std::vector<uint8_t> vecPrevPropertyId = CompressInteger(previousPropertyId);
+    std::vector<uint8_t> vecPropertyType = CompressInteger((uint64_t)propertyType);
+    std::vector<uint8_t> vecPrevPropertyId = CompressInteger((uint64_t)previousPropertyId);
     std::vector<uint8_t> vecAmount = CompressInteger(amount);
 
     if (name.size() > 255) name = name.substr(0,255);
@@ -97,9 +96,7 @@ std::vector<unsigned char> CreatePayload_IssuanceFixed(uint8_t ecosystem, uint16
     return payload;
 }
 
-std::vector<unsigned char> CreatePayload_IssuanceVariable(uint8_t ecosystem, uint16_t propertyType, uint32_t previousPropertyId,
-                                                          std::string name, std::string url, std::string data, uint32_t propertyIdDesired,
-                                                          uint64_t amountPerUnit, uint64_t deadline, uint8_t earlyBonus, uint8_t issuerPercentage)
+std::vector<unsigned char> CreatePayload_IssuanceVariable(uint8_t ecosystem, uint16_t propertyType, uint32_t previousPropertyId, std::string name, std::string url, std::string data, uint32_t propertyIdDesired, uint64_t amountPerUnit, uint64_t deadline, uint8_t earlyBonus, uint8_t issuerPercentage)
 {
     std::vector<unsigned char> payload;
 
@@ -108,9 +105,9 @@ std::vector<unsigned char> CreatePayload_IssuanceVariable(uint8_t ecosystem, uin
 
     std::vector<uint8_t> vecMessageType = CompressInteger(messageType);
     std::vector<uint8_t> vecMessageVer = CompressInteger(messageVer);
-    std::vector<uint8_t> vecPropertyType = CompressInteger(propertyType);
-    std::vector<uint8_t> vecPrevPropertyId = CompressInteger(previousPropertyId);
-    std::vector<uint8_t> vecPropertyIdDesired = CompressInteger(propertyIdDesired);
+    std::vector<uint8_t> vecPropertyType = CompressInteger((uint64_t)propertyType);
+    std::vector<uint8_t> vecPrevPropertyId = CompressInteger((uint64_t)previousPropertyId);
+    std::vector<uint8_t> vecPropertyIdDesired = CompressInteger((uint64_t)propertyIdDesired);
     std::vector<uint8_t> vecAmountPerUnit = CompressInteger(amountPerUnit);
     std::vector<uint8_t> vecDeadline = CompressInteger(deadline);
 
@@ -138,8 +135,7 @@ std::vector<unsigned char> CreatePayload_IssuanceVariable(uint8_t ecosystem, uin
     return payload;
 }
 
-std::vector<unsigned char> CreatePayload_IssuanceManaged(uint8_t ecosystem, uint16_t propertyType, uint32_t previousPropertyId,
-                                                       std::string name, std::string url, std::string data)
+std::vector<unsigned char> CreatePayload_IssuanceManaged(uint8_t ecosystem, uint16_t propertyType, uint32_t previousPropertyId, std::string name, std::string url, std::string data)
 {
     std::vector<unsigned char> payload;
 
@@ -148,8 +144,8 @@ std::vector<unsigned char> CreatePayload_IssuanceManaged(uint8_t ecosystem, uint
 
     std::vector<uint8_t> vecMessageType = CompressInteger(messageType);
     std::vector<uint8_t> vecMessageVer = CompressInteger(messageVer);
-    std::vector<uint8_t> vecPropertyType = CompressInteger(propertyType);
-    std::vector<uint8_t> vecPrevPropertyId = CompressInteger(previousPropertyId);
+    std::vector<uint8_t> vecPropertyType = CompressInteger((uint64_t)propertyType);
+    std::vector<uint8_t> vecPrevPropertyId = CompressInteger((uint64_t)previousPropertyId);
 
     if (name.size() > 255) name = name.substr(0,255);
     if (url.size() > 255) url = url.substr(0,255);
@@ -269,8 +265,8 @@ std::vector<unsigned char> CreatePayload_ActivateFeature(uint16_t featureId, uin
 {
     std::vector<unsigned char> payload;
 
-    uint16_t messageVer = 65535;
-    uint16_t messageType = 65534;
+    uint64_t messageVer = 65535;
+    uint64_t messageType = 65534;
 
     std::vector<uint8_t> vecMessageType = CompressInteger((uint64_t)messageType);
     std::vector<uint8_t> vecMessageVer = CompressInteger((uint64_t)messageVer);
@@ -316,16 +312,16 @@ std::vector<unsigned char> CreatePayload_CreateContract(uint8_t ecosystem, uint3
     uint64_t messageType = 40;
     uint64_t messageVer = 0;
 
-    std::vector<uint8_t> vecMessageType = CompressInteger(messageType);
-    std::vector<uint8_t> vecMessageVer = CompressInteger(messageVer);
-    std::vector<uint8_t> vecEcosystem = CompressInteger(ecosystem);
-    std::vector<uint8_t> vecNumType = CompressInteger(numType);
-    std::vector<uint8_t> vecDenomType = CompressInteger(denomType);
-    std::vector<uint8_t> vecBlocksUntilExpiration = CompressInteger(blocks_until_expiration);
-    std::vector<uint8_t> vecNotionalSize = CompressInteger(notional_size);
-    std::vector<uint8_t> vecCollateralCurrency = CompressInteger(collateral_currency);
-    std::vector<uint8_t> vecMarginRequirement = CompressInteger(margin_requirement);
-    std::vector<uint8_t> vecTickSize = CompressInteger(ticksize);
+    std::vector<uint8_t> vecMessageType = CompressInteger((uint64_t)messageType);
+    std::vector<uint8_t> vecMessageVer = CompressInteger((uint64_t)messageVer);
+    std::vector<uint8_t> vecEcosystem = CompressInteger((uint64_t)ecosystem);
+    std::vector<uint8_t> vecNumType = CompressInteger((uint64_t)numType);
+    std::vector<uint8_t> vecDenomType = CompressInteger((uint64_t)denomType);
+    std::vector<uint8_t> vecBlocksUntilExpiration = CompressInteger((uint64_t)blocks_until_expiration);
+    std::vector<uint8_t> vecNotionalSize = CompressInteger((uint64_t)notional_size);
+    std::vector<uint8_t> vecCollateralCurrency = CompressInteger((uint64_t)collateral_currency);
+    std::vector<uint8_t> vecMarginRequirement = CompressInteger((uint64_t)margin_requirement);
+    std::vector<uint8_t> vecTickSize = CompressInteger((uint64_t)ticksize);
 
     if ((name).size() > 255) name = name.substr(0,255);
     payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
@@ -348,15 +344,15 @@ std::vector<unsigned char> CreatePayload_ContractDexTrade(uint32_t propertyIdFor
 {
     std::vector<unsigned char> payload;
 
-    uint16_t messageVer = 0;
-    uint16_t messageType = 29;
+    uint64_t messageVer = 0;
+    uint64_t messageType = 29;
 
     std::vector<uint8_t> vecMessageType = CompressInteger(messageType);
     std::vector<uint8_t> vecMessageVer = CompressInteger(messageVer);
-    std::vector<uint8_t> vecPropertyId = CompressInteger(propertyIdForSale);
+    std::vector<uint8_t> vecPropertyId = CompressInteger((uint64_t)propertyIdForSale);
     std::vector<uint8_t> vecAmountForSale = CompressInteger(amountForSale);
     std::vector<uint8_t> vecEffectivePrice = CompressInteger(effective_price);
-    std::vector<uint8_t> vecTradingAction = CompressInteger(trading_action);
+    std::vector<uint8_t> vecTradingAction = CompressInteger((uint64_t)trading_action);
     payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
     payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
     payload.insert(payload.end(), vecPropertyId.begin(), vecPropertyId.end());
@@ -369,15 +365,15 @@ std::vector<unsigned char> CreatePayload_ContractDexTrade(uint32_t propertyIdFor
 
 std::vector<unsigned char> CreatePayload_ContractDexCancelEcosystem(uint8_t ecosystem, uint32_t contractId)
 {
-    std::vector<unsigned char> payload;
+  std::vector<unsigned char> payload;
 
-    uint16_t messageType = 32;
-    uint16_t messageVer = 0;
+    uint64_t messageType = 32;
+    uint64_t messageVer = 0;
 
     std::vector<uint8_t> vecMessageType = CompressInteger(messageType);
     std::vector<uint8_t> vecMessageVer = CompressInteger(messageVer);
-    std::vector<uint8_t> vecEcosystem = CompressInteger(ecosystem);
-    std::vector<uint8_t> vecContractId = CompressInteger(contractId);
+    std::vector<uint8_t> vecEcosystem = CompressInteger((uint64_t)ecosystem);
+    std::vector<uint8_t> vecContractId = CompressInteger((uint64_t)contractId);
     payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
     payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
     payload.insert(payload.end(), vecEcosystem.begin(), vecEcosystem.end());
@@ -390,13 +386,13 @@ std::vector<unsigned char> CreatePayload_ContractDexClosePosition(uint8_t ecosys
 {
     std::vector<unsigned char> payload;
 
-    uint16_t messageType = 33;
-    uint16_t messageVer = 0;
+    uint64_t messageType = 33;
+    uint64_t messageVer = 0;
 
     std::vector<uint8_t> vecMessageType = CompressInteger(messageType);
     std::vector<uint8_t> vecMessageVer = CompressInteger(messageVer);
-    std::vector<uint8_t> vecEcosystem = CompressInteger(ecosystem);
-    std::vector<uint8_t> vecContractId = CompressInteger(contractId);
+    std::vector<uint8_t> vecEcosystem = CompressInteger((uint64_t)ecosystem);
+    std::vector<uint8_t> vecContractId = CompressInteger((uint64_t)contractId);
     payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
     payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
     payload.insert(payload.end(), vecEcosystem.begin(), vecEcosystem.end());
@@ -409,14 +405,14 @@ std::vector<unsigned char> CreatePayload_ContractDexCancelOrderByTxId(int block,
 {
     std::vector<unsigned char> payload;
 
-    uint16_t messageType = 34;
-    uint16_t messageVer = 0;
+    uint64_t messageType = 34;
+    uint64_t messageVer = 0;
     uint32_t tblock = static_cast<uint32_t>(block);
     uint32_t tidx = static_cast<uint32_t>(idx);
     std::vector<uint8_t> vecMessageType = CompressInteger(messageType);
     std::vector<uint8_t> vecMessageVer = CompressInteger(messageVer);
-    std::vector<uint8_t> vecBlock = CompressInteger(tblock);
-    std::vector<uint8_t> vecIdx = CompressInteger(tidx);
+    std::vector<uint8_t> vecBlock = CompressInteger((uint64_t)tblock);
+    std::vector<uint8_t> vecIdx = CompressInteger((uint64_t)tidx);
     payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
     payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
     payload.insert(payload.end(), vecBlock.begin(), vecBlock.end());
@@ -429,17 +425,17 @@ std::vector<unsigned char> CreatePayload_IssuancePegged(uint8_t ecosystem, uint1
 {
     std::vector<unsigned char> payload;
 
-    uint16_t messageType = 100;
-    uint16_t messageVer = 0;
+    uint64_t messageType = 100;
+    uint64_t messageVer = 0;
 
-    std::vector<uint8_t> vecMessageType = CompressInteger(messageType);
-    std::vector<uint8_t> vecMessageVer = CompressInteger(messageVer);
-    std::vector<uint8_t> vecEcosystem = CompressInteger(ecosystem);
-    std::vector<uint8_t> vecPropertyType = CompressInteger(propertyType);
-    std::vector<uint8_t> vecPrevPropertyId = CompressInteger(previousPropertyId);
-    std::vector<uint8_t> vecContractId = CompressInteger(contractId);
+    std::vector<uint8_t> vecMessageType = CompressInteger((uint64_t)messageType);
+    std::vector<uint8_t> vecMessageVer = CompressInteger((uint64_t)messageVer);
+    std::vector<uint8_t> vecEcosystem = CompressInteger((uint64_t)ecosystem);
+    std::vector<uint8_t> vecPropertyType = CompressInteger((uint64_t)propertyType);
+    std::vector<uint8_t> vecPrevPropertyId = CompressInteger((uint64_t)previousPropertyId);
+    std::vector<uint8_t> vecContractId = CompressInteger((uint64_t)contractId);
     std::vector<uint8_t> vecAmount = CompressInteger(amount);
-    std::vector<uint8_t> vecPropertyId = CompressInteger(propertyId);
+    std::vector<uint8_t> vecPropertyId = CompressInteger((uint64_t)propertyId);
     if (name.size() > 255) name = name.substr(0,255);
     payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
     payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
@@ -459,12 +455,12 @@ std::vector<unsigned char> CreatePayload_SendPeggedCurrency(uint32_t propertyId,
 {
     std::vector<unsigned char> payload;
 
-    uint16_t messageType = 102;
-    uint16_t messageVer = 0;
+    uint64_t messageType = 102;
+    uint64_t messageVer = 0;
 
     std::vector<uint8_t> vecMessageType = CompressInteger(messageType);
     std::vector<uint8_t> vecMessageVer = CompressInteger(messageVer);
-    std::vector<uint8_t> vecPropertyId = CompressInteger(propertyId);
+    std::vector<uint8_t> vecPropertyId = CompressInteger((uint64_t)propertyId);
     std::vector<uint8_t> vecAmount = CompressInteger(amount);
     payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
     payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
@@ -478,13 +474,13 @@ std::vector<unsigned char> CreatePayload_RedemptionPegged(uint32_t propertyId, u
 {
     std::vector<unsigned char> payload;
 
-    uint16_t messageType = 101;
-    uint16_t messageVer = 0;
+    uint64_t messageType = 101;
+    uint64_t messageVer = 0;
 
     std::vector<uint8_t> vecMessageType = CompressInteger(messageType);
     std::vector<uint8_t> vecMessageVer = CompressInteger(messageVer);
-    std::vector<uint8_t> vecPropertyId = CompressInteger(propertyId);
-    std::vector<uint8_t> vecContractId = CompressInteger(contractId);
+    std::vector<uint8_t> vecPropertyId = CompressInteger((uint64_t)propertyId);
+    std::vector<uint8_t> vecContractId = CompressInteger((uint64_t)contractId);
     std::vector<uint8_t> vecAmount = CompressInteger(amount);
     payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
     payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
@@ -500,17 +496,17 @@ std::vector<unsigned char> CreatePayload_DExSell(uint32_t propertyId, uint64_t a
 {
     std::vector<unsigned char> payload;
 
-    uint16_t messageType = 20;
-    uint16_t messageVer = 0;
+    uint64_t messageType = 20;
+    uint64_t messageVer = 0;
 
     std::vector<uint8_t> vecMessageType = CompressInteger(messageType);
     std::vector<uint8_t> vecMessageVer = CompressInteger(messageVer);
-    std::vector<uint8_t> vecPropertyId = CompressInteger(propertyId);
+    std::vector<uint8_t> vecPropertyId = CompressInteger((uint64_t)propertyId);
     std::vector<uint8_t> vecAmountForSale = CompressInteger(amountForSale);
     std::vector<uint8_t> vecAmountDesired = CompressInteger(amountDesired);
-    std::vector<uint8_t> vecTimeLimit = CompressInteger(timeLimit);
+    std::vector<uint8_t> vecTimeLimit = CompressInteger((uint64_t)timeLimit);
     std::vector<uint8_t> vecMinFee = CompressInteger(minFee);
-    std::vector<uint8_t> vecSubAction = CompressInteger(subAction);
+    std::vector<uint8_t> vecSubAction = CompressInteger((uint64_t)subAction);
     payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
     payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
     payload.insert(payload.end(), vecPropertyId.begin(), vecPropertyId.end());
@@ -527,17 +523,17 @@ std::vector<unsigned char> CreatePayload_DEx(uint32_t propertyId, uint64_t amoun
 {
     std::vector<unsigned char> payload;
 
-    uint16_t messageType = 21;
-    uint16_t messageVer = 0;
+    uint64_t messageType = 21;
+    uint64_t messageVer = 0;
 
     std::vector<uint8_t> vecMessageType = CompressInteger(messageType);
     std::vector<uint8_t> vecMessageVer = CompressInteger(messageVer);
-    std::vector<uint8_t> vecPropertyId = CompressInteger(propertyId);
+    std::vector<uint8_t> vecPropertyId = CompressInteger((uint64_t)propertyId);
     std::vector<uint8_t> vecAmountForSale = CompressInteger(amount);
     std::vector<uint8_t> vecPrice = CompressInteger(price);
-    std::vector<uint8_t> vecTimeLimit = CompressInteger(timeLimit);
+    std::vector<uint8_t> vecTimeLimit = CompressInteger((uint64_t)timeLimit);
     std::vector<uint8_t> vecMinFee = CompressInteger(minFee);
-    std::vector<uint8_t> vecSubAction = CompressInteger(subAction);
+    std::vector<uint8_t> vecSubAction = CompressInteger((uint64_t)subAction);
     payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
     payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
     payload.insert(payload.end(), vecPropertyId.begin(), vecPropertyId.end());
@@ -554,12 +550,12 @@ std::vector<unsigned char> CreatePayload_DExAccept(uint32_t propertyId, uint64_t
 {
     std::vector<unsigned char> payload;
 
-    uint16_t messageType = 22;
-    uint16_t messageVer = 0;
+    uint64_t messageType = 22;
+    uint64_t messageVer = 0;
 
     std::vector<uint8_t> vecMessageType = CompressInteger(messageType);
     std::vector<uint8_t> vecMessageVer = CompressInteger(messageVer);
-    std::vector<uint8_t> vecPropertyId = CompressInteger(propertyId);
+    std::vector<uint8_t> vecPropertyId = CompressInteger((uint64_t)propertyId);
     std::vector<uint8_t> vecAmount = CompressInteger(amount);
     payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
     payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
@@ -573,14 +569,14 @@ std::vector<unsigned char> CreatePayload_MetaDExTrade(uint32_t propertyIdForSale
 {
     std::vector<unsigned char> payload;
 
-    uint16_t messageType = 25;
-    uint16_t messageVer = 0;
+    uint64_t messageType = 25;
+    uint64_t messageVer = 0;
 
     std::vector<uint8_t> vecMessageType = CompressInteger(messageType);
     std::vector<uint8_t> vecMessageVer = CompressInteger(messageVer);
-    std::vector<uint8_t> vecPropertyIdForSale = CompressInteger(propertyIdForSale);
+    std::vector<uint8_t> vecPropertyIdForSale = CompressInteger((uint64_t)propertyIdForSale);
     std::vector<uint8_t> vecAmountForSale = CompressInteger(amountForSale);
-    std::vector<uint8_t> vecPropertyIdDesired = CompressInteger(propertyIdDesired);
+    std::vector<uint8_t> vecPropertyIdDesired = CompressInteger((uint64_t)propertyIdDesired);
     std::vector<uint8_t> vecAmountDesired = CompressInteger(amountDesired);
     payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
     payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
