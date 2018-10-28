@@ -85,7 +85,7 @@ $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1 # Generating one blo
 printf "\n________________________________________\n"
 printf "Creating Future Contract with base address: ${ADDRBase}\n"
 TRACreate=$($SRCDIR/litecoin-cli -datadir=$DATADIR --regtest omni_createcontract $ADDRBase 1 1 "Future Contract 1" ${blocks_until_expiration} ${notional_size} ${collateral} ${margin_requirement})
-$SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
+$SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1 ## Generating one block
 
 # printf "\n________________________________________\n"
 # printf "Checking confirmation of Creating Future Contract #1:\n"

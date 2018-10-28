@@ -36,8 +36,6 @@ UniValue omni_createpayload_simplesend(const JSONRPCRequest& request)
         );
 
     uint32_t propertyId = ParsePropertyId(request.params[0]);
-//    RequireExistingProperty(propertyId);
-//    int64_t amount = ParseAmount(request.params[1], isPropertyDivisible(propertyId));
     int64_t amount = ParseAmount(request.params[1], false);
 
     std::vector<unsigned char> payload = CreatePayload_SimpleSend(propertyId, amount);
@@ -45,8 +43,49 @@ UniValue omni_createpayload_simplesend(const JSONRPCRequest& request)
     return HexStr(payload.begin(), payload.end());
 }
 
-/*
-UniValue omni_createpayload_sendall(const JSONRPCRequest& request)
+// UniValue omni_createpayload_createcontract(const JSONRPCRequest& request)
+// {
+//   if (request.params.size() != 8)
+//     throw runtime_error(
+// 			"omni_createpayload_createcontract ecosystem type previousid \"category\" \"subcategory\" \"name\" \"url\" \"data\" propertyiddesired tokensperunit deadline earlybonus issuerpercentage\n"
+			
+// 			"\nCreates the payload for a new tokens issuance with crowdsale.\n"
+			
+// 			"\nArguments:\n"
+// 			"1. fromaddress               (string, required) the address to send from\n"
+// 			"2. ecosystem                 the ecosystem to create the tokens in (1 for main ecosystem, 2 for test ecosystem)\n"
+// 			"3. type                      (number, required) 4: ALL, 5: sLTC, 6: LTC.\n"
+// 			"4. name                      (string, required) the name of the new tokens to create\n"
+// 			"5. type                      (number, required) 1 for weekly, 2 for monthly contract\n"
+// 			"6. notional size             (number, required) notional size\n"
+// 			"7. collateral currency       (number, required) collateral currency\n"
+//                         "8. margin requirement        (number, required) margin requirement\n"
+			
+// 			"\nResult:\n"
+// 			"\"payload\"             (string) the hex-encoded payload\n"
+			
+// 			"\nExamples:\n"
+// 			+ HelpExampleCli("omni_createpayload_createcontract", "2 1 0 \"Companies\" \"Bitcoin Mining\" \"Quantum Miner\" \"\" \"\" 2 \"100\" 1483228800 30 2 4461 100 1 25")
+// 			+ HelpExampleRpc("omni_createpayload_createcontract", "2, 1, 0, \"Companies\", \"Bitcoin Mining\", \"Quantum Miner\", \"\", \"\", 2, \"100\", 1483228800, 30, 2, 4461, 100, 1, 25")
+// 			);
+
+//   std::string fromAddress = ParseAddress(request.params[0]);
+//   uint8_t ecosystem = ParseEcosystem(request.params[1]);
+//   uint32_t type = ParseNewValues(request.params[2]);
+//   std::string name = ParseText(request.params[3]);
+   
+//   /** New things for Contracts */
+//   uint32_t blocks_until_expiration = ParseNewValues(request.params[4]);
+//   uint32_t notional_size = ParseNewValues(request.params[5]);
+//   uint32_t collateral_currency = ParseNewValues(request.params[6]);
+//   uint32_t margin_requirement = ParseNewValues(request.params[7]);
+  
+//   std::vector<unsigned char> payload = CreatePayload_CreateContract(ecosystem, type, name, blocks_until_expiration, notional_size, collateral_currency, margin_requirement);
+  
+//   return HexStr(payload.begin(), payload.end());
+// }
+
+/* UniValue omni_createpayload_sendall(const JSONRPCRequest& request)
 {
     if (fHelp || request.params.size() != 1)
         throw runtime_error(
@@ -318,18 +357,19 @@ UniValue omni_createpayload_changeissuer(const JSONRPCRequest& request)
 
 */
 static const CRPCCommand commands[] =
-{ //  category                         name                                      actor (function)                         okSafeMode
-  //  -------------------------------- ----------------------------------------- ---------------------------------------- ----------
-    { "omni layer (payload creation)", "omni_createpayload_simplesend",          &omni_createpayload_simplesend,          {} },
-   /* { "omni layer (payload creation)", "omni_createpayload_sendall",             &omni_createpayload_sendall,             true },
-    { "omni layer (payload creation)", "omni_createpayload_grant",               &omni_createpayload_grant,               true },
-    { "omni layer (payload creation)", "omni_createpayload_revoke",              &omni_createpayload_revoke,              true },
-    { "omni layer (payload creation)", "omni_createpayload_changeissuer",        &omni_createpayload_changeissuer,        true },
-    { "omni layer (payload creation)", "omni_createpayload_issuancefixed",       &omni_createpayload_issuancefixed,       true },
-    { "omni layer (payload creation)", "omni_createpayload_issuancecrowdsale",   &omni_createpayload_issuancecrowdsale,   true },
-    { "omni layer (payload creation)", "omni_createpayload_issuancemanaged",     &omni_createpayload_issuancemanaged,     true },
-    { "omni layer (payload creation)", "omni_createpayload_closecrowdsale",      &omni_createpayload_closecrowdsale,      true },*/
-};
+  { //  category                         name                                      actor (function)                         okSafeMode
+    //  -------------------------------- ----------------------------------------- ---------------------------------------- ----------
+    { "omni layer (payload creation)", "omni_createpayload_simplesend",      &omni_createpayload_simplesend,          {} },
+    // { "omni layer (payload creation)", "omni_createpayload_createcontract",  &omni_createpayload_createcontract,      {} },
+    /* { "omni layer (payload creation)", "omni_createpayload_sendall",             &omni_createpayload_sendall,             true },
+       { "omni layer (payload creation)", "omni_createpayload_grant",               &omni_createpayload_grant,               true },
+       { "omni layer (payload creation)", "omni_createpayload_revoke",              &omni_createpayload_revoke,              true },
+       { "omni layer (payload creation)", "omni_createpayload_changeissuer",        &omni_createpayload_changeissuer,        true },
+       { "omni layer (payload creation)", "omni_createpayload_issuancefixed",       &omni_createpayload_issuancefixed,       true },
+       { "omni layer (payload creation)", "omni_createpayload_issuancecrowdsale",   &omni_createpayload_issuancecrowdsale,   true },
+       { "omni layer (payload creation)", "omni_createpayload_issuancemanaged",     &omni_createpayload_issuancemanaged,     true },
+       { "omni layer (payload creation)", "omni_createpayload_closecrowdsale",      &omni_createpayload_closecrowdsale,      true },*/
+  };
 
 void RegisterOmniPayloadCreationRPCCommands(CRPCTable &tableRPC)
 {

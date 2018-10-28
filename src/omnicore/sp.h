@@ -97,7 +97,7 @@ public:
         uint32_t nextContractId; // september -> october
         uint32_t numerator;
         uint32_t denomination;
-        int64_t ticksize;
+        /* int64_t ticksize; */
         std::string series;
 
         // for pegged currency
@@ -150,7 +150,7 @@ public:
             READWRITE(nextContractId);
             READWRITE(numerator);
             READWRITE(denomination);
-            READWRITE(ticksize);
+            /* READWRITE(ticksize); */
             READWRITE(series);
             ////////////////////////////
         }
@@ -250,10 +250,9 @@ private:
     uint32_t notional_size;
     uint32_t collateral_currency;
     uint32_t margin_requirement;
-    int64_t ticksize;
+    /* int64_t ticksize; */
     uint32_t contractId;
     int init_block;
-
 
 public:
     ContractSP();
@@ -266,7 +265,7 @@ public:
     uint32_t getNotionalSize () const { return notional_size; }
     uint32_t getMarginRequirement () const { return margin_requirement; }
     int getInitBlock () const { return init_block; }
-    int64_t getTickSize () const { return ticksize; }
+    /* int64_t getTickSize () const { return ticksize; } */
 };
 
 namespace mastercore

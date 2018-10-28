@@ -856,95 +856,80 @@ bool CMPTransaction::interpret_MetaDExTrade()
 /** Tx  40*/
 bool CMPTransaction::interpret_CreateContractDex()
 {
-    int i = 0;
-
-    std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
-    std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
-
-    memcpy(&ecosystem, &pkt[i], 1);
-    i++;
-    std::vector<uint8_t> vecNumTypeBytes = GetNextVarIntBytes(i);
-    std::vector<uint8_t> vecDenomTypeBytes = GetNextVarIntBytes(i);
-
-
-    const char* p = i + (char*) &pkt;
-    std::vector<std::string> spstr;
-    for (int j = 0; j < 1; j++) {
-        spstr.push_back(std::string(p));
-        p += spstr.back().size() + 1;
-    }
-
-    if (isOverrun(p)) {
-        PrintToLog("%s(): rejected: malformed string value(s)\n", __func__);
-        return false;
-    }
-
-    int j = 0;
-    memcpy(name, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(name)-1)); j++;
-    i = i + strlen(name) + 1; // data sizes + 3 null terminators
-    std::vector<uint8_t> vecBlocksUntilExpiration = GetNextVarIntBytes(i);
-    std::vector<uint8_t> vecNotionalSize = GetNextVarIntBytes(i);
-    std::vector<uint8_t> vecCollateralCurrency = GetNextVarIntBytes(i);
-    std::vector<uint8_t> vecMarginRequirement = GetNextVarIntBytes(i);
-    // std::vector<uint8_t> vecTickSize = GetNextVarIntBytes(i);
-
-    if (!vecVersionBytes.empty()) {
-        version = DecompressInteger(vecVersionBytes);
-    } else return false;
-
-    if (!vecTypeBytes.empty()) {
-        type = DecompressInteger(vecTypeBytes);
-    } else return false;
-
-    if (!vecDenomTypeBytes.empty()) {
-        denomination = DecompressInteger(vecDenomTypeBytes);
-    } else return false;
-
-    if (!vecDenomTypeBytes.empty()) {
-        numerator = DecompressInteger(vecNumTypeBytes);
-    } else return false;
-
-    if (!vecBlocksUntilExpiration.empty()) {
-        blocks_until_expiration = DecompressInteger(vecBlocksUntilExpiration);
-    } else return false;
-
-    if (!vecNotionalSize.empty()) {
-        notional_size = DecompressInteger(vecNotionalSize);
-    } else return false;
-
-    if (!vecCollateralCurrency.empty()) {
-        collateral_currency = DecompressInteger(vecCollateralCurrency);
-    } else return false;
-
-    if (!vecMarginRequirement.empty()) {
-        margin_requirement = DecompressInteger(vecMarginRequirement);
-    } else return false;
-
-    // if (!vecTickSize.empty()) {
-    //     ticksize = DecompressInteger(vecTickSize);
-    // } else return false;
-
-    std::string sub = "Futures Contracts";
-    strcpy(subcategory, sub.c_str());
-
-    PrintToLog("------------------------------------------------------------\n");
-    PrintToLog("Inside interpret_CreateContractDex function\n");
-    PrintToLog("numerator: %d\n", numerator);
-    PrintToLog("denomination: %d\n", denomination);
-    PrintToLog("version: %d\n", version);
-    PrintToLog("messageType: %d\n",type);
-    PrintToLog("ecosystem: %d\n", ecosystem);
-    PrintToLog("property type: %d\n", prop_type);
-    PrintToLog("name: %s\n", name);
-    PrintToLog("subcategory: %s\n", subcategory);
-    PrintToLog("blocks until expiration : %d\n", blocks_until_expiration);
-    PrintToLog("notional size : %d\n", notional_size);
-    PrintToLog("collateral currency: %d\n", collateral_currency);
-    PrintToLog("margin requirement: %d\n", margin_requirement);
-    // PrintToLog("ticksize: %d\n", ticksize);
-    PrintToLog("------------------------------------------------------------\n");
-
-    return true;
+  int i = 0;
+  
+  std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+  
+  memcpy(&ecosystem, &pkt[i], 1);
+  i++;
+  std::vector<uint8_t> vecDenomTypeBytes = GetNextVarIntBytes(i);
+  
+  const char* p = i + (char*) &pkt;
+  std::vector<std::string> spstr;
+  for (int j = 0; j < 1; j++) {
+    spstr.push_back(std::string(p));
+    p += spstr.back().size() + 1;
+  }
+  
+  if (isOverrun(p)) {
+    PrintToLog("%s(): rejected: malformed string value(s)\n", __func__);
+    return false;
+  }
+  
+  int j = 0;
+  memcpy(name, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(name)-1)); j++;
+  i = i + strlen(name) + 1; // data sizes + 3 null terminators
+  std::vector<uint8_t> vecBlocksUntilExpiration = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecNotionalSize = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecCollateralCurrency = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecMarginRequirement = GetNextVarIntBytes(i);
+  
+  if (!vecVersionBytes.empty()) {
+    version = DecompressInteger(vecVersionBytes);
+  } else return false;
+  
+  if (!vecTypeBytes.empty()) {
+    type = DecompressInteger(vecTypeBytes);
+  } else return false;
+  
+  if (!vecDenomTypeBytes.empty()) {
+    denomination = DecompressInteger(vecDenomTypeBytes);
+  } else return false;
+  
+  if (!vecBlocksUntilExpiration.empty()) {
+    blocks_until_expiration = DecompressInteger(vecBlocksUntilExpiration);
+  } else return false;
+    
+  if (!vecNotionalSize.empty()) {
+    notional_size = DecompressInteger(vecNotionalSize);
+  } else return false;
+  
+  if (!vecCollateralCurrency.empty()) {
+    collateral_currency = DecompressInteger(vecCollateralCurrency);
+  } else return false;
+  
+  if (!vecMarginRequirement.empty()) {
+    margin_requirement = DecompressInteger(vecMarginRequirement);
+  } else return false;
+  
+  // std::string sub = "Futures Contracts";
+  // strcpy(subcategory, sub.c_str());
+  
+  PrintToLog("------------------------------------------------------------\n");
+  PrintToLog("Inside interpret_CreateContractDex function\n");
+  PrintToLog("version: %d\n", version);
+  PrintToLog("messageType: %d\n",type);
+  PrintToLog("denomination: %d\n", denomination);
+  PrintToLog("blocks until expiration : %d\n", blocks_until_expiration);
+  PrintToLog("notional size : %d\n", notional_size);
+  PrintToLog("collateral currency: %d\n", collateral_currency);
+  PrintToLog("margin requirement: %d\n", margin_requirement);
+  PrintToLog("ecosystem: %d\n", ecosystem);
+  PrintToLog("name: %s\n", name);
+  PrintToLog("------------------------------------------------------------\n");
+  
+  return true;
 }
 /**Tx 29 */
 bool CMPTransaction::interpret_ContractDexTrade()
@@ -2225,44 +2210,44 @@ int CMPTransaction::logicMath_CreateContractDex()
             blockHash = pindex->GetBlockHash();
     }
 
-    if (OMNI_PROPERTY_MSC != ecosystem && OMNI_PROPERTY_TMSC != ecosystem) {
-        PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, (uint32_t) ecosystem);
-        return (PKT_ERROR_SP -21);
-    }
+    // if (OMNI_PROPERTY_MSC != ecosystem && OMNI_PROPERTY_TMSC != ecosystem) {
+    //     PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, (uint32_t) ecosystem);
+    //     return (PKT_ERROR_SP -21);
+    // }
 
-    if (!IsTransactionTypeAllowed(block, ecosystem, type, version)) {
-        PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
-            __func__,
-            type,
-            version,
-            propertyId,
-            block);
-        return (PKT_ERROR_SP -22);
-    }
+    // if (!IsTransactionTypeAllowed(block, ecosystem, type, version)) {
+    //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+    //         __func__,
+    //         type,
+    //         version,
+    //         propertyId,
+    //         block);
+    //     return (PKT_ERROR_SP -22);
+    // }
 
-    if ('\0' == name[0]) {
-       PrintToLog("%s(): rejected: property name must not be empty\n", __func__);
-       return (PKT_ERROR_SP -37);
-    }
+    // if ('\0' == name[0]) {
+    //    PrintToLog("%s(): rejected: property name must not be empty\n", __func__);
+    //    return (PKT_ERROR_SP -37);
+    // }
 
-    PrintToLog("type of denomination: %d\n",denomination);
+    // PrintToLog("type of denomination: %d\n",denomination);
 
-    if (denomination != TL_dUSD && denomination != TL_dEUR && denomination!= TL_dYEN && denomination != TL_ALL && denomination != TL_sLTC && denomination!= TL_LTC) {
-      PrintToLog("rejected: denomination invalid\n");
-      return (PKT_ERROR_SP -37);
-    }
+    // if (denomination != TL_dUSD && denomination != TL_dEUR && denomination!= TL_dYEN && denomination != TL_ALL && denomination != TL_sLTC && denomination!= TL_LTC) {
+    //   PrintToLog("rejected: denomination invalid\n");
+    //   return (PKT_ERROR_SP -37);
+    // }
 
-    if (numerator != TL_ALL && numerator != TL_sLTC && numerator != TL_LTC) {
-      PrintToLog("rejected: denomination invalid\n");
-      return (PKT_ERROR_SP -37);
-    }
+    // if (numerator != TL_ALL && numerator != TL_sLTC && numerator != TL_LTC) {
+    //   PrintToLog("rejected: denomination invalid\n");
+    //   return (PKT_ERROR_SP -37);
+    // }
 
     // -----------------------------------------------
 
     CMPSPInfo::Entry newSP;
     newSP.issuer = sender;
-    newSP.prop_type = prop_type;
-    newSP.subcategory.assign(subcategory);
+    // newSP.prop_type = prop_type;
+    // newSP.subcategory.assign(subcategory);
     newSP.name.assign(name);
     newSP.fixed = false;
     newSP.creation_block = blockHash;
@@ -2274,7 +2259,7 @@ int CMPTransaction::logicMath_CreateContractDex()
     newSP.init_block = block;
     // newSP.ticksize = ticksize;
     newSP.denomination = denomination;
-    newSP.numerator = numerator;
+    // newSP.numerator = numerator;
 
     const uint32_t propertyId = _my_sps->putSP(ecosystem, newSP);
     assert(propertyId > 0);
@@ -2282,19 +2267,19 @@ int CMPTransaction::logicMath_CreateContractDex()
     PrintToLog("Contract id: %d\n",propertyId);
     PrintToLog("------------------------------------------------------------\n");
     PrintToLog("Inside logicMath_CreateContractDex function\n");
-    PrintToLog("denomination: %d\n", denomination);
-    PrintToLog("numerator: %d\n", numerator);
+    // PrintToLog("numerator: %d\n", numerator);
     PrintToLog("version: %d\n", version);
     PrintToLog("messageType: %d\n",type);
     PrintToLog("ecosystem: %d\n", ecosystem);
-    PrintToLog("property type: %d\n", prop_type);
+    PrintToLog("denomination: %d\n", denomination);
+    // PrintToLog("property type: %d\n", prop_type);
     PrintToLog("name: %s\n", name);
-    PrintToLog("subcategory: %s\n", subcategory);
+    // PrintToLog("subcategory: %s\n", subcategory);
     PrintToLog("blocks until expiration : %d\n", blocks_until_expiration);
     PrintToLog("notional size : %d\n", notional_size);
     PrintToLog("collateral currency: %d\n", collateral_currency);
     PrintToLog("margin requirement: %d\n", margin_requirement);
-    // PrintToLog("ticksize: %d\n", ticksize);
+    // // PrintToLog("ticksize: %d\n", ticksize);
     PrintToLog("------------------------------------------------------------\n");
 
     return 0;
@@ -2320,7 +2305,7 @@ int CMPTransaction::logicMath_ContractDexTrade()
 
    CMPSPInfo::Entry sp;
    assert(_my_sps->getSP(contractId, sp));
-   int index = static_cast<int>(contractId);
+   // int index = static_cast<int>(contractId);
    int64_t marginRe = static_cast<int64_t>(sp.margin_requirement);
    int64_t nBalance = getMPbalance(sender, sp.collateral_currency, BALANCE);
    rational_t conv = notionalChange(contractId);
@@ -2511,7 +2496,7 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
     uint32_t npropertyId = 0;
     int64_t amountNeeded;
     int64_t contracts;
-    int index = static_cast<int>(contractId);
+    // int index = static_cast<int>(contractId);
 
     {
         LOCK(cs_main);

@@ -719,7 +719,6 @@ UniValue omni_sendalert(const JSONRPCRequest& request)
 }
 //////////////////////////////////////
 /** New things for Contract */
-
 UniValue omni_sendtrade(const JSONRPCRequest& request)
 {
     if (request.params.size() != 5)
@@ -779,64 +778,62 @@ UniValue omni_sendtrade(const JSONRPCRequest& request)
 
 UniValue omni_createcontract(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 10)
-        throw runtime_error(
-            "omni_createcontract \"fromaddress\" ecosystem type previousid \"category\" \"subcategory\" \"name\" \"url\" \"data\" propertyiddesired tokensperunit deadline ( earlybonus issuerpercentage )\n"
-
-            "Create new Future Contract."
-
-            "\nArguments:\n"
-            "1. fromaddress               (string, required) the address to send from\n"
-            "2. ecosystem                 (string, required) the ecosystem to create the tokens in (1 for main ecosystem, 2 for test ecosystem)\n"
-            "3. numerator                 (number, required) 4: ALL, 5: sLTC, 6: LTC.\n"
-            "4. denomination              (number, required) 1 for dUSD, 2 for dEUR, 3: dYEN, 4: ALL, 5: sLTC, 6: LTC.\n"
-            "5. name                      (string, required) the name of the new tokens to create\n"
-            "6. type                      (number, required) 1 for weekly, 2 for monthly contract\n"
-            "7. notional size             (number, required) notional size\n"
-            "8. collateral currency       (number, required) collateral currency\n"
-            "9. margin requirement        (number, required) margin requirement\n"
-            "10. tick size                (number, required) minimum increment on price\n"
-
-            "\nResult:\n"
-            "\"hash\"                  (string) the hex-encoded transaction hash\n"
-
-            "\nExamples:\n"
-            + HelpExampleCli("omni_createcontract", "2 1 0 \"Companies\" \"Bitcoin Mining\" \"Quantum Miner\" \"\" \"\" 2 \"100\" 1483228800 30 2 4461 100 1 25")
-            + HelpExampleRpc("omni_createcontract", "2, 1, 0, \"Companies\", \"Bitcoin Mining\", \"Quantum Miner\", \"\", \"\", 2, \"100\", 1483228800, 30, 2, 4461, 100, 1, 25")
-        );
-
-    std::string fromAddress = ParseAddress(request.params[0]);
-    uint8_t ecosystem = ParseEcosystem(request.params[1]);
-    uint32_t numerator = ParseNewValues(request.params[2]);
-    uint32_t denomination = ParseContractDen(request.params[3]);
-    std::string name = ParseText(request.params[4]);
-    uint32_t blocks_until_expiration = ParseContractType(request.params[5]);
-    uint32_t notional_size = ParseNewValues(request.params[6]);
-    uint32_t collateral_currency = ParseNewValues(request.params[7]);
-    uint32_t margin_requirement = ParseAmount(request.params[8], true);
-    // uint64_t ticksize = ParseAmount(request.params[9], true);  // we can put decimals
-
-    RequirePropertyName(name);
-    RequireSaneName(name);
-
-    // create a payload for the transaction
-    // std::vector<unsigned char> payload = CreatePayload_CreateContract(ecosystem, numerator, denomination, name, blocks_until_expiration, notional_size, collateral_currency, margin_requirement, ticksize);
-    std::vector<unsigned char> payload = CreatePayload_CreateContract(ecosystem, numerator, denomination, name, blocks_until_expiration, notional_size, collateral_currency, margin_requirement);
-
-    // request the wallet build the transaction (and if needed commit it)
-    uint256 txid;
-    std::string rawHex;
-    int result = WalletTxBuilder(fromAddress, "", 0, payload, txid, rawHex, autoCommit);
-
-    // check error and return the txid (or raw hex depending on autocommit)
-    if (result != 0) {
-        throw JSONRPCError(result, error_str(result));
-    } else {
-        if (!autoCommit) {
-            return rawHex;
-        } else {
-            return txid.GetHex();
-        }
+  if (request.params.size() != 8)
+    throw runtime_error(
+			"omni_createcontract \"fromaddress\" ecosystem type previousid \"category\" \"subcategory\" \"name\" \"url\" \"data\" propertyiddesired tokensperunit deadline ( earlybonus issuerpercentage )\n"
+			
+			"Create new Future Contract."
+			
+			"\nArguments:\n"
+			"1. fromaddress               (string, required) the address to send from\n"
+			"2. ecosystem                 (string, required) the ecosystem to create the tokens in (1 for main ecosystem, 2 for test ecosystem)\n"
+			"3. numerator                 (number, required) 4: ALL, 5: sLTC, 6: LTC.\n"
+			"4. name                      (string, required) the name of the new tokens to create\n"
+			"5. type                      (number, required) 1 for weekly, 2 for monthly contract\n"
+			"6. notional size             (number, required) notional size\n"
+			"7. collateral currency       (number, required) collateral currency\n"
+                        "8. margin requirement        (number, required) margin requirement\n"
+			
+			"\nResult:\n"
+			"\"hash\"                  (string) the hex-encoded transaction hash\n"
+			
+			"\nExamples:\n"
+			+ HelpExampleCli("omni_createcontract", "2 1 0 \"Companies\" \"Bitcoin Mining\" \"Quantum Miner\" \"\" \"\" 2 \"100\" 1483228800 30 2 4461 100 1 25")
+			+ HelpExampleRpc("omni_createcontract", "2, 1, 0, \"Companies\", \"Bitcoin Mining\", \"Quantum Miner\", \"\", \"\", 2, \"100\", 1483228800, 30, 2, 4461, 100, 1, 25")
+			);
+  
+  std::string fromAddress = ParseAddress(request.params[0]);
+  uint8_t ecosystem = ParseEcosystem(request.params[1]);
+  uint32_t type = ParseNewValues(request.params[2]);  
+  std::string name = ParseText(request.params[3]);
+  uint32_t blocks_until_expiration = ParseNewValues(request.params[4]);
+  uint32_t notional_size = ParseNewValues(request.params[5]);
+  uint32_t collateral_currency = ParseNewValues(request.params[6]);
+  uint32_t margin_requirement = ParseNewValues(request.params[7]);
+  
+  RequirePropertyName(name);
+  RequireSaneName(name);
+  
+  std::vector<unsigned char> payload = CreatePayload_CreateContract(ecosystem, type, name, blocks_until_expiration, notional_size, collateral_currency, margin_requirement);
+  
+  uint256 txid;
+  std::string rawHex;
+  int result = WalletTxBuilder(fromAddress, "", 0, payload, txid, rawHex, autoCommit);
+  
+  if ( result != 0 )
+    {
+      throw JSONRPCError(result, error_str(result));
+    }
+  else
+    {
+      if (!autoCommit)
+	{
+	  return rawHex;
+	}
+      else
+	{
+	  return txid.GetHex();
+	}
     }
 }
 
@@ -1381,6 +1378,7 @@ UniValue omni_senddexaccept(const JSONRPCRequest& request)
     }
 
 }
+
 /////////////////////////////////////////////////////////////////////////////////
 static const CRPCCommand commands[] =
 { //  category                             name                            actor (function)               okSafeMode

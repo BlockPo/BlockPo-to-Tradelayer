@@ -103,11 +103,11 @@ uint32_t ParsePreviousPropertyId(const UniValue& value)
 
 std::string ParseText(const UniValue& value)
 {
-    std::string text = value.get_str();
-    if (text.size() > 255) {
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "Text must not be longer than 255 characters");
-    }
-    return text;
+  std::string text = value.get_str();
+  if (text.size() > 255) {
+    throw JSONRPCError(RPC_INVALID_PARAMETER, "Text must not be longer than 255 characters");
+  }
+  return text;
 }
 
 int64_t ParseDeadline(const UniValue& value)
@@ -211,27 +211,26 @@ std::vector<PrevTxsEntry> ParsePrevTxs(const UniValue& value)
 /** New things for Future Contracts */
 int64_t ParseAmountContract(const UniValue& value)
 {
-    /** Here we use getValStr() instead of get_str */
-    int64_t amount = mastercore::StrToInt64(value.get_str(),true);
-    if (amount < 1) {
-        throw JSONRPCError(RPC_TYPE_ERROR, "Invalid amount");
-    }
-    return amount;
+  int64_t amount = mastercore::StrToInt64(value.get_str(), true);
+  if (amount < 1) {
+    throw JSONRPCError(RPC_TYPE_ERROR, "Invalid amount");
+  }
+  return amount;
 }
 
 int64_t ParseAmountContract(const UniValue& value, int propertyType)
 {
-    bool fContract = (propertyType == 3);  // 3 = contract
-    return ParseAmountContract(value, fContract);
+  bool fContract = propertyType == 3;
+  return ParseAmountContract(value, fContract);
 }
 
 uint32_t ParseNewValues(const UniValue& value)
 {
-    int64_t Nvalue = value.get_int64();
-    if (Nvalue < 1 || 4294967295LL < Nvalue) {
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "Value is out of range");
-    }
-    return static_cast<uint32_t>(Nvalue);
+  int64_t Nvalue = value.get_int64();
+  if (Nvalue < 1 || 4294967295LL < Nvalue) {
+    throw JSONRPCError(RPC_INVALID_PARAMETER, "Value is out of range");
+  }
+  return static_cast<uint32_t>(Nvalue);
 }
 
 uint64_t ParseEffectivePrice(const UniValue& value, uint32_t contractId)
@@ -248,7 +247,7 @@ uint64_t ParseEffectivePrice(const UniValue& value, uint32_t contractId)
     }
 
     // int64_t result = effPrice % sp.ticksize;
-    
+
     // PrintToConsole("ticksize: %d\n",sp.ticksize);
     PrintToConsole("effPrice: %d\n",effPrice);
     // PrintToConsole("result: %d\n",result);
