@@ -2305,9 +2305,11 @@ int CMPTransaction::logicMath_ContractDexTrade()
 	return (PKT_ERROR_SP -20);
       }
     blockHash = pindex->GetBlockHash();
-  }  
+  }
+  
   CMPSPInfo::Entry sp;
   assert(_my_sps->getSP(contractId, sp));
+  id_contract = contractId;
   int64_t marginRe = static_cast<int64_t>(sp.margin_requirement);
   int64_t nBalance = getMPbalance(sender, sp.collateral_currency, BALANCE);
   rational_t conv = notionalChange(contractId);

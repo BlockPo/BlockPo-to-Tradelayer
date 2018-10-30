@@ -32,7 +32,7 @@ printf "\n________________________________________\n"
 printf "Base address to work with:\n"
 printf $ADDRBase
 
-N=10
+N=100
 
 amount_bitcoin=10
 amountbitcoin_baseaddr=100
@@ -41,8 +41,7 @@ amountbitcoin_moneyaddr=1
 notional_size=1
 margin_requirement=1
 amountusdts_manyaddr=2000000
-blocks_until_expiration=35
-# amountomnies_manyaddr=20
+blocks_until_expiration=350
 CONTRACT=3
 collateral=4
 
@@ -114,13 +113,13 @@ do
     printf "Checking USDT balances for the address #$i:\n"
     $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest omni_getbalance ${ADDRess[$i]} 4
 done
-##################################################################
 
-for (( i=1; i<=${N}/2+3; i++ ))
+##################################################################
+for (( i=1; i<=${N}/2+30; i++ ))
 do
     printf "\n________________________________________\n"
     printf "Price for sale Seller #$i\n"
-    PRICE=$((RANDOM%10+6390))
+    PRICE=$((RANDOM%5+6390))
     printf "\nRandom Price:\n"
     printf $PRICE
 
@@ -139,7 +138,7 @@ for (( i=1; i<=${N}; i++ ))
 do
     printf "\n________________________________________\n"
     printf "Price for sale Buyer #$i\n"
-    PRICE=$((RANDOM%10+6390))
+    PRICE=$((RANDOM%5+6390))
     printf "\nRandom Price:\n"
     printf $PRICE
 
@@ -158,7 +157,7 @@ for (( i=1; i<=${N}; i++ ))
 do
     printf "\n________________________________________\n"
     printf "Price for sale Seller #$i\n"
-    PRICE=$((RANDOM%10+6390))
+    PRICE=$((RANDOM%5+6390))
     printf "\nRandom Price:\n"
     printf $PRICE
 
@@ -172,6 +171,12 @@ do
     $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
     
 done
+
+# $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest omni_tradecontract ${ADDRess[1]} ${CONTRACT} 10 50 2
+# $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
+
+# $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest omni_tradecontract ${ADDRess[2]} ${CONTRACT} 5 50 1
+# $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
 
 printf "\n Cheking the  orderbok (sellside):\n"
 $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest omni_getcontract_orderbook ${CONTRACT} 2

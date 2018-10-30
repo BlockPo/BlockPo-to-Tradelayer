@@ -1,6 +1,7 @@
 #include "externfns.h"
 #include "tradelayer_matrices.h"
 #include <unordered_set>
+#include "omnicore/log.h"
 
 using namespace std;
 
@@ -13,16 +14,16 @@ void printing_matrix(MatrixTLS &gdata)
     {
       for (int j = 0; j < N; ++j)
 	{
-	  std::cout << gdata[i][j] << "\t";
+	  PrintToLog("%s\t", gdata[i][j]);
 	}
-      std::cout << "\n";
+      PrintToLog("\n");
     }
 }
 
 void printing_vector(VectorTLS &vdata)
 {
   int n = length(vdata);
-    for (int i = 0; i < n; ++i) cout << vdata[i] << "\t";
+  for (int i = 0; i < n; ++i) PrintToLog("%s\t", vdata[i]);
 }
 
 bool finding(std::string &s, VectorTLS &v)

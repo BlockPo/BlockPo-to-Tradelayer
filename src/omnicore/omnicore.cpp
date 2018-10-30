@@ -2054,7 +2054,6 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   if (nBlock < nWaterlineBlock) return false;
   int64_t nBlockTime = pBlockIndex->GetBlockTime();
   
-  PrintToConsole("nBlockTime: %d\n", static_cast<int>(nBlockTime));
   CMPTransaction mp_obj;
   mp_obj.unlockLogic();
   
@@ -2068,6 +2067,9 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
 	  actualBlock = static_cast<int>(pBlockIndex->nHeight);
         }
     }
+  PrintToLog("nBlockTime: %d\n", static_cast<int>(nBlockTime));
+  PrintToLog("expirationBlock: %d\n", static_cast<int>(expirationBlock));
+  
   int deadline = sp.init_block + expirationBlock;
   if ( actualBlock != 0 && deadline != 0 )
     checkExpiration = actualBlock == deadline ? 1 : 0;
@@ -2077,18 +2079,18 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
       idx_expiration += 1;
       if ( idx_expiration == 2 )
         {
-	  PrintToConsole("actualBlock: %d\n", actualBlock);
-	  PrintToConsole("deadline: %d\n", deadline);
-	  PrintToConsole("\nExpiration Date Achieve\n");
-	  PrintToConsole("checkExpiration: %d\n", checkExpiration);
+	  PrintToLog("actualBlock: %d\n", actualBlock);
+	  PrintToLog("deadline: %d\n", deadline);
+	  PrintToLog("\nExpiration Date Achieve\n");
+	  PrintToLog("checkExpiration: %d\n", checkExpiration);
 	  expirationAchieve = 1;
         }
       else expirationAchieve = 0;
     }
   else
     {
-      PrintToConsole("actualBlock: %d\n", actualBlock);
-      PrintToConsole("deadline: %d\n", deadline);
+      PrintToLog("actualBlock: %d\n", actualBlock);
+      PrintToLog("deadline: %d\n", deadline);
       expirationAchieve = 0;
     }
   
@@ -2999,30 +3001,33 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
       path_ele.push_back(edgeEle);
       buildingEdge(edgeEle, address1, address2, s_maker2, s_taker2, lives_s2, lives_b2, nCouldBuy2, effective_price, idx_q, 0);
       path_ele.push_back(edgeEle);
+      PrintToLog("Line 1: %s\n", line1);
+      PrintToLog("Line 2: %s\n", line2);
       if ( s_maker3 != "EmptyStr" && s_taker3 != "EmptyStr" )
 	{
 	  buildingEdge(edgeEle, address1, address2, s_maker3, s_taker3, lives_s3, lives_b3,nCouldBuy3,effective_price,idx_q,0);
 	  path_ele.push_back(edgeEle);
+	  PrintToLog("Line 3: %s\n", line3);
 	}
     }
   else
     {
       buildingEdge(edgeEle, address1, address2, s_maker0, s_taker0, lives_s0, lives_b0, nCouldBuy0, effective_price, idx_q, 0);
       path_ele.push_back(edgeEle);
+      PrintToLog("Line 0: %s\n", line0);
     }
-
+  
   loopForEntryPrice(path_ele, path_length, address1, address2, UPNL1, UPNL2, effective_price);
   path_length = path_ele.size();
-  PrintToConsole("UPNL1 = %d, UPNL2 = %d\n", UPNL1, UPNL2);
-
+  PrintToLog("UPNL1 = %d, UPNL2 = %d\n", UPNL1, UPNL2);
+  
   Status status;
   if (pdb)
     {
       status = pdb->Put(writeoptions, key, value);
       ++nWritten;
-      // if (msc_debug_tradedb) PrintToLog("\n%s(): %s\n", __FUNCTION__, status.ToString());
     }
-  PrintToConsole("\n\nEnd of recordMatchedTrade <------------------------------\n");
+  PrintToLog("\n\nEnd of recordMatchedTrade <------------------------------\n");
 }
 
 void fillingMatrix(MatrixTLS &M_file, MatrixTLS &ndatabase, std::vector<std::map<std::string, std::string>> &path_ele)
