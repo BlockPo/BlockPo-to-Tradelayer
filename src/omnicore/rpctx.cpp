@@ -372,56 +372,56 @@ UniValue omni_sendissuancemanaged(const JSONRPCRequest& request)
 
 UniValue omni_sendgrant(const JSONRPCRequest& request)
 {
-    if (request.params.size() < 4 || request.params.size() > 5)
-        throw runtime_error(
-            "omni_sendgrant \"fromaddress\" \"toaddress\" propertyid \"amount\"\n"
-
-            "\nIssue or grant new units of managed tokens.\n"
-
-            "\nArguments:\n"
-            "1. fromaddress          (string, required) the address to send from\n"
-            "2. toaddress            (string, required) the receiver of the tokens (sender by default, can be \"\")\n"
-            "3. propertyid           (number, required) the identifier of the tokens to grant\n"
-            "4. amount               (string, required) the amount of tokens to create\n"
-
-            "\nResult:\n"
-            "\"hash\"                  (string) the hex-encoded transaction hash\n"
-
-            "\nExamples:\n"
-            + HelpExampleCli("omni_sendgrant", "\"3HsJvhr9qzgRe3ss97b1QHs38rmaLExLcH\" \"\" 51 \"7000\"")
-            + HelpExampleRpc("omni_sendgrant", "\"3HsJvhr9qzgRe3ss97b1QHs38rmaLExLcH\", \"\", 51, \"7000\"")
-        );
-
-    // obtain parameters & info
-    std::string fromAddress = ParseAddress(request.params[0]);
-    std::string toAddress = !ParseText(request.params[1]).empty() ? ParseAddress(request.params[1]): "";
-    uint32_t propertyId = ParsePropertyId(request.params[2]);
-    int64_t amount = ParseAmount(request.params[3], isPropertyDivisible(propertyId));
-
-    // perform checks
-    RequireExistingProperty(propertyId);
-    RequireManagedProperty(propertyId);
-    RequireNotContract(propertyId);
-    RequireTokenIssuer(fromAddress, propertyId);
-
-    // create a payload for the transaction
-    std::vector<unsigned char> payload = CreatePayload_Grant(propertyId, amount);
-
-    // request the wallet build the transaction (and if needed commit it)
-    uint256 txid;
-    std::string rawHex;
-    int result = WalletTxBuilder(fromAddress, toAddress, 0, payload, txid, rawHex, autoCommit);
-
-    // check error and return the txid (or raw hex depending on autocommit)
-    if (result != 0) {
-        throw JSONRPCError(result, error_str(result));
+  if (request.params.size() < 4 || request.params.size() > 5)
+    throw runtime_error(
+			"omni_sendgrant \"fromaddress\" \"toaddress\" propertyid \"amount\"\n"
+			
+			"\nIssue or grant new units of managed tokens.\n"
+			
+			"\nArguments:\n"
+			"1. fromaddress          (string, required) the address to send from\n"
+			"2. toaddress            (string, required) the receiver of the tokens (sender by default, can be \"\")\n"
+			"3. propertyid           (number, required) the identifier of the tokens to grant\n"
+			"4. amount               (string, required) the amount of tokens to create\n"
+			
+			"\nResult:\n"
+			"\"hash\"                  (string) the hex-encoded transaction hash\n"
+			
+			"\nExamples:\n"
+			+ HelpExampleCli("omni_sendgrant", "\"3HsJvhr9qzgRe3ss97b1QHs38rmaLExLcH\" \"\" 51 \"7000\"")
+			+ HelpExampleRpc("omni_sendgrant", "\"3HsJvhr9qzgRe3ss97b1QHs38rmaLExLcH\", \"\", 51, \"7000\"")
+			);
+  
+  // obtain parameters & info
+  std::string fromAddress = ParseAddress(request.params[0]);
+  std::string toAddress = !ParseText(request.params[1]).empty() ? ParseAddress(request.params[1]): "";
+  uint32_t propertyId = ParsePropertyId(request.params[2]);
+  int64_t amount = ParseAmount(request.params[3], isPropertyDivisible(propertyId));
+  
+  // perform checks
+  RequireExistingProperty(propertyId);
+  RequireManagedProperty(propertyId);
+  RequireNotContract(propertyId);
+  RequireTokenIssuer(fromAddress, propertyId);
+  
+  // create a payload for the transaction
+  std::vector<unsigned char> payload = CreatePayload_Grant(propertyId, amount);
+  
+  // request the wallet build the transaction (and if needed commit it)
+  uint256 txid;
+  std::string rawHex;
+  int result = WalletTxBuilder(fromAddress, toAddress, 0, payload, txid, rawHex, autoCommit);
+  
+  // check error and return the txid (or raw hex depending on autocommit)
+  if (result != 0) {
+    throw JSONRPCError(result, error_str(result));
+  } else {
+    if (!autoCommit) {
+      return rawHex;
     } else {
-        if (!autoCommit) {
-            return rawHex;
-        } else {
-            return txid.GetHex();
-        }
+      return txid.GetHex();
     }
+  }
 }
 
 UniValue omni_sendrevoke(const JSONRPCRequest& request)
@@ -837,6 +837,61 @@ UniValue omni_createcontract(const JSONRPCRequest& request)
     }
 }
 
+UniValue omni_tradecontract(const JSONRPCRequest& request)
+{
+  if (request.params.size() != 5)
+    throw runtime_error(
+			"omni_tradecontract \"fromaddress\" propertyidforsale \"amountforsale\" propertiddesired \"amountdesired\"\n"
+			
+			"\nPlace a trade offer on the distributed Futures Contracts exchange.\n"
+			
+			"\nArguments:\n"
+			"1. fromaddress          (string, required) the address to trade with\n"
+			"2. propertyidforsale    (number, required) the identifier of the contract to list for trade\n"
+			"3. amountforsale        (number, required) the amount of contracts to trade\n"
+			"4. effective price     (number, required) limit price desired in exchange\n"
+			"5. trading action        (number, required) 1 to BUY contracts, 2 to SELL contracts \n"
+			"\nResult:\n"
+			"\"payload\"             (string) the hex-encoded payload\n"
+			
+			"\nExamples:\n"
+			+ HelpExampleCli("omni_tradecontract", "31\"250.0\"1\"10.0\"70.0\"80.0\"")
+			+ HelpExampleRpc("omni_tradecontract", "31,\"250.0\",1,\"10.0,\"70.0,\"80.0\"")
+			);
+  
+  std::string fromAddress = ParseAddress(request.params[0]);
+  uint32_t propertyIdForSale = ParsePropertyId(request.params[1]);
+  int64_t amountForSale = ParseAmountContract(request.params[2]);
+  uint64_t effective_price = ParseEffectivePrice(request.params[3], propertyIdForSale);
+  uint8_t trading_action = ParseContractDexAction(request.params[4]);
+  
+  RequireContract(propertyIdForSale);
+  
+  std::vector<unsigned char> payload = CreatePayload_ContractDexTrade(propertyIdForSale, amountForSale, effective_price, trading_action);
+  
+  uint256 txid;
+  std::string rawHex;
+  int result = WalletTxBuilder(fromAddress, "", 0, payload, txid, rawHex, autoCommit);
+  PrintToConsole("Result of WalletTxBuilder: %d\n",result);
+  
+  if (result != 0)
+    {
+      throw JSONRPCError(result, error_str(result));
+    }
+  else
+    {
+      if (!autoCommit)
+	{
+	  return rawHex;
+        }
+      else
+	{
+	  PendingAdd(txid, fromAddress, MSC_TYPE_CONTRACTDEX_TRADE, propertyIdForSale, amountForSale);
+	  return txid.GetHex();
+        }
+    } 
+}
+
 UniValue omni_cancelallcontractsbyaddress(const JSONRPCRequest& request)
 {
     if (request.params.size() != 3)
@@ -942,57 +997,6 @@ UniValue omni_closeposition(const JSONRPCRequest& request)
     }
 }
 
-UniValue omni_tradecontract(const JSONRPCRequest& request)
-{
-    if (request.params.size() != 5)
-        throw runtime_error(
-            "omni_tradecontract \"fromaddress\" propertyidforsale \"amountforsale\" propertiddesired \"amountdesired\"\n"
-
-            "\nPlace a trade offer on the distributed Futures Contracts exchange.\n"
-
-            "\nArguments:\n"
-            "1. fromaddress          (string, required) the address to trade with\n"
-            "2. propertyidforsale    (number, required) the identifier of the contract to list for trade\n"
-            "3. amountforsale        (number, required) the amount of contracts to trade\n"
-            "4. effective price     (number, required) limit price desired in exchange\n"
-            "5. trading action        (number, required) 1 to BUY contracts, 2 to SELL contracts \n"
-            "\nResult:\n"
-            "\"payload\"             (string) the hex-encoded payload\n"
-
-            "\nExamples:\n"
-            + HelpExampleCli("omni_tradecontract", "31\"250.0\"1\"10.0\"70.0\"80.0\"")
-            + HelpExampleRpc("omni_tradecontract", "31,\"250.0\",1,\"10.0,\"70.0,\"80.0\"")
-        );
-
-    // obtain parameters & info
-    std::string fromAddress = ParseAddress(request.params[0]);
-    uint32_t propertyIdForSale = ParsePropertyId(request.params[1]);
-    int64_t amountForSale = ParseAmountContract(request.params[2]);
-    uint64_t effective_price = ParseEffectivePrice(request.params[3], propertyIdForSale);
-    uint8_t trading_action = ParseContractDexAction(request.params[4]);
-    RequireContract(propertyIdForSale);
-
-    // create a payload for the transaction
-    std::vector<unsigned char> payload = CreatePayload_ContractDexTrade(propertyIdForSale, amountForSale, effective_price, trading_action);
-
-    // request the wallet build the transaction (and if needed commit it)
-    uint256 txid;
-    std::string rawHex;
-    int result = WalletTxBuilder(fromAddress, "", 0, payload, txid, rawHex, autoCommit);
-    PrintToConsole("Result of WalletTxBuilder: %d\n",result);
-    // check error and return the txid (or raw hex depending on autocommit)
-    if (result != 0) {
-        throw JSONRPCError(result, error_str(result));
-    } else {
-        if (!autoCommit) {
-            return rawHex;
-        } else {
-            PendingAdd(txid, fromAddress, MSC_TYPE_CONTRACTDEX_TRADE, propertyIdForSale, amountForSale);
-            return txid.GetHex();
-        }
-     }
-
-}
 UniValue omni_sendissuance_pegged(const JSONRPCRequest& request)
 {
     if (request.params.size() != 8)

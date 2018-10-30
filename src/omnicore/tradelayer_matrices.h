@@ -87,18 +87,18 @@ template<class T> MatrixTL<T>::MatrixTL(int n, int m) : nrows(n), ncols(m), ets(
 
 template<class T> MatrixTL<T>::MatrixTL(const MatrixTL &mat) : nrows(mat.nrows), ncols(mat.ncols), ets(new T*[mat.nrows])
 {
-	assert(ets != NULL);
-	for (int i = 0; i < mat.nrows; ++i)
-	{
-		ets[i] = new T[mat.ncols];
-		for (int j = 0; j < mat.ncols; ++j) ets[i][j] = mat[i][j];
-	}
+  assert(ets != NULL);
+  for (int i = 0; i < mat.nrows; ++i)
+    {
+      ets[i] = new T[mat.ncols];
+      for (int j = 0; j < mat.ncols; ++j) ets[i][j] = mat[i][j];
+    }
 }
 
 template<class T> MatrixTL<T>::~MatrixTL()
 {
-	for (int i = 0; i < nrows; ++i) delete [] ets[i];
-	delete [] ets;
+  for (int i = 0; i < nrows; ++i) delete [] ets[i];
+  delete [] ets;
 }
 
 template<class T> T* MatrixTL<T>::operator[](int i) const 
@@ -106,16 +106,19 @@ template<class T> T* MatrixTL<T>::operator[](int i) const
 
 template<class T> MatrixTL<T> &MatrixTL<T>::operator=(const MatrixTL<T>& mat)
 {
-	if (this != &mat)
-	{
-		assert(nrows != mat.nrows || ncols !=mat.ncols);
-		for (int i = 0; i < nrows; ++i) for (int j = 0; j < ncols; ++j) ets[i][j] = mat[i][j];
-	}
-	return *this;
+  if (this != &mat)
+    {
+      assert(nrows != mat.nrows || ncols !=mat.ncols);
+      for (int i = 0; i < nrows; ++i) for (int j = 0; j < ncols; ++j) ets[i][j] = mat[i][j];
+    }
+  return *this;
 }
 
 template<class T> inline int size(const MatrixTL<T> &mat, int k)
 { return k == 0 ? mat.nrows : mat.ncols; }
+
+typedef MatrixTL<std::string> MatrixTLS;
+typedef VectorTL<std::string> VectorTLS;
 
 //////////////////////////////////////////////////
 

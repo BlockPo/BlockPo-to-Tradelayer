@@ -692,55 +692,53 @@ UniValue omni_getproperty(const JSONRPCRequest& request)
 
 UniValue omni_listproperties(const JSONRPCRequest& request)
 {
-    if (false) //TODO: put fHelp boolean
-        throw runtime_error(
-            "omni_listproperties\n"
-            "\nLists all tokens or smart properties.\n"
-            "\nResult:\n"
-            "[                                (array of JSON objects)\n"
-            "  {\n"
-            "    \"propertyid\" : n,                (number) the identifier of the tokens\n"
-            "    \"name\" : \"name\",                 (string) the name of the tokens\n"
-            "    \"data\" : \"information\",          (string) additional information or a description\n"
-            "    \"url\" : \"uri\",                   (string) an URI, for example pointing to a website\n"
-            "    \"divisible\" : true|false         (boolean) whether the tokens are divisible\n"
-            "  },\n"
-            "  ...\n"
-            "]\n"
-            "\nExamples:\n"
-            + HelpExampleCli("omni_listproperties", "")
-            + HelpExampleRpc("omni_listproperties", "")
-        );
-
-    UniValue response(UniValue::VARR);
-
-    LOCK(cs_tally);
-
-    uint32_t nextSPID = _my_sps->peekNextSPID(1);
-    for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++) {
-        CMPSPInfo::Entry sp;
-        if (_my_sps->getSP(propertyId, sp)) {
-            UniValue propertyObj(UniValue::VOBJ);
-            propertyObj.push_back(Pair("propertyid", (uint64_t) propertyId));
-            PropertyToJSON(sp, propertyObj); // name, data, url, divisible
-
-            response.push_back(propertyObj);
-        }
+  if (false) //TODO: put fHelp boolean
+    throw runtime_error(
+			"omni_listproperties\n"
+			"\nLists all tokens or smart properties.\n"
+			"\nResult:\n"
+			"[                                (array of JSON objects)\n"
+			"  {\n"
+			"    \"propertyid\" : n,                (number) the identifier of the tokens\n"
+			"    \"name\" : \"name\",                 (string) the name of the tokens\n"
+			"    \"data\" : \"information\",          (string) additional information or a description\n"
+			"    \"url\" : \"uri\",                   (string) an URI, for example pointing to a website\n"
+			"    \"divisible\" : true|false         (boolean) whether the tokens are divisible\n"
+			"  },\n"
+			"  ...\n"
+			"]\n"
+			"\nExamples:\n"
+			+ HelpExampleCli("omni_listproperties", "")
+			+ HelpExampleRpc("omni_listproperties", "")
+			);
+  
+  UniValue response(UniValue::VARR);
+  
+  LOCK(cs_tally);
+  
+  uint32_t nextSPID = _my_sps->peekNextSPID(1);
+  for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++) {
+    CMPSPInfo::Entry sp;
+    if (_my_sps->getSP(propertyId, sp)) {
+      UniValue propertyObj(UniValue::VOBJ);
+      propertyObj.push_back(Pair("propertyid", (uint64_t) propertyId));
+      PropertyToJSON(sp, propertyObj); // name, data, url, divisible
+      response.push_back(propertyObj);
     }
-
-    uint32_t nextTestSPID = _my_sps->peekNextSPID(2);
-    for (uint32_t propertyId = TEST_ECO_PROPERTY_1; propertyId < nextTestSPID; propertyId++) {
-        CMPSPInfo::Entry sp;
-        if (_my_sps->getSP(propertyId, sp)) {
-            UniValue propertyObj(UniValue::VOBJ);
-            propertyObj.push_back(Pair("propertyid", (uint64_t) propertyId));
-            PropertyToJSON(sp, propertyObj); // name, data, url, divisible
-
-            response.push_back(propertyObj);
-        }
+  }
+  
+  uint32_t nextTestSPID = _my_sps->peekNextSPID(2);
+  for (uint32_t propertyId = TEST_ECO_PROPERTY_1; propertyId < nextTestSPID; propertyId++) {
+    CMPSPInfo::Entry sp;
+    if (_my_sps->getSP(propertyId, sp)) {
+      UniValue propertyObj(UniValue::VOBJ);
+      propertyObj.push_back(Pair("propertyid", (uint64_t) propertyId));
+      PropertyToJSON(sp, propertyObj); // name, data, url, divisible
+      
+      response.push_back(propertyObj);
     }
-
-    return response;
+  }  
+  return response;
 }
 
 UniValue omni_getcrowdsale(const JSONRPCRequest& request)
@@ -1090,39 +1088,39 @@ UniValue omni_listblocktransactions(const JSONRPCRequest& request)
 
 UniValue omni_gettransaction(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 1)
-        throw runtime_error(
-            "omni_gettransaction \"txid\"\n"
-            "\nGet detailed information about an Omni transaction.\n"
-            "\nArguments:\n"
-            "1. txid                 (string, required) the hash of the transaction to lookup\n"
-            "\nResult:\n"
-            "{\n"
-            "  \"txid\" : \"hash\",                  (string) the hex-encoded hash of the transaction\n"
-            "  \"sendingaddress\" : \"address\",     (string) the Bitcoin address of the sender\n"
-            "  \"referenceaddress\" : \"address\",   (string) a Bitcoin address used as reference (if any)\n"
-            "  \"ismine\" : true|false,            (boolean) whether the transaction involes an address in the wallet\n"
-            "  \"confirmations\" : nnnnnnnnnn,     (number) the number of transaction confirmations\n"
-            "  \"fee\" : \"n.nnnnnnnn\",             (string) the transaction fee in bitcoins\n"
-            "  \"blocktime\" : nnnnnnnnnn,         (number) the timestamp of the block that contains the transaction\n"
-            "  \"valid\" : true|false,             (boolean) whether the transaction is valid\n"
-            "  \"version\" : n,                    (number) the transaction version\n"
-            "  \"type_int\" : n,                   (number) the transaction type as number\n"
-            "  \"type\" : \"type\",                  (string) the transaction type as string\n"
-            "  [...]                             (mixed) other transaction type specific properties\n"
-            "}\n"
-            "\nbExamples:\n"
-            + HelpExampleCli("omni_gettransaction", "\"1075db55d416d3ca199f55b6084e2115b9345e16c5cf302fc80e9d5fbf5d48d\"")
-            + HelpExampleRpc("omni_gettransaction", "\"1075db55d416d3ca199f55b6084e2115b9345e16c5cf302fc80e9d5fbf5d48d\"")
-        );
-
-    uint256 hash = ParseHashV(request.params[0], "txid");
-
-    UniValue txobj(UniValue::VOBJ);
-    int populateResult = populateRPCTransactionObject(hash, txobj);
-    if (populateResult != 0) PopulateFailure(populateResult);
-
-    return txobj;
+  if (request.params.size() != 1)
+    throw runtime_error(
+			"omni_gettransaction \"txid\"\n"
+			"\nGet detailed information about an Omni transaction.\n"
+			"\nArguments:\n"
+			"1. txid                 (string, required) the hash of the transaction to lookup\n"
+			"\nResult:\n"
+			"{\n"
+			"  \"txid\" : \"hash\",                  (string) the hex-encoded hash of the transaction\n"
+			"  \"sendingaddress\" : \"address\",     (string) the Bitcoin address of the sender\n"
+			"  \"referenceaddress\" : \"address\",   (string) a Bitcoin address used as reference (if any)\n"
+			"  \"ismine\" : true|false,            (boolean) whether the transaction involes an address in the wallet\n"
+			"  \"confirmations\" : nnnnnnnnnn,     (number) the number of transaction confirmations\n"
+			"  \"fee\" : \"n.nnnnnnnn\",             (string) the transaction fee in bitcoins\n"
+			"  \"blocktime\" : nnnnnnnnnn,         (number) the timestamp of the block that contains the transaction\n"
+			"  \"valid\" : true|false,             (boolean) whether the transaction is valid\n"
+			"  \"version\" : n,                    (number) the transaction version\n"
+			"  \"type_int\" : n,                   (number) the transaction type as number\n"
+			"  \"type\" : \"type\",                  (string) the transaction type as string\n"
+			"  [...]                             (mixed) other transaction type specific properties\n"
+			"}\n"
+			"\nbExamples:\n"
+			+ HelpExampleCli("omni_gettransaction", "\"1075db55d416d3ca199f55b6084e2115b9345e16c5cf302fc80e9d5fbf5d48d\"")
+			+ HelpExampleRpc("omni_gettransaction", "\"1075db55d416d3ca199f55b6084e2115b9345e16c5cf302fc80e9d5fbf5d48d\"")
+			);
+  
+  uint256 hash = ParseHashV(request.params[0], "txid");
+  
+  UniValue txobj(UniValue::VOBJ);
+  int populateResult = populateRPCTransactionObject(hash, txobj);
+  if (populateResult != 0) PopulateFailure(populateResult);
+  
+  return txobj;
 }
 
 UniValue omni_listtransactions(const JSONRPCRequest& request)
@@ -1582,64 +1580,63 @@ UniValue omni_getorderbook(const JSONRPCRequest& request)
 
 UniValue omni_getcontract_orderbook(const JSONRPCRequest& request)
 {
-    if (request.params.size() < 2 || request.params.size() > 2)
-        throw runtime_error(
-            "omni_getcontract_orderbook contractid tradingaction\n"
-            "\nList active offers on the distributed futures contracts exchange.\n"
-            "\nArguments:\n"
-            "1. contractid           (number, required) filter orders by contract identifier for sale\n"
-            "2. tradingaction        (number, required) filter orders by trading action desired (Buy = 1, Sell = 2)\n"
-            "\nResult:\n"
-            "[                                              (array of JSON objects)\n"
-            "  {\n"
-            "    \"address\" : \"address\",                         (string) the Bitcoin address of the trader\n"
-            "    \"txid\" : \"hash\",                               (string) the hex-encoded hash of the transaction of the order\n"
-            "    \"ecosystem\" : \"main\"|\"test\",                   (string) the ecosytem in which the order was made (if \"cancel-ecosystem\")\n"
-            "    \"propertyidforsale\" : n,                       (number) the identifier of the tokens put up for sale\n"
-            "    \"propertyidforsaleisdivisible\" : true|false,   (boolean) whether the tokens for sale are divisible\n"
-            "    \"amountforsale\" : \"n.nnnnnnnn\",                (string) the amount of tokens initially offered\n"
-            "    \"amountremaining\" : \"n.nnnnnnnn\",              (string) the amount of tokens still up for sale\n"
-            "    \"propertyiddesired\" : n,                       (number) the identifier of the tokens desired in exchange\n"
-            "    \"propertyiddesiredisdivisible\" : true|false,   (boolean) whether the desired tokens are divisible\n"
-            "    \"amountdesired\" : \"n.nnnnnnnn\",                (string) the amount of tokens initially desired\n"
-            "    \"amounttofill\" : \"n.nnnnnnnn\",                 (string) the amount of tokens still needed to fill the offer completely\n"
-            "    \"action\" : n,                                  (number) the action of the transaction: (1) \"trade\", (2) \"cancel-price\", (3) \"cancel-pair\", (4) \"cancel-ecosystem\"\n"
-            "    \"block\" : nnnnnn,                              (number) the index of the block that contains the transaction\n"
-            "    \"blocktime\" : nnnnnnnnnn                       (number) the timestamp of the block that contains the transaction\n"
-            "  },\n"
-            "  ...\n"
-            "]\n"
-            "\nExamples:\n"
-            + HelpExampleCli("omni_getcontract_orderbook", "2" "1")
-            + HelpExampleRpc("omni_getcontract_orderbook", "2" "1")
-        );
-
-
-    uint32_t propertyIdForSale = ParsePropertyId(request.params[0]);
-    // RequireExistingProperty(propertyIdForSale);
-    uint8_t tradingaction = ParseContractDexAction(request.params[1]);
-
-    std::vector<CMPContractDex> vecContractDexObjects;
-    {
-        LOCK(cs_tally);
-        for (cd_PropertiesMap::const_iterator my_it = contractdex.begin(); my_it != contractdex.end(); ++my_it) {
-            const cd_PricesMap& prices = my_it->second;
-            for (cd_PricesMap::const_iterator it = prices.begin(); it != prices.end(); ++it) {
-                const cd_Set& indexes = it->second;
-                for (cd_Set::const_iterator it = indexes.begin(); it != indexes.end(); ++it) {
-                    const CMPContractDex& obj = *it;
-                    if (obj.getProperty() != propertyIdForSale) continue;
-                    if (obj.getTradingAction() != tradingaction) continue;
-                    if (obj.getAmountForSale() <= 0) continue;
-                    vecContractDexObjects.push_back(obj);
-                }
-            }
-        }
+  if (request.params.size() < 2 || request.params.size() > 2)
+    throw runtime_error(
+			"omni_getcontract_orderbook contractid tradingaction\n"
+			"\nList active offers on the distributed futures contracts exchange.\n"
+			"\nArguments:\n"
+			"1. contractid           (number, required) filter orders by contract identifier for sale\n"
+			"2. tradingaction        (number, required) filter orders by trading action desired (Buy = 1, Sell = 2)\n"
+			"\nResult:\n"
+			"[                                              (array of JSON objects)\n"
+			"  {\n"
+			"    \"address\" : \"address\",                         (string) the Bitcoin address of the trader\n"
+			"    \"txid\" : \"hash\",                               (string) the hex-encoded hash of the transaction of the order\n"
+			"    \"ecosystem\" : \"main\"|\"test\",                   (string) the ecosytem in which the order was made (if \"cancel-ecosystem\")\n"
+			"    \"propertyidforsale\" : n,                       (number) the identifier of the tokens put up for sale\n"
+			"    \"propertyidforsaleisdivisible\" : true|false,   (boolean) whether the tokens for sale are divisible\n"
+			"    \"amountforsale\" : \"n.nnnnnnnn\",                (string) the amount of tokens initially offered\n"
+			"    \"amountremaining\" : \"n.nnnnnnnn\",              (string) the amount of tokens still up for sale\n"
+			"    \"propertyiddesired\" : n,                       (number) the identifier of the tokens desired in exchange\n"
+			"    \"propertyiddesiredisdivisible\" : true|false,   (boolean) whether the desired tokens are divisible\n"
+			"    \"amountdesired\" : \"n.nnnnnnnn\",                (string) the amount of tokens initially desired\n"
+			"    \"amounttofill\" : \"n.nnnnnnnn\",                 (string) the amount of tokens still needed to fill the offer completely\n"
+			"    \"action\" : n,                                  (number) the action of the transaction: (1) \"trade\", (2) \"cancel-price\", (3) \"cancel-pair\", (4) \"cancel-ecosystem\"\n"
+			"    \"block\" : nnnnnn,                              (number) the index of the block that contains the transaction\n"
+			"    \"blocktime\" : nnnnnnnnnn                       (number) the timestamp of the block that contains the transaction\n"
+			"  },\n"
+			"  ...\n"
+			"]\n"
+			"\nExamples:\n"
+			+ HelpExampleCli("omni_getcontract_orderbook", "2" "1")
+			+ HelpExampleRpc("omni_getcontract_orderbook", "2" "1")
+			);
+  
+  
+  uint32_t propertyIdForSale = ParsePropertyId(request.params[0]);
+  uint8_t tradingaction = ParseContractDexAction(request.params[1]);
+  
+  std::vector<CMPContractDex> vecContractDexObjects;
+  {
+    LOCK(cs_tally);
+    for (cd_PropertiesMap::const_iterator my_it = contractdex.begin(); my_it != contractdex.end(); ++my_it) {
+      const cd_PricesMap& prices = my_it->second;
+      for (cd_PricesMap::const_iterator it = prices.begin(); it != prices.end(); ++it) {
+	const cd_Set& indexes = it->second;
+	for (cd_Set::const_iterator it = indexes.begin(); it != indexes.end(); ++it) {
+	  const CMPContractDex& obj = *it;
+	  if (obj.getProperty() != propertyIdForSale) continue;
+	  if (obj.getTradingAction() != tradingaction) continue;
+	  if (obj.getAmountForSale() <= 0) continue;
+	  vecContractDexObjects.push_back(obj);
+	}
+      }
     }
-
-    UniValue response(UniValue::VARR);
-    ContractDexObjectsToJSON(vecContractDexObjects, response);
-    return response;
+  }
+  
+  UniValue response(UniValue::VARR);
+  ContractDexObjectsToJSON(vecContractDexObjects, response);
+  return response;
 }
 
 UniValue omni_gettradehistory(const JSONRPCRequest& request)
@@ -1994,36 +1991,36 @@ UniValue omni_getactivedexsells(const JSONRPCRequest& request)
 static const CRPCCommand commands[] =
 { //  category                             name                            actor (function)               okSafeMode
   //  ------------------------------------ ------------------------------- ------------------------------ ----------
-    { "omni layer (data retrieval)", "omni_getinfo",                   &omni_getinfo,                    {} },
-    { "omni layer (data retrieval)", "omni_getactivations",            &omni_getactivations,             {} },
-    { "omni layer (data retrieval)", "omni_getallbalancesforid",       &omni_getallbalancesforid,        {} },
-    { "omni layer (data retrieval)", "omni_getbalance",                &omni_getbalance,                 {} },
-    { "omni layer (data retrieval)", "omni_gettransaction",            &omni_gettransaction,             {} },
-    { "omni layer (data retrieval)", "omni_getproperty",               &omni_getproperty,                {} },
-    { "omni layer (data retrieval)", "omni_listproperties",            &omni_listproperties,             {} },
-    { "omni layer (data retrieval)", "omni_getcrowdsale",              &omni_getcrowdsale,               {} },
-    { "omni layer (data retrieval)", "omni_getgrants",                 &omni_getgrants,                  {} },
-    { "omni layer (data retrieval)", "omni_getactivecrowdsales",       &omni_getactivecrowdsales,        {} },
-    { "omni layer (data retrieval)", "omni_listblocktransactions",     &omni_listblocktransactions,      {} },
-    { "omni layer (data retrieval)", "omni_listpendingtransactions",   &omni_listpendingtransactions,    {} },
-    { "omni layer (data retrieval)", "omni_getallbalancesforaddress",  &omni_getallbalancesforaddress,   {} },
-    { "omni layer (data retrieval)", "omni_getcurrentconsensushash",   &omni_getcurrentconsensushash,    {} },
-    { "omni layer (data retrieval)", "omni_getpayload",                &omni_getpayload,                 {} },
+  { "omni layer (data retrieval)", "omni_getinfo",                   &omni_getinfo,                    {} },
+  { "omni layer (data retrieval)", "omni_getactivations",            &omni_getactivations,             {} },
+  { "omni layer (data retrieval)", "omni_getallbalancesforid",       &omni_getallbalancesforid,        {} },
+  { "omni layer (data retrieval)", "omni_getbalance",                &omni_getbalance,                 {} },
+  { "omni layer (data retrieval)", "omni_gettransaction",            &omni_gettransaction,             {} },
+  { "omni layer (data retrieval)", "omni_getproperty",               &omni_getproperty,                {} },
+  { "omni layer (data retrieval)", "omni_listproperties",            &omni_listproperties,             {} },
+  { "omni layer (data retrieval)", "omni_getcrowdsale",              &omni_getcrowdsale,               {} },
+  { "omni layer (data retrieval)", "omni_getgrants",                 &omni_getgrants,                  {} },
+  { "omni layer (data retrieval)", "omni_getactivecrowdsales",       &omni_getactivecrowdsales,        {} },
+  { "omni layer (data retrieval)", "omni_listblocktransactions",     &omni_listblocktransactions,      {} },
+  { "omni layer (data retrieval)", "omni_listpendingtransactions",   &omni_listpendingtransactions,    {} },
+  { "omni layer (data retrieval)", "omni_getallbalancesforaddress",  &omni_getallbalancesforaddress,   {} },
+  { "omni layer (data retrieval)", "omni_getcurrentconsensushash",   &omni_getcurrentconsensushash,    {} },
+  { "omni layer (data retrieval)", "omni_getpayload",                &omni_getpayload,                 {} },
 #ifdef ENABLE_WALLET
-    { "omni layer (data retrieval)", "omni_listtransactions",          &omni_listtransactions,           {} },
-    { "omni layer (configuration)",  "omni_setautocommit",             &omni_setautocommit,              {} },
+  { "omni layer (data retrieval)", "omni_listtransactions",          &omni_listtransactions,           {} },
+  { "omni layer (configuration)",  "omni_setautocommit",             &omni_setautocommit,              {} },
 #endif
-    { "hidden",                      "mscrpc",                         &mscrpc,                          {} },
-    { "omni layer (data retrieval)", "omni_getposition",               &omni_getposition,                {} },
-    { "omni layer (data retrieval)", "omni_getcontract_orderbook",     &omni_getcontract_orderbook,      {} },
-    { "omni layer (data retrieval)", "omni_gettradehistory",           &omni_gettradehistory,            {} },
-    { "omni layer (data retrieval)", "omni_getupnl",                    &omni_getupnl,                   {} },
-    { "omni layer (data retrieval)", "omni_getpnl",                    &omni_getpnl,                     {} },
-    { "omni layer (data retieval)", "omni_getactivedexsells",          &omni_getactivedexsells ,         {} },
-    {"omni layer (data retieval)" , "omni_getorderbook",               &omni_getorderbook,               {} },
-    {"omni layer (data retieval)" , "omni_getpeggedhistory",           &omni_getpeggedhistory,           {} },
-    {"omni layer (data retieval)" , "omni_getcontract_reserve",        &omni_getcontract_reserve,        {} },
-    {"omni layer (data retieval)" , "omni_getmargin",                  &omni_getmargin,                  {} },
+  { "hidden",                      "mscrpc",                         &mscrpc,                          {} },
+  { "omni layer (data retrieval)", "omni_getposition",               &omni_getposition,                {} },
+  { "omni layer (data retrieval)", "omni_getcontract_orderbook",     &omni_getcontract_orderbook,      {} },
+  { "omni layer (data retrieval)", "omni_gettradehistory",           &omni_gettradehistory,            {} },
+  { "omni layer (data retrieval)", "omni_getupnl",                   &omni_getupnl,                   {} },
+  { "omni layer (data retrieval)", "omni_getpnl",                    &omni_getpnl,                     {} },
+  { "omni layer (data retieval)", "omni_getactivedexsells",          &omni_getactivedexsells ,         {} },
+  {"omni layer (data retieval)" , "omni_getorderbook",               &omni_getorderbook,               {} },
+  {"omni layer (data retieval)" , "omni_getpeggedhistory",           &omni_getpeggedhistory,           {} },
+  {"omni layer (data retieval)" , "omni_getcontract_reserve",        &omni_getcontract_reserve,        {} },
+  {"omni layer (data retieval)" , "omni_getmargin",                  &omni_getmargin,                  {} },
 };
 
 void RegisterOmniDataRetrievalRPCCommands(CRPCTable &tableRPC)

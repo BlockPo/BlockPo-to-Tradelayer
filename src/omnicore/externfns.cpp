@@ -4,26 +4,28 @@
 
 using namespace std;
 
-void printing_matrix(MatrixTL<std::string> &gdata)
+void printing_matrix(MatrixTLS &gdata)
 {
-    int n_rows = size(gdata, 0);
-    int n_cols = size(gdata, 1);
-
-    for (int i = 0; i < n_rows; ++i) {
-        for (int j = 0; j < n_cols; ++j) {
-            std::cout << gdata[i][j] << "\t";
-        }
-        std::cout << "\n";
+  int M = size(gdata, 0);
+  int N = size(gdata, 1);
+  
+  for (int i = 0; i < M; ++i)
+    {
+      for (int j = 0; j < N; ++j)
+	{
+	  std::cout << gdata[i][j] << "\t";
+	}
+      std::cout << "\n";
     }
 }
 
-void printing_vector(VectorTL<std::string> &vdata)
+void printing_vector(VectorTLS &vdata)
 {
-    int n = length(vdata);
+  int n = length(vdata);
     for (int i = 0; i < n; ++i) cout << vdata[i] << "\t";
 }
 
-bool finding(std::string &s, VectorTL<std::string> &v)
+bool finding(std::string &s, VectorTLS &v)
 {
   int n = length(v);
   bool findout = false;
@@ -39,7 +41,7 @@ bool finding(std::string &s, VectorTL<std::string> &v)
   return findout;
 }
 
-void sub_row(VectorTL<std::string> &jrow_databe, MatrixTL<std::string> &databe, int i)
+void sub_row(VectorTLS &jrow_databe, MatrixTLS &databe, int i)
 {
   for (int j = 0; j < size(databe, 1); ++j) jrow_databe[j] = databe[i][j];
 }
@@ -90,4 +92,6 @@ bool find_string_set(std::string s, std::unordered_set<std::string> addrs_set)
   return find_bool;
 }
 
-bool findTrueValue(bool a, bool b, bool c) { return a || b || c; }
+bool findTrueValue(bool a, bool b, bool c) { return ( a || b ) || c; }
+
+bool findTrueValue(bool a, bool b, bool c, bool d) { return ( a || b ) || ( c || d ); }

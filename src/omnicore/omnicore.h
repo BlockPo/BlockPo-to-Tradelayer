@@ -32,6 +32,7 @@ class CTransaction;
 #include <vector>
 #include <set>
 #include <unordered_map>
+#include "tradelayer_matrices.h"
 
 using std::string;
 
@@ -187,6 +188,7 @@ std::string FormatShortMP(uint32_t propertyId, int64_t amount);
 std::string FormatByType(int64_t amount, uint16_t propertyType);
 std::string FormatByDivisibility(int64_t amount, bool divisible);
 double FormatContractShortMP(int64_t n);
+long int FormatShortIntegerMP(int64_t n);
 /** Returns the Exodus address. */
 const std::string ExodusAddress();
 
@@ -361,15 +363,16 @@ void CheckWalletUpdate(bool forceUpdate = false);
 void NotifyTotalTokensChanged(uint32_t propertyId);
 
 void buildingEdge(std::map<std::string, std::string> &edgeEle, std::string addrs_src, std::string addrs_trk, std::string status_src, std::string status_trk, int64_t lives_src, int64_t lives_trk, int64_t amount_path, int64_t matched_price, int idx_q, int ghost_edge);
-void printing_edges(std::map<std::string, std::string> &path_ele);
+void printing_edges_database(std::map<std::string, std::string> &path_ele);
 const string gettingLineOut(std::string address1, std::string s_status1, int64_t lives_maker, std::string address2, std::string s_status2, int64_t lives_taker, int64_t nCouldBuy, uint64_t effective_price);
 void loopForEntryPrice(std::vector<std::map<std::string, std::string>> path_ele, unsigned int path_length, std::string address1, std::string address2, double &UPNL1, double &UPNL2, uint64_t exit_price);
 double PNL_function(uint64_t entry_price, uint64_t exit_price, int64_t amount_trd, std::string netted_status);
-int mastercore_handler_disc_begin(int nBlockNow, CBlockIndex const * pBlockIndex);
-int mastercore_handler_disc_end(int nBlockNow, CBlockIndex const * pBlockIndex);
-int mastercore_handler_block_begin(int nBlockNow, CBlockIndex const * pBlockIndex);
-int mastercore_handler_block_end(int nBlockNow, CBlockIndex const * pBlockIndex, unsigned int);
-bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx, const CBlockIndex* pBlockIndex);
+void fillingMatrix(MatrixTLS &M_file, MatrixTLS &ndatabase, std::vector<std::map<std::string, std::string>> &path_ele);
+int mastercore_handler_disc_begin(int nBlockNow, CBlockIndex const *pBlockIndex);
+int mastercore_handler_disc_end(int nBlockNow, CBlockIndex const *pBlockIndex);
+int mastercore_handler_block_begin(int nBlockNow, CBlockIndex const *pBlockIndex);
+int mastercore_handler_block_end(int nBlockNow, CBlockIndex const *pBlockIndex, unsigned int);
+bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx, const CBlockIndex *pBlockIndex);
 int mastercore_save_state( CBlockIndex const *pBlockIndex );
 
 namespace mastercore
@@ -429,8 +432,6 @@ bool getValidMPTX(const uint256 &txid, int *block = NULL, unsigned int *type = N
 bool update_tally_map(const std::string& who, uint32_t propertyId, int64_t amount, TallyType ttype);
 
 std::string getTokenLabel(uint32_t propertyId);
-
-
 }
 
 

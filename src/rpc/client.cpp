@@ -158,6 +158,12 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "omni_createcontract", 5, "arg5"},
     { "omni_createcontract", 6, "arg6"},
     { "omni_createcontract", 7, "arg7"},
+    { "omni_tradecontract", 1, "arg1"},
+    { "omni_tradecontract", 3, "arg3"},
+    { "omni_tradecontract", 4, "arg4"},
+    { "omni_sendgrant", 2, "arg2"},
+    { "omni_getcontract_orderbook", 0 },
+    { "omni_getcontract_orderbook", 1 },
     
     /* Omni Core - data retrieval calls */
     { "omni_setautocommit", 0, "arg0" },

@@ -18,7 +18,7 @@
 #include <httpserver.h>
 #include <httprpc.h>
 #include <utilstrencodings.h>
-
+#include "omnicore/tradelayer_matrices.h"
 #include <boost/thread.hpp>
 
 #include <stdio.h>
@@ -178,10 +178,24 @@ bool AppInit(int argc, char* argv[])
 
 int main(int argc, char* argv[])
 {
-    SetupEnvironment();
-
-    // Connect bitcoind signal handlers
-    noui_connect();
-
-    return (AppInit(argc, argv) ? EXIT_SUCCESS : EXIT_FAILURE);
+  extern int64_t factorE;
+  extern int64_t priceIndex; 
+  extern int64_t allPrice;
+  extern double denMargin;
+  extern int n_cols;
+  extern VectorTLS *pt_open_incr_long;
+  extern VectorTLS *pt_open_incr_short;
+  extern VectorTLS *pt_netted_npartly_long;
+  extern VectorTLS *pt_netted_npartly_short;
+  extern VectorTLS *pt_open_incr_anypos;
+  extern VectorTLS *pt_netted_npartly_anypos;
+  
+#include "initial_conditions.h"
+  
+  SetupEnvironment();
+  
+  // Connect bitcoind signal handlers
+  noui_connect();
+  
+  return (AppInit(argc, argv) ? EXIT_SUCCESS : EXIT_FAILURE);
 }

@@ -195,7 +195,7 @@ std::vector<unsigned char> CreatePayload_Grant(uint32_t propertyId, uint64_t amo
     std::vector<uint8_t> vecMessageVer = CompressInteger((uint64_t)messageVer);
     std::vector<uint8_t> vecPropertyId = CompressInteger((uint64_t)propertyId);
     std::vector<uint8_t> vecAmount = CompressInteger((uint64_t)amount);
-
+    
     payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
     payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
     payload.insert(payload.end(), vecPropertyId.begin(), vecPropertyId.end());
@@ -332,31 +332,33 @@ std::vector<unsigned char> CreatePayload_CreateContract(uint8_t ecosystem, uint3
   payload.insert(payload.end(), vecNotionalSize.begin(), vecNotionalSize.end());
   payload.insert(payload.end(), vecCollateralCurrency.begin(), vecCollateralCurrency.end());
   payload.insert(payload.end(), vecMarginRequirement.begin(), vecMarginRequirement.end());
+  payload.push_back('\0');
   
   return payload;
 }
 
 std::vector<unsigned char> CreatePayload_ContractDexTrade(uint32_t propertyIdForSale, uint64_t amountForSale, uint64_t effective_price, uint8_t trading_action)
 {
-    std::vector<unsigned char> payload;
-
-    uint64_t messageVer = 0;
-    uint64_t messageType = 29;
-
-    std::vector<uint8_t> vecMessageType = CompressInteger((uint64_t)messageType);
-    std::vector<uint8_t> vecMessageVer = CompressInteger((uint64_t)messageVer);
-    std::vector<uint8_t> vecPropertyId = CompressInteger((uint64_t)propertyIdForSale);
-    std::vector<uint8_t> vecAmountForSale = CompressInteger((uint64_t)amountForSale);
-    std::vector<uint8_t> vecEffectivePrice = CompressInteger((uint64_t)effective_price);
-    std::vector<uint8_t> vecTradingAction = CompressInteger((uint64_t)trading_action);
-    payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
-    payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
-    payload.insert(payload.end(), vecPropertyId.begin(), vecPropertyId.end());
-    payload.insert(payload.end(), vecAmountForSale.begin(), vecAmountForSale.end());
-    payload.insert(payload.end(), vecEffectivePrice.begin(), vecEffectivePrice.end());
-    payload.insert(payload.end(), vecTradingAction.begin(), vecTradingAction.end());
-
-    return payload;
+  std::vector<unsigned char> payload;
+  
+  uint64_t messageVer = 0;
+  uint64_t messageType = 29;
+  
+  std::vector<uint8_t> vecMessageType = CompressInteger((uint64_t)messageType);
+  std::vector<uint8_t> vecMessageVer = CompressInteger((uint64_t)messageVer);
+  std::vector<uint8_t> vecPropertyId = CompressInteger((uint64_t)propertyIdForSale);
+  std::vector<uint8_t> vecAmountForSale = CompressInteger((uint64_t)amountForSale);
+  std::vector<uint8_t> vecEffectivePrice = CompressInteger((uint64_t)effective_price);
+  std::vector<uint8_t> vecTradingAction = CompressInteger((uint64_t)trading_action);
+  
+  payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
+  payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
+  payload.insert(payload.end(), vecPropertyId.begin(), vecPropertyId.end());
+  payload.insert(payload.end(), vecAmountForSale.begin(), vecAmountForSale.end());
+  payload.insert(payload.end(), vecEffectivePrice.begin(), vecEffectivePrice.end());
+  payload.insert(payload.end(), vecTradingAction.begin(), vecTradingAction.end());
+  
+  return payload;
 }
 
 std::vector<unsigned char> CreatePayload_ContractDexCancelEcosystem(uint8_t ecosystem, uint32_t contractId)

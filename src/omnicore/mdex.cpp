@@ -12,8 +12,9 @@
 #include "chain.h"
 #include "tinyformat.h"
 #include "uint256.h"
-#include "tradelayer_matrices.h"
-#include "externfns.h"
+#include "omnicore/tradelayer_matrices.h"
+#include "omnicore/externfns.h"
+#include "omnicore/operators_algo_clearing.h"
 #include "validation.h"
 
 #include <univalue.h>
@@ -49,6 +50,11 @@ extern volatile uint64_t marketPrice;
 extern volatile int idx_q;
 extern int64_t factorE;
 extern uint64_t marketP[NPTYPES];
+extern int expirationAchieve;
+extern std::vector<std::map<std::string, std::string>> path_ele;
+extern int n_cols;
+extern int n_rows;
+extern MatrixTLS *pt_ndatabase;
 
 md_PricesMap* mastercore::get_Prices(uint32_t prop)
 {
@@ -93,7 +99,26 @@ void mastercore::LoopBiDirectional(cd_PricesMap* const ppriceMap, uint8_t trdAct
 {
   cd_PricesMap::iterator it_fwdPrices;
   cd_PricesMap::reverse_iterator it_bwdPrices;
-
+  std::vector<std::map<std::string, std::string>>::iterator it_path_ele;
+  
+  /** Calling for settlement algorithm when the expiration date has been achieved */
+  if ( expirationAchieve )
+    {
+      PrintToConsole("expirationAchieve: %d\n", expirationAchieve);
+      PrintToConsole("Path for Settlement:\n");
+      for (it_path_ele = path_ele.begin(); it_path_ele != path_ele.end(); ++it_path_ele) printing_edges_database(*it_path_ele);
+      cout << "\n";
+      pt_ndatabase = new MatrixTLS(path_ele.size(), n_cols); MatrixTLS &ndatabase = *pt_ndatabase;
+      MatrixTLS M_file(path_ele.size(), n_cols);
+      fillingMatrix(M_file, ndatabase, path_ele);
+      n_rows = size(M_file, 0); 
+      PrintToConsole("Matrix for Settlement: dim = (%d, %d)\n\n", n_rows, n_cols);
+      printing_matrix(M_file);
+      cout << "\n\n";
+      PrintToConsole("Calling the Settlement Algorithm:\n\n");
+      settlement_algorithm_fifo(M_file);
+    }
+  
   if ( trdAction == BUY )
     {
       for (it_fwdPrices = ppriceMap->begin(); it_fwdPrices != ppriceMap->end(); ++it_fwdPrices)
@@ -133,26 +158,19 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       assert(pold->getEffectivePrice() == sellerPrice);
 
       std::string tradeStatus = pold->getEffectivePrice() == sellerPrice ? "Matched" : "NoMatched";
-
-      /** If someone is matching with himself */
-      if ( pold->getAddr() == pnew->getAddr() )
-	{
-	  PrintToConsole("Mathching with yourself!, Please choose another order\n");
-	  ++offerIt;
-	  continue;
-	}
-
+      
+      /** Match Conditions */
       bool boolProperty  = pold->getProperty() != propertyForSale;
       bool boolTrdAction = pold->getTradingAction() == pnew->getTradingAction();
       bool boolEffPrice  = pnew->getEffectivePrice() != pold->getEffectivePrice();
-
-      /** Does the desired property match? Does the tradingaction match? */
-      if ( findTrueValue(boolProperty, boolTrdAction, boolEffPrice) )
+      bool boolAddresses = pold->getAddr() == pnew->getAddr();
+      
+      if ( findTrueValue(boolProperty, boolTrdAction, boolEffPrice, boolAddresses) )
 	{
 	  ++offerIt;
 	  continue;
 	}
-
+      
       idx_q += 1;
       // PrintToConsole("Checking idx_q = %d", idx_q);
 
@@ -1029,7 +1047,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
 
       PrintToConsole("\nmarketPrice Now : %d, marketP[index] = %d\n", marketPriceNow, marketP[index]);
       t_tradelistdb->recordForUPNL(pnew->getHash(),pnew->getAddr(),property_traded,pold->getEffectivePrice());
-
+      
       // if (msc_debug_metadex1) PrintToLog("++ erased old: %s\n", offerIt->ToString());
       pofferSet->erase(offerIt++);
 

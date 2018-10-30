@@ -235,27 +235,19 @@ uint32_t ParseNewValues(const UniValue& value)
 
 uint64_t ParseEffectivePrice(const UniValue& value, uint32_t contractId)
 {
-    int64_t effPrice = StrToInt64(value.getValStr(), true);  // BTC is divisible
-    if (effPrice < 0) {
-        throw JSONRPCError(RPC_TYPE_ERROR, "Price should be positive");
-    }
-
-    LOCK(cs_tally);
-    CMPSPInfo::Entry sp;
-    if (!mastercore::_my_sps->getSP(contractId, sp)) {
-        throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
-    }
-
-    // int64_t result = effPrice % sp.ticksize;
-
-    // PrintToConsole("ticksize: %d\n",sp.ticksize);
-    PrintToConsole("effPrice: %d\n",effPrice);
-    // PrintToConsole("result: %d\n",result);
-    
-    // if (result != 0) {
-    //     throw JSONRPCError(RPC_TYPE_ERROR, "Incorrect tick used in price");
-    // }
-    return effPrice;
+  int64_t effPrice = StrToInt64(value.getValStr(), true);  
+  if (effPrice < 0) {
+    throw JSONRPCError(RPC_TYPE_ERROR, "Price should be positive");
+  }
+  
+  LOCK(cs_tally);
+  CMPSPInfo::Entry sp;
+  if (!mastercore::_my_sps->getSP(contractId, sp)) {
+    throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
+  }
+  
+  PrintToConsole("effPrice: %d\n",effPrice);
+  return effPrice;
 }
 
 uint8_t ParseContractDexAction(const UniValue& value)

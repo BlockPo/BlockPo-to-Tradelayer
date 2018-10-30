@@ -55,77 +55,79 @@ int populateRPCTransactionObject(const uint256& txid, UniValue& txobj, std::stri
 
 int populateRPCTransactionObject(const CTransaction& tx, const uint256& blockHash, UniValue& txobj, std::string filterAddress, bool extendedDetails, std::string extendedDetailsFilter, int blockHeight)
 {
-    int confirmations = 0;
-    int64_t blockTime = 0;
-    int positionInBlock = 0;
-
-    if (blockHeight == 0) {
-        blockHeight = GetHeight();
+  int confirmations = 0;
+  int64_t blockTime = 0;
+  int positionInBlock = 0;
+  
+  if (blockHeight == 0) {
+    blockHeight = GetHeight();
+  }
+  
+  if (!blockHash.IsNull()) {
+    CBlockIndex* pBlockIndex = GetBlockIndex(blockHash);
+    if (NULL != pBlockIndex) {
+      confirmations = 1 + blockHeight - pBlockIndex->nHeight;
+      blockTime = pBlockIndex->nTime;
+      blockHeight = pBlockIndex->nHeight;
     }
+  }
 
-    if (!blockHash.IsNull()) {
-        CBlockIndex* pBlockIndex = GetBlockIndex(blockHash);
-        if (NULL != pBlockIndex) {
-            confirmations = 1 + blockHeight - pBlockIndex->nHeight;
-            blockTime = pBlockIndex->nTime;
-            blockHeight = pBlockIndex->nHeight;
-        }
-    }
+  // attempt to parse the transaction
+  CMPTransaction mp_obj;
+  int parseRC = ParseTransaction(tx, blockHeight, 0, mp_obj, blockTime);
+  if (parseRC < 0) return MP_TX_IS_NOT_MASTER_PROTOCOL;
+  
+  const uint256& txid = tx.GetHash();
+  
+  // check if we're filtering from listtransactions_MP, and if so whether we have a non-match we want to skip
+  if (!filterAddress.empty() && mp_obj.getSender() != filterAddress && mp_obj.getReceiver() != filterAddress) return -1;
 
-    // attempt to parse the transaction
-    CMPTransaction mp_obj;
-    int parseRC = ParseTransaction(tx, blockHeight, 0, mp_obj, blockTime);
-    if (parseRC < 0) return MP_TX_IS_NOT_MASTER_PROTOCOL;
-
-    const uint256& txid = tx.GetHash();
-
-    // check if we're filtering from listtransactions_MP, and if so whether we have a non-match we want to skip
-    if (!filterAddress.empty() && mp_obj.getSender() != filterAddress && mp_obj.getReceiver() != filterAddress) return -1;
-
-    // parse packet and populate mp_obj
-    if (!mp_obj.interpret_Transaction()) return MP_TX_IS_NOT_MASTER_PROTOCOL;
-
-    // obtain validity - only confirmed transactions can be valid
-    bool valid = false;
-    if (confirmations > 0) {
-        LOCK(cs_tally);
-        valid = getValidMPTX(txid);
-        positionInBlock = p_OmniTXDB->FetchTransactionPosition(txid);
-    }
-
-    // populate some initial info for the transaction
-    bool fMine = false;
-    if (IsMyAddress(mp_obj.getSender()) || IsMyAddress(mp_obj.getReceiver())) fMine = true;
-    txobj.push_back(Pair("txid", txid.GetHex()));
-    txobj.push_back(Pair("fee", FormatDivisibleMP(mp_obj.getFeePaid())));
-    txobj.push_back(Pair("sendingaddress", mp_obj.getSender()));
-    if (showRefForTx(mp_obj.getType())) txobj.push_back(Pair("referenceaddress", mp_obj.getReceiver()));
-    txobj.push_back(Pair("ismine", fMine));
-    txobj.push_back(Pair("version", (uint64_t)mp_obj.getVersion()));
-    txobj.push_back(Pair("type_int", (uint64_t)mp_obj.getType()));
-    if (mp_obj.getType() != MSC_TYPE_SIMPLE_SEND) { // Type 0 will add "Type" attribute during populateRPCTypeSimpleSend
-        txobj.push_back(Pair("type", mp_obj.getTypeString()));
-    }
-
-    // populate type specific info and extended details if requested
-    // extended details are not available for unconfirmed transactions
-    if (confirmations <= 0) extendedDetails = false;
-    populateRPCTypeInfo(mp_obj, txobj, mp_obj.getType(), extendedDetails, extendedDetailsFilter);
-
-    // state and chain related information
-    if (confirmations != 0 && !blockHash.IsNull()) {
-        txobj.push_back(Pair("valid", valid));
-        txobj.push_back(Pair("blockhash", blockHash.GetHex()));
-        txobj.push_back(Pair("blocktime", blockTime));
-        txobj.push_back(Pair("positioninblock", positionInBlock));
-    }
-    if (confirmations != 0) {
-        txobj.push_back(Pair("block", blockHeight));
-    }
-    txobj.push_back(Pair("confirmations", confirmations));
-
-    // finished
-    return 0;
+  // parse packet and populate mp_obj
+  if (!mp_obj.interpret_Transaction()) return MP_TX_IS_NOT_MASTER_PROTOCOL;
+  
+  // obtain validity - only confirmed transactions can be valid
+  bool valid = false;
+  if (confirmations > 0) {
+    LOCK(cs_tally);
+    valid = getValidMPTX(txid);
+    positionInBlock = p_OmniTXDB->FetchTransactionPosition(txid);
+  }
+  PrintToLog("Checking valid : %s\n", valid ? "true" : "false");
+  PrintToLog("Checking positionInBlock : %d\n", positionInBlock);
+  
+  // populate some initial info for the transaction
+  bool fMine = false;
+  if (IsMyAddress(mp_obj.getSender()) || IsMyAddress(mp_obj.getReceiver())) fMine = true;
+  txobj.push_back(Pair("txid", txid.GetHex()));
+  txobj.push_back(Pair("fee", FormatDivisibleMP(mp_obj.getFeePaid())));
+  txobj.push_back(Pair("sendingaddress", mp_obj.getSender()));
+  if (showRefForTx(mp_obj.getType())) txobj.push_back(Pair("referenceaddress", mp_obj.getReceiver()));
+  txobj.push_back(Pair("ismine", fMine));
+  txobj.push_back(Pair("version", (uint64_t)mp_obj.getVersion()));
+  txobj.push_back(Pair("type_int", (uint64_t)mp_obj.getType()));
+  if (mp_obj.getType() != MSC_TYPE_SIMPLE_SEND) { // Type 0 will add "Type" attribute during populateRPCTypeSimpleSend
+    txobj.push_back(Pair("type", mp_obj.getTypeString()));
+  }
+  
+  // populate type specific info and extended details if requested
+  // extended details are not available for unconfirmed transactions
+  if (confirmations <= 0) extendedDetails = false;
+  populateRPCTypeInfo(mp_obj, txobj, mp_obj.getType(), extendedDetails, extendedDetailsFilter);
+  
+  // state and chain related information
+  if (confirmations != 0 && !blockHash.IsNull()) {
+    txobj.push_back(Pair("valid", valid));
+    txobj.push_back(Pair("blockhash", blockHash.GetHex()));
+    txobj.push_back(Pair("blocktime", blockTime));
+    txobj.push_back(Pair("positioninblock", positionInBlock));
+  }
+  if (confirmations != 0) {
+    txobj.push_back(Pair("block", blockHeight));
+  }
+  txobj.push_back(Pair("confirmations", confirmations));
+  
+  // finished
+  return 0;
 }
 
 /* Function to call respective populators based on message type
