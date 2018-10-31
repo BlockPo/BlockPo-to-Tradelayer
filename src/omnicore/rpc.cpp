@@ -188,22 +188,22 @@ void ContractDexObjectsToJSON(std::vector<CMPContractDex>& vContractDexObjs, Uni
 }
 ///////////////////////////////////////////////
 // obtain the payload for a transaction
-UniValue omni_getpayload(const JSONRPCRequest& request)
+UniValue tl_getpayload(const JSONRPCRequest& request)
 {
     if (request.params.size() != 1)
         throw runtime_error(
-            "omni_getpayload \"txid\"\n"
-            "\nGet the payload for an Omni transaction.\n"
+            "tl_getpayload \"txid\"\n"
+            "\nGet the payload for an Trade Layer transaction.\n"
             "\nArguments:\n"
             "1. txid                 (string, required) the hash of the transaction to retrieve payload\n"
             "\nResult:\n"
             "{\n"
-            "  \"payload\" : \"payloadmessage\",       (string) the decoded Omni payload message\n"
+            "  \"payload\" : \"payloadmessage\",       (string) the decoded Trade Layer payload message\n"
             "  \"payloadsize\" : n                     (number) the size of the payload\n"
             "}\n"
             "\nExamples:\n"
-            + HelpExampleCli("omni_getpayload", "\"1075db55d416d3ca199f55b6084e2115b9345e16c5cf302fc80e9d5fbf5d48d\"")
-            + HelpExampleRpc("omni_getpayload", "\"1075db55d416d3ca199f55b6084e2115b9345e16c5cf302fc80e9d5fbf5d48d\"")
+            + HelpExampleCli("tl_getpayload", "\"1075db55d416d3ca199f55b6084e2115b9345e16c5cf302fc80e9d5fbf5d48d\"")
+            + HelpExampleRpc("tl_getpayload", "\"1075db55d416d3ca199f55b6084e2115b9345e16c5cf302fc80e9d5fbf5d48d\"")
         );
 
     uint256 txid = ParseHashV(request.params[0], "txid");
@@ -235,19 +235,19 @@ UniValue omni_getpayload(const JSONRPCRequest& request)
 }
 
 // determine whether to automatically commit transactions
-UniValue omni_setautocommit(const JSONRPCRequest& request)
+UniValue tl_setautocommit(const JSONRPCRequest& request)
 {
     if (request.params.size() != 1)
         throw runtime_error(
-            "omni_setautocommit flag\n"
+            "tl_setautocommit flag\n"
             "\nSets the global flag that determines whether transactions are automatically committed and broadcast.\n"
             "\nArguments:\n"
             "1. flag                 (boolean, required) the flag\n"
             "\nResult:\n"
             "true|false              (boolean) the updated flag status\n"
             "\nExamples:\n"
-            + HelpExampleCli("omni_setautocommit", "false")
-            + HelpExampleRpc("omni_setautocommit", "false")
+            + HelpExampleCli("tl_setautocommit", "false")
+            + HelpExampleRpc("tl_setautocommit", "false")
         );
 
     LOCK(cs_tally);
@@ -449,11 +449,11 @@ UniValue mscrpc(const JSONRPCRequest& request)
 }
 
 // display an MP balance via RPC
-UniValue omni_getbalance(const JSONRPCRequest& request)
+UniValue tl_getbalance(const JSONRPCRequest& request)
 {
     if (request.params.size() != 2)
         throw runtime_error(
-            "omni_getbalance \"address\" propertyid\n"
+            "tl_getbalance \"address\" propertyid\n"
             "\nReturns the token balance for a given address and property.\n"
             "\nArguments:\n"
             "1. address              (string, required) the address\n"
@@ -464,8 +464,8 @@ UniValue omni_getbalance(const JSONRPCRequest& request)
             "  \"reserved\" : \"n.nnnnnnnn\"   (string) the amount reserved by sell offers and accepts\n"
             "}\n"
             "\nExamples:\n"
-            + HelpExampleCli("omni_getbalance", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" 1")
-            + HelpExampleRpc("omni_getbalance", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", 1")
+            + HelpExampleCli("tl_getbalance", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" 1")
+            + HelpExampleRpc("tl_getbalance", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", 1")
         );
 
     std::string address = ParseAddress(request.params[0]);
@@ -480,11 +480,11 @@ UniValue omni_getbalance(const JSONRPCRequest& request)
     return balanceObj;
 }
 
-UniValue omni_getmargin(const JSONRPCRequest& request)
+UniValue tl_getmargin(const JSONRPCRequest& request)
 {
     if (request.params.size() != 2)
         throw runtime_error(
-            "omni_getmargin \"address\" propertyid\n"
+            "tl_getmargin \"address\" propertyid\n"
             "\nReturns the token margin account using in futures contracts, for a given address and property.\n"
             "\nArguments:\n"
             "1. address              (string, required) the address\n"
@@ -495,8 +495,8 @@ UniValue omni_getmargin(const JSONRPCRequest& request)
             "  \"reserved\" : \"n.nnnnnnnn\"   (string) the amount reserved by sell offers and accepts\n"
             "}\n"
             "\nExamples:\n"
-            + HelpExampleCli("omni_getmargin", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" 1")
-            + HelpExampleRpc("omni_getmargin", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", 1")
+            + HelpExampleCli("tl_getmargin", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" 1")
+            + HelpExampleRpc("tl_getmargin", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", 1")
         );
 
     std::string address = ParseAddress(request.params[0]);
@@ -511,11 +511,11 @@ UniValue omni_getmargin(const JSONRPCRequest& request)
     return balanceObj;
 }
 
-UniValue omni_getallbalancesforid(const JSONRPCRequest& request)
+UniValue tl_getallbalancesforid(const JSONRPCRequest& request)
 {
     if (request.params.size() != 1)
         throw runtime_error(
-            "omni_getallbalancesforid propertyid\n"
+            "tl_getallbalancesforid propertyid\n"
             "\nReturns a list of token balances for a given currency or property identifier.\n"
             "\nArguments:\n"
             "1. propertyid           (number, required) the property identifier\n"
@@ -529,8 +529,8 @@ UniValue omni_getallbalancesforid(const JSONRPCRequest& request)
             "  ...\n"
             "]\n"
             "\nExamples:\n"
-            + HelpExampleCli("omni_getallbalancesforid", "1")
-            + HelpExampleRpc("omni_getallbalancesforid", "1")
+            + HelpExampleCli("tl_getallbalancesforid", "1")
+            + HelpExampleRpc("tl_getallbalancesforid", "1")
         );
 
     uint32_t propertyId = ParsePropertyId(request.params[0]);
@@ -568,11 +568,11 @@ UniValue omni_getallbalancesforid(const JSONRPCRequest& request)
     return response;
 }
 
-UniValue omni_getallbalancesforaddress(const JSONRPCRequest& request)
+UniValue tl_getallbalancesforaddress(const JSONRPCRequest& request)
 {
     if (request.params.size() != 1)
         throw runtime_error(
-            "omni_getallbalancesforaddress \"address\"\n"
+            "tl_getallbalancesforaddress \"address\"\n"
             "\nReturns a list of all token balances for a given address.\n"
             "\nArguments:\n"
             "1. address              (string, required) the address\n"
@@ -586,8 +586,8 @@ UniValue omni_getallbalancesforaddress(const JSONRPCRequest& request)
             "  ...\n"
             "]\n"
             "\nExamples:\n"
-            + HelpExampleCli("omni_getallbalancesforaddress", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\"")
-            + HelpExampleRpc("omni_getallbalancesforaddress", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\"")
+            + HelpExampleCli("tl_getallbalancesforaddress", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\"")
+            + HelpExampleRpc("tl_getallbalancesforaddress", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\"")
         );
 
     std::string address = ParseAddress(request.params[0]);
@@ -618,11 +618,11 @@ UniValue omni_getallbalancesforaddress(const JSONRPCRequest& request)
     return response;
 }
 
-UniValue omni_getproperty(const JSONRPCRequest& request)
+UniValue tl_getproperty(const JSONRPCRequest& request)
 {
     if (request.params.size() != 1)
         throw runtime_error(
-            "omni_getproperty propertyid\n"
+            "tl_getproperty propertyid\n"
             "\nReturns details for about the tokens or smart property to lookup.\n"
             "\nArguments:\n"
             "1. propertyid           (number, required) the identifier of the tokens or property\n"
@@ -639,8 +639,8 @@ UniValue omni_getproperty(const JSONRPCRequest& request)
             "  \"totaltokens\" : \"n.nnnnnnnn\"     (string) the total number of tokens in existence\n"
             "}\n"
             "\nExamples:\n"
-            + HelpExampleCli("omni_getproperty", "3")
-            + HelpExampleRpc("omni_getproperty", "3")
+            + HelpExampleCli("tl_getproperty", "3")
+            + HelpExampleRpc("tl_getproperty", "3")
         );
 
     uint32_t propertyId = ParsePropertyId(request.params[0]);
@@ -690,11 +690,11 @@ UniValue omni_getproperty(const JSONRPCRequest& request)
     return response;
 }
 
-UniValue omni_listproperties(const JSONRPCRequest& request)
+UniValue tl_listproperties(const JSONRPCRequest& request)
 {
   if (false) //TODO: put fHelp boolean
     throw runtime_error(
-			"omni_listproperties\n"
+			"tl_listproperties\n"
 			"\nLists all tokens or smart properties.\n"
 			"\nResult:\n"
 			"[                                (array of JSON objects)\n"
@@ -708,14 +708,14 @@ UniValue omni_listproperties(const JSONRPCRequest& request)
 			"  ...\n"
 			"]\n"
 			"\nExamples:\n"
-			+ HelpExampleCli("omni_listproperties", "")
-			+ HelpExampleRpc("omni_listproperties", "")
+			+ HelpExampleCli("tl_listproperties", "")
+			+ HelpExampleRpc("tl_listproperties", "")
 			);
-  
+
   UniValue response(UniValue::VARR);
-  
+
   LOCK(cs_tally);
-  
+
   uint32_t nextSPID = _my_sps->peekNextSPID(1);
   for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++) {
     CMPSPInfo::Entry sp;
@@ -726,7 +726,7 @@ UniValue omni_listproperties(const JSONRPCRequest& request)
       response.push_back(propertyObj);
     }
   }
-  
+
   uint32_t nextTestSPID = _my_sps->peekNextSPID(2);
   for (uint32_t propertyId = TEST_ECO_PROPERTY_1; propertyId < nextTestSPID; propertyId++) {
     CMPSPInfo::Entry sp;
@@ -734,18 +734,18 @@ UniValue omni_listproperties(const JSONRPCRequest& request)
       UniValue propertyObj(UniValue::VOBJ);
       propertyObj.push_back(Pair("propertyid", (uint64_t) propertyId));
       PropertyToJSON(sp, propertyObj); // name, data, url, divisible
-      
+
       response.push_back(propertyObj);
     }
-  }  
+  }
   return response;
 }
 
-UniValue omni_getcrowdsale(const JSONRPCRequest& request)
+UniValue tl_getcrowdsale(const JSONRPCRequest& request)
 {
     if (request.params.size() < 1 || request.params.size() > 2)
         throw runtime_error(
-            "omni_getcrowdsale propertyid ( verbose )\n"
+            "tl_getcrowdsale propertyid ( verbose )\n"
             "\nReturns information about a crowdsale.\n"
             "\nArguments:\n"
             "1. propertyid           (number, required) the identifier of the crowdsale\n"
@@ -780,8 +780,8 @@ UniValue omni_getcrowdsale(const JSONRPCRequest& request)
             "  ]\n"
             "}\n"
             "\nExamples:\n"
-            + HelpExampleCli("omni_getcrowdsale", "3 true")
-            + HelpExampleRpc("omni_getcrowdsale", "3, true")
+            + HelpExampleCli("tl_getcrowdsale", "3 true")
+            + HelpExampleRpc("tl_getcrowdsale", "3, true")
         );
 
     uint32_t propertyId = ParsePropertyId(request.params[0]);
@@ -885,11 +885,11 @@ UniValue omni_getcrowdsale(const JSONRPCRequest& request)
     return response;
 }
 
-UniValue omni_getactivecrowdsales(const JSONRPCRequest& request)
+UniValue tl_getactivecrowdsales(const JSONRPCRequest& request)
 {
     if (false)
         throw runtime_error(
-            "omni_getactivecrowdsales\n"
+            "tl_getactivecrowdsales\n"
             "\nLists currently active crowdsales.\n"
             "\nResult:\n"
             "[                                 (array of JSON objects)\n"
@@ -907,8 +907,8 @@ UniValue omni_getactivecrowdsales(const JSONRPCRequest& request)
             "  ...\n"
             "]\n"
             "\nExamples:\n"
-            + HelpExampleCli("omni_getactivecrowdsales", "")
-            + HelpExampleRpc("omni_getactivecrowdsales", "")
+            + HelpExampleCli("tl_getactivecrowdsales", "")
+            + HelpExampleRpc("tl_getactivecrowdsales", "")
         );
 
     UniValue response(UniValue::VARR);
@@ -953,11 +953,11 @@ UniValue omni_getactivecrowdsales(const JSONRPCRequest& request)
     return response;
 }
 
-UniValue omni_getgrants(const JSONRPCRequest& request)
+UniValue tl_getgrants(const JSONRPCRequest& request)
 {
     if (request.params.size() != 1)
         throw runtime_error(
-            "omni_getgrants propertyid\n"
+            "tl_getgrants propertyid\n"
             "\nReturns information about granted and revoked units of managed tokens.\n"
             "\nArguments:\n"
             "1. propertyid           (number, required) the identifier of the managed tokens to lookup\n"
@@ -981,8 +981,8 @@ UniValue omni_getgrants(const JSONRPCRequest& request)
             "  ]\n"
             "}\n"
             "\nExamples:\n"
-            + HelpExampleCli("omni_getgrants", "31")
-            + HelpExampleRpc("omni_getgrants", "31")
+            + HelpExampleCli("tl_getgrants", "31")
+            + HelpExampleRpc("tl_getgrants", "31")
         );
 
     uint32_t propertyId = ParsePropertyId(request.params[0]);
@@ -1035,12 +1035,12 @@ UniValue omni_getgrants(const JSONRPCRequest& request)
     return response;
 }
 
-UniValue omni_listblocktransactions(const JSONRPCRequest& request)
+UniValue tl_listblocktransactions(const JSONRPCRequest& request)
 {
     if (request.params.size() != 1)
         throw runtime_error(
-            "omni_listblocktransactions index\n"
-            "\nLists all Omni transactions in a block.\n"
+            "tl_listblocktransactions index\n"
+            "\nLists all Trade Layer transactions in a block.\n"
             "\nArguments:\n"
             "1. index                (number, required) the block height or block index\n"
             "\nResult:\n"
@@ -1050,8 +1050,8 @@ UniValue omni_listblocktransactions(const JSONRPCRequest& request)
             "]\n"
 
             "\nExamples:\n"
-            + HelpExampleCli("omni_listblocktransactions", "279007")
-            + HelpExampleRpc("omni_listblocktransactions", "279007")
+            + HelpExampleCli("tl_listblocktransactions", "279007")
+            + HelpExampleRpc("tl_listblocktransactions", "279007")
         );
 
     int blockHeight = request.params[0].get_int();
@@ -1086,12 +1086,12 @@ UniValue omni_listblocktransactions(const JSONRPCRequest& request)
     return response;
 }
 
-UniValue omni_gettransaction(const JSONRPCRequest& request)
+UniValue tl_gettransaction(const JSONRPCRequest& request)
 {
   if (request.params.size() != 1)
     throw runtime_error(
-			"omni_gettransaction \"txid\"\n"
-			"\nGet detailed information about an Omni transaction.\n"
+			"tl_gettransaction \"txid\"\n"
+			"\nGet detailed information about an Trade Layer transaction.\n"
 			"\nArguments:\n"
 			"1. txid                 (string, required) the hash of the transaction to lookup\n"
 			"\nResult:\n"
@@ -1110,24 +1110,24 @@ UniValue omni_gettransaction(const JSONRPCRequest& request)
 			"  [...]                             (mixed) other transaction type specific properties\n"
 			"}\n"
 			"\nbExamples:\n"
-			+ HelpExampleCli("omni_gettransaction", "\"1075db55d416d3ca199f55b6084e2115b9345e16c5cf302fc80e9d5fbf5d48d\"")
-			+ HelpExampleRpc("omni_gettransaction", "\"1075db55d416d3ca199f55b6084e2115b9345e16c5cf302fc80e9d5fbf5d48d\"")
+			+ HelpExampleCli("tl_gettransaction", "\"1075db55d416d3ca199f55b6084e2115b9345e16c5cf302fc80e9d5fbf5d48d\"")
+			+ HelpExampleRpc("tl_gettransaction", "\"1075db55d416d3ca199f55b6084e2115b9345e16c5cf302fc80e9d5fbf5d48d\"")
 			);
-  
+
   uint256 hash = ParseHashV(request.params[0], "txid");
-  
+
   UniValue txobj(UniValue::VOBJ);
   int populateResult = populateRPCTransactionObject(hash, txobj);
   if (populateResult != 0) PopulateFailure(populateResult);
-  
+
   return txobj;
 }
 
-UniValue omni_listtransactions(const JSONRPCRequest& request)
+UniValue tl_listtransactions(const JSONRPCRequest& request)
 {
     if (request.params.size() > 5)
         throw runtime_error(
-            "omni_listtransactions ( \"address\" count skip startblock endblock )\n"
+            "tl_listtransactions ( \"address\" count skip startblock endblock )\n"
             "\nList wallet transactions, optionally filtered by an address and block boundaries.\n"
             "\nArguments:\n"
             "1. address              (string, optional) address filter (default: \"*\")\n"
@@ -1154,8 +1154,8 @@ UniValue omni_listtransactions(const JSONRPCRequest& request)
             "  ...\n"
             "]\n"
             "\nExamples:\n"
-            + HelpExampleCli("omni_listtransactions", "")
-            + HelpExampleRpc("omni_listtransactions", "")
+            + HelpExampleCli("tl_listtransactions", "")
+            + HelpExampleRpc("tl_listtransactions", "")
         );
 
     // obtains parameters - default all wallet addresses & last 10 transactions
@@ -1176,7 +1176,7 @@ UniValue omni_listtransactions(const JSONRPCRequest& request)
     if (request.params.size() > 4) nEndBlock = request.params[4].get_int64();
     if (nEndBlock < 0) throw JSONRPCError(RPC_INVALID_PARAMETER, "Negative end block");
 
-    // obtain a sorted list of Omni layer wallet transactions (including STO receipts and pending)
+    // obtain a sorted list of trade layer wallet transactions (including STO receipts and pending)
     std::map<std::string,uint256> walletTransactions = FetchWalletOmniTransactions(nFrom+nCount, nStartBlock, nEndBlock);
 
     // reverse iterate over (now ordered) transactions and populate RPC objects for each one
@@ -1204,12 +1204,12 @@ UniValue omni_listtransactions(const JSONRPCRequest& request)
     return response;
 }
 
-UniValue omni_listpendingtransactions(const JSONRPCRequest& request)
+UniValue tl_listpendingtransactions(const JSONRPCRequest& request)
 {
     if (request.params.size() > 1)
         throw runtime_error(
-            "omni_listpendingtransactions ( \"address\" )\n"
-            "\nReturns a list of unconfirmed Omni transactions, pending in the memory pool.\n"
+            "tl_listpendingtransactions ( \"address\" )\n"
+            "\nReturns a list of unconfirmed Trade Layer transactions, pending in the memory pool.\n"
             "\nAn optional filter can be provided to only include transactions which involve the given address.\n"
             "\nNote: the validity of pending transactions is uncertain, and the state of the memory pool may "
             "change at any moment. It is recommended to check transactions after confirmation, and pending "
@@ -1232,8 +1232,8 @@ UniValue omni_listpendingtransactions(const JSONRPCRequest& request)
             "  ...\n"
             "]\n"
             "\nExamples:\n"
-            + HelpExampleCli("omni_listpendingtransactions", "")
-            + HelpExampleRpc("omni_listpendingtransactions", "")
+            + HelpExampleCli("tl_listpendingtransactions", "")
+            + HelpExampleRpc("tl_listpendingtransactions", "")
         );
 
     std::string filterAddress;
@@ -1255,42 +1255,42 @@ UniValue omni_listpendingtransactions(const JSONRPCRequest& request)
     return result;
 }
 
-UniValue omni_getinfo(const JSONRPCRequest& request)
+UniValue tl_getinfo(const JSONRPCRequest& request)
 {
     if (request.params.size() != 0)
         throw runtime_error(
-            "omni_getinfo\n"
+            "tl_getinfo\n"
             "Returns various state information of the client and protocol.\n"
             "\nResult:\n"
             "{\n"
-            "  \"omnicoreliteversion_int\" : xxxxxxx,      (number) client version as integer\n"
-            "  \"omnicoreliteversion\" : \"x.x.x.x-xxx\",  (string) client version\n"
-            "  \"litecoinversion\" : \"x.x.x\",            (string) Litecoin Core version\n"
-            "  \"commitinfo\" : \"xxxxxxx\",               (string) build commit identifier\n"
-            "  \"block\" : nnnnnn,                         (number) index of the last processed block\n"
-            "  \"blocktime\" : nnnnnnnnnn,                 (number) timestamp of the last processed block\n"
-            "  \"blocktransactions\" : nnnn,               (number) Omni transactions found in the last processed block\n"
-            "  \"totaltransactions\" : nnnnnnnn,           (number) Omni transactions processed in total\n"
-            "  \"alerts\" : [                              (array of JSON objects) active protocol alert (if any)\n"
+            "  \"tradelayer_version_int\" : xxxxxxx,         (number) client version as integer\n"
+            "  \"tradelayer_coreversion\" : \"x.x.x.x-xxx\", (string) client version\n"
+            "  \"litecoinversion\" : \"x.x.x\",              (string) Litecoin Core version\n"
+            "  \"commitinfo\" : \"xxxxxxx\",                 (string) build commit identifier\n"
+            "  \"block\" : nnnnnn,                           (number) index of the last processed block\n"
+            "  \"blocktime\" : nnnnnnnnnn,                   (number) timestamp of the last processed block\n"
+            "  \"blocktransactions\" : nnnn,                 (number) Trade Layer transactions found in the last processed block\n"
+            "  \"totaltransactions\" : nnnnnnnn,             (number) Trade Layer transactions processed in total\n"
+            "  \"alerts\" : [                                (array of JSON objects) active protocol alert (if any)\n"
             "    {\n"
-            "      \"alerttypeint\" : n,                    (number) alert type as integer\n"
-            "      \"alerttype\" : \"xxx\",                   (string) alert type\n"
-            "      \"alertexpiry\" : \"nnnnnnnnnn\",          (string) expiration criteria\n"
-            "      \"alertmessage\" : \"xxx\"                 (string) information about the alert\n"
+            "      \"alerttypeint\" : n,                     (number) alert type as integer\n"
+            "      \"alerttype\" : \"xxx\",                  (string) alert type\n"
+            "      \"alertexpiry\" : \"nnnnnnnnnn\",         (string) expiration criteria\n"
+            "      \"alertmessage\" : \"xxx\"                (string) information about the alert\n"
             "    },\n"
             "    ...\n"
             "  ]\n"
             "}\n"
             "\nExamples:\n"
-            + HelpExampleCli("omni_getinfo", "")
-            + HelpExampleRpc("omni_getinfo", "")
+            + HelpExampleCli("tl_getinfo", "")
+            + HelpExampleRpc("tl_getinfo", "")
         );
 
     UniValue infoResponse(UniValue::VOBJ);
 
     // provide the mastercore and bitcoin version and if available commit id
-    infoResponse.push_back(Pair("omnicoreliteversion_int", OMNICORE_VERSION));
-    infoResponse.push_back(Pair("omnicoreliteversion", OmniCoreVersion()));
+    infoResponse.push_back(Pair("tradelayer_version_int", OMNICORE_VERSION));
+    infoResponse.push_back(Pair("tradelayer_coreversion", OmniCoreVersion()));
     infoResponse.push_back(Pair("litecoinversion", BitcoinCoreVersion()));
     infoResponse.push_back(Pair("commitinfo", BuildCommit()));
 
@@ -1334,11 +1334,11 @@ UniValue omni_getinfo(const JSONRPCRequest& request)
     return infoResponse;
 }
 
-UniValue omni_getactivations(const JSONRPCRequest& request)
+UniValue tl_getactivations(const JSONRPCRequest& request)
 {
     if (request.params.size() != 0)
         throw runtime_error(
-            "omni_getactivations\n"
+            "tl_getactivations\n"
             "Returns pending and completed feature activations.\n"
             "\nResult:\n"
             "{\n"
@@ -1362,8 +1362,8 @@ UniValue omni_getactivations(const JSONRPCRequest& request)
             "  ]\n"
             "}\n"
             "\nExamples:\n"
-            + HelpExampleCli("omni_getactivations", "")
-            + HelpExampleRpc("omni_getactivations", "")
+            + HelpExampleCli("tl_getactivations", "")
+            + HelpExampleRpc("tl_getactivations", "")
         );
 
     UniValue response(UniValue::VOBJ);
@@ -1398,11 +1398,11 @@ UniValue omni_getactivations(const JSONRPCRequest& request)
     return response;
 }
 
-UniValue omni_getcurrentconsensushash(const JSONRPCRequest& request)
+UniValue tl_getcurrentconsensushash(const JSONRPCRequest& request)
 {
     if (request.params.size() != 0)
         throw runtime_error(
-            "omni_getcurrentconsensushash\n"
+            "tl_getcurrentconsensushash\n"
             "\nReturns the consensus hash for all balances for the current block.\n"
             "\nResult:\n"
             "{\n"
@@ -1412,8 +1412,8 @@ UniValue omni_getcurrentconsensushash(const JSONRPCRequest& request)
             "}\n"
 
             "\nExamples:\n"
-            + HelpExampleCli("omni_getcurrentconsensushash", "")
-            + HelpExampleRpc("omni_getcurrentconsensushash", "")
+            + HelpExampleCli("tl_getcurrentconsensushash", "")
+            + HelpExampleRpc("tl_getcurrentconsensushash", "")
         );
 
     LOCK(cs_main); // TODO - will this ensure we don't take in a new block in the couple of ms it takes to calculate the consensus hash?
@@ -1447,11 +1447,11 @@ bool PositionToJSON(const std::string& address, uint32_t property, UniValue& bal
 }
 
 
-UniValue omni_getposition(const JSONRPCRequest& request)
+UniValue tl_getposition(const JSONRPCRequest& request)
 {
     if (request.params.size() != 2)
         throw runtime_error(
-            "omni_getbalance \"address\" propertyid\n"
+            "tl_getbalance \"address\" propertyid\n"
             "\nReturns the position for the future contract for a given address and property.\n"
             "\nArguments:\n"
             "1. address              (string, required) the address\n"
@@ -1462,8 +1462,8 @@ UniValue omni_getposition(const JSONRPCRequest& request)
             "  \"longPosition\" : \"n.nnnnnnnn\"  (string) long position of the address\n"
             "}\n"
             "\nExamples:\n"
-            + HelpExampleCli("omni_getposition", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" 1")
-            + HelpExampleRpc("omni_getposition", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", 1")
+            + HelpExampleCli("tl_getposition", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" 1")
+            + HelpExampleRpc("tl_getposition", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", 1")
         );
 
     std::string address = ParseAddress(request.params[0]);
@@ -1477,11 +1477,11 @@ UniValue omni_getposition(const JSONRPCRequest& request)
     return balanceObj;
 }
 
-UniValue omni_getcontract_reserve(const JSONRPCRequest& request)
+UniValue tl_getcontract_reserve(const JSONRPCRequest& request)
 {
     if (request.params.size() != 2)
         throw runtime_error(
-            "omni_getcotract_reserve \"address\" propertyid\n"
+            "tl_getcotract_reserve \"address\" propertyid\n"
             "\nReturns the reserves contracts for the future contract for a given address and property.\n"
             "\nArguments:\n"
             "1. address              (string, required) the address\n"
@@ -1491,8 +1491,8 @@ UniValue omni_getcontract_reserve(const JSONRPCRequest& request)
             "  \"reserve\" : \"n.nnnnnnnn\",   (string) amount of contracts in reserve for the address \n"
             "}\n"
             "\nExamples:\n"
-            + HelpExampleCli("omni_getcotract_reserve", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" 1")
-            + HelpExampleRpc("omni_getcotract_reserve", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", 1")
+            + HelpExampleCli("tl_getcotract_reserve", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" 1")
+            + HelpExampleRpc("tl_getcotract_reserve", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", 1")
         );
 
     std::string address = ParseAddress(request.params[0]);
@@ -1507,11 +1507,11 @@ UniValue omni_getcontract_reserve(const JSONRPCRequest& request)
 }
 
 
-UniValue omni_getorderbook(const JSONRPCRequest& request)
+UniValue tl_getorderbook(const JSONRPCRequest& request)
 {
     if (request.params.size() < 1 || request.params.size() > 2)
         throw runtime_error(
-            "omni_getorderbook propertyid ( propertyid )\n"
+            "tl_getorderbook propertyid ( propertyid )\n"
             "\nList active offers on the distributed token exchange.\n"
             "\nArguments:\n"
             "1. propertyid           (number, required) filter orders by property identifier for sale\n"
@@ -1537,8 +1537,8 @@ UniValue omni_getorderbook(const JSONRPCRequest& request)
             "  ...\n"
             "]\n"
             "\nExamples:\n"
-            + HelpExampleCli("omni_getorderbook", "2")
-            + HelpExampleRpc("omni_getorderbook", "2")
+            + HelpExampleCli("tl_getorderbook", "2")
+            + HelpExampleRpc("tl_getorderbook", "2")
         );
 
     bool filterDesired = (request.params.size() > 1);
@@ -1578,11 +1578,11 @@ UniValue omni_getorderbook(const JSONRPCRequest& request)
     return response;
 }
 
-UniValue omni_getcontract_orderbook(const JSONRPCRequest& request)
+UniValue tl_getcontract_orderbook(const JSONRPCRequest& request)
 {
   if (request.params.size() < 2 || request.params.size() > 2)
     throw runtime_error(
-			"omni_getcontract_orderbook contractid tradingaction\n"
+			"tl_getcontract_orderbook contractid tradingaction\n"
 			"\nList active offers on the distributed futures contracts exchange.\n"
 			"\nArguments:\n"
 			"1. contractid           (number, required) filter orders by contract identifier for sale\n"
@@ -1608,14 +1608,14 @@ UniValue omni_getcontract_orderbook(const JSONRPCRequest& request)
 			"  ...\n"
 			"]\n"
 			"\nExamples:\n"
-			+ HelpExampleCli("omni_getcontract_orderbook", "2" "1")
-			+ HelpExampleRpc("omni_getcontract_orderbook", "2" "1")
+			+ HelpExampleCli("tl_getcontract_orderbook", "2" "1")
+			+ HelpExampleRpc("tl_getcontract_orderbook", "2" "1")
 			);
-  
-  
+
+
   uint32_t propertyIdForSale = ParsePropertyId(request.params[0]);
   uint8_t tradingaction = ParseContractDexAction(request.params[1]);
-  
+
   std::vector<CMPContractDex> vecContractDexObjects;
   {
     LOCK(cs_tally);
@@ -1633,17 +1633,17 @@ UniValue omni_getcontract_orderbook(const JSONRPCRequest& request)
       }
     }
   }
-  
+
   UniValue response(UniValue::VARR);
   ContractDexObjectsToJSON(vecContractDexObjects, response);
   return response;
 }
 
-UniValue omni_gettradehistory(const JSONRPCRequest& request)
+UniValue tl_gettradehistory(const JSONRPCRequest& request)
 {
     if (request.params.size() != 1)
         throw runtime_error(
-            "omni_gettradehistory contractid propertyid ( count )\n"
+            "tl_gettradehistory contractid propertyid ( count )\n"
             "\nRetrieves the history of trades on the distributed contract exchange for the specified market.\n"
             "\nArguments:\n"
             "1. contractid           (number, required) the id of future contract\n"
@@ -1663,8 +1663,8 @@ UniValue omni_gettradehistory(const JSONRPCRequest& request)
             "  ...\n"
             "]\n"
             "\nExamples:\n"
-            + HelpExampleCli("omni_gettradehistoryforpair", "1 12 500")
-            + HelpExampleRpc("omni_gettradehistoryforpair", "1, 12, 500")
+            + HelpExampleCli("tl_gettradehistoryforpair", "1 12 500")
+            + HelpExampleRpc("tl_gettradehistoryforpair", "1, 12, 500")
         );
 
     // obtain property identifiers for pair & check valid parameters
@@ -1680,11 +1680,11 @@ UniValue omni_gettradehistory(const JSONRPCRequest& request)
     return response;
 }
 
-UniValue omni_getpeggedhistory(const JSONRPCRequest& request)
+UniValue tl_getpeggedhistory(const JSONRPCRequest& request)
 {
     if (request.params.size() != 1)
         throw runtime_error(
-            "omni_getpeggedhistory propertyid ( count )\n"
+            "tl_getpeggedhistory propertyid ( count )\n"
             "\nRetrieves the history of amounts created for a given pegged .\n"
             "\nArguments:\n"
             "1. propertyid           (number, required) the id of pegged currency\n"
@@ -1704,8 +1704,8 @@ UniValue omni_getpeggedhistory(const JSONRPCRequest& request)
             "  ...\n"
             "]\n"
             "\nExamples:\n"
-            + HelpExampleCli("omni_getpeggedhistory", "1")
-            + HelpExampleRpc("omni_getpeggedhistory", "1")
+            + HelpExampleCli("tl_getpeggedhistory", "1")
+            + HelpExampleRpc("tl_getpeggedhistory", "1")
         );
 
     // obtain property identifiers for pair & check valid parameters
@@ -1721,11 +1721,11 @@ UniValue omni_getpeggedhistory(const JSONRPCRequest& request)
 }
 
 
-UniValue omni_getupnl(const JSONRPCRequest& request)
+UniValue tl_getupnl(const JSONRPCRequest& request)
 {
     if (request.params.size() != 2)
         throw runtime_error(
-            "omni_getpnl addres contractid\n"
+            "tl_getpnl addres contractid\n"
             "\nRetrieves the unrealized PNL for trades on the distributed contract exchange for the specified market.\n"
             "\nArguments:\n"
             "1. address           (string, required) address of owner\n"
@@ -1746,8 +1746,8 @@ UniValue omni_getupnl(const JSONRPCRequest& request)
             "  ...\n"
             "]\n"
             "\nExamples:\n"
-            + HelpExampleCli("omni_getupnl", "address 12 ")
-            + HelpExampleRpc("omni_getupnl", "address, 500")
+            + HelpExampleCli("tl_getupnl", "address 12 ")
+            + HelpExampleRpc("tl_getupnl", "address, 500")
         );
 
         std::string address = ParseAddress(request.params[0]);
@@ -1777,11 +1777,11 @@ UniValue omni_getupnl(const JSONRPCRequest& request)
         return balanceObj;
 }
 
-UniValue omni_getpnl(const JSONRPCRequest& request)
+UniValue tl_getpnl(const JSONRPCRequest& request)
 {
     if (request.params.size() != 2)
         throw runtime_error(
-            "omni_getpnl address contractid\n"
+            "tl_getpnl address contractid\n"
             "\nRetrieves the realized PNL for trades on the distributed contract exchange for the specified market.\n"
             "\nArguments:\n"
             "1. address           (string, required) address of owner\n"
@@ -1802,8 +1802,8 @@ UniValue omni_getpnl(const JSONRPCRequest& request)
             "  ...\n"
             "]\n"
             "\nExamples:\n"
-            + HelpExampleCli("omni_getpnl", "address 12 ")
-            + HelpExampleRpc("omni_getpnl", "address, 500")
+            + HelpExampleCli("tl_getpnl", "address 12 ")
+            + HelpExampleRpc("tl_getpnl", "address, 500")
         );
 
         std::string address = ParseAddress(request.params[0]);
@@ -1844,11 +1844,11 @@ UniValue omni_getpnl(const JSONRPCRequest& request)
 }
 
 
-UniValue omni_getactivedexsells(const JSONRPCRequest& request)
+UniValue tl_getactivedexsells(const JSONRPCRequest& request)
 {
     if (request.params.size() > 1)
         throw runtime_error(
-            "omni_getactivedexsells ( address )\n"
+            "tl_getactivedexsells ( address )\n"
             "\nReturns currently active offers on the distributed exchange.\n"
             "\nArguments:\n"
             "1. address              (string, optional) address filter (default: include any)\n"
@@ -1878,8 +1878,8 @@ UniValue omni_getactivedexsells(const JSONRPCRequest& request)
             "  ...\n"
             "]\n"
             "\nExamples:\n"
-            + HelpExampleCli("omni_getactivedexsells", "")
-            + HelpExampleRpc("omni_getactivedexsells", "")
+            + HelpExampleCli("tl_getactivedexsells", "")
+            + HelpExampleRpc("tl_getactivedexsells", "")
         );
 
     std::string addressFilter;  //TODO: Fix amountavalable when the maker are selling  (we need invert this) "amountavailable": "10.00000000",
@@ -1991,36 +1991,36 @@ UniValue omni_getactivedexsells(const JSONRPCRequest& request)
 static const CRPCCommand commands[] =
 { //  category                             name                            actor (function)               okSafeMode
   //  ------------------------------------ ------------------------------- ------------------------------ ----------
-  { "omni layer (data retrieval)", "omni_getinfo",                   &omni_getinfo,                    {} },
-  { "omni layer (data retrieval)", "omni_getactivations",            &omni_getactivations,             {} },
-  { "omni layer (data retrieval)", "omni_getallbalancesforid",       &omni_getallbalancesforid,        {} },
-  { "omni layer (data retrieval)", "omni_getbalance",                &omni_getbalance,                 {} },
-  { "omni layer (data retrieval)", "omni_gettransaction",            &omni_gettransaction,             {} },
-  { "omni layer (data retrieval)", "omni_getproperty",               &omni_getproperty,                {} },
-  { "omni layer (data retrieval)", "omni_listproperties",            &omni_listproperties,             {} },
-  { "omni layer (data retrieval)", "omni_getcrowdsale",              &omni_getcrowdsale,               {} },
-  { "omni layer (data retrieval)", "omni_getgrants",                 &omni_getgrants,                  {} },
-  { "omni layer (data retrieval)", "omni_getactivecrowdsales",       &omni_getactivecrowdsales,        {} },
-  { "omni layer (data retrieval)", "omni_listblocktransactions",     &omni_listblocktransactions,      {} },
-  { "omni layer (data retrieval)", "omni_listpendingtransactions",   &omni_listpendingtransactions,    {} },
-  { "omni layer (data retrieval)", "omni_getallbalancesforaddress",  &omni_getallbalancesforaddress,   {} },
-  { "omni layer (data retrieval)", "omni_getcurrentconsensushash",   &omni_getcurrentconsensushash,    {} },
-  { "omni layer (data retrieval)", "omni_getpayload",                &omni_getpayload,                 {} },
+  { "trade layer (data retrieval)", "tl_getinfo",                   &tl_getinfo,                    {} },
+  { "trade layer (data retrieval)", "tl_getactivations",            &tl_getactivations,             {} },
+  { "trade layer (data retrieval)", "tl_getallbalancesforid",       &tl_getallbalancesforid,        {} },
+  { "trade layer (data retrieval)", "tl_getbalance",                &tl_getbalance,                 {} },
+  { "trade layer (data retrieval)", "tl_gettransaction",            &tl_gettransaction,             {} },
+  { "trade layer (data retrieval)", "tl_getproperty",               &tl_getproperty,                {} },
+  { "trade layer (data retrieval)", "tl_listproperties",            &tl_listproperties,             {} },
+  { "trade layer (data retrieval)", "tl_getcrowdsale",              &tl_getcrowdsale,               {} },
+  { "trade layer (data retrieval)", "tl_getgrants",                 &tl_getgrants,                  {} },
+  { "trade layer (data retrieval)", "tl_getactivecrowdsales",       &tl_getactivecrowdsales,        {} },
+  { "trade layer (data retrieval)", "tl_listblocktransactions",     &tl_listblocktransactions,      {} },
+  { "trade layer (data retrieval)", "tl_listpendingtransactions",   &tl_listpendingtransactions,    {} },
+  { "trade layer (data retrieval)", "tl_getallbalancesforaddress",  &tl_getallbalancesforaddress,   {} },
+  { "trade layer (data retrieval)", "tl_getcurrentconsensushash",   &tl_getcurrentconsensushash,    {} },
+  { "trade layer (data retrieval)", "tl_getpayload",                &tl_getpayload,                 {} },
 #ifdef ENABLE_WALLET
-  { "omni layer (data retrieval)", "omni_listtransactions",          &omni_listtransactions,           {} },
-  { "omni layer (configuration)",  "omni_setautocommit",             &omni_setautocommit,              {} },
+  { "trade layer (data retrieval)", "tl_listtransactions",          &tl_listtransactions,           {} },
+  { "trade layer (configuration)",  "tl_setautocommit",             &tl_setautocommit,              {} },
 #endif
-  { "hidden",                      "mscrpc",                         &mscrpc,                          {} },
-  { "omni layer (data retrieval)", "omni_getposition",               &omni_getposition,                {} },
-  { "omni layer (data retrieval)", "omni_getcontract_orderbook",     &omni_getcontract_orderbook,      {} },
-  { "omni layer (data retrieval)", "omni_gettradehistory",           &omni_gettradehistory,            {} },
-  { "omni layer (data retrieval)", "omni_getupnl",                   &omni_getupnl,                   {} },
-  { "omni layer (data retrieval)", "omni_getpnl",                    &omni_getpnl,                     {} },
-  { "omni layer (data retieval)", "omni_getactivedexsells",          &omni_getactivedexsells ,         {} },
-  {"omni layer (data retieval)" , "omni_getorderbook",               &omni_getorderbook,               {} },
-  {"omni layer (data retieval)" , "omni_getpeggedhistory",           &omni_getpeggedhistory,           {} },
-  {"omni layer (data retieval)" , "omni_getcontract_reserve",        &omni_getcontract_reserve,        {} },
-  {"omni layer (data retieval)" , "omni_getmargin",                  &omni_getmargin,                  {} },
+  { "hidden",                       "mscrpc",                       &mscrpc,                          {} },
+  { "trade layer (data retrieval)", "tl_getposition",               &tl_getposition,                {} },
+  { "trade layer (data retrieval)", "tl_getcontract_orderbook",     &tl_getcontract_orderbook,      {} },
+  { "trade layer (data retrieval)", "tl_gettradehistory",           &tl_gettradehistory,            {} },
+  { "trade layer (data retrieval)", "tl_getupnl",                   &tl_getupnl,                    {} },
+  { "trade layer (data retrieval)", "tl_getpnl",                    &tl_getpnl,                     {} },
+  { "trade layer (data retieval)",  "tl_getactivedexsells",         &tl_getactivedexsells ,         {} },
+  { "trade layer (data retieval)" , "tl_getorderbook",              &tl_getorderbook,               {} },
+  { "trade layer (data retieval)" , "tl_getpeggedhistory",          &tl_getpeggedhistory,           {} },
+  { "trade layer (data retieval)" , "tl_getcontract_reserve",       &tl_getcontract_reserve,        {} },
+  { "trade layer (data retieval)" , "tl_getmargin",                 &tl_getmargin,                  {} },
 };
 
 void RegisterOmniDataRetrievalRPCCommands(CRPCTable &tableRPC)

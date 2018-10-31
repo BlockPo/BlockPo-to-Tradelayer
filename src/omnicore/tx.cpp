@@ -505,17 +505,17 @@ bool CMPTransaction::interpret_GrantTokens()
     if (!vecPropIdBytes.empty()) {
       property = DecompressInteger(vecPropIdBytes);
     } else return false;
-    
+
     if (!vecAmountBytes.empty()) {
       nValue = DecompressInteger(vecAmountBytes);
       nNewValue = nValue;
     } else return false;
-    
+
     if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly) {
       PrintToLog("\t        property: %d (%s)\n", property, strMPProperty(property));
       PrintToLog("\t           value: %s\n", FormatMP(property, nValue));
     }
-    
+
     return true;
 }
 
@@ -857,26 +857,26 @@ bool CMPTransaction::interpret_MetaDExTrade()
 bool CMPTransaction::interpret_CreateContractDex()
 {
   int i = 0;
-  
+
   std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
-  
+
   memcpy(&ecosystem, &pkt[i], 1);
   i++;
   std::vector<uint8_t> vecDenomTypeBytes = GetNextVarIntBytes(i);
-  
+
   const char* p = i + (char*) &pkt;
   std::vector<std::string> spstr;
   for (int j = 0; j < 1; j++) {
     spstr.push_back(std::string(p));
     p += spstr.back().size() + 1;
   }
-  
+
   if (isOverrun(p)) {
     PrintToLog("%s(): rejected: malformed string value(s)\n", __func__);
     return false;
   }
-  
+
   int j = 0;
   memcpy(name, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(name)-1)); j++;
   i = i + strlen(name) + 1; // data sizes + 3 null terminators
@@ -884,38 +884,38 @@ bool CMPTransaction::interpret_CreateContractDex()
   std::vector<uint8_t> vecNotionalSize = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecCollateralCurrency = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecMarginRequirement = GetNextVarIntBytes(i);
-  
+
   if (!vecVersionBytes.empty()) {
     version = DecompressInteger(vecVersionBytes);
   } else return false;
-  
+
   if (!vecTypeBytes.empty()) {
     type = DecompressInteger(vecTypeBytes);
   } else return false;
-  
+
   if (!vecDenomTypeBytes.empty()) {
     denomination = DecompressInteger(vecDenomTypeBytes);
   } else return false;
-  
+
   if (!vecBlocksUntilExpiration.empty()) {
     blocks_until_expiration = DecompressInteger(vecBlocksUntilExpiration);
   } else return false;
-    
+
   if (!vecNotionalSize.empty()) {
     notional_size = DecompressInteger(vecNotionalSize);
   } else return false;
-  
+
   if (!vecCollateralCurrency.empty()) {
     collateral_currency = DecompressInteger(vecCollateralCurrency);
   } else return false;
-  
+
   if (!vecMarginRequirement.empty()) {
     margin_requirement = DecompressInteger(vecMarginRequirement);
   } else return false;
-  
+
   std::string sub = "Futures Contracts";
   strcpy(subcategory, sub.c_str());
-  
+
   PrintToLog("------------------------------------------------------------\n");
   PrintToLog("Inside interpret_CreateContractDex function\n");
   PrintToLog("version: %d\n", version);
@@ -928,7 +928,7 @@ bool CMPTransaction::interpret_CreateContractDex()
   PrintToLog("ecosystem: %d\n", ecosystem);
   PrintToLog("name: %s\n", name);
   PrintToLog("------------------------------------------------------------\n");
-  
+
   return true;
 }
 
@@ -937,18 +937,18 @@ bool CMPTransaction::interpret_ContractDexTrade()
 {
   PrintToLog("Inside of trade contractdexTrade function\n");
   int i = 0;
-  
+
   std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecPropertyIdBytes = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecAmountForSaleBytes = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecEffectivePriceBytes = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecTradingActionBytes = GetNextVarIntBytes(i);
-  
+
   if (!vecTypeBytes.empty()) {
     type = DecompressInteger(vecTypeBytes);
   } else return false;
-  
+
   if (!vecVersionBytes.empty()) {
       version = DecompressInteger(vecVersionBytes);
   } else return false;
@@ -1810,7 +1810,7 @@ int CMPTransaction::logicMath_GrantTokens()
   uint256 blockHash;
   {
     LOCK(cs_main);
-    
+
     CBlockIndex* pindex = chainActive[block];
     if (pindex == NULL) {
       PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
@@ -1818,7 +1818,7 @@ int CMPTransaction::logicMath_GrantTokens()
     }
     blockHash = pindex->GetBlockHash();
   }
-  
+
   if (!IsTransactionTypeAllowed(block, property, type, version)) {
     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
   	       __func__,
@@ -1828,30 +1828,30 @@ int CMPTransaction::logicMath_GrantTokens()
                 block);
     return (PKT_ERROR_TOKENS -22);
   }
-  
+
   if (nValue <= 0 || MAX_INT_8_BYTES < nValue) {
     PrintToLog("%s(): rejected: value out of range or zero: %d\n", __func__, nValue);
     return (PKT_ERROR_TOKENS -23);
   }
-  
+
   if (!IsPropertyIdValid(property)) {
     PrintToLog("%s(): rejected: property %d does not exist\n", __func__, property);
     return (PKT_ERROR_TOKENS -24);
   }
-  
+
   CMPSPInfo::Entry sp;
   assert(_my_sps->getSP(property, sp));
-  
+
   if (!sp.manual) {
     PrintToLog("%s(): rejected: property %d is not managed\n", __func__, property);
     return (PKT_ERROR_TOKENS -42);
   }
-  
+
   if (sender != sp.issuer) {
     PrintToLog("%s(): rejected: sender %s is not issuer of property %d [issuer=%s]\n", __func__, sender, property, sp.issuer);
     return (PKT_ERROR_TOKENS -43);
   }
-  
+
   int64_t nTotalTokens = getTotalTokens(property);
   if (nValue > (MAX_INT_8_BYTES - nTotalTokens)) {
     PrintToLog("%s(): rejected: no more than %s tokens can ever exist [%s + %s > %s]\n",
@@ -1862,28 +1862,28 @@ int CMPTransaction::logicMath_GrantTokens()
 	       FormatMP(property, MAX_INT_8_BYTES));
     return (PKT_ERROR_TOKENS -44);
   }
-  
+
   // ------------------------------------------
-  
+
   std::vector<int64_t> dataPt;
   dataPt.push_back(nValue);
   dataPt.push_back(0);
   sp.historicalData.insert(std::make_pair(txid, dataPt));
   sp.update_block = blockHash;
-  
+
   // Persist the number of granted tokens
   assert(_my_sps->updateSP(property, sp));
-  
+
   // Special case: if can't find the receiver -- assume grant to self!
   if (receiver.empty()) {
     receiver = sender;
   }
-  
+
   // Move the tokens
   assert(update_tally_map(receiver, property, nValue, BALANCE));
-  
+
   NotifyTotalTokensChanged(property);
-  
+
   return 0;
 }
 
@@ -2248,43 +2248,23 @@ int CMPTransaction::logicMath_CreateContractDex()
     CMPSPInfo::Entry newSP;
     newSP.issuer = sender;
     newSP.prop_type = prop_type;
-    newSP.category.assign(category);
     newSP.subcategory.assign(subcategory);
     newSP.name.assign(name);
-    newSP.url.assign(url);
-    newSP.data.assign(data);
     newSP.fixed = false;
+    newSP.manual = true;
     newSP.creation_block = blockHash;
-    newSP.update_block = newSP.creation_block;
+    newSP.update_block = blockHash;
     newSP.blocks_until_expiration = blocks_until_expiration;
     newSP.notional_size = notional_size;
     newSP.collateral_currency = collateral_currency;
     newSP.margin_requirement = margin_requirement;
     newSP.init_block = block;
-    // newSP.ticksize = ticksize;
     newSP.denomination = denomination;
-    // newSP.numerator = numerator;
 
     const uint32_t propertyId = _my_sps->putSP(ecosystem, newSP);
     assert(propertyId > 0);
 
     PrintToLog("Contract id: %d\n",propertyId);
-    PrintToLog("------------------------------------------------------------\n");
-    PrintToLog("Inside logicMath_CreateContractDex function\n");
-    // PrintToLog("numerator: %d\n", numerator);
-    PrintToLog("version: %d\n", version);
-    PrintToLog("messageType: %d\n",type);
-    PrintToLog("ecosystem: %d\n", ecosystem);
-    PrintToLog("denomination: %d\n", denomination);
-    PrintToLog("property type: %d\n", prop_type);
-    PrintToLog("name: %s\n", name);
-    PrintToLog("subcategory: %s\n", subcategory);
-    PrintToLog("blocks until expiration : %d\n", blocks_until_expiration);
-    PrintToLog("notional size : %d\n", notional_size);
-    PrintToLog("collateral currency: %d\n", collateral_currency);
-    PrintToLog("margin requirement: %d\n", margin_requirement);
-    // // PrintToLog("ticksize: %d\n", ticksize);
-    PrintToLog("------------------------------------------------------------\n");
 
     return 0;
 }
@@ -2292,12 +2272,11 @@ int CMPTransaction::logicMath_CreateContractDex()
 /** Tx 29 */
 int CMPTransaction::logicMath_ContractDexTrade()
 {
-  PrintToLog("----------------------------------------------------------\n");
   PrintToLog("Inside of logicMath_ContractDexTrade\n");
   uint256 blockHash;
   {
     LOCK(cs_main);
-    
+
     CBlockIndex* pindex = chainActive[block];
     if (pindex == NULL)
       {
@@ -2306,9 +2285,13 @@ int CMPTransaction::logicMath_ContractDexTrade()
       }
     blockHash = pindex->GetBlockHash();
   }
-  
+
   CMPSPInfo::Entry sp;
-  assert(_my_sps->getSP(contractId, sp));
+  if(!_my_sps->getSP(contractId, sp)) {
+      PrintToLog("%s(): ERROR: No contractId found!\n", __func__);
+      return -1;
+  }
+
   id_contract = contractId;
   int64_t marginRe = static_cast<int64_t>(sp.margin_requirement);
   int64_t nBalance = getMPbalance(sender, sp.collateral_currency, BALANCE);
@@ -2317,25 +2300,25 @@ int CMPTransaction::logicMath_ContractDexTrade()
   int64_t den = conv.denominator().convert_to<int64_t>();
   arith_uint256 amountTR = (ConvertTo256(amount) * ConvertTo256(marginRe) * ConvertTo256(num) / (ConvertTo256(den) * ConvertTo256(factorE)));
   int64_t amountToReserve = ConvertTo64(amountTR);
-  
+
   PrintToLog("sp.margin_requirement: %d\n",sp.margin_requirement);
   PrintToLog("collateral currency id of contract : %d\n",sp.collateral_currency);
   PrintToLog("margin Requirement: %d\n",marginRe);
   PrintToLog("amount: %d\n",amount);
   PrintToLog("nBalance: %d\n",nBalance);
-  PrintToLog("amountToReserve------->: %d\n",amountToReserve);
+  PrintToLog("amountToReserve-------: %d\n",amountToReserve);
   PrintToLog("----------------------------------------------------------\n");
-  
+
   if (nBalance < amountToReserve || nBalance == 0)
     {
       PrintToLog("%s(): rejected: sender %s has insufficient balance for contracts %d [%s < %s] \n",
-		 __func__,
-		 sender,
-		 property,
-		 FormatMP(property, nBalance),
-		 FormatMP(property, amountToReserve));
+		  __func__,
+		  sender,
+		  property,
+		  FormatMP(property, nBalance),
+		  FormatMP(property, amountToReserve));
       return (PKT_ERROR_SEND -25);
-      
+
     }
   else if (conv != 0)
     {
@@ -2344,59 +2327,14 @@ int CMPTransaction::logicMath_ContractDexTrade()
 	  assert(update_tally_map(sender, sp.collateral_currency, -amountToReserve, BALANCE));
 	  assert(update_tally_map(sender, sp.collateral_currency,  amountToReserve, CONTRACTDEX_RESERVE));
 	}
-      
+
       int64_t reserva = getMPbalance(sender, sp.collateral_currency,CONTRACTDEX_RESERVE);
       std::string reserved = FormatDivisibleMP(reserva,false);
-      
-    }
 
+    }
   t_tradelistdb->recordNewTrade(txid, sender, contractId, desired_property, block, tx_idx, 0);
   int rc = ContractDex_ADD(sender, contractId, amount, block, txid, tx_idx, effective_price, trading_action,0);
-  //SOCKET
-  char buffAction[10];
-  char buffTradingAction[3];
-  char buffQuantity[21];
-  char buffPrice[21];
-  char buffAddress[40]; // for array of chars needed for the address
-  char buffEnd[10];
-  char buffProperty[10];
-  char buffSeparator[10];
-  char buffer[512];
-  strcpy(buffAddress, sender.c_str());
-  sprintf(buffAction, "%s", "trade");
-  sprintf(buffTradingAction, "%u", trading_action);
-  sprintf(buffQuantity, "%" PRIu64, amount);
-  sprintf(buffPrice, "%" PRIu64, effective_price);
-  sprintf(buffProperty, "%u", contractId);
-  sprintf(buffEnd, "%s", "<<<");
-  sprintf(buffSeparator, "%s", "-");
-  
-  strcpy(buffer,buffAction);
-  strcat(buffer,buffSeparator);
-  strcat(buffer,buffQuantity);
-  strcat(buffer,buffSeparator);
-  strcat(buffer,buffPrice);
-  strcat(buffer,buffSeparator);
-  strcat(buffer,buffProperty);
-  strcat(buffer,buffSeparator);
-  strcat(buffer,buffTradingAction);
-  strcat(buffer,buffSeparator);
-  strcat(buffer,buffAddress);
-  strcat(buffer,buffEnd);
-  
-  std::cout << "buffer itself: ";
-  std::cout << buffer;
-  
-  int sockfd;
-  
-  sockfd = socket(AF_INET,SOCK_DGRAM,0);
-  struct sockaddr_in serv;
-  serv.sin_family = AF_INET;
-  serv.sin_port = htons(666);
-  serv.sin_addr.s_addr = inet_addr("127.0.0.1");
-  socklen_t m = sizeof(serv);
-  sendto(sockfd,buffer,sizeof(buffer),0,(struct sockaddr *)&serv,m);
-  
+
   return rc;
 }
 

@@ -82,14 +82,14 @@ CMPSPInfo::CMPSPInfo(const boost::filesystem::path& path, bool fWipe)
     implied_omni.num_tokens = 700000;
     implied_omni.category = "N/A";
     implied_omni.subcategory = "N/A";
-    implied_omni.name = "ALL";
+    implied_omni.name = "property 1";
     implied_omni.url = "";
-    implied_omni.data = "https://tradelayer.io";
+    implied_omni.data = "";
     implied_tomni.prop_type = MSC_PROPERTY_TYPE_DIVISIBLE;
     implied_tomni.num_tokens = 700000;
     implied_tomni.category = "N/A";
     implied_tomni.subcategory = "N/A";
-    implied_tomni.name = "ALL";
+    implied_tomni.name = "test property 2";
     implied_tomni.url = "";
     implied_tomni.data = "";
 
@@ -932,7 +932,7 @@ int CMPSPInfo::rollingContractsBlock(const CBlockIndex* pBlockIndex)
                     CMPSPInfo::Entry fc;
                     if (_my_sps->getSP(propertyId, fc)) {
                         PrintToConsole("Property Id: %d\n",propertyId);
-                        if (fc.subcategory == "Futures Contracts" && fc.numerator == spp.numerator  && fc.denomination == spp.denomination && fc.name != spp.name){
+                        if (fc.subcategory == "Futures Contracts" && fc.denomination == spp.denomination && fc.name != spp.name){
                             contractId2 = propertyId;
                             notionalSizeB = static_cast<int64_t>(fc.notional_size);
                             PrintToConsole("Property to jump in rolling found: %d\n",propertyId);
