@@ -16,12 +16,12 @@ echo "Copying .am files"
 find . -name '*.am' | cpio -o -Bav -H crc | sshpass -p 'lihki' ssh lihki@200.86.176.38 'cd /home/lihki/omnicore-litecoin0.16.3; cpio -i -vumd'
 echo "Done"
 
-# echo "Copying .include files"
-# find . -name '*.include' | cpio -o -Bav -H crc | sshpass -p 'lihki' ssh lihki@200.86.176.38 'cd /home/lihki/omnicore-litecoin; cpio -i -vumd'
-# echo "Done"
+echo "Copying .include files"
+find . -name '*.include' | cpio -o -Bav -H crc | sshpass -p 'lihki' ssh lihki@200.86.176.38 'cd /home/lihki/omnicore-litecoin0.16.3; cpio -i -vumd'
+echo "Done"
 
 # echo "Copying .ac files"
-# find . -name '*.ac' | cpio -o -Bav -H crc | sshpass -p 'lihki' ssh lihki@200.86.176.38 'cd /home/lihki/omnicore-litecoin; cpio -i -vumd'
+# find . -name '*.ac' | cpio -o -Bav -H crc | sshpass -p 'lihki' ssh lihki@200.86.176.38 'cd /home/lihki/omnicore-litecoin0.16.3; cpio -i -vumd'
 # echo "Done"
 
 
