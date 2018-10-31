@@ -3,6 +3,7 @@ OMNICORE_TEST_H = \
 
 OMNICORE_TEST_CPP = \
   omnicore/test/encoding_d_tests.cpp \
+  omnicore/test/tally_tests.cpp \
   omnicore/test/create_payload_tests.cpp \
   omnicore/test/x_trade_tests.cpp
   

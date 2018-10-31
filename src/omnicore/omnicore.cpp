@@ -473,7 +473,6 @@ void NotifyTotalTokensChanged(uint32_t propertyId)
 // The idea is have tools to see the origin of pegged currency created !!!
 void CMPTradeList::NotifyPeggedCurrency(const uint256& txid, string address, uint32_t propertyId, uint64_t amount, std::string series)
 {
-    PrintToConsole("Inside of NotifyPeggedCurrency function -------------------\n");
     if (!pdb) return;
     const string key = txid.ToString();
     const string value = strprintf("%s:%d:%d:%d:%s",address, propertyId, GetHeight(), amount, series);
@@ -527,10 +526,8 @@ void CheckWalletUpdate(bool forceUpdate)
 
 /**
  * Returns the encoding class, used to embed a payload.
- *
- *   0 None
- *   3 Class C (op-return)
- *   4 Class D (op-return compressed)
+ *    Class A (dex payments)
+ *    Class D (op-return compressed)
  */
 int mastercore::GetEncodingClass(const CTransaction& tx, int nBlock)
 {
@@ -572,7 +569,6 @@ int mastercore::GetEncodingClass(const CTransaction& tx, int nBlock)
         if (!IsAllowedOutputType(outType, nBlock)) {
             //continue;
         }
-/*New things for DEX implementation *///////////////////////////////////////////
 
         if (outType == TX_PUBKEYHASH) {
             CTxDestination dest;
@@ -584,7 +580,6 @@ int mastercore::GetEncodingClass(const CTransaction& tx, int nBlock)
             }
         }
 
-////////////////////////////////////////////////////////////////////////////////
         if (outType == TX_NULL_DATA) {
             // Ensure there is a payload, and the first pushed element equals,
             // or starts with the "ol" marker
@@ -611,13 +606,12 @@ int mastercore::GetEncodingClass(const CTransaction& tx, int nBlock)
         PrintToLog("OP_RETURN FOUND \n");
         return OMNI_CLASS_D;
     }
-/* New things for DEX implementation*///////////////////////////////////////////
 
     if (hasExodus) {
         return OMNI_CLASS_A;
     }
 
-////////////////////////////////////////////////////////////////////////////////
+
     return NO_MARKER;
 }
 
@@ -1118,23 +1112,6 @@ int input_msc_balances_string(const std::string& s)
         int64_t liquidationPrice = boost::lexical_cast<int64_t>(curBalance[11]);
         int64_t upnl = boost::lexical_cast<int64_t>(curBalance[12]);
 
-        PrintToConsole("--------------------------------------------------------\n");
-        PrintToConsole("Inside of input_msc_balances_string function!\n");
-        PrintToConsole("Property Id : %d\n",propertyId);
-        PrintToConsole("balance : %d\n",balance);
-        PrintToConsole("sellReserved : %d\n",sellReserved);
-        PrintToConsole("acceptReserved: %d\n",acceptReserved);
-        PrintToConsole("metadexReserved: %d\n",metadexReserved);
-        PrintToConsole("contractdexReserved: %d\n",contractdexReserved);
-        PrintToConsole("positiveBalance : %d\n",positiveBalance);
-        PrintToConsole("negativeBalance: %d\n",negativeBalance);
-        PrintToConsole("realizeProfit : %d\n",realizeProfit);
-        PrintToConsole("realizedLosses: %d\n",realizeLosses);
-        PrintToConsole("count : %d\n",count);
-        PrintToConsole("remaining : %d\n",remaining);
-        PrintToConsole("liquidation Price: %d\n",liquidationPrice);
-        PrintToConsole("upnl: %d\n",upnl);
-        PrintToConsole("--------------------------------------------------------\n");
         if (balance) update_tally_map(strAddress, propertyId, balance, BALANCE);
         if (sellReserved) update_tally_map(strAddress, propertyId, sellReserved, SELLOFFER_RESERVE);
         if (acceptReserved) update_tally_map(strAddress, propertyId, acceptReserved, ACCEPT_RESERVE);
@@ -1149,7 +1126,7 @@ int input_msc_balances_string(const std::string& s)
         if (remaining) update_tally_map(strAddress, propertyId, remaining, REMAINING);
         if (liquidationPrice) update_tally_map(strAddress, propertyId, liquidationPrice, LIQUIDATION_PRICE);
         if (upnl) update_tally_map(strAddress, propertyId, upnl, UPNL);
-       /////////////////////////////////////////////////////////////////////////
+
     }
 
     return 0;
@@ -2036,27 +2013,27 @@ int mastercore_shutdown()
 bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx, const CBlockIndex* pBlockIndex)
 {
   extern volatile int id_contract;
-  
+
   LOCK(cs_tally);
-  
+
   if (!mastercoreInitialized)
     {
       mastercore_init();
     }
-  
+
   // clear pending, if any
   // NOTE1: Every incoming TX is checked, not just MP-ones because:
   // if for some reason the incoming TX doesn't pass our parser validation steps successfuly, I'd still want to clear pending amounts for that TX.
   // NOTE2: Plus I wanna clear the amount before that TX is parsed by our protocol, in case we ever consider pending amounts in internal calculations.
   PendingDelete(tx.GetHash());
-  
+
   // we do not care about parsing blocks prior to our waterline (empty blockchain defense)
   if (nBlock < nWaterlineBlock) return false;
   int64_t nBlockTime = pBlockIndex->GetBlockTime();
-  
+
   CMPTransaction mp_obj;
   mp_obj.unlockLogic();
-  
+
   int expirationBlock = 0, actualBlock = 0, checkExpiration = 0;
   CMPSPInfo::Entry sp;
   if ( id_contract != 0 )
@@ -2069,11 +2046,11 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
     }
   PrintToLog("nBlockTime: %d\n", static_cast<int>(nBlockTime));
   PrintToLog("expirationBlock: %d\n", static_cast<int>(expirationBlock));
-  
+
   int deadline = sp.init_block + expirationBlock;
   if ( actualBlock != 0 && deadline != 0 )
     checkExpiration = actualBlock == deadline ? 1 : 0;
-  
+
   if (checkExpiration)
     {
       idx_expiration += 1;
@@ -2093,10 +2070,10 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
       PrintToLog("deadline: %d\n", deadline);
       expirationAchieve = 0;
     }
-  
+
   bool fFoundTx = false;
   int pop_ret = parseTransaction(false, tx, nBlock, idx, mp_obj, nBlockTime);
-  
+
   if (0 == pop_ret)
     {
       assert(mp_obj.getEncodingClass() != NO_MARKER);
@@ -2104,7 +2081,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
 
       int interp_ret = mp_obj.interpretPacket();
       if (interp_ret) PrintToLog("!!! interpretPacket() returned %d !!!\n", interp_ret);
-      
+
       // Only structurally valid transactions get recorded in levelDB
       // PKT_ERROR - 2 = interpret_Transaction failed, structurally invalid payload
       if (interp_ret != PKT_ERROR - 2)
@@ -2117,13 +2094,13 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
     }
   else if (pop_ret > 0)
     fFoundTx |= HandleDExPayments(tx, nBlock, mp_obj.getSender()); // testing the payment handler
-  
+
   if (fFoundTx && msc_debug_consensus_hash_every_transaction)
     {
       uint256 consensusHash = GetConsensusHash();
       PrintToLog("Consensus hash for transaction %s: %s\n", tx.GetHash().GetHex(), consensusHash.GetHex());
     }
-  
+
   return fFoundTx;
 }
 
@@ -2161,7 +2138,6 @@ int mastercore::WalletTxBuilder(const std::string& senderAddress, const std::str
     + multisig and plain address encoding are banned
     + nulldata encoding must use compression (varint)
     **/
-    //int omniTxClass = OMNI_CLASS_D;
 
     if (nMaxDatacarrierBytes < (data.size()+GetOmMarker().size())) return MP_ERR_PAYLOAD_TOO_BIG;
 
@@ -2597,14 +2573,14 @@ bool CMPTxList::exists(const uint256 &txid)
 bool CMPTxList::getTX(const uint256 &txid, string &value)
 {
   Status status = pdb->Get(readoptions, txid.ToString(), &value);
-  
+
   ++nRead;
-  
+
   if (status.ok())
    {
      return true;
    }
-  
+
    return false;
 }
 
@@ -2755,59 +2731,59 @@ bool mastercore::getValidMPTX(const uint256 &txid, int *block, unsigned int *typ
 {
   string result;
   int validity = 0;
-  
+
   if (msc_debug_txdb) PrintToLog("%s()\n", __FUNCTION__);
 
   if (!p_txlistdb) return false;
-  
+
   if (!p_txlistdb->getTX(txid, result)) return false;
-  
+
   // parse the string returned, find the validity flag/bit & other parameters
   std::vector<std::string> vstr;
   boost::split(vstr, result, boost::is_any_of(":"), token_compress_on);
-  
+
   if (msc_debug_txdb) PrintToLog("%s() size=%lu : %s\n", __FUNCTION__, vstr.size(), result);
-  
+
   if (1 <= vstr.size()) validity = atoi(vstr[0]);
-  
+
   if (block)
     {
       if (2 <= vstr.size()) *block = atoi(vstr[1]);
       else *block = 0;
     }
-  
+
   if (type)
     {
       if (3 <= vstr.size()) *type = atoi(vstr[2]);
       else *type = 0;
     }
-  
+
   if (nAmended)
     {
       if (4 <= vstr.size()) *nAmended = boost::lexical_cast<boost::uint64_t>(vstr[3]);
       else nAmended = 0;
     }
-  
+
   if (msc_debug_txdb) p_txlistdb->printStats();
-  
+
   if ((int)0 == validity) return false;
-  
+
   return true;
 }
 
 int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockIndex)
 {
   LOCK(cs_tally);
-  
+
   if (reorgRecoveryMode > 0) {
     reorgRecoveryMode = 0; // clear reorgRecovery here as this is likely re-entrant
-    
+
     // NOTE: The blockNum parameter is inclusive, so deleteAboveBlock(1000) will delete records in block 1000 and above.
     p_txlistdb->isMPinBlockRange(pBlockIndex->nHeight, reorgRecoveryMaxHeight, true);
     reorgRecoveryMaxHeight = 0;
-    
+
     nWaterlineBlock = ConsensusParams().GENESIS_BLOCK - 1;
-    
+
     int best_state_block = load_most_relevant_state();
     if (best_state_block < 0) {
       // unable to recover easily, remove stale stale state bits and reparse from the beginning.
@@ -2815,18 +2791,18 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
     } else {
       nWaterlineBlock = best_state_block;
     }
-    
+
     // clear the global wallet property list, perform a forced wallet update and tell the UI that state is no longer valid, and UI views need to be reinit
     global_wallet_property_list.clear();
     CheckWalletUpdate(true);
     //uiInterface.OmniStateInvalidated();
-    
+
     if (nWaterlineBlock < nBlockPrev) {
       // scan from the block after the best active block to catch up to the active chain
       msc_initial_scan(nWaterlineBlock + 1);
     }
   }
-  
+
   // handle any features that go live with this block
   CheckLiveActivations(pBlockIndex->nHeight);
   addInterestPegged(nBlockPrev,pBlockIndex);
@@ -3016,11 +2992,11 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
       path_ele.push_back(edgeEle);
       PrintToLog("Line 0: %s\n", line0);
     }
-  
+
   loopForEntryPrice(path_ele, path_length, address1, address2, UPNL1, UPNL2, effective_price);
   path_length = path_ele.size();
   PrintToLog("UPNL1 = %d, UPNL2 = %d\n", UPNL1, UPNL2);
-  
+
   Status status;
   if (pdb)
     {
