@@ -32,7 +32,7 @@ printf "\n________________________________________\n"
 printf "Base address to work with:\n"
 printf $ADDRBase
 
-N=100
+N=10
 
 amount_bitcoin=10
 amountbitcoin_baseaddr=100
@@ -41,7 +41,7 @@ amountbitcoin_moneyaddr=1
 notional_size=1
 margin_requirement=1
 amountusdts_manyaddr=2000000
-blocks_until_expiration=350
+blocks_until_expiration=35
 CONTRACT=3
 collateral=4
 
@@ -83,74 +83,55 @@ $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1 # Generating one blo
 ##################################################################
 printf "\n________________________________________\n"
 printf "Creating Future Contract with base address: ${ADDRBase}\n"
-TRACreate=$($SRCDIR/litecoin-cli -datadir=$DATADIR --regtest omni_createcontract $ADDRBase 1 1 "Future Contract 1" ${blocks_until_expiration} ${notional_size} ${collateral} ${margin_requirement})
+TRACreate=$($SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_createcontract $ADDRBase 1 1 "Future Contract 1" ${blocks_until_expiration} ${notional_size} ${collateral} ${margin_requirement})
 $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
 
 printf "\n________________________________________\n"
 printf "Checking confirmation of Creating Future Contract #1:\n"
-$SRCDIR/litecoin-cli -datadir=$DATADIR --regtest omni_gettransaction $TRACreate
-# ./litecoin-cli -datadir=$DATADIR --regrest omni_listproperties
-
+$SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_gettransaction $TRACreate
+./litecoin-cli -datadir=$DATADIR --regrest tl_listproperties
 ##################################################################
 printf "\n________________________________________\n"
 printf "Creating an Divisible Token USDT:\n"
-TRAUSDT=$($SRCDIR/litecoin-cli -datadir=$DATADIR --regtest omni_sendissuancemanaged $ADDRBase 1 2 0 "Tether" "Tether" "")
+TRAUSDT=$($SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_sendissuancemanaged $ADDRBase 1 2 0 "Tether" "Tether" "")
 $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
 
 printf "\n________________________________________\n"
 printf "Checking confirmation of transaction Token USDT:\n"
 $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest omni_gettransaction $TRAUSDT
-# ./litecoin-cli -datadir=$DATADIR -regrest omni_listproperties
+./litecoin-cli -datadir=$DATADIR -regrest tl_listproperties
+
 ##################################################################
 for (( i=1; i<=${N}; i++ ))
 do
     printf "\n////////////////////////////////////////\n"
     printf "Sending USDTs from base address to the addresses #$i\n"
-    $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest omni_sendgrant ${ADDRBase} ${ADDRess[$i]} 4 ${amountusdts_manyaddr}
+    $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_sendgrant ${ADDRBase} ${ADDRess[$i]} 4 ${amountusdts_manyaddr}
     $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1 # Generating one block
     
     printf "\n________________________________________\n"
     printf "Checking USDT balances for the address #$i:\n"
-    $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest omni_getbalance ${ADDRess[$i]} 4
+    $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_getbalance ${ADDRess[$i]} 4
 done
-
 ##################################################################
-for (( i=1; i<=${N}/2+30; i++ ))
+
+for (( i=1; i<=${N}/2+3; i++ ))
 do
     printf "\n________________________________________\n"
     printf "Price for sale Seller #$i\n"
     PRICE=$((RANDOM%5+6390))
     printf "\nRandom Price:\n"
     printf $PRICE
-
+    
     printf "\nAmount for sale Seller #$i\n"
     AMOUNT=$((RANDOM%99+1))
     printf "\nRandom Amount:\n"
     printf $AMOUNT
     printf "\n"
-
-    $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest omni_tradecontract ${ADDRess[$i]} ${CONTRACT} ${AMOUNT} ${PRICE} 2
-    $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
-
-done
-
-for (( i=1; i<=${N}; i++ ))
-do
-    printf "\n________________________________________\n"
-    printf "Price for sale Buyer #$i\n"
-    PRICE=$((RANDOM%5+6390))
-    printf "\nRandom Price:\n"
-    printf $PRICE
-
-    printf "\nAmount for sale Buyer #$i\n"
-    AMOUNT=$((RANDOM%99+1))
-    printf "\nRandom Amount:\n"
-    printf $AMOUNT
-    printf "\n"
     
-    $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest omni_tradecontract ${ADDRess[$i]} ${CONTRACT} ${AMOUNT} ${PRICE} 1
+    $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[$i]} ${CONTRACT} ${AMOUNT} ${PRICE} 2
     $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
-
+    
 done
 
 for (( i=1; i<=${N}; i++ ))
@@ -160,31 +141,43 @@ do
     PRICE=$((RANDOM%5+6390))
     printf "\nRandom Price:\n"
     printf $PRICE
-
+    
     printf "\nAmount for sale Seller #$i\n"
     AMOUNT=$((RANDOM%99+1))
     printf "\nRandom Amount:\n"
     printf $AMOUNT
     printf "\n"
     
-    $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest omni_tradecontract ${ADDRess[$i]} ${CONTRACT} ${AMOUNT} ${PRICE} 2
+    $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[$i]} ${CONTRACT} ${AMOUNT} ${PRICE} 1
     $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
     
 done
 
-# $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest omni_tradecontract ${ADDRess[1]} ${CONTRACT} 10 50 2
-# $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
-
-# $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest omni_tradecontract ${ADDRess[2]} ${CONTRACT} 5 50 1
-# $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
-
+for (( i=1; i<=${N}; i++ ))
+do
+    printf "\n________________________________________\n"
+    printf "Price for sale Seller #$i\n"
+    PRICE=$((RANDOM%5+6390))
+    printf "\nRandom Price:\n"
+    printf $PRICE
+    
+    printf "\nAmount for sale Seller #$i\n"
+    AMOUNT=$((RANDOM%99+1))
+    printf "\nRandom Amount:\n"
+    printf $AMOUNT
+    printf "\n"
+    
+    $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[$i]} ${CONTRACT} ${AMOUNT} ${PRICE} 2
+    $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
+    
+done
+##################################################################
 printf "\n Cheking the  orderbok (sellside):\n"
-$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest omni_getcontract_orderbook ${CONTRACT} 2
+$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_getcontract_orderbook ${CONTRACT} 2
 
 printf "\n Cheking the  orderbok (buyside):\n"
-$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest omni_getcontract_orderbook ${CONTRACT} 1
-
-# printf "\n//////////////////////////////////////////\n"
+$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_getcontract_orderbook ${CONTRACT} 1
+##################################################################
 printf "Stoping omnicored and litecoin-cli:\n"
 $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest stop
 # /home/lihki/Documentos/omnicore-litecoin-local/src/litecoin-cli -datadir=/home/lihki/.litecoin --regtest stop

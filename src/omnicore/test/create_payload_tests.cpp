@@ -351,6 +351,7 @@ BOOST_AUTO_TEST_CASE(payload_send_pegged)
   std::vector<unsigned char> vch = CreatePayload_SendPeggedCurrency(static_cast<uint32_t>(0),              // propertyId
 								    static_cast<uint32_t>(78563));         // amount
   BOOST_CHECK_EQUAL(HexStr(vch),"006600e3e504");
+  BOOST_CHECK_EQUAL(vch.size(), 6);
 }
 
 BOOST_AUTO_TEST_CASE(payload_redemption_pegged)
