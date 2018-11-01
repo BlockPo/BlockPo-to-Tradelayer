@@ -864,7 +864,7 @@ UniValue tl_tradecontract(const JSONRPCRequest& request)
   int64_t amountForSale = ParseAmountContract(request.params[2]);
   uint64_t effective_price = ParseEffectivePrice(request.params[3], propertyIdForSale);
   uint8_t trading_action = ParseContractDexAction(request.params[4]);
-
+  
   RequireContract(propertyIdForSale);
 
   std::vector<unsigned char> payload = CreatePayload_ContractDexTrade(propertyIdForSale, amountForSale, effective_price, trading_action);

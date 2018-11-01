@@ -347,22 +347,6 @@ BOOST_AUTO_TEST_CASE(payload_issuance_pegged)
 
 BOOST_AUTO_TEST_CASE(payload_send_pegged)
 {
-
-  std::vector<unsigned char> vch = CreatePayload_SendPeggedCurrency(static_cast<uint32_t>(0),              // propertyId
-								    static_cast<uint32_t>(78563));         // amount
-  BOOST_CHECK_EQUAL(HexStr(vch),"006600e3e504");
-}
-
-
-// omni_sendissuance_pegged
-// omni_send_pegged
-// omni_redemption_pegged
-// omni_closeposition
-// omni_sendtrade
-// omni_senddexoffer
-// omni_senddexaccept
-=======
-
     std::vector<unsigned char> vch = CreatePayload_SendPeggedCurrency(
         static_cast<uint32_t>(0),         // propertyId
         static_cast<uint32_t>(78563)      // amount
@@ -434,6 +418,5 @@ BOOST_AUTO_TEST_CASE(payload_send_dex_accept)
     BOOST_CHECK_EQUAL(HexStr(vch),"001601d804");
     BOOST_CHECK_EQUAL(vch.size(), 5);
 }
->>>>>>> ac758e3db46855740b167ff98ed875cd11ae4592
 
 BOOST_AUTO_TEST_SUITE_END()
