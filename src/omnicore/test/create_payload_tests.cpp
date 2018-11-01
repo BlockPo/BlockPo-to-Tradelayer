@@ -118,7 +118,7 @@ BOOST_AUTO_TEST_CASE(payload_create_property_full)
         static_cast<uint8_t>(1),         // ecosystem: main
         static_cast<uint16_t>(1),        // property type: indivisible tokens
         static_cast<uint32_t>(0),        // previous property: none
-	
+
         std::string(700, 'x'),           // name
         std::string(700, 'x'),           // url
         std::string(700, 'x'),           // data
@@ -189,7 +189,7 @@ BOOST_AUTO_TEST_CASE(payload_close_crowdsale)
 {
     // Close crowdsale [type 53, version 0]
   std::vector<unsigned char> vch = CreatePayload_CloseCrowdsale(static_cast<uint32_t>(9));  // property: SP #9
-  
+
   BOOST_CHECK_EQUAL(HexStr(vch), "003509");
 }
 
@@ -353,25 +353,6 @@ BOOST_AUTO_TEST_CASE(payload_send_pegged)
   BOOST_CHECK_EQUAL(HexStr(vch),"006600e3e504");
 }
 
-
-// omni_sendissuance_pegged
-// omni_send_pegged
-// omni_redemption_pegged
-// omni_closeposition
-// omni_sendtrade
-// omni_senddexoffer
-// omni_senddexaccept
-=======
-
-    std::vector<unsigned char> vch = CreatePayload_SendPeggedCurrency(
-        static_cast<uint32_t>(0),         // propertyId
-        static_cast<uint32_t>(78563)      // amount
-    );
-
-    BOOST_CHECK_EQUAL(HexStr(vch),"006600e3e504");
-    BOOST_CHECK_EQUAL(vch.size(), 6);
-}
-
 BOOST_AUTO_TEST_CASE(payload_redemption_pegged)
 {
     std::vector<unsigned char> vch = CreatePayload_RedemptionPegged(
@@ -434,6 +415,5 @@ BOOST_AUTO_TEST_CASE(payload_send_dex_accept)
     BOOST_CHECK_EQUAL(HexStr(vch),"001601d804");
     BOOST_CHECK_EQUAL(vch.size(), 5);
 }
->>>>>>> ac758e3db46855740b167ff98ed875cd11ae4592
 
 BOOST_AUTO_TEST_SUITE_END()

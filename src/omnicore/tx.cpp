@@ -879,7 +879,7 @@ bool CMPTransaction::interpret_CreateContractDex()
 
   int j = 0;
   memcpy(name, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(name)-1)); j++;
-  i = i + strlen(name) + 1; // data sizes + 3 null terminators
+  i = i + strlen(name) + 1; // data sizes + 1 null terminators
   std::vector<uint8_t> vecBlocksUntilExpiration = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecNotionalSize = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecCollateralCurrency = GetNextVarIntBytes(i);
@@ -2244,6 +2244,25 @@ int CMPTransaction::logicMath_CreateContractDex()
     // }
 
     // -----------------------------------------------
+
+    PrintToLog("------------------------------------------------------------\n");
+    PrintToLog("Inside logicMath_CreateContractDex function\n");
+    PrintToLog("version: %d\n", version);
+    PrintToLog("messageType: %d\n",type);
+    PrintToLog("denomination: %d\n", denomination);
+    PrintToLog("blocks until expiration : %d\n", blocks_until_expiration);
+    PrintToLog("notional size : %d\n", notional_size);
+    PrintToLog("collateral currency: %d\n", collateral_currency);
+    PrintToLog("margin requirement: %d\n", margin_requirement);
+    PrintToLog("ecosystem: %d\n", ecosystem);
+    PrintToLog("name: %s\n", name);
+    PrintToLog("sugcategory : %s\n", subcategory);
+    PrintToLog("Sender: %s\n", sender);
+    PrintToLog("property type: %s\n", prop_type);
+    PrintToLog("blockhash: %s\n", blockHash.ToString());
+    PrintToLog("block: %d\n", block);
+    PrintToLog("denomination: %d\n", denomination);
+    PrintToLog("------------------------------------------------------------\n");
 
     CMPSPInfo::Entry newSP;
     newSP.issuer = sender;

@@ -792,7 +792,7 @@ UniValue tl_createcontract(const JSONRPCRequest& request)
 			"5. type                      (number, required) 1 for weekly, 2 for monthly contract\n"
 			"6. notional size             (number, required) notional size\n"
 			"7. collateral currency       (number, required) collateral currency\n"
-                        "8. margin requirement        (number, required) margin requirement\n"
+      "8. margin requirement        (number, required) margin requirement\n"
 
 			"\nResult:\n"
 			"\"hash\"                  (string) the hex-encoded transaction hash\n"

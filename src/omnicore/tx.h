@@ -100,12 +100,12 @@ private:
     uint32_t contractId;
     uint64_t amount;
     /* uint64_t ticksize; */
-    uint32_t nextContractId;
+    /*uint32_t nextContractId;*/
     uint32_t blocks_until_expiration;
     uint32_t notional_size;
     uint32_t collateral_currency;
     uint32_t margin_requirement;
-    uint32_t numerator;
+    /*uint32_t numerator;*/
     uint32_t denomination;
     // int block;
     ////////////////////////////

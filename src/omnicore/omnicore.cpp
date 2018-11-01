@@ -694,6 +694,8 @@ static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, 
         PrintToLog("%s(block=%d, %s idx= %d); txid: %s\n", __FUNCTION__, nBlock, DateTimeStrFormat("%Y-%m-%d %H:%M:%S", nTime), idx, wtx.GetHash().GetHex());
     }
 
+    LOCK(cs_tx_cache);
+
     // Add previous transaction inputs to the cache
     if (!FillTxInputCache(wtx)) {
         PrintToLog("%s() ERROR: failed to get inputs for %s\n", __func__, wtx.GetHash().GetHex());
@@ -703,7 +705,6 @@ static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, 
     assert(view.HaveInputs(wtx));
 
     // ### SENDER IDENTIFICATION ###
-    PrintToLog("First checkpoint \n");
     std::string strSender;
 
     // determine the sender, but invalidate transaction, if the input is not accepted
@@ -731,6 +732,7 @@ static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, 
     } else return -110;
 
     PrintToLog("3rd checkpoint \n");
+
 
     int64_t inAll = view.GetValueIn(wtx);
     int64_t outAll = wtx.GetValueOut();
@@ -845,7 +847,7 @@ static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, 
                 }
             }
         }
-        // ### EXTRACT PAYLOAD FOR CLASS C ###
+        // ### EXTRACT PAYLOAD FOR CLASS D ###
         for (unsigned int n = 0; n < op_return_script_data.size(); ++n) {
             if (!op_return_script_data[n].empty()) {
                 assert(IsHex(op_return_script_data[n])); // via GetScriptPushes()
@@ -870,10 +872,10 @@ static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, 
     if (msc_debug_verbose) PrintToLog("single_pkt: %s\n", HexStr(single_pkt, packet_size + single_pkt));
     mp_tx.Set(strSender, strReference, 0, wtx.GetHash(), nBlock, idx, (unsigned char *)&single_pkt, packet_size, omniClass, (inAll-outAll));
 
-
     if (omniClass == OMNI_CLASS_A && packet_size == 0) {
         return 1;
     }
+
     return 0;
 }
 
@@ -1048,8 +1050,8 @@ static int msc_initial_scan(int nFirstBlock)
 
         CBlock block;
         if (!ReadBlockFromDisk(block, pblockindex, Params().GetConsensus())) break;
-          for(const auto tx : block.vtx) {
-             if (mastercore_handler_tx(*(tx), nBlock, nTxNum, pblockindex)) ++nTxsFoundInBlock;
+          for(CTransactionRef& tx : block.vtx) {
+             if (mastercore_handler_tx(*(tx.get()), nBlock, nTxNum, pblockindex)) ++nTxsFoundInBlock;
              ++nTxNum;
           }
 
@@ -1172,7 +1174,8 @@ int input_globals_state_string(const string &s)
   int i = 0;
   nextSPID = boost::lexical_cast<unsigned int>(vstr[i++]);
   nextTestSPID = boost::lexical_cast<unsigned int>(vstr[i++]);
-
+  PrintToLog("input_global_state, nextSPID : %s \n",nextSPID);
+  PrintToLog("input_global_state, nextTestSPID : %s \n",nextTestSPID);
   _my_sps->init(nextSPID, nextTestSPID);
   return 0;
 }
@@ -1606,6 +1609,8 @@ static int write_globals_state(ofstream &file, SHA256_CTX *shaCtx)
     nextSPID,
     nextTestSPID);
 
+  PrintToLog("write_global_state, lineOut : %s \n",lineOut);
+
   // add the line to the hash
   SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
 
@@ -1839,21 +1844,29 @@ int mastercore_save_state( CBlockIndex const *pBlockIndex )
  */
 void clear_all_state()
 {
-    // LOCK2(cs_tally, cs_pending);
+    LOCK2(cs_tally, cs_pending);
 
     // Memory based storage
     mp_tally_map.clear();
     my_crowds.clear();
     my_pending.clear();
+    my_offers.clear();
+    my_accepts.clear();
+    metadex.clear();
+    my_pending.clear();
+    contractdex.clear();
     ResetConsensusParams();
     // ClearActivations();
     // ClearAlerts();
     //
     // LevelDB based storage
      _my_sps->Clear();
+     // s_stolistdb->Clear();
+     t_tradelistdb->Clear();
      p_txlistdb->Clear();
      p_OmniTXDB->Clear();
-     //assert(p_txlistdb->setDBVersion() == DB_VERSION); // new set of databases, set DB version
+
+     // assert(p_txlistdb->setDBVersion() == DB_VERSION); // new set of databases, set DB version
 }
 
 /**
@@ -2085,12 +2098,13 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
       // Only structurally valid transactions get recorded in levelDB
       // PKT_ERROR - 2 = interpret_Transaction failed, structurally invalid payload
       if (interp_ret != PKT_ERROR - 2)
-	{
-	  bool bValid = (0 <= interp_ret);
-	  p_txlistdb->recordTX(tx.GetHash(), bValid, nBlock, mp_obj.getType(), mp_obj.getNewAmount());
-	  p_OmniTXDB->RecordTransaction(tx.GetHash(), idx);
+	      {
+	          bool bValid = (0 <= interp_ret);
+	          p_txlistdb->recordTX(tx.GetHash(), bValid, nBlock, mp_obj.getType(), mp_obj.getNewAmount());
+	          p_OmniTXDB->RecordTransaction(tx.GetHash(), idx);
         }
-      fFoundTx |= (interp_ret == 0);
+
+        fFoundTx |= (interp_ret == 0);
     }
   else if (pop_ret > 0)
     fFoundTx |= HandleDExPayments(tx, nBlock, mp_obj.getSender()); // testing the payment handler
@@ -2186,11 +2200,11 @@ int mastercore::WalletTxBuilder(const std::string& senderAddress, const std::str
         return MP_ERR_CREATE_TX; }
 
     // Workaround for SigOps limit
-      //{
+    {
          if (!FillTxInputCache(*(wtxNew.tx))) {
              PrintToLog("%s ERROR: failed to get inputs for %s after createtransaction\n", __func__, wtxNew.GetHash().GetHex());
          }
-     /*
+
         unsigned int nBytesPerSigOp = 20; // default of Bitcoin Core 12.1
         unsigned int nSize = ::GetSerializeSize(wtxNew, SER_NETWORK, PROTOCOL_VERSION);
         unsigned int nSigOps = GetLegacySigOpCount(*(wtxNew.tx));
@@ -2202,8 +2216,8 @@ int mastercore::WalletTxBuilder(const std::string& senderAddress, const std::str
 
              // Ensure the requested number of inputs was available, so there may be more
              if (vInputs.size() >= minInputs) {
-                 Build a new transaction and try to select one additional input to
-                 shift the bytes per sigops ratio in our favor
+                 //Build a new transaction and try to select one additional input to
+                 //shift the bytes per sigops ratio in our favor
                  ++minInputs;
                  return WalletTxBuilder(senderAddress, receiverAddress, referenceAmount, data, txid, rawHex, commit, minInputs);
              } else {
@@ -2211,8 +2225,8 @@ int mastercore::WalletTxBuilder(const std::string& senderAddress, const std::str
                          __func__, wtxNew.GetHash().GetHex(), nSigOps);
              }
          }
-     }
-*/
+    }
+
     // If this request is only to create, but not commit the transaction then display it and exit
     if (!commit) {
         rawHex = EncodeHexTx(*(wtxNew.tx));
