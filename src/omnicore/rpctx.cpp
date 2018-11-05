@@ -864,7 +864,7 @@ UniValue tl_tradecontract(const JSONRPCRequest& request)
   int64_t amountForSale = ParseAmountContract(request.params[2]);
   uint64_t effective_price = ParseEffectivePrice(request.params[3], propertyIdForSale);
   uint8_t trading_action = ParseContractDexAction(request.params[4]);
-  
+
   RequireContract(propertyIdForSale);
 
   std::vector<unsigned char> payload = CreatePayload_ContractDexTrade(propertyIdForSale, amountForSale, effective_price, trading_action);
@@ -916,6 +916,12 @@ UniValue tl_cancelallcontractsbyaddress(const JSONRPCRequest& request)
     std::string fromAddress = ParseAddress(request.params[0]);
     uint8_t ecosystem = ParseEcosystem(request.params[1]);
     uint32_t contractId = ParsePropertyId(request.params[2]);
+
+    PrintToLog("-------------------------------------------------------------\n");
+    PrintToLog("ecosystem: %d \n",ecosystem);
+    PrintToLog("contractId: %d \n",contractId);
+    PrintToLog("-------------------------------------------------------------\n");
+
     // perform checks
     RequireContract(contractId);
     // check, if there are matching offers to cancel
@@ -929,9 +935,9 @@ UniValue tl_cancelallcontractsbyaddress(const JSONRPCRequest& request)
     std::string rawHex;
     int result = WalletTxBuilder(fromAddress, "", 0, payload, txid, rawHex, autoCommit);
 
-    PrintToConsole("WalletTxBuilder result: %d\n", result);
-    PrintToConsole("rawHex: %s\n", rawHex);
-    PrintToConsole("txid: %s\n", txid.GetHex());
+    PrintToLog("WalletTxBuilder result: %d\n", result);
+    PrintToLog("rawHex: %s\n", rawHex);
+    PrintToLog("txid: %s\n", txid.GetHex());
     // check error and return the txid (or raw hex depending on autocommit)
     if (result != 0) {
         throw JSONRPCError(result, error_str(result));
