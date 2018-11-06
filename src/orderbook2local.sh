@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SRCDIR=/home/lihki/omnicore-litecoin0.16.3/src
+SRCDIR=/home/lihki/Documentos/omnicore-litecoin0.16.3-local/src
 DATADIR=/home/lihki/.litecoin
 NUL=/dev/null
 printf "\n//////////////////////////////////////////\n"
@@ -32,7 +32,7 @@ printf "\n________________________________________\n"
 printf "Base address to work with:\n"
 printf $ADDRBase
 
-N=100
+N=10
 
 amount_bitcoin=10
 amountbitcoin_baseaddr=100
@@ -41,7 +41,7 @@ amountbitcoin_moneyaddr=1
 notional_size=1
 margin_requirement=1
 amountusdts_manyaddr=2000000
-blocks_until_expiration=250
+blocks_until_expiration=35
 CONTRACT=3
 collateral=4
 
@@ -115,6 +115,25 @@ do
 done
 ##################################################################
 
+for (( i=1; i<=${N}/2+3; i++ ))
+do
+    printf "\n________________________________________\n"
+    printf "Price for sale Seller #$i\n"
+    PRICE=$((RANDOM%5+6390))
+    printf "\nRandom Price:\n"
+    printf $PRICE
+    
+    printf "\nAmount for sale Seller #$i\n"
+    AMOUNT=$((RANDOM%99+1))
+    printf "\nRandom Amount:\n"
+    printf $AMOUNT
+    printf "\n"
+    
+    $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[$i]} ${CONTRACT} ${AMOUNT} ${PRICE} 2
+    $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
+    
+done
+
 for (( i=1; i<=${N}; i++ ))
 do
     printf "\n________________________________________\n"
@@ -152,6 +171,7 @@ do
     $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
     
 done
+
 ##################################################################
 printf "\n Cheking the  orderbok (sellside):\n"
 $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_getcontract_orderbook ${CONTRACT} 2
