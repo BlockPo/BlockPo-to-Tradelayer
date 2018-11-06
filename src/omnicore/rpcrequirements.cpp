@@ -304,9 +304,8 @@ void RequireContractOrder(std::string& fromAddress, uint32_t contractId)
           const mastercore::cd_Set& indexes = it->second;
           for (mastercore::cd_Set::const_iterator it = indexes.begin(); it != indexes.end(); ++it) {
               const CMPContractDex& obj = *it;
-              if (obj.getProperty() != contractId) continue;
-              if (obj.getAddr() != fromAddress) continue;
-              PrintToLog("Order found!\n",__func__);
+              if (obj.getProperty() != contractId || obj.getAddr() != fromAddress) continue;
+              PrintToLog("Order found!\n");
               found = true;
               break;
           }

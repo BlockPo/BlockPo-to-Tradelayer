@@ -3011,6 +3011,10 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   path_length = path_ele.size();
   PrintToLog("UPNL1 = %d, UPNL2 = %d\n", UPNL1, UPNL2);
 
+  // adding the upnl
+  update_tally_map(address1, property_traded , UPNL1, UPNL);
+  update_tally_map(address2, property_traded , UPNL2, UPNL);
+
   Status status;
   if (pdb)
     {
@@ -3271,6 +3275,8 @@ bool CMPTradeList::getCreatedPegged(uint32_t propertyId, UniValue& tradeArray)
   if (count) { return true; } else { return false; }
 }
 
+
+/* TODO: use this for redeem the ALLs tokens
 int64_t CMPTradeList::getTradeAllsByTxId(uint256& txid)  // function that return the initial margin (ALLs) for a trade txid
 {
   if (!pdb) return false;
@@ -3292,24 +3298,24 @@ int64_t CMPTradeList::getTradeAllsByTxId(uint256& txid)  // function that return
       boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
       if (vstr.size() != 6) {
           PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
-          // PrintToConsole("TRADEDB error - unexpected number of tokens in value %d \n",vstr.size());
           continue;
       }
+
       if (strKey != txidStr){
           continue;
       }
 
      // decode the details from the value string
       alls = boost::lexical_cast<int64_t>(vstr[5]);
-      PrintToConsole("txid from db: %s<------------------------------\n",strKey);
-      PrintToConsole("alls for margin: %s<------------------------------\n",alls);
-      PrintToConsole("count : %d\n",count);
+      PrintToLog("txid from db: %s\n",strKey);
+      PrintToLog("alls for margin: %s\n",alls);
+      PrintToLog("count : %d\n",count);
       ++count;
   }
   // clean up
   delete it; // Desallocation proccess
   return alls;
-}
+}*/
 
 void CMPTradeList::recordForUPNL(const uint256 txid, string address, uint32_t property_traded, int64_t effectivePrice)
 {
@@ -3329,7 +3335,7 @@ void CMPTradeList::recordForUPNL(const uint256 txid, string address, uint32_t pr
       ++nWritten;
       // if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
   }
-  PrintToConsole("Exit the recordForUPNL function <--------------------------\n");
+  PrintToLog("Exit the recordForUPNL function \n");
 
 }
 
@@ -3372,10 +3378,12 @@ double CMPTradeList::getPNL(string address, int64_t contractsClosed, int64_t pri
         std::string address2 = vstr[1];
         int64_t effectivePrice = (boost::lexical_cast<int64_t>(vstr[12]))/factorE;
         int64_t nCouldBuy = (boost::lexical_cast<int64_t>(vstr[2]))/factorE;
-        PrintToConsole("aux: %d\n",aux);
-        PrintToConsole("nCouldBuy: %d\n",nCouldBuy);
-        PrintToConsole("EffectivePrice: %d\n",effectivePrice);
-        PrintToConsole("Contracts closed: %d\n",d_contractsClosed);
+
+        PrintToLog("aux: %d\n",aux);
+        PrintToLog("nCouldBuy: %d\n",nCouldBuy);
+        PrintToLog("EffectivePrice: %d\n",effectivePrice);
+        PrintToLog("Contracts closed: %d\n",d_contractsClosed);
+
         // making some calculations needed for PNL
         if(aux > totalAux){
           if (nCouldBuy > aux - totalAux){

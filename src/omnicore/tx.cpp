@@ -2422,25 +2422,22 @@ int CMPTransaction::logicMath_ContractDexClosePosition()
 
 int CMPTransaction::logicMath_ContractDex_Cancel_Orders_By_Block()
 {
-  // if (!IsTransactionTypeAllowed(block, ecosystem, type, version)) {
-  //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
-  //             __func__,
-  //             type,
-  //             version,
-  //             property,
-  //             block);
-  //     return (PKT_ERROR_METADEX -22);
-  // }
-  //
-  // if (OMNI_PROPERTY_MSC != ecosystem && OMNI_PROPERTY_TMSC != ecosystem) {
-  //     PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, ecosystem);
-  //     PrintToLog("rejected: invalid ecosystem %d\n",ecosystem);
-  //     return (PKT_ERROR_METADEX -21);
-  // }
+  if (!IsTransactionTypeAllowed(block, ecosystem, type, version)) {
+      PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+              __func__,
+              type,
+              version,
+              property,
+              block);
+      return (PKT_ERROR_METADEX -22);
+  }
+  
+  if (OMNI_PROPERTY_MSC != ecosystem && OMNI_PROPERTY_TMSC != ecosystem) {
+      PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, ecosystem);
+      PrintToLog("rejected: invalid ecosystem %d\n",ecosystem);
+      return (PKT_ERROR_METADEX -21);
+  }
 
-    PrintToLog("Inside the logicMath_ContractDex_Cancel_Orders_By_Block function !!!\n");
-    PrintToLog("sender address : %s\n",sender);
-    PrintToLog("ecosystem: %d",ecosystem);
     ContractDex_CANCEL_FOR_BLOCK(txid, block, tx_idx, sender, ecosystem);
     int rc = 0;
 

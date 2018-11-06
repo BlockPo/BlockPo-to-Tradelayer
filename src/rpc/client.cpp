@@ -162,8 +162,12 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_tradecontract", 3, "arg3"},
     { "tl_tradecontract", 4, "arg4"},
     { "tl_sendgrant", 2, "arg2"},
-    { "tl_getcontract_orderbook", 0 },
-    { "tl_getcontract_orderbook", 1 },
+    { "tl_getcontract_orderbook", 0, "arg0"},
+    { "tl_getcontract_orderbook", 1, "arg1" },
+    { "tl_cancelallcontractsbyaddress", 1, "arg1"},
+    { "tl_cancelallcontractsbyaddress", 2, "arg2" },
+    { "tl_cancelorderbyblock", 1, "arg1"},
+    { "tl_cancelorderbyblock", 2, "arg2" },
 
     /* Trade Layer - data retrieval calls */
     { "tl_setautocommit", 0, "arg0" },
