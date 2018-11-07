@@ -27,11 +27,9 @@
 #include "omnicore/walletcache.h"
 #include "omnicore/wallettxs.h"
 #include "omnicore/mdex.h"
-
 #include "arith_uint256.h"
 #include "base58.h"
 #include "chainparams.h"
-// #include "coincontrol.h"
 #include <wallet/coincontrol.h>
 #include "coins.h"
 #include "core_io.h"
@@ -1113,6 +1111,7 @@ int input_msc_balances_string(const std::string& s)
         int64_t remaining = boost::lexical_cast<int64_t>(curBalance[10]);
         int64_t liquidationPrice = boost::lexical_cast<int64_t>(curBalance[11]);
         int64_t upnl = boost::lexical_cast<int64_t>(curBalance[12]);
+        int64_t nupnl = boost::lexical_cast<int64_t>(curBalance[13]);
 
         if (balance) update_tally_map(strAddress, propertyId, balance, BALANCE);
         if (sellReserved) update_tally_map(strAddress, propertyId, sellReserved, SELLOFFER_RESERVE);
@@ -1128,7 +1127,7 @@ int input_msc_balances_string(const std::string& s)
         if (remaining) update_tally_map(strAddress, propertyId, remaining, REMAINING);
         if (liquidationPrice) update_tally_map(strAddress, propertyId, liquidationPrice, LIQUIDATION_PRICE);
         if (upnl) update_tally_map(strAddress, propertyId, upnl, UPNL);
-
+        if (upnl) update_tally_map(strAddress, propertyId, nupnl, NUPNL);
     }
 
     return 0;
@@ -1563,15 +1562,16 @@ static int write_msc_balances(std::ofstream& file, SHA256_CTX* shaCtx)
             int64_t remaining = (*iter).second.getMoney(propertyId, REMAINING);
             int64_t liquidationPrice = (*iter).second.getMoney(propertyId, LIQUIDATION_PRICE);
             int64_t upnl = (*iter).second.getMoney(propertyId, UPNL);
+            int64_t nupnl = (*iter).second.getMoney(propertyId, NUPNL);
             // we don't allow 0 balances to read in, so if we don't write them
             // it makes things match up better between persisted state and processed state
-            if (0 == balance && 0 == sellReserved && 0 == acceptReserved && 0 == metadexReserved && contractdexReserved == 0 && positiveBalance == 0 && negativeBalance == 0 && realizedProfit == 0 && realizedLosses == 0 && count == 0 && remaining == 0 && liquidationPrice == 0 && upnl == 0) {
+            if (0 == balance && 0 == sellReserved && 0 == acceptReserved && 0 == metadexReserved && contractdexReserved == 0 && positiveBalance == 0 && negativeBalance == 0 && realizedProfit == 0 && realizedLosses == 0 && count == 0 && remaining == 0 && liquidationPrice == 0 && upnl == 0 && nupnl == 0) {
                 continue;
             }
 
             emptyWallet = false;
 
-            lineOut.append(strprintf("%d:%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d;",
+            lineOut.append(strprintf("%d:%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d;",
                     propertyId,
                     balance,
                     sellReserved,
@@ -1585,7 +1585,8 @@ static int write_msc_balances(std::ofstream& file, SHA256_CTX* shaCtx)
                     count,
                     remaining,
                     liquidationPrice,
-                    upnl));
+                    upnl,
+                    nupnl));
           //  PrintToConsole("Inside write_msc_balances ...no problem with strprintf!!!\n");
         }
 
@@ -3012,8 +3013,25 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   PrintToLog("UPNL1 = %d, UPNL2 = %d\n", UPNL1, UPNL2);
 
   // adding the upnl
-  update_tally_map(address1, property_traded , UPNL1, UPNL);
-  update_tally_map(address2, property_traded , UPNL2, UPNL);
+  double uPNL1 = static_cast<double>(factorE * UPNL1);
+  double uPNL2 = static_cast<double>(factorE * UPNL2);
+  int64_t iUPNL1 = static_cast<int64_t>(uPNL1);
+  int64_t iUPNL2 = static_cast<int64_t>(uPNL2);
+
+  PrintToLog("UPNL1 to tally : %d ------------------------------------\n",iUPNL1);
+  PrintToLog("UPNL2 to tally : %d ------------------------------------\n",iUPNL2);
+
+  if (iUPNL1 > 0 ) {
+      update_tally_map(address1, property_traded , iUPNL1, UPNL);
+  } else if (iUPNL1 < 0 ) {
+      update_tally_map(address1, property_traded , -iUPNL1, NUPNL);
+  }
+
+  if (iUPNL2 > 0 ) {
+      update_tally_map(address2, property_traded , iUPNL2, UPNL);
+  } else if (iUPNL2 < 0 ) {
+      update_tally_map(address2, property_traded , -iUPNL2, NUPNL);
+  }
 
   Status status;
   if (pdb)

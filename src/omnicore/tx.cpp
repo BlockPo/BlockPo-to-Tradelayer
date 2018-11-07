@@ -2422,16 +2422,16 @@ int CMPTransaction::logicMath_ContractDexClosePosition()
 
 int CMPTransaction::logicMath_ContractDex_Cancel_Orders_By_Block()
 {
-  if (!IsTransactionTypeAllowed(block, ecosystem, type, version)) {
-      PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
-              __func__,
-              type,
-              version,
-              property,
-              block);
-      return (PKT_ERROR_METADEX -22);
-  }
-  
+  // if (!IsTransactionTypeAllowed(block, ecosystem, type, version)) {
+  //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+  //             __func__,
+  //             type,
+  //             version,
+  //             propertyId,
+  //             block);
+    //  return (PKT_ERROR_METADEX -22);
+  // }
+
   if (OMNI_PROPERTY_MSC != ecosystem && OMNI_PROPERTY_TMSC != ecosystem) {
       PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, ecosystem);
       PrintToLog("rejected: invalid ecosystem %d\n",ecosystem);

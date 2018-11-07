@@ -1082,7 +1082,7 @@ bool mastercore::isPropertyContract(uint32_t propertyId)
     return true;
 }
 
-int64_t mastercore::edgeOrderbook(uint32_t contractId, uint8_t tradingAction)
+uint64_t mastercore::edgeOrderbook(uint32_t contractId, uint8_t tradingAction)
 {
     uint64_t price = 0;
     uint64_t result = 0;
@@ -1093,9 +1093,9 @@ int64_t mastercore::edgeOrderbook(uint32_t contractId, uint8_t tradingAction)
         const cd_Set& indexes = it->second;
         for (cd_Set::const_iterator it = indexes.begin(); it != indexes.end(); ++it) {
             const CMPContractDex& obj = *it;
-            if (obj.getTradingAction() == tradingAction) continue;
-            if (obj.getAmountForSale() <= 0) continue;
+            if (obj.getTradingAction() == tradingAction || obj.getAmountForSale() <= 0) continue;
             price = obj.getEffectivePrice();
+            PrintToLog("edgeOrderbook/price: %d\n",price);
             vecContractDexPrices.push_back(price);
         }
     }
@@ -1106,5 +1106,5 @@ int64_t mastercore::edgeOrderbook(uint32_t contractId, uint8_t tradingAction)
        result = vecContractDexPrices.back();
     }
 
-    return static_cast<int64_t>(result);
+    return static_cast<uint64_t>(result);
 }

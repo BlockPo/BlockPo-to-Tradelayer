@@ -1765,17 +1765,18 @@ int mastercore::ContractDex_ADD_MARKET_PRICE(const std::string& sender_addr, uin
 {
     int rc = METADEX_ERROR -1;
 
+    PrintToLog("------------------------------------------------------------\n");
     PrintToLog("Inside ContractDex_ADD_MARKET_PRICE\n");
-    PrintToLog("Id of contract after create a CMPContractDex object: \n");
 
     /*Remember: Here CMPTransaction::ADD is the subaction coming from CMPMetaDEx*/
 
     if (trading_action == BUY){
         uint64_t ask = edgeOrderbook(contractId,BUY);
+        PrintToLog("ask: %d\n",ask);
         CMPContractDex new_cdex(sender_addr, block, contractId, amount, 0, 0, txid, idx, CMPTransaction::ADD, ask, trading_action);
 
         // Ensure this is not a badly priced trade (for example due to zero amounts)
-        PrintToLog("effective price of new_cdex: %d\n",new_cdex.getEffectivePrice());
+        PrintToLog("effective price of new_cdex /buy/: %d\n",new_cdex.getEffectivePrice());
         if (0 >= new_cdex.getEffectivePrice()) return METADEX_ERROR -66;
 
         // Insert the remaining order into the ContractDex maps
@@ -1783,38 +1784,45 @@ int mastercore::ContractDex_ADD_MARKET_PRICE(const std::string& sender_addr, uin
         uint64_t oldvalue;
         uint64_t newvalue;
 
-        while (0 < diff) {
+        while(true) {
             oldvalue = new_cdex.getAmountForSale();
             x_Trade(&new_cdex);
-            uint64_t price =  edgeOrderbook(contractId,BUY);
-            new_cdex.setPrice(price);
             newvalue = new_cdex.getAmountForSale();
-            diff = oldvalue - newvalue;
+            if (newvalue == 0) {
+                 break;
+            }
 
-            PrintToLog("BUY SIDE in while loop<-------\n");
+            uint64_t price = edgeOrderbook(contractId,BUY);
+            new_cdex.setPrice(price);
+            PrintToLog("SELL SIDE in while loop/ right side of example/<-------\n");
        }
+
     } else if (trading_action == SELL){
         uint64_t bid = edgeOrderbook(contractId,SELL);
+        PrintToLog("bid: %d\n",bid);
         CMPContractDex new_cdex(sender_addr, block, contractId, amount, 0, 0, txid, idx, CMPTransaction::ADD, bid, trading_action);
         //  Ensure this is not a badly priced trade (for example due to zero amounts
 
-        PrintToConsole("effective price of new_cdex: %d\n",new_cdex.getEffectivePrice());
+        PrintToLog("effective price of new_cdex/sell/: %d\n",new_cdex.getEffectivePrice());
         if (0 >= new_cdex.getEffectivePrice()) return METADEX_ERROR -66;
 
         // Insert the remaining order into the ContractDex maps
         uint64_t oldvalue;
         uint64_t newvalue;
         uint64_t diff;
-        while (0 < diff) {
+        while(true) {
             oldvalue = new_cdex.getAmountForSale();
             x_Trade(&new_cdex);
-            uint64_t price =  edgeOrderbook(contractId,SELL);
-            new_cdex.setPrice(price);
             newvalue = new_cdex.getAmountForSale();
-            diff = oldvalue - newvalue;
+            if (newvalue == 0) {
+                 break;
+            }
 
-            PrintToConsole("SELL SIDE in while loop<-------\n");
+            uint64_t price = edgeOrderbook(contractId,BUY);
+            new_cdex.setPrice(price);
+            PrintToLog("BUY SIDE in while loop/ right side of example/<-------\n");
        }
+
     }
 
     rc = 0;
@@ -1961,28 +1969,19 @@ int mastercore::ContractDex_CLOSE_POSITION(const uint256& txid, unsigned int blo
 {
     int64_t shortPosition = getMPbalance(sender_addr,contractId, NEGATIVE_BALANCE);
     int64_t longPosition = getMPbalance(sender_addr,contractId, POSSITIVE_BALANCE);
+    PrintToLog("shortPosition before: %d\n",shortPosition);
+    PrintToLog("longPosition before: %d\n",longPosition);
 
     LOCK(cs_tally);
-
-    //realized the UPNL
-    int64_t upnl = getMPbalance(sender_addr, collateralCurrency, UPNL);
-    if (upnl > 0){
-        update_tally_map(sender_addr,collateralCurrency, upnl, REALIZED_PROFIT);
-        PrintToLog("proffits: %d\n",upnl);
-
-    } else if (upnl < 0) {
-        update_tally_map(sender_addr, collateralCurrency, upnl, REALIZED_LOSSES);
-        PrintToLog("losses: %d\n",upnl);
-    }
 
     // Clearing the position
     unsigned int idx=0;
     if (shortPosition > 0 && longPosition == 0){
         PrintToLog("Short Position closing...\n");
-        ContractDex_ADD_MARKET_PRICE(sender_addr,contractId, shortPosition, block, txid, idx,BUY,0);
+        ContractDex_ADD_MARKET_PRICE(sender_addr,contractId, shortPosition, block, txid, idx,BUY, 0);
     } else if (longPosition > 0 && shortPosition == 0){
         PrintToLog("Long Position closing...\n");
-        ContractDex_ADD_MARKET_PRICE(sender_addr,contractId, longPosition, block, txid, idx,SELL,0);
+        ContractDex_ADD_MARKET_PRICE(sender_addr,contractId, longPosition, block, txid, idx, SELL, 0);
     }
 
     // cleaning liquidation price
@@ -1991,10 +1990,28 @@ int mastercore::ContractDex_CLOSE_POSITION(const uint256& txid, unsigned int blo
         update_tally_map(sender_addr, contractId, -liqPrice, LIQUIDATION_PRICE);
     }
 
+    //realized the UPNL
+    int64_t upnl = 0;
+    int64_t ppnl  = getMPbalance(sender_addr, contractId, UPNL);
+    int64_t nupnl  = getMPbalance(sender_addr, contractId, NUPNL);
+
+    (ppnl > 0) ? upnl = ppnl : upnl = nupnl ;
+
+    if (upnl > 0){
+        update_tally_map(sender_addr, contractId, -upnl, UPNL);
+        update_tally_map(sender_addr, contractId, upnl, REALIZED_PROFIT);
+        PrintToLog("profits: %d\n",upnl);
+
+    } else if (upnl < 0) {
+        update_tally_map(sender_addr,contractId, upnl, UPNL);
+        update_tally_map(sender_addr, contractId, -upnl, REALIZED_LOSSES);
+        PrintToLog("losses: %d\n",upnl);
+    }
 
     int64_t shortPositionAf = getMPbalance(sender_addr,contractId, NEGATIVE_BALANCE);
     int64_t longPositionAf= getMPbalance(sender_addr,contractId, POSSITIVE_BALANCE);
-
+    PrintToLog("shortPosition Now: %d\n",shortPositionAf);
+    PrintToLog("longPosition Now: %d\n",longPositionAf);
 
     if (shortPositionAf == 0 && longPositionAf == 0){
         PrintToLog("POSITION CLOSED!!!\n");

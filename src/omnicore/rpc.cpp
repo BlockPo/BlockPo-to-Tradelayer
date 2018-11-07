@@ -488,7 +488,7 @@ UniValue tl_getmargin(const JSONRPCRequest& request)
             "\nReturns the token margin account using in futures contracts, for a given address and property.\n"
             "\nArguments:\n"
             "1. address              (string, required) the address\n"
-            "2. propertyid           (number, required) the property identifier\n"
+            "2. propertyid           (number, required) the contract identifier\n"
             "\nResult:\n"
             "{\n"
             "  \"balance\" : \"n.nnnnnnnn\",   (string) the available balance of the address\n"
@@ -1753,26 +1753,30 @@ UniValue tl_getupnl(const JSONRPCRequest& request)
         std::string address = ParseAddress(request.params[0]);
         uint32_t contractId = ParsePropertyId(request.params[1]);
 
-        //RequireExistingProperty(propertyId);
+        RequireExistingProperty(contractId);
 
         UniValue balanceObj(UniValue::VOBJ);
-        // int64_t upnl  = getMPbalance(address, contractId, UPNL);
-        LOCK(cs_tally);
-        double dupnl = t_tradelistdb->getUPNL(address, contractId);
-        int64_t upnl = static_cast<int64_t>(dupnl*factorE);
-        PrintToConsole("unrealized PNL: %d\n",upnl);
-        // double averagePrice = static_cast<double>(totalAmount/d_contractsClosed);
-        // double PNL_num = static_cast<double>((d_price - averagePrice)*(notionalSize*d_contractsClosed));
-        // double PNL_den = static_cast<double>(averagePrice*marginRequirementContract);
-       if (upnl >= 0){
-        balanceObj.push_back(Pair("positiveupnl", FormatByType(upnl,2)));
-        balanceObj.push_back(Pair("negativeupnl", FormatByType(0,2)));
-      } else {
-        uint64_t upnl1 = static_cast<uint64_t>(upnl);
-        balanceObj.push_back(Pair("positiveupnl", FormatByType(0,2)));
-        balanceObj.push_back(Pair("negativeupnl", FormatByType(upnl1,2)));
 
-      }
+        int64_t upnl  = getMPbalance(address, contractId, UPNL);
+        int64_t nupnl  = getMPbalance(address, contractId, NUPNL);
+        PrintToLog("_________________________________________________________\n");
+        PrintToLog("upnl in rpc: %d\n",upnl);
+        PrintToLog("nupnl in rpc: %d\n",nupnl);
+        PrintToLog("_________________________________________________________\n");
+
+        if (upnl > 0 && nupnl == 0) {
+            PrintToLog("upnl after if: %d\n",upnl);
+            balanceObj.push_back(Pair("positiveupnl", FormatByType(static_cast<uint64_t>(upnl),2)));
+            balanceObj.push_back(Pair("negativeupnl", FormatByType(0,2)));
+        } else if (nupnl > 0 && upnl == 0) {
+            PrintToLog("nupnl after if: %d\n",nupnl);
+            balanceObj.push_back(Pair("positiveupnl", FormatByType(0,2)));
+            balanceObj.push_back(Pair("negativeupnl", FormatByType(static_cast<uint64_t>(nupnl),2)));
+
+        } else{
+            balanceObj.push_back(Pair("positiveupnl", FormatByType(0,2)));
+            balanceObj.push_back(Pair("negativeupnl", FormatByType(0,2)));
+        }
 
         return balanceObj;
 }
@@ -1809,38 +1813,30 @@ UniValue tl_getpnl(const JSONRPCRequest& request)
         std::string address = ParseAddress(request.params[0]);
         uint32_t contractId = ParsePropertyId(request.params[1]);
 
-        //RequireExistingProperty(propertyId);
-        CMPSPInfo::Entry sp;
-        {
-           LOCK(cs_tally);
-           if (!_my_sps->getSP(contractId, sp)) {
-              PrintToLog(" %s() : Property identifier %d does not exist\n",
-                 __func__,
-                 address,
-                 contractId);
-              return (PKT_ERROR_SEND -25);
-           }
-        }
+        RequireExistingProperty(contractId);
 
-        uint32_t collateralCurrency = sp.collateral_currency;
         UniValue balanceObj(UniValue::VOBJ);
+        int64_t upnl  = getMPbalance(address, contractId, REALIZED_PROFIT);
+        int64_t nupnl  = getMPbalance(address, contractId, REALIZED_LOSSES);
+        PrintToLog("_________________________________________________________\n");
+        PrintToLog("realized profit in rpc: %d\n",upnl);
+        PrintToLog("realized losses in rpc: %d\n",nupnl);
+        PrintToLog("_________________________________________________________\n");
 
-	PrintToConsole("\nChecking factorE: %d\n", factorE);
-        uint64_t realizedProfits  = static_cast<uint64_t>(factorE*getMPbalance(address, collateralCurrency, REALIZED_PROFIT));
-        uint64_t realizedLosses  = static_cast<uint64_t>(factorE*getMPbalance(address, collateralCurrency, REALIZED_LOSSES));
+        if (upnl > 0 && nupnl == 0) {
+            PrintToLog("upnl after if: %d\n",upnl);
+            balanceObj.push_back(Pair("positivepnl", FormatByType(static_cast<uint64_t>(upnl),2)));
+            balanceObj.push_back(Pair("negativepnl", FormatByType(0,2)));
+        } else if (nupnl > 0 && upnl == 0) {
+            PrintToLog("nupnl after if: %d\n",nupnl);
+            balanceObj.push_back(Pair("positivepnl", FormatByType(0,2)));
+            balanceObj.push_back(Pair("negativepnl", FormatByType(static_cast<uint64_t>(nupnl),2)));
 
-       if (realizedProfits > 0 && realizedLosses == 0){
-        balanceObj.push_back(Pair("positivepnl", FormatByType(realizedProfits,2)));
-        balanceObj.push_back(Pair("negativepnl", FormatByType(0,2)));
-      } else if (realizedLosses > 0 && realizedProfits == 0){
-        balanceObj.push_back(Pair("positivepnl", FormatByType(0,2)));
-        balanceObj.push_back(Pair("negativepnl", FormatByType(realizedProfits,2)));
-
-      } else if (realizedLosses == 0 && realizedProfits == 0){
-          balanceObj.push_back(Pair("positivepnl", FormatByType(0,2)));
-          balanceObj.push_back(Pair("negativepnl", FormatByType(0,2)));
-      }
-      return balanceObj;
+        } else{
+            balanceObj.push_back(Pair("positivepnl", FormatByType(0,2)));
+            balanceObj.push_back(Pair("negativepnl", FormatByType(0,2)));
+        }
+        return balanceObj;
 }
 
 

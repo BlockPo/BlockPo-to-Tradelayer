@@ -168,6 +168,17 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_cancelallcontractsbyaddress", 2, "arg2" },
     { "tl_cancelorderbyblock", 1, "arg1"},
     { "tl_cancelorderbyblock", 2, "arg2" },
+    { "tl_closeposition", 1, "arg1" },
+    { "tl_closeposition", 2, "arg2" },
+    { "tl_sendtrade", 1, "arg1" },
+    { "tl_sendtrade", 3, "arg3" },
+    { "tl_sendissuance_pegged", 1, "arg1" },
+    { "tl_sendissuance_pegged", 2, "arg2" },
+    { "tl_sendissuance_pegged", 3, "arg3" },
+    { "tl_sendissuance_pegged", 5, "arg5" },
+    { "tl_sendissuance_pegged", 6, "arg6" },
+    { "tl_redemption_pegged", 1, "arg1" },
+    { "tl_redemption_pegged", 3, "arg3" },
 
     /* Trade Layer - data retrieval calls */
     { "tl_setautocommit", 0, "arg0" },
@@ -178,6 +189,8 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_getmargin", 1, "arg1" },
     { "tl_getproperty", 0, "arg0" },
     { "tl_getposition", 1, "arg1" },
+    { "tl_getupnl", 1, "arg1" },
+    { "tl_getpnl", 1, "arg1" },
     { "tl_listtransactions", 1, "arg1" },
     { "tl_listtransactions", 2, "arg2" },
     { "tl_listtransactions", 3, "arg3" },
@@ -186,6 +199,10 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_listblocktransactions", 0, "arg0" },
     { "tl_gettradehistory", 0, "arg0" },
     { "tl_getpeggedhistory",0, "arg0" },
+    { "tl_getorderbook",0, "arg0" },
+    { "tl_getorderbook",1, "arg1" },
+    { "tl_getcontract_reserve", 1 ,"arg1" },
+    { "tl_getmargin", 1, "arg1" },
 
 };
 
