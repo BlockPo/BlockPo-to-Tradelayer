@@ -139,6 +139,8 @@ extern uint64_t marketP[NPTYPES];
 extern std::vector<std::map<std::string, std::string>> path_ele;
 extern int idx_expiration;
 extern int expirationAchieve;
+extern double globalPNLALL_DUSD;
+extern int64_t globalVolumeALL_DUSD;
 
 CMPTxList *mastercore::p_txlistdb;
 CMPTradeList *mastercore::t_tradelistdb;
@@ -3010,8 +3012,17 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   loopForEntryPrice(path_ele, path_length, address1, address2, UPNL1, UPNL2, effective_price);
   path_length = path_ele.size();
   PrintToLog("UPNL1 = %d, UPNL2 = %d\n", UPNL1, UPNL2);
-
-  // adding the upnl
+  
+  unsigned int contractId = static_cast<unsigned int>(property_traded);
+  
+  if ( contractId == MSC_PROPERTY_TYPE_CONTRACT )
+    {
+      globalPNLALL_DUSD += UPNL1 + UPNL2;
+      globalVolumeALL_DUSD += nCouldBuy0;
+    }
+  
+  PrintToLog("\nglobalPNLALL_DUSD = %d, globalVolumeALL_DUSD = %d, contractId = %d\n", globalPNLALL_DUSD, globalVolumeALL_DUSD, contractId);
+  
   update_tally_map(address1, property_traded , UPNL1, UPNL);
   update_tally_map(address2, property_traded , UPNL2, UPNL);
 

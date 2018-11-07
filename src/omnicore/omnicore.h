@@ -153,20 +153,13 @@ enum FILETYPES {
 #define SELL  2
 #define ACTIONINVALID  3
 
-
+#define CONTRACT_ALL        3
 #define CONTRACT_ALL_DUSD   4
 #define CONTRACT_ALL_LTC    5
 #define CONTRACT_LTC_DJPY   6
 #define CONTRACT_LTC_DUSD   7
 #define CONTRACT_LTC_DEUR   8
 #define CONTRACT_sLTC_ALL   9
-
-// #define  CONTRACT_ALL_DUSD   4
-// #define  CONTRACT_ALL_LTC    5
-// #define  CONTRACT_LTC_DJPY   6
-// #define  CONTRACT_LTC_DUSD   7
-// #define  CONTRACT_LTC_DEUR   8
-// #define  CONTRACT_sLTC_ALL   9
 
 // Currency in existance (options for createcontract)
 uint32_t const TL_dUSD  = 1;
@@ -175,7 +168,6 @@ uint32_t const TL_dYEN  = 3;
 uint32_t const TL_ALL   = 4;
 uint32_t const TL_sLTC  = 5;
 uint32_t const TL_LTC   = 6;
-
 
 /** New for future contracts port */
 #define MSC_PROPERTY_TYPE_CONTRACT    3

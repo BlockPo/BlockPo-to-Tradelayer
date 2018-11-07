@@ -32,7 +32,7 @@ printf "\n________________________________________\n"
 printf "Base address to work with:\n"
 printf $ADDRBase
 
-N=100
+N=50
 
 amount_bitcoin=10
 amountbitcoin_baseaddr=100
@@ -41,7 +41,7 @@ amountbitcoin_moneyaddr=1
 notional_size=1
 margin_requirement=1
 amountusdts_manyaddr=2000000
-blocks_until_expiration=250
+blocks_until_expiration=125
 CONTRACT=3
 collateral=4
 
@@ -152,6 +152,7 @@ do
     $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
     
 done
+
 ##################################################################
 printf "\n Cheking the  orderbok (sellside):\n"
 $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_getcontract_orderbook ${CONTRACT} 2
