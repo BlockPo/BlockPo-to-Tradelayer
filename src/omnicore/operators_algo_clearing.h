@@ -53,7 +53,7 @@ void computing_lives_bypath(std::vector<std::map<std::string, std::string>> &it_
 
 struct status_amounts_edge *get_status_byedge(std::map<std::string, std::string> &edge);
 
-void looking_netted_events(std::string &addrs_obj, std::vector<std::map<std::string, std::string>> &it_path_main, int q, long int amount_opened, int index_src_trk);
+void looking_netted_events(std::string &addrs_obj, std::vector<std::map<std::string, std::string>> &it_path_main, int q, long int amount_opened, int index_src_trk, std::string status_opening);
 
 void printing_path_maini(std::vector<std::map<std::string, std::string>> &it_path_maini);
 
