@@ -182,6 +182,10 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_senddexoffer", 1, "arg1" },
     { "tl_senddexoffer", 4, "arg4" },
     { "tl_senddexoffer", 7, "arg7" },
+    { "tl_listtransactions", 1, "arg1" },
+    { "tl_listtransactions", 2, "arg2" },
+    { "tl_listtransactions", 3, "arg3" },
+    { "tl_listtransactions", 4, "arg4" },
 
     /* Trade Layer - data retrieval calls */
     { "tl_setautocommit", 0, "arg0" },
