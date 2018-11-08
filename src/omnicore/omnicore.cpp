@@ -3021,11 +3021,27 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
       globalVolumeALL_DUSD += nCouldBuy0;
     }
   
+  int64_t volumeToCompare = 0;
+  bool perpetualBool = callingPerpetualSettlement(globalPNLALL_DUSD, globalVolumeALL_DUSD, volumeToCompare);
+  if (perpetualBool) PrintToLog("Perpetual Settlement Online");
+  
   PrintToLog("\nglobalPNLALL_DUSD = %d, globalVolumeALL_DUSD = %d, contractId = %d\n", globalPNLALL_DUSD, globalVolumeALL_DUSD, contractId);
+  
+  std::fstream fileglobalPNLALL_DUSD;
+  fileglobalPNLALL_DUSD.open ("globalPNLALL_DUSD.txt", std::fstream::in | std::fstream::out | std::fstream::app);
+  if ( contractId == MSC_PROPERTY_TYPE_CONTRACT )
+    saveDataGraphs(fileglobalPNLALL_DUSD, std::to_string(globalPNLALL_DUSD));
+  fileglobalPNLALL_DUSD.close();
+  
+  std::fstream fileglobalVolumeALL_DUSD;
+  fileglobalVolumeALL_DUSD.open ("globalVolumeALL_DUSD.txt", std::fstream::in | std::fstream::out | std::fstream::app);
+  if ( contractId == MSC_PROPERTY_TYPE_CONTRACT )
+    saveDataGraphs(fileglobalVolumeALL_DUSD, std::to_string(FormatShortIntegerMP(globalVolumeALL_DUSD)));
+  fileglobalVolumeALL_DUSD.close();
   
   update_tally_map(address1, property_traded , UPNL1, UPNL);
   update_tally_map(address2, property_traded , UPNL2, UPNL);
-
+  
   Status status;
   if (pdb)
     {
@@ -3033,6 +3049,21 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
       ++nWritten;
     }
   PrintToLog("\n\nEnd of recordMatchedTrade <------------------------------\n");
+}
+
+bool callingPerpetualSettlement(double globalPNLALL_DUSD, int64_t globalVolumeALL_DUSD, int64_t volumeToCompare)
+{
+  bool perpetualBool = false;
+  
+  if ( globalPNLALL_DUSD == 0 )
+    {
+      PrintToLog("Liquidate Forward Positions");
+      perpetualBool = true;
+    }
+  else if ( globalVolumeALL_DUSD > volumeToCompare )
+    PrintToLog("Take decisions for globalVolumeALL_DUSD > volumeToCompare");
+  
+  return perpetualBool;
 }
 
 void fillingMatrix(MatrixTLS &M_file, MatrixTLS &ndatabase, std::vector<std::map<std::string, std::string>> &path_ele)

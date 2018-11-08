@@ -8,8 +8,7 @@ printf "Cleaning the regtest folder\n"
 
 sudo rm -r /home/lihki/.litecoin/regtest
 sudo rm graphInfo*
-sudo rm globalPNLALL_DUSD.txt
-sudo rm globalVolumeALL_DUSD.txt
+
 
 printf "\n________________________________________\n"
 printf "Preparing a test environment...\n"
