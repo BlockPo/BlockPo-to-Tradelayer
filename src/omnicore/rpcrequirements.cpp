@@ -294,6 +294,11 @@ void RequireSaneName(std::string& name)
 
 }
 
+void RequirePeggedSaneName(std::string& name)
+{
+    if (name.empty()) { throw JSONRPCError(RPC_INVALID_PARAMETER,"Pegged need a name!\n"); }
+}
+
 void RequireContractOrder(std::string& fromAddress, uint32_t contractId)
 {
   LOCK(cs_tally);

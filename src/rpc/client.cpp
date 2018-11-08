@@ -179,6 +179,9 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_sendissuance_pegged", 6, "arg6" },
     { "tl_redemption_pegged", 1, "arg1" },
     { "tl_redemption_pegged", 3, "arg3" },
+    { "tl_senddexoffer", 1, "arg1" },
+    { "tl_senddexoffer", 4, "arg4" },
+    { "tl_senddexoffer", 7, "arg7" },
 
     /* Trade Layer - data retrieval calls */
     { "tl_setautocommit", 0, "arg0" },
@@ -203,6 +206,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_getorderbook",1, "arg1" },
     { "tl_getcontract_reserve", 1 ,"arg1" },
     { "tl_getmargin", 1, "arg1" },
+    { "tl_senddexaccept", 2, "arg2" },
 
 };
 

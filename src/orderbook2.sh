@@ -1,17 +1,17 @@
 #!/bin/bash
 
-SRCDIR=/home/lihki/omnicore-litecoin0.16.3/src
-DATADIR=/home/lihki/.litecoin
+SRCDIR=/home/ale/Escritorio/lastgit/src
+DATADIR=/home/ale/.litecoin
 NUL=/dev/null
 printf "\n//////////////////////////////////////////\n"
 printf "Cleaning the regtest folder\n"
 
-sudo rm -r /home/lihki/.litecoin/regtest
+sudo rm -r /home/ale/.litecoin/regtest
 sudo rm graphInfo*
 
 printf "\n________________________________________\n"
 printf "Preparing a test environment...\n"
-$SRCDIR/litecoind -datadir=$DATADIR --cleancache --startclear -regtest -server -daemon 
+$SRCDIR/litecoind -datadir=$DATADIR --cleancache --startclear -regtest -server -daemon
 
 printf "\n________________________________________\n"
 printf "Waiting three seconds to start the client...\n"
@@ -108,7 +108,7 @@ do
     printf "Sending USDTs from base address to the addresses #$i\n"
     $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_sendgrant ${ADDRBase} ${ADDRess[$i]} 4 ${amountusdts_manyaddr}
     $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1 # Generating one block
-    
+
     printf "\n________________________________________\n"
     printf "Checking USDT balances for the address #$i:\n"
     $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_getbalance ${ADDRess[$i]} 4
@@ -118,39 +118,41 @@ done
 for (( i=1; i<=${N}; i++ ))
 do
     printf "\n________________________________________\n"
+    printf "First Loop\n"
     printf "Price for sale Seller #$i\n"
     PRICE=$((RANDOM%5+6390))
     printf "\nRandom Price:\n"
     printf $PRICE
-    
+
     printf "\nAmount for sale Seller #$i\n"
     AMOUNT=$((RANDOM%99+1))
     printf "\nRandom Amount:\n"
     printf $AMOUNT
     printf "\n"
-    
+
     $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[$i]} ${CONTRACT} ${AMOUNT} ${PRICE} 1
     $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
-    
+
 done
 
 for (( i=1; i<=${N}; i++ ))
 do
-    printf "\n________________________________________\n"
+    printf "\n___________________________________\n"
+    printf "Second Loop\n"
     printf "Price for sale Seller #$i\n"
     PRICE=$((RANDOM%5+6390))
     printf "\nRandom Price:\n"
     printf $PRICE
-    
+
     printf "\nAmount for sale Seller #$i\n"
     AMOUNT=$((RANDOM%99+1))
     printf "\nRandom Amount:\n"
     printf $AMOUNT
     printf "\n"
-    
+
     $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[$i]} ${CONTRACT} ${AMOUNT} ${PRICE} 2
     $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
-    
+
 done
 
 ##################################################################

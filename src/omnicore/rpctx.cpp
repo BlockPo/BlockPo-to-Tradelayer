@@ -885,8 +885,8 @@ UniValue tl_tradecontract(const JSONRPCRequest& request)
 	  return rawHex;
         }
       else
-	{
-	  PendingAdd(txid, fromAddress, MSC_TYPE_CONTRACTDEX_TRADE, propertyIdForSale, amountForSale);
+	{ //TODO: PendingAdd function
+	  // PendingAdd(txid, fromAddress, MSC_TYPE_CONTRACTDEX_TRADE, propertyIdForSale, amountForSale);
 	  return txid.GetHex();
         }
     }
@@ -1039,10 +1039,7 @@ UniValue tl_sendissuance_pegged(const JSONRPCRequest& request)
     uint64_t amount = ParseAmount(request.params[7], isPropertyDivisible(propertyId));
 
     // perform checks
-    RequirePropertyName(name);
-
-    // checking existing the same name yet
-    RequireSaneName(name);
+    RequirePeggedSaneName(name);
 
      // Checking existing
     RequireExistingProperty(propertyId);

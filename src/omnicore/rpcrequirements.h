@@ -7,6 +7,7 @@
 void RequireBalance(const std::string& address, uint32_t propertyId, int64_t amount);
 void RequirePrimaryToken(uint32_t propertyId);
 void RequirePropertyName(const std::string& name);
+void RequirePeggedSaneName(std::string& name);
 void RequireExistingProperty(uint32_t propertyId);
 void RequireSameEcosystem(uint32_t propertyId, uint32_t otherId);
 void RequireDifferentIds(uint32_t propertyId, uint32_t otherId);
