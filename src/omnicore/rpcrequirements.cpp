@@ -55,17 +55,17 @@ void RequirePropertyName(const std::string& name)
 
 void RequireExistingProperty(uint32_t propertyId)
 {
-    LOCK(cs_tally);
-    if (!mastercore::IsPropertyIdValid(propertyId)) {
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "Property identifier does not exist");
-    }
+  LOCK(cs_tally);
+  if (!mastercore::IsPropertyIdValid(propertyId)) {
+    throw JSONRPCError(RPC_INVALID_PARAMETER, "Property identifier does not exist");
+  }
 }
 
 void RequireSameEcosystem(uint32_t propertyId, uint32_t otherId)
 {
-    if (mastercore::isTestEcosystemProperty(propertyId) != mastercore::isTestEcosystemProperty(otherId)) {
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "Properties must be in the same ecosystem");
-    }
+  if (mastercore::isTestEcosystemProperty(propertyId) != mastercore::isTestEcosystemProperty(otherId)) {
+    throw JSONRPCError(RPC_INVALID_PARAMETER, "Properties must be in the same ecosystem");
+  }
 }
 
 void RequireDifferentIds(uint32_t propertyId, uint32_t otherId)

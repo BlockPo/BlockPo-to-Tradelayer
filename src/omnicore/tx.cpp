@@ -1480,10 +1480,10 @@ int CMPTransaction::logicMath_SendAll()
 
     while (0 != (propertyId = ptally->next())) {
         // only transfer tokens in the specified ecosystem
-        if (ecosystem == OMNI_PROPERTY_MSC && isTestEcosystemProperty(propertyId)) {
+        if (ecosystem == OMNI_PROPERTY_ALL && isTestEcosystemProperty(propertyId)) {
             continue;
         }
-        if (ecosystem == OMNI_PROPERTY_TMSC && isMainEcosystemProperty(propertyId)) {
+        if (ecosystem == OMNI_PROPERTY_TALL && isMainEcosystemProperty(propertyId)) {
             continue;
         }
 
@@ -1521,7 +1521,7 @@ int CMPTransaction::logicMath_CreatePropertyFixed()
         blockHash = pindex->GetBlockHash();
     }
 
-    if (OMNI_PROPERTY_MSC != ecosystem && OMNI_PROPERTY_TMSC != ecosystem) {
+    if (OMNI_PROPERTY_ALL != ecosystem && OMNI_PROPERTY_TALL != ecosystem) {
         PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, (uint32_t) ecosystem);
         return (PKT_ERROR_SP -21);
     }
@@ -1541,7 +1541,7 @@ int CMPTransaction::logicMath_CreatePropertyFixed()
         return (PKT_ERROR_SP -23);
     }
 
-    if (MSC_PROPERTY_TYPE_INDIVISIBLE != prop_type && MSC_PROPERTY_TYPE_DIVISIBLE != prop_type) {
+    if (ALL_PROPERTY_TYPE_INDIVISIBLE != prop_type && ALL_PROPERTY_TYPE_DIVISIBLE != prop_type) {
         PrintToLog("%s(): rejected: invalid property type: %d\n", __func__, prop_type);
         return (PKT_ERROR_SP -36);
     }
@@ -1591,7 +1591,7 @@ int CMPTransaction::logicMath_CreatePropertyVariable()
         blockHash = pindex->GetBlockHash();
     }
 
-    if (OMNI_PROPERTY_MSC != ecosystem && OMNI_PROPERTY_TMSC != ecosystem) {
+    if (OMNI_PROPERTY_ALL != ecosystem && OMNI_PROPERTY_TALL != ecosystem) {
         PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, (uint32_t) ecosystem);
         return (PKT_ERROR_SP -21);
     }
@@ -1624,7 +1624,7 @@ int CMPTransaction::logicMath_CreatePropertyVariable()
         return (PKT_ERROR_SP -24);
     }
 
-    if (MSC_PROPERTY_TYPE_INDIVISIBLE != prop_type && MSC_PROPERTY_TYPE_DIVISIBLE != prop_type) {
+    if (ALL_PROPERTY_TYPE_INDIVISIBLE != prop_type && ALL_PROPERTY_TYPE_DIVISIBLE != prop_type) {
         PrintToLog("%s(): rejected: invalid property type: %d\n", __func__, prop_type);
         return (PKT_ERROR_SP -36);
     }
@@ -1755,7 +1755,7 @@ int CMPTransaction::logicMath_CreatePropertyManaged()
         blockHash = pindex->GetBlockHash();
     }
 
-    if (OMNI_PROPERTY_MSC != ecosystem && OMNI_PROPERTY_TMSC != ecosystem) {
+    if (OMNI_PROPERTY_ALL != ecosystem && OMNI_PROPERTY_TALL != ecosystem) {
         PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, (uint32_t) ecosystem);
         return (PKT_ERROR_SP -21);
     }
@@ -1770,7 +1770,7 @@ int CMPTransaction::logicMath_CreatePropertyManaged()
         return (PKT_ERROR_SP -22);
     }
 
-    if (MSC_PROPERTY_TYPE_INDIVISIBLE != prop_type && MSC_PROPERTY_TYPE_DIVISIBLE != prop_type) {
+    if (ALL_PROPERTY_TYPE_INDIVISIBLE != prop_type && ALL_PROPERTY_TYPE_DIVISIBLE != prop_type) {
         PrintToLog("%s(): rejected: invalid property type: %d\n", __func__, prop_type);
         return (PKT_ERROR_SP -36);
     }
@@ -2211,7 +2211,7 @@ int CMPTransaction::logicMath_CreateContractDex()
             blockHash = pindex->GetBlockHash();
     }
 
-    // if (OMNI_PROPERTY_MSC != ecosystem && OMNI_PROPERTY_TMSC != ecosystem) {
+    // if (OMNI_PROPERTY_ALL != ecosystem && OMNI_PROPERTY_TALL != ecosystem) {
     //     PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, (uint32_t) ecosystem);
     //     return (PKT_ERROR_SP -21);
     // }
@@ -2282,7 +2282,7 @@ int CMPTransaction::logicMath_CreateContractDex()
 
     const uint32_t propertyId = _my_sps->putSP(ecosystem, newSP);
     assert(propertyId > 0);
-
+    
     PrintToLog("Contract id: %d\n",propertyId);
 
     return 0;
@@ -2370,7 +2370,7 @@ int CMPTransaction::logicMath_ContractDexCancelEcosystem()
         return (PKT_ERROR_METADEX -22);
     }
 
-    if (OMNI_PROPERTY_MSC != ecosystem && OMNI_PROPERTY_TMSC != ecosystem) {
+    if (OMNI_PROPERTY_ALL != ecosystem && OMNI_PROPERTY_TALL != ecosystem) {
         PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, ecosystem);
         PrintToLog("rejected: invalid ecosystem %d\n",ecosystem);
         return (PKT_ERROR_METADEX -21);
@@ -2395,7 +2395,7 @@ int CMPTransaction::logicMath_ContractDexClosePosition()
         return (PKT_ERROR_METADEX -22);
     }
 
-    if (OMNI_PROPERTY_MSC != ecosystem && OMNI_PROPERTY_TMSC != ecosystem) {
+    if (OMNI_PROPERTY_ALL != ecosystem && OMNI_PROPERTY_TALL != ecosystem) {
         PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, ecosystem);
         PrintToLog("rejected: invalid ecosystem %d\n",ecosystem);
         return (PKT_ERROR_METADEX -21);
@@ -2432,7 +2432,7 @@ int CMPTransaction::logicMath_ContractDex_Cancel_Orders_By_Block()
     //  return (PKT_ERROR_METADEX -22);
   // }
 
-  if (OMNI_PROPERTY_MSC != ecosystem && OMNI_PROPERTY_TMSC != ecosystem) {
+  if (OMNI_PROPERTY_ALL != ecosystem && OMNI_PROPERTY_TALL != ecosystem) {
       PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, ecosystem);
       PrintToLog("rejected: invalid ecosystem %d\n",ecosystem);
       return (PKT_ERROR_METADEX -21);
@@ -2468,7 +2468,7 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
         blockHash = pindex->GetBlockHash();
     }
 
-    if (OMNI_PROPERTY_MSC != ecosystem && OMNI_PROPERTY_TMSC != ecosystem) {
+    if (OMNI_PROPERTY_ALL != ecosystem && OMNI_PROPERTY_TALL != ecosystem) {
         PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, (uint32_t) ecosystem);
         return (PKT_ERROR_SP -21);
     }
@@ -2483,7 +2483,7 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
 //         return (PKT_ERROR_SP -22);
 //     }
 
-    if (MSC_PROPERTY_TYPE_INDIVISIBLE != prop_type && MSC_PROPERTY_TYPE_DIVISIBLE != prop_type) {
+    if (ALL_PROPERTY_TYPE_INDIVISIBLE != prop_type && ALL_PROPERTY_TYPE_DIVISIBLE != prop_type) {
         PrintToLog("%s(): rejected: invalid property type: %d\n", __func__, prop_type);
         return (PKT_ERROR_SP -36);
     }
@@ -2795,7 +2795,7 @@ int CMPTransaction::logicMath_TradeOffer()
         // return (PKT_ERROR_TRADEOFFER -23);
     }
 
-  // if (OMNI_PROPERTY_TMSC != property && OMNI_PROPERTY_MSC != property) {
+  // if (OMNI_PROPERTY_TALL != property && OMNI_PROPERTY_ALL != property) {
   //     PrintToLog("%s(): rejected: property for sale %d must be OMNI or TOMNI\n", __func__, property);
   //     return (PKT_ERROR_TRADEOFFER -47);
   // }
@@ -2894,7 +2894,7 @@ int CMPTransaction::logicMath_DExBuy()
         // return (PKT_ERROR_TRADEOFFER -23);
     }
 
-  // if (OMNI_PROPERTY_TMSC != property && OMNI_PROPERTY_MSC != property) {
+  // if (OMNI_PROPERTY_TALL != property && OMNI_PROPERTY_ALL != property) {
   //     PrintToLog("%s(): rejected: property for sale %d must be OMNI or TOMNI\n", __func__, property);
   //     return (PKT_ERROR_TRADEOFFER -47);
   // }

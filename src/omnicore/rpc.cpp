@@ -713,9 +713,9 @@ UniValue tl_listproperties(const JSONRPCRequest& request)
 			);
 
   UniValue response(UniValue::VARR);
-
+  
   LOCK(cs_tally);
-
+  
   uint32_t nextSPID = _my_sps->peekNextSPID(1);
   for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++) {
     CMPSPInfo::Entry sp;
@@ -726,7 +726,7 @@ UniValue tl_listproperties(const JSONRPCRequest& request)
       response.push_back(propertyObj);
     }
   }
-
+  
   uint32_t nextTestSPID = _my_sps->peekNextSPID(2);
   for (uint32_t propertyId = TEST_ECO_PROPERTY_1; propertyId < nextTestSPID; propertyId++) {
     CMPSPInfo::Entry sp;
@@ -734,7 +734,7 @@ UniValue tl_listproperties(const JSONRPCRequest& request)
       UniValue propertyObj(UniValue::VOBJ);
       propertyObj.push_back(Pair("propertyid", (uint64_t) propertyId));
       PropertyToJSON(sp, propertyObj); // name, data, url, divisible
-
+      
       response.push_back(propertyObj);
     }
   }
@@ -834,13 +834,13 @@ UniValue tl_getcrowdsale(const JSONRPCRequest& request)
 
     int64_t startTime = -1;
     if (!hashBlock.IsNull() && GetBlockIndex(hashBlock)) {
-        startTime = GetBlockIndex(hashBlock)->nTime;
+      startTime = GetBlockIndex(hashBlock)->nTime;
     }
-
+    
     // note the database is already deserialized here and there is minimal performance penalty to iterate recipients to calculate amountRaised
     int64_t amountRaised = 0;
-    uint16_t propertyIdType = isPropertyDivisible(propertyId) ? MSC_PROPERTY_TYPE_DIVISIBLE : MSC_PROPERTY_TYPE_INDIVISIBLE;
-    uint16_t desiredIdType = isPropertyDivisible(sp.property_desired) ? MSC_PROPERTY_TYPE_DIVISIBLE : MSC_PROPERTY_TYPE_INDIVISIBLE;
+    uint16_t propertyIdType = isPropertyDivisible(propertyId) ? ALL_PROPERTY_TYPE_DIVISIBLE : ALL_PROPERTY_TYPE_INDIVISIBLE;
+    uint16_t desiredIdType = isPropertyDivisible(sp.property_desired) ? ALL_PROPERTY_TYPE_DIVISIBLE : ALL_PROPERTY_TYPE_INDIVISIBLE;
     std::map<std::string, UniValue> sortMap;
     for (std::map<uint256, std::vector<int64_t> >::const_iterator it = database.begin(); it != database.end(); it++) {
         UniValue participanttx(UniValue::VOBJ);

@@ -156,25 +156,28 @@ static bool writePersistence(int block_now)
 
 std::string mastercore::strMPProperty(uint32_t propertyId)
 {
-    std::string str = "*unknown*";
-
-    // test user-token
-    if (0x80000000 & propertyId) {
-        str = strprintf("Test token: %d : 0x%08X", 0x7FFFFFFF & propertyId, propertyId);
-    } else {
-        switch (propertyId) {
-            case OMNI_PROPERTY_BTC: str = "BTC";
-                break;
-            case OMNI_PROPERTY_MSC: str = "OMNI";
-                break;
-            case OMNI_PROPERTY_TMSC: str = "TOMNI";
-                break;
-            default:
-                str = strprintf("SP token: %d", propertyId);
-        }
+  std::string str = "*unknown*";
+  
+  // test user-token
+  if (0x80000000 & propertyId)
+    {
+      str = strprintf("Test token: %d : 0x%08X", 0x7FFFFFFF & propertyId, propertyId);
     }
-
-    return str;
+  else
+    {
+      switch (propertyId)
+	{
+	case OMNI_PROPERTY_BTC: str = "BTC";
+	  break;
+	case OMNI_PROPERTY_ALL: str = "ALL";
+	  break;
+	case OMNI_PROPERTY_TALL: str = "TALL";
+	  break;
+	default:
+	  str = strprintf("SP token: %d", propertyId);
+	}
+    } 
+  return str;
 }
 
 std::string FormatDivisibleShortMP(int64_t n)
@@ -237,7 +240,7 @@ std::string FormatMP(uint32_t property, int64_t n, bool fSign)
 
 std::string FormatByType(int64_t amount, uint16_t propertyType)
 {
-    if (propertyType & MSC_PROPERTY_TYPE_INDIVISIBLE) {
+    if (propertyType & ALL_PROPERTY_TYPE_INDIVISIBLE) {
         return FormatIndivisibleMP(amount);
     } else {
         return FormatDivisibleMP(amount);
@@ -293,7 +296,7 @@ long int FormatShortIntegerMP(int64_t n)
 	str.erase(it);
       }
     } //get rid of trailing dot if non decimal
-    long int q = atof(str.c_str());
+    long int q = atol(str.c_str());
     return q;
 }
 /////////////////////////////////////////
@@ -342,31 +345,31 @@ int64_t getUserAvailableMPbalance(const std::string& address, uint32_t propertyI
 
 bool mastercore::isTestEcosystemProperty(uint32_t propertyId)
 {
-    if ((OMNI_PROPERTY_TMSC == propertyId) || (TEST_ECO_PROPERTY_1 <= propertyId)) return true;
-
-    return false;
+  if ((OMNI_PROPERTY_TALL == propertyId) || (TEST_ECO_PROPERTY_1 <= propertyId)) return true;
+  
+  return false;
 }
 
 bool mastercore::isMainEcosystemProperty(uint32_t propertyId)
 {
-    if ((OMNI_PROPERTY_BTC != propertyId) && !isTestEcosystemProperty(propertyId)) return true;
-
-    return false;
+  if ((OMNI_PROPERTY_BTC != propertyId) && !isTestEcosystemProperty(propertyId)) return true;
+  
+  return false;
 }
 
 std::string mastercore::getTokenLabel(uint32_t propertyId)
 {
-    std::string tokenStr;
-    if (propertyId < 3) {
-        if (propertyId == 1) {
-            tokenStr = " OMNI";
-        } else {
-            tokenStr = " TOMNI";
-        }
+  std::string tokenStr;
+  if (propertyId < 3) {
+    if (propertyId == 1) {
+      tokenStr = " OMNI";
     } else {
-        tokenStr = strprintf(" SPT#%d", propertyId);
+      tokenStr = " TOMNI";
     }
-    return tokenStr;
+  } else {
+    tokenStr = strprintf(" SPT#%d", propertyId);
+  }
+  return tokenStr;
 }
 
 // get total tokens for a property
@@ -457,11 +460,11 @@ bool mastercore::update_tally_map(const std::string& who, uint32_t propertyId, i
 
 uint32_t mastercore::GetNextPropertyId(bool maineco)
 {
-    if (maineco) {
-        return _my_sps->peekNextSPID(1);
-    } else {
-        return _my_sps->peekNextSPID(2);
-    }
+  if (maineco) {
+    return _my_sps->peekNextSPID(1);
+  } else {
+    return _my_sps->peekNextSPID(2);
+  }
 }
 
 // Perform any actions that need to be taken when the total number of tokens for a property ID changes
@@ -1171,7 +1174,7 @@ int input_globals_state_string(const string &s)
   std::vector<std::string> vstr;
   boost::split(vstr, s, boost::is_any_of(" ,="), token_compress_on);
   if (2 != vstr.size()) return -1;
-
+  
   int i = 0;
   nextSPID = boost::lexical_cast<unsigned int>(vstr[i++]);
   nextTestSPID = boost::lexical_cast<unsigned int>(vstr[i++]);
@@ -1606,17 +1609,16 @@ static int write_msc_balances(std::ofstream& file, SHA256_CTX* shaCtx)
 
 static int write_globals_state(ofstream &file, SHA256_CTX *shaCtx)
 {
-  unsigned int nextSPID = _my_sps->peekNextSPID(OMNI_PROPERTY_MSC);
-  unsigned int nextTestSPID = _my_sps->peekNextSPID(OMNI_PROPERTY_TMSC);
-  std::string lineOut = strprintf("%d,%d",
-    nextSPID,
-    nextTestSPID);
+  unsigned int nextSPID = _my_sps->peekNextSPID(OMNI_PROPERTY_ALL);
+  unsigned int nextTestSPID = _my_sps->peekNextSPID(OMNI_PROPERTY_TALL);
 
+  std::string lineOut = strprintf("%d,%d", nextSPID, nextTestSPID);
+  
   PrintToLog("write_global_state, lineOut : %s \n",lineOut);
-
+  
   // add the line to the hash
   SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
-
+  
   // write the line
   file << lineOut << endl;
 
@@ -3016,7 +3018,7 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
 
   unsigned int contractId = static_cast<unsigned int>(property_traded);
 
-  if ( contractId == MSC_PROPERTY_TYPE_CONTRACT )
+  if ( contractId == ALL_PROPERTY_TYPE_CONTRACT )
     {
       globalPNLALL_DUSD += UPNL1 + UPNL2;
       globalVolumeALL_DUSD += nCouldBuy0;
@@ -3030,13 +3032,13 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
 
   std::fstream fileglobalPNLALL_DUSD;
   fileglobalPNLALL_DUSD.open ("globalPNLALL_DUSD.txt", std::fstream::in | std::fstream::out | std::fstream::app);
-  if ( contractId == MSC_PROPERTY_TYPE_CONTRACT )
+  if ( contractId == ALL_PROPERTY_TYPE_CONTRACT )
     saveDataGraphs(fileglobalPNLALL_DUSD, std::to_string(globalPNLALL_DUSD));
   fileglobalPNLALL_DUSD.close();
 
   std::fstream fileglobalVolumeALL_DUSD;
   fileglobalVolumeALL_DUSD.open ("globalVolumeALL_DUSD.txt", std::fstream::in | std::fstream::out | std::fstream::app);
-  if ( contractId == MSC_PROPERTY_TYPE_CONTRACT )
+  if ( contractId == ALL_PROPERTY_TYPE_CONTRACT )
     saveDataGraphs(fileglobalVolumeALL_DUSD, std::to_string(FormatShortIntegerMP(globalVolumeALL_DUSD)));
   fileglobalVolumeALL_DUSD.close();
   

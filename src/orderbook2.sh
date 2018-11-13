@@ -1,12 +1,12 @@
 #!/bin/bash
 
-SRCDIR=/home/ale/Escritorio/lastgit/src    
-DATADIR=/home/ale/.litecoin
+SRCDIR=/home/lihki/omnicore-litecoin0.16.3/src   
+DATADIR=/home/lihki/.litecoin
 NUL=/dev/null
 printf "\n//////////////////////////////////////////\n"
 printf "Cleaning the regtest folder\n"
 
-sudo rm -r /home/ale/.litecoin/regtest
+sudo rm -r /home/lihki/.litecoin/regtest
 sudo rm graphInfo*
 sudo rm globalPNLALL_DUSD.txt
 sudo rm globalVolumeALL_DUSD.txt
@@ -21,7 +21,7 @@ printf "Waiting three seconds to start the client...\n"
 sleep 3
 
 printf "\n________________________________________\n"
-printf "Preparing some mature regtest BTC: Mining the first 101 blocks getting 50 Bitcoins\n"
+printf "Preparing some mature regtest BTC: Mining the first N blocks getting X Bitcoins\n"
 $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest  -rpcwait=1 generate 202 #> $NUL # Es importante agregar el rpcwait que espera que el nodo e$
 
 printf "\n________________________________________\n"
@@ -59,14 +59,14 @@ done
 
 ##################################################################
 printf "\n________________________________________\n"
-printf " Funding the address with some testnet BTC for fees: 40 BTC to this address\n"
+printf " Funding the address with some testnet BTC for fees: X BTC to this address\n"
 $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest  sendfrom "" ${ADDRBase} ${amount_bitcoin}  # enviamos 10 BTC a ADDR
 printf "Generating one block\n"
 $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest  generate 1
 
 ##################################################################
 printf "\n________________________________________\n"
-printf "   * Participating in the Exodus crowdsale to obtain 1000 OMNIs: To get OMNIs in the first address ADDR\n"
+printf "   * Participating in the Exodus crowdsale to obtain M OMNIs: To get OMNIs in the first address ADDR\n"
 
 for (( i=1; i<=${N}; i++ ))
 do
@@ -85,7 +85,7 @@ $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1 # Generating one blo
 ##################################################################
 printf "\n________________________________________\n"
 printf "Creating Future Contract with base address: ${ADDRBase}\n"
-TRACreate=$($SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_createcontract $ADDRBase 1 1 "Future Contract 1" ${blocks_until_expiration} ${notional_size} ${collateral} ${margin_requirement})
+TRACreate=$($SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_createcontract $ADDRBase 1 1 "Future ALL" ${blocks_until_expiration} ${notional_size} ${collateral} ${margin_requirement})
 $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
 
 printf "\n________________________________________\n"

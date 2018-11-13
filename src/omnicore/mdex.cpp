@@ -1265,7 +1265,7 @@ MatchReturnType x_Trade(CMPMetaDEx* const pnew)
 
             // strip a 0.05% fee from non-OMNI pairs if fees are activated
             if (IsFeatureActivated(FEATURE_FEES, pnew->getBlock())) {
-                if (pold->getProperty() > OMNI_PROPERTY_TMSC && pold->getDesProperty() > OMNI_PROPERTY_TMSC) {
+                if (pold->getProperty() > OMNI_PROPERTY_TALL && pold->getDesProperty() > OMNI_PROPERTY_TALL) {
                     int64_t feeDivider = 2000; // 0.05%
                     tradingFee = buyer_amountGot / feeDivider;
 
@@ -1404,7 +1404,7 @@ int get_LiquidationPrice(int64_t effectivePrice, string address, uint32_t proper
 std::string CMPMetaDEx::displayUnitPrice() const
 {
      rational_t tmpDisplayPrice;
-     if (getDesProperty() == OMNI_PROPERTY_MSC || getDesProperty() == OMNI_PROPERTY_TMSC) {
+     if (getDesProperty() == OMNI_PROPERTY_ALL || getDesProperty() == OMNI_PROPERTY_TALL) {
          tmpDisplayPrice = unitPrice();
          if (isPropertyDivisible(getProperty())) tmpDisplayPrice = tmpDisplayPrice * COIN;
      } else {
@@ -1831,73 +1831,76 @@ int mastercore::ContractDex_ADD_MARKET_PRICE(const std::string& sender_addr, uin
 
 int mastercore::ContractDex_CANCEL_EVERYTHING(const uint256& txid, unsigned int block, const std::string& sender_addr, unsigned char ecosystem, uint32_t contractId)
 {
-    int rc = METADEX_ERROR -40;
-    bool bValid = false;
-    int64_t factorH = factorE;
-
-    for (cd_PropertiesMap::iterator my_it = contractdex.begin(); my_it != contractdex.end(); ++my_it) {
-        unsigned int prop = my_it->first;
-
-        // skip property, if it is not in the expected ecosystem
-        if (isMainEcosystemProperty(ecosystem) && !isMainEcosystemProperty(prop)) continue;
-        if (isTestEcosystemProperty(ecosystem) && !isTestEcosystemProperty(prop)) continue;
-
-        // PrintToLog(" ## property: %u\n", prop);
-        cd_PricesMap &prices = my_it->second;
-
-        for (cd_PricesMap::iterator it = prices.begin(); it != prices.end(); ++it) {
-            // uint64_t price = it->first;
-            cd_Set &indexes = it->second;
-
-            // PrintToLog("  # Price Level: %s\n", xToString(price));
-
-            for (cd_Set::iterator it = indexes.begin(); it != indexes.end();) {
-                // PrintToLog("%s= %s\n", xToString(price), it->ToString());
-
-                if (it->getAddr() != sender_addr || it->getProperty() != contractId || it->getAmountForSale() == 0) {
-                    ++it;
-                    continue;
-                }
-
-                rc = 0;
-                // PrintToLog("%s(): REMOVING %s\n", __FUNCTION__, it->ToString());
-
-                CMPSPInfo::Entry sp;
-                assert(_my_sps->getSP(it->getProperty(), sp));
-                uint32_t collateralCurrency = sp.collateral_currency;
-                int64_t marginRe = static_cast<int64_t>(sp.margin_requirement);
-
-                string addr = it->getAddr();
-                int64_t amountForSale = it->getAmountForSale();
-
-                rational_t conv = notionalChange(contractId);
-                int64_t num = conv.numerator().convert_to<int64_t>();
-                int64_t den = conv.denominator().convert_to<int64_t>();
-
-                arith_uint256 amountMargin = (ConvertTo256(amountForSale) * ConvertTo256(marginRe) * ConvertTo256(num) / (ConvertTo256(den) * ConvertTo256(factorH)));
-                int64_t redeemed = ConvertTo64(amountMargin);
-
-                PrintToLog("collateral currency id of contract : %d\n",collateralCurrency);
-                PrintToLog("margin requirement of contract : %d\n",marginRe);
-                PrintToLog("amountForSale: %d\n",amountForSale);
-                PrintToLog("Address: %d\n",addr);
-                PrintToLog("--------------------------------------------\n");
-
-                // move from reserve to balance the collateral
-                assert(update_tally_map(addr, collateralCurrency, redeemed, BALANCE));
-                assert(update_tally_map(addr, collateralCurrency, redeemed, CONTRACTDEX_RESERVE));
-                // // record the cancellation
-                bValid = true;
-                // p_txlistdb->recordContractDexCancelTX(txid, it->getHash(), bValid, block, it->getProperty(), it->getAmountForSale
-                indexes.erase(it++);
-            }
-        }
+  int rc = METADEX_ERROR -40;
+  bool bValid = false;
+  int64_t factorH = factorE;
+  
+  for (cd_PropertiesMap::iterator my_it = contractdex.begin(); my_it != contractdex.end(); ++my_it)
+    {
+      unsigned int prop = my_it->first;
+      
+      // skip property, if it is not in the expected ecosystem
+      if (isTestEcosystemProperty(ecosystem) && !isTestEcosystemProperty(prop)) continue;
+      if (isTestEcosystemProperty(ecosystem) && !isTestEcosystemProperty(prop)) continue;
+      
+      // PrintToLog(" ## property: %u\n", prop);
+      cd_PricesMap &prices = my_it->second;
+      
+      for (cd_PricesMap::iterator it = prices.begin(); it != prices.end(); ++it)
+	{
+	  // uint64_t price = it->first;
+	  cd_Set &indexes = it->second;
+	  
+	  // PrintToLog("  # Price Level: %s\n", xToString(price));
+	  
+	  for (cd_Set::iterator it = indexes.begin(); it != indexes.end();)
+	    {
+	      // PrintToLog("%s= %s\n", xToString(price), it->ToString());
+	      
+	      if (it->getAddr() != sender_addr || it->getProperty() != contractId || it->getAmountForSale() == 0)
+		{
+		  ++it;
+		  continue;
+		}
+	      
+	      rc = 0;
+	      // PrintToLog("%s(): REMOVING %s\n", __FUNCTION__, it->ToString());
+	      
+	      CMPSPInfo::Entry sp;
+	      assert(_my_sps->getSP(it->getProperty(), sp));
+	      uint32_t collateralCurrency = sp.collateral_currency;
+	      int64_t marginRe = static_cast<int64_t>(sp.margin_requirement);
+	      
+	      string addr = it->getAddr();
+	      int64_t amountForSale = it->getAmountForSale();
+	    
+	      rational_t conv = notionalChange(contractId);
+	      int64_t num = conv.numerator().convert_to<int64_t>();
+	      int64_t den = conv.denominator().convert_to<int64_t>();
+	      
+	      arith_uint256 amountMargin = (ConvertTo256(amountForSale) * ConvertTo256(marginRe) * ConvertTo256(num) / (ConvertTo256(den) * ConvertTo256(factorH)));
+	      int64_t redeemed = ConvertTo64(amountMargin);
+	      
+	      PrintToLog("collateral currency id of contract : %d\n",collateralCurrency);
+	      PrintToLog("margin requirement of contract : %d\n",marginRe);
+	      PrintToLog("amountForSale: %d\n",amountForSale);
+	      PrintToLog("Address: %d\n",addr);
+	      PrintToLog("--------------------------------------------\n");
+	      
+	      // move from reserve to balance the collateral
+	      assert(update_tally_map(addr, collateralCurrency, redeemed, BALANCE));
+	      assert(update_tally_map(addr, collateralCurrency, redeemed, CONTRACTDEX_RESERVE));
+	      // // record the cancellation
+	      bValid = true;
+	      // p_txlistdb->recordContractDexCancelTX(txid, it->getHash(), bValid, block, it->getProperty(), it->getAmountForSale
+	      indexes.erase(it++);
+	    }  
+	}
     }
-    if (bValid == false){
-       PrintToConsole("You don't have active orders\n");
-    }
-
-    return rc;
+  if (bValid == false)
+    PrintToConsole("You don't have active orders\n");
+  
+  return rc;
 }
 
 int mastercore::ContractDex_CANCEL_FOR_BLOCK(const uint256& txid,  int block,unsigned int idx, const std::string& sender_addr, unsigned char ecosystem)

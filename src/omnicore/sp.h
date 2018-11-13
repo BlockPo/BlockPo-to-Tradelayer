@@ -156,22 +156,22 @@ public:
         void print() const;
       	bool isContract() const;
     };
-
-private:
-    // implied version of OMNI and TOMNI so they don't hit the leveldb
-    Entry implied_omni;
-    Entry implied_tomni;
-
+    
+ private:
+    /** implied version of ALL and TALL so they don't hit the leveldb */
+    Entry implied_all;
+    Entry implied_tall;
+    
     uint32_t next_spid;
     uint32_t next_test_spid;
-
-public:
+    
+ public:
     CMPSPInfo(const boost::filesystem::path& path, bool fWipe);
     virtual ~CMPSPInfo();
-
+    
     /** Extends clearing of CDBBase. */
     void Clear();
-
+    
     void init(uint32_t nextSPID = 0x3UL, uint32_t nextTestSPID = TEST_ECO_PROPERTY_1);
 
     uint32_t peekNextSPID(uint8_t ecosystem) const;
