@@ -1446,6 +1446,110 @@ bool PositionToJSON(const std::string& address, uint32_t property, UniValue& bal
     return true;
 }
 
+// in progress
+bool FullPositionToJSON(const std::string& address, uint32_t property, UniValue& position_obj, bool divisible, CMPSPInfo::Entry sProperty)
+{
+  // const int64_t factor = 100000000;
+  int64_t longPosition = getMPbalance(address, property, POSSITIVE_BALANCE);
+  int64_t shortPosition = getMPbalance(address, property, NEGATIVE_BALANCE);
+  int64_t liqPrice = getMPbalance(address, property, LIQUIDATION_PRICE);
+  int64_t valueLong = longPosition * (uint64_t) sProperty.notional_size;
+  int64_t valueShort = shortPosition * (uint64_t) sProperty.notional_size;
+
+  position_obj.push_back(Pair("longPosition", FormatByType(longPosition, 1)));
+  position_obj.push_back(Pair("shortPosition", FormatByType(shortPosition, 1)));
+  position_obj.push_back(Pair("liquidationPrice", FormatByType(liqPrice,2)));
+  position_obj.push_back(Pair("valueLong", FormatByType(valueLong, 1)));
+  position_obj.push_back(Pair("valueShort", FormatByType(valueShort, 1)));
+
+  return true;
+
+}
+
+UniValue tl_getfullposition(const JSONRPCRequest& request)
+{
+  if (request.params.size() != 2)
+      throw runtime_error(
+        "tl_getfullposition \"address\" propertyid\n"
+        "\nReturns the position for the future contract for a given address and property.\n"
+        "\nArguments:\n"
+        "1. address              (string, required) the address\n"
+        "2. propertyid           (number, required) the future contract identifier\n"
+        "\nResult:\n"
+        "{\n"
+        "  \"symbol\" : \"n.nnnnnnnn\",   (string) short position of the address \n"
+        "  \"notional_size\" : \"n.nnnnnnnn\"  (string) long position of the address\n"
+        "  \"shortPosition\" : \"n.nnnnnnnn\",   (string) short position of the address \n"
+        "  \"longPosition\" : \"n.nnnnnnnn\"  (string) long position of the address\n"
+        "  \"liquidationPrice\" : \"n.nnnnnnnn\"  (string) long position of the address\n"
+        "  \"positiveupnl\" : \"n.nnnnnnnn\",   (string) short position of the address \n"
+        "  \"negativeupnl\" : \"n.nnnnnnnn\"  (string) long position of the address\n"
+        "  \"positivepnl\" : \"n.nnnnnnnn\",   (string) short position of the address \n"
+        "  \"negativepnl\" : \"n.nnnnnnnn\"  (string) long position of the address\n"
+        "}\n"
+        "\nExamples:\n"
+        + HelpExampleCli("tl_getfullposition", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" 1")
+        + HelpExampleRpc("tl_getfullposition", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", 1")
+      );
+
+      std::string address = ParseAddress(request.params[0]);
+      uint32_t propertyId = ParsePropertyId(request.params[1]);
+
+      RequireContract(propertyId);
+
+      UniValue positionObj(UniValue::VOBJ);
+
+      CMPSPInfo::Entry sp;
+      {
+          LOCK(cs_tally);
+          if (!_my_sps->getSP(propertyId, sp)) {
+              throw JSONRPCError(RPC_INVALID_PARAMETER, "Property identifier does not exist");
+          }
+      }
+
+      positionObj.push_back(Pair("symbol", sp.name));
+      positionObj.push_back(Pair("notional_size", (uint64_t) sp.notional_size)); // value of position = short or long position (balance) * notional_size
+      // PTJ -> short/longPosition /liquidation price
+      FullPositionToJSON(address, propertyId, positionObj,isPropertyContract(propertyId), sp);
+
+      // upnl
+      LOCK(cs_tally);
+      double dupnl = t_tradelistdb->getUPNL(address, propertyId);
+      const int64_t factor = 100000000;
+      int64_t upnl = static_cast<int64_t>(dupnl*factor);
+      PrintToConsole("unrealized PNL: %d\n",upnl);
+      // double averagePrice = static_cast<double>(totalAmount/d_contractsClosed);
+      // double PNL_num = static_cast<double>((d_price - averagePrice)*(notionalSize*d_contractsClosed));
+      // double PNL_den = static_cast<double>(averagePrice*marginRequirementContract);
+     if (upnl >= 0){
+      positionObj.push_back(Pair("positiveupnl", FormatByType(upnl,2)));
+      positionObj.push_back(Pair("negativeupnl", FormatByType(0,2)));
+    } else {
+      uint64_t upnl1 = static_cast<uint64_t>(upnl);
+      positionObj.push_back(Pair("positiveupnl", FormatByType(0,2)));
+      positionObj.push_back(Pair("negativeupnl", FormatByType(upnl1,2)));
+    }
+
+    // pnl
+    uint32_t collateralCurrency = sp.collateral_currency;
+    uint64_t realizedProfits  = static_cast<uint64_t>(factor*getMPbalance(address, collateralCurrency, REALIZED_PROFIT));
+    uint64_t realizedLosses  = static_cast<uint64_t>(factor*getMPbalance(address, collateralCurrency, REALIZED_LOSSES));
+
+   if (realizedProfits > 0 && realizedLosses == 0){
+    positionObj.push_back(Pair("positivepnl", FormatByType(realizedProfits,2)));
+    positionObj.push_back(Pair("negativepnl", FormatByType(0,2)));
+  } else if (realizedLosses > 0 && realizedProfits == 0){
+    positionObj.push_back(Pair("positivepnl", FormatByType(0,2)));
+    positionObj.push_back(Pair("negativepnl", FormatByType(realizedProfits,2)));
+  } else if (realizedLosses == 0 && realizedProfits == 0){
+    positionObj.push_back(Pair("positivepnl", FormatByType(0,2)));
+    positionObj.push_back(Pair("negativepnl", FormatByType(0,2)));
+  }
+
+    return positionObj;
+
+}
+
 
 UniValue tl_getposition(const JSONRPCRequest& request)
 {
@@ -2008,6 +2112,7 @@ static const CRPCCommand commands[] =
 #endif
   { "hidden",                       "mscrpc",                       &mscrpc,                          {} },
   { "trade layer (data retrieval)", "tl_getposition",               &tl_getposition,                {} },
+  { "trade layer (data retrieval)", "tl_getfullposition",           &tl_getfullposition,          {} },
   { "trade layer (data retrieval)", "tl_getcontract_orderbook",     &tl_getcontract_orderbook,      {} },
   { "trade layer (data retrieval)", "tl_gettradehistory",           &tl_gettradehistory,            {} },
   { "trade layer (data retrieval)", "tl_getupnl",                   &tl_getupnl,                    {} },
