@@ -2304,13 +2304,13 @@ int CMPTransaction::logicMath_ContractDexTrade()
       }
     blockHash = pindex->GetBlockHash();
   }
-
+  
   CMPSPInfo::Entry sp;
   if(!_my_sps->getSP(contractId, sp)) {
-      PrintToLog("%s(): ERROR: No contractId found!\n", __func__);
-      return -1;
+    PrintToLog("%s(): ERROR: No contractId found!\n", __func__);
+    return -1;
   }
-
+  
   id_contract = contractId;
   int64_t marginRe = static_cast<int64_t>(sp.margin_requirement);
   int64_t nBalance = getMPbalance(sender, sp.collateral_currency, BALANCE);

@@ -105,9 +105,6 @@ void mastercore::LoopBiDirectional(cd_PricesMap* const ppriceMap, uint8_t trdAct
   if ( expirationAchieve )
     {
       PrintToLog("expirationAchieve: %d\n", expirationAchieve);
-      // PrintToConsole("Path for Settlement:\n");
-      // for (it_path_ele = path_ele.begin(); it_path_ele != path_ele.end(); ++it_path_ele) printing_edges_database(*it_path_ele);
-      // cout << "\n";
       pt_ndatabase = new MatrixTLS(path_ele.size(), n_cols); MatrixTLS &ndatabase = *pt_ndatabase;
       MatrixTLS M_file(path_ele.size(), n_cols);
       fillingMatrix(M_file, ndatabase, path_ele);
@@ -144,7 +141,7 @@ void mastercore::LoopBiDirectional(cd_PricesMap* const ppriceMap, uint8_t trdAct
 void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPrices, typename cd_PricesMap::reverse_iterator &it_bwdPrices, uint8_t trdAction, CMPContractDex* const pnew, const uint64_t sellerPrice, const uint32_t propertyForSale, MatchReturnType &NewReturn)
 {
   cd_Set* const pofferSet = trdAction == BUY ? &(it_fwdPrices->second) : &(it_bwdPrices->second);
-
+  
   /** At good (single) price level and property iterate over offers looking at all parameters to find the match */
   cd_Set::iterator offerIt = pofferSet->begin();
 
@@ -167,7 +164,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
 	  ++offerIt;
 	  continue;
 	}
-
+      
       idx_q += 1;
       const int idx_qp = idx_q;
       PrintToLog("Checking idx_q = %d", idx_qp);
@@ -200,6 +197,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       PrintToLog("Trading action pold: %d\n", pold->getTradingAction() );
       PrintToLog("Trading action pnew: %d\n", pnew->getTradingAction() );
       PrintToLog("Trade Status: %s\n", tradeStatus);
+      PrintToLog("propertyForSale = %d", propertyForSale);
 
       /********************************************************/
       uint32_t property_traded = pold->getProperty();
@@ -1922,9 +1920,10 @@ int mastercore::ContractDex_CANCEL_FOR_BLOCK(const uint256& txid,  int block,uns
                    ++it;
                    continue;
                }
-
-               CMPSPInfo::Entry sp;
+		
+	       CMPSPInfo::Entry sp;
                uint32_t contractId = it->getProperty();
+	       
                assert(_my_sps->getSP(contractId, sp));
                uint32_t collateralCurrency = sp.collateral_currency;
                uint32_t marginRe = sp.margin_requirement;

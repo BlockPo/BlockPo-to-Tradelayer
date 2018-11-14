@@ -362,9 +362,9 @@ std::string mastercore::getTokenLabel(uint32_t propertyId)
   std::string tokenStr;
   if (propertyId < 3) {
     if (propertyId == 1) {
-      tokenStr = " OMNI";
+      tokenStr = " ALL";
     } else {
-      tokenStr = " TOMNI";
+      tokenStr = " TALL";
     }
   } else {
     tokenStr = strprintf(" SPT#%d", propertyId);
@@ -376,37 +376,37 @@ std::string mastercore::getTokenLabel(uint32_t propertyId)
 // optionally counts the number of addresses who own that property: n_owners_total
 int64_t mastercore::getTotalTokens(uint32_t propertyId, int64_t* n_owners_total)
 {
-    int64_t prev = 0;
-    int64_t owners = 0;
-    int64_t totalTokens = 0;
+  int64_t prev = 0;
+  int64_t owners = 0;
+  int64_t totalTokens = 0;
 
-    LOCK(cs_tally);
+  LOCK(cs_tally);
 
-    CMPSPInfo::Entry property;
-    if (false == _my_sps->getSP(propertyId, property)) {
-        return 0; // property ID does not exist
+  CMPSPInfo::Entry property;
+  if (false == _my_sps->getSP(propertyId, property)) {
+    return 0; // property ID does not exist
+  }
+  
+  if (!property.fixed || n_owners_total) {
+    for (std::unordered_map<std::string, CMPTally>::const_iterator it = mp_tally_map.begin(); it != mp_tally_map.end(); ++it) {
+      const CMPTally& tally = it->second;
+      
+      totalTokens += tally.getMoney(propertyId, BALANCE);
+      
+      if (prev != totalTokens) {
+	prev = totalTokens;
+	owners++;
+      }
     }
-
-    if (!property.fixed || n_owners_total) {
-        for (std::unordered_map<std::string, CMPTally>::const_iterator it = mp_tally_map.begin(); it != mp_tally_map.end(); ++it) {
-            const CMPTally& tally = it->second;
-
-            totalTokens += tally.getMoney(propertyId, BALANCE);
-
-            if (prev != totalTokens) {
-                prev = totalTokens;
-                owners++;
-            }
-        }
-    }
-
-    if (property.fixed) {
-        totalTokens = property.num_tokens; // only valid for TX50
-    }
-
-    if (n_owners_total) *n_owners_total = owners;
-
-    return totalTokens;
+  }
+  
+  if (property.fixed) {
+    totalTokens = property.num_tokens; // only valid for TX50
+  }
+  
+  if (n_owners_total) *n_owners_total = owners;
+  
+  return totalTokens;
 }
 
 // return true if everything is ok
@@ -3685,30 +3685,31 @@ int marginCall(const std::string& address, uint32_t propertyId, uint64_t marketP
 
 rational_t mastercore::notionalChange(uint32_t contractId)
 {
-    int index = static_cast<unsigned int>(contractId);
-    int64_t den = static_cast<int64_t>(marketP[index]);
-    if (den == 0) {
-        PrintToConsole("returning 1\n");
-        return rational_t(1,1);
+  int index = static_cast<unsigned int>(contractId);
+  int64_t den = static_cast<int64_t>(marketP[index]);
+  
+  if ( den == 0 ) {
+    PrintToConsole("returning 1\n");
+    return rational_t(1,1);
+  }
+  
+  rational_t uPrice = rational_t(1,den);
+
+  switch (contractId)
+    {
+    case CONTRACT_ALL_DUSD:
+      if (uPrice > 0){
+	return uPrice;
+      }
+      break;
+    case CONTRACT_ALL_LTC:
+      if (uPrice > 0){
+	return uPrice;
+      }
+      break;      
+    default: return rational_t(1,1);
     }
-
-    rational_t uPrice = rational_t(1,den);
-
-    switch (contractId) {
-            case CONTRACT_ALL_DUSD:
-                if (uPrice > 0){
-                    return uPrice;
-                }
-            break;
-            case CONTRACT_ALL_LTC:
-                if (uPrice > 0){
-                    return uPrice;
-                }
-            break;
-
-            default: return rational_t(1,1);
-        }
-        return rational_t(1,1);
+  return rational_t(1,1);
 }
 
 bool mastercore::marginNeeded(const std::string address, int64_t amountTraded, uint32_t contractId)

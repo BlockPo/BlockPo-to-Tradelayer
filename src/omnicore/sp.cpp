@@ -52,23 +52,34 @@ CMPSPInfo::Entry::Entry()
 
 bool CMPSPInfo::Entry::isDivisible() const
 {
-    switch (prop_type) {
-        case ALL_PROPERTY_TYPE_DIVISIBLE:
-        case ALL_PROPERTY_TYPE_INDIVISIBLE:
-            return true;
+  switch (prop_type)
+    {
+    case ALL_PROPERTY_TYPE_DIVISIBLE:
+    case ALL_PROPERTY_TYPE_INDIVISIBLE:
+      return true;
     }
-    return false;
+  return false;
+}
+
+bool CMPSPInfo::Entry::isContract() const
+{
+  switch (prop_type)
+    {
+    case ALL_PROPERTY_TYPE_CONTRACT:
+      return true;
+    }
+  return false;
 }
 
 void CMPSPInfo::Entry::print() const
 {
-    PrintToConsole("%s:%s(Fixed=%s,Divisible=%s):%d:%s/%s, %s %s\n",
-            issuer,
-            name,
-            fixed ? "Yes" : "No",
-            isDivisible() ? "Yes" : "No",
-            num_tokens,
-            category, subcategory, url, data);
+  PrintToConsole("%s:%s(Fixed=%s,Divisible=%s):%d:%s/%s, %s %s\n",
+		 issuer,
+		 name,
+		 fixed ? "Yes" : "No",
+		 isDivisible() ? "Yes" : "No",
+		 num_tokens,
+		 category, subcategory, url, data);
 }
 
 CMPSPInfo::CMPSPInfo(const boost::filesystem::path& path, bool fWipe)
@@ -595,12 +606,21 @@ bool mastercore::IsPropertyIdValid(uint32_t propertyId)
 
 bool mastercore::isPropertyDivisible(uint32_t propertyId)
 {
-    // TODO: is a lock here needed
-    // CMPSPInfo::Entry sp;
-    //
-    // if (_my_sps->getSP(propertyId, sp)) return sp.isDivisible();
+  // TODO: is a lock here needed
+  CMPSPInfo::Entry sp;
+  
+  if (_my_sps->getSP(propertyId, sp)) return sp.isDivisible();
+  
+  return true;
+}
 
-    return true;
+bool mastercore::isPropertyContract(uint32_t propertyId)
+{
+  CMPSPInfo::Entry sp;
+  
+  if (_my_sps->getSP(propertyId, sp)) return sp.isContract();
+  
+  return true;
 }
 
 std::string mastercore::getPropertyName(uint32_t propertyId)
@@ -1069,17 +1089,6 @@ std::string mastercore::strEcosystem(uint8_t ecosystem)
     }
   
   return "unknown";
-}
-
-/** New things for futures contracts */
-bool mastercore::isPropertyContract(uint32_t propertyId)
-{
-  CMPSPInfo::Entry sp;
-  
-  if (_my_sps->getSP(propertyId, sp)  && sp.subcategory == "Futures Contracts") {
-    return false;
-  }
-  return true;
 }
 
 uint64_t mastercore::edgeOrderbook(uint32_t contractId, uint8_t tradingAction)
