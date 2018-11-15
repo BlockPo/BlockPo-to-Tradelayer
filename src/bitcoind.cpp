@@ -189,6 +189,7 @@ int main(int argc, char* argv[])
   extern VectorTLS *pt_netted_npartly_short;
   extern VectorTLS *pt_open_incr_anypos;
   extern VectorTLS *pt_netted_npartly_anypos;
+  extern VectorTLS *pt_expiration_dates;
   
 #include "initial_conditions.h"
   

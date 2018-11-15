@@ -33,3 +33,4 @@ MatrixTLS *pt_ndatabase;
 std::map<std::string,uint32_t> peggedIssuers;
 double globalPNLALL_DUSD;
 int64_t globalVolumeALL_DUSD;
+VectorTLS *pt_expiration_dates;

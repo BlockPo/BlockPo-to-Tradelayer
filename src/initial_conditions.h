@@ -1,5 +1,7 @@
 int N = 2;
 int M = 4;
+int NYears = 10;
+int initYear = 19;
 
 factorE = 100000000;
 priceIndex = 110; // an index price (USDs) to calculate the interest in pegg currencies (10% more)
@@ -35,3 +37,19 @@ netted_npartly_anypos[1] = "LongPosNettedPartly";
 netted_npartly_anypos[2] = "ShortPosNetted";
 netted_npartly_anypos[3] = "ShortPosNettedPartly";
 
+pt_expiration_dates = new VectorTLS(12*NYears); VectorTLS &expiration_dates = *pt_expiration_dates;
+for ( int i = 0; i < NYears; i++ )
+  {
+    expiration_dates[i+11*i]    = "ALL F" + std::to_string(i+initYear);
+    expiration_dates[i+1+11*i]  = "ALL G" + std::to_string(i+initYear);
+    expiration_dates[i+2+11*i]  = "ALL H" + std::to_string(i+initYear);
+    expiration_dates[i+3+11*i]  = "ALL J" + std::to_string(i+initYear);
+    expiration_dates[i+4+11*i]  = "ALL K" + std::to_string(i+initYear);
+    expiration_dates[i+5+11*i]  = "ALL M" + std::to_string(i+initYear);
+    expiration_dates[i+6+11*i]  = "ALL N" + std::to_string(i+initYear);
+    expiration_dates[i+7+11*i]  = "ALL Q" + std::to_string(i+initYear);
+    expiration_dates[i+8+11*i]  = "ALL U" + std::to_string(i+initYear);
+    expiration_dates[i+9+11*i]  = "ALL V" + std::to_string(i+initYear);
+    expiration_dates[i+10+11*i] = "ALL X" + std::to_string(i+initYear);
+    expiration_dates[i+11+11*i] = "ALL Z" + std::to_string(i+initYear);
+  }

@@ -1618,7 +1618,7 @@ int CMPTransaction::logicMath_CreatePropertyVariable()
         PrintToLog("%s(): rejected: value out of range or zero: %d\n", __func__, nValue);
         return (PKT_ERROR_SP -23);
     }
-
+    
     if (!IsPropertyIdValid(property)) {
         PrintToLog("%s(): rejected: property %d does not exist\n", __func__, property);
         return (PKT_ERROR_SP -24);
@@ -2996,4 +2996,30 @@ int CMPTransaction::logicMath_AcceptOfferBTC()
     int rc = DEx_acceptCreate(sender, receiver, propertyId, nValue, block, tx_fee_paid, &nNewValue);
 
     return rc;
+}
+
+struct FutureContractObject *getFutureContractObject(uint32_t property_type, std::string identifier)
+{
+  struct FutureContractObject *pt_fco = new FutureContractObject;
+  extern VectorTLS *pt_expiration_dates; VectorTLS &expiration_dates = *pt_expiration_dates;
+  
+  pt_fco->fco_property_type = property_type;
+  pt_fco->fco_identifier = identifier;
+  
+  if ( isPropertyContract(property_type))
+    {
+      CMPSPInfo::Entry sp;
+      assert(_my_sps->getSP(property_type, sp));
+      
+      pt_fco->fco_denomination = sp.denomination;
+      pt_fco->fco_blocks_until_expiration = sp.blocks_until_expiration;
+      pt_fco->fco_notional_size = sp.notional_size;
+      pt_fco->fco_collateral_currency = sp.collateral_currency;
+      pt_fco->fco_margin_requirement = sp.margin_requirement;
+      pt_fco->fco_name = sp.name;
+      pt_fco->fco_subcategory = sp.subcategory;
+      pt_fco->fco_issuer = sp.issuer;
+      pt_fco->fco_init_block = sp.init_block;
+    }
+  return pt_fco;   
 }

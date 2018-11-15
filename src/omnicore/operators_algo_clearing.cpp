@@ -1,5 +1,4 @@
 #include "operators_algo_clearing.h"
-#include <bits/stdc++.h>
 #include "tradelayer_matrices.h"
 #include "externfns.h"
 #include <unordered_set>

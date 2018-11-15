@@ -383,5 +383,21 @@ public:
 /** Parses a transaction and populates the CMPTransaction object. */
 int ParseTransaction(const CTransaction& tx, int nBlock, unsigned int idx, CMPTransaction& mptx, unsigned int nTime=0);
 
+struct FutureContractObject
+{
+  uint32_t fco_property_type;
+  std::string fco_identifier;
+  uint32_t fco_denomination;
+  uint32_t fco_blocks_until_expiration;
+  uint32_t fco_notional_size;
+  uint32_t fco_collateral_currency;
+  uint32_t fco_margin_requirement;
+  std::string fco_name;
+  std::string fco_subcategory;
+  std::string fco_issuer;
+  int fco_init_block;
+};
+
+struct FutureContractObject *getFutureContractObject(uint32_t property_type, std::string identifier);
 
 #endif // OMNICORE_TX_H
