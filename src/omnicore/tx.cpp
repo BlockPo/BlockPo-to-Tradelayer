@@ -1619,7 +1619,7 @@ int CMPTransaction::logicMath_CreatePropertyVariable()
         PrintToLog("%s(): rejected: value out of range or zero: %d\n", __func__, nValue);
         return (PKT_ERROR_SP -23);
     }
-    
+
     if (!IsPropertyIdValid(property)) {
         PrintToLog("%s(): rejected: property %d does not exist\n", __func__, property);
         return (PKT_ERROR_SP -24);
@@ -2284,7 +2284,7 @@ int CMPTransaction::logicMath_CreateContractDex()
     
     const uint32_t propertyId = _my_sps->putSP(ecosystem, newSP);
     assert(propertyId > 0);
-    
+
     PrintToLog("Contract id: %d\n", propertyId);
     PrintToLog("ecosystemSP: %d\n", ecosystem);
     
@@ -2307,13 +2307,13 @@ int CMPTransaction::logicMath_ContractDexTrade()
       }
     blockHash = pindex->GetBlockHash();
   }
-  
+
   CMPSPInfo::Entry sp;
   if(!_my_sps->getSP(contractId, sp)) {
     PrintToLog("%s(): ERROR: No contractId found!\n", __func__);
     return -1;
   }
-  
+
   id_contract = contractId;
   int64_t marginRe = static_cast<int64_t>(sp.margin_requirement);
   int64_t nBalance = getMPbalance(sender, sp.collateral_currency, BALANCE);
@@ -2497,7 +2497,7 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
         return (PKT_ERROR_SP -37);
     }
 
-        // checking collateral currency
+    // checking collateral currency
     int64_t nBalance = getMPbalance(sender, propertyId, BALANCE);
     if (nBalance == 0) {
         PrintToLog("%s(): rejected: sender %s has insufficient collateral currency in balance %d \n",
@@ -2507,6 +2507,8 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
              PrintToLog("rejected: sender has insufficient collateral currency in balance\n");
         return (PKT_ERROR_SEND -25);
     }
+
+    struct FutureContractObject *getFutureContractObject()
 
     CMPSPInfo::Entry sp;
     {
@@ -2519,12 +2521,13 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
                 contractId);
             return (PKT_ERROR_SEND -25);
 
-        } else if (sp.subcategory != "Futures Contracts") {
-            PrintToLog(" %s() : property identifier %d does not a future contract\n",
-            __func__,
-            sender,
-            contractId);
-            return (PKT_ERROR_SEND -25);
+        if(!sp.isContract()) {
+            PrintToLog(" %s() : Property related is not a contract\n",
+                __func__,
+                sender,
+                contractId);
+            return (PKT_ERROR_SEND -26);
+        }
 
         } else if (sp.collateral_currency != propertyId) {
             PrintToLog(" %s() : Future contract has not this collateral currency %d\n",
@@ -3024,5 +3027,5 @@ struct FutureContractObject *getFutureContractObject(uint32_t property_type, std
       pt_fco->fco_issuer = sp.issuer;
       pt_fco->fco_init_block = sp.init_block;
     }
-  return pt_fco;   
+  return pt_fco;
 }

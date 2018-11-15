@@ -157,7 +157,7 @@ static bool writePersistence(int block_now)
 std::string mastercore::strMPProperty(uint32_t propertyId)
 {
   std::string str = "*unknown*";
-  
+
   // test user-token
   if (0x80000000 & propertyId)
     {
@@ -176,7 +176,7 @@ std::string mastercore::strMPProperty(uint32_t propertyId)
 	default:
 	  str = strprintf("SP token: %d", propertyId);
 	}
-    } 
+    }
   return str;
 }
 
@@ -346,14 +346,14 @@ int64_t getUserAvailableMPbalance(const std::string& address, uint32_t propertyI
 bool mastercore::isTestEcosystemProperty(uint32_t propertyId)
 {
   if ((OMNI_PROPERTY_TALL == propertyId) || (TEST_ECO_PROPERTY_1 <= propertyId)) return true;
-  
+
   return false;
 }
 
 bool mastercore::isMainEcosystemProperty(uint32_t propertyId)
 {
   if ((OMNI_PROPERTY_BTC != propertyId) && !isTestEcosystemProperty(propertyId)) return true;
-  
+
   return false;
 }
 
@@ -386,26 +386,26 @@ int64_t mastercore::getTotalTokens(uint32_t propertyId, int64_t* n_owners_total)
   if (false == _my_sps->getSP(propertyId, property)) {
     return 0; // property ID does not exist
   }
-  
+
   if (!property.fixed || n_owners_total) {
     for (std::unordered_map<std::string, CMPTally>::const_iterator it = mp_tally_map.begin(); it != mp_tally_map.end(); ++it) {
       const CMPTally& tally = it->second;
-      
+
       totalTokens += tally.getMoney(propertyId, BALANCE);
-      
+
       if (prev != totalTokens) {
 	prev = totalTokens;
 	owners++;
       }
     }
   }
-  
+
   if (property.fixed) {
     totalTokens = property.num_tokens; // only valid for TX50
   }
-  
+
   if (n_owners_total) *n_owners_total = owners;
-  
+
   return totalTokens;
 }
 
@@ -636,6 +636,7 @@ static unsigned int nCacheMiss = 0;
  */
 static bool FillTxInputCache(const CTransaction& tx)
 {
+    LOCK(cs_tx_cache);
     static unsigned int nCacheSize = gArgs.GetArg("-omnitxcache", 500000);
 
     if (view.GetCacheSize() > nCacheSize) {
@@ -1174,7 +1175,7 @@ int input_globals_state_string(const string &s)
   std::vector<std::string> vstr;
   boost::split(vstr, s, boost::is_any_of(" ,="), token_compress_on);
   if (2 != vstr.size()) return -1;
-  
+
   int i = 0;
   nextSPID = boost::lexical_cast<unsigned int>(vstr[i++]);
   nextTestSPID = boost::lexical_cast<unsigned int>(vstr[i++]);
@@ -1613,12 +1614,12 @@ static int write_globals_state(ofstream &file, SHA256_CTX *shaCtx)
   unsigned int nextTestSPID = _my_sps->peekNextSPID(OMNI_PROPERTY_TALL);
 
   std::string lineOut = strprintf("%d,%d", nextSPID, nextTestSPID);
-  
+
   PrintToLog("write_global_state, lineOut : %s \n",lineOut);
-  
+
   // add the line to the hash
   SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
-  
+
   // write the line
   file << lineOut << endl;
 
@@ -3041,7 +3042,7 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   if ( contractId == ALL_PROPERTY_TYPE_CONTRACT )
     saveDataGraphs(fileglobalVolumeALL_DUSD, std::to_string(FormatShortIntegerMP(globalVolumeALL_DUSD)));
   fileglobalVolumeALL_DUSD.close();
-  
+
   // adding the upnl
   double uPNL1 = static_cast<double>(factorE * UPNL1);
   double uPNL2 = static_cast<double>(factorE * UPNL2);
@@ -3687,12 +3688,12 @@ rational_t mastercore::notionalChange(uint32_t contractId)
 {
   int index = static_cast<unsigned int>(contractId);
   int64_t den = static_cast<int64_t>(marketP[index]);
-  
+
   if ( den == 0 ) {
     PrintToConsole("returning 1\n");
     return rational_t(1,1);
   }
-  
+
   rational_t uPrice = rational_t(1,den);
 
   switch (contractId)
@@ -3706,7 +3707,7 @@ rational_t mastercore::notionalChange(uint32_t contractId)
       if (uPrice > 0){
 	return uPrice;
       }
-      break;      
+      break;
     default: return rational_t(1,1);
     }
   return rational_t(1,1);

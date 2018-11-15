@@ -2821,7 +2821,7 @@ bool CWallet::CreateTransaction(const std::vector<CRecipient>& vecSend, CWalletT
                     if (!SelectCoins(vAvailableCoins, nValueToSelect, setCoins, nValueIn, &coin_control))
                     {
                         strFailReason = _("Insufficient funds");
-                       // return false;  TODO: FIX THIS LATER!!!!
+                       return false;  
                     }
                 }
 
