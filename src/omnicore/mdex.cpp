@@ -171,7 +171,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
 
       CMPSPInfo::Entry sp;
       assert(_my_sps->getSP(propertyForSale, sp));
-
+      
       uint32_t marginRequirementContract = sp.margin_requirement;
       int64_t marginRequirement = static_cast<int64_t>(marginRequirementContract);
       uint32_t collateralCurrency = sp.collateral_currency;

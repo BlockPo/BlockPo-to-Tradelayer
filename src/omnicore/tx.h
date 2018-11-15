@@ -105,6 +105,7 @@ private:
     uint32_t notional_size;
     uint32_t collateral_currency;
     uint32_t margin_requirement;
+    uint32_t ecosystemSP;
     /*uint32_t numerator;*/
     uint32_t denomination;
     // int block;

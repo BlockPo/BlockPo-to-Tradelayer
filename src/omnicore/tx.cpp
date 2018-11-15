@@ -13,6 +13,7 @@
 #include "omnicore/varint.h"
 #include "omnicore/mdex.h"
 #include "omnicore/uint256_extensions.h"
+#include "omnicore/externfns.h"
 
 #include "amount.h"
 #include "validation.h"
@@ -2279,12 +2280,14 @@ int CMPTransaction::logicMath_CreateContractDex()
     newSP.margin_requirement = margin_requirement;
     newSP.init_block = block;
     newSP.denomination = denomination;
-
+    newSP.ecosystemSP = ecosystem;
+    
     const uint32_t propertyId = _my_sps->putSP(ecosystem, newSP);
     assert(propertyId > 0);
     
-    PrintToLog("Contract id: %d\n",propertyId);
-
+    PrintToLog("Contract id: %d\n", propertyId);
+    PrintToLog("ecosystemSP: %d\n", ecosystem);
+    
     return 0;
 }
 
@@ -3001,16 +3004,16 @@ int CMPTransaction::logicMath_AcceptOfferBTC()
 struct FutureContractObject *getFutureContractObject(uint32_t property_type, std::string identifier)
 {
   struct FutureContractObject *pt_fco = new FutureContractObject;
-  extern VectorTLS *pt_expiration_dates; VectorTLS &expiration_dates = *pt_expiration_dates;
+  /** extern VectorTLS *pt_expiration_dates; VectorTLS &expiration_dates = *pt_expiration_dates;*/
   
   pt_fco->fco_property_type = property_type;
   pt_fco->fco_identifier = identifier;
   
-  if ( isPropertyContract(property_type))
+  CMPSPInfo::Entry sp;
+  assert(_my_sps->getSP(sp.ecosystemSP, sp));
+  
+  if ( isPropertyContract(property_type) && finding_string(identifier, sp.subcategory) )
     {
-      CMPSPInfo::Entry sp;
-      assert(_my_sps->getSP(property_type, sp));
-      
       pt_fco->fco_denomination = sp.denomination;
       pt_fco->fco_blocks_until_expiration = sp.blocks_until_expiration;
       pt_fco->fco_notional_size = sp.notional_size;

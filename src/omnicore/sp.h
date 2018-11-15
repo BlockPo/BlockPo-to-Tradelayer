@@ -94,6 +94,7 @@ public:
         uint32_t margin_requirement;
         int64_t contracts_needed;
         int init_block;
+        uint32_t ecosystemSP;
         /*uint32_t numerator; */
         uint32_t denomination;
         /* int64_t ticksize; */

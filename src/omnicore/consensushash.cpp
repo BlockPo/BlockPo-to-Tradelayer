@@ -318,7 +318,7 @@ namespace mastercore
          if (msc_debug_consensus_hash) PrintToLog("Adding Crowdsale entry to consensus hash: %s\n", dataStr);
          SHA256_Update(&shaCtx, dataStr.c_str(), dataStr.length());
      }
-
+     
      // Properties - loop through each property and store the issuer (to capture state changes via change issuer transactions)
      // Note: we are loading every SP from the DB to check the issuer, if using consensus_hash_every_block debug option this
      //       will slow things down dramatically.  Not an issue to do it once every 10,000 blocks for checkpoint verification.
