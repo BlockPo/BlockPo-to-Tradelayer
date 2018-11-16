@@ -2039,7 +2039,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
     {
       mastercore_init();
     }
-
+  
   // clear pending, if any
   // NOTE1: Every incoming TX is checked, not just MP-ones because:
   // if for some reason the incoming TX doesn't pass our parser validation steps successfuly, I'd still want to clear pending amounts for that TX.

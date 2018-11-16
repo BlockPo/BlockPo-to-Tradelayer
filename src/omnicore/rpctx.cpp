@@ -778,7 +778,7 @@ UniValue tl_sendtrade(const JSONRPCRequest& request)
 
 UniValue tl_createcontract(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 8)
+  if (request.params.size() != 9)
     throw runtime_error(
 			"tl_createcontract \"fromaddress\" ecosystem type previousid \"category\" \"subcategory\" \"name\" \"url\" \"data\" propertyiddesired tokensperunit deadline ( earlybonus issuerpercentage )\n"
 
@@ -810,11 +810,12 @@ UniValue tl_createcontract(const JSONRPCRequest& request)
   uint32_t notional_size = ParseNewValues(request.params[5]);
   uint32_t collateral_currency = ParseNewValues(request.params[6]);
   uint32_t margin_requirement = ParseNewValues(request.params[7]);
-
+  uint32_t attribute_type = ParseNewValues(request.params[8]);
+  
   RequirePropertyName(name);
   RequireSaneName(name);
   
-  std::vector<unsigned char> payload = CreatePayload_CreateContract(ecosystem, type, name, blocks_until_expiration, notional_size, collateral_currency, margin_requirement);
+  std::vector<unsigned char> payload = CreatePayload_CreateContract(ecosystem, type, name, blocks_until_expiration, notional_size, collateral_currency, margin_requirement, attribute_type);
 
   uint256 txid;
   std::string rawHex;

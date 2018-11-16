@@ -106,6 +106,7 @@ private:
     uint32_t collateral_currency;
     uint32_t margin_requirement;
     uint32_t ecosystemSP;
+    uint32_t attribute_type;
     /*uint32_t numerator;*/
     uint32_t denomination;
     // int block;
@@ -386,19 +387,18 @@ int ParseTransaction(const CTransaction& tx, int nBlock, unsigned int idx, CMPTr
 
 struct FutureContractObject
 {
-  uint32_t fco_property_type;
-  std::string fco_identifier;
   uint32_t fco_denomination;
   uint32_t fco_blocks_until_expiration;
   uint32_t fco_notional_size;
   uint32_t fco_collateral_currency;
   uint32_t fco_margin_requirement;
+  int fco_init_block;
   std::string fco_name;
   std::string fco_subcategory;
   std::string fco_issuer;
-  int fco_init_block;
 };
 
 struct FutureContractObject *getFutureContractObject(uint32_t property_type, std::string identifier);
 
+  
 #endif // OMNICORE_TX_H

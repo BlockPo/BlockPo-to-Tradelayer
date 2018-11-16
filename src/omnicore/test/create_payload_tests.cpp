@@ -298,9 +298,10 @@ BOOST_AUTO_TEST_CASE(payload_create_contract)
         static_cast<uint32_t>(3000),         // blocks until expiration
         static_cast<uint32_t>(2),            // notional size
         static_cast<uint32_t>(3),            // collateral currency
-        static_cast<uint32_t>(3)             // margin rpcrequirements
+        static_cast<uint32_t>(3),             // margin rpcrequirements
+	static_cast<uint32_t>(3)             // attribute_type
     );
-        BOOST_CHECK_EQUAL(HexStr(vch),"00280101414c4c2f6455534400b81702030300");
+    BOOST_CHECK_EQUAL(HexStr(vch),"00280101414c4c2f6455534400b81702030300");
 }
 
 BOOST_AUTO_TEST_CASE(payload_trade_contract)

@@ -305,7 +305,7 @@ std::vector<unsigned char> CreatePayload_OmniCoreAlert(uint16_t alertType, uint3
     return payload;
 }
 
-std::vector<unsigned char> CreatePayload_CreateContract(uint8_t ecosystem, uint32_t denomType, std::string name, uint32_t blocks_until_expiration, uint32_t notional_size, uint32_t collateral_currency, uint32_t margin_requirement)
+std::vector<unsigned char> CreatePayload_CreateContract(uint8_t ecosystem, uint32_t denomType, std::string name, uint32_t blocks_until_expiration, uint32_t notional_size, uint32_t collateral_currency, uint32_t margin_requirement, uint32_t attribute_type)
 {
   std::vector<unsigned char> payload;
   
@@ -320,6 +320,7 @@ std::vector<unsigned char> CreatePayload_CreateContract(uint8_t ecosystem, uint3
   std::vector<uint8_t> vecNotionalSize = CompressInteger((uint64_t)notional_size);
   std::vector<uint8_t> vecCollateralCurrency = CompressInteger((uint64_t)collateral_currency);
   std::vector<uint8_t> vecMarginRequirement = CompressInteger((uint64_t)margin_requirement);
+  std::vector<uint8_t> vecAttributeType = CompressInteger((uint64_t)attribute_type);
   
   if ((name).size() > 255) name = name.substr(0,255);
   payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
@@ -332,6 +333,7 @@ std::vector<unsigned char> CreatePayload_CreateContract(uint8_t ecosystem, uint3
   payload.insert(payload.end(), vecNotionalSize.begin(), vecNotionalSize.end());
   payload.insert(payload.end(), vecCollateralCurrency.begin(), vecCollateralCurrency.end());
   payload.insert(payload.end(), vecMarginRequirement.begin(), vecMarginRequirement.end());
+  payload.insert(payload.end(), vecAttributeType.begin(), vecAttributeType.end());
   payload.push_back('\0');
   
   return payload;

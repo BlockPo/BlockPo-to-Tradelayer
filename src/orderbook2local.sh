@@ -54,18 +54,15 @@ do
     ADDRess[$i]=$($SRCDIR/litecoin-cli -datadir=$DATADIR --regtest  getnewaddress OMNIAccount)
     echo ${ADDRess[$i]} >> graphInfoAddresses.txt
 done
-
 ##################################################################
 printf "\n________________________________________\n"
 printf " Funding the address with some testnet BTC for fees: 40 BTC to this address\n"
 $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest  sendfrom "" ${ADDRBase} ${amount_bitcoin}  # enviamos 10 BTC a ADDR
 printf "Generating one block\n"
 $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest  generate 1
-
 ##################################################################
 printf "\n________________________________________\n"
 printf "   * Participating in the Exodus crowdsale to obtain 1000 OMNIs: To get OMNIs in the first address ADDR\n"
-
 for (( i=1; i<=${N}; i++ ))
 do
     StringJSON+=",\""${ADDRess[$i]}"\":${amountbitcoin_manyaddr}"
@@ -79,7 +76,6 @@ printf "${JSON}"
 printf "\n________________________________________\n"
 $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest sendmany "" $JSON #Sending Bitcoin to every address
 $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1 # Generating one block
-
 ##################################################################
 printf "\n________________________________________\n"
 printf "Creating Future Contract with base address: ${ADDRBase}\n"
@@ -100,7 +96,6 @@ printf "\n________________________________________\n"
 printf "Checking confirmation of transaction Token USDT:\n"
 $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest omni_gettransaction $TRAUSDT
 ./litecoin-cli -datadir=$DATADIR -regrest tl_listproperties
-
 ##################################################################
 for (( i=1; i<=${N}; i++ ))
 do
@@ -114,7 +109,6 @@ do
     $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_getbalance ${ADDRess[$i]} 4
 done
 ##################################################################
-
 for (( i=1; i<=${N}; i++ ))
 do
     printf "\n________________________________________\n"
@@ -152,7 +146,6 @@ do
     $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
     
 done
-
 ##################################################################
 printf "\n Cheking the  orderbok (sellside):\n"
 $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_getcontract_orderbook ${CONTRACT} 2

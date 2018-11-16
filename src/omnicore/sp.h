@@ -92,6 +92,7 @@ public:
         uint32_t notional_size;
         uint32_t collateral_currency;
         uint32_t margin_requirement;
+        uint32_t attribute_type;
         int64_t contracts_needed;
         int init_block;
         uint32_t ecosystemSP;
@@ -146,6 +147,7 @@ public:
             READWRITE(notional_size);
             READWRITE(collateral_currency);
             READWRITE(margin_requirement);
+	    READWRITE(attribute_type);
             READWRITE(init_block);
             READWRITE(contract_associated);
             READWRITE(denomination);
@@ -306,7 +308,11 @@ bool isPropertyContract(uint32_t propertyId);
 
 }
 
-
-
+/* class CMPSPInfoContract : CMPSPInfo */
+/* { */
+/*  public: */
+  
+/*  private: */
+/* }; */
 
 #endif // OMNICORE_SP_H

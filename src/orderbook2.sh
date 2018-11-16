@@ -34,7 +34,7 @@ printf "\n________________________________________\n"
 printf "Base address to work with:\n"
 printf $ADDRBase
 
-N=50
+N=10
 
 amount_bitcoin=10
 amountbitcoin_baseaddr=100
@@ -43,7 +43,7 @@ amountbitcoin_moneyaddr=1
 notional_size=1
 margin_requirement=1
 amountusdts_manyaddr=2000000
-blocks_until_expiration=125
+blocks_until_expiration=25
 CONTRACT=3
 collateral=4
 
@@ -81,11 +81,10 @@ printf "${JSON}"
 printf "\n________________________________________\n"
 $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest sendmany "" $JSON #Sending Bitcoin to every address
 $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1 # Generating one block
-
 ##################################################################
 printf "\n________________________________________\n"
 printf "Creating Future Contract with base address: ${ADDRBase}\n"
-TRACreate=$($SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_createcontract $ADDRBase 1 1 "Future ALL" ${blocks_until_expiration} ${notional_size} ${collateral} ${margin_requirement})
+TRACreate=$($SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_createcontract $ADDRBase 1 1 "ALL F19" ${blocks_until_expiration} ${notional_size} ${collateral} ${margin_requirement} ${CONTRACT})
 $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
 
 printf "\n________________________________________\n"

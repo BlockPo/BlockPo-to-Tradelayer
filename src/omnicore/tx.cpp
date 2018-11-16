@@ -885,7 +885,8 @@ bool CMPTransaction::interpret_CreateContractDex()
   std::vector<uint8_t> vecNotionalSize = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecCollateralCurrency = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecMarginRequirement = GetNextVarIntBytes(i);
-
+  std::vector<uint8_t> vecAttributeType = GetNextVarIntBytes(i);
+  
   if (!vecVersionBytes.empty()) {
     version = DecompressInteger(vecVersionBytes);
   } else return false;
@@ -913,7 +914,11 @@ bool CMPTransaction::interpret_CreateContractDex()
   if (!vecMarginRequirement.empty()) {
     margin_requirement = DecompressInteger(vecMarginRequirement);
   } else return false;
-
+  
+  if (!vecAttributeType.empty()) {
+    attribute_type = DecompressInteger(vecAttributeType);
+  } else return false;
+  
   std::string sub = "Futures Contracts";
   strcpy(subcategory, sub.c_str());
 
@@ -928,8 +933,9 @@ bool CMPTransaction::interpret_CreateContractDex()
   PrintToLog("margin requirement: %d\n", margin_requirement);
   PrintToLog("ecosystem: %d\n", ecosystem);
   PrintToLog("name: %s\n", name);
+  PrintToLog("attribute_type: %d\n", attribute_type);
   PrintToLog("------------------------------------------------------------\n");
-
+  
   return true;
 }
 
@@ -2256,6 +2262,7 @@ int CMPTransaction::logicMath_CreateContractDex()
     PrintToLog("collateral currency: %d\n", collateral_currency);
     PrintToLog("margin requirement: %d\n", margin_requirement);
     PrintToLog("ecosystem: %d\n", ecosystem);
+    PrintToLog("attribute_type: %d\n", attribute_type);
     PrintToLog("name: %s\n", name);
     PrintToLog("sugcategory : %s\n", subcategory);
     PrintToLog("Sender: %s\n", sender);
@@ -2281,6 +2288,7 @@ int CMPTransaction::logicMath_CreateContractDex()
     newSP.init_block = block;
     newSP.denomination = denomination;
     newSP.ecosystemSP = ecosystem;
+    newSP.attribute_type = attribute_type;
     
     const uint32_t propertyId = _my_sps->putSP(ecosystem, newSP);
     assert(propertyId > 0);
@@ -3003,27 +3011,47 @@ int CMPTransaction::logicMath_AcceptOfferBTC()
 }
 
 struct FutureContractObject *getFutureContractObject(uint32_t property_type, std::string identifier)
-{
+{  
   struct FutureContractObject *pt_fco = new FutureContractObject;
-  /** extern VectorTLS *pt_expiration_dates; VectorTLS &expiration_dates = *pt_expiration_dates;*/
   
-  pt_fco->fco_property_type = property_type;
-  pt_fco->fco_identifier = identifier;
-  
-  CMPSPInfo::Entry sp;
-  assert(_my_sps->getSP(sp.ecosystemSP, sp));
-  
-  if ( isPropertyContract(property_type) && finding_string(identifier, sp.subcategory) )
+  LOCK(cs_tally);
+  uint32_t nextSPID = _my_sps->peekNextSPID(1);
+  for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
     {
-      pt_fco->fco_denomination = sp.denomination;
-      pt_fco->fco_blocks_until_expiration = sp.blocks_until_expiration;
-      pt_fco->fco_notional_size = sp.notional_size;
-      pt_fco->fco_collateral_currency = sp.collateral_currency;
-      pt_fco->fco_margin_requirement = sp.margin_requirement;
-      pt_fco->fco_name = sp.name;
-      pt_fco->fco_subcategory = sp.subcategory;
-      pt_fco->fco_issuer = sp.issuer;
-      pt_fco->fco_init_block = sp.init_block;
+      CMPSPInfo::Entry sp;
+      if (_my_sps->getSP(propertyId, sp))
+	{
+	  if ( sp.attribute_type == property_type && sp.name == identifier ) /** Futures */
+	    {
+	      PrintToLog("\npropertyId: %d\n", propertyId);
+	      PrintToLog("\nattribute_type: %d\n", sp.attribute_type);
+	      PrintToLog("\nname: %d\n", sp.name);
+	      pt_fco->fco_denomination = sp.denomination;
+	      pt_fco->fco_blocks_until_expiration = sp.blocks_until_expiration;
+	      pt_fco->fco_notional_size = sp.notional_size;
+	      pt_fco->fco_collateral_currency = sp.collateral_currency;
+	      pt_fco->fco_margin_requirement = sp.margin_requirement;
+	      pt_fco->fco_name = sp.name;
+	      pt_fco->fco_subcategory = sp.subcategory;
+	      pt_fco->fco_issuer = sp.issuer;
+	      pt_fco->fco_init_block = sp.init_block;
+	    }
+	  else if ( property_type == 4 && sp.subcategory == identifier )  /** Peggeds */
+	    {
+	      PrintToLog("\npropertyId: %d\n", propertyId);
+	      PrintToLog("\nattribute_type: %d\n", sp.attribute_type);
+	      PrintToLog("\nname: %d\n", sp.name);
+	      pt_fco->fco_denomination = sp.denomination;
+	      pt_fco->fco_blocks_until_expiration = sp.blocks_until_expiration;
+	      pt_fco->fco_notional_size = sp.notional_size;
+	      pt_fco->fco_collateral_currency = sp.collateral_currency;
+	      pt_fco->fco_margin_requirement = sp.margin_requirement;
+	      pt_fco->fco_name = sp.name;
+	      pt_fco->fco_subcategory = sp.subcategory;
+	      pt_fco->fco_issuer = sp.issuer;
+	      pt_fco->fco_init_block = sp.init_block;
+	    }
+	}
     }
   return pt_fco;
 }

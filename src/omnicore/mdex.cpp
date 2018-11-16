@@ -168,7 +168,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       idx_q += 1;
       const int idx_qp = idx_q;
       PrintToLog("Checking idx_q = %d", idx_qp);
-
+      
       CMPSPInfo::Entry sp;
       assert(_my_sps->getSP(propertyForSale, sp));
       
@@ -177,12 +177,16 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       uint32_t collateralCurrency = sp.collateral_currency;
       uint32_t notionalSize = sp.notional_size;
 
+      struct FutureContractObject *pfuture = getFutureContractObject(propertyForSale, "ALL F19");
+      PrintToLog("fco_margin_requirement : %d\n", static_cast<int64_t>(pfuture->fco_margin_requirement));
+      
       PrintToLog("\n---------------------------------------------------\n");
       PrintToLog("Inside x_trade function:\n");
       PrintToLog("marginRequirement : %d\n", marginRequirement);
       PrintToLog("marginRequirementContract : %d\n", marginRequirementContract);
       PrintToLog("collateral currency id of contract : %d\n",collateralCurrency);
       PrintToLog("notional size : %d\n",notionalSize);
+      PrintToLog("subcategory : %d\n", sp.subcategory);
       /********************************************************/
       /** Preconditions */
       assert(pold->getProperty() == pnew->getProperty());
