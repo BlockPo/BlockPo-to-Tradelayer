@@ -196,6 +196,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_getmargin", 1, "arg1" },
     { "tl_getproperty", 0, "arg0" },
     { "tl_getposition", 1, "arg1" },
+    { "tl_getfullposition", 1, "arg1" },
     { "tl_getupnl", 1, "arg1" },
     { "tl_getpnl", 1, "arg1" },
     { "tl_listtransactions", 1, "arg1" },
