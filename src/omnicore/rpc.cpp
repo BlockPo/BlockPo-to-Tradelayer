@@ -28,7 +28,9 @@
 #include "omnicore/version.h"
 #include "omnicore/wallettxs.h"
 #include "omnicore/mdex.h"
+#include "omnicore/uint256_extensions.h"
 
+#include "arith_uint256.h"
 #include "amount.h"
 #include "chainparams.h"
 #include "init.h"
@@ -57,7 +59,7 @@ using std::runtime_error;
 using namespace mastercore;
 
 extern int64_t factorE;
-
+extern rational_t globalNotionalPrice;
 /**
  * Throws a JSONRPCError, depending on error code.
  */
@@ -1825,6 +1827,36 @@ UniValue tl_getpeggedhistory(const JSONRPCRequest& request)
 }
 
 
+UniValue tl_getallprice(const JSONRPCRequest& request)
+{
+    if (false)
+        throw runtime_error(
+            "tl_getallprice \n"
+            "\nRetrieves the ALL price in metadex (in dUSD) .\n"
+            "\nResult:\n"
+            "[                                      (array of JSON objects)\n"
+            "  {\n"
+            "    \"price\" : nnnnnn,                       (number) the price of 1 ALL in dUSD\n"
+            "  },\n"
+            "  ...\n"
+            "]\n"
+            "\nExamples:\n"
+            + HelpExampleCli("tl_getallprice", "")
+            + HelpExampleRpc("tl_getallprice", "")
+        );
+
+    UniValue balanceObj(UniValue::VOBJ);
+
+    int64_t num = globalNotionalPrice.numerator().convert_to<int64_t>();
+    int64_t den = globalNotionalPrice.denominator().convert_to<int64_t>();
+    arith_uint256 price = (ConvertTo256(num) *ConvertTo256(factorE)/ (ConvertTo256(den)));
+    int64_t iPrice = ConvertTo64(price);
+    balanceObj.push_back(Pair("unitprice", FormatByType(static_cast<uint64_t>(iPrice),2)));
+    balanceObj.push_back(Pair("num", FormatByType(static_cast<uint64_t>(num*factorE),2)));
+    balanceObj.push_back(Pair("den", FormatByType(static_cast<uint64_t>(den*factorE),2)));
+    return balanceObj;
+}
+
 UniValue tl_getupnl(const JSONRPCRequest& request)
 {
     if (request.params.size() != 2)
@@ -2122,6 +2154,7 @@ static const CRPCCommand commands[] =
   { "trade layer (data retieval)" , "tl_getpeggedhistory",          &tl_getpeggedhistory,           {} },
   { "trade layer (data retieval)" , "tl_getcontract_reserve",       &tl_getcontract_reserve,        {} },
   { "trade layer (data retieval)" , "tl_getmargin",                 &tl_getmargin,                  {} },
+  { "trade layer (data retieval)" , "tl_getallprice",                 &tl_getallprice,                {} },
 };
 
 void RegisterOmniDataRetrievalRPCCommands(CRPCTable &tableRPC)

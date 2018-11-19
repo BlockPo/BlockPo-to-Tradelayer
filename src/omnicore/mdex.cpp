@@ -55,6 +55,7 @@ extern std::vector<std::map<std::string, std::string>> path_ele;
 extern int n_cols;
 extern int n_rows;
 extern MatrixTLS *pt_ndatabase;
+extern rational_t globalNotionalPrice;
 
 md_PricesMap* mastercore::get_Prices(uint32_t prop)
 {
@@ -408,7 +409,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       int64_t lives_maker0 = 0, lives_maker1 = 0, lives_maker2 = 0, lives_maker3 = 0;
       int64_t lives_taker0 = 0, lives_taker1 = 0, lives_taker2 = 0, lives_taker3 = 0;
       int64_t nCouldBuy0 = 0, nCouldBuy1 = 0, nCouldBuy2 = 0, nCouldBuy3 = 0;
-      
+
       lives_maker0 = lives_maker;
       lives_taker0 = lives_taker;
       nCouldBuy0 = nCouldBuy;
@@ -1200,6 +1201,9 @@ MatchReturnType x_Trade(CMPMetaDEx* const pnew)
             assert(pold->unitPrice() <= pnew->inversePrice());
             assert(pnew->unitPrice() <= pold->inversePrice());
 
+            globalNotionalPrice = pnew->unitPrice();
+            /*Lets gonna take the pnew->unitPrice() as the ALL unit price*/
+            /*unitPrice = 1 ALL on dUSD*/
             ///////////////////////////
 
             // First determine how many representable (indivisible) tokens Alice can

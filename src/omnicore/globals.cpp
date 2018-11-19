@@ -9,8 +9,9 @@
 using namespace std;
 
 volatile uint64_t marketPrice;
-int64_t priceIndex; 
-int64_t allPrice;  
+rational_t globalNotionalPrice;
+int64_t priceIndex;
+int64_t allPrice;
 double percentLiqPrice;
 int64_t factorE;
 double denMargin;

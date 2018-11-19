@@ -131,6 +131,7 @@ static int mastercoreInitialized = 0;
 static int reorgRecoveryMode = 0;
 static int reorgRecoveryMaxHeight = 0;
 
+extern rational_t globalNotionalPrice;
 extern int64_t factorE;
 extern double denMargin;
 extern uint64_t marketP[NPTYPES];
@@ -3039,7 +3040,7 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   if ( contractId == MSC_PROPERTY_TYPE_CONTRACT )
     saveDataGraphs(fileglobalVolumeALL_DUSD, std::to_string(FormatShortIntegerMP(globalVolumeALL_DUSD)));
   fileglobalVolumeALL_DUSD.close();
-  
+
   // adding the upnl
   double uPNL1 = static_cast<double>(factorE * UPNL1);
   double uPNL2 = static_cast<double>(factorE * UPNL2);
@@ -3684,23 +3685,19 @@ int marginCall(const std::string& address, uint32_t propertyId, uint64_t marketP
 rational_t mastercore::notionalChange(uint32_t contractId)
 {
     int index = static_cast<unsigned int>(contractId);
-    int64_t den = static_cast<int64_t>(marketP[index]);
-    if (den == 0) {
-        PrintToConsole("returning 1\n");
-        return rational_t(1,1);
-    }
-
-    rational_t uPrice = rational_t(1,den);
-
+    int64_t num = globalNotionalPrice.numerator().convert_to<int64_t>();
+    int64_t den = globalNotionalPrice.denominator().convert_to<int64_t>();
+    PrintToLog("globalNotionalPrice %d =", globalNotionalPrice);
+    rational_t inversePrice = rational_t(den,num);
     switch (contractId) {
             case CONTRACT_ALL_DUSD:
-                if (uPrice > 0){
-                    return uPrice;
+                if (num > 0){
+                    return inversePrice;
                 }
             break;
             case CONTRACT_ALL_LTC:
-                if (uPrice > 0){
-                    return uPrice;
+                if (num > 0){
+                    return inversePrice;
                 }
             break;
 
