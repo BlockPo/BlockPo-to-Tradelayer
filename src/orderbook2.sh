@@ -1,12 +1,12 @@
 #!/bin/bash
 
-SRCDIR=/home/ale/Escritorio/lastgit/src    
-DATADIR=/home/ale/.litecoin
+SRCDIR=/mnt/d/omnicore-litecoin-master-local/src    
+DATADIR=/mndt/d/Datadir/litecoin
 NUL=/dev/null
 printf "\n//////////////////////////////////////////\n"
 printf "Cleaning the regtest folder\n"
 
-sudo rm -r /home/ale/.litecoin/regtest
+sudo rm -r /mndt/d/Datadir/litecoin/regtest
 sudo rm graphInfo*
 sudo rm globalPNLALL_DUSD.txt
 sudo rm globalVolumeALL_DUSD.txt
