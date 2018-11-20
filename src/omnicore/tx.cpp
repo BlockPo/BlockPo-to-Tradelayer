@@ -2339,7 +2339,7 @@ int CMPTransaction::logicMath_ContractDexTrade()
       return (PKT_ERROR_SEND -25);
 
     }
-  else if (conv != 0)
+  else if (conv > 0)
     {
       if (amountToReserve > 0)
 	{
