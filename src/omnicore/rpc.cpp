@@ -668,6 +668,7 @@ UniValue tl_getproperty(const JSONRPCRequest& request)
     response.push_back(Pair("creationtxid", strCreationHash));
     response.push_back(Pair("fixedissuance", sp.fixed));
     response.push_back(Pair("totaltokens", strTotalTokens));
+    response.push_back(Pair("creation block", sp.init_block));
 
     if (sp.subcategory == "Futures Contracts"){
         response.push_back(Pair("notional size",(uint64_t) sp.notional_size));

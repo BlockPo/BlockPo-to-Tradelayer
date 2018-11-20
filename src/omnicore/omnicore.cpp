@@ -539,7 +539,7 @@ int mastercore::GetEncodingClass(const CTransaction& tx, int nBlock)
      * Perform a string comparison on hex for each scriptPubKey & look directly for omni marker bytes
      * This allows to drop non-Omni transactions with less work
      */
-    std::string strClassD = "7071"; /*the pepe marker*/
+    std::string strClassD = "7171"; /*the pepe marker*/
     bool examineClosely = false;
     for (unsigned int n = 0; n < tx.vout.size(); ++n) {
         const CTxOut& output = tx.vout[n];
@@ -2823,8 +2823,8 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
 
   // handle any features that go live with this block
   CheckLiveActivations(pBlockIndex->nHeight);
-  addInterestPegged(nBlockPrev,pBlockIndex);
-  eraseExpiredCrowdsale(pBlockIndex);
+  // addInterestPegged(nBlockPrev,pBlockIndex);
+  // eraseExpiredCrowdsale(pBlockIndex);
   _my_sps->rollingContractsBlock(pBlockIndex); // NOTE: we are checking every contract expiration
   return 0;
 }
@@ -3824,7 +3824,7 @@ const std::string ExodusAddress()
  */
 const std::vector<unsigned char> GetOmMarker()
 {
-    static unsigned char pch[] = {0x70, 0x71}; // Hex-encoded: "pq"
+    static unsigned char pch[] = {0x71, 0x71}; // Hex-encoded: "pq"
 
     return std::vector<unsigned char>(pch, pch + sizeof(pch) / sizeof(pch[0]));
 }

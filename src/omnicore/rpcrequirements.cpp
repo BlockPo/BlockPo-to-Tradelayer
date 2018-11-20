@@ -287,7 +287,7 @@ void RequireSaneName(std::string& name)
         if (mastercore::_my_sps->getSP(propertyId, sp)) {
             PrintToConsole("Property Id: %d\n",propertyId);
             if (sp.name == name){
-                throw JSONRPCError(RPC_INVALID_PARAMETER,"We have another pegged currency with the same name\n");
+                throw JSONRPCError(RPC_INVALID_PARAMETER,"We have another property with the same name\n");
             }
         }
     }

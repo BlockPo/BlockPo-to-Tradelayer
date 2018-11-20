@@ -2468,11 +2468,8 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
         blockHash = pindex->GetBlockHash();
     }
 
-    if (OMNI_PROPERTY_MSC != ecosystem && OMNI_PROPERTY_TMSC != ecosystem) {
-        PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, (uint32_t) ecosystem);
-        return (PKT_ERROR_SP -21);
-    }
 //
+// if (OMNI_PROPERTY_MSC != ecosystem && OMNI_PROPERTY_TMSC != ecosystem) {
 //     if (!IsTransactionTypeAllowed(block, ecosystem, type, version)) {
 //         PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
 //                 __func__,
@@ -2677,6 +2674,9 @@ int CMPTransaction::logicMath_SendPeggedCurrency()
 
     assert(update_tally_map(sender, propertyId, -amount, BALANCE));
     assert(update_tally_map(receiver, propertyId, amount, BALANCE));
+
+    // Adding the element to map of pegged currency owners
+    peggedIssuers.insert (std::pair<std::string,uint32_t>(receiver,propertyId));
 
     return 0;
 }

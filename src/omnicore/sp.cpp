@@ -882,33 +882,42 @@ int mastercore::addInterestPegged(int nBlockPrev, const CBlockIndex* pBlockIndex
 
 int CMPSPInfo::rollingContractsBlock(const CBlockIndex* pBlockIndex)
 {
-    PrintToConsole("_________________________________________________________\n");
-    PrintToConsole("Actual block : %d\n",pBlockIndex->nHeight); // Issuer, bid always
+    PrintToLog("_________________________________________________________\n");
+    PrintToLog("INSIDE ROLLING CONTRACT FUNCTION...\n");
+    PrintToLog("Actual block : %d\n",pBlockIndex->nHeight); // Issuer, bid always
+
 
     for (std::map<std::string, uint32_t>::const_iterator it = peggedIssuers.begin(); it != peggedIssuers.end(); it++) {
         const std::string owner = it->first;
         const uint32_t propertyId = it->second;
-
+        PrintToLog("INSIDE FIRST FOR LOOP....\n");
+        PrintToLog("propertyId: %d\n",propertyId);
+        PrintToLog("owner: %s\n",owner);
         // NOTE: We need a map of Contracts and Pegged Currency to look for data faster
         Entry sp;
         if (_my_sps->getSP(propertyId, sp) && sp.subcategory == "Pegged Currency") {
             Entry spp;
             _my_sps->getSP(sp.contract_associated, spp);
-            int expiration = static_cast<int>(spp.blocks_until_expiration);
+            int period = static_cast<int>(spp.blocks_until_expiration);
             int actualBlock = static_cast<int>(pBlockIndex->nHeight);
-            int deadline = expiration + spp.init_block;
-            int rollingBlock = static_cast<int>(trunc( 0.8 * deadline ));  //80% of deadline blocks
+            PrintToLog("CONTRACT ASSOCIATED: %s\n",sp.contract_associated);
+            PrintToLog("ACTUAL BLOCK: %s\n",actualBlock);
+            int rollingBlock = static_cast<int>(spp.init_block) + static_cast<int>(trunc(0.8 * period));  //80% of deadline blocks
+            PrintToLog("ROLLING BLOCK: %s\n",rollingBlock);
             if (rollingBlock != actualBlock) { continue; }
 
             int64_t contractsReserved = getMPbalance(owner,sp.contract_associated, CONTRACTDEX_RESERVE);
 
-            PrintToConsole("Generate the Rolling!\n");
+            PrintToLog("GENERATE ROLLING ****************************************************************************************************!\n");
 
             // then we must rolling the contracts A to contracts B  (selling the contracts and then putting them into RESERVE)
             int64_t bid = edgeOrderbook(sp.contract_associated,2);
+            PrintToLog("bid in Contract A: %d\n",bid);
+            PrintToLog("propId of Contract A: %d\n",sp.contract_associated);
             int64_t positiveBalance = getMPbalance(owner, sp.contract_associated, POSSITIVE_BALANCE);
             int64_t negativeBalance = getMPbalance(owner, sp.contract_associated, NEGATIVE_BALANCE);
-
+            PrintToLog("shortposition Contract A: %d\n",negativeBalance);
+            PrintToLog("shortposition Contract A: %d\n",positiveBalance);
             // calculating the price of the reserve position
             int64_t notionalSize = static_cast<int64_t>(spp.notional_size);
             ui128 uReservePrice = multiply_int64_t(contractsReserved, notionalSize);
@@ -926,16 +935,15 @@ int CMPSPInfo::rollingContractsBlock(const CBlockIndex* pBlockIndex)
             {
                 LOCK(cs_tally);  // TODO: use maps instead search in database
                 uint32_t NextSPID = _my_sps->peekNextSPID(1);
-                PrintToConsole("NextSPID: %d\n",NextSPID);
-                uint32_t begin = sp.contract_associated + 1;
-                for (uint32_t propertyId = begin; propertyId < NextSPID; propertyId++) {
+                PrintToLog("NextSPID: %d\n",NextSPID);
+                for (uint32_t propertyId = 1; propertyId < NextSPID; propertyId++) {
                     CMPSPInfo::Entry fc;
                     if (_my_sps->getSP(propertyId, fc)) {
-                        PrintToConsole("Property Id: %d\n",propertyId);
-                        if (fc.subcategory == "Futures Contracts" && fc.denomination == spp.denomination && fc.name != spp.name){
+                        PrintToLog("Property Id: %d\n",propertyId);
+                        if (fc.subcategory == "Futures Contracts" && fc.denomination == spp.denomination && fc.name != spp.name && sp.contract_associated < propertyId){
                             contractId2 = propertyId;
                             notionalSizeB = static_cast<int64_t>(fc.notional_size);
-                            PrintToConsole("Property to jump in rolling found: %d\n",propertyId);
+                            PrintToLog("Property to jump in rolling found: %d\n",propertyId);
                             break;
                         }
                     }
@@ -944,23 +952,28 @@ int CMPSPInfo::rollingContractsBlock(const CBlockIndex* pBlockIndex)
 
            // If there's no contract to jump to
            if(contractId2 == 0) {
-               PrintToConsole("No contract to jump to\n");
+               PrintToLog("No contract to jump to\n");
                return 0;
            }
 
            int64_t bid1 = edgeOrderbook(contractId2,2);
+           PrintToLog("bid COntract B: %d\n",bid1);
+
            int64_t positiveBalanceB = getMPbalance(owner,contractId2, POSSITIVE_BALANCE);
            int64_t negativeBalanceB = getMPbalance(owner,contractId2, NEGATIVE_BALANCE);
+
+           PrintToLog("shortposition Contract B: %d\n",negativeBalanceB);
+           PrintToLog("shortposition Contract B: %d\n",positiveBalanceB);
 
            // making the calculations of new amount of contracts in reserve
            arith_uint256 toReserve = DivideAndRoundUp(ConvertTo256(reservePrice), ConvertTo256(notionalSizeB)*ConvertTo256(factorE));
            int64_t newReserved = ConvertTo64(toReserve) * factorE;  // TODO: use multiply_int64_t
 
-           PrintToConsole("________________________________________________\n");
-           PrintToConsole("notional Size Contract B: %d\n",notionalSizeB);
-           PrintToConsole("reservePrice: %d\n",reservePrice);
-           PrintToConsole("new reserve: %d\n",newReserved);
-           PrintToConsole("________________________________________________\n");
+           PrintToLog("________________________________________________\n");
+           PrintToLog("notional Size Contract B: %d\n",notionalSizeB);
+           PrintToLog("reservePrice: %d\n",reservePrice);
+           PrintToLog("new reserve: %d\n",newReserved);
+           PrintToLog("________________________________________________\n");
 
            int result2 = ContractDex_ADD(owner,contractId2, newReserved, actualBlock, txid, 0, bid1, 2, 0); // shorting in the future contract B
 
@@ -982,14 +995,24 @@ int CMPSPInfo::rollingContractsBlock(const CBlockIndex* pBlockIndex)
 
            }
 
+           PrintToLog("IN RESERVE / NEW CONTRACT %d: %d\n",contractId2,newReserved);
+
            assert(update_tally_map(owner, contractId2, newReserved, CONTRACTDEX_RESERVE));
 
            int64_t contractsReservedB = getMPbalance(owner,contractId2, CONTRACTDEX_RESERVE);
 
-           PrintToConsole("Price of bid: %d\n",bid1);
 
-           if (result == 0){ PrintToConsole("Order Added in Contract A\n"); }
-           if (result2 == 0){ PrintToConsole("Order Added in Contract B\n"); }
+           if (result == 0){ PrintToLog("Order Added in Contract A\n"); }
+           if (result2 == 0){ PrintToLog("Order Added in Contract B\n"); }
+
+
+           CMPSPInfo::Entry newSP;
+           assert(_my_sps->getSP(propertyId, newSP));
+
+           // Updating the contract_associated of Pegged Currency
+           newSP.contract_associated = contractId2;
+           assert(_my_sps->updateSP(propertyId, newSP));
+           PrintToLog("NEW CONTRACT ASSOCIATED: %d ************************************************\n",newSP.contract_associated);
 
        }
    }
@@ -1106,5 +1129,6 @@ uint64_t mastercore::edgeOrderbook(uint32_t contractId, uint8_t tradingAction)
        result = vecContractDexPrices.back();
     }
 
+    PrintToLog("return of edgeOrderbook: %d\n",result);
     return static_cast<uint64_t>(result);
 }
