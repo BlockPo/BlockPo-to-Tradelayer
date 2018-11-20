@@ -3687,8 +3687,13 @@ rational_t mastercore::notionalChange(uint32_t contractId)
     int index = static_cast<unsigned int>(contractId);
     int64_t num = globalNotionalPrice.numerator().convert_to<int64_t>();
     int64_t den = globalNotionalPrice.denominator().convert_to<int64_t>();
-    PrintToLog("globalNotionalPrice %d =", globalNotionalPrice);
-    rational_t inversePrice = rational_t(den,num);
+    rational_t inversePrice;
+    if(num > 0) {
+        inversePrice = rational_t(den,num);
+    } else {
+        inversePrice = rational_t(1,1);
+    }
+
     switch (contractId) {
             case CONTRACT_ALL_DUSD:
                 if (num > 0){
