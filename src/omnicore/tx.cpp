@@ -1190,43 +1190,42 @@ bool CMPTransaction::interpret_SendPeggedCurrency()
 
 bool CMPTransaction::interpret_RedemptionPegged()
 {
-    int i = 0;
-
-    std::vector<uint8_t> vecMessageVerBytes = GetNextVarIntBytes(i);
-    std::vector<uint8_t> vecMessageTypeBytes = GetNextVarIntBytes(i);
-    std::vector<uint8_t> vecPropertyIdBytes = GetNextVarIntBytes(i);
-    std::vector<uint8_t> vecContractIdBytes = GetNextVarIntBytes(i);
-    std::vector<uint8_t> vecAmountBytes = GetNextVarIntBytes(i);
-
-    if (!vecMessageVerBytes.empty()) {
-        version = DecompressInteger(vecMessageVerBytes);
-    } else return false;
-
-    if (!vecMessageTypeBytes.empty()) {
-        type = DecompressInteger(vecMessageTypeBytes);
-    } else return false;
-
-    if (!vecPropertyIdBytes.empty()) {
-        propertyId = DecompressInteger(vecPropertyIdBytes);
-    } else return false;
-
-    if (!vecContractIdBytes.empty()) {
-        contractId = DecompressInteger(vecContractIdBytes);
-    } else return false;
-
-    if (!vecAmountBytes.empty()) {
-        amount = DecompressInteger(vecAmountBytes);
-    } else return false;
-
-    PrintToLog("version: %d\n", version);
-    PrintToLog("messageType: %d\n",type);
-    PrintToLog("propertyId: %d\n", propertyId);
-    PrintToLog("contractId: %d\n", contractId);
-    PrintToLog("amount of pegged currency : %d\n", amount);
-
-    return true;
- }
-
+  int i = 0;
+  
+  std::vector<uint8_t> vecMessageVerBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecMessageTypeBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecPropertyIdBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecContractIdBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecAmountBytes = GetNextVarIntBytes(i);
+  
+  if (!vecMessageVerBytes.empty()) {
+    version = DecompressInteger(vecMessageVerBytes);
+  } else return false;
+  
+  if (!vecMessageTypeBytes.empty()) {
+    type = DecompressInteger(vecMessageTypeBytes);
+  } else return false;
+  
+  if (!vecPropertyIdBytes.empty()) {
+    propertyId = DecompressInteger(vecPropertyIdBytes);
+  } else return false;
+  
+  if (!vecContractIdBytes.empty()) {
+    contractId = DecompressInteger(vecContractIdBytes);
+  } else return false;
+  
+  if (!vecAmountBytes.empty()) {
+    amount = DecompressInteger(vecAmountBytes);
+  } else return false;
+  
+  PrintToLog("version: %d\n", version);
+  PrintToLog("messageType: %d\n",type);
+  PrintToLog("propertyId: %d\n", propertyId);
+  PrintToLog("contractId: %d\n", contractId);
+  PrintToLog("amount of pegged currency : %d\n", amount);
+  
+  return true;
+}
 
 // ---------------------- CORE LOGIC -------------------------
 

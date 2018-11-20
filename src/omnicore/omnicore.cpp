@@ -2032,9 +2032,9 @@ int mastercore_shutdown()
 bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx, const CBlockIndex* pBlockIndex)
 {
   extern volatile int id_contract;
-
+  
   LOCK(cs_tally);
-
+  
   if (!mastercoreInitialized)
     {
       mastercore_init();
@@ -2045,31 +2045,32 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   // if for some reason the incoming TX doesn't pass our parser validation steps successfuly, I'd still want to clear pending amounts for that TX.
   // NOTE2: Plus I wanna clear the amount before that TX is parsed by our protocol, in case we ever consider pending amounts in internal calculations.
   PendingDelete(tx.GetHash());
-
+  
   // we do not care about parsing blocks prior to our waterline (empty blockchain defense)
   if (nBlock < nWaterlineBlock) return false;
   int64_t nBlockTime = pBlockIndex->GetBlockTime();
-
+  
   CMPTransaction mp_obj;
   mp_obj.unlockLogic();
-
+  
   int expirationBlock = 0, actualBlock = 0, checkExpiration = 0;
   CMPSPInfo::Entry sp;
+  
+  struct FutureContractObject *pfuture = getFutureContractObject(id_contract, "ALL F19");
+  
   if ( id_contract != 0 )
     {
-      if (_my_sps->getSP(id_contract, sp) && sp.subcategory ==  "Futures Contracts")
-	{
-	  expirationBlock = static_cast<int>(sp.blocks_until_expiration);
-	  actualBlock = static_cast<int>(pBlockIndex->nHeight);
-        }
+      expirationBlock = static_cast<int>(pfuture->fco_blocks_until_expiration);
+      actualBlock = static_cast<int>(pBlockIndex->nHeight);
     }
+  
   PrintToLog("nBlockTime: %d\n", static_cast<int>(nBlockTime));
   PrintToLog("expirationBlock: %d\n", static_cast<int>(expirationBlock));
-
-  int deadline = sp.init_block + expirationBlock;
-  if ( actualBlock != 0 && deadline != 0 )
-    checkExpiration = actualBlock == deadline ? 1 : 0;
-
+  
+  int deadline = pfuture->fco_init_block + expirationBlock;
+  
+  if ( actualBlock != 0 && deadline != 0 ) checkExpiration = actualBlock == deadline ? 1 : 0;
+  
   if (checkExpiration)
     {
       idx_expiration += 1;
@@ -2089,38 +2090,38 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
       PrintToLog("deadline: %d\n", deadline);
       expirationAchieve = 0;
     }
-
+  
   bool fFoundTx = false;
   int pop_ret = parseTransaction(false, tx, nBlock, idx, mp_obj, nBlockTime);
-
+  
   if (0 == pop_ret)
     {
       assert(mp_obj.getEncodingClass() != NO_MARKER);
       assert(mp_obj.getSender().empty() == false);
-
+      
       int interp_ret = mp_obj.interpretPacket();
       if (interp_ret) PrintToLog("!!! interpretPacket() returned %d !!!\n", interp_ret);
-
+      
       // Only structurally valid transactions get recorded in levelDB
       // PKT_ERROR - 2 = interpret_Transaction failed, structurally invalid payload
       if (interp_ret != PKT_ERROR - 2)
-	      {
-	          bool bValid = (0 <= interp_ret);
+	{
+	  bool bValid = (0 <= interp_ret);
 	          p_txlistdb->recordTX(tx.GetHash(), bValid, nBlock, mp_obj.getType(), mp_obj.getNewAmount());
 	          p_OmniTXDB->RecordTransaction(tx.GetHash(), idx);
         }
-
-        fFoundTx |= (interp_ret == 0);
+      
+      fFoundTx |= (interp_ret == 0);
     }
   else if (pop_ret > 0)
     fFoundTx |= HandleDExPayments(tx, nBlock, mp_obj.getSender()); // testing the payment handler
-
+  
   if (fFoundTx && msc_debug_consensus_hash_every_transaction)
     {
       uint256 consensusHash = GetConsensusHash();
       PrintToLog("Consensus hash for transaction %s: %s\n", tx.GetHash().GetHex(), consensusHash.GetHex());
     }
-
+  
   return fFoundTx;
 }
 

@@ -399,6 +399,5 @@ struct FutureContractObject
 };
 
 struct FutureContractObject *getFutureContractObject(uint32_t property_type, std::string identifier);
-
   
 #endif // OMNICORE_TX_H
