@@ -2741,7 +2741,7 @@ int CMPTransaction::logicMath_RedemptionPegged()
         }
     }
 
-    arith_uint256 conNeeded = ConvertTo256(amount) / (ConvertTo256(notSize) * ConvertTo256(factorE));
+    arith_uint256 conNeeded = ConvertTo256(amount) / ConvertTo256(notSize);
     int64_t contractsNeeded = ConvertTo64(conNeeded);
 
     PrintToLog("contracts needed : %d\n",contractsNeeded);
@@ -2750,28 +2750,30 @@ int CMPTransaction::logicMath_RedemptionPegged()
 
     if ((contractsNeeded > 0) && (amount > 0)) {
        // Delete the tokens
-       //assert(update_tally_map(sender, propertyId, -amount, BALANCE));
-       // get back the contracts
-       //assert(update_tally_map(sender, contractId, -contractsNeeded, CONTRACTDEX_RESERVE));
+       assert(update_tally_map(sender, propertyId, -amount, BALANCE));
+       // delete contracts in reserve
+       assert(update_tally_map(sender, contractId, -contractsNeeded, CONTRACTDEX_RESERVE));
         // get back the collateral
-       //assert(update_tally_map(sender, collateralId, -amount, CONTRACTDEX_RESERVE));
-       //assert(update_tally_map(sender, collateralId, amount, BALANCE));
-       if ((posContracts > 0) && (negContracts == 0)){
+       assert(update_tally_map(sender, collateralId, -amount, CONTRACTDEX_RESERVE));
+       assert(update_tally_map(sender, collateralId, amount, BALANCE));
+       if (posContracts > 0 && negContracts == 0)
+       {
+           int64_t dif = posContracts - contractsNeeded;
+           PrintToLog("Difference of contracts : %d\n",dif);
+           if (dif >= 0)
+           {
+               assert(update_tally_map(sender, contractId, -contractsNeeded, POSSITIVE_BALANCE));
+           } else {
+               assert(update_tally_map(sender, contractId, -posContracts, POSSITIVE_BALANCE));
+               assert(update_tally_map(sender, contractId, -dif, NEGATIVE_BALANCE));
+           }
 
-         // int64_t dif = posContracts - contractsNeeded;
-        //  PrintToLog("Difference of contracts : %d\n",dif);
-         // if (dif >= 0){
-            // assert(update_tally_map(sender, contractId, -contractsNeeded, POSSITIVE_BALANCE));
-         // }else {
-           //  assert(update_tally_map(sender, contractId, -posContracts, POSSITIVE_BALANCE));
-           //  assert(update_tally_map(sender, contractId, -dif, NEGATIVE_BALANCE));
-         // }
-       } else if ((posContracts == 0) && (negContracts >= 0)) {
-          //assert(update_tally_map(sender, contractId, contractsNeeded, NEGATIVE_BALANCE));
+       } else if (posContracts == 0 && negContracts >= 0) {
+          assert(update_tally_map(sender, contractId, contractsNeeded, NEGATIVE_BALANCE));
        }
 
     } else {
-        PrintToLog("amount redeemed must be equal at least to value of one future contract \n");
+        PrintToLog("amount redeemed must be equal at least to value of 1 future contract \n");
         // return (PKT_ERROR_SEND -25);
     }
 
