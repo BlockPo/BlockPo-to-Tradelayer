@@ -115,13 +115,13 @@ void mastercore::LoopBiDirectional(cd_PricesMap* const ppriceMap, uint8_t trdAct
       PrintToLog("\nCalling the Settlement Algorithm:\n\n");
       settlement_algorithm_fifo(M_file);
     }
-
+  
   if ( trdAction == BUY )
     {
       for (it_fwdPrices = ppriceMap->begin(); it_fwdPrices != ppriceMap->end(); ++it_fwdPrices)
 	{
 	  const uint64_t sellerPrice = it_fwdPrices->first;
-	  if ( pnew->getEffectivePrice() < sellerPrice )
+	  if ( pnew->getEffectivePrice() <= sellerPrice )
 	    continue;
 	  x_TradeBidirectional(it_fwdPrices, it_bwdPrices, trdAction, pnew, sellerPrice, propertyForSale, NewReturn);
 	}
@@ -131,7 +131,7 @@ void mastercore::LoopBiDirectional(cd_PricesMap* const ppriceMap, uint8_t trdAct
       for (it_bwdPrices = ppriceMap->rbegin(); it_bwdPrices != ppriceMap->rend(); ++it_bwdPrices)
 	{
 	  const uint64_t sellerPrice = it_bwdPrices->first;
-	  if ( pnew->getEffectivePrice() > sellerPrice )
+	  if ( pnew->getEffectivePrice() >= sellerPrice )
 	    continue;
 	  x_TradeBidirectional(it_fwdPrices, it_bwdPrices, trdAction, pnew, sellerPrice, propertyForSale, NewReturn);
 	}
@@ -144,22 +144,21 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
   
   /** At good (single) price level and property iterate over offers looking at all parameters to find the match */
   cd_Set::iterator offerIt = pofferSet->begin();
-
+  
   while ( offerIt != pofferSet->end() )  /** Specific price, check all properties */
     {
       const CMPContractDex* const pold = &(*offerIt);
-
+      
       assert(pold->getEffectivePrice() == sellerPrice);
-
+      
       std::string tradeStatus = pold->getEffectivePrice() == sellerPrice ? "Matched" : "NoMatched";
-
+      
       /** Match Conditions */
       bool boolProperty  = pold->getProperty() != propertyForSale;
       bool boolTrdAction = pold->getTradingAction() == pnew->getTradingAction();
-      bool boolEffPrice  = pnew->getEffectivePrice() != pold->getEffectivePrice();
       bool boolAddresses = pold->getAddr() == pnew->getAddr();
-
-      if ( findTrueValue(boolProperty, boolTrdAction, boolEffPrice, boolAddresses) )
+      
+      if ( findTrueValue(boolProperty, boolTrdAction, boolAddresses) )
 	{
 	  ++offerIt;
 	  continue;
@@ -168,7 +167,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       idx_q += 1;
       const int idx_qp = idx_q;
       PrintToLog("Checking idx_q = %d", idx_qp);
-                  
+      
       struct FutureContractObject *pfuture = getFutureContractObject(propertyForSale, "ALL F19");
       
       PrintToLog("\n---------------------------------------------------\n");
