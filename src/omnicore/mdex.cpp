@@ -163,11 +163,11 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       bool boolEffPrice  = pnew->getEffectivePrice() != pold->getEffectivePrice();
       bool boolAddresses = pold->getAddr() == pnew->getAddr();
 
-      if ( findTrueValue(boolProperty, boolTrdAction, boolEffPrice, boolAddresses) )
+     /* if ( findTrueValue(boolProperty, boolTrdAction, boolEffPrice, boolAddresses) )
 	{
 	  ++offerIt;
 	  continue;
-	}
+	}*/
 
       idx_q += 1;
       const int idx_qp = idx_q;
