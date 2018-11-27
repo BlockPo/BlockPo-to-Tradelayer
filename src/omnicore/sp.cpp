@@ -71,6 +71,16 @@ bool CMPSPInfo::Entry::isContract() const
   return false;
 }
 
+bool CMPSPInfo::Entry::isVesting() const
+{
+  switch (prop_type)
+    {
+    case ALL_PROPERTY_TYPE_VESTING:
+      return true;
+    }
+  return false;
+}
+
 void CMPSPInfo::Entry::print() const
 {
   PrintToConsole("%s:%s(Fixed=%s,Divisible=%s):%d:%s/%s, %s %s\n",
@@ -623,11 +633,21 @@ bool mastercore::isPropertyContract(uint32_t propertyId)
   return true;
 }
 
+bool mastercore::isPropertyVesting(uint32_t propertyId)
+{
+  CMPSPInfo::Entry sp;
+  
+  if (_my_sps->getSP(propertyId, sp)) return sp.isVesting();
+  
+  return true;
+}
+
+
 std::string mastercore::getPropertyName(uint32_t propertyId)
 {
-    CMPSPInfo::Entry sp;
-    if (_my_sps->getSP(propertyId, sp)) return sp.name;
-    return "Property Name Not Found";
+  CMPSPInfo::Entry sp;
+  if (_my_sps->getSP(propertyId, sp)) return sp.name;
+  return "Property Name Not Found";
 }
 
 bool mastercore::isCrowdsaleActive(uint32_t propertyId)

@@ -137,33 +137,64 @@ std::vector<unsigned char> CreatePayload_IssuanceVariable(uint8_t ecosystem, uin
 
 std::vector<unsigned char> CreatePayload_IssuanceManaged(uint8_t ecosystem, uint16_t propertyType, uint32_t previousPropertyId, std::string name, std::string url, std::string data)
 {
-    std::vector<unsigned char> payload;
+  std::vector<unsigned char> payload;
+  
+  uint64_t messageType = 54;
+  uint64_t messageVer = 0;
+  
+  std::vector<uint8_t> vecMessageType = CompressInteger((uint64_t)messageType);
+  std::vector<uint8_t> vecMessageVer = CompressInteger((uint64_t)messageVer);
+  std::vector<uint8_t> vecPropertyType = CompressInteger((uint64_t)propertyType);
+  std::vector<uint8_t> vecPrevPropertyId = CompressInteger((uint64_t)previousPropertyId);
+  
+  if (name.size() > 255) name = name.substr(0,255);
+  if (url.size() > 255) url = url.substr(0,255);
+  if (data.size() > 255) data = data.substr(0,255);
+  
+  payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
+  payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
+  PUSH_BACK_BYTES(payload, ecosystem);
+  payload.insert(payload.end(), vecPropertyType.begin(), vecPropertyType.end());
+  payload.insert(payload.end(), vecPrevPropertyId.begin(), vecPrevPropertyId.end());
+  payload.insert(payload.end(), name.begin(), name.end());
+  payload.push_back('\0');
+  payload.insert(payload.end(), url.begin(), url.end());
+  payload.push_back('\0');
+  payload.insert(payload.end(), data.begin(), data.end());
+  payload.push_back('\0');
+  
+  return payload;
+}
 
-    uint64_t messageType = 54;
-    uint64_t messageVer = 0;
-
-    std::vector<uint8_t> vecMessageType = CompressInteger((uint64_t)messageType);
-    std::vector<uint8_t> vecMessageVer = CompressInteger((uint64_t)messageVer);
-    std::vector<uint8_t> vecPropertyType = CompressInteger((uint64_t)propertyType);
-    std::vector<uint8_t> vecPrevPropertyId = CompressInteger((uint64_t)previousPropertyId);
-
-    if (name.size() > 255) name = name.substr(0,255);
-    if (url.size() > 255) url = url.substr(0,255);
-    if (data.size() > 255) data = data.substr(0,255);
-
-    payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
-    payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
-    PUSH_BACK_BYTES(payload, ecosystem);
-    payload.insert(payload.end(), vecPropertyType.begin(), vecPropertyType.end());
-    payload.insert(payload.end(), vecPrevPropertyId.begin(), vecPrevPropertyId.end());
-    payload.insert(payload.end(), name.begin(), name.end());
-    payload.push_back('\0');
-    payload.insert(payload.end(), url.begin(), url.end());
-    payload.push_back('\0');
-    payload.insert(payload.end(), data.begin(), data.end());
-    payload.push_back('\0');
-
-    return payload;
+std::vector<unsigned char> CreatePayload_VestingTokens(uint8_t ecosystem, uint16_t propertyType, uint32_t previousPropertyId, std::string name, std::string url, std::string data)
+{
+  std::vector<unsigned char> payload;
+  
+  uint64_t messageType = 57;
+  uint64_t messageVer = 0;
+  
+  std::vector<uint8_t> vecMessageType = CompressInteger((uint64_t)messageType);
+  std::vector<uint8_t> vecMessageVer = CompressInteger((uint64_t)messageVer);
+  std::vector<uint8_t> vecPropertyType = CompressInteger((uint64_t)propertyType);
+  std::vector<uint8_t> vecPrevPropertyId = CompressInteger((uint64_t)previousPropertyId);
+  
+  if (name.size() > 255) name = name.substr(0,255);
+  if (url.size() > 255) url = url.substr(0,255);
+  if (data.size() > 255) data = data.substr(0,255);
+  
+  payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
+  payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
+  PUSH_BACK_BYTES(payload, ecosystem);
+  payload.insert(payload.end(), vecPropertyType.begin(), vecPropertyType.end());
+  payload.insert(payload.end(), vecPrevPropertyId.begin(), vecPrevPropertyId.end());
+  payload.insert(payload.end(), name.begin(), name.end());
+  payload.push_back('\0');
+  payload.insert(payload.end(), url.begin(), url.end());
+  payload.push_back('\0');
+  payload.insert(payload.end(), data.begin(), data.end());
+  payload.push_back('\0');
+  
+  return payload;
 }
 
 std::vector<unsigned char> CreatePayload_CloseCrowdsale(uint32_t propertyId)

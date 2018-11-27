@@ -121,7 +121,7 @@ void mastercore::LoopBiDirectional(cd_PricesMap* const ppriceMap, uint8_t trdAct
       for (it_fwdPrices = ppriceMap->begin(); it_fwdPrices != ppriceMap->end(); ++it_fwdPrices)
 	{
 	  const uint64_t sellerPrice = it_fwdPrices->first;
-	  if ( pnew->getEffectivePrice() <= sellerPrice )
+	  if ( pnew->getEffectivePrice() < sellerPrice )
 	    continue;
 	  x_TradeBidirectional(it_fwdPrices, it_bwdPrices, trdAction, pnew, sellerPrice, propertyForSale, NewReturn);
 	}
@@ -131,7 +131,7 @@ void mastercore::LoopBiDirectional(cd_PricesMap* const ppriceMap, uint8_t trdAct
       for (it_bwdPrices = ppriceMap->rbegin(); it_bwdPrices != ppriceMap->rend(); ++it_bwdPrices)
 	{
 	  const uint64_t sellerPrice = it_bwdPrices->first;
-	  if ( pnew->getEffectivePrice() >= sellerPrice )
+	  if ( pnew->getEffectivePrice() > sellerPrice )
 	    continue;
 	  x_TradeBidirectional(it_fwdPrices, it_bwdPrices, trdAction, pnew, sellerPrice, propertyForSale, NewReturn);
 	}
