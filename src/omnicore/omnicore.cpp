@@ -527,6 +527,24 @@ void CheckWalletUpdate(bool forceUpdate)
 #endif
 }
 
+static bool TXVestingFundraiser(const CTransaction& tx, const std::string& sender, int64_t amountVesting, int nBlock, unsigned int nTime)
+{
+  const CConsensusParams &params = ConsensusParams();
+  
+  if ( nBlock == params.MSC_VESTING_BLOCK )
+    { 
+      int64_t amountGenerated = amountVesting;
+      if (amountGenerated > 0)
+	{
+	  PrintToLog("Vesting Fundraiser tx detected, tx %s generated %s\n", tx.GetHash().ToString(), FormatDivisibleMP(amountGenerated));
+	  assert(update_tally_map(sender, OMNI_PROPERTY_ALL,  amountGenerated, UNVESTING));
+	  assert(update_tally_map(sender, OMNI_PROPERTY_TALL, amountGenerated, UNVESTING));
+	  return true;
+	}
+    }
+  return false;
+}
+
 /**
  * Returns the encoding class, used to embed a payload.
  *    Class A (dex payments)
@@ -3025,7 +3043,7 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
       globalPNLALL_DUSD += UPNL1 + UPNL2;
       globalVolumeALL_DUSD += nCouldBuy0;
     }
-
+  
   int64_t volumeToCompare = 0;
   bool perpetualBool = callingPerpetualSettlement(globalPNLALL_DUSD, globalVolumeALL_DUSD, volumeToCompare);
   if (perpetualBool) PrintToLog("Perpetual Settlement Online");
