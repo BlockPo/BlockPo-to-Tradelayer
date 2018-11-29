@@ -2,7 +2,6 @@ int N = 2;
 int M = 4;
 int NYears = 10;
 int initYear = 19;
-int vestingAmount = 10; /** The final amount will be chosen at mainnet launch time */
 
 factorE = 100000000;
 priceIndex = 110; // an index price (USDs) to calculate the interest in pegg currencies (10% more)
@@ -55,7 +54,18 @@ for ( int i = 0; i < NYears; i++ )
     expiration_dates[i+11+11*i] = "ALL Z" + std::to_string(i+initYear);
   }
 
-pt_vestingAdrresses = new VectorTLS(vestingAmount); VectorTLS &vestingAdrresses = *pt_vestingAdrresses;
-for ( int i = 0; i < vestingAmount; i++ ) vestingAdrresses[i] = "VESTINGADDRESSNUMBER" + std::to_string(i); 
-
-
+/** The final addrs amount will be chosen at mainnet launch time */
+nVestingAddrs = 10;
+amountVesting = 100;
+pt_vestingAddresses = new VectorTLS(nVestingAddrs); VectorTLS &vestingAddresses = *pt_vestingAddresses;
+/** List od vesting addresses */
+vestingAddresses[0] = "QiPiqxEkaNcqsiUv4WQ5P2Rnd5CRKs7cFF";
+vestingAddresses[1] = "QcbwthpCyZVq2BPpMEiGb776pquK3e9ASp";
+vestingAddresses[2] = "QP8T82YHCfHcvTvNaQ6LYR1KquSoZf6Hpf";
+vestingAddresses[3] = "QMyztrthEfgkNupse2RBeMnxvv2RXXkMEj";
+vestingAddresses[4] = "QPSyfsqGbP5E8Z5GXkD85g5p8ot9XFa54m";
+vestingAddresses[5] = "QXtzVB3ry9kDa9nDnqN3FAWkGa9upZ6Qsp";
+vestingAddresses[6] = "QVpVSqKGAjqRGMJoBSPMM63V2YK6tkoqW4";
+vestingAddresses[7] = "QhEKbR3ckrgYLQLHuS7nNVpRGWazVp6zrM";
+vestingAddresses[8] = "QbWe1DYDorzFMP6wZf8QtTWu7YpM8ZSDDu";
+vestingAddresses[9] = "QSsJXDFb4b3vTgqeycrHtkYTYKmCk4TJn1";

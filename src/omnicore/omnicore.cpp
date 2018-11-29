@@ -527,22 +527,15 @@ void CheckWalletUpdate(bool forceUpdate)
 #endif
 }
 
-static bool TXVestingFundraiser(const CTransaction& tx, std::string &addrs, int64_t amountVesting, int nBlock)
+void sendingVestingTokens()
 {
-  const CConsensusParams &params = ConsensusParams();
-  extern VectorTLS *pt_vestingAdrresses;  VectorTLS &vestingAdrresses  = *pt_vestingAdrresses;
+  extern VectorTLS *pt_vestingAddresses;  VectorTLS &vestingAddresses  = *pt_vestingAddresses;
+  extern int64_t amountVesting;
+  extern int nVestingAddrs;
+  PrintToLog("\nVesting amount for every vesting address : %d\n", amountVesting);
   
-  if ( nBlock == params.MSC_VESTING_BLOCK && finding(addrs, vestingAdrresses) )
-    { 
-      if (amountVesting > 0)
-	{
-	  PrintToLog("Vesting Fundraiser tx detected, tx %s generated %s\n", tx.GetHash().ToString(), FormatDivisibleMP(amountVesting));
-	  assert(update_tally_map(addrs, OMNI_PROPERTY_ALL,  amountVesting, UNVESTED));
-	  assert(update_tally_map(addrs, OMNI_PROPERTY_TALL, amountVesting, UNVESTED));
-	  return true;
-	}
-    }
-  return false;
+  for (int i = 0; i < nVestingAddrs; i++)
+    assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, amountVesting, UNVESTED));
 }
 
 /**
@@ -934,23 +927,6 @@ static bool HandleDExPayments(const CTransaction& tx, int nBlock, const std::str
     }
   }  
   return (count > 0);
-}
-
-static bool HandleVestingPurchase(const CTransaction &tx, int nBlock)
-{
-  int64_t amountVesting = 0;
-  
-  for (unsigned int n = 0; n < tx.vout.size(); ++n)
-    {
-      CTxDestination dest;
-      if (ExtractDestination(tx.vout[n].scriptPubKey, dest))
-	{
-	  std::string address = EncodeDestination(dest);
-	  if (address == ExodusAddress()) continue;
-	  return TXVestingFundraiser(tx, address, tx.vout[n].nValue, nBlock);
-	}
-    }  
-  return false;
 }
 
 /**
@@ -2095,6 +2071,20 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
     {
       expirationBlock = static_cast<int>(pfuture->fco_blocks_until_expiration);
       actualBlock = static_cast<int>(pBlockIndex->nHeight);
+    }
+  
+  const CConsensusParams &params = ConsensusParams();
+  if (static_cast<int>(pBlockIndex->nHeight) == params.MSC_VESTING_BLOCK)
+    {
+      sendingVestingTokens();
+      
+      int64_t vestingBalance  = getMPbalance("QSsJXDFb4b3vTgqeycrHtkYTYKmCk4TJn1", OMNI_PROPERTY_ALL, UNVESTED);
+      int64_t positiveBalance = getMPbalance("QSsJXDFb4b3vTgqeycrHtkYTYKmCk4TJn1", OMNI_PROPERTY_ALL, POSSITIVE_BALANCE);
+      int64_t negativeBalance = getMPbalance("QSsJXDFb4b3vTgqeycrHtkYTYKmCk4TJn1", OMNI_PROPERTY_ALL, NEGATIVE_BALANCE);
+      
+      PrintToLog("\nvestingBalance QSsJXDFb4b3vTgqeycrHtkYTYKmCk4TJn1:  %d\n", vestingBalance);
+      PrintToLog("\npositiveBalance QSsJXDFb4b3vTgqeycrHtkYTYKmCk4TJn1: %d\n", positiveBalance);
+      PrintToLog("\nnegativeBalance QSsJXDFb4b3vTgqeycrHtkYTYKmCk4TJn1: %d\n", negativeBalance);
     }
   
   PrintToLog("nBlockTime: %d\n", static_cast<int>(nBlockTime));

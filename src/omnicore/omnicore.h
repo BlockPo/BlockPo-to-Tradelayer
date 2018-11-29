@@ -365,6 +365,7 @@ int mastercore_handler_block_begin(int nBlockNow, CBlockIndex const *pBlockIndex
 int mastercore_handler_block_end(int nBlockNow, CBlockIndex const *pBlockIndex, unsigned int);
 bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx, const CBlockIndex *pBlockIndex);
 int mastercore_save_state( CBlockIndex const *pBlockIndex );
+void sendingVestingTokens();
 
 namespace mastercore
 {
