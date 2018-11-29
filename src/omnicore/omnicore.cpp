@@ -527,18 +527,18 @@ void CheckWalletUpdate(bool forceUpdate)
 #endif
 }
 
-static bool TXVestingFundraiser(const CTransaction& tx, const std::string& sender, int64_t amountVesting, int nBlock, unsigned int nTime)
+static bool TXVestingFundraiser(const CTransaction& tx, std::string &addrs, int64_t amountVesting, int nBlock)
 {
   const CConsensusParams &params = ConsensusParams();
+  extern VectorTLS *pt_vestingAdrresses;  VectorTLS &vestingAdrresses  = *pt_vestingAdrresses;
   
-  if ( nBlock == params.MSC_VESTING_BLOCK )
+  if ( nBlock == params.MSC_VESTING_BLOCK && finding(addrs, vestingAdrresses) )
     { 
-      int64_t amountGenerated = amountVesting;
-      if (amountGenerated > 0)
+      if (amountVesting > 0)
 	{
-	  PrintToLog("Vesting Fundraiser tx detected, tx %s generated %s\n", tx.GetHash().ToString(), FormatDivisibleMP(amountGenerated));
-	  assert(update_tally_map(sender, OMNI_PROPERTY_ALL,  amountGenerated, UNVESTING));
-	  assert(update_tally_map(sender, OMNI_PROPERTY_TALL, amountGenerated, UNVESTING));
+	  PrintToLog("Vesting Fundraiser tx detected, tx %s generated %s\n", tx.GetHash().ToString(), FormatDivisibleMP(amountVesting));
+	  assert(update_tally_map(addrs, OMNI_PROPERTY_ALL,  amountVesting, UNVESTED));
+	  assert(update_tally_map(addrs, OMNI_PROPERTY_TALL, amountVesting, UNVESTED));
 	  return true;
 	}
     }
@@ -919,25 +919,40 @@ int ParseTransaction(const CTransaction& tx, int nBlock, unsigned int idx, CMPTr
  */
 static bool HandleDExPayments(const CTransaction& tx, int nBlock, const std::string& strSender)
 {
-    int count = 0;
-    PrintToConsole("Inside HandleDExPayments function <<<<<<<<<<<<<<<<<<<<<\n");
-    for (unsigned int n = 0; n < tx.vout.size(); ++n) {
-        CTxDestination dest;
-        if (ExtractDestination(tx.vout[n].scriptPubKey, dest)) {
-            std::string address = EncodeDestination(dest);
-            if (address == ExodusAddress() || address == strSender) {
-                continue;
-            }
-
-            // if (msc_debug_parser_dex) PrintToLog("payment #%d %s %s\n", count, strAddress, FormatIndivisibleMP(tx.vout[n].nValue));
-
-            // check everything and pay BTC for the property we are buying here...
-            if (0 == DEx_payment(tx.GetHash(), n, address, strSender, tx.vout[n].nValue, nBlock)) ++count;
-        }
+  int count = 0;
+  PrintToConsole("Inside HandleDExPayments function <<<<<<<<<<<<<<<<<<<<<\n");
+  for (unsigned int n = 0; n < tx.vout.size(); ++n) {
+    CTxDestination dest;
+    if (ExtractDestination(tx.vout[n].scriptPubKey, dest)) {
+      std::string address = EncodeDestination(dest);
+      if (address == ExodusAddress() || address == strSender) {
+	continue;
+      }
+      // if (msc_debug_parser_dex) PrintToLog("payment #%d %s %s\n", count, strAddress, FormatIndivisibleMP(tx.vout[n].nValue));
+      // check everything and pay BTC for the property we are buying here...
+      if (0 == DEx_payment(tx.GetHash(), n, address, strSender, tx.vout[n].nValue, nBlock)) ++count;
     }
-
-    return (count > 0);
+  }  
+  return (count > 0);
 }
+
+static bool HandleVestingPurchase(const CTransaction &tx, int nBlock)
+{
+  int64_t amountVesting = 0;
+  
+  for (unsigned int n = 0; n < tx.vout.size(); ++n)
+    {
+      CTxDestination dest;
+      if (ExtractDestination(tx.vout[n].scriptPubKey, dest))
+	{
+	  std::string address = EncodeDestination(dest);
+	  if (address == ExodusAddress()) continue;
+	  return TXVestingFundraiser(tx, address, tx.vout[n].nValue, nBlock);
+	}
+    }  
+  return false;
+}
+
 /**
  * Reports the progress of the initial transaction scanning.
  *

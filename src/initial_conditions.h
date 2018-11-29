@@ -2,6 +2,7 @@ int N = 2;
 int M = 4;
 int NYears = 10;
 int initYear = 19;
+int vestingAmount = 10; /** The final amount will be chosen at mainnet launch time */
 
 factorE = 100000000;
 priceIndex = 110; // an index price (USDs) to calculate the interest in pegg currencies (10% more)
@@ -53,3 +54,8 @@ for ( int i = 0; i < NYears; i++ )
     expiration_dates[i+10+11*i] = "ALL X" + std::to_string(i+initYear);
     expiration_dates[i+11+11*i] = "ALL Z" + std::to_string(i+initYear);
   }
+
+pt_vestingAdrresses = new VectorTLS(vestingAmount); VectorTLS &vestingAdrresses = *pt_vestingAdrresses;
+for ( int i = 0; i < vestingAmount; i++ ) vestingAdrresses[i] = "VESTINGADDRESSNUMBER" + std::to_string(i); 
+
+

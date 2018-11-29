@@ -24,7 +24,7 @@ enum TallyType
    LIQUIDATION_PRICE = 12,
    UPNL = 13, // positive
    NUPNL = 14, // negative
-   UNVESTING = 15,
+   UNVESTED = 15,
    /****************************************/   
    TALLY_TYPE_COUNT
   };
