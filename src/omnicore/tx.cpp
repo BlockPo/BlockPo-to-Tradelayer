@@ -2328,98 +2328,98 @@ int CMPTransaction::logicMath_MetaDExTrade()
 /** Tx 40 */
 int CMPTransaction::logicMath_CreateContractDex()
 {
-    uint256 blockHash;
-    {
-        LOCK(cs_main);
-
-        CBlockIndex* pindex = chainActive[block];
-
-        if (pindex == NULL) {
-            PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
-            return (PKT_ERROR_SP -20);
-        }
-            blockHash = pindex->GetBlockHash();
+  uint256 blockHash;
+  {
+    LOCK(cs_main);
+    
+    CBlockIndex* pindex = chainActive[block];
+    
+    if (pindex == NULL) {
+      PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
+      return (PKT_ERROR_SP -20);
     }
-
-    // if (OMNI_PROPERTY_ALL != ecosystem && OMNI_PROPERTY_TALL != ecosystem) {
-    //     PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, (uint32_t) ecosystem);
-    //     return (PKT_ERROR_SP -21);
-    // }
-
-    // if (!IsTransactionTypeAllowed(block, ecosystem, type, version)) {
-    //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
-    //         __func__,
-    //         type,
-    //         version,
-    //         propertyId,
-    //         block);
-    //     return (PKT_ERROR_SP -22);
-    // }
-
-    // if ('\0' == name[0]) {
-    //    PrintToLog("%s(): rejected: property name must not be empty\n", __func__);
-    //    return (PKT_ERROR_SP -37);
-    // }
-
-    // PrintToLog("type of denomination: %d\n",denomination);
-
-    // if (denomination != TL_dUSD && denomination != TL_dEUR && denomination!= TL_dYEN && denomination != TL_ALL && denomination != TL_sLTC && denomination!= TL_LTC) {
-    //   PrintToLog("rejected: denomination invalid\n");
-    //   return (PKT_ERROR_SP -37);
-    // }
-
-    // if (numerator != TL_ALL && numerator != TL_sLTC && numerator != TL_LTC) {
-    //   PrintToLog("rejected: denomination invalid\n");
-    //   return (PKT_ERROR_SP -37);
-    // }
-
-    // -----------------------------------------------
-
-    PrintToLog("------------------------------------------------------------\n");
-    PrintToLog("Inside logicMath_CreateContractDex function\n");
-    PrintToLog("version: %d\n", version);
-    PrintToLog("messageType: %d\n",type);
-    PrintToLog("denomination: %d\n", denomination);
-    PrintToLog("blocks until expiration : %d\n", blocks_until_expiration);
-    PrintToLog("notional size : %d\n", notional_size);
-    PrintToLog("collateral currency: %d\n", collateral_currency);
-    PrintToLog("margin requirement: %d\n", margin_requirement);
-    PrintToLog("ecosystem: %d\n", ecosystem);
-    PrintToLog("attribute_type: %d\n", attribute_type);
-    PrintToLog("name: %s\n", name);
-    PrintToLog("sugcategory : %s\n", subcategory);
-    PrintToLog("Sender: %s\n", sender);
-    PrintToLog("property type: %s\n", prop_type);
-    PrintToLog("blockhash: %s\n", blockHash.ToString());
-    PrintToLog("block: %d\n", block);
-    PrintToLog("denomination: %d\n", denomination);
-    PrintToLog("------------------------------------------------------------\n");
-
-    CMPSPInfo::Entry newSP;
-    newSP.issuer = sender;
-    newSP.prop_type = prop_type;
-    newSP.subcategory.assign(subcategory);
-    newSP.name.assign(name);
-    newSP.fixed = false;
-    newSP.manual = true;
-    newSP.creation_block = blockHash;
-    newSP.update_block = blockHash;
-    newSP.blocks_until_expiration = blocks_until_expiration;
-    newSP.notional_size = notional_size;
-    newSP.collateral_currency = collateral_currency;
-    newSP.margin_requirement = margin_requirement;
-    newSP.init_block = block;
-    newSP.denomination = denomination;
-    newSP.ecosystemSP = ecosystem;
-    newSP.attribute_type = attribute_type;
+    blockHash = pindex->GetBlockHash();
+  }
+  
+  // if (OMNI_PROPERTY_ALL != ecosystem && OMNI_PROPERTY_TALL != ecosystem) {
+  //     PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, (uint32_t) ecosystem);
+  //     return (PKT_ERROR_SP -21);
+  // }
+  
+  // if (!IsTransactionTypeAllowed(block, ecosystem, type, version)) {
+  //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+  //         __func__,
+  //         type,
+  //         version,
+  //         propertyId,
+  //         block);
+  //     return (PKT_ERROR_SP -22);
+  // }
+  
+  // if ('\0' == name[0]) {
+  //    PrintToLog("%s(): rejected: property name must not be empty\n", __func__);
+  //    return (PKT_ERROR_SP -37);
+  // }
+  
+  // PrintToLog("type of denomination: %d\n",denomination);
+  
+  // if (denomination != TL_dUSD && denomination != TL_dEUR && denomination!= TL_dYEN && denomination != TL_ALL && denomination != TL_sLTC && denomination!= TL_LTC) {
+  //   PrintToLog("rejected: denomination invalid\n");
+  //   return (PKT_ERROR_SP -37);
+  // }
+  
+  // if (numerator != TL_ALL && numerator != TL_sLTC && numerator != TL_LTC) {
+  //   PrintToLog("rejected: denomination invalid\n");
+  //   return (PKT_ERROR_SP -37);
+  // }
+  
+  // -----------------------------------------------
+  
+  PrintToLog("------------------------------------------------------------\n");
+  PrintToLog("Inside logicMath_CreateContractDex function\n");
+  PrintToLog("version: %d\n", version);
+  PrintToLog("messageType: %d\n",type);
+  PrintToLog("denomination: %d\n", denomination);
+  PrintToLog("blocks until expiration : %d\n", blocks_until_expiration);
+  PrintToLog("notional size : %d\n", notional_size);
+  PrintToLog("collateral currency: %d\n", collateral_currency);
+  PrintToLog("margin requirement: %d\n", margin_requirement);
+  PrintToLog("ecosystem: %d\n", ecosystem);
+  PrintToLog("attribute_type: %d\n", attribute_type);
+  PrintToLog("name: %s\n", name);
+  PrintToLog("sugcategory : %s\n", subcategory);
+  PrintToLog("Sender: %s\n", sender);
+  PrintToLog("property type: %s\n", prop_type);
+  PrintToLog("blockhash: %s\n", blockHash.ToString());
+  PrintToLog("block: %d\n", block);
+  PrintToLog("denomination: %d\n", denomination);
+  PrintToLog("------------------------------------------------------------\n");
+  
+  CMPSPInfo::Entry newSP;
+  newSP.issuer = sender;
+  newSP.prop_type = prop_type;
+  newSP.subcategory.assign(subcategory);
+  newSP.name.assign(name);
+  newSP.fixed = false;
+  newSP.manual = true;
+  newSP.creation_block = blockHash;
+  newSP.update_block = blockHash;
+  newSP.blocks_until_expiration = blocks_until_expiration;
+  newSP.notional_size = notional_size;
+  newSP.collateral_currency = collateral_currency;
+  newSP.margin_requirement = margin_requirement;
+  newSP.init_block = block;
+  newSP.denomination = denomination;
+  newSP.ecosystemSP = ecosystem;
+  newSP.attribute_type = attribute_type;
+  
+  const uint32_t propertyId = _my_sps->putSP(ecosystem, newSP);
+  assert(propertyId > 0);
+  
+  PrintToLog("Contract id: %d\n", propertyId);
+  PrintToLog("ecosystemSP: %d\n", ecosystem);
     
-    const uint32_t propertyId = _my_sps->putSP(ecosystem, newSP);
-    assert(propertyId > 0);
-
-    PrintToLog("Contract id: %d\n", propertyId);
-    PrintToLog("ecosystemSP: %d\n", ecosystem);
-    
-    return 0;
+  return 0;
 }
 
 /** Tx 29 */

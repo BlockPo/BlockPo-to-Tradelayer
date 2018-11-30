@@ -148,7 +148,7 @@ enum FILETYPES {
 #define OMNI_PROPERTY_BTC             0
 #define OMNI_PROPERTY_ALL             1
 #define OMNI_PROPERTY_TALL            2
-//////////////////////////////////////
+////////////////////////////////////////
 /** New things for Contracts */
 #define BUY   1
 #define SELL  2

@@ -142,7 +142,7 @@ uint32_t CMPSPInfo::peekNextSPID(uint8_t ecosystem) const
   
   switch (ecosystem)
     {
-    case OMNI_PROPERTY_ALL: // Main ecosystem, MSC: 1, TMSC: 2, First available SP = 3
+    case OMNI_PROPERTY_ALL: // Main ecosystem, ALL: 1, TALL: 2, First available SP = 3
       nextId = next_spid;
       break;
     case OMNI_PROPERTY_TALL: // Test ecosystem, same as above with high bit set
