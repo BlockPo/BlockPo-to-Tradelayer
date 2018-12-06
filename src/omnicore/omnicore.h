@@ -84,7 +84,6 @@ enum TransactionType {
   MSC_TYPE_CREATE_PROPERTY_MANUAL     = 54,
   MSC_TYPE_GRANT_PROPERTY_TOKENS      = 55,
   MSC_TYPE_REVOKE_PROPERTY_TOKENS     = 56,
-  MSC_TYPE_CREATE_VESTING_TOKENS      = 57,
   MSC_TYPE_CHANGE_ISSUER_ADDRESS      = 70,
   OMNICORE_MESSAGE_TYPE_DEACTIVATION  = 65533,
   OMNICORE_MESSAGE_TYPE_ACTIVATION    = 65534,
@@ -113,7 +112,6 @@ enum TransactionType {
 #define ALL_PROPERTY_TYPE_INDIVISIBLE             1
 #define ALL_PROPERTY_TYPE_DIVISIBLE               2
 #define ALL_PROPERTY_TYPE_CONTRACT                3
-#define ALL_PROPERTY_TYPE_VESTING                 4
 
 enum FILETYPES {
   FILETYPE_BALANCES = 0,
@@ -148,7 +146,7 @@ enum FILETYPES {
 #define OMNI_PROPERTY_BTC             0
 #define OMNI_PROPERTY_ALL             1
 #define OMNI_PROPERTY_TALL            2
-////////////////////////////////////////
+//////////////////////////////////////
 /** New things for Contracts */
 #define BUY   1
 #define SELL  2

@@ -129,91 +129,87 @@ bool CMPTransaction::isOverrun(const char* p)
 /** Parses the packet or payload. */
 bool CMPTransaction::interpret_Transaction()
 {
-  if (!interpret_TransactionType())
-    {
-      PrintToLog("Failed to interpret type and version\n");
-      return false;
+    if (!interpret_TransactionType()) {
+        PrintToLog("Failed to interpret type and version\n");
+        return false;
     }
-  
-  switch (type)
-    {
-    case MSC_TYPE_SIMPLE_SEND:
-      return interpret_SimpleSend();
-      
-    case MSC_TYPE_SEND_ALL:
-      return interpret_SendAll();
-      
-    case MSC_TYPE_CREATE_PROPERTY_FIXED:
-      return interpret_CreatePropertyFixed();
-      
-    case MSC_TYPE_CREATE_PROPERTY_VARIABLE:
-      return interpret_CreatePropertyVariable();
-      
-    case MSC_TYPE_CLOSE_CROWDSALE:
-      return interpret_CloseCrowdsale();
-      
-    case MSC_TYPE_CREATE_PROPERTY_MANUAL:
-      return interpret_CreatePropertyManaged();
-      
-    case MSC_TYPE_GRANT_PROPERTY_TOKENS:
-      return interpret_GrantTokens();
 
-    case MSC_TYPE_REVOKE_PROPERTY_TOKENS:
-      return interpret_RevokeTokens();
-      
-    case MSC_TYPE_CREATE_VESTING_TOKENS:
-      return interpret_CreateVestingTokens();
-      
-    case MSC_TYPE_CHANGE_ISSUER_ADDRESS:
-      return interpret_ChangeIssuer();
-      
-    case OMNICORE_MESSAGE_TYPE_DEACTIVATION:
-      return interpret_Deactivation();
-      
-    case OMNICORE_MESSAGE_TYPE_ACTIVATION:
-      return interpret_Activation();
-      
-    case OMNICORE_MESSAGE_TYPE_ALERT:
-      return interpret_Alert();
-      
-    case MSC_TYPE_METADEX_TRADE:
-      return interpret_MetaDExTrade();
-      
-    case MSC_TYPE_CREATE_CONTRACT:
-      return interpret_CreateContractDex();
-      
-    case MSC_TYPE_CONTRACTDEX_TRADE:
-      return interpret_ContractDexTrade();
-      
-    case MSC_TYPE_CONTRACTDEX_CANCEL_ECOSYSTEM:
-      return interpret_ContractDexCancelEcosystem();
-      
-    case MSC_TYPE_PEGGED_CURRENCY:
-      return interpret_CreatePeggedCurrency();
-      
-    case MSC_TYPE_SEND_PEGGED_CURRENCY:
-      return interpret_SendPeggedCurrency();
-      
-    case MSC_TYPE_REDEMPTION_PEGGED:
-      return interpret_RedemptionPegged();
-      
-    case MSC_TYPE_CONTRACTDEX_CLOSE_POSITION:
-      return interpret_ContractDexClosePosition();
-      
-    case MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK:
-      return interpret_ContractDex_Cancel_Orders_By_Block();
-      
-    case MSC_TYPE_TRADE_OFFER:
-      return interpret_TradeOffer();
-      
-    case MSC_TYPE_DEX_BUY_OFFER:
-      return interpret_DExBuy();
-      
-    case MSC_TYPE_ACCEPT_OFFER_BTC:
-      return interpret_AcceptOfferBTC();
-      
+    switch (type) {
+        case MSC_TYPE_SIMPLE_SEND:
+            return interpret_SimpleSend();
+
+        case MSC_TYPE_SEND_ALL:
+            return interpret_SendAll();
+
+        case MSC_TYPE_CREATE_PROPERTY_FIXED:
+            return interpret_CreatePropertyFixed();
+
+        case MSC_TYPE_CREATE_PROPERTY_VARIABLE:
+            return interpret_CreatePropertyVariable();
+
+        case MSC_TYPE_CLOSE_CROWDSALE:
+            return interpret_CloseCrowdsale();
+
+        case MSC_TYPE_CREATE_PROPERTY_MANUAL:
+            return interpret_CreatePropertyManaged();
+
+        case MSC_TYPE_GRANT_PROPERTY_TOKENS:
+            return interpret_GrantTokens();
+
+        case MSC_TYPE_REVOKE_PROPERTY_TOKENS:
+            return interpret_RevokeTokens();
+
+        case MSC_TYPE_CHANGE_ISSUER_ADDRESS:
+            return interpret_ChangeIssuer();
+
+        case OMNICORE_MESSAGE_TYPE_DEACTIVATION:
+            return interpret_Deactivation();
+
+        case OMNICORE_MESSAGE_TYPE_ACTIVATION:
+            return interpret_Activation();
+
+        case OMNICORE_MESSAGE_TYPE_ALERT:
+            return interpret_Alert();
+
+        case MSC_TYPE_METADEX_TRADE:
+            return interpret_MetaDExTrade();
+
+        case MSC_TYPE_CREATE_CONTRACT:
+            return interpret_CreateContractDex();
+
+        case MSC_TYPE_CONTRACTDEX_TRADE:
+            return interpret_ContractDexTrade();
+
+        case MSC_TYPE_CONTRACTDEX_CANCEL_ECOSYSTEM:
+            return interpret_ContractDexCancelEcosystem();
+
+        case MSC_TYPE_PEGGED_CURRENCY:
+            return interpret_CreatePeggedCurrency();
+
+        case MSC_TYPE_SEND_PEGGED_CURRENCY:
+            return interpret_SendPeggedCurrency();
+
+        case MSC_TYPE_REDEMPTION_PEGGED:
+            return interpret_RedemptionPegged();
+
+        case MSC_TYPE_CONTRACTDEX_CLOSE_POSITION:
+            return interpret_ContractDexClosePosition();
+
+        case MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK:
+            return interpret_ContractDex_Cancel_Orders_By_Block();
+
+        case MSC_TYPE_TRADE_OFFER:
+            return interpret_TradeOffer();
+
+        case MSC_TYPE_DEX_BUY_OFFER:
+            return interpret_DExBuy();
+
+        case MSC_TYPE_ACCEPT_OFFER_BTC:
+            return interpret_AcceptOfferBTC();
+
     }
-  return false;
+
+    return false;
 }
 
 /** Version and type */
@@ -465,12 +461,12 @@ bool CMPTransaction::interpret_CreatePropertyManaged()
         spstr.push_back(std::string(p));
         p += spstr.back().size() + 1;
     }
-    
+
     if (isOverrun(p)) {
-      PrintToLog("%s(): rejected: malformed string value(s)\n", __func__);
-      return false;
+        PrintToLog("%s(): rejected: malformed string value(s)\n", __func__);
+        return false;
     }
-    
+
     int j = 0;
     memcpy(name, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(name)-1)); j++;
     memcpy(url, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(url)-1)); j++;
@@ -549,57 +545,6 @@ bool CMPTransaction::interpret_RevokeTokens()
     }
 
     return true;
-}
-
-/** Tx 57 */
-bool CMPTransaction::interpret_CreateVestingTokens()
-{
-  int i = 0;
-  
-  std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
-  std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
-  
-  memcpy(&ecosystem, &pkt[i], 1);
-  i++;
-  
-  std::vector<uint8_t> vecPropTypeBytes = GetNextVarIntBytes(i);
-  std::vector<uint8_t> vecPrevPropIdBytes = GetNextVarIntBytes(i);
-  
-  const char* p = i + (char*) &pkt;
-  std::vector<std::string> spstr;
-  for (int j = 0; j < 3; j++) {
-    spstr.push_back(std::string(p));
-    p += spstr.back().size() + 1;
-  }
-  
-  if (isOverrun(p)) {
-    PrintToLog("%s(): rejected: malformed string value(s)\n", __func__);
-    return false;
-  }
-  
-  int j = 0;
-  memcpy(name, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(name)-1)); j++;
-  memcpy(url, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(url)-1)); j++;
-  memcpy(data, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(data)-1)); j++;
-  i = i + strlen(name) + strlen(url) + strlen(data) + 3; // data sizes + 3 null terminators
-  
-  if (!vecPropTypeBytes.empty()) {
-    prop_type = DecompressInteger(vecPropTypeBytes);
-  } else return false;
-  
-  if (!vecPrevPropIdBytes.empty()) {
-    prev_prop_id = DecompressInteger(vecPrevPropIdBytes);
-  } else return false;
-  
-  if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly) {
-    PrintToLog("\t       ecosystem: %d\n", ecosystem);
-    PrintToLog("\t   property type: %d (%s)\n", prop_type, strPropertyType(prop_type));
-    PrintToLog("\tprev property id: %d\n", prev_prop_id);
-    PrintToLog("\t            name: %s\n", name);
-    PrintToLog("\t             url: %s\n", url);
-    PrintToLog("\t            data: %s\n", data);
-  }
-  return true;
 }
 
 /** Tx 70 */
@@ -1292,97 +1237,92 @@ bool CMPTransaction::interpret_RedemptionPegged()
  */
 int CMPTransaction::interpretPacket()
 {
-  if (rpcOnly)
-    {
-      PrintToLog("%s(): ERROR: attempt to execute logic in RPC mode\n", __func__);
-      return (PKT_ERROR -1);
+    if (rpcOnly) {
+        PrintToLog("%s(): ERROR: attempt to execute logic in RPC mode\n", __func__);
+        return (PKT_ERROR -1);
     }
-  
-  if (!interpret_Transaction())
-    {
-      return (PKT_ERROR -2);
-    }
-  
-  LOCK(cs_tally);
-  switch (type)
-    {
-    case MSC_TYPE_SIMPLE_SEND:
-      return logicMath_SimpleSend();
-      
-    case MSC_TYPE_SEND_ALL:
-      return logicMath_SendAll();
-      
-    case MSC_TYPE_CREATE_PROPERTY_FIXED:
-      return logicMath_CreatePropertyFixed();
-      
-    case MSC_TYPE_CREATE_PROPERTY_VARIABLE:
-      return logicMath_CreatePropertyVariable();
-      
-    case MSC_TYPE_CLOSE_CROWDSALE:
-      return logicMath_CloseCrowdsale();
-      
-    case MSC_TYPE_CREATE_PROPERTY_MANUAL:
-      return logicMath_CreatePropertyManaged();
-      
-    case MSC_TYPE_GRANT_PROPERTY_TOKENS:
-      return logicMath_GrantTokens();
-      
-    case MSC_TYPE_REVOKE_PROPERTY_TOKENS:
-      return logicMath_RevokeTokens();
-      
-    case MSC_TYPE_CREATE_VESTING_TOKENS:
-      return logicMath_CreateVestingTokens();
-      
-    case MSC_TYPE_CHANGE_ISSUER_ADDRESS:
-      return logicMath_ChangeIssuer();
-      
-    case OMNICORE_MESSAGE_TYPE_DEACTIVATION:
-      return logicMath_Deactivation();
-      
-    case OMNICORE_MESSAGE_TYPE_ACTIVATION:
-      return logicMath_Activation();
-      
-    case OMNICORE_MESSAGE_TYPE_ALERT:
-      return logicMath_Alert();
-      
-    case MSC_TYPE_CREATE_CONTRACT:
-      return logicMath_CreateContractDex();
-      
-    case MSC_TYPE_CONTRACTDEX_TRADE:
-      return logicMath_ContractDexTrade();
-      
-    case MSC_TYPE_CONTRACTDEX_CANCEL_ECOSYSTEM:
-      return logicMath_ContractDexCancelEcosystem();
-      
-    case MSC_TYPE_PEGGED_CURRENCY:
-      return logicMath_CreatePeggedCurrency();
 
-    case MSC_TYPE_SEND_PEGGED_CURRENCY:
-      return logicMath_SendPeggedCurrency();
-      
-    case MSC_TYPE_REDEMPTION_PEGGED:
-      return logicMath_RedemptionPegged();
-      
-    case MSC_TYPE_CONTRACTDEX_CLOSE_POSITION:
-      return logicMath_ContractDexClosePosition();
-      
-    case MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK:
-      return logicMath_ContractDex_Cancel_Orders_By_Block();
-      
-    case MSC_TYPE_TRADE_OFFER:
-      return logicMath_TradeOffer();
-      
-    case MSC_TYPE_DEX_BUY_OFFER:
-      return logicMath_DExBuy();
-      
-    case MSC_TYPE_ACCEPT_OFFER_BTC:
-      return logicMath_AcceptOfferBTC();
-      
-    case MSC_TYPE_METADEX_TRADE:
-      return logicMath_MetaDExTrade();
-      
+    if (!interpret_Transaction()) {
+        return (PKT_ERROR -2);
     }
-  return (PKT_ERROR -100);
+
+    LOCK(cs_tally);
+    switch (type) {
+        case MSC_TYPE_SIMPLE_SEND:
+            return logicMath_SimpleSend();
+
+        case MSC_TYPE_SEND_ALL:
+            return logicMath_SendAll();
+
+        case MSC_TYPE_CREATE_PROPERTY_FIXED:
+            return logicMath_CreatePropertyFixed();
+
+        case MSC_TYPE_CREATE_PROPERTY_VARIABLE:
+            return logicMath_CreatePropertyVariable();
+
+        case MSC_TYPE_CLOSE_CROWDSALE:
+            return logicMath_CloseCrowdsale();
+
+        case MSC_TYPE_CREATE_PROPERTY_MANUAL:
+            return logicMath_CreatePropertyManaged();
+
+        case MSC_TYPE_GRANT_PROPERTY_TOKENS:
+            return logicMath_GrantTokens();
+
+        case MSC_TYPE_REVOKE_PROPERTY_TOKENS:
+            return logicMath_RevokeTokens();
+
+        case MSC_TYPE_CHANGE_ISSUER_ADDRESS:
+            return logicMath_ChangeIssuer();
+
+        case OMNICORE_MESSAGE_TYPE_DEACTIVATION:
+            return logicMath_Deactivation();
+
+        case OMNICORE_MESSAGE_TYPE_ACTIVATION:
+            return logicMath_Activation();
+
+        case OMNICORE_MESSAGE_TYPE_ALERT:
+            return logicMath_Alert();
+
+        case MSC_TYPE_CREATE_CONTRACT:
+            return logicMath_CreateContractDex();
+
+        case MSC_TYPE_CONTRACTDEX_TRADE:
+            return logicMath_ContractDexTrade();
+
+        case MSC_TYPE_CONTRACTDEX_CANCEL_ECOSYSTEM:
+            return logicMath_ContractDexCancelEcosystem();
+
+        case MSC_TYPE_PEGGED_CURRENCY:
+            return logicMath_CreatePeggedCurrency();
+
+        case MSC_TYPE_SEND_PEGGED_CURRENCY:
+            return logicMath_SendPeggedCurrency();
+
+        case MSC_TYPE_REDEMPTION_PEGGED:
+            return logicMath_RedemptionPegged();
+
+        case MSC_TYPE_CONTRACTDEX_CLOSE_POSITION:
+            return logicMath_ContractDexClosePosition();
+
+        case MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK:
+            return logicMath_ContractDex_Cancel_Orders_By_Block();
+
+        case MSC_TYPE_TRADE_OFFER:
+            return logicMath_TradeOffer();
+
+        case MSC_TYPE_DEX_BUY_OFFER:
+            return logicMath_DExBuy();
+
+        case MSC_TYPE_ACCEPT_OFFER_BTC:
+            return logicMath_AcceptOfferBTC();
+
+        case MSC_TYPE_METADEX_TRADE:
+            return logicMath_MetaDExTrade();
+
+    }
+
+    return (PKT_ERROR -100);
 }
 
 /** Passive effect of crowdsale participation. */
@@ -1809,65 +1749,65 @@ int CMPTransaction::logicMath_CloseCrowdsale()
 /** Tx 54 */
 int CMPTransaction::logicMath_CreatePropertyManaged()
 {
-  uint256 blockHash;
-  {
-    LOCK(cs_main);
-    
-    CBlockIndex* pindex = chainActive[block];
-    if (pindex == NULL) {
-      PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
-      return (PKT_ERROR_SP -20);
+    uint256 blockHash;
+    {
+        LOCK(cs_main);
+
+        CBlockIndex* pindex = chainActive[block];
+        if (pindex == NULL) {
+            PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
+            return (PKT_ERROR_SP -20);
+        }
+        blockHash = pindex->GetBlockHash();
     }
-    blockHash = pindex->GetBlockHash();
-  }
-  
-  if (OMNI_PROPERTY_ALL != ecosystem && OMNI_PROPERTY_TALL != ecosystem) {
-    PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, (uint32_t) ecosystem);
-    return (PKT_ERROR_SP -21);
-  }
 
-  if (!IsTransactionTypeAllowed(block, ecosystem, type, version)) {
-    PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
-	       __func__,
-	       type,
-	       version,
-	       property,
-	       block);
-    return (PKT_ERROR_SP -22);
-  }
-  
-  if (ALL_PROPERTY_TYPE_INDIVISIBLE != prop_type && ALL_PROPERTY_TYPE_DIVISIBLE != prop_type) {
-    PrintToLog("%s(): rejected: invalid property type: %d\n", __func__, prop_type);
-    return (PKT_ERROR_SP -36);
-  }
-  
-  if ('\0' == name[0]) {
-    PrintToLog("%s(): rejected: property name must not be empty\n", __func__);
-    return (PKT_ERROR_SP -37);
-  }
+    if (OMNI_PROPERTY_ALL != ecosystem && OMNI_PROPERTY_TALL != ecosystem) {
+        PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, (uint32_t) ecosystem);
+        return (PKT_ERROR_SP -21);
+    }
 
-  // ------------------------------------------
-  
-  CMPSPInfo::Entry newSP;
-  newSP.issuer = sender;
-  newSP.txid = txid;
-  newSP.prop_type = prop_type;
-  newSP.category.assign(category);
-  newSP.subcategory.assign(subcategory);
-  newSP.name.assign(name);
-  newSP.url.assign(url);
-  newSP.data.assign(data);
-  newSP.fixed = false;
-  newSP.manual = true;
-  newSP.creation_block = blockHash;
-  newSP.update_block = newSP.creation_block;
-  
-  uint32_t propertyId = _my_sps->putSP(ecosystem, newSP);
-  assert(propertyId > 0);
+    if (!IsTransactionTypeAllowed(block, ecosystem, type, version)) {
+        PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+                __func__,
+                type,
+                version,
+                property,
+                block);
+        return (PKT_ERROR_SP -22);
+    }
 
-  PrintToLog("CREATED MANUAL PROPERTY id: %d admin: %s\n", propertyId, sender);
-  
-  return 0;
+    if (ALL_PROPERTY_TYPE_INDIVISIBLE != prop_type && ALL_PROPERTY_TYPE_DIVISIBLE != prop_type) {
+        PrintToLog("%s(): rejected: invalid property type: %d\n", __func__, prop_type);
+        return (PKT_ERROR_SP -36);
+    }
+
+    if ('\0' == name[0]) {
+        PrintToLog("%s(): rejected: property name must not be empty\n", __func__);
+        return (PKT_ERROR_SP -37);
+    }
+
+    // ------------------------------------------
+
+    CMPSPInfo::Entry newSP;
+    newSP.issuer = sender;
+    newSP.txid = txid;
+    newSP.prop_type = prop_type;
+    newSP.category.assign(category);
+    newSP.subcategory.assign(subcategory);
+    newSP.name.assign(name);
+    newSP.url.assign(url);
+    newSP.data.assign(data);
+    newSP.fixed = false;
+    newSP.manual = true;
+    newSP.creation_block = blockHash;
+    newSP.update_block = newSP.creation_block;
+
+    uint32_t propertyId = _my_sps->putSP(ecosystem, newSP);
+    assert(propertyId > 0);
+
+    PrintToLog("CREATED MANUAL PROPERTY id: %d admin: %s\n", propertyId, sender);
+
+    return 0;
 }
 
 /** Tx 55 */
@@ -2021,70 +1961,6 @@ int CMPTransaction::logicMath_RevokeTokens()
     NotifyTotalTokensChanged(property);
 
     return 0;
-}
-
-/** Tx 57 */
-int CMPTransaction::logicMath_CreateVestingTokens()
-{
-  uint256 blockHash;
-  {
-    LOCK(cs_main);
-    
-    CBlockIndex* pindex = chainActive[block];
-    if (pindex == NULL) {
-      PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
-      return (PKT_ERROR_SP -20);
-    }
-    blockHash = pindex->GetBlockHash();
-  }
-  
-  if (OMNI_PROPERTY_ALL != ecosystem && OMNI_PROPERTY_TALL != ecosystem) {
-    PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, (uint32_t) ecosystem);
-    return (PKT_ERROR_SP -21);
-  }
-  
-  if (!IsTransactionTypeAllowed(block, ecosystem, type, version)) {
-    PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
-	       __func__,
-	       type,
-	       version,
-	       property,
-	       block);
-    return (PKT_ERROR_SP -22);
-  }
-  
-  if (ALL_PROPERTY_TYPE_INDIVISIBLE != prop_type && ALL_PROPERTY_TYPE_DIVISIBLE != prop_type) {
-    PrintToLog("%s(): rejected: invalid property type: %d\n", __func__, prop_type);
-    return (PKT_ERROR_SP -36);
-  }
-  
-  if ('\0' == name[0]) {
-    PrintToLog("%s(): rejected: property name must not be empty\n", __func__);
-    return (PKT_ERROR_SP -37);
-  }
-
-  // ------------------------------------------
-  
-  CMPSPInfo::Entry newSP;
-  newSP.issuer = sender;
-  newSP.txid = txid;
-  newSP.prop_type = prop_type;
-  newSP.category.assign(category);
-  newSP.subcategory.assign(subcategory);
-  newSP.name.assign(name);
-  newSP.url.assign(url);
-  newSP.data.assign(data);
-  newSP.fixed = false;
-  newSP.manual = true;
-  newSP.creation_block = blockHash;
-  newSP.update_block = newSP.creation_block;
-  
-  uint32_t propertyId = _my_sps->putSP(ecosystem, newSP);
-  assert(propertyId > 0);
-  
-  PrintToLog("Vesting Tokens Created Manually: propertyId = %d admin = %s\n", propertyId, sender);
-  
-  return 0;
 }
 
 /** Tx 70 */
@@ -2328,98 +2204,98 @@ int CMPTransaction::logicMath_MetaDExTrade()
 /** Tx 40 */
 int CMPTransaction::logicMath_CreateContractDex()
 {
-  uint256 blockHash;
-  {
-    LOCK(cs_main);
-    
-    CBlockIndex* pindex = chainActive[block];
-    
-    if (pindex == NULL) {
-      PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
-      return (PKT_ERROR_SP -20);
+    uint256 blockHash;
+    {
+        LOCK(cs_main);
+
+        CBlockIndex* pindex = chainActive[block];
+
+        if (pindex == NULL) {
+            PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
+            return (PKT_ERROR_SP -20);
+        }
+            blockHash = pindex->GetBlockHash();
     }
-    blockHash = pindex->GetBlockHash();
-  }
-  
-  // if (OMNI_PROPERTY_ALL != ecosystem && OMNI_PROPERTY_TALL != ecosystem) {
-  //     PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, (uint32_t) ecosystem);
-  //     return (PKT_ERROR_SP -21);
-  // }
-  
-  // if (!IsTransactionTypeAllowed(block, ecosystem, type, version)) {
-  //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
-  //         __func__,
-  //         type,
-  //         version,
-  //         propertyId,
-  //         block);
-  //     return (PKT_ERROR_SP -22);
-  // }
-  
-  // if ('\0' == name[0]) {
-  //    PrintToLog("%s(): rejected: property name must not be empty\n", __func__);
-  //    return (PKT_ERROR_SP -37);
-  // }
-  
-  // PrintToLog("type of denomination: %d\n",denomination);
-  
-  // if (denomination != TL_dUSD && denomination != TL_dEUR && denomination!= TL_dYEN && denomination != TL_ALL && denomination != TL_sLTC && denomination!= TL_LTC) {
-  //   PrintToLog("rejected: denomination invalid\n");
-  //   return (PKT_ERROR_SP -37);
-  // }
-  
-  // if (numerator != TL_ALL && numerator != TL_sLTC && numerator != TL_LTC) {
-  //   PrintToLog("rejected: denomination invalid\n");
-  //   return (PKT_ERROR_SP -37);
-  // }
-  
-  // -----------------------------------------------
-  
-  PrintToLog("------------------------------------------------------------\n");
-  PrintToLog("Inside logicMath_CreateContractDex function\n");
-  PrintToLog("version: %d\n", version);
-  PrintToLog("messageType: %d\n",type);
-  PrintToLog("denomination: %d\n", denomination);
-  PrintToLog("blocks until expiration : %d\n", blocks_until_expiration);
-  PrintToLog("notional size : %d\n", notional_size);
-  PrintToLog("collateral currency: %d\n", collateral_currency);
-  PrintToLog("margin requirement: %d\n", margin_requirement);
-  PrintToLog("ecosystem: %d\n", ecosystem);
-  PrintToLog("attribute_type: %d\n", attribute_type);
-  PrintToLog("name: %s\n", name);
-  PrintToLog("sugcategory : %s\n", subcategory);
-  PrintToLog("Sender: %s\n", sender);
-  PrintToLog("property type: %s\n", prop_type);
-  PrintToLog("blockhash: %s\n", blockHash.ToString());
-  PrintToLog("block: %d\n", block);
-  PrintToLog("denomination: %d\n", denomination);
-  PrintToLog("------------------------------------------------------------\n");
-  
-  CMPSPInfo::Entry newSP;
-  newSP.issuer = sender;
-  newSP.prop_type = prop_type;
-  newSP.subcategory.assign(subcategory);
-  newSP.name.assign(name);
-  newSP.fixed = false;
-  newSP.manual = true;
-  newSP.creation_block = blockHash;
-  newSP.update_block = blockHash;
-  newSP.blocks_until_expiration = blocks_until_expiration;
-  newSP.notional_size = notional_size;
-  newSP.collateral_currency = collateral_currency;
-  newSP.margin_requirement = margin_requirement;
-  newSP.init_block = block;
-  newSP.denomination = denomination;
-  newSP.ecosystemSP = ecosystem;
-  newSP.attribute_type = attribute_type;
-  
-  const uint32_t propertyId = _my_sps->putSP(ecosystem, newSP);
-  assert(propertyId > 0);
-  
-  PrintToLog("Contract id: %d\n", propertyId);
-  PrintToLog("ecosystemSP: %d\n", ecosystem);
+
+    // if (OMNI_PROPERTY_ALL != ecosystem && OMNI_PROPERTY_TALL != ecosystem) {
+    //     PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, (uint32_t) ecosystem);
+    //     return (PKT_ERROR_SP -21);
+    // }
+
+    // if (!IsTransactionTypeAllowed(block, ecosystem, type, version)) {
+    //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+    //         __func__,
+    //         type,
+    //         version,
+    //         propertyId,
+    //         block);
+    //     return (PKT_ERROR_SP -22);
+    // }
+
+    // if ('\0' == name[0]) {
+    //    PrintToLog("%s(): rejected: property name must not be empty\n", __func__);
+    //    return (PKT_ERROR_SP -37);
+    // }
+
+    // PrintToLog("type of denomination: %d\n",denomination);
+
+    // if (denomination != TL_dUSD && denomination != TL_dEUR && denomination!= TL_dYEN && denomination != TL_ALL && denomination != TL_sLTC && denomination!= TL_LTC) {
+    //   PrintToLog("rejected: denomination invalid\n");
+    //   return (PKT_ERROR_SP -37);
+    // }
+
+    // if (numerator != TL_ALL && numerator != TL_sLTC && numerator != TL_LTC) {
+    //   PrintToLog("rejected: denomination invalid\n");
+    //   return (PKT_ERROR_SP -37);
+    // }
+
+    // -----------------------------------------------
+
+    PrintToLog("------------------------------------------------------------\n");
+    PrintToLog("Inside logicMath_CreateContractDex function\n");
+    PrintToLog("version: %d\n", version);
+    PrintToLog("messageType: %d\n",type);
+    PrintToLog("denomination: %d\n", denomination);
+    PrintToLog("blocks until expiration : %d\n", blocks_until_expiration);
+    PrintToLog("notional size : %d\n", notional_size);
+    PrintToLog("collateral currency: %d\n", collateral_currency);
+    PrintToLog("margin requirement: %d\n", margin_requirement);
+    PrintToLog("ecosystem: %d\n", ecosystem);
+    PrintToLog("attribute_type: %d\n", attribute_type);
+    PrintToLog("name: %s\n", name);
+    PrintToLog("sugcategory : %s\n", subcategory);
+    PrintToLog("Sender: %s\n", sender);
+    PrintToLog("property type: %s\n", prop_type);
+    PrintToLog("blockhash: %s\n", blockHash.ToString());
+    PrintToLog("block: %d\n", block);
+    PrintToLog("denomination: %d\n", denomination);
+    PrintToLog("------------------------------------------------------------\n");
+
+    CMPSPInfo::Entry newSP;
+    newSP.issuer = sender;
+    newSP.prop_type = prop_type;
+    newSP.subcategory.assign(subcategory);
+    newSP.name.assign(name);
+    newSP.fixed = false;
+    newSP.manual = true;
+    newSP.creation_block = blockHash;
+    newSP.update_block = blockHash;
+    newSP.blocks_until_expiration = blocks_until_expiration;
+    newSP.notional_size = notional_size;
+    newSP.collateral_currency = collateral_currency;
+    newSP.margin_requirement = margin_requirement;
+    newSP.init_block = block;
+    newSP.denomination = denomination;
+    newSP.ecosystemSP = ecosystem;
+    newSP.attribute_type = attribute_type;
     
-  return 0;
+    const uint32_t propertyId = _my_sps->putSP(ecosystem, newSP);
+    assert(propertyId > 0);
+
+    PrintToLog("Contract id: %d\n", propertyId);
+    PrintToLog("ecosystemSP: %d\n", ecosystem);
+    
+    return 0;
 }
 
 /** Tx 29 */

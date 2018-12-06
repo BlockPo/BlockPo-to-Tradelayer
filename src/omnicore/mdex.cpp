@@ -168,14 +168,13 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       const int idx_qp = idx_q;
       PrintToLog("Checking idx_q = %d", idx_qp);
       
-      struct FutureContractObject *pfuture = getFutureContractObject(propertyForSale, "ALL F19");
+      CMPSPInfo::Entry sp;
+      assert(_my_sps->getSP(propertyForSale, sp));
       
-      PrintToLog("\n---------------------------------------------------\n");
-      PrintToLog("Inside x_trade function:\n");
-      PrintToLog("fco_margin_requirement : %d\n", static_cast<int64_t>(pfuture->fco_margin_requirement));
-      PrintToLog("fco_collateral_currency : %d\n", pfuture->fco_collateral_currency);
-      PrintToLog("fco_notional_size : %d\n", pfuture->fco_notional_size);
-      PrintToLog("fco_subcategory : %s\n", pfuture->fco_subcategory);
+      uint32_t marginRequirementContract = sp.margin_requirement;
+      int64_t marginRequirement = static_cast<int64_t>(marginRequirementContract);
+      uint32_t collateralCurrency = sp.collateral_currency;
+      uint32_t notionalSize = sp.notional_size;
       /********************************************************/
       /** Preconditions */
       assert(pold->getProperty() == pnew->getProperty());
@@ -1856,10 +1855,11 @@ int mastercore::ContractDex_CANCEL_EVERYTHING(const uint256& txid, unsigned int 
 	      
 	      rc = 0;
 	      
-	      struct FutureContractObject *pfuture = getFutureContractObject(it->getProperty(), "ALL F19");
+	      CMPSPInfo::Entry sp;
+	      assert(_my_sps->getSP(it->getProperty(), sp));
+	      uint32_t collateralCurrency = sp.collateral_currency;
+	      int64_t marginRe = static_cast<int64_t>(sp.margin_requirement);
 	      
-	      uint32_t collateralCurrency = pfuture->fco_collateral_currency;
-	      int64_t marginRe = static_cast<int64_t>(pfuture->fco_margin_requirement); 
 	      string addr = it->getAddr();
 	      int64_t amountForSale = it->getAmountForSale();
 	      
@@ -1912,10 +1912,11 @@ int mastercore::ContractDex_CANCEL_FOR_BLOCK(const uint256& txid,  int block,uns
 	  continue;
 	}
 	
-	struct FutureContractObject *pfuture = getFutureContractObject(it->getProperty(), "ALL F19");
-	
-	uint32_t collateralCurrency = pfuture->fco_collateral_currency;
-	uint32_t marginRe = pfuture->fco_margin_requirement;
+	CMPSPInfo::Entry sp;
+	uint32_t contractId = it->getProperty();
+	assert(_my_sps->getSP(contractId, sp));
+	uint32_t collateralCurrency = sp.collateral_currency;
+	uint32_t marginRe = sp.margin_requirement;
 
 	int64_t balance = getMPbalance(addr,collateralCurrency,BALANCE);
 	int64_t amountForSale = it->getAmountForSale();

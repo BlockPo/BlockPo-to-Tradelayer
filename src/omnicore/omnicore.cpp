@@ -527,6 +527,7 @@ void CheckWalletUpdate(bool forceUpdate)
 #endif
 }
 
+
 void sendingVestingTokens()
 {
   extern VectorTLS *pt_vestingAddresses;  VectorTLS &vestingAddresses  = *pt_vestingAddresses;
@@ -534,26 +535,8 @@ void sendingVestingTokens()
   extern int nVestingAddrs;
   PrintToLog("\nVesting amount for every vesting address : %d\n", amountVesting);
   
-  CMPSPInfo::Entry newSP;
-  
-  newSP.name = "Vesting Tokens";
-  newSP.data = "Divisible Tokens";
-  newSP.url  = "www.tradelayer.org";
-  newSP.category = "N/A";
-  newSP.subcategory = "N/A";
-  newSP.prop_type = ALL_PROPERTY_TYPE_DIVISIBLE;
-  newSP.num_tokens = amountVesting;
-  newSP.attribute_type = ALL_PROPERTY_TYPE_VESTING; 
-  
-  const uint32_t propertyIdVesting = _my_sps->putSP(OMNI_PROPERTY_ALL, newSP);
-  assert(propertyIdVesting > 0);
-  for (int i = 0; i < nVestingAddrs; i++) assert(update_tally_map(vestingAddresses[i], propertyIdVesting, amountVesting, BALANCE));
-  
   for (int i = 0; i < nVestingAddrs; i++)
-    {
-      if (getMPbalance(vestingAddresses[i], OMNI_PROPERTY_ALL, UNVESTED) == 0)
-	assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, getMPbalance(vestingAddresses[i], propertyIdVesting, BALANCE), UNVESTED));
-    }
+    assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, amountVesting, UNVESTED));
 }
 
 /**
@@ -930,23 +913,25 @@ int ParseTransaction(const CTransaction& tx, int nBlock, unsigned int idx, CMPTr
  */
 static bool HandleDExPayments(const CTransaction& tx, int nBlock, const std::string& strSender)
 {
-  int count = 0;
-  PrintToConsole("Inside HandleDExPayments function <<<<<<<<<<<<<<<<<<<<<\n");
-  for (unsigned int n = 0; n < tx.vout.size(); ++n) {
-    CTxDestination dest;
-    if (ExtractDestination(tx.vout[n].scriptPubKey, dest)) {
-      std::string address = EncodeDestination(dest);
-      if (address == ExodusAddress() || address == strSender) {
-	continue;
-      }
-      // if (msc_debug_parser_dex) PrintToLog("payment #%d %s %s\n", count, strAddress, FormatIndivisibleMP(tx.vout[n].nValue));
-      // check everything and pay BTC for the property we are buying here...
-      if (0 == DEx_payment(tx.GetHash(), n, address, strSender, tx.vout[n].nValue, nBlock)) ++count;
-    }
-  }  
-  return (count > 0);
-}
+    int count = 0;
+    PrintToConsole("Inside HandleDExPayments function <<<<<<<<<<<<<<<<<<<<<\n");
+    for (unsigned int n = 0; n < tx.vout.size(); ++n) {
+        CTxDestination dest;
+        if (ExtractDestination(tx.vout[n].scriptPubKey, dest)) {
+            std::string address = EncodeDestination(dest);
+            if (address == ExodusAddress() || address == strSender) {
+                continue;
+            }
 
+            // if (msc_debug_parser_dex) PrintToLog("payment #%d %s %s\n", count, strAddress, FormatIndivisibleMP(tx.vout[n].nValue));
+
+            // check everything and pay BTC for the property we are buying here...
+            if (0 == DEx_payment(tx.GetHash(), n, address, strSender, tx.vout[n].nValue, nBlock)) ++count;
+        }
+    }
+
+    return (count > 0);
+}
 /**
  * Reports the progress of the initial transaction scanning.
  *
@@ -2083,26 +2068,33 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   int expirationBlock = 0, actualBlock = 0, checkExpiration = 0;
   CMPSPInfo::Entry sp;
   
-  struct FutureContractObject *pfuture = getFutureContractObject(id_contract, "ALL F19");
-  
   if ( id_contract != 0 )
     {
-      expirationBlock = static_cast<int>(pfuture->fco_blocks_until_expiration);
-      actualBlock = static_cast<int>(pBlockIndex->nHeight);
+      if (_my_sps->getSP(id_contract, sp) && sp.subcategory ==  "Futures Contracts")
+	{
+	  expirationBlock = static_cast<int>(sp.blocks_until_expiration);
+	  actualBlock = static_cast<int>(pBlockIndex->nHeight);
+	}
     }
-  
+
   const CConsensusParams &params = ConsensusParams();
   if (static_cast<int>(pBlockIndex->nHeight) == params.MSC_VESTING_BLOCK)
     {
-      sendingVestingTokens();      
-      int64_t vestingBalance  = getMPbalance("QSsJXDFb4b3vTgqeycrHtkYTYKmCk4TJn1", OMNI_PROPERTY_ALL, UNVESTED); 
+      sendingVestingTokens();
+
+      int64_t vestingBalance  = getMPbalance("QSsJXDFb4b3vTgqeycrHtkYTYKmCk4TJn1", OMNI_PROPERTY_ALL, UNVESTED);
+      int64_t positiveBalance = getMPbalance("QSsJXDFb4b3vTgqeycrHtkYTYKmCk4TJn1", OMNI_PROPERTY_ALL, POSSITIVE_BALANCE);
+      int64_t negativeBalance = getMPbalance("QSsJXDFb4b3vTgqeycrHtkYTYKmCk4TJn1", OMNI_PROPERTY_ALL, NEGATIVE_BALANCE);
+
       PrintToLog("\nvestingBalance QSsJXDFb4b3vTgqeycrHtkYTYKmCk4TJn1:  %d\n", vestingBalance);
+      PrintToLog("\npositiveBalance QSsJXDFb4b3vTgqeycrHtkYTYKmCk4TJn1: %d\n", positiveBalance);
+      PrintToLog("\nnegativeBalance QSsJXDFb4b3vTgqeycrHtkYTYKmCk4TJn1: %d\n", negativeBalance);
     }
   
   PrintToLog("nBlockTime: %d\n", static_cast<int>(nBlockTime));
   PrintToLog("expirationBlock: %d\n", static_cast<int>(expirationBlock));
   
-  int deadline = pfuture->fco_init_block + expirationBlock;
+  int deadline = sp.init_block + expirationBlock;
   
   if ( actualBlock != 0 && deadline != 0 ) checkExpiration = actualBlock == deadline ? 1 : 0;
   
@@ -3060,7 +3052,7 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
       globalPNLALL_DUSD += UPNL1 + UPNL2;
       globalVolumeALL_DUSD += nCouldBuy0;
     }
-  
+
   int64_t volumeToCompare = 0;
   bool perpetualBool = callingPerpetualSettlement(globalPNLALL_DUSD, globalVolumeALL_DUSD, volumeToCompare);
   if (perpetualBool) PrintToLog("Perpetual Settlement Online");

@@ -11,7 +11,7 @@
  */
 CMPTally::CMPTally()
 {
-  my_it = mp_token.begin();
+    my_it = mp_token.begin();
 }
 
 /**
@@ -21,12 +21,12 @@ CMPTally::CMPTally()
  */
 uint32_t CMPTally::init()
 {
-  uint32_t propertyId = 0;
-  my_it = mp_token.begin();
-  if (my_it != mp_token.end()) {
-    propertyId = my_it->first;
-  }
-  return propertyId;
+    uint32_t propertyId = 0;
+    my_it = mp_token.begin();
+    if (my_it != mp_token.end()) {
+        propertyId = my_it->first;
+    }
+    return propertyId;
 }
 
 /**
@@ -36,12 +36,12 @@ uint32_t CMPTally::init()
  */
 uint32_t CMPTally::next()
 {
-  uint32_t ret = 0;
-  if (my_it != mp_token.end()) {
-    ret = my_it->first;
-    ++my_it;
-  }
-  return ret;
+    uint32_t ret = 0;
+    if (my_it != mp_token.end()) {
+        ret = my_it->first;
+        ++my_it;
+    }
+    return ret;
 }
 
 /**
@@ -53,8 +53,8 @@ uint32_t CMPTally::next()
  */
 static bool isOverflow(int64_t a, int64_t b)
 {
-  return (((b > 0) && (a > (std::numeric_limits<int64_t>::max() - b))) ||
-	  ((b < 0) && (a < (std::numeric_limits<int64_t>::min() - b))));
+    return (((b > 0) && (a > (std::numeric_limits<int64_t>::max() - b))) ||
+            ((b < 0) && (a < (std::numeric_limits<int64_t>::min() - b))));
 }
 
 /**

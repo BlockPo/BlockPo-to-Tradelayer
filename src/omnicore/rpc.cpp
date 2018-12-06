@@ -83,12 +83,12 @@ void PopulateFailure(int error)
 
 void PropertyToJSON(const CMPSPInfo::Entry& sProperty, UniValue& property_obj)
 {
-  property_obj.push_back(Pair("name", sProperty.name));
-  property_obj.push_back(Pair("data", sProperty.data));
-  property_obj.push_back(Pair("url", sProperty.url));
-  property_obj.push_back(Pair("divisible", sProperty.isDivisible()));
-  property_obj.push_back(Pair("category", sProperty.category));
-  property_obj.push_back(Pair("subcategory", sProperty.subcategory));
+    property_obj.push_back(Pair("name", sProperty.name));
+    property_obj.push_back(Pair("data", sProperty.data));
+    property_obj.push_back(Pair("url", sProperty.url));
+    property_obj.push_back(Pair("divisible", sProperty.isDivisible()));
+    property_obj.push_back(Pair("category", sProperty.category));
+    property_obj.push_back(Pair("subcategory", sProperty.subcategory));
 }
 
 bool BalanceToJSON(const std::string& address, uint32_t property, UniValue& balance_obj, bool divisible)
@@ -711,13 +711,12 @@ UniValue tl_listproperties(const JSONRPCRequest& request)
 			+ HelpExampleCli("tl_listproperties", "")
 			+ HelpExampleRpc("tl_listproperties", "")
 			);
-  
+
   UniValue response(UniValue::VARR);
   
   LOCK(cs_tally);
   
   uint32_t nextSPID = _my_sps->peekNextSPID(1);
-  PrintToLog("Check nextSPID: %d", nextSPID);
   for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++) {
     CMPSPInfo::Entry sp;
     if (_my_sps->getSP(propertyId, sp)) {
@@ -735,11 +734,10 @@ UniValue tl_listproperties(const JSONRPCRequest& request)
       UniValue propertyObj(UniValue::VOBJ);
       propertyObj.push_back(Pair("propertyid", (uint64_t) propertyId));
       PropertyToJSON(sp, propertyObj); // name, data, url, divisible
-  
+      
       response.push_back(propertyObj);
     }
   }
-  
   return response;
 }
 

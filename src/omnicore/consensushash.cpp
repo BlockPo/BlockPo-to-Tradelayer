@@ -68,21 +68,20 @@ namespace mastercore
      int64_t liquidationPrice = tallyObj.getMoney(propertyId, LIQUIDATION_PRICE);
      int64_t upnl = tallyObj.getMoney(propertyId, UPNL);
      int64_t unvested = tallyObj.getMoney(propertyId, UNVESTED);
-     
-     
+
      // return a blank string if all balances are empty
      if (!balance && !sellOfferReserve && !acceptReserve && !metaDExReserve && !contractdexReserved && !positiveBalance && !negativeBalance && !realizedProfit && !realizedLosses && !count && !remaining && !liquidationPrice && !upnl && !unvested) {
-       return "";
+         return "";
      }
-     
-     return strprintf("%s|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d",
+
+     return strprintf("%s|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d",
 		      address, propertyId, balance, sellOfferReserve,
 		      acceptReserve, metaDExReserve,contractdexReserved,
 		      positiveBalance, negativeBalance, realizedProfit,
 		      realizedLosses, count, remaining, liquidationPrice, upnl, unvested);
  }
-  
-  // Generates a consensus string for hashing based on a DEx sell offer object
+
+ // Generates a consensus string for hashing based on a DEx sell offer object
  std::string GenerateConsensusString(const CMPOffer& offerObj, const std::string& address)
  {
      return strprintf("%s|%s|%d|%d|%d|%d|%d",

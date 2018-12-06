@@ -146,15 +146,12 @@ static const CRPCConvertParam vRPCConvertParams[] =
 
      /* Trade Layer - payload creation */
     { "tl_createpayload_simplesend", 0, "arg0" },
-    
+
     /* Trade Layer - transaction calls */
     { "tl_send", 2, "arg2" },
     { "tl_sendissuancemanaged", 1, "arg1" },
     { "tl_sendissuancemanaged", 2, "arg2" },
     { "tl_sendissuancemanaged", 3, "arg3" },
-    { "tl_sendvestingtokens", 1, "arg1" },
-    { "tl_sendvestingtokens", 2, "arg2" },
-    { "tl_sendvestingtokens", 3, "arg3" },
     { "tl_createcontract", 1, "arg1"},
     { "tl_createcontract", 2, "arg2"},
     { "tl_createcontract", 4, "arg4"},

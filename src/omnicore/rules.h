@@ -9,20 +9,20 @@
 
 namespace mastercore
 {
-  //! Feature identifier placeholder
-  const uint16_t FEATURE_NA = 9999;
-  const uint16_t FEATURE_DEXMATH = 5;
-  //! Feature identifier to enable the fee cache and strip 0.05% fees from non-Omni pairs
-  const uint16_t FEATURE_FEES = 9;
-  //! Feature identifier to enable Send All transactions
-  const uint16_t FEATURE_CONTRACTDEX = 11;
-  /** A structure to represent transaction restrictions*/
-  
-  //! When (propertyTotalTokens / OMNI_FEE_THRESHOLD) is reached fee distribution will occur
-  const int64_t OMNI_FEE_THRESHOLD = 100000; // 0.001%
-  
-  struct TransactionRestriction
-  {
+//! Feature identifier placeholder
+const uint16_t FEATURE_NA = 9999;
+const uint16_t FEATURE_DEXMATH = 5;
+//! Feature identifier to enable the fee cache and strip 0.05% fees from non-Omni pairs
+const uint16_t FEATURE_FEES = 9;
+//! Feature identifier to enable Send All transactions
+const uint16_t FEATURE_CONTRACTDEX = 11;
+/** A structure to represent transaction restrictions*/
+
+//! When (propertyTotalTokens / OMNI_FEE_THRESHOLD) is reached fee distribution will occur
+const int64_t OMNI_FEE_THRESHOLD = 100000; // 0.001%
+
+struct TransactionRestriction
+{
     //! Transaction type
     uint16_t txType;
     //! Transaction version
@@ -31,29 +31,29 @@ namespace mastercore
     bool allowWildcard;
     //! Block after which the feature or transaction is enabled
     int activationBlock;
-  };
+};
 
-  /** A structure to represent a verification checkpoint.
-   */
-  struct ConsensusCheckpoint
-  {
+/** A structure to represent a verification checkpoint.
+ */
+struct ConsensusCheckpoint
+{
     int blockHeight;
     uint256 blockHash;
     uint256 consensusHash;
-  };
-  
-  // TODO: rename allcaps variable names
-  // TODO: remove remaining global heights
-  // TODO: add Exodus addresses to params
-  
-  /** Base class for consensus parameters.
-   */
-  class CConsensusParams
-  {
-  public:
+};
+
+// TODO: rename allcaps variable names
+// TODO: remove remaining global heights
+// TODO: add Exodus addresses to params
+
+/** Base class for consensus parameters.
+ */
+class CConsensusParams
+{
+public:
     //! Live block of Omni Layer Lite
     int GENESIS_BLOCK;
-    
+
     //! Minimum number of blocks to use for notice rules on activation
     int MIN_ACTIVATION_BLOCKS;
     //! Maximum number of blocks to use for notice rules on activation
@@ -76,11 +76,12 @@ namespace mastercore
     int MSC_MANUALSP_BLOCK;
     //! Block to enable "send all" transactions
     int MSC_SEND_ALL_BLOCK;
-    /*********************************/
+    ////////////////////////////////////
     /** New things for Contract: ! Block to enable MetaDEx transactions */
     int MSC_CONTRACTDEX_BLOCK;
-
     int MSC_VESTING_BLOCK;
+    ////////////////////////////////////
+
     /** Returns a mapping of transaction types, and the blocks at which they are enabled. */
     virtual std::vector<TransactionRestriction> GetRestrictions() const;
 
