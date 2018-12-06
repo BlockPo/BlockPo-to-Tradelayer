@@ -42,9 +42,8 @@ notional_size=1
 margin_requirement=1
 amountusdts_manyaddr=200000000
 blocks_until_expiration=225
-CONTRACT=3
-collateral=4
-
+CONTRACT=4
+collateral=5
 
 printf " Creating the addresses ..."
 
@@ -89,7 +88,6 @@ $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
 printf "\n________________________________________\n"
 printf "Checking confirmation of Creating Future Contract #1:\n"
 $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_gettransaction $TRACreate
-./litecoin-cli -datadir=$DATADIR --regrest tl_listproperties
 ##################################################################
 printf "\n________________________________________\n"
 printf "Creating an Divisible Token USDT:\n"
@@ -105,14 +103,14 @@ for (( i=1; i<=${N}; i++ ))
 do
     printf "\n////////////////////////////////////////\n"
     printf "Sending USDTs from base address to the addresses #$i\n"
-    $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_sendgrant ${ADDRBase} ${ADDRess[$i]} 4 ${amountusdts_manyaddr}
+    $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_sendgrant ${ADDRBase} ${ADDRess[$i]} 5 ${amountusdts_manyaddr}
     $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1 # Generating one block
     
     printf "\n________________________________________\n"
     printf "Checking USDT balances for the address #$i:\n"
-    $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_getbalance ${ADDRess[$i]} 4
+    $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_getbalance ${ADDRess[$i]} 5
 done
-
+##################################################################
 for (( i=1; i<=${N}; i++ ))
 do
     printf "\n________________________________________\n"
@@ -128,10 +126,9 @@ do
     printf "\n"
     
     $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[$i]} ${CONTRACT} ${AMOUNT} ${PRICE} 1
-    $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
-    
+    $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1    
 done
-
+##################################################################
 for (( i=1; i<=${N}; i++ ))
 do
     printf "\n________________________________________\n"
@@ -147,10 +144,8 @@ do
     printf "\n"
     
     $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[$i]} ${CONTRACT} ${AMOUNT} ${PRICE} 2
-    $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
-    
+    $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1    
 done
-
 ##################################################################
 printf "\n Cheking the  orderbok (sellside):\n"
 $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_getcontract_orderbook ${CONTRACT} 2

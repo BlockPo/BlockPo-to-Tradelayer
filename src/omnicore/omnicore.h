@@ -112,6 +112,7 @@ enum TransactionType {
 #define ALL_PROPERTY_TYPE_INDIVISIBLE             1
 #define ALL_PROPERTY_TYPE_DIVISIBLE               2
 #define ALL_PROPERTY_TYPE_CONTRACT                3
+#define ALL_PROPERTY_TYPE_VESTING                 4
 
 enum FILETYPES {
   FILETYPE_BALANCES = 0,

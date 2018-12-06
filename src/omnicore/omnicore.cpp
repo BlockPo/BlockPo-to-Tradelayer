@@ -534,9 +534,27 @@ void sendingVestingTokens()
   extern int64_t amountVesting;
   extern int nVestingAddrs;
   PrintToLog("\nVesting amount for every vesting address : %d\n", amountVesting);
+
+  CMPSPInfo::Entry newSP;
+  
+  newSP.name = "Vesting Tokens";
+  newSP.data = "Divisible Tokens";
+  newSP.url  = "www.tradelayer.org";
+  newSP.category = "N/A";
+  newSP.subcategory = "N/A";
+  newSP.prop_type = ALL_PROPERTY_TYPE_DIVISIBLE;
+  newSP.num_tokens = amountVesting;
+  newSP.attribute_type = ALL_PROPERTY_TYPE_VESTING; 
+  
+  const uint32_t propertyIdVesting = _my_sps->putSP(OMNI_PROPERTY_ALL, newSP);
+  assert(propertyIdVesting > 0);
+  for (int i = 0; i < nVestingAddrs; i++) assert(update_tally_map(vestingAddresses[i], propertyIdVesting, amountVesting, BALANCE));
   
   for (int i = 0; i < nVestingAddrs; i++)
-    assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, amountVesting, UNVESTED));
+    {
+      if (getMPbalance(vestingAddresses[i], OMNI_PROPERTY_ALL, UNVESTED) == 0)
+	assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, getMPbalance(vestingAddresses[i], propertyIdVesting, BALANCE), UNVESTED));
+    }
 }
 
 /**
@@ -2081,14 +2099,8 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   if (static_cast<int>(pBlockIndex->nHeight) == params.MSC_VESTING_BLOCK)
     {
       sendingVestingTokens();
-
       int64_t vestingBalance  = getMPbalance("QSsJXDFb4b3vTgqeycrHtkYTYKmCk4TJn1", OMNI_PROPERTY_ALL, UNVESTED);
-      int64_t positiveBalance = getMPbalance("QSsJXDFb4b3vTgqeycrHtkYTYKmCk4TJn1", OMNI_PROPERTY_ALL, POSSITIVE_BALANCE);
-      int64_t negativeBalance = getMPbalance("QSsJXDFb4b3vTgqeycrHtkYTYKmCk4TJn1", OMNI_PROPERTY_ALL, NEGATIVE_BALANCE);
-
-      PrintToLog("\nvestingBalance QSsJXDFb4b3vTgqeycrHtkYTYKmCk4TJn1:  %d\n", vestingBalance);
-      PrintToLog("\npositiveBalance QSsJXDFb4b3vTgqeycrHtkYTYKmCk4TJn1: %d\n", positiveBalance);
-      PrintToLog("\nnegativeBalance QSsJXDFb4b3vTgqeycrHtkYTYKmCk4TJn1: %d\n", negativeBalance);
+      PrintToLog("\nvestingBalance QSsJXDFb4b3vTgqeycrHtkYTYKmCk4TJn1:  %d\n", vestingBalance); 
     }
   
   PrintToLog("nBlockTime: %d\n", static_cast<int>(nBlockTime));
@@ -3165,7 +3177,7 @@ void loopForEntryPrice(std::vector<std::map<std::string, std::string>> path_ele,
       	{
       	  addrs_srch = (*it_path_ele)["addrs_src"];
 	  limInf = path_ele.size()-(path_length+idx_path)+1;
-
+	  
       	  for (reit_path_ele = path_ele.rbegin()+limInf; reit_path_ele != path_ele.rend(); ++reit_path_ele)
       	    {
       	      if ( addrs_srch == (*reit_path_ele)["addrs_src"] && finding_string("Open", (*reit_path_ele)["status_src"]) )

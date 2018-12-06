@@ -711,7 +711,7 @@ UniValue tl_listproperties(const JSONRPCRequest& request)
 			+ HelpExampleCli("tl_listproperties", "")
 			+ HelpExampleRpc("tl_listproperties", "")
 			);
-
+  
   UniValue response(UniValue::VARR);
   
   LOCK(cs_tally);
