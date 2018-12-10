@@ -144,8 +144,8 @@ CTestNetConsensusParams::CTestNetConsensusParams()
     // Transaction restrictions:
     MSC_ALERT_BLOCK = 0;
     MSC_SEND_BLOCK = 0;
-    MSC_SP_BLOCK = 0;
-    MSC_MANUALSP_BLOCK = 0;
+    MSC_SP_BLOCK = 9999999;
+    MSC_MANUALSP_BLOCK = 9999999;
     MSC_SEND_ALL_BLOCK = 0;
     ///////////////////////////////
     /** New things for Contract */
