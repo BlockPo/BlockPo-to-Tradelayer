@@ -752,9 +752,11 @@ UniValue tl_sendtrade(const JSONRPCRequest& request)
     // perform checks
     RequireExistingProperty(propertyIdForSale);
     RequireNotContract(propertyIdForSale);
+    RequireNotVesting(propertyIdForSale);
     RequireExistingProperty(propertyIdDesired);
     RequireNotContract(propertyIdDesired);
-
+    RequireNotVesting(propertyIdDesired);
+    
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_MetaDExTrade(propertyIdForSale, amountForSale, propertyIdDesired, amountDesired);
 

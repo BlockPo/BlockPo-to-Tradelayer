@@ -114,12 +114,12 @@ done
 for (( i=1; i<=${N}; i++ ))
 do
     printf "\n________________________________________\n"
-    printf "Price for sale Seller #$i\n"
+    printf "Price for sale Buyer #$i\n"
     PRICE=$((RANDOM%5+6390))
     printf "\nRandom Price:\n"
     printf $PRICE
     
-    printf "\nAmount for sale Seller #$i\n"
+    printf "\nAmount for sale Buyer #$i\n"
     AMOUNT=$((RANDOM%99+1))
     printf "\nRandom Amount:\n"
     printf $AMOUNT
@@ -146,6 +146,18 @@ do
     $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[$i]} ${CONTRACT} ${AMOUNT} ${PRICE} 2
     $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1    
 done
+##################################################################
+# $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[1]} ${CONTRACT} 100 10 1
+# $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1   
+
+# $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[1]} ${CONTRACT} 200 20 1
+# $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
+
+# $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[1]} ${CONTRACT} 300 30 1
+# $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
+
+# $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[2]} ${CONTRACT} 300 30 2
+# $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1   
 ##################################################################
 printf "\n Cheking the  orderbok (sellside):\n"
 $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_getcontract_orderbook ${CONTRACT} 2

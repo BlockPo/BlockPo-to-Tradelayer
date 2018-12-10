@@ -37,3 +37,5 @@ VectorTLS *pt_expiration_dates;
 VectorTLS *pt_vestingAddresses;
 int nVestingAddrs;
 int64_t amountVesting;
+int actualBlockg;
+int vestingActivationBlock;

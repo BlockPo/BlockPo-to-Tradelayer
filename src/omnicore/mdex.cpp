@@ -55,6 +55,7 @@ extern std::vector<std::map<std::string, std::string>> path_ele;
 extern int n_cols;
 extern int n_rows;
 extern MatrixTLS *pt_ndatabase;
+extern int actualBlockg;
 
 md_PricesMap* mastercore::get_Prices(uint32_t prop)
 {
@@ -100,7 +101,7 @@ void mastercore::LoopBiDirectional(cd_PricesMap* const ppriceMap, uint8_t trdAct
   cd_PricesMap::iterator it_fwdPrices;
   cd_PricesMap::reverse_iterator it_bwdPrices;
   std::vector<std::map<std::string, std::string>>::iterator it_path_ele;
-
+  
   /** Calling for settlement algorithm when the expiration date has been achieved */
   if ( expirationAchieve )
     {
@@ -122,7 +123,11 @@ void mastercore::LoopBiDirectional(cd_PricesMap* const ppriceMap, uint8_t trdAct
 	{
 	  const uint64_t sellerPrice = it_fwdPrices->first;
 	  if ( pnew->getEffectivePrice() < sellerPrice )
-	    continue;
+	    {
+	      // PrintToLog("\nLoop fwd: pnew->getEffectivePrice() = %d, pnew->getAddr() = %s\n", pnew->getEffectivePrice(), pnew->getAddr());
+	      // PrintToLog("Match found");
+	      continue;
+	    }
 	  x_TradeBidirectional(it_fwdPrices, it_bwdPrices, trdAction, pnew, sellerPrice, propertyForSale, NewReturn);
 	}
     }
@@ -131,8 +136,15 @@ void mastercore::LoopBiDirectional(cd_PricesMap* const ppriceMap, uint8_t trdAct
       for (it_bwdPrices = ppriceMap->rbegin(); it_bwdPrices != ppriceMap->rend(); ++it_bwdPrices)
 	{
 	  const uint64_t sellerPrice = it_bwdPrices->first;
+	  PrintToLog("\nLoop bwd: pnew->getEffectivePrice() = %d, pnew->getAddr() = %s\n", pnew->getEffectivePrice(), pnew->getAddr());
 	  if ( pnew->getEffectivePrice() > sellerPrice )
-	    continue;
+	    {
+	      // PrintToLog("\nLoop bwd: pnew->getEffectivePrice() = %d, pnew->getAddr() = %s\n", pnew->getEffectivePrice(), pnew->getAddr());
+	      // PrintToLog("Match found");
+	      continue;
+	    }
+	  // PrintToLog("\nMatch Found!!\n");
+	  // PrintToLog("\nLoop bwd: pnew->getEffectivePrice() = %d, pnew->getAddr() = %s\n", pnew->getEffectivePrice(), pnew->getAddr());
 	  x_TradeBidirectional(it_fwdPrices, it_bwdPrices, trdAction, pnew, sellerPrice, propertyForSale, NewReturn);
 	}
     }
@@ -190,7 +202,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       PrintToLog("Trading action pnew: %d\n", pnew->getTradingAction() );
       PrintToLog("Trade Status: %s\n", tradeStatus);
       PrintToLog("propertyForSale = %d", propertyForSale);
-      
+      PrintToLog("\nactualBlockg = %s\n", actualBlockg);
       /********************************************************/
       uint32_t property_traded = pold->getProperty();
       

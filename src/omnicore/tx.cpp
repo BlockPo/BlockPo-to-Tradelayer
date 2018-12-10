@@ -1515,16 +1515,16 @@ int CMPTransaction::logicMath_SendAll()
 /** Tx 50 */
 int CMPTransaction::logicMath_CreatePropertyFixed()
 {
-    uint256 blockHash;
+  uint256 blockHash;
     {
-        LOCK(cs_main);
-
-        CBlockIndex* pindex = chainActive[block];
-        if (pindex == NULL) {
-            PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
-            return (PKT_ERROR_SP -20);
-        }
-        blockHash = pindex->GetBlockHash();
+      LOCK(cs_main);
+      
+      CBlockIndex* pindex = chainActive[block];
+      if (pindex == NULL) {
+	PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
+	return (PKT_ERROR_SP -20);
+      }
+      blockHash = pindex->GetBlockHash();
     }
 
     if (OMNI_PROPERTY_ALL != ecosystem && OMNI_PROPERTY_TALL != ecosystem) {
@@ -2206,15 +2206,15 @@ int CMPTransaction::logicMath_CreateContractDex()
 {
     uint256 blockHash;
     {
-        LOCK(cs_main);
+      LOCK(cs_main);
 
-        CBlockIndex* pindex = chainActive[block];
-
-        if (pindex == NULL) {
-            PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
-            return (PKT_ERROR_SP -20);
-        }
-            blockHash = pindex->GetBlockHash();
+      CBlockIndex* pindex = chainActive[block];
+      
+      if (pindex == NULL) {
+	PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
+	return (PKT_ERROR_SP -20);
+      }
+      blockHash = pindex->GetBlockHash();
     }
 
     // if (OMNI_PROPERTY_ALL != ecosystem && OMNI_PROPERTY_TALL != ecosystem) {

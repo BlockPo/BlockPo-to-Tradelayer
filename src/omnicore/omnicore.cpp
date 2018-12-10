@@ -139,6 +139,8 @@ extern int idx_expiration;
 extern int expirationAchieve;
 extern double globalPNLALL_DUSD;
 extern int64_t globalVolumeALL_DUSD;
+extern int actualBlockg;
+extern int vestingActivationBlock;
 
 CMPTxList *mastercore::p_txlistdb;
 CMPTradeList *mastercore::t_tradelistdb;
@@ -2094,8 +2096,11 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
 	  actualBlock = static_cast<int>(pBlockIndex->nHeight);
 	}
     }
-
+  
+  actualBlockg = actualBlock;
   const CConsensusParams &params = ConsensusParams();
+  vestingActivationBlock = params.MSC_VESTING_BLOCK;
+  
   if (static_cast<int>(pBlockIndex->nHeight) == params.MSC_VESTING_BLOCK)
     {
       sendingVestingTokens();
@@ -3052,11 +3057,11 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
       path_ele.push_back(edgeEle);
       PrintToLog("Line 0: %s\n", line0);
     }
-
+  
   loopForEntryPrice(path_ele, path_length, address1, address2, UPNL1, UPNL2, effective_price);
   path_length = path_ele.size();
   PrintToLog("UPNL1 = %d, UPNL2 = %d\n", UPNL1, UPNL2);
-
+  
   unsigned int contractId = static_cast<unsigned int>(property_traded);
 
   if ( contractId == ALL_PROPERTY_TYPE_CONTRACT )
@@ -3163,13 +3168,13 @@ void loopForEntryPrice(std::vector<std::map<std::string, std::string>> path_ele,
   std::vector<std::map<std::string, std::string>>::reverse_iterator reit_path_ele;
   std::string addrs_srch;
   std::string addrs_trkh;
-
+  
   int idx_path = 0;
   unsigned int limInf = 0;
   uint64_t entry_pricesrc = 0, entry_pricetrk = 0;
   double UPNLSRC, UPNLTRK;
   double UPNLSRC_sum = 0, UPNLTRK_sum = 0;
-
+  
   for (it_path_ele = path_ele.begin()+path_length; it_path_ele != path_ele.end(); ++it_path_ele)
     {
       idx_path += 1;
