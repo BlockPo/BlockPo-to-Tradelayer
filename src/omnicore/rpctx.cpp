@@ -801,7 +801,7 @@ UniValue tl_createcontract(const JSONRPCRequest& request)
 			+ HelpExampleCli("tl_createcontract", "2 1 0 \"Companies\" \"Bitcoin Mining\" \"Quantum Miner\" \"\" \"\" 2 \"100\" 1483228800 30 2 4461 100 1 25")
 			+ HelpExampleRpc("tl_createcontract", "2, 1, 0, \"Companies\", \"Bitcoin Mining\", \"Quantum Miner\", \"\", \"\", 2, \"100\", 1483228800, 30, 2, 4461, 100, 1, 25")
 			);
-  
+
   std::string fromAddress = ParseAddress(request.params[0]);
   uint8_t ecosystem = ParseEcosystem(request.params[1]);
   uint32_t type = ParseContractType(request.params[2]);
@@ -1001,6 +1001,44 @@ UniValue tl_closeposition(const JSONRPCRequest& request)
             return txid.GetHex();
         }
     }
+}
+
+//tl_getmax_peggedcurrency
+//input : JSONRPCREquest which contains: 1)address of creator, 2) contract ID which is collaterilized in ALL
+//return: UniValue which is JSON object that is max pegged currency you can create
+UniValue tl_getmax_peggedcurrency(const JSONRPCRequest& request)
+{
+  if (request.params.size() != 2)
+    throw runtime_error(
+    "tl_getmax_peggedcurrency\"fromaddress\""
+    "\nGet max pegged currency address can create\n"
+    "\n arguments: \n"
+    "\n 1) fromaddress (string, required) the address to send from\n"
+    "\n 2) contractID (number, required) contract ID which is collaterilized in ALL \n"
+  );
+
+  // Get available ALL because dCurrency is a hedge of ALL and ALL denominated Short Contracts
+  // obtain parameters & info
+  std::string fromAddress = ParseAddress(request.params[0]);
+  // get ALL balance  -1 is ALL property id
+  int64_t ALLbalance = getMPbalance(fromAddress, 3, BALANCE);
+  // get ALL Price
+  extern int64_t allPrice;
+  // multiply ALL balance for address times the ALL price (which is denominated in dUSD)
+  int64_t max_dUSD = ALLbalance * allPrice;
+  //compare to short Position
+  //get # short contracts
+  uint32_t contractId = ParseNewValues(request.params[1]);
+  int64_t shortPosition = getMPbalance(fromAddress, contractId, NEGATIVE_BALANCE);
+  //determine which is less and use that one as max you can peg
+  int64_t maxpegged = (max_dUSD > shortPosition) ? shortPosition : max_dUSD;
+  //create UniValue object to return
+  UniValue max_pegged(UniValue::VOBJ);
+  //add value maxpegged to maxPegged json object
+  max_pegged.push_back(Pair("maxPegged", FormatDivisibleMP(maxpegged)));
+  //return UniValue JSON object
+  return max_pegged;
+
 }
 
 UniValue tl_sendissuance_pegged(const JSONRPCRequest& request)
