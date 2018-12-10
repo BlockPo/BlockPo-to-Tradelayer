@@ -8,8 +8,9 @@
 
 using namespace std;
 
-volatile uint64_t marketPrice;
-rational_t globalNotionalPrice;
+uint64_t marketPrice;
+int64_t globalNumPrice;
+int64_t globalDenPrice;
 int64_t priceIndex;
 int64_t allPrice;
 double percentLiqPrice;
@@ -34,3 +35,5 @@ MatrixTLS *pt_ndatabase;
 std::map<std::string,uint32_t> peggedIssuers;
 double globalPNLALL_DUSD;
 int64_t globalVolumeALL_DUSD;
+//Elements to calculate average entry price (for UPNL)
+std::map<std::string, std::vector<int64_t>> cd_AvEntry;

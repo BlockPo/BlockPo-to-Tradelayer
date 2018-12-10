@@ -55,7 +55,8 @@ extern std::vector<std::map<std::string, std::string>> path_ele;
 extern int n_cols;
 extern int n_rows;
 extern MatrixTLS *pt_ndatabase;
-extern rational_t globalNotionalPrice;
+extern int64_t globalNumPrice;
+extern int64_t globalDenPrice;
 
 md_PricesMap* mastercore::get_Prices(uint32_t prop)
 {
@@ -160,14 +161,13 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       /** Match Conditions */
       bool boolProperty  = pold->getProperty() != propertyForSale;
       bool boolTrdAction = pold->getTradingAction() == pnew->getTradingAction();
-      bool boolEffPrice  = pnew->getEffectivePrice() != pold->getEffectivePrice();
       bool boolAddresses = pold->getAddr() == pnew->getAddr();
 
-     /* if ( findTrueValue(boolProperty, boolTrdAction, boolEffPrice, boolAddresses) )
+      if ( findTrueValue(boolProperty, boolTrdAction, boolAddresses) )
 	{
 	  ++offerIt;
 	  continue;
-	}*/
+	}
 
       idx_q += 1;
       const int idx_qp = idx_q;
@@ -191,6 +191,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       /** Preconditions */
       assert(pold->getProperty() == pnew->getProperty());
 
+
       PrintToLog("________________________________________________________\n");
       PrintToLog("Inside x_trade:\n");
       PrintToLog("Checking effective prices and trading actions:\n");
@@ -204,6 +205,8 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
 
       /********************************************************/
       uint32_t property_traded = pold->getProperty();
+      uint64_t amountpnew = pnew->getAmountForSale();
+      uint64_t amountpold = pold->getAmountForSale();
 
       int64_t poldPositiveBalanceB = getMPbalance(pold->getAddr(), property_traded, POSSITIVE_BALANCE);
       int64_t pnewPositiveBalanceB = getMPbalance(pnew->getAddr(), property_traded, POSSITIVE_BALANCE);
@@ -1017,15 +1020,16 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
 					nCouldBuy0,
 					nCouldBuy1,
 					nCouldBuy2,
-					nCouldBuy3);
+					nCouldBuy3,
+          amountpnew,
+          amountpold);
       /********************************************************/
       int index = static_cast<unsigned int>(property_traded);
 
       marketP[index] = pold->getEffectivePrice();
       uint64_t marketPriceNow = marketP[index];
-
       PrintToLog("\nmarketPrice Now : %d, marketP[index] = %d\n", marketPriceNow, marketP[index]);
-      t_tradelistdb->recordForUPNL(pnew->getHash(),pnew->getAddr(),property_traded,pold->getEffectivePrice());
+      // t_tradelistdb->recordForUPNL(pnew->getHash(),pnew->getAddr(),property_traded,pold->getEffectivePrice());
 
       // if (msc_debug_metadex1) PrintToLog("++ erased old: %s\n", offerIt->ToString());
       pofferSet->erase(offerIt++);
@@ -1201,7 +1205,8 @@ MatchReturnType x_Trade(CMPMetaDEx* const pnew)
             assert(pold->unitPrice() <= pnew->inversePrice());
             assert(pnew->unitPrice() <= pold->inversePrice());
 
-            globalNotionalPrice = pnew->unitPrice();
+            globalNumPrice = pold->getAmountDesired();
+            globalDenPrice = pold->getAmountForSale();
             /*Lets gonna take the pnew->unitPrice() as the ALL unit price*/
             /*unitPrice = 1 ALL on dUSD*/
             ///////////////////////////
@@ -1365,40 +1370,7 @@ MatchReturnType x_Trade(CMPContractDex* const pnew)
   return NewReturn;
 }
 
-/////////////////////////////////////
-/** New things for contracts */
-int get_LiquidationPrice(int64_t effectivePrice, string address, uint32_t property, uint8_t trading_action)
-{
-    double percentLiqPrice = 0.95;
-    double liqFactor = 0;
-    int64_t longs = getMPbalance(address, property, POSSITIVE_BALANCE);
-    int64_t shorts = getMPbalance(address, property, NEGATIVE_BALANCE);
-    int64_t oldLiqPrice = getMPbalance (address, property,LIQUIDATION_PRICE);
-    PrintToConsole("longs : %d",longs);
-    PrintToConsole("shorts : %d",shorts);
-    if (longs == 0 && shorts == 0 && oldLiqPrice != 0) {
-        PrintToConsole("oldLiqPrice : %d",oldLiqPrice);
-        assert(update_tally_map(address, property, -oldLiqPrice, LIQUIDATION_PRICE));
-        return -1;
-    }
 
-    (trading_action == BUY) ? liqFactor = 1 - percentLiqPrice :  liqFactor = 1 + percentLiqPrice;
-    double liqPr = static_cast<double> (effectivePrice * liqFactor) ;
-    double aLiqPrice = ( liqPr + static_cast<double>(oldLiqPrice) ) / 2  ;
-    int64_t newLiqPrice = static_cast<int64_t>(aLiqPrice);
-    PrintToConsole ("trading action : %d\n", trading_action);
-    PrintToConsole ("LiqFactor : %d\n", liqFactor);
-    PrintToConsole ("Precio de liquidación antiguo : %d\n", oldLiqPrice);
-    PrintToConsole ("Precio de liquidación actual : %d\n", liqPr);
-    PrintToConsole ("Precio de liquidación Nuevo : %d\n", newLiqPrice);
-    if (oldLiqPrice > 0) {
-        assert(update_tally_map(address, property, -oldLiqPrice, LIQUIDATION_PRICE));
-        assert(update_tally_map(address, property, newLiqPrice, LIQUIDATION_PRICE));
-        return 1;
-    }
-
-    return -1;
-}
 ////////////////////////////////////////
 /**
  * Used for display of unit prices to 8 decimal places at UI layer.
@@ -1877,6 +1849,7 @@ int mastercore::ContractDex_CANCEL_EVERYTHING(const uint256& txid, unsigned int 
                 rational_t conv = notionalChange(contractId);
                 int64_t num = conv.numerator().convert_to<int64_t>();
                 int64_t den = conv.denominator().convert_to<int64_t>();
+                int64_t balance = getMPbalance(addr,collateralCurrency,BALANCE);
 
                 arith_uint256 amountMargin = (ConvertTo256(amountForSale) * ConvertTo256(marginRe) * ConvertTo256(num) / (ConvertTo256(den) * ConvertTo256(factorH)));
                 int64_t redeemed = ConvertTo64(amountMargin);
@@ -1888,9 +1861,11 @@ int mastercore::ContractDex_CANCEL_EVERYTHING(const uint256& txid, unsigned int 
                 PrintToLog("--------------------------------------------\n");
 
                 // move from reserve to balance the collateral
-                assert(update_tally_map(addr, collateralCurrency, redeemed, BALANCE));
-                assert(update_tally_map(addr, collateralCurrency, redeemed, CONTRACTDEX_RESERVE));
+                if (balance > redeemed && balance > 0 && redeemed > 0) {
+                    assert(update_tally_map(addr, collateralCurrency, redeemed, BALANCE));
+                    assert(update_tally_map(addr, collateralCurrency, -redeemed, CONTRACTDEX_RESERVE));
                 // // record the cancellation
+                }
                 bValid = true;
                 // p_txlistdb->recordContractDexCancelTX(txid, it->getHash(), bValid, block, it->getProperty(), it->getAmountForSale
                 indexes.erase(it++);

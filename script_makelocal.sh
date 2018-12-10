@@ -1,7 +1,7 @@
 #!/bin/bash
 
-echo "Doing Make"
+echo "Doing Make Locally"
 ./autogen.sh
 ./configure
-make 
+make --jobs=12
 echo "Done"
