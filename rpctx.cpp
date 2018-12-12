@@ -801,7 +801,7 @@ UniValue tl_createcontract(const JSONRPCRequest& request)
 			+ HelpExampleCli("tl_createcontract", "2 1 0 \"Companies\" \"Bitcoin Mining\" \"Quantum Miner\" \"\" \"\" 2 \"100\" 1483228800 30 2 4461 100 1 25")
 			+ HelpExampleRpc("tl_createcontract", "2, 1, 0, \"Companies\", \"Bitcoin Mining\", \"Quantum Miner\", \"\", \"\", 2, \"100\", 1483228800, 30, 2, 4461, 100, 1, 25")
 			);
-  
+
   std::string fromAddress = ParseAddress(request.params[0]);
   uint8_t ecosystem = ParseEcosystem(request.params[1]);
   uint32_t type = ParseContractType(request.params[2]);
@@ -1408,6 +1408,7 @@ static const CRPCCommand commands[] =
     { "trade layer (transaction creation)", "tl_tradecontract",                &tl_tradecontract,                   {} },
     { "trade layer (transaction creation)", "tl_cancelallcontractsbyaddress",  &tl_cancelallcontractsbyaddress,     {} },
     { "trade layer (transaction creation)", "tl_cancelorderbyblock"         ,  &tl_cancelorderbyblock,              {} },
+    { "trade layer (transaction creation)", "tl_getmax_peggedcurrency",        &tl_getmax_peggedcurrency,           {} },
     { "trade layer (transaction creation)", "tl_sendissuance_pegged",          &tl_sendissuance_pegged,             {} },
     { "trade layer (transaction creation)", "tl_send_pegged",                  &tl_send_pegged,                     {} },
     { "trade layer (transaction creation)", "tl_redemption_pegged",            &tl_redemption_pegged,               {} },

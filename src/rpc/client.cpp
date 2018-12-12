@@ -172,6 +172,8 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_closeposition", 2, "arg2" },
     { "tl_sendtrade", 1, "arg1" },
     { "tl_sendtrade", 3, "arg3" },
+    { "tl_getmax_peggedcurrency", 1, "arg1" },
+    { "tl_getmax_peggedcurrency", 2, "arg2" },
     { "tl_sendissuance_pegged", 1, "arg1" },
     { "tl_sendissuance_pegged", 2, "arg2" },
     { "tl_sendissuance_pegged", 3, "arg3" },
