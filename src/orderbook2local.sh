@@ -1,12 +1,12 @@
 #!/bin/bash
 
-SRCDIR=/home/lihkir/Documents/omnicore-litecoin-demo-local/src
-DATADIR=/home/lihkir/.litecoin
+SRCDIR=/home/lihki/Documents/omnicore-litecoin-demo-local/src
+DATADIR=/home/lihki/.litecoin
 NUL=/dev/null
 printf "\n//////////////////////////////////////////\n"
 printf "Cleaning the regtest folder\n"
 
-sudo rm -r /home/lihkir/.litecoin/regtest
+sudo rm -r /home/lihki/.litecoin/regtest
 sudo rm graphInfo*
 
 printf "\n________________________________________\n"
@@ -115,7 +115,7 @@ for (( i=1; i<=${N}; i++ ))
 do
     printf "\n________________________________________\n"
     printf "Price for sale Seller #$i\n"
-    PRICE=$((RANDOM%5+6390))
+    PRICE=$((RANDOM%100+3400))
     printf "\nRandom Price:\n"
     printf $PRICE
     
@@ -133,7 +133,7 @@ for (( i=1; i<=${N}; i++ ))
 do
     printf "\n________________________________________\n"
     printf "Price for sale Seller #$i\n"
-    PRICE=$((RANDOM%5+6390))
+    PRICE=$((RANDOM%100+3400))
     printf "\nRandom Price:\n"
     printf $PRICE
     

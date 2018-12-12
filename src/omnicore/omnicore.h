@@ -360,7 +360,7 @@ void printing_edges_database(std::map<std::string, std::string> &path_ele);
 const string gettingLineOut(std::string address1, std::string s_status1, int64_t lives_maker, std::string address2, std::string s_status2, int64_t lives_taker, int64_t nCouldBuy, uint64_t effective_price);
 void loopForEntryPrice(std::vector<std::map<std::string, std::string>> path_ele, unsigned int path_length, std::string address1, std::string address2, double &UPNL1, double &UPNL2, uint64_t exit_price);
 bool callingPerpetualSettlement(double globalPNLALL_DUSD, int64_t globalVolumeALL_DUSD, int64_t volumeToCompare);
-double PNL_function(uint64_t entry_price, uint64_t exit_price, int64_t amount_trd, std::string netted_status);
+double PNL_function(double entry_price, double exit_price, int64_t amount_trd, std::string netted_status);
 void fillingMatrix(MatrixTLS &M_file, MatrixTLS &ndatabase, std::vector<std::map<std::string, std::string>> &path_ele);
 int mastercore_handler_disc_begin(int nBlockNow, CBlockIndex const *pBlockIndex);
 int mastercore_handler_disc_end(int nBlockNow, CBlockIndex const *pBlockIndex);

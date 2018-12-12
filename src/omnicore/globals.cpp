@@ -35,5 +35,6 @@ MatrixTLS *pt_ndatabase;
 std::map<std::string,uint32_t> peggedIssuers;
 double globalPNLALL_DUSD;
 int64_t globalVolumeALL_DUSD;
+std::map<uint32_t, std::map<std::string, double>> addrs_upnlc;
 //Elements to calculate average entry price (for UPNL)
 std::map<std::string, std::vector<int64_t>> cd_AvEntry;
