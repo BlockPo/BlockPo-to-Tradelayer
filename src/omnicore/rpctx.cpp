@@ -1446,6 +1446,7 @@ static const CRPCCommand commands[] =
     { "trade layer (transaction creation)", "tl_tradecontract",                &tl_tradecontract,                   {} },
     { "trade layer (transaction creation)", "tl_cancelallcontractsbyaddress",  &tl_cancelallcontractsbyaddress,     {} },
     { "trade layer (transaction creation)", "tl_cancelorderbyblock"         ,  &tl_cancelorderbyblock,              {} },
+    { "trade layer (transaction creation)", "tl_getmax_peggedcurrency",        &tl_getmax_peggedcurrency,           {} },
     { "trade layer (transaction creation)", "tl_sendissuance_pegged",          &tl_sendissuance_pegged,             {} },
     { "trade layer (transaction creation)", "tl_send_pegged",                  &tl_send_pegged,                     {} },
     { "trade layer (transaction creation)", "tl_redemption_pegged",            &tl_redemption_pegged,               {} },
