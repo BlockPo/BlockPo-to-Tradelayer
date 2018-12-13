@@ -2968,7 +2968,7 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   if (!pdb) return;
 
   extern volatile int idx_q;
-  extern volatile int path_length;
+  extern volatile unsigned int path_length;
   std::map<std::string, std::string> edgeEle;
   std::map<std::string, double>::iterator it_addrs_upnlm;
   std::vector<std::map<std::string, std::string>>:: iterator it_path_ele;
@@ -2997,6 +2997,7 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   else saveDataGraphs(fileSixth, line0);
   fileSixth.close();
   /********************************************************************/
+  int number_lines = 0;
   if ( status_bool1 || status_bool2 )
     {
       buildingEdge(edgeEle, address1, address2, s_maker1, s_taker1, lives_s1, lives_b1, nCouldBuy1, effective_price, idx_q, 0);
@@ -3005,11 +3006,13 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
       path_ele.push_back(edgeEle);
       PrintToLog("Line 1: %s\n", line1);
       PrintToLog("Line 2: %s\n", line2);
+      number_lines += 2;
       if ( s_maker3 != "EmptyStr" && s_taker3 != "EmptyStr" )
 	{
 	  buildingEdge(edgeEle, address1, address2, s_maker3, s_taker3, lives_s3, lives_b3,nCouldBuy3,effective_price,idx_q,0);
 	  path_ele.push_back(edgeEle);
 	  PrintToLog("Line 3: %s\n", line3);
+	  number_lines += 1;
 	}
     }
   else
@@ -3017,12 +3020,13 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
       buildingEdge(edgeEle, address1, address2, s_maker0, s_taker0, lives_s0, lives_b0, nCouldBuy0, effective_price, idx_q, 0);
       path_ele.push_back(edgeEle);
       PrintToLog("Line 0: %s\n", line0);
+      number_lines += 1;
     }
   
-  PrintToLog("\nPath Ele inside recordMatchedTrade\n");
+  PrintToLog("\nPath Ele inside recordMatchedTrade. Length last match = %d\n", number_lines);
   for (it_path_ele = path_ele.begin(); it_path_ele != path_ele.end(); ++it_path_ele) printing_edges_database(*it_path_ele);
   
-  loopForEntryPrice(path_ele, path_length, address1, address2, UPNL1, UPNL2, FormatShortIntegerMP(effective_price));  
+  loopForUPNL(path_ele, path_length, address1, address2, UPNL1, UPNL2, FormatShortIntegerMP(effective_price));  
   path_length = path_ele.size();
   PrintToLog("UPNL1 = %d, UPNL2 = %d\n", UPNL1, UPNL2);
   
@@ -3058,24 +3062,24 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
     saveDataGraphs(fileglobalVolumeALL_DUSD, std::to_string(FormatShortIntegerMP(globalVolumeALL_DUSD)));
   fileglobalVolumeALL_DUSD.close();
 
-  // adding the upnl
-  int64_t iUPNL1 = static_cast<int64_t>(UPNL1);
-  int64_t iUPNL2 = static_cast<int64_t>(UPNL2);
+  // // adding the upnl
+  // int64_t iUPNL1 = static_cast<int64_t>(UPNL1);
+  // int64_t iUPNL2 = static_cast<int64_t>(UPNL2);
 
-  PrintToLog("UPNL1 to tally : %d ---\n",iUPNL1);
-  PrintToLog("UPNL2 to tally : %d ---\n",iUPNL2);
+  // PrintToLog("UPNL1 to tally : %d ---\n",iUPNL1);
+  // PrintToLog("UPNL2 to tally : %d ---\n",iUPNL2);
 
-  if (iUPNL1 > 0 ) {
-      update_tally_map(address1, property_traded , iUPNL1, UPNL);
-  } else if (iUPNL1 < 0 ) {
-      update_tally_map(address1, property_traded , -iUPNL1, NUPNL);
-  }
+  // if (iUPNL1 > 0 ) {
+  //     update_tally_map(address1, property_traded , iUPNL1, UPNL);
+  // } else if (iUPNL1 < 0 ) {
+  //     update_tally_map(address1, property_traded , -iUPNL1, NUPNL);
+  // }
 
-  if (iUPNL2 > 0 ) {
-      update_tally_map(address2, property_traded , iUPNL2, UPNL);
-  } else if (iUPNL2 < 0 ) {
-      update_tally_map(address2, property_traded , -iUPNL2, NUPNL);
-  }
+  // if (iUPNL2 > 0 ) {
+  //     update_tally_map(address2, property_traded , iUPNL2, UPNL);
+  // } else if (iUPNL2 < 0 ) {
+  //     update_tally_map(address2, property_traded , -iUPNL2, NUPNL);
+  // }
 
   Status status;
   if (pdb)
@@ -3130,117 +3134,75 @@ double PNL_function(double entry_price, double exit_price, int64_t amount_trd, s
   return PNL;
 }
 
-void loopForEntryPrice(std::vector<std::map<std::string, std::string>> path_ele, unsigned int path_length, std::string address1, std::string address2, double &UPNL1, double &UPNL2, uint64_t exit_price)
+void loopForUPNL(std::vector<std::map<std::string, std::string>> path_ele, unsigned int path_length, std::string address1, std::string address2, double &UPNL1, double &UPNL2, uint64_t exit_price)
 {
   std::vector<std::map<std::string, std::string>>::iterator it_path_ele;
-  std::vector<std::map<std::string, std::string>>::reverse_iterator reit_path_ele;
-  std::string addrs_srch = "";
-  std::string addrs_trkh = "";
   
-  int idx_path = 0;
-  unsigned int limInf = 0;
   double entry_pricesrc = 0, entry_pricetrk = 0;
   double exit_priceh = (double)exit_price;
   double UPNLSRC, UPNLTRK;
-  double UPNLSRC_sum = 0, UPNLTRK_sum = 0;
   
-  PrintToLog("\nInside loopForEntryPrice:\n");
+  int idx_price_src = 0, idx_price_trk = 0;
+  uint64_t entry_pricesrc_num = 0, entry_pricetrk_num = 0;
+  std::string addrs_upnl = address1;
+  unsigned int limSup = path_ele.size()-path_length;
+  
+  loopforEntryPrice(path_ele, address1, entry_pricesrc, idx_price_src, entry_pricesrc_num, limSup, exit_priceh);
+  loopforEntryPrice(path_ele, address2, entry_pricetrk, idx_price_trk, entry_pricetrk_num, limSup, exit_priceh);
+  
+  PrintToLog("\nentry_pricesrc = %d, entry_pricetrk = %d, exit_price = %d\n", entry_pricesrc, entry_pricetrk, exit_priceh);
+  PrintToLog("\nidx_price_src = %d, idx_price_trk = %d\n", idx_price_src, idx_price_src);
+  
   for (it_path_ele = path_ele.begin()+path_length; it_path_ele != path_ele.end(); ++it_path_ele)
     {
-      idx_path += 1;
-      if ( finding_string("Netted", (*it_path_ele)["status_src"]) )
-      	{
-      	  addrs_srch = (*it_path_ele)["addrs_src"];
-	  PrintToLog("Address Netting = %s", addrs_srch);
-	  limInf = path_ele.size()-(path_length+idx_path)+1;
-	  
-	  int idx_price_src = 0;
-	  uint64_t entry_pricesrc_num = 0;
-      	  for (reit_path_ele = path_ele.rbegin()+limInf; reit_path_ele != path_ele.rend(); ++reit_path_ele)
-      	    {
-      	      if (addrs_srch == (*reit_path_ele)["addrs_src"])
-      	      	{
-		  if (finding_string("Open", (*reit_path_ele)["status_src"]) || finding_string("Increased", (*reit_path_ele)["status_src"]))
-		    {
-		      PrintToLog("\nRow Reverse Loop for addrs_srch = %s\n", addrs_srch);
-		      printing_edges_database(*reit_path_ele);
-		      idx_price_src += 1;
-		      entry_pricesrc_num += static_cast<uint64_t>(stol((*reit_path_ele)["matched_price"]));
-		      if (finding_string("Open", (*reit_path_ele)["status_src"]))
-			{
-			  entry_pricesrc = entry_pricesrc_num/(double)idx_price_src;
-			  break;
-			}
-		    }
-		}
-      	      else if ( addrs_srch == (*reit_path_ele)["addrs_trk"])
-      	      	{
-		  if (finding_string("Open", (*reit_path_ele)["status_trk"]) || finding_string("Increased", (*reit_path_ele)["status_trk"]))
-		    {
-		      PrintToLog("\nRow Reverse Loop for addrs_srch = %s\n", addrs_srch);
-		      printing_edges_database(*reit_path_ele);
-		      idx_price_src += 1;
-		      entry_pricesrc_num += static_cast<uint64_t>(stol((*reit_path_ele)["matched_price"]));
-		      if (finding_string("Open", (*reit_path_ele)["status_trk"]))
-			{
-			  entry_pricesrc = entry_pricesrc_num/(double)idx_price_src;
-			  break;
-			}
-		    }
-      	      	}
-      	    }
-	  PrintToLog("\nentry_pricesrc = %d, exit_price = %d, idx_price_src = %d\n", entry_pricesrc, exit_priceh, idx_price_src);
-	  UPNLSRC = PNL_function(entry_pricesrc, exit_priceh, static_cast<uint64_t>(stol((*it_path_ele)["amount_trd"])), (*it_path_ele)["status_src"]);
-	  UPNLSRC_sum += UPNLSRC;
-      	}
-      if ( finding_string("Netted", (*it_path_ele)["status_trk"]) )
-      	{
-      	  addrs_trkh = (*it_path_ele)["addrs_trk"];
-	  PrintToLog("Address Netting = %s", addrs_trkh);
-	  limInf = path_ele.size()-(path_length+idx_path)+1;
-	  
-	  int idx_price_trk = 0;
-	  uint64_t entry_pricetrk_num = 0;
-	  for (reit_path_ele = path_ele.rbegin()+limInf; reit_path_ele != path_ele.rend(); ++reit_path_ele)
-      	    {
-      	      if (addrs_trkh == (*reit_path_ele)["addrs_src"])
-      	      	{
-		  if(finding_string("Open", (*reit_path_ele)["status_src"]) || finding_string("Increased", (*reit_path_ele)["status_src"]))
-		    {
-		      PrintToLog("\nRow Reverse Loop for addrs_trkh = %s\n", addrs_trkh);
-		      printing_edges_database(*reit_path_ele);
-		      idx_price_trk += 1;
-		      entry_pricetrk_num += static_cast<uint64_t>(stol((*reit_path_ele)["matched_price"]));
-		      if(finding_string("Open", (*reit_path_ele)["status_src"]))
-			{
-			  entry_pricetrk = entry_pricetrk_num/(double)idx_price_trk;
-			  break;
-			}
-		    }
-		}
-	      else if ( addrs_trkh == (*reit_path_ele)["addrs_trk"] )
-		{
-		  if(finding_string("Open", (*reit_path_ele)["status_trk"]) || finding_string("Increased", (*reit_path_ele)["status_trk"]))
-		    {
-		      PrintToLog("\nRow Reverse Loop for addrs_trkh = %s\n", addrs_trkh);
-		      printing_edges_database(*reit_path_ele);
-		      idx_price_trk += 1;
-		      entry_pricetrk_num += static_cast<uint64_t>(stol((*reit_path_ele)["matched_price"]));
-		      if(finding_string("Open", (*reit_path_ele)["status_trk"]))
-			{
-			  entry_pricetrk = entry_pricetrk_num/(double)idx_price_trk;
-			  break;
-			}
-		    }
-	      	}
-      	    }
-	  PrintToLog("\nentry_pricetrk = %d, exit_price = %d, idx_price_trk = %d\n", entry_pricetrk, exit_priceh, idx_price_trk);
-	  UPNLTRK = PNL_function(entry_pricetrk, exit_priceh, static_cast<uint64_t>(stol((*it_path_ele)["amount_trd"])), (*it_path_ele)["status_trk"]);
-	  UPNLTRK_sum += UPNLTRK;
-      	}
+      UPNLSRC = PNL_function(entry_pricesrc, exit_priceh, static_cast<uint64_t>(stol((*it_path_ele)["amount_trd"])), (*it_path_ele)["status_src"]);
+      UPNL1 += UPNLSRC;
+      UPNLTRK = PNL_function(entry_pricetrk, exit_priceh, static_cast<uint64_t>(stol((*it_path_ele)["amount_trd"])), (*it_path_ele)["status_trk"]);
+      UPNL2 += UPNLTRK;
     }
-  UPNL1 = UPNLSRC_sum;
-  UPNL2 = UPNLTRK_sum;
+}
+
+void loopforEntryPrice(std::vector<std::map<std::string, std::string>> path_ele, std::string addrs_upnl, double &entry_price, int &idx_price, uint64_t entry_price_num, unsigned int limSup, double exit_priceh)
+{
+  std::vector<std::map<std::string, std::string>>::reverse_iterator reit_path_ele;
+  
+  PrintToLog("\nInside loopForEntryPrice:\n");
+  for (reit_path_ele = path_ele.rbegin()+limSup; reit_path_ele != path_ele.rend(); ++reit_path_ele)
+    {
+      if (addrs_upnl == (*reit_path_ele)["addrs_src"])
+	{
+	  if (finding_string("Open", (*reit_path_ele)["status_src"]) || finding_string("Increased", (*reit_path_ele)["status_src"]))
+	    {
+	      PrintToLog("\nRow Reverse Loop for addrs_upnl = %s\n", addrs_upnl);
+	      printing_edges_database(*reit_path_ele);
+	      idx_price += 1;
+	      entry_price_num += static_cast<uint64_t>(stol((*reit_path_ele)["matched_price"]));
+	      if (finding_string("Open", (*reit_path_ele)["status_src"]))
+		{
+		  entry_price = entry_price_num/(double)idx_price;
+		  break;
+		}
+	    }
+	}
+      else if ( addrs_upnl == (*reit_path_ele)["addrs_trk"])
+	{
+	  if (finding_string("Open", (*reit_path_ele)["status_trk"]) || finding_string("Increased", (*reit_path_ele)["status_trk"]))
+	    {
+	      PrintToLog("\nRow Reverse Loop for addrs_upnl = %s\n", addrs_upnl);
+	      printing_edges_database(*reit_path_ele);
+	      idx_price += 1;
+	      entry_price_num += static_cast<uint64_t>(stol((*reit_path_ele)["matched_price"]));
+	      if (finding_string("Open", (*reit_path_ele)["status_trk"]))
+		{
+		  entry_price = entry_price_num/(double)idx_price;
+		  break;
+		}
+	    }
+	}
+      else
+	continue;
+    }
+  if (idx_price == 0) entry_price = exit_priceh;
 }
 
 const string gettingLineOut(std::string address1, std::string s_status1, int64_t lives_maker, std::string address2, std::string s_status2, int64_t lives_taker, int64_t nCouldBuy, uint64_t effective_price)

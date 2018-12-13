@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SRCDIR=/home/lihki/Documents/omnicore-litecoin-demo-local/src
+SRCDIR=/home/lihki/Desktop/omnicore-litecoin-demo-local/src
 DATADIR=/home/lihki/.litecoin
 NUL=/dev/null
 printf "\n//////////////////////////////////////////\n"
@@ -32,7 +32,7 @@ printf "\n________________________________________\n"
 printf "Base address to work with:\n"
 printf $ADDRBase
 
-N=100
+N=10
 
 amount_bitcoin=10
 amountbitcoin_baseaddr=10

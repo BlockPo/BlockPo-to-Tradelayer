@@ -19,7 +19,7 @@ double denMargin;
 uint64_t marketP[NPTYPES];
 volatile int id_contract;
 volatile int idx_q;
-volatile int path_length;
+volatile unsigned int path_length;
 std::vector<std::map<std::string, std::string>> path_ele;
 int n_cols;
 int n_rows;
