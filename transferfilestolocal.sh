@@ -1,25 +1,25 @@
 #!/bin/bash
 
 echo "Copying .cpp files"
-find . -name '*.cpp' | cpio -pdm /mnt/d/omnicore-litecoin-master-local
+find . -name '*.cpp' | cpio -pdm /home/lihki/Desktop/omnicore-litecoin-demo-local
 echo "Done"
 
 echo "Copying .h files"
-find . -name '*.h' | cpio -pdm /mnt/d/omnicore-litecoin-master-local
+find . -name '*.h' | cpio -pdm /home/lihki/Desktop/omnicore-litecoin-demo-local
 echo "Done"
 
 echo "Copying .sh files"
-find . -name '*.sh' | cpio -pdm /mnt/d/omnicore-litecoin-master-local
+find . -name '*.sh' | cpio -pdm /home/lihki/Desktop/omnicore-litecoin-demo-local
 echo "Done"
 
 echo "Copying .am files"
-find . -name '*.am' | cpio -pdm /mnt/d/omnicore-litecoin-master-local
+find . -name '*.am' | cpio -pdm /home/lihki/Desktop/omnicore-litecoin-demo-local
 echo "Done"
 
 echo "Copying .include files"
-find . -name '*.include' | cpio -pdm /mnt/d/omnicore-litecoin-master-local
+find . -name '*.include' | cpio -pdm /home/lihki/Desktop/omnicore-litecoin-demo-local
 echo "Done"
 
 echo "Copying .ac files"
-find . -name '*.ac' | cpio -pdm /mnt/d/omnicore-litecoin-master-local
+find . -name '*.ac' | cpio -pdm /home/lihki/Desktop/omnicore-litecoin-demo-local
 echo "Done"

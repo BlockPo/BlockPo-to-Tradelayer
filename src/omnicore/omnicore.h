@@ -181,6 +181,7 @@ std::string FormatByType(int64_t amount, uint16_t propertyType);
 std::string FormatByDivisibility(int64_t amount, bool divisible);
 double FormatContractShortMP(int64_t n);
 long int FormatShortIntegerMP(int64_t n);
+uint64_t int64ToUint64(int64_t value);
 /** Returns the Exodus address. */
 const std::string ExodusAddress();
 
@@ -303,7 +304,7 @@ public:
 
     /////////////////////////////////
     /** New things for Contract */
-    void recordMatchedTrade(const uint256 txid1, const uint256 txid2, string address1, string address2, uint64_t effective_price, uint64_t amount_maker, uint64_t amount_taker, int blockNum1, int blockNum2, uint32_t property_traded, string tradeStatus, int64_t lives_s0, int64_t lives_s1, int64_t lives_s2, int64_t lives_s3, int64_t lives_b0, int64_t lives_b1, int64_t lives_b2, int64_t lives_b3, string s_maker0, string s_taker0, string s_maker1, string s_taker1, string s_maker2, string s_taker2, string s_maker3, string s_taker3, int64_t nCouldBuy0, int64_t nCouldBuy1, int64_t nCouldBuy2, int64_t nCouldBuy3);
+    void recordMatchedTrade(const uint256 txid1, const uint256 txid2, string address1, string address2, uint64_t effective_price, uint64_t amount_maker, uint64_t amount_taker, int blockNum1, int blockNum2, uint32_t property_traded, string tradeStatus, int64_t lives_s0, int64_t lives_s1, int64_t lives_s2, int64_t lives_s3, int64_t lives_b0, int64_t lives_b1, int64_t lives_b2, int64_t lives_b3, string s_maker0, string s_taker0, string s_maker1, string s_taker1, string s_maker2, string s_taker2, string s_maker3, string s_taker3, int64_t nCouldBuy0, int64_t nCouldBuy1, int64_t nCouldBuy2, int64_t nCouldBuy3, uint64_t amountpnew, uint64_t amountpold);
     void recordForUPNL(const uint256 txid, string address, uint32_t property_traded, int64_t effectivePrice);
     // void recordMatchedTrade(const uint256 txid1, const uint256 txid2, string address1, string address2, unsigned int prop1, unsigned int prop2, uint64_t amount1, uint64_t amount2, int blockNum, int64_t fee, string t_status, std::vector<uint256> &vecTxid);
     /////////////////////////////////
@@ -357,9 +358,10 @@ void NotifyTotalTokensChanged(uint32_t propertyId);
 void buildingEdge(std::map<std::string, std::string> &edgeEle, std::string addrs_src, std::string addrs_trk, std::string status_src, std::string status_trk, int64_t lives_src, int64_t lives_trk, int64_t amount_path, int64_t matched_price, int idx_q, int ghost_edge);
 void printing_edges_database(std::map<std::string, std::string> &path_ele);
 const string gettingLineOut(std::string address1, std::string s_status1, int64_t lives_maker, std::string address2, std::string s_status2, int64_t lives_taker, int64_t nCouldBuy, uint64_t effective_price);
-void loopForEntryPrice(std::vector<std::map<std::string, std::string>> path_ele, unsigned int path_length, std::string address1, std::string address2, double &UPNL1, double &UPNL2, uint64_t exit_price);
+void loopForUPNL(std::vector<std::map<std::string, std::string>> path_ele, unsigned int path_length, std::string address1, std::string address2, double &UPNL1, double &UPNL2, uint64_t exit_price);
+void loopforEntryPrice(std::vector<std::map<std::string, std::string>> path_ele, std::string addrs_upnl, double &entry_price, int &idx_price, uint64_t entry_price_num, unsigned int limSup, double exit_priceh);
 bool callingPerpetualSettlement(double globalPNLALL_DUSD, int64_t globalVolumeALL_DUSD, int64_t volumeToCompare);
-double PNL_function(uint64_t entry_price, uint64_t exit_price, int64_t amount_trd, std::string netted_status);
+double PNL_function(double entry_price, double exit_price, int64_t amount_trd, std::string netted_status);
 void fillingMatrix(MatrixTLS &M_file, MatrixTLS &ndatabase, std::vector<std::map<std::string, std::string>> &path_ele);
 int mastercore_handler_disc_begin(int nBlockNow, CBlockIndex const *pBlockIndex);
 int mastercore_handler_disc_end(int nBlockNow, CBlockIndex const *pBlockIndex);
@@ -425,6 +427,9 @@ bool getValidMPTX(const uint256 &txid, int *block = NULL, unsigned int *type = N
 bool update_tally_map(const std::string& who, uint32_t propertyId, int64_t amount, TallyType ttype);
 
 std::string getTokenLabel(uint32_t propertyId);
+
+// int64_t getAverageEntryPrice(std::string address, uint32_t contractId);
+// void insertEntryPrice(std::string address, uint64_t mprice);
 }
 
 

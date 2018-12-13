@@ -59,7 +59,9 @@ using std::runtime_error;
 using namespace mastercore;
 
 extern int64_t factorE;
-extern rational_t globalNotionalPrice;
+extern volatile int64_t globalNumPrice;
+extern volatile int64_t globalDenPrice;
+extern uint64_t marketP[NPTYPES];
 /**
  * Throws a JSONRPCError, depending on error code.
  */
@@ -1471,7 +1473,7 @@ bool FullPositionToJSON(const std::string& address, uint32_t property, UniValue&
 
 UniValue tl_getfullposition(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 2)
+  /*if (request.params.size() != 2)
       throw runtime_error(
         "tl_getfullposition \"address\" propertyid\n"
         "\nReturns the position for the future contract for a given address and property.\n"
@@ -1550,7 +1552,7 @@ UniValue tl_getfullposition(const JSONRPCRequest& request)
   }
 
     return positionObj;
-
+*/
 }
 
 
@@ -1847,9 +1849,8 @@ UniValue tl_getallprice(const JSONRPCRequest& request)
         );
 
     UniValue balanceObj(UniValue::VOBJ);
-
-    int64_t num = globalNotionalPrice.numerator().convert_to<int64_t>();
-    int64_t den = globalNotionalPrice.denominator().convert_to<int64_t>();
+    uint64_t num = static_cast<uint64_t>(globalNumPrice);
+    uint64_t den = static_cast<uint64_t>(globalDenPrice);
     arith_uint256 price = (ConvertTo256(num) *ConvertTo256(factorE)/ (ConvertTo256(den)));
     int64_t iPrice = ConvertTo64(price);
     balanceObj.push_back(Pair("unitprice", FormatByType(static_cast<uint64_t>(iPrice),2)));
@@ -1976,6 +1977,81 @@ UniValue tl_getpnl(const JSONRPCRequest& request)
         return balanceObj;
 }
 
+// UniValue tl_getaverage_entry(const JSONRPCRequest& request)
+// {
+//     if (request.params.size() != 2)
+//         throw runtime_error(
+//             "tl_getaverage_entry address contractid\n"
+//             "\nRetrieves the last match price on the distributed contract exchange for the specified market.\n"
+//             "\nArguments:\n"
+//             "1. address              (string, required) the address of user\n"
+//             "2. contractid           (number, required) the id of future contract\n"
+//             "\nResult:\n"
+//             "[                                      (array of JSON objects)\n"
+//             "  {\n"
+//             "    \"block\" : nnnnnn,                      (number) the index of the block that contains the trade match\n"
+//             "    \"unitprice\" : \"n.nnnnnnnnnnn...\" ,     (string) the unit price used to execute this trade (received/sold)\n"
+//             "    \"price\" : \"n.nnnnnnnnnnn...\",   (string) the inverse unit price (sold/received)\n"
+//             "  ...\n"
+//             "]\n"
+//             "\nExamples:\n"
+//             + HelpExampleCli("tl_getmarketprice", "12" )
+//             + HelpExampleRpc("tl_getmarketprice", "500")
+//         );
+//         std::string address = ParseAddress(request.params[0]);
+//         uint32_t contractId = ParsePropertyId(request.params[1]);
+//
+//         RequireExistingProperty(contractId);
+//         RequireContract(contractId);
+//
+//         UniValue balanceObj(UniValue::VOBJ);
+//
+//         int64_t price = mastercore::getAverageEntryPrice(address, contractId);
+//
+//         balanceObj.push_back(Pair("average_entry", FormatByType(price,2)));
+//
+//         return balanceObj;
+// }
+
+UniValue tl_getmarketprice(const JSONRPCRequest& request)
+{
+    if (request.params.size() != 1)
+        throw runtime_error(
+            "tl_getpnl addres contractid\n"
+            "\nRetrieves the last match price on the distributed contract exchange for the specified market.\n"
+            "\nArguments:\n"
+            "1. contractid           (number, required) the id of future contract\n"
+            "\nResult:\n"
+            "[                                      (array of JSON objects)\n"
+            "  {\n"
+            "    \"block\" : nnnnnn,                      (number) the index of the block that contains the trade match\n"
+            "    \"unitprice\" : \"n.nnnnnnnnnnn...\" ,     (string) the unit price used to execute this trade (received/sold)\n"
+            "    \"price\" : \"n.nnnnnnnnnnn...\",   (string) the inverse unit price (sold/received)\n"
+            "  ...\n"
+            "]\n"
+            "\nExamples:\n"
+            + HelpExampleCli("tl_getaverage_entry", "12" )
+            + HelpExampleRpc("tl_getaverage_entry", "500")
+          );
+
+
+          uint32_t contractId = ParsePropertyId(request.params[0]);
+
+          RequireExistingProperty(contractId);
+          RequireContract(contractId);
+
+          UniValue balanceObj(UniValue::VOBJ);
+          int index = static_cast<unsigned int>(contractId);
+          int64_t price = marketP[index];
+
+          PrintToLog("_________________________________________________________\n");
+          PrintToLog("marketprice in rpc: %d\n",price);
+          PrintToLog("_________________________________________________________\n");
+
+          balanceObj.push_back(Pair("price", FormatByType(price,2)));
+
+          return balanceObj;
+}
 
 UniValue tl_getactivedexsells(const JSONRPCRequest& request)
 {
@@ -2143,9 +2219,9 @@ static const CRPCCommand commands[] =
   { "trade layer (data retrieval)", "tl_listtransactions",          &tl_listtransactions,           {} },
   { "trade layer (configuration)",  "tl_setautocommit",             &tl_setautocommit,              {} },
 #endif
-  { "hidden",                       "mscrpc",                       &mscrpc,                          {} },
+  { "hidden",                       "mscrpc",                       &mscrpc,                        {} },
   { "trade layer (data retrieval)", "tl_getposition",               &tl_getposition,                {} },
-  { "trade layer (data retrieval)", "tl_getfullposition",           &tl_getfullposition,          {} },
+  { "trade layer (data retrieval)", "tl_getfullposition",           &tl_getfullposition,            {} },
   { "trade layer (data retrieval)", "tl_getcontract_orderbook",     &tl_getcontract_orderbook,      {} },
   { "trade layer (data retrieval)", "tl_gettradehistory",           &tl_gettradehistory,            {} },
   { "trade layer (data retrieval)", "tl_getupnl",                   &tl_getupnl,                    {} },
@@ -2155,7 +2231,9 @@ static const CRPCCommand commands[] =
   { "trade layer (data retieval)" , "tl_getpeggedhistory",          &tl_getpeggedhistory,           {} },
   { "trade layer (data retieval)" , "tl_getcontract_reserve",       &tl_getcontract_reserve,        {} },
   { "trade layer (data retieval)" , "tl_getmargin",                 &tl_getmargin,                  {} },
-  { "trade layer (data retieval)" , "tl_getallprice",                 &tl_getallprice,                {} },
+  { "trade layer (data retieval)" , "tl_getallprice",               &tl_getallprice,                {} },
+  { "trade layer (data retieval)" , "tl_getmarketprice",            &tl_getmarketprice,             {} },
+  // {"trade layer (data retieval)" ,  "tl_getaverage_entry",          &tl_getaverage_entry,           {} },
 };
 
 void RegisterOmniDataRetrievalRPCCommands(CRPCTable &tableRPC)

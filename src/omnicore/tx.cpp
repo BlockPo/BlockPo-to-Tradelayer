@@ -2311,13 +2311,20 @@ int CMPTransaction::logicMath_ContractDexTrade()
       return -1;
   }
 
+  PrintToLog("First checkout\n");
+
   id_contract = contractId;
   int64_t marginRe = static_cast<int64_t>(sp.margin_requirement);
   int64_t nBalance = getMPbalance(sender, sp.collateral_currency, BALANCE);
-  rational_t conv = notionalChange(contractId);
+  PrintToLog("1.5 checkout\n");
+  rational_t conv = notionalChange(contractId); //TODO: fix me!
+  //rational_t conv = rational_t(1,1);
+  PrintToLog("Second checkout\n");
   int64_t num = conv.numerator().convert_to<int64_t>();
   int64_t den = conv.denominator().convert_to<int64_t>();
+  PrintToLog("Third checkout\n");
   arith_uint256 amountTR = (ConvertTo256(amount) * ConvertTo256(marginRe) * ConvertTo256(num) / (ConvertTo256(den) * ConvertTo256(factorE)));
+  PrintToLog("4th checkout\n");
   int64_t amountToReserve = ConvertTo64(amountTR);
 
   PrintToLog("sp.margin_requirement: %d\n",sp.margin_requirement);
@@ -2333,7 +2340,7 @@ int CMPTransaction::logicMath_ContractDexTrade()
       PrintToLog("%s(): rejected: sender %s has insufficient balance for contracts %d [%s < %s] \n",
 		  __func__,
 		  sender,
-		  property,
+		  contractId,
 		  FormatMP(property, nBalance),
 		  FormatMP(property, amountToReserve));
       return (PKT_ERROR_SEND -25);
