@@ -2971,6 +2971,7 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   extern volatile unsigned int path_length;
   std::map<std::string, std::string> edgeEle;
   std::map<std::string, double>::iterator it_addrs_upnlm;
+  std::map<uint32_t, std::map<std::string, double>>::iterator it_addrs_upnlc;
   std::vector<std::map<std::string, std::string>>:: iterator it_path_ele;
   bool savedata_bool = false;
 
@@ -3027,15 +3028,41 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   for (it_path_ele = path_ele.begin(); it_path_ele != path_ele.end(); ++it_path_ele) printing_edges_database(*it_path_ele);
   
   loopForUPNL(path_ele, path_length, address1, address2, UPNL1, UPNL2, FormatShortIntegerMP(effective_price));  
+  unsigned int limSup = path_ele.size()-path_length;
   path_length = path_ele.size();
   PrintToLog("UPNL1 = %d, UPNL2 = %d\n", UPNL1, UPNL2);
   
-  addrs_upnlc[property_traded][address1] += UPNL1;
-  addrs_upnlc[property_traded][address2] += UPNL2;
+  addrs_upnlc[property_traded][address1] = UPNL1;
+  addrs_upnlc[property_traded][address2] = UPNL2;
   
-  PrintToLog("\nMap with addrs:upnl for propertyId given:\n");
-  for (it_addrs_upnlm = addrs_upnlc[property_traded].begin(); it_addrs_upnlm != addrs_upnlc[property_traded].end(); ++it_addrs_upnlm)
-    PrintToLog("ADDRS = %s, UPNL = %d\n", it_addrs_upnlm->first, it_addrs_upnlm->second);
+  for (it_addrs_upnlc = addrs_upnlc.begin(); it_addrs_upnlc != addrs_upnlc.end(); ++it_addrs_upnlc)
+    {
+      for (it_addrs_upnlm = it_addrs_upnlc->second.begin(); it_addrs_upnlm != it_addrs_upnlc->second.end(); ++it_addrs_upnlm)
+      	{
+	  if (it_addrs_upnlm->first != address1 && it_addrs_upnlm->first != address2)
+	    {
+	      double entry_price_first = 0;
+	      int idx_price_first = 0;
+	      uint64_t entry_pricefirst_num = 0;
+	      double exit_priceh = (double)FormatShortIntegerMP(effective_price);
+	      uint64_t amount = 0;
+	      std::string status = "";
+	      loopforEntryPrice(path_ele, it_addrs_upnlm->first, entry_price_first, idx_price_first, entry_pricefirst_num, limSup, exit_priceh, amount, status);
+	      double UPNL_show = PNL_function(entry_price_first, exit_priceh, amount, status);
+	      PrintToLog("UPNL_show = %d\n", UPNL_show);
+	      addrs_upnlc[it_addrs_upnlc->first][it_addrs_upnlm->first] = UPNL_show;
+	    }
+	}
+    }
+  
+  for (it_addrs_upnlc = addrs_upnlc.begin(); it_addrs_upnlc != addrs_upnlc.end(); ++it_addrs_upnlc)
+    {
+      PrintToLog("\nMap with addrs:upnl for propertyId = %d\n", it_addrs_upnlc->first);
+      for (it_addrs_upnlm = it_addrs_upnlc->second.begin(); it_addrs_upnlm != it_addrs_upnlc->second.end(); ++it_addrs_upnlm)
+      	{
+	  PrintToLog("ADDRS = %s, UPNL = %d\n", it_addrs_upnlm->first, it_addrs_upnlm->second);
+	}
+    }
   
   unsigned int contractId = static_cast<unsigned int>(property_traded);
   if ( contractId == MSC_PROPERTY_TYPE_CONTRACT )
@@ -3146,9 +3173,11 @@ void loopForUPNL(std::vector<std::map<std::string, std::string>> path_ele, unsig
   uint64_t entry_pricesrc_num = 0, entry_pricetrk_num = 0;
   std::string addrs_upnl = address1;
   unsigned int limSup = path_ele.size()-path_length;
+  uint64_t amount_src = 0, amount_trk = 0;
+  std::string status_src = "", status_trk = "";
   
-  loopforEntryPrice(path_ele, address1, entry_pricesrc, idx_price_src, entry_pricesrc_num, limSup, exit_priceh);
-  loopforEntryPrice(path_ele, address2, entry_pricetrk, idx_price_trk, entry_pricetrk_num, limSup, exit_priceh);
+  loopforEntryPrice(path_ele, address1, entry_pricesrc, idx_price_src, entry_pricesrc_num, limSup, exit_priceh, amount_src, status_src);
+  loopforEntryPrice(path_ele, address2, entry_pricetrk, idx_price_trk, entry_pricetrk_num, limSup, exit_priceh, amount_trk, status_trk);
   
   PrintToLog("\nentry_pricesrc = %d, entry_pricetrk = %d, exit_price = %d\n", entry_pricesrc, entry_pricetrk, exit_priceh);
   PrintToLog("\nidx_price_src = %d, idx_price_trk = %d\n", idx_price_src, idx_price_src);
@@ -3162,7 +3191,7 @@ void loopForUPNL(std::vector<std::map<std::string, std::string>> path_ele, unsig
     }
 }
 
-void loopforEntryPrice(std::vector<std::map<std::string, std::string>> path_ele, std::string addrs_upnl, double &entry_price, int &idx_price, uint64_t entry_price_num, unsigned int limSup, double exit_priceh)
+void loopforEntryPrice(std::vector<std::map<std::string, std::string>> path_ele, std::string addrs_upnl, double &entry_price, int &idx_price, uint64_t entry_price_num, unsigned int limSup, double exit_priceh, uint64_t &amount, std::string &status)
 {
   std::vector<std::map<std::string, std::string>>::reverse_iterator reit_path_ele;
   
@@ -3177,8 +3206,11 @@ void loopforEntryPrice(std::vector<std::map<std::string, std::string>> path_ele,
 	      printing_edges_database(*reit_path_ele);
 	      idx_price += 1;
 	      entry_price_num += static_cast<uint64_t>(stol((*reit_path_ele)["matched_price"]));
+	      amount += static_cast<uint64_t>(stol((*reit_path_ele)["amount_trd"]));
 	      if (finding_string("Open", (*reit_path_ele)["status_src"]))
 		{
+		  status = (*reit_path_ele)["status_src"];
+		  amount += static_cast<uint64_t>(stol((*reit_path_ele)["amount_trd"]));
 		  entry_price = entry_price_num/(double)idx_price;
 		  break;
 		}
@@ -3192,8 +3224,11 @@ void loopforEntryPrice(std::vector<std::map<std::string, std::string>> path_ele,
 	      printing_edges_database(*reit_path_ele);
 	      idx_price += 1;
 	      entry_price_num += static_cast<uint64_t>(stol((*reit_path_ele)["matched_price"]));
+	      amount += static_cast<uint64_t>(stol((*reit_path_ele)["amount_trd"]));
 	      if (finding_string("Open", (*reit_path_ele)["status_trk"]))
 		{
+		  status = (*reit_path_ele)["status_trk"];
+		  amount += static_cast<uint64_t>(stol((*reit_path_ele)["amount_trd"]));
 		  entry_price = entry_price_num/(double)idx_price;
 		  break;
 		}
@@ -3202,6 +3237,7 @@ void loopforEntryPrice(std::vector<std::map<std::string, std::string>> path_ele,
       else
 	continue;
     }
+  
   if (idx_price == 0) entry_price = exit_priceh;
 }
 
