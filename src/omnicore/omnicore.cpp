@@ -3048,8 +3048,9 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
 	      uint64_t amount = 0;
 	      std::string status = "";
 	      loopforEntryPrice(path_ele, it_addrs_upnlm->first, entry_price_first, idx_price_first, entry_pricefirst_num, limSup, exit_priceh, amount, status);
+	      PrintToLog("\namount for UPNL_show: %d\n", amount);
 	      double UPNL_show = PNL_function(entry_price_first, exit_priceh, amount, status);
-	      PrintToLog("UPNL_show = %d\n", UPNL_show);
+	      PrintToLog("\nUPNL_show = %d\n", UPNL_show);
 	      addrs_upnlc[it_addrs_upnlc->first][it_addrs_upnlm->first] = UPNL_show;
 	    }
 	}
@@ -3210,7 +3211,6 @@ void loopforEntryPrice(std::vector<std::map<std::string, std::string>> path_ele,
 	      if (finding_string("Open", (*reit_path_ele)["status_src"]))
 		{
 		  status = (*reit_path_ele)["status_src"];
-		  amount += static_cast<uint64_t>(stol((*reit_path_ele)["amount_trd"]));
 		  entry_price = entry_price_num/(double)idx_price;
 		  break;
 		}
@@ -3228,7 +3228,6 @@ void loopforEntryPrice(std::vector<std::map<std::string, std::string>> path_ele,
 	      if (finding_string("Open", (*reit_path_ele)["status_trk"]))
 		{
 		  status = (*reit_path_ele)["status_trk"];
-		  amount += static_cast<uint64_t>(stol((*reit_path_ele)["amount_trd"]));
 		  entry_price = entry_price_num/(double)idx_price;
 		  break;
 		}
