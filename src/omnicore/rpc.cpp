@@ -1473,7 +1473,7 @@ bool FullPositionToJSON(const std::string& address, uint32_t property, UniValue&
 
 UniValue tl_getfullposition(const JSONRPCRequest& request)
 {
-  /*if (request.params.size() != 2)
+  if (request.params.size() != 2)
       throw runtime_error(
         "tl_getfullposition \"address\" propertyid\n"
         "\nReturns the position for the future contract for a given address and property.\n"
@@ -1519,10 +1519,11 @@ UniValue tl_getfullposition(const JSONRPCRequest& request)
 
       // upnl
       LOCK(cs_tally);
-      double dupnl = t_tradelistdb->getUPNL(address, propertyId);
+      double dupnl = 0;
+      // double dupnl = t_tradelistdb->getUPNL(address, propertyId);
       const int64_t factor = 100000000;
       int64_t upnl = static_cast<int64_t>(dupnl*factor);
-      PrintToConsole("unrealized PNL: %d\n",upnl);
+      // PrintToConsole("unrealized PNL: %d\n",upnl);
       // double averagePrice = static_cast<double>(totalAmount/d_contractsClosed);
       // double PNL_num = static_cast<double>((d_price - averagePrice)*(notionalSize*d_contractsClosed));
       // double PNL_den = static_cast<double>(averagePrice*marginRequirementContract);
@@ -1552,7 +1553,6 @@ UniValue tl_getfullposition(const JSONRPCRequest& request)
   }
 
     return positionObj;
-*/
 }
 
 
