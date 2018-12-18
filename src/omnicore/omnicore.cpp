@@ -139,7 +139,7 @@ extern int idx_expiration;
 extern int expirationAchieve;
 extern double globalPNLALL_DUSD;
 extern int64_t globalVolumeALL_DUSD;
-extern int actualBlockg;
+extern int lastBlockg;
 extern int vestingActivationBlock;
 
 CMPTxList *mastercore::p_txlistdb;
@@ -265,7 +265,7 @@ std::string mastercore::FormatContractMP(int64_t n)
     return strprintf("%d", n);
 }
 /////////////////////////////////////////
-/*New things for contracts*/////////////////////////////////////////////////////
+/** New things for contracts */
 double FormatContractShortMP(int64_t n)
 {
     int64_t n_abs = (n > 0 ? n : -n);
@@ -2067,10 +2067,9 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   
   LOCK(cs_tally);
   
-  if (!mastercoreInitialized)
-    {
-      mastercore_init();
-    }
+  if (!mastercoreInitialized) {
+    mastercore_init();
+  }
   
   // clear pending, if any
   // NOTE1: Every incoming TX is checked, not just MP-ones because:
@@ -2081,90 +2080,68 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   // we do not care about parsing blocks prior to our waterline (empty blockchain defense)
   if (nBlock < nWaterlineBlock) return false;
   int64_t nBlockTime = pBlockIndex->GetBlockTime();
+  PrintToLog("\nBlock counter: %d\n", static_cast<int>(pBlockIndex->nHeight));
   
   CMPTransaction mp_obj;
   mp_obj.unlockLogic();
   
-  int expirationBlock = 0, actualBlock = 0, checkExpiration = 0;
+  int expirationBlock = 0, tradeBlock = 0, checkExpiration = 0;
   CMPSPInfo::Entry sp;
-  
-  if ( id_contract != 0 )
-    {
-      if (_my_sps->getSP(id_contract, sp) && sp.subcategory ==  "Futures Contracts")
-	{
-	  expirationBlock = static_cast<int>(sp.blocks_until_expiration);
-	  actualBlock = static_cast<int>(pBlockIndex->nHeight);
-	}
+  if ( id_contract != 0 ) {
+    if (_my_sps->getSP(id_contract, sp) && sp.subcategory ==  "Futures Contracts") {
+      expirationBlock = static_cast<int>(sp.blocks_until_expiration);
+      tradeBlock = static_cast<int>(pBlockIndex->nHeight);
     }
+  }
   
-  actualBlockg = actualBlock;
+  lastBlockg = static_cast<int>(pBlockIndex->nHeight);
   const CConsensusParams &params = ConsensusParams();
   vestingActivationBlock = params.MSC_VESTING_BLOCK;
   
-  if (static_cast<int>(pBlockIndex->nHeight) == params.MSC_VESTING_BLOCK)
-    {
-      sendingVestingTokens();
-      int64_t vestingBalance  = getMPbalance("QSsJXDFb4b3vTgqeycrHtkYTYKmCk4TJn1", OMNI_PROPERTY_ALL, UNVESTED);
-      PrintToLog("\nvestingBalance QSsJXDFb4b3vTgqeycrHtkYTYKmCk4TJn1:  %d\n", vestingBalance); 
-    }
-  
-  PrintToLog("nBlockTime: %d\n", static_cast<int>(nBlockTime));
-  PrintToLog("expirationBlock: %d\n", static_cast<int>(expirationBlock));
+  if (static_cast<int>(pBlockIndex->nHeight) == params.MSC_VESTING_BLOCK) {
+    sendingVestingTokens();
+    int64_t vestingBalance  = getMPbalance("QSsJXDFb4b3vTgqeycrHtkYTYKmCk4TJn1", OMNI_PROPERTY_ALL, UNVESTED);
+    PrintToLog("\nvestingBalance QSsJXDFb4b3vTgqeycrHtkYTYKmCk4TJn1:  %d\n", vestingBalance); 
+  }
   
   int deadline = sp.init_block + expirationBlock;
+  if ( tradeBlock != 0 && deadline != 0 ) checkExpiration = tradeBlock == deadline ? 1 : 0;
   
-  if ( actualBlock != 0 && deadline != 0 ) checkExpiration = actualBlock == deadline ? 1 : 0;
-  
-  if (checkExpiration)
-    {
-      idx_expiration += 1;
-      if ( idx_expiration == 2 )
-        {
-	  PrintToLog("actualBlock: %d\n", actualBlock);
-	  PrintToLog("deadline: %d\n", deadline);
-	  PrintToLog("\nExpiration Date Achieve\n");
-	  PrintToLog("checkExpiration: %d\n", checkExpiration);
-	  expirationAchieve = 1;
-        }
-      else expirationAchieve = 0;
-    }
-  else
-    {
-      PrintToLog("actualBlock: %d\n", actualBlock);
+  if (checkExpiration) {
+    idx_expiration += 1;
+    if ( idx_expiration == 2 ) {
+      PrintToLog("\nExpiration Date Achieve\n");
       PrintToLog("deadline: %d\n", deadline);
-      expirationAchieve = 0;
-    }
+      PrintToLog("expirationBlock: %d\n", static_cast<int>(expirationBlock));
+      PrintToLog("nBlockTime: %d\n", static_cast<int>(nBlockTime));
+      expirationAchieve = 1;
+    } else expirationAchieve = 0;
+  } else expirationAchieve = 0;
   
   bool fFoundTx = false;
   int pop_ret = parseTransaction(false, tx, nBlock, idx, mp_obj, nBlockTime);
   
-  if (0 == pop_ret)
-    {
-      assert(mp_obj.getEncodingClass() != NO_MARKER);
-      assert(mp_obj.getSender().empty() == false);
-      
-      int interp_ret = mp_obj.interpretPacket();
-      if (interp_ret) PrintToLog("!!! interpretPacket() returned %d !!!\n", interp_ret);
-      
-      // Only structurally valid transactions get recorded in levelDB
-      // PKT_ERROR - 2 = interpret_Transaction failed, structurally invalid payload
-      if (interp_ret != PKT_ERROR - 2)
-	{
-	  bool bValid = (0 <= interp_ret);
-	          p_txlistdb->recordTX(tx.GetHash(), bValid, nBlock, mp_obj.getType(), mp_obj.getNewAmount());
-	          p_OmniTXDB->RecordTransaction(tx.GetHash(), idx);
-        }
-      
-      fFoundTx |= (interp_ret == 0);
+  if (0 == pop_ret) {
+    assert(mp_obj.getEncodingClass() != NO_MARKER);
+    assert(mp_obj.getSender().empty() == false);
+    
+    int interp_ret = mp_obj.interpretPacket();
+    if (interp_ret) PrintToLog("!!! interpretPacket() returned %d !!!\n", interp_ret);
+    
+    // Only structurally valid transactions get recorded in levelDB
+    // PKT_ERROR - 2 = interpret_Transaction failed, structurally invalid payload
+    if (interp_ret != PKT_ERROR - 2) {
+      bool bValid = (0 <= interp_ret);
+      p_txlistdb->recordTX(tx.GetHash(), bValid, nBlock, mp_obj.getType(), mp_obj.getNewAmount());
+      p_OmniTXDB->RecordTransaction(tx.GetHash(), idx);
     }
-  else if (pop_ret > 0)
-    fFoundTx |= HandleDExPayments(tx, nBlock, mp_obj.getSender()); // testing the payment handler
+    fFoundTx |= (interp_ret == 0);
+  } else if (pop_ret > 0) fFoundTx |= HandleDExPayments(tx, nBlock, mp_obj.getSender()); // testing the payment handler
   
-  if (fFoundTx && msc_debug_consensus_hash_every_transaction)
-    {
-      uint256 consensusHash = GetConsensusHash();
-      PrintToLog("Consensus hash for transaction %s: %s\n", tx.GetHash().GetHex(), consensusHash.GetHex());
-    }
+  if (fFoundTx && msc_debug_consensus_hash_every_transaction) {
+    uint256 consensusHash = GetConsensusHash();
+    PrintToLog("Consensus hash for transaction %s: %s\n", tx.GetHash().GetHex(), consensusHash.GetHex());
+  }
   
   return fFoundTx;
 }

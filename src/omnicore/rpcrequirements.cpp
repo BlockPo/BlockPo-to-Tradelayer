@@ -26,7 +26,7 @@ using boost::algorithm::token_compress_on;
 typedef boost::rational<boost::multiprecision::checked_int128_t> rational_t;
 extern int64_t factorE;
 extern uint64_t marketP[NPTYPES];
-extern int actualBlockg;
+extern int lastBlockg;
 extern int vestingActivationBlock;
 
 void RequireBalance(const std::string& address, uint32_t propertyId, int64_t amount)
@@ -144,7 +144,7 @@ void RequireNotVesting(uint32_t propertyId)
     throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
   }
   
-  if (sp.attribute_type == ALL_PROPERTY_TYPE_VESTING && actualBlockg < vestingActivationBlock + 210240) {
+  if (sp.attribute_type == ALL_PROPERTY_TYPE_VESTING && lastBlockg < vestingActivationBlock + 210240) {
     throw JSONRPCError(RPC_INVALID_PARAMETER, "Vesting Tokens can not be traded at DEx before one year\n");
   }
 }

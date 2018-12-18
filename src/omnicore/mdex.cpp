@@ -55,7 +55,7 @@ extern std::vector<std::map<std::string, std::string>> path_ele;
 extern int n_cols;
 extern int n_rows;
 extern MatrixTLS *pt_ndatabase;
-extern int actualBlockg;
+extern int lastBlockg;
 
 md_PricesMap* mastercore::get_Prices(uint32_t prop)
 {
@@ -195,7 +195,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       PrintToLog("Trading action pnew: %d\n", pnew->getTradingAction() );
       PrintToLog("Trade Status: %s\n", tradeStatus);
       PrintToLog("propertyForSale = %d", propertyForSale);
-      PrintToLog("\nactualBlockg = %s\n", actualBlockg);
+      PrintToLog("\nlastBlockg = %s\n", lastBlockg);
       /********************************************************/
       uint32_t property_traded = pold->getProperty();
       
@@ -1738,19 +1738,17 @@ int mastercore::ContractDex_ADD(const std::string& sender_addr, uint32_t prop, i
   // if (msc_debug_metadex3) MetaDEx_debug_print();
   
   // Insert the remaining order into the ContractDex maps
-  if (0 < new_cdex.getAmountForSale())
-    { //switch to getAmounForSale() when ready
-      if (!ContractDex_INSERT(new_cdex))
-	{
-	  PrintToLog("%s() ERROR: ALREADY EXISTS, line %d, file: %s\n", __FUNCTION__, __LINE__, __FILE__);
-	  return METADEX_ERROR -70;  // TODO: create new numbers for our errors.
-	} else {
-	PrintToConsole("\nInserted in the orderbook!!\n");
-	// if (msc_debug_metadex1) PrintToLog("==== INSERTED: %s= %s\n", xToString(new_cdex.getEffectivePrice()), new_cdex.ToString());
-	// if (msc_debug_metadex3) MetaDEx_debug_print();
-      }
+  if (0 < new_cdex.getAmountForSale()) { //switch to getAmounForSale() when ready
+    if (!ContractDex_INSERT(new_cdex)) {
+      PrintToLog("%s() ERROR: ALREADY EXISTS, line %d, file: %s\n", __FUNCTION__, __LINE__, __FILE__);
+      return METADEX_ERROR -70;  // TODO: create new numbers for our errors.
+    } else {
+      PrintToConsole("\nInserted in the orderbook!!\n");
+      // if (msc_debug_metadex1) PrintToLog("==== INSERTED: %s= %s\n", xToString(new_cdex.getEffectivePrice()), new_cdex.ToString());
+      // if (msc_debug_metadex3) MetaDEx_debug_print();
     }
-    return 0;
+  }
+  return 0;
 }
 
 /////////////////////////////////////////

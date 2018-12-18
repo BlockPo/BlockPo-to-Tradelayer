@@ -990,7 +990,7 @@ bool CMPTransaction::interpret_ContractDexTrade()
   PrintToLog("amount of contracts : %d\n", amount);
   PrintToLog("effective price : %d\n", effective_price);
   PrintToLog("trading action : %d\n", trading_action);
-
+  
   return true;
 }
 
@@ -2340,28 +2340,32 @@ int CMPTransaction::logicMath_ContractDexTrade()
   PrintToLog("amount: %d\n",amount);
   PrintToLog("nBalance: %d\n",nBalance);
   PrintToLog("amountToReserve-------: %d\n",amountToReserve);
+  PrintToLog("\npfuture->fco_init_block = %d\n", pfuture->fco_init_block);
+  PrintToLog("\npfuture->fco_blocks_until_expiration = %d\n", pfuture->fco_blocks_until_expiration);
+  PrintToLog("\nblock = %d\n", block);
+  
+  if (block > pfuture->fco_init_block + static_cast<int>(pfuture->fco_blocks_until_expiration) || block < pfuture->fco_init_block) {
+    PrintToLog("\nTrade out of deadline!!\n");
+    return PKT_ERROR_SP -38;
+  } 
   PrintToLog("----------------------------------------------------------\n");
   
-  if (nBalance < amountToReserve || nBalance == 0)
-    {
-      PrintToLog("%s(): rejected: sender %s has insufficient balance for contracts %d [%s < %s] \n",
-		 __func__,
-		 sender,
-		 property,
-		 FormatMP(property, nBalance),
-		 FormatMP(property, amountToReserve));
-      return (PKT_ERROR_SEND -25); 
+  if (nBalance < amountToReserve || nBalance == 0) {
+    PrintToLog("%s(): rejected: sender %s has insufficient balance for contracts %d [%s < %s] \n",
+	       __func__,
+	       sender,
+	       property,
+	       FormatMP(property, nBalance),
+	       FormatMP(property, amountToReserve));
+    return (PKT_ERROR_SEND -25); 
+  } else if (conv != 0) {
+    if (amountToReserve > 0) {
+      assert(update_tally_map(sender, pfuture->fco_collateral_currency, -amountToReserve, BALANCE));
+      assert(update_tally_map(sender, pfuture->fco_collateral_currency,  amountToReserve, CONTRACTDEX_RESERVE));
     }
-  else if (conv != 0)
-    {
-      if (amountToReserve > 0)
-	{
-	  assert(update_tally_map(sender, pfuture->fco_collateral_currency, -amountToReserve, BALANCE));
-	  assert(update_tally_map(sender, pfuture->fco_collateral_currency,  amountToReserve, CONTRACTDEX_RESERVE));
-	}
-      int64_t reserva = getMPbalance(sender, pfuture->fco_collateral_currency,CONTRACTDEX_RESERVE);
-      std::string reserved = FormatDivisibleMP(reserva,false);
-    }
+    int64_t reserva = getMPbalance(sender, pfuture->fco_collateral_currency,CONTRACTDEX_RESERVE);
+    std::string reserved = FormatDivisibleMP(reserva,false);
+  }
   
   t_tradelistdb->recordNewTrade(txid, sender, pfuture->fco_propertyId, desired_property, block, tx_idx, 0);
   int rc = ContractDex_ADD(sender, pfuture->fco_propertyId, amount, block, txid, tx_idx, effective_price, trading_action,0);
@@ -3025,7 +3029,7 @@ struct FutureContractObject *getFutureContractObject(uint32_t property_type, std
 	  if ( sp.prop_type == property_type && sp.name == identifier ) /** Futures */
 	    {
 	      PrintToLog("\npropertyId: %d\n", propertyId);
-	      PrintToLog("\nattribute_type: %d\n", sp.attribute_type);
+	      PrintToLog("\nprop_type: %d\n", sp.prop_type);
 	      PrintToLog("\nname: %d\n", sp.name);
 	      pt_fco->fco_denomination = sp.denomination;
 	      pt_fco->fco_blocks_until_expiration = sp.blocks_until_expiration;
