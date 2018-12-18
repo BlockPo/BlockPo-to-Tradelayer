@@ -133,7 +133,7 @@ CMainConsensusParams::CMainConsensusParams()
  */
 CTestNetConsensusParams::CTestNetConsensusParams()
 {
-    GENESIS_BLOCK = 620000;
+    GENESIS_BLOCK = 0;
     // Notice range for feature activations:
     MIN_ACTIVATION_BLOCKS = 0;
     MAX_ACTIVATION_BLOCKS = 999999;
@@ -144,8 +144,8 @@ CTestNetConsensusParams::CTestNetConsensusParams()
     // Transaction restrictions:
     MSC_ALERT_BLOCK = 0;
     MSC_SEND_BLOCK = 0;
-    MSC_SP_BLOCK = 9999999;
-    MSC_MANUALSP_BLOCK = 9999999;
+    MSC_SP_BLOCK = 0;
+    MSC_MANUALSP_BLOCK = 0;
     MSC_SEND_ALL_BLOCK = 0;
     ///////////////////////////////
     /** New things for Contract */

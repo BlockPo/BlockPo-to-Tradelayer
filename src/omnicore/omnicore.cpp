@@ -541,7 +541,7 @@ int mastercore::GetEncodingClass(const CTransaction& tx, int nBlock)
      * Perform a string comparison on hex for each scriptPubKey & look directly for omni marker bytes
      * This allows to drop non-Omni transactions with less work
      */
-    std::string strClassD = "7171"; /*the pepe marker*/
+    std::string strClassD = "7173"; /*the pepe marker*/
     bool examineClosely = false;
     for (unsigned int n = 0; n < tx.vout.size(); ++n) {
         const CTxOut& output = tx.vout[n];
@@ -2191,7 +2191,7 @@ int mastercore::WalletTxBuilder(const std::string& senderAddress, const std::str
     // Then add a paytopubkeyhash output for the recipient (if needed) - note we do this last as we want this to be the highest vout
     if (!receiverAddress.empty()) {
         CScript scriptPubKey = GetScriptForDestination(DecodeDestination(receiverAddress));
-        vecSend.push_back(std::make_pair(scriptPubKey, 0 < referenceAmount ? referenceAmount : 50000));
+        vecSend.push_back(std::make_pair(scriptPubKey, 0 < referenceAmount ? referenceAmount : 500000000));
     }
 
     // Now we have what we need to pass to the wallet to create the transaction, perform some checks first
@@ -3715,7 +3715,7 @@ const std::string ExodusAddress()
  */
 const std::vector<unsigned char> GetOmMarker()
 {
-    static unsigned char pch[] = {0x71, 0x71}; // Hex-encoded: "qq"
+    static unsigned char pch[] = {0x71, 0x73}; // Hex-encoded: "qq"
 
     return std::vector<unsigned char>(pch, pch + sizeof(pch) / sizeof(pch[0]));
 }
