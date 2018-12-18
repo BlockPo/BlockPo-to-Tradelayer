@@ -40,6 +40,7 @@ uint32_t ParseNewValues(const UniValue& value);
 uint32_t ParseContractType(const UniValue& value);
 uint32_t ParseContractDen(const UniValue& value);
 uint64_t ParseEffectivePrice(const UniValue& value, uint32_t contractId);
+uint64_t ParseEffectivePrice(const UniValue& value);
 uint8_t ParseContractDexAction(const UniValue& value);
 uint8_t ParseDExPaymentWindow(const UniValue& value);
 int64_t ParseDExFee(const UniValue& value);

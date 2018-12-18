@@ -180,13 +180,6 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       const int idx_qp = idx_q;
       PrintToLog("Checking idx_q = %d", idx_qp);
       
-      CMPSPInfo::Entry sp;
-      assert(_my_sps->getSP(propertyForSale, sp));
-      
-      uint32_t marginRequirementContract = sp.margin_requirement;
-      int64_t marginRequirement = static_cast<int64_t>(marginRequirementContract);
-      uint32_t collateralCurrency = sp.collateral_currency;
-      uint32_t notionalSize = sp.notional_size;
       /********************************************************/
       /** Preconditions */
       assert(pold->getProperty() == pnew->getProperty());
@@ -1734,30 +1727,29 @@ int mastercore::MetaDEx_ADD(const std::string& sender_addr, uint32_t prop, int64
 /** New things for Contract */
 int mastercore::ContractDex_ADD(const std::string& sender_addr, uint32_t prop, int64_t amount, int block, const uint256& txid, unsigned int idx, uint64_t effective_price, uint8_t trading_action, int64_t amount_to_reserve)
 {
-    // int rc = METADEX_ERROR -1;
-    /*Remember: Here CMPTransaction::ADD is the subaction coming from CMPMetaDEx*/
-    CMPContractDex new_cdex(sender_addr, block, prop, amount, 0, 0, txid, idx, CMPTransaction::ADD, effective_price, trading_action);
-    // if (msc_debug_metadex1) PrintToLog("%s(); buyer obj: %s\n", __FUNCTION__, new_cdex.ToString());
-    //  Ensure this is not a badly priced trade (for example due to zero amounts)
-    if (0 >= new_cdex.getEffectivePrice()) return METADEX_ERROR -66;
+  // int rc = METADEX_ERROR -1;
+  /*Remember: Here CMPTransaction::ADD is the subaction coming from CMPMetaDEx*/
+  CMPContractDex new_cdex(sender_addr, block, prop, amount, 0, 0, txid, idx, CMPTransaction::ADD, effective_price, trading_action);
+  // if (msc_debug_metadex1) PrintToLog("%s(); buyer obj: %s\n", __FUNCTION__, new_cdex.ToString());
+  //  Ensure this is not a badly priced trade (for example due to zero amounts)
+  if (0 >= new_cdex.getEffectivePrice()) return METADEX_ERROR -66;
 
-    x_Trade(&new_cdex);
-    // if (msc_debug_metadex3) MetaDEx_debug_print();
-
-    // Insert the remaining order into the ContractDex maps
-    if (0 < new_cdex.getAmountForSale())
+  x_Trade(&new_cdex);
+  // if (msc_debug_metadex3) MetaDEx_debug_print();
+  
+  // Insert the remaining order into the ContractDex maps
+  if (0 < new_cdex.getAmountForSale())
     { //switch to getAmounForSale() when ready
-        if (!ContractDex_INSERT(new_cdex))
-	      {
-	          PrintToLog("%s() ERROR: ALREADY EXISTS, line %d, file: %s\n", __FUNCTION__, __LINE__, __FILE__);
-	          return METADEX_ERROR -70;  // TODO: create new numbers for our errors.
-	      } else {
-	          PrintToConsole("\nInserted in the orderbook!!\n");
-	          // if (msc_debug_metadex1) PrintToLog("==== INSERTED: %s= %s\n", xToString(new_cdex.getEffectivePrice()), new_cdex.ToString());
-	          // if (msc_debug_metadex3) MetaDEx_debug_print();
-	      }
+      if (!ContractDex_INSERT(new_cdex))
+	{
+	  PrintToLog("%s() ERROR: ALREADY EXISTS, line %d, file: %s\n", __FUNCTION__, __LINE__, __FILE__);
+	  return METADEX_ERROR -70;  // TODO: create new numbers for our errors.
+	} else {
+	PrintToConsole("\nInserted in the orderbook!!\n");
+	// if (msc_debug_metadex1) PrintToLog("==== INSERTED: %s= %s\n", xToString(new_cdex.getEffectivePrice()), new_cdex.ToString());
+	// if (msc_debug_metadex3) MetaDEx_debug_print();
+      }
     }
-
     return 0;
 }
 
@@ -1765,70 +1757,72 @@ int mastercore::ContractDex_ADD(const std::string& sender_addr, uint32_t prop, i
 /** New things for Contract */
 int mastercore::ContractDex_ADD_MARKET_PRICE(const std::string& sender_addr, uint32_t contractId, int64_t amount, int block, const uint256& txid, unsigned int idx, uint8_t trading_action, int64_t amount_to_reserve)
 {
-    int rc = METADEX_ERROR -1;
-
-    PrintToLog("------------------------------------------------------------\n");
-    PrintToLog("Inside ContractDex_ADD_MARKET_PRICE\n");
-
-    /*Remember: Here CMPTransaction::ADD is the subaction coming from CMPMetaDEx*/
-
-    if (trading_action == BUY){
-        uint64_t ask = edgeOrderbook(contractId,BUY);
-        PrintToLog("ask: %d\n",ask);
-        CMPContractDex new_cdex(sender_addr, block, contractId, amount, 0, 0, txid, idx, CMPTransaction::ADD, ask, trading_action);
-
-        // Ensure this is not a badly priced trade (for example due to zero amounts)
-        PrintToLog("effective price of new_cdex /buy/: %d\n",new_cdex.getEffectivePrice());
-        if (0 >= new_cdex.getEffectivePrice()) return METADEX_ERROR -66;
-
-        // Insert the remaining order into the ContractDex maps
-        uint64_t diff;
-        uint64_t oldvalue;
-        uint64_t newvalue;
-
-        while(true) {
-            oldvalue = new_cdex.getAmountForSale();
-            x_Trade(&new_cdex);
-            newvalue = new_cdex.getAmountForSale();
-            if (newvalue == 0) {
-                 break;
-            }
-
-            uint64_t price = edgeOrderbook(contractId,BUY);
-            new_cdex.setPrice(price);
-            PrintToLog("SELL SIDE in while loop/ right side of example/<-------\n");
-       }
-
-    } else if (trading_action == SELL){
-        uint64_t bid = edgeOrderbook(contractId,SELL);
-        PrintToLog("bid: %d\n",bid);
-        CMPContractDex new_cdex(sender_addr, block, contractId, amount, 0, 0, txid, idx, CMPTransaction::ADD, bid, trading_action);
-        //  Ensure this is not a badly priced trade (for example due to zero amounts
-
-        PrintToLog("effective price of new_cdex/sell/: %d\n",new_cdex.getEffectivePrice());
-        if (0 >= new_cdex.getEffectivePrice()) return METADEX_ERROR -66;
-
-        // Insert the remaining order into the ContractDex maps
-        uint64_t oldvalue;
-        uint64_t newvalue;
-        uint64_t diff;
-        while(true) {
-            oldvalue = new_cdex.getAmountForSale();
-            x_Trade(&new_cdex);
-            newvalue = new_cdex.getAmountForSale();
-            if (newvalue == 0) {
-                 break;
-            }
-
-            uint64_t price = edgeOrderbook(contractId,BUY);
-            new_cdex.setPrice(price);
-            PrintToLog("BUY SIDE in while loop/ right side of example/<-------\n");
-       }
-
+  int rc = METADEX_ERROR -1;
+  
+  PrintToLog("------------------------------------------------------------\n");
+  PrintToLog("Inside ContractDex_ADD_MARKET_PRICE\n");
+  
+  /*Remember: Here CMPTransaction::ADD is the subaction coming from CMPMetaDEx*/
+  
+  if (trading_action == BUY){
+    uint64_t ask = edgeOrderbook(contractId,BUY);
+    PrintToLog("ask: %d\n",ask);
+    CMPContractDex new_cdex(sender_addr, block, contractId, amount, 0, 0, txid, idx, CMPTransaction::ADD, ask, trading_action);
+    
+    // Ensure this is not a badly priced trade (for example due to zero amounts)
+    PrintToLog("effective price of new_cdex /buy/: %d\n",new_cdex.getEffectivePrice());
+    if (0 >= new_cdex.getEffectivePrice()) return METADEX_ERROR -66;
+    
+    // Insert the remaining order into the ContractDex maps
+    // uint64_t diff;
+    uint64_t oldvalue;
+    uint64_t newvalue;
+    
+    while(true) {
+      oldvalue = new_cdex.getAmountForSale();
+      x_Trade(&new_cdex);
+      newvalue = new_cdex.getAmountForSale();
+      if (newvalue == 0) {
+	break;
+      }
+      
+      uint64_t price = edgeOrderbook(contractId,BUY);
+      new_cdex.setPrice(price);
+      PrintToLog("oldvalue = %d", oldvalue);
+      PrintToLog("SELL SIDE in while loop/ right side of example/<-------\n");
     }
+    
+  } else if (trading_action == SELL){
+    uint64_t bid = edgeOrderbook(contractId,SELL);
+    PrintToLog("bid: %d\n",bid);
+    CMPContractDex new_cdex(sender_addr, block, contractId, amount, 0, 0, txid, idx, CMPTransaction::ADD, bid, trading_action);
+    //  Ensure this is not a badly priced trade (for example due to zero amounts
+    
+    PrintToLog("effective price of new_cdex/sell/: %d\n",new_cdex.getEffectivePrice());
+    if (0 >= new_cdex.getEffectivePrice()) return METADEX_ERROR -66;
 
-    rc = 0;
-    return rc;
+    // Insert the remaining order into the ContractDex maps
+    uint64_t oldvalue;
+    uint64_t newvalue;
+    // uint64_t diff;
+    while(true) {
+      oldvalue = new_cdex.getAmountForSale();
+      x_Trade(&new_cdex);
+      newvalue = new_cdex.getAmountForSale();
+      if (newvalue == 0) {
+	break;
+      }
+      
+      uint64_t price = edgeOrderbook(contractId,BUY);
+      new_cdex.setPrice(price);
+      PrintToLog("oldvalue = %d", oldvalue);
+      PrintToLog("BUY SIDE in while loop/ right side of example/<-------\n");
+    }
+    
+  }
+  
+  rc = 0;
+  return rc;
 }
 
 int mastercore::ContractDex_CANCEL_EVERYTHING(const uint256& txid, unsigned int block, const std::string& sender_addr, unsigned char ecosystem, uint32_t contractId)

@@ -233,6 +233,15 @@ uint32_t ParseNewValues(const UniValue& value)
   return static_cast<uint32_t>(Nvalue);
 }
 
+uint64_t ParseEffectivePrice(const UniValue& value)
+{
+  int64_t effPrice = StrToInt64(value.getValStr(), true);  
+  if (effPrice < 0) {
+    throw JSONRPCError(RPC_TYPE_ERROR, "Price should be positive");
+  }
+  return effPrice;
+}
+
 uint64_t ParseEffectivePrice(const UniValue& value, uint32_t contractId)
 {
   int64_t effPrice = StrToInt64(value.getValStr(), true);  

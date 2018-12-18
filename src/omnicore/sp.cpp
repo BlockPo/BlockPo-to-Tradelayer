@@ -883,7 +883,7 @@ int mastercore::addInterestPegged(int nBlockPrev, const CBlockIndex* pBlockIndex
 
                 int64_t diff = priceIndex - nMarketPrice;
                 int64_t tokens = static_cast<int64_t>(newSp.num_tokens);
-                arith_uint256 num_tokens = ConvertTo256(tokens) / ConvertTo256(factorE);
+                // arith_uint256 num_tokens = ConvertTo256(tokens) / ConvertTo256(factorE);
                 arith_uint256 interest = ConvertTo256(diff) / ConvertTo256(nMarketPrice);
 
                 //adding interest to pegged
@@ -926,8 +926,8 @@ int CMPSPInfo::rollingContractsBlock(const CBlockIndex* pBlockIndex)
 
             // then we must rolling the contracts A to contracts B  (selling the contracts and then putting them into RESERVE)
             int64_t bid = edgeOrderbook(sp.contract_associated,2);
-            int64_t positiveBalance = getMPbalance(owner, sp.contract_associated, POSSITIVE_BALANCE);
-            int64_t negativeBalance = getMPbalance(owner, sp.contract_associated, NEGATIVE_BALANCE);
+            // int64_t positiveBalance = getMPbalance(owner, sp.contract_associated, POSSITIVE_BALANCE);
+            // int64_t negativeBalance = getMPbalance(owner, sp.contract_associated, NEGATIVE_BALANCE);
 
             // calculating the price of the reserve position
             int64_t notionalSize = static_cast<int64_t>(spp.notional_size);
@@ -1004,7 +1004,7 @@ int CMPSPInfo::rollingContractsBlock(const CBlockIndex* pBlockIndex)
 
            assert(update_tally_map(owner, contractId2, newReserved, CONTRACTDEX_RESERVE));
 
-           int64_t contractsReservedB = getMPbalance(owner,contractId2, CONTRACTDEX_RESERVE);
+           // int64_t contractsreservedB = getMPbalance(owner,contractId2, CONTRACTDEX_RESERVE);
 
            PrintToConsole("Price of bid: %d\n",bid1);
 

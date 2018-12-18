@@ -252,7 +252,7 @@ int DEx_BuyOfferCreate(const std::string& addressMaker, uint32_t propertyId, int
             PrintToLog("longs: %d\n", longs);
             PrintToLog("shorts: %d\n", shorts);
 
-            int index = static_cast<int>(propertyId);
+            // int index = static_cast<int>(propertyId);
             // int index1 = static_cast<int>(CONTRACT_sLTC_ALL);
             rational_t conv = notionalChange(propertyId);
             int64_t num = conv.numerator().convert_to<int64_t>();

@@ -780,7 +780,7 @@ UniValue tl_sendtrade(const JSONRPCRequest& request)
 
 UniValue tl_createcontract(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 9)
+  if (request.params.size() != 8)
     throw runtime_error(
 			"tl_createcontract \"fromaddress\" ecosystem type previousid \"category\" \"subcategory\" \"name\" \"url\" \"data\" propertyiddesired tokensperunit deadline ( earlybonus issuerpercentage )\n"
 
@@ -812,12 +812,11 @@ UniValue tl_createcontract(const JSONRPCRequest& request)
   uint32_t notional_size = ParseNewValues(request.params[5]);
   uint32_t collateral_currency = ParseNewValues(request.params[6]);
   uint32_t margin_requirement = ParseNewValues(request.params[7]);
-  uint32_t attribute_type = ParseNewValues(request.params[8]);
   
-  RequirePropertyName(name);
-  RequireSaneName(name);
+  // RequirePropertyName(name);
+  // RequireSaneName(name);
   
-  std::vector<unsigned char> payload = CreatePayload_CreateContract(ecosystem, type, name, blocks_until_expiration, notional_size, collateral_currency, margin_requirement, attribute_type);
+  std::vector<unsigned char> payload = CreatePayload_CreateContract(ecosystem, type, name, blocks_until_expiration, notional_size, collateral_currency, margin_requirement);
 
   uint256 txid;
   std::string rawHex;
@@ -845,9 +844,9 @@ UniValue tl_tradecontract(const JSONRPCRequest& request)
   if (request.params.size() != 5)
     throw runtime_error(
 			"tl_tradecontract \"fromaddress\" propertyidforsale \"amountforsale\" propertiddesired \"amountdesired\"\n"
-
+			
 			"\nPlace a trade offer on the distributed Futures Contracts exchange.\n"
-
+			
 			"\nArguments:\n"
 			"1. fromaddress          (string, required) the address to trade with\n"
 			"2. propertyidforsale    (number, required) the identifier of the contract to list for trade\n"
@@ -856,21 +855,19 @@ UniValue tl_tradecontract(const JSONRPCRequest& request)
 			"5. trading action        (number, required) 1 to BUY contracts, 2 to SELL contracts \n"
 			"\nResult:\n"
 			"\"payload\"             (string) the hex-encoded payload\n"
-
+			
 			"\nExamples:\n"
 			+ HelpExampleCli("tl_tradecontract", "31\"250.0\"1\"10.0\"70.0\"80.0\"")
 			+ HelpExampleRpc("tl_tradecontract", "31,\"250.0\",1,\"10.0,\"70.0,\"80.0\"")
 			);
-
+  
   std::string fromAddress = ParseAddress(request.params[0]);
-  uint32_t propertyIdForSale = ParsePropertyId(request.params[1]);
+  std::string name_traded = ParseText(request.params[1]);
   int64_t amountForSale = ParseAmountContract(request.params[2]);
-  uint64_t effective_price = ParseEffectivePrice(request.params[3], propertyIdForSale);
+  uint64_t effective_price = ParseEffectivePrice(request.params[3]);
   uint8_t trading_action = ParseContractDexAction(request.params[4]);
-
-  RequireContract(propertyIdForSale);
-
-  std::vector<unsigned char> payload = CreatePayload_ContractDexTrade(propertyIdForSale, amountForSale, effective_price, trading_action);
+  
+  std::vector<unsigned char> payload = CreatePayload_ContractDexTrade(name_traded, amountForSale, effective_price, trading_action);
 
   uint256 txid;
   std::string rawHex;

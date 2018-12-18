@@ -1539,18 +1539,17 @@ UniValue tl_getorderbook(const JSONRPCRequest& request)
             "\nExamples:\n"
             + HelpExampleCli("tl_getorderbook", "2")
             + HelpExampleRpc("tl_getorderbook", "2")
-        );
-
+			    );
+    
     bool filterDesired = (request.params.size() > 1);
     uint32_t propertyIdForSale = ParsePropertyId(request.params[0]);
     uint32_t propertyIdDesired = 0;
-
+    
     RequireExistingProperty(propertyIdForSale);
     RequireNotContract(propertyIdForSale);
 
     if (filterDesired) {
         propertyIdDesired = ParsePropertyId(request.params[1]);
-
         RequireExistingProperty(propertyIdDesired);
         RequireNotContract(propertyIdDesired);
         RequireSameEcosystem(propertyIdForSale, propertyIdDesired);
@@ -1611,11 +1610,13 @@ UniValue tl_getcontract_orderbook(const JSONRPCRequest& request)
 			+ HelpExampleCli("tl_getcontract_orderbook", "2" "1")
 			+ HelpExampleRpc("tl_getcontract_orderbook", "2" "1")
 			);
-
-
-  uint32_t propertyIdForSale = ParsePropertyId(request.params[0]);
+  
+  std::string name_traded = ParseText(request.params[0]);
   uint8_t tradingaction = ParseContractDexAction(request.params[1]);
-
+  
+  struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, name_traded);
+  uint32_t propertyIdForSale = pfuture->fco_propertyId;
+  
   std::vector<CMPContractDex> vecContractDexObjects;
   {
     LOCK(cs_tally);
@@ -1720,11 +1721,10 @@ UniValue tl_getpeggedhistory(const JSONRPCRequest& request)
     return response;
 }
 
-
 UniValue tl_getupnl(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 2)
-        throw runtime_error(
+  if (request.params.size() != 2)
+    throw runtime_error(
             "tl_getpnl addres contractid\n"
             "\nRetrieves the unrealized PNL for trades on the distributed contract exchange for the specified market.\n"
             "\nArguments:\n"

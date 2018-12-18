@@ -72,6 +72,7 @@ private:
     char subcategory[SP_STRING_FIELD_LEN];
     /* New things for contracts */
     char stxid[SP_STRING_FIELD_LEN];
+    char name_traded[SP_STRING_FIELD_LEN];
     //////////////////////////////////
     char name[SP_STRING_FIELD_LEN];
     char url[SP_STRING_FIELD_LEN];
@@ -99,6 +100,7 @@ private:
     uint32_t propertyId;
     uint32_t contractId;
     uint64_t amount;
+    
     /* uint64_t ticksize; */
     /*uint32_t nextContractId;*/
     uint32_t blocks_until_expiration;
@@ -306,6 +308,7 @@ public:
         memset(&url, 0, sizeof(url));
         memset(&data, 0, sizeof(data));
         memset(&stxid, 0, sizeof(stxid));
+	memset(&name_traded, 0, sizeof(name_traded));
         deadline = 0;
         early_bird = 0;
         percentage = 0;
@@ -392,6 +395,7 @@ struct FutureContractObject
   uint32_t fco_notional_size;
   uint32_t fco_collateral_currency;
   uint32_t fco_margin_requirement;
+  uint32_t fco_propertyId;
   int fco_init_block;
   std::string fco_name;
   std::string fco_subcategory;

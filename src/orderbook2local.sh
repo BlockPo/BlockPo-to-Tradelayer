@@ -1,12 +1,12 @@
 #!/bin/bash
 
-SRCDIR=/home/lihkir/Documents/omnicore-litecoin-lihki-local/src
-DATADIR=/home/lihkir/.litecoin
+SRCDIR=/home/lihki/Documents/omnicore-litecoin-lihki-local/src
+DATADIR=/home/lihki/.litecoin
 NUL=/dev/null
 printf "\n//////////////////////////////////////////\n"
 printf "Cleaning the regtest folder\n"
 
-sudo rm -r /home/lihkir/.litecoin/regtest
+sudo rm -r /home/lihki/.litecoin/regtest
 sudo rm graphInfo*
 
 printf "\n________________________________________\n"
@@ -42,7 +42,6 @@ notional_size=1
 margin_requirement=1
 amountusdts_manyaddr=200000000
 blocks_until_expiration=225
-CONTRACT=4
 collateral=5
 
 printf " Creating the addresses ..."
@@ -82,7 +81,7 @@ $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1 # Generating one blo
 ##################################################################
 printf "\n________________________________________\n"
 printf "Creating Future Contract with base address: ${ADDRBase}\n"
-TRACreate=$($SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_createcontract $ADDRBase 1 1 "ALL F19" ${blocks_until_expiration} ${notional_size} ${collateral} ${margin_requirement} ${CONTRACT})
+TRACreate=$($SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_createcontract $ADDRBase 1 1 "ALL F18" ${blocks_until_expiration} ${notional_size} ${collateral} ${margin_requirement})
 $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
 
 printf "\n________________________________________\n"
@@ -125,7 +124,7 @@ do
     printf $AMOUNT
     printf "\n"
     
-    $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[$i]} ${CONTRACT} ${AMOUNT} ${PRICE} 1
+    $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[$i]} "ALL F18" ${AMOUNT} ${PRICE} 1
     $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1    
 done
 ##################################################################
@@ -143,27 +142,15 @@ do
     printf $AMOUNT
     printf "\n"
     
-    $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[$i]} ${CONTRACT} ${AMOUNT} ${PRICE} 2
+    $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[$i]} "ALL F18" ${AMOUNT} ${PRICE} 2
     $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1    
 done
 ##################################################################
-# $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[1]} ${CONTRACT} 100 10 1
-# $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1   
-
-# $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[1]} ${CONTRACT} 200 20 1
-# $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
-
-# $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[1]} ${CONTRACT} 300 30 1
-# $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
-
-# $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[2]} ${CONTRACT} 300 30 2
-# $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1   
-##################################################################
 printf "\n Cheking the  orderbok (sellside):\n"
-$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_getcontract_orderbook ${CONTRACT} 2
+$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_getcontract_orderbook "ALL F18" 2
 
 printf "\n Cheking the  orderbok (buyside):\n"
-$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_getcontract_orderbook ${CONTRACT} 1
+$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_getcontract_orderbook "ALL F18" 1
 ################################################################## 
 printf "Stoping omnicored and litecoin-cli:\n"
 $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest stop

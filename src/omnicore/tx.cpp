@@ -858,26 +858,26 @@ bool CMPTransaction::interpret_MetaDExTrade()
 bool CMPTransaction::interpret_CreateContractDex()
 {
   int i = 0;
-
+  
   std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
-
+  
   memcpy(&ecosystem, &pkt[i], 1);
   i++;
   std::vector<uint8_t> vecDenomTypeBytes = GetNextVarIntBytes(i);
-
+  
   const char* p = i + (char*) &pkt;
   std::vector<std::string> spstr;
   for (int j = 0; j < 1; j++) {
     spstr.push_back(std::string(p));
     p += spstr.back().size() + 1;
   }
-
+  
   if (isOverrun(p)) {
     PrintToLog("%s(): rejected: malformed string value(s)\n", __func__);
     return false;
   }
-
+  
   int j = 0;
   memcpy(name, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(name)-1)); j++;
   i = i + strlen(name) + 1; // data sizes + 1 null terminators
@@ -885,16 +885,15 @@ bool CMPTransaction::interpret_CreateContractDex()
   std::vector<uint8_t> vecNotionalSize = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecCollateralCurrency = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecMarginRequirement = GetNextVarIntBytes(i);
-  std::vector<uint8_t> vecAttributeType = GetNextVarIntBytes(i);
   
   if (!vecVersionBytes.empty()) {
     version = DecompressInteger(vecVersionBytes);
   } else return false;
-
+  
   if (!vecTypeBytes.empty()) {
     type = DecompressInteger(vecTypeBytes);
   } else return false;
-
+  
   if (!vecDenomTypeBytes.empty()) {
     denomination = DecompressInteger(vecDenomTypeBytes);
   } else return false;
@@ -910,18 +909,15 @@ bool CMPTransaction::interpret_CreateContractDex()
   if (!vecCollateralCurrency.empty()) {
     collateral_currency = DecompressInteger(vecCollateralCurrency);
   } else return false;
-
+  
   if (!vecMarginRequirement.empty()) {
     margin_requirement = DecompressInteger(vecMarginRequirement);
   } else return false;
   
-  if (!vecAttributeType.empty()) {
-    attribute_type = DecompressInteger(vecAttributeType);
-  } else return false;
-  
+  prop_type = ALL_PROPERTY_TYPE_CONTRACT;  
   std::string sub = "Futures Contracts";
   strcpy(subcategory, sub.c_str());
-
+  
   PrintToLog("------------------------------------------------------------\n");
   PrintToLog("Inside interpret_CreateContractDex function\n");
   PrintToLog("version: %d\n", version);
@@ -933,7 +929,7 @@ bool CMPTransaction::interpret_CreateContractDex()
   PrintToLog("margin requirement: %d\n", margin_requirement);
   PrintToLog("ecosystem: %d\n", ecosystem);
   PrintToLog("name: %s\n", name);
-  PrintToLog("attribute_type: %d\n", attribute_type);
+  PrintToLog("prop_type: %d\n", prop_type);
   PrintToLog("------------------------------------------------------------\n");
   
   return true;
@@ -943,42 +939,54 @@ bool CMPTransaction::interpret_CreateContractDex()
 bool CMPTransaction::interpret_ContractDexTrade()
 {
   PrintToLog("Inside of trade contractdexTrade function\n");
+  
   int i = 0;
-
   std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
-  std::vector<uint8_t> vecPropertyIdBytes = GetNextVarIntBytes(i);
+  
+  const char* p = i + (char*) &pkt;
+  std::vector<std::string> spstr;
+  for (int j = 0; j < 1; j++) {
+    spstr.push_back(std::string(p));
+    p += spstr.back().size() + 1;
+  }
+  
+  if (isOverrun(p)) {
+    PrintToLog("%s(): rejected: malformed string value(s)\n", __func__);
+    return false;
+  }
+  
+  int j = 0;
+  memcpy(name_traded, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(name_traded)-1)); j++;
+  i = i + strlen(name_traded) + 1; 
+  
   std::vector<uint8_t> vecAmountForSaleBytes = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecEffectivePriceBytes = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecTradingActionBytes = GetNextVarIntBytes(i);
-
+  
   if (!vecTypeBytes.empty()) {
     type = DecompressInteger(vecTypeBytes);
   } else return false;
-
+  
   if (!vecVersionBytes.empty()) {
-      version = DecompressInteger(vecVersionBytes);
+    version = DecompressInteger(vecVersionBytes);
   } else return false;
-
-  if (!vecPropertyIdBytes.empty()) {
-      contractId = DecompressInteger(vecPropertyIdBytes);
-  } else return false;
-
+  
   if (!vecAmountForSaleBytes.empty()) {
-      amount = DecompressInteger(vecAmountForSaleBytes);
+    amount = DecompressInteger(vecAmountForSaleBytes);
   } else return false;
-
+  
   if (!vecEffectivePriceBytes.empty()) {
-      effective_price = DecompressInteger(vecEffectivePriceBytes);
+    effective_price = DecompressInteger(vecEffectivePriceBytes);
   } else return false;
-
+  
   if (!vecTradingActionBytes.empty()) {
-      trading_action = DecompressInteger(vecTradingActionBytes);
+    trading_action = DecompressInteger(vecTradingActionBytes);
   } else return false;
-
+  
   PrintToLog("version: %d\n", version);
   PrintToLog("messageType: %d\n",type);
-  PrintToLog("contractId: %d\n", contractId);
+  PrintToLog("contractName: %s\n", name_traded);
   PrintToLog("amount of contracts : %d\n", amount);
   PrintToLog("effective price : %d\n", effective_price);
   PrintToLog("trading action : %d\n", trading_action);
@@ -2204,98 +2212,98 @@ int CMPTransaction::logicMath_MetaDExTrade()
 /** Tx 40 */
 int CMPTransaction::logicMath_CreateContractDex()
 {
-    uint256 blockHash;
-    {
-      LOCK(cs_main);
-
-      CBlockIndex* pindex = chainActive[block];
-      
+  uint256 blockHash;
+  {
+    LOCK(cs_main);
+    
+    CBlockIndex* pindex = chainActive[block];
+    
       if (pindex == NULL) {
 	PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
 	return (PKT_ERROR_SP -20);
       }
       blockHash = pindex->GetBlockHash();
-    }
+  }
+  
+  // if (OMNI_PROPERTY_ALL != ecosystem && OMNI_PROPERTY_TALL != ecosystem) {
+  //     PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, (uint32_t) ecosystem);
+  //     return (PKT_ERROR_SP -21);
+  // }
+  
+  // if (!IsTransactionTypeAllowed(block, ecosystem, type, version)) {
+  //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+  //         __func__,
+  //         type,
+  //         version,
+  //         propertyId,
+  //         block);
+  //     return (PKT_ERROR_SP -22);
+  // }
+  
+  // if ('\0' == name[0]) {
+  //    PrintToLog("%s(): rejected: property name must not be empty\n", __func__);
+  //    return (PKT_ERROR_SP -37);
+  // }
+  
+  // PrintToLog("type of denomination: %d\n",denomination);
 
-    // if (OMNI_PROPERTY_ALL != ecosystem && OMNI_PROPERTY_TALL != ecosystem) {
-    //     PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, (uint32_t) ecosystem);
-    //     return (PKT_ERROR_SP -21);
-    // }
-
-    // if (!IsTransactionTypeAllowed(block, ecosystem, type, version)) {
-    //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
-    //         __func__,
-    //         type,
-    //         version,
-    //         propertyId,
-    //         block);
-    //     return (PKT_ERROR_SP -22);
-    // }
-
-    // if ('\0' == name[0]) {
-    //    PrintToLog("%s(): rejected: property name must not be empty\n", __func__);
-    //    return (PKT_ERROR_SP -37);
-    // }
-
-    // PrintToLog("type of denomination: %d\n",denomination);
-
-    // if (denomination != TL_dUSD && denomination != TL_dEUR && denomination!= TL_dYEN && denomination != TL_ALL && denomination != TL_sLTC && denomination!= TL_LTC) {
-    //   PrintToLog("rejected: denomination invalid\n");
-    //   return (PKT_ERROR_SP -37);
-    // }
-
-    // if (numerator != TL_ALL && numerator != TL_sLTC && numerator != TL_LTC) {
-    //   PrintToLog("rejected: denomination invalid\n");
-    //   return (PKT_ERROR_SP -37);
-    // }
-
-    // -----------------------------------------------
-
-    PrintToLog("------------------------------------------------------------\n");
-    PrintToLog("Inside logicMath_CreateContractDex function\n");
-    PrintToLog("version: %d\n", version);
-    PrintToLog("messageType: %d\n",type);
-    PrintToLog("denomination: %d\n", denomination);
-    PrintToLog("blocks until expiration : %d\n", blocks_until_expiration);
-    PrintToLog("notional size : %d\n", notional_size);
-    PrintToLog("collateral currency: %d\n", collateral_currency);
-    PrintToLog("margin requirement: %d\n", margin_requirement);
-    PrintToLog("ecosystem: %d\n", ecosystem);
-    PrintToLog("attribute_type: %d\n", attribute_type);
-    PrintToLog("name: %s\n", name);
-    PrintToLog("sugcategory : %s\n", subcategory);
-    PrintToLog("Sender: %s\n", sender);
-    PrintToLog("property type: %s\n", prop_type);
-    PrintToLog("blockhash: %s\n", blockHash.ToString());
-    PrintToLog("block: %d\n", block);
-    PrintToLog("denomination: %d\n", denomination);
-    PrintToLog("------------------------------------------------------------\n");
-
-    CMPSPInfo::Entry newSP;
-    newSP.issuer = sender;
-    newSP.prop_type = prop_type;
-    newSP.subcategory.assign(subcategory);
-    newSP.name.assign(name);
-    newSP.fixed = false;
-    newSP.manual = true;
-    newSP.creation_block = blockHash;
-    newSP.update_block = blockHash;
-    newSP.blocks_until_expiration = blocks_until_expiration;
-    newSP.notional_size = notional_size;
-    newSP.collateral_currency = collateral_currency;
-    newSP.margin_requirement = margin_requirement;
-    newSP.init_block = block;
-    newSP.denomination = denomination;
-    newSP.ecosystemSP = ecosystem;
-    newSP.attribute_type = attribute_type;
-    
-    const uint32_t propertyId = _my_sps->putSP(ecosystem, newSP);
-    assert(propertyId > 0);
-
-    PrintToLog("Contract id: %d\n", propertyId);
-    PrintToLog("ecosystemSP: %d\n", ecosystem);
-    
-    return 0;
+  // if (denomination != TL_dUSD && denomination != TL_dEUR && denomination!= TL_dYEN && denomination != TL_ALL && denomination != TL_sLTC && denomination!= TL_LTC) {
+  //   PrintToLog("rejected: denomination invalid\n");
+  //   return (PKT_ERROR_SP -37);
+  // }
+  
+  // if (numerator != TL_ALL && numerator != TL_sLTC && numerator != TL_LTC) {
+  //   PrintToLog("rejected: denomination invalid\n");
+  //   return (PKT_ERROR_SP -37);
+  // }
+  
+  // -----------------------------------------------
+  
+  PrintToLog("------------------------------------------------------------\n");
+  PrintToLog("Inside logicMath_CreateContractDex function\n");
+  PrintToLog("version: %d\n", version);
+  PrintToLog("messageType: %d\n",type);
+  PrintToLog("denomination: %d\n", denomination);
+  PrintToLog("blocks until expiration : %d\n", blocks_until_expiration);
+  PrintToLog("notional size : %d\n", notional_size);
+  PrintToLog("collateral currency: %d\n", collateral_currency);
+  PrintToLog("margin requirement: %d\n", margin_requirement);
+  PrintToLog("ecosystem: %d\n", ecosystem);
+  PrintToLog("prop_type: %d\n", prop_type);
+  PrintToLog("name: %s\n", name);
+  PrintToLog("sugcategory : %s\n", subcategory);
+  PrintToLog("Sender: %s\n", sender);
+  PrintToLog("property type: %s\n", prop_type);
+  PrintToLog("blockhash: %s\n", blockHash.ToString());
+  PrintToLog("block: %d\n", block);
+  PrintToLog("denomination: %d\n", denomination);
+  PrintToLog("------------------------------------------------------------\n");
+  
+  CMPSPInfo::Entry newSP;
+  newSP.issuer = sender;
+  newSP.prop_type = prop_type;
+  newSP.subcategory.assign(subcategory);
+  newSP.name.assign(name);
+  newSP.fixed = false;
+  newSP.manual = true;
+  newSP.creation_block = blockHash;
+  newSP.update_block = blockHash;
+  newSP.blocks_until_expiration = blocks_until_expiration;
+  newSP.notional_size = notional_size;
+  newSP.collateral_currency = collateral_currency;
+  newSP.margin_requirement = margin_requirement;
+  newSP.init_block = block;
+  newSP.denomination = denomination;
+  newSP.ecosystemSP = ecosystem;
+  newSP.attribute_type = attribute_type;
+  
+  const uint32_t propertyId = _my_sps->putSP(ecosystem, newSP);
+  assert(propertyId > 0);
+  
+  PrintToLog("Contract id: %d\n", propertyId);
+  PrintToLog("ecosystemSP: %d\n", ecosystem);
+  
+  return 0;
 }
 
 /** Tx 29 */
@@ -2305,7 +2313,7 @@ int CMPTransaction::logicMath_ContractDexTrade()
   uint256 blockHash;
   {
     LOCK(cs_main);
-
+    
     CBlockIndex* pindex = chainActive[block];
     if (pindex == NULL)
       {
@@ -2314,56 +2322,50 @@ int CMPTransaction::logicMath_ContractDexTrade()
       }
     blockHash = pindex->GetBlockHash();
   }
-
-  CMPSPInfo::Entry sp;
-  if(!_my_sps->getSP(contractId, sp)) {
-    PrintToLog("%s(): ERROR: No contractId found!\n", __func__);
-    return -1;
-  }
-
-  id_contract = contractId;
-  int64_t marginRe = static_cast<int64_t>(sp.margin_requirement);
-  int64_t nBalance = getMPbalance(sender, sp.collateral_currency, BALANCE);
-  rational_t conv = notionalChange(contractId);
+  
+  struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, name_traded);
+  
+  id_contract = pfuture->fco_propertyId;
+  int64_t marginRe = static_cast<int64_t>(pfuture->fco_margin_requirement);
+  int64_t nBalance = getMPbalance(sender, pfuture->fco_collateral_currency, BALANCE);
+  rational_t conv = notionalChange(pfuture->fco_propertyId);
   int64_t num = conv.numerator().convert_to<int64_t>();
   int64_t den = conv.denominator().convert_to<int64_t>();
   arith_uint256 amountTR = (ConvertTo256(amount) * ConvertTo256(marginRe) * ConvertTo256(num) / (ConvertTo256(den) * ConvertTo256(factorE)));
   int64_t amountToReserve = ConvertTo64(amountTR);
-
-  PrintToLog("sp.margin_requirement: %d\n",sp.margin_requirement);
-  PrintToLog("collateral currency id of contract : %d\n",sp.collateral_currency);
+  
+  PrintToLog("pfuture->fco_margin_requirement: %d\n", pfuture->fco_margin_requirement);
+  PrintToLog("collateral currency id of contract : %d\n", pfuture->fco_collateral_currency);
   PrintToLog("margin Requirement: %d\n",marginRe);
   PrintToLog("amount: %d\n",amount);
   PrintToLog("nBalance: %d\n",nBalance);
   PrintToLog("amountToReserve-------: %d\n",amountToReserve);
   PrintToLog("----------------------------------------------------------\n");
-
+  
   if (nBalance < amountToReserve || nBalance == 0)
     {
       PrintToLog("%s(): rejected: sender %s has insufficient balance for contracts %d [%s < %s] \n",
-		  __func__,
-		  sender,
-		  property,
-		  FormatMP(property, nBalance),
-		  FormatMP(property, amountToReserve));
-      return (PKT_ERROR_SEND -25);
-
+		 __func__,
+		 sender,
+		 property,
+		 FormatMP(property, nBalance),
+		 FormatMP(property, amountToReserve));
+      return (PKT_ERROR_SEND -25); 
     }
   else if (conv != 0)
     {
       if (amountToReserve > 0)
 	{
-	  assert(update_tally_map(sender, sp.collateral_currency, -amountToReserve, BALANCE));
-	  assert(update_tally_map(sender, sp.collateral_currency,  amountToReserve, CONTRACTDEX_RESERVE));
+	  assert(update_tally_map(sender, pfuture->fco_collateral_currency, -amountToReserve, BALANCE));
+	  assert(update_tally_map(sender, pfuture->fco_collateral_currency,  amountToReserve, CONTRACTDEX_RESERVE));
 	}
-
-      int64_t reserva = getMPbalance(sender, sp.collateral_currency,CONTRACTDEX_RESERVE);
+      int64_t reserva = getMPbalance(sender, pfuture->fco_collateral_currency,CONTRACTDEX_RESERVE);
       std::string reserved = FormatDivisibleMP(reserva,false);
-
     }
-  t_tradelistdb->recordNewTrade(txid, sender, contractId, desired_property, block, tx_idx, 0);
-  int rc = ContractDex_ADD(sender, contractId, amount, block, txid, tx_idx, effective_price, trading_action,0);
-
+  
+  t_tradelistdb->recordNewTrade(txid, sender, pfuture->fco_propertyId, desired_property, block, tx_idx, 0);
+  int rc = ContractDex_ADD(sender, pfuture->fco_propertyId, amount, block, txid, tx_idx, effective_price, trading_action,0);
+  
   return rc;
 }
 
@@ -3020,7 +3022,7 @@ struct FutureContractObject *getFutureContractObject(uint32_t property_type, std
       CMPSPInfo::Entry sp;
       if (_my_sps->getSP(propertyId, sp))
 	{
-	  if ( sp.attribute_type == property_type && sp.name == identifier ) /** Futures */
+	  if ( sp.prop_type == property_type && sp.name == identifier ) /** Futures */
 	    {
 	      PrintToLog("\npropertyId: %d\n", propertyId);
 	      PrintToLog("\nattribute_type: %d\n", sp.attribute_type);
@@ -3034,22 +3036,24 @@ struct FutureContractObject *getFutureContractObject(uint32_t property_type, std
 	      pt_fco->fco_subcategory = sp.subcategory;
 	      pt_fco->fco_issuer = sp.issuer;
 	      pt_fco->fco_init_block = sp.init_block;
+	      pt_fco->fco_propertyId = propertyId;
 	    }
-	  else if ( property_type == 4 && sp.subcategory == identifier )  /** Peggeds */
-	    {
-	      PrintToLog("\npropertyId: %d\n", propertyId);
-	      PrintToLog("\nattribute_type: %d\n", sp.attribute_type);
-	      PrintToLog("\nname: %d\n", sp.name);
-	      pt_fco->fco_denomination = sp.denomination;
-	      pt_fco->fco_blocks_until_expiration = sp.blocks_until_expiration;
-	      pt_fco->fco_notional_size = sp.notional_size;
-	      pt_fco->fco_collateral_currency = sp.collateral_currency;
-	      pt_fco->fco_margin_requirement = sp.margin_requirement;
-	      pt_fco->fco_name = sp.name;
-	      pt_fco->fco_subcategory = sp.subcategory;
-	      pt_fco->fco_issuer = sp.issuer;
-	      pt_fco->fco_init_block = sp.init_block;
-	    }
+	  // else if ( property_type == 4 && sp.subcategory == identifier )  /** Peggeds */
+	  //   {
+	  //     PrintToLog("\npropertyId: %d\n", propertyId);
+	  //     PrintToLog("\nattribute_type: %d\n", sp.attribute_type);
+	  //     PrintToLog("\nname: %d\n", sp.name);
+	  //     pt_fco->fco_denomination = sp.denomination;
+	  //     pt_fco->fco_blocks_until_expiration = sp.blocks_until_expiration;
+	  //     pt_fco->fco_notional_size = sp.notional_size;
+	  //     pt_fco->fco_collateral_currency = sp.collateral_currency;
+	  //     pt_fco->fco_margin_requirement = sp.margin_requirement;
+	  //     pt_fco->fco_name = sp.name;
+	  //     pt_fco->fco_subcategory = sp.subcategory;
+	  //     pt_fco->fco_issuer = sp.issuer;
+	  //     pt_fco->fco_init_block = sp.init_block;
+	  //     pt_fco->fco_propertyId = propertyId;
+	  //   }
 	}
     }
   return pt_fco;
