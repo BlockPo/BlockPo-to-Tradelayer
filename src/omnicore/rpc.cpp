@@ -62,6 +62,7 @@ extern int64_t factorE;
 extern volatile int64_t globalNumPrice;
 extern volatile int64_t globalDenPrice;
 extern uint64_t marketP[NPTYPES];
+extern std::map<uint32_t, std::map<std::string, double>> addrs_upnlc;
 /**
  * Throws a JSONRPCError, depending on error code.
  */
@@ -1473,7 +1474,7 @@ bool FullPositionToJSON(const std::string& address, uint32_t property, UniValue&
 
 UniValue tl_getfullposition(const JSONRPCRequest& request)
 {
-  /*if (request.params.size() != 2)
+  if (request.params.size() != 2)
       throw runtime_error(
         "tl_getfullposition \"address\" propertyid\n"
         "\nReturns the position for the future contract for a given address and property.\n"
@@ -1519,20 +1520,20 @@ UniValue tl_getfullposition(const JSONRPCRequest& request)
 
       // upnl
       LOCK(cs_tally);
-      double dupnl = t_tradelistdb->getUPNL(address, propertyId);
       const int64_t factor = 100000000;
-      int64_t upnl = static_cast<int64_t>(dupnl*factor);
-      PrintToConsole("unrealized PNL: %d\n",upnl);
+      int64_t upnl = static_cast<int64_t>(addrs_upnlc[propertyId][address]) *factor;
+      // double dupnl = t_tradelistdb->getUPNL(address, propertyId);
+      // int64_t upnl = static_cast<int64_t>(dupnl*factor);
+      // PrintToConsole("unrealized PNL: %d\n",upnl);
       // double averagePrice = static_cast<double>(totalAmount/d_contractsClosed);
       // double PNL_num = static_cast<double>((d_price - averagePrice)*(notionalSize*d_contractsClosed));
       // double PNL_den = static_cast<double>(averagePrice*marginRequirementContract);
      if (upnl >= 0){
-      positionObj.push_back(Pair("positiveupnl", FormatByType(upnl,2)));
+      positionObj.push_back(Pair("positiveupnl", FormatDivisibleMP(upnl)));
       positionObj.push_back(Pair("negativeupnl", FormatByType(0,2)));
-    } else {
-      uint64_t upnl1 = static_cast<uint64_t>(upnl);
+    } else{
       positionObj.push_back(Pair("positiveupnl", FormatByType(0,2)));
-      positionObj.push_back(Pair("negativeupnl", FormatByType(upnl1,2)));
+      positionObj.push_back(Pair("negativeupnl", FormatDivisibleMP(-upnl)));
     }
 
     // pnl
@@ -1552,7 +1553,7 @@ UniValue tl_getfullposition(const JSONRPCRequest& request)
   }
 
     return positionObj;
-*/
+
 }
 
 
@@ -1892,24 +1893,17 @@ UniValue tl_getupnl(const JSONRPCRequest& request)
         uint32_t contractId = ParsePropertyId(request.params[1]);
 
         RequireExistingProperty(contractId);
+        RequireContract(contractId);
 
         UniValue balanceObj(UniValue::VOBJ);
+        double upnl = addrs_upnlc[contractId][address] * factorE;
 
-        int64_t upnl  = getMPbalance(address, contractId, UPNL);
-        int64_t nupnl  = getMPbalance(address, contractId, NUPNL);
-        PrintToLog("_________________________________________________________\n");
-        PrintToLog("upnl in rpc: %d\n",upnl);
-        PrintToLog("nupnl in rpc: %d\n",nupnl);
-        PrintToLog("_________________________________________________________\n");
-
-        if (upnl > 0 && nupnl == 0) {
-            PrintToLog("upnl after if: %d\n",upnl);
-            balanceObj.push_back(Pair("positiveupnl", FormatByType(static_cast<uint64_t>(upnl),2)));
+        if (upnl > 0) {
+            balanceObj.push_back(Pair("positiveupnl", FormatDivisibleMP(static_cast<uint64_t>(upnl))));
             balanceObj.push_back(Pair("negativeupnl", FormatByType(0,2)));
-        } else if (nupnl > 0 && upnl == 0) {
-            PrintToLog("nupnl after if: %d\n",nupnl);
+        } else if (upnl < 0) {
             balanceObj.push_back(Pair("positiveupnl", FormatByType(0,2)));
-            balanceObj.push_back(Pair("negativeupnl", FormatByType(static_cast<uint64_t>(nupnl),2)));
+            balanceObj.push_back(Pair("negativeupnl", FormatDivisibleMP(static_cast<uint64_t>(upnl))));
 
         } else{
             balanceObj.push_back(Pair("positiveupnl", FormatByType(0,2)));
