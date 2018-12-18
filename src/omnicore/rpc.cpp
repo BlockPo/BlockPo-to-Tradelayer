@@ -1553,10 +1553,6 @@ UniValue tl_getfullposition(const JSONRPCRequest& request)
   }
 
     return positionObj;
-<<<<<<< HEAD
-=======
-
->>>>>>> demo
 }
 
 
