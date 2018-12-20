@@ -1116,7 +1116,7 @@ UniValue tl_sendissuance_pegged(const JSONRPCRequest& request)
 
 UniValue tl_send_pegged(const JSONRPCRequest& request)
 {
-    if ((request.params.size() != 4) || (request.params.size() != 5))
+    if (request.params.size() != 4) 
         throw runtime_error(
             "tl_send \"fromaddress\" \"toaddress\" propertyid \"amount\" ( \"redeemaddress\" \"referenceamount\" )\n"
 
