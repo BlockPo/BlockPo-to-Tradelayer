@@ -1847,7 +1847,7 @@ int CMPTransaction::logicMath_GrantTokens()
     return (PKT_ERROR_TOKENS -42);
   }
 
-  if (sender != sp.issuer) {
+  if (sender != sp.issuer) { // FIXME!
     PrintToLog("%s(): rejected: sender %s is not issuer of property %d [issuer=%s]\n", __func__, sender, property, sp.issuer);
     return (PKT_ERROR_TOKENS -43);
   }

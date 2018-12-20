@@ -1520,8 +1520,7 @@ UniValue tl_getfullposition(const JSONRPCRequest& request)
 
       // upnl
       LOCK(cs_tally);
-      const int64_t factor = 100000000;
-      int64_t upnl = static_cast<int64_t>(addrs_upnlc[propertyId][address]) *factor;
+      double upnl = addrs_upnlc[propertyId][address] *factorE;
       // double dupnl = t_tradelistdb->getUPNL(address, propertyId);
       // int64_t upnl = static_cast<int64_t>(dupnl*factor);
       // PrintToConsole("unrealized PNL: %d\n",upnl);
@@ -1529,17 +1528,17 @@ UniValue tl_getfullposition(const JSONRPCRequest& request)
       // double PNL_num = static_cast<double>((d_price - averagePrice)*(notionalSize*d_contractsClosed));
       // double PNL_den = static_cast<double>(averagePrice*marginRequirementContract);
      if (upnl >= 0){
-      positionObj.push_back(Pair("positiveupnl", FormatDivisibleMP(upnl)));
+      positionObj.push_back(Pair("positiveupnl", FormatDivisibleMP(static_cast<uint64_t>(upnl))));
       positionObj.push_back(Pair("negativeupnl", FormatByType(0,2)));
     } else{
       positionObj.push_back(Pair("positiveupnl", FormatByType(0,2)));
-      positionObj.push_back(Pair("negativeupnl", FormatDivisibleMP(-upnl)));
+      positionObj.push_back(Pair("negativeupnl", FormatDivisibleMP(static_cast<uint64_t>(-upnl))));
     }
 
     // pnl
     uint32_t collateralCurrency = sp.collateral_currency;
-    uint64_t realizedProfits  = static_cast<uint64_t>(factor*getMPbalance(address, collateralCurrency, REALIZED_PROFIT));
-    uint64_t realizedLosses  = static_cast<uint64_t>(factor*getMPbalance(address, collateralCurrency, REALIZED_LOSSES));
+    uint64_t realizedProfits  = static_cast<uint64_t>(factorE * getMPbalance(address, collateralCurrency, REALIZED_PROFIT));
+    uint64_t realizedLosses  = static_cast<uint64_t>(factorE * getMPbalance(address, collateralCurrency, REALIZED_LOSSES));
 
    if (realizedProfits > 0 && realizedLosses == 0){
     positionObj.push_back(Pair("positivepnl", FormatByType(realizedProfits,2)));

@@ -235,18 +235,18 @@ uint32_t ParseNewValues(const UniValue& value)
 
 uint64_t ParseEffectivePrice(const UniValue& value, uint32_t contractId)
 {
-  int64_t effPrice = StrToInt64(value.getValStr(), true);  
+  int64_t effPrice = StrToInt64(value.getValStr(), true);
   if (effPrice < 0) {
     throw JSONRPCError(RPC_TYPE_ERROR, "Price should be positive");
   }
-  
+
   LOCK(cs_tally);
   CMPSPInfo::Entry sp;
   if (!mastercore::_my_sps->getSP(contractId, sp)) {
     throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
   }
-  
-  PrintToConsole("effPrice: %d\n",effPrice);
+
+  PrintToLog("effPrice: %d\n*****************************************",effPrice);
   return effPrice;
 }
 
@@ -289,11 +289,11 @@ uint8_t ParseDExPaymentWindow(const UniValue& value)
 uint32_t ParseContractType(const UniValue& value)
 {
   int64_t Nvalue = value.get_int64();
-  
+
   if (Nvalue != 1 && Nvalue != 2 && Nvalue != 3 && Nvalue != 4) {
     throw JSONRPCError(RPC_INVALID_PARAMETER, "option no valid");
   }
-  
+
   if ( Nvalue == 1 ) {
     return weekly;
   } else if ( Nvalue == 2 ) {
@@ -303,7 +303,7 @@ uint32_t ParseContractType(const UniValue& value)
   } else if ( Nvalue == 4 ) {
     return time4hours;
   }
-  
+
   return 0;
 }
 
