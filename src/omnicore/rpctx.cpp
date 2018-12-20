@@ -1116,7 +1116,7 @@ UniValue tl_sendissuance_pegged(const JSONRPCRequest& request)
 
 UniValue tl_send_pegged(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 4)
+    if ((request.params.size() != 4) || (request.params.size() != 5))
         throw runtime_error(
             "tl_send \"fromaddress\" \"toaddress\" propertyid \"amount\" ( \"redeemaddress\" \"referenceamount\" )\n"
 
@@ -1144,7 +1144,7 @@ UniValue tl_send_pegged(const JSONRPCRequest& request)
     RequirePeggedCurrency(propertyId);
     int64_t amount = ParseAmount(request.params[3], isPropertyDivisible(propertyId));
   //  std::string redeemAddress = (request.params.size() > 4 && !ParseText(request.params[4]).empty()) ? ParseAddress(request.params[4]): "";
-    int64_t referenceAmount = (request.params.size() > 5) ? ParseAmount(request.params[5], true): 0;
+    int64_t referenceAmount = (request.params.size() > 4) ? ParseAmount(request.params[4], true): 0;
 
 
     // perform checks
