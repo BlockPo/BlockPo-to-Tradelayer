@@ -28,6 +28,7 @@ $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest  getbalance  # balance del bloq
 
 ##################################################################
 ADDRBase=$($SRCDIR/litecoin-cli -datadir=$DATADIR --regtest  getnewaddress Lihki)
+ADDRPeggeds=$($SRCDIR/litecoin-cli -datadir=$DATADIR --regtest  getnewaddress Peggeds)
 printf "\n________________________________________\n"
 printf "Base address to work with:\n"
 printf $ADDRBase
@@ -143,7 +144,7 @@ do
     printf "\n"
     
     $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[$i]} "ALL F18" ${AMOUNT} ${PRICE} 2
-    $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1    
+    $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1     
 done
 ##################################################################
 printf "\n Cheking the  orderbok (sellside):\n"
@@ -151,6 +152,10 @@ $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_getcontract_orderbook "ALL F1
 
 printf "\n Cheking the  orderbok (buyside):\n"
 $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_getcontract_orderbook "ALL F18" 1
+##################################################################
+# Peggeds Currencies
+$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_sendissuance_pegged ${ADDRPeggeds} 1 2 0 "dUSD" 5 "ALL F18" ${PRICE} 100
+$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1     
 ################################################################## 
 printf "Stoping omnicored and litecoin-cli:\n"
 $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest stop

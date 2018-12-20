@@ -173,7 +173,6 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_sendissuance_pegged", 1, "arg1" },
     { "tl_sendissuance_pegged", 2, "arg2" },
     { "tl_sendissuance_pegged", 3, "arg3" },
-    { "tl_sendissuance_pegged", 5, "arg5" },
     { "tl_sendissuance_pegged", 6, "arg6" },
     { "tl_redemption_pegged", 1, "arg1" },
     { "tl_redemption_pegged", 3, "arg3" },
