@@ -93,6 +93,6 @@ bool find_string_set(std::string s, std::unordered_set<std::string> addrs_set)
   return find_bool;
 }
 
+bool findTrueValue(bool a, bool b) { return a || b; }
 bool findTrueValue(bool a, bool b, bool c) { return ( a || b ) || c; }
-
 bool findTrueValue(bool a, bool b, bool c, bool d) { return ( a || b ) || ( c || d ); }

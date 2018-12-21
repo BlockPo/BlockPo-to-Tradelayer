@@ -161,14 +161,13 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       /** Match Conditions */
       bool boolProperty  = pold->getProperty() != propertyForSale;
       bool boolTrdAction = pold->getTradingAction() == pnew->getTradingAction();
-      bool boolAddresses = pold->getAddr() == pnew->getAddr();
-
-      if ( findTrueValue(boolProperty, boolTrdAction, boolAddresses) )
+      
+      if ( findTrueValue(boolProperty, boolTrdAction) )
 	{
 	  ++offerIt;
 	  continue;
 	}
-
+      
       idx_q += 1;
       const int idx_qp = idx_q;
       PrintToLog("Checking idx_q = %d", idx_qp);
