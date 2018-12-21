@@ -144,18 +144,18 @@ do
     printf "\n"
     
     $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[$i]} "ALL F18" ${AMOUNT} ${PRICE} 2
-    $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1     
+    $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1    
 done
 ##################################################################
-printf "\n Cheking the  orderbok (sellside):\n"
-$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_getcontract_orderbook "ALL F18" 2
-
-printf "\n Cheking the  orderbok (buyside):\n"
-$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_getcontract_orderbook "ALL F18" 1
+$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_sendissuance_pegged ${ADDRess[5]} 1 2 0 "dUSD" 5 "ALL F18" 100
+$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_send_pegged ${ADDRess[10]} ${ADDRess[2]} "dUSD" 50
+$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_redemption_pegged ${ADDRess[2]} "dUSD" 20 "ALL F18"
 ##################################################################
-# Peggeds Currencies
-$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_sendissuance_pegged ${ADDRPeggeds} 1 2 0 "dUSD" 5 "ALL F18" ${PRICE} 100
-$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1     
+# printf "\n Cheking the  orderbok (sellside):\n"
+# $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_getcontract_orderbook "ALL F18" 2
+
+# printf "\n Cheking the  orderbok (buyside):\n"
+# $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_getcontract_orderbook "ALL F18" 1
 ################################################################## 
 printf "Stoping omnicored and litecoin-cli:\n"
 $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest stop

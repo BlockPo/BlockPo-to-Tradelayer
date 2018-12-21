@@ -667,7 +667,7 @@ UniValue tl_getproperty(const JSONRPCRequest& request)
     response.push_back(Pair("fixedissuance", sp.fixed));
     response.push_back(Pair("totaltokens", strTotalTokens));
 
-    if (sp.subcategory == "Futures Contracts"){
+    if (sp.prop_type == ALL_PROPERTY_TYPE_CONTRACT){
         response.push_back(Pair("notional size",(uint64_t) sp.notional_size));
         response.push_back(Pair("collateral currency",(uint64_t) sp.collateral_currency));
         response.push_back(Pair("margin requirement",(uint64_t) sp.margin_requirement));
@@ -682,9 +682,9 @@ UniValue tl_getproperty(const JSONRPCRequest& request)
             denomination = "Yen";
         }
         response.push_back(Pair("denomination", denomination));
-    } else if (sp.subcategory == "Pegged Currency") {
-        response.push_back(Pair("contract associated",(uint64_t) sp.contract_associated));
-        response.push_back(Pair("series", sp.series));
+    } else if (sp.prop_type == ALL_PROPERTY_TYPE_PEGGEDS) {
+      response.push_back(Pair("contract associated",(uint64_t) sp.contract_associated));
+      response.push_back(Pair("series", sp.series));
     }
 
     return response;

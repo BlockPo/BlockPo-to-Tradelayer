@@ -242,8 +242,8 @@ int DEx_BuyOfferCreate(const std::string& addressMaker, uint32_t propertyId, int
         CMPSPInfo::Entry sp;
         if (_my_sps->getSP(propertyId, sp)) {
             PrintToLog("Property Id: %d\n",propertyId);
-            if (sp.subcategory != "Futures Contracts"){
-                continue;
+            if (sp.prop_type != ALL_PROPERTY_TYPE_CONTRACT){
+	      continue;
             }
 
             int64_t longs = getMPbalance(addressMaker, propertyId, POSSITIVE_BALANCE);

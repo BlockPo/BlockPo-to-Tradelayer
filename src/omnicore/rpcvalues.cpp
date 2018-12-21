@@ -242,15 +242,6 @@ uint64_t ParseEffectivePrice(const UniValue& value)
   return effPrice;
 }
 
-uint64_t ParsePeggedAmount(const UniValue& value)
-{
-  int64_t amount = StrToInt64(value.getValStr(), true);  
-  if (amount < 1) {
-    throw JSONRPCError(RPC_TYPE_ERROR, "Amount should not be less than one");
-  }
-  return amount;
-}
-
 uint64_t ParseEffectivePrice(const UniValue& value, uint32_t contractId)
 {
   int64_t effPrice = StrToInt64(value.getValStr(), true);  

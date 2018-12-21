@@ -2088,7 +2088,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   int expirationBlock = 0, tradeBlock = 0, checkExpiration = 0;
   CMPSPInfo::Entry sp;
   if ( id_contract != 0 ) {
-    if (_my_sps->getSP(id_contract, sp) && sp.subcategory ==  "Futures Contracts") {
+    if (_my_sps->getSP(id_contract, sp) && sp.prop_type == ALL_PROPERTY_TYPE_CONTRACT) {
       expirationBlock = static_cast<int>(sp.blocks_until_expiration);
       tradeBlock = static_cast<int>(pBlockIndex->nHeight);
     }
@@ -3761,7 +3761,7 @@ bool mastercore::marginNeeded(const std::string address, int64_t amountTraded, u
     //     for (uint32_t contractId = 1; contractId < nextSPID; contractId++) {  // looping on the properties
     //         CMPSPInfo::Entry sp;
     //         assert(_my_sps->getSP(contractId, sp));
-    //         if (sp.subcategory != "Futures Contracts") {
+    //         if (sp.prop_type != ALL_PROPERTY_TYPE_CONTRACT) {
     //             continue;
     //         }
     //

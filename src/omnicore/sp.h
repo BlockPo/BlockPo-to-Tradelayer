@@ -158,6 +158,7 @@ public:
         bool isDivisible() const;
         void print() const;
       	bool isContract() const;
+        bool isPegged() const;
     };
     
  private:
@@ -281,6 +282,7 @@ std::string strEcosystem(uint8_t ecosystem);
 //////////////////////////////////////
 /** New things for Contracts */
 bool isPropertyContract(uint32_t propertyId);
+bool isPropertyPegged(uint32_t propertyId);
 int addInterestPegged(int nBlockPrev, const CBlockIndex* pBlockIndex);
 uint64_t edgeOrderbook(uint32_t contractId, uint8_t tradingAction);
 //////////////////////////////////////

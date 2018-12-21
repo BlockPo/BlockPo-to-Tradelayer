@@ -71,6 +71,16 @@ bool CMPSPInfo::Entry::isContract() const
   return false;
 }
 
+bool CMPSPInfo::Entry::isPegged() const
+{
+  switch (prop_type)
+    {
+    case ALL_PROPERTY_TYPE_PEGGEDS:
+      return true;
+    }
+  return false;
+}
+
 void CMPSPInfo::Entry::print() const
 {
   PrintToConsole("%s:%s(Fixed=%s,Divisible=%s):%d:%s/%s, %s %s\n",
@@ -623,6 +633,15 @@ bool mastercore::isPropertyContract(uint32_t propertyId)
   return true;
 }
 
+bool mastercore::isPropertyPegged(uint32_t propertyId)
+{
+  CMPSPInfo::Entry sp;
+  
+  if (_my_sps->getSP(propertyId, sp)) return sp.isPegged();
+  
+  return true;
+}
+
 std::string mastercore::getPropertyName(uint32_t propertyId)
 {
     CMPSPInfo::Entry sp;
@@ -869,10 +888,10 @@ int mastercore::addInterestPegged(int nBlockPrev, const CBlockIndex* pBlockIndex
 
             // searching for pegged currency
             while (0 != (id = (it->second).next())) {
-	      CMPSPInfo::Entry newSp;
-	      if (!_my_sps->getSP(id, newSp) || newSp.subcategory != "Pegged Currency") {
-		continue;
-	      }
+                CMPSPInfo::Entry newSp;
+                if (!_my_sps->getSP(id, newSp) || newSp.prop_type != ALL_PROPERTY_TYPE_PEGGEDS) {
+                    continue;
+                }
 
                 // checking for deadline block
                 CMPSPInfo::Entry spp;
@@ -882,7 +901,7 @@ int mastercore::addInterestPegged(int nBlockPrev, const CBlockIndex* pBlockIndex
                 if (deadline != actualBlock) { continue; }
 
                 int64_t diff = priceIndex - nMarketPrice;
-                // int64_t tokens = static_cast<int64_t>(newSp.num_tokens);
+                int64_t tokens = static_cast<int64_t>(newSp.num_tokens);
                 // arith_uint256 num_tokens = ConvertTo256(tokens) / ConvertTo256(factorE);
                 arith_uint256 interest = ConvertTo256(diff) / ConvertTo256(nMarketPrice);
 
@@ -902,113 +921,119 @@ int mastercore::addInterestPegged(int nBlockPrev, const CBlockIndex* pBlockIndex
 
 int CMPSPInfo::rollingContractsBlock(const CBlockIndex* pBlockIndex)
 {
-  PrintToConsole("_________________________________________________________\n");
-  PrintToConsole("Actual block : %d\n", pBlockIndex->nHeight); // Issuer, bid always
-  
-  for (std::map<std::string, uint32_t>::const_iterator it = peggedIssuers.begin(); it != peggedIssuers.end(); it++) {
-    
-    const std::string owner = it->first;
-    const uint32_t propertyId = it->second;
-    
-    // NOTE: We need a map of Contracts and Pegged Currency to look for data faster
-    Entry sp;
-    if (_my_sps->getSP(propertyId, sp) && sp.subcategory == "Pegged Currency") {
-      Entry spp;
-      _my_sps->getSP(sp.contract_associated, spp);
-      int expiration = static_cast<int>(spp.blocks_until_expiration);
-      int actualBlock = static_cast<int>(pBlockIndex->nHeight);
-      int deadline = expiration + spp.init_block;
-      int rollingBlock = static_cast<int>(trunc( 0.8 * deadline ));  //80% of deadline blocks
-      
-      if (rollingBlock != actualBlock) {
-	continue;
-      }
-      
-      int64_t contractsReserved = getMPbalance(owner,sp.contract_associated, CONTRACTDEX_RESERVE);
-      PrintToConsole("Generate the Rolling!\n");
-      
-      // then we must rolling the contracts A to contracts B  (selling the contracts and then putting them into RESERVE)
-      int64_t bid = edgeOrderbook(sp.contract_associated, 2);
-      // int64_t positiveBalance = getMPbalance(owner, sp.contract_associated, POSSITIVE_BALANCE);
-      // int64_t negativeBalance = getMPbalance(owner, sp.contract_associated, NEGATIVE_BALANCE);
-      
-      // calculating the price of the reserve position
-      int64_t notionalSize = static_cast<int64_t>(spp.notional_size);
-      ui128 uReservePrice = multiply_int64_t(contractsReserved, notionalSize);
-      int64_t reservePrice = static_cast<int64_t>(uReservePrice);
-      
-      uint256 txid;
-      uint32_t contractId2 = 0;
-      int64_t notionalSizeB;
-      assert(update_tally_map(owner, sp.contract_associated, -contractsReserved, CONTRACTDEX_RESERVE));
-      
-      // TODO: Here is better use ContractDex_INSERT function
-      int result = ContractDex_ADD(owner, sp.contract_associated, contractsReserved, actualBlock, txid, 0, bid, 1, 0);
-      // Looking for an older contract of the same type
-      {
-	LOCK(cs_tally);  // TODO: use maps instead search in database
-	uint32_t NextSPID = _my_sps->peekNextSPID(1);
-	PrintToConsole("NextSPID: %d\n",NextSPID);
-	uint32_t begin = sp.contract_associated + 1;
-	for (uint32_t propertyId = begin; propertyId < NextSPID; propertyId++) {
-	  CMPSPInfo::Entry fc;
-	  if (_my_sps->getSP(propertyId, fc)) {
-	    PrintToConsole("Property Id: %d\n",propertyId);
-	    if (fc.subcategory == "Futures Contracts" && fc.denomination == spp.denomination && fc.name != spp.name){
-	      contractId2 = propertyId;
-	      notionalSizeB = static_cast<int64_t>(fc.notional_size);
-	      PrintToConsole("Property to jump in rolling found: %d\n",propertyId);
-	      break;
-	    }
-	  }
-	}
-      }
-      
-      // If there's no contract to jump to
-      if(contractId2 == 0) {
-	PrintToConsole("No contract to jump to\n");
-	return 0;
-      }
-      
-      int64_t bid1 = edgeOrderbook(contractId2,2);
-      int64_t positiveBalanceB = getMPbalance(owner,contractId2, POSSITIVE_BALANCE);
-      int64_t negativeBalanceB = getMPbalance(owner,contractId2, NEGATIVE_BALANCE);
-      
-      // making the calculations of new amount of contracts in reserve
-      arith_uint256 toReserve = DivideAndRoundUp(ConvertTo256(reservePrice), ConvertTo256(notionalSizeB)*ConvertTo256(factorE));
-      int64_t newReserved = ConvertTo64(toReserve) * factorE;  // TODO: use multiply_int64_t
-	
-      PrintToConsole("________________________________________________\n");
-      PrintToConsole("notional Size Contract B: %d\n",notionalSizeB);
-      PrintToConsole("reservePrice: %d\n",reservePrice);
-      PrintToConsole("new reserve: %d\n",newReserved);
-      PrintToConsole("________________________________________________\n");
-      
-      int result2 = ContractDex_ADD(owner,contractId2, newReserved, actualBlock, txid, 0, bid1, 2, 0); // shorting in the future contract B
-      
-      if(positiveBalanceB >= 0 && negativeBalanceB == 0) {
-	assert(update_tally_map(owner, contractId2, newReserved, POSSITIVE_BALANCE));
-      } else if (positiveBalanceB == 0 && negativeBalanceB >= 0) {
-	int64_t diffn = newReserved - negativeBalanceB;
-	if (diffn > 0)
-	  {
-	    assert(update_tally_map(owner, contractId2, diffn, POSSITIVE_BALANCE));
-	    assert(update_tally_map(owner, contractId2, -negativeBalanceB, NEGATIVE_BALANCE));  
-	  } else {
-	  assert(update_tally_map(owner, contractId2, -newReserved, NEGATIVE_BALANCE));
-	}  
-      }
-      assert(update_tally_map(owner, contractId2, newReserved, CONTRACTDEX_RESERVE));
-      // int64_t contractsreservedB = getMPbalance(owner,contractId2, CONTRACTDEX_RESERVE);
-      
-      PrintToConsole("Price of bid: %d\n",bid1);
-      
-      if (result == 0){ PrintToConsole("Order Added in Contract A\n"); }
-      if (result2 == 0){ PrintToConsole("Order Added in Contract B\n"); }
-    }
-  }
-  
-  return 1;
+    PrintToConsole("_________________________________________________________\n");
+    PrintToConsole("Actual block : %d\n",pBlockIndex->nHeight); // Issuer, bid always
+
+    for (std::map<std::string, uint32_t>::const_iterator it = peggedIssuers.begin(); it != peggedIssuers.end(); it++) {
+        const std::string owner = it->first;
+        const uint32_t propertyId = it->second;
+
+        // NOTE: We need a map of Contracts and Pegged Currency to look for data faster
+        Entry sp;
+        if (_my_sps->getSP(propertyId, sp) && sp.prop_type == ALL_PROPERTY_TYPE_PEGGEDS) {
+            Entry spp;
+            _my_sps->getSP(sp.contract_associated, spp);
+            int expiration = static_cast<int>(spp.blocks_until_expiration);
+            int actualBlock = static_cast<int>(pBlockIndex->nHeight);
+            int deadline = expiration + spp.init_block;
+            int rollingBlock = static_cast<int>(trunc( 0.8 * deadline ));  //80% of deadline blocks
+            if (rollingBlock != actualBlock) { continue; }
+
+            int64_t contractsReserved = getMPbalance(owner,sp.contract_associated, CONTRACTDEX_RESERVE);
+
+            PrintToConsole("Generate the Rolling!\n");
+
+            // then we must rolling the contracts A to contracts B  (selling the contracts and then putting them into RESERVE)
+            int64_t bid = edgeOrderbook(sp.contract_associated,2);
+            // int64_t positiveBalance = getMPbalance(owner, sp.contract_associated, POSSITIVE_BALANCE);
+            // int64_t negativeBalance = getMPbalance(owner, sp.contract_associated, NEGATIVE_BALANCE);
+
+            // calculating the price of the reserve position
+            int64_t notionalSize = static_cast<int64_t>(spp.notional_size);
+            ui128 uReservePrice = multiply_int64_t(contractsReserved, notionalSize);
+            int64_t reservePrice = static_cast<int64_t>(uReservePrice);
+
+            uint256 txid;
+            uint32_t contractId2 = 0;
+            int64_t notionalSizeB;
+            assert(update_tally_map(owner, sp.contract_associated, -contractsReserved, CONTRACTDEX_RESERVE));
+
+            // TODO: Here is better use ContractDex_INSERT function
+            int result = ContractDex_ADD(owner, sp.contract_associated, contractsReserved, actualBlock, txid, 0, bid, 1, 0);
+
+            // Looking for an older contract of the same type
+            {
+                LOCK(cs_tally);  // TODO: use maps instead search in database
+                uint32_t NextSPID = _my_sps->peekNextSPID(1);
+                PrintToConsole("NextSPID: %d\n",NextSPID);
+                uint32_t begin = sp.contract_associated + 1;
+                for (uint32_t propertyId = begin; propertyId < NextSPID; propertyId++) {
+                    CMPSPInfo::Entry fc;
+                    if (_my_sps->getSP(propertyId, fc)) {
+                        PrintToConsole("Property Id: %d\n",propertyId);
+                        if (fc.prop_type == ALL_PROPERTY_TYPE_CONTRACT && fc.denomination == spp.denomination && fc.name != spp.name){
+                            contractId2 = propertyId;
+                            notionalSizeB = static_cast<int64_t>(fc.notional_size);
+                            PrintToConsole("Property to jump in rolling found: %d\n",propertyId);
+                            break;
+                        }
+                    }
+                }
+           }
+
+           // If there's no contract to jump to
+           if(contractId2 == 0) {
+               PrintToConsole("No contract to jump to\n");
+               return 0;
+           }
+
+           int64_t bid1 = edgeOrderbook(contractId2,2);
+           int64_t positiveBalanceB = getMPbalance(owner,contractId2, POSSITIVE_BALANCE);
+           int64_t negativeBalanceB = getMPbalance(owner,contractId2, NEGATIVE_BALANCE);
+
+           // making the calculations of new amount of contracts in reserve
+           arith_uint256 toReserve = DivideAndRoundUp(ConvertTo256(reservePrice), ConvertTo256(notionalSizeB)*ConvertTo256(factorE));
+           int64_t newReserved = ConvertTo64(toReserve) * factorE;  // TODO: use multiply_int64_t
+
+           PrintToConsole("________________________________________________\n");
+           PrintToConsole("notional Size Contract B: %d\n",notionalSizeB);
+           PrintToConsole("reservePrice: %d\n",reservePrice);
+           PrintToConsole("new reserve: %d\n",newReserved);
+           PrintToConsole("________________________________________________\n");
+
+           int result2 = ContractDex_ADD(owner,contractId2, newReserved, actualBlock, txid, 0, bid1, 2, 0); // shorting in the future contract B
+
+           if(positiveBalanceB >= 0 && negativeBalanceB == 0)
+           {
+               assert(update_tally_map(owner, contractId2, newReserved, POSSITIVE_BALANCE));
+
+           } else if (positiveBalanceB == 0 && negativeBalanceB >= 0) {
+               int64_t diffn = newReserved - negativeBalanceB;
+
+               if (diffn > 0)
+               {
+                    assert(update_tally_map(owner, contractId2, diffn, POSSITIVE_BALANCE));
+                    assert(update_tally_map(owner, contractId2, -negativeBalanceB, NEGATIVE_BALANCE));
+
+               } else {
+                    assert(update_tally_map(owner, contractId2, -newReserved, NEGATIVE_BALANCE));
+               }
+
+           }
+
+           assert(update_tally_map(owner, contractId2, newReserved, CONTRACTDEX_RESERVE));
+
+           // int64_t contractsreservedB = getMPbalance(owner,contractId2, CONTRACTDEX_RESERVE);
+
+           PrintToConsole("Price of bid: %d\n",bid1);
+
+           if (result == 0){ PrintToConsole("Order Added in Contract A\n"); }
+           if (result2 == 0){ PrintToConsole("Order Added in Contract B\n"); }
+
+       }
+   }
+
+   return 1;
 }
 
 unsigned int mastercore::eraseExpiredCrowdsale(const CBlockIndex* pBlockIndex)
@@ -1087,27 +1112,27 @@ std::string mastercore::strEcosystem(uint8_t ecosystem)
 
 uint64_t mastercore::edgeOrderbook(uint32_t contractId, uint8_t tradingAction)
 {
-  uint64_t price = 0;
-  uint64_t result = 0;
-  std::vector<uint64_t> vecContractDexPrices;
-  
-  cd_PricesMap* const ppriceMap = get_PricesCd(contractId); // checking the ask price of contract A
-  for (cd_PricesMap::iterator it = ppriceMap->begin(); it != ppriceMap->end(); ++it) {
-    const cd_Set& indexes = it->second;
-    for (cd_Set::const_iterator it = indexes.begin(); it != indexes.end(); ++it) {
-      const CMPContractDex& obj = *it;
-      if (obj.getTradingAction() == tradingAction || obj.getAmountForSale() <= 0) continue;
-      price = obj.getEffectivePrice();
-      PrintToLog("edgeOrderbook/price: %d\n",price);
-      vecContractDexPrices.push_back(price);
+    uint64_t price = 0;
+    uint64_t result = 0;
+    std::vector<uint64_t> vecContractDexPrices;
+
+    cd_PricesMap* const ppriceMap = get_PricesCd(contractId); // checking the ask price of contract A
+    for (cd_PricesMap::iterator it = ppriceMap->begin(); it != ppriceMap->end(); ++it) {
+        const cd_Set& indexes = it->second;
+        for (cd_Set::const_iterator it = indexes.begin(); it != indexes.end(); ++it) {
+            const CMPContractDex& obj = *it;
+            if (obj.getTradingAction() == tradingAction || obj.getAmountForSale() <= 0) continue;
+            price = obj.getEffectivePrice();
+            PrintToLog("edgeOrderbook/price: %d\n",price);
+            vecContractDexPrices.push_back(price);
+        }
     }
-  }
 
-  if (tradingAction == BUY && !vecContractDexPrices.empty()){
-    result = vecContractDexPrices.front();
-  } else if (tradingAction == SELL && !vecContractDexPrices.empty()){
-    result = vecContractDexPrices.back();
-  }
+    if (tradingAction == BUY && !vecContractDexPrices.empty()){
+       result = vecContractDexPrices.front();
+    } else if (tradingAction == SELL && !vecContractDexPrices.empty()){
+       result = vecContractDexPrices.back();
+    }
 
-  return static_cast<uint64_t>(result);
+    return static_cast<uint64_t>(result);
 }

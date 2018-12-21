@@ -156,21 +156,21 @@ void RequireNotContract(uint32_t propertyId)
     if (!mastercore::_my_sps->getSP(propertyId, sp)) {
         throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
     }
-    if (sp.subcategory == "Futures Contracts") {
+    if (sp.prop_type == ALL_PROPERTY_TYPE_CONTRACT) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Property must not be future contract\n");
     }
 }
 
 void RequireContract(uint32_t propertyId)
 {
-  LOCK(cs_tally);
-  CMPSPInfo::Entry sp;
-  if (!mastercore::_my_sps->getSP(propertyId, sp)) {
-    throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
-  }
-  if (sp.prop_type != 3) {
-    throw JSONRPCError(RPC_INVALID_PARAMETER, "prop_type must be 3 for future contracts\n");
-  }
+    LOCK(cs_tally);
+    CMPSPInfo::Entry sp;
+    if (!mastercore::_my_sps->getSP(propertyId, sp)) {
+        throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
+    }
+    if (sp.prop_type != ALL_PROPERTY_TYPE_CONTRACT) {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "contractId must be future contract\n");
+    }
 }
 
 void RequirePeggedCurrency(uint32_t propertyId)
@@ -178,10 +178,11 @@ void RequirePeggedCurrency(uint32_t propertyId)
     LOCK(cs_tally);
     CMPSPInfo::Entry sp;
     if (!mastercore::_my_sps->getSP(propertyId, sp)) {
-        throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
+      throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
     }
-    if (sp.subcategory != "Pegged Currency") {
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "propertyId must be a pegged currency\n");
+    
+    if (sp.prop_type != ALL_PROPERTY_TYPE_PEGGEDS) {
+      throw JSONRPCError(RPC_INVALID_PARAMETER, "propertyId must be a pegged currency\n");
     }
 }
 
@@ -246,30 +247,32 @@ void RequireSaneDExPaymentWindow(const std::string& address, uint32_t propertyId
 
 void RequireShort(std::string& fromAddress, uint32_t contractId, uint64_t amount)
 {
-  LOCK(cs_tally);
-  int64_t contractsNeeded = 0;
-  
-  CMPSPInfo::Entry sp;
-  if (!mastercore::_my_sps->getSP(contractId, sp)) {
-    throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
-  }
-  
-  if (sp.prop_type == 3) {
-    int64_t notionalSize = static_cast<int64_t>(sp.notional_size);
-    int64_t position = getMPbalance(fromAddress, contractId, NEGATIVE_BALANCE);
-    rational_t conv = mastercore::notionalChange(contractId);
-    int64_t num = conv.numerator().convert_to<int64_t>();
-    int64_t denom = conv.denominator().convert_to<int64_t>();
-    arith_uint256 Amount = mastercore::ConvertTo256(num) * mastercore::ConvertTo256(amount) / mastercore::ConvertTo256(denom); // Alls needed
-    arith_uint256 contracts = mastercore::DivideAndRoundUp(Amount * mastercore::ConvertTo256(notionalSize), mastercore::ConvertTo256(factorE)) ;
-    contractsNeeded = mastercore::ConvertTo64(contracts);
-    PrintToLog("contractsNeeded : %d\n",contractsNeeded);
-    if (contractsNeeded > position) {
-      throw JSONRPCError(RPC_INVALID_PARAMETER, "Not enough short position\n");
-    }    
-  } else {
-    throw JSONRPCError(RPC_INVALID_PARAMETER, "prop_type must be 3 for future contract\n");
-  }
+    LOCK(cs_tally);
+    int64_t contractsNeeded = 0;
+    // int index = static_cast<int>(contractId);
+
+    CMPSPInfo::Entry sp;
+    if (!mastercore::_my_sps->getSP(contractId, sp)) {
+        throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
+    }
+
+    if (sp.prop_type == ALL_PROPERTY_TYPE_CONTRACT) {
+        int64_t notionalSize = static_cast<int64_t>(sp.notional_size);
+        int64_t position = getMPbalance(fromAddress, contractId, NEGATIVE_BALANCE);
+        rational_t conv = mastercore::notionalChange(contractId);
+        int64_t num = conv.numerator().convert_to<int64_t>();
+        int64_t denom = conv.denominator().convert_to<int64_t>();
+        arith_uint256 Amount = mastercore::ConvertTo256(num) * mastercore::ConvertTo256(amount) / mastercore::ConvertTo256(denom); // Alls needed
+        arith_uint256 contracts = mastercore::DivideAndRoundUp(Amount * mastercore::ConvertTo256(notionalSize), mastercore::ConvertTo256(factorE)) ;
+        contractsNeeded = mastercore::ConvertTo64(contracts);
+        PrintToLog("contractsNeeded : %d\n",contractsNeeded);
+        if (contractsNeeded > position) {
+            throw JSONRPCError(RPC_INVALID_PARAMETER, "Not enough short position\n");
+        }
+
+    } else  {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "contractId must be future contract\n");
+    }
 }
 
 void RequireContractTxId(std::string& txid)

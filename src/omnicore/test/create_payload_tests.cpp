@@ -331,19 +331,19 @@ BOOST_AUTO_TEST_CASE(payload_cancel_orders_by_block)
     );
     BOOST_CHECK_EQUAL(HexStr(vch),"00200107");}
 
-// BOOST_AUTO_TEST_CASE(payload_issuance_pegged)
-// {
-//     std::vector<unsigned char> vch = CreatePayload_IssuancePegged(
-//         static_cast<uint8_t>(1),             // ecosystem: main
-//         static_cast<uint16_t>(1),            // property type
-//         static_cast<uint32_t>(0),            // previous propertyId
-//         std::string("dUSD"),                 // name
-//         static_cast<uint32_t>(2),            // propertyId
-//         static_cast<uint32_t>(3),            // contractId
-//         static_cast<uint32_t>(78563)         // amount
-//     );
-//         BOOST_CHECK_EQUAL(HexStr(vch),"006401010064555344000203e3e504");
-// }
+BOOST_AUTO_TEST_CASE(payload_issuance_pegged)
+{
+    std::vector<unsigned char> vch = CreatePayload_IssuancePegged(
+        static_cast<uint8_t>(1),             // ecosystem: main
+        static_cast<uint16_t>(1),            // property type
+        static_cast<uint32_t>(0),            // previous propertyId
+        std::string("dUSD"),                 // name
+        static_cast<uint32_t>(2),            // propertyId
+        static_cast<uint32_t>(3),            // contractId
+        static_cast<uint32_t>(78563)         // amount
+    );
+        BOOST_CHECK_EQUAL(HexStr(vch),"006401010064555344000203e3e504");
+}
 
 BOOST_AUTO_TEST_CASE(payload_send_pegged)
 {
