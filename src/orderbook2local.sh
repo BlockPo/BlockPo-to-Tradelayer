@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SRCDIR=/home/lihki/Documents/omnicore-litecoin-demo-local/src
+SRCDIR=/home/lihki/Documents/omnicore-litecoin-rackeo-local/src
 DATADIR=/home/lihki/.litecoin
 NUL=/dev/null
 printf "\n//////////////////////////////////////////\n"
@@ -147,23 +147,20 @@ done
 #     $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1    
 # done
 ##################################################################
-$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[1]} ${CONTRACT} 1000 1000 1
-$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
-$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[2]} ${CONTRACT} 1000 1000 2
+$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[1]} ${CONTRACT} 100 1000 1
 $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
 
-$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[2]} ${CONTRACT} 1000 100 1
-$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
-$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[3]} ${CONTRACT} 1000 100 2
+$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[1]} ${CONTRACT} 200 1000 2
 $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
 ##################################################################
-
 printf "\n Cheking the  orderbok (sellside):\n"
 $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_getcontract_orderbook ${CONTRACT} 2
 
 printf "\n Cheking the  orderbok (buyside):\n"
 $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_getcontract_orderbook ${CONTRACT} 1
-################################################################## 
+##################################################################
+$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_getposition ${ADDRess[1]} ${CONTRACT}
+##################################################################
 printf "Stoping omnicored and litecoin-cli:\n"
 $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest stop
 # /home/lihki/Documentos/omnicore-litecoin-local/src/litecoin-cli -datadir=/home/lihki/.litecoin --regtest stop

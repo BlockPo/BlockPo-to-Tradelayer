@@ -155,7 +155,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       const CMPContractDex* const pold = &(*offerIt);
 
       assert(pold->getEffectivePrice() == sellerPrice);
-
+      
       std::string tradeStatus = pold->getEffectivePrice() == sellerPrice ? "Matched" : "NoMatched";
 
       /** Match Conditions */
@@ -239,34 +239,38 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       	}
       /********************************************************/
       int64_t difference_s = 0, difference_b = 0;
-
-      if ( possitive_sell != 0 )
-      	{
-      	  difference_s = possitive_sell - nCouldBuy;
-      	  if (difference_s >= 0)
-      	    assert(update_tally_map(seller_address, property_traded, -nCouldBuy, POSSITIVE_BALANCE));
-      	  else
-      	    {
-      	      assert(update_tally_map(seller_address, property_traded, -possitive_sell, POSSITIVE_BALANCE));
-      	      assert(update_tally_map(seller_address, property_traded, -difference_s, NEGATIVE_BALANCE));
-      	    }
-      	}
-      else if ( negative_sell != 0 || negative_sell == 0 || possitive_sell == 0 )
-	assert(update_tally_map(seller_address, property_traded, nCouldBuy, NEGATIVE_BALANCE));
-
-      if ( negative_buy != 0 )
+      bool boolAddresses = pold->getAddr() != pnew->getAddr();
+      
+      if (boolAddresses)
 	{
-	  difference_b = negative_buy - nCouldBuy;
-	  if (difference_b >= 0)
-	    assert(update_tally_map(buyer_address, property_traded, -nCouldBuy, NEGATIVE_BALANCE));
-	  else
+	  if ( possitive_sell != 0 )
 	    {
-	      assert(update_tally_map(buyer_address, property_traded, -negative_buy, NEGATIVE_BALANCE));
-	      assert(update_tally_map(buyer_address, property_traded, -difference_b, POSSITIVE_BALANCE));
+	      difference_s = possitive_sell - nCouldBuy;
+	      if (difference_s >= 0)
+		assert(update_tally_map(seller_address, property_traded, -nCouldBuy, POSSITIVE_BALANCE));
+	      else
+		{
+		  assert(update_tally_map(seller_address, property_traded, -possitive_sell, POSSITIVE_BALANCE));
+		  assert(update_tally_map(seller_address, property_traded, -difference_s, NEGATIVE_BALANCE));
+		}
 	    }
+	  else if ( negative_sell != 0 || negative_sell == 0 || possitive_sell == 0 )
+	    assert(update_tally_map(seller_address, property_traded, nCouldBuy, NEGATIVE_BALANCE));
+	  
+	  if ( negative_buy != 0 )
+	    {
+	      difference_b = negative_buy - nCouldBuy;
+	      if (difference_b >= 0)
+		assert(update_tally_map(buyer_address, property_traded, -nCouldBuy, NEGATIVE_BALANCE));
+	      else
+		{
+		  assert(update_tally_map(buyer_address, property_traded, -negative_buy, NEGATIVE_BALANCE));
+		  assert(update_tally_map(buyer_address, property_traded, -difference_b, POSSITIVE_BALANCE));
+		}
+	    }
+	  else if ( possitive_buy != 0 || possitive_buy == 0 || negative_buy == 0 )
+	    assert(update_tally_map(buyer_address, property_traded, nCouldBuy, POSSITIVE_BALANCE));
 	}
-      else if ( possitive_buy != 0 || possitive_buy == 0 || negative_buy == 0 )
-	assert(update_tally_map(buyer_address, property_traded, nCouldBuy, POSSITIVE_BALANCE));
       /********************************************************/
       int64_t poldPositiveBalanceL = getMPbalance(pold->getAddr(), property_traded, POSSITIVE_BALANCE);
       int64_t pnewPositiveBalanceL = getMPbalance(pnew->getAddr(), property_traded, POSSITIVE_BALANCE);
