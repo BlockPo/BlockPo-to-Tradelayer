@@ -536,7 +536,7 @@ void sendingVestingTokens()
   extern int64_t amountVesting;
   extern int nVestingAddrs;
   PrintToLog("\nVesting amount for every vesting address : %d\n", amountVesting);
-
+  
   CMPSPInfo::Entry newSP;
   
   newSP.name = "Vesting Tokens";
@@ -933,24 +933,24 @@ int ParseTransaction(const CTransaction& tx, int nBlock, unsigned int idx, CMPTr
  */
 static bool HandleDExPayments(const CTransaction& tx, int nBlock, const std::string& strSender)
 {
-    int count = 0;
-    PrintToConsole("Inside HandleDExPayments function <<<<<<<<<<<<<<<<<<<<<\n");
-    for (unsigned int n = 0; n < tx.vout.size(); ++n) {
-        CTxDestination dest;
-        if (ExtractDestination(tx.vout[n].scriptPubKey, dest)) {
-            std::string address = EncodeDestination(dest);
-            if (address == ExodusAddress() || address == strSender) {
-                continue;
-            }
-
-            // if (msc_debug_parser_dex) PrintToLog("payment #%d %s %s\n", count, strAddress, FormatIndivisibleMP(tx.vout[n].nValue));
-
-            // check everything and pay BTC for the property we are buying here...
-            if (0 == DEx_payment(tx.GetHash(), n, address, strSender, tx.vout[n].nValue, nBlock)) ++count;
-        }
+  int count = 0;
+  PrintToConsole("Inside HandleDExPayments function <<<<<<<<<<<<<<<<<<<<<\n");
+  for (unsigned int n = 0; n < tx.vout.size(); ++n) {
+    CTxDestination dest;
+    if (ExtractDestination(tx.vout[n].scriptPubKey, dest)) {
+      std::string address = EncodeDestination(dest);
+      if (address == ExodusAddress() || address == strSender) {
+	continue;
+      }
+      
+      // if (msc_debug_parser_dex) PrintToLog("payment #%d %s %s\n", count, strAddress, FormatIndivisibleMP(tx.vout[n].nValue));
+      
+      // check everything and pay BTC for the property we are buying here...
+      if (0 == DEx_payment(tx.GetHash(), n, address, strSender, tx.vout[n].nValue, nBlock)) ++count;
     }
-
-    return (count > 0);
+  }
+  
+  return (count > 0);
 }
 /**
  * Reports the progress of the initial transaction scanning.

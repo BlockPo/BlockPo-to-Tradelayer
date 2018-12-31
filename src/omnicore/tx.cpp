@@ -44,6 +44,7 @@ using boost::algorithm::token_compress_on;
 
 using namespace mastercore;
 typedef boost::rational<boost::multiprecision::checked_int128_t> rational_t;
+typedef boost::multiprecision::cpp_dec_float_100 dec_float;
 extern std::map<std::string,uint32_t> peggedIssuers;
 extern int64_t factorE;
 extern int64_t priceIndex;
@@ -774,36 +775,36 @@ bool CMPTransaction::interpret_DExBuy()
 
 bool CMPTransaction::interpret_AcceptOfferBTC()
 {
-    PrintToLog("Inside of interpret_AcceptOfferBTC function!!!!!!!!!\n");
-    int i = 0;
-    std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
-    std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
-    std::vector<uint8_t> vecPropertyIdForSaleBytes = GetNextVarIntBytes(i);
-    std::vector<uint8_t> vecAmountForSaleBytes = GetNextVarIntBytes(i);
+  PrintToLog("Inside of interpret_AcceptOfferBTC function!!!!!!!!!\n");
 
-    if (!vecTypeBytes.empty()) {
-        type = DecompressInteger(vecTypeBytes);
-    } else return false;
-
-    if (!vecVersionBytes.empty()) {
-        version = DecompressInteger(vecVersionBytes);
-    } else return false;
-
-    if (!vecPropertyIdForSaleBytes.empty()) {
-        propertyId = DecompressInteger(vecPropertyIdForSaleBytes);
-    } else return false;
-
-    if (!vecAmountForSaleBytes.empty()) {
-        nValue = DecompressInteger(vecAmountForSaleBytes);
-        nNewValue = nValue;
-    } else return false;
-
-    PrintToLog("version: %d\n", version);
-    PrintToLog("messageType: %d\n",type);
-    PrintToLog("property: %d\n", propertyId);
-    PrintToLog("amount : %d\n", nValue);
-
-    return true;
+  int i = 0;
+  std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecPropertyIdForSaleBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecAmountForSaleBytes = GetNextVarIntBytes(i);
+  
+  if (!vecTypeBytes.empty()) {
+    type = DecompressInteger(vecTypeBytes);
+  } else return false;
+  
+  if (!vecVersionBytes.empty()) {
+    version = DecompressInteger(vecVersionBytes);
+  } else return false;
+  
+  if (!vecPropertyIdForSaleBytes.empty()) {
+    propertyId = DecompressInteger(vecPropertyIdForSaleBytes);
+  } else return false;
+  
+  if (!vecAmountForSaleBytes.empty()) {
+    nValue = DecompressInteger(vecAmountForSaleBytes);
+    nNewValue = nValue;
+  } else return false;
+  
+  PrintToLog("version: %d\n", version);
+  PrintToLog("messageType: %d\n",type);
+//   PrintToLog("property: %d\n", propertyId);
+  
+  return true;
 }
 
 /** Tx  25*/
@@ -2988,28 +2989,22 @@ int CMPTransaction::logicMath_DExBuy()
 
 int CMPTransaction::logicMath_AcceptOfferBTC()
 {
-    PrintToLog("Inside logicMath_AcceptOffer_BTC ----------------------------\n");
-  //  if (!IsTransactionTypeAllowed(block, propertyId, type, version)) {
-  //      PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
-  //              __func__,
-  //              type,
-  //              version,
-  //              propertyId,
-  //              block);
-  //      return (DEX_ERROR_ACCEPT -22);
-  //  }
-
-    if (nValue <= 0 || MAX_INT_8_BYTES < nValue) {
-        PrintToLog("%s(): rejected: value out of range or zero: %d\n", __func__, nValue);
-      // return (DEX_ERROR_ACCEPT -23);
-    }
-
-    // ------------------------------------------
-
-    // the min fee spec requirement is checked in the following function
-    int rc = DEx_acceptCreate(sender, receiver, propertyId, nValue, block, tx_fee_paid, &nNewValue);
-
-    return rc;
+  extern int64_t LTCPriceOffer;
+  PrintToLog("Inside logicMath_AcceptOffer_BTC ----------------------------\n");
+  
+  if (nValue <= 0 || MAX_INT_8_BYTES < nValue) {
+    PrintToLog("%s(): rejected: value out of range or zero: %d\n", __func__, nValue);
+  }
+  
+  // the min fee spec requirement is checked in the following function
+  int rc = DEx_acceptCreate(sender, receiver, propertyId, nValue, block, tx_fee_paid, &nNewValue);
+  PrintToLog("\nALL amount = %d , LTC offer = %d, rc = %d\n", nValue, LTCPriceOffer, rc);
+  
+  dec_float LTCunit_price = dec_float(LTCPriceOffer)/dec_float(nValue);
+  
+  PrintToLog("\nFactorALLtoLTC = %d\n", LTCunit_price);
+  
+  return rc;
 }
 
 struct FutureContractObject *getFutureContractObject(uint32_t property_type, std::string identifier)

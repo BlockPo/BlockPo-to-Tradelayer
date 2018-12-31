@@ -31,6 +31,8 @@
 using std::runtime_error;
 using namespace mastercore;
 
+extern int64_t LTCPriceOffer;
+
 UniValue tl_sendrawtx(const JSONRPCRequest& request)
 {
     if (request.params.size() < 2 || request.params.size() > 5)
@@ -1278,8 +1280,8 @@ UniValue tl_senddexoffer(const JSONRPCRequest& request)
             + HelpExampleRpc("tl_senddexsell", "\"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\", 1, \"1.5\", \"0.75\", 25, \"0.0005\", 1")
         );
 
-        // obtain parameters & info
-
+    // obtain parameters & info
+    
     std::string fromAddress = ParseAddress(request.params[0]);
     uint32_t propertyIdForSale = ParsePropertyId(request.params[1]);
     int64_t amountForSale = ParseAmount(request.params[2], true); // TMSC/MSC is divisible
@@ -1288,17 +1290,20 @@ UniValue tl_senddexoffer(const JSONRPCRequest& request)
     int64_t minAcceptFee = ParseDExFee(request.params[5]);
     int64_t option = ParseAmount(request.params[6], false);  // buy : 1 ; sell : 2;
     uint8_t action = ParseDExAction(request.params[7]);
+
     if (action == 1 ) { RequireNoOtherDExOffer(fromAddress, propertyIdForSale); }
     std::vector<unsigned char> payload;
     if (option == 2) {
-    // RequirePrimaryToken(propertyIdForSale);
-    // if (action <= CMPTransaction::UPDATE) {
-        RequireBalance(fromAddress, propertyIdForSale, amountForSale);
-        payload = CreatePayload_DExSell(propertyIdForSale, amountForSale, price, paymentWindow, minAcceptFee, action);
-    // }
+      // RequirePrimaryToken(propertyIdForSale);
+      // if (action <= CMPTransaction::UPDATE) {
+      RequireBalance(fromAddress, propertyIdForSale, amountForSale);
+      payload = CreatePayload_DExSell(propertyIdForSale, amountForSale, price, paymentWindow, minAcceptFee, action);
+      // }
     } else if (option == 1) {
-       payload = CreatePayload_DEx(propertyIdForSale, amountForSale, price, paymentWindow, minAcceptFee, action);
+      payload = CreatePayload_DEx(propertyIdForSale, amountForSale, price, paymentWindow, minAcceptFee, action);
     }
+
+    LTCPriceOffer = price;
     // request the wallet build the transaction (and if needed commit it)
     uint256 txid;
     std::string rawHex;

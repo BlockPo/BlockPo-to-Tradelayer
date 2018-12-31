@@ -39,3 +39,4 @@ int nVestingAddrs;
 int64_t amountVesting;
 int lastBlockg;
 int vestingActivationBlock;
+int64_t LTCPriceOffer;
