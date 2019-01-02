@@ -552,11 +552,11 @@ void sendingVestingTokens()
   assert(propertyIdVesting > 0);
   for (int i = 0; i < nVestingAddrs; i++) assert(update_tally_map(vestingAddresses[i], propertyIdVesting, amountVesting, BALANCE));
   
-  for (int i = 0; i < nVestingAddrs; i++)
-    {
-      if (getMPbalance(vestingAddresses[i], OMNI_PROPERTY_ALL, UNVESTED) == 0)
-	assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, getMPbalance(vestingAddresses[i], propertyIdVesting, BALANCE), UNVESTED));
-    }
+  for (int i = 0; i < nVestingAddrs; i++) {
+    if (getMPbalance(vestingAddresses[i], OMNI_PROPERTY_ALL, UNVESTED) == 0)
+      assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, getMPbalance(vestingAddresses[i], propertyIdVesting, BALANCE), UNVESTED));
+  }
+  /** Vesting Tokens to Balance */
 }
 
 /**

@@ -40,3 +40,4 @@ int64_t amountVesting;
 int lastBlockg;
 int vestingActivationBlock;
 int64_t LTCPriceOffer;
+int64_t factorALLtoLTC;

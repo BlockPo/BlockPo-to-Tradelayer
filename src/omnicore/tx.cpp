@@ -14,6 +14,7 @@
 #include "omnicore/mdex.h"
 #include "omnicore/uint256_extensions.h"
 #include "omnicore/externfns.h"
+#include "omnicore/parse_string.h"
 
 #include "amount.h"
 #include "validation.h"
@@ -45,6 +46,7 @@ using boost::algorithm::token_compress_on;
 using namespace mastercore;
 typedef boost::rational<boost::multiprecision::checked_int128_t> rational_t;
 typedef boost::multiprecision::cpp_dec_float_100 dec_float;
+typedef boost::multiprecision::checked_int128_t int128_t;
 extern std::map<std::string,uint32_t> peggedIssuers;
 extern int64_t factorE;
 extern int64_t priceIndex;
@@ -52,6 +54,9 @@ extern int64_t allPrice;
 extern double denMargin;
 extern uint64_t marketP[NPTYPES];
 extern volatile int id_contract;
+extern int64_t factorALLtoLTC;
+
+using mastercore::StrToInt64;
 
 /** Returns a label for the given transaction type. */
 std::string mastercore::strTransactionType(uint16_t txType)
@@ -2998,12 +3003,14 @@ int CMPTransaction::logicMath_AcceptOfferBTC()
   
   // the min fee spec requirement is checked in the following function
   int rc = DEx_acceptCreate(sender, receiver, propertyId, nValue, block, tx_fee_paid, &nNewValue);
+  
   PrintToLog("\nALL amount = %d , LTC offer = %d, rc = %d\n", nValue, LTCPriceOffer, rc);
+  rational_t LTCunit_priceRat(LTCPriceOffer, nValue);
+  PrintToLog("\nLTCunit_priceRat = %s\n", xToString(LTCunit_priceRat));
   
-  dec_float LTCunit_price = dec_float(LTCPriceOffer)/dec_float(nValue);
-  
-  PrintToLog("\nFactorALLtoLTC = %d\n", LTCunit_price);
-  
+  factorALLtoLTC = mastercore::StrToInt64(xToString(LTCunit_priceRat), true);
+  PrintToLog("\nLTCunit_priceRat int64_t = %d\n", factorALLtoLTC);
+ 
   return rc;
 }
 
