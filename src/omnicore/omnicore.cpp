@@ -564,13 +564,13 @@ void sendingVestingTokens()
   for (int i = 0; i < nVestingAddrs; i++) {
     int64_t ALLBalance = getMPbalance(vestingAddresses[i], OMNI_PROPERTY_ALL, BALANCE);
     if (ALLBalance) {
-      if (x_Axis >= 0 && x_Axis < 300) { /** y = x*/
+      if (x_Axis >= 0 && x_Axis < 300000) { /** y = x*/
 	assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, -x_Axis, UNVESTED));
 	assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, x_Axis, BALANCE));
-      } else if (x_Axis >= 0 && x_Axis < 300) { /** y = x^2*/
+      } else if (x_Axis >= 300000 && x_Axis < 300000000) { /** y = x^2*/
 	assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, -x_Axis*x_Axis, UNVESTED));
 	assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, x_Axis*x_Axis, BALANCE));      
-      } else if (x_Axis >= 0 && x_Axis < 300) { /** y = ln|x|*/
+      } else if (x_Axis >= 300000000 && x_Axis < 30000000000000) { /** y = ln|x|*/
 	assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, -log(x_Axis), UNVESTED));
 	assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, log(x_Axis), BALANCE));          
       }
