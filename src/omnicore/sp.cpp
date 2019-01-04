@@ -862,8 +862,8 @@ int mastercore::addInterestPegged(int nBlockPrev, const CBlockIndex* pBlockIndex
                 if (deadline != actualBlock) { continue; }
 
                 int64_t diff = priceIndex - nMarketPrice;
-                int64_t tokens = static_cast<int64_t>(newSp.num_tokens);
-                arith_uint256 num_tokens = ConvertTo256(tokens) / ConvertTo256(factorE);
+                // int64_t tokens = static_cast<int64_t>(newSp.num_tokens);
+                // arith_uint256 num_tokens = ConvertTo256(tokens) / ConvertTo256(factorE);
                 arith_uint256 interest = ConvertTo256(diff) / ConvertTo256(nMarketPrice);
 
                 //adding interest to pegged
@@ -878,7 +878,6 @@ int mastercore::addInterestPegged(int nBlockPrev, const CBlockIndex* pBlockIndex
 
     return 1;
 }
-
 
 int CMPSPInfo::rollingContractsBlock(const CBlockIndex* pBlockIndex)
 {
@@ -999,8 +998,7 @@ int CMPSPInfo::rollingContractsBlock(const CBlockIndex* pBlockIndex)
 
            assert(update_tally_map(owner, contractId2, newReserved, CONTRACTDEX_RESERVE));
 
-           int64_t contractsReservedB = getMPbalance(owner,contractId2, CONTRACTDEX_RESERVE);
-
+           // int64_t contractsReservedB = getMPbalance(owner,contractId2, CONTRACTDEX_RESERVE);
 
            if (result == 0){ PrintToLog("Order Added in Contract A\n"); }
            if (result2 == 0){ PrintToLog("Order Added in Contract B\n"); }

@@ -1,12 +1,12 @@
 #!/bin/bash
 
-SRCDIR=/home/lihki/Documents/omnicore-litecoin-rackeo-local/src
-DATADIR=/home/lihki/.litecoin
+SRCDIR=/home/lihkir/Documents/TradeLayer/omnicore-litecoin-rackeo-local/src
+DATADIR=/home/lihkir/.litecoin
 NUL=/dev/null
 printf "\n//////////////////////////////////////////\n"
 printf "Cleaning the regtest folder\n"
 
-sudo rm -r /home/lihki/.litecoin/regtest
+sudo rm -r /home/lihkir/.litecoin/regtest
 sudo rm graphInfo*
 
 printf "\n________________________________________\n"
@@ -147,19 +147,23 @@ done
 #     $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1    
 # done
 ##################################################################
-$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[1]} ${CONTRACT} 100 1000 1
+$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[1]} ${CONTRACT} 1000 20 1
+$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
+$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[2]} ${CONTRACT} 1000 20 2
 $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
 
-$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[1]} ${CONTRACT} 200 1000 2
+$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[2]} ${CONTRACT} 1000 100 1
 $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
+$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[3]} ${CONTRACT} 1000 100 2
+$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
+##################################################################
+$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_getfullposition ${ADDRess[1]} ${CONTRACT}
 ##################################################################
 printf "\n Cheking the  orderbok (sellside):\n"
 $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_getcontract_orderbook ${CONTRACT} 2
 
 printf "\n Cheking the  orderbok (buyside):\n"
 $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_getcontract_orderbook ${CONTRACT} 1
-##################################################################
-$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_getposition ${ADDRess[1]} ${CONTRACT}
 ##################################################################
 printf "Stoping omnicored and litecoin-cli:\n"
 $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest stop

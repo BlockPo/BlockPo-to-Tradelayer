@@ -2807,9 +2807,10 @@ bool CWallet::CreateTransaction(const std::vector<CRecipient>& vecSend, CWalletT
                             else
                                 strFailReason = _("The transaction amount is too small to send after the fee has been deducted");
                         }
-                        else
-                            strFailReason = _("Transaction amount too small");
-                            return false;
+                        else {
+			  strFailReason = _("Transaction amount too small");
+			  return false;
+			}
                     }
                     txNew.vout.push_back(txout);
                 }

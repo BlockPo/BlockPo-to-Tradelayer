@@ -2335,29 +2335,30 @@ int CMPTransaction::logicMath_ContractDexTrade()
   PrintToLog("amountToReserve-------: %d\n",amountToReserve);
   PrintToLog("----------------------------------------------------------\n");
 
-  if (nBalance < amountToReserve || nBalance == 0)
-    {
-      PrintToLog("%s(): rejected: sender %s has insufficient balance for contracts %d [%s < %s] \n",
-		  __func__,
-		  sender,
-		  contractId,
-		  FormatMP(property, nBalance),
-		  FormatMP(property, amountToReserve));
-      return (PKT_ERROR_SEND -25);
+  // if (nBalance < amountToReserve || nBalance == 0)
+  //   {
+  //     PrintToLog("%s(): rejected: sender %s has insufficient balance for contracts %d [%s < %s] \n",
+  // 		  __func__,
+  // 		  sender,
+  // 		  contractId,
+  // 		  FormatMP(property, nBalance),
+  // 		  FormatMP(property, amountToReserve));
+  //     return (PKT_ERROR_SEND -25);
+  
+  //   }
+  // else if (conv > 0)
+  //   {
+  //     if (amountToReserve > 0)
+  // 	{
+  // 	  assert(update_tally_map(sender, sp.collateral_currency, -amountToReserve, BALANCE));
+  // 	  assert(update_tally_map(sender, sp.collateral_currency,  amountToReserve, CONTRACTDEX_RESERVE));
+  // 	}
 
-    }
-  else if (conv > 0)
-    {
-      if (amountToReserve > 0)
-	{
-	  assert(update_tally_map(sender, sp.collateral_currency, -amountToReserve, BALANCE));
-	  assert(update_tally_map(sender, sp.collateral_currency,  amountToReserve, CONTRACTDEX_RESERVE));
-	}
+  //     int64_t reserva = getMPbalance(sender, sp.collateral_currency,CONTRACTDEX_RESERVE);
+  //     std::string reserved = FormatDivisibleMP(reserva,false);
 
-      int64_t reserva = getMPbalance(sender, sp.collateral_currency,CONTRACTDEX_RESERVE);
-      std::string reserved = FormatDivisibleMP(reserva,false);
-
-    }
+  //   }
+  
   t_tradelistdb->recordNewTrade(txid, sender, contractId, desired_property, block, tx_idx, 0);
   int rc = ContractDex_ADD(sender, contractId, amount, block, txid, tx_idx, effective_price, trading_action,0);
 

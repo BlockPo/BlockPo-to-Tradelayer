@@ -1759,12 +1759,12 @@ int mastercore::ContractDex_ADD_MARKET_PRICE(const std::string& sender_addr, uin
         if (0 >= new_cdex.getEffectivePrice()) return METADEX_ERROR -66;
 
         // Insert the remaining order into the ContractDex maps
-        uint64_t diff;
-        uint64_t oldvalue;
+        // uint64_t diff;
+        // uint64_t oldvalue;
         uint64_t newvalue;
 
         while(true) {
-            oldvalue = new_cdex.getAmountForSale();
+            // oldvalue = new_cdex.getAmountForSale();
             x_Trade(&new_cdex);
             newvalue = new_cdex.getAmountForSale();
             if (newvalue == 0) {
@@ -1786,11 +1786,11 @@ int mastercore::ContractDex_ADD_MARKET_PRICE(const std::string& sender_addr, uin
         if (0 >= new_cdex.getEffectivePrice()) return METADEX_ERROR -66;
 
         // Insert the remaining order into the ContractDex maps
-        uint64_t oldvalue;
+        // uint64_t oldvalue;
         uint64_t newvalue;
-        uint64_t diff;
+        // uint64_t diff;
         while(true) {
-            oldvalue = new_cdex.getAmountForSale();
+            // oldvalue = new_cdex.getAmountForSale();
             x_Trade(&new_cdex);
             newvalue = new_cdex.getAmountForSale();
             if (newvalue == 0) {

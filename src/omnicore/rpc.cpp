@@ -29,6 +29,8 @@
 #include "omnicore/wallettxs.h"
 #include "omnicore/mdex.h"
 #include "omnicore/uint256_extensions.h"
+#include "omnicore/parse_string.h"
+#include "omnicore/externfns.h"
 
 #include "arith_uint256.h"
 #include "amount.h"
@@ -63,6 +65,8 @@ extern volatile int64_t globalNumPrice;
 extern volatile int64_t globalDenPrice;
 extern uint64_t marketP[NPTYPES];
 extern std::map<uint32_t, std::map<std::string, double>> addrs_upnlc;
+using mastercore::StrToInt64;
+using mastercore::DoubleToInt64;
 /**
  * Throws a JSONRPCError, depending on error code.
  */
@@ -1474,115 +1478,111 @@ bool FullPositionToJSON(const std::string& address, uint32_t property, UniValue&
 
 UniValue tl_getfullposition(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 2)
-      throw runtime_error(
-        "tl_getfullposition \"address\" propertyid\n"
-        "\nReturns the position for the future contract for a given address and property.\n"
-        "\nArguments:\n"
-        "1. address              (string, required) the address\n"
-        "2. propertyid           (number, required) the future contract identifier\n"
-        "\nResult:\n"
-        "{\n"
-        "  \"symbol\" : \"n.nnnnnnnn\",   (string) short position of the address \n"
-        "  \"notional_size\" : \"n.nnnnnnnn\"  (string) long position of the address\n"
-        "  \"shortPosition\" : \"n.nnnnnnnn\",   (string) short position of the address \n"
-        "  \"longPosition\" : \"n.nnnnnnnn\"  (string) long position of the address\n"
-        "  \"liquidationPrice\" : \"n.nnnnnnnn\"  (string) long position of the address\n"
-        "  \"positiveupnl\" : \"n.nnnnnnnn\",   (string) short position of the address \n"
-        "  \"negativeupnl\" : \"n.nnnnnnnn\"  (string) long position of the address\n"
-        "  \"positivepnl\" : \"n.nnnnnnnn\",   (string) short position of the address \n"
-        "  \"negativepnl\" : \"n.nnnnnnnn\"  (string) long position of the address\n"
-        "}\n"
-        "\nExamples:\n"
-        + HelpExampleCli("tl_getfullposition", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" 1")
-        + HelpExampleRpc("tl_getfullposition", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", 1")
-      );
+  if (request.params.size() != 2) {
+    throw runtime_error(
+			"tl_getfullposition \"address\" propertyid\n"
+			"\nReturns the position for the future contract for a given address and property.\n"
+			"\nArguments:\n"
+			"1. address              (string, required) the address\n"
+			"2. propertyid           (number, required) the future contract identifier\n"
+			"\nResult:\n"
+			"{\n"
+			"  \"symbol\" : \"n.nnnnnnnn\",   (string) short position of the address \n"
+			"  \"notional_size\" : \"n.nnnnnnnn\"  (string) long position of the address\n"
+			"  \"shortPosition\" : \"n.nnnnnnnn\",   (string) short position of the address \n"
+			"  \"longPosition\" : \"n.nnnnnnnn\"  (string) long position of the address\n"
+			"  \"liquidationPrice\" : \"n.nnnnnnnn\"  (string) long position of the address\n"
+			"  \"positiveupnl\" : \"n.nnnnnnnn\",   (string) short position of the address \n"
+			"  \"negativeupnl\" : \"n.nnnnnnnn\"  (string) long position of the address\n"
+			"  \"positivepnl\" : \"n.nnnnnnnn\",   (string) short position of the address \n"
+			"  \"negativepnl\" : \"n.nnnnnnnn\"  (string) long position of the address\n"
+			"}\n"
+			"\nExamples:\n"
+			+ HelpExampleCli("tl_getfullposition", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" 1")
+			+ HelpExampleRpc("tl_getfullposition", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", 1")
+			);
+  }
 
-      std::string address = ParseAddress(request.params[0]);
-      uint32_t propertyId = ParsePropertyId(request.params[1]);
-
-      RequireContract(propertyId);
-
-      UniValue positionObj(UniValue::VOBJ);
-
-      CMPSPInfo::Entry sp;
-      {
-          LOCK(cs_tally);
-          if (!_my_sps->getSP(propertyId, sp)) {
-              throw JSONRPCError(RPC_INVALID_PARAMETER, "Property identifier does not exist");
-          }
-      }
-
-      positionObj.push_back(Pair("symbol", sp.name));
-      positionObj.push_back(Pair("notional_size", (uint64_t) sp.notional_size)); // value of position = short or long position (balance) * notional_size
-      // PTJ -> short/longPosition /liquidation price
-      FullPositionToJSON(address, propertyId, positionObj,isPropertyContract(propertyId), sp);
-
-      // upnl
-      LOCK(cs_tally);
-      double upnl = addrs_upnlc[propertyId][address] *factorE;
-      // double dupnl = t_tradelistdb->getUPNL(address, propertyId);
-      // int64_t upnl = static_cast<int64_t>(dupnl*factor);
-      // PrintToConsole("unrealized PNL: %d\n",upnl);
-      // double averagePrice = static_cast<double>(totalAmount/d_contractsClosed);
-      // double PNL_num = static_cast<double>((d_price - averagePrice)*(notionalSize*d_contractsClosed));
-      // double PNL_den = static_cast<double>(averagePrice*marginRequirementContract);
-     if (upnl >= 0){
-      positionObj.push_back(Pair("positiveupnl", FormatDivisibleMP(static_cast<uint64_t>(upnl))));
-      positionObj.push_back(Pair("negativeupnl", FormatByType(0,2)));
-    } else{
-      positionObj.push_back(Pair("positiveupnl", FormatByType(0,2)));
-      positionObj.push_back(Pair("negativeupnl", FormatDivisibleMP(static_cast<uint64_t>(-upnl))));
+  std::string address = ParseAddress(request.params[0]);
+  uint32_t propertyId = ParsePropertyId(request.params[1]);
+  
+  RequireContract(propertyId);
+  
+  UniValue positionObj(UniValue::VOBJ);
+  
+  CMPSPInfo::Entry sp;
+  {
+    LOCK(cs_tally);
+    if (!_my_sps->getSP(propertyId, sp)) {
+      throw JSONRPCError(RPC_INVALID_PARAMETER, "Property identifier does not exist");
     }
-
-    // pnl
-    uint32_t collateralCurrency = sp.collateral_currency;
-    uint64_t realizedProfits  = static_cast<uint64_t>(factorE * getMPbalance(address, collateralCurrency, REALIZED_PROFIT));
-    uint64_t realizedLosses  = static_cast<uint64_t>(factorE * getMPbalance(address, collateralCurrency, REALIZED_LOSSES));
-
-   if (realizedProfits > 0 && realizedLosses == 0){
+  }
+  
+  positionObj.push_back(Pair("symbol", sp.name));
+  positionObj.push_back(Pair("notional_size", (uint64_t) sp.notional_size)); // value of position = short or long position (balance) * notional_size
+  // PTJ -> short/longPosition /liquidation price
+  FullPositionToJSON(address, propertyId, positionObj,isPropertyContract(propertyId), sp);
+  
+  LOCK(cs_tally);
+  
+  double upnl = addrs_upnlc[propertyId][address];
+  
+  if (upnl >= 0) {
+    positionObj.push_back(Pair("positiveupnl", FormatByType(mastercore::DoubleToInt64(upnl), 2)));
+    positionObj.push_back(Pair("negativeupnl", FormatByType(0,2)));
+  } else {
+    positionObj.push_back(Pair("positiveupnl", FormatByType(0,2)));
+    positionObj.push_back(Pair("negativeupnl", FormatByType(mastercore::DoubleToInt64(upnl), 2)));
+  }
+  
+  // pnl
+  uint32_t collateralCurrency = sp.collateral_currency;
+  uint64_t realizedProfits  = static_cast<uint64_t>(factorE * getMPbalance(address, collateralCurrency, REALIZED_PROFIT));
+  uint64_t realizedLosses  = static_cast<uint64_t>(factorE * getMPbalance(address, collateralCurrency, REALIZED_LOSSES));
+  
+  if (realizedProfits > 0 && realizedLosses == 0) {
     positionObj.push_back(Pair("positivepnl", FormatByType(realizedProfits,2)));
     positionObj.push_back(Pair("negativepnl", FormatByType(0,2)));
-  } else if (realizedLosses > 0 && realizedProfits == 0){
+  } else if (realizedLosses > 0 && realizedProfits == 0) {
     positionObj.push_back(Pair("positivepnl", FormatByType(0,2)));
     positionObj.push_back(Pair("negativepnl", FormatByType(realizedProfits,2)));
-  } else if (realizedLosses == 0 && realizedProfits == 0){
+  } else if (realizedLosses == 0 && realizedProfits == 0) {
     positionObj.push_back(Pair("positivepnl", FormatByType(0,2)));
     positionObj.push_back(Pair("negativepnl", FormatByType(0,2)));
   }
-
-    return positionObj;
+  
+  return positionObj;
 }
 
 
 UniValue tl_getposition(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 2)
-        throw runtime_error(
-            "tl_getbalance \"address\" propertyid\n"
-            "\nReturns the position for the future contract for a given address and property.\n"
-            "\nArguments:\n"
-            "1. address              (string, required) the address\n"
-            "2. contractid           (number, required) the future contract identifier\n"
-            "\nResult:\n"
-            "{\n"
-            "  \"shortPosition\" : \"n.nnnnnnnn\",   (string) short position of the address \n"
-            "  \"longPosition\" : \"n.nnnnnnnn\"  (string) long position of the address\n"
-            "}\n"
-            "\nExamples:\n"
-            + HelpExampleCli("tl_getposition", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" 1")
-            + HelpExampleRpc("tl_getposition", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", 1")
-        );
-
-    std::string address = ParseAddress(request.params[0]);
-    uint32_t propertyId = ParsePropertyId(request.params[1]);
-    
-    RequireContract(propertyId);
-    
-    UniValue balanceObj(UniValue::VOBJ);
-    PositionToJSON(address, propertyId, balanceObj, isPropertyContract(propertyId));
-
-    return balanceObj;
+  if (request.params.size() != 2)
+    throw runtime_error(
+			"tl_getbalance \"address\" propertyid\n"
+			"\nReturns the position for the future contract for a given address and property.\n"
+			"\nArguments:\n"
+			"1. address              (string, required) the address\n"
+			"2. contractid           (number, required) the future contract identifier\n"
+			"\nResult:\n"
+			"{\n"
+			"  \"shortPosition\" : \"n.nnnnnnnn\",   (string) short position of the address \n"
+			"  \"longPosition\" : \"n.nnnnnnnn\"  (string) long position of the address\n"
+			"}\n"
+			"\nExamples:\n"
+			+ HelpExampleCli("tl_getposition", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" 1")
+			+ HelpExampleRpc("tl_getposition", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", 1")
+			);
+  
+  std::string address = ParseAddress(request.params[0]);
+  uint32_t propertyId = ParsePropertyId(request.params[1]);
+  
+  RequireContract(propertyId);
+  
+  UniValue balanceObj(UniValue::VOBJ);
+  PositionToJSON(address, propertyId, balanceObj, isPropertyContract(propertyId));
+  
+  return balanceObj;
 }
 
 UniValue tl_getcontract_reserve(const JSONRPCRequest& request)
@@ -1860,113 +1860,112 @@ UniValue tl_getallprice(const JSONRPCRequest& request)
 
 UniValue tl_getupnl(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 2)
-        throw runtime_error(
-            "tl_getpnl addres contractid\n"
-            "\nRetrieves the unrealized PNL for trades on the distributed contract exchange for the specified market.\n"
-            "\nArguments:\n"
-            "1. address           (string, required) address of owner\n"
-            "2. contractid           (number, required) the id of future contract\n"
-            "\nResult:\n"
-            "[                                      (array of JSON objects)\n"
-            "  {\n"
-            "    \"block\" : nnnnnn,                      (number) the index of the block that contains the trade match\n"
-            "    \"unitprice\" : \"n.nnnnnnnnnnn...\" ,     (string) the unit price used to execute this trade (received/sold)\n"
-            "    \"inverseprice\" : \"n.nnnnnnnnnnn...\",   (string) the inverse unit price (sold/received)\n"
-            "    \"sellertxid\" : \"hash\",                 (string) the hash of the transaction of the seller\n"
-            "    \"address\" : \"address\",                 (string) the Bitcoin address of the seller\n"
-            "    \"amountsold\" : \"n.nnnnnnnn\",           (string) the number of tokens sold in this trade\n"
-            "    \"amountreceived\" : \"n.nnnnnnnn\",       (string) the number of tokens traded in exchange\n"
-            "    \"matchingtxid\" : \"hash\",               (string) the hash of the transaction that was matched against\n"
-            "    \"matchingaddress\" : \"address\"          (string) the Bitcoin address of the other party of this trade\n"
-            "  },\n"
-            "  ...\n"
-            "]\n"
-            "\nExamples:\n"
-            + HelpExampleCli("tl_getupnl", "address 12 ")
-            + HelpExampleRpc("tl_getupnl", "address, 500")
-        );
-
-        std::string address = ParseAddress(request.params[0]);
-        uint32_t contractId = ParsePropertyId(request.params[1]);
-
-        RequireExistingProperty(contractId);
-        RequireContract(contractId);
-
-        UniValue balanceObj(UniValue::VOBJ);
-        double upnl = addrs_upnlc[contractId][address] * factorE;
-
-        if (upnl > 0) {
-            balanceObj.push_back(Pair("positiveupnl", FormatDivisibleMP(static_cast<uint64_t>(upnl))));
-            balanceObj.push_back(Pair("negativeupnl", FormatByType(0,2)));
-        } else if (upnl < 0) {
-            balanceObj.push_back(Pair("positiveupnl", FormatByType(0,2)));
-            balanceObj.push_back(Pair("negativeupnl", FormatDivisibleMP(static_cast<uint64_t>(upnl))));
-
-        } else{
-            balanceObj.push_back(Pair("positiveupnl", FormatByType(0,2)));
-            balanceObj.push_back(Pair("negativeupnl", FormatByType(0,2)));
-        }
-
-        return balanceObj;
+  if (request.params.size() != 2) {
+    throw runtime_error(
+			"tl_getpnl addres contractid\n"
+			"\nRetrieves the unrealized PNL for trades on the distributed contract exchange for the specified market.\n"
+			"\nArguments:\n"
+			"1. address           (string, required) address of owner\n"
+			"2. contractid           (number, required) the id of future contract\n"
+			"\nResult:\n"
+			"[                                      (array of JSON objects)\n"
+			"  {\n"
+			"    \"block\" : nnnnnn,                      (number) the index of the block that contains the trade match\n"
+			"    \"unitprice\" : \"n.nnnnnnnnnnn...\" ,     (string) the unit price used to execute this trade (received/sold)\n"
+			"    \"inverseprice\" : \"n.nnnnnnnnnnn...\",   (string) the inverse unit price (sold/received)\n"
+			"    \"sellertxid\" : \"hash\",                 (string) the hash of the transaction of the seller\n"
+			"    \"address\" : \"address\",                 (string) the Bitcoin address of the seller\n"
+			"    \"amountsold\" : \"n.nnnnnnnn\",           (string) the number of tokens sold in this trade\n"
+			"    \"amountreceived\" : \"n.nnnnnnnn\",       (string) the number of tokens traded in exchange\n"
+			"    \"matchingtxid\" : \"hash\",               (string) the hash of the transaction that was matched against\n"
+			"    \"matchingaddress\" : \"address\"          (string) the Bitcoin address of the other party of this trade\n"
+			"  },\n"
+			"  ...\n"
+			"]\n"
+			"\nExamples:\n"
+			+ HelpExampleCli("tl_getupnl", "address 12 ")
+			+ HelpExampleRpc("tl_getupnl", "address, 500")
+			);
+  }
+    
+  std::string address = ParseAddress(request.params[0]);
+  uint32_t contractId = ParsePropertyId(request.params[1]);
+  
+  RequireExistingProperty(contractId);
+  RequireContract(contractId);
+  
+  UniValue balanceObj(UniValue::VOBJ);
+  double upnl = addrs_upnlc[contractId][address];
+  
+  if (upnl > 0) {
+    balanceObj.push_back(Pair("positiveupnl", FormatByType(mastercore::DoubleToInt64(upnl),2)));
+    balanceObj.push_back(Pair("negativeupnl", FormatByType(0,2)));
+  } else if (upnl < 0) {
+    balanceObj.push_back(Pair("positiveupnl", FormatByType(0,2)));
+    balanceObj.push_back(Pair("negativeupnl", FormatByType(mastercore::DoubleToInt64(upnl),2)));
+  } else {
+    balanceObj.push_back(Pair("positiveupnl", FormatByType(0,2)));
+    balanceObj.push_back(Pair("negativeupnl", FormatByType(0,2)));
+  }
+  
+  return balanceObj;
 }
 
 UniValue tl_getpnl(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 2)
-        throw runtime_error(
-            "tl_getpnl address contractid\n"
-            "\nRetrieves the realized PNL for trades on the distributed contract exchange for the specified market.\n"
-            "\nArguments:\n"
-            "1. address           (string, required) address of owner\n"
-            "2. contractid           (number, required) the id of future contract\n"
-            "\nResult:\n"
-            "[                                      (array of JSON objects)\n"
-            "  {\n"
-            "    \"block\" : nnnnnn,                      (number) the index of the block that contains the trade match\n"
-            "    \"unitprice\" : \"n.nnnnnnnnnnn...\" ,     (string) the unit price used to execute this trade (received/sold)\n"
-            "    \"inverseprice\" : \"n.nnnnnnnnnnn...\",   (string) the inverse unit price (sold/received)\n"
-            "    \"sellertxid\" : \"hash\",                 (string) the hash of the transaction of the seller\n"
-            "    \"address\" : \"address\",                 (string) the Bitcoin address of the seller\n"
-            "    \"amountsold\" : \"n.nnnnnnnn\",           (string) the number of tokens sold in this trade\n"
-            "    \"amountreceived\" : \"n.nnnnnnnn\",       (string) the number of tokens traded in exchange\n"
-            "    \"matchingtxid\" : \"hash\",               (string) the hash of the transaction that was matched against\n"
-            "    \"matchingaddress\" : \"address\"          (string) the Bitcoin address of the other party of this trade\n"
-            "  },\n"
-            "  ...\n"
-            "]\n"
-            "\nExamples:\n"
-            + HelpExampleCli("tl_getpnl", "address 12 ")
-            + HelpExampleRpc("tl_getpnl", "address, 500")
-        );
+  if (request.params.size() != 2)
+    throw runtime_error(
+			"tl_getpnl address contractid\n"
+			"\nRetrieves the realized PNL for trades on the distributed contract exchange for the specified market.\n"
+			"\nArguments:\n"
+			"1. address           (string, required) address of owner\n"
+			"2. contractid           (number, required) the id of future contract\n"
+			"\nResult:\n"
+			"[                                      (array of JSON objects)\n"
+			"  {\n"
+			"    \"block\" : nnnnnn,                      (number) the index of the block that contains the trade match\n"
+			"    \"unitprice\" : \"n.nnnnnnnnnnn...\" ,     (string) the unit price used to execute this trade (received/sold)\n"
+			"    \"inverseprice\" : \"n.nnnnnnnnnnn...\",   (string) the inverse unit price (sold/received)\n"
+			"    \"sellertxid\" : \"hash\",                 (string) the hash of the transaction of the seller\n"
+			"    \"address\" : \"address\",                 (string) the Bitcoin address of the seller\n"
+			"    \"amountsold\" : \"n.nnnnnnnn\",           (string) the number of tokens sold in this trade\n"
+			"    \"amountreceived\" : \"n.nnnnnnnn\",       (string) the number of tokens traded in exchange\n"
+			"    \"matchingtxid\" : \"hash\",               (string) the hash of the transaction that was matched against\n"
+			"    \"matchingaddress\" : \"address\"          (string) the Bitcoin address of the other party of this trade\n"
+			"  },\n"
+			"  ...\n"
+			"]\n"
+			"\nExamples:\n"
+			+ HelpExampleCli("tl_getpnl", "address 12 ")
+			+ HelpExampleRpc("tl_getpnl", "address, 500")
+			);
 
-        std::string address = ParseAddress(request.params[0]);
-        uint32_t contractId = ParsePropertyId(request.params[1]);
-
-        RequireExistingProperty(contractId);
-
-        UniValue balanceObj(UniValue::VOBJ);
-        int64_t upnl  = getMPbalance(address, contractId, REALIZED_PROFIT);
-        int64_t nupnl  = getMPbalance(address, contractId, REALIZED_LOSSES);
-        PrintToLog("_________________________________________________________\n");
-        PrintToLog("realized profit in rpc: %d\n",upnl);
-        PrintToLog("realized losses in rpc: %d\n",nupnl);
-        PrintToLog("_________________________________________________________\n");
-
-        if (upnl > 0 && nupnl == 0) {
-            PrintToLog("upnl after if: %d\n",upnl);
-            balanceObj.push_back(Pair("positivepnl", FormatByType(static_cast<uint64_t>(upnl),2)));
-            balanceObj.push_back(Pair("negativepnl", FormatByType(0,2)));
-        } else if (nupnl > 0 && upnl == 0) {
-            PrintToLog("nupnl after if: %d\n",nupnl);
-            balanceObj.push_back(Pair("positivepnl", FormatByType(0,2)));
-            balanceObj.push_back(Pair("negativepnl", FormatByType(static_cast<uint64_t>(nupnl),2)));
-
-        } else{
-            balanceObj.push_back(Pair("positivepnl", FormatByType(0,2)));
-            balanceObj.push_back(Pair("negativepnl", FormatByType(0,2)));
-        }
-        return balanceObj;
+  std::string address = ParseAddress(request.params[0]);
+  uint32_t contractId = ParsePropertyId(request.params[1]);
+  
+  RequireExistingProperty(contractId);
+  
+  UniValue balanceObj(UniValue::VOBJ);
+  int64_t upnl  = getMPbalance(address, contractId, REALIZED_PROFIT);
+  int64_t nupnl  = getMPbalance(address, contractId, REALIZED_LOSSES);
+  PrintToLog("_________________________________________________________\n");
+  PrintToLog("realized profit in rpc: %d\n",upnl);
+  PrintToLog("realized losses in rpc: %d\n",nupnl);
+  PrintToLog("_________________________________________________________\n");
+  
+  if (upnl > 0 && nupnl == 0) {
+    PrintToLog("upnl after if: %d\n",upnl);
+    balanceObj.push_back(Pair("positivepnl", FormatByType(static_cast<uint64_t>(upnl),2)));
+    balanceObj.push_back(Pair("negativepnl", FormatByType(0,2)));
+  } else if (nupnl > 0 && upnl == 0) {
+    PrintToLog("nupnl after if: %d\n",nupnl);
+    balanceObj.push_back(Pair("positivepnl", FormatByType(0,2)));
+    balanceObj.push_back(Pair("negativepnl", FormatByType(static_cast<uint64_t>(nupnl),2)));  
+  } else{
+    balanceObj.push_back(Pair("positivepnl", FormatByType(0,2)));
+    balanceObj.push_back(Pair("negativepnl", FormatByType(0,2)));
+  }
+  return balanceObj;
 }
 
 // UniValue tl_getaverage_entry(const JSONRPCRequest& request)

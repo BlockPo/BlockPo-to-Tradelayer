@@ -4,6 +4,8 @@
 #include "tradelayer_matrices.h"
 #include <vector>
 #include <unordered_set>
+#include <stdint.h>
+#include <string>
 
 void printing_matrix(MatrixTLS &gdata);
 void printing_vector(VectorTLS &vdata);
@@ -16,5 +18,10 @@ bool find_string_set(std::string s, std::unordered_set<std::string> addrs_set);
 bool findTrueValue(bool a, bool b);
 bool findTrueValue(bool a, bool b, bool c);
 bool findTrueValue(bool a, bool b, bool c, bool d);
+
+namespace mastercore
+{
+  int64_t DoubleToInt64(double d);
+}
 
 #endif

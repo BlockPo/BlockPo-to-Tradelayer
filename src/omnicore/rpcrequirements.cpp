@@ -234,7 +234,7 @@ void RequireShort(std::string& fromAddress, uint32_t contractId, uint64_t amount
 {
     LOCK(cs_tally);
     int64_t contractsNeeded = 0;
-    int index = static_cast<int>(contractId);
+    // int index = static_cast<int>(contractId);
 
     CMPSPInfo::Entry sp;
     if (!mastercore::_my_sps->getSP(contractId, sp)) {

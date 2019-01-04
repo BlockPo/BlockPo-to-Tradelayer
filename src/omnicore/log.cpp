@@ -112,10 +112,10 @@ static void DebugLogInit()
 /**
  * @return The current timestamp in the format: 2009-01-03 18:15:05
  */
-static std::string GetTimestamp()
-{
-    return DateTimeStrFormat("%Y-%m-%d %H:%M:%S", GetTime());
-}
+// static std::string GetTimestamp()
+// {
+//   return DateTimeStrFormat("%Y-%m-%d %H:%M:%S", GetTime());
+// }
 
 /**
  * Prints to log file.

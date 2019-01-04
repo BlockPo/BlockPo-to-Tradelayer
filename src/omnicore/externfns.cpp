@@ -2,7 +2,13 @@
 #include "tradelayer_matrices.h"
 #include <unordered_set>
 #include "omnicore/log.h"
+#include "omnicore/parse_string.h"
+#include <boost/lexical_cast.hpp>
+#include <stdint.h>
+#include <algorithm>
+#include <string>
 
+using mastercore::StrToInt64;
 using namespace std;
 
 void printing_matrix(MatrixTLS &gdata)
@@ -96,3 +102,8 @@ bool find_string_set(std::string s, std::unordered_set<std::string> addrs_set)
 bool findTrueValue(bool a, bool b) { return a || b; }
 bool findTrueValue(bool a, bool b, bool c) { return ( a || b ) || c; }
 bool findTrueValue(bool a, bool b, bool c, bool d) { return ( a || b ) || ( c || d ); }
+
+namespace mastercore
+{
+  int64_t DoubleToInt64(double d) { return mastercore::StrToInt64(boost::lexical_cast<std::string>(d), true); }
+}
