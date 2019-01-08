@@ -1783,62 +1783,61 @@ UniValue tl_getupnl(const JSONRPCRequest& request)
 
 UniValue tl_getpnl(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 2)
-        throw runtime_error(
-            "tl_getpnl address contractid\n"
-            "\nRetrieves the realized PNL for trades on the distributed contract exchange for the specified market.\n"
-            "\nArguments:\n"
-            "1. address           (string, required) address of owner\n"
-            "2. contractid           (number, required) the id of future contract\n"
-            "\nResult:\n"
-            "[                                      (array of JSON objects)\n"
-            "  {\n"
-            "    \"block\" : nnnnnn,                      (number) the index of the block that contains the trade match\n"
-            "    \"unitprice\" : \"n.nnnnnnnnnnn...\" ,     (string) the unit price used to execute this trade (received/sold)\n"
-            "    \"inverseprice\" : \"n.nnnnnnnnnnn...\",   (string) the inverse unit price (sold/received)\n"
-            "    \"sellertxid\" : \"hash\",                 (string) the hash of the transaction of the seller\n"
-            "    \"address\" : \"address\",                 (string) the Bitcoin address of the seller\n"
-            "    \"amountsold\" : \"n.nnnnnnnn\",           (string) the number of tokens sold in this trade\n"
-            "    \"amountreceived\" : \"n.nnnnnnnn\",       (string) the number of tokens traded in exchange\n"
-            "    \"matchingtxid\" : \"hash\",               (string) the hash of the transaction that was matched against\n"
-            "    \"matchingaddress\" : \"address\"          (string) the Bitcoin address of the other party of this trade\n"
-            "  },\n"
-            "  ...\n"
-            "]\n"
-            "\nExamples:\n"
-            + HelpExampleCli("tl_getpnl", "address 12 ")
-            + HelpExampleRpc("tl_getpnl", "address, 500")
-        );
-
-        std::string address = ParseAddress(request.params[0]);
-        uint32_t contractId = ParsePropertyId(request.params[1]);
-
-        RequireExistingProperty(contractId);
-
-        UniValue balanceObj(UniValue::VOBJ);
-        int64_t upnl  = getMPbalance(address, contractId, REALIZED_PROFIT);
-        int64_t nupnl  = getMPbalance(address, contractId, REALIZED_LOSSES);
-        PrintToLog("_________________________________________________________\n");
-        PrintToLog("realized profit in rpc: %d\n",upnl);
-        PrintToLog("realized losses in rpc: %d\n",nupnl);
-        PrintToLog("_________________________________________________________\n");
-
-        if (upnl > 0 && nupnl == 0) {
-            PrintToLog("upnl after if: %d\n",upnl);
-            balanceObj.push_back(Pair("positivepnl", FormatByType(static_cast<uint64_t>(upnl),2)));
-            balanceObj.push_back(Pair("negativepnl", FormatByType(0,2)));
-        } else if (nupnl > 0 && upnl == 0) {
-            PrintToLog("nupnl after if: %d\n",nupnl);
-            balanceObj.push_back(Pair("positivepnl", FormatByType(0,2)));
-            balanceObj.push_back(Pair("negativepnl", FormatByType(static_cast<uint64_t>(nupnl),2)));
-
-        } else{
-            balanceObj.push_back(Pair("positivepnl", FormatByType(0,2)));
-            balanceObj.push_back(Pair("negativepnl", FormatByType(0,2)));
-        }
-        return balanceObj;
+  if (request.params.size() != 2) {
+    throw runtime_error(
+			"tl_getpnl address contractid\n"
+			"\nRetrieves the realized PNL for trades on the distributed contract exchange for the specified market.\n"
+			"\nArguments:\n"
+			"1. address           (string, required) address of owner\n"
+			"2. contractid           (number, required) the id of future contract\n"
+			"\nResult:\n"
+			"[                                      (array of JSON objects)\n"
+			"  {\n"
+			"    \"block\" : nnnnnn,                      (number) the index of the block that contains the trade match\n"
+			"    \"unitprice\" : \"n.nnnnnnnnnnn...\" ,     (string) the unit price used to execute this trade (received/sold)\n"
+			"    \"inverseprice\" : \"n.nnnnnnnnnnn...\",   (string) the inverse unit price (sold/received)\n"
+			"    \"sellertxid\" : \"hash\",                 (string) the hash of the transaction of the seller\n"
+			"    \"address\" : \"address\",                 (string) the Bitcoin address of the seller\n"
+			"    \"amountsold\" : \"n.nnnnnnnn\",           (string) the number of tokens sold in this trade\n"
+			"    \"amountreceived\" : \"n.nnnnnnnn\",       (string) the number of tokens traded in exchange\n"
+			"    \"matchingtxid\" : \"hash\",               (string) the hash of the transaction that was matched against\n"
+			"    \"matchingaddress\" : \"address\"          (string) the Bitcoin address of the other party of this trade\n"
+			"  },\n"
+			"  ...\n"
+			"]\n"
+			"\nExamples:\n"
+			+ HelpExampleCli("tl_getpnl", "address 12 ")
+			+ HelpExampleRpc("tl_getpnl", "address, 500")
+			);
+  }
+  std::string address = ParseAddress(request.params[0]);
+  uint32_t contractId = ParsePropertyId(request.params[1]);
+  
+  RequireExistingProperty(contractId);
+  
+  UniValue balanceObj(UniValue::VOBJ);
+  int64_t upnl  = getMPbalance(address, contractId, REALIZED_PROFIT);
+  int64_t nupnl  = getMPbalance(address, contractId, REALIZED_LOSSES);
+  PrintToLog("_________________________________________________________\n");
+  PrintToLog("realized profit in rpc: %d\n",upnl);
+  PrintToLog("realized losses in rpc: %d\n",nupnl);
+  PrintToLog("_________________________________________________________\n");
+  
+  if (upnl > 0 && nupnl == 0) {
+    PrintToLog("upnl after if: %d\n",upnl);
+    balanceObj.push_back(Pair("positivepnl", FormatByType(static_cast<uint64_t>(upnl),2)));
+    balanceObj.push_back(Pair("negativepnl", FormatByType(0,2)));
+  } else if (nupnl > 0 && upnl == 0) {
+    PrintToLog("nupnl after if: %d\n",nupnl);
+    balanceObj.push_back(Pair("positivepnl", FormatByType(0,2)));
+    balanceObj.push_back(Pair("negativepnl", FormatByType(static_cast<uint64_t>(nupnl),2)));
+    
+  } else{
+    balanceObj.push_back(Pair("positivepnl", FormatByType(0,2)));
+    balanceObj.push_back(Pair("negativepnl", FormatByType(0,2)));
+  }
+  return balanceObj;
 }
-
 
 UniValue tl_getactivedexsells(const JSONRPCRequest& request)
 {

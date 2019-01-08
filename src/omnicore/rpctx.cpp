@@ -1200,6 +1200,7 @@ UniValue tl_redemption_pegged(const JSONRPCRequest& request)
         }
     }
 }
+
 UniValue tl_cancelorderbyblock(const JSONRPCRequest& request)
 {
     if (request.params.size() != 3)
@@ -1255,71 +1256,71 @@ UniValue tl_cancelorderbyblock(const JSONRPCRequest& request)
 
 UniValue tl_senddexoffer(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 8)
-        throw runtime_error(
-            "tl_senddexsell \"fromaddress\" propertyidforsale \"amountforsale\" \"amountdesired\" paymentwindow minacceptfee action\n"
-
-            "\nPlace, update or cancel a sell offer on the traditional distributed Trade Layer/LTC exchange.\n"
-
-            "\nArguments:\n"
-
-            "1. fromaddress         (string, required) the address to send from\n"
-            "2. propertyidoffer     (number, required) the identifier of the tokens to list for sale (must be 1 for OMNI or 2 for TOMNI)\n"
-            "3. amountoffering      (string, required) the amount of tokens to list for sale\n"
-            "4. price               (string, required) the price in litecoin of the offer \n"
-            "5. paymentwindow       (number, required) a time limit in blocks a buyer has to pay following a successful accepting order\n"
-            "6. minacceptfee        (string, required) a minimum mining fee a buyer has to pay to accept the offer\n"
-            "7. option              (number, required) 1 for buy tokens, 2 to sell\n"
-            "8. action              (number, required) the action to take (1 for new offers, 2 to update\", 3 to cancel)\n"
-
-            "\nResult:\n"
-            "\"hash\"                  (string) the hex-encoded transaction hash\n"
-
-            "\nExamples:\n"
-            + HelpExampleCli("tl_senddexsell", "\"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\" 1 \"1.5\" \"0.75\" 25 \"0.0005\" 1")
-            + HelpExampleRpc("tl_senddexsell", "\"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\", 1, \"1.5\", \"0.75\", 25, \"0.0005\", 1")
-        );
-
-    // obtain parameters & info
-    
-    std::string fromAddress = ParseAddress(request.params[0]);
-    uint32_t propertyIdForSale = ParsePropertyId(request.params[1]);
-    int64_t amountForSale = ParseAmount(request.params[2], true); // TMSC/MSC is divisible
-    int64_t price = ParseAmount(request.params[3], true); // BTC is divisible
-    uint8_t paymentWindow = ParseDExPaymentWindow(request.params[4]);
-    int64_t minAcceptFee = ParseDExFee(request.params[5]);
-    int64_t option = ParseAmount(request.params[6], false);  // buy : 1 ; sell : 2;
-    uint8_t action = ParseDExAction(request.params[7]);
-
-    if (action == 1 ) { RequireNoOtherDExOffer(fromAddress, propertyIdForSale); }
-    std::vector<unsigned char> payload;
-    if (option == 2) {
-      // RequirePrimaryToken(propertyIdForSale);
-      // if (action <= CMPTransaction::UPDATE) {
-      RequireBalance(fromAddress, propertyIdForSale, amountForSale);
-      payload = CreatePayload_DExSell(propertyIdForSale, amountForSale, price, paymentWindow, minAcceptFee, action);
-      // }
-    } else if (option == 1) {
-      payload = CreatePayload_DEx(propertyIdForSale, amountForSale, price, paymentWindow, minAcceptFee, action);
-    }
-
-    LTCPriceOffer = price;
-    // request the wallet build the transaction (and if needed commit it)
-    uint256 txid;
-    std::string rawHex;
-    int result = WalletTxBuilder(fromAddress, "", 0, payload, txid, rawHex, autoCommit);
-    // check error and return the txid (or raw hex depending on autocommit)
-    if (result != 0) {
-        throw JSONRPCError(result, error_str(result));
+  if (request.params.size() != 8) {
+    throw runtime_error(
+			"tl_senddexsell \"fromaddress\" propertyidforsale \"amountforsale\" \"amountdesired\" paymentwindow minacceptfee action\n"
+			
+			"\nPlace, update or cancel a sell offer on the traditional distributed Trade Layer/LTC exchange.\n"
+			
+			"\nArguments:\n"
+			
+			"1. fromaddress         (string, required) the address to send from\n"
+			"2. propertyidoffer     (number, required) the identifier of the tokens to list for sale (must be 1 for OMNI or 2 for TOMNI)\n"
+			"3. amountoffering      (string, required) the amount of tokens to list for sale\n"
+			"4. price               (string, required) the price in litecoin of the offer \n"
+			"5. paymentwindow       (number, required) a time limit in blocks a buyer has to pay following a successful accepting order\n"
+			"6. minacceptfee        (string, required) a minimum mining fee a buyer has to pay to accept the offer\n"
+			"7. option              (number, required) 1 for buy tokens, 2 to sell\n"
+			"8. action              (number, required) the action to take (1 for new offers, 2 to update\", 3 to cancel)\n"
+			
+			"\nResult:\n"
+			"\"hash\"                  (string) the hex-encoded transaction hash\n"
+			
+			"\nExamples:\n"
+			+ HelpExampleCli("tl_senddexsell", "\"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\" 1 \"1.5\" \"0.75\" 25 \"0.0005\" 1")
+			+ HelpExampleRpc("tl_senddexsell", "\"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\", 1, \"1.5\", \"0.75\", 25, \"0.0005\", 1")
+			);
+  }
+  // obtain parameters & info
+  
+  std::string fromAddress = ParseAddress(request.params[0]);
+  uint32_t propertyIdForSale = ParsePropertyId(request.params[1]);
+  int64_t amountForSale = ParseAmount(request.params[2], true); // TMSC/MSC is divisible
+  int64_t price = ParseAmount(request.params[3], true); // BTC is divisible
+  uint8_t paymentWindow = ParseDExPaymentWindow(request.params[4]);
+  int64_t minAcceptFee = ParseDExFee(request.params[5]);
+  int64_t option = ParseAmount(request.params[6], false);  // buy : 1 ; sell : 2;
+  uint8_t action = ParseDExAction(request.params[7]);
+  
+  if (action == 1 ) { RequireNoOtherDExOffer(fromAddress, propertyIdForSale); }
+  std::vector<unsigned char> payload;
+  if (option == 2) {
+    // RequirePrimaryToken(propertyIdForSale);
+    // if (action <= CMPTransaction::UPDATE) {
+    RequireBalance(fromAddress, propertyIdForSale, amountForSale);
+    payload = CreatePayload_DExSell(propertyIdForSale, amountForSale, price, paymentWindow, minAcceptFee, action);
+    // }
+  } else if (option == 1) {
+    payload = CreatePayload_DEx(propertyIdForSale, amountForSale, price, paymentWindow, minAcceptFee, action);
+  }
+  
+  LTCPriceOffer = price;
+  // request the wallet build the transaction (and if needed commit it)
+  uint256 txid;
+  std::string rawHex;
+  int result = WalletTxBuilder(fromAddress, "", 0, payload, txid, rawHex, autoCommit);
+  // check error and return the txid (or raw hex depending on autocommit)
+  if (result != 0) {
+    throw JSONRPCError(result, error_str(result));
+  } else {
+    if (!autoCommit) {
+      return rawHex;
     } else {
-        if (!autoCommit) {
-            return rawHex;
-        } else {
-            // bool fSubtract = (action <= CMPTransaction::UPDATE); // no pending balances for cancels
-            // PendingAdd(txid, fromAddress, MSC_TYPE_TRADE_OFFER, propertyIdForSale, amountForSale, fSubtract);
-            return txid.GetHex();
-        }
+      // bool fSubtract = (action <= CMPTransaction::UPDATE); // no pending balances for cancels
+      // PendingAdd(txid, fromAddress, MSC_TYPE_TRADE_OFFER, propertyIdForSale, amountForSale, fSubtract);
+      return txid.GetHex();
     }
+  }
 }
 
 UniValue tl_senddexaccept(const JSONRPCRequest& request)

@@ -901,7 +901,7 @@ int mastercore::addInterestPegged(int nBlockPrev, const CBlockIndex* pBlockIndex
                 if (deadline != actualBlock) { continue; }
 
                 int64_t diff = priceIndex - nMarketPrice;
-                int64_t tokens = static_cast<int64_t>(newSp.num_tokens);
+                // int64_t tokens = static_cast<int64_t>(newSp.num_tokens);
                 // arith_uint256 num_tokens = ConvertTo256(tokens) / ConvertTo256(factorE);
                 arith_uint256 interest = ConvertTo256(diff) / ConvertTo256(nMarketPrice);
 

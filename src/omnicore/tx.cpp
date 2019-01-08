@@ -55,6 +55,7 @@ extern double denMargin;
 extern uint64_t marketP[NPTYPES];
 extern volatile int id_contract;
 extern int64_t factorALLtoLTC;
+extern int64_t globalVolumeALL_LTC;
 
 using mastercore::StrToInt64;
 
@@ -3010,7 +3011,12 @@ int CMPTransaction::logicMath_AcceptOfferBTC()
   
   factorALLtoLTC = mastercore::StrToInt64(xToString(LTCunit_priceRat), true);
   PrintToLog("\nLTCunit_priceRat int64_t = %d\n", factorALLtoLTC);
- 
+  
+  arith_uint256 globalVolumeALL_LTC256 = ConvertTo256(factorALLtoLTC)*ConvertTo256(nValue);
+  int64_t globalVolumeALL_LTC = ConvertTo64(globalVolumeALL_LTC256);
+  
+  PrintToLog("\nglobalVolumeALL_LTC = %s\n", FormatDivisibleZeroClean(globalVolumeALL_LTC));
+  
   return rc;
 }
 

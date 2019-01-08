@@ -139,6 +139,7 @@ extern int idx_expiration;
 extern int expirationAchieve;
 extern double globalPNLALL_DUSD;
 extern int64_t globalVolumeALL_DUSD;
+extern int64_t globalVolumeALL_LTC;
 extern int lastBlockg;
 extern int vestingActivationBlock;
 
@@ -266,13 +267,29 @@ std::string mastercore::FormatContractMP(int64_t n)
 }
 /////////////////////////////////////////
 /** New things for contracts */
+std::string FormatDivisibleZeroClean(int64_t n)
+{
+  int64_t n_abs = (n > 0 ? n : -n);
+  int64_t quotient = n_abs/COIN;
+  int64_t remainder = n_abs % COIN;
+  std::string str = strprintf("%d.%08d", quotient/COIN, remainder);
+  
+  str.erase(str.find_last_not_of('0') + 1, std::string::npos);
+  if (str.length() > 0) {
+    std::string::iterator it = str.end() - 1;
+    if (*it == '.') 
+      str.erase(it);
+  } 
+  return str;
+}
+
 double FormatContractShortMP(int64_t n)
 {
-    int64_t n_abs = (n > 0 ? n : -n);
-    int64_t quotient = n_abs / COIN;
-    int64_t remainder = n_abs % COIN;
-    std::string str = strprintf("%d.%08d", quotient, remainder);
-    // clean up trailing zeros - good for RPC not so much for UI
+  int64_t n_abs = (n > 0 ? n : -n);
+  int64_t quotient = n_abs / COIN;
+  int64_t remainder = n_abs % COIN;
+  std::string str = strprintf("%d.%08d", quotient, remainder);
+  // clean up trailing zeros - good for RPC not so much for UI
     str.erase(str.find_last_not_of('0') + 1, std::string::npos);
     if (str.length() > 0) {
         std::string::iterator it = str.end() - 1;
@@ -558,8 +575,10 @@ void sendingVestingTokens()
   }
   /** Vesting Tokens to Balance */
   extern int64_t factorALLtoLTC;
-  extern int64_t globalVolumeALL_DUSD;
-  int64_t x_Axis = factorALLtoLTC*globalVolumeALL_DUSD;
+  extern int64_t globalVolumeALL_LTC;
+  int64_t x_Axis = factorALLtoLTC*globalVolumeALL_LTC;
+  
+  PrintToLog("factorALLtoLTC = %d, globalVolumeALL_LTC = %d", factorALLtoLTC, globalVolumeALL_LTC);
   
   for (int i = 0; i < nVestingAddrs; i++) {
     int64_t ALLBalance = getMPbalance(vestingAddresses[i], OMNI_PROPERTY_ALL, BALANCE);
@@ -3058,13 +3077,14 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   PrintToLog("UPNL1 = %d, UPNL2 = %d\n", UPNL1, UPNL2);
   
   unsigned int contractId = static_cast<unsigned int>(property_traded);
-
+  
   if ( contractId == ALL_PROPERTY_TYPE_CONTRACT )
     {
       globalPNLALL_DUSD += UPNL1 + UPNL2;
       globalVolumeALL_DUSD += nCouldBuy0;
+      globalVolumeALL_LTC += globalVolumeALL_DUSD;
     }
-
+  
   int64_t volumeToCompare = 0;
   bool perpetualBool = callingPerpetualSettlement(globalPNLALL_DUSD, globalVolumeALL_DUSD, volumeToCompare);
   if (perpetualBool) PrintToLog("Perpetual Settlement Online");

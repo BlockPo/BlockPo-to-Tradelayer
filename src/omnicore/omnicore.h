@@ -179,6 +179,7 @@ std::string FormatByType(int64_t amount, uint16_t propertyType);
 std::string FormatByDivisibility(int64_t amount, bool divisible);
 double FormatContractShortMP(int64_t n);
 long int FormatShortIntegerMP(int64_t n);
+std::string FormatDivisibleZeroClean(int64_t n);
 /** Returns the Exodus address. */
 const std::string ExodusAddress();
 
