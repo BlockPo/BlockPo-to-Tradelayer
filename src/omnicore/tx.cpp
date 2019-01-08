@@ -55,7 +55,6 @@ extern double denMargin;
 extern uint64_t marketP[NPTYPES];
 extern volatile int id_contract;
 extern int64_t factorALLtoLTC;
-extern int64_t globalVolumeALL_LTC;
 
 using mastercore::StrToInt64;
 
@@ -848,9 +847,9 @@ bool CMPTransaction::interpret_MetaDExTrade()
     } else return false;
 
     if (!vecAmountDesiredBytes.empty()) {
-        desired_value = DecompressInteger(vecAmountDesiredBytes);
+      desired_value = DecompressInteger(vecAmountDesiredBytes);
     } else return false;
-
+    
     PrintToLog("version: %d\n", version);
     PrintToLog("messageType: %d\n",type);
     PrintToLog("property: %d\n", property);
@@ -2146,7 +2145,7 @@ int CMPTransaction::logicMath_Alert()
 
 int CMPTransaction::logicMath_MetaDExTrade()
 {
-
+  extern volatile int64_t globalVolumeALL_LTC;
   if (!IsTransactionTypeAllowed(block, property, type, version)) {
       PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
               __func__,
@@ -2193,7 +2192,6 @@ int CMPTransaction::logicMath_MetaDExTrade()
       return (PKT_ERROR_METADEX -34);
   }
 
-
   int64_t nBalance = getMPbalance(sender, property, BALANCE);
   if (nBalance < (int64_t) nNewValue) {
       PrintToLog("%s(): rejected: sender %s has insufficient balance of property %d [%s < %s]\n",
@@ -2206,11 +2204,13 @@ int CMPTransaction::logicMath_MetaDExTrade()
   }
 
   // ------------------------------------------
-
+  
   t_tradelistdb->recordNewTrade(txid, sender, property, desired_property, block, tx_idx);
   int rc = MetaDEx_ADD(sender, property, nNewValue, block, desired_property, desired_value, txid, tx_idx);
+  globalVolumeALL_LTC += desired_value;
+  PrintToLog("\nglobalVolumeALL_LTC = %s\n", FormatDivisibleZeroClean(globalVolumeALL_LTC));
+  
   return rc;
-
 }
 
 /** Tx 40 */
@@ -2996,6 +2996,8 @@ int CMPTransaction::logicMath_DExBuy()
 int CMPTransaction::logicMath_AcceptOfferBTC()
 {
   extern int64_t LTCPriceOffer;
+  extern volatile int64_t globalVolumeALL_LTC;
+  
   PrintToLog("Inside logicMath_AcceptOffer_BTC ----------------------------\n");
   
   if (nValue <= 0 || MAX_INT_8_BYTES < nValue) {
@@ -3005,18 +3007,22 @@ int CMPTransaction::logicMath_AcceptOfferBTC()
   // the min fee spec requirement is checked in the following function
   int rc = DEx_acceptCreate(sender, receiver, propertyId, nValue, block, tx_fee_paid, &nNewValue);
   
-  PrintToLog("\nALL amount = %d , LTC offer = %d, rc = %d\n", nValue, LTCPriceOffer, rc);
-  rational_t LTCunit_priceRat(LTCPriceOffer, nValue);
-  PrintToLog("\nLTCunit_priceRat = %s\n", xToString(LTCunit_priceRat));
-  
-  factorALLtoLTC = mastercore::StrToInt64(xToString(LTCunit_priceRat), true);
-  PrintToLog("\nLTCunit_priceRat int64_t = %d\n", factorALLtoLTC);
-  
-  arith_uint256 globalVolumeALL_LTC256 = ConvertTo256(factorALLtoLTC)*ConvertTo256(nValue);
-  int64_t globalVolumeALL_LTC = ConvertTo64(globalVolumeALL_LTC256);
-  
-  PrintToLog("\nglobalVolumeALL_LTC = %s\n", FormatDivisibleZeroClean(globalVolumeALL_LTC));
-  
+  if (!rc) {
+    
+    PrintToLog("\nALL amount = %d , LTC offer = %d, rc = %d\n", nValue, LTCPriceOffer, rc);
+    rational_t LTCunit_priceRat(LTCPriceOffer, nValue);
+    PrintToLog("\nLTCunit_priceRat = %s\n", xToString(LTCunit_priceRat));
+    
+    factorALLtoLTC = mastercore::StrToInt64(xToString(LTCunit_priceRat), true);
+    PrintToLog("\nLTCunit_priceRat int64_t = %d\n", factorALLtoLTC);
+    
+    arith_uint256 volumeALL_LTC256 = ConvertTo256(factorALLtoLTC)*ConvertTo256(nValue);
+    int64_t volumeALL_LTC = ConvertTo64(volumeALL_LTC256);
+    
+    globalVolumeALL_LTC += volumeALL_LTC;
+    PrintToLog("\nglobalVolumeALL_LTC = %s\n", FormatDivisibleZeroClean(globalVolumeALL_LTC));
+  }
+    
   return rc;
 }
 

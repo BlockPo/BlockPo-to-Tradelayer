@@ -41,4 +41,4 @@ int lastBlockg;
 int vestingActivationBlock;
 int64_t LTCPriceOffer;
 int64_t factorALLtoLTC;
-int64_t globalVolumeALL_LTC;
+volatile int64_t globalVolumeALL_LTC;

@@ -139,7 +139,6 @@ extern int idx_expiration;
 extern int expirationAchieve;
 extern double globalPNLALL_DUSD;
 extern int64_t globalVolumeALL_DUSD;
-extern int64_t globalVolumeALL_LTC;
 extern int lastBlockg;
 extern int vestingActivationBlock;
 
@@ -552,6 +551,8 @@ void sendingVestingTokens()
   extern VectorTLS *pt_vestingAddresses;  VectorTLS &vestingAddresses  = *pt_vestingAddresses;
   extern int64_t amountVesting;
   extern int nVestingAddrs;
+  extern volatile int64_t globalVolumeALL_LTC;
+  int64_t x_Axis = globalVolumeALL_LTC;
   PrintToLog("\nVesting amount for every vesting address : %d\n", amountVesting);
   
   CMPSPInfo::Entry newSP;
@@ -574,11 +575,6 @@ void sendingVestingTokens()
       assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, getMPbalance(vestingAddresses[i], propertyIdVesting, BALANCE), UNVESTED));
   }
   /** Vesting Tokens to Balance */
-  extern int64_t factorALLtoLTC;
-  extern int64_t globalVolumeALL_LTC;
-  int64_t x_Axis = factorALLtoLTC*globalVolumeALL_LTC;
-  
-  PrintToLog("factorALLtoLTC = %d, globalVolumeALL_LTC = %d", factorALLtoLTC, globalVolumeALL_LTC);
   
   for (int i = 0; i < nVestingAddrs; i++) {
     int64_t ALLBalance = getMPbalance(vestingAddresses[i], OMNI_PROPERTY_ALL, BALANCE);
@@ -3026,6 +3022,8 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   extern volatile int path_length;
   std::map<std::string, std::string> edgeEle;
   bool savedata_bool = false;
+  extern int64_t factorALLtoLTC;
+  extern volatile int64_t globalVolumeALL_LTC;
 
   double UPNL1 = 0, UPNL2 = 0;
   /********************************************************************/
@@ -3078,12 +3076,13 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   
   unsigned int contractId = static_cast<unsigned int>(property_traded);
   
-  if ( contractId == ALL_PROPERTY_TYPE_CONTRACT )
-    {
-      globalPNLALL_DUSD += UPNL1 + UPNL2;
-      globalVolumeALL_DUSD += nCouldBuy0;
-      globalVolumeALL_LTC += globalVolumeALL_DUSD;
-    }
+  if ( contractId == ALL_PROPERTY_TYPE_CONTRACT ) {
+    globalPNLALL_DUSD += UPNL1 + UPNL2;
+    globalVolumeALL_DUSD += nCouldBuy0;
+    arith_uint256 volumeALL_LTC256 = ConvertTo256(factorALLtoLTC)*ConvertTo256(nCouldBuy0);
+    int64_t volumeALL_LTC = ConvertTo64(volumeALL_LTC256);
+    globalVolumeALL_LTC += volumeALL_LTC;
+  }
   
   int64_t volumeToCompare = 0;
   bool perpetualBool = callingPerpetualSettlement(globalPNLALL_DUSD, globalVolumeALL_DUSD, volumeToCompare);
