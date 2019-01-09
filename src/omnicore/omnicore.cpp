@@ -3000,16 +3000,29 @@ void CMPTradeList::recordNewTrade(const uint256& txid, const std::string& addres
 
 void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, string address1, string address2, unsigned int prop1, unsigned int prop2, uint64_t amount1, uint64_t amount2, int blockNum, int64_t fee)
 {
-    if (!pdb) return;
-    const string key = txid1.ToString() + "+" + txid2.ToString();
-    const string value = strprintf("%s:%s:%u:%u:%lu:%lu:%d:%d", address1, address2, prop1, prop2, amount1, amount2, blockNum, fee);
-
-    Status status;
-    if (pdb)
+  if (!pdb) return;
+  const string key = txid1.ToString() + "+" + txid2.ToString();
+  const string value = strprintf("%s:%s:%u:%u:%lu:%lu:%d:%d", address1, address2, prop1, prop2, amount1, amount2, blockNum, fee);
+  
+  extern int64_t factorALLtoLTC;
+  extern volatile int64_t globalVolumeALL_LTC;
+  
+  if (prop1 == OMNI_PROPERTY_ALL) {
+    arith_uint256 volumeALLtoLTC_256t = ConvertTo256(factorALLtoLTC)*ConvertTo256(amount1);
+    int64_t volumeALLtoLTC = ConvertTo64(volumeALLtoLTC_256t);
+    globalVolumeALL_LTC += volumeALLtoLTC;
+  } else if (prop2 == OMNI_PROPERTY_ALL) {
+    arith_uint256 volumeALLtoLTC_256t = ConvertTo256(factorALLtoLTC)*ConvertTo256(amount2);
+    int64_t volumeALLtoLTC = ConvertTo64(volumeALLtoLTC_256t);
+    globalVolumeALL_LTC += volumeALLtoLTC;
+  }
+  
+  Status status;
+  if (pdb)
     {
-        status = pdb->Put(writeoptions, key, value);
-        ++nWritten;
-        // if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
+      status = pdb->Put(writeoptions, key, value);
+      ++nWritten;
+      // if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
     }
 }
 /********************************************************/
@@ -3075,13 +3088,16 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   PrintToLog("UPNL1 = %d, UPNL2 = %d\n", UPNL1, UPNL2);
   
   unsigned int contractId = static_cast<unsigned int>(property_traded);
+  CMPSPInfo::Entry sp;
+  assert(_my_sps->getSP(property_traded, sp));
+  uint32_t NotionalSize = sp.notional_size;
   
-  if ( contractId == ALL_PROPERTY_TYPE_CONTRACT ) {
+  if (contractId == ALL_PROPERTY_TYPE_CONTRACT) {
     globalPNLALL_DUSD += UPNL1 + UPNL2;
     globalVolumeALL_DUSD += nCouldBuy0;
-    arith_uint256 volumeALL_LTC256 = ConvertTo256(factorALLtoLTC)*ConvertTo256(nCouldBuy0);
-    int64_t volumeALL_LTC = ConvertTo64(volumeALL_LTC256);
-    globalVolumeALL_LTC += volumeALL_LTC;
+    arith_uint256 volumeALLtoLTC_256t = ConvertTo256(factorALLtoLTC)*(ConvertTo256(nCouldBuy0)*ConvertTo256(NotionalSize));
+    int64_t volumeALLtoLTC = ConvertTo64(volumeALLtoLTC_256t);
+    globalVolumeALL_LTC += volumeALLtoLTC;
   }
   
   int64_t volumeToCompare = 0;
