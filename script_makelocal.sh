@@ -3,5 +3,5 @@
 echo "Doing Make Locally"
 ./autogen.sh
 ./configure
-make --jobs=24
+make --jobs=18
 echo "Done"

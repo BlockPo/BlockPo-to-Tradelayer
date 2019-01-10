@@ -84,6 +84,7 @@
 #include <vector>
 #include "tradelayer_matrices.h"
 #include "externfns.h"
+#include "omnicore/parse_string.h"
 
 using boost::algorithm::token_compress_on;
 using boost::to_string;
@@ -141,11 +142,13 @@ extern double globalPNLALL_DUSD;
 extern int64_t globalVolumeALL_DUSD;
 extern int lastBlockg;
 extern int vestingActivationBlock;
+extern volatile int64_t globalVolumeALL_LTC;
 
 CMPTxList *mastercore::p_txlistdb;
 CMPTradeList *mastercore::t_tradelistdb;
 COmniTransactionDB *mastercore::p_OmniTXDB;
 
+using mastercore::StrToInt64;
 // indicate whether persistence is enabled at this point, or not
 // used to write/read files, for breakout mode, debugging, etc.
 static bool writePersistence(int block_now)
@@ -551,7 +554,7 @@ void sendingVestingTokens()
   extern VectorTLS *pt_vestingAddresses;  VectorTLS &vestingAddresses  = *pt_vestingAddresses;
   extern int64_t amountVesting;
   extern int nVestingAddrs;
-  extern volatile int64_t globalVolumeALL_LTC;
+  // extern volatile int64_t globalVolumeALL_LTC;
   int64_t x_Axis = globalVolumeALL_LTC;
   PrintToLog("\nVesting amount for every vesting address : %d\n", amountVesting);
   
@@ -3005,17 +3008,19 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   const string value = strprintf("%s:%s:%u:%u:%lu:%lu:%d:%d", address1, address2, prop1, prop2, amount1, amount2, blockNum, fee);
   
   extern int64_t factorALLtoLTC;
-  extern volatile int64_t globalVolumeALL_LTC;
+  int64_t volumeALLtoLTC = 0;
   
   if (prop1 == OMNI_PROPERTY_ALL) {
     arith_uint256 volumeALLtoLTC_256t = ConvertTo256(factorALLtoLTC)*ConvertTo256(amount1);
-    int64_t volumeALLtoLTC = ConvertTo64(volumeALLtoLTC_256t);
-    globalVolumeALL_LTC += volumeALLtoLTC;
+    volumeALLtoLTC = ConvertTo64(volumeALLtoLTC_256t)/COIN;
   } else if (prop2 == OMNI_PROPERTY_ALL) {
     arith_uint256 volumeALLtoLTC_256t = ConvertTo256(factorALLtoLTC)*ConvertTo256(amount2);
-    int64_t volumeALLtoLTC = ConvertTo64(volumeALLtoLTC_256t);
-    globalVolumeALL_LTC += volumeALLtoLTC;
+    volumeALLtoLTC = ConvertTo64(volumeALLtoLTC_256t)/COIN;
   }
+
+  globalVolumeALL_LTC += volumeALLtoLTC;
+  const int64_t globalVolumeALL_LTCh = globalVolumeALL_LTC;
+  PrintToLog("\nGlobal LTC Volume Updated: CMPMetaDEx = %s\n", FormatDivisibleZeroClean(globalVolumeALL_LTCh));
   
   Status status;
   if (pdb)
@@ -3036,7 +3041,6 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   std::map<std::string, std::string> edgeEle;
   bool savedata_bool = false;
   extern int64_t factorALLtoLTC;
-  extern volatile int64_t globalVolumeALL_LTC;
 
   double UPNL1 = 0, UPNL2 = 0;
   /********************************************************************/
@@ -3091,14 +3095,21 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   CMPSPInfo::Entry sp;
   assert(_my_sps->getSP(property_traded, sp));
   uint32_t NotionalSize = sp.notional_size;
+  int64_t volumeALLtoLTC = 0;
   
-  if (contractId == ALL_PROPERTY_TYPE_CONTRACT) {
+  PrintToLog("\nCheck nCouldBuy0 = %d, factorALLtoLTC = %d, NotionalSize = %d\n", nCouldBuy0, factorALLtoLTC, NotionalSize);
+  
+  if (sp.prop_type == ALL_PROPERTY_TYPE_CONTRACT) {
     globalPNLALL_DUSD += UPNL1 + UPNL2;
     globalVolumeALL_DUSD += nCouldBuy0;
     arith_uint256 volumeALLtoLTC_256t = ConvertTo256(factorALLtoLTC)*(ConvertTo256(nCouldBuy0)*ConvertTo256(NotionalSize));
-    int64_t volumeALLtoLTC = ConvertTo64(volumeALLtoLTC_256t);
-    globalVolumeALL_LTC += volumeALLtoLTC;
+    volumeALLtoLTC = ConvertTo64(volumeALLtoLTC_256t)/COIN;
   }
+  
+  PrintToLog("Number of Traded Contracts ~ %s LTC\n", FormatDivisibleZeroClean(volumeALLtoLTC));
+  globalVolumeALL_LTC += volumeALLtoLTC;
+  const int64_t globalVolumeALL_LTCh = globalVolumeALL_LTC;
+  PrintToLog("\nGlobal LTC Volume Updated: CMPContractDEx = %s\n", FormatDivisibleZeroClean(globalVolumeALL_LTCh));
   
   int64_t volumeToCompare = 0;
   bool perpetualBool = callingPerpetualSettlement(globalPNLALL_DUSD, globalVolumeALL_DUSD, volumeToCompare);
@@ -3154,11 +3165,11 @@ bool callingPerpetualSettlement(double globalPNLALL_DUSD, int64_t globalVolumeAL
 
   if ( globalPNLALL_DUSD == 0 )
     {
-      PrintToLog("Liquidate Forward Positions");
+      PrintToLog("\nLiquidate Forward Positions\n");
       perpetualBool = true;
     }
   else if ( globalVolumeALL_DUSD > volumeToCompare )
-    PrintToLog("Take decisions for globalVolumeALL_DUSD > volumeToCompare");
+    PrintToLog("\nTake decisions for globalVolumeALL_DUSD > volumeToCompare\n");
 
   return perpetualBool;
 }

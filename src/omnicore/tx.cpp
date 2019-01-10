@@ -55,6 +55,8 @@ extern double denMargin;
 extern uint64_t marketP[NPTYPES];
 extern volatile int id_contract;
 extern int64_t factorALLtoLTC;
+extern volatile int64_t globalVolumeALL_LTC;
+extern int64_t LTCPriceOffer;
 
 using mastercore::StrToInt64;
 
@@ -2145,7 +2147,6 @@ int CMPTransaction::logicMath_Alert()
 
 int CMPTransaction::logicMath_MetaDExTrade()
 {
-  extern volatile int64_t globalVolumeALL_LTC;
   if (!IsTransactionTypeAllowed(block, property, type, version)) {
       PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
               __func__,
@@ -2207,8 +2208,6 @@ int CMPTransaction::logicMath_MetaDExTrade()
   
   t_tradelistdb->recordNewTrade(txid, sender, property, desired_property, block, tx_idx);
   int rc = MetaDEx_ADD(sender, property, nNewValue, block, desired_property, desired_value, txid, tx_idx);
-  globalVolumeALL_LTC += desired_value;
-  PrintToLog("\nglobalVolumeALL_LTC = %s\n", FormatDivisibleZeroClean(globalVolumeALL_LTC));
   
   return rc;
 }
@@ -2994,10 +2993,7 @@ int CMPTransaction::logicMath_DExBuy()
 }
 
 int CMPTransaction::logicMath_AcceptOfferBTC()
-{
-  extern int64_t LTCPriceOffer;
-  extern volatile int64_t globalVolumeALL_LTC;
-  
+{ 
   PrintToLog("Inside logicMath_AcceptOffer_BTC ----------------------------\n");
   
   if (nValue <= 0 || MAX_INT_8_BYTES < nValue) {
@@ -3019,10 +3015,11 @@ int CMPTransaction::logicMath_AcceptOfferBTC()
     arith_uint256 volumeALL_LTC256 = ConvertTo256(factorALLtoLTC)*ConvertTo256(nValue);
     int64_t volumeALL_LTC = ConvertTo64(volumeALL_LTC256);
     
+    PrintToLog("\nBefore: globalVolumeALL_LTC CMPDEx = %s\n", FormatDivisibleZeroClean(globalVolumeALL_LTC));
     globalVolumeALL_LTC += volumeALL_LTC;
-    PrintToLog("\nglobalVolumeALL_LTC = %s\n", FormatDivisibleZeroClean(globalVolumeALL_LTC));
+    PrintToLog("\nglobalVolumeALL_LTC CMPDEx = %s\n", FormatDivisibleZeroClean(globalVolumeALL_LTC));
   }
-    
+  
   return rc;
 }
 

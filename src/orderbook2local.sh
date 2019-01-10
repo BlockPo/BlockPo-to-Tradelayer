@@ -33,7 +33,7 @@ printf "\n________________________________________\n"
 printf "Base address to work with:\n"
 printf $ADDRBase
 
-N=100
+N=50
 
 amount_bitcoin=10
 amountbitcoin_baseaddr=10
@@ -116,9 +116,9 @@ ADDR2=$($SRCDIR/litecoin-cli -datadir=$DATADIR --regtest  getnewaddress daniel)
 ##################################################################
 printf "\n________________________________________\n"
 printf " Funding the address with some testnet LTC for fees: \n"
-$SRCDIR/litecoin-cli -datadir=$DATADIR --regtest  sendfrom "" ${ADDR} 6  # enviamos 3 BTC a ADDR
+$SRCDIR/litecoin-cli -datadir=$DATADIR --regtest  sendfrom "" ${ADDR} 6   # LTC tests a ADDR
 $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest  generate 1
-$SRCDIR/litecoin-cli -datadir=$DATADIR --regtest  sendfrom "" ${ADDR2} 6  # enviamos 3 BTC a ADDR
+$SRCDIR/litecoin-cli -datadir=$DATADIR --regtest  sendfrom "" ${ADDR2} 6  # LTC tests a ADDR
 $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest  generate 1
 ##################################################################
 ./litecoin-cli -datadir=$DATADIR -regrest tl_listproperties
