@@ -41,7 +41,7 @@ amountbitcoin_manyaddr=100
 amountbitcoin_moneyaddr=10
 notional_size=1
 margin_requirement=1
-amountusdts_manyaddr=200000000
+amountusdts_manyaddr=100000000
 blocks_until_expiration=225
 collateral=5
 
@@ -90,9 +90,9 @@ $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
 
 printf "\n________________________________________\n"
 printf "Checking confirmation of transaction Token USDT:\n"
-$SRCDIR/litecoin-cli -datadir=$DATADIR --regtest omni_gettransaction $TRAUSDT
+$SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_gettransaction $TRAUSDT
 ./litecoin-cli -datadir=$DATADIR -regrest tl_listproperties
-##################################################################
+
 for (( i=1; i<=${N}; i++ ))
 do
     printf "\n////////////////////////////////////////\n"
@@ -103,6 +103,28 @@ do
     printf "\n________________________________________\n"
     printf "Checking USDT balances for the address #$i:\n"
     $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_getbalance ${ADDRess[$i]} 5
+done
+##################################################################
+printf "\n________________________________________\n"
+printf "Creating an Divisible Token ALLs:\n"
+TRAALL=$($SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_sendissuancemanaged $ADDRBase 1 2 0 "ALL" "ALL" "")
+$SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
+
+printf "\n________________________________________\n"
+printf "Checking confirmation of transaction Token ALLs:\n"
+$SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_gettransaction $TRAALL
+./litecoin-cli -datadir=$DATADIR -regrest tl_listproperties
+
+for (( i=1; i<=${N}; i++ ))
+do
+    printf "\n////////////////////////////////////////\n"
+    printf "Sending ALLs from base address to the addresses #$i\n"
+    $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_sendgrant ${ADDRBase} ${ADDRess[$i]} 6 ${amountusdts_manyaddr}
+    $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1 # Generating one block
+    
+    printf "\n________________________________________\n"
+    printf "Checking USDT balances for the address #$i:\n"
+    $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_getbalance ${ADDRess[$i]} 6
 done
 ##################################################################
 # Begin of CMPContractDEx
@@ -121,7 +143,8 @@ do
     printf "\n"
     
     $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[$i]} "ALL F18" ${AMOUNT} ${PRICE} 1
-    $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1    
+    $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
+    
 done
 ##################################################################
 PAYMENTWINDOW=10
@@ -160,7 +183,32 @@ do
 
     # End DEx Traded
     #################################################################
-
+    # Begin MetaDex traded
+    
+    printf "\n________________________________________\n"
+    printf "Sending metadex trade:\n"
+    
+    printf "\nAmount Tether #$i\n"
+    AMOUNTALL=$((RANDOM%500+1000))
+    printf "\nRandom Amount Tethers:\n"
+    printf $AMOUNTALL
+    printf "\n"
+    
+    $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_getbalance ${ADDRess[$i]} 6
+    $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_getbalance ${ADDRess[$i]} 5
+    
+    $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_getbalance ${ADDRess[$i+1]} 6
+    $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_getbalance ${ADDRess[$i+1]} 5
+    
+    $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_sendtrade ${ADDRess[$i+1]} 5 ${AMOUNTALL} 6 ${AMOUNT}
+    $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
+    
+    $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_sendtrade ${ADDRess[$i]} 6 ${AMOUNT} 5 ${AMOUNTALL}
+    $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
+    
+    # End MetaDex traded
+    #################################################################
+    
     printf "\n________________________________________\n"
     printf "Price for sale Seller #$i\n"
     PRICE=$((RANDOM%5+6390))
@@ -174,7 +222,8 @@ do
     printf "\n"
     
     $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[$i]} "ALL F18" ${AMOUNT} ${PRICE} 2
-    $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1    
+    $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
+    
 done
 ##################################################################
 printf "\n Cheking the  orderbok (sellside):\n"

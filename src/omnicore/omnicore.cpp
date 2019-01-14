@@ -554,7 +554,6 @@ void sendingVestingTokens()
   extern VectorTLS *pt_vestingAddresses;  VectorTLS &vestingAddresses  = *pt_vestingAddresses;
   extern int64_t amountVesting;
   extern int nVestingAddrs;
-  // extern volatile int64_t globalVolumeALL_LTC;
   int64_t x_Axis = globalVolumeALL_LTC;
   PrintToLog("\nVesting amount for every vesting address : %d\n", amountVesting);
   
@@ -3010,17 +3009,20 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   extern int64_t factorALLtoLTC;
   int64_t volumeALLtoLTC = 0;
   
-  if (prop1 == OMNI_PROPERTY_ALL) {
+  if (prop1 == OMNI_PROPERTY_ALL_ISSUANCE) {
     arith_uint256 volumeALLtoLTC_256t = ConvertTo256(factorALLtoLTC)*ConvertTo256(amount1);
     volumeALLtoLTC = ConvertTo64(volumeALLtoLTC_256t)/COIN;
-  } else if (prop2 == OMNI_PROPERTY_ALL) {
+    PrintToLog("factorALLtoLTC =%d, amount1 = %d\n", factorALLtoLTC, amount1);
+  } else if (prop2 == OMNI_PROPERTY_ALL_ISSUANCE) {
     arith_uint256 volumeALLtoLTC_256t = ConvertTo256(factorALLtoLTC)*ConvertTo256(amount2);
     volumeALLtoLTC = ConvertTo64(volumeALLtoLTC_256t)/COIN;
+    PrintToLog("factorALLtoLTC =%d, amount1 = %d\n", factorALLtoLTC, amount1);
   }
-
+  
+  PrintToLog("Number of Traded Contracts ~ %s LTC\n", FormatDivisibleMP(volumeALLtoLTC, true));
+  PrintToLog("\nGlobal LTC Volume No Updated: CMPContractDEx = %s \n", FormatDivisibleMP(globalVolumeALL_LTC, true));
   globalVolumeALL_LTC += volumeALLtoLTC;
-  const int64_t globalVolumeALL_LTCh = globalVolumeALL_LTC;
-  PrintToLog("\nGlobal LTC Volume Updated: CMPMetaDEx = %s\n", FormatDivisibleZeroClean(globalVolumeALL_LTCh));
+  PrintToLog("\nGlobal LTC Volume Updated: CMPMetaDEx = %s\n", FormatDivisibleMP(globalVolumeALL_LTC, true));
   
   Status status;
   if (pdb)
