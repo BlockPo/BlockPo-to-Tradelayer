@@ -204,20 +204,20 @@ std::string FormatDivisibleShortMP(int64_t n)
 
 std::string FormatDivisibleMP(int64_t n, bool fSign)
 {
-    // Note: not using straight sprintf here because we do NOT want
-    // localized number formatting.
-    int64_t n_abs = (n > 0 ? n : -n);
-    int64_t quotient = n_abs / COIN;
-    int64_t remainder = n_abs % COIN;
-    std::string str = strprintf("%d.%08d", quotient, remainder);
-
-    if (!fSign) return str;
-
-    if (n < 0)
-        str.insert((unsigned int) 0, 1, '-');
-    else
-        str.insert((unsigned int) 0, 1, '+');
-    return str;
+  // Note: not using straight sprintf here because we do NOT want
+  // localized number formatting.
+  int64_t n_abs = (n > 0 ? n : -n);
+  int64_t quotient = n_abs / COIN;
+  int64_t remainder = n_abs % COIN;
+  std::string str = strprintf("%d.%08d", quotient, remainder);
+  
+  if (!fSign) return str;
+  
+  if (n < 0)
+    str.insert((unsigned int) 0, 1, '-');
+  else
+    str.insert((unsigned int) 0, 1, '+');
+  return str;
 }
 
 std::string mastercore::FormatIndivisibleMP(int64_t n)
@@ -3106,10 +3106,10 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
     volumeALLtoLTC = ConvertTo64(volumeALLtoLTC_256t)/COIN;
   }
   
-  PrintToLog("Number of Traded Contracts ~ %s LTC\n", FormatDivisibleZeroClean(volumeALLtoLTC));
+  PrintToLog("Number of Traded Contracts ~ %s LTC\n", FormatDivisibleMP(volumeALLtoLTC, true));
+  PrintToLog("\nGlobal LTC Volume No Updated: CMPContractDEx = %s \n", FormatDivisibleMP(globalVolumeALL_LTC, true));
   globalVolumeALL_LTC += volumeALLtoLTC;
-  const int64_t globalVolumeALL_LTCh = globalVolumeALL_LTC;
-  PrintToLog("\nGlobal LTC Volume Updated: CMPContractDEx = %s\n", FormatDivisibleZeroClean(globalVolumeALL_LTCh));
+  PrintToLog("\nGlobal LTC Volume Updated: CMPContractDEx = %s \n", FormatDivisibleMP(globalVolumeALL_LTC, true));
   
   int64_t volumeToCompare = 0;
   bool perpetualBool = callingPerpetualSettlement(globalPNLALL_DUSD, globalVolumeALL_DUSD, volumeToCompare);

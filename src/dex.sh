@@ -44,7 +44,7 @@ printf "\n________________________________________\n"
 printf "Checking ALLs balances:\n"
 $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_getbalance ${ADDR} 4
 $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_getbalance ${ADDR2} 4
-# #################################################################
+#################################################################
 printf "\n________________________________________\n"
 printf "Sending DEX trade:\n"                                                     #blks
 $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_senddexoffer ${ADDR} 4 1000 20 10 0.00002980 2 1

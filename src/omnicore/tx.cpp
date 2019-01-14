@@ -2925,30 +2925,30 @@ int CMPTransaction::logicMath_DExBuy()
     PrintToLog("Inside logicMath_DExBuy function ----------------------------\n");
     // figure out which Action this is based on amount for sale, version & etc.
     switch (version)
-    {
-        case MP_TX_PKT_V0:
+      {
+      case MP_TX_PKT_V0:
         {
-            if (0 != nValue) {
-
-                if (!DEx_offerExists(sender, propertyId)) {
-                    PrintToLog("Dex offer doesn't exist\n");
-                    rc = DEx_BuyOfferCreate(sender, propertyId, nValue, block, effective_price, minFee, timeLimit, txid, &nNewValue);
-                } else {
-                  rc = DEx_offerUpdate(sender, propertyId, nValue, block, effective_price, minFee, timeLimit, txid, &nNewValue);
-                }
-            } else {
-                // what happens if nValue is 0 for V0 ?  ANSWER: check if exists and it does -- cancel, otherwise invalid
-                  if (DEx_offerExists(sender, propertyId)) {
-                      rc = DEx_offerDestroy(sender, propertyId);
-                  } else {
-                     PrintToLog("%s(): rejected: sender %s has no active sell offer for property: %d\n", __func__, sender, propertyId);
-                    rc = (PKT_ERROR_TRADEOFFER -49);
-                  }
-            }
-
-            break;
+	  if (0 != nValue) {
+	    
+	    if (!DEx_offerExists(sender, propertyId)) {
+	      PrintToLog("Dex offer doesn't exist\n");
+	      rc = DEx_BuyOfferCreate(sender, propertyId, nValue, block, effective_price, minFee, timeLimit, txid, &nNewValue);
+	    } else {
+	      rc = DEx_offerUpdate(sender, propertyId, nValue, block, effective_price, minFee, timeLimit, txid, &nNewValue);
+	    }
+	  } else {
+	    // what happens if nValue is 0 for V0 ?  ANSWER: check if exists and it does -- cancel, otherwise invalid
+	    if (DEx_offerExists(sender, propertyId)) {
+	      rc = DEx_offerDestroy(sender, propertyId);
+	    } else {
+	      PrintToLog("%s(): rejected: sender %s has no active sell offer for property: %d\n", __func__, sender, propertyId);
+	      rc = (PKT_ERROR_TRADEOFFER -49);
+	    }
+	  }
+	  
+	  break;
         }
-
+	
         case MP_TX_PKT_V1:
         {
             PrintToLog("Case MP_TX_PKT_V1\n");
@@ -3013,11 +3013,12 @@ int CMPTransaction::logicMath_AcceptOfferBTC()
     PrintToLog("\nLTCunit_priceRat int64_t = %d\n", factorALLtoLTC);
     
     arith_uint256 volumeALL_LTC256 = ConvertTo256(factorALLtoLTC)*ConvertTo256(nValue);
-    int64_t volumeALL_LTC = ConvertTo64(volumeALL_LTC256);
+    int64_t volumeALL_LTC = ConvertTo64(volumeALL_LTC256)/COIN;
     
-    PrintToLog("\nBefore: globalVolumeALL_LTC CMPDEx = %s\n", FormatDivisibleZeroClean(globalVolumeALL_LTC));
+    PrintToLog("\nvolumeALL_LTC = %s\n", FormatDivisibleMP(volumeALL_LTC, true));
+    PrintToLog("\nBefore: globalVolumeALL_LTC CMPDEx = %s\n", FormatDivisibleMP(globalVolumeALL_LTC, true));
     globalVolumeALL_LTC += volumeALL_LTC;
-    PrintToLog("\nglobalVolumeALL_LTC CMPDEx = %s\n", FormatDivisibleZeroClean(globalVolumeALL_LTC));
+    PrintToLog("\nglobalVolumeALL_LTC CMPDEx = %s\n\n", FormatDivisibleMP(globalVolumeALL_LTC, true));
   }
   
   return rc;

@@ -288,11 +288,11 @@ uint8_t ParseDExAction(const UniValue& value)
 
 uint8_t ParseDExPaymentWindow(const UniValue& value)
 {
-    int64_t blocks = value.get_int64();
-    if (blocks < 1 || 255 < blocks) {
-        throw JSONRPCError(RPC_TYPE_ERROR, "Payment window must be within 1-255 blocks");
-    }
-    return static_cast<uint8_t>(blocks);
+  int64_t blocks = value.get_int64();
+  // if (blocks < 1 || 255 < blocks) {
+  //     throw JSONRPCError(RPC_TYPE_ERROR, "Payment window must be within 1-255 blocks");
+  // }
+  return static_cast<uint8_t>(blocks);
 }
 
 uint32_t ParseContractType(const UniValue& value)

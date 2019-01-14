@@ -212,82 +212,82 @@ int DEx_offerCreate(const std::string& addressSeller, uint32_t propertyId, int64
 
 int DEx_BuyOfferCreate(const std::string& addressMaker, uint32_t propertyId, int64_t amountOffered, int block, int64_t price, int64_t minAcceptFee, uint8_t paymentWindow, const uint256& txid, uint64_t* nAmended)
 {
-    bool ready = false;
-    int rc = DEX_ERROR_SELLOFFER;
+  bool ready = false;
+  int rc = DEX_ERROR_SELLOFFER;
+  
+  // sanity checks
+  // shold not be removed, because it may be used when updating/destroying an offer
+  if (paymentWindow == 0) {
+    PrintToConsole("DEX_ERROR_SELLOFFER\n");
+    return (DEX_ERROR_SELLOFFER -101);
+  }
+  if (price == 0) {
+    PrintToConsole("DEX_ERROR_SELLOFFER\n");
+    return (DEX_ERROR_SELLOFFER -101);
+  }
+  if (DEx_getOffer(addressMaker, propertyId)) {
+    PrintToConsole("DEX_ERROR_SELLOFFER\n");
+    return (DEX_ERROR_SELLOFFER -10); // offer already exists
+  }
+  
+  const std::string key = STR_SELLOFFER_ADDR_PROP_COMBO(addressMaker, propertyId);
+  // if (msc_debug_dex) PrintToLog("%s(%s|%s), nValue=%d)\n", __func__, addressMaker, key, amountOffered);
+  
+  // ------------------------------------------------------------------------
+  // On this part we need to put in reserve synth Litecoins.
+  LOCK(cs_tally);
+  arith_uint256 sumValues;
+  uint32_t nextSPID = _my_sps->peekNextSPID(1);
+  for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++) {
+    CMPSPInfo::Entry sp;
+    if (_my_sps->getSP(propertyId, sp)) {
+      PrintToLog("Property Id: %d\n",propertyId);
+      if (sp.prop_type != ALL_PROPERTY_TYPE_CONTRACT){
+	continue;
+      }
 
-    // sanity checks
-    // shold not be removed, because it may be used when updating/destroying an offer
-    if (paymentWindow == 0) {
-        PrintToConsole("DEX_ERROR_SELLOFFER\n");
-        return (DEX_ERROR_SELLOFFER -101);
+      int64_t longs = getMPbalance(addressMaker, propertyId, POSSITIVE_BALANCE);
+      int64_t shorts = getMPbalance(addressMaker, propertyId, NEGATIVE_BALANCE);
+      
+      PrintToLog("longs: %d\n", longs);
+      PrintToLog("shorts: %d\n", shorts);
+      
+      // int index = static_cast<int>(propertyId);
+      // int index1 = static_cast<int>(CONTRACT_sLTC_ALL);
+      rational_t conv = notionalChange(propertyId);
+      int64_t num = conv.numerator().convert_to<int64_t>();
+      int64_t denom = conv.denominator().convert_to<int64_t>();
+      // rational_t factor = notionalChange(CONTRACT_sLTC_ALL,marketP[index1]); // price of one sLTC in ALLs
+      if (longs >= 0 && shorts == 0){
+	sumValues += ConvertTo256(num) * ConvertTo256(longs) /* *factor *// ConvertTo256(denom);  // factor=1 only for testing
+      } else if (longs == 0 && shorts >= 0) {
+	sumValues += ConvertTo256(num) *  ConvertTo256(longs) / ConvertTo256(denom);
+      }
+      
+      if (true) {
+	// if (sumValues > dprice) {  // price= price of entire order   .
+	PrintToLog("You can buy tokens now\n");
+	// ready = true;
+	break;
+      }
     }
-    if (price == 0) {
-        PrintToConsole("DEX_ERROR_SELLOFFER\n");
-        return (DEX_ERROR_SELLOFFER -101);
-    }
-    if (DEx_getOffer(addressMaker, propertyId)) {
-        PrintToConsole("DEX_ERROR_SELLOFFER\n");
-        return (DEX_ERROR_SELLOFFER -10); // offer already exists
-    }
-
-    const std::string key = STR_SELLOFFER_ADDR_PROP_COMBO(addressMaker, propertyId);
-    // if (msc_debug_dex) PrintToLog("%s(%s|%s), nValue=%d)\n", __func__, addressMaker, key, amountOffered);
-
-    // ------------------------------------------------------------------------
-    // On this part we need to put in reserve synth Litecoins.
-    LOCK(cs_tally);
-    arith_uint256 sumValues;
-    uint32_t nextSPID = _my_sps->peekNextSPID(1);
-    for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++) {
-        CMPSPInfo::Entry sp;
-        if (_my_sps->getSP(propertyId, sp)) {
-            PrintToLog("Property Id: %d\n",propertyId);
-            if (sp.prop_type != ALL_PROPERTY_TYPE_CONTRACT){
-	      continue;
-            }
-
-            int64_t longs = getMPbalance(addressMaker, propertyId, POSSITIVE_BALANCE);
-            int64_t shorts = getMPbalance(addressMaker, propertyId, NEGATIVE_BALANCE);
-
-            PrintToLog("longs: %d\n", longs);
-            PrintToLog("shorts: %d\n", shorts);
-
-            // int index = static_cast<int>(propertyId);
-            // int index1 = static_cast<int>(CONTRACT_sLTC_ALL);
-            rational_t conv = notionalChange(propertyId);
-            int64_t num = conv.numerator().convert_to<int64_t>();
-            int64_t denom = conv.denominator().convert_to<int64_t>();
-            // rational_t factor = notionalChange(CONTRACT_sLTC_ALL,marketP[index1]); // price of one sLTC in ALLs
-            if (longs >= 0 && shorts == 0){
-                sumValues += ConvertTo256(num) * ConvertTo256(longs) /* *factor *// ConvertTo256(denom);  // factor=1 only for testing
-            } else if (longs == 0 && shorts >= 0) {
-                sumValues += ConvertTo256(num) *  ConvertTo256(longs) / ConvertTo256(denom);
-            }
-
-            if (true) {
-                // if (sumValues > dprice) {  // price= price of entire order   .
-                PrintToLog("You can buy tokens now\n");
-                // ready = true;
-                break;
-            }
-        }
-    }
-
-    PrintToLog("sumValues: %d\n",ConvertTo64(sumValues));
-    // PrintToLog("prices: %d\n",dprice);
-    ready = true;
-    if (price > 0 && ready) {
-        // assert(update_tally_map(addressMaker, SLTC_ID, -price, BALANCE));
-        // assert(update_tally_map(addressMaker, SLTC_ID, price, SELLOFFER_RESERVE));
-    } else {
-        PrintToLog("You CAN'T buy tokens now\n");
-        return 1;
-    }
-
-    CMPOffer sellOffer(block, amountOffered, propertyId, price, minAcceptFee, paymentWindow, txid, 1);
-    my_offers.insert(std::make_pair(key, sellOffer));
-
-    return rc;
+  }
+  
+  PrintToLog("sumValues: %d\n",ConvertTo64(sumValues));
+  // PrintToLog("prices: %d\n",dprice);
+  ready = true;
+  if (price > 0 && ready) {
+    // assert(update_tally_map(addressMaker, SLTC_ID, -price, BALANCE));
+    // assert(update_tally_map(addressMaker, SLTC_ID, price, SELLOFFER_RESERVE));
+  } else {
+    PrintToLog("You CAN'T buy tokens now\n");
+    return 1;
+  }
+  
+  CMPOffer sellOffer(block, amountOffered, propertyId, price, minAcceptFee, paymentWindow, txid, 1);
+  my_offers.insert(std::make_pair(key, sellOffer));
+  
+  return rc;
 }
 /**
  * Destorys a sell offer.
