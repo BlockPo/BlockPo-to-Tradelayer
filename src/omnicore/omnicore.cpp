@@ -548,13 +548,11 @@ void CheckWalletUpdate(bool forceUpdate)
 #endif
 }
 
-
 void sendingVestingTokens()
 {
   extern VectorTLS *pt_vestingAddresses;  VectorTLS &vestingAddresses  = *pt_vestingAddresses;
   extern int64_t amountVesting;
   extern int nVestingAddrs;
-  int64_t x_Axis = globalVolumeALL_LTC;
   PrintToLog("\nVesting amount for every vesting address : %d\n", amountVesting);
   
   CMPSPInfo::Entry newSP;
@@ -575,23 +573,6 @@ void sendingVestingTokens()
   for (int i = 0; i < nVestingAddrs; i++) {
     if (getMPbalance(vestingAddresses[i], OMNI_PROPERTY_ALL, UNVESTED) == 0)
       assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, getMPbalance(vestingAddresses[i], propertyIdVesting, BALANCE), UNVESTED));
-  }
-  /** Vesting Tokens to Balance */
-  
-  for (int i = 0; i < nVestingAddrs; i++) {
-    int64_t ALLBalance = getMPbalance(vestingAddresses[i], OMNI_PROPERTY_ALL, BALANCE);
-    if (ALLBalance) {
-      if (x_Axis >= 0 && x_Axis < 300000) { /** y = x*/
-	assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, -x_Axis, UNVESTED));
-	assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, x_Axis, BALANCE));
-      } else if (x_Axis >= 300000 && x_Axis < 300000000) { /** y = x^2*/
-	assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, -x_Axis*x_Axis, UNVESTED));
-	assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, x_Axis*x_Axis, BALANCE));      
-      } else if (x_Axis >= 300000000 && x_Axis < 30000000000000) { /** y = ln|x|*/
-	assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, -log(x_Axis), UNVESTED));
-	assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, log(x_Axis), BALANCE));          
-      }
-    }
   }
 }
 /**
@@ -2099,6 +2080,8 @@ int mastercore_shutdown()
 bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx, const CBlockIndex* pBlockIndex)
 {
   extern volatile int id_contract;
+  extern VectorTLS *pt_vestingAddresses;  VectorTLS &vestingAddresses  = *pt_vestingAddresses;
+  extern int nVestingAddrs;
   
   LOCK(cs_tally);
   
@@ -2115,7 +2098,28 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   // we do not care about parsing blocks prior to our waterline (empty blockchain defense)
   if (nBlock < nWaterlineBlock) return false;
   int64_t nBlockTime = pBlockIndex->GetBlockTime();
-  PrintToLog("\nBlock counter: %d\n", static_cast<int>(pBlockIndex->nHeight));
+  PrintToLog("\nBlock counter: %d, lastBlockg = %d\n", static_cast<int>(pBlockIndex->nHeight), lastBlockg);
+  
+  /***********************************************/
+  /** Vesting Tokens to Balance */
+  int64_t x_Axis = globalVolumeALL_LTC;
+  PrintToLog("x_Axis = %s", FormatDivisibleMP(x_Axis, true));
+  for (int i = 0; i < nVestingAddrs; i++) {
+    int64_t ALLUnvested = getMPbalance(vestingAddresses[i], OMNI_PROPERTY_ALL, UNVESTED);
+    if (ALLUnvested != 0 && nBlockTime == lastBlockg ) {
+      if (x_Axis >= 0 && x_Axis < 300000) { /** y = x*/
+	assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, -x_Axis, UNVESTED));
+	assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, x_Axis, BALANCE));
+      } else if (x_Axis >= 300000 && x_Axis < 300000000) { /** y = x^2*/
+	assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, -x_Axis*x_Axis, UNVESTED));
+	assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, x_Axis*x_Axis, BALANCE));      
+      } else if (x_Axis >= 300000000 && x_Axis < 30000000000000) { /** y = ln|x|*/
+	assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, -log(x_Axis), UNVESTED));
+	assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, log(x_Axis), BALANCE));          
+      }
+    }
+  }
+  /***********************************************/
   
   CMPTransaction mp_obj;
   mp_obj.unlockLogic();
