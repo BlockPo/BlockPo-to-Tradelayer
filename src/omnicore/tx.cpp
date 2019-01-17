@@ -15,6 +15,7 @@
 #include "omnicore/uint256_extensions.h"
 #include "omnicore/externfns.h"
 #include "omnicore/parse_string.h"
+#include "omnicore/utilsbitcoin.h"
 
 #include "amount.h"
 #include "validation.h"
@@ -54,9 +55,10 @@ extern int64_t allPrice;
 extern double denMargin;
 extern uint64_t marketP[NPTYPES];
 extern volatile int id_contract;
-extern int64_t factorALLtoLTC;
+extern volatile int64_t factorALLtoLTC;
 extern volatile int64_t globalVolumeALL_LTC;
-extern int64_t LTCPriceOffer;
+extern volatile int64_t LTCPriceOffer;
+typedef boost::multiprecision::uint128_t ui128;
 
 using mastercore::StrToInt64;
 
@@ -3003,23 +3005,85 @@ int CMPTransaction::logicMath_AcceptOfferBTC()
   // the min fee spec requirement is checked in the following function
   int rc = DEx_acceptCreate(sender, receiver, propertyId, nValue, block, tx_fee_paid, &nNewValue);
   
-  if (!rc) {
-    
-    PrintToLog("\nALL amount = %d , LTC offer = %d, rc = %d\n", nValue, LTCPriceOffer, rc);
-    rational_t LTCunit_priceRat(LTCPriceOffer, nValue);
-    PrintToLog("\nLTCunit_priceRat = %s\n", xToString(LTCunit_priceRat));
-    
-    factorALLtoLTC = mastercore::StrToInt64(xToString(LTCunit_priceRat), true);
-    PrintToLog("\nLTCunit_priceRat int64_t = %d\n", factorALLtoLTC);
-    
-    arith_uint256 volumeALL_LTC256 = ConvertTo256(factorALLtoLTC)*ConvertTo256(nValue);
-    int64_t volumeALL_LTC = ConvertTo64(volumeALL_LTC256)/COIN;
-    
-    PrintToLog("\nvolumeALL_LTC = %s\n", FormatDivisibleMP(volumeALL_LTC, true));
-    PrintToLog("\nBefore: globalVolumeALL_LTC CMPDEx = %s\n", FormatDivisibleMP(globalVolumeALL_LTC, true));
-    globalVolumeALL_LTC += volumeALL_LTC;
-    PrintToLog("\nglobalVolumeALL_LTC CMPDEx = %s\n\n", FormatDivisibleMP(globalVolumeALL_LTC, true));
-  }
+  int64_t unitPrice = 0;
+  std::string sellerS = "", buyerS = "";
+  
+  if (!rc)
+    {
+      /*****************************************************/
+      std::string addressFilter = receiver;
+      int curBlock = GetHeight();
+      PrintToLog("\ncurBlock = %d\n", curBlock);
+      
+      LOCK(cs_tally);
+      
+      for (OfferMap::iterator it = my_offers.begin(); it != my_offers.end(); ++it)
+	{
+	  const CMPOffer &offer = it->second;
+	  const std::string &sellCombo = it->first;
+	  std::string seller = sellCombo.substr(0, sellCombo.size() - 2);
+	  
+	  if (!addressFilter.empty() && seller != addressFilter) continue;
+	  
+	  std::string txid = offer.getHash().GetHex();
+	  uint32_t propertyId = offer.getProperty();
+	  int64_t sellOfferAmount = offer.getOfferAmountOriginal(); 
+	  int64_t sellBitcoinDesired = offer.getBTCDesiredOriginal(); 
+	  int64_t amountAvailable = getMPbalance(seller, propertyId, SELLOFFER_RESERVE);
+	  uint8_t option = offer.getOption();
+	  
+	  double unitPriceFloat = 0.0;
+	  if ((sellOfferAmount > 0) && (sellBitcoinDesired > 0)) {
+	    unitPriceFloat = (double)sellBitcoinDesired/(double)sellOfferAmount; 
+	  }
+	  
+	  unitPrice = rounduint64(unitPriceFloat*COIN);
+	  int64_t bitcoinDesired = calculateDesiredBTC(sellOfferAmount, sellBitcoinDesired, amountAvailable);
+	  int64_t sumLtcs = 0;
+	  for (AcceptMap::const_iterator ait = my_accepts.begin(); ait != my_accepts.end(); ++ait)
+	    {
+	      const CMPAccept& accept = ait->second;
+	      const std::string& acceptCombo = ait->first;
+	      
+	      if (accept.getHash() == offer.getHash())
+		{
+		  std::string buyer = acceptCombo.substr((acceptCombo.find("+") + 1), (acceptCombo.size()-(acceptCombo.find("+") + 1)));
+		  int64_t amountOffered = accept.getAcceptAmountRemaining(); 
+		  int64_t amountToPayInBTC = calculateDesiredBTC(accept.getOfferAmountOriginal(), accept.getBTCDesiredOriginal(), amountOffered);
+		  if (option == 1)
+		    {
+		      uint64_t ltcsreceived = rounduint64(unitPrice*amountOffered/COIN);
+		      sumLtcs += ltcsreceived;
+		      sellerS = buyer;
+		      globalVolumeALL_LTC += ltcsreceived;
+		    }
+		  else if (option == 2)
+		    {
+		      buyerS = buyer;
+		      globalVolumeALL_LTC += amountToPayInBTC;
+		    }
+		}
+	      
+	      if (option == 2)
+		{
+		  sellerS = seller;
+		  globalVolumeALL_LTC += bitcoinDesired;
+		}
+	      else if (option == 1)
+		{
+		  buyerS = seller;
+		  globalVolumeALL_LTC += sellBitcoinDesired - sumLtcs;
+		}
+	    }
+	}
+    }
+  
+  PrintToLog("\nSeller = %s\n", sellerS);
+  PrintToLog("\nBuyer = %s\n", buyerS);
+  factorALLtoLTC = unitPrice;
+  PrintToLog("\nfactorALLtoLTC CMPDEx = %s\n", FormatDivisibleMP(unitPrice));
+  PrintToLog("\nglobalVolumeALL_LTC CMPDEx = %s\n\n", FormatDivisibleMP(globalVolumeALL_LTC));
+  /*****************************************************/
   
   return rc;
 }

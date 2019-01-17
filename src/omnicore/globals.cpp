@@ -39,6 +39,6 @@ int nVestingAddrs;
 int64_t amountVesting;
 int lastBlockg;
 int vestingActivationBlock;
-int64_t LTCPriceOffer;
-int64_t factorALLtoLTC;
+volatile int64_t LTCPriceOffer;
+volatile int64_t factorALLtoLTC;
 volatile int64_t globalVolumeALL_LTC;

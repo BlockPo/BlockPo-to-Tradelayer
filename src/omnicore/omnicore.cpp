@@ -3013,18 +3013,17 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   extern int64_t factorALLtoLTC;
   int64_t volumeALLtoLTC = 0;
   
+  const int64_t factorALLtoLTCh = factorALLtoLTC;
   if (prop1 == OMNI_PROPERTY_ALL_ISSUANCE) {
-    arith_uint256 volumeALLtoLTC_256t = ConvertTo256(factorALLtoLTC)*ConvertTo256(amount1);
-    volumeALLtoLTC = ConvertTo64(volumeALLtoLTC_256t)/COIN;
-    PrintToLog("factorALLtoLTC =%d, amount1 = %d\n", factorALLtoLTC, amount1);
+    volumeALLtoLTC = rounduint64(factorALLtoLTCh*amount1/COIN);
+    PrintToLog("factorALLtoLTC =%d, amount1 = %d: CMPMetaDEx\n", factorALLtoLTC, amount1);
   } else if (prop2 == OMNI_PROPERTY_ALL_ISSUANCE) {
-    arith_uint256 volumeALLtoLTC_256t = ConvertTo256(factorALLtoLTC)*ConvertTo256(amount2);
-    volumeALLtoLTC = ConvertTo64(volumeALLtoLTC_256t)/COIN;
-    PrintToLog("factorALLtoLTC =%d, amount1 = %d\n", factorALLtoLTC, amount1);
+    volumeALLtoLTC = rounduint64(factorALLtoLTCh*amount2/COIN);
+    PrintToLog("factorALLtoLTC =%d, amount1 = %d: CMPMetaDEx\n", factorALLtoLTC, amount1);
   }
   
   PrintToLog("Number of Traded Contracts ~ %s LTC\n", FormatDivisibleMP(volumeALLtoLTC, true));
-  PrintToLog("\nGlobal LTC Volume No Updated: CMPContractDEx = %s \n", FormatDivisibleMP(globalVolumeALL_LTC, true));
+  PrintToLog("\nGlobal LTC Volume No Updated: CMPMetaDEx = %s \n", FormatDivisibleMP(globalVolumeALL_LTC, true));
   globalVolumeALL_LTC += volumeALLtoLTC;
   PrintToLog("\nGlobal LTC Volume Updated: CMPMetaDEx = %s\n", FormatDivisibleMP(globalVolumeALL_LTC, true));
   
@@ -3103,13 +3102,14 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   uint32_t NotionalSize = sp.notional_size;
   int64_t volumeALLtoLTC = 0;
   
-  PrintToLog("\nCheck nCouldBuy0 = %d, factorALLtoLTC = %d, NotionalSize = %d\n", nCouldBuy0, factorALLtoLTC, NotionalSize);
+  PrintToLog("\nCheck nCouldBuy0 = %d, factorALLtoLTC = %s, NotionalSize = %d: CMPContractDEx\n", nCouldBuy0, FormatDivisibleMP(factorALLtoLTC), NotionalSize);
   
+  const int64_t factorALLtoLTCh = factorALLtoLTC;
   if (sp.prop_type == ALL_PROPERTY_TYPE_CONTRACT) {
     globalPNLALL_DUSD += UPNL1 + UPNL2;
     globalVolumeALL_DUSD += nCouldBuy0;
-    arith_uint256 volumeALLtoLTC_256t = ConvertTo256(factorALLtoLTC)*(ConvertTo256(nCouldBuy0)*ConvertTo256(NotionalSize));
-    volumeALLtoLTC = ConvertTo64(volumeALLtoLTC_256t)/COIN;
+    int64_t LTSforNotionalSize = rounduint64(factorALLtoLTCh*nCouldBuy0/COIN);
+    volumeALLtoLTC = rounduint64((int64_t)NotionalSize*LTSforNotionalSize);
   }
   
   PrintToLog("Number of Traded Contracts ~ %s LTC\n", FormatDivisibleMP(volumeALLtoLTC, true));
