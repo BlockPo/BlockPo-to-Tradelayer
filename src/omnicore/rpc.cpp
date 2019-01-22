@@ -678,9 +678,9 @@ UniValue tl_getproperty(const JSONRPCRequest& request)
     response.push_back(Pair("creation block", sp.init_block));
 
     if (sp.subcategory == "Futures Contracts"){
-        response.push_back(Pair("notional size",(uint64_t) sp.notional_size));
+        response.push_back(Pair("notional size",FormatDivisibleShortMP(sp.notional_size)));
         response.push_back(Pair("collateral currency",(uint64_t) sp.collateral_currency));
-        response.push_back(Pair("margin requirement",(uint64_t) sp.margin_requirement));
+          response.push_back(Pair("margin requirement",FormatDivisibleShortMP(sp.margin_requirement)));
         response.push_back(Pair("blocks until expiration",(uint64_t) sp.blocks_until_expiration));
         // response.push_back(Pair("ticksize", FormatByType(sp.ticksize,2)));
 
