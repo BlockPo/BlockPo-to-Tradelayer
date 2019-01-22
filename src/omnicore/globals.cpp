@@ -32,6 +32,7 @@ VectorTLS *pt_netted_npartly_short;
 VectorTLS *pt_open_incr_anypos;
 VectorTLS *pt_netted_npartly_anypos;
 MatrixTLS *pt_ndatabase;
+VectorTLS *pt_changepos_status;
 std::map<std::string,uint32_t> peggedIssuers;
 double globalPNLALL_DUSD;
 int64_t globalVolumeALL_DUSD;

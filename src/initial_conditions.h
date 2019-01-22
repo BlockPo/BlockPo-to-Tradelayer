@@ -35,3 +35,6 @@ netted_npartly_anypos[1] = "LongPosNettedPartly";
 netted_npartly_anypos[2] = "ShortPosNetted";
 netted_npartly_anypos[3] = "ShortPosNettedPartly";
 
+pt_changepos_status = new VectorTLS(2); VectorTLS &changepos_status = *pt_changepos_status;
+changepos_status[0] = "OpenLongPosByShortPosNetted";
+changepos_status[1] = "OpenShortPosByLongPosNetted";

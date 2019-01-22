@@ -32,7 +32,7 @@ printf "\n________________________________________\n"
 printf "Base address to work with:\n"
 printf $ADDRBase
 
-N=100
+N=5
 
 amount_bitcoin=10
 amountbitcoin_baseaddr=10
@@ -111,54 +111,60 @@ do
     $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_getbalance ${ADDRess[$i]} 4
 done
 ##################################################################
-# for (( i=1; i<=${N}; i++ ))
-# do
-#     printf "\n________________________________________\n"
-#     printf "Price for sale Seller #$i\n"
-#     PRICE=$((RANDOM%100+3400))
-#     printf "\nRandom Price:\n"
-#     printf $PRICE
+for (( i=1; i<=${N}; i++ ))
+do
+    printf "\n________________________________________\n"
+    printf "Price for sale Seller #$i\n"
+    PRICE=$((RANDOM%100+3400))
+    printf "\nRandom Price:\n"
+    printf $PRICE
     
-#     printf "\nAmount for sale Seller #$i\n"
-#     AMOUNT=$((RANDOM%99+1))
-#     printf "\nRandom Amount:\n"
-#     printf $AMOUNT
-#     printf "\n"
+    printf "\nAmount for sale Seller #$i\n"
+    AMOUNT=$((RANDOM%99+1))
+    printf "\nRandom Amount:\n"
+    printf $AMOUNT
+    printf "\n"
     
-#     $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[$i]} ${CONTRACT} ${AMOUNT} ${PRICE} 1
-#     $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1    
-# done
-# ##################################################################
-# for (( i=1; i<=${N}; i++ ))
-# do
-#     printf "\n________________________________________\n"
-#     printf "Price for sale Seller #$i\n"
-#     PRICE=$((RANDOM%100+3400))
-#     printf "\nRandom Price:\n"
-#     printf $PRICE
-    
-#     printf "\nAmount for sale Seller #$i\n"
-#     AMOUNT=$((RANDOM%99+1))
-#     printf "\nRandom Amount:\n"
-#     printf $AMOUNT
-#     printf "\n"
-    
-#     $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[$i]} ${CONTRACT} ${AMOUNT} ${PRICE} 2
-#     $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1    
-# done
+    $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[$i]} ${CONTRACT} ${AMOUNT} ${PRICE} 1
+    $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1    
+done
 ##################################################################
-$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[1]} ${CONTRACT} 1000 20 1
-$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
-$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[2]} ${CONTRACT} 1000 20 2
-$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
+for (( i=1; i<=${N}; i++ ))
+do
+    printf "\n________________________________________\n"
+    printf "Price for sale Seller #$i\n"
+    PRICE=$((RANDOM%100+3400))
+    printf "\nRandom Price:\n"
+    printf $PRICE
+    
+    printf "\nAmount for sale Seller #$i\n"
+    AMOUNT=$((RANDOM%99+1))
+    printf "\nRandom Amount:\n"
+    printf $AMOUNT
+    printf "\n"
+    
+    $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[$i]} ${CONTRACT} ${AMOUNT} ${PRICE} 2
+    $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1    
+done
+##################################################################
+# $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[1]} ${CONTRACT} 50 100 1
+# $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
 
-$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[2]} ${CONTRACT} 1000 100 1
-$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
-$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[3]} ${CONTRACT} 1000 100 2
-$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
-##################################################################
-$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_getfullposition ${ADDRess[1]} ${CONTRACT}
-##################################################################
+# $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[2]} ${CONTRACT} 50 100 2
+# $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
+
+# $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[1]} ${CONTRACT} 50 200 1
+# $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
+
+# $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[3]} ${CONTRACT} 50 200 2
+# $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
+
+# $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[1]} ${CONTRACT} 100 300 2
+# $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
+
+# $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[4]} ${CONTRACT} 100 300 1
+# $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
+# ##################################################################
 printf "\n Cheking the  orderbok (sellside):\n"
 $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_getcontract_orderbook ${CONTRACT} 2
 
