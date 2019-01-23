@@ -3033,7 +3033,7 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   PrintToLog("\nPath Ele inside recordMatchedTrade. Length last match = %d\n", number_lines);
   for (it_path_ele = path_ele.begin(); it_path_ele != path_ele.end(); ++it_path_ele) printing_edges_database(*it_path_ele);
   
-  loopForUPNL(path_ele, path_eleh, path_length, address1, address2, s_maker0, s_taker0, UPNL1, UPNL2, FormatShortIntegerMP(effective_price), nCouldBuy0);
+  loopForUPNL(path_ele, path_eleh, path_length, address1, address2, s_maker0, s_taker0, UPNL1, UPNL2, effective_price, nCouldBuy0);
   
   unsigned int limSup = path_ele.size()-path_length;
   path_length = path_ele.size();
@@ -3051,7 +3051,7 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   	      double entry_price_first = 0;
   	      int idx_price_first = 0;
   	      uint64_t entry_pricefirst_num = 0;
-  	      double exit_priceh = (double)FormatShortIntegerMP(effective_price);
+  	      double exit_priceh = (double)effective_price/COIN;
   	      uint64_t amount = 0;
   	      std::string status = "";
 	      std::string last_match_status = "";
@@ -3151,10 +3151,14 @@ double PNL_function(double entry_price, double exit_price, int64_t amount_trd, s
 {
   double PNL = 0;
   
+  PrintToLog("\nInside PNL_ffunction: entry_price = %d, exit_price = %d, amount_trd = %d\n", entry_price, exit_price, amount_trd);
+  
   if ( finding_string("Long", netted_status) )
     PNL = (double)amount_trd*(1/entry_price-1/exit_price);
   else if ( finding_string("Short", netted_status) )
     PNL = (double)amount_trd*(1/exit_price-1/entry_price);
+  
+  PrintToLog("\nPNL inside PNL_function = %d\n", PNL);
   
   return PNL;
 }
@@ -3164,7 +3168,7 @@ void loopForUPNL(std::vector<std::map<std::string, std::string>> path_ele, std::
   std::vector<std::map<std::string, std::string>>::iterator it_path_ele;
   
   double entry_pricesrc = 0, entry_pricetrk = 0;
-  double exit_priceh = (double)exit_price;
+  double exit_priceh = (double)exit_price/COIN;
   
   int idx_price_src = 0, idx_price_trk = 0;
   uint64_t entry_pricesrc_num = 0, entry_pricetrk_num = 0;
@@ -3176,8 +3180,8 @@ void loopForUPNL(std::vector<std::map<std::string, std::string>> path_ele, std::
   loopforEntryPrice(path_ele, path_eleh, address1, status1, entry_pricesrc, idx_price_src, entry_pricesrc_num, limSup, exit_priceh, amount_src, status_src);
   loopforEntryPrice(path_ele, path_eleh, address2, status2, entry_pricetrk, idx_price_trk, entry_pricetrk_num, limSup, exit_priceh, amount_trk, status_trk);
   
-  PrintToLog("\nentry_pricesrc = %d, entry_pricetrk = %d, exit_price = %d\n", entry_pricesrc, entry_pricetrk, exit_priceh);
-  PrintToLog("\nidx_price_src = %d, idx_price_trk = %d\n", idx_price_src, idx_price_src);
+  PrintToLog("\nentry_pricesrc = %d, address1 = %s, exit_price = %d, amount_src = %d\n", entry_pricesrc, address1, exit_priceh, amount_src);
+  PrintToLog("\nentry_pricetrk = %d, address2 = %s, exit_price = %d, amount_trk = %d\n", entry_pricetrk, address2, exit_priceh, amount_src);
   
   UPNL1 = PNL_function(entry_pricesrc, exit_priceh, amount_src, status_src);
   UPNL2 = PNL_function(entry_pricetrk, exit_priceh, amount_trk, status_trk);
@@ -3235,11 +3239,10 @@ void loopforEntryPrice(std::vector<std::map<std::string, std::string>> path_ele,
 		  amount += static_cast<uint64_t>(stol((*reit_path_ele)["amount_trd"]));
 		  
 		  price_num_w += stod((*reit_path_ele)["matched_price"])*stod((*reit_path_ele)["amount_trd"]);
-		  PrintToLog("price_num_w trk = %d", price_num_w);
 		  
 		  if (finding_string("Open", (*reit_path_ele)["status_src"]))
 		    {
-		      // status = (*reit_path_ele)["status_src"];
+		      PrintToLog("\nprice_num_w trk = %d, amount = %d\n", price_num_w, amount);
 		      entry_price = price_num_w/(double)amount;
 		      break;
 		    }
@@ -3256,11 +3259,10 @@ void loopforEntryPrice(std::vector<std::map<std::string, std::string>> path_ele,
 		  amount += static_cast<uint64_t>(stol((*reit_path_ele)["amount_trd"]));
 		  
 		  price_num_w += stod((*reit_path_ele)["matched_price"])*stod((*reit_path_ele)["amount_trd"]);
-		  PrintToLog("price_num_w trk = %d", price_num_w);
 		  
 		  if (finding_string("Open", (*reit_path_ele)["status_trk"]))
 		    {
-		      // status = (*reit_path_ele)["status_trk"];
+		      PrintToLog("\nprice_num_w trk = %d, amount = %d\n", price_num_w, amount);
 		      entry_price = price_num_w/(double)amount;
 		      break;
 		    }

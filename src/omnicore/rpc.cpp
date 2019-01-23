@@ -1528,11 +1528,11 @@ UniValue tl_getfullposition(const JSONRPCRequest& request)
   double upnl = addrs_upnlc[propertyId][address];
   
   if (upnl >= 0) {
-    positionObj.push_back(Pair("positiveupnl", FormatByType(mastercore::DoubleToInt64(upnl), 2)));
+    positionObj.push_back(Pair("positiveupnl", upnl));
     positionObj.push_back(Pair("negativeupnl", FormatByType(0,2)));
   } else {
     positionObj.push_back(Pair("positiveupnl", FormatByType(0,2)));
-    positionObj.push_back(Pair("negativeupnl", FormatByType(mastercore::DoubleToInt64(upnl), 2)));
+    positionObj.push_back(Pair("negativeupnl", upnl));
   }
   
   // pnl
