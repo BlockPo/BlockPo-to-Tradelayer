@@ -1902,7 +1902,7 @@ UniValue tl_getupnl(const JSONRPCRequest& request)
     balanceObj.push_back(Pair("negativeupnl", FormatByType(0,2)));
   } else if (upnl < 0) {
     balanceObj.push_back(Pair("positiveupnl", FormatByType(0,2)));
-    balanceObj.push_back(Pair("negativeupnl", FormatByType(mastercore::DoubleToInt64(upnl),2)));
+    balanceObj.push_back(Pair("negativeupnl", FormatByType(mastercore::DoubleToInt64(-upnl),2)));
   } else {
     balanceObj.push_back(Pair("positiveupnl", FormatByType(0,2)));
     balanceObj.push_back(Pair("negativeupnl", FormatByType(0,2)));
