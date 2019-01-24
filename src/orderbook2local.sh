@@ -147,22 +147,22 @@ done
 #     $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1    
 # done
 ##################################################################
-$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[1]} ${CONTRACT} 5000 3.1 1
+$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[1]} ${CONTRACT} 5000 3.119 1
 $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
 
-$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[2]} ${CONTRACT} 5000 3.1 2
+$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[2]} ${CONTRACT} 5000 3.119 2
 $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
 
-$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[1]} ${CONTRACT} 5000 3.2 1
+$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[1]} ${CONTRACT} 5000 3.219 1
 $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
 
-$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[3]} ${CONTRACT} 5000 3.2 2
+$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[3]} ${CONTRACT} 5000 3.219 2
 $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
 
-$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[1]} ${CONTRACT} 10000 3.3 2
+$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[1]} ${CONTRACT} 10000 3.319 2
 $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
 
-$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[4]} ${CONTRACT} 10000 3.3 1
+$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[4]} ${CONTRACT} 10000 3.319 1
 $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
 
 $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_getfullposition ${ADDRess[1]} ${CONTRACT}

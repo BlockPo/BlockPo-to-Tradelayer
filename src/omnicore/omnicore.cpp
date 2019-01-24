@@ -3055,6 +3055,7 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   	      uint64_t amount = 0;
   	      std::string status = "";
 	      std::string last_match_status = "";
+	      
 	      for (reit_path_ele = path_ele.rbegin(); reit_path_ele != path_ele.rend(); ++reit_path_ele)
 		{
 		  if(finding_string(it_addrs_upnlm->first, (*reit_path_ele)["addrs_src"]))
@@ -3062,7 +3063,13 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
 		      last_match_status = (*reit_path_ele)["status_src"];
 		      break;
 		    }
+		  else if(finding_string(it_addrs_upnlm->first, (*reit_path_ele)["addrs_trk"]))
+		    {
+		      last_match_status = (*reit_path_ele)["status_trk"];
+		      break;
+		    }
 		}
+	      
   	      loopforEntryPrice(path_ele, path_eleh, it_addrs_upnlm->first, last_match_status, entry_price_first, idx_price_first, entry_pricefirst_num, limSup, exit_priceh, amount, status);
   	      PrintToLog("\namount for UPNL_show: %d\n", amount);
   	      double UPNL_show = PNL_function(entry_price_first, exit_priceh, amount, status);
@@ -3151,12 +3158,12 @@ double PNL_function(double entry_price, double exit_price, int64_t amount_trd, s
 {
   double PNL = 0;
   
-  PrintToLog("\nInside PNL_ffunction: entry_price = %d, exit_price = %d, amount_trd = %d\n", entry_price, exit_price, amount_trd);
+  PrintToLog("\nInside PNL_ffunction: entry_price = %d, exit_price = %d, amount_trd = %d, status = %s\n", entry_price, exit_price, amount_trd, netted_status);
   
   if ( finding_string("Long", netted_status) )
-    PNL = (double)amount_trd*(1/entry_price-1/exit_price);
+    PNL = (double)amount_trd*(1/(double)entry_price-1/(double)exit_price);
   else if ( finding_string("Short", netted_status) )
-    PNL = (double)amount_trd*(1/exit_price-1/entry_price);
+    PNL = (double)amount_trd*(1/(double)exit_price-1/(double)entry_price);
   
   PrintToLog("\nPNL inside PNL_function = %d\n", PNL);
   
@@ -3178,12 +3185,11 @@ void loopForUPNL(std::vector<std::map<std::string, std::string>> path_ele, std::
   std::string status_src = "", status_trk = "";
   
   loopforEntryPrice(path_ele, path_eleh, address1, status1, entry_pricesrc, idx_price_src, entry_pricesrc_num, limSup, exit_priceh, amount_src, status_src);
-  loopforEntryPrice(path_ele, path_eleh, address2, status2, entry_pricetrk, idx_price_trk, entry_pricetrk_num, limSup, exit_priceh, amount_trk, status_trk);
-  
   PrintToLog("\nentry_pricesrc = %d, address1 = %s, exit_price = %d, amount_src = %d\n", entry_pricesrc, address1, exit_priceh, amount_src);
-  PrintToLog("\nentry_pricetrk = %d, address2 = %s, exit_price = %d, amount_trk = %d\n", entry_pricetrk, address2, exit_priceh, amount_src);
-  
   UPNL1 = PNL_function(entry_pricesrc, exit_priceh, amount_src, status_src);
+  
+  loopforEntryPrice(path_ele, path_eleh, address2, status2, entry_pricetrk, idx_price_trk, entry_pricetrk_num, limSup, exit_priceh, amount_trk, status_trk);
+  PrintToLog("\nentry_pricetrk = %d, address2 = %s, exit_price = %d, amount_trk = %d\n", entry_pricetrk, address2, exit_priceh, amount_src);
   UPNL2 = PNL_function(entry_pricetrk, exit_priceh, amount_trk, status_trk);
 }
 
@@ -3193,8 +3199,6 @@ void loopforEntryPrice(std::vector<std::map<std::string, std::string>> path_ele,
   std::vector<std::map<std::string, std::string>>::iterator it_path_eleh;
   double price_num_w = 0;
   extern VectorTLS *pt_changepos_status; VectorTLS &changepos_status  = *pt_changepos_status;
-  
-  status = addrs_upnl == path_eleh[path_eleh.size()-1]["addrs_src"] ? path_eleh[path_eleh.size()-1]["status_src"] : path_eleh[path_eleh.size()-1]["status_trk"];
   
   if (finding(status_match, changepos_status))
     {
@@ -3212,9 +3216,22 @@ void loopforEntryPrice(std::vector<std::map<std::string, std::string>> path_ele,
       	    }
       	}
       entry_price = price_num_w/(double)amount;
+      
+      for (reit_path_ele = path_eleh.rbegin(); reit_path_ele != path_eleh.rend(); ++reit_path_ele)
+	{
+	  if (addrs_upnl == (*reit_path_ele)["addrs_src"] && finding_string("Open", (*reit_path_ele)["status_src"]))
+	    {
+	      status = (*reit_path_ele)["status_src"];
+	    }
+	  else if (addrs_upnl == (*reit_path_ele)["addrs_trk"] && finding_string("Open", (*reit_path_ele)["status_trk"]))
+	    {
+	      status = (*reit_path_ele)["status_trk"];
+	    }
+	}
     }
   else
     {
+      PrintToLog("\nLoop in the Path Element\n");
       for (it_path_eleh = path_eleh.begin(); it_path_eleh != path_eleh.end(); ++it_path_eleh)
       	{
       	  if (addrs_upnl == (*it_path_eleh)["addrs_src"] || addrs_upnl == (*it_path_eleh)["addrs_trk"])
@@ -3225,7 +3242,7 @@ void loopforEntryPrice(std::vector<std::map<std::string, std::string>> path_ele,
       	    }
       	}
       
-      PrintToLog("\nInside loopForEntryPrice:\n");
+      PrintToLog("\nInside LoopForEntryPrice:\n");
       for (reit_path_ele = path_ele.rbegin()+limSup; reit_path_ele != path_ele.rend(); ++reit_path_ele)
 	{
 	  if (addrs_upnl == (*reit_path_ele)["addrs_src"])
@@ -3242,8 +3259,9 @@ void loopforEntryPrice(std::vector<std::map<std::string, std::string>> path_ele,
 		  
 		  if (finding_string("Open", (*reit_path_ele)["status_src"]))
 		    {
-		      PrintToLog("\nprice_num_w trk = %d, amount = %d\n", price_num_w, amount);
+		      PrintToLog("\naddrs = %s, price_num_w trk = %d, amount = %d\n", addrs_upnl, price_num_w, amount);
 		      entry_price = price_num_w/(double)amount;
+		      status = (*reit_path_ele)["status_src"];
 		      break;
 		    }
 		}
@@ -3262,8 +3280,9 @@ void loopforEntryPrice(std::vector<std::map<std::string, std::string>> path_ele,
 		  
 		  if (finding_string("Open", (*reit_path_ele)["status_trk"]))
 		    {
-		      PrintToLog("\nprice_num_w trk = %d, amount = %d\n", price_num_w, amount);
+		      PrintToLog("\naddrs = %s, price_num_w trk = %d, amount = %d\n", addrs_upnl, price_num_w, amount);
 		      entry_price = price_num_w/(double)amount;
+		      status = (*reit_path_ele)["status_trk"];
 		      break;
 		    }
 		}
@@ -3271,7 +3290,11 @@ void loopforEntryPrice(std::vector<std::map<std::string, std::string>> path_ele,
 	  else
 	    continue;
 	}
-      if (idx_price == 0) entry_price = exit_priceh;
+      if (idx_price == 0)
+	{
+	  entry_price = exit_priceh;
+	  status = status_match;
+	}
     }
 }
 
