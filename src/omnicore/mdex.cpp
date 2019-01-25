@@ -1204,8 +1204,10 @@ MatchReturnType x_Trade(CMPMetaDEx* const pnew)
             assert(pold->unitPrice() <= pnew->inversePrice());
             assert(pnew->unitPrice() <= pold->inversePrice());
 
-            globalNumPrice = pold->getAmountDesired();
-            globalDenPrice = pold->getAmountForSale();
+//             globalNumPrice = pold->getAmountDesired();
+//             globalDenPrice = pold->getAmountForSale();
+	       globalNumPrice = 1;
+               globalDenPrice = 1;
             /*Lets gonna take the pnew->unitPrice() as the ALL unit price*/
             /*unitPrice = 1 ALL on dUSD*/
             ///////////////////////////
