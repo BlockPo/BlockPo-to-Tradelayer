@@ -2,7 +2,14 @@
 #include "tradelayer_matrices.h"
 #include <unordered_set>
 #include "omnicore/log.h"
+#include "omnicore/mdex.h"
 
+#include <boost/math/constants/constants.hpp>
+#include <boost/multiprecision/cpp_dec_float.hpp>
+#include <iostream>
+#include <limits>
+
+typedef boost::multiprecision::cpp_dec_float_100 dec_float;
 using namespace std;
 
 void printing_matrix(MatrixTLS &gdata)
@@ -96,3 +103,8 @@ bool find_string_set(std::string s, std::unordered_set<std::string> addrs_set)
 bool findTrueValue(bool a, bool b) { return a || b ; }
 bool findTrueValue(bool a, bool b, bool c) { return ( a || b ) || c; }
 bool findTrueValue(bool a, bool b, bool c, bool d) { return ( a || b ) || ( c || d ); }
+
+std::string DecFloatToString(dec_float& value)
+{
+  return value.str(DISPLAY_PRECISION_LEN, std::ios_base::fixed);
+}

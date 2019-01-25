@@ -43,6 +43,7 @@
 #include "tradelayer_matrices.h"
 
 using boost::algorithm::token_compress_on;
+typedef boost::multiprecision::uint128_t ui128;
 
 using namespace mastercore;
 typedef boost::rational<boost::multiprecision::checked_int128_t> rational_t;
@@ -58,7 +59,6 @@ extern volatile int id_contract;
 extern volatile int64_t factorALLtoLTC;
 extern volatile int64_t globalVolumeALL_LTC;
 extern volatile int64_t LTCPriceOffer;
-typedef boost::multiprecision::uint128_t ui128;
 
 using mastercore::StrToInt64;
 
@@ -2357,11 +2357,11 @@ int CMPTransaction::logicMath_ContractDexTrade()
   
   if (nBalance < amountToReserve || nBalance == 0) {
     PrintToLog("%s(): rejected: sender %s has insufficient balance for contracts %d [%s < %s] \n",
-	       __func__,
-	       sender,
-	       property,
-	       FormatMP(property, nBalance),
-	       FormatMP(property, amountToReserve));
+  	       __func__,
+  	       sender,
+  	       property,
+  	       FormatMP(property, nBalance),
+  	       FormatMP(property, amountToReserve));
     return (PKT_ERROR_SEND -25); 
   } else if (conv != 0) {
     if (amountToReserve > 0) {
@@ -3032,14 +3032,15 @@ int CMPTransaction::logicMath_AcceptOfferBTC()
 	  int64_t amountAvailable = getMPbalance(seller, propertyId, SELLOFFER_RESERVE);
 	  uint8_t option = offer.getOption();
 	  
-	  double unitPriceFloat = 0.0;
-	  if ((sellOfferAmount > 0) && (sellBitcoinDesired > 0)) {
-	    unitPriceFloat = (double)sellBitcoinDesired/(double)sellOfferAmount; 
-	  }
+	  rational_t unitPriceFloat(sellBitcoinDesired, sellOfferAmount); 
+	  PrintToLog("\nunitPriceFloat = %s\n", xToString(unitPriceFloat));
 	  
-	  unitPrice = rounduint64(unitPriceFloat*COIN);
+	  unitPrice = mastercore::StrToInt64(xToString(unitPriceFloat), true);
+	  PrintToLog("\nunitPriceFloat int64_t= %s\n", FormatDivisibleMP(unitPrice));
+	  
 	  int64_t bitcoinDesired = calculateDesiredBTC(sellOfferAmount, sellBitcoinDesired, amountAvailable);
 	  int64_t sumLtcs = 0;
+	  
 	  for (AcceptMap::const_iterator ait = my_accepts.begin(); ait != my_accepts.end(); ++ait)
 	    {
 	      const CMPAccept& accept = ait->second;
@@ -3050,9 +3051,11 @@ int CMPTransaction::logicMath_AcceptOfferBTC()
 		  std::string buyer = acceptCombo.substr((acceptCombo.find("+") + 1), (acceptCombo.size()-(acceptCombo.find("+") + 1)));
 		  int64_t amountOffered = accept.getAcceptAmountRemaining(); 
 		  int64_t amountToPayInBTC = calculateDesiredBTC(accept.getOfferAmountOriginal(), accept.getBTCDesiredOriginal(), amountOffered);
+		  
 		  if (option == 1)
 		    {
-		      uint64_t ltcsreceived = rounduint64(unitPrice*amountOffered/COIN);
+		      arith_uint256 ltcsreceived_256t = ConvertTo256(unitPrice)*ConvertTo256(amountOffered);
+		      uint64_t ltcsreceived = ConvertTo64(ltcsreceived_256t)/COIN;
 		      sumLtcs += ltcsreceived;
 		      sellerS = buyer;
 		      globalVolumeALL_LTC += ltcsreceived;
@@ -3078,11 +3081,10 @@ int CMPTransaction::logicMath_AcceptOfferBTC()
 	}
     }
   
-  PrintToLog("\nSeller = %s\n", sellerS);
-  PrintToLog("\nBuyer = %s\n", buyerS);
-  factorALLtoLTC = unitPrice;
-  PrintToLog("\nfactorALLtoLTC CMPDEx = %s\n", FormatDivisibleMP(unitPrice));
-  PrintToLog("\nglobalVolumeALL_LTC CMPDEx = %s\n\n", FormatDivisibleMP(globalVolumeALL_LTC));
+  PrintToLog("\nSeller = %s\t Buyer = %s\n", sellerS, buyerS);
+  factorALLtoLTC = unitPrice;   
+  PrintToLog("\nfactorALLtoLTC CMPDEx = %s, nValue = %s\n", FormatDivisibleMP(unitPrice), FormatDivisibleMP(nValue));
+  PrintToLog("\nglobalVolumeALL_LTC CMPDEx = %d\n\n", FormatDivisibleMP(globalVolumeALL_LTC));
   /*****************************************************/
   
   return rc;

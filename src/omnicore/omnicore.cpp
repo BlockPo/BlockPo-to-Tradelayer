@@ -102,6 +102,8 @@ using std::string;
 using std::vector;
 
 using namespace mastercore;
+typedef boost::multiprecision::uint128_t ui128;
+typedef boost::multiprecision::cpp_dec_float_100 dec_float;
 
 CCriticalSection cs_tally;
 
@@ -149,6 +151,7 @@ CMPTradeList *mastercore::t_tradelistdb;
 COmniTransactionDB *mastercore::p_OmniTXDB;
 
 using mastercore::StrToInt64;
+
 // indicate whether persistence is enabled at this point, or not
 // used to write/read files, for breakout mode, debugging, etc.
 static bool writePersistence(int block_now)
@@ -568,6 +571,7 @@ void sendingVestingTokens()
   
   const uint32_t propertyIdVesting = _my_sps->putSP(OMNI_PROPERTY_ALL, newSP);
   assert(propertyIdVesting > 0);
+
   for (int i = 0; i < nVestingAddrs; i++) assert(update_tally_map(vestingAddresses[i], propertyIdVesting, amountVesting, BALANCE));
   
   for (int i = 0; i < nVestingAddrs; i++) {
@@ -729,6 +733,7 @@ static bool FillTxInputCache(const CTransaction& tx)
 // RETURNS: 0 if parsed a MP TX
 // RETURNS: < 0 if a non-MP-TX or invalid
 // RETURNS: >0 if 1 or more payments have been made
+
 static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, unsigned int idx, CMPTransaction& mp_tx, unsigned int nTime)
 {
     assert(bRPConly == mp_tx.isRpcOnly());
@@ -2103,22 +2108,31 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   /***********************************************/
   /** Vesting Tokens to Balance */
   int64_t x_Axis = globalVolumeALL_LTC;
-  PrintToLog("x_Axis = %s", FormatDivisibleMP(x_Axis, true));
-  for (int i = 0; i < nVestingAddrs; i++) {
-    int64_t ALLUnvested = getMPbalance(vestingAddresses[i], OMNI_PROPERTY_ALL, UNVESTED);
-    if (ALLUnvested != 0 && nBlockTime == lastBlockg ) {
-      if (x_Axis >= 0 && x_Axis < 300000) { /** y = x*/
-	assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, -x_Axis, UNVESTED));
-	assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, x_Axis, BALANCE));
-      } else if (x_Axis >= 300000 && x_Axis < 300000000) { /** y = x^2*/
-	assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, -x_Axis*x_Axis, UNVESTED));
-	assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, x_Axis*x_Axis, BALANCE));      
-      } else if (x_Axis >= 300000000 && x_Axis < 30000000000000) { /** y = ln|x|*/
-	assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, -log(x_Axis), UNVESTED));
-	assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, log(x_Axis), BALANCE));          
+  
+  if (x_Axis)
+    {
+      PrintToLog("\nx_Axis = %s\n", FormatDivisibleMP(x_Axis));
+      PrintToLog("Before Unvested = %d", getMPbalance(vestingAddresses[1], OMNI_PROPERTY_ALL, UNVESTED));
+      PrintToLog("Before Balance = %d", getMPbalance(vestingAddresses[1], OMNI_PROPERTY_ALL, BALANCE));
+      
+      for (int i = 0; i < nVestingAddrs; i++) {
+	int64_t ALLUnvested = getMPbalance(vestingAddresses[i], OMNI_PROPERTY_ALL, UNVESTED);
+	if (ALLUnvested != 0 && nBlockTime == lastBlockg ) {
+	  if (x_Axis >= 0 && x_Axis < 300000) { /** y = x*/
+	    assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, -x_Axis, UNVESTED));
+	    assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, x_Axis, BALANCE));
+	  } else if (x_Axis >= 300000 && x_Axis < 300000000) { /** y = x^2*/
+	    assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, -x_Axis*x_Axis, UNVESTED));
+	    assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, x_Axis*x_Axis, BALANCE));      
+	  } else if (x_Axis >= 300000000 && x_Axis < 30000000000) { /** y = ln|x|*/
+	    assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, -log(x_Axis), UNVESTED));
+	    assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, log(x_Axis), BALANCE));          
+	  }
+	}
       }
+      PrintToLog("Before Unvested = %d", getMPbalance(vestingAddresses[1], OMNI_PROPERTY_ALL, UNVESTED));
+      PrintToLog("Before Balance = %d", getMPbalance(vestingAddresses[1], OMNI_PROPERTY_ALL, BALANCE));
     }
-  }
   /***********************************************/
   
   CMPTransaction mp_obj;
@@ -3010,22 +3024,30 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   const string key = txid1.ToString() + "+" + txid2.ToString();
   const string value = strprintf("%s:%s:%u:%u:%lu:%lu:%d:%d", address1, address2, prop1, prop2, amount1, amount2, blockNum, fee);
   
-  extern int64_t factorALLtoLTC;
-  int64_t volumeALLtoLTC = 0;
+  extern volatile int64_t factorALLtoLTC;
+  int64_t volumeALL64_t = 0;
   
-  const int64_t factorALLtoLTCh = factorALLtoLTC;
-  if (prop1 == OMNI_PROPERTY_ALL_ISSUANCE) {
-    volumeALLtoLTC = rounduint64(factorALLtoLTCh*amount1/COIN);
-    PrintToLog("factorALLtoLTC =%d, amount1 = %d: CMPMetaDEx\n", factorALLtoLTC, amount1);
-  } else if (prop2 == OMNI_PROPERTY_ALL_ISSUANCE) {
-    volumeALLtoLTC = rounduint64(factorALLtoLTCh*amount2/COIN);
-    PrintToLog("factorALLtoLTC =%d, amount1 = %d: CMPMetaDEx\n", factorALLtoLTC, amount1);
-  }
+  if (prop1 == OMNI_PROPERTY_ALL_ISSUANCE)
+    {
+      PrintToLog("factorALLtoLTC =%s, amount1 = %s: CMPMetaDEx\n", FormatDivisibleMP(factorALLtoLTC), FormatDivisibleMP(amount1));
+      arith_uint256 volumeALL256_t = mastercore::ConvertTo256(factorALLtoLTC)*mastercore::ConvertTo256(amount1)/COIN;
+      PrintToLog("ALLs involved in the traded 256 Bits ~ %s ALL\n", volumeALL256_t.ToString());
+      volumeALL64_t = mastercore::ConvertTo64(volumeALL256_t);
+      PrintToLog("ALLs involved in the traded 64 Bits ~ %s ALL\n", FormatDivisibleMP(volumeALL64_t)); 
+    }
+  else if (prop2 == OMNI_PROPERTY_ALL_ISSUANCE)
+    {
+      PrintToLog("factorALLtoLTC =%s, amount1 = %s: CMPMetaDEx\n", FormatDivisibleMP(factorALLtoLTC), FormatDivisibleMP(amount2));    
+      arith_uint256 volumeALL256_t = mastercore::ConvertTo256(factorALLtoLTC)*mastercore::ConvertTo256(amount2)/COIN;
+      PrintToLog("ALLs involved in the traded 256 Bits ~ %s ALL\n", volumeALL256_t.ToString());
+      volumeALL64_t = mastercore::ConvertTo64(volumeALL256_t);
+      PrintToLog("ALLs involved in the traded 64 Bits ~ %s ALL\n", FormatDivisibleMP(volumeALL64_t));
+    }
   
-  PrintToLog("Number of Traded Contracts ~ %s LTC\n", FormatDivisibleMP(volumeALLtoLTC, true));
-  PrintToLog("\nGlobal LTC Volume No Updated: CMPMetaDEx = %s \n", FormatDivisibleMP(globalVolumeALL_LTC, true));
-  globalVolumeALL_LTC += volumeALLtoLTC;
-  PrintToLog("\nGlobal LTC Volume Updated: CMPMetaDEx = %s\n", FormatDivisibleMP(globalVolumeALL_LTC, true));
+  PrintToLog("Number of Traded Contracts ~ %s LTC\n", FormatDivisibleMP(volumeALL64_t));
+  PrintToLog("\nGlobal LTC Volume No Updated: CMPMetaDEx = %s \n", FormatDivisibleMP(globalVolumeALL_LTC));
+  globalVolumeALL_LTC += volumeALL64_t;
+  PrintToLog("\nGlobal LTC Volume Updated: CMPMetaDEx = %s\n", FormatDivisibleMP(globalVolumeALL_LTC));
   
   Status status;
   if (pdb)
@@ -3045,7 +3067,7 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   extern volatile int path_length;
   std::map<std::string, std::string> edgeEle;
   bool savedata_bool = false;
-  extern int64_t factorALLtoLTC;
+  extern volatile int64_t factorALLtoLTC;
 
   double UPNL1 = 0, UPNL2 = 0;
   /********************************************************************/
@@ -3100,22 +3122,26 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   CMPSPInfo::Entry sp;
   assert(_my_sps->getSP(property_traded, sp));
   uint32_t NotionalSize = sp.notional_size;
-  int64_t volumeALLtoLTC = 0;
   
-  PrintToLog("\nCheck nCouldBuy0 = %d, factorALLtoLTC = %s, NotionalSize = %d: CMPContractDEx\n", nCouldBuy0, FormatDivisibleMP(factorALLtoLTC), NotionalSize);
+  PrintToLog("\nCheck nCouldBuy0 = %s, factorALLtoLTC = %s, NotionalSize = %d: CMPContractDEx\n", FormatDivisibleMP(nCouldBuy0), FormatDivisibleMP(factorALLtoLTC), NotionalSize);
   
-  const int64_t factorALLtoLTCh = factorALLtoLTC;
-  if (sp.prop_type == ALL_PROPERTY_TYPE_CONTRACT) {
-    globalPNLALL_DUSD += UPNL1 + UPNL2;
-    globalVolumeALL_DUSD += nCouldBuy0;
-    int64_t LTSforNotionalSize = rounduint64(factorALLtoLTCh*nCouldBuy0/COIN);
-    volumeALLtoLTC = rounduint64((int64_t)NotionalSize*LTSforNotionalSize);
-  }
+  globalPNLALL_DUSD += UPNL1 + UPNL2;
+  globalVolumeALL_DUSD += nCouldBuy0;
   
-  PrintToLog("Number of Traded Contracts ~ %s LTC\n", FormatDivisibleMP(volumeALLtoLTC, true));
-  PrintToLog("\nGlobal LTC Volume No Updated: CMPContractDEx = %s \n", FormatDivisibleMP(globalVolumeALL_LTC, true));
-  globalVolumeALL_LTC += volumeALLtoLTC;
-  PrintToLog("\nGlobal LTC Volume Updated: CMPContractDEx = %s \n", FormatDivisibleMP(globalVolumeALL_LTC, true));
+  arith_uint256 volumeALL256_t = mastercore::ConvertTo256(NotionalSize)*mastercore::ConvertTo256(nCouldBuy0);
+  PrintToLog("ALLs involved in the traded 256 Bits ~ %s ALL\n", volumeALL256_t.ToString());
+  
+  int64_t volumeALL64_t = mastercore::ConvertTo64(volumeALL256_t);
+  PrintToLog("ALLs involved in the traded 64 Bits ~ %s ALL\n", FormatDivisibleMP(volumeALL64_t));
+  
+  arith_uint256 volumeLTC256_t = mastercore::ConvertTo256(factorALLtoLTC)*mastercore::ConvertTo256(volumeALL64_t)/COIN;
+  PrintToLog("LTCs involved in the traded 256 Bits ~ %s LTC\n", volumeLTC256_t.ToString());
+  
+  int64_t volumeLTC64_t = mastercore::ConvertTo64(volumeLTC256_t);
+  PrintToLog("LTCs involved in the traded 64 Bits ~ %d LTC\n", FormatDivisibleMP(volumeLTC64_t));
+  
+  globalVolumeALL_LTC += volumeLTC64_t;
+  PrintToLog("\nGlobal LTC Volume Updated: CMPContractDEx = %d \n", FormatDivisibleMP(globalVolumeALL_LTC));
   
   int64_t volumeToCompare = 0;
   bool perpetualBool = callingPerpetualSettlement(globalPNLALL_DUSD, globalVolumeALL_DUSD, volumeToCompare);

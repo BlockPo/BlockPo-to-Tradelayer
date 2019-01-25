@@ -723,61 +723,61 @@ UniValue tl_sendalert(const JSONRPCRequest& request)
 /** New things for Contract */
 UniValue tl_sendtrade(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 5)
-        throw runtime_error(
-            "tl_sendtrade \"fromaddress\" propertyidforsale \"amountforsale\" propertiddesired \"amountdesired\"\n"
-
-            "\nPlace a trade offer on the distributed token exchange.\n"
-
-            "\nArguments:\n"
-            "1. fromaddress          (string, required) the address to trade with\n"
-            "2. propertyidforsale    (number, required) the identifier of the tokens to list for sale\n"
-            "3. amountforsale        (string, required) the amount of tokens to list for sale\n"
-            "4. propertiddesired     (number, required) the identifier of the tokens desired in exchange\n"
-            "5. amountdesired        (string, required) the amount of tokens desired in exchange\n"
-
-            "\nResult:\n"
-            "\"hash\"                  (string) the hex-encoded transaction hash\n"
-
-            "\nExamples:\n"
-            + HelpExampleCli("tl_sendtrade", "\"3BydPiSLPP3DR5cf726hDQ89fpqWLxPKLR\" 31 \"250.0\" 1 \"10.0\"")
-            + HelpExampleRpc("tl_sendtrade", "\"3BydPiSLPP3DR5cf726hDQ89fpqWLxPKLR\", 31, \"250.0\", 1, \"10.0\"")
-        );
-
-    // obtain parameters & info
-    std::string fromAddress = ParseAddress(request.params[0]);
-    uint32_t propertyIdForSale = ParsePropertyId(request.params[1]);
-    int64_t amountForSale = ParseAmount(request.params[2], isPropertyDivisible(propertyIdForSale));
-    uint32_t propertyIdDesired = ParsePropertyId(request.params[3]);
-    int64_t amountDesired = ParseAmount(request.params[4], isPropertyDivisible(propertyIdDesired));
-
-    // perform checks
-    RequireExistingProperty(propertyIdForSale);
-    RequireNotContract(propertyIdForSale);
-    RequireNotVesting(propertyIdForSale);
-    RequireExistingProperty(propertyIdDesired);
-    RequireNotContract(propertyIdDesired);
-    RequireNotVesting(propertyIdDesired);
-    
-    // create a payload for the transaction
-    std::vector<unsigned char> payload = CreatePayload_MetaDExTrade(propertyIdForSale, amountForSale, propertyIdDesired, amountDesired);
-
-    // request the wallet build the transaction (and if needed commit it)
-    uint256 txid;
-    std::string rawHex;
-    int result = WalletTxBuilder(fromAddress, "", 0, payload, txid, rawHex, autoCommit);
-
-    // check error and return the txid (or raw hex depending on autocommit)
-    if (result != 0) {
-        throw JSONRPCError(result, error_str(result));
+  if (request.params.size() != 5) {
+    throw runtime_error(
+			"tl_sendtrade \"fromaddress\" propertyidforsale \"amountforsale\" propertiddesired \"amountdesired\"\n"
+			
+			"\nPlace a trade offer on the distributed token exchange.\n"
+			
+			"\nArguments:\n"
+			"1. fromaddress          (string, required) the address to trade with\n"
+			"2. propertyidforsale    (number, required) the identifier of the tokens to list for sale\n"
+			"3. amountforsale        (string, required) the amount of tokens to list for sale\n"
+			"4. propertiddesired     (number, required) the identifier of the tokens desired in exchange\n"
+			"5. amountdesired        (string, required) the amount of tokens desired in exchange\n"
+			
+			"\nResult:\n"
+			"\"hash\"                  (string) the hex-encoded transaction hash\n"
+			
+			"\nExamples:\n"
+			+ HelpExampleCli("tl_sendtrade", "\"3BydPiSLPP3DR5cf726hDQ89fpqWLxPKLR\" 31 \"250.0\" 1 \"10.0\"")
+			+ HelpExampleRpc("tl_sendtrade", "\"3BydPiSLPP3DR5cf726hDQ89fpqWLxPKLR\", 31, \"250.0\", 1, \"10.0\"")
+			);
+  }
+  // obtain parameters & info
+  std::string fromAddress = ParseAddress(request.params[0]);
+  uint32_t propertyIdForSale = ParsePropertyId(request.params[1]);
+  int64_t amountForSale = ParseAmount(request.params[2], isPropertyDivisible(propertyIdForSale));
+  uint32_t propertyIdDesired = ParsePropertyId(request.params[3]);
+  int64_t amountDesired = ParseAmount(request.params[4], isPropertyDivisible(propertyIdDesired));
+  
+  // perform checks
+  // RequireExistingProperty(propertyIdForSale);
+  // RequireNotContract(propertyIdForSale);
+  // RequireNotVesting(propertyIdForSale);
+  // RequireExistingProperty(propertyIdDesired);
+  // RequireNotContract(propertyIdDesired);
+  // RequireNotVesting(propertyIdDesired);
+  
+  // create a payload for the transaction
+  std::vector<unsigned char> payload = CreatePayload_MetaDExTrade(propertyIdForSale, amountForSale, propertyIdDesired, amountDesired);
+  
+  // request the wallet build the transaction (and if needed commit it)
+  uint256 txid;
+  std::string rawHex;
+  int result = WalletTxBuilder(fromAddress, "", 0, payload, txid, rawHex, autoCommit);
+  
+  // check error and return the txid (or raw hex depending on autocommit)
+  if (result != 0) {
+    throw JSONRPCError(result, error_str(result));
+  } else {
+    if (!autoCommit) {
+      return rawHex;
     } else {
-        if (!autoCommit) {
-            return rawHex;
-        } else {
-            PendingAdd(txid, fromAddress, MSC_TYPE_METADEX_TRADE, propertyIdForSale, amountForSale);
-            return txid.GetHex();
-        }
+      PendingAdd(txid, fromAddress, MSC_TYPE_METADEX_TRADE, propertyIdForSale, amountForSale);
+      return txid.GetHex();
     }
+  }
 }
 
 UniValue tl_createcontract(const JSONRPCRequest& request)

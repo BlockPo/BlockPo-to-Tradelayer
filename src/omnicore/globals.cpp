@@ -6,6 +6,7 @@
 #include "tradelayer_matrices.h"
 #include "mdex.h"
 
+typedef boost::multiprecision::uint128_t ui128;
 using namespace std;
 
 volatile uint64_t marketPrice;

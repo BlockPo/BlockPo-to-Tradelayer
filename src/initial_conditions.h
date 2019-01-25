@@ -56,7 +56,7 @@ for ( int i = 0; i < NYears; i++ )
 
 /** The final addrs amount will be chosen at mainnet launch time */
 nVestingAddrs = 10;
-amountVesting = 100;
+amountVesting = 999999999999999;
 pt_vestingAddresses = new VectorTLS(nVestingAddrs); VectorTLS &vestingAddresses = *pt_vestingAddresses;
 /** List od vesting addresses */
 vestingAddresses[0] = "QiPiqxEkaNcqsiUv4WQ5P2Rnd5CRKs7cFF";

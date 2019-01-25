@@ -70,6 +70,7 @@ int const MAX_STATE_HISTORY = 50;
 
 #define MAX_CLASS_D_SEARCH_BYTES   200
 
+#define COIN256   10000000000000000
 
 // Transaction types, from the spec
 enum TransactionType {
