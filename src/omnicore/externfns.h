@@ -7,6 +7,14 @@
 #include <stdint.h>
 #include <string>
 
+#include <boost/math/constants/constants.hpp>
+#include <boost/multiprecision/cpp_dec_float.hpp>
+#include <iostream>
+#include <limits>
+
+typedef boost::multiprecision::cpp_dec_float_100 dec_float;
+
+
 void printing_matrix(MatrixTLS &gdata);
 void printing_vector(VectorTLS &vdata);
 bool finding(std::string &s, VectorTLS &v);
@@ -18,6 +26,7 @@ bool find_string_set(std::string s, std::unordered_set<std::string> addrs_set);
 bool findTrueValue(bool a, bool b);
 bool findTrueValue(bool a, bool b, bool c);
 bool findTrueValue(bool a, bool b, bool c, bool d);
+std::string DecFloatToString(dec_float& value);
 
 namespace mastercore
 {

@@ -144,7 +144,7 @@ class CMPContractDex : public CMPMetaDEx
  private:
   uint64_t effective_price;
   uint8_t trading_action;
-
+  
  public:
  CMPContractDex()
    : effective_price(0), trading_action(0) {}
@@ -171,7 +171,7 @@ class CMPContractDex : public CMPMetaDEx
   std::string ToString() const;
 
   void saveOffer(std::ofstream& file, SHA256_CTX* shaCtx) const;
-
+  
   void setPrice(int64_t price);
 
   ///////////////////////////////

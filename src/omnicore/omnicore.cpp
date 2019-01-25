@@ -84,6 +84,7 @@
 #include <vector>
 #include "tradelayer_matrices.h"
 #include "externfns.h"
+#include "omnicore/parse_string.h"
 
 using boost::algorithm::token_compress_on;
 using boost::to_string;
@@ -101,6 +102,8 @@ using std::string;
 using std::vector;
 
 using namespace mastercore;
+typedef boost::multiprecision::uint128_t ui128;
+typedef boost::multiprecision::cpp_dec_float_100 dec_float;
 
 CCriticalSection cs_tally;
 
@@ -141,11 +144,16 @@ extern int idx_expiration;
 extern int expirationAchieve;
 extern double globalPNLALL_DUSD;
 extern int64_t globalVolumeALL_DUSD;
-extern std::map<std::string, std::vector<int64_t>> cd_AvEntry;
+extern int lastBlockg;
+extern int vestingActivationBlock;
+extern volatile int64_t globalVolumeALL_LTC;
+
 CMPTxList *mastercore::p_txlistdb;
 CMPTradeList *mastercore::t_tradelistdb;
 COmniTransactionDB *mastercore::p_OmniTXDB;
 extern std::map<uint32_t, std::map<std::string, double>> addrs_upnlc;
+
+using mastercore::StrToInt64;
 
 // indicate whether persistence is enabled at this point, or not
 // used to write/read files, for breakout mode, debugging, etc.
@@ -159,25 +167,28 @@ static bool writePersistence(int block_now)
 
 std::string mastercore::strMPProperty(uint32_t propertyId)
 {
-    std::string str = "*unknown*";
+  std::string str = "*unknown*";
 
-    // test user-token
-    if (0x80000000 & propertyId) {
-        str = strprintf("Test token: %d : 0x%08X", 0x7FFFFFFF & propertyId, propertyId);
-    } else {
-        switch (propertyId) {
-            case OMNI_PROPERTY_BTC: str = "BTC";
-                break;
-            case OMNI_PROPERTY_MSC: str = "OMNI";
-                break;
-            case OMNI_PROPERTY_TMSC: str = "TOMNI";
-                break;
-            default:
-                str = strprintf("SP token: %d", propertyId);
-        }
+  // test user-token
+  if (0x80000000 & propertyId)
+    {
+      str = strprintf("Test token: %d : 0x%08X", 0x7FFFFFFF & propertyId, propertyId);
     }
-
-    return str;
+  else
+    {
+      switch (propertyId)
+	{
+	case OMNI_PROPERTY_BTC: str = "BTC";
+	  break;
+	case OMNI_PROPERTY_ALL: str = "ALL";
+	  break;
+	case OMNI_PROPERTY_TALL: str = "TALL";
+	  break;
+	default:
+	  str = strprintf("SP token: %d", propertyId);
+	}
+    }
+  return str;
 }
 
 std::string FormatDivisibleShortMP(int64_t n)
@@ -199,20 +210,20 @@ std::string FormatDivisibleShortMP(int64_t n)
 
 std::string FormatDivisibleMP(int64_t n, bool fSign)
 {
-    // Note: not using straight sprintf here because we do NOT want
-    // localized number formatting.
-    int64_t n_abs = (n > 0 ? n : -n);
-    int64_t quotient = n_abs / COIN;
-    int64_t remainder = n_abs % COIN;
-    std::string str = strprintf("%d.%08d", quotient, remainder);
-
-    if (!fSign) return str;
-
-    if (n < 0)
-        str.insert((unsigned int) 0, 1, '-');
-    else
-        str.insert((unsigned int) 0, 1, '+');
-    return str;
+  // Note: not using straight sprintf here because we do NOT want
+  // localized number formatting.
+  int64_t n_abs = (n > 0 ? n : -n);
+  int64_t quotient = n_abs / COIN;
+  int64_t remainder = n_abs % COIN;
+  std::string str = strprintf("%d.%08d", quotient, remainder);
+  
+  if (!fSign) return str;
+  
+  if (n < 0)
+    str.insert((unsigned int) 0, 1, '-');
+  else
+    str.insert((unsigned int) 0, 1, '+');
+  return str;
 }
 
 std::string mastercore::FormatIndivisibleMP(int64_t n)
@@ -240,7 +251,7 @@ std::string FormatMP(uint32_t property, int64_t n, bool fSign)
 
 std::string FormatByType(int64_t amount, uint16_t propertyType)
 {
-  if (propertyType & MSC_PROPERTY_TYPE_INDIVISIBLE) {
+  if (propertyType & ALL_PROPERTY_TYPE_INDIVISIBLE) {
     return FormatIndivisibleMP(amount);
   } else {
     return FormatDivisibleMP(amount);
@@ -263,14 +274,30 @@ std::string mastercore::FormatContractMP(int64_t n)
     return strprintf("%d", n);
 }
 /////////////////////////////////////////
-/*New things for contracts*/////////////////////////////////////////////////////
+/** New things for contracts */
+std::string FormatDivisibleZeroClean(int64_t n)
+{
+  int64_t n_abs = (n > 0 ? n : -n);
+  int64_t quotient = n_abs/COIN;
+  int64_t remainder = n_abs % COIN;
+  std::string str = strprintf("%d.%08d", quotient/COIN, remainder);
+  
+  str.erase(str.find_last_not_of('0') + 1, std::string::npos);
+  if (str.length() > 0) {
+    std::string::iterator it = str.end() - 1;
+    if (*it == '.') 
+      str.erase(it);
+  } 
+  return str;
+}
+
 double FormatContractShortMP(int64_t n)
 {
-    int64_t n_abs = (n > 0 ? n : -n);
-    int64_t quotient = n_abs / COIN;
-    int64_t remainder = n_abs % COIN;
-    std::string str = strprintf("%d.%08d", quotient, remainder);
-    // clean up trailing zeros - good for RPC not so much for UI
+  int64_t n_abs = (n > 0 ? n : -n);
+  int64_t quotient = n_abs / COIN;
+  int64_t remainder = n_abs % COIN;
+  std::string str = strprintf("%d.%08d", quotient, remainder);
+  // clean up trailing zeros - good for RPC not so much for UI
     str.erase(str.find_last_not_of('0') + 1, std::string::npos);
     if (str.length() > 0) {
         std::string::iterator it = str.end() - 1;
@@ -296,7 +323,7 @@ long int FormatShortIntegerMP(int64_t n)
 	str.erase(it);
       }
     } //get rid of trailing dot if non decimal
-    long int q = atof(str.c_str());
+    long int q = atol(str.c_str());
     return q;
 }
 /////////////////////////////////////////
@@ -345,68 +372,68 @@ int64_t getUserAvailableMPbalance(const std::string& address, uint32_t propertyI
 
 bool mastercore::isTestEcosystemProperty(uint32_t propertyId)
 {
-    if ((OMNI_PROPERTY_TMSC == propertyId) || (TEST_ECO_PROPERTY_1 <= propertyId)) return true;
+  if ((OMNI_PROPERTY_TALL == propertyId) || (TEST_ECO_PROPERTY_1 <= propertyId)) return true;
 
-    return false;
+  return false;
 }
 
 bool mastercore::isMainEcosystemProperty(uint32_t propertyId)
 {
-    if ((OMNI_PROPERTY_BTC != propertyId) && !isTestEcosystemProperty(propertyId)) return true;
+  if ((OMNI_PROPERTY_BTC != propertyId) && !isTestEcosystemProperty(propertyId)) return true;
 
-    return false;
+  return false;
 }
 
 std::string mastercore::getTokenLabel(uint32_t propertyId)
 {
-    std::string tokenStr;
-    if (propertyId < 3) {
-        if (propertyId == 1) {
-            tokenStr = " OMNI";
-        } else {
-            tokenStr = " TOMNI";
-        }
+  std::string tokenStr;
+  if (propertyId < 3) {
+    if (propertyId == 1) {
+      tokenStr = " ALL";
     } else {
-        tokenStr = strprintf(" SPT#%d", propertyId);
+      tokenStr = " TALL";
     }
-    return tokenStr;
+  } else {
+    tokenStr = strprintf(" SPT#%d", propertyId);
+  }
+  return tokenStr;
 }
 
 // get total tokens for a property
 // optionally counts the number of addresses who own that property: n_owners_total
 int64_t mastercore::getTotalTokens(uint32_t propertyId, int64_t* n_owners_total)
 {
-    int64_t prev = 0;
-    int64_t owners = 0;
-    int64_t totalTokens = 0;
+  int64_t prev = 0;
+  int64_t owners = 0;
+  int64_t totalTokens = 0;
 
-    LOCK(cs_tally);
+  LOCK(cs_tally);
 
-    CMPSPInfo::Entry property;
-    if (false == _my_sps->getSP(propertyId, property)) {
-        return 0; // property ID does not exist
+  CMPSPInfo::Entry property;
+  if (false == _my_sps->getSP(propertyId, property)) {
+    return 0; // property ID does not exist
+  }
+
+  if (!property.fixed || n_owners_total) {
+    for (std::unordered_map<std::string, CMPTally>::const_iterator it = mp_tally_map.begin(); it != mp_tally_map.end(); ++it) {
+      const CMPTally& tally = it->second;
+
+      totalTokens += tally.getMoney(propertyId, BALANCE);
+
+      if (prev != totalTokens) {
+	prev = totalTokens;
+	owners++;
+      }
     }
+  }
 
-    if (!property.fixed || n_owners_total) {
-        for (std::unordered_map<std::string, CMPTally>::const_iterator it = mp_tally_map.begin(); it != mp_tally_map.end(); ++it) {
-            const CMPTally& tally = it->second;
+  if (property.fixed) {
+    totalTokens = property.num_tokens; // only valid for TX50
+  }
 
-            totalTokens += tally.getMoney(propertyId, BALANCE);
+  if (n_owners_total) *n_owners_total = owners;
 
-            if (prev != totalTokens) {
-                prev = totalTokens;
-                owners++;
-            }
-        }
-    }
-
-    if (property.fixed) {
-        totalTokens = property.num_tokens; // only valid for TX50
-    }
-
-    if (n_owners_total) *n_owners_total = owners;
-
-    return totalTokens;
+  return totalTokens;
 }
 
 // return true if everything is ok
@@ -460,11 +487,11 @@ bool mastercore::update_tally_map(const std::string& who, uint32_t propertyId, i
 
 uint32_t mastercore::GetNextPropertyId(bool maineco)
 {
-    if (maineco) {
-        return _my_sps->peekNextSPID(1);
-    } else {
-        return _my_sps->peekNextSPID(2);
-    }
+  if (maineco) {
+    return _my_sps->peekNextSPID(1);
+  } else {
+    return _my_sps->peekNextSPID(2);
+  }
 }
 
 // Perform any actions that need to be taken when the total number of tokens for a property ID changes
@@ -527,6 +554,34 @@ void CheckWalletUpdate(bool forceUpdate)
 #endif
 }
 
+void sendingVestingTokens()
+{
+  extern VectorTLS *pt_vestingAddresses;  VectorTLS &vestingAddresses  = *pt_vestingAddresses;
+  extern int64_t amountVesting;
+  extern int nVestingAddrs;
+  PrintToLog("\nVesting amount for every vesting address : %d\n", amountVesting);
+  
+  CMPSPInfo::Entry newSP;
+  
+  newSP.name = "Vesting Tokens";
+  newSP.data = "Divisible Tokens";
+  newSP.url  = "www.tradelayer.org";
+  newSP.category = "N/A";
+  newSP.subcategory = "N/A";
+  newSP.prop_type = ALL_PROPERTY_TYPE_DIVISIBLE;
+  newSP.num_tokens = amountVesting;
+  newSP.attribute_type = ALL_PROPERTY_TYPE_VESTING; 
+  
+  const uint32_t propertyIdVesting = _my_sps->putSP(OMNI_PROPERTY_ALL, newSP);
+  assert(propertyIdVesting > 0);
+
+  for (int i = 0; i < nVestingAddrs; i++) assert(update_tally_map(vestingAddresses[i], propertyIdVesting, amountVesting, BALANCE));
+  
+  for (int i = 0; i < nVestingAddrs; i++) {
+    if (getMPbalance(vestingAddresses[i], OMNI_PROPERTY_ALL, UNVESTED) == 0)
+      assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, getMPbalance(vestingAddresses[i], propertyIdVesting, BALANCE), UNVESTED));
+  }
+}
 /**
  * Returns the encoding class, used to embed a payload.
  *    Class A (dex payments)
@@ -636,6 +691,7 @@ static unsigned int nCacheMiss = 0;
  */
 static bool FillTxInputCache(const CTransaction& tx)
 {
+    LOCK(cs_tx_cache);
     static unsigned int nCacheSize = gArgs.GetArg("-omnitxcache", 500000);
 
     if (view.GetCacheSize() > nCacheSize) {
@@ -900,24 +956,24 @@ int ParseTransaction(const CTransaction& tx, int nBlock, unsigned int idx, CMPTr
  */
 static bool HandleDExPayments(const CTransaction& tx, int nBlock, const std::string& strSender)
 {
-    int count = 0;
-    PrintToConsole("Inside HandleDExPayments function <<<<<<<<<<<<<<<<<<<<<\n");
-    for (unsigned int n = 0; n < tx.vout.size(); ++n) {
-        CTxDestination dest;
-        if (ExtractDestination(tx.vout[n].scriptPubKey, dest)) {
-            std::string address = EncodeDestination(dest);
-            if (address == ExodusAddress() || address == strSender) {
-                continue;
-            }
-
-            // if (msc_debug_parser_dex) PrintToLog("payment #%d %s %s\n", count, strAddress, FormatIndivisibleMP(tx.vout[n].nValue));
-
-            // check everything and pay BTC for the property we are buying here...
-            if (0 == DEx_payment(tx.GetHash(), n, address, strSender, tx.vout[n].nValue, nBlock)) ++count;
-        }
+  int count = 0;
+  PrintToConsole("Inside HandleDExPayments function <<<<<<<<<<<<<<<<<<<<<\n");
+  for (unsigned int n = 0; n < tx.vout.size(); ++n) {
+    CTxDestination dest;
+    if (ExtractDestination(tx.vout[n].scriptPubKey, dest)) {
+      std::string address = EncodeDestination(dest);
+      if (address == ExodusAddress() || address == strSender) {
+	continue;
+      }
+      
+      // if (msc_debug_parser_dex) PrintToLog("payment #%d %s %s\n", count, strAddress, FormatIndivisibleMP(tx.vout[n].nValue));
+      
+      // check everything and pay BTC for the property we are buying here...
+      if (0 == DEx_payment(tx.GetHash(), n, address, strSender, tx.vout[n].nValue, nBlock)) ++count;
     }
-
-    return (count > 0);
+  }
+  
+  return (count > 0);
 }
 /**
  * Reports the progress of the initial transaction scanning.
@@ -1117,7 +1173,7 @@ int input_msc_balances_string(const std::string& s)
         int64_t liquidationPrice = boost::lexical_cast<int64_t>(curBalance[11]);
         int64_t upnl = boost::lexical_cast<int64_t>(curBalance[12]);
         int64_t nupnl = boost::lexical_cast<int64_t>(curBalance[13]);
-        int64_t averageEntry = boost::lexical_cast<int64_t>(curBalance[14]);
+        int64_t unvested = boost::lexical_cast<int64_t>(curBalance[14]);
 
         if (balance) update_tally_map(strAddress, propertyId, balance, BALANCE);
         if (sellReserved) update_tally_map(strAddress, propertyId, sellReserved, SELLOFFER_RESERVE);
@@ -1134,7 +1190,7 @@ int input_msc_balances_string(const std::string& s)
         if (liquidationPrice) update_tally_map(strAddress, propertyId, liquidationPrice, LIQUIDATION_PRICE);
         if (upnl) update_tally_map(strAddress, propertyId, upnl, UPNL);
         if (upnl) update_tally_map(strAddress, propertyId, nupnl, NUPNL);
-        if (averageEntry) update_tally_map(strAddress, propertyId, nupnl, AVERAGE_ENTRY);
+        if (unvested) update_tally_map(strAddress, propertyId, unvested, UNVESTED);
     }
 
     return 0;
@@ -1570,10 +1626,10 @@ static int write_msc_balances(std::ofstream& file, SHA256_CTX* shaCtx)
             int64_t liquidationPrice = (*iter).second.getMoney(propertyId, LIQUIDATION_PRICE);
             int64_t upnl = (*iter).second.getMoney(propertyId, UPNL);
             int64_t nupnl = (*iter).second.getMoney(propertyId, NUPNL);
-            int64_t averageEntry = (*iter).second.getMoney(propertyId, AVERAGE_ENTRY);
+            int64_t unvested = (*iter).second.getMoney(propertyId, UNVESTED);
             // we don't allow 0 balances to read in, so if we don't write them
             // it makes things match up better between persisted state and processed state
-            if (0 == balance && 0 == sellReserved && 0 == acceptReserved && 0 == metadexReserved && contractdexReserved == 0 && positiveBalance == 0 && negativeBalance == 0 && realizedProfit == 0 && realizedLosses == 0 && count == 0 && remaining == 0 && liquidationPrice == 0 && upnl == 0 && nupnl == 0 && averageEntry == 0) {
+            if (0 == balance && 0 == sellReserved && 0 == acceptReserved && 0 == metadexReserved && contractdexReserved == 0 && positiveBalance == 0 && negativeBalance == 0 && realizedProfit == 0 && realizedLosses == 0 && count == 0 && remaining == 0 && liquidationPrice == 0 && upnl == 0 && nupnl == 0 && unvested == 0) {
                 continue;
             }
 
@@ -1595,10 +1651,10 @@ static int write_msc_balances(std::ofstream& file, SHA256_CTX* shaCtx)
                     liquidationPrice,
                     upnl,
                     nupnl,
-                    averageEntry));
+                    unvested));
           //  PrintToConsole("Inside write_msc_balances ...no problem with strprintf!!!\n");
         }
-
+	
         if (false == emptyWallet) {
             // add the line to the hash
             SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
@@ -1613,11 +1669,10 @@ static int write_msc_balances(std::ofstream& file, SHA256_CTX* shaCtx)
 
 static int write_globals_state(ofstream &file, SHA256_CTX *shaCtx)
 {
-  unsigned int nextSPID = _my_sps->peekNextSPID(OMNI_PROPERTY_MSC);
-  unsigned int nextTestSPID = _my_sps->peekNextSPID(OMNI_PROPERTY_TMSC);
-  std::string lineOut = strprintf("%d,%d",
-    nextSPID,
-    nextTestSPID);
+  unsigned int nextSPID = _my_sps->peekNextSPID(OMNI_PROPERTY_ALL);
+  unsigned int nextTestSPID = _my_sps->peekNextSPID(OMNI_PROPERTY_TALL);
+
+  std::string lineOut = strprintf("%d,%d", nextSPID, nextTestSPID);
 
   PrintToLog("write_global_state, lineOut : %s \n",lineOut);
 
@@ -2036,95 +2091,117 @@ int mastercore_shutdown()
 bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx, const CBlockIndex* pBlockIndex)
 {
   extern volatile int id_contract;
-
+  extern VectorTLS *pt_vestingAddresses;  VectorTLS &vestingAddresses  = *pt_vestingAddresses;
+  extern int nVestingAddrs;
+  
   LOCK(cs_tally);
-
-  if (!mastercoreInitialized)
-    {
-      mastercore_init();
-    }
-
+  
+  if (!mastercoreInitialized) {
+    mastercore_init();
+  }
+  
   // clear pending, if any
   // NOTE1: Every incoming TX is checked, not just MP-ones because:
   // if for some reason the incoming TX doesn't pass our parser validation steps successfuly, I'd still want to clear pending amounts for that TX.
   // NOTE2: Plus I wanna clear the amount before that TX is parsed by our protocol, in case we ever consider pending amounts in internal calculations.
   PendingDelete(tx.GetHash());
-
+  
   // we do not care about parsing blocks prior to our waterline (empty blockchain defense)
   if (nBlock < nWaterlineBlock) return false;
   int64_t nBlockTime = pBlockIndex->GetBlockTime();
-
+  PrintToLog("\nBlock counter: %d, lastBlockg = %d\n", static_cast<int>(pBlockIndex->nHeight), lastBlockg);
+  
+  /***********************************************/
+  /** Vesting Tokens to Balance */
+  int64_t x_Axis = globalVolumeALL_LTC;
+  
+  if (x_Axis)
+    {
+      PrintToLog("\nx_Axis = %s\n", FormatDivisibleMP(x_Axis));
+      PrintToLog("Before Unvested = %d", getMPbalance(vestingAddresses[1], OMNI_PROPERTY_ALL, UNVESTED));
+      PrintToLog("Before Balance = %d", getMPbalance(vestingAddresses[1], OMNI_PROPERTY_ALL, BALANCE));
+      
+      for (int i = 0; i < nVestingAddrs; i++) {
+	int64_t ALLUnvested = getMPbalance(vestingAddresses[i], OMNI_PROPERTY_ALL, UNVESTED);
+	if (ALLUnvested != 0 && nBlockTime == lastBlockg ) {
+	  if (x_Axis >= 0 && x_Axis < 300000) { /** y = x*/
+	    assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, -x_Axis, UNVESTED));
+	    assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, x_Axis, BALANCE));
+	  } else if (x_Axis >= 300000 && x_Axis < 300000000) { /** y = x^2*/
+	    assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, -x_Axis*x_Axis, UNVESTED));
+	    assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, x_Axis*x_Axis, BALANCE));      
+	  } else if (x_Axis >= 300000000 && x_Axis < 30000000000) { /** y = ln|x|*/
+	    assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, -log(x_Axis), UNVESTED));
+	    assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, log(x_Axis), BALANCE));          
+	  }
+	}
+      }
+      PrintToLog("Before Unvested = %d", getMPbalance(vestingAddresses[1], OMNI_PROPERTY_ALL, UNVESTED));
+      PrintToLog("Before Balance = %d", getMPbalance(vestingAddresses[1], OMNI_PROPERTY_ALL, BALANCE));
+    }
+  /***********************************************/
+  
   CMPTransaction mp_obj;
   mp_obj.unlockLogic();
-
-  int expirationBlock = 0, actualBlock = 0, checkExpiration = 0;
+  
+  int expirationBlock = 0, tradeBlock = 0, checkExpiration = 0;
   CMPSPInfo::Entry sp;
-  if ( id_contract != 0 )
-    {
-      if (_my_sps->getSP(id_contract, sp) && sp.subcategory ==  "Futures Contracts")
-	{
-	  expirationBlock = static_cast<int>(sp.blocks_until_expiration);
-	  actualBlock = static_cast<int>(pBlockIndex->nHeight);
-        }
+  if ( id_contract != 0 ) {
+    if (_my_sps->getSP(id_contract, sp) && sp.prop_type == ALL_PROPERTY_TYPE_CONTRACT) {
+      expirationBlock = static_cast<int>(sp.blocks_until_expiration);
+      tradeBlock = static_cast<int>(pBlockIndex->nHeight);
     }
-  PrintToLog("nBlockTime: %d\n", static_cast<int>(nBlockTime));
-  PrintToLog("expirationBlock: %d\n", static_cast<int>(expirationBlock));
-
+  }
+  
+  lastBlockg = static_cast<int>(pBlockIndex->nHeight);
+  const CConsensusParams &params = ConsensusParams();
+  vestingActivationBlock = params.MSC_VESTING_BLOCK;
+  
+  if (static_cast<int>(pBlockIndex->nHeight) == params.MSC_VESTING_BLOCK) {
+    sendingVestingTokens();
+    int64_t vestingBalance  = getMPbalance("QSsJXDFb4b3vTgqeycrHtkYTYKmCk4TJn1", OMNI_PROPERTY_ALL, UNVESTED);
+    PrintToLog("\nvestingBalance QSsJXDFb4b3vTgqeycrHtkYTYKmCk4TJn1:  %d\n", vestingBalance); 
+  }
+  
   int deadline = sp.init_block + expirationBlock;
-  if ( actualBlock != 0 && deadline != 0 )
-    checkExpiration = actualBlock == deadline ? 1 : 0;
-
-  if (checkExpiration)
-    {
-      idx_expiration += 1;
-      if ( idx_expiration == 2 )
-        {
-	  PrintToLog("actualBlock: %d\n", actualBlock);
-	  PrintToLog("deadline: %d\n", deadline);
-	  PrintToLog("\nExpiration Date Achieve\n");
-	  PrintToLog("checkExpiration: %d\n", checkExpiration);
-	  expirationAchieve = 1;
-        }
-      else expirationAchieve = 0;
-    }
-  else
-    {
-      PrintToLog("actualBlock: %d\n", actualBlock);
+  if ( tradeBlock != 0 && deadline != 0 ) checkExpiration = tradeBlock == deadline ? 1 : 0;
+  
+  if (checkExpiration) {
+    idx_expiration += 1;
+    if ( idx_expiration == 2 ) {
+      PrintToLog("\nExpiration Date Achieve\n");
       PrintToLog("deadline: %d\n", deadline);
-      expirationAchieve = 0;
-    }
-
+      PrintToLog("expirationBlock: %d\n", static_cast<int>(expirationBlock));
+      PrintToLog("nBlockTime: %d\n", static_cast<int>(nBlockTime));
+      expirationAchieve = 1;
+    } else expirationAchieve = 0;
+  } else expirationAchieve = 0;
+  
   bool fFoundTx = false;
   int pop_ret = parseTransaction(false, tx, nBlock, idx, mp_obj, nBlockTime);
-
-  if (0 == pop_ret)
-    {
-      assert(mp_obj.getEncodingClass() != NO_MARKER);
-      assert(mp_obj.getSender().empty() == false);
-
-      int interp_ret = mp_obj.interpretPacket();
-      if (interp_ret) PrintToLog("!!! interpretPacket() returned %d !!!\n", interp_ret);
-
-      // Only structurally valid transactions get recorded in levelDB
-      // PKT_ERROR - 2 = interpret_Transaction failed, structurally invalid payload
-      if (interp_ret != PKT_ERROR - 2)
-	      {
-	          bool bValid = (0 <= interp_ret);
-	          p_txlistdb->recordTX(tx.GetHash(), bValid, nBlock, mp_obj.getType(), mp_obj.getNewAmount());
-	          p_OmniTXDB->RecordTransaction(tx.GetHash(), idx);
-        }
-
-        fFoundTx |= (interp_ret == 0);
+  
+  if (0 == pop_ret) {
+    assert(mp_obj.getEncodingClass() != NO_MARKER);
+    assert(mp_obj.getSender().empty() == false);
+    
+    int interp_ret = mp_obj.interpretPacket();
+    if (interp_ret) PrintToLog("!!! interpretPacket() returned %d !!!\n", interp_ret);
+    
+    // Only structurally valid transactions get recorded in levelDB
+    // PKT_ERROR - 2 = interpret_Transaction failed, structurally invalid payload
+    if (interp_ret != PKT_ERROR - 2) {
+      bool bValid = (0 <= interp_ret);
+      p_txlistdb->recordTX(tx.GetHash(), bValid, nBlock, mp_obj.getType(), mp_obj.getNewAmount());
+      p_OmniTXDB->RecordTransaction(tx.GetHash(), idx);
     }
-  else if (pop_ret > 0)
-    fFoundTx |= HandleDExPayments(tx, nBlock, mp_obj.getSender()); // testing the payment handler
-
-  if (fFoundTx && msc_debug_consensus_hash_every_transaction)
-    {
-      uint256 consensusHash = GetConsensusHash();
-      PrintToLog("Consensus hash for transaction %s: %s\n", tx.GetHash().GetHex(), consensusHash.GetHex());
-    }
-
+    fFoundTx |= (interp_ret == 0);
+  } else if (pop_ret > 0) fFoundTx |= HandleDExPayments(tx, nBlock, mp_obj.getSender()); // testing the payment handler
+  
+  if (fFoundTx && msc_debug_consensus_hash_every_transaction) {
+    uint256 consensusHash = GetConsensusHash();
+    PrintToLog("Consensus hash for transaction %s: %s\n", tx.GetHash().GetHex(), consensusHash.GetHex());
+  }
+  
   return fFoundTx;
 }
 
@@ -2949,18 +3026,44 @@ void CMPTradeList::recordNewTrade(const uint256& txid, const std::string& addres
 
 void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, string address1, string address2, unsigned int prop1, unsigned int prop2, uint64_t amount1, uint64_t amount2, int blockNum, int64_t fee)
 {
-    if (!pdb) return;
-    const string key = txid1.ToString() + "+" + txid2.ToString();
-    const string value = strprintf("%s:%s:%u:%u:%lu:%lu:%d:%d", address1, address2, prop1, prop2, amount1, amount2, blockNum, fee);
-
-    Status status;
-    if (pdb)
+  if (!pdb) return;
+  const string key = txid1.ToString() + "+" + txid2.ToString();
+  const string value = strprintf("%s:%s:%u:%u:%lu:%lu:%d:%d", address1, address2, prop1, prop2, amount1, amount2, blockNum, fee);
+  
+  extern volatile int64_t factorALLtoLTC;
+  int64_t volumeALL64_t = 0;
+  
+  if (prop1 == OMNI_PROPERTY_ALL_ISSUANCE)
     {
-        status = pdb->Put(writeoptions, key, value);
-        ++nWritten;
-        // if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
+      PrintToLog("factorALLtoLTC =%s, amount1 = %s: CMPMetaDEx\n", FormatDivisibleMP(factorALLtoLTC), FormatDivisibleMP(amount1));
+      arith_uint256 volumeALL256_t = mastercore::ConvertTo256(factorALLtoLTC)*mastercore::ConvertTo256(amount1)/COIN;
+      PrintToLog("ALLs involved in the traded 256 Bits ~ %s ALL\n", volumeALL256_t.ToString());
+      volumeALL64_t = mastercore::ConvertTo64(volumeALL256_t);
+      PrintToLog("ALLs involved in the traded 64 Bits ~ %s ALL\n", FormatDivisibleMP(volumeALL64_t)); 
+    }
+  else if (prop2 == OMNI_PROPERTY_ALL_ISSUANCE)
+    {
+      PrintToLog("factorALLtoLTC =%s, amount1 = %s: CMPMetaDEx\n", FormatDivisibleMP(factorALLtoLTC), FormatDivisibleMP(amount2));    
+      arith_uint256 volumeALL256_t = mastercore::ConvertTo256(factorALLtoLTC)*mastercore::ConvertTo256(amount2)/COIN;
+      PrintToLog("ALLs involved in the traded 256 Bits ~ %s ALL\n", volumeALL256_t.ToString());
+      volumeALL64_t = mastercore::ConvertTo64(volumeALL256_t);
+      PrintToLog("ALLs involved in the traded 64 Bits ~ %s ALL\n", FormatDivisibleMP(volumeALL64_t));
+    }
+  
+  PrintToLog("Number of Traded Contracts ~ %s LTC\n", FormatDivisibleMP(volumeALL64_t));
+  PrintToLog("\nGlobal LTC Volume No Updated: CMPMetaDEx = %s \n", FormatDivisibleMP(globalVolumeALL_LTC));
+  globalVolumeALL_LTC += volumeALL64_t;
+  PrintToLog("\nGlobal LTC Volume Updated: CMPMetaDEx = %s\n", FormatDivisibleMP(globalVolumeALL_LTC));
+  
+  Status status;
+  if (pdb)
+    {
+      status = pdb->Put(writeoptions, key, value);
+      ++nWritten;
+      // if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
     }
 }
+
 /********************************************************/
 /** New things for Contract */
 void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, string address1, string address2, uint64_t effective_price, uint64_t amount_maker, uint64_t amount_taker, int blockNum1, int blockNum2, uint32_t property_traded, string tradeStatus, int64_t lives_s0, int64_t lives_s1, int64_t lives_s2, int64_t lives_s3, int64_t lives_b0, int64_t lives_b1, int64_t lives_b2, int64_t lives_b3, string s_maker0, string s_taker0, string s_maker1, string s_taker1, string s_maker2, string s_taker2, string s_maker3, string s_taker3, int64_t nCouldBuy0, int64_t nCouldBuy1, int64_t nCouldBuy2, int64_t nCouldBuy3,uint64_t amountpnew, uint64_t amountpold)
@@ -3089,7 +3192,7 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
     }
   
   unsigned int contractId = static_cast<unsigned int>(property_traded);
-  if ( contractId == MSC_PROPERTY_TYPE_CONTRACT )
+  if ( contractId == ALL_PROPERTY_TYPE_CONTRACT )
     {
       globalPNLALL_DUSD += UPNL1 + UPNL2;
       globalVolumeALL_DUSD += nCouldBuy0;
@@ -3100,16 +3203,16 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   if (perpetualBool) PrintToLog("Perpetual Settlement Online");
 
   PrintToLog("\nglobalPNLALL_DUSD = %d, globalVolumeALL_DUSD = %d, contractId = %d\n", globalPNLALL_DUSD, globalVolumeALL_DUSD, contractId);
-
+  
   std::fstream fileglobalPNLALL_DUSD;
   fileglobalPNLALL_DUSD.open ("globalPNLALL_DUSD.txt", std::fstream::in | std::fstream::out | std::fstream::app);
-  if ( contractId == MSC_PROPERTY_TYPE_CONTRACT )
+  if ( contractId == ALL_PROPERTY_TYPE_CONTRACT )
     saveDataGraphs(fileglobalPNLALL_DUSD, std::to_string(globalPNLALL_DUSD));
   fileglobalPNLALL_DUSD.close();
-
+  
   std::fstream fileglobalVolumeALL_DUSD;
   fileglobalVolumeALL_DUSD.open ("globalVolumeALL_DUSD.txt", std::fstream::in | std::fstream::out | std::fstream::app);
-  if ( contractId == MSC_PROPERTY_TYPE_CONTRACT )
+  if ( contractId == ALL_PROPERTY_TYPE_CONTRACT )
     saveDataGraphs(fileglobalVolumeALL_DUSD, std::to_string(FormatShortIntegerMP(globalVolumeALL_DUSD)));
   fileglobalVolumeALL_DUSD.close();
 
@@ -3128,11 +3231,11 @@ bool callingPerpetualSettlement(double globalPNLALL_DUSD, int64_t globalVolumeAL
 
   if ( globalPNLALL_DUSD == 0 )
     {
-      PrintToLog("Liquidate Forward Positions");
+      PrintToLog("\nLiquidate Forward Positions\n");
       perpetualBool = true;
     }
   else if ( globalVolumeALL_DUSD > volumeToCompare )
-    PrintToLog("Take decisions for globalVolumeALL_DUSD > volumeToCompare");
+    PrintToLog("\nTake decisions for globalVolumeALL_DUSD > volumeToCompare\n");
 
   return perpetualBool;
 }
@@ -3617,7 +3720,6 @@ int marginCall(const std::string& address, uint32_t propertyId, uint64_t marketP
 
 rational_t mastercore::notionalChange(uint32_t contractId)
 {
-
     PrintToLog("ContractId: %d\n",contractId);
     rational_t inversePrice;
     if (globalDenPrice != 0) {
@@ -3630,7 +3732,7 @@ rational_t mastercore::notionalChange(uint32_t contractId)
 }
 
 /*int64_t mastercore::getAverageEntryPrice(std::string address, uint32_t contractId)
-{
+  {
     PrintToLog("******************INSIDE GETAVERAGEENTTRYPRICE*************\n");
     bool found = false;
     arith_uint256 avEntry = 0;
@@ -3661,7 +3763,6 @@ rational_t mastercore::notionalChange(uint32_t contractId)
       PrintToLog("******************Address not found !: %d*************\n");
       return 0;
     }
-
 }
 
 void mastercore::insertEntryPrice(std::string address, uint64_t mprice)
@@ -3712,7 +3813,7 @@ bool mastercore::marginNeeded(const std::string address, int64_t amountTraded, u
     //     for (uint32_t contractId = 1; contractId < nextSPID; contractId++) {  // looping on the properties
     //         CMPSPInfo::Entry sp;
     //         assert(_my_sps->getSP(contractId, sp));
-    //         if (sp.subcategory != "Futures Contracts") {
+    //         if (sp.prop_type != ALL_PROPERTY_TYPE_CONTRACT) {
     //             continue;
     //         }
     //

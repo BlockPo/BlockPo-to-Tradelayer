@@ -233,6 +233,15 @@ uint32_t ParseNewValues(const UniValue& value)
   return static_cast<uint32_t>(Nvalue);
 }
 
+uint64_t ParseEffectivePrice(const UniValue& value)
+{
+  int64_t effPrice = StrToInt64(value.getValStr(), true);  
+  if (effPrice < 0) {
+    throw JSONRPCError(RPC_TYPE_ERROR, "Price should be positive");
+  }
+  return effPrice;
+}
+
 uint64_t ParseEffectivePrice(const UniValue& value, uint32_t contractId)
 {
   int64_t effPrice = StrToInt64(value.getValStr(), true);
@@ -279,11 +288,11 @@ uint8_t ParseDExAction(const UniValue& value)
 
 uint8_t ParseDExPaymentWindow(const UniValue& value)
 {
-    int64_t blocks = value.get_int64();
-    if (blocks < 1 || 255 < blocks) {
-        throw JSONRPCError(RPC_TYPE_ERROR, "Payment window must be within 1-255 blocks");
-    }
-    return static_cast<uint8_t>(blocks);
+  int64_t blocks = value.get_int64();
+  // if (blocks < 1 || 255 < blocks) {
+  //     throw JSONRPCError(RPC_TYPE_ERROR, "Payment window must be within 1-255 blocks");
+  // }
+  return static_cast<uint8_t>(blocks);
 }
 
 uint32_t ParseContractType(const UniValue& value)

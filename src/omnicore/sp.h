@@ -92,8 +92,10 @@ public:
         uint32_t notional_size;
         uint32_t collateral_currency;
         uint32_t margin_requirement;
+        uint32_t attribute_type;
         int64_t contracts_needed;
         int init_block;
+        uint32_t ecosystemSP;
         /*uint32_t numerator; */
         uint32_t denomination;
         /* int64_t ticksize; */
@@ -145,6 +147,7 @@ public:
             READWRITE(notional_size);
             READWRITE(collateral_currency);
             READWRITE(margin_requirement);
+	    READWRITE(attribute_type);
             READWRITE(init_block);
             READWRITE(contract_associated);
             READWRITE(denomination);
@@ -155,23 +158,24 @@ public:
         bool isDivisible() const;
         void print() const;
       	bool isContract() const;
+        bool isPegged() const;
     };
-
-private:
-    // implied version of OMNI and TOMNI so they don't hit the leveldb
-    Entry implied_omni;
-    Entry implied_tomni;
-
+    
+ private:
+    /** implied version of ALL and TALL so they don't hit the leveldb */
+    Entry implied_all;
+    Entry implied_tall;
+    
     uint32_t next_spid;
     uint32_t next_test_spid;
-
-public:
+    
+ public:
     CMPSPInfo(const boost::filesystem::path& path, bool fWipe);
     virtual ~CMPSPInfo();
-
+    
     /** Extends clearing of CDBBase. */
     void Clear();
-
+    
     void init(uint32_t nextSPID = 0x3UL, uint32_t nextTestSPID = TEST_ECO_PROPERTY_1);
 
     uint32_t peekNextSPID(uint8_t ecosystem) const;
@@ -278,6 +282,7 @@ std::string strEcosystem(uint8_t ecosystem);
 //////////////////////////////////////
 /** New things for Contracts */
 bool isPropertyContract(uint32_t propertyId);
+bool isPropertyPegged(uint32_t propertyId);
 int addInterestPegged(int nBlockPrev, const CBlockIndex* pBlockIndex);
 uint64_t edgeOrderbook(uint32_t contractId, uint8_t tradingAction);
 //////////////////////////////////////
@@ -305,7 +310,11 @@ bool isPropertyContract(uint32_t propertyId);
 
 }
 
-
-
+/* class CMPSPInfoContract : CMPSPInfo */
+/* { */
+/*  public: */
+  
+/*  private: */
+/* }; */
 
 #endif // OMNICORE_SP_H

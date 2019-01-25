@@ -48,8 +48,6 @@ namespace mastercore
     return false;
   }
 
-
-
  // Generates a consensus string for hashing based on a tally object
  std::string GenerateConsensusString(const CMPTally& tallyObj, const std::string& address, const uint32_t propertyId)
  {
@@ -67,17 +65,18 @@ namespace mastercore
      int64_t remaining = tallyObj.getMoney(propertyId, REMAINING);
      int64_t liquidationPrice = tallyObj.getMoney(propertyId, LIQUIDATION_PRICE);
      int64_t upnl = tallyObj.getMoney(propertyId, UPNL);
-
+     int64_t unvested = tallyObj.getMoney(propertyId, UNVESTED);
+     
      // return a blank string if all balances are empty
-     if (!balance && !sellOfferReserve && !acceptReserve && !metaDExReserve && !contractdexReserved && !positiveBalance && !negativeBalance && !realizedProfit && !realizedLosses && !count && !remaining && !liquidationPrice && !upnl) {
-         return "";
+     if (!balance && !sellOfferReserve && !acceptReserve && !metaDExReserve && !contractdexReserved && !positiveBalance && !negativeBalance && !realizedProfit && !realizedLosses && !count && !remaining && !liquidationPrice && !upnl && !unvested) {
+       return "";
      }
 
-     return strprintf("%s|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d",
-             address, propertyId, balance, sellOfferReserve,
-             acceptReserve, metaDExReserve,contractdexReserved,
-             positiveBalance, negativeBalance, realizedProfit,
-             realizedLosses, count, remaining, liquidationPrice, upnl);
+     return strprintf("%s|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d",
+		      address, propertyId, balance, sellOfferReserve,
+		      acceptReserve, metaDExReserve,contractdexReserved,
+		      positiveBalance, negativeBalance, realizedProfit,
+		      realizedLosses, count, remaining, liquidationPrice, upnl, unvested);
  }
 
  // Generates a consensus string for hashing based on a DEx sell offer object
@@ -318,25 +317,25 @@ namespace mastercore
          if (msc_debug_consensus_hash) PrintToLog("Adding Crowdsale entry to consensus hash: %s\n", dataStr);
          SHA256_Update(&shaCtx, dataStr.c_str(), dataStr.length());
      }
-
+     
      // Properties - loop through each property and store the issuer (to capture state changes via change issuer transactions)
      // Note: we are loading every SP from the DB to check the issuer, if using consensus_hash_every_block debug option this
      //       will slow things down dramatically.  Not an issue to do it once every 10,000 blocks for checkpoint verification.
      // Placeholders: "propertyid|issueraddress"
      for (uint8_t ecosystem = 1; ecosystem <= 2; ecosystem++) {
-         uint32_t startPropertyId = (ecosystem == 1) ? 1 : TEST_ECO_PROPERTY_1;
-         for (uint32_t propertyId = startPropertyId; propertyId < _my_sps->peekNextSPID(ecosystem); propertyId++) {
-             CMPSPInfo::Entry sp;
-             if (!_my_sps->getSP(propertyId, sp)) {
-                 PrintToLog("Error loading property ID %d for consensus hashing, hash should not be trusted!\n");
-                 continue;
-             }
-             std::string dataStr = GenerateConsensusString(propertyId, sp.issuer);
-             if (msc_debug_consensus_hash) PrintToLog("Adding property to consensus hash: %s\n", dataStr);
-             SHA256_Update(&shaCtx, dataStr.c_str(), dataStr.length());
-         }
+       uint32_t startPropertyId = (ecosystem == 1) ? 1 : TEST_ECO_PROPERTY_1;
+       for (uint32_t propertyId = startPropertyId; propertyId < _my_sps->peekNextSPID(ecosystem); propertyId++) {
+	 CMPSPInfo::Entry sp;
+	 if (!_my_sps->getSP(propertyId, sp)) {
+	   PrintToLog("Error loading property ID %d for consensus hashing, hash should not be trusted!\n");
+	   continue;
+	 }
+	 std::string dataStr = GenerateConsensusString(propertyId, sp.issuer);
+	 if (msc_debug_consensus_hash) PrintToLog("Adding property to consensus hash: %s\n", dataStr);
+	 SHA256_Update(&shaCtx, dataStr.c_str(), dataStr.length());
+       }
      }
-
+     
      // extract the final result and return the hash
      uint256 consensusHash;
      SHA256_Final((unsigned char*)&consensusHash, &shaCtx);
@@ -344,7 +343,7 @@ namespace mastercore
 
      return consensusHash;
  }
-
+  
  uint256 GetMetaDExHash(const uint32_t propertyId)
  {
      SHA256_CTX shaCtx;

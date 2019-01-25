@@ -70,6 +70,7 @@ int const MAX_STATE_HISTORY = 50;
 
 #define MAX_CLASS_D_SEARCH_BYTES   200
 
+#define COIN256   10000000000000000
 
 // Transaction types, from the spec
 enum TransactionType {
@@ -105,14 +106,15 @@ enum TransactionType {
   MSC_TYPE_PEGGED_CURRENCY            = 100,
   MSC_TYPE_REDEMPTION_PEGGED          = 101,
   MSC_TYPE_SEND_PEGGED_CURRENCY       = 102,
-
-
   ////////////////////////////////////
 
 };
 
-#define MSC_PROPERTY_TYPE_INDIVISIBLE             1
-#define MSC_PROPERTY_TYPE_DIVISIBLE               2
+#define ALL_PROPERTY_TYPE_INDIVISIBLE             1
+#define ALL_PROPERTY_TYPE_DIVISIBLE               2
+#define ALL_PROPERTY_TYPE_CONTRACT                3
+#define ALL_PROPERTY_TYPE_VESTING                 4
+#define ALL_PROPERTY_TYPE_PEGGEDS                 5
 
 enum FILETYPES {
   FILETYPE_BALANCES = 0,
@@ -145,8 +147,9 @@ enum FILETYPES {
 #define PKT_ERROR_TRADEOFFER  (-70000)
 
 #define OMNI_PROPERTY_BTC             0
-#define OMNI_PROPERTY_MSC             1
-#define OMNI_PROPERTY_TMSC            2
+#define OMNI_PROPERTY_ALL             1
+#define OMNI_PROPERTY_TALL            2
+#define OMNI_PROPERTY_ALL_ISSUANCE    6
 //////////////////////////////////////
 /** New things for Contracts */
 #define BUY   1
@@ -169,9 +172,6 @@ uint32_t const TL_ALL   = 4;
 uint32_t const TL_sLTC  = 5;
 uint32_t const TL_LTC   = 6;
 
-/** New for future contracts port */
-#define MSC_PROPERTY_TYPE_CONTRACT    3
-
 // forward declarations
 std::string FormatDivisibleMP(int64_t amount, bool fSign = false);
 std::string FormatDivisibleShortMP(int64_t amount);
@@ -182,6 +182,8 @@ std::string FormatByDivisibility(int64_t amount, bool divisible);
 double FormatContractShortMP(int64_t n);
 long int FormatShortIntegerMP(int64_t n);
 uint64_t int64ToUint64(int64_t value);
+std::string FormatDivisibleZeroClean(int64_t n);
+
 /** Returns the Exodus address. */
 const std::string ExodusAddress();
 
@@ -369,68 +371,66 @@ int mastercore_handler_block_begin(int nBlockNow, CBlockIndex const *pBlockIndex
 int mastercore_handler_block_end(int nBlockNow, CBlockIndex const *pBlockIndex, unsigned int);
 bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx, const CBlockIndex *pBlockIndex);
 int mastercore_save_state( CBlockIndex const *pBlockIndex );
+void sendingVestingTokens();
 
 namespace mastercore
 {
-extern std::unordered_map<std::string, CMPTally> mp_tally_map;
-/*New things for contracts*///////////////////////////////////
-// extern std::unordered_map<std::string, CDexTally> cd_tally_map;
-//////////////////////////////////////////////////////////////
-extern CMPTxList *p_txlistdb;
-extern COmniTransactionDB *p_OmniTXDB;
-extern CMPTradeList *t_tradelistdb;
+  extern std::unordered_map<std::string, CMPTally> mp_tally_map;
+  /*New things for contracts*///////////////////////////////////
+  // extern std::unordered_map<std::string, CDexTally> cd_tally_map;
+  //////////////////////////////////////////////////////////////
+  extern CMPTxList *p_txlistdb;
+  extern COmniTransactionDB *p_OmniTXDB;
+  extern CMPTradeList *t_tradelistdb;
 
-// TODO: move, rename
-extern CCoinsView viewDummy;
-extern CCoinsViewCache view;
-//! Guards coins view cache
-extern CCriticalSection cs_tx_cache;
-
-std::string strMPProperty(uint32_t propertyId);
-
-/* New things for contracts *///////////////////////////////////////////////////
-rational_t notionalChange(uint32_t contractId);
-// bool marginCheck(const std::string address);
-bool marginNeeded(const std::string address, int64_t amountTraded, uint32_t contractId);
-bool marginBack(const std::string address, int64_t amountTraded, uint32_t contractId);
-////////////////////////////////////////////////////////////////////////////////
-
-bool isMPinBlockRange(int starting_block, int ending_block, bool bDeleteFound);
-
-/////////////////////////////////////////
-/*New property type No 3 Contract*/
-std::string FormatContractMP(int64_t n);
-/////////////////////////////////////////
-std::string FormatIndivisibleMP(int64_t n);
-
-int WalletTxBuilder(const std::string& senderAddress, const std::string& receiverAddress, int64_t referenceAmount,
-     const std::vector<unsigned char>& data, uint256& txid, std::string& rawHex, bool commit, unsigned int minInputs = 1);
-
-bool isTestEcosystemProperty(uint32_t propertyId);
-bool isMainEcosystemProperty(uint32_t propertyId);
-uint32_t GetNextPropertyId(bool maineco); // maybe move into sp
-
-CMPTally* getTally(const std::string& address);
-
-int64_t getTotalTokens(uint32_t propertyId, int64_t* n_owners_total = NULL);
-
-std::string strTransactionType(uint16_t txType);
-
-/** Returns the encoding class, used to embed a payload. */
-int GetEncodingClass(const CTransaction& tx, int nBlock);
-
-/** Determines, whether it is valid to use a Class C transaction for a given payload size. */
-bool UseEncodingClassC(size_t nDataSize);
-
-bool getValidMPTX(const uint256 &txid, int *block = NULL, unsigned int *type = NULL, uint64_t *nAmended = NULL);
-
-bool update_tally_map(const std::string& who, uint32_t propertyId, int64_t amount, TallyType ttype);
-
-std::string getTokenLabel(uint32_t propertyId);
-
-// int64_t getAverageEntryPrice(std::string address, uint32_t contractId);
-// void insertEntryPrice(std::string address, uint64_t mprice);
+  // TODO: move, rename
+  extern CCoinsView viewDummy;
+  extern CCoinsViewCache view;
+  //! Guards coins view cache
+  extern CCriticalSection cs_tx_cache;
+  
+  std::string strMPProperty(uint32_t propertyId);
+  
+  /* New things for contracts *///////////////////////////////////////////////////
+  rational_t notionalChange(uint32_t contractId);
+  // bool marginCheck(const std::string address);
+  bool marginNeeded(const std::string address, int64_t amountTraded, uint32_t contractId);
+  bool marginBack(const std::string address, int64_t amountTraded, uint32_t contractId);
+  ////////////////////////////////////////////////////////////////////////////////
+  
+  bool isMPinBlockRange(int starting_block, int ending_block, bool bDeleteFound);
+  
+  /////////////////////////////////////////
+  /*New property type No 3 Contract*/
+  std::string FormatContractMP(int64_t n);
+  /////////////////////////////////////////
+  std::string FormatIndivisibleMP(int64_t n);
+  
+  int WalletTxBuilder(const std::string& senderAddress, const std::string& receiverAddress, int64_t referenceAmount,
+		      const std::vector<unsigned char>& data, uint256& txid, std::string& rawHex, bool commit, unsigned int minInputs = 1);
+  
+  bool isTestEcosystemProperty(uint32_t propertyId);
+  bool isMainEcosystemProperty(uint32_t propertyId);
+    
+  uint32_t GetNextPropertyId(bool maineco); // maybe move into sp
+  
+  CMPTally* getTally(const std::string& address);
+  
+  int64_t getTotalTokens(uint32_t propertyId, int64_t* n_owners_total = NULL);
+  
+  std::string strTransactionType(uint16_t txType);
+  
+  /** Returns the encoding class, used to embed a payload. */
+  int GetEncodingClass(const CTransaction& tx, int nBlock);
+  
+  /** Determines, whether it is valid to use a Class C transaction for a given payload size. */
+  bool UseEncodingClassC(size_t nDataSize);
+  
+  bool getValidMPTX(const uint256 &txid, int *block = NULL, unsigned int *type = NULL, uint64_t *nAmended = NULL);
+  
+  bool update_tally_map(const std::string& who, uint32_t propertyId, int64_t amount, TallyType ttype);
+  
+  std::string getTokenLabel(uint32_t propertyId);
 }
-
 
 #endif // OMNICORE_OMNICORE_H

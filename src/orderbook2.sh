@@ -1,12 +1,15 @@
 #!/bin/bash
 
-SRCDIR=/mnt/d/omnicore-litecoin-master-local/src    
-DATADIR=/mndt/d/Datadir/litecoin
+
+SRCDIR=/home/lihki/omnicore-litecoin0.16.3/src    
+DATADIR=/home/lihki/.litecoin
+
 NUL=/dev/null
 printf "\n//////////////////////////////////////////\n"
 printf "Cleaning the regtest folder\n"
 
-sudo rm -r /mndt/d/Datadir/litecoin/regtest
+sudo rm -r /home/lihki/.litecoin/regtest
+
 sudo rm graphInfo*
 sudo rm globalPNLALL_DUSD.txt
 sudo rm globalVolumeALL_DUSD.txt
@@ -28,13 +31,13 @@ printf "\n________________________________________\n"
 printf "\n Checking the balance of block:\n"
 $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest  getbalance  # balance del bloque (50BTCs)
 
-# ##################################################################
+##################################################################
 ADDRBase=$($SRCDIR/litecoin-cli -datadir=$DATADIR --regtest  getnewaddress Lihki)
 printf "\n________________________________________\n"
 printf "Base address to work with:\n"
 printf $ADDRBase
 
-N=50
+N=10
 
 amount_bitcoin=10
 amountbitcoin_baseaddr=100
@@ -43,7 +46,7 @@ amountbitcoin_moneyaddr=1
 notional_size=1
 margin_requirement=1
 amountusdts_manyaddr=2000000
-blocks_until_expiration=125
+blocks_until_expiration=25
 CONTRACT=3
 collateral=4
 
@@ -163,7 +166,7 @@ $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_getcontract_orderbook ${CONTR
 
 printf "\n Cheking the  orderbok (buyside):\n"
 $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_getcontract_orderbook ${CONTRACT} 1
-##################################################################
+
 printf "Stoping omnicored and litecoin-cli:\n"
 $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest stop
 # /home/lihki/Documentos/omnicore-litecoin-local/src/litecoin-cli -datadir=/home/lihki/.litecoin --regtest stop

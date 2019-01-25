@@ -26,6 +26,8 @@ using boost::algorithm::token_compress_on;
 typedef boost::rational<boost::multiprecision::checked_int128_t> rational_t;
 extern int64_t factorE;
 extern uint64_t marketP[NPTYPES];
+extern int lastBlockg;
+extern int vestingActivationBlock;
 
 void RequireBalance(const std::string& address, uint32_t propertyId, int64_t amount)
 {
@@ -55,17 +57,17 @@ void RequirePropertyName(const std::string& name)
 
 void RequireExistingProperty(uint32_t propertyId)
 {
-    LOCK(cs_tally);
-    if (!mastercore::IsPropertyIdValid(propertyId)) {
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "Property identifier does not exist");
-    }
+  LOCK(cs_tally);
+  if (!mastercore::IsPropertyIdValid(propertyId)) {
+    throw JSONRPCError(RPC_INVALID_PARAMETER, "Property identifier does not exist");
+  }
 }
 
 void RequireSameEcosystem(uint32_t propertyId, uint32_t otherId)
 {
-    if (mastercore::isTestEcosystemProperty(propertyId) != mastercore::isTestEcosystemProperty(otherId)) {
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "Properties must be in the same ecosystem");
-    }
+  if (mastercore::isTestEcosystemProperty(propertyId) != mastercore::isTestEcosystemProperty(otherId)) {
+    throw JSONRPCError(RPC_INVALID_PARAMETER, "Properties must be in the same ecosystem");
+  }
 }
 
 void RequireDifferentIds(uint32_t propertyId, uint32_t otherId)
@@ -134,6 +136,18 @@ void RequireHeightInChain(int blockHeight)
     }
 }
 
+void RequireNotVesting(uint32_t propertyId)
+{
+  LOCK(cs_tally);
+  CMPSPInfo::Entry sp;
+  if (!mastercore::_my_sps->getSP(propertyId, sp)) {
+    throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
+  }
+  
+  if (sp.attribute_type == ALL_PROPERTY_TYPE_VESTING && lastBlockg < vestingActivationBlock + 210240) {
+    throw JSONRPCError(RPC_INVALID_PARAMETER, "Vesting Tokens can not be traded at DEx before one year\n");
+  }
+}
 
 void RequireNotContract(uint32_t propertyId)
 {
@@ -142,7 +156,7 @@ void RequireNotContract(uint32_t propertyId)
     if (!mastercore::_my_sps->getSP(propertyId, sp)) {
         throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
     }
-    if (sp.subcategory == "Futures Contracts") {
+    if (sp.prop_type == ALL_PROPERTY_TYPE_CONTRACT) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Property must not be future contract\n");
     }
 }
@@ -154,7 +168,7 @@ void RequireContract(uint32_t propertyId)
     if (!mastercore::_my_sps->getSP(propertyId, sp)) {
         throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
     }
-    if (sp.subcategory != "Futures Contracts") {
+    if (sp.prop_type != ALL_PROPERTY_TYPE_CONTRACT) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "contractId must be future contract\n");
     }
 }
@@ -164,10 +178,11 @@ void RequirePeggedCurrency(uint32_t propertyId)
     LOCK(cs_tally);
     CMPSPInfo::Entry sp;
     if (!mastercore::_my_sps->getSP(propertyId, sp)) {
-        throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
+      throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
     }
-    if (sp.subcategory != "Pegged Currency") {
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "propertyId must be a pegged currency\n");
+    
+    if (sp.prop_type != ALL_PROPERTY_TYPE_PEGGEDS) {
+      throw JSONRPCError(RPC_INVALID_PARAMETER, "propertyId must be a pegged currency\n");
     }
 }
 
@@ -241,7 +256,7 @@ void RequireShort(std::string& fromAddress, uint32_t contractId, uint64_t amount
         throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
     }
 
-    if (sp.subcategory == "Futures Contracts") {
+    if (sp.prop_type == ALL_PROPERTY_TYPE_CONTRACT) {
         int64_t notionalSize = static_cast<int64_t>(sp.notional_size);
         int64_t position = getMPbalance(fromAddress, contractId, NEGATIVE_BALANCE);
         rational_t conv = mastercore::notionalChange(contractId);

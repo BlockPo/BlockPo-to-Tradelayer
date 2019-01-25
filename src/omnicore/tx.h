@@ -72,6 +72,7 @@ private:
     char subcategory[SP_STRING_FIELD_LEN];
     /* New things for contracts */
     char stxid[SP_STRING_FIELD_LEN];
+    char name_traded[SP_STRING_FIELD_LEN];
     //////////////////////////////////
     char name[SP_STRING_FIELD_LEN];
     char url[SP_STRING_FIELD_LEN];
@@ -99,12 +100,15 @@ private:
     uint32_t propertyId;
     uint32_t contractId;
     uint64_t amount;
+    
     /* uint64_t ticksize; */
     /*uint32_t nextContractId;*/
     uint32_t blocks_until_expiration;
     uint32_t notional_size;
     uint32_t collateral_currency;
     uint32_t margin_requirement;
+    uint32_t ecosystemSP;
+    uint32_t attribute_type;
     /*uint32_t numerator;*/
     uint32_t denomination;
     // int block;
@@ -304,6 +308,7 @@ public:
         memset(&url, 0, sizeof(url));
         memset(&data, 0, sizeof(data));
         memset(&stxid, 0, sizeof(stxid));
+	memset(&name_traded, 0, sizeof(name_traded));
         deadline = 0;
         early_bird = 0;
         percentage = 0;
@@ -383,5 +388,20 @@ public:
 /** Parses a transaction and populates the CMPTransaction object. */
 int ParseTransaction(const CTransaction& tx, int nBlock, unsigned int idx, CMPTransaction& mptx, unsigned int nTime=0);
 
+struct FutureContractObject
+{
+  uint32_t fco_denomination;
+  uint32_t fco_blocks_until_expiration;
+  uint32_t fco_notional_size;
+  uint32_t fco_collateral_currency;
+  uint32_t fco_margin_requirement;
+  uint32_t fco_propertyId;
+  int fco_init_block;
+  std::string fco_name;
+  std::string fco_subcategory;
+  std::string fco_issuer;
+};
 
+struct FutureContractObject *getFutureContractObject(uint32_t property_type, std::string identifier);
+  
 #endif // OMNICORE_TX_H

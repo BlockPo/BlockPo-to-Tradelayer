@@ -7,8 +7,15 @@
 #include <stdint.h>
 #include <algorithm>
 #include <string>
+#include "omnicore/mdex.h"
+#include <boost/math/constants/constants.hpp>
+#include <boost/multiprecision/cpp_dec_float.hpp>
+#include <iostream>
+#include <limits>
 
 using mastercore::StrToInt64;
+typedef boost::multiprecision::cpp_dec_float_100 dec_float;
+
 using namespace std;
 
 void printing_matrix(MatrixTLS &gdata)

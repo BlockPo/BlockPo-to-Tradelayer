@@ -676,9 +676,9 @@ UniValue tl_getproperty(const JSONRPCRequest& request)
     response.push_back(Pair("fixedissuance", sp.fixed));
     response.push_back(Pair("totaltokens", strTotalTokens));
     response.push_back(Pair("creation block", sp.init_block));
-
-    if (sp.subcategory == "Futures Contracts"){
-        response.push_back(Pair("notional size",FormatDivisibleShortMP(sp.notional_size)));
+    
+    if (sp.prop_type == ALL_PROPERTY_TYPE_CONTRACT){
+        response.push_back(Pair("notional size",(uint64_t) sp.notional_size));
         response.push_back(Pair("collateral currency",(uint64_t) sp.collateral_currency));
           response.push_back(Pair("margin requirement",FormatDivisibleShortMP(sp.margin_requirement)));
         response.push_back(Pair("blocks until expiration",(uint64_t) sp.blocks_until_expiration));
@@ -692,9 +692,9 @@ UniValue tl_getproperty(const JSONRPCRequest& request)
             denomination = "Yen";
         }
         response.push_back(Pair("denomination", denomination));
-    } else if (sp.subcategory == "Pegged Currency") {
-        response.push_back(Pair("contract associated",(uint64_t) sp.contract_associated));
-        response.push_back(Pair("series", sp.series));
+    } else if (sp.prop_type == ALL_PROPERTY_TYPE_PEGGEDS) {
+      response.push_back(Pair("contract associated",(uint64_t) sp.contract_associated));
+      response.push_back(Pair("series", sp.series));
     }
 
     return response;
@@ -721,11 +721,11 @@ UniValue tl_listproperties(const JSONRPCRequest& request)
 			+ HelpExampleCli("tl_listproperties", "")
 			+ HelpExampleRpc("tl_listproperties", "")
 			);
-
+  
   UniValue response(UniValue::VARR);
-
+  
   LOCK(cs_tally);
-
+  
   uint32_t nextSPID = _my_sps->peekNextSPID(1);
   for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++) {
     CMPSPInfo::Entry sp;
@@ -736,7 +736,7 @@ UniValue tl_listproperties(const JSONRPCRequest& request)
       response.push_back(propertyObj);
     }
   }
-
+  
   uint32_t nextTestSPID = _my_sps->peekNextSPID(2);
   for (uint32_t propertyId = TEST_ECO_PROPERTY_1; propertyId < nextTestSPID; propertyId++) {
     CMPSPInfo::Entry sp;
@@ -744,7 +744,7 @@ UniValue tl_listproperties(const JSONRPCRequest& request)
       UniValue propertyObj(UniValue::VOBJ);
       propertyObj.push_back(Pair("propertyid", (uint64_t) propertyId));
       PropertyToJSON(sp, propertyObj); // name, data, url, divisible
-
+      
       response.push_back(propertyObj);
     }
   }
@@ -844,13 +844,13 @@ UniValue tl_getcrowdsale(const JSONRPCRequest& request)
 
     int64_t startTime = -1;
     if (!hashBlock.IsNull() && GetBlockIndex(hashBlock)) {
-        startTime = GetBlockIndex(hashBlock)->nTime;
+      startTime = GetBlockIndex(hashBlock)->nTime;
     }
-
+    
     // note the database is already deserialized here and there is minimal performance penalty to iterate recipients to calculate amountRaised
     int64_t amountRaised = 0;
-    uint16_t propertyIdType = isPropertyDivisible(propertyId) ? MSC_PROPERTY_TYPE_DIVISIBLE : MSC_PROPERTY_TYPE_INDIVISIBLE;
-    uint16_t desiredIdType = isPropertyDivisible(sp.property_desired) ? MSC_PROPERTY_TYPE_DIVISIBLE : MSC_PROPERTY_TYPE_INDIVISIBLE;
+    uint16_t propertyIdType = isPropertyDivisible(propertyId) ? ALL_PROPERTY_TYPE_DIVISIBLE : ALL_PROPERTY_TYPE_INDIVISIBLE;
+    uint16_t desiredIdType = isPropertyDivisible(sp.property_desired) ? ALL_PROPERTY_TYPE_DIVISIBLE : ALL_PROPERTY_TYPE_INDIVISIBLE;
     std::map<std::string, UniValue> sortMap;
     for (std::map<uint256, std::vector<int64_t> >::const_iterator it = database.begin(); it != database.end(); it++) {
         UniValue participanttx(UniValue::VOBJ);
@@ -1647,18 +1647,17 @@ UniValue tl_getorderbook(const JSONRPCRequest& request)
             "\nExamples:\n"
             + HelpExampleCli("tl_getorderbook", "2")
             + HelpExampleRpc("tl_getorderbook", "2")
-        );
-
+			    );
+    
     bool filterDesired = (request.params.size() > 1);
     uint32_t propertyIdForSale = ParsePropertyId(request.params[0]);
     uint32_t propertyIdDesired = 0;
-
+    
     RequireExistingProperty(propertyIdForSale);
     RequireNotContract(propertyIdForSale);
 
     if (filterDesired) {
         propertyIdDesired = ParsePropertyId(request.params[1]);
-
         RequireExistingProperty(propertyIdDesired);
         RequireNotContract(propertyIdDesired);
         RequireSameEcosystem(propertyIdForSale, propertyIdDesired);
@@ -1719,11 +1718,13 @@ UniValue tl_getcontract_orderbook(const JSONRPCRequest& request)
 			+ HelpExampleCli("tl_getcontract_orderbook", "2" "1")
 			+ HelpExampleRpc("tl_getcontract_orderbook", "2" "1")
 			);
-
-
-  uint32_t propertyIdForSale = ParsePropertyId(request.params[0]);
+  
+  std::string name_traded = ParseText(request.params[0]);
   uint8_t tradingaction = ParseContractDexAction(request.params[1]);
-
+  
+  struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, name_traded);
+  uint32_t propertyIdForSale = pfuture->fco_propertyId;
+  
   std::vector<CMPContractDex> vecContractDexObjects;
   {
     LOCK(cs_tally);
@@ -1828,13 +1829,13 @@ UniValue tl_getpeggedhistory(const JSONRPCRequest& request)
     return response;
 }
 
-
 UniValue tl_getallprice(const JSONRPCRequest& request)
 {
     if (false)
         throw runtime_error(
             "tl_getallprice \n"
             "\nRetrieves the ALL price in metadex (in dUSD) .\n"
+
             "\nResult:\n"
             "[                                      (array of JSON objects)\n"
             "  {\n"
@@ -2006,42 +2007,42 @@ UniValue tl_getpnl(const JSONRPCRequest& request)
 
 UniValue tl_getmarketprice(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 1)
-        throw runtime_error(
-            "tl_getpnl addres contractid\n"
-            "\nRetrieves the last match price on the distributed contract exchange for the specified market.\n"
-            "\nArguments:\n"
-            "1. contractid           (number, required) the id of future contract\n"
-            "\nResult:\n"
-            "[                                      (array of JSON objects)\n"
-            "  {\n"
-            "    \"block\" : nnnnnn,                      (number) the index of the block that contains the trade match\n"
-            "    \"unitprice\" : \"n.nnnnnnnnnnn...\" ,     (string) the unit price used to execute this trade (received/sold)\n"
-            "    \"price\" : \"n.nnnnnnnnnnn...\",   (string) the inverse unit price (sold/received)\n"
-            "  ...\n"
-            "]\n"
-            "\nExamples:\n"
-            + HelpExampleCli("tl_getaverage_entry", "12" )
-            + HelpExampleRpc("tl_getaverage_entry", "500")
-          );
-
-
-          uint32_t contractId = ParsePropertyId(request.params[0]);
-
-          RequireExistingProperty(contractId);
-          RequireContract(contractId);
-
-          UniValue balanceObj(UniValue::VOBJ);
-          int index = static_cast<unsigned int>(contractId);
-          int64_t price = marketP[index];
-
-          PrintToLog("_________________________________________________________\n");
-          PrintToLog("marketprice in rpc: %d\n",price);
-          PrintToLog("_________________________________________________________\n");
-
-          balanceObj.push_back(Pair("price", FormatByType(price,2)));
-
-          return balanceObj;
+  if (request.params.size() != 1)
+    throw runtime_error(
+			"tl_getmarketprice addres contractid\n"
+			"\nRetrieves the last match price on the distributed contract exchange for the specified market.\n"
+			"\nArguments:\n"
+			"1. contractid           (number, required) the id of future contract\n"
+			"\nResult:\n"
+			"[                                      (array of JSON objects)\n"
+			"  {\n"
+			"    \"block\" : nnnnnn,                      (number) the index of the block that contains the trade match\n"
+			"    \"unitprice\" : \"n.nnnnnnnnnnn...\" ,     (string) the unit price used to execute this trade (received/sold)\n"
+			"    \"price\" : \"n.nnnnnnnnnnn...\",   (string) the inverse unit price (sold/received)\n"
+			"  ...\n"
+			"]\n"
+			"\nExamples:\n"
+			+ HelpExampleCli("tl_getaverage_entry", "12" )
+			+ HelpExampleRpc("tl_getaverage_entry", "500")
+			);
+  
+  
+  uint32_t contractId = ParsePropertyId(request.params[0]);
+  
+  RequireExistingProperty(contractId);
+  RequireContract(contractId);
+  
+  UniValue balanceObj(UniValue::VOBJ);
+  int index = static_cast<unsigned int>(contractId);
+  int64_t price = marketP[index];
+  
+  PrintToLog("_________________________________________________________\n");
+  PrintToLog("marketprice in rpc: %d\n",price);
+  PrintToLog("_________________________________________________________\n");
+  
+  balanceObj.push_back(Pair("price", FormatByType(price,2)));
+  
+  return balanceObj;
 }
 
 UniValue tl_getactivedexsells(const JSONRPCRequest& request)

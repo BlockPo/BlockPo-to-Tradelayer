@@ -125,6 +125,7 @@ CMainConsensusParams::CMainConsensusParams()
     ///////////////////////////////
     /** New things for Contract */
     MSC_CONTRACTDEX_BLOCK = 999999;
+    MSC_VESTING_BLOCK = 0;
     ///////////////////////////////
 }
 
@@ -150,6 +151,7 @@ CTestNetConsensusParams::CTestNetConsensusParams()
     ///////////////////////////////
     /** New things for Contract */
     MSC_CONTRACTDEX_BLOCK = 0;
+    MSC_VESTING_BLOCK = 0;
     ///////////////////////////////
 }
 
@@ -175,6 +177,7 @@ CRegTestConsensusParams::CRegTestConsensusParams()
     ///////////////////////////////
     /** New things for Contract */
     MSC_CONTRACTDEX_BLOCK = 0;
+    MSC_VESTING_BLOCK = 0;
     ///////////////////////////////
 }
 

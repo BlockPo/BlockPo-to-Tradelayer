@@ -1,5 +1,7 @@
 int N = 2;
 int M = 4;
+int NYears = 10;
+int initYear = 19;
 
 factorE = 100000000;
 priceIndex = 110; // an index price (USDs) to calculate the interest in pegg currencies (10% more)
@@ -38,3 +40,36 @@ netted_npartly_anypos[3] = "ShortPosNettedPartly";
 pt_changepos_status = new VectorTLS(2); VectorTLS &changepos_status = *pt_changepos_status;
 changepos_status[0] = "OpenLongPosByShortPosNetted";
 changepos_status[1] = "OpenShortPosByLongPosNetted";
+
+pt_expiration_dates = new VectorTLS(12*NYears); VectorTLS &expiration_dates = *pt_expiration_dates;
+for ( int i = 0; i < NYears; i++ )
+  {
+    expiration_dates[i+11*i]    = "ALL F" + std::to_string(i+initYear);
+    expiration_dates[i+1+11*i]  = "ALL G" + std::to_string(i+initYear);
+    expiration_dates[i+2+11*i]  = "ALL H" + std::to_string(i+initYear);
+    expiration_dates[i+3+11*i]  = "ALL J" + std::to_string(i+initYear);
+    expiration_dates[i+4+11*i]  = "ALL K" + std::to_string(i+initYear);
+    expiration_dates[i+5+11*i]  = "ALL M" + std::to_string(i+initYear);
+    expiration_dates[i+6+11*i]  = "ALL N" + std::to_string(i+initYear);
+    expiration_dates[i+7+11*i]  = "ALL Q" + std::to_string(i+initYear);
+    expiration_dates[i+8+11*i]  = "ALL U" + std::to_string(i+initYear);
+    expiration_dates[i+9+11*i]  = "ALL V" + std::to_string(i+initYear);
+    expiration_dates[i+10+11*i] = "ALL X" + std::to_string(i+initYear);
+    expiration_dates[i+11+11*i] = "ALL Z" + std::to_string(i+initYear);
+  }
+
+/** The final addrs amount will be chosen at mainnet launch time */
+nVestingAddrs = 10;
+amountVesting = 999999999999999;
+pt_vestingAddresses = new VectorTLS(nVestingAddrs); VectorTLS &vestingAddresses = *pt_vestingAddresses;
+/** List od vesting addresses */
+vestingAddresses[0] = "QiPiqxEkaNcqsiUv4WQ5P2Rnd5CRKs7cFF";
+vestingAddresses[1] = "QcbwthpCyZVq2BPpMEiGb776pquK3e9ASp";
+vestingAddresses[2] = "QP8T82YHCfHcvTvNaQ6LYR1KquSoZf6Hpf";
+vestingAddresses[3] = "QMyztrthEfgkNupse2RBeMnxvv2RXXkMEj";
+vestingAddresses[4] = "QPSyfsqGbP5E8Z5GXkD85g5p8ot9XFa54m";
+vestingAddresses[5] = "QXtzVB3ry9kDa9nDnqN3FAWkGa9upZ6Qsp";
+vestingAddresses[6] = "QVpVSqKGAjqRGMJoBSPMM63V2YK6tkoqW4";
+vestingAddresses[7] = "QhEKbR3ckrgYLQLHuS7nNVpRGWazVp6zrM";
+vestingAddresses[8] = "QbWe1DYDorzFMP6wZf8QtTWu7YpM8ZSDDu";
+vestingAddresses[9] = "QSsJXDFb4b3vTgqeycrHtkYTYKmCk4TJn1";

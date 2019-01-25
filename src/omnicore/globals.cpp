@@ -6,6 +6,7 @@
 #include "tradelayer_matrices.h"
 #include "mdex.h"
 
+typedef boost::multiprecision::uint128_t ui128;
 using namespace std;
 
 uint64_t marketPrice;
@@ -37,5 +38,12 @@ std::map<std::string,uint32_t> peggedIssuers;
 double globalPNLALL_DUSD;
 int64_t globalVolumeALL_DUSD;
 std::map<uint32_t, std::map<std::string, double>> addrs_upnlc;
-//Elements to calculate average entry price (for UPNL)
-std::map<std::string, std::vector<int64_t>> cd_AvEntry;
+VectorTLS *pt_expiration_dates;
+VectorTLS *pt_vestingAddresses;
+int nVestingAddrs;
+int64_t amountVesting;
+int lastBlockg;
+int vestingActivationBlock;
+volatile int64_t LTCPriceOffer;
+volatile int64_t factorALLtoLTC;
+volatile int64_t globalVolumeALL_LTC;
