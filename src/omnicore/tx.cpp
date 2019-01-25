@@ -2337,7 +2337,7 @@ int CMPTransaction::logicMath_ContractDexTrade()
   int64_t num = conv.numerator().convert_to<int64_t>();
   int64_t den = conv.denominator().convert_to<int64_t>();
   PrintToLog("Third checkout\n");
-  arith_uint256 amountTR = (ConvertTo256(amount) * ConvertTo256(marginRe) * ConvertTo256(num) / (ConvertTo256(den) * ConvertTo256(factorE)));
+  arith_uint256 amountTR = (ConvertTo256(amount) * ConvertTo256(marginRe) * ConvertTo256(num) / (ConvertTo256(den)));
   PrintToLog("4th checkout\n");
   int64_t amountToReserve = ConvertTo64(amountTR);
   
