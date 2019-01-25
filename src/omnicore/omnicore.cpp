@@ -75,13 +75,15 @@
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
-
 #include <fstream>
 #include <map>
 #include <set>
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <cmath>
+#include <iostream>
+
 #include "tradelayer_matrices.h"
 #include "externfns.h"
 #include "omnicore/parse_string.h"
@@ -582,6 +584,7 @@ void sendingVestingTokens()
       assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, getMPbalance(vestingAddresses[i], propertyIdVesting, BALANCE), UNVESTED));
   }
 }
+
 /**
  * Returns the encoding class, used to embed a payload.
  *    Class A (dex payments)
@@ -2113,31 +2116,38 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   
   /***********************************************/
   /** Vesting Tokens to Balance */
-  int64_t x_Axis = globalVolumeALL_LTC;
+  int64_t x_Axis = globalVolumeALL_LTC/COIN;
+  PrintToLog("log(x_Axis) = %d", FormatDivisibleMP(mastercore::DoubleToInt64(log(static_cast<double>(x_Axis)/COIN))));
   
   if (x_Axis)
     {
       PrintToLog("\nx_Axis = %s\n", FormatDivisibleMP(x_Axis));
-      PrintToLog("Before Unvested = %d", getMPbalance(vestingAddresses[1], OMNI_PROPERTY_ALL, UNVESTED));
-      PrintToLog("Before Balance = %d", getMPbalance(vestingAddresses[1], OMNI_PROPERTY_ALL, BALANCE));
+      PrintToLog("\nBefore Unvested = %d\n", getMPbalance(vestingAddresses[1], OMNI_PROPERTY_ALL, UNVESTED));
+      PrintToLog("\nBefore Balance = %d\n", getMPbalance(vestingAddresses[1], OMNI_PROPERTY_ALL, BALANCE));
+      PrintToLog("nBlockTime = %d, lastBlockg = %d", nBlockTime, lastBlockg);
       
       for (int i = 0; i < nVestingAddrs; i++) {
 	int64_t ALLUnvested = getMPbalance(vestingAddresses[i], OMNI_PROPERTY_ALL, UNVESTED);
-	if (ALLUnvested != 0 && nBlockTime == lastBlockg ) {
+	if (ALLUnvested != 0) {
 	  if (x_Axis >= 0 && x_Axis < 300000) { /** y = x*/
+	    PrintToLog("\nLinear Function\n");
 	    assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, -x_Axis, UNVESTED));
 	    assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, x_Axis, BALANCE));
 	  } else if (x_Axis >= 300000 && x_Axis < 300000000) { /** y = x^2*/
-	    assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, -x_Axis*x_Axis, UNVESTED));
-	    assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, x_Axis*x_Axis, BALANCE));      
+	    PrintToLog("\nQuadratic Function\n");
+	    arith_uint256 quad256_t = mastercore::ConvertTo256(x_Axis)*mastercore::ConvertTo256(x_Axis)/COIN;
+	    int64_t quad64_t = mastercore::ConvertTo64(quad256_t);
+	    assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, -quad64_t, UNVESTED));
+	    assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, quad64_t, BALANCE));
 	  } else if (x_Axis >= 300000000 && x_Axis < 30000000000) { /** y = ln|x|*/
-	    assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, -log(x_Axis), UNVESTED));
-	    assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, log(x_Axis), BALANCE));          
+	    PrintToLog("\nLogarithmic Function\n");
+	    assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, -mastercore::DoubleToInt64(log(static_cast<double>(x_Axis)/COIN)), UNVESTED));
+	    assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, mastercore::DoubleToInt64(log(static_cast<double>(x_Axis)/COIN)), BALANCE));
 	  }
 	}
       }
-      PrintToLog("Before Unvested = %d", getMPbalance(vestingAddresses[1], OMNI_PROPERTY_ALL, UNVESTED));
-      PrintToLog("Before Balance = %d", getMPbalance(vestingAddresses[1], OMNI_PROPERTY_ALL, BALANCE));
+      PrintToLog("\nAfter Unvested = %d\n", getMPbalance(vestingAddresses[1], OMNI_PROPERTY_ALL, UNVESTED));
+      PrintToLog("\nAfter Balance = %d\n", getMPbalance(vestingAddresses[1], OMNI_PROPERTY_ALL, BALANCE));
     }
   /***********************************************/
   

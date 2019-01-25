@@ -2,6 +2,6 @@
 
 echo "Doing Make Locally"
 ./autogen.sh
-./configure
+./configure --without-gui --disable-tests
 make --jobs=12
 echo "Done"
