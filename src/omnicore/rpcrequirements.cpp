@@ -109,6 +109,17 @@ void RequireManagedProperty(uint32_t propertyId)
     }
 }
 
+void RequireAssociation(uint32_t propertyId,uint32_t contractId)
+{
+  LOCK(cs_tally);
+  CMPSPInfo::Entry sp;
+  if (!mastercore::_my_sps->getSP(propertyId, sp)) {
+      throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
+  }
+  if (sp.contract_associated != contractId) {
+      throw JSONRPCError(RPC_INVALID_PARAMETER, "Pegged does not comes from this contract");
+  }
+}
 
 void RequireTokenIssuer(const std::string& address, uint32_t propertyId)
 {
@@ -143,7 +154,7 @@ void RequireNotVesting(uint32_t propertyId)
   if (!mastercore::_my_sps->getSP(propertyId, sp)) {
     throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
   }
-  
+
   if (sp.attribute_type == ALL_PROPERTY_TYPE_VESTING && lastBlockg < vestingActivationBlock + 210240) {
     throw JSONRPCError(RPC_INVALID_PARAMETER, "Vesting Tokens can not be traded at DEx before one year\n");
   }
@@ -180,7 +191,7 @@ void RequirePeggedCurrency(uint32_t propertyId)
     if (!mastercore::_my_sps->getSP(propertyId, sp)) {
       throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
     }
-    
+
     if (sp.prop_type != ALL_PROPERTY_TYPE_PEGGEDS) {
       throw JSONRPCError(RPC_INVALID_PARAMETER, "propertyId must be a pegged currency\n");
     }
@@ -259,13 +270,16 @@ void RequireShort(std::string& fromAddress, uint32_t contractId, uint64_t amount
     if (sp.prop_type == ALL_PROPERTY_TYPE_CONTRACT) {
         int64_t notionalSize = static_cast<int64_t>(sp.notional_size);
         int64_t position = getMPbalance(fromAddress, contractId, NEGATIVE_BALANCE);
-        rational_t conv = mastercore::notionalChange(contractId);
+        // rational_t conv = mastercore::notionalChange(contractId);
+        rational_t conv = rational_t(1,1);
         int64_t num = conv.numerator().convert_to<int64_t>();
         int64_t denom = conv.denominator().convert_to<int64_t>();
         arith_uint256 Amount = mastercore::ConvertTo256(num) * mastercore::ConvertTo256(amount) / mastercore::ConvertTo256(denom); // Alls needed
-        arith_uint256 contracts = mastercore::DivideAndRoundUp(Amount * mastercore::ConvertTo256(notionalSize), mastercore::ConvertTo256(factorE)) ;
+        arith_uint256 contracts = mastercore::DivideAndRoundUp(Amount * mastercore::ConvertTo256(notionalSize), mastercore::ConvertTo256(1)) ;
         contractsNeeded = mastercore::ConvertTo64(contracts);
-        PrintToLog("contractsNeeded : %d\n",contractsNeeded);
+        PrintToLog("contractId : %d  ###############################################################################################\n", contractId);
+        PrintToLog("position : %d  ###############################################################################################\n", position);
+        PrintToLog("contractsNeeded : %d  ###############################################################################################\n" ,contractsNeeded);
         if (contractsNeeded > position) {
             throw JSONRPCError(RPC_INVALID_PARAMETER, "Not enough short position\n");
         }

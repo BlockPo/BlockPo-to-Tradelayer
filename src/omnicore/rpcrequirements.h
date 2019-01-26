@@ -23,6 +23,7 @@ void RequireForPegged(const std::string& address, uint32_t propertyId, uint32_t 
 void RequireNotVesting(uint32_t propertyId);
 void RequireNotContract(uint32_t propertyId);
 void RequireContract(uint32_t propertyId);
+void RequireAssociation(uint32_t propertyId,uint32_t contractId); // origin contract for pegged
 void RequirePeggedCurrency(uint32_t propertyId);
 void RequireMatchingDExOffer(const std::string& address, uint32_t propertyId);
 void RequireNoOtherDExOffer(const std::string& address, uint32_t propertyId);

@@ -55,7 +55,7 @@ bool CMPSPInfo::Entry::isDivisible() const
   switch (prop_type)
     {
     case ALL_PROPERTY_TYPE_DIVISIBLE:
-    case ALL_PROPERTY_TYPE_INDIVISIBLE:
+    case ALL_PROPERTY_TYPE_PEGGEDS:
       return true;
     }
   return false;
@@ -96,7 +96,7 @@ CMPSPInfo::CMPSPInfo(const boost::filesystem::path& path, bool fWipe)
 {
   leveldb::Status status = Open(path, fWipe);
   PrintToConsole("Loading smart property database: %s\n", status.ToString());
-  
+
   // special cases for constant SPs ALL and TALL
   // implied_all.issuer = ExodusAddress().ToString();
   implied_all.prop_type = ALL_PROPERTY_TYPE_DIVISIBLE;
@@ -113,7 +113,7 @@ CMPSPInfo::CMPSPInfo(const boost::filesystem::path& path, bool fWipe)
   implied_tall.name = "test property 2";
   implied_tall.url = "";
   implied_tall.data = "";
-  
+
   init();
 }
 
@@ -139,7 +139,7 @@ void CMPSPInfo::init(uint32_t nextSPID, uint32_t nextTestSPID)
 uint32_t CMPSPInfo::peekNextSPID(uint8_t ecosystem) const
 {
   uint32_t nextId = 0;
-  
+
   switch (ecosystem)
     {
     case OMNI_PROPERTY_ALL: // Main ecosystem, ALL: 1, TALL: 2, First available SP = 3
@@ -150,7 +150,7 @@ uint32_t CMPSPInfo::peekNextSPID(uint8_t ecosystem) const
       break;
     default: // Non-standard ecosystem, ID's start at 0
       nextId = 0;
-    } 
+    }
   return nextId;
 }
 
@@ -160,12 +160,12 @@ bool CMPSPInfo::updateSP(uint32_t propertyId, const Entry& info)
   if (OMNI_PROPERTY_ALL == propertyId || OMNI_PROPERTY_TALL == propertyId) {
     return false;
   }
-  
+
   // DB key for property entry
   CDataStream ssSpKey(SER_DISK, CLIENT_VERSION);
   ssSpKey << std::make_pair('s', propertyId);
   leveldb::Slice slSpKey(&ssSpKey[0], ssSpKey.size());
-  
+
   // DB value for property entry
   CDataStream ssSpValue(SER_DISK, CLIENT_VERSION);
   // ssSpValue.reserve(GetSerializeSize(info, ssSpValue.GetType(), ssSpValue.GetVersion()));
@@ -178,22 +178,22 @@ bool CMPSPInfo::updateSP(uint32_t propertyId, const Entry& info)
   ssSpPrevKey << info.update_block;
   ssSpPrevKey << propertyId;
   leveldb::Slice slSpPrevKey(&ssSpPrevKey[0], ssSpPrevKey.size());
-  
+
   leveldb::WriteBatch batch;
   std::string strSpPrevValue;
-  
+
   // if a value exists move it to the old key
   if (!pdb->Get(readoptions, slSpKey, &strSpPrevValue).IsNotFound()) {
     batch.Put(slSpPrevKey, strSpPrevValue);
   }
   batch.Put(slSpKey, slSpValue);
   leveldb::Status status = pdb->Write(syncoptions, &batch);
-    
+
   if (!status.ok()) {
     PrintToLog("%s(): ERROR for SP %d: %s\n", __func__, propertyId, status.ToString());
     return false;
   }
-  
+
   PrintToLog("%s(): updated entry for SP %d successfully\n", __func__, propertyId);
   return true;
 }
@@ -598,19 +598,19 @@ CMPCrowd* mastercore::getCrowd(const std::string& address)
 bool mastercore::IsPropertyIdValid(uint32_t propertyId)
 {
   if (propertyId == 0) return false;
-  
+
   uint32_t nextId = 0;
-  
+
   if (propertyId < TEST_ECO_PROPERTY_1) {
     nextId = _my_sps->peekNextSPID(1);
   } else {
     nextId = _my_sps->peekNextSPID(2);
   }
-  
+
   if (propertyId < nextId) {
     return true;
   }
-  
+
   return false;
 }
 
@@ -618,27 +618,27 @@ bool mastercore::isPropertyDivisible(uint32_t propertyId)
 {
   // TODO: is a lock here needed
   CMPSPInfo::Entry sp;
-  
+
   if (_my_sps->getSP(propertyId, sp)) return sp.isDivisible();
-  
+
   return true;
 }
 
 bool mastercore::isPropertyContract(uint32_t propertyId)
 {
   CMPSPInfo::Entry sp;
-  
+
   if (_my_sps->getSP(propertyId, sp)) return sp.isContract();
-  
+
   return true;
 }
 
 bool mastercore::isPropertyPegged(uint32_t propertyId)
 {
   CMPSPInfo::Entry sp;
-  
+
   if (_my_sps->getSP(propertyId, sp)) return sp.isPegged();
-  
+
   return true;
 }
 
@@ -974,17 +974,17 @@ int CMPSPInfo::rollingContractsBlock(const CBlockIndex* pBlockIndex)
                 for (uint32_t propertyId = 1; propertyId < NextSPID; propertyId++) {
                     CMPSPInfo::Entry fc;
                     if (_my_sps->getSP(propertyId, fc)) {
-		      PrintToConsole("Property Id: %d\n",propertyId);
-		      if (fc.prop_type == ALL_PROPERTY_TYPE_CONTRACT && fc.denomination == spp.denomination && fc.name != spp.name){
-			contractId2 = propertyId;
-			notionalSizeB = static_cast<int64_t>(fc.notional_size);
-			PrintToLog("Property to jump in rolling found: %d\n",propertyId);
-			break;
-		      }
+		                    PrintToConsole("Property Id: %d\n",propertyId);
+		                      if (fc.prop_type == ALL_PROPERTY_TYPE_CONTRACT && fc.denomination == spp.denomination && fc.name != spp.name){
+			                         contractId2 = propertyId;
+			                         notionalSizeB = static_cast<int64_t>(fc.notional_size);
+			                         PrintToLog("Property to jump in rolling found: %d\n",propertyId);
+			                         break;
+		                      }
                     }
                 }
-	    }
-	    
+	         }
+
            // If there's no contract to jump to
            if(contractId2 == 0) {
                PrintToLog("No contract to jump to\n");
@@ -1109,7 +1109,7 @@ std::string mastercore::strPropertyType(uint16_t propertyType)
     case ALL_PROPERTY_TYPE_DIVISIBLE: return "divisible";
     case ALL_PROPERTY_TYPE_INDIVISIBLE: return "indivisible";
     }
-  
+
   return "unknown";
 }
 
@@ -1120,7 +1120,7 @@ std::string mastercore::strEcosystem(uint8_t ecosystem)
     case OMNI_PROPERTY_ALL: return "main";
     case OMNI_PROPERTY_TALL: return "test";
     }
-  
+
   return "unknown";
 }
 
