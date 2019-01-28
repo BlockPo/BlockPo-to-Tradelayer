@@ -599,7 +599,7 @@ int mastercore::GetEncodingClass(const CTransaction& tx, int nBlock)
      * Perform a string comparison on hex for each scriptPubKey & look directly for omni marker bytes
      * This allows to drop non-Omni transactions with less work
      */
-    std::string strClassD = "626E"; /*the bn marker*/
+    std::string strClassD = "504A"; /*the PJ marker*/
     bool examineClosely = false;
     for (unsigned int n = 0; n < tx.vout.size(); ++n) {
         const CTxOut& output = tx.vout[n];
@@ -3927,7 +3927,7 @@ const std::string ExodusAddress()
  */
 const std::vector<unsigned char> GetOmMarker()
 {
-    static unsigned char pch[] = {0x62, 0x6E}; // Hex-encoded: "bn"
+    static unsigned char pch[] = {0x50, 0x4A}; // Hex-encoded: "PJ"
 
     return std::vector<unsigned char>(pch, pch + sizeof(pch) / sizeof(pch[0]));
 }
