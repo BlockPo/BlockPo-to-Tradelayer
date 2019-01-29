@@ -952,6 +952,7 @@ bool CMPTransaction::interpret_ContractDexTrade()
   std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
 
+  PrintToLog("i after two elements: %d\n",i);
   const char* p = i + (char*) &pkt;
   std::vector<std::string> spstr;
   for (int j = 0; j < 1; j++) {
@@ -2332,8 +2333,8 @@ int CMPTransaction::logicMath_ContractDexTrade()
   id_contract = pfuture->fco_propertyId;
   int64_t marginRe = static_cast<int64_t>(pfuture->fco_margin_requirement);
   int64_t nBalance = getMPbalance(sender, pfuture->fco_collateral_currency, BALANCE);
-  rational_t conv = notionalChange(pfuture->fco_propertyId);
-
+  // rational_t conv = notionalChange(pfuture->fco_propertyId);
+  rational_t conv = rational_t(1,1);
   int64_t num = conv.numerator().convert_to<int64_t>();
   int64_t den = conv.denominator().convert_to<int64_t>();
   PrintToLog("Third checkout\n");

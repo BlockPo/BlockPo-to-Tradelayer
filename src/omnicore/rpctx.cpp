@@ -869,6 +869,8 @@ UniValue tl_tradecontract(const JSONRPCRequest& request)
   uint64_t effective_price = ParseEffectivePrice(request.params[3]);
   uint8_t trading_action = ParseContractDexAction(request.params[4]);
 
+  RequireCollateral(fromAddress,name_traded);
+
   std::vector<unsigned char> payload = CreatePayload_ContractDexTrade(name_traded, amountForSale, effective_price, trading_action);
 
   uint256 txid;
@@ -1152,9 +1154,9 @@ UniValue tl_send_pegged(const JSONRPCRequest& request)
 
     RequirePeggedCurrency(propertyId);
 
-    int64_t amount = ParseAmount(request.params[3], isPropertyPegged(propertyId));
+    int64_t amount = ParseAmount(request.params[3], true);
     //  std::string redeemAddress = (request.params.size() > 4 && !ParseText(request.params[4]).empty()) ? ParseAddress(request.params[4]): "";
-    int64_t referenceAmount = (request.params.size() > 5) ? ParseAmount(request.params[5], true): 0;
+    // int64_t referenceAmount = (request.params.size() > 5) ? ParseAmount(request.params[4], true): 0;
 
     // perform checks
     RequireExistingProperty(propertyId);
@@ -1166,7 +1168,7 @@ UniValue tl_send_pegged(const JSONRPCRequest& request)
     // request the wallet build the transaction (and if needed commit it)
     uint256 txid;
     std::string rawHex;
-    int result = WalletTxBuilder(fromAddress, toAddress,referenceAmount, payload, txid, rawHex, autoCommit);
+    int result = WalletTxBuilder(fromAddress, toAddress,0, payload, txid, rawHex, autoCommit);
 
     // check error and return the txid (or raw hex depending on autocommit)
     if (result != 0) {
@@ -1209,7 +1211,7 @@ UniValue tl_redemption_pegged(const JSONRPCRequest& request)
     struct FutureContractObject *pfuture_pegged = getFutureContractObject(ALL_PROPERTY_TYPE_PEGGEDS, name_pegged);
     uint32_t propertyId = pfuture_pegged->fco_propertyId;
 
-    uint64_t amount = ParseAmount(request.params[2], isPropertyPegged(propertyId));
+    uint64_t amount = ParseAmount(request.params[2], true);
 
     struct FutureContractObject *pfuture_contract = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, name_contract);
     uint32_t contractId = pfuture_contract->fco_propertyId;

@@ -235,7 +235,7 @@ uint32_t ParseNewValues(const UniValue& value)
 
 uint64_t ParseEffectivePrice(const UniValue& value)
 {
-  int64_t effPrice = StrToInt64(value.getValStr(), true);  
+  int64_t effPrice = StrToInt64(value.getValStr(), true);
   if (effPrice < 0) {
     throw JSONRPCError(RPC_TYPE_ERROR, "Price should be positive");
   }
@@ -299,21 +299,27 @@ uint32_t ParseContractType(const UniValue& value)
 {
   int64_t Nvalue = value.get_int64();
 
-  if (Nvalue != 1 && Nvalue != 2 && Nvalue != 3 && Nvalue != 4) {
-    throw JSONRPCError(RPC_INVALID_PARAMETER, "option no valid");
+  if (Nvalue < 1 || 4294967295LL < Nvalue) {
+    throw JSONRPCError(RPC_INVALID_PARAMETER, "Value is out of range");
   }
+  return static_cast<uint32_t>(Nvalue);  
 
-  if ( Nvalue == 1 ) {
-    return weekly;
-  } else if ( Nvalue == 2 ) {
-    return monthly;
-  } else if ( Nvalue == 3 ) {
-    return time25minutes;
-  } else if ( Nvalue == 4 ) {
-    return time4hours;
-  }
+  // if (Nvalue != 1 && Nvalue != 2 && Nvalue != 3 && Nvalue != 4) {
+  //   throw JSONRPCError(RPC_INVALID_PARAMETER, "option no valid");
+  // }
+  //
+  // if ( Nvalue == 1 ) {
+  //   return weekly;
+  // } else if ( Nvalue == 2 ) {
+  //   return monthly;
+  // } else if ( Nvalue == 3 ) {
+  //   return time25minutes;
+  // } else if ( Nvalue == 4 ) {
+  //   return time4hours;
+  // }
+  //
+  // return 0;
 
-  return 0;
 }
 
 uint32_t ParseContractDen(const UniValue& value)

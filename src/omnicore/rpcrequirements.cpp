@@ -41,6 +41,24 @@ void RequireBalance(const std::string& address, uint32_t propertyId, int64_t amo
     }
 }
 
+
+void RequireCollateral(const std::string& address, std::string name_traded)
+{
+
+  struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, name_traded);
+
+    uint32_t propertyId = pfuture->fco_collateral_currency;
+    int64_t balance = getMPbalance(address, propertyId, BALANCE);
+    if (balance == 0) {
+        throw JSONRPCError(RPC_TYPE_ERROR, "Sender has insufficient balance");
+    }
+    int64_t balanceUnconfirmed = getUserAvailableMPbalance(address, propertyId);
+    if (balanceUnconfirmed == 0) {
+        throw JSONRPCError(RPC_TYPE_ERROR, "Sender has insufficient balance (due to pending transactions)");
+    }
+}
+
+
 void RequirePrimaryToken(uint32_t propertyId)
 {
     if (propertyId < 1 || 2 < propertyId) {

@@ -25,6 +25,7 @@ void RequireNotContract(uint32_t propertyId);
 void RequireContract(uint32_t propertyId);
 void RequireAssociation(uint32_t propertyId,uint32_t contractId); // origin contract for pegged
 void RequirePeggedCurrency(uint32_t propertyId);
+void RequireCollateral(const std::string& address, std::string name_traded);
 void RequireMatchingDExOffer(const std::string& address, uint32_t propertyId);
 void RequireNoOtherDExOffer(const std::string& address, uint32_t propertyId);
 void RequireContractOrder(std::string& fromAddress, uint32_t contractId);

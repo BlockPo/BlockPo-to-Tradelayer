@@ -3927,7 +3927,7 @@ const std::string ExodusAddress()
  */
 const std::vector<unsigned char> GetOmMarker()
 {
-    static unsigned char pch[] = {0x50, 0x4A}; // Hex-encoded: "PJ"
+     static unsigned char pch[] = {0x50, 0x4A}; // Hex-encoded: "PJ"
 
     return std::vector<unsigned char>(pch, pch + sizeof(pch) / sizeof(pch[0]));
 }
