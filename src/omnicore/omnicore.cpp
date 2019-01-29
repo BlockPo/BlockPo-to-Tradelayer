@@ -112,7 +112,7 @@ CCriticalSection cs_tally;
 static string exodus_address = "1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P";
 
 static const string exodus_mainnet = "1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P";
-static const string exodus_testnet = "mfjQ3ow4STCqW2zMeUeBWvs4y9Fgx7Gxfh";  // one of our litecoin testnet addresses
+static const string exodus_testnet = "mffpEfNWbCjDFEUGHadLB36bzfi8xQD3VY";  // one of our litecoin testnet (private) addresses
 // static const string getmoney_testnet = "moneyqMan7uh8FqdCA2BV5yZ8qVrc9ikLP";
 
 static int nWaterlineBlock = 0;
