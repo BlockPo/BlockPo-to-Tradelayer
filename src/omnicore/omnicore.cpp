@@ -2196,8 +2196,10 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
 		  PrintToLog("quadBalance = %s, vestingBalance = %s\n", FormatDivisibleMP(quadBalance), FormatDivisibleMP(vestingBalance));
 		  PrintToLog("quadWeighted = %d\n", FormatDivisibleMP(quadWeighted));
 		  
-		  assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, -quadWeighted, UNVESTED));
-		  assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, quadWeighted, BALANCE)); 
+		  if (getMPbalance(vestingAddresses[i], OMNI_PROPERTY_ALL, UNVESTED) >= quadWeighted) {
+			  assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, -quadWeighted, UNVESTED));
+			  assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, quadWeighted, BALANCE)); 
+		  }
 	      	}
 	      // else if (XAxis > 300000000 && XAxis <= 30000000000)
 	      // 	{ /** y = ln|x|*/
