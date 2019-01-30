@@ -2116,46 +2116,98 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
 
   /***********************************************/
   /** Vesting Tokens to Balance */
-  int64_t x_Axis = globalVolumeALL_LTC/COIN;
-  int64_t LogAxis = mastercore::DoubleToInt64(log(static_cast<double>(x_Axis)/COIN));
+  int64_t x_Axis = globalVolumeALL_LTC;
+  // int64_t LogAxis = mastercore::DoubleToInt64(log(static_cast<double>(x_Axis)/COIN));
+  
+  rational_t Factor1over3(1, 3);
+  int64_t Factor1over3_64t = mastercore::RationalToInt64(Factor1over3);
+  
+  int64_t XAxis = x_Axis/COIN;
+  PrintToLog("nBlockCounter = %d, lastBlockg = %d\n", static_cast<int>(pBlockIndex->nHeight), lastBlockg);      
+  PrintToLog("XAxis Decimal Scale = %d, x_Axis = %s, Lastx_Axis = %s\n", XAxis, FormatDivisibleMP(x_Axis), FormatDivisibleMP(Lastx_Axis));      
+  
+  if (x_Axis && x_Axis != Lastx_Axis)
+    {      
+      PrintToLog("\nALLs UNVESTED = %d\n", getMPbalance(vestingAddresses[1], OMNI_PROPERTY_ALL, UNVESTED));
+      PrintToLog("ALLs BALANCE = %d\n", getMPbalance(vestingAddresses[1], OMNI_PROPERTY_ALL, BALANCE));
 
-  if (LogAxis)
-    {
-      PrintToLog("\nBefore Unvested = %d\n", getMPbalance(vestingAddresses[1], OMNI_PROPERTY_ALL, UNVESTED));
-      PrintToLog("Before Balance = %d\n", getMPbalance(vestingAddresses[1], OMNI_PROPERTY_ALL, BALANCE));
-      PrintToLog("nBlockCounter = %d, lastBlockg = %d\n", static_cast<int>(pBlockIndex->nHeight), lastBlockg);
-      PrintToLog("x_Axis Decimal Scale = %d\tx_Axis Log Scale = %d", FormatDivisibleMP(x_Axis), FormatDivisibleMP(LogAxis));
-
-      int64_t Axis = LogAxis/COIN;
+      int64_t line64_t = 0;
+      int64_t quad64_t = 0;
+      
       for (int i = 0; i < nVestingAddrs; i++)
 	{
-	  int64_t ALLUnvested = getMPbalance(vestingAddresses[i], OMNI_PROPERTY_ALL, UNVESTED);
-	  if (ALLUnvested != 0 && static_cast<int>(pBlockIndex->nHeight) == lastBlockg) {
-
-	    if (Axis >= 0 && Axis < 300000)
-	      { /** y = x*/
-		PrintToLog("\nLinear Function\n");
-		assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, -LogAxis, UNVESTED));
-		assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, LogAxis, BALANCE));
-	      }
-	    else if (Axis >= 300000 && Axis < 300000000)
-	      { /** y = x^2*/
-		PrintToLog("\nQuadratic Function\n");
-		arith_uint256 quad256_t = mastercore::ConvertTo256(LogAxis)*mastercore::ConvertTo256(LogAxis)/COIN;
-		int64_t quad64_t = mastercore::ConvertTo64(quad256_t);
-		assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, -quad64_t, UNVESTED));
-		assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, quad64_t, BALANCE));
-	      }
-	    else if (Axis >= 300000000 && Axis < 30000000000)
-	      { /** y = ln|x|*/
-		PrintToLog("\nLogarithmic Function\n");
-		assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, -mastercore::DoubleToInt64(log(static_cast<double>(LogAxis)/COIN)), UNVESTED));
-		assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, mastercore::DoubleToInt64(log(static_cast<double>(LogAxis)/COIN)), BALANCE));
-	      }
-	  }
+	  int64_t vestingBalance = getMPbalance(vestingAddresses[i], OMNI_PROPERTY_VESTING, BALANCE);
+	  if (vestingBalance != 0)
+	    {	    
+	      if (XAxis >= 0 && XAxis <= 300000)
+		{ /** y = 1/3x */
+		  arith_uint256 line256_t = mastercore::ConvertTo256(Factor1over3_64t)*mastercore::ConvertTo256(x_Axis)/COIN;  
+		  line64_t = mastercore::ConvertTo64(line256_t);
+		  
+		  PrintToLog("\nLinear Function\n");
+		  PrintToLog("\nvestingBalance >= 140K?? vestingBalance = %s, 140K =%s\n", FormatDivisibleMP(vestingBalance), FormatDivisibleMP(140000*COIN));
+		  PrintToLog("XAxis >= 0 && XAxis < 300000?? 300,000 - XAxis= %d\n", 300000 - XAxis);
+		  PrintToLog("line256_t = %s\n", line256_t.ToString());
+		  PrintToLog("line64_t = %s, LastLinear = %s\n", FormatDivisibleMP(line64_t), FormatDivisibleMP(LastLinear));
+		  
+		  int64_t linearBalance = line64_t-LastLinear;
+		  arith_uint256 linew256_t = mastercore::ConvertTo256(linearBalance)*mastercore::ConvertTo256(vestingBalance)/COIN;
+	      	  int64_t linew64_t = mastercore::ConvertTo64(linew256_t);
+		  
+		  rational_t linearRationalw(linew64_t, (int64_t)TOTAL_AMOUNT_VESTING_TOKENS);
+		  int64_t linearWeighted = mastercore::RationalToInt64(linearRationalw);
+		  
+		  PrintToLog("linearBalance = %s, vestingBalance = %s\n", FormatDivisibleMP(linearBalance), FormatDivisibleMP(vestingBalance));
+		  PrintToLog("linearWeighted = %s\n", FormatDivisibleMP(linearWeighted));
+		  
+		  assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, -linearWeighted, UNVESTED));
+		  assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, linearWeighted, BALANCE)); 
+		}
+	      else if (XAxis > 300000 && XAxis <= 300000000)
+	      	{ /** y = 200K+sqrt(40B-4C(x))/2 */
+		  
+		  PrintToLog("\nQuadratic Function\n");		  
+		  
+		  dec_float SecndTermnf = dec_float(7)*dec_float(XAxis)*dec_float(XAxis)/dec_float(940900000);
+		  int64_t SecndTermn64_t = mastercore::StrToInt64(SecndTermnf.str(DISPLAY_PRECISION_LEN, std::ios_base::fixed), true);
+		  PrintToLog("SecndTermnf = %d\n", FormatDivisibleMP(SecndTermn64_t));
+		  
+		  dec_float ThirdTermnf = dec_float(7)*dec_float(600000)*dec_float(XAxis)/dec_float(940900000);
+		  int64_t ThirdTermn64_t = mastercore::StrToInt64(ThirdTermnf.str(DISPLAY_PRECISION_LEN, std::ios_base::fixed), true);
+		  PrintToLog("ThirdTermnf = %d\n", FormatDivisibleMP(ThirdTermn64_t));
+		  
+		  dec_float ForthTermnf = dec_float(7)*dec_float(90000000000)/dec_float(940900000);
+		  int64_t ForthTermn64_t = mastercore::StrToInt64(ForthTermnf.str(DISPLAY_PRECISION_LEN, std::ios_base::fixed), true);
+		  PrintToLog("ForthTermnf = %d\n", FormatDivisibleMP(ForthTermn64_t));
+		  
+		  int64_t quad64_t = (int64_t)(100000*COIN) + SecndTermn64_t - ThirdTermn64_t + ForthTermn64_t; 
+		  int64_t quadBalance = quad64_t - LastQuad;
+		  
+		  arith_uint256 quadw256_t = mastercore::ConvertTo256(quadBalance)*mastercore::ConvertTo256(vestingBalance)/COIN;
+	      	  int64_t quadw64_t = mastercore::ConvertTo64(quadw256_t);
+		  
+		  rational_t quadRationalw(quadw64_t, (int64_t)TOTAL_AMOUNT_VESTING_TOKENS);
+		  int64_t quadWeighted = mastercore::RationalToInt64(quadRationalw);
+		  
+		  PrintToLog("quadBalance = %s, vestingBalance = %s\n", FormatDivisibleMP(quadBalance), FormatDivisibleMP(vestingBalance));
+		  PrintToLog("quadWeighted = %d\n", FormatDivisibleMP(quadWeighted));
+		  
+		  assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, -quadWeighted, UNVESTED));
+		  assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, quadWeighted, BALANCE)); 
+	      	}
+	      // else if (XAxis > 300000000 && XAxis <= 30000000000)
+	      // 	{ /** y = ln|x|*/
+	      // 	  PrintToLog("\nLogarithmic Function\n");
+	      // 	  assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, -mastercore::DoubleToInt64(log(static_cast<double>(LogAxis)/COIN)), UNVESTED));
+	      // 	  assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, mastercore::DoubleToInt64(log(static_cast<double>(LogAxis)/COIN)), BALANCE));
+	      // 	}
+	    }
 	}
-      PrintToLog("\nAfter Unvested = %d\n", getMPbalance(vestingAddresses[1], OMNI_PROPERTY_ALL, UNVESTED));
-      PrintToLog("\nAfter Balance = %d\n", getMPbalance(vestingAddresses[1], OMNI_PROPERTY_ALL, BALANCE));
+      PrintToLog("\nALLs UNVESTED = %d\n", getMPbalance(vestingAddresses[1], OMNI_PROPERTY_ALL, UNVESTED));
+      PrintToLog("ALLs BALANCE = %d\n", getMPbalance(vestingAddresses[1], OMNI_PROPERTY_ALL, BALANCE));
+      Lastx_Axis = x_Axis;
+      LastLinear = line64_t;
+      LastQuad = quad64_t;
     }
   /***********************************************/
 
