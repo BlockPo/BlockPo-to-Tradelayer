@@ -1,14 +1,14 @@
 #!/bin/bash
 
-SRCDIR=/home/lihkir/Documents/TradeLayer/omnicore-litecoin-merge-local/src
+SRCDIR=/home/blockpo/parcero/BlockPo-to-Tradelayer/src
 
-DATADIR=/home/lihkir/.litecoin
+DATADIR=/home/blockpo/parcero
 NUL=/dev/null
 printf "\n//////////////////////////////////////////\n"
 printf "Cleaning the regtest folder\n"
 
-sudo rm -r /home/lihkir/.litecoin/regtest
-sudo rm graphInfo*
+#sudo rm -r /home/lihkir/.litecoin/regtest
+#sudo rm graphInfo*
 
 printf "\n________________________________________\n"
 printf "Preparing a test environment...\n"

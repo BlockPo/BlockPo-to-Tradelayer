@@ -7,8 +7,11 @@
 #include <stdint.h>
 #include <string>
 
-#include <boost/math/constants/constants.hpp>
+#include <boost/lexical_cast.hpp>
 #include <boost/multiprecision/cpp_dec_float.hpp>
+#include <boost/multiprecision/cpp_int.hpp>
+#include <boost/rational.hpp>
+#include <boost/math/constants/constants.hpp>
 #include <iostream>
 #include <limits>
 
