@@ -31,6 +31,7 @@ std::string DecFloatToString(dec_float& value);
 namespace mastercore
 {
   int64_t DoubleToInt64(double d);
+  int64_t RationalToInt64(rational_t r);
 }
 
 #endif
