@@ -3109,7 +3109,7 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   extern volatile int64_t factorALLtoLTC;
   int64_t volumeALL64_t = 0;
 
-  if (prop1 == OMNI_PROPERTY_ALL_ISSUANCE)
+  if (prop1 == OMNI_PROPERTY_ALL)
     {
       PrintToLog("factorALLtoLTC =%s, amount1 = %s: CMPMetaDEx\n", FormatDivisibleMP(factorALLtoLTC), FormatDivisibleMP(amount1));
       arith_uint256 volumeALL256_t = mastercore::ConvertTo256(factorALLtoLTC)*mastercore::ConvertTo256(amount1)/COIN;
@@ -3117,7 +3117,7 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
       volumeALL64_t = mastercore::ConvertTo64(volumeALL256_t);
       PrintToLog("ALLs involved in the traded 64 Bits ~ %s ALL\n", FormatDivisibleMP(volumeALL64_t));
     }
-  else if (prop2 == OMNI_PROPERTY_ALL_ISSUANCE)
+  else if (prop2 == OMNI_PROPERTY_ALL)
     {
       PrintToLog("factorALLtoLTC =%s, amount1 = %s: CMPMetaDEx\n", FormatDivisibleMP(factorALLtoLTC), FormatDivisibleMP(amount2));
       arith_uint256 volumeALL256_t = mastercore::ConvertTo256(factorALLtoLTC)*mastercore::ConvertTo256(amount2)/COIN;
@@ -3155,6 +3155,7 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   std::vector<std::map<std::string, std::string>>::reverse_iterator reit_path_ele;
   std::vector<std::map<std::string, std::string>> path_eleh;
   bool savedata_bool = false;
+  extern volatile int64_t factorALLtoLTC;
 
   double UPNL1 = 0, UPNL2 = 0;
   /********************************************************************/
@@ -3268,18 +3269,36 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
     }
 
   unsigned int contractId = static_cast<unsigned int>(property_traded);
-  if ( contractId == ALL_PROPERTY_TYPE_CONTRACT )
-    {
-      globalPNLALL_DUSD += UPNL1 + UPNL2;
-      globalVolumeALL_DUSD += nCouldBuy0;
-    }
-
+  CMPSPInfo::Entry sp;
+  assert(_my_sps->getSP(property_traded, sp));
+  uint32_t NotionalSize = sp.notional_size;
+  
+  PrintToLog("\nCheck nCouldBuy0 = %s, factorALLtoLTC = %s, NotionalSize = %d: CMPContractDEx\n", FormatDivisibleMP(nCouldBuy0), FormatDivisibleMP(factorALLtoLTC), NotionalSize);
+  
+  globalPNLALL_DUSD += UPNL1 + UPNL2;
+  globalVolumeALL_DUSD += nCouldBuy0;
+  
+  arith_uint256 volumeALL256_t = mastercore::ConvertTo256(NotionalSize)*mastercore::ConvertTo256(nCouldBuy0);
+  PrintToLog("ALLs involved in the traded 256 Bits ~ %s ALL\n", volumeALL256_t.ToString());
+  
+  int64_t volumeALL64_t = mastercore::ConvertTo64(volumeALL256_t);
+  PrintToLog("ALLs involved in the traded 64 Bits ~ %s ALL\n", FormatDivisibleMP(volumeALL64_t));
+  
+  arith_uint256 volumeLTC256_t = mastercore::ConvertTo256(factorALLtoLTC)*mastercore::ConvertTo256(volumeALL64_t)/COIN;
+  PrintToLog("LTCs involved in the traded 256 Bits ~ %s LTC\n", volumeLTC256_t.ToString());
+  
+  int64_t volumeLTC64_t = mastercore::ConvertTo64(volumeLTC256_t);
+  PrintToLog("LTCs involved in the traded 64 Bits ~ %d LTC\n", FormatDivisibleMP(volumeLTC64_t));
+  
+  globalVolumeALL_LTC += volumeLTC64_t;
+  PrintToLog("\nGlobal LTC Volume Updated: CMPContractDEx = %d \n", FormatDivisibleMP(globalVolumeALL_LTC));
+  
   int64_t volumeToCompare = 0;
   bool perpetualBool = callingPerpetualSettlement(globalPNLALL_DUSD, globalVolumeALL_DUSD, volumeToCompare);
   if (perpetualBool) PrintToLog("Perpetual Settlement Online");
 
   PrintToLog("\nglobalPNLALL_DUSD = %d, globalVolumeALL_DUSD = %d, contractId = %d\n", globalPNLALL_DUSD, globalVolumeALL_DUSD, contractId);
-
+  
   std::fstream fileglobalPNLALL_DUSD;
   fileglobalPNLALL_DUSD.open ("globalPNLALL_DUSD.txt", std::fstream::in | std::fstream::out | std::fstream::app);
   if ( contractId == ALL_PROPERTY_TYPE_CONTRACT )
