@@ -113,4 +113,5 @@ bool findTrueValue(bool a, bool b, bool c, bool d) { return ( a || b ) || ( c ||
 namespace mastercore
 {
   int64_t DoubleToInt64(double d) { return mastercore::StrToInt64(boost::lexical_cast<std::string>(d), true); }
+  int64_t RationalToInt64(rational_t r) { return mastercore::StrToInt64(xToString(r), true); }
 }
