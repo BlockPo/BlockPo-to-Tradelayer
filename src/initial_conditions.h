@@ -59,17 +59,12 @@ for ( int i = 0; i < NYears; i++ )
   }
 
 /** The final addrs amount will be chosen at mainnet launch time */
-nVestingAddrs = 10;
-amountVesting = 9999999999999999;
+nVestingAddrs = 5;
+amountVesting = (1500000/nVestingAddrs)*COIN;
 pt_vestingAddresses = new VectorTLS(nVestingAddrs); VectorTLS &vestingAddresses = *pt_vestingAddresses;
 /** List od vesting addresses */
-vestingAddresses[0] = "QiPiqxEkaNcqsiUv4WQ5P2Rnd5CRKs7cFF";
-vestingAddresses[1] = "QcbwthpCyZVq2BPpMEiGb776pquK3e9ASp";
-vestingAddresses[2] = "QP8T82YHCfHcvTvNaQ6LYR1KquSoZf6Hpf";
-vestingAddresses[3] = "QMyztrthEfgkNupse2RBeMnxvv2RXXkMEj";
-vestingAddresses[4] = "QPSyfsqGbP5E8Z5GXkD85g5p8ot9XFa54m";
-vestingAddresses[5] = "QXtzVB3ry9kDa9nDnqN3FAWkGa9upZ6Qsp";
-vestingAddresses[6] = "QVpVSqKGAjqRGMJoBSPMM63V2YK6tkoqW4";
-vestingAddresses[7] = "QhEKbR3ckrgYLQLHuS7nNVpRGWazVp6zrM";
-vestingAddresses[8] = "QbWe1DYDorzFMP6wZf8QtTWu7YpM8ZSDDu";
-vestingAddresses[9] = "QSsJXDFb4b3vTgqeycrHtkYTYKmCk4TJn1";
+vestingAddresses[0] = "mrbR7zJKLaZMJnWztptZ7qFvDNvqed6kqw";
+vestingAddresses[1] = "mwpY8D4dAkfZP5kj97AYucAVcxfLfbBUeC";
+vestingAddresses[2] = "n2k7njAU6F8TV3YzmQTog4b3ArqZctPcrC";
+vestingAddresses[3] = "mpYrisony94G5DqwdbKXtsxsE5EzTiQ2FC";
+vestingAddresses[4] = "mmTMfePDfkztoYSvbmGvbKUbp8RZLxKsdg";

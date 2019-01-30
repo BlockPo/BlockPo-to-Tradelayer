@@ -1,0 +1,12 @@
+QgWbpA9zBHgLSPjRJtfoMkYSXJmtLYmZuQ	 OpenShortPosition	 0	 QgWbpA9zBHgLSPjRJtfoMkYSXJmtLYmZuQ	 OpenShortPosition	 0	 1002	 6394
+QgWbpA9zBHgLSPjRJtfoMkYSXJmtLYmZuQ	 OpenLongPosition	 55	 QeWTmcSbtJMGEKkxV9BT2vMYave7vQW4GB	 OpenShortPosition	 55	 55	 6394
+QeWTmcSbtJMGEKkxV9BT2vMYave7vQW4GB	 ShortPosIncreased	 55	 QeWTmcSbtJMGEKkxV9BT2vMYave7vQW4GB	 ShortPosIncreased	 55	 1075	 6394
+QbJMworYY4Wns7EfoKDTozqumkcSyXb9aY	 OpenLongPosition	 227	 QeWTmcSbtJMGEKkxV9BT2vMYave7vQW4GB	 ShortPosIncreased	 282	 227	 6393
+QbJMworYY4Wns7EfoKDTozqumkcSyXb9aY	 LongPosIncreased	 1004	 QPBv2q3aQJs7PLf9vUA3e2fBy2PmR2vw2k	 OpenShortPosition	 777	 777	 6393
+QcftuQx7Vexw4SQw11cUhABHhU4d892nk6	 OpenLongPosition	 549	 QPBv2q3aQJs7PLf9vUA3e2fBy2PmR2vw2k	 ShortPosIncreased	 1326	 549	 6393
+QcftuQx7Vexw4SQw11cUhABHhU4d892nk6	 LongPosIncreased	 1498	 QQ5A2ytbP51RK3ZH5nfdhz4tmnst4LnASv	 OpenShortPosition	 949	 949	 6393
+QhndYJafwJoiZfScTSaCcwKegAEXfcJwSE	 OpenLongPosition	 1004	 QbJMworYY4Wns7EfoKDTozqumkcSyXb9aY	 LongPosNetted	 0	 1004	 6392
+QhndYJafwJoiZfScTSaCcwKegAEXfcJwSE	 LongPosIncreased	 1200	 QbJMworYY4Wns7EfoKDTozqumkcSyXb9aY	 OpenShortPosition	 196	 196	 6392
+QhndYJafwJoiZfScTSaCcwKegAEXfcJwSE	 LongPosIncreased	 1297	 QPsavyu9ntixiJwfuCeMpNvd6gnjVdMb1p	 OpenShortPosition	 97	 97	 6392
+QVpYTAaNFPzc5g3YxQfzoM7se1iGG3yyuD	 OpenLongPosition	 1282	 QPsavyu9ntixiJwfuCeMpNvd6gnjVdMb1p	 ShortPosIncreased	 1379	 1282	 6391
+QVpYTAaNFPzc5g3YxQfzoM7se1iGG3yyuD	 LongPosIncreased	 1339	 QcftuQx7Vexw4SQw11cUhABHhU4d892nk6	 LongPosNettedPartly	 1441	 57	 6391

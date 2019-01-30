@@ -1,13 +1,14 @@
-#include "externfns.h"
-#include "tradelayer_matrices.h"
-#include <unordered_set>
+#include "omnicore/externfns.h"
+#include "omnicore/tradelayer_matrices.h"
 #include "omnicore/log.h"
 #include "omnicore/parse_string.h"
+#include "omnicore/mdex.h"
+
+#include <unordered_set>
 #include <boost/lexical_cast.hpp>
 #include <stdint.h>
 #include <algorithm>
 #include <string>
-#include "omnicore/mdex.h"
 #include <boost/math/constants/constants.hpp>
 #include <boost/multiprecision/cpp_dec_float.hpp>
 #include <iostream>
@@ -22,7 +23,7 @@ void printing_matrix(MatrixTLS &gdata)
 {
   int M = size(gdata, 0);
   int N = size(gdata, 1);
-  
+
   for (int i = 0; i < M; ++i)
     {
       for (int j = 0; j < N; ++j)
@@ -43,15 +44,15 @@ bool finding(std::string &s, VectorTLS &v)
 {
   int n = length(v);
   bool findout = false;
-  
+
   for (int i = 0; i < n; ++i)
-    { 
+    {
       if ( v[i] == s )
 	{
 	  findout = true;
 	  break;
-        }
-    }   
+	}
+    }
   return findout;
 }
 
@@ -62,11 +63,10 @@ void sub_row(VectorTLS &jrow_databe, MatrixTLS &databe, int i)
 
 bool is_number(const std::string& s)
 {
-    std::string::const_iterator it = s.begin();
-    while (it != s.end() && std::isdigit(*it)) ++it;
-    return !s.empty() && it == s.end();
+  std::string::const_iterator it = s.begin();
+  while (it != s.end() && std::isdigit(*it)) ++it;
+  return !s.empty() && it == s.end();
 }
-
 bool finding_string(std::string sub_word, std::string word_target)
 {
   bool word_bool = false;
@@ -74,7 +74,7 @@ bool finding_string(std::string sub_word, std::string word_target)
   std::size_t found = word_target.find(sub_word);
   if (found != std::string::npos)
     word_bool = true;
-  
+
   return word_bool;
 }
 
@@ -113,4 +113,5 @@ bool findTrueValue(bool a, bool b, bool c, bool d) { return ( a || b ) || ( c ||
 namespace mastercore
 {
   int64_t DoubleToInt64(double d) { return mastercore::StrToInt64(boost::lexical_cast<std::string>(d), true); }
+  int64_t RationalToInt64(rational_t r) { return mastercore::StrToInt64(xToString(r), true); }
 }

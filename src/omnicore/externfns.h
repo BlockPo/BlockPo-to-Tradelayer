@@ -7,13 +7,16 @@
 #include <stdint.h>
 #include <string>
 
-#include <boost/math/constants/constants.hpp>
+#include <boost/lexical_cast.hpp>
 #include <boost/multiprecision/cpp_dec_float.hpp>
+#include <boost/multiprecision/cpp_int.hpp>
+#include <boost/rational.hpp>
+#include <boost/math/constants/constants.hpp>
 #include <iostream>
 #include <limits>
 
 typedef boost::multiprecision::cpp_dec_float_100 dec_float;
-
+typedef boost::rational<boost::multiprecision::checked_int128_t> rational_t;
 
 void printing_matrix(MatrixTLS &gdata);
 void printing_vector(VectorTLS &vdata);
@@ -31,6 +34,7 @@ std::string DecFloatToString(dec_float& value);
 namespace mastercore
 {
   int64_t DoubleToInt64(double d);
+  int64_t RationalToInt64(rational_t r);
 }
 
 #endif
