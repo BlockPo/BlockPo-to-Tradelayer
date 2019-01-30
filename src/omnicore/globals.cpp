@@ -47,3 +47,6 @@ int vestingActivationBlock;
 volatile int64_t LTCPriceOffer;
 volatile int64_t factorALLtoLTC;
 volatile int64_t globalVolumeALL_LTC;
+volatile int64_t Lastx_Axis;
+volatile int64_t LastLinear;
+volatile int64_t LastQuad;
