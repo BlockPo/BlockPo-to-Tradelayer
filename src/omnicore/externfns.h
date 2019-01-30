@@ -13,7 +13,7 @@
 #include <limits>
 
 typedef boost::multiprecision::cpp_dec_float_100 dec_float;
-
+typedef boost::rational<boost::multiprecision::checked_int128_t> rational_t;
 
 void printing_matrix(MatrixTLS &gdata);
 void printing_vector(VectorTLS &vdata);
