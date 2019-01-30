@@ -150,6 +150,7 @@ enum FILETYPES {
 #define OMNI_PROPERTY_ALL             1
 #define OMNI_PROPERTY_TALL            2
 #define OMNI_PROPERTY_ALL_ISSUANCE    6
+#define TOTAL_AMOUNT_VESTING_TOKENS   1500000*COIN
 //////////////////////////////////////
 /** New things for Contracts */
 #define BUY   1
