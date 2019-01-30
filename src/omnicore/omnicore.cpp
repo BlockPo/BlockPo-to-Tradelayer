@@ -2096,6 +2096,10 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   extern volatile int id_contract;
   extern VectorTLS *pt_vestingAddresses;  VectorTLS &vestingAddresses  = *pt_vestingAddresses;
   extern int nVestingAddrs;
+  extern volatile int64_t Lastx_Axis;
+  extern volatile int64_t LastLinear;
+  extern volatile int64_t LastQuad;
+
 
   LOCK(cs_tally);
 
