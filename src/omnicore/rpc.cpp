@@ -1725,24 +1725,96 @@ UniValue tl_getcontract_orderbook(const JSONRPCRequest& request)
   struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, name_traded);
   uint32_t propertyIdForSale = pfuture->fco_propertyId;
   
+  std::vector<uint64_t> SortpricesLowerToHigher;
+  std::vector<uint64_t> SortpricesHigherToLower;
+  
   std::vector<CMPContractDex> vecContractDexObjects;
   {
     LOCK(cs_tally);
-    for (cd_PropertiesMap::const_iterator my_it = contractdex.begin(); my_it != contractdex.end(); ++my_it) {
-      const cd_PricesMap& prices = my_it->second;
-      for (cd_PricesMap::const_iterator it = prices.begin(); it != prices.end(); ++it) {
-	const cd_Set& indexes = it->second;
-	for (cd_Set::const_iterator it = indexes.begin(); it != indexes.end(); ++it) {
-	  const CMPContractDex& obj = *it;
-	  if (obj.getProperty() != propertyIdForSale) continue;
-	  if (obj.getTradingAction() != tradingaction) continue;
-	  if (obj.getAmountForSale() <= 0) continue;
-	  vecContractDexObjects.push_back(obj);
-	}
+    for (cd_PropertiesMap::const_iterator my_it = contractdex.begin(); my_it != contractdex.end(); ++my_it)
+      {
+	const cd_PricesMap& prices = my_it->second;
+	for (cd_PricesMap::const_iterator it = prices.begin(); it != prices.end(); ++it)
+	  {
+	    const cd_Set& indexes = it->second;
+	    for (cd_Set::const_iterator it = indexes.begin(); it != indexes.end(); ++it)
+	      {
+		const CMPContractDex& obj = *it;
+		
+		if (obj.getProperty() != propertyIdForSale) continue;
+		if (obj.getTradingAction() != tradingaction) continue;
+		if (obj.getAmountForSale() <= 0) continue;
+		
+		uint64_t priceh = obj.getEffectivePrice();
+		
+		SortpricesLowerToHigher.push_back(priceh);
+		SortpricesHigherToLower.push_back(priceh);
+	      }
+	  }
       }
-    }
+    unsigned int p = 0;
+    while (p < SortpricesLowerToHigher.size())
+      {
+	for (unsigned int j = 0; j < SortpricesLowerToHigher.size(); j++)
+	  {
+	    if(SortpricesLowerToHigher[p]/COIN < SortpricesLowerToHigher[j]/COIN)
+	      {
+		uint64_t temp1 = SortpricesLowerToHigher[p];              
+		SortpricesLowerToHigher[p] = SortpricesLowerToHigher[j];
+		SortpricesLowerToHigher[j] = temp1;
+	      }
+	    if(SortpricesHigherToLower[p]/COIN > SortpricesHigherToLower[j]/COIN)
+	      {
+		uint64_t temp2 = SortpricesHigherToLower[p];              
+		SortpricesHigherToLower[p] = SortpricesHigherToLower[j];
+		SortpricesHigherToLower[j] = temp2;
+	      }
+	  }
+	p++;
+      }
+    
+    PrintToLog("Trading Action 2: SortpricesLowerToHigher = \n");
+    std::vector<uint64_t> SortpricesLowerToHigher5;
+    SortpricesLowerToHigher5.assign(std::begin(SortpricesLowerToHigher), std::begin(SortpricesLowerToHigher)+5);
+    for(unsigned int i = 0; i < SortpricesLowerToHigher5.size(); ++i)
+      PrintToLog("%d\n", SortpricesLowerToHigher5[i]);
+    
+    PrintToLog("Trading Action 1: SortpricesHigherToLower = \n");
+    std::vector<uint64_t> SortpricesHigherToLower5;
+    SortpricesHigherToLower5.assign(std::begin(SortpricesHigherToLower), std::begin(SortpricesHigherToLower)+5);
+    for(unsigned int i = 0; i < SortpricesHigherToLower5.size(); ++i)
+      PrintToLog("%d\n", SortpricesHigherToLower5[i]);
+    
+    for (cd_PropertiesMap::const_iterator my_it = contractdex.begin(); my_it != contractdex.end(); ++my_it)
+      {
+	const cd_PricesMap& prices = my_it->second;
+	for (cd_PricesMap::const_iterator it = prices.begin(); it != prices.end(); ++it)
+	  {
+	    const cd_Set& indexes = it->second;
+	    
+	    for (cd_Set::const_iterator it = indexes.begin(); it != indexes.end(); ++it)
+	      {
+		const CMPContractDex& obj = *it;
+		
+		if (obj.getProperty() != propertyIdForSale) continue;
+		if (obj.getTradingAction() != tradingaction) continue;
+		if (obj.getAmountForSale() <= 0) continue;
+		
+		uint64_t priceh = obj.getEffectivePrice();
+		
+		if (tradingaction == 1) {
+		  if (!find_uint64_t(priceh, SortpricesHigherToLower)) continue;
+		}
+		
+		if (tradingaction == 2) {
+		  if (!find_uint64_t(priceh, SortpricesLowerToHigher)) continue;
+		}
+		vecContractDexObjects.push_back(obj);
+	      } 
+	  }
+      }
   }
-
+  
   UniValue response(UniValue::VARR);
   ContractDexObjectsToJSON(vecContractDexObjects, response);
   return response;

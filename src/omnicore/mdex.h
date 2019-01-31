@@ -194,10 +194,10 @@ namespace mastercore
   typedef std::map<rational_t, md_Set> md_PricesMap;
   //! Map of properties; there is a map of prices for exchange each property
   typedef std::map<uint32_t, md_PricesMap> md_PropertiesMap;
-
+  
   //! Global map for price and order data
   extern md_PropertiesMap metadex;
-
+  
   // TODO: explore a property-pair, instead of a single priceoperty as map's key........
   md_PricesMap* get_Prices(uint32_t prop);
   md_Set* get_Indexes(md_PricesMap* p, rational_t price);

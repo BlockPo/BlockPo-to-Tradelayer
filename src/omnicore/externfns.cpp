@@ -92,6 +92,20 @@ bool find_string_strv(std::string s, std::vector<std::string> v)
   return find_bool;
 }
 
+bool find_uint64_t(uint64_t m, std::vector<uint64_t> v)
+{
+  bool find_bool = false;
+  for (std::vector<uint64_t>::iterator it = v.begin(); it != v.end(); ++it)
+    {
+      if ( *it == m )
+	{
+	  find_bool = true;
+	  break;
+	}
+    }
+  return find_bool;
+}
+
 bool find_string_set(std::string s, std::unordered_set<std::string> addrs_set)
 {
   bool find_bool = false;
