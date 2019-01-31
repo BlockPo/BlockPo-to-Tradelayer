@@ -2122,83 +2122,83 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   /** Vesting Tokens to Balance */
   int64_t x_Axis = globalVolumeALL_LTC;
   // int64_t LogAxis = mastercore::DoubleToInt64(log(static_cast<double>(x_Axis)/COIN));
-  
+
   rational_t Factor1over3(1, 3);
   int64_t Factor1over3_64t = mastercore::RationalToInt64(Factor1over3);
-  
+
   int64_t XAxis = x_Axis/COIN;
-  PrintToLog("nBlockCounter = %d, lastBlockg = %d\n", static_cast<int>(pBlockIndex->nHeight), lastBlockg);      
-  PrintToLog("XAxis Decimal Scale = %d, x_Axis = %s, Lastx_Axis = %s\n", XAxis, FormatDivisibleMP(x_Axis), FormatDivisibleMP(Lastx_Axis));      
-  
+  PrintToLog("nBlockCounter = %d, lastBlockg = %d\n", static_cast<int>(pBlockIndex->nHeight), lastBlockg);
+  PrintToLog("XAxis Decimal Scale = %d, x_Axis = %s, Lastx_Axis = %s\n", XAxis, FormatDivisibleMP(x_Axis), FormatDivisibleMP(Lastx_Axis));
+
   if (x_Axis && x_Axis != Lastx_Axis)
-    {      
+    {
       PrintToLog("\nALLs UNVESTED = %d\n", getMPbalance(vestingAddresses[1], OMNI_PROPERTY_ALL, UNVESTED));
       PrintToLog("ALLs BALANCE = %d\n", getMPbalance(vestingAddresses[1], OMNI_PROPERTY_ALL, BALANCE));
 
       int64_t line64_t = 0;
       int64_t quad64_t = 0;
-      
+
       for (int i = 0; i < nVestingAddrs; i++)
 	{
 	  int64_t vestingBalance = getMPbalance(vestingAddresses[i], OMNI_PROPERTY_VESTING, BALANCE);
 	  if (vestingBalance != 0)
-	    {	    
+	    {
 	      if (XAxis >= 0 && XAxis <= 300000)
 		{ /** y = 1/3x */
-		  arith_uint256 line256_t = mastercore::ConvertTo256(Factor1over3_64t)*mastercore::ConvertTo256(x_Axis)/COIN;  
+		  arith_uint256 line256_t = mastercore::ConvertTo256(Factor1over3_64t)*mastercore::ConvertTo256(x_Axis)/COIN;
 		  line64_t = mastercore::ConvertTo64(line256_t);
-		  
+
 		  PrintToLog("\nLinear Function\n");
 		  PrintToLog("\nvestingBalance >= 140K?? vestingBalance = %s, 140K =%s\n", FormatDivisibleMP(vestingBalance), FormatDivisibleMP(140000*COIN));
 		  PrintToLog("XAxis >= 0 && XAxis < 300000?? 300,000 - XAxis= %d\n", 300000 - XAxis);
 		  PrintToLog("line256_t = %s\n", line256_t.ToString());
 		  PrintToLog("line64_t = %s, LastLinear = %s\n", FormatDivisibleMP(line64_t), FormatDivisibleMP(LastLinear));
-		  
+
 		  int64_t linearBalance = line64_t-LastLinear;
 		  arith_uint256 linew256_t = mastercore::ConvertTo256(linearBalance)*mastercore::ConvertTo256(vestingBalance)/COIN;
 	      	  int64_t linew64_t = mastercore::ConvertTo64(linew256_t);
-		  
+
 		  rational_t linearRationalw(linew64_t, (int64_t)TOTAL_AMOUNT_VESTING_TOKENS);
 		  int64_t linearWeighted = mastercore::RationalToInt64(linearRationalw);
-		  
+
 		  PrintToLog("linearBalance = %s, vestingBalance = %s\n", FormatDivisibleMP(linearBalance), FormatDivisibleMP(vestingBalance));
 		  PrintToLog("linearWeighted = %s\n", FormatDivisibleMP(linearWeighted));
-		  
+
 		  assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, -linearWeighted, UNVESTED));
-		  assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, linearWeighted, BALANCE)); 
+		  assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, linearWeighted, BALANCE));
 		}
 	      else if (XAxis > 300000 && XAxis <= 300000000)
 	      	{ /** y = 200K+sqrt(40B-4C(x))/2 */
-		  
-		  PrintToLog("\nQuadratic Function\n");		  
-		  
+
+		  PrintToLog("\nQuadratic Function\n");
+
 		  dec_float SecndTermnf = dec_float(7)*dec_float(XAxis)*dec_float(XAxis)/dec_float(940900000);
 		  int64_t SecndTermn64_t = mastercore::StrToInt64(SecndTermnf.str(DISPLAY_PRECISION_LEN, std::ios_base::fixed), true);
 		  PrintToLog("SecndTermnf = %d\n", FormatDivisibleMP(SecndTermn64_t));
-		  
+
 		  dec_float ThirdTermnf = dec_float(7)*dec_float(600000)*dec_float(XAxis)/dec_float(940900000);
 		  int64_t ThirdTermn64_t = mastercore::StrToInt64(ThirdTermnf.str(DISPLAY_PRECISION_LEN, std::ios_base::fixed), true);
 		  PrintToLog("ThirdTermnf = %d\n", FormatDivisibleMP(ThirdTermn64_t));
-		  
+
 		  dec_float ForthTermnf = dec_float(7)*dec_float(90000000000)/dec_float(940900000);
 		  int64_t ForthTermn64_t = mastercore::StrToInt64(ForthTermnf.str(DISPLAY_PRECISION_LEN, std::ios_base::fixed), true);
 		  PrintToLog("ForthTermnf = %d\n", FormatDivisibleMP(ForthTermn64_t));
-		  
-		  int64_t quad64_t = (int64_t)(100000*COIN) + SecndTermn64_t - ThirdTermn64_t + ForthTermn64_t; 
+
+		  int64_t quad64_t = (int64_t)(100000*COIN) + SecndTermn64_t - ThirdTermn64_t + ForthTermn64_t;
 		  int64_t quadBalance = quad64_t - LastQuad;
-		  
+
 		  arith_uint256 quadw256_t = mastercore::ConvertTo256(quadBalance)*mastercore::ConvertTo256(vestingBalance)/COIN;
 	      	  int64_t quadw64_t = mastercore::ConvertTo64(quadw256_t);
-		  
+
 		  rational_t quadRationalw(quadw64_t, (int64_t)TOTAL_AMOUNT_VESTING_TOKENS);
 		  int64_t quadWeighted = mastercore::RationalToInt64(quadRationalw);
-		  
+
 		  PrintToLog("quadBalance = %s, vestingBalance = %s\n", FormatDivisibleMP(quadBalance), FormatDivisibleMP(vestingBalance));
 		  PrintToLog("quadWeighted = %d\n", FormatDivisibleMP(quadWeighted));
-		  
+
 		  if (getMPbalance(vestingAddresses[i], OMNI_PROPERTY_ALL, UNVESTED) >= quadWeighted) {
 			  assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, -quadWeighted, UNVESTED));
-			  assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, quadWeighted, BALANCE)); 
+			  assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, quadWeighted, BALANCE));
 		  }
 	      	}
 	      // else if (XAxis > 300000000 && XAxis <= 30000000000)
@@ -3156,10 +3156,10 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   std::vector<std::map<std::string, std::string>> path_eleh;
   bool savedata_bool = false;
   extern volatile int64_t factorALLtoLTC;
-
+  std::string sblockNum2 = std::to_string(blockNum2);
   double UPNL1 = 0, UPNL2 = 0;
   /********************************************************************/
-  const string key = txid1.ToString() + "+" + txid2.ToString();
+  const string key =  sblockNum2 + "+" + txid1.ToString() + "+" + txid2.ToString(); //order with block of taker.
   const string value = strprintf("%s:%s:%lu:%lu:%lu:%d:%d:%s:%s:%d:%d:%d:%s:%s:%d:%d:%d", address1, address2, effective_price, amount_maker, amount_taker, blockNum1, blockNum2, s_maker0, s_taker0, lives_s0, lives_b0, property_traded, txid1.ToString(), txid2.ToString(), nCouldBuy0,amountpold, amountpnew);
 
   const string line0 = gettingLineOut(address1, s_maker0, lives_s0, address2, s_taker0, lives_b0, nCouldBuy0, effective_price);
@@ -3272,33 +3272,33 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   CMPSPInfo::Entry sp;
   assert(_my_sps->getSP(property_traded, sp));
   uint32_t NotionalSize = sp.notional_size;
-  
+
   PrintToLog("\nCheck nCouldBuy0 = %s, factorALLtoLTC = %s, NotionalSize = %d: CMPContractDEx\n", FormatDivisibleMP(nCouldBuy0), FormatDivisibleMP(factorALLtoLTC), NotionalSize);
-  
+
   globalPNLALL_DUSD += UPNL1 + UPNL2;
   globalVolumeALL_DUSD += nCouldBuy0;
-  
+
   arith_uint256 volumeALL256_t = mastercore::ConvertTo256(NotionalSize)*mastercore::ConvertTo256(nCouldBuy0);
   PrintToLog("ALLs involved in the traded 256 Bits ~ %s ALL\n", volumeALL256_t.ToString());
-  
+
   int64_t volumeALL64_t = mastercore::ConvertTo64(volumeALL256_t);
   PrintToLog("ALLs involved in the traded 64 Bits ~ %s ALL\n", FormatDivisibleMP(volumeALL64_t));
-  
+
   arith_uint256 volumeLTC256_t = mastercore::ConvertTo256(factorALLtoLTC)*mastercore::ConvertTo256(volumeALL64_t)/COIN;
   PrintToLog("LTCs involved in the traded 256 Bits ~ %s LTC\n", volumeLTC256_t.ToString());
-  
+
   int64_t volumeLTC64_t = mastercore::ConvertTo64(volumeLTC256_t);
   PrintToLog("LTCs involved in the traded 64 Bits ~ %d LTC\n", FormatDivisibleMP(volumeLTC64_t));
-  
+
   globalVolumeALL_LTC += volumeLTC64_t;
   PrintToLog("\nGlobal LTC Volume Updated: CMPContractDEx = %d \n", FormatDivisibleMP(globalVolumeALL_LTC));
-  
+
   int64_t volumeToCompare = 0;
   bool perpetualBool = callingPerpetualSettlement(globalPNLALL_DUSD, globalVolumeALL_DUSD, volumeToCompare);
   if (perpetualBool) PrintToLog("Perpetual Settlement Online");
   
   PrintToLog("\nglobalPNLALL_DUSD = %d, globalVolumeALL_DUSD = %d, contractId = %d\n", globalPNLALL_DUSD, globalVolumeALL_DUSD, contractId);
-  
+
   std::fstream fileglobalPNLALL_DUSD;
   fileglobalPNLALL_DUSD.open ("globalPNLALL_DUSD.txt", std::fstream::in | std::fstream::out | std::fstream::app);
   if ( contractId == ALL_PROPERTY_TYPE_CONTRACT )
@@ -3537,15 +3537,16 @@ bool CMPTradeList::getMatchingTrades(uint32_t propertyId, UniValue& tradeArray)
 
   leveldb::Iterator* it = NewIterator(); // Allocation proccess
 
-  for(it->SeekToFirst(); it->Valid(); it->Next()) {
+  for(it->SeekToLast(); it->Valid(); it->Prev()) {
       // search key to see if this is a matching trade
       std::string strKey = it->key().ToString();
+      PrintToLog("key of this match: %s ****************************\n",strKey);
       std::string strValue = it->value().ToString();
 
       // ensure correct amount of tokens in value string
       boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
       if (vstr.size() != 17) {
-          PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
+          //PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
           // PrintToConsole("TRADEDB error - unexpected number of tokens in value %d \n",vstr.size());
           continue;
       }
@@ -3572,19 +3573,21 @@ bool CMPTradeList::getMatchingTrades(uint32_t propertyId, UniValue& tradeArray)
       }
 
       UniValue trade(UniValue::VOBJ);
-
-      trade.push_back(Pair("maker_address", address1));
-      trade.push_back(Pair("maker_txid", txidmaker));
-      trade.push_back(Pair("taker_address", address2));
-      trade.push_back(Pair("taker_txid", txidtaker));
-      trade.push_back(Pair("amount_maker", FormatByType(amount1,2)));
-      trade.push_back(Pair("amount_taker", FormatByType(amount2,2)));
-      trade.push_back(Pair("price", FormatByType(price,2)));
-      trade.push_back(Pair("taker_block",block));
-      trade.push_back(Pair("amount_traded",FormatByType(amount_traded,2)));
-      tradeArray.push_back(trade);
-      ++count;
-      PrintToConsole("count : %d\n",count);
+      if (tradeArray.size() <= 9)
+      {
+          trade.push_back(Pair("maker_address", address1));
+          trade.push_back(Pair("maker_txid", txidmaker));
+          trade.push_back(Pair("taker_address", address2));
+          trade.push_back(Pair("taker_txid", txidtaker));
+          trade.push_back(Pair("amount_maker", FormatByType(amount1,2)));
+          trade.push_back(Pair("amount_taker", FormatByType(amount2,2)));
+          trade.push_back(Pair("price", FormatByType(price,2)));
+          trade.push_back(Pair("taker_block",block));
+          trade.push_back(Pair("amount_traded",FormatByType(amount_traded,2)));
+          tradeArray.push_back(trade);
+          ++count;
+          PrintToConsole("count : %d\n",count);
+      }  
   }
   // clean up
   delete it; // Desallocation proccess
