@@ -3584,10 +3584,10 @@ bool CMPTradeList::getMatchingTrades(uint32_t propertyId, UniValue& tradeArray)
           trade.push_back(Pair("price", FormatByType(price,2)));
           trade.push_back(Pair("taker_block",block));
           trade.push_back(Pair("amount_traded",FormatByType(amount_traded,2)));
-       }
-       tradeArray.push_back(trade);
-       ++count;
-       PrintToConsole("count : %d\n",count);
+          tradeArray.push_back(trade);
+          ++count;
+          PrintToConsole("count : %d\n",count);
+      }  
   }
   // clean up
   delete it; // Desallocation proccess
