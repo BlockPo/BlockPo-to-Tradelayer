@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SRCDIR=/home/lihki/Documents/TradeLayer/omnicore-litecoin-rackeo-local/src
+SRCDIR=/home/lihki/Documents/TradeLayer/tradelayer-rackeo-local/src
 
 DATADIR=/home/lihki/.litecoin
 NUL=/dev/null
@@ -35,7 +35,7 @@ printf "\n________________________________________\n"
 printf "Base address to work with:\n"
 printf $ADDRBase
 
-N=10
+N=100
 
 amount_bitcoin=10
 amountbitcoin_baseaddr=10000
@@ -143,7 +143,7 @@ do
     printf $PRICE
     
     printf "\nAmount for sale Buyer #$i ContractDEx\n"
-    AMOUNT=$((RANDOM%500+1000))
+    AMOUNT=$((RANDOM%1000+6000))
     printf "\nRandom Amount:\n"
     printf $AMOUNT
     printf "\n"
@@ -159,7 +159,7 @@ do
     # Begin DEx Traded
     printf "\n________________________________________\n"
     printf "Price for sale Buyer #$i DEx\n"
-    PRICEDEx=$((RANDOM%8+1))
+    PRICEDEx=$((RANDOM%80+10))
     printf "\nRandom Price DEx:\n"
     printf $PRICEDEx
     
@@ -187,30 +187,30 @@ do
     
     # End DEx Traded
     #################################################################
-    # # Begin MetaDex traded
+    # Begin MetaDex traded
     
-    # printf "\n________________________________________\n"
-    # printf "Sending metadex trade:\n"
+    printf "\n________________________________________\n"
+    printf "Sending metadex trade:\n"
     
-    # printf "\nAmount ALL #$i\n"
-    # AMOUNTALL=$((RANDOM%5+6390))
-    # printf "\nRandom Amount ALL:\n"
-    # printf $AMOUNTALL
-    # printf "\n"
+    printf "\nAmount ALL #$i\n"
+    AMOUNTALL=$((RANDOM%1000+6000))
+    printf "\nRandom Amount ALL:\n"
+    printf $AMOUNTALL
+    printf "\n"
     
-    # printf "\nAmount Tether #$i\n"
-    # AMOUNTTETHER=$((RANDOM%5+6390))
-    # printf "\nRandom Amount Tether:\n"
-    # printf $AMOUNTTETHER
-    # printf "\n"
+    printf "\nAmount Tether #$i\n"
+    AMOUNTTETHER=$((RANDOM%1000+6000))
+    printf "\nRandom Amount Tether:\n"
+    printf $AMOUNTTETHER
+    printf "\n"
     
-    # $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_sendtrade ${ADDRess[$i+1]} 5 ${AMOUNTALL} 6 ${AMOUNTTETHER}
-    # $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
+    $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_sendtrade ${ADDRess[$i+1]} 5 ${AMOUNTALL} 6 ${AMOUNTTETHER}
+    $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
     
-    # $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_sendtrade ${ADDRess[$i]} 6 ${AMOUNTTETHER} 5 ${AMOUNTALL}
-    # $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
+    $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_sendtrade ${ADDRess[$i]} 6 ${AMOUNTTETHER} 5 ${AMOUNTALL}
+    $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
     
-    # # End MetaDex traded
+    # End MetaDex traded
     # #################################################################
     # Match CMPCOntractDEx
     
@@ -221,7 +221,7 @@ do
     printf $PRICE
     
     printf "\nAmount for sale Seller #$i ContractDEx match\n"
-    AMOUNT=$((RANDOM%500+1000))
+    AMOUNT=$((RANDOM%1000+6000))
     printf "\nRandom Amount ContractDEx match:\n"
     printf $AMOUNT
     printf "\n"
@@ -240,5 +240,5 @@ $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_getcontract_orderbook "ALL F1
 ##################################################################
 printf "Stoping omnicored and litecoin-cli:\n"
 $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest stop
-# /home/lihki/Documentos/omnicore-litecoin-local/src/litecoin-cli -datadir=/home/lihki/.litecoin --regtest stop
+# /home/lihki/Documentos/tradelayer-local/src/litecoin-cli -datadir=/home/lihki/.litecoin --regtest stop
 
