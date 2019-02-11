@@ -103,22 +103,22 @@ void mastercore::LoopBiDirectional(cd_PricesMap* const ppriceMap, uint8_t trdAct
   cd_PricesMap::iterator it_fwdPrices;
   cd_PricesMap::reverse_iterator it_bwdPrices;
   std::vector<std::map<std::string, std::string>>::iterator it_path_ele;
-  
+
   /** Calling for settlement algorithm when the expiration date has been achieved */
   if ( expirationAchieve )
     {
-      PrintToLog("expirationAchieve: %d\n", expirationAchieve);
+      // PrintToLog("expirationAchieve: %d\n", expirationAchieve);
       pt_ndatabase = new MatrixTLS(path_ele.size(), n_cols); MatrixTLS &ndatabase = *pt_ndatabase;
       MatrixTLS M_file(path_ele.size(), n_cols);
       fillingMatrix(M_file, ndatabase, path_ele);
       n_rows = size(M_file, 0);
-      PrintToLog("Matrix for Settlement: dim = (%d, %d)\n\n", n_rows, n_cols);
+      // PrintToLog("Matrix for Settlement: dim = (%d, %d)\n\n", n_rows, n_cols);
       printing_matrix(M_file);
       cout << "\n\n";
-      PrintToLog("\nCalling the Settlement Algorithm:\n\n");
+      // PrintToLog("\nCalling the Settlement Algorithm:\n\n");
       settlement_algorithm_fifo(M_file);
     }
-  
+
   if ( trdAction == BUY )
     {
       for (it_fwdPrices = ppriceMap->begin(); it_fwdPrices != ppriceMap->end(); ++it_fwdPrices)
@@ -138,7 +138,7 @@ void mastercore::LoopBiDirectional(cd_PricesMap* const ppriceMap, uint8_t trdAct
       for (it_bwdPrices = ppriceMap->rbegin(); it_bwdPrices != ppriceMap->rend(); ++it_bwdPrices)
 	{
 	  const uint64_t sellerPrice = it_bwdPrices->first;
-	  PrintToLog("\nLoop bwd: pnew->getEffectivePrice() = %d, pnew->getAddr() = %s\n", pnew->getEffectivePrice(), pnew->getAddr());
+	  // PrintToLog("\nLoop bwd: pnew->getEffectivePrice() = %d, pnew->getAddr() = %s\n", pnew->getEffectivePrice(), pnew->getAddr());
 	  if ( pnew->getEffectivePrice() > sellerPrice )
 	    {
 	      // PrintToLog("\nLoop bwd: pnew->getEffectivePrice() = %d, pnew->getAddr() = %s\n", pnew->getEffectivePrice(), pnew->getAddr());
@@ -155,49 +155,49 @@ void mastercore::LoopBiDirectional(cd_PricesMap* const ppriceMap, uint8_t trdAct
 void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPrices, typename cd_PricesMap::reverse_iterator &it_bwdPrices, uint8_t trdAction, CMPContractDex* const pnew, const uint64_t sellerPrice, const uint32_t propertyForSale, MatchReturnType &NewReturn)
 {
   cd_Set* const pofferSet = trdAction == BUY ? &(it_fwdPrices->second) : &(it_bwdPrices->second);
-  
+
   /** At good (single) price level and property iterate over offers looking at all parameters to find the match */
   cd_Set::iterator offerIt = pofferSet->begin();
-  
+
   while ( offerIt != pofferSet->end() )  /** Specific price, check all properties */
     {
       const CMPContractDex* const pold = &(*offerIt);
-      
+
       assert(pold->getEffectivePrice() == sellerPrice);
-      
+
       std::string tradeStatus = pold->getEffectivePrice() == sellerPrice ? "Matched" : "NoMatched";
-      
+
       /** Match Conditions */
       bool boolProperty  = pold->getProperty() != propertyForSale;
       bool boolTrdAction = pold->getTradingAction() == pnew->getTradingAction();
-      
+
       if ( findTrueValue(boolProperty, boolTrdAction) )
 	{
 	  ++offerIt;
 	  continue;
 	}
-      
+
       idx_q += 1;
       const int idx_qp = idx_q;
-      PrintToLog("Checking idx_q = %d", idx_qp);
-      
+      // PrintToLog("Checking idx_q = %d", idx_qp);
+
       /********************************************************/
       /** Preconditions */
       assert(pold->getProperty() == pnew->getProperty());
 
-
-      PrintToLog("________________________________________________________\n");
-      PrintToLog("Inside x_trade:\n");
-      PrintToLog("Checking effective prices and trading actions:\n");
-      PrintToLog("Effective price pold: %d\n", FormatContractShortMP(pold->getEffectivePrice()) );
-      PrintToLog("Effective price pnew: %d\n", FormatContractShortMP(pnew->getEffectivePrice()) );
-      PrintToLog("Amount for sale pold: %d\n", pold->getAmountForSale() );
-      PrintToLog("Amount for sale pnew: %d\n", pnew->getAmountForSale() );
-      PrintToLog("Trading action pold: %d\n", pold->getTradingAction() );
-      PrintToLog("Trading action pnew: %d\n", pnew->getTradingAction() );
-      PrintToLog("Trade Status: %s\n", tradeStatus);
-      PrintToLog("propertyForSale = %d", propertyForSale);
-      PrintToLog("\nlastBlockg = %s\n", lastBlockg);
+      //
+      // PrintToLog("________________________________________________________\n");
+      // PrintToLog("Inside x_trade:\n");
+      // PrintToLog("Checking effective prices and trading actions:\n");
+      // PrintToLog("Effective price pold: %d\n", FormatContractShortMP(pold->getEffectivePrice()) );
+      // PrintToLog("Effective price pnew: %d\n", FormatContractShortMP(pnew->getEffectivePrice()) );
+      // PrintToLog("Amount for sale pold: %d\n", pold->getAmountForSale() );
+      // PrintToLog("Amount for sale pnew: %d\n", pnew->getAmountForSale() );
+      // PrintToLog("Trading action pold: %d\n", pold->getTradingAction() );
+      // PrintToLog("Trading action pnew: %d\n", pnew->getTradingAction() );
+      // PrintToLog("Trade Status: %s\n", tradeStatus);
+      // PrintToLog("propertyForSale = %d", propertyForSale);
+      // PrintToLog("\nlastBlockg = %s\n", lastBlockg);
       /********************************************************/
       uint32_t property_traded = pold->getProperty();
       uint64_t amountpnew = pnew->getAmountForSale();
@@ -208,8 +208,8 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       int64_t poldNegativeBalanceB = getMPbalance(pold->getAddr(), property_traded, NEGATIVE_BALANCE);
       int64_t pnewNegativeBalanceB = getMPbalance(pnew->getAddr(), property_traded, NEGATIVE_BALANCE);
 
-      PrintToLog("poldPositiveBalanceB: %d, poldNegativeBalanceB: %d\n", poldPositiveBalanceB, poldNegativeBalanceB);
-      PrintToLog("pnewPositiveBalanceB: %d, pnewNegativeBalanceB: %d\n", pnewPositiveBalanceB, pnewNegativeBalanceB);
+      // PrintToLog("poldPositiveBalanceB: %d, poldNegativeBalanceB: %d\n", poldPositiveBalanceB, poldNegativeBalanceB);
+      // PrintToLog("pnewPositiveBalanceB: %d, pnewNegativeBalanceB: %d\n", pnewPositiveBalanceB, pnewNegativeBalanceB);
 
       int64_t possitive_sell = (pold->getTradingAction() == SELL) ? poldPositiveBalanceB : pnewPositiveBalanceB;
       int64_t negative_sell  = (pold->getTradingAction() == SELL) ? poldNegativeBalanceB : pnewNegativeBalanceB;
@@ -223,9 +223,9 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
 
       /********************************************************/
       int64_t nCouldBuy = buyer_amount < seller_amount ? buyer_amount : seller_amount;
-      PrintToLog("This is the nCouldBuy %d\n", nCouldBuy);
-      PrintToLog("possitive_sell: %d, negative_sell: %d\n", possitive_sell, negative_sell);
-      PrintToLog("possitive_buy: %d,  negative_buy: %d\n", possitive_buy, negative_buy);
+      // PrintToLog("This is the nCouldBuy %d\n", nCouldBuy);
+      // PrintToLog("possitive_sell: %d, negative_sell: %d\n", possitive_sell, negative_sell);
+      // PrintToLog("possitive_buy: %d,  negative_buy: %d\n", possitive_buy, negative_buy);
 
       if (nCouldBuy == 0)
       	{
@@ -236,7 +236,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       /********************************************************/
       int64_t difference_s = 0, difference_b = 0;
       bool boolAddresses = pold->getAddr() != pnew->getAddr();
-      
+
       if (boolAddresses)
 	{
 	  if ( possitive_sell != 0 )
@@ -252,7 +252,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
 	    }
 	  else if ( negative_sell != 0 || negative_sell == 0 || possitive_sell == 0 )
 	    assert(update_tally_map(seller_address, property_traded, nCouldBuy, NEGATIVE_BALANCE));
-	  
+
 	  if ( negative_buy != 0 )
 	    {
 	      difference_b = negative_buy - nCouldBuy;
@@ -281,9 +281,9 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       int64_t creplNegativeBalance = getMPbalance(contract_replacement.getAddr(), property_traded, NEGATIVE_BALANCE);
       int64_t creplPositiveBalance = getMPbalance(contract_replacement.getAddr(), property_traded, POSSITIVE_BALANCE);
 
-      PrintToLog("poldPositiveBalance: %d, poldNegativeBalance: %d\n", poldPositiveBalanceL, poldNegativeBalanceL);
-      PrintToLog("pnewPositiveBalance: %d, pnewNegativeBalance: %d\n", pnewPositiveBalanceL, pnewNegativeBalanceL);
-      PrintToLog("creplPositiveBalance: %d, creplNegativeBalance: %d\n", creplPositiveBalance, creplNegativeBalance);
+      // PrintToLog("poldPositiveBalance: %d, poldNegativeBalance: %d\n", poldPositiveBalanceL, poldNegativeBalanceL);
+      // PrintToLog("pnewPositiveBalance: %d, pnewNegativeBalance: %d\n", pnewPositiveBalanceL, pnewNegativeBalanceL);
+      // PrintToLog("creplPositiveBalance: %d, creplNegativeBalance: %d\n", creplPositiveBalance, creplNegativeBalance);
 
       int64_t remaining = seller_amount >= buyer_amount ? seller_amount - buyer_amount : buyer_amount - seller_amount;
 
@@ -403,7 +403,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       	  Status_maker = Status_b;
       	  Status_taker = Status_s;
       	}
-      PrintToLog("Status_maker = %d, Status_taker = %d\n", Status_maker, Status_taker);
+      // PrintToLog("Status_maker = %d, Status_taker = %d\n", Status_maker, Status_taker);
 
       std::string Status_s0 = "EmptyStr", Status_s1 = "EmptyStr", Status_s2 = "EmptyStr", Status_s3 = "EmptyStr";
       std::string Status_b0 = "EmptyStr", Status_b1 = "EmptyStr", Status_b2 = "EmptyStr", Status_b3 = "EmptyStr";
@@ -1027,7 +1027,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
 
       marketP[index] = pold->getEffectivePrice();
       uint64_t marketPriceNow = marketP[index];
-      PrintToLog("\nmarketPrice Now : %d, marketP[index] = %d\n", marketPriceNow, marketP[index]);
+      // PrintToLog("\nmarketPrice Now : %d, marketP[index] = %d\n", marketPriceNow, marketP[index]);
       // t_tradelistdb->recordForUPNL(pnew->getHash(),pnew->getAddr(),property_traded,pold->getEffectivePrice());
 
       // if (msc_debug_metadex1) PrintToLog("++ erased old: %s\n", offerIt->ToString());
@@ -1328,7 +1328,7 @@ MatchReturnType x_Trade(CMPMetaDEx* const pnew)
 
             // insert the updated one in place of the old
             if (0 < seller_replacement.getAmountRemaining()) {
-                PrintToLog("++ inserting seller_replacement: %s\n", seller_replacement.ToString());
+                // PrintToLog("++ inserting seller_replacement: %s\n", seller_replacement.ToString());
                 pofferSet->insert(seller_replacement);
             }
 
@@ -1341,7 +1341,7 @@ MatchReturnType x_Trade(CMPMetaDEx* const pnew)
         if (bBuyerSatisfied) break;
     } // check all prices
 
-    PrintToLog("%s()=%d:%s\n", __FUNCTION__, NewReturn, getTradeReturnType(NewReturn));
+    // PrintToLog("%s()=%d:%s\n", __FUNCTION__, NewReturn, getTradeReturnType(NewReturn));
 
     return NewReturn;
 }
@@ -1718,7 +1718,7 @@ int mastercore::ContractDex_ADD(const std::string& sender_addr, uint32_t prop, i
 
   x_Trade(&new_cdex);
   // if (msc_debug_metadex3) MetaDEx_debug_print();
-  
+
   // Insert the remaining order into the ContractDex maps
   if (0 < new_cdex.getAmountForSale()) { //switch to getAmounForSale() when ready
     if (!ContractDex_INSERT(new_cdex)) {
@@ -1738,26 +1738,26 @@ int mastercore::ContractDex_ADD(const std::string& sender_addr, uint32_t prop, i
 int mastercore::ContractDex_ADD_MARKET_PRICE(const std::string& sender_addr, uint32_t contractId, int64_t amount, int block, const uint256& txid, unsigned int idx, uint8_t trading_action, int64_t amount_to_reserve)
 {
   int rc = METADEX_ERROR -1;
-  
-  PrintToLog("------------------------------------------------------------\n");
-  PrintToLog("Inside ContractDex_ADD_MARKET_PRICE\n");
+
+  // PrintToLog("------------------------------------------------------------\n");
+  // PrintToLog("Inside ContractDex_ADD_MARKET_PRICE\n");
 
   /*Remember: Here CMPTransaction::ADD is the subaction coming from CMPMetaDEx*/
-  
+
   if (trading_action == BUY){
     uint64_t ask = edgeOrderbook(contractId,BUY);
-    PrintToLog("ask: %d\n",ask);
+    // PrintToLog("ask: %d\n",ask);
     CMPContractDex new_cdex(sender_addr, block, contractId, amount, 0, 0, txid, idx, CMPTransaction::ADD, ask, trading_action);
-    
+
     // Ensure this is not a badly priced trade (for example due to zero amounts)
-    PrintToLog("effective price of new_cdex /buy/: %d\n",new_cdex.getEffectivePrice());
+    // PrintToLog("effective price of new_cdex /buy/: %d\n",new_cdex.getEffectivePrice());
     if (0 >= new_cdex.getEffectivePrice()) return METADEX_ERROR -66;
-    
+
     // Insert the remaining order into the ContractDex maps
     // uint64_t diff;
     // uint64_t oldvalue;
     uint64_t newvalue;
-    
+
     while(true) {
       // oldvalue = new_cdex.getAmountForSale();
       x_Trade(&new_cdex);
@@ -1765,21 +1765,21 @@ int mastercore::ContractDex_ADD_MARKET_PRICE(const std::string& sender_addr, uin
       if (newvalue == 0) {
 	break;
       }
-      
+
       uint64_t price = edgeOrderbook(contractId,BUY);
       new_cdex.setPrice(price);
-      PrintToLog("SELL SIDE in while loop/ right side of example/<-------\n");
+      // PrintToLog("SELL SIDE in while loop/ right side of example/<-------\n");
     }
-    
+
   } else if (trading_action == SELL){
     uint64_t bid = edgeOrderbook(contractId,SELL);
-    PrintToLog("bid: %d\n",bid);
+    // PrintToLog("bid: %d\n",bid);
     CMPContractDex new_cdex(sender_addr, block, contractId, amount, 0, 0, txid, idx, CMPTransaction::ADD, bid, trading_action);
     //  Ensure this is not a badly priced trade (for example due to zero amounts
-    
-    PrintToLog("effective price of new_cdex/sell/: %d\n",new_cdex.getEffectivePrice());
+
+    // PrintToLog("effective price of new_cdex/sell/: %d\n",new_cdex.getEffectivePrice());
     if (0 >= new_cdex.getEffectivePrice()) return METADEX_ERROR -66;
-    
+
     // Insert the remaining order into the ContractDex maps
     // uint64_t oldvalue;
     uint64_t newvalue;
@@ -1791,14 +1791,14 @@ int mastercore::ContractDex_ADD_MARKET_PRICE(const std::string& sender_addr, uin
       if (newvalue == 0) {
 	break;
       }
-      
+
       uint64_t price = edgeOrderbook(contractId,BUY);
       new_cdex.setPrice(price);
-      PrintToLog("BUY SIDE in while loop/ right side of example/<-------\n");
+      // PrintToLog("BUY SIDE in while loop/ right side of example/<-------\n");
     }
-    
+
   }
-  
+
   rc = 0;
   return rc;
 }
@@ -1811,53 +1811,53 @@ int mastercore::ContractDex_CANCEL_EVERYTHING(const uint256& txid, unsigned int 
 
   for (cd_PropertiesMap::iterator my_it = contractdex.begin(); my_it != contractdex.end(); ++my_it) {
     unsigned int prop = my_it->first;
-    
+
     // skip property, if it is not in the expected ecosystem
     if (isMainEcosystemProperty(ecosystem) && !isMainEcosystemProperty(prop)) continue;
     if (isTestEcosystemProperty(ecosystem) && !isTestEcosystemProperty(prop)) continue;
-    
+
     // PrintToLog(" ## property: %u\n", prop);
     cd_PricesMap &prices = my_it->second;
-    
+
     for (cd_PricesMap::iterator it = prices.begin(); it != prices.end(); ++it) {
       // uint64_t price = it->first;
       cd_Set &indexes = it->second;
-      
+
       // PrintToLog("  # Price Level: %s\n", xToString(price));
-      
+
       for (cd_Set::iterator it = indexes.begin(); it != indexes.end();) {
 	// PrintToLog("%s= %s\n", xToString(price), it->ToString());
-	
+
 	if (it->getAddr() != sender_addr || it->getProperty() != contractId || it->getAmountForSale() == 0) {
 	  ++it;
 	  continue;
 	}
-	
+
 	rc = 0;
 	// PrintToLog("%s(): REMOVING %s\n", __FUNCTION__, it->ToString());
-	
+
 	CMPSPInfo::Entry sp;
 	assert(_my_sps->getSP(it->getProperty(), sp));
 	uint32_t collateralCurrency = sp.collateral_currency;
 	int64_t marginRe = static_cast<int64_t>(sp.margin_requirement);
-	
+
 	string addr = it->getAddr();
 	int64_t amountForSale = it->getAmountForSale();
-	
+
 	rational_t conv = notionalChange(contractId);
 	int64_t num = conv.numerator().convert_to<int64_t>();
 	int64_t den = conv.denominator().convert_to<int64_t>();
 	int64_t balance = getMPbalance(addr,collateralCurrency,BALANCE);
-	
+
 	arith_uint256 amountMargin = (ConvertTo256(amountForSale) * ConvertTo256(marginRe) * ConvertTo256(num) / (ConvertTo256(den) * ConvertTo256(factorH)));
 	int64_t redeemed = ConvertTo64(amountMargin);
-	
-	PrintToLog("collateral currency id of contract : %d\n",collateralCurrency);
-	PrintToLog("margin requirement of contract : %d\n",marginRe);
-	PrintToLog("amountForSale: %d\n",amountForSale);
-	PrintToLog("Address: %d\n",addr);
-	PrintToLog("--------------------------------------------\n");
-	
+
+	// PrintToLog("collateral currency id of contract : %d\n",collateralCurrency);
+	// PrintToLog("margin requirement of contract : %d\n",marginRe);
+	// PrintToLog("amountForSale: %d\n",amountForSale);
+	// PrintToLog("Address: %d\n",addr);
+	// PrintToLog("--------------------------------------------\n");
+
 	// move from reserve to balance the collateral
 	if (balance > redeemed && balance > 0 && redeemed > 0) {
 	  assert(update_tally_map(addr, collateralCurrency, redeemed, BALANCE));
@@ -1872,7 +1872,7 @@ int mastercore::ContractDex_CANCEL_EVERYTHING(const uint256& txid, unsigned int 
   }
   if (bValid == false)
     PrintToConsole("You don't have active orders\n");
-  
+
   return rc;
 }
 
@@ -1881,21 +1881,21 @@ int mastercore::ContractDex_CANCEL_FOR_BLOCK(const uint256& txid,  int block,uns
   int rc = METADEX_ERROR -40;
   bool bValid = false;
   for (cd_PropertiesMap::iterator my_it = contractdex.begin(); my_it != contractdex.end(); ++my_it) {
-    
+
     // PrintToLog(" ## property: %u\n", prop);
     cd_PricesMap &prices = my_it->second;
-    
+
     for (cd_PricesMap::iterator it = prices.begin(); it != prices.end(); ++it) {
             // uint64_t price = it->first;
       cd_Set &indexes = it->second;
-      
+
       for (cd_Set::iterator it = indexes.begin(); it != indexes.end();) {
 	string addr = it->getAddr();
 	if (addr != sender_addr || it->getBlock()!= block || it->getIdx()!= idx) {
 	  ++it;
 	  continue;
 	}
-	
+
 	CMPSPInfo::Entry sp;
 	uint32_t contractId = it->getProperty();
 	assert(_my_sps->getSP(contractId, sp));
@@ -1908,17 +1908,17 @@ int mastercore::ContractDex_CANCEL_FOR_BLOCK(const uint256& txid,  int block,uns
 	rational_t conv = notionalChange(it->getProperty());
 	int64_t num = conv.numerator().convert_to<int64_t>();
 	int64_t den = conv.denominator().convert_to<int64_t>();
-	
+
 	arith_uint256 amountMargin = (ConvertTo256(amountForSale) * ConvertTo256(marginRe) * ConvertTo256(num) / (ConvertTo256(den) * ConvertTo256(factorE)));
 	int64_t redeemed = ConvertTo64(amountMargin);
-	
-	PrintToLog("collateral currency id of contract : %d\n", collateralCurrency);
-	PrintToLog("margin requirement of contract : %d\n", marginRe);
-	PrintToLog("amountForSale: %d\n", amountForSale);
-	PrintToLog("Address: %d\n", addr);
+
+	// PrintToLog("collateral currency id of contract : %d\n", collateralCurrency);
+	// PrintToLog("margin requirement of contract : %d\n", marginRe);
+	// PrintToLog("amountForSale: %d\n", amountForSale);
+	// PrintToLog("Address: %d\n", addr);
 	std::string sgetback = FormatDivisibleMP(redeemed, false);
-	PrintToLog("amount returned to balance: %d\n", redeemed);
-	PrintToLog("--------------------------------------------\n");
+	// PrintToLog("amount returned to balance: %d\n", redeemed);
+	// PrintToLog("--------------------------------------------\n");
 
 	// move from reserve to balance the collateral
 	if (balance > redeemed && balance > 0 && redeemed > 0) {
@@ -1929,7 +1929,7 @@ int mastercore::ContractDex_CANCEL_FOR_BLOCK(const uint256& txid,  int block,uns
 	bValid = true;
 	// p_txlistdb->recordContractDexCancelTX(txid, it->getHash(), bValid, block, it->getProperty(), it->getAmountForSale
 	indexes.erase(it++);
-	
+
 	rc = 0;
       }
     }
@@ -1944,18 +1944,18 @@ int mastercore::ContractDex_CLOSE_POSITION(const uint256& txid, unsigned int blo
 {
     int64_t shortPosition = getMPbalance(sender_addr,contractId, NEGATIVE_BALANCE);
     int64_t longPosition = getMPbalance(sender_addr,contractId, POSSITIVE_BALANCE);
-    PrintToLog("shortPosition before: %d\n",shortPosition);
-    PrintToLog("longPosition before: %d\n",longPosition);
+    // PrintToLog("shortPosition before: %d\n",shortPosition);
+    // PrintToLog("longPosition before: %d\n",longPosition);
 
     LOCK(cs_tally);
 
     // Clearing the position
     unsigned int idx=0;
     if (shortPosition > 0 && longPosition == 0){
-        PrintToLog("Short Position closing...\n");
+        // PrintToLog("Short Position closing...\n");
         ContractDex_ADD_MARKET_PRICE(sender_addr,contractId, shortPosition, block, txid, idx,BUY, 0);
     } else if (longPosition > 0 && shortPosition == 0){
-        PrintToLog("Long Position closing...\n");
+        // PrintToLog("Long Position closing...\n");
         ContractDex_ADD_MARKET_PRICE(sender_addr,contractId, longPosition, block, txid, idx, SELL, 0);
     }
 
@@ -1975,23 +1975,23 @@ int mastercore::ContractDex_CLOSE_POSITION(const uint256& txid, unsigned int blo
     if (upnl > 0){
         update_tally_map(sender_addr, contractId, -upnl, UPNL);
         update_tally_map(sender_addr, contractId, upnl, REALIZED_PROFIT);
-        PrintToLog("profits: %d\n",upnl);
+        // PrintToLog("profits: %d\n",upnl);
 
     } else if (upnl < 0) {
         update_tally_map(sender_addr,contractId, upnl, UPNL);
         update_tally_map(sender_addr, contractId, -upnl, REALIZED_LOSSES);
-        PrintToLog("losses: %d\n",upnl);
+        // PrintToLog("losses: %d\n",upnl);
     }
 
     int64_t shortPositionAf = getMPbalance(sender_addr,contractId, NEGATIVE_BALANCE);
     int64_t longPositionAf= getMPbalance(sender_addr,contractId, POSSITIVE_BALANCE);
-    PrintToLog("shortPosition Now: %d\n",shortPositionAf);
-    PrintToLog("longPosition Now: %d\n",longPositionAf);
+    // PrintToLog("shortPosition Now: %d\n",shortPositionAf);
+    // PrintToLog("longPosition Now: %d\n",longPositionAf);
 
     if (shortPositionAf == 0 && longPositionAf == 0){
-        PrintToLog("POSITION CLOSED!!!\n");
+        // PrintToLog("POSITION CLOSED!!!\n");
     } else {
-        PrintToLog("ERROR: Position partialy Closed\n");
+        // PrintToLog("ERROR: Position partialy Closed\n");
     }
 
     return 0;
