@@ -676,7 +676,7 @@ UniValue tl_getproperty(const JSONRPCRequest& request)
     response.push_back(Pair("fixedissuance", sp.fixed));
     response.push_back(Pair("totaltokens", strTotalTokens));
     response.push_back(Pair("creation block", sp.init_block));
-    
+
     if (sp.prop_type == ALL_PROPERTY_TYPE_CONTRACT){
         response.push_back(Pair("notional size",(uint64_t) sp.notional_size));
         response.push_back(Pair("collateral currency",(uint64_t) sp.collateral_currency));
@@ -721,11 +721,11 @@ UniValue tl_listproperties(const JSONRPCRequest& request)
 			+ HelpExampleCli("tl_listproperties", "")
 			+ HelpExampleRpc("tl_listproperties", "")
 			);
-  
+
   UniValue response(UniValue::VARR);
-  
+
   LOCK(cs_tally);
-  
+
   uint32_t nextSPID = _my_sps->peekNextSPID(1);
   for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++) {
     CMPSPInfo::Entry sp;
@@ -736,7 +736,7 @@ UniValue tl_listproperties(const JSONRPCRequest& request)
       response.push_back(propertyObj);
     }
   }
-  
+
   uint32_t nextTestSPID = _my_sps->peekNextSPID(2);
   for (uint32_t propertyId = TEST_ECO_PROPERTY_1; propertyId < nextTestSPID; propertyId++) {
     CMPSPInfo::Entry sp;
@@ -744,7 +744,7 @@ UniValue tl_listproperties(const JSONRPCRequest& request)
       UniValue propertyObj(UniValue::VOBJ);
       propertyObj.push_back(Pair("propertyid", (uint64_t) propertyId));
       PropertyToJSON(sp, propertyObj); // name, data, url, divisible
-      
+
       response.push_back(propertyObj);
     }
   }
@@ -846,7 +846,7 @@ UniValue tl_getcrowdsale(const JSONRPCRequest& request)
     if (!hashBlock.IsNull() && GetBlockIndex(hashBlock)) {
       startTime = GetBlockIndex(hashBlock)->nTime;
     }
-    
+
     // note the database is already deserialized here and there is minimal performance penalty to iterate recipients to calculate amountRaised
     int64_t amountRaised = 0;
     uint16_t propertyIdType = isPropertyDivisible(propertyId) ? ALL_PROPERTY_TYPE_DIVISIBLE : ALL_PROPERTY_TYPE_INDIVISIBLE;
@@ -1505,11 +1505,11 @@ UniValue tl_getfullposition(const JSONRPCRequest& request)
 
   std::string address = ParseAddress(request.params[0]);
   uint32_t propertyId = ParsePropertyId(request.params[1]);
-  
+
   RequireContract(propertyId);
-  
+
   UniValue positionObj(UniValue::VOBJ);
-  
+
   CMPSPInfo::Entry sp;
   {
     LOCK(cs_tally);
@@ -1517,16 +1517,16 @@ UniValue tl_getfullposition(const JSONRPCRequest& request)
       throw JSONRPCError(RPC_INVALID_PARAMETER, "Property identifier does not exist");
     }
   }
-  
+
   positionObj.push_back(Pair("symbol", sp.name));
   positionObj.push_back(Pair("notional_size", (uint64_t) sp.notional_size)); // value of position = short or long position (balance) * notional_size
   // PTJ -> short/longPosition /liquidation price
   FullPositionToJSON(address, propertyId, positionObj,isPropertyContract(propertyId), sp);
-  
+
   LOCK(cs_tally);
-  
+
   double upnl = addrs_upnlc[propertyId][address];
-  
+
   if (upnl >= 0) {
     positionObj.push_back(Pair("positiveupnl", upnl));
     positionObj.push_back(Pair("negativeupnl", FormatByType(0,2)));
@@ -1534,12 +1534,12 @@ UniValue tl_getfullposition(const JSONRPCRequest& request)
     positionObj.push_back(Pair("positiveupnl", FormatByType(0,2)));
     positionObj.push_back(Pair("negativeupnl", upnl));
   }
-  
+
   // pnl
   uint32_t collateralCurrency = sp.collateral_currency;
   uint64_t realizedProfits  = static_cast<uint64_t>(factorE * getMPbalance(address, collateralCurrency, REALIZED_PROFIT));
   uint64_t realizedLosses  = static_cast<uint64_t>(factorE * getMPbalance(address, collateralCurrency, REALIZED_LOSSES));
-  
+
   if (realizedProfits > 0 && realizedLosses == 0) {
     positionObj.push_back(Pair("positivepnl", FormatByType(realizedProfits,2)));
     positionObj.push_back(Pair("negativepnl", FormatByType(0,2)));
@@ -1550,7 +1550,7 @@ UniValue tl_getfullposition(const JSONRPCRequest& request)
     positionObj.push_back(Pair("positivepnl", FormatByType(0,2)));
     positionObj.push_back(Pair("negativepnl", FormatByType(0,2)));
   }
-  
+
   return positionObj;
 }
 
@@ -1573,15 +1573,15 @@ UniValue tl_getposition(const JSONRPCRequest& request)
 			+ HelpExampleCli("tl_getposition", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" 1")
 			+ HelpExampleRpc("tl_getposition", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", 1")
 			);
-  
+
   std::string address = ParseAddress(request.params[0]);
   uint32_t propertyId = ParsePropertyId(request.params[1]);
-  
+
   RequireContract(propertyId);
-  
+
   UniValue balanceObj(UniValue::VOBJ);
   PositionToJSON(address, propertyId, balanceObj, isPropertyContract(propertyId));
-  
+
   return balanceObj;
 }
 
@@ -1648,11 +1648,11 @@ UniValue tl_getorderbook(const JSONRPCRequest& request)
             + HelpExampleCli("tl_getorderbook", "2")
             + HelpExampleRpc("tl_getorderbook", "2")
 			    );
-    
+
     bool filterDesired = (request.params.size() > 1);
     uint32_t propertyIdForSale = ParsePropertyId(request.params[0]);
     uint32_t propertyIdDesired = 0;
-    
+
     RequireExistingProperty(propertyIdForSale);
     RequireNotContract(propertyIdForSale);
 
@@ -1718,106 +1718,30 @@ UniValue tl_getcontract_orderbook(const JSONRPCRequest& request)
 			+ HelpExampleCli("tl_getcontract_orderbook", "2" "1")
 			+ HelpExampleRpc("tl_getcontract_orderbook", "2" "1")
 			);
-  
-  std::string name_traded = ParseText(request.params[0]);
-  uint8_t tradingaction = ParseContractDexAction(request.params[1]);
-  
-  struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, name_traded);
-  uint32_t propertyIdForSale = pfuture->fco_propertyId;
-  
-  std::vector<uint64_t> SortpricesLowerToHigher;
-  std::vector<uint64_t> SortpricesHigherToLower;
-  
-  std::vector<CMPContractDex> vecContractDexObjects;
-  {
-    LOCK(cs_tally);
-    for (cd_PropertiesMap::const_iterator my_it = contractdex.begin(); my_it != contractdex.end(); ++my_it)
+      uint32_t propertyIdForSale = ParsePropertyId(request.params[0]);
+      uint8_t tradingaction = ParseContractDexAction(request.params[1]);
+
+      std::vector<CMPContractDex> vecContractDexObjects;
       {
-	const cd_PricesMap& prices = my_it->second;
-	for (cd_PricesMap::const_iterator it = prices.begin(); it != prices.end(); ++it)
-	  {
-	    const cd_Set& indexes = it->second;
-	    for (cd_Set::const_iterator it = indexes.begin(); it != indexes.end(); ++it)
-	      {
-		const CMPContractDex& obj = *it;
-		
-		if (obj.getProperty() != propertyIdForSale) continue;
-		if (obj.getTradingAction() != tradingaction) continue;
-		if (obj.getAmountForSale() <= 0) continue;
-		
-		uint64_t priceh = obj.getEffectivePrice();
-		
-		SortpricesLowerToHigher.push_back(priceh);
-		SortpricesHigherToLower.push_back(priceh);
-	      }
-	  }
+        LOCK(cs_tally);
+        for (cd_PropertiesMap::const_iterator my_it = contractdex.begin(); my_it != contractdex.end(); ++my_it) {
+          const cd_PricesMap& prices = my_it->second;
+          for (cd_PricesMap::const_iterator it = prices.begin(); it != prices.end(); ++it) {
+    	const cd_Set& indexes = it->second;
+    	for (cd_Set::const_iterator it = indexes.begin(); it != indexes.end(); ++it) {
+    	  const CMPContractDex& obj = *it;
+    	  if (obj.getProperty() != propertyIdForSale) continue;
+    	  if (obj.getTradingAction() != tradingaction) continue;
+    	  if (obj.getAmountForSale() <= 0) continue;
+    	  vecContractDexObjects.push_back(obj);
+    	}
+          }
+        }
       }
-    unsigned int p = 0;
-    while (p < SortpricesLowerToHigher.size())
-      {
-	for (unsigned int j = 0; j < SortpricesLowerToHigher.size(); j++)
-	  {
-	    if(SortpricesLowerToHigher[p]/COIN < SortpricesLowerToHigher[j]/COIN)
-	      {
-		uint64_t temp1 = SortpricesLowerToHigher[p];              
-		SortpricesLowerToHigher[p] = SortpricesLowerToHigher[j];
-		SortpricesLowerToHigher[j] = temp1;
-	      }
-	    if(SortpricesHigherToLower[p]/COIN > SortpricesHigherToLower[j]/COIN)
-	      {
-		uint64_t temp2 = SortpricesHigherToLower[p];              
-		SortpricesHigherToLower[p] = SortpricesHigherToLower[j];
-		SortpricesHigherToLower[j] = temp2;
-	      }
-	  }
-	p++;
-      }
-    
-    PrintToLog("Trading Action 2: SortpricesLowerToHigher = \n");
-    std::vector<uint64_t> SortpricesLowerToHigher5;
-    SortpricesLowerToHigher5.assign(std::begin(SortpricesLowerToHigher), std::begin(SortpricesLowerToHigher)+5);
-    for(unsigned int i = 0; i < SortpricesLowerToHigher5.size(); ++i)
-      PrintToLog("%d\n", SortpricesLowerToHigher5[i]);
-    
-    PrintToLog("Trading Action 1: SortpricesHigherToLower = \n");
-    std::vector<uint64_t> SortpricesHigherToLower5;
-    SortpricesHigherToLower5.assign(std::begin(SortpricesHigherToLower), std::begin(SortpricesHigherToLower)+5);
-    for(unsigned int i = 0; i < SortpricesHigherToLower5.size(); ++i)
-      PrintToLog("%d\n", SortpricesHigherToLower5[i]);
-    
-    for (cd_PropertiesMap::const_iterator my_it = contractdex.begin(); my_it != contractdex.end(); ++my_it)
-      {
-	const cd_PricesMap& prices = my_it->second;
-	for (cd_PricesMap::const_iterator it = prices.begin(); it != prices.end(); ++it)
-	  {
-	    const cd_Set& indexes = it->second;
-	    
-	    for (cd_Set::const_iterator it = indexes.begin(); it != indexes.end(); ++it)
-	      {
-		const CMPContractDex& obj = *it;
-		
-		if (obj.getProperty() != propertyIdForSale) continue;
-		if (obj.getTradingAction() != tradingaction) continue;
-		if (obj.getAmountForSale() <= 0) continue;
-		
-		uint64_t priceh = obj.getEffectivePrice();
-		
-		if (tradingaction == 1) {
-		  if (!find_uint64_t(priceh, SortpricesHigherToLower)) continue;
-		}
-		
-		if (tradingaction == 2) {
-		  if (!find_uint64_t(priceh, SortpricesLowerToHigher)) continue;
-		}
-		vecContractDexObjects.push_back(obj);
-	      } 
-	  }
-      }
-  }
-  
-  UniValue response(UniValue::VARR);
-  ContractDexObjectsToJSON(vecContractDexObjects, response);
-  return response;
+
+      UniValue response(UniValue::VARR);
+      ContractDexObjectsToJSON(vecContractDexObjects, response);
+      return response;
 }
 
 UniValue tl_gettradehistory(const JSONRPCRequest& request)
@@ -1960,16 +1884,16 @@ UniValue tl_getupnl(const JSONRPCRequest& request)
 			+ HelpExampleRpc("tl_getupnl", "address, 500")
 			);
   }
-    
+
   std::string address = ParseAddress(request.params[0]);
   uint32_t contractId = ParsePropertyId(request.params[1]);
-  
+
   RequireExistingProperty(contractId);
   RequireContract(contractId);
-  
+
   UniValue balanceObj(UniValue::VOBJ);
   double upnl = addrs_upnlc[contractId][address];
-  
+
   if (upnl > 0) {
     balanceObj.push_back(Pair("positiveupnl", FormatByType(mastercore::DoubleToInt64(upnl),2)));
     balanceObj.push_back(Pair("negativeupnl", FormatByType(0,2)));
@@ -1980,7 +1904,7 @@ UniValue tl_getupnl(const JSONRPCRequest& request)
     balanceObj.push_back(Pair("positiveupnl", FormatByType(0,2)));
     balanceObj.push_back(Pair("negativeupnl", FormatByType(0,2)));
   }
-  
+
   return balanceObj;
 }
 
@@ -2015,9 +1939,9 @@ UniValue tl_getpnl(const JSONRPCRequest& request)
 
   std::string address = ParseAddress(request.params[0]);
   uint32_t contractId = ParsePropertyId(request.params[1]);
-  
+
   RequireExistingProperty(contractId);
-  
+
   UniValue balanceObj(UniValue::VOBJ);
   int64_t upnl  = getMPbalance(address, contractId, REALIZED_PROFIT);
   int64_t nupnl  = getMPbalance(address, contractId, REALIZED_LOSSES);
@@ -2025,7 +1949,7 @@ UniValue tl_getpnl(const JSONRPCRequest& request)
   PrintToLog("realized profit in rpc: %d\n",upnl);
   PrintToLog("realized losses in rpc: %d\n",nupnl);
   PrintToLog("_________________________________________________________\n");
-  
+
   if (upnl > 0 && nupnl == 0) {
     PrintToLog("upnl after if: %d\n",upnl);
     balanceObj.push_back(Pair("positivepnl", FormatByType(static_cast<uint64_t>(upnl),2)));
@@ -2033,7 +1957,7 @@ UniValue tl_getpnl(const JSONRPCRequest& request)
   } else if (nupnl > 0 && upnl == 0) {
     PrintToLog("nupnl after if: %d\n",nupnl);
     balanceObj.push_back(Pair("positivepnl", FormatByType(0,2)));
-    balanceObj.push_back(Pair("negativepnl", FormatByType(static_cast<uint64_t>(nupnl),2)));  
+    balanceObj.push_back(Pair("negativepnl", FormatByType(static_cast<uint64_t>(nupnl),2)));
   } else{
     balanceObj.push_back(Pair("positivepnl", FormatByType(0,2)));
     balanceObj.push_back(Pair("negativepnl", FormatByType(0,2)));
@@ -2097,23 +2021,23 @@ UniValue tl_getmarketprice(const JSONRPCRequest& request)
 			+ HelpExampleCli("tl_getaverage_entry", "12" )
 			+ HelpExampleRpc("tl_getaverage_entry", "500")
 			);
-  
-  
+
+
   uint32_t contractId = ParsePropertyId(request.params[0]);
-  
+
   RequireExistingProperty(contractId);
   RequireContract(contractId);
-  
+
   UniValue balanceObj(UniValue::VOBJ);
   int index = static_cast<unsigned int>(contractId);
   int64_t price = marketP[index];
-  
+
   PrintToLog("_________________________________________________________\n");
   PrintToLog("marketprice in rpc: %d\n",price);
   PrintToLog("_________________________________________________________\n");
-  
+
   balanceObj.push_back(Pair("price", FormatByType(price,2)));
-  
+
   return balanceObj;
 }
 
