@@ -63,8 +63,8 @@ nVestingAddrs = 5;
 amountVesting = (1500000/nVestingAddrs)*COIN;
 pt_vestingAddresses = new VectorTLS(nVestingAddrs); VectorTLS &vestingAddresses = *pt_vestingAddresses;
 /** List od vesting addresses */
-vestingAddresses[0] = "mrbR7zJKLaZMJnWztptZ7qFvDNvqed6kqw";
-vestingAddresses[1] = "mwpY8D4dAkfZP5kj97AYucAVcxfLfbBUeC";
-vestingAddresses[2] = "n2k7njAU6F8TV3YzmQTog4b3ArqZctPcrC";
-vestingAddresses[3] = "mpYrisony94G5DqwdbKXtsxsE5EzTiQ2FC";
-vestingAddresses[4] = "mmTMfePDfkztoYSvbmGvbKUbp8RZLxKsdg";
+vestingAddresses[0] = "myQZ2CH4VnvftJuQv192fvj4AftqfktWmU";
+vestingAddresses[1] = "mzWHwDAJmahfqCcUuNEhs2n8eK6HWC5YWN";
+vestingAddresses[2] = "msw6VWZdXPfcMJKi8Dwh2ue1VSo6MYEznd";
+vestingAddresses[3] = "mzPDhKkTER9pkRWJBhE91R4PscGhzEp2a6";
+vestingAddresses[4] = "mpvNWKdqw6kFMhrb4b5BnPjpDrkcR11cY3";
