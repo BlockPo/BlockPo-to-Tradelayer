@@ -1687,7 +1687,7 @@ UniValue tl_getorderbook(const JSONRPCRequest& request)
 
 UniValue tl_getcontract_orderbook(const JSONRPCRequest& request)
 {
-  if (request.params.size() < 2 || request.params.size() > 2)
+  if (request.params.size() != 2)
     throw runtime_error(
 			"tl_getcontract_orderbook contractid tradingaction\n"
 			"\nList active offers on the distributed futures contracts exchange.\n"
@@ -1718,8 +1718,11 @@ UniValue tl_getcontract_orderbook(const JSONRPCRequest& request)
 			+ HelpExampleCli("tl_getcontract_orderbook", "2" "1")
 			+ HelpExampleRpc("tl_getcontract_orderbook", "2" "1")
 			);
-      uint32_t propertyIdForSale = ParsePropertyId(request.params[0]);
+      std::string name_traded = ParseText(request.params[0]);
       uint8_t tradingaction = ParseContractDexAction(request.params[1]);
+
+      struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, name_traded);
+      uint32_t propertyIdForSale = pfuture->fco_propertyId;
 
       std::vector<CMPContractDex> vecContractDexObjects;
       {
