@@ -50,3 +50,4 @@ volatile int64_t globalVolumeALL_LTC;
 volatile int64_t Lastx_Axis;
 volatile int64_t LastLinear;
 volatile int64_t LastQuad;
+volatile int64_t LastLog;

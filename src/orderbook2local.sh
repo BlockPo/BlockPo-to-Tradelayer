@@ -1,13 +1,13 @@
 #!/bin/bash
 
-SRCDIR=/home/lihki/Documents/TradeLayer/tradelayer-rackeo-local/src
+SRCDIR=/root/lihki/tradelayer-rackeo-local/src
 
-DATADIR=/home/lihki/.litecoin
+DATADIR=/root/lihki/chainlihki
 NUL=/dev/null
 printf "\n//////////////////////////////////////////\n"
 printf "Cleaning the regtest folder\n"
 
-sudo rm -r /home/lihki/.litecoin/regtest
+sudo rm -r /root/lihki/chainlihki/regtest
 sudo rm graphInfo*
 
 printf "\n________________________________________\n"
