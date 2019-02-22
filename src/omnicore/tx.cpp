@@ -2454,11 +2454,11 @@ int CMPTransaction::logicMath_ContractDex_Cancel_Orders_By_Block()
     //  return (PKT_ERROR_METADEX -22);
   // }
 
-  if (OMNI_PROPERTY_ALL != ecosystem && OMNI_PROPERTY_TALL != ecosystem) {
-      PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, ecosystem);
-      PrintToLog("rejected: invalid ecosystem %d\n",ecosystem);
-      return (PKT_ERROR_METADEX -21);
-  }
+//   if (OMNI_PROPERTY_ALL != ecosystem && OMNI_PROPERTY_TALL != ecosystem) {
+//       PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, ecosystem);
+//       PrintToLog("rejected: invalid ecosystem %d\n",ecosystem);
+//       return (PKT_ERROR_METADEX -21);
+//   }
 
     ContractDex_CANCEL_FOR_BLOCK(txid, block, tx_idx, sender, ecosystem);
     int rc = 0;
