@@ -59,16 +59,13 @@
 #endif
 
 #include <univalue.h>
-
 #include <boost/algorithm/string.hpp>
 #include <boost/exception/to_string.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
 #include <boost/multiprecision/cpp_int.hpp>
 #include <boost/lexical_cast.hpp>
-
 #include <openssl/sha.h>
-
 #include "leveldb/db.h"
 
 #include <assert.h>
@@ -559,11 +556,12 @@ void sendingVestingTokens()
 {
   extern VectorTLS *pt_vestingAddresses;  VectorTLS &vestingAddresses  = *pt_vestingAddresses;
   extern int64_t amountVesting;
+  extern int64_t totalVesting;
   extern int nVestingAddrs;
-  // PrintToLog("\nVesting amount for every vesting address : %d\n", amountVesting);
-
+  extern std::string admin_addrs;
+  
   CMPSPInfo::Entry newSP;
-
+  
   newSP.name = "Vesting Tokens";
   newSP.data = "Divisible Tokens";
   newSP.url  = "www.tradelayer.org";
@@ -572,12 +570,19 @@ void sendingVestingTokens()
   newSP.prop_type = ALL_PROPERTY_TYPE_DIVISIBLE;
   newSP.num_tokens = amountVesting;
   newSP.attribute_type = ALL_PROPERTY_TYPE_VESTING;
-
+  
   const uint32_t propertyIdVesting = _my_sps->putSP(OMNI_PROPERTY_ALL, newSP);
   assert(propertyIdVesting > 0);
-
-  for (int i = 0; i < nVestingAddrs; i++) assert(update_tally_map(vestingAddresses[i], propertyIdVesting, amountVesting, BALANCE));
-
+  
+  assert(update_tally_map(admin_addrs, propertyIdVesting, totalVesting, BALANCE));
+  
+  int64_t amountVesting_q = 0;
+  for (int i = 0; i < nVestingAddrs; i++) {
+    amountVesting_q += amountVesting;
+    assert(update_tally_map(admin_addrs, propertyIdVesting, totalVesting-amountVesting_q, BALANCE));
+    assert(update_tally_map(vestingAddresses[i], propertyIdVesting, amountVesting, BALANCE));
+  }
+  
   for (int i = 0; i < nVestingAddrs; i++) {
     if (getMPbalance(vestingAddresses[i], OMNI_PROPERTY_ALL, UNVESTED) == 0)
       assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, getMPbalance(vestingAddresses[i], propertyIdVesting, BALANCE), UNVESTED));

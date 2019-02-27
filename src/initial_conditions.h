@@ -58,11 +58,14 @@ for ( int i = 0; i < NYears; i++ )
     expiration_dates[i+11+11*i] = "ALL Z" + std::to_string(i+initYear);
   }
 
-/** The final addrs amount will be chosen at mainnet launch time */
+/** The final addrs amount will be chosen at mainnet launch time **/
 nVestingAddrs = 5;
-amountVesting = (1500000/nVestingAddrs)*COIN;
+totalVesting = 1500000;
+amountVesting = (totalVesting/nVestingAddrs)*COIN;
+/** Admin address **/
+admin_addrs = "QfCbRAxwaxAE2SdSDz8Vu9pgJ5XVix2Lhu";
+/** List of vesting addresses **/
 pt_vestingAddresses = new VectorTLS(nVestingAddrs); VectorTLS &vestingAddresses = *pt_vestingAddresses;
-/** List od vesting addresses */
 vestingAddresses[0] = "myQZ2CH4VnvftJuQv192fvj4AftqfktWmU";
 vestingAddresses[1] = "mzWHwDAJmahfqCcUuNEhs2n8eK6HWC5YWN";
 vestingAddresses[2] = "msw6VWZdXPfcMJKi8Dwh2ue1VSo6MYEznd";

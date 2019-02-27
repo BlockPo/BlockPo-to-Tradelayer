@@ -185,6 +185,7 @@ int main(int argc, char* argv[])
   extern int n_cols;
   extern int nVestingAddrs;
   extern int64_t amountVesting;
+  extern int64_t totalVesting;
   extern VectorTLS *pt_open_incr_long;
   extern VectorTLS *pt_open_incr_short;
   extern VectorTLS *pt_netted_npartly_long;
@@ -194,6 +195,7 @@ int main(int argc, char* argv[])
   extern VectorTLS *pt_changepos_status;
   extern VectorTLS *pt_expiration_dates;
   extern VectorTLS *pt_vestingAddresses;
+  extern std::string admin_addrs;
   
 #include "initial_conditions.h"
   
