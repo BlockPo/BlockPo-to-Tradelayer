@@ -1788,6 +1788,49 @@ UniValue tl_gettradehistory(const JSONRPCRequest& request)
     return response;
 }
 
+UniValue tl_gettradehistory_unfiltered(const JSONRPCRequest& request)
+{
+    if (request.params.size() != 1)
+        throw runtime_error(
+            "tl_gettradehistory contractid propertyid ( count )\n"
+            "\nRetrieves the history of trades on the distributed contract exchange for the specified market.\n"
+            "\nArguments:\n"
+            "1. contractid           (number, required) the id of future contract\n"
+            "\nResult:\n"
+            "[                                      (array of JSON objects)\n"
+            "  {\n"
+            "    \"block\" : nnnnnn,                      (number) the index of the block that contains the trade match\n"
+            "    \"unitprice\" : \"n.nnnnnnnnnnn...\" ,     (string) the unit price used to execute this trade (received/sold)\n"
+            "    \"inverseprice\" : \"n.nnnnnnnnnnn...\",   (string) the inverse unit price (sold/received)\n"
+            "    \"sellertxid\" : \"hash\",                 (string) the hash of the transaction of the seller\n"
+            "    \"address\" : \"address\",                 (string) the Bitcoin address of the seller\n"
+            "    \"amountsold\" : \"n.nnnnnnnn\",           (string) the number of tokens sold in this trade\n"
+            "    \"amountreceived\" : \"n.nnnnnnnn\",       (string) the number of tokens traded in exchange\n"
+            "    \"matchingtxid\" : \"hash\",               (string) the hash of the transaction that was matched against\n"
+            "    \"matchingaddress\" : \"address\"          (string) the Bitcoin address of the other party of this trade\n"
+            "  },\n"
+            "  ...\n"
+            "]\n"
+            "\nExamples:\n"
+            + HelpExampleCli("tl_gettradehistoryforpair", "1 12 500")
+            + HelpExampleRpc("tl_gettradehistoryforpair", "1, 12, 500")
+        );
+
+    // obtain property identifiers for pair & check valid parameters
+    uint32_t contractId = ParsePropertyId(request.params[0]);
+
+    RequireContract(contractId);
+
+    // request pair trade history from trade db
+    UniValue response(UniValue::VARR);
+    LOCK(cs_tally);
+    PrintToConsole("Inside the rpc gettradehistory \n");
+
+    // gets unfiltered list of trades
+    t_tradelistdb->getMatchingTradesUnfiltered(contractId,response);
+    return response;
+}
+
 UniValue tl_getpeggedhistory(const JSONRPCRequest& request)
 {
     if (request.params.size() != 1)
@@ -2215,6 +2258,7 @@ static const CRPCCommand commands[] =
   { "trade layer (data retrieval)", "tl_getfullposition",           &tl_getfullposition,            {} },
   { "trade layer (data retrieval)", "tl_getcontract_orderbook",     &tl_getcontract_orderbook,      {} },
   { "trade layer (data retrieval)", "tl_gettradehistory",           &tl_gettradehistory,            {} },
+  { "trade layer (data retrieval)", "tl_gettradehistory_unfiltered",&tl_gettradehistory_unfiltered, {} },
   { "trade layer (data retrieval)", "tl_getupnl",                   &tl_getupnl,                    {} },
   { "trade layer (data retrieval)", "tl_getpnl",                    &tl_getpnl,                     {} },
   { "trade layer (data retieval)",  "tl_getactivedexsells",         &tl_getactivedexsells ,         {} },
