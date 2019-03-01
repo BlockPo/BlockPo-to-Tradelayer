@@ -60,8 +60,8 @@ for ( int i = 0; i < NYears; i++ )
 
 /** The final addrs amount will be chosen at mainnet launch time **/
 nVestingAddrs = 5;
-totalVesting = 1500000;
-amountVesting = (totalVesting/nVestingAddrs)*COIN;
+totalVesting = 1500000*COIN;
+amountVesting = (1500000/nVestingAddrs)*COIN;
 /** Admin address **/
 admin_addrs = "QfCbRAxwaxAE2SdSDz8Vu9pgJ5XVix2Lhu";
 /** List of vesting addresses **/

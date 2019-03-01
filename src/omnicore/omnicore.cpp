@@ -575,11 +575,10 @@ void sendingVestingTokens()
   assert(propertyIdVesting > 0);
   
   assert(update_tally_map(admin_addrs, propertyIdVesting, totalVesting, BALANCE));
+  PrintToLog("\namountVesting = %s, totalVesting = %s\n", FormatDivisibleMP(amountVesting), FormatDivisibleMP(totalVesting));
   
-  int64_t amountVesting_q = 0;
   for (int i = 0; i < nVestingAddrs; i++) {
-    amountVesting_q += amountVesting;
-    assert(update_tally_map(admin_addrs, propertyIdVesting, totalVesting-amountVesting_q, BALANCE));
+    assert(update_tally_map(admin_addrs, propertyIdVesting, -amountVesting, BALANCE));
     assert(update_tally_map(vestingAddresses[i], propertyIdVesting, amountVesting, BALANCE));
   }
   
