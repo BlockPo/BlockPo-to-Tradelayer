@@ -204,6 +204,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_getallbalancesforid", 0, "arg0" },
     { "tl_listblocktransactions", 0, "arg0" },
     { "tl_gettradehistory", 0, "arg0" },
+    { "tl_gettradehistory_unfiltered", 0, "arg0" },
     { "tl_getpeggedhistory",0, "arg0" },
     { "tl_getorderbook",0, "arg0" },
     { "tl_getorderbook",1, "arg1" },

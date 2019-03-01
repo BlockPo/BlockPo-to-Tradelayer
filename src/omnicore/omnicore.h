@@ -324,6 +324,7 @@ public:
     ///////////////////////////////////////
     /** New things for Contract */
     bool getMatchingTrades(uint32_t propertyId, UniValue& tradeArray);
+    bool getMatchingTradesUnfiltered(uint32_t propertyId, UniValue& tradeArray);
     double getPNL(string address, int64_t contractsClosed, int64_t price, uint32_t property, uint32_t marginRequirementContract, uint32_t notionalSize, std::string Status);
     void marginLogic(uint32_t property);
     double getUPNL(string address, uint32_t contractId);
@@ -390,48 +391,48 @@ namespace mastercore
   extern CCoinsViewCache view;
   //! Guards coins view cache
   extern CCriticalSection cs_tx_cache;
-  
+
   std::string strMPProperty(uint32_t propertyId);
-  
+
   /* New things for contracts *///////////////////////////////////////////////////
   rational_t notionalChange(uint32_t contractId);
   // bool marginCheck(const std::string address);
   bool marginNeeded(const std::string address, int64_t amountTraded, uint32_t contractId);
   bool marginBack(const std::string address, int64_t amountTraded, uint32_t contractId);
   ////////////////////////////////////////////////////////////////////////////////
-  
+
   bool isMPinBlockRange(int starting_block, int ending_block, bool bDeleteFound);
-  
+
   /////////////////////////////////////////
   /*New property type No 3 Contract*/
   std::string FormatContractMP(int64_t n);
   /////////////////////////////////////////
   std::string FormatIndivisibleMP(int64_t n);
-  
+
   int WalletTxBuilder(const std::string& senderAddress, const std::string& receiverAddress, int64_t referenceAmount,
 		      const std::vector<unsigned char>& data, uint256& txid, std::string& rawHex, bool commit, unsigned int minInputs = 1);
-  
+
   bool isTestEcosystemProperty(uint32_t propertyId);
   bool isMainEcosystemProperty(uint32_t propertyId);
-    
+
   uint32_t GetNextPropertyId(bool maineco); // maybe move into sp
-  
+
   CMPTally* getTally(const std::string& address);
-  
+
   int64_t getTotalTokens(uint32_t propertyId, int64_t* n_owners_total = NULL);
-  
+
   std::string strTransactionType(uint16_t txType);
-  
+
   /** Returns the encoding class, used to embed a payload. */
   int GetEncodingClass(const CTransaction& tx, int nBlock);
-  
+
   /** Determines, whether it is valid to use a Class C transaction for a given payload size. */
   bool UseEncodingClassC(size_t nDataSize);
-  
+
   bool getValidMPTX(const uint256 &txid, int *block = NULL, unsigned int *type = NULL, uint64_t *nAmended = NULL);
-  
+
   bool update_tally_map(const std::string& who, uint32_t propertyId, int64_t amount, TallyType ttype);
-  
+
   std::string getTokenLabel(uint32_t propertyId);
 }
 
