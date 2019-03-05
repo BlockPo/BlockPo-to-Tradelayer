@@ -949,7 +949,7 @@ int CMPSPInfo::rollingContractsBlock(const CBlockIndex* pBlockIndex)
             // PrintToLog("GENERATE ROLLING ****************************************************************************************************!\n");
 
             // then we must rolling the contracts A to contracts B  (selling the contracts and then putting them into RESERVE)
-            int64_t bid = edgeOrderbook(sp.contract_associated,2);
+            // int64_t bid = edgeOrderbook(sp.contract_associated,2);
             // int64_t positiveBalance = getMPbalance(owner, sp.contract_associated, POSSITIVE_BALANCE);
             // int64_t negativeBalance = getMPbalance(owner, sp.contract_associated, NEGATIVE_BALANCE);
 
@@ -964,7 +964,7 @@ int CMPSPInfo::rollingContractsBlock(const CBlockIndex* pBlockIndex)
             assert(update_tally_map(owner, sp.contract_associated, -contractsReserved, CONTRACTDEX_RESERVE));
 
             // TODO: Here is better use ContractDex_INSERT function
-            int result = ContractDex_ADD(owner, sp.contract_associated, contractsReserved, actualBlock, txid, 0, bid, 1, 0);
+            // int result = ContractDex_ADD(owner, sp.contract_associated, contractsReserved, actualBlock, txid, 0, bid, 1, 0);
 
             // Looking for an older contract of the same type
             {
@@ -991,7 +991,7 @@ int CMPSPInfo::rollingContractsBlock(const CBlockIndex* pBlockIndex)
                return 0;
            }
 
-           int64_t bid1 = edgeOrderbook(contractId2,2);
+           // int64_t bid1 = edgeOrderbook(contractId2,2);
            // PrintToLog("bid COntract B: %d\n",bid1);
 
            int64_t positiveBalanceB = getMPbalance(owner,contractId2, POSSITIVE_BALANCE);
@@ -1010,7 +1010,7 @@ int CMPSPInfo::rollingContractsBlock(const CBlockIndex* pBlockIndex)
            // PrintToLog("new reserve: %d\n",newReserved);
            // PrintToLog("________________________________________________\n");
 
-           int result2 = ContractDex_ADD(owner,contractId2, newReserved, actualBlock, txid, 0, bid1, 2, 0); // shorting in the future contract B
+           // int result2 = ContractDex_ADD(owner,contractId2, newReserved, actualBlock, txid, 0, bid1, 2, 0); // shorting in the future contract B
 
            if(positiveBalanceB >= 0 && negativeBalanceB == 0)
            {

@@ -178,7 +178,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
 	}
 
       idx_q += 1;
-      const int idx_qp = idx_q;
+      // const int idx_qp = idx_q;
       // PrintToLog("Checking idx_q = %d", idx_qp);
 
       /********************************************************/
@@ -268,9 +268,9 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
 	    assert(update_tally_map(buyer_address, property_traded, nCouldBuy, POSSITIVE_BALANCE));
 	}
       /********************************************************/
-      int64_t poldPositiveBalanceL = getMPbalance(pold->getAddr(), property_traded, POSSITIVE_BALANCE);
+      // int64_t poldPositiveBalanceL = getMPbalance(pold->getAddr(), property_traded, POSSITIVE_BALANCE);
       int64_t pnewPositiveBalanceL = getMPbalance(pnew->getAddr(), property_traded, POSSITIVE_BALANCE);
-      int64_t poldNegativeBalanceL = getMPbalance(pold->getAddr(), property_traded, NEGATIVE_BALANCE);
+      // int64_t poldNegativeBalanceL = getMPbalance(pold->getAddr(), property_traded, NEGATIVE_BALANCE);
       int64_t pnewNegativeBalanceL = getMPbalance(pnew->getAddr(), property_traded, NEGATIVE_BALANCE);
 
       std::string Status_s = "Empty";
@@ -1026,7 +1026,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       int index = static_cast<unsigned int>(property_traded);
 
       marketP[index] = pold->getEffectivePrice();
-      uint64_t marketPriceNow = marketP[index];
+      // uint64_t marketPriceNow = marketP[index];
       // PrintToLog("\nmarketPrice Now : %d, marketP[index] = %d\n", marketPriceNow, marketP[index]);
       // t_tradelistdb->recordForUPNL(pnew->getHash(),pnew->getAddr(),property_traded,pold->getEffectivePrice());
 
