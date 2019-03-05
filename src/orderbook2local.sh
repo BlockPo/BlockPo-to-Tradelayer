@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SRCDIR=/home/lihki/Documents/TradeLayer/tradelayer-rackeo-local/src
+SRCDIR=/home/lihki/Documents/TradeLayer/tradelayer-devlihki-todomake/src
 
 DATADIR=/home/lihki/.litecoin
 NUL=/dev/null
@@ -159,7 +159,7 @@ do
     # Begin DEx Traded
     printf "\n________________________________________\n"
     printf "Price for sale Buyer #$i DEx\n"
-    PRICEDEx=$((RANDOM%80+10))
+    PRICEDEx=$((RANDOM%80000+10000))
     printf "\nRandom Price DEx:\n"
     printf $PRICEDEx
     

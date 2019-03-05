@@ -2471,7 +2471,7 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
 {
     uint256 blockHash;
     uint32_t den;
-    uint32_t marginReq = 0;
+    // uint32_t marginReq = 0;
     uint32_t notSize = 0;
     uint32_t npropertyId = 0;
     int64_t amountNeeded;
@@ -2556,7 +2556,7 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
 
         }
 
-        marginReq = sp.margin_requirement;
+        // uint32_t marginReq = sp.margin_requirement;
         notSize = static_cast<int64_t>(sp.notional_size);
         den = sp.denomination;
         // PrintToLog("denomination in the contract: %d, marginReq %d\n", den, marginReq);
@@ -2728,7 +2728,7 @@ int CMPTransaction::logicMath_RedemptionPegged()
     }
 
     int64_t nBalance = getMPbalance(sender, propertyId, BALANCE);
-    int64_t nContracts = getMPbalance(sender, contractId, CONTRACTDEX_RESERVE);
+    // int64_t nContracts = getMPbalance(sender, contractId, CONTRACTDEX_RESERVE);
     int64_t negContracts = getMPbalance(sender, contractId, NEGATIVE_BALANCE);
     int64_t posContracts = getMPbalance(sender, contractId, POSSITIVE_BALANCE);
 
@@ -3019,7 +3019,7 @@ int CMPTransaction::logicMath_AcceptOfferBTC()
     {
       /*****************************************************/
       std::string addressFilter = receiver;
-      int curBlock = GetHeight();
+      // int curBlock = GetHeight();
       // PrintToLog("\ncurBlock = %d\n", curBlock);
 
       LOCK(cs_tally);
