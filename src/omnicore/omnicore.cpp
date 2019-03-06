@@ -574,7 +574,7 @@ void sendingVestingTokens()
   const uint32_t propertyIdVesting = _my_sps->putSP(OMNI_PROPERTY_ALL, newSP);
   assert(propertyIdVesting > 0);
 
-  // assert(update_tally_map(admin_addrs, propertyIdVesting, totalVesting, BALANCE));
+  assert(update_tally_map(admin_addrs, propertyIdVesting, totalVesting, BALANCE));
 
   for (int i = 0; i < nVestingAddrs; i++) {
     assert(update_tally_map(admin_addrs, propertyIdVesting, -amountVesting, BALANCE));
@@ -2238,7 +2238,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
 
 	  PrintToLog("logBalance = %s, vestingBalance = %s\n", FormatDivisibleMP(logBalance), FormatDivisibleMP(vestingBalance));
 	  multiply(numLog128, (int64_t)logBalance, (int64_t)vestingBalance);
-	  PrintToLog("numLog128 = %s\n", xToString(numLog128/COIN));
+	  // PrintToLog("numLog128 = %s\n", xToString(numLog128/COIN));
 
 	  rational_t logRationalw(numLog128/COIN, TOTAL_AMOUNT_VESTING_TOKENS);
 	  int64_t logWeighted = mastercore::RationalToInt64(logRationalw);
