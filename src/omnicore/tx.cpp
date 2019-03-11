@@ -2331,83 +2331,6 @@ int CMPTransaction::logicMath_CreateContractDex()
   return 0;
 }
 
-
-/** Tx 29 */
-// int CMPTransaction::logicMath_ContractDexTrade()
-// {
-//   PrintToLog("Inside of logicMath_ContractDexTrade\n");
-//   uint256 blockHash;
-//   {
-//     LOCK(cs_main);
-//
-//     CBlockIndex* pindex = chainActive[block];
-//     if (pindex == NULL)
-//       {
-// 	PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
-// 	return (PKT_ERROR_SP -20);
-//       }
-//     blockHash = pindex->GetBlockHash();
-//   }
-//
-//   PrintToLog("checkpoint 1\n");
-//   struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, name_traded);
-//   PrintToLog("checkpoint 2\n");
-//   PrintToLog("amount: %d\n",amount);
-//   PrintToLog("marginRe: %d\n",pfuture->fco_margin_requirement);
-//   PrintToLog("leverage: %d\n",pfuture->fco_leverage);
-//   id_contract = pfuture->fco_propertyId;
-//   int64_t leverage = static_cast<int64_t>(pfuture->fco_leverage / factorE);
-//   PrintToLog("checkpoint 3\n");
-//   int64_t marginRe = static_cast<int64_t>(pfuture->fco_margin_requirement / factorE);
-//   PrintToLog("checkpoint 4\n");
-//   int64_t nBalance = getMPbalance(sender, pfuture->fco_collateral_currency, BALANCE);
-//   // rational_t conv = notionalChange(pfuture->fco_propertyId);
-//   rational_t conv = rational_t(1,1);
-//   int64_t num = conv.numerator().convert_to<int64_t>();
-//   int64_t den = conv.denominator().convert_to<int64_t>();
-//   arith_uint256 amountTR = (ConvertTo256(amount) * ConvertTo256(marginRe) * ConvertTo256(num)) / (ConvertTo256(den) * ConvertTo256(leverage));
-//   int64_t amountToReserve = ConvertTo64(amountTR);
-//   PrintToLog("amountToReserve: %d",amountToReserve);
-//   PrintToLog("checkpoint 7\n");
-//   //
-//   // PrintToLog("pfuture->fco_margin_requirement: %d\n", pfuture->fco_margin_requirement);
-//   // PrintToLog("collateral currency id of contract : %d\n", pfuture->fco_collateral_currency);
-//   // PrintToLog("margin Requirement: %d\n",marginRe);
-//   // PrintToLog("amount: %d\n",amount);
-//   // PrintToLog("nBalance: %d\n",nBalance);
-//   // PrintToLog("amountToReserve-------: %d\n",amountToReserve);
-//   // PrintToLog("\npfuture->fco_init_block = %d\n", pfuture->fco_init_block);
-//   // PrintToLog("\npfuture->fco_blocks_until_expiration = %d\n", pfuture->fco_blocks_until_expiration);
-//   // PrintToLog("\nblock = %d\n", block);
-//
-//   if (block > pfuture->fco_init_block + static_cast<int>(pfuture->fco_blocks_until_expiration) || block < pfuture->fco_init_block) {
-//     PrintToLog("\nTrade out of deadline!!\n");
-//     return PKT_ERROR_SP -38;
-//   }
-//   // PrintToLog("----------------------------------------------------------\n");
-//   if (nBalance < amountToReserve || nBalance == 0) {
-//     PrintToLog("%s(): rejected: sender %s has insufficient balance for contracts %d [%s < %s] \n",
-//   	       __func__,
-//   	       sender,
-//   	       property,
-//   	       FormatMP(property, nBalance),
-//   	       FormatMP(property, amountToReserve));
-//     return (PKT_ERROR_SEND -25);
-//   } else  {
-//     if (amountToReserve > 0) {
-//       assert(update_tally_map(sender, pfuture->fco_collateral_currency, -amountToReserve, BALANCE));
-//       assert(update_tally_map(sender, pfuture->fco_collateral_currency,  amountToReserve, CONTRACTDEX_RESERVE));
-//     }
-//     int64_t reserva = getMPbalance(sender, pfuture->fco_collateral_currency,CONTRACTDEX_RESERVE);
-//     std::string reserved = FormatDivisibleMP(reserva,false);
-//   }
-//   PrintToLog("checkpoint 8\n");
-//   t_tradelistdb->recordNewTrade(txid, sender, id_contract, desired_property, block, tx_idx, 0);
-//   PrintToLog("checkpoint 9\n");
-//   int rc = ContractDex_ADD(sender, id_contract, amount, block, txid, tx_idx, effective_price, trading_action,0);
-//   return rc;
-// }
-
 int CMPTransaction::logicMath_ContractDexTrade()
 {
   // PrintToLog("Inside of logicMath_ContractDexTrade\n");
@@ -2435,7 +2358,7 @@ int CMPTransaction::logicMath_ContractDexTrade()
   int64_t den = conv.denominator().convert_to<int64_t>();
   arith_uint256 amountTR = (ConvertTo256(amount) * ConvertTo256(marginRe) * ConvertTo256(num)) / (ConvertTo256(num) * ConvertTo256(leverage));
   int64_t amountToReserve = ConvertTo64(amountTR);
-  
+
   // PrintToLog("pfuture->fco_margin_requirement: %d\n", pfuture->fco_margin_requirement);
   // PrintToLog("collateral currency id of contract : %d\n", pfuture->fco_collateral_currency);
   // PrintToLog("margin Requirement: %d\n",marginRe);
