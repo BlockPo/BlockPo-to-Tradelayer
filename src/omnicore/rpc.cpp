@@ -494,7 +494,7 @@ UniValue tl_getmargin(const JSONRPCRequest& request)
     if (request.params.size() != 2)
         throw runtime_error(
             "tl_getmargin \"address\" propertyid\n"
-            "\nReturns the token margin account using in futures contracts, for a given address and property.\n"
+            "\nReturns the token reserves account using in futures contracts, for a given address and property.\n"
             "\nArguments:\n"
             "1. address              (string, required) the address\n"
             "2. propertyid           (number, required) the contract identifier\n"

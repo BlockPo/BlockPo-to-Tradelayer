@@ -83,6 +83,16 @@ uint8_t ParseEcosystem(const UniValue& value)
     return static_cast<uint8_t>(ecosystem);
 }
 
+uint64_t ParsePercent(const UniValue& value, bool isDivisible)
+{
+    int64_t amount = mastercore::StrToInt64(value.get_str(), isDivisible);
+    PrintToLog("amount: %d\n",amount);
+    if (amount <= 0 || 10000000000 < amount) {
+        throw JSONRPCError(RPC_TYPE_ERROR, "Invalid amount");
+    }
+    return static_cast<uint64_t>(amount);
+}
+
 uint16_t ParsePropertyType(const UniValue& value)
 {
     int64_t propertyType = value.get_int64();
@@ -224,6 +234,15 @@ int64_t ParseAmountContract(const UniValue& value, int propertyType)
   return ParseAmountContract(value, fContract);
 }
 
+uint64_t ParseLeverage(const UniValue& value)
+{
+    int64_t amount = mastercore::StrToInt64(value.get_str(), true);
+    if (amount < 100000000 || 1000000000 < amount) {
+        throw JSONRPCError(RPC_TYPE_ERROR, "Leverage out of range");
+    }
+    return static_cast<uint64_t>(amount);
+}
+
 uint32_t ParseNewValues(const UniValue& value)
 {
   int64_t Nvalue = value.get_int64();
@@ -241,6 +260,7 @@ uint64_t ParseEffectivePrice(const UniValue& value)
   }
   return effPrice;
 }
+
 
 uint64_t ParseEffectivePrice(const UniValue& value, uint32_t contractId)
 {
@@ -302,7 +322,7 @@ uint32_t ParseContractType(const UniValue& value)
   if (Nvalue < 1 || 4294967295LL < Nvalue) {
     throw JSONRPCError(RPC_INVALID_PARAMETER, "Value is out of range");
   }
-  return static_cast<uint32_t>(Nvalue);  
+  return static_cast<uint32_t>(Nvalue);
 
   // if (Nvalue != 1 && Nvalue != 2 && Nvalue != 3 && Nvalue != 4) {
   //   throw JSONRPCError(RPC_INVALID_PARAMETER, "option no valid");

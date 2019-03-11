@@ -100,7 +100,7 @@ private:
     uint32_t propertyId;
     uint32_t contractId;
     uint64_t amount;
-    
+
     /* uint64_t ticksize; */
     /*uint32_t nextContractId;*/
     uint32_t blocks_until_expiration;
@@ -109,6 +109,9 @@ private:
     uint32_t margin_requirement;
     uint32_t ecosystemSP;
     uint32_t attribute_type;
+    uint64_t first_limit;
+    uint64_t second_limit;
+    uint64_t leverage;
     /*uint32_t numerator;*/
     uint32_t denomination;
     // int block;
@@ -396,6 +399,12 @@ struct FutureContractObject
   uint32_t fco_collateral_currency;
   uint32_t fco_margin_requirement;
   uint32_t fco_propertyId;
+
+  uint64_t fco_leverage;
+  uint64_t fco_first_limit;
+  uint64_t fco_second_limit;
+
+
   int fco_init_block;
   std::string fco_name;
   std::string fco_subcategory;
@@ -403,5 +412,5 @@ struct FutureContractObject
 };
 
 struct FutureContractObject *getFutureContractObject(uint32_t property_type, std::string identifier);
-  
+
 #endif // OMNICORE_TX_H

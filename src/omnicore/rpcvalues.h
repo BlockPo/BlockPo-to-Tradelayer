@@ -23,6 +23,7 @@ std::string ParseAddressOrWildcard(const UniValue& value);
 uint32_t ParsePropertyId(const UniValue& value);
 int64_t ParseAmount(const UniValue& value, bool isDivisible);
 int64_t ParseAmount(const UniValue& value, int propertyType);
+uint64_t ParseLeverage(const UniValue& value);
 uint8_t ParseEcosystem(const UniValue& value);
 uint16_t ParsePropertyType(const UniValue& value);
 uint32_t ParsePreviousPropertyId(const UniValue& value);
@@ -47,5 +48,6 @@ uint8_t ParseContractDexAction(const UniValue& value);
 uint8_t ParseDExPaymentWindow(const UniValue& value);
 int64_t ParseDExFee(const UniValue& value);
 uint8_t ParseDExAction(const UniValue& value);
+uint64_t ParsePercent(const UniValue& value, bool isDivisible);
 
 #endif // OMNICORE_RPCVALUES_H
