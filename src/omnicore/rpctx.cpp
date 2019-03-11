@@ -815,9 +815,9 @@ UniValue tl_createcontract(const JSONRPCRequest& request)
   uint32_t type = ParseContractType(request.params[2]);
   std::string name = ParseText(request.params[3]);
   uint32_t blocks_until_expiration = ParseNewValues(request.params[4]);
-  uint32_t notional_size = ParseNewValues(request.params[5]); // fix this (we need decimals)
+  uint32_t notional_size = ParseNewValues(request.params[5]);
   uint32_t collateral_currency = ParseNewValues(request.params[6]);
-  uint32_t margin_requirement = ParseAmount(request.params[7], true); // we need decimals
+  uint32_t margin_requirement = ParseAmount(request.params[7], true); 
   uint64_t first_limit = ParsePercent(request.params[8], true);
   uint64_t second_limit = ParsePercent(request.params[9], true);
   uint64_t leverage = ParseLeverage(request.params[10]);
