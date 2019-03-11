@@ -96,6 +96,9 @@ public:
         int64_t contracts_needed;
         int init_block;
         uint32_t ecosystemSP;
+        uint64_t firstlimit;
+        uint64_t secondlimit;
+        uint64_t leverage;
         /*uint32_t numerator; */
         uint32_t denomination;
         /* int64_t ticksize; */
@@ -147,11 +150,14 @@ public:
             READWRITE(notional_size);
             READWRITE(collateral_currency);
             READWRITE(margin_requirement);
-	    READWRITE(attribute_type);
+	          READWRITE(attribute_type);
             READWRITE(init_block);
             READWRITE(contract_associated);
             READWRITE(denomination);
             READWRITE(series);
+            READWRITE(firstlimit);
+            READWRITE(secondlimit);
+            READWRITE(leverage);
             ////////////////////////////
         }
 
@@ -160,22 +166,22 @@ public:
       	bool isContract() const;
         bool isPegged() const;
     };
-    
+
  private:
     /** implied version of ALL and TALL so they don't hit the leveldb */
     Entry implied_all;
     Entry implied_tall;
-    
+
     uint32_t next_spid;
     uint32_t next_test_spid;
-    
+
  public:
     CMPSPInfo(const boost::filesystem::path& path, bool fWipe);
     virtual ~CMPSPInfo();
-    
+
     /** Extends clearing of CDBBase. */
     void Clear();
-    
+
     void init(uint32_t nextSPID = 0x3UL, uint32_t nextTestSPID = TEST_ECO_PROPERTY_1);
 
     uint32_t peekNextSPID(uint8_t ecosystem) const;
@@ -313,7 +319,7 @@ bool isPropertyContract(uint32_t propertyId);
 /* class CMPSPInfoContract : CMPSPInfo */
 /* { */
 /*  public: */
-  
+
 /*  private: */
 /* }; */
 

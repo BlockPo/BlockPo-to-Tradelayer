@@ -782,7 +782,7 @@ UniValue tl_sendtrade(const JSONRPCRequest& request)
 
 UniValue tl_createcontract(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 8)
+  if (request.params.size() != 11)
     throw runtime_error(
 			"tl_createcontract \"fromaddress\" ecosystem type previousid \"category\" \"subcategory\" \"name\" \"url\" \"data\" propertyiddesired tokensperunit deadline ( earlybonus issuerpercentage )\n"
 
@@ -793,10 +793,14 @@ UniValue tl_createcontract(const JSONRPCRequest& request)
 			"2. ecosystem                 (string, required) the ecosystem to create the tokens in (1 for main ecosystem, 2 for test ecosystem)\n"
 			"3. numerator                 (number, required) 4: ALL, 5: sLTC, 6: LTC.\n"
 			"4. name                      (string, required) the name of the new tokens to create\n"
-			"5. type                      (number, required) 1 for weekly, 2 for monthly contract\n"
+			"5. blocks until expiration   (number, required) life of contract, in blocks\n"
 			"6. notional size             (number, required) notional size\n"
 			"7. collateral currency       (number, required) collateral currency\n"
       "8. margin requirement        (number, required) margin requirement\n"
+      "9. margin first limit        (string, required) upnl loss limit above orders must be canelled (percentaje)\n"
+      "10. margin second limit      (string, required) upnl loss limit above position start getting liquidated (percentaje)\n"
+      "11. leverage                 (number, required) leverage (2x, 3x, ... 10x)\n"
+
 
 			"\nResult:\n"
 			"\"hash\"                  (string) the hex-encoded transaction hash\n"
@@ -811,14 +815,19 @@ UniValue tl_createcontract(const JSONRPCRequest& request)
   uint32_t type = ParseContractType(request.params[2]);
   std::string name = ParseText(request.params[3]);
   uint32_t blocks_until_expiration = ParseNewValues(request.params[4]);
-  uint32_t notional_size = ParseNewValues(request.params[5]);
+  uint32_t notional_size = ParseNewValues(request.params[5]); // fix this (we need decimals)
   uint32_t collateral_currency = ParseNewValues(request.params[6]);
-  uint32_t margin_requirement = ParseNewValues(request.params[7]);
+  uint32_t margin_requirement = ParseAmount(request.params[7], true); // we need decimals
+  uint64_t first_limit = ParsePercent(request.params[8], true);
+  uint64_t second_limit = ParsePercent(request.params[9], true);
+  uint64_t leverage = ParseLeverage(request.params[10]);
 
-  // RequirePropertyName(name);
-  // RequireSaneName(name);
+  PrintToLog("inside rpc createcontract, notional size: %d",notional_size);
+  RequireOrder(first_limit,second_limit);
+  RequirePropertyName(name);
+  RequireSaneName(name);
 
-  std::vector<unsigned char> payload = CreatePayload_CreateContract(ecosystem, type, name, blocks_until_expiration, notional_size, collateral_currency, margin_requirement);
+  std::vector<unsigned char> payload = CreatePayload_CreateContract(ecosystem, type, name, blocks_until_expiration, notional_size, collateral_currency, margin_requirement, first_limit, second_limit,leverage);
 
   uint256 txid;
   std::string rawHex;

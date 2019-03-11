@@ -289,19 +289,19 @@ BOOST_AUTO_TEST_CASE(payload_change_property_manager)
     BOOST_CHECK_EQUAL(HexStr(vch), "00460d");
 }
 
-BOOST_AUTO_TEST_CASE(payload_create_contract)
-{
-    std::vector<unsigned char> vch = CreatePayload_CreateContract(
-        static_cast<uint8_t>(1),             // ecosystem: main
-        static_cast<uint32_t>(1),            // denomType: 1 (dUSD)
-        std::string("ALL/dUSD"),             // name
-        static_cast<uint32_t>(3000),         // blocks until expiration
-        static_cast<uint32_t>(2),            // notional size
-        static_cast<uint32_t>(3),            // collateral currency
-        static_cast<uint32_t>(3)             // margin rpcrequirements
-    );
-    BOOST_CHECK_EQUAL(HexStr(vch),"00280101414c4c2f6455534400b81702030300");
-}
+// BOOST_AUTO_TEST_CASE(payload_create_contract)
+// {
+//     std::vector<unsigned char> vch = CreatePayload_CreateContract(
+//         static_cast<uint8_t>(1),             // ecosystem: main
+//         static_cast<uint32_t>(1),            // denomType: 1 (dUSD)
+//         std::string("ALL/dUSD"),             // name
+//         static_cast<uint32_t>(3000),         // blocks until expiration
+//         static_cast<uint32_t>(2),            // notional size
+//         static_cast<uint32_t>(3),            // collateral currency
+//         static_cast<uint32_t>(3)             // margin rpcrequirements
+//     );
+//     BOOST_CHECK_EQUAL(HexStr(vch),"00280101414c4c2f6455534400b81702030300");
+// }
 
 // BOOST_AUTO_TEST_CASE(payload_trade_contract)
 // {

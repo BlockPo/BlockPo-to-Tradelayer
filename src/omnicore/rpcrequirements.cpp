@@ -202,6 +202,14 @@ void RequireContract(uint32_t propertyId)
     }
 }
 
+void RequireOrder(uint64_t first_limit,uint64_t second_limit)
+{
+    if (first_limit >= second_limit) {
+        throw JSONRPCError(RPC_DATABASE_ERROR, "second limit must be bigger than first limit");
+    }
+
+}
+
 void RequirePeggedCurrency(uint32_t propertyId)
 {
     LOCK(cs_tally);

@@ -895,6 +895,9 @@ bool CMPTransaction::interpret_CreateContractDex()
   std::vector<uint8_t> vecNotionalSize = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecCollateralCurrency = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecMarginRequirement = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecFirstLimit = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecSecondLimit = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecLeverage = GetNextVarIntBytes(i);
 
   if (!vecVersionBytes.empty()) {
     version = DecompressInteger(vecVersionBytes);
@@ -924,6 +927,18 @@ bool CMPTransaction::interpret_CreateContractDex()
     margin_requirement = DecompressInteger(vecMarginRequirement);
   } else return false;
 
+  if (!vecFirstLimit.empty()) {
+    first_limit = DecompressInteger(vecFirstLimit);
+  } else return false;
+
+  if (!vecSecondLimit.empty()) {
+    second_limit = DecompressInteger(vecSecondLimit);
+  } else return false;
+
+  if (!vecLeverage.empty()) {
+    leverage = DecompressInteger(vecLeverage);
+  } else return false;
+
   prop_type = ALL_PROPERTY_TYPE_CONTRACT;
 
   // PrintToLog("------------------------------------------------------------\n");
@@ -932,12 +947,12 @@ bool CMPTransaction::interpret_CreateContractDex()
   // PrintToLog("messageType: %d\n",type);
   // PrintToLog("denomination: %d\n", denomination);
   // PrintToLog("blocks until expiration : %d\n", blocks_until_expiration);
-  // PrintToLog("notional size : %d\n", notional_size);
+  PrintToLog("notional size : %d\n", notional_size);
   // PrintToLog("collateral currency: %d\n", collateral_currency);
   // PrintToLog("margin requirement: %d\n", margin_requirement);
   // PrintToLog("ecosystem: %d\n", ecosystem);
   // PrintToLog("name: %s\n", name);
-  // PrintToLog("prop_type: %d\n", prop_type);
+  PrintToLog("prop_type: %d\n", prop_type);
   // PrintToLog("------------------------------------------------------------\n");
 
   return true;
@@ -2246,10 +2261,10 @@ int CMPTransaction::logicMath_CreateContractDex()
   //     return (PKT_ERROR_SP -22);
   // }
 
-  // if ('\0' == name[0]) {
-  //    PrintToLog("%s(): rejected: property name must not be empty\n", __func__);
-  //    return (PKT_ERROR_SP -37);
-  // }
+  if ('\0' == name[0]) {
+     PrintToLog("%s(): rejected: property name must not be empty\n", __func__);
+     return (PKT_ERROR_SP -37);
+  }
 
   // PrintToLog("type of denomination: %d\n",denomination);
 
@@ -2275,8 +2290,8 @@ int CMPTransaction::logicMath_CreateContractDex()
   // PrintToLog("collateral currency: %d\n", collateral_currency);
   // PrintToLog("margin requirement: %d\n", margin_requirement);
   // PrintToLog("ecosystem: %d\n", ecosystem);
-  // PrintToLog("prop_type: %d\n", prop_type);
-  // PrintToLog("name: %s\n", name);
+  PrintToLog("prop_type: %d\n", prop_type);
+  PrintToLog("name: %s\n", name);
   // PrintToLog("sugcategory : %s\n", subcategory);
   // PrintToLog("Sender: %s\n", sender);
   // PrintToLog("property type: %s\n", prop_type);
@@ -2286,6 +2301,7 @@ int CMPTransaction::logicMath_CreateContractDex()
   // PrintToLog("------------------------------------------------------------\n");
 
   CMPSPInfo::Entry newSP;
+  newSP.txid = txid;
   newSP.issuer = sender;
   newSP.prop_type = prop_type;
   newSP.subcategory.assign(subcategory);
@@ -2300,6 +2316,9 @@ int CMPTransaction::logicMath_CreateContractDex()
   newSP.margin_requirement = margin_requirement;
   newSP.init_block = block;
   newSP.denomination = denomination;
+  newSP.firstlimit = first_limit;
+  newSP.secondlimit = second_limit;
+  newSP.leverage = leverage;
   newSP.ecosystemSP = ecosystem;
   newSP.attribute_type = attribute_type;
 
@@ -2312,7 +2331,83 @@ int CMPTransaction::logicMath_CreateContractDex()
   return 0;
 }
 
+
 /** Tx 29 */
+// int CMPTransaction::logicMath_ContractDexTrade()
+// {
+//   PrintToLog("Inside of logicMath_ContractDexTrade\n");
+//   uint256 blockHash;
+//   {
+//     LOCK(cs_main);
+//
+//     CBlockIndex* pindex = chainActive[block];
+//     if (pindex == NULL)
+//       {
+// 	PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
+// 	return (PKT_ERROR_SP -20);
+//       }
+//     blockHash = pindex->GetBlockHash();
+//   }
+//
+//   PrintToLog("checkpoint 1\n");
+//   struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, name_traded);
+//   PrintToLog("checkpoint 2\n");
+//   PrintToLog("amount: %d\n",amount);
+//   PrintToLog("marginRe: %d\n",pfuture->fco_margin_requirement);
+//   PrintToLog("leverage: %d\n",pfuture->fco_leverage);
+//   id_contract = pfuture->fco_propertyId;
+//   int64_t leverage = static_cast<int64_t>(pfuture->fco_leverage / factorE);
+//   PrintToLog("checkpoint 3\n");
+//   int64_t marginRe = static_cast<int64_t>(pfuture->fco_margin_requirement / factorE);
+//   PrintToLog("checkpoint 4\n");
+//   int64_t nBalance = getMPbalance(sender, pfuture->fco_collateral_currency, BALANCE);
+//   // rational_t conv = notionalChange(pfuture->fco_propertyId);
+//   rational_t conv = rational_t(1,1);
+//   int64_t num = conv.numerator().convert_to<int64_t>();
+//   int64_t den = conv.denominator().convert_to<int64_t>();
+//   arith_uint256 amountTR = (ConvertTo256(amount) * ConvertTo256(marginRe) * ConvertTo256(num)) / (ConvertTo256(den) * ConvertTo256(leverage));
+//   int64_t amountToReserve = ConvertTo64(amountTR);
+//   PrintToLog("amountToReserve: %d",amountToReserve);
+//   PrintToLog("checkpoint 7\n");
+//   //
+//   // PrintToLog("pfuture->fco_margin_requirement: %d\n", pfuture->fco_margin_requirement);
+//   // PrintToLog("collateral currency id of contract : %d\n", pfuture->fco_collateral_currency);
+//   // PrintToLog("margin Requirement: %d\n",marginRe);
+//   // PrintToLog("amount: %d\n",amount);
+//   // PrintToLog("nBalance: %d\n",nBalance);
+//   // PrintToLog("amountToReserve-------: %d\n",amountToReserve);
+//   // PrintToLog("\npfuture->fco_init_block = %d\n", pfuture->fco_init_block);
+//   // PrintToLog("\npfuture->fco_blocks_until_expiration = %d\n", pfuture->fco_blocks_until_expiration);
+//   // PrintToLog("\nblock = %d\n", block);
+//
+//   if (block > pfuture->fco_init_block + static_cast<int>(pfuture->fco_blocks_until_expiration) || block < pfuture->fco_init_block) {
+//     PrintToLog("\nTrade out of deadline!!\n");
+//     return PKT_ERROR_SP -38;
+//   }
+//   // PrintToLog("----------------------------------------------------------\n");
+//   if (nBalance < amountToReserve || nBalance == 0) {
+//     PrintToLog("%s(): rejected: sender %s has insufficient balance for contracts %d [%s < %s] \n",
+//   	       __func__,
+//   	       sender,
+//   	       property,
+//   	       FormatMP(property, nBalance),
+//   	       FormatMP(property, amountToReserve));
+//     return (PKT_ERROR_SEND -25);
+//   } else  {
+//     if (amountToReserve > 0) {
+//       assert(update_tally_map(sender, pfuture->fco_collateral_currency, -amountToReserve, BALANCE));
+//       assert(update_tally_map(sender, pfuture->fco_collateral_currency,  amountToReserve, CONTRACTDEX_RESERVE));
+//     }
+//     int64_t reserva = getMPbalance(sender, pfuture->fco_collateral_currency,CONTRACTDEX_RESERVE);
+//     std::string reserved = FormatDivisibleMP(reserva,false);
+//   }
+//   PrintToLog("checkpoint 8\n");
+//   t_tradelistdb->recordNewTrade(txid, sender, id_contract, desired_property, block, tx_idx, 0);
+//   PrintToLog("checkpoint 9\n");
+//   int rc = ContractDex_ADD(sender, id_contract, amount, block, txid, tx_idx, effective_price, trading_action,0);
+//   return rc;
+// }
+
 int CMPTransaction::logicMath_ContractDexTrade()
 {
   // PrintToLog("Inside of logicMath_ContractDexTrade\n");
@@ -2328,18 +2423,19 @@ int CMPTransaction::logicMath_ContractDexTrade()
       }
     blockHash = pindex->GetBlockHash();
   }
-  struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, name_traded);
 
+  struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, name_traded);
   id_contract = pfuture->fco_propertyId;
   int64_t marginRe = static_cast<int64_t>(pfuture->fco_margin_requirement);
+  int64_t leverage = static_cast<int64_t>(pfuture->fco_leverage);
   int64_t nBalance = getMPbalance(sender, pfuture->fco_collateral_currency, BALANCE);
   // rational_t conv = notionalChange(pfuture->fco_propertyId);
   rational_t conv = rational_t(1,1);
   int64_t num = conv.numerator().convert_to<int64_t>();
   int64_t den = conv.denominator().convert_to<int64_t>();
-  arith_uint256 amountTR = (ConvertTo256(amount) * ConvertTo256(marginRe) * ConvertTo256(num) / (ConvertTo256(den)));
+  arith_uint256 amountTR = (ConvertTo256(amount) * ConvertTo256(marginRe) * ConvertTo256(num)) / (ConvertTo256(num) * ConvertTo256(leverage));
   int64_t amountToReserve = ConvertTo64(amountTR);
-  //
+  
   // PrintToLog("pfuture->fco_margin_requirement: %d\n", pfuture->fco_margin_requirement);
   // PrintToLog("collateral currency id of contract : %d\n", pfuture->fco_collateral_currency);
   // PrintToLog("margin Requirement: %d\n",marginRe);
@@ -2349,13 +2445,13 @@ int CMPTransaction::logicMath_ContractDexTrade()
   // PrintToLog("\npfuture->fco_init_block = %d\n", pfuture->fco_init_block);
   // PrintToLog("\npfuture->fco_blocks_until_expiration = %d\n", pfuture->fco_blocks_until_expiration);
   // PrintToLog("\nblock = %d\n", block);
+  // PrintToLog("\ntrading action = %d\n", trading_action);
 
   if (block > pfuture->fco_init_block + static_cast<int>(pfuture->fco_blocks_until_expiration) || block < pfuture->fco_init_block) {
     PrintToLog("\nTrade out of deadline!!\n");
     return PKT_ERROR_SP -38;
   }
   // PrintToLog("----------------------------------------------------------\n");
-
   if (nBalance < amountToReserve || nBalance == 0) {
     PrintToLog("%s(): rejected: sender %s has insufficient balance for contracts %d [%s < %s] \n",
   	       __func__,
@@ -2364,7 +2460,7 @@ int CMPTransaction::logicMath_ContractDexTrade()
   	       FormatMP(property, nBalance),
   	       FormatMP(property, amountToReserve));
     return (PKT_ERROR_SEND -25);
-  } else if (conv != 0) {
+  } else {
     if (amountToReserve > 0) {
       assert(update_tally_map(sender, pfuture->fco_collateral_currency, -amountToReserve, BALANCE));
       assert(update_tally_map(sender, pfuture->fco_collateral_currency,  amountToReserve, CONTRACTDEX_RESERVE));
@@ -2372,12 +2468,11 @@ int CMPTransaction::logicMath_ContractDexTrade()
     int64_t reserva = getMPbalance(sender, pfuture->fco_collateral_currency,CONTRACTDEX_RESERVE);
     std::string reserved = FormatDivisibleMP(reserva,false);
   }
-
-  t_tradelistdb->recordNewTrade(txid, sender, pfuture->fco_propertyId, desired_property, block, tx_idx, 0);
-  int rc = ContractDex_ADD(sender, pfuture->fco_propertyId, amount, block, txid, tx_idx, effective_price, trading_action,0);
-
+  t_tradelistdb->recordNewTrade(txid, sender, id_contract, desired_property, block, tx_idx, 0);
+  int rc = ContractDex_ADD(sender, id_contract, amount, block, txid, tx_idx, effective_price, trading_action,0);
   return rc;
 }
+
 
 /** Tx 32 */
 int CMPTransaction::logicMath_ContractDexCancelEcosystem()
@@ -3114,6 +3209,7 @@ struct FutureContractObject *getFutureContractObject(uint32_t property_type, std
 	      // PrintToLog("\nprop_type: %d\n", sp.prop_type);
 	      // PrintToLog("\nname: %d\n", sp.name);
 	      pt_fco->fco_denomination = sp.denomination;
+        pt_fco->fco_leverage = sp.leverage;
 	      pt_fco->fco_blocks_until_expiration = sp.blocks_until_expiration;
 	      pt_fco->fco_notional_size = sp.notional_size;
 	      pt_fco->fco_collateral_currency = sp.collateral_currency;
