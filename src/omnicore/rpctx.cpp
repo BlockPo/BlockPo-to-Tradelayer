@@ -782,7 +782,7 @@ UniValue tl_sendtrade(const JSONRPCRequest& request)
 
 UniValue tl_createcontract(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 11)
+  if (request.params.size() != 8)
     throw runtime_error(
 			"tl_createcontract \"fromaddress\" ecosystem type previousid \"category\" \"subcategory\" \"name\" \"url\" \"data\" propertyiddesired tokensperunit deadline ( earlybonus issuerpercentage )\n"
 
@@ -797,10 +797,6 @@ UniValue tl_createcontract(const JSONRPCRequest& request)
 			"6. notional size             (number, required) notional size\n"
 			"7. collateral currency       (number, required) collateral currency\n"
       "8. margin requirement        (number, required) margin requirement\n"
-      "9. margin first limit        (string, required) upnl loss limit above orders must be canelled (percentaje)\n"
-      "10. margin second limit      (string, required) upnl loss limit above position start getting liquidated (percentaje)\n"
-      "11. leverage                 (number, required) leverage (2x, 3x, ... 10x)\n"
-
 
 			"\nResult:\n"
 			"\"hash\"                  (string) the hex-encoded transaction hash\n"
@@ -817,17 +813,12 @@ UniValue tl_createcontract(const JSONRPCRequest& request)
   uint32_t blocks_until_expiration = ParseNewValues(request.params[4]);
   uint32_t notional_size = ParseNewValues(request.params[5]);
   uint32_t collateral_currency = ParseNewValues(request.params[6]);
-  uint32_t margin_requirement = ParseAmount(request.params[7], true); 
-  uint64_t first_limit = ParsePercent(request.params[8], true);
-  uint64_t second_limit = ParsePercent(request.params[9], true);
-  uint64_t leverage = ParseLeverage(request.params[10]);
+  uint32_t margin_requirement = ParseAmount(request.params[7], true);
 
-  PrintToLog("inside rpc createcontract, notional size: %d",notional_size);
-  RequireOrder(first_limit,second_limit);
   RequirePropertyName(name);
   RequireSaneName(name);
 
-  std::vector<unsigned char> payload = CreatePayload_CreateContract(ecosystem, type, name, blocks_until_expiration, notional_size, collateral_currency, margin_requirement, first_limit, second_limit,leverage);
+  std::vector<unsigned char> payload = CreatePayload_CreateContract(ecosystem, type, name, blocks_until_expiration, notional_size, collateral_currency, margin_requirement);
 
   uint256 txid;
   std::string rawHex;
@@ -852,7 +843,7 @@ UniValue tl_createcontract(const JSONRPCRequest& request)
 
 UniValue tl_tradecontract(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 5)
+  if (request.params.size() != 6)
     throw runtime_error(
 			"tl_tradecontract \"fromaddress\" propertyidforsale \"amountforsale\" propertiddesired \"amountdesired\"\n"
 
@@ -862,8 +853,9 @@ UniValue tl_tradecontract(const JSONRPCRequest& request)
 			"1. fromaddress          (string, required) the address to trade with\n"
 			"2. propertyidforsale    (number, required) the identifier of the contract to list for trade\n"
 			"3. amountforsale        (number, required) the amount of contracts to trade\n"
-			"4. effective price     (number, required) limit price desired in exchange\n"
-			"5. trading action        (number, required) 1 to BUY contracts, 2 to SELL contracts \n"
+			"4. effective price      (number, required) limit price desired in exchange\n"
+			"5. trading action       (number, required) 1 to BUY contracts, 2 to SELL contracts \n"
+      "6. leverage             (number, required) leverage (2x, 3x, ... 10x)\n"
 			"\nResult:\n"
 			"\"payload\"             (string) the hex-encoded payload\n"
 
@@ -877,10 +869,11 @@ UniValue tl_tradecontract(const JSONRPCRequest& request)
   int64_t amountForSale = ParseAmountContract(request.params[2]);
   uint64_t effective_price = ParseEffectivePrice(request.params[3]);
   uint8_t trading_action = ParseContractDexAction(request.params[4]);
+  uint64_t leverage = ParseLeverage(request.params[5]);
 
   RequireCollateral(fromAddress,name_traded);
 
-  std::vector<unsigned char> payload = CreatePayload_ContractDexTrade(name_traded, amountForSale, effective_price, trading_action);
+  std::vector<unsigned char> payload = CreatePayload_ContractDexTrade(name_traded, amountForSale, effective_price, trading_action, leverage);
 
   uint256 txid;
   std::string rawHex;

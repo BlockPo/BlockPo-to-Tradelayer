@@ -96,9 +96,6 @@ public:
         int64_t contracts_needed;
         int init_block;
         uint32_t ecosystemSP;
-        uint64_t firstlimit;
-        uint64_t secondlimit;
-        uint64_t leverage;
         /*uint32_t numerator; */
         uint32_t denomination;
         /* int64_t ticksize; */
@@ -155,9 +152,6 @@ public:
             READWRITE(contract_associated);
             READWRITE(denomination);
             READWRITE(series);
-            READWRITE(firstlimit);
-            READWRITE(secondlimit);
-            READWRITE(leverage);
             ////////////////////////////
         }
 

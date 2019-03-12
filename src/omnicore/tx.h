@@ -109,8 +109,6 @@ private:
     uint32_t margin_requirement;
     uint32_t ecosystemSP;
     uint32_t attribute_type;
-    uint64_t first_limit;
-    uint64_t second_limit;
     uint64_t leverage;
     /*uint32_t numerator;*/
     uint32_t denomination;
@@ -399,11 +397,6 @@ struct FutureContractObject
   uint32_t fco_collateral_currency;
   uint32_t fco_margin_requirement;
   uint32_t fco_propertyId;
-
-  uint64_t fco_leverage;
-  uint64_t fco_first_limit;
-  uint64_t fco_second_limit;
-
 
   int fco_init_block;
   std::string fco_name;

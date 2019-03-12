@@ -22,7 +22,6 @@ void RequireHeightInChain(int blockHeight);
 void RequireForPegged(const std::string& address, uint32_t propertyId, uint32_t contractId, uint64_t amount);
 void RequireNotVesting(uint32_t propertyId);
 void RequireNotContract(uint32_t propertyId);
-void RequireOrder(uint64_t first_limit,uint64_t second_limit);
 void RequireContract(uint32_t propertyId);
 void RequireAssociation(uint32_t propertyId,uint32_t contractId); // origin contract for pegged
 void RequirePeggedCurrency(uint32_t propertyId);

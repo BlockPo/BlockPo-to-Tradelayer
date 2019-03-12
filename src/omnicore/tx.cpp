@@ -895,9 +895,7 @@ bool CMPTransaction::interpret_CreateContractDex()
   std::vector<uint8_t> vecNotionalSize = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecCollateralCurrency = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecMarginRequirement = GetNextVarIntBytes(i);
-  std::vector<uint8_t> vecFirstLimit = GetNextVarIntBytes(i);
-  std::vector<uint8_t> vecSecondLimit = GetNextVarIntBytes(i);
-  std::vector<uint8_t> vecLeverage = GetNextVarIntBytes(i);
+
 
   if (!vecVersionBytes.empty()) {
     version = DecompressInteger(vecVersionBytes);
@@ -925,18 +923,6 @@ bool CMPTransaction::interpret_CreateContractDex()
 
   if (!vecMarginRequirement.empty()) {
     margin_requirement = DecompressInteger(vecMarginRequirement);
-  } else return false;
-
-  if (!vecFirstLimit.empty()) {
-    first_limit = DecompressInteger(vecFirstLimit);
-  } else return false;
-
-  if (!vecSecondLimit.empty()) {
-    second_limit = DecompressInteger(vecSecondLimit);
-  } else return false;
-
-  if (!vecLeverage.empty()) {
-    leverage = DecompressInteger(vecLeverage);
   } else return false;
 
   prop_type = ALL_PROPERTY_TYPE_CONTRACT;
@@ -987,6 +973,7 @@ bool CMPTransaction::interpret_ContractDexTrade()
   std::vector<uint8_t> vecAmountForSaleBytes = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecEffectivePriceBytes = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecTradingActionBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecLeverage = GetNextVarIntBytes(i);
 
   if (!vecTypeBytes.empty()) {
     type = DecompressInteger(vecTypeBytes);
@@ -1008,7 +995,11 @@ bool CMPTransaction::interpret_ContractDexTrade()
     trading_action = DecompressInteger(vecTradingActionBytes);
   } else return false;
 
-  // PrintToLog("version: %d\n", version);
+  if (!vecLeverage.empty()) {
+    leverage = DecompressInteger(vecLeverage);
+  } else return false;
+
+  PrintToLog("leverage: %d\n", leverage);
   // PrintToLog("messageType: %d\n",type);
   // PrintToLog("contractName: %s\n", name_traded);
   // PrintToLog("amount of contracts : %d\n", amount);
@@ -2316,9 +2307,6 @@ int CMPTransaction::logicMath_CreateContractDex()
   newSP.margin_requirement = margin_requirement;
   newSP.init_block = block;
   newSP.denomination = denomination;
-  newSP.firstlimit = first_limit;
-  newSP.secondlimit = second_limit;
-  newSP.leverage = leverage;
   newSP.ecosystemSP = ecosystem;
   newSP.attribute_type = attribute_type;
 
@@ -2350,7 +2338,6 @@ int CMPTransaction::logicMath_ContractDexTrade()
   struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, name_traded);
   id_contract = pfuture->fco_propertyId;
   int64_t marginRe = static_cast<int64_t>(pfuture->fco_margin_requirement);
-  int64_t leverage = static_cast<int64_t>(pfuture->fco_leverage);
   int64_t nBalance = getMPbalance(sender, pfuture->fco_collateral_currency, BALANCE);
   // rational_t conv = notionalChange(pfuture->fco_propertyId);
   rational_t conv = rational_t(1,1);
@@ -3132,7 +3119,6 @@ struct FutureContractObject *getFutureContractObject(uint32_t property_type, std
 	      // PrintToLog("\nprop_type: %d\n", sp.prop_type);
 	      // PrintToLog("\nname: %d\n", sp.name);
 	      pt_fco->fco_denomination = sp.denomination;
-        pt_fco->fco_leverage = sp.leverage;
 	      pt_fco->fco_blocks_until_expiration = sp.blocks_until_expiration;
 	      pt_fco->fco_notional_size = sp.notional_size;
 	      pt_fco->fco_collateral_currency = sp.collateral_currency;
