@@ -155,8 +155,13 @@ UniValue tl_sendvesting(const JSONRPCRequest& request)
   // obtain parameters & info
   std::string fromAddress = ParseAddress(request.params[0]);
   std::string toAddress = ParseAddress(request.params[1]);
-  uint32_t propertyId = ParsePropertyId(request.params[2]);
+  uint32_t propertyId = ParsePropertyId(request.params[2]); /** id=3 Vesting Tokens**/
   int64_t amount = ParseAmount(request.params[3], true);
+  
+  PrintToLog("propertyid = %d\n", propertyId);
+  PrintToLog("amount = %d\n", amount);
+  PrintToLog("fromAddress = %s", fromAddress);
+  PrintToLog("toAddress = %s", toAddress);
   
   // create a payload for the transaction
   std::vector<unsigned char> payload = CreatePayload_SendVestingTokens(propertyId, amount);
@@ -164,25 +169,19 @@ UniValue tl_sendvesting(const JSONRPCRequest& request)
   // request the wallet build the transaction (and if needed commit it)
   uint256 txid;
   std::string rawHex;
-  int result = WalletTxBuilder(fromAddress, toAddress, 0, payload, txid, rawHex, autoCommit);
+  int result = WalletTxBuilder(fromAddress, toAddress,0, payload, txid, rawHex, autoCommit);
   
   // check error and return the txid (or raw hex depending on autocommit)
-  if (result != 0)
-    {
-      throw JSONRPCError(result, error_str(result));
+  if (result != 0) {
+    throw JSONRPCError(result, error_str(result));
+  } else {
+    if (!autoCommit) {
+      return rawHex;
+    } else {
+      PendingAdd(txid, fromAddress, MSC_TYPE_SEND_VESTING, propertyId, amount);
+      return txid.GetHex();
     }
-  else
-    {
-      if (!autoCommit)
-	{
-	  return rawHex;
-	}
-      else
-	{
-	  PendingAdd(txid, fromAddress, MSC_TYPE_SEND_VESTING, propertyId, amount);
-	  return txid.GetHex();
-	}
-    }
+  }
 }
 
 UniValue tl_sendall(const JSONRPCRequest& request)
@@ -860,7 +859,7 @@ UniValue tl_createcontract(const JSONRPCRequest& request)
 			+ HelpExampleCli("tl_createcontract", "2 1 0 \"Companies\" \"Bitcoin Mining\" \"Quantum Miner\" \"\" \"\" 2 \"100\" 1483228800 30 2 4461 100 1 25")
 			+ HelpExampleRpc("tl_createcontract", "2, 1, 0, \"Companies\", \"Bitcoin Mining\", \"Quantum Miner\", \"\", \"\", 2, \"100\", 1483228800, 30, 2, 4461, 100, 1, 25")
 			);
-
+  
   std::string fromAddress = ParseAddress(request.params[0]);
   uint8_t ecosystem = ParseEcosystem(request.params[1]);
   uint32_t type = ParseContractType(request.params[2]);
@@ -1514,6 +1513,7 @@ static const CRPCCommand commands[] =
 #ifdef ENABLE_WALLET
     { "trade layer (transaction creation)", "tl_sendrawtx",                    &tl_sendrawtx,                       {} },
     { "trade layer (transaction creation)", "tl_send",                         &tl_send,                            {} },
+    { "trade layer (transaction creation)", "tl_sendvesting",                  &tl_sendvesting,                     {} },
     { "trade layer (transaction creation)", "tl_sendissuancecrowdsale",        &tl_sendissuancecrowdsale,           {} },
     { "trade layer (transaction creation)", "tl_sendissuancefixed",            &tl_sendissuancefixed,               {} },
     { "trade layer (transaction creation)", "tl_sendissuancemanaged",          &tl_sendissuancemanaged,             {} },

@@ -63,7 +63,7 @@ nVestingAddrs = 5;
 totalVesting = 1500000*COIN;
 amountVesting = (1500000/nVestingAddrs)*COIN;
 /** Admin address **/
-admin_addrs = "mkkadb2CbeA8iuHrpxowwjWNshq7vk1MMu";
+admin_addrs = "QdgkwBVmz3uAtXiQdbbiAsTp1SDQS9zRt9";
 /** List of vesting addresses **/
 pt_vestingAddresses = new VectorTLS(nVestingAddrs); VectorTLS &vestingAddresses = *pt_vestingAddresses;
 vestingAddresses[0] = "myQZ2CH4VnvftJuQv192fvj4AftqfktWmU";

@@ -17,11 +17,13 @@ $SRCDIR/litecoind -datadir=$DATADIR --cleancache --startclear -regtest -server -
 printf "\n________________________________________\n"
 printf "Waiting three seconds to start the client...\n"
 
-sleep 3
+sleep 5
+
+printf "Importing private key Admin Address\n"
+$SRCDIR/litecoin-cli --datadir=$DATADIR importprivkey "cPG7ybMnPTT6amMYnYnw61jQyi4Xcbf29D2gMnKQN7UiA91gAmAK"
 
 printf "\n________________________________________\n"
 printf "Preparing some mature regtest BTC: Mining the first N blocks getting X Bitcoins\n"
-
 $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest  -rpcwait=1 generate 1000 #> $NUL # Es importante agregar el rpcwait que espera que el nodo e$
 
 printf "\n________________________________________\n"
@@ -38,9 +40,9 @@ printf $ADDRBase
 N=100
 
 amount_bitcoin=10
-amountbitcoin_baseaddr=10000
-amountbitcoin_manyaddr=10
-amountbitcoin_moneyaddr=10
+amountbitcoin_baseaddr=100
+amountbitcoin_manyaddr=100
+amountbitcoin_moneyaddr=100
 notional_size=2
 margin_requirement=1
 amountusdts_manyaddr=90000000
@@ -48,6 +50,7 @@ blocks_until_expiration=99999999
 collateral=5
 PAYMENTWINDOW=10
 MINFEEACCEPTED=0.00002980
+addrs_admin="QdgkwBVmz3uAtXiQdbbiAsTp1SDQS9zRt9"
 
 printf " Creating the addresses ..."
 ADDRess=()
@@ -61,6 +64,12 @@ done
 printf "\n________________________________________\n"
 printf " Funding the address with some testnet LTC for fees\n"
 $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest  sendfrom "" ${ADDRBase} ${amount_bitcoin}  
+printf "Generating one block\n"
+$SRCDIR/litecoin-cli -datadir=$DATADIR --regtest  generate 1
+##################################################################
+printf "\n________________________________________\n"
+printf " Funding the Vesting Address with some testnet LTC for fees\n"
+$SRCDIR/litecoin-cli -datadir=$DATADIR --regtest  sendfrom "" ${addrs_admin} ${amount_bitcoin}  
 printf "Generating one block\n"
 $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest  generate 1
 ##################################################################
@@ -230,14 +239,33 @@ do
     $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
     
 done
+# End of CMPContractDEx
+##################################################################"
+for (( i=1; i<=${N}/10; i++ ))
+do    
+    printf "\nAmount Vesting Tokens #$i\n"
+    AMOUNTVESTING=$((RANDOM%1000+1000))
+    printf "\nRandom Amount Vesting:\n"
+    printf $AMOUNTVESTING
+    printf "\n"
+    printf "\n////////////////////////////////////////\n"
+    printf "Vesting Balance Admin Address\n"
+    $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_getbalance ${addrs_admin} 3
+    printf "Sending Vesting Tokens #$i\n"
+    $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_sendvesting ${addrs_admin} ${ADDRess[$i]} 3 ${AMOUNTVESTING}
+    $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1 # Generating one block
+    
+    printf "\n________________________________________\n"
+    printf "Checking Vesting balances for the address #$i:\n"
+    $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_getbalance ${ADDRess[$i]} 3
+done
 ##################################################################
 printf "\n Cheking the  orderbok (sellside):\n"
 $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_getcontract_orderbook "ALL F18" 2
 
 printf "\n Cheking the  orderbok (buyside):\n"
 $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_getcontract_orderbook "ALL F18" 1
-# End of CMPContractDEx
-##################################################################
+###############################################################
 printf "Stoping omnicored and litecoin-cli:\n"
 $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest stop
 # /home/lihki/Documentos/tradelayer-local/src/litecoin-cli -datadir=/home/lihki/.litecoin --regtest stop
