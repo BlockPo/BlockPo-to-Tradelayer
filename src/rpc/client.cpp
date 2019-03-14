@@ -149,6 +149,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
 
     /* Trade Layer - transaction calls */
     { "tl_send", 2, "arg2" },
+    { "tl_sendvesting", 2, "arg2" },
     { "tl_sendissuancemanaged", 1, "arg1" },
     { "tl_sendissuancemanaged", 2, "arg2" },
     { "tl_sendissuancemanaged", 3, "arg3" },

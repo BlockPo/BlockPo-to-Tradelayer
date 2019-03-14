@@ -1,13 +1,13 @@
 #!/bin/bash
 
-SRCDIR=/home/lihki/Documents/TradeLayer/tradelayer-devlihki-todomake/src
+SRCDIR=/root/dev-lihki-domake/src
 
-DATADIR=/home/lihki/.litecoin
+DATADIR=/root/chain-lihki
 NUL=/dev/null
 printf "\n//////////////////////////////////////////\n"
 printf "Cleaning the regtest folder\n"
 
-sudo rm -r /home/lihki/.litecoin/regtest
+sudo rm -r /root/chain-lihki/regtest
 sudo rm graphInfo*
 
 printf "\n________________________________________\n"
@@ -148,7 +148,7 @@ do
     printf $AMOUNT
     printf "\n"
     
-    $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[$i]} "ALL F18" ${AMOUNT} ${PRICE} 1
+    $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[$i]} "ALL F18" ${AMOUNT} ${PRICE} 1 2
     $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
     
 done
@@ -226,7 +226,7 @@ do
     printf $AMOUNT
     printf "\n"
     
-    $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[$i]} "ALL F18" ${AMOUNT} ${PRICE} 2
+    $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[$i]} "ALL F18" ${AMOUNT} ${PRICE} 2 2
     $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
     
 done

@@ -2,26 +2,26 @@
 
 echo "Copying .cpp files"
 
-find . -name '*.cpp' | cpio -pdm /home/lihki/Documents/TradeLayer/tradelayer-devlihki-todomake
+find . -name '*.cpp' | cpio -pdm /root/dev-lihki-domake
 hecho "Done"
 
 echo "Copying .h files"
-find . -name '*.h' | cpio -pdm /home/lihki/Documents/TradeLayer/tradelayer-devlihki-todomake
+find . -name '*.h' | cpio -pdm /root/dev-lihki-domake
 echo "Done"
 
 echo "Copying .sh files"
-find . -name '*.sh' | cpio -pdm /home/lihki/Documents/TradeLayer/tradelayer-devlihki-todomake
+find . -name '*.sh' | cpio -pdm /root/dev-lihki-domake
 echo "Done"
 
 echo "Copying .am files"
-find . -name '*.am' | cpio -pdm /home/lihki/Documents/TradeLayer/tradelayer-devlihki-todomake
+find . -name '*.am' | cpio -pdm /root/dev-lihki-domake
 echo "Done"
 
 echo "Copying .include files"
-find . -name '*.include' | cpio -pdm /home/lihki/Documents/TradeLayer/tradelayer-devlihki-todomake
+find . -name '*.include' | cpio -pdm /root/dev-lihki-domake
 echo "Done"
 
 echo "Copying .ac files"
-find . -name '*.ac' | cpio -pdm /home/lihki/Documents/TradeLayer/tradelayer-devlihki-todomake
+find . -name '*.ac' | cpio -pdm /root/dev-lihki-domake
 
 echo "Done"

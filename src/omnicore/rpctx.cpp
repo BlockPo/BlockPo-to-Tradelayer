@@ -95,20 +95,20 @@ UniValue tl_send(const JSONRPCRequest& request)
             + HelpExampleCli("tl_send", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\" \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\" 1 \"100.0\"")
             + HelpExampleRpc("tl_send", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\", \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\", 1, \"100.0\"")
         );
-
+    
     // obtain parameters & info
     std::string fromAddress = ParseAddress(request.params[0]);
     std::string toAddress = ParseAddress(request.params[1]);
     uint32_t propertyId = ParsePropertyId(request.params[2]);
     int64_t amount = ParseAmount(request.params[3], isPropertyDivisible(propertyId));
     int64_t referenceAmount = (request.params.size() > 4) ? ParseAmount(request.params[4], true): 0;
-
+    
     // perform checks
     RequireExistingProperty(propertyId);
     RequireNotContract(propertyId);
     RequireBalance(fromAddress, propertyId, amount);
     RequireSaneReferenceAmount(referenceAmount);
-
+    
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_SimpleSend(propertyId, amount);
 
@@ -127,6 +127,61 @@ UniValue tl_send(const JSONRPCRequest& request)
             PendingAdd(txid, fromAddress, MSC_TYPE_SIMPLE_SEND, propertyId, amount);
             return txid.GetHex();
         }
+    }
+}
+
+UniValue tl_sendvesting(const JSONRPCRequest& request)
+{
+  if (request.params.size() < 4 || request.params.size() > 6)
+    throw runtime_error(
+			"tl_send \"fromaddress\" \"toaddress\" propertyid \"amount\" ( \"referenceamount\" )\n"
+			
+			"\nCreate and broadcast a simple send transaction.\n"
+			
+			"\nArguments:\n"
+			"1. fromaddress          (string, required) the address to send from\n"
+			"2. toaddress            (string, required) the address of the receiver\n"
+			"3. propertyid           (number, required) the identifier of the tokens to send\n"
+			"4. amount               (string, required) the amount of vesting tokens to send\n"
+			
+			"\nResult:\n"
+			"\"hash\"                  (string) the hex-encoded transaction hash\n"
+			
+			"\nExamples:\n"
+			+ HelpExampleCli("tl_send", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\" \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\" 1 \"100.0\"")
+			+ HelpExampleRpc("tl_send", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\", \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\", 1, \"100.0\"")
+			);
+  
+  // obtain parameters & info
+  std::string fromAddress = ParseAddress(request.params[0]);
+  std::string toAddress = ParseAddress(request.params[1]);
+  uint32_t propertyId = ParsePropertyId(request.params[2]);
+  int64_t amount = ParseAmount(request.params[3], true);
+  
+  // create a payload for the transaction
+  std::vector<unsigned char> payload = CreatePayload_SendVestingTokens(propertyId, amount);
+  
+  // request the wallet build the transaction (and if needed commit it)
+  uint256 txid;
+  std::string rawHex;
+  int result = WalletTxBuilder(fromAddress, toAddress, 0, payload, txid, rawHex, autoCommit);
+  
+  // check error and return the txid (or raw hex depending on autocommit)
+  if (result != 0)
+    {
+      throw JSONRPCError(result, error_str(result));
+    }
+  else
+    {
+      if (!autoCommit)
+	{
+	  return rawHex;
+	}
+      else
+	{
+	  PendingAdd(txid, fromAddress, MSC_TYPE_SEND_VESTING, propertyId, amount);
+	  return txid.GetHex();
+	}
     }
 }
 
@@ -870,7 +925,7 @@ UniValue tl_tradecontract(const JSONRPCRequest& request)
   uint64_t effective_price = ParseEffectivePrice(request.params[3]);
   uint8_t trading_action = ParseContractDexAction(request.params[4]);
   uint64_t leverage = ParseLeverage(request.params[5]);
-
+  
   RequireCollateral(fromAddress,name_traded);
 
   std::vector<unsigned char> payload = CreatePayload_ContractDexTrade(name_traded, amountForSale, effective_price, trading_action, leverage);

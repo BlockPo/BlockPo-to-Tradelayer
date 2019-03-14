@@ -573,14 +573,14 @@ void sendingVestingTokens()
 
   const uint32_t propertyIdVesting = _my_sps->putSP(OMNI_PROPERTY_ALL, newSP);
   assert(propertyIdVesting > 0);
-
+  
   assert(update_tally_map(admin_addrs, propertyIdVesting, totalVesting, BALANCE));
-
+  
   for (int i = 0; i < nVestingAddrs; i++) {
     assert(update_tally_map(admin_addrs, propertyIdVesting, -amountVesting, BALANCE));
     assert(update_tally_map(vestingAddresses[i], propertyIdVesting, amountVesting, BALANCE));
   }
-
+  
   for (int i = 0; i < nVestingAddrs; i++) {
     if (getMPbalance(vestingAddresses[i], OMNI_PROPERTY_ALL, UNVESTED) == 0)
       assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, getMPbalance(vestingAddresses[i], propertyIdVesting, BALANCE), UNVESTED));
@@ -2115,7 +2115,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   if (nBlock < nWaterlineBlock) return false;
   int64_t nBlockTime = pBlockIndex->GetBlockTime();
   // PrintToLog("\nBlock counter: %d, lastBlockg = %d\n", static_cast<int>(pBlockIndex->nHeight), lastBlockg);
-
+  
   /***********************************************/
   /** Vesting Tokens to Balance */
   int64_t x_Axis = globalVolumeALL_LTC;
@@ -2934,6 +2934,35 @@ void CMPTxList::printStats()
     return (n_found);
  }
 
+void CMPTxList::getMPTransactionAddresses(std::vector<std::string> &vaddrs)
+{
+  if (!pdb) return;
+
+  Slice skey, svalue;
+  Iterator* it = NewIterator();
+
+  for(it->SeekToFirst(); it->Valid(); it->Next())
+    {
+      svalue = it->value();
+      string strValue = svalue.ToString();
+      
+      std::vector<std::string> vstr;
+      boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
+      
+      if (vstr.size() != 17) continue;
+
+      std::string address1 = vstr[0];
+      std::string address2 = vstr[1];
+      
+      PrintToLog("Inside getMPTransactionAddresses\n");
+      PrintToLog("address1 = %s,\t address2 =%s", address1, address2);
+      
+      if(!find_string_strv(address1, vaddrs)) vaddrs.push_back(address1);
+      if(!find_string_strv(address2, vaddrs)) vaddrs.push_back(address2);
+    }
+  delete it;
+}
+
 // global wrapper, block numbers are inclusive, if ending_block is 0 top of the chain will be used
 bool mastercore::isMPinBlockRange(int starting_block, int ending_block, bool bDeleteFound)
  {
@@ -3204,19 +3233,21 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   bool savedata_bool = false;
   extern volatile int64_t factorALLtoLTC;
   std::string sblockNum2 = std::to_string(blockNum2);
+  //extern VectorTLS *pt_vestingAddresses; VectorTLS &vestingAddresses = *pt_vestingAddresses;
+  
   double UPNL1 = 0, UPNL2 = 0;
   /********************************************************************/
   const string key =  sblockNum2 + "+" + txid1.ToString() + "+" + txid2.ToString(); //order with block of taker.
   const string value = strprintf("%s:%s:%lu:%lu:%lu:%d:%d:%s:%s:%d:%d:%d:%s:%s:%d:%d:%d", address1, address2, effective_price, amount_maker, amount_taker, blockNum1, blockNum2, s_maker0, s_taker0, lives_s0, lives_b0, property_traded, txid1.ToString(), txid2.ToString(), nCouldBuy0,amountpold, amountpnew);
-
+  
   const string line0 = gettingLineOut(address1, s_maker0, lives_s0, address2, s_taker0, lives_b0, nCouldBuy0, effective_price);
   const string line1 = gettingLineOut(address1, s_maker1, lives_s1, address2, s_taker1, lives_b1, nCouldBuy1, effective_price);
   const string line2 = gettingLineOut(address1, s_maker2, lives_s2, address2, s_taker2, lives_b2, nCouldBuy2, effective_price);
   const string line3 = gettingLineOut(address1, s_maker3, lives_s3, address2, s_taker3, lives_b3, nCouldBuy3, effective_price);
-
+  
   bool status_bool1 = s_maker0 == "OpenShortPosByLongPosNetted" || s_maker0 == "OpenLongPosByShortPosNetted";
   bool status_bool2 = s_taker0 == "OpenShortPosByLongPosNetted" || s_taker0 == "OpenLongPosByShortPosNetted";
-
+  
   std::fstream fileSixth;
   fileSixth.open ("graphInfoSixth.txt", std::fstream::in | std::fstream::out | std::fstream::app);
   if ( status_bool1 || status_bool2 )
