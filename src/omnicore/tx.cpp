@@ -281,7 +281,7 @@ bool CMPTransaction::interpret_SimpleSend()
     return true;
 }
 
-/** Tx 1 */
+/** Tx 5 */
 bool CMPTransaction::interpret_SendVestingTokens()
 {
   int i = 0;
@@ -1517,44 +1517,44 @@ int CMPTransaction::logicMath_SimpleSend()
 /** Tx 5 */
 int CMPTransaction::logicMath_SendVestingTokens()
 {
+  // if (!IsTransactionTypeAllowed(block, property, type, version)) {
+  //   PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+  // 	       __func__,
+  // 	       type,
+  // 	       version,
+  // 	       property,
+  // 	       block);
+  //   return (PKT_ERROR_SEND -22);
+  // }
   
-  extern std::string admin_addrs;
+  // if (nValue <= 0 || MAX_INT_8_BYTES < nValue) {
+  //   PrintToLog("%s(): rejected: value out of range or zero: %d", __func__, nValue);
+  //   return (PKT_ERROR_SEND -23);
+  // }
   
-  if (!IsTransactionTypeAllowed(block, property, type, version)) {
-    PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
-	       __func__,
-	       type,
-	       version,
-	       property,
-	       block);
-    return (PKT_ERROR_SEND -22);
-  }
+  // if (!IsPropertyIdValid(property)) {
+  //   PrintToLog("%s(): rejected: property %d does not exist\n", __func__, property);
+  //   return (PKT_ERROR_SEND -24);
+  // }
   
-  if (nValue <= 0 || MAX_INT_8_BYTES < nValue) {
-    PrintToLog("%s(): rejected: value out of range or zero: %d", __func__, nValue);
-    return (PKT_ERROR_SEND -23);
-  }
-  
-  if (!IsPropertyIdValid(property)) {
-    PrintToLog("%s(): rejected: property %d does not exist\n", __func__, property);
-    return (PKT_ERROR_SEND -24);
-  }
-  
-  int64_t nBalance = getMPbalance(sender, property, BALANCE);
-  if (nBalance < (int64_t) nValue) {
-    PrintToLog("%s(): rejected: sender %s has insufficient balance of property %d [%s < %s]\n",
-	       __func__,
-	       sender,
-	       property,
-	       FormatMP(property, nBalance),
-	       FormatMP(property, nValue));
-    return (PKT_ERROR_SEND -25);
-  }
+  // int64_t nBalance = getMPbalance(sender, property, BALANCE);
+  // if (nBalance < (int64_t) nValue) {
+  //   PrintToLog("%s(): rejected: sender %s has insufficient balance of property %d [%s < %s]\n",
+  // 	       __func__,
+  // 	       sender,
+  // 	       property,
+  // 	       FormatMP(property, nBalance),
+  // 	       FormatMP(property, nValue));
+  //   return (PKT_ERROR_SEND -25);
+  // }
   
   // Move the tokens
   assert(update_tally_map(sender, property, -nValue, BALANCE));
   assert(update_tally_map(receiver, property, nValue, BALANCE));
   assert(update_tally_map(receiver, OMNI_PROPERTY_ALL, nValue, UNVESTED));
+  
+  PrintToLog("Balance sender = %d", getMPbalance(sender, property, BALANCE));
+  PrintToLog("Balance receiver = %d", getMPbalance(receiver, property, BALANCE));
   
   return 0;
 }
