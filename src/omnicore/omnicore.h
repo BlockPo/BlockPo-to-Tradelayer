@@ -174,6 +174,10 @@ uint32_t const TL_ALL   = 4;
 uint32_t const TL_sLTC  = 5;
 uint32_t const TL_LTC   = 6;
 
+// limits for margin dynamic
+const rational_t factor = rational_t(80,100);  // critical limit
+const rational_t factor2 = rational_t(20,100); // normal limits
+
 // forward declarations
 std::string FormatDivisibleMP(int64_t amount, bool fSign = false);
 std::string FormatDivisibleShortMP(int64_t amount);
@@ -434,6 +438,8 @@ namespace mastercore
   bool update_tally_map(const std::string& who, uint32_t propertyId, int64_t amount, TallyType ttype);
 
   std::string getTokenLabel(uint32_t propertyId);
+
+  bool marginMain(int Block);
 }
 
 #endif // OMNICORE_OMNICORE_H

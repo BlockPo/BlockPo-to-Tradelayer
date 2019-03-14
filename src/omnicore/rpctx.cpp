@@ -817,6 +817,8 @@ UniValue tl_createcontract(const JSONRPCRequest& request)
 
   RequirePropertyName(name);
   RequireSaneName(name);
+  RequireNotContract(collateral_currency);
+  RequireNotVesting(collateral_currency);
 
   std::vector<unsigned char> payload = CreatePayload_CreateContract(ecosystem, type, name, blocks_until_expiration, notional_size, collateral_currency, margin_requirement);
 
