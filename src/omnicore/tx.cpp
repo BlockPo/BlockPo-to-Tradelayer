@@ -65,38 +65,40 @@ using mastercore::StrToInt64;
 /** Returns a label for the given transaction type. */
 std::string mastercore::strTransactionType(uint16_t txType)
 {
-    switch (txType) {
-        case MSC_TYPE_SIMPLE_SEND: return "Simple Send";
-        case MSC_TYPE_RESTRICTED_SEND: return "Restricted Send";
-        case MSC_TYPE_SEND_ALL: return "Send All";
-        case MSC_TYPE_SAVINGS_MARK: return "Savings";
-        case MSC_TYPE_SAVINGS_COMPROMISED: return "Savings COMPROMISED";
-        case MSC_TYPE_CREATE_PROPERTY_FIXED: return "Create Property - Fixed";
-        case MSC_TYPE_CREATE_PROPERTY_VARIABLE: return "Create Property - Variable";
-        case MSC_TYPE_CLOSE_CROWDSALE: return "Close Crowdsale";
-        case MSC_TYPE_CREATE_PROPERTY_MANUAL: return "Create Property - Manual";
-        case MSC_TYPE_GRANT_PROPERTY_TOKENS: return "Grant Property Tokens";
-        case MSC_TYPE_REVOKE_PROPERTY_TOKENS: return "Revoke Property Tokens";
-        case MSC_TYPE_CHANGE_ISSUER_ADDRESS: return "Change Issuer Address";
-        case OMNICORE_MESSAGE_TYPE_ALERT: return "ALERT";
-        case OMNICORE_MESSAGE_TYPE_DEACTIVATION: return "Feature Deactivation";
-        case OMNICORE_MESSAGE_TYPE_ACTIVATION: return "Feature Activation";
-        case MSC_TYPE_METADEX_TRADE: return "Metadex Order";
-
-        /** New things for Contract */
-        case MSC_TYPE_CONTRACTDEX_TRADE: return "Future Contract";
-        // case MSC_TYPE_CONTRACTDEX_CANCEL_PRICE: return "ContractDex cancel-price";
-        case MSC_TYPE_CONTRACTDEX_CANCEL_ECOSYSTEM: return "ContractDex cancel-ecosystem";
-        case MSC_TYPE_CREATE_CONTRACT: return "Create Contract";
-        case MSC_TYPE_PEGGED_CURRENCY: return "Pegged Currency";
-        case MSC_TYPE_REDEMPTION_PEGGED: return "Redemption Pegged Currency";
-        case MSC_TYPE_SEND_PEGGED_CURRENCY: return "Send Pegged Currency";
-        case MSC_TYPE_CONTRACTDEX_CLOSE_POSITION: return "Close Position";
-        case MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK: return "Cancel Orders by Block";
-        case MSC_TYPE_TRADE_OFFER: return "DEx Sell Offer";
-        case MSC_TYPE_DEX_BUY_OFFER: return "DEx Buy Offer";
-        ////////////////////////////////////////////////////////////////////////
-        default: return "* unknown type *";
+  switch (txType)
+    {
+    case MSC_TYPE_SIMPLE_SEND: return "Simple Send";
+    case MSC_TYPE_RESTRICTED_SEND: return "Restricted Send";
+    case MSC_TYPE_SEND_ALL: return "Send All";
+    case MSC_TYPE_SEND_VESTING: return "Send Vesting Tokens";
+    case MSC_TYPE_SAVINGS_MARK: return "Savings";
+    case MSC_TYPE_SAVINGS_COMPROMISED: return "Savings COMPROMISED";
+    case MSC_TYPE_CREATE_PROPERTY_FIXED: return "Create Property - Fixed";
+    case MSC_TYPE_CREATE_PROPERTY_VARIABLE: return "Create Property - Variable";
+    case MSC_TYPE_CLOSE_CROWDSALE: return "Close Crowdsale";
+    case MSC_TYPE_CREATE_PROPERTY_MANUAL: return "Create Property - Manual";
+    case MSC_TYPE_GRANT_PROPERTY_TOKENS: return "Grant Property Tokens";
+    case MSC_TYPE_REVOKE_PROPERTY_TOKENS: return "Revoke Property Tokens";
+    case MSC_TYPE_CHANGE_ISSUER_ADDRESS: return "Change Issuer Address";
+    case OMNICORE_MESSAGE_TYPE_ALERT: return "ALERT";
+    case OMNICORE_MESSAGE_TYPE_DEACTIVATION: return "Feature Deactivation";
+    case OMNICORE_MESSAGE_TYPE_ACTIVATION: return "Feature Activation";
+    case MSC_TYPE_METADEX_TRADE: return "Metadex Order";
+      
+      /** New things for Contract */
+    case MSC_TYPE_CONTRACTDEX_TRADE: return "Future Contract";
+      // case MSC_TYPE_CONTRACTDEX_CANCEL_PRICE: return "ContractDex cancel-price";
+    case MSC_TYPE_CONTRACTDEX_CANCEL_ECOSYSTEM: return "ContractDex cancel-ecosystem";
+    case MSC_TYPE_CREATE_CONTRACT: return "Create Contract";
+    case MSC_TYPE_PEGGED_CURRENCY: return "Pegged Currency";
+    case MSC_TYPE_REDEMPTION_PEGGED: return "Redemption Pegged Currency";
+    case MSC_TYPE_SEND_PEGGED_CURRENCY: return "Send Pegged Currency";
+    case MSC_TYPE_CONTRACTDEX_CLOSE_POSITION: return "Close Position";
+    case MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK: return "Cancel Orders by Block";
+    case MSC_TYPE_TRADE_OFFER: return "DEx Sell Offer";
+    case MSC_TYPE_DEX_BUY_OFFER: return "DEx Buy Offer";
+      ////////////////////////////////////////////////////////////////////////
+    default: return "* unknown type *";
     }
 }
 
@@ -139,87 +141,91 @@ bool CMPTransaction::isOverrun(const char* p)
 /** Parses the packet or payload. */
 bool CMPTransaction::interpret_Transaction()
 {
-    if (!interpret_TransactionType()) {
-        PrintToLog("Failed to interpret type and version\n");
-        return false;
-    }
-
-    switch (type) {
-        case MSC_TYPE_SIMPLE_SEND:
-            return interpret_SimpleSend();
-
-        case MSC_TYPE_SEND_ALL:
-            return interpret_SendAll();
-
-        case MSC_TYPE_CREATE_PROPERTY_FIXED:
-            return interpret_CreatePropertyFixed();
-
-        case MSC_TYPE_CREATE_PROPERTY_VARIABLE:
-            return interpret_CreatePropertyVariable();
-
-        case MSC_TYPE_CLOSE_CROWDSALE:
-            return interpret_CloseCrowdsale();
-
-        case MSC_TYPE_CREATE_PROPERTY_MANUAL:
-            return interpret_CreatePropertyManaged();
-
-        case MSC_TYPE_GRANT_PROPERTY_TOKENS:
-            return interpret_GrantTokens();
-
-        case MSC_TYPE_REVOKE_PROPERTY_TOKENS:
-            return interpret_RevokeTokens();
-
-        case MSC_TYPE_CHANGE_ISSUER_ADDRESS:
-            return interpret_ChangeIssuer();
-
-        case OMNICORE_MESSAGE_TYPE_DEACTIVATION:
-            return interpret_Deactivation();
-
-        case OMNICORE_MESSAGE_TYPE_ACTIVATION:
-            return interpret_Activation();
-
-        case OMNICORE_MESSAGE_TYPE_ALERT:
-            return interpret_Alert();
-
-        case MSC_TYPE_METADEX_TRADE:
-            return interpret_MetaDExTrade();
-
-        case MSC_TYPE_CREATE_CONTRACT:
-            return interpret_CreateContractDex();
-
-        case MSC_TYPE_CONTRACTDEX_TRADE:
-            return interpret_ContractDexTrade();
-
-        case MSC_TYPE_CONTRACTDEX_CANCEL_ECOSYSTEM:
-            return interpret_ContractDexCancelEcosystem();
-
-        case MSC_TYPE_PEGGED_CURRENCY:
-            return interpret_CreatePeggedCurrency();
-
-        case MSC_TYPE_SEND_PEGGED_CURRENCY:
-            return interpret_SendPeggedCurrency();
-
-        case MSC_TYPE_REDEMPTION_PEGGED:
-            return interpret_RedemptionPegged();
-
-        case MSC_TYPE_CONTRACTDEX_CLOSE_POSITION:
-            return interpret_ContractDexClosePosition();
-
-        case MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK:
-            return interpret_ContractDex_Cancel_Orders_By_Block();
-
-        case MSC_TYPE_TRADE_OFFER:
-            return interpret_TradeOffer();
-
-        case MSC_TYPE_DEX_BUY_OFFER:
-            return interpret_DExBuy();
-
-        case MSC_TYPE_ACCEPT_OFFER_BTC:
-            return interpret_AcceptOfferBTC();
-
-    }
-
+  if (!interpret_TransactionType()) {
+    PrintToLog("Failed to interpret type and version\n");
     return false;
+  }
+  
+  switch (type)
+    {
+    case MSC_TYPE_SIMPLE_SEND:
+      return interpret_SimpleSend();
+      
+    case MSC_TYPE_SEND_ALL:
+      return interpret_SendAll();
+      
+    case MSC_TYPE_SEND_VESTING:
+      return interpret_SendVestingTokens();
+
+    case MSC_TYPE_CREATE_PROPERTY_FIXED:
+      return interpret_CreatePropertyFixed();
+      
+    case MSC_TYPE_CREATE_PROPERTY_VARIABLE:
+      return interpret_CreatePropertyVariable();
+      
+    case MSC_TYPE_CLOSE_CROWDSALE:
+      return interpret_CloseCrowdsale();
+      
+    case MSC_TYPE_CREATE_PROPERTY_MANUAL:
+      return interpret_CreatePropertyManaged();
+      
+    case MSC_TYPE_GRANT_PROPERTY_TOKENS:
+      return interpret_GrantTokens();
+      
+    case MSC_TYPE_REVOKE_PROPERTY_TOKENS:
+      return interpret_RevokeTokens();
+      
+    case MSC_TYPE_CHANGE_ISSUER_ADDRESS:
+      return interpret_ChangeIssuer();
+      
+    case OMNICORE_MESSAGE_TYPE_DEACTIVATION:
+      return interpret_Deactivation();
+      
+    case OMNICORE_MESSAGE_TYPE_ACTIVATION:
+      return interpret_Activation();
+      
+    case OMNICORE_MESSAGE_TYPE_ALERT:
+      return interpret_Alert();
+      
+    case MSC_TYPE_METADEX_TRADE:
+      return interpret_MetaDExTrade();
+      
+    case MSC_TYPE_CREATE_CONTRACT:
+      return interpret_CreateContractDex();
+      
+    case MSC_TYPE_CONTRACTDEX_TRADE:
+      return interpret_ContractDexTrade();
+      
+    case MSC_TYPE_CONTRACTDEX_CANCEL_ECOSYSTEM:
+      return interpret_ContractDexCancelEcosystem();
+      
+    case MSC_TYPE_PEGGED_CURRENCY:
+      return interpret_CreatePeggedCurrency();
+      
+    case MSC_TYPE_SEND_PEGGED_CURRENCY:
+      return interpret_SendPeggedCurrency();
+      
+    case MSC_TYPE_REDEMPTION_PEGGED:
+      return interpret_RedemptionPegged();
+      
+    case MSC_TYPE_CONTRACTDEX_CLOSE_POSITION:
+      return interpret_ContractDexClosePosition();
+      
+    case MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK:
+      return interpret_ContractDex_Cancel_Orders_By_Block();
+      
+    case MSC_TYPE_TRADE_OFFER:
+      return interpret_TradeOffer();
+      
+    case MSC_TYPE_DEX_BUY_OFFER:
+      return interpret_DExBuy();
+      
+    case MSC_TYPE_ACCEPT_OFFER_BTC:
+      return interpret_AcceptOfferBTC();
+      
+    }
+  
+  return false;
 }
 
 /** Version and type */
@@ -273,6 +279,33 @@ bool CMPTransaction::interpret_SimpleSend()
     }
 
     return true;
+}
+
+/** Tx 1 */
+bool CMPTransaction::interpret_SendVestingTokens()
+{
+  int i = 0;
+  
+  std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecPropIdBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecAmountBytes = GetNextVarIntBytes(i);
+  
+  if (!vecPropIdBytes.empty()) {
+    property = DecompressInteger(vecPropIdBytes);
+  } else return false;
+  
+  if (!vecAmountBytes.empty()) {
+    nValue = DecompressInteger(vecAmountBytes);
+    nNewValue = nValue;
+  } else return false;
+  
+  if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly) {
+    PrintToLog("\t        property: %d (%s)\n", property, strMPProperty(property));
+    PrintToLog("\t           value: %s\n", FormatMP(property, nValue));
+  }
+  
+  return true;
 }
 
 /** Tx 4 */
@@ -891,6 +924,7 @@ bool CMPTransaction::interpret_CreateContractDex()
   int j = 0;
   memcpy(name, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(name)-1)); j++;
   i = i + strlen(name) + 1; // data sizes + 1 null terminators
+
   std::vector<uint8_t> vecBlocksUntilExpiration = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecNotionalSize = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecCollateralCurrency = GetNextVarIntBytes(i);
@@ -1276,6 +1310,9 @@ int CMPTransaction::interpretPacket()
         case MSC_TYPE_SEND_ALL:
             return logicMath_SendAll();
 
+        case MSC_TYPE_SEND_VESTING:
+            return logicMath_SendVestingTokens();
+
         case MSC_TYPE_CREATE_PROPERTY_FIXED:
             return logicMath_CreatePropertyFixed();
 
@@ -1475,6 +1512,51 @@ int CMPTransaction::logicMath_SimpleSend()
     logicHelper_CrowdsaleParticipation();
 
     return 0;
+}
+
+/** Tx 5 */
+int CMPTransaction::logicMath_SendVestingTokens()
+{
+  
+  extern std::string admin_addrs;
+  
+  if (!IsTransactionTypeAllowed(block, property, type, version)) {
+    PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+	       __func__,
+	       type,
+	       version,
+	       property,
+	       block);
+    return (PKT_ERROR_SEND -22);
+  }
+  
+  if (nValue <= 0 || MAX_INT_8_BYTES < nValue) {
+    PrintToLog("%s(): rejected: value out of range or zero: %d", __func__, nValue);
+    return (PKT_ERROR_SEND -23);
+  }
+  
+  if (!IsPropertyIdValid(property)) {
+    PrintToLog("%s(): rejected: property %d does not exist\n", __func__, property);
+    return (PKT_ERROR_SEND -24);
+  }
+  
+  int64_t nBalance = getMPbalance(sender, property, BALANCE);
+  if (nBalance < (int64_t) nValue) {
+    PrintToLog("%s(): rejected: sender %s has insufficient balance of property %d [%s < %s]\n",
+	       __func__,
+	       sender,
+	       property,
+	       FormatMP(property, nBalance),
+	       FormatMP(property, nValue));
+    return (PKT_ERROR_SEND -25);
+  }
+  
+  // Move the tokens
+  assert(update_tally_map(sender, property, -nValue, BALANCE));
+  assert(update_tally_map(receiver, property, nValue, BALANCE));
+  assert(update_tally_map(receiver, OMNI_PROPERTY_ALL, nValue, UNVESTED));
+  
+  return 0;
 }
 
 /** Tx 4 */
@@ -2342,7 +2424,7 @@ int CMPTransaction::logicMath_ContractDexTrade()
   // rational_t conv = notionalChange(pfuture->fco_propertyId);
   rational_t conv = rational_t(1,1);
   int64_t num = conv.numerator().convert_to<int64_t>();
-  int64_t den = conv.denominator().convert_to<int64_t>();
+  //int64_t den = conv.denominator().convert_to<int64_t>();
   arith_uint256 amountTR = (ConvertTo256(amount) * ConvertTo256(marginRe) * ConvertTo256(num)) / (ConvertTo256(num) * ConvertTo256(leverage));
   int64_t amountToReserve = ConvertTo64(amountTR);
 

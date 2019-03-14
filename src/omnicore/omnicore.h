@@ -77,6 +77,7 @@ enum TransactionType {
   MSC_TYPE_SIMPLE_SEND                =  0,
   MSC_TYPE_RESTRICTED_SEND            =  2,
   MSC_TYPE_SEND_ALL                   =  4,
+  MSC_TYPE_SEND_VESTING               =  5,
   MSC_TYPE_SAVINGS_MARK               = 10,
   MSC_TYPE_SAVINGS_COMPROMISED        = 11,
   MSC_TYPE_CREATE_PROPERTY_FIXED      = 50,
@@ -286,7 +287,7 @@ public:
     /** New things for Contracts */
     int getNumberOfContractDexCancels(const uint256 txid);
     //////////////////////////////////////
-
+    void getMPTransactionAddresses(std::vector<std::string> &vaddrs);
 };
 /** LevelDB based storage for the trade history. Trades are listed with key "txid1+txid2".
  */

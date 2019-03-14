@@ -173,6 +173,7 @@ private:
     bool interpret_MetaDExTrade();
     bool interpret_TradeOffer();
     bool interpret_DExBuy();
+    bool interpret_SendVestingTokens();
     ///////////////////////////////////////////////
 
     /**
@@ -205,6 +206,7 @@ private:
     int logicMath_TradeOffer();
     int logicMath_AcceptOfferBTC();
     int logicMath_DExBuy();
+    int logicMath_SendVestingTokens();
     ///////////////////////////////////////////////
 
     /**
