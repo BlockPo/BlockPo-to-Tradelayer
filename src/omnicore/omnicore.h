@@ -401,8 +401,6 @@ namespace mastercore
   /* New things for contracts *///////////////////////////////////////////////////
   rational_t notionalChange(uint32_t contractId);
   // bool marginCheck(const std::string address);
-  bool marginNeeded(const std::string address, int64_t amountTraded, uint32_t contractId);
-  bool marginBack(const std::string address, int64_t amountTraded, uint32_t contractId);
   ////////////////////////////////////////////////////////////////////////////////
 
   bool isMPinBlockRange(int starting_block, int ending_block, bool bDeleteFound);
@@ -440,6 +438,10 @@ namespace mastercore
   std::string getTokenLabel(uint32_t propertyId);
 
   bool marginMain(int Block);
+
+  void update_sum_upnls(); // update the sum of all upnls for all addresses.
+
+  bool sum_check_upnl(std::string address); // check if the sum of all upnls is positive for a given address.
 }
 
 #endif // OMNICORE_OMNICORE_H

@@ -65,6 +65,7 @@ extern volatile int64_t globalNumPrice;
 extern volatile int64_t globalDenPrice;
 extern uint64_t marketP[NPTYPES];
 extern std::map<uint32_t, std::map<std::string, double>> addrs_upnlc;
+extern std::map<std::string, int64_t> sum_upnls;
 using mastercore::StrToInt64;
 using mastercore::DoubleToInt64;
 /**
@@ -517,6 +518,34 @@ UniValue tl_getmargin(const JSONRPCRequest& request)
     UniValue balanceObj(UniValue::VOBJ);
     MarginToJSON(address, propertyId, balanceObj, isPropertyDivisible(propertyId));
 
+    return balanceObj;
+}
+
+UniValue tl_getsum_upnl(const JSONRPCRequest& request)
+{
+    if (request.params.size() != 1)
+        throw runtime_error(
+            "tl_getsum_upnl\"address\"\n"
+            "\nReturns the sum of all upnls for a given address.\n"
+            "\nArguments:\n"
+            "1. address              (string, required) the address\n"
+            "\nResult:\n"
+            "{\n"
+            "  \"sum_upnls\" : \"n.nnnnnnnn\",   (string) the available balance of the address\n"
+            "  \"reserved\" : \"n.nnnnnnnn\"   (string) the amount reserved by sell offers and accepts\n"
+            "}\n"
+            "\nExamples:\n"
+            + HelpExampleCli("tl_getsum_upnl", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" ")
+            + HelpExampleRpc("tl_getsum_upnl", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" ")
+        );
+
+    std::string address = ParseAddress(request.params[0]);
+
+    UniValue balanceObj(UniValue::VOBJ);
+
+    std::map<std::string, int64_t>::iterator it = sum_upnls.find(address);
+    int64_t sum_upnls = it->second;
+    balanceObj.push_back(Pair("sum_upnls", FormatDivisibleMP(sum_upnls,true)));
     return balanceObj;
 }
 
@@ -2266,6 +2295,7 @@ static const CRPCCommand commands[] =
   { "trade layer (data retieval)" , "tl_getpeggedhistory",          &tl_getpeggedhistory,           {} },
   { "trade layer (data retieval)" , "tl_getcontract_reserve",       &tl_getcontract_reserve,        {} },
   { "trade layer (data retieval)" , "tl_getmargin",                 &tl_getmargin,                  {} },
+  { "trade layer (data retieval)" , "tl_getsum_upnl",               &tl_getsum_upnl,                {} },
   { "trade layer (data retieval)" , "tl_getallprice",               &tl_getallprice,                {} },
   { "trade layer (data retieval)" , "tl_getmarketprice",            &tl_getmarketprice,             {} },
   // {"trade layer (data retieval)" ,  "tl_getaverage_entry",          &tl_getaverage_entry,           {} },

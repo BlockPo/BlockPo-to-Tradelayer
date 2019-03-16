@@ -150,6 +150,7 @@ CMPTxList *mastercore::p_txlistdb;
 CMPTradeList *mastercore::t_tradelistdb;
 COmniTransactionDB *mastercore::p_OmniTXDB;
 extern std::map<uint32_t, std::map<std::string, double>> addrs_upnlc;
+extern std::map<std::string, int64_t> sum_upnls;
 
 using mastercore::StrToInt64;
 
@@ -3029,6 +3030,7 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
 
   // handle any features that go live with this block
   CheckLiveActivations(pBlockIndex->nHeight);
+  update_sum_upnls();
   // addInterestPegged(nBlockPrev,pBlockIndex);
   // eraseExpiredCrowdsale(pBlockIndex);
   _my_sps->rollingContractsBlock(pBlockIndex); // NOTE: we are checking every contract expiration
@@ -3898,43 +3900,6 @@ void CMPTradeList::marginLogic(uint32_t property) // Vector of matching address 
 
 }
 
-// uint64_t getLiquidationPrice (std::string address, uint32_t contractId, uint64_t entryPrice)
-// {
-  // checking contracts:
-  // int64_t longP = getMPBalance(address,contractId,POSSITIVE_BALANCE);
-  // int64_t shortP = getMPBalance(address,contractId,NEGATIVE_BALANCE);
-  //
-  // CMPSPInfo::Entry sp;
-  // _my_sps->getSP(contractId, sp);
-  // if(sp.subcategory != "Futures Contracts")
-  //     return 0;
-  // int64_t notional =  static_cast<int64_t>(sp.notional_size);
-  // if (0 < longP && 0 == shortP)
-  // {
-  //   uint64_t exitPrice = longP * notional * entryPrice / longP * ENTRYP + longP * notional)
-  // } else if (0 == longP && 0 < shortP) {
-  //
-  //
-  // }
-  //
-
-// }
-
-////////////////////////////////////////
-/** New things for Contracts */
-int marginCall(const std::string& address, uint32_t propertyId, uint64_t marketPrice, uint8_t trading_action, int64_t amountInOrder)
-{
-    int rc = 0;
-    // PrintToConsole("____________________________________________________________\n");
-    // PrintToConsole("Into the marginCall function\n");
-
-    const uint256 tx;
-    // int rc = ContractDex_ADD(address, propertyId, amountInOrder, tx, 1, marketPrice, trading_action,0);
-    if (rc == 0) {
-        // PrintToConsole("return of ContractDex_ADD: %d\n",rc);
-    }
-    return rc;
-}
 
 rational_t mastercore::notionalChange(uint32_t contractId)
 {
@@ -3949,306 +3914,9 @@ rational_t mastercore::notionalChange(uint32_t contractId)
     return inversePrice;
 }
 
-/*int64_t mastercore::getAverageEntryPrice(std::string address, uint32_t contractId)
-  {
-    PrintToLog("******************INSIDE GETAVERAGEENTTRYPRICE*************\n");
-    bool found = false;
-    arith_uint256 avEntry = 0;
-    map<std::string,std::vector<int64_t>>::iterator it = cd_AvEntry.find(address);
-    if(it != cd_AvEntry.end()){
-        int64_t sum = 0;
-        std::vector<int64_t> Entry = it->second;
-        for (std::vector<int64_t>::iterator it1 = Entry.begin(); it1 != Entry.end(); ++it1) {
-            sum += *(it1);
-            PrintToLog("***************price: %d******************\n",*(it1));
-        }
-
-        int64_t elem = static_cast<int64_t>(Entry.size());
-        PrintToLog("elements inside vector: %d",elem);
-        if (elem != 0) {
-            avEntry = ConvertTo256(sum) / ConvertTo256(elem);
-        }
-
-        found = true;
-    }
-
-    if (found) {  // returning average!
-        int64_t newAverage = ConvertTo64(avEntry);
-        PrintToLog("*****************newAverage: %d************\n",newAverage);
-        return newAverage;
-
-    } else {
-      PrintToLog("******************Address not found !: %d*************\n");
-      return 0;
-    }
-}
-
-void mastercore::insertEntryPrice(std::string address, uint64_t mprice)
-{
-    PrintToLog("******************INSIDE INSERTENTRYPRICE*************\n");
-    int64_t marketPriceNow = static_cast<int64_t>(mprice);
-    std::vector<int64_t> Prices;
-    Prices.push_back(marketPriceNow);
-
-
-    if(!cd_AvEntry.insert (std::make_pair(address,Prices)).second) {
-        std::map<std::string,std::vector<int64_t>>::iterator it1 = cd_AvEntry.find(address);
-        Prices = it1->second;
-        Prices.push_back(marketPriceNow);
-        cd_AvEntry[address] = Prices;
-        assert( cd_AvEntry.find(address)->second == Prices );
-        PrintToLog("******************first price: %d*************\n");
-
-    } else {
-        PrintToLog("******************empty: %d*************\n");
-    }
-
-}*/
-
-bool mastercore::marginNeeded(const std::string address, int64_t amountTraded, uint32_t contractId)
-{
-    // CMPSPInfo::Entry sp;
-    // assert(_my_sps->getSP(contractId, sp));
-    // double marginRe = static_cast<double>(sp.margin_requirement) / denMargin ;
-    // int64_t nBalance = getMPbalance(address, sp.collateral_currency, BALANCE);
-    // double conv = notionalChange(contractId,marketP[static_cast<int>(contractId)]);
-    // double amountToReserve = amountTraded * marginRe * factor * conv ;
-    // int64_t toReserve = static_cast<int64_t>(amountToReserve);
-    // PrintToConsole("#######################################################\n");
-    // PrintToConsole(" Inside marginNeeded function\n");
-    // PrintToConsole("amount to Reserve: %d\n", amountToReserve);
-    // PrintToConsole("Balance: %d\n", nBalance);
-    // PrintToConsole("amountTraded: %d\n", amountTraded);
-    // PrintToConsole("marginRe: %s\n", marginRe);
-    // PrintToConsole("conv: %d\n", conv);
-    // if (nBalance >= toReserve && nBalance != 0 && toReserve != 0){
-    //     update_tally_map(address, sp.collateral_currency, -toReserve, BALANCE);
-    //     update_tally_map(address, sp.collateral_currency, toReserve, CONTRACTDEX_RESERVE);
-    // } else {
-    //     // do we need upnl?
-    //     LOCK(cs_tally);
-    //     uint32_t nextSPID = _my_sps->peekNextSPID(1);
-    //     for (uint32_t contractId = 1; contractId < nextSPID; contractId++) {  // looping on the properties
-    //         CMPSPInfo::Entry sp;
-    //         assert(_my_sps->getSP(contractId, sp));
-    //         if (sp.prop_type != ALL_PROPERTY_TYPE_CONTRACT) {
-    //             continue;
-    //         }
-    //
-    //         int64_t amountTaken = getMPbalance(address, contractId, UPNL); // Collecting money!
-    //         if (amountTaken >= toReserve) {
-    //             PrintToConsole(" Ready with amountToReserve\n");
-    //             update_tally_map(address, contractId, -toReserve, UPNL);
-    //             update_tally_map(address, sp.collateral_currency, toReserve, CONTRACTDEX_RESERVE);
-    //             break;   // ready with amountToReserve
-    //         } else {
-    //             PrintToConsole(" we need more money\n");
-    //             update_tally_map(address, contractId, -amountTaken, UPNL); // we need more
-    //             update_tally_map(address, sp.collateral_currency, amountTaken, CONTRACTDEX_RESERVE);
-    //             toReserve -= amountTaken;
-    //         }
-    //
-    //     }
-    //
-    //     if (toReserve > 0) { //  If we still need money, use fractional liquidation when closing to the threshold.
-    //         PrintToConsole("fractional liquidation\n");
-    //         PrintToConsole("Remaining amount: %d\n",toReserve);
-    //         return false;
-    //     }
-    //
-    // }
-    // PrintToConsole("#######################################################\n");
-    return true;
-
-}
-
-bool mastercore::marginBack(const std::string address, int64_t amountTraded, uint32_t contractId)
-{
-    // PrintToConsole("#######################################################\n");
-    // PrintToConsole(" Inside marginBack function\n");
-    // CMPSPInfo::Entry sp;
-    // double percent = 0;
-    // assert(_my_sps->getSP(contractId, sp));
-    // double marginRe = sp.margin_requirement / denMargin;
-    // int64_t longs = getMPbalance(address, contractId, POSSITIVE_BALANCE);
-    // int64_t shorts = getMPbalance(address, contractId, NEGATIVE_BALANCE);
-    // PrintToConsole("longs: %d\n", longs);
-    // PrintToConsole("short: %d\n", shorts);
-    // PrintToConsole("amountTraded: %d\n", amountTraded);
-    // if (longs > 0 && shorts == 0) {
-    //     PrintToConsole("Enter in the long side\n");
-    //     percent = static_cast<double> (amountTraded) / longs;
-    //     // boost::multiprecision::backends::divide_unsigned_helper() // TODO: improve the math!
-    // } else if (longs == 0 && shorts > 0) {
-    //     PrintToConsole("Enter in the short side\n");
-    //     percent = static_cast<double> (amountTraded) / shorts;
-    // }
-    //
-    // int64_t margin = getMPbalance(address, sp.collateral_currency, CONTRACTDEX_RESERVE);
-    // double product = static_cast<double> (margin * percent);
-    // int64_t amountBack = static_cast<int64_t>(product);
-    // PrintToConsole("amount Back: %d\n",amountBack);
-    // PrintToConsole("margin: %d\n", margin);
-    // PrintToConsole("marginRe: %d\n", marginRe);
-    // PrintToConsole("percent: %d\n", percent);
-    // PrintToConsole("product: %d\n", product);
-    // if (margin >= amountBack && amountBack > 0) {
-    //    update_tally_map(address, sp.collateral_currency, -amountBack, CONTRACTDEX_RESERVE);
-    //    update_tally_map(address, sp.collateral_currency, amountBack, BALANCE);
-    // } else {
-    //     PrintToConsole("wrong amount of margin: %d\n",margin);
-    //     return false;
-    // }
-    // PrintToConsole("#######################################################\n");
-    return true;
-}
-
-// bool mastercore::marginMain(int Block)
-// {
-//     //checking in map for address and the UPNL.
-//     LOCK(cs_tally);
-//     uint32_t nextSPID = _my_sps->peekNextSPID(1);
-//     for (uint32_t contractId = 1; contractId < nextSPID; contractId++) {
-//         CMPSPInfo::Entry sp;
-//         if (_my_sps->getSP(contractId, sp)) {
-//             PrintToLog("Property Id: %d\n",contractId);
-//             if (sp.prop_type != ALL_PROPERTY_TYPE_CONTRACT){
-//                 PrintToLog("Property is not future contract\n");
-//                 continue;
-//             }
-//         }
-//
-//         uint32_t collateralCurrency = sp.collateral_currency;
-//
-//         unsigned char ecosystem;
-//
-//         // checking the upnl map
-//         std::map<uint32_t, std::map<std::string, double>>::iterator it = addrs_upnlc.find(contractId);
-//         std::map<std::string, double> upnls = it->second;
-//
-//         int64_t sum_upnl = 0;
-//
-//         // checking the sum of UPNL for the user's address
-//         for(std::map<std::string, double>::iterator it1 = upnls.begin(); it1 != upnls.end(); ++it1) {
-//             const std::string address = it1->first;
-//             sum_upnl += (double) it1->second * factorE;
-//         }
-//
-//         PrintToLog("sum_upn=%d\n",sum_upnl);
-//
-//         // if the sum of upnls is >= 0, do nothing.
-//         if(0 <= sum_upnl) {
-//             PrintToLog("Do Nothing, sum_upnl= %d\n",sum_upnl);
-//             return false;
-//         }
-//
-//         //  if upnls is < 0, we need to cancel orders or liquidate contracts.
-//         for(std::map<std::string, double>::iterator it2 = upnls.begin(); it2 != upnls.end(); ++it2) {
-//             const std::string address = it2->first;
-//             int64_t upnl = (double) it2->second * factorE;
-//
-//             if (0 <= upnl)// if upnl is positive, keep searching
-//                 continue;
-//
-//             int64_t margin = getMPbalance(address,collateralCurrency,CONTRACTDEX_RESERVE);
-//             rational_t percent = rational_t(-upnl,margin);
-//
-//
-//             PrintToLog("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
-//             PrintToLog("\nmargin= %d\n", margin);
-//             PrintToLog("upnl= %d\n",upnl);
-//             PrintToLog("percent = %s\n", xToString(percent));
-//             PrintToLog("factor= %d\n",factor);
-//             PrintToLog("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
-//
-//             while (factor < percent)
-//             {
-//                 PrintToLog("CALLING CANCEL IN ORDER\n");
-//                 // PrintToLog("percent before cancel: %s\n",xToString(percent));
-//                 margin = getMPbalance(address,collateralCurrency,CONTRACTDEX_RESERVE);
-//                 PrintToLog("margin before cancel: %s\n", margin);
-//                 int result = ContractDex_CANCEL_IN_ORDER(address, ecosystem, contractId);
-//                 margin = getMPbalance(address,collateralCurrency,CONTRACTDEX_RESERVE);
-//                 PrintToLog("margin after cancel: %s\n",margin);
-//                 PrintToLog("percent after cancel: %s\n",xToString(percent));
-//
-//                 //  do we have enough position ? ----> a) partially close position
-//                 // b) if isnt we execute margin call
-//
-//                 if (result == 1)
-//                 {
-//                     PrintToLog("No Orders found, we have to check the position\n");
-//                     int option;
-//                     int64_t amount;
-//                     const uint256 txid;
-//                     int64_t longs = getMPbalance(address,contractId,POSSITIVE_BALANCE);
-//                     int64_t shorts = getMPbalance(address,contractId,NEGATIVE_BALANCE);
-//
-//                     if (longs > 0 && shorts == 0)
-//                     {
-//                         amount = longs;
-//                         option = SELL;
-//                     } else if (shorts > 0 && longs == 0){
-//                         amount = shorts;
-//                         option = BUY;
-//                     } else {
-//                         PrintToLog("shorts = 0, longs = 0 ?\n");
-//                         return false;
-//                     }
-//
-//                     // calculating the price of position in ALLs
-//                     rational_t conv = rational_t(1,50);
-//                     int64_t num = conv.numerator().convert_to<int64_t>();
-//                     int64_t den = conv.denominator().convert_to<int64_t>();
-//                     arith_uint256 pricePos = ConvertTo256(amount) * ConvertTo256(num) / (ConvertTo256(den));
-//                     int64_t ipricePos = ConvertTo64(pricePos);
-//                     PrintToLog("ipricePos: %d\n",ipricePos);
-//
-//                     if (ipricePos > -upnl)  // if position can cover the upnl loss
-//                     {
-//                           int64_t contracts;
-//                           unsigned int idx=0;
-//                           PrintToLog("position can cover the upnl loss\n");
-//                           if(factor2 < percent)  // if the upnl loss is bigger that 80% of balance
-//                           {
-//                               PrintToLog("upnl loss is bigger than 80% of balance\n");
-//                               contracts = margin / 2 ;
-//                           } else {
-//                               double aUpnl = it1->second;
-//                               double aNotional = 1;
-//                               double division = - aUpnl / aNotional;
-//                               contracts = ceil(division) * factorE;
-//                               PrintToLog("division: %d\n",division);
-//                           }
-//
-//                           PrintToLog("contracts to liquidate: %d\n",contracts);
-//                           PrintToLog("upnl before partially liquidation: %d\n",it1->second);
-//                           ContractDex_ADD_ORDERBOOK_EDGE(address, contractId, contracts, Block, txid, idx, option, 0);
-//                           PrintToLog("upnl after partially liquidation: %d\n",it1->second);
-//
-//                     } else {
-//                         // closing full position
-//                         PrintToLog("closing full position \n");
-//                         ContractDex_CLOSE_POSITION(txid, Block, address, ecosystem, contractId, collateralCurrency);
-//                     }
-//
-//                     break;
-//
-//                 } else if (result == 0)
-//                     PrintToLog("Exit CANCEL IN ORDER\n");
-//                 }
-//
-//             }
-//
-//     }
-//
-//     return true;
-//
-// }
-
-
 bool mastercore::marginMain(int Block)
 {
+
     //checking in map for address and the UPNL.
     LOCK(cs_tally);
     uint32_t nextSPID = _my_sps->peekNextSPID(1);
@@ -4268,26 +3936,15 @@ bool mastercore::marginMain(int Block)
         std::map<uint32_t, std::map<std::string, double>>::iterator it = addrs_upnlc.find(contractId);
         std::map<std::string, double> upnls = it->second;
 
-        int64_t sum_upnl = 0;
-
-        // checking the sum of UPNL for the user's address
-        for(std::map<std::string, double>::iterator it1 = upnls.begin(); it1 != upnls.end(); ++it1) {
-            const std::string address = it1->first;
-            sum_upnl += (double) it1->second * factorE;
-        }
-
-        PrintToLog("sum_upn=%d\n",sum_upnl);
-
-        // if the sum of upnls is >= 0, do nothing.
-        if(0 <= sum_upnl) {
-            PrintToLog("Do Nothing, sum_upnl= %d\n",sum_upnl);
-            return false;
-        }
-
         //  if upnls is < 0, we need to cancel orders or liquidate contracts.
         for(std::map<std::string, double>::iterator it2 = upnls.begin(); it2 != upnls.end(); ++it2) {
             const std::string address = it2->first;
-            int64_t upnl = (double) it2->second * factorE;
+
+            // if sum of upnl is positive, skip address.
+            if (sum_check_upnl(address))
+                continue;
+
+            int64_t upnl = static_cast<int64_t>(it2->second * factorE);
 
             // if upnl is positive, keep searching
             if (upnl >= 0)
@@ -4413,6 +4070,56 @@ bool mastercore::marginMain(int Block)
 
     return true;
 
+}
+
+
+bool mastercore::sum_check_upnl(std::string address)
+{
+    std::map<std::string, int64_t>::iterator it = sum_upnls.find(address);
+    int64_t upnl = it->second;
+    if (0 <= upnl)
+    {
+        PrintToLog("\n sum_upnl for address: %s is positive or zero: %d\n",address,upnl);
+        return true;
+    } else {
+        PrintToLog("\n sum_upnl for address: %s is negative: %d\n",address,upnl);
+        return false;
+    }
+
+}
+
+
+void mastercore::update_sum_upnls()
+{
+    //cleaning the sum_upnls map
+    if(!sum_upnls.empty())
+        sum_upnls.clear();
+
+    LOCK(cs_tally);
+    uint32_t nextSPID = _my_sps->peekNextSPID(1);
+    for (uint32_t contractId = 1; contractId < nextSPID; contractId++)
+    {
+        CMPSPInfo::Entry sp;
+        if (_my_sps->getSP(contractId, sp))
+        {
+            PrintToLog("Property Id: %d\n",contractId);
+            if (sp.prop_type != ALL_PROPERTY_TYPE_CONTRACT)
+                continue;
+
+            std::map<uint32_t, std::map<std::string, double>>::iterator it = addrs_upnlc.find(contractId);
+            std::map<std::string, double> upnls = it->second;
+
+            for(std::map<std::string, double>::iterator it1 = upnls.begin(); it1 != upnls.end(); ++it1)
+            {
+                const std::string address = it1->first;
+                int64_t upnl = static_cast<int64_t>(it1->second * factorE);
+                PrintToLog("adding upnl for address:%s ,upnl: %d\n",address,it1->second);
+                //add this in the sumupnl vector
+                sum_upnls[address] += upnl;
+            }
+
+        }
+    }
 }
 
 uint64_t int64ToUint64(int64_t value)
