@@ -194,9 +194,8 @@ int main(int argc, char* argv[])
   extern VectorTLS *pt_netted_npartly_anypos;
   extern VectorTLS *pt_changepos_status;
   extern VectorTLS *pt_expiration_dates;
-  extern VectorTLS *pt_vestingAddresses;
   extern std::string admin_addrs;
-  
+   
 #include "initial_conditions.h"
   
   SetupEnvironment();
