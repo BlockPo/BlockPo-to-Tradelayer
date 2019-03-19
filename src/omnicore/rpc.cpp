@@ -5,7 +5,6 @@
  */
 
 #include "omnicore/rpc.h"
-
 #include "omnicore/activation.h"
 #include "omnicore/consensushash.h"
 #include "omnicore/convert.h"
@@ -1502,14 +1501,17 @@ UniValue tl_getfullposition(const JSONRPCRequest& request)
 			+ HelpExampleRpc("tl_getfullposition", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", 1")
 			);
   }
-
+  
   std::string address = ParseAddress(request.params[0]);
-  uint32_t propertyId = ParsePropertyId(request.params[1]);
-
+  std::string name_traded = ParseText(request.params[1]);
+  
+  struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, name_traded);
+  uint32_t propertyId = pfuture->fco_propertyId;
+  
   RequireContract(propertyId);
-
+  
   UniValue positionObj(UniValue::VOBJ);
-
+  
   CMPSPInfo::Entry sp;
   {
     LOCK(cs_tally);
@@ -1517,7 +1519,7 @@ UniValue tl_getfullposition(const JSONRPCRequest& request)
       throw JSONRPCError(RPC_INVALID_PARAMETER, "Property identifier does not exist");
     }
   }
-
+  
   positionObj.push_back(Pair("symbol", sp.name));
   positionObj.push_back(Pair("notional_size", (uint64_t) sp.notional_size)); // value of position = short or long position (balance) * notional_size
   // PTJ -> short/longPosition /liquidation price
@@ -1749,43 +1751,48 @@ UniValue tl_getcontract_orderbook(const JSONRPCRequest& request)
 
 UniValue tl_gettradehistory(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 1)
-        throw runtime_error(
-            "tl_gettradehistory contractid propertyid ( count )\n"
-            "\nRetrieves the history of trades on the distributed contract exchange for the specified market.\n"
-            "\nArguments:\n"
-            "1. contractid           (number, required) the id of future contract\n"
-            "\nResult:\n"
-            "[                                      (array of JSON objects)\n"
-            "  {\n"
-            "    \"block\" : nnnnnn,                      (number) the index of the block that contains the trade match\n"
-            "    \"unitprice\" : \"n.nnnnnnnnnnn...\" ,     (string) the unit price used to execute this trade (received/sold)\n"
-            "    \"inverseprice\" : \"n.nnnnnnnnnnn...\",   (string) the inverse unit price (sold/received)\n"
-            "    \"sellertxid\" : \"hash\",                 (string) the hash of the transaction of the seller\n"
-            "    \"address\" : \"address\",                 (string) the Bitcoin address of the seller\n"
-            "    \"amountsold\" : \"n.nnnnnnnn\",           (string) the number of tokens sold in this trade\n"
-            "    \"amountreceived\" : \"n.nnnnnnnn\",       (string) the number of tokens traded in exchange\n"
-            "    \"matchingtxid\" : \"hash\",               (string) the hash of the transaction that was matched against\n"
-            "    \"matchingaddress\" : \"address\"          (string) the Bitcoin address of the other party of this trade\n"
-            "  },\n"
-            "  ...\n"
-            "]\n"
-            "\nExamples:\n"
-            + HelpExampleCli("tl_gettradehistoryforpair", "1 12 500")
-            + HelpExampleRpc("tl_gettradehistoryforpair", "1, 12, 500")
-        );
+  if (request.params.size() != 1)
+    throw runtime_error(
+			"tl_gettradehistory contractid propertyid ( count )\n"
+			"\nRetrieves the history of trades on the distributed contract exchange for the specified market.\n"
+			"\nArguments:\n"
+			"1. contractid           (number, required) the id of future contract\n"
+			"\nResult:\n"
+			"[                                      (array of JSON objects)\n"
+			"  {\n"
+			"    \"block\" : nnnnnn,                      (number) the index of the block that contains the trade match\n"
+			"    \"unitprice\" : \"n.nnnnnnnnnnn...\" ,     (string) the unit price used to execute this trade (received/sold)\n"
+			"    \"inverseprice\" : \"n.nnnnnnnnnnn...\",   (string) the inverse unit price (sold/received)\n"
+			"    \"sellertxid\" : \"hash\",                 (string) the hash of the transaction of the seller\n"
+			"    \"address\" : \"address\",                 (string) the Bitcoin address of the seller\n"
+			"    \"amountsold\" : \"n.nnnnnnnn\",           (string) the number of tokens sold in this trade\n"
+			"    \"amountreceived\" : \"n.nnnnnnnn\",       (string) the number of tokens traded in exchange\n"
+			"    \"matchingtxid\" : \"hash\",               (string) the hash of the transaction that was matched against\n"
+			"    \"matchingaddress\" : \"address\"          (string) the Bitcoin address of the other party of this trade\n"
+			"  },\n"
+			"  ...\n"
+			"]\n"
+			"\nExamples:\n"
+			+ HelpExampleCli("tl_gettradehistoryforpair", "1 12 500")
+			+ HelpExampleRpc("tl_gettradehistoryforpair", "1, 12, 500")
+			);
+  
+  // obtain property identifiers for pair & check valid parameters
+  std::string name_traded = ParseText(request.params[0]);
+  
+  struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, name_traded);
+  uint32_t contractId = pfuture->fco_propertyId;
+  
+  RequireContract(contractId);
+  
+  // request pair trade history from trade db
+  UniValue response(UniValue::VARR);
+  
+  LOCK(cs_tally);
+  PrintToConsole("Inside the rpc gettradehistory \n");
+  t_tradelistdb->getMatchingTrades(contractId, response);
 
-    // obtain property identifiers for pair & check valid parameters
-    uint32_t contractId = ParsePropertyId(request.params[0]);
-
-    RequireContract(contractId);
-
-    // request pair trade history from trade db
-    UniValue response(UniValue::VARR);
-    LOCK(cs_tally);
-    PrintToConsole("Inside the rpc gettradehistory \n");
-    t_tradelistdb->getMatchingTrades(contractId,response);
-    return response;
+  return response;
 }
 
 UniValue tl_gettradehistory_unfiltered(const JSONRPCRequest& request)
@@ -1814,8 +1821,8 @@ UniValue tl_gettradehistory_unfiltered(const JSONRPCRequest& request)
             "\nExamples:\n"
             + HelpExampleCli("tl_gettradehistoryforpair", "1 12 500")
             + HelpExampleRpc("tl_gettradehistoryforpair", "1, 12, 500")
-        );
-
+			    );
+    
     // obtain property identifiers for pair & check valid parameters
     uint32_t contractId = ParsePropertyId(request.params[0]);
 

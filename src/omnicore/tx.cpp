@@ -1046,33 +1046,46 @@ bool CMPTransaction::interpret_ContractDexTrade()
 /** Tx 32 */
 bool CMPTransaction::interpret_ContractDexCancelEcosystem()
 {
-    int i = 0;
-
-    std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
-    std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
-    std::vector<uint8_t> vecEcosystemBytes = GetNextVarIntBytes(i);
-    std::vector<uint8_t> vecContractIdBytes = GetNextVarIntBytes(i);
-
-    if (!vecTypeBytes.empty()) {
-        type = DecompressInteger(vecTypeBytes);
-    } else return false;
-
-    if (!vecVersionBytes.empty()) {
-        version = DecompressInteger(vecVersionBytes);
-    } else return false;
-
-    if (!vecEcosystemBytes.empty()) {
-        ecosystem = DecompressInteger(vecEcosystemBytes);
-    } else return false;
-    if (!vecContractIdBytes.empty()) {
-        contractId = DecompressInteger(vecContractIdBytes);
-    } else return false;
-
-    // PrintToLog("version: %d\n", version);
-    // PrintToLog("messageType: %d\n",type);
-    // PrintToLog("ecosystem: %d\n", ecosystem);
-    return true;
+  int i = 0;
+  std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+  
+  // PrintToLog("i after two elements: %d\n",i);
+  const char* p = i + (char*) &pkt;
+  std::vector<std::string> spstr;
+  for (int j = 0; j < 1; j++) {
+    spstr.push_back(std::string(p));
+    p += spstr.back().size() + 1;
   }
+  
+  if (isOverrun(p)) {
+    PrintToLog("%s(): rejected: malformed string value(s)\n", __func__);
+    return false;
+  }
+  
+  int j = 0;
+  memcpy(name_traded, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(name_traded)-1)); j++;
+  i = i + strlen(name_traded) + 1;
+  
+  std::vector<uint8_t> vecEcosystemBytes = GetNextVarIntBytes(i);
+  
+  if (!vecTypeBytes.empty()) {
+    type = DecompressInteger(vecTypeBytes);
+  } else return false;
+  
+  if (!vecVersionBytes.empty()) {
+    version = DecompressInteger(vecVersionBytes);
+  } else return false;
+  
+  if (!vecEcosystemBytes.empty()) {
+    ecosystem = DecompressInteger(vecEcosystemBytes);
+  } else return false;
+  
+  // PrintToLog("version: %d\n", version);
+  // PrintToLog("messageType: %d\n",type);
+  // PrintToLog("ecosystem: %d\n", ecosystem);
+  return true;
+}
 
   /** Tx 33 */
 bool CMPTransaction::interpret_ContractDexClosePosition()
@@ -1548,13 +1561,13 @@ int CMPTransaction::logicMath_SendVestingTokens()
   //   return (PKT_ERROR_SEND -25);
   // }
   
-  // Move the tokens
-  assert(update_tally_map(sender, property, -nValue, BALANCE));
+  assert(update_tally_map(sender, property, -nValue, BALANCE));  
   assert(update_tally_map(receiver, property, nValue, BALANCE));
   assert(update_tally_map(receiver, OMNI_PROPERTY_ALL, nValue, UNVESTED));
   
   PrintToLog("Balance sender = %d", getMPbalance(sender, property, BALANCE));
   PrintToLog("Balance receiver = %d", getMPbalance(receiver, property, BALANCE));
+  PrintToLog("Unvested Balance receiver = %d", getMPbalance(receiver, OMNI_PROPERTY_ALL, UNVESTED));
   
   return 0;
 }
@@ -2469,25 +2482,29 @@ int CMPTransaction::logicMath_ContractDexTrade()
 /** Tx 32 */
 int CMPTransaction::logicMath_ContractDexCancelEcosystem()
 {
-    if (!IsTransactionTypeAllowed(block, ecosystem, type, version)) {
-        PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
-                __func__,
-                type,
-                version,
-                property,
-                block);
-        return (PKT_ERROR_METADEX -22);
-    }
+  if (!IsTransactionTypeAllowed(block, ecosystem, type, version)) {
+    PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+	       __func__,
+	       type,
+	       version,
+	       property,
+	       block);
+    return (PKT_ERROR_METADEX -22);
+  }
+  
+  if (OMNI_PROPERTY_ALL != ecosystem && OMNI_PROPERTY_TALL != ecosystem) {
+    PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, ecosystem);
+    PrintToLog("rejected: invalid ecosystem %d\n",ecosystem);
+    return (PKT_ERROR_METADEX -21);
+  }
 
-    if (OMNI_PROPERTY_ALL != ecosystem && OMNI_PROPERTY_TALL != ecosystem) {
-        PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, ecosystem);
-        PrintToLog("rejected: invalid ecosystem %d\n",ecosystem);
-        return (PKT_ERROR_METADEX -21);
-    }
-    PrintToLog("Inside the logicMath_ContractDexCancelEcosystem!!!!!\n");
-    int rc = ContractDex_CANCEL_EVERYTHING(txid, block, sender, ecosystem, contractId);
-
-    return rc;
+  struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, name_traded);
+  uint32_t contractId = pfuture->fco_propertyId;
+  
+  PrintToLog("Inside the logicMath_ContractDexCancelEcosystem!!!!!\n");
+  int rc = ContractDex_CANCEL_EVERYTHING(txid, block, sender, ecosystem, contractId);
+  
+  return rc;
 }
 
 
