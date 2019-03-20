@@ -37,7 +37,7 @@ printf "\n________________________________________\n"
 printf "Base address to work with:\n"
 printf $ADDRBase
 
-N=10
+N=100
 
 amount_bitcoin=10
 amountbitcoin_baseaddr=100
@@ -143,18 +143,18 @@ do
 done
 ##################################################################"
 # Sending Vesting Tokens from admin address
-for (( i=1; i<=${N}/10; i++ ))
+for (( i=1; i<=10; i++ ))
 do    
-    printf "\nAmount Vesting Tokens #$i\n"
-    AMOUNTVESTING=$((RANDOM%1000+1000))
-    printf "\nRandom Amount Vesting:\n"
-    printf $AMOUNTVESTING
-    printf "\n"
+    # printf "\nAmount Vesting Tokens #$i\n"
+    # AMOUNTVESTING=$((RANDOM%1000+1000))
+    # printf "\nRandom Amount Vesting:\n"
+    # printf $AMOUNTVESTING
+    # printf "\n"
     printf "\n////////////////////////////////////////\n"
     printf "Vesting Balance Admin Address\n"
     $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_getbalance ${addrs_admin} 3
     printf "Sending Vesting Tokens #$i\n"
-    $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_sendvesting ${addrs_admin} ${ADDRess[$i]} 3 ${AMOUNTVESTING}
+    $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_sendvesting ${addrs_admin} ${ADDRess[$i]} 3 150000
     $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1 # Generating one block
     
     printf "\n________________________________________\n"
