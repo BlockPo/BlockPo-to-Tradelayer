@@ -29,6 +29,7 @@ bool find_string_set(std::string s, std::unordered_set<std::string> addrs_set);
 bool findTrueValue(bool a, bool b);
 bool findTrueValue(bool a, bool b, bool c);
 bool findTrueValue(bool a, bool b, bool c, bool d);
+bool findConjTrueValue(bool a, bool b, bool c);
 std::string DecFloatToString(dec_float& value);
 bool find_uint64_t(uint64_t m, std::vector<uint64_t> v);
 
