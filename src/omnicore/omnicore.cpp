@@ -2105,7 +2105,16 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   // PrintToLog("\nBlock counter: %d, lastBlockg = %d\n", static_cast<int>(pBlockIndex->nHeight), lastBlockg);
   
   /***********************************************/
-  /** Vesting Tokens to Balance */
+  /** Checking Market Price **/
+  
+  int64_t priceALL_USD = mastercore::getPairMarketPrice("ALL", "Tether");
+  PrintToLog("\npriceALL_USD = %s\n", FormatDivisibleMP(priceALL_USD));
+  
+  int64_t priceUSD_ALL = mastercore::getPairMarketPrice("Tether", "ALL");
+  PrintToLog("\npriceUSD_ALL = %s\n", FormatDivisibleMP(priceUSD_ALL));
+  
+  /***********************************************/
+  /** Vesting Tokens to Balance **/
   int64_t x_Axis = globalVolumeALL_LTC;
   int64_t LogAxis = mastercore::DoubleToInt64(log(static_cast<double>(x_Axis)/COIN));
   

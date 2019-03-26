@@ -1264,27 +1264,27 @@ MatchReturnType x_Trade(CMPMetaDEx* const pnew)
 	    
             ///////////////////////////
 
-	    /** Finding Market Prices ALL/dUSD or dUSD/ALL **/
+	    /** Finding Market Prices TOKEN1/TOKEN2 or TOKEN2/TOKEN1 **/
 	    PrintToLog("\npropertyForSale = %d,\t propertyDesired = %d\n", propertyForSale, propertyDesired);
 	    
 	    int64_t pnew_forsale = pnew->getAmountForSale();
 	    int64_t pnew_desired = pnew->getAmountDesired();
 	    PrintToLog("\npnew_forsale = %s,\t pnew_desired = %s\n", FormatDivisibleMP(pnew_forsale), FormatDivisibleMP(pnew_desired));
 	    
-	    rational_t market_priceratALL_USD(pnew_forsale, pnew_desired);
-	    int64_t market_priceALL_USD = mastercore::RationalToInt64(market_priceratALL_USD);
-	    market_priceMap[propertyForSale][propertyDesired] = market_priceALL_USD; 
-	    PrintToLog("\nmarket_priceALL_USD MetaDEx = %s\n", FormatDivisibleMP(market_priceMap[propertyForSale][propertyDesired]));
-	    	    
-	    rational_t market_priceratUSD_ALL(pnew_desired, pnew_forsale);
-	    int64_t market_priceUSD_ALL = mastercore::RationalToInt64(market_priceratUSD_ALL);
-	    market_priceMap[propertyDesired][propertyForSale] = market_priceUSD_ALL;
-	    PrintToLog("\nmarket_priceUSD_ALL MetaDEx = %s\n", FormatDivisibleMP(market_priceMap[propertyDesired][propertyForSale]));
+	    rational_t market_priceratTOKEN1_TOKEN2(pnew_forsale, pnew_desired);
+	    int64_t market_priceTOKEN1_TOKEN2 = mastercore::RationalToInt64(market_priceratTOKEN1_TOKEN2);
+	    market_priceMap[propertyForSale][propertyDesired] = market_priceTOKEN1_TOKEN2; 
+	    PrintToLog("\nmarket_priceTOKEN1_TOKEN2 MetaDEx = %s\n", FormatDivisibleMP(market_priceMap[propertyForSale][propertyDesired]));
+	    
+	    rational_t market_priceratTOKEN2_TOKEN1(pnew_desired, pnew_forsale);
+	    int64_t market_priceTOKEN2_TOKEN1 = mastercore::RationalToInt64(market_priceratTOKEN2_TOKEN1);
+	    market_priceMap[propertyDesired][propertyForSale] = market_priceTOKEN2_TOKEN1;
+	    PrintToLog("\nmarket_priceTOKEN2_TOKEN1 MetaDEx = %s\n", FormatDivisibleMP(market_priceMap[propertyDesired][propertyForSale]));
 	    
 	    int64_t pold_forsale = pold->getAmountForSale();
 	    int64_t pold_desired = pold->getAmountDesired();
 	    PrintToLog("\npold_forsale = %s,\t pold_desired = %s\n", FormatDivisibleMP(pold_forsale), FormatDivisibleMP(pold_desired));
-
+	    
 	    ///////////////////////////
 	    
             int64_t buyer_amountGotAfterFee = buyer_amountGot;
@@ -2013,6 +2013,36 @@ int mastercore::ContractDex_CLOSE_POSITION(const uint256& txid, unsigned int blo
 
     return 0;
 }
+
+int64_t mastercore::getPairMarketPrice(std::string num, std::string den)
+{ 
+  LOCK(cs_tally);
+  uint32_t nextSPID = _my_sps->peekNextSPID(1);
+  
+  uint32_t numId = 0;
+  uint32_t denId = 0;
+  
+  for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
+    {
+      CMPSPInfo::Entry sp;
+      if (_my_sps->getSP(propertyId, sp))
+	{
+	  if ( sp.name == num )
+	    {
+	      PrintToLog("\npropertyId num: %d\n", propertyId);
+	      numId = propertyId;
+	    }
+	  if ( sp.name == den )
+	    {
+	      PrintToLog("\npropertyId den: %d\n", propertyId);
+	      denId = propertyId;
+	    }
+	}
+    }
+  
+  return market_priceMap[numId][denId];
+}
+
 //
 // /**
 //  * Scans the orderbook and removes every all-pair order
