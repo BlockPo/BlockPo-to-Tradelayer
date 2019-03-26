@@ -50,6 +50,7 @@ typedef boost::rational<boost::multiprecision::checked_int128_t> rational_t;
 typedef boost::multiprecision::cpp_dec_float_100 dec_float;
 typedef boost::multiprecision::checked_int128_t int128_t;
 extern std::map<std::string,uint32_t> peggedIssuers;
+extern std::map<uint32_t, std::map<std::string, int64_t>> init_margin;
 extern int64_t factorE;
 extern int64_t priceIndex;
 extern int64_t allPrice;
@@ -2378,6 +2379,10 @@ int CMPTransaction::logicMath_ContractDexTrade()
     int64_t reserva = getMPbalance(sender, pfuture->fco_collateral_currency,CONTRACTDEX_RESERVE);
     std::string reserved = FormatDivisibleMP(reserva,false);
   }
+
+  // putting init margin in the map
+  init_margin[id_contract][sender] = amountToReserve;
+
   t_tradelistdb->recordNewTrade(txid, sender, id_contract, desired_property, block, tx_idx, 0);
   int rc = ContractDex_ADD(sender, id_contract, amount, block, txid, tx_idx, effective_price, trading_action,0);
   return rc;

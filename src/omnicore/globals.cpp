@@ -42,6 +42,9 @@ std::map<uint32_t, std::map<std::string, double>> addrs_upnlc;
 // using for margin dynamics
 std::map<std::string, int64_t> sum_upnls;
 
+//initial margin (for active orders)
+std::map<uint32_t, std::map<std::string, int64_t>> init_margin;
+
 VectorTLS *pt_expiration_dates;
 VectorTLS *pt_vestingAddresses;
 int nVestingAddrs;

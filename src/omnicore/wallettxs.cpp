@@ -5,6 +5,7 @@
 #include "omnicore/rules.h"
 #include "omnicore/script.h"
 #include "omnicore/utilsbitcoin.h"
+#include "wallet/fees.h"
 
 #include "amount.h"
 #include "base58.h"
@@ -110,6 +111,24 @@ bool CheckFee(const std::string& fromAddress, size_t nDataSize)
     return inputTotal >= minFee;
 }
 
+int64_t GetEstimatedFeePerKb(CCoinControl& coinControl)
+{
+    int64_t nFee = 50000; // 0.0005 LTC;
+
+#ifdef ENABLE_WALLET
+	CWalletRef pwalletMain = NULL;
+	if (vpwallets.size() > 0){
+		pwalletMain = vpwallets[0];
+	}
+    if (pwalletMain) {
+        FeeCalculation feeCalc;
+        nFee = GetMinimumFee(1000, coinControl, ::mempool,::feeEstimator, &feeCalc);
+    }
+#endif
+
+    return nFee;
+}
+
 /**
  * Checks, whether the output qualifies as input for a transaction.
  */
@@ -118,12 +137,12 @@ bool CheckInput(const CTxOut& txOut, int nHeight, CTxDestination& dest)
     txnouttype whichType;
 
     if (!GetOutputType(txOut.scriptPubKey, whichType)) {
-       //PrintToLog("!GetOutputType\n");
-       //return false;
+       PrintToLog("!GetOutputType\n");
+       return false;
     }
     if (!IsAllowedInputType(whichType, nHeight)) {
-       //PrintToLog("!IsAllowedInputType\n");
-       //return false;
+       PrintToLog("!IsAllowedInputType\n");
+       return false;
     }
     if (!ExtractDestination(txOut.scriptPubKey, dest)) {
        PrintToLog("!ExtractDestination \n");
@@ -203,7 +222,11 @@ int64_t SelectCoins(const std::string& fromAddress, CCoinControl& coinControl, i
     }
 
     // assume 20 KB max. transaction size at 0.0001 per kilobyte
-    int64_t nMax = (COIN * (20 * (0.0001)));
+    // int64_t nMax = (COIN * (20 * (0.0001)));
+    int64_t nMax = 20 * GetEstimatedFeePerKb(coinControl);
+
+    // PrintToLog("///////////////////// INSIDE selectCoins function: nMax=%d //////////////////////\n",nMax);
+    PrintToLog("///////////////////// : estimated=%d //////////////////////\n",nMax);
 
     // if referenceamount is set it is needed to be accounted for here too
     if (0 < additional) nMax += additional;
@@ -217,12 +240,12 @@ int64_t SelectCoins(const std::string& fromAddress, CCoinControl& coinControl, i
         const CWalletTx& wtx = it->second;
 
         if (!wtx.IsTrusted()) {
-            PrintToLog("!wtx.IsTrusted\n");
-            //continue;
+            // PrintToLog("!wtx.IsTrusted\n");
+            continue;
         }
         if (!wtx.GetAvailableCredit()) {
-            PrintToLog("!wtx.GetAvailabeCredit \n");
-            //continue;
+            // PrintToLog("!wtx.GetAvailabeCredit \n");
+            continue;
         }
 
         for (unsigned int n = 0; n < wtx.tx->vout.size(); n++) {
@@ -230,19 +253,19 @@ int64_t SelectCoins(const std::string& fromAddress, CCoinControl& coinControl, i
 
             CTxDestination dest;
             if (!CheckInput(txOut, nHeight, dest)) {
-                PrintToLog("!CheckInput \n");
+                // PrintToLog("!CheckInput \n");
                 continue;
-            } 
+            }
             if (!IsMine(*pwalletMain, dest)) {
-                PrintToLog("!IsMine \n");
+                // PrintToLog("!IsMine \n");
                 continue;
             }
             if (pwalletMain->IsSpent(txid, n)) {
-               PrintToLog("pwalletMain->IsSpent \n");
+               // PrintToLog("pwalletMain->IsSpent \n");
                continue;
             }
 
-            CTxDestination cfromAddress = DecodeDestination(fromAddress); // new change 
+            CTxDestination cfromAddress = DecodeDestination(fromAddress); // new change
             //if (msc_debug_tokens)
             //PrintToLog("%s(): sender: %s, outpoint: %s:%d, value: %d\n", __func__, sAddress, txid.GetHex(), n, txOut.nValue);
             PrintToLog("fromAddress: %s\n", fromAddress);
@@ -250,7 +273,7 @@ int64_t SelectCoins(const std::string& fromAddress, CCoinControl& coinControl, i
 
             // only use funds from the sender's address
             if (cfromAddress == dest) {
-                PrintToLog("fromAddress == sAddress \n");
+                // PrintToLog("fromAddress == sAddress \n");
                 COutPoint outpoint(txid, n);
                 coinControl.Select(outpoint);
 

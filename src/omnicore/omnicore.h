@@ -442,6 +442,8 @@ namespace mastercore
   void update_sum_upnls(); // update the sum of all upnls for all addresses.
 
   bool sum_check_upnl(std::string address); // check if the sum of all upnls is positive for a given address.
+
+  int64_t maint_margin(uint32_t contractId, std::string address, uint16_t prop_type, uint32_t margin_requirement); // return mainteinance margin for a given contrand and address
 }
 
 #endif // OMNICORE_OMNICORE_H

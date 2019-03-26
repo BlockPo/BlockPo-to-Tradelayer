@@ -26,6 +26,8 @@ std::string GetAddressLabel(const std::string& address);
 /** IsMine wrapper to determine whether the address is in the wallet. */
 int IsMyAddress(const std::string& address);
 
+int64_t GetEstimatedFeePerKb(CCoinControl& coinControl);
+
 /** Selects spendable outputs to create a transaction. */
 int64_t SelectCoins(const std::string& fromAddress, CCoinControl& coinControl, int64_t additional = 0, unsigned int minOutputs = 0);
 }
