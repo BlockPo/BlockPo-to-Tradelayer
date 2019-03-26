@@ -1,5 +1,4 @@
 #include "omnicore/mdex.h"
-
 #include "omnicore/errors.h"
 #include "omnicore/log.h"
 #include "omnicore/omnicore.h"
@@ -7,7 +6,6 @@
 #include "omnicore/sp.h"
 #include "omnicore/tx.h"
 #include "omnicore/uint256_extensions.h"
-
 #include "arith_uint256.h"
 #include "chain.h"
 #include "tinyformat.h"
@@ -16,18 +14,13 @@
 #include "omnicore/externfns.h"
 #include "omnicore/operators_algo_clearing.h"
 #include "validation.h"
-
 #include <univalue.h>
-
 #include <boost/lexical_cast.hpp>
 #include <boost/multiprecision/cpp_int.hpp>
 #include <boost/rational.hpp>
-
 #include <openssl/sha.h>
-
 #include <assert.h>
 #include <stdint.h>
-
 #include <iostream>
 #include <fstream>
 #include <limits>
@@ -52,6 +45,7 @@ extern int64_t factorE;
 extern uint64_t marketP[NPTYPES];
 extern int expirationAchieve;
 extern std::vector<std::map<std::string, std::string>> path_ele;
+extern std::map<uint32_t, std::map<uint32_t, int64_t>> market_priceMap;
 extern int n_cols;
 extern int n_rows;
 extern MatrixTLS *pt_ndatabase;
@@ -1204,10 +1198,10 @@ MatchReturnType x_Trade(CMPMetaDEx* const pnew)
             assert(pold->unitPrice() <= pnew->inversePrice());
             assert(pnew->unitPrice() <= pold->inversePrice());
 
-//             globalNumPrice = pold->getAmountDesired();
-//             globalDenPrice = pold->getAmountForSale();
-	       globalNumPrice = 1;
-               globalDenPrice = 1;
+	    //             globalNumPrice = pold->getAmountDesired();
+	    //             globalDenPrice = pold->getAmountForSale();
+	    globalNumPrice = 1;
+	    globalDenPrice = 1;
             /*Lets gonna take the pnew->unitPrice() as the ALL unit price*/
             /*unitPrice = 1 ALL on dUSD*/
             ///////////////////////////
@@ -1244,10 +1238,10 @@ MatchReturnType x_Trade(CMPMetaDEx* const pnew)
             const rational_t xEffectivePrice(nWouldPay, nCouldBuy);
 
             if (xEffectivePrice > pnew->inversePrice()) {
-                // if (msc_debug_metadex1) PrintToLog(
-                //         "-- effective price is too expensive: %s\n", xToString(xEffectivePrice));
-                ++offerIt;
-                continue;
+	      // if (msc_debug_metadex1) PrintToLog(
+	      //         "-- effective price is too expensive: %s\n", xToString(xEffectivePrice));
+	      ++offerIt;
+	      continue;
             }
 
             const int64_t buyer_amountGot = nCouldBuy;
@@ -1267,9 +1261,32 @@ MatchReturnType x_Trade(CMPMetaDEx* const pnew)
             assert(0 <= buyer_amountLeft);
             assert(seller_amountForSale == seller_amountLeft + buyer_amountGot);
             assert(buyer_amountOffered == buyer_amountLeft + seller_amountGot);
-
+	    
             ///////////////////////////
 
+	    /** Finding Market Prices ALL/dUSD or dUSD/ALL **/
+	    PrintToLog("\npropertyForSale = %d,\t propertyDesired = %d\n", propertyForSale, propertyDesired);
+	    
+	    int64_t pnew_forsale = pnew->getAmountForSale();
+	    int64_t pnew_desired = pnew->getAmountDesired();
+	    PrintToLog("\npnew_forsale = %s,\t pnew_desired = %s\n", FormatDivisibleMP(pnew_forsale), FormatDivisibleMP(pnew_desired));
+	    
+	    rational_t market_priceratALL_USD(pnew_forsale, pnew_desired);
+	    int64_t market_priceALL_USD = mastercore::RationalToInt64(market_priceratALL_USD);
+	    market_priceMap[propertyForSale][propertyDesired] = market_priceALL_USD; 
+	    PrintToLog("\nmarket_priceALL_USD MetaDEx = %s\n", FormatDivisibleMP(market_priceMap[propertyForSale][propertyDesired]));
+	    	    
+	    rational_t market_priceratUSD_ALL(pnew_desired, pnew_forsale);
+	    int64_t market_priceUSD_ALL = mastercore::RationalToInt64(market_priceratUSD_ALL);
+	    market_priceMap[propertyDesired][propertyForSale] = market_priceUSD_ALL;
+	    PrintToLog("\nmarket_priceUSD_ALL MetaDEx = %s\n", FormatDivisibleMP(market_priceMap[propertyDesired][propertyForSale]));
+	    
+	    int64_t pold_forsale = pold->getAmountForSale();
+	    int64_t pold_desired = pold->getAmountDesired();
+	    PrintToLog("\npold_forsale = %s,\t pold_desired = %s\n", FormatDivisibleMP(pold_forsale), FormatDivisibleMP(pold_desired));
+
+	    ///////////////////////////
+	    
             int64_t buyer_amountGotAfterFee = buyer_amountGot;
             int64_t tradingFee = 0;
 
@@ -1438,16 +1455,16 @@ std::string CMPContractDex::displayFullContractPrice() const
 
 rational_t CMPMetaDEx::unitPrice() const
 {
-    rational_t effectivePrice;
-    if (amount_forsale) effectivePrice = rational_t(amount_desired, amount_forsale);
-    return effectivePrice;
+  rational_t effectivePrice;
+  if (amount_forsale) effectivePrice = rational_t(amount_desired, amount_forsale);
+  return effectivePrice;
 }
 
 rational_t CMPMetaDEx::inversePrice() const
 {
-    rational_t inversePrice;
-    if (amount_desired) inversePrice = rational_t(amount_forsale, amount_desired);
-    return inversePrice;
+  rational_t inversePrice;
+  if (amount_desired) inversePrice = rational_t(amount_forsale, amount_desired);
+  return inversePrice;
 }
 
 int64_t CMPMetaDEx::getAmountToFill() const

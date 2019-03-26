@@ -37,7 +37,7 @@ printf "\n________________________________________\n"
 printf "Base address to work with:\n"
 printf $ADDRBase
 
-N=100
+N=10
 
 amount_bitcoin=10
 amountbitcoin_baseaddr=100
@@ -222,7 +222,7 @@ do
     printf "Sending metadex trade:\n"
     
     printf "\nAmount ALL #$i\n"
-    AMOUNTALL=$((RANDOM%1000+6000))
+    AMOUNTALL=$((RANDOM%10+60))
     printf "\nRandom Amount ALL:\n"
     printf $AMOUNTALL
     printf "\n"
