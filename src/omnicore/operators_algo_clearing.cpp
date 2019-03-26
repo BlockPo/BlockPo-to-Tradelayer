@@ -29,7 +29,8 @@ struct status_amounts *get_status_amounts_open_incr(VectorTLS &v, int q)
       pt_status->lives_src  = stol(v[5].c_str());
       pt_status->nlives_trk = stol(v[8].c_str());
       pt_status->nlives_src = stol(v[9].c_str());
-    } else
+    }
+  else
     {
       pt_status->addrs_src  = v[0];
       pt_status->status_src = v[1];

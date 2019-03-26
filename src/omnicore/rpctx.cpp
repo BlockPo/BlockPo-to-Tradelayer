@@ -780,9 +780,9 @@ UniValue tl_sendtrade(const JSONRPCRequest& request)
   if (request.params.size() != 5) {
     throw runtime_error(
 			"tl_sendtrade \"fromaddress\" propertyidforsale \"amountforsale\" propertiddesired \"amountdesired\"\n"
-
+			
 			"\nPlace a trade offer on the distributed token exchange.\n"
-
+			
 			"\nArguments:\n"
 			"1. fromaddress          (string, required) the address to trade with\n"
 			"2. propertyidforsale    (number, required) the identifier of the tokens to list for sale\n"
@@ -804,7 +804,7 @@ UniValue tl_sendtrade(const JSONRPCRequest& request)
   int64_t amountForSale = ParseAmount(request.params[2], isPropertyDivisible(propertyIdForSale));
   uint32_t propertyIdDesired = ParsePropertyId(request.params[3]);
   int64_t amountDesired = ParseAmount(request.params[4], isPropertyDivisible(propertyIdDesired));
-
+  
   // perform checks
   // RequireExistingProperty(propertyIdForSale);
   // RequireNotContract(propertyIdForSale);
@@ -812,7 +812,7 @@ UniValue tl_sendtrade(const JSONRPCRequest& request)
   // RequireExistingProperty(propertyIdDesired);
   // RequireNotContract(propertyIdDesired);
   // RequireNotVesting(propertyIdDesired);
-
+  
   // create a payload for the transaction
   std::vector<unsigned char> payload = CreatePayload_MetaDExTrade(propertyIdForSale, amountForSale, propertyIdDesired, amountDesired);
 
