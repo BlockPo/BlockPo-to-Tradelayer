@@ -14,7 +14,7 @@ enum TallyType {
 
         //////////////////////////////////////
         /** New things for Contracts */  /*NOTE: maybe build another tally for contracts */
-        CONTRACTDEX_RESERVE = 5, // margin acount
+        CONTRACTDEX_RESERVE = 5, // contracts to rolling
         POSSITIVE_BALANCE = 6,
         NEGATIVE_BALANCE = 7,
         REALIZED_PROFIT = 8,
@@ -24,7 +24,8 @@ enum TallyType {
         LIQUIDATION_PRICE = 12,
         UPNL = 13, // positive
         NUPNL = 14, // negative
-	UNVESTED = 15,
+	      UNVESTED = 15,
+        CONTRACTDEX_MARGIN = 16,   //TODO: need save to db
         //////////////////////////////////////
 
         TALLY_TYPE_COUNT
