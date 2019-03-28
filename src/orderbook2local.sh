@@ -100,7 +100,7 @@ $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_gettransaction $TRACreate
 ##################################################################
 printf "\n________________________________________\n"
 printf "Creating an Divisible Token USDT:\n"
-TRAUSDT=$($SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_sendissuancemanaged $ADDRBase 1 2 0 "Tether" "Tether" "")
+TRAUSDT=$($SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_sendissuancemanaged $ADDRBase 1 2 0 "dUSD" "dUSD" "")
 $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
 
 printf "\n________________________________________\n"
@@ -233,10 +233,10 @@ do
     printf $AMOUNTTETHER
     printf "\n"
     
-    $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_sendtrade ${ADDRess[$i+1]} 5 ${AMOUNTALL} 6 ${AMOUNTTETHER}
+    $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_sendtrade ${ADDRess[$i+1]} 6 ${AMOUNTALL} 5 ${AMOUNTTETHER}
     $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
     
-    $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_sendtrade ${ADDRess[$i]} 6 ${AMOUNTTETHER} 5 ${AMOUNTALL}
+    $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_sendtrade ${ADDRess[$i]} 5 ${AMOUNTTETHER} 6 ${AMOUNTALL}
     $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
     
     # End MetaDex traded

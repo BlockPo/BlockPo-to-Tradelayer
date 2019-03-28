@@ -46,6 +46,9 @@ extern uint64_t marketP[NPTYPES];
 extern int expirationAchieve;
 extern std::vector<std::map<std::string, std::string>> path_ele;
 extern std::map<uint32_t, std::map<uint32_t, int64_t>> market_priceMap;
+extern std::map<uint32_t, std::map<uint32_t, int64_t>> numVWAPMap;
+extern std::map<uint32_t, std::map<uint32_t, int64_t>> denVWAPMap;
+extern std::map<uint32_t, std::map<uint32_t, int64_t>> VWAPMap;
 extern int n_cols;
 extern int n_rows;
 extern MatrixTLS *pt_ndatabase;
@@ -112,7 +115,7 @@ void mastercore::LoopBiDirectional(cd_PricesMap* const ppriceMap, uint8_t trdAct
       // PrintToLog("\nCalling the Settlement Algorithm:\n\n");
       settlement_algorithm_fifo(M_file);
     }
-
+  
   if ( trdAction == BUY )
     {
       for (it_fwdPrices = ppriceMap->begin(); it_fwdPrices != ppriceMap->end(); ++it_fwdPrices)
@@ -1262,54 +1265,83 @@ MatchReturnType x_Trade(CMPMetaDEx* const pnew)
             assert(seller_amountForSale == seller_amountLeft + buyer_amountGot);
             assert(buyer_amountOffered == buyer_amountLeft + seller_amountGot);
 	    
-            ///////////////////////////
-
+	    /***********************************************************************************************/
 	    /** Finding Market Prices TOKEN1/TOKEN2 or TOKEN2/TOKEN1 **/
-	    PrintToLog("\npropertyForSale = %d,\t propertyDesired = %d\n", propertyForSale, propertyDesired);
+	    PrintToLog("\n********************************************************************************\n");
+	    
+	    PrintToLog("\npold->getProperty() = %d,\t pold->getDesProperty() = %d\n", pold->getProperty(), pold->getDesProperty());
+	    PrintToLog("\npnew->getProperty() = %d,\t pnew->getDesProperty() = %d\n", pnew->getProperty(), pnew->getDesProperty());
 	    
 	    int64_t pnew_forsale = pnew->getAmountForSale();
 	    int64_t pnew_desired = pnew->getAmountDesired();
-	    PrintToLog("\npnew_forsale = %s,\t pnew_desired = %s\n", FormatDivisibleMP(pnew_forsale), FormatDivisibleMP(pnew_desired));
-	    
-	    rational_t market_priceratTOKEN1_TOKEN2(pnew_forsale, pnew_desired);
-	    int64_t market_priceTOKEN1_TOKEN2 = mastercore::RationalToInt64(market_priceratTOKEN1_TOKEN2);
-	    market_priceMap[propertyForSale][propertyDesired] = market_priceTOKEN1_TOKEN2; 
-	    PrintToLog("\nmarket_priceTOKEN1_TOKEN2 MetaDEx = %s\n", FormatDivisibleMP(market_priceMap[propertyForSale][propertyDesired]));
-	    
-	    rational_t market_priceratTOKEN2_TOKEN1(pnew_desired, pnew_forsale);
-	    int64_t market_priceTOKEN2_TOKEN1 = mastercore::RationalToInt64(market_priceratTOKEN2_TOKEN1);
-	    market_priceMap[propertyDesired][propertyForSale] = market_priceTOKEN2_TOKEN1;
-	    PrintToLog("\nmarket_priceTOKEN2_TOKEN1 MetaDEx = %s\n", FormatDivisibleMP(market_priceMap[propertyDesired][propertyForSale]));
 	    
 	    int64_t pold_forsale = pold->getAmountForSale();
 	    int64_t pold_desired = pold->getAmountDesired();
-	    PrintToLog("\npold_forsale = %s,\t pold_desired = %s\n", FormatDivisibleMP(pold_forsale), FormatDivisibleMP(pold_desired));
 	    
-	    ///////////////////////////
+	    rational_t market_priceratToken1_Token2(pold_desired, pold_forsale);
+	    int64_t market_priceToken1_Token2 = mastercore::RationalToInt64(market_priceratToken1_Token2);
+	    market_priceMap[pold->getProperty()][pold->getDesProperty()] = market_priceToken1_Token2;
+	    PrintToLog("\nmarket_priceToken1_Token2 MetaDEx = %s\n", FormatDivisibleMP(market_priceMap[pold->getProperty()][pold->getDesProperty()]));
+	    
+	    rational_t market_priceratToken2_Token1(pnew_desired, pnew_forsale);
+	    int64_t market_priceToken2_Token1 = mastercore::RationalToInt64(market_priceratToken2_Token1);
+	    market_priceMap[pnew->getProperty()][pnew->getDesProperty()] = market_priceToken2_Token1;
+	    PrintToLog("\nmarket_priceToken2_Token1 MetaDEx = %s\n", FormatDivisibleMP(market_priceMap[pnew->getProperty()][pnew->getDesProperty()]));
+
+	    PrintToLog("\npold_forsale = %s,\t pold_desired = %s\n", FormatDivisibleMP(pold_forsale), FormatDivisibleMP(pold_desired));
+	    PrintToLog("\npnew_forsale = %s,\t pnew_desired = %s\n", FormatDivisibleMP(pnew_forsale), FormatDivisibleMP(pnew_desired));
+
+	    PrintToLog("\n********************************************************************************\n");
+	    /** Finding VWAP Price **/	    
+	    PrintToLog("\nbuyer_amountGot = %s,\t seller_amountGot = %s\n", FormatDivisibleMP(buyer_amountGot), FormatDivisibleMP(seller_amountGot));
+	    
+	    arith_uint256 numVWAPMapToken1_Token2_256t = mastercore::ConvertTo256(market_priceToken1_Token2)*mastercore::ConvertTo256(buyer_amountGot)/COIN;
+	    int64_t numVWAPMapToken1_Token2_64t = mastercore::ConvertTo64(numVWAPMapToken1_Token2_256t);
+	    numVWAPMap[pold->getProperty()][pold->getDesProperty()] += numVWAPMapToken1_Token2_64t;
+	    denVWAPMap[pold->getProperty()][pold->getDesProperty()] += buyer_amountGot;
+
+	    rational_t vwapPriceToken1_Token2Rat(numVWAPMap[pold->getProperty()][pold->getDesProperty()], denVWAPMap[pold->getProperty()][pold->getDesProperty()]);
+	    int64_t vwapPriceToken1_Token2Int64 = mastercore::RationalToInt64(vwapPriceToken1_Token2Rat);
+	    VWAPMap[pold->getProperty()][pold->getDesProperty()]=vwapPriceToken1_Token2Int64;
+	    
+	    arith_uint256 numVWAPMapToken2_Token1_256t = mastercore::ConvertTo256(market_priceToken2_Token1)*mastercore::ConvertTo256(seller_amountGot)/COIN;
+	    int64_t numVWAPMapToken2_Token1_64t = mastercore::ConvertTo64(numVWAPMapToken2_Token1_256t);
+	    numVWAPMap[pnew->getProperty()][pnew->getDesProperty()] += numVWAPMapToken2_Token1_64t;
+	    denVWAPMap[pnew->getProperty()][pnew->getDesProperty()] += seller_amountGot;
+	    
+	    rational_t vwapPriceToken2_Token1Rat(numVWAPMap[pnew->getProperty()][pnew->getDesProperty()], denVWAPMap[pnew->getProperty()][pnew->getDesProperty()]);
+	    int64_t vwapPriceToken2_Token1Int64 = mastercore::RationalToInt64(vwapPriceToken2_Token1Rat);
+	    VWAPMap[pnew->getProperty()][pnew->getDesProperty()]=vwapPriceToken2_Token1Int64;
+	    
+	    PrintToLog("\nVWAPMap[pold->getProperty()][pold->getDesProperty()] = %s\n", FormatDivisibleMP(VWAPMap[pold->getProperty()][pold->getDesProperty()]));
+	    PrintToLog("\nVWAPMap[pnew->getProperty()][pnew->getDesProperty()] = %s\n", FormatDivisibleMP(VWAPMap[pnew->getProperty()][pnew->getDesProperty()]));
+
+	    PrintToLog("\n********************************************************************************\n");
+	    /***********************************************************************************************/
 	    
             int64_t buyer_amountGotAfterFee = buyer_amountGot;
             int64_t tradingFee = 0;
 
             // strip a 0.05% fee from non-OMNI pairs if fees are activated
             if (IsFeatureActivated(FEATURE_FEES, pnew->getBlock())) {
-                if (pold->getProperty() > OMNI_PROPERTY_TALL && pold->getDesProperty() > OMNI_PROPERTY_TALL) {
-                    int64_t feeDivider = 2000; // 0.05%
-                    tradingFee = buyer_amountGot / feeDivider;
-
-                    // subtract the fee from the amount the seller will receive
-                    buyer_amountGotAfterFee = buyer_amountGot - tradingFee;
-
-                    // add the fee to the fee cache  TODO: check the fees file
-                    // p_feecache->AddFee(pnew->getDesProperty(), pnew->getBlock(), tradingFee);
-                } else {
-                    // if (msc_debug_fees) PrintToLog("Skipping fee reduction for trade match %s:%s as one of the properties is Omni\n", pold->getHash().GetHex(), pnew->getHash().GetHex());
-                }
+	      if (pold->getProperty() > OMNI_PROPERTY_TALL && pold->getDesProperty() > OMNI_PROPERTY_TALL) {
+		int64_t feeDivider = 2000; // 0.05%
+		tradingFee = buyer_amountGot / feeDivider;
+		
+		// subtract the fee from the amount the seller will receive
+		buyer_amountGotAfterFee = buyer_amountGot - tradingFee;
+		
+		// add the fee to the fee cache  TODO: check the fees file
+		// p_feecache->AddFee(pnew->getDesProperty(), pnew->getBlock(), tradingFee);
+	      } else {
+		// if (msc_debug_fees) PrintToLog("Skipping fee reduction for trade match %s:%s as one of the properties is Omni\n", pold->getHash().GetHex(), pnew->getHash().GetHex());
+	      }
             }
-
+	    
             // transfer the payment property from buyer to seller
             assert(update_tally_map(pnew->getAddr(), pnew->getProperty(), -seller_amountGot, BALANCE));
             assert(update_tally_map(pold->getAddr(), pold->getDesProperty(), seller_amountGot, BALANCE));
-
+	    
             // transfer the market (the one being sold) property from seller to buyer
             assert(update_tally_map(pold->getAddr(), pold->getProperty(), -buyer_amountGot, METADEX_RESERVE));
             assert(update_tally_map(pnew->getAddr(), pnew->getDesProperty(), buyer_amountGotAfterFee, BALANCE));
