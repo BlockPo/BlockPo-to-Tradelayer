@@ -124,6 +124,7 @@ bool findTrueValue(bool a, bool b) { return a || b; }
 bool findTrueValue(bool a, bool b, bool c) { return ( a || b ) || c; }
 bool findTrueValue(bool a, bool b, bool c, bool d) { return ( a || b ) || ( c || d ); }
 bool findConjTrueValue(bool a, bool b, bool c) { return ( a && b ) && c; }
+bool findConjTrueValue(bool a, bool b) { return a && b; }
 
 namespace mastercore
 {
