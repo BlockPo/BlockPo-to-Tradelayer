@@ -39,6 +39,12 @@ double globalPNLALL_DUSD;
 int64_t globalVolumeALL_DUSD;
 std::map<uint32_t, std::map<std::string, double>> addrs_upnlc;
 std::map<uint32_t, std::map<uint32_t, int64_t>> market_priceMap;
+std::map<uint32_t, std::map<uint32_t, int64_t>> numVWAPMap;
+std::map<uint32_t, std::map<uint32_t, int64_t>> denVWAPMap;
+std::map<uint32_t, std::map<uint32_t, int64_t>> VWAPMap;
+std::map<uint32_t, std::map<uint32_t, int64_t>> VWAPMapSubVector;
+std::map<uint32_t, std::map<uint32_t, std::vector<int64_t>>> numVWAPVector;
+std::map<uint32_t, std::map<uint32_t, std::vector<int64_t>>> denVWAPVector;
 VectorTLS *pt_expiration_dates;
 std::vector<std::string> vestingAddresses;
 int nVestingAddrs;
@@ -54,3 +60,5 @@ volatile int64_t LastLinear;
 volatile int64_t LastQuad;
 volatile int64_t LastLog;
 std::string admin_addrs;
+int volumeToVWAP;
+

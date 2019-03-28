@@ -3204,7 +3204,7 @@ int CMPTransaction::logicMath_AcceptOfferBTC()
 struct FutureContractObject *getFutureContractObject(uint32_t property_type, std::string identifier)
 {
   struct FutureContractObject *pt_fco = new FutureContractObject;
-
+  
   LOCK(cs_tally);
   uint32_t nextSPID = _my_sps->peekNextSPID(1);
   for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)

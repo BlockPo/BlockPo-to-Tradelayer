@@ -30,6 +30,7 @@ bool findTrueValue(bool a, bool b);
 bool findTrueValue(bool a, bool b, bool c);
 bool findTrueValue(bool a, bool b, bool c, bool d);
 bool findConjTrueValue(bool a, bool b, bool c);
+bool findConjTrueValue(bool a, bool b);
 std::string DecFloatToString(dec_float& value);
 bool find_uint64_t(uint64_t m, std::vector<uint64_t> v);
 
