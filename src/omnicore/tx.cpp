@@ -2345,7 +2345,6 @@ int CMPTransaction::logicMath_ContractDexTrade()
   int64_t den = conv.denominator().convert_to<int64_t>();
   arith_uint256 amountTR = (ConvertTo256(amount) * ConvertTo256(marginRe) * ConvertTo256(num)) / (ConvertTo256(num) * ConvertTo256(leverage));
   int64_t amountToReserve = ConvertTo64(amountTR);
-
   // PrintToLog("pfuture->fco_margin_requirement: %d\n", pfuture->fco_margin_requirement);
   // PrintToLog("collateral currency id of contract : %d\n", pfuture->fco_collateral_currency);
   // PrintToLog("margin Requirement: %d\n",marginRe);
@@ -2373,9 +2372,9 @@ int CMPTransaction::logicMath_ContractDexTrade()
   } else {
     if (amountToReserve > 0) {
       assert(update_tally_map(sender, pfuture->fco_collateral_currency, -amountToReserve, BALANCE));
-      assert(update_tally_map(sender, pfuture->fco_collateral_currency,  amountToReserve, CONTRACTDEX_RESERVE));
+      assert(update_tally_map(sender, pfuture->fco_collateral_currency,  amountToReserve, CONTRACTDEX_MARGIN));
     }
-    int64_t reserva = getMPbalance(sender, pfuture->fco_collateral_currency,CONTRACTDEX_RESERVE);
+    int64_t reserva = getMPbalance(sender, pfuture->fco_collateral_currency,CONTRACTDEX_MARGIN);
     std::string reserved = FormatDivisibleMP(reserva,false);
   }
 

@@ -3033,7 +3033,7 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
   // addInterestPegged(nBlockPrev,pBlockIndex);
   // eraseExpiredCrowdsale(pBlockIndex);
   marginMain(pBlockIndex->nHeight);
-  _my_sps->rollingContractsBlock(pBlockIndex); // NOTE: we are checking every contract expiration
+  // _my_sps->rollingContractsBlock(pBlockIndex); // NOTE: we are checking every contract expiration
   return 0;
 }
 
@@ -3946,13 +3946,16 @@ bool mastercore::marginMain(int Block)
             const std::string address = it2->first;
 
             int64_t upnl = static_cast<int64_t>(it2->second * factorE);
-
+            PrintToLog("upnl: %d",upnl);
             // if upnl is positive, keep searching
             if (upnl >= 0)
                 continue;
 
+            PrintToLog("upnl: %d",upnl);
+            PrintToLog("sum_check_upnl: %d",sum_check_upnl(address));
+
             // if sum of upnl is positive, skip address.
-            if (sum_check_upnl(address))
+            if (sum_check_upnl(address) > upnl)
                 continue;
 
             // checking position margin
@@ -3978,7 +3981,7 @@ bool mastercore::marginMain(int Block)
             PrintToLog("proportion upnl/initMargin= %d\n",xToString(percent));
             PrintToLog("\n--------------------------------------------------\n");
 
-            // if the upnl loss is more than 80% of the maintMargin
+            // if the upnl loss is more than 80% of the initial Margin
             if (factor <= percent)
             {
                 const uint256 txid;
@@ -3994,17 +3997,22 @@ bool mastercore::marginMain(int Block)
                 PrintToLog("factor2 <= percent : %s <= %s\n",xToString(factor2),xToString(percent));
                 int64_t margin = getMPbalance(address,collateralCurrency,CONTRACTDEX_MARGIN);
                 int64_t left = - 0.2 * margin - upnl;
-                bool orders = true;
+                bool orders = false;
 
                 do
                 {
                       PrintToLog("margin before cancel: %s\n", margin);
                       if(ContractDex_CANCEL_IN_ORDER(address, contractId) == 1)
-                          orders = false;
+                          orders = true;
                       margin = getMPbalance(address,collateralCurrency,CONTRACTDEX_MARGIN);
                       PrintToLog("margin after cancel: %s\n",margin);
+                      PrintToLog("left: %d\n",left);
+                      if (orders) {
+                          PrintToLog("orders=true !\n");
+                      } else
+                         PrintToLog("orders=false\n");
 
-                } while(0 < left || !orders);
+                } while(left < 0 && !orders);
 
                 // if left is negative, the margin is above the first limit (more than 80% maintMargin)
                 if (0 < left)
@@ -4032,7 +4040,6 @@ bool mastercore::marginMain(int Block)
 
                          const uint256 txid;
                          unsigned int idx;
-                         int64_t leverage = 1;  // for now
                          uint8_t option;
 
                          int64_t longs = getMPbalance(address,contractId,POSSITIVE_BALANCE);
@@ -4045,7 +4052,7 @@ bool mastercore::marginMain(int Block)
 
                          PrintToLog("option: %d\n", option);
 
-                         arith_uint256 contracts = DivideAndRoundUp(ConvertTo256(posMargin) + ConvertTo256(-upnl), ConvertTo256(static_cast<int64_t>(sp.margin_requirement)) * ConvertTo256(leverage));
+                         arith_uint256 contracts = DivideAndRoundUp(ConvertTo256(posMargin) + ConvertTo256(-upnl), ConvertTo256(static_cast<int64_t>(sp.margin_requirement)));
                          int64_t icontracts = ConvertTo64(contracts);
 
                          PrintToLog("icontracts: %d\n", icontracts);
@@ -4069,19 +4076,11 @@ bool mastercore::marginMain(int Block)
 }
 
 
-bool mastercore::sum_check_upnl(std::string address)
+int64_t mastercore::sum_check_upnl(std::string address)
 {
     std::map<std::string, int64_t>::iterator it = sum_upnls.find(address);
     int64_t upnl = it->second;
-    if (0 <= upnl)
-    {
-        PrintToLog("\n sum_upnl for address: %s is positive or zero: %d\n",address,upnl);
-        return true;
-    } else {
-        PrintToLog("\n sum_upnl for address: %s is negative: %d\n",address,upnl);
-        return false;
-    }
-
+    return upnl;
 }
 
 
