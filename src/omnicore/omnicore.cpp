@@ -369,6 +369,13 @@ int64_t getUserAvailableMPbalance(const std::string& address, uint32_t propertyI
     return money;
 }
 
+int64_t getUserReserveMPbalance(const std::string& address, uint32_t propertyId)
+{
+    int64_t money = getMPbalance(address, propertyId, CONTRACTDEX_RESERVE);
+
+    return money;
+}
+
 bool mastercore::isTestEcosystemProperty(uint32_t propertyId)
 {
   if ((OMNI_PROPERTY_TALL == propertyId) || (TEST_ECO_PROPERTY_1 <= propertyId)) return true;

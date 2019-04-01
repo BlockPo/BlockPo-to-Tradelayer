@@ -103,12 +103,17 @@ bool BalanceToJSON(const std::string& address, uint32_t property, UniValue& bala
 {
     // confirmed balance minus unconfirmed, spent amounts
     int64_t nAvailable = getUserAvailableMPbalance(address, property);
+    int64_t nReserve = getUserReserveMPbalance(address, property);
 
     if (divisible) {
         balance_obj.push_back(Pair("balance", FormatDivisibleMP(nAvailable)));
+        balance_obj.push_back(Pair("reserve", FormatDivisibleMP(nReserve)));
     } else {
         balance_obj.push_back(Pair("balance", FormatIndivisibleMP(nAvailable)));
+        balance_obj.push_back(Pair("reserve", FormatIndivisibleMP(nReserve)));
     }
+
+
 
     if (nAvailable == 0) {
         return false;
