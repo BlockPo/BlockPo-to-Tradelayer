@@ -3995,8 +3995,11 @@ bool mastercore::marginMain(int Block)
             } else if (factor2 <= percent) {
                 PrintToLog("CALLING CANCEL IN ORDER\n");
                 PrintToLog("factor2 <= percent : %s <= %s\n",xToString(factor2),xToString(percent));
+                int64_t fbalance, diff;
                 int64_t margin = getMPbalance(address,collateralCurrency,CONTRACTDEX_MARGIN);
+                int64_t ibalance = getMPbalance(address,collateralCurrency, BALANCE);
                 int64_t left = - 0.2 * margin - upnl;
+
                 bool orders = false;
 
                 do
@@ -4004,15 +4007,24 @@ bool mastercore::marginMain(int Block)
                       PrintToLog("margin before cancel: %s\n", margin);
                       if(ContractDex_CANCEL_IN_ORDER(address, contractId) == 1)
                           orders = true;
-                      margin = getMPbalance(address,collateralCurrency,CONTRACTDEX_MARGIN);
-                      PrintToLog("margin after cancel: %s\n",margin);
+                      fbalance = getMPbalance(address,collateralCurrency, BALANCE);
+                      diff = fbalance - ibalance;
+
+                      PrintToLog("ibalance: %s\n",ibalance);
+                      PrintToLog("fbalance: %s\n",fbalance);
+                      PrintToLog("diff: %d\n",diff);
                       PrintToLog("left: %d\n",left);
+
+                      if ( left <= diff ) {
+                          PrintToLog("left <= diff !\n");
+                      }
+
                       if (orders) {
                           PrintToLog("orders=true !\n");
                       } else
                          PrintToLog("orders=false\n");
 
-                } while(left < 0 && !orders);
+                } while(diff < left && !orders);
 
                 // if left is negative, the margin is above the first limit (more than 80% maintMargin)
                 if (0 < left)
@@ -4041,6 +4053,7 @@ bool mastercore::marginMain(int Block)
                          const uint256 txid;
                          unsigned int idx;
                          uint8_t option;
+                         int64_t fcontracts;
 
                          int64_t longs = getMPbalance(address,contractId,POSSITIVE_BALANCE);
                          int64_t shorts = getMPbalance(address,contractId,NEGATIVE_BALANCE);
@@ -4048,14 +4061,23 @@ bool mastercore::marginMain(int Block)
                          PrintToLog("longs: %d\n", longs);
                          PrintToLog("shorts: %d\n", shorts);
 
-                         (longs > 0 && shorts == 0) ? option = SELL : option = BUY;
+                         (longs > 0 && shorts == 0) ? option = SELL, fcontracts = longs : option = BUY, fcontracts = shorts;
 
                          PrintToLog("option: %d\n", option);
+                         PrintToLog("upnl: %d",upnl);
+                         PrintToLog("posMargin: %d", posMargin);
 
                          arith_uint256 contracts = DivideAndRoundUp(ConvertTo256(posMargin) + ConvertTo256(-upnl), ConvertTo256(static_cast<int64_t>(sp.margin_requirement)));
                          int64_t icontracts = ConvertTo64(contracts);
 
+
                          PrintToLog("icontracts: %d\n", icontracts);
+                         PrintToLog("fcontracts before: %d\n", fcontracts);
+
+                         if (icontracts > fcontracts)
+                             icontracts = fcontracts;
+
+                         PrintToLog("fcontracts after: %d\n", fcontracts);
 
                          ContractDex_ADD_MARKET_PRICE(address, contractId, icontracts, Block, txid, idx, option, 0);
 
