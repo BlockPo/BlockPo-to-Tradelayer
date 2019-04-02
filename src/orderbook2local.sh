@@ -222,21 +222,21 @@ do
     printf "Sending metadex trade:\n"
     
     printf "\nAmount ALL #$i\n"
-    AMOUNTALL=$((RANDOM%10+60))
+    AMOUNTALL=$((RANDOM%12+8))
     printf "\nRandom Amount ALL:\n"
     printf $AMOUNTALL
     printf "\n"
     
-    printf "\nAmount Tether #$i\n"
-    AMOUNTTETHER=$((RANDOM%1000+6000))
-    printf "\nRandom Amount Tether:\n"
-    printf $AMOUNTTETHER
+    printf "\nAmount dUSD #$i\n"
+    AMOUNTdUSD=$((RANDOM%10000+60000))
+    printf "\nRandom Amount dUSD:\n"
+    printf $AMOUNTdUSD
     printf "\n"
     
-    $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_sendtrade ${ADDRess[$i+1]} 6 ${AMOUNTALL} 5 ${AMOUNTTETHER}
+    $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_sendtrade ${ADDRess[$i+1]} 6 ${AMOUNTALL} 5 ${AMOUNTdUSD}
     $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
     
-    $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_sendtrade ${ADDRess[$i]} 5 ${AMOUNTTETHER} 6 ${AMOUNTALL}
+    $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_sendtrade ${ADDRess[$i]} 5 ${AMOUNTdUSD} 6 ${AMOUNTALL}
     $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
     
     # End MetaDex traded

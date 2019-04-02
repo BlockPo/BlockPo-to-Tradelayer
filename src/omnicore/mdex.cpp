@@ -1368,13 +1368,18 @@ MatchReturnType x_Trade(CMPMetaDEx* const pnew)
 		int64_t vwapPriceToken2_Token1Int64V = mastercore::RationalToInt64(vwapPriceToken2_Token1RatV);
 		
 		VWAPMapSubVector[pold->getProperty()][pold->getDesProperty()]=vwapPriceToken1_Token2Int64V;
-		VWAPMapSubVector[pnew->getProperty()][pnew->getDesProperty()]=vwapPriceToken2_Token1Int64V;
-		
-		PrintToLog("\nVWAPMapSubVector[pold->getProperty()][pold->getDesProperty()] = %s\n",
-			   FormatDivisibleMP(VWAPMapSubVector[pold->getProperty()][pold->getDesProperty()]));
-		PrintToLog("\nVWAPMapSubVector[pnew->getProperty()][pnew->getDesProperty()] = %s\n",
-			   FormatDivisibleMP(VWAPMapSubVector[pnew->getProperty()][pnew->getDesProperty()]));
+		VWAPMapSubVector[pnew->getProperty()][pnew->getDesProperty()]=vwapPriceToken2_Token1Int64V;		
 	      }
+	    else
+	      {
+		VWAPMapSubVector[pold->getProperty()][pold->getDesProperty()]=market_priceMap[pold->getProperty()][pold->getDesProperty()];
+		VWAPMapSubVector[pnew->getProperty()][pnew->getDesProperty()]=market_priceMap[pnew->getProperty()][pnew->getDesProperty()];
+	      }
+	    
+	    PrintToLog("\nVWAPMapSubVector[pold->getProperty()][pold->getDesProperty()] = %s\n",
+		       FormatDivisibleMP(VWAPMapSubVector[pold->getProperty()][pold->getDesProperty()]));
+	    PrintToLog("\nVWAPMapSubVector[pnew->getProperty()][pnew->getDesProperty()] = %s\n",
+		       FormatDivisibleMP(VWAPMapSubVector[pnew->getProperty()][pnew->getDesProperty()]));
 	    PrintToLog("\n********************************************************************************\n");
 	    /***********************************************************************************************/
             int64_t buyer_amountGotAfterFee = buyer_amountGot;
@@ -1478,7 +1483,34 @@ MatchReturnType x_Trade(CMPContractDex* const pnew)
   return NewReturn;
 }
 
-
+int64_t mastercore::getVWAPPriceByPair(std::string num, std::string den)
+{
+  LOCK(cs_tally);
+  uint32_t nextSPID = _my_sps->peekNextSPID(1);
+  
+  uint32_t numId = 0;
+  uint32_t denId = 0;
+  
+  for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
+    {
+      CMPSPInfo::Entry sp;
+      if (_my_sps->getSP(propertyId, sp))
+	{
+	  if ( sp.name == num )
+	    {
+	      PrintToLog("\npropertyId num: %d\n", propertyId);
+	      numId = propertyId;
+	    }
+	  if ( sp.name == den )
+	    {
+	      PrintToLog("\npropertyId den: %d\n", propertyId);
+	      denId = propertyId;
+	    }
+	}
+    }
+  
+  return VWAPMapSubVector[numId][denId];
+}
 ////////////////////////////////////////
 /**
  * Used for display of unit prices to 8 decimal places at UI layer.
