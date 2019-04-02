@@ -3274,13 +3274,13 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   if (!pdb) return;
 
   extern volatile int idx_q;
-  extern volatile unsigned int path_length;
+  //extern volatile unsigned int path_length;
   std::map<std::string, std::string> edgeEle;
   std::map<std::string, double>::iterator it_addrs_upnlm;
   std::map<uint32_t, std::map<std::string, double>>::iterator it_addrs_upnlc;
   std::vector<std::map<std::string, std::string>>::iterator it_path_ele;
   std::vector<std::map<std::string, std::string>>::reverse_iterator reit_path_ele;
-  std::vector<std::map<std::string, std::string>> path_eleh;
+  //std::vector<std::map<std::string, std::string>> path_eleh;
   bool savedata_bool = false;
   extern volatile int64_t factorALLtoLTC;
   std::string sblockNum2 = std::to_string(blockNum2);
@@ -3329,12 +3329,12 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   if ( status_bool1 || status_bool2 )
     {
       buildingEdge(edgeEle, address1, address2, s_maker1, s_taker1, lives_s1, lives_b1, nCouldBuy1, effective_price, idx_q, 0);
-      path_ele.push_back(edgeEle);
+      //path_ele.push_back(edgeEle);
+      //path_eleh.push_back(edgeEle);
       path_elef.push_back(edgeEle);
-      path_eleh.push_back(edgeEle);
       buildingEdge(edgeEle, address1, address2, s_maker2, s_taker2, lives_s2, lives_b2, nCouldBuy2, effective_price, idx_q, 0);
-      path_ele.push_back(edgeEle);
-      path_eleh.push_back(edgeEle);
+      //path_ele.push_back(edgeEle);
+      //path_eleh.push_back(edgeEle);
       path_elef.push_back(edgeEle);
       // PrintToLog("Line 1: %s\n", line1);
       // PrintToLog("Line 2: %s\n", line2);
@@ -3342,8 +3342,8 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
       if ( s_maker3 != "EmptyStr" && s_taker3 != "EmptyStr" )
 	{
 	  buildingEdge(edgeEle, address1, address2, s_maker3, s_taker3, lives_s3, lives_b3,nCouldBuy3,effective_price,idx_q,0);
-	  path_ele.push_back(edgeEle);
-	  path_eleh.push_back(edgeEle);
+	  //path_ele.push_back(edgeEle);
+	  //path_eleh.push_back(edgeEle);
 	  path_elef.push_back(edgeEle);
 	  // PrintToLog("Line 3: %s\n", line3);
 	  number_lines += 1;
@@ -3352,70 +3352,70 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   else
     {
       buildingEdge(edgeEle, address1, address2, s_maker0, s_taker0, lives_s0, lives_b0, nCouldBuy0, effective_price, idx_q, 0);
-      path_ele.push_back(edgeEle);
-      path_eleh.push_back(edgeEle);
+      //path_ele.push_back(edgeEle);
+      //path_eleh.push_back(edgeEle);
       path_elef.push_back(edgeEle);
       // PrintToLog("Line 0: %s\n", line0);
       number_lines += 1;
     }
   
-  PrintToLog("\nPath Ele inside recordMatchedTrade. Length last match = %d\n", number_lines);
-  for (it_path_ele = path_ele.begin(); it_path_ele != path_ele.end(); ++it_path_ele) printing_edges_database(*it_path_ele);
+  // PrintToLog("\nPath Ele inside recordMatchedTrade. Length last match = %d\n", number_lines);
+  // for (it_path_ele = path_ele.begin(); it_path_ele != path_ele.end(); ++it_path_ele) printing_edges_database(*it_path_ele);
   
-  loopForUPNL(path_ele, path_eleh, path_length, address1, address2, s_maker0, s_taker0, UPNL1, UPNL2, effective_price, nCouldBuy0);
+  // loopForUPNL(path_ele, path_eleh, path_length, address1, address2, s_maker0, s_taker0, UPNL1, UPNL2, effective_price, nCouldBuy0);
+  
+  // unsigned int limSup = path_ele.size()-path_length;
+  // path_length = path_ele.size();
+  // // PrintToLog("UPNL1 = %d, UPNL2 = %d\n", UPNL1, UPNL2);
+  
+  // addrs_upnlc[property_traded][address1] = UPNL1;
+  // addrs_upnlc[property_traded][address2] = UPNL2;
+  
+  // for (it_addrs_upnlc = addrs_upnlc.begin(); it_addrs_upnlc != addrs_upnlc.end(); ++it_addrs_upnlc)
+  //   {
+  //     for (it_addrs_upnlm = it_addrs_upnlc->second.begin(); it_addrs_upnlm != it_addrs_upnlc->second.end(); ++it_addrs_upnlm)
+  //     	{
+  // 	  if (it_addrs_upnlm->first != address1 && it_addrs_upnlm->first != address2)
+  // 	    {
+  // 	      double entry_price_first = 0;
+  // 	      int idx_price_first = 0;
+  // 	      uint64_t entry_pricefirst_num = 0;
+  // 	      double exit_priceh = (double)effective_price/COIN;
+  // 	      uint64_t amount = 0;
+  // 	      std::string status = "";
+  // 	      std::string last_match_status = "";
 
-  unsigned int limSup = path_ele.size()-path_length;
-  path_length = path_ele.size();
-  // PrintToLog("UPNL1 = %d, UPNL2 = %d\n", UPNL1, UPNL2);
+  // 	      for (reit_path_ele = path_ele.rbegin(); reit_path_ele != path_ele.rend(); ++reit_path_ele)
+  // 		{
+  // 		  if(finding_string(it_addrs_upnlm->first, (*reit_path_ele)["addrs_src"]))
+  // 		    {
+  // 		      last_match_status = (*reit_path_ele)["status_src"];
+  // 		      break;
+  // 		    }
+  // 		  else if(finding_string(it_addrs_upnlm->first, (*reit_path_ele)["addrs_trk"]))
+  // 		    {
+  // 		      last_match_status = (*reit_path_ele)["status_trk"];
+  // 		      break;
+  // 		    }
+  // 		}
 
-  addrs_upnlc[property_traded][address1] = UPNL1;
-  addrs_upnlc[property_traded][address2] = UPNL2;
+  // 	      loopforEntryPrice(path_ele, path_eleh, it_addrs_upnlm->first, last_match_status, entry_price_first, idx_price_first, entry_pricefirst_num, limSup, exit_priceh, amount, status);
+  // 	      // PrintToLog("\namount for UPNL_show: %d\n", amount);
+  // 	      double UPNL_show = PNL_function(entry_price_first, exit_priceh, amount, status);
+  // 	      // PrintToLog("\nUPNL_show = %d\n", UPNL_show);
+  // 	      addrs_upnlc[it_addrs_upnlc->first][it_addrs_upnlm->first] = UPNL_show;
+  // 	    }
+  // 	}
+  //   }
 
-  for (it_addrs_upnlc = addrs_upnlc.begin(); it_addrs_upnlc != addrs_upnlc.end(); ++it_addrs_upnlc)
-    {
-      for (it_addrs_upnlm = it_addrs_upnlc->second.begin(); it_addrs_upnlm != it_addrs_upnlc->second.end(); ++it_addrs_upnlm)
-      	{
-  	  if (it_addrs_upnlm->first != address1 && it_addrs_upnlm->first != address2)
-  	    {
-  	      double entry_price_first = 0;
-  	      int idx_price_first = 0;
-  	      uint64_t entry_pricefirst_num = 0;
-  	      double exit_priceh = (double)effective_price/COIN;
-  	      uint64_t amount = 0;
-  	      std::string status = "";
-	      std::string last_match_status = "";
-
-	      for (reit_path_ele = path_ele.rbegin(); reit_path_ele != path_ele.rend(); ++reit_path_ele)
-		{
-		  if(finding_string(it_addrs_upnlm->first, (*reit_path_ele)["addrs_src"]))
-		    {
-		      last_match_status = (*reit_path_ele)["status_src"];
-		      break;
-		    }
-		  else if(finding_string(it_addrs_upnlm->first, (*reit_path_ele)["addrs_trk"]))
-		    {
-		      last_match_status = (*reit_path_ele)["status_trk"];
-		      break;
-		    }
-		}
-
-  	      loopforEntryPrice(path_ele, path_eleh, it_addrs_upnlm->first, last_match_status, entry_price_first, idx_price_first, entry_pricefirst_num, limSup, exit_priceh, amount, status);
-  	      // PrintToLog("\namount for UPNL_show: %d\n", amount);
-  	      double UPNL_show = PNL_function(entry_price_first, exit_priceh, amount, status);
-  	      // PrintToLog("\nUPNL_show = %d\n", UPNL_show);
-  	      addrs_upnlc[it_addrs_upnlc->first][it_addrs_upnlm->first] = UPNL_show;
-  	    }
-  	}
-    }
-
-  for (it_addrs_upnlc = addrs_upnlc.begin(); it_addrs_upnlc != addrs_upnlc.end(); ++it_addrs_upnlc)
-    {
-      // PrintToLog("\nMap with addrs:upnl for propertyId = %d\n", it_addrs_upnlc->first);
-      for (it_addrs_upnlm = it_addrs_upnlc->second.begin(); it_addrs_upnlm != it_addrs_upnlc->second.end(); ++it_addrs_upnlm)
-      	{
-  	  // PrintToLog("ADDRS = %s, UPNL = %d\n", it_addrs_upnlm->first, it_addrs_upnlm->second);
-  	}
-    }
+  // for (it_addrs_upnlc = addrs_upnlc.begin(); it_addrs_upnlc != addrs_upnlc.end(); ++it_addrs_upnlc)
+  //   {
+  //     // PrintToLog("\nMap with addrs:upnl for propertyId = %d\n", it_addrs_upnlc->first);
+  //     for (it_addrs_upnlm = it_addrs_upnlc->second.begin(); it_addrs_upnlm != it_addrs_upnlc->second.end(); ++it_addrs_upnlm)
+  //     	{
+  // 	  // PrintToLog("ADDRS = %s, UPNL = %d\n", it_addrs_upnlm->first, it_addrs_upnlm->second);
+  // 	}
+  //   }
 
   unsigned int contractId = static_cast<unsigned int>(property_traded);
   CMPSPInfo::Entry sp;
@@ -3445,9 +3445,9 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   int64_t volumeToCompare = 0;
   bool perpetualBool = callingPerpetualSettlement(globalPNLALL_DUSD, globalVolumeALL_DUSD, volumeToCompare);
   if (perpetualBool) PrintToLog("Perpetual Settlement Online");
-
+  
   // PrintToLog("\nglobalPNLALL_DUSD = %d, globalVolumeALL_DUSD = %d, contractId = %d\n", globalPNLALL_DUSD, globalVolumeALL_DUSD, contractId);
-
+  
   std::fstream fileglobalPNLALL_DUSD;
   fileglobalPNLALL_DUSD.open ("globalPNLALL_DUSD.txt", std::fstream::in | std::fstream::out | std::fstream::app);
   if ( contractId == ALL_PROPERTY_TYPE_CONTRACT )
