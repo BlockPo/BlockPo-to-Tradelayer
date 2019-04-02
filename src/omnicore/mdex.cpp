@@ -45,7 +45,6 @@ extern volatile int idx_q;
 extern int64_t factorE;
 extern uint64_t marketP[NPTYPES];
 extern int expirationAchieve;
-extern std::vector<std::map<std::string, std::string>> path_ele;
 extern std::map<uint32_t, std::map<uint32_t, int64_t>> market_priceMap;
 extern std::map<uint32_t, std::map<uint32_t, int64_t>> numVWAPMap;
 extern std::map<uint32_t, std::map<uint32_t, int64_t>> denVWAPMap;
@@ -103,22 +102,6 @@ void mastercore::LoopBiDirectional(cd_PricesMap* const ppriceMap, uint8_t trdAct
 {
   cd_PricesMap::iterator it_fwdPrices;
   cd_PricesMap::reverse_iterator it_bwdPrices;
-  std::vector<std::map<std::string, std::string>>::iterator it_path_ele;
-  
-  /** Calling for settlement algorithm when the expiration date has been achieved **/  
-  // if (expirationAchieve)
-  //   {
-  //     PrintToLog("\n Settlement every 8 hours\n");
-  //     pt_ndatabase = new MatrixTLS(path_ele.size(), n_cols); MatrixTLS &ndatabase = *pt_ndatabase;
-  //     MatrixTLS M_file(path_ele.size(), n_cols);
-  //     fillingMatrix(M_file, ndatabase, path_ele);
-  //     n_rows = size(M_file, 0);
-  //     // PrintToLog("Matrix for Settlement: dim = (%d, %d)\n\n", n_rows, n_cols);
-  //     printing_matrix(M_file);
-  //     cout << "\n\n";
-  //     // PrintToLog("\nCalling the Settlement Algorithm:\n\n");
-  //     settlement_algorithm_fifo(M_file);
-  //   }
   
   if ( trdAction == BUY )
     {
