@@ -1,10 +1,14 @@
-#include "operators_algo_clearing.h"
-#include "tradelayer_matrices.h"
-#include "externfns.h"
+#include "omnicore/operators_algo_clearing.h"
+#include "omnicore/tradelayer_matrices.h"
+#include "omnicore/externfns.h"
+#include "omnicore/log.h"
+#include "omnicore/mdex.h"
+#include "amount.h"
 #include <unordered_set>
 #include <limits>
 #include <iostream>
-#include "omnicore/log.h"
+
+typedef boost::multiprecision::cpp_dec_float_100 dec_float;
 
 extern VectorTLS *pt_netted_npartly_anypos;
 extern VectorTLS *pt_open_incr_anypos;
@@ -157,19 +161,20 @@ void settlement_algorithm_fifo(MatrixTLS &M_file)
 
   int path_number = 0;
   VectorTLS vdata(n_cols);
-
+  
   for (int i = 0; i < n_rows; ++i)
     {
       for (int j = 0; j < n_cols; ++j) vdata[j] = M_file[i][j];
-
+      
       struct status_amounts *pt_vdata_long  = get_status_amounts_open_incr(vdata, 0);
       struct status_amounts *pt_vdata_short = get_status_amounts_open_incr(vdata, 1);
+      
       std::vector<std::map<std::string, std::string>> path_maini;
-
+      
       if ( finding(pt_vdata_long->status_trk, open_incr_long) && finding(pt_vdata_short->status_trk, open_incr_short) )
         {
 	  path_number += 1;
-
+	  
 	  PrintToLog("\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
 	  PrintToLog("New Edge Source: Row #%d\n\n", i);
 	  building_edge(edge_source, pt_vdata_long->addrs_src, pt_vdata_long->addrs_trk, pt_vdata_long->status_src, pt_vdata_long->status_trk, pt_vdata_long->matched_price, pt_vdata_long->matched_price, 0, i, path_number, pt_vdata_long->amount_trd, 0);
@@ -187,7 +192,7 @@ void settlement_algorithm_fifo(MatrixTLS &M_file)
 	  PrintToLog("\n*************************************************");
 	  PrintToLog("\nTracking Short Position:");
 	  clearing_operator_fifo(vdata, M_file, i, pt_vdata_short, 1, counting_netted_short, amount_trd_sum_short, path_maini, path_number, pt_vdata_short->nlives_trk);
-
+	  
 	  PrintToLog("\n\nPath #%d:\n\n", path_number);
 	  for (std::vector<std::map<std::string, std::string>>::iterator it = path_maini.begin(); it != path_maini.end(); ++it)
 	    printing_edges(*it);
@@ -197,19 +202,20 @@ void settlement_algorithm_fifo(MatrixTLS &M_file)
   PrintToLog("\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
   PrintToLog("\nChecking Lives by Path:\n\n");
   int counting_paths = 0;
-
+  
   std::vector<std::map<std::string, std::string>> lives_longs;
   std::vector<std::map<std::string, std::string>> lives_shorts;
   std::vector<std::map<std::string, std::string>> ghost_edges_array;
 
   long int sum_oflives = 0;
-  double exit_price_desired = 0;
+  //double exit_price_desired = 0;
+  double vwap_exit_price = 0;
   double PNL_total = 0;
   double gamma_p = 0;
   double gamma_q = 0;
   double sum_gamma_p = 0;
   double sum_gamma_q = 0;
-
+  
   for (it_path_main = path_main.begin(); it_path_main != path_main.end(); ++it_path_main)
     {
       PrintToLog("*******************************************");
@@ -224,14 +230,26 @@ void settlement_algorithm_fifo(MatrixTLS &M_file)
       sum_gamma_p += gamma_p;
       sum_gamma_q += gamma_q;
     }
-
-  exit_price_desired = sum_gamma_p/sum_gamma_q;
-  PrintToLog("\nexit_price_desired: %d\n", exit_price_desired);
+  //exit_price_desired = sum_gamma_p/sum_gamma_q;
+  //PrintToLog("\nexit_price_desired: %d\n", exit_price_desired);
+  
+  /**********************************************/
+  /** Checking VWAP Price for Settlement**/
+  int64_t VWAPALL_USD = mastercore::getVWAPPriceByPair("ALL", "dUSD");
+  PrintToLog("\nVWAPALL_USD = %s\n", FormatDivisibleMP(VWAPALL_USD));
+  
+  int64_t VWAPUSD_ALL = mastercore::getVWAPPriceByPair("dUSD", "ALL");
+  PrintToLog("\nVWAPUSD_ALL = %s\n", FormatDivisibleMP(VWAPUSD_ALL)); 
+  
+  vwap_exit_price = static_cast<long double>(VWAPALL_USD)/COIN;
+  PrintToLog("\nVWAP Price for Settlement = %d\n", vwap_exit_price);
+  /**********************************************/
+  
   counting_lives_longshorts(lives_longs, lives_shorts);
-
+  
   PrintToLog("____________________________________________________");
   PrintToLog("\nGhost Edges Vector:\n");
-  calculating_ghost_edges(lives_longs, lives_shorts, exit_price_desired, ghost_edges_array);
+  calculating_ghost_edges(lives_longs, lives_shorts, vwap_exit_price, ghost_edges_array);
   std::vector<std::map<std::string, std::string>>::iterator it_ghost;
   for (it_ghost = ghost_edges_array.begin(); it_ghost != ghost_edges_array.end(); ++it_ghost)
     {
@@ -255,8 +273,9 @@ void settlement_algorithm_fifo(MatrixTLS &M_file)
       PNL_total += PNL_totalit;
       PrintToLog("\nPNL_total_main sum: %f\n", PNL_total);
     }
+  
   PrintToLog("\n____________________________________________________\n");
-  PrintToLog("\nChecking PNL global (Total Sum PNL by Path) using exit price by Equation found:\n");
+  PrintToLog("\nChecking PNL global (Total Sum PNL by Path):\n");
   PrintToLog("\nPNL_total_main = %f", PNL_total);
   PrintToLog("\n____________________________________________________\n");
 }
@@ -639,7 +658,7 @@ void calculate_pnltrk_bypath(std::vector<std::map<std::string, std::string>> pat
   extern int n_cols;
   extern MatrixTLS *pt_ndatabase; MatrixTLS &ndatabase = *pt_ndatabase;
   VectorTLS jrow_database(n_cols);
-
+  
   PrintToLog("\nChecking PNL in this Path:\n");
   for (it_path = path_main.begin(); it_path != path_main.end(); ++it_path)
     {

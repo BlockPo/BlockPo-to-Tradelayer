@@ -151,9 +151,16 @@ COmniTransactionDB *mastercore::p_OmniTXDB;
 extern std::map<uint32_t, std::map<std::string, double>> addrs_upnlc;
 extern MatrixTLS *pt_ndatabase;
 extern int n_cols;
+extern int n_rows;
 extern std::vector<std::map<std::string, std::string>> path_ele;
 extern std::vector<std::map<std::string, std::string>> path_elef;
-extern int n_rows;
+extern std::map<uint32_t, std::map<uint32_t, int64_t>> market_priceMap;
+extern std::map<uint32_t, std::map<uint32_t, int64_t>> numVWAPMap;
+extern std::map<uint32_t, std::map<uint32_t, int64_t>> denVWAPMap;
+extern std::map<uint32_t, std::map<uint32_t, int64_t>> VWAPMap;
+extern std::map<uint32_t, std::map<uint32_t, int64_t>> VWAPMapSubVector;
+extern std::map<uint32_t, std::map<uint32_t, std::vector<int64_t>>> numVWAPVector;
+extern std::map<uint32_t, std::map<uint32_t, std::vector<int64_t>>> denVWAPVector;
 
 using mastercore::StrToInt64;
 
@@ -2116,6 +2123,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   int nBlockNow = GetHeight();
   
   if (nBlockNow%192 == 0 && nBlockNow != 0 && path_elef.size() != 0) {
+    
     PrintToLog("\nSettlement every 8 hours here. nBlockNow = %d\n", nBlockNow);
     pt_ndatabase = new MatrixTLS(path_elef.size(), n_cols); MatrixTLS &ndatabase = *pt_ndatabase;
     MatrixTLS M_file(path_elef.size(), n_cols);
@@ -2126,8 +2134,18 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
     cout << "\n\n";
     PrintToLog("\nCalling the Settlement Algorithm:\n\n");
     settlement_algorithm_fifo(M_file);
+    
+    /**Unallocating Dynamic Memory**/
     path_elef.clear();
+    market_priceMap.clear();
+    numVWAPMap.clear();
+    denVWAPMap.clear();
+    VWAPMap.clear();
+    VWAPMapSubVector.clear();
+    numVWAPVector.clear();
+    denVWAPVector.clear();
   }
+  
   /**********************************************/
   /** Checking Market Price **/
   
