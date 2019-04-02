@@ -26,6 +26,7 @@
 #include "omnicore/walletcache.h"
 #include "omnicore/wallettxs.h"
 #include "omnicore/mdex.h"
+#include "omnicore/operators_algo_clearing.h"
 #include "arith_uint256.h"
 #include "base58.h"
 #include "chainparams.h"
@@ -123,15 +124,12 @@ std::set<uint32_t> global_wallet_property_list;
  *
  * Can be set with configuration "-autocommit" or RPC "setautocommit_OMNI".
  */
+
 bool autoCommit = true;
-
 static boost::filesystem::path MPPersistencePath;
-
 static int mastercoreInitialized = 0;
-
 static int reorgRecoveryMode = 0;
 static int reorgRecoveryMaxHeight = 0;
-
 extern int64_t globalNumPrice;
 extern int64_t globalDenPrice;
 extern int64_t factorE;
@@ -151,6 +149,11 @@ CMPTxList *mastercore::p_txlistdb;
 CMPTradeList *mastercore::t_tradelistdb;
 COmniTransactionDB *mastercore::p_OmniTXDB;
 extern std::map<uint32_t, std::map<std::string, double>> addrs_upnlc;
+extern MatrixTLS *pt_ndatabase;
+extern int n_cols;
+extern std::vector<std::map<std::string, std::string>> path_ele;
+extern std::vector<std::map<std::string, std::string>> path_elef;
+extern int n_rows;
 
 using mastercore::StrToInt64;
 
@@ -2098,13 +2101,27 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   // if for some reason the incoming TX doesn't pass our parser validation steps successfuly, I'd still want to clear pending amounts for that TX.
   // NOTE2: Plus I wanna clear the amount before that TX is parsed by our protocol, in case we ever consider pending amounts in internal calculations.
   PendingDelete(tx.GetHash());
-
+  
   // we do not care about parsing blocks prior to our waterline (empty blockchain defense)
   if (nBlock < nWaterlineBlock) return false;
   int64_t nBlockTime = pBlockIndex->GetBlockTime();
-  // PrintToLog("\nBlock counter: %d, lastBlockg = %d\n", static_cast<int>(pBlockIndex->nHeight), lastBlockg);
   
-  /***********************************************/
+  int nBlockNow = GetHeight();
+  
+  if (nBlockNow%192 == 0 && nBlockNow != 0 && path_elef.size() != 0) {
+    PrintToLog("\nSettlement every 8 hours here. nBlockNow = %d\n", nBlockNow);
+    pt_ndatabase = new MatrixTLS(path_elef.size(), n_cols); MatrixTLS &ndatabase = *pt_ndatabase;
+    MatrixTLS M_file(path_elef.size(), n_cols);
+    fillingMatrix(M_file, ndatabase, path_elef);
+    n_rows = size(M_file, 0);
+    PrintToLog("Matrix for Settlement: dim = (%d, %d)\n\n", n_rows, n_cols);
+    printing_matrix(M_file);
+    cout << "\n\n";
+    PrintToLog("\nCalling the Settlement Algorithm:\n\n");
+    settlement_algorithm_fifo(M_file);
+    path_elef.clear();
+  }
+  /**********************************************/
   /** Checking Market Price **/
   
   int64_t priceALL_USD = mastercore::getPairMarketPrice("ALL", "dUSD");
@@ -2297,12 +2314,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   const CConsensusParams &params = ConsensusParams();
   vestingActivationBlock = params.MSC_VESTING_BLOCK;
   
-  if (static_cast<int>(pBlockIndex->nHeight) == params.MSC_VESTING_BLOCK)
-    {
-      creatingVestingTokens();
-      //int64_t vestingBalance  = getMPbalance("QSsJXDFb4b3vTgqeycrHtkYTYKmCk4TJn1", OMNI_PROPERTY_ALL, UNVESTED);
-      //PrintToLog("\nvestingBalance QSsJXDFb4b3vTgqeycrHtkYTYKmCk4TJn1:  %d\n", vestingBalance);
-    }
+  if (static_cast<int>(pBlockIndex->nHeight) == params.MSC_VESTING_BLOCK) creatingVestingTokens();   
   
   int deadline = sp.init_block + expirationBlock;
   if ( tradeBlock != 0 && deadline != 0 ) checkExpiration = tradeBlock == deadline ? 1 : 0;
@@ -2310,10 +2322,6 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   if (checkExpiration) {
     idx_expiration += 1;
     if ( idx_expiration == 2 ) {
-      // PrintToLog("\nExpiration Date Achieve\n");
-      // PrintToLog("deadline: %d\n", deadline);
-      // PrintToLog("expirationBlock: %d\n", static_cast<int>(expirationBlock));
-      // PrintToLog("nBlockTime: %d\n", static_cast<int>(nBlockTime));
       expirationAchieve = 1;
     } else expirationAchieve = 0;
   } else expirationAchieve = 0;
@@ -3315,10 +3323,12 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
     {
       buildingEdge(edgeEle, address1, address2, s_maker1, s_taker1, lives_s1, lives_b1, nCouldBuy1, effective_price, idx_q, 0);
       path_ele.push_back(edgeEle);
+      path_elef.push_back(edgeEle);
       path_eleh.push_back(edgeEle);
       buildingEdge(edgeEle, address1, address2, s_maker2, s_taker2, lives_s2, lives_b2, nCouldBuy2, effective_price, idx_q, 0);
       path_ele.push_back(edgeEle);
       path_eleh.push_back(edgeEle);
+      path_elef.push_back(edgeEle);
       // PrintToLog("Line 1: %s\n", line1);
       // PrintToLog("Line 2: %s\n", line2);
       number_lines += 2;
@@ -3327,6 +3337,7 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
 	  buildingEdge(edgeEle, address1, address2, s_maker3, s_taker3, lives_s3, lives_b3,nCouldBuy3,effective_price,idx_q,0);
 	  path_ele.push_back(edgeEle);
 	  path_eleh.push_back(edgeEle);
+	  path_elef.push_back(edgeEle);
 	  // PrintToLog("Line 3: %s\n", line3);
 	  number_lines += 1;
 	}
@@ -3336,13 +3347,14 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
       buildingEdge(edgeEle, address1, address2, s_maker0, s_taker0, lives_s0, lives_b0, nCouldBuy0, effective_price, idx_q, 0);
       path_ele.push_back(edgeEle);
       path_eleh.push_back(edgeEle);
+      path_elef.push_back(edgeEle);
       // PrintToLog("Line 0: %s\n", line0);
       number_lines += 1;
     }
-
-  // PrintToLog("\nPath Ele inside recordMatchedTrade. Length last match = %d\n", number_lines);
+  
+  PrintToLog("\nPath Ele inside recordMatchedTrade. Length last match = %d\n", number_lines);
   for (it_path_ele = path_ele.begin(); it_path_ele != path_ele.end(); ++it_path_ele) printing_edges_database(*it_path_ele);
-
+  
   loopForUPNL(path_ele, path_eleh, path_length, address1, address2, s_maker0, s_taker0, UPNL1, UPNL2, effective_price, nCouldBuy0);
 
   unsigned int limSup = path_ele.size()-path_length;

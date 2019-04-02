@@ -14,6 +14,7 @@
 #include "omnicore/externfns.h"
 #include "omnicore/operators_algo_clearing.h"
 #include "validation.h"
+#include "utilsbitcoin.h"
 #include <univalue.h>
 #include <boost/lexical_cast.hpp>
 #include <boost/multiprecision/cpp_int.hpp>
@@ -103,21 +104,21 @@ void mastercore::LoopBiDirectional(cd_PricesMap* const ppriceMap, uint8_t trdAct
   cd_PricesMap::iterator it_fwdPrices;
   cd_PricesMap::reverse_iterator it_bwdPrices;
   std::vector<std::map<std::string, std::string>>::iterator it_path_ele;
-
-  /** Calling for settlement algorithm when the expiration date has been achieved */
-  if ( expirationAchieve )
-    {
-      // PrintToLog("expirationAchieve: %d\n", expirationAchieve);
-      pt_ndatabase = new MatrixTLS(path_ele.size(), n_cols); MatrixTLS &ndatabase = *pt_ndatabase;
-      MatrixTLS M_file(path_ele.size(), n_cols);
-      fillingMatrix(M_file, ndatabase, path_ele);
-      n_rows = size(M_file, 0);
-      // PrintToLog("Matrix for Settlement: dim = (%d, %d)\n\n", n_rows, n_cols);
-      printing_matrix(M_file);
-      cout << "\n\n";
-      // PrintToLog("\nCalling the Settlement Algorithm:\n\n");
-      settlement_algorithm_fifo(M_file);
-    }
+  
+  /** Calling for settlement algorithm when the expiration date has been achieved **/  
+  // if (expirationAchieve)
+  //   {
+  //     PrintToLog("\n Settlement every 8 hours\n");
+  //     pt_ndatabase = new MatrixTLS(path_ele.size(), n_cols); MatrixTLS &ndatabase = *pt_ndatabase;
+  //     MatrixTLS M_file(path_ele.size(), n_cols);
+  //     fillingMatrix(M_file, ndatabase, path_ele);
+  //     n_rows = size(M_file, 0);
+  //     // PrintToLog("Matrix for Settlement: dim = (%d, %d)\n\n", n_rows, n_cols);
+  //     printing_matrix(M_file);
+  //     cout << "\n\n";
+  //     // PrintToLog("\nCalling the Settlement Algorithm:\n\n");
+  //     settlement_algorithm_fifo(M_file);
+  //   }
   
   if ( trdAction == BUY )
     {
@@ -180,11 +181,11 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       idx_q += 1;
       // const int idx_qp = idx_q;
       // PrintToLog("Checking idx_q = %d", idx_qp);
-
+      
       /********************************************************/
       /** Preconditions */
       assert(pold->getProperty() == pnew->getProperty());
-
+      
       //
       // PrintToLog("________________________________________________________\n");
       // PrintToLog("Inside x_trade:\n");
@@ -215,12 +216,12 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       int64_t negative_sell  = (pold->getTradingAction() == SELL) ? poldNegativeBalanceB : pnewNegativeBalanceB;
       int64_t possitive_buy  = (pold->getTradingAction() == SELL) ? pnewPositiveBalanceB : poldPositiveBalanceB;
       int64_t negative_buy   = (pold->getTradingAction() == SELL) ? pnewNegativeBalanceB : poldNegativeBalanceB;
-
+      
       int64_t seller_amount  = (pold->getTradingAction() == SELL) ? pold->getAmountForSale() : pnew->getAmountForSale();
       int64_t buyer_amount   = (pold->getTradingAction() == SELL) ? pnew->getAmountForSale() : pold->getAmountForSale();
       std::string seller_address = (pold->getTradingAction() == SELL) ? pold->getAddr() : pnew->getAddr();
       std::string buyer_address  = (pold->getTradingAction() == SELL) ? pnew->getAddr() : pold->getAddr();
-
+      
       /********************************************************/
       int64_t nCouldBuy = buyer_amount < seller_amount ? buyer_amount : seller_amount;
       // PrintToLog("This is the nCouldBuy %d\n", nCouldBuy);
@@ -236,7 +237,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       /********************************************************/
       int64_t difference_s = 0, difference_b = 0;
       bool boolAddresses = pold->getAddr() != pnew->getAddr();
-
+      
       if (boolAddresses)
 	{
 	  if ( possitive_sell != 0 )
@@ -378,7 +379,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       	}
       /********************************************************/
       int64_t lives_maker = 0, lives_taker = 0;
-
+      
       if( creplPositiveBalance > 0 && creplNegativeBalance == 0 )
       	lives_maker = creplPositiveBalance;
       else if( creplNegativeBalance > 0 && creplPositiveBalance == 0 )
@@ -407,7 +408,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
 
       std::string Status_s0 = "EmptyStr", Status_s1 = "EmptyStr", Status_s2 = "EmptyStr", Status_s3 = "EmptyStr";
       std::string Status_b0 = "EmptyStr", Status_b1 = "EmptyStr", Status_b2 = "EmptyStr", Status_b3 = "EmptyStr";
-
+      
       int64_t lives_maker0 = 0, lives_maker1 = 0, lives_maker2 = 0, lives_maker3 = 0;
       int64_t lives_taker0 = 0, lives_taker1 = 0, lives_taker2 = 0, lives_taker3 = 0;
       int64_t nCouldBuy0 = 0, nCouldBuy1 = 0, nCouldBuy2 = 0, nCouldBuy3 = 0;
@@ -1285,26 +1286,30 @@ MatchReturnType x_Trade(CMPMetaDEx* const pnew)
 	    rational_t market_priceratToken1_Token2(pold_desired, pold_forsale);
 	    int64_t market_priceToken1_Token2 = mastercore::RationalToInt64(market_priceratToken1_Token2);
 	    market_priceMap[pold->getProperty()][pold->getDesProperty()] = market_priceToken1_Token2;
-	    PrintToLog("\nmarket_priceToken1_Token2 MetaDEx = %s\n", FormatDivisibleMP(market_priceMap[pold->getProperty()][pold->getDesProperty()]));
+	    PrintToLog("\nmarket_priceToken1_Token2 MetaDEx = %s\n",
+		       FormatDivisibleMP(market_priceMap[pold->getProperty()][pold->getDesProperty()]));
 	    
 	    rational_t market_priceratToken2_Token1(pnew_desired, pnew_forsale);
 	    int64_t market_priceToken2_Token1 = mastercore::RationalToInt64(market_priceratToken2_Token1);
 	    market_priceMap[pnew->getProperty()][pnew->getDesProperty()] = market_priceToken2_Token1;
-	    PrintToLog("\nmarket_priceToken2_Token1 MetaDEx = %s\n", FormatDivisibleMP(market_priceMap[pnew->getProperty()][pnew->getDesProperty()]));
+	    PrintToLog("\nmarket_priceToken2_Token1 MetaDEx = %s\n",
+		       FormatDivisibleMP(market_priceMap[pnew->getProperty()][pnew->getDesProperty()]));
 
 	    PrintToLog("\npold_forsale = %s,\t pold_desired = %s\n", FormatDivisibleMP(pold_forsale), FormatDivisibleMP(pold_desired));
 	    PrintToLog("\npnew_forsale = %s,\t pnew_desired = %s\n", FormatDivisibleMP(pnew_forsale), FormatDivisibleMP(pnew_desired));
 	    
 	    PrintToLog("\n********************************************************************************\n");
 	    /** Finding VWAP Price **/	    
-	    PrintToLog("\nbuyer_amountGot = %s,\t seller_amountGot = %s\n", FormatDivisibleMP(buyer_amountGot), FormatDivisibleMP(seller_amountGot));
+	    PrintToLog("\nbuyer_amountGot = %s,\t seller_amountGot = %s\n", FormatDivisibleMP(buyer_amountGot),
+		       FormatDivisibleMP(seller_amountGot));
 	    
 	    arith_uint256 numVWAPMapToken1_Token2_256t = mastercore::ConvertTo256(market_priceToken1_Token2)*mastercore::ConvertTo256(buyer_amountGot)/COIN;
 	    int64_t numVWAPMapToken1_Token2_64t = mastercore::ConvertTo64(numVWAPMapToken1_Token2_256t);
 	    numVWAPMap[pold->getProperty()][pold->getDesProperty()] += numVWAPMapToken1_Token2_64t;
 	    denVWAPMap[pold->getProperty()][pold->getDesProperty()] += buyer_amountGot;
 	    
-	    rational_t vwapPriceToken1_Token2Rat(numVWAPMap[pold->getProperty()][pold->getDesProperty()], denVWAPMap[pold->getProperty()][pold->getDesProperty()]);
+	    rational_t vwapPriceToken1_Token2Rat(numVWAPMap[pold->getProperty()][pold->getDesProperty()],
+						 denVWAPMap[pold->getProperty()][pold->getDesProperty()]);
 	    int64_t vwapPriceToken1_Token2Int64 = mastercore::RationalToInt64(vwapPriceToken1_Token2Rat);
 	    VWAPMap[pold->getProperty()][pold->getDesProperty()]=vwapPriceToken1_Token2Int64;
 	    
@@ -1313,12 +1318,15 @@ MatchReturnType x_Trade(CMPMetaDEx* const pnew)
 	    numVWAPMap[pnew->getProperty()][pnew->getDesProperty()] += numVWAPMapToken2_Token1_64t;
 	    denVWAPMap[pnew->getProperty()][pnew->getDesProperty()] += seller_amountGot;
 	    
-	    rational_t vwapPriceToken2_Token1Rat(numVWAPMap[pnew->getProperty()][pnew->getDesProperty()], denVWAPMap[pnew->getProperty()][pnew->getDesProperty()]);
+	    rational_t vwapPriceToken2_Token1Rat(numVWAPMap[pnew->getProperty()][pnew->getDesProperty()],
+						 denVWAPMap[pnew->getProperty()][pnew->getDesProperty()]);
 	    int64_t vwapPriceToken2_Token1Int64 = mastercore::RationalToInt64(vwapPriceToken2_Token1Rat);
 	    VWAPMap[pnew->getProperty()][pnew->getDesProperty()]=vwapPriceToken2_Token1Int64;
 	    
-	    PrintToLog("\nVWAPMap[pold->getProperty()][pold->getDesProperty()] = %s\n", FormatDivisibleMP(VWAPMap[pold->getProperty()][pold->getDesProperty()]));
-	    PrintToLog("\nVWAPMap[pnew->getProperty()][pnew->getDesProperty()] = %s\n", FormatDivisibleMP(VWAPMap[pnew->getProperty()][pnew->getDesProperty()]));
+	    PrintToLog("\nVWAPMap[pold->getProperty()][pold->getDesProperty()] = %s\n",
+		       FormatDivisibleMP(VWAPMap[pold->getProperty()][pold->getDesProperty()]));
+	    PrintToLog("\nVWAPMap[pnew->getProperty()][pnew->getDesProperty()] = %s\n",
+		       FormatDivisibleMP(VWAPMap[pnew->getProperty()][pnew->getDesProperty()]));
 	    
 	    PrintToLog("\n********************************************************************************\n");
 	    /** VWAP for the last N trades **/
@@ -1329,8 +1337,10 @@ MatchReturnType x_Trade(CMPMetaDEx* const pnew)
 	    numVWAPVector[pnew->getProperty()][pnew->getDesProperty()].push_back(numVWAPMapToken2_Token1_64t);
 	    denVWAPVector[pnew->getProperty()][pnew->getDesProperty()].push_back(seller_amountGot);
 	    
-	    PrintToLog("numVWAPVector[pold->getProperty()][pold->getDesProperty()].size() = %d", numVWAPVector[pold->getProperty()][pold->getDesProperty()].size());
-	    PrintToLog("numVWAPVector[pnew->getProperty()][pnew->getDesProperty()].size() = %d", numVWAPVector[pnew->getProperty()][pnew->getDesProperty()].size());	   
+	    PrintToLog("numVWAPVector[pold->getProperty()][pold->getDesProperty()].size() = %d",
+		       numVWAPVector[pold->getProperty()][pold->getDesProperty()].size());
+	    PrintToLog("numVWAPVector[pnew->getProperty()][pnew->getDesProperty()].size() = %d",
+		       numVWAPVector[pnew->getProperty()][pnew->getDesProperty()].size());	   
 	    
 	    std::vector<int64_t> numVWAPpoldv(numVWAPVector[pold->getProperty()][pold->getDesProperty()].end()-
 					      std::min(int(numVWAPVector[pold->getProperty()][pold->getDesProperty()].size()), volumeToVWAP),
@@ -1386,7 +1396,7 @@ MatchReturnType x_Trade(CMPMetaDEx* const pnew)
 	    /***********************************************************************************************/
             int64_t buyer_amountGotAfterFee = buyer_amountGot;
             int64_t tradingFee = 0;
-
+	    
             // strip a 0.05% fee from non-OMNI pairs if fees are activated
             if (IsFeatureActivated(FEATURE_FEES, pnew->getBlock())) {
 	      if (pold->getProperty() > OMNI_PROPERTY_TALL && pold->getDesProperty() > OMNI_PROPERTY_TALL) {
@@ -1479,9 +1489,9 @@ MatchReturnType x_Trade(CMPContractDex* const pnew)
       PrintToLog("%s()=%d:%s NOT FOUND ON THE MARKET\n", __FUNCTION__, NewReturn, getTradeReturnType(NewReturn));
       return NewReturn;
     }
-
+  
   LoopBiDirectional(ppriceMap, trdAction, NewReturn, pnew, propertyForSale);
-
+  
   return NewReturn;
 }
 
@@ -1521,18 +1531,18 @@ std::string CMPMetaDEx::displayUnitPrice() const
  */
 std::string CMPMetaDEx::displayFullUnitPrice() const
 {
-    rational_t tempUnitPrice = unitPrice();
-
-    /* Matching types require no action (divisible/divisible or indivisible/indivisible)
-       Non-matching types require adjustment for display purposes
-           divisible/indivisible   : *COIN
-           indivisible/divisible   : /COIN
-    */
-    if ( isPropertyDivisible(getProperty()) && !isPropertyDivisible(getDesProperty()) ) tempUnitPrice = tempUnitPrice*COIN;
-    if ( !isPropertyDivisible(getProperty()) && isPropertyDivisible(getDesProperty()) ) tempUnitPrice = tempUnitPrice/COIN;
-
-    std::string unitPriceStr = xToString(tempUnitPrice);
-    return unitPriceStr;
+  rational_t tempUnitPrice = unitPrice();
+  
+  /* Matching types require no action (divisible/divisible or indivisible/indivisible)
+     Non-matching types require adjustment for display purposes
+     divisible/indivisible   : *COIN
+     indivisible/divisible   : /COIN
+  */
+  if ( isPropertyDivisible(getProperty()) && !isPropertyDivisible(getDesProperty()) ) tempUnitPrice = tempUnitPrice*COIN;
+  if ( !isPropertyDivisible(getProperty()) && isPropertyDivisible(getDesProperty()) ) tempUnitPrice = tempUnitPrice/COIN;
+  
+  std::string unitPriceStr = xToString(tempUnitPrice);
+  return unitPriceStr;
 }
 
 //////////////////////////////////////

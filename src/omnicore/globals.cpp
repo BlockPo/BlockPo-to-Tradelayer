@@ -22,6 +22,7 @@ volatile int id_contract;
 volatile int idx_q;
 volatile unsigned int path_length;
 std::vector<std::map<std::string, std::string>> path_ele;
+std::vector<std::map<std::string, std::string>> path_elef;
 int n_cols;
 int n_rows;
 int idx_expiration;
@@ -61,4 +62,3 @@ volatile int64_t LastQuad;
 volatile int64_t LastLog;
 std::string admin_addrs;
 int volumeToVWAP;
-
