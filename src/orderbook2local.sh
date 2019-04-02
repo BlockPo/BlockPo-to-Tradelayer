@@ -37,7 +37,7 @@ printf "\n________________________________________\n"
 printf "Base address to work with:\n"
 printf $ADDRBase
 
-N=10
+N=100
 
 amount_bitcoin=10
 amountbitcoin_baseaddr=100
