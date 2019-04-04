@@ -1,13 +1,13 @@
 #!/bin/bash
 
-SRCDIR=/root/dev-lihki-domake/src
+SRCDIR=/home/blockpo/dev-lihki-domake/src
 
-DATADIR=/root/chain-lihki
+DATADIR=/home/blockpo/chain-lihki
 NUL=/dev/null
 printf "\n//////////////////////////////////////////\n"
 printf "Cleaning the regtest folder\n"
 
-sudo rm -r /root/chain-lihki/regtest
+sudo rm -r /home/blockpo/chain-lihki/regtest
 sudo rm graphInfo*
 
 printf "\n________________________________________\n"

@@ -3,6 +3,7 @@
 #include "omnicore/externfns.h"
 #include "omnicore/log.h"
 #include "omnicore/mdex.h"
+#include "omnicore/omnicore.h"
 #include "amount.h"
 #include <unordered_set>
 #include <limits>
@@ -250,18 +251,23 @@ void settlement_algorithm_fifo(MatrixTLS &M_file)
   PrintToLog("____________________________________________________");
   PrintToLog("\nGhost Edges Vector:\n");
   calculating_ghost_edges(lives_longs, lives_shorts, vwap_exit_price, ghost_edges_array);
+
   std::vector<std::map<std::string, std::string>>::iterator it_ghost;
   for (it_ghost = ghost_edges_array.begin(); it_ghost != ghost_edges_array.end(); ++it_ghost)
     {
       printing_edges(*it_ghost);
     }
-
+  
   PrintToLog("____________________________________________________");
+
   joining_pathmain_ghostedges(path_main, ghost_edges_array);
   int k = 0;
   long int nonzero_lives;
   double PNL_totalit;
-
+  
+  std::unordered_set<std::string> addrs_set;
+  std::vector<std::string> addrsv;
+  
   for (it_path_main = path_main.begin(); it_path_main != path_main.end(); ++it_path_main)
     {
       k += 1;
@@ -269,9 +275,12 @@ void settlement_algorithm_fifo(MatrixTLS &M_file)
       printing_path_maini(*it_path_main);
       nonzero_lives = checkpath_livesnonzero(*it_path_main);
       checkzeronetted_bypath_ghostedges(*it_path_main, nonzero_lives);
-      calculate_pnltrk_bypath(*it_path_main, PNL_totalit);
+      listof_addresses_bypath(*it_path_main, addrsv);
+      PrintToLog("\nComputing PNL in this Path\n");
+      calculate_pnltrk_bypath(*it_path_main, PNL_totalit, addrs_set, addrsv);
       PNL_total += PNL_totalit;
       PrintToLog("\nPNL_total_main sum: %f\n", PNL_total);
+      addrs_set.clear();
     }
   
   PrintToLog("\n____________________________________________________\n");
@@ -604,7 +613,7 @@ void computing_settlement_exitprice(std::vector<std::map<std::string, std::strin
   long int sum_oflivesh = 0;
   std::unordered_set<std::string> addrs_set;
   std::vector<std::string> addrsv;
-
+  
   for (std::vector<std::map<std::string, std::string>>::iterator it = it_path_main.begin(); it != it_path_main.end(); ++it)
     {
       std::map<std::string, std::string> &it_ele = *it;
@@ -618,6 +627,7 @@ void computing_settlement_exitprice(std::vector<std::map<std::string, std::strin
       listof_addresses_bypath(it_path_main, addrsv);
       calculate_pnltrk_bypath(it_path_main, PNL_total, addrs_set, addrsv);
       getting_gammapq_bypath(it_path_main, PNL_total, gamma_p, gamma_q, addrs_set);
+      addrs_set.clear();
     }
 }
 
@@ -630,7 +640,7 @@ void calculate_pnltrk_bypath(std::vector<std::map<std::string, std::string>> &pa
   extern int n_cols;
   extern MatrixTLS *pt_ndatabase; MatrixTLS &ndatabase = *pt_ndatabase;
   VectorTLS jrow_database(n_cols);
-
+  
   for (std::vector<std::string>::iterator it_addrs = addrsv.begin(); it_addrs != addrsv.end(); ++it_addrs)
     {
       addrsit = *it_addrs;
@@ -642,11 +652,17 @@ void calculate_pnltrk_bypath(std::vector<std::map<std::string, std::string>> &pa
 	      sub_row(jrow_database, ndatabase, stol(edge_path["edge_row"]));
 	      struct status_amounts *pt_jrow_database = get_status_amounts_byaddrs(jrow_database, addrsit);
 	      addrs_set.insert(addrsit);
-	      PNL_trk = PNL_function(stod(edge_path["entry_price"]), stod(edge_path["exit_price"]), stol(edge_path["amount_trd"]), pt_jrow_database);
+	      PNL_trk = PNL_function(stod(edge_path["entry_price"]), stod(edge_path["exit_price"]),
+				     stol(edge_path["amount_trd"]), pt_jrow_database);
 	      sumPNL_trk += PNL_trk;
+	      if (mastercore::DoubleToInt64(PNL_trk) != 0)
+	      	{
+		  PrintToLog("mastercore::DoubleToInt64(PNL_trk) = %s", FormatDivisibleMP(mastercore::DoubleToInt64(PNL_trk)));
+	      	  assert(mastercore::update_tally_map(addrsit, OMNI_PROPERTY_ALL, mastercore::DoubleToInt64(PNL_trk), BALANCE));
+	      	}
 	    }
 	}
-    }
+    }  
   PNL_total = sumPNL_trk;
 }
 
