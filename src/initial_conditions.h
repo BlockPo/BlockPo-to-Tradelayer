@@ -64,5 +64,5 @@ totalVesting = 1500000*COIN;
 amountVesting = (1500000/nVestingAddrs)*COIN;
 volumeToVWAP = 2;
 /** Admin address **/
-admin_addrs = "mvgwqiCqTVtmS954RJvemj2DnvnH7NhiTF"; /**Testnet**/
-//admin_addrs = "QdgkwBVmz3uAtXiQdbbiAsTp1SDQS9zRt9"; /**Regtest**/
+//admin_addrs = "mvgwqiCqTVtmS954RJvemj2DnvnH7NhiTF"; /**Testnet**/
+admin_addrs = "QdgkwBVmz3uAtXiQdbbiAsTp1SDQS9zRt9"; /**Regtest**/
