@@ -327,7 +327,6 @@ public:
     bool getMatchingTrades(uint32_t propertyId, UniValue& tradeArray);
     bool getMatchingTradesUnfiltered(uint32_t propertyId, UniValue& tradeArray);
     double getPNL(string address, int64_t contractsClosed, int64_t price, uint32_t property, uint32_t marginRequirementContract, uint32_t notionalSize, std::string Status);
-    void marginLogic(uint32_t property);
     double getUPNL(string address, uint32_t contractId);
     int64_t getTradeAllsByTxId(uint256& txid);
     /** Used to notify that the number of tokens for a property has changed. */
@@ -398,10 +397,6 @@ namespace mastercore
 
   /* New things for contracts *///////////////////////////////////////////////////
   rational_t notionalChange(uint32_t contractId);
-  // bool marginCheck(const std::string address);
-  bool marginNeeded(const std::string address, int64_t amountTraded, uint32_t contractId);
-  bool marginBack(const std::string address, int64_t amountTraded, uint32_t contractId);
-  ////////////////////////////////////////////////////////////////////////////////
 
   bool isMPinBlockRange(int starting_block, int ending_block, bool bDeleteFound);
 
