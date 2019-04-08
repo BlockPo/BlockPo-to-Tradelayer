@@ -275,7 +275,6 @@ uint64_t ParseEffectivePrice(const UniValue& value, uint32_t contractId)
     throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
   }
 
-  PrintToLog("effPrice: %d\n*****************************************",effPrice);
   return effPrice;
 }
 
@@ -324,21 +323,21 @@ uint32_t ParseContractType(const UniValue& value)
   }
   return static_cast<uint32_t>(Nvalue);
 
-  // if (Nvalue != 1 && Nvalue != 2 && Nvalue != 3 && Nvalue != 4) {
-  //   throw JSONRPCError(RPC_INVALID_PARAMETER, "option no valid");
-  // }
-  //
-  // if ( Nvalue == 1 ) {
-  //   return weekly;
-  // } else if ( Nvalue == 2 ) {
-  //   return monthly;
-  // } else if ( Nvalue == 3 ) {
-  //   return time25minutes;
-  // } else if ( Nvalue == 4 ) {
-  //   return time4hours;
-  // }
-  //
-  // return 0;
+  /*if (Nvalue != 1 && Nvalue != 2 && Nvalue != 3 && Nvalue != 4) {
+    throw JSONRPCError(RPC_INVALID_PARAMETER, "option no valid");
+  }
+
+  if ( Nvalue == 1 ) {
+    return weekly;
+  } else if ( Nvalue == 2 ) {
+    return monthly;
+  } else if ( Nvalue == 3 ) {
+    return time25minutes;
+  } else if ( Nvalue == 4 ) {
+    return time4hours;
+  }
+
+  return 0; */
 
 }
 
