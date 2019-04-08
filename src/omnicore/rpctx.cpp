@@ -95,20 +95,20 @@ UniValue tl_send(const JSONRPCRequest& request)
             + HelpExampleCli("tl_send", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\" \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\" 1 \"100.0\"")
             + HelpExampleRpc("tl_send", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\", \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\", 1, \"100.0\"")
         );
-    
+
     // obtain parameters & info
     std::string fromAddress = ParseAddress(request.params[0]);
     std::string toAddress = ParseAddress(request.params[1]);
     uint32_t propertyId = ParsePropertyId(request.params[2]);
     int64_t amount = ParseAmount(request.params[3], isPropertyDivisible(propertyId));
     int64_t referenceAmount = (request.params.size() > 4) ? ParseAmount(request.params[4], true): 0;
-    
+
     // perform checks
     RequireExistingProperty(propertyId);
     RequireNotContract(propertyId);
     RequireBalance(fromAddress, propertyId, amount);
     RequireSaneReferenceAmount(referenceAmount);
-    
+
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_SimpleSend(propertyId, amount);
 
@@ -135,42 +135,42 @@ UniValue tl_sendvesting(const JSONRPCRequest& request)
   if (request.params.size() < 4 || request.params.size() > 6)
     throw runtime_error(
 			"tl_send \"fromaddress\" \"toaddress\" propertyid \"amount\" ( \"referenceamount\" )\n"
-			
+
 			"\nCreate and broadcast a simple send transaction.\n"
-			
+
 			"\nArguments:\n"
 			"1. fromaddress          (string, required) the address to send from\n"
 			"2. toaddress            (string, required) the address of the receiver\n"
 			"3. propertyid           (number, required) the identifier of the tokens to send\n"
 			"4. amount               (string, required) the amount of vesting tokens to send\n"
-			
+
 			"\nResult:\n"
 			"\"hash\"                  (string) the hex-encoded transaction hash\n"
-			
+
 			"\nExamples:\n"
 			+ HelpExampleCli("tl_send", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\" \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\" 1 \"100.0\"")
 			+ HelpExampleRpc("tl_send", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\", \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\", 1, \"100.0\"")
 			);
-  
+
   // obtain parameters & info
   std::string fromAddress = ParseAddress(request.params[0]);
   std::string toAddress = ParseAddress(request.params[1]);
   uint32_t propertyId = ParsePropertyId(request.params[2]); /** id=3 Vesting Tokens**/
   int64_t amount = ParseAmount(request.params[3], true);
-  
+
   PrintToLog("propertyid = %d\n", propertyId);
   PrintToLog("amount = %d\n", amount);
   PrintToLog("fromAddress = %s", fromAddress);
   PrintToLog("toAddress = %s", toAddress);
-  
+
   // create a payload for the transaction
   std::vector<unsigned char> payload = CreatePayload_SendVestingTokens(propertyId, amount);
-  
+
   // request the wallet build the transaction (and if needed commit it)
   uint256 txid;
   std::string rawHex;
   int result = WalletTxBuilder(fromAddress, toAddress,0, payload, txid, rawHex, autoCommit);
-  
+
   // check error and return the txid (or raw hex depending on autocommit)
   if (result != 0) {
     throw JSONRPCError(result, error_str(result));
@@ -773,16 +773,15 @@ UniValue tl_sendalert(const JSONRPCRequest& request)
         }
     }
 }
-//////////////////////////////////////
-/** New things for Contract */
+
 UniValue tl_sendtrade(const JSONRPCRequest& request)
 {
   if (request.params.size() != 5) {
     throw runtime_error(
 			"tl_sendtrade \"fromaddress\" propertyidforsale \"amountforsale\" propertiddesired \"amountdesired\"\n"
-			
+
 			"\nPlace a trade offer on the distributed token exchange.\n"
-			
+
 			"\nArguments:\n"
 			"1. fromaddress          (string, required) the address to trade with\n"
 			"2. propertyidforsale    (number, required) the identifier of the tokens to list for sale\n"
@@ -804,15 +803,15 @@ UniValue tl_sendtrade(const JSONRPCRequest& request)
   int64_t amountForSale = ParseAmount(request.params[2], isPropertyDivisible(propertyIdForSale));
   uint32_t propertyIdDesired = ParsePropertyId(request.params[3]);
   int64_t amountDesired = ParseAmount(request.params[4], isPropertyDivisible(propertyIdDesired));
-  
+
   // perform checks
-  // RequireExistingProperty(propertyIdForSale);
-  // RequireNotContract(propertyIdForSale);
-  // RequireNotVesting(propertyIdForSale);
-  // RequireExistingProperty(propertyIdDesired);
-  // RequireNotContract(propertyIdDesired);
-  // RequireNotVesting(propertyIdDesired);
-  
+  RequireExistingProperty(propertyIdForSale);
+  RequireNotContract(propertyIdForSale);
+  RequireNotVesting(propertyIdForSale);
+  RequireExistingProperty(propertyIdDesired);
+  RequireNotContract(propertyIdDesired);
+  RequireNotVesting(propertyIdDesired);
+
   // create a payload for the transaction
   std::vector<unsigned char> payload = CreatePayload_MetaDExTrade(propertyIdForSale, amountForSale, propertyIdDesired, amountDesired);
 
@@ -859,7 +858,7 @@ UniValue tl_createcontract(const JSONRPCRequest& request)
 			+ HelpExampleCli("tl_createcontract", "2 1 0 \"Companies\" \"Bitcoin Mining\" \"Quantum Miner\" \"\" \"\" 2 \"100\" 1483228800 30 2 4461 100 1 25")
 			+ HelpExampleRpc("tl_createcontract", "2, 1, 0, \"Companies\", \"Bitcoin Mining\", \"Quantum Miner\", \"\", \"\", 2, \"100\", 1483228800, 30, 2, 4461, 100, 1, 25")
 			);
-  
+
   std::string fromAddress = ParseAddress(request.params[0]);
   uint8_t ecosystem = ParseEcosystem(request.params[1]);
   uint32_t type = ParseContractType(request.params[2]);
@@ -924,7 +923,7 @@ UniValue tl_tradecontract(const JSONRPCRequest& request)
   uint64_t effective_price = ParseEffectivePrice(request.params[3]);
   uint8_t trading_action = ParseContractDexAction(request.params[4]);
   uint64_t leverage = ParseLeverage(request.params[5]);
-  
+
   RequireCollateral(fromAddress,name_traded);
 
   std::vector<unsigned char> payload = CreatePayload_ContractDexTrade(name_traded, amountForSale, effective_price, trading_action, leverage);
@@ -957,47 +956,42 @@ UniValue tl_cancelallcontractsbyaddress(const JSONRPCRequest& request)
   if (request.params.size() != 3)
     throw runtime_error(
 			"tl_cancelallcontractsbyaddress \"fromaddress\" ecosystem\n"
-			
+
 			"\nCancel all offers on a given Futures Contract .\n"
-			
+
 			"\nArguments:\n"
 			"1. fromaddress          (string, required) the address to trade with\n"
 			"2. ecosystem            (number, required) the ecosystem of the offers to cancel (1 for main ecosystem, 2 for test ecosystem)\n"
 			"3. contractId           (number, required) the Id of Future Contract \n"
 			"\nResult:\n"
 			"\"hash\"                  (string) the hex-encoded transaction hash\n"
-			
+
 			"\nExamples:\n"
 			+ HelpExampleCli("tl_cancelallcontractsbyaddress", "\"3BydPiSLPP3DR5cf726hDQ89fpqWLxPKLR\" 1, 3")
 			+ HelpExampleRpc("tl_cancelallcontractsbyaddress", "\"3BydPiSLPP3DR5cf726hDQ89fpqWLxPKLR\", 1, 3")
 			);
-  
+
   // obtain parameters & info
   std::string fromAddress = ParseAddress(request.params[0]);
   uint8_t ecosystem = ParseEcosystem(request.params[1]);
   std::string name_traded = ParseText(request.params[2]);
-  
+
   struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, name_traded);
   uint32_t contractId = pfuture->fco_propertyId;
-  
-  PrintToLog("-------------------------------------------------------------\n");
-  PrintToLog("ecosystem: %d \n",ecosystem);
-  PrintToLog("contractId: %d \n",contractId);
-  PrintToLog("-------------------------------------------------------------\n");
-  
+
   // perform checks
   RequireContract(contractId);
   // check, if there are matching offers to cancel
   RequireContractOrder(fromAddress, contractId);
-  
+
   // create a payload for the transaction
   std::vector<unsigned char> payload = CreatePayload_ContractDexCancelEcosystem(ecosystem, contractId);
-  
+
   // request the wallet build the transaction (and if needed commit it)
   uint256 txid;
   std::string rawHex;
   int result = WalletTxBuilder(fromAddress, "", 0, payload, txid, rawHex, autoCommit);
-  
+
   PrintToLog("WalletTxBuilder result: %d\n", result);
   PrintToLog("rawHex: %s\n", rawHex);
   PrintToLog("txid: %s\n", txid.GetHex());
@@ -1079,7 +1073,7 @@ UniValue tl_getmax_peggedcurrency(const JSONRPCRequest& request)
 			"\n 1) fromaddress (string, required) the address to send from\n"
 			"\n 2) name of contract requiered \n"
 			);
-  
+
   // Get available ALL because dCurrency is a hedge of ALL and ALL denominated Short Contracts
   // obtain parameters & info
   std::string fromAddress = ParseAddress(request.params[0]);
@@ -1091,11 +1085,11 @@ UniValue tl_getmax_peggedcurrency(const JSONRPCRequest& request)
   int64_t max_dUSD = ALLbalance * allPrice;
   //compare to short Position
   //get # short contract
-  
-  std::string name_traded = ParseText(request.params[1]);  
+
+  std::string name_traded = ParseText(request.params[1]);
   struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, name_traded);
   uint32_t contractId = pfuture->fco_propertyId;
-  
+
   int64_t shortPosition = getMPbalance(fromAddress, contractId, NEGATIVE_BALANCE);
   //determine which is less and use that one as max you can peg
   int64_t maxpegged = (max_dUSD > shortPosition) ? shortPosition : max_dUSD;
@@ -1113,9 +1107,9 @@ UniValue tl_sendissuance_pegged(const JSONRPCRequest& request)
   if (request.params.size() != 8)
     throw runtime_error(
 			"tl_sendissuance_pegged\"fromaddress\" ecosystem type previousid \"category\" \"subcategory\" \"name\" \"url\" \"data\"\n"
-			
+
 			"\nCreate new pegged currency with manageable supply.\n"
-			
+
 			"\nArguments:\n"
 			"1. fromaddress          (string, required) the address to send from\n"
 			"2. ecosystem            (string, required) the ecosystem to create the pegged currency in (1 for main ecosystem, 2 for test ecosystem)\n"
@@ -1127,12 +1121,12 @@ UniValue tl_sendissuance_pegged(const JSONRPCRequest& request)
 			"8. amount of pegged    (number, required) amount of pegged to create \n"
 			"\nResult:\n"
 			"\"hash\"                  (string) the hex-encoded transaction hash\n"
-			
+
 			"\nExamples:\n"
 			+ HelpExampleCli("tl_sendissuance_pegged", "\"3HsJvhr9qzgRe3ss97b1QHs38rmaLExLcH\" 2 1 0 \"Companies\" \"Bitcoin Mining\" \"Quantum Miner\" \"\" \"\"")
 			+ HelpExampleRpc("tl_sendissuance_pegged", "\"3HsJvhr9qzgRe3ss97b1QHs38rmaLExLcH\", 2, 1, 0, \"Companies\", \"Bitcoin Mining\", \"Quantum Miner\", \"\", \"\"")
 			);
-  
+
   // obtain parameters & info
   std::string fromAddress = ParseAddress(request.params[0]);
   uint8_t ecosystem = ParseEcosystem(request.params[1]);
@@ -1142,36 +1136,36 @@ UniValue tl_sendissuance_pegged(const JSONRPCRequest& request)
   uint32_t propertyId = ParsePropertyId(request.params[5]);
   std::string name_traded = ParseText(request.params[6]);
   uint64_t amount = ParseAmount(request.params[7], isPropertyDivisible(propertyId));
-  
+
   struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, name_traded);
   uint32_t contractId = pfuture->fco_propertyId;
-  
+
   // perform checks
   RequirePeggedSaneName(name);
-  
+
   // Checking existing
   RequireExistingProperty(propertyId);
-  
+
   // Property must not be a future contract
   RequireNotContract(propertyId);
-  
+
   // Checking for future contract
   RequireContract(contractId);
-  
+
   // Checking for short position in given future contract
   RequireShort(fromAddress, contractId, amount);
-  
+
   // checking for collateral balance, checking for short position in given contract
   RequireForPegged(fromAddress, propertyId, contractId, amount);
-  
+
   // create a payload for the transaction
   std::vector<unsigned char> payload = CreatePayload_IssuancePegged(ecosystem, type, previousId, name, propertyId, contractId, amount);
-  
+
   // request the wallet build the transaction (and if needed commit it)
   uint256 txid;
   std::string rawHex;
   int result = WalletTxBuilder(fromAddress, "", 0, payload, txid, rawHex, autoCommit);
-  
+
   // check error and return the txid (or raw hex depending on autocommit)
   if (result != 0) {
     throw JSONRPCError(result, error_str(result));
@@ -1189,50 +1183,48 @@ UniValue tl_send_pegged(const JSONRPCRequest& request)
   if (request.params.size() != 4)
     throw runtime_error(
 			"tl_send \"fromaddress\" \"toaddress\" propertyid \"amount\" ( \"redeemaddress\" \"referenceamount\" )\n"
-			
+
 			"\nSend the pegged currency to other addresses.\n"
-			
+
 			"\nArguments:\n"
 			"1. fromaddress          (string, required) the address to send from\n"
 			"2. toaddress            (string, required) the address of the receiver\n"
 			"3. property name        (string, required) the identifier of the tokens to send\n"
 			"4. amount               (string, required) the amount to send\n"
-			
-			
+
+
 			"\nResult:\n"
 			"\"hash\"                  (string) the hex-encoded transaction hash\n"
-			
+
 			"\nExamples:\n"
 			+ HelpExampleCli("tl_send_pegged", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\" \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\" 1 \"100.0\"")
 			+ HelpExampleRpc("tl_send_pegged", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\", \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\", 1, \"100.0\"")
 			);
-  
+
   // obtain parameters & info
   std::string fromAddress = ParseAddress(request.params[0]);
   std::string toAddress = ParseAddress(request.params[1]);
   std::string name_pegged = ParseText(request.params[2]);
-  
+
   struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_PEGGEDS, name_pegged);
   uint32_t propertyId = pfuture->fco_propertyId;
-  
+
   RequirePeggedCurrency(propertyId);
-  
+
   int64_t amount = ParseAmount(request.params[3], true);
-  //  std::string redeemAddress = (request.params.size() > 4 && !ParseText(request.params[4]).empty()) ? ParseAddress(request.params[4]): "";
-  // int64_t referenceAmount = (request.params.size() > 5) ? ParseAmount(request.params[4], true): 0;
-  
+
   // perform checks
   RequireExistingProperty(propertyId);
   RequireBalance(fromAddress, propertyId, amount);
-  
+
   // create a payload for the transaction
   std::vector<unsigned char> payload = CreatePayload_SendPeggedCurrency(propertyId, amount);
-  
+
   // request the wallet build the transaction (and if needed commit it)
   uint256 txid;
   std::string rawHex;
   int result = WalletTxBuilder(fromAddress, toAddress,0, payload, txid, rawHex, autoCommit);
-  
+
   // check error and return the txid (or raw hex depending on autocommit)
   if (result != 0) {
     throw JSONRPCError(result, error_str(result));
@@ -1251,9 +1243,9 @@ UniValue tl_redemption_pegged(const JSONRPCRequest& request)
   if (request.params.size() != 4)
     throw runtime_error(
 			"tl_redemption_pegged \"fromaddress\" propertyid \"amount\" ( \"redeemaddress\" distributionproperty )\n"
-			
+
 			"\n Redemption of the pegged currency .\n"
-			
+
 			"\nArguments:\n"
 			"1. redeemaddress        (string, required) the address of owner \n"
 			"2. name of pegged       (string, required) name of the tokens to redeem\n"
@@ -1261,42 +1253,42 @@ UniValue tl_redemption_pegged(const JSONRPCRequest& request)
 			"4. name of contract     (string, required) the identifier of the future contract involved\n"
 			"\nResult:\n"
 			"\"hash\"                  (string) the hex-encoded transaction hash\n"
-			
+
 			"\nExamples:\n"
 			+ HelpExampleCli("tl_redemption_pegged", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\" , 1")
 			+ HelpExampleRpc("tl_redemption_pegged", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\", 1")
 			);
-  
+
   // obtain parameters & info
   std::string fromAddress = ParseAddress(request.params[0]);
-  
+
   std::string name_pegged = ParseText(request.params[1]);
   std::string name_contract = ParseText(request.params[3]);
   struct FutureContractObject *pfuture_pegged = getFutureContractObject(ALL_PROPERTY_TYPE_PEGGEDS, name_pegged);
   uint32_t propertyId = pfuture_pegged->fco_propertyId;
-  
+
   uint64_t amount = ParseAmount(request.params[2], true);
-  
+
   struct FutureContractObject *pfuture_contract = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, name_contract);
   uint32_t contractId = pfuture_contract->fco_propertyId;
-  
+
   // perform checks
   RequireExistingProperty(propertyId);
   RequirePeggedCurrency(propertyId);
   RequireContract(contractId);
   RequireBalance(fromAddress, propertyId, amount);
-  
+
   // is given contract origin of pegged?
   RequireAssociation(propertyId,contractId);
-  
+
   // create a payload for the transaction
   std::vector<unsigned char> payload = CreatePayload_RedemptionPegged(propertyId, contractId, amount);
-  
+
   // request the wallet build the transaction (and if needed commit it)
   uint256 txid;
   std::string rawHex;
   int result = WalletTxBuilder(fromAddress, "", 0, payload, txid, rawHex, autoCommit);
-  
+
   // check error and return the txid (or raw hex depending on autocommit)
   if (result != 0) {
     throw JSONRPCError(result, error_str(result));
@@ -1315,7 +1307,7 @@ UniValue tl_cancelorderbyblock(const JSONRPCRequest& request)
         throw runtime_error(
             "tl_cancelorderbyblock \"fromaddress\" ecosystem\n"
 
-            "\nCancel all offers on the distributed token exchange.\n"
+            "\nCancel an specific offer on the distributed token exchange.\n"
 
             "\nArguments:\n"
             "1. address         (string, required) the txid of order to cancel\n"
@@ -1334,8 +1326,6 @@ UniValue tl_cancelorderbyblock(const JSONRPCRequest& request)
        std::string fromAddress = ParseAddress(request.params[0]);
        int block = static_cast<int>(ParseNewValues(request.params[1]));
        int idx = static_cast<int>(ParseNewValues(request.params[2]));
-       printf ("block: %d\n",block);
-       printf ("idx: %d\n",idx);
 
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_ContractDexCancelOrderByTxId(block,idx);
@@ -1345,9 +1335,6 @@ UniValue tl_cancelorderbyblock(const JSONRPCRequest& request)
     std::string rawHex;
     int result = WalletTxBuilder(fromAddress, "", 0, payload, txid, rawHex, autoCommit);
 
-    PrintToConsole("WalletTxBuilder result: %d\n", result);
-    PrintToConsole("rawHex: %s\n", rawHex);
-    PrintToConsole("txid: %s\n", txid.GetHex());
     //check error and return the txid (or raw hex depending on autocommit)
     if (result != 0) {
         throw JSONRPCError(result, error_str(result));
@@ -1361,7 +1348,6 @@ UniValue tl_cancelorderbyblock(const JSONRPCRequest& request)
 }
 
 /* The DEX 1 rpcs */
-
 UniValue tl_senddexoffer(const JSONRPCRequest& request)
 {
   if (request.params.size() != 8) {
@@ -1514,7 +1500,7 @@ UniValue tl_senddexaccept(const JSONRPCRequest& request)
 
 }
 
-/////////////////////////////////////////////////////////////////////////////////
+
 static const CRPCCommand commands[] =
 { //  category                             name                            actor (function)               okSafeMode
   //  ------------------------------------ ------------------------------- ------------------------------ ----------
@@ -1544,8 +1530,7 @@ static const CRPCCommand commands[] =
     { "trade layer (transaction creation)", "tl_closeposition",                &tl_closeposition,                   {} },
     { "trade layer (transaction creation)", "tl_sendtrade",                    &tl_sendtrade,                       {} },
     { "trade layer (transaction creation)", "tl_senddexoffer",                 &tl_senddexoffer,                    {} },
-    { "trade layer (transaction creation)", "tl_senddexaccept",                &tl_senddexaccept,                   {} },
-    // { "trade layer (transaction creation)", "tl_senddexbuy",                &tl_senddexbuy,                      {} },
+    { "trade layer (transaction creation)", "tl_senddexaccept",                &tl_senddexaccept,                   {} }
 #endif
 };
 
