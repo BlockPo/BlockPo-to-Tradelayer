@@ -295,9 +295,6 @@ void RequireShort(std::string& fromAddress, uint32_t contractId, uint64_t amount
         arith_uint256 Amount = mastercore::ConvertTo256(num) * mastercore::ConvertTo256(amount) / mastercore::ConvertTo256(denom); // Alls needed
         arith_uint256 contracts = mastercore::DivideAndRoundUp(Amount * mastercore::ConvertTo256(notionalSize), mastercore::ConvertTo256(1)) ;
         contractsNeeded = mastercore::ConvertTo64(contracts);
-        PrintToLog("contractId : %d  ###############################################################################################\n", contractId);
-        PrintToLog("position : %d  ###############################################################################################\n", position);
-        PrintToLog("contractsNeeded : %d  ###############################################################################################\n" ,contractsNeeded);
         if (contractsNeeded > position) {
             throw JSONRPCError(RPC_INVALID_PARAMETER, "Not enough short position\n");
         }

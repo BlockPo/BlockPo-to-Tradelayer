@@ -80,8 +80,7 @@ md_Set* mastercore::get_Indexes(md_PricesMap* p, rational_t price)
 
     return (md_Set*) NULL;
 }
-/********************************************************/
-/** New things for Contracts */
+
 cd_PropertiesMap mastercore::contractdex;
 
 cd_PricesMap *mastercore::get_PricesCd(uint32_t prop)
@@ -104,39 +103,36 @@ cd_Set *mastercore::get_IndexesCd(cd_PricesMap *p, uint64_t price)
 
 void mastercore::LoopBiDirectional(cd_PricesMap* const ppriceMap, uint8_t trdAction, MatchReturnType &NewReturn, CMPContractDex* const pnew, const uint32_t propertyForSale)
 {
-  cd_PricesMap::iterator it_fwdPrices;
-  cd_PricesMap::reverse_iterator it_bwdPrices;
-  
-  if ( trdAction == BUY )
+    cd_PricesMap::iterator it_fwdPrices;
+    cd_PricesMap::reverse_iterator it_bwdPrices;
+
+    if ( trdAction == BUY )
     {
-      for (it_fwdPrices = ppriceMap->begin(); it_fwdPrices != ppriceMap->end(); ++it_fwdPrices)
-	{
-	  const uint64_t sellerPrice = it_fwdPrices->first;
-	  if ( pnew->getEffectivePrice() < sellerPrice )
-	    {
-	      // PrintToLog("\nLoop fwd: pnew->getEffectivePrice() = %d, pnew->getAddr() = %s\n", pnew->getEffectivePrice(), pnew->getAddr());
-	      // PrintToLog("Match found");
-	      continue;
-	    }
-	  x_TradeBidirectional(it_fwdPrices, it_bwdPrices, trdAction, pnew, sellerPrice, propertyForSale, NewReturn);
-	}
+        for (it_fwdPrices = ppriceMap->begin(); it_fwdPrices != ppriceMap->end(); ++it_fwdPrices)
+	      {
+	          const uint64_t sellerPrice = it_fwdPrices->first;
+	          if ( pnew->getEffectivePrice() < sellerPrice )
+	          {
+	              // PrintToLog("\nLoop fwd: pnew->getEffectivePrice() = %d, pnew->getAddr() = %s\n", pnew->getEffectivePrice(), pnew->getAddr());
+	              continue;
+	          }
+	          x_TradeBidirectional(it_fwdPrices, it_bwdPrices, trdAction, pnew, sellerPrice, propertyForSale, NewReturn);
+	      }
     }
-  else
+    else
     {
-      for (it_bwdPrices = ppriceMap->rbegin(); it_bwdPrices != ppriceMap->rend(); ++it_bwdPrices)
-	{
-	  const uint64_t sellerPrice = it_bwdPrices->first;
-	  // PrintToLog("\nLoop bwd: pnew->getEffectivePrice() = %d, pnew->getAddr() = %s\n", pnew->getEffectivePrice(), pnew->getAddr());
-	  if ( pnew->getEffectivePrice() > sellerPrice )
-	    {
-	      // PrintToLog("\nLoop bwd: pnew->getEffectivePrice() = %d, pnew->getAddr() = %s\n", pnew->getEffectivePrice(), pnew->getAddr());
-	      // PrintToLog("Match found");
-	      continue;
-	    }
-	  // PrintToLog("\nMatch Found!!\n");
-	  // PrintToLog("\nLoop bwd: pnew->getEffectivePrice() = %d, pnew->getAddr() = %s\n", pnew->getEffectivePrice(), pnew->getAddr());
-	  x_TradeBidirectional(it_fwdPrices, it_bwdPrices, trdAction, pnew, sellerPrice, propertyForSale, NewReturn);
-	}
+        for (it_bwdPrices = ppriceMap->rbegin(); it_bwdPrices != ppriceMap->rend(); ++it_bwdPrices)
+	      {
+	          const uint64_t sellerPrice = it_bwdPrices->first;
+	         // PrintToLog("\nLoop bwd: pnew->getEffectivePrice() = %d, pnew->getAddr() = %s\n", pnew->getEffectivePrice(), pnew->getAddr());
+	         if ( pnew->getEffectivePrice() > sellerPrice )
+	         {
+	             // PrintToLog("\nLoop bwd: pnew->getEffectivePrice() = %d, pnew->getAddr() = %s\n", pnew->getEffectivePrice(), pnew->getAddr());
+	             continue;
+	         }
+	         // PrintToLog("\nLoop bwd: pnew->getEffectivePrice() = %d, pnew->getAddr() = %s\n", pnew->getEffectivePrice(), pnew->getAddr());
+	         x_TradeBidirectional(it_fwdPrices, it_bwdPrices, trdAction, pnew, sellerPrice, propertyForSale, NewReturn);
+	      }
     }
 }
 
@@ -1053,20 +1049,20 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
 					nCouldBuy3,
 					amountpnew,
 					amountpold);
-      /********************************************************/
-      int index = static_cast<unsigned int>(property_traded);
+          /********************************************************/
+          int index = static_cast<unsigned int>(property_traded);
 
-      marketP[index] = pold->getEffectivePrice();
-      // uint64_t marketPriceNow = marketP[index];
-      // PrintToLog("\nmarketPrice Now : %d, marketP[index] = %d\n", marketPriceNow, marketP[index]);
-      // t_tradelistdb->recordForUPNL(pnew->getHash(),pnew->getAddr(),property_traded,pold->getEffectivePrice());
+          marketP[index] = pold->getEffectivePrice();
+          // uint64_t marketPriceNow = marketP[index];
+          // PrintToLog("\nmarketPrice Now : %d, marketP[index] = %d\n", marketPriceNow, marketP[index]);
+          // t_tradelistdb->recordForUPNL(pnew->getHash(),pnew->getAddr(),property_traded,pold->getEffectivePrice());
 
-      // if (msc_debug_metadex1) PrintToLog("++ erased old: %s\n", offerIt->ToString());
-      pofferSet->erase(offerIt++);
+          // if (msc_debug_metadex1) PrintToLog("++ erased old: %s\n", offerIt->ToString());
+          pofferSet->erase(offerIt++);
 
-      if (0 < remaining)
-	    pofferSet->insert(contract_replacement);
-    }
+          if (0 < remaining)
+	            pofferSet->insert(contract_replacement);
+      }
 }
 
 static const std::string getTradeReturnType(MatchReturnType ret)
@@ -1128,8 +1124,7 @@ std::string xToString(const rational_t& value)
   else
     return strprintf("%s / %s", xToString(value.numerator()), xToString(value.denominator()));
 }
-/********************************************************************/
-/** New things for Contracts */
+
 std::string xToString(const uint64_t &price)
 {
   return strprintf("%s", boost::lexical_cast<std::string>(price));
@@ -1201,7 +1196,9 @@ MatchReturnType x_Trade(CMPMetaDEx* const pnew)
 
         // at good (single) price level and property iterate over offers looking at all parameters to find the match
         md_Set::iterator offerIt = pofferSet->begin();
-        while (offerIt != pofferSet->end()) { // specific price, check all properties
+        while (offerIt != pofferSet->end())
+        {
+            // specific price, check all properties
             const CMPMetaDEx* const pold = &(*offerIt);
             assert(pold->unitPrice() == sellersPrice);
 
@@ -1236,10 +1233,10 @@ MatchReturnType x_Trade(CMPMetaDEx* const pnew)
             assert(pold->unitPrice() <= pnew->inversePrice());
             assert(pnew->unitPrice() <= pold->inversePrice());
 
-	    //             globalNumPrice = pold->getAmountDesired();
-	    //             globalDenPrice = pold->getAmountForSale();
-	    globalNumPrice = 1;
-	    globalDenPrice = 1;
+	          //globalNumPrice = pold->getAmountDesired();
+	          //globalDenPrice = pold->getAmountForSale();
+	          globalNumPrice = 1;
+	          globalDenPrice = 1;
             /*Lets gonna take the pnew->unitPrice() as the ALL unit price*/
             /*unitPrice = 1 ALL on dUSD*/
             ///////////////////////////
@@ -1275,11 +1272,12 @@ MatchReturnType x_Trade(CMPMetaDEx* const pnew)
             // orders shall not execute, and no representable fill is made
             const rational_t xEffectivePrice(nWouldPay, nCouldBuy);
 
-            if (xEffectivePrice > pnew->inversePrice()) {
-	      // if (msc_debug_metadex1) PrintToLog(
-	      //         "-- effective price is too expensive: %s\n", xToString(xEffectivePrice));
-	      ++offerIt;
-	      continue;
+            if (xEffectivePrice > pnew->inversePrice())
+            {
+	              // if (msc_debug_metadex1) PrintToLog(
+	              //         "-- effective price is too expensive: %s\n", xToString(xEffectivePrice));
+	              ++offerIt;
+	              continue;
             }
 
             const int64_t buyer_amountGot = nCouldBuy;
@@ -1290,7 +1288,6 @@ MatchReturnType x_Trade(CMPMetaDEx* const pnew)
             // if (msc_debug_metadex1) PrintToLog("$$ buyer_got= %d, seller_got= %d, seller_left_for_sale= %d, buyer_still_for_sale= %d\n",
             //     buyer_amountGot, seller_amountGot, seller_amountLeft, buyer_amountLeft);
 
-            ///////////////////////////
 
             // postconditions
             assert(xEffectivePrice >= pold->unitPrice());
@@ -1299,159 +1296,160 @@ MatchReturnType x_Trade(CMPMetaDEx* const pnew)
             assert(0 <= buyer_amountLeft);
             assert(seller_amountForSale == seller_amountLeft + buyer_amountGot);
             assert(buyer_amountOffered == buyer_amountLeft + seller_amountGot);
-	    
-	    /***********************************************************************************************/
-	    /** Finding Market Prices TOKEN1/TOKEN2 or TOKEN2/TOKEN1 **/
-	    PrintToLog("\n********************************************************************************\n");
-	    
-	    PrintToLog("\npold->getProperty() = %d,\t pold->getDesProperty() = %d\n", pold->getProperty(), pold->getDesProperty());
-	    PrintToLog("\npnew->getProperty() = %d,\t pnew->getDesProperty() = %d\n", pnew->getProperty(), pnew->getDesProperty());
-	    
-	    int64_t pnew_forsale = pnew->getAmountForSale();
-	    int64_t pnew_desired = pnew->getAmountDesired();
-	    
-	    int64_t pold_forsale = pold->getAmountForSale();
-	    int64_t pold_desired = pold->getAmountDesired();
-	    
-	    rational_t market_priceratToken1_Token2(pold_desired, pold_forsale);
-	    int64_t market_priceToken1_Token2 = mastercore::RationalToInt64(market_priceratToken1_Token2);
-	    market_priceMap[pold->getProperty()][pold->getDesProperty()] = market_priceToken1_Token2;
-	    PrintToLog("\nmarket_priceToken1_Token2 MetaDEx = %s\n",
-		       FormatDivisibleMP(market_priceMap[pold->getProperty()][pold->getDesProperty()]));
-	    
-	    rational_t market_priceratToken2_Token1(pnew_desired, pnew_forsale);
-	    int64_t market_priceToken2_Token1 = mastercore::RationalToInt64(market_priceratToken2_Token1);
-	    market_priceMap[pnew->getProperty()][pnew->getDesProperty()] = market_priceToken2_Token1;
-	    PrintToLog("\nmarket_priceToken2_Token1 MetaDEx = %s\n",
-		       FormatDivisibleMP(market_priceMap[pnew->getProperty()][pnew->getDesProperty()]));
 
-	    PrintToLog("\npold_forsale = %s,\t pold_desired = %s\n", FormatDivisibleMP(pold_forsale), FormatDivisibleMP(pold_desired));
-	    PrintToLog("\npnew_forsale = %s,\t pnew_desired = %s\n", FormatDivisibleMP(pnew_forsale), FormatDivisibleMP(pnew_desired));
-	    
-	    PrintToLog("\n********************************************************************************\n");
-	    /** Finding VWAP Price **/	    
-	    PrintToLog("\nbuyer_amountGot = %s,\t seller_amountGot = %s\n", FormatDivisibleMP(buyer_amountGot),
-		       FormatDivisibleMP(seller_amountGot));
-	    
-	    arith_uint256 numVWAPMapToken1_Token2_256t = mastercore::ConvertTo256(market_priceToken1_Token2)*mastercore::ConvertTo256(buyer_amountGot)/COIN;
-	    int64_t numVWAPMapToken1_Token2_64t = mastercore::ConvertTo64(numVWAPMapToken1_Token2_256t);
-	    numVWAPMap[pold->getProperty()][pold->getDesProperty()] += numVWAPMapToken1_Token2_64t;
-	    denVWAPMap[pold->getProperty()][pold->getDesProperty()] += buyer_amountGot;
-	    
-	    rational_t vwapPriceToken1_Token2Rat(numVWAPMap[pold->getProperty()][pold->getDesProperty()],
-						 denVWAPMap[pold->getProperty()][pold->getDesProperty()]);
-	    int64_t vwapPriceToken1_Token2Int64 = mastercore::RationalToInt64(vwapPriceToken1_Token2Rat);
-	    VWAPMap[pold->getProperty()][pold->getDesProperty()]=vwapPriceToken1_Token2Int64;
-	    
-	    arith_uint256 numVWAPMapToken2_Token1_256t = mastercore::ConvertTo256(market_priceToken2_Token1)*mastercore::ConvertTo256(seller_amountGot)/COIN;
-	    int64_t numVWAPMapToken2_Token1_64t = mastercore::ConvertTo64(numVWAPMapToken2_Token1_256t);
-	    numVWAPMap[pnew->getProperty()][pnew->getDesProperty()] += numVWAPMapToken2_Token1_64t;
-	    denVWAPMap[pnew->getProperty()][pnew->getDesProperty()] += seller_amountGot;
-	    
-	    rational_t vwapPriceToken2_Token1Rat(numVWAPMap[pnew->getProperty()][pnew->getDesProperty()],
-						 denVWAPMap[pnew->getProperty()][pnew->getDesProperty()]);
-	    int64_t vwapPriceToken2_Token1Int64 = mastercore::RationalToInt64(vwapPriceToken2_Token1Rat);
-	    VWAPMap[pnew->getProperty()][pnew->getDesProperty()]=vwapPriceToken2_Token1Int64;
-	    
-	    PrintToLog("\nVWAPMap[pold->getProperty()][pold->getDesProperty()] = %s\n",
-		       FormatDivisibleMP(VWAPMap[pold->getProperty()][pold->getDesProperty()]));
-	    PrintToLog("\nVWAPMap[pnew->getProperty()][pnew->getDesProperty()] = %s\n",
-		       FormatDivisibleMP(VWAPMap[pnew->getProperty()][pnew->getDesProperty()]));
-	    
-	    PrintToLog("\n********************************************************************************\n");
-	    /** VWAP for the last N trades **/
-	    
-	    numVWAPVector[pold->getProperty()][pold->getDesProperty()].push_back(numVWAPMapToken1_Token2_64t);
-	    denVWAPVector[pold->getProperty()][pold->getDesProperty()].push_back(buyer_amountGot);
-	    
-	    numVWAPVector[pnew->getProperty()][pnew->getDesProperty()].push_back(numVWAPMapToken2_Token1_64t);
-	    denVWAPVector[pnew->getProperty()][pnew->getDesProperty()].push_back(seller_amountGot);
-	    
-	    PrintToLog("numVWAPVector[pold->getProperty()][pold->getDesProperty()].size() = %d",
-		       numVWAPVector[pold->getProperty()][pold->getDesProperty()].size());
-	    PrintToLog("numVWAPVector[pnew->getProperty()][pnew->getDesProperty()].size() = %d",
-		       numVWAPVector[pnew->getProperty()][pnew->getDesProperty()].size());	   
-	    
-	    std::vector<int64_t> numVWAPpoldv(numVWAPVector[pold->getProperty()][pold->getDesProperty()].end()-
+	          /***********************************************************************************************/
+	          /** Finding Market Prices TOKEN1/TOKEN2 or TOKEN2/TOKEN1 **/
+	          PrintToLog("\n********************************************************************************\n");
+
+  	        PrintToLog("\npnew->getProperty() = %d,\t pnew->getDesProperty() = %d\n", pnew->getProperty(), pnew->getDesProperty());
+
+	          int64_t pnew_forsale = pnew->getAmountForSale();
+	          int64_t pnew_desired = pnew->getAmountDesired();
+
+	          int64_t pold_forsale = pold->getAmountForSale();
+	          int64_t pold_desired = pold->getAmountDesired();
+
+	          rational_t market_priceratToken1_Token2(pold_desired, pold_forsale);
+	          int64_t market_priceToken1_Token2 = mastercore::RationalToInt64(market_priceratToken1_Token2);
+	          market_priceMap[pold->getProperty()][pold->getDesProperty()] = market_priceToken1_Token2;
+	          PrintToLog("\nmarket_priceToken1_Token2 MetaDEx = %s\n",
+		            FormatDivisibleMP(market_priceMap[pold->getProperty()][pold->getDesProperty()]));
+
+	          rational_t market_priceratToken2_Token1(pnew_desired, pnew_forsale);
+	          int64_t market_priceToken2_Token1 = mastercore::RationalToInt64(market_priceratToken2_Token1);
+	          market_priceMap[pnew->getProperty()][pnew->getDesProperty()] = market_priceToken2_Token1;
+	          PrintToLog("\nmarket_priceToken2_Token1 MetaDEx = %s\n",
+		            FormatDivisibleMP(market_priceMap[pnew->getProperty()][pnew->getDesProperty()]));
+
+	          PrintToLog("\npold_forsale = %s,\t pold_desired = %s\n", FormatDivisibleMP(pold_forsale), FormatDivisibleMP(pold_desired));
+	          PrintToLog("\npnew_forsale = %s,\t pnew_desired = %s\n", FormatDivisibleMP(pnew_forsale), FormatDivisibleMP(pnew_desired));
+
+	          PrintToLog("\n********************************************************************************\n");
+	          /** Finding VWAP Price **/
+	          PrintToLog("\nbuyer_amountGot = %s,\t seller_amountGot = %s\n", FormatDivisibleMP(buyer_amountGot),
+		            FormatDivisibleMP(seller_amountGot));
+
+	          arith_uint256 numVWAPMapToken1_Token2_256t = mastercore::ConvertTo256(market_priceToken1_Token2)*mastercore::ConvertTo256(buyer_amountGot)/COIN;
+	          int64_t numVWAPMapToken1_Token2_64t = mastercore::ConvertTo64(numVWAPMapToken1_Token2_256t);
+	          numVWAPMap[pold->getProperty()][pold->getDesProperty()] += numVWAPMapToken1_Token2_64t;
+	          denVWAPMap[pold->getProperty()][pold->getDesProperty()] += buyer_amountGot;
+
+	          rational_t vwapPriceToken1_Token2Rat(numVWAPMap[pold->getProperty()][pold->getDesProperty()],
+						     denVWAPMap[pold->getProperty()][pold->getDesProperty()]);
+	          int64_t vwapPriceToken1_Token2Int64 = mastercore::RationalToInt64(vwapPriceToken1_Token2Rat);
+	          VWAPMap[pold->getProperty()][pold->getDesProperty()]=vwapPriceToken1_Token2Int64;
+
+	          arith_uint256 numVWAPMapToken2_Token1_256t = mastercore::ConvertTo256(market_priceToken2_Token1)*mastercore::ConvertTo256(seller_amountGot)/COIN;
+	          int64_t numVWAPMapToken2_Token1_64t = mastercore::ConvertTo64(numVWAPMapToken2_Token1_256t);
+	          numVWAPMap[pnew->getProperty()][pnew->getDesProperty()] += numVWAPMapToken2_Token1_64t;
+	          denVWAPMap[pnew->getProperty()][pnew->getDesProperty()] += seller_amountGot;
+
+	          rational_t vwapPriceToken2_Token1Rat(numVWAPMap[pnew->getProperty()][pnew->getDesProperty()],
+						    denVWAPMap[pnew->getProperty()][pnew->getDesProperty()]);
+	          int64_t vwapPriceToken2_Token1Int64 = mastercore::RationalToInt64(vwapPriceToken2_Token1Rat);
+	          VWAPMap[pnew->getProperty()][pnew->getDesProperty()]=vwapPriceToken2_Token1Int64;
+
+	          PrintToLog("\nVWAPMap[pold->getProperty()][pold->getDesProperty()] = %s\n",
+		            FormatDivisibleMP(VWAPMap[pold->getProperty()][pold->getDesProperty()]));
+	          PrintToLog("\nVWAPMap[pnew->getProperty()][pnew->getDesProperty()] = %s\n",
+		            FormatDivisibleMP(VWAPMap[pnew->getProperty()][pnew->getDesProperty()]));
+
+	          PrintToLog("\n********************************************************************************\n");
+	          /** VWAP for the last N trades **/
+
+	          numVWAPVector[pold->getProperty()][pold->getDesProperty()].push_back(numVWAPMapToken1_Token2_64t);
+	          denVWAPVector[pold->getProperty()][pold->getDesProperty()].push_back(buyer_amountGot);
+
+	          numVWAPVector[pnew->getProperty()][pnew->getDesProperty()].push_back(numVWAPMapToken2_Token1_64t);
+	          denVWAPVector[pnew->getProperty()][pnew->getDesProperty()].push_back(seller_amountGot);
+
+	          PrintToLog("numVWAPVector[pold->getProperty()][pold->getDesProperty()].size() = %d",
+		            numVWAPVector[pold->getProperty()][pold->getDesProperty()].size());
+	          PrintToLog("numVWAPVector[pnew->getProperty()][pnew->getDesProperty()].size() = %d",
+		            numVWAPVector[pnew->getProperty()][pnew->getDesProperty()].size());
+
+	          std::vector<int64_t> numVWAPpoldv(numVWAPVector[pold->getProperty()][pold->getDesProperty()].end()-
 					      std::min(int(numVWAPVector[pold->getProperty()][pold->getDesProperty()].size()), volumeToVWAP),
 					      numVWAPVector[pold->getProperty()][pold->getDesProperty()].end());
-	    std::vector<int64_t> denVWAPpoldv(denVWAPVector[pold->getProperty()][pold->getDesProperty()].end()-
+	          std::vector<int64_t> denVWAPpoldv(denVWAPVector[pold->getProperty()][pold->getDesProperty()].end()-
 					      std::min(int(denVWAPVector[pold->getProperty()][pold->getDesProperty()].size()), volumeToVWAP),
 					      denVWAPVector[pold->getProperty()][pold->getDesProperty()].end());
-	    
-	    std::vector<int64_t> numVWAPpnewv(numVWAPVector[pnew->getProperty()][pnew->getDesProperty()].end()-
+
+	          std::vector<int64_t> numVWAPpnewv(numVWAPVector[pnew->getProperty()][pnew->getDesProperty()].end()-
 					      std::min(int(numVWAPVector[pnew->getProperty()][pnew->getDesProperty()].size()), volumeToVWAP),
 					      numVWAPVector[pnew->getProperty()][pnew->getDesProperty()].end());
-	    std::vector<int64_t> denVWAPpnewv(denVWAPVector[pnew->getProperty()][pnew->getDesProperty()].end()-
+	          std::vector<int64_t> denVWAPpnewv(denVWAPVector[pnew->getProperty()][pnew->getDesProperty()].end()-
 					      std::min(int(denVWAPVector[pnew->getProperty()][pnew->getDesProperty()].size()), volumeToVWAP),
 					      denVWAPVector[pnew->getProperty()][pnew->getDesProperty()].end());
-	    int64_t numVWAPpold = 0;
-	    int64_t denVWAPpold = 0;
-	    int64_t numVWAPpnew = 0;
-	    int64_t denVWAPpnew = 0;
-	    
-	    PrintToLog("\nnumVWAPpoldv.size() = %d\n", numVWAPpoldv.size());
-	    PrintToLog("\ndenVWAPpoldv.size() = %d\n", denVWAPpoldv.size());
-	    PrintToLog("\nnumVWAPpnewv.size() = %d\n", numVWAPpnewv.size());
-	    PrintToLog("\ndenVWAPpnewv.size() = %d\n", denVWAPpnewv.size());
-	    
-	    if (int(numVWAPpoldv.size())==volumeToVWAP && int(denVWAPpoldv.size())==volumeToVWAP &&
-		int(numVWAPpnewv.size())==volumeToVWAP && int(denVWAPpnewv.size())==volumeToVWAP)
-	      {
-		for (int i = 0; i < volumeToVWAP; i++)
-		  {
-		    PrintToLog("\nnumVWAPpoldv[i] = %s,\t denVWAPpoldv[i] = %s\n", FormatDivisibleMP(numVWAPpoldv[i]), FormatDivisibleMP(denVWAPpoldv[i]));
-		    PrintToLog("\nnumVWAPpnewv[i] = %s,\t denVWAPpnewv[i] = %s\n", FormatDivisibleMP(numVWAPpnewv[i]), FormatDivisibleMP(denVWAPpnewv[i]));
-		    numVWAPpold += numVWAPpoldv[i];
-		    denVWAPpold += denVWAPpoldv[i];
-		    numVWAPpnew += numVWAPpnewv[i];
-		    denVWAPpnew += denVWAPpnewv[i];
-		  }
-		
-		rational_t vwapPriceToken1_Token2RatV(numVWAPpold, denVWAPpold);
-		int64_t vwapPriceToken1_Token2Int64V = mastercore::RationalToInt64(vwapPriceToken1_Token2RatV);
-		
-		rational_t vwapPriceToken2_Token1RatV(numVWAPpnew, denVWAPpnew);
-		int64_t vwapPriceToken2_Token1Int64V = mastercore::RationalToInt64(vwapPriceToken2_Token1RatV);
-		
-		VWAPMapSubVector[pold->getProperty()][pold->getDesProperty()]=vwapPriceToken1_Token2Int64V;
-		VWAPMapSubVector[pnew->getProperty()][pnew->getDesProperty()]=vwapPriceToken2_Token1Int64V;		
-	      }
-	    else
-	      {
-		VWAPMapSubVector[pold->getProperty()][pold->getDesProperty()]=market_priceMap[pold->getProperty()][pold->getDesProperty()];
-		VWAPMapSubVector[pnew->getProperty()][pnew->getDesProperty()]=market_priceMap[pnew->getProperty()][pnew->getDesProperty()];
-	      }
-	    
-	    PrintToLog("\nVWAPMapSubVector[pold->getProperty()][pold->getDesProperty()] = %s\n",
-		       FormatDivisibleMP(VWAPMapSubVector[pold->getProperty()][pold->getDesProperty()]));
-	    PrintToLog("\nVWAPMapSubVector[pnew->getProperty()][pnew->getDesProperty()] = %s\n",
-		       FormatDivisibleMP(VWAPMapSubVector[pnew->getProperty()][pnew->getDesProperty()]));
-	    PrintToLog("\n********************************************************************************\n");
-	    /***********************************************************************************************/
+	          int64_t numVWAPpold = 0;
+	          int64_t denVWAPpold = 0;
+	          int64_t numVWAPpnew = 0;
+	          int64_t denVWAPpnew = 0;
+
+	          PrintToLog("\nnumVWAPpoldv.size() = %d\n", numVWAPpoldv.size());
+	          PrintToLog("\ndenVWAPpoldv.size() = %d\n", denVWAPpoldv.size());
+	          PrintToLog("\nnumVWAPpnewv.size() = %d\n", numVWAPpnewv.size());
+	          PrintToLog("\ndenVWAPpnewv.size() = %d\n", denVWAPpnewv.size());
+
+	          if (int(numVWAPpoldv.size())==volumeToVWAP && int(denVWAPpoldv.size())==volumeToVWAP &&
+		        int(numVWAPpnewv.size())==volumeToVWAP && int(denVWAPpnewv.size())==volumeToVWAP)
+	          {
+		            for (int i = 0; i < volumeToVWAP; i++)
+		            {
+		                PrintToLog("\nnumVWAPpoldv[i] = %s,\t denVWAPpoldv[i] = %s\n", FormatDivisibleMP(numVWAPpoldv[i]), FormatDivisibleMP(denVWAPpoldv[i]));
+		                PrintToLog("\nnumVWAPpnewv[i] = %s,\t denVWAPpnewv[i] = %s\n", FormatDivisibleMP(numVWAPpnewv[i]), FormatDivisibleMP(denVWAPpnewv[i]));
+		                numVWAPpold += numVWAPpoldv[i];
+		                denVWAPpold += denVWAPpoldv[i];
+		                numVWAPpnew += numVWAPpnewv[i];
+		                denVWAPpnew += denVWAPpnewv[i];
+		            }
+
+		            rational_t vwapPriceToken1_Token2RatV(numVWAPpold, denVWAPpold);
+		            int64_t vwapPriceToken1_Token2Int64V = mastercore::RationalToInt64(vwapPriceToken1_Token2RatV);
+
+		            rational_t vwapPriceToken2_Token1RatV(numVWAPpnew, denVWAPpnew);
+		            int64_t vwapPriceToken2_Token1Int64V = mastercore::RationalToInt64(vwapPriceToken2_Token1RatV);
+
+		            VWAPMapSubVector[pold->getProperty()][pold->getDesProperty()]=vwapPriceToken1_Token2Int64V;
+		            VWAPMapSubVector[pnew->getProperty()][pnew->getDesProperty()]=vwapPriceToken2_Token1Int64V;
+	          }
+	          else
+	          {
+		            VWAPMapSubVector[pold->getProperty()][pold->getDesProperty()]=market_priceMap[pold->getProperty()][pold->getDesProperty()];
+		            VWAPMapSubVector[pnew->getProperty()][pnew->getDesProperty()]=market_priceMap[pnew->getProperty()][pnew->getDesProperty()];
+	          }
+
+	          PrintToLog("\nVWAPMapSubVector[pold->getProperty()][pold->getDesProperty()] = %s\n",
+		            FormatDivisibleMP(VWAPMapSubVector[pold->getProperty()][pold->getDesProperty()]));
+	          PrintToLog("\nVWAPMapSubVector[pnew->getProperty()][pnew->getDesProperty()] = %s\n",
+		            FormatDivisibleMP(VWAPMapSubVector[pnew->getProperty()][pnew->getDesProperty()]));
+	          PrintToLog("\n********************************************************************************\n");
+	          /***********************************************************************************************/
             int64_t buyer_amountGotAfterFee = buyer_amountGot;
             int64_t tradingFee = 0;
-	    
+
             // strip a 0.05% fee from non-OMNI pairs if fees are activated
-            if (IsFeatureActivated(FEATURE_FEES, pnew->getBlock())) {
-	      if (pold->getProperty() > OMNI_PROPERTY_TALL && pold->getDesProperty() > OMNI_PROPERTY_TALL) {
-		int64_t feeDivider = 2000; // 0.05%
-		tradingFee = buyer_amountGot / feeDivider;
-		
-		// subtract the fee from the amount the seller will receive
-		buyer_amountGotAfterFee = buyer_amountGot - tradingFee;
-		
-		// add the fee to the fee cache  TODO: check the fees file
-		// p_feecache->AddFee(pnew->getDesProperty(), pnew->getBlock(), tradingFee);
-	      } else {
-		// if (msc_debug_fees) PrintToLog("Skipping fee reduction for trade match %s:%s as one of the properties is Omni\n", pold->getHash().GetHex(), pnew->getHash().GetHex());
-	      }
+            if (IsFeatureActivated(FEATURE_FEES, pnew->getBlock()))
+            {
+	              if (pold->getProperty() > OMNI_PROPERTY_TALL && pold->getDesProperty() > OMNI_PROPERTY_TALL)
+                {
+		                int64_t feeDivider = 2000; // 0.05%
+		                tradingFee = buyer_amountGot / feeDivider;
+
+		                // subtract the fee from the amount the seller will receive
+		                buyer_amountGotAfterFee = buyer_amountGot - tradingFee;
+
+		                // add the fee to the fee cache  TODO: check the fees file
+		                // p_feecache->AddFee(pnew->getDesProperty(), pnew->getBlock(), tradingFee);
+	              } else {
+		                // if (msc_debug_fees) PrintToLog("Skipping fee reduction for trade match %s:%s as one of the properties is Omni\n", pold->getHash().GetHex(), pnew->getHash().GetHex());
+	              }
             }
-	    
+
             // transfer the payment property from buyer to seller
             assert(update_tally_map(pnew->getAddr(), pnew->getProperty(), -seller_amountGot, BALANCE));
             assert(update_tally_map(pold->getAddr(), pold->getDesProperty(), seller_amountGot, BALANCE));
-	    
+
             // transfer the market (the one being sold) property from seller to buyer
             assert(update_tally_map(pold->getAddr(), pold->getProperty(), -buyer_amountGot, METADEX_RESERVE));
             assert(update_tally_map(pnew->getAddr(), pnew->getDesProperty(), buyer_amountGotAfterFee, BALANCE));
@@ -1463,17 +1461,14 @@ MatchReturnType x_Trade(CMPMetaDEx* const pnew)
 
             pnew->setAmountRemaining(buyer_amountLeft, "buyer");
 
-            if (0 < buyer_amountLeft) {
+            if (0 < buyer_amountLeft)
                 NewReturn = TRADED_MOREINBUYER;
-            }
 
-            if (0 == buyer_amountLeft) {
+            if (0 == buyer_amountLeft)
                 bBuyerSatisfied = true;
-            }
 
-            if (0 < seller_amountLeft) {
+            if (0 < seller_amountLeft)
                 NewReturn = TRADED_MOREINSELLER;
-            }
 
             // if (msc_debug_metadex1) PrintToLog("==== TRADED !!! %u=%s\n", NewReturn, getTradeReturnType(NewReturn));
 
@@ -1486,12 +1481,14 @@ MatchReturnType x_Trade(CMPMetaDEx* const pnew)
             pofferSet->erase(offerIt++);
 
             // insert the updated one in place of the old
-            if (0 < seller_replacement.getAmountRemaining()) {
+            if (0 < seller_replacement.getAmountRemaining())
+            {
                 // PrintToLog("++ inserting seller_replacement: %s\n", seller_replacement.ToString());
                 pofferSet->insert(seller_replacement);
             }
 
-            if (bBuyerSatisfied) {
+            if (bBuyerSatisfied)
+            {
                 assert(buyer_amountLeft == 0);
                 break;
             }
@@ -1524,9 +1521,9 @@ MatchReturnType x_Trade(CMPContractDex* const pnew)
       PrintToLog("%s()=%d:%s NOT FOUND ON THE MARKET\n", __FUNCTION__, NewReturn, getTradeReturnType(NewReturn));
       return NewReturn;
     }
-  
+
   LoopBiDirectional(ppriceMap, trdAction, NewReturn, pnew, propertyForSale);
-  
+
   return NewReturn;
 }
 
@@ -1534,10 +1531,10 @@ int64_t mastercore::getVWAPPriceByPair(std::string num, std::string den)
 {
   LOCK(cs_tally);
   uint32_t nextSPID = _my_sps->peekNextSPID(1);
-  
+
   uint32_t numId = 0;
   uint32_t denId = 0;
-  
+
   for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
     {
       CMPSPInfo::Entry sp;
@@ -1555,7 +1552,7 @@ int64_t mastercore::getVWAPPriceByPair(std::string num, std::string den)
 	    }
 	}
     }
-  
+
   return VWAPMapSubVector[numId][denId];
 }
 
@@ -1615,7 +1612,7 @@ std::string CMPMetaDEx::displayUnitPrice() const
 std::string CMPMetaDEx::displayFullUnitPrice() const
 {
   rational_t tempUnitPrice = unitPrice();
-  
+
   /* Matching types require no action (divisible/divisible or indivisible/indivisible)
      Non-matching types require adjustment for display purposes
      divisible/indivisible   : *COIN
@@ -1623,13 +1620,11 @@ std::string CMPMetaDEx::displayFullUnitPrice() const
   */
   if ( isPropertyDivisible(getProperty()) && !isPropertyDivisible(getDesProperty()) ) tempUnitPrice = tempUnitPrice*COIN;
   if ( !isPropertyDivisible(getProperty()) && isPropertyDivisible(getDesProperty()) ) tempUnitPrice = tempUnitPrice/COIN;
-  
+
   std::string unitPriceStr = xToString(tempUnitPrice);
   return unitPriceStr;
 }
 
-//////////////////////////////////////
-/** New things for Contracts */
 std::string CMPContractDex::displayFullContractPrice() const
 {
     uint64_t priceForsale = getEffectivePrice();
@@ -1641,7 +1636,6 @@ std::string CMPContractDex::displayFullContractPrice() const
     std::string priceForsaleStr = xToString(fullprice);
     return priceForsaleStr;
 }
-//////////////////////////////////////
 
 rational_t CMPMetaDEx::unitPrice() const
 {
@@ -1698,15 +1692,12 @@ std::string CMPMetaDEx::ToString() const
         property, FormatMP(property, amount_forsale), desired_property, FormatMP(desired_property, amount_desired));
 }
 
-////////////////////////////////////
-/** New things for Contract */
 std::string CMPContractDex::ToString() const
 {
     return strprintf("%s:%34s in %d/%03u, txid: %s , trade #%u %s for #%u %s",
         xToString(getEffectivePrice()), getAddr(), getBlock(), getIdx(), getHash().ToString().substr(0, 10),
         getProperty(), FormatMP(getProperty(), getAmountForSale()));
 }
-//////////////////////////////////////
 
 void CMPMetaDEx::saveOffer(std::ofstream& file, SHA256_CTX* shaCtx) const
 {
@@ -1730,8 +1721,6 @@ void CMPMetaDEx::saveOffer(std::ofstream& file, SHA256_CTX* shaCtx) const
     file << lineOut << std::endl;
 }
 
-////////////////////////////////////
-/** New things for Contract */
 void CMPContractDex::saveOffer(std::ofstream& file, SHA256_CTX* shaCtx) const
 {
     std::string lineOut = strprintf("%s,%d,%d,%d,%d,%d,%d,%d,%s,%d,%d,%d",
@@ -1756,8 +1745,6 @@ void CMPContractDex::saveOffer(std::ofstream& file, SHA256_CTX* shaCtx) const
     file << lineOut << std::endl;
 }
 
-////////////////////////////////////
-/** New things for Contract */
 void saveDataGraphs(std::fstream &file, std::string lineOutSixth1, std::string lineOutSixth2, std::string lineOutSixth3, bool savedata_bool)
 {
   std::string lineSixth1 = lineOutSixth1;
@@ -1782,7 +1769,6 @@ void saveDataGraphs(std::fstream &file, std::string lineOut)
   std::string line = lineOut;
   file << line << std::endl;
 }
-////////////////////////////////////
 
 bool MetaDEx_compare::operator()(const CMPMetaDEx &lhs, const CMPMetaDEx &rhs) const
 {
@@ -1790,14 +1776,11 @@ bool MetaDEx_compare::operator()(const CMPMetaDEx &lhs, const CMPMetaDEx &rhs) c
     else return lhs.getBlock() < rhs.getBlock();
 }
 
-///////////////////////////////////////////
-/** New things for Contracts */
 bool ContractDex_compare::operator()(const CMPContractDex &lhs, const CMPContractDex &rhs) const
 {
     if (lhs.getBlock() == rhs.getBlock()) return lhs.getIdx() < rhs.getIdx();
     else return lhs.getBlock() < rhs.getBlock();
 }
-///////////////////////////////////////////
 
 bool mastercore::MetaDEx_INSERT(const CMPMetaDEx& objMetaDEx)
 {
@@ -1834,8 +1817,6 @@ bool mastercore::MetaDEx_INSERT(const CMPMetaDEx& objMetaDEx)
     return true;
 }
 
-///////////////////////////////////////////
-/** New things for Contracts */
 bool mastercore::ContractDex_INSERT(const CMPContractDex &objContractDex)
 {
   // Create an empty price map (to use in case price map for this property does not already exist)
@@ -1874,14 +1855,11 @@ bool mastercore::ContractDex_INSERT(const CMPContractDex &objContractDex)
 
   return true;
 }
-///////////////////////////////////////////
 
 // pretty much directly linked to the ADD TX21 command off the wire
 int mastercore::MetaDEx_ADD(const std::string& sender_addr, uint32_t prop, int64_t amount, int block, uint32_t property_desired, int64_t amount_desired, const uint256& txid, unsigned int idx)
 {
     int rc = METADEX_ERROR -1;
-    PrintToConsole("------------------------------------------------------------\n");
-    PrintToConsole("Inside MetaDEx_ADD\n");
     // Create a MetaDEx object from paremeters
     CMPMetaDEx new_mdex(sender_addr, block, prop, amount, property_desired, amount_desired, txid, idx, CMPTransaction::ADD);
     // if (msc_debug_metadex1) PrintToLog("%s(); buyer obj: %s\n", __FUNCTION__, new_mdex.ToString());
@@ -1912,170 +1890,165 @@ int mastercore::MetaDEx_ADD(const std::string& sender_addr, uint32_t prop, int64
     return rc;
 }
 
-/////////////////////////////////////////
-/** New things for Contract */
 int mastercore::ContractDex_ADD(const std::string& sender_addr, uint32_t prop, int64_t amount, int block, const uint256& txid, unsigned int idx, uint64_t effective_price, uint8_t trading_action, int64_t amount_to_reserve)
 {
-  // int rc = METADEX_ERROR -1;
-  /*Remember: Here CMPTransaction::ADD is the subaction coming from CMPMetaDEx*/
-  CMPContractDex new_cdex(sender_addr, block, prop, amount, 0, 0, txid, idx, CMPTransaction::ADD, effective_price, trading_action);
-  // if (msc_debug_metadex1) PrintToLog("%s(); buyer obj: %s\n", __FUNCTION__, new_cdex.ToString());
-  //  Ensure this is not a badly priced trade (for example due to zero amounts)
-  if (0 >= new_cdex.getEffectivePrice()) return METADEX_ERROR -66;
+    int rc = METADEX_ERROR -1;
+    /*Remember: Here CMPTransaction::ADD is the subaction coming from CMPMetaDEx*/
+    CMPContractDex new_cdex(sender_addr, block, prop, amount, 0, 0, txid, idx, CMPTransaction::ADD, effective_price, trading_action);
+    // if (msc_debug_metadex1) PrintToLog("%s(); buyer obj: %s\n", __FUNCTION__, new_cdex.ToString());
+    //  Ensure this is not a badly priced trade (for example due to zero amounts)
+    if (0 >= new_cdex.getEffectivePrice()) return METADEX_ERROR -66;
 
-  x_Trade(&new_cdex);
-  // if (msc_debug_metadex3) MetaDEx_debug_print();
+    x_Trade(&new_cdex);
 
-  // Insert the remaining order into the ContractDex maps
-  if (0 < new_cdex.getAmountForSale()) { //switch to getAmounForSale() when ready
-    if (!ContractDex_INSERT(new_cdex)) {
-      PrintToLog("%s() ERROR: ALREADY EXISTS, line %d, file: %s\n", __FUNCTION__, __LINE__, __FILE__);
-      return METADEX_ERROR -70;  // TODO: create new numbers for our errors.
-    } else {
-      PrintToConsole("\nInserted in the orderbook!!\n");
-      // if (msc_debug_metadex1) PrintToLog("==== INSERTED: %s= %s\n", xToString(new_cdex.getEffectivePrice()), new_cdex.ToString());
-      // if (msc_debug_metadex3) MetaDEx_debug_print();
-    }
-  }
-  return 0;
+    // Insert the remaining order into the ContractDex maps
+    if (0 < new_cdex.getAmountForSale())
+    {
+        //switch to getAmounForSale() when ready
+        if (!ContractDex_INSERT(new_cdex))
+        {
+            PrintToLog("%s() ERROR: ALREADY EXISTS, line %d, file: %s\n", __FUNCTION__, __LINE__, __FILE__);
+            return METADEX_ERROR -70;  // TODO: create new numbers for our errors.
+        } else {
+            PrintToConsole("\nInserted in the orderbook!!\n");
+            // if (msc_debug_metadex1) PrintToLog("==== INSERTED: %s= %s\n", xToString(new_cdex.getEffectivePrice()), new_cdex.ToString());
+            // if (msc_debug_metadex3) MetaDEx_debug_print();
+        }
+     }
+     rc = 0;
+     return rc;
 }
 
-/////////////////////////////////////////
-/** New things for Contract */
 int mastercore::ContractDex_ADD_MARKET_PRICE(const std::string& sender_addr, uint32_t contractId, int64_t amount, int block, const uint256& txid, unsigned int idx, uint8_t trading_action, int64_t amount_to_reserve)
 {
-  int rc = METADEX_ERROR -1;
+    int rc = METADEX_ERROR -1;
 
-  // PrintToLog("------------------------------------------------------------\n");
-  // PrintToLog("Inside ContractDex_ADD_MARKET_PRICE\n");
+    if (trading_action == BUY)
+    {
+        uint64_t ask = edgeOrderbook(contractId,BUY);
 
-  /*Remember: Here CMPTransaction::ADD is the subaction coming from CMPMetaDEx*/
+        CMPContractDex new_cdex(sender_addr, block, contractId, amount, 0, 0, txid, idx, CMPTransaction::ADD, ask, trading_action);
 
-  if (trading_action == BUY){
-    uint64_t ask = edgeOrderbook(contractId,BUY);
-    // PrintToLog("ask: %d\n",ask);
-    CMPContractDex new_cdex(sender_addr, block, contractId, amount, 0, 0, txid, idx, CMPTransaction::ADD, ask, trading_action);
+        // Ensure this is not a badly priced trade (for example due to zero amounts)
+        // PrintToLog("effective price of new_cdex /buy/: %d\n",new_cdex.getEffectivePrice());
+        if (0 >= new_cdex.getEffectivePrice()) return METADEX_ERROR -66;
 
-    // Ensure this is not a badly priced trade (for example due to zero amounts)
-    // PrintToLog("effective price of new_cdex /buy/: %d\n",new_cdex.getEffectivePrice());
-    if (0 >= new_cdex.getEffectivePrice()) return METADEX_ERROR -66;
+        uint64_t newvalue;
 
-    // Insert the remaining order into the ContractDex maps
-    // uint64_t diff;
-    // uint64_t oldvalue;
-    uint64_t newvalue;
+        while(true)
+       {
+           // oldvalue = new_cdex.getAmountForSale();
+           x_Trade(&new_cdex);
+           newvalue = new_cdex.getAmountForSale();
+           if (newvalue == 0)
+	             break;
+           uint64_t price = edgeOrderbook(contractId,BUY);
+           new_cdex.setPrice(price);
+       }
 
-    while(true) {
-      // oldvalue = new_cdex.getAmountForSale();
-      x_Trade(&new_cdex);
-      newvalue = new_cdex.getAmountForSale();
-      if (newvalue == 0) {
-	break;
-      }
+    }
+    else if (trading_action == SELL)
+    {
+        uint64_t bid = edgeOrderbook(contractId,SELL);
+        // PrintToLog("bid: %d\n",bid);
+        CMPContractDex new_cdex(sender_addr, block, contractId, amount, 0, 0, txid, idx, CMPTransaction::ADD, bid, trading_action);
+        //  Ensure this is not a badly priced trade (for example due to zero amounts
 
-      uint64_t price = edgeOrderbook(contractId,BUY);
-      new_cdex.setPrice(price);
-      // PrintToLog("SELL SIDE in while loop/ right side of example/<-------\n");
+        // PrintToLog("effective price of new_cdex/sell/: %d\n",new_cdex.getEffectivePrice());
+        if (0 >= new_cdex.getEffectivePrice()) return METADEX_ERROR -66;
+
+        uint64_t newvalue;
+
+        while(true)
+        {
+            // oldvalue = new_cdex.getAmountForSale();
+            x_Trade(&new_cdex);
+            newvalue = new_cdex.getAmountForSale();
+            if (newvalue == 0)
+	              break;
+
+            uint64_t price = edgeOrderbook(contractId,BUY);
+            new_cdex.setPrice(price);
+
+        }
+
     }
 
-  } else if (trading_action == SELL){
-    uint64_t bid = edgeOrderbook(contractId,SELL);
-    // PrintToLog("bid: %d\n",bid);
-    CMPContractDex new_cdex(sender_addr, block, contractId, amount, 0, 0, txid, idx, CMPTransaction::ADD, bid, trading_action);
-    //  Ensure this is not a badly priced trade (for example due to zero amounts
-
-    // PrintToLog("effective price of new_cdex/sell/: %d\n",new_cdex.getEffectivePrice());
-    if (0 >= new_cdex.getEffectivePrice()) return METADEX_ERROR -66;
-
-    // Insert the remaining order into the ContractDex maps
-    // uint64_t oldvalue;
-    uint64_t newvalue;
-    // uint64_t diff;
-    while(true) {
-      // oldvalue = new_cdex.getAmountForSale();
-      x_Trade(&new_cdex);
-      newvalue = new_cdex.getAmountForSale();
-      if (newvalue == 0) {
-	break;
-      }
-
-      uint64_t price = edgeOrderbook(contractId,BUY);
-      new_cdex.setPrice(price);
-      // PrintToLog("BUY SIDE in while loop/ right side of example/<-------\n");
-    }
-
-  }
-
-  rc = 0;
-  return rc;
+    rc = 0;
+    return rc;
 }
 
 int mastercore::ContractDex_CANCEL_EVERYTHING(const uint256& txid, unsigned int block, const std::string& sender_addr, unsigned char ecosystem, uint32_t contractId)
 {
-  int rc = METADEX_ERROR -40;
-  bool bValid = false;
-  int64_t factorH = factorE;
+    int rc = METADEX_ERROR -40;
+    bool bValid = false;
+    int64_t factorH = factorE;
 
-  for (cd_PropertiesMap::iterator my_it = contractdex.begin(); my_it != contractdex.end(); ++my_it) {
-    unsigned int prop = my_it->first;
+    for (cd_PropertiesMap::iterator my_it = contractdex.begin(); my_it != contractdex.end(); ++my_it)
+    {
+        unsigned int prop = my_it->first;
 
-    // skip property, if it is not in the expected ecosystem
-    if (isMainEcosystemProperty(ecosystem) && !isMainEcosystemProperty(prop)) continue;
-    if (isTestEcosystemProperty(ecosystem) && !isTestEcosystemProperty(prop)) continue;
+        // skip property, if it is not in the expected ecosystem
+        if (isMainEcosystemProperty(ecosystem) && !isMainEcosystemProperty(prop)) continue;
+        if (isTestEcosystemProperty(ecosystem) && !isTestEcosystemProperty(prop)) continue;
 
-    // PrintToLog(" ## property: %u\n", prop);
-    cd_PricesMap &prices = my_it->second;
+        // PrintToLog(" ## property: %u\n", prop);
+        cd_PricesMap &prices = my_it->second;
 
-    for (cd_PricesMap::iterator it = prices.begin(); it != prices.end(); ++it) {
-      // uint64_t price = it->first;
-      cd_Set &indexes = it->second;
+        for (cd_PricesMap::iterator it = prices.begin(); it != prices.end(); ++it)
+        {
+            // uint64_t price = it->first;
+            cd_Set &indexes = it->second;
 
-      // PrintToLog("  # Price Level: %s\n", xToString(price));
+            // PrintToLog("  # Price Level: %s\n", xToString(price));
 
-      for (cd_Set::iterator it = indexes.begin(); it != indexes.end();) {
-	// PrintToLog("%s= %s\n", xToString(price), it->ToString());
+            for (cd_Set::iterator it = indexes.begin(); it != indexes.end();)
+            {
+	              // PrintToLog("%s= %s\n", xToString(price), it->ToString());
 
-	if (it->getAddr() != sender_addr || it->getProperty() != contractId || it->getAmountForSale() == 0) {
-	  ++it;
-	  continue;
-	}
+	              if (it->getAddr() != sender_addr || it->getProperty() != contractId || it->getAmountForSale() == 0)
+                {
+	                  ++it;
+	                  continue;
+	              }
 
-	rc = 0;
-	// PrintToLog("%s(): REMOVING %s\n", __FUNCTION__, it->ToString());
+	              rc = 0;
+	              // PrintToLog("%s(): REMOVING %s\n", __FUNCTION__, it->ToString());
 
-	CMPSPInfo::Entry sp;
-	assert(_my_sps->getSP(it->getProperty(), sp));
-	uint32_t collateralCurrency = sp.collateral_currency;
-	int64_t marginRe = static_cast<int64_t>(sp.margin_requirement);
+	              CMPSPInfo::Entry sp;
+	              assert(_my_sps->getSP(it->getProperty(), sp));
+	              uint32_t collateralCurrency = sp.collateral_currency;
+	              int64_t marginRe = static_cast<int64_t>(sp.margin_requirement);
 
-	string addr = it->getAddr();
-	int64_t amountForSale = it->getAmountForSale();
+	              string addr = it->getAddr();
+	              int64_t amountForSale = it->getAmountForSale();
 
-	rational_t conv = notionalChange(contractId);
-	int64_t num = conv.numerator().convert_to<int64_t>();
-	int64_t den = conv.denominator().convert_to<int64_t>();
-	int64_t balance = getMPbalance(addr,collateralCurrency,BALANCE);
+	              rational_t conv = notionalChange(contractId);
+	              int64_t num = conv.numerator().convert_to<int64_t>();
+	              int64_t den = conv.denominator().convert_to<int64_t>();
+	              int64_t balance = getMPbalance(addr,collateralCurrency,BALANCE);
 
-	arith_uint256 amountMargin = (ConvertTo256(amountForSale) * ConvertTo256(marginRe) * ConvertTo256(num) / (ConvertTo256(den) * ConvertTo256(factorH)));
-	int64_t redeemed = ConvertTo64(amountMargin);
+	              arith_uint256 amountMargin = (ConvertTo256(amountForSale) * ConvertTo256(marginRe) * ConvertTo256(num) / (ConvertTo256(den) * ConvertTo256(factorH)));
+	              int64_t redeemed = ConvertTo64(amountMargin);
 
-	// PrintToLog("collateral currency id of contract : %d\n",collateralCurrency);
-	// PrintToLog("margin requirement of contract : %d\n",marginRe);
-	// PrintToLog("amountForSale: %d\n",amountForSale);
-	// PrintToLog("Address: %d\n",addr);
-	// PrintToLog("--------------------------------------------\n");
+	              // PrintToLog("collateral currency id of contract : %d\n",collateralCurrency);
+	              // PrintToLog("margin requirement of contract : %d\n",marginRe);
+	              // PrintToLog("amountForSale: %d\n",amountForSale);
+	              // PrintToLog("Address: %d\n",addr);
+	              // PrintToLog("--------------------------------------------\n");
 
-	// move from reserve to balance the collateral
-	if (balance > redeemed && balance > 0 && redeemed > 0) {
-	  assert(update_tally_map(addr, collateralCurrency, redeemed, BALANCE));
-	  assert(update_tally_map(addr, collateralCurrency, -redeemed, CONTRACTDEX_RESERVE));
-	  // // record the cancellation
-	}
-	bValid = true;
-	// p_txlistdb->recordContractDexCancelTX(txid, it->getHash(), bValid, block, it->getProperty(), it->getAmountForSale
-	indexes.erase(it++);
-      }
-    }
+	              // move from reserve to balance the collateral
+	              if (balance > redeemed && balance > 0 && redeemed > 0)
+                {
+	                  assert(update_tally_map(addr, collateralCurrency, redeemed, BALANCE));
+	                  assert(update_tally_map(addr, collateralCurrency, -redeemed, CONTRACTDEX_RESERVE));
+	              }
+
+	              bValid = true;
+	              // p_txlistdb->recordContractDexCancelTX(txid, it->getHash(), bValid, block, it->getProperty(), it->getAmountForSale
+	              indexes.erase(it++);
+            }
+        }
   }
   if (bValid == false)
     PrintToConsole("You don't have active orders\n");
@@ -2085,64 +2058,69 @@ int mastercore::ContractDex_CANCEL_EVERYTHING(const uint256& txid, unsigned int 
 
 int mastercore::ContractDex_CANCEL_FOR_BLOCK(const uint256& txid,  int block,unsigned int idx, const std::string& sender_addr, unsigned char ecosystem)
 {
-  int rc = METADEX_ERROR -40;
-  bool bValid = false;
-  for (cd_PropertiesMap::iterator my_it = contractdex.begin(); my_it != contractdex.end(); ++my_it) {
+    int rc = METADEX_ERROR -40;
+    bool bValid = false;
+    for (cd_PropertiesMap::iterator my_it = contractdex.begin(); my_it != contractdex.end(); ++my_it)
+    {
+        // PrintToLog(" ## property: %u\n", prop);
+        cd_PricesMap &prices = my_it->second;
 
-    // PrintToLog(" ## property: %u\n", prop);
-    cd_PricesMap &prices = my_it->second;
-
-    for (cd_PricesMap::iterator it = prices.begin(); it != prices.end(); ++it) {
+        for (cd_PricesMap::iterator it = prices.begin(); it != prices.end(); ++it)
+        {
             // uint64_t price = it->first;
-      cd_Set &indexes = it->second;
+            cd_Set &indexes = it->second;
 
-      for (cd_Set::iterator it = indexes.begin(); it != indexes.end();) {
-	string addr = it->getAddr();
-	if (addr != sender_addr || it->getBlock()!= block || it->getIdx()!= idx) {
-	  ++it;
-	  continue;
-	}
+            for (cd_Set::iterator it = indexes.begin(); it != indexes.end();)
+            {
+	              string addr = it->getAddr();
+ 	              if (addr != sender_addr || it->getBlock()!= block || it->getIdx()!= idx)
+                {
+	                  ++it;
+	                  continue;
+	              }
 
-	CMPSPInfo::Entry sp;
-	uint32_t contractId = it->getProperty();
-	assert(_my_sps->getSP(contractId, sp));
-	uint32_t collateralCurrency = sp.collateral_currency;
-	uint32_t marginRe = sp.margin_requirement;
+	              CMPSPInfo::Entry sp;
+	              uint32_t contractId = it->getProperty();
+	              assert(_my_sps->getSP(contractId, sp));
+	              uint32_t collateralCurrency = sp.collateral_currency;
+	              uint32_t marginRe = sp.margin_requirement;
 
-	int64_t balance = getMPbalance(addr,collateralCurrency,BALANCE);
-	int64_t amountForSale = it->getAmountForSale();
+	              int64_t balance = getMPbalance(addr,collateralCurrency,BALANCE);
+	              int64_t amountForSale = it->getAmountForSale();
 
-	rational_t conv = notionalChange(it->getProperty());
-	int64_t num = conv.numerator().convert_to<int64_t>();
-	int64_t den = conv.denominator().convert_to<int64_t>();
+	              rational_t conv = notionalChange(it->getProperty());
+	              int64_t num = conv.numerator().convert_to<int64_t>();
+	              int64_t den = conv.denominator().convert_to<int64_t>();
 
-	arith_uint256 amountMargin = (ConvertTo256(amountForSale) * ConvertTo256(marginRe) * ConvertTo256(num) / (ConvertTo256(den) * ConvertTo256(factorE)));
-	int64_t redeemed = ConvertTo64(amountMargin);
+	              arith_uint256 amountMargin = (ConvertTo256(amountForSale) * ConvertTo256(marginRe) * ConvertTo256(num) / (ConvertTo256(den) * ConvertTo256(factorE)));
+	              int64_t redeemed = ConvertTo64(amountMargin);
 
-	// PrintToLog("collateral currency id of contract : %d\n", collateralCurrency);
-	// PrintToLog("margin requirement of contract : %d\n", marginRe);
-	// PrintToLog("amountForSale: %d\n", amountForSale);
-	// PrintToLog("Address: %d\n", addr);
-	std::string sgetback = FormatDivisibleMP(redeemed, false);
-	// PrintToLog("amount returned to balance: %d\n", redeemed);
-	// PrintToLog("--------------------------------------------\n");
+	              // PrintToLog("collateral currency id of contract : %d\n", collateralCurrency);
+	              // PrintToLog("margin requirement of contract : %d\n", marginRe);
+	              // PrintToLog("amountForSale: %d\n", amountForSale);
+	              // PrintToLog("Address: %d\n", addr);
+	              std::string sgetback = FormatDivisibleMP(redeemed, false);
+	              // PrintToLog("amount returned to balance: %d\n", redeemed);
+	              // PrintToLog("--------------------------------------------\n");
 
-	// move from reserve to balance the collateral
-	if (balance > redeemed && balance > 0 && redeemed > 0) {
-	  assert(update_tally_map(addr, collateralCurrency, redeemed, BALANCE));
-	  assert(update_tally_map(addr, collateralCurrency,  -redeemed, CONTRACTDEX_RESERVE));
-	}
-	// record the cancellation
-	bValid = true;
-	// p_txlistdb->recordContractDexCancelTX(txid, it->getHash(), bValid, block, it->getProperty(), it->getAmountForSale
-	indexes.erase(it++);
+	              // move from reserve to balance the collateral
+	              if (balance > redeemed && balance > 0 && redeemed > 0)
+                {
+	                  assert(update_tally_map(addr, collateralCurrency, redeemed, BALANCE));
+	                  assert(update_tally_map(addr, collateralCurrency,  -redeemed, CONTRACTDEX_RESERVE));
+	              }
 
-	rc = 0;
-      }
-    }
+	              // record the cancellation
+	              bValid = true;
+	              // p_txlistdb->recordContractDexCancelTX(txid, it->getHash(), bValid, block, it->getProperty(), it->getAmountForSale
+	              indexes.erase(it++);
+
+	              rc = 0;
+            }
+       }
   }
   if (bValid == false){
-    PrintToConsole("Incorrect block or idx\n");
+    PrintToLog("Incorrect block or idx\n");
   }
   return rc;
 }
@@ -2158,7 +2136,8 @@ int mastercore::ContractDex_CLOSE_POSITION(const uint256& txid, unsigned int blo
 
     // Clearing the position
     unsigned int idx=0;
-    if (shortPosition > 0 && longPosition == 0){
+    if (shortPosition > 0 && longPosition == 0)
+    {
         // PrintToLog("Short Position closing...\n");
         ContractDex_ADD_MARKET_PRICE(sender_addr,contractId, shortPosition, block, txid, idx,BUY, 0);
     } else if (longPosition > 0 && shortPosition == 0){
@@ -2172,389 +2151,46 @@ int mastercore::ContractDex_CLOSE_POSITION(const uint256& txid, unsigned int blo
         update_tally_map(sender_addr, contractId, -liqPrice, LIQUIDATION_PRICE);
     }
 
-    //realized the UPNL
-    int64_t upnl = 0;
-    int64_t ppnl  = getMPbalance(sender_addr, contractId, UPNL);
-    int64_t nupnl  = getMPbalance(sender_addr, contractId, NUPNL);
-
-    (ppnl > 0) ? upnl = ppnl : upnl = nupnl ;
-
-    if (upnl > 0){
-        update_tally_map(sender_addr, contractId, -upnl, UPNL);
-        update_tally_map(sender_addr, contractId, upnl, REALIZED_PROFIT);
-        // PrintToLog("profits: %d\n",upnl);
-
-    } else if (upnl < 0) {
-        update_tally_map(sender_addr,contractId, upnl, UPNL);
-        update_tally_map(sender_addr, contractId, -upnl, REALIZED_LOSSES);
-        // PrintToLog("losses: %d\n",upnl);
-    }
-
     int64_t shortPositionAf = getMPbalance(sender_addr,contractId, NEGATIVE_BALANCE);
     int64_t longPositionAf= getMPbalance(sender_addr,contractId, POSSITIVE_BALANCE);
-    // PrintToLog("shortPosition Now: %d\n",shortPositionAf);
-    // PrintToLog("longPosition Now: %d\n",longPositionAf);
+
+    PrintToLog("shortPosition Now: %d\n",shortPositionAf);
+    PrintToLog("longPosition Now: %d\n",longPositionAf);
 
     if (shortPositionAf == 0 && longPositionAf == 0){
-        // PrintToLog("POSITION CLOSED!!!\n");
+        PrintToLog("POSITION CLOSED!!!\n");
     } else {
-        // PrintToLog("ERROR: Position partialy Closed\n");
+        PrintToLog("ERROR: Position partialy Closed\n");
     }
 
     return 0;
 }
 
 int64_t mastercore::getPairMarketPrice(std::string num, std::string den)
-{ 
-  LOCK(cs_tally);
-  uint32_t nextSPID = _my_sps->peekNextSPID(1);
-  
-  uint32_t numId = 0;
-  uint32_t denId = 0;
-  
-  for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
-    {
-      CMPSPInfo::Entry sp;
-      if (_my_sps->getSP(propertyId, sp))
-	{
-	  if ( sp.name == num )
-	    {
-	      PrintToLog("\npropertyId num: %d\n", propertyId);
-	      numId = propertyId;
-	    }
-	  if ( sp.name == den )
-	    {
-	      PrintToLog("\npropertyId den: %d\n", propertyId);
-	      denId = propertyId;
-	    }
-	}
-    }
-  
-  return market_priceMap[numId][denId];
-}
+{
+    LOCK(cs_tally);
+    uint32_t nextSPID = _my_sps->peekNextSPID(1);
 
-//
-// /**
-//  * Scans the orderbook and removes every all-pair order
-//  */
-// int mastercore::MetaDEx_SHUTDOWN_ALLPAIR()
-// {
-//     int rc = 0;
-//     PrintToLog("%s()\n", __FUNCTION__);
-//     for (md_PropertiesMap::iterator my_it = metadex.begin(); my_it != metadex.end(); ++my_it) {
-//         md_PricesMap& prices = my_it->second;
-//         for (md_PricesMap::iterator it = prices.begin(); it != prices.end(); ++it) {
-//             md_Set& indexes = it->second;
-//             for (md_Set::iterator it = indexes.begin(); it != indexes.end();) {
-//                 if (it->getDesProperty() > OMNI_PROPERTY_TMSC && it->getProperty() > OMNI_PROPERTY_TMSC) { // no OMNI/TOMNI side to the trade
-//                     PrintToLog("%s(): REMOVING %s\n", __FUNCTION__, it->ToString());
-//                     // move from reserve to balance
-//                     assert(update_tally_map(it->getAddr(), it->getProperty(), -it->getAmountRemaining(), METADEX_RESERVE));
-//                     assert(update_tally_map(it->getAddr(), it->getProperty(), it->getAmountRemaining(), BALANCE));
-//                     indexes.erase(it++);
-//                 }
-//             }
-//         }
-//     }
-//     return rc;
-// }
-//
-// ///////////////////////////////////
-// /** New things for Contracts */
-// int mastercore::ContractDex_SHUTDOWN_ALLPAIR()
-// {
-//     int rc = 0;
-//     PrintToLog("%s()\n", __FUNCTION__);
-//     for (cd_PropertiesMap::iterator my_it = contractdex.begin(); my_it != contractdex.end(); ++my_it) {
-//         cd_PricesMap &prices = my_it->second;
-//         for (cd_PricesMap::iterator it = prices.begin(); it != prices.end(); ++it) {
-//             cd_Set &indexes = it->second;
-//             for (cd_Set::iterator it = indexes.begin(); it != indexes.end();) {
-//                 if (it->getDesProperty() > OMNI_PROPERTY_TMSC && it->getProperty() > OMNI_PROPERTY_TMSC) { // no OMNI/TOMNI side to the trade
-//                     PrintToLog("%s(): REMOVING %s\n", __FUNCTION__, it->ToString());
-//                     // move from reserve to balance
-//                     assert(update_tally_map(it->getAddr(), it->getProperty(), -it->getAmountRemaining(), METADEX_RESERVE));
-//                     assert(update_tally_map(it->getAddr(), it->getProperty(),  it->getAmountRemaining(), BALANCE));
-//                     indexes.erase(it++);
-//                 }
-//             }
-//         }
-//     }
-//     return rc;
-// }
-// ///////////////////////////////////
-//
-// /**
-//  * Scans the orderbook and removes every order
-//  */
-// int mastercore::MetaDEx_SHUTDOWN()
-// {
-//     int rc = 0;
-//     PrintToLog("%s()\n", __FUNCTION__);
-//     for (md_PropertiesMap::iterator my_it = metadex.begin(); my_it != metadex.end(); ++my_it) {
-//         md_PricesMap& prices = my_it->second;
-//         for (md_PricesMap::iterator it = prices.begin(); it != prices.end(); ++it) {
-//             md_Set& indexes = it->second;
-//             for (md_Set::iterator it = indexes.begin(); it != indexes.end();) {
-//                 PrintToLog("%s(): REMOVING %s\n", __FUNCTION__, it->ToString());
-//                 // move from reserve to balance
-//                 assert(update_tally_map(it->getAddr(), it->getProperty(), -it->getAmountRemaining(), METADEX_RESERVE));
-//                 assert(update_tally_map(it->getAddr(), it->getProperty(), it->getAmountRemaining(), BALANCE));
-//                 indexes.erase(it++);
-//             }
-//         }
-//     }
-//     return rc;
-// }
-//
-// //////////////////////////////////
-// /** New things for Contracts */
-// int mastercore::ContractDex_SHUTDOWN()
-// {
-//     int rc = 0;
-//     PrintToLog("%s()\n", __FUNCTION__);
-//     for (cd_PropertiesMap::iterator my_it = contractdex.begin(); my_it != contractdex.end(); ++my_it) {
-//         cd_PricesMap &prices = my_it->second;
-//         for (cd_PricesMap::iterator it = prices.begin(); it != prices.end(); ++it) {
-//             cd_Set &indexes = it->second;
-//             for (cd_Set::iterator it = indexes.begin(); it != indexes.end();) {
-//                 PrintToLog("%s(): REMOVING %s\n", __FUNCTION__, it->ToString());
-//                 // move from reserve to balance
-//                 assert(update_tally_map(it->getAddr(), it->getProperty(), -it->getAmountRemaining(), METADEX_RESERVE));
-//                 assert(update_tally_map(it->getAddr(), it->getProperty(), it->getAmountRemaining(), BALANCE));
-//                 indexes.erase(it++);
-//             }
-//         }
-//     }
-//     return rc;
-// }
-// //////////////////////////////////
-//
-// // searches the metadex maps to see if a trade is still open
-// // allows search to be optimized if propertyIdForSale is specified
-// bool mastercore::MetaDEx_isOpen(const uint256& txid, uint32_t propertyIdForSale)
-// {
-//     for (md_PropertiesMap::iterator my_it = metadex.begin(); my_it != metadex.end(); ++my_it) {
-//         if (propertyIdForSale != 0 && propertyIdForSale != my_it->first) continue;
-//         md_PricesMap & prices = my_it->second;
-//         for (md_PricesMap::iterator it = prices.begin(); it != prices.end(); ++it) {
-//             md_Set & indexes = (it->second);
-//             for (md_Set::iterator it = indexes.begin(); it != indexes.end(); ++it) {
-//                 CMPMetaDEx obj = *it;
-//                 if( obj.getHash().GetHex() == txid.GetHex() ) return true;
-//             }
-//         }
-//     }
-//     return false;
-// }
-//
-// /////////////////////////////////////
-// /** New things for Contracts */
-// bool mastercore::ContractDex_isOpen(const uint256& txid, uint32_t propertyIdForSale)
-// {
-//     for (cd_PropertiesMap::iterator my_it = contractdex.begin(); my_it != contractdex.end(); ++my_it) {
-//         if (propertyIdForSale != 0 && propertyIdForSale != my_it->first) continue;
-//         cd_PricesMap &prices = my_it->second;
-//         for (cd_PricesMap::iterator it = prices.begin(); it != prices.end(); ++it) {
-//             cd_Set &indexes = (it->second);
-//             for (cd_Set::iterator it = indexes.begin(); it != indexes.end(); ++it) {
-//                 CMPContractDex obj = *it;
-//                 if( obj.getHash().GetHex() == txid.GetHex() ) return true;
-//             }
-//         }
-//     }
-//     return false;
-// }
-// ////////////////////////////////////
-//
-// /**
-//  * Returns a string describing the status of a trade
-//  *
-//  */
-// std::string mastercore::MetaDEx_getStatusText(int tradeStatus)
-// {
-//     switch (tradeStatus) {
-//         case TRADE_OPEN: return "open";
-//         case TRADE_OPEN_PART_FILLED: return "open part filled";
-//         case TRADE_FILLED: return "filled";
-//         case TRADE_CANCELLED: return "cancelled";
-//         case TRADE_CANCELLED_PART_FILLED: return "cancelled part filled";
-//         case TRADE_INVALID: return "trade invalid";
-//         default: return "unknown";
-//     }
-// }
-//
-// ////////////////////////////////
-// /** New things for Contracts */
-// std::string mastercore::ContractDex_getStatusText(int tradeStatus)
-// {
-//     switch (tradeStatus) {
-//         case TRADE_OPEN: return "open";
-//         case TRADE_OPEN_PART_FILLED: return "open part filled";
-//         case TRADE_FILLED: return "filled";
-//         case TRADE_CANCELLED: return "cancelled";
-//         case TRADE_CANCELLED_PART_FILLED: return "cancelled part filled";
-//         case TRADE_INVALID: return "trade invalid";
-//         default: return "unknown";
-//     }
-// }
-// ////////////////////////////////
-//
-// /**
-//  * Returns the status of a MetaDEx trade
-//  *
-//  */
-// int mastercore::MetaDEx_getStatus(const uint256& txid, uint32_t propertyIdForSale, int64_t amountForSale, int64_t totalSold)
-// {
-//     // NOTE: If the calling code is already aware of the total amount sold, pass the value in to this function to avoid duplication of
-//     //       work.  If the calling code doesn't know the amount, leave default (-1) and we will calculate it from levelDB lookups.
-//     if (totalSold == -1) {
-//         UniValue tradeArray(UniValue::VARR);
-//         int64_t totalReceived;
-//         t_tradelistdb->getMatchingTrades(txid, propertyIdForSale, tradeArray, totalSold, totalReceived);
-//     }
-//
-//     // Return a "trade invalid" status if the trade was invalidated at parsing/interpretation (eg insufficient funds)
-//     if (!getValidMPTX(txid)) return TRADE_INVALID;
-//
-//     // Calculate and return the status of the trade via the amount sold and open/closed attributes.
-//     if (MetaDEx_isOpen(txid, propertyIdForSale)) {
-//         if (totalSold == 0) {
-//             return TRADE_OPEN;
-//         } else {
-//             return TRADE_OPEN_PART_FILLED;
-//         }
-//     } else {
-//         if (totalSold == 0) {
-//             return TRADE_CANCELLED;
-//         } else if (totalSold < amountForSale) {
-//             return TRADE_CANCELLED_PART_FILLED;
-//         } else {
-//             return TRADE_FILLED;
-//         }
-//     }
-// }
-//
-// ///////////////////////////////
-// /** New things for Contracts */
-// int mastercore::ContractDex_getStatus(const uint256& txid, uint32_t propertyIdForSale, int64_t amountForSale, int64_t totalSold)
-// {
-//     // NOTE: If the calling code is already aware of the total amount sold, pass the value in to this function to avoid duplication of
-//     //       work.  If the calling code doesn't know the amount, leave default (-1) and we will calculate it from levelDB lookups.
-//     if (totalSold == -1) {
-//         UniValue tradeArray(UniValue::VARR);
-//         int64_t totalReceived;
-//         t_tradelistdb->getMatchingTrades(txid, propertyIdForSale, tradeArray, totalSold, totalReceived);
-//     }
-//
-//     // Return a "trade invalid" status if the trade was invalidated at parsing/interpretation (eg insufficient funds)
-//     if (!getValidMPTX(txid)) return TRADE_INVALID;
-//
-//     // Calculate and return the status of the trade via the amount sold and open/closed attributes.
-//     if (ContractDex_isOpen(txid, propertyIdForSale)) {
-//         if (totalSold == 0) {
-//             return TRADE_OPEN;
-//         } else {
-//             return TRADE_OPEN_PART_FILLED;
-//         }
-//     } else {
-//         if (totalSold == 0) {
-//             return TRADE_CANCELLED;
-//         } else if (totalSold < amountForSale) {
-//             return TRADE_CANCELLED_PART_FILLED;
-//         } else {
-//             return TRADE_FILLED;
-//         }
-//     }
-// }
-// ///////////////////////////////
-//
-// void mastercore::MetaDEx_debug_print(bool bShowPriceLevel, bool bDisplay)
-// {
-//     PrintToLog("<<<\n");
-//     for (md_PropertiesMap::iterator my_it = metadex.begin(); my_it != metadex.end(); ++my_it) {
-//         uint32_t prop = my_it->first;
-//
-//         PrintToLog(" ## property: %u\n", prop);
-//         md_PricesMap& prices = my_it->second;
-//
-//         for (md_PricesMap::iterator it = prices.begin(); it != prices.end(); ++it) {
-//             rational_t price = it->first;
-//             md_Set& indexes = it->second;
-//
-//             if (bShowPriceLevel) PrintToLog("  # Price Level: %s\n", xToString(price));
-//
-//             for (md_Set::iterator it = indexes.begin(); it != indexes.end(); ++it) {
-//                 const CMPMetaDEx& obj = *it;
-//
-//                 if (bDisplay) PrintToConsole("%s= %s\n", xToString(price), obj.ToString());
-//                 else PrintToLog("%s= %s\n", xToString(price), obj.ToString());
-//             }
-//         }
-//     }
-//     PrintToLog(">>>\n");
-// }
-//
-// /////////////////////////////////////
-// /** New things for Contracts */
-// void mastercore::ContractDex_debug_print(bool bShowPriceLevel, bool bDisplay)
-// {
-//     PrintToLog("<<<\n");
-//     for (cd_PropertiesMap::iterator my_it = contractdex.begin(); my_it != contractdex.end(); ++my_it) {
-//         uint32_t prop = my_it->first;
-//
-//         PrintToLog(" ## property: %u\n", prop);
-//         cd_PricesMap &prices = my_it->second;
-//
-//         for (cd_PricesMap::iterator it = prices.begin(); it != prices.end(); ++it) {
-//             uint64_t price = it->first;
-//             cd_Set &indexes = it->second;
-//
-//             if (bShowPriceLevel) PrintToLog("  # Price Level: %s\n", xToString(price));
-//
-//             for (cd_Set::iterator it = indexes.begin(); it != indexes.end(); ++it) {
-//                 const CMPContractDex &obj = *it;
-//
-//                 if (bDisplay) PrintToConsole("%s= %s\n", xToString(price), obj.ToString());
-//                 else PrintToLog("%s= %s\n", xToString(price), obj.ToString());
-//             }
-//         }
-//     }
-//     PrintToLog(">>>\n");
-// }
-// /////////////////////////////////////
-//
-// /**
-//  * Locates a trade in the MetaDEx maps via txid and returns the trade object
-//  *
-//  */
-// const CMPMetaDEx* mastercore::MetaDEx_RetrieveTrade(const uint256& txid)
-// {
-//     for (md_PropertiesMap::iterator propIter = metadex.begin(); propIter != metadex.end(); ++propIter) {
-//         md_PricesMap & prices = propIter->second;
-//         for (md_PricesMap::iterator pricesIter = prices.begin(); pricesIter != prices.end(); ++pricesIter) {
-//             md_Set & indexes = pricesIter->second;
-//             for (md_Set::iterator tradesIter = indexes.begin(); tradesIter != indexes.end(); ++tradesIter) {
-//                 if (txid == (*tradesIter).getHash()) return &(*tradesIter);
-//             }
-//         }
-//     }
-//     return (CMPMetaDEx*) NULL;
-// }
-//
-// ////////////////////////////////////////
-// /** New things for Contracts */
-// const CMPContractDex* mastercore::ContractDex_RetrieveTrade(const uint256& txid)
-// {
-//     for (cd_PropertiesMap::iterator propIter = contractdex.begin(); propIter != contractdex.end(); ++propIter) {
-//         cd_PricesMap &prices = propIter->second;
-//         for (cd_PricesMap::iterator pricesIter = prices.begin(); pricesIter != prices.end(); ++pricesIter) {
-//             cd_Set &indexes = pricesIter->second;
-//             for (cd_Set::iterator tradesIter = indexes.begin(); tradesIter != indexes.end(); ++tradesIter) {
-//                 if (txid == (*tradesIter).getHash()) return &(*tradesIter);
-//             }
-//         }
-//     }
-//     return (CMPContractDex*) NULL;
-// }
-////////////////////////////////////////
+    uint32_t numId = 0;
+    uint32_t denId = 0;
+
+    for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
+    {
+        CMPSPInfo::Entry sp;
+        if (_my_sps->getSP(propertyId, sp))
+       	{
+	          if ( sp.name == num )
+	          {
+	              PrintToLog("\npropertyId num: %d\n", propertyId);
+	              numId = propertyId;
+	          }
+	          if ( sp.name == den )
+	          {
+	              PrintToLog("\npropertyId den: %d\n", propertyId);
+	              denId = propertyId;
+	          }
+	      }
+    }
+
+    return market_priceMap[numId][denId];
+}

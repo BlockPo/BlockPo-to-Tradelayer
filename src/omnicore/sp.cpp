@@ -920,38 +920,25 @@ int mastercore::addInterestPegged(int nBlockPrev, const CBlockIndex* pBlockIndex
 
 int CMPSPInfo::rollingContractsBlock(const CBlockIndex* pBlockIndex)
 {
-    // PrintToLog("_________________________________________________________\n");
-    // PrintToLog("INSIDE ROLLING CONTRACT FUNCTION...\n");
-    // PrintToLog("Actual block : %d\n",pBlockIndex->nHeight); // Issuer, bid always
-
 
     for (std::map<std::string, uint32_t>::const_iterator it = peggedIssuers.begin(); it != peggedIssuers.end(); it++) {
         const std::string owner = it->first;
         const uint32_t propertyId = it->second;
-        // PrintToLog("INSIDE FIRST FOR LOOP....\n");
-        // PrintToLog("propertyId: %d\n",propertyId);
-        // PrintToLog("owner: %s\n",owner);
+
         // NOTE: We need a map of Contracts and Pegged Currency to look for data faster
         Entry sp;
-        if (_my_sps->getSP(propertyId, sp) && sp.prop_type == ALL_PROPERTY_TYPE_PEGGEDS) {
+        if (_my_sps->getSP(propertyId, sp) && sp.prop_type == ALL_PROPERTY_TYPE_PEGGEDS)
+        {
             Entry spp;
             _my_sps->getSP(sp.contract_associated, spp);
             int period = static_cast<int>(spp.blocks_until_expiration);
             int actualBlock = static_cast<int>(pBlockIndex->nHeight);
-            // PrintToLog("CONTRACT ASSOCIATED: %s\n",sp.contract_associated);
-            // PrintToLog("ACTUAL BLOCK: %s\n",actualBlock);
             int rollingBlock = static_cast<int>(spp.init_block) + static_cast<int>(trunc(0.8 * period));  //80% of deadline blocks
-            // PrintToLog("ROLLING BLOCK: %s\n",rollingBlock);
-            if (rollingBlock != actualBlock) { continue; }
+
+            if (rollingBlock != actualBlock)
+                continue;
 
             int64_t contractsReserved = getMPbalance(owner,sp.contract_associated, CONTRACTDEX_RESERVE);
-
-            // PrintToLog("GENERATE ROLLING ****************************************************************************************************!\n");
-
-            // then we must rolling the contracts A to contracts B  (selling the contracts and then putting them into RESERVE)
-            // int64_t bid = edgeOrderbook(sp.contract_associated,2);
-            // int64_t positiveBalance = getMPbalance(owner, sp.contract_associated, POSSITIVE_BALANCE);
-            // int64_t negativeBalance = getMPbalance(owner, sp.contract_associated, NEGATIVE_BALANCE);
 
             // calculating the price of the reserve position
             int64_t notionalSize = static_cast<int64_t>(spp.notional_size);
@@ -970,53 +957,40 @@ int CMPSPInfo::rollingContractsBlock(const CBlockIndex* pBlockIndex)
             {
                 LOCK(cs_tally);  // TODO: use maps instead search in database
                 uint32_t NextSPID = _my_sps->peekNextSPID(1);
-                // PrintToLog("NextSPID: %d\n",NextSPID);
-                for (uint32_t propertyId = 1; propertyId < NextSPID; propertyId++) {
+                for (uint32_t propertyId = 1; propertyId < NextSPID; propertyId++)
+                {
                     CMPSPInfo::Entry fc;
-                    if (_my_sps->getSP(propertyId, fc)) {
-		                    // PrintToConsole("Property Id: %d\n",propertyId);
-		                      if (fc.prop_type == ALL_PROPERTY_TYPE_CONTRACT && fc.denomination == spp.denomination && fc.name != spp.name){
-			                         contractId2 = propertyId;
-			                         notionalSizeB = static_cast<int64_t>(fc.notional_size);
-			                         // PrintToLog("Property to jump in rolling found: %d\n",propertyId);
-			                         break;
-		                      }
+                    if (_my_sps->getSP(propertyId, fc))
+                    {
+		                    if (fc.prop_type == ALL_PROPERTY_TYPE_CONTRACT && fc.denomination == spp.denomination && fc.name != spp.name)
+                        {
+			                      contractId2 = propertyId;
+			                      notionalSizeB = static_cast<int64_t>(fc.notional_size);
+			                      break;
+		                     }
                     }
                 }
 	         }
 
            // If there's no contract to jump to
-           if(contractId2 == 0) {
-               // PrintToLog("No contract to jump to\n");
+           if(contractId2 == 0)
+           {
+               PrintToLog("No contract to jump to\n");
                return 0;
            }
 
-           // int64_t bid1 = edgeOrderbook(contractId2,2);
-           // PrintToLog("bid COntract B: %d\n",bid1);
-
            int64_t positiveBalanceB = getMPbalance(owner,contractId2, POSSITIVE_BALANCE);
            int64_t negativeBalanceB = getMPbalance(owner,contractId2, NEGATIVE_BALANCE);
-
-           // PrintToLog("shortposition Contract B: %d\n",negativeBalanceB);
-           // PrintToLog("shortposition Contract B: %d\n",positiveBalanceB);
 
            // making the calculations of new amount of contracts in reserve
            arith_uint256 toReserve = DivideAndRoundUp(ConvertTo256(reservePrice), ConvertTo256(notionalSizeB)*ConvertTo256(factorE));
            int64_t newReserved = ConvertTo64(toReserve) * factorE;  // TODO: use multiply_int64_t
 
-           // PrintToLog("________________________________________________\n");
-           // PrintToLog("notional Size Contract B: %d\n",notionalSizeB);
-           // PrintToLog("reservePrice: %d\n",reservePrice);
-           // PrintToLog("new reserve: %d\n",newReserved);
-           // PrintToLog("________________________________________________\n");
-
-           // int result2 = ContractDex_ADD(owner,contractId2, newReserved, actualBlock, txid, 0, bid1, 2, 0); // shorting in the future contract B
-
            if(positiveBalanceB >= 0 && negativeBalanceB == 0)
-           {
                assert(update_tally_map(owner, contractId2, newReserved, POSSITIVE_BALANCE));
 
-           } else if (positiveBalanceB == 0 && negativeBalanceB >= 0) {
+           else if (positiveBalanceB == 0 && negativeBalanceB >= 0)
+           {
                int64_t diffn = newReserved - negativeBalanceB;
 
                if (diffn > 0)
@@ -1024,17 +998,12 @@ int CMPSPInfo::rollingContractsBlock(const CBlockIndex* pBlockIndex)
                     assert(update_tally_map(owner, contractId2, diffn, POSSITIVE_BALANCE));
                     assert(update_tally_map(owner, contractId2, -negativeBalanceB, NEGATIVE_BALANCE));
 
-               } else {
-                    assert(update_tally_map(owner, contractId2, -newReserved, NEGATIVE_BALANCE));
-               }
+               } else
+                   assert(update_tally_map(owner, contractId2, -newReserved, NEGATIVE_BALANCE));
 
            }
 
-           // PrintToLog("IN RESERVE / NEW CONTRACT %d: %d\n",contractId2,newReserved);
-
            assert(update_tally_map(owner, contractId2, newReserved, CONTRACTDEX_RESERVE));
-
-           // int64_t contractsreservedB = getMPbalance(owner,contractId2, CONTRACTDEX_RESERVE);
 
            CMPSPInfo::Entry newSP;
            assert(_my_sps->getSP(propertyId, newSP));
@@ -1042,7 +1011,6 @@ int CMPSPInfo::rollingContractsBlock(const CBlockIndex* pBlockIndex)
            // Updating the contract_associated of Pegged Currency
            newSP.contract_associated = contractId2;
            assert(_my_sps->updateSP(propertyId, newSP));
-           // PrintToLog("NEW CONTRACT ASSOCIATED: %d ************************************************\n",newSP.contract_associated);
 
        }
    }
@@ -1137,7 +1105,6 @@ uint64_t mastercore::edgeOrderbook(uint32_t contractId, uint8_t tradingAction)
             const CMPContractDex& obj = *it;
             if (obj.getTradingAction() == tradingAction || obj.getAmountForSale() <= 0) continue;
             price = obj.getEffectivePrice();
-            // PrintToLog("edgeOrderbook/price: %d\n",price);
             vecContractDexPrices.push_back(price);
         }
     }
@@ -1148,6 +1115,5 @@ uint64_t mastercore::edgeOrderbook(uint32_t contractId, uint8_t tradingAction)
        result = vecContractDexPrices.back();
     }
 
-    // PrintToLog("return of edgeOrderbook: %d\n",result);
     return static_cast<uint64_t>(result);
 }

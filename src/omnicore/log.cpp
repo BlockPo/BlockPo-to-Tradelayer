@@ -66,8 +66,10 @@ static boost::once_flag debugLogInitFlag = BOOST_ONCE_INIT;
  */
 static FILE* fileout = NULL;
 static boost::mutex* mutexDebugLog = NULL;
+
 /** Flag to indicate, whether the Omni Core log file should be reopened. */
 extern std::atomic<bool> fReopenOmniCoreLiteLog;
+
 /**
  * Returns path for debug log file.
  *
@@ -136,36 +138,41 @@ int LogFilePrint(const std::string& str)
     //     // Print to console
     //     ret = ConsolePrint(str);
     // }
-      if (true) {
-    // else if (fPrintToDebugLog && AreBaseParamsConfigured()) {
+    if (true)
+    {
+        // else if (fPrintToDebugLog && AreBaseParamsConfigured()) {
         static bool fStartedNewLine = true;
         boost::call_once(&DebugLogInit, debugLogInitFlag);
 
-        if (fileout == NULL) {
+        if (fileout == NULL)
+        {
             return ret;
         }
+
         boost::mutex::scoped_lock scoped_lock(*mutexDebugLog);
 
         // Reopen the log file, if requested
         //if (fReopenOmniCoreLiteLog) {
-         if (false) {
+         if (false)
+         {
             fReopenOmniCoreLiteLog = false;
             boost::filesystem::path pathDebug = GetLogPath();
-            if (freopen(pathDebug.string().c_str(), "a", fileout) != NULL) {
+            if (freopen(pathDebug.string().c_str(), "a", fileout) != NULL)
                 setbuf(fileout, NULL); // Unbuffered
-            }
-        }
 
-        // Printing log timestamps can be useful for profiling
-        if (fLogTimestamps && fStartedNewLine) {
-           // ret += fprintf(fileout, "%s ", GetTimestamp().c_str());
-        }
-        if (!str.empty() && str[str.size()-1] == '\n') {
+         }
+
+         // Printing log timestamps can be useful for profiling
+         // if (fLogTimestamps && fStartedNewLine) {
+         //   ret += fprintf(fileout, "%s ", GetTimestamp().c_str());
+         // }
+
+         if (!str.empty() && str[str.size()-1] == '\n') {
             //fStartedNewLine = true;
-        } else {
+         } else {
             fStartedNewLine = false;
-        }
-        ret += fwrite(str.data(), 1, str.size(), fileout);
+         }
+         ret += fwrite(str.data(), 1, str.size(), fileout);
     }
 
     return ret;
@@ -180,22 +187,23 @@ int LogFilePrint(const std::string& str)
  * @param str[in]  The message to print
  * @return The total number of characters written
  */
+
 int ConsolePrint(const std::string& str)
 {
     int ret = 0; // Number of characters written
-    // static bool fStartedNewLine = true;
-    //
-    // if (fLogTimestamps && fStartedNewLine) {
-    //     ret = fprintf(stdout, "%s %s", GetTimestamp().c_str(), str.c_str());
-    // } else {
-    //     ret = fwrite(str.data(), 1, str.size(), stdout);
-    // }
-    // if (!str.empty() && str[str.size()-1] == '\n') {
-    //     fStartedNewLine = true;
-    // } else {
-    //     fStartedNewLine = false;
-    // }
-    // fflush(stdout);
+    /*static bool fStartedNewLine = true;
+
+    if (fLogTimestamps && fStartedNewLine) {
+        ret = fprintf(stdout, "%s %s", GetTimestamp().c_str(), str.c_str());
+    } else {
+        ret = fwrite(str.data(), 1, str.size(), stdout);
+    }
+    if (!str.empty() && str[str.size()-1] == '\n') {
+        fStartedNewLine = true;
+    } else {
+        fStartedNewLine = false;
+    }
+    fflush(stdout); */
 
     return ret;
 }
@@ -210,9 +218,8 @@ int ConsolePrint(const std::string& str)
  */
 void InitDebugLogLevels()
 {
-  if (!gArgs.IsArgSet("-omnidebug")) {
+  if (!gArgs.IsArgSet("-omnidebug"))
       return;
-  }
 
   const std::vector<std::string>& debugLevels = gArgs.GetArgs("-omnidebug");
 

@@ -132,12 +132,11 @@ void MarginToJSON(const std::string& address, uint32_t property, UniValue& balan
     }
 }
 
-///////////////////////////////////////////////
-/** New things for Contract */
 void MetaDexObjectToJSON(const CMPMetaDEx& obj, UniValue& metadex_obj)
 {
     bool propertyIdForSaleIsDivisible = isPropertyDivisible(obj.getProperty());
     bool propertyIdDesiredIsDivisible = isPropertyDivisible(obj.getDesProperty());
+
     // add data to JSON object
     metadex_obj.push_back(Pair("address", obj.getAddr()));
     metadex_obj.push_back(Pair("txid", obj.getHash().GetHex()));
@@ -199,6 +198,7 @@ void ContractDexObjectsToJSON(std::vector<CMPContractDex>& vContractDexObjs, Uni
         response.push_back(contractdex_obj);
     }
 }
+
 ///////////////////////////////////////////////
 // obtain the payload for a transaction
 UniValue tl_getpayload(const JSONRPCRequest& request)
@@ -684,9 +684,9 @@ UniValue tl_getproperty(const JSONRPCRequest& request)
     if (sp.prop_type == ALL_PROPERTY_TYPE_CONTRACT){
         response.push_back(Pair("notional size",(uint64_t) sp.notional_size));
         response.push_back(Pair("collateral currency",(uint64_t) sp.collateral_currency));
-          response.push_back(Pair("margin requirement",FormatDivisibleShortMP(sp.margin_requirement)));
+        response.push_back(Pair("margin requirement",FormatDivisibleShortMP(sp.margin_requirement)));
         response.push_back(Pair("blocks until expiration",(uint64_t) sp.blocks_until_expiration));
-        // response.push_back(Pair("ticksize", FormatByType(sp.ticksize,2)));
+
 
         if (sp.denomination == TL_dUSD){
             denomination = "Dollar";
@@ -1447,7 +1447,6 @@ UniValue tl_getcurrentconsensushash(const JSONRPCRequest& request)
     return response;
 }
 
-/** New things for Future Contract */
 bool PositionToJSON(const std::string& address, uint32_t property, UniValue& balance_obj, bool divisible)
 {
     int64_t longPosition  = getMPbalance(address, property, POSSITIVE_BALANCE);
@@ -1485,7 +1484,7 @@ UniValue tl_getfullposition(const JSONRPCRequest& request)
   if (request.params.size() != 2) {
     throw runtime_error(
 			"tl_getfullposition \"address\" propertyid\n"
-			"\nReturns the position for the future contract for a given address and property.\n"
+			"\nReturns the full position for the future contract for a given address and property.\n"
 			"\nArguments:\n"
 			"1. address              (string, required) the address\n"
 			"2. propertyid           (number, required) the future contract identifier\n"
@@ -1506,17 +1505,17 @@ UniValue tl_getfullposition(const JSONRPCRequest& request)
 			+ HelpExampleRpc("tl_getfullposition", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", 1")
 			);
   }
-  
+
   std::string address = ParseAddress(request.params[0]);
   std::string name_traded = ParseText(request.params[1]);
-  
+
   struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, name_traded);
   uint32_t propertyId = pfuture->fco_propertyId;
-  
+
   RequireContract(propertyId);
-  
+
   UniValue positionObj(UniValue::VOBJ);
-  
+
   CMPSPInfo::Entry sp;
   {
     LOCK(cs_tally);
@@ -1524,7 +1523,7 @@ UniValue tl_getfullposition(const JSONRPCRequest& request)
       throw JSONRPCError(RPC_INVALID_PARAMETER, "Property identifier does not exist");
     }
   }
-  
+
   positionObj.push_back(Pair("symbol", sp.name));
   positionObj.push_back(Pair("notional_size", (uint64_t) sp.notional_size)); // value of position = short or long position (balance) * notional_size
   // PTJ -> short/longPosition /liquidation price
@@ -1737,16 +1736,16 @@ UniValue tl_getcontract_orderbook(const JSONRPCRequest& request)
         for (cd_PropertiesMap::const_iterator my_it = contractdex.begin(); my_it != contractdex.end(); ++my_it) {
           const cd_PricesMap& prices = my_it->second;
           for (cd_PricesMap::const_iterator it = prices.begin(); it != prices.end(); ++it) {
-    	const cd_Set& indexes = it->second;
-    	for (cd_Set::const_iterator it = indexes.begin(); it != indexes.end(); ++it) {
-    	  const CMPContractDex& obj = *it;
-    	  if (obj.getProperty() != propertyIdForSale) continue;
-    	  if (obj.getTradingAction() != tradingaction) continue;
-    	  if (obj.getAmountForSale() <= 0) continue;
-    	  vecContractDexObjects.push_back(obj);
-    	}
-          }
-        }
+    	        const cd_Set& indexes = it->second;
+    	        for (cd_Set::const_iterator it = indexes.begin(); it != indexes.end(); ++it) {
+    	            const CMPContractDex& obj = *it;
+    	            if (obj.getProperty() != propertyIdForSale) continue;
+    	            if (obj.getTradingAction() != tradingaction) continue;
+    	            if (obj.getAmountForSale() <= 0) continue;
+    	            vecContractDexObjects.push_back(obj);
+    	        }
+           }
+         }
       }
 
       UniValue response(UniValue::VARR);
@@ -1778,21 +1777,21 @@ UniValue tl_gettradehistory(const JSONRPCRequest& request)
 			"  ...\n"
 			"]\n"
 			"\nExamples:\n"
-			+ HelpExampleCli("tl_gettradehistoryforpair", "1 12 500")
-			+ HelpExampleRpc("tl_gettradehistoryforpair", "1, 12, 500")
+			+ HelpExampleCli("tl_gettradehistory", "1")
+			+ HelpExampleRpc("tl_gettradehistory", "1")
 			);
-  
+
   // obtain property identifiers for pair & check valid parameters
   std::string name_traded = ParseText(request.params[0]);
-  
+
   struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, name_traded);
   uint32_t contractId = pfuture->fco_propertyId;
-  
+
   RequireContract(contractId);
-  
+
   // request pair trade history from trade db
   UniValue response(UniValue::VARR);
-  
+
   LOCK(cs_tally);
   PrintToConsole("Inside the rpc gettradehistory \n");
   t_tradelistdb->getMatchingTrades(contractId, response);
@@ -1827,7 +1826,7 @@ UniValue tl_gettradehistory_unfiltered(const JSONRPCRequest& request)
             + HelpExampleCli("tl_gettradehistoryforpair", "1 12 500")
             + HelpExampleRpc("tl_gettradehistoryforpair", "1, 12, 500")
 			    );
-    
+
     // obtain property identifiers for pair & check valid parameters
     uint32_t contractId = ParsePropertyId(request.params[0]);
 
@@ -2003,10 +2002,6 @@ UniValue tl_getpnl(const JSONRPCRequest& request)
   UniValue balanceObj(UniValue::VOBJ);
   int64_t upnl  = getMPbalance(address, contractId, REALIZED_PROFIT);
   int64_t nupnl  = getMPbalance(address, contractId, REALIZED_LOSSES);
-  PrintToLog("_________________________________________________________\n");
-  PrintToLog("realized profit in rpc: %d\n",upnl);
-  PrintToLog("realized losses in rpc: %d\n",nupnl);
-  PrintToLog("_________________________________________________________\n");
 
   if (upnl > 0 && nupnl == 0) {
     PrintToLog("upnl after if: %d\n",upnl);
@@ -2023,42 +2018,6 @@ UniValue tl_getpnl(const JSONRPCRequest& request)
   return balanceObj;
 }
 
-// UniValue tl_getaverage_entry(const JSONRPCRequest& request)
-// {
-//     if (request.params.size() != 2)
-//         throw runtime_error(
-//             "tl_getaverage_entry address contractid\n"
-//             "\nRetrieves the last match price on the distributed contract exchange for the specified market.\n"
-//             "\nArguments:\n"
-//             "1. address              (string, required) the address of user\n"
-//             "2. contractid           (number, required) the id of future contract\n"
-//             "\nResult:\n"
-//             "[                                      (array of JSON objects)\n"
-//             "  {\n"
-//             "    \"block\" : nnnnnn,                      (number) the index of the block that contains the trade match\n"
-//             "    \"unitprice\" : \"n.nnnnnnnnnnn...\" ,     (string) the unit price used to execute this trade (received/sold)\n"
-//             "    \"price\" : \"n.nnnnnnnnnnn...\",   (string) the inverse unit price (sold/received)\n"
-//             "  ...\n"
-//             "]\n"
-//             "\nExamples:\n"
-//             + HelpExampleCli("tl_getmarketprice", "12" )
-//             + HelpExampleRpc("tl_getmarketprice", "500")
-//         );
-//         std::string address = ParseAddress(request.params[0]);
-//         uint32_t contractId = ParsePropertyId(request.params[1]);
-//
-//         RequireExistingProperty(contractId);
-//         RequireContract(contractId);
-//
-//         UniValue balanceObj(UniValue::VOBJ);
-//
-//         int64_t price = mastercore::getAverageEntryPrice(address, contractId);
-//
-//         balanceObj.push_back(Pair("average_entry", FormatByType(price,2)));
-//
-//         return balanceObj;
-// }
-
 UniValue tl_getmarketprice(const JSONRPCRequest& request)
 {
   if (request.params.size() != 1)
@@ -2071,13 +2030,13 @@ UniValue tl_getmarketprice(const JSONRPCRequest& request)
 			"[                                      (array of JSON objects)\n"
 			"  {\n"
 			"    \"block\" : nnnnnn,                      (number) the index of the block that contains the trade match\n"
-			"    \"unitprice\" : \"n.nnnnnnnnnnn...\" ,     (string) the unit price used to execute this trade (received/sold)\n"
-			"    \"price\" : \"n.nnnnnnnnnnn...\",   (string) the inverse unit price (sold/received)\n"
+			"    \"unitprice\" : \"n.nnnnnnnnnnn...\" ,   (string) the unit price used to execute this trade (received/sold)\n"
+			"    \"price\" : \"n.nnnnnnnnnnn...\",        (string) the inverse unit price (sold/received)\n"
 			"  ...\n"
 			"]\n"
 			"\nExamples:\n"
-			+ HelpExampleCli("tl_getaverage_entry", "12" )
-			+ HelpExampleRpc("tl_getaverage_entry", "500")
+			+ HelpExampleCli("tl_getmarketprice", "12" )
+			+ HelpExampleRpc("tl_getmarketprice", "500")
 			);
 
 
@@ -2089,10 +2048,6 @@ UniValue tl_getmarketprice(const JSONRPCRequest& request)
   UniValue balanceObj(UniValue::VOBJ);
   int index = static_cast<unsigned int>(contractId);
   int64_t price = marketP[index];
-
-  PrintToLog("_________________________________________________________\n");
-  PrintToLog("marketprice in rpc: %d\n",price);
-  PrintToLog("_________________________________________________________\n");
 
   balanceObj.push_back(Pair("price", FormatByType(price,2)));
 
@@ -2242,7 +2197,7 @@ UniValue tl_getactivedexsells(const JSONRPCRequest& request)
 
     return response;
 }
-////////////////////////////////////////////////////////////////////////////////
+
 static const CRPCCommand commands[] =
 { //  category                             name                            actor (function)               okSafeMode
   //  ------------------------------------ ------------------------------- ------------------------------ ----------
@@ -2280,7 +2235,6 @@ static const CRPCCommand commands[] =
   { "trade layer (data retieval)" , "tl_getmargin",                 &tl_getmargin,                  {} },
   { "trade layer (data retieval)" , "tl_getallprice",               &tl_getallprice,                {} },
   { "trade layer (data retieval)" , "tl_getmarketprice",            &tl_getmarketprice,             {} },
-  // {"trade layer (data retieval)" ,  "tl_getaverage_entry",          &tl_getaverage_entry,           {} },
 };
 
 void RegisterOmniDataRetrievalRPCCommands(CRPCTable &tableRPC)

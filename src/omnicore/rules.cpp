@@ -122,11 +122,9 @@ CMainConsensusParams::CMainConsensusParams()
     MSC_SP_BLOCK = 9999999;
     MSC_MANUALSP_BLOCK = 9999999;
     MSC_SEND_ALL_BLOCK = 9999999;
-    ///////////////////////////////
-    /** New things for Contract */
     MSC_CONTRACTDEX_BLOCK = 999999;
     MSC_VESTING_BLOCK = 0;
-    ///////////////////////////////
+
 }
 
 /**
@@ -148,11 +146,9 @@ CTestNetConsensusParams::CTestNetConsensusParams()
     MSC_SP_BLOCK = 0;
     MSC_MANUALSP_BLOCK = 0;
     MSC_SEND_ALL_BLOCK = 0;
-    ///////////////////////////////
-    /** New things for Contract */
     MSC_CONTRACTDEX_BLOCK = 0;
     MSC_VESTING_BLOCK = 0;
-    ///////////////////////////////
+
 }
 
 /**
@@ -174,11 +170,8 @@ CRegTestConsensusParams::CRegTestConsensusParams()
     MSC_SP_BLOCK = 0;
     MSC_MANUALSP_BLOCK = 0;
     MSC_SEND_ALL_BLOCK = 0;
-    ///////////////////////////////
-    /** New things for Contract */
     MSC_CONTRACTDEX_BLOCK = 0;
     MSC_VESTING_BLOCK = 0;
-    ///////////////////////////////
 }
 
 //! Consensus parameters for mainnet

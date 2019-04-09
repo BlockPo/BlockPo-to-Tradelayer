@@ -81,6 +81,7 @@ std::map<std::string, uint256> FetchWalletOmniTransactions(unsigned int count, i
             LOCK(cs_tally);
             if (!p_txlistdb->exists(txHash)) continue;
         }
+        
         const uint256& blockHash = pwtx->hashBlock;
         if (blockHash.IsNull() || (NULL == GetBlockIndex(blockHash))) continue;
         const CBlockIndex* pBlockIndex = GetBlockIndex(blockHash);
