@@ -2103,11 +2103,11 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   // we do not care about parsing blocks prior to our waterline (empty blockchain defense)
   if (nBlock < nWaterlineBlock) return false;
   int64_t nBlockTime = pBlockIndex->GetBlockTime();
-
+  
   int nBlockNow = GetHeight();
-
-  if (nBlockNow%192 == 0 && nBlockNow != 0 && path_elef.size() != 0) {
-
+  
+  if (nBlockNow%192 == 0 && nBlockNow != 0 && path_elef.size() != 0 && lastBlockg != nBlockNow) {
+    
     PrintToLog("\nSettlement every 8 hours here. nBlockNow = %d\n", nBlockNow);
     pt_ndatabase = new MatrixTLS(path_elef.size(), n_cols); MatrixTLS &ndatabase = *pt_ndatabase;
     MatrixTLS M_file(path_elef.size(), n_cols);

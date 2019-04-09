@@ -62,7 +62,7 @@ for ( int i = 0; i < NYears; i++ )
 nVestingAddrs = 5;
 totalVesting = 1500000*COIN;
 amountVesting = (1500000/nVestingAddrs)*COIN;
-volumeToVWAP = 100;
+volumeToVWAP = 200;
 /** Admin address **/
 //admin_addrs = "mvgwqiCqTVtmS954RJvemj2DnvnH7NhiTF"; /**Testnet**/
 admin_addrs = "QdgkwBVmz3uAtXiQdbbiAsTp1SDQS9zRt9"; /**Regtest**/
