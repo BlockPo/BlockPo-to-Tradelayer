@@ -223,14 +223,14 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       assert(_my_sps->getSP(property_traded, sp));
       uint32_t NotionalSize = sp.notional_size;
       
-      PrintToLog("\nNotionalSize = %d\t nCouldBuy = %s\n", NotionalSize, FormatDivisibleMP(nCouldBuy));
+      //PrintToLog("\nNotionalSize = %d\t nCouldBuy = %s\n", NotionalSize, FormatDivisibleMP(nCouldBuy));
       arith_uint256 Volume256_t = mastercore::ConvertTo256(NotionalSize)*mastercore::ConvertTo256(nCouldBuy);
       int64_t Volume64_t = mastercore::ConvertTo64(Volume256_t);            
-      PrintToLog("\nVolume64_t = %s\n", FormatDivisibleMP(Volume64_t));
+      //PrintToLog("\nVolume64_t = %s\n", FormatDivisibleMP(Volume64_t));
       
       arith_uint256 numVWAP256_t = mastercore::ConvertTo256(sellerPrice)*mastercore::ConvertTo256(Volume64_t)/COIN;
       int64_t numVWAP64_t = mastercore::ConvertTo64(numVWAP256_t);
-      PrintToLog("numVWAP64_t = %s", FormatDivisibleMP(numVWAP64_t));
+      //PrintToLog("numVWAP64_t = %s", FormatDivisibleMP(numVWAP64_t));
       
       mapContractAmountTimesPrice[property_traded].push_back(numVWAP64_t);            
       mapContractVolume[property_traded].push_back(Volume64_t);
@@ -246,8 +246,8 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
 	{
 	  for (int i = 0; i < volumeToVWAP; i++)
 	    {
-	      PrintToLog("\nnumVWAPpriceContract[%d] = %s,\t denVWAPpriceContract[%d] = %s\n",
-			 i, FormatDivisibleMP(numVWAPpriceContract[i]), i, FormatDivisibleMP(numVWAPpriceContract[i]));	      
+	      // PrintToLog("\nnumVWAPpriceContract[%d] = %s,\t denVWAPpriceContract[%d] = %s\n",
+	      // 		 i, FormatDivisibleMP(numVWAPpriceContract[i]), i, FormatDivisibleMP(numVWAPpriceContract[i]));	      
 	      numVWAPriceh += numVWAPpriceContract[i];
 	      denVWAPriceh += denVWAPpriceContract[i];
 	    }	  
@@ -258,8 +258,8 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       else
 	VWAPMapContracts[property_traded]=sellerPrice;
       
-      PrintToLog("\nVWAPMapContracts[property_traded] = %s\n", FormatDivisibleMP(VWAPMapContracts[property_traded]));
-      PrintToLog("\n********************************************************************************\n");
+      //PrintToLog("\nVWAPMapContracts[property_traded] = %s\n", FormatDivisibleMP(VWAPMapContracts[property_traded]));
+      //PrintToLog("\n********************************************************************************\n");
       /********************************************************/
       int64_t difference_s = 0, difference_b = 0;
       bool boolAddresses = pold->getAddr() != pnew->getAddr();
