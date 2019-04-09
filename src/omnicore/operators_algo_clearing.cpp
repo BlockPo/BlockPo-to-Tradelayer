@@ -54,7 +54,7 @@ struct status_amounts *get_status_amounts_open_incr(VectorTLS &v, int q)
 struct status_amounts *get_status_amounts_byaddrs(VectorTLS &v, std::string addrs)
 {
   struct status_amounts *pt_status = new status_amounts;
-
+  
   if ( addrs == v[0] )
     {
       pt_status->addrs_trk  = v[0];
@@ -231,18 +231,14 @@ void settlement_algorithm_fifo(MatrixTLS &M_file)
       sum_gamma_p += gamma_p;
       sum_gamma_q += gamma_q;
     }
-  //exit_price_desired = sum_gamma_p/sum_gamma_q;
-  //PrintToLog("\nexit_price_desired: %d\n", exit_price_desired);
+  /**exit_price_desired = sum_gamma_p/sum_gamma_q;**/
   
   /**********************************************/
   /** Checking VWAP Price for Settlement**/
-  int64_t VWAPALL_USD = mastercore::getVWAPPriceByPair("ALL", "dUSD");
-  PrintToLog("\nVWAPALL_USD = %s\n", FormatDivisibleMP(VWAPALL_USD));
+  int64_t VWAPContractPrice = mastercore::getVWAPPriceContracts("ALL F18");
+  PrintToLog("\nVWAPContractPrice = %s\n", FormatDivisibleMP(VWAPContractPrice));
   
-  int64_t VWAPUSD_ALL = mastercore::getVWAPPriceByPair("dUSD", "ALL");
-  PrintToLog("\nVWAPUSD_ALL = %s\n", FormatDivisibleMP(VWAPUSD_ALL)); 
-  
-  vwap_exit_price = static_cast<long double>(VWAPALL_USD)/COIN;
+  vwap_exit_price = static_cast<long double>(VWAPContractPrice)/COIN;
   PrintToLog("\nVWAP Price for Settlement = %d\n", vwap_exit_price);
   /**********************************************/
   

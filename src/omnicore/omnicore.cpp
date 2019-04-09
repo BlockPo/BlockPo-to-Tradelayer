@@ -2125,8 +2125,10 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
     VWAPMapSubVector.clear();
     numVWAPVector.clear();
     denVWAPVector.clear();
+    mapContractAmountTimesPrice.clear();
+    mapContractVolume.clear();
+    VWAPMapContracts.clear();
   }
-
   /**********************************************/
   /** Checking Market Price **/
 
@@ -3422,7 +3424,7 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
 
   globalPNLALL_DUSD += UPNL1 + UPNL2;
   globalVolumeALL_DUSD += nCouldBuy0;
-
+  
   arith_uint256 volumeALL256_t = mastercore::ConvertTo256(NotionalSize)*mastercore::ConvertTo256(nCouldBuy0);
   // PrintToLog("ALLs involved in the traded 256 Bits ~ %s ALL\n", volumeALL256_t.ToString());
 
