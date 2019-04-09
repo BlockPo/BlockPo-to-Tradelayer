@@ -161,6 +161,9 @@ extern std::map<uint32_t, std::map<uint32_t, int64_t>> VWAPMap;
 extern std::map<uint32_t, std::map<uint32_t, int64_t>> VWAPMapSubVector;
 extern std::map<uint32_t, std::map<uint32_t, std::vector<int64_t>>> numVWAPVector;
 extern std::map<uint32_t, std::map<uint32_t, std::vector<int64_t>>> denVWAPVector;
+extern std::map<uint32_t, std::vector<int64_t>> mapContractAmountTimesPrice;
+extern std::map<uint32_t, std::vector<int64_t>> mapContractVolume;
+extern std::map<uint32_t, int64_t> VWAPMapContracts;
 
 using mastercore::StrToInt64;
 
