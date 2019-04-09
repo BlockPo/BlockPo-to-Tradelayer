@@ -254,6 +254,7 @@ namespace mastercore
   std::string MetaDEx_getStatusText(int tradeStatus);
   int64_t getPairMarketPrice(std::string num, std::string den);
   int64_t getVWAPPriceByPair(std::string num, std::string den);
+  int64_t getVWAPPriceContracts(std::string namec);
   
   // Locates a trade in the MetaDEx maps via txid and returns the trade object
   const CMPMetaDEx* MetaDEx_RetrieveTrade(const uint256& txid);
