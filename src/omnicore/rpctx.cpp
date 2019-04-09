@@ -908,10 +908,10 @@ UniValue tl_tradecontract(const JSONRPCRequest& request)
 			"3. amountforsale        (number, required) the amount of contracts to trade\n"
 			"4. effective price      (number, required) limit price desired in exchange\n"
 			"5. trading action       (number, required) 1 to BUY contracts, 2 to SELL contracts \n"
-      "6. leverage             (number, required) leverage (2x, 3x, ... 10x)\n"
+			"6. leverage             (number, required) leverage (2x, 3x, ... 10x)\n"
 			"\nResult:\n"
 			"\"payload\"             (string) the hex-encoded payload\n"
-
+			
 			"\nExamples:\n"
 			+ HelpExampleCli("tl_tradecontract", "31\"250.0\"1\"10.0\"70.0\"80.0\"")
 			+ HelpExampleRpc("tl_tradecontract", "31,\"250.0\",1,\"10.0,\"70.0,\"80.0\"")
