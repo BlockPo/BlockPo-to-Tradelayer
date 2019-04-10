@@ -65,3 +65,4 @@ volatile int64_t LastQuad;
 volatile int64_t LastLog;
 std::string admin_addrs;
 int volumeToVWAP;
+std::string setExoduss;

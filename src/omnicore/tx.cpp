@@ -756,6 +756,7 @@ bool CMPTransaction::interpret_TradeOffer()
     return true;
 }
 
+/*Tx 21*/
 bool CMPTransaction::interpret_DExBuy()
 {
     int i = 0;
@@ -2838,25 +2839,20 @@ int CMPTransaction::logicMath_RedemptionPegged()
 
 int CMPTransaction::logicMath_TradeOffer()
 {
-    if (!IsTransactionTypeAllowed(block, propertyId, type, version)) {
-        PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
-            __func__,
-            type,
-            version,
-            propertyId,
-            block);
-      // return (PKT_ERROR_TRADEOFFER -22);
-    }
+    // if (!IsTransactionTypeAllowed(block, propertyId, type, version)) {
+    //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+    //         __func__,
+    //         type,
+    //         version,
+    //         propertyId,
+    //         block);
+    //   return (PKT_ERROR_TRADEOFFER -22);
+    // }
 
     if (MAX_INT_8_BYTES < nValue) {
         PrintToLog("%s(): rejected: value out of range or zero: %d\n", __func__, nValue);
         // return (PKT_ERROR_TRADEOFFER -23);
     }
-
-  // if (OMNI_PROPERTY_TALL != property && OMNI_PROPERTY_ALL != property) {
-  //     PrintToLog("%s(): rejected: property for sale %d must be OMNI or TOMNI\n", __func__, property);
-  //     return (PKT_ERROR_TRADEOFFER -47);
-  // }
 
   // ------------------------------------------
 
@@ -2935,27 +2931,24 @@ int CMPTransaction::logicMath_TradeOffer()
   return rc;
 }
 
+/*Tx 21*/
 int CMPTransaction::logicMath_DExBuy()
 {
-    if (!IsTransactionTypeAllowed(block, propertyId, type, version)) {
-     // PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
-     //         __func__,
-     //         type,
-     //         version,
-     //         propertyId,
-     //         block);
-      // return (PKT_ERROR_TRADEOFFER -22);
-    }
+    // if (!IsTransactionTypeAllowed(block, propertyId, type, version)) {
+    //  PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+    //          __func__,
+    //          type,
+    //          version,
+    //          propertyId,
+    //          block);
+    //   return (PKT_ERROR_TRADEOFFER -22);
+    // }
 
     if (MAX_INT_8_BYTES < nValue) {
         PrintToLog("%s(): rejected: value out of range or zero: %d\n", __func__, nValue);
-        // return (PKT_ERROR_TRADEOFFER -23);
+        return (PKT_ERROR_TRADEOFFER -23);
     }
 
-  // if (OMNI_PROPERTY_TALL != property && OMNI_PROPERTY_ALL != property) {
-  //     PrintToLog("%s(): rejected: property for sale %d must be OMNI or TOMNI\n", __func__, property);
-  //     return (PKT_ERROR_TRADEOFFER -47);
-  // }
 
   // ------------------------------------------
 

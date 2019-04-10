@@ -32,6 +32,7 @@ using std::runtime_error;
 using namespace mastercore;
 
 extern volatile int64_t LTCPriceOffer;
+extern std::string setExoduss;
 
 UniValue tl_sendrawtx(const JSONRPCRequest& request)
 {
@@ -40,7 +41,6 @@ UniValue tl_sendrawtx(const JSONRPCRequest& request)
             "tl_sendrawtx \"fromaddress\" \"rawtransaction\" ( \"referenceaddress\" \"referenceamount\" )\n"
             "\nBroadcasts a raw trade layer transaction.\n"
             "\nArguments:\n"
-            "1. fromaddress          (string, required) the address to send from\n"
             "2. rawtransaction       (string, required) the hex-encoded raw transaction\n"
             "3. referenceaddress     (string, optional) a reference address (none by default)\n"
             "4. referenceamount      (string, optional) a bitcoin amount that is sent to the receiver (minimal by default)\n"
@@ -1386,16 +1386,16 @@ UniValue tl_senddexoffer(const JSONRPCRequest& request)
   int64_t option = ParseAmount(request.params[6], false);  // buy : 1 ; sell : 2;
   uint8_t action = ParseDExAction(request.params[7]);
 
-  if (action == 1 ) { RequireNoOtherDExOffer(fromAddress, propertyIdForSale); }
   std::vector<unsigned char> payload;
-  if (option == 2) {
-    // RequirePrimaryToken(propertyIdForSale);
-    // if (action <= CMPTransaction::UPDATE) {
-    RequireBalance(fromAddress, propertyIdForSale, amountForSale);
-    payload = CreatePayload_DExSell(propertyIdForSale, amountForSale, price, paymentWindow, minAcceptFee, action);
-    // }
-  } else if (option == 1) {
-    payload = CreatePayload_DEx(propertyIdForSale, amountForSale, price, paymentWindow, minAcceptFee, action);
+
+  RequireNoOtherDExOffer(fromAddress, propertyIdForSale);
+
+  if (option == 1)
+  {
+      payload = CreatePayload_DEx(propertyIdForSale, amountForSale, price, paymentWindow, minAcceptFee, action);
+  } else if (option == 2) {
+      RequireBalance(fromAddress, propertyIdForSale, amountForSale);
+      payload = CreatePayload_DExSell(propertyIdForSale, amountForSale, price, paymentWindow, minAcceptFee, action);
   }
 
   LTCPriceOffer = price;
@@ -1500,6 +1500,33 @@ UniValue tl_senddexaccept(const JSONRPCRequest& request)
 
 }
 
+UniValue tl_setexodus(const JSONRPCRequest& request)
+{
+    if (request.params.size() < 1 )
+        throw runtime_error(
+            "tl_setexodus \"fromaddress\" \"toaddress\" propertyid \"amount\" ( override )\n"
+
+            "\nsetting exodus address.\n"
+
+            "\nArguments:\n"
+            "1. fromaddress          (string, required) the address to send from\n"
+            "\nResult:\n"
+            "\"hash\"                  (string) the hex-encoded transaction hash\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("tl_senddexaccept", "\"35URq1NN3xL6GeRKUP6vzaQVcxoJiiJKd8\" \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\" 1 \"15.0\"")
+            + HelpExampleRpc("tl_senddexaccept", "\"35URq1NN3xL6GeRKUP6vzaQVcxoJiiJKd8\", \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\", 1, \"15.0\"")
+        );
+
+    // obtain parameters & info
+    setExoduss = ParseAddress(request.params[0]);
+    PrintToLog("setExoduss : %s",setExoduss);
+    uint256 txid;
+
+    return txid.GetHex();
+
+}
+
 
 static const CRPCCommand commands[] =
 { //  category                             name                            actor (function)               okSafeMode
@@ -1530,7 +1557,8 @@ static const CRPCCommand commands[] =
     { "trade layer (transaction creation)", "tl_closeposition",                &tl_closeposition,                   {} },
     { "trade layer (transaction creation)", "tl_sendtrade",                    &tl_sendtrade,                       {} },
     { "trade layer (transaction creation)", "tl_senddexoffer",                 &tl_senddexoffer,                    {} },
-    { "trade layer (transaction creation)", "tl_senddexaccept",                &tl_senddexaccept,                   {} }
+    { "trade layer (transaction creation)", "tl_senddexaccept",                &tl_senddexaccept,                   {} },
+    { "trade layer (transaction creation)", "tl_setexodus",                    &tl_setexodus    ,                   {} }
 #endif
 };
 
