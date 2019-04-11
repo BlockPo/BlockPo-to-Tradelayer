@@ -1500,32 +1500,32 @@ UniValue tl_senddexaccept(const JSONRPCRequest& request)
 
 }
 
-UniValue tl_setexodus(const JSONRPCRequest& request)
-{
-    if (request.params.size() < 1 )
-        throw runtime_error(
-            "tl_setexodus \"fromaddress\" \"toaddress\" propertyid \"amount\" ( override )\n"
-
-            "\nsetting exodus address.\n"
-
-            "\nArguments:\n"
-            "1. fromaddress          (string, required) the address to send from\n"
-            "\nResult:\n"
-            "\"hash\"                  (string) the hex-encoded transaction hash\n"
-
-            "\nExamples:\n"
-            + HelpExampleCli("tl_senddexaccept", "\"35URq1NN3xL6GeRKUP6vzaQVcxoJiiJKd8\" \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\" 1 \"15.0\"")
-            + HelpExampleRpc("tl_senddexaccept", "\"35URq1NN3xL6GeRKUP6vzaQVcxoJiiJKd8\", \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\", 1, \"15.0\"")
-        );
-
-    // obtain parameters & info
-    setExoduss = ParseAddress(request.params[0]);
-    PrintToLog("setExoduss : %s",setExoduss);
-    uint256 txid;
-
-    return txid.GetHex();
-
-}
+// UniValue tl_setexodus(const JSONRPCRequest& request)
+// {
+//     if (request.params.size() < 1 )
+//         throw runtime_error(
+//             "tl_setexodus \"fromaddress\" \"toaddress\" propertyid \"amount\" ( override )\n"
+//
+//             "\nsetting exodus address.\n"
+//
+//             "\nArguments:\n"
+//             "1. fromaddress          (string, required) the address to send from\n"
+//             "\nResult:\n"
+//             "\"hash\"                  (string) the hex-encoded transaction hash\n"
+//
+//             "\nExamples:\n"
+//             + HelpExampleCli("tl_senddexaccept", "\"35URq1NN3xL6GeRKUP6vzaQVcxoJiiJKd8\" \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\" 1 \"15.0\"")
+//             + HelpExampleRpc("tl_senddexaccept", "\"35URq1NN3xL6GeRKUP6vzaQVcxoJiiJKd8\", \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\", 1, \"15.0\"")
+//         );
+//
+//     // obtain parameters & info
+//     setExoduss = ParseAddress(request.params[0]);
+//     PrintToLog("setExoduss : %s",setExoduss);
+//     uint256 txid;
+//
+//     return txid.GetHex();
+//
+// }
 
 
 static const CRPCCommand commands[] =
@@ -1557,8 +1557,7 @@ static const CRPCCommand commands[] =
     { "trade layer (transaction creation)", "tl_closeposition",                &tl_closeposition,                   {} },
     { "trade layer (transaction creation)", "tl_sendtrade",                    &tl_sendtrade,                       {} },
     { "trade layer (transaction creation)", "tl_senddexoffer",                 &tl_senddexoffer,                    {} },
-    { "trade layer (transaction creation)", "tl_senddexaccept",                &tl_senddexaccept,                   {} },
-    { "trade layer (transaction creation)", "tl_setexodus",                    &tl_setexodus    ,                   {} }
+    { "trade layer (transaction creation)", "tl_senddexaccept",                &tl_senddexaccept,                   {} }
 #endif
 };
 
