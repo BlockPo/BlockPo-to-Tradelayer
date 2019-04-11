@@ -52,18 +52,18 @@ std::vector<TransactionRestriction> CConsensusParams::GetRestrictions() const
         { MSC_TYPE_GRANT_PROPERTY_TOKENS,     MP_TX_PKT_V0,  false,            MSC_MANUALSP_BLOCK },
         { MSC_TYPE_REVOKE_PROPERTY_TOKENS,    MP_TX_PKT_V0,  false,            MSC_MANUALSP_BLOCK },
         { MSC_TYPE_CHANGE_ISSUER_ADDRESS,     MP_TX_PKT_V0,  false,            MSC_MANUALSP_BLOCK },
-        { MSC_TYPE_CREATE_CONTRACT,           MP_TX_PKT_V0,  false,         MSC_CONTRACTDEX_BLOCK },
-        { MSC_TYPE_CONTRACTDEX_TRADE,         MP_TX_PKT_V0,  false,         MSC_CONTRACTDEX_BLOCK },
-        { MSC_TYPE_CONTRACTDEX_CANCEL_ECOSYSTEM, MP_TX_PKT_V0,  false,      MSC_CONTRACTDEX_BLOCK },
-        { MSC_TYPE_PEGGED_CURRENCY,           MP_TX_PKT_V0,  false,         MSC_CONTRACTDEX_BLOCK },
-        { MSC_TYPE_SEND_PEGGED_CURRENCY,           MP_TX_PKT_V0,  false,    MSC_CONTRACTDEX_BLOCK },
-        { MSC_TYPE_SEND_ALL,                  MP_TX_PKT_V0,  false,            MSC_SEND_ALL_BLOCK },
-        { MSC_TYPE_CONTRACTDEX_CLOSE_POSITION,MP_TX_PKT_V0,  false,         MSC_CONTRACTDEX_BLOCK },
-        {MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK,MP_TX_PKT_V0,  false,   MSC_CONTRACTDEX_BLOCK},
-        {MSC_TYPE_METADEX_TRADE,              MP_TX_PKT_V0,  false,          MSC_CONTRACTDEX_BLOCK},
-        {MSC_TYPE_TRADE_OFFER,                MP_TX_PKT_V1,  false,          MSC_CONTRACTDEX_BLOCK},
-        {MSC_TYPE_ACCEPT_OFFER_BTC,           MP_TX_PKT_V1,  false,          MSC_CONTRACTDEX_BLOCK},
-        {MSC_TYPE_DEX_BUY_OFFER,              MP_TX_PKT_V1,  false,          MSC_CONTRACTDEX_BLOCK}
+        { MSC_TYPE_CREATE_CONTRACT,           MP_TX_PKT_V0,  true,         MSC_CONTRACTDEX_BLOCK },
+        { MSC_TYPE_CONTRACTDEX_TRADE,         MP_TX_PKT_V0,  true,         MSC_CONTRACTDEX_BLOCK },
+        { MSC_TYPE_CONTRACTDEX_CANCEL_ECOSYSTEM, MP_TX_PKT_V0,  true,      MSC_CONTRACTDEX_BLOCK },
+        { MSC_TYPE_PEGGED_CURRENCY,           MP_TX_PKT_V0,  true,         MSC_CONTRACTDEX_BLOCK },
+        { MSC_TYPE_SEND_PEGGED_CURRENCY,           MP_TX_PKT_V0,  true,    MSC_CONTRACTDEX_BLOCK },
+        { MSC_TYPE_SEND_ALL,                  MP_TX_PKT_V0,  true,            MSC_SEND_ALL_BLOCK },
+        { MSC_TYPE_CONTRACTDEX_CLOSE_POSITION,MP_TX_PKT_V0,  true,         MSC_CONTRACTDEX_BLOCK },
+        {MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK,MP_TX_PKT_V0,  true,   MSC_CONTRACTDEX_BLOCK},
+        {MSC_TYPE_METADEX_TRADE,              MP_TX_PKT_V0,  true,          MSC_CONTRACTDEX_BLOCK},
+        {MSC_TYPE_TRADE_OFFER,                MP_TX_PKT_V1,  true,          MSC_CONTRACTDEX_BLOCK},
+        {MSC_TYPE_ACCEPT_OFFER_BTC,           MP_TX_PKT_V1,  true,          MSC_CONTRACTDEX_BLOCK},
+        {MSC_TYPE_DEX_BUY_OFFER,              MP_TX_PKT_V1,  true,          MSC_CONTRACTDEX_BLOCK}
 
     };
 

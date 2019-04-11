@@ -2198,6 +2198,15 @@ UniValue tl_getactivedexsells(const JSONRPCRequest& request)
     return response;
 }
 
+UniValue tl_getexodus(const JSONRPCRequest& request)
+{
+
+    UniValue balanceObj(UniValue::VOBJ);
+    std::string address = ExodusAddress();
+    balanceObj.push_back(Pair("exodus address: ", address));
+    return balanceObj;
+}
+
 static const CRPCCommand commands[] =
 { //  category                             name                            actor (function)               okSafeMode
   //  ------------------------------------ ------------------------------- ------------------------------ ----------
@@ -2235,6 +2244,7 @@ static const CRPCCommand commands[] =
   { "trade layer (data retieval)" , "tl_getmargin",                 &tl_getmargin,                  {} },
   { "trade layer (data retieval)" , "tl_getallprice",               &tl_getallprice,                {} },
   { "trade layer (data retieval)" , "tl_getmarketprice",            &tl_getmarketprice,             {} },
+  { "trade layer (data retieval)" , "tl_getexodus",                 &tl_getexodus,                  {} }
 };
 
 void RegisterOmniDataRetrievalRPCCommands(CRPCTable &tableRPC)

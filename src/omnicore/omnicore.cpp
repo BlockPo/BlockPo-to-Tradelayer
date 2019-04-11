@@ -164,7 +164,7 @@ extern std::map<uint32_t, std::map<uint32_t, std::vector<int64_t>>> denVWAPVecto
 extern std::map<uint32_t, std::vector<int64_t>> mapContractAmountTimesPrice;
 extern std::map<uint32_t, std::vector<int64_t>> mapContractVolume;
 extern std::map<uint32_t, int64_t> VWAPMapContracts;
-
+extern std::string setExoduss;
 using mastercore::StrToInt64;
 
 // indicate whether persistence is enabled at this point, or not
@@ -793,6 +793,7 @@ static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, 
     CTxDestination source;
     if (ExtractDestination(txOut.scriptPubKey, source)) {
         strSender = EncodeDestination(source);
+        PrintToLog("%s: strSender: %s ",__func__, strSender);
     } else return -110;
 
 
@@ -963,8 +964,13 @@ static bool HandleDExPayments(const CTransaction& tx, int nBlock, const std::str
     CTxDestination dest;
     if (ExtractDestination(tx.vout[n].scriptPubKey, dest)) {
       std::string address = EncodeDestination(dest);
+      PrintToLog("destination address: %s\n",address);
+      PrintToLog("sender's address: %s\n",strSender);
       if (address == ExodusAddress() || address == strSender)
-	        continue;
+      {
+           PrintToLog("continue...\n");
+           continue;
+      }
 
       // if (msc_debug_parser_dex) PrintToLog("payment #%d %s %s\n", count, strAddress, FormatIndivisibleMP(tx.vout[n].nValue));
 
@@ -3427,7 +3433,7 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
 
   globalPNLALL_DUSD += UPNL1 + UPNL2;
   globalVolumeALL_DUSD += nCouldBuy0;
-  
+
   arith_uint256 volumeALL256_t = mastercore::ConvertTo256(NotionalSize)*mastercore::ConvertTo256(nCouldBuy0);
   // PrintToLog("ALLs involved in the traded 256 Bits ~ %s ALL\n", volumeALL256_t.ToString());
 
@@ -3925,7 +3931,11 @@ uint64_t int64ToUint64(int64_t value)
 
 const std::string ExodusAddress()
 {
-    if (isNonMainNet()) {
+    if(RegTest()){
+       return setExoduss;
+    }
+
+    else if (isNonMainNet()) {
         return exodus_testnet;
     } else {
         return exodus_mainnet;
