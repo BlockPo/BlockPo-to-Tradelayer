@@ -281,8 +281,7 @@ int DEx_BuyOfferCreate(const std::string& addressMaker, uint32_t propertyId, int
         }
     }
 
-    // if (ready)
-    if (true)
+    if (ready)
     {
         CMPOffer sellOffer(block, amountOffered, propertyId, price, minAcceptFee, paymentWindow, txid, 1);
         my_offers.insert(std::make_pair(key, sellOffer));
