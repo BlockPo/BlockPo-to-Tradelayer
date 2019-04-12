@@ -3931,11 +3931,11 @@ uint64_t int64ToUint64(int64_t value)
 
 const std::string ExodusAddress()
 {
-    if(RegTest()){
-       return setExoduss;
-    }
+//     if(RegTest()){
+//        return setExoduss;
+//     }
 
-    else if (isNonMainNet()) {
+    if (isNonMainNet()) {
         return exodus_testnet;
     } else {
         return exodus_mainnet;
