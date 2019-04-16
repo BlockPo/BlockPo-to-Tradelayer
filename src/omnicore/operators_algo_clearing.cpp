@@ -202,7 +202,6 @@ void settlement_algorithm_fifo(MatrixTLS &M_file)
     }
   PrintToLog("\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
   PrintToLog("\nChecking Lives by Path:\n\n");
-  //int counting_paths = 0;
   
   std::vector<std::map<std::string, std::string>> lives_longs;
   std::vector<std::map<std::string, std::string>> lives_shorts;
@@ -210,28 +209,30 @@ void settlement_algorithm_fifo(MatrixTLS &M_file)
 
   double vwap_exit_price = 0;
   double PNL_total = 0;
-  //long int sum_oflives = 0;
-  //double exit_price_desired = 0;
-  // double gamma_p = 0;
-  // double gamma_q = 0;
-  // double sum_gamma_p = 0;
-  // double sum_gamma_q = 0;
+  int counting_paths = 0;
+  long int sum_oflives = 0;
+  double exit_price_desired = 0;
+  double gamma_p = 0;
+  double gamma_q = 0;
+  double sum_gamma_p = 0;
+  double sum_gamma_q = 0;
   
-  // for (it_path_main = path_main.begin(); it_path_main != path_main.end(); ++it_path_main)
-  //   {
-  //     PrintToLog("*******************************************");
-  //     counting_paths += 1;
-  //     computing_lives_bypath(*it_path_main);
-  //     PrintToLog("\n\nPath #%d:\n\n", counting_paths);
-  //     printing_path_maini(*it_path_main);
-  //     checking_zeronetted_bypath(*it_path_main);
-  //     computing_livesvectors_forlongshort(*it_path_main, lives_longs, lives_shorts);
-  //     computing_settlement_exitprice(*it_path_main, sum_oflives, PNL_total, gamma_p, gamma_q);
-  //     PrintToLog("\ngamma_p : %d, gamma_q : %d, PNL_total : %d\n", gamma_p, gamma_q, PNL_total);
-  //     sum_gamma_p += gamma_p;
-  //     sum_gamma_q += gamma_q;
-  //   }
-  /**exit_price_desired = sum_gamma_p/sum_gamma_q;**/
+  for (it_path_main = path_main.begin(); it_path_main != path_main.end(); ++it_path_main)
+    {
+      PrintToLog("*******************************************");
+      counting_paths += 1;
+      computing_lives_bypath(*it_path_main);
+      PrintToLog("\n\nPath #%d:\n\n", counting_paths);
+      printing_path_maini(*it_path_main);
+      checking_zeronetted_bypath(*it_path_main);
+      computing_livesvectors_forlongshort(*it_path_main, lives_longs, lives_shorts);
+      computing_settlement_exitprice(*it_path_main, sum_oflives, PNL_total, gamma_p, gamma_q);
+      PrintToLog("\ngamma_p : %d, gamma_q : %d, PNL_total : %d\n", gamma_p, gamma_q, PNL_total);
+      sum_gamma_p += gamma_p;
+      sum_gamma_q += gamma_q;
+    }
+  exit_price_desired = sum_gamma_p/sum_gamma_q;
+  PrintToLog("\nexit_price_desired = %d\n", exit_price_desired);
   
   /**********************************************/
   /** Checking VWAP Price for Settlement**/
@@ -509,10 +510,10 @@ void looking_netted_events(std::string &addrs_obj, std::vector<std::map<std::str
 	    }
 	}
     }
-
+  
   bool check = sum_amount_trd <= amount_opened;
   if ( netted_counter != 0 )
-    it_path_main[index_netted]["lives_trk"] = check ? std::to_string(amount_opened - sum_amount_trd) : 0;
+    it_path_main[index_netted]["lives_trk"] = check ? std::to_string(amount_opened - sum_amount_trd) : std::to_string(0);
   else
     {
       PrintToLog("\nindex q = %d\n", q);

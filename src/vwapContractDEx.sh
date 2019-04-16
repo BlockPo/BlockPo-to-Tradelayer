@@ -38,7 +38,8 @@ printf "Base address to work with:\n"
 printf $ADDRBase
 
 N=100
-Kloops=200
+#Kloops=200
+Kloops=20
 
 amount_bitcoin=10
 amountbitcoin_baseaddr=100
@@ -114,7 +115,7 @@ do
     printf "\n////////////////////////////////////////\n"
     printf "Sending USDTs from base address to the addresses #$i\n"
     $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_sendgrant ${ADDRBase} ${ADDRess[$i]} 5 ${amountusdts_manyaddr}
-    if (( $i % 20 == 0 )) 
+    if (( $i % 2 == 0 )) 
     then
 	$SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
     fi
@@ -139,7 +140,7 @@ do
     printf "\n////////////////////////////////////////\n"
     printf "Sending ALLs from base address to the addresses #$i\n"
     $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_sendgrant ${ADDRBase} ${ADDRess[$i]} 6 ${amountusdts_manyaddr}
-    if (( $i % 20 == 0 )) 
+    if (( $i % 2 == 0 )) 
     then
 	$SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
     fi
@@ -163,7 +164,7 @@ do
     printf "Sending Vesting Tokens #$i\n"
     $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_sendvesting ${addrs_admin} ${ADDRess[$i]} 3 150000
 
-    if (( $i % 20 == 0 )) 
+    if (( $i % 2 == 0 )) 
     then
 	$SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
     fi
@@ -192,7 +193,7 @@ do
 	printf "\n"
 	
 	$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[$i]} "ALL F18" ${AMOUNT} ${PRICE} 1 2       	
-	if (( $i % 20 == 0 )) 
+	if (( $i % 2 == 0 )) 
 	then
 	    $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
 	fi
@@ -217,7 +218,7 @@ do
 	printf "\n"
 	
 	$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[$i]} "ALL F18" ${AMOUNT} ${PRICE} 2 2
-	if (( $i % 20 == 0 )) 
+	if (( $i % 2 == 0 )) 
 	then
 	    $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
 	fi
