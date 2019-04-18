@@ -82,6 +82,8 @@ public:
 
     CTxOut &GetTxOut() { return out; }
     const CTxOut &GetTxOut() const { return out; }
+    
+    uint32_t GetHeight() const { return nHeight >> 1; }
 };
 
 class SaltedOutpointHasher
