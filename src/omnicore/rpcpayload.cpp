@@ -15,7 +15,7 @@
 using std::runtime_error;
 using namespace mastercore;
 
-UniValue omni_createpayload_simplesend(const JSONRPCRequest& request)
+UniValue tl_createpayload_simplesend(const JSONRPCRequest& request)
 {
    if (request.params.size() != 2)
         throw runtime_error(
@@ -46,7 +46,7 @@ UniValue omni_createpayload_simplesend(const JSONRPCRequest& request)
 static const CRPCCommand commands[] =
   { //  category                         name                                      actor (function)                         okSafeMode
     //  -------------------------------- ----------------------------------------- ---------------------------------------- ----------
-    { "omni layer (payload creation)", "omni_createpayload_simplesend",      &omni_createpayload_simplesend,          {} }
+    { "trade layer (payload creation)", "tl_createpayload_simplesend",      &tl_createpayload_simplesend,          {} }
   };
 
 void RegisterOmniPayloadCreationRPCCommands(CRPCTable &tableRPC)

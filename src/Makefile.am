@@ -200,6 +200,7 @@ BITCOIN_CORE_H = \
   omnicore/rpc.h \
   omnicore/rpctxobject.h \
   omnicore/rpcvalues.h \
+	omnicore/rpcrawtx.h \
   omnicore/fetchwallettx.h \
   omnicore/rpcrequirements.h \
   omnicore/rpctx.h \
@@ -208,8 +209,8 @@ BITCOIN_CORE_H = \
   omnicore/rpcpayload.h \
   omnicore/varint.h \
   omnicore/dex.h \
-  omnicore/mdex.h \	
-  omnicore/externfns.h \	
+  omnicore/mdex.h \
+  omnicore/externfns.h \
   omnicore/operators_algo_clearing.h
 
 obj/build.h: FORCE
@@ -281,6 +282,7 @@ libbitcoin_server_a_SOURCES = \
   omnicore/rpc.cpp \
   omnicore/rpctxobject.cpp \
   omnicore/rpcvalues.cpp \
+	omnicore/rpcrawtx.cpp \
   omnicore/fetchwallettx.cpp \
   omnicore/rpcrequirements.cpp \
   omnicore/rpctx.cpp \
