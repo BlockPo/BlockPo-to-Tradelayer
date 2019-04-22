@@ -39,7 +39,7 @@ printf $ADDRBase
 
 N=100
 #Kloops=200
-Kloops=20
+Kloops=50
 
 amount_bitcoin=10
 amountbitcoin_baseaddr=100

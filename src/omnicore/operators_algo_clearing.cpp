@@ -248,7 +248,7 @@ void settlement_algorithm_fifo(MatrixTLS &M_file)
   PrintToLog("____________________________________________________");
   PrintToLog("\nGhost Edges Vector:\n");
   calculating_ghost_edges(lives_longs, lives_shorts, vwap_exit_price, ghost_edges_array);
-
+  
   std::vector<std::map<std::string, std::string>>::iterator it_ghost;
   for (it_ghost = ghost_edges_array.begin(); it_ghost != ghost_edges_array.end(); ++it_ghost)
     {
@@ -256,7 +256,7 @@ void settlement_algorithm_fifo(MatrixTLS &M_file)
     }
   
   PrintToLog("____________________________________________________");
-
+  
   joining_pathmain_ghostedges(path_main, ghost_edges_array);
   int k = 0;
   long int nonzero_lives;
@@ -560,14 +560,14 @@ void checking_zeronetted_bypath(std::vector<std::map<std::string, std::string>> 
 void computing_livesvectors_forlongshort(std::vector<std::map<std::string, std::string>> &it_path_main, std::vector<std::map<std::string, std::string>> &lives_longs, std::vector<std::map<std::string, std::string>> &lives_shorts)
 {
   std::map<std::string, std::string> path_ele;
-
+  
   for (std::vector<std::map<std::string, std::string>>::iterator it = it_path_main.begin(); it != it_path_main.end(); ++it)
     {
       struct status_amounts_edge *pt_status_byedge = get_status_byedge(*it);
       if ( pt_status_byedge->lives_src != 0 )
 	{
 	  building_lives_edges(path_ele, pt_status_byedge->addrs_src, pt_status_byedge->status_src, pt_status_byedge->lives_src, pt_status_byedge->exit_price, pt_status_byedge);
-
+	  
 	  if ( finding_string("Long", pt_status_byedge->status_src) )
 	    lives_longs.push_back(path_ele);
 	  else if ( finding_string("Short", pt_status_byedge->status_src) )
@@ -576,7 +576,7 @@ void computing_livesvectors_forlongshort(std::vector<std::map<std::string, std::
       if ( pt_status_byedge->lives_trk != 0 )
 	{
 	  building_lives_edges(path_ele, pt_status_byedge->addrs_trk, pt_status_byedge->status_trk, pt_status_byedge->lives_trk, pt_status_byedge->entry_price, pt_status_byedge);
-
+	  
 	  if ( finding_string("Long", pt_status_byedge->status_trk) )
 	    lives_longs.push_back(path_ele);
 	  else if ( finding_string("Short", pt_status_byedge->status_trk) )
