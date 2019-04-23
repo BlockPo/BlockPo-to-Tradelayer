@@ -150,21 +150,24 @@ uint8_t ParseIssuerBonus(const UniValue& value)
 CTransaction ParseTransaction(const UniValue& value)
 {
     const CTransaction tx;
-    CMutableTransaction mutableTx(tx);
     if (value.isNull() || value.get_str().empty()) {
         return tx;
     }
 
-    if (!DecodeHexTx(mutableTx, value.get_str())) {
-        throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "Transaction deserialization failed");
-    }
+    // if (!DecodeHexTx(mutableTx, value.get_str())) {
+    //     throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "Transaction deserialization failed");
+    // }
+
     return tx;
 }
 
 CMutableTransaction ParseMutableTransaction(const UniValue& value)
 {
-    CTransaction tx = ParseTransaction(value);
-    return CMutableTransaction(tx);
+    CMutableTransaction mutableTx;
+    if (!DecodeHexTx(mutableTx, value.get_str())) {
+        throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "Transaction deserialization failed");
+    }
+    return mutableTx;
 }
 
 CPubKey ParsePubKeyOrAddress(const UniValue& value)

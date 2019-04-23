@@ -140,7 +140,7 @@ UniValue tl_createrawtx_opreturn(const JSONRPCRequest& request)
             .addOpReturn(payload)
             .build();
 
-    return EncodeHexTx(tx);
+    return EncodeHexTx(CTransaction(tx));
 }
 
 UniValue tl_createrawtx_input(const JSONRPCRequest& request)
@@ -167,7 +167,7 @@ UniValue tl_createrawtx_input(const JSONRPCRequest& request)
         );
 
     CMutableTransaction tx = ParseMutableTransaction(request.params[0]);
-    uint256 txid = ParseHashV(request.params[1], "txid");
+    uint256 txid = ParseHashV(request.params[1], "txid"); //TODO: Check this!
     uint32_t nOut = ParseOutputIndex(request.params[2]);
 
     // extend the transaction

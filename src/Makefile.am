@@ -268,6 +268,7 @@ libbitcoin_server_a_SOURCES = \
   omnicore/activation.cpp \
   omnicore/consensushash.cpp \
   omnicore/convert.cpp \
+	omnicore/createtx.cpp \
   omnicore/encoding.cpp \
   omnicore/notifications.cpp \
   omnicore/pending.cpp \

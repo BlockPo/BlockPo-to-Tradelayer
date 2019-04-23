@@ -121,6 +121,7 @@ public:
      */
     CMutableTransaction build();
 
+
 protected:
     CMutableTransaction transaction;
 };
