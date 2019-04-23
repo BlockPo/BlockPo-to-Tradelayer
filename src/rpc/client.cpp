@@ -147,6 +147,16 @@ static const CRPCConvertParam vRPCConvertParams[] =
      /* Trade Layer - payload creation */
     { "tl_createpayload_simplesend", 0, "arg0" },
 
+    /* Trade Layer - raw transaction calls */
+    { "tl_decodetransaction", 1, "arg1" },
+    { "tl_decodetransaction", 2, "arg2" },
+    { "tl_createrawtx_reference", 2, "arg2" },
+    { "tl_createrawtx_input", 2, "arg2" },
+    { "tl_createrawtx_change", 1, "arg1" },
+    { "tl_createrawtx_change", 3, "arg3" },
+    { "tl_createrawtx_change", 4, "arg4" },
+
+
     /* Trade Layer - transaction calls */
     { "tl_send", 2, "arg2" },
     { "tl_sendvesting", 2, "arg2" },
