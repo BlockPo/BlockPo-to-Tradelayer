@@ -36,7 +36,7 @@ UniValue tl_createpayload_simplesend(const JSONRPCRequest& request)
         );
 
     uint32_t propertyId = ParsePropertyId(request.params[0]);
-    int64_t amount = ParseAmount(request.params[1], false);
+    int64_t amount = ParseAmount(request.params[1], isPropertyDivisible(propertyId));
 
     std::vector<unsigned char> payload = CreatePayload_SimpleSend(propertyId, amount);
 
