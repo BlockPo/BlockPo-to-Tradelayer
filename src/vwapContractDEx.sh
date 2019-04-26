@@ -39,7 +39,7 @@ printf $ADDRBase
 
 N=100
 #Kloops=200
-Kloops=50
+Kloops=4
 
 amount_bitcoin=10
 amountbitcoin_baseaddr=100
@@ -115,10 +115,10 @@ do
     printf "\n////////////////////////////////////////\n"
     printf "Sending USDTs from base address to the addresses #$i\n"
     $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_sendgrant ${ADDRBase} ${ADDRess[$i]} 5 ${amountusdts_manyaddr}
-    if (( $i % 2 == 0 )) 
-    then
-	$SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
-    fi
+    # if (( $i % 20 == 0 )) 
+    # then
+    $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
+    # fi
     
     printf "\n________________________________________\n"
     printf "Checking USDT balances for the address #$i:\n"
@@ -140,34 +140,24 @@ do
     printf "\n////////////////////////////////////////\n"
     printf "Sending ALLs from base address to the addresses #$i\n"
     $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_sendgrant ${ADDRBase} ${ADDRess[$i]} 6 ${amountusdts_manyaddr}
-    if (( $i % 2 == 0 )) 
-    then
-	$SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
-    fi
+    # if (( $i % 20 == 0 )) 
+    # then
+    $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
+    # fi
     printf "\n________________________________________\n"
     printf "Checking ALL balances for the address #$i:\n"
     $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_getbalance ${ADDRess[$i]} 6
 done
-
 ##################################################################"
 # Sending Vesting Tokens from admin address
 for (( i=1; i<=10; i++ ))
 do    
-    # printf "\nAmount Vesting Tokens #$i\n"
-    # AMOUNTVESTING=$((RANDOM%1000+1000))
-    # printf "\nRandom Amount Vesting:\n"
-    # printf $AMOUNTVESTING
-    # printf "\n"
     printf "\n////////////////////////////////////////\n"
     printf "Vesting Balance Admin Address\n"
     $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_getbalance ${addrs_admin} 3
     printf "Sending Vesting Tokens #$i\n"
     $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_sendvesting ${addrs_admin} ${ADDRess[$i]} 3 150000
-
-    if (( $i % 2 == 0 )) 
-    then
-	$SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
-    fi
+    $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
     
     printf "\n________________________________________\n"
     printf "Checking Vesting balances for the address #$i:\n"
@@ -187,16 +177,16 @@ do
 	printf $PRICE
 	
 	printf "\nAmount for sale Buyer #$i ContractDEx\n"
-	AMOUNT=$((RANDOM%10+10))
+	AMOUNT=$((RANDOM%80+10))
 	printf "\nRandom Amount:\n"
 	printf $AMOUNT
 	printf "\n"
 	
 	$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[$i]} "ALL F18" ${AMOUNT} ${PRICE} 1 2       	
-	if (( $i % 2 == 0 )) 
-	then
-	    $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
-	fi
+	# if (( $i % 2 == 0 )) 
+	# then
+	$SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
+	# fi
 	
     done
     ##################################################################
@@ -212,16 +202,16 @@ do
 	printf $PRICE
 	
 	printf "\nAmount for sale Seller #$i ContractDEx match\n"
-	AMOUNT=$((RANDOM%10+10))
+	AMOUNT=$((RANDOM%80+10))
 	printf "\nRandom Amount ContractDEx match:\n"
 	printf $AMOUNT
 	printf "\n"
 	
 	$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[$i]} "ALL F18" ${AMOUNT} ${PRICE} 2 2
-	if (( $i % 2 == 0 )) 
-	then
-	    $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
-	fi
+	# if (( $i % 2 == 0 )) 
+	# then
+	$SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
+	# fi
 	
     done    
 done

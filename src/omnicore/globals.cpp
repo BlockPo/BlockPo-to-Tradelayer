@@ -23,6 +23,8 @@ volatile int idx_q;
 volatile unsigned int path_length;
 std::vector<std::map<std::string, std::string>> path_ele;
 std::vector<std::map<std::string, std::string>> path_elef;
+std::vector<std::map<std::string, std::string>> lives_longs_vg;
+std::vector<std::map<std::string, std::string>> lives_shorts_vg;
 int n_cols;
 int n_rows;
 int idx_expiration;
