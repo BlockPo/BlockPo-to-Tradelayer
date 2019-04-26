@@ -23,6 +23,13 @@ struct status_amounts_edge
   double entry_price, exit_price;
 };
 
+struct status_lives_edge
+{
+  std::string addrs, status;
+  long int lives, edge_row, path_number;
+  double entry_price;
+};
+
 /**************************************************************/
 /** Functions for clearing algo */
 struct status_amounts *get_status_amounts_open_incr(VectorTLS &v, int q);
@@ -53,6 +60,8 @@ void computing_lives_bypath(std::vector<std::map<std::string, std::string>> &it_
 
 struct status_amounts_edge *get_status_byedge(std::map<std::string, std::string> &edge);
 
+struct status_lives_edge *get_status_bylivesedge(std::map<std::string, std::string> &edge);
+
 void looking_netted_events(std::string &addrs_obj, std::vector<std::map<std::string, std::string>> &it_path_main, int q, long int amount_opened, int index_src_trk, std::string status_opening);
 
 void printing_path_maini(std::vector<std::map<std::string, std::string>> &it_path_maini);
@@ -68,6 +77,8 @@ void building_lives_edges(std::map<std::string, std::string> &path_first, std::s
 void printing_edges_lives(std::map<std::string, std::string> &path_first);
 
 void counting_lives_longshorts(std::vector<std::map<std::string, std::string>> &lives_longs, std::vector<std::map<std::string, std::string>> &lives_shorts);
+
+void computing_livesvector_global(std::vector<std::map<std::string, std::string>> lives_longs, std::vector<std::map<std::string, std::string>> lives_shorts, std::vector<std::map<std::string, std::string>> &lives_longs_vg, std::vector<std::map<std::string, std::string>> &lives_shorts_vg);
 
 void computing_settlement_exitprice(std::vector<std::map<std::string, std::string>> &it_path_main, long int &sum_oflives, double &PNL_total, double &gamma_p, double &gamma_q);
 
@@ -90,5 +101,13 @@ void checkzeronetted_bypath_ghostedges(std::vector<std::map<std::string, std::st
 long int checkpath_livesnonzero(std::vector<std::map<std::string, std::string>> path_maini);
 
 void calculate_pnltrk_bypath(std::vector<std::map<std::string, std::string>> path_main, double &PNL_total);
+
+bool find_address_lives_vector(std::vector<std::map<std::string, std::string>> lives_v, std::string address);
+
+int find_posaddress_lives_vector(std::vector<std::map<std::string, std::string>> lives_v, std::string address);
+
+void getting_globallives_long_short(std::vector<std::map<std::string, std::string>> lives, std::vector<std::map<std::string, std::string>> &lives_vg);
+
+void printing_lives_vector(std::vector<std::map<std::string, std::string>> lives);
 
 #endif
