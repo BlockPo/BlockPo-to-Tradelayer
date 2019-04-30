@@ -554,7 +554,7 @@ int64_t calculateDExPurchase(const int64_t amountOffered, const int64_t amountDe
     // convert back to int64_t
     return ConvertTo64(amountPurchased256);
 }
-
+  
 /**
  * Handles incoming BTC payment for the offer in omnicore.cpp
  * TODO: change nAmended: uint64_t -> int64_t

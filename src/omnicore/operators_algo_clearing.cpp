@@ -268,10 +268,7 @@ void settlement_algorithm_fifo(MatrixTLS &M_file)
   calculating_ghost_edges(lives_longs, lives_shorts, vwap_exit_price, ghost_edges_array);
   
   std::vector<std::map<std::string, std::string>>::iterator it_ghost;
-  for (it_ghost = ghost_edges_array.begin(); it_ghost != ghost_edges_array.end(); ++it_ghost)
-    {
-      printing_edges(*it_ghost);
-    }
+  for (it_ghost = ghost_edges_array.begin(); it_ghost != ghost_edges_array.end(); ++it_ghost) printing_edges(*it_ghost);
   
   PrintToLog("____________________________________________________");
   
@@ -308,7 +305,7 @@ void clearing_operator_fifo(VectorTLS &vdata, MatrixTLS &M_file, int index_init,
 {
   extern int n_rows;
   extern int n_cols;
-
+  
   VectorTLS status_z(2);
   std::string addrs_opening = pt_pos->addrs_trk;
   long int d_amounts = 0;
@@ -318,7 +315,7 @@ void clearing_operator_fifo(VectorTLS &vdata, MatrixTLS &M_file, int index_init,
     {
       VectorTLS jrow_database(n_cols);
       sub_row(jrow_database, M_file, i);
-
+      
       if ( finding(addrs_opening, jrow_database) )
         {
 	  struct status_amounts *pt_status_addrs_trk = get_status_amounts_byaddrs(jrow_database, addrs_opening);
@@ -601,6 +598,8 @@ void computing_livesvectors_forlongshort(std::vector<std::map<std::string, std::
 	    lives_shorts.push_back(path_ele);
 	}
     }
+  /** Be sure if M_file contain addrs in G_lives. Are those addrs still containing lives contracts from some past settlement? **/
+  
 }
 
 void counting_lives_longshorts(std::vector<std::map<std::string, std::string>> &lives_longs, std::vector<std::map<std::string, std::string>> &lives_shorts)

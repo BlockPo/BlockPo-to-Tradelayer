@@ -2087,13 +2087,15 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
 {
   extern volatile int id_contract;
   extern std::vector<std::string> vestingAddresses;
+  extern std::vector<std::map<std::string, std::string>> lives_longs_vg;
+  extern std::vector<std::map<std::string, std::string>> lives_shorts_vg;
   extern volatile int64_t Lastx_Axis;
   extern volatile int64_t LastLinear;
   extern volatile int64_t LastQuad;
   extern volatile int64_t LastLog;
   ui128 numLog128;
   ui128 numQuad128;
-
+  
   LOCK(cs_tally);
 
   if (!mastercoreInitialized) {
@@ -2117,14 +2119,18 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
     PrintToLog("\nSettlement every 8 hours here. nBlockNow = %d\n", nBlockNow);
     pt_ndatabase = new MatrixTLS(path_elef.size(), n_cols); MatrixTLS &ndatabase = *pt_ndatabase;
     MatrixTLS M_file(path_elef.size(), n_cols);
-    fillingMatrix(M_file, ndatabase, path_elef);
+    fillingMatrix(M_file, ndatabase, path_elef);    
     n_rows = size(M_file, 0);
     PrintToLog("Matrix for Settlement: dim = (%d, %d)\n\n", n_rows, n_cols);
     printing_matrix(M_file);
     cout << "\n\n";
+    
+    lookingin_globalvector_pastlivesperpetuals(lives_longs_vg, M_file);
+    lookingin_globalvector_pastlivesperpetuals(lives_shorts_vg, M_file);
+    
     PrintToLog("\nCalling the Settlement Algorithm:\n\n");
     settlement_algorithm_fifo(M_file);
-
+    
     /**Unallocating Dynamic Memory**/
     path_elef.clear();
     market_priceMap.clear();
@@ -2369,6 +2375,50 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   }
 
   return fFoundTx;
+}
+
+void lookingin_globalvector_pastlivesperpetuals(std::vector<std::map<std::string, std::string>> &lives, MatrixTLS &M_file)
+{
+  int idx_q = 0;
+  for (std::vector<std::map<std::string, std::string>>::iterator it = lives.begin(); it != lives.end(); ++it)
+    {
+      idx_q +=1;
+      struct status_lives_edge *pt_status_bylivesedge = get_status_bylivesedge(*it);
+      lookingaddrs_inside_M_file(pt_status_bylivesedge->addrs, M_file, lives, idx_q-1);
+    }
+}
+
+void lookingaddrs_inside_M_file(std::string addrs, MatrixTLS &M_file, std::vector<std::map<std::string, std::string>> &lives, int idx_q)
+{
+  for (int i = 0; i < size(M_file, 0); ++i)
+    {
+      VectorTLS jrow_database(size(M_file, 1));
+      sub_row(jrow_database, M_file, i);
+      struct status_amounts *pt_status_amounts_byaddrs = get_status_amounts_byaddrs(jrow_database, addrs);
+      
+      if (addrs == pt_status_amounts_byaddrs->addrs_src)
+	{
+	  if (pt_status_amounts_byaddrs->lives_src != 0)
+	    continue;
+	  else
+	    {
+	      /** Deleting entry idx_q containing addrs from lives vector. ¡¡lives_src = 0!!**/
+	      lives.erase(lives.begin() + idx_q);
+	      break;
+	    }	    
+	}
+      if (addrs == pt_status_amounts_byaddrs->addrs_trk)
+	{
+	  if (pt_status_amounts_byaddrs->lives_trk != 0)
+	    continue;
+	  else
+	    {
+	      /** Deleting entry idx_q containing addrs from lives vector. ¡¡lives_trk = 0!!**/
+	      lives.erase(lives.begin() + idx_q);
+	      break;
+	    }	    
+	}
+    } 
 }
 
 /**
