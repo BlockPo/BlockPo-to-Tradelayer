@@ -165,6 +165,7 @@ extern std::map<uint32_t, std::vector<int64_t>> mapContractAmountTimesPrice;
 extern std::map<uint32_t, std::vector<int64_t>> mapContractVolume;
 extern std::map<uint32_t, int64_t> VWAPMapContracts;
 extern std::string setExoduss;
+
 using mastercore::StrToInt64;
 
 // indicate whether persistence is enabled at this point, or not
@@ -2087,12 +2088,13 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
 {
   extern volatile int id_contract;
   extern std::vector<std::string> vestingAddresses;
-  extern std::vector<std::map<std::string, std::string>> lives_longs_vg;
-  extern std::vector<std::map<std::string, std::string>> lives_shorts_vg;
   extern volatile int64_t Lastx_Axis;
   extern volatile int64_t LastLinear;
   extern volatile int64_t LastQuad;
   extern volatile int64_t LastLog;
+  extern std::vector<std::map<std::string, std::string>> lives_longs_vg;
+  extern std::vector<std::map<std::string, std::string>> lives_shorts_vg;
+  
   ui128 numLog128;
   ui128 numQuad128;
   
@@ -2114,6 +2116,8 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   
   int nBlockNow = GetHeight();
   
+  /***********************************************************************/
+  /** Calling The Settlement Algorithm **/
   if (nBlockNow%192 == 0 && nBlockNow != 0 && path_elef.size() != 0 && lastBlockg != nBlockNow) {
     
     PrintToLog("\nSettlement every 8 hours here. nBlockNow = %d\n", nBlockNow);
@@ -2123,14 +2127,28 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
     n_rows = size(M_file, 0);
     PrintToLog("Matrix for Settlement: dim = (%d, %d)\n\n", n_rows, n_cols);
     printing_matrix(M_file);
-    cout << "\n\n";
     
+    /***********************************************************************/
+    /** Checking if an addrs has lives non-zero from the past settlements **/
     lookingin_globalvector_pastlivesperpetuals(lives_longs_vg, M_file);
     lookingin_globalvector_pastlivesperpetuals(lives_shorts_vg, M_file);
     
+    PrintToLog("\n\nlives_longs_vg.size() before = %d\n\n", lives_longs_vg.size());
+    std::sort(lives_longs_vg.begin(), lives_longs_vg.end());
+    lives_longs_vg.erase(std::unique(lives_longs_vg.begin(), lives_longs_vg.end()), lives_longs_vg.end());
+    PrintToLog("\n\nlives_longs_vg.size() later = %d\n\n", lives_longs_vg.size());
+    
+    PrintToLog("\n\nlives_shorts_vg.size() before = %d\n\n", lives_shorts_vg.size());
+    std::sort(lives_shorts_vg.begin(), lives_shorts_vg.end());
+    lives_shorts_vg.erase(std::unique(lives_shorts_vg.begin(), lives_shorts_vg.end()), lives_shorts_vg.end());
+    PrintToLog("\n\nlives_shorts_vg.size() later = %d\n\n", lives_shorts_vg.size());
+    
+    /***********************************************************************/
+    cout << "\n\n";
     PrintToLog("\nCalling the Settlement Algorithm:\n\n");
     settlement_algorithm_fifo(M_file);
     
+    /***********************************************************************/
     /**Unallocating Dynamic Memory**/
     path_elef.clear();
     market_priceMap.clear();
@@ -2144,16 +2162,15 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
     mapContractVolume.clear();
     VWAPMapContracts.clear();
   }
-  /**********************************************/
+  /***********************************************************************/
   /** Checking Market Price **/
-  
   int64_t priceALL_USD = mastercore::getPairMarketPrice("ALL", "dUSD");
   PrintToLog("\npriceALL_USD = %s\n", FormatDivisibleMP(priceALL_USD));
 
   int64_t priceUSD_ALL = mastercore::getPairMarketPrice("dUSD", "ALL");
   PrintToLog("\npriceUSD_ALL = %s\n", FormatDivisibleMP(priceUSD_ALL));
 
-  /***********************************************/
+  /***********************************************************************/
   /** Vesting Tokens to Balance **/
   int64_t x_Axis = globalVolumeALL_LTC;
   int64_t LogAxis = mastercore::DoubleToInt64(log(static_cast<double>(x_Axis)/COIN));
@@ -2368,27 +2385,25 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
     }
     fFoundTx |= (interp_ret == 0);
   } else if (pop_ret > 0) fFoundTx |= HandleDExPayments(tx, nBlock, mp_obj.getSender()); // testing the payment handler
-
+  
   if (fFoundTx && msc_debug_consensus_hash_every_transaction) {
     uint256 consensusHash = GetConsensusHash();
     PrintToLog("Consensus hash for transaction %s: %s\n", tx.GetHash().GetHex(), consensusHash.GetHex());
   }
-
+  
   return fFoundTx;
 }
 
-void lookingin_globalvector_pastlivesperpetuals(std::vector<std::map<std::string, std::string>> &lives, MatrixTLS &M_file)
+void lookingin_globalvector_pastlivesperpetuals(std::vector<std::map<std::string, std::string>> &lives, MatrixTLS M_file)
 {
-  int idx_q = 0;
   for (std::vector<std::map<std::string, std::string>>::iterator it = lives.begin(); it != lives.end(); ++it)
     {
-      idx_q +=1;
       struct status_lives_edge *pt_status_bylivesedge = get_status_bylivesedge(*it);
-      lookingaddrs_inside_M_file(pt_status_bylivesedge->addrs, M_file, lives, idx_q-1);
+      lookingaddrs_inside_M_file(pt_status_bylivesedge->addrs, M_file, lives);
     }
 }
 
-void lookingaddrs_inside_M_file(std::string addrs, MatrixTLS &M_file, std::vector<std::map<std::string, std::string>> &lives, int idx_q)
+void lookingaddrs_inside_M_file(std::string addrs, MatrixTLS M_file, std::vector<std::map<std::string, std::string>> &lives)
 {
   for (int i = 0; i < size(M_file, 0); ++i)
     {
@@ -2398,29 +2413,64 @@ void lookingaddrs_inside_M_file(std::string addrs, MatrixTLS &M_file, std::vecto
       
       if (addrs == pt_status_amounts_byaddrs->addrs_src)
 	{
-	  if (pt_status_amounts_byaddrs->lives_src != 0)
-	    continue;
-	  else
+	  long int lives_srch = pt_status_amounts_byaddrs->lives_src;
+	  if (lives_srch != 0)
 	    {
+	      PrintToLog("pt_status_amounts_byaddrs->lives_src = %d\t", pt_status_amounts_byaddrs->lives_src);
+	      continue;
+	    }
+	  else
+	    {	      
+	      PrintToLog("pt_status_amounts_byaddrs->lives_src = %d\t", pt_status_amounts_byaddrs->lives_src);
 	      /** Deleting entry idx_q containing addrs from lives vector. ¡¡lives_src = 0!!**/
-	      lives.erase(lives.begin() + idx_q);
+	      int idx_q = finding_idxforaddress(addrs, lives);
+	      lives[idx_q]["addrs"]       = std::string();
+	      lives[idx_q]["status"]      = std::string();
+	      lives[idx_q]["lives"]       = std::to_string(0);
+	      lives[idx_q]["entry_price"] = std::to_string(0);
+	      lives[idx_q]["edge_row"]    = std::to_string(0);
+	      lives[idx_q]["path_number"] = std::to_string(0);
 	      break;
 	    }	    
 	}
-      if (addrs == pt_status_amounts_byaddrs->addrs_trk)
+      else if (addrs == pt_status_amounts_byaddrs->addrs_trk)
 	{
-	  if (pt_status_amounts_byaddrs->lives_trk != 0)
-	    continue;
+	  long int lives_trkh = pt_status_amounts_byaddrs->lives_trk;
+	  if (lives_trkh != 0)
+	    {
+	      PrintToLog("pt_status_amounts_byaddrs->lives_trk = %d\t", pt_status_amounts_byaddrs->lives_trk);
+	      continue;
+	    }
 	  else
 	    {
+	      PrintToLog("pt_status_amounts_byaddrs->lives_trk = %d\t", pt_status_amounts_byaddrs->lives_trk);
 	      /** Deleting entry idx_q containing addrs from lives vector. ¡¡lives_trk = 0!!**/
-	      lives.erase(lives.begin() + idx_q);
+	      int idx_q = finding_idxforaddress(addrs, lives);
+	      lives[idx_q]["addrs"]       = std::string();
+	      lives[idx_q]["status"]      = std::string();
+	      lives[idx_q]["lives"]       = std::to_string(0);
+	      lives[idx_q]["entry_price"] = std::to_string(0);
+	      lives[idx_q]["edge_row"]    = std::to_string(0);
+	      lives[idx_q]["path_number"] = std::to_string(0);
 	      break;
 	    }	    
 	}
-    } 
+      else
+	continue;
+    }
 }
 
+int finding_idxforaddress(std::string addrs, std::vector<std::map<std::string, std::string>> lives)
+{
+  int idx_q = 0;
+  for (std::vector<std::map<std::string, std::string>>::iterator it = lives.begin(); it != lives.end(); ++it)
+    {
+      idx_q += 1;
+      struct status_lives_edge *pt_status_bylivesedge = get_status_bylivesedge(*it);
+      if (addrs == pt_status_bylivesedge->addrs) break;
+    }
+  return idx_q-1;
+}
 /**
  * Determines, whether it is valid to use a Class C transaction for a given payload size.
  *
