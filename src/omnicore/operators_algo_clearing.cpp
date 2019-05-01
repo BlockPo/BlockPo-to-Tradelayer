@@ -16,9 +16,6 @@ extern VectorTLS *pt_open_incr_anypos;
 extern VectorTLS *pt_open_incr_long;
 extern MatrixTLS *pt_ndatabase; MatrixTLS &ndatabase = *pt_ndatabase;
 
-extern std::vector<std::map<std::string, std::string>> lives_longs_vg;
-extern std::vector<std::map<std::string, std::string>> lives_shorts_vg;
-
 /**************************************************************/
 /** Functions for Settlement Algorithm */
 struct status_amounts *get_status_amounts_open_incr(VectorTLS &v, int q)
@@ -172,6 +169,8 @@ void settlement_algorithm_fifo(MatrixTLS &M_file)
   extern int n_rows;
   extern VectorTLS *pt_open_incr_long;  VectorTLS &open_incr_long  = *pt_open_incr_long;
   extern VectorTLS *pt_open_incr_short; VectorTLS &open_incr_short = *pt_open_incr_short;
+  extern std::vector<std::map<std::string, std::string>> lives_longs_vg;
+  extern std::vector<std::map<std::string, std::string>> lives_shorts_vg;
   std::vector<std::vector<std::map<std::string, std::string>>> path_main;
   std::vector<std::vector<std::map<std::string, std::string>>>::iterator it_path_main;
   std::vector<std::map<std::string, std::string>>::iterator it_path_maini;
@@ -260,7 +259,7 @@ void settlement_algorithm_fifo(MatrixTLS &M_file)
   PrintToLog("\nVWAP Price for Settlement = %d\n", vwap_exit_price);
   /**********************************************/
   
-  computing_livesvector_global(lives_longs, lives_shorts, lives_longs_vg, lives_shorts_vg);
+  computing_livesvector_global(lives_longs, lives_shorts, lives_longs_vg, lives_shorts_vg);  
   counting_lives_longshorts(lives_longs, lives_shorts);
   
   PrintToLog("____________________________________________________");
