@@ -1098,7 +1098,6 @@ bool mastercore::ContractDex_Fees(std::string addressTaker,std::string addressMa
        return false;
 
     int64_t marginRe = static_cast<int64_t>(sp.margin_requirement);
-    int32_t collateralCurrency = sp.collateral_currency;
 
     PrintToLog("%s: addressTaker: %d\n",__func__,addressTaker);
     PrintToLog("%s: addressMaker: %d\n",__func__,addressMaker);
@@ -1125,14 +1124,19 @@ bool mastercore::ContractDex_Fees(std::string addressTaker,std::string addressMa
         // 0.5 to oracle maintaineer
         // update_tally_map(maintaineer,sp.collateral_currency, cacheFee,BALANCE);
 
-        if (collateralCurrency == 1) //ALLS
+        if (sp.collateral_currency == 1) //ALLS
         {
           // 0.5 to feecache
           cachefees[contractId] += cacheFee;
 
         }else {
-          // Create the metadex object with specific params
-          // MetaDEX_INSERT
+            // Create the metadex object with specific params
+            uint256 txid;
+            int block = 0;
+            unsigned int idx = 0;
+            int64_t amount_desired = 1; // we need to ajust this to market prices
+            CMPMetaDEx new_mdex(addressTaker, block, sp.collateral_currency, cacheFee, 1, amount_desired, txid, idx, CMPTransaction::ADD);
+            mastercore::MetaDEx_INSERT(new_mdex);
 
         }
 
@@ -1158,32 +1162,37 @@ bool mastercore::ContractDex_Fees(std::string addressTaker,std::string addressMa
 
 }
 
-bool mastercore::MetaDEx_Fees(const CMPMetaDEx *pnew,const CMPMetaDEx *pold, int64_t nCouldBuy)
+bool mastercore::MetaDEx_Fees(const CMPMetaDEx *pnew,const CMPMetaDEx *pold, int64_t buyer_amountGot)
 {
     if(pnew->getBlock() == 0 && pnew->getHash() == uint256() && pnew->getIdx() == 0) {
        PrintToLog("%s: Buy from  ContractDex_Fees \n",__func__);
        return false;
     }
 
-    arith_uint256 uTakerFee = (ConvertTo256(nCouldBuy) * ConvertTo256(5)) / ConvertTo256(100);
-    arith_uint256 uMakerFee = (ConvertTo256(nCouldBuy) * ConvertTo256(4)) / ConvertTo256(100);
-    arith_uint256 uCacheFee = ConvertTo256(nCouldBuy) / ConvertTo256(100);
+    arith_uint256 uTakerFee = (ConvertTo256(buyer_amountGot) * ConvertTo256(5)) / ConvertTo256(100);
+    arith_uint256 uMakerFee = (ConvertTo256(buyer_amountGot) * ConvertTo256(4)) / ConvertTo256(100);
+    arith_uint256 uCacheFee = ConvertTo256(buyer_amountGot) / ConvertTo256(100);
 
     int64_t takerFee = ConvertTo64(uTakerFee);
     int64_t makerFee = ConvertTo64(uMakerFee);
     int64_t cacheFee = ConvertTo64(uCacheFee);
 
-    PrintToLog("%s: cacheFee: %d\n",__func__,cacheFee);
-    PrintToLog("%s: takerFee: %d\n",__func__,takerFee);
-    PrintToLog("%s: makerFee: %d\n",__func__,makerFee);
+    PrintToLog("%s: buyer_amountGot: %d\n",__func__, buyer_amountGot);
+    PrintToLog("%s: cacheFee: %d\n",__func__, cacheFee);
+    PrintToLog("%s: takerFee: %d\n",__func__, takerFee);
+    PrintToLog("%s: makerFee: %d\n",__func__, makerFee);
+
+    //sum check
+    assert(takerFee == makerFee + cacheFee);
 
     // checking the same property for both
-    assert(pnew->getProperty() == pold->getDesProperty());
-    PrintToLog("%s: makerFee: %d\n",__func__,pnew->getProperty());
+    assert(pnew->getDesProperty() == pold->getProperty());
+    PrintToLog("%s: propertyId: %d\n",__func__,pold->getProperty());
 
     // -% to taker, +% to maker
-    update_tally_map(pnew->getAddr(), pnew->getProperty(),-takerFee,BALANCE);
-    update_tally_map(pold->getAddr(), pold->getDesProperty(), makerFee,BALANCE);
+    update_tally_map(pnew->getAddr(), pnew->getDesProperty(), -takerFee,BALANCE);
+    update_tally_map(pold->getAddr(), pold->getProperty(), makerFee,BALANCE);
+
 
     // to feecache
     cachefees[pnew->getProperty()] += cacheFee;
@@ -1398,13 +1407,6 @@ MatchReturnType x_Trade(CMPMetaDEx* const pnew)
             const int64_t buyer_amountLeft = pnew->getAmountRemaining() - seller_amountGot;
             const int64_t seller_amountLeft = pold->getAmountRemaining() - buyer_amountGot;
 
-            /**
-             * Fees calculations for maker and taker.
-             *
-             *
-             */
-            mastercore::MetaDEx_Fees(pnew, pold, nCouldBuy);
-
             // if (msc_debug_metadex1) PrintToLog("$$ buyer_got= %d, seller_got= %d, seller_left_for_sale= %d, buyer_still_for_sale= %d\n",
             //     buyer_amountGot, seller_amountGot, seller_amountLeft, buyer_amountLeft);
 
@@ -1566,13 +1568,23 @@ MatchReturnType x_Trade(CMPMetaDEx* const pnew)
 	              }
             } */
 
+
+
+
             // transfer the payment property from buyer to seller
             assert(update_tally_map(pnew->getAddr(), pnew->getProperty(), -seller_amountGot, BALANCE));
             assert(update_tally_map(pold->getAddr(), pold->getDesProperty(), seller_amountGot, BALANCE));
 
             // transfer the market (the one being sold) property from seller to buyer
             assert(update_tally_map(pold->getAddr(), pold->getProperty(), -buyer_amountGot, METADEX_RESERVE));
-            assert(update_tally_map(pnew->getAddr(), pnew->getDesProperty(), buyer_amountGotAfterFee, BALANCE));
+            assert(update_tally_map(pnew->getAddr(), pnew->getDesProperty(), buyer_amountGot, BALANCE));
+
+            /**
+             * Fees calculations for maker and taker.
+             *
+             *
+             */
+            mastercore::MetaDEx_Fees(pnew, pold, buyer_amountGot);
 
             NewReturn = TRADED;
 
