@@ -554,7 +554,7 @@ int64_t calculateDExPurchase(const int64_t amountOffered, const int64_t amountDe
     // convert back to int64_t
     return ConvertTo64(amountPurchased256);
 }
-  
+
 /**
  * Handles incoming BTC payment for the offer in omnicore.cpp
  * TODO: change nAmended: uint64_t -> int64_t
@@ -562,9 +562,6 @@ int64_t calculateDExPurchase(const int64_t amountOffered, const int64_t amountDe
 int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addressSeller, const std::string& addressBuyer, int64_t amountPaid, int block, uint64_t* nAmended)
 {
     PrintToLog("%s(%s, %s)\n", __func__, addressSeller, addressBuyer);
-
-    bool normal = false;
-    bool inverted = false;
     int rc = DEX_ERROR_PAYMENT;
     uint32_t propertyId;
     CMPAccept* p_accept;
@@ -582,7 +579,6 @@ int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addre
 
         if (p_accept)
         {
-            normal = true;
             PrintToLog("Found seller market maker!\n");
             break;
         }
@@ -592,7 +588,6 @@ int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addre
 
         if (p_accept)
         {
-            inverted = true;
             PrintToLog("Found buyer market maker!\n");
             break;
         }
