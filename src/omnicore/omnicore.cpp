@@ -2094,6 +2094,8 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   extern volatile int64_t LastLog;
   extern std::vector<std::map<std::string, std::string>> lives_longs_vg;
   extern std::vector<std::map<std::string, std::string>> lives_shorts_vg;
+  // std::vector<std::string> addrsl_vg;
+  // std::vector<std::string> addrss_vg;
   
   ui128 numLog128;
   ui128 numQuad128;
@@ -2118,8 +2120,9 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   
   /***********************************************************************/
   /** Calling The Settlement Algorithm **/
-  if (nBlockNow%192 == 0 && nBlockNow != 0 && path_elef.size() != 0 && lastBlockg != nBlockNow) {
-    
+  // if (nBlockNow%192 == 0 && nBlockNow != 0 && path_elef.size() != 0 && lastBlockg != nBlockNow) {
+  if (nBlockNow%10 == 0 && nBlockNow != 0 && path_elef.size() != 0 && lastBlockg != nBlockNow) {
+  
     PrintToLog("\nSettlement every 8 hours here. nBlockNow = %d\n", nBlockNow);
     pt_ndatabase = new MatrixTLS(path_elef.size(), n_cols); MatrixTLS &ndatabase = *pt_ndatabase;
     MatrixTLS M_file(path_elef.size(), n_cols);
@@ -2130,18 +2133,22 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
     
     /***********************************************************************/
     /** Checking if an addrs has lives non-zero from the past settlements **/
-    lookingin_globalvector_pastlivesperpetuals(lives_longs_vg, M_file);
-    lookingin_globalvector_pastlivesperpetuals(lives_shorts_vg, M_file);
     
-    PrintToLog("\n\nlives_longs_vg.size() before = %d\n\n", lives_longs_vg.size());
-    std::sort(lives_longs_vg.begin(), lives_longs_vg.end());
-    lives_longs_vg.erase(std::unique(lives_longs_vg.begin(), lives_longs_vg.end()), lives_longs_vg.end());
-    PrintToLog("\n\nlives_longs_vg.size() later = %d\n\n", lives_longs_vg.size());
+    // listof_addresses_lives(lives_longs_vg, addrsl_vg);
+    // lookingin_globalvector_pastlivesperpetuals(lives_longs_vg, M_file, addrsl_vg);
     
-    PrintToLog("\n\nlives_shorts_vg.size() before = %d\n\n", lives_shorts_vg.size());
-    std::sort(lives_shorts_vg.begin(), lives_shorts_vg.end());
-    lives_shorts_vg.erase(std::unique(lives_shorts_vg.begin(), lives_shorts_vg.end()), lives_shorts_vg.end());
-    PrintToLog("\n\nlives_shorts_vg.size() later = %d\n\n", lives_shorts_vg.size());
+    // listof_addresses_lives(lives_shorts_vg, addrss_vg);
+    // lookingin_globalvector_pastlivesperpetuals(lives_shorts_vg, M_file, addrss_vg);
+    
+    // PrintToLog("\n\nlives_longs_vg.size() before = %d\n\n", lives_longs_vg.size());
+    // std::sort(lives_longs_vg.begin(), lives_longs_vg.end());
+    // lives_longs_vg.erase(std::unique(lives_longs_vg.begin(), lives_longs_vg.end()), lives_longs_vg.end());
+    // PrintToLog("\n\nlives_longs_vg.size() later = %d\n\n", lives_longs_vg.size());
+    
+    // PrintToLog("\n\nlives_shorts_vg.size() before = %d\n\n", lives_shorts_vg.size());
+    // std::sort(lives_shorts_vg.begin(), lives_shorts_vg.end());
+    // lives_shorts_vg.erase(std::unique(lives_shorts_vg.begin(), lives_shorts_vg.end()), lives_shorts_vg.end());
+    // PrintToLog("\n\nlives_shorts_vg.size() later = %d\n\n", lives_shorts_vg.size());
     
     /***********************************************************************/
     cout << "\n\n";
@@ -2394,16 +2401,13 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   return fFoundTx;
 }
 
-void lookingin_globalvector_pastlivesperpetuals(std::vector<std::map<std::string, std::string>> &lives, MatrixTLS M_file)
+void lookingin_globalvector_pastlivesperpetuals(std::vector<std::map<std::string, std::string>> &lives_g, MatrixTLS M_file, std::vector<std::string> addrs_vg, std::vector<std::map<std::string, std::string>> &lives_h)
 {
-  for (std::vector<std::map<std::string, std::string>>::iterator it = lives.begin(); it != lives.end(); ++it)
-    {
-      struct status_lives_edge *pt_status_bylivesedge = get_status_bylivesedge(*it);
-      lookingaddrs_inside_M_file(pt_status_bylivesedge->addrs, M_file, lives);
-    }
+  for (std::vector<std::string>::iterator it = addrs_vg.begin(); it != addrs_vg.end(); ++it)
+    lookingaddrs_inside_M_file(*it, M_file, lives_g, lives_h);
 }
 
-void lookingaddrs_inside_M_file(std::string addrs, MatrixTLS M_file, std::vector<std::map<std::string, std::string>> &lives)
+void lookingaddrs_inside_M_file(std::string addrs, MatrixTLS M_file, std::vector<std::map<std::string, std::string>> &lives_g, std::vector<std::map<std::string, std::string>> &lives_h)
 {
   for (int i = 0; i < size(M_file, 0); ++i)
     {
@@ -2411,52 +2415,64 @@ void lookingaddrs_inside_M_file(std::string addrs, MatrixTLS M_file, std::vector
       sub_row(jrow_database, M_file, i);
       struct status_amounts *pt_status_amounts_byaddrs = get_status_amounts_byaddrs(jrow_database, addrs);
       
-      if (addrs == pt_status_amounts_byaddrs->addrs_src)
+      /***********************************************************************************/
+      /** Checking if the address is inside the new settlement database **/
+      if (addrs == pt_status_amounts_byaddrs->addrs_src || addrs == pt_status_amounts_byaddrs->addrs_trk)
 	{
-	  long int lives_srch = pt_status_amounts_byaddrs->lives_src;
-	  if (lives_srch != 0)
+	  for (std::vector<std::map<std::string, std::string>>::iterator it = lives_g.begin(); it != lives_g.end(); ++it)
 	    {
-	      PrintToLog("pt_status_amounts_byaddrs->lives_src = %d\t", pt_status_amounts_byaddrs->lives_src);
-	      continue;
+	      struct status_lives_edge *pt_status_bylivesedge = get_status_bylivesedge(*it);
+	      if (addrs == pt_status_bylivesedge->addrs)
+		lives_h.push_back(*it);
 	    }
-	  else
-	    {	      
-	      PrintToLog("pt_status_amounts_byaddrs->lives_src = %d\t", pt_status_amounts_byaddrs->lives_src);
-	      /** Deleting entry idx_q containing addrs from lives vector. ¡¡lives_src = 0!!**/
-	      int idx_q = finding_idxforaddress(addrs, lives);
-	      lives[idx_q]["addrs"]       = std::string();
-	      lives[idx_q]["status"]      = std::string();
-	      lives[idx_q]["lives"]       = std::to_string(0);
-	      lives[idx_q]["entry_price"] = std::to_string(0);
-	      lives[idx_q]["edge_row"]    = std::to_string(0);
-	      lives[idx_q]["path_number"] = std::to_string(0);
-	      break;
-	    }	    
+	  break;
 	}
-      else if (addrs == pt_status_amounts_byaddrs->addrs_trk)
-	{
-	  long int lives_trkh = pt_status_amounts_byaddrs->lives_trk;
-	  if (lives_trkh != 0)
-	    {
-	      PrintToLog("pt_status_amounts_byaddrs->lives_trk = %d\t", pt_status_amounts_byaddrs->lives_trk);
-	      continue;
-	    }
-	  else
-	    {
-	      PrintToLog("pt_status_amounts_byaddrs->lives_trk = %d\t", pt_status_amounts_byaddrs->lives_trk);
-	      /** Deleting entry idx_q containing addrs from lives vector. ¡¡lives_trk = 0!!**/
-	      int idx_q = finding_idxforaddress(addrs, lives);
-	      lives[idx_q]["addrs"]       = std::string();
-	      lives[idx_q]["status"]      = std::string();
-	      lives[idx_q]["lives"]       = std::to_string(0);
-	      lives[idx_q]["entry_price"] = std::to_string(0);
-	      lives[idx_q]["edge_row"]    = std::to_string(0);
-	      lives[idx_q]["path_number"] = std::to_string(0);
-	      break;
-	    }	    
-	}
-      else
-	continue;
+      // if (addrs == pt_status_amounts_byaddrs->addrs_src)
+      // 	{
+      // long int lives_srch = pt_status_amounts_byaddrs->lives_src;
+      // if (lives_srch != 0)
+      //   {
+      //     //PrintToLog("pt_status_amounts_byaddrs->lives_src = %d\t", pt_status_amounts_byaddrs->lives_src);
+      //     continue;
+      //   }
+      // else
+      //   {	      
+      //     PrintToLog("pt_status_amounts_byaddrs->lives_src = %d\t", pt_status_amounts_byaddrs->lives_src);
+      //     /** Deleting entry idx_q containing addrs from lives vector. ¡¡lives_src = 0!!**/
+      //     int idx_q = finding_idxforaddress(addrs, lives_g);
+      //     lives_g[idx_q]["addrs"]       = std::string();
+      //     lives_g[idx_q]["status"]      = std::string();
+      //     lives_g[idx_q]["lives"]       = std::to_string(0);
+      //     lives_g[idx_q]["entry_price"] = std::to_string(0);
+      //     lives_g[idx_q]["edge_row"]    = std::to_string(0);
+      //     lives_g[idx_q]["path_number"] = std::to_string(0);
+      //     break;
+      //   }
+      // }
+      // else if (addrs == pt_status_amounts_byaddrs->addrs_trk)
+      //   {
+      // long int lives_trkh = pt_status_amounts_byaddrs->lives_trk;
+      // if (lives_trkh != 0)
+      //   {
+      //     //PrintToLog("pt_status_amounts_byaddrs->lives_trk = %d\t", pt_status_amounts_byaddrs->lives_trk);
+      //     continue;
+      //   }
+      // else
+      //   {
+      //     PrintToLog("pt_status_amounts_byaddrs->lives_trk = %d\t", pt_status_amounts_byaddrs->lives_trk);
+      //     /** Deleting entry idx_q containing addrs from lives vector. ¡¡lives_trk = 0!!**/
+      //     int idx_q = finding_idxforaddress(addrs, lives_g);
+      //     lives_g[idx_q]["addrs"]       = std::string();
+      //     lives_g[idx_q]["status"]      = std::string();
+      //     lives_g[idx_q]["lives"]       = std::to_string(0);
+      //     lives_g[idx_q]["entry_price"] = std::to_string(0);
+      //     lives_g[idx_q]["edge_row"]    = std::to_string(0);
+      //     lives_g[idx_q]["path_number"] = std::to_string(0);
+      //     break;
+      //   }	    
+      // 	}
+      //   else
+      // 	continue;
     }
 }
 

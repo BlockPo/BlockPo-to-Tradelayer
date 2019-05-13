@@ -150,12 +150,13 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       assert(pold->getEffectivePrice() == sellerPrice);
       
       std::string tradeStatus = pold->getEffectivePrice() == sellerPrice ? "Matched" : "NoMatched";
-
+      
       /** Match Conditions */
       bool boolProperty  = pold->getProperty() != propertyForSale;
       bool boolTrdAction = pold->getTradingAction() == pnew->getTradingAction();
+      bool boolAddresses = pold->getAddr() != pnew->getAddr();
       
-      if ( findTrueValue(boolProperty, boolTrdAction) )
+      if ( findTrueValue(boolProperty, boolTrdAction, !boolAddresses) )
 	{
 	  ++offerIt;
 	  continue;
@@ -262,7 +263,6 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       //PrintToLog("\n********************************************************************************\n");
       /********************************************************/
       int64_t difference_s = 0, difference_b = 0;
-      bool boolAddresses = pold->getAddr() != pnew->getAddr();
       
       if (boolAddresses)
 	{

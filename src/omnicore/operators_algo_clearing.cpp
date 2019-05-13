@@ -197,9 +197,10 @@ void settlement_algorithm_fifo(MatrixTLS &M_file)
 	  building_edge(edge_source, pt_vdata_long->addrs_src, pt_vdata_long->addrs_trk, pt_vdata_long->status_src, pt_vdata_long->status_trk, pt_vdata_long->matched_price, pt_vdata_long->matched_price, 0, i, path_number, pt_vdata_long->amount_trd, 0);
 	  path_maini.push_back(edge_source);
 	  printing_edges(edge_source);
-
+	  
 	  int counting_netted_long = 0;
 	  long int amount_trd_sum_long = 0;
+	  
 	  PrintToLog("\n*************************************************");
 	  PrintToLog("\nTracking Long Position:");
 	  clearing_operator_fifo(vdata, M_file, i, pt_vdata_long, 0, counting_netted_long, amount_trd_sum_long, path_maini, path_number, pt_vdata_long->nlives_trk);
@@ -257,19 +258,51 @@ void settlement_algorithm_fifo(MatrixTLS &M_file)
   
   vwap_exit_price = static_cast<long double>(VWAPContractPrice)/COIN;
   PrintToLog("\nVWAP Price for Settlement = %d\n", vwap_exit_price);
+  
   /**********************************************/
+  PrintToLog("\n----------------------------------------------------------\n");
   
+  PrintToLog("lives_longs_vg.size() = %d,\t lives_shorts_vg.size() =%d", lives_longs_vg.size(), lives_shorts_vg.size());
   computing_livesvector_global(lives_longs, lives_shorts, lives_longs_vg, lives_shorts_vg);  
-  counting_lives_longshorts(lives_longs, lives_shorts);
   
-  PrintToLog("____________________________________________________");
+  PrintToLog("\n\nLocal Vector of Longs Lives\n\n");
+  printing_lives_vector(lives_longs);
+  PrintToLog("\n\nGlobal Vector of Longs Lives\n\n");
+  printing_lives_vector(lives_longs_vg);
+  
+  PrintToLog("\n\nLocal Vector of Shorts Lives\n\n");
+  printing_lives_vector(lives_shorts);
+  PrintToLog("\n\nGlobal Vector of Shorts Lives\n\n");
+  printing_lives_vector(lives_shorts_vg);
+  
+  /**********************************************************************/
+  /** Review if it is necessary to insert lives from the past **/
+  
+  std::vector<std::string> addrsl_vg;
+  std::vector<std::string> addrss_vg;
+  
+  listof_addresses_lives(lives_longs_vg, addrsl_vg);
+  lookingin_globalvector_pastlivesperpetuals(lives_longs_vg, M_file, addrsl_vg, lives_longs);
+  PrintToLog("\n\nVector Longs Lives Merged\n\n");
+  printing_lives_vector(lives_longs);
+  
+  listof_addresses_lives(lives_shorts_vg, addrss_vg);
+  lookingin_globalvector_pastlivesperpetuals(lives_shorts_vg, M_file, addrss_vg, lives_shorts);
+  PrintToLog("\n\nVector Shorts Lives Merged\n\n");
+  printing_lives_vector(lives_shorts);
+  
+  counting_lives_longshorts(lives_longs, lives_shorts);
+  /**********************************************************************/
+  
+  PrintToLog("\n----------------------------------------------------------\n");
+  
   PrintToLog("\nGhost Edges Vector:\n");
   calculating_ghost_edges(lives_longs, lives_shorts, vwap_exit_price, ghost_edges_array);
   
   std::vector<std::map<std::string, std::string>>::iterator it_ghost;
   for (it_ghost = ghost_edges_array.begin(); it_ghost != ghost_edges_array.end(); ++it_ghost) printing_edges(*it_ghost);
   
-  PrintToLog("____________________________________________________");
+  PrintToLog("\n__________________________________________________________\n");
   
   joining_pathmain_ghostedges(path_main, ghost_edges_array);
   int k = 0;
@@ -297,7 +330,6 @@ void settlement_algorithm_fifo(MatrixTLS &M_file)
   PrintToLog("\n____________________________________________________\n");
   PrintToLog("\nChecking PNL global (Total Sum PNL by Path):\n");
   PrintToLog("\nPNL_total_main = %f", PNL_total);
-  PrintToLog("\n____________________________________________________\n");
 }
 
 void clearing_operator_fifo(VectorTLS &vdata, MatrixTLS &M_file, int index_init, struct status_amounts *pt_pos, int idx_long_short, int &counting_netted, long int amount_trd_sum, std::vector<std::map<std::string, std::string>> &path_main, int path_number, long int opened_contracts)
@@ -606,16 +638,16 @@ void counting_lives_longshorts(std::vector<std::map<std::string, std::string>> &
   long int nlives_longs = 0;
   long int nlives_shorts = 0;
   
-  PrintToLog("\nList of Long Lives:\n");
+  //PrintToLog("\nList of Long Lives:\n");
   for (std::vector<std::map<std::string, std::string>>::iterator it = lives_longs.begin(); it != lives_longs.end(); ++it)
     {
-      printing_edges_lives(*it);
+      //printing_edges_lives(*it);
       nlives_longs += stol((*it)["lives"]);
     }
-  PrintToLog("\nList of Short Lives:\n");
+  //PrintToLog("\nList of Short Lives:\n");
   for (std::vector<std::map<std::string, std::string>>::iterator it = lives_shorts.begin(); it != lives_shorts.end(); ++it)
     {
-      printing_edges_lives(*it);
+      //printing_edges_lives(*it);
       nlives_shorts += stol((*it)["lives"]);
     }
   PrintToLog("\n|nlives_longs| : %d, \n|nlives_shorts| : %d\n", nlives_longs, nlives_shorts);
@@ -624,13 +656,8 @@ void counting_lives_longshorts(std::vector<std::map<std::string, std::string>> &
 
 void computing_livesvector_global(std::vector<std::map<std::string, std::string>> lives_longs, std::vector<std::map<std::string, std::string>> lives_shorts, std::vector<std::map<std::string, std::string>> &lives_longs_vg, std::vector<std::map<std::string, std::string>> &lives_shorts_vg)
 {
-  getting_globallives_long_short(lives_longs, lives_longs_vg);
-  PrintToLog("\n\nGlobal Vector of Long Lives\n\n");
-  printing_lives_vector(lives_longs_vg);
-  
+  getting_globallives_long_short(lives_longs, lives_longs_vg);  
   getting_globallives_long_short(lives_shorts, lives_shorts_vg);
-  PrintToLog("\n\nGlobal Vector of Short Lives\n\n");
-  printing_lives_vector(lives_shorts_vg);
 }
 
 void printing_lives_vector(std::vector<std::map<std::string, std::string>> lives)
@@ -645,15 +672,15 @@ void getting_globallives_long_short(std::vector<std::map<std::string, std::strin
 {
   for (std::vector<std::map<std::string, std::string>>::iterator it = lives.begin(); it != lives.end(); ++it)
     {
-      struct status_lives_edge *pt_status_bylivesedge = get_status_bylivesedge(*it);
-      if (find_address_lives_vector(lives_vg, pt_status_bylivesedge->addrs))
-	{
-	  int pos_idx = find_posaddress_lives_vector(lives_vg, pt_status_bylivesedge->addrs);
-	  long int n_lives = stol(lives_vg[pos_idx]["lives"])+pt_status_bylivesedge->lives;
-	  lives_vg[pos_idx]["lives"] = std::to_string(n_lives);
-	}
-      else
-	lives_vg.push_back(*it);
+      // struct status_lives_edge *pt_status_bylivesedge = get_status_bylivesedge(*it);
+      // if (find_address_lives_vector(lives_vg, pt_status_bylivesedge->addrs))
+      // 	{
+      // 	  int pos_idx = find_posaddress_lives_vector(lives_vg, pt_status_bylivesedge->addrs);
+      // 	  long int n_lives = stol(lives_vg[pos_idx]["lives"])+pt_status_bylivesedge->lives;
+      // 	  lives_vg[pos_idx]["lives"] = std::to_string(n_lives);
+      // 	}
+      // else
+      lives_vg.push_back(*it);
     }
 }
 
@@ -765,6 +792,20 @@ void calculate_pnltrk_bypath(std::vector<std::map<std::string, std::string>> pat
   PrintToLog("\nPNL_total_thispath = %f\n", PNL_total);
 }
 
+void listof_addresses_lives(std::vector<std::map<std::string, std::string>> lives, std::vector<std::string> &addrsv)
+{
+  std::vector<std::string> addrsvh;
+  for (std::vector<std::map<std::string, std::string>>::iterator it = lives.begin(); it != lives.end(); ++it)
+    {
+      std::map<std::string, std::string> &it_ele = *it;
+      if ( !find_string_strv(it_ele["addrs"], addrsvh) )
+	addrsvh.push_back(it_ele["addrs_src"]);
+      else
+	continue;
+    }
+  addrsv = addrsvh;
+}
+
 void listof_addresses_bypath(std::vector<std::map<std::string, std::string>> &it_path_main, std::vector<std::string> &addrsv)
 {
   std::vector<std::string> addrsvh;
@@ -782,7 +823,7 @@ void listof_addresses_bypath(std::vector<std::map<std::string, std::string>> &it
 double PNL_function(double entry_price, double exit_price, long int amount_trd, struct status_amounts *pt_jrow_database)
 {
   double PNL = 0;
-
+  
   if ( finding_string("Long", pt_jrow_database->status_trk) )
     PNL = (double)amount_trd*(1/entry_price-1/exit_price);
   else if ( finding_string("Short", pt_jrow_database->status_trk) )
