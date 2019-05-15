@@ -164,6 +164,7 @@ extern std::map<uint32_t, std::map<uint32_t, std::vector<int64_t>>> denVWAPVecto
 extern std::map<uint32_t, std::vector<int64_t>> mapContractAmountTimesPrice;
 extern std::map<uint32_t, std::vector<int64_t>> mapContractVolume;
 extern std::map<uint32_t, int64_t> VWAPMapContracts;
+//extern volatile std::vector<std::map<std::string, std::string>> path_eleg;
 extern std::string setExoduss;
 
 using mastercore::StrToInt64;
@@ -2122,7 +2123,12 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   /** Calling The Settlement Algorithm **/
   // if (nBlockNow%192 == 0 && nBlockNow != 0 && path_elef.size() != 0 && lastBlockg != nBlockNow) {
   if (nBlockNow%10 == 0 && nBlockNow != 0 && path_elef.size() != 0 && lastBlockg != nBlockNow) {
-  
+    
+    /*****************************************************************************/
+    /** Adding some new rows **/
+    // for(std::vector<std::map<std::string, std::string>>::iterator ith = path_elef.begin(); ith != path_elef.end(); ++ith)
+    //   path_eleg.push_back(*ith);
+    /*****************************************************************************/
     PrintToLog("\nSettlement every 8 hours here. nBlockNow = %d\n", nBlockNow);
     pt_ndatabase = new MatrixTLS(path_elef.size(), n_cols); MatrixTLS &ndatabase = *pt_ndatabase;
     MatrixTLS M_file(path_elef.size(), n_cols);
@@ -2130,8 +2136,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
     n_rows = size(M_file, 0);
     PrintToLog("Matrix for Settlement: dim = (%d, %d)\n\n", n_rows, n_cols);
     printing_matrix(M_file);
-    
-    /***********************************************************************/
+    /*****************************************************************************/
     /** Checking if an addrs has lives non-zero from the past settlements **/
     
     // listof_addresses_lives(lives_longs_vg, addrsl_vg);
@@ -2157,7 +2162,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
     
     /***********************************************************************/
     /**Unallocating Dynamic Memory**/
-    path_elef.clear();
+    //path_elef.clear();
     market_priceMap.clear();
     numVWAPMap.clear();
     denVWAPMap.clear();
@@ -3488,7 +3493,7 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   
   // PrintToLog("\nPath Ele inside recordMatchedTrade. Length last match = %d\n", number_lines);
   // for (it_path_ele = path_ele.begin(); it_path_ele != path_ele.end(); ++it_path_ele) printing_edges_database(*it_path_ele);
-
+  
   // loopForUPNL(path_ele, path_eleh, path_length, address1, address2, s_maker0, s_taker0, UPNL1, UPNL2, effective_price, nCouldBuy0);
   
   // unsigned int limSup = path_ele.size()-path_length;

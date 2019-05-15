@@ -343,7 +343,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       	    }
       	  else
       	    {
-      	      Status_s = possitive_sell > pnewPositiveBalanceL && pnewPositiveBalanceL != 0 ? "LongPosNettedPartly" : ( pnewPositiveBalanceL == 0 && pnewNegativeBalanceL == 0 ? "LongPosNettedPartly" : ( pnewPositiveBalanceL == 0 && pnewNegativeBalanceL > 0 ? "OpenShortPosByLongPosNetted": "LongPosIncreased") );
+      	      Status_s = possitive_sell > pnewPositiveBalanceL && pnewPositiveBalanceL != 0 ? "LongPosNettedPartly" : ( pnewPositiveBalanceL == 0 && pnewNegativeBalanceL == 0 ? "LongPosNetted" : ( pnewPositiveBalanceL == 0 && pnewNegativeBalanceL > 0 ? "OpenShortPosByLongPosNetted": "LongPosIncreased") );
       	      countClosedSeller = pnewPositiveBalanceL == 0 ? possitive_sell : abs( possitive_sell - pnewPositiveBalanceL );
       	    }
       	}
@@ -484,7 +484,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
 		      Status_b2  = "ShortPosNetted";
 		      lives_taker2   = 0;
 		      nCouldBuy2 = lives_maker2;
-
+		      
 		      Status_b3  = "OpenLongPosition";
 		      lives_taker3   = nCouldBuy - negative_buy;
 		      Status_s3  = "ShortPosIncreased";
@@ -603,7 +603,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
 		      lives_maker1   = negative_buy - possitive_sell;
 		      Status_s1  = "LongPosNetted";
 		      lives_taker1   = 0;
-		      nCouldBuy1 = lives_maker1;
+		      nCouldBuy1 = possitive_sell;
 
 		      Status_b2  = "ShortPosNetted";
 		      lives_maker2   = 0;
