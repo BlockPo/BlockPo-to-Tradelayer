@@ -66,7 +66,7 @@ void looking_netted_events(std::string &addrs_obj, std::vector<std::map<std::str
 
 void printing_path_maini(std::vector<std::map<std::string, std::string>> &it_path_maini);
 
-void checking_zeronetted_bypath(std::vector<std::map<std::string, std::string>> &path_maini);
+void checking_zeronetted_bypath(std::vector<std::map<std::string, std::string>> path_maini);
 
 bool find_netted_npartly_anypos(std::string &s, VectorTLS *v);
 
