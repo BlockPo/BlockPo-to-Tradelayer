@@ -21,6 +21,7 @@ uint64_t marketP[NPTYPES];
 volatile int id_contract;
 volatile int idx_q;
 volatile unsigned int path_length;
+//volatile std::vector<std::map<std::string, std::string>> path_eleg;
 std::vector<std::map<std::string, std::string>> path_ele;
 std::vector<std::map<std::string, std::string>> path_elef;
 std::vector<std::map<std::string, std::string>> lives_longs_vg;

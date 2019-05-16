@@ -37,9 +37,9 @@ printf "\n________________________________________\n"
 printf "Base address to work with:\n"
 printf $ADDRBase
 
-N=100
+N=10
 #Kloops=200
-Kloops=4
+Kloops=30
 
 amount_bitcoin=10
 amountbitcoin_baseaddr=100
@@ -148,9 +148,9 @@ do
     printf "Checking ALL balances for the address #$i:\n"
     $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_getbalance ${ADDRess[$i]} 6
 done
-##################################################################"
+##################################################################
 # Sending Vesting Tokens from admin address
-for (( i=1; i<=10; i++ ))
+for (( i=1; i<=${N}; i++ ))
 do    
     printf "\n////////////////////////////////////////\n"
     printf "Vesting Balance Admin Address\n"

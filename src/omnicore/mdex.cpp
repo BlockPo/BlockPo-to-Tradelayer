@@ -151,16 +151,17 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       assert(pold->getEffectivePrice() == sellerPrice);
 
       std::string tradeStatus = pold->getEffectivePrice() == sellerPrice ? "Matched" : "NoMatched";
-
+      
       /** Match Conditions */
       bool boolProperty  = pold->getProperty() != propertyForSale;
       bool boolTrdAction = pold->getTradingAction() == pnew->getTradingAction();
-
-      if ( findTrueValue(boolProperty, boolTrdAction) )
-	{
-	  ++offerIt;
-	  continue;
-	}
+      bool boolAddresses = pold->getAddr() != pnew->getAddr();
+      
+      if ( findTrueValue(boolProperty, boolTrdAction, !boolAddresses) )
+    	{
+	      ++offerIt;
+	      continue;
+	    }
 
       idx_q += 1;
       // const int idx_qp = idx_q;
@@ -263,9 +264,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       //PrintToLog("\n********************************************************************************\n");
       /********************************************************/
       int64_t difference_s = 0, difference_b = 0;
-      bool boolAddresses = pold->getAddr() != pnew->getAddr();
-
-      if (boolAddresses)
+  if (boolAddresses)
 	{
 	  if ( possitive_sell != 0 )
 	    {
@@ -344,7 +343,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       	    }
       	  else
       	    {
-      	      Status_s = possitive_sell > pnewPositiveBalanceL && pnewPositiveBalanceL != 0 ? "LongPosNettedPartly" : ( pnewPositiveBalanceL == 0 && pnewNegativeBalanceL == 0 ? "LongPosNettedPartly" : ( pnewPositiveBalanceL == 0 && pnewNegativeBalanceL > 0 ? "OpenShortPosByLongPosNetted": "LongPosIncreased") );
+      	      Status_s = possitive_sell > pnewPositiveBalanceL && pnewPositiveBalanceL != 0 ? "LongPosNettedPartly" : ( pnewPositiveBalanceL == 0 && pnewNegativeBalanceL == 0 ? "LongPosNetted" : ( pnewPositiveBalanceL == 0 && pnewNegativeBalanceL > 0 ? "OpenShortPosByLongPosNetted": "LongPosIncreased") );
       	      countClosedSeller = pnewPositiveBalanceL == 0 ? possitive_sell : abs( possitive_sell - pnewPositiveBalanceL );
       	    }
       	}
@@ -485,7 +484,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
 		      Status_b2  = "ShortPosNetted";
 		      lives_taker2   = 0;
 		      nCouldBuy2 = lives_maker2;
-
+		      
 		      Status_b3  = "OpenLongPosition";
 		      lives_taker3   = nCouldBuy - negative_buy;
 		      Status_s3  = "ShortPosIncreased";
@@ -604,7 +603,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
 		      lives_maker1   = negative_buy - possitive_sell;
 		      Status_s1  = "LongPosNetted";
 		      lives_taker1   = 0;
-		      nCouldBuy1 = lives_maker1;
+		      nCouldBuy1 = possitive_sell;
 
 		      Status_b2  = "ShortPosNetted";
 		      lives_maker2   = 0;

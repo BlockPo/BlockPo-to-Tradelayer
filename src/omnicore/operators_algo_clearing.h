@@ -66,7 +66,7 @@ void looking_netted_events(std::string &addrs_obj, std::vector<std::map<std::str
 
 void printing_path_maini(std::vector<std::map<std::string, std::string>> &it_path_maini);
 
-void checking_zeronetted_bypath(std::vector<std::map<std::string, std::string>> &path_maini);
+void checking_zeronetted_bypath(std::vector<std::map<std::string, std::string>> path_maini);
 
 bool find_netted_npartly_anypos(std::string &s, VectorTLS *v);
 
@@ -85,6 +85,8 @@ void computing_settlement_exitprice(std::vector<std::map<std::string, std::strin
 void calculate_pnltrk_bypath(std::vector<std::map<std::string, std::string>> &path_main, double &PNL_total, std::unordered_set<std::string> &addrs_set, std::vector<std::string> addrsv);
 
 void listof_addresses_bypath(std::vector<std::map<std::string, std::string>> &it_path_main, std::vector<std::string> &addrsv);
+
+void listof_addresses_lives(std::vector<std::map<std::string, std::string>> lives, std::vector<std::string> &addrsv);
 
 double PNL_function(double entry_price, double exit_price, long int amount_trd, struct status_amounts *pt_jrow_database);
 
