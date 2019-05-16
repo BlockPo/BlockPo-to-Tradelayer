@@ -135,6 +135,7 @@ class CMPMetaDEx
 
   void saveOffer(std::ofstream& file, SHA256_CTX* shaCtx) const;
 
+
 };
 
 ///////////////////////////////////////////
@@ -144,7 +145,7 @@ class CMPContractDex : public CMPMetaDEx
  private:
   uint64_t effective_price;
   uint8_t trading_action;
-  
+
  public:
  CMPContractDex()
    : effective_price(0), trading_action(0) {}
@@ -171,8 +172,10 @@ class CMPContractDex : public CMPMetaDEx
   std::string ToString() const;
 
   void saveOffer(std::ofstream& file, SHA256_CTX* shaCtx) const;
-  
+
   void setPrice(int64_t price);
+
+  bool Fees(std::string addressTaker,std::string addressMaker, int64_t nCouldBuy,uint32_t contractId);
 
   ///////////////////////////////
   /*New things for Contracts*/
@@ -194,10 +197,10 @@ namespace mastercore
   typedef std::map<rational_t, md_Set> md_PricesMap;
   //! Map of properties; there is a map of prices for exchange each property
   typedef std::map<uint32_t, md_PricesMap> md_PropertiesMap;
-  
+
   //! Global map for price and order data
   extern md_PropertiesMap metadex;
-  
+
   // TODO: explore a property-pair, instead of a single priceoperty as map's key........
   md_PricesMap* get_Prices(uint32_t prop);
   md_Set* get_Indexes(md_PricesMap* p, rational_t price);
@@ -239,6 +242,7 @@ namespace mastercore
   int ContractDex_CANCEL_AT_PRICE(const uint256& txid, unsigned int block, const std::string& sender_addr, uint32_t prop, int64_t amount, uint32_t property_desired, int64_t amount_desired, uint64_t effective_price, uint8_t trading_action);
   int ContractDex_ADD_MARKET_PRICE(const std::string& sender_addr, uint32_t contractId, int64_t amount, int block, const uint256& txid, unsigned int idx, uint8_t trading_action, int64_t amount_to_reserve);
   int ContractDex_CANCEL_FOR_BLOCK(const uint256& txid, int block,unsigned int idx, const std::string& sender_addr, unsigned char ecosystem);
+  bool ContractDex_Fees(std::string addressTaker,std::string addressMaker, int64_t nCouldBuy,uint32_t contractId);
   ///////////////////////////////////
 
   int MetaDEx_ADD(const std::string& sender_addr, uint32_t, int64_t, int block, uint32_t property_desired, int64_t amount_desired, const uint256& txid, unsigned int idx);
@@ -255,7 +259,9 @@ namespace mastercore
   int64_t getPairMarketPrice(std::string num, std::string den);
   int64_t getVWAPPriceByPair(std::string num, std::string den);
   int64_t getVWAPPriceContracts(std::string namec);
-  
+
+  bool MetaDEx_Fees(const CMPMetaDEx *pnew, const CMPMetaDEx *pold, int64_t nCouldBuy);
+
   // Locates a trade in the MetaDEx maps via txid and returns the trade object
   const CMPMetaDEx* MetaDEx_RetrieveTrade(const uint256& txid);
   const CMPContractDex* ContractDex_RetrieveTrade(const uint256&);
