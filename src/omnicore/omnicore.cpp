@@ -2125,10 +2125,6 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   if (nBlockNow%10 == 0 && nBlockNow != 0 && path_elef.size() != 0 && lastBlockg != nBlockNow) {
     
     /*****************************************************************************/
-    /** Adding some new rows **/
-    // for(std::vector<std::map<std::string, std::string>>::iterator ith = path_elef.begin(); ith != path_elef.end(); ++ith)
-    //   path_eleg.push_back(*ith);
-    /*****************************************************************************/
     PrintToLog("\nSettlement every 8 hours here. nBlockNow = %d\n", nBlockNow);
     pt_ndatabase = new MatrixTLS(path_elef.size(), n_cols); MatrixTLS &ndatabase = *pt_ndatabase;
     MatrixTLS M_file(path_elef.size(), n_cols);
@@ -2137,25 +2133,6 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
     PrintToLog("Matrix for Settlement: dim = (%d, %d)\n\n", n_rows, n_cols);
     printing_matrix(M_file);
     /*****************************************************************************/
-    /** Checking if an addrs has lives non-zero from the past settlements **/
-    
-    // listof_addresses_lives(lives_longs_vg, addrsl_vg);
-    // lookingin_globalvector_pastlivesperpetuals(lives_longs_vg, M_file, addrsl_vg);
-    
-    // listof_addresses_lives(lives_shorts_vg, addrss_vg);
-    // lookingin_globalvector_pastlivesperpetuals(lives_shorts_vg, M_file, addrss_vg);
-    
-    // PrintToLog("\n\nlives_longs_vg.size() before = %d\n\n", lives_longs_vg.size());
-    // std::sort(lives_longs_vg.begin(), lives_longs_vg.end());
-    // lives_longs_vg.erase(std::unique(lives_longs_vg.begin(), lives_longs_vg.end()), lives_longs_vg.end());
-    // PrintToLog("\n\nlives_longs_vg.size() later = %d\n\n", lives_longs_vg.size());
-    
-    // PrintToLog("\n\nlives_shorts_vg.size() before = %d\n\n", lives_shorts_vg.size());
-    // std::sort(lives_shorts_vg.begin(), lives_shorts_vg.end());
-    // lives_shorts_vg.erase(std::unique(lives_shorts_vg.begin(), lives_shorts_vg.end()), lives_shorts_vg.end());
-    // PrintToLog("\n\nlives_shorts_vg.size() later = %d\n\n", lives_shorts_vg.size());
-    
-    /***********************************************************************/
     cout << "\n\n";
     PrintToLog("\nCalling the Settlement Algorithm:\n\n");
     settlement_algorithm_fifo(M_file);
