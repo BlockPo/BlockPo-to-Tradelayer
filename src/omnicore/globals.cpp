@@ -57,8 +57,8 @@ mutex map_vector_mtx;
 mutex cout_map_vector;
 std::map<uint32_t, std::vector<int64_t>> mapContractAmountTimesPrice;
 std::map<uint32_t, std::vector<int64_t>> mapContractVolume;
-
 std::map<uint32_t, int64_t> VWAPMapContracts;
+
 std::map<uint32_t, int64_t> cachefees;
 VectorTLS *pt_expiration_dates;
 std::vector<std::string> vestingAddresses;

@@ -2137,8 +2137,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
     cout << "\n\n";
     PrintToLog("\nCalling the Settlement Algorithm:\n\n");
     settlement_algorithm_fifo(M_file);
-    
-    /***********************************************************************/
+    /**********************************************************************/
     /**Unallocating Dynamic Memory**/
     //path_elef.clear();
     market_priceMap.clear();
@@ -2151,15 +2150,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
     mapContractAmountTimesPrice.clear();
     mapContractVolume.clear();
     VWAPMapContracts.clear();
-  }
-  /***********************************************************************/
-  /** Checking Market Price **/
-  int64_t priceALL_USD = mastercore::getPairMarketPrice("ALL", "dUSD");
-  PrintToLog("\npriceALL_USD = %s\n", FormatDivisibleMP(priceALL_USD));
-  
-  int64_t priceUSD_ALL = mastercore::getPairMarketPrice("dUSD", "ALL");
-  PrintToLog("\npriceUSD_ALL = %s\n", FormatDivisibleMP(priceUSD_ALL));
-  
+  } 
   /***********************************************************************/
   /** Vesting Tokens to Balance **/
   int64_t x_Axis = globalVolumeALL_LTC;
@@ -2170,18 +2161,18 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
 
   int64_t XAxis = x_Axis/COIN;
   PrintToLog("\nXAxis Decimal Scale = %d, x_Axis = %s, Lastx_Axis = %s\n", XAxis, FormatDivisibleMP(x_Axis), FormatDivisibleMP(Lastx_Axis));
-
+  
   bool cond_first = x_Axis != 0;
   bool cond_secnd = x_Axis != Lastx_Axis;
   bool cond_third = vestingAddresses.size() != 0;
-
+  
   if (findConjTrueValue(cond_first, cond_secnd, cond_third))
     {
       int64_t line64_t = 0, quad64_t = 0, log64_t  = 0;
 
       PrintToLog("\nALLs UNVESTED = %d\n", getMPbalance(vestingAddresses[0], OMNI_PROPERTY_ALL, UNVESTED));
       PrintToLog("ALLs BALANCE = %d\n", getMPbalance(vestingAddresses[0], OMNI_PROPERTY_ALL, BALANCE));
-
+      
       for (unsigned int i = 0; i < vestingAddresses.size(); i++)
       	{
 	  //PrintToLog("\nIteration #%d Inside Vesting function. Address = %s\n", i, vestingAddresses[i]);
@@ -3360,7 +3351,7 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
       volumeALL64_t = mastercore::ConvertTo64(volumeALL256_t);
       // PrintToLog("ALLs involved in the traded 64 Bits ~ %s ALL\n", FormatDivisibleMP(volumeALL64_t));
     }
-
+  
   // PrintToLog("Number of Traded Contracts ~ %s LTC\n", FormatDivisibleMP(volumeALL64_t));
   // PrintToLog("\nGlobal LTC Volume No Updated: CMPMetaDEx = %s \n", FormatDivisibleMP(globalVolumeALL_LTC));
   globalVolumeALL_LTC += volumeALL64_t;
@@ -3536,7 +3527,7 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
 
   globalPNLALL_DUSD += UPNL1 + UPNL2;
   globalVolumeALL_DUSD += nCouldBuy0;
-
+  
   arith_uint256 volumeALL256_t = mastercore::ConvertTo256(NotionalSize)*mastercore::ConvertTo256(nCouldBuy0);
   // PrintToLog("ALLs involved in the traded 256 Bits ~ %s ALL\n", volumeALL256_t.ToString());
 
@@ -3548,7 +3539,7 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
 
   int64_t volumeLTC64_t = mastercore::ConvertTo64(volumeLTC256_t);
   // PrintToLog("LTCs involved in the traded 64 Bits ~ %d LTC\n", FormatDivisibleMP(volumeLTC64_t));
-
+  
   globalVolumeALL_LTC += volumeLTC64_t;
   // PrintToLog("\nGlobal LTC Volume Updated: CMPContractDEx = %d \n", FormatDivisibleMP(globalVolumeALL_LTC));
 
