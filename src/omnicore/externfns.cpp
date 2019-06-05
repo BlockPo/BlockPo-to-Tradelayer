@@ -14,6 +14,10 @@
 #include <iostream>
 #include <limits>
 
+extern std::map<uint32_t, std::vector<int64_t>> mapContractVolume;
+extern std::map<uint32_t, std::vector<int64_t>> mapContractAmountTimesPrice;
+extern mutex map_vector_mtx;
+extern mutex cout_map_vector;
 using mastercore::StrToInt64;
 typedef boost::multiprecision::cpp_dec_float_100 dec_float;
 
@@ -126,6 +130,26 @@ bool findTrueValue(bool a, bool b, bool c) { return ( a || b ) || c; }
 bool findTrueValue(bool a, bool b, bool c, bool d) { return ( a || b ) || ( c || d ); }
 bool findConjTrueValue(bool a, bool b, bool c) { return ( a && b ) && c; }
 bool findConjTrueValue(bool a, bool b) { return a && b; }
+
+void thread_map_vector(uint32_t keyid, int64_t valueid, std::string name_vec)
+{
+  // cout_map_vector.lock();
+  // PrintToLog("\nStarting thread (keyid, vector[i]) = (%d, %d)\n", keyid, valueid);
+  // cout_map_vector.unlock();
+  
+  if (name_vec == "cdex_volume")
+    {
+      map_vector_mtx.lock();
+      mapContractVolume[keyid].push_back(valueid);
+      map_vector_mtx.unlock();
+    }
+  else if (name_vec == "cdex_price")
+    {
+      map_vector_mtx.lock();
+      mapContractAmountTimesPrice[keyid].push_back(valueid);
+      map_vector_mtx.unlock();
+    }
+}
 
 namespace mastercore
 {

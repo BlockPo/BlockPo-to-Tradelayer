@@ -5,6 +5,9 @@
 #include <stdint.h>
 #include "tradelayer_matrices.h"
 #include "mdex.h"
+#include <iostream>
+#include <thread>
+#include <mutex>
 
 typedef boost::multiprecision::uint128_t ui128;
 using namespace std;
@@ -49,8 +52,12 @@ std::map<uint32_t, std::map<uint32_t, int64_t>> VWAPMap;
 std::map<uint32_t, std::map<uint32_t, int64_t>> VWAPMapSubVector;
 std::map<uint32_t, std::map<uint32_t, std::vector<int64_t>>> numVWAPVector;
 std::map<uint32_t, std::map<uint32_t, std::vector<int64_t>>> denVWAPVector;
+
+mutex map_vector_mtx;
+mutex cout_map_vector;
 std::map<uint32_t, std::vector<int64_t>> mapContractAmountTimesPrice;
 std::map<uint32_t, std::vector<int64_t>> mapContractVolume;
+
 std::map<uint32_t, int64_t> VWAPMapContracts;
 std::map<uint32_t, int64_t> cachefees;
 VectorTLS *pt_expiration_dates;
@@ -69,4 +76,5 @@ volatile int64_t LastQuad;
 volatile int64_t LastLog;
 std::string admin_addrs;
 int volumeToVWAP;
+int BlockS;
 std::string setExoduss;

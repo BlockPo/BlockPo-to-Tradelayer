@@ -187,6 +187,7 @@ int main(int argc, char* argv[])
   extern int64_t amountVesting;
   extern int64_t totalVesting;
   extern int volumeToVWAP;
+  extern int BlockS;
   extern VectorTLS *pt_open_incr_long;
   extern VectorTLS *pt_open_incr_short;
   extern VectorTLS *pt_netted_npartly_long;
