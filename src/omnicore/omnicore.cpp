@@ -2095,6 +2095,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   extern volatile int64_t LastLog;
   extern std::vector<std::map<std::string, std::string>> lives_longs_vg;
   extern std::vector<std::map<std::string, std::string>> lives_shorts_vg;
+  extern int BlockS;
   // std::vector<std::string> addrsl_vg;
   // std::vector<std::string> addrss_vg;
   
@@ -2121,8 +2122,8 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   
   /***********************************************************************/
   /** Calling The Settlement Algorithm **/
-  // if (nBlockNow%192 == 0 && nBlockNow != 0 && path_elef.size() != 0 && lastBlockg != nBlockNow) {
-  if (nBlockNow%10 == 0 && nBlockNow != 0 && path_elef.size() != 0 && lastBlockg != nBlockNow) {
+
+  if (nBlockNow%BlockS == 0 && nBlockNow != 0 && path_elef.size() != 0 && lastBlockg != nBlockNow) {
     
     /*****************************************************************************/
     PrintToLog("\nSettlement every 8 hours here. nBlockNow = %d\n", nBlockNow);
@@ -2155,10 +2156,10 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   /** Checking Market Price **/
   int64_t priceALL_USD = mastercore::getPairMarketPrice("ALL", "dUSD");
   PrintToLog("\npriceALL_USD = %s\n", FormatDivisibleMP(priceALL_USD));
-
+  
   int64_t priceUSD_ALL = mastercore::getPairMarketPrice("dUSD", "ALL");
   PrintToLog("\npriceUSD_ALL = %s\n", FormatDivisibleMP(priceUSD_ALL));
-
+  
   /***********************************************************************/
   /** Vesting Tokens to Balance **/
   int64_t x_Axis = globalVolumeALL_LTC;
