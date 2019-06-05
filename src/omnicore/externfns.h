@@ -33,7 +33,7 @@ bool findConjTrueValue(bool a, bool b, bool c);
 bool findConjTrueValue(bool a, bool b);
 std::string DecFloatToString(dec_float& value);
 bool find_uint64_t(uint64_t m, std::vector<uint64_t> v);
-void thread_map_vector(uint32_t keyid, int64_t valueid, std::string name_vec);
+void threading(uint32_t keyid, int64_t valueid, std::string name_vec);
 
 namespace mastercore
 {

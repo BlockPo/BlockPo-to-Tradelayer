@@ -16,6 +16,7 @@
 
 extern std::map<uint32_t, std::vector<int64_t>> mapContractVolume;
 extern std::map<uint32_t, std::vector<int64_t>> mapContractAmountTimesPrice;
+extern std::map<uint32_t, int64_t> VWAPMapContracts;
 extern mutex map_vector_mtx;
 extern mutex cout_map_vector;
 using mastercore::StrToInt64;
@@ -131,7 +132,7 @@ bool findTrueValue(bool a, bool b, bool c, bool d) { return ( a || b ) || ( c ||
 bool findConjTrueValue(bool a, bool b, bool c) { return ( a && b ) && c; }
 bool findConjTrueValue(bool a, bool b) { return a && b; }
 
-void thread_map_vector(uint32_t keyid, int64_t valueid, std::string name_vec)
+void threading(uint32_t keyid, int64_t valueid, std::string name_vec)
 {
   // cout_map_vector.lock();
   // PrintToLog("\nStarting thread (keyid, vector[i]) = (%d, %d)\n", keyid, valueid);
@@ -147,6 +148,12 @@ void thread_map_vector(uint32_t keyid, int64_t valueid, std::string name_vec)
     {
       map_vector_mtx.lock();
       mapContractAmountTimesPrice[keyid].push_back(valueid);
+      map_vector_mtx.unlock();
+    }
+  else if (name_vec == "cdex_vwap")
+    {
+      map_vector_mtx.lock();
+      VWAPMapContracts[keyid]=valueid;
       map_vector_mtx.unlock();
     }
 }

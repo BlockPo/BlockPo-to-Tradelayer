@@ -148,11 +148,11 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
   while ( offerIt != pofferSet->end() )  /** Specific price, check all properties */
     {
       const CMPContractDex* const pold = &(*offerIt);
-
+      
       assert(pold->getEffectivePrice() == sellerPrice);
 
       std::string tradeStatus = pold->getEffectivePrice() == sellerPrice ? "Matched" : "NoMatched";
-
+      
       /** Match Conditions */
       bool boolProperty  = pold->getProperty() != propertyForSale;
       bool boolTrdAction = pold->getTradingAction() == pnew->getTradingAction();
@@ -160,10 +160,10 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       
       if ( findTrueValue(boolProperty, boolTrdAction, !boolAddresses) )
     	{
-	      ++offerIt;
-	      continue;
-	    }
-
+	  ++offerIt;
+	  continue;
+	}
+      
       idx_q += 1;
       // const int idx_qp = idx_q;
       // PrintToLog("Checking idx_q = %d", idx_qp);
@@ -230,8 +230,8 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       arith_uint256 numVWAP256_t = mastercore::ConvertTo256(sellerPrice)*mastercore::ConvertTo256(Volume64_t)/COIN;
       int64_t numVWAP64_t = mastercore::ConvertTo64(numVWAP256_t);
       
-      thread_map_vector(property_traded, numVWAP64_t, "cdex_price");
-      thread_map_vector(property_traded, Volume64_t, "cdex_volume");
+      threading(property_traded, numVWAP64_t, "cdex_price");
+      threading(property_traded, Volume64_t, "cdex_volume");
       
       std::vector<int64_t> numVWAPpriceContract(mapContractAmountTimesPrice[property_traded].end()-
 						std::min(int(mapContractAmountTimesPrice[property_traded].size()), volumeToVWAP),
@@ -244,17 +244,17 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       PrintToLog("\nnumVWAPpriceContract.size() = %d\n", numVWAPpriceContract.size());
       PrintToLog("\ndenVWAPpriceContract.size() = %d\n", denVWAPpriceContract.size());
       
-      if (int(numVWAPpriceContract.size()) == volumeToVWAP && int(denVWAPpriceContract.size()) == volumeToVWAP)
-      	{
-	  for (int i = 0; i < volumeToVWAP; i++)
-	    {
-	      numVWAPriceh += numVWAPpriceContract[i];
-	      denVWAPriceh += denVWAPpriceContract[i];
-	    }
-	  rational_t vwapPricehRat(numVWAPriceh, denVWAPriceh);
-	  int64_t vwapPriceh64_t = mastercore::RationalToInt64(vwapPricehRat);
-	  VWAPMapContracts[property_traded]=vwapPriceh64_t;
+      int vwaplength = denVWAPpriceContract.size();
+      for (int i = 0; i < vwaplength; i++)
+	{
+	  numVWAPriceh += numVWAPpriceContract[i];
+	  denVWAPriceh += denVWAPpriceContract[i];
 	}
+      
+      rational_t vwapPricehRat(numVWAPriceh, denVWAPriceh);
+      int64_t vwapPriceh64_t = mastercore::RationalToInt64(vwapPricehRat);
+      threading(property_traded, vwapPriceh64_t, "cdex_vwap");
+      PrintToLog("\nVWAPMapContracts[property_traded] = %d\n", FormatDivisibleMP(VWAPMapContracts[property_traded]));
       
       /********************************************************/
       int64_t difference_s = 0, difference_b = 0;
@@ -1517,10 +1517,10 @@ MatchReturnType x_Trade(CMPMetaDEx* const pnew)
 	      {
 		for (int i = 0; i < volumeToVWAP; i++)
 		  {
-		    PrintToLog("\nnumVWAPpoldv[i] = %s,\t denVWAPpoldv[i] = %s\n",
-			       FormatDivisibleMP(numVWAPpoldv[i]), FormatDivisibleMP(denVWAPpoldv[i]));
-		    PrintToLog("\nnumVWAPpnewv[i] = %s,\t denVWAPpnewv[i] = %s\n",
-			       FormatDivisibleMP(numVWAPpnewv[i]), FormatDivisibleMP(denVWAPpnewv[i]));
+		    // PrintToLog("\nnumVWAPpoldv[i] = %s,\t denVWAPpoldv[i] = %s\n",
+		    // 	       FormatDivisibleMP(numVWAPpoldv[i]), FormatDivisibleMP(denVWAPpoldv[i]));
+		    // PrintToLog("\nnumVWAPpnewv[i] = %s,\t denVWAPpnewv[i] = %s\n",
+		    // 	       FormatDivisibleMP(numVWAPpnewv[i]), FormatDivisibleMP(denVWAPpnewv[i]));
 		    numVWAPpold += numVWAPpoldv[i];
 		    denVWAPpold += denVWAPpoldv[i];
 		    numVWAPpnew += numVWAPpnewv[i];
@@ -1657,9 +1657,9 @@ MatchReturnType x_Trade(CMPContractDex* const pnew)
       PrintToLog("%s()=%d:%s NOT FOUND ON THE MARKET\n", __FUNCTION__, NewReturn, getTradeReturnType(NewReturn));
       return NewReturn;
     }
-
+  
   LoopBiDirectional(ppriceMap, trdAction, NewReturn, pnew, propertyForSale);
-
+  
   return NewReturn;
 }
 
@@ -1710,6 +1710,7 @@ int64_t mastercore::getVWAPPriceContracts(std::string namec)
 	    }
 	}
     }
+  PrintToLog("\nVWAPMapContracts[nameId] = %d\n", VWAPMapContracts[nameId]);
   return VWAPMapContracts[nameId];
 }
 ////////////////////////////////////////
