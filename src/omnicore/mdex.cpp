@@ -1588,7 +1588,7 @@ MatchReturnType x_Trade(CMPMetaDEx* const pnew)
              *
              *
              */
-            //mastercore::MetaDEx_Fees(pnew, pold, buyer_amountGot);
+            //mastercore::MetaDEx_Fees(&pnew, &pold, buyer_amountGot);
 
             NewReturn = TRADED;
 
