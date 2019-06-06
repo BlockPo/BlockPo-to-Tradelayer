@@ -142,46 +142,41 @@ do
     printf "Checking ALL balances for the address #$i:\n"
     $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_getbalance ${ADDRess[$i]} 6
 done
-##################################################################"
-# # Sending Vesting Tokens from admin address
-# for (( i=1; i<=10; i++ ))
-# do
-#     # printf "\nAmount Vesting Tokens #$i\n"
-#     # AMOUNTVESTING=$((RANDOM%1000+1000))
-#     # printf "\nRandom Amount Vesting:\n"
-#     # printf $AMOUNTVESTING
-#     # printf "\n"
-#     printf "\n////////////////////////////////////////\n"
-#     printf "Vesting Balance Admin Address\n"
-#     $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_getbalance ${addrs_admin} 3
-#     printf "Sending Vesting Tokens #$i\n"
-#     $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_sendvesting ${addrs_admin} ${ADDRess[$i]} 3 150000
-#     $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1 # Generating one block
+##################################################################
+# Sending Vesting Tokens from admin address
+for (( i=1; i<=10; i++ ))
+do
+    printf "\n////////////////////////////////////////\n"
+    printf "Vesting Balance Admin Address\n"
+    $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_getbalance ${addrs_admin} 3
+    printf "Sending Vesting Tokens #$i\n"
+    $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_sendvesting ${addrs_admin} ${ADDRess[$i]} 3 150000
+    $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1 # Generating one block
 
-#     printf "\n________________________________________\n"
-#     printf "Checking Vesting balances for the address #$i:\n"
-#     $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_getbalance ${ADDRess[$i]} 3
-# done
+    printf "\n________________________________________\n"
+    printf "Checking Vesting balances for the address #$i:\n"
+    $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_getbalance ${ADDRess[$i]} 3
+done
 ##################################################################
 # Begin of CMPContractDEx
 for (( j=1; j<=${Kloops}; j++ ))
 do
     for (( i=1; i<=${N}; i++ ))
     do
-	printf "\n________________________________________\n"
-	printf "Price for sale Buyer #$i ContractDEx\n"
-	PRICE=$((RANDOM%1000+6000))
-	printf "\nRandom Price:\n"
-	printf $PRICE
+    	printf "\n________________________________________\n"
+    	printf "Price for sale Buyer #$i ContractDEx\n"
+    	PRICE=$((RANDOM%1000+6000))
+    	printf "\nRandom Price:\n"
+    	printf $PRICE
 	
-	printf "\nAmount for sale Buyer #$i ContractDEx\n"
-	AMOUNT=$((RANDOM%1000+6000))
-	printf "\nRandom Amount:\n"
-	printf $AMOUNT
-	printf "\n"
+    	printf "\nAmount for sale Buyer #$i ContractDEx\n"
+    	AMOUNT=$((RANDOM%1000+6000))
+    	printf "\nRandom Amount:\n"
+    	printf $AMOUNT
+    	printf "\n"
 	
-	$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[$i]} "ALL F18" ${AMOUNT} ${PRICE} 1 2
-	$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
+    	$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[$i]} "ALL F18" ${AMOUNT} ${PRICE} 1 2
+    	$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
 	
     done
     ##################################################################
@@ -219,47 +214,47 @@ do
 	
 	# End DEx Traded
 	#################################################################
-	# Begin MetaDex traded
+    	# Begin MetaDex traded
 	
-	printf "\n________________________________________\n"
-	printf "Sending metadex trade:\n"
+    	printf "\n________________________________________\n"
+    	printf "Sending metadex trade:\n"
 	
-	printf "\nAmount ALL #$i\n"
-	AMOUNTALL=$((RANDOM%1+9))
-	printf "\nRandom Amount ALL:\n"
-	printf $AMOUNTALL
-	printf "\n"
+    	printf "\nAmount ALL #$i\n"
+    	AMOUNTALL=$((RANDOM%1+9))
+    	printf "\nRandom Amount ALL:\n"
+    	printf $AMOUNTALL
+    	printf "\n"
 	
-	printf "\nAmount dUSD #$i\n"
-	AMOUNTdUSD=$((RANDOM%10000+60000))
-	printf "\nRandom Amount dUSD:\n"
-	printf $AMOUNTdUSD
-	printf "\n"
+    	printf "\nAmount dUSD #$i\n"
+    	AMOUNTdUSD=$((RANDOM%10000+60000))
+    	printf "\nRandom Amount dUSD:\n"
+    	printf $AMOUNTdUSD
+    	printf "\n"
 	
-	$SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_sendtrade ${ADDRess[$i+1]} 6 ${AMOUNTALL} 5 ${AMOUNTdUSD}
-	$SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
+    	$SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_sendtrade ${ADDRess[$i+1]} 6 ${AMOUNTALL} 5 ${AMOUNTdUSD}
+    	$SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
 	
-	$SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_sendtrade ${ADDRess[$i]} 5 ${AMOUNTdUSD} 6 ${AMOUNTALL}
-	$SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
+    	$SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_sendtrade ${ADDRess[$i]} 5 ${AMOUNTdUSD} 6 ${AMOUNTALL}
+    	$SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
 	
-	# End MetaDex traded
-	# #################################################################
-	# Match CMPCOntractDEx
+    	# End MetaDex traded
+    	# #################################################################
+    	# Match CMPCOntractDEx
 	
-	printf "\n________________________________________\n"
-	printf "Price for sale Seller #$i ContractDEx match\n"
-	PRICE=$((RANDOM%1000+6000))
-	printf "\nRandom Price  ContractDEx match:\n"
-	printf $PRICE
+    	printf "\n________________________________________\n"
+    	printf "Price for sale Seller #$i ContractDEx match\n"
+    	PRICE=$((RANDOM%1000+6000))
+    	printf "\nRandom Price  ContractDEx match:\n"
+    	printf $PRICE
 	
-	printf "\nAmount for sale Seller #$i ContractDEx match\n"
-	AMOUNT=$((RANDOM%1000+6000))
-	printf "\nRandom Amount ContractDEx match:\n"
-	printf $AMOUNT
-	printf "\n"
+    	printf "\nAmount for sale Seller #$i ContractDEx match\n"
+    	AMOUNT=$((RANDOM%1000+6000))
+    	printf "\nRandom Amount ContractDEx match:\n"
+    	printf $AMOUNT
+    	printf "\n"
 	
-	$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[$i]} "ALL F18" ${AMOUNT} ${PRICE} 2 2
-	$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
+    	$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[$i]} "ALL F18" ${AMOUNT} ${PRICE} 2 2
+    	$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest generate 1
 	
     done
 done

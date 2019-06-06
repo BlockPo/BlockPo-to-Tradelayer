@@ -158,6 +158,15 @@ void threading(uint32_t keyid, int64_t valueid, std::string name_vec)
     }
 }
 
+void vwap_num_den(std::vector<int64_t> vn, std::vector<int64_t> vd, int64_t &n, int64_t &d) 
+{
+  for (unsigned int i = 0; i < vn.size(); i++)
+    {
+      n += vn[i];
+      d += vd[i];
+    }
+}
+
 namespace mastercore
 {
   int64_t DoubleToInt64(double d) { return mastercore::StrToInt64(boost::lexical_cast<std::string>(d), true); }

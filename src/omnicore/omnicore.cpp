@@ -2153,12 +2153,13 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   } 
   /***********************************************************************/
   /** Vesting Tokens to Balance **/
+  
   int64_t x_Axis = globalVolumeALL_LTC;
   int64_t LogAxis = mastercore::DoubleToInt64(log(static_cast<double>(x_Axis)/COIN));
-
+  
   rational_t Factor1over3(1, 3);
   int64_t Factor1over3_64t = mastercore::RationalToInt64(Factor1over3);
-
+  
   int64_t XAxis = x_Axis/COIN;
   PrintToLog("\nXAxis Decimal Scale = %d, x_Axis = %s, Lastx_Axis = %s\n", XAxis, FormatDivisibleMP(x_Axis), FormatDivisibleMP(Lastx_Axis));
   
@@ -2307,7 +2308,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
       		}
 	    }
 	}
-
+      
       PrintToLog("\nALLs UNVESTED = %d\n", getMPbalance(vestingAddresses[0], OMNI_PROPERTY_ALL, UNVESTED));
       PrintToLog("ALLs BALANCE = %d\n", getMPbalance(vestingAddresses[0], OMNI_PROPERTY_ALL, BALANCE));
 
@@ -3317,23 +3318,6 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   int64_t volumeALL64_t = 0;
   extern volatile int64_t factorALLtoLTC;
 
-  PrintToLog("getMPbalance(address1, OMNI_PROPERTY_ALL, UNVESTED) = %d\n", getMPbalance(address1, OMNI_PROPERTY_ALL, UNVESTED));
-  PrintToLog("getMPbalance(address2, OMNI_PROPERTY_ALL, UNVESTED) = %d\n", getMPbalance(address2, OMNI_PROPERTY_ALL, UNVESTED));
-
-  if (getMPbalance(address1, OMNI_PROPERTY_ALL, UNVESTED) != 0 && !find_string_strv(address1, vestingAddresses)) {
-    PrintToLog("Address1 with Vesting Tokens = %s\n", address1);
-    vestingAddresses.push_back(address1);
-  }
-
-  if (getMPbalance(address2, OMNI_PROPERTY_ALL, UNVESTED) != 0 && !find_string_strv(address2, vestingAddresses)) {
-    PrintToLog("Address2 with Vesting Tokens = %s\n", address2);
-    vestingAddresses.push_back(address2);
-  }
-
-  PrintToLog("Vector vestingAddresses size = %d\n", vestingAddresses.size());
-  for (unsigned int i = 0; i < vestingAddresses.size(); i++) {
-    PrintToLog("vestingAddresses[%d]=%s\n", i, vestingAddresses[i]);
-  }
   /********************************************************************/
   if (prop1 == OMNI_PROPERTY_ALL)
     {
@@ -3403,24 +3387,7 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
     }
   else saveDataGraphs(fileSixth, line0);
   fileSixth.close();
-
-  PrintToLog("getMPbalance(address1, OMNI_PROPERTY_ALL, UNVESTED) = %d\n", getMPbalance(address1, OMNI_PROPERTY_ALL, UNVESTED));
-  PrintToLog("getMPbalance(address2, OMNI_PROPERTY_ALL, UNVESTED) = %d\n", getMPbalance(address2, OMNI_PROPERTY_ALL, UNVESTED));
-
-  if (getMPbalance(address1, OMNI_PROPERTY_ALL, UNVESTED) != 0 && !find_string_strv(address1, vestingAddresses)) {
-    PrintToLog("Address1 with Vesting Tokens = %s\n", address1);
-    vestingAddresses.push_back(address1);
-  }
-
-  if (getMPbalance(address2, OMNI_PROPERTY_ALL, UNVESTED) != 0 && !find_string_strv(address2, vestingAddresses)) {
-    PrintToLog("Address2 with Vesting Tokens = %s\n", address2);
-    vestingAddresses.push_back(address2);
-  }
-
-  PrintToLog("Vector vestingAddresses size = %d\n", vestingAddresses.size());
-  for (unsigned int i = 0; i < vestingAddresses.size(); i++) {
-    PrintToLog("vestingAddresses[%d]=%s\n", i, vestingAddresses[i]);
-  }
+  
   /********************************************************************/
   int number_lines = 0;
   if ( status_bool1 || status_bool2 )
