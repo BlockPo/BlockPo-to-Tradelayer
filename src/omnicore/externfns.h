@@ -34,6 +34,7 @@ bool findConjTrueValue(bool a, bool b);
 std::string DecFloatToString(dec_float& value);
 bool find_uint64_t(uint64_t m, std::vector<uint64_t> v);
 void threading(uint32_t keyid, int64_t valueid, std::string name_vec);
+void vwap_num_den(std::vector<int64_t> vn, std::vector<int64_t> vd, int64_t &n, int64_t &d);
 
 namespace mastercore
 {

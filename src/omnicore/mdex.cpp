@@ -115,7 +115,6 @@ void mastercore::LoopBiDirectional(cd_PricesMap* const ppriceMap, uint8_t trdAct
 	  const uint64_t sellerPrice = it_fwdPrices->first;
 	  if ( pnew->getEffectivePrice() < sellerPrice )
 	    {
-	      // PrintToLog("\nLoop fwd: pnew->getEffectivePrice() = %d, pnew->getAddr() = %s\n", pnew->getEffectivePrice(), pnew->getAddr());
 	      continue;
 	    }
 	  x_TradeBidirectional(it_fwdPrices, it_bwdPrices, trdAction, pnew, sellerPrice, propertyForSale, NewReturn);
@@ -126,13 +125,11 @@ void mastercore::LoopBiDirectional(cd_PricesMap* const ppriceMap, uint8_t trdAct
       for (it_bwdPrices = ppriceMap->rbegin(); it_bwdPrices != ppriceMap->rend(); ++it_bwdPrices)
 	{
 	  const uint64_t sellerPrice = it_bwdPrices->first;
-	  // PrintToLog("\nLoop bwd: pnew->getEffectivePrice() = %d, pnew->getAddr() = %s\n", pnew->getEffectivePrice(), pnew->getAddr());
+	  
 	  if ( pnew->getEffectivePrice() > sellerPrice )
 	    {
-	      // PrintToLog("\nLoop bwd: pnew->getEffectivePrice() = %d, pnew->getAddr() = %s\n", pnew->getEffectivePrice(), pnew->getAddr());
 	      continue;
-	    }
-	  // PrintToLog("\nLoop bwd: pnew->getEffectivePrice() = %d, pnew->getAddr() = %s\n", pnew->getEffectivePrice(), pnew->getAddr());
+	    }	 
 	  x_TradeBidirectional(it_fwdPrices, it_bwdPrices, trdAction, pnew, sellerPrice, propertyForSale, NewReturn);
 	}
     }
@@ -167,7 +164,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       idx_q += 1;
       // const int idx_qp = idx_q;
       // PrintToLog("Checking idx_q = %d", idx_qp);
-
+      
       /********************************************************/
       /** Preconditions */
       assert(pold->getProperty() == pnew->getProperty());
@@ -241,9 +238,6 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
 						mapContractVolume[property_traded].end());
       int64_t numVWAPriceh = 0, denVWAPriceh = 0;
       
-      PrintToLog("\nnumVWAPpriceContract.size() = %d\n", numVWAPpriceContract.size());
-      PrintToLog("\ndenVWAPpriceContract.size() = %d\n", denVWAPpriceContract.size());
-      
       int vwaplength = denVWAPpriceContract.size();
       for (int i = 0; i < vwaplength; i++)
 	{
@@ -254,7 +248,6 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       rational_t vwapPricehRat(numVWAPriceh, denVWAPriceh);
       int64_t vwapPriceh64_t = mastercore::RationalToInt64(vwapPricehRat);
       threading(property_traded, vwapPriceh64_t, "cdex_vwap");
-      PrintToLog("\nVWAPMapContracts[property_traded] = %d\n", FormatDivisibleMP(VWAPMapContracts[property_traded]));
       
       /********************************************************/
       int64_t difference_s = 0, difference_b = 0;
@@ -1389,10 +1382,10 @@ MatchReturnType x_Trade(CMPMetaDEx* const pnew)
 
             if (xEffectivePrice > pnew->inversePrice())
             {
-	              // if (msc_debug_metadex1) PrintToLog(
-	              //         "-- effective price is too expensive: %s\n", xToString(xEffectivePrice));
-	              ++offerIt;
-	              continue;
+	      // if (msc_debug_metadex1) PrintToLog(
+	      //         "-- effective price is too expensive: %s\n", xToString(xEffectivePrice));
+	      ++offerIt;
+	      continue;
             }
 
             const int64_t buyer_amountGot = nCouldBuy;
@@ -1427,56 +1420,30 @@ MatchReturnType x_Trade(CMPMetaDEx* const pnew)
 	    rational_t market_priceratToken1_Token2(pold_desired, pold_forsale);
 	    int64_t market_priceToken1_Token2 = mastercore::RationalToInt64(market_priceratToken1_Token2);
 	    market_priceMap[pold->getProperty()][pold->getDesProperty()] = market_priceToken1_Token2;
-	    PrintToLog("\nmarket_priceToken1_Token2 MetaDEx = %s\n",
-		       FormatDivisibleMP(market_priceMap[pold->getProperty()][pold->getDesProperty()]));
-	    
+	    	    
 	    rational_t market_priceratToken2_Token1(pnew_desired, pnew_forsale);
 	    int64_t market_priceToken2_Token1 = mastercore::RationalToInt64(market_priceratToken2_Token1);
 	    market_priceMap[pnew->getProperty()][pnew->getDesProperty()] = market_priceToken2_Token1;
-	    PrintToLog("\nmarket_priceToken2_Token1 MetaDEx = %s\n",
-		       FormatDivisibleMP(market_priceMap[pnew->getProperty()][pnew->getDesProperty()]));
-	    
+	    	    
 	    PrintToLog("\npold_forsale = %s,\t pold_desired = %s\n",
 		       FormatDivisibleMP(pold_forsale), FormatDivisibleMP(pold_desired));
 	    PrintToLog("\npnew_forsale = %s,\t pnew_desired = %s\n",
 		       FormatDivisibleMP(pnew_forsale), FormatDivisibleMP(pnew_desired));
-
+	    
 	    /*************************************************************************************************/
 	    /** Finding VWAP Price **/
+	    
 	    PrintToLog("\n********************************************************************************\n");
-
 	    PrintToLog("\nbuyer_amountGot = %s,\t seller_amountGot = %s\n", FormatDivisibleMP(buyer_amountGot),
 		       FormatDivisibleMP(seller_amountGot));
 	    
 	    arith_uint256 numVWAPMapToken1_Token2_256t =
 	      mastercore::ConvertTo256(market_priceToken1_Token2)*mastercore::ConvertTo256(buyer_amountGot)/COIN;
 	    int64_t numVWAPMapToken1_Token2_64t = mastercore::ConvertTo64(numVWAPMapToken1_Token2_256t);
-	    numVWAPMap[pold->getProperty()][pold->getDesProperty()] += numVWAPMapToken1_Token2_64t;
-	    denVWAPMap[pold->getProperty()][pold->getDesProperty()] += buyer_amountGot;
-	    
-	    rational_t vwapPriceToken1_Token2Rat(numVWAPMap[pold->getProperty()][pold->getDesProperty()],
-						 denVWAPMap[pold->getProperty()][pold->getDesProperty()]);
-	    int64_t vwapPriceToken1_Token2Int64 = mastercore::RationalToInt64(vwapPriceToken1_Token2Rat);
-	    VWAPMap[pold->getProperty()][pold->getDesProperty()]=vwapPriceToken1_Token2Int64;
 	    
 	    arith_uint256 numVWAPMapToken2_Token1_256t =
 	      mastercore::ConvertTo256(market_priceToken2_Token1)*mastercore::ConvertTo256(seller_amountGot)/COIN;
 	    int64_t numVWAPMapToken2_Token1_64t = mastercore::ConvertTo64(numVWAPMapToken2_Token1_256t);
-	    numVWAPMap[pnew->getProperty()][pnew->getDesProperty()] += numVWAPMapToken2_Token1_64t;
-	    denVWAPMap[pnew->getProperty()][pnew->getDesProperty()] += seller_amountGot;
-	    
-	    rational_t vwapPriceToken2_Token1Rat(numVWAPMap[pnew->getProperty()][pnew->getDesProperty()],
-						 denVWAPMap[pnew->getProperty()][pnew->getDesProperty()]);
-	    int64_t vwapPriceToken2_Token1Int64 = mastercore::RationalToInt64(vwapPriceToken2_Token1Rat);
-	    VWAPMap[pnew->getProperty()][pnew->getDesProperty()]=vwapPriceToken2_Token1Int64;
-	    
-	    PrintToLog("\nVWAPMap[pold->getProperty()][pold->getDesProperty()] = %s\n",
-		       FormatDivisibleMP(VWAPMap[pold->getProperty()][pold->getDesProperty()]));
-	    PrintToLog("\nVWAPMap[pnew->getProperty()][pnew->getDesProperty()] = %s\n",
-		       FormatDivisibleMP(VWAPMap[pnew->getProperty()][pnew->getDesProperty()]));
-	    
-	    PrintToLog("\n********************************************************************************\n");
-	    /** VWAP for the last N trades **/
 	    
 	    numVWAPVector[pold->getProperty()][pold->getDesProperty()].push_back(numVWAPMapToken1_Token2_64t);
 	    denVWAPVector[pold->getProperty()][pold->getDesProperty()].push_back(buyer_amountGot);
@@ -1485,64 +1452,42 @@ MatchReturnType x_Trade(CMPMetaDEx* const pnew)
 	    denVWAPVector[pnew->getProperty()][pnew->getDesProperty()].push_back(seller_amountGot);
 	    
 	    PrintToLog("numVWAPVector[pold->getProperty()][pold->getDesProperty()].size() = %d",
-		       numVWAPVector[pold->getProperty()][pold->getDesProperty()].size());
+	    	       numVWAPVector[pold->getProperty()][pold->getDesProperty()].size());
 	    PrintToLog("numVWAPVector[pnew->getProperty()][pnew->getDesProperty()].size() = %d",
-		       numVWAPVector[pnew->getProperty()][pnew->getDesProperty()].size());
+	    	       numVWAPVector[pnew->getProperty()][pnew->getDesProperty()].size());
 	    
 	    std::vector<int64_t> numVWAPpoldv(numVWAPVector[pold->getProperty()][pold->getDesProperty()].end()-
-					      std::min(int(numVWAPVector[pold->getProperty()][pold->getDesProperty()].size()), volumeToVWAP),
+					      std::min(int(numVWAPVector[pold->getProperty()][pold->getDesProperty()].size()),
+						       volumeToVWAP),
 					      numVWAPVector[pold->getProperty()][pold->getDesProperty()].end());
 	    std::vector<int64_t> denVWAPpoldv(denVWAPVector[pold->getProperty()][pold->getDesProperty()].end()-
-					      std::min(int(denVWAPVector[pold->getProperty()][pold->getDesProperty()].size()), volumeToVWAP),
+					      std::min(int(denVWAPVector[pold->getProperty()][pold->getDesProperty()].size()),
+						       volumeToVWAP),
 					      denVWAPVector[pold->getProperty()][pold->getDesProperty()].end());
 	    
 	    std::vector<int64_t> numVWAPpnewv(numVWAPVector[pnew->getProperty()][pnew->getDesProperty()].end()-
-					      std::min(int(numVWAPVector[pnew->getProperty()][pnew->getDesProperty()].size()), volumeToVWAP),
+					      std::min(int(numVWAPVector[pnew->getProperty()][pnew->getDesProperty()].size()),
+						       volumeToVWAP),
 					      numVWAPVector[pnew->getProperty()][pnew->getDesProperty()].end());
 	    std::vector<int64_t> denVWAPpnewv(denVWAPVector[pnew->getProperty()][pnew->getDesProperty()].end()-
-					      std::min(int(denVWAPVector[pnew->getProperty()][pnew->getDesProperty()].size()), volumeToVWAP),
+					      std::min(int(denVWAPVector[pnew->getProperty()][pnew->getDesProperty()].size()),
+						       volumeToVWAP),
 					      denVWAPVector[pnew->getProperty()][pnew->getDesProperty()].end());
-	    int64_t numVWAPpold = 0;
-	    int64_t denVWAPpold = 0;
-	    int64_t numVWAPpnew = 0;
-	    int64_t denVWAPpnew = 0;
 	    
-	    PrintToLog("\nnumVWAPpoldv.size() = %d\n", numVWAPpoldv.size());
-	    PrintToLog("\ndenVWAPpoldv.size() = %d\n", denVWAPpoldv.size());
-	    PrintToLog("\nnumVWAPpnewv.size() = %d\n", numVWAPpnewv.size());
-	    PrintToLog("\ndenVWAPpnewv.size() = %d\n", denVWAPpnewv.size());
+	    int64_t numVWAPpold = 0, denVWAPpold = 0;
+	    int64_t numVWAPpnew = 0, denVWAPpnew = 0;	    
 	    
-	    if (int(numVWAPpoldv.size())==volumeToVWAP && int(denVWAPpoldv.size())==volumeToVWAP &&
-		int(numVWAPpnewv.size())==volumeToVWAP && int(denVWAPpnewv.size())==volumeToVWAP)
-	      {
-		for (int i = 0; i < volumeToVWAP; i++)
-		  {
-		    // PrintToLog("\nnumVWAPpoldv[i] = %s,\t denVWAPpoldv[i] = %s\n",
-		    // 	       FormatDivisibleMP(numVWAPpoldv[i]), FormatDivisibleMP(denVWAPpoldv[i]));
-		    // PrintToLog("\nnumVWAPpnewv[i] = %s,\t denVWAPpnewv[i] = %s\n",
-		    // 	       FormatDivisibleMP(numVWAPpnewv[i]), FormatDivisibleMP(denVWAPpnewv[i]));
-		    numVWAPpold += numVWAPpoldv[i];
-		    denVWAPpold += denVWAPpoldv[i];
-		    numVWAPpnew += numVWAPpnewv[i];
-		    denVWAPpnew += denVWAPpnewv[i];
-		  }
-		
-		rational_t vwapPriceToken1_Token2RatV(numVWAPpold, denVWAPpold);
-		int64_t vwapPriceToken1_Token2Int64V = mastercore::RationalToInt64(vwapPriceToken1_Token2RatV);
-		
-		rational_t vwapPriceToken2_Token1RatV(numVWAPpnew, denVWAPpnew);
-		int64_t vwapPriceToken2_Token1Int64V = mastercore::RationalToInt64(vwapPriceToken2_Token1RatV);
-		
-		VWAPMapSubVector[pold->getProperty()][pold->getDesProperty()]=vwapPriceToken1_Token2Int64V;
-		VWAPMapSubVector[pnew->getProperty()][pnew->getDesProperty()]=vwapPriceToken2_Token1Int64V;
-	      }
-	    else
-	      {
-		VWAPMapSubVector[pold->getProperty()][pold->getDesProperty()]=
-		  market_priceMap[pold->getProperty()][pold->getDesProperty()];
-		VWAPMapSubVector[pnew->getProperty()][pnew->getDesProperty()]=
-		  market_priceMap[pnew->getProperty()][pnew->getDesProperty()];
-	      }
+	    vwap_num_den(numVWAPpoldv, denVWAPpoldv, numVWAPpold, denVWAPpold);
+	    vwap_num_den(numVWAPpnewv, denVWAPpnewv, numVWAPpnew, denVWAPpnew);
+	    
+	    rational_t vwapPriceToken1_Token2RatV(numVWAPpold, denVWAPpold);
+	    int64_t vwapPriceToken1_Token2Int64V = mastercore::RationalToInt64(vwapPriceToken1_Token2RatV);
+	    
+	    rational_t vwapPriceToken2_Token1RatV(numVWAPpnew, denVWAPpnew);
+	    int64_t vwapPriceToken2_Token1Int64V = mastercore::RationalToInt64(vwapPriceToken2_Token1RatV);
+	    
+	    VWAPMapSubVector[pold->getProperty()][pold->getDesProperty()]=vwapPriceToken1_Token2Int64V;
+	    VWAPMapSubVector[pnew->getProperty()][pnew->getDesProperty()]=vwapPriceToken2_Token1Int64V;
 	    
 	    PrintToLog("\nVWAPMapSubVector[pold->getProperty()][pold->getDesProperty()] = %s\n",
 		       FormatDivisibleMP(VWAPMapSubVector[pold->getProperty()][pold->getDesProperty()]));
@@ -1688,7 +1633,7 @@ int64_t mastercore::getVWAPPriceByPair(std::string num, std::string den)
 	    }
 	}
     }
-  
+  PrintToLog("\nVWAPMapSubVector[nameId][denId] = %d\n", FormatDivisibleMP(VWAPMapSubVector[numId][denId]));
   return VWAPMapSubVector[numId][denId];
 }
 
@@ -1710,9 +1655,10 @@ int64_t mastercore::getVWAPPriceContracts(std::string namec)
 	    }
 	}
     }
-  PrintToLog("\nVWAPMapContracts[nameId] = %d\n", VWAPMapContracts[nameId]);
+  PrintToLog("\nVWAPMapContracts[nameId] = %d\n", FormatDivisibleMP(VWAPMapContracts[nameId]));
   return VWAPMapContracts[nameId];
 }
+
 ////////////////////////////////////////
 /**
  * Used for display of unit prices to 8 decimal places at UI layer.

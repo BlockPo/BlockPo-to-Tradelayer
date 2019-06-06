@@ -59,6 +59,7 @@ extern volatile int id_contract;
 extern volatile int64_t factorALLtoLTC;
 extern volatile int64_t globalVolumeALL_LTC;
 extern volatile int64_t LTCPriceOffer;
+extern std::vector<std::string> vestingAddresses;
 
 using mastercore::StrToInt64;
 
@@ -1527,45 +1528,12 @@ int CMPTransaction::logicMath_SimpleSend()
 /** Tx 5 */
 int CMPTransaction::logicMath_SendVestingTokens()
 {
-  // if (!IsTransactionTypeAllowed(block, property, type, version)) {
-  //   PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
-  // 	       __func__,
-  // 	       type,
-  // 	       version,
-  // 	       property,
-  // 	       block);
-  //   return (PKT_ERROR_SEND -22);
-  // }
-
-  // if (nValue <= 0 || MAX_INT_8_BYTES < nValue) {
-  //   PrintToLog("%s(): rejected: value out of range or zero: %d", __func__, nValue);
-  //   return (PKT_ERROR_SEND -23);
-  // }
-
-  // if (!IsPropertyIdValid(property)) {
-  //   PrintToLog("%s(): rejected: property %d does not exist\n", __func__, property);
-  //   return (PKT_ERROR_SEND -24);
-  // }
-
-  // int64_t nBalance = getMPbalance(sender, property, BALANCE);
-  // if (nBalance < (int64_t) nValue) {
-  //   PrintToLog("%s(): rejected: sender %s has insufficient balance of property %d [%s < %s]\n",
-  // 	       __func__,
-  // 	       sender,
-  // 	       property,
-  // 	       FormatMP(property, nBalance),
-  // 	       FormatMP(property, nValue));
-  //   return (PKT_ERROR_SEND -25);
-  // }
-
   assert(update_tally_map(sender, property, -nValue, BALANCE));
   assert(update_tally_map(receiver, property, nValue, BALANCE));
   assert(update_tally_map(receiver, OMNI_PROPERTY_ALL, nValue, UNVESTED));
-
-  // PrintToLog("Balance sender = %d", getMPbalance(sender, property, BALANCE));
-  // PrintToLog("Balance receiver = %d", getMPbalance(receiver, property, BALANCE));
-  // PrintToLog("Unvested Balance receiver = %d", getMPbalance(receiver, OMNI_PROPERTY_ALL, UNVESTED));
-
+  
+  vestingAddresses.push_back(receiver);
+ 
   return 0;
 }
 
@@ -3029,7 +2997,7 @@ int CMPTransaction::logicMath_AcceptOfferBTC()
   if (nValue <= 0 || MAX_INT_8_BYTES < nValue) {
     PrintToLog("%s(): rejected: value out of range or zero: %d\n", __func__, nValue);
   }
-
+  
   // the min fee spec requirement is checked in the following function
   int rc = DEx_acceptCreate(sender, receiver, propertyId, nValue, block, tx_fee_paid, &nNewValue);
 
@@ -3068,7 +3036,7 @@ int CMPTransaction::logicMath_AcceptOfferBTC()
 
 	  int64_t bitcoinDesired = calculateDesiredBTC(sellOfferAmount, sellBitcoinDesired, amountAvailable);
 	  int64_t sumLtcs = 0;
-
+	  
 	  for (AcceptMap::const_iterator ait = my_accepts.begin(); ait != my_accepts.end(); ++ait)
 	    {
 	      const CMPAccept& accept = ait->second;
@@ -3108,7 +3076,9 @@ int CMPTransaction::logicMath_AcceptOfferBTC()
 	    }
 	}
     }
-
+  
+  const int64_t globalVolumeALL_LTCh = globalVolumeALL_LTC;
+  PrintToLog("\nglobalVolumeALL_LTC in DEx= %d\n", FormatDivisibleMP(globalVolumeALL_LTCh));
   factorALLtoLTC = unitPrice;
 
   return rc;
