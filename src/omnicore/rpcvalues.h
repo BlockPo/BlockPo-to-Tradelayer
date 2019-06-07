@@ -23,6 +23,7 @@ std::string ParseAddressOrWildcard(const UniValue& value);
 uint32_t ParsePropertyId(const UniValue& value);
 int64_t ParseAmount(const UniValue& value, bool isDivisible);
 int64_t ParseAmount(const UniValue& value, int propertyType);
+uint32_t ParseAmount32t(const UniValue& value);
 uint64_t ParseLeverage(const UniValue& value);
 uint8_t ParseEcosystem(const UniValue& value);
 uint16_t ParsePropertyType(const UniValue& value);

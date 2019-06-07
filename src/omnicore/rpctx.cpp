@@ -849,28 +849,30 @@ UniValue tl_createcontract(const JSONRPCRequest& request)
 			"5. blocks until expiration   (number, required) life of contract, in blocks\n"
 			"6. notional size             (number, required) notional size\n"
 			"7. collateral currency       (number, required) collateral currency\n"
-      "8. margin requirement        (number, required) margin requirement\n"
-
+			"8. margin requirement        (number, required) margin requirement\n"
+			
 			"\nResult:\n"
 			"\"hash\"                  (string) the hex-encoded transaction hash\n"
-
+			
 			"\nExamples:\n"
 			+ HelpExampleCli("tl_createcontract", "2 1 0 \"Companies\" \"Bitcoin Mining\" \"Quantum Miner\" \"\" \"\" 2 \"100\" 1483228800 30 2 4461 100 1 25")
 			+ HelpExampleRpc("tl_createcontract", "2, 1, 0, \"Companies\", \"Bitcoin Mining\", \"Quantum Miner\", \"\", \"\", 2, \"100\", 1483228800, 30, 2, 4461, 100, 1, 25")
 			);
-
+  
   std::string fromAddress = ParseAddress(request.params[0]);
   uint8_t ecosystem = ParseEcosystem(request.params[1]);
   uint32_t type = ParseContractType(request.params[2]);
   std::string name = ParseText(request.params[3]);
-  uint32_t blocks_until_expiration = ParseNewValues(request.params[4]);
-  uint32_t notional_size = ParseNewValues(request.params[5]);
-  uint32_t collateral_currency = ParseNewValues(request.params[6]);
-  uint32_t margin_requirement = ParseAmount(request.params[7], true);
-
+  uint32_t blocks_until_expiration = ParseAmount32t(request.params[4]);
+  uint32_t notional_size = ParseAmount32t(request.params[5]);
+  uint32_t collateral_currency = ParseAmount32t(request.params[6]);
+  uint32_t margin_requirement = ParseAmount32t(request.params[7]);
+  
+  PrintToLog("\n RPC tl_createcontract: notional_size = %d\t margin_requirement = %d\n", notional_size, margin_requirement);
+  
   RequirePropertyName(name);
   RequireSaneName(name);
-
+  
   std::vector<unsigned char> payload = CreatePayload_CreateContract(ecosystem, type, name, blocks_until_expiration, notional_size, collateral_currency, margin_requirement);
 
   uint256 txid;
