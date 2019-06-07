@@ -255,6 +255,15 @@ uint32_t ParseNewValues(const UniValue& value)
   return static_cast<uint32_t>(Nvalue);
 }
 
+uint32_t ParseAmount32t(const UniValue& value)
+{
+  int64_t amount = StrToInt64(value.getValStr(), true);
+  if (amount < 0) {
+    throw JSONRPCError(RPC_TYPE_ERROR, "Price should be positive");
+  }
+  return static_cast<uint32_t>(amount);
+}
+
 uint64_t ParseEffectivePrice(const UniValue& value)
 {
   int64_t effPrice = StrToInt64(value.getValStr(), true);
