@@ -918,15 +918,15 @@ UniValue tl_tradecontract(const JSONRPCRequest& request)
 			+ HelpExampleCli("tl_tradecontract", "31\"250.0\"1\"10.0\"70.0\"80.0\"")
 			+ HelpExampleRpc("tl_tradecontract", "31,\"250.0\",1,\"10.0,\"70.0,\"80.0\"")
 			);
-
+  
   std::string fromAddress = ParseAddress(request.params[0]);
   std::string name_traded = ParseText(request.params[1]);
   int64_t amountForSale = ParseAmountContract(request.params[2]);
   uint64_t effective_price = ParseEffectivePrice(request.params[3]);
   uint8_t trading_action = ParseContractDexAction(request.params[4]);
   uint64_t leverage = ParseLeverage(request.params[5]);
-
-  RequireCollateral(fromAddress,name_traded);
+  
+  //RequireCollateral(fromAddress,name_traded);
 
   std::vector<unsigned char> payload = CreatePayload_ContractDexTrade(name_traded, amountForSale, effective_price, trading_action, leverage);
 

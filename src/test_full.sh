@@ -37,21 +37,21 @@ printf "\n________________________________________\n"
 printf "Base address to work with:\n"
 printf $ADDRBase
 
-N=50
+N=100
 
 amount_bitcoin=10
 amountbitcoin_baseaddr=100
 amountbitcoin_manyaddr=100
 amountbitcoin_moneyaddr=100
-notional_size=2
-margin_requirement=1
+notional_size=0.01
+margin_requirement=0.001
 amountusdts_manyaddr=90000000
 blocks_until_expiration=99999999
 collateral=5
 PAYMENTWINDOW=10
 MINFEEACCEPTED=0.00002980
 addrs_admin="QdgkwBVmz3uAtXiQdbbiAsTp1SDQS9zRt9"
-Kloops=5
+Kloops=2
 
 printf " Creating the addresses ..."
 ADDRess=()
@@ -165,7 +165,7 @@ do
     do
     	printf "\n________________________________________\n"
     	printf "Price for sale Buyer #$i ContractDEx\n"
-    	PRICE=$((RANDOM%1000+6000))
+    	PRICE=$((RANDOM%10+7000))
     	printf "\nRandom Price:\n"
     	printf $PRICE
 	
@@ -182,68 +182,67 @@ do
     ##################################################################
     for (( i=1; i<=${N}-1; i++ ))
     do
-	##################################################################
-	# Begin DEx Traded
-	printf "\n________________________________________\n"
-	printf "Price for sale Buyer #$i DEx\n"
-	PRICEDEx=$((RANDOM%80000+10000))
-	printf "\nRandom Price DEx:\n"
-	printf $PRICEDEx
+	# 	# Begin DEx Traded
+	# 	printf "\n________________________________________\n"
+	# 	printf "Price for sale Buyer #$i DEx\n"
+	# 	PRICEDEx=$((RANDOM%80000+10000))
+	# 	printf "\nRandom Price DEx:\n"
+	# 	printf $PRICEDEx
 	
-	printf "\nAmount for sale Buyer #$i DEx\n"
-	AMOUNTDEx=$((RANDOM%8+1))
-	printf "\nRandom Amount DEx:\n"
-	printf $AMOUNTDEx
+	# 	printf "\nAmount for sale Buyer #$i DEx\n"
+	# 	AMOUNTDEx=$((RANDOM%8+1))
+	# 	printf "\nRandom Amount DEx:\n"
+	# 	printf $AMOUNTDEx
+	
+	# 	printf "\n________________________________________\n"
+	# 	$SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_senddexoffer ${ADDRess[$i]} 6 ${AMOUNTDEx} ${PRICEDEx} ${PAYMENTWINDOW} ${MINFEEACCEPTED} 2 1
+	# 	$SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
+	
+	# 	printf "\n________________________________________\n"
+	# 	printf "Checking the orderbook DEx:\n"
+	# 	$SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_getactivedexsells ${ADDRess[$i]}
+	
+	# 	printf "\n________________________________________\n"
+	# 	printf "Accepting DEX offer DEx:\n"
+	# 	$SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_senddexaccept ${ADDRess[$i+1]} ${ADDRess[$i]} 6 ${AMOUNTDEx}
+	# 	$SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
+	
+	# 	printf "\n________________________________________\n"
+	# 	printf "Checking the orderbook DEx:\n"
+	# 	$SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_getactivedexsells ${ADDRess[$i]}
+	
+	# 	# End DEx Traded
+    	#################################################################
+	# Begin MetaDex traded
 	
 	printf "\n________________________________________\n"
-	$SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_senddexoffer ${ADDRess[$i]} 6 ${AMOUNTDEx} ${PRICEDEx} ${PAYMENTWINDOW} ${MINFEEACCEPTED} 2 1
+	printf "Sending metadex trade:\n"
+	
+	printf "\nAmount ALL #$i\n"
+	AMOUNTALL=$((RANDOM%1+9))
+	printf "\nRandom Amount ALL:\n"
+	printf $AMOUNTALL
+	printf "\n"
+	
+	printf "\nAmount dUSD #$i\n"
+	AMOUNTdUSD=$((RANDOM%10000+60000))
+	printf "\nRandom Amount dUSD:\n"
+	printf $AMOUNTdUSD
+	printf "\n"
+	
+	$SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_sendtrade ${ADDRess[$i+1]} 6 ${AMOUNTALL} 5 ${AMOUNTdUSD}
 	$SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
 	
-	printf "\n________________________________________\n"
-	printf "Checking the orderbook DEx:\n"
-	$SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_getactivedexsells ${ADDRess[$i]}
-	
-	printf "\n________________________________________\n"
-	printf "Accepting DEX offer DEx:\n"
-	$SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_senddexaccept ${ADDRess[$i+1]} ${ADDRess[$i]} 6 ${AMOUNTDEx}
+	$SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_sendtrade ${ADDRess[$i]} 5 ${AMOUNTdUSD} 6 ${AMOUNTALL}
 	$SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
 	
-	printf "\n________________________________________\n"
-	printf "Checking the orderbook DEx:\n"
-	$SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_getactivedexsells ${ADDRess[$i]}
-	
-	# End DEx Traded
+	# End MetaDex traded
 	#################################################################
-    	# Begin MetaDex traded
-	
-    	printf "\n________________________________________\n"
-    	printf "Sending metadex trade:\n"
-	
-    	printf "\nAmount ALL #$i\n"
-    	AMOUNTALL=$((RANDOM%1+9))
-    	printf "\nRandom Amount ALL:\n"
-    	printf $AMOUNTALL
-    	printf "\n"
-	
-    	printf "\nAmount dUSD #$i\n"
-    	AMOUNTdUSD=$((RANDOM%10000+60000))
-    	printf "\nRandom Amount dUSD:\n"
-    	printf $AMOUNTdUSD
-    	printf "\n"
-	
-    	$SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_sendtrade ${ADDRess[$i+1]} 6 ${AMOUNTALL} 5 ${AMOUNTdUSD}
-    	$SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
-	
-    	$SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_sendtrade ${ADDRess[$i]} 5 ${AMOUNTdUSD} 6 ${AMOUNTALL}
-    	$SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
-	
-    	# End MetaDex traded
-    	# #################################################################
     	# Match CMPCOntractDEx
 	
     	printf "\n________________________________________\n"
     	printf "Price for sale Seller #$i ContractDEx match\n"
-    	PRICE=$((RANDOM%1000+6000))
+    	PRICE=$((RANDOM%10+7000))
     	printf "\nRandom Price  ContractDEx match:\n"
     	printf $PRICE
 	
@@ -259,7 +258,11 @@ do
     done
 done
 # End of CMPContractDEx
-##################################################################
+###############################################################
+
+./litecoin-cli -datadir=$DATADIR -regrest tl_listproperties
+
+###############################################################
 
 printf "\n Cheking the  orderbok (sellside):\n"
 $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_getcontract_orderbook "ALL F18" 2
@@ -267,20 +270,7 @@ $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_getcontract_orderbook "ALL F1
 printf "\n Cheking the  orderbok (buyside):\n"
 $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_getcontract_orderbook "ALL F18" 1
 
-###############################################################
-
-./litecoin-cli -datadir=$DATADIR -regrest tl_listproperties
-
-printf "\n Cheking tl_gettradehistory:\n"
-$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_gettradehistory "ALL F18"
-
-printf "\n Checking tl_cancelallcontractsbyaddress:\n"
-$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_cancelallcontractsbyaddress ${ADDRess[1]} 1 "ALL F18"
-
-printf "\n Checking tl_getfullposition\n"
-$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_getfullposition ${ADDRess[1]} "ALL F18"
-
-###############################################################
+##################################################################
 
 printf "Stoping omnicored and litecoin-cli:\n"
 $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest stop

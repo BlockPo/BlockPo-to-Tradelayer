@@ -138,16 +138,16 @@ void mastercore::LoopBiDirectional(cd_PricesMap* const ppriceMap, uint8_t trdAct
 void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPrices, typename cd_PricesMap::reverse_iterator &it_bwdPrices, uint8_t trdAction, CMPContractDex* const pnew, const uint64_t sellerPrice, const uint32_t propertyForSale, MatchReturnType &NewReturn)
 {
   cd_Set* const pofferSet = trdAction == BUY ? &(it_fwdPrices->second) : &(it_bwdPrices->second);
-
+  
   /** At good (single) price level and property iterate over offers looking at all parameters to find the match */
   cd_Set::iterator offerIt = pofferSet->begin();
-
+  
   while ( offerIt != pofferSet->end() )  /** Specific price, check all properties */
     {
       const CMPContractDex* const pold = &(*offerIt);
       
       assert(pold->getEffectivePrice() == sellerPrice);
-
+      
       std::string tradeStatus = pold->getEffectivePrice() == sellerPrice ? "Matched" : "NoMatched";
       
       /** Match Conditions */
@@ -218,11 +218,14 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       
       CMPSPInfo::Entry sp;
       assert(_my_sps->getSP(property_traded, sp));
-
+      
       uint32_t NotionalSize = sp.notional_size;
       
-      arith_uint256 Volume256_t = mastercore::ConvertTo256(NotionalSize)*mastercore::ConvertTo256(nCouldBuy);
+      arith_uint256 Volume256_t = mastercore::ConvertTo256(NotionalSize)*mastercore::ConvertTo256(nCouldBuy)/COIN;
       int64_t Volume64_t = mastercore::ConvertTo64(Volume256_t);
+      
+      PrintToLog("\nNotionalSize = %s\t nCouldBuy = %s\t Volume64_t = %s\n",
+		 FormatDivisibleMP(NotionalSize), FormatDivisibleMP(nCouldBuy), FormatDivisibleMP(Volume64_t));
       
       arith_uint256 numVWAP256_t = mastercore::ConvertTo256(sellerPrice)*mastercore::ConvertTo256(Volume64_t)/COIN;
       int64_t numVWAP64_t = mastercore::ConvertTo64(numVWAP256_t);
@@ -1976,14 +1979,16 @@ int mastercore::MetaDEx_ADD(const std::string& sender_addr, uint32_t prop, int64
 int mastercore::ContractDex_ADD(const std::string& sender_addr, uint32_t prop, int64_t amount, int block, const uint256& txid, unsigned int idx, uint64_t effective_price, uint8_t trading_action, int64_t amount_to_reserve)
 {
     int rc = METADEX_ERROR -1;
+
     /*Remember: Here CMPTransaction::ADD is the subaction coming from CMPMetaDEx*/
     CMPContractDex new_cdex(sender_addr, block, prop, amount, 0, 0, txid, idx, CMPTransaction::ADD, effective_price, trading_action);
+
     // if (msc_debug_metadex1) PrintToLog("%s(); buyer obj: %s\n", __FUNCTION__, new_cdex.ToString());
     //  Ensure this is not a badly priced trade (for example due to zero amounts)
     if (0 >= new_cdex.getEffectivePrice()) return METADEX_ERROR -66;
 
     x_Trade(&new_cdex);
-
+    
     // Insert the remaining order into the ContractDex maps
     if (0 < new_cdex.getAmountForSale())
     {
