@@ -2362,7 +2362,7 @@ int CMPTransaction::logicMath_ContractDexTrade()
   uint256 blockHash;
   {
     LOCK(cs_main);
-
+    
     CBlockIndex* pindex = chainActive[block];
     if (pindex == NULL)
       {
@@ -2371,41 +2371,59 @@ int CMPTransaction::logicMath_ContractDexTrade()
       }
     blockHash = pindex->GetBlockHash();
   }
-
+  
   struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, name_traded);
   id_contract = pfuture->fco_propertyId;
+  
+  PrintToLog("\nCheck here: collateral_currency = %s\n", FormatDivisibleMP(pfuture->fco_collateral_currency));
+  
+  uint32_t colateralh = pfuture->fco_collateral_currency/COIN;
   int64_t marginRe = static_cast<int64_t>(pfuture->fco_margin_requirement);
-  int64_t nBalance = getMPbalance(sender, pfuture->fco_collateral_currency, BALANCE);
+  int64_t nBalance = getMPbalance(sender, colateralh, BALANCE);
   // rational_t conv = notionalChange(pfuture->fco_propertyId);
   rational_t conv = rational_t(1,1);
   int64_t num = conv.numerator().convert_to<int64_t>();
   //int64_t den = conv.denominator().convert_to<int64_t>();
-  arith_uint256 amountTR = (ConvertTo256(amount) * ConvertTo256(marginRe) * ConvertTo256(num)) / (ConvertTo256(num) * ConvertTo256(leverage));
+  arith_uint256 amountTR =
+    (ConvertTo256(amount) * ConvertTo256(marginRe) * ConvertTo256(num)) / (ConvertTo256(num) * ConvertTo256(leverage));
   int64_t amountToReserve = ConvertTo64(amountTR);
-
-  if (block > pfuture->fco_init_block + static_cast<int>(pfuture->fco_blocks_until_expiration) || block < pfuture->fco_init_block) {
-    PrintToLog("\nTrade out of deadline!!\n");
-    return PKT_ERROR_SP -38;
-  }
-
-  if (nBalance < amountToReserve || nBalance == 0) {
-    PrintToLog("%s(): rejected: sender %s has insufficient balance for contracts %d [%s < %s] \n",
-  	       __func__,
-  	       sender,
-  	       property,
-  	       FormatMP(property, nBalance),
-  	       FormatMP(property, amountToReserve));
-    return (PKT_ERROR_SEND -25);
-  } else {
-    if (amountToReserve > 0) {
-      assert(update_tally_map(sender, pfuture->fco_collateral_currency, -amountToReserve, BALANCE));
-      assert(update_tally_map(sender, pfuture->fco_collateral_currency,  amountToReserve, CONTRACTDEX_RESERVE));
+  
+  PrintToLog("\nmarginRe = %s\t num =%s\t amount = %s\t leverage = %s\t amountToReserve = %s\t nBalance = %s\n",
+	     FormatDivisibleMP(marginRe), FormatDivisibleMP(num), FormatDivisibleMP(amount), FormatDivisibleMP(leverage),
+	     FormatDivisibleMP(amountToReserve), FormatDivisibleMP(nBalance));
+  
+  if (block > pfuture->fco_init_block + static_cast<int>(pfuture->fco_blocks_until_expiration) || block < pfuture->fco_init_block)
+    {
+      PrintToLog("\nTrade out of deadline!!\n");
+      return PKT_ERROR_SP -38;
     }
-    int64_t reserva = getMPbalance(sender, pfuture->fco_collateral_currency,CONTRACTDEX_RESERVE);
-    std::string reserved = FormatDivisibleMP(reserva,false);
-  }
+  
+  if (nBalance < amountToReserve || nBalance == 0)
+    {
+      PrintToLog("%s(): rejected: sender %s has insufficient balance for contracts %d [%s < %s] \n",
+		 __func__,
+		 sender,
+		 property,
+		 FormatMP(property, nBalance),
+		 FormatMP(property, amountToReserve));
+      return (PKT_ERROR_SEND -25);
+    }
+  else
+    {
+      if (amountToReserve > 0)
+	{
+	  assert(update_tally_map(sender, colateralh, -amountToReserve, BALANCE));
+	  assert(update_tally_map(sender, colateralh,  amountToReserve, CONTRACTDEX_RESERVE));
+	}
+      int64_t reserva = getMPbalance(sender, colateralh, CONTRACTDEX_RESERVE);
+      std::string reserved = FormatDivisibleMP(reserva,false);
+    }
+  
   t_tradelistdb->recordNewTrade(txid, sender, id_contract, desired_property, block, tx_idx, 0);
   int rc = ContractDex_ADD(sender, id_contract, amount, block, txid, tx_idx, effective_price, trading_action,0);
+  
+  PrintToLog("\n\nEnd of Logic ContracttDExTrade\n\n");
+
   return rc;
 }
 
