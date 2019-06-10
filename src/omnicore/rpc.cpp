@@ -104,7 +104,7 @@ bool BalanceToJSON(const std::string& address, uint32_t property, UniValue& bala
     // confirmed balance minus unconfirmed, spent amounts
     int64_t nAvailable = getUserAvailableMPbalance(address, property);
     int64_t nReserve = getUserReserveMPbalance(address, property);
-
+    
     if (divisible) {
         balance_obj.push_back(Pair("balance", FormatDivisibleMP(nAvailable)));
         balance_obj.push_back(Pair("reserve", FormatDivisibleMP(nReserve)));
@@ -667,40 +667,43 @@ UniValue tl_getproperty(const JSONRPCRequest& request)
             throw JSONRPCError(RPC_INVALID_PARAMETER, "Property identifier does not exist");
         }
     }
-
+    
     int64_t nTotalTokens = getTotalTokens(propertyId);
     std::string strCreationHash = sp.txid.GetHex();
     std::string strTotalTokens = FormatMP(propertyId, nTotalTokens);
     std::string denomination = "";
+
     UniValue response(UniValue::VOBJ);
     response.push_back(Pair("propertyid", (uint64_t) propertyId));
     PropertyToJSON(sp, response); // name, data, url, divisible
+    
     response.push_back(Pair("issuer", sp.issuer));
     response.push_back(Pair("creationtxid", strCreationHash));
     response.push_back(Pair("fixedissuance", sp.fixed));
     response.push_back(Pair("totaltokens", strTotalTokens));
     response.push_back(Pair("creation block", sp.init_block));
-
+    
     if (sp.prop_type == ALL_PROPERTY_TYPE_CONTRACT){
-        response.push_back(Pair("notional size",(uint64_t) sp.notional_size));
-        response.push_back(Pair("collateral currency",(uint64_t) sp.collateral_currency));
-        response.push_back(Pair("margin requirement",FormatDivisibleShortMP(sp.margin_requirement)));
-        response.push_back(Pair("blocks until expiration",(uint64_t) sp.blocks_until_expiration));
+      
+      response.push_back(Pair("notional size", FormatDivisibleShortMP(sp.notional_size)));
+      response.push_back(Pair("collateral currency", std::to_string(sp.collateral_currency)));
+      response.push_back(Pair("margin requirement", FormatDivisibleShortMP(sp.margin_requirement)));
+      response.push_back(Pair("blocks until expiration", std::to_string(sp.blocks_until_expiration)));
+      
+      if (sp.denomination == TL_dUSD){
+	denomination = "Dollar";
+      } else if (sp.denomination == TL_dEUR)  {
+	denomination = "Euro";
+      } else if (sp.denomination == TL_dYEN) {
+	denomination = "Yen";
+      }
+      response.push_back(Pair("denomination", denomination));
 
-
-        if (sp.denomination == TL_dUSD){
-            denomination = "Dollar";
-        } else if (sp.denomination == TL_dEUR)  {
-            denomination = "Euro";
-        } else if (sp.denomination == TL_dYEN) {
-            denomination = "Yen";
-        }
-        response.push_back(Pair("denomination", denomination));
     } else if (sp.prop_type == ALL_PROPERTY_TYPE_PEGGEDS) {
       response.push_back(Pair("contract associated",(uint64_t) sp.contract_associated));
       response.push_back(Pair("series", sp.series));
     }
-
+    
     return response;
 }
 

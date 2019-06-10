@@ -219,6 +219,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_createcontract", 4, "arg4"},
     { "tl_createcontract", 5, "arg5"},
     { "tl_createcontract", 6, "arg6"},
+    { "tl_createcontract", 7, "arg7"},
     { "tl_tradecontract", 3, "arg3"},
     { "tl_tradecontract", 4, "arg4"},
     { "tl_sendgrant", 2, "arg2"},
