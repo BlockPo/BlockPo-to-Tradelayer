@@ -1934,12 +1934,12 @@ int CMPTransaction::logicMath_GrantTokens()
     PrintToLog("%s(): rejected: property %d is not managed\n", __func__, property);
     return (PKT_ERROR_TOKENS -42);
   }
-
+  
   if (sender != sp.issuer) { // FIXME!
     PrintToLog("%s(): rejected: sender %s is not issuer of property %d [issuer=%s]\n", __func__, sender, property, sp.issuer);
     return (PKT_ERROR_TOKENS -43);
   }
-
+  
   int64_t nTotalTokens = getTotalTokens(property);
   if (nValue > (MAX_INT_8_BYTES - nTotalTokens)) {
     PrintToLog("%s(): rejected: no more than %s tokens can ever exist [%s + %s > %s]\n",
@@ -2311,12 +2311,12 @@ int CMPTransaction::logicMath_CreateContractDex()
   //         block);
   //     return (PKT_ERROR_SP -22);
   // }
-
+  
   if ('\0' == name[0]) {
-     PrintToLog("%s(): rejected: property name must not be empty\n", __func__);
-     return (PKT_ERROR_SP -37);
+    PrintToLog("%s(): rejected: property name must not be empty\n", __func__);
+    return (PKT_ERROR_SP -37);
   }
-
+  
   // PrintToLog("type of denomination: %d\n",denomination);
 
   // if (denomination != TL_dUSD && denomination != TL_dEUR && denomination!= TL_dYEN && denomination != TL_ALL && denomination != TL_sLTC && denomination!= TL_LTC) {
@@ -2330,7 +2330,7 @@ int CMPTransaction::logicMath_CreateContractDex()
   // }
 
   // -----------------------------------------------
-
+  
   CMPSPInfo::Entry newSP;
   newSP.txid = txid;
   newSP.issuer = sender;
@@ -2349,7 +2349,7 @@ int CMPTransaction::logicMath_CreateContractDex()
   newSP.denomination = denomination;
   newSP.ecosystemSP = ecosystem;
   newSP.attribute_type = attribute_type;
-
+  
   const uint32_t propertyId = _my_sps->putSP(ecosystem, newSP);
   assert(propertyId > 0);
 
@@ -2375,9 +2375,8 @@ int CMPTransaction::logicMath_ContractDexTrade()
   struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, name_traded);
   id_contract = pfuture->fco_propertyId;
   
-  PrintToLog("\nCheck here: collateral_currency = %s\n", FormatDivisibleMP(pfuture->fco_collateral_currency));
   
-  uint32_t colateralh = pfuture->fco_collateral_currency/COIN;
+  uint32_t colateralh = pfuture->fco_collateral_currency;
   int64_t marginRe = static_cast<int64_t>(pfuture->fco_margin_requirement);
   int64_t nBalance = getMPbalance(sender, colateralh, BALANCE);
   // rational_t conv = notionalChange(pfuture->fco_propertyId);
@@ -2387,10 +2386,6 @@ int CMPTransaction::logicMath_ContractDexTrade()
   arith_uint256 amountTR =
     (ConvertTo256(amount) * ConvertTo256(marginRe) * ConvertTo256(num)) / (ConvertTo256(num) * ConvertTo256(leverage));
   int64_t amountToReserve = ConvertTo64(amountTR);
-  
-  PrintToLog("\nmarginRe = %s\t num =%s\t amount = %s\t leverage = %s\t amountToReserve = %s\t nBalance = %s\n",
-	     FormatDivisibleMP(marginRe), FormatDivisibleMP(num), FormatDivisibleMP(amount), FormatDivisibleMP(leverage),
-	     FormatDivisibleMP(amountToReserve), FormatDivisibleMP(nBalance));
   
   if (block > pfuture->fco_init_block + static_cast<int>(pfuture->fco_blocks_until_expiration) || block < pfuture->fco_init_block)
     {

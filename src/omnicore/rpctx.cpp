@@ -279,7 +279,7 @@ UniValue tl_sendissuancecrowdsale(const JSONRPCRequest& request)
     int64_t deadline = ParseDeadline(request.params[9]);
     uint8_t earlyBonus = ParseEarlyBirdBonus(request.params[10]);
     uint8_t issuerPercentage = ParseIssuerBonus(request.params[11]);
-
+    
     // perform checks
     RequirePropertyName(name);
     RequireExistingProperty(propertyIdDesired);
@@ -614,7 +614,7 @@ UniValue tl_sendchangeissuer(const JSONRPCRequest& request)
     RequireManagedProperty(propertyId);
     RequireNotContract(propertyId);
     RequireTokenIssuer(fromAddress, propertyId);
-
+    
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_ChangeIssuer(propertyId);
 
@@ -653,7 +653,7 @@ UniValue tl_sendactivation(const JSONRPCRequest& request)
             + HelpExampleCli("tl_sendactivation", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" 1 370000 999")
             + HelpExampleRpc("tl_sendactivation", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", 1, 370000, 999")
         );
-
+    
     // obtain parameters & info
     std::string fromAddress = ParseAddress(request.params[0]);
     uint16_t featureId = request.params[1].get_int();
@@ -863,12 +863,12 @@ UniValue tl_createcontract(const JSONRPCRequest& request)
   uint8_t ecosystem = ParseEcosystem(request.params[1]);
   uint32_t type = ParseContractType(request.params[2]);
   std::string name = ParseText(request.params[3]);
-  uint32_t blocks_until_expiration = ParseAmount32t(request.params[4]);
+  uint32_t blocks_until_expiration = request.params[4].get_int();
   uint32_t notional_size = ParseAmount32t(request.params[5]);
-  uint32_t collateral_currency = ParseAmount32t(request.params[6]);
+  uint32_t collateral_currency = request.params[6].get_int();
   uint32_t margin_requirement = ParseAmount32t(request.params[7]);
   
-  PrintToLog("\n RPC tl_createcontract: notional_size = %d\t margin_requirement = %d\n", notional_size, margin_requirement);
+  PrintToLog("\nRPC tl_createcontract: notional_size = %s\t margin_requirement = %s\t blocks_until_expiration = %d\t collateral_currency=%d\t ecosystem = %d\t type = %d\n", FormatDivisibleMP(notional_size), FormatDivisibleMP(margin_requirement), blocks_until_expiration, collateral_currency, ecosystem, type);
   
   RequirePropertyName(name);
   RequireSaneName(name);

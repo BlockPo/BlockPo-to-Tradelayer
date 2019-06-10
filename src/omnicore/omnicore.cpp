@@ -3435,10 +3435,10 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   unsigned int limSup = path_ele.size()-path_length;
   path_length = path_ele.size();
   // PrintToLog("UPNL1 = %d, UPNL2 = %d\n", UPNL1, UPNL2);
-
+  
   addrs_upnlc[property_traded][address1] = UPNL1;
   addrs_upnlc[property_traded][address2] = UPNL2;
-
+  
   for (it_addrs_upnlc = addrs_upnlc.begin(); it_addrs_upnlc != addrs_upnlc.end(); ++it_addrs_upnlc)
     {
       for (it_addrs_upnlm = it_addrs_upnlc->second.begin(); it_addrs_upnlm != it_addrs_upnlc->second.end(); ++it_addrs_upnlm)
@@ -3466,7 +3466,7 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   		      break;
   		    }
   		}
-
+	      
   	      loopforEntryPrice(path_ele, path_eleh, it_addrs_upnlm->first, last_match_status, entry_price_first, idx_price_first, entry_pricefirst_num, limSup, exit_priceh, amount, status);
   	      // PrintToLog("\namount for UPNL_show: %d\n", amount);
   	      double UPNL_show = PNL_function(entry_price_first, exit_priceh, amount, status);
@@ -3475,7 +3475,7 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   	    }
   	}
     }
-
+  
   for (it_addrs_upnlc = addrs_upnlc.begin(); it_addrs_upnlc != addrs_upnlc.end(); ++it_addrs_upnlc)
     {
       // PrintToLog("\nMap with addrs:upnl for propertyId = %d\n", it_addrs_upnlc->first);
