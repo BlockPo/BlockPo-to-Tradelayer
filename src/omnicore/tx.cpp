@@ -959,19 +959,19 @@ bool CMPTransaction::interpret_CreateContractDex()
 
   prop_type = ALL_PROPERTY_TYPE_CONTRACT;
 
-  // PrintToLog("------------------------------------------------------------\n");
-  // PrintToLog("Inside interpret_CreateContractDex function\n");
-  // PrintToLog("version: %d\n", version);
-  // PrintToLog("messageType: %d\n",type);
-  // PrintToLog("denomination: %d\n", denomination);
-  // PrintToLog("blocks until expiration : %d\n", blocks_until_expiration);
-  // PrintToLog("notional size : %d\n", notional_size);
-  // PrintToLog("collateral currency: %d\n", collateral_currency);
-  // PrintToLog("margin requirement: %d\n", margin_requirement);
-  // PrintToLog("ecosystem: %d\n", ecosystem);
-  // PrintToLog("name: %s\n", name);
-  // PrintToLog("prop_type: %d\n", prop_type);
-  // PrintToLog("------------------------------------------------------------\n");
+  PrintToLog("------------------------------------------------------------\n");
+  PrintToLog("Inside interpret_CreateContractDex function\n");
+  PrintToLog("version: %d\n", version);
+  PrintToLog("messageType: %d\n",type);
+  PrintToLog("denomination: %d\n", denomination);
+  PrintToLog("blocks until expiration : %d\n", blocks_until_expiration);
+  PrintToLog("notional size : %d\n", notional_size);
+  PrintToLog("collateral currency: %d\n", collateral_currency);
+  PrintToLog("margin requirement: %d\n", margin_requirement);
+  PrintToLog("ecosystem: %d\n", ecosystem);
+  PrintToLog("name: %s\n", name);
+  PrintToLog("prop_type: %d\n", prop_type);
+  PrintToLog("------------------------------------------------------------\n");
 
   return true;
 }
@@ -1531,9 +1531,9 @@ int CMPTransaction::logicMath_SendVestingTokens()
   assert(update_tally_map(sender, property, -nValue, BALANCE));
   assert(update_tally_map(receiver, property, nValue, BALANCE));
   assert(update_tally_map(receiver, OMNI_PROPERTY_ALL, nValue, UNVESTED));
-  
+
   vestingAddresses.push_back(receiver);
- 
+
   return 0;
 }
 
@@ -1934,12 +1934,12 @@ int CMPTransaction::logicMath_GrantTokens()
     PrintToLog("%s(): rejected: property %d is not managed\n", __func__, property);
     return (PKT_ERROR_TOKENS -42);
   }
-  
+
   if (sender != sp.issuer) { // FIXME!
     PrintToLog("%s(): rejected: sender %s is not issuer of property %d [issuer=%s]\n", __func__, sender, property, sp.issuer);
     return (PKT_ERROR_TOKENS -43);
   }
-  
+
   int64_t nTotalTokens = getTotalTokens(property);
   if (nValue > (MAX_INT_8_BYTES - nTotalTokens)) {
     PrintToLog("%s(): rejected: no more than %s tokens can ever exist [%s + %s > %s]\n",
@@ -2311,12 +2311,12 @@ int CMPTransaction::logicMath_CreateContractDex()
   //         block);
   //     return (PKT_ERROR_SP -22);
   // }
-  
+
   if ('\0' == name[0]) {
     PrintToLog("%s(): rejected: property name must not be empty\n", __func__);
     return (PKT_ERROR_SP -37);
   }
-  
+
   // PrintToLog("type of denomination: %d\n",denomination);
 
   // if (denomination != TL_dUSD && denomination != TL_dEUR && denomination!= TL_dYEN && denomination != TL_ALL && denomination != TL_sLTC && denomination!= TL_LTC) {
@@ -2330,7 +2330,7 @@ int CMPTransaction::logicMath_CreateContractDex()
   // }
 
   // -----------------------------------------------
-  
+
   CMPSPInfo::Entry newSP;
   newSP.txid = txid;
   newSP.issuer = sender;
@@ -2349,7 +2349,7 @@ int CMPTransaction::logicMath_CreateContractDex()
   newSP.denomination = denomination;
   newSP.ecosystemSP = ecosystem;
   newSP.attribute_type = attribute_type;
-  
+
   const uint32_t propertyId = _my_sps->putSP(ecosystem, newSP);
   assert(propertyId > 0);
 
@@ -2362,7 +2362,7 @@ int CMPTransaction::logicMath_ContractDexTrade()
   uint256 blockHash;
   {
     LOCK(cs_main);
-    
+
     CBlockIndex* pindex = chainActive[block];
     if (pindex == NULL)
       {
@@ -2371,28 +2371,34 @@ int CMPTransaction::logicMath_ContractDexTrade()
       }
     blockHash = pindex->GetBlockHash();
   }
-  
+
   struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, name_traded);
   id_contract = pfuture->fco_propertyId;
-  
-  
+
+
   uint32_t colateralh = pfuture->fco_collateral_currency;
   int64_t marginRe = static_cast<int64_t>(pfuture->fco_margin_requirement);
   int64_t nBalance = getMPbalance(sender, colateralh, BALANCE);
-  // rational_t conv = notionalChange(pfuture->fco_propertyId);
+
+  // PrintToLog("inside ContractDexTrade id_contract: %d\n",id_contract);
+  PrintToLog("inside ContractDexTrade colateralh: %d\n",colateralh);
+  PrintToLog("inside ContractDexTrade marginRe: %d\n",marginRe);
+  PrintToLog("inside ContractDexTrade nBalance: %d\n",nBalance);
+  // // rational_t conv = notionalChange(pfuture->fco_propertyId);
   rational_t conv = rational_t(1,1);
   int64_t num = conv.numerator().convert_to<int64_t>();
-  //int64_t den = conv.denominator().convert_to<int64_t>();
-  arith_uint256 amountTR =
-    (ConvertTo256(amount) * ConvertTo256(marginRe) * ConvertTo256(num)) / (ConvertTo256(num) * ConvertTo256(leverage));
+  int64_t den = conv.denominator().convert_to<int64_t>();
+  arith_uint256 amountTR = (ConvertTo256(amount) * ConvertTo256(marginRe) * ConvertTo256(num)) / (ConvertTo256(den) * ConvertTo256(leverage));
   int64_t amountToReserve = ConvertTo64(amountTR);
-  
+
+  PrintToLog("inside ContractDexTrade amountToReserve: %d\n",amountToReserve);
+
   if (block > pfuture->fco_init_block + static_cast<int>(pfuture->fco_blocks_until_expiration) || block < pfuture->fco_init_block)
     {
       PrintToLog("\nTrade out of deadline!!\n");
       return PKT_ERROR_SP -38;
     }
-  
+
   if (nBalance < amountToReserve || nBalance == 0)
     {
       PrintToLog("%s(): rejected: sender %s has insufficient balance for contracts %d [%s < %s] \n",
@@ -2413,12 +2419,12 @@ int CMPTransaction::logicMath_ContractDexTrade()
       int64_t reserva = getMPbalance(sender, colateralh, CONTRACTDEX_RESERVE);
       std::string reserved = FormatDivisibleMP(reserva,false);
     }
-  
+
   t_tradelistdb->recordNewTrade(txid, sender, id_contract, desired_property, block, tx_idx, 0);
   int rc = ContractDex_ADD(sender, id_contract, amount, block, txid, tx_idx, effective_price, trading_action,0);
-  
-  PrintToLog("\n\nEnd of Logic ContracttDExTrade\n\n");
 
+  PrintToLog("\n\nEnd of Logic ContracttDExTrade\n\n");
+  
   return rc;
 }
 
@@ -3010,7 +3016,7 @@ int CMPTransaction::logicMath_AcceptOfferBTC()
   if (nValue <= 0 || MAX_INT_8_BYTES < nValue) {
     PrintToLog("%s(): rejected: value out of range or zero: %d\n", __func__, nValue);
   }
-  
+
   // the min fee spec requirement is checked in the following function
   int rc = DEx_acceptCreate(sender, receiver, propertyId, nValue, block, tx_fee_paid, &nNewValue);
 
@@ -3049,7 +3055,7 @@ int CMPTransaction::logicMath_AcceptOfferBTC()
 
 	  int64_t bitcoinDesired = calculateDesiredBTC(sellOfferAmount, sellBitcoinDesired, amountAvailable);
 	  int64_t sumLtcs = 0;
-	  
+
 	  for (AcceptMap::const_iterator ait = my_accepts.begin(); ait != my_accepts.end(); ++ait)
 	    {
 	      const CMPAccept& accept = ait->second;
@@ -3089,7 +3095,7 @@ int CMPTransaction::logicMath_AcceptOfferBTC()
 	    }
 	}
     }
-  
+
   const int64_t globalVolumeALL_LTCh = globalVolumeALL_LTC;
   PrintToLog("\nglobalVolumeALL_LTC in DEx= %d\n", FormatDivisibleMP(globalVolumeALL_LTCh));
   factorALLtoLTC = unitPrice;

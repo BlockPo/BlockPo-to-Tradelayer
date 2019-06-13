@@ -166,7 +166,8 @@ extern std::map<uint32_t, std::vector<int64_t>> mapContractVolume;
 extern std::map<uint32_t, int64_t> VWAPMapContracts;
 //extern volatile std::vector<std::map<std::string, std::string>> path_eleg;
 extern std::string setExoduss;
-
+extern std::map<uint32_t, std::map<std::string, double>> addrs_upnlc;
+extern std::map<std::string, int64_t> sum_upnls;
 using mastercore::StrToInt64;
 
 // indicate whether persistence is enabled at this point, or not
@@ -3192,6 +3193,8 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
 
   // handle any features that go live with this block
   CheckLiveActivations(pBlockIndex->nHeight);
+  update_sum_upnls();
+  marginMain(pBlockIndex->nHeight);
   // addInterestPegged(nBlockPrev,pBlockIndex);
   // eraseExpiredCrowdsale(pBlockIndex);
   _my_sps->rollingContractsBlock(pBlockIndex); // NOTE: we are checking every contract expiration
@@ -3978,6 +3981,263 @@ rational_t mastercore::notionalChange(uint32_t contractId)
     }
 
     return inversePrice;
+}
+
+bool mastercore::marginMain(int Block)
+{
+    //checking in map for address and the UPNL.
+    PrintToLog("Block in marginMain: %d\n",Block);
+    LOCK(cs_tally);
+    uint32_t nextSPID = _my_sps->peekNextSPID(1);
+    for (uint32_t contractId = 1; contractId < nextSPID; contractId++)
+    {
+        CMPSPInfo::Entry sp;
+        if (_my_sps->getSP(contractId, sp))
+        {
+            PrintToLog("Property Id: %d\n",contractId);
+            if (sp.prop_type != ALL_PROPERTY_TYPE_CONTRACT)
+            {
+                PrintToLog("Property is not future contract\n");
+                continue;
+            }
+        }
+
+        uint32_t collateralCurrency = sp.collateral_currency;
+        int64_t notionalSize = static_cast<int64_t>(sp.notional_size);
+
+        // checking the upnl map
+        std::map<uint32_t, std::map<std::string, double>>::iterator it = addrs_upnlc.find(contractId);
+        std::map<std::string, double> upnls = it->second;
+
+        //  if upnls is < 0, we need to cancel orders or liquidate contracts.
+        for(std::map<std::string, double>::iterator it2 = upnls.begin(); it2 != upnls.end(); ++it2)
+        {
+            const std::string address = it2->first;
+
+            int64_t upnl = static_cast<int64_t>(it2->second * factorE);
+            PrintToLog("upnl: %d",upnl);
+            // if upnl is positive, keep searching
+            if (upnl >= 0)
+                continue;
+
+            PrintToLog("upnl: %d",upnl);
+            PrintToLog("sum_check_upnl: %d",sum_check_upnl(address));
+
+            // if sum of upnl is bigger than this upnl, skip address.
+            if (sum_check_upnl(address) > upnl)
+                continue;
+
+            // checking position margin
+            int64_t posMargin = pos_margin(contractId, address, sp.prop_type, sp.margin_requirement);
+
+            // if there's no position, something is wrong!
+            if (posMargin < 0)
+                continue;
+
+            // checking the initMargin (init_margin = position_margin + active_orders_margin)
+            int64_t initMargin = getMPbalance(address,collateralCurrency,CONTRACTDEX_MARGIN); ;
+
+            rational_t percent = rational_t(-upnl,initMargin);
+
+            int64_t ordersMargin = initMargin - posMargin;
+
+            PrintToLog("\n--------------------------------------------------\n");
+            PrintToLog("\ninitMargin= %d\n", initMargin);
+            PrintToLog("\npositionMargin= %d\n", posMargin);
+            PrintToLog("\nordersMargin= %d\n", ordersMargin);
+            PrintToLog("upnl= %d\n",upnl);
+            PrintToLog("factor= %d\n",factor);
+            PrintToLog("proportion upnl/initMargin= %d\n",xToString(percent));
+            PrintToLog("\n--------------------------------------------------\n");
+
+            // if the upnl loss is more than 80% of the initial Margin
+            if (factor <= percent)
+            {
+                const uint256 txid;
+                unsigned char ecosystem;
+                PrintToLog("factor <= percent : %d <= %d\n",xToString(factor), xToString(percent));
+                PrintToLog("margin call!\n");
+                ContractDex_CLOSE_POSITION(txid, Block, address, ecosystem, contractId, collateralCurrency);
+                continue;
+
+            // if the upnl loss is more than 20% and minus 80% of the Margin
+            } else if (factor2 <= percent) {
+                PrintToLog("CALLING CANCEL IN ORDER\n");
+                PrintToLog("factor2 <= percent : %s <= %s\n",xToString(factor2),xToString(percent));
+                int64_t fbalance, diff;
+                int64_t margin = getMPbalance(address,collateralCurrency,CONTRACTDEX_MARGIN);
+                int64_t ibalance = getMPbalance(address,collateralCurrency, BALANCE);
+                int64_t left = - 0.2 * margin - upnl;
+
+                bool orders = false;
+
+                do
+                {
+                      PrintToLog("margin before cancel: %s\n", margin);
+                      if(ContractDex_CANCEL_IN_ORDER(address, contractId) == 1)
+                          orders = true;
+                      fbalance = getMPbalance(address,collateralCurrency, BALANCE);
+                      diff = fbalance - ibalance;
+
+                      PrintToLog("ibalance: %s\n",ibalance);
+                      PrintToLog("fbalance: %s\n",fbalance);
+                      PrintToLog("diff: %d\n",diff);
+                      PrintToLog("left: %d\n",left);
+
+                      if ( left <= diff ) {
+                          PrintToLog("left <= diff !\n");
+                      }
+
+                      if (orders) {
+                          PrintToLog("orders=true !\n");
+                      } else
+                         PrintToLog("orders=false\n");
+
+                } while(diff < left && !orders);
+
+                // if left is negative, the margin is above the first limit (more than 80% maintMargin)
+                if (0 < left)
+                {
+                    PrintToLog("orders can't cover, we have to check the balance to refill margin\n");
+                    PrintToLog("left: %d\n", left);
+                    //we have to see if we can cover this with the balance
+                    int64_t balance = getMPbalance(address,collateralCurrency,BALANCE);
+
+                    if(balance >= left) // recover to 80% of maintMargin
+                    {
+                        PrintToLog("\n balance >= left\n");
+                        update_tally_map(address, collateralCurrency, -left, BALANCE);
+                        update_tally_map(address, collateralCurrency, left, CONTRACTDEX_MARGIN);
+                        continue;
+
+                    } else { // not enough money in balance to recover margin, so we use position
+
+                         PrintToLog("not enough money in balance to recover margin, so we use position\n");
+                         if (balance > 0)
+                         {
+                             update_tally_map(address, collateralCurrency, -balance, BALANCE);
+                             update_tally_map(address, collateralCurrency, balance, CONTRACTDEX_MARGIN);
+                         }
+
+                         const uint256 txid;
+                         unsigned int idx;
+                         uint8_t option;
+                         int64_t fcontracts;
+
+                         int64_t longs = getMPbalance(address,contractId,POSSITIVE_BALANCE);
+                         int64_t shorts = getMPbalance(address,contractId,NEGATIVE_BALANCE);
+
+                         PrintToLog("longs: %d\n", longs);
+                         PrintToLog("shorts: %d\n", shorts);
+
+                         (longs > 0 && shorts == 0) ? option = SELL, fcontracts = longs : option = BUY, fcontracts = shorts;
+
+                         PrintToLog("option: %d\n", option);
+                         PrintToLog("upnl: %d",upnl);
+                         PrintToLog("posMargin: %d", posMargin);
+
+                         arith_uint256 contracts = DivideAndRoundUp(ConvertTo256(posMargin) + ConvertTo256(-upnl), ConvertTo256(static_cast<int64_t>(sp.margin_requirement)));
+                         int64_t icontracts = ConvertTo64(contracts);
+
+
+                         PrintToLog("icontracts: %d\n", icontracts);
+                         PrintToLog("fcontracts before: %d\n", fcontracts);
+
+                         if (icontracts > fcontracts)
+                             icontracts = fcontracts;
+
+                         PrintToLog("fcontracts after: %d\n", fcontracts);
+
+                         ContractDex_ADD_MARKET_PRICE(address, contractId, icontracts, Block, txid, idx, option, 0);
+
+
+                    }
+
+                }
+
+            } else {
+                PrintToLog("the upnl loss is LESS than 20% of the margin, nothing happen\n");
+
+            }
+        }
+    }
+
+    return true;
+
+}
+
+
+int64_t mastercore::sum_check_upnl(std::string address)
+{
+    std::map<std::string, int64_t>::iterator it = sum_upnls.find(address);
+    int64_t upnl = it->second;
+    return upnl;
+}
+
+
+void mastercore::update_sum_upnls()
+{
+    //cleaning the sum_upnls map
+    if(!sum_upnls.empty())
+        sum_upnls.clear();
+
+    LOCK(cs_tally);
+    uint32_t nextSPID = _my_sps->peekNextSPID(1);
+
+    for (uint32_t contractId = 1; contractId < nextSPID; contractId++)
+    {
+        CMPSPInfo::Entry sp;
+        if (_my_sps->getSP(contractId, sp))
+        {
+            if (sp.prop_type != ALL_PROPERTY_TYPE_CONTRACT)
+                continue;
+
+            std::map<uint32_t, std::map<std::string, double>>::iterator it = addrs_upnlc.find(contractId);
+            std::map<std::string, double> upnls = it->second;
+
+            for(std::map<std::string, double>::iterator it1 = upnls.begin(); it1 != upnls.end(); ++it1)
+            {
+                const std::string address = it1->first;
+                int64_t upnl = static_cast<int64_t>(it1->second * factorE);
+
+                //add this in the sumupnl vector
+                sum_upnls[address] += upnl;
+            }
+
+        }
+    }
+}
+
+/* margin needed for a given position */
+int64_t mastercore::pos_margin(uint32_t contractId, std::string address, uint16_t prop_type, uint32_t margin_requirement)
+{
+        arith_uint256 maintMargin;
+
+        if (prop_type != ALL_PROPERTY_TYPE_CONTRACT)
+        {
+            PrintToLog("this is not a future contract\n");
+            return -1;
+        }
+
+        int64_t longs = getMPbalance(address,contractId,POSSITIVE_BALANCE);
+        int64_t shorts = getMPbalance(address,contractId,NEGATIVE_BALANCE);
+
+        PrintToLog("longs: %d, shorts: %d\n",longs,shorts);
+        PrintToLog("margin requirement: %d\n",margin_requirement);
+
+        if (longs > 0 && shorts == 0)
+        {
+            maintMargin = (ConvertTo256(longs) * ConvertTo256(static_cast<int64_t>(margin_requirement))) / ConvertTo256(factorE);
+        } else if (shorts > 0 && longs == 0){
+            maintMargin = (ConvertTo256(shorts) * ConvertTo256(static_cast<int64_t>(margin_requirement))) / ConvertTo256(factorE);
+        } else {
+            PrintToLog("there's no position avalaible\n");
+            return -2;
+        }
+
+        int64_t maint_margin = ConvertTo64(maintMargin);
+        PrintToLog("maint margin: %d\n",maint_margin);
+        return maint_margin;
 }
 
 uint64_t int64ToUint64(int64_t value)

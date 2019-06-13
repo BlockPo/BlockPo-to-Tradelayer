@@ -45,6 +45,10 @@ std::map<std::string,uint32_t> peggedIssuers;
 double globalPNLALL_DUSD;
 int64_t globalVolumeALL_DUSD;
 std::map<uint32_t, std::map<std::string, double>> addrs_upnlc;
+
+// using for margin dynamics
+std::map<std::string, int64_t> sum_upnls;
+
 std::map<uint32_t, std::map<uint32_t, int64_t>> market_priceMap;
 std::map<uint32_t, std::map<uint32_t, int64_t>> numVWAPMap;
 std::map<uint32_t, std::map<uint32_t, int64_t>> denVWAPMap;
