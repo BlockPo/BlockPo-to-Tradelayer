@@ -1,5 +1,4 @@
-
-	#!/bin/bash
+#!/bin/bash
 
 SRCDIR=/root/dev-margin-domake/src
 
@@ -52,7 +51,7 @@ collateral=5
 PAYMENTWINDOW=10
 MINFEEACCEPTED=0.00002980
 addrs_admin="QdgkwBVmz3uAtXiQdbbiAsTp1SDQS9zRt9"
-Kloops=2
+Kloops=1
 
 printf " Creating the addresses ..."
 ADDRess=()

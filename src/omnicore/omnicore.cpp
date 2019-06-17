@@ -148,7 +148,6 @@ extern std::vector<std::string> vestingAddresses;
 CMPTxList *mastercore::p_txlistdb;
 CMPTradeList *mastercore::t_tradelistdb;
 COmniTransactionDB *mastercore::p_OmniTXDB;
-extern std::map<uint32_t, std::map<std::string, double>> addrs_upnlc;
 extern MatrixTLS *pt_ndatabase;
 extern int n_cols;
 extern int n_rows;
@@ -3396,12 +3395,12 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   if ( status_bool1 || status_bool2 )
     {
       buildingEdge(edgeEle, address1, address2, s_maker1, s_taker1, lives_s1, lives_b1, nCouldBuy1, effective_price, idx_q, 0);
-      // path_ele.push_back(edgeEle);
+      path_ele.push_back(edgeEle);
       path_eleh.push_back(edgeEle);
 
       path_elef.push_back(edgeEle);
       buildingEdge(edgeEle, address1, address2, s_maker2, s_taker2, lives_s2, lives_b2, nCouldBuy2, effective_price, idx_q, 0);
-      // path_ele.push_back(edgeEle);
+      path_ele.push_back(edgeEle);
       path_eleh.push_back(edgeEle);
 
       path_elef.push_back(edgeEle);
@@ -3411,7 +3410,7 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
       if ( s_maker3 != "EmptyStr" && s_taker3 != "EmptyStr" )
 	{
 	  buildingEdge(edgeEle, address1, address2, s_maker3, s_taker3, lives_s3, lives_b3,nCouldBuy3,effective_price,idx_q,0);
-	  // path_ele.push_back(edgeEle);
+	  path_ele.push_back(edgeEle);
 	  path_eleh.push_back(edgeEle);
 
 	  path_elef.push_back(edgeEle);
@@ -3422,20 +3421,21 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   else
     {
       buildingEdge(edgeEle, address1, address2, s_maker0, s_taker0, lives_s0, lives_b0, nCouldBuy0, effective_price, idx_q, 0);
-      // path_ele.push_back(edgeEle);
+      path_ele.push_back(edgeEle);
       path_eleh.push_back(edgeEle);
 
       path_elef.push_back(edgeEle);
       // PrintToLog("Line 0: %s\n", line0);
       number_lines += 1;
     }
-
-  PrintToLog("\nPath Ele inside recordMatchedTrade. Length last match = %d\n", number_lines);
-  for (it_path_ele = path_ele.begin(); it_path_ele != path_ele.end(); ++it_path_ele) printing_edges_database(*it_path_ele);
-
+  
+  // PrintToLog("\nPath Ele inside recordMatchedTrade. Length last match = %d\n", number_lines);
+  // for (it_path_ele = path_ele.begin(); it_path_ele != path_ele.end(); ++it_path_ele) printing_edges_database(*it_path_ele);
+  
   loopForUPNL(path_ele, path_eleh, path_length, address1, address2, s_maker0, s_taker0, UPNL1, UPNL2, effective_price, nCouldBuy0);
   unsigned int limSup = path_ele.size()-path_length;
   path_length = path_ele.size();
+  
   // PrintToLog("UPNL1 = %d, UPNL2 = %d\n", UPNL1, UPNL2);
   addrs_upnlc[property_traded][address1] = UPNL1;
   addrs_upnlc[property_traded][address2] = UPNL2;
@@ -3476,14 +3476,14 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   	}
     }
   
-  for (it_addrs_upnlc = addrs_upnlc.begin(); it_addrs_upnlc != addrs_upnlc.end(); ++it_addrs_upnlc)
-    {
-      // PrintToLog("\nMap with addrs:upnl for propertyId = %d\n", it_addrs_upnlc->first);
-      for (it_addrs_upnlm = it_addrs_upnlc->second.begin(); it_addrs_upnlm != it_addrs_upnlc->second.end(); ++it_addrs_upnlm)
-      	{
-  	  // PrintToLog("ADDRS = %s, UPNL = %d\n", it_addrs_upnlm->first, it_addrs_upnlm->second);
-  	}
-    }
+  // for (it_addrs_upnlc = addrs_upnlc.begin(); it_addrs_upnlc != addrs_upnlc.end(); ++it_addrs_upnlc)
+  //   {
+  //     PrintToLog("\nMap with addrs:upnl for propertyId = %d\n", it_addrs_upnlc->first);
+  //     for (it_addrs_upnlm = it_addrs_upnlc->second.begin(); it_addrs_upnlm != it_addrs_upnlc->second.end(); ++it_addrs_upnlm)
+  //     	{
+  // 	  PrintToLog("ADDRS = %s, UPNL = %d\n", it_addrs_upnlm->first, it_addrs_upnlm->second);
+  // 	}
+  //   }
   
   unsigned int contractId = static_cast<unsigned int>(property_traded);
   CMPSPInfo::Entry sp;
@@ -3984,7 +3984,7 @@ rational_t mastercore::notionalChange(uint32_t contractId)
 
 bool mastercore::marginMain(int Block)
 {
-    //checking in map for address and the UPNL.
+  //checking in map for address and the UPNL.
     PrintToLog("Block in marginMain: %d\n",Block);
     LOCK(cs_tally);
     uint32_t nextSPID = _my_sps->peekNextSPID(1);
@@ -4003,14 +4003,14 @@ bool mastercore::marginMain(int Block)
 
         uint32_t collateralCurrency = sp.collateral_currency;
         int64_t notionalSize = static_cast<int64_t>(sp.notional_size);
-
+	
         // checking the upnl map
         std::map<uint32_t, std::map<std::string, double>>::iterator it = addrs_upnlc.find(contractId);
         std::map<std::string, double> upnls = it->second;
-
+	
         //  if upnls is < 0, we need to cancel orders or liquidate contracts.
         for(std::map<std::string, double>::iterator it2 = upnls.begin(); it2 != upnls.end(); ++it2)
-        {
+	  {
             const std::string address = it2->first;
 
             int64_t upnl = static_cast<int64_t>(it2->second * factorE);
@@ -4018,7 +4018,7 @@ bool mastercore::marginMain(int Block)
             // if upnl is positive, keep searching
             if (upnl >= 0)
                 continue;
-
+	    
             PrintToLog("upnl: %d",upnl);
             PrintToLog("sum_check_upnl: %d",sum_check_upnl(address));
 
