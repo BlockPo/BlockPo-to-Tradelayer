@@ -64,6 +64,7 @@ extern volatile int64_t globalNumPrice;
 extern volatile int64_t globalDenPrice;
 extern uint64_t marketP[NPTYPES];
 extern std::map<uint32_t, std::map<std::string, double>> addrs_upnlc;
+extern std::map<std::string, int64_t> sum_upnls;
 using mastercore::StrToInt64;
 using mastercore::DoubleToInt64;
 /**
@@ -104,7 +105,7 @@ bool BalanceToJSON(const std::string& address, uint32_t property, UniValue& bala
     // confirmed balance minus unconfirmed, spent amounts
     int64_t nAvailable = getUserAvailableMPbalance(address, property);
     int64_t nReserve = getUserReserveMPbalance(address, property);
-    
+
     if (divisible) {
         balance_obj.push_back(Pair("balance", FormatDivisibleMP(nAvailable)));
         balance_obj.push_back(Pair("reserve", FormatDivisibleMP(nReserve)));
@@ -122,13 +123,13 @@ bool BalanceToJSON(const std::string& address, uint32_t property, UniValue& bala
     }
 }
 
-void MarginToJSON(const std::string& address, uint32_t property, UniValue& balance_obj, bool divisible)
+void ReserveToJSON(const std::string& address, uint32_t property, UniValue& balance_obj, bool divisible)
 {
     int64_t margin = getMPbalance(address, property, CONTRACTDEX_RESERVE);
     if (divisible) {
-        balance_obj.push_back(Pair("margin", FormatDivisibleMP(margin)));
+        balance_obj.push_back(Pair("reserve", FormatDivisibleMP(margin)));
     } else {
-        balance_obj.push_back(Pair("margin", FormatIndivisibleMP(margin)));
+        balance_obj.push_back(Pair("reserve", FormatIndivisibleMP(margin)));
     }
 }
 
@@ -493,12 +494,12 @@ UniValue tl_getbalance(const JSONRPCRequest& request)
     return balanceObj;
 }
 
-UniValue tl_getmargin(const JSONRPCRequest& request)
+UniValue tl_getreserve(const JSONRPCRequest& request)
 {
     if (request.params.size() != 2)
         throw runtime_error(
             "tl_getmargin \"address\" propertyid\n"
-            "\nReturns the token reserves account using in futures contracts, for a given address and property.\n"
+            "\nReturns the token reserve account using in futures contracts, for a given address and property.\n"
             "\nArguments:\n"
             "1. address              (string, required) the address\n"
             "2. propertyid           (number, required) the contract identifier\n"
@@ -519,7 +520,7 @@ UniValue tl_getmargin(const JSONRPCRequest& request)
     RequireNotContract(propertyId);
 
     UniValue balanceObj(UniValue::VOBJ);
-    MarginToJSON(address, propertyId, balanceObj, isPropertyDivisible(propertyId));
+    ReserveToJSON(address, propertyId, balanceObj, isPropertyDivisible(propertyId));
 
     return balanceObj;
 }
@@ -667,7 +668,7 @@ UniValue tl_getproperty(const JSONRPCRequest& request)
             throw JSONRPCError(RPC_INVALID_PARAMETER, "Property identifier does not exist");
         }
     }
-    
+
     int64_t nTotalTokens = getTotalTokens(propertyId);
     std::string strCreationHash = sp.txid.GetHex();
     std::string strTotalTokens = FormatMP(propertyId, nTotalTokens);
@@ -676,20 +677,20 @@ UniValue tl_getproperty(const JSONRPCRequest& request)
     UniValue response(UniValue::VOBJ);
     response.push_back(Pair("propertyid", (uint64_t) propertyId));
     PropertyToJSON(sp, response); // name, data, url, divisible
-    
+
     response.push_back(Pair("issuer", sp.issuer));
     response.push_back(Pair("creationtxid", strCreationHash));
     response.push_back(Pair("fixedissuance", sp.fixed));
     response.push_back(Pair("totaltokens", strTotalTokens));
     response.push_back(Pair("creation block", sp.init_block));
-    
+
     if (sp.prop_type == ALL_PROPERTY_TYPE_CONTRACT){
-      
+
       response.push_back(Pair("notional size", FormatDivisibleShortMP(sp.notional_size)));
       response.push_back(Pair("collateral currency", std::to_string(sp.collateral_currency)));
       response.push_back(Pair("margin requirement", FormatDivisibleShortMP(sp.margin_requirement)));
       response.push_back(Pair("blocks until expiration", std::to_string(sp.blocks_until_expiration)));
-      
+
       if (sp.denomination == TL_dUSD){
 	denomination = "Dollar";
       } else if (sp.denomination == TL_dEUR)  {
@@ -703,7 +704,7 @@ UniValue tl_getproperty(const JSONRPCRequest& request)
       response.push_back(Pair("contract associated",(uint64_t) sp.contract_associated));
       response.push_back(Pair("series", sp.series));
     }
-    
+
     return response;
 }
 
@@ -2210,6 +2211,38 @@ UniValue tl_getexodus(const JSONRPCRequest& request)
     return balanceObj;
 }
 
+UniValue tl_getsum_upnl(const JSONRPCRequest& request)
+{
+  if (request.params.size() != 1)
+    throw runtime_error(
+			"tl_getsum_upnl addres \n"
+			"\nRetrieve the global upnl for an address.\n"
+			"\nArguments:\n"
+			"1. contractid           (number, required) the id of future contract\n"
+			"\nResult:\n"
+			"[                                      (array of JSON objects)\n"
+			"  {\n"
+			"    \"upnl\" : nnnnnn,                      (number) global unrealized profit and loss\n"
+			"  ...\n"
+			"]\n"
+			"\nExamples:\n"
+			+ HelpExampleCli("tl_getsum_upnl", "address1" )
+			+ HelpExampleRpc("tl_getsum_upnl", "address2")
+			);
+
+
+  std::string address = ParseAddress(request.params[0]);
+
+
+  UniValue balanceObj(UniValue::VOBJ);
+
+  std::map<std::string, int64_t>:: iterator it = sum_upnls.find(address);
+  int64_t upnl = it->second;
+  balanceObj.push_back(Pair("upnl", FormatByType(upnl,2)));
+
+  return balanceObj;
+}
+
 static const CRPCCommand commands[] =
 { //  category                             name                            actor (function)               okSafeMode
   //  ------------------------------------ ------------------------------- ------------------------------ ----------
@@ -2244,10 +2277,11 @@ static const CRPCCommand commands[] =
   { "trade layer (data retieval)" , "tl_getorderbook",              &tl_getorderbook,               {} },
   { "trade layer (data retieval)" , "tl_getpeggedhistory",          &tl_getpeggedhistory,           {} },
   { "trade layer (data retieval)" , "tl_getcontract_reserve",       &tl_getcontract_reserve,        {} },
-  { "trade layer (data retieval)" , "tl_getmargin",                 &tl_getmargin,                  {} },
+  { "trade layer (data retieval)" , "tl_getreserve",                &tl_getreserve,                    {} },
   { "trade layer (data retieval)" , "tl_getallprice",               &tl_getallprice,                {} },
   { "trade layer (data retieval)" , "tl_getmarketprice",            &tl_getmarketprice,             {} },
-  { "trade layer (data retieval)" , "tl_getexodus",                 &tl_getexodus,                  {} }
+  { "trade layer (data retieval)" , "tl_getexodus",                 &tl_getexodus,                  {} },
+  { "trade layer (data retieval)" , "tl_getsum_upnl",               &tl_getsum_upnl,                {} }
 };
 
 void RegisterOmniDataRetrievalRPCCommands(CRPCTable &tableRPC)

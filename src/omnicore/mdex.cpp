@@ -2212,6 +2212,121 @@ int mastercore::ContractDex_CANCEL_FOR_BLOCK(const uint256& txid,  int block,uns
   return rc;
 }
 
+int mastercore::ContractDex_CANCEL_IN_ORDER(const std::string& sender_addr, uint32_t contractId)
+{
+    int rc = METADEX_ERROR -40;
+    bool bValid = false;
+    int64_t factorH = factorE;
+    PrintToLog("Inside CANCEL IN ORDER\n");
+
+    CMPSPInfo::Entry sp;
+    if(!_my_sps->getSP(contractId, sp))
+        return rc;
+
+    uint32_t collateralCurrency = sp.collateral_currency;
+    int64_t marginRe = static_cast<int64_t>(sp.margin_requirement);
+
+    // TODO: deberia cancelar la orden mas alejada del spread (checkear) que rellene el margen
+
+    for (cd_PropertiesMap::iterator my_it = contractdex.begin(); my_it != contractdex.end(); ++my_it) {
+        unsigned int prop = my_it->first;
+
+        PrintToLog(" ## property: %u\n", prop);
+        cd_PricesMap &prices = my_it->second;
+
+        for (cd_PricesMap::iterator it = prices.begin(); it != prices.end(); ++it) {
+            // uint64_t price = it->first;
+            cd_Set &indexes = it->second;
+
+            for (cd_Set::iterator it = indexes.begin(); it != indexes.end();) {
+                // PrintToLog("%s= %s\n", xToString(price), it->ToString());
+                PrintToLog("address: %d\n",it->getAddr());
+                PrintToLog("propertyid: %d\n",it->getProperty());
+                PrintToLog("amount for sale: %d\n",it->getAmountForSale());
+                if (it->getAddr() != sender_addr || it->getProperty() != contractId || it->getAmountForSale() == 0) {
+                    ++it;
+                    continue;
+                }
+
+                string addr = it->getAddr();
+                int64_t amountForSale = it->getAmountForSale();
+
+                // rational_t conv = notionalChange(contractId);
+                PrintToLog("checkpoint 1\n");
+                rational_t conv = rational_t(1,1);
+                PrintToLog("checkpoint 2\n");
+                int64_t num = conv.numerator().convert_to<int64_t>();
+                int64_t den = conv.denominator().convert_to<int64_t>();
+                int64_t balance = getMPbalance(addr,collateralCurrency,BALANCE);
+		
+                PrintToLog("checkpoint 3\n");
+                PrintToLog("collateral currency id of contract : %d\n",collateralCurrency);
+                PrintToLog("margin requirement of contract : %d\n",marginRe);
+                PrintToLog("amountForSale: %d\n",amountForSale);
+                PrintToLog("Address: %d\n",addr);
+
+                // arith_uint256 amountMargin = ConvertTo256(amountForSale) * ConvertTo256(marginRe) * ConvertTo256(num) / ConvertTo256(den);
+                arith_uint256 amountMargin = ConvertTo256(amountForSale) * ConvertTo256(num) / ConvertTo256(den);
+                int64_t redeemed = ConvertTo64(amountMargin);
+                PrintToLog("redeemed: %d\n",redeemed);
+
+                PrintToLog("--------------------------------------------\n");
+
+                // move from reserve to balance the collateral
+                if (balance > redeemed && balance > 0 && redeemed > 0) {
+                    assert(update_tally_map(addr, collateralCurrency, redeemed, BALANCE));
+                    assert(update_tally_map(addr, collateralCurrency, -redeemed, CONTRACTDEX_MARGIN));
+                // // record the cancellation
+                }
+                bValid = true;
+                PrintToLog("CANCEL IN ORDER: order found!\n");
+                // p_txlistdb->recordContractDexCancelTX(txid, it->getHash(), bValid, block, it->getProperty(), it->getAmountForSale
+                indexes.erase(it++);
+                rc = 0;
+                return rc;
+            }
+
+        }
+    }
+    if (bValid == false){
+       PrintToLog("CANCEL IN ORDER: You don't have active orders\n");
+       rc = 1;
+    }
+
+    return rc;
+}
+
+int mastercore::ContractDex_ADD_ORDERBOOK_EDGE(const std::string& sender_addr, uint32_t contractId, int64_t amount, int block, const uint256& txid, unsigned int idx, uint8_t trading_action, int64_t amount_to_reserve)
+{
+    int rc = METADEX_ERROR -1;
+    uint64_t price;
+
+    PrintToLog("------------------------------------------------------------\n");
+    PrintToLog("Inside ContractDex_ADD_ORDERBOOK_EDGE\n");
+
+    (trading_action == BUY) ? price = edgeOrderbook(contractId, SELL) : price = edgeOrderbook(contractId, BUY);
+    PrintToLog("price of edge: %d\n",price);
+    if (price > 0)
+    {
+        CMPContractDex new_cdex(sender_addr, block, contractId, amount, 0, 0, txid, idx, CMPTransaction::ADD, price, trading_action);
+        if (!ContractDex_INSERT(new_cdex))
+        {
+            PrintToLog("%s() ERROR: ALREADY EXISTS, line %d, file: %s\n", __FUNCTION__, __LINE__, __FILE__);
+            return METADEX_ERROR -70;  // TODO: create new numbers for our errors.
+        } else {
+            PrintToLog("\nInserted in the orderbook!!\n");
+        }
+
+    } else{
+        PrintToLog("\nNo orders in ask or bid\n");
+        return METADEX_ERROR -60;
+    }
+
+    rc = 0;
+    return rc;
+}
+
+/*NEW FUNCTION*/
 int mastercore::ContractDex_CLOSE_POSITION(const uint256& txid, unsigned int block, const std::string& sender_addr, unsigned char ecosystem, uint32_t contractId, uint32_t collateralCurrency)
 {
     int64_t shortPosition = getMPbalance(sender_addr,contractId, NEGATIVE_BALANCE);
