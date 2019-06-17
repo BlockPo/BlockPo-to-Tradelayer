@@ -123,13 +123,13 @@ bool BalanceToJSON(const std::string& address, uint32_t property, UniValue& bala
     }
 }
 
-void MarginToJSON(const std::string& address, uint32_t property, UniValue& balance_obj, bool divisible)
+void ReserveToJSON(const std::string& address, uint32_t property, UniValue& balance_obj, bool divisible)
 {
     int64_t margin = getMPbalance(address, property, CONTRACTDEX_RESERVE);
     if (divisible) {
-        balance_obj.push_back(Pair("margin", FormatDivisibleMP(margin)));
+        balance_obj.push_back(Pair("reserve", FormatDivisibleMP(margin)));
     } else {
-        balance_obj.push_back(Pair("margin", FormatIndivisibleMP(margin)));
+        balance_obj.push_back(Pair("reserve", FormatIndivisibleMP(margin)));
     }
 }
 
@@ -494,12 +494,12 @@ UniValue tl_getbalance(const JSONRPCRequest& request)
     return balanceObj;
 }
 
-UniValue tl_getmargin(const JSONRPCRequest& request)
+UniValue tl_getreserve(const JSONRPCRequest& request)
 {
     if (request.params.size() != 2)
         throw runtime_error(
             "tl_getmargin \"address\" propertyid\n"
-            "\nReturns the token reserves account using in futures contracts, for a given address and property.\n"
+            "\nReturns the token reserve account using in futures contracts, for a given address and property.\n"
             "\nArguments:\n"
             "1. address              (string, required) the address\n"
             "2. propertyid           (number, required) the contract identifier\n"
@@ -520,7 +520,7 @@ UniValue tl_getmargin(const JSONRPCRequest& request)
     RequireNotContract(propertyId);
 
     UniValue balanceObj(UniValue::VOBJ);
-    MarginToJSON(address, propertyId, balanceObj, isPropertyDivisible(propertyId));
+    ReserveToJSON(address, propertyId, balanceObj, isPropertyDivisible(propertyId));
 
     return balanceObj;
 }
@@ -2277,11 +2277,11 @@ static const CRPCCommand commands[] =
   { "trade layer (data retieval)" , "tl_getorderbook",              &tl_getorderbook,               {} },
   { "trade layer (data retieval)" , "tl_getpeggedhistory",          &tl_getpeggedhistory,           {} },
   { "trade layer (data retieval)" , "tl_getcontract_reserve",       &tl_getcontract_reserve,        {} },
-  { "trade layer (data retieval)" , "tl_getmargin",                 &tl_getmargin,                  {} },
+  { "trade layer (data retieval)" , "tl_getreserve",                &tl_getreserve,                    {} },
   { "trade layer (data retieval)" , "tl_getallprice",               &tl_getallprice,                {} },
   { "trade layer (data retieval)" , "tl_getmarketprice",            &tl_getmarketprice,             {} },
   { "trade layer (data retieval)" , "tl_getexodus",                 &tl_getexodus,                  {} },
-  { "trade layer (data retieval)" , "tl_getsum_upnl",                &tl_getsum_upnl,                {} }
+  { "trade layer (data retieval)" , "tl_getsum_upnl",               &tl_getsum_upnl,                {} }
 };
 
 void RegisterOmniDataRetrievalRPCCommands(CRPCTable &tableRPC)
