@@ -2258,7 +2258,7 @@ int mastercore::ContractDex_CANCEL_IN_ORDER(const std::string& sender_addr, uint
                 int64_t num = conv.numerator().convert_to<int64_t>();
                 int64_t den = conv.denominator().convert_to<int64_t>();
                 int64_t balance = getMPbalance(addr,collateralCurrency,BALANCE);
-
+		
                 PrintToLog("checkpoint 3\n");
                 PrintToLog("collateral currency id of contract : %d\n",collateralCurrency);
                 PrintToLog("margin requirement of contract : %d\n",marginRe);
