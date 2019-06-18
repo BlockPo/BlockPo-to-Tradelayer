@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SRCDIR=/root/dev-margin-domake/src
+SRCDIR=/root/dev-lihki-domake/src
 
 DATADIR=/root/chain-lihki
 NUL=/dev/null

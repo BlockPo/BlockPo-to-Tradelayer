@@ -4029,7 +4029,7 @@ bool mastercore::marginMain(int Block)
         }
 
         uint32_t collateralCurrency = sp.collateral_currency;
-        int64_t notionalSize = static_cast<int64_t>(sp.notional_size);
+        //int64_t notionalSize = static_cast<int64_t>(sp.notional_size);
 	
         // checking the upnl map
         std::map<uint32_t, std::map<std::string, double>>::iterator it = addrs_upnlc.find(contractId);
@@ -4075,12 +4075,12 @@ bool mastercore::marginMain(int Block)
             PrintToLog("factor= %d\n",factor);
             PrintToLog("proportion upnl/initMargin= %d\n",xToString(percent));
             PrintToLog("\n--------------------------------------------------\n");
-
+	    
             // if the upnl loss is more than 80% of the initial Margin
             if (factor <= percent)
             {
                 const uint256 txid;
-                unsigned char ecosystem;
+                unsigned char ecosystem = '\0';
                 PrintToLog("factor <= percent : %d <= %d\n",xToString(factor), xToString(percent));
                 PrintToLog("margin call!\n");
                 ContractDex_CLOSE_POSITION(txid, Block, address, ecosystem, contractId, collateralCurrency);
@@ -4146,7 +4146,7 @@ bool mastercore::marginMain(int Block)
                          }
 
                          const uint256 txid;
-                         unsigned int idx;
+                         unsigned int idx = 0;
                          uint8_t option;
                          int64_t fcontracts;
 
@@ -4173,7 +4173,7 @@ bool mastercore::marginMain(int Block)
                              icontracts = fcontracts;
 
                          PrintToLog("fcontracts after: %d\n", fcontracts);
-
+			 
                          ContractDex_ADD_MARKET_PRICE(address, contractId, icontracts, Block, txid, idx, option, 0);
 
 
