@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SRCDIR=/root/dev-lihki-domake/src
+SRCDIR=/root/dev-margin-domake/src
 
 DATADIR=/root/chain-lihki
 NUL=/dev/null
@@ -230,7 +230,7 @@ do
 	# $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_getactivedexsells ${ADDRess[$i]}
 	
 	# # End DEx Traded
-    	#################################################################
+  #################################################################
 	# Begin MetaDex traded
 	
 	printf "\n________________________________________\n"
