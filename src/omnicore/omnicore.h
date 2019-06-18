@@ -383,6 +383,8 @@ void creatingVestingTokens();
 void lookingin_globalvector_pastlivesperpetuals(std::vector<std::map<std::string, std::string>> &lives_g, MatrixTLS M_file, std::vector<std::string> addrs_vg, std::vector<std::map<std::string, std::string>> &lives_h);
 void lookingaddrs_inside_M_file(std::string addrs, MatrixTLS M_file, std::vector<std::map<std::string, std::string>> &lives_g, std::vector<std::map<std::string, std::string>> &lives_h);
 int finding_idxforaddress(std::string addrs, std::vector<std::map<std::string, std::string>> lives);
+void Filling_Twap_Vec(std::map<uint32_t, std::vector<uint64_t>> &twap_ele, std::map<uint32_t, std::vector<uint64_t>> &twap_vec,
+		      uint32_t property_traded, uint64_t effective_price, std::string name);
 
 namespace mastercore
 {
