@@ -1,12 +1,13 @@
 #ifndef EXTERNFNS_H
 #define EXTERNFNS_H
 
-#include "tradelayer_matrices.h"
+#include "omnicore/tradelayer_matrices.h"
+#include "omnicore/log.h"
+
 #include <vector>
 #include <unordered_set>
 #include <stdint.h>
 #include <string>
-
 #include <boost/lexical_cast.hpp>
 #include <boost/multiprecision/cpp_dec_float.hpp>
 #include <boost/multiprecision/cpp_int.hpp>
@@ -40,6 +41,18 @@ namespace mastercore
 {
   int64_t DoubleToInt64(double d);
   int64_t RationalToInt64(rational_t r);
+}
+
+template<typename T> void print_stdvector(T const &vec)
+{
+  typename T::const_iterator pos;  
+  typename T::const_iterator end(vec.end());  
+  
+  PrintToLog("\n\nPrinting std::vector: [\t");
+  for (pos=vec.begin(); pos!=end; ++pos) {
+    PrintToLog("%s\t", FormatDivisibleMP(*pos));
+  }
+  PrintToLog("]\n\n");
 }
 
 #endif

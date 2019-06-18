@@ -78,3 +78,10 @@ std::string admin_addrs;
 int volumeToVWAP;
 int BlockS;
 std::string setExoduss;
+/*****************************************/
+/** TWAP containers **/
+std::map<uint32_t, std::vector<uint64_t>> cdextwap_ele;
+std::map<uint32_t, std::vector<uint64_t>> mdextwap_ele;
+std::map<uint32_t, std::vector<uint64_t>> cdextwap_vec;
+std::map<uint32_t, std::vector<uint64_t>> mdextwap_vec;
+/*****************************************/

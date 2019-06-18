@@ -133,11 +133,7 @@ bool findConjTrueValue(bool a, bool b, bool c) { return ( a && b ) && c; }
 bool findConjTrueValue(bool a, bool b) { return a && b; }
 
 void threading(uint32_t keyid, int64_t valueid, std::string name_vec)
-{
-  // cout_map_vector.lock();
-  // PrintToLog("\nStarting thread (keyid, vector[i]) = (%d, %d)\n", keyid, valueid);
-  // cout_map_vector.unlock();
-  
+{  
   if (name_vec == "cdex_volume")
     {
       map_vector_mtx.lock();

@@ -166,6 +166,13 @@ extern std::map<uint32_t, std::vector<int64_t>> mapContractVolume;
 extern std::map<uint32_t, int64_t> VWAPMapContracts;
 //extern volatile std::vector<std::map<std::string, std::string>> path_eleg;
 extern std::string setExoduss;
+/************************************************/
+/** TWAP containers **/
+extern std::map<uint32_t, std::vector<uint64_t>> cdextwap_ele;
+extern std::map<uint32_t, std::vector<uint64_t>> mdextwap_ele;
+extern std::map<uint32_t, std::vector<uint64_t>> cdextwap_vec;
+extern std::map<uint32_t, std::vector<uint64_t>> mdextwap_vec;
+/************************************************/
 
 using mastercore::StrToInt64;
 
@@ -2122,7 +2129,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   
   /***********************************************************************/
   /** Calling The Settlement Algorithm **/
-
+  
   if (nBlockNow%BlockS == 0 && nBlockNow != 0 && path_elef.size() != 0 && lastBlockg != nBlockNow) {
     
     /*****************************************************************************/
@@ -3369,15 +3376,15 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   /********************************************************************/
   const string key =  sblockNum2 + "+" + txid1.ToString() + "+" + txid2.ToString(); //order with block of taker.
   const string value = strprintf("%s:%s:%lu:%lu:%lu:%d:%d:%s:%s:%d:%d:%d:%s:%s:%d:%d:%d", address1, address2, effective_price, amount_maker, amount_taker, blockNum1, blockNum2, s_maker0, s_taker0, lives_s0, lives_b0, property_traded, txid1.ToString(), txid2.ToString(), nCouldBuy0,amountpold, amountpnew);
-
+  
   const string line0 = gettingLineOut(address1, s_maker0, lives_s0, address2, s_taker0, lives_b0, nCouldBuy0, effective_price);
   const string line1 = gettingLineOut(address1, s_maker1, lives_s1, address2, s_taker1, lives_b1, nCouldBuy1, effective_price);
   const string line2 = gettingLineOut(address1, s_maker2, lives_s2, address2, s_taker2, lives_b2, nCouldBuy2, effective_price);
   const string line3 = gettingLineOut(address1, s_maker3, lives_s3, address2, s_taker3, lives_b3, nCouldBuy3, effective_price);
-
+  
   bool status_bool1 = s_maker0 == "OpenShortPosByLongPosNetted" || s_maker0 == "OpenLongPosByShortPosNetted";
   bool status_bool2 = s_taker0 == "OpenShortPosByLongPosNetted" || s_taker0 == "OpenLongPosByShortPosNetted";
-
+  
   std::fstream fileSixth;
   fileSixth.open ("graphInfoSixth.txt", std::fstream::in | std::fstream::out | std::fstream::app);
   if ( status_bool1 || status_bool2 )
@@ -3427,11 +3434,17 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
       number_lines += 1;
     }
   
-  PrintToLog("\nPath Ele inside recordMatchedTrade. Length last match = %d\n", number_lines);
-  for (it_path_ele = path_ele.begin(); it_path_ele != path_ele.end(); ++it_path_ele) printing_edges_database(*it_path_ele);
+  // PrintToLog("\nPath Ele inside recordMatchedTrade. Length last match = %d\n", number_lines);
+  // for (it_path_ele = path_ele.begin(); it_path_ele != path_ele.end(); ++it_path_ele) printing_edges_database(*it_path_ele);
+
+  /********************************************/
+  /** Building TWAP vector **/
+  Filling_Twap_Vec(cdextwap_ele, cdextwap_vec, property_traded, effective_price, "CDEx");
+  PrintToLog("\ncdextwap_ele.size() = %d\n", cdextwap_ele[property_traded].size());
+  print_stdvector(cdextwap_ele[property_traded]);
+  /********************************************/
   
-  loopForUPNL(path_ele, path_eleh, path_length, address1, address2, s_maker0, s_taker0, UPNL1, UPNL2, effective_price, nCouldBuy0);
-  
+  loopForUPNL(path_ele, path_eleh, path_length, address1, address2, s_maker0, s_taker0, UPNL1, UPNL2, effective_price, nCouldBuy0);  
   unsigned int limSup = path_ele.size()-path_length;
   path_length = path_ele.size();
   // PrintToLog("UPNL1 = %d, UPNL2 = %d\n", UPNL1, UPNL2);
@@ -3476,28 +3489,26 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   	}
     }
   
-  for (it_addrs_upnlc = addrs_upnlc.begin(); it_addrs_upnlc != addrs_upnlc.end(); ++it_addrs_upnlc)
-    {
-      // PrintToLog("\nMap with addrs:upnl for propertyId = %d\n", it_addrs_upnlc->first);
-      for (it_addrs_upnlm = it_addrs_upnlc->second.begin(); it_addrs_upnlm != it_addrs_upnlc->second.end(); ++it_addrs_upnlm)
-      	{
-  	  // PrintToLog("ADDRS = %s, UPNL = %d\n", it_addrs_upnlm->first, it_addrs_upnlm->second);
-  	}
-    }
+  // for (it_addrs_upnlc = addrs_upnlc.begin(); it_addrs_upnlc != addrs_upnlc.end(); ++it_addrs_upnlc)
+  //   {
+  //     // PrintToLog("\nMap with addrs:upnl for propertyId = %d\n", it_addrs_upnlc->first);
+  //     for (it_addrs_upnlm = it_addrs_upnlc->second.begin(); it_addrs_upnlm != it_addrs_upnlc->second.end(); ++it_addrs_upnlm)
+  //     	{
+  // 	  // PrintToLog("ADDRS = %s, UPNL = %d\n", it_addrs_upnlm->first, it_addrs_upnlm->second);
+  // 	}
+  //   }
   
   unsigned int contractId = static_cast<unsigned int>(property_traded);
   CMPSPInfo::Entry sp;
   assert(_my_sps->getSP(property_traded, sp));
   uint32_t NotionalSize = sp.notional_size;
-
-  // PrintToLog("\nCheck nCouldBuy0 = %s, factorALLtoLTC = %s, NotionalSize = %d: CMPContractDEx\n", FormatDivisibleMP(nCouldBuy0), FormatDivisibleMP(factorALLtoLTC), NotionalSize);
-
+  
   globalPNLALL_DUSD += UPNL1 + UPNL2;
   globalVolumeALL_DUSD += nCouldBuy0;
   
-  arith_uint256 volumeALL256_t = mastercore::ConvertTo256(NotionalSize)*mastercore::ConvertTo256(nCouldBuy0);
+  arith_uint256 volumeALL256_t = mastercore::ConvertTo256(NotionalSize)*mastercore::ConvertTo256(nCouldBuy0)/COIN;
   // PrintToLog("ALLs involved in the traded 256 Bits ~ %s ALL\n", volumeALL256_t.ToString());
-
+  
   int64_t volumeALL64_t = mastercore::ConvertTo64(volumeALL256_t);
   // PrintToLog("ALLs involved in the traded 64 Bits ~ %s ALL\n", FormatDivisibleMP(volumeALL64_t));
 
@@ -3513,15 +3524,15 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   int64_t volumeToCompare = 0;
   bool perpetualBool = callingPerpetualSettlement(globalPNLALL_DUSD, globalVolumeALL_DUSD, volumeToCompare);
   if (perpetualBool) PrintToLog("Perpetual Settlement Online");
-
+  
   // PrintToLog("\nglobalPNLALL_DUSD = %d, globalVolumeALL_DUSD = %d, contractId = %d\n", globalPNLALL_DUSD, globalVolumeALL_DUSD, contractId);
-
+  
   std::fstream fileglobalPNLALL_DUSD;
   fileglobalPNLALL_DUSD.open ("globalPNLALL_DUSD.txt", std::fstream::in | std::fstream::out | std::fstream::app);
   if ( contractId == ALL_PROPERTY_TYPE_CONTRACT )
     saveDataGraphs(fileglobalPNLALL_DUSD, std::to_string(globalPNLALL_DUSD));
   fileglobalPNLALL_DUSD.close();
-
+  
   std::fstream fileglobalVolumeALL_DUSD;
   fileglobalVolumeALL_DUSD.open ("globalVolumeALL_DUSD.txt", std::fstream::in | std::fstream::out | std::fstream::app);
   if ( contractId == ALL_PROPERTY_TYPE_CONTRACT )
@@ -3535,6 +3546,22 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
       ++nWritten;
     }
   // PrintToLog("\n\nEnd of recordMatchedTrade <------------------------------\n");
+}
+
+void Filling_Twap_Vec(std::map<uint32_t, std::vector<uint64_t>> &twap_ele, std::map<uint32_t, std::vector<uint64_t>> &twap_vec,
+		      uint32_t property_traded, uint64_t effective_price, std::string name)
+{
+  int nBlockNow = GetHeight();
+  
+  if (nBlockNow == lastBlockg)
+    {
+      if (name == "CDEx")
+	twap_ele[property_traded].push_back(effective_price);	
+    }
+  else
+    {
+      twap_ele[property_traded].clear();
+    }
 }
 
 bool callingPerpetualSettlement(double globalPNLALL_DUSD, int64_t globalVolumeALL_DUSD, int64_t volumeToCompare)
