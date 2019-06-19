@@ -65,7 +65,7 @@ amountVesting = (1500000/nVestingAddrs)*COIN;
 //volumeToVWAP = 200;
 volumeToVWAP = 10;
 //BlockH = 192;
-BlockS = 50;
+BlockS = 720;
 /** Admin address **/
-//admin_addrs = "mvgwqiCqTVtmS954RJvemj2DnvnH7NhiTF"; /**Testnet**/
-admin_addrs = "QdgkwBVmz3uAtXiQdbbiAsTp1SDQS9zRt9"; /**Regtest**/
+admin_addrs = "moCYruRphhYgejzH75bxWD49qRFan8eGES"; /**Testnet**/
+//admin_addrs = "QdgkwBVmz3uAtXiQdbbiAsTp1SDQS9zRt9"; /**Regtest**/
