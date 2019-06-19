@@ -141,6 +141,7 @@ extern int expirationAchieve;
 extern double globalPNLALL_DUSD;
 extern int64_t globalVolumeALL_DUSD;
 extern int lastBlockg;
+extern int twapBlockg;
 extern int vestingActivationBlock;
 extern volatile int64_t globalVolumeALL_LTC;
 extern std::vector<std::string> vestingAddresses;
@@ -3554,8 +3555,8 @@ void Filling_Twap_Vec(std::map<uint32_t, std::vector<uint64_t>> &twap_ele, std::
 		      uint32_t property_traded, uint64_t effective_price, std::string name)
 {
   int nBlockNow = GetHeight();
-  
-  if (nBlockNow == lastBlockg)
+  PrintToLog("\nnBlockNow = %d\t twapBlockg = %d\n", nBlockNow, twapBlockg);
+  if (nBlockNow == twapBlockg)
     {
       if (name == "CDEx")
 	twap_ele[property_traded].push_back(effective_price);	
@@ -3563,7 +3564,9 @@ void Filling_Twap_Vec(std::map<uint32_t, std::vector<uint64_t>> &twap_ele, std::
   else
     {
       twap_ele[property_traded].clear();
+      twap_ele[property_traded].push_back(effective_price);
     }
+  twapBlockg = nBlockNow;
 }
 
 bool callingPerpetualSettlement(double globalPNLALL_DUSD, int64_t globalVolumeALL_DUSD, int64_t volumeToCompare)
