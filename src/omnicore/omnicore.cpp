@@ -80,6 +80,7 @@
 #include <vector>
 #include <cmath>
 #include <iostream>
+#include <numeric>
 
 #include "tradelayer_matrices.h"
 #include "externfns.h"
@@ -2133,7 +2134,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   /** Calling The Settlement Algorithm **/
   
   if (nBlockNow%BlockS == 0 && nBlockNow != 0 && path_elef.size() != 0 && lastBlockg != nBlockNow) {
-
+    
     /*****************************************************************************/
     PrintToLog("\nSettlement every 8 hours here. nBlockNow = %d\n", nBlockNow);
     pt_ndatabase = new MatrixTLS(path_elef.size(), n_cols); MatrixTLS &ndatabase = *pt_ndatabase;
@@ -2147,7 +2148,17 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
     PrintToLog("\nCalling the Settlement Algorithm:\n\n");
     settlement_algorithm_fifo(M_file);
     /**********************************************************************/
-    /**Unallocating Dynamic Memory**/
+    /** TWAP vector **/
+    PrintToLog("\nTWAP vector CDEx = \n");
+    struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, "ALL F18");
+    uint32_t property_traded = pfuture->fco_propertyId;
+    print_stdvector(cdextwap_ele[property_traded]);
+    uint64_t numerator = accumulate(cdextwap_ele[property_traded].begin(), cdextwap_ele[property_traded].end(), 0.0);
+    rational_t twap_priceRat(numerator/COIN, cdextwap_ele[property_traded].size());
+    int64_t twap_price = mastercore::RationalToInt64(twap_priceRat);
+    PrintToLog("\nTvwap Price = %s\n", FormatDivisibleMP(twap_price));
+    /**********************************************************************/
+    /** Unallocating Dynamic Memory **/
     //path_elef.clear();
     market_priceMap.clear();
     numVWAPMap.clear();
@@ -2159,13 +2170,14 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
     mapContractAmountTimesPrice.clear();
     mapContractVolume.clear();
     VWAPMapContracts.clear();
+    cdextwap_vec.clear();
   }
   /***********************************************************************/
   /** Vesting Tokens to Balance **/
-
+  
   int64_t x_Axis = globalVolumeALL_LTC;
   int64_t LogAxis = mastercore::DoubleToInt64(log(static_cast<double>(x_Axis)/COIN));
-
+  
   rational_t Factor1over3(1, 3);
   int64_t Factor1over3_64t = mastercore::RationalToInt64(Factor1over3);
 
@@ -3398,7 +3410,7 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
     }
   else saveDataGraphs(fileSixth, line0);
   fileSixth.close();
-
+  
   /********************************************************************/
   int number_lines = 0;
   if ( status_bool1 || status_bool2 )
@@ -3555,7 +3567,8 @@ void Filling_Twap_Vec(std::map<uint32_t, std::vector<uint64_t>> &twap_ele, std::
 		      uint32_t property_traded, uint64_t effective_price, std::string name)
 {
   int nBlockNow = GetHeight();
-  PrintToLog("\nnBlockNow = %d\t twapBlockg = %d\n", nBlockNow, twapBlockg);
+  std::vector<uint64_t> twap_minmax;
+  PrintToLog("\nCheck here:\t nBlockNow = %d\t twapBlockg = %d\n", nBlockNow, twapBlockg);
   if (nBlockNow == twapBlockg)
     {
       if (name == "CDEx")
@@ -3563,8 +3576,20 @@ void Filling_Twap_Vec(std::map<uint32_t, std::vector<uint64_t>> &twap_ele, std::
     }
   else
     {
-      twap_ele[property_traded].clear();
-      twap_ele[property_traded].push_back(effective_price);
+      if (name == "CDEx")
+	{
+	  if (twap_ele[property_traded].size() != 0)
+	    {
+	      twap_minmax = min_max(twap_ele[property_traded]);
+	      uint64_t numerator = twap_ele[property_traded].front()+twap_minmax[0]+twap_minmax[1]+twap_ele[property_traded].back();
+	      rational_t twapRat(numerator/COIN, 4);
+	      int64_t twap_elej = mastercore::RationalToInt64(twapRat);
+	      PrintToLog("\ntwap_elej = %s\n", FormatDivisibleMP(twap_elej));
+	      cdextwap_vec[property_traded].push_back(twap_elej);
+	    }
+	  twap_ele[property_traded].clear();
+	  twap_ele[property_traded].push_back(effective_price);
+	}
     }
   twapBlockg = nBlockNow;
 }

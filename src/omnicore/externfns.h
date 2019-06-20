@@ -15,6 +15,7 @@
 #include <boost/math/constants/constants.hpp>
 #include <iostream>
 #include <limits>
+#include <algorithm>
 
 typedef boost::multiprecision::cpp_dec_float_100 dec_float;
 typedef boost::rational<boost::multiprecision::checked_int128_t> rational_t;
@@ -48,11 +49,19 @@ template<typename T> void print_stdvector(T const &vec)
   typename T::const_iterator pos;  
   typename T::const_iterator end(vec.end());  
   
-  PrintToLog("\n\nPrinting std::vector: [\t");
+  PrintToLog("\n\nPrinting std::vector: [\t ");
   for (pos=vec.begin(); pos!=end; ++pos) {
     PrintToLog("%s\t", FormatDivisibleMP(*pos));
   }
   PrintToLog("]\n\n");
+}
+
+template<typename T> std::vector<T> min_max(std::vector<T> &vec)
+{
+  auto result = std::minmax_element(vec.begin(),vec.end());
+  vec[0]=*result.first;
+  vec[1]=*result.second;  
+  return vec;
 }
 
 #endif
