@@ -2069,8 +2069,7 @@ int mastercore::ContractDex_CANCEL_EVERYTHING(const uint256& txid, unsigned int 
 {
     int rc = METADEX_ERROR -40;
     bool bValid = false;
-    int64_t factorH = factorE;
-
+    
     for (cd_PropertiesMap::iterator my_it = contractdex.begin(); my_it != contractdex.end(); ++my_it)
     {
         unsigned int prop = my_it->first;
@@ -2115,7 +2114,7 @@ int mastercore::ContractDex_CANCEL_EVERYTHING(const uint256& txid, unsigned int 
 	              int64_t den = conv.denominator().convert_to<int64_t>();
 	              int64_t balance = getMPbalance(addr,collateralCurrency,BALANCE);
 
-	              arith_uint256 amountMargin = (ConvertTo256(amountForSale) * ConvertTo256(marginRe) * ConvertTo256(num) / (ConvertTo256(den) * ConvertTo256(factorH)));
+	              arith_uint256 amountMargin = (ConvertTo256(amountForSale) * ConvertTo256(marginRe) * ConvertTo256(num) / (ConvertTo256(den) * ConvertTo256(factorE)));
 	              int64_t redeemed = ConvertTo64(amountMargin);
 
 	              // PrintToLog("collateral currency id of contract : %d\n",collateralCurrency);
@@ -2216,7 +2215,6 @@ int mastercore::ContractDex_CANCEL_IN_ORDER(const std::string& sender_addr, uint
 {
     int rc = METADEX_ERROR -40;
     bool bValid = false;
-    int64_t factorH = factorE;
     PrintToLog("Inside CANCEL IN ORDER\n");
 
     CMPSPInfo::Entry sp;

@@ -37,7 +37,7 @@ printf "\n________________________________________\n"
 printf "Base address to work with:\n"
 printf $ADDRBase
 
-N=100
+N=50
 
 amount_bitcoin=10
 amountbitcoin_baseaddr=100
@@ -51,7 +51,7 @@ collateral=5
 PAYMENTWINDOW=10
 MINFEEACCEPTED=0.00002980
 addrs_admin="QdgkwBVmz3uAtXiQdbbiAsTp1SDQS9zRt9"
-Kloops=10
+Kloops=20
 Ng=20
 
 printf " Creating the addresses ..."
