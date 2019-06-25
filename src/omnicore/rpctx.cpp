@@ -803,7 +803,7 @@ UniValue tl_sendtrade(const JSONRPCRequest& request)
   int64_t amountForSale = ParseAmount(request.params[2], isPropertyDivisible(propertyIdForSale));
   uint32_t propertyIdDesired = ParsePropertyId(request.params[3]);
   int64_t amountDesired = ParseAmount(request.params[4], isPropertyDivisible(propertyIdDesired));
-
+  
   // perform checks
   RequireExistingProperty(propertyIdForSale);
   RequireNotContract(propertyIdForSale);

@@ -79,25 +79,25 @@ UniValue tl_decodetransaction(const JSONRPCRequest& request)
     CCoinsViewCache viewTemp(&viewDummyTemp);
 
     if (request.params.size() > 1) {
-        std::vector<PrevTxsEntry> prevTxsParsed = ParsePrevTxs(request.params[1]);
-        InputsToView(prevTxsParsed, viewTemp);
+      std::vector<PrevTxsEntry> prevTxsParsed = ParsePrevTxs(request.params[1]);
+      InputsToView(prevTxsParsed, viewTemp);
     }
-
-    int blockHeight = 0;
-    if (request.params.size() > 2) {
-        blockHeight = request.params[2].get_int();
-    }
-
+    
+    // int blockHeight = 0;
+    // if (request.params.size() > 2) {
+    //   blockHeight = request.params[2].get_int();
+    // }
+    
     UniValue txObj(UniValue::VOBJ);
     int populateResult = -3331;
-/**
-TODO Figure out what's wrong with swap
+    /**
+       TODO Figure out what's wrong with swap
     {
         LOCK2(cs_main, cs_tx_cache);
         // temporarily switch global coins view cache for transaction inputs
         std::swap(view, viewTemp);
         // then get the results
-        populateResult = populateRPCTransactionObject(tx, uint256(), txObj, "", false, "", blockHeight);
+        populateResult = populateRPCTransactionObject(tx, uint256(), txObj, "", false, "", blockHeigh);
         // and restore the original, unpolluted coins view cache
         std::swap(viewTemp, view);
     }

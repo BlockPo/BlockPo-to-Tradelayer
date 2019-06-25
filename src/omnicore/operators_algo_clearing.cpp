@@ -545,15 +545,15 @@ void printing_path_maini(std::vector<std::map<std::string, std::string>> &it_pat
 void checking_zeronetted_bypath(std::vector<std::map<std::string, std::string>> path_maini)
 {
   long int contracts_closed = 0;
-  long int contracts_opened = 0;
-  extern VectorTLS *pt_open_incr_anypos; VectorTLS &open_incr_anypos = *pt_open_incr_anypos;
+  //long int contracts_opened = 0;
+  //extern VectorTLS *pt_open_incr_anypos; VectorTLS &open_incr_anypos = *pt_open_incr_anypos;
   
-  if (finding(path_maini[0]["status_src"], open_incr_anypos) && finding(path_maini[0]["status_trk"], open_incr_anypos))
-    contracts_opened = 2*std::stol(path_maini[0]["amount_trd"]);
-  else
-    contracts_opened = std::stol(path_maini[0]["amount_trd"]);
+  // if (finding(path_maini[0]["status_src"], open_incr_anypos) && finding(path_maini[0]["status_trk"], open_incr_anypos))
+  //   contracts_opened = 2*std::stol(path_maini[0]["amount_trd"]);
+  // else
+  //   contracts_opened = std::stol(path_maini[0]["amount_trd"]);
   
-  long int contracts_lives = std::stol(path_maini[0]["lives_src"])+std::stol(path_maini[0]["lives_trk"]);
+  //long int contracts_lives = std::stol(path_maini[0]["lives_src"])+std::stol(path_maini[0]["lives_trk"]);
   
   int idx_q = 0;
   /** Counting closed contracts. Netted eventes are followed by addrs_trk!! **/
@@ -594,11 +594,11 @@ void checking_zeronetted_bypath(std::vector<std::map<std::string, std::string>> 
   
   // PrintToLog("\ncontracts_opened = %d, contracts_closed = %d, contracts_lives = %d\n",
   // 	     contracts_opened, contracts_closed, contracts_lives);
-  if ( (contracts_opened - contracts_closed)-contracts_lives == 0 )
-    PrintToLog("\nChecking Zero Netted by Path:\n(contracts_opened - contracts_closed)-contracts_lives = %d\n",
-	       (contracts_opened - contracts_closed)-contracts_lives);
-  else
-    PrintToLog("¡¡Warning!! There is no zero netted event in the path");
+  // if ( (contracts_opened - contracts_closed)-contracts_lives == 0 )
+  //   PrintToLog("\nChecking Zero Netted by Path:\n(contracts_opened - contracts_closed)-contracts_lives = %d\n",
+  // 	       (contracts_opened - contracts_closed)-contracts_lives);
+  // else
+  //   PrintToLog("¡¡Warning!! There is no zero netted event in the path");
 }
 
 void computing_livesvectors_forlongshort(std::vector<std::map<std::string, std::string>> &it_path_main, std::vector<std::map<std::string, std::string>> &lives_longs, std::vector<std::map<std::string, std::string>> &lives_shorts)
@@ -712,7 +712,9 @@ void computing_settlement_exitprice(std::vector<std::map<std::string, std::strin
     }
   sum_oflives = sum_oflivesh;
   if ( sum_oflives == 0 )
-    PrintToLog("\nThis path does not have lives contracts!!\n");
+    {
+      //PrintToLog("\nThis path does not have lives contracts!!\n");
+    }
   else
     {
       listof_addresses_bypath(it_path_main, addrsv);
@@ -983,7 +985,7 @@ void checkzeronetted_bypath_ghostedges(std::vector<std::map<std::string, std::st
 	    }
 	}
     }
-  PrintToLog("\nLives in the Path - Lives settled : (%ld - %ld) = %ld\n", nonzero_lives, lives_settled, nonzero_lives - lives_settled);
+  //PrintToLog("\nLives in the Path - Lives settled : (%ld - %ld) = %ld\n", nonzero_lives, lives_settled, nonzero_lives - lives_settled);
 }
 
 long int checkpath_livesnonzero(std::vector<std::map<std::string, std::string>> path_maini)

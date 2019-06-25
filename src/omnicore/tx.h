@@ -406,6 +406,22 @@ struct FutureContractObject
   std::string fco_issuer;
 };
 
+struct TokenDataByName
+{
+  uint32_t data_denomination;
+  uint32_t data_blocks_until_expiration;
+  uint32_t data_notional_size;
+  uint32_t data_collateral_currency;
+  uint32_t data_margin_requirement;
+  uint32_t data_propertyId;
+
+  int data_init_block;
+  std::string data_name;
+  std::string data_subcategory;
+  std::string data_issuer;
+};
+
 struct FutureContractObject *getFutureContractObject(uint32_t property_type, std::string identifier);
+struct TokenDataByName *getTokenDataByName(std::string identifier);
 
 #endif // OMNICORE_TX_H

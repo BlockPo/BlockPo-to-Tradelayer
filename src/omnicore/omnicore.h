@@ -384,8 +384,10 @@ void lookingin_globalvector_pastlivesperpetuals(std::vector<std::map<std::string
 void lookingaddrs_inside_M_file(std::string addrs, MatrixTLS M_file, std::vector<std::map<std::string, std::string>> &lives_g, std::vector<std::map<std::string, std::string>> &lives_h);
 int finding_idxforaddress(std::string addrs, std::vector<std::map<std::string, std::string>> lives);
 void Filling_Twap_Vec(std::map<uint32_t, std::vector<uint64_t>> &twap_ele, std::map<uint32_t, std::vector<uint64_t>> &twap_vec,
-		      uint32_t property_traded, uint64_t effective_price, std::string name);
-
+		      uint32_t property_traded, uint32_t property_desired, uint64_t effective_price);
+void Filling_Twap_Vec(std::map<uint32_t, std::map<uint32_t, std::vector<uint64_t>>> &twap_ele,
+		      std::map<uint32_t, std::map<uint32_t, std::vector<uint64_t>>> &twap_vec,
+		      uint32_t property_traded, uint32_t property_desired, uint64_t effective_price);
 namespace mastercore
 {
   extern std::unordered_map<std::string, CMPTally> mp_tally_map;

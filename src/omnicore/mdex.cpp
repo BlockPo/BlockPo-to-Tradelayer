@@ -1274,316 +1274,318 @@ ui128 multiply_uint64_t(uint64_t &m, uint64_t &n)
 
 MatchReturnType x_Trade(CMPMetaDEx* const pnew)
 {
-    const uint32_t propertyForSale = pnew->getProperty();
-    const uint32_t propertyDesired = pnew->getDesProperty();
-    MatchReturnType NewReturn = NOTHING;
-    bool bBuyerSatisfied = false;
-    extern int volumeToVWAP;
-
-    // if (msc_debug_metadex1) PrintToLog("%s(%s: prop=%d, desprop=%d, desprice= %s);newo: %s\n",
-    //     __FUNCTION__, pnew->getAddr(), propertyForSale, propertyDesired, xToString(pnew->inversePrice()), pnew->ToString());
-
-    md_PricesMap* const ppriceMap = get_Prices(propertyDesired);
-
-    // nothing for the desired property exists in the market, sorry!
-    if (!ppriceMap) {
-        PrintToLog("%s()=%d:%s NOT FOUND ON THE MARKET\n", __FUNCTION__, NewReturn, getTradeReturnType(NewReturn));
-        return NewReturn;
-    }
-
-    // within the desired property map (given one property) iterate over the items looking at prices
-    for (md_PricesMap::iterator priceIt = ppriceMap->begin(); priceIt != ppriceMap->end(); ++priceIt) { // check all prices
-        const rational_t sellersPrice = priceIt->first;
-
-        // if (msc_debug_metadex2) PrintToLog("comparing prices: desprice %s needs to be GREATER THAN OR EQUAL TO %s\n",
-        //     xToString(pnew->inversePrice()), xToString(sellersPrice));
-
-        // Is the desired price check satisfied? The buyer's inverse price must be larger than that of the seller.
-        if (pnew->inversePrice() < sellersPrice) {
-            continue;
-        }
-
-        md_Set* const pofferSet = &(priceIt->second);
-
-        // at good (single) price level and property iterate over offers looking at all parameters to find the match
-        md_Set::iterator offerIt = pofferSet->begin();
-        while (offerIt != pofferSet->end())
-        {
-            // specific price, check all properties
-            const CMPMetaDEx* const pold = &(*offerIt);
-            assert(pold->unitPrice() == sellersPrice);
-
-            // if (msc_debug_metadex1) PrintToLog("Looking at existing: %s (its prop= %d, its des prop= %d) = %s\n",
-            //     xToString(sellersPrice), pold->getProperty(), pold->getDesProperty(), pold->ToString());
-
-            // does the desired property match?
-            if (pold->getDesProperty() != propertyForSale) {
-                ++offerIt;
-                continue;
-            }
-
-            // if (msc_debug_metadex1) PrintToLog("MATCH FOUND, Trade: %s = %s\n", xToString(sellersPrice), pold->ToString());
-
-            // match found, execute trade now!
-            const int64_t seller_amountForSale = pold->getAmountRemaining();
-            const int64_t buyer_amountOffered = pnew->getAmountRemaining();
-
-            // if (msc_debug_metadex1) PrintToLog("$$ trading using price: %s; seller: forsale=%d, desired=%d, remaining=%d, buyer amount offered=%d\n",
-            //     xToString(sellersPrice), pold->getAmountForSale(), pold->getAmountDesired(), pold->getAmountRemaining(), pnew->getAmountRemaining());
-            // if (msc_debug_metadex1) PrintToLog("$$ old: %s\n", pold->ToString());
-            // if (msc_debug_metadex1) PrintToLog("$$ new: %s\n", pnew->ToString());
-
-            ///////////////////////////
-
-            // preconditions
-            assert(0 < pold->getAmountRemaining());
-            assert(0 < pnew->getAmountRemaining());
-            assert(pnew->getProperty() != pnew->getDesProperty());
-            assert(pnew->getProperty() == pold->getDesProperty());
-            assert(pold->getProperty() == pnew->getDesProperty());
-            assert(pold->unitPrice() <= pnew->inversePrice());
-            assert(pnew->unitPrice() <= pold->inversePrice());
-
-	    //globalNumPrice = pold->getAmountDesired();
-	    //globalDenPrice = pold->getAmountForSale();
-	    globalNumPrice = 1;
-	    globalDenPrice = 1;
-            /*Lets gonna take the pnew->unitPrice() as the ALL unit price*/
-            /*unitPrice = 1 ALL on dUSD*/
-            ///////////////////////////
-
-            // First determine how many representable (indivisible) tokens Alice can
-            // purchase from Bob, using Bob's unit price
-            // This implies rounding down, since rounding up is impossible, and would
-            // require more tokens than Alice has
-            arith_uint256 iCouldBuy = (ConvertTo256(pnew->getAmountRemaining()) * ConvertTo256(pold->getAmountForSale())) / ConvertTo256(pold->getAmountDesired());
-
-            int64_t nCouldBuy = 0;
-            if (iCouldBuy < ConvertTo256(pold->getAmountRemaining())) {
-                nCouldBuy = ConvertTo64(iCouldBuy);
-            } else {
-                nCouldBuy = pold->getAmountRemaining();
-            }
-
-            if (nCouldBuy == 0) {
-                // if (msc_debug_metadex1) PrintToLog(
-                //         "-- buyer has not enough tokens for sale to purchase one unit!\n");
-                ++offerIt;
-                continue;
-            }
-
-            // If the amount Alice would have to pay to buy Bob's tokens at his price
-            // is fractional, always round UP the amount Alice has to pay
-            // This will always be better for Bob. Rounding in the other direction
-            // will always be impossible, because ot would violate Bob's accepted price
-            arith_uint256 iWouldPay = DivideAndRoundUp((ConvertTo256(nCouldBuy) * ConvertTo256(pold->getAmountDesired())), ConvertTo256(pold->getAmountForSale()));
-            int64_t nWouldPay = ConvertTo64(iWouldPay);
-
-            // If the resulting adjusted unit price is higher than Alice' price, the
-            // orders shall not execute, and no representable fill is made
-            const rational_t xEffectivePrice(nWouldPay, nCouldBuy);
-
-            if (xEffectivePrice > pnew->inversePrice())
-            {
-	      // if (msc_debug_metadex1) PrintToLog(
-	      //         "-- effective price is too expensive: %s\n", xToString(xEffectivePrice));
-	      ++offerIt;
-	      continue;
-            }
-
-            const int64_t buyer_amountGot = nCouldBuy;
-            const int64_t seller_amountGot = nWouldPay;
-            const int64_t buyer_amountLeft = pnew->getAmountRemaining() - seller_amountGot;
-            const int64_t seller_amountLeft = pold->getAmountRemaining() - buyer_amountGot;
-
-            // if (msc_debug_metadex1) PrintToLog("$$ buyer_got= %d, seller_got= %d, seller_left_for_sale= %d, buyer_still_for_sale= %d\n",
-            //     buyer_amountGot, seller_amountGot, seller_amountLeft, buyer_amountLeft);
-
-
-            // postconditions
-            assert(xEffectivePrice >= pold->unitPrice());
-            assert(xEffectivePrice <= pnew->inversePrice());
-            assert(0 <= seller_amountLeft);
-            assert(0 <= buyer_amountLeft);
-            assert(seller_amountForSale == seller_amountLeft + buyer_amountGot);
-            assert(buyer_amountOffered == buyer_amountLeft + seller_amountGot);
-
-	    /***********************************************************************************************/
-	    /** Finding Market Prices TOKEN1/TOKEN2 or TOKEN2/TOKEN1 **/
-	    
-	    PrintToLog("\n********************************************************************************\n");
-	    PrintToLog("\npnew->getProperty() = %d,\t pnew->getDesProperty() = %d\n", pnew->getProperty(), pnew->getDesProperty());
-	    
-	    int64_t pnew_forsale = pnew->getAmountForSale();
-	    int64_t pnew_desired = pnew->getAmountDesired();
-	    
-	    int64_t pold_forsale = pold->getAmountForSale();
-	    int64_t pold_desired = pold->getAmountDesired();
-	    
-	    rational_t market_priceratToken1_Token2(pold_desired, pold_forsale);
-	    int64_t market_priceToken1_Token2 = mastercore::RationalToInt64(market_priceratToken1_Token2);
-	    market_priceMap[pold->getProperty()][pold->getDesProperty()] = market_priceToken1_Token2;
-	    	    
-	    rational_t market_priceratToken2_Token1(pnew_desired, pnew_forsale);
-	    int64_t market_priceToken2_Token1 = mastercore::RationalToInt64(market_priceratToken2_Token1);
-	    market_priceMap[pnew->getProperty()][pnew->getDesProperty()] = market_priceToken2_Token1;
-	    	    
-	    PrintToLog("\npold_forsale = %s,\t pold_desired = %s\n",
-		       FormatDivisibleMP(pold_forsale), FormatDivisibleMP(pold_desired));
-	    PrintToLog("\npnew_forsale = %s,\t pnew_desired = %s\n",
-		       FormatDivisibleMP(pnew_forsale), FormatDivisibleMP(pnew_desired));
-	    
-	    /*************************************************************************************************/
-	    /** Finding VWAP Price **/
-	    
-	    PrintToLog("\n********************************************************************************\n");
-	    PrintToLog("\nbuyer_amountGot = %s,\t seller_amountGot = %s\n", FormatDivisibleMP(buyer_amountGot),
-		       FormatDivisibleMP(seller_amountGot));
-	    
-	    arith_uint256 numVWAPMapToken1_Token2_256t =
-	      mastercore::ConvertTo256(market_priceToken1_Token2)*mastercore::ConvertTo256(buyer_amountGot)/COIN;
-	    int64_t numVWAPMapToken1_Token2_64t = mastercore::ConvertTo64(numVWAPMapToken1_Token2_256t);
-	    
-	    arith_uint256 numVWAPMapToken2_Token1_256t =
-	      mastercore::ConvertTo256(market_priceToken2_Token1)*mastercore::ConvertTo256(seller_amountGot)/COIN;
-	    int64_t numVWAPMapToken2_Token1_64t = mastercore::ConvertTo64(numVWAPMapToken2_Token1_256t);
-	    
-	    numVWAPVector[pold->getProperty()][pold->getDesProperty()].push_back(numVWAPMapToken1_Token2_64t);
-	    denVWAPVector[pold->getProperty()][pold->getDesProperty()].push_back(buyer_amountGot);
-	    
-	    numVWAPVector[pnew->getProperty()][pnew->getDesProperty()].push_back(numVWAPMapToken2_Token1_64t);
-	    denVWAPVector[pnew->getProperty()][pnew->getDesProperty()].push_back(seller_amountGot);
-	    
-	    PrintToLog("numVWAPVector[pold->getProperty()][pold->getDesProperty()].size() = %d",
-	    	       numVWAPVector[pold->getProperty()][pold->getDesProperty()].size());
-	    PrintToLog("numVWAPVector[pnew->getProperty()][pnew->getDesProperty()].size() = %d",
-	    	       numVWAPVector[pnew->getProperty()][pnew->getDesProperty()].size());
-	    
-	    std::vector<int64_t> numVWAPpoldv(numVWAPVector[pold->getProperty()][pold->getDesProperty()].end()-
-					      std::min(int(numVWAPVector[pold->getProperty()][pold->getDesProperty()].size()),
-						       volumeToVWAP),
-					      numVWAPVector[pold->getProperty()][pold->getDesProperty()].end());
-	    std::vector<int64_t> denVWAPpoldv(denVWAPVector[pold->getProperty()][pold->getDesProperty()].end()-
-					      std::min(int(denVWAPVector[pold->getProperty()][pold->getDesProperty()].size()),
-						       volumeToVWAP),
-					      denVWAPVector[pold->getProperty()][pold->getDesProperty()].end());
-	    
-	    std::vector<int64_t> numVWAPpnewv(numVWAPVector[pnew->getProperty()][pnew->getDesProperty()].end()-
-					      std::min(int(numVWAPVector[pnew->getProperty()][pnew->getDesProperty()].size()),
-						       volumeToVWAP),
-					      numVWAPVector[pnew->getProperty()][pnew->getDesProperty()].end());
-	    std::vector<int64_t> denVWAPpnewv(denVWAPVector[pnew->getProperty()][pnew->getDesProperty()].end()-
-					      std::min(int(denVWAPVector[pnew->getProperty()][pnew->getDesProperty()].size()),
-						       volumeToVWAP),
-					      denVWAPVector[pnew->getProperty()][pnew->getDesProperty()].end());
-	    
-	    int64_t numVWAPpold = 0, denVWAPpold = 0;
-	    int64_t numVWAPpnew = 0, denVWAPpnew = 0;	    
-	    
-	    vwap_num_den(numVWAPpoldv, denVWAPpoldv, numVWAPpold, denVWAPpold);
-	    vwap_num_den(numVWAPpnewv, denVWAPpnewv, numVWAPpnew, denVWAPpnew);
-	    
-	    rational_t vwapPriceToken1_Token2RatV(numVWAPpold, denVWAPpold);
-	    int64_t vwapPriceToken1_Token2Int64V = mastercore::RationalToInt64(vwapPriceToken1_Token2RatV);
-	    
-	    rational_t vwapPriceToken2_Token1RatV(numVWAPpnew, denVWAPpnew);
-	    int64_t vwapPriceToken2_Token1Int64V = mastercore::RationalToInt64(vwapPriceToken2_Token1RatV);
-	    
-	    VWAPMapSubVector[pold->getProperty()][pold->getDesProperty()]=vwapPriceToken1_Token2Int64V;
-	    VWAPMapSubVector[pnew->getProperty()][pnew->getDesProperty()]=vwapPriceToken2_Token1Int64V;
-	    
-	    PrintToLog("\nVWAPMapSubVector[pold->getProperty()][pold->getDesProperty()] = %s\n",
-		       FormatDivisibleMP(VWAPMapSubVector[pold->getProperty()][pold->getDesProperty()]));
-	    PrintToLog("\nVWAPMapSubVector[pnew->getProperty()][pnew->getDesProperty()] = %s\n",
-		       FormatDivisibleMP(VWAPMapSubVector[pnew->getProperty()][pnew->getDesProperty()]));
-	    PrintToLog("\n********************************************************************************\n");
-	    
-	    /***********************************************************************************************/
-            int64_t buyer_amountGotAfterFee = buyer_amountGot;
-            int64_t tradingFee = 0;
-	    
-            // strip a 0.05% fee from non-OMNI pairs if fees are activated
-            /*if (IsFeatureActivated(FEATURE_FEES, pnew->getBlock()))
-            {
-	              if (pold->getProperty() > OMNI_PROPERTY_TALL && pold->getDesProperty() > OMNI_PROPERTY_TALL)
-                {
-		                int64_t feeDivider = 2000; // 0.05%
-		                tradingFee = buyer_amountGot / feeDivider;
-
-		                // subtract the fee from the amount the seller will receive
-		                buyer_amountGotAfterFee = buyer_amountGot - tradingFee;
-
-		                // add the fee to the fee cache  TODO: check the fees file
-		                // p_feecache->AddFee(pnew->getDesProperty(), pnew->getBlock(), tradingFee);
-	              } else {
-		                // if (msc_debug_fees) PrintToLog("Skipping fee reduction for trade match %s:%s as one of the properties is Omni\n", pold->getHash().GetHex(), pnew->getHash().GetHex());
-	              }
-            } */
-
-
-
-
-            // transfer the payment property from buyer to seller
-            assert(update_tally_map(pnew->getAddr(), pnew->getProperty(), -seller_amountGot, BALANCE));
-            assert(update_tally_map(pold->getAddr(), pold->getDesProperty(), seller_amountGot, BALANCE));
-
-            // transfer the market (the one being sold) property from seller to buyer
-            assert(update_tally_map(pold->getAddr(), pold->getProperty(), -buyer_amountGot, METADEX_RESERVE));
-            assert(update_tally_map(pnew->getAddr(), pnew->getDesProperty(), buyer_amountGot, BALANCE));
-
-            /**
-             * Fees calculations for maker and taker.
-             *
-             *
-             */
-            //mastercore::MetaDEx_Fees(&pnew, &pold, buyer_amountGot);
-
-            NewReturn = TRADED;
-
-            CMPMetaDEx seller_replacement = *pold; // < can be moved into last if block
-            seller_replacement.setAmountRemaining(seller_amountLeft, "seller_replacement");
-
-            pnew->setAmountRemaining(buyer_amountLeft, "buyer");
-
-            if (0 < buyer_amountLeft)
-                NewReturn = TRADED_MOREINBUYER;
-
-            if (0 == buyer_amountLeft)
-                bBuyerSatisfied = true;
-
-            if (0 < seller_amountLeft)
-                NewReturn = TRADED_MOREINSELLER;
-
-            // if (msc_debug_metadex1) PrintToLog("==== TRADED !!! %u=%s\n", NewReturn, getTradeReturnType(NewReturn));
-
-            // record the trade in MPTradeList
-            t_tradelistdb->recordMatchedTrade(pold->getHash(), pnew->getHash(), // < might just pass pold, pnew
-                pold->getAddr(), pnew->getAddr(), pold->getDesProperty(), pnew->getDesProperty(), seller_amountGot, buyer_amountGotAfterFee, pnew->getBlock(), tradingFee);
-
-            // if (msc_debug_metadex1) PrintToLog("++ erased old: %s\n", offerIt->ToString());
-            // erase the old seller element
-            pofferSet->erase(offerIt++);
-
-            // insert the updated one in place of the old
-            if (0 < seller_replacement.getAmountRemaining())
-            {
-                // PrintToLog("++ inserting seller_replacement: %s\n", seller_replacement.ToString());
-                pofferSet->insert(seller_replacement);
-            }
-
-            if (bBuyerSatisfied)
-            {
-                assert(buyer_amountLeft == 0);
-                break;
-            }
-        } // specific price, check all properties
-
-        if (bBuyerSatisfied) break;
-    } // check all prices
-
-    // PrintToLog("%s()=%d:%s\n", __FUNCTION__, NewReturn, getTradeReturnType(NewReturn));
-
+  PrintToLog("\nx_Trade MDEx start\n");
+  
+  const uint32_t propertyForSale = pnew->getProperty();
+  const uint32_t propertyDesired = pnew->getDesProperty();
+  MatchReturnType NewReturn = NOTHING;
+  bool bBuyerSatisfied = false;
+  extern int volumeToVWAP;
+  
+  // if (msc_debug_metadex1) PrintToLog("%s(%s: prop=%d, desprop=%d, desprice= %s);newo: %s\n",
+  //     __FUNCTION__, pnew->getAddr(), propertyForSale, propertyDesired, xToString(pnew->inversePrice()), pnew->ToString());
+  
+  md_PricesMap* const ppriceMap = get_Prices(propertyDesired);
+  
+  // Nothing for the desired property exists in the market !!
+  if (!ppriceMap) {
+    PrintToLog("%s()=%d:%s FOUND ON THE MARKET\n", __FUNCTION__, NewReturn, getTradeReturnType(NewReturn));
     return NewReturn;
+  }
+  
+  // Within the desired property map (given one property) iterate over the items looking at prices
+  for (md_PricesMap::iterator priceIt = ppriceMap->begin(); priceIt != ppriceMap->end(); ++priceIt) { // check all prices
+
+    const rational_t sellersPrice = priceIt->first;
+    
+    // if (msc_debug_metadex2) PrintToLog("comparing prices: desprice %s needs to be GREATER THAN OR EQUAL TO %s\n",
+    //     xToString(pnew->inversePrice()), xToString(sellersPrice));
+    
+    // Is the desired price check satisfied? The buyer's inverse price must be larger than that of the seller.
+    if (pnew->inversePrice() < sellersPrice) {
+      continue;
+    }
+    
+    md_Set* const pofferSet = &(priceIt->second);
+    
+    // at good (single) price level and property iterate over offers looking at all parameters to find the match
+    md_Set::iterator offerIt = pofferSet->begin();
+    while (offerIt != pofferSet->end())
+      {
+	// specific price, check all properties
+	const CMPMetaDEx* const pold = &(*offerIt);
+	assert(pold->unitPrice() == sellersPrice);
+	
+	// if (msc_debug_metadex1) PrintToLog("Looking at existing: %s (its prop= %d, its des prop= %d) = %s\n",
+	//     xToString(sellersPrice), pold->getProperty(), pold->getDesProperty(), pold->ToString());
+	
+	// does the desired property match?
+	if (pold->getDesProperty() != propertyForSale) {
+	  ++offerIt;
+	  continue;
+	}
+	
+	// if (msc_debug_metadex1) PrintToLog("MATCH FOUND, Trade: %s = %s\n", xToString(sellersPrice), pold->ToString());
+	
+	// match found, execute trade now!
+	const int64_t seller_amountForSale = pold->getAmountRemaining();
+	const int64_t buyer_amountOffered = pnew->getAmountRemaining();
+	
+	// if (msc_debug_metadex1) PrintToLog("$$ trading using price: %s; seller: forsale=%d, desired=%d, remaining=%d, buyer amount offered=%d\n",
+	//     xToString(sellersPrice), pold->getAmountForSale(), pold->getAmountDesired(), pold->getAmountRemaining(), pnew->getAmountRemaining());
+	// if (msc_debug_metadex1) PrintToLog("$$ old: %s\n", pold->ToString());
+	// if (msc_debug_metadex1) PrintToLog("$$ new: %s\n", pnew->ToString());
+	
+	///////////////////////////
+	
+	// preconditions
+	assert(0 < pold->getAmountRemaining());
+	assert(0 < pnew->getAmountRemaining());
+	assert(pnew->getProperty() != pnew->getDesProperty());
+	assert(pnew->getProperty() == pold->getDesProperty());
+	assert(pold->getProperty() == pnew->getDesProperty());
+	assert(pold->unitPrice() <= pnew->inversePrice());
+	assert(pnew->unitPrice() <= pold->inversePrice());
+	
+	//globalNumPrice = pold->getAmountDesired();
+	//globalDenPrice = pold->getAmountForSale();
+	globalNumPrice = 1;
+	globalDenPrice = 1;
+	/*Lets gonna take the pnew->unitPrice() as the ALL unit price*/
+	/*unitPrice = 1 ALL on dUSD*/
+	///////////////////////////
+	
+	// First determine how many representable (indivisible) tokens Alice can
+	// purchase from Bob, using Bob's unit price
+	// This implies rounding down, since rounding up is impossible, and would
+	// require more tokens than Alice has
+	arith_uint256 iCouldBuy = (ConvertTo256(pnew->getAmountRemaining()) * ConvertTo256(pold->getAmountForSale())) / ConvertTo256(pold->getAmountDesired());
+	
+	int64_t nCouldBuy = 0;
+	if (iCouldBuy < ConvertTo256(pold->getAmountRemaining())) {
+	  nCouldBuy = ConvertTo64(iCouldBuy);
+	} else {
+	  nCouldBuy = pold->getAmountRemaining();
+	}
+	
+	if (nCouldBuy == 0) {
+	  // if (msc_debug_metadex1) PrintToLog(
+	  //         "-- buyer has not enough tokens for sale to purchase one unit!\n");
+	  ++offerIt;
+	  continue;
+	}
+	
+	// If the amount Alice would have to pay to buy Bob's tokens at his price
+	// is fractional, always round UP the amount Alice has to pay
+	// This will always be better for Bob. Rounding in the other direction
+	// will always be impossible, because ot would violate Bob's accepted price
+	arith_uint256 iWouldPay = DivideAndRoundUp((ConvertTo256(nCouldBuy) * ConvertTo256(pold->getAmountDesired())), ConvertTo256(pold->getAmountForSale()));
+	int64_t nWouldPay = ConvertTo64(iWouldPay);
+	
+	// If the resulting adjusted unit price is higher than Alice' price, the
+	// orders shall not execute, and no representable fill is made
+	const rational_t xEffectivePrice(nWouldPay, nCouldBuy);
+	
+	if (xEffectivePrice > pnew->inversePrice())
+	  {
+	    // if (msc_debug_metadex1) PrintToLog(
+	    //         "-- effective price is too expensive: %s\n", xToString(xEffectivePrice));
+	    ++offerIt;
+	    continue;
+	  }
+	
+	const int64_t buyer_amountGot = nCouldBuy;
+	const int64_t seller_amountGot = nWouldPay;
+	const int64_t buyer_amountLeft = pnew->getAmountRemaining() - seller_amountGot;
+	const int64_t seller_amountLeft = pold->getAmountRemaining() - buyer_amountGot;
+	
+	// if (msc_debug_metadex1) PrintToLog("$$ buyer_got= %d, seller_got= %d, seller_left_for_sale= %d, buyer_still_for_sale= %d\n",
+	//     buyer_amountGot, seller_amountGot, seller_amountLeft, buyer_amountLeft);
+	
+	
+	// postconditions
+	assert(xEffectivePrice >= pold->unitPrice());
+	assert(xEffectivePrice <= pnew->inversePrice());
+	assert(0 <= seller_amountLeft);
+	assert(0 <= buyer_amountLeft);
+	assert(seller_amountForSale == seller_amountLeft + buyer_amountGot);
+	assert(buyer_amountOffered == buyer_amountLeft + seller_amountGot);
+	
+	/***********************************************************************************************/
+	/** Finding Market Prices TOKEN1/TOKEN2 or TOKEN2/TOKEN1 **/
+	
+	PrintToLog("\n********************************************************************************\n");
+	PrintToLog("\npnew->getProperty() = %d,\t pnew->getDesProperty() = %d\n", pnew->getProperty(), pnew->getDesProperty());
+	    
+	int64_t pnew_forsale = pnew->getAmountForSale();
+	int64_t pnew_desired = pnew->getAmountDesired();
+	
+	int64_t pold_forsale = pold->getAmountForSale();
+	int64_t pold_desired = pold->getAmountDesired();
+	
+	rational_t market_priceratToken1_Token2(pold_desired, pold_forsale);
+	int64_t market_priceToken1_Token2 = mastercore::RationalToInt64(market_priceratToken1_Token2);
+	market_priceMap[pold->getProperty()][pold->getDesProperty()] = market_priceToken1_Token2;
+	
+	rational_t market_priceratToken2_Token1(pnew_desired, pnew_forsale);
+	int64_t market_priceToken2_Token1 = mastercore::RationalToInt64(market_priceratToken2_Token1);
+	market_priceMap[pnew->getProperty()][pnew->getDesProperty()] = market_priceToken2_Token1;
+	
+	PrintToLog("\npold_forsale = %s,\t pold_desired = %s\n",
+		   FormatDivisibleMP(pold_forsale), FormatDivisibleMP(pold_desired));
+	PrintToLog("\npnew_forsale = %s,\t pnew_desired = %s\n",
+		   FormatDivisibleMP(pnew_forsale), FormatDivisibleMP(pnew_desired));
+	
+	/*************************************************************************************************/
+	/** Finding VWAP Price **/
+	
+	PrintToLog("\n********************************************************************************\n");
+	PrintToLog("\nbuyer_amountGot = %s,\t seller_amountGot = %s\n", FormatDivisibleMP(buyer_amountGot),
+		   FormatDivisibleMP(seller_amountGot));
+	
+	arith_uint256 numVWAPMapToken1_Token2_256t =
+	  mastercore::ConvertTo256(market_priceToken1_Token2)*mastercore::ConvertTo256(buyer_amountGot)/COIN;
+	int64_t numVWAPMapToken1_Token2_64t = mastercore::ConvertTo64(numVWAPMapToken1_Token2_256t);
+	
+	arith_uint256 numVWAPMapToken2_Token1_256t =
+	  mastercore::ConvertTo256(market_priceToken2_Token1)*mastercore::ConvertTo256(seller_amountGot)/COIN;
+	int64_t numVWAPMapToken2_Token1_64t = mastercore::ConvertTo64(numVWAPMapToken2_Token1_256t);
+	
+	numVWAPVector[pold->getProperty()][pold->getDesProperty()].push_back(numVWAPMapToken1_Token2_64t);
+	denVWAPVector[pold->getProperty()][pold->getDesProperty()].push_back(buyer_amountGot);
+	
+	numVWAPVector[pnew->getProperty()][pnew->getDesProperty()].push_back(numVWAPMapToken2_Token1_64t);
+	denVWAPVector[pnew->getProperty()][pnew->getDesProperty()].push_back(seller_amountGot);
+	
+	PrintToLog("numVWAPVector[pold->getProperty()][pold->getDesProperty()].size() = %d",
+		   numVWAPVector[pold->getProperty()][pold->getDesProperty()].size());
+	PrintToLog("numVWAPVector[pnew->getProperty()][pnew->getDesProperty()].size() = %d",
+		   numVWAPVector[pnew->getProperty()][pnew->getDesProperty()].size());
+	
+	std::vector<int64_t> numVWAPpoldv(numVWAPVector[pold->getProperty()][pold->getDesProperty()].end()-
+					  std::min(int(numVWAPVector[pold->getProperty()][pold->getDesProperty()].size()),
+						   volumeToVWAP),
+					  numVWAPVector[pold->getProperty()][pold->getDesProperty()].end());
+	std::vector<int64_t> denVWAPpoldv(denVWAPVector[pold->getProperty()][pold->getDesProperty()].end()-
+					  std::min(int(denVWAPVector[pold->getProperty()][pold->getDesProperty()].size()),
+						   volumeToVWAP),
+					  denVWAPVector[pold->getProperty()][pold->getDesProperty()].end());
+	
+	std::vector<int64_t> numVWAPpnewv(numVWAPVector[pnew->getProperty()][pnew->getDesProperty()].end()-
+					  std::min(int(numVWAPVector[pnew->getProperty()][pnew->getDesProperty()].size()),
+						   volumeToVWAP),
+					  numVWAPVector[pnew->getProperty()][pnew->getDesProperty()].end());
+	std::vector<int64_t> denVWAPpnewv(denVWAPVector[pnew->getProperty()][pnew->getDesProperty()].end()-
+					  std::min(int(denVWAPVector[pnew->getProperty()][pnew->getDesProperty()].size()),
+						   volumeToVWAP),
+					  denVWAPVector[pnew->getProperty()][pnew->getDesProperty()].end());
+	
+	int64_t numVWAPpold = 0, denVWAPpold = 0;
+	int64_t numVWAPpnew = 0, denVWAPpnew = 0;	    
+	
+	vwap_num_den(numVWAPpoldv, denVWAPpoldv, numVWAPpold, denVWAPpold);
+	vwap_num_den(numVWAPpnewv, denVWAPpnewv, numVWAPpnew, denVWAPpnew);
+	
+	rational_t vwapPriceToken1_Token2RatV(numVWAPpold, denVWAPpold);
+	int64_t vwapPriceToken1_Token2Int64V = mastercore::RationalToInt64(vwapPriceToken1_Token2RatV);
+	
+	rational_t vwapPriceToken2_Token1RatV(numVWAPpnew, denVWAPpnew);
+	int64_t vwapPriceToken2_Token1Int64V = mastercore::RationalToInt64(vwapPriceToken2_Token1RatV);
+	
+	VWAPMapSubVector[pold->getProperty()][pold->getDesProperty()]=vwapPriceToken1_Token2Int64V;
+	VWAPMapSubVector[pnew->getProperty()][pnew->getDesProperty()]=vwapPriceToken2_Token1Int64V;
+	
+	PrintToLog("\nVWAPMapSubVector[pold->getProperty()][pold->getDesProperty()] = %s\n",
+		   FormatDivisibleMP(VWAPMapSubVector[pold->getProperty()][pold->getDesProperty()]));
+	PrintToLog("\nVWAPMapSubVector[pnew->getProperty()][pnew->getDesProperty()] = %s\n",
+		   FormatDivisibleMP(VWAPMapSubVector[pnew->getProperty()][pnew->getDesProperty()]));
+	PrintToLog("\n********************************************************************************\n");
+	
+	/***********************************************************************************************/
+	int64_t buyer_amountGotAfterFee = buyer_amountGot;
+	int64_t tradingFee = 0;
+	
+	// strip a 0.05% fee from non-OMNI pairs if fees are activated
+	/*if (IsFeatureActivated(FEATURE_FEES, pnew->getBlock()))
+	  {
+	  if (pold->getProperty() > OMNI_PROPERTY_TALL && pold->getDesProperty() > OMNI_PROPERTY_TALL)
+	  {
+	  int64_t feeDivider = 2000; // 0.05%
+	  tradingFee = buyer_amountGot / feeDivider;
+	  
+	  // subtract the fee from the amount the seller will receive
+	  buyer_amountGotAfterFee = buyer_amountGot - tradingFee;
+	  
+	  // add the fee to the fee cache  TODO: check the fees file
+	  // p_feecache->AddFee(pnew->getDesProperty(), pnew->getBlock(), tradingFee);
+	              } else {
+		      // if (msc_debug_fees) PrintToLog("Skipping fee reduction for trade match %s:%s as one of the properties is Omni\n", pold->getHash().GetHex(), pnew->getHash().GetHex());
+	              }
+		      } */
+	
+	
+	
+	
+	// transfer the payment property from buyer to seller
+	assert(update_tally_map(pnew->getAddr(), pnew->getProperty(), -seller_amountGot, BALANCE));
+	assert(update_tally_map(pold->getAddr(), pold->getDesProperty(), seller_amountGot, BALANCE));
+	
+	// transfer the market (the one being sold) property from seller to buyer
+	assert(update_tally_map(pold->getAddr(), pold->getProperty(), -buyer_amountGot, METADEX_RESERVE));
+	assert(update_tally_map(pnew->getAddr(), pnew->getDesProperty(), buyer_amountGot, BALANCE));
+	
+	/**
+	 * Fees calculations for maker and taker.
+	 *
+	 *
+	 */
+	//mastercore::MetaDEx_Fees(&pnew, &pold, buyer_amountGot);
+	
+	NewReturn = TRADED;
+	
+	CMPMetaDEx seller_replacement = *pold; // < can be moved into last if block
+	seller_replacement.setAmountRemaining(seller_amountLeft, "seller_replacement");
+	
+	pnew->setAmountRemaining(buyer_amountLeft, "buyer");
+	
+	if (0 < buyer_amountLeft)
+	  NewReturn = TRADED_MOREINBUYER;
+	
+	if (0 == buyer_amountLeft)
+	  bBuyerSatisfied = true;
+	
+	if (0 < seller_amountLeft)
+	  NewReturn = TRADED_MOREINSELLER;
+	
+	// if (msc_debug_metadex1) PrintToLog("==== TRADED !!! %u=%s\n", NewReturn, getTradeReturnType(NewReturn));	  
+	// record the trade in MPTradeList
+	t_tradelistdb->recordMatchedTrade(pold->getHash(), pnew->getHash(), // < might just pass pold, pnew
+					  pold->getAddr(), pnew->getAddr(), pold->getDesProperty(), pnew->getDesProperty(), seller_amountGot, buyer_amountGotAfterFee, pnew->getBlock(), tradingFee);
+	
+	// if (msc_debug_metadex1) PrintToLog("++ erased old: %s\n", offerIt->ToString());
+	// erase the old seller element
+	pofferSet->erase(offerIt++);
+	
+	// insert the updated one in place of the old
+	if (0 < seller_replacement.getAmountRemaining())
+	  {
+	    // PrintToLog("++ inserting seller_replacement: %s\n", seller_replacement.ToString());
+	    pofferSet->insert(seller_replacement);
+	  }
+	
+	if (bBuyerSatisfied)
+	  {
+	    assert(buyer_amountLeft == 0);
+	    break;
+	  }
+      } // specific price, check all properties
+    
+    if (bBuyerSatisfied) break;
+  } // check all prices
+  
+    // PrintToLog("%s()=%d:%s\n", __FUNCTION__, NewReturn, getTradeReturnType(NewReturn));
+  
+  return NewReturn;
 }
 
 ///////////////////////////////////////
@@ -2368,29 +2370,29 @@ int mastercore::ContractDex_CLOSE_POSITION(const uint256& txid, unsigned int blo
 
 int64_t mastercore::getPairMarketPrice(std::string num, std::string den)
 {
-    LOCK(cs_tally);
-    uint32_t nextSPID = _my_sps->peekNextSPID(1);
-
-    uint32_t numId = 0;
-    uint32_t denId = 0;
-
-    for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
+  LOCK(cs_tally);
+  uint32_t nextSPID = _my_sps->peekNextSPID(1);
+  
+  uint32_t numId = 0;
+  uint32_t denId = 0;
+  
+  for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
     {
-        CMPSPInfo::Entry sp;
-        if (_my_sps->getSP(propertyId, sp))
+      CMPSPInfo::Entry sp;
+      if (_my_sps->getSP(propertyId, sp))
        	{
-	          if ( sp.name == num )
-	          {
-	              PrintToLog("\npropertyId num: %d\n", propertyId);
-	              numId = propertyId;
-	          }
-	          if ( sp.name == den )
-	          {
-	              PrintToLog("\npropertyId den: %d\n", propertyId);
-	              denId = propertyId;
-	          }
-	      }
+	  if ( sp.name == num )
+	    {
+	      PrintToLog("\npropertyId num: %d\n", propertyId);
+	      numId = propertyId;
+	    }
+	  if ( sp.name == den )
+	    {
+	      PrintToLog("\npropertyId den: %d\n", propertyId);
+	      denId = propertyId;
+	    }
+	}
     }
-
-    return market_priceMap[numId][denId];
+  
+  return market_priceMap[numId][denId];
 }

@@ -481,13 +481,13 @@ UniValue tl_getbalance(const JSONRPCRequest& request)
             + HelpExampleCli("tl_getbalance", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" 1")
             + HelpExampleRpc("tl_getbalance", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", 1")
         );
-
+    
     std::string address = ParseAddress(request.params[0]);
     uint32_t propertyId = ParsePropertyId(request.params[1]);
-
-    RequireExistingProperty(propertyId);
-    RequireNotContract(propertyId);
-
+    
+    // RequireExistingProperty(propertyId);
+    // RequireNotContract(propertyId);
+    
     UniValue balanceObj(UniValue::VOBJ);
     BalanceToJSON(address, propertyId, balanceObj, isPropertyDivisible(propertyId));
 
@@ -1658,14 +1658,14 @@ UniValue tl_getorderbook(const JSONRPCRequest& request)
             + HelpExampleCli("tl_getorderbook", "2")
             + HelpExampleRpc("tl_getorderbook", "2")
 			    );
-
+    
     bool filterDesired = (request.params.size() > 1);
     uint32_t propertyIdForSale = ParsePropertyId(request.params[0]);
     uint32_t propertyIdDesired = 0;
-
+    
     RequireExistingProperty(propertyIdForSale);
     RequireNotContract(propertyIdForSale);
-
+    
     if (filterDesired) {
         propertyIdDesired = ParsePropertyId(request.params[1]);
         RequireExistingProperty(propertyIdDesired);
