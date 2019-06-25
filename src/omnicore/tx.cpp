@@ -3105,7 +3105,7 @@ int CMPTransaction::logicMath_AcceptOfferBTC()
 struct FutureContractObject *getFutureContractObject(uint32_t property_type, std::string identifier)
 {
   struct FutureContractObject *pt_fco = new FutureContractObject;
-
+  
   LOCK(cs_tally);
   uint32_t nextSPID = _my_sps->peekNextSPID(1);
   for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
@@ -3142,4 +3142,30 @@ struct FutureContractObject *getFutureContractObject(uint32_t property_type, std
 	}
     }
   return pt_fco;
+}
+
+struct TokenDataByName *getTokenDataByName(std::string identifier)
+{
+  struct TokenDataByName *pt_data = new TokenDataByName;
+  
+  LOCK(cs_tally);
+  uint32_t nextSPID = _my_sps->peekNextSPID(1);
+  for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
+    {
+      CMPSPInfo::Entry sp;
+      if (_my_sps->getSP(propertyId, sp) && sp.name == identifier)
+	{
+	  pt_data->data_denomination = sp.denomination;
+	  pt_data->data_blocks_until_expiration = sp.blocks_until_expiration;
+	  pt_data->data_notional_size = sp.notional_size;
+	  pt_data->data_collateral_currency = sp.collateral_currency;
+	  pt_data->data_margin_requirement = sp.margin_requirement;
+	  pt_data->data_name = sp.name;
+	  pt_data->data_subcategory = sp.subcategory;
+	  pt_data->data_issuer = sp.issuer;
+	  pt_data->data_init_block = sp.init_block;
+	  pt_data->data_propertyId = propertyId;
+	}
+    }
+  return pt_data;
 }

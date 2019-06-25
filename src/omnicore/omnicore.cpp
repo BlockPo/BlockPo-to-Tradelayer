@@ -170,9 +170,9 @@ extern std::string setExoduss;
 /************************************************/
 /** TWAP containers **/
 extern std::map<uint32_t, std::vector<uint64_t>> cdextwap_ele;
-extern std::map<uint32_t, std::vector<uint64_t>> mdextwap_ele;
 extern std::map<uint32_t, std::vector<uint64_t>> cdextwap_vec;
-extern std::map<uint32_t, std::vector<uint64_t>> mdextwap_vec;
+extern std::map<uint32_t, std::map<uint32_t, std::vector<uint64_t>>> mdextwap_ele;
+extern std::map<uint32_t, std::map<uint32_t, std::vector<uint64_t>>> mdextwap_vec;
 /************************************************/
 extern std::map<uint32_t, std::map<std::string, double>> addrs_upnlc;
 extern std::map<std::string, int64_t> sum_upnls;
@@ -2149,14 +2149,36 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
     settlement_algorithm_fifo(M_file);
     /**********************************************************************/
     /** TWAP vector **/
-    PrintToLog("\nTWAP vector CDEx = \n");
+    
+    PrintToLog("\nTWAP Prices = \n");
     struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, "ALL F18");
     uint32_t property_traded = pfuture->fco_propertyId;
-    print_stdvector(cdextwap_ele[property_traded]);
-    uint64_t numerator = accumulate(cdextwap_ele[property_traded].begin(), cdextwap_ele[property_traded].end(), 0.0);
-    rational_t twap_priceRat(numerator/COIN, cdextwap_ele[property_traded].size());
-    int64_t twap_price = mastercore::RationalToInt64(twap_priceRat);
-    PrintToLog("\nTvwap Price = %s\n", FormatDivisibleMP(twap_price));
+    
+    PrintToLog("\nVector CDExtwap_vec =\n");
+    for (unsigned int i = 0; i < cdextwap_vec[property_traded].size(); i++)
+      PrintToLog("%s\n", FormatDivisibleMP(cdextwap_vec[property_traded][i]));
+    
+    uint64_t num_cdex = accumulate(cdextwap_vec[property_traded].begin(), cdextwap_vec[property_traded].end(), 0.0);
+    rational_t twap_priceRatCDEx(num_cdex/COIN, cdextwap_vec[property_traded].size());
+    int64_t twap_priceCDEx = mastercore::RationalToInt64(twap_priceRatCDEx);
+    PrintToLog("\nTvwap Price CDEx = %s\n", FormatDivisibleMP(twap_priceCDEx));
+    
+    /**********************************************************************/
+    
+    struct TokenDataByName *pfuture_ALL = getTokenDataByName("ALL");
+    struct TokenDataByName *pfuture_USD = getTokenDataByName("dUSD");
+    uint32_t property_all = pfuture_ALL->data_propertyId;
+    uint32_t property_usd = pfuture_USD->data_propertyId;
+    
+    PrintToLog("\nVector MDExtwap_vec =\n");
+    for (unsigned int i = 0; i < mdextwap_vec[property_all][property_usd].size(); i++)
+      PrintToLog("%s\n", FormatDivisibleMP(mdextwap_vec[property_all][property_usd][i]));
+    
+    uint64_t num_mdex = accumulate(mdextwap_vec[property_all][property_usd].begin(), mdextwap_vec[property_all][property_usd].end(), 0.0);
+    rational_t twap_priceRatMDEx(num_mdex/COIN, mdextwap_vec[property_all][property_usd].size());
+    int64_t twap_priceMDEx = mastercore::RationalToInt64(twap_priceRatMDEx);
+    PrintToLog("\nTvwap Price MDEx = %s\n", FormatDivisibleMP(twap_priceMDEx));
+    
     /**********************************************************************/
     /** Unallocating Dynamic Memory **/
     //path_elef.clear();
@@ -3340,7 +3362,7 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
 
   int64_t volumeALL64_t = 0;
   extern volatile int64_t factorALLtoLTC;
-
+  
   /********************************************************************/
   if (prop1 == OMNI_PROPERTY_ALL)
     {
@@ -3358,12 +3380,31 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
       volumeALL64_t = mastercore::ConvertTo64(volumeALL256_t);
       // PrintToLog("ALLs involved in the traded 64 Bits ~ %s ALL\n", FormatDivisibleMP(volumeALL64_t));
     }
-
+  
   // PrintToLog("Number of Traded Contracts ~ %s LTC\n", FormatDivisibleMP(volumeALL64_t));
   // PrintToLog("\nGlobal LTC Volume No Updated: CMPMetaDEx = %s \n", FormatDivisibleMP(globalVolumeALL_LTC));
   globalVolumeALL_LTC += volumeALL64_t;
   // PrintToLog("\nGlobal LTC Volume Updated: CMPMetaDEx = %s\n", FormatDivisibleMP(globalVolumeALL_LTC));
-
+  
+  /****************************************************/
+  /** Building TWAP vector MDEx **/  
+  
+  struct TokenDataByName *pfuture_ALL = getTokenDataByName("ALL");
+  struct TokenDataByName *pfuture_USD = getTokenDataByName("dUSD");
+  
+  uint32_t property_all = pfuture_ALL->data_propertyId;
+  uint32_t property_usd = pfuture_USD->data_propertyId;
+  
+  Filling_Twap_Vec(mdextwap_ele, mdextwap_vec, property_all, property_usd, market_priceMap[property_all][property_usd]);
+  PrintToLog("\nMDExtwap_ele.size() = %d\t property_all = %d\t property_usd = %d\t market_priceMap = %s\n",
+	     mdextwap_ele[property_all][property_usd].size(), property_all, property_usd,
+	     FormatDivisibleMP(market_priceMap[property_all][property_usd]));
+  PrintToLog("\nVector MDExtwap_ele =\n");
+  for (unsigned int i = 0; i < mdextwap_ele[property_all][property_usd].size(); i++)
+    PrintToLog("%s\n", FormatDivisibleMP(mdextwap_ele[property_all][property_usd][i]));
+  
+  /****************************************************/
+  
   Status status;
   if (pdb)
     {
@@ -3454,10 +3495,14 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   // for (it_path_ele = path_ele.begin(); it_path_ele != path_ele.end(); ++it_path_ele) printing_edges_database(*it_path_ele);
   
   /********************************************/
-  /** Building TWAP vector **/
-  Filling_Twap_Vec(cdextwap_ele, cdextwap_vec, property_traded, effective_price, "CDEx");
+  /** Building TWAP vector CDEx **/
+  
+  Filling_Twap_Vec(cdextwap_ele, cdextwap_vec, property_traded, 0, effective_price);
   PrintToLog("\ncdextwap_ele.size() = %d\n", cdextwap_ele[property_traded].size());
-  print_stdvector(cdextwap_ele[property_traded]);
+  PrintToLog("\nVector CDExtwap_ele =\n");
+  for (unsigned int i = 0; i < cdextwap_ele[property_traded].size(); i++)
+    PrintToLog("%s\n", FormatDivisibleMP(cdextwap_ele[property_traded][i]));
+  
   /********************************************/
   
   // loopForUPNL(path_ele, path_eleh, path_length, address1, address2, s_maker0, s_taker0, UPNL1, UPNL2, effective_price, nCouldBuy0);  
@@ -3564,32 +3609,55 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
 }
 
 void Filling_Twap_Vec(std::map<uint32_t, std::vector<uint64_t>> &twap_ele, std::map<uint32_t, std::vector<uint64_t>> &twap_vec,
-		      uint32_t property_traded, uint64_t effective_price, std::string name)
+		      uint32_t property_traded, uint32_t property_desired, uint64_t effective_price)
 {
   int nBlockNow = GetHeight();
   std::vector<uint64_t> twap_minmax;
-  PrintToLog("\nCheck here:\t nBlockNow = %d\t twapBlockg = %d\n", nBlockNow, twapBlockg);
+  PrintToLog("\nCheck here CDEx:\t nBlockNow = %d\t twapBlockg = %d\n", nBlockNow, twapBlockg);
+  
   if (nBlockNow == twapBlockg)
-    {
-      if (name == "CDEx")
-	twap_ele[property_traded].push_back(effective_price);	
+    twap_ele[property_traded].push_back(effective_price);	
+  else
+    {    
+      if (twap_ele[property_traded].size() != 0)
+	{
+	  twap_minmax = min_max(twap_ele[property_traded]);
+	  uint64_t numerator = twap_ele[property_traded].front()+twap_minmax[0]+twap_minmax[1]+twap_ele[property_traded].back();
+	  rational_t twapRat(numerator/COIN, 4);
+	  int64_t twap_elej = mastercore::RationalToInt64(twapRat);
+	  PrintToLog("\ntwap_elej CDEx = %s\n", FormatDivisibleMP(twap_elej));
+	  cdextwap_vec[property_traded].push_back(twap_elej);
+	}
+      twap_ele[property_traded].clear();
+      twap_ele[property_traded].push_back(effective_price); 
     }
+  twapBlockg = nBlockNow;
+}
+
+void Filling_Twap_Vec(std::map<uint32_t, std::map<uint32_t, std::vector<uint64_t>>> &twap_ele,
+		      std::map<uint32_t, std::map<uint32_t, std::vector<uint64_t>>> &twap_vec,
+		      uint32_t property_traded, uint32_t property_desired, uint64_t effective_price)
+{
+  int nBlockNow = GetHeight();
+  std::vector<uint64_t> twap_minmax;
+  PrintToLog("\nCheck here MDEx:\t nBlockNow = %d\t twapBlockg = %d\n", nBlockNow, twapBlockg);
+  
+  if (nBlockNow == twapBlockg)
+    twap_ele[property_traded][property_desired].push_back(effective_price);	
   else
     {
-      if (name == "CDEx")
+      if (twap_ele[property_traded][property_desired].size() != 0)
 	{
-	  if (twap_ele[property_traded].size() != 0)
-	    {
-	      twap_minmax = min_max(twap_ele[property_traded]);
-	      uint64_t numerator = twap_ele[property_traded].front()+twap_minmax[0]+twap_minmax[1]+twap_ele[property_traded].back();
-	      rational_t twapRat(numerator/COIN, 4);
-	      int64_t twap_elej = mastercore::RationalToInt64(twapRat);
-	      PrintToLog("\ntwap_elej = %s\n", FormatDivisibleMP(twap_elej));
-	      cdextwap_vec[property_traded].push_back(twap_elej);
-	    }
-	  twap_ele[property_traded].clear();
-	  twap_ele[property_traded].push_back(effective_price);
+	  twap_minmax = min_max(twap_ele[property_traded][property_desired]);
+	  uint64_t numerator = twap_ele[property_traded][property_desired].front()+twap_minmax[0]+
+	    twap_minmax[1]+twap_ele[property_traded][property_desired].back();
+	  rational_t twapRat(numerator/COIN, 4);
+	  int64_t twap_elej = mastercore::RationalToInt64(twapRat);
+	  PrintToLog("\ntwap_elej MDEx = %s\n", FormatDivisibleMP(twap_elej));
+	  mdextwap_vec[property_traded][property_desired].push_back(twap_elej);
 	}
+      twap_ele[property_traded][property_desired].clear();
+      twap_ele[property_traded][property_desired].push_back(effective_price);
     }
   twapBlockg = nBlockNow;
 }
