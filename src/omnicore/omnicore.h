@@ -388,6 +388,8 @@ void Filling_Twap_Vec(std::map<uint32_t, std::vector<uint64_t>> &twap_ele, std::
 void Filling_Twap_Vec(std::map<uint32_t, std::map<uint32_t, std::vector<uint64_t>>> &twap_ele,
 		      std::map<uint32_t, std::map<uint32_t, std::vector<uint64_t>>> &twap_vec,
 		      uint32_t property_traded, uint32_t property_desired, uint64_t effective_price);
+inline int64_t clamp_function(int64_t diff, int64_t nclamp);
+
 namespace mastercore
 {
   extern std::unordered_map<std::string, CMPTally> mp_tally_map;
