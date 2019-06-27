@@ -2180,6 +2180,12 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
     PrintToLog("\nTvwap Price MDEx = %s\n", FormatDivisibleMP(twap_priceMDEx));
     
     /**********************************************************************/
+    /** Interest formula:  **/
+    
+    int64_t interest = clamp_function(abs(twap_priceCDEx-twap_priceMDEx), 0.05);
+    PrintToLog("Interes to Pay = %s", FormatDivisibleMP(interest));
+    
+    /**********************************************************************/
     /** Unallocating Dynamic Memory **/
     //path_elef.clear();
     market_priceMap.clear();
@@ -2505,6 +2511,13 @@ int finding_idxforaddress(std::string addrs, std::vector<std::map<std::string, s
     }
   return idx_q-1;
 }
+
+inline int64_t clamp_function(int64_t diff, int64_t nclamp)
+{
+  int64_t interest = diff > nclamp ? diff-nclamp+1 : (diff < -nclamp ? diff+nclamp+1 : 0.01);
+  return interest;
+}
+
 /**
  * Determines, whether it is valid to use a Class C transaction for a given payload size.
  *

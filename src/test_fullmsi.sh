@@ -253,7 +253,7 @@ do
 	printf "\n"
 	
 	printf "\nAmount dUSD #$i\n"
-	AMOUNTdUSD=$((RANDOM%10000+60000))
+	AMOUNTdUSD=$((RANDOM%10+70000))
 	printf "\nRandom Amount dUSD:\n"
 	printf $AMOUNTdUSD
 	printf "\n"
