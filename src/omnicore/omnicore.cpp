@@ -2136,17 +2136,15 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   if (nBlockNow%BlockS == 0 && nBlockNow != 0 && path_elef.size() != 0 && lastBlockg != nBlockNow) {
     
     /*****************************************************************************/
+
     PrintToLog("\nSettlement every 8 hours here. nBlockNow = %d\n", nBlockNow);
     pt_ndatabase = new MatrixTLS(path_elef.size(), n_cols); MatrixTLS &ndatabase = *pt_ndatabase;
     MatrixTLS M_file(path_elef.size(), n_cols);
     fillingMatrix(M_file, ndatabase, path_elef);
     n_rows = size(M_file, 0);
     PrintToLog("Matrix for Settlement: dim = (%d, %d)\n\n", n_rows, n_cols);
-    printing_matrix(M_file);
-    /*****************************************************************************/
-    cout << "\n\n";
-    PrintToLog("\nCalling the Settlement Algorithm:\n\n");
-    settlement_algorithm_fifo(M_file);
+    //printing_matrix(M_file);
+
     /**********************************************************************/
     /** TWAP vector **/
     
@@ -2154,39 +2152,42 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
     struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, "ALL F18");
     uint32_t property_traded = pfuture->fco_propertyId;
     
-    PrintToLog("\nVector CDExtwap_vec =\n");
-    for (unsigned int i = 0; i < cdextwap_vec[property_traded].size(); i++)
-      PrintToLog("%s\n", FormatDivisibleMP(cdextwap_vec[property_traded][i]));
+    // PrintToLog("\nVector CDExtwap_vec =\n");
+    // for (unsigned int i = 0; i < cdextwap_vec[property_traded].size(); i++)
+    //   PrintToLog("%s\n", FormatDivisibleMP(cdextwap_vec[property_traded][i]));
     
     uint64_t num_cdex = accumulate(cdextwap_vec[property_traded].begin(), cdextwap_vec[property_traded].end(), 0.0);
     rational_t twap_priceRatCDEx(num_cdex/COIN, cdextwap_vec[property_traded].size());
     int64_t twap_priceCDEx = mastercore::RationalToInt64(twap_priceRatCDEx);
     PrintToLog("\nTvwap Price CDEx = %s\n", FormatDivisibleMP(twap_priceCDEx));
-    
-    /**********************************************************************/
-    
+        
     struct TokenDataByName *pfuture_ALL = getTokenDataByName("ALL");
     struct TokenDataByName *pfuture_USD = getTokenDataByName("dUSD");
     uint32_t property_all = pfuture_ALL->data_propertyId;
     uint32_t property_usd = pfuture_USD->data_propertyId;
     
-    PrintToLog("\nVector MDExtwap_vec =\n");
-    for (unsigned int i = 0; i < mdextwap_vec[property_all][property_usd].size(); i++)
-      PrintToLog("%s\n", FormatDivisibleMP(mdextwap_vec[property_all][property_usd][i]));
+    // PrintToLog("\nVector MDExtwap_vec =\n");
+    // for (unsigned int i = 0; i < mdextwap_vec[property_all][property_usd].size(); i++)
+    //   PrintToLog("%s\n", FormatDivisibleMP(mdextwap_vec[property_all][property_usd][i]));
     
     uint64_t num_mdex = accumulate(mdextwap_vec[property_all][property_usd].begin(), mdextwap_vec[property_all][property_usd].end(), 0.0);
     rational_t twap_priceRatMDEx(num_mdex/COIN, mdextwap_vec[property_all][property_usd].size());
     int64_t twap_priceMDEx = mastercore::RationalToInt64(twap_priceRatMDEx);
     PrintToLog("\nTvwap Price MDEx = %s\n", FormatDivisibleMP(twap_priceMDEx));
     
-    /**********************************************************************/
     /** Interest formula:  **/
     
     int64_t interest = clamp_function(abs(twap_priceCDEx-twap_priceMDEx), 0.05);
     PrintToLog("Interes to Pay = %s", FormatDivisibleMP(interest));
     
+    /*****************************************************************************/
+    cout << "\n\n";
+    PrintToLog("\nCalling the Settlement Algorithm:\n\n");
+    settlement_algorithm_fifo(M_file, interest, twap_priceCDEx);
+    
     /**********************************************************************/
     /** Unallocating Dynamic Memory **/
+
     //path_elef.clear();
     market_priceMap.clear();
     numVWAPMap.clear();
@@ -3412,9 +3413,9 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   PrintToLog("\nMDExtwap_ele.size() = %d\t property_all = %d\t property_usd = %d\t market_priceMap = %s\n",
 	     mdextwap_ele[property_all][property_usd].size(), property_all, property_usd,
 	     FormatDivisibleMP(market_priceMap[property_all][property_usd]));
-  PrintToLog("\nVector MDExtwap_ele =\n");
-  for (unsigned int i = 0; i < mdextwap_ele[property_all][property_usd].size(); i++)
-    PrintToLog("%s\n", FormatDivisibleMP(mdextwap_ele[property_all][property_usd][i]));
+  // PrintToLog("\nVector MDExtwap_ele =\n");
+  // for (unsigned int i = 0; i < mdextwap_ele[property_all][property_usd].size(); i++)
+  //   PrintToLog("%s\n", FormatDivisibleMP(mdextwap_ele[property_all][property_usd][i]));
   
   /****************************************************/
   
@@ -3512,9 +3513,9 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   
   Filling_Twap_Vec(cdextwap_ele, cdextwap_vec, property_traded, 0, effective_price);
   PrintToLog("\ncdextwap_ele.size() = %d\n", cdextwap_ele[property_traded].size());
-  PrintToLog("\nVector CDExtwap_ele =\n");
-  for (unsigned int i = 0; i < cdextwap_ele[property_traded].size(); i++)
-    PrintToLog("%s\n", FormatDivisibleMP(cdextwap_ele[property_traded][i]));
+  // PrintToLog("\nVector CDExtwap_ele =\n");
+  // for (unsigned int i = 0; i < cdextwap_ele[property_traded].size(); i++)
+  //   PrintToLog("%s\n", FormatDivisibleMP(cdextwap_ele[property_traded][i]));
   
   /********************************************/
   
@@ -3574,7 +3575,7 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   CMPSPInfo::Entry sp;
   assert(_my_sps->getSP(property_traded, sp));
   uint32_t NotionalSize = sp.notional_size;
-
+  
   globalPNLALL_DUSD += UPNL1 + UPNL2;
   globalVolumeALL_DUSD += nCouldBuy0;
   

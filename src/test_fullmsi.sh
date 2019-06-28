@@ -51,7 +51,7 @@ collateral=5
 PAYMENTWINDOW=10
 MINFEEACCEPTED=0.00002980
 addrs_admin="QdgkwBVmz3uAtXiQdbbiAsTp1SDQS9zRt9"
-Kloops=20
+Kloops=5
 Ng=10
 
 printf " Creating the addresses ..."

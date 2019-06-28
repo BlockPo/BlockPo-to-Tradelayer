@@ -2118,30 +2118,30 @@ int mastercore::ContractDex_CANCEL_EVERYTHING(const uint256& txid, unsigned int 
 
 	              arith_uint256 amountMargin = (ConvertTo256(amountForSale) * ConvertTo256(marginRe) * ConvertTo256(num) / (ConvertTo256(den) * ConvertTo256(factorE)));
 	              int64_t redeemed = ConvertTo64(amountMargin);
-
+		      
 	              // PrintToLog("collateral currency id of contract : %d\n",collateralCurrency);
 	              // PrintToLog("margin requirement of contract : %d\n",marginRe);
 	              // PrintToLog("amountForSale: %d\n",amountForSale);
 	              // PrintToLog("Address: %d\n",addr);
 	              // PrintToLog("--------------------------------------------\n");
-
+		      
 	              // move from reserve to balance the collateral
 	              if (balance > redeemed && balance > 0 && redeemed > 0)
-                {
+			{
 	                  assert(update_tally_map(addr, collateralCurrency, redeemed, BALANCE));
 	                  assert(update_tally_map(addr, collateralCurrency, -redeemed, CONTRACTDEX_RESERVE));
-	              }
-
+			}
+		      
 	              bValid = true;
 	              // p_txlistdb->recordContractDexCancelTX(txid, it->getHash(), bValid, block, it->getProperty(), it->getAmountForSale
 	              indexes.erase(it++);
             }
         }
-  }
-  if (bValid == false)
-    PrintToConsole("You don't have active orders\n");
-
-  return rc;
+    }
+    if (bValid == false)
+      PrintToConsole("You don't have active orders\n");
+    
+    return rc;
 }
 
 int mastercore::ContractDex_CANCEL_FOR_BLOCK(const uint256& txid,  int block,unsigned int idx, const std::string& sender_addr, unsigned char ecosystem)
@@ -2193,11 +2193,11 @@ int mastercore::ContractDex_CANCEL_FOR_BLOCK(const uint256& txid,  int block,uns
 
 	              // move from reserve to balance the collateral
 	              if (balance > redeemed && balance > 0 && redeemed > 0)
-                {
-	                  assert(update_tally_map(addr, collateralCurrency, redeemed, BALANCE));
+			{
+			  assert(update_tally_map(addr, collateralCurrency, redeemed, BALANCE));
 	                  assert(update_tally_map(addr, collateralCurrency,  -redeemed, CONTRACTDEX_RESERVE));
 	              }
-
+		      
 	              // record the cancellation
 	              bValid = true;
 	              // p_txlistdb->recordContractDexCancelTX(txid, it->getHash(), bValid, block, it->getProperty(), it->getAmountForSale
