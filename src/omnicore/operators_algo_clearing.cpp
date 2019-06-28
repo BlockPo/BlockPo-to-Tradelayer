@@ -8,6 +8,8 @@
 #include <unordered_set>
 #include <limits>
 #include <iostream>
+#include "omnicore/uint256_extensions.h"
+#include "omnicore/parse_string.h"
 
 typedef boost::multiprecision::cpp_dec_float_100 dec_float;
 
@@ -121,12 +123,13 @@ VectorTLS status_open_incr(VectorTLS &status_q, int q)
 {
   extern VectorTLS *pt_open_incr_long; VectorTLS &open_incr_long = *pt_open_incr_long;
   extern VectorTLS *pt_open_incr_short; VectorTLS &open_incr_short = *pt_open_incr_short;
-
+  
   if ( q == 0 )
     {
       status_q[0] = open_incr_long[0];
       status_q[1] = open_incr_long[1];
-    } else
+    }
+  else
     {
       status_q[0] = open_incr_short[0];
       status_q[1] = open_incr_short[1];
@@ -163,7 +166,7 @@ void adding_newtwocols_trdamount(MatrixTLS &M_file, MatrixTLS &database)
     }
 }
 
-void settlement_algorithm_fifo(MatrixTLS &M_file)
+void settlement_algorithm_fifo(MatrixTLS &M_file, int64_t interest, int64_t twap_price)
 {
   extern int n_cols;
   extern int n_rows;
@@ -252,7 +255,7 @@ void settlement_algorithm_fifo(MatrixTLS &M_file)
       //printing_path_maini(*it_path_main);
       checking_zeronetted_bypath(*it_path_main);
       computing_livesvectors_forlongshort(*it_path_main, lives_longs, lives_shorts);
-      computing_settlement_exitprice(*it_path_main, sum_oflives, PNL_total, gamma_p, gamma_q);
+      computing_settlement_exitprice(*it_path_main, sum_oflives, PNL_total, gamma_p, gamma_q, interest, twap_price);
       //PrintToLog("\ngamma_p : %d, gamma_q : %d, PNL_total : %d\n", gamma_p, gamma_q, PNL_total);
       sum_gamma_p += gamma_p;
       sum_gamma_q += gamma_q;
@@ -312,7 +315,7 @@ void settlement_algorithm_fifo(MatrixTLS &M_file)
       checkzeronetted_bypath_ghostedges(*it_path_main, nonzero_lives);
       listof_addresses_bypath(*it_path_main, addrsv);
       //PrintToLog("\nComputing PNL in this Path\n");
-      calculate_pnltrk_bypath(*it_path_main, PNL_totalit, addrs_set, addrsv);
+      calculate_pnltrk_bypath(*it_path_main, PNL_totalit, addrs_set, addrsv, interest, twap_price);
       PNL_total += PNL_totalit;
       //PrintToLog("\nPNL_total_main sum: %f\n", PNL_total);
       addrs_set.clear();
@@ -699,7 +702,7 @@ int find_posaddress_lives_vector(std::vector<std::map<std::string, std::string>>
   return idx_q-1;
 }
 
-void computing_settlement_exitprice(std::vector<std::map<std::string, std::string>> &it_path_main, long int &sum_oflives, double &PNL_total, double &gamma_p, double &gamma_q)
+void computing_settlement_exitprice(std::vector<std::map<std::string, std::string>> &it_path_main, long int &sum_oflives, double &PNL_total, double &gamma_p, double &gamma_q, int64_t interest, int64_t twap_price)
 {
   long int sum_oflivesh = 0;
   std::unordered_set<std::string> addrs_set;
@@ -718,13 +721,13 @@ void computing_settlement_exitprice(std::vector<std::map<std::string, std::strin
   else
     {
       listof_addresses_bypath(it_path_main, addrsv);
-      calculate_pnltrk_bypath(it_path_main, PNL_total, addrs_set, addrsv);
+      calculate_pnltrk_bypath(it_path_main, PNL_total, addrs_set, addrsv, interest, twap_price);
       getting_gammapq_bypath(it_path_main, PNL_total, gamma_p, gamma_q, addrs_set);
       addrs_set.clear();
     }
 }
 
-void calculate_pnltrk_bypath(std::vector<std::map<std::string, std::string>> &path_main, double &PNL_total, std::unordered_set<std::string> &addrs_set, std::vector<std::string> addrsv)
+void calculate_pnltrk_bypath(std::vector<std::map<std::string, std::string>> &path_main, double &PNL_total, std::unordered_set<std::string> &addrs_set, std::vector<std::string> addrsv, int64_t interest, int64_t twap_price)
 {
   std::vector<std::map<std::string, std::string>>::iterator it_path;
   std::string addrsit;
@@ -745,14 +748,33 @@ void calculate_pnltrk_bypath(std::vector<std::map<std::string, std::string>> &pa
 	      sub_row(jrow_database, ndatabase, stol(edge_path["edge_row"]));
 	      struct status_amounts *pt_jrow_database = get_status_amounts_byaddrs(jrow_database, addrsit);
 	      addrs_set.insert(addrsit);
-	      PNL_trk = PNL_function(stod(edge_path["entry_price"]), stod(edge_path["exit_price"]),
-				     stol(edge_path["amount_trd"]), pt_jrow_database);
+	      
+	      PNL_trk = PNL_function(stod(edge_path["entry_price"]), stod(edge_path["exit_price"]), stol(edge_path["amount_trd"]),
+				     pt_jrow_database);
 	      sumPNL_trk += PNL_trk;
-	      if (mastercore::DoubleToInt64(PNL_trk) != 0)
-	      	{
-		  //PrintToLog("mastercore::DoubleToInt64(PNL_trk) = %s", FormatDivisibleMP(mastercore::DoubleToInt64(PNL_trk)));
-	      	  assert(mastercore::update_tally_map(addrsit, OMNI_PROPERTY_ALL, mastercore::DoubleToInt64(PNL_trk), BALANCE));
-	      	}
+	      
+	      std::string addrssr = edge_path["addrs_src"];
+	      int64_t PNL_trkInt64 = mastercore::DoubleToInt64(PNL_trk);
+	      
+	      struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, "ALL F18");
+	      uint32_t NotionalSize = pfuture->fco_notional_size;
+	      
+	      arith_uint256 volumeALL256_t = mastercore::ConvertTo256(NotionalSize)*mastercore::ConvertTo256(PNL_trkInt64)/COIN;  
+	      int64_t volumeALL64_t = mastercore::ConvertTo64(volumeALL256_t);
+	      
+	      struct TokenDataByName *pfuture_ALL = getTokenDataByName("ALL");
+	      uint32_t ALLId = pfuture_ALL->data_propertyId;
+	      
+	      int64_t entry_priceh =  mastercore::StrToInt64(edge_path["entry_price"], true);
+	      PrintToLog("\nInterest Payment: Entry Price = %s, Twap Price = %s\n",
+			 FormatDivisibleMP(entry_priceh), FormatDivisibleMP(twap_price));
+	      
+	      if (volumeALL64_t != 0)
+		{
+		  PrintToLog("\nRebalancing Settlement\n");
+		  assert(mastercore::update_tally_map(addrssr, ALLId, -volumeALL64_t, BALANCE)); /** Change in testnet **/
+		  assert(mastercore::update_tally_map(addrsit, ALLId,  volumeALL64_t, BALANCE)); /** Change in testnet**/
+	       	}
 	    }
 	}
     }  

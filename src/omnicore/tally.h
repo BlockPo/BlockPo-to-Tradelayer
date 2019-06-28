@@ -11,7 +11,6 @@ enum TallyType {
         ACCEPT_RESERVE = 2,
         PENDING = 3,
         METADEX_RESERVE = 4,
-
         CONTRACTDEX_RESERVE = 5, // margin acount
         POSSITIVE_BALANCE = 6,
         NEGATIVE_BALANCE = 7,
@@ -25,7 +24,6 @@ enum TallyType {
 	UNVESTED = 15,
         CONTRACTDEX_MARGIN = 16,   //TODO: need save to db
         //////////////////////////////////////
-
         TALLY_TYPE_COUNT
 };
 
