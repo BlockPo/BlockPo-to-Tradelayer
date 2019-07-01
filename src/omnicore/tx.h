@@ -103,6 +103,7 @@ private:
 
     /* uint64_t ticksize; */
     /*uint32_t nextContractId;*/
+    uint64_t oracle_price;
     uint32_t blocks_until_expiration;
     uint32_t notional_size;
     uint32_t collateral_currency;
@@ -174,6 +175,10 @@ private:
     bool interpret_TradeOffer();
     bool interpret_DExBuy();
     bool interpret_SendVestingTokens();
+    bool interpret_CreateOracleContract();
+    bool interpret_Change_OracleRef();
+    bool interpret_Set_Oracle();
+    bool interpret_OracleBackup();
     ///////////////////////////////////////////////
 
     /**
@@ -207,6 +212,10 @@ private:
     int logicMath_AcceptOfferBTC();
     int logicMath_DExBuy();
     int logicMath_SendVestingTokens();
+    int logicMath_CreateOracleContract();
+    int logicMath_Change_OracleRef();
+    int logicMath_Set_Oracle();
+    int logicMath_OracleBackup();
     ///////////////////////////////////////////////
 
     /**
@@ -404,6 +413,7 @@ struct FutureContractObject
   std::string fco_name;
   std::string fco_subcategory;
   std::string fco_issuer;
+  std::string fco_backup_address;
 };
 
 struct TokenDataByName

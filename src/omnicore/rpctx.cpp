@@ -896,6 +896,73 @@ UniValue tl_createcontract(const JSONRPCRequest& request)
     }
 }
 
+
+UniValue tl_create_oraclecontract(const JSONRPCRequest& request)
+{
+  if (request.params.size() != 9)
+    throw runtime_error(
+			"tl_create_oraclecontract \"address\" ecosystem type previousid \"category\" \"subcategory\" \"name\" \"url\" \"data\" propertyiddesired tokensperunit deadline ( earlybonus issuerpercentage )\n"
+
+			"Create new Oracle Future Contract."
+
+			"\nArguments:\n"
+			"1. oracle address            (string, required) the address to send from (admin)\n"
+			"2. ecosystem                 (string, required) the ecosystem to create the tokens in (1 for main ecosystem, 2 for test ecosystem)\n"
+			"3. numerator                 (number, required) 4: ALL, 5: sLTC, 6: LTC.\n"
+			"4. name                      (string, required) the name of the new tokens to create\n"
+			"5. blocks until expiration   (number, required) life of contract, in blocks\n"
+			"6. notional size             (number, required) notional size\n"
+			"7. collateral currency       (number, required) collateral currency\n"
+			"8. margin requirement        (number, required) margin requirement\n"
+      "9. backup address            (string, required) backup admin address contract\n"
+
+			"\nResult:\n"
+			"\"hash\"                  (string) the hex-encoded transaction hash\n"
+
+			"\nExamples:\n"
+			+ HelpExampleCli("tl_create_oraclecontract", "2 1 0 \"Companies\" \"Bitcoin Mining\" \"Quantum Miner\" \"\" \"\" 2 \"100\" 1483228800 30 2 4461 100 1 25")
+			+ HelpExampleRpc("tl_create_oraclecontract", "2, 1, 0, \"Companies\", \"Bitcoin Mining\", \"Quantum Miner\", \"\", \"\", 2, \"100\", 1483228800, 30, 2, 4461, 100, 1, 25")
+			);
+
+  std::string fromAddress = ParseAddress(request.params[0]);
+  uint8_t ecosystem = ParseEcosystem(request.params[1]);
+  uint32_t type = ParseContractType(request.params[2]);
+  std::string name = ParseText(request.params[3]);
+  uint32_t blocks_until_expiration = request.params[4].get_int();
+  uint32_t notional_size = ParseAmount32t(request.params[5]);
+  uint32_t collateral_currency = request.params[6].get_int();
+  uint32_t margin_requirement = ParseAmount32t(request.params[7]);
+  std::string oracleAddress = ParseAddress(request.params[8]);
+
+  PrintToLog("\nRPC tl_create_oraclecontract: notional_size = %s\t margin_requirement = %s\t blocks_until_expiration = %d\t collateral_currency=%d\t ecosystem = %d\t type = %d\n", FormatDivisibleMP(notional_size), FormatDivisibleMP(margin_requirement), blocks_until_expiration, collateral_currency, ecosystem, type);
+
+  RequirePropertyName(name);
+  RequireSaneName(name);
+
+  std::vector<unsigned char> payload = CreatePayload_CreateOracleContract(ecosystem, type, name, blocks_until_expiration, notional_size, collateral_currency, margin_requirement);
+
+  uint256 txid;
+  std::string rawHex;
+  int result = WalletTxBuilder(fromAddress, oracleAddress, 0, payload, txid, rawHex, autoCommit);
+
+  if ( result != 0 )
+    {
+      throw JSONRPCError(result, error_str(result));
+    }
+  else
+    {
+      if (!autoCommit)
+	{
+	  return rawHex;
+	}
+      else
+	{
+	  return txid.GetHex();
+	}
+    }
+}
+
+
 UniValue tl_tradecontract(const JSONRPCRequest& request)
 {
   if (request.params.size() != 6)
@@ -1502,6 +1569,177 @@ UniValue tl_senddexaccept(const JSONRPCRequest& request)
 
 }
 
+UniValue tl_setoracle(const JSONRPCRequest& request)
+{
+    if (request.params.size() != 3)
+        throw runtime_error(
+            "tl_setoracle \"fromaddress\" \"contract name\" price\n"
+
+            "\nSet the price for an oracle address.\n"
+
+            "\nArguments:\n"
+            "1. fromaddress          (string, required) the oracle address for the Future Contract\n"
+            "2. contract name        (string, required) the name of the Future Contract\n"
+            "2. price                (number, required) the price of the asset\n"
+
+
+            "\nResult:\n"
+            "\"hash\"                  (string) the hex-encoded transaction hash\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("tl_setoracle", "\"1ARjWDkZ7kT9fwjPrjcQyvbXDkEySzKHwu\" ,\"3HTHRxu3aSDV4de+akjC7VmsiUp7c6dfbvs\" ,\"Contract 1\"")
+            + HelpExampleRpc("tl_setoracle", "\"1ARjWDkZ7kT9fwjPrjcQyvbXDkEySzKHwu\", \"3HTHRxu3aSDV4deakjC7VmsiUp7c6dfbvs\", \"Contract 1\"")
+        );
+
+    // obtain parameters & info
+    std::string fromAddress = ParseAddress(request.params[0]);
+    std::string name_contract = ParseText(request.params[1]);
+      uint64_t price = ParseEffectivePrice(request.params[2]);
+    struct FutureContractObject *pfuture_contract = getFutureContractObject(ALL_PROPERTY_TYPE_ORACLE_CONTRACT, name_contract);
+    uint32_t contractId = pfuture_contract->fco_propertyId;
+    std::string oracleAddress = pfuture_contract->fco_issuer;
+
+    // checks
+
+    if (oracleAddress != fromAddress)
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "address is not the oracle address of contract");
+
+    RequireExistingProperty(contractId);
+    RequireOracleContract(contractId);
+
+
+    // create a payload for the transaction
+    std::vector<unsigned char> payload = CreatePayload_Set_Oracle(contractId,price);
+
+    // request the wallet build the transaction (and if needed commit it)
+    uint256 txid;
+    std::string rawHex;
+    int result = WalletTxBuilder(fromAddress, "", 0, payload, txid, rawHex, autoCommit);
+
+    // check error and return the txid (or raw hex depending on autocommit)
+    if (result != 0) {
+        throw JSONRPCError(result, error_str(result));
+    } else {
+        if (!autoCommit) {
+            return rawHex;
+        } else {
+            return txid.GetHex();
+        }
+    }
+}
+
+UniValue tl_change_oracleref(const JSONRPCRequest& request)
+{
+    if (request.params.size() != 3)
+        throw runtime_error(
+            "tl_change_oracleref \"fromaddress\" \"toaddress\" contract name\n"
+
+            "\nChange the issuer on record of the Oracle Future Contract.\n"
+
+            "\nArguments:\n"
+            "1. fromaddress          (string, required) the address associated with the oracle Future Contract\n"
+            "2. toaddress            (string, required) the address to transfer administrative control to\n"
+            "3. contract name        (string, required) the name of the Future Contract\n"
+
+            "\nResult:\n"
+            "\"hash\"                  (string) the hex-encoded transaction hash\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("tl_change_oracleref", "\"1ARjWDkZ7kT9fwjPrjcQyvbXDkEySzKHwu\" ,\"3HTHRxu3aSDV4de+akjC7VmsiUp7c6dfbvs\" ,\"Contract 1\"")
+            + HelpExampleRpc("tl_change_oracleref", "\"1ARjWDkZ7kT9fwjPrjcQyvbXDkEySzKHwu\", \"3HTHRxu3aSDV4deakjC7VmsiUp7c6dfbvs\", \"Contract 1\"")
+        );
+
+    // obtain parameters & info
+    std::string fromAddress = ParseAddress(request.params[0]);
+    std::string toAddress = ParseAddress(request.params[1]);
+    std::string name_contract = ParseText(request.params[2]);
+    struct FutureContractObject *pfuture_contract = getFutureContractObject(ALL_PROPERTY_TYPE_ORACLE_CONTRACT, name_contract);
+    uint32_t contractId = pfuture_contract->fco_propertyId;
+    std::string oracleAddress = pfuture_contract->fco_issuer;
+
+    // checks
+    if (oracleAddress != fromAddress)
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "address is not the oracle address of contract");
+
+    RequireExistingProperty(contractId);
+    RequireOracleContract(contractId);  //RequireOracleContract
+
+
+    // create a payload for the transaction
+    std::vector<unsigned char> payload = CreatePayload_Change_OracleRef(contractId);
+
+    // request the wallet build the transaction (and if needed commit it)
+    uint256 txid;
+    std::string rawHex;
+    int result = WalletTxBuilder(fromAddress, toAddress, 0, payload, txid, rawHex, autoCommit);
+
+    // check error and return the txid (or raw hex depending on autocommit)
+    if (result != 0) {
+        throw JSONRPCError(result, error_str(result));
+    } else {
+        if (!autoCommit) {
+            return rawHex;
+        } else {
+            return txid.GetHex();
+        }
+    }
+}
+
+UniValue tl_oraclebackup(const JSONRPCRequest& request)
+{
+    if (request.params.size() != 2)
+        throw runtime_error(
+            "tl_oraclebackup \"oracle address\" \"contract name\n"
+
+            "\n Activation of backup address (backup is now the new oracle address).\n"
+
+            "\nArguments:\n"
+            "1. backup address          (string, required) the address associated with the oracle Future Contract\n"
+            "2. contract name           (string, required) the name of the Future Contract\n"
+
+            "\nResult:\n"
+            "\"hash\"                  (string) the hex-encoded transaction hash\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("tl_oraclebackup", "\"1ARjWDkZ7kT9fwjPrjcQyvbXDkEySzKHwu\" ,\"Contract 1\"")
+            + HelpExampleRpc("tl_oraclebackup", "\"1ARjWDkZ7kT9fwjPrjcQyvbXDkEySzKHwu\", \"Contract 1\"")
+        );
+
+    // obtain parameters & info
+    std::string fromAddress = ParseAddress(request.params[0]);
+    std::string name_contract = ParseText(request.params[1]);
+    struct FutureContractObject *pfuture_contract = getFutureContractObject(ALL_PROPERTY_TYPE_ORACLE_CONTRACT, name_contract);
+    uint32_t contractId = pfuture_contract->fco_propertyId;
+    std::string backupAddress = pfuture_contract->fco_backup_address;
+
+    // checks
+    if (backupAddress != fromAddress)
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "address is not the backup address of contract");
+
+    RequireExistingProperty(contractId);
+    RequireOracleContract(contractId);  //RequireOracleContract
+
+
+    // create a payload for the transaction
+    std::vector<unsigned char> payload = CreatePayload_OracleBackup(contractId);
+
+    // request the wallet build the transaction (and if needed commit it)
+    uint256 txid;
+    std::string rawHex;
+    int result = WalletTxBuilder(fromAddress, "", 0, payload, txid, rawHex, autoCommit);
+
+    // check error and return the txid (or raw hex depending on autocommit)
+    if (result != 0) {
+        throw JSONRPCError(result, error_str(result));
+    } else {
+        if (!autoCommit) {
+            return rawHex;
+        } else {
+            return txid.GetHex();
+        }
+    }
+}
+
 // UniValue tl_setexodus(const JSONRPCRequest& request)
 // {
 //     if (request.params.size() < 1 )
@@ -1559,7 +1797,11 @@ static const CRPCCommand commands[] =
     { "trade layer (transaction creation)", "tl_closeposition",                &tl_closeposition,                   {} },
     { "trade layer (transaction creation)", "tl_sendtrade",                    &tl_sendtrade,                       {} },
     { "trade layer (transaction creation)", "tl_senddexoffer",                 &tl_senddexoffer,                    {} },
-    { "trade layer (transaction creation)", "tl_senddexaccept",                &tl_senddexaccept,                   {} }
+    { "trade layer (transaction creation)", "tl_senddexaccept",                &tl_senddexaccept,                   {} },
+    { "trade layer (transaction creation)", "tl_create_oraclecontract",        &tl_create_oraclecontract,           {} },
+    { "trade layer (transaction creation)", "tl_setoracle",                    &tl_setoracle,                       {} },
+    { "trade layer (transaction creation)", "tl_change_oracleref",             &tl_change_oracleref,                {} },
+    { "trade layer (transaction creation)", "tl_oraclebackup",                 &tl_oraclebackup,                    {} }
 #endif
 };
 
