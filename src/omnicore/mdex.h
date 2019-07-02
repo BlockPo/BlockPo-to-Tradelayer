@@ -170,7 +170,7 @@ class CMPContractDex : public CMPMetaDEx
 
   std::string displayFullContractPrice() const;
   std::string ToString() const;
-
+  
   void saveOffer(std::ofstream& file, SHA256_CTX* shaCtx) const;
 
   void setPrice(int64_t price);

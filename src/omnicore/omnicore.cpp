@@ -1950,105 +1950,105 @@ void clear_all_state()
  */
 int mastercore_init()
 {
-    LOCK(cs_tally);
-
-    if (mastercoreInitialized) {
-        // nothing to do
-        return 0;
-    }
-
-    PrintToLog("\nInitializing Omni Core Lite\n");
-    PrintToLog("Startup time: %s\n", DateTimeStrFormat("%Y-%m-%d %H:%M:%S", GetTime()));
-    // PrintToLog("Build date: %s, based on commit: %s\n", BuildDate(), BuildCommit());
-
-    InitDebugLogLevels();
-    ShrinkDebugLog();
-
-    // check for --autocommit option and set transaction commit flag accordingly
-     if (!gArgs.GetBoolArg("-autocommit", true)) {
-         PrintToLog("Process was started with --autocommit set to false. "
-                 "Created Omni transactions will not be committed to wallet or broadcast.\n");
-         autoCommit = false;
-     }
-
-    // check for --startclean option and delete MP_ folders if present
-     bool startClean = false;
-    if (gArgs.GetBoolArg("-startclean", false)) {
-         PrintToLog("Process was started with --startclean option, attempting to clear persistence files..\n");
-         try {
-             boost::filesystem::path persistPath = GetDataDir() / "OCL_persist";
-             boost::filesystem::path txlistPath = GetDataDir() / "OCL_txlist";
-             boost::filesystem::path spPath = GetDataDir() / "OCL_spinfo";
-             boost::filesystem::path omniTXDBPath = GetDataDir() / "OCL_TXDB";
-             if (boost::filesystem::exists(persistPath)) boost::filesystem::remove_all(persistPath);
-             if (boost::filesystem::exists(txlistPath)) boost::filesystem::remove_all(txlistPath);
-             if (boost::filesystem::exists(spPath)) boost::filesystem::remove_all(spPath);
-             if (boost::filesystem::exists(omniTXDBPath)) boost::filesystem::remove_all(omniTXDBPath);
-             PrintToLog("Success clearing persistence files in datadir %s\n", GetDataDir().string());
-             startClean = true;
-         } catch (const boost::filesystem::filesystem_error& e) {
-             PrintToLog("Failed to delete persistence folders: %s\n", e.what());
-             PrintToConsole("Failed to delete persistence folders: %s\n", e.what());
-         }
-    }
-
-    p_txlistdb = new CMPTxList(GetDataDir() / "OCL_txlist", fReindex);
-    _my_sps = new CMPSPInfo(GetDataDir() / "OCL_spinfo", fReindex);
-    p_OmniTXDB = new COmniTransactionDB(GetDataDir() / "OCL_TXDB", fReindex);
-    t_tradelistdb = new CMPTradeList(GetDataDir()/"OCL_tradelist", fReindex);
-    MPPersistencePath = GetDataDir() / "OCL_persist";
-    TryCreateDirectory(MPPersistencePath);
-
-     bool wrongDBVersion = (p_txlistdb->getDBVersion() != DB_VERSION);
-
-     ++mastercoreInitialized;
-
-    nWaterlineBlock = load_most_relevant_state();
-    bool noPreviousState = (nWaterlineBlock <= 0);
-
-     if (startClean) {
-         assert(p_txlistdb->setDBVersion() == DB_VERSION); // new set of databases, set DB version
-     } else if (wrongDBVersion) {
-          nWaterlineBlock = -1; // force a clear_all_state and parse from start
-     }
-
-     if (nWaterlineBlock > 0) {
-         PrintToConsole("Loading persistent state: OK [block %d]\n", nWaterlineBlock);
-     } else {
-         std::string strReason = "unknown";
-         if (wrongDBVersion) strReason = "client version changed";
-         if (noPreviousState) strReason = "no usable previous state found";
-         if (startClean) strReason = "-startclean parameter used";
-         PrintToConsole("Loading persistent state: NONE (%s)\n", strReason);
-     }
-
-    if (nWaterlineBlock < 0) {
-        //persistence says we reparse!, nuke some stuff in case the partial loads left stale bits
-        clear_all_state();
-    }
-
-    // legacy code, setting to pre-genesis-block
-    int snapshotHeight = ConsensusParams().GENESIS_BLOCK - 1;
-
-    if (nWaterlineBlock < snapshotHeight) {
-        nWaterlineBlock = snapshotHeight;
-    }
-
-    // advance the waterline so that we start on the next unaccounted for block
-    nWaterlineBlock += 1;
-
-    // load feature activation messages from txlistdb and process them accordingly
-    p_txlistdb->LoadActivations(nWaterlineBlock);
-
-    // load all alerts from levelDB (and immediately expire old ones)
-    p_txlistdb->LoadAlerts(nWaterlineBlock);
-
-    // initial scan
-    msc_initial_scan(nWaterlineBlock);
-
-    PrintToLog("Omni Core Lite initialization completed\n");
-
+  LOCK(cs_tally);
+  
+  if (mastercoreInitialized) {
+    // nothing to do
     return 0;
+  }
+  
+  PrintToLog("\nInitializing Omni Core Lite\n");
+  PrintToLog("Startup time: %s\n", DateTimeStrFormat("%Y-%m-%d %H:%M:%S", GetTime()));
+  // PrintToLog("Build date: %s, based on commit: %s\n", BuildDate(), BuildCommit());
+  
+  InitDebugLogLevels();
+  ShrinkDebugLog();
+  
+  // check for --autocommit option and set transaction commit flag accordingly
+  if (!gArgs.GetBoolArg("-autocommit", true)) {
+    PrintToLog("Process was started with --autocommit set to false. "
+	       "Created Omni transactions will not be committed to wallet or broadcast.\n");
+    autoCommit = false;
+  }
+  
+  // check for --startclean option and delete MP_ folders if present
+  bool startClean = false;
+  if (gArgs.GetBoolArg("-startclean", false)) {
+    PrintToLog("Process was started with --startclean option, attempting to clear persistence files..\n");
+    try {
+      boost::filesystem::path persistPath = GetDataDir() / "OCL_persist";
+      boost::filesystem::path txlistPath = GetDataDir() / "OCL_txlist";
+      boost::filesystem::path spPath = GetDataDir() / "OCL_spinfo";
+      boost::filesystem::path omniTXDBPath = GetDataDir() / "OCL_TXDB";
+      if (boost::filesystem::exists(persistPath)) boost::filesystem::remove_all(persistPath);
+      if (boost::filesystem::exists(txlistPath)) boost::filesystem::remove_all(txlistPath);
+      if (boost::filesystem::exists(spPath)) boost::filesystem::remove_all(spPath);
+      if (boost::filesystem::exists(omniTXDBPath)) boost::filesystem::remove_all(omniTXDBPath);
+      PrintToLog("Success clearing persistence files in datadir %s\n", GetDataDir().string());
+      startClean = true;
+    } catch (const boost::filesystem::filesystem_error& e) {
+      PrintToLog("Failed to delete persistence folders: %s\n", e.what());
+      PrintToConsole("Failed to delete persistence folders: %s\n", e.what());
+    }
+  }
+  
+  p_txlistdb = new CMPTxList(GetDataDir() / "OCL_txlist", fReindex);
+  _my_sps = new CMPSPInfo(GetDataDir() / "OCL_spinfo", fReindex);
+  p_OmniTXDB = new COmniTransactionDB(GetDataDir() / "OCL_TXDB", fReindex);
+  t_tradelistdb = new CMPTradeList(GetDataDir()/"OCL_tradelist", fReindex);
+  MPPersistencePath = GetDataDir() / "OCL_persist";
+  TryCreateDirectory(MPPersistencePath);
+  
+  bool wrongDBVersion = (p_txlistdb->getDBVersion() != DB_VERSION);
+  
+  ++mastercoreInitialized;
+  
+  nWaterlineBlock = load_most_relevant_state();
+  bool noPreviousState = (nWaterlineBlock <= 0);
+  
+  if (startClean) {
+    assert(p_txlistdb->setDBVersion() == DB_VERSION); // new set of databases, set DB version
+  } else if (wrongDBVersion) {
+    nWaterlineBlock = -1; // force a clear_all_state and parse from start
+  }
+  
+  if (nWaterlineBlock > 0) {
+    PrintToConsole("Loading persistent state: OK [block %d]\n", nWaterlineBlock);
+  } else {
+    std::string strReason = "unknown";
+    if (wrongDBVersion) strReason = "client version changed";
+    if (noPreviousState) strReason = "no usable previous state found";
+    if (startClean) strReason = "-startclean parameter used";
+    PrintToConsole("Loading persistent state: NONE (%s)\n", strReason);
+  }
+  
+  if (nWaterlineBlock < 0) {
+    //persistence says we reparse!, nuke some stuff in case the partial loads left stale bits
+    clear_all_state();
+  }
+  
+  // legacy code, setting to pre-genesis-block
+  int snapshotHeight = ConsensusParams().GENESIS_BLOCK - 1;
+  
+  if (nWaterlineBlock < snapshotHeight) {
+    nWaterlineBlock = snapshotHeight;
+  }
+  
+  // advance the waterline so that we start on the next unaccounted for block
+  nWaterlineBlock += 1;
+  
+  // load feature activation messages from txlistdb and process them accordingly
+  p_txlistdb->LoadActivations(nWaterlineBlock);
+  
+  // load all alerts from levelDB (and immediately expire old ones)
+  p_txlistdb->LoadAlerts(nWaterlineBlock);
+  
+  // initial scan
+  msc_initial_scan(nWaterlineBlock);
+  
+  PrintToLog("Omni Core Lite initialization completed\n");
+  
+  return 0;
 }
 
 /**
@@ -2061,33 +2061,33 @@ int mastercore_init()
  */
 int mastercore_shutdown()
 {
-    LOCK(cs_tally);
-
-    if (p_txlistdb) {
-        delete p_txlistdb;
-        p_txlistdb = NULL;
-    }
-    if (t_tradelistdb) {
-        delete t_tradelistdb;
-        t_tradelistdb = NULL;
-    }
-    if (_my_sps) {
-        delete _my_sps;
-        _my_sps = NULL;
-    }
-    if (p_OmniTXDB) {
-        delete p_OmniTXDB;
-        p_OmniTXDB = NULL;
-    }
-
-    mastercoreInitialized = 0;
-
-    PrintToLog("\nOmni Core Lite shutdown completed\n");
-    PrintToLog("Shutdown time: %s\n", DateTimeStrFormat("%Y-%m-%d %H:%M:%S", GetTime()));
-
-    // PrintToConsole("Omni Core Lite shutdown completed\n");
-
-    return 0;
+  LOCK(cs_tally);
+  
+  if (p_txlistdb) {
+    delete p_txlistdb;
+    p_txlistdb = NULL;
+  }
+  if (t_tradelistdb) {
+    delete t_tradelistdb;
+    t_tradelistdb = NULL;
+  }
+  if (_my_sps) {
+    delete _my_sps;
+    _my_sps = NULL;
+  }
+  if (p_OmniTXDB) {
+    delete p_OmniTXDB;
+    p_OmniTXDB = NULL;
+  }
+  
+  mastercoreInitialized = 0;
+  
+  PrintToLog("\nOmni Core Lite shutdown completed\n");
+  PrintToLog("Shutdown time: %s\n", DateTimeStrFormat("%Y-%m-%d %H:%M:%S", GetTime()));
+  
+  // PrintToConsole("Omni Core Lite shutdown completed\n");
+  
+  return 0;
 }
 
 /**
@@ -2108,12 +2108,12 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   extern int BlockS;
   // std::vector<std::string> addrsl_vg;
   // std::vector<std::string> addrss_vg;
-
+  
   ui128 numLog128;
   ui128 numQuad128;
-
+  
   LOCK(cs_tally);
-
+  
   if (!mastercoreInitialized) {
     mastercore_init();
   }
@@ -2209,7 +2209,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   
   rational_t Factor1over3(1, 3);
   int64_t Factor1over3_64t = mastercore::RationalToInt64(Factor1over3);
-
+  
   int64_t XAxis = x_Axis/COIN;
   PrintToLog("\nXAxis Decimal Scale = %d, x_Axis = %s, Lastx_Axis = %s\n", XAxis, FormatDivisibleMP(x_Axis), FormatDivisibleMP(Lastx_Axis));
 
@@ -2233,33 +2233,33 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
       	    {
       	      if (XAxis >= 0 && XAxis <= 300000)
       	  	{/** y = 1/3x **/
-
+		  
 		  //PrintToLog("\nLinear Function\n");
 		  arith_uint256 line256_t = mastercore::ConvertTo256(Factor1over3_64t)*mastercore::ConvertTo256(x_Axis)/COIN;
 		  line64_t = mastercore::ConvertTo64(line256_t);
-
+		  
 		  //PrintToLog("line64_t = %s, LastLinear = %s\n", FormatDivisibleMP(line64_t), FormatDivisibleMP(LastLinear));
       	  	  int64_t linearBalance = line64_t-LastLinear;
       	  	  arith_uint256 linew256_t = mastercore::ConvertTo256(linearBalance)*mastercore::ConvertTo256(vestingBalance)/COIN;
       	  	  int64_t linew64_t = mastercore::ConvertTo64(linew256_t);
-
+		  
       	  	  rational_t linearRationalw(linew64_t, (int64_t)TOTAL_AMOUNT_VESTING_TOKENS);
       	  	  int64_t linearWeighted = mastercore::RationalToInt64(linearRationalw);
-
+		  
       	  	  //PrintToLog("linearBalance = %s, vestingBalance = %s\n", FormatDivisibleMP(linearBalance), FormatDivisibleMP(vestingBalance));
       	  	  //PrintToLog("linearWeighted = %s\n", FormatDivisibleMP(linearWeighted));
-
+		  
 		  assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, -linearWeighted, UNVESTED));
 		  assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, linearWeighted, BALANCE));
       	   	}
 	      else if (XAxis > 300000 && XAxis <= 10000000)
       		{ /** y = 100K+7/940900000(x^2-600Kx+90) */
       		  //PrintToLog("\nQuadratic Function\n");
-
+		  
       		  dec_float SecndTermnf = dec_float(7)*dec_float(XAxis)*dec_float(XAxis)/dec_float(940900000);
       		  int64_t SecndTermn64_t = mastercore::StrToInt64(SecndTermnf.str(DISPLAY_PRECISION_LEN, std::ios_base::fixed), true);
       		  // PrintToLog("SecndTermnf = %d\n", FormatDivisibleMP(SecndTermn64_t));
-
+		  
       		  dec_float ThirdTermnf = dec_float(7)*dec_float(600000)*dec_float(XAxis)/dec_float(940900000);
       		  int64_t ThirdTermn64_t = mastercore::StrToInt64(ThirdTermnf.str(DISPLAY_PRECISION_LEN, std::ios_base::fixed), true);
       		  // PrintToLog("ThirdTermnf = %d\n", FormatDivisibleMP(ThirdTermn64_t));
@@ -2337,7 +2337,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
       		  // PrintToLog("logBalance = %s, vestingBalance = %s\n", FormatDivisibleMP(logBalance), FormatDivisibleMP(vestingBalance));
       		  multiply(numLog128, (int64_t)logBalance, (int64_t)vestingBalance);
       		  // PrintToLog("numLog128 = %s\n", xToString(numLog128/COIN));
-
+		  
       		  rational_t logRationalw(numLog128/COIN, TOTAL_AMOUNT_VESTING_TOKENS);
       		  int64_t logWeighted = mastercore::RationalToInt64(logRationalw);
 
@@ -2370,7 +2370,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   /***********************************************/
   CMPTransaction mp_obj;
   mp_obj.unlockLogic();
-
+  
   int expirationBlock = 0, tradeBlock = 0, checkExpiration = 0;
   CMPSPInfo::Entry sp;
   if ( id_contract != 0 )
@@ -2417,12 +2417,15 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
     }
     fFoundTx |= (interp_ret == 0);
   } else if (pop_ret > 0) fFoundTx |= HandleDExPayments(tx, nBlock, mp_obj.getSender()); // testing the payment handler
-
+  
   if (fFoundTx && msc_debug_consensus_hash_every_transaction) {
     uint256 consensusHash = GetConsensusHash();
     PrintToLog("Consensus hash for transaction %s: %s\n", tx.GetHash().GetHex(), consensusHash.GetHex());
   }
-
+  
+  uint256 consensusHash = GetConsensusHash();
+  PrintToLog("\n\nChecking Consensus Hash:\ntx hex = %s\nconsensus hex = %s\n\n", tx.GetHash().GetHex(), consensusHash.GetHex());
+  
   return fFoundTx;
 }
 
@@ -2538,111 +2541,117 @@ bool mastercore::UseEncodingClassC(size_t nDataSize)
 
 // This function requests the wallet create an Omni transaction using the supplied parameters and payload
 int mastercore::WalletTxBuilder(const std::string& senderAddress, const std::string& receiverAddress, int64_t referenceAmount,
-     const std::vector<unsigned char>& data, uint256& txid, std::string& rawHex, bool commit, unsigned int minInputs)
+				const std::vector<unsigned char>& data, uint256& txid, std::string& rawHex, bool commit,
+				unsigned int minInputs)
 {
 #ifdef ENABLE_WALLET
-    CWalletRef pwalletMain = NULL;
-    if (vpwallets.size() > 0){
-        pwalletMain = vpwallets[0];
-    }
 
-    if (pwalletMain == NULL) return MP_ERR_WALLET_ACCESS;
-
-    /**
-    Omni Core Lite's core purpose is to be light weight thus:
-    + multisig and plain address encoding are banned
-    + nulldata encoding must use compression (varint)
-    **/
-
-    if (nMaxDatacarrierBytes < (data.size()+GetOmMarker().size())) return MP_ERR_PAYLOAD_TOO_BIG;
-
-    //TODO verify datacarrier is enabled at startup, otherwise won't be able to send transactions
-
-    // Prepare the transaction - first setup some vars
-    CCoinControl coinControl;
-    coinControl.fAllowOtherInputs = true;
-    CWalletTx wtxNew;
-    CAmount nFeeRet = 0;
-    int nChangePosInOut = -1;
-    std::string strFailReason;
-    std::vector<std::pair<CScript, int64_t> > vecSend;
-    CReserveKey reserveKey(pwalletMain);
-
-    // Next, we set the change address to the sender
-    coinControl.destChange = DecodeDestination(senderAddress);
-
-    // Select the inputs
-    if (0 > SelectCoins(senderAddress, coinControl, referenceAmount, minInputs)) { return MP_INPUTS_INVALID; }
-
-    // Encode the data outputs
-
-    if(!OmniCore_Encode_ClassD(data,vecSend)) { return MP_ENCODING_ERROR; }
-
-
-    // Then add a paytopubkeyhash output for the recipient (if needed) - note we do this last as we want this to be the highest vout
-    if (!receiverAddress.empty()) {
-        CScript scriptPubKey = GetScriptForDestination(DecodeDestination(receiverAddress));
-        vecSend.push_back(std::make_pair(scriptPubKey, 0 < referenceAmount ? referenceAmount : 50000000));
-    }
-
-    // Now we have what we need to pass to the wallet to create the transaction, perform some checks first
-
-    if (!coinControl.HasSelected()) return MP_ERR_INPUTSELECT_FAIL;
-
-    std::vector<CRecipient> vecRecipients;
-    for (size_t i = 0; i < vecSend.size(); ++i) {
-        const std::pair<CScript, int64_t>& vec = vecSend[i];
-        CRecipient recipient = {vec.first, CAmount(vec.second), false};
-        vecRecipients.push_back(recipient);
-    }
-
-    // Ask the wallet to create the transaction (note mining fee determined by Bitcoin Core params)
-    if (!pwalletMain->CreateTransaction(vecRecipients, wtxNew, reserveKey, nFeeRet, nChangePosInOut, strFailReason, coinControl, true)) {
-        return MP_ERR_CREATE_TX; }
-
-    // Workaround for SigOps limit
+  CWalletRef pwalletMain = NULL;
+  if (vpwallets.size() > 0){
+    pwalletMain = vpwallets[0];
+  }
+  
+  if (pwalletMain == NULL) return MP_ERR_WALLET_ACCESS;
+  
+  /**
+     Omni Core Lite's core purpose is to be light weight thus:
+     + multisig and plain address encoding are banned
+     + nulldata encoding must use compression (varint)
+  **/
+  
+  if (nMaxDatacarrierBytes < (data.size()+GetOmMarker().size())) return MP_ERR_PAYLOAD_TOO_BIG;
+  
+  //TODO verify datacarrier is enabled at startup, otherwise won't be able to send transactions
+  
+  // Prepare the transaction - first setup some vars
+  CCoinControl coinControl;
+  coinControl.fAllowOtherInputs = true;
+  CWalletTx wtxNew;
+  CAmount nFeeRet = 0;
+  int nChangePosInOut = -1;
+  std::string strFailReason;
+  std::vector<std::pair<CScript, int64_t> > vecSend;
+  CReserveKey reserveKey(pwalletMain);
+  
+  // Next, we set the change address to the sender
+  coinControl.destChange = DecodeDestination(senderAddress);
+  
+  // Select the inputs
+  if (0 > SelectCoins(senderAddress, coinControl, referenceAmount, minInputs)) { return MP_INPUTS_INVALID; }
+  
+  // Encode the data outputs
+  
+  if(!OmniCore_Encode_ClassD(data,vecSend)) { return MP_ENCODING_ERROR; }
+  
+  
+  // Then add a paytopubkeyhash output for the recipient (if needed) - note we do this last as we want this to be the highest vout
+  if (!receiverAddress.empty()) {
+    CScript scriptPubKey = GetScriptForDestination(DecodeDestination(receiverAddress));
+    vecSend.push_back(std::make_pair(scriptPubKey, 0 < referenceAmount ? referenceAmount : 50000000));
+  }
+  
+  // Now we have what we need to pass to the wallet to create the transaction, perform some checks first
+  
+  if (!coinControl.HasSelected()) return MP_ERR_INPUTSELECT_FAIL;
+  
+  std::vector<CRecipient> vecRecipients;
+  for (size_t i = 0; i < vecSend.size(); ++i)
     {
-         if (!FillTxInputCache(*(wtxNew.tx))) {
-             PrintToLog("%s ERROR: failed to get inputs for %s after createtransaction\n", __func__, wtxNew.GetHash().GetHex());
-         }
-
-        unsigned int nBytesPerSigOp = 20; // default of Bitcoin Core 12.1
-        unsigned int nSize = ::GetSerializeSize(wtxNew, SER_NETWORK, PROTOCOL_VERSION);
-        unsigned int nSigOps = GetLegacySigOpCount(*(wtxNew.tx));
-        nSigOps += GetP2SHSigOpCount(*(wtxNew.tx), view);
-
-        if (nSigOps > nSize / nBytesPerSigOp) {
-             std::vector<COutPoint> vInputs;
-             coinControl.ListSelected(vInputs);
-
-             // Ensure the requested number of inputs was available, so there may be more
-             if (vInputs.size() >= minInputs) {
-                 //Build a new transaction and try to select one additional input to
-                 //shift the bytes per sigops ratio in our favor
-                 ++minInputs;
-                 return WalletTxBuilder(senderAddress, receiverAddress, referenceAmount, data, txid, rawHex, commit, minInputs);
-             } else {
-                 PrintToLog("%s WARNING: %s has %d sigops, and may not confirm in time\n",
-                         __func__, wtxNew.GetHash().GetHex(), nSigOps);
-             }
-         }
+      const std::pair<CScript, int64_t>& vec = vecSend[i];
+      CRecipient recipient = {vec.first, CAmount(vec.second), false};
+      vecRecipients.push_back(recipient);
     }
-
-    // If this request is only to create, but not commit the transaction then display it and exit
-    if (!commit) {
-        rawHex = EncodeHexTx(*(wtxNew.tx));
-        return 0;
-    } else {
-        // Commit the transaction to the wallet and broadcast)
-        CValidationState state;
-        if (!pwalletMain->CommitTransaction(wtxNew, reserveKey, g_connman.get(), state)) return MP_ERR_COMMIT_TX;
-        txid = wtxNew.GetHash();
-        return 0;
+  
+  // Ask the wallet to create the transaction (note mining fee determined by Bitcoin Core params)
+  if (!pwalletMain->CreateTransaction(vecRecipients, wtxNew, reserveKey, nFeeRet, nChangePosInOut, strFailReason, coinControl, true))
+    {
+      return MP_ERR_CREATE_TX;
     }
+  
+  // Workaround for SigOps limit
+  {
+    if (!FillTxInputCache(*(wtxNew.tx)))
+      {
+	PrintToLog("%s ERROR: failed to get inputs for %s after createtransaction\n", __func__, wtxNew.GetHash().GetHex());
+      }
+    
+    unsigned int nBytesPerSigOp = 20; // default of Bitcoin Core 12.1
+    unsigned int nSize = ::GetSerializeSize(wtxNew, SER_NETWORK, PROTOCOL_VERSION);
+    unsigned int nSigOps = GetLegacySigOpCount(*(wtxNew.tx));
+    nSigOps += GetP2SHSigOpCount(*(wtxNew.tx), view);
+    
+    if (nSigOps > nSize / nBytesPerSigOp) {
+      std::vector<COutPoint> vInputs;
+      coinControl.ListSelected(vInputs);
+      
+      // Ensure the requested number of inputs was available, so there may be more
+      if (vInputs.size() >= minInputs) {
+	//Build a new transaction and try to select one additional input to
+	//shift the bytes per sigops ratio in our favor
+	++minInputs;
+	return WalletTxBuilder(senderAddress, receiverAddress, referenceAmount, data, txid, rawHex, commit, minInputs);
+      } else {
+	PrintToLog("%s WARNING: %s has %d sigops, and may not confirm in time\n",
+		   __func__, wtxNew.GetHash().GetHex(), nSigOps);
+      }
+    }
+  }
+  
+  // If this request is only to create, but not commit the transaction then display it and exit
+  if (!commit) {
+    rawHex = EncodeHexTx(*(wtxNew.tx));
+    return 0;
+  } else {
+    // Commit the transaction to the wallet and broadcast)
+    CValidationState state;
+    if (!pwalletMain->CommitTransaction(wtxNew, reserveKey, g_connman.get(), state)) return MP_ERR_COMMIT_TX;
+    txid = wtxNew.GetHash();
+    return 0;
+  }
 #else
-    return MP_ERR_WALLET_ACCESS;
+  return MP_ERR_WALLET_ACCESS;
 #endif
-
+  
 }
 
 void COmniTransactionDB::RecordTransaction(const uint256& txid, uint32_t posInBlock)
@@ -3004,22 +3013,23 @@ void CMPTxList::printStats()
   PrintToLog("CMPTxList stats: nWritten= %d , nRead= %d\n", nWritten, nRead);
 }
 
- void CMPTxList::printAll()
+void CMPTxList::printAll()
 {
-   int count = 0;
-   Slice skey, svalue;
-   Iterator* it = NewIterator();
-
-   for(it->SeekToFirst(); it->Valid(); it->Next())
-   {
-     skey = it->key();
-     svalue = it->value();
-     ++count;
-     PrintToConsole("entry #%8d= %s:%s\n", count, skey.ToString(), svalue.ToString());
-   }
-
-   delete it;
- }
+  int count = 0;
+  
+  Slice skey, svalue;
+  Iterator* it = NewIterator();
+  
+  for(it->SeekToFirst(); it->Valid(); it->Next())
+    {
+      skey = it->key();
+      svalue = it->value();
+      ++count;
+      PrintToConsole("entry #%8d= %s:%s\n", count, skey.ToString(), svalue.ToString());
+    }
+  
+  delete it;
+}
 
  void CMPTxList::recordPaymentTX(const uint256 &txid, bool fValid, int nBlock, unsigned int vout, unsigned int propertyId, uint64_t nValue, string buyer, string seller)
  {
@@ -3274,13 +3284,13 @@ int mastercore_handler_block_end(int nBlockNow, CBlockIndex const * pBlockIndex,
 
      // transactions were found in the block, signal the UI accordingly
      if (countMP > 0) CheckWalletUpdate(true);
-
+     
      // calculate and print a consensus hash if required
      if (msc_debug_consensus_hash_every_block) {
-         uint256 consensusHash = GetConsensusHash();
-         PrintToLog("Consensus hash for block %d: %s\n", nBlockNow, consensusHash.GetHex());
+       uint256 consensusHash = GetConsensusHash();
+       PrintToLog("Consensus hash for block %d: %s\n", nBlockNow, consensusHash.GetHex());
      }
-
+     
      // request checkpoint verification
      bool checkpointValid = VerifyCheckpoint(nBlockNow, pBlockIndex->GetBlockHash());
      if (!checkpointValid) {

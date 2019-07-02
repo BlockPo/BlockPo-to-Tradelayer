@@ -147,7 +147,7 @@ public:
             READWRITE(notional_size);
             READWRITE(collateral_currency);
             READWRITE(margin_requirement);
-	          READWRITE(attribute_type);
+	    READWRITE(attribute_type);
             READWRITE(init_block);
             READWRITE(contract_associated);
             READWRITE(denomination);
@@ -297,7 +297,7 @@ bool isCrowdsalePurchase(const uint256& txid, const std::string& address, int64_
 
 /** Calculates missing bonus tokens, which are credited to the crowdsale issuer. */
 int64_t GetMissedIssuerBonus(const CMPSPInfo::Entry& sp, const CMPCrowd& crowdsale);
-
+ 
 /** Calculates amounts credited for a crowdsale purchase. */
 void calculateFundraiser(bool inflateAmount, int64_t amtTransfer, uint8_t bonusPerc,
         int64_t fundraiserSecs, int64_t currentSecs, int64_t numProps, uint8_t issuerPerc, int64_t totalTokens,

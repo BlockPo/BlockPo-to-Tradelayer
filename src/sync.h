@@ -91,6 +91,7 @@ void static inline DeleteLock(void* cs) {}
  * Wrapped mutex: supports recursive locking, but no waiting
  * TODO: We should move away from using the recursive lock by default.
  */
+
 class CCriticalSection : public AnnotatedMixin<std::recursive_mutex>
 {
 public:

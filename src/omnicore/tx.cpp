@@ -3011,7 +3011,7 @@ int CMPTransaction::logicMath_DExBuy()
 
 int CMPTransaction::logicMath_AcceptOfferBTC()
 {
-
+  
   if (nValue <= 0 || MAX_INT_8_BYTES < nValue) {
     PrintToLog("%s(): rejected: value out of range or zero: %d\n", __func__, nValue);
   }
@@ -3038,7 +3038,7 @@ int CMPTransaction::logicMath_AcceptOfferBTC()
 	  std::string seller = sellCombo.substr(0, sellCombo.size() - 2);
 
 	  if (!addressFilter.empty() && seller != addressFilter) continue;
-
+	  
 	  std::string txid = offer.getHash().GetHex();
 	  uint32_t propertyId = offer.getProperty();
 	  int64_t sellOfferAmount = offer.getOfferAmountOriginal();

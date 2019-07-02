@@ -242,12 +242,12 @@ public:
         leveldb::Status status = Open(path, fWipe);
         PrintToConsole("Loading tx meta-info database: %s\n", status.ToString());
     }
-
+    
     virtual ~CMPTxList()
-    {
+      {
         // if (msc_debug_persistence) PrintToLog("CMPTxList closed\n");
-    }
-
+      }
+    
     void recordTX(const uint256 &txid, bool fValid, int nBlock, unsigned int type, uint64_t nValue);
     /** Records a "send all" sub record. */
     void recordSendAllSubRecord(const uint256& txid, int subRecordNumber, uint32_t propertyId, int64_t nvalue);
@@ -293,60 +293,75 @@ public:
     //////////////////////////////////////
     void getMPTransactionAddresses(std::vector<std::string> &vaddrs);
 };
+
 /** LevelDB based storage for the trade history. Trades are listed with key "txid1+txid2".
  */
+
 class CMPTradeList : public CDBBase
 {
-public:
-    CMPTradeList(const boost::filesystem::path& path, bool fWipe)
+ public:
+  
+  CMPTradeList(const boost::filesystem::path& path, bool fWipe)
     {
-        leveldb::Status status = Open(path, fWipe);
-        PrintToConsole("Loading trades database: %s\n", status.ToString());
+      leveldb::Status status = Open(path, fWipe);
+      PrintToConsole("Loading trades database: %s\n", status.ToString());
     }
-
-    virtual ~CMPTradeList()
+  
+  virtual ~CMPTradeList()
     {
-        // if (msc_debug_persistence) PrintToLog("CMPTradeList closed\n");
+      // if (msc_debug_persistence) PrintToLog("CMPTradeList closed\n");
     }
-
-    void recordMatchedTrade(const uint256 txid1, const uint256 txid2, string address1, string address2, unsigned int prop1, unsigned int prop2, uint64_t amount1, uint64_t amount2, int blockNum, int64_t fee);
-
-    /////////////////////////////////
-    /** New things for Contract */
-    void recordMatchedTrade(const uint256 txid1, const uint256 txid2, string address1, string address2, uint64_t effective_price, uint64_t amount_maker, uint64_t amount_taker, int blockNum1, int blockNum2, uint32_t property_traded, string tradeStatus, int64_t lives_s0, int64_t lives_s1, int64_t lives_s2, int64_t lives_s3, int64_t lives_b0, int64_t lives_b1, int64_t lives_b2, int64_t lives_b3, string s_maker0, string s_taker0, string s_maker1, string s_taker1, string s_maker2, string s_taker2, string s_maker3, string s_taker3, int64_t nCouldBuy0, int64_t nCouldBuy1, int64_t nCouldBuy2, int64_t nCouldBuy3, uint64_t amountpnew, uint64_t amountpold);
-    void recordForUPNL(const uint256 txid, string address, uint32_t property_traded, int64_t effectivePrice);
-    // void recordMatchedTrade(const uint256 txid1, const uint256 txid2, string address1, string address2, unsigned int prop1, unsigned int prop2, uint64_t amount1, uint64_t amount2, int blockNum, int64_t fee, string t_status, std::vector<uint256> &vecTxid);
-    /////////////////////////////////
-
-    void recordNewTrade(const uint256& txid, const std::string& address, uint32_t propertyIdForSale, uint32_t propertyIdDesired, int blockNum, int blockIndex);
-    void recordNewTrade(const uint256& txid, const std::string& address, uint32_t propertyIdForSale, uint32_t propertyIdDesired, int blockNum, int blockIndex, int64_t reserva);
-    int deleteAboveBlock(int blockNum);
-    bool exists(const uint256 &txid);
-    void printStats();
-    void printAll();
-    bool getMatchingTrades(const uint256& txid, uint32_t propertyId, UniValue& tradeArray, int64_t& totalSold, int64_t& totalBought);
-
-    ///////////////////////////////////////
-    /** New things for Contract */
-    bool getMatchingTrades(uint32_t propertyId, UniValue& tradeArray);
-    bool getMatchingTradesUnfiltered(uint32_t propertyId, UniValue& tradeArray);
-    double getPNL(string address, int64_t contractsClosed, int64_t price, uint32_t property, uint32_t marginRequirementContract, uint32_t notionalSize, std::string Status);
-    double getUPNL(string address, uint32_t contractId);
-    int64_t getTradeAllsByTxId(uint256& txid);
-    /** Used to notify that the number of tokens for a property has changed. */
-    void NotifyPeggedCurrency(const uint256& txid, string address, uint32_t propertyId, uint64_t amount, std::string series);
-    bool getCreatedPegged(uint32_t propertyId, UniValue& tradeArray);
-    //////////////////////////////////////
-
-    bool getMatchingTrades(const uint256& txid);
-    void getTradesForAddress(std::string address, std::vector<uint256>& vecTransactions, uint32_t propertyIdFilter = 0);
-    void getTradesForPair(uint32_t propertyIdSideA, uint32_t propertyIdSideB, UniValue& response, uint64_t count);
-    int getMPTradeCountTotal();
+  
+  void recordMatchedTrade(const uint256 txid1, const uint256 txid2, string address1, string address2, unsigned int prop1, unsigned int prop2, uint64_t amount1, uint64_t amount2, int blockNum, int64_t fee);
+  
+  /////////////////////////////////
+  /** New things for Contract */
+  void recordMatchedTrade(const uint256 txid1, const uint256 txid2, string address1, string address2, uint64_t effective_price, uint64_t amount_maker, uint64_t amount_taker, int blockNum1, int blockNum2, uint32_t property_traded, string tradeStatus, int64_t lives_s0, int64_t lives_s1, int64_t lives_s2, int64_t lives_s3, int64_t lives_b0, int64_t lives_b1, int64_t lives_b2, int64_t lives_b3, string s_maker0, string s_taker0, string s_maker1, string s_taker1, string s_maker2, string s_taker2, string s_maker3, string s_taker3, int64_t nCouldBuy0, int64_t nCouldBuy1, int64_t nCouldBuy2, int64_t nCouldBuy3, uint64_t amountpnew, uint64_t amountpold);
+  void recordForUPNL(const uint256 txid, string address, uint32_t property_traded, int64_t effectivePrice);
+  // void recordMatchedTrade(const uint256 txid1, const uint256 txid2, string address1, string address2, unsigned int prop1, unsigned int prop2, uint64_t amount1, uint64_t amount2, int blockNum, int64_t fee, string t_status, std::vector<uint256> &vecTxid);
+  /////////////////////////////////
+  
+  void recordNewTrade(const uint256& txid, const std::string& address, uint32_t propertyIdForSale, uint32_t propertyIdDesired, int blockNum, int blockIndex);
+  void recordNewTrade(const uint256& txid, const std::string& address, uint32_t propertyIdForSale, uint32_t propertyIdDesired, int blockNum, int blockIndex, int64_t reserva);
+  int deleteAboveBlock(int blockNum);
+  bool exists(const uint256 &txid);
+  void printStats();
+  void printAll();
+  bool getMatchingTrades(const uint256& txid, uint32_t propertyId, UniValue& tradeArray, int64_t& totalSold, int64_t& totalBought);
+  
+  ///////////////////////////////////////
+  /** New things for Contract */
+  bool getMatchingTrades(uint32_t propertyId, UniValue& tradeArray);
+  bool getMatchingTradesUnfiltered(uint32_t propertyId, UniValue& tradeArray);
+  double getPNL(string address, int64_t contractsClosed, int64_t price, uint32_t property, uint32_t marginRequirementContract, uint32_t notionalSize, std::string Status);
+  double getUPNL(string address, uint32_t contractId);
+  int64_t getTradeAllsByTxId(uint256& txid);
+  /** Used to notify that the number of tokens for a property has changed. */
+  void NotifyPeggedCurrency(const uint256& txid, string address, uint32_t propertyId, uint64_t amount, std::string series);
+  bool getCreatedPegged(uint32_t propertyId, UniValue& tradeArray);
+  //////////////////////////////////////
+  
+  bool getMatchingTrades(const uint256& txid);
+  void getTradesForAddress(std::string address, std::vector<uint256>& vecTransactions, uint32_t propertyIdFilter = 0);
+  void getTradesForPair(uint32_t propertyIdSideA, uint32_t propertyIdSideB, UniValue& response, uint64_t count);
+  int getMPTradeCountTotal();
 };
 
+class CMPSettlementMatchList : public CDBBase
+{
+ public:
+  CMPSettlementMatchList(const boost::filesystem::path& path, bool fWipe)
+    {
+      leveldb::Status status = Open(path, fWipe);
+      PrintToConsole("Loading settlement match info database: %s\n", status.ToString());
+    }
+  
+  virtual ~CMPSettlementMatchList() { }
+};
 
 //! Available balances of wallet properties
 extern std::map<uint32_t, int64_t> global_balance_money;
+
 //! Vector containing a list of properties relative to the wallet
 extern std::set<uint32_t> global_wallet_property_list;
 

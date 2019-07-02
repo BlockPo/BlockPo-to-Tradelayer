@@ -40,7 +40,7 @@ private:
     int64_t blockTime;  // internally nTime is still an "unsigned int"
     unsigned int tx_idx;  // tx # within the block, 0-based
     uint64_t tx_fee_paid;
-
+    
     int pkt_size;
     unsigned char pkt[65535];
     int encodingClass;  // No Marker = 0, Class A = 1, Class B = 2, Class C = 3
