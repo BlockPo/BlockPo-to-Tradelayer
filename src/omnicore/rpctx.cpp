@@ -874,11 +874,11 @@ UniValue tl_createcontract(const JSONRPCRequest& request)
   RequireSaneName(name);
   
   std::vector<unsigned char> payload = CreatePayload_CreateContract(ecosystem, type, name, blocks_until_expiration, notional_size, collateral_currency, margin_requirement);
-
+  
   uint256 txid;
   std::string rawHex;
   int result = WalletTxBuilder(fromAddress, "", 0, payload, txid, rawHex, autoCommit);
-
+  
   if ( result != 0 )
     {
       throw JSONRPCError(result, error_str(result));
