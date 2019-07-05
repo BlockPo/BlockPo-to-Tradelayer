@@ -103,7 +103,8 @@ private:
 
     /* uint64_t ticksize; */
     /*uint32_t nextContractId;*/
-    uint64_t oracle_price;
+    uint64_t oracle_high;
+    uint64_t oracle_low;
     uint32_t blocks_until_expiration;
     uint32_t notional_size;
     uint32_t collateral_currency;
@@ -429,6 +430,14 @@ struct TokenDataByName
   std::string data_name;
   std::string data_subcategory;
   std::string data_issuer;
+};
+
+struct oracledata
+{
+  int block;
+  int64_t high;
+  int64_t low;
+  uint32_t contractId;
 };
 
 struct FutureContractObject *getFutureContractObject(uint32_t property_type, std::string identifier);

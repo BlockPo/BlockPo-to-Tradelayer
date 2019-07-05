@@ -253,6 +253,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_listtransactions", 3, "arg3" },
     { "tl_listtransactions", 4, "arg4" },
     { "tl_setoracle", 2, "arg2" },
+    { "tl_setoracle", 3, "arg3" },
 
     /* Trade Layer - data retrieval calls */
     { "tl_setautocommit", 0, "arg0" },

@@ -50,7 +50,7 @@ typedef boost::rational<boost::multiprecision::checked_int128_t> rational_t;
 typedef boost::multiprecision::cpp_dec_float_100 dec_float;
 typedef boost::multiprecision::checked_int128_t int128_t;
 extern std::map<std::string,uint32_t> peggedIssuers;
-extern std::map<uint32_t,uint64_t> oraclePrices;
+extern std::map<uint32_t,oracledata> oraclePrices;
 extern int64_t factorE;
 extern int64_t priceIndex;
 extern int64_t allPrice;
@@ -1418,18 +1418,24 @@ bool CMPTransaction::interpret_Set_Oracle()
     std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
     std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
     std::vector<uint8_t> vecContIdBytes = GetNextVarIntBytes(i);
-    std::vector<uint8_t> vecPriceBytes = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecHighBytes = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecLowBytes = GetNextVarIntBytes(i);
 
     if (!vecContIdBytes.empty()) {
         contractId = DecompressInteger(vecContIdBytes);
     } else return false;
 
-    if (!vecPriceBytes.empty()) {
-        oracle_price = DecompressInteger(vecPriceBytes);
+    if (!vecHighBytes.empty()) {
+        oracle_high = DecompressInteger(vecHighBytes);
+    } else return false;
+
+    if (!vecLowBytes.empty()) {
+        oracle_low = DecompressInteger(vecLowBytes);
     } else return false;
 
     PrintToLog("version: %d\n", version);
-    PrintToLog("oracle price: %d\n",oracle_price);
+    PrintToLog("oracle high price: %d\n",oracle_high);
+    PrintToLog("oracle low price: %d\n",oracle_low);
     PrintToLog("propertyId: %d\n", propertyId);
 
     return true;
@@ -3454,13 +3460,14 @@ int CMPTransaction::logicMath_Set_Oracle()
 
 
     // ------------------------------------------
-
-    oraclePrices[contractId] = oracle_price;
+    oraclePrices[contractId].block = block;
+    oraclePrices[contractId].high = oracle_high;
+    oraclePrices[contractId].low = oracle_low;
 
     // checking the map
-    std::map<uint32_t,uint64_t>::iterator it = oraclePrices.find(contractId);
+    std::map<uint32_t,oracledata>::iterator it = oraclePrices.find(contractId);
 
-    PrintToLog("price inside the oracle for contract: %d\n",it->second);
+    PrintToLog("oracle data for contract: block: %d,high:%d, low:%d\n",it->second.block, it->second.high, it->second.low);
 
     return 0;
 }
@@ -3518,7 +3525,7 @@ int CMPTransaction::logicMath_OracleBackup()
 struct FutureContractObject *getFutureContractObject(uint32_t property_type, std::string identifier)
 {
   struct FutureContractObject *pt_fco = new FutureContractObject;
-  
+
   LOCK(cs_tally);
   uint32_t nextSPID = _my_sps->peekNextSPID(1);
   for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
@@ -3561,7 +3568,7 @@ struct FutureContractObject *getFutureContractObject(uint32_t property_type, std
 struct TokenDataByName *getTokenDataByName(std::string identifier)
 {
   struct TokenDataByName *pt_data = new TokenDataByName;
-  
+
   LOCK(cs_tally);
   uint32_t nextSPID = _my_sps->peekNextSPID(1);
   for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)

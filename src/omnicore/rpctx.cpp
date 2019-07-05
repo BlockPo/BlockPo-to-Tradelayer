@@ -279,7 +279,7 @@ UniValue tl_sendissuancecrowdsale(const JSONRPCRequest& request)
     int64_t deadline = ParseDeadline(request.params[9]);
     uint8_t earlyBonus = ParseEarlyBirdBonus(request.params[10]);
     uint8_t issuerPercentage = ParseIssuerBonus(request.params[11]);
-    
+
     // perform checks
     RequirePropertyName(name);
     RequireExistingProperty(propertyIdDesired);
@@ -614,7 +614,7 @@ UniValue tl_sendchangeissuer(const JSONRPCRequest& request)
     RequireManagedProperty(propertyId);
     RequireNotContract(propertyId);
     RequireTokenIssuer(fromAddress, propertyId);
-    
+
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_ChangeIssuer(propertyId);
 
@@ -653,7 +653,7 @@ UniValue tl_sendactivation(const JSONRPCRequest& request)
             + HelpExampleCli("tl_sendactivation", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" 1 370000 999")
             + HelpExampleRpc("tl_sendactivation", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", 1, 370000, 999")
         );
-    
+
     // obtain parameters & info
     std::string fromAddress = ParseAddress(request.params[0]);
     uint16_t featureId = request.params[1].get_int();
@@ -803,7 +803,7 @@ UniValue tl_sendtrade(const JSONRPCRequest& request)
   int64_t amountForSale = ParseAmount(request.params[2], isPropertyDivisible(propertyIdForSale));
   uint32_t propertyIdDesired = ParsePropertyId(request.params[3]);
   int64_t amountDesired = ParseAmount(request.params[4], isPropertyDivisible(propertyIdDesired));
-  
+
   // perform checks
   RequireExistingProperty(propertyIdForSale);
   RequireNotContract(propertyIdForSale);
@@ -850,15 +850,15 @@ UniValue tl_createcontract(const JSONRPCRequest& request)
 			"6. notional size             (number, required) notional size\n"
 			"7. collateral currency       (number, required) collateral currency\n"
 			"8. margin requirement        (number, required) margin requirement\n"
-			
+
 			"\nResult:\n"
 			"\"hash\"                  (string) the hex-encoded transaction hash\n"
-			
+
 			"\nExamples:\n"
 			+ HelpExampleCli("tl_createcontract", "2 1 0 \"Companies\" \"Bitcoin Mining\" \"Quantum Miner\" \"\" \"\" 2 \"100\" 1483228800 30 2 4461 100 1 25")
 			+ HelpExampleRpc("tl_createcontract", "2, 1, 0, \"Companies\", \"Bitcoin Mining\", \"Quantum Miner\", \"\", \"\", 2, \"100\", 1483228800, 30, 2, 4461, 100, 1, 25")
 			);
-  
+
   std::string fromAddress = ParseAddress(request.params[0]);
   uint8_t ecosystem = ParseEcosystem(request.params[1]);
   uint32_t type = ParseContractType(request.params[2]);
@@ -867,12 +867,12 @@ UniValue tl_createcontract(const JSONRPCRequest& request)
   uint32_t notional_size = ParseAmount32t(request.params[5]);
   uint32_t collateral_currency = request.params[6].get_int();
   uint32_t margin_requirement = ParseAmount32t(request.params[7]);
-  
+
   PrintToLog("\nRPC tl_createcontract: notional_size = %s\t margin_requirement = %s\t blocks_until_expiration = %d\t collateral_currency=%d\t ecosystem = %d\t type = %d\n", FormatDivisibleMP(notional_size), FormatDivisibleMP(margin_requirement), blocks_until_expiration, collateral_currency, ecosystem, type);
-  
+
   RequirePropertyName(name);
   RequireSaneName(name);
-  
+
   std::vector<unsigned char> payload = CreatePayload_CreateContract(ecosystem, type, name, blocks_until_expiration, notional_size, collateral_currency, margin_requirement);
 
   uint256 txid;
@@ -980,19 +980,19 @@ UniValue tl_tradecontract(const JSONRPCRequest& request)
 			"6. leverage             (number, required) leverage (2x, 3x, ... 10x)\n"
 			"\nResult:\n"
 			"\"payload\"             (string) the hex-encoded payload\n"
-			
+
 			"\nExamples:\n"
 			+ HelpExampleCli("tl_tradecontract", "31\"250.0\"1\"10.0\"70.0\"80.0\"")
 			+ HelpExampleRpc("tl_tradecontract", "31,\"250.0\",1,\"10.0,\"70.0,\"80.0\"")
 			);
-  
+
   std::string fromAddress = ParseAddress(request.params[0]);
   std::string name_traded = ParseText(request.params[1]);
   int64_t amountForSale = ParseAmountContract(request.params[2]);
   uint64_t effective_price = ParseEffectivePrice(request.params[3]);
   uint8_t trading_action = ParseContractDexAction(request.params[4]);
   uint64_t leverage = ParseLeverage(request.params[5]);
-  
+
   //RequireCollateral(fromAddress,name_traded);
 
   std::vector<unsigned char> payload = CreatePayload_ContractDexTrade(name_traded, amountForSale, effective_price, trading_action, leverage);
@@ -1571,7 +1571,7 @@ UniValue tl_senddexaccept(const JSONRPCRequest& request)
 
 UniValue tl_setoracle(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 3)
+    if (request.params.size() != 4)
         throw runtime_error(
             "tl_setoracle \"fromaddress\" \"contract name\" price\n"
 
@@ -1580,8 +1580,8 @@ UniValue tl_setoracle(const JSONRPCRequest& request)
             "\nArguments:\n"
             "1. fromaddress          (string, required) the oracle address for the Future Contract\n"
             "2. contract name        (string, required) the name of the Future Contract\n"
-            "2. price                (number, required) the price of the asset\n"
-
+            "3. high price           (number, required) the highest price of the asset\n"
+            "4. low price            (number, required) the lowest price of the asset\n"
 
             "\nResult:\n"
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
@@ -1594,7 +1594,8 @@ UniValue tl_setoracle(const JSONRPCRequest& request)
     // obtain parameters & info
     std::string fromAddress = ParseAddress(request.params[0]);
     std::string name_contract = ParseText(request.params[1]);
-      uint64_t price = ParseEffectivePrice(request.params[2]);
+    uint64_t high = ParseEffectivePrice(request.params[2]);
+    uint64_t low = ParseEffectivePrice(request.params[3]);
     struct FutureContractObject *pfuture_contract = getFutureContractObject(ALL_PROPERTY_TYPE_ORACLE_CONTRACT, name_contract);
     uint32_t contractId = pfuture_contract->fco_propertyId;
     std::string oracleAddress = pfuture_contract->fco_issuer;
@@ -1609,7 +1610,7 @@ UniValue tl_setoracle(const JSONRPCRequest& request)
 
 
     // create a payload for the transaction
-    std::vector<unsigned char> payload = CreatePayload_Set_Oracle(contractId,price);
+    std::vector<unsigned char> payload = CreatePayload_Set_Oracle(contractId,high,low);
 
     // request the wallet build the transaction (and if needed commit it)
     uint256 txid;
