@@ -41,6 +41,7 @@ std::vector<unsigned char> CreatePayload_MetaDExCancelEcosystem(uint8_t ecosyste
 std::vector<unsigned char> CreatePayload_CreateOracleContract(uint8_t ecosystem, uint32_t denomType, std::string name, uint32_t blocks_until_expiration, uint32_t notional_size, uint32_t collateral_currency, uint32_t margin_requirement);
 std::vector<unsigned char> CreatePayload_Change_OracleRef(uint32_t contractId);
 std::vector<unsigned char> CreatePayload_OracleBackup(uint32_t contractId);
+std::vector<unsigned char> CreatePayload_Close_Oracle(uint32_t contractId);
 std::vector<unsigned char> CreatePayload_Set_Oracle(uint32_t contractId, uint64_t high, uint64_t low);
 
 #endif // OMNICORE_CREATEPAYLOAD_H

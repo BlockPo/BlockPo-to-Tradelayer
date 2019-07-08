@@ -236,6 +236,9 @@ bool CMPTransaction::interpret_Transaction()
     case MSC_TYPE_ORACLE_BACKUP:
       return interpret_OracleBackup();
 
+    case MSC_TYPE_CLOSE_ORACLE:
+      return interpret_CloseOracle();
+
     }
 
   return false;
@@ -1460,6 +1463,25 @@ bool CMPTransaction::interpret_OracleBackup()
     return true;
 }
 
+/** Tx 107 */
+bool CMPTransaction::interpret_CloseOracle()
+{
+    int i = 0;
+
+    std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecContIdBytes = GetNextVarIntBytes(i);
+
+    if (!vecContIdBytes.empty()) {
+        contractId = DecompressInteger(vecContIdBytes);
+    } else return false;
+
+    PrintToLog("version: %d\n", version);
+    PrintToLog("contractId: %d\n", contractId);
+
+    return true;
+}
+
 // ---------------------- CORE LOGIC -------------------------
 
 /**
@@ -1567,6 +1589,9 @@ int CMPTransaction::interpretPacket()
 
         case MSC_TYPE_ORACLE_BACKUP:
             return logicMath_OracleBackup();
+
+        case MSC_TYPE_CLOSE_ORACLE:
+            return logicMath_CloseOracle();
 
 
     }
@@ -3520,7 +3545,54 @@ int CMPTransaction::logicMath_OracleBackup()
     return 0;
 }
 
+/** Tx 107 */
+int CMPTransaction::logicMath_CloseOracle()
+{
+    uint256 blockHash;
+    {
+        LOCK(cs_main);
 
+        CBlockIndex* pindex = chainActive[block];
+        if (pindex == NULL) {
+            PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
+            return (PKT_ERROR_TOKENS -20);
+        }
+        blockHash = pindex->GetBlockHash();
+    }
+
+    // if (!IsTransactionTypeAllowed(block, property, type, version)) {
+    //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+    //             __func__,
+    //             type,
+    //             version,
+    //             property,
+    //             block);
+    //     return (PKT_ERROR_TOKENS -22);
+    // }
+
+    if (!IsPropertyIdValid(contractId)) {
+        PrintToLog("%s(): rejected: property %d does not exist\n", __func__, property);
+        return (PKT_ERROR_TOKENS -24);
+    }
+
+    CMPSPInfo::Entry sp;
+    assert(_my_sps->getSP(contractId, sp));
+
+    if (sender != sp.backup_address) {
+        PrintToLog("%s(): rejected: sender %s is not the backup address of the Oracle Future Contract\n", __func__,sender);
+        return (PKT_ERROR_TOKENS -43);
+    }
+
+    // ------------------------------------------
+
+    sp.blocks_until_expiration = 0;
+
+    assert(_my_sps->updateSP(contractId, sp));
+
+          PrintToLog("%s(): Oracle Contract (id:%d) Closed\n", __func__,contractId);
+
+    return 0;
+}
 
 struct FutureContractObject *getFutureContractObject(uint32_t property_type, std::string identifier)
 {

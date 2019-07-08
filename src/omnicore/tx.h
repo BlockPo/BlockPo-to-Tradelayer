@@ -180,6 +180,7 @@ private:
     bool interpret_Change_OracleRef();
     bool interpret_Set_Oracle();
     bool interpret_OracleBackup();
+    bool interpret_CloseOracle();
     ///////////////////////////////////////////////
 
     /**
@@ -217,6 +218,7 @@ private:
     int logicMath_Change_OracleRef();
     int logicMath_Set_Oracle();
     int logicMath_OracleBackup();
+    int logicMath_CloseOracle();
     ///////////////////////////////////////////////
 
     /**

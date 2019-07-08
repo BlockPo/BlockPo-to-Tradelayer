@@ -110,7 +110,8 @@ enum TransactionType {
   MSC_TYPE_CREATE_ORACLE_CONTRACT     = 103,
   MSC_TYPE_CHANGE_ORACLE_REF          = 104,
   MSC_TYPE_SET_ORACLE                 = 105,
-  MSC_TYPE_ORACLE_BACKUP              = 106, 
+  MSC_TYPE_ORACLE_BACKUP              = 106,
+  MSC_TYPE_CLOSE_ORACLE               = 107, 
   ////////////////////////////////////
 
 };

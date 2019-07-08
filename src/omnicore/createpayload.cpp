@@ -698,5 +698,23 @@ std::vector<unsigned char> CreatePayload_OracleBackup(uint32_t contractId)
     return payload;
 }
 
+std::vector<unsigned char> CreatePayload_Close_Oracle(uint32_t contractId)
+{
+    std::vector<unsigned char> payload;
+
+    uint64_t messageType = 107;
+    uint64_t messageVer = 0;
+
+    std::vector<uint8_t> vecMessageType = CompressInteger((uint64_t)messageType);
+    std::vector<uint8_t> vecMessageVer = CompressInteger((uint64_t)messageVer);
+    std::vector<uint8_t> vecContractId = CompressInteger((uint64_t)contractId);
+
+    payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
+    payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
+    payload.insert(payload.end(), vecContractId.begin(), vecContractId.end());
+
+    return payload;
+}
+
 #undef PUSH_BACK_BYTES
 #undef PUSH_BACK_BYTES_PTR
