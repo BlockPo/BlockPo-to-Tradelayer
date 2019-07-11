@@ -100,6 +100,7 @@ public:
         uint32_t denomination;
         /* int64_t ticksize; */
         std::string series;
+        std::string backup_address;
 
         // for pegged currency
         uint32_t contract_associated;
@@ -152,6 +153,7 @@ public:
             READWRITE(contract_associated);
             READWRITE(denomination);
             READWRITE(series);
+            READWRITE(backup_address);
             ////////////////////////////
         }
 

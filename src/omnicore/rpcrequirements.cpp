@@ -73,6 +73,13 @@ void RequirePropertyName(const std::string& name)
     }
 }
 
+void RequireDifferentAddrs(const std::string& oracleAddress,const std::string& backupAddress)
+{
+  if (oracleAddress == backupAddress) {
+      throw JSONRPCError(RPC_TYPE_ERROR, "oracle and backup addresses must be differents");
+  }
+}
+
 void RequireExistingProperty(uint32_t propertyId)
 {
   LOCK(cs_tally);
@@ -199,6 +206,19 @@ void RequireContract(uint32_t propertyId)
     }
     if (sp.prop_type != ALL_PROPERTY_TYPE_CONTRACT) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "contractId must be future contract\n");
+    }
+}
+
+void RequireOracleContract(uint32_t propertyId)
+{
+    LOCK(cs_tally);
+    CMPSPInfo::Entry sp;
+    if (!mastercore::_my_sps->getSP(propertyId, sp)) {
+        throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
+    }
+
+    if (sp.prop_type !=ALL_PROPERTY_TYPE_ORACLE_CONTRACT) {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "contractId must be oracle future contract\n");
     }
 }
 

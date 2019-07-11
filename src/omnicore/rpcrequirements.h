@@ -23,6 +23,7 @@ void RequireForPegged(const std::string& address, uint32_t propertyId, uint32_t 
 void RequireNotVesting(uint32_t propertyId);
 void RequireNotContract(uint32_t propertyId);
 void RequireContract(uint32_t propertyId);
+void RequireOracleContract(uint32_t propertyId);
 void RequireAssociation(uint32_t propertyId,uint32_t contractId); // origin contract for pegged
 void RequirePeggedCurrency(uint32_t propertyId);
 void RequireCollateral(const std::string& address, std::string name_traded);
@@ -33,6 +34,7 @@ void RequireContractTxId(std::string& txid);
 void RequireSaneDExPaymentWindow(const std::string& address, uint32_t propertyId);
 void RequireSaneDExFee(const std::string& address, uint32_t propertyId);
 void RequireSaneName(std::string& name);
+void RequireDifferentAddrs(const std::string& oracleAddress, const std::string& backupAddress);
 void RequireShort(std::string& fromAddress, uint32_t contractId, uint64_t amount);
 ////////////////////////////////////////////////////////////////////////////////
 

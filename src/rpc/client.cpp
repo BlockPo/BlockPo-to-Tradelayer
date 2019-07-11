@@ -220,6 +220,12 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_createcontract", 5, "arg5"},
     { "tl_createcontract", 6, "arg6"},
     { "tl_createcontract", 7, "arg7"},
+    { "tl_create_oraclecontract", 1, "arg1"},
+    { "tl_create_oraclecontract", 2, "arg2"},
+    { "tl_create_oraclecontract", 4, "arg4"},
+    { "tl_create_oraclecontract", 5, "arg5"},
+    { "tl_create_oraclecontract", 6, "arg6"},
+    { "tl_create_oraclecontract", 7, "arg7"},
     { "tl_tradecontract", 3, "arg3"},
     { "tl_tradecontract", 4, "arg4"},
     { "tl_sendgrant", 2, "arg2"},
@@ -246,6 +252,8 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_listtransactions", 2, "arg2" },
     { "tl_listtransactions", 3, "arg3" },
     { "tl_listtransactions", 4, "arg4" },
+    { "tl_setoracle", 2, "arg2" },
+    { "tl_setoracle", 3, "arg3" },
 
     /* Trade Layer - data retrieval calls */
     { "tl_setautocommit", 0, "arg0" },

@@ -28,40 +28,40 @@
 std::vector<unsigned char> CreatePayload_SimpleSend(uint32_t propertyId, uint64_t amount)
 {
   std::vector<unsigned char> payload;
-  
+
   uint64_t messageType = 0;
   uint64_t messageVer = 0;
-  
+
   std::vector<uint8_t> vecMessageType = CompressInteger((uint64_t)messageType);
   std::vector<uint8_t> vecMessageVer = CompressInteger((uint64_t)messageVer);
   std::vector<uint8_t> vecPropertyId = CompressInteger((uint64_t)propertyId);
   std::vector<uint8_t> vecAmount = CompressInteger((uint64_t)amount);
-  
+
   payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
   payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
   payload.insert(payload.end(), vecPropertyId.begin(), vecPropertyId.end());
   payload.insert(payload.end(), vecAmount.begin(), vecAmount.end());
-  
+
   return payload;
 }
 
 std::vector<unsigned char> CreatePayload_SendVestingTokens(uint32_t propertyId, uint64_t amount)
 {
   std::vector<unsigned char> payload;
-  
+
   uint64_t messageType = 5;
   uint64_t messageVer = 0;
-  
+
   std::vector<uint8_t> vecMessageType = CompressInteger((uint64_t)messageType);
   std::vector<uint8_t> vecMessageVer = CompressInteger((uint64_t)messageVer);
   std::vector<uint8_t> vecPropertyId = CompressInteger((uint64_t)propertyId);
   std::vector<uint8_t> vecAmount = CompressInteger((uint64_t)amount);
-  
+
   payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
   payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
   payload.insert(payload.end(), vecPropertyId.begin(), vecPropertyId.end());
   payload.insert(payload.end(), vecAmount.begin(), vecAmount.end());
-  
+
   return payload;
 }
 
@@ -602,6 +602,116 @@ std::vector<unsigned char> CreatePayload_MetaDExTrade(uint32_t propertyIdForSale
     payload.insert(payload.end(), vecAmountForSale.begin(), vecAmountForSale.end());
     payload.insert(payload.end(), vecPropertyIdDesired.begin(), vecPropertyIdDesired.end());
     payload.insert(payload.end(), vecAmountDesired.begin(), vecAmountDesired.end());
+
+    return payload;
+}
+
+/* Tx 103 */
+std::vector<unsigned char> CreatePayload_CreateOracleContract(uint8_t ecosystem, uint32_t denomType, std::string name, uint32_t blocks_until_expiration, uint32_t notional_size, uint32_t collateral_currency, uint32_t margin_requirement)
+{
+  std::vector<unsigned char> payload;
+
+  uint64_t messageType = 103;
+  uint64_t messageVer = 0;
+
+  std::vector<uint8_t> vecMessageType = CompressInteger((uint64_t)messageType);
+  std::vector<uint8_t> vecMessageVer = CompressInteger((uint64_t)messageVer);
+  std::vector<uint8_t> vecEcosystem = CompressInteger((uint64_t)ecosystem);
+  std::vector<uint8_t> vecDenomType = CompressInteger((uint64_t)denomType);
+  std::vector<uint8_t> vecBlocksUntilExpiration = CompressInteger((uint64_t)blocks_until_expiration);
+  std::vector<uint8_t> vecNotionalSize = CompressInteger((uint64_t)notional_size);
+  std::vector<uint8_t> vecCollateralCurrency = CompressInteger((uint64_t)collateral_currency);
+  std::vector<uint8_t> vecMarginRequirement = CompressInteger((uint64_t)margin_requirement);
+
+  if ((name).size() > 255) name = name.substr(0,255);
+  payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
+  payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
+  payload.insert(payload.end(), vecEcosystem.begin(), vecEcosystem.end());
+  payload.insert(payload.end(), vecDenomType.begin(), vecDenomType.end());
+  payload.insert(payload.end(), name.begin(), name.end());
+  payload.push_back('\0');
+  payload.insert(payload.end(), vecBlocksUntilExpiration.begin(), vecBlocksUntilExpiration.end());
+  payload.insert(payload.end(), vecNotionalSize.begin(), vecNotionalSize.end());
+  payload.insert(payload.end(), vecCollateralCurrency.begin(), vecCollateralCurrency.end());
+  payload.insert(payload.end(), vecMarginRequirement.begin(), vecMarginRequirement.end());
+
+  return payload;
+}
+
+/* Tx 104 */
+std::vector<unsigned char> CreatePayload_Change_OracleRef(uint32_t contractId)
+{
+    std::vector<unsigned char> payload;
+
+    uint64_t messageType = 104;
+    uint64_t messageVer = 0;
+
+    std::vector<uint8_t> vecMessageType = CompressInteger((uint64_t)messageType);
+    std::vector<uint8_t> vecMessageVer = CompressInteger((uint64_t)messageVer);
+    std::vector<uint8_t> vecContractId = CompressInteger((uint64_t)contractId);
+
+    payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
+    payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
+    payload.insert(payload.end(), vecContractId.begin(), vecContractId.end());
+
+    return payload;
+}
+
+/* Tx 105 */
+std::vector<unsigned char> CreatePayload_Set_Oracle(uint32_t contractId, uint64_t high, uint64_t low)
+{
+    std::vector<unsigned char> payload;
+
+    uint64_t messageType = 105;
+    uint64_t messageVer = 0;
+
+    std::vector<uint8_t> vecMessageType = CompressInteger((uint64_t)messageType);
+    std::vector<uint8_t> vecMessageVer = CompressInteger((uint64_t)messageVer);
+    std::vector<uint8_t> vecContractId = CompressInteger((uint64_t)contractId);
+    std::vector<uint8_t> vecHigh = CompressInteger(high);
+    std::vector<uint8_t> vecLow = CompressInteger(low);
+
+    payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
+    payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
+    payload.insert(payload.end(), vecContractId.begin(), vecContractId.end());
+    payload.insert(payload.end(), vecHigh.begin(), vecHigh.end());
+    payload.insert(payload.end(), vecLow.begin(), vecLow.end());
+
+    return payload;
+}
+
+std::vector<unsigned char> CreatePayload_OracleBackup(uint32_t contractId)
+{
+    std::vector<unsigned char> payload;
+
+    uint64_t messageType = 106;
+    uint64_t messageVer = 0;
+
+    std::vector<uint8_t> vecMessageType = CompressInteger((uint64_t)messageType);
+    std::vector<uint8_t> vecMessageVer = CompressInteger((uint64_t)messageVer);
+    std::vector<uint8_t> vecContractId = CompressInteger((uint64_t)contractId);
+
+    payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
+    payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
+    payload.insert(payload.end(), vecContractId.begin(), vecContractId.end());
+
+    return payload;
+}
+
+std::vector<unsigned char> CreatePayload_Close_Oracle(uint32_t contractId)
+{
+    std::vector<unsigned char> payload;
+
+    uint64_t messageType = 107;
+    uint64_t messageVer = 0;
+
+    std::vector<uint8_t> vecMessageType = CompressInteger((uint64_t)messageType);
+    std::vector<uint8_t> vecMessageVer = CompressInteger((uint64_t)messageVer);
+    std::vector<uint8_t> vecContractId = CompressInteger((uint64_t)contractId);
+
+    payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
+    payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
+    payload.insert(payload.end(), vecContractId.begin(), vecContractId.end());
 
     return payload;
 }
