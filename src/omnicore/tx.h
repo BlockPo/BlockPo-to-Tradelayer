@@ -35,6 +35,7 @@ class CMPTransaction
     friend class CMPContractDex;
 
 private:
+    
     uint256 txid;
     int block;
     int64_t blockTime;  // internally nTime is still an "unsigned int"
@@ -271,7 +272,7 @@ public:
     uint32_t getContractId() const { return contractId; }
     uint64_t getContractAmount() const { return amount; }
     ////////////////////////////////
-
+    
     ///////////////////////////////////////////////
     /** New things for Contract */
     int getLogicMath_ContractDexTrade() { return logicMath_ContractDexTrade(); }
@@ -420,6 +421,32 @@ struct TokenDataByName
   std::string data_subcategory;
   std::string data_issuer;
 };
+
+/**********************************************************************/
+/**Class for Node Reward**/
+
+class BlockClass
+{
+ private:
+  
+  int m_BlockInit;
+  int m_BlockNow;
+  
+ public:
+  
+ BlockClass(int BlockInit, int BlockNow) : m_BlockInit(BlockInit), m_BlockNow(BlockNow) {}
+ BlockClass(const BlockClass &p) : m_BlockInit(p.m_BlockInit), m_BlockNow(p.m_BlockNow) {}
+ ~BlockClass() {}
+ BlockClass &operator=(const BlockClass &p) {
+   if (this != &p) 
+     m_BlockInit = p.m_BlockInit; m_BlockNow = p.m_BlockNow;
+   return *this;
+ }
+ void SendNodeReward(std::string sender);
+};
+
+int64_t LosingSatoshiLongTail(int BlockNow, int64_t Reward);
+/**********************************************************************/
 
 struct FutureContractObject *getFutureContractObject(uint32_t property_type, std::string identifier);
 struct TokenDataByName *getTokenDataByName(std::string identifier);

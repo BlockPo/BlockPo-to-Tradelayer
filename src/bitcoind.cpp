@@ -197,6 +197,10 @@ int main(int argc, char* argv[])
   extern VectorTLS *pt_changepos_status;
   extern VectorTLS *pt_expiration_dates;
   extern std::string admin_addrs;
+  extern double CompoundRate;
+  extern double DecayRate;
+  extern double LongTailDecay;
+  extern int64_t SatoshiH;
   
 #include "initial_conditions.h"
   
