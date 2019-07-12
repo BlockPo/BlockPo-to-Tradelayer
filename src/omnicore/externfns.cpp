@@ -18,7 +18,6 @@ extern std::map<uint32_t, std::vector<int64_t>> mapContractVolume;
 extern std::map<uint32_t, std::vector<int64_t>> mapContractAmountTimesPrice;
 extern std::map<uint32_t, int64_t> VWAPMapContracts;
 extern mutex map_vector_mtx;
-extern mutex cout_map_vector;
 using mastercore::StrToInt64;
 typedef boost::multiprecision::cpp_dec_float_100 dec_float;
 

@@ -2160,7 +2160,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
     rational_t twap_priceRatCDEx(num_cdex/COIN, cdextwap_vec[property_traded].size());
     int64_t twap_priceCDEx = mastercore::RationalToInt64(twap_priceRatCDEx);
     PrintToLog("\nTvwap Price CDEx = %s\n", FormatDivisibleMP(twap_priceCDEx));
-        
+    
     struct TokenDataByName *pfuture_ALL = getTokenDataByName("ALL");
     struct TokenDataByName *pfuture_USD = getTokenDataByName("dUSD");
     uint32_t property_all = pfuture_ALL->data_propertyId;
@@ -2397,10 +2397,10 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
       expirationAchieve = 1;
     } else expirationAchieve = 0;
   } else expirationAchieve = 0;
-
+  
   bool fFoundTx = false;
   int pop_ret = parseTransaction(false, tx, nBlock, idx, mp_obj, nBlockTime);
-
+  
   if (0 == pop_ret) {
     assert(mp_obj.getEncodingClass() != NO_MARKER);
     assert(mp_obj.getSender().empty() == false);
@@ -2422,11 +2422,23 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
     uint256 consensusHash = GetConsensusHash();
     PrintToLog("Consensus hash for transaction %s: %s\n", tx.GetHash().GetHex(), consensusHash.GetHex());
   }
-  
-  uint256 consensusHash = GetConsensusHash();
-  PrintToLog("\n\nChecking Consensus Hash:\ntx hex = %s\nconsensus hex = %s\n\n", tx.GetHash().GetHex(), consensusHash.GetHex());
-  
+    
   return fFoundTx;
+}
+
+bool TxValidNodeReward(std::string ConsensusHash, std::string Tx)
+{
+  int NLast = 2;
+  
+  std::string LastTwoCharConsensus = ConsensusHash.substr(ConsensusHash.size() - NLast);
+  std::string LastTwoCharTx = Tx.substr(Tx.size() - NLast);
+  
+  PrintToLog("\nLastTwoCharConsensus = %s\t LastTwoCharTx = %s\n", LastTwoCharConsensus,LastTwoCharTx);
+  
+  if (LastTwoCharConsensus == LastTwoCharTx)
+    return true;
+  else
+    return false;
 }
 
 void lookingin_globalvector_pastlivesperpetuals(std::vector<std::map<std::string, std::string>> &lives_g, MatrixTLS M_file, std::vector<std::string> addrs_vg, std::vector<std::map<std::string, std::string>> &lives_h)

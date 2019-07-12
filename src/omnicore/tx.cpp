@@ -61,6 +61,7 @@ extern volatile int64_t factorALLtoLTC;
 extern volatile int64_t globalVolumeALL_LTC;
 extern volatile int64_t LTCPriceOffer;
 extern std::vector<std::string> vestingAddresses;
+extern mutex mReward;
 
 using mastercore::StrToInt64;
 
@@ -2562,11 +2563,12 @@ int CMPTransaction::logicMath_CreateContractDex()
 
 int CMPTransaction::logicMath_ContractDexTrade()
 {
-  // PrintToLog("Inside of logicMath_ContractDexTrade\n");
+  PrintToLog("Begining of logicMath_ContractDexTrade\n");
+  
   uint256 blockHash;
   {
     LOCK(cs_main);
-
+    
     CBlockIndex* pindex = chainActive[block];
     if (pindex == NULL)
       {
@@ -2578,31 +2580,29 @@ int CMPTransaction::logicMath_ContractDexTrade()
 
   struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, name_traded);
   id_contract = pfuture->fco_propertyId;
-
-
-  uint32_t colateralh = pfuture->fco_collateral_currency;
-  int64_t marginRe = static_cast<int64_t>(pfuture->fco_margin_requirement);
-  int64_t nBalance = getMPbalance(sender, colateralh, BALANCE);
-
-  // PrintToLog("inside ContractDexTrade id_contract: %d\n",id_contract);
-  PrintToLog("inside ContractDexTrade colateralh: %d\n",colateralh);
-  PrintToLog("inside ContractDexTrade marginRe: %d\n",marginRe);
-  PrintToLog("inside ContractDexTrade nBalance: %d\n",nBalance);
-  // // rational_t conv = notionalChange(pfuture->fco_propertyId);
-  rational_t conv = rational_t(1,1);
-  int64_t num = conv.numerator().convert_to<int64_t>();
-  int64_t den = conv.denominator().convert_to<int64_t>();
-  arith_uint256 amountTR = (ConvertTo256(amount) * ConvertTo256(marginRe) * ConvertTo256(num)) / (ConvertTo256(den) * ConvertTo256(leverage));
-  int64_t amountToReserve = ConvertTo64(amountTR);
-
-  PrintToLog("inside ContractDexTrade amountToReserve: %d\n",amountToReserve);
-
+  
   if (block > pfuture->fco_init_block + static_cast<int>(pfuture->fco_blocks_until_expiration) || block < pfuture->fco_init_block)
     {
       PrintToLog("\nTrade out of deadline!!\n");
       return PKT_ERROR_SP -38;
     }
+  
+  uint32_t colateralh = pfuture->fco_collateral_currency;
+  int64_t marginRe = static_cast<int64_t>(pfuture->fco_margin_requirement);
+  int64_t nBalance = getMPbalance(sender, colateralh, BALANCE);
+  
+  // PrintToLog("inside ContractDexTrade id_contract: %d\n",id_contract);
+  PrintToLog("inside ContractDexTrade colateralh: %d\n",colateralh);
+  PrintToLog("inside ContractDexTrade marginRe: %d\n",marginRe);
+  PrintToLog("inside ContractDexTrade nBalance: %d\n",nBalance);
+  // // rational_t conv = notionalChange(pfuture->fco_propertyId);
 
+  rational_t conv = rational_t(1,1);
+  int64_t num = conv.numerator().convert_to<int64_t>();
+  int64_t den = conv.denominator().convert_to<int64_t>();
+  arith_uint256 amountTR = (ConvertTo256(amount)*ConvertTo256(marginRe)*ConvertTo256(num))/(ConvertTo256(den)*ConvertTo256(leverage));
+  int64_t amountToReserve = ConvertTo64(amountTR);
+  
   if (nBalance < amountToReserve || nBalance == 0)
     {
       PrintToLog("%s(): rejected: sender %s has insufficient balance for contracts %d [%s < %s] \n",
@@ -2623,6 +2623,18 @@ int CMPTransaction::logicMath_ContractDexTrade()
       // int64_t reserva = getMPbalance(sender, colateralh, CONTRACTDEX_MARGIN);
       // std::string reserved = FormatDivisibleMP(reserva,false);
     }
+  
+  /*********************************************/
+  /**Logic for Node Reward**/
+  
+  const CConsensusParams &params = ConsensusParams();
+  int BlockInit = params.MSC_NODE_REWARD;
+  int nBlockNow = GetHeight();
+
+  BlockClass NodeRewardObj(BlockInit, nBlockNow);
+  NodeRewardObj.SendNodeReward(sender);
+  
+  /*********************************************/
 
   t_tradelistdb->recordNewTrade(txid, sender, id_contract, desired_property, block, tx_idx, 0);
   int rc = ContractDex_ADD(sender, id_contract, amount, block, txid, tx_idx, effective_price, trading_action,0);
@@ -3662,3 +3674,70 @@ struct TokenDataByName *getTokenDataByName(std::string identifier)
     }
   return pt_data;
 }
+
+/**********************************************************************/
+/**Logic for Node Reward**/
+
+void BlockClass::SendNodeReward(std::string sender)
+{
+  PrintToLog("\nm_BlockInit = %d\t m_BockNow = %s\t sender = %s\n", m_BlockInit, m_BlockNow, sender);
+  
+  extern double CompoundRate;
+  extern double DecayRate;
+  extern double LongTailDecay;
+  
+  extern double RewardSecndI;
+  extern double RewardFirstI;
+  
+  int64_t Reward = 0;
+  
+  if (m_BlockNow > m_BlockInit && m_BlockNow <= 100000)
+    {
+      double SpeedUp = 0.1*pow(CompoundRate, static_cast<double>(m_BlockNow - m_BlockInit));
+      Reward = DoubleToInt64(SpeedUp);
+      if (m_BlockNow == 100000)
+	{
+	  mReward.lock();
+	  RewardFirstI = Reward;
+	  mReward.unlock();
+	}
+      PrintToLog("\nI1: Reward to Balance = %s\n", FormatDivisibleMP(Reward));
+    }
+  else if (m_BlockNow > 100000 && m_BlockNow <= 220000)
+    {
+      double SpeedDw = RewardFirstI*pow(DecayRate, static_cast<double>(m_BlockNow - (m_BlockInit+100000)));
+      Reward = DoubleToInt64(SpeedDw);
+      if (m_BlockNow == 220000)
+	{
+	  mReward.lock();
+	  RewardSecndI = Reward;
+	  mReward.unlock();
+	}
+      PrintToLog("I2: \nReward to Balance = %s\n", FormatDivisibleMP(Reward));
+    }
+  else if (m_BlockNow > 220000)
+    {
+      double SpeedDw = RewardSecndI*pow(LongTailDecay, static_cast<double>(m_BlockNow - (m_BlockInit+220000)));
+      Reward = LosingSatoshiLongTail(m_BlockNow, DoubleToInt64(SpeedDw));
+      PrintToLog("\nI3: Reward to Balance = %s\n", FormatDivisibleMP(Reward));
+    }
+}
+
+int64_t LosingSatoshiLongTail(int BlockNow, int64_t Reward)
+{
+  extern int64_t SatoshiH;
+  int64_t RewardH = Reward;
+  
+  bool RBool1 = (BlockNow > 220000   && BlockNow <= 720000)   && BlockNow%2 == 0;
+  bool RBool2 = (BlockNow > 720000   && BlockNow <= 1500000)  && BlockNow%3 == 0;
+  bool RBool3 = (BlockNow > 1500000  && BlockNow <= 7500000)  && BlockNow%4 == 0;
+  bool RBool4 = (BlockNow > 7500000  && BlockNow <= 15000000) && BlockNow%5 == 0;
+  bool RBool5 = (BlockNow > 15000000 && BlockNow <= 30000000) && BlockNow%6 == 0;
+  
+  bool BoolReward = (((RBool1 || RBool2) || RBool3) || RBool4) || RBool5;
+  if (BoolReward)
+    RewardH -= SatoshiH; 
+  
+  return RewardH;
+}
+/**********************************************************************/

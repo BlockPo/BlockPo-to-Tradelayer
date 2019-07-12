@@ -80,6 +80,7 @@ public:
     /** New things for Contract: ! Block to enable MetaDEx transactions */
     int MSC_CONTRACTDEX_BLOCK;
     int MSC_VESTING_BLOCK;
+    int MSC_NODE_REWARD;
     ////////////////////////////////////
 
     /** Returns a mapping of transaction types, and the blocks at which they are enabled. */

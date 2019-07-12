@@ -59,11 +59,11 @@ std::vector<TransactionRestriction> CConsensusParams::GetRestrictions() const
         { MSC_TYPE_SEND_PEGGED_CURRENCY,           MP_TX_PKT_V0,  true,    MSC_CONTRACTDEX_BLOCK },
         { MSC_TYPE_SEND_ALL,                  MP_TX_PKT_V0,  true,            MSC_SEND_ALL_BLOCK },
         { MSC_TYPE_CONTRACTDEX_CLOSE_POSITION,MP_TX_PKT_V0,  true,         MSC_CONTRACTDEX_BLOCK },
-        {MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK,MP_TX_PKT_V0,  true,   MSC_CONTRACTDEX_BLOCK},
-        {MSC_TYPE_METADEX_TRADE,              MP_TX_PKT_V0,  true,          MSC_CONTRACTDEX_BLOCK},
-        {MSC_TYPE_TRADE_OFFER,                MP_TX_PKT_V1,  true,          MSC_CONTRACTDEX_BLOCK},
-        {MSC_TYPE_ACCEPT_OFFER_BTC,           MP_TX_PKT_V1,  true,          MSC_CONTRACTDEX_BLOCK},
-        {MSC_TYPE_DEX_BUY_OFFER,              MP_TX_PKT_V1,  true,          MSC_CONTRACTDEX_BLOCK}
+        { MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK,MP_TX_PKT_V0,  true,   MSC_CONTRACTDEX_BLOCK},
+        { MSC_TYPE_METADEX_TRADE,              MP_TX_PKT_V0,  true,          MSC_CONTRACTDEX_BLOCK},
+        { MSC_TYPE_TRADE_OFFER,                MP_TX_PKT_V1,  true,          MSC_CONTRACTDEX_BLOCK},
+        { MSC_TYPE_ACCEPT_OFFER_BTC,           MP_TX_PKT_V1,  true,          MSC_CONTRACTDEX_BLOCK},
+        { MSC_TYPE_DEX_BUY_OFFER,              MP_TX_PKT_V1,  true,          MSC_CONTRACTDEX_BLOCK}
 
     };
 
@@ -124,9 +124,9 @@ CMainConsensusParams::CMainConsensusParams()
     MSC_SEND_ALL_BLOCK = 9999999;
     MSC_CONTRACTDEX_BLOCK = 999999;
     MSC_VESTING_BLOCK = 0;
-
+    MSC_NODE_REWARD = 777;
 }
-
+  
 /**
  * Constructor for testnet consensus parameters.
  */
@@ -148,7 +148,7 @@ CTestNetConsensusParams::CTestNetConsensusParams()
     MSC_SEND_ALL_BLOCK = 0;
     MSC_CONTRACTDEX_BLOCK = 0;
     MSC_VESTING_BLOCK = 0;
-
+    MSC_NODE_REWARD = 777;
 }
 
 /**
@@ -172,6 +172,7 @@ CRegTestConsensusParams::CRegTestConsensusParams()
     MSC_SEND_ALL_BLOCK = 0;
     MSC_CONTRACTDEX_BLOCK = 0;
     MSC_VESTING_BLOCK = 0;
+    MSC_NODE_REWARD = 777;
 }
 
 //! Consensus parameters for mainnet

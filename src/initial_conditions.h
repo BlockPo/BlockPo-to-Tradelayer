@@ -69,3 +69,8 @@ BlockS = 50;
 /** Admin address **/
 //admin_addrs = "moCYruRphhYgejzH75bxWD49qRFan8eGES"; /** testnet **/
 admin_addrs = "QdgkwBVmz3uAtXiQdbbiAsTp1SDQS9zRt9"; /** regtest **/
+
+CompoundRate = 1.00002303;
+DecayRate = 0.99998;
+LongTailDecay = 0.99999992;
+SatoshiH = 0.00000001;

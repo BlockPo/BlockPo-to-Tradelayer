@@ -59,7 +59,6 @@ std::map<uint32_t, std::map<uint32_t, std::vector<int64_t>>> numVWAPVector;
 std::map<uint32_t, std::map<uint32_t, std::vector<int64_t>>> denVWAPVector;
 
 mutex map_vector_mtx;
-mutex cout_map_vector;
 std::map<uint32_t, std::vector<int64_t>> mapContractAmountTimesPrice;
 std::map<uint32_t, std::vector<int64_t>> mapContractVolume;
 std::map<uint32_t, int64_t> VWAPMapContracts;
@@ -86,10 +85,23 @@ int BlockS;
 std::string setExoduss;
 /*****************************************/
 /** TWAP containers **/
+
 std::map<uint32_t, std::vector<uint64_t>> cdextwap_ele;
 std::map<uint32_t, std::vector<uint64_t>> cdextwap_vec;
 std::map<uint32_t, std::map<uint32_t, std::vector<uint64_t>>> mdextwap_ele;
 std::map<uint32_t, std::map<uint32_t, std::vector<uint64_t>>> mdextwap_vec;
+
+/*****************************************/
+/**Node Reward**/
+
+double CompoundRate;
+double DecayRate;
+double LongTailDecay;
+mutex mReward;
+double RewardSecndI;
+double RewardFirstI;
+int64_t SatoshiH;
+
 /*****************************************/
 
 std::map<uint32_t,oracledata> oraclePrices;
