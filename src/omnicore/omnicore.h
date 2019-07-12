@@ -107,6 +107,11 @@ enum TransactionType {
   MSC_TYPE_PEGGED_CURRENCY            = 100,
   MSC_TYPE_REDEMPTION_PEGGED          = 101,
   MSC_TYPE_SEND_PEGGED_CURRENCY       = 102,
+  MSC_TYPE_CREATE_ORACLE_CONTRACT     = 103,
+  MSC_TYPE_CHANGE_ORACLE_REF          = 104,
+  MSC_TYPE_SET_ORACLE                 = 105,
+  MSC_TYPE_ORACLE_BACKUP              = 106,
+  MSC_TYPE_CLOSE_ORACLE               = 107, 
   ////////////////////////////////////
 
 };
@@ -116,6 +121,7 @@ enum TransactionType {
 #define ALL_PROPERTY_TYPE_CONTRACT                3
 #define ALL_PROPERTY_TYPE_VESTING                 4
 #define ALL_PROPERTY_TYPE_PEGGEDS                 5
+#define ALL_PROPERTY_TYPE_ORACLE_CONTRACT         6
 
 enum FILETYPES {
   FILETYPE_BALANCES = 0,

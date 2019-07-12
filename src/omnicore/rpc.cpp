@@ -698,7 +698,15 @@ UniValue tl_getproperty(const JSONRPCRequest& request)
       } else if (sp.denomination == TL_dYEN) {
 	denomination = "Yen";
       }
+
       response.push_back(Pair("denomination", denomination));
+
+    } else if (sp.prop_type == ALL_PROPERTY_TYPE_ORACLE_CONTRACT) {
+      response.push_back(Pair("notional size", FormatDivisibleShortMP(sp.notional_size)));
+      response.push_back(Pair("collateral currency", std::to_string(sp.collateral_currency)));
+      response.push_back(Pair("margin requirement", FormatDivisibleShortMP(sp.margin_requirement)));
+      response.push_back(Pair("blocks until expiration", std::to_string(sp.blocks_until_expiration)));
+      response.push_back(Pair("backup address", sp.backup_address));
 
     } else if (sp.prop_type == ALL_PROPERTY_TYPE_PEGGEDS) {
       response.push_back(Pair("contract associated",(uint64_t) sp.contract_associated));

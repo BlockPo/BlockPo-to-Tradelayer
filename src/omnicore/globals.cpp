@@ -42,6 +42,7 @@ VectorTLS *pt_netted_npartly_anypos;
 MatrixTLS *pt_ndatabase;
 VectorTLS *pt_changepos_status;
 std::map<std::string,uint32_t> peggedIssuers;
+
 double globalPNLALL_DUSD;
 int64_t globalVolumeALL_DUSD;
 std::map<uint32_t, std::map<std::string, double>> addrs_upnlc;
@@ -102,3 +103,5 @@ double RewardFirstI;
 int64_t SatoshiH;
 
 /*****************************************/
+
+std::map<uint32_t,oracledata> oraclePrices;
