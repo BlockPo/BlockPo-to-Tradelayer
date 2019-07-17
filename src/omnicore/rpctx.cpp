@@ -874,11 +874,11 @@ UniValue tl_createcontract(const JSONRPCRequest& request)
   RequireSaneName(name);
 
   std::vector<unsigned char> payload = CreatePayload_CreateContract(ecosystem, type, name, blocks_until_expiration, notional_size, collateral_currency, margin_requirement);
-  
+
   uint256 txid;
   std::string rawHex;
   int result = WalletTxBuilder(fromAddress, "", 0, payload, txid, rawHex, autoCommit);
-  
+
   if ( result != 0 )
     {
       throw JSONRPCError(result, error_str(result));
@@ -1797,32 +1797,32 @@ UniValue tl_closeoracle(const JSONRPCRequest& request)
     }
 }
 
-// UniValue tl_setexodus(const JSONRPCRequest& request)
-// {
-//     if (request.params.size() < 1 )
-//         throw runtime_error(
-//             "tl_setexodus \"fromaddress\" \"toaddress\" propertyid \"amount\" ( override )\n"
-//
-//             "\nsetting exodus address.\n"
-//
-//             "\nArguments:\n"
-//             "1. fromaddress          (string, required) the address to send from\n"
-//             "\nResult:\n"
-//             "\"hash\"                  (string) the hex-encoded transaction hash\n"
-//
-//             "\nExamples:\n"
-//             + HelpExampleCli("tl_senddexaccept", "\"35URq1NN3xL6GeRKUP6vzaQVcxoJiiJKd8\" \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\" 1 \"15.0\"")
-//             + HelpExampleRpc("tl_senddexaccept", "\"35URq1NN3xL6GeRKUP6vzaQVcxoJiiJKd8\", \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\", 1, \"15.0\"")
-//         );
-//
-//     // obtain parameters & info
-//     setExoduss = ParseAddress(request.params[0]);
-//     PrintToLog("setExoduss : %s",setExoduss);
-//     uint256 txid;
-//
-//     return txid.GetHex();
-//
-// }
+UniValue tl_setexodus(const JSONRPCRequest& request)
+{
+    if (request.params.size() < 1 )
+        throw runtime_error(
+            "tl_setexodus \"fromaddress\" \"toaddress\" propertyid \"amount\" ( override )\n"
+
+            "\nsetting exodus address.\n"
+
+            "\nArguments:\n"
+            "1. fromaddress          (string, required) the address to send from\n"
+            "\nResult:\n"
+            "\"hash\"                  (string) the hex-encoded transaction hash\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("tl_senddexaccept", "\"35URq1NN3xL6GeRKUP6vzaQVcxoJiiJKd8\" \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\" 1 \"15.0\"")
+            + HelpExampleRpc("tl_senddexaccept", "\"35URq1NN3xL6GeRKUP6vzaQVcxoJiiJKd8\", \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\", 1, \"15.0\"")
+        );
+
+    // obtain parameters & info
+    setExoduss = ParseAddress(request.params[0]);
+    PrintToLog("setExoduss : %s",setExoduss);
+    uint256 txid;
+
+    return txid.GetHex();
+
+}
 
 
 static const CRPCCommand commands[] =
@@ -1859,7 +1859,8 @@ static const CRPCCommand commands[] =
     { "trade layer (transaction creation)", "tl_setoracle",                    &tl_setoracle,                       {} },
     { "trade layer (transaction creation)", "tl_change_oracleref",             &tl_change_oracleref,                {} },
     { "trade layer (transaction creation)", "tl_oraclebackup",                 &tl_oraclebackup,                    {} },
-    { "trade layer (transaction creation)", "tl_closeoracle",                  &tl_closeoracle,                     {} }
+    { "trade layer (transaction creation)", "tl_closeoracle",                  &tl_closeoracle,                     {} },
+    { "trade layer (transaction creation)", "tl_setexodus",                    &tl_setexodus,                       {} }
 #endif
 };
 
