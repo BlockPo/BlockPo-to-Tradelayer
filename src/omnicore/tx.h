@@ -35,13 +35,13 @@ class CMPTransaction
     friend class CMPContractDex;
 
 private:
-    
+
     uint256 txid;
     int block;
     int64_t blockTime;  // internally nTime is still an "unsigned int"
     unsigned int tx_idx;  // tx # within the block, 0-based
     uint64_t tx_fee_paid;
-    
+
     int pkt_size;
     unsigned char pkt[65535];
     int encodingClass;  // No Marker = 0, Class A = 1, Class B = 2, Class C = 3
@@ -134,6 +134,10 @@ private:
     uint64_t min_fee;
     unsigned char subaction;
 
+    //Commit channel
+    uint64_t amountCommited;
+    uint64_t vOut;
+
     // Indicates whether the transaction can be used to execute logic
     bool rpcOnly;
 
@@ -182,6 +186,7 @@ private:
     bool interpret_Set_Oracle();
     bool interpret_OracleBackup();
     bool interpret_CloseOracle();
+    bool interpret_CommitChannel();
     ///////////////////////////////////////////////
 
     /**
@@ -220,6 +225,7 @@ private:
     int logicMath_Set_Oracle();
     int logicMath_OracleBackup();
     int logicMath_CloseOracle();
+    int logicMath_CommitChannel();
     ///////////////////////////////////////////////
 
     /**
@@ -284,7 +290,7 @@ public:
     uint32_t getContractId() const { return contractId; }
     uint64_t getContractAmount() const { return amount; }
     ////////////////////////////////
-    
+
     ///////////////////////////////////////////////
     /** New things for Contract */
     int getLogicMath_ContractDexTrade() { return logicMath_ContractDexTrade(); }
@@ -324,7 +330,7 @@ public:
         memset(&url, 0, sizeof(url));
         memset(&data, 0, sizeof(data));
         memset(&stxid, 0, sizeof(stxid));
-	memset(&name_traded, 0, sizeof(name_traded));
+	      memset(&name_traded, 0, sizeof(name_traded));
         deadline = 0;
         early_bird = 0;
         percentage = 0;
@@ -345,7 +351,7 @@ public:
         alert_type = 0;
         alert_expiry = 0;
         distribution_property = 0;
-        ////////////////////////////////////
+  
         /** New things for Contracts */
         effective_price = 0;
         trading_action = 0;
@@ -355,6 +361,11 @@ public:
         amountDesired = 0;
         timeLimit = 0;
         denomination = 0;
+
+        //Commit channel
+        amountCommited = 0;
+        vOut = 0;
+
         ////////////////////////////////////
     }
 
@@ -441,17 +452,17 @@ struct TokenDataByName
 class BlockClass
 {
  private:
-  
+
   int m_BlockInit;
   int m_BlockNow;
-  
+
  public:
-  
+
  BlockClass(int BlockInit, int BlockNow) : m_BlockInit(BlockInit), m_BlockNow(BlockNow) {}
  BlockClass(const BlockClass &p) : m_BlockInit(p.m_BlockInit), m_BlockNow(p.m_BlockNow) {}
  ~BlockClass() {}
  BlockClass &operator=(const BlockClass &p) {
-   if (this != &p) 
+   if (this != &p)
      m_BlockInit = p.m_BlockInit; m_BlockNow = p.m_BlockNow;
    return *this;
  }
