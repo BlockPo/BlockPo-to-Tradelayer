@@ -333,6 +333,7 @@ class CMPTradeList : public CDBBase
 
   //Commit channels
   void recordNewCommit(const uint256& txid, const std::string& channelAddress, const std::string& sender, uint32_t propertyId, uint64_t amountCommited, uint32_t vOut, int blockNum, int blockIndex);
+  bool getAllCommits(std::string channelAddress, UniValue& tradeArray);
 
   int deleteAboveBlock(int blockNum);
   bool exists(const uint256 &txid);

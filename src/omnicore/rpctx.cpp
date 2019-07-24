@@ -1821,22 +1821,24 @@ UniValue tl_commit_tochannel(const JSONRPCRequest& request)
 
     // obtain parameters & info
     std::string senderAddress = ParseAddress(request.params[0]);
-    std::string channelAddress = ParseAddress(request.params[1]);
+    std::string channelAddress = ParseMultisig(request.params[1]);
     uint32_t propertyId = ParsePropertyId(request.params[2]);
     int64_t amount = ParseAmount(request.params[3], true);
     uint32_t vout = ParseOutputIndex(request.params[4]);
 
-    // RequireExistingProperty(contractId);
-    // RequireOracleContract(contractId);  //RequireOracleContract
 
+    RequireExistingProperty(propertyId);
+    RequireBalance(senderAddress, propertyId, amount);
+
+    PrintToLog("channelAddress inside rpctx : %s\n",channelAddress);
 
     // create a payload for the transaction
-    std::vector<unsigned char> payload = CreatePayload_Commit_Channel(propertyId, amount, vout);
+    std::vector<unsigned char> payload = CreatePayload_Commit_Channel(propertyId, amount, vout, channelAddress);
 
     // request the wallet build the transaction (and if needed commit it)
     uint256 txid;
     std::string rawHex;
-    int result = WalletTxBuilder(senderAddress, channelAddress, 0, payload, txid, rawHex, autoCommit);
+    int result = WalletTxBuilder(senderAddress,"", 0, payload, txid, rawHex, autoCommit);
 
     // check error and return the txid (or raw hex depending on autocommit)
     if (result != 0) {

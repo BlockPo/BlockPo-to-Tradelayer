@@ -481,13 +481,13 @@ UniValue tl_getbalance(const JSONRPCRequest& request)
             + HelpExampleCli("tl_getbalance", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" 1")
             + HelpExampleRpc("tl_getbalance", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", 1")
         );
-    
+
     std::string address = ParseAddress(request.params[0]);
     uint32_t propertyId = ParsePropertyId(request.params[1]);
-    
+
     // RequireExistingProperty(propertyId);
     // RequireNotContract(propertyId);
-    
+
     UniValue balanceObj(UniValue::VOBJ);
     BalanceToJSON(address, propertyId, balanceObj, isPropertyDivisible(propertyId));
 
@@ -1666,14 +1666,14 @@ UniValue tl_getorderbook(const JSONRPCRequest& request)
             + HelpExampleCli("tl_getorderbook", "2")
             + HelpExampleRpc("tl_getorderbook", "2")
 			    );
-    
+
     bool filterDesired = (request.params.size() > 1);
     uint32_t propertyIdForSale = ParsePropertyId(request.params[0]);
     uint32_t propertyIdDesired = 0;
-    
+
     RequireExistingProperty(propertyIdForSale);
     RequireNotContract(propertyIdForSale);
-    
+
     if (filterDesired) {
         propertyIdDesired = ParsePropertyId(request.params[1]);
         RequireExistingProperty(propertyIdDesired);
@@ -2251,6 +2251,49 @@ UniValue tl_getsum_upnl(const JSONRPCRequest& request)
   return balanceObj;
 }
 
+UniValue tl_check_commits(const JSONRPCRequest& request)
+{
+  if (request.params.size() != 1)
+    throw runtime_error(
+			"tl_check_commits channelAddress \n"
+			"\nRetrieves the history of commits in the channel\n"
+			"\nArguments:\n"
+			"1. channel address           (string, required) the multisig address of channel\n"
+			"\nResult:\n"
+			"[                                      (array of JSON objects)\n"
+			"  {\n"
+			"    \"block\" : nnnnnn,                      (number) the index of the block that contains the trade match\n"
+			"    \"unitprice\" : \"n.nnnnnnnnnnn...\" ,     (string) the unit price used to execute this trade (received/sold)\n"
+			"    \"inverseprice\" : \"n.nnnnnnnnnnn...\",   (string) the inverse unit price (sold/received)\n"
+			"    \"sellertxid\" : \"hash\",                 (string) the hash of the transaction of the seller\n"
+			"    \"address\" : \"address\",                 (string) the Bitcoin address of the seller\n"
+			"    \"amountsold\" : \"n.nnnnnnnn\",           (string) the number of tokens sold in this trade\n"
+			"    \"amountreceived\" : \"n.nnnnnnnn\",       (string) the number of tokens traded in exchange\n"
+			"    \"matchingtxid\" : \"hash\",               (string) the hash of the transaction that was matched against\n"
+			"    \"matchingaddress\" : \"address\"          (string) the Bitcoin address of the other party of this trade\n"
+			"  },\n"
+			"  ...\n"
+			"]\n"
+			"\nExamples:\n"
+			+ HelpExampleCli("tl_check_commits", "1")
+			+ HelpExampleRpc("tl_check_commits", "1")
+			);
+
+  // obtain property identifiers for pair & check valid parameters
+  std::string address = ParseMultisig(request.params[0]);
+
+  // RequireContract(contractId);
+
+  // request pair trade history from trade db
+  UniValue response(UniValue::VARR);
+
+  LOCK(cs_tally);
+
+  t_tradelistdb->getAllCommits(address, response);
+
+  return response;
+}
+
 static const CRPCCommand commands[] =
 { //  category                             name                            actor (function)               okSafeMode
   //  ------------------------------------ ------------------------------- ------------------------------ ----------
@@ -2285,11 +2328,12 @@ static const CRPCCommand commands[] =
   { "trade layer (data retieval)" , "tl_getorderbook",              &tl_getorderbook,               {} },
   { "trade layer (data retieval)" , "tl_getpeggedhistory",          &tl_getpeggedhistory,           {} },
   { "trade layer (data retieval)" , "tl_getcontract_reserve",       &tl_getcontract_reserve,        {} },
-  { "trade layer (data retieval)" , "tl_getreserve",                &tl_getreserve,                    {} },
+  { "trade layer (data retieval)" , "tl_getreserve",                &tl_getreserve,                 {} },
   { "trade layer (data retieval)" , "tl_getallprice",               &tl_getallprice,                {} },
   { "trade layer (data retieval)" , "tl_getmarketprice",            &tl_getmarketprice,             {} },
   { "trade layer (data retieval)" , "tl_getexodus",                 &tl_getexodus,                  {} },
-  { "trade layer (data retieval)" , "tl_getsum_upnl",               &tl_getsum_upnl,                {} }
+  { "trade layer (data retieval)" , "tl_getsum_upnl",               &tl_getsum_upnl,                {} },
+  { "trade layer (data retieval)" , "tl_check_commits",             &tl_check_commits,              {} }
 };
 
 void RegisterOmniDataRetrievalRPCCommands(CRPCTable &tableRPC)

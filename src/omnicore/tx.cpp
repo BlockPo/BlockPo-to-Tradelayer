@@ -1493,24 +1493,44 @@ bool CMPTransaction::interpret_CommitChannel()
 
     std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
     std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+
     std::vector<uint8_t> vecContIdBytes = GetNextVarIntBytes(i);
     std::vector<uint8_t> vecAmountBytes = GetNextVarIntBytes(i);
     std::vector<uint8_t> vecVoutBytes = GetNextVarIntBytes(i);
+
+    const char* p = i + (char*) &pkt;
+    std::vector<std::string> spstr;
+    for (int j = 0; j < 1; j++) {
+      spstr.push_back(std::string(p));
+      p += spstr.back().size() + 1;
+    }
+
+    if (isOverrun(p)) {
+      PrintToLog("%s(): rejected: malformed string value(s)\n", __func__);
+      return false;
+    }
+
+    int j = 0;
+    memcpy(channelAddress, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(channelAddress)-1)); j++;
+    i = i + strlen(channelAddress) + 1; // data sizes + 1 null terminators
+
 
     if (!vecContIdBytes.empty()) {
         propertyId = DecompressInteger(vecContIdBytes);
     } else return false;
 
     if (!vecAmountBytes.empty()) {
-        amountCommited = DecompressInteger(vecContIdBytes);
+        amountCommited = DecompressInteger(vecAmountBytes);
     } else return false;
 
     if (!vecVoutBytes.empty()) {
         vOut = DecompressInteger(vecVoutBytes);
     } else return false;
 
+
+    PrintToLog("channelAddress: %s\n", channelAddress);
     PrintToLog("version: %d\n", version);
-    PrintToLog("propertyId: %d\n", contractId);
+    PrintToLog("propertyId: %d\n", propertyId);
     PrintToLog("amount commited: %d\n", amountCommited);
     PrintToLog("vOut: %d\n", vOut);
 
@@ -3668,7 +3688,7 @@ int CMPTransaction::logicMath_CommitChannel()
     //     return (PKT_ERROR_TOKENS -22);
     // }
 
-    if (!IsPropertyIdValid(contractId)) {
+    if (!IsPropertyIdValid(propertyId)) {
         PrintToLog("%s(): rejected: property %d does not exist\n", __func__, property);
         return (PKT_ERROR_TOKENS -24);
     }
@@ -3678,12 +3698,14 @@ int CMPTransaction::logicMath_CommitChannel()
 
     // logic for the commit Here
     PrintToLog("logic_Math for commit channel\n");
+    PrintToLog("sender: %s\n",sender);
+    PrintToLog("channelAddress: %s\n",channelAddress);
 
     //putting money into channel reserve
-    update_tally_map(sender, propertyId, -amountCommited, BALANCE);
-    update_tally_map(receiver, propertyId, amountCommited, CHANNEL_RESERVE);
+    assert(update_tally_map(sender, propertyId, -amountCommited, BALANCE));
+    assert(update_tally_map(channelAddress, propertyId, amountCommited, CHANNEL_RESERVE));
 
-    t_tradelistdb->recordNewCommit(txid, receiver, sender, propertyId, amountCommited, vOut, block, tx_idx);
+    t_tradelistdb->recordNewCommit(txid, channelAddress, sender, propertyId, amountCommited, vOut, block, tx_idx);
 
 
     return 0;

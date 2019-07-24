@@ -78,6 +78,10 @@ private:
     char name[SP_STRING_FIELD_LEN];
     char url[SP_STRING_FIELD_LEN];
     char data[SP_STRING_FIELD_LEN];
+
+    // Commit multisig channel
+    char channelAddress[SP_STRING_FIELD_LEN];
+    
     uint64_t deadline;
     unsigned char early_bird;
     unsigned char percentage;
@@ -351,7 +355,7 @@ public:
         alert_type = 0;
         alert_expiry = 0;
         distribution_property = 0;
-  
+
         /** New things for Contracts */
         effective_price = 0;
         trading_action = 0;
