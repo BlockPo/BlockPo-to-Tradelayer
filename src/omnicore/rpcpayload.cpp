@@ -785,6 +785,41 @@ UniValue tl_createpayload_dexaccept(const JSONRPCRequest& request)
     return HexStr(payload.begin(), payload.end());
 }
 
+UniValue tl_createpayload_sendvesting(const JSONRPCRequest& request)
+{
+  if (request.params.size() < 2 || request.params.size() > 2)
+    throw runtime_error(
+			"tl_createpayload_sendvesting \"fromaddress\" \"toaddress\" propertyid \"amount\" ( \"referenceamount\" )\n"
+
+			"\nCreate and broadcast a simple send transaction.\n"
+
+			"\nArguments:\n"
+			"1. propertyid           (number, required) the identifier of the tokens to send\n"
+			"2. amount               (string, required) the amount of vesting tokens to send\n"
+
+			"\nResult:\n"
+			"\"hash\"                  (string) the hex-encoded transaction hash\n"
+
+			"\nExamples:\n"
+			+ HelpExampleCli("tl_createpayload_sendvesting", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\" \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\" 1 \"100.0\"")
+			+ HelpExampleRpc("tl_createpayload_sendvesting", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\", \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\", 1, \"100.0\"")
+			);
+
+  // obtain parameters & info
+  uint32_t propertyId = ParsePropertyId(request.params[0]); /** id=3 Vesting Tokens**/
+  int64_t amount = ParseAmount(request.params[1], true);
+
+  PrintToLog("propertyid = %d\n", propertyId);
+  PrintToLog("amount = %d\n", amount);
+
+    // create a payload for the transaction
+    std::vector<unsigned char> payload = CreatePayload_SendVestingTokens(propertyId, amount);
+
+    return HexStr(payload.begin(), payload.end());
+
+}
+
+
 static const CRPCCommand commands[] =
   { //  category                         name                                             actor (function)                               okSafeMode
     //  -------------------------------- -----------------------------------------       ----------------------------------------        ----------
@@ -812,7 +847,8 @@ static const CRPCCommand commands[] =
     { "trade layer (payload creation)", "tl_createpayload_redemption_pegged",             &tl_createpayload_redemption_pegged,               {}   },
     { "trade layer (payload creation)", "tl_createpayload_cancelorderbyblock",            &tl_createpayload_cancelorderbyblock,              {}   },
     { "trade layer (payload creation)", "tl_createpayload_dexoffer",                      &tl_createpayload_dexoffer,                        {}   },
-    { "trade layer (payload creation)", "tl_createpayload_dexaccept",                     &tl_createpayload_dexaccept,                       {}   }
+    { "trade layer (payload creation)", "tl_createpayload_dexaccept",                     &tl_createpayload_dexaccept,                       {}   },
+    { "trade layer (payload creation)", "tl_createpayload_sendvesting",                   &tl_createpayload_sendvesting,                     {}   }
   };
 
 
