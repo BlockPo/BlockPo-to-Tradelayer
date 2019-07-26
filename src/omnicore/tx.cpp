@@ -51,6 +51,7 @@ typedef boost::multiprecision::cpp_dec_float_100 dec_float;
 typedef boost::multiprecision::checked_int128_t int128_t;
 extern std::map<std::string,uint32_t> peggedIssuers;
 extern std::map<uint32_t,oracledata> oraclePrices;
+extern std::map<std::string,vector<withdrawalAccepted>> withdrawal_Map;
 extern int64_t factorE;
 extern int64_t priceIndex;
 extern int64_t allPrice;
@@ -242,6 +243,9 @@ bool CMPTransaction::interpret_Transaction()
 
     case MSC_TYPE_COMMIT_CHANNEL:
         return interpret_CommitChannel();
+
+    case MSC_TYPE_WITHDRAWAL_FROM_CHANNEL:
+        return interpret_Withdrawal_FromChannel();
 
     }
 
@@ -1537,6 +1541,57 @@ bool CMPTransaction::interpret_CommitChannel()
     return true;
 }
 
+/** Tx 109 */
+bool CMPTransaction::interpret_Withdrawal_FromChannel()
+{
+    int i = 0;
+
+    std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+
+    std::vector<uint8_t> vecContIdBytes = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecAmountBytes = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecVoutBytes = GetNextVarIntBytes(i);
+
+    const char* p = i + (char*) &pkt;
+    std::vector<std::string> spstr;
+    for (int j = 0; j < 1; j++) {
+      spstr.push_back(std::string(p));
+      p += spstr.back().size() + 1;
+    }
+
+    if (isOverrun(p)) {
+      PrintToLog("%s(): rejected: malformed string value(s)\n", __func__);
+      return false;
+    }
+
+    int j = 0;
+    memcpy(channelAddress, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(channelAddress)-1)); j++;
+    i = i + strlen(channelAddress) + 1; // data sizes + 1 null terminators
+
+
+    if (!vecContIdBytes.empty()) {
+        propertyId = DecompressInteger(vecContIdBytes);
+    } else return false;
+
+    if (!vecAmountBytes.empty()) {
+        amountToWithdraw = DecompressInteger(vecAmountBytes);
+    } else return false;
+
+    if (!vecVoutBytes.empty()) {
+        vOut = DecompressInteger(vecVoutBytes);
+    } else return false;
+
+
+    PrintToLog("channelAddress: %s\n", channelAddress);
+    PrintToLog("version: %d\n", version);
+    PrintToLog("propertyId: %d\n", propertyId);
+    PrintToLog("amount to withdrawal: %d\n", amountToWithdraw);
+    PrintToLog("vOut: %d\n", vOut);
+
+    return true;
+}
+
 // ---------------------- CORE LOGIC -------------------------
 
 /**
@@ -1650,6 +1705,9 @@ int CMPTransaction::interpretPacket()
 
         case MSC_TYPE_COMMIT_CHANNEL:
             return logicMath_CommitChannel();
+
+        case MSC_TYPE_WITHDRAWAL_FROM_CHANNEL:
+            return logicMath_Withdrawal_FromChannel();
 
 
     }
@@ -3707,6 +3765,74 @@ int CMPTransaction::logicMath_CommitChannel()
 
     t_tradelistdb->recordNewCommit(txid, channelAddress, sender, propertyId, amountCommited, vOut, block, tx_idx);
 
+
+    return 0;
+}
+
+/** Tx 109 */
+int CMPTransaction::logicMath_Withdrawal_FromChannel()
+{
+    uint256 blockHash;
+    {
+        LOCK(cs_main);
+
+        CBlockIndex* pindex = chainActive[block];
+        if (pindex == NULL) {
+            PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
+            return (PKT_ERROR_TOKENS -20);
+        }
+        blockHash = pindex->GetBlockHash();
+    }
+
+    // if (!IsTransactionTypeAllowed(block, property, type, version)) {
+    //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+    //             __func__,
+    //             type,
+    //             version,
+    //             property,
+    //             block);
+    //     return (PKT_ERROR_TOKENS -22);
+    // }
+
+    if (!IsPropertyIdValid(propertyId)) {
+        PrintToLog("%s(): rejected: property %d does not exist\n", __func__, property);
+        return (PKT_ERROR_TOKENS -24);
+    }
+
+
+    // ------------------------------------------
+
+    //checking balance of channelAddress
+    uint64_t totalAmount = static_cast<uint64_t>(getMPbalance(channelAddress, propertyId, CHANNEL_RESERVE));
+
+    if (amountToWithdraw > totalAmount)
+    {
+        PrintToLog("%s(): amount to withdrawal is bigger than totalAmount on channel\n", __func__);
+        return (PKT_ERROR_TOKENS -25);
+    }
+
+    uint64_t amountCommited = t_tradelistdb->getSumofCommits(channelAddress, sender, propertyId);
+
+    PrintToLog("all the amountCommited : %s\n",amountCommited);
+
+    if (amountToWithdraw > amountCommited) //here we need to check the PNLs
+    {
+        PrintToLog("%s(): amount to withdrawal is bigger than amount commited for the address %s\n", __func__, sender);
+        return (PKT_ERROR_TOKENS -26);
+    }
+
+    withdrawalAccepted wthd;
+
+    wthd.address = sender;
+    wthd.deadline_block = block + 7;
+    wthd.propertyId = propertyId;
+    wthd.amount = amountToWithdraw;
+
+    PrintToLog("checking wthd element : address: %s, deadline: %d, propertyId: %d, amount: %d \n", wthd.address, wthd.deadline_block, wthd.propertyId, wthd.amount);
+
+    withdrawal_Map[channelAddress].push_back(wthd);
+
+    t_tradelistdb->recordNewWithdrawal(txid, channelAddress, sender, propertyId, amountToWithdraw, vOut, block, tx_idx);
 
     return 0;
 }

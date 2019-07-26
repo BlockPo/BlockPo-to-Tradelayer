@@ -81,7 +81,7 @@ private:
 
     // Commit multisig channel
     char channelAddress[SP_STRING_FIELD_LEN];
-    
+
     uint64_t deadline;
     unsigned char early_bird;
     unsigned char percentage;
@@ -140,6 +140,7 @@ private:
 
     //Commit channel
     uint64_t amountCommited;
+    uint64_t amountToWithdraw;
     uint64_t vOut;
 
     // Indicates whether the transaction can be used to execute logic
@@ -191,6 +192,7 @@ private:
     bool interpret_OracleBackup();
     bool interpret_CloseOracle();
     bool interpret_CommitChannel();
+    bool interpret_Withdrawal_FromChannel();
     ///////////////////////////////////////////////
 
     /**
@@ -230,6 +232,7 @@ private:
     int logicMath_OracleBackup();
     int logicMath_CloseOracle();
     int logicMath_CommitChannel();
+    int logicMath_Withdrawal_FromChannel();
     ///////////////////////////////////////////////
 
     /**
@@ -368,6 +371,7 @@ public:
 
         //Commit channel
         amountCommited = 0;
+        amountToWithdraw = 0;
         vOut = 0;
 
         ////////////////////////////////////
@@ -482,6 +486,16 @@ struct oracledata
   int64_t high;
   int64_t low;
   uint32_t contractId;
+};
+
+struct withdrawalAccepted
+{
+  std::string address;
+  int deadline_block;
+  uint32_t propertyId;
+  uint64_t amount;
+
+  withdrawalAccepted() : address(""), deadline_block(0), propertyId(0), amount(0) {}
 };
 
 

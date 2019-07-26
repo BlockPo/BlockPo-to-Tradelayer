@@ -103,5 +103,9 @@ double RewardFirstI;
 int64_t SatoshiH;
 
 /*****************************************/
-
+/** Oracles **/
 std::map<uint32_t,oracledata> oraclePrices;
+
+/*****************************************/
+/** Withdrawals on channels **/
+std::map<std::string,vector<withdrawalAccepted>> withdrawal_Map;

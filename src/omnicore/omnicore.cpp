@@ -3401,6 +3401,17 @@ void CMPTradeList::recordNewCommit(const uint256& txid, const std::string& chann
   PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
 }
 
+void CMPTradeList::recordNewWithdrawal(const uint256& txid, const std::string& channelAddress, const std::string& sender, uint32_t propertyId, uint64_t amountToWithdrawal, uint32_t vOut, int blockNum, int blockIndex)
+{
+  if (!pdb) return;
+  std::string strValue = strprintf("%s:%s:%d:%d:%d:%d:%d", channelAddress, sender, propertyId, amountToWithdrawal, vOut, blockNum, blockIndex);
+  const string key = blockNum + "+" + txid.ToString(); // order by blockNum
+  Status status = pdb->Put(writeoptions, txid.ToString(), strValue);
+  ++nWritten;
+  // if (msc_debug_tradedb)
+  PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
+}
+
 
 
 void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, string address1, string address2, unsigned int prop1, unsigned int prop2, uint64_t amount1, uint64_t amount2, int blockNum, int64_t fee)
@@ -4499,6 +4510,131 @@ const std::string ExodusAddress()
    delete it; // Desallocation proccess
    if (count) { return true; } else { return false; }
  }
+
+ uint64_t CMPTradeList::getSumofCommits(const std::string& channelAddress, const std::string& senderAddress, uint32_t propertyId)
+ {
+
+   if (!pdb) return false;
+
+   int count = 0;
+   uint64_t sumAmount = 0;
+
+   std::vector<std::string> vstr;
+   // string txidStr = txid.ToString();
+
+   leveldb::Iterator* it = NewIterator(); // Allocation proccess
+
+   for(it->SeekToLast(); it->Valid(); it->Prev()) {
+
+       PrintToLog("Inside looop in db\n");
+       // search key to see if this is a matching trade
+       std::string strKey = it->key().ToString();
+       // PrintToLog("key of this match: %s ****************************\n",strKey);
+       std::string strValue = it->value().ToString();
+
+       // ensure correct amount of tokens in value string
+       boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
+       if (vstr.size() != 7) {
+           //PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
+           // PrintToConsole("TRADEDB error - unexpected number of tokens in value %d \n",vstr.size());
+           continue;
+       }
+
+       //channelAddress, sender, propertyId, amountCommited, vOut, blockIndex
+
+       std::string cAddress = vstr[0];
+
+       if(channelAddress != cAddress)
+           continue;
+
+       std::string sender = vstr[1];
+
+       if(senderAddress != sender)
+           continue;
+
+       uint32_t propId = boost::lexical_cast<uint32_t>(vstr[2]);
+
+       if(propertyId != propId)
+           continue;
+
+       uint64_t amount = boost::lexical_cast<uint64_t>(vstr[3]);
+       // populate trade object and add to the trade array, correcting for orientation of trade
+       sumAmount += amount;
+   }
+
+   // clean up
+   delete it; // Desallocation proccess
+
+   return sumAmount;
+   
+ }
+
+
+ /**
+  * @retrieve withdrawal for a channel
+  */
+  bool CMPTradeList::getAllWithdrawals(std::string senderAddress, UniValue& tradeArray)
+  {
+    if (!pdb) return false;
+
+    int count = 0;
+
+    std::vector<std::string> vstr;
+    // string txidStr = txid.ToString();
+
+    leveldb::Iterator* it = NewIterator(); // Allocation proccess
+
+    for(it->SeekToLast(); it->Valid(); it->Prev()) {
+
+        PrintToLog("Inside looop in db\n");
+        // search key to see if this is a matching trade
+        std::string strKey = it->key().ToString();
+        // PrintToLog("key of this match: %s ****************************\n",strKey);
+        std::string strValue = it->value().ToString();
+
+        // ensure correct amount of tokens in value string
+        boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
+        if (vstr.size() != 7) {
+            //PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
+            // PrintToConsole("TRADEDB error - unexpected number of tokens in value %d \n",vstr.size());
+            continue;
+        }
+
+        //channelAddress, sender, propertyId, amountCommited, vOut, blockIndex
+
+        std::string cAddress = vstr[0];
+
+        std::string sender = vstr[1];
+
+        if(sender != senderAddress)
+            continue;
+
+        uint32_t propertyId = boost::lexical_cast<uint32_t>(vstr[2]);
+
+        int64_t withdrawalAmount = boost::lexical_cast<int64_t>(vstr[3]);
+        uint32_t vOut = boost::lexical_cast<uint32_t>(vstr[4]);
+        int blockNum = boost::lexical_cast<int>(vstr[5]);
+        int blockIndex = boost::lexical_cast<int>(vstr[6]);
+
+        // populate trade object and add to the trade array, correcting for orientation of trade
+
+
+        UniValue trade(UniValue::VOBJ);
+        if (tradeArray.size() <= 20)
+        {
+            trade.push_back(Pair("sender", sender));
+            trade.push_back(Pair("withdrawalAmount", FormatByType(withdrawalAmount,2)));
+            trade.push_back(Pair("vOut", FormatByType(vOut,1)));
+            trade.push_back(Pair("block",blockNum));
+            trade.push_back(Pair("block_index",blockIndex));
+            tradeArray.push_back(trade);
+            ++count;
+        }
+    }
+    // clean up
+    delete it; // Desallocation proccess
+    if (count) { return true; } else { return false; }
+  }
 
 /**
  * @return The marker for class C transactions.

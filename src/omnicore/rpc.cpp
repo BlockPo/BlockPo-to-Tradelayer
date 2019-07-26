@@ -2275,8 +2275,8 @@ UniValue tl_check_commits(const JSONRPCRequest& request)
 			"  ...\n"
 			"]\n"
 			"\nExamples:\n"
-			+ HelpExampleCli("tl_check_commits", "1")
-			+ HelpExampleRpc("tl_check_commits", "1")
+			+ HelpExampleCli("tl_check_commits", "address")
+			+ HelpExampleRpc("tl_check_commits", "address")
 			);
 
   // obtain property identifiers for pair & check valid parameters
@@ -2290,6 +2290,49 @@ UniValue tl_check_commits(const JSONRPCRequest& request)
   LOCK(cs_tally);
 
   t_tradelistdb->getAllCommits(address, response);
+
+  return response;
+}
+
+UniValue tl_check_withdrawals(const JSONRPCRequest& request)
+{
+  if (request.params.size() != 1)
+    throw runtime_error(
+			"tl_check_withdrawals senderAddress \n"
+			"\nRetrieves the history of withdrawal for a given address in the channel\n"
+			"\nArguments:\n"
+			"1. sender address           (string, required) the address related to withdrawals on the channel\n"
+			"\nResult:\n"
+			"[                                      (array of JSON objects)\n"
+			"  {\n"
+			"    \"block\" : nnnnnn,                      (number) the index of the block that contains the trade match\n"
+			"    \"unitprice\" : \"n.nnnnnnnnnnn...\" ,     (string) the unit price used to execute this trade (received/sold)\n"
+			"    \"inverseprice\" : \"n.nnnnnnnnnnn...\",   (string) the inverse unit price (sold/received)\n"
+			"    \"sellertxid\" : \"hash\",                 (string) the hash of the transaction of the seller\n"
+			"    \"address\" : \"address\",                 (string) the Bitcoin address of the seller\n"
+			"    \"amountsold\" : \"n.nnnnnnnn\",           (string) the number of tokens sold in this trade\n"
+			"    \"amountreceived\" : \"n.nnnnnnnn\",       (string) the number of tokens traded in exchange\n"
+			"    \"matchingtxid\" : \"hash\",               (string) the hash of the transaction that was matched against\n"
+			"    \"matchingaddress\" : \"address\"          (string) the Bitcoin address of the other party of this trade\n"
+			"  },\n"
+			"  ...\n"
+			"]\n"
+			"\nExamples:\n"
+			+ HelpExampleCli("tl_check_withdrawals", "1")
+			+ HelpExampleRpc("tl_check_withdrawals", "1")
+			);
+
+  // obtain property identifiers for pair & check valid parameters
+  std::string address = ParseMultisig(request.params[0]);
+
+  // RequireContract(contractId);
+
+  // request pair trade history from trade db
+  UniValue response(UniValue::VARR);
+
+  LOCK(cs_tally);
+
+  t_tradelistdb->getAllWithdrawals(address, response);
 
   return response;
 }
@@ -2333,7 +2376,8 @@ static const CRPCCommand commands[] =
   { "trade layer (data retieval)" , "tl_getmarketprice",            &tl_getmarketprice,             {} },
   { "trade layer (data retieval)" , "tl_getexodus",                 &tl_getexodus,                  {} },
   { "trade layer (data retieval)" , "tl_getsum_upnl",               &tl_getsum_upnl,                {} },
-  { "trade layer (data retieval)" , "tl_check_commits",             &tl_check_commits,              {} }
+  { "trade layer (data retieval)" , "tl_check_commits",             &tl_check_commits,              {} },
+  { "trade layer (data retieval)" , "tl_check_withdrawals",         &tl_check_withdrawals,          {} }
 };
 
 void RegisterOmniDataRetrievalRPCCommands(CRPCTable &tableRPC)
