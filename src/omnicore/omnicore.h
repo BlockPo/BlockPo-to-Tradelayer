@@ -484,6 +484,8 @@ namespace mastercore
   int64_t sum_check_upnl(std::string address); //  sum of all upnls for a given address.
 
   int64_t pos_margin(uint32_t contractId, std::string address, uint16_t prop_type, uint32_t margin_requirement); // return mainteinance margin for a given contrand and address
+
+  bool makeWithdrawals(int Block); // make the withdrawals for multisig channels
 }
 
 #endif // OMNICORE_OMNICORE_H

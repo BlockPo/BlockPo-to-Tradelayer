@@ -177,6 +177,9 @@ extern std::map<uint32_t, std::map<uint32_t, std::vector<uint64_t>>> mdextwap_ve
 extern std::map<uint32_t, std::map<std::string, double>> addrs_upnlc;
 extern std::map<std::string, int64_t> sum_upnls;
 
+/** Pending withdrawals **/
+extern std::map<std::string,vector<withdrawalAccepted>> withdrawal_Map;
+
 using mastercore::StrToInt64;
 
 // indicate whether persistence is enabled at this point, or not
@@ -3270,6 +3273,7 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
   }
 
   // handle any features that go live with this block
+  makeWithdrawals(pBlockIndex->nHeight);
   CheckLiveActivations(pBlockIndex->nHeight);
   update_sum_upnls();
   marginMain(pBlockIndex->nHeight);
@@ -4422,6 +4426,28 @@ int64_t mastercore::pos_margin(uint32_t contractId, std::string address, uint16_
         return maint_margin;
 }
 
+bool mastercore::makeWithdrawals(int Block)
+{
+    for(std::map<std::string,vector<withdrawalAccepted>>::iterator it = withdrawal_Map.begin(); it != withdrawal_Map.end(); ++it)
+    {
+        for (std::vector<withdrawalAccepted>::iterator itt = it->second.begin() ; itt != it->second.end(); ++itt)
+        {
+            if (Block != itt->deadline_block)
+                continue;
+
+          // updating tally map
+          assert(update_tally_map(itt->address, itt->propertyId, itt->amount, BALANCE));
+          assert(update_tally_map(it->first, itt->propertyId, -itt->amount, CHANNEL_RESERVE));
+
+          // deleting element from vector
+          it->second.erase(itt);
+          
+        }
+
+    }
+
+}
+
 uint64_t int64ToUint64(int64_t value)
 {
   uint64_t uvalue = value;
@@ -4498,6 +4524,7 @@ const std::string ExodusAddress()
        if (tradeArray.size() <= 20)
        {
            trade.push_back(Pair("sender", sender));
+           trade.push_back(Pair("propertyId",FormatByType(propertyId,1)));
            trade.push_back(Pair("amount", FormatByType(amount,2)));
            trade.push_back(Pair("vOut", FormatByType(vOut,1)));
            trade.push_back(Pair("block",blockNum));
@@ -4566,7 +4593,7 @@ const std::string ExodusAddress()
    delete it; // Desallocation proccess
 
    return sumAmount;
-   
+
  }
 
 
