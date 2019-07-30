@@ -95,6 +95,16 @@ Founder Reward
 
 A special kind of Vesting Token exists that can only be moved once a year, converts to ALL based on cumulative volume, and otherwise shows in reserve and carries with it when transferred, the yet-to-be-vested ALL associated with a balance. Vesting is linked to cumulative volume of all trading pairs on TradeLayer, measured in Litecoin, and requires many millions of cumulative LTC in volume to go through an S-curve like vesting function.
 
+Revised Margin System
+-----------------------------------------
+
+We thoroughly delved into contingent logic and minute balance adjustments relating to the margining of decentralized derivatives. We came up with a model where users are incrementally liquidated below a cross-margined maintainence threshold. Due to the discrete complexity in the decentralized settlement, unrealized and pre-settlement realized profits cannot be used to offset losses in other assets, portfolio margining style. But the system is fairly robust for cross-margin, the incremental liquidation thresholds were tweaked to encourage highly leveraged traders to drop size before going broke, in favor of systemic anti-fragility.
+
+Revised Settlement Algorithms
+-----------------------------------------
+
+A lot of re-working had to be done, arriving at a semi-distinct alternative implementation, of a perpetual settlement algorithms. Unlike an earlier vision where everyone would be settled stochastically on a rolling basis, this model implemented a much less experimental periodic settlement where the entire graph is reduced to a set of counterparties with open positions. Given this nature of the graph rewrite algorithm, it's very opportune to apply whatever interest rate function to those pairings at that time.
+
 Coming soon in 0.2.x
 
 Trade Channels
