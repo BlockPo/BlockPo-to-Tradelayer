@@ -1,13 +1,13 @@
-TradeLayer v0.1.0
+TradeLayer v0.2.0
 ================
 
-v0.1.0 is the first version of TradeLayer protocol. Is based on Omnicore-lite (credits to https://github.com/zathras-crypto) working on top of Litecoin Core (v0.16.3).
+v0.2.0 is the second version of TradeLayer protocol. Is based on Omnicore-lite (credits to https://github.com/zathras-crypto) working on top of Litecoin Core (v0.16.3).
 
 
 Table of contents
 =================
 
-- [TradeLayer v0.1.0]
+- [TradeLayer v0.2.0]
 - [Compatibility with Litecoin Core](#compatibility-with-litecoin-core)
 - [Notable changes](#notable-changes)
   - [Contract DEx](#contract-dex)
@@ -25,8 +25,8 @@ Compatibility with Litecoin Core
 
 TradeLayer can be used as replacement for Litecoin Core v0.16.3 because it's an enhancement. In inheritance, Tradelayer has all the notables improvements of this Litecoin version.
 
-Notable changes
-===============
+Notable changes from OmniLayer
+=============== 
 
 Contract DEx
 -----------------------------------------
@@ -60,8 +60,8 @@ Settlement Algorithm
 -----------------------------------------------------
 This algorithm consider like source edges from every match line of the
 vector of vector of maps built in recordMatchedTrade having two nodes opening or increasing
-his positions two of them. We look for matched events for this two addresses using FIF and
-also for those nodes opening or increasing position while the process. When the
+his positions two of them. We look for matched events for this two addresses using FIFO and
+also for those nodes opening or increasing positions. When the
 FIFO algorithm finishes opened contracts are added as ghost nodes in a graph structure, that builds paths
 following netting events with source being the new contracts created. By using a piecewise
 function obtained by solving some equation we compute the respective exit price
@@ -72,6 +72,54 @@ Unit Testing
 -----------------------------------------------------
 Inside the repo src/ some shell scripts to test the project were built and unit tests based
 in some usual Boost libraries inside src/omnicore/test/.
+
+
+
+Notable changes from 0.1.0
+===============
+
+TradeLayer v0.2.0 through 0.2.n repesent near-launch versions of the more mature protocol vs. the working prototype version that was pushed in October 2018. 
+
+Contract DEx
+-----------------------------------------
+
+Expanded the Dex to include Oracle-based contracts. Expanded the type of contracts to include perpetual contracts with interest rate formulas. Insurance caches and fees deter wash trading, direct the cashflow to back-up contracts and deploy in cases where settlements would be otherwise insolvent. Oracles can earn revenue by publishing a reliable feed consistently and cultivating a popular usage of their contracts.
+
+Node Reward
+-----------------------------------------
+
+It's possible to start from a given block to be able to publish Node Reward transactions, these transactions include a cipher based on correctly parsing and calculating the layer's consensus hash. Valid transactions split a Node Reward. The reward incrementally increases per value each block for about six months and then decays, until many decades in the future it stabilizes at a fixed number per block. It's designed to provide an egalitarian faucet for uncapitalized persons in the future, see the money supply of ALL in an organic way, and encourage long-term subsidy of non-miners operating full validating nodes.
+
+Founder Reward
+-----------------------------------------
+
+A special kind of Vesting Token exists that can only be moved once a year, converts to ALL based on cumulative volume, and otherwise shows in reserve and carries with it when transferred, the yet-to-be-vested ALL associated with a balance. Vesting is linked to cumulative volume of all trading pairs on TradeLayer, measured in Litecoin, and requires many millions of cumulative LTC in volume to go through an S-curve like vesting function.
+
+Coming soon in 0.2.x
+
+Trade Channels
+----------------------
+
+Build atomic transactions using multisig channels and a commit/withdrawal block-height nonce scheme, co-sign them for instant execution, manage channels to limit the need to publish to the base chain and save on miner fees.
+
+Liquidity Reward
+-----------------------------------------
+
+On-chain orders that match and clear in xTrade and involve native ecosystem trading pairs are subsidized with a perpetual inflation function. The rate of inflation is 10% per doubling past a fixed number of LTC in cumulative volume for those pairs. Below that fixed number, the inflation is more generous in favor of early liquidity providers. Oracle contracts and issued smart property tokens are not considered to be part of the native ecosystem.
+
+Identity Module
+----------------------
+
+Get into the identity business as a 3rd party registrar, emit attestations, include registrars in a whitelist of who you would be comfortable:  
+
+               1) trading with on chain
+               2) having trade the oracle contract you operate
+               3) having trade or hold the security token or bank coin you issued/operate
+
+Standardizing dCurrency
+-----------------------
+
+Revised RPC parameters to make dCurrency more usable and standardized in the native ecosystem.
 
 
 Credits
