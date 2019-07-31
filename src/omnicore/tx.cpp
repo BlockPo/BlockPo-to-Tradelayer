@@ -1509,15 +1509,18 @@ bool CMPTransaction::interpret_CommitChannel()
       p += spstr.back().size() + 1;
     }
 
+
     if (isOverrun(p)) {
       PrintToLog("%s(): rejected: malformed string value(s)\n", __func__);
       return false;
     }
 
     int j = 0;
-    memcpy(channelAddress, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(channelAddress)-1)); j++;
+    memcpy(channelAddress, spstr[j].c_str(), spstr[j].length() - 1); j++;
     i = i + strlen(channelAddress) + 1; // data sizes + 1 null terminators
 
+    // PrintToLog("spstr[j].length() : %d\n",spstr[j].length());
+    // PrintToLog("size of channel : %d\n",sizeof(channelAddress));
 
     if (!vecContIdBytes.empty()) {
         propertyId = DecompressInteger(vecContIdBytes);
@@ -1566,7 +1569,7 @@ bool CMPTransaction::interpret_Withdrawal_FromChannel()
     }
 
     int j = 0;
-    memcpy(channelAddress, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(channelAddress)-1)); j++;
+    memcpy(channelAddress, spstr[j].c_str(), spstr[j].length() - 1); j++;
     i = i + strlen(channelAddress) + 1; // data sizes + 1 null terminators
 
 
@@ -3765,6 +3768,9 @@ int CMPTransaction::logicMath_CommitChannel()
 
     t_tradelistdb->recordNewCommit(txid, channelAddress, sender, propertyId, amountCommited, vOut, block, tx_idx);
 
+    int64_t amountCheck = getMPbalance(channelAddress,propertyId,CHANNEL_RESERVE);
+
+    PrintToLog("amount inside channel multisig: %s\n",amountCheck);
 
     return 0;
 }
@@ -3804,6 +3810,9 @@ int CMPTransaction::logicMath_Withdrawal_FromChannel()
 
     //checking balance of channelAddress
     uint64_t totalAmount = static_cast<uint64_t>(getMPbalance(channelAddress, propertyId, CHANNEL_RESERVE));
+
+    PrintToLog("amountToWithdraw : %d\n",amountToWithdraw);
+    PrintToLog("totalAmount : %d\n",totalAmount);
 
     if (amountToWithdraw > totalAmount)
     {

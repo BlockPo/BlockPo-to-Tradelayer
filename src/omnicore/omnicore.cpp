@@ -4430,21 +4430,42 @@ bool mastercore::makeWithdrawals(int Block)
 {
     for(std::map<std::string,vector<withdrawalAccepted>>::iterator it = withdrawal_Map.begin(); it != withdrawal_Map.end(); ++it)
     {
-        for (std::vector<withdrawalAccepted>::iterator itt = it->second.begin() ; itt != it->second.end(); ++itt)
+        std::string channelAddress = it->first;
+
+        vector<withdrawalAccepted> &accepted = it->second;
+
+        for (std::vector<withdrawalAccepted>::iterator itt = accepted.begin() ; itt != accepted.end();)
         {
-            if (Block != itt->deadline_block)
+            withdrawalAccepted wthd = *itt;
+
+            const int deadline = wthd.deadline_block;
+
+            if (Block != deadline)
+            {
+                ++itt;
                 continue;
+            }
 
-          // updating tally map
-          assert(update_tally_map(itt->address, itt->propertyId, itt->amount, BALANCE));
-          assert(update_tally_map(it->first, itt->propertyId, -itt->amount, CHANNEL_RESERVE));
+            const std::string address = wthd.address;
+            const uint32_t propertyId = wthd.propertyId;
+            const int64_t amount = static_cast<int64_t>(wthd.amount);
 
-          // deleting element from vector
-          it->second.erase(itt);
-          
+
+            PrintToLog("%s(): withdrawal: block: %d, deadline: %d, address: %s, propertyId: %d, amount: %d \n", __func__, Block, deadline, address, propertyId, amount);
+
+            // updating tally map
+            assert(update_tally_map(address, propertyId, amount, BALANCE));
+            assert(update_tally_map(channelAddress, propertyId, -amount, CHANNEL_RESERVE));
+
+            // deleting element from vector
+            // PrintToLog("%s(): deleting element from vector\n",__func__);
+            accepted.erase(itt);
+
         }
 
     }
+
+    return true;
 
 }
 
