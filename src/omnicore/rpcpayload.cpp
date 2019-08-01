@@ -819,6 +819,56 @@ UniValue tl_createpayload_sendvesting(const JSONRPCRequest& request)
 
 }
 
+//blockheight_expiry, propertyid1 or contract id, amount, propertyid2 if token trade, 2nd amount if token trade, price if a contract trade (optional)
+
+UniValue tl_createpayload_instant_trade(const JSONRPCRequest& request)
+{
+  if (request.params.size() < 3 || request.params.size() > 5)
+    throw runtime_error(
+			"tl_createpayload_instant_trade \"fromaddress\" \"toaddress\" propertyid \"amount\" ( \"referenceamount\" )\n"
+
+			"\nCreate an instant trade payload.\n"
+
+			"\nArguments:\n"
+			"1. propertyId            (number, required) the identifier of the property\n"
+			"2. amount                (string, required) the amount of the property traded\n"
+      "3. blockheight_expiry    (string, required) block of expiry\n"
+      "4. propertyDesired       (number, optional) the identifier of the property desiderd\n"
+      "5. amountDesired         (string, optional) the amount desired of tokens\n"
+      "6. price                 (number, optional) the price of contract\n"
+
+
+
+			"\nResult:\n"
+			"\"hash\"                  (string) the hex-encoded transaction hash\n"
+
+			"\nExamples:\n"
+			+ HelpExampleCli("tl_createpayload_instant_trade", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\" \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\" 1 \"100.0\"")
+			+ HelpExampleRpc("tl_createpayload_instant_trade", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\", \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\", 1, \"100.0\"")
+			);
+
+  // obtain parameters & info
+  uint32_t propertyId = ParsePropertyId(request.params[0]);
+  int64_t amount = ParseAmount(request.params[1], true);
+  uint32_t blockheight_expiry = request.params[2].get_int();
+  uint32_t propertyDesired = (request.params.size() > 3) ? ParsePropertyId(request.params[3]): 0;
+  int64_t amountDesired = (request.params.size() > 3) ? ParseAmount(request.params[4],true): 0;
+  int64_t price = (request.params.size() > 3) ? ParseAmount(request.params[5],true): 0;
+
+  PrintToLog("propertyid = %d\n", propertyId);
+  PrintToLog("amount = %d\n", amount);
+  PrintToLog("blockheight_expiry = %d\n", blockheight_expiry);
+  PrintToLog("propertyDesired = %d\n", propertyDesired);
+  PrintToLog("amountDesired = %d\n", amountDesired);
+  PrintToLog("price = %d\n", price);
+
+  // create a payload for the transaction
+  std::vector<unsigned char> payload = CreatePayload_Instant_Trade(propertyId, amount, blockheight_expiry, propertyDesired, amountDesired, price);
+
+  return HexStr(payload.begin(), payload.end());
+
+}
+
 
 static const CRPCCommand commands[] =
   { //  category                         name                                             actor (function)                               okSafeMode
@@ -848,7 +898,9 @@ static const CRPCCommand commands[] =
     { "trade layer (payload creation)", "tl_createpayload_cancelorderbyblock",            &tl_createpayload_cancelorderbyblock,              {}   },
     { "trade layer (payload creation)", "tl_createpayload_dexoffer",                      &tl_createpayload_dexoffer,                        {}   },
     { "trade layer (payload creation)", "tl_createpayload_dexaccept",                     &tl_createpayload_dexaccept,                       {}   },
-    { "trade layer (payload creation)", "tl_createpayload_sendvesting",                   &tl_createpayload_sendvesting,                     {}   }
+    { "trade layer (payload creation)", "tl_createpayload_sendvesting",                   &tl_createpayload_sendvesting,                     {}   },
+    { "trade layer (payload creation)", "tl_createpayload_instant_trade",                 &tl_createpayload_instant_trade,                   {}   }
+
   };
 
 

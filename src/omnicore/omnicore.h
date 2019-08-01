@@ -175,6 +175,12 @@ enum FILETYPES {
 #define CONTRACT_LTC_DEUR   8
 #define CONTRACT_sLTC_ALL   9
 
+
+// channels definitions
+#define TYPE_COMMIT      "commit"
+#define TYPE_WITHDRAWAL  "withdrawal"
+
+
 // Currency in existance (options for createcontract)
 uint32_t const TL_dUSD  = 1;
 uint32_t const TL_dEUR  = 2;
@@ -186,6 +192,7 @@ uint32_t const TL_LTC   = 6;
 // limits for margin dynamic
 const rational_t factor = rational_t(80,100);  // critical limit
 const rational_t factor2 = rational_t(20,100); // normal limits
+
 
 // forward declarations
 std::string FormatDivisibleMP(int64_t amount, bool fSign = false);
@@ -335,7 +342,7 @@ class CMPTradeList : public CDBBase
   //Commit channels
   void recordNewCommit(const uint256& txid, const std::string& channelAddress, const std::string& sender, uint32_t propertyId, uint64_t amountCommited, uint32_t vOut, int blockNum, int blockIndex);
   void recordNewWithdrawal(const uint256& txid, const std::string& channelAddress, const std::string& sender, uint32_t propertyId, uint64_t amountToWithdrawal, uint32_t vOut, int blockNum, int blockIndex);
-  bool getAllCommits(std::string channelAddress, UniValue& tradeArray);
+  bool getAllCommits(std::string senderAddress, UniValue& tradeArray);
   bool getAllWithdrawals(std::string senderAddress, UniValue& tradeArray);
   uint64_t getSumofCommits(const std::string& channelAddress, const std::string& senderAddress, uint32_t propertyId);
 

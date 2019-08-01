@@ -3397,7 +3397,7 @@ void CMPTradeList::recordNewTrade(const uint256& txid, const std::string& addres
 void CMPTradeList::recordNewCommit(const uint256& txid, const std::string& channelAddress, const std::string& sender, uint32_t propertyId, uint64_t amountCommited, uint32_t vOut, int blockNum, int blockIndex)
 {
   if (!pdb) return;
-  std::string strValue = strprintf("%s:%s:%d:%d:%d:%d:%d", channelAddress, sender, propertyId, amountCommited, vOut, blockNum, blockIndex);
+  std::string strValue = strprintf("%s:%s:%d:%d:%d:%d:%d:%s", channelAddress, sender, propertyId, amountCommited, vOut, blockNum, blockIndex, TYPE_COMMIT);
   const string key = blockNum + "+" + txid.ToString(); // order by blockNum
   Status status = pdb->Put(writeoptions, txid.ToString(), strValue);
   ++nWritten;
@@ -3408,7 +3408,7 @@ void CMPTradeList::recordNewCommit(const uint256& txid, const std::string& chann
 void CMPTradeList::recordNewWithdrawal(const uint256& txid, const std::string& channelAddress, const std::string& sender, uint32_t propertyId, uint64_t amountToWithdrawal, uint32_t vOut, int blockNum, int blockIndex)
 {
   if (!pdb) return;
-  std::string strValue = strprintf("%s:%s:%d:%d:%d:%d:%d", channelAddress, sender, propertyId, amountToWithdrawal, vOut, blockNum, blockIndex);
+  std::string strValue = strprintf("%s:%s:%d:%d:%d:%d:%d:%s", channelAddress, sender, propertyId, amountToWithdrawal, vOut, blockNum, blockIndex,TYPE_WITHDRAWAL);
   const string key = blockNum + "+" + txid.ToString(); // order by blockNum
   Status status = pdb->Put(writeoptions, txid.ToString(), strValue);
   ++nWritten;
@@ -4496,7 +4496,7 @@ const std::string ExodusAddress()
 /**
  * @retrieve commits for a channel
  */
- bool CMPTradeList::getAllCommits(std::string channelAddress, UniValue& tradeArray)
+ bool CMPTradeList::getAllCommits(std::string senderAddress, UniValue& tradeArray)
  {
    if (!pdb) return false;
 
@@ -4517,7 +4517,7 @@ const std::string ExodusAddress()
 
        // ensure correct amount of tokens in value string
        boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
-       if (vstr.size() != 7) {
+       if (vstr.size() != 8) {
            //PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
            // PrintToConsole("TRADEDB error - unexpected number of tokens in value %d \n",vstr.size());
            continue;
@@ -4525,12 +4525,16 @@ const std::string ExodusAddress()
 
        //channelAddress, sender, propertyId, amountCommited, vOut, blockIndex
 
-       std::string cAddress = vstr[0];
+       std::string type = vstr[7];
 
-       if(channelAddress != cAddress)
+       if(type != TYPE_COMMIT)
            continue;
 
        std::string sender = vstr[1];
+
+       if(sender != senderAddress)
+           continue;
+
        uint32_t propertyId = boost::lexical_cast<uint32_t>(vstr[2]);
 
        int64_t amount = boost::lexical_cast<int64_t>(vstr[3]);
@@ -4582,7 +4586,7 @@ const std::string ExodusAddress()
 
        // ensure correct amount of tokens in value string
        boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
-       if (vstr.size() != 7) {
+       if (vstr.size() != 8) {
            //PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
            // PrintToConsole("TRADEDB error - unexpected number of tokens in value %d \n",vstr.size());
            continue;
@@ -4619,7 +4623,7 @@ const std::string ExodusAddress()
 
 
  /**
-  * @retrieve withdrawal for a channel
+  * @retrieve withdrawal for a given address in the channel
   */
   bool CMPTradeList::getAllWithdrawals(std::string senderAddress, UniValue& tradeArray)
   {
@@ -4642,13 +4646,18 @@ const std::string ExodusAddress()
 
         // ensure correct amount of tokens in value string
         boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
-        if (vstr.size() != 7) {
+        if (vstr.size() != 8) {
             //PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
             // PrintToConsole("TRADEDB error - unexpected number of tokens in value %d \n",vstr.size());
             continue;
         }
 
         //channelAddress, sender, propertyId, amountCommited, vOut, blockIndex
+
+        std::string type = vstr[7];
+
+        if(type != TYPE_WITHDRAWAL)
+            continue;
 
         std::string cAddress = vstr[0];
 

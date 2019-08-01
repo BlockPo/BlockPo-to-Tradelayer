@@ -45,4 +45,5 @@ std::vector<unsigned char> CreatePayload_Close_Oracle(uint32_t contractId);
 std::vector<unsigned char> CreatePayload_Set_Oracle(uint32_t contractId, uint64_t high, uint64_t low);
 std::vector<unsigned char> CreatePayload_Commit_Channel(uint32_t propertyId, uint64_t amount, uint32_t vout, std::string channelAddress);
 std::vector<unsigned char> CreatePayload_Withdrawal_FromChannel(uint32_t propertyId, uint64_t amount, uint32_t vout, std::string channelAddress);
+std::vector<unsigned char> CreatePayload_Instant_Trade(uint32_t propertyId, uint64_t amount, uint32_t blockheight_expiry, uint32_t propertyDesired, uint64_t amountDesired, uint64_t price);
 #endif // OMNICORE_CREATEPAYLOAD_H

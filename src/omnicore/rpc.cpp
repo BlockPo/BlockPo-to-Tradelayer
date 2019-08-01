@@ -2255,10 +2255,10 @@ UniValue tl_check_commits(const JSONRPCRequest& request)
 {
   if (request.params.size() != 1)
     throw runtime_error(
-			"tl_check_commits channelAddress \n"
+			"tl_check_commits sender address \n"
 			"\nRetrieves the history of commits in the channel\n"
 			"\nArguments:\n"
-			"1. channel address           (string, required) the multisig address of channel\n"
+			"1. sender address                      (string, required) the multisig address of channel\n"
 			"\nResult:\n"
 			"[                                      (array of JSON objects)\n"
 			"  {\n"
@@ -2280,7 +2280,7 @@ UniValue tl_check_commits(const JSONRPCRequest& request)
 			);
 
   // obtain property identifiers for pair & check valid parameters
-  std::string address = ParseMultisig(request.params[0]);
+  std::string address = ParseAddress(request.params[0]);
 
   // RequireContract(contractId);
 
@@ -2301,7 +2301,7 @@ UniValue tl_check_withdrawals(const JSONRPCRequest& request)
 			"tl_check_withdrawals senderAddress \n"
 			"\nRetrieves the history of withdrawal for a given address in the channel\n"
 			"\nArguments:\n"
-			"1. sender address           (string, required) the address related to withdrawals on the channel\n"
+			"1. sender address                      (string, required) the address related to withdrawals on the channel\n"
 			"\nResult:\n"
 			"[                                      (array of JSON objects)\n"
 			"  {\n"
@@ -2318,12 +2318,12 @@ UniValue tl_check_withdrawals(const JSONRPCRequest& request)
 			"  ...\n"
 			"]\n"
 			"\nExamples:\n"
-			+ HelpExampleCli("tl_check_withdrawals", "1")
-			+ HelpExampleRpc("tl_check_withdrawals", "1")
+			+ HelpExampleCli("tl_check_withdrawals", "address1")
+			+ HelpExampleRpc("tl_check_withdrawals", "address1")
 			);
 
   // obtain property identifiers for pair & check valid parameters
-  std::string address = ParseMultisig(request.params[0]);
+  std::string address = ParseAddress(request.params[0]);
 
   // RequireContract(contractId);
 
