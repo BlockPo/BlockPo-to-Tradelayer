@@ -1502,26 +1502,6 @@ bool CMPTransaction::interpret_CommitChannel()
     std::vector<uint8_t> vecAmountBytes = GetNextVarIntBytes(i);
     std::vector<uint8_t> vecVoutBytes = GetNextVarIntBytes(i);
 
-    const char* p = i + (char*) &pkt;
-    std::vector<std::string> spstr;
-    for (int j = 0; j < 1; j++) {
-      spstr.push_back(std::string(p));
-      p += spstr.back().size() + 1;
-    }
-
-
-    if (isOverrun(p)) {
-      PrintToLog("%s(): rejected: malformed string value(s)\n", __func__);
-      return false;
-    }
-
-    int j = 0;
-    memcpy(channelAddress, spstr[j].c_str(), spstr[j].length() - 1); j++;
-    i = i + strlen(channelAddress) + 1; // data sizes + 1 null terminators
-
-    // PrintToLog("spstr[j].length() : %d\n",spstr[j].length());
-    // PrintToLog("size of channel : %d\n",sizeof(channelAddress));
-
     if (!vecContIdBytes.empty()) {
         propertyId = DecompressInteger(vecContIdBytes);
     } else return false;
@@ -1535,7 +1515,7 @@ bool CMPTransaction::interpret_CommitChannel()
     } else return false;
 
 
-    PrintToLog("channelAddress: %s\n", channelAddress);
+    PrintToLog("channelAddress: %s\n", receiver);
     PrintToLog("version: %d\n", version);
     PrintToLog("propertyId: %d\n", propertyId);
     PrintToLog("amount commited: %d\n", amountCommited);
@@ -1556,23 +1536,6 @@ bool CMPTransaction::interpret_Withdrawal_FromChannel()
     std::vector<uint8_t> vecAmountBytes = GetNextVarIntBytes(i);
     std::vector<uint8_t> vecVoutBytes = GetNextVarIntBytes(i);
 
-    const char* p = i + (char*) &pkt;
-    std::vector<std::string> spstr;
-    for (int j = 0; j < 1; j++) {
-      spstr.push_back(std::string(p));
-      p += spstr.back().size() + 1;
-    }
-
-    if (isOverrun(p)) {
-      PrintToLog("%s(): rejected: malformed string value(s)\n", __func__);
-      return false;
-    }
-
-    int j = 0;
-    memcpy(channelAddress, spstr[j].c_str(), spstr[j].length() - 1); j++;
-    i = i + strlen(channelAddress) + 1; // data sizes + 1 null terminators
-
-
     if (!vecContIdBytes.empty()) {
         propertyId = DecompressInteger(vecContIdBytes);
     } else return false;
@@ -1586,7 +1549,7 @@ bool CMPTransaction::interpret_Withdrawal_FromChannel()
     } else return false;
 
 
-    PrintToLog("channelAddress: %s\n", channelAddress);
+    PrintToLog("channelAddress: %s\n", receiver);
     PrintToLog("version: %d\n", version);
     PrintToLog("propertyId: %d\n", propertyId);
     PrintToLog("amount to withdrawal: %d\n", amountToWithdraw);
@@ -3760,15 +3723,15 @@ int CMPTransaction::logicMath_CommitChannel()
     // logic for the commit Here
     PrintToLog("logic_Math for commit channel\n");
     PrintToLog("sender: %s\n",sender);
-    PrintToLog("channelAddress: %s\n",channelAddress);
+    PrintToLog("channelAddress: %s\n",receiver);
 
     //putting money into channel reserve
     assert(update_tally_map(sender, propertyId, -amountCommited, BALANCE));
-    assert(update_tally_map(channelAddress, propertyId, amountCommited, CHANNEL_RESERVE));
+    assert(update_tally_map(receiver, propertyId, amountCommited, CHANNEL_RESERVE));
 
-    t_tradelistdb->recordNewCommit(txid, channelAddress, sender, propertyId, amountCommited, vOut, block, tx_idx);
+    t_tradelistdb->recordNewCommit(txid, receiver, sender, propertyId, amountCommited, vOut, block, tx_idx);
 
-    int64_t amountCheck = getMPbalance(channelAddress,propertyId,CHANNEL_RESERVE);
+    int64_t amountCheck = getMPbalance(receiver, propertyId,CHANNEL_RESERVE);
 
     PrintToLog("amount inside channel multisig: %s\n",amountCheck);
 
@@ -3809,7 +3772,7 @@ int CMPTransaction::logicMath_Withdrawal_FromChannel()
     // ------------------------------------------
 
     //checking balance of channelAddress
-    uint64_t totalAmount = static_cast<uint64_t>(getMPbalance(channelAddress, propertyId, CHANNEL_RESERVE));
+    uint64_t totalAmount = static_cast<uint64_t>(getMPbalance(receiver, propertyId, CHANNEL_RESERVE));
 
     PrintToLog("amountToWithdraw : %d\n",amountToWithdraw);
     PrintToLog("totalAmount : %d\n",totalAmount);
@@ -3820,7 +3783,7 @@ int CMPTransaction::logicMath_Withdrawal_FromChannel()
         return (PKT_ERROR_TOKENS -25);
     }
 
-    uint64_t amountCommited = t_tradelistdb->getSumofCommits(channelAddress, sender, propertyId);
+    uint64_t amountCommited = t_tradelistdb->getSumofCommits(receiver, sender, propertyId);
 
     PrintToLog("all the amountCommited : %s\n",amountCommited);
 
@@ -3839,9 +3802,9 @@ int CMPTransaction::logicMath_Withdrawal_FromChannel()
 
     PrintToLog("checking wthd element : address: %s, deadline: %d, propertyId: %d, amount: %d \n", wthd.address, wthd.deadline_block, wthd.propertyId, wthd.amount);
 
-    withdrawal_Map[channelAddress].push_back(wthd);
+    withdrawal_Map[receiver].push_back(wthd);
 
-    t_tradelistdb->recordNewWithdrawal(txid, channelAddress, sender, propertyId, amountToWithdraw, vOut, block, tx_idx);
+    t_tradelistdb->recordNewWithdrawal(txid, receiver, sender, propertyId, amountToWithdraw, vOut, block, tx_idx);
 
     return 0;
 }

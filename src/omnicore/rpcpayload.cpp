@@ -819,7 +819,6 @@ UniValue tl_createpayload_sendvesting(const JSONRPCRequest& request)
 
 }
 
-//blockheight_expiry, propertyid1 or contract id, amount, propertyid2 if token trade, 2nd amount if token trade, price if a contract trade (optional)
 
 UniValue tl_createpayload_instant_trade(const JSONRPCRequest& request)
 {
@@ -869,6 +868,89 @@ UniValue tl_createpayload_instant_trade(const JSONRPCRequest& request)
 
 }
 
+UniValue tl_createpayload_pnl_update(const JSONRPCRequest& request)
+{
+  if (request.params.size() != 5)
+    throw runtime_error(
+			"tl_createpayload_pnl_update \"fromaddress\" \"toaddress\" propertyid \"amount\" ( \"referenceamount\" )\n"
+
+			"\nCreate an pnl update payload.\n"
+
+			"\nArguments:\n"
+			"1. propertyId            (number, required) the identifier of the property\n"
+			"2. amount                (string, required) the amount of the property traded\n"
+      "3. blockheight expiry    (number, required) block of expiry\n"
+      "4. vOut beneficiary      (number, optional) vout for beneficiary address\n"
+      "5. vOut payer            (number, optional) vout for payer address\n"
+
+
+			"\nResult:\n"
+			"\"hash\"                  (string) the hex-encoded transaction hash\n"
+
+			"\nExamples:\n"
+			+ HelpExampleCli("tl_createpayload_pnl_update", "\" 1 \"15.0\"")
+			+ HelpExampleRpc("tl_createpayload_pnl_update", "\", 1 \"15.0\"")
+			);
+
+  // obtain parameters & info
+  uint32_t propertyId = ParsePropertyId(request.params[0]);
+  int64_t amount = ParseAmount(request.params[1], true);
+  uint32_t blockheight_expiry = request.params[2].get_int();
+  uint32_t voutBenef = ParseOutputIndex(request.params[3]);
+  uint32_t voutPayer = ParseOutputIndex(request.params[4]);
+
+  PrintToLog("propertyid = %d\n", propertyId);
+  PrintToLog("amount = %d\n", amount);
+  PrintToLog("blockheight_expiry = %d\n", blockheight_expiry);
+  PrintToLog("voutBenef = %d\n", voutBenef);
+  PrintToLog("voutPayer = %d\n", voutPayer);
+
+  // create a payload for the transaction
+  std::vector<unsigned char> payload = CreatePayload_PNL_Update(propertyId, amount, blockheight_expiry, voutBenef, voutPayer);
+
+  return HexStr(payload.begin(), payload.end());
+
+}
+
+//Params: propertyid, amount, reference vOut for destination address
+
+UniValue tl_createpayload_transfer(const JSONRPCRequest& request)
+{
+  if (request.params.size() != 3)
+    throw runtime_error(
+			"tl_createpayload_transfer \"fromaddress\" \"toaddress\" propertyid \"amount\" ( \"referenceamount\" )\n"
+
+			"\nCreate an transfer payload.\n"
+
+			"\nArguments:\n"
+			"1. propertyId            (number, required) the identifier of the property\n"
+			"2. amount                (string, required) the amount of the property traded\n"
+      "3. vOut for reference    (number, optional) vout for receiver address\n"
+
+			"\nResult:\n"
+			"\"hash\"                  (string) the hex-encoded transaction hash\n"
+
+			"\nExamples:\n"
+			+ HelpExampleCli("tl_createpayload_transfer", "\" 1 \"15.0\"")
+			+ HelpExampleRpc("tl_createpayload_transfer", "\", 1 \"15.0\"")
+			);
+
+  // obtain parameters & info
+  uint32_t propertyId = ParsePropertyId(request.params[0]);
+  int64_t amount = ParseAmount(request.params[1], true);
+  uint32_t vOut = ParseOutputIndex(request.params[2]);
+
+
+  PrintToLog("propertyid = %d\n", propertyId);
+  PrintToLog("amount = %d\n", amount);
+  PrintToLog("vOut = %d\n", vOut);
+
+  // create a payload for the transaction
+  std::vector<unsigned char> payload = CreatePayload_Transfer(propertyId, amount, vOut);
+
+  return HexStr(payload.begin(), payload.end());
+
+}
 
 static const CRPCCommand commands[] =
   { //  category                         name                                             actor (function)                               okSafeMode
@@ -899,7 +981,9 @@ static const CRPCCommand commands[] =
     { "trade layer (payload creation)", "tl_createpayload_dexoffer",                      &tl_createpayload_dexoffer,                        {}   },
     { "trade layer (payload creation)", "tl_createpayload_dexaccept",                     &tl_createpayload_dexaccept,                       {}   },
     { "trade layer (payload creation)", "tl_createpayload_sendvesting",                   &tl_createpayload_sendvesting,                     {}   },
-    { "trade layer (payload creation)", "tl_createpayload_instant_trade",                 &tl_createpayload_instant_trade,                   {}   }
+    { "trade layer (payload creation)", "tl_createpayload_instant_trade",                 &tl_createpayload_instant_trade,                   {}   },
+    { "trade layer (payload creation)", "tl_createpayload_pnl_update",                    &tl_createpayload_pnl_update,                      {}   },
+    { "trade layer (payload creation)", "tl_createpayload_transfer",                      &tl_createpayload_transfer,                        {}   }
 
   };
 

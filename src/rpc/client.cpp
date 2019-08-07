@@ -202,6 +202,11 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_createpayload_instant_trade", 2, "arg2"},
     { "tl_createpayload_instant_trade", 3, "arg3"},
 
+    { "tl_createpayload_pnl_update", 0, "arg0"},
+    { "tl_createpayload_pnl_update", 2, "arg2"},
+    { "tl_createpayload_pnl_update", 3, "arg3"},
+    { "tl_createpayload_pnl_update", 4, "arg4"},
+
     /* Trade Layer - raw transaction calls */
     { "tl_decodetransaction", 1, "arg1" },
     { "tl_decodetransaction", 2, "arg2" },
