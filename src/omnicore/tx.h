@@ -4,6 +4,7 @@
 class CMPMetaDEx;
 class CMPOffer;
 class CTransaction;
+class ChnDEx;
 ////////////////////////////
 /** New things for Contracts */
 class CMPContractDex;
@@ -30,8 +31,7 @@ class CMPTransaction
 {
     friend class CMPMetaDEx;
     friend class CMPOffer;
-    ////////////////////////////
-    /** New things for Contracts */
+    friend class ChnDEx;
     friend class CMPContractDex;
 
 private:
@@ -95,7 +95,7 @@ private:
     uint64_t minFee;
     uint8_t subAction;
     uint8_t option; // buy=1 , sell=2
-    ////////////////////////////////////
+
     /** New things for Contract */
     uint64_t effective_price;
     uint8_t trading_action;
@@ -114,10 +114,8 @@ private:
     uint32_t ecosystemSP;
     uint32_t attribute_type;
     uint64_t leverage;
-    /*uint32_t numerator;*/
     uint32_t denomination;
-    // int block;
-    ////////////////////////////
+
 
     // Alert
     uint16_t alert_type;
@@ -135,10 +133,13 @@ private:
     uint64_t min_fee;
     unsigned char subaction;
 
-    //Commit channel
+    //Multisig channels
     uint64_t amountCommited;
     uint64_t amountToWithdraw;
     uint64_t vOut;
+    uint64_t price;
+    int blockheight_expiry;
+
 
     // Indicates whether the transaction can be used to execute logic
     bool rpcOnly;
@@ -190,6 +191,10 @@ private:
     bool interpret_CloseOracle();
     bool interpret_CommitChannel();
     bool interpret_Withdrawal_FromChannel();
+    bool interpret_Instant_Trade();
+    bool interpret_Update_PNL();
+    bool interpret_Transfer();
+    bool interpret_Create_Channel();
     ///////////////////////////////////////////////
 
     /**
@@ -207,8 +212,6 @@ private:
     int logicMath_Activation();
     int logicMath_Deactivation();
     int logicMath_Alert();
-    ///////////////////////////////////////////////
-    /** New things for Contract */
     int logicMath_ContractDexTrade();
     int logicMath_CreateContractDex();
     int logicMath_ContractDexCancelPrice();
@@ -230,6 +233,10 @@ private:
     int logicMath_CloseOracle();
     int logicMath_CommitChannel();
     int logicMath_Withdrawal_FromChannel();
+    int logicMath_Instant_Trade();
+    int logicMath_Update_PNL();
+    int logicMath_Transfer();
+    int logicMath_Create_Channel();
     ///////////////////////////////////////////////
 
     /**
@@ -366,10 +373,11 @@ public:
         timeLimit = 0;
         denomination = 0;
 
-        //Commit channel
+        //Multisig channels
         amountCommited = 0;
         amountToWithdraw = 0;
         vOut = 0;
+        blockheight_expiry = 0;
 
         ////////////////////////////////////
     }

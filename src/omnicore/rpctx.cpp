@@ -1904,6 +1904,50 @@ UniValue tl_withdrawal_fromchannel(const JSONRPCRequest& request)
     }
 }
 
+UniValue tl_create_channel(const JSONRPCRequest& request)
+{
+    if (request.params.size() != 2)
+        throw runtime_error(
+            "tl_create_channel \"sender\" \"channel address\" \"propertyId\" \"amount\"vout\n"
+
+            "\nsetting multisig address channel.\n"
+
+            "\nArguments:\n"
+            "1. sender                 (string, required) the sender address that commit into the channel\n"
+            "2. channel address        (string, required) multisig address of channel\n"
+            "\nResult:\n"
+            "\"hash\"                  (string) the hex-encoded transaction hash\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("tl_withdrawal_fromchannel", "\"1M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\" \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\" 3 100 \"1\"")
+            + HelpExampleRpc("tl_withdrawal_fromchannel", "\"1M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\", \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\",3, 100, \"1\"")
+        );
+
+    // obtain parameters & info
+    std::string senderAddress = ParseAddress(request.params[0]);
+    std::string channelAddress = ParseAddress(request.params[1]);
+
+
+    // create a payload for the transaction
+    std::vector<unsigned char> payload = CreatePayload_Create_Channel();
+
+    // request the wallet build the transaction (and if needed commit it)
+    uint256 txid;
+    std::string rawHex;
+    int result = WalletTxBuilder(senderAddress, channelAddress, 0, payload, txid, rawHex, autoCommit);
+
+    // check error and return the txid (or raw hex depending on autocommit)
+    if (result != 0) {
+        throw JSONRPCError(result, error_str(result));
+    } else {
+        if (!autoCommit) {
+            return rawHex;
+        } else {
+            return txid.GetHex();
+        }
+    }
+}
+
 // UniValue tl_setexodus(const JSONRPCRequest& request)
 // {
 //     if (request.params.size() < 1 )
@@ -1968,7 +2012,9 @@ static const CRPCCommand commands[] =
     { "trade layer (transaction creation)", "tl_oraclebackup",                 &tl_oraclebackup,                    {} },
     { "trade layer (transaction creation)", "tl_closeoracle",                  &tl_closeoracle,                     {} },
     { "trade layer (transaction creation)", "tl_commit_tochannel",             &tl_commit_tochannel,                {} },
-    { "trade layer (transaction creation)", "tl_withdrawal_fromchannel",       &tl_withdrawal_fromchannel,          {} }
+    { "trade layer (transaction creation)", "tl_withdrawal_fromchannel",       &tl_withdrawal_fromchannel,          {} },
+    { "trade layer (transaction creation)", "tl_create_channel",               &tl_create_channel,                  {} }
+
 #endif
 };
 

@@ -3416,7 +3416,14 @@ void CMPTradeList::recordNewWithdrawal(const uint256& txid, const std::string& c
   PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
 }
 
-
+void CMPTradeList::recordNewChannel(const std::string& address, const std::string& creatorAddress,int blockNum, int blockIndex)
+{
+  if (!pdb) return;
+  std::string strValue = strprintf("%s:%d:%d", creatorAddress, blockNum, blockIndex);
+  Status status = pdb->Put(writeoptions, address, strValue);
+  ++nWritten;
+  // if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
+}
 
 void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, string address1, string address2, unsigned int prop1, unsigned int prop2, uint64_t amount1, uint64_t amount2, int blockNum, int64_t fee)
 {
@@ -4566,7 +4573,7 @@ const std::string ExodusAddress()
  uint64_t CMPTradeList::getSumofCommits(const std::string& channelAddress, const std::string& senderAddress, uint32_t propertyId)
  {
 
-   if (!pdb) return false;
+   if (!pdb) return 0;
 
    int count = 0;
    uint64_t sumAmount = 0;
@@ -4621,6 +4628,51 @@ const std::string ExodusAddress()
 
  }
 
+
+bool CMPTradeList::checkChannelAddress(const std::string& channelAddress)
+  {
+
+    bool status = false;
+    if (!pdb) return status;
+
+    int count = 0;
+    uint64_t sumAmount = 0;
+
+    std::vector<std::string> vstr;
+    // string txidStr = txid.ToString();
+
+    leveldb::Iterator* it = NewIterator(); // Allocation proccess
+
+    for(it->SeekToLast(); it->Valid(); it->Prev())
+    {
+
+        PrintToLog("Inside looop in db\n");
+        // search key to see if this is a matching trade
+        std::string strKey = it->key().ToString();
+        // PrintToLog("key of this match: %s ****************************\n",strKey);
+        std::string strValue = it->value().ToString();
+
+        // ensure correct amount of tokens in value string
+        boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
+        if (vstr.size() != 3) {
+            //PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
+            // PrintToConsole("TRADEDB error - unexpected number of tokens in value %d \n",vstr.size());
+            continue;
+        }
+
+        std::string cAddress = vstr[0];
+
+        if(channelAddress != cAddress)
+            continue;
+
+        status = true;
+    }
+
+    // clean up
+    delete it; // Desallocation proccess
+    return status;
+
+  }
 
  /**
   * @retrieve withdrawal for a given address in the channel

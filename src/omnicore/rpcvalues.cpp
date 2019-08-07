@@ -35,20 +35,6 @@ std::string ParseAddress(const UniValue& value)
     return EncodeDestination(dest);
 }
 
-std::string ParseMultisig(const UniValue& value)
-{
-    std::string address = value.get_str();
-    std::string addr = address.substr(1, address.size()-1);
-    std::string fchar = address.substr (1,1);
-
-    if (fchar != "Q" && fchar != "3" && fchar != "M"){
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Channel address must be Multisig");
-    }
-
-
-    return addr;
-}
-
 std::string ParseAddressOrEmpty(const UniValue& value)
 {
     if (value.isNull() || value.get_str().empty()) {

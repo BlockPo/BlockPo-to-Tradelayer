@@ -247,6 +247,9 @@ bool CMPTransaction::interpret_Transaction()
     case MSC_TYPE_WITHDRAWAL_FROM_CHANNEL:
         return interpret_Withdrawal_FromChannel();
 
+    case MSC_TYPE_INSTANT_TRADE:
+        return interpret_Instant_Trade();
+
     }
 
   return false;
@@ -1558,6 +1561,52 @@ bool CMPTransaction::interpret_Withdrawal_FromChannel()
     return true;
 }
 
+/** Tx 110 */
+bool CMPTransaction::interpret_Instant_Trade()
+{
+  int i = 0;
+
+  std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecPropertyIdForSaleBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecAmountForSaleBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecPropertyIdDesiredBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecAmountDesiredBytes = GetNextVarIntBytes(i);
+
+  if (!vecTypeBytes.empty()) {
+      type = DecompressInteger(vecTypeBytes);
+  } else return false;
+
+  if (!vecVersionBytes.empty()) {
+      version = DecompressInteger(vecVersionBytes);
+  } else return false;
+
+  if (!vecPropertyIdForSaleBytes.empty()) {
+      property = DecompressInteger(vecPropertyIdForSaleBytes);
+  } else return false;
+
+  if (!vecAmountForSaleBytes.empty()) {
+      amount_forsale = DecompressInteger(vecAmountForSaleBytes);
+  } else return false;
+
+  if (!vecPropertyIdDesiredBytes.empty()) {
+      desired_property = DecompressInteger(vecPropertyIdDesiredBytes);
+  } else return false;
+
+  if (!vecAmountDesiredBytes.empty()) {
+    desired_value = DecompressInteger(vecAmountDesiredBytes);
+  } else return false;
+
+  PrintToLog("version: %d\n", version);
+  PrintToLog("messageType: %d\n",type);
+  PrintToLog("property: %d\n", property);
+  PrintToLog("amount : %d\n", amount_forsale);
+  PrintToLog("property desired : %d\n", desired_property);
+  PrintToLog("amount desired : %d\n", desired_value);
+
+  return true;
+}
+
 // ---------------------- CORE LOGIC -------------------------
 
 /**
@@ -1674,6 +1723,9 @@ int CMPTransaction::interpretPacket()
 
         case MSC_TYPE_WITHDRAWAL_FROM_CHANNEL:
             return logicMath_Withdrawal_FromChannel();
+
+        case MSC_TYPE_INSTANT_TRADE:
+            return logicMath_Instant_Trade();
 
 
     }
@@ -3768,6 +3820,11 @@ int CMPTransaction::logicMath_Withdrawal_FromChannel()
         return (PKT_ERROR_TOKENS -24);
     }
 
+    if (!t_tradelistdb->checkChannelAddress(receiver)) {
+        PrintToLog("%s(): rejected: address %s doesn't belong to multisig channel\n", __func__, receiver);
+        return (PKT_ERROR_TOKENS -24);
+    }
+
 
     // ------------------------------------------
 
@@ -3808,6 +3865,111 @@ int CMPTransaction::logicMath_Withdrawal_FromChannel()
 
     return 0;
 }
+
+
+/** Tx 110 */
+int CMPTransaction::logicMath_Instant_Trade()
+{
+  PrintToLog("Begining of logicMath_Instant_Trade\n");
+
+  // if (!IsTransactionTypeAllowed(block, property, type, version)) {
+  //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+  //             __func__,
+  //             type,
+  //             version,
+  //             property,
+  //             block);
+  //     return (PKT_ERROR_METADEX -22);
+  // }
+
+  if (property == desired_property) {
+      PrintToLog("%s(): rejected: property for sale %d and desired property %d must not be equal\n",
+              __func__,
+              property,
+              desired_property);
+      return (PKT_ERROR_METADEX -29);
+  }
+
+  if (isTestEcosystemProperty(property) != isTestEcosystemProperty(desired_property)) {
+      PrintToLog("%s(): rejected: property for sale %d and desired property %d not in same ecosystem\n",
+              __func__,
+              property,
+              desired_property);
+      return (PKT_ERROR_METADEX -30);
+  }
+
+  if (!IsPropertyIdValid(property)) {
+      PrintToLog("%s(): rejected: property for sale %d does not exist\n", __func__, property);
+      return (PKT_ERROR_METADEX -31);
+  }
+
+  if (!IsPropertyIdValid(desired_property)) {
+      PrintToLog("%s(): rejected: desired property %d does not exist\n", __func__, desired_property);
+      return (PKT_ERROR_METADEX -32);
+  }
+
+  if (nNewValue <= 0 || MAX_INT_8_BYTES < nNewValue) {
+      PrintToLog("%s(): rejected: amount for sale out of range or zero: %d\n", __func__, nNewValue);
+      return (PKT_ERROR_METADEX -33);
+  }
+
+  if (desired_value <= 0 || MAX_INT_8_BYTES < desired_value) {
+      PrintToLog("%s(): rejected: desired amount out of range or zero: %d\n", __func__, desired_value);
+      return (PKT_ERROR_METADEX -34);
+  }
+
+  int64_t nBalance = getMPbalance(sender, property, BALANCE);
+  if (nBalance < (int64_t) nNewValue) {
+      PrintToLog("%s(): rejected: sender %s has insufficient balance of property %d [%s < %s]\n",
+              __func__,
+              sender,
+              property,
+              FormatMP(property, nBalance),
+              FormatMP(property, nNewValue));
+      return (PKT_ERROR_METADEX -25);
+  }
+
+  // ------------------------------------------
+
+  // t_tradelistdb->recordNewInstantTrade(txid, sender, property, desired_property, block, tx_idx);
+  // int rc = ChnDEx_ADD(sender, property, nNewValue, block, desired_property, desired_value, txid, tx_idx);
+  int rc = 0;
+  return rc;
+}
+
+/** Tx 113*/
+int CMPTransaction::logicMath_Create_Channel()
+{
+    uint256 blockHash;
+    {
+        LOCK(cs_main);
+
+        CBlockIndex* pindex = chainActive[block];
+        if (pindex == NULL) {
+            PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
+            return (PKT_ERROR_TOKENS -20);
+        }
+        blockHash = pindex->GetBlockHash();
+    }
+
+    // if (!IsTransactionTypeAllowed(block, property, type, version)) {
+    //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+    //             __func__,
+    //             type,
+    //             version,
+    //             property,
+    //             block);
+    //     return (PKT_ERROR_TOKENS -22);
+    // }
+
+
+    // ------------------------------------------
+
+    t_tradelistdb->recordNewChannel(receiver,sender,block, tx_idx);
+
+    return 0;
+}
+
 
 
 

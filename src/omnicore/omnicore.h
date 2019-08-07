@@ -114,6 +114,10 @@ enum TransactionType {
   MSC_TYPE_CLOSE_ORACLE               = 107,
   MSC_TYPE_COMMIT_CHANNEL             = 108,
   MSC_TYPE_WITHDRAWAL_FROM_CHANNEL    = 109,
+  MSC_TYPE_INSTANT_TRADE              = 110,
+  MSC_TYPE_PNL_UPDATE                 = 111,
+  MSC_TYPE_TRANSFER                   = 112,
+  MSC_TYPE_CREATE_CHANNEL             = 113,
   ////////////////////////////////////
 
 };
@@ -342,8 +346,10 @@ class CMPTradeList : public CDBBase
   //Commit channels
   void recordNewCommit(const uint256& txid, const std::string& channelAddress, const std::string& sender, uint32_t propertyId, uint64_t amountCommited, uint32_t vOut, int blockNum, int blockIndex);
   void recordNewWithdrawal(const uint256& txid, const std::string& channelAddress, const std::string& sender, uint32_t propertyId, uint64_t amountToWithdrawal, uint32_t vOut, int blockNum, int blockIndex);
+  void recordNewChannel(const std::string& address, const std::string& creatorAddress,int blockNum, int blockIndex);
   bool getAllCommits(std::string senderAddress, UniValue& tradeArray);
   bool getAllWithdrawals(std::string senderAddress, UniValue& tradeArray);
+  bool checkChannelAddress(const std::string& channelAddress);
   uint64_t getSumofCommits(const std::string& channelAddress, const std::string& senderAddress, uint32_t propertyId);
 
   int deleteAboveBlock(int blockNum);

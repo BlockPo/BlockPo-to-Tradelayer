@@ -48,4 +48,5 @@ std::vector<unsigned char> CreatePayload_Withdrawal_FromChannel(uint32_t propert
 std::vector<unsigned char> CreatePayload_Instant_Trade(uint32_t propertyId, uint64_t amount, uint32_t blockheight_expiry, uint32_t propertyDesired, uint64_t amountDesired, uint64_t price);
 std::vector<unsigned char> CreatePayload_PNL_Update(uint32_t propertyId, uint64_t amount, uint32_t blockheight_expiry, uint32_t voutBenef, uint32_t voutPayer);
 std::vector<unsigned char> CreatePayload_Transfer(uint32_t propertyId, uint64_t amount, uint32_t vOut);
+std::vector<unsigned char> CreatePayload_Create_Channel();
 #endif // OMNICORE_CREATEPAYLOAD_H

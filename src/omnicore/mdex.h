@@ -138,6 +138,59 @@ class CMPMetaDEx
 
 };
 
+
+/** A trade on the channel exchange.
+ */
+class ChnDEx
+{
+ private:
+  int block;
+  uint256 txid;
+  unsigned int idx; // index within block
+  uint32_t property;
+  int64_t amount_forsale;
+  uint32_t desired_property;
+  int64_t amount_desired;
+  int64_t price;
+  int blockheight_expiry;
+  std::string addr;
+
+ public:
+
+  uint256 getHash() const { return txid; }
+  uint32_t getProperty() const { return property; }
+  uint32_t getDesProperty() const { return desired_property; }
+
+  int64_t getAmountForSale() const { return amount_forsale; }
+  int64_t getAmountDesired() const { return amount_desired; }
+  int64_t getPrice() const { return price; }
+  int64_t getAmountToFill() const;
+
+  int getExpiryBlock() const { return blockheight_expiry; }
+
+  const std::string& getAddr() const { return addr; }
+
+  int getBlock() const { return block; }
+  unsigned int getIdx() const { return idx; }
+
+  int64_t getBlockTime() const;
+
+ ChnDEx()
+   : block(0), idx(0), property(0), amount_forsale(0), desired_property(0), amount_desired(0),
+    price(0), blockheight_expiry(0) {}
+
+ ChnDEx(const CMPTransaction& tx)
+   : block(tx.block), txid(tx.txid), idx(tx.tx_idx), property(tx.property), amount_forsale(tx.nValue),
+    desired_property(tx.desired_property), amount_desired(tx.desired_value), price(tx.price),
+    blockheight_expiry(tx.blockheight_expiry), addr(tx.sender) {}
+
+  std::string ToString() const;
+
+  void saveOffer(std::ofstream& file, SHA256_CTX* shaCtx) const;
+
+
+};
+
 ///////////////////////////////////////////
 /** New things for Contracts */
 class CMPContractDex : public CMPMetaDEx
@@ -170,7 +223,7 @@ class CMPContractDex : public CMPMetaDEx
 
   std::string displayFullContractPrice() const;
   std::string ToString() const;
-  
+
   void saveOffer(std::ofstream& file, SHA256_CTX* shaCtx) const;
 
   void setPrice(int64_t price);
@@ -204,10 +257,32 @@ namespace mastercore
   // TODO: explore a property-pair, instead of a single priceoperty as map's key........
   md_PricesMap* get_Prices(uint32_t prop);
   md_Set* get_Indexes(md_PricesMap* p, rational_t price);
+
   // ---------------
 
-  ///////////////////////////////////////////
-  /** New things for Contracts */
+  struct ChnDEx_compare
+  {
+    bool operator()(const ChnDEx& lhs, const ChnDEx& rhs) const;
+  };
+
+  // ---------------
+  //! Set of objects sorted by block+idx
+  typedef std::set<ChnDEx, ChnDEx_compare> chn_Set;
+
+  typedef std::map<rational_t, chn_Set> chn_PricesMap;
+
+  typedef std::map<uint32_t, chn_PricesMap> chn_PropertiesMap;
+
+  extern chn_PropertiesMap chndex;
+
+  chn_PricesMap* get_chnPrices(uint32_t prop);
+  chn_Set* get_chnIndexes(chn_PricesMap* p, rational_t price);
+
+  int ChnDEx_ADD(const std::string& sender_addr, uint32_t, int64_t, int block, uint32_t property_desired, int64_t amount_desired, const uint256& txid, unsigned int idx);
+
+  // ---------------
+
+
   struct ContractDex_compare
   {
     bool operator()(const CMPContractDex &lhs, const CMPContractDex &rhs) const;
@@ -216,12 +291,12 @@ namespace mastercore
   typedef std::set<CMPContractDex, ContractDex_compare> cd_Set;
   typedef std::map<uint64_t, cd_Set> cd_PricesMap;
   typedef std::map<uint32_t, cd_PricesMap> cd_PropertiesMap;
-  
+
   extern cd_PropertiesMap contractdex;
 
   cd_PricesMap *get_PricesCd(uint32_t prop);
   cd_Set *get_IndexesCd(cd_PricesMap *p, uint64_t price);
-  
+
   void LoopBiDirectional(cd_PricesMap* const ppriceMap, uint8_t trdAction, MatchReturnType &NewReturn, CMPContractDex* const pnew, const uint32_t propertyForSale);
   void x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPrices, typename cd_PricesMap::reverse_iterator &it_bwdPrices, uint8_t trdAction, CMPContractDex* const pnew, const uint64_t sellerPrice, const uint32_t propertyForSale, MatchReturnType &NewReturn);
   int ContractDex_ADD(const std::string& sender_addr, uint32_t prop, int64_t amount, int block, const uint256& txid, unsigned int idx, uint64_t effective_price, uint8_t trading_action, int64_t amount_to_reserve);
