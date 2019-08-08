@@ -250,6 +250,9 @@ bool CMPTransaction::interpret_Transaction()
     case MSC_TYPE_INSTANT_TRADE:
         return interpret_Instant_Trade();
 
+    case MSC_TYPE_TRANSFER:
+        return interpret_Transfer();
+
     }
 
   return false;
@@ -1510,7 +1513,7 @@ bool CMPTransaction::interpret_CommitChannel()
     } else return false;
 
     if (!vecAmountBytes.empty()) {
-        amountCommited = DecompressInteger(vecAmountBytes);
+        amount_commited = DecompressInteger(vecAmountBytes);
     } else return false;
 
     if (!vecVoutBytes.empty()) {
@@ -1521,7 +1524,7 @@ bool CMPTransaction::interpret_CommitChannel()
     PrintToLog("channelAddress: %s\n", receiver);
     PrintToLog("version: %d\n", version);
     PrintToLog("propertyId: %d\n", propertyId);
-    PrintToLog("amount commited: %d\n", amountCommited);
+    PrintToLog("amount commited: %d\n", amount_commited);
     PrintToLog("vOut: %d\n", vOut);
 
     return true;
@@ -1544,7 +1547,7 @@ bool CMPTransaction::interpret_Withdrawal_FromChannel()
     } else return false;
 
     if (!vecAmountBytes.empty()) {
-        amountToWithdraw = DecompressInteger(vecAmountBytes);
+        amount_to_withdraw = DecompressInteger(vecAmountBytes);
     } else return false;
 
     if (!vecVoutBytes.empty()) {
@@ -1555,7 +1558,7 @@ bool CMPTransaction::interpret_Withdrawal_FromChannel()
     PrintToLog("channelAddress: %s\n", receiver);
     PrintToLog("version: %d\n", version);
     PrintToLog("propertyId: %d\n", propertyId);
-    PrintToLog("amount to withdrawal: %d\n", amountToWithdraw);
+    PrintToLog("amount to withdrawal: %d\n", amount_to_withdraw);
     PrintToLog("vOut: %d\n", vOut);
 
     return true;
@@ -1603,6 +1606,109 @@ bool CMPTransaction::interpret_Instant_Trade()
   PrintToLog("amount : %d\n", amount_forsale);
   PrintToLog("property desired : %d\n", desired_property);
   PrintToLog("amount desired : %d\n", desired_value);
+
+  return true;
+}
+
+/** Tx 111 */
+bool CMPTransaction::interpret_Update_PNL()
+{
+  int i = 0;
+
+  std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecPropertyId = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecAmount = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecBlock = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecVoutBef = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecVoutPay = GetNextVarIntBytes(i);
+
+  if (!vecTypeBytes.empty()) {
+      type = DecompressInteger(vecTypeBytes);
+  } else return false;
+
+  if (!vecVersionBytes.empty()) {
+      version = DecompressInteger(vecVersionBytes);
+  } else return false;
+
+  if (!vecPropertyId.empty()) {
+      property = DecompressInteger(vecPropertyId);
+  } else return false;
+
+  if (!vecAmount.empty()) {
+      pnl_amount = DecompressInteger(vecAmount);
+  } else return false;
+
+  if (!vecVoutBef.empty()) {
+      vout_bef = DecompressInteger(vecVoutBef);
+  } else return false;
+
+  if (!vecVoutPay.empty()) {
+      vout_pay = DecompressInteger(vecVoutPay);
+  } else return false;
+
+
+  // PrintToLog("version: %d\n", version);
+  // PrintToLog("messageType: %d\n",type);
+  // PrintToLog("property: %d\n", property);
+  // PrintToLog("amount : %d\n", amount_forsale);
+  // PrintToLog("property desired : %d\n", desired_property);
+  // PrintToLog("amount desired : %d\n", desired_value);
+
+  return true;
+}
+
+/** Tx 112 */
+bool CMPTransaction::interpret_Transfer()
+{
+  int i = 0;
+
+  std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecPropertyId = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecAmount = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecVout = GetNextVarIntBytes(i);
+
+
+  if (!vecTypeBytes.empty()) {
+      type = DecompressInteger(vecTypeBytes);
+  } else return false;
+
+  if (!vecVersionBytes.empty()) {
+      version = DecompressInteger(vecVersionBytes);
+  } else return false;
+
+  if (!vecPropertyId.empty()) {
+      property = DecompressInteger(vecPropertyId);
+  } else return false;
+
+  if (!vecAmount.empty()) {
+      amount = DecompressInteger(vecAmount);
+  } else return false;
+
+  if (!vecVout.empty()) {
+      vOut = DecompressInteger(vecVout);
+  } else return false;
+
+  return true;
+}
+
+
+/** Tx 113 */
+bool CMPTransaction::interpret_Create_Channel()
+{
+  int i = 0;
+
+  std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+
+  if (!vecTypeBytes.empty()) {
+      type = DecompressInteger(vecTypeBytes);
+  } else return false;
+
+  if (!vecVersionBytes.empty()) {
+      version = DecompressInteger(vecVersionBytes);
+  } else return false;
 
   return true;
 }
@@ -1726,6 +1832,12 @@ int CMPTransaction::interpretPacket()
 
         case MSC_TYPE_INSTANT_TRADE:
             return logicMath_Instant_Trade();
+
+        case MSC_TYPE_TRANSFER:
+            return logicMath_Transfer();
+
+        case MSC_TYPE_CREATE_CHANNEL:
+            return logicMath_Create_Channel();
 
 
     }
@@ -3778,10 +3890,10 @@ int CMPTransaction::logicMath_CommitChannel()
     PrintToLog("channelAddress: %s\n",receiver);
 
     //putting money into channel reserve
-    assert(update_tally_map(sender, propertyId, -amountCommited, BALANCE));
-    assert(update_tally_map(receiver, propertyId, amountCommited, CHANNEL_RESERVE));
+    assert(update_tally_map(sender, propertyId, -amount_commited, BALANCE));
+    assert(update_tally_map(receiver, propertyId, amount_commited, CHANNEL_RESERVE));
 
-    t_tradelistdb->recordNewCommit(txid, receiver, sender, propertyId, amountCommited, vOut, block, tx_idx);
+    t_tradelistdb->recordNewCommit(txid, receiver, sender, propertyId, amount_commited, vOut, block, tx_idx);
 
     int64_t amountCheck = getMPbalance(receiver, propertyId,CHANNEL_RESERVE);
 
@@ -3831,20 +3943,20 @@ int CMPTransaction::logicMath_Withdrawal_FromChannel()
     //checking balance of channelAddress
     uint64_t totalAmount = static_cast<uint64_t>(getMPbalance(receiver, propertyId, CHANNEL_RESERVE));
 
-    PrintToLog("amountToWithdraw : %d\n",amountToWithdraw);
+    PrintToLog("amount_to_withdraw : %d\n",amount_to_withdraw);
     PrintToLog("totalAmount : %d\n",totalAmount);
 
-    if (amountToWithdraw > totalAmount)
+    if (amount_to_withdraw > totalAmount)
     {
         PrintToLog("%s(): amount to withdrawal is bigger than totalAmount on channel\n", __func__);
         return (PKT_ERROR_TOKENS -25);
     }
 
-    uint64_t amountCommited = t_tradelistdb->getSumofCommits(receiver, sender, propertyId);
+    uint64_t amount_commited = t_tradelistdb->getSumofCommits(receiver, sender, propertyId);
 
-    PrintToLog("all the amountCommited : %s\n",amountCommited);
+    PrintToLog("all the amount_commited : %s\n",amount_commited);
 
-    if (amountToWithdraw > amountCommited) //here we need to check the PNLs
+    if (amount_to_withdraw > amount_commited) //here we need to check the PNLs
     {
         PrintToLog("%s(): amount to withdrawal is bigger than amount commited for the address %s\n", __func__, sender);
         return (PKT_ERROR_TOKENS -26);
@@ -3855,13 +3967,13 @@ int CMPTransaction::logicMath_Withdrawal_FromChannel()
     wthd.address = sender;
     wthd.deadline_block = block + 7;
     wthd.propertyId = propertyId;
-    wthd.amount = amountToWithdraw;
+    wthd.amount = amount_to_withdraw;
 
     PrintToLog("checking wthd element : address: %s, deadline: %d, propertyId: %d, amount: %d \n", wthd.address, wthd.deadline_block, wthd.propertyId, wthd.amount);
 
     withdrawal_Map[receiver].push_back(wthd);
 
-    t_tradelistdb->recordNewWithdrawal(txid, receiver, sender, propertyId, amountToWithdraw, vOut, block, tx_idx);
+    t_tradelistdb->recordNewWithdrawal(txid, receiver, sender, propertyId, amount_to_withdraw, vOut, block, tx_idx);
 
     return 0;
 }
@@ -3935,6 +4047,92 @@ int CMPTransaction::logicMath_Instant_Trade()
   // int rc = ChnDEx_ADD(sender, property, nNewValue, block, desired_property, desired_value, txid, tx_idx);
   int rc = 0;
   return rc;
+}
+
+/** Tx 111 */
+int CMPTransaction::logicMath_Update_PNL()
+{
+  uint256 blockHash;
+  {
+      LOCK(cs_main);
+
+      CBlockIndex* pindex = chainActive[block];
+      if (pindex == NULL) {
+          PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
+          return (PKT_ERROR_TOKENS -20);
+      }
+      blockHash = pindex->GetBlockHash();
+  }
+
+  // if (!IsTransactionTypeAllowed(block, property, type, version)) {
+  //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+  //             __func__,
+  //             type,
+  //             version,
+  //             property,
+  //             block);
+  //     return (PKT_ERROR_TOKENS -22);
+  // }
+
+  if (!IsPropertyIdValid(propertyId)) {
+      PrintToLog("%s(): rejected: property %d does not exist\n", __func__, property);
+      return (PKT_ERROR_TOKENS -24);
+  }
+
+
+  // ------------------------------------------
+
+
+  //putting PNLS
+  // assert(update_tally_map(sender, propertyId, -amount_commited, BALANCE));
+  // assert(update_tally_map(receiver, propertyId, amount_commited, CHANNEL_RESERVE));
+
+
+
+
+  return 0;
+
+}
+
+/** Tx 112 */
+int CMPTransaction::logicMath_Transfer()
+{
+  uint256 blockHash;
+  {
+      LOCK(cs_main);
+
+      CBlockIndex* pindex = chainActive[block];
+      if (pindex == NULL) {
+          PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
+          return (PKT_ERROR_TOKENS -20);
+      }
+      blockHash = pindex->GetBlockHash();
+  }
+
+  // if (!IsTransactionTypeAllowed(block, property, type, version)) {
+  //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+  //             __func__,
+  //             type,
+  //             version,
+  //             property,
+  //             block);
+  //     return (PKT_ERROR_TOKENS -22);
+  // }
+
+  if (!IsPropertyIdValid(propertyId)) {
+      PrintToLog("%s(): rejected: property %d does not exist\n", __func__, property);
+      return (PKT_ERROR_TOKENS -24);
+  }
+
+
+  // ------------------------------------------
+
+
+  // TRANSFER logic here
+
+
+  return 0;
+
 }
 
 /** Tx 113*/

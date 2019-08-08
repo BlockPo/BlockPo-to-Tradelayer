@@ -134,9 +134,12 @@ private:
     unsigned char subaction;
 
     //Multisig channels
-    uint64_t amountCommited;
-    uint64_t amountToWithdraw;
+    uint64_t amount_commited;
+    uint64_t amount_to_withdraw;
+    uint64_t pnl_amount;
     uint64_t vOut;
+    uint64_t vout_bef;
+    uint64_t vout_pay;
     uint64_t price;
     int blockheight_expiry;
 
@@ -374,10 +377,11 @@ public:
         denomination = 0;
 
         //Multisig channels
-        amountCommited = 0;
-        amountToWithdraw = 0;
+        amount_commited = 0;
+        amount_to_withdraw = 0;
         vOut = 0;
         blockheight_expiry = 0;
+        pnl_amount= 0;
 
         ////////////////////////////////////
     }
