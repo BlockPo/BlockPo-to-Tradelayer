@@ -183,6 +183,7 @@ enum FILETYPES {
 // channels definitions
 #define TYPE_COMMIT      "commit"
 #define TYPE_WITHDRAWAL  "withdrawal"
+#define TYPE_INSTANT_TRADE  "instant_trade"
 
 
 // Currency in existance (options for createcontract)
@@ -343,13 +344,16 @@ class CMPTradeList : public CDBBase
   void recordNewTrade(const uint256& txid, const std::string& address, uint32_t propertyIdForSale, uint32_t propertyIdDesired, int blockNum, int blockIndex);
   void recordNewTrade(const uint256& txid, const std::string& address, uint32_t propertyIdForSale, uint32_t propertyIdDesired, int blockNum, int blockIndex, int64_t reserva);
 
-  //Commit channels
+  //Multisig channels
   void recordNewCommit(const uint256& txid, const std::string& channelAddress, const std::string& sender, uint32_t propertyId, uint64_t amountCommited, uint32_t vOut, int blockNum, int blockIndex);
   void recordNewWithdrawal(const uint256& txid, const std::string& channelAddress, const std::string& sender, uint32_t propertyId, uint64_t amountToWithdrawal, uint32_t vOut, int blockNum, int blockIndex);
   void recordNewChannel(const std::string& address, const std::string& creatorAddress,int blockNum, int blockIndex);
+  void recordNewInstantTrade(const uint256& txid, const std::string& address, uint32_t propertyIdForSale, uint32_t propertyIdDesired, int blockNum, int blockIndex);
+
   bool getAllCommits(std::string senderAddress, UniValue& tradeArray);
   bool getAllWithdrawals(std::string senderAddress, UniValue& tradeArray);
   bool checkChannelAddress(const std::string& channelAddress);
+  bool checkChannelPair(const std::string& oldAddress, const std::string& newAddress);
   uint64_t getSumofCommits(const std::string& channelAddress, const std::string& senderAddress, uint32_t propertyId);
 
   int deleteAboveBlock(int blockNum);

@@ -141,58 +141,27 @@ class CMPMetaDEx
 
 /** A trade on the channel exchange.
  */
-class ChnDEx
+class ChnDEx : public CMPMetaDEx
 {
  private:
-  int block;
-  uint256 txid;
-  unsigned int idx; // index within block
-  uint32_t property;
-  int64_t amount_forsale;
-  uint32_t desired_property;
-  int64_t amount_desired;
-  int64_t price;
-  int blockheight_expiry;
-  std::string addr;
+   int blockheight_expiry;
 
  public:
-
-  uint256 getHash() const { return txid; }
-  uint32_t getProperty() const { return property; }
-  uint32_t getDesProperty() const { return desired_property; }
-
-  int64_t getAmountForSale() const { return amount_forsale; }
-  int64_t getAmountDesired() const { return amount_desired; }
-  int64_t getPrice() const { return price; }
-  int64_t getAmountToFill() const;
-
-  int getExpiryBlock() const { return blockheight_expiry; }
-
-  const std::string& getAddr() const { return addr; }
-
-  int getBlock() const { return block; }
-  unsigned int getIdx() const { return idx; }
-
-  int64_t getBlockTime() const;
-
  ChnDEx()
-   : block(0), idx(0), property(0), amount_forsale(0), desired_property(0), amount_desired(0),
-    price(0), blockheight_expiry(0) {}
+   : blockheight_expiry(0) {}
 
- ChnDEx(const CMPTransaction& tx)
-   : block(tx.block), txid(tx.txid), idx(tx.tx_idx), property(tx.property), amount_forsale(tx.nValue),
-    desired_property(tx.desired_property), amount_desired(tx.desired_value), price(tx.price),
-    blockheight_expiry(tx.blockheight_expiry), addr(tx.sender) {}
+   ChnDEx(const CMPTransaction &tx)
+     : CMPMetaDEx(tx), blockheight_expiry(tx.blockheight_expiry) {}
 
-  std::string ToString() const;
+     ChnDEx(const std::string& addr, int b, uint32_t c, int64_t nValue, uint32_t cd, int64_t ad, const uint256& tx, uint32_t i, uint8_t suba,int blck)
+       : CMPMetaDEx(addr, b, c, nValue, cd, ad, tx, i, suba), blockheight_expiry(blck) {}
 
-  void saveOffer(std::ofstream& file, SHA256_CTX* shaCtx) const;
-
+     int getBlockExpiry() const { return blockheight_expiry; }
+     friend MatchReturnType x_Trade(ChnDEx* const pnew);
 
 };
 
-///////////////////////////////////////////
-/** New things for Contracts */
+
 class CMPContractDex : public CMPMetaDEx
 {
  private:
@@ -278,7 +247,8 @@ namespace mastercore
   chn_PricesMap* get_chnPrices(uint32_t prop);
   chn_Set* get_chnIndexes(chn_PricesMap* p, rational_t price);
 
-  int ChnDEx_ADD(const std::string& sender_addr, uint32_t, int64_t, int block, uint32_t property_desired, int64_t amount_desired, const uint256& txid, unsigned int idx);
+  int ChnDEx_ADD(const std::string& sender_addr, uint32_t, int64_t, int block, uint32_t property_desired, int64_t amount_desired, const uint256& txid, unsigned int idx, int blockheight_expiry);
+  bool ChnDEx_INSERT(const ChnDEx& objMetaDEx);
 
   // ---------------
 

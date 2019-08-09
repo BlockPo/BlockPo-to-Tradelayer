@@ -4043,9 +4043,9 @@ int CMPTransaction::logicMath_Instant_Trade()
 
   // ------------------------------------------
 
-  // t_tradelistdb->recordNewInstantTrade(txid, sender, property, desired_property, block, tx_idx);
-  // int rc = ChnDEx_ADD(sender, property, nNewValue, block, desired_property, desired_value, txid, tx_idx);
-  int rc = 0;
+  t_tradelistdb->recordNewInstantTrade(txid, sender, property, desired_property, block, tx_idx);
+  int rc = ChnDEx_ADD(sender, property, nNewValue, block, desired_property, desired_value, txid, tx_idx, blockheight_expiry);
+
   return rc;
 }
 
