@@ -1667,8 +1667,6 @@ bool CMPTransaction::interpret_Transfer()
   std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecPropertyId = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecAmount = GetNextVarIntBytes(i);
-  std::vector<uint8_t> vecVout = GetNextVarIntBytes(i);
-
 
   if (!vecTypeBytes.empty()) {
       type = DecompressInteger(vecTypeBytes);
@@ -1684,10 +1682,6 @@ bool CMPTransaction::interpret_Transfer()
 
   if (!vecAmount.empty()) {
       amount = DecompressInteger(vecAmount);
-  } else return false;
-
-  if (!vecVout.empty()) {
-      vOut = DecompressInteger(vecVout);
   } else return false;
 
   return true;
@@ -4031,22 +4025,43 @@ int CMPTransaction::logicMath_Instant_Trade()
   }
 
   int64_t nBalance = getMPbalance(sender, property, BALANCE);
-  if (nBalance < (int64_t) nNewValue) {
+  if (nBalance < (int64_t) amount_forsale) {
       PrintToLog("%s(): rejected: sender %s has insufficient balance of property %d [%s < %s]\n",
               __func__,
               sender,
               property,
               FormatMP(property, nBalance),
-              FormatMP(property, nNewValue));
+              FormatMP(property, amount_forsale));
+      return (PKT_ERROR_METADEX -25);
+  }
+
+  nBalance = getMPbalance(receiver, desired_property, BALANCE);
+  if (nBalance < (int64_t) amount_desired) {
+      PrintToLog("%s(): rejected: sender %s has insufficient balance of property %d [%s < %s]\n",
+              __func__,
+              sender,
+              property,
+              FormatMP(property, nBalance),
+              FormatMP(property, amount_desired));
       return (PKT_ERROR_METADEX -25);
   }
 
   // ------------------------------------------
 
-  t_tradelistdb->recordNewInstantTrade(txid, sender, property, desired_property, block, tx_idx);
-  int rc = ChnDEx_ADD(sender, property, nNewValue, block, desired_property, desired_value, txid, tx_idx, blockheight_expiry);
+  assert(update_tally_map(sender, property, -amount_forsale, BALANCE));
+  assert(update_tally_map(receiver, property, amount_forsale, BALANCE));
 
-  return rc;
+  assert(update_tally_map(sender, desired_property, amount_desired, BALANCE));
+  assert(update_tally_map(receiver, desired_property, -amount_desired, BALANCE));
+
+
+  t_tradelistdb->recordNewInstantTrade(txid, sender,receiver, property, amount_forsale, desired_property, desired_value, block, tx_idx);
+
+
+
+  // int rc = ChnDEx_ADD(sender, property, nNewValue, block, desired_property, desired_value, txid, tx_idx, blockheight_expiry);
+
+  return 0;
 }
 
 /** Tx 111 */
@@ -4083,11 +4098,9 @@ int CMPTransaction::logicMath_Update_PNL()
   // ------------------------------------------
 
 
-  //putting PNLS
+  //TODO: logic for PNLS
   // assert(update_tally_map(sender, propertyId, -amount_commited, BALANCE));
   // assert(update_tally_map(receiver, propertyId, amount_commited, CHANNEL_RESERVE));
-
-
 
 
   return 0;
@@ -4130,6 +4143,11 @@ int CMPTransaction::logicMath_Transfer()
 
   // TRANSFER logic here
 
+  assert(update_tally_map(sender, propertyId, -amount, CHANNEL_RESERVE));
+  assert(update_tally_map(receiver, propertyId, amount, CHANNEL_RESERVE));
+
+  // recordNewTransfer
+  t_tradelistdb->recordNewTransfer(txid, sender,receiver, propertyId, amount, block, tx_idx);
 
   return 0;
 

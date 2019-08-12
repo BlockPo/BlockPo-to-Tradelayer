@@ -3394,10 +3394,10 @@ void CMPTradeList::recordNewTrade(const uint256& txid, const std::string& addres
   // if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
 }
 
-void CMPTradeList::recordNewInstantTrade(const uint256& txid, const std::string& address, uint32_t propertyIdForSale, uint32_t propertyIdDesired, int blockNum, int blockIndex)
+void CMPTradeList::recordNewInstantTrade(const uint256& txid, const std::string& sender, const std::string& receiver, uint32_t propertyIdForSale, uint64_t amount_forsale, uint32_t propertyIdDesired, uint64_t amount_desired,int blockNum, int blockIndex)
 {
   if (!pdb) return;
-  std::string strValue = strprintf("%s:%d:%d:%d:%d:%d:%s", address, propertyIdForSale, propertyIdDesired, blockNum, blockIndex,TYPE_INSTANT_TRADE);
+  std::string strValue = strprintf("%s:%d:%d:%d:%d:%d:%d:%d:%s", sender, receiver, propertyIdForSale, amount_forsale, propertyIdDesired, amount_desired, blockNum, blockIndex,TYPE_INSTANT_TRADE);
   Status status = pdb->Put(writeoptions, txid.ToString(), strValue);
   ++nWritten;
   // if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
@@ -3432,6 +3432,17 @@ void CMPTradeList::recordNewChannel(const std::string& address, const std::strin
   Status status = pdb->Put(writeoptions, address, strValue);
   ++nWritten;
   // if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
+}
+
+void CMPTradeList::recordNewTransfer(const uint256& txid, const std::string& sender, const std::string& receiver, uint32_t propertyId, uint64_t amount, int blockNum, int blockIndex)
+{
+  if (!pdb) return;
+  std::string strValue = strprintf("%s:%s:%d:%d:%d:%d:%s", sender, receiver, propertyId, amount, blockNum, blockIndex, TYPE_TRANSFER);
+  const string key = blockNum + "+" + txid.ToString(); // order by blockNum
+  Status status = pdb->Put(writeoptions, txid.ToString(), strValue);
+  ++nWritten;
+  // if (msc_debug_tradedb)
+  PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
 }
 
 void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, string address1, string address2, unsigned int prop1, unsigned int prop2, uint64_t amount1, uint64_t amount2, int blockNum, int64_t fee)

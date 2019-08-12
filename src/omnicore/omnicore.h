@@ -184,6 +184,7 @@ enum FILETYPES {
 #define TYPE_COMMIT      "commit"
 #define TYPE_WITHDRAWAL  "withdrawal"
 #define TYPE_INSTANT_TRADE  "instant_trade"
+#define TYPE_TRANSFER  "transfer"
 
 
 // Currency in existance (options for createcontract)
@@ -348,7 +349,8 @@ class CMPTradeList : public CDBBase
   void recordNewCommit(const uint256& txid, const std::string& channelAddress, const std::string& sender, uint32_t propertyId, uint64_t amountCommited, uint32_t vOut, int blockNum, int blockIndex);
   void recordNewWithdrawal(const uint256& txid, const std::string& channelAddress, const std::string& sender, uint32_t propertyId, uint64_t amountToWithdrawal, uint32_t vOut, int blockNum, int blockIndex);
   void recordNewChannel(const std::string& address, const std::string& creatorAddress,int blockNum, int blockIndex);
-  void recordNewInstantTrade(const uint256& txid, const std::string& address, uint32_t propertyIdForSale, uint32_t propertyIdDesired, int blockNum, int blockIndex);
+  void recordNewInstantTrade(const uint256& txid, const std::string& sender, const std::string& receiver, uint32_t propertyIdForSale, uint64_t amount_forsale, uint32_t propertyIdDesired, uint64_t amount_desired, int blockNum, int blockIndex);
+  void recordNewTransfer(const uint256& txid, const std::string& sender, const std::string& receiver, uint32_t propertyId, uint64_t amount, int blockNum, int blockIndex);
 
   bool getAllCommits(std::string senderAddress, UniValue& tradeArray);
   bool getAllWithdrawals(std::string senderAddress, UniValue& tradeArray);

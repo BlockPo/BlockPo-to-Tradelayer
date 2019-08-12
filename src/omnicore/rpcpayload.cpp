@@ -916,7 +916,7 @@ UniValue tl_createpayload_pnl_update(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_transfer(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 3)
+  if (request.params.size() != 2)
     throw runtime_error(
 			"tl_createpayload_transfer \"fromaddress\" \"toaddress\" propertyid \"amount\" ( \"referenceamount\" )\n"
 
@@ -925,7 +925,6 @@ UniValue tl_createpayload_transfer(const JSONRPCRequest& request)
 			"\nArguments:\n"
 			"1. propertyId            (number, required) the identifier of the property\n"
 			"2. amount                (string, required) the amount of the property traded\n"
-      "3. vOut for reference    (number, optional) vout for receiver address\n"
 
 			"\nResult:\n"
 			"\"hash\"                  (string) the hex-encoded transaction hash\n"
@@ -938,15 +937,13 @@ UniValue tl_createpayload_transfer(const JSONRPCRequest& request)
   // obtain parameters & info
   uint32_t propertyId = ParsePropertyId(request.params[0]);
   int64_t amount = ParseAmount(request.params[1], true);
-  uint32_t vOut = ParseOutputIndex(request.params[2]);
 
 
   PrintToLog("propertyid = %d\n", propertyId);
   PrintToLog("amount = %d\n", amount);
-  PrintToLog("vOut = %d\n", vOut);
 
   // create a payload for the transaction
-  std::vector<unsigned char> payload = CreatePayload_Transfer(propertyId, amount, vOut);
+  std::vector<unsigned char> payload = CreatePayload_Transfer(propertyId, amount);
 
   return HexStr(payload.begin(), payload.end());
 
