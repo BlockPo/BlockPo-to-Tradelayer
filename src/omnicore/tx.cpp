@@ -240,6 +240,9 @@ bool CMPTransaction::interpret_Transaction()
     case MSC_TYPE_CLOSE_ORACLE:
       return interpret_CloseOracle();
 
+    case MSC_TYPE_COMMIT_CHANNEL:
+        return interpret_CommitChannel();
+
     }
 
   return false;
@@ -1483,6 +1486,57 @@ bool CMPTransaction::interpret_CloseOracle()
     return true;
 }
 
+/** Tx 108 */
+bool CMPTransaction::interpret_CommitChannel()
+{
+    int i = 0;
+
+    std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+
+    std::vector<uint8_t> vecContIdBytes = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecAmountBytes = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecVoutBytes = GetNextVarIntBytes(i);
+
+    const char* p = i + (char*) &pkt;
+    std::vector<std::string> spstr;
+    for (int j = 0; j < 1; j++) {
+      spstr.push_back(std::string(p));
+      p += spstr.back().size() + 1;
+    }
+
+    if (isOverrun(p)) {
+      PrintToLog("%s(): rejected: malformed string value(s)\n", __func__);
+      return false;
+    }
+
+    int j = 0;
+    memcpy(channelAddress, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(channelAddress)-1)); j++;
+    i = i + strlen(channelAddress) + 1; // data sizes + 1 null terminators
+
+
+    if (!vecContIdBytes.empty()) {
+        propertyId = DecompressInteger(vecContIdBytes);
+    } else return false;
+
+    if (!vecAmountBytes.empty()) {
+        amountCommited = DecompressInteger(vecAmountBytes);
+    } else return false;
+
+    if (!vecVoutBytes.empty()) {
+        vOut = DecompressInteger(vecVoutBytes);
+    } else return false;
+
+
+    PrintToLog("channelAddress: %s\n", channelAddress);
+    PrintToLog("version: %d\n", version);
+    PrintToLog("propertyId: %d\n", propertyId);
+    PrintToLog("amount commited: %d\n", amountCommited);
+    PrintToLog("vOut: %d\n", vOut);
+
+    return true;
+}
+
 // ---------------------- CORE LOGIC -------------------------
 
 /**
@@ -1593,6 +1647,9 @@ int CMPTransaction::interpretPacket()
 
         case MSC_TYPE_CLOSE_ORACLE:
             return logicMath_CloseOracle();
+
+        case MSC_TYPE_COMMIT_CHANNEL:
+            return logicMath_CommitChannel();
 
 
     }
@@ -2564,11 +2621,11 @@ int CMPTransaction::logicMath_CreateContractDex()
 int CMPTransaction::logicMath_ContractDexTrade()
 {
   PrintToLog("Begining of logicMath_ContractDexTrade\n");
-  
+
   uint256 blockHash;
   {
     LOCK(cs_main);
-    
+
     CBlockIndex* pindex = chainActive[block];
     if (pindex == NULL)
       {
@@ -2580,17 +2637,17 @@ int CMPTransaction::logicMath_ContractDexTrade()
 
   struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, name_traded);
   id_contract = pfuture->fco_propertyId;
-  
+
   if (block > pfuture->fco_init_block + static_cast<int>(pfuture->fco_blocks_until_expiration) || block < pfuture->fco_init_block)
     {
       PrintToLog("\nTrade out of deadline!!\n");
       return PKT_ERROR_SP -38;
     }
-  
+
   uint32_t colateralh = pfuture->fco_collateral_currency;
   int64_t marginRe = static_cast<int64_t>(pfuture->fco_margin_requirement);
   int64_t nBalance = getMPbalance(sender, colateralh, BALANCE);
-  
+
   // PrintToLog("inside ContractDexTrade id_contract: %d\n",id_contract);
   PrintToLog("inside ContractDexTrade colateralh: %d\n",colateralh);
   PrintToLog("inside ContractDexTrade marginRe: %d\n",marginRe);
@@ -2602,7 +2659,7 @@ int CMPTransaction::logicMath_ContractDexTrade()
   int64_t den = conv.denominator().convert_to<int64_t>();
   arith_uint256 amountTR = (ConvertTo256(amount)*ConvertTo256(marginRe)*ConvertTo256(num))/(ConvertTo256(den)*ConvertTo256(leverage));
   int64_t amountToReserve = ConvertTo64(amountTR);
-  
+
   if (nBalance < amountToReserve || nBalance == 0)
     {
       PrintToLog("%s(): rejected: sender %s has insufficient balance for contracts %d [%s < %s] \n",
@@ -2623,17 +2680,17 @@ int CMPTransaction::logicMath_ContractDexTrade()
       // int64_t reserva = getMPbalance(sender, colateralh, CONTRACTDEX_MARGIN);
       // std::string reserved = FormatDivisibleMP(reserva,false);
     }
-  
+
   /*********************************************/
   /**Logic for Node Reward**/
-  
+
   const CConsensusParams &params = ConsensusParams();
   int BlockInit = params.MSC_NODE_REWARD;
   int nBlockNow = GetHeight();
 
   BlockClass NodeRewardObj(BlockInit, nBlockNow);
   NodeRewardObj.SendNodeReward(sender);
-  
+
   /*********************************************/
 
   t_tradelistdb->recordNewTrade(txid, sender, id_contract, desired_property, block, tx_idx, 0);
@@ -3227,7 +3284,7 @@ int CMPTransaction::logicMath_DExBuy()
 
 int CMPTransaction::logicMath_AcceptOfferBTC()
 {
-  
+
   if (nValue <= 0 || MAX_INT_8_BYTES < nValue) {
     PrintToLog("%s(): rejected: value out of range or zero: %d\n", __func__, nValue);
   }
@@ -3254,7 +3311,7 @@ int CMPTransaction::logicMath_AcceptOfferBTC()
 	  std::string seller = sellCombo.substr(0, sellCombo.size() - 2);
 
 	  if (!addressFilter.empty() && seller != addressFilter) continue;
-	  
+
 	  std::string txid = offer.getHash().GetHex();
 	  uint32_t propertyId = offer.getProperty();
 	  int64_t sellOfferAmount = offer.getOfferAmountOriginal();
@@ -3606,6 +3663,57 @@ int CMPTransaction::logicMath_CloseOracle()
     return 0;
 }
 
+/** Tx 108 */
+int CMPTransaction::logicMath_CommitChannel()
+{
+    uint256 blockHash;
+    {
+        LOCK(cs_main);
+
+        CBlockIndex* pindex = chainActive[block];
+        if (pindex == NULL) {
+            PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
+            return (PKT_ERROR_TOKENS -20);
+        }
+        blockHash = pindex->GetBlockHash();
+    }
+
+    // if (!IsTransactionTypeAllowed(block, property, type, version)) {
+    //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+    //             __func__,
+    //             type,
+    //             version,
+    //             property,
+    //             block);
+    //     return (PKT_ERROR_TOKENS -22);
+    // }
+
+    if (!IsPropertyIdValid(propertyId)) {
+        PrintToLog("%s(): rejected: property %d does not exist\n", __func__, property);
+        return (PKT_ERROR_TOKENS -24);
+    }
+
+
+    // ------------------------------------------
+
+    // logic for the commit Here
+    PrintToLog("logic_Math for commit channel\n");
+    PrintToLog("sender: %s\n",sender);
+    PrintToLog("channelAddress: %s\n",channelAddress);
+
+    //putting money into channel reserve
+    assert(update_tally_map(sender, propertyId, -amountCommited, BALANCE));
+    assert(update_tally_map(channelAddress, propertyId, amountCommited, CHANNEL_RESERVE));
+
+    t_tradelistdb->recordNewCommit(txid, channelAddress, sender, propertyId, amountCommited, vOut, block, tx_idx);
+
+
+    return 0;
+}
+
+
+
+
 struct FutureContractObject *getFutureContractObject(uint32_t property_type, std::string identifier)
 {
   struct FutureContractObject *pt_fco = new FutureContractObject;
@@ -3681,16 +3789,16 @@ struct TokenDataByName *getTokenDataByName(std::string identifier)
 void BlockClass::SendNodeReward(std::string sender)
 {
   PrintToLog("\nm_BlockInit = %d\t m_BockNow = %s\t sender = %s\n", m_BlockInit, m_BlockNow, sender);
-  
+
   extern double CompoundRate;
   extern double DecayRate;
   extern double LongTailDecay;
-  
+
   extern double RewardSecndI;
   extern double RewardFirstI;
-  
+
   int64_t Reward = 0;
-  
+
   if (m_BlockNow > m_BlockInit && m_BlockNow <= 100000)
     {
       double SpeedUp = 0.1*pow(CompoundRate, static_cast<double>(m_BlockNow - m_BlockInit));
@@ -3727,17 +3835,17 @@ int64_t LosingSatoshiLongTail(int BlockNow, int64_t Reward)
 {
   extern int64_t SatoshiH;
   int64_t RewardH = Reward;
-  
+
   bool RBool1 = (BlockNow > 220000   && BlockNow <= 720000)   && BlockNow%2 == 0;
   bool RBool2 = (BlockNow > 720000   && BlockNow <= 1500000)  && BlockNow%3 == 0;
   bool RBool3 = (BlockNow > 1500000  && BlockNow <= 7500000)  && BlockNow%4 == 0;
   bool RBool4 = (BlockNow > 7500000  && BlockNow <= 15000000) && BlockNow%5 == 0;
   bool RBool5 = (BlockNow > 15000000 && BlockNow <= 30000000) && BlockNow%6 == 0;
-  
+
   bool BoolReward = (((RBool1 || RBool2) || RBool3) || RBool4) || RBool5;
   if (BoolReward)
-    RewardH -= SatoshiH; 
-  
+    RewardH -= SatoshiH;
+
   return RewardH;
 }
 /**********************************************************************/

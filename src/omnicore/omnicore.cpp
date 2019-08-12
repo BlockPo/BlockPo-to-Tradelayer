@@ -2132,7 +2132,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
 
   /***********************************************************************/
   /** Calling The Settlement Algorithm **/
-  
+
   if (nBlockNow%BlockS == 0 && nBlockNow != 0 && path_elef.size() != 0 && lastBlockg != nBlockNow) {
 
     /*****************************************************************************/
@@ -2147,47 +2147,47 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
     
     /**********************************************************************/
     /** TWAP vector **/
-    
+
     PrintToLog("\nTWAP Prices = \n");
     struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, "ALL F18");
     uint32_t property_traded = pfuture->fco_propertyId;
-    
+
     // PrintToLog("\nVector CDExtwap_vec =\n");
     // for (unsigned int i = 0; i < cdextwap_vec[property_traded].size(); i++)
     //   PrintToLog("%s\n", FormatDivisibleMP(cdextwap_vec[property_traded][i]));
-    
+
     uint64_t num_cdex = accumulate(cdextwap_vec[property_traded].begin(), cdextwap_vec[property_traded].end(), 0.0);
 
     rational_t twap_priceRatCDEx(num_cdex/COIN, cdextwap_vec[property_traded].size());
     int64_t twap_priceCDEx = mastercore::RationalToInt64(twap_priceRatCDEx);
     PrintToLog("\nTvwap Price CDEx = %s\n", FormatDivisibleMP(twap_priceCDEx));
-    
+
     struct TokenDataByName *pfuture_ALL = getTokenDataByName("ALL");
     struct TokenDataByName *pfuture_USD = getTokenDataByName("dUSD");
     
     uint32_t property_all = pfuture_ALL->data_propertyId;
     uint32_t property_usd = pfuture_USD->data_propertyId;
-    
+
     // PrintToLog("\nVector MDExtwap_vec =\n");
     // for (unsigned int i = 0; i < mdextwap_vec[property_all][property_usd].size(); i++)
     //   PrintToLog("%s\n", FormatDivisibleMP(mdextwap_vec[property_all][property_usd][i]));
     
     uint64_t num_mdex=accumulate(mdextwap_vec[property_all][property_usd].begin(),mdextwap_vec[property_all][property_usd].end(),0.0);
-    
+   
     rational_t twap_priceRatMDEx(num_mdex/COIN, mdextwap_vec[property_all][property_usd].size());
     int64_t twap_priceMDEx = mastercore::RationalToInt64(twap_priceRatMDEx);
     PrintToLog("\nTvwap Price MDEx = %s\n", FormatDivisibleMP(twap_priceMDEx));
-    
+
     /** Interest formula:  **/
-    
+
     int64_t interest = clamp_function(abs(twap_priceCDEx-twap_priceMDEx), 0.05);
     PrintToLog("Interes to Pay = %s", FormatDivisibleMP(interest));
-    
+
     /*****************************************************************************/
     cout << "\n\n";
     PrintToLog("\nCalling the Settlement Algorithm:\n\n");
     settlement_algorithm_fifo(M_file, interest, twap_priceCDEx);
-    
+
     /**********************************************************************/
     /** Unallocating Dynamic Memory **/
 
@@ -3393,6 +3393,19 @@ void CMPTradeList::recordNewTrade(const uint256& txid, const std::string& addres
   // if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
 }
 
+void CMPTradeList::recordNewCommit(const uint256& txid, const std::string& channelAddress, const std::string& sender, uint32_t propertyId, uint64_t amountCommited, uint32_t vOut, int blockNum, int blockIndex)
+{
+  if (!pdb) return;
+  std::string strValue = strprintf("%s:%s:%d:%d:%d:%d:%d", channelAddress, sender, propertyId, amountCommited, vOut, blockNum, blockIndex);
+  const string key = blockNum + "+" + txid.ToString(); // order by blockNum
+  Status status = pdb->Put(writeoptions, txid.ToString(), strValue);
+  ++nWritten;
+  // if (msc_debug_tradedb)
+  PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
+}
+
+
+
 void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, string address1, string address2, unsigned int prop1, unsigned int prop2, uint64_t amount1, uint64_t amount2, int blockNum, int64_t fee)
 {
   if (!pdb) return;
@@ -4421,6 +4434,72 @@ const std::string ExodusAddress()
     return exodus_mainnet;
   } 
 }
+
+/**
+ * @retrieve commits for a channel
+ */
+ bool CMPTradeList::getAllCommits(std::string channelAddress, UniValue& tradeArray)
+ {
+   if (!pdb) return false;
+
+   int count = 0;
+
+   std::vector<std::string> vstr;
+   // string txidStr = txid.ToString();
+
+   leveldb::Iterator* it = NewIterator(); // Allocation proccess
+
+   for(it->SeekToLast(); it->Valid(); it->Prev()) {
+
+       PrintToLog("Inside looop in db\n");
+       // search key to see if this is a matching trade
+       std::string strKey = it->key().ToString();
+       // PrintToLog("key of this match: %s ****************************\n",strKey);
+       std::string strValue = it->value().ToString();
+
+       // ensure correct amount of tokens in value string
+       boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
+       if (vstr.size() != 7) {
+           //PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
+           // PrintToConsole("TRADEDB error - unexpected number of tokens in value %d \n",vstr.size());
+           continue;
+       }
+
+       //channelAddress, sender, propertyId, amountCommited, vOut, blockIndex
+
+       std::string cAddress = vstr[0];
+
+       if(channelAddress != cAddress)
+           continue;
+
+       std::string sender = vstr[1];
+       uint32_t propertyId = boost::lexical_cast<uint32_t>(vstr[2]);
+
+       int64_t amount = boost::lexical_cast<int64_t>(vstr[3]);
+       uint32_t vOut = boost::lexical_cast<uint32_t>(vstr[4]);
+       int blockNum = boost::lexical_cast<int>(vstr[5]);
+       int blockIndex = boost::lexical_cast<int>(vstr[6]);
+
+       // populate trade object and add to the trade array, correcting for orientation of trade
+
+
+       UniValue trade(UniValue::VOBJ);
+       if (tradeArray.size() <= 20)
+       {
+           trade.push_back(Pair("sender", sender));
+           trade.push_back(Pair("amount", FormatByType(amount,2)));
+           trade.push_back(Pair("vOut", FormatByType(vOut,1)));
+           trade.push_back(Pair("block",blockNum));
+           trade.push_back(Pair("block_index",blockIndex));
+           tradeArray.push_back(trade);
+           ++count;
+       }
+   }
+   // clean up
+   delete it; // Desallocation proccess
+   if (count) { return true; } else { return false; }
+ }
+
 /**
  * @return The marker for class C transactions.
  */

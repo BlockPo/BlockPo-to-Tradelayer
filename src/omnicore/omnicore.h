@@ -111,7 +111,8 @@ enum TransactionType {
   MSC_TYPE_CHANGE_ORACLE_REF          = 104,
   MSC_TYPE_SET_ORACLE                 = 105,
   MSC_TYPE_ORACLE_BACKUP              = 106,
-  MSC_TYPE_CLOSE_ORACLE               = 107, 
+  MSC_TYPE_CLOSE_ORACLE               = 107,
+  MSC_TYPE_COMMIT_CHANNEL             = 108,
   ////////////////////////////////////
 
 };
@@ -248,12 +249,12 @@ public:
         leveldb::Status status = Open(path, fWipe);
         PrintToConsole("Loading tx meta-info database: %s\n", status.ToString());
     }
-    
+
     virtual ~CMPTxList()
       {
         // if (msc_debug_persistence) PrintToLog("CMPTxList closed\n");
       }
-    
+
     void recordTX(const uint256 &txid, bool fValid, int nBlock, unsigned int type, uint64_t nValue);
     /** Records a "send all" sub record. */
     void recordSendAllSubRecord(const uint256& txid, int subRecordNumber, uint32_t propertyId, int64_t nvalue);
@@ -306,35 +307,40 @@ public:
 class CMPTradeList : public CDBBase
 {
  public:
-  
+
   CMPTradeList(const boost::filesystem::path& path, bool fWipe)
     {
       leveldb::Status status = Open(path, fWipe);
       PrintToConsole("Loading trades database: %s\n", status.ToString());
     }
-  
+
   virtual ~CMPTradeList()
     {
       // if (msc_debug_persistence) PrintToLog("CMPTradeList closed\n");
     }
-  
+
   void recordMatchedTrade(const uint256 txid1, const uint256 txid2, string address1, string address2, unsigned int prop1, unsigned int prop2, uint64_t amount1, uint64_t amount2, int blockNum, int64_t fee);
-  
+
   /////////////////////////////////
   /** New things for Contract */
   void recordMatchedTrade(const uint256 txid1, const uint256 txid2, string address1, string address2, uint64_t effective_price, uint64_t amount_maker, uint64_t amount_taker, int blockNum1, int blockNum2, uint32_t property_traded, string tradeStatus, int64_t lives_s0, int64_t lives_s1, int64_t lives_s2, int64_t lives_s3, int64_t lives_b0, int64_t lives_b1, int64_t lives_b2, int64_t lives_b3, string s_maker0, string s_taker0, string s_maker1, string s_taker1, string s_maker2, string s_taker2, string s_maker3, string s_taker3, int64_t nCouldBuy0, int64_t nCouldBuy1, int64_t nCouldBuy2, int64_t nCouldBuy3, uint64_t amountpnew, uint64_t amountpold);
   void recordForUPNL(const uint256 txid, string address, uint32_t property_traded, int64_t effectivePrice);
   // void recordMatchedTrade(const uint256 txid1, const uint256 txid2, string address1, string address2, unsigned int prop1, unsigned int prop2, uint64_t amount1, uint64_t amount2, int blockNum, int64_t fee, string t_status, std::vector<uint256> &vecTxid);
   /////////////////////////////////
-  
+
   void recordNewTrade(const uint256& txid, const std::string& address, uint32_t propertyIdForSale, uint32_t propertyIdDesired, int blockNum, int blockIndex);
   void recordNewTrade(const uint256& txid, const std::string& address, uint32_t propertyIdForSale, uint32_t propertyIdDesired, int blockNum, int blockIndex, int64_t reserva);
+
+  //Commit channels
+  void recordNewCommit(const uint256& txid, const std::string& channelAddress, const std::string& sender, uint32_t propertyId, uint64_t amountCommited, uint32_t vOut, int blockNum, int blockIndex);
+  bool getAllCommits(std::string channelAddress, UniValue& tradeArray);
+
   int deleteAboveBlock(int blockNum);
   bool exists(const uint256 &txid);
   void printStats();
   void printAll();
   bool getMatchingTrades(const uint256& txid, uint32_t propertyId, UniValue& tradeArray, int64_t& totalSold, int64_t& totalBought);
-  
+
   ///////////////////////////////////////
   /** New things for Contract */
   bool getMatchingTrades(uint32_t propertyId, UniValue& tradeArray);
@@ -346,7 +352,7 @@ class CMPTradeList : public CDBBase
   void NotifyPeggedCurrency(const uint256& txid, string address, uint32_t propertyId, uint64_t amount, std::string series);
   bool getCreatedPegged(uint32_t propertyId, UniValue& tradeArray);
   //////////////////////////////////////
-  
+
   bool getMatchingTrades(const uint256& txid);
   void getTradesForAddress(std::string address, std::vector<uint256>& vecTransactions, uint32_t propertyIdFilter = 0);
   void getTradesForPair(uint32_t propertyIdSideA, uint32_t propertyIdSideB, UniValue& response, uint64_t count);
@@ -361,7 +367,7 @@ class CMPSettlementMatchList : public CDBBase
       leveldb::Status status = Open(path, fWipe);
       PrintToConsole("Loading settlement match info database: %s\n", status.ToString());
     }
-  
+
   virtual ~CMPSettlementMatchList() { }
 };
 
