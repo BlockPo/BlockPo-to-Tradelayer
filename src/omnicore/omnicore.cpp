@@ -2136,7 +2136,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   if (nBlockNow%BlockS == 0 && nBlockNow != 0 && path_elef.size() != 0 && lastBlockg != nBlockNow) {
 
     /*****************************************************************************/
-
+    
     PrintToLog("\nSettlement every 8 hours here. nBlockNow = %d\n", nBlockNow);
     pt_ndatabase = new MatrixTLS(path_elef.size(), n_cols); MatrixTLS &ndatabase = *pt_ndatabase;
     MatrixTLS M_file(path_elef.size(), n_cols);
@@ -2144,7 +2144,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
     n_rows = size(M_file, 0);
     PrintToLog("Matrix for Settlement: dim = (%d, %d)\n\n", n_rows, n_cols);
     //printing_matrix(M_file);
-
+    
     /**********************************************************************/
     /** TWAP vector **/
 
@@ -2157,20 +2157,23 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
     //   PrintToLog("%s\n", FormatDivisibleMP(cdextwap_vec[property_traded][i]));
 
     uint64_t num_cdex = accumulate(cdextwap_vec[property_traded].begin(), cdextwap_vec[property_traded].end(), 0.0);
+
     rational_t twap_priceRatCDEx(num_cdex/COIN, cdextwap_vec[property_traded].size());
     int64_t twap_priceCDEx = mastercore::RationalToInt64(twap_priceRatCDEx);
     PrintToLog("\nTvwap Price CDEx = %s\n", FormatDivisibleMP(twap_priceCDEx));
 
     struct TokenDataByName *pfuture_ALL = getTokenDataByName("ALL");
     struct TokenDataByName *pfuture_USD = getTokenDataByName("dUSD");
+    
     uint32_t property_all = pfuture_ALL->data_propertyId;
     uint32_t property_usd = pfuture_USD->data_propertyId;
 
     // PrintToLog("\nVector MDExtwap_vec =\n");
     // for (unsigned int i = 0; i < mdextwap_vec[property_all][property_usd].size(); i++)
     //   PrintToLog("%s\n", FormatDivisibleMP(mdextwap_vec[property_all][property_usd][i]));
-
-    uint64_t num_mdex = accumulate(mdextwap_vec[property_all][property_usd].begin(), mdextwap_vec[property_all][property_usd].end(), 0.0);
+    
+    uint64_t num_mdex=accumulate(mdextwap_vec[property_all][property_usd].begin(),mdextwap_vec[property_all][property_usd].end(),0.0);
+   
     rational_t twap_priceRatMDEx(num_mdex/COIN, mdextwap_vec[property_all][property_usd].size());
     int64_t twap_priceMDEx = mastercore::RationalToInt64(twap_priceRatMDEx);
     PrintToLog("\nTvwap Price MDEx = %s\n", FormatDivisibleMP(twap_priceMDEx));
@@ -4423,16 +4426,13 @@ uint64_t int64ToUint64(int64_t value)
 
 const std::string ExodusAddress()
 {
-//     if(RegTest()){
-//        return setExoduss;
-//     }
-
-    if (isNonMainNet()) {
-        return exodus_testnet;
-    } else {
-        return exodus_mainnet;
-    }
-
+  if(RegTest()){
+    return setExoduss;
+  } else if (isNonMainNet()) {
+    return exodus_testnet;
+  } else {
+    return exodus_mainnet;
+  } 
 }
 
 /**

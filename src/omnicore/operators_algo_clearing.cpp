@@ -765,11 +765,11 @@ void calculate_pnltrk_bypath(std::vector<std::map<std::string, std::string>> &pa
 	      struct TokenDataByName *pfuture_ALL = getTokenDataByName("ALL");
 	      uint32_t ALLId = pfuture_ALL->data_propertyId;
 	      
-	      int64_t entry_priceh =  mastercore::StrToInt64(edge_path["entry_price"], true);
-	      PrintToLog("\nInterest Payment: Entry Price = %s, Twap Price = %s\n",
-			 FormatDivisibleMP(entry_priceh), FormatDivisibleMP(twap_price));
+	      // int64_t entry_priceh =  mastercore::StrToInt64(edge_path["entry_price"], true);
+	      // PrintToLog("\nInterest Payment: Entry Price = %s, Twap Price = %s\n",
+	      // 		 FormatDivisibleMP(entry_priceh), FormatDivisibleMP(twap_price));
 	      
-	      if (volumeALL64_t != 0)
+	      if (volumeALL64_t != 0 && volumeALL64_t < getMPbalance(addrssr, ALLId, BALANCE))
 		{
 		  PrintToLog("\nRebalancing Settlement\n");
 		  assert(mastercore::update_tally_map(addrssr, ALLId, -volumeALL64_t, BALANCE)); /** Change in testnet **/
