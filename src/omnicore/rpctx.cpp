@@ -1922,17 +1922,17 @@ UniValue tl_create_channel(const JSONRPCRequest& request)
         );
 
     // obtain parameters & info
-    std::string senderAddress = ParseAddress(request.params[0]);
-    std::string channelAddress = ParseAddress(request.params[1]);
-
+    std::string firstAddress = ParseAddress(request.params[0]);
+    std::string secondAddress = ParseAddress(request.params[1]);
+    std::string channelAddress = ParseAddress(request.params[2]);
 
     // create a payload for the transaction
-    std::vector<unsigned char> payload = CreatePayload_Create_Channel();
+    std::vector<unsigned char> payload = CreatePayload_Create_Channel(channelAddress);
 
     // request the wallet build the transaction (and if needed commit it)
     uint256 txid;
     std::string rawHex;
-    int result = WalletTxBuilder(senderAddress, channelAddress, 0, payload, txid, rawHex, autoCommit);
+    int result = WalletTxBuilder(firstAddress, secondAddress, 0, payload, txid, rawHex, autoCommit);
 
     // check error and return the txid (or raw hex depending on autocommit)
     if (result != 0) {

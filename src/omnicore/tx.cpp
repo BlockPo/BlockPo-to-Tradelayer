@@ -1698,6 +1698,23 @@ bool CMPTransaction::interpret_Create_Channel()
   std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
 
+  const char* p = i + (char*) &pkt;
+  std::vector<std::string> spstr;
+  for (int j = 0; j < 1; j++) {
+    spstr.push_back(std::string(p));
+    p += spstr.back().size() + 1;
+  }
+
+  if (isOverrun(p)) {
+    PrintToLog("%s(): rejected: malformed string value(s)\n", __func__);
+    return false;
+  }
+
+  int j = 0;
+  memcpy(channel_address, spstr[j].c_str(), spstr[j].length()); j++;
+  i = i + strlen(channel_address) + 1; // data sizes + null terminators
+
+
   if (!vecTypeBytes.empty()) {
       type = DecompressInteger(vecTypeBytes);
   } else return false;
@@ -1705,6 +1722,13 @@ bool CMPTransaction::interpret_Create_Channel()
   if (!vecVersionBytes.empty()) {
       version = DecompressInteger(vecVersionBytes);
   } else return false;
+
+  PrintToLog("version: %d\n", version);
+  PrintToLog("messageType: %d\n",type);
+  PrintToLog("channelAddress : %d\n",channel_address);
+  PrintToLog("first address : %d\n", sender);
+  PrintToLog("second address : %d\n", receiver);
+
 
   return true;
 }
@@ -3933,7 +3957,7 @@ int CMPTransaction::logicMath_Withdrawal_FromChannel()
         return (PKT_ERROR_TOKENS -24);
     }
 
-    if (!t_tradelistdb->checkChannelAddress(receiver)) {
+    if (!t_tradelistdb->checkChannelAddress(sender)) {
         PrintToLog("%s(): rejected: address %s doesn't belong to multisig channel\n", __func__, receiver);
         return (PKT_ERROR_TOKENS -24);
     }
@@ -3945,7 +3969,7 @@ int CMPTransaction::logicMath_Withdrawal_FromChannel()
     uint64_t totalAmount = static_cast<uint64_t>(getMPbalance(receiver, propertyId, CHANNEL_RESERVE));
 
     PrintToLog("amount_to_withdraw : %d\n",amount_to_withdraw);
-    PrintToLog("totalAmount : %d\n",totalAmount);
+    PrintToLog("totalAmount in channel: %d\n",totalAmount);
 
     if (amount_to_withdraw > totalAmount)
     {
@@ -3953,13 +3977,13 @@ int CMPTransaction::logicMath_Withdrawal_FromChannel()
         return (PKT_ERROR_TOKENS -25);
     }
 
-    uint64_t amount_commited = t_tradelistdb->getSumofCommits(receiver, sender, propertyId);
+    uint64_t amount_commited = t_tradelistdb->getRemaining(sender, receiver, propertyId);
 
-    PrintToLog("all the amount_commited : %s\n",amount_commited);
+    PrintToLog("all the amount_commited for the receiver address : %s\n",amount_commited);
 
-    if (amount_to_withdraw > amount_commited) //here we need to check the PNLs
+    if (amount_to_withdraw > amount_commited)
     {
-        PrintToLog("%s(): amount to withdrawal is bigger than amount commited for the address %s\n", __func__, sender);
+        PrintToLog("%s(): amount to withdrawal is bigger than amount remaining in channel for the address %s\n", __func__, sender);
         return (PKT_ERROR_TOKENS -26);
     }
 
@@ -3974,7 +3998,7 @@ int CMPTransaction::logicMath_Withdrawal_FromChannel()
 
     withdrawal_Map[receiver].push_back(wthd);
 
-    t_tradelistdb->recordNewWithdrawal(txid, receiver, sender, propertyId, amount_to_withdraw, vOut, block, tx_idx);
+    t_tradelistdb->recordNewWithdrawal(txid, receiver, sender, propertyId, amount_to_withdraw, block, tx_idx);
 
     return 0;
 }
@@ -4183,7 +4207,7 @@ int CMPTransaction::logicMath_Create_Channel()
 
     // ------------------------------------------
 
-    t_tradelistdb->recordNewChannel(receiver,sender,block, tx_idx);
+    t_tradelistdb->recordNewChannel(channel_address,sender,receiver,block, tx_idx);
 
     return 0;
 }

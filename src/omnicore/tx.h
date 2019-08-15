@@ -134,6 +134,7 @@ private:
     unsigned char subaction;
 
     //Multisig channels
+    char channel_address[SP_STRING_FIELD_LEN];
     uint64_t amount_commited;
     uint64_t amount_to_withdraw;
     uint64_t pnl_amount;
@@ -345,6 +346,7 @@ public:
         memset(&data, 0, sizeof(data));
         memset(&stxid, 0, sizeof(stxid));
 	      memset(&name_traded, 0, sizeof(name_traded));
+        memset(&channel_address, 0, sizeof(channel_address));
         deadline = 0;
         early_bird = 0;
         percentage = 0;

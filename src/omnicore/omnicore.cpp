@@ -3414,10 +3414,10 @@ void CMPTradeList::recordNewCommit(const uint256& txid, const std::string& chann
   PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
 }
 
-void CMPTradeList::recordNewWithdrawal(const uint256& txid, const std::string& channelAddress, const std::string& sender, uint32_t propertyId, uint64_t amountToWithdrawal, uint32_t vOut, int blockNum, int blockIndex)
+void CMPTradeList::recordNewWithdrawal(const uint256& txid, const std::string& channelAddress, const std::string& sender, uint32_t propertyId, uint64_t amountToWithdrawal, int blockNum, int blockIndex)
 {
   if (!pdb) return;
-  std::string strValue = strprintf("%s:%s:%d:%d:%d:%d:%d:%s", channelAddress, sender, propertyId, amountToWithdrawal, vOut, blockNum, blockIndex,TYPE_WITHDRAWAL);
+  std::string strValue = strprintf("%s:%s:%d:%d:%d:%d:%d:%s", channelAddress, sender, propertyId, amountToWithdrawal, blockNum, blockIndex,TYPE_WITHDRAWAL);
   const string key = blockNum + "+" + txid.ToString(); // order by blockNum
   Status status = pdb->Put(writeoptions, txid.ToString(), strValue);
   ++nWritten;
@@ -3425,11 +3425,11 @@ void CMPTradeList::recordNewWithdrawal(const uint256& txid, const std::string& c
   PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
 }
 
-void CMPTradeList::recordNewChannel(const std::string& address, const std::string& creatorAddress,int blockNum, int blockIndex)
+void CMPTradeList::recordNewChannel(const std::string& channelAddress, const std::string& sender, const std::string& receiver, int blockNum, int blockIndex)
 {
   if (!pdb) return;
-  std::string strValue = strprintf("%s:%d:%d", creatorAddress, blockNum, blockIndex);
-  Status status = pdb->Put(writeoptions, address, strValue);
+  std::string strValue = strprintf("%s:%s:%d:%d", sender, receiver, blockNum, blockIndex);
+  Status status = pdb->Put(writeoptions, channelAddress, strValue);
   ++nWritten;
   // if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
 }
@@ -4588,13 +4588,17 @@ const std::string ExodusAddress()
    if (count) { return true; } else { return false; }
  }
 
- uint64_t CMPTradeList::getSumofCommits(const std::string& channelAddress, const std::string& senderAddress, uint32_t propertyId)
+ /**
+  * @retrieve  All commits minus All withdrawal for a given address into specific channel
+  */
+ uint64_t CMPTradeList::getRemaining(const std::string& channelAddress, const std::string& senderAddress, uint32_t propertyId)
  {
 
    if (!pdb) return 0;
 
    int count = 0;
-   uint64_t sumAmount = 0;
+   uint64_t sumCommits = 0;
+   uint64_t sumWithdr = 0;
 
    std::vector<std::string> vstr;
    // string txidStr = txid.ToString();
@@ -4611,7 +4615,7 @@ const std::string ExodusAddress()
 
        // ensure correct amount of tokens in value string
        boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
-       if (vstr.size() != 8) {
+       if (vstr.size() != 7) {
            //PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
            // PrintToConsole("TRADEDB error - unexpected number of tokens in value %d \n",vstr.size());
            continue;
@@ -4635,18 +4639,25 @@ const std::string ExodusAddress()
            continue;
 
        uint64_t amount = boost::lexical_cast<uint64_t>(vstr[3]);
-       // populate trade object and add to the trade array, correcting for orientation of trade
-       sumAmount += amount;
+
+       std::string type = vstr[6];
+
+       (type == TYPE_COMMIT) ? sumCommits += amount : sumWithdr += amount;
+
    }
 
    // clean up
    delete it; // Desallocation proccess
 
-   return sumAmount;
+   uint64_t total = sumCommits - sumWithdr;
+
+   return total;
 
  }
 
-
+ /**
+  *  Does the channel address exist?
+  */
 bool CMPTradeList::checkChannelAddress(const std::string& channelAddress)
   {
 
@@ -4678,9 +4689,7 @@ bool CMPTradeList::checkChannelAddress(const std::string& channelAddress)
             continue;
         }
 
-        std::string cAddress = vstr[0];
-
-        if(channelAddress != cAddress)
+        if(channelAddress != strKey)
             continue;
 
         status = true;
@@ -4693,7 +4702,10 @@ bool CMPTradeList::checkChannelAddress(const std::string& channelAddress)
 
   }
 
-  bool CMPTradeList::checkChannelPair(const std::string& oldAddress, const std::string& newAddress)
+  /**
+   * @retrieve  if P2PKH address are related to the channel Address
+   */
+  bool CMPTradeList::checkChannelPair(const std::string& channelAddress, const std::string& receiver)
     {
 
       bool status = false;
@@ -4724,13 +4736,13 @@ bool CMPTradeList::checkChannelAddress(const std::string& channelAddress)
               continue;
           }
 
-          std::string firAddress = vstr[1];
-          std::string secAddress = vstr[1];
+          std::string frAddr = vstr[0];
+          std::string secAddr = vstr[1];
 
-          if(oldAddress != firAddress && oldAddress != secAddress)
+          if (channelAddress != strKey)
               continue;
 
-          if(newAddress != firAddress && newAddress != secAddress)
+          if (receiver != frAddr && receiver != secAddr)
               continue;
 
           status = true;
@@ -4739,6 +4751,7 @@ bool CMPTradeList::checkChannelAddress(const std::string& channelAddress)
 
       // clean up
       delete it; // Desallocation proccess
+
       return status;
 
     }

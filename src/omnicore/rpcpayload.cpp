@@ -848,17 +848,11 @@ UniValue tl_createpayload_instant_trade(const JSONRPCRequest& request)
 
   // obtain parameters & info
   uint32_t propertyId = ParsePropertyId(request.params[0]);
-  PrintToLog("checkpoint 1\n");
   int64_t amount = ParseAmount(request.params[1], true);
-  PrintToLog("checkpoint 2\n");
   uint32_t blockheight_expiry = request.params[2].get_int();
-  PrintToLog("checkpoint 3\n");
   uint32_t propertyDesired = (request.params.size() > 3) ? ParsePropertyId(request.params[3]): 0;
-  PrintToLog("checkpoint 4\n");
   int64_t amountDesired = (request.params.size() > 3) ? ParseAmount(request.params[4],true): 0;
-  PrintToLog("checkpoint 5\n");
   int64_t price = (request.params.size() == 4) ? ParseAmount(request.params[5],true): 0;
-  PrintToLog("checkpoint 6\n");
 
   PrintToLog("propertyid = %d\n", propertyId);
   PrintToLog("amount = %d\n", amount);

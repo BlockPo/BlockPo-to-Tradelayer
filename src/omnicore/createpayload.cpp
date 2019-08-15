@@ -828,7 +828,7 @@ std::vector<unsigned char> CreatePayload_Transfer(uint32_t propertyId, uint64_t 
   return payload;
 }
 
-std::vector<unsigned char> CreatePayload_Create_Channel()
+std::vector<unsigned char> CreatePayload_Create_Channel(std::string channelAddress)
 {
   std::vector<unsigned char> payload;
 
@@ -838,8 +838,12 @@ std::vector<unsigned char> CreatePayload_Create_Channel()
   std::vector<uint8_t> vecMessageType = CompressInteger((uint64_t)messageType);
   std::vector<uint8_t> vecMessageVer = CompressInteger((uint64_t)messageVer);
 
+  if ((channelAddress).size() > 255) channelAddress = channelAddress.substr(0,255);
+
   payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
   payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
+  payload.insert(payload.end(), channelAddress.begin(), channelAddress.end());
+  payload.push_back('\0');
 
   return payload;
 }

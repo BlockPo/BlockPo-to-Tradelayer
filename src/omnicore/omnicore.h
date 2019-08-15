@@ -347,16 +347,16 @@ class CMPTradeList : public CDBBase
 
   //Multisig channels
   void recordNewCommit(const uint256& txid, const std::string& channelAddress, const std::string& sender, uint32_t propertyId, uint64_t amountCommited, int blockNum, int blockIndex);
-  void recordNewWithdrawal(const uint256& txid, const std::string& channelAddress, const std::string& sender, uint32_t propertyId, uint64_t amountToWithdrawal, uint32_t vOut, int blockNum, int blockIndex);
-  void recordNewChannel(const std::string& address, const std::string& creatorAddress,int blockNum, int blockIndex);
+  void recordNewWithdrawal(const uint256& txid, const std::string& channelAddress, const std::string& sender, uint32_t propertyId, uint64_t amountToWithdrawal, int blockNum, int blockIndex);
+  void recordNewChannel(const std::string& channelAddress, const std::string& sender, const std::string& receiver, int blockNum, int blockIndex);
   void recordNewInstantTrade(const uint256& txid, const std::string& sender, const std::string& receiver, uint32_t propertyIdForSale, uint64_t amount_forsale, uint32_t propertyIdDesired, uint64_t amount_desired, int blockNum, int blockIndex);
   void recordNewTransfer(const uint256& txid, const std::string& sender, const std::string& receiver, uint32_t propertyId, uint64_t amount, int blockNum, int blockIndex);
 
   bool getAllCommits(std::string senderAddress, UniValue& tradeArray);
   bool getAllWithdrawals(std::string senderAddress, UniValue& tradeArray);
   bool checkChannelAddress(const std::string& channelAddress);
-  bool checkChannelPair(const std::string& oldAddress, const std::string& newAddress);
-  uint64_t getSumofCommits(const std::string& channelAddress, const std::string& senderAddress, uint32_t propertyId);
+  bool checkChannelPair(const std::string& channelAddress, const std::string& receiver);
+  uint64_t getRemaining(const std::string& channelAddress, const std::string& senderAddress, uint32_t propertyId);
 
   int deleteAboveBlock(int blockNum);
   bool exists(const uint256 &txid);
