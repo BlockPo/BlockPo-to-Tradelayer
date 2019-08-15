@@ -1799,7 +1799,7 @@ UniValue tl_closeoracle(const JSONRPCRequest& request)
 
 UniValue tl_commit_tochannel(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 5)
+    if (request.params.size() != 4)
         throw runtime_error(
             "tl_commit_tochannel \"sender\" \"channel address\" \"propertyId\" \"amount\"vout\n"
 
@@ -1810,7 +1810,6 @@ UniValue tl_commit_tochannel(const JSONRPCRequest& request)
             "2. channel address        (string, required) multisig address of channel\n"
             "3. propertyId             (number, required) the propertyId of token commited into the channel\n"
             "4. amount                 (number, required) amount of tokens traded in the channel\n"
-            "5. vout                   (number, required) the reference address vOut\n"
             "\nResult:\n"
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
 
@@ -1824,7 +1823,6 @@ UniValue tl_commit_tochannel(const JSONRPCRequest& request)
     std::string channelAddress = ParseAddress(request.params[1]);
     uint32_t propertyId = ParsePropertyId(request.params[2]);
     int64_t amount = ParseAmount(request.params[3], true);
-    uint32_t vout = ParseOutputIndex(request.params[4]);
 
 
     RequireExistingProperty(propertyId);
@@ -1833,7 +1831,7 @@ UniValue tl_commit_tochannel(const JSONRPCRequest& request)
     PrintToLog("channelAddress inside rpctx : %s\n",channelAddress);
 
     // create a payload for the transaction
-    std::vector<unsigned char> payload = CreatePayload_Commit_Channel(propertyId, amount, vout);
+    std::vector<unsigned char> payload = CreatePayload_Commit_Channel(propertyId, amount);
 
     // request the wallet build the transaction (and if needed commit it)
     uint256 txid;

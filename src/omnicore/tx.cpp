@@ -1516,16 +1516,12 @@ bool CMPTransaction::interpret_CommitChannel()
         amount_commited = DecompressInteger(vecAmountBytes);
     } else return false;
 
-    if (!vecVoutBytes.empty()) {
-        vOut = DecompressInteger(vecVoutBytes);
-    } else return false;
 
 
     PrintToLog("channelAddress: %s\n", receiver);
     PrintToLog("version: %d\n", version);
     PrintToLog("propertyId: %d\n", propertyId);
     PrintToLog("amount commited: %d\n", amount_commited);
-    PrintToLog("vOut: %d\n", vOut);
 
     return true;
 }
@@ -1573,6 +1569,7 @@ bool CMPTransaction::interpret_Instant_Trade()
   std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecPropertyIdForSaleBytes = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecAmountForSaleBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecBlock = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecPropertyIdDesiredBytes = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecAmountDesiredBytes = GetNextVarIntBytes(i);
 
@@ -1592,6 +1589,10 @@ bool CMPTransaction::interpret_Instant_Trade()
       amount_forsale = DecompressInteger(vecAmountForSaleBytes);
   } else return false;
 
+  if (!vecBlock.empty()) {
+      blockheight_expiry = DecompressInteger(vecBlock);
+  } else return false;
+
   if (!vecPropertyIdDesiredBytes.empty()) {
       desired_property = DecompressInteger(vecPropertyIdDesiredBytes);
   } else return false;
@@ -1604,6 +1605,7 @@ bool CMPTransaction::interpret_Instant_Trade()
   PrintToLog("messageType: %d\n",type);
   PrintToLog("property: %d\n", property);
   PrintToLog("amount : %d\n", amount_forsale);
+    PrintToLog("blockheight_expiry : %d\n", blockheight_expiry);
   PrintToLog("property desired : %d\n", desired_property);
   PrintToLog("amount desired : %d\n", desired_value);
 
@@ -3870,6 +3872,11 @@ int CMPTransaction::logicMath_CommitChannel()
     //     return (PKT_ERROR_TOKENS -22);
     // }
 
+    if (!t_tradelistdb->checkChannelAddress(receiver)) {
+        PrintToLog("%s(): rejected: address %s doesn't belong to multisig channel\n", __func__, receiver);
+        return (PKT_ERROR_TOKENS -24);
+    }
+
     if (!IsPropertyIdValid(propertyId)) {
         PrintToLog("%s(): rejected: property %d does not exist\n", __func__, property);
         return (PKT_ERROR_TOKENS -24);
@@ -3887,7 +3894,7 @@ int CMPTransaction::logicMath_CommitChannel()
     assert(update_tally_map(sender, propertyId, -amount_commited, BALANCE));
     assert(update_tally_map(receiver, propertyId, amount_commited, CHANNEL_RESERVE));
 
-    t_tradelistdb->recordNewCommit(txid, receiver, sender, propertyId, amount_commited, vOut, block, tx_idx);
+    t_tradelistdb->recordNewCommit(txid, receiver, sender, propertyId, amount_commited, block, tx_idx);
 
     int64_t amountCheck = getMPbalance(receiver, propertyId,CHANNEL_RESERVE);
 
@@ -4014,17 +4021,12 @@ int CMPTransaction::logicMath_Instant_Trade()
       return (PKT_ERROR_METADEX -32);
   }
 
-  if (nNewValue <= 0 || MAX_INT_8_BYTES < nNewValue) {
-      PrintToLog("%s(): rejected: amount for sale out of range or zero: %d\n", __func__, nNewValue);
-      return (PKT_ERROR_METADEX -33);
+  if (!t_tradelistdb->checkChannelPair(sender,receiver)) {
+      PrintToLog("%s(): rejected: some address doesn't belong to multisig channel\n", __func__);
+      return (PKT_ERROR_TOKENS -25);
   }
 
-  if (desired_value <= 0 || MAX_INT_8_BYTES < desired_value) {
-      PrintToLog("%s(): rejected: desired amount out of range or zero: %d\n", __func__, desired_value);
-      return (PKT_ERROR_METADEX -34);
-  }
-
-  int64_t nBalance = getMPbalance(sender, property, BALANCE);
+  int64_t nBalance = getMPbalance(sender, property, CHANNEL_RESERVE);
   if (nBalance < (int64_t) amount_forsale) {
       PrintToLog("%s(): rejected: sender %s has insufficient balance of property %d [%s < %s]\n",
               __func__,
@@ -4035,7 +4037,7 @@ int CMPTransaction::logicMath_Instant_Trade()
       return (PKT_ERROR_METADEX -25);
   }
 
-  nBalance = getMPbalance(receiver, desired_property, BALANCE);
+  nBalance = getMPbalance(receiver, desired_property, CHANNEL_RESERVE);
   if (nBalance < (int64_t) amount_desired) {
       PrintToLog("%s(): rejected: sender %s has insufficient balance of property %d [%s < %s]\n",
               __func__,
@@ -4048,16 +4050,16 @@ int CMPTransaction::logicMath_Instant_Trade()
 
   // ------------------------------------------
 
-  assert(update_tally_map(sender, property, -amount_forsale, BALANCE));
+  assert(update_tally_map(sender, property, -amount_forsale, CHANNEL_RESERVE));
   assert(update_tally_map(receiver, property, amount_forsale, BALANCE));
 
-  assert(update_tally_map(sender, desired_property, amount_desired, BALANCE));
+  assert(update_tally_map(sender, desired_property, amount_desired, CHANNEL_RESERVE));
   assert(update_tally_map(receiver, desired_property, -amount_desired, BALANCE));
 
 
   t_tradelistdb->recordNewInstantTrade(txid, sender,receiver, property, amount_forsale, desired_property, desired_value, block, tx_idx);
 
-
+  // what to do with blockheighy_expiry value?
 
   // int rc = ChnDEx_ADD(sender, property, nNewValue, block, desired_property, desired_value, txid, tx_idx, blockheight_expiry);
 

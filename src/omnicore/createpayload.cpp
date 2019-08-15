@@ -716,7 +716,7 @@ std::vector<unsigned char> CreatePayload_Close_Oracle(uint32_t contractId)
     return payload;
 }
 
-std::vector<unsigned char> CreatePayload_Commit_Channel(uint32_t propertyId, uint64_t amount, uint32_t vout)
+std::vector<unsigned char> CreatePayload_Commit_Channel(uint32_t propertyId, uint64_t amount)
 {
   std::vector<unsigned char> payload;
 
@@ -727,12 +727,10 @@ std::vector<unsigned char> CreatePayload_Commit_Channel(uint32_t propertyId, uin
   std::vector<uint8_t> vecMessageVer = CompressInteger((uint64_t)messageVer);
   std::vector<uint8_t> vecPropertyId = CompressInteger((uint64_t)propertyId);
   std::vector<uint8_t> vecAmount = CompressInteger((uint64_t)amount);
-  std::vector<uint8_t> vecVout = CompressInteger((uint64_t)vout);
   payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
   payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
   payload.insert(payload.end(), vecPropertyId.begin(), vecPropertyId.end());
   payload.insert(payload.end(), vecAmount.begin(), vecAmount.end());
-  payload.insert(payload.end(), vecVout.begin(), vecVout.end());
 
   return payload;
 }

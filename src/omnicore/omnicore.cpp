@@ -3403,10 +3403,10 @@ void CMPTradeList::recordNewInstantTrade(const uint256& txid, const std::string&
   // if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
 }
 
-void CMPTradeList::recordNewCommit(const uint256& txid, const std::string& channelAddress, const std::string& sender, uint32_t propertyId, uint64_t amountCommited, uint32_t vOut, int blockNum, int blockIndex)
+void CMPTradeList::recordNewCommit(const uint256& txid, const std::string& channelAddress, const std::string& sender, uint32_t propertyId, uint64_t amountCommited, int blockNum, int blockIndex)
 {
   if (!pdb) return;
-  std::string strValue = strprintf("%s:%s:%d:%d:%d:%d:%d:%s", channelAddress, sender, propertyId, amountCommited, vOut, blockNum, blockIndex, TYPE_COMMIT);
+  std::string strValue = strprintf("%s:%s:%d:%d:%d:%d:%s", channelAddress, sender, propertyId, amountCommited, blockNum, blockIndex, TYPE_COMMIT);
   const string key = blockNum + "+" + txid.ToString(); // order by blockNum
   Status status = pdb->Put(writeoptions, txid.ToString(), strValue);
   ++nWritten;
@@ -4544,7 +4544,7 @@ const std::string ExodusAddress()
 
        // ensure correct amount of tokens in value string
        boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
-       if (vstr.size() != 8) {
+       if (vstr.size() != 7) {
            //PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
            // PrintToConsole("TRADEDB error - unexpected number of tokens in value %d \n",vstr.size());
            continue;
@@ -4552,7 +4552,7 @@ const std::string ExodusAddress()
 
        //channelAddress, sender, propertyId, amountCommited, vOut, blockIndex
 
-       std::string type = vstr[7];
+       std::string type = vstr[6];
 
        if(type != TYPE_COMMIT)
            continue;
@@ -4565,9 +4565,8 @@ const std::string ExodusAddress()
        uint32_t propertyId = boost::lexical_cast<uint32_t>(vstr[2]);
 
        int64_t amount = boost::lexical_cast<int64_t>(vstr[3]);
-       uint32_t vOut = boost::lexical_cast<uint32_t>(vstr[4]);
-       int blockNum = boost::lexical_cast<int>(vstr[5]);
-       int blockIndex = boost::lexical_cast<int>(vstr[6]);
+       int blockNum = boost::lexical_cast<int>(vstr[4]);
+       int blockIndex = boost::lexical_cast<int>(vstr[5]);
 
        // populate trade object and add to the trade array, correcting for orientation of trade
 
@@ -4578,7 +4577,6 @@ const std::string ExodusAddress()
            trade.push_back(Pair("sender", sender));
            trade.push_back(Pair("propertyId",FormatByType(propertyId,1)));
            trade.push_back(Pair("amount", FormatByType(amount,2)));
-           trade.push_back(Pair("vOut", FormatByType(vOut,1)));
            trade.push_back(Pair("block",blockNum));
            trade.push_back(Pair("block_index",blockIndex));
            tradeArray.push_back(trade);
