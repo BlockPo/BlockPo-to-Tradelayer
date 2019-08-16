@@ -1938,7 +1938,7 @@ static const CRPCCommand commands[] =
     { "trade layer (transaction creation)", "tl_change_oracleref",             &tl_change_oracleref,                {} },
     { "trade layer (transaction creation)", "tl_oraclebackup",                 &tl_oraclebackup,                    {} },
     { "trade layer (transaction creation)", "tl_closeoracle",                  &tl_closeoracle,                     {} },
-    { "trade layer (transaction creation)", "tl_setexodus",                    &tl_setexodus,                       {} }
+    { "trade layer (transaction creation)", "tl_setexodus",                    &tl_setexodus,                       {} },
     { "trade layer (transaction creation)", "tl_commit_tochannel",             &tl_commit_tochannel,                {} }
 #endif
 };

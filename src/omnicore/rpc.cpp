@@ -707,6 +707,9 @@ UniValue tl_getproperty(const JSONRPCRequest& request)
       response.push_back(Pair("margin requirement", FormatDivisibleShortMP(sp.margin_requirement)));
       response.push_back(Pair("blocks until expiration", std::to_string(sp.blocks_until_expiration)));
       response.push_back(Pair("backup address", sp.backup_address));
+      response.push_back(Pair("hight price", FormatDivisibleShortMP(sp.oracle_high)));
+      response.push_back(Pair("low price", FormatDivisibleShortMP(sp.oracle_low)));
+      response.push_back(Pair("last update block", std::to_string(sp.oracle_last_update)));
 
     } else if (sp.prop_type == ALL_PROPERTY_TYPE_PEGGEDS) {
       response.push_back(Pair("contract associated",(uint64_t) sp.contract_associated));
