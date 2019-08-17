@@ -138,8 +138,30 @@ class CMPMetaDEx
 
 };
 
-///////////////////////////////////////////
-/** New things for Contracts */
+
+/** A trade on the channel exchange.
+ */
+class ChnDEx : public CMPMetaDEx
+{
+ private:
+   int blockheight_expiry;
+
+ public:
+ ChnDEx()
+   : blockheight_expiry(0) {}
+
+   ChnDEx(const CMPTransaction &tx)
+     : CMPMetaDEx(tx), blockheight_expiry(tx.blockheight_expiry) {}
+
+     ChnDEx(const std::string& addr, int b, uint32_t c, int64_t nValue, uint32_t cd, int64_t ad, const uint256& tx, uint32_t i, uint8_t suba,int blck)
+       : CMPMetaDEx(addr, b, c, nValue, cd, ad, tx, i, suba), blockheight_expiry(blck) {}
+
+     int getBlockExpiry() const { return blockheight_expiry; }
+     friend MatchReturnType x_Trade(ChnDEx* const pnew);
+
+};
+
+
 class CMPContractDex : public CMPMetaDEx
 {
  private:
@@ -170,7 +192,7 @@ class CMPContractDex : public CMPMetaDEx
 
   std::string displayFullContractPrice() const;
   std::string ToString() const;
-  
+
   void saveOffer(std::ofstream& file, SHA256_CTX* shaCtx) const;
 
   void setPrice(int64_t price);
@@ -204,10 +226,33 @@ namespace mastercore
   // TODO: explore a property-pair, instead of a single priceoperty as map's key........
   md_PricesMap* get_Prices(uint32_t prop);
   md_Set* get_Indexes(md_PricesMap* p, rational_t price);
+
   // ---------------
 
-  ///////////////////////////////////////////
-  /** New things for Contracts */
+  struct ChnDEx_compare
+  {
+    bool operator()(const ChnDEx& lhs, const ChnDEx& rhs) const;
+  };
+
+  // ---------------
+  //! Set of objects sorted by block+idx
+  typedef std::set<ChnDEx, ChnDEx_compare> chn_Set;
+
+  typedef std::map<rational_t, chn_Set> chn_PricesMap;
+
+  typedef std::map<uint32_t, chn_PricesMap> chn_PropertiesMap;
+
+  extern chn_PropertiesMap chndex;
+
+  chn_PricesMap* get_chnPrices(uint32_t prop);
+  chn_Set* get_chnIndexes(chn_PricesMap* p, rational_t price);
+
+  int ChnDEx_ADD(const std::string& sender_addr, uint32_t, int64_t, int block, uint32_t property_desired, int64_t amount_desired, const uint256& txid, unsigned int idx, int blockheight_expiry);
+  bool ChnDEx_INSERT(const ChnDEx& objMetaDEx);
+
+  // ---------------
+
+
   struct ContractDex_compare
   {
     bool operator()(const CMPContractDex &lhs, const CMPContractDex &rhs) const;
@@ -216,12 +261,12 @@ namespace mastercore
   typedef std::set<CMPContractDex, ContractDex_compare> cd_Set;
   typedef std::map<uint64_t, cd_Set> cd_PricesMap;
   typedef std::map<uint32_t, cd_PricesMap> cd_PropertiesMap;
-  
+
   extern cd_PropertiesMap contractdex;
 
   cd_PricesMap *get_PricesCd(uint32_t prop);
   cd_Set *get_IndexesCd(cd_PricesMap *p, uint64_t price);
-  
+
   void LoopBiDirectional(cd_PricesMap* const ppriceMap, uint8_t trdAction, MatchReturnType &NewReturn, CMPContractDex* const pnew, const uint32_t propertyForSale);
   void x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPrices, typename cd_PricesMap::reverse_iterator &it_bwdPrices, uint8_t trdAction, CMPContractDex* const pnew, const uint64_t sellerPrice, const uint32_t propertyForSale, MatchReturnType &NewReturn);
   int ContractDex_ADD(const std::string& sender_addr, uint32_t prop, int64_t amount, int block, const uint256& txid, unsigned int idx, uint64_t effective_price, uint8_t trading_action, int64_t amount_to_reserve);

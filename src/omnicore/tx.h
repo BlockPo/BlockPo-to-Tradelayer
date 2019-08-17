@@ -4,6 +4,7 @@
 class CMPMetaDEx;
 class CMPOffer;
 class CTransaction;
+class ChnDEx;
 ////////////////////////////
 /** New things for Contracts */
 class CMPContractDex;
@@ -30,8 +31,7 @@ class CMPTransaction
 {
     friend class CMPMetaDEx;
     friend class CMPOffer;
-    ////////////////////////////
-    /** New things for Contracts */
+    friend class ChnDEx;
     friend class CMPContractDex;
 
 private:
@@ -79,9 +79,6 @@ private:
     char url[SP_STRING_FIELD_LEN];
     char data[SP_STRING_FIELD_LEN];
 
-    // Commit multisig channel
-    char channelAddress[SP_STRING_FIELD_LEN];
-    
     uint64_t deadline;
     unsigned char early_bird;
     unsigned char percentage;
@@ -98,7 +95,7 @@ private:
     uint64_t minFee;
     uint8_t subAction;
     uint8_t option; // buy=1 , sell=2
-    ////////////////////////////////////
+
     /** New things for Contract */
     uint64_t effective_price;
     uint8_t trading_action;
@@ -117,10 +114,8 @@ private:
     uint32_t ecosystemSP;
     uint32_t attribute_type;
     uint64_t leverage;
-    /*uint32_t numerator;*/
     uint32_t denomination;
-    // int block;
-    ////////////////////////////
+
 
     // Alert
     uint16_t alert_type;
@@ -138,9 +133,17 @@ private:
     uint64_t min_fee;
     unsigned char subaction;
 
-    //Commit channel
-    uint64_t amountCommited;
+    //Multisig channels
+    char channel_address[SP_STRING_FIELD_LEN];
+    uint64_t amount_commited;
+    uint64_t amount_to_withdraw;
+    uint64_t pnl_amount;
     uint64_t vOut;
+    uint64_t vout_bef;
+    uint64_t vout_pay;
+    uint64_t price;
+    int blockheight_expiry;
+
 
     // Indicates whether the transaction can be used to execute logic
     bool rpcOnly;
@@ -191,6 +194,11 @@ private:
     bool interpret_OracleBackup();
     bool interpret_CloseOracle();
     bool interpret_CommitChannel();
+    bool interpret_Withdrawal_FromChannel();
+    bool interpret_Instant_Trade();
+    bool interpret_Update_PNL();
+    bool interpret_Transfer();
+    bool interpret_Create_Channel();
     ///////////////////////////////////////////////
 
     /**
@@ -208,8 +216,6 @@ private:
     int logicMath_Activation();
     int logicMath_Deactivation();
     int logicMath_Alert();
-    ///////////////////////////////////////////////
-    /** New things for Contract */
     int logicMath_ContractDexTrade();
     int logicMath_CreateContractDex();
     int logicMath_ContractDexCancelPrice();
@@ -230,6 +236,11 @@ private:
     int logicMath_OracleBackup();
     int logicMath_CloseOracle();
     int logicMath_CommitChannel();
+    int logicMath_Withdrawal_FromChannel();
+    int logicMath_Instant_Trade();
+    int logicMath_Update_PNL();
+    int logicMath_Transfer();
+    int logicMath_Create_Channel();
     ///////////////////////////////////////////////
 
     /**
@@ -335,6 +346,7 @@ public:
         memset(&data, 0, sizeof(data));
         memset(&stxid, 0, sizeof(stxid));
 	      memset(&name_traded, 0, sizeof(name_traded));
+        memset(&channel_address, 0, sizeof(channel_address));
         deadline = 0;
         early_bird = 0;
         percentage = 0;
@@ -366,9 +378,12 @@ public:
         timeLimit = 0;
         denomination = 0;
 
-        //Commit channel
-        amountCommited = 0;
+        //Multisig channels
+        amount_commited = 0;
+        amount_to_withdraw = 0;
         vOut = 0;
+        blockheight_expiry = 0;
+        pnl_amount= 0;
 
         ////////////////////////////////////
     }
@@ -482,6 +497,16 @@ struct oracledata
   int64_t high;
   int64_t low;
   uint32_t contractId;
+};
+
+struct withdrawalAccepted
+{
+  std::string address;
+  int deadline_block;
+  uint32_t propertyId;
+  uint64_t amount;
+
+  withdrawalAccepted() : address(""), deadline_block(0), propertyId(0), amount(0) {}
 };
 
 

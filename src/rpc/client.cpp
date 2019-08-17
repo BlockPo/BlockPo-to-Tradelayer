@@ -197,7 +197,17 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_createpayload_dexoffer", 3, "arg3" },
     { "tl_createpayload_dexoffer", 6, "arg6" },
     { "tl_createpayload_senddexaccept", 1, "arg1" },
-     { "tl_createpayload_sendvesting", 0, "arg0"},
+    { "tl_createpayload_sendvesting", 0, "arg0"},
+    { "tl_createpayload_instant_trade", 0, "arg0"},
+    { "tl_createpayload_instant_trade", 2, "arg2"},
+    { "tl_createpayload_instant_trade", 3, "arg3"},
+    // { "tl_createpayload_instant_trade", 4, "arg4"},
+
+
+    { "tl_createpayload_pnl_update", 0, "arg0"},
+    { "tl_createpayload_pnl_update", 2, "arg2"},
+    { "tl_createpayload_pnl_update", 3, "arg3"},
+    { "tl_createpayload_pnl_update", 4, "arg4"},
 
     /* Trade Layer - raw transaction calls */
     { "tl_decodetransaction", 1, "arg1" },
@@ -257,6 +267,8 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_setoracle", 3, "arg3" },
     { "tl_commit_tochannel", 2, "arg2" },
     { "tl_commit_tochannel", 4, "arg4" },
+    { "tl_withdrawal_fromchannel", 2, "arg2" },
+    { "tl_withdrawal_fromchannel", 4, "arg4" },
 
     /* Trade Layer - data retrieval calls */
     { "tl_setautocommit", 0, "arg0" },

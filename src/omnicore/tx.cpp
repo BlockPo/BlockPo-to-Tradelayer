@@ -51,6 +51,7 @@ typedef boost::multiprecision::cpp_dec_float_100 dec_float;
 typedef boost::multiprecision::checked_int128_t int128_t;
 extern std::map<std::string,uint32_t> peggedIssuers;
 extern std::map<uint32_t,oracledata> oraclePrices;
+extern std::map<std::string,vector<withdrawalAccepted>> withdrawal_Map;
 extern int64_t factorE;
 extern int64_t priceIndex;
 extern int64_t allPrice;
@@ -242,6 +243,18 @@ bool CMPTransaction::interpret_Transaction()
 
     case MSC_TYPE_COMMIT_CHANNEL:
         return interpret_CommitChannel();
+
+    case MSC_TYPE_WITHDRAWAL_FROM_CHANNEL:
+        return interpret_Withdrawal_FromChannel();
+
+    case MSC_TYPE_INSTANT_TRADE:
+        return interpret_Instant_Trade();
+
+    case MSC_TYPE_TRANSFER:
+        return interpret_Transfer();
+
+    case MSC_TYPE_CREATE_CHANNEL:
+        return interpret_Create_Channel();
 
     }
 
@@ -1498,43 +1511,228 @@ bool CMPTransaction::interpret_CommitChannel()
     std::vector<uint8_t> vecAmountBytes = GetNextVarIntBytes(i);
     std::vector<uint8_t> vecVoutBytes = GetNextVarIntBytes(i);
 
-    const char* p = i + (char*) &pkt;
-    std::vector<std::string> spstr;
-    for (int j = 0; j < 1; j++) {
-      spstr.push_back(std::string(p));
-      p += spstr.back().size() + 1;
-    }
+    if (!vecContIdBytes.empty()) {
+        propertyId = DecompressInteger(vecContIdBytes);
+    } else return false;
 
-    if (isOverrun(p)) {
-      PrintToLog("%s(): rejected: malformed string value(s)\n", __func__);
-      return false;
-    }
+    if (!vecAmountBytes.empty()) {
+        amount_commited = DecompressInteger(vecAmountBytes);
+    } else return false;
 
-    int j = 0;
-    memcpy(channelAddress, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(channelAddress)-1)); j++;
-    i = i + strlen(channelAddress) + 1; // data sizes + 1 null terminators
 
+
+    PrintToLog("channelAddress: %s\n", receiver);
+    PrintToLog("version: %d\n", version);
+    PrintToLog("propertyId: %d\n", propertyId);
+    PrintToLog("amount commited: %d\n", amount_commited);
+
+    return true;
+}
+
+/** Tx 109 */
+bool CMPTransaction::interpret_Withdrawal_FromChannel()
+{
+    int i = 0;
+
+    std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+
+    std::vector<uint8_t> vecContIdBytes = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecAmountBytes = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecVoutBytes = GetNextVarIntBytes(i);
 
     if (!vecContIdBytes.empty()) {
         propertyId = DecompressInteger(vecContIdBytes);
     } else return false;
 
     if (!vecAmountBytes.empty()) {
-        amountCommited = DecompressInteger(vecAmountBytes);
-    } else return false;
-
-    if (!vecVoutBytes.empty()) {
-        vOut = DecompressInteger(vecVoutBytes);
+        amount_to_withdraw = DecompressInteger(vecAmountBytes);
     } else return false;
 
 
-    PrintToLog("channelAddress: %s\n", channelAddress);
+    PrintToLog("channelAddress: %s\n", receiver);
     PrintToLog("version: %d\n", version);
     PrintToLog("propertyId: %d\n", propertyId);
-    PrintToLog("amount commited: %d\n", amountCommited);
-    PrintToLog("vOut: %d\n", vOut);
+    PrintToLog("amount to withdrawal: %d\n", amount_to_withdraw);
 
     return true;
+}
+
+/** Tx 110 */
+bool CMPTransaction::interpret_Instant_Trade()
+{
+  int i = 0;
+
+  PrintToLog("Inside interpret_Instant_Trade\n");
+
+  std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecPropertyIdForSaleBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecAmountForSaleBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecBlock = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecPropertyIdDesiredBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecAmountDesiredBytes = GetNextVarIntBytes(i);
+
+  if (!vecTypeBytes.empty()) {
+      type = DecompressInteger(vecTypeBytes);
+  } else return false;
+
+  if (!vecVersionBytes.empty()) {
+      version = DecompressInteger(vecVersionBytes);
+  } else return false;
+
+  if (!vecPropertyIdForSaleBytes.empty()) {
+      property = DecompressInteger(vecPropertyIdForSaleBytes);
+  } else return false;
+
+  if (!vecAmountForSaleBytes.empty()) {
+      amount_forsale = DecompressInteger(vecAmountForSaleBytes);
+  } else return false;
+
+  if (!vecBlock.empty()) {
+      blockheight_expiry = DecompressInteger(vecBlock);
+  } else return false;
+
+  if (!vecPropertyIdDesiredBytes.empty()) {
+      desired_property = DecompressInteger(vecPropertyIdDesiredBytes);
+  } else return false;
+
+  if (!vecAmountDesiredBytes.empty()) {
+    desired_value = DecompressInteger(vecAmountDesiredBytes);
+  } else return false;
+
+  PrintToLog("version: %d\n", version);
+  PrintToLog("messageType: %d\n",type);
+  PrintToLog("property: %d\n", property);
+  PrintToLog("amount : %d\n", amount_forsale);
+  PrintToLog("blockheight_expiry : %d\n", blockheight_expiry);
+  PrintToLog("property desired : %d\n", desired_property);
+  PrintToLog("amount desired : %d\n", desired_value);
+
+  return true;
+}
+
+/** Tx 111 */
+bool CMPTransaction::interpret_Update_PNL()
+{
+  int i = 0;
+
+  std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecPropertyId = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecAmount = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecBlock = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecVoutBef = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecVoutPay = GetNextVarIntBytes(i);
+
+  if (!vecTypeBytes.empty()) {
+      type = DecompressInteger(vecTypeBytes);
+  } else return false;
+
+  if (!vecVersionBytes.empty()) {
+      version = DecompressInteger(vecVersionBytes);
+  } else return false;
+
+  if (!vecPropertyId.empty()) {
+      property = DecompressInteger(vecPropertyId);
+  } else return false;
+
+  if (!vecAmount.empty()) {
+      pnl_amount = DecompressInteger(vecAmount);
+  } else return false;
+
+  if (!vecVoutBef.empty()) {
+      vout_bef = DecompressInteger(vecVoutBef);
+  } else return false;
+
+  if (!vecVoutPay.empty()) {
+      vout_pay = DecompressInteger(vecVoutPay);
+  } else return false;
+
+
+  // PrintToLog("version: %d\n", version);
+  // PrintToLog("messageType: %d\n",type);
+  // PrintToLog("property: %d\n", property);
+  // PrintToLog("amount : %d\n", amount_forsale);
+  // PrintToLog("property desired : %d\n", desired_property);
+  // PrintToLog("amount desired : %d\n", desired_value);
+
+  return true;
+}
+
+/** Tx 112 */
+bool CMPTransaction::interpret_Transfer()
+{
+  int i = 0;
+
+  std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecPropertyId = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecAmount = GetNextVarIntBytes(i);
+
+  if (!vecTypeBytes.empty()) {
+      type = DecompressInteger(vecTypeBytes);
+  } else return false;
+
+  if (!vecVersionBytes.empty()) {
+      version = DecompressInteger(vecVersionBytes);
+  } else return false;
+
+  if (!vecPropertyId.empty()) {
+      property = DecompressInteger(vecPropertyId);
+  } else return false;
+
+  if (!vecAmount.empty()) {
+      amount = DecompressInteger(vecAmount);
+  } else return false;
+
+  return true;
+}
+
+
+/** Tx 113 */
+bool CMPTransaction::interpret_Create_Channel()
+{
+  int i = 0;
+
+  PrintToLog("Inside interpret_Create_Channel\n");
+
+  std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+
+  const char* p = i + (char*) &pkt;
+  std::vector<std::string> spstr;
+  for (int j = 0; j < 1; j++) {
+    spstr.push_back(std::string(p));
+    p += spstr.back().size() + 1;
+  }
+
+  if (isOverrun(p)) {
+    PrintToLog("%s(): rejected: malformed string value(s)\n", __func__);
+    return false;
+  }
+
+  int j = 0;
+  memcpy(channel_address, spstr[j].c_str(), spstr[j].length()); j++;
+  i = i + strlen(channel_address) + 1; // data sizes + null terminators
+
+
+  if (!vecTypeBytes.empty()) {
+      type = DecompressInteger(vecTypeBytes);
+  } else return false;
+
+  if (!vecVersionBytes.empty()) {
+      version = DecompressInteger(vecVersionBytes);
+  } else return false;
+
+  PrintToLog("version: %d\n", version);
+  PrintToLog("messageType: %d\n",type);
+  PrintToLog("channelAddress : %d\n",channel_address);
+  PrintToLog("first address : %d\n", sender);
+  PrintToLog("second address : %d\n", receiver);
+
+
+  return true;
 }
 
 // ---------------------- CORE LOGIC -------------------------
@@ -1650,6 +1848,18 @@ int CMPTransaction::interpretPacket()
 
         case MSC_TYPE_COMMIT_CHANNEL:
             return logicMath_CommitChannel();
+
+        case MSC_TYPE_WITHDRAWAL_FROM_CHANNEL:
+            return logicMath_Withdrawal_FromChannel();
+
+        case MSC_TYPE_INSTANT_TRADE:
+            return logicMath_Instant_Trade();
+
+        case MSC_TYPE_TRANSFER:
+            return logicMath_Transfer();
+
+        case MSC_TYPE_CREATE_CHANNEL:
+            return logicMath_Create_Channel();
 
 
     }
@@ -3694,6 +3904,11 @@ int CMPTransaction::logicMath_CommitChannel()
     //     return (PKT_ERROR_TOKENS -22);
     // }
 
+    if (!t_tradelistdb->checkChannelAddress(receiver)) {
+        PrintToLog("%s(): rejected: address %s doesn't belong to multisig channel\n", __func__, receiver);
+        return (PKT_ERROR_TOKENS -24);
+    }
+
     if (!IsPropertyIdValid(propertyId)) {
         PrintToLog("%s(): rejected: property %d does not exist\n", __func__, property);
         return (PKT_ERROR_TOKENS -24);
@@ -3705,17 +3920,306 @@ int CMPTransaction::logicMath_CommitChannel()
     // logic for the commit Here
     PrintToLog("logic_Math for commit channel\n");
     PrintToLog("sender: %s\n",sender);
-    PrintToLog("channelAddress: %s\n",channelAddress);
+    PrintToLog("channelAddress: %s\n",receiver);
 
     //putting money into channel reserve
-    assert(update_tally_map(sender, propertyId, -amountCommited, BALANCE));
-    assert(update_tally_map(channelAddress, propertyId, amountCommited, CHANNEL_RESERVE));
+    assert(update_tally_map(sender, propertyId, -amount_commited, BALANCE));
+    assert(update_tally_map(receiver, propertyId, amount_commited, CHANNEL_RESERVE));
 
-    t_tradelistdb->recordNewCommit(txid, channelAddress, sender, propertyId, amountCommited, vOut, block, tx_idx);
+    t_tradelistdb->recordNewCommit(txid, receiver, sender, propertyId, amount_commited, block, tx_idx);
 
+    int64_t amountCheck = getMPbalance(receiver, propertyId,CHANNEL_RESERVE);
+
+    PrintToLog("amount inside channel multisig: %s\n",amountCheck);
 
     return 0;
 }
+
+/** Tx 109 */
+int CMPTransaction::logicMath_Withdrawal_FromChannel()
+{
+    uint256 blockHash;
+    {
+        LOCK(cs_main);
+
+        CBlockIndex* pindex = chainActive[block];
+        if (pindex == NULL) {
+            PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
+            return (PKT_ERROR_TOKENS -20);
+        }
+        blockHash = pindex->GetBlockHash();
+    }
+
+    // if (!IsTransactionTypeAllowed(block, property, type, version)) {
+    //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+    //             __func__,
+    //             type,
+    //             version,
+    //             property,
+    //             block);
+    //     return (PKT_ERROR_TOKENS -22);
+    // }
+
+    if (!IsPropertyIdValid(propertyId)) {
+        PrintToLog("%s(): rejected: property %d does not exist\n", __func__, property);
+        return (PKT_ERROR_TOKENS -24);
+    }
+
+    if (!t_tradelistdb->checkChannelAddress(receiver)) {
+        PrintToLog("%s(): rejected: address %s doesn't belong to multisig channel\n", __func__, receiver);
+        return (PKT_ERROR_TOKENS -24);
+    }
+
+
+    // ------------------------------------------
+
+    //checking balance of channelAddress
+    uint64_t totalAmount = static_cast<uint64_t>(getMPbalance(receiver, propertyId, CHANNEL_RESERVE));
+
+    PrintToLog("amount_to_withdraw : %d\n",amount_to_withdraw);
+    PrintToLog("totalAmount in channel: %d\n",totalAmount);
+
+    if (amount_to_withdraw > totalAmount)
+    {
+        PrintToLog("%s(): amount to withdrawal is bigger than totalAmount on channel\n", __func__);
+        return (PKT_ERROR_TOKENS -25);
+    }
+
+    uint64_t amount_commited = t_tradelistdb->getRemaining(receiver, sender, propertyId);
+
+    PrintToLog("all the amount_commited for the receiver address : %s\n",amount_commited);
+
+    if (amount_to_withdraw > amount_commited)
+    {
+        PrintToLog("%s(): amount to withdrawal is bigger than amount remaining in channel for the address %s\n", __func__, sender);
+        return (PKT_ERROR_TOKENS -26);
+    }
+
+    withdrawalAccepted wthd;
+
+    wthd.address = sender;
+    wthd.deadline_block = block + 7;
+    wthd.propertyId = propertyId;
+    wthd.amount = amount_to_withdraw;
+
+    PrintToLog("checking wthd element : address: %s, deadline: %d, propertyId: %d, amount: %d \n", wthd.address, wthd.deadline_block, wthd.propertyId, wthd.amount);
+
+    withdrawal_Map[receiver].push_back(wthd);
+
+    t_tradelistdb->recordNewWithdrawal(txid, receiver, sender, propertyId, amount_to_withdraw, block, tx_idx);
+
+    return 0;
+}
+
+
+/** Tx 110 */
+int CMPTransaction::logicMath_Instant_Trade()
+{
+  PrintToLog("Begining of logicMath_Instant_Trade\n");
+
+  // if (!IsTransactionTypeAllowed(block, property, type, version)) {
+  //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+  //             __func__,
+  //             type,
+  //             version,
+  //             property,
+  //             block);
+  //     return (PKT_ERROR_METADEX -22);
+  // }
+
+  if (property == desired_property) {
+      PrintToLog("%s(): rejected: property for sale %d and desired property %d must not be equal\n",
+              __func__,
+              property,
+              desired_property);
+      return (PKT_ERROR_METADEX -29);
+  }
+
+  if (isTestEcosystemProperty(property) != isTestEcosystemProperty(desired_property)) {
+      PrintToLog("%s(): rejected: property for sale %d and desired property %d not in same ecosystem\n",
+              __func__,
+              property,
+              desired_property);
+      return (PKT_ERROR_METADEX -30);
+  }
+
+  if (!IsPropertyIdValid(property)) {
+      PrintToLog("%s(): rejected: property for sale %d does not exist\n", __func__, property);
+      return (PKT_ERROR_METADEX -31);
+  }
+
+  if (!IsPropertyIdValid(desired_property)) {
+      PrintToLog("%s(): rejected: desired property %d does not exist\n", __func__, desired_property);
+      return (PKT_ERROR_METADEX -32);
+  }
+
+  if (!t_tradelistdb->checkChannelPair(sender,receiver)) {
+      PrintToLog("%s(): rejected: some address doesn't belong to multisig channel\n", __func__);
+      return (PKT_ERROR_TOKENS -25);
+  }
+
+  int64_t nBalance = getMPbalance(sender, property, CHANNEL_RESERVE);
+  if (nBalance < (int64_t) amount_forsale) {
+      PrintToLog("%s(): rejected: sender %s has insufficient balance of property %d [%s < %s]\n",
+              __func__,
+              sender,
+              property,
+              FormatMP(property, nBalance),
+              FormatMP(property, amount_forsale));
+      return (PKT_ERROR_METADEX -25);
+  }
+
+  nBalance = getMPbalance(receiver, desired_property, BALANCE);
+  if (nBalance < (int64_t) desired_value) {
+      PrintToLog("%s(): rejected: sender %s has insufficient balance of property %d [%s < %s]\n",
+              __func__,
+              sender,
+              property,
+              FormatMP(property, nBalance),
+              FormatMP(property, desired_value));
+      return (PKT_ERROR_METADEX -25);
+  }
+
+  // ------------------------------------------
+
+  assert(update_tally_map(sender, property, -amount_forsale, CHANNEL_RESERVE));
+  assert(update_tally_map(receiver, property, amount_forsale, BALANCE));
+
+  assert(update_tally_map(sender, desired_property, desired_value, CHANNEL_RESERVE));
+  assert(update_tally_map(receiver, desired_property, -desired_value, BALANCE));
+
+
+  t_tradelistdb->recordNewInstantTrade(txid, sender,receiver, property, amount_forsale, desired_property, desired_value, block, tx_idx);
+
+  // what to do with blockheighy_expiry value?
+
+  // int rc = ChnDEx_ADD(sender, property, nNewValue, block, desired_property, desired_value, txid, tx_idx, blockheight_expiry);
+
+  return 0;
+}
+
+/** Tx 111 */
+int CMPTransaction::logicMath_Update_PNL()
+{
+  uint256 blockHash;
+  {
+      LOCK(cs_main);
+
+      CBlockIndex* pindex = chainActive[block];
+      if (pindex == NULL) {
+          PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
+          return (PKT_ERROR_TOKENS -20);
+      }
+      blockHash = pindex->GetBlockHash();
+  }
+
+  // if (!IsTransactionTypeAllowed(block, property, type, version)) {
+  //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+  //             __func__,
+  //             type,
+  //             version,
+  //             property,
+  //             block);
+  //     return (PKT_ERROR_TOKENS -22);
+  // }
+
+  if (!IsPropertyIdValid(propertyId)) {
+      PrintToLog("%s(): rejected: property %d does not exist\n", __func__, property);
+      return (PKT_ERROR_TOKENS -24);
+  }
+
+
+  // ------------------------------------------
+
+
+  //TODO: logic for PNLS
+  // assert(update_tally_map(sender, propertyId, -amount_commited, BALANCE));
+  // assert(update_tally_map(receiver, propertyId, amount_commited, CHANNEL_RESERVE));
+
+
+  return 0;
+
+}
+
+/** Tx 112 */
+int CMPTransaction::logicMath_Transfer()
+{
+  uint256 blockHash;
+  {
+      LOCK(cs_main);
+
+      CBlockIndex* pindex = chainActive[block];
+      if (pindex == NULL) {
+          PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
+          return (PKT_ERROR_TOKENS -20);
+      }
+      blockHash = pindex->GetBlockHash();
+  }
+
+  // if (!IsTransactionTypeAllowed(block, property, type, version)) {
+  //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+  //             __func__,
+  //             type,
+  //             version,
+  //             property,
+  //             block);
+  //     return (PKT_ERROR_TOKENS -22);
+  // }
+
+  if (!IsPropertyIdValid(propertyId)) {
+      PrintToLog("%s(): rejected: property %d does not exist\n", __func__, property);
+      return (PKT_ERROR_TOKENS -24);
+  }
+
+
+  // ------------------------------------------
+
+
+  // TRANSFER logic here
+
+  assert(update_tally_map(sender, propertyId, -amount, CHANNEL_RESERVE));
+  assert(update_tally_map(receiver, propertyId, amount, CHANNEL_RESERVE));
+
+  // recordNewTransfer
+  t_tradelistdb->recordNewTransfer(txid, sender,receiver, propertyId, amount, block, tx_idx);
+
+  return 0;
+
+}
+
+/** Tx 113*/
+int CMPTransaction::logicMath_Create_Channel()
+{
+    uint256 blockHash;
+    {
+        LOCK(cs_main);
+
+        CBlockIndex* pindex = chainActive[block];
+        if (pindex == NULL) {
+            PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
+            return (PKT_ERROR_TOKENS -20);
+        }
+        blockHash = pindex->GetBlockHash();
+    }
+
+    // if (!IsTransactionTypeAllowed(block, property, type, version)) {
+    //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+    //             __func__,
+    //             type,
+    //             version,
+    //             property,
+    //             block);
+    //     return (PKT_ERROR_TOKENS -22);
+    // }
+
+
+    // ------------------------------------------
+
+    t_tradelistdb->recordNewChannel(channel_address,sender,receiver,block, tx_idx);
+
+    return 0;
+}
+
 
 
 

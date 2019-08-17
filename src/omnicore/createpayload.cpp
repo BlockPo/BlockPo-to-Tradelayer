@@ -716,24 +716,130 @@ std::vector<unsigned char> CreatePayload_Close_Oracle(uint32_t contractId)
     return payload;
 }
 
-std::vector<unsigned char> CreatePayload_Commit_Channel(uint32_t propertyId, uint64_t amount, uint32_t vout, std::string channelAddress)
+std::vector<unsigned char> CreatePayload_Commit_Channel(uint32_t propertyId, uint64_t amount)
 {
   std::vector<unsigned char> payload;
 
   uint64_t messageType = 108;
   uint64_t messageVer = 0;
 
-  if ((channelAddress).size() > 255) channelAddress = channelAddress.substr(0,255);
   std::vector<uint8_t> vecMessageType = CompressInteger((uint64_t)messageType);
   std::vector<uint8_t> vecMessageVer = CompressInteger((uint64_t)messageVer);
   std::vector<uint8_t> vecPropertyId = CompressInteger((uint64_t)propertyId);
   std::vector<uint8_t> vecAmount = CompressInteger((uint64_t)amount);
-  std::vector<uint8_t> vecVout = CompressInteger((uint64_t)vout);
   payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
   payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
   payload.insert(payload.end(), vecPropertyId.begin(), vecPropertyId.end());
   payload.insert(payload.end(), vecAmount.begin(), vecAmount.end());
-  payload.insert(payload.end(), vecVout.begin(), vecVout.end());
+
+  return payload;
+}
+
+std::vector<unsigned char> CreatePayload_Withdrawal_FromChannel(uint32_t propertyId, uint64_t amount)
+{
+  std::vector<unsigned char> payload;
+
+  uint64_t messageType = 109;
+  uint64_t messageVer = 0;
+
+  std::vector<uint8_t> vecMessageType = CompressInteger((uint64_t)messageType);
+  std::vector<uint8_t> vecMessageVer = CompressInteger((uint64_t)messageVer);
+  std::vector<uint8_t> vecPropertyId = CompressInteger((uint64_t)propertyId);
+  std::vector<uint8_t> vecAmount = CompressInteger((uint64_t)amount);
+  payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
+  payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
+  payload.insert(payload.end(), vecPropertyId.begin(), vecPropertyId.end());
+  payload.insert(payload.end(), vecAmount.begin(), vecAmount.end());
+
+  return payload;
+}
+
+std::vector<unsigned char> CreatePayload_Instant_Trade(uint32_t propertyId, uint64_t amount, uint32_t blockheight_expiry, uint32_t propertyDesired, uint64_t amountDesired, uint64_t price)
+{
+  std::vector<unsigned char> payload;
+
+  uint64_t messageType = 110;
+  uint64_t messageVer = 0;
+
+  std::vector<uint8_t> vecMessageType = CompressInteger((uint64_t)messageType);
+  std::vector<uint8_t> vecMessageVer = CompressInteger((uint64_t)messageVer);
+  std::vector<uint8_t> vecPropertyId = CompressInteger((uint64_t)propertyId);
+  std::vector<uint8_t> vecAmount = CompressInteger((uint64_t)amount);
+  std::vector<uint8_t> vecBlock = CompressInteger((uint64_t)blockheight_expiry);
+  std::vector<uint8_t> vecPropertyDesired = CompressInteger((uint64_t)propertyDesired);
+  std::vector<uint8_t> vecAmountDesired = CompressInteger((uint64_t)amountDesired);
+
+  payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
+  payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
+  payload.insert(payload.end(), vecPropertyId.begin(), vecPropertyId.end());
+  payload.insert(payload.end(), vecAmount.begin(), vecAmount.end());
+  payload.insert(payload.end(), vecBlock.begin(), vecBlock.end());
+  payload.insert(payload.end(), vecPropertyDesired.begin(), vecPropertyDesired.end());
+  payload.insert(payload.end(), vecAmountDesired.begin(), vecAmountDesired.end());
+
+  return payload;
+}
+
+std::vector<unsigned char> CreatePayload_PNL_Update(uint32_t propertyId, uint64_t amount, uint32_t blockheight_expiry, uint32_t voutBenef, uint32_t voutPayer)
+{
+  std::vector<unsigned char> payload;
+
+  uint64_t messageType = 111;
+  uint64_t messageVer = 0;
+
+  std::vector<uint8_t> vecMessageType = CompressInteger((uint64_t)messageType);
+  std::vector<uint8_t> vecMessageVer = CompressInteger((uint64_t)messageVer);
+  std::vector<uint8_t> vecPropertyId = CompressInteger((uint64_t)propertyId);
+  std::vector<uint8_t> vecAmount = CompressInteger((uint64_t)amount);
+  std::vector<uint8_t> vecBlock = CompressInteger((uint64_t)blockheight_expiry);
+  std::vector<uint8_t> vecVoutBef = CompressInteger((uint64_t)voutBenef);
+  std::vector<uint8_t> vecVoutPay = CompressInteger((uint64_t)voutPayer);
+
+  payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
+  payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
+  payload.insert(payload.end(), vecPropertyId.begin(), vecPropertyId.end());
+  payload.insert(payload.end(), vecAmount.begin(), vecAmount.end());
+  payload.insert(payload.end(), vecBlock.begin(), vecBlock.end());
+  payload.insert(payload.end(), vecVoutBef.begin(), vecVoutBef.end());
+  payload.insert(payload.end(), vecVoutPay.begin(), vecVoutPay.end());
+
+  return payload;
+}
+
+std::vector<unsigned char> CreatePayload_Transfer(uint32_t propertyId, uint64_t amount)
+{
+  std::vector<unsigned char> payload;
+
+  uint64_t messageType = 112;
+  uint64_t messageVer = 0;
+
+  std::vector<uint8_t> vecMessageType = CompressInteger((uint64_t)messageType);
+  std::vector<uint8_t> vecMessageVer = CompressInteger((uint64_t)messageVer);
+  std::vector<uint8_t> vecPropertyId = CompressInteger((uint64_t)propertyId);
+  std::vector<uint8_t> vecAmount = CompressInteger((uint64_t)amount);
+
+  payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
+  payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
+  payload.insert(payload.end(), vecPropertyId.begin(), vecPropertyId.end());
+  payload.insert(payload.end(), vecAmount.begin(), vecAmount.end());
+
+  return payload;
+}
+
+std::vector<unsigned char> CreatePayload_Create_Channel(std::string channelAddress)
+{
+  std::vector<unsigned char> payload;
+
+  uint64_t messageType = 113;
+  uint64_t messageVer = 0;
+
+  std::vector<uint8_t> vecMessageType = CompressInteger((uint64_t)messageType);
+  std::vector<uint8_t> vecMessageVer = CompressInteger((uint64_t)messageVer);
+
+  if ((channelAddress).size() > 255) channelAddress = channelAddress.substr(0,255);
+
+  payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
+  payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
   payload.insert(payload.end(), channelAddress.begin(), channelAddress.end());
   payload.push_back('\0');
 

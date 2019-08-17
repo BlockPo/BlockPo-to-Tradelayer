@@ -40,6 +40,8 @@ using namespace mastercore;
 //! Global map for price and order data
 md_PropertiesMap mastercore::metadex;
 
+chn_PropertiesMap mastercore::chndex;
+
 extern volatile uint64_t marketPrice;
 extern volatile int idx_q;
 extern int64_t factorE;
@@ -74,6 +76,15 @@ md_PricesMap* mastercore::get_Prices(uint32_t prop)
     return (md_PricesMap*) NULL;
 }
 
+chn_PricesMap* mastercore::get_chnPrices(uint32_t prop)
+{
+    chn_PropertiesMap::iterator it = chndex.find(prop);
+
+    if (it != chndex.end()) return &(it->second);
+
+    return (chn_PricesMap*) NULL;
+}
+
 md_Set* mastercore::get_Indexes(md_PricesMap* p, rational_t price)
 {
     md_PricesMap::iterator it = p->find(price);
@@ -81,6 +92,15 @@ md_Set* mastercore::get_Indexes(md_PricesMap* p, rational_t price)
     if (it != p->end()) return &(it->second);
 
     return (md_Set*) NULL;
+}
+
+chn_Set* mastercore::get_chnIndexes(chn_PricesMap* p, rational_t price)
+{
+    chn_PricesMap::iterator it = p->find(price);
+
+    if (it != p->end()) return &(it->second);
+
+    return (chn_Set*) NULL;
 }
 
 cd_PropertiesMap mastercore::contractdex;
@@ -1596,6 +1616,8 @@ MatchReturnType x_Trade(CMPMetaDEx* const pnew)
   return NewReturn;
 }
 
+
+
 ///////////////////////////////////////
 /** New things for Contracts */
 MatchReturnType x_Trade(CMPContractDex* const pnew)
@@ -1747,6 +1769,7 @@ rational_t CMPMetaDEx::inversePrice() const
   return inversePrice;
 }
 
+
 int64_t CMPMetaDEx::getAmountToFill() const
 {
     // round up to ensure that the amount we present will actually result in buying all available tokens
@@ -1766,6 +1789,7 @@ void CMPMetaDEx::setAmountRemaining(int64_t amount, const std::string& label)
     amount_remaining = amount;
     PrintToLog("update remaining amount still up for sale (%ld %s):%s\n", amount, label, ToString());
 }
+
 
 ///////////////////////////////////////////
 void CMPMetaDEx::setAmountForsale(int64_t amount, const std::string& label)
@@ -1872,6 +1896,7 @@ bool MetaDEx_compare::operator()(const CMPMetaDEx &lhs, const CMPMetaDEx &rhs) c
     else return lhs.getBlock() < rhs.getBlock();
 }
 
+
 bool ContractDex_compare::operator()(const CMPContractDex &lhs, const CMPContractDex &rhs) const
 {
     if (lhs.getBlock() == rhs.getBlock()) return lhs.getIdx() < rhs.getIdx();
@@ -1947,7 +1972,6 @@ bool mastercore::ContractDex_INSERT(const CMPContractDex &objContractDex)
 
   // Set the contractdex map for the property to the updated (or new if it didn't exist) price map
   contractdex[objContractDex.getProperty()] = *cd_prices;
-  // = *cd_prices;
 
   return true;
 }
@@ -1982,6 +2006,7 @@ int mastercore::MetaDEx_ADD(const std::string& sender_addr, uint32_t prop, int64
             // if (msc_debug_metadex3) MetaDEx_debug_print();
         }
     }
+
     rc = 0;
     return rc;
 }
@@ -2126,20 +2151,20 @@ int mastercore::ContractDex_CANCEL_EVERYTHING(const uint256& txid, unsigned int 
 
 	              arith_uint256 amountMargin = (ConvertTo256(amountForSale) * ConvertTo256(marginRe) * ConvertTo256(num) / (ConvertTo256(den) * ConvertTo256(factorE)));
 	              int64_t redeemed = ConvertTo64(amountMargin);
-		      
+
 	              // PrintToLog("collateral currency id of contract : %d\n",collateralCurrency);
 	              // PrintToLog("margin requirement of contract : %d\n",marginRe);
 	              // PrintToLog("amountForSale: %d\n",amountForSale);
 	              // PrintToLog("Address: %d\n",addr);
 	              // PrintToLog("--------------------------------------------\n");
-		      
+
 	              // move from reserve to balance the collateral
 	              if (balance > redeemed && balance > 0 && redeemed > 0)
 			{
 	                  assert(update_tally_map(addr, collateralCurrency, redeemed, BALANCE));
 	                  assert(update_tally_map(addr, collateralCurrency, -redeemed, CONTRACTDEX_RESERVE));
 			}
-		      
+
 	              bValid = true;
 	              // p_txlistdb->recordContractDexCancelTX(txid, it->getHash(), bValid, block, it->getProperty(), it->getAmountForSale
 	              indexes.erase(it++);
@@ -2148,7 +2173,7 @@ int mastercore::ContractDex_CANCEL_EVERYTHING(const uint256& txid, unsigned int 
     }
     if (bValid == false)
       PrintToConsole("You don't have active orders\n");
-    
+
     return rc;
 }
 
@@ -2205,7 +2230,7 @@ int mastercore::ContractDex_CANCEL_FOR_BLOCK(const uint256& txid,  int block,uns
 			  assert(update_tally_map(addr, collateralCurrency, redeemed, BALANCE));
 	                  assert(update_tally_map(addr, collateralCurrency,  -redeemed, CONTRACTDEX_RESERVE));
 	              }
-		      
+
 	              // record the cancellation
 	              bValid = true;
 	              // p_txlistdb->recordContractDexCancelTX(txid, it->getHash(), bValid, block, it->getProperty(), it->getAmountForSale
