@@ -1852,7 +1852,7 @@ UniValue tl_commit_tochannel(const JSONRPCRequest& request)
 
 UniValue tl_withdrawal_fromchannel(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 5)
+    if (request.params.size() != 4)
         throw runtime_error(
             "tl_withdrawal_fromchannel \"sender\" \"channel address\" \"propertyId\" \"amount\"vout\n"
 
@@ -1863,7 +1863,6 @@ UniValue tl_withdrawal_fromchannel(const JSONRPCRequest& request)
             "2. channel address        (string, required) multisig address of channel\n"
             "3. propertyId             (number, required) the propertyId of token commited into the channel\n"
             "4. amount                 (number, required) amount to withdrawal from channel\n"
-            "5. vout                   (number, required) the reference address vOut\n"
             "\nResult:\n"
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
 
@@ -1877,13 +1876,12 @@ UniValue tl_withdrawal_fromchannel(const JSONRPCRequest& request)
     std::string channelAddress = ParseAddress(request.params[1]);
     uint32_t propertyId = ParsePropertyId(request.params[2]);
     int64_t amount = ParseAmount(request.params[3], true);
-    uint32_t vout = ParseOutputIndex(request.params[4]);
 
 
     RequireExistingProperty(propertyId);
 
     // create a payload for the transaction
-    std::vector<unsigned char> payload = CreatePayload_Withdrawal_FromChannel(propertyId, amount, vout);
+    std::vector<unsigned char> payload = CreatePayload_Withdrawal_FromChannel(propertyId, amount);
 
     // request the wallet build the transaction (and if needed commit it)
     uint256 txid;
@@ -1904,15 +1902,16 @@ UniValue tl_withdrawal_fromchannel(const JSONRPCRequest& request)
 
 UniValue tl_create_channel(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 2)
+    if (request.params.size() != 3)
         throw runtime_error(
             "tl_create_channel \"sender\" \"channel address\" \"propertyId\" \"amount\"vout\n"
 
             "\nsetting multisig address channel.\n"
 
             "\nArguments:\n"
-            "1. sender                 (string, required) the sender address that commit into the channel\n"
-            "2. channel address        (string, required) multisig address of channel\n"
+            "1. first address            (string, required) the first address that commit into the channel\n"
+            "2. second address           (string, required) the second address that commit into the channel\n"
+            "3. channel address          (string, required) multisig address of channel\n"
             "\nResult:\n"
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
 

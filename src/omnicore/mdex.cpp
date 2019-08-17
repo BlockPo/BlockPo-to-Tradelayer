@@ -1616,162 +1616,6 @@ MatchReturnType x_Trade(CMPMetaDEx* const pnew)
   return NewReturn;
 }
 
-MatchReturnType x_Trade(ChnDEx* const pnew)
-{
-
-  const uint32_t propertyForSale = pnew->getProperty();
-  const uint32_t propertyDesired = pnew->getDesProperty();
-  MatchReturnType NewReturn = NOTHING;
-  bool bBuyerSatisfied = false;
-
-  chn_PricesMap* const ppriceMap = get_chnPrices(propertyDesired);
-
-  // Nothing for the desired property exists in the market !!
-  if (!ppriceMap) {
-    PrintToLog("%s()=%d:%s FOUND ON THE MARKET\n", __FUNCTION__, NewReturn, getTradeReturnType(NewReturn));
-    return NewReturn;
-  }
-
-  // Within the desired property map (given one property) iterate over the items looking at prices
-  for (chn_PricesMap::iterator priceIt = ppriceMap->begin(); priceIt != ppriceMap->end(); ++priceIt) { // check all prices
-
-    const rational_t sellersPrice = priceIt->first;
-
-
-    // Is the desired price check satisfied? The buyer's inverse price must be larger than that of the seller.
-    if (pnew->inversePrice() < sellersPrice) {
-      continue;
-    }
-
-    chn_Set* const pofferSet = &(priceIt->second);
-
-    // at good (single) price level and property iterate over offers looking at all parameters to find the match
-    chn_Set::iterator offerIt = pofferSet->begin();
-    while (offerIt != pofferSet->end())
-    {
-	      // specific price, check all properties
-	      const ChnDEx* const pold = &(*offerIt);
-	      assert(pold->unitPrice() == sellersPrice);
-
-      	// does the desired property match?
-	      if (pold->getDesProperty() != propertyForSale)
-        {
-	          ++offerIt;
-	          continue;
-	      }
-
-          // does the pold address pair of pnew address in multisig channel?
-        if (!t_tradelistdb->checkChannelPair(pold->getAddr(),pnew->getAddr()))
-        {
-            ++offerIt;
-            continue;
-        }
-
-
-	      // match found, execute trade now!
-	      const int64_t seller_amountForSale = pold->getAmountRemaining();
-	      const int64_t buyer_amountOffered = pnew->getAmountRemaining();
-
-    	  // preconditions
-
-	      assert(0 < pold->getAmountRemaining());
-	      assert(0 < pnew->getAmountRemaining());
-	      assert(pnew->getProperty() != pnew->getDesProperty());
-	      assert(pnew->getProperty() == pold->getDesProperty());
-	      assert(pold->getProperty() == pnew->getDesProperty());
-	      assert(pold->unitPrice() <= pnew->inversePrice());
-	      assert(pnew->unitPrice() <= pold->inversePrice());
-
-
-	      // First determine how many representable (indivisible) tokens Alice can
-	      // purchase from Bob, using Bob's unit price
-	      // This implies rounding down, since rounding up is impossible, and would
-	      // require more tokens than Alice has
-	      arith_uint256 iCouldBuy = (ConvertTo256(pnew->getAmountRemaining()) * ConvertTo256(pold->getAmountForSale())) / ConvertTo256(pold->getAmountDesired());
-
-	      int64_t nCouldBuy = 0;
-	      if (iCouldBuy < ConvertTo256(pold->getAmountRemaining())) {
-	         nCouldBuy = ConvertTo64(iCouldBuy);
-	      } else {
-	         nCouldBuy = pold->getAmountRemaining();
-	      }
-
-	      if (nCouldBuy == 0)
-        {
-	         ++offerIt;
-	         continue;
-	      }
-
-	      // If the amount Alice would have to pay to buy Bob's tokens at his price
-	      // is fractional, always round UP the amount Alice has to pay
-	      // This will always be better for Bob. Rounding in the other direction
-	      // will always be impossible, because ot would violate Bob's accepted price
-	      arith_uint256 iWouldPay = DivideAndRoundUp((ConvertTo256(nCouldBuy) * ConvertTo256(pold->getAmountDesired())), ConvertTo256(pold->getAmountForSale()));
-	      int64_t nWouldPay = ConvertTo64(iWouldPay);
-
-	      const int64_t buyer_amountGot = nCouldBuy;
-	      const int64_t seller_amountGot = nWouldPay;
-	      const int64_t buyer_amountLeft = pnew->getAmountRemaining() - seller_amountGot;
-	      const int64_t seller_amountLeft = pold->getAmountRemaining() - buyer_amountGot;
-
-	      assert(0 <= seller_amountLeft);
-	      assert(0 <= buyer_amountLeft);
-	      assert(seller_amountForSale == seller_amountLeft + buyer_amountGot);
-	      assert(buyer_amountOffered == buyer_amountLeft + seller_amountGot);
-
-      	/***********************************************************************************************/
-	      int64_t buyer_amountGotAfterFee = buyer_amountGot;
-	      int64_t tradingFee = 0;
-
-	      // transfer the payment property from buyer to seller
-	      assert(update_tally_map(pnew->getAddr(), pnew->getProperty(), -seller_amountGot, BALANCE));
-	      assert(update_tally_map(pold->getAddr(), pold->getDesProperty(), seller_amountGot, BALANCE));
-
-	      // transfer the market (the one being sold) property from seller to buyer
-	      assert(update_tally_map(pold->getAddr(), pold->getProperty(), -buyer_amountGot, METADEX_RESERVE));
-	      assert(update_tally_map(pnew->getAddr(), pnew->getDesProperty(), buyer_amountGot, BALANCE));
-
-
-	      NewReturn = TRADED;
-
-	      ChnDEx seller_replacement = *pold; // < can be moved into last if block
-	      seller_replacement.setAmountRemaining(seller_amountLeft, "seller_replacement");
-
-	      pnew->setAmountRemaining(buyer_amountLeft, "buyer");
-
-	      if (0 < buyer_amountLeft)
-	         NewReturn = TRADED_MOREINBUYER;
-
-	      if (0 == buyer_amountLeft)
-	         bBuyerSatisfied = true;
-
-	      if (0 < seller_amountLeft)
-	         NewReturn = TRADED_MOREINSELLER;
-
-	      // t_tradelistdb->recordMatchedTrade(pold->getHash(), pnew->getHash(), // < might just pass pold, pnew
-	      // 				  pold->getAddr(), pnew->getAddr(), pold->getDesProperty(), pnew->getDesProperty(), seller_amountGot, buyer_amountGotAfterFee, pnew->getBlock(), tradingFee);
-
-	      pofferSet->erase(offerIt++);
-
-	      // insert the updated one in place of the old
-	      if (0 < seller_replacement.getAmountRemaining())
-	      {
-	          // PrintToLog("++ inserting seller_replacement: %s\n", seller_replacement.ToString());
-	          pofferSet->insert(seller_replacement);
-	      }
-
-	      if (bBuyerSatisfied)
-	      {
-	          assert(buyer_amountLeft == 0);
-	          break;
-	      }
-    } // specific price, check all properties
-
-        if (bBuyerSatisfied) break;
-    } // check all prices
-
-    return NewReturn;
-}
 
 
 ///////////////////////////////////////
@@ -2052,11 +1896,6 @@ bool MetaDEx_compare::operator()(const CMPMetaDEx &lhs, const CMPMetaDEx &rhs) c
     else return lhs.getBlock() < rhs.getBlock();
 }
 
-bool ChnDEx_compare::operator()(const ChnDEx &lhs, const ChnDEx &rhs) const
-{
-    if (lhs.getBlock() == rhs.getBlock()) return lhs.getIdx() < rhs.getIdx();
-    else return lhs.getBlock() < rhs.getBlock();
-}
 
 bool ContractDex_compare::operator()(const CMPContractDex &lhs, const CMPContractDex &rhs) const
 {
@@ -2095,41 +1934,6 @@ bool mastercore::MetaDEx_INSERT(const CMPMetaDEx& objMetaDEx)
 
     // Set the metadex map for the property to the updated (or new if it didn't exist) price map
     metadex[objMetaDEx.getProperty()] = *p_prices;
-
-    return true;
-}
-
-bool mastercore::ChnDEx_INSERT(const ChnDEx& objMetaDEx)
-{
-    // Create an empty price map (to use in case price map for this property does not already exist)
-    chn_PricesMap temp_prices;
-    // Attempt to obtain the price map for the property
-    chn_PricesMap *p_prices = get_chnPrices(objMetaDEx.getProperty());
-
-    // Create an empty set of metadex objects (to use in case no set currently exists at this price)
-    chn_Set temp_indexes;
-    chn_Set *p_indexes = NULL;
-
-    // Prepare for return code
-    std::pair <chn_Set::iterator, bool> ret;
-
-    // Attempt to obtain a set of metadex objects for this price from the price map
-    if (p_prices) p_indexes = get_chnIndexes(p_prices, objMetaDEx.unitPrice());
-    // See if the set was populated, if not no set exists at this price level, use the empty set that we created earlier
-    if (!p_indexes) p_indexes = &temp_indexes;
-
-    // Attempt to insert the metadex object into the set
-    ret = p_indexes->insert(objMetaDEx);
-    if (false == ret.second) return false;
-
-    // If a prices map did not exist for this property, set p_prices to the temp empty price map
-    if (!p_prices) p_prices = &temp_prices;
-
-    // Update the prices map with the new set at this price
-    (*p_prices)[objMetaDEx.unitPrice()] = *p_indexes;
-
-    // Set the metadex map for the property to the updated (or new if it didn't exist) price map
-    chndex[objMetaDEx.getProperty()] = *p_prices;
 
     return true;
 }
@@ -2205,35 +2009,6 @@ int mastercore::MetaDEx_ADD(const std::string& sender_addr, uint32_t prop, int64
 
     rc = 0;
     return rc;
-}
-
-int mastercore::ChnDEx_ADD(const std::string& sender_addr, uint32_t prop, int64_t amount, int block, uint32_t property_desired, int64_t amount_desired, const uint256& txid, unsigned int idx, int blockheight_expiry)
-{
-    int rc = METADEX_ERROR -1;
-
-    ChnDEx new_mdex(sender_addr, block, prop, amount, property_desired, amount_desired, txid, idx, CMPTransaction::ADD,blockheight_expiry);
-
-    // Ensure this is not a badly priced trade (for example due to zero amounts)
-    if (0 >= new_mdex.unitPrice()) return METADEX_ERROR -66;
-
-    // Match against existing trades, remainder of the order will be put into the order book
-    // if (msc_debug_metadex3) MetaDEx_debug_print();
-    x_Trade(&new_mdex);
-    // if (msc_debug_metadex3) MetaDEx_debug_print();
-
-    // Insert the remaining order into the MetaDEx maps
-    if (0 < new_mdex.getAmountRemaining()) { //switch to getAmountRemaining() when ready
-        if (!ChnDEx_INSERT(new_mdex)) {
-            PrintToLog("%s() ERROR: ALREADY EXISTS, line %d, file: %s\n", __FUNCTION__, __LINE__, __FILE__);
-            return METADEX_ERROR -70;
-        } else {
-            // move tokens into reserve
-            assert(update_tally_map(sender_addr, prop, -new_mdex.getAmountRemaining(), BALANCE));
-            assert(update_tally_map(sender_addr, prop, new_mdex.getAmountRemaining(), METADEX_RESERVE));
-        }
-    }
-
-    return 0;
 }
 
 int mastercore::ContractDex_ADD(const std::string& sender_addr, uint32_t prop, int64_t amount, int block, const uint256& txid, unsigned int idx, uint64_t effective_price, uint8_t trading_action, int64_t amount_to_reserve)

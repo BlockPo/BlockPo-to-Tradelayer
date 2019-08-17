@@ -253,6 +253,9 @@ bool CMPTransaction::interpret_Transaction()
     case MSC_TYPE_TRANSFER:
         return interpret_Transfer();
 
+    case MSC_TYPE_CREATE_CHANNEL:
+        return interpret_Create_Channel();
+
     }
 
   return false;
@@ -1546,16 +1549,11 @@ bool CMPTransaction::interpret_Withdrawal_FromChannel()
         amount_to_withdraw = DecompressInteger(vecAmountBytes);
     } else return false;
 
-    if (!vecVoutBytes.empty()) {
-        vOut = DecompressInteger(vecVoutBytes);
-    } else return false;
-
 
     PrintToLog("channelAddress: %s\n", receiver);
     PrintToLog("version: %d\n", version);
     PrintToLog("propertyId: %d\n", propertyId);
     PrintToLog("amount to withdrawal: %d\n", amount_to_withdraw);
-    PrintToLog("vOut: %d\n", vOut);
 
     return true;
 }
@@ -1564,6 +1562,8 @@ bool CMPTransaction::interpret_Withdrawal_FromChannel()
 bool CMPTransaction::interpret_Instant_Trade()
 {
   int i = 0;
+
+  PrintToLog("Inside interpret_Instant_Trade\n");
 
   std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
@@ -1605,7 +1605,7 @@ bool CMPTransaction::interpret_Instant_Trade()
   PrintToLog("messageType: %d\n",type);
   PrintToLog("property: %d\n", property);
   PrintToLog("amount : %d\n", amount_forsale);
-    PrintToLog("blockheight_expiry : %d\n", blockheight_expiry);
+  PrintToLog("blockheight_expiry : %d\n", blockheight_expiry);
   PrintToLog("property desired : %d\n", desired_property);
   PrintToLog("amount desired : %d\n", desired_value);
 
@@ -1694,6 +1694,8 @@ bool CMPTransaction::interpret_Transfer()
 bool CMPTransaction::interpret_Create_Channel()
 {
   int i = 0;
+
+  PrintToLog("Inside interpret_Create_Channel\n");
 
   std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
@@ -3957,7 +3959,7 @@ int CMPTransaction::logicMath_Withdrawal_FromChannel()
         return (PKT_ERROR_TOKENS -24);
     }
 
-    if (!t_tradelistdb->checkChannelAddress(sender)) {
+    if (!t_tradelistdb->checkChannelAddress(receiver)) {
         PrintToLog("%s(): rejected: address %s doesn't belong to multisig channel\n", __func__, receiver);
         return (PKT_ERROR_TOKENS -24);
     }
@@ -3977,7 +3979,7 @@ int CMPTransaction::logicMath_Withdrawal_FromChannel()
         return (PKT_ERROR_TOKENS -25);
     }
 
-    uint64_t amount_commited = t_tradelistdb->getRemaining(sender, receiver, propertyId);
+    uint64_t amount_commited = t_tradelistdb->getRemaining(receiver, sender, propertyId);
 
     PrintToLog("all the amount_commited for the receiver address : %s\n",amount_commited);
 
@@ -4061,14 +4063,14 @@ int CMPTransaction::logicMath_Instant_Trade()
       return (PKT_ERROR_METADEX -25);
   }
 
-  nBalance = getMPbalance(receiver, desired_property, CHANNEL_RESERVE);
-  if (nBalance < (int64_t) amount_desired) {
+  nBalance = getMPbalance(receiver, desired_property, BALANCE);
+  if (nBalance < (int64_t) desired_value) {
       PrintToLog("%s(): rejected: sender %s has insufficient balance of property %d [%s < %s]\n",
               __func__,
               sender,
               property,
               FormatMP(property, nBalance),
-              FormatMP(property, amount_desired));
+              FormatMP(property, desired_value));
       return (PKT_ERROR_METADEX -25);
   }
 
@@ -4077,8 +4079,8 @@ int CMPTransaction::logicMath_Instant_Trade()
   assert(update_tally_map(sender, property, -amount_forsale, CHANNEL_RESERVE));
   assert(update_tally_map(receiver, property, amount_forsale, BALANCE));
 
-  assert(update_tally_map(sender, desired_property, amount_desired, CHANNEL_RESERVE));
-  assert(update_tally_map(receiver, desired_property, -amount_desired, BALANCE));
+  assert(update_tally_map(sender, desired_property, desired_value, CHANNEL_RESERVE));
+  assert(update_tally_map(receiver, desired_property, -desired_value, BALANCE));
 
 
   t_tradelistdb->recordNewInstantTrade(txid, sender,receiver, property, amount_forsale, desired_property, desired_value, block, tx_idx);

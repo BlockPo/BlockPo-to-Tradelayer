@@ -3417,7 +3417,7 @@ void CMPTradeList::recordNewCommit(const uint256& txid, const std::string& chann
 void CMPTradeList::recordNewWithdrawal(const uint256& txid, const std::string& channelAddress, const std::string& sender, uint32_t propertyId, uint64_t amountToWithdrawal, int blockNum, int blockIndex)
 {
   if (!pdb) return;
-  std::string strValue = strprintf("%s:%s:%d:%d:%d:%d:%d:%s", channelAddress, sender, propertyId, amountToWithdrawal, blockNum, blockIndex,TYPE_WITHDRAWAL);
+  std::string strValue = strprintf("%s:%s:%d:%d:%d:%d:%s", channelAddress, sender, propertyId, amountToWithdrawal, blockNum, blockIndex,TYPE_WITHDRAWAL);
   const string key = blockNum + "+" + txid.ToString(); // order by blockNum
   Status status = pdb->Put(writeoptions, txid.ToString(), strValue);
   ++nWritten;
@@ -4625,22 +4625,37 @@ const std::string ExodusAddress()
 
        std::string cAddress = vstr[0];
 
+       // PrintToLog("(%s): cAddress: %s\n",__func__,cAddress);
+       // PrintToLog("(%s): channelAddress: %s\n",__func__,channelAddress);
+
        if(channelAddress != cAddress)
            continue;
 
        std::string sender = vstr[1];
+
+       // PrintToLog("(%s): sender: %s\n",__func__, sender);
+       // PrintToLog("(%s): senderAddress: %s\n",__func__, senderAddress);
 
        if(senderAddress != sender)
            continue;
 
        uint32_t propId = boost::lexical_cast<uint32_t>(vstr[2]);
 
+       // PrintToLog("(%s): propId: %d\n",__func__, propId);
+       // PrintToLog("(%s): propertyId: %d\n",__func__, propertyId);
+
+
        if(propertyId != propId)
            continue;
 
        uint64_t amount = boost::lexical_cast<uint64_t>(vstr[3]);
 
+       // PrintToLog("(%s): amount: %d\n",__func__, amount);
+
+
        std::string type = vstr[6];
+
+       // PrintToLog("(%s): type : %s\n",__func__, type);
 
        (type == TYPE_COMMIT) ? sumCommits += amount : sumWithdr += amount;
 
@@ -4683,11 +4698,14 @@ bool CMPTradeList::checkChannelAddress(const std::string& channelAddress)
 
         // ensure correct amount of tokens in value string
         boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
-        if (vstr.size() != 3) {
+        if (vstr.size() != 4) {
             //PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
             // PrintToConsole("TRADEDB error - unexpected number of tokens in value %d \n",vstr.size());
             continue;
         }
+
+        PrintToLog("channelAddress: %s\n",channelAddress);
+        PrintToLog("strKey: %s\n",strKey);
 
         if(channelAddress != strKey)
             continue;
@@ -4703,16 +4721,13 @@ bool CMPTradeList::checkChannelAddress(const std::string& channelAddress)
   }
 
   /**
-   * @retrieve  if P2PKH address are related to the channel Address
+   * @retrieve  if both P2PKH address are related to the channel Address
    */
   bool CMPTradeList::checkChannelPair(const std::string& channelAddress, const std::string& receiver)
     {
 
       bool status = false;
       if (!pdb) return status;
-
-      int count = 0;
-      uint64_t sumAmount = 0;
 
       std::vector<std::string> vstr;
       // string txidStr = txid.ToString();
@@ -4730,7 +4745,7 @@ bool CMPTradeList::checkChannelAddress(const std::string& channelAddress)
 
           // ensure correct amount of tokens in value string
           boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
-          if (vstr.size() != 3) {
+          if (vstr.size() != 4) {
               //PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
               // PrintToConsole("TRADEDB error - unexpected number of tokens in value %d \n",vstr.size());
               continue;
@@ -4744,6 +4759,7 @@ bool CMPTradeList::checkChannelAddress(const std::string& channelAddress)
 
           if (receiver != frAddr && receiver != secAddr)
               continue;
+
 
           status = true;
           break;
