@@ -1797,6 +1797,33 @@ UniValue tl_closeoracle(const JSONRPCRequest& request)
     }
 }
 
+UniValue tl_setexodus(const JSONRPCRequest& request)
+{
+    if (request.params.size() < 1 )
+        throw runtime_error(
+            "tl_setexodus \"fromaddress\" \"toaddress\" propertyid \"amount\" ( override )\n"
+
+            "\nsetting exodus address.\n"
+
+            "\nArguments:\n"
+            "1. fromaddress          (string, required) the address to send from\n"
+            "\nResult:\n"
+            "\"hash\"                  (string) the hex-encoded transaction hash\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("tl_senddexaccept", "\"35URq1NN3xL6GeRKUP6vzaQVcxoJiiJKd8\" \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\" 1 \"15.0\"")
+            + HelpExampleRpc("tl_senddexaccept", "\"35URq1NN3xL6GeRKUP6vzaQVcxoJiiJKd8\", \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\", 1, \"15.0\"")
+        );
+
+    // obtain parameters & info
+    setExoduss = ParseAddress(request.params[0]);
+    PrintToLog("setExoduss : %s",setExoduss);
+    uint256 txid;
+
+    return txid.GetHex();
+
+}
+
 UniValue tl_commit_tochannel(const JSONRPCRequest& request)
 {
     if (request.params.size() != 4)
@@ -1814,6 +1841,7 @@ UniValue tl_commit_tochannel(const JSONRPCRequest& request)
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
 
             "\nExamples:\n"
+
             + HelpExampleCli("tl_commit_tochannel", "\"1M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\" \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\" 3 100 \"1\"")
             + HelpExampleRpc("tl_commit_tochannel", "\"1M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\", \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\",3, 100, \"1\"")
         );
@@ -2010,8 +2038,10 @@ static const CRPCCommand commands[] =
     { "trade layer (transaction creation)", "tl_closeoracle",                  &tl_closeoracle,                     {} },
     { "trade layer (transaction creation)", "tl_commit_tochannel",             &tl_commit_tochannel,                {} },
     { "trade layer (transaction creation)", "tl_withdrawal_fromchannel",       &tl_withdrawal_fromchannel,          {} },
-    { "trade layer (transaction creation)", "tl_create_channel",               &tl_create_channel,                  {} }
+    { "trade layer (transaction creation)", "tl_create_channel",               &tl_create_channel,                  {} },
 
+    { "trade layer (transaction creation)", "tl_setexodus",                    &tl_setexodus,                       {} },
+    { "trade layer (transaction creation)", "tl_commit_tochannel",             &tl_commit_tochannel,                {} }
 #endif
 };
 

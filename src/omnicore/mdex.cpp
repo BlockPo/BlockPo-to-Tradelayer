@@ -1031,7 +1031,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
    *
    *
    */
-   mastercore::ContractDex_Fees(pnew->getAddr(),pold->getAddr(), nCouldBuy, property_traded);
+      //mastercore::ContractDex_Fees(pnew->getAddr(),pold->getAddr(), nCouldBuy, property_traded);
 
 
    /********************************************************/
@@ -1567,7 +1567,7 @@ MatchReturnType x_Trade(CMPMetaDEx* const pnew)
 	 *
 	 *
 	 */
-	mastercore::MetaDEx_Fees(pnew, pold, buyer_amountGot);
+	//mastercore::MetaDEx_Fees(pnew, pold, buyer_amountGot);
 
 	NewReturn = TRADED;
 

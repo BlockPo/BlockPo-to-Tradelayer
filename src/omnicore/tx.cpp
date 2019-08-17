@@ -3764,14 +3764,20 @@ int CMPTransaction::logicMath_Set_Oracle()
 
 
     // ------------------------------------------
+
+    // putting data on memory
     oraclePrices[contractId].block = block;
     oraclePrices[contractId].high = oracle_high;
     oraclePrices[contractId].low = oracle_low;
 
-    // checking the map
-    std::map<uint32_t,oracledata>::iterator it = oraclePrices.find(contractId);
+    // saving on db
+    sp.oracle_high = oracle_high;
+    sp.oracle_low = oracle_low;
+    sp.oracle_last_update = block;
 
-    PrintToLog("oracle data for contract: block: %d,high:%d, low:%d\n",it->second.block, it->second.high, it->second.low);
+    assert(_my_sps->updateSP(contractId, sp));
+
+    PrintToLog("oracle data for contract: block: %d,high:%d, low:%d\n",block, oracle_high, oracle_low);
 
     return 0;
 }
