@@ -298,6 +298,10 @@ public:
     uint32_t getActivationBlock() const { return activation_block; }
     uint32_t getMinClientVersion() const { return min_client_version; }
     unsigned int getIndexInBlock() const { return tx_idx; }
+
+    /** Instan trade (Channels) */
+    uint64_t getAmountForSale() const { return amount_forsale; }
+
     ////////////////////////////////
     /** New things for Contracts */
     uint32_t getMarginRequirement() const { return margin_requirement; }

@@ -4015,6 +4015,8 @@ int CMPTransaction::logicMath_Withdrawal_FromChannel()
 /** Tx 110 */
 int CMPTransaction::logicMath_Instant_Trade()
 {
+  int rc = 0;
+
   PrintToLog("Begining of logicMath_Instant_Trade\n");
 
   // if (!IsTransactionTypeAllowed(block, property, type, version)) {
@@ -4059,7 +4061,7 @@ int CMPTransaction::logicMath_Instant_Trade()
   }
 
   int64_t nBalance = getMPbalance(sender, property, CHANNEL_RESERVE);
-  if (nBalance < (int64_t) amount_forsale) {
+  if (property > 0 && nBalance < (int64_t) amount_forsale) {
       PrintToLog("%s(): rejected: sender %s has insufficient balance of property %d [%s < %s]\n",
               __func__,
               sender,
@@ -4070,7 +4072,7 @@ int CMPTransaction::logicMath_Instant_Trade()
   }
 
   nBalance = getMPbalance(receiver, desired_property, BALANCE);
-  if (nBalance < (int64_t) desired_value) {
+  if (desired_property > 0 && nBalance < (int64_t) desired_value) {
       PrintToLog("%s(): rejected: sender %s has insufficient balance of property %d [%s < %s]\n",
               __func__,
               sender,
@@ -4082,20 +4084,22 @@ int CMPTransaction::logicMath_Instant_Trade()
 
   // ------------------------------------------
 
-  assert(update_tally_map(sender, property, -amount_forsale, CHANNEL_RESERVE));
-  assert(update_tally_map(receiver, property, amount_forsale, BALANCE));
+   // if property = 0 ; we are exchanging litecoins
+  // if (property > 0)
+  if (false)
+  {
+      assert(update_tally_map(sender, property, -amount_forsale, CHANNEL_RESERVE));
+      assert(update_tally_map(receiver, property, amount_forsale, BALANCE));
+  } else rc = 1;
 
   assert(update_tally_map(sender, desired_property, desired_value, CHANNEL_RESERVE));
   assert(update_tally_map(receiver, desired_property, -desired_value, BALANCE));
 
-
-  t_tradelistdb->recordNewInstantTrade(txid, sender,receiver, property, amount_forsale, desired_property, desired_value, block, tx_idx);
+  if (rc == 0) t_tradelistdb->recordNewInstantTrade(txid, sender,receiver, property, amount_forsale, desired_property, desired_value, block, tx_idx);
 
   // what to do with blockheighy_expiry value?
 
-  // int rc = ChnDEx_ADD(sender, property, nNewValue, block, desired_property, desired_value, txid, tx_idx, blockheight_expiry);
-
-  return 0;
+  return rc;
 }
 
 /** Tx 111 */

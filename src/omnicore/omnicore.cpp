@@ -996,6 +996,31 @@ static bool HandleDExPayments(const CTransaction& tx, int nBlock, const std::str
 
   return (count > 0);
 }
+
+static bool HandleLtcInstantTrade(const CTransaction& tx, int nBlock, const std::string& destAddr, uint32_t property, uint64_t amount_forsale)
+{
+    if (property != 0) return false;
+    int count = 0;
+
+    for (unsigned int n = 0; n < tx.vout.size(); ++n)
+    {
+        CTxDestination dest;
+        if (ExtractDestination(tx.vout[n].scriptPubKey, dest))
+        {
+            std::string address = EncodeDestination(dest);
+            PrintToLog("destination address: %s\n",address);
+            PrintToLog("dest address: %s\n", destAddr);
+
+            if (address == destAddr && tx.vout[n].nValue == amount_forsale)
+            {
+                PrintToLog("litecoins found..., receiver address: %s, litecoin amount: %d\n", destAddr, tx.vout[n].nValue);
+                count++;
+            }
+        }
+    }
+
+    return (count > 0);
+}
 /**
  * Reports the progress of the initial transaction scanning.
  *
@@ -2139,7 +2164,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   if (nBlockNow%BlockS == 0 && nBlockNow != 0 && path_elef.size() != 0 && lastBlockg != nBlockNow) {
 
     /*****************************************************************************/
-    
+
     PrintToLog("\nSettlement every 8 hours here. nBlockNow = %d\n", nBlockNow);
     pt_ndatabase = new MatrixTLS(path_elef.size(), n_cols); MatrixTLS &ndatabase = *pt_ndatabase;
     MatrixTLS M_file(path_elef.size(), n_cols);
@@ -2147,7 +2172,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
     n_rows = size(M_file, 0);
     PrintToLog("Matrix for Settlement: dim = (%d, %d)\n\n", n_rows, n_cols);
     //printing_matrix(M_file);
-    
+
     /**********************************************************************/
     /** TWAP vector **/
 
@@ -2167,16 +2192,16 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
 
     struct TokenDataByName *pfuture_ALL = getTokenDataByName("ALL");
     struct TokenDataByName *pfuture_USD = getTokenDataByName("dUSD");
-    
+
     uint32_t property_all = pfuture_ALL->data_propertyId;
     uint32_t property_usd = pfuture_USD->data_propertyId;
 
     // PrintToLog("\nVector MDExtwap_vec =\n");
     // for (unsigned int i = 0; i < mdextwap_vec[property_all][property_usd].size(); i++)
     //   PrintToLog("%s\n", FormatDivisibleMP(mdextwap_vec[property_all][property_usd][i]));
-    
+
     uint64_t num_mdex=accumulate(mdextwap_vec[property_all][property_usd].begin(),mdextwap_vec[property_all][property_usd].end(),0.0);
-   
+
     rational_t twap_priceRatMDEx(num_mdex/COIN, mdextwap_vec[property_all][property_usd].size());
     int64_t twap_priceMDEx = mastercore::RationalToInt64(twap_priceRatMDEx);
     PrintToLog("\nTvwap Price MDEx = %s\n", FormatDivisibleMP(twap_priceMDEx));
@@ -2412,7 +2437,8 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
     assert(mp_obj.getSender().empty() == false);
 
     int interp_ret = mp_obj.interpretPacket();
-    if (interp_ret) PrintToLog("!!! interpretPacket() returned %d !!!\n", interp_ret);
+    // if (interp_ret) PrintToLog("!!! interpretPacket() returned %d !!!\n", interp_ret);
+    PrintToLog("!!! interpretPacket() returned %d !!!\n", interp_ret);
 
     // Only structurally valid transactions get recorded in levelDB
     // PKT_ERROR - 2 = interpret_Transaction failed, structurally invalid payload
@@ -2420,9 +2446,14 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
       bool bValid = (0 <= interp_ret);
       p_txlistdb->recordTX(tx.GetHash(), bValid, nBlock, mp_obj.getType(), mp_obj.getNewAmount());
       p_OmniTXDB->RecordTransaction(tx.GetHash(), idx);
-    }
+
+    } else if (interp_ret == 1) // litecoin instant_trade
+        HandleLtcInstantTrade(tx, nBlock, mp_obj.getReceiver(), mp_obj.getProperty(), mp_obj.getAmountForSale());
+
     fFoundTx |= (interp_ret == 0);
-  } else if (pop_ret > 0) fFoundTx |= HandleDExPayments(tx, nBlock, mp_obj.getSender()); // testing the payment handler
+  } else if (pop_ret > 0) {
+      fFoundTx |= HandleDExPayments(tx, nBlock, mp_obj.getSender());
+  }
 
   if (fFoundTx && msc_debug_consensus_hash_every_transaction) {
     uint256 consensusHash = GetConsensusHash();
@@ -4517,7 +4548,7 @@ const std::string ExodusAddress()
     return exodus_testnet;
   } else {
     return exodus_mainnet;
-  } 
+  }
 }
 
 /**

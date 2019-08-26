@@ -597,7 +597,8 @@ CMPCrowd* mastercore::getCrowd(const std::string& address)
 
 bool mastercore::IsPropertyIdValid(uint32_t propertyId)
 {
-  if (propertyId == 0) return false;
+  // is true, because we can exchange litecoins too
+  if (propertyId == 0) return true;
 
   uint32_t nextId = 0;
 
