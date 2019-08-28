@@ -4055,47 +4055,52 @@ int CMPTransaction::logicMath_Instant_Trade()
       return (PKT_ERROR_METADEX -32);
   }
 
-  if (!t_tradelistdb->checkChannelPair(sender,receiver)) {
+  channel chnAddrs = t_tradelistdb->getChannelAddresses(sender);
+
+  if (sender.empty() && chnAddrs.first.empty() && chnAddrs.second.empty()) {
       PrintToLog("%s(): rejected: some address doesn't belong to multisig channel\n", __func__);
       return (PKT_ERROR_TOKENS -25);
   }
 
   int64_t nBalance = getMPbalance(sender, property, CHANNEL_RESERVE);
   if (property > 0 && nBalance < (int64_t) amount_forsale) {
-      PrintToLog("%s(): rejected: sender %s has insufficient balance of property %d [%s < %s]\n",
+      PrintToLog("%s(): rejected: channel address %s has insufficient balance of property %d [%s < %s]\n",
               __func__,
               sender,
               property,
               FormatMP(property, nBalance),
               FormatMP(property, amount_forsale));
-      return (PKT_ERROR_METADEX -25);
+      return (PKT_ERROR_METADEX -26);
   }
 
-  nBalance = getMPbalance(receiver, desired_property, BALANCE);
+  nBalance = getMPbalance(sender, desired_property, CHANNEL_RESERVE);
   if (desired_property > 0 && nBalance < (int64_t) desired_value) {
-      PrintToLog("%s(): rejected: sender %s has insufficient balance of property %d [%s < %s]\n",
+      PrintToLog("%s(): rejected: channel address %s has insufficient balance of property %d [%s < %s]\n",
               __func__,
               sender,
-              property,
-              FormatMP(property, nBalance),
-              FormatMP(property, desired_value));
-      return (PKT_ERROR_METADEX -25);
+              desired_property,
+              FormatMP(desired_property, nBalance),
+              FormatMP(desired_property, desired_value));
+      return (PKT_ERROR_METADEX -27);
   }
 
   // ------------------------------------------
 
-   // if property = 0 ; we are exchanging litecoins
-  // if (property > 0)
-  if (false)
+  // if property = 0 ; we are exchanging litecoins
+  // if (false)
+  if (property > 0 && desired_property > 0)
   {
+      assert(update_tally_map(chnAddrs.second, property, amount_forsale, BALANCE));
       assert(update_tally_map(sender, property, -amount_forsale, CHANNEL_RESERVE));
-      assert(update_tally_map(receiver, property, amount_forsale, BALANCE));
-  } else rc = 1;
+      assert(update_tally_map(chnAddrs.first, desired_property, desired_value, BALANCE));
+      assert(update_tally_map(sender, desired_property, -desired_value, CHANNEL_RESERVE));
+      t_tradelistdb->recordNewInstantTrade(txid, sender, chnAddrs.first, property, amount_forsale, desired_property, desired_value, block, tx_idx);
+  } else {
+      // assert(update_tally_map(sender, property, desired_value, BALANCE));
+      // assert(update_tally_map(chnAddrs, property, -desired_value, CHANNEL_RESERVE));
+      // rc = 1;
 
-  assert(update_tally_map(sender, desired_property, desired_value, CHANNEL_RESERVE));
-  assert(update_tally_map(receiver, desired_property, -desired_value, BALANCE));
-
-  if (rc == 0) t_tradelistdb->recordNewInstantTrade(txid, sender,receiver, property, amount_forsale, desired_property, desired_value, block, tx_idx);
+  }
 
   // what to do with blockheighy_expiry value?
 

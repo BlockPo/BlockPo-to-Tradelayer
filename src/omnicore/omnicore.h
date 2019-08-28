@@ -227,6 +227,16 @@ extern CCriticalSection cs_tally;
 /** LevelDB based storage for storing Omni transaction data.  This will become the new master database, holding serialized Omni transactions.
  *  Note, intention is to consolidate and clean up data storage
  */
+
+ struct channel
+ {
+   std::string multisig;
+   std::string first;
+   std::string second;
+
+   channel() : multisig(""), first(""), second("") {}
+ };
+
 class COmniTransactionDB : public CDBBase
 {
 public:
@@ -355,7 +365,7 @@ class CMPTradeList : public CDBBase
   bool getAllCommits(std::string senderAddress, UniValue& tradeArray);
   bool getAllWithdrawals(std::string senderAddress, UniValue& tradeArray);
   bool checkChannelAddress(const std::string& channelAddress);
-  bool checkChannelPair(const std::string& channelAddress, const std::string& receiver);
+  channel getChannelAddresses(const std::string& channelAddress);
   uint64_t getRemaining(const std::string& channelAddress, const std::string& senderAddress, uint32_t propertyId);
 
   int deleteAboveBlock(int blockNum);

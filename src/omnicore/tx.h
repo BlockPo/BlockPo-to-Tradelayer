@@ -301,7 +301,8 @@ public:
 
     /** Instan trade (Channels) */
     uint64_t getAmountForSale() const { return amount_forsale; }
-
+    uint32_t getDesiredProperty() const { return desired_property; }
+    uint64_t getDesiredValue() const { return desired_value; }
     ////////////////////////////////
     /** New things for Contracts */
     uint32_t getMarginRequirement() const { return margin_requirement; }
@@ -502,6 +503,7 @@ struct oracledata
   int64_t low;
   uint32_t contractId;
 };
+
 
 struct withdrawalAccepted
 {

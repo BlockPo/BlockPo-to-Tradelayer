@@ -298,6 +298,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_senddexaccept", 2, "arg2" },
     { "tl_getmarketprice", 0, "arg0" },
     {"tl_getaverage_entry",1,"arg1" },
+    { "tl_get_channelreserve", 1, "arg1" }
 
 };
 

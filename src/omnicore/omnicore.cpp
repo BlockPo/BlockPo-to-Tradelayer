@@ -997,7 +997,7 @@ static bool HandleDExPayments(const CTransaction& tx, int nBlock, const std::str
   return (count > 0);
 }
 
-static bool HandleLtcInstantTrade(const CTransaction& tx, int nBlock, const std::string& destAddr, uint32_t property, uint64_t amount_forsale)
+static bool HandleLtcInstantTrade(const CTransaction& tx, int nBlock, const std::string& sender, const std::string& receiver, uint32_t property, uint64_t amount_forsale, uint32_t desired_property, uint64_t desired_value, unsigned int idx)
 {
     if (property != 0) return false;
     int count = 0;
@@ -1009,14 +1009,20 @@ static bool HandleLtcInstantTrade(const CTransaction& tx, int nBlock, const std:
         {
             std::string address = EncodeDestination(dest);
             PrintToLog("destination address: %s\n",address);
-            PrintToLog("dest address: %s\n", destAddr);
+            PrintToLog("dest address: %s\n", receiver);
 
-            if (address == destAddr && tx.vout[n].nValue == amount_forsale)
+            if (address == receiver && tx.vout[n].nValue == amount_forsale)
             {
-                PrintToLog("litecoins found..., receiver address: %s, litecoin amount: %d\n", destAddr, tx.vout[n].nValue);
+                PrintToLog("litecoins found..., receiver address: %s, litecoin amount: %d\n", receiver, tx.vout[n].nValue);
                 count++;
             }
         }
+    }
+
+    if (count > 0)
+    {
+        t_tradelistdb->recordNewInstantTrade(tx.GetHash(), sender,receiver, property, amount_forsale, desired_property, desired_value, nBlock, idx);
+        PrintToLog("Successfully litecoins traded \n");
     }
 
     return (count > 0);
@@ -2448,7 +2454,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
       p_OmniTXDB->RecordTransaction(tx.GetHash(), idx);
 
     } else if (interp_ret == 1) // litecoin instant_trade
-        HandleLtcInstantTrade(tx, nBlock, mp_obj.getReceiver(), mp_obj.getProperty(), mp_obj.getAmountForSale());
+        HandleLtcInstantTrade(tx, nBlock, mp_obj.getSender(), mp_obj.getReceiver(), mp_obj.getProperty(), mp_obj.getAmountForSale(), mp_obj.getDesiredProperty(), mp_obj.getDesiredValue(), mp_obj.getIndexInBlock());
 
     fFoundTx |= (interp_ret == 0);
   } else if (pop_ret > 0) {
@@ -4752,16 +4758,16 @@ bool CMPTradeList::checkChannelAddress(const std::string& channelAddress)
   }
 
   /**
-   * @retrieve  if both P2PKH address are related to the channel Address
+   * @return both P2PKH address related to the channel Address
    */
-  bool CMPTradeList::checkChannelPair(const std::string& channelAddress, const std::string& receiver)
-    {
-
+channel CMPTradeList::getChannelAddresses(const std::string& channelAddress)
+{
       bool status = false;
-      if (!pdb) return status;
-
       std::vector<std::string> vstr;
-      // string txidStr = txid.ToString();
+      channel ret;
+      std::string strKey;
+
+      if (!pdb) return ret;
 
       leveldb::Iterator* it = NewIterator(); // Allocation proccess
 
@@ -4770,7 +4776,7 @@ bool CMPTradeList::checkChannelAddress(const std::string& channelAddress)
 
           PrintToLog("Inside looop in db\n");
           // search key to see if this is a matching trade
-          std::string strKey = it->key().ToString();
+          strKey = it->key().ToString();
           // PrintToLog("key of this match: %s ****************************\n",strKey);
           std::string strValue = it->value().ToString();
 
@@ -4788,18 +4794,19 @@ bool CMPTradeList::checkChannelAddress(const std::string& channelAddress)
           if (channelAddress != strKey)
               continue;
 
-          if (receiver != frAddr && receiver != secAddr)
-              continue;
-
+          ret.multisig = strKey;
+          ret.first = frAddr;
+          ret.second = secAddr;
 
           status = true;
+
           break;
       }
 
       // clean up
       delete it; // Desallocation proccess
 
-      return status;
+      return ret;
 
     }
 

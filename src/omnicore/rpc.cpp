@@ -133,6 +133,16 @@ void ReserveToJSON(const std::string& address, uint32_t property, UniValue& bala
     }
 }
 
+void ChannelToJSON(const std::string& address, uint32_t property, UniValue& balance_obj, bool divisible)
+{
+    int64_t margin = getMPbalance(address, property, CHANNEL_RESERVE);
+    if (divisible) {
+        balance_obj.push_back(Pair("channel reserve", FormatDivisibleMP(margin)));
+    } else {
+        balance_obj.push_back(Pair("channel reserve", FormatIndivisibleMP(margin)));
+    }
+}
+
 void MetaDexObjectToJSON(const CMPMetaDEx& obj, UniValue& metadex_obj)
 {
     bool propertyIdForSaleIsDivisible = isPropertyDivisible(obj.getProperty());
@@ -521,6 +531,36 @@ UniValue tl_getreserve(const JSONRPCRequest& request)
 
     UniValue balanceObj(UniValue::VOBJ);
     ReserveToJSON(address, propertyId, balanceObj, isPropertyDivisible(propertyId));
+
+    return balanceObj;
+}
+
+UniValue tl_get_channelreserve(const JSONRPCRequest& request)
+{
+    if (request.params.size() != 2)
+        throw runtime_error(
+            "tl_getchannelreserve \"address\" propertyid\n"
+            "\nReturns the token reserve account for a given channel address and property.\n"
+            "\nArguments:\n"
+            "1. channel address      (string, required) the address\n"
+            "2. propertyid           (number, required) the contract identifier\n"
+            "\nResult:\n"
+            "{\n"
+            "  \"channel address\" : \"n.nnnnnnnn\",   (string) the available balance of the address\n"
+            "}\n"
+            "\nExamples:\n"
+            + HelpExampleCli("tl_get_channelreserve", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" 1")
+            + HelpExampleRpc("tl_get_channelreserve", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", 1")
+        );
+
+    std::string address = ParseAddress(request.params[0]);
+    uint32_t propertyId = ParsePropertyId(request.params[1]);
+
+    RequireExistingProperty(propertyId);
+    RequireNotContract(propertyId);
+
+    UniValue balanceObj(UniValue::VOBJ);
+    ChannelToJSON(address, propertyId, balanceObj, isPropertyDivisible(propertyId));
 
     return balanceObj;
 }
@@ -2380,6 +2420,7 @@ static const CRPCCommand commands[] =
   { "trade layer (data retieval)" , "tl_getexodus",                 &tl_getexodus,                  {} },
   { "trade layer (data retieval)" , "tl_getsum_upnl",               &tl_getsum_upnl,                {} },
   { "trade layer (data retieval)" , "tl_check_commits",             &tl_check_commits,              {} },
+  { "trade layer (data retieval)" , "tl_get_channelreserve",        &tl_get_channelreserve,         {} },
   { "trade layer (data retieval)" , "tl_check_withdrawals",         &tl_check_withdrawals,          {} }
 };
 

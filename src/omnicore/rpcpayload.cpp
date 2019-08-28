@@ -830,9 +830,9 @@ UniValue tl_createpayload_instant_trade(const JSONRPCRequest& request)
 
 			"\nArguments:\n"
 			"1. propertyId            (number, required) the identifier of the property\n"
-			"2. amount                (string, required) the amount of the property traded\n"
+			"2. amount                (string, required) the amount of the property traded for the first address of channel\n"
       "3. blockheight_expiry    (string, required) block of expiry\n"
-      "4. propertyDesired       (number, optional) the identifier of the property desiderd\n"
+      "4. propertyDesired       (number, optional) the identifier of the property traded for the second address of channel\n"
       "5. amountDesired         (string, optional) the amount desired of tokens\n"
       "6. price                 (number, optional) the price of contract\n"
 
