@@ -4094,11 +4094,15 @@ int CMPTransaction::logicMath_Instant_Trade()
       assert(update_tally_map(sender, property, -amount_forsale, CHANNEL_RESERVE));
       assert(update_tally_map(chnAddrs.first, desired_property, desired_value, BALANCE));
       assert(update_tally_map(sender, desired_property, -desired_value, CHANNEL_RESERVE));
+
       t_tradelistdb->recordNewInstantTrade(txid, sender, chnAddrs.first, property, amount_forsale, desired_property, desired_value, block, tx_idx);
+
   } else {
-      // assert(update_tally_map(sender, property, desired_value, BALANCE));
-      // assert(update_tally_map(chnAddrs, property, -desired_value, CHANNEL_RESERVE));
-      // rc = 1;
+
+      assert(update_tally_map(chnAddrs.first, desired_property, desired_value, BALANCE));
+      assert(update_tally_map(sender, desired_property, -desired_value, CHANNEL_RESERVE));
+      rc = 1;
+      PrintToLog("Trading litecoins vs tokens\n");
 
   }
 
