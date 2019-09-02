@@ -565,6 +565,34 @@ UniValue tl_get_channelreserve(const JSONRPCRequest& request)
     return balanceObj;
 }
 
+UniValue tl_getchannel_info(const JSONRPCRequest& request)
+{
+    if (request.params.size() != 1)
+        throw runtime_error(
+            "tl_getchannel_info \"address\" \n"
+            "\nReturns all multisig channel info.\n"
+            "\nArguments:\n"
+            "1. channel address      (string, required) the address\n"
+            "\nResult:\n"
+            "{\n"
+            "  \"channel address\" : \"n.nnnnnnnn\",   (string) the available balance of the address\n"
+            "}\n"
+            "\nExamples:\n"
+            + HelpExampleCli("tl_getchannel_info", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\"")
+            + HelpExampleRpc("tl_getchannel_info", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\"")
+        );
+
+    std::string address = ParseAddress(request.params[0]);
+
+    UniValue response(UniValue::VOBJ);
+
+    LOCK(cs_tally);
+
+    t_tradelistdb->getChannelInfo(address,response);
+
+    return response;
+}
+
 UniValue tl_getallbalancesforid(const JSONRPCRequest& request)
 {
     if (request.params.size() != 1)
@@ -2421,6 +2449,7 @@ static const CRPCCommand commands[] =
   { "trade layer (data retieval)" , "tl_getsum_upnl",               &tl_getsum_upnl,                {} },
   { "trade layer (data retieval)" , "tl_check_commits",             &tl_check_commits,              {} },
   { "trade layer (data retieval)" , "tl_get_channelreserve",        &tl_get_channelreserve,         {} },
+  { "trade layer (data retieval)" , "tl_getchannel_info",           &tl_getchannel_info,            {} },
   { "trade layer (data retieval)" , "tl_check_withdrawals",         &tl_check_withdrawals,          {} }
 };
 

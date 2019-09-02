@@ -142,6 +142,9 @@ private:
     uint64_t vout_bef;
     uint64_t vout_pay;
     uint64_t price;
+    uint64_t ileverage;
+    uint64_t itrading_action;
+
     int blockheight_expiry;
 
 
@@ -199,6 +202,7 @@ private:
     bool interpret_Update_PNL();
     bool interpret_Transfer();
     bool interpret_Create_Channel();
+    bool interpret_Contract_Instant();
     ///////////////////////////////////////////////
 
     /**
@@ -241,6 +245,7 @@ private:
     int logicMath_Update_PNL();
     int logicMath_Transfer();
     int logicMath_Create_Channel();
+    int logicMath_Contract_Instant();
     ///////////////////////////////////////////////
 
     /**
@@ -389,6 +394,8 @@ public:
         vOut = 0;
         blockheight_expiry = 0;
         pnl_amount= 0;
+        ileverage = 0;
+        itrading_action = 0;
 
         ////////////////////////////////////
     }

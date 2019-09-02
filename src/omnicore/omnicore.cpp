@@ -1014,7 +1014,7 @@ static bool HandleLtcInstantTrade(const CTransaction& tx, int nBlock, const std:
             PrintToLog("destination address: %s\n",address);
             PrintToLog("dest address: %s\n", receiver);
 
-            if (address == receiver && tx.vout[n].nValue == amount_forsale)
+            if (address == receiver && tx.vout[n].nValue >= amount_forsale)
             {
                 PrintToLog("litecoins found..., receiver address: %s, litecoin amount: %d\n", receiver, tx.vout[n].nValue);
                 count++;
@@ -2451,6 +2451,8 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
 
     // Only structurally valid transactions get recorded in levelDB
     // PKT_ERROR - 2 = interpret_Transaction failed, structurally invalid payload
+
+    // if interpretPacket returns 1, that means we have an instant trade between LTCs and tokens.
     if (interp_ret == 1)
         HandleLtcInstantTrade(tx, nBlock, mp_obj.getSender(), mp_obj.getReceiver(), mp_obj.getProperty(), mp_obj.getAmountForSale(), mp_obj.getDesiredProperty(), mp_obj.getDesiredValue(), mp_obj.getIndexInBlock());
 
@@ -2459,7 +2461,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
       p_txlistdb->recordTX(tx.GetHash(), bValid, nBlock, mp_obj.getType(), mp_obj.getNewAmount());
       p_OmniTXDB->RecordTransaction(tx.GetHash(), idx);
 
-    }         
+    }
 
     fFoundTx |= (interp_ret == 0);
   } else if (pop_ret > 0) {
@@ -3439,6 +3441,15 @@ void CMPTradeList::recordNewTrade(const uint256& txid, const std::string& addres
   // if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
 }
 
+void CMPTradeList::recordNewChannel(const std::string& channelAddress, const std::string& frAddr, const std::string& secAddr, int blockNum, int blockIndex)
+{
+  if (!pdb) return;
+  std::string strValue = strprintf("%s:%s:%d:%d",frAddr, secAddr, blockNum, blockIndex);
+  Status status = pdb->Put(writeoptions, channelAddress, strValue);
+  ++nWritten;
+  // if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
+}
+
 void CMPTradeList::recordNewInstantTrade(const uint256& txid, const std::string& sender, const std::string& receiver, uint32_t propertyIdForSale, uint64_t amount_forsale, uint32_t propertyIdDesired, uint64_t amount_desired,int blockNum, int blockIndex)
 {
   if (!pdb) return;
@@ -3468,15 +3479,6 @@ void CMPTradeList::recordNewWithdrawal(const uint256& txid, const std::string& c
   ++nWritten;
   // if (msc_debug_tradedb)
   PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
-}
-
-void CMPTradeList::recordNewChannel(const std::string& channelAddress, const std::string& sender, const std::string& receiver, int blockNum, int blockIndex)
-{
-  if (!pdb) return;
-  std::string strValue = strprintf("%s:%s:%d:%d", sender, receiver, blockNum, blockIndex);
-  Status status = pdb->Put(writeoptions, channelAddress, strValue);
-  ++nWritten;
-  // if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
 }
 
 void CMPTradeList::recordNewTransfer(const uint256& txid, const std::string& sender, const std::string& receiver, uint32_t propertyId, uint64_t amount, int blockNum, int blockIndex)
@@ -4565,7 +4567,7 @@ const std::string ExodusAddress()
 /**
  * @retrieve commits for a channel
  */
- bool CMPTradeList::getAllCommits(std::string senderAddress, UniValue& tradeArray)
+ bool CMPTradeList::getAllCommits(const std::string& senderAddress, UniValue& tradeArray)
  {
    if (!pdb) return false;
 
@@ -4762,6 +4764,68 @@ bool CMPTradeList::checkChannelAddress(const std::string& channelAddress)
 
   }
 
+
+
+/**
+* @return all info about Channel
+*/
+bool CMPTradeList::getChannelInfo(const std::string& channelAddress, UniValue& tradeArray)
+{
+    if (!pdb) return false;
+
+    bool status = false;
+
+    std::vector<std::string> vstr;
+    // string txidStr = txid.ToString();
+
+    leveldb::Iterator* it = NewIterator(); // Allocation proccess
+
+    for(it->SeekToLast(); it->Valid(); it->Prev()) {
+
+        PrintToLog("Inside looop in db\n");
+        // search key to see if this is a matching trade
+        std::string strKey = it->key().ToString();
+        // PrintToLog("key of this match: %s ****************************\n",strKey);
+        std::string strValue = it->value().ToString();
+
+        // ensure correct amount of tokens in value string
+        boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
+        if (vstr.size() != 4) {
+            //PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
+            // PrintToConsole("TRADEDB error - unexpected number of tokens in value %d \n",vstr.size());
+            continue;
+        }
+
+        if(strKey != channelAddress)
+            continue;
+
+
+        std::string frAddr = vstr[0];
+        std::string secAddr = vstr[1];
+
+        int blockNum = boost::lexical_cast<int>(vstr[2]);
+
+        PrintToLog("multisig address: %s\n",strKey);
+        PrintToLog("first address: %s\n",frAddr);
+        PrintToLog("second address: %s\n",secAddr);
+        PrintToLog("creation block: %d\n",blockNum);
+
+        tradeArray.push_back(Pair("multisig address", strKey));
+        tradeArray.push_back(Pair("first address", frAddr));
+        tradeArray.push_back(Pair("second address", secAddr));
+        tradeArray.push_back(Pair("creation block",blockNum));
+        status = true;
+
+      break;
+    }
+
+       // clean up
+    delete it; // Desallocation proccess
+
+    return status;
+
+}
+
   /**
    * @return both P2PKH address related to the channel Address
    */
@@ -4818,7 +4882,7 @@ channel CMPTradeList::getChannelAddresses(const std::string& channelAddress)
  /**
   * @retrieve withdrawal for a given address in the channel
   */
-  bool CMPTradeList::getAllWithdrawals(std::string senderAddress, UniValue& tradeArray)
+  bool CMPTradeList::getAllWithdrawals(const std::string& senderAddress, UniValue& tradeArray)
   {
     if (!pdb) return false;
 

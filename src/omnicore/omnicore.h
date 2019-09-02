@@ -118,6 +118,7 @@ enum TransactionType {
   MSC_TYPE_PNL_UPDATE                 = 111,
   MSC_TYPE_TRANSFER                   = 112,
   MSC_TYPE_CREATE_CHANNEL             = 113,
+  MSC_TYPE_CONTRACT_INSTANT           = 114,
   ////////////////////////////////////
 
 };
@@ -358,12 +359,13 @@ class CMPTradeList : public CDBBase
   //Multisig channels
   void recordNewCommit(const uint256& txid, const std::string& channelAddress, const std::string& sender, uint32_t propertyId, uint64_t amountCommited, int blockNum, int blockIndex);
   void recordNewWithdrawal(const uint256& txid, const std::string& channelAddress, const std::string& sender, uint32_t propertyId, uint64_t amountToWithdrawal, int blockNum, int blockIndex);
-  void recordNewChannel(const std::string& channelAddress, const std::string& sender, const std::string& receiver, int blockNum, int blockIndex);
+  void recordNewChannel(const std::string& channelAddress, const std::string& frAddr, const std::string& secAddr, int blockNum, int blockIndex);
   void recordNewInstantTrade(const uint256& txid, const std::string& sender, const std::string& receiver, uint32_t propertyIdForSale, uint64_t amount_forsale, uint32_t propertyIdDesired, uint64_t amount_desired, int blockNum, int blockIndex);
   void recordNewTransfer(const uint256& txid, const std::string& sender, const std::string& receiver, uint32_t propertyId, uint64_t amount, int blockNum, int blockIndex);
 
-  bool getAllCommits(std::string senderAddress, UniValue& tradeArray);
-  bool getAllWithdrawals(std::string senderAddress, UniValue& tradeArray);
+  bool getAllCommits(const std::string& senderAddress, UniValue& tradeArray);
+  bool getAllWithdrawals(const std::string& senderAddress, UniValue& tradeArray);
+  bool getChannelInfo(const std::string& channelAddress, UniValue& tradeArray);
   bool checkChannelAddress(const std::string& channelAddress);
   channel getChannelAddresses(const std::string& channelAddress);
   uint64_t getRemaining(const std::string& channelAddress, const std::string& senderAddress, uint32_t propertyId);

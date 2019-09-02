@@ -822,7 +822,7 @@ UniValue tl_createpayload_sendvesting(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_instant_trade(const JSONRPCRequest& request)
 {
-  if (request.params.size() < 4 || request.params.size() > 6)
+  if (request.params.size() < 5)
     throw runtime_error(
 			"tl_createpayload_instant_trade \"fromaddress\" \"toaddress\" propertyid \"amount\" ( \"referenceamount\" )\n"
 
@@ -834,8 +834,6 @@ UniValue tl_createpayload_instant_trade(const JSONRPCRequest& request)
       "3. blockheight_expiry    (string, required) block of expiry\n"
       "4. propertyDesired       (number, optional) the identifier of the property traded for the second address of channel\n"
       "5. amountDesired         (string, optional) the amount desired of tokens\n"
-      "6. price                 (number, optional) the price of contract\n"
-
 
 
 			"\nResult:\n"
@@ -850,19 +848,63 @@ UniValue tl_createpayload_instant_trade(const JSONRPCRequest& request)
   uint32_t propertyId = ParsePropertyId(request.params[0]);
   int64_t amount = ParseAmount(request.params[1], true);
   uint32_t blockheight_expiry = request.params[2].get_int();
-  uint32_t propertyDesired = (request.params.size() > 3) ? ParsePropertyId(request.params[3]): 0;
-  int64_t amountDesired = (request.params.size() > 3) ? ParseAmount(request.params[4],true): 0;
-  int64_t price = (request.params.size() == 4) ? ParseAmount(request.params[5],true): 0;
+  uint32_t propertyDesired = ParsePropertyId(request.params[3]);
+  int64_t amountDesired = ParseAmount(request.params[4],true);
+
 
   PrintToLog("propertyid = %d\n", propertyId);
   PrintToLog("amount = %d\n", amount);
   PrintToLog("blockheight_expiry = %d\n", blockheight_expiry);
   PrintToLog("propertyDesired = %d\n", propertyDesired);
   PrintToLog("amountDesired = %d\n", amountDesired);
-  PrintToLog("price = %d\n", price);
 
   // create a payload for the transaction
-  std::vector<unsigned char> payload = CreatePayload_Instant_Trade(propertyId, amount, blockheight_expiry, propertyDesired, amountDesired, price);
+  std::vector<unsigned char> payload = CreatePayload_Instant_Trade(propertyId, amount, blockheight_expiry, propertyDesired, amountDesired);
+
+  return HexStr(payload.begin(), payload.end());
+
+}
+
+UniValue tl_createpayload_contract_instant_trade(const JSONRPCRequest& request)
+{
+  if (request.params.size() < 6)
+    throw runtime_error(
+			"tl_createpayload_instant_trade \"fromaddress\" \"toaddress\" propertyid \"amount\" ( \"referenceamount\" )\n"
+
+			"\nCreate an contract instant trade payload.\n"
+
+			"\nArguments:\n"
+			"1. contractId            (number, required) the identifier of the property\n"
+			"2. amount                (string, required) the amount of the property traded for the first address of channel\n"
+      "3. blockheight_expiry    (string, required) block of expiry\n"
+      "4. effective price      (number, required) limit price desired in exchange\n"
+			"5. trading action       (number, required) 1 to BUY contracts, 2 to SELL contracts \n"
+			"6. leverage             (number, required) leverage (2x, 3x, ... 10x)\n"
+
+			"\nResult:\n"
+			"\"hash\"                  (string) the hex-encoded transaction hash\n"
+
+			"\nExamples:\n"
+			+ HelpExampleCli("tl_createpayload_contract_instant_trade", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\" \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\" 1 \"100.0\"")
+			+ HelpExampleRpc("tl_createpayload_contract_instant_trade", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\", \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\", 1, \"100.0\"")
+			);
+
+  // obtain parameters & info
+  uint32_t contractId = ParsePropertyId(request.params[0]);
+  int64_t amount = ParseAmount(request.params[1], true);
+  uint32_t blockheight_expiry = request.params[2].get_int();
+  uint64_t price = ParseAmount(request.params[3],true);
+  uint8_t trading_action = ParseContractDexAction(request.params[4]);
+  uint64_t leverage = ParseLeverage(request.params[5]);
+
+
+  PrintToLog("propertyid = %d\n", contractId);
+  PrintToLog("amount = %d\n", amount);
+  PrintToLog("blockheight_expiry = %d\n", blockheight_expiry);
+  PrintToLog("price= %d\n", price);
+
+  // create a payload for the transaction
+  std::vector<unsigned char> payload = CreatePayload_Contract_Instant_Trade(contractId, amount, blockheight_expiry, price, trading_action, leverage);
 
   return HexStr(payload.begin(), payload.end());
 

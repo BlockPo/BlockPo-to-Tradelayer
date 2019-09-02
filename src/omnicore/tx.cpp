@@ -256,6 +256,9 @@ bool CMPTransaction::interpret_Transaction()
     case MSC_TYPE_CREATE_CHANNEL:
         return interpret_Create_Channel();
 
+    case MSC_TYPE_CONTRACT_INSTANT:
+        return interpret_Contract_Instant();
+
     }
 
   return false;
@@ -1735,6 +1738,67 @@ bool CMPTransaction::interpret_Create_Channel()
   return true;
 }
 
+/** Tx 114 */
+bool CMPTransaction::interpret_Contract_Instant()
+{
+  int i = 0;
+
+  PrintToLog("Inside interpret_Contract_Instant\n");
+
+  std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecContractId = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecAmount = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecBlock = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecPrice = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecTrading = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecLeverage = GetNextVarIntBytes(i);
+
+
+  if (!vecTypeBytes.empty()) {
+      type = DecompressInteger(vecTypeBytes);
+  } else return false;
+
+  if (!vecVersionBytes.empty()) {
+      version = DecompressInteger(vecVersionBytes);
+  } else return false;
+
+  if (!vecContractId.empty()) {
+      property = DecompressInteger(vecContractId);
+  } else return false;
+
+  if (!vecAmount.empty()) {
+      amount_forsale = DecompressInteger(vecAmount);
+  } else return false;
+
+  if (!vecBlock.empty()) {
+      blockheight_expiry = DecompressInteger(vecBlock);
+  } else return false;
+
+  if (!vecPrice.empty()) {
+      price = DecompressInteger(vecPrice);
+  } else return false;
+
+  if (!vecTrading.empty()) {
+      itrading_action = DecompressInteger(vecTrading);
+  } else return false;
+
+  if (!vecLeverage.empty()) {
+      ileverage = DecompressInteger(vecLeverage);
+  } else return false;
+
+  PrintToLog("version: %d\n", version);
+  PrintToLog("messageType: %d\n",type);
+  PrintToLog("property: %d\n", property);
+  PrintToLog("amount : %d\n", amount_forsale);
+  PrintToLog("blockheight_expiry : %d\n", blockheight_expiry);
+  PrintToLog("price : %d\n", price);
+  PrintToLog("trading action : %d\n", itrading_action);
+  PrintToLog("leverage : %d\n", ileverage);
+
+  return true;
+}
+
 // ---------------------- CORE LOGIC -------------------------
 
 /**
@@ -1860,6 +1924,9 @@ int CMPTransaction::interpretPacket()
 
         case MSC_TYPE_CREATE_CHANNEL:
             return logicMath_Create_Channel();
+
+        case MSC_TYPE_CONTRACT_INSTANT:
+            return logicMath_Contract_Instant();
 
 
     }
@@ -4233,8 +4300,112 @@ int CMPTransaction::logicMath_Create_Channel()
     return 0;
 }
 
+/** Tx 114 */
+int CMPTransaction::logicMath_Contract_Instant()
+{
+  int rc = 0;
+
+  PrintToLog("Begining of logicMath_Contract_Instant\n");
+
+  // if (!IsTransactionTypeAllowed(block, property, type, version)) {
+  //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+  //             __func__,
+  //             type,
+  //             version,
+  //             property,
+  //             block);
+  //     return (PKT_ERROR_METADEX -22);
+  // }
 
 
+  if (!IsPropertyIdValid(property)) {
+      PrintToLog("%s(): rejected: property for sale %d does not exist\n", __func__, property);
+      return (PKT_ERROR_METADEX -31);
+  }
+
+  if (!IsPropertyIdValid(desired_property)) {
+      PrintToLog("%s(): rejected: desired property %d does not exist\n", __func__, desired_property);
+      return (PKT_ERROR_METADEX -32);
+  }
+
+  channel chnAddrs = t_tradelistdb->getChannelAddresses(sender);
+
+  if (sender.empty() && chnAddrs.first.empty() && chnAddrs.second.empty()) {
+      PrintToLog("%s(): rejected: some address doesn't belong to multisig channel\n", __func__);
+      return (PKT_ERROR_TOKENS -25);
+  }
+
+  // ------------------------------------------
+
+  struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, name_traded);
+  id_contract = pfuture->fco_propertyId;
+
+  if (block > pfuture->fco_init_block + static_cast<int>(pfuture->fco_blocks_until_expiration) || block < pfuture->fco_init_block)
+    {
+      PrintToLog("\nTrade out of deadline!!\n");
+      return PKT_ERROR_SP -38;
+    }
+
+  uint32_t colateralh = pfuture->fco_collateral_currency;
+  int64_t marginRe = static_cast<int64_t>(pfuture->fco_margin_requirement);
+  int64_t nBalance = getMPbalance(sender, colateralh, CHANNEL_RESERVE);
+
+
+  rational_t conv = rational_t(1,1);
+  int64_t num = conv.numerator().convert_to<int64_t>();
+  int64_t den = conv.denominator().convert_to<int64_t>();
+  arith_uint256 amountTR = (ConvertTo256(amount)*ConvertTo256(marginRe)*ConvertTo256(num))/(ConvertTo256(den)*ConvertTo256(ileverage));
+  int64_t amountToReserve = ConvertTo64(amountTR);
+
+  if (nBalance < amountToReserve || nBalance == 0)
+    {
+      PrintToLog("%s(): rejected: sender %s has insufficient balance for contracts %d [%s < %s] \n",
+    __func__,
+    sender,
+    colateralh,
+    FormatMP(colateralh, nBalance),
+    FormatMP(colateralh, amountToReserve));
+      return (PKT_ERROR_SEND -25);
+    }
+  else
+    {
+      if (amountToReserve > 0)
+ {
+   // assert(update_tally_map(sender, colateralh, -amountToReserve, CHANNEL_RESERVE));
+   // assert(update_tally_map(sender, colateralh,  amountToReserve, CONTRACTDEX_MARGIN));
+ }
+    }
+
+  /*********************************************/
+  /**Logic for Node Reward**/
+
+  // const CConsensusParams &params = ConsensusParams();
+  // int BlockInit = params.MSC_NODE_REWARD;
+  // int nBlockNow = GetHeight();
+  //
+  // BlockClass NodeRewardObj(BlockInit, nBlockNow);
+  // NodeRewardObj.SendNodeReward(sender);
+
+  /*********************************************/
+
+  if (itrading_action == BUY)
+  {
+      assert(update_tally_map(sender, property, amount_forsale, POSSITIVE_BALANCE));
+      assert(update_tally_map(receiver, property,  amount_forsale, NEGATIVE_BALANCE));
+
+  } else if (itrading_action == SELL) {
+      assert(update_tally_map(sender, property, amount_forsale, NEGATIVE_BALANCE));
+      assert(update_tally_map(receiver, property,  amount_forsale, POSSITIVE_BALANCE));
+  }
+
+    // t_tradelistdb->recordNewTrade(txid, sender, id_contract, desired_property, block, tx_idx, 0);
+
+  PrintToLog("\n\nEnd of Logic Instant Contract Trade\n\n");
+
+  // what to do with blockheighy_expiry value?
+
+  return rc;
+}
 
 
 struct FutureContractObject *getFutureContractObject(uint32_t property_type, std::string identifier)
