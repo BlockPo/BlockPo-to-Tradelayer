@@ -877,9 +877,9 @@ UniValue tl_createpayload_contract_instant_trade(const JSONRPCRequest& request)
 			"1. contractId            (number, required) the identifier of the property\n"
 			"2. amount                (string, required) the amount of the property traded for the first address of channel\n"
       "3. blockheight_expiry    (string, required) block of expiry\n"
-      "4. effective price      (number, required) limit price desired in exchange\n"
-			"5. trading action       (number, required) 1 to BUY contracts, 2 to SELL contracts \n"
-			"6. leverage             (number, required) leverage (2x, 3x, ... 10x)\n"
+      "4. effective price       (string, required) limit price desired in exchange\n"
+			"5. trading action        (number, required) 1 to BUY contracts, 2 to SELL contracts \n"
+			"6. leverage              (number, required) leverage (2x, 3x, ... 10x)\n"
 
 			"\nResult:\n"
 			"\"hash\"                  (string) the hex-encoded transaction hash\n"
@@ -1022,8 +1022,8 @@ static const CRPCCommand commands[] =
     { "trade layer (payload creation)", "tl_createpayload_sendvesting",                   &tl_createpayload_sendvesting,                     {}   },
     { "trade layer (payload creation)", "tl_createpayload_instant_trade",                 &tl_createpayload_instant_trade,                   {}   },
     { "trade layer (payload creation)", "tl_createpayload_pnl_update",                    &tl_createpayload_pnl_update,                      {}   },
-    { "trade layer (payload creation)", "tl_createpayload_transfer",                      &tl_createpayload_transfer,                        {}   }
-
+    { "trade layer (payload creation)", "tl_createpayload_transfer",                      &tl_createpayload_transfer,                        {}   },
+    { "trade layer (payload creation)", "tl_createpayload_contract_instant_trade",        &tl_createpayload_contract_instant_trade,          {}   }
   };
 
 

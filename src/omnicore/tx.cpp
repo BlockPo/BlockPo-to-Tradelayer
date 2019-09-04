@@ -4330,24 +4330,28 @@ int CMPTransaction::logicMath_Contract_Instant()
 
   channel chnAddrs = t_tradelistdb->getChannelAddresses(sender);
 
-  if (sender.empty() && chnAddrs.first.empty() && chnAddrs.second.empty()) {
+  if (sender.empty() || chnAddrs.first.empty() || chnAddrs.second.empty()) {
       PrintToLog("%s(): rejected: some address doesn't belong to multisig channel\n", __func__);
       return (PKT_ERROR_TOKENS -25);
   }
 
   // ------------------------------------------
 
-  struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, name_traded);
-  id_contract = pfuture->fco_propertyId;
+  CMPSPInfo::Entry sp;
+  if (!_my_sps->getSP(property, sp))
+      return (PKT_ERROR_TOKENS -26);
 
-  if (block > pfuture->fco_init_block + static_cast<int>(pfuture->fco_blocks_until_expiration) || block < pfuture->fco_init_block)
+
+  if (block > sp.init_block + static_cast<int>(sp.blocks_until_expiration) || block < sp.init_block)
     {
-      PrintToLog("\nTrade out of deadline!!\n");
+      int initblock = sp.init_block ;
+      int deadline = initblock + static_cast<int>(sp.blocks_until_expiration);
+      PrintToLog("\nTrade out of deadline!!: actual block: %d, deadline: %d\n",initblock,deadline);
       return PKT_ERROR_SP -38;
     }
 
-  uint32_t colateralh = pfuture->fco_collateral_currency;
-  int64_t marginRe = static_cast<int64_t>(pfuture->fco_margin_requirement);
+  uint32_t colateralh = sp.collateral_currency;
+  int64_t marginRe = static_cast<int64_t>(sp.margin_requirement);
   int64_t nBalance = getMPbalance(sender, colateralh, CHANNEL_RESERVE);
 
 
@@ -4365,7 +4369,7 @@ int CMPTransaction::logicMath_Contract_Instant()
     colateralh,
     FormatMP(colateralh, nBalance),
     FormatMP(colateralh, amountToReserve));
-      return (PKT_ERROR_SEND -25);
+      // return (PKT_ERROR_SEND -27);
     }
   else
     {
@@ -4390,12 +4394,12 @@ int CMPTransaction::logicMath_Contract_Instant()
 
   if (itrading_action == BUY)
   {
-      assert(update_tally_map(sender, property, amount_forsale, POSSITIVE_BALANCE));
-      assert(update_tally_map(receiver, property,  amount_forsale, NEGATIVE_BALANCE));
+      assert(update_tally_map(chnAddrs.first, property, amount_forsale, POSSITIVE_BALANCE));
+      assert(update_tally_map(chnAddrs.second, property,  amount_forsale, NEGATIVE_BALANCE));
 
   } else if (itrading_action == SELL) {
-      assert(update_tally_map(sender, property, amount_forsale, NEGATIVE_BALANCE));
-      assert(update_tally_map(receiver, property,  amount_forsale, POSSITIVE_BALANCE));
+      assert(update_tally_map(chnAddrs.first, property, amount_forsale, NEGATIVE_BALANCE));
+      assert(update_tally_map(chnAddrs.second, property,  amount_forsale, POSSITIVE_BALANCE));
   }
 
     // t_tradelistdb->recordNewTrade(txid, sender, id_contract, desired_property, block, tx_idx, 0);
