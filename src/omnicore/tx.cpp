@@ -4390,19 +4390,9 @@ int CMPTransaction::logicMath_Contract_Instant()
   // BlockClass NodeRewardObj(BlockInit, nBlockNow);
   // NodeRewardObj.SendNodeReward(sender);
 
-  /*********************************************/
+  /********************************************************/
 
-  if (itrading_action == BUY)
-  {
-      assert(update_tally_map(chnAddrs.first, property, amount_forsale, POSSITIVE_BALANCE));
-      assert(update_tally_map(chnAddrs.second, property,  amount_forsale, NEGATIVE_BALANCE));
 
-  } else if (itrading_action == SELL) {
-      assert(update_tally_map(chnAddrs.first, property, amount_forsale, NEGATIVE_BALANCE));
-      assert(update_tally_map(chnAddrs.second, property,  amount_forsale, POSSITIVE_BALANCE));
-  }
-
-    // t_tradelistdb->recordNewTrade(txid, sender, id_contract, desired_property, block, tx_idx, 0);
 
   PrintToLog("\n\nEnd of Logic Instant Contract Trade\n\n");
 

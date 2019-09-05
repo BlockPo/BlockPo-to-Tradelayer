@@ -186,6 +186,7 @@ enum FILETYPES {
 #define TYPE_WITHDRAWAL  "withdrawal"
 #define TYPE_INSTANT_TRADE  "instant_trade"
 #define TYPE_TRANSFER  "transfer"
+#define TYPE_CONTRACT_INSTANT_TRADE "contract_instat_trade"
 
 
 // Currency in existance (options for createcontract)
@@ -362,6 +363,7 @@ class CMPTradeList : public CDBBase
   void recordNewChannel(const std::string& channelAddress, const std::string& frAddr, const std::string& secAddr, int blockNum, int blockIndex);
   void recordNewInstantTrade(const uint256& txid, const std::string& sender, const std::string& receiver, uint32_t propertyIdForSale, uint64_t amount_forsale, uint32_t propertyIdDesired, uint64_t amount_desired, int blockNum, int blockIndex);
   void recordNewTransfer(const uint256& txid, const std::string& sender, const std::string& receiver, uint32_t propertyId, uint64_t amount, int blockNum, int blockIndex);
+  void recordNewInstContTrade(const uint256& txid, const std::string& firstAddr, const std::string& secondAddr, uint32_t property, uint64_t amount_forsale, uint64_t price ,int blockNum, int blockIndex);
 
   bool getAllCommits(const std::string& senderAddress, UniValue& tradeArray);
   bool getAllWithdrawals(const std::string& senderAddress, UniValue& tradeArray);
@@ -517,6 +519,9 @@ namespace mastercore
   int64_t pos_margin(uint32_t contractId, std::string address, uint16_t prop_type, uint32_t margin_requirement); // return mainteinance margin for a given contrand and address
 
   bool makeWithdrawals(int Block); // make the withdrawals for multisig channels
+
+  // x_Trade function for contracts on instant trade
+  bool Instant_x_Trade(const uint256& txid, uint8_t tradingAction, std::string& firstAddr, std::string& secondAddr, uint32_t property, int64_t amount_forsale, uint64_t price, int block, int tx_idx);
 }
 
 #endif // OMNICORE_OMNICORE_H

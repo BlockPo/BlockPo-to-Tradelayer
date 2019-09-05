@@ -3459,6 +3459,15 @@ void CMPTradeList::recordNewInstantTrade(const uint256& txid, const std::string&
   // if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
 }
 
+void CMPTradeList::recordNewInstContTrade(const uint256& txid, const std::string& firstAddr, const std::string& secondAddr, uint32_t property, uint64_t amount_forsale, uint64_t price ,int blockNum, int blockIndex)
+{
+  if (!pdb) return;
+  std::string strValue = strprintf("%s:%s:%d:%d:%d:%d:%d:%s", firstAddr, secondAddr, property, amount_forsale, price, blockNum, blockIndex, TYPE_CONTRACT_INSTANT_TRADE);
+  Status status = pdb->Put(writeoptions, txid.ToString(), strValue);
+  ++nWritten;
+  // if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
+}
+
 void CMPTradeList::recordNewCommit(const uint256& txid, const std::string& channelAddress, const std::string& sender, uint32_t propertyId, uint64_t amountCommited, int blockNum, int blockIndex)
 {
   if (!pdb) return;
@@ -4949,6 +4958,40 @@ channel CMPTradeList::getChannelAddresses(const std::string& channelAddress)
     delete it; // Desallocation proccess
     if (count) { return true; } else { return false; }
   }
+
+bool mastercore::Instant_x_Trade(const uint256& txid, uint8_t tradingAction, std::string& firstAddr, std::string& secondAddr, uint32_t property, int64_t amount_forsale, uint64_t price, int block, int tx_idx)
+{
+  int64_t added = 0;
+
+  int64_t firstPoss = getMPbalance(firstAddr, property, POSSITIVE_BALANCE);
+  int64_t firstNeg = getMPbalance(firstAddr, property, NEGATIVE_BALANCE);
+  int64_t secondPoss = getMPbalance(secondAddr, property, POSSITIVE_BALANCE);
+  int64_t secondNeg = getMPbalance(secondAddr, property, NEGATIVE_BALANCE);
+
+  (tradingAction == BUY) ? added = amount_forsale : added = -amount_forsale;
+
+  int64_t first_p = firstPoss - firstNeg + amount_forsale;
+  int64_t second_p = secondPoss - secondNeg - amount_forsale;
+
+  if(first_p >= 0)
+      assert(update_tally_map(firstAddr, property, first_p - firstPoss, POSSITIVE_BALANCE));
+  else
+      assert(update_tally_map(firstAddr, property, first_p - firstNeg, NEGATIVE_BALANCE));
+
+  if(second_p >= 0)
+      assert(update_tally_map(secondAddr, property, second_p - secondPoss, POSSITIVE_BALANCE));
+  else
+      assert(update_tally_map(secondAddr, property, second_p - secondNeg, NEGATIVE_BALANCE));
+
+
+  // fees here!
+
+
+  t_tradelistdb->recordNewInstContTrade(txid,firstAddr,secondAddr, property, amount_forsale, price, block, tx_idx);
+
+
+  return true;
+}
 
 /**
  * @return The marker for class C transactions.
