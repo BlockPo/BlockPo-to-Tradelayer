@@ -1644,13 +1644,6 @@ bool CMPTransaction::interpret_Update_PNL()
       pnl_amount = DecompressInteger(vecAmount);
   } else return false;
 
-  if (!vecVoutBef.empty()) {
-      vout_bef = DecompressInteger(vecVoutBef);
-  } else return false;
-
-  if (!vecVoutPay.empty()) {
-      vout_pay = DecompressInteger(vecVoutPay);
-  } else return false;
 
 
   // PrintToLog("version: %d\n", version);
@@ -4212,9 +4205,9 @@ int CMPTransaction::logicMath_Update_PNL()
   // ------------------------------------------
 
 
-  //TODO: logic for PNLS
-  // assert(update_tally_map(sender, propertyId, -amount_commited, BALANCE));
-  // assert(update_tally_map(receiver, propertyId, amount_commited, CHANNEL_RESERVE));
+  //logic for PNLS
+  assert(update_tally_map(sender, propertyId, -pnl_amount, CHANNEL_RESERVE));
+  assert(update_tally_map(receiver, propertyId, pnl_amount, BALANCE));
 
 
   return 0;
@@ -4361,24 +4354,24 @@ int CMPTransaction::logicMath_Contract_Instant()
   arith_uint256 amountTR = (ConvertTo256(amount)*ConvertTo256(marginRe)*ConvertTo256(num))/(ConvertTo256(den)*ConvertTo256(ileverage));
   int64_t amountToReserve = ConvertTo64(amountTR);
 
-  if (nBalance < amountToReserve || nBalance == 0)
-    {
-      PrintToLog("%s(): rejected: sender %s has insufficient balance for contracts %d [%s < %s] \n",
-    __func__,
-    sender,
-    colateralh,
-    FormatMP(colateralh, nBalance),
-    FormatMP(colateralh, amountToReserve));
-      // return (PKT_ERROR_SEND -27);
-    }
-  else
-    {
-      if (amountToReserve > 0)
- {
-   // assert(update_tally_map(sender, colateralh, -amountToReserve, CHANNEL_RESERVE));
-   // assert(update_tally_map(sender, colateralh,  amountToReserve, CONTRACTDEX_MARGIN));
- }
-    }
+ //  if (nBalance < amountToReserve || nBalance == 0)
+ //    {
+ //      PrintToLog("%s(): rejected: sender %s has insufficient balance for contracts %d [%s < %s] \n",
+ //    __func__,
+ //    sender,
+ //    colateralh,
+ //    FormatMP(colateralh, nBalance),
+ //    FormatMP(colateralh, amountToReserve));
+ //      return (PKT_ERROR_SEND -27);
+ //    }
+ //  else
+ //    {
+ //      if (amountToReserve > 0)
+ // {
+ //   // assert(update_tally_map(sender, colateralh, -amountToReserve, CHANNEL_RESERVE));
+ //   // assert(update_tally_map(sender, colateralh,  amountToReserve, CONTRACTDEX_MARGIN));
+ // }
+ //    }
 
   /*********************************************/
   /**Logic for Node Reward**/
@@ -4392,7 +4385,7 @@ int CMPTransaction::logicMath_Contract_Instant()
 
   /********************************************************/
 
-
+  mastercore::Instant_x_Trade(txid, itrading_action, chnAddrs.first, chnAddrs.second, property, amount_forsale, price, block, tx_idx);
 
   PrintToLog("\n\nEnd of Logic Instant Contract Trade\n\n");
 

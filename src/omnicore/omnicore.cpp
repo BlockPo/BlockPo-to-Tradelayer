@@ -3454,7 +3454,8 @@ void CMPTradeList::recordNewInstantTrade(const uint256& txid, const std::string&
 {
   if (!pdb) return;
   std::string strValue = strprintf("%s:%d:%d:%d:%d:%d:%d:%d:%s", sender, receiver, propertyIdForSale, amount_forsale, propertyIdDesired, amount_desired, blockNum, blockIndex,TYPE_INSTANT_TRADE);
-  Status status = pdb->Put(writeoptions, txid.ToString(), strValue);
+  const string key = blockNum + "+" + txid.ToString(); // order by blockNum
+  Status status = pdb->Put(writeoptions, key, strValue);
   ++nWritten;
   // if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
 }
@@ -3463,7 +3464,8 @@ void CMPTradeList::recordNewInstContTrade(const uint256& txid, const std::string
 {
   if (!pdb) return;
   std::string strValue = strprintf("%s:%s:%d:%d:%d:%d:%d:%s", firstAddr, secondAddr, property, amount_forsale, price, blockNum, blockIndex, TYPE_CONTRACT_INSTANT_TRADE);
-  Status status = pdb->Put(writeoptions, txid.ToString(), strValue);
+  const string key = blockNum + "+" + txid.ToString(); // order by blockNum
+  Status status = pdb->Put(writeoptions, key, strValue);
   ++nWritten;
   // if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
 }
@@ -4961,33 +4963,66 @@ channel CMPTradeList::getChannelAddresses(const std::string& channelAddress)
 
 bool mastercore::Instant_x_Trade(const uint256& txid, uint8_t tradingAction, std::string& firstAddr, std::string& secondAddr, uint32_t property, int64_t amount_forsale, uint64_t price, int block, int tx_idx)
 {
-  int64_t added = 0;
 
   int64_t firstPoss = getMPbalance(firstAddr, property, POSSITIVE_BALANCE);
   int64_t firstNeg = getMPbalance(firstAddr, property, NEGATIVE_BALANCE);
   int64_t secondPoss = getMPbalance(secondAddr, property, POSSITIVE_BALANCE);
   int64_t secondNeg = getMPbalance(secondAddr, property, NEGATIVE_BALANCE);
 
-  (tradingAction == BUY) ? added = amount_forsale : added = -amount_forsale;
+  PrintToLog("\nfirstPossitive: %d\n",firstPoss);
+  PrintToLog("\nfirstNegative: %d\n",firstNeg);
+  PrintToLog("\nsecondPossitive: %d\n",secondPoss);
+  PrintToLog("\nsecondNegative: %d\n",secondNeg);
+
+  if(tradingAction == SELL)
+      amount_forsale = -amount_forsale;
 
   int64_t first_p = firstPoss - firstNeg + amount_forsale;
   int64_t second_p = secondPoss - secondNeg - amount_forsale;
 
-  if(first_p >= 0)
+  PrintToLog("\nfirst address position after: %d\n",first_p);
+  PrintToLog("\nsecond address position after : %d\n",second_p);
+
+  if(first_p > 0)
+  {
+      PrintToLog("checkpoin 1\n");
       assert(update_tally_map(firstAddr, property, first_p - firstPoss, POSSITIVE_BALANCE));
-  else
-      assert(update_tally_map(firstAddr, property, first_p - firstNeg, NEGATIVE_BALANCE));
+      PrintToLog("checkpoin 2\n");
+      if(firstNeg != 0)
+          assert(update_tally_map(firstAddr, property, -firstNeg, NEGATIVE_BALANCE));
 
-  if(second_p >= 0)
+  } else if (first_p < 0){
+      PrintToLog("checkpoin 3\n");
+      PrintToLog("first_p : %d\n", first_p);
+      PrintToLog("firstNeg : %d\n", firstNeg);
+      assert(update_tally_map(firstAddr, property, -first_p - firstNeg, NEGATIVE_BALANCE));
+      PrintToLog("checkpoin 4\n");
+      if(firstPoss != 0)
+          assert(update_tally_map(firstAddr, property, -firstPoss, POSSITIVE_BALANCE));
+  }
+
+  if(second_p > 0){
+      PrintToLog("checkpoin 5\n");
       assert(update_tally_map(secondAddr, property, second_p - secondPoss, POSSITIVE_BALANCE));
-  else
-      assert(update_tally_map(secondAddr, property, second_p - secondNeg, NEGATIVE_BALANCE));
+      PrintToLog("checkpoin 6\n");
+      if (secondNeg != 0)
+          assert(update_tally_map(secondAddr, property, -secondNeg, NEGATIVE_BALANCE));
 
+  } else if (second_p < 0){
+      PrintToLog("checkpoin 7\n");
+      PrintToLog("second_p : %d\n",second_p);
+      PrintToLog("secondNeg : %d\n",secondNeg);
+      assert(update_tally_map(secondAddr, property, -second_p - secondNeg, NEGATIVE_BALANCE));
+      PrintToLog("checkpoin 8\n");
+      if (secondPoss != 0)
+          assert(update_tally_map(secondAddr, property, -secondPoss, POSSITIVE_BALANCE));
+  }
+
+  PrintToLog("checkpoin 9\n");
 
   // fees here!
 
-
-  t_tradelistdb->recordNewInstContTrade(txid,firstAddr,secondAddr, property, amount_forsale, price, block, tx_idx);
+  // t_tradelistdb->recordNewInstContTrade(txid,firstAddr,secondAddr, property, amount_forsale, price, block, tx_idx);
 
 
   return true;

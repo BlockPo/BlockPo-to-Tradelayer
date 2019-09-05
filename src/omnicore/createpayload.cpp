@@ -808,7 +808,7 @@ std::vector<unsigned char> CreatePayload_Contract_Instant_Trade(uint32_t contrac
   return payload;
 }
 
-std::vector<unsigned char> CreatePayload_PNL_Update(uint32_t propertyId, uint64_t amount, uint32_t blockheight_expiry, uint32_t voutBenef, uint32_t voutPayer)
+std::vector<unsigned char> CreatePayload_PNL_Update(uint32_t propertyId, uint64_t amount, uint32_t blockheight_expiry)
 {
   std::vector<unsigned char> payload;
 
@@ -820,16 +820,12 @@ std::vector<unsigned char> CreatePayload_PNL_Update(uint32_t propertyId, uint64_
   std::vector<uint8_t> vecPropertyId = CompressInteger((uint64_t)propertyId);
   std::vector<uint8_t> vecAmount = CompressInteger((uint64_t)amount);
   std::vector<uint8_t> vecBlock = CompressInteger((uint64_t)blockheight_expiry);
-  std::vector<uint8_t> vecVoutBef = CompressInteger((uint64_t)voutBenef);
-  std::vector<uint8_t> vecVoutPay = CompressInteger((uint64_t)voutPayer);
 
   payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
   payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
   payload.insert(payload.end(), vecPropertyId.begin(), vecPropertyId.end());
   payload.insert(payload.end(), vecAmount.begin(), vecAmount.end());
   payload.insert(payload.end(), vecBlock.begin(), vecBlock.end());
-  payload.insert(payload.end(), vecVoutBef.begin(), vecVoutBef.end());
-  payload.insert(payload.end(), vecVoutPay.begin(), vecVoutPay.end());
 
   return payload;
 }

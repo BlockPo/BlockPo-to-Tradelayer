@@ -139,8 +139,6 @@ private:
     uint64_t amount_to_withdraw;
     uint64_t pnl_amount;
     uint64_t vOut;
-    uint64_t vout_bef;
-    uint64_t vout_pay;
     uint64_t price;
     uint64_t ileverage;
     uint64_t itrading_action;
