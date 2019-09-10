@@ -161,21 +161,21 @@ std::string GetAddressLabel(const std::string& address)
  */
 int IsMyAddress(const std::string& address)
 {
-// #ifdef ENABLE_WALLET
-//     CWalletRef pwalletMain = NULL;
-//     if (vpwallets.size() > 0){
-//         pwalletMain = vpwallets[0];
-//     }
-//
-//     if (pwalletMain) {
-//         // TODO: resolve deadlock caused cs_tally, cs_wallet
-//         // LOCK(pwalletMain->cs_wallet);
-//         CBitcoinAddress parsedAddress(address);
-//         isminetype isMine = IsMine(*pwalletMain, parsedAddress.Get());
-//
-//         return static_cast<int>(isMine);
-//     }
-// #endif
+#ifdef ENABLE_WALLET
+    CWalletRef pwalletMain = NULL;
+    if (vpwallets.size() > 0){
+        pwalletMain = vpwallets[0];
+    }
+
+    if (pwalletMain) {
+        // TODO: resolve deadlock caused cs_tally, cs_wallet
+        // LOCK(pwalletMain->cs_wallet);
+        // CBitcoinAddress parsedAddress(address);
+        isminetype isMine = IsMine(*pwalletMain, DecodeDestination(address));
+
+        return static_cast<int>(isMine);
+    }
+#endif
     return 0;
 }
 
