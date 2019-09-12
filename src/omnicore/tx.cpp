@@ -4051,11 +4051,11 @@ int CMPTransaction::logicMath_Withdrawal_FromChannel()
         return (PKT_ERROR_TOKENS -25);
     }
 
-    uint64_t amount_commited = t_tradelistdb->getRemaining(receiver, sender, propertyId);
+    uint64_t amount_remaining = t_tradelistdb->getRemaining(receiver, sender, propertyId);
 
-    PrintToLog("all the amount_commited for the receiver address : %s\n",amount_commited);
+    PrintToLog("all the amount remaining for the receiver address : %s\n",amount_remaining);
 
-    if (amount_to_withdraw > amount_commited)
+    if (amount_to_withdraw > amount_remaining)
     {
         PrintToLog("%s(): amount to withdrawal is bigger than amount remaining in channel for the address %s\n", __func__, sender);
         return (PKT_ERROR_TOKENS -26);
@@ -4143,7 +4143,7 @@ int CMPTransaction::logicMath_Instant_Trade()
               FormatMP(property, amount_forsale));
       return (PKT_ERROR_METADEX -27);
   }
-  
+
   nBalance = getMPbalance(sender, desired_property, CHANNEL_RESERVE);
   if (desired_property > 0 && nBalance < (int64_t) desired_value) {
       PrintToLog("%s(): rejected: channel address %s has insufficient balance of property %d [%s < %s]\n",
@@ -4184,10 +4184,10 @@ int CMPTransaction::logicMath_Instant_Trade()
       }
 
       // checking the updating
-      std::map<std::string,channel>::iterator itt = channels_Map.find(sender);
-      channel& chn1 = itt->second;
-
-      PrintToLog("expiry height updated: %d\n",chn1.expiry_height);
+      // std::map<std::string,channel>::iterator itt = channels_Map.find(sender);
+      // channel& chn1 = itt->second;
+      //
+      // PrintToLog("expiry height updated: %d\n",chn1.expiry_height);
 
 
   } else {
@@ -4372,11 +4372,16 @@ int CMPTransaction::logicMath_Contract_Instant()
       return (PKT_ERROR_TOKENS -25);
   }
 
+  if (chnAddrs.expiry_height < block) {
+      PrintToLog("%s(): rejected: out of channel deadline: actual block: %d, deadline: %d\n", __func__, block, chnAddrs.expiry_height);
+      return (PKT_ERROR_TOKENS -26);
+  }
+
   // ------------------------------------------
 
   CMPSPInfo::Entry sp;
   if (!_my_sps->getSP(property, sp))
-      return (PKT_ERROR_TOKENS -26);
+      return (PKT_ERROR_TOKENS -27);
 
 
   if (block > sp.init_block + static_cast<int>(sp.blocks_until_expiration) || block < sp.init_block)
@@ -4429,7 +4434,22 @@ int CMPTransaction::logicMath_Contract_Instant()
 
   /********************************************************/
 
-  mastercore::Instant_x_Trade(txid, itrading_action, chnAddrs.first, chnAddrs.second, property, amount_forsale, price, block, tx_idx);
+  // updating last exchange block
+  std::map<std::string,channel>::iterator it = channels_Map.find(sender);
+  channel& chn = it->second;
+
+  int difference = block - chn.last_exchange_block;
+
+  PrintToLog("expiry height after update: %d\n",chn.expiry_height);
+
+  if (difference < dayblocks)
+  {
+      // updating expiry_height
+      chn.expiry_height += difference;
+
+  }
+
+  mastercore::Instant_x_Trade(txid, itrading_action, chnAddrs.multisig, chnAddrs.first, chnAddrs.second, property, amount_forsale, price, block, tx_idx);
 
   PrintToLog("\n\nEnd of Logic Instant Contract Trade\n\n");
 

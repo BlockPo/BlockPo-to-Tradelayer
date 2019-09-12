@@ -1027,6 +1027,21 @@ static bool HandleLtcInstantTrade(const CTransaction& tx, int nBlock, const std:
 
     if (count > 0)
     {
+        // updating last exchange block
+        std::map<std::string,channel>::iterator it = channels_Map.find(sender);
+        channel& chn = it->second;
+
+        int difference = nBlock - chn.last_exchange_block;
+
+        PrintToLog("expiry height after update: %d\n",chn.expiry_height);
+
+        if (difference < dayblocks)
+        {
+            // updating expiry_height
+            chn.expiry_height += difference;
+
+        }
+
         t_tradelistdb->recordNewInstantTrade(tx.GetHash(), sender,receiver, property, amount_forsale, desired_property, desired_value, nBlock, idx);
         PrintToLog("Successfully litecoins traded \n");
     }
@@ -4558,6 +4573,8 @@ bool mastercore::makeWithdrawals(int Block)
 
 bool mastercore::closeChannels(int Block)
 {
+    bool status = false;
+
     for(std::map<std::string,channel>::iterator it = channels_Map.begin(); it != channels_Map.end();)
     {
         std::string channelAddress = it->first;
@@ -4570,27 +4587,51 @@ bool mastercore::closeChannels(int Block)
         {
             ++it;
             continue;
-         }
+        }
 
-         // if the channel was used on last 576 blocks : continue (we must include this on other function)
+        LOCK(cs_tally);
 
-         const std::string channelAdress = chn.multisig;
-         const std::string firstAddr = chn.first;
-         const std::string secondAddr = chn.second;
+        uint32_t nextSPID = _my_sps->peekNextSPID(1);
 
+        for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
+        {
+            CMPSPInfo::Entry sp;
+            if (_my_sps->getSP(propertyId, sp))
+            {
+                if (sp.prop_type == ALL_PROPERTY_TYPE_CONTRACT)
+                {
+                    PrintToLog("Property is a future contract\n");
+                    continue;
+                }
+            }
 
-         // PrintToLog("%s(): withdrawal: block: %d, deadline: %d, address: %s, propertyId: %d, amount: %d \n", __func__, Block, deadline, address, propertyId, amount);
+            uint64_t first_rem = t_tradelistdb->getRemaining(chn.multisig, chn.first, propertyId);
+            uint64_t second_rem = t_tradelistdb->getRemaining(chn.multisig, chn.second, propertyId);
 
-         // updating tally map
-         // assert(update_tally_map(address, propertyId, amount, BALANCE));
-         // assert(update_tally_map(channelAddress, propertyId, -amount, CHANNEL_RESERVE));
+            if (first_rem > 0)
+            {
+              assert(update_tally_map(chn.multisig, propertyId, -first_rem, CHANNEL_RESERVE));
+              assert(update_tally_map(chn.first, propertyId, first_rem, BALANCE));
+              status = true;
+            }
 
-         // deleting element from map
-         channels_Map.erase (it);
+            if (second_rem > 0)
+            {
+              assert(update_tally_map(chn.multisig, propertyId, -first_rem, CHANNEL_RESERVE));
+              assert(update_tally_map(chn.second, propertyId, first_rem, BALANCE));
+              status = true;
+            }
+
+        }
+
+        // deleting element from map
+        channels_Map.erase (it);
+
+        // maybe last step is put some information on db
 
     }
 
-    return true;
+    return status;
 
 }
 
@@ -4791,6 +4832,13 @@ bool CMPTradeList::checkChannelAddress(const std::string& channelAddress)
         if(channelAddress != strKey)
             continue;
 
+        // checking now on channels_Map
+        std::map<std::string,channel>::iterator it = channels_Map.find(channelAddress);
+        std::string chnAddr = it->first;
+
+        if(channelAddress != chnAddr)
+            continue;
+
         status = true;
         break;
     }
@@ -4982,7 +5030,7 @@ channel CMPTradeList::getChannelAddresses(const std::string& channelAddress)
     if (count) { return true; } else { return false; }
   }
 
-bool mastercore::Instant_x_Trade(const uint256& txid, uint8_t tradingAction, std::string& firstAddr, std::string& secondAddr, uint32_t property, int64_t amount_forsale, uint64_t price, int block, int tx_idx)
+bool mastercore::Instant_x_Trade(const uint256& txid, uint8_t tradingAction, std::string& channelAddr, std::string& firstAddr, std::string& secondAddr, uint32_t property, int64_t amount_forsale, uint64_t price, int block, int tx_idx)
 {
 
   int64_t firstPoss = getMPbalance(firstAddr, property, POSSITIVE_BALANCE);
@@ -4996,47 +5044,38 @@ bool mastercore::Instant_x_Trade(const uint256& txid, uint8_t tradingAction, std
   int64_t first_p = firstPoss - firstNeg + amount_forsale;
   int64_t second_p = secondPoss - secondNeg - amount_forsale;
 
-  PrintToLog("\nfirst address position after: %d\n",first_p);
-  PrintToLog("\nsecond address position after : %d\n",second_p);
-
   if(first_p > 0)
   {
-      PrintToLog("checkpoin 1\n");
       assert(update_tally_map(firstAddr, property, first_p - firstPoss, POSSITIVE_BALANCE));
-      PrintToLog("checkpoin 2\n");
       if(firstNeg != 0)
           assert(update_tally_map(firstAddr, property, -firstNeg, NEGATIVE_BALANCE));
 
   } else if (first_p < 0){
-      PrintToLog("checkpoin 3\n");
-      PrintToLog("first_p : %d\n", first_p);
-      PrintToLog("firstNeg : %d\n", firstNeg);
       assert(update_tally_map(firstAddr, property, -first_p - firstNeg, NEGATIVE_BALANCE));
-      PrintToLog("checkpoin 4\n");
       if(firstPoss != 0)
           assert(update_tally_map(firstAddr, property, -firstPoss, POSSITIVE_BALANCE));
   }
 
   if(second_p > 0){
-      PrintToLog("checkpoin 5\n");
       assert(update_tally_map(secondAddr, property, second_p - secondPoss, POSSITIVE_BALANCE));
-      PrintToLog("checkpoin 6\n");
       if (secondNeg != 0)
           assert(update_tally_map(secondAddr, property, -secondNeg, NEGATIVE_BALANCE));
 
   } else if (second_p < 0){
-      PrintToLog("checkpoin 7\n");
-      PrintToLog("second_p : %d\n",second_p);
-      PrintToLog("secondNeg : %d\n",secondNeg);
       assert(update_tally_map(secondAddr, property, -second_p - secondNeg, NEGATIVE_BALANCE));
-      PrintToLog("checkpoin 8\n");
       if (secondPoss != 0)
           assert(update_tally_map(secondAddr, property, -secondPoss, POSSITIVE_BALANCE));
   }
 
-  PrintToLog("checkpoin 9\n");
-
   // fees here!
+
+  //margin Here
+  // assert(update_tally_map(channelAddr, property, -secondPoss, POSSITIVE_BALANCE));
+  // assert(update_tally_map(firstAddr, property, -secondPoss, POSSITIVE_BALANCE));
+  //
+  // assert(update_tally_map(channelAddr, property, -secondPoss, POSSITIVE_BALANCE));
+  // assert(update_tally_map(secondAddr, property, -secondPoss, POSSITIVE_BALANCE));
+
 
   // t_tradelistdb->recordNewInstContTrade(txid,firstAddr,secondAddr, property, amount_forsale, price, block, tx_idx);
 
