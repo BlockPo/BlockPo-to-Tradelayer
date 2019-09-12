@@ -143,7 +143,7 @@ private:
     uint64_t ileverage;
     uint64_t itrading_action;
 
-    int blockheight_expiry;
+    int block_forexpiry;
 
 
     // Indicates whether the transaction can be used to execute logic
@@ -390,7 +390,7 @@ public:
         amount_commited = 0;
         amount_to_withdraw = 0;
         vOut = 0;
-        blockheight_expiry = 0;
+        block_forexpiry = 0;
         pnl_amount= 0;
         ileverage = 0;
         itrading_action = 0;

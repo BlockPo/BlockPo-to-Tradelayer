@@ -273,6 +273,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_commit_tochannel", 4, "arg4" },
     { "tl_withdrawal_fromchannel", 2, "arg2" },
     { "tl_withdrawal_fromchannel", 4, "arg4" },
+    { "tl_create_channel", 3, "arg3" },
 
     /* Trade Layer - data retrieval calls */
     { "tl_setautocommit", 0, "arg0" },

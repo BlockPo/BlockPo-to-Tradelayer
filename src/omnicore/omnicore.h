@@ -187,7 +187,7 @@ enum FILETYPES {
 #define TYPE_INSTANT_TRADE  "instant_trade"
 #define TYPE_TRANSFER  "transfer"
 #define TYPE_CONTRACT_INSTANT_TRADE "contract_instat_trade"
-
+#define TYPE_CREATE_CHANNEL "create channel"
 
 // Currency in existance (options for createcontract)
 uint32_t const TL_dUSD  = 1;
@@ -196,6 +196,9 @@ uint32_t const TL_dYEN  = 3;
 uint32_t const TL_ALL   = 4;
 uint32_t const TL_sLTC  = 5;
 uint32_t const TL_LTC   = 6;
+
+/*24 horus to blocks*/
+const int dayblocks = 576;
 
 // limits for margin dynamic
 const rational_t factor = rational_t(80,100);  // critical limit
@@ -235,8 +238,10 @@ extern CCriticalSection cs_tally;
    std::string multisig;
    std::string first;
    std::string second;
+   int expiry_height;
+   int last_exchange_block;
 
-   channel() : multisig(""), first(""), second("") {}
+   channel() : multisig(""), first(""), second(""), expiry_height(0), last_exchange_block(0) {}
  };
 
 class COmniTransactionDB : public CDBBase
@@ -519,6 +524,8 @@ namespace mastercore
   int64_t pos_margin(uint32_t contractId, std::string address, uint16_t prop_type, uint32_t margin_requirement); // return mainteinance margin for a given contrand and address
 
   bool makeWithdrawals(int Block); // make the withdrawals for multisig channels
+
+  bool closeChannels(int Block);
 
   // x_Trade function for contracts on instant trade
   bool Instant_x_Trade(const uint256& txid, uint8_t tradingAction, std::string& firstAddr, std::string& secondAddr, uint32_t property, int64_t amount_forsale, uint64_t price, int block, int tx_idx);

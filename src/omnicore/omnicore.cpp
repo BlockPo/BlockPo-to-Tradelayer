@@ -180,6 +180,9 @@ extern std::map<std::string, int64_t> sum_upnls;
 /** Pending withdrawals **/
 extern std::map<std::string,vector<withdrawalAccepted>> withdrawal_Map;
 
+/** Map of active channels**/
+extern std::map<std::string,channel> channels_Map;
+
 using mastercore::StrToInt64;
 
 // indicate whether persistence is enabled at this point, or not
@@ -3444,7 +3447,7 @@ void CMPTradeList::recordNewTrade(const uint256& txid, const std::string& addres
 void CMPTradeList::recordNewChannel(const std::string& channelAddress, const std::string& frAddr, const std::string& secAddr, int blockNum, int blockIndex)
 {
   if (!pdb) return;
-  std::string strValue = strprintf("%s:%s:%d:%d",frAddr, secAddr, blockNum, blockIndex);
+  std::string strValue = strprintf("%s:%s:%d:%d:%s",frAddr, secAddr, blockNum, blockIndex,TYPE_CREATE_CHANNEL);
   Status status = pdb->Put(writeoptions, channelAddress, strValue);
   ++nWritten;
   // if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
@@ -4543,10 +4546,47 @@ bool mastercore::makeWithdrawals(int Block)
             assert(update_tally_map(channelAddress, propertyId, -amount, CHANNEL_RESERVE));
 
             // deleting element from vector
-            // PrintToLog("%s(): deleting element from vector\n",__func__);
             accepted.erase(itt);
 
         }
+
+    }
+
+    return true;
+
+}
+
+bool mastercore::closeChannels(int Block)
+{
+    for(std::map<std::string,channel>::iterator it = channels_Map.begin(); it != channels_Map.end();)
+    {
+        std::string channelAddress = it->first;
+
+        channel &chn = it->second;
+
+        const int expiry = chn.expiry_height;
+
+        if (Block != expiry)
+        {
+            ++it;
+            continue;
+         }
+
+         // if the channel was used on last 576 blocks : continue (we must include this on other function)
+
+         const std::string channelAdress = chn.multisig;
+         const std::string firstAddr = chn.first;
+         const std::string secondAddr = chn.second;
+
+
+         // PrintToLog("%s(): withdrawal: block: %d, deadline: %d, address: %s, propertyId: %d, amount: %d \n", __func__, Block, deadline, address, propertyId, amount);
+
+         // updating tally map
+         // assert(update_tally_map(address, propertyId, amount, BALANCE));
+         // assert(update_tally_map(channelAddress, propertyId, -amount, CHANNEL_RESERVE));
+
+         // deleting element from map
+         channels_Map.erase (it);
 
     }
 
@@ -4656,7 +4696,6 @@ const std::string ExodusAddress()
    uint64_t sumWithdr = 0;
 
    std::vector<std::string> vstr;
-   // string txidStr = txid.ToString();
 
    leveldb::Iterator* it = NewIterator(); // Allocation proccess
 
@@ -4680,25 +4719,15 @@ const std::string ExodusAddress()
 
        std::string cAddress = vstr[0];
 
-       // PrintToLog("(%s): cAddress: %s\n",__func__,cAddress);
-       // PrintToLog("(%s): channelAddress: %s\n",__func__,channelAddress);
-
        if(channelAddress != cAddress)
            continue;
 
        std::string sender = vstr[1];
 
-       // PrintToLog("(%s): sender: %s\n",__func__, sender);
-       // PrintToLog("(%s): senderAddress: %s\n",__func__, senderAddress);
-
        if(senderAddress != sender)
            continue;
 
        uint32_t propId = boost::lexical_cast<uint32_t>(vstr[2]);
-
-       // PrintToLog("(%s): propId: %d\n",__func__, propId);
-       // PrintToLog("(%s): propertyId: %d\n",__func__, propertyId);
-
 
        if(propertyId != propId)
            continue;
@@ -4753,14 +4782,11 @@ bool CMPTradeList::checkChannelAddress(const std::string& channelAddress)
 
         // ensure correct amount of tokens in value string
         boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
-        if (vstr.size() != 4) {
+        if (vstr.size() != 5) {
             //PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
             // PrintToConsole("TRADEDB error - unexpected number of tokens in value %d \n",vstr.size());
             continue;
         }
-
-        PrintToLog("channelAddress: %s\n",channelAddress);
-        PrintToLog("strKey: %s\n",strKey);
 
         if(channelAddress != strKey)
             continue;
@@ -4801,7 +4827,7 @@ bool CMPTradeList::getChannelInfo(const std::string& channelAddress, UniValue& t
 
         // ensure correct amount of tokens in value string
         boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
-        if (vstr.size() != 4) {
+        if (vstr.size() != 5) {
             //PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
             // PrintToConsole("TRADEDB error - unexpected number of tokens in value %d \n",vstr.size());
             continue;
@@ -4816,15 +4842,10 @@ bool CMPTradeList::getChannelInfo(const std::string& channelAddress, UniValue& t
 
         int blockNum = boost::lexical_cast<int>(vstr[2]);
 
-        PrintToLog("multisig address: %s\n",strKey);
-        PrintToLog("first address: %s\n",frAddr);
-        PrintToLog("second address: %s\n",secAddr);
-        PrintToLog("creation block: %d\n",blockNum);
-
         tradeArray.push_back(Pair("multisig address", strKey));
         tradeArray.push_back(Pair("first address", frAddr));
         tradeArray.push_back(Pair("second address", secAddr));
-        tradeArray.push_back(Pair("creation block",blockNum));
+        tradeArray.push_back(Pair("expiry block",blockNum));
         status = true;
 
       break;
@@ -4862,7 +4883,7 @@ channel CMPTradeList::getChannelAddresses(const std::string& channelAddress)
 
           // ensure correct amount of tokens in value string
           boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
-          if (vstr.size() != 4) {
+          if (vstr.size() != 5) {
               //PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
               // PrintToConsole("TRADEDB error - unexpected number of tokens in value %d \n",vstr.size());
               continue;
@@ -4870,6 +4891,7 @@ channel CMPTradeList::getChannelAddresses(const std::string& channelAddress)
 
           std::string frAddr = vstr[0];
           std::string secAddr = vstr[1];
+          int expiry = boost::lexical_cast<int>(vstr[2]);
 
           if (channelAddress != strKey)
               continue;
@@ -4877,6 +4899,7 @@ channel CMPTradeList::getChannelAddresses(const std::string& channelAddress)
           ret.multisig = strKey;
           ret.first = frAddr;
           ret.second = secAddr;
+          ret.expiry_height = expiry;
 
           status = true;
 
@@ -4919,8 +4942,6 @@ channel CMPTradeList::getChannelAddresses(const std::string& channelAddress)
             // PrintToConsole("TRADEDB error - unexpected number of tokens in value %d \n",vstr.size());
             continue;
         }
-
-        //channelAddress, sender, propertyId, amountCommited, vOut, blockIndex
 
         std::string type = vstr[7];
 
@@ -4968,11 +4989,6 @@ bool mastercore::Instant_x_Trade(const uint256& txid, uint8_t tradingAction, std
   int64_t firstNeg = getMPbalance(firstAddr, property, NEGATIVE_BALANCE);
   int64_t secondPoss = getMPbalance(secondAddr, property, POSSITIVE_BALANCE);
   int64_t secondNeg = getMPbalance(secondAddr, property, NEGATIVE_BALANCE);
-
-  PrintToLog("\nfirstPossitive: %d\n",firstPoss);
-  PrintToLog("\nfirstNegative: %d\n",firstNeg);
-  PrintToLog("\nsecondPossitive: %d\n",secondPoss);
-  PrintToLog("\nsecondNegative: %d\n",secondNeg);
 
   if(tradingAction == SELL)
       amount_forsale = -amount_forsale;

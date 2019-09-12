@@ -151,7 +151,7 @@ class ChnDEx : public CMPMetaDEx
    : blockheight_expiry(0) {}
 
    ChnDEx(const CMPTransaction &tx)
-     : CMPMetaDEx(tx), blockheight_expiry(tx.blockheight_expiry) {}
+     : CMPMetaDEx(tx), blockheight_expiry(tx.block_forexpiry) {}
 
      ChnDEx(const std::string& addr, int b, uint32_t c, int64_t nValue, uint32_t cd, int64_t ad, const uint256& tx, uint32_t i, uint8_t suba,int blck)
        : CMPMetaDEx(addr, b, c, nValue, cd, ad, tx, i, suba), blockheight_expiry(blck) {}

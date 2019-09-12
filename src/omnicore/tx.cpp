@@ -52,6 +52,7 @@ typedef boost::multiprecision::checked_int128_t int128_t;
 extern std::map<std::string,uint32_t> peggedIssuers;
 extern std::map<uint32_t,oracledata> oraclePrices;
 extern std::map<std::string,vector<withdrawalAccepted>> withdrawal_Map;
+extern std::map<std::string,channel> channels_Map;
 extern int64_t factorE;
 extern int64_t priceIndex;
 extern int64_t allPrice;
@@ -1593,7 +1594,7 @@ bool CMPTransaction::interpret_Instant_Trade()
   } else return false;
 
   if (!vecBlock.empty()) {
-      blockheight_expiry = DecompressInteger(vecBlock);
+      block_forexpiry = DecompressInteger(vecBlock);
   } else return false;
 
   if (!vecPropertyIdDesiredBytes.empty()) {
@@ -1608,7 +1609,7 @@ bool CMPTransaction::interpret_Instant_Trade()
   PrintToLog("messageType: %d\n",type);
   PrintToLog("property: %d\n", property);
   PrintToLog("amount : %d\n", amount_forsale);
-  PrintToLog("blockheight_expiry : %d\n", blockheight_expiry);
+  PrintToLog("blockheight_expiry : %d\n", block_forexpiry);
   PrintToLog("property desired : %d\n", desired_property);
   PrintToLog("amount desired : %d\n", desired_value);
 
@@ -1695,6 +1696,7 @@ bool CMPTransaction::interpret_Create_Channel()
 
   std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecBlocks = GetNextVarIntBytes(i);
 
   const char* p = i + (char*) &pkt;
   std::vector<std::string> spstr;
@@ -1721,12 +1723,16 @@ bool CMPTransaction::interpret_Create_Channel()
       version = DecompressInteger(vecVersionBytes);
   } else return false;
 
+  if (!vecBlocks.empty()) {
+      block_forexpiry = DecompressInteger(vecBlocks);
+  } else return false;
+
   PrintToLog("version: %d\n", version);
   PrintToLog("messageType: %d\n",type);
   PrintToLog("channelAddress : %d\n",channel_address);
   PrintToLog("first address : %d\n", sender);
   PrintToLog("second address : %d\n", receiver);
-
+  PrintToLog("blocks : %d\n", block_forexpiry);
 
   return true;
 }
@@ -1765,7 +1771,7 @@ bool CMPTransaction::interpret_Contract_Instant()
   } else return false;
 
   if (!vecBlock.empty()) {
-      blockheight_expiry = DecompressInteger(vecBlock);
+      block_forexpiry = DecompressInteger(vecBlock);
   } else return false;
 
   if (!vecPrice.empty()) {
@@ -1784,7 +1790,7 @@ bool CMPTransaction::interpret_Contract_Instant()
   PrintToLog("messageType: %d\n",type);
   PrintToLog("property: %d\n", property);
   PrintToLog("amount : %d\n", amount_forsale);
-  PrintToLog("blockheight_expiry : %d\n", blockheight_expiry);
+  PrintToLog("blockfor_expiry : %d\n", block_forexpiry);
   PrintToLog("price : %d\n", price);
   PrintToLog("trading action : %d\n", itrading_action);
   PrintToLog("leverage : %d\n", ileverage);
@@ -4122,6 +4128,11 @@ int CMPTransaction::logicMath_Instant_Trade()
       return (PKT_ERROR_TOKENS -25);
   }
 
+  if (chnAddrs.expiry_height < block) {
+      PrintToLog("%s(): rejected: out of channel deadline: actual block: %d, deadline: %d\n", __func__, block, chnAddrs.expiry_height);
+      return (PKT_ERROR_TOKENS -26);
+  }
+
   int64_t nBalance = getMPbalance(sender, property, CHANNEL_RESERVE);
   if (property > 0 && nBalance < (int64_t) amount_forsale) {
       PrintToLog("%s(): rejected: channel address %s has insufficient balance of property %d [%s < %s]\n",
@@ -4130,9 +4141,9 @@ int CMPTransaction::logicMath_Instant_Trade()
               property,
               FormatMP(property, nBalance),
               FormatMP(property, amount_forsale));
-      return (PKT_ERROR_METADEX -26);
+      return (PKT_ERROR_METADEX -27);
   }
-
+  
   nBalance = getMPbalance(sender, desired_property, CHANNEL_RESERVE);
   if (desired_property > 0 && nBalance < (int64_t) desired_value) {
       PrintToLog("%s(): rejected: channel address %s has insufficient balance of property %d [%s < %s]\n",
@@ -4141,7 +4152,7 @@ int CMPTransaction::logicMath_Instant_Trade()
               desired_property,
               FormatMP(desired_property, nBalance),
               FormatMP(desired_property, desired_value));
-      return (PKT_ERROR_METADEX -27);
+      return (PKT_ERROR_METADEX -28);
   }
 
   // ------------------------------------------
@@ -4157,6 +4168,28 @@ int CMPTransaction::logicMath_Instant_Trade()
 
       t_tradelistdb->recordNewInstantTrade(txid, sender, chnAddrs.first, property, amount_forsale, desired_property, desired_value, block, tx_idx);
 
+      // updating last exchange block
+      std::map<std::string,channel>::iterator it = channels_Map.find(sender);
+      channel& chn = it->second;
+
+      int difference = block - chn.last_exchange_block;
+
+      PrintToLog("expiry height after update: %d\n",chn.expiry_height);
+
+      if (difference < dayblocks)
+      {
+          // updating expiry_height
+          chn.expiry_height += difference;
+
+      }
+
+      // checking the updating
+      std::map<std::string,channel>::iterator itt = channels_Map.find(sender);
+      channel& chn1 = itt->second;
+
+      PrintToLog("expiry height updated: %d\n",chn1.expiry_height);
+
+
   } else {
 
       assert(update_tally_map(chnAddrs.first, desired_property, desired_value, BALANCE));
@@ -4165,8 +4198,6 @@ int CMPTransaction::logicMath_Instant_Trade()
       PrintToLog("Trading litecoins vs tokens\n");
 
   }
-
-  // what to do with blockheighy_expiry value?
 
   return rc;
 }
@@ -4288,7 +4319,20 @@ int CMPTransaction::logicMath_Create_Channel()
 
     // ------------------------------------------
 
-    t_tradelistdb->recordNewChannel(channel_address,sender,receiver,block, tx_idx);
+    int expiry_height = block + block_forexpiry;
+
+    channel chn;
+
+    chn.multisig = channel_address;
+    chn.first = sender;
+    chn.second = receiver;
+    chn.expiry_height = expiry_height;
+
+    PrintToLog("checking channel elements : channel address: %s, first address: %d, second address: %d, expiry_height: %d \n", chn.multisig, chn.first, chn.second, chn.expiry_height);
+
+    channels_Map[channel_address] = chn;
+
+    t_tradelistdb->recordNewChannel(channel_address,sender,receiver, expiry_height, tx_idx);
 
     return 0;
 }

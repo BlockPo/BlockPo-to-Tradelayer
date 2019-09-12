@@ -1930,7 +1930,7 @@ UniValue tl_withdrawal_fromchannel(const JSONRPCRequest& request)
 
 UniValue tl_create_channel(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 3)
+    if (request.params.size() != 4)
         throw runtime_error(
             "tl_create_channel \"sender\" \"channel address\" \"propertyId\" \"amount\"vout\n"
 
@@ -1940,6 +1940,7 @@ UniValue tl_create_channel(const JSONRPCRequest& request)
             "1. first address            (string, required) the first address that commit into the channel\n"
             "2. second address           (string, required) the second address that commit into the channel\n"
             "3. channel address          (string, required) multisig address of channel\n"
+            "4. blocks          (string, required) blocks until channel expiration\n"
             "\nResult:\n"
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
 
@@ -1952,9 +1953,10 @@ UniValue tl_create_channel(const JSONRPCRequest& request)
     std::string firstAddress = ParseAddress(request.params[0]);
     std::string secondAddress = ParseAddress(request.params[1]);
     std::string channelAddress = ParseAddress(request.params[2]);
+    uint32_t blocks = request.params[3].get_int();
 
     // create a payload for the transaction
-    std::vector<unsigned char> payload = CreatePayload_Create_Channel(channelAddress);
+    std::vector<unsigned char> payload = CreatePayload_Create_Channel(channelAddress,blocks);
 
     // request the wallet build the transaction (and if needed commit it)
     uint256 txid;
