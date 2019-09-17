@@ -5018,6 +5018,7 @@ channel CMPTradeList::getChannelAddresses(const std::string& channelAddress)
         {
             trade.push_back(Pair("sender", sender));
             trade.push_back(Pair("withdrawalAmount", FormatByType(withdrawalAmount,2)));
+            trade.push_back(Pair("propertyId", FormatByType(propertyId,1)));
             trade.push_back(Pair("vOut", FormatByType(vOut,1)));
             trade.push_back(Pair("block",blockNum));
             trade.push_back(Pair("block_index",blockIndex));
@@ -5028,60 +5029,150 @@ channel CMPTradeList::getChannelAddresses(const std::string& channelAddress)
     // clean up
     delete it; // Desallocation proccess
     if (count) { return true; } else { return false; }
-  }
+}
+
+int64_t setPosition(int64_t positive, int64_t negative)
+{
+    if (positive < 0 && negative == 0)
+        return positive;
+    else if (positive == 0 && negative < 0)
+        return -negative;
+    else
+        return 0;
+}
+
+std::string updateStatus(int64_t oldPos, int64_t newPos)
+{
+    if(oldPos == 0 && newPos > 0)
+        return "OpenLongPosition";
+
+    else if (oldPos == 0 && newPos < 0)
+        return "OpenShortPosition";
+
+    else if (oldPos > newPos && oldPos > 0 && newPos > 0)
+        return "LongPosNettedPartly";
+
+    else if (oldPos > newPos && oldPos < 0 && newPos < 0)
+        return "ShortPosNettedPartly";
+
+    else if (oldPos < newPos && oldPos > 0 && newPos > 0)
+        return "LongPosIncreased";
+
+    else if (oldPos > newPos && oldPos < 0 && newPos < 0)
+        return "ShortPosIncreased";
+
+    else if (newPos == 0 && oldPos > 0)
+        return "LongPosNetted";
+
+    else if (newPos == 0 && oldPos < 0)
+        return "ShortPosNetted";
+
+    else if (newPos > 0 && oldPos < 0)
+        return "OpenLongPosByShortPosNetted";
+
+    else if (newPos < 0 && oldPos > 0)
+        return "OpenShortPosByLongPosNetted";
+
+}
+
 
 bool mastercore::Instant_x_Trade(const uint256& txid, uint8_t tradingAction, std::string& channelAddr, std::string& firstAddr, std::string& secondAddr, uint32_t property, int64_t amount_forsale, uint64_t price, int block, int tx_idx)
 {
 
-  int64_t firstPoss = getMPbalance(firstAddr, property, POSSITIVE_BALANCE);
-  int64_t firstNeg = getMPbalance(firstAddr, property, NEGATIVE_BALANCE);
-  int64_t secondPoss = getMPbalance(secondAddr, property, POSSITIVE_BALANCE);
-  int64_t secondNeg = getMPbalance(secondAddr, property, NEGATIVE_BALANCE);
+    int64_t firstPoss = getMPbalance(firstAddr, property, POSSITIVE_BALANCE);
+    int64_t firstNeg = getMPbalance(firstAddr, property, NEGATIVE_BALANCE);
+    int64_t secondPoss = getMPbalance(secondAddr, property, POSSITIVE_BALANCE);
+    int64_t secondNeg = getMPbalance(secondAddr, property, NEGATIVE_BALANCE);
 
-  if(tradingAction == SELL)
-      amount_forsale = -amount_forsale;
+    if(tradingAction == SELL)
+        amount_forsale = -amount_forsale;
 
-  int64_t first_p = firstPoss - firstNeg + amount_forsale;
-  int64_t second_p = secondPoss - secondNeg - amount_forsale;
+    int64_t first_p = firstPoss - firstNeg + amount_forsale;
+    int64_t second_p = secondPoss - secondNeg - amount_forsale;
 
-  if(first_p > 0)
-  {
-      assert(update_tally_map(firstAddr, property, first_p - firstPoss, POSSITIVE_BALANCE));
-      if(firstNeg != 0)
-          assert(update_tally_map(firstAddr, property, -firstNeg, NEGATIVE_BALANCE));
+    if(first_p > 0)
+    {
+        assert(update_tally_map(firstAddr, property, first_p - firstPoss, POSSITIVE_BALANCE));
+        if(firstNeg != 0)
+            assert(update_tally_map(firstAddr, property, -firstNeg, NEGATIVE_BALANCE));
 
-  } else if (first_p < 0){
-      assert(update_tally_map(firstAddr, property, -first_p - firstNeg, NEGATIVE_BALANCE));
-      if(firstPoss != 0)
-          assert(update_tally_map(firstAddr, property, -firstPoss, POSSITIVE_BALANCE));
-  }
 
-  if(second_p > 0){
-      assert(update_tally_map(secondAddr, property, second_p - secondPoss, POSSITIVE_BALANCE));
-      if (secondNeg != 0)
-          assert(update_tally_map(secondAddr, property, -secondNeg, NEGATIVE_BALANCE));
+    } else if (first_p < 0){
+        assert(update_tally_map(firstAddr, property, -first_p - firstNeg, NEGATIVE_BALANCE));
+        if(firstPoss != 0)
+            assert(update_tally_map(firstAddr, property, -firstPoss, POSSITIVE_BALANCE));
 
-  } else if (second_p < 0){
-      assert(update_tally_map(secondAddr, property, -second_p - secondNeg, NEGATIVE_BALANCE));
-      if (secondPoss != 0)
-          assert(update_tally_map(secondAddr, property, -secondPoss, POSSITIVE_BALANCE));
-  }
+    }
+
+    if(second_p > 0){
+        assert(update_tally_map(secondAddr, property, second_p - secondPoss, POSSITIVE_BALANCE));
+        if (secondNeg != 0)
+            assert(update_tally_map(secondAddr, property, -secondNeg, NEGATIVE_BALANCE));
+
+    } else if (second_p < 0){
+        assert(update_tally_map(secondAddr, property, -second_p - secondNeg, NEGATIVE_BALANCE));
+        if (secondPoss != 0)
+            assert(update_tally_map(secondAddr, property, -secondPoss, POSSITIVE_BALANCE));
+    }
 
   // fees here!
 
   //margin Here
+
   // assert(update_tally_map(channelAddr, property, -secondPoss, POSSITIVE_BALANCE));
   // assert(update_tally_map(firstAddr, property, -secondPoss, POSSITIVE_BALANCE));
   //
   // assert(update_tally_map(channelAddr, property, -secondPoss, POSSITIVE_BALANCE));
   // assert(update_tally_map(secondAddr, property, -secondPoss, POSSITIVE_BALANCE));
 
+  std::string Status_s0 = "EmptyStr", Status_s1 = "EmptyStr", Status_s2 = "EmptyStr", Status_s3 = "EmptyStr";
+  std::string Status_b0 = "EmptyStr", Status_b1 = "EmptyStr", Status_b2 = "EmptyStr", Status_b3 = "EmptyStr";
 
-  // t_tradelistdb->recordNewInstContTrade(txid,firstAddr,secondAddr, property, amount_forsale, price, block, tx_idx);
+  int64_t first = setPosition(firstPoss,firstNeg);
+  int64_t second = setPosition(secondPoss,secondNeg);
 
+  std::string Status_maker0 = updateStatus(first,first_p);
+  std::string Status_taker0 = updateStatus(second,second_p);
+
+  t_tradelistdb->recordMatchedTrade(txid,
+         txid,
+         firstAddr,
+         secondAddr,
+         price,
+         amount_forsale,
+         amount_forsale,
+         block,
+         block,
+         property,
+         "Matched",
+         amount_forsale,
+         0,
+         0,
+         0,
+         amount_forsale,
+         0,
+         0,
+         0,
+         Status_maker0,
+         Status_taker0,
+         "EmptyStr",
+         "EmptyStr",
+         "EmptyStr",
+         "EmptyStr",
+         "EmptyStr",
+         "EmptyStr",
+         amount_forsale,
+         0,
+         0,
+         0,
+         amount_forsale,
+         amount_forsale);
 
   return true;
 }
+
+
+
 
 /**
  * @return The marker for class C transactions.
