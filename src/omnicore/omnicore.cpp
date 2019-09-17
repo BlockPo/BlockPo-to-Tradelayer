@@ -3728,9 +3728,10 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   CMPSPInfo::Entry sp;
   assert(_my_sps->getSP(property_traded, sp));
   uint32_t NotionalSize = sp.notional_size;
-
   globalPNLALL_DUSD += UPNL1 + UPNL2;
   globalVolumeALL_DUSD += nCouldBuy0;
+
+
 
   arith_uint256 volumeALL256_t = mastercore::ConvertTo256(NotionalSize)*mastercore::ConvertTo256(nCouldBuy0)/COIN;
   // PrintToLog("ALLs involved in the traded 256 Bits ~ %s ALL\n", volumeALL256_t.ToString());
@@ -3772,7 +3773,7 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
       ++nWritten;
     }
 
-  // PrintToLog("\n\nEnd of recordMatchedTrade <------------------------------\n");
+  PrintToLog("\n\nEnd of recordMatchedTrade <------------------------------\n");
 }
 
 void Filling_Twap_Vec(std::map<uint32_t, std::vector<uint64_t>> &twap_ele, std::map<uint32_t, std::vector<uint64_t>> &twap_vec,
@@ -5033,9 +5034,9 @@ channel CMPTradeList::getChannelAddresses(const std::string& channelAddress)
 
 int64_t setPosition(int64_t positive, int64_t negative)
 {
-    if (positive < 0 && negative == 0)
+    if (positive > 0 && negative == 0)
         return positive;
-    else if (positive == 0 && negative < 0)
+    else if (positive == 0 && negative > 0)
         return -negative;
     else
         return 0;
@@ -5043,6 +5044,9 @@ int64_t setPosition(int64_t positive, int64_t negative)
 
 std::string updateStatus(int64_t oldPos, int64_t newPos)
 {
+
+    PrintToLog("%s: old position: %d, new position: %d \n", __func__, oldPos, newPos);
+
     if(oldPos == 0 && newPos > 0)
         return "OpenLongPosition";
 
@@ -5052,7 +5056,7 @@ std::string updateStatus(int64_t oldPos, int64_t newPos)
     else if (oldPos > newPos && oldPos > 0 && newPos > 0)
         return "LongPosNettedPartly";
 
-    else if (oldPos > newPos && oldPos < 0 && newPos < 0)
+    else if (oldPos < newPos && oldPos < 0 && newPos < 0)
         return "ShortPosNettedPartly";
 
     else if (oldPos < newPos && oldPos > 0 && newPos > 0)
@@ -5072,7 +5076,8 @@ std::string updateStatus(int64_t oldPos, int64_t newPos)
 
     else if (newPos < 0 && oldPos > 0)
         return "OpenShortPosByLongPosNetted";
-
+    else
+        return "None";
 }
 
 
@@ -5115,58 +5120,67 @@ bool mastercore::Instant_x_Trade(const uint256& txid, uint8_t tradingAction, std
             assert(update_tally_map(secondAddr, property, -secondPoss, POSSITIVE_BALANCE));
     }
 
-  // fees here!
-
-  //margin Here
-
-  // assert(update_tally_map(channelAddr, property, -secondPoss, POSSITIVE_BALANCE));
-  // assert(update_tally_map(firstAddr, property, -secondPoss, POSSITIVE_BALANCE));
-  //
-  // assert(update_tally_map(channelAddr, property, -secondPoss, POSSITIVE_BALANCE));
-  // assert(update_tally_map(secondAddr, property, -secondPoss, POSSITIVE_BALANCE));
+  // fees here?
 
   std::string Status_s0 = "EmptyStr", Status_s1 = "EmptyStr", Status_s2 = "EmptyStr", Status_s3 = "EmptyStr";
   std::string Status_b0 = "EmptyStr", Status_b1 = "EmptyStr", Status_b2 = "EmptyStr", Status_b3 = "EmptyStr";
 
-  int64_t first = setPosition(firstPoss,firstNeg);
-  int64_t second = setPosition(secondPoss,secondNeg);
+  // old positions
+  int64_t oldFrs = setPosition(firstPoss,firstNeg);
+  int64_t oldSec = setPosition(secondPoss,secondNeg);
 
-  std::string Status_maker0 = updateStatus(first,first_p);
-  std::string Status_taker0 = updateStatus(second,second_p);
+  std::string Status_maker0 = updateStatus(oldFrs,first_p);
+  std::string Status_taker0 = updateStatus(oldSec,second_p);
 
-  t_tradelistdb->recordMatchedTrade(txid,
-         txid,
-         firstAddr,
-         secondAddr,
-         price,
-         amount_forsale,
-         amount_forsale,
-         block,
-         block,
-         property,
-         "Matched",
-         amount_forsale,
-         0,
-         0,
-         0,
-         amount_forsale,
-         0,
-         0,
-         0,
-         Status_maker0,
-         Status_taker0,
-         "EmptyStr",
-         "EmptyStr",
-         "EmptyStr",
-         "EmptyStr",
-         "EmptyStr",
-         "EmptyStr",
-         amount_forsale,
-         0,
-         0,
-         0,
-         amount_forsale,
-         amount_forsale);
+
+  PrintToLog("%s: old first position: %d, old second position: %d \n", __func__, oldFrs, oldSec);
+  PrintToLog("%s: new first position: %d, new second position: %d \n", __func__, first_p, second_p);
+  PrintToLog("%s: Status_marker0: %s, Status_taker0: %s \n",__func__,Status_maker0, Status_taker0);
+
+  PrintToLog("amount_forsale: %d\n",amount_forsale);
+
+  uint64_t amountTraded;
+
+  (amount_forsale < 0) ? amountTraded = static_cast<uint64_t>(-amount_forsale) : amountTraded = static_cast<uint64_t>(amount_forsale);
+
+  PrintToLog("amountTraded: %d\n",amountTraded);
+
+// (const uint256 txid1, const uint256 txid2, string address1, string address2, uint64_t effective_price, uint64_t amount_maker, uint64_t amount_taker, int blockNum1, int blockNum2, uint32_t property_traded, string tradeStatus, int64_t lives_s0, int64_t lives_s1, int64_t lives_s2, int64_t lives_s3, int64_t lives_b0, int64_t lives_b1, int64_t lives_b2, int64_t lives_b3, string s_maker0, string s_taker0, string s_maker1, string s_taker1, string s_maker2, string s_taker2, string s_maker3, string //s_taker3, int64_t nCouldBuy0, int64_t nCouldBuy1, int64_t nCouldBuy2, int64_t nCouldBuy3,uint64_t amountpnew, uint64_t amountpold)
+
+
+  // t_tradelistdb->recordMatchedTrade(txid,
+  //        txid,
+  //        firstAddr,
+  //        secondAddr,
+  //        price,
+  //        amountTraded,
+  //        amountTraded,
+  //        block,
+  //        block,
+  //        property,
+  //        "Matched",
+  //        amountTraded,
+  //        0,
+  //        0,
+  //        0,
+  //        amountTraded,
+  //        0,
+  //        0,
+  //        0,
+  //        Status_maker0,
+  //        Status_taker0,
+  //        "EmptyStr",
+  //        "EmptyStr",
+  //        "EmptyStr",
+  //        "EmptyStr",
+  //        "EmptyStr",
+  //        "EmptyStr",
+  //        amountTraded,
+  //        0,
+  //        0,
+  //        0,
+  //        amountTraded,
+  //        amountTraded);
 
   return true;
 }

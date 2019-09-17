@@ -4403,6 +4403,8 @@ int CMPTransaction::logicMath_Contract_Instant()
   arith_uint256 amountTR = (ConvertTo256(amount)*ConvertTo256(marginRe)*ConvertTo256(num))/(ConvertTo256(den)*ConvertTo256(ileverage));
   int64_t amountToReserve = ConvertTo64(amountTR);
 
+  PrintToLog("AmountToReserve: %d, channel Balance: %d\n",amountToReserve,nBalance);
+
  //  if (nBalance < amountToReserve || nBalance == 0)
  //    {
  //      PrintToLog("%s(): rejected: sender %s has insufficient balance for contracts %d [%s < %s] \n",
@@ -4417,8 +4419,8 @@ int CMPTransaction::logicMath_Contract_Instant()
  //    {
  //      if (amountToReserve > 0)
  // {
- //   // assert(update_tally_map(sender, colateralh, -amountToReserve, CHANNEL_RESERVE));
- //   // assert(update_tally_map(sender, colateralh,  amountToReserve, CONTRACTDEX_MARGIN));
+ //   assert(update_tally_map(sender, colateralh, -amountToReserve, CHANNEL_RESERVE));
+ //   assert(update_tally_map(sender, colateralh,  amountToReserve, CONTRACTDEX_MARGIN));
  // }
  //    }
 
@@ -4453,7 +4455,6 @@ int CMPTransaction::logicMath_Contract_Instant()
 
   PrintToLog("\n\nEnd of Logic Instant Contract Trade\n\n");
 
-  // what to do with blockheighy_expiry value?
 
   return rc;
 }
