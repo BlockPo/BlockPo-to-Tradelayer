@@ -4403,26 +4403,29 @@ int CMPTransaction::logicMath_Contract_Instant()
   arith_uint256 amountTR = (ConvertTo256(amount)*ConvertTo256(marginRe)*ConvertTo256(num))/(ConvertTo256(den)*ConvertTo256(ileverage));
   int64_t amountToReserve = ConvertTo64(amountTR);
 
-  PrintToLog("AmountToReserve: %d, channel Balance: %d\n",amountToReserve,nBalance);
+  PrintToLog("%s: AmountToReserve: %d, channel Balance: %d\n", __func__, amountToReserve,nBalance);
 
- //  if (nBalance < amountToReserve || nBalance == 0)
- //    {
- //      PrintToLog("%s(): rejected: sender %s has insufficient balance for contracts %d [%s < %s] \n",
- //    __func__,
- //    sender,
- //    colateralh,
- //    FormatMP(colateralh, nBalance),
- //    FormatMP(colateralh, amountToReserve));
- //      return (PKT_ERROR_SEND -27);
- //    }
- //  else
- //    {
- //      if (amountToReserve > 0)
- // {
- //   assert(update_tally_map(sender, colateralh, -amountToReserve, CHANNEL_RESERVE));
- //   assert(update_tally_map(sender, colateralh,  amountToReserve, CONTRACTDEX_MARGIN));
- // }
- //    }
+ // NOTE: include fees here!
+
+  /*if (nBalance < amountToReserve || nBalance == 0)
+    {
+      PrintToLog("%s(): rejected: sender %s has insufficient balance for contracts %d [%s < %s] \n",
+    __func__,
+    sender,
+    colateralh,
+    FormatMP(colateralh, nBalance),
+    FormatMP(colateralh, amountToReserve));
+      return (PKT_ERROR_SEND -27);
+    }
+  else
+    {
+      if (amountToReserve > 0)
+ {
+   assert(update_tally_map(sender, colateralh, -amountToReserve, CHANNEL_RESERVE));
+   assert(update_tally_map(sender, colateralh,  amountToReserve, CONTRACTDEX_MARGIN));
+ }
+    }
+  */
 
   /*********************************************/
   /**Logic for Node Reward**/
@@ -4442,7 +4445,7 @@ int CMPTransaction::logicMath_Contract_Instant()
 
   int difference = block - chn.last_exchange_block;
 
-  PrintToLog("expiry height after update: %d\n",chn.expiry_height);
+  PrintToLog("%s: expiry height after update: %d\n",__func__, chn.expiry_height);
 
   if (difference < dayblocks)
   {
@@ -4453,7 +4456,7 @@ int CMPTransaction::logicMath_Contract_Instant()
 
   mastercore::Instant_x_Trade(txid, itrading_action, chnAddrs.multisig, chnAddrs.first, chnAddrs.second, property, amount_forsale, price, block, tx_idx);
 
-  PrintToLog("\n\nEnd of Logic Instant Contract Trade\n\n");
+  PrintToLog("%s: End of Logic Instant Contract Trade\n\n",__func__);
 
 
   return rc;
