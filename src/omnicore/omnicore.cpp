@@ -176,6 +176,7 @@ extern std::map<uint32_t, std::map<uint32_t, std::vector<uint64_t>>> mdextwap_ve
 /************************************************/
 extern std::map<uint32_t, std::map<std::string, double>> addrs_upnlc;
 extern std::map<std::string, int64_t> sum_upnls;
+extern std::map<uint32_t, int64_t> cachefees;
 
 /** Pending withdrawals **/
 extern std::map<std::string,vector<withdrawalAccepted>> withdrawal_Map;
@@ -1404,6 +1405,18 @@ int input_market_prices_string(const std::string& s)
    return 0;
 }
 
+int input_cachefees_string(const std::string& s)
+{
+   std::vector<std::string> vstr;
+   boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
+
+   uint32_t propertyId = boost::lexical_cast<uint32_t>(vstr[0]);
+
+   cachefees[propertyId] = boost::lexical_cast<int64_t>(vstr[1]);;
+
+   return 0;
+}
+
 int input_mp_mdexorder_string(const std::string& s)
 {
     std::vector<std::string> vstr;
@@ -1477,6 +1490,10 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
         // ...
         metadex.clear();
         inputLineFunc = input_mp_mdexorder_string;
+        break;
+
+    case FILETYPE_CACHEFEES:
+        inputLineFunc = input_cachefees_string;
         break;
 
     default:
@@ -1828,6 +1845,27 @@ static int write_mp_offers(ofstream &file, SHA256_CTX *shaCtx)
   return 0;
 }
 
+
+static int write_mp_cachefees(std::ofstream& file, SHA256_CTX* shaCtx)
+{
+    std::string lineOut;
+
+    for (std::map<uint32_t, int64_t>::iterator it = cachefees.begin(); it != cachefees.end(); ++it) {
+        // decompose the key for address
+        const uint32_t& propertyId = it->first;
+        const int64_t& cache = it->second;
+        lineOut.append(strprintf("%d,%d",propertyId, cache));
+    }
+
+    // add the line to the hash
+    SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
+
+    // write the line
+    file << lineOut << endl;
+
+    return 0;
+}
+
 static int write_state_file( CBlockIndex const *pBlockIndex, int what )
 {
   boost::filesystem::path path = MPPersistencePath / strprintf("%s-%s.dat", statePrefix[what], pBlockIndex->GetBlockHash().ToString());
@@ -1868,6 +1906,10 @@ static int write_state_file( CBlockIndex const *pBlockIndex, int what )
 
   case FILETYPE_MDEXORDERS:
       result = write_mp_metadex(file, &shaCtx);
+      break;
+
+  case FILETYPE_CACHEFEES:
+      result = write_mp_cachefees(file, &shaCtx);
       break;
 
   }
@@ -4322,7 +4364,20 @@ bool mastercore::marginMain(int Block)
                 continue;
 
             // checking the initMargin (init_margin = position_margin + active_orders_margin)
-            int64_t initMargin = getMPbalance(address,collateralCurrency,CONTRACTDEX_MARGIN); ;
+            std::string channelAddr;
+            int64_t initMargin;
+
+            //NOTE: need to check the special case of Instant Contract Trades
+
+            // if(t_tradelistdb->checkChannelRelation(address,channelAddr))
+            // {
+            //     int64_t chnBalance = getMPbalance(channelAddr,collateralCurrency,CONTRACTDEX_MARGIN);
+            //     initMargin = t_tradelistdb->getRemaining(channelAddr, address, contractId);
+            //     assert(chnBalance >= initMargin);
+            //
+            // } else
+
+            initMargin = getMPbalance(address,collateralCurrency,CONTRACTDEX_MARGIN);
 
             rational_t percent = rational_t(-upnl,initMargin);
 
@@ -4789,7 +4844,7 @@ const std::string ExodusAddress()
  }
 
  /**
-  *  Does the channel address exist?
+  *  Does the channel address exist and is active?
   */
 bool CMPTradeList::checkChannelAddress(const std::string& channelAddress)
 {
@@ -4837,7 +4892,57 @@ bool CMPTradeList::checkChannelAddress(const std::string& channelAddress)
 
   }
 
+  /**
+   *  Does the address is related to some active channel?
+   */
+ bool CMPTradeList::checkChannelRelation(const std::string& address, std::string& channelAddr)
+ {
 
+     bool status = false;
+     if (!pdb) return status;
+
+     std::vector<std::string> vstr;
+
+     leveldb::Iterator* it = NewIterator(); // Allocation proccess
+
+     for(it->SeekToLast(); it->Valid(); it->Prev())
+     {
+         // search key to see if this is a matching trade
+         std::string strKey = it->key().ToString();
+         // PrintToLog("key of this match: %s ****************************\n",strKey);
+         std::string strValue = it->value().ToString();
+
+         // ensure correct amount of tokens in value string
+         boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
+
+         if (vstr.size() != 5) {
+             //PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
+             // PrintToConsole("TRADEDB error - unexpected number of tokens in value %d \n",vstr.size());
+             continue;
+         }
+
+         std::string frAddr = vstr[0];
+         std::string secAddr = vstr[1];
+
+         if (address != frAddr && address != secAddr)
+             continue;
+
+         // checking now on channels_Map (active channels)
+         std::map<std::string,channel>::iterator it = channels_Map.find(strKey);
+
+         if(it == channels_Map.end())
+             continue;
+
+         channelAddr = strKey;
+         status = true;
+         break;
+     }
+
+     // clean up
+     delete it; // Desallocation proccess
+     return status;
+
+}
 
 /**
 * @return all info about Channel
@@ -5058,6 +5163,67 @@ std::string updateStatus(int64_t oldPos, int64_t newPos)
     else
         return "None";
 }
+
+bool mastercore::ContInst_Fees(const std::string& firstAddr,const std::string& secondAddr,const std::string& channelAddr, int64_t amountToReserve,uint32_t contractId)
+{
+    int64_t cacheFee;
+    arith_uint256 fee;
+
+    CMPSPInfo::Entry sp;
+    if (!_my_sps->getSP(contractId, sp))
+       return false;
+
+    int64_t marginRe = static_cast<int64_t>(sp.margin_requirement);
+
+    PrintToLog("%s: firstAddr: %d\n", __func__, firstAddr);
+    PrintToLog("%s: secondAddr: %d\n", __func__, secondAddr);
+    PrintToLog("%s: amountToReserve: %d\n", __func__, amountToReserve);
+    PrintToLog("%s: contractId: %d\n", __func__,contractId);
+
+    if (sp.prop_type == ALL_PROPERTY_TYPE_CONTRACT)
+    {
+        // 0.5% minus for firstAddr, 0.5% minus for secondAddr
+        fee = (ConvertTo256(amountToReserve) * ConvertTo256(5)) / ConvertTo256(1000);
+
+    } else if (sp.prop_type == ALL_PROPERTY_TYPE_ORACLE_CONTRACT){
+        // 1.25% minus each
+        fee = (ConvertTo256(amountToReserve) * ConvertTo256(5)) / (ConvertTo256(4000) * ConvertTo256(COIN));
+    }
+
+    int64_t uFee = ConvertTo64(fee);
+
+
+    // checking if each address can pay the totalAmount + uFee:
+
+    int64_t totalAmount = uFee + amountToReserve;
+    int64_t firstRem = static_cast<int64_t>(t_tradelistdb->getRemaining(channelAddr, firstAddr,sp.collateral_currency));
+
+    if (firstRem < totalAmount)
+    {
+            PrintToLog("%s:address %s doesn't have enough money %d\n", __func__, firstAddr);
+            return false;
+    }
+
+    int64_t secondRem = static_cast<int64_t>(t_tradelistdb->getRemaining(channelAddr, secondAddr,sp.collateral_currency));
+
+    if (secondRem < totalAmount)
+    {
+            PrintToLog("%s:address %s doesn't have enough money %d\n", __func__, secondAddr);
+            return false;
+    }
+
+
+    PrintToLog("%s: uFee: %d\n",__func__,uFee);
+
+    update_tally_map(channelAddr, sp.collateral_currency, -2*uFee, CHANNEL_RESERVE);
+
+    // % to feecache
+    cachefees[sp.collateral_currency] += 2*uFee;
+
+
+    return true;
+}
+
 
 
 bool mastercore::Instant_x_Trade(const uint256& txid, uint8_t tradingAction, std::string& channelAddr, std::string& firstAddr, std::string& secondAddr, uint32_t property, int64_t amount_forsale, uint64_t price, int block, int tx_idx)

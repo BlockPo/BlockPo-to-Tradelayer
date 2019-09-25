@@ -4168,6 +4168,8 @@ int CMPTransaction::logicMath_Instant_Trade()
 
       t_tradelistdb->recordNewInstantTrade(txid, sender, chnAddrs.first, property, amount_forsale, desired_property, desired_value, block, tx_idx);
 
+      // NOTE: require discount for address and tokens (to consider commits and withdrawals too)
+
       // updating last exchange block
       std::map<std::string,channel>::iterator it = channels_Map.find(sender);
       channel& chn = it->second;
@@ -4182,12 +4184,6 @@ int CMPTransaction::logicMath_Instant_Trade()
           chn.expiry_height += difference;
 
       }
-
-      // checking the updating
-      // std::map<std::string,channel>::iterator itt = channels_Map.find(sender);
-      // channel& chn1 = itt->second;
-      //
-      // PrintToLog("expiry height updated: %d\n",chn1.expiry_height);
 
 
   } else {
@@ -4342,7 +4338,7 @@ int CMPTransaction::logicMath_Contract_Instant()
 {
   int rc = 0;
 
-  PrintToLog("Begining of logicMath_Contract_Instant\n");
+  PrintToLog("%s: Begining of logicMath\n", __func__);
 
   // if (!IsTransactionTypeAllowed(block, property, type, version)) {
   //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
@@ -4377,8 +4373,6 @@ int CMPTransaction::logicMath_Contract_Instant()
       return (PKT_ERROR_TOKENS -26);
   }
 
-  // ------------------------------------------
-
   CMPSPInfo::Entry sp;
   if (!_my_sps->getSP(property, sp))
       return (PKT_ERROR_TOKENS -27);
@@ -4405,61 +4399,67 @@ int CMPTransaction::logicMath_Contract_Instant()
 
   PrintToLog("%s: AmountToReserve: %d, channel Balance: %d\n", __func__, amountToReserve,nBalance);
 
- // NOTE: include fees here!
 
-  /*if (nBalance < amountToReserve || nBalance == 0)
-    {
-      PrintToLog("%s(): rejected: sender %s has insufficient balance for contracts %d [%s < %s] \n",
-    __func__,
-    sender,
-    colateralh,
-    FormatMP(colateralh, nBalance),
-    FormatMP(colateralh, amountToReserve));
-      return (PKT_ERROR_SEND -27);
-    }
-  else
-    {
-      if (amountToReserve > 0)
- {
-   assert(update_tally_map(sender, colateralh, -amountToReserve, CHANNEL_RESERVE));
-   assert(update_tally_map(sender, colateralh,  amountToReserve, CONTRACTDEX_MARGIN));
- }
-    }
-  */
+  //fees
+  mastercore::ContInst_Fees(chnAddrs.first, chnAddrs.second, chnAddrs.multisig, amountToReserve, contractId);
 
-  /*********************************************/
-  /**Logic for Node Reward**/
 
-  // const CConsensusParams &params = ConsensusParams();
-  // int BlockInit = params.MSC_NODE_REWARD;
-  // int nBlockNow = GetHeight();
-  //
-  // BlockClass NodeRewardObj(BlockInit, nBlockNow);
-  // NodeRewardObj.SendNodeReward(sender);
-
-  /********************************************************/
-
-  // updating last exchange block
-  std::map<std::string,channel>::iterator it = channels_Map.find(sender);
-  channel& chn = it->second;
-
-  int difference = block - chn.last_exchange_block;
-
-  PrintToLog("%s: expiry height after update: %d\n",__func__, chn.expiry_height);
-
-  if (difference < dayblocks)
+  if (nBalance < (2 * amountToReserve) || nBalance == 0)
   {
-      // updating expiry_height
-      chn.expiry_height += difference;
+      PrintToLog("%s(): rejected: sender %s has insufficient balance for contracts %d [%s < %s] \n",
+      __func__,
+      sender,
+      colateralh,
+      FormatMP(colateralh, nBalance),
+      FormatMP(colateralh, amountToReserve));
+      return (PKT_ERROR_SEND -27);
+   }
+   else {
 
-  }
+       if (amountToReserve > 0)
+       {
+           assert(update_tally_map(sender, colateralh, -amountToReserve, CHANNEL_RESERVE));
+           assert(update_tally_map(chnAddrs.first, colateralh, ConvertTo64(amountTR), CONTRACTDEX_MARGIN));
+           assert(update_tally_map(chnAddrs.second, colateralh, ConvertTo64(amountTR), CONTRACTDEX_MARGIN));
+       }
+   }
 
-  mastercore::Instant_x_Trade(txid, itrading_action, chnAddrs.multisig, chnAddrs.first, chnAddrs.second, property, amount_forsale, price, block, tx_idx);
+   /*********************************************/
+   /**Logic for Node Reward**/
 
-  PrintToLog("%s: End of Logic Instant Contract Trade\n\n",__func__);
+   // const CConsensusParams &params = ConsensusParams();
+   // int BlockInit = params.MSC_NODE_REWARD;
+   // int nBlockNow = GetHeight();
+   //
+   // BlockClass NodeRewardObj(BlockInit, nBlockNow);
+   // NodeRewardObj.SendNodeReward(sender);
+
+   /********************************************************/
+
+   // updating last exchange block
+   std::map<std::string,channel>::iterator it = channels_Map.find(sender);
+   channel& chn = it->second;
+
+   int difference = block - chn.last_exchange_block;
+
+   PrintToLog("%s: expiry height after update: %d\n",__func__, chn.expiry_height);
+
+   if (difference < dayblocks)
+   {
+       // updating expiry_height
+       chn.expiry_height += difference;
+
+   }
+
+   mastercore::Instant_x_Trade(txid, itrading_action, chnAddrs.multisig, chnAddrs.first, chnAddrs.second, property, amount_forsale, price, block, tx_idx);
+
+   // t_tradelistdb->recordNewInstContTrade(txid, receiver, sender, propertyId, amount_commited, block, tx_idx);
+   // NOTE: add discount from channel of fees + amountToReserve
+
+   PrintToLog("%s: End of Logic Instant Contract Trade\n\n",__func__);
 
 
-  return rc;
+   return rc;
 }
 
 

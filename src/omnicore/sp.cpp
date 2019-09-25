@@ -976,7 +976,7 @@ int CMPSPInfo::rollingContractsBlock(const CBlockIndex* pBlockIndex)
            // If there's no contract to jump to
            if(contractId2 == 0)
            {
-               PrintToLog("No contract to jump to\n");
+               PrintToLog("%s: No contract to jump to\n", __func__);
                return 0;
            }
 

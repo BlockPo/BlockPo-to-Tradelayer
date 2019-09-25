@@ -1137,7 +1137,7 @@ bool mastercore::ContractDex_Fees(std::string addressTaker,std::string addressMa
         if (sp.collateral_currency == 4) //ALLS
         {
           // 0.5% to feecache
-          cachefees[contractId] += cacheFee;
+          cachefees[sp.collateral_currency] += cacheFee;
 
         }else {
             // Create the metadex object with specific params
