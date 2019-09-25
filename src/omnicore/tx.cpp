@@ -4401,7 +4401,12 @@ int CMPTransaction::logicMath_Contract_Instant()
 
 
   //fees
-  mastercore::ContInst_Fees(chnAddrs.first, chnAddrs.second, chnAddrs.multisig, amountToReserve, contractId);
+  if(!mastercore::ContInst_Fees(chnAddrs.first, chnAddrs.second, chnAddrs.multisig, amountToReserve, contractId))
+  {
+      PrintToLog("\n %s: no enogh money to pay fees\n", __func__);
+      return PKT_ERROR_SP -39;
+
+  }
 
 
   if (nBalance < (2 * amountToReserve) || nBalance == 0)

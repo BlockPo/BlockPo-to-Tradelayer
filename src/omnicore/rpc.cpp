@@ -65,6 +65,8 @@ extern volatile int64_t globalDenPrice;
 extern uint64_t marketP[NPTYPES];
 extern std::map<uint32_t, std::map<std::string, double>> addrs_upnlc;
 extern std::map<std::string, int64_t> sum_upnls;
+extern std::map<uint32_t, int64_t> cachefees;
+
 using mastercore::StrToInt64;
 using mastercore::DoubleToInt64;
 /**
@@ -2408,6 +2410,40 @@ UniValue tl_check_withdrawals(const JSONRPCRequest& request)
   return response;
 }
 
+UniValue tl_getcache(const JSONRPCRequest& request)
+{
+    if (request.params.size() != 1)
+        throw runtime_error(
+            "tl_getmargin \"address\" propertyid\n"
+            "\nReturns the token reserve account using in futures contracts, for a given address and property.\n"
+            "\nArguments:\n"
+            "1. address              (string, required) the address\n"
+            "2. propertyid           (number, required) the contract identifier\n"
+            "\nResult:\n"
+            "{\n"
+            "  \"balance\" : \"n.nnnnnnnn\",   (string) the available balance of the address\n"
+            "  \"reserved\" : \"n.nnnnnnnn\"   (string) the amount reserved by sell offers and accepts\n"
+            "}\n"
+            "\nExamples:\n"
+            + HelpExampleCli("tl_getmargin", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" 1")
+            + HelpExampleRpc("tl_getmargin", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", 1")
+        );
+
+    uint32_t propertyId = ParsePropertyId(request.params[0]);
+
+    // geting data from cache!
+    std::map<uint32_t, int64_t>::iterator it =  cachefees.find(propertyId);
+    int64_t amount = it->second;
+
+    UniValue balanceObj(UniValue::VOBJ);
+
+    balanceObj.push_back(Pair("amount", FormatByType(amount,1)));
+
+
+
+    return balanceObj;
+}
+
 static const CRPCCommand commands[] =
 { //  category                             name                            actor (function)               okSafeMode
   //  ------------------------------------ ------------------------------- ------------------------------ ----------
@@ -2450,6 +2486,7 @@ static const CRPCCommand commands[] =
   { "trade layer (data retieval)" , "tl_check_commits",             &tl_check_commits,              {} },
   { "trade layer (data retieval)" , "tl_get_channelreserve",        &tl_get_channelreserve,         {} },
   { "trade layer (data retieval)" , "tl_getchannel_info",           &tl_getchannel_info,            {} },
+  { "trade layer (data retieval)" , "tl_getcache",                  &tl_getcache,                   {} },
   { "trade layer (data retieval)" , "tl_check_withdrawals",         &tl_check_withdrawals,          {} }
 };
 

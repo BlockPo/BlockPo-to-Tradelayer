@@ -1031,7 +1031,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
    *
    *
    */
-      //mastercore::ContractDex_Fees(pnew->getAddr(),pold->getAddr(), nCouldBuy, property_traded);
+    mastercore::ContractDex_Fees(pnew->getAddr(),pold->getAddr(), nCouldBuy, property_traded);
     PrintToLog("Checking all parameters inside recordMatchedTrade:\n");
     PrintToLog("txmaker: %s, txtaker: %s, makeraddress: %s, takeraddress: %s, price: %d, maker_crgafs: %d\n", pold->getHash().ToString(), pnew->getHash().ToString(), pold->getAddr(), pnew->getAddr(), pold->getEffectivePrice(),contract_replacement.getAmountForSale());
     PrintToLog("takergetAmounForSale: %d, makerblock: %d, takerblock: %d, property: %d, tradestatus: %s\n", pnew->getAmountForSale(), pold->getBlock(), pnew->getBlock(), property_traded, tradeStatus);

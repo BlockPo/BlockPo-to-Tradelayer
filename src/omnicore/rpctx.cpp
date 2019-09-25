@@ -2002,7 +2002,6 @@ UniValue tl_create_channel(const JSONRPCRequest& request)
 //
 // }
 
-
 static const CRPCCommand commands[] =
 { //  category                             name                            actor (function)               okSafeMode
   //  ------------------------------------ ------------------------------- ------------------------------ ----------
@@ -2041,7 +2040,6 @@ static const CRPCCommand commands[] =
     { "trade layer (transaction creation)", "tl_commit_tochannel",             &tl_commit_tochannel,                {} },
     { "trade layer (transaction creation)", "tl_withdrawal_fromchannel",       &tl_withdrawal_fromchannel,          {} },
     { "trade layer (transaction creation)", "tl_create_channel",               &tl_create_channel,                  {} },
-
     { "trade layer (transaction creation)", "tl_setexodus",                    &tl_setexodus,                       {} },
     { "trade layer (transaction creation)", "tl_commit_tochannel",             &tl_commit_tochannel,                {} }
 #endif

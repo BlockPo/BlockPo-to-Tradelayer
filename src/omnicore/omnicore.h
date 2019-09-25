@@ -534,6 +534,7 @@ namespace mastercore
 
   //Fees for contract instant trades
   bool ContInst_Fees(const std::string& firstAdrr,const std::string& secondAddr,const std::string& channelAddr, int64_t amountToReserve, uint32_t contractId);
+
 }
 
 #endif // OMNICORE_OMNICORE_H

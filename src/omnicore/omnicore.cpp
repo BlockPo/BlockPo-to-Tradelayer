@@ -177,7 +177,6 @@ extern std::map<uint32_t, std::map<uint32_t, std::vector<uint64_t>>> mdextwap_ve
 extern std::map<uint32_t, std::map<std::string, double>> addrs_upnlc;
 extern std::map<std::string, int64_t> sum_upnls;
 extern std::map<uint32_t, int64_t> cachefees;
-
 /** Pending withdrawals **/
 extern std::map<std::string,vector<withdrawalAccepted>> withdrawal_Map;
 
@@ -1407,12 +1406,17 @@ int input_market_prices_string(const std::string& s)
 
 int input_cachefees_string(const std::string& s)
 {
+
    std::vector<std::string> vstr;
    boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
 
    uint32_t propertyId = boost::lexical_cast<uint32_t>(vstr[0]);
 
-   cachefees[propertyId] = boost::lexical_cast<int64_t>(vstr[1]);;
+   int64_t amount = boost::lexical_cast<int64_t>(vstr[1]);;
+
+   PrintToLog("%s: propertyId: %s, amount: %s \n", __func__, vstr[0], vstr[1]);
+
+   if (!cachefees.insert(std::make_pair(propertyId, amount)).second) return -1;
 
    return 0;
 }
@@ -1479,20 +1483,23 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
         break;
 
     case FILETYPE_OFFERS:
-      my_offers.clear();
-      inputLineFunc = input_mp_offers_string;
-      break;
+        PrintToLog("%s: using FILETYPE_OFFERS case\n");
+        my_offers.clear();
+        inputLineFunc = input_mp_offers_string;
+        break;
 
     case FILETYPE_MDEXORDERS:
         // FIXME
         // memory leak ... gotta unallocate inner layers first....
         // TODO
         // ...
+        PrintToLog("%s: using FILETYPE_MDEXORDERS case\n");
         metadex.clear();
         inputLineFunc = input_mp_mdexorder_string;
         break;
 
     case FILETYPE_CACHEFEES:
+        PrintToLog("%s: using FILETYPE_CACHEFEES case\n");
         inputLineFunc = input_cachefees_string;
         break;
 
@@ -1576,6 +1583,7 @@ static char const * const statePrefix[NUM_FILETYPES] = {
     "marketprices",
     "offers",
     "mdexorders",
+    "cachefees",
 
 };
 
@@ -1848,12 +1856,19 @@ static int write_mp_offers(ofstream &file, SHA256_CTX *shaCtx)
 
 static int write_mp_cachefees(std::ofstream& file, SHA256_CTX* shaCtx)
 {
+
+    PrintToLog("### %s: inside function!!! \n", __func__);
     std::string lineOut;
 
-    for (std::map<uint32_t, int64_t>::iterator it = cachefees.begin(); it != cachefees.end(); ++it) {
+    if(cachefees.size() == 0)
+        PrintToLog("%s: there's no data inside cachefee map\n", __func__);
+
+    for (std::map<uint32_t, int64_t>::iterator itt = cachefees.begin(); itt != cachefees.end(); ++itt) {
         // decompose the key for address
-        const uint32_t& propertyId = it->first;
-        const int64_t& cache = it->second;
+        uint32_t propertyId = itt->first;
+        int64_t cache = itt->second;
+        PrintToLog("### %s: saving cachefee[%d] = %d\n", __func__, propertyId, cache);
+
         lineOut.append(strprintf("%d,%d",propertyId, cache));
     }
 
@@ -2002,6 +2017,7 @@ int mastercore_save_state( CBlockIndex const *pBlockIndex )
     write_state_file(pBlockIndex, FILETYPE_MARKETPRICES);
     write_state_file(pBlockIndex, FILETYPE_OFFERS);
     write_state_file(pBlockIndex, FILETYPE_MDEXORDERS);
+    write_state_file(pBlockIndex, FILETYPE_CACHEFEES);
 
     // clean-up the directory
     prune_state_files(pBlockIndex);
@@ -3381,7 +3397,7 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
   makeWithdrawals(pBlockIndex->nHeight);
   CheckLiveActivations(pBlockIndex->nHeight);
   update_sum_upnls();
-  marginMain(pBlockIndex->nHeight);
+  // marginMain(pBlockIndex->nHeight);
   // addInterestPegged(nBlockPrev,pBlockIndex);
   // eraseExpiredCrowdsale(pBlockIndex);
   _my_sps->rollingContractsBlock(pBlockIndex); // NOTE: we are checking every contract expiration
@@ -5166,14 +5182,13 @@ std::string updateStatus(int64_t oldPos, int64_t newPos)
 
 bool mastercore::ContInst_Fees(const std::string& firstAddr,const std::string& secondAddr,const std::string& channelAddr, int64_t amountToReserve,uint32_t contractId)
 {
-    int64_t cacheFee;
     arith_uint256 fee;
 
     CMPSPInfo::Entry sp;
     if (!_my_sps->getSP(contractId, sp))
        return false;
 
-    int64_t marginRe = static_cast<int64_t>(sp.margin_requirement);
+    // int64_t marginRe = static_cast<int64_t>(sp.margin_requirement);
 
     PrintToLog("%s: firstAddr: %d\n", __func__, firstAddr);
     PrintToLog("%s: secondAddr: %d\n", __func__, secondAddr);
@@ -5347,8 +5362,6 @@ bool mastercore::Instant_x_Trade(const uint256& txid, uint8_t tradingAction, std
 
   return true;
 }
-
-
 
 
 /**
