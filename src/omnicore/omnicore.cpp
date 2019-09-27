@@ -1453,6 +1453,27 @@ int input_withdrawals_string(const std::string& s)
 
 }
 
+int input_activechannels_string(const std::string& s)
+{
+    std::vector<std::string> vstr;
+    boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
+
+    channel chn;
+
+    std::string chnAddr = vstr[0];
+    chn.multisig = vstr[1];
+    chn.first = vstr[2];
+    chn.second = vstr[3];
+    chn.expiry_height = boost::lexical_cast<int>(vstr[4]);
+    chn.last_exchange_block = boost::lexical_cast<int>(vstr[5]);
+
+    //inserting chn into map
+    if(!channels_Map.insert(std::make_pair(chnAddr,chn)).second) return -1;
+
+    return 0;
+
+}
+
 int input_mp_mdexorder_string(const std::string& s)
 {
     std::vector<std::string> vstr;
@@ -1540,6 +1561,11 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
         inputLineFunc = input_withdrawals_string;
         break;
 
+    case FILETYPE_ACTIVE_CHANNELS:
+        PrintToLog("%s: using FILETYPE_ACTIVE_CHANNELS case\n");
+        inputLineFunc = input_activechannels_string;
+        break;
+
     default:
       return -1;
   }
@@ -1622,6 +1648,7 @@ static char const * const statePrefix[NUM_FILETYPES] = {
     "mdexorders",
     "cachefees",
     "withdrawals",
+    "activechannels",
 
 };
 
@@ -1938,14 +1965,38 @@ static int write_mp_withdrawals(std::ofstream& file, SHA256_CTX* shaCtx)
         for(std::vector<withdrawalAccepted>::iterator itt = whd.begin(); itt != whd.end(); ++itt)
         {
             withdrawalAccepted  w = *(itt);
-            std::string address = w.address;
-            int deadline_block = w.deadline_block;
-            uint32_t propertyId = w.propertyId;
-            uint64_t amount = w.amount;
-
             lineOut.append(strprintf("%s,%s,%d,%d,%d", chnAddr, w.address, w.deadline_block, w.propertyId, w.amount));
 
         }
+
+    }
+
+    // add the line to the hash
+    SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
+
+    // write the line
+    file << lineOut << endl;
+
+    return 0;
+}
+
+/**Saving map of active channels**/
+static int write_mp_active_channels(std::ofstream& file, SHA256_CTX* shaCtx)
+{
+
+    PrintToLog("### %s: inside function!!! \n", __func__);
+    std::string lineOut;
+
+    if(channels_Map.size() == 0)
+        PrintToLog("%s: there's no data inside channels_Map\n", __func__);
+
+    for (std::map<std::string,channel>::iterator it = channels_Map.begin(); it != channels_Map.end(); ++it)
+    {
+        // decompose the key for address
+        std::string chnAddr = it->first;
+        channel chnObj = it->second;
+
+        lineOut.append(strprintf("%s,%s,%s,%s,%d,%d", chnAddr, chnObj.multisig, chnObj.first, chnObj.second, chnObj.expiry_height, chnObj.last_exchange_block));
 
     }
 
@@ -2006,6 +2057,10 @@ static int write_state_file( CBlockIndex const *pBlockIndex, int what )
 
   case FILETYPE_WITHDRAWALS:
       result = write_mp_withdrawals(file, &shaCtx);
+      break;
+
+  case FILETYPE_ACTIVE_CHANNELS:
+      result = write_mp_active_channels(file, &shaCtx);
       break;
 
   }
@@ -2100,6 +2155,7 @@ int mastercore_save_state( CBlockIndex const *pBlockIndex )
     write_state_file(pBlockIndex, FILETYPE_MDEXORDERS);
     write_state_file(pBlockIndex, FILETYPE_CACHEFEES);
     write_state_file(pBlockIndex, FILETYPE_WITHDRAWALS);
+    write_state_file(pBlockIndex, FILETYPE_ACTIVE_CHANNELS);
 
     // clean-up the directory
     prune_state_files(pBlockIndex);
