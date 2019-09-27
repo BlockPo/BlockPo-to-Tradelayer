@@ -177,6 +177,7 @@ extern std::map<uint32_t, std::map<uint32_t, std::vector<uint64_t>>> mdextwap_ve
 extern std::map<uint32_t, std::map<std::string, double>> addrs_upnlc;
 extern std::map<std::string, int64_t> sum_upnls;
 extern std::map<uint32_t, int64_t> cachefees;
+
 /** Pending withdrawals **/
 extern std::map<std::string,vector<withdrawalAccepted>> withdrawal_Map;
 
@@ -1406,7 +1407,6 @@ int input_market_prices_string(const std::string& s)
 
 int input_cachefees_string(const std::string& s)
 {
-
    std::vector<std::string> vstr;
    boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
 
@@ -1419,6 +1419,38 @@ int input_cachefees_string(const std::string& s)
    if (!cachefees.insert(std::make_pair(propertyId, amount)).second) return -1;
 
    return 0;
+}
+
+int input_withdrawals_string(const std::string& s)
+{
+    std::vector<std::string> vstr;
+    boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
+
+    withdrawalAccepted w;
+
+    std::string chnAddr = vstr[0];
+    w.address = vstr[1];
+    w.deadline_block = boost::lexical_cast<int>(vstr[2]);
+    w.propertyId = boost::lexical_cast<uint32_t>(vstr[3]);
+    w.amount = boost::lexical_cast<int64_t>(vstr[4]);
+
+    PrintToLog("%s: chnAddr: %s, address: %s, deadline_blocks: %s, propertyId: %s, amount: %s \n", __func__, vstr[0], vstr[1], vstr[2], vstr[3], vstr[4]);
+
+    vector<withdrawalAccepted> whAc;
+
+    std::map<std::string,vector<withdrawalAccepted>>::iterator it = withdrawal_Map.find(chnAddr);
+
+    if (it != withdrawal_Map.end())
+    {
+        whAc = it->second;
+        whAc.push_back(w);
+    } else {
+        whAc.push_back(w);
+        if(!withdrawal_Map.insert(std::make_pair(chnAddr,whAc)).second) return -1;
+    }
+
+    return 0;
+
 }
 
 int input_mp_mdexorder_string(const std::string& s)
@@ -1503,6 +1535,11 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
         inputLineFunc = input_cachefees_string;
         break;
 
+    case FILETYPE_WITHDRAWALS:
+        PrintToLog("%s: using FILETYPE_WITHDRAWALS case\n");
+        inputLineFunc = input_withdrawals_string;
+        break;
+
     default:
       return -1;
   }
@@ -1584,6 +1621,7 @@ static char const * const statePrefix[NUM_FILETYPES] = {
     "offers",
     "mdexorders",
     "cachefees",
+    "withdrawals",
 
 };
 
@@ -1881,6 +1919,45 @@ static int write_mp_cachefees(std::ofstream& file, SHA256_CTX* shaCtx)
     return 0;
 }
 
+/** Saving pending withdrawals **/
+static int write_mp_withdrawals(std::ofstream& file, SHA256_CTX* shaCtx)
+{
+
+    PrintToLog("### %s: inside function!!! \n", __func__);
+    std::string lineOut;
+
+    if(withdrawal_Map.size() == 0)
+        PrintToLog("%s: there's no data inside withdrawal_Map\n", __func__);
+
+    for (std::map<std::string,vector<withdrawalAccepted>>::iterator it = withdrawal_Map.begin(); it != withdrawal_Map.end(); ++it)
+    {
+        // decompose the key for address
+        std::string chnAddr = it->first;
+        vector<withdrawalAccepted> whd = it->second;
+
+        for(std::vector<withdrawalAccepted>::iterator itt = whd.begin(); itt != whd.end(); ++itt)
+        {
+            withdrawalAccepted  w = *(itt);
+            std::string address = w.address;
+            int deadline_block = w.deadline_block;
+            uint32_t propertyId = w.propertyId;
+            uint64_t amount = w.amount;
+
+            lineOut.append(strprintf("%s,%s,%d,%d,%d", chnAddr, w.address, w.deadline_block, w.propertyId, w.amount));
+
+        }
+
+    }
+
+    // add the line to the hash
+    SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
+
+    // write the line
+    file << lineOut << endl;
+
+    return 0;
+}
+
 static int write_state_file( CBlockIndex const *pBlockIndex, int what )
 {
   boost::filesystem::path path = MPPersistencePath / strprintf("%s-%s.dat", statePrefix[what], pBlockIndex->GetBlockHash().ToString());
@@ -1925,6 +2002,10 @@ static int write_state_file( CBlockIndex const *pBlockIndex, int what )
 
   case FILETYPE_CACHEFEES:
       result = write_mp_cachefees(file, &shaCtx);
+      break;
+
+  case FILETYPE_WITHDRAWALS:
+      result = write_mp_withdrawals(file, &shaCtx);
       break;
 
   }
@@ -2018,6 +2099,7 @@ int mastercore_save_state( CBlockIndex const *pBlockIndex )
     write_state_file(pBlockIndex, FILETYPE_OFFERS);
     write_state_file(pBlockIndex, FILETYPE_MDEXORDERS);
     write_state_file(pBlockIndex, FILETYPE_CACHEFEES);
+    write_state_file(pBlockIndex, FILETYPE_WITHDRAWALS);
 
     // clean-up the directory
     prune_state_files(pBlockIndex);
