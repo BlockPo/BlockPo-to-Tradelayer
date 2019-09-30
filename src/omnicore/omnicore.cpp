@@ -5144,6 +5144,11 @@ bool CMPTradeList::getChannelInfo(const std::string& channelAddress, UniValue& t
       break;
     }
 
+    // channel status:
+    std::map<std::string,channel>::iterator itt = channels_Map.find(channelAddress);
+
+    (itt != channels_Map.end()) ? tradeArray.push_back(Pair("status","active")) : tradeArray.push_back(Pair("status","closed"));
+
        // clean up
     delete it; // Desallocation proccess
 
