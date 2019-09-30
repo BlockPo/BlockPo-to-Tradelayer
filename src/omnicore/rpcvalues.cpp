@@ -54,7 +54,7 @@ std::string ParseAddressOrWildcard(const UniValue& value)
 uint32_t ParsePropertyId(const UniValue& value)
 {
     int64_t propertyId = value.get_int64();
-    if (propertyId < 1 || 4294967295LL < propertyId) {
+    if (propertyId < 0 || 4294967295LL < propertyId) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Property identifier is out of range");
     }
     return static_cast<uint32_t>(propertyId);

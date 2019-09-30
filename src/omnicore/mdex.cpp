@@ -1031,9 +1031,13 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
    *
    *
    */
-      //mastercore::ContractDex_Fees(pnew->getAddr(),pold->getAddr(), nCouldBuy, property_traded);
-
-
+    mastercore::ContractDex_Fees(pnew->getAddr(),pold->getAddr(), nCouldBuy, property_traded);
+    PrintToLog("Checking all parameters inside recordMatchedTrade:\n");
+    PrintToLog("txmaker: %s, txtaker: %s, makeraddress: %s, takeraddress: %s, price: %d, maker_crgafs: %d\n", pold->getHash().ToString(), pnew->getHash().ToString(), pold->getAddr(), pnew->getAddr(), pold->getEffectivePrice(),contract_replacement.getAmountForSale());
+    PrintToLog("takergetAmounForSale: %d, makerblock: %d, takerblock: %d, property: %d, tradestatus: %s\n", pnew->getAmountForSale(), pold->getBlock(), pnew->getBlock(), property_traded, tradeStatus);
+    PrintToLog("lives_maker0: %d, lives_maker1: %d, lives_maker2: %d, lives_maker3: %d, lives_taker0: %d, lives_taker1: %d, lives_taker2: %d, lives_taker3:%d\n",lives_maker0, lives_maker1, lives_maker2, lives_maker3, lives_taker0, lives_taker1, lives_taker2, lives_taker3);
+    PrintToLog("Status_maker0: %d, Status_taker0: %d, Status_maker1: %d, Status_taker1: %d, Status_maker2: %d, Status_taker2: %d, Status_maker3: %d, Status_taker3:%d\n",Status_maker0, Status_taker0, Status_maker1, Status_taker1, Status_maker2, Status_taker2, Status_maker3, Status_taker3);
+    PrintToLog("nCouldBuy0: %d, nCouldBuy1: %d, nCouldBuy2: %d, nCouldBuy3: %d, amountpnew: %d, amountpold: %d\n",nCouldBuy0, nCouldBuy1, nCouldBuy2, nCouldBuy3, amountpnew, amountpold);
    /********************************************************/
    t_tradelistdb->recordMatchedTrade(pold->getHash(),
 					pnew->getHash(),
@@ -1133,7 +1137,7 @@ bool mastercore::ContractDex_Fees(std::string addressTaker,std::string addressMa
         if (sp.collateral_currency == 4) //ALLS
         {
           // 0.5% to feecache
-          cachefees[contractId] += cacheFee;
+          cachefees[sp.collateral_currency] += cacheFee;
 
         }else {
             // Create the metadex object with specific params

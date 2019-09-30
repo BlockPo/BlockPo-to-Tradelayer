@@ -109,3 +109,6 @@ std::map<uint32_t,oracledata> oraclePrices;
 /*****************************************/
 /** Withdrawals on channels **/
 std::map<std::string,vector<withdrawalAccepted>> withdrawal_Map;
+
+/** Active channels **/
+std::map<std::string,channel> channels_Map;

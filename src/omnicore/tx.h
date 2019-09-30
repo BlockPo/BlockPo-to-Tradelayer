@@ -139,10 +139,11 @@ private:
     uint64_t amount_to_withdraw;
     uint64_t pnl_amount;
     uint64_t vOut;
-    uint64_t vout_bef;
-    uint64_t vout_pay;
     uint64_t price;
-    int blockheight_expiry;
+    uint64_t ileverage;
+    uint64_t itrading_action;
+
+    int block_forexpiry;
 
 
     // Indicates whether the transaction can be used to execute logic
@@ -199,6 +200,7 @@ private:
     bool interpret_Update_PNL();
     bool interpret_Transfer();
     bool interpret_Create_Channel();
+    bool interpret_Contract_Instant();
     ///////////////////////////////////////////////
 
     /**
@@ -241,6 +243,7 @@ private:
     int logicMath_Update_PNL();
     int logicMath_Transfer();
     int logicMath_Create_Channel();
+    int logicMath_Contract_Instant();
     ///////////////////////////////////////////////
 
     /**
@@ -298,6 +301,11 @@ public:
     uint32_t getActivationBlock() const { return activation_block; }
     uint32_t getMinClientVersion() const { return min_client_version; }
     unsigned int getIndexInBlock() const { return tx_idx; }
+
+    /** Instan trade (Channels) */
+    uint64_t getAmountForSale() const { return amount_forsale; }
+    uint32_t getDesiredProperty() const { return desired_property; }
+    uint64_t getDesiredValue() const { return desired_value; }
     ////////////////////////////////
     /** New things for Contracts */
     uint32_t getMarginRequirement() const { return margin_requirement; }
@@ -382,8 +390,10 @@ public:
         amount_commited = 0;
         amount_to_withdraw = 0;
         vOut = 0;
-        blockheight_expiry = 0;
+        block_forexpiry = 0;
         pnl_amount= 0;
+        ileverage = 0;
+        itrading_action = 0;
 
         ////////////////////////////////////
     }
@@ -498,6 +508,7 @@ struct oracledata
   int64_t low;
   uint32_t contractId;
 };
+
 
 struct withdrawalAccepted
 {

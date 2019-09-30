@@ -65,6 +65,8 @@ extern volatile int64_t globalDenPrice;
 extern uint64_t marketP[NPTYPES];
 extern std::map<uint32_t, std::map<std::string, double>> addrs_upnlc;
 extern std::map<std::string, int64_t> sum_upnls;
+extern std::map<uint32_t, int64_t> cachefees;
+
 using mastercore::StrToInt64;
 using mastercore::DoubleToInt64;
 /**
@@ -130,6 +132,16 @@ void ReserveToJSON(const std::string& address, uint32_t property, UniValue& bala
         balance_obj.push_back(Pair("reserve", FormatDivisibleMP(margin)));
     } else {
         balance_obj.push_back(Pair("reserve", FormatIndivisibleMP(margin)));
+    }
+}
+
+void ChannelToJSON(const std::string& address, uint32_t property, UniValue& balance_obj, bool divisible)
+{
+    int64_t margin = getMPbalance(address, property, CHANNEL_RESERVE);
+    if (divisible) {
+        balance_obj.push_back(Pair("channel reserve", FormatDivisibleMP(margin)));
+    } else {
+        balance_obj.push_back(Pair("channel reserve", FormatIndivisibleMP(margin)));
     }
 }
 
@@ -523,6 +535,64 @@ UniValue tl_getreserve(const JSONRPCRequest& request)
     ReserveToJSON(address, propertyId, balanceObj, isPropertyDivisible(propertyId));
 
     return balanceObj;
+}
+
+UniValue tl_get_channelreserve(const JSONRPCRequest& request)
+{
+    if (request.params.size() != 2)
+        throw runtime_error(
+            "tl_getchannelreserve \"address\" propertyid\n"
+            "\nReturns the token reserve account for a given channel address and property.\n"
+            "\nArguments:\n"
+            "1. channel address      (string, required) the address\n"
+            "2. propertyid           (number, required) the contract identifier\n"
+            "\nResult:\n"
+            "{\n"
+            "  \"channel address\" : \"n.nnnnnnnn\",   (string) the available balance of the address\n"
+            "}\n"
+            "\nExamples:\n"
+            + HelpExampleCli("tl_get_channelreserve", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" 1")
+            + HelpExampleRpc("tl_get_channelreserve", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", 1")
+        );
+
+    std::string address = ParseAddress(request.params[0]);
+    uint32_t propertyId = ParsePropertyId(request.params[1]);
+
+    RequireExistingProperty(propertyId);
+    RequireNotContract(propertyId);
+
+    UniValue balanceObj(UniValue::VOBJ);
+    ChannelToJSON(address, propertyId, balanceObj, isPropertyDivisible(propertyId));
+
+    return balanceObj;
+}
+
+UniValue tl_getchannel_info(const JSONRPCRequest& request)
+{
+    if (request.params.size() != 1)
+        throw runtime_error(
+            "tl_getchannel_info \"address\" \n"
+            "\nReturns all multisig channel info.\n"
+            "\nArguments:\n"
+            "1. channel address      (string, required) the address\n"
+            "\nResult:\n"
+            "{\n"
+            "  \"channel address\" : \"n.nnnnnnnn\",   (string) the available balance of the address\n"
+            "}\n"
+            "\nExamples:\n"
+            + HelpExampleCli("tl_getchannel_info", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\"")
+            + HelpExampleRpc("tl_getchannel_info", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\"")
+        );
+
+    std::string address = ParseAddress(request.params[0]);
+
+    UniValue response(UniValue::VOBJ);
+
+    LOCK(cs_tally);
+
+    t_tradelistdb->getChannelInfo(address,response);
+
+    return response;
 }
 
 UniValue tl_getallbalancesforid(const JSONRPCRequest& request)
@@ -2340,6 +2410,40 @@ UniValue tl_check_withdrawals(const JSONRPCRequest& request)
   return response;
 }
 
+UniValue tl_getcache(const JSONRPCRequest& request)
+{
+    if (request.params.size() != 1)
+        throw runtime_error(
+            "tl_getmargin \"address\" propertyid\n"
+            "\nReturns the token reserve account using in futures contracts, for a given address and property.\n"
+            "\nArguments:\n"
+            "1. address              (string, required) the address\n"
+            "2. propertyid           (number, required) the contract identifier\n"
+            "\nResult:\n"
+            "{\n"
+            "  \"balance\" : \"n.nnnnnnnn\",   (string) the available balance of the address\n"
+            "  \"reserved\" : \"n.nnnnnnnn\"   (string) the amount reserved by sell offers and accepts\n"
+            "}\n"
+            "\nExamples:\n"
+            + HelpExampleCli("tl_getmargin", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" 1")
+            + HelpExampleRpc("tl_getmargin", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", 1")
+        );
+
+    uint32_t propertyId = ParsePropertyId(request.params[0]);
+
+    // geting data from cache!
+    std::map<uint32_t, int64_t>::iterator it =  cachefees.find(propertyId);
+    int64_t amount = it->second;
+
+    UniValue balanceObj(UniValue::VOBJ);
+
+    balanceObj.push_back(Pair("amount", FormatByType(amount,1)));
+
+
+
+    return balanceObj;
+}
+
 static const CRPCCommand commands[] =
 { //  category                             name                            actor (function)               okSafeMode
   //  ------------------------------------ ------------------------------- ------------------------------ ----------
@@ -2380,6 +2484,9 @@ static const CRPCCommand commands[] =
   { "trade layer (data retieval)" , "tl_getexodus",                 &tl_getexodus,                  {} },
   { "trade layer (data retieval)" , "tl_getsum_upnl",               &tl_getsum_upnl,                {} },
   { "trade layer (data retieval)" , "tl_check_commits",             &tl_check_commits,              {} },
+  { "trade layer (data retieval)" , "tl_get_channelreserve",        &tl_get_channelreserve,         {} },
+  { "trade layer (data retieval)" , "tl_getchannel_info",           &tl_getchannel_info,            {} },
+  { "trade layer (data retieval)" , "tl_getcache",                  &tl_getcache,                   {} },
   { "trade layer (data retieval)" , "tl_check_withdrawals",         &tl_check_withdrawals,          {} }
 };
 

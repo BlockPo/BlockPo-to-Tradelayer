@@ -822,7 +822,7 @@ UniValue tl_createpayload_sendvesting(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_instant_trade(const JSONRPCRequest& request)
 {
-  if (request.params.size() < 4 || request.params.size() > 6)
+  if (request.params.size() < 5)
     throw runtime_error(
 			"tl_createpayload_instant_trade \"fromaddress\" \"toaddress\" propertyid \"amount\" ( \"referenceamount\" )\n"
 
@@ -830,12 +830,10 @@ UniValue tl_createpayload_instant_trade(const JSONRPCRequest& request)
 
 			"\nArguments:\n"
 			"1. propertyId            (number, required) the identifier of the property\n"
-			"2. amount                (string, required) the amount of the property traded\n"
+			"2. amount                (string, required) the amount of the property traded for the first address of channel\n"
       "3. blockheight_expiry    (string, required) block of expiry\n"
-      "4. propertyDesired       (number, optional) the identifier of the property desiderd\n"
+      "4. propertyDesired       (number, optional) the identifier of the property traded for the second address of channel\n"
       "5. amountDesired         (string, optional) the amount desired of tokens\n"
-      "6. price                 (number, optional) the price of contract\n"
-
 
 
 			"\nResult:\n"
@@ -850,19 +848,63 @@ UniValue tl_createpayload_instant_trade(const JSONRPCRequest& request)
   uint32_t propertyId = ParsePropertyId(request.params[0]);
   int64_t amount = ParseAmount(request.params[1], true);
   uint32_t blockheight_expiry = request.params[2].get_int();
-  uint32_t propertyDesired = (request.params.size() > 3) ? ParsePropertyId(request.params[3]): 0;
-  int64_t amountDesired = (request.params.size() > 3) ? ParseAmount(request.params[4],true): 0;
-  int64_t price = (request.params.size() == 4) ? ParseAmount(request.params[5],true): 0;
+  uint32_t propertyDesired = ParsePropertyId(request.params[3]);
+  int64_t amountDesired = ParseAmount(request.params[4],true);
+
 
   PrintToLog("propertyid = %d\n", propertyId);
   PrintToLog("amount = %d\n", amount);
   PrintToLog("blockheight_expiry = %d\n", blockheight_expiry);
   PrintToLog("propertyDesired = %d\n", propertyDesired);
   PrintToLog("amountDesired = %d\n", amountDesired);
-  PrintToLog("price = %d\n", price);
 
   // create a payload for the transaction
-  std::vector<unsigned char> payload = CreatePayload_Instant_Trade(propertyId, amount, blockheight_expiry, propertyDesired, amountDesired, price);
+  std::vector<unsigned char> payload = CreatePayload_Instant_Trade(propertyId, amount, blockheight_expiry, propertyDesired, amountDesired);
+
+  return HexStr(payload.begin(), payload.end());
+
+}
+
+UniValue tl_createpayload_contract_instant_trade(const JSONRPCRequest& request)
+{
+  if (request.params.size() < 6)
+    throw runtime_error(
+			"tl_createpayload_instant_trade \"fromaddress\" \"toaddress\" propertyid \"amount\" ( \"referenceamount\" )\n"
+
+			"\nCreate an contract instant trade payload.\n"
+
+			"\nArguments:\n"
+			"1. contractId            (number, required) the identifier of the property\n"
+			"2. amount                (string, required) the amount of the property traded for the first address of channel\n"
+      "3. blockheight_expiry    (string, required) block of expiry\n"
+      "4. effective price       (string, required) limit price desired in exchange\n"
+			"5. trading action        (number, required) 1 to BUY contracts, 2 to SELL contracts \n"
+			"6. leverage              (number, required) leverage (2x, 3x, ... 10x)\n"
+
+			"\nResult:\n"
+			"\"hash\"                  (string) the hex-encoded transaction hash\n"
+
+			"\nExamples:\n"
+			+ HelpExampleCli("tl_createpayload_contract_instant_trade", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\" \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\" 1 \"100.0\"")
+			+ HelpExampleRpc("tl_createpayload_contract_instant_trade", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\", \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\", 1, \"100.0\"")
+			);
+
+  // obtain parameters & info
+  uint32_t contractId = ParsePropertyId(request.params[0]);
+  int64_t amount = ParseAmount(request.params[1], true);
+  uint32_t blockheight_expiry = request.params[2].get_int();
+  uint64_t price = ParseAmount(request.params[3],true);
+  uint8_t trading_action = ParseContractDexAction(request.params[4]);
+  uint64_t leverage = ParseLeverage(request.params[5]);
+
+
+  PrintToLog("propertyid = %d\n", contractId);
+  PrintToLog("amount = %d\n", amount);
+  PrintToLog("blockheight_expiry = %d\n", blockheight_expiry);
+  PrintToLog("price= %d\n", price);
+
+  // create a payload for the transaction
+  std::vector<unsigned char> payload = CreatePayload_Contract_Instant_Trade(contractId, amount, blockheight_expiry, price, trading_action, leverage);
 
   return HexStr(payload.begin(), payload.end());
 
@@ -870,7 +912,7 @@ UniValue tl_createpayload_instant_trade(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_pnl_update(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 5)
+  if (request.params.size() != 3)
     throw runtime_error(
 			"tl_createpayload_pnl_update \"fromaddress\" \"toaddress\" propertyid \"amount\" ( \"referenceamount\" )\n"
 
@@ -880,9 +922,6 @@ UniValue tl_createpayload_pnl_update(const JSONRPCRequest& request)
 			"1. propertyId            (number, required) the identifier of the property\n"
 			"2. amount                (string, required) the amount of the property traded\n"
       "3. blockheight expiry    (number, required) block of expiry\n"
-      "4. vOut beneficiary      (number, optional) vout for beneficiary address\n"
-      "5. vOut payer            (number, optional) vout for payer address\n"
-
 
 			"\nResult:\n"
 			"\"hash\"                  (string) the hex-encoded transaction hash\n"
@@ -896,17 +935,13 @@ UniValue tl_createpayload_pnl_update(const JSONRPCRequest& request)
   uint32_t propertyId = ParsePropertyId(request.params[0]);
   int64_t amount = ParseAmount(request.params[1], true);
   uint32_t blockheight_expiry = request.params[2].get_int();
-  uint32_t voutBenef = ParseOutputIndex(request.params[3]);
-  uint32_t voutPayer = ParseOutputIndex(request.params[4]);
 
   PrintToLog("propertyid = %d\n", propertyId);
   PrintToLog("amount = %d\n", amount);
   PrintToLog("blockheight_expiry = %d\n", blockheight_expiry);
-  PrintToLog("voutBenef = %d\n", voutBenef);
-  PrintToLog("voutPayer = %d\n", voutPayer);
 
   // create a payload for the transaction
-  std::vector<unsigned char> payload = CreatePayload_PNL_Update(propertyId, amount, blockheight_expiry, voutBenef, voutPayer);
+  std::vector<unsigned char> payload = CreatePayload_PNL_Update(propertyId, amount, blockheight_expiry);
 
   return HexStr(payload.begin(), payload.end());
 
@@ -980,8 +1015,8 @@ static const CRPCCommand commands[] =
     { "trade layer (payload creation)", "tl_createpayload_sendvesting",                   &tl_createpayload_sendvesting,                     {}   },
     { "trade layer (payload creation)", "tl_createpayload_instant_trade",                 &tl_createpayload_instant_trade,                   {}   },
     { "trade layer (payload creation)", "tl_createpayload_pnl_update",                    &tl_createpayload_pnl_update,                      {}   },
-    { "trade layer (payload creation)", "tl_createpayload_transfer",                      &tl_createpayload_transfer,                        {}   }
-
+    { "trade layer (payload creation)", "tl_createpayload_transfer",                      &tl_createpayload_transfer,                        {}   },
+    { "trade layer (payload creation)", "tl_createpayload_contract_instant_trade",        &tl_createpayload_contract_instant_trade,          {}   }
   };
 
 

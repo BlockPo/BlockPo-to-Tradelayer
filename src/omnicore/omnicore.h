@@ -118,6 +118,7 @@ enum TransactionType {
   MSC_TYPE_PNL_UPDATE                 = 111,
   MSC_TYPE_TRANSFER                   = 112,
   MSC_TYPE_CREATE_CHANNEL             = 113,
+  MSC_TYPE_CONTRACT_INSTANT           = 114,
   ////////////////////////////////////
 
 };
@@ -137,6 +138,9 @@ enum FILETYPES {
   FILETYPE_MARKETPRICES,
   FILETYPE_MDEXORDERS,
   FILETYPE_OFFERS,
+  FILETYPE_CACHEFEES,
+  FILETYPE_WITHDRAWALS,
+  FILETYPE_ACTIVE_CHANNELS,
   NUM_FILETYPES
 };
 
@@ -185,7 +189,8 @@ enum FILETYPES {
 #define TYPE_WITHDRAWAL  "withdrawal"
 #define TYPE_INSTANT_TRADE  "instant_trade"
 #define TYPE_TRANSFER  "transfer"
-
+#define TYPE_CONTRACT_INSTANT_TRADE "contract_instat_trade"
+#define TYPE_CREATE_CHANNEL "create channel"
 
 // Currency in existance (options for createcontract)
 uint32_t const TL_dUSD  = 1;
@@ -194,6 +199,9 @@ uint32_t const TL_dYEN  = 3;
 uint32_t const TL_ALL   = 4;
 uint32_t const TL_sLTC  = 5;
 uint32_t const TL_LTC   = 6;
+
+/*24 horus to blocks*/
+const int dayblocks = 576;
 
 // limits for margin dynamic
 const rational_t factor = rational_t(80,100);  // critical limit
@@ -227,6 +235,18 @@ extern CCriticalSection cs_tally;
 /** LevelDB based storage for storing Omni transaction data.  This will become the new master database, holding serialized Omni transactions.
  *  Note, intention is to consolidate and clean up data storage
  */
+
+ struct channel
+ {
+   std::string multisig;
+   std::string first;
+   std::string second;
+   int expiry_height;
+   int last_exchange_block;
+
+   channel() : multisig(""), first(""), second(""), expiry_height(0), last_exchange_block(0) {}
+ };
+
 class COmniTransactionDB : public CDBBase
 {
 public:
@@ -348,14 +368,17 @@ class CMPTradeList : public CDBBase
   //Multisig channels
   void recordNewCommit(const uint256& txid, const std::string& channelAddress, const std::string& sender, uint32_t propertyId, uint64_t amountCommited, int blockNum, int blockIndex);
   void recordNewWithdrawal(const uint256& txid, const std::string& channelAddress, const std::string& sender, uint32_t propertyId, uint64_t amountToWithdrawal, int blockNum, int blockIndex);
-  void recordNewChannel(const std::string& channelAddress, const std::string& sender, const std::string& receiver, int blockNum, int blockIndex);
+  void recordNewChannel(const std::string& channelAddress, const std::string& frAddr, const std::string& secAddr, int blockNum, int blockIndex);
   void recordNewInstantTrade(const uint256& txid, const std::string& sender, const std::string& receiver, uint32_t propertyIdForSale, uint64_t amount_forsale, uint32_t propertyIdDesired, uint64_t amount_desired, int blockNum, int blockIndex);
   void recordNewTransfer(const uint256& txid, const std::string& sender, const std::string& receiver, uint32_t propertyId, uint64_t amount, int blockNum, int blockIndex);
+  void recordNewInstContTrade(const uint256& txid, const std::string& firstAddr, const std::string& secondAddr, uint32_t property, uint64_t amount_forsale, uint64_t price ,int blockNum, int blockIndex);
 
-  bool getAllCommits(std::string senderAddress, UniValue& tradeArray);
-  bool getAllWithdrawals(std::string senderAddress, UniValue& tradeArray);
+  bool getAllCommits(const std::string& senderAddress, UniValue& tradeArray);
+  bool getAllWithdrawals(const std::string& senderAddress, UniValue& tradeArray);
+  bool getChannelInfo(const std::string& channelAddress, UniValue& tradeArray);
   bool checkChannelAddress(const std::string& channelAddress);
-  bool checkChannelPair(const std::string& channelAddress, const std::string& receiver);
+  channel getChannelAddresses(const std::string& channelAddress);
+  bool checkChannelRelation(const std::string& address, std::string& channelAddr);
   uint64_t getRemaining(const std::string& channelAddress, const std::string& senderAddress, uint32_t propertyId);
 
   int deleteAboveBlock(int blockNum);
@@ -505,6 +528,15 @@ namespace mastercore
   int64_t pos_margin(uint32_t contractId, std::string address, uint16_t prop_type, uint32_t margin_requirement); // return mainteinance margin for a given contrand and address
 
   bool makeWithdrawals(int Block); // make the withdrawals for multisig channels
+
+  bool closeChannels(int Block);
+
+  // x_Trade function for contracts on instant trade
+  bool Instant_x_Trade(const uint256& txid, uint8_t tradingAction, std::string& channelAddr, std::string& firstAddr, std::string& secondAddr, uint32_t property, int64_t amount_forsale, uint64_t price, int block, int tx_idx);
+
+  //Fees for contract instant trades
+  bool ContInst_Fees(const std::string& firstAdrr,const std::string& secondAddr,const std::string& channelAddr, int64_t amountToReserve, uint32_t contractId);
+
 }
 
 #endif // OMNICORE_OMNICORE_H
