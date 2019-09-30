@@ -90,7 +90,6 @@ std::string mastercore::strTransactionType(uint16_t txType)
     case OMNICORE_MESSAGE_TYPE_ACTIVATION: return "Feature Activation";
     case MSC_TYPE_METADEX_TRADE: return "Metadex Order";
 
-
     case MSC_TYPE_CONTRACTDEX_TRADE: return "Future Contract";
     case MSC_TYPE_CONTRACTDEX_CANCEL_ECOSYSTEM: return "ContractDex cancel-ecosystem";
     case MSC_TYPE_CREATE_CONTRACT: return "Create Contract";
@@ -101,6 +100,17 @@ std::string mastercore::strTransactionType(uint16_t txType)
     case MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK: return "Cancel Orders by Block";
     case MSC_TYPE_TRADE_OFFER: return "DEx Sell Offer";
     case MSC_TYPE_DEX_BUY_OFFER: return "DEx Buy Offer";
+    case MSC_TYPE_ACCEPT_OFFER_BTC: return "DEx Accept Offer BTC";
+    case MSC_TYPE_CHANGE_ORACLE_REF: return "Oracle Change Reference";
+    case MSC_TYPE_SET_ORACLE: return "Oracle Set Address";
+    case MSC_TYPE_ORACLE_BACKUP: return "Oracle Backup";
+    case MSC_TYPE_CLOSE_ORACLE: return "Oracle Close";
+    case MSC_TYPE_COMMIT_CHANNEL: return "Channel Commit";
+    case MSC_TYPE_WITHDRAWAL_FROM_CHANNEL: return "Channel Withdrawal";
+    case MSC_TYPE_INSTANT_TRADE: return "Channel Instant Trade";
+    case MSC_TYPE_TRANSFER: return "Channel Transfer";
+    case MSC_TYPE_CREATE_CHANNEL: return "Channel Creation";
+    case MSC_TYPE_CONTRACT_INSTANT: return "Channel Contract Instant Trade";
 
     default: return "* unknown type *";
     }
