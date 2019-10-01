@@ -872,5 +872,28 @@ std::vector<unsigned char> CreatePayload_Create_Channel(std::string channelAddre
   return payload;
 }
 
+std::vector<unsigned char> CreatePayload_New_Id_Registration(std::string website, std::string name)
+{
+  std::vector<unsigned char> payload;
+
+  uint64_t messageType = 115;
+  uint64_t messageVer = 0;
+
+  std::vector<uint8_t> vecMessageType = CompressInteger((uint64_t)messageType);
+  std::vector<uint8_t> vecMessageVer = CompressInteger((uint64_t)messageVer);
+
+  if ((website).size() > 255) website = website.substr(0,255);
+  if ((name).size() > 255) name = name.substr(0,255);
+
+  payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
+  payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
+  payload.insert(payload.end(), website.begin(), website.end());
+  payload.push_back('\0');
+  payload.insert(payload.end(), name.begin(), name.end());
+  payload.push_back('\0');
+
+  return payload;
+}
+
 #undef PUSH_BACK_BYTES
 #undef PUSH_BACK_BYTES_PTR

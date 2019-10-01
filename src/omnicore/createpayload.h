@@ -50,4 +50,5 @@ std::vector<unsigned char> CreatePayload_Contract_Instant_Trade(uint32_t contrac
 std::vector<unsigned char> CreatePayload_PNL_Update(uint32_t propertyId, uint64_t amount, uint32_t blockheight_expiry);
 std::vector<unsigned char> CreatePayload_Transfer(uint32_t propertyId, uint64_t amount);
 std::vector<unsigned char> CreatePayload_Create_Channel(std::string channelAddress, uint32_t blocks);
+std::vector<unsigned char> CreatePayload_New_Id_Registration(std::string website, std::string name);
 #endif // OMNICORE_CREATEPAYLOAD_H

@@ -111,7 +111,7 @@ std::string mastercore::strTransactionType(uint16_t txType)
     case MSC_TYPE_TRANSFER: return "Channel Transfer";
     case MSC_TYPE_CREATE_CHANNEL: return "Channel Creation";
     case MSC_TYPE_CONTRACT_INSTANT: return "Channel Contract Instant Trade";
-
+    case MSC_TYPE_NEW_ID_REGISTRATION: return "New Id Registration";
     default: return "* unknown type *";
     }
 }
@@ -269,6 +269,9 @@ bool CMPTransaction::interpret_Transaction()
 
     case MSC_TYPE_CONTRACT_INSTANT:
         return interpret_Contract_Instant();
+
+    case MSC_TYPE_NEW_ID_REGISTRATION:
+        return interpret_New_Id_Registration();
 
     }
 
@@ -1808,6 +1811,41 @@ bool CMPTransaction::interpret_Contract_Instant()
   return true;
 }
 
+/** Tx  115*/
+bool CMPTransaction::interpret_New_Id_Registration()
+{
+  int i = 0;
+
+  std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+
+  memcpy(&ecosystem, &pkt[i], 1);
+
+  const char* p = i + (char*) &pkt;
+  std::vector<std::string> spstr;
+  for (int j = 0; j < 2; j++) {
+    spstr.push_back(std::string(p));
+    p += spstr.back().size() + 1;
+  }
+
+  if (isOverrun(p)) {
+    PrintToLog("%s(): rejected: malformed string value(s)\n", __func__);
+    return false;
+  }
+
+  int j = 0;
+  memcpy(website, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(website)-1)); j++;
+  memcpy(company_name, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(company_name)-1)); j++;
+  i = i + strlen(website) + strlen(company_name) + 2;
+
+  PrintToLog("%s: address: %s\n", __func__, sender);
+  PrintToLog("%s: website: %s\n", __func__, website);
+  PrintToLog("%s: company name: %s\n", __func__, company_name);
+
+  return true;
+}
+
+
 // ---------------------- CORE LOGIC -------------------------
 
 /**
@@ -1936,6 +1974,9 @@ int CMPTransaction::interpretPacket()
 
         case MSC_TYPE_CONTRACT_INSTANT:
             return logicMath_Contract_Instant();
+
+        case MSC_TYPE_NEW_ID_REGISTRATION:
+            return logicMath_New_Id_Registration();
 
 
     }
@@ -4477,6 +4518,38 @@ int CMPTransaction::logicMath_Contract_Instant()
    return rc;
 }
 
+/** Tx 115 */
+int CMPTransaction::logicMath_New_Id_Registration()
+{
+  uint256 blockHash;
+  {
+      LOCK(cs_main);
+
+      CBlockIndex* pindex = chainActive[block];
+      if (pindex == NULL) {
+          PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
+          return (PKT_ERROR_TOKENS -20);
+      }
+      blockHash = pindex->GetBlockHash();
+  }
+
+  // if (!IsTransactionTypeAllowed(block, property, type, version)) {
+  //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+  //             __func__,
+  //             type,
+  //             version,
+  //             property,
+  //             block);
+  //     return (PKT_ERROR_TOKENS -22);
+  // }
+
+  // ---------------------------------------
+
+  int nextId = t_tradelistdb->getNextId();
+  t_tradelistdb->recordNewIdRegister(txid, sender, website, company_name, block, tx_idx, nextId);
+
+  return 0;
+}
 
 struct FutureContractObject *getFutureContractObject(uint32_t property_type, std::string identifier)
 {

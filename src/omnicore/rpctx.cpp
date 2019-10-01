@@ -1975,6 +1975,51 @@ UniValue tl_create_channel(const JSONRPCRequest& request)
     }
 }
 
+UniValue tl_new_id_registration(const JSONRPCRequest& request)
+{
+    if (request.params.size() != 3)
+        throw runtime_error(
+            "tl_new_id_registration \"address\" \"website url\" \"company name\" \n"
+
+            "\nsetting identity registrar Id number for address.\n"
+
+            "\nArguments:\n"
+            "1. address                  (string, required) the first address that commit into the channel\n"
+            "2. website url              (string, required) the second address that commit into the channel\n"
+            "3. company name             (string, required) multisig address of channel\n"
+            "\nResult:\n"
+            "\"hash\"                  (string) the hex-encoded transaction hash\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("tl_new_id_registration", "\"1M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\" \"www.companyone.com\" company one \"")
+            + HelpExampleRpc("tl_new_id_registration", "\"1M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\", \"www.companyone.com\",company one \"")
+        );
+
+    // obtain parameters & info
+    std::string address = ParseAddress(request.params[0]);
+    std::string website = ParseText(request.params[1]);
+    std::string name = ParseText(request.params[2]);
+
+    // create a payload for the transaction
+    std::vector<unsigned char> payload = CreatePayload_New_Id_Registration(website, name);
+
+    // request the wallet build the transaction (and if needed commit it)
+    uint256 txid;
+    std::string rawHex;
+    int result = WalletTxBuilder(address, "", 0, payload, txid, rawHex, autoCommit);
+
+    // check error and return the txid (or raw hex depending on autocommit)
+    if (result != 0) {
+        throw JSONRPCError(result, error_str(result));
+    } else {
+        if (!autoCommit) {
+            return rawHex;
+        } else {
+            return txid.GetHex();
+        }
+    }
+}
+
 // UniValue tl_setexodus(const JSONRPCRequest& request)
 // {
 //     if (request.params.size() < 1 )
@@ -2041,6 +2086,7 @@ static const CRPCCommand commands[] =
     { "trade layer (transaction creation)", "tl_withdrawal_fromchannel",       &tl_withdrawal_fromchannel,          {} },
     { "trade layer (transaction creation)", "tl_create_channel",               &tl_create_channel,                  {} },
     { "trade layer (transaction creation)", "tl_setexodus",                    &tl_setexodus,                       {} },
+    { "trade layer (transaction cration)", "tl_new_id_registration",           &tl_new_id_registration,             {} },
     { "trade layer (transaction creation)", "tl_commit_tochannel",             &tl_commit_tochannel,                {} }
 #endif
 };

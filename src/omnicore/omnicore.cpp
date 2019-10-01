@@ -3672,6 +3672,19 @@ void CMPTradeList::recordNewInstantTrade(const uint256& txid, const std::string&
   // if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
 }
 
+void CMPTradeList::recordNewIdRegister(const uint256& txid, const std::string& address, const std::string& website, const std::string& name, int blockNum, int blockIndex, int nextId)
+{
+  if (!pdb) return;
+  PrintToLog("%s: id_number = %d\n",__func__, nextId);
+  std::string strValue = strprintf("%s:%s:%s:%d:%d:%d:%s", address, website, name, blockNum, blockIndex, nextId, TYPE_NEW_ID_REGISTER);
+  PrintToLog("%s: strValue: %s\n", __func__, strValue);
+  const string key = blockNum + "+" + txid.ToString(); // order by blockNum
+  Status status = pdb->Put(writeoptions, key, strValue);
+
+  ++nWritten;
+  PrintToLog("%s: %s\n", __FUNCTION__, status.ToString());
+}
+
 void CMPTradeList::recordNewInstContTrade(const uint256& txid, const std::string& firstAddr, const std::string& secondAddr, uint32_t property, uint64_t amount_forsale, uint64_t price ,int blockNum, int blockIndex)
 {
   if (!pdb) return;
@@ -5273,6 +5286,55 @@ channel CMPTradeList::getChannelAddresses(const std::string& channelAddress)
     // clean up
     delete it; // Desallocation proccess
     if (count) { return true; } else { return false; }
+}
+
+/**
+* @return next id for kyc
+*/
+int CMPTradeList::getNextId()
+{
+    if (!pdb) return -1;
+
+    int count = 0;
+
+    std::vector<std::string> vstr;
+
+    leveldb::Iterator* it = NewIterator(); // Allocation proccess
+
+    for(it->SeekToLast(); it->Valid(); it->Prev()) {
+
+        // search key to see if this is a matching trade
+        std::string strKey = it->key().ToString();
+        // PrintToLog("key of this match: %s ****************************\n",strKey);
+        std::string strValue = it->value().ToString();
+
+        // ensure correct amount of tokens in value string
+        boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
+        if (vstr.size() != 7) {
+            PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
+            // PrintToConsole("TRADEDB error - unexpected number of tokens in value %d \n",vstr.size());
+            continue;
+        }
+
+        std::string type = vstr[6];
+
+        PrintToLog("%s: type: %s\n",__func__,type);
+
+        if( type != TYPE_NEW_ID_REGISTER)
+            continue;
+
+        count++;
+    }
+
+    // clean up
+    delete it;
+
+    count++;
+
+    PrintToLog("%s: count: %d\n",__func__,count);
+
+    return count;
+
 }
 
 int64_t setPosition(int64_t positive, int64_t negative)
