@@ -374,7 +374,7 @@ class CMPTradeList : public CDBBase
   void recordNewInstantTrade(const uint256& txid, const std::string& sender, const std::string& receiver, uint32_t propertyIdForSale, uint64_t amount_forsale, uint32_t propertyIdDesired, uint64_t amount_desired, int blockNum, int blockIndex);
   void recordNewTransfer(const uint256& txid, const std::string& sender, const std::string& receiver, uint32_t propertyId, uint64_t amount, int blockNum, int blockIndex);
   void recordNewInstContTrade(const uint256& txid, const std::string& firstAddr, const std::string& secondAddr, uint32_t property, uint64_t amount_forsale, uint64_t price ,int blockNum, int blockIndex);
-  void recordNewIdRegister(const uint256& txid, const std::string& address, const std::string& website, const std::string& name, int blockNum, int blockIndex, int nextId);
+  void recordNewIdRegister(const uint256& txid, const std::string& address, const std::string& website, const std::string& name, int blockNum, int blockIndex);
 
   bool getAllCommits(const std::string& senderAddress, UniValue& tradeArray);
   bool getAllWithdrawals(const std::string& senderAddress, UniValue& tradeArray);
@@ -383,6 +383,7 @@ class CMPTradeList : public CDBBase
   channel getChannelAddresses(const std::string& channelAddress);
   bool checkChannelRelation(const std::string& address, std::string& channelAddr);
   uint64_t getRemaining(const std::string& channelAddress, const std::string& senderAddress, uint32_t propertyId);
+  bool updateIdRegister(const uint256& txid, const std::string& address, const std::string& newAddr, int blockNum, int blockIndex);
 
   int deleteAboveBlock(int blockNum);
   bool exists(const uint256 &txid);

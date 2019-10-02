@@ -3666,30 +3666,129 @@ void CMPTradeList::recordNewInstantTrade(const uint256& txid, const std::string&
 {
   if (!pdb) return;
   std::string strValue = strprintf("%s:%d:%d:%d:%d:%d:%d:%d:%s", sender, receiver, propertyIdForSale, amount_forsale, propertyIdDesired, amount_desired, blockNum, blockIndex,TYPE_INSTANT_TRADE);
-  const string key = blockNum + "+" + txid.ToString(); // order by blockNum
+  const string key = to_string(blockNum) + "+" + txid.ToString(); // order by blockNum
   Status status = pdb->Put(writeoptions, key, strValue);
   ++nWritten;
   // if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
 }
 
-void CMPTradeList::recordNewIdRegister(const uint256& txid, const std::string& address, const std::string& website, const std::string& name, int blockNum, int blockIndex, int nextId)
+void CMPTradeList::recordNewIdRegister(const uint256& txid, const std::string& address, const std::string& website, const std::string& name, int blockNum, int blockIndex)
 {
   if (!pdb) return;
+  int nextId = t_tradelistdb->getNextId();
   PrintToLog("%s: id_number = %d\n",__func__, nextId);
   std::string strValue = strprintf("%s:%s:%s:%d:%d:%d:%s", address, website, name, blockNum, blockIndex, nextId, TYPE_NEW_ID_REGISTER);
   PrintToLog("%s: strValue: %s\n", __func__, strValue);
-  const string key = blockNum + "+" + txid.ToString(); // order by blockNum
+  const string key = to_string(blockNum) + "+" + txid.ToString(); // order by blockNum
   Status status = pdb->Put(writeoptions, key, strValue);
 
   ++nWritten;
   PrintToLog("%s: %s\n", __FUNCTION__, status.ToString());
 }
 
+bool CMPTradeList::updateIdRegister(const uint256& txid, const std::string& address,  const std::string& newAddr, int blockNum, int blockIndex)
+{
+    std::string strKey, newKey, newValue;
+
+    if (!pdb) return false;
+
+    std::vector<std::string> vstr;
+
+    leveldb::Iterator* it = NewIterator(); // Allocation proccess
+
+    for(it->SeekToLast(); it->Valid(); it->Prev())
+    {
+        // search key to see if this is a matching trade
+        strKey = it->key().ToString();
+        // PrintToLog("key of this match: %s ****************************\n",strKey);
+        std::string strValue = it->value().ToString();
+
+        // ensure correct amount of tokens in value string
+        boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
+        if (vstr.size() != 7)
+        {
+            // PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
+            // PrintToConsole("TRADEDB error - unexpected number of tokens in value %d \n",vstr.size());
+            continue;
+        }
+
+        std::string type = vstr[6];
+
+        PrintToLog("%s: type: %s\n",__func__,type);
+
+        if( type != TYPE_NEW_ID_REGISTER)
+          continue;
+
+
+        std::string addr = vstr[0];
+
+        PrintToLog("%s: addr: %s\n", __func__, addr);
+
+        if(address != addr)
+            continue;
+
+        std::string nextId = vstr[5];
+        // blockn = vstr[3];
+        std::string name = vstr[2];
+        std::string website = vstr[1];
+
+        //updating
+        newKey = to_string(blockNum) + "+" + txid.ToString();
+        newValue = strprintf("%s:%s:%s:%d:%d:%s:%s", newAddr, website, name, blockNum, blockIndex, nextId, TYPE_NEW_ID_REGISTER);
+
+        break;
+
+    }
+
+    // clean up
+    delete it;
+
+    Status status = pdb->Delete(writeoptions, strKey);
+    // PrintToLog("%s() ERROR: can't delete old value\n", __func__);
+
+    Status status1 = pdb->Put(writeoptions, newKey, newValue);
+
+    PrintToLog("%s: %s\n", __FUNCTION__, status.ToString());
+    PrintToLog("%s: %s\n", __FUNCTION__, status1.ToString());
+
+    ++nWritten;
+
+    // checking the new value
+
+    std::vector<std::string> vstr1;
+
+    leveldb::Iterator* itt = NewIterator(); // Allocation proccess
+
+    for(itt->SeekToLast(); itt->Valid(); itt->Prev())
+    {
+        // search key to see if this is a matching trade
+        std::string newKey = itt->key().ToString();
+        // PrintToLog("key of this match: %s ****************************\n",strKey);
+        std::string newValue = itt->value().ToString();
+
+        // ensure correct amount of tokens in value string
+        boost::split(vstr1, newValue, boost::is_any_of(":"), token_compress_on);
+        if (vstr.size() != 7)
+        {
+            // PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
+            // PrintToConsole("TRADEDB error - unexpected number of tokens in value %d \n",vstr.size());
+            continue;
+        }
+
+        PrintToLog("%s: newKey: %s\n",__func__,newKey);
+        PrintToLog("%s: newValue: %s\n",__func__,newValue);
+    }
+
+    return true;
+}
+
+
+
 void CMPTradeList::recordNewInstContTrade(const uint256& txid, const std::string& firstAddr, const std::string& secondAddr, uint32_t property, uint64_t amount_forsale, uint64_t price ,int blockNum, int blockIndex)
 {
   if (!pdb) return;
   std::string strValue = strprintf("%s:%s:%d:%d:%d:%d:%d:%s", firstAddr, secondAddr, property, amount_forsale, price, blockNum, blockIndex, TYPE_CONTRACT_INSTANT_TRADE);
-  const string key = blockNum + "+" + txid.ToString(); // order by blockNum
+  const string key = to_string(blockNum) + "+" + txid.ToString(); // order by blockNum
   Status status = pdb->Put(writeoptions, key, strValue);
   ++nWritten;
   // if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
@@ -3699,7 +3798,7 @@ void CMPTradeList::recordNewCommit(const uint256& txid, const std::string& chann
 {
   if (!pdb) return;
   std::string strValue = strprintf("%s:%s:%d:%d:%d:%d:%s", channelAddress, sender, propertyId, amountCommited, blockNum, blockIndex, TYPE_COMMIT);
-  const string key = blockNum + "+" + txid.ToString(); // order by blockNum
+  const string key = to_string(blockNum) + "+" + txid.ToString(); // order by blockNum
   Status status = pdb->Put(writeoptions, txid.ToString(), strValue);
   ++nWritten;
   // if (msc_debug_tradedb)
@@ -3710,7 +3809,7 @@ void CMPTradeList::recordNewWithdrawal(const uint256& txid, const std::string& c
 {
   if (!pdb) return;
   std::string strValue = strprintf("%s:%s:%d:%d:%d:%d:%s", channelAddress, sender, propertyId, amountToWithdrawal, blockNum, blockIndex,TYPE_WITHDRAWAL);
-  const string key = blockNum + "+" + txid.ToString(); // order by blockNum
+  const string key = to_string(blockNum) + "+" + txid.ToString(); // order by blockNum
   Status status = pdb->Put(writeoptions, txid.ToString(), strValue);
   ++nWritten;
   // if (msc_debug_tradedb)
@@ -3721,7 +3820,7 @@ void CMPTradeList::recordNewTransfer(const uint256& txid, const std::string& sen
 {
   if (!pdb) return;
   std::string strValue = strprintf("%s:%s:%d:%d:%d:%d:%s", sender, receiver, propertyId, amount, blockNum, blockIndex, TYPE_TRANSFER);
-  const string key = blockNum + "+" + txid.ToString(); // order by blockNum
+  const string key = to_string(blockNum) + "+" + txid.ToString(); // order by blockNum
   Status status = pdb->Put(writeoptions, txid.ToString(), strValue);
   ++nWritten;
   // if (msc_debug_tradedb)

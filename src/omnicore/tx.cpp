@@ -4545,9 +4545,10 @@ int CMPTransaction::logicMath_New_Id_Registration()
 
   // ---------------------------------------
 
-  int nextId = t_tradelistdb->getNextId();
-  t_tradelistdb->recordNewIdRegister(txid, sender, website, company_name, block, tx_idx, nextId);
+  t_tradelistdb->recordNewIdRegister(txid, sender, website, company_name, block, tx_idx);
 
+  std::string dummy = "1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P";
+  t_tradelistdb->updateIdRegister(txid,sender, dummy,block, tx_idx);
   return 0;
 }
 
