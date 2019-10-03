@@ -26,6 +26,7 @@ int64_t ParseAmount(const UniValue& value, int propertyType);
 uint32_t ParseAmount32t(const UniValue& value);
 uint64_t ParseLeverage(const UniValue& value);
 uint8_t ParseEcosystem(const UniValue& value);
+uint8_t ParsePermission(const UniValue& value);
 uint16_t ParsePropertyType(const UniValue& value);
 uint32_t ParsePreviousPropertyId(const UniValue& value);
 std::string ParseText(const UniValue& value);

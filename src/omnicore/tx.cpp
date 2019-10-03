@@ -1819,6 +1819,11 @@ bool CMPTransaction::interpret_New_Id_Registration()
   std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
 
+  std::vector<uint8_t> vecTokens = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecLtc = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecNatives = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecOracles = GetNextVarIntBytes(i);
+
   memcpy(&ecosystem, &pkt[i], 1);
 
   const char* p = i + (char*) &pkt;
@@ -1838,9 +1843,29 @@ bool CMPTransaction::interpret_New_Id_Registration()
   memcpy(company_name, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(company_name)-1)); j++;
   i = i + strlen(website) + strlen(company_name) + 2;
 
+  if (!vecTokens.empty()) {
+      tokens = DecompressInteger(vecTokens);
+  } else return false;
+
+  if (!vecLtc.empty()) {
+      ltc = DecompressInteger(vecLtc);
+  } else return false;
+
+  if (!vecNatives.empty()) {
+      natives = DecompressInteger(vecNatives);
+  } else return false;
+
+  if (!vecOracles.empty()) {
+      oracles = DecompressInteger(vecOracles);
+  } else return false;
+
   PrintToLog("%s: address: %s\n", __func__, sender);
   PrintToLog("%s: website: %s\n", __func__, website);
   PrintToLog("%s: company name: %s\n", __func__, company_name);
+  PrintToLog("%s: tokens: %d\n", __func__, tokens);
+  PrintToLog("%s: ltc: %d\n", __func__, ltc);
+  PrintToLog("%s: natives: %d\n", __func__, natives);
+  PrintToLog("%s: oracles: %d\n", __func__, oracles);
 
   return true;
 }
@@ -4545,7 +4570,7 @@ int CMPTransaction::logicMath_New_Id_Registration()
 
   // ---------------------------------------
 
-  t_tradelistdb->recordNewIdRegister(txid, sender, website, company_name, block, tx_idx);
+  t_tradelistdb->recordNewIdRegister(txid, sender, website, company_name, tokens, ltc, natives, oracles, block, tx_idx);
 
   std::string dummy = "1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P";
   t_tradelistdb->updateIdRegister(txid,sender, dummy,block, tx_idx);

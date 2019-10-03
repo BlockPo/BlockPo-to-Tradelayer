@@ -84,6 +84,16 @@ uint8_t ParseEcosystem(const UniValue& value)
     return static_cast<uint8_t>(ecosystem);
 }
 
+uint8_t ParsePermission(const UniValue& value)
+{
+    int64_t number = value.get_int64();
+    PrintToLog("%s: number: %d\n",__func__,number);
+    if (number != 0 && number != 1) {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid number (0 = false, 1 = true)");
+    }
+    return static_cast<uint8_t>(number);
+}
+
 uint64_t ParsePercent(const UniValue& value, bool isDivisible)
 {
     int64_t amount = mastercore::StrToInt64(value.get_str(), isDivisible);
@@ -335,22 +345,6 @@ uint32_t ParseContractType(const UniValue& value)
     throw JSONRPCError(RPC_INVALID_PARAMETER, "Value is out of range");
   }
   return static_cast<uint32_t>(Nvalue);
-
-  /*if (Nvalue != 1 && Nvalue != 2 && Nvalue != 3 && Nvalue != 4) {
-    throw JSONRPCError(RPC_INVALID_PARAMETER, "option no valid");
-  }
-
-  if ( Nvalue == 1 ) {
-    return weekly;
-  } else if ( Nvalue == 2 ) {
-    return monthly;
-  } else if ( Nvalue == 3 ) {
-    return time25minutes;
-  } else if ( Nvalue == 4 ) {
-    return time4hours;
-  }
-
-  return 0; */
 
 }
 

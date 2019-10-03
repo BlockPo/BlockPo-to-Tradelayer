@@ -146,8 +146,8 @@ private:
     //KYC
     char company_name[SP_STRING_FIELD_LEN];
     char website[SP_STRING_FIELD_LEN];
-
     int block_forexpiry;
+    uint8_t tokens, ltc, natives, oracles;
 
 
     // Indicates whether the transaction can be used to execute logic
@@ -402,6 +402,12 @@ public:
         pnl_amount= 0;
         ileverage = 0;
         itrading_action = 0;
+
+        //Kyc
+        tokens = 0;
+        ltc = 0;
+        natives = 0;
+        oracles = 0;
         ////////////////////////////////////
     }
 

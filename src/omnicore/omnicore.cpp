@@ -3671,16 +3671,15 @@ void CMPTradeList::recordNewInstantTrade(const uint256& txid, const std::string&
   ++nWritten;
   // if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
 }
-
-void CMPTradeList::recordNewIdRegister(const uint256& txid, const std::string& address, const std::string& website, const std::string& name, int blockNum, int blockIndex)
+//recordNewIdRegister(txid, sender, website, company_name, tokens, ltc, natives, oracles, block, tx_idx);
+void CMPTradeList::recordNewIdRegister(const uint256& txid, const std::string& address, const std::string& website, const std::string& name, uint8_t tokens, uint8_t ltc, uint8_t natives, uint8_t oracles, int blockNum, int blockIndex)
 {
   if (!pdb) return;
   int nextId = t_tradelistdb->getNextId();
   PrintToLog("%s: id_number = %d\n",__func__, nextId);
-  std::string strValue = strprintf("%s:%s:%s:%d:%d:%d:%s", address, website, name, blockNum, blockIndex, nextId, TYPE_NEW_ID_REGISTER);
+  std::string strValue = strprintf("%s:%s:%d:%d:%d:%d:%d:%d:%d:%s:%s", website, name, tokens, ltc, natives, oracles, blockNum, blockIndex, nextId,txid.ToString(), TYPE_NEW_ID_REGISTER);
   PrintToLog("%s: strValue: %s\n", __func__, strValue);
-  const string key = to_string(blockNum) + "+" + txid.ToString(); // order by blockNum
-  Status status = pdb->Put(writeoptions, key, strValue);
+  Status status = pdb->Put(writeoptions, address, strValue);
 
   ++nWritten;
   PrintToLog("%s: %s\n", __FUNCTION__, status.ToString());
@@ -3705,14 +3704,14 @@ bool CMPTradeList::updateIdRegister(const uint256& txid, const std::string& addr
 
         // ensure correct amount of tokens in value string
         boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
-        if (vstr.size() != 7)
+        if (vstr.size() != 11)
         {
             // PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
             // PrintToConsole("TRADEDB error - unexpected number of tokens in value %d \n",vstr.size());
             continue;
         }
 
-        std::string type = vstr[6];
+        std::string type = vstr[10];
 
         PrintToLog("%s: type: %s\n",__func__,type);
 
@@ -3720,21 +3719,20 @@ bool CMPTradeList::updateIdRegister(const uint256& txid, const std::string& addr
           continue;
 
 
-        std::string addr = vstr[0];
+        PrintToLog("%s: strKey: %s\n", __func__, strKey);
 
-        PrintToLog("%s: addr: %s\n", __func__, addr);
-
-        if(address != addr)
+        if(address != strKey)
             continue;
 
-        std::string nextId = vstr[5];
-        // blockn = vstr[3];
-        std::string name = vstr[2];
-        std::string website = vstr[1];
+        std::string website = vstr[0];
+        std::string name = vstr[1];
+        std::string tokens = vstr[2];
+        std::string ltc = vstr[3];
+        std::string natives = vstr[4];
+        std::string oracles = vstr[5];
+        std::string nextId = vstr[8];
 
-        //updating
-        newKey = to_string(blockNum) + "+" + txid.ToString();
-        newValue = strprintf("%s:%s:%s:%d:%d:%s:%s", newAddr, website, name, blockNum, blockIndex, nextId, TYPE_NEW_ID_REGISTER);
+        newValue = strprintf("%s:%s:%s:%s:%s:%s:%d:%d:%s:%s:%s", website, name, tokens, ltc, natives, oracles, blockNum, blockIndex, nextId,txid.ToString(), TYPE_NEW_ID_REGISTER);
 
         break;
 
@@ -3746,7 +3744,7 @@ bool CMPTradeList::updateIdRegister(const uint256& txid, const std::string& addr
     Status status = pdb->Delete(writeoptions, strKey);
     // PrintToLog("%s() ERROR: can't delete old value\n", __func__);
 
-    Status status1 = pdb->Put(writeoptions, newKey, newValue);
+    Status status1 = pdb->Put(writeoptions, newAddr, newValue);
 
     PrintToLog("%s: %s\n", __FUNCTION__, status.ToString());
     PrintToLog("%s: %s\n", __FUNCTION__, status1.ToString());
@@ -3768,12 +3766,8 @@ bool CMPTradeList::updateIdRegister(const uint256& txid, const std::string& addr
 
         // ensure correct amount of tokens in value string
         boost::split(vstr1, newValue, boost::is_any_of(":"), token_compress_on);
-        if (vstr.size() != 7)
-        {
-            // PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
-            // PrintToConsole("TRADEDB error - unexpected number of tokens in value %d \n",vstr.size());
+        if (vstr.size() != 11)
             continue;
-        }
 
         PrintToLog("%s: newKey: %s\n",__func__,newKey);
         PrintToLog("%s: newValue: %s\n",__func__,newValue);
