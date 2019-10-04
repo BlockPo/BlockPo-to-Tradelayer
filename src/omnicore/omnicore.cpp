@@ -1984,11 +1984,11 @@ static int write_mp_withdrawals(std::ofstream& file, SHA256_CTX* shaCtx)
 static int write_mp_active_channels(std::ofstream& file, SHA256_CTX* shaCtx)
 {
 
-    PrintToLog("### %s: inside function!!! \n", __func__);
+    // PrintToLog("### %s: inside function!!! \n", __func__);
     std::string lineOut;
 
-    if(channels_Map.size() == 0)
-        PrintToLog("%s: there's no data inside channels_Map\n", __func__);
+    // if(channels_Map.size() == 0)
+        // PrintToLog("%s: there's no data inside channels_Map\n", __func__);
 
     for (std::map<std::string,channel>::iterator it = channels_Map.begin(); it != channels_Map.end(); ++it)
     {
@@ -3687,9 +3687,10 @@ void CMPTradeList::recordNewIdRegister(const uint256& txid, const std::string& a
 
 bool CMPTradeList::updateIdRegister(const uint256& txid, const std::string& address,  const std::string& newAddr, int blockNum, int blockIndex)
 {
+    bool status = false;
     std::string strKey, newKey, newValue;
 
-    if (!pdb) return false;
+    if (!pdb) return status;
 
     std::vector<std::string> vstr;
 
@@ -3734,6 +3735,7 @@ bool CMPTradeList::updateIdRegister(const uint256& txid, const std::string& addr
 
         newValue = strprintf("%s:%s:%s:%s:%s:%s:%d:%d:%s:%s:%s", website, name, tokens, ltc, natives, oracles, blockNum, blockIndex, nextId,txid.ToString(), TYPE_NEW_ID_REGISTER);
 
+        status = true;
         break;
 
     }
@@ -3741,39 +3743,75 @@ bool CMPTradeList::updateIdRegister(const uint256& txid, const std::string& addr
     // clean up
     delete it;
 
-    Status status = pdb->Delete(writeoptions, strKey);
+    Status status1 = pdb->Delete(writeoptions, strKey);
     // PrintToLog("%s() ERROR: can't delete old value\n", __func__);
 
-    Status status1 = pdb->Put(writeoptions, newAddr, newValue);
+    Status status2 = pdb->Put(writeoptions, newAddr, newValue);
 
-    PrintToLog("%s: %s\n", __FUNCTION__, status.ToString());
     PrintToLog("%s: %s\n", __FUNCTION__, status1.ToString());
+    PrintToLog("%s: %s\n", __FUNCTION__, status2.ToString());
 
     ++nWritten;
 
-    // checking the new value
+    return status;
+}
 
-    std::vector<std::string> vstr1;
+bool CMPTradeList::checkKYCRegister(const std::string& address, int registered)
+{
+    bool status = false;
+    std::string strKey, newKey, newValue;
 
-    leveldb::Iterator* itt = NewIterator(); // Allocation proccess
+    std::vector<std::string> vstr;
 
-    for(itt->SeekToLast(); itt->Valid(); itt->Prev())
+    if (!pdb) return status;
+
+    leveldb::Iterator* it = NewIterator(); // Allocation proccess
+
+    for(it->SeekToLast(); it->Valid(); it->Prev())
     {
         // search key to see if this is a matching trade
-        std::string newKey = itt->key().ToString();
+        strKey = it->key().ToString();
         // PrintToLog("key of this match: %s ****************************\n",strKey);
-        std::string newValue = itt->value().ToString();
+        std::string strValue = it->value().ToString();
 
         // ensure correct amount of tokens in value string
-        boost::split(vstr1, newValue, boost::is_any_of(":"), token_compress_on);
+        boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
         if (vstr.size() != 11)
+        {
+            // PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
+            // PrintToConsole("TRADEDB error - unexpected number of tokens in value %d \n",vstr.size());
+            continue;
+        }
+
+        std::string type = vstr[10];
+
+        PrintToLog("%s: type: %s\n",__func__,type);
+
+        if( type != TYPE_NEW_ID_REGISTER)
+          continue;
+
+
+        PrintToLog("%s: strKey: %s\n", __func__, strKey);
+
+        if(address != strKey)
             continue;
 
-        PrintToLog("%s: newKey: %s\n",__func__,newKey);
-        PrintToLog("%s: newValue: %s\n",__func__,newValue);
+        if (1 < registered && registered < 6)
+            std::string output = vstr[registered];
+        else {
+            PrintToLog("%s: Register out of range\n",__func__);
+            return false;
+        }
+
+        status = true;
+        break;
+
     }
 
-    return true;
+    // clean up
+    delete it;
+
+    return status;
 }
 
 

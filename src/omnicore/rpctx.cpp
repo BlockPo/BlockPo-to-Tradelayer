@@ -2028,6 +2028,48 @@ UniValue tl_new_id_registration(const JSONRPCRequest& request)
     }
 }
 
+UniValue tl_update_id_registration(const JSONRPCRequest& request)
+{
+    if (request.params.size() != 2)
+        throw runtime_error(
+            "tl_update_id_registration \"address\" \"new address\" \n"
+
+            "\nupdate the address on id registration.\n"
+
+            "\nArguments:\n"
+            "1. address                      (string, required) old address registered\n"
+            "2. new address                  (string, required) new address into register\n"
+
+            "\nResult:\n"
+            "\"hash\"                  (string) the hex-encoded transaction hash\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("tl_update_id_registration", "\"1M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\" , \"1M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\"")
+            + HelpExampleRpc("tl_update_id_registration", "\"1M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\",  \"1M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\"")
+        );
+
+    // obtain parameters & info
+    std::string address = ParseAddress(request.params[0]);
+    std::string newAddr = ParseAddress(request.params[1]);
+    // create a payload for the transaction
+    std::vector<unsigned char> payload = CreatePayload_Update_Id_Registration();
+
+    // request the wallet build the transaction (and if needed commit it)
+    uint256 txid;
+    std::string rawHex;
+    int result = WalletTxBuilder(address, newAddr, 0, payload, txid, rawHex, autoCommit);
+    // check error and return the txid (or raw hex depending on autocommit)
+    if (result != 0) {
+        throw JSONRPCError(result, error_str(result));
+    } else {
+        if (!autoCommit) {
+            return rawHex;
+        } else {
+            return txid.GetHex();
+        }
+    }
+}
+
 // UniValue tl_setexodus(const JSONRPCRequest& request)
 // {
 //     if (request.params.size() < 1 )
@@ -2094,7 +2136,8 @@ static const CRPCCommand commands[] =
     { "trade layer (transaction creation)", "tl_withdrawal_fromchannel",       &tl_withdrawal_fromchannel,          {} },
     { "trade layer (transaction creation)", "tl_create_channel",               &tl_create_channel,                  {} },
     { "trade layer (transaction creation)", "tl_setexodus",                    &tl_setexodus,                       {} },
-    { "trade layer (transaction cration)", "tl_new_id_registration",           &tl_new_id_registration,             {} },
+    { "trade layer (transaction cration)",  "tl_new_id_registration",          &tl_new_id_registration,             {} },
+    { "trade layer (transaction cration)",  "tl_update_id_registration",      &tl_update_id_registration,         {} },
     { "trade layer (transaction creation)", "tl_commit_tochannel",             &tl_commit_tochannel,                {} }
 #endif
 };

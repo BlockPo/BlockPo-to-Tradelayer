@@ -51,4 +51,5 @@ std::vector<unsigned char> CreatePayload_PNL_Update(uint32_t propertyId, uint64_
 std::vector<unsigned char> CreatePayload_Transfer(uint32_t propertyId, uint64_t amount);
 std::vector<unsigned char> CreatePayload_Create_Channel(std::string channelAddress, uint32_t blocks);
 std::vector<unsigned char> CreatePayload_New_Id_Registration(std::string website, std::string name, uint8_t tokens, uint8_t ltc, uint8_t natives, uint8_t oracles);
+std::vector<unsigned char> CreatePayload_Update_Id_Registration();
 #endif // OMNICORE_CREATEPAYLOAD_H

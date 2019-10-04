@@ -206,6 +206,7 @@ private:
     bool interpret_Create_Channel();
     bool interpret_Contract_Instant();
     bool interpret_New_Id_Registration();
+    bool interpret_Update_Id_Registration();
     ///////////////////////////////////////////////
 
     /**
@@ -250,6 +251,7 @@ private:
     int logicMath_Create_Channel();
     int logicMath_Contract_Instant();
     int logicMath_New_Id_Registration();
+    int logicMath_Update_Id_Registration();
     ///////////////////////////////////////////////
 
     /**

@@ -112,6 +112,7 @@ std::string mastercore::strTransactionType(uint16_t txType)
     case MSC_TYPE_CREATE_CHANNEL: return "Channel Creation";
     case MSC_TYPE_CONTRACT_INSTANT: return "Channel Contract Instant Trade";
     case MSC_TYPE_NEW_ID_REGISTRATION: return "New Id Registration";
+    case   MSC_TYPE_UPDATE_ID_REGISTRATION: return "Update Id Registration";
     default: return "* unknown type *";
     }
 }
@@ -272,6 +273,9 @@ bool CMPTransaction::interpret_Transaction()
 
     case MSC_TYPE_NEW_ID_REGISTRATION:
         return interpret_New_Id_Registration();
+
+    case MSC_TYPE_UPDATE_ID_REGISTRATION:
+        return interpret_Update_Id_Registration();
 
     }
 
@@ -1871,6 +1875,18 @@ bool CMPTransaction::interpret_New_Id_Registration()
 }
 
 
+/** Tx  116*/
+bool CMPTransaction::interpret_Update_Id_Registration()
+{
+  int i = 0;
+
+  std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+
+
+  return true;
+}
+
 // ---------------------- CORE LOGIC -------------------------
 
 /**
@@ -2002,6 +2018,9 @@ int CMPTransaction::interpretPacket()
 
         case MSC_TYPE_NEW_ID_REGISTRATION:
             return logicMath_New_Id_Registration();
+
+        case MSC_TYPE_UPDATE_ID_REGISTRATION:
+            return logicMath_Update_Id_Registration();
 
 
     }
@@ -4572,8 +4591,40 @@ int CMPTransaction::logicMath_New_Id_Registration()
 
   t_tradelistdb->recordNewIdRegister(txid, sender, website, company_name, tokens, ltc, natives, oracles, block, tx_idx);
 
-  std::string dummy = "1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P";
-  t_tradelistdb->updateIdRegister(txid,sender, dummy,block, tx_idx);
+  // std::string dummy = "1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P";
+  // t_tradelistdb->updateIdRegister(txid,sender, dummy,block, tx_idx);
+  return 0;
+}
+
+/** Tx 116 */
+int CMPTransaction::logicMath_Update_Id_Registration()
+{
+  uint256 blockHash;
+  {
+      LOCK(cs_main);
+
+      CBlockIndex* pindex = chainActive[block];
+      if (pindex == NULL) {
+          PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
+          return (PKT_ERROR_TOKENS -20);
+      }
+      blockHash = pindex->GetBlockHash();
+  }
+
+  // if (!IsTransactionTypeAllowed(block, property, type, version)) {
+  //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+  //             __func__,
+  //             type,
+  //             version,
+  //             property,
+  //             block);
+  //     return (PKT_ERROR_TOKENS -22);
+  // }
+
+  // ---------------------------------------
+
+  t_tradelistdb->updateIdRegister(txid,sender, receiver,block, tx_idx);
+
   return 0;
 }
 

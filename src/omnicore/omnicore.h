@@ -120,6 +120,7 @@ enum TransactionType {
   MSC_TYPE_CREATE_CHANNEL             = 113,
   MSC_TYPE_CONTRACT_INSTANT           = 114,
   MSC_TYPE_NEW_ID_REGISTRATION        = 115,
+  MSC_TYPE_UPDATE_ID_REGISTRATION     = 116,
   ////////////////////////////////////
 
 };
@@ -384,6 +385,7 @@ class CMPTradeList : public CDBBase
   bool checkChannelRelation(const std::string& address, std::string& channelAddr);
   uint64_t getRemaining(const std::string& channelAddress, const std::string& senderAddress, uint32_t propertyId);
   bool updateIdRegister(const uint256& txid, const std::string& address, const std::string& newAddr, int blockNum, int blockIndex);
+  bool checkKYCRegister(const std::string& address, int registered);
 
   int deleteAboveBlock(int blockNum);
   bool exists(const uint256 &txid);
