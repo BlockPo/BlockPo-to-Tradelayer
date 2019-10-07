@@ -1922,7 +1922,6 @@ static int write_mp_offers(ofstream &file, SHA256_CTX *shaCtx)
 static int write_mp_cachefees(std::ofstream& file, SHA256_CTX* shaCtx)
 {
 
-    PrintToLog("### %s: inside function!!! \n", __func__);
     std::string lineOut;
 
     if(cachefees.size() == 0)
@@ -1932,7 +1931,7 @@ static int write_mp_cachefees(std::ofstream& file, SHA256_CTX* shaCtx)
         // decompose the key for address
         uint32_t propertyId = itt->first;
         int64_t cache = itt->second;
-        PrintToLog("### %s: saving cachefee[%d] = %d\n", __func__, propertyId, cache);
+        // PrintToLog("### %s: saving cachefee[%d] = %d\n", __func__, propertyId, cache);
 
         lineOut.append(strprintf("%d,%d",propertyId, cache));
     }
@@ -1950,7 +1949,7 @@ static int write_mp_cachefees(std::ofstream& file, SHA256_CTX* shaCtx)
 static int write_mp_withdrawals(std::ofstream& file, SHA256_CTX* shaCtx)
 {
 
-    PrintToLog("### %s: inside function!!! \n", __func__);
+    // PrintToLog("### %s: inside function!!! \n", __func__);
     std::string lineOut;
 
     if(withdrawal_Map.size() == 0)
@@ -3671,7 +3670,7 @@ void CMPTradeList::recordNewInstantTrade(const uint256& txid, const std::string&
   ++nWritten;
   // if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
 }
-//recordNewIdRegister(txid, sender, website, company_name, tokens, ltc, natives, oracles, block, tx_idx);
+
 void CMPTradeList::recordNewIdRegister(const uint256& txid, const std::string& address, const std::string& website, const std::string& name, uint8_t tokens, uint8_t ltc, uint8_t natives, uint8_t oracles, int blockNum, int blockIndex)
 {
   if (!pdb) return;
@@ -3765,6 +3764,7 @@ bool CMPTradeList::checkKYCRegister(const std::string& address, int registered)
 
     if (!pdb) return status;
 
+
     leveldb::Iterator* it = NewIterator(); // Allocation proccess
 
     for(it->SeekToLast(); it->Valid(); it->Prev())
@@ -3796,14 +3796,20 @@ bool CMPTradeList::checkKYCRegister(const std::string& address, int registered)
         if(address != strKey)
             continue;
 
-        if (1 < registered && registered < 6)
-            std::string output = vstr[registered];
-        else {
+        if (registered < 2 || 5 < registered)
+        {
             PrintToLog("%s: Register out of range\n",__func__);
             return false;
         }
 
-        status = true;
+        std::string output = vstr[registered];
+
+        if (output == "1")
+        {
+            PrintToLog("%s: output == 1\n",__func__);
+            status = true;
+        }
+
         break;
 
     }

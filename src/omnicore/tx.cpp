@@ -2991,7 +2991,6 @@ int CMPTransaction::logicMath_CreateContractDex()
 
 int CMPTransaction::logicMath_ContractDexTrade()
 {
-  PrintToLog("Begining of logicMath_ContractDexTrade\n");
 
   uint256 blockHash;
   {
@@ -2999,15 +2998,25 @@ int CMPTransaction::logicMath_ContractDexTrade()
 
     CBlockIndex* pindex = chainActive[block];
     if (pindex == NULL)
-      {
-	PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
-	return (PKT_ERROR_SP -20);
-      }
+    {
+	      PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
+	      return (PKT_ERROR_SP -20);
+    }
     blockHash = pindex->GetBlockHash();
   }
 
+  int result;
+
   struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, name_traded);
   id_contract = pfuture->fco_propertyId;
+
+  (pfuture->fco_prop_type == ALL_PROPERTY_TYPE_CONTRACT) ? result = 4 : result = 5;
+
+  if(!t_tradelistdb->checkKYCRegister(sender,result))
+  {
+      PrintToLog("%s: tx disable from kyc register!\n",__func__);
+      return PKT_ERROR_SP -37;
+  }
 
   if (block > pfuture->fco_init_block + static_cast<int>(pfuture->fco_blocks_until_expiration) || block < pfuture->fco_init_block)
     {
@@ -3479,6 +3488,12 @@ int CMPTransaction::logicMath_TradeOffer()
     //   return (PKT_ERROR_TRADEOFFER -22);
     // }
 
+    if(!t_tradelistdb->checkKYCRegister(sender,3))
+    {
+        PrintToLog("%s: tx disable from kyc register!\n",__func__);
+        return (PKT_ERROR_TRADEOFFER -22);
+    }
+
     if (MAX_INT_8_BYTES < nValue) {
         PrintToLog("%s(): rejected: value out of range or zero: %d\n", __func__, nValue);
         // return (PKT_ERROR_TRADEOFFER -23);
@@ -3574,6 +3589,12 @@ int CMPTransaction::logicMath_DExBuy()
     //   return (PKT_ERROR_TRADEOFFER -22);
     // }
 
+    if(!t_tradelistdb->checkKYCRegister(sender,3))
+    {
+        PrintToLog("%s: tx disable from kyc register!\n",__func__);
+        return (PKT_ERROR_TRADEOFFER -22);
+    }
+
     if (MAX_INT_8_BYTES < nValue) {
         PrintToLog("%s(): rejected: value out of range or zero: %d\n", __func__, nValue);
         return (PKT_ERROR_TRADEOFFER -23);
@@ -3662,6 +3683,12 @@ int CMPTransaction::logicMath_AcceptOfferBTC()
 
   // the min fee spec requirement is checked in the following function
   int rc = DEx_acceptCreate(sender, receiver, propertyId, nValue, block, tx_fee_paid, &nNewValue);
+
+  if(!t_tradelistdb->checkKYCRegister(sender,3) || !t_tradelistdb->checkKYCRegister(receiver,3))
+  {
+      PrintToLog("%s: tx disable from kyc register!\n",__func__);
+      return (PKT_ERROR_TRADEOFFER -22);
+  }
 
   int64_t unitPrice = 0;
   std::string sellerS = "", buyerS = "";
@@ -4652,6 +4679,7 @@ struct FutureContractObject *getFutureContractObject(uint32_t property_type, std
 	      pt_fco->fco_init_block = sp.init_block;
         pt_fco->fco_backup_address = sp.backup_address;
 	      pt_fco->fco_propertyId = propertyId;
+        pt_fco->fco_prop_type = sp.prop_type;
 	    }
 	  else if ( sp.prop_type == ALL_PROPERTY_TYPE_PEGGEDS && sp.name == identifier )
 	    {

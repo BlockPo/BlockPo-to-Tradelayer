@@ -2410,6 +2410,50 @@ UniValue tl_check_withdrawals(const JSONRPCRequest& request)
   return response;
 }
 
+UniValue tl_check_kyc(const JSONRPCRequest& request)
+{
+  if (request.params.size() != 2)
+    throw runtime_error(
+			"tl_check_withdrawals senderAddress \n"
+			"\nRetrieves the history of withdrawal for a given address in the channel\n"
+			"\nArguments:\n"
+			"1. address                       (string, required) the address registered\n"
+      "2. register                      (int, required)  2,3,4 or 5\n"
+			"\nResult:\n"
+			"[                                      (array of JSON objects)\n"
+			"  {\n"
+			"    \"block\" : nnnnnn,                      (number) the index of the block that contains the trade match\n"
+			"    \"unitprice\" : \"n.nnnnnnnnnnn...\" ,     (string) the unit price used to execute this trade (received/sold)\n"
+			"    \"inverseprice\" : \"n.nnnnnnnnnnn...\",   (string) the inverse unit price (sold/received)\n"
+			"    \"sellertxid\" : \"hash\",                 (string) the hash of the transaction of the seller\n"
+			"    \"address\" : \"address\",                 (string) the Bitcoin address of the seller\n"
+			"    \"amountsold\" : \"n.nnnnnnnn\",           (string) the number of tokens sold in this trade\n"
+			"    \"amountreceived\" : \"n.nnnnnnnn\",       (string) the number of tokens traded in exchange\n"
+			"    \"matchingtxid\" : \"hash\",               (string) the hash of the transaction that was matched against\n"
+			"    \"matchingaddress\" : \"address\"          (string) the Bitcoin address of the other party of this trade\n"
+			"  },\n"
+			"  ...\n"
+			"]\n"
+			"\nExamples:\n"
+			+ HelpExampleCli("tl_check_withdrawals", "address1")
+			+ HelpExampleRpc("tl_check_withdrawals", "address1")
+			);
+
+  // obtain property identifiers for pair & check valid parameters
+  std::string result;
+  std::string address = ParseAddress(request.params[0]);
+  int registered = static_cast<int>(ParseNewValues(request.params[1]));
+  // RequireContract(contractId);
+
+
+  (!t_tradelistdb->checkKYCRegister(address, registered)) ? result = "disabled" : result = "enabled";
+
+  UniValue balanceObj(UniValue::VOBJ);
+  balanceObj.push_back(Pair("result: ", result));
+  return balanceObj;
+
+}
+
 UniValue tl_getcache(const JSONRPCRequest& request)
 {
     if (request.params.size() != 1)
@@ -2487,6 +2531,7 @@ static const CRPCCommand commands[] =
   { "trade layer (data retieval)" , "tl_get_channelreserve",        &tl_get_channelreserve,         {} },
   { "trade layer (data retieval)" , "tl_getchannel_info",           &tl_getchannel_info,            {} },
   { "trade layer (data retieval)" , "tl_getcache",                  &tl_getcache,                   {} },
+  { "trade layer (data retieval)" , "tl_check_kyc",                 &tl_check_kyc,                  {} },
   { "trade layer (data retieval)" , "tl_check_withdrawals",         &tl_check_withdrawals,          {} }
 };
 
