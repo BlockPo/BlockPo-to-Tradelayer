@@ -48,7 +48,14 @@ bool msc_debug_consensus_hash                   = 0;
 bool msc_debug_consensus_hash_every_block       = 0;
 bool msc_debug_consensus_hash_every_transaction = 0;
 bool msc_debug_alerts                           = 1;
-
+bool msc_debug_handle_dex_payment               = 0;
+bool msc_debug_handle_instant                   = 0;
+bool msc_debug_handler_tx                       = 0;
+bool msc_debug_tradedb                          = 0;
+bool msc_debug_margin_main                      = 0;
+bool msc_debug_pos_margin                       = 0;
+bool msc_debug_contract_inst_fee                = 0;
+bool msc_debug_instant_x_trade                  = 0;
 /**
  * LogPrintf() has been broken a couple of times now
  * by well-meaning people adding mutexes in the most straightforward way.

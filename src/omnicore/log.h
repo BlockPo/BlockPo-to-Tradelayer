@@ -51,6 +51,14 @@ extern bool msc_debug_tradedb;
 extern bool msc_debug_dex;
 extern bool msc_debug_fees;
 extern bool msc_debug_sto;
+extern bool msc_debug_parser_data;
+extern bool msc_debug_handle_dex_payment;
+extern bool msc_debug_handle_instant;
+extern bool msc_debug_handler_tx;
+extern bool msc_debug_margin_main;
+extern bool msc_debug_pos_margin;
+extern bool msc_debug_contract_inst_fee;
+extern bool msc_debug_instant_x_trade;
 
 /* When we switch to C++11, this can be switched to variadic templates instead
  * of this macro-based construction (see tinyformat.h).
