@@ -57,7 +57,7 @@ bool DEx_offerExists(const std::string& addressSeller, uint32_t propertyId)
  */
 CMPOffer* DEx_getOffer(const std::string& addressSeller, uint32_t propertyId)
 {
-    // if (msc_debug_dex) PrintToLog("%s(%s, %d)\n", __func__, addressSeller, propertyId);
+    if (msc_debug_dex) PrintToLog("%s(%s, %d)\n", __func__, addressSeller, propertyId);
 
     std::string key = STR_SELLOFFER_ADDR_PROP_COMBO(addressSeller, propertyId);
     OfferMap::iterator it = my_offers.find(key);
@@ -84,7 +84,7 @@ bool DEx_acceptExists(const std::string& addressSeller, uint32_t propertyId, con
  */
 CMPAccept* DEx_getAccept(const std::string& addressSeller, uint32_t propertyId, const std::string& addressBuyer)
 {
-    // if (msc_debug_dex) PrintToLog("%s(%s, %d, %s)\n", __func__, addressSeller, propertyId, addressBuyer);
+    if (msc_debug_dex) PrintToLog("%s(%s, %d, %s)\n", __func__, addressSeller, propertyId, addressBuyer);
 
     std::string key = STR_ACCEPT_ADDR_PROP_ADDR_COMBO(addressSeller, addressBuyer, propertyId);
     AcceptMap::iterator it = my_accepts.find(key);
@@ -163,7 +163,7 @@ int DEx_offerCreate(const std::string& addressSeller, uint32_t propertyId, int64
     }
 
     const std::string key = STR_SELLOFFER_ADDR_PROP_COMBO(addressSeller, propertyId);
-    PrintToLog("%s(%s|%s), nValue=%d)\n &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&", __func__, addressSeller, key, amountOffered);
+    if (msc_debug_dex) PrintToLog("%s(%s|%s), nValue=%d)\n &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&", __func__, addressSeller, key, amountOffered);
 
     const int64_t balanceReallyAvailable = getMPbalance(addressSeller, propertyId, BALANCE);
 
@@ -218,24 +218,24 @@ int DEx_BuyOfferCreate(const std::string& addressMaker, uint32_t propertyId, int
     // sanity checks
     if (paymentWindow == 0)
     {
-        PrintToLog("DEX_ERROR_SELLOFFER\n");
+        if (msc_debug_dex) PrintToLog("DEX_ERROR_SELLOFFER\n");
         return (DEX_ERROR_SELLOFFER -101);
     }
 
     if (price == 0)
     {
-        PrintToLog("DEX_ERROR_SELLOFFER\n");
+        if (msc_debug_dex) PrintToLog("DEX_ERROR_SELLOFFER\n");
         return (DEX_ERROR_SELLOFFER -101);
     }
 
     if (DEx_getOffer(addressMaker, propertyId))
     {
-        PrintToLog("DEX_ERROR_SELLOFFER\n");
+        if (msc_debug_dex) PrintToLog("DEX_ERROR_SELLOFFER\n");
         return (DEX_ERROR_SELLOFFER -10); // offer already exists
     }
 
     const std::string key = STR_SELLOFFER_ADDR_PROP_COMBO(addressMaker, propertyId);
-    // if (msc_debug_dex) PrintToLog("%s(%s|%s), nValue=%d)\n", __func__, addressMaker, key, amountOffered);
+    if (msc_debug_dex) PrintToLog("%s(%s|%s), nValue=%d)\n", __func__, addressMaker, key, amountOffered);
 
     // ------------------------------------------------------------------------
     // On this part we need to put in reserve synth Litecoins.
@@ -249,7 +249,7 @@ int DEx_BuyOfferCreate(const std::string& addressMaker, uint32_t propertyId, int
         CMPSPInfo::Entry sp;
         if (_my_sps->getSP(propertyId, sp))
         {
-            PrintToLog("Property Id: %d\n",propertyId);
+            if (msc_debug_dex) PrintToLog("Property Id: %d\n",propertyId);
             if (sp.prop_type != ALL_PROPERTY_TYPE_CONTRACT)
 	              continue;
 
@@ -257,14 +257,12 @@ int DEx_BuyOfferCreate(const std::string& addressMaker, uint32_t propertyId, int
             int64_t shorts = getMPbalance(addressMaker, propertyId, NEGATIVE_BALANCE);
             int64_t notional = static_cast<int64_t>(sp.notional_size);
 
-            PrintToLog("longs: %d\n", longs);
-            PrintToLog("shorts: %d\n", shorts);
-            PrintToLog("notional: %d\n", notional);
+            if (msc_debug_dex) PrintToLog("%s(): longs: %d, shorts: %d, notional: %d\n",__func__, longs, shorts, notional);
 
             // price of one sLTC in ALLs
             int64_t pair = getPairMarketPrice("sLTC", "ALL");
 
-            PrintToLog("pair: %d\n", pair);
+            if (msc_debug_dex) PrintToLog("pair: %d\n", pair);
 
             if (longs >= 0 && shorts == 0)
 	              sumValues += (ConvertTo256(longs) * ConvertTo256(notional)) * ConvertTo256(pair) / ConvertTo256(factorE);
@@ -274,7 +272,7 @@ int DEx_BuyOfferCreate(const std::string& addressMaker, uint32_t propertyId, int
 	          if (sumValues > ConvertTo256(price))
             {
                 // price = price of entire order   .
-	              PrintToLog("You can buy tokens now\n");
+	              if (msc_debug_dex) PrintToLog("You can buy tokens now\n");
 	              ready = true;
 	              break;
             }
@@ -286,7 +284,7 @@ int DEx_BuyOfferCreate(const std::string& addressMaker, uint32_t propertyId, int
         CMPOffer sellOffer(block, amountOffered, propertyId, price, minAcceptFee, paymentWindow, txid, 1);
         my_offers.insert(std::make_pair(key, sellOffer));
     } else {
-        PrintToLog("You can't buy tokens, you need more position value\n");
+        if (msc_debug_dex) PrintToLog("You can't buy tokens, you need more position value\n");
         return -1;
     }
 
@@ -318,7 +316,7 @@ int DEx_offerDestroy(const std::string& addressSeller, uint32_t propertyId)
     OfferMap::iterator it = my_offers.find(key);
     my_offers.erase(it);
 
-    // if (msc_debug_dex) PrintToLog("%s(%s|%s)\n", __func__, addressSeller, key);
+    if (msc_debug_dex) PrintToLog("%s(%s|%s)\n", __func__, addressSeller, key);
 
     return 0;
 }
@@ -332,7 +330,7 @@ int DEx_offerDestroy(const std::string& addressSeller, uint32_t propertyId)
  */
 int DEx_offerUpdate(const std::string& addressSeller, uint32_t propertyId, int64_t amountOffered, int block, int64_t amountDesired, int64_t minAcceptFee, uint8_t paymentWindow, const uint256& txid, uint64_t* nAmended)
 {
-    // if (msc_debug_dex) PrintToLog("%s(%s, %d)\n", __func__, addressSeller, propertyId);
+    if (msc_debug_dex) PrintToLog("%s(%s, %d)\n", __func__, addressSeller, propertyId);
 
     if (!DEx_offerExists(addressSeller, propertyId)) {
         return (DEX_ERROR_SELLOFFER -12); // offer does not exist
@@ -369,7 +367,7 @@ int DEx_acceptCreate(const std::string& addressTaker, const std::string& address
 
     const CMPOffer& offer = my_it->second;
 
-    PrintToLog("%s: found a matching sell offer [seller: %s, buyer: %s, property: %d)\n", __func__,
+    if (msc_debug_dex) PrintToLog("%s: found a matching sell offer [seller: %s, buyer: %s, property: %d)\n", __func__,
                     addressMaker, addressTaker, propertyId);
 
     // the older accept is the valid one: do not accept any new ones!
@@ -381,15 +379,19 @@ int DEx_acceptCreate(const std::string& addressTaker, const std::string& address
     // ensure the correct BTC fee was paid in this acceptance message
     if (feePaid < offer.getMinFee()) {
         PrintToLog("%s: rejected: transaction fee too small [%d < %d]\n", __func__, feePaid, offer.getMinFee());
-        PrintToConsole("rejected: transaction fee too small\n");
         return DEX_ERROR_ACCEPT -105;
     }
 
     if (offer.getOption() == 1)
     {   // if we are buying tokens
-        PrintToLog("getProperty: %d\n",offer.getProperty());
-        PrintToLog("getOfferAmountOriginal: %d\n",offer.getOfferAmountOriginal());
-        PrintToLog("getBTCDesiredOriginal: %d\n",offer.getBTCDesiredOriginal());
+
+        if (msc_debug_dex)
+        {
+            PrintToLog("getProperty: %d\n",offer.getProperty());
+            PrintToLog("getOfferAmountOriginal: %d\n",offer.getOfferAmountOriginal());
+            PrintToLog("getBTCDesiredOriginal: %d\n",offer.getBTCDesiredOriginal());
+        }
+
         if (amountAccepted > offer.getOfferAmountOriginal()) {
             amountAccepted = offer.getOfferAmountOriginal();
         }
@@ -513,17 +515,22 @@ static int64_t calculateDExPurchase(const int64_t amountOffered, const int64_t a
     const double BTC_desired_original = acceptBTCDesired;
     const double offer_amount_original = acceptOfferAmount;
 
-    PrintToLog("BTC_paid : %d\n", BTC_paid);
-    PrintToLog("BTC_desired_original : %d\n", BTC_desired_original);
-
+    if (msc_debug_dex)
+    {
+        PrintToLog("BTC_paid : %d\n", BTC_paid);
+        PrintToLog("BTC_desired_original : %d\n", BTC_desired_original);
+    }
 
     double perc_X = (double) BTC_paid / BTC_desired_original;
     double Purchased = offer_amount_original * perc_X;
 
     uint64_t units_purchased = rounduint64(Purchased);
 
-    PrintToLog("Purchased : %d\n", Purchased);
-    PrintToLog("units_purchased : %d\n", units_purchased);
+    if (msc_debug_dex)
+    {
+        PrintToLog("Purchased : %d\n", Purchased);
+        PrintToLog("units_purchased : %d\n", units_purchased);
+    }
 
     return static_cast<int64_t>(units_purchased);
 }
@@ -561,7 +568,7 @@ int64_t calculateDExPurchase(const int64_t amountOffered, const int64_t amountDe
  */
 int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addressSeller, const std::string& addressBuyer, int64_t amountPaid, int block, uint64_t* nAmended)
 {
-    PrintToLog("%s(%s, %s)\n", __func__, addressSeller, addressBuyer);
+    if (msc_debug_dex) PrintToLog("%s(%s, %s)\n", __func__, addressSeller, addressBuyer);
     int rc = DEX_ERROR_PAYMENT;
     uint32_t propertyId;
     CMPAccept* p_accept;
@@ -571,7 +578,7 @@ int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addre
     for (propertyId = 1; propertyId < _my_sps->peekNextSPID(1); propertyId++)
     {
         CMPSPInfo::Entry sp;
-        PrintToLog("propertyId: %d\n",propertyId);
+        if (msc_debug_dex) PrintToLog("propertyId: %d\n",propertyId);
         if (!_my_sps->getSP(propertyId, sp)) continue;
 
         // seller market maker?
@@ -579,7 +586,7 @@ int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addre
 
         if (p_accept)
         {
-            PrintToLog("Found seller market maker!\n");
+            if (msc_debug_dex) PrintToLog("Found seller market maker!\n");
             break;
         }
 
@@ -588,14 +595,14 @@ int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addre
 
         if (p_accept)
         {
-            PrintToLog("Found buyer market maker!\n");
+            if (msc_debug_dex) PrintToLog("Found buyer market maker!\n");
             break;
         }
 
 
     }
 
-    if (!p_accept)
+    if (!p_accept && msc_debug_dex)
     {
        // there must be an active accept order for this payment
        PrintToLog("first return!\n");
@@ -608,13 +615,12 @@ int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addre
     const int64_t amountDesired = p_accept->getBTCDesiredOriginal();
     const int64_t amountOffered = p_accept->getOfferAmountOriginal();
 
-    PrintToLog("amountDesired : %d\n",amountDesired);
-    PrintToLog("amountOffered : %d\n",amountOffered);
+    if (msc_debug_dex) PrintToLog("%s(): amountDesired : %d, amountOffered : %d\n",__func__, amountDesired, amountOffered);
 
     // divide by 0 protection
     if (0 == amountDesired)
     {
-        // if (msc_debug_dex) PrintToLog("%s: ERROR: desired amount of accept order is zero", __func__);
+        if (msc_debug_dex) PrintToLog("%s: ERROR: desired amount of accept order is zero", __func__);
         return (DEX_ERROR_PAYMENT -2);
     }
 
@@ -641,14 +647,13 @@ int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addre
 
     // -------------------------------------------------------------------------
 
-    PrintToLog("amountPurchased: %d\n",amountPurchased);
+    if (msc_debug_dex) PrintToLog("amountPurchased: %d\n",amountPurchased);
     const int64_t amountRemaining = p_accept->getAcceptAmountRemaining(); // actual amount desired, in the Accept
 
-    PrintToLog("amountRemaining: %d \n",amountRemaining);
-    // if (msc_debug_dex) PrintToLog(
-    // "%s: LTC desired: %s, offered amount: %s, amount to purchase: %s, amount remaining: %s\n", __func__,
-    // FormatDivisibleMP(amountDesired), FormatDivisibleMP(amountOffered),
-    // FormatDivisibleMP(amountPurchased), FormatDivisibleMP(amountRemaining));
+    if (msc_debug_dex) PrintToLog(
+    "%s: LTC desired: %s, offered amount: %s, amount to purchase: %s, amount remaining: %s\n", __func__,
+    FormatDivisibleMP(amountDesired), FormatDivisibleMP(amountOffered),
+    FormatDivisibleMP(amountPurchased), FormatDivisibleMP(amountRemaining));
 
 
     // if units_purchased is greater than what's in the Accept, the buyer gets only what's in the Accept
@@ -660,7 +665,7 @@ int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addre
         if (nAmended) *nAmended = amountPurchased;
     }
 
-    PrintToLog("amountPurchased: %d",amountPurchased);
+    if (msc_debug_dex) PrintToLog("amountPurchased: %d",amountPurchased);
 
     if (amountPurchased > 0)
     {
@@ -685,8 +690,8 @@ int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addre
         const int64_t reserveSell = getMPbalance(addressSeller, propertyId, SELLOFFER_RESERVE);
         const int64_t reserveAccept = getMPbalance(addressSeller, propertyId, ACCEPT_RESERVE);
 
-        PrintToLog("reserveSell: %d\n",reserveSell);
-        PrintToLog("reserveAccept: %d\n",reserveAccept);
+        PrintToLog("reserveSell: %d, reserveAccept: %d\n",reserveSell, reserveAccept);
+
 
         DEx_acceptDestroy(addressBuyer, addressSeller, propertyId, true);
 
