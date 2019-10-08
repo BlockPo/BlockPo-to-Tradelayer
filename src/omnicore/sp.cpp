@@ -83,7 +83,7 @@ bool CMPSPInfo::Entry::isPegged() const
 
 void CMPSPInfo::Entry::print() const
 {
-  PrintToConsole("%s:%s(Fixed=%s,Divisible=%s):%d:%s/%s, %s %s\n",
+  PrintToLog("%s:%s(Fixed=%s,Divisible=%s):%d:%s/%s, %s %s\n",
 		 issuer,
 		 name,
 		 fixed ? "Yes" : "No",
@@ -95,7 +95,7 @@ void CMPSPInfo::Entry::print() const
 CMPSPInfo::CMPSPInfo(const boost::filesystem::path& path, bool fWipe)
 {
   leveldb::Status status = Open(path, fWipe);
-  PrintToConsole("Loading smart property database: %s\n", status.ToString());
+  PrintToLog("Loading smart property database: %s\n", status.ToString());
 
   // special cases for constant SPs ALL and TALL
   // implied_all.issuer = ExodusAddress().ToString();
@@ -926,6 +926,8 @@ int CMPSPInfo::rollingContractsBlock(const CBlockIndex* pBlockIndex)
         const std::string owner = it->first;
         const uint32_t propertyId = it->second;
 
+        if(msc_debug_sp) PrintToLog("%s(): owner: %s, propertyId: %d\n",__func__, owner, propertyId);
+
         // NOTE: We need a map of Contracts and Pegged Currency to look for data faster
         Entry sp;
         if (_my_sps->getSP(propertyId, sp) && sp.prop_type == ALL_PROPERTY_TYPE_PEGGEDS)
@@ -936,6 +938,8 @@ int CMPSPInfo::rollingContractsBlock(const CBlockIndex* pBlockIndex)
             int actualBlock = static_cast<int>(pBlockIndex->nHeight);
             int rollingBlock = static_cast<int>(spp.init_block) + static_cast<int>(trunc(0.8 * period));  //80% of deadline blocks
 
+            if(msc_debug_sp) PrintToLog("%s(): period: %d, actual block: %d, rolling block: %d\n",__func__, period, actualBlock, rollingBlock);
+
             if (rollingBlock != actualBlock)
                 continue;
 
@@ -945,6 +949,8 @@ int CMPSPInfo::rollingContractsBlock(const CBlockIndex* pBlockIndex)
             int64_t notionalSize = static_cast<int64_t>(spp.notional_size);
             ui128 uReservePrice = multiply_int64_t(contractsReserved, notionalSize);
             int64_t reservePrice = static_cast<int64_t>(uReservePrice);
+
+            if(msc_debug_sp) PrintToLog("%s(): notionalSize: %d, reservePrice: %d\n",__func__, notionalSize, reservePrice);
 
             uint256 txid;
             uint32_t contractId2 = 0;
@@ -976,12 +982,14 @@ int CMPSPInfo::rollingContractsBlock(const CBlockIndex* pBlockIndex)
            // If there's no contract to jump to
            if(contractId2 == 0)
            {
-               PrintToLog("%s: No contract to jump to\n", __func__);
+               if(msc_debug_sp) PrintToLog("%s: No contract to jump to\n", __func__);
                return 0;
            }
 
            int64_t positiveBalanceB = getMPbalance(owner,contractId2, POSSITIVE_BALANCE);
            int64_t negativeBalanceB = getMPbalance(owner,contractId2, NEGATIVE_BALANCE);
+
+           if(msc_debug_sp) PrintToLog("%s(): positiveBalanceB: %d, negativeBalanceB: %d\n",__func__, positiveBalanceB, negativeBalanceB);
 
            // making the calculations of new amount of contracts in reserve
            arith_uint256 toReserve = DivideAndRoundUp(ConvertTo256(reservePrice), ConvertTo256(notionalSizeB)*ConvertTo256(factorE));
@@ -1106,6 +1114,7 @@ uint64_t mastercore::edgeOrderbook(uint32_t contractId, uint8_t tradingAction)
             const CMPContractDex& obj = *it;
             if (obj.getTradingAction() == tradingAction || obj.getAmountForSale() <= 0) continue;
             price = obj.getEffectivePrice();
+            if(msc_debug_sp) PrintToLog("%s(): choosen price: %d\n",__func__, price);
             vecContractDexPrices.push_back(price);
         }
     }
