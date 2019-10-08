@@ -51,7 +51,29 @@ extern bool msc_debug_tradedb;
 extern bool msc_debug_dex;
 extern bool msc_debug_fees;
 extern bool msc_debug_sto;
-
+extern bool msc_debug_parser_data;
+extern bool msc_debug_handle_dex_payment;
+extern bool msc_debug_handle_instant;
+extern bool msc_debug_handler_tx;
+extern bool msc_debug_margin_main;
+extern bool msc_debug_pos_margin;
+extern bool msc_debug_contract_inst_fee;
+extern bool msc_debug_instant_x_trade;
+extern bool msc_debug_x_trade_bidirectional;
+extern bool msc_debug_contractdex_fees;
+extern bool msc_debug_metadex_fees;
+extern bool msc_debug_metadex1;
+extern bool msc_debug_metadex2;
+extern bool msc_debug_metadex3;
+extern bool msc_debug_metadex_add;
+extern bool msc_debug_contractdex_add;
+extern bool msc_debug_contract_add_market;
+extern bool msc_debug_contract_cancel_every;
+extern bool msc_debug_contract_cancel_forblock;
+extern bool msc_debug_contract_cancel_inorder;
+extern bool msc_debug_add_orderbook_edge;
+extern bool msc_debug_close_position;
+extern bool msc_debug_get_pair_market_price;
 /* When we switch to C++11, this can be switched to variadic templates instead
  * of this macro-based construction (see tinyformat.h).
  */
