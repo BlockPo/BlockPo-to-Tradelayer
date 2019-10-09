@@ -799,14 +799,17 @@ bool CMPTransaction::interpret_TradeOffer()
         subAction = DecompressInteger(vecSubActionBytes);
     } else return false;
 
-    // PrintToLog("version: %d\n", version);
-    // PrintToLog("messageType: %d\n",type);
-    // PrintToLog("property: %d\n", propertyId);
-    // PrintToLog("amount : %d\n", nValue);
-    // PrintToLog("amount desired : %d\n", amountDesired);
-    // PrintToLog("block limit : %d\n", timeLimit);
-    // PrintToLog("min fees : %d\n", minFee);
-    // PrintToLog("subaction : %d\n", subAction);
+    if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+    {
+        PrintToLog("\t version: %d\n", version);
+        PrintToLog("\t messageType: %d\n",type);
+        PrintToLog("\t property: %d\n", propertyId);
+        PrintToLog("\t amount : %d\n", nValue);
+        PrintToLog("\t amount desired : %d\n", amountDesired);
+        PrintToLog("\t block limit : %d\n", timeLimit);
+        PrintToLog("\t min fees : %d\n", minFee);
+        PrintToLog("\t subaction : %d\n", subAction);
+    }
 
     return true;
 }
@@ -858,16 +861,19 @@ bool CMPTransaction::interpret_DExBuy()
         subAction = DecompressInteger(vecSubActionBytes);
     } else return false;
 
-    // PrintToLog("version: %d\n", version);
-    // PrintToLog("messageType: %d\n",type);
-    // PrintToLog("property: %d\n", propertyId);
-    // PrintToLog("amount : %d\n", nValue);
-    // PrintToLog("price : %d\n", effective_price);
-    // PrintToLog("block limit : %d\n", timeLimit);
-    // PrintToLog("min fees : %d\n", minFee);
-    // PrintToLog("subaction : %d\n", subAction);
+    if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+    {
+        PrintToLog("\t version: %d\n", version);
+        PrintToLog("\t messageType: %d\n",type);
+        PrintToLog("\t property: %d\n", propertyId);
+        PrintToLog("\t amount : %d\n", nValue);
+        PrintToLog("\t price : %d\n", effective_price);
+        PrintToLog("\t block limit : %d\n", timeLimit);
+        PrintToLog("\t min fees : %d\n", minFee);
+        PrintToLog("\t subaction : %d\n", subAction);
+    }
 
-  return true;
+    return true;
 }
 
 bool CMPTransaction::interpret_AcceptOfferBTC()
@@ -895,9 +901,12 @@ bool CMPTransaction::interpret_AcceptOfferBTC()
     nNewValue = nValue;
   } else return false;
 
-  // PrintToLog("version: %d\n", version);
-  // PrintToLog("messageType: %d\n",type);
-  // PrintToLog("property: %d\n", propertyId);
+  if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+  {
+      PrintToLog("\t version: %d\n", version);
+      PrintToLog("\t messageType: %d\n",type);
+      PrintToLog("\t property: %d\n", propertyId);
+  }
 
   return true;
 }
@@ -939,12 +948,15 @@ bool CMPTransaction::interpret_MetaDExTrade()
       desired_value = DecompressInteger(vecAmountDesiredBytes);
     } else return false;
 
-    // PrintToLog("version: %d\n", version);
-    // PrintToLog("messageType: %d\n",type);
-    // PrintToLog("property: %d\n", property);
-    // PrintToLog("amount : %d\n", amount_forsale);
-    // PrintToLog("property desired : %d\n", desired_property);
-    // PrintToLog("amount desired : %d\n", desired_value);
+    if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+    {
+        PrintToLog("\t version: %d\n", version);
+        PrintToLog("\t messageType: %d\n",type);
+        PrintToLog("\t property: %d\n", property);
+        PrintToLog("\t amount : %d\n", amount_forsale);
+        PrintToLog("\t property desired : %d\n", desired_property);
+        PrintToLog("\t amount desired : %d\n", desired_value);
+    }
 
     return true;
 }
@@ -1013,19 +1025,19 @@ bool CMPTransaction::interpret_CreateContractDex()
 
   prop_type = ALL_PROPERTY_TYPE_CONTRACT;
 
-  PrintToLog("------------------------------------------------------------\n");
-  PrintToLog("Inside interpret_CreateContractDex function\n");
-  PrintToLog("version: %d\n", version);
-  PrintToLog("messageType: %d\n",type);
-  PrintToLog("denomination: %d\n", denomination);
-  PrintToLog("blocks until expiration : %d\n", blocks_until_expiration);
-  PrintToLog("notional size : %d\n", notional_size);
-  PrintToLog("collateral currency: %d\n", collateral_currency);
-  PrintToLog("margin requirement: %d\n", margin_requirement);
-  PrintToLog("ecosystem: %d\n", ecosystem);
-  PrintToLog("name: %s\n", name);
-  PrintToLog("prop_type: %d\n", prop_type);
-  PrintToLog("------------------------------------------------------------\n");
+  if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+  {
+      PrintToLog("\t version: %d\n", version);
+      PrintToLog("\t messageType: %d\n",type);
+      PrintToLog("\t denomination: %d\n", denomination);
+      PrintToLog("\t blocks until expiration : %d\n", blocks_until_expiration);
+      PrintToLog("\t notional size : %d\n", notional_size);
+      PrintToLog("\t collateral currency: %d\n", collateral_currency);
+      PrintToLog("\t margin requirement: %d\n", margin_requirement);
+      PrintToLog("\t ecosystem: %d\n", ecosystem);
+      PrintToLog("\t name: %s\n", name);
+      PrintToLog("\t prop_type: %d\n", prop_type);
+  }
 
   return true;
 }
@@ -1085,12 +1097,15 @@ bool CMPTransaction::interpret_ContractDexTrade()
     leverage = DecompressInteger(vecLeverage);
   } else return false;
 
-  // PrintToLog("leverage: %d\n", leverage);
-  // PrintToLog("messageType: %d\n",type);
-  // PrintToLog("contractName: %s\n", name_traded);
-  // PrintToLog("amount of contracts : %d\n", amount);
-  // PrintToLog("effective price : %d\n", effective_price);
-  // PrintToLog("trading action : %d\n", trading_action);
+  if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+  {
+      PrintToLog("\t leverage: %d\n", leverage);
+      PrintToLog("\t messageType: %d\n",type);
+      PrintToLog("\t contractName: %s\n", name_traded);
+      PrintToLog("\t amount of contracts : %d\n", amount);
+      PrintToLog("\t effective price : %d\n", effective_price);
+      PrintToLog("\t trading action : %d\n", trading_action);
+  }
 
   return true;
 }
@@ -1133,9 +1148,13 @@ bool CMPTransaction::interpret_ContractDexCancelEcosystem()
     ecosystem = DecompressInteger(vecEcosystemBytes);
   } else return false;
 
-  // PrintToLog("version: %d\n", version);
-  // PrintToLog("messageType: %d\n",type);
-  // PrintToLog("ecosystem: %d\n", ecosystem);
+  if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+  {
+     PrintToLog("\t version: %d\n", version);
+     PrintToLog("\t messageType: %d\n",type);
+     PrintToLog("\t ecosystem: %d\n", ecosystem);
+  }
+
   return true;
 }
 
@@ -1164,11 +1183,14 @@ bool CMPTransaction::interpret_ContractDexClosePosition()
     if (!vecContractIdBytes.empty()) {
         contractId = DecompressInteger(vecContractIdBytes);
     } else return false;
-    //
-    // PrintToLog("version: %d\n", version);
-    // PrintToLog("messageType: %d\n",type);
-    // PrintToLog("ecosystem: %d\n", ecosystem);
-    // PrintToLog("contractId: %d\n", contractId);
+
+    if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+    {
+        PrintToLog("\t version: %d\n", version);
+        PrintToLog("\t messageType: %d\n",type);
+        PrintToLog("\t ecosystem: %d\n", ecosystem);
+        PrintToLog("\t contractId: %d\n", contractId);
+    }
 
     return true;
 }
@@ -1193,13 +1215,19 @@ bool CMPTransaction::interpret_ContractDex_Cancel_Orders_By_Block()
 
     if (!vecBlockBytes.empty()) {
         block = DecompressInteger(vecBlockBytes);
-        // PrintToLog("block : %d\n",block);
     } else return false;
 
     if (!vecIdxBytes.empty()) {
         tx_idx = DecompressInteger(vecIdxBytes);
-        // PrintToLog("idx : %d\n",tx_idx);
     } else return false;
+
+    if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+    {
+      PrintToLog("\t version: %d\n", version);
+      PrintToLog("\t messageType: %d\n",type);
+      PrintToLog("\t block: %d\n", block);
+      PrintToLog("\t tx_idx: %d\n", tx_idx);
+    }
 
     return true;
 }
@@ -1261,17 +1289,20 @@ bool CMPTransaction::interpret_CreatePeggedCurrency()
     } else return false;
 
     prop_type = ALL_PROPERTY_TYPE_PEGGEDS;
-    //
-    // PrintToLog("version: %d\n", version);
-    // PrintToLog("messageType: %d\n",type);
-    // PrintToLog("ecosystem: %d\n", ecosystem);
-    // PrintToLog("property type: %d\n",prop_type);
-    // PrintToLog("prev prop id: %d\n",prev_prop_id);
-    // PrintToLog("contractId: %d\n", contractId);
-    // PrintToLog("propertyId: %d\n", propertyId);
-    // PrintToLog("amount of pegged currency : %d\n", amount);
-    // PrintToLog("name : %d\n", name);
-    // PrintToLog("subcategory: %d\n", subcategory);
+
+    if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+    {
+        PrintToLog("\t version: %d\n", version);
+        PrintToLog("\t messageType: %d\n",type);
+        PrintToLog("\t ecosystem: %d\n", ecosystem);
+        PrintToLog("\t property type: %d\n",prop_type);
+        PrintToLog("\t prev prop id: %d\n",prev_prop_id);
+        PrintToLog("\t contractId: %d\n", contractId);
+        PrintToLog("\t propertyId: %d\n", propertyId);
+        PrintToLog("\t amount of pegged currency : %d\n", amount);
+        PrintToLog("\t name : %d\n", name);
+        PrintToLog("\t subcategory: %d\n", subcategory);
+    }
 
     return true;
 }
@@ -1301,10 +1332,13 @@ bool CMPTransaction::interpret_SendPeggedCurrency()
         amount = DecompressInteger(vecAmountBytes);
     } else return false;
 
-    // PrintToLog("version: %d\n", version);
-    // PrintToLog("messageType: %d\n",type);
-    // PrintToLog("propertyId: %d\n", propertyId);
-    // PrintToLog("amount of pegged currency : %d\n", amount);
+    if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+    {
+        PrintToLog("\t version: %d\n", version);
+        PrintToLog("\t messageType: %d\n",type);
+        PrintToLog("\t propertyId: %d\n", propertyId);
+        PrintToLog("\t amount of pegged currency : %d\n", amount);
+    }
 
     return true;
 }
@@ -1338,12 +1372,15 @@ bool CMPTransaction::interpret_RedemptionPegged()
   if (!vecAmountBytes.empty()) {
     amount = DecompressInteger(vecAmountBytes);
   } else return false;
-  //
-  // PrintToLog("version: %d\n", version);
-  // PrintToLog("messageType: %d\n",type);
-  // PrintToLog("propertyId: %d\n", propertyId);
-  // PrintToLog("contractId: %d\n", contractId);
-  // PrintToLog("amount of pegged currency : %d\n", amount);
+
+  if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+  {
+      PrintToLog("\t version: %d\n", version);
+      PrintToLog("\t messageType: %d\n",type);
+      PrintToLog("\t propertyId: %d\n", propertyId);
+      PrintToLog("\t contractId: %d\n", contractId);
+      PrintToLog("\t amount of pegged currency : %d\n", amount);
+  }
 
   return true;
 }
@@ -1412,21 +1449,22 @@ bool CMPTransaction::interpret_CreateOracleContract()
 
   prop_type = ALL_PROPERTY_TYPE_ORACLE_CONTRACT;
 
-  // PrintToLog("------------------------------------------------------------\n");
-  // PrintToLog("Inside interpret_CreateContractDex function\n");
-  // PrintToLog("version: %d\n", version);
-  // PrintToLog("messageType: %d\n",type);
-  // PrintToLog("denomination: %d\n", denomination);
-  // PrintToLog("blocks until expiration : %d\n", blocks_until_expiration);
-  // PrintToLog("notional size : %d\n", notional_size);
-  // PrintToLog("collateral currency: %d\n", collateral_currency);
-  // PrintToLog("margin requirement: %d\n", margin_requirement);
-  // PrintToLog("ecosystem: %d\n", ecosystem);
-  PrintToLog("name: %s\n", name);
-  PrintToLog("oracleAddress: %s\n", sender);
-  PrintToLog("backupAddress: %s\n", receiver);
-  // PrintToLog("prop_type: %d\n", prop_type);
-  // PrintToLog("------------------------------------------------------------\n");
+  if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+  {
+      PrintToLog("\t version: %d\n", version);
+      PrintToLog("\t messageType: %d\n",type);
+      PrintToLog("\t denomination: %d\n", denomination);
+      PrintToLog("\t blocks until expiration : %d\n", blocks_until_expiration);
+      PrintToLog("\t notional size : %d\n", notional_size);
+      PrintToLog("\t collateral currency: %d\n", collateral_currency);
+      PrintToLog("\t margin requirement: %d\n", margin_requirement);
+      PrintToLog("\t ecosystem: %d\n", ecosystem);
+      PrintToLog("\t name: %s\n", name);
+      PrintToLog("\t oracleAddress: %s\n", sender);
+      PrintToLog("\t backupAddress: %s\n", receiver);
+      PrintToLog("\t prop_type: %d\n", prop_type);
+
+  }
 
   return true;
 }
@@ -1444,9 +1482,12 @@ bool CMPTransaction::interpret_Change_OracleRef()
         contractId = DecompressInteger(vecContIdBytes);
     } else return false;
 
-    PrintToLog("version: %d\n", version);
-    PrintToLog("messageType: %d\n",type);
-    PrintToLog("propertyId: %d\n", propertyId);
+    if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+    {
+        PrintToLog("\t version: %d\n", version);
+        PrintToLog("\t messageType: %d\n",type);
+        PrintToLog("\t propertyId: %d\n", propertyId);
+    }
 
     return true;
 }
@@ -1474,10 +1515,13 @@ bool CMPTransaction::interpret_Set_Oracle()
         oracle_low = DecompressInteger(vecLowBytes);
     } else return false;
 
-    PrintToLog("version: %d\n", version);
-    PrintToLog("oracle high price: %d\n",oracle_high);
-    PrintToLog("oracle low price: %d\n",oracle_low);
-    PrintToLog("propertyId: %d\n", propertyId);
+    if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+    {
+        PrintToLog("\t version: %d\n", version);
+        PrintToLog("\t oracle high price: %d\n",oracle_high);
+        PrintToLog("\t oracle low price: %d\n",oracle_low);
+        PrintToLog("\t propertyId: %d\n", propertyId);
+    }
 
     return true;
 }
@@ -1495,8 +1539,11 @@ bool CMPTransaction::interpret_OracleBackup()
         contractId = DecompressInteger(vecContIdBytes);
     } else return false;
 
-    PrintToLog("version: %d\n", version);
-    PrintToLog("contractId: %d\n", contractId);
+    if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+    {
+        PrintToLog("\t version: %d\n", version);
+        PrintToLog("\t contractId: %d\n", contractId);
+    }
 
     return true;
 }
@@ -1514,8 +1561,11 @@ bool CMPTransaction::interpret_CloseOracle()
         contractId = DecompressInteger(vecContIdBytes);
     } else return false;
 
-    PrintToLog("version: %d\n", version);
-    PrintToLog("contractId: %d\n", contractId);
+    if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+    {
+        PrintToLog("\t version: %d\n", version);
+        PrintToLog("\t contractId: %d\n", contractId);
+    }
 
     return true;
 }
@@ -1541,11 +1591,13 @@ bool CMPTransaction::interpret_CommitChannel()
     } else return false;
 
 
-
-    PrintToLog("channelAddress: %s\n", receiver);
-    PrintToLog("version: %d\n", version);
-    PrintToLog("propertyId: %d\n", propertyId);
-    PrintToLog("amount commited: %d\n", amount_commited);
+    if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+    {
+        PrintToLog("\t channelAddress: %s\n", receiver);
+        PrintToLog("\t version: %d\n", version);
+        PrintToLog("\t propertyId: %d\n", propertyId);
+        PrintToLog("\t amount commited: %d\n", amount_commited);
+    }
 
     return true;
 }
@@ -1570,11 +1622,13 @@ bool CMPTransaction::interpret_Withdrawal_FromChannel()
         amount_to_withdraw = DecompressInteger(vecAmountBytes);
     } else return false;
 
-
-    PrintToLog("channelAddress: %s\n", receiver);
-    PrintToLog("version: %d\n", version);
-    PrintToLog("propertyId: %d\n", propertyId);
-    PrintToLog("amount to withdrawal: %d\n", amount_to_withdraw);
+    if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+    {
+        PrintToLog("\t channelAddress: %s\n", receiver);
+        PrintToLog("\t version: %d\n", version);
+        PrintToLog("\t propertyId: %d\n", propertyId);
+        PrintToLog("\t amount to withdrawal: %d\n", amount_to_withdraw);
+    }
 
     return true;
 }
@@ -1583,8 +1637,6 @@ bool CMPTransaction::interpret_Withdrawal_FromChannel()
 bool CMPTransaction::interpret_Instant_Trade()
 {
   int i = 0;
-
-  PrintToLog("Inside interpret_Instant_Trade\n");
 
   std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
@@ -1622,13 +1674,16 @@ bool CMPTransaction::interpret_Instant_Trade()
     desired_value = DecompressInteger(vecAmountDesiredBytes);
   } else return false;
 
-  PrintToLog("version: %d\n", version);
-  PrintToLog("messageType: %d\n",type);
-  PrintToLog("property: %d\n", property);
-  PrintToLog("amount : %d\n", amount_forsale);
-  PrintToLog("blockheight_expiry : %d\n", block_forexpiry);
-  PrintToLog("property desired : %d\n", desired_property);
-  PrintToLog("amount desired : %d\n", desired_value);
+  if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+  {
+      PrintToLog("\t version: %d\n", version);
+      PrintToLog("\t messageType: %d\n",type);
+      PrintToLog("\t property: %d\n", property);
+      PrintToLog("\t amount : %d\n", amount_forsale);
+      PrintToLog("\t blockheight_expiry : %d\n", block_forexpiry);
+      PrintToLog("\t property desired : %d\n", desired_property);
+      PrintToLog("\t amount desired : %d\n", desired_value);
+  }
 
   return true;
 }
@@ -1663,13 +1718,15 @@ bool CMPTransaction::interpret_Update_PNL()
   } else return false;
 
 
-
-  // PrintToLog("version: %d\n", version);
-  // PrintToLog("messageType: %d\n",type);
-  // PrintToLog("property: %d\n", property);
-  // PrintToLog("amount : %d\n", amount_forsale);
-  // PrintToLog("property desired : %d\n", desired_property);
-  // PrintToLog("amount desired : %d\n", desired_value);
+  if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+  {
+      PrintToLog("\t version: %d\n", version);
+      PrintToLog("\t messageType: %d\n",type);
+      PrintToLog("\t property: %d\n", property);
+      PrintToLog("\t amount : %d\n", amount_forsale);
+      PrintToLog("\t property desired : %d\n", desired_property);
+      PrintToLog("\t amount desired : %d\n", desired_value);
+  }
 
   return true;
 }
@@ -1700,6 +1757,14 @@ bool CMPTransaction::interpret_Transfer()
       amount = DecompressInteger(vecAmount);
   } else return false;
 
+  if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+  {
+      PrintToLog("\t version: %d\n", version);
+      PrintToLog("\t messageType: %d\n",type);
+      PrintToLog("\t property: %d\n", property);
+      PrintToLog("\t amount : %d\n", amount);
+  }
+
   return true;
 }
 
@@ -1708,8 +1773,6 @@ bool CMPTransaction::interpret_Transfer()
 bool CMPTransaction::interpret_Create_Channel()
 {
   int i = 0;
-
-  PrintToLog("Inside interpret_Create_Channel\n");
 
   std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
@@ -1744,12 +1807,15 @@ bool CMPTransaction::interpret_Create_Channel()
       block_forexpiry = DecompressInteger(vecBlocks);
   } else return false;
 
-  PrintToLog("version: %d\n", version);
-  PrintToLog("messageType: %d\n",type);
-  PrintToLog("channelAddress : %d\n",channel_address);
-  PrintToLog("first address : %d\n", sender);
-  PrintToLog("second address : %d\n", receiver);
-  PrintToLog("blocks : %d\n", block_forexpiry);
+  if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+  {
+      PrintToLog("\t version: %d\n", version);
+      PrintToLog("\t messageType: %d\n",type);
+      PrintToLog("\t channelAddress : %d\n",channel_address);
+      PrintToLog("\t first address : %d\n", sender);
+      PrintToLog("\t second address : %d\n", receiver);
+      PrintToLog("\t blocks : %d\n", block_forexpiry);
+  }
 
   return true;
 }
@@ -1758,8 +1824,6 @@ bool CMPTransaction::interpret_Create_Channel()
 bool CMPTransaction::interpret_Contract_Instant()
 {
   int i = 0;
-
-  PrintToLog("Inside interpret_Contract_Instant\n");
 
   std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
@@ -1802,15 +1866,18 @@ bool CMPTransaction::interpret_Contract_Instant()
   if (!vecLeverage.empty()) {
       ileverage = DecompressInteger(vecLeverage);
   } else return false;
-
-  PrintToLog("version: %d\n", version);
-  PrintToLog("messageType: %d\n",type);
-  PrintToLog("property: %d\n", property);
-  PrintToLog("amount : %d\n", instant_amount);
-  PrintToLog("blockfor_expiry : %d\n", block_forexpiry);
-  PrintToLog("price : %d\n", price);
-  PrintToLog("trading action : %d\n", itrading_action);
-  PrintToLog("leverage : %d\n", ileverage);
+  
+  if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+  {
+      PrintToLog("\t version: %d\n", version);
+      PrintToLog("\t messageType: %d\n",type);
+      PrintToLog("\t property: %d\n", property);
+      PrintToLog("\t amount : %d\n", amount_forsale);
+      PrintToLog("\t blockfor_expiry : %d\n", block_forexpiry);
+      PrintToLog("\t price : %d\n", price);
+      PrintToLog("\t trading action : %d\n", itrading_action);
+      PrintToLog("\t leverage : %d\n", ileverage);
+  }
 
   return true;
 }
@@ -1863,14 +1930,17 @@ bool CMPTransaction::interpret_New_Id_Registration()
       oracles = DecompressInteger(vecOracles);
   } else return false;
 
-  PrintToLog("%s: address: %s\n", __func__, sender);
-  PrintToLog("%s: website: %s\n", __func__, website);
-  PrintToLog("%s: company name: %s\n", __func__, company_name);
-  PrintToLog("%s: tokens: %d\n", __func__, tokens);
-  PrintToLog("%s: ltc: %d\n", __func__, ltc);
-  PrintToLog("%s: natives: %d\n", __func__, natives);
-  PrintToLog("%s: oracles: %d\n", __func__, oracles);
-
+  if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+  {
+      PrintToLog("\t address: %s\n", __func__, sender);
+      PrintToLog("\t website: %s\n", __func__, website);
+      PrintToLog("\t company name: %s\n", __func__, company_name);
+      PrintToLog("\t tokens: %d\n", __func__, tokens);
+      PrintToLog("\t ltc: %d\n", __func__, ltc);
+      PrintToLog("\t natives: %d\n", __func__, natives);
+      PrintToLog("\t oracles: %d\n", __func__, oracles);
+  }
+  
   return true;
 }
 
