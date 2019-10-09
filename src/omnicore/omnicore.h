@@ -403,6 +403,7 @@ class CMPTradeList : public CDBBase
   /** Used to notify that the number of tokens for a property has changed. */
   void NotifyPeggedCurrency(const uint256& txid, string address, uint32_t propertyId, uint64_t amount, std::string series);
   bool getCreatedPegged(uint32_t propertyId, UniValue& tradeArray);
+  bool checkRegister(const std::string& address, int registered);
   //////////////////////////////////////
 
   bool getMatchingTrades(const uint256& txid);

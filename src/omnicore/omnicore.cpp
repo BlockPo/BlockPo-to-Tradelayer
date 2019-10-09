@@ -3650,7 +3650,7 @@ void CMPTradeList::recordNewChannel(const std::string& channelAddress, const std
   ++nWritten;
 
   if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
-  
+
 }
 
 void CMPTradeList::recordNewInstantTrade(const uint256& txid, const std::string& sender, const std::string& receiver, uint32_t propertyIdForSale, uint64_t amount_forsale, uint32_t propertyIdDesired, uint64_t amount_desired,int blockNum, int blockIndex)
@@ -3815,7 +3815,71 @@ bool CMPTradeList::checkRegister(const std::string& address, int registered)
     return status;
 }
 
+bool CMPTradeList::checkKYCRegister(const std::string& address, int registered)
+{
+    bool status = false;
+    std::string strKey, newKey, newValue;
 
+    std::vector<std::string> vstr;
+
+    if (!pdb) return status;
+
+
+    leveldb::Iterator* it = NewIterator(); // Allocation proccess
+
+    for(it->SeekToLast(); it->Valid(); it->Prev())
+    {
+        // search key to see if this is a matching trade
+        strKey = it->key().ToString();
+        // PrintToLog("key of this match: %s ****************************\n",strKey);
+        std::string strValue = it->value().ToString();
+
+        // ensure correct amount of tokens in value string
+        boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
+        if (vstr.size() != 12)
+        {
+            // PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
+            // PrintToConsole("TRADEDB error - unexpected number of tokens in value %d \n",vstr.size());
+            continue;
+        }
+
+        std::string type = vstr[11];
+
+        PrintToLog("%s: type: %s\n",__func__,type);
+
+        if( type != TYPE_NEW_ID_REGISTER)
+          continue;
+
+
+        PrintToLog("%s: strKey: %s\n", __func__, strKey);
+
+        std::string regAddr = vstr[0];
+
+        PrintToLog("%s: regAddr: %s\n", __func__, regAddr);
+
+        if(address != regAddr) continue;
+
+        if (registered < 3 || 6 < registered)
+        {
+            PrintToLog("%s: Register out of range\n",__func__);
+            return false;
+        }
+
+        std::string output = vstr[registered];
+
+        PrintToLog("%s: output == %s\n",__func__, output);
+
+        if (output == "1") status = true;
+
+        break;
+
+    }
+
+    // clean up
+    delete it;
+
+    return status;
+}
 
 void CMPTradeList::recordNewInstContTrade(const uint256& txid, const std::string& firstAddr, const std::string& secondAddr, uint32_t property, uint64_t amount_forsale, uint64_t price ,int blockNum, int blockIndex)
 {
@@ -5545,7 +5609,7 @@ bool mastercore::ContInst_Fees(const std::string& firstAddr,const std::string& s
         PrintToLog("%s: firstAddr: %d\n", __func__, firstAddr);
         PrintToLog("%s: secondAddr: %d\n", __func__, secondAddr);
         PrintToLog("%s: amountToReserve: %d\n", __func__, amountToReserve);
-        PrintToLog("%s: contractId: %d\n", __func__,contractId);
+        PrintToLog("%s: colateral: %d\n", __func__,colateral);
     }
 
     if (type == ALL_PROPERTY_TYPE_CONTRACT)
@@ -5574,7 +5638,7 @@ bool mastercore::ContInst_Fees(const std::string& firstAddr,const std::string& s
     {
 
             if(msc_debug_contract_inst_fee) PrintToLog("%s:address %s doesn't have enough money %d\n", __func__, firstAddr);
-      
+
             return false;
     }
 
@@ -5689,7 +5753,7 @@ bool mastercore::Instant_x_Trade(const uint256& txid, uint8_t tradingAction, std
       PrintToLog("%s: newPosTaker: %d\n", __func__, newPosTaker);
       PrintToLog("%s: amountTraded: %d\n", __func__, amountTraded);
   }
-  
+
   // (const uint256 txid1, const uint256 txid2, string address1, string address2, uint64_t effective_price, uint64_t amount_maker, uint64_t amount_taker, int blockNum1, int blockNum2, uint32_t property_traded, string tradeStatus, int64_t lives_s0, int64_t lives_s1, int64_t lives_s2, int64_t lives_s3, int64_t lives_b0, int64_t lives_b1, int64_t lives_b2, int64_t lives_b3, string s_maker0, string s_taker0, string s_maker1, string s_taker1, string s_maker2, string s_taker2, string s_maker3, string //s_taker3, int64_t nCouldBuy0, int64_t nCouldBuy1, int64_t nCouldBuy2, int64_t nCouldBuy3,uint64_t amountpnew, uint64_t amountpold)
 
 
