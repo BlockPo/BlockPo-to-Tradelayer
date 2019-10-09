@@ -1924,9 +1924,6 @@ static int write_mp_cachefees(std::ofstream& file, SHA256_CTX* shaCtx)
 
     std::string lineOut;
 
-    if(cachefees.size() == 0)
-        PrintToLog("%s: there's no data inside cachefee map\n", __func__);
-
     for (std::map<uint32_t, int64_t>::iterator itt = cachefees.begin(); itt != cachefees.end(); ++itt) {
         // decompose the key for address
         uint32_t propertyId = itt->first;
@@ -1948,12 +1945,7 @@ static int write_mp_cachefees(std::ofstream& file, SHA256_CTX* shaCtx)
 /** Saving pending withdrawals **/
 static int write_mp_withdrawals(std::ofstream& file, SHA256_CTX* shaCtx)
 {
-
-    // PrintToLog("### %s: inside function!!! \n", __func__);
     std::string lineOut;
-
-    if(withdrawal_Map.size() == 0)
-        PrintToLog("%s: there's no data inside withdrawal_Map\n", __func__);
 
     for (std::map<std::string,vector<withdrawalAccepted>>::iterator it = withdrawal_Map.begin(); it != withdrawal_Map.end(); ++it)
     {
@@ -1985,9 +1977,6 @@ static int write_mp_active_channels(std::ofstream& file, SHA256_CTX* shaCtx)
 
     // PrintToLog("### %s: inside function!!! \n", __func__);
     std::string lineOut;
-
-    // if(channels_Map.size() == 0)
-        // PrintToLog("%s: there's no data inside channels_Map\n", __func__);
 
     for (std::map<std::string,channel>::iterator it = channels_Map.begin(); it != channels_Map.end(); ++it)
     {
@@ -3658,7 +3647,7 @@ void CMPTradeList::recordNewChannel(const std::string& channelAddress, const std
   std::string strValue = strprintf("%s:%s:%d:%d:%s",frAddr, secAddr, blockNum, blockIndex,TYPE_CREATE_CHANNEL);
   Status status = pdb->Put(writeoptions, channelAddress, strValue);
   ++nWritten;
-  // if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
+  PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
 }
 
 void CMPTradeList::recordNewInstantTrade(const uint256& txid, const std::string& sender, const std::string& receiver, uint32_t propertyIdForSale, uint64_t amount_forsale, uint32_t propertyIdDesired, uint64_t amount_desired,int blockNum, int blockIndex)
@@ -3673,12 +3662,14 @@ void CMPTradeList::recordNewInstantTrade(const uint256& txid, const std::string&
 
 void CMPTradeList::recordNewIdRegister(const uint256& txid, const std::string& address, const std::string& website, const std::string& name, uint8_t tokens, uint8_t ltc, uint8_t natives, uint8_t oracles, int blockNum, int blockIndex)
 {
+  // tokens : v[3], ltc/tokens: v[4], native contracts: v[5], oracle contracts : v[6]
   if (!pdb) return;
   int nextId = t_tradelistdb->getNextId();
   PrintToLog("%s: id_number = %d\n",__func__, nextId);
-  std::string strValue = strprintf("%s:%s:%d:%d:%d:%d:%d:%d:%d:%s:%s", website, name, tokens, ltc, natives, oracles, blockNum, blockIndex, nextId,txid.ToString(), TYPE_NEW_ID_REGISTER);
+  std::string strValue = strprintf("%s:%s:%s:%d:%d:%d:%d:%d:%d:%d:%s:%s",address, website, name, tokens, ltc, natives, oracles, blockNum, blockIndex, nextId, txid.ToString(), TYPE_NEW_ID_REGISTER);
   PrintToLog("%s: strValue: %s\n", __func__, strValue);
-  Status status = pdb->Put(writeoptions, address, strValue);
+  const string key = to_string(blockNum) + "+" + txid.ToString(); // order by blockNum
+  Status status = pdb->Put(writeoptions, key, strValue);
 
   ++nWritten;
   PrintToLog("%s: %s\n", __FUNCTION__, status.ToString());
@@ -3704,7 +3695,7 @@ bool CMPTradeList::updateIdRegister(const uint256& txid, const std::string& addr
 
         // ensure correct amount of tokens in value string
         boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
-        if (vstr.size() != 11)
+        if (vstr.size() != 12)
         {
             // PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
             // PrintToConsole("TRADEDB error - unexpected number of tokens in value %d \n",vstr.size());
@@ -3776,14 +3767,14 @@ bool CMPTradeList::checkKYCRegister(const std::string& address, int registered)
 
         // ensure correct amount of tokens in value string
         boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
-        if (vstr.size() != 11)
+        if (vstr.size() != 12)
         {
             // PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
             // PrintToConsole("TRADEDB error - unexpected number of tokens in value %d \n",vstr.size());
             continue;
         }
 
-        std::string type = vstr[10];
+        std::string type = vstr[11];
 
         PrintToLog("%s: type: %s\n",__func__,type);
 
@@ -3793,10 +3784,13 @@ bool CMPTradeList::checkKYCRegister(const std::string& address, int registered)
 
         PrintToLog("%s: strKey: %s\n", __func__, strKey);
 
-        if(address != strKey)
-            continue;
+        std::string regAddr = vstr[0];
 
-        if (registered < 2 || 5 < registered)
+        PrintToLog("%s: regAddr: %s\n", __func__, regAddr);
+
+        if(address != regAddr) continue;
+
+        if (registered < 3 || 6 < registered)
         {
             PrintToLog("%s: Register out of range\n",__func__);
             return false;
@@ -3804,11 +3798,9 @@ bool CMPTradeList::checkKYCRegister(const std::string& address, int registered)
 
         std::string output = vstr[registered];
 
-        if (output == "1")
-        {
-            PrintToLog("%s: output == 1\n",__func__);
-            status = true;
-        }
+        PrintToLog("%s: output == %s\n",__func__, output);
+
+        if (output == "1") status = true;
 
         break;
 
@@ -5176,6 +5168,11 @@ bool CMPTradeList::checkChannelAddress(const std::string& channelAddress)
             continue;
         }
 
+        std::string type = vstr[4];
+
+        if (type != TYPE_CREATE_CHANNEL)
+            continue;
+
         if(channelAddress != strKey)
             continue;
 
@@ -5329,10 +5326,14 @@ channel CMPTradeList::getChannelAddresses(const std::string& channelAddress)
           // ensure correct amount of tokens in value string
           boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
           if (vstr.size() != 5) {
-              //PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
-              // PrintToConsole("TRADEDB error - unexpected number of tokens in value %d \n",vstr.size());
+              PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
               continue;
           }
+
+          std::string type = vstr[4];
+
+          if (type != TYPE_CREATE_CHANNEL)
+              continue;
 
           std::string frAddr = vstr[0];
           std::string secAddr = vstr[1];
@@ -5345,6 +5346,8 @@ channel CMPTradeList::getChannelAddresses(const std::string& channelAddress)
           ret.first = frAddr;
           ret.second = secAddr;
           ret.expiry_height = expiry;
+
+          PrintToLog("%s(): ok!: multisig: %s, fist: %s, second: %s\n",__func__, ret.multisig, ret.first, ret.second);
 
           break;
       }
@@ -5449,7 +5452,6 @@ int CMPTradeList::getNextId()
         boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
         if (vstr.size() != 7) {
             PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
-            // PrintToConsole("TRADEDB error - unexpected number of tokens in value %d \n",vstr.size());
             continue;
         }
 

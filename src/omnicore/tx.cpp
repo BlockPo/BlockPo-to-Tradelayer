@@ -3010,7 +3010,7 @@ int CMPTransaction::logicMath_ContractDexTrade()
   struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, name_traded);
   id_contract = pfuture->fco_propertyId;
 
-  (pfuture->fco_prop_type == ALL_PROPERTY_TYPE_CONTRACT) ? result = 4 : result = 5;
+  (pfuture->fco_prop_type == ALL_PROPERTY_TYPE_CONTRACT) ? result = 5 : result = 6;
 
   if(!t_tradelistdb->checkKYCRegister(sender,result))
   {
@@ -3488,7 +3488,7 @@ int CMPTransaction::logicMath_TradeOffer()
     //   return (PKT_ERROR_TRADEOFFER -22);
     // }
 
-    if(!t_tradelistdb->checkKYCRegister(sender,3))
+    if(!t_tradelistdb->checkKYCRegister(sender,4))
     {
         PrintToLog("%s: tx disable from kyc register!\n",__func__);
         return (PKT_ERROR_TRADEOFFER -22);
@@ -3589,7 +3589,7 @@ int CMPTransaction::logicMath_DExBuy()
     //   return (PKT_ERROR_TRADEOFFER -22);
     // }
 
-    if(!t_tradelistdb->checkKYCRegister(sender,3))
+    if(!t_tradelistdb->checkKYCRegister(sender,4))
     {
         PrintToLog("%s: tx disable from kyc register!\n",__func__);
         return (PKT_ERROR_TRADEOFFER -22);
@@ -3684,7 +3684,7 @@ int CMPTransaction::logicMath_AcceptOfferBTC()
   // the min fee spec requirement is checked in the following function
   int rc = DEx_acceptCreate(sender, receiver, propertyId, nValue, block, tx_fee_paid, &nNewValue);
 
-  if(!t_tradelistdb->checkKYCRegister(sender,3) || !t_tradelistdb->checkKYCRegister(receiver,3))
+  if(!t_tradelistdb->checkKYCRegister(sender,4) || !t_tradelistdb->checkKYCRegister(receiver,4))
   {
       PrintToLog("%s: tx disable from kyc register!\n",__func__);
       return (PKT_ERROR_TRADEOFFER -22);
@@ -4501,12 +4501,22 @@ int CMPTransaction::logicMath_Contract_Instant()
 
 
   if (block > sp.init_block + static_cast<int>(sp.blocks_until_expiration) || block < sp.init_block)
-    {
+  {
       int initblock = sp.init_block ;
       int deadline = initblock + static_cast<int>(sp.blocks_until_expiration);
       PrintToLog("\nTrade out of deadline!!: actual block: %d, deadline: %d\n",initblock,deadline);
       return PKT_ERROR_SP -38;
-    }
+  }
+
+  int result;
+
+  (sp.prop_type == ALL_PROPERTY_TYPE_CONTRACT) ? result = 5 : result = 6;
+
+  if(!t_tradelistdb->checkKYCRegister(sender,result))
+  {
+      PrintToLog("%s: tx disable from kyc register!\n",__func__);
+      return PKT_ERROR_SP -39;
+  }
 
   uint32_t colateralh = sp.collateral_currency;
   int64_t marginRe = static_cast<int64_t>(sp.margin_requirement);
@@ -4521,15 +4531,12 @@ int CMPTransaction::logicMath_Contract_Instant()
 
   PrintToLog("%s: AmountToReserve: %d, channel Balance: %d\n", __func__, amountToReserve,nBalance);
 
-
   //fees
   if(!mastercore::ContInst_Fees(chnAddrs.first, chnAddrs.second, chnAddrs.multisig, amountToReserve, sp.prop_type, sp.collateral_currency))
   {
       PrintToLog("\n %s: no enogh money to pay fees\n", __func__);
-      return PKT_ERROR_SP -39;
-
+      return PKT_ERROR_SP -40;
   }
-
 
   if (nBalance < (2 * amountToReserve) || nBalance == 0)
   {
@@ -4539,17 +4546,17 @@ int CMPTransaction::logicMath_Contract_Instant()
       colateralh,
       FormatMP(colateralh, nBalance),
       FormatMP(colateralh, amountToReserve));
-      return (PKT_ERROR_SEND -27);
-   }
-   else {
+      return (PKT_ERROR_SEND -41);
+  }
+  else {
 
-       if (amountToReserve > 0)
+      if (amountToReserve > 0)
        {
            assert(update_tally_map(sender, colateralh, -amountToReserve, CHANNEL_RESERVE));
            assert(update_tally_map(chnAddrs.first, colateralh, ConvertTo64(amountTR), CONTRACTDEX_MARGIN));
            assert(update_tally_map(chnAddrs.second, colateralh, ConvertTo64(amountTR), CONTRACTDEX_MARGIN));
        }
-   }
+  }
 
    /*********************************************/
    /**Logic for Node Reward**/
@@ -4615,8 +4622,9 @@ int CMPTransaction::logicMath_New_Id_Registration()
   // }
 
   // ---------------------------------------
-
-  t_tradelistdb->recordNewIdRegister(txid, sender, website, company_name, tokens, ltc, natives, oracles, block, tx_idx);
+  PrintToLog("%s(): channelAddres in register: %s \n",__func__,receiver);
+  
+  t_tradelistdb->recordNewIdRegister(txid, receiver, website, company_name, tokens, ltc, natives, oracles, block, tx_idx);
 
   // std::string dummy = "1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P";
   // t_tradelistdb->updateIdRegister(txid,sender, dummy,block, tx_idx);
