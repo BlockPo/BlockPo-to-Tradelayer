@@ -1784,7 +1784,7 @@ bool CMPTransaction::interpret_Contract_Instant()
   } else return false;
 
   if (!vecAmount.empty()) {
-      amount_forsale = DecompressInteger(vecAmount);
+      instant_amount = DecompressInteger(vecAmount);
   } else return false;
 
   if (!vecBlock.empty()) {
@@ -1806,7 +1806,7 @@ bool CMPTransaction::interpret_Contract_Instant()
   PrintToLog("version: %d\n", version);
   PrintToLog("messageType: %d\n",type);
   PrintToLog("property: %d\n", property);
-  PrintToLog("amount : %d\n", amount_forsale);
+  PrintToLog("amount : %d\n", instant_amount);
   PrintToLog("blockfor_expiry : %d\n", block_forexpiry);
   PrintToLog("price : %d\n", price);
   PrintToLog("trading action : %d\n", itrading_action);
@@ -4246,7 +4246,7 @@ int CMPTransaction::logicMath_Instant_Trade()
   channel chnAddrs = t_tradelistdb->getChannelAddresses(sender);
 
   if (sender.empty() && chnAddrs.first.empty() && chnAddrs.second.empty()) {
-      PrintToLog("%s(): rejected: some address doesn't belong to multisig channel\n", __func__);
+      PrintToLog("%s(): rejected: some address doesn't belong to multisig channel \n", __func__);
       return (PKT_ERROR_TOKENS -25);
   }
 
@@ -4516,14 +4516,14 @@ int CMPTransaction::logicMath_Contract_Instant()
   rational_t conv = rational_t(1,1);
   int64_t num = conv.numerator().convert_to<int64_t>();
   int64_t den = conv.denominator().convert_to<int64_t>();
-  arith_uint256 amountTR = (ConvertTo256(amount)*ConvertTo256(marginRe)*ConvertTo256(num))/(ConvertTo256(den)*ConvertTo256(ileverage));
+  arith_uint256 amountTR = (ConvertTo256(instant_amount)*ConvertTo256(marginRe)*ConvertTo256(num))/(ConvertTo256(den)*ConvertTo256(ileverage));
   int64_t amountToReserve = ConvertTo64(amountTR);
 
   PrintToLog("%s: AmountToReserve: %d, channel Balance: %d\n", __func__, amountToReserve,nBalance);
 
 
   //fees
-  if(!mastercore::ContInst_Fees(chnAddrs.first, chnAddrs.second, chnAddrs.multisig, amountToReserve, contractId))
+  if(!mastercore::ContInst_Fees(chnAddrs.first, chnAddrs.second, chnAddrs.multisig, amountToReserve, sp.prop_type, sp.collateral_currency))
   {
       PrintToLog("\n %s: no enogh money to pay fees\n", __func__);
       return PKT_ERROR_SP -39;
@@ -4578,7 +4578,7 @@ int CMPTransaction::logicMath_Contract_Instant()
 
    }
 
-   mastercore::Instant_x_Trade(txid, itrading_action, chnAddrs.multisig, chnAddrs.first, chnAddrs.second, property, amount_forsale, price, block, tx_idx);
+   mastercore::Instant_x_Trade(txid, itrading_action, chnAddrs.multisig, chnAddrs.first, chnAddrs.second, property, instant_amount, price, block, tx_idx);
 
    // t_tradelistdb->recordNewInstContTrade(txid, receiver, sender, propertyId, amount_commited, block, tx_idx);
    // NOTE: add discount from channel of fees + amountToReserve

@@ -142,7 +142,7 @@ private:
     uint64_t price;
     uint64_t ileverage;
     uint64_t itrading_action;
-
+    uint64_t instant_amount;
     //KYC
     char company_name[SP_STRING_FIELD_LEN];
     char website[SP_STRING_FIELD_LEN];
@@ -404,6 +404,7 @@ public:
         pnl_amount= 0;
         ileverage = 0;
         itrading_action = 0;
+        instant_amount = 0;
 
         //Kyc
         tokens = 0;

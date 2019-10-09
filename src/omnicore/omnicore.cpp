@@ -5127,12 +5127,12 @@ const std::string ExodusAddress()
 
        uint64_t amount = boost::lexical_cast<uint64_t>(vstr[3]);
 
-       // PrintToLog("(%s): amount: %d\n",__func__, amount);
+       PrintToLog("%s(): amount: %d\n",__func__, amount);
 
 
        std::string type = vstr[6];
 
-       // PrintToLog("(%s): type : %s\n",__func__, type);
+       PrintToLog("%s(): type : %s\n",__func__, type);
 
        (type == TYPE_COMMIT) ? sumCommits += amount : sumWithdr += amount;
 
@@ -5522,30 +5522,28 @@ std::string updateStatus(int64_t oldPos, int64_t newPos)
         return "None";
 }
 
-bool mastercore::ContInst_Fees(const std::string& firstAddr,const std::string& secondAddr,const std::string& channelAddr, int64_t amountToReserve,uint32_t contractId)
+bool mastercore::ContInst_Fees(const std::string& firstAddr,const std::string& secondAddr,const std::string& channelAddr, int64_t amountToReserve,uint16_t type, uint32_t colateral)
 {
     arith_uint256 fee;
-
-    CMPSPInfo::Entry sp;
-    if (!_my_sps->getSP(contractId, sp))
-       return false;
 
     // int64_t marginRe = static_cast<int64_t>(sp.margin_requirement);
 
     PrintToLog("%s: firstAddr: %d\n", __func__, firstAddr);
     PrintToLog("%s: secondAddr: %d\n", __func__, secondAddr);
     PrintToLog("%s: amountToReserve: %d\n", __func__, amountToReserve);
-    PrintToLog("%s: contractId: %d\n", __func__,contractId);
+    PrintToLog("%s: colateral: %d\n", __func__,colateral);
 
-    if (sp.prop_type == ALL_PROPERTY_TYPE_CONTRACT)
+    if (type == ALL_PROPERTY_TYPE_CONTRACT)
     {
         // 0.5% minus for firstAddr, 0.5% minus for secondAddr
         fee = (ConvertTo256(amountToReserve) * ConvertTo256(5)) / ConvertTo256(1000);
 
-    } else if (sp.prop_type == ALL_PROPERTY_TYPE_ORACLE_CONTRACT){
+    } else if (type == ALL_PROPERTY_TYPE_ORACLE_CONTRACT){
         // 1.25% minus each
         fee = (ConvertTo256(amountToReserve) * ConvertTo256(5)) / (ConvertTo256(4000) * ConvertTo256(COIN));
     }
+
+    PrintToLog("%s: checkpoin 1\n",__func__);
 
     int64_t uFee = ConvertTo64(fee);
 
@@ -5553,31 +5551,38 @@ bool mastercore::ContInst_Fees(const std::string& firstAddr,const std::string& s
     // checking if each address can pay the totalAmount + uFee:
 
     int64_t totalAmount = uFee + amountToReserve;
-    int64_t firstRem = static_cast<int64_t>(t_tradelistdb->getRemaining(channelAddr, firstAddr,sp.collateral_currency));
+    int64_t firstRem = static_cast<int64_t>(t_tradelistdb->getRemaining(channelAddr, firstAddr, colateral));
+
+    PrintToLog("%s: checkpoin 2\n",__func__);
 
     if (firstRem < totalAmount)
     {
-            PrintToLog("%s:address %s doesn't have enough money %d\n", __func__, firstAddr);
+            PrintToLog("%s():address %s doesn't have enough money\n", __func__, firstAddr);
+            PrintToLog("%s(): firstRem (%d) < totalAmount (%d)\n", __func__, firstRem, totalAmount);
             return false;
     }
 
-    int64_t secondRem = static_cast<int64_t>(t_tradelistdb->getRemaining(channelAddr, secondAddr,sp.collateral_currency));
+    PrintToLog("%s: checkpoin 3\n",__func__);
+
+    int64_t secondRem = static_cast<int64_t>(t_tradelistdb->getRemaining(channelAddr, secondAddr, colateral));
 
     if (secondRem < totalAmount)
     {
-            PrintToLog("%s:address %s doesn't have enough money %d\n", __func__, secondAddr);
+            PrintToLog("%s():address %s doesn't have enough money \n", __func__, secondAddr);
+            PrintToLog("%s(): secondRem (%d) < totalAmount (%d)\n", __func__, secondRem, totalAmount);
             return false;
     }
 
-
+    PrintToLog("%s: checkpoin 4\n",__func__);
     PrintToLog("%s: uFee: %d\n",__func__,uFee);
 
-    update_tally_map(channelAddr, sp.collateral_currency, -2*uFee, CHANNEL_RESERVE);
+    update_tally_map(channelAddr, colateral, -2*uFee, CHANNEL_RESERVE);
 
+    PrintToLog("%s: checkpoin 5\n",__func__);
     // % to feecache
-    cachefees[sp.collateral_currency] += 2*uFee;
+    cachefees[colateral] += 2*uFee;
 
-
+    PrintToLog("%s: checkpoin 6\n",__func__);
     return true;
 }
 
