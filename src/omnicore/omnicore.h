@@ -119,6 +119,8 @@ enum TransactionType {
   MSC_TYPE_TRANSFER                   = 112,
   MSC_TYPE_CREATE_CHANNEL             = 113,
   MSC_TYPE_CONTRACT_INSTANT           = 114,
+  MSC_TYPE_NEW_ID_REGISTRATION        = 115,
+  MSC_TYPE_UPDATE_ID_REGISTRATION     = 116,
   ////////////////////////////////////
 
 };
@@ -191,6 +193,7 @@ enum FILETYPES {
 #define TYPE_TRANSFER  "transfer"
 #define TYPE_CONTRACT_INSTANT_TRADE "contract_instat_trade"
 #define TYPE_CREATE_CHANNEL "create channel"
+#define TYPE_NEW_ID_REGISTER "new id register"
 
 // Currency in existance (options for createcontract)
 uint32_t const TL_dUSD  = 1;
@@ -372,6 +375,7 @@ class CMPTradeList : public CDBBase
   void recordNewInstantTrade(const uint256& txid, const std::string& sender, const std::string& receiver, uint32_t propertyIdForSale, uint64_t amount_forsale, uint32_t propertyIdDesired, uint64_t amount_desired, int blockNum, int blockIndex);
   void recordNewTransfer(const uint256& txid, const std::string& sender, const std::string& receiver, uint32_t propertyId, uint64_t amount, int blockNum, int blockIndex);
   void recordNewInstContTrade(const uint256& txid, const std::string& firstAddr, const std::string& secondAddr, uint32_t property, uint64_t amount_forsale, uint64_t price ,int blockNum, int blockIndex);
+  void recordNewIdRegister(const uint256& txid, const std::string& address, const std::string& website, const std::string& name, uint8_t tokens, uint8_t ltc, uint8_t natives, uint8_t oracles, int blockNum, int blockIndex);
 
   bool getAllCommits(const std::string& senderAddress, UniValue& tradeArray);
   bool getAllWithdrawals(const std::string& senderAddress, UniValue& tradeArray);
@@ -380,6 +384,8 @@ class CMPTradeList : public CDBBase
   channel getChannelAddresses(const std::string& channelAddress);
   bool checkChannelRelation(const std::string& address, std::string& channelAddr);
   uint64_t getRemaining(const std::string& channelAddress, const std::string& senderAddress, uint32_t propertyId);
+  bool updateIdRegister(const uint256& txid, const std::string& address, const std::string& newAddr, int blockNum, int blockIndex);
+  bool checkKYCRegister(const std::string& address, int registered);
 
   int deleteAboveBlock(int blockNum);
   bool exists(const uint256 &txid);
@@ -403,6 +409,7 @@ class CMPTradeList : public CDBBase
   void getTradesForAddress(std::string address, std::vector<uint256>& vecTransactions, uint32_t propertyIdFilter = 0);
   void getTradesForPair(uint32_t propertyIdSideA, uint32_t propertyIdSideB, UniValue& response, uint64_t count);
   int getMPTradeCountTotal();
+  int getNextId();
 };
 
 class CMPSettlementMatchList : public CDBBase
@@ -535,7 +542,7 @@ namespace mastercore
   bool Instant_x_Trade(const uint256& txid, uint8_t tradingAction, std::string& channelAddr, std::string& firstAddr, std::string& secondAddr, uint32_t property, int64_t amount_forsale, uint64_t price, int block, int tx_idx);
 
   //Fees for contract instant trades
-  bool ContInst_Fees(const std::string& firstAdrr,const std::string& secondAddr,const std::string& channelAddr, int64_t amountToReserve, uint32_t contractId);
+  bool ContInst_Fees(const std::string& firstAddr,const std::string& secondAddr,const std::string& channelAddr, int64_t amountToReserve,uint16_t type, uint32_t colateral);
 
 }
 

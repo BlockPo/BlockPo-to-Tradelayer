@@ -1975,6 +1975,103 @@ UniValue tl_create_channel(const JSONRPCRequest& request)
     }
 }
 
+UniValue tl_new_id_registration(const JSONRPCRequest& request)
+{
+    if (request.params.size() != 8)
+        throw runtime_error(
+            "tl_new_id_registration \"sender\" \"address\" \"website url\" \"company name\" \n"
+
+            "\nsetting identity registrar Id number for address.\n"
+
+            "\nArguments:\n"
+            "1. sender                       (string, required) sender address\n"
+            "2. channel address              (string, required) channel address\n"
+            "3. website url                  (string, required) the second address that commit into the channel\n"
+            "4. company name                 (string, required) multisig address of channel\n"
+            "5. token/token permission       (int, required) trading token for tokens (0 = false, 1 = true)\n"
+            "6. ltc/token permission         (int, required) trading litecoins for tokens (0 = false, 1 = true)\n"
+            "7. native-contract permission   (int, required) trading native contracts (0 = false, 1 = true)\n"
+            "8. oracle-contract permission   (int, required) trading oracle contracts (0 = false, 1 = true)\n"
+
+            "\nResult:\n"
+            "\"hash\"                  (string) the hex-encoded transaction hash\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("tl_new_id_registration", "\"1M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\" \"www.companyone.com\" company one , 1,0,0,0 \"")
+            + HelpExampleRpc("tl_new_id_registration", "\"1M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\", \"www.companyone.com\",company one, 1,1,0,0 \"")
+        );
+
+    // obtain parameters & info
+    std::string sender = ParseAddress(request.params[0]);
+    std::string address = ParseAddress(request.params[1]);
+    std::string website = ParseText(request.params[2]);
+    std::string name = ParseText(request.params[3]);
+    uint8_t tokens = ParsePermission(request.params[4]);
+    uint8_t ltc = ParsePermission(request.params[5]);
+    uint8_t natives = ParsePermission(request.params[6]);
+    uint8_t oracles = ParsePermission(request.params[7]);
+
+    // create a payload for the transaction
+    std::vector<unsigned char> payload = CreatePayload_New_Id_Registration(website, name, tokens, ltc, natives, oracles);
+
+    // request the wallet build the transaction (and if needed commit it)
+    uint256 txid;
+    std::string rawHex;
+    int result = WalletTxBuilder(sender, address, 0, payload, txid, rawHex, autoCommit);
+    // check error and return the txid (or raw hex depending on autocommit)
+    if (result != 0) {
+        throw JSONRPCError(result, error_str(result));
+    } else {
+        if (!autoCommit) {
+            return rawHex;
+        } else {
+            return txid.GetHex();
+        }
+    }
+}
+
+UniValue tl_update_id_registration(const JSONRPCRequest& request)
+{
+    if (request.params.size() != 2)
+        throw runtime_error(
+            "tl_update_id_registration \"address\" \"new address\" \n"
+
+            "\nupdate the address on id registration.\n"
+
+            "\nArguments:\n"
+            "1. address                      (string, required) old address registered\n"
+            "2. new address                  (string, required) new address into register\n"
+
+            "\nResult:\n"
+            "\"hash\"                  (string) the hex-encoded transaction hash\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("tl_update_id_registration", "\"1M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\" , \"1M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\"")
+            + HelpExampleRpc("tl_update_id_registration", "\"1M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\",  \"1M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\"")
+        );
+
+    // obtain parameters & info
+    std::string address = ParseAddress(request.params[0]);
+    std::string newAddr = ParseAddress(request.params[1]);
+    // create a payload for the transaction
+    std::vector<unsigned char> payload = CreatePayload_Update_Id_Registration();
+
+    // request the wallet build the transaction (and if needed commit it)
+    uint256 txid;
+    std::string rawHex;
+    int result = WalletTxBuilder(address, newAddr, 0, payload, txid, rawHex, autoCommit);
+    // check error and return the txid (or raw hex depending on autocommit)
+    if (result != 0) {
+        throw JSONRPCError(result, error_str(result));
+    } else {
+        if (!autoCommit) {
+            return rawHex;
+        } else {
+            return txid.GetHex();
+        }
+    }
+}
+
 // UniValue tl_setexodus(const JSONRPCRequest& request)
 // {
 //     if (request.params.size() < 1 )
@@ -2041,6 +2138,8 @@ static const CRPCCommand commands[] =
     { "trade layer (transaction creation)", "tl_withdrawal_fromchannel",       &tl_withdrawal_fromchannel,          {} },
     { "trade layer (transaction creation)", "tl_create_channel",               &tl_create_channel,                  {} },
     { "trade layer (transaction creation)", "tl_setexodus",                    &tl_setexodus,                       {} },
+    { "trade layer (transaction cration)",  "tl_new_id_registration",          &tl_new_id_registration,             {} },
+    { "trade layer (transaction cration)",  "tl_update_id_registration",      &tl_update_id_registration,         {} },
     { "trade layer (transaction creation)", "tl_commit_tochannel",             &tl_commit_tochannel,                {} }
 #endif
 };

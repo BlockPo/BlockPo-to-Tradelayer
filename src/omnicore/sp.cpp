@@ -71,6 +71,16 @@ bool CMPSPInfo::Entry::isContract() const
   return false;
 }
 
+bool CMPSPInfo::Entry::isOracle() const
+{
+  switch (prop_type)
+    {
+    case ALL_PROPERTY_TYPE_ORACLE_CONTRACT:
+      return true;
+    }
+  return false;
+}
+
 bool CMPSPInfo::Entry::isPegged() const
 {
   switch (prop_type)

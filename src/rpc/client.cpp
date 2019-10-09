@@ -274,6 +274,13 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_withdrawal_fromchannel", 2, "arg2" },
     { "tl_withdrawal_fromchannel", 4, "arg4" },
     { "tl_create_channel", 3, "arg3" },
+    { "tl_new_id_registration", 4, "arg3" },
+    { "tl_new_id_registration", 5, "arg4" },
+    { "tl_new_id_registration", 6, "arg5" },
+    { "tl_new_id_registration", 7, "arg6" },
+
+
+
 
     /* Trade Layer - data retrieval calls */
     { "tl_setautocommit", 0, "arg0" },
@@ -304,7 +311,8 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_getmarketprice", 0, "arg0" },
     {"tl_getaverage_entry",1,"arg1" },
     { "tl_getcache", 0, "arg0" }, // NOTE: only to test persistence
-    { "tl_get_channelreserve", 1, "arg1" }
+    { "tl_get_channelreserve", 1, "arg1" },
+    { "tl_check_kyc", 1, "arg1" }
 
 };
 

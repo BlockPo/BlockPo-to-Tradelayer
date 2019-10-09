@@ -142,8 +142,12 @@ private:
     uint64_t price;
     uint64_t ileverage;
     uint64_t itrading_action;
-
+    uint64_t instant_amount;
+    //KYC
+    char company_name[SP_STRING_FIELD_LEN];
+    char website[SP_STRING_FIELD_LEN];
     int block_forexpiry;
+    uint8_t tokens, ltc, natives, oracles;
 
 
     // Indicates whether the transaction can be used to execute logic
@@ -201,6 +205,8 @@ private:
     bool interpret_Transfer();
     bool interpret_Create_Channel();
     bool interpret_Contract_Instant();
+    bool interpret_New_Id_Registration();
+    bool interpret_Update_Id_Registration();
     ///////////////////////////////////////////////
 
     /**
@@ -244,6 +250,8 @@ private:
     int logicMath_Transfer();
     int logicMath_Create_Channel();
     int logicMath_Contract_Instant();
+    int logicMath_New_Id_Registration();
+    int logicMath_Update_Id_Registration();
     ///////////////////////////////////////////////
 
     /**
@@ -355,6 +363,8 @@ public:
         memset(&stxid, 0, sizeof(stxid));
 	      memset(&name_traded, 0, sizeof(name_traded));
         memset(&channel_address, 0, sizeof(channel_address));
+        memset(&website, 0, sizeof(website));
+        memset(&company_name, 0, sizeof(company_name));
         deadline = 0;
         early_bird = 0;
         percentage = 0;
@@ -394,7 +404,13 @@ public:
         pnl_amount= 0;
         ileverage = 0;
         itrading_action = 0;
+        instant_amount = 0;
 
+        //Kyc
+        tokens = 0;
+        ltc = 0;
+        natives = 0;
+        oracles = 0;
         ////////////////////////////////////
     }
 
@@ -452,6 +468,7 @@ struct FutureContractObject
   uint32_t fco_collateral_currency;
   uint32_t fco_margin_requirement;
   uint32_t fco_propertyId;
+  uint16_t fco_prop_type;
 
   int fco_init_block;
   std::string fco_name;

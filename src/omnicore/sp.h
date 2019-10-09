@@ -167,6 +167,7 @@ public:
         void print() const;
       	bool isContract() const;
         bool isPegged() const;
+        bool isOracle() const;
     };
 
  private:
