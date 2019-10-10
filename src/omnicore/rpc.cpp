@@ -102,6 +102,39 @@ void PropertyToJSON(const CMPSPInfo::Entry& sProperty, UniValue& property_obj)
     property_obj.push_back(Pair("subcategory", sProperty.subcategory));
 }
 
+void ContractToJSON(const CMPSPInfo::Entry& sProperty, UniValue& property_obj)
+{
+  property_obj.push_back(Pair("name", sProperty.name));
+  property_obj.push_back(Pair("data", sProperty.data));
+  property_obj.push_back(Pair("url", sProperty.url));
+  property_obj.push_back(Pair("issuer", sProperty.issuer));
+  property_obj.push_back(Pair("creationtxid", sProperty.txid.GetHex()));
+  property_obj.push_back(Pair("creation block", sProperty.init_block));
+  property_obj.push_back(Pair("notional size", FormatDivisibleShortMP(sProperty.notional_size)));
+  property_obj.push_back(Pair("collateral currency", std::to_string(sProperty.collateral_currency)));
+  property_obj.push_back(Pair("margin requirement", FormatDivisibleShortMP(sProperty.margin_requirement)));
+  property_obj.push_back(Pair("blocks until expiration", std::to_string(sProperty.blocks_until_expiration)));
+
+}
+
+
+void OracleToJSON(const CMPSPInfo::Entry& sProperty, UniValue& property_obj)
+{
+  property_obj.push_back(Pair("name", sProperty.name));
+  property_obj.push_back(Pair("data", sProperty.data));
+  property_obj.push_back(Pair("url", sProperty.url));
+  property_obj.push_back(Pair("issuer", sProperty.issuer));
+  property_obj.push_back(Pair("creationtxid", sProperty.txid.GetHex()));
+  property_obj.push_back(Pair("creation block", sProperty.init_block));
+  property_obj.push_back(Pair("notional size", FormatDivisibleShortMP(sProperty.notional_size)));
+  property_obj.push_back(Pair("collateral currency", std::to_string(sProperty.collateral_currency)));
+  property_obj.push_back(Pair("margin requirement", FormatDivisibleShortMP(sProperty.margin_requirement)));
+  property_obj.push_back(Pair("blocks until expiration", std::to_string(sProperty.blocks_until_expiration)));
+  property_obj.push_back(Pair("last high price", std::to_string(sProperty.oracle_high)));
+  property_obj.push_back(Pair("last low price", std::to_string(sProperty.oracle_low)));
+  property_obj.push_back(Pair("last update block", std::to_string(sProperty.oracle_last_update)));
+}
+
 bool BalanceToJSON(const std::string& address, uint32_t property, UniValue& balance_obj, bool divisible)
 {
     // confirmed balance minus unconfirmed, spent amounts
@@ -837,6 +870,124 @@ UniValue tl_listproperties(const JSONRPCRequest& request)
       response.push_back(propertyObj);
     }
   }
+  return response;
+}
+
+UniValue tl_list_natives(const JSONRPCRequest& request)
+{
+  if (false) //TODO: put fHelp boolean
+    throw runtime_error(
+			"tl_listnatives\n"
+			"\nLists all native contracts.\n"
+			"\nResult:\n"
+			"[                                (array of JSON objects)\n"
+			"  {\n"
+			"    \"propertyid\" : n,                (number) the identifier of the tokens\n"
+			"    \"name\" : \"name\",                 (string) the name of the tokens\n"
+			"    \"data\" : \"information\",          (string) additional information or a description\n"
+			"    \"url\" : \"uri\",                   (string) an URI, for example pointing to a website\n"
+			"  },\n"
+			"  ...\n"
+			"]\n"
+			"\nExamples:\n"
+			+ HelpExampleCli("tl_list_natives", "")
+			+ HelpExampleRpc("tl_list_natives", "")
+			);
+
+  UniValue response(UniValue::VARR);
+
+  LOCK(cs_tally);
+
+  uint32_t nextSPID = _my_sps->peekNextSPID(1);
+  for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++) {
+    CMPSPInfo::Entry sp;
+
+    if (_my_sps->getSP(propertyId, sp))
+    {
+      if(sp.prop_type != ALL_PROPERTY_TYPE_CONTRACT)
+          continue;
+
+      UniValue propertyObj(UniValue::VOBJ);
+      propertyObj.push_back(Pair("propertyid", (uint64_t) propertyId));
+      ContractToJSON(sp, propertyObj); // name, data, url,...
+      response.push_back(propertyObj);
+    }
+  }
+
+  uint32_t nextTestSPID = _my_sps->peekNextSPID(2);
+  for (uint32_t propertyId = TEST_ECO_PROPERTY_1; propertyId < nextTestSPID; propertyId++) {
+    CMPSPInfo::Entry sp;
+    if (_my_sps->getSP(propertyId, sp)) {
+
+      if(sp.prop_type != ALL_PROPERTY_TYPE_CONTRACT)
+          continue;
+
+      UniValue propertyObj(UniValue::VOBJ);
+      propertyObj.push_back(Pair("propertyid", (uint64_t) propertyId));
+      ContractToJSON(sp, propertyObj);
+      response.push_back(propertyObj);
+    }
+  }
+
+  return response;
+}
+
+UniValue tl_list_oracles(const JSONRPCRequest& request)
+{
+  if (false) //TODO: put fHelp boolean
+    throw runtime_error(
+			"tl_list_oracles\n"
+			"\nLists all oracles contracts.\n"
+			"\nResult:\n"
+			"[                                (array of JSON objects)\n"
+			"  {\n"
+			"    \"propertyid\" : n,                (number) the identifier of the tokens\n"
+			"    \"name\" : \"name\",                 (string) the name of the tokens\n"
+			"    \"data\" : \"information\",          (string) additional information or a description\n"
+			"    \"url\" : \"uri\",                   (string) an URI, for example pointing to a website\n"
+			"  },\n"
+			"  ...\n"
+			"]\n"
+			"\nExamples:\n"
+			+ HelpExampleCli("tl_list_natives", "")
+			+ HelpExampleRpc("tl_list_natives", "")
+			);
+
+  UniValue response(UniValue::VARR);
+
+  LOCK(cs_tally);
+
+  uint32_t nextSPID = _my_sps->peekNextSPID(1);
+  for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++) {
+    CMPSPInfo::Entry sp;
+
+    if (_my_sps->getSP(propertyId, sp))
+    {
+      if(sp.prop_type != ALL_PROPERTY_TYPE_ORACLE_CONTRACT)
+          continue;
+
+      UniValue propertyObj(UniValue::VOBJ);
+      propertyObj.push_back(Pair("propertyid", (uint64_t) propertyId));
+      OracleToJSON(sp, propertyObj); // name, data, url,...
+      response.push_back(propertyObj);
+    }
+  }
+
+  uint32_t nextTestSPID = _my_sps->peekNextSPID(2);
+  for (uint32_t propertyId = TEST_ECO_PROPERTY_1; propertyId < nextTestSPID; propertyId++) {
+    CMPSPInfo::Entry sp;
+    if (_my_sps->getSP(propertyId, sp)) {
+
+      if(sp.prop_type != ALL_PROPERTY_TYPE_ORACLE_CONTRACT)
+          continue;
+
+      UniValue propertyObj(UniValue::VOBJ);
+      propertyObj.push_back(Pair("propertyid", (uint64_t) propertyId));
+      OracleToJSON(sp, propertyObj);
+      response.push_back(propertyObj);
+    }
+  }
+
   return response;
 }
 
@@ -2532,6 +2683,8 @@ static const CRPCCommand commands[] =
   { "trade layer (data retieval)" , "tl_getchannel_info",           &tl_getchannel_info,            {} },
   { "trade layer (data retieval)" , "tl_getcache",                  &tl_getcache,                   {} },
   { "trade layer (data retieval)" , "tl_check_kyc",                 &tl_check_kyc,                  {} },
+  { "trade layer (data retieval)" , "tl_list_natives",              &tl_list_natives,               {} },
+  { "trade layer (data retieval)" , "tl_list_oracles",              &tl_list_oracles,               {} },
   { "trade layer (data retieval)" , "tl_check_withdrawals",         &tl_check_withdrawals,          {} }
 };
 
