@@ -1866,7 +1866,7 @@ bool CMPTransaction::interpret_Contract_Instant()
   if (!vecLeverage.empty()) {
       ileverage = DecompressInteger(vecLeverage);
   } else return false;
-  
+
   if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
   {
       PrintToLog("\t version: %d\n", version);
@@ -1940,7 +1940,7 @@ bool CMPTransaction::interpret_New_Id_Registration()
       PrintToLog("\t natives: %d\n", __func__, natives);
       PrintToLog("\t oracles: %d\n", __func__, oracles);
   }
-  
+
   return true;
 }
 
@@ -3000,11 +3000,6 @@ int CMPTransaction::logicMath_CreateContractDex()
       blockHash = pindex->GetBlockHash();
   }
 
-  // if (OMNI_PROPERTY_ALL != ecosystem && OMNI_PROPERTY_TALL != ecosystem) {
-  //     PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, (uint32_t) ecosystem);
-  //     return (PKT_ERROR_SP -21);
-  // }
-
   // if (!IsTransactionTypeAllowed(block, ecosystem, type, version)) {
   //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
   //         __func__,
@@ -3083,25 +3078,18 @@ int CMPTransaction::logicMath_ContractDexTrade()
   (pfuture->fco_prop_type == ALL_PROPERTY_TYPE_CONTRACT) ? result = 5 : result = 6;
 
   if(!t_tradelistdb->checkKYCRegister(sender,result))
-  {
-      PrintToLog("%s: tx disable from kyc register!\n",__func__);
-      return PKT_ERROR_SP -37;
-  }
+      return PKT_ERROR_KYC -10;
+
 
   if (block > pfuture->fco_init_block + static_cast<int>(pfuture->fco_blocks_until_expiration) || block < pfuture->fco_init_block)
-    {
-      PrintToLog("\nTrade out of deadline!!\n");
       return PKT_ERROR_SP -38;
-    }
 
   uint32_t colateralh = pfuture->fco_collateral_currency;
   int64_t marginRe = static_cast<int64_t>(pfuture->fco_margin_requirement);
   int64_t nBalance = getMPbalance(sender, colateralh, BALANCE);
 
-  // PrintToLog("inside ContractDexTrade id_contract: %d\n",id_contract);
-  PrintToLog("inside ContractDexTrade colateralh: %d\n",colateralh);
-  PrintToLog("inside ContractDexTrade marginRe: %d\n",marginRe);
-  PrintToLog("inside ContractDexTrade nBalance: %d\n",nBalance);
+  if(msc_debug_contractdex_tx) PrintToLog("%s():colateralh: %d, marginRe: %d, nBalance: %d\n",__func__, colateralh, marginRe, nBalance);
+
   // // rational_t conv = notionalChange(pfuture->fco_propertyId);
 
   rational_t conv = rational_t(1,1);
@@ -3146,7 +3134,6 @@ int CMPTransaction::logicMath_ContractDexTrade()
   t_tradelistdb->recordNewTrade(txid, sender, id_contract, desired_property, block, tx_idx, 0);
   int rc = ContractDex_ADD(sender, id_contract, amount, block, txid, tx_idx, effective_price, trading_action,0);
 
-  PrintToLog("\n\nEnd of Logic ContracttDExTrade\n\n");
   return rc;
 }
 
@@ -3160,19 +3147,17 @@ int CMPTransaction::logicMath_ContractDexCancelEcosystem()
 	       version,
 	       property,
 	       block);
-    return (PKT_ERROR_METADEX -22);
+    return (PKT_ERROR_CONTRACTDEX -20);
   }
 
   if (OMNI_PROPERTY_ALL != ecosystem && OMNI_PROPERTY_TALL != ecosystem) {
     PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, ecosystem);
-    PrintToLog("rejected: invalid ecosystem %d\n",ecosystem);
-    return (PKT_ERROR_METADEX -21);
+    return (PKT_ERROR_SP -21);
   }
 
   struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, name_traded);
   uint32_t contractId = pfuture->fco_propertyId;
 
-  PrintToLog("Inside the logicMath_ContractDexCancelEcosystem!!!!!\n");
   int rc = ContractDex_CANCEL_EVERYTHING(txid, block, sender, ecosystem, contractId);
 
   return rc;
@@ -3188,13 +3173,12 @@ int CMPTransaction::logicMath_ContractDexClosePosition()
             version,
             property,
             block);
-        return (PKT_ERROR_METADEX -22);
+        return (PKT_ERROR_CONTRACTDEX -20);
     }
 
     if (OMNI_PROPERTY_ALL != ecosystem && OMNI_PROPERTY_TALL != ecosystem) {
         PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, ecosystem);
-        PrintToLog("rejected: invalid ecosystem %d\n",ecosystem);
-        return (PKT_ERROR_METADEX -21);
+        return (PKT_ERROR_SP -21);
     }
 
     CMPSPInfo::Entry sp;
@@ -3205,8 +3189,7 @@ int CMPTransaction::logicMath_ContractDexClosePosition()
                 __func__,
                 sender,
                 contractId);
-                PrintToLog("Property identifier no exist\n");
-            return (PKT_ERROR_SEND -25);
+            return (PKT_ERROR_SEND -24);
         }
     }
 
@@ -3228,16 +3211,14 @@ int CMPTransaction::logicMath_ContractDex_Cancel_Orders_By_Block()
     //  return (PKT_ERROR_METADEX -22);
   // }
 
-//   if (OMNI_PROPERTY_ALL != ecosystem && OMNI_PROPERTY_TALL != ecosystem) {
-//       PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, ecosystem);
-//       PrintToLog("rejected: invalid ecosystem %d\n",ecosystem);
-//       return (PKT_ERROR_METADEX -21);
-//   }
+  if (OMNI_PROPERTY_ALL != ecosystem && OMNI_PROPERTY_TALL != ecosystem) {
+      PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, ecosystem);
+      return (PKT_ERROR_SP -21);
+  }
 
     ContractDex_CANCEL_FOR_BLOCK(txid, block, tx_idx, sender, ecosystem);
-    int rc = 0;
 
-    return rc;
+    return 0;
 }
 
 /** Tx 100 */
@@ -3296,7 +3277,6 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
              __func__,
              sender,
              propertyId);
-             PrintToLog("rejected: sender has insufficient collateral currency in balance\n");
         return (PKT_ERROR_SEND -25);
     }
 
@@ -3309,14 +3289,14 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
                 __func__,
                 sender,
                 contractId);
-            return (PKT_ERROR_SEND -25);
+            return (PKT_ERROR_SEND -24);
 
         if(!sp.isContract()) {
             PrintToLog(" %s() : Property related is not a contract\n",
                 __func__,
                 sender,
                 contractId);
-            return (PKT_ERROR_SEND -26);
+            return (PKT_ERROR_CONTRACTDEX -21);
         }
 
         } else if (sp.collateral_currency != propertyId) {
@@ -3324,7 +3304,7 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
             __func__,
             sender,
             propertyId);
-            return (PKT_ERROR_SEND -25);
+            return (PKT_ERROR_CONTRACTDEX -22);
 
         }
 
@@ -3340,7 +3320,7 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
 
     if (nBalance < amountNeeded || position < contracts) {
         PrintToLog("rejected:Sender has not required short position on this contract or balance enough\n");
-        return (PKT_ERROR_SEND -25);
+        return (PKT_ERROR_CONTRACTDEX -23);
     }
 
     {
@@ -3396,8 +3376,12 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
     // Adding the element to map of pegged currency owners
     peggedIssuers.insert (std::pair<std::string,uint32_t>(sender,npropertyId));
 
-    // PrintToLog("Pegged currency Id: %d\n",npropertyId);
-    // PrintToLog("CREATED PEGGED PROPERTY id: %d admin: %s\n", npropertyId, sender);
+    if (msc_debug_create_pegged)
+    {
+        PrintToLog("Pegged currency Id: %d\n",npropertyId);
+        PrintToLog("CREATED PEGGED PROPERTY id: %d admin: %s\n", npropertyId, sender);
+    }
+
 
     //putting into reserve contracts and collateral currency
     assert(update_tally_map(sender, contractId, -contracts, NEGATIVE_BALANCE));
@@ -3417,7 +3401,6 @@ int CMPTransaction::logicMath_SendPeggedCurrency()
             version,
             property,
             block);
-        PrintToLog("rejected: type or version not permitted for property at block\n");
         return (PKT_ERROR_SEND -22);
     }
 
@@ -3434,14 +3417,14 @@ int CMPTransaction::logicMath_SendPeggedCurrency()
             property,
             FormatMP(property, nBalance),
             FormatMP(property, nValue));
-            PrintToLog("rejected: sender has insufficient balance of property\n");
-            PrintToLog("nBalance Pegged Currency Sender : %d \n",nBalance);
-            PrintToLog("amount to send of Pegged Currency : %d \n",amount);
         return (PKT_ERROR_SEND -25);
     }
 
-    PrintToLog("nBalance Pegged Currency Sender : %d \n",nBalance);
-    PrintToLog("amount to send of Pegged Currency : %d \n",amount);
+    if (msc_debug_send_pegged)
+    {
+        PrintToLog("nBalance Pegged Currency Sender : %d \n",nBalance);
+        PrintToLog("amount to send of Pegged Currency : %d \n",amount);
+    }
 
     // ------------------------------------------
 
@@ -3477,7 +3460,7 @@ int CMPTransaction::logicMath_RedemptionPegged()
 
     if (!IsPropertyIdValid(propertyId)) {
         PrintToLog("%s(): rejected: property %d does not exist\n", __func__, property);
-        //return (PKT_ERROR_SEND -24);
+        return (PKT_ERROR_SEND -24);
     }
 
     int64_t nBalance = getMPbalance(sender, propertyId, BALANCE);
@@ -3506,7 +3489,7 @@ int CMPTransaction::logicMath_RedemptionPegged()
             __func__,
             sender,
             contractId);
-           return (PKT_ERROR_SEND -25);
+           return (PKT_ERROR_SEND -24);
         } else {
            collateralId = sp.collateral_currency;
            notSize = static_cast<int64_t>(sp.notional_size);
@@ -3561,12 +3544,12 @@ int CMPTransaction::logicMath_TradeOffer()
     if(!t_tradelistdb->checkKYCRegister(sender,4))
     {
         PrintToLog("%s: tx disable from kyc register!\n",__func__);
-        return (PKT_ERROR_TRADEOFFER -22);
+        return (PKT_ERROR_KYC -10);
     }
 
     if (MAX_INT_8_BYTES < nValue) {
         PrintToLog("%s(): rejected: value out of range or zero: %d\n", __func__, nValue);
-        // return (PKT_ERROR_TRADEOFFER -23);
+        return (PKT_ERROR_SEND -23);
     }
 
   // ------------------------------------------
@@ -3581,7 +3564,7 @@ int CMPTransaction::logicMath_TradeOffer()
             if (0 != nValue) {
 
                 if (!DEx_offerExists(sender, propertyId)) {
-                    PrintToLog("Dex offer doesn't exist\n");
+                    PrintToLog("%s():Dex offer doesn't exist\n");
                     rc = DEx_offerCreate(sender, propertyId, nValue, block, amountDesired, minFee, timeLimit, txid, &nNewValue);
                 } else {
                     rc = DEx_offerUpdate(sender, propertyId, nValue, block, amountDesired, minFee, timeLimit, txid, &nNewValue);
@@ -3601,7 +3584,7 @@ int CMPTransaction::logicMath_TradeOffer()
 
         case MP_TX_PKT_V1:
         {
-            PrintToLog("Case MP_TX_PKT_V1\n");
+            PrintToLog("%s():Case MP_TX_PKT_V1\n");
             if (DEx_offerExists(sender, propertyId)) {
                 if (CANCEL != subAction && UPDATE != subAction) {
                     PrintToLog("%s(): rejected: sender %s has an active sell offer for property: %d\n", __func__, sender, property);
@@ -3619,7 +3602,7 @@ int CMPTransaction::logicMath_TradeOffer()
 
             switch (subAction) {
                 case NEW:
-                    PrintToLog("Subaction: NEW\n");
+                    PrintToLog("%s():Subaction: NEW\n");
                     rc = DEx_offerCreate(sender, propertyId, nValue, block, amountDesired, minFee, timeLimit, txid, &nNewValue);
                     break;
 
@@ -3662,19 +3645,19 @@ int CMPTransaction::logicMath_DExBuy()
     if(!t_tradelistdb->checkKYCRegister(sender,4))
     {
         PrintToLog("%s: tx disable from kyc register!\n",__func__);
-        return (PKT_ERROR_TRADEOFFER -22);
+        return (PKT_ERROR_KYC -10);
     }
 
     if (MAX_INT_8_BYTES < nValue) {
         PrintToLog("%s(): rejected: value out of range or zero: %d\n", __func__, nValue);
-        return (PKT_ERROR_TRADEOFFER -23);
+        return (PKT_ERROR_SEND -23);
     }
 
 
   // ------------------------------------------
 
     int rc = PKT_ERROR_TRADEOFFER;
-    // PrintToLog("Inside logicMath_DExBuy function ----------------------------\n");
+
     // figure out which Action this is based on amount for sale, version & etc.
     switch (version)
       {
@@ -3683,7 +3666,7 @@ int CMPTransaction::logicMath_DExBuy()
 	  if (0 != nValue) {
 
 	    if (!DEx_offerExists(sender, propertyId)) {
-	      PrintToLog("Dex offer doesn't exist\n");
+	      PrintToLog("%s():Dex offer doesn't exist\n");
 	      rc = DEx_BuyOfferCreate(sender, propertyId, nValue, block, effective_price, minFee, timeLimit, txid, &nNewValue);
 	    } else {
 	      rc = DEx_offerUpdate(sender, propertyId, nValue, block, effective_price, minFee, timeLimit, txid, &nNewValue);
@@ -3703,7 +3686,7 @@ int CMPTransaction::logicMath_DExBuy()
 
         case MP_TX_PKT_V1:
         {
-            PrintToLog("Case MP_TX_PKT_V1\n");
+            PrintToLog("%s():Case MP_TX_PKT_V1\n");
             if (DEx_offerExists(sender, propertyId)) {
                 if (CANCEL != subAction && UPDATE != subAction) {
                     PrintToLog("%s(): rejected: sender %s has an active sell offer for property: %d\n", __func__, sender, property);
@@ -3721,7 +3704,7 @@ int CMPTransaction::logicMath_DExBuy()
 
             switch (subAction) {
                 case NEW:
-                    PrintToLog("Subaction: NEW\n");
+                    PrintToLog("%s():Subaction: NEW\n");
                     rc = DEx_BuyOfferCreate(sender, propertyId, nValue, block, effective_price, minFee, timeLimit, txid, &nNewValue);
                     break;
 
@@ -3757,7 +3740,7 @@ int CMPTransaction::logicMath_AcceptOfferBTC()
   if(!t_tradelistdb->checkKYCRegister(sender,4) || !t_tradelistdb->checkKYCRegister(receiver,4))
   {
       PrintToLog("%s: tx disable from kyc register!\n",__func__);
-      return (PKT_ERROR_TRADEOFFER -22);
+      return (PKT_ERROR_KYC -10);
   }
 
   int64_t unitPrice = 0;
@@ -3767,8 +3750,8 @@ int CMPTransaction::logicMath_AcceptOfferBTC()
     {
       /*****************************************************/
       std::string addressFilter = receiver;
-      // int curBlock = GetHeight();
-      // PrintToLog("\ncurBlock = %d\n", curBlock);
+      int curBlock = GetHeight();
+      if (msc_debug_accept_offerbtc) PrintToLog("\ncurBlock = %d\n", curBlock);
 
       LOCK(cs_tally);
 
@@ -3788,10 +3771,10 @@ int CMPTransaction::logicMath_AcceptOfferBTC()
 	  uint8_t option = offer.getOption();
 
 	  rational_t unitPriceFloat(sellBitcoinDesired, sellOfferAmount);
-	  // PrintToLog("\nunitPriceFloat = %s\n", xToString(unitPriceFloat));
+	  if(msc_debug_accept_offerbtc) PrintToLog("\nunitPriceFloat = %s\n", xToString(unitPriceFloat));
 
 	  unitPrice = mastercore::StrToInt64(xToString(unitPriceFloat), true);
-	  // PrintToLog("\nunitPriceFloat int64_t= %s\n", FormatDivisibleMP(unitPrice));
+	  if(msc_debug_accept_offerbtc) PrintToLog("\nunitPriceFloat int64_t= %s\n", FormatDivisibleMP(unitPrice));
 
 	  int64_t bitcoinDesired = calculateDesiredBTC(sellOfferAmount, sellBitcoinDesired, amountAvailable);
 	  int64_t sumLtcs = 0;
@@ -3837,7 +3820,7 @@ int CMPTransaction::logicMath_AcceptOfferBTC()
     }
 
   const int64_t globalVolumeALL_LTCh = globalVolumeALL_LTC;
-  PrintToLog("\nglobalVolumeALL_LTC in DEx= %d\n", FormatDivisibleMP(globalVolumeALL_LTCh));
+  if(msc_debug_accept_offerbtc) PrintToLog("\nglobalVolumeALL_LTC in DEx= %d\n", FormatDivisibleMP(globalVolumeALL_LTCh));
   factorALLtoLTC = unitPrice;
 
   return rc;
@@ -3865,13 +3848,13 @@ int CMPTransaction::logicMath_CreateOracleContract()
   if (sender == receiver)
   {
       PrintToLog("%s(): ERROR: oracle and backup addresses can't be the same!\n", __func__, block);
-      return (PKT_ERROR_SP -21);
+      return (PKT_ERROR_ORACLE -10);
   }
 
-  // if (OMNI_PROPERTY_ALL != ecosystem && OMNI_PROPERTY_TALL != ecosystem) {
-  //     PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, (uint32_t) ecosystem);
-  //     return (PKT_ERROR_SP -21);
-  // }
+  if (OMNI_PROPERTY_ALL != ecosystem && OMNI_PROPERTY_TALL != ecosystem) {
+      PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, (uint32_t) ecosystem);
+      return (PKT_ERROR_SP -21);
+  }
 
   // if (!IsTransactionTypeAllowed(block, ecosystem, type, version)) {
   //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
@@ -3955,21 +3938,21 @@ int CMPTransaction::logicMath_Change_OracleRef()
     // }
 
     if (!IsPropertyIdValid(contractId)) {
-        PrintToLog("%s(): rejected: property %d does not exist\n", __func__, property);
-        return (PKT_ERROR_TOKENS -24);
+        PrintToLog("%s(): rejected: oracle contract %d does not exist\n", __func__, property);
+        return (PKT_ERROR_ORACLE -11);
     }
 
     CMPSPInfo::Entry sp;
     assert(_my_sps->getSP(contractId, sp));
 
     if (sender != sp.issuer) {
-        PrintToLog("%s(): rejected: sender %s is not issuer of property %d [issuer=%s]\n", __func__, sender, property, sp.issuer);
-        return (PKT_ERROR_TOKENS -43);
+        PrintToLog("%s(): rejected: sender %s is not issuer of contract %d [issuer=%s]\n", __func__, sender, property, sp.issuer);
+        return (PKT_ERROR_ORACLE -12);
     }
 
     if (receiver.empty()) {
         PrintToLog("%s(): rejected: receiver is empty\n", __func__);
-        return (PKT_ERROR_TOKENS -45);
+        return (PKT_ERROR_ORACLE -13);
     }
 
     // ------------------------------------------
@@ -4008,8 +3991,8 @@ int CMPTransaction::logicMath_Set_Oracle()
     // }
 
     if (!IsPropertyIdValid(contractId)) {
-        PrintToLog("%s(): rejected: property %d does not exist\n", __func__, property);
-        return (PKT_ERROR_TOKENS -24);
+        PrintToLog("%s(): rejected: oracle %d does not exist\n", __func__, property);
+        return (PKT_ERROR_ORACLE -11);
     }
 
     CMPSPInfo::Entry sp;
@@ -4017,7 +4000,7 @@ int CMPTransaction::logicMath_Set_Oracle()
 
     if (sender != sp.issuer) {
         PrintToLog("%s(): rejected: sender %s is not the oracle address of the future contract %d [oracle address=%s]\n", __func__, sender, contractId, sp.issuer);
-        return (PKT_ERROR_TOKENS -43);
+        return (PKT_ERROR_ORACLE -12);
     }
 
 
@@ -4035,7 +4018,7 @@ int CMPTransaction::logicMath_Set_Oracle()
 
     assert(_my_sps->updateSP(contractId, sp));
 
-    PrintToLog("oracle data for contract: block: %d,high:%d, low:%d\n",block, oracle_high, oracle_low);
+    if (msc_debug_set_oracle) PrintToLog("oracle data for contract: block: %d,high:%d, low:%d\n",block, oracle_high, oracle_low);
 
     return 0;
 }
@@ -4066,8 +4049,8 @@ int CMPTransaction::logicMath_OracleBackup()
     // }
 
     if (!IsPropertyIdValid(contractId)) {
-        PrintToLog("%s(): rejected: property %d does not exist\n", __func__, property);
-        return (PKT_ERROR_TOKENS -24);
+        PrintToLog("%s(): rejected: oracle %d does not exist\n", __func__, property);
+        return (PKT_ERROR_ORACLE -11);
     }
 
     CMPSPInfo::Entry sp;
@@ -4075,7 +4058,7 @@ int CMPTransaction::logicMath_OracleBackup()
 
     if (sender != sp.backup_address) {
         PrintToLog("%s(): rejected: sender %s is not the backup address of the Oracle Future Contract\n", __func__,sender);
-        return (PKT_ERROR_TOKENS -43);
+        return (PKT_ERROR_ORACLE -14);
     }
 
     // ------------------------------------------
@@ -4114,8 +4097,8 @@ int CMPTransaction::logicMath_CloseOracle()
     // }
 
     if (!IsPropertyIdValid(contractId)) {
-        PrintToLog("%s(): rejected: property %d does not exist\n", __func__, property);
-        return (PKT_ERROR_TOKENS -24);
+        PrintToLog("%s(): rejected: oracle %d does not exist\n", __func__, property);
+        return (PKT_ERROR_ORACLE -11);
     }
 
     CMPSPInfo::Entry sp;
@@ -4123,7 +4106,7 @@ int CMPTransaction::logicMath_CloseOracle()
 
     if (sender != sp.backup_address) {
         PrintToLog("%s(): rejected: sender %s is not the backup address of the Oracle Future Contract\n", __func__,sender);
-        return (PKT_ERROR_TOKENS -43);
+        return (PKT_ERROR_ORACLE -14);
     }
 
     // ------------------------------------------
@@ -4132,7 +4115,7 @@ int CMPTransaction::logicMath_CloseOracle()
 
     assert(_my_sps->updateSP(contractId, sp));
 
-          PrintToLog("%s(): Oracle Contract (id:%d) Closed\n", __func__,contractId);
+    PrintToLog("%s(): Oracle Contract (id:%d) Closed\n", __func__,contractId);
 
     return 0;
 }
@@ -4164,7 +4147,7 @@ int CMPTransaction::logicMath_CommitChannel()
 
     if (!t_tradelistdb->checkChannelAddress(receiver)) {
         PrintToLog("%s(): rejected: address %s doesn't belong to multisig channel\n", __func__, receiver);
-        return (PKT_ERROR_TOKENS -24);
+        return (PKT_ERROR_CHANNELS -10);
     }
 
     if (!IsPropertyIdValid(propertyId)) {
@@ -4176,9 +4159,8 @@ int CMPTransaction::logicMath_CommitChannel()
     // ------------------------------------------
 
     // logic for the commit Here
-    PrintToLog("logic_Math for commit channel\n");
-    PrintToLog("sender: %s\n",sender);
-    PrintToLog("channelAddress: %s\n",receiver);
+
+    if(msc_debug_commit_channel) PrintToLog("%s():sender: %s, channelAddress: %s\n",__func__, sender, receiver);
 
     //putting money into channel reserve
     assert(update_tally_map(sender, propertyId, -amount_commited, BALANCE));
@@ -4188,7 +4170,7 @@ int CMPTransaction::logicMath_CommitChannel()
 
     int64_t amountCheck = getMPbalance(receiver, propertyId,CHANNEL_RESERVE);
 
-    PrintToLog("amount inside channel multisig: %s\n",amountCheck);
+    if(msc_debug_commit_channel) PrintToLog("amount inside channel multisig: %s\n",amountCheck);
 
     return 0;
 }
@@ -4225,7 +4207,7 @@ int CMPTransaction::logicMath_Withdrawal_FromChannel()
 
     if (!t_tradelistdb->checkChannelAddress(receiver)) {
         PrintToLog("%s(): rejected: address %s doesn't belong to multisig channel\n", __func__, receiver);
-        return (PKT_ERROR_TOKENS -24);
+        return (PKT_ERROR_CHANNELS -10);
     }
 
 
@@ -4234,8 +4216,7 @@ int CMPTransaction::logicMath_Withdrawal_FromChannel()
     //checking balance of channelAddress
     uint64_t totalAmount = static_cast<uint64_t>(getMPbalance(receiver, propertyId, CHANNEL_RESERVE));
 
-    PrintToLog("amount_to_withdraw : %d\n",amount_to_withdraw);
-    PrintToLog("totalAmount in channel: %d\n",totalAmount);
+    if (msc_debug_withdrawal_from_channel) PrintToLog("%s(): amount_to_withdraw : %d, totalAmount in channel: %d\n", __func__, amount_to_withdraw, totalAmount);
 
     if (amount_to_withdraw > totalAmount)
     {
@@ -4245,7 +4226,7 @@ int CMPTransaction::logicMath_Withdrawal_FromChannel()
 
     uint64_t amount_remaining = t_tradelistdb->getRemaining(receiver, sender, propertyId);
 
-    PrintToLog("all the amount remaining for the receiver address : %s\n",amount_remaining);
+    if (msc_debug_withdrawal_from_channel) PrintToLog("all the amount remaining for the receiver address : %s\n",amount_remaining);
 
     if (amount_to_withdraw > amount_remaining)
     {
@@ -4260,7 +4241,7 @@ int CMPTransaction::logicMath_Withdrawal_FromChannel()
     wthd.propertyId = propertyId;
     wthd.amount = amount_to_withdraw;
 
-    PrintToLog("checking wthd element : address: %s, deadline: %d, propertyId: %d, amount: %d \n", wthd.address, wthd.deadline_block, wthd.propertyId, wthd.amount);
+    if (msc_debug_withdrawal_from_channel) PrintToLog("checking wthd element : address: %s, deadline: %d, propertyId: %d, amount: %d \n", wthd.address, wthd.deadline_block, wthd.propertyId, wthd.amount);
 
     withdrawal_Map[receiver].push_back(wthd);
 
@@ -4274,8 +4255,6 @@ int CMPTransaction::logicMath_Withdrawal_FromChannel()
 int CMPTransaction::logicMath_Instant_Trade()
 {
   int rc = 0;
-
-  PrintToLog("Begining of logicMath_Instant_Trade\n");
 
   // if (!IsTransactionTypeAllowed(block, property, type, version)) {
   //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
@@ -4292,7 +4271,7 @@ int CMPTransaction::logicMath_Instant_Trade()
               __func__,
               property,
               desired_property);
-      return (PKT_ERROR_METADEX -29);
+      return (PKT_ERROR_CHANNELS -11);
   }
 
   if (isTestEcosystemProperty(property) != isTestEcosystemProperty(desired_property)) {
@@ -4300,29 +4279,29 @@ int CMPTransaction::logicMath_Instant_Trade()
               __func__,
               property,
               desired_property);
-      return (PKT_ERROR_METADEX -30);
+      return (PKT_ERROR_CHANNELS -12);
   }
 
   if (!IsPropertyIdValid(property)) {
       PrintToLog("%s(): rejected: property for sale %d does not exist\n", __func__, property);
-      return (PKT_ERROR_METADEX -31);
+      return (PKT_ERROR_CHANNELS -13);
   }
 
   if (!IsPropertyIdValid(desired_property)) {
       PrintToLog("%s(): rejected: desired property %d does not exist\n", __func__, desired_property);
-      return (PKT_ERROR_METADEX -32);
+      return (PKT_ERROR_CHANNELS -14);
   }
 
   channel chnAddrs = t_tradelistdb->getChannelAddresses(sender);
 
   if (sender.empty() && chnAddrs.first.empty() && chnAddrs.second.empty()) {
       PrintToLog("%s(): rejected: some address doesn't belong to multisig channel \n", __func__);
-      return (PKT_ERROR_TOKENS -25);
+      return (PKT_ERROR_CHANNELS -15);
   }
 
   if (chnAddrs.expiry_height < block) {
       PrintToLog("%s(): rejected: out of channel deadline: actual block: %d, deadline: %d\n", __func__, block, chnAddrs.expiry_height);
-      return (PKT_ERROR_TOKENS -26);
+      return (PKT_ERROR_CHANNELS -16);
   }
 
   int64_t nBalance = getMPbalance(sender, property, CHANNEL_RESERVE);
@@ -4333,7 +4312,7 @@ int CMPTransaction::logicMath_Instant_Trade()
               property,
               FormatMP(property, nBalance),
               FormatMP(property, amount_forsale));
-      return (PKT_ERROR_METADEX -27);
+      return (PKT_ERROR_CHANNELS -17);
   }
 
   nBalance = getMPbalance(sender, desired_property, CHANNEL_RESERVE);
@@ -4344,7 +4323,7 @@ int CMPTransaction::logicMath_Instant_Trade()
               desired_property,
               FormatMP(desired_property, nBalance),
               FormatMP(desired_property, desired_value));
-      return (PKT_ERROR_METADEX -28);
+      return (PKT_ERROR_CHANNELS -17);
   }
 
   // ------------------------------------------
@@ -4368,7 +4347,7 @@ int CMPTransaction::logicMath_Instant_Trade()
 
       int difference = block - chn.last_exchange_block;
 
-      PrintToLog("expiry height after update: %d\n",chn.expiry_height);
+      if (msc_debug_instant_trade) PrintToLog("expiry height after update: %d\n",chn.expiry_height);
 
       if (difference < dayblocks)
       {
@@ -4383,7 +4362,7 @@ int CMPTransaction::logicMath_Instant_Trade()
       assert(update_tally_map(chnAddrs.first, desired_property, desired_value, BALANCE));
       assert(update_tally_map(sender, desired_property, -desired_value, CHANNEL_RESERVE));
       rc = 1;
-      PrintToLog("Trading litecoins vs tokens\n");
+      if(msc_debug_instant_trade) PrintToLog("Trading litecoins vs tokens\n");
 
   }
 
@@ -4417,7 +4396,7 @@ int CMPTransaction::logicMath_Update_PNL()
 
   if (!IsPropertyIdValid(propertyId)) {
       PrintToLog("%s(): rejected: property %d does not exist\n", __func__, property);
-      return (PKT_ERROR_TOKENS -24);
+      return (PKT_ERROR_CHANNELS -13);
   }
 
 
@@ -4460,7 +4439,7 @@ int CMPTransaction::logicMath_Transfer()
 
   if (!IsPropertyIdValid(propertyId)) {
       PrintToLog("%s(): rejected: property %d does not exist\n", __func__, property);
-      return (PKT_ERROR_TOKENS -24);
+      return (PKT_ERROR_CHANNELS -13);
   }
 
 
@@ -4516,7 +4495,7 @@ int CMPTransaction::logicMath_Create_Channel()
     chn.second = receiver;
     chn.expiry_height = expiry_height;
 
-    PrintToLog("checking channel elements : channel address: %s, first address: %d, second address: %d, expiry_height: %d \n", chn.multisig, chn.first, chn.second, chn.expiry_height);
+    if(msc_create_channel) PrintToLog("checking channel elements : channel address: %s, first address: %d, second address: %d, expiry_height: %d \n", chn.multisig, chn.first, chn.second, chn.expiry_height);
 
     channels_Map[channel_address] = chn;
 
@@ -4530,7 +4509,6 @@ int CMPTransaction::logicMath_Contract_Instant()
 {
   int rc = 0;
 
-  PrintToLog("%s: Begining of logicMath\n", __func__);
 
   // if (!IsTransactionTypeAllowed(block, property, type, version)) {
   //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
@@ -4545,29 +4523,29 @@ int CMPTransaction::logicMath_Contract_Instant()
 
   if (!IsPropertyIdValid(property)) {
       PrintToLog("%s(): rejected: property for sale %d does not exist\n", __func__, property);
-      return (PKT_ERROR_METADEX -31);
+      return (PKT_ERROR_CHANNELS -13);
   }
 
   if (!IsPropertyIdValid(desired_property)) {
       PrintToLog("%s(): rejected: desired property %d does not exist\n", __func__, desired_property);
-      return (PKT_ERROR_METADEX -32);
+      return (PKT_ERROR_CHANNELS -14);
   }
 
   channel chnAddrs = t_tradelistdb->getChannelAddresses(sender);
 
   if (sender.empty() || chnAddrs.first.empty() || chnAddrs.second.empty()) {
       PrintToLog("%s(): rejected: some address doesn't belong to multisig channel\n", __func__);
-      return (PKT_ERROR_TOKENS -25);
+      return (PKT_ERROR_CHANNELS -15);
   }
 
   if (chnAddrs.expiry_height < block) {
       PrintToLog("%s(): rejected: out of channel deadline: actual block: %d, deadline: %d\n", __func__, block, chnAddrs.expiry_height);
-      return (PKT_ERROR_TOKENS -26);
+      return (PKT_ERROR_CHANNELS -16);
   }
 
   CMPSPInfo::Entry sp;
   if (!_my_sps->getSP(property, sp))
-      return (PKT_ERROR_TOKENS -27);
+      return (PKT_ERROR_CHANNELS -13);
 
 
   if (block > sp.init_block + static_cast<int>(sp.blocks_until_expiration) || block < sp.init_block)
@@ -4575,7 +4553,7 @@ int CMPTransaction::logicMath_Contract_Instant()
       int initblock = sp.init_block ;
       int deadline = initblock + static_cast<int>(sp.blocks_until_expiration);
       PrintToLog("\nTrade out of deadline!!: actual block: %d, deadline: %d\n",initblock,deadline);
-      return PKT_ERROR_SP -38;
+      return (PKT_ERROR_CHANNELS -16);
   }
 
   int result;
@@ -4585,7 +4563,7 @@ int CMPTransaction::logicMath_Contract_Instant()
   if(!t_tradelistdb->checkKYCRegister(sender,result))
   {
       PrintToLog("%s: tx disable from kyc register!\n",__func__);
-      return PKT_ERROR_SP -39;
+      return (PKT_ERROR_KYC -10);
   }
 
   uint32_t colateralh = sp.collateral_currency;
@@ -4599,13 +4577,13 @@ int CMPTransaction::logicMath_Contract_Instant()
   arith_uint256 amountTR = (ConvertTo256(instant_amount)*ConvertTo256(marginRe)*ConvertTo256(num))/(ConvertTo256(den)*ConvertTo256(ileverage));
   int64_t amountToReserve = ConvertTo64(amountTR);
 
-  PrintToLog("%s: AmountToReserve: %d, channel Balance: %d\n", __func__, amountToReserve,nBalance);
+  if(msc_debug_contract_instant_trade) PrintToLog("%s: AmountToReserve: %d, channel Balance: %d\n", __func__, amountToReserve,nBalance);
 
   //fees
   if(!mastercore::ContInst_Fees(chnAddrs.first, chnAddrs.second, chnAddrs.multisig, amountToReserve, sp.prop_type, sp.collateral_currency))
   {
       PrintToLog("\n %s: no enogh money to pay fees\n", __func__);
-      return PKT_ERROR_SP -40;
+      return (PKT_ERROR_CHANNELS -18);
   }
 
   if (nBalance < (2 * amountToReserve) || nBalance == 0)
@@ -4616,7 +4594,7 @@ int CMPTransaction::logicMath_Contract_Instant()
       colateralh,
       FormatMP(colateralh, nBalance),
       FormatMP(colateralh, amountToReserve));
-      return (PKT_ERROR_SEND -41);
+      return (PKT_ERROR_CHANNELS -17);
   }
   else {
 
@@ -4646,7 +4624,7 @@ int CMPTransaction::logicMath_Contract_Instant()
 
    int difference = block - chn.last_exchange_block;
 
-   PrintToLog("%s: expiry height after update: %d\n",__func__, chn.expiry_height);
+   if(msc_debug_contract_instant_trade) PrintToLog("%s: expiry height after update: %d\n",__func__, chn.expiry_height);
 
    if (difference < dayblocks)
    {
@@ -4660,7 +4638,7 @@ int CMPTransaction::logicMath_Contract_Instant()
    // t_tradelistdb->recordNewInstContTrade(txid, receiver, sender, propertyId, amount_commited, block, tx_idx);
    // NOTE: add discount from channel of fees + amountToReserve
 
-   PrintToLog("%s: End of Logic Instant Contract Trade\n\n",__func__);
+   if (msc_debug_contract_instant_trade)PrintToLog("%s: End of Logic Instant Contract Trade\n\n",__func__);
 
 
    return rc;
@@ -4692,8 +4670,8 @@ int CMPTransaction::logicMath_New_Id_Registration()
   // }
 
   // ---------------------------------------
-  PrintToLog("%s(): channelAddres in register: %s \n",__func__,receiver);
-  
+  if (msc_debug_new_id_registration) PrintToLog("%s(): channelAddres in register: %s \n",__func__,receiver);
+
   t_tradelistdb->recordNewIdRegister(txid, receiver, website, company_name, tokens, ltc, natives, oracles, block, tx_idx);
 
   // std::string dummy = "1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P";
