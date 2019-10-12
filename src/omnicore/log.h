@@ -66,6 +66,7 @@ extern bool msc_debug_metadex1;
 extern bool msc_debug_metadex2;
 extern bool msc_debug_metadex3;
 extern bool msc_debug_metadex_add;
+extern bool msc_debug_contractdex_tx;
 extern bool msc_debug_contractdex_add;
 extern bool msc_debug_contract_add_market;
 extern bool msc_debug_contract_cancel_every;
@@ -74,6 +75,16 @@ extern bool msc_debug_contract_cancel_inorder;
 extern bool msc_debug_add_orderbook_edge;
 extern bool msc_debug_close_position;
 extern bool msc_debug_get_pair_market_price;
+extern bool msc_debug_create_pegged;
+extern bool msc_debug_accept_offerbtc;
+extern bool msc_debug_set_oracle;
+extern bool msc_debug_send_pegged;
+extern bool msc_debug_commit_channel;
+extern bool msc_debug_withdrawal_from_channel;
+extern bool msc_debug_instant_trade;
+extern bool msc_create_channel;
+extern bool msc_debug_contract_instant_trade;
+extern bool msc_debug_new_id_registration;
 /* When we switch to C++11, this can be switched to variadic templates instead
  * of this macro-based construction (see tinyformat.h).
  */

@@ -165,6 +165,11 @@ enum FILETYPES {
 #define DEX_ERROR_PAYMENT     (-30000)
 #define PKT_ERROR_TRADEOFFER  (-70000)
 
+#define PKT_ERROR_KYC            (-90000)
+#define PKT_ERROR_CONTRACTDEX    (-100000)
+#define PKT_ERROR_ORACLE         (-110000)
+#define PKT_ERROR_CHANNELS       (-120000)
+
 #define OMNI_PROPERTY_BTC             0
 #define OMNI_PROPERTY_ALL             1
 #define OMNI_PROPERTY_TALL            2

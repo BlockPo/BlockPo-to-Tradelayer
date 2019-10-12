@@ -102,7 +102,7 @@ inline std::string error_str(int ec) {
       break;
     case PKT_ERROR -54:
       ec_str = "Activation failed";
-      break;  
+      break;
     case PKT_ERROR -100:
       ec_str = "Transaction is not a supported type";
       break;
@@ -258,7 +258,7 @@ inline std::string error_str(int ec) {
       break;
     case PKT_ERROR_SP -50:
       ec_str = "Tokens to issue and desired property are not in the same ecosystem";
-      break;  
+      break;
     case PKT_ERROR_TOKENS -22:
       ec_str = "Transaction type or version not permitted";
       break;
@@ -295,10 +295,71 @@ inline std::string error_str(int ec) {
     case PKT_ERROR_TOKENS -50:
       ec_str = "Address is already frozen";
       break;
+    case PKT_ERROR_KYC -10:
+      ec_str = "Tx disable from kyc register";
+      break;
+    case PKT_ERROR_CONTRACTDEX -10:
+      ec_str = "Trade out of deadline";
+      break;
+    case PKT_ERROR_CONTRACTDEX -20:
+      ec_str = "Transaction type not allowed";
+      break;
+    case PKT_ERROR_CONTRACTDEX -21:
+      ec_str = "Property related is not a contract";
+      break;
+    case PKT_ERROR_CONTRACTDEX -22:
+      ec_str = "Incorrect collateral currency";
+      break;
+    case PKT_ERROR_CONTRACTDEX -23:
+      ec_str = "Sender has not required short position or balance enough";
+      break;
+    case PKT_ERROR_ORACLE -10:
+      ec_str = "Oracle and backup addresses can't be the same";
+      break;
+    case PKT_ERROR_ORACLE -11:
+      ec_str = "Oracle contract doesn't exist";
+      break;
+    case PKT_ERROR_ORACLE -12:
+      ec_str = "Sender is not issuer of oracle contract";
+      break;
+    case PKT_ERROR_ORACLE -13:
+      ec_str = "Receiver is empty";
+      break;
+    case PKT_ERROR_ORACLE -14:
+      ec_str = "Wrong backup address";
+      break;
+    case PKT_ERROR_CHANNELS -10:
+      ec_str = "Address doesn't belong to multisig channel";
+      break;
+    case PKT_ERROR_CHANNELS -11:
+      ec_str = "Property for sale and desired property are not be equal";
+      break;
+    case PKT_ERROR_CHANNELS -12:
+      ec_str = "Property for sale and desired property are not in the same ecosystem";
+      break;
+    case PKT_ERROR_CHANNELS -13:
+      ec_str = "Property does not exist";
+      break;
+    case PKT_ERROR_CHANNELS -14:
+      ec_str = "Property desired does not exist";
+      break;
+    case PKT_ERROR_CHANNELS -15:
+      ec_str = "some address doesn't belong to multisig channel";
+      break;
+    case PKT_ERROR_CHANNELS -16:
+      ec_str = "out of channel deadline";
+      break;
+    case PKT_ERROR_CHANNELS -17:
+      ec_str = "Sender has insufficient balance";
+      break;
+    case PKT_ERROR_CHANNELS -18:
+      ec_str = "Insufficient funds for fees";
+      break;
+
     default:
       ec_str = "Unknown error";
     }
-  
+
   return ec_str;
 }
 
