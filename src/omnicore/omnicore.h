@@ -64,10 +64,8 @@ int const MAX_STATE_HISTORY = 50;
 #define MP_TX_PKT_V1  1
 
 // Alls
-#define ALL_PROPERTY_MSC   3
-
-#define MIN_PAYLOAD_SIZE     5
-
+#define ALL_PROPERTY_MSC             3
+#define MIN_PAYLOAD_SIZE             5
 #define MAX_CLASS_D_SEARCH_BYTES   200
 
 #define COIN256   10000000000000000
@@ -91,46 +89,44 @@ enum TransactionType {
   OMNICORE_MESSAGE_TYPE_ACTIVATION    = 65534,
   OMNICORE_MESSAGE_TYPE_ALERT         = 65535,
 
-  ////////////////////////////////////
-  /** New things for Contract */
-  MSC_TYPE_TRADE_OFFER                = 20,
-  MSC_TYPE_DEX_BUY_OFFER              = 21,
-  MSC_TYPE_ACCEPT_OFFER_BTC           = 22,
-  MSC_TYPE_METADEX_TRADE              = 25,
-  MSC_TYPE_CONTRACTDEX_TRADE          = 29,
-  MSC_TYPE_CONTRACTDEX_CANCEL_PRICE   = 30,
-  MSC_TYPE_CONTRACTDEX_CANCEL_ECOSYSTEM   = 32,
-  MSC_TYPE_CONTRACTDEX_CLOSE_POSITION   = 33,
-  MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK = 34,
-  /** !Here we changed "MSC_TYPE_OFFER_ACCEPT_A_BET = 40" */
-  MSC_TYPE_CREATE_CONTRACT            = 40,
-  MSC_TYPE_PEGGED_CURRENCY            = 100,
-  MSC_TYPE_REDEMPTION_PEGGED          = 101,
-  MSC_TYPE_SEND_PEGGED_CURRENCY       = 102,
-  MSC_TYPE_CREATE_ORACLE_CONTRACT     = 103,
-  MSC_TYPE_CHANGE_ORACLE_REF          = 104,
-  MSC_TYPE_SET_ORACLE                 = 105,
-  MSC_TYPE_ORACLE_BACKUP              = 106,
-  MSC_TYPE_CLOSE_ORACLE               = 107,
-  MSC_TYPE_COMMIT_CHANNEL             = 108,
-  MSC_TYPE_WITHDRAWAL_FROM_CHANNEL    = 109,
-  MSC_TYPE_INSTANT_TRADE              = 110,
-  MSC_TYPE_PNL_UPDATE                 = 111,
-  MSC_TYPE_TRANSFER                   = 112,
-  MSC_TYPE_CREATE_CHANNEL             = 113,
-  MSC_TYPE_CONTRACT_INSTANT           = 114,
-  MSC_TYPE_NEW_ID_REGISTRATION        = 115,
-  MSC_TYPE_UPDATE_ID_REGISTRATION     = 116,
-  ////////////////////////////////////
+  MSC_TYPE_TRADE_OFFER                         = 20,
+  MSC_TYPE_DEX_BUY_OFFER                       = 21,
+  MSC_TYPE_ACCEPT_OFFER_BTC                    = 22,
+  MSC_TYPE_METADEX_TRADE                       = 25,
+  MSC_TYPE_CONTRACTDEX_TRADE                   = 29,
+  MSC_TYPE_CONTRACTDEX_CANCEL_PRICE            = 30,
+  MSC_TYPE_CONTRACTDEX_CANCEL_ECOSYSTEM        = 32,
+  MSC_TYPE_CONTRACTDEX_CLOSE_POSITION          = 33,
+  MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK  = 34,
+  MSC_TYPE_CREATE_CONTRACT                     = 40,
+  MSC_TYPE_PEGGED_CURRENCY                    = 100,
+  MSC_TYPE_REDEMPTION_PEGGED                  = 101,
+  MSC_TYPE_SEND_PEGGED_CURRENCY               = 102,
+  MSC_TYPE_CREATE_ORACLE_CONTRACT             = 103,
+  MSC_TYPE_CHANGE_ORACLE_REF                  = 104,
+  MSC_TYPE_SET_ORACLE                         = 105,
+  MSC_TYPE_ORACLE_BACKUP                      = 106,
+  MSC_TYPE_CLOSE_ORACLE                       = 107,
+  MSC_TYPE_COMMIT_CHANNEL                     = 108,
+  MSC_TYPE_WITHDRAWAL_FROM_CHANNEL            = 109,
+  MSC_TYPE_INSTANT_TRADE                      = 110,
+  MSC_TYPE_PNL_UPDATE                         = 111,
+  MSC_TYPE_TRANSFER                           = 112,
+  MSC_TYPE_CREATE_CHANNEL                     = 113,
+  MSC_TYPE_CONTRACT_INSTANT                   = 114,
+  MSC_TYPE_NEW_ID_REGISTRATION                = 115,
+  MSC_TYPE_UPDATE_ID_REGISTRATION             = 116,
 
 };
 
-#define ALL_PROPERTY_TYPE_INDIVISIBLE             1
-#define ALL_PROPERTY_TYPE_DIVISIBLE               2
-#define ALL_PROPERTY_TYPE_CONTRACT                3
-#define ALL_PROPERTY_TYPE_VESTING                 4
-#define ALL_PROPERTY_TYPE_PEGGEDS                 5
-#define ALL_PROPERTY_TYPE_ORACLE_CONTRACT         6
+#define ALL_PROPERTY_TYPE_INDIVISIBLE                 1
+#define ALL_PROPERTY_TYPE_DIVISIBLE                   2
+#define ALL_PROPERTY_TYPE_CONTRACT                    3
+#define ALL_PROPERTY_TYPE_VESTING                     4
+#define ALL_PROPERTY_TYPE_PEGGEDS                     5
+#define ALL_PROPERTY_TYPE_ORACLE_CONTRACT             6
+#define ALL_PROPERTY_TYPE_PERPETUAL_ORACLE            7
+#define ALL_PROPERTY_TYPE_PERPETUAL_CONTRACTS         8
 
 enum FILETYPES {
   FILETYPE_BALANCES = 0,
@@ -176,10 +172,9 @@ enum FILETYPES {
 #define OMNI_PROPERTY_VESTING         3
 #define OMNI_PROPERTY_ALL_ISSUANCE    6
 #define TOTAL_AMOUNT_VESTING_TOKENS   1500000*COIN
-//////////////////////////////////////
-/** New things for Contracts */
-#define BUY   1
-#define SELL  2
+
+#define BUY            1
+#define SELL           2
 #define ACTIONINVALID  3
 
 #define CONTRACT_ALL        3
@@ -192,13 +187,13 @@ enum FILETYPES {
 
 
 // channels definitions
-#define TYPE_COMMIT      "commit"
-#define TYPE_WITHDRAWAL  "withdrawal"
-#define TYPE_INSTANT_TRADE  "instant_trade"
-#define TYPE_TRANSFER  "transfer"
-#define TYPE_CONTRACT_INSTANT_TRADE "contract_instat_trade"
-#define TYPE_CREATE_CHANNEL "create channel"
-#define TYPE_NEW_ID_REGISTER "new id register"
+#define TYPE_COMMIT                     "commit"
+#define TYPE_WITHDRAWAL                 "withdrawal"
+#define TYPE_INSTANT_TRADE              "instant_trade"
+#define TYPE_TRANSFER                   "transfer"
+#define TYPE_CONTRACT_INSTANT_TRADE     "contract_instat_trade"
+#define TYPE_CREATE_CHANNEL             "create channel"
+#define TYPE_NEW_ID_REGISTER            "new id register"
 
 // Currency in existance (options for createcontract)
 uint32_t const TL_dUSD  = 1;
@@ -266,7 +261,7 @@ public:
 
     virtual ~COmniTransactionDB()
     {
-        // if (msc_debug_persistence) PrintToLog("COmniTransactionDB closed\n");
+        if (msc_debug_persistence) PrintToLog("COmniTransactionDB closed\n");
     }
 
     /* These functions would be expanded upon to store a serialized version of the transaction and associated state data
@@ -294,7 +289,7 @@ public:
 
     virtual ~CMPTxList()
       {
-        // if (msc_debug_persistence) PrintToLog("CMPTxList closed\n");
+        if (msc_debug_persistence) PrintToLog("CMPTxList closed\n");
       }
 
     void recordTX(const uint256 &txid, bool fValid, int nBlock, unsigned int type, uint64_t nValue);
@@ -326,20 +321,13 @@ public:
 
     void recordPaymentTX(const uint256 &txid, bool fValid, int nBlock, unsigned int vout, unsigned int propertyId, uint64_t nValue, string buyer, string seller);
     void recordMetaDExCancelTX(const uint256 &txidMaster, const uint256 &txidSub, bool fValid, int nBlock, unsigned int propertyId, uint64_t nValue);
-
-    /////////////////////////////////////////////
-    /** New things for Contracts */
     void recordContractDexCancelTX(const uint256 &txidMaster, const uint256 &txidSub, bool fValid, int nBlock, unsigned int propertyId, uint64_t nValue);
-    /////////////////////////////////////////////
 
     uint256 findMetaDExCancel(const uint256 txid);
+
     /** Returns the number of sub records. */
     int getNumberOfMetaDExCancels(const uint256 txid);
-
-    //////////////////////////////////////
-    /** New things for Contracts */
     int getNumberOfContractDexCancels(const uint256 txid);
-    //////////////////////////////////////
     void getMPTransactionAddresses(std::vector<std::string> &vaddrs);
 };
 
@@ -358,18 +346,13 @@ class CMPTradeList : public CDBBase
 
   virtual ~CMPTradeList()
     {
-      // if (msc_debug_persistence) PrintToLog("CMPTradeList closed\n");
+      if (msc_debug_persistence) PrintToLog("CMPTradeList closed\n");
     }
 
   void recordMatchedTrade(const uint256 txid1, const uint256 txid2, string address1, string address2, unsigned int prop1, unsigned int prop2, uint64_t amount1, uint64_t amount2, int blockNum, int64_t fee);
 
-  /////////////////////////////////
-  /** New things for Contract */
   void recordMatchedTrade(const uint256 txid1, const uint256 txid2, string address1, string address2, uint64_t effective_price, uint64_t amount_maker, uint64_t amount_taker, int blockNum1, int blockNum2, uint32_t property_traded, string tradeStatus, int64_t lives_s0, int64_t lives_s1, int64_t lives_s2, int64_t lives_s3, int64_t lives_b0, int64_t lives_b1, int64_t lives_b2, int64_t lives_b3, string s_maker0, string s_taker0, string s_maker1, string s_taker1, string s_maker2, string s_taker2, string s_maker3, string s_taker3, int64_t nCouldBuy0, int64_t nCouldBuy1, int64_t nCouldBuy2, int64_t nCouldBuy3, uint64_t amountpnew, uint64_t amountpold);
   void recordForUPNL(const uint256 txid, string address, uint32_t property_traded, int64_t effectivePrice);
-  // void recordMatchedTrade(const uint256 txid1, const uint256 txid2, string address1, string address2, unsigned int prop1, unsigned int prop2, uint64_t amount1, uint64_t amount2, int blockNum, int64_t fee, string t_status, std::vector<uint256> &vecTxid);
-  /////////////////////////////////
-
   void recordNewTrade(const uint256& txid, const std::string& address, uint32_t propertyIdForSale, uint32_t propertyIdDesired, int blockNum, int blockIndex);
   void recordNewTrade(const uint256& txid, const std::string& address, uint32_t propertyIdForSale, uint32_t propertyIdDesired, int blockNum, int blockIndex, int64_t reserva);
 
@@ -389,6 +372,8 @@ class CMPTradeList : public CDBBase
   channel getChannelAddresses(const std::string& channelAddress);
   bool checkChannelRelation(const std::string& address, std::string& channelAddr);
   uint64_t getRemaining(const std::string& channelAddress, const std::string& senderAddress, uint32_t propertyId);
+
+  //KYC
   bool updateIdRegister(const uint256& txid, const std::string& address, const std::string& newAddr, int blockNum, int blockIndex);
   bool checkKYCRegister(const std::string& address, int registered);
 
@@ -398,18 +383,16 @@ class CMPTradeList : public CDBBase
   void printAll();
   bool getMatchingTrades(const uint256& txid, uint32_t propertyId, UniValue& tradeArray, int64_t& totalSold, int64_t& totalBought);
 
-  ///////////////////////////////////////
-  /** New things for Contract */
   bool getMatchingTrades(uint32_t propertyId, UniValue& tradeArray);
   bool getMatchingTradesUnfiltered(uint32_t propertyId, UniValue& tradeArray);
   double getPNL(string address, int64_t contractsClosed, int64_t price, uint32_t property, uint32_t marginRequirementContract, uint32_t notionalSize, std::string Status);
   double getUPNL(string address, uint32_t contractId);
   int64_t getTradeAllsByTxId(uint256& txid);
+
   /** Used to notify that the number of tokens for a property has changed. */
   void NotifyPeggedCurrency(const uint256& txid, string address, uint32_t propertyId, uint64_t amount, std::string series);
   bool getCreatedPegged(uint32_t propertyId, UniValue& tradeArray);
   bool checkRegister(const std::string& address, int registered);
-  //////////////////////////////////////
 
   bool getMatchingTrades(const uint256& txid);
   void getTradesForAddress(std::string address, std::vector<uint256>& vecTransactions, uint32_t propertyIdFilter = 0);
@@ -480,9 +463,6 @@ bool TxValidNodeReward(std::string ConsensusHash, std::string Tx);
 namespace mastercore
 {
   extern std::unordered_map<std::string, CMPTally> mp_tally_map;
-  /*New things for contracts*///////////////////////////////////
-  // extern std::unordered_map<std::string, CDexTally> cd_tally_map;
-  //////////////////////////////////////////////////////////////
   extern CMPTxList *p_txlistdb;
   extern COmniTransactionDB *p_OmniTXDB;
   extern CMPTradeList *t_tradelistdb;
@@ -490,20 +470,18 @@ namespace mastercore
   // TODO: move, rename
   extern CCoinsView viewDummy;
   extern CCoinsViewCache view;
+
   //! Guards coins view cache
   extern CCriticalSection cs_tx_cache;
 
   std::string strMPProperty(uint32_t propertyId);
 
-  /* New things for contracts *///////////////////////////////////////////////////
   rational_t notionalChange(uint32_t contractId);
 
   bool isMPinBlockRange(int starting_block, int ending_block, bool bDeleteFound);
 
-  /////////////////////////////////////////
-  /*New property type No 3 Contract*/
   std::string FormatContractMP(int64_t n);
-  /////////////////////////////////////////
+
   std::string FormatIndivisibleMP(int64_t n);
 
   int WalletTxBuilder(const std::string& senderAddress, const std::string& receiverAddress, int64_t referenceAmount,
