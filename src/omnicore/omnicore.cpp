@@ -983,35 +983,7 @@ int ParseTransaction(const CTransaction& tx, int nBlock, unsigned int idx, CMPTr
  */
 static bool HandleDExPayments(const CTransaction& tx, int nBlock, const std::string& strSender)
 {
-  int count = 0;
-  for (unsigned int n = 0; n < tx.vout.size(); ++n) {
-    CTxDestination dest;
-    if (ExtractDestination(tx.vout[n].scriptPubKey, dest)) {
-      std::string address = EncodeDestination(dest);
-
-    if (msc_debug_handle_dex_payment)
-    {
-      PrintToLog("%s: destination address: %s\n", __func__, address);
-      PrintToLog("%s: sender's address: %s\n",__func__, strSender);
-    }
-
-    if (address == ExodusAddress() || address == strSender)
-        continue;
-
-    if (msc_debug_handle_dex_payment) PrintToLog("payment #%d %s %s\n", count, address, FormatIndivisibleMP(tx.vout[n].nValue));
-
-      // check everything and pay BTC for the property we are buying here...
-      if (0 == DEx_payment(tx.GetHash(), n, address, strSender, tx.vout[n].nValue, nBlock)) ++count;
-    }
-  }
-
-  return (count > 0);
-}
-
-static bool HandleLtcInstantTrade(const CTransaction& tx, int nBlock, const std::string& sender, const std::string& receiver, uint32_t property, uint64_t amount_forsale, uint32_t desired_property, uint64_t desired_value, unsigned int idx)
-{
-
-    if (property != 0) return false;
+    uint64_t nValue;
     int count = 0;
 
     for (unsigned int n = 0; n < tx.vout.size(); ++n)
@@ -1021,12 +993,48 @@ static bool HandleLtcInstantTrade(const CTransaction& tx, int nBlock, const std:
         {
             std::string address = EncodeDestination(dest);
 
-            if (msc_debug_handle_instant)
-            {    PrintToLog("%s: destination address: %s\n", __func__, address);
-                 PrintToLog("%s: dest address: %s\n", __func__, receiver);
-            }
+            if (msc_debug_handle_dex_payment) PrintToLog("%s: destination address: %s, sender's address: %s \n", __func__, address, strSender);
 
-            uint64_t nValue = static_cast<uint64_t>(tx.vout[n].nValue);
+            if (address == ExodusAddress() || address == strSender)
+                continue;
+
+            if (msc_debug_handle_dex_payment) PrintToLog("payment #%d %s %s\n", count, address, FormatIndivisibleMP(tx.vout[n].nValue));
+
+            nValue = static_cast<uint64_t>(tx.vout[n].nValue);
+            // check everything and pay BTC for the property we are buying here...
+            if (0 == DEx_payment(tx.GetHash(), n, address, strSender, tx.vout[n].nValue, nBlock)) ++count;
+        }
+    }
+
+    /** Adding LTC into volume */
+    arith_uint256 ltcsreceived_256t = ConvertTo256(static_cast<int64_t>(nValue));
+    uint64_t ltcsreceived = ConvertTo64(ltcsreceived_256t)/COIN;
+    globalVolumeALL_LTC += ltcsreceived;
+    const int64_t globalVolumeALL_LTCh = globalVolumeALL_LTC;
+
+    if (msc_debug_handle_dex_payment) PrintToLog("%s(): ltcsreceived: %d, globalVolumeALL_LTC: %d \n",__func__,ltcsreceived, globalVolumeALL_LTCh);
+
+    return (count > 0);
+}
+
+static bool HandleLtcInstantTrade(const CTransaction& tx, int nBlock, const std::string& sender, const std::string& receiver, uint32_t property, uint64_t amount_forsale, uint32_t desired_property, uint64_t desired_value, unsigned int idx)
+{
+
+    uint64_t nValue;
+    int count = 0;
+
+    if (property != 0) return false;
+
+    for (unsigned int n = 0; n < tx.vout.size(); ++n)
+    {
+        CTxDestination dest;
+        if (ExtractDestination(tx.vout[n].scriptPubKey, dest))
+        {
+            std::string address = EncodeDestination(dest);
+
+            if (msc_debug_handle_instant) PrintToLog("%s(): destination address: %s, dest address: %s \n", __func__, address, receiver);
+
+            nValue = static_cast<uint64_t>(tx.vout[n].nValue);
 
             if (address == receiver && nValue >= amount_forsale)
             {
@@ -1054,6 +1062,14 @@ static bool HandleLtcInstantTrade(const CTransaction& tx, int nBlock, const std:
 
         if (msc_debug_handle_instant) PrintToLog("%s: Successfully litecoins traded \n", __func__);
     }
+
+    /** Adding LTC into volume */
+    arith_uint256 ltcsreceived_256t = ConvertTo256(static_cast<int64_t>(nValue));
+    uint64_t ltcsreceived = ConvertTo64(ltcsreceived_256t)/COIN;
+    globalVolumeALL_LTC += ltcsreceived;
+    const int64_t globalVolumeALL_LTCh = globalVolumeALL_LTC;
+
+    if (msc_debug_handle_instant) PrintToLog("%s(): ltcsreceived: %d, globalVolumeALL_LTC: %d \n",__func__,ltcsreceived, globalVolumeALL_LTCh);
 
     return (count > 0);
 }
