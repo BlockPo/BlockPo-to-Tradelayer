@@ -2631,6 +2631,8 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
 
     int interp_ret = mp_obj.interpretPacket();
 
+    PrintToLog("%s(): interp_ret: %d\n",__func__,interp_ret);
+
     // Only structurally valid transactions get recorded in levelDB
     // PKT_ERROR - 2 = interpret_Transaction failed, structurally invalid payload
 
@@ -2639,7 +2641,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
         HandleLtcInstantTrade(tx, nBlock, mp_obj.getSender(), mp_obj.getReceiver(), mp_obj.getProperty(), mp_obj.getAmountForSale(), mp_obj.getDesiredProperty(), mp_obj.getDesiredValue(), mp_obj.getIndexInBlock());
 
     //NOTE: we need to return this number 2 from mp_obj.interpretPacket() (tx.cpp)
-    } else if (pop_ret == 2) {
+  } else if (interp_ret == 2) {
         HandleDExPayments(tx, nBlock, mp_obj.getSender());
     }
 
