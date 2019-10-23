@@ -1550,27 +1550,6 @@ MatchReturnType x_Trade(CMPMetaDEx* const pnew)
 	int64_t buyer_amountGotAfterFee = buyer_amountGot;
 	int64_t tradingFee = 0;
 
-	// strip a 0.05% fee from non-OMNI pairs if fees are activated
-	/*if (IsFeatureActivated(FEATURE_FEES, pnew->getBlock()))
-	  {
-	  if (pold->getProperty() > OMNI_PROPERTY_TALL && pold->getDesProperty() > OMNI_PROPERTY_TALL)
-	  {
-	  int64_t feeDivider = 2000; // 0.05%
-	  tradingFee = buyer_amountGot / feeDivider;
-
-	  // subtract the fee from the amount the seller will receive
-	  buyer_amountGotAfterFee = buyer_amountGot - tradingFee;
-
-	  // add the fee to the fee cache  TODO: check the fees file
-	  // p_feecache->AddFee(pnew->getDesProperty(), pnew->getBlock(), tradingFee);
-	              } else {
-		      // if (msc_debug_fees) PrintToLog("Skipping fee reduction for trade match %s:%s as one of the properties is Omni\n", pold->getHash().GetHex(), pnew->getHash().GetHex());
-	              }
-		      } */
-
-
-
-
 	// transfer the payment property from buyer to seller
 	assert(update_tally_map(pnew->getAddr(), pnew->getProperty(), -seller_amountGot, BALANCE));
 	assert(update_tally_map(pold->getAddr(), pold->getDesProperty(), seller_amountGot, BALANCE));

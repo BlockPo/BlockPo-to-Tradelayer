@@ -3761,21 +3761,24 @@ int CMPTransaction::logicMath_AcceptOfferBTC()
     PrintToLog("%s(): rejected: value out of range or zero: %d\n", __func__, nValue);
   }
 
+  if(!t_tradelistdb->checkKYCRegister(sender,4) || !t_tradelistdb->checkKYCRegister(receiver,4))
+  {
+      PrintToLog("%s: tx disable from kyc register!\n",__func__);
+      return (PKT_ERROR_KYC -10);
+  }
+
   // the min fee spec requirement is checked in the following function
   int rc = DEx_acceptCreate(sender, receiver, propertyId, nValue, block, tx_fee_paid, &nNewValue);
 
-  // if(!t_tradelistdb->checkKYCRegister(sender,4) || !t_tradelistdb->checkKYCRegister(receiver,4))
-  // {
-  //     PrintToLog("%s: tx disable from kyc register!\n",__func__);
-  //     return (PKT_ERROR_KYC -10);
-  // }
+  // NOTE: LTC are now added on DEx_payment function!
 
+  /*
   int64_t unitPrice = 0;
   std::string sellerS = "", buyerS = "";
 
   if (!rc)
     {
-      /*****************************************************/
+
       std::string addressFilter = receiver;
       int curBlock = GetHeight();
       if (msc_debug_accept_offerbtc) PrintToLog("\ncurBlock = %d\n", curBlock);
@@ -3849,6 +3852,7 @@ int CMPTransaction::logicMath_AcceptOfferBTC()
   const int64_t globalVolumeALL_LTCh = globalVolumeALL_LTC;
   if(msc_debug_accept_offerbtc) PrintToLog("\nglobalVolumeALL_LTC in DEx= %d\n", FormatDivisibleMP(globalVolumeALL_LTCh));
   factorALLtoLTC = unitPrice;
+  */
 
   return rc;
 }

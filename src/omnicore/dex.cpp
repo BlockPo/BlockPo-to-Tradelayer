@@ -571,8 +571,8 @@ int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addre
     if (msc_debug_dex) PrintToLog("%s(%s, %s)\n", __func__, addressSeller, addressBuyer);
     int rc = DEX_ERROR_PAYMENT;
     uint32_t propertyId;
-    CMPAccept* p_accept;
 
+    CMPAccept* p_accept;
 
     // logic here: we look only into main properties if there's some match
     for (propertyId = 1; propertyId < _my_sps->peekNextSPID(1); propertyId++)
@@ -608,8 +608,6 @@ int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addre
        PrintToLog("first return!\n");
        return (DEX_ERROR_PAYMENT -1);
     }
-
-
 
     // -------------------------------------------------------------------------
     const int64_t amountDesired = p_accept->getBTCDesiredOriginal();
@@ -702,6 +700,7 @@ int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addre
             DEx_offerDestroy(addressSeller, propertyId);
         }
     }
+
     rc = 0;
     return rc;
 }
