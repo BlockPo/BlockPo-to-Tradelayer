@@ -669,15 +669,15 @@ int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addre
 
     if (amountPurchased > 0)
     {
-        PrintToLog("%s: seller %s offered %s %s for %s BTC\n", __func__,
+        PrintToLog("%s: seller %s offered %s %s for %s LTC\n", __func__,
 	      addressSeller, FormatDivisibleMP(amountOffered), strMPProperty(propertyId), FormatDivisibleMP(amountDesired));
-        PrintToLog("%s: buyer %s pays %s BTC to purchase %s %s\n", __func__,
+        PrintToLog("%s: buyer %s pays %s LTC to purchase %s %s\n", __func__,
 	      addressBuyer, FormatDivisibleMP(amountPaid), FormatDivisibleMP(amountPurchased), strMPProperty(propertyId));
         assert(update_tally_map(addressSeller, propertyId, -amountPurchased, ACCEPT_RESERVE));
         assert(update_tally_map(addressBuyer, propertyId, amountPurchased, BALANCE));
         PrintToLog("AmountPurchased : %d\n",amountPurchased);
         bool valid = true;
-        p_txlistdb->recordPaymentTX(txid, valid, block, vout, propertyId, amountPurchased, addressBuyer, addressSeller);
+        // p_txlistdb->recordPaymentTX(txid, valid, block, vout, propertyId, amountPurchased, addressBuyer, addressSeller);
 
         rc = 0;
         PrintToLog("#######################################################\n");

@@ -970,11 +970,7 @@ static bool HandleDExPayments(const CTransaction& tx, int nBlock, const std::str
     if (ExtractDestination(tx.vout[n].scriptPubKey, dest)) {
       std::string address = EncodeDestination(dest);
 
-    if (msc_debug_handle_dex_payment)
-    {
-      PrintToLog("%s: destination address: %s\n", __func__, address);
-      PrintToLog("%s: sender's address: %s\n",__func__, strSender);
-    }
+    if (msc_debug_handle_dex_payment) PrintToLog("%s(): destination address: %s, sender's address: %s\n", __func__, address, strSender);
 
     if (address == strSender)
         continue;
