@@ -207,6 +207,7 @@ private:
     bool interpret_Contract_Instant();
     bool interpret_New_Id_Registration();
     bool interpret_Update_Id_Registration();
+    bool interpret_DEx_Payment();
     ///////////////////////////////////////////////
 
     /**
@@ -252,6 +253,7 @@ private:
     int logicMath_Contract_Instant();
     int logicMath_New_Id_Registration();
     int logicMath_Update_Id_Registration();
+    int logicMath_DEx_Payment();
     ///////////////////////////////////////////////
 
     /**

@@ -278,6 +278,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_new_id_registration", 5, "arg4" },
     { "tl_new_id_registration", 6, "arg5" },
     { "tl_new_id_registration", 7, "arg6" },
+    // { "tl_send_dex_payment", 2, "arg2" },
 
 
 

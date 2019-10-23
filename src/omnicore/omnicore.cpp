@@ -621,7 +621,6 @@ void creatingVestingTokens()
  */
 int mastercore::GetEncodingClass(const CTransaction& tx, int nBlock)
 {
-    bool hasExodus = false;
     bool hasOpReturn = false;
 
     /* Fast Search
@@ -657,16 +656,6 @@ int mastercore::GetEncodingClass(const CTransaction& tx, int nBlock)
             continue;
         }
 
-        if (outType == TX_PUBKEYHASH) {
-            CTxDestination dest;
-            if (ExtractDestination(output.scriptPubKey, dest)) {
-                std::string address = EncodeDestination(dest);
-                if (address == ExodusAddress()) {
-                    hasExodus = true;
-                }
-            }
-        }
-
         if (outType == TX_NULL_DATA) {
             // Ensure there is a payload, and the first pushed element equals,
             // or starts with the "tl" marker
@@ -690,11 +679,6 @@ int mastercore::GetEncodingClass(const CTransaction& tx, int nBlock)
     if (hasOpReturn) {
         return OMNI_CLASS_D;
     }
-
-    if (hasExodus) {
-        return OMNI_CLASS_A;
-    }
-
 
     return NO_MARKER;
 }
@@ -958,9 +942,6 @@ static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, 
     // ### SET MP TX INFO ###
     if (msc_debug_verbose) PrintToLog("single_pkt: %s\n", HexStr(single_pkt, packet_size + single_pkt));
     mp_tx.Set(strSender, strReference, 0, wtx.GetHash(), nBlock, idx, (unsigned char *)&single_pkt, packet_size, omniClass, (inAll-outAll));
-    if (omniClass == OMNI_CLASS_A && packet_size == 0) {
-        return 1;
-    }
 
     return 0;
 }
@@ -989,13 +970,9 @@ static bool HandleDExPayments(const CTransaction& tx, int nBlock, const std::str
     if (ExtractDestination(tx.vout[n].scriptPubKey, dest)) {
       std::string address = EncodeDestination(dest);
 
-    if (msc_debug_handle_dex_payment)
-    {
-      PrintToLog("%s: destination address: %s\n", __func__, address);
-      PrintToLog("%s: sender's address: %s\n",__func__, strSender);
-    }
+    if (msc_debug_handle_dex_payment) PrintToLog("%s(): destination address: %s, sender's address: %s\n", __func__, address, strSender);
 
-    if (address == ExodusAddress() || address == strSender)
+    if (address == strSender)
         continue;
 
     if (msc_debug_handle_dex_payment) PrintToLog("payment #%d %s %s\n", count, address, FormatIndivisibleMP(tx.vout[n].nValue));
@@ -2650,12 +2627,19 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
 
     int interp_ret = mp_obj.interpretPacket();
 
+    PrintToLog("%s(): interp_ret: %d\n",__func__,interp_ret);
+
     // Only structurally valid transactions get recorded in levelDB
     // PKT_ERROR - 2 = interpret_Transaction failed, structurally invalid payload
 
     // if interpretPacket returns 1, that means we have an instant trade between LTCs and tokens.
-    if (interp_ret == 1)
+    if (interp_ret == 1){
         HandleLtcInstantTrade(tx, nBlock, mp_obj.getSender(), mp_obj.getReceiver(), mp_obj.getProperty(), mp_obj.getAmountForSale(), mp_obj.getDesiredProperty(), mp_obj.getDesiredValue(), mp_obj.getIndexInBlock());
+
+    //NOTE: we need to return this number 2 from mp_obj.interpretPacket() (tx.cpp)
+  } else if (interp_ret == 2) {
+        HandleDExPayments(tx, nBlock, mp_obj.getSender());
+    }
 
     if (interp_ret != PKT_ERROR - 2) {
       bool bValid = (0 <= interp_ret);
@@ -2665,8 +2649,6 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
     }
 
     fFoundTx |= (interp_ret == 0);
-  } else if (pop_ret > 0) {
-      fFoundTx |= HandleDExPayments(tx, nBlock, mp_obj.getSender());
   }
 
   if (fFoundTx && msc_debug_consensus_hash_every_transaction) {
