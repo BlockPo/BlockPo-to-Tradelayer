@@ -112,7 +112,8 @@ std::string mastercore::strTransactionType(uint16_t txType)
     case MSC_TYPE_CREATE_CHANNEL: return "Channel Creation";
     case MSC_TYPE_CONTRACT_INSTANT: return "Channel Contract Instant Trade";
     case MSC_TYPE_NEW_ID_REGISTRATION: return "New Id Registration";
-    case   MSC_TYPE_UPDATE_ID_REGISTRATION: return "Update Id Registration";
+    case MSC_TYPE_UPDATE_ID_REGISTRATION: return "Update Id Registration";
+    case MSC_TYPE_DEX_PAYMENT: return "DEx payment";
     default: return "* unknown type *";
     }
 }
@@ -276,6 +277,9 @@ bool CMPTransaction::interpret_Transaction()
 
     case MSC_TYPE_UPDATE_ID_REGISTRATION:
         return interpret_Update_Id_Registration();
+
+    case MSC_TYPE_DEX_PAYMENT:
+        return interpret_DEx_Payment();
 
     }
 
@@ -1932,13 +1936,13 @@ bool CMPTransaction::interpret_New_Id_Registration()
 
   if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
   {
-      PrintToLog("\t address: %s\n", __func__, sender);
-      PrintToLog("\t website: %s\n", __func__, website);
-      PrintToLog("\t company name: %s\n", __func__, company_name);
-      PrintToLog("\t tokens: %d\n", __func__, tokens);
-      PrintToLog("\t ltc: %d\n", __func__, ltc);
-      PrintToLog("\t natives: %d\n", __func__, natives);
-      PrintToLog("\t oracles: %d\n", __func__, oracles);
+      PrintToLog("\t address: %s\n", sender);
+      PrintToLog("\t website: %s\n", website);
+      PrintToLog("\t company name: %s\n", company_name);
+      PrintToLog("\t tokens: %d\n", tokens);
+      PrintToLog("\t ltc: %d\n", ltc);
+      PrintToLog("\t natives: %d\n", natives);
+      PrintToLog("\t oracles: %d\n", oracles);
   }
 
   return true;
@@ -1953,6 +1957,26 @@ bool CMPTransaction::interpret_Update_Id_Registration()
   std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
 
+
+  return true;
+}
+
+/** Tx  117*/
+bool CMPTransaction::interpret_DEx_Payment()
+{
+  int i = 0;
+
+  std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+
+
+  // if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+  if(true)
+  {
+      PrintToLog("%s(): inside the function\n",__func__);
+      PrintToLog("\t sender: %s\n", sender);
+      PrintToLog("\t receiver: %s\n", website);
+  }
 
   return true;
 }
@@ -2091,6 +2115,9 @@ int CMPTransaction::interpretPacket()
 
         case MSC_TYPE_UPDATE_ID_REGISTRATION:
             return logicMath_Update_Id_Registration();
+
+        case MSC_TYPE_DEX_PAYMENT:
+            return logicMath_DEx_Payment();
 
 
     }
@@ -3541,11 +3568,11 @@ int CMPTransaction::logicMath_TradeOffer()
     //   return (PKT_ERROR_TRADEOFFER -22);
     // }
 
-    if(!t_tradelistdb->checkKYCRegister(sender,4))
-    {
-        PrintToLog("%s: tx disable from kyc register!\n",__func__);
-        return (PKT_ERROR_KYC -10);
-    }
+    // if(!t_tradelistdb->checkKYCRegister(sender,4))
+    // {
+    //     PrintToLog("%s: tx disable from kyc register!\n",__func__);
+    //     return (PKT_ERROR_KYC -10);
+    // }
 
     if (MAX_INT_8_BYTES < nValue) {
         PrintToLog("%s(): rejected: value out of range or zero: %d\n", __func__, nValue);
@@ -4714,6 +4741,28 @@ int CMPTransaction::logicMath_Update_Id_Registration()
 
   return 0;
 }
+
+/** Tx 117 */
+int CMPTransaction::logicMath_DEx_Payment()
+{
+  int rc = 0;
+
+  // if (!IsTransactionTypeAllowed(block, property, type, version)) {
+  //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+  //             __func__,
+  //             type,
+  //             version,
+  //             property,
+  //             block);
+  //     return (PKT_ERROR_METADEX -22);
+  // }
+  PrintToLog("%s(): inside the function\n",__func__);
+
+  rc = 2;
+
+  return rc;
+}
+
 
 struct FutureContractObject *getFutureContractObject(uint32_t property_type, std::string identifier)
 {

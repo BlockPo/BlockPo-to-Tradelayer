@@ -2072,6 +2072,52 @@ UniValue tl_update_id_registration(const JSONRPCRequest& request)
     }
 }
 
+UniValue tl_send_dex_payment(const JSONRPCRequest& request)
+{
+    if (request.params.size() != 3)
+        throw runtime_error(
+            "tl_send_dex_payment \"fromaddress\" \"toaddress\"amount\" \n"
+
+            "\nCreate and broadcast a dex payment.\n"
+
+            "\nArguments:\n"
+            "1. fromaddress          (string, required) the address to send from\n"
+            "2. toaddress            (string, required) the address of the receiver\n"
+            "3. amount               (string, required) the amount of Litecoins to send\n"
+
+            "\nResult:\n"
+            "\"hash\"                  (string) the hex-encoded transaction hash\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("tl_send_dex_payment", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\" \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\"100.0\"")
+            + HelpExampleRpc("tl_send_dex_payment", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\", \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\",\"100.0\"")
+        );
+
+    // obtain parameters & info
+    std::string fromAddress = ParseAddress(request.params[0]);
+    std::string toAddress = ParseAddress(request.params[1]);
+    int64_t amount = ParseAmount(request.params[2], true);
+
+    // create a payload for the transaction
+    std::vector<unsigned char> payload = CreatePayload_DEx_Payment();
+
+    // request the wallet build the transaction (and if needed commit it)
+    uint256 txid;
+    std::string rawHex;
+    int result = WalletTxBuilder(fromAddress, toAddress, amount, payload, txid, rawHex, autoCommit);
+
+    // check error and return the txid (or raw hex depending on autocommit)
+    if (result != 0) {
+        throw JSONRPCError(result, error_str(result));
+    } else {
+        if (!autoCommit) {
+            return rawHex;
+        } else {
+            return txid.GetHex();
+        }
+    }
+}
+
 // UniValue tl_setexodus(const JSONRPCRequest& request)
 // {
 //     if (request.params.size() < 1 )
@@ -2139,7 +2185,8 @@ static const CRPCCommand commands[] =
     { "trade layer (transaction creation)", "tl_create_channel",               &tl_create_channel,                  {} },
     { "trade layer (transaction creation)", "tl_setexodus",                    &tl_setexodus,                       {} },
     { "trade layer (transaction cration)",  "tl_new_id_registration",          &tl_new_id_registration,             {} },
-    { "trade layer (transaction cration)",  "tl_update_id_registration",      &tl_update_id_registration,         {} },
+    { "trade layer (transaction cration)",  "tl_update_id_registration",       &tl_update_id_registration,          {} },
+    { "trade layer (transaction cration)",  "tl_send_dex_payment",             &tl_send_dex_payment,                {} },
     { "trade layer (transaction creation)", "tl_commit_tochannel",             &tl_commit_tochannel,                {} }
 #endif
 };

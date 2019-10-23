@@ -984,6 +984,29 @@ UniValue tl_createpayload_transfer(const JSONRPCRequest& request)
 
 }
 
+UniValue tl_createpayload_dex_payment(const JSONRPCRequest& request)
+{
+  if (request.params.size() != 0)
+    throw runtime_error(
+			"tl_createpayload_dex_payment\n"
+
+			"\nCreate an transfer payload.\n"
+
+			"\nResult:\n"
+			"\"hash\"                  (string) the hex-encoded transaction hash\n"
+
+			"\nExamples:\n"
+		  + HelpExampleCli("tl_createpayload_dex_payment", "\"")
+			+ HelpExampleRpc("tl_createpayload_dex_payment", "\"")
+			);
+
+  // create a payload for the transaction
+  std::vector<unsigned char> payload = CreatePayload_DEx_Payment();
+
+  return HexStr(payload.begin(), payload.end());
+
+}
+
 static const CRPCCommand commands[] =
   { //  category                         name                                             actor (function)                               okSafeMode
     //  -------------------------------- -----------------------------------------       ----------------------------------------        ----------
@@ -1016,6 +1039,7 @@ static const CRPCCommand commands[] =
     { "trade layer (payload creation)", "tl_createpayload_instant_trade",                 &tl_createpayload_instant_trade,                   {}   },
     { "trade layer (payload creation)", "tl_createpayload_pnl_update",                    &tl_createpayload_pnl_update,                      {}   },
     { "trade layer (payload creation)", "tl_createpayload_transfer",                      &tl_createpayload_transfer,                        {}   },
+    { "trade layer (payload creation)", "tl_createpayload_dex_payment",                   &tl_createpayload_dex_payment,                     {}   },
     { "trade layer (payload creation)", "tl_createpayload_contract_instant_trade",        &tl_createpayload_contract_instant_trade,          {}   }
   };
 
