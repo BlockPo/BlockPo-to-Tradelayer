@@ -2665,7 +2665,7 @@ int CMPTransaction::logicMath_GrantTokens()
     return (PKT_ERROR_TOKENS -42);
   }
 
-  if (sender != sp.issuer) { // FIXME!
+  if (sender != sp.issuer) {
     PrintToLog("%s(): rejected: sender %s is not issuer of property %d [issuer=%s]\n", __func__, sender, property, sp.issuer);
     return (PKT_ERROR_TOKENS -43);
   }
@@ -3027,15 +3027,15 @@ int CMPTransaction::logicMath_CreateContractDex()
       blockHash = pindex->GetBlockHash();
   }
 
-  // if (!IsTransactionTypeAllowed(block, ecosystem, type, version)) {
-  //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
-  //         __func__,
-  //         type,
-  //         version,
-  //         propertyId,
-  //         block);
-  //     return (PKT_ERROR_SP -22);
-  // }
+  if (!IsTransactionTypeAllowed(block, ecosystem, type, version)) {
+      PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+          __func__,
+          type,
+          version,
+          propertyId,
+          block);
+      return (PKT_ERROR_SP -22);
+  }
 
   if ('\0' == name[0]) {
     PrintToLog("%s(): rejected: property name must not be empty\n", __func__);
@@ -3228,15 +3228,15 @@ int CMPTransaction::logicMath_ContractDexClosePosition()
 
 int CMPTransaction::logicMath_ContractDex_Cancel_Orders_By_Block()
 {
-  // if (!IsTransactionTypeAllowed(block, ecosystem, type, version)) {
-  //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
-  //             __func__,
-  //             type,
-  //             version,
-  //             propertyId,
-  //             block);
-    //  return (PKT_ERROR_METADEX -22);
-  // }
+  if (!IsTransactionTypeAllowed(block, ecosystem, type, version)) {
+      PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+              __func__,
+              type,
+              version,
+              propertyId,
+              block);
+     return (PKT_ERROR_METADEX -22);
+  }
 
   if (OMNI_PROPERTY_ALL != ecosystem && OMNI_PROPERTY_TALL != ecosystem) {
       PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, ecosystem);
@@ -3274,17 +3274,16 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
         PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, (uint32_t) ecosystem);
         return (PKT_ERROR_SP -21);
     }
-//
-// if (OMNI_PROPERTY_MSC != ecosystem && OMNI_PROPERTY_TMSC != ecosystem) {
-//     if (!IsTransactionTypeAllowed(block, ecosystem, type, version)) {
-//         PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
-//                 __func__,
-//                 type,
-//                 version,
-//                 property,
-//                 block);
-//         return (PKT_ERROR_SP -22);
-//     }
+
+    if (!IsTransactionTypeAllowed(block, ecosystem, type, version)) {
+        PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+                __func__,
+                type,
+                version,
+                property,
+                block);
+        return (PKT_ERROR_SP -22);
+    }
 
     if (ALL_PROPERTY_TYPE_INDIVISIBLE != prop_type && ALL_PROPERTY_TYPE_DIVISIBLE != prop_type && ALL_PROPERTY_TYPE_PEGGEDS != prop_type) {
         PrintToLog("%s(): rejected: invalid property type: %d\n", __func__, prop_type);
@@ -3473,17 +3472,16 @@ int CMPTransaction::logicMath_SendPeggedCurrency()
 
 int CMPTransaction::logicMath_RedemptionPegged()
 {
-
-    // if (!IsTransactionTypeAllowed(block, propertyId, type, version)) {
-    //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
-    //             __func__,
-    //             type,
-    //             version,
-    //             propertyId,
-    //             block);
-    //     PrintToLog("rejected: type %d or version %d not permitted for property %d at block %d\n");
-    //     return (PKT_ERROR_SEND -22);
-    // }
+    if (!IsTransactionTypeAllowed(block, propertyId, type, version)) {
+        PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+                __func__,
+                type,
+                version,
+                propertyId,
+                block);
+        PrintToLog("rejected: type %d or version %d not permitted for property %d at block %d\n");
+        return (PKT_ERROR_SEND -22);
+    }
 
     if (!IsPropertyIdValid(propertyId)) {
         PrintToLog("%s(): rejected: property %d does not exist\n", __func__, property);
@@ -3558,21 +3556,21 @@ int CMPTransaction::logicMath_RedemptionPegged()
 
 int CMPTransaction::logicMath_TradeOffer()
 {
-    // if (!IsTransactionTypeAllowed(block, propertyId, type, version)) {
-    //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
-    //         __func__,
-    //         type,
-    //         version,
-    //         propertyId,
-    //         block);
-    //   return (PKT_ERROR_TRADEOFFER -22);
-    // }
+    if (!IsTransactionTypeAllowed(block, propertyId, type, version)) {
+        PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+            __func__,
+            type,
+            version,
+            propertyId,
+            block);
+      return (PKT_ERROR_TRADEOFFER -22);
+    }
 
-    // if(!t_tradelistdb->checkKYCRegister(sender,4))
-    // {
-    //     PrintToLog("%s: tx disable from kyc register!\n",__func__);
-    //     return (PKT_ERROR_KYC -10);
-    // }
+    if(!t_tradelistdb->checkKYCRegister(sender,4))
+    {
+        PrintToLog("%s: tx disable from kyc register!\n",__func__);
+        return (PKT_ERROR_KYC -10);
+    }
 
     if (MAX_INT_8_BYTES < nValue) {
         PrintToLog("%s(): rejected: value out of range or zero: %d\n", __func__, nValue);
@@ -3659,15 +3657,15 @@ int CMPTransaction::logicMath_TradeOffer()
 /*Tx 21*/
 int CMPTransaction::logicMath_DExBuy()
 {
-    // if (!IsTransactionTypeAllowed(block, propertyId, type, version)) {
-    //  PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
-    //          __func__,
-    //          type,
-    //          version,
-    //          propertyId,
-    //          block);
-    //   return (PKT_ERROR_TRADEOFFER -22);
-    // }
+    if (!IsTransactionTypeAllowed(block, propertyId, type, version)) {
+     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+             __func__,
+             type,
+             version,
+             propertyId,
+             block);
+      return (PKT_ERROR_TRADEOFFER -22);
+    }
 
     if(!t_tradelistdb->checkKYCRegister(sender,4))
     {
@@ -3887,15 +3885,15 @@ int CMPTransaction::logicMath_CreateOracleContract()
       return (PKT_ERROR_SP -21);
   }
 
-  // if (!IsTransactionTypeAllowed(block, ecosystem, type, version)) {
-  //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
-  //         __func__,
-  //         type,
-  //         version,
-  //         propertyId,
-  //         block);
-  //     return (PKT_ERROR_SP -22);
-  // }
+  if (!IsTransactionTypeAllowed(block, ecosystem, type, version)) {
+      PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+          __func__,
+          type,
+          version,
+          propertyId,
+          block);
+      return (PKT_ERROR_SP -22);
+  }
 
   if ('\0' == name[0])
   {
@@ -3958,15 +3956,15 @@ int CMPTransaction::logicMath_Change_OracleRef()
         blockHash = pindex->GetBlockHash();
     }
 
-    // if (!IsTransactionTypeAllowed(block, property, type, version)) {
-    //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
-    //             __func__,
-    //             type,
-    //             version,
-    //             property,
-    //             block);
-    //     return (PKT_ERROR_TOKENS -22);
-    // }
+    if (!IsTransactionTypeAllowed(block, property, type, version)) {
+        PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+                __func__,
+                type,
+                version,
+                property,
+                block);
+        return (PKT_ERROR_TOKENS -22);
+    }
 
     if (!IsPropertyIdValid(contractId)) {
         PrintToLog("%s(): rejected: oracle contract %d does not exist\n", __func__, property);
@@ -4011,15 +4009,15 @@ int CMPTransaction::logicMath_Set_Oracle()
         blockHash = pindex->GetBlockHash();
     }
 
-    // if (!IsTransactionTypeAllowed(block, property, type, version)) {
-    //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
-    //             __func__,
-    //             type,
-    //             version,
-    //             property,
-    //             block);
-    //     return (PKT_ERROR_TOKENS -22);
-    // }
+    if (!IsTransactionTypeAllowed(block, property, type, version)) {
+        PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+                __func__,
+                type,
+                version,
+                property,
+                block);
+        return (PKT_ERROR_TOKENS -22);
+    }
 
     if (!IsPropertyIdValid(contractId)) {
         PrintToLog("%s(): rejected: oracle %d does not exist\n", __func__, property);
@@ -4069,15 +4067,15 @@ int CMPTransaction::logicMath_OracleBackup()
         blockHash = pindex->GetBlockHash();
     }
 
-    // if (!IsTransactionTypeAllowed(block, property, type, version)) {
-    //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
-    //             __func__,
-    //             type,
-    //             version,
-    //             property,
-    //             block);
-    //     return (PKT_ERROR_TOKENS -22);
-    // }
+    if (!IsTransactionTypeAllowed(block, property, type, version)) {
+        PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+                __func__,
+                type,
+                version,
+                property,
+                block);
+        return (PKT_ERROR_TOKENS -22);
+    }
 
     if (!IsPropertyIdValid(contractId)) {
         PrintToLog("%s(): rejected: oracle %d does not exist\n", __func__, property);
@@ -4117,15 +4115,15 @@ int CMPTransaction::logicMath_CloseOracle()
         blockHash = pindex->GetBlockHash();
     }
 
-    // if (!IsTransactionTypeAllowed(block, property, type, version)) {
-    //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
-    //             __func__,
-    //             type,
-    //             version,
-    //             property,
-    //             block);
-    //     return (PKT_ERROR_TOKENS -22);
-    // }
+    if (!IsTransactionTypeAllowed(block, property, type, version)) {
+        PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+                __func__,
+                type,
+                version,
+                property,
+                block);
+        return (PKT_ERROR_TOKENS -22);
+    }
 
     if (!IsPropertyIdValid(contractId)) {
         PrintToLog("%s(): rejected: oracle %d does not exist\n", __func__, property);
@@ -4166,15 +4164,15 @@ int CMPTransaction::logicMath_CommitChannel()
         blockHash = pindex->GetBlockHash();
     }
 
-    // if (!IsTransactionTypeAllowed(block, property, type, version)) {
-    //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
-    //             __func__,
-    //             type,
-    //             version,
-    //             property,
-    //             block);
-    //     return (PKT_ERROR_TOKENS -22);
-    // }
+    if (!IsTransactionTypeAllowed(block, property, type, version)) {
+        PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+                __func__,
+                type,
+                version,
+                property,
+                block);
+        return (PKT_ERROR_TOKENS -22);
+    }
 
     if (!t_tradelistdb->checkChannelAddress(receiver)) {
         PrintToLog("%s(): rejected: address %s doesn't belong to multisig channel\n", __func__, receiver);
@@ -4221,15 +4219,15 @@ int CMPTransaction::logicMath_Withdrawal_FromChannel()
         blockHash = pindex->GetBlockHash();
     }
 
-    // if (!IsTransactionTypeAllowed(block, property, type, version)) {
-    //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
-    //             __func__,
-    //             type,
-    //             version,
-    //             property,
-    //             block);
-    //     return (PKT_ERROR_TOKENS -22);
-    // }
+    if (!IsTransactionTypeAllowed(block, property, type, version)) {
+        PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+                __func__,
+                type,
+                version,
+                property,
+                block);
+        return (PKT_ERROR_TOKENS -22);
+    }
 
     if (!IsPropertyIdValid(propertyId)) {
         PrintToLog("%s(): rejected: property %d does not exist\n", __func__, property);
@@ -4287,15 +4285,15 @@ int CMPTransaction::logicMath_Instant_Trade()
 {
   int rc = 0;
 
-  // if (!IsTransactionTypeAllowed(block, property, type, version)) {
-  //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
-  //             __func__,
-  //             type,
-  //             version,
-  //             property,
-  //             block);
-  //     return (PKT_ERROR_METADEX -22);
-  // }
+  if (!IsTransactionTypeAllowed(block, property, type, version)) {
+      PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+              __func__,
+              type,
+              version,
+              property,
+              block);
+      return (PKT_ERROR_METADEX -22);
+  }
 
   if (property == desired_property) {
       PrintToLog("%s(): rejected: property for sale %d and desired property %d must not be equal\n",
@@ -4415,15 +4413,15 @@ int CMPTransaction::logicMath_Update_PNL()
       blockHash = pindex->GetBlockHash();
   }
 
-  // if (!IsTransactionTypeAllowed(block, property, type, version)) {
-  //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
-  //             __func__,
-  //             type,
-  //             version,
-  //             property,
-  //             block);
-  //     return (PKT_ERROR_TOKENS -22);
-  // }
+  if (!IsTransactionTypeAllowed(block, property, type, version)) {
+      PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+              __func__,
+              type,
+              version,
+              property,
+              block);
+      return (PKT_ERROR_TOKENS -22);
+  }
 
   if (!IsPropertyIdValid(propertyId)) {
       PrintToLog("%s(): rejected: property %d does not exist\n", __func__, property);
@@ -4458,15 +4456,15 @@ int CMPTransaction::logicMath_Transfer()
       blockHash = pindex->GetBlockHash();
   }
 
-  // if (!IsTransactionTypeAllowed(block, property, type, version)) {
-  //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
-  //             __func__,
-  //             type,
-  //             version,
-  //             property,
-  //             block);
-  //     return (PKT_ERROR_TOKENS -22);
-  // }
+  if (!IsTransactionTypeAllowed(block, property, type, version)) {
+      PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+              __func__,
+              type,
+              version,
+              property,
+              block);
+      return (PKT_ERROR_TOKENS -22);
+  }
 
   if (!IsPropertyIdValid(propertyId)) {
       PrintToLog("%s(): rejected: property %d does not exist\n", __func__, property);
@@ -4504,15 +4502,15 @@ int CMPTransaction::logicMath_Create_Channel()
         blockHash = pindex->GetBlockHash();
     }
 
-    // if (!IsTransactionTypeAllowed(block, property, type, version)) {
-    //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
-    //             __func__,
-    //             type,
-    //             version,
-    //             property,
-    //             block);
-    //     return (PKT_ERROR_TOKENS -22);
-    // }
+    if (!IsTransactionTypeAllowed(block, property, type, version)) {
+        PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+                __func__,
+                type,
+                version,
+                property,
+                block);
+        return (PKT_ERROR_TOKENS -22);
+    }
 
 
     // ------------------------------------------
@@ -4541,15 +4539,15 @@ int CMPTransaction::logicMath_Contract_Instant()
   int rc = 0;
 
 
-  // if (!IsTransactionTypeAllowed(block, property, type, version)) {
-  //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
-  //             __func__,
-  //             type,
-  //             version,
-  //             property,
-  //             block);
-  //     return (PKT_ERROR_METADEX -22);
-  // }
+  if (!IsTransactionTypeAllowed(block, property, type, version)) {
+      PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+              __func__,
+              type,
+              version,
+              property,
+              block);
+      return (PKT_ERROR_METADEX -22);
+  }
 
 
   if (!IsPropertyIdValid(property)) {
@@ -4690,15 +4688,15 @@ int CMPTransaction::logicMath_New_Id_Registration()
       blockHash = pindex->GetBlockHash();
   }
 
-  // if (!IsTransactionTypeAllowed(block, property, type, version)) {
-  //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
-  //             __func__,
-  //             type,
-  //             version,
-  //             property,
-  //             block);
-  //     return (PKT_ERROR_TOKENS -22);
-  // }
+  if (!IsTransactionTypeAllowed(block, property, type, version)) {
+      PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+              __func__,
+              type,
+              version,
+              property,
+              block);
+      return (PKT_ERROR_TOKENS -22);
+  }
 
   // ---------------------------------------
   if (msc_debug_new_id_registration) PrintToLog("%s(): channelAddres in register: %s \n",__func__,receiver);
@@ -4725,15 +4723,15 @@ int CMPTransaction::logicMath_Update_Id_Registration()
       blockHash = pindex->GetBlockHash();
   }
 
-  // if (!IsTransactionTypeAllowed(block, property, type, version)) {
-  //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
-  //             __func__,
-  //             type,
-  //             version,
-  //             property,
-  //             block);
-  //     return (PKT_ERROR_TOKENS -22);
-  // }
+  if (!IsTransactionTypeAllowed(block, property, type, version)) {
+      PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+              __func__,
+              type,
+              version,
+              property,
+              block);
+      return (PKT_ERROR_TOKENS -22);
+  }
 
   // ---------------------------------------
 
@@ -4747,15 +4745,15 @@ int CMPTransaction::logicMath_DEx_Payment()
 {
   int rc = 0;
 
-  // if (!IsTransactionTypeAllowed(block, property, type, version)) {
-  //     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
-  //             __func__,
-  //             type,
-  //             version,
-  //             property,
-  //             block);
-  //     return (PKT_ERROR_METADEX -22);
-  // }
+  if (!IsTransactionTypeAllowed(block, property, type, version)) {
+      PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+              __func__,
+              type,
+              version,
+              property,
+              block);
+      return (PKT_ERROR_METADEX -22);
+  }
   PrintToLog("%s(): inside the function\n",__func__);
 
   rc = 2;

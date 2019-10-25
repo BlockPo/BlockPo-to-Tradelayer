@@ -35,35 +35,56 @@ namespace mastercore
 std::vector<TransactionRestriction> CConsensusParams::GetRestrictions() const
 {
     const TransactionRestriction vTxRestrictions[] =
-    { //  transaction type                    version        allow 0  activation block
-      //  ----------------------------------  -------------  -------  ------------------
-        { OMNICORE_MESSAGE_TYPE_ALERT,        0xFFFF,        true,             MSC_ALERT_BLOCK    },
-        { OMNICORE_MESSAGE_TYPE_ACTIVATION,   0xFFFF,        true,             MSC_ALERT_BLOCK    },
-        { OMNICORE_MESSAGE_TYPE_DEACTIVATION, 0xFFFF,        true,             MSC_ALERT_BLOCK    },
-
-        { MSC_TYPE_SIMPLE_SEND,               MP_TX_PKT_V0,  false,            MSC_SEND_BLOCK     },
-
-        { MSC_TYPE_CREATE_PROPERTY_FIXED,     MP_TX_PKT_V0,  false,            MSC_SP_BLOCK       },
-        { MSC_TYPE_CREATE_PROPERTY_VARIABLE,  MP_TX_PKT_V0,  false,            MSC_SP_BLOCK       },
-        { MSC_TYPE_CREATE_PROPERTY_VARIABLE,  MP_TX_PKT_V1,  false,            MSC_SP_BLOCK       },
-        { MSC_TYPE_CLOSE_CROWDSALE,           MP_TX_PKT_V0,  false,            MSC_SP_BLOCK       },
-
-        { MSC_TYPE_CREATE_PROPERTY_MANUAL,    MP_TX_PKT_V0,  false,            MSC_MANUALSP_BLOCK },
-        { MSC_TYPE_GRANT_PROPERTY_TOKENS,     MP_TX_PKT_V0,  false,            MSC_MANUALSP_BLOCK },
-        { MSC_TYPE_REVOKE_PROPERTY_TOKENS,    MP_TX_PKT_V0,  false,            MSC_MANUALSP_BLOCK },
-        { MSC_TYPE_CHANGE_ISSUER_ADDRESS,     MP_TX_PKT_V0,  false,            MSC_MANUALSP_BLOCK },
-        { MSC_TYPE_CREATE_CONTRACT,           MP_TX_PKT_V0,  true,         MSC_CONTRACTDEX_BLOCK },
-        { MSC_TYPE_CONTRACTDEX_TRADE,         MP_TX_PKT_V0,  true,         MSC_CONTRACTDEX_BLOCK },
-        { MSC_TYPE_CONTRACTDEX_CANCEL_ECOSYSTEM, MP_TX_PKT_V0,  true,      MSC_CONTRACTDEX_BLOCK },
-        { MSC_TYPE_PEGGED_CURRENCY,           MP_TX_PKT_V0,  true,         MSC_CONTRACTDEX_BLOCK },
-        { MSC_TYPE_SEND_PEGGED_CURRENCY,           MP_TX_PKT_V0,  true,    MSC_CONTRACTDEX_BLOCK },
-        { MSC_TYPE_SEND_ALL,                  MP_TX_PKT_V0,  true,            MSC_SEND_ALL_BLOCK },
-        { MSC_TYPE_CONTRACTDEX_CLOSE_POSITION,MP_TX_PKT_V0,  true,         MSC_CONTRACTDEX_BLOCK },
-        { MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK,MP_TX_PKT_V0,  true,   MSC_CONTRACTDEX_BLOCK},
-        { MSC_TYPE_METADEX_TRADE,              MP_TX_PKT_V0,  true,          MSC_CONTRACTDEX_BLOCK},
-        { MSC_TYPE_TRADE_OFFER,                MP_TX_PKT_V1,  true,          MSC_CONTRACTDEX_BLOCK},
-        { MSC_TYPE_ACCEPT_OFFER_BTC,           MP_TX_PKT_V1,  true,          MSC_CONTRACTDEX_BLOCK},
-        { MSC_TYPE_DEX_BUY_OFFER,              MP_TX_PKT_V1,  true,          MSC_CONTRACTDEX_BLOCK}
+    { //  transaction type                                 version          allow 0          activation block
+      //  ----------------------------------            -------------       -------          ------------------
+        { OMNICORE_MESSAGE_TYPE_ALERT,                    0xFFFF,            true,             MSC_ALERT_BLOCK    },
+        { OMNICORE_MESSAGE_TYPE_ACTIVATION,               0xFFFF,            true,             MSC_ALERT_BLOCK    },
+        { OMNICORE_MESSAGE_TYPE_DEACTIVATION,             0xFFFF,            true,             MSC_ALERT_BLOCK    },
+        { MSC_TYPE_SIMPLE_SEND,                           MP_TX_PKT_V0,      false,            MSC_SEND_BLOCK     },
+        { MSC_TYPE_CREATE_PROPERTY_FIXED,                 MP_TX_PKT_V0,      false,            MSC_SP_BLOCK       },
+        { MSC_TYPE_CREATE_PROPERTY_VARIABLE,              MP_TX_PKT_V0,      false,            MSC_SP_BLOCK       },
+        { MSC_TYPE_CREATE_PROPERTY_VARIABLE,              MP_TX_PKT_V1,      false,            MSC_SP_BLOCK       },
+        { MSC_TYPE_CLOSE_CROWDSALE,                       MP_TX_PKT_V0,      false,            MSC_SP_BLOCK       },
+        { MSC_TYPE_CREATE_PROPERTY_MANUAL,                MP_TX_PKT_V0,      false,            MSC_MANUALSP_BLOCK },
+        { MSC_TYPE_GRANT_PROPERTY_TOKENS,                 MP_TX_PKT_V0,      false,            MSC_MANUALSP_BLOCK },
+        { MSC_TYPE_REVOKE_PROPERTY_TOKENS,                MP_TX_PKT_V0,      false,            MSC_MANUALSP_BLOCK },
+        { MSC_TYPE_CHANGE_ISSUER_ADDRESS,                 MP_TX_PKT_V0,      false,            MSC_MANUALSP_BLOCK },
+        { MSC_TYPE_CREATE_CONTRACT,                       MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK },
+        { MSC_TYPE_CONTRACTDEX_TRADE,                     MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK },
+        { MSC_TYPE_CONTRACTDEX_CANCEL_ECOSYSTEM,          MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK },
+        { MSC_TYPE_PEGGED_CURRENCY,                       MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK },
+        { MSC_TYPE_SEND_PEGGED_CURRENCY,                  MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK },
+        { MSC_TYPE_SEND_ALL,                              MP_TX_PKT_V0,      true,             MSC_SEND_ALL_BLOCK },
+        { MSC_TYPE_CONTRACTDEX_CLOSE_POSITION,            MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK },
+        { MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK,    MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
+        { MSC_TYPE_METADEX_TRADE,                         MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
+        { MSC_TYPE_TRADE_OFFER,                           MP_TX_PKT_V1,      true,             MSC_CONTRACTDEX_BLOCK},
+        { MSC_TYPE_ACCEPT_OFFER_BTC,                      MP_TX_PKT_V1,      true,             MSC_CONTRACTDEX_BLOCK},
+        { MSC_TYPE_DEX_BUY_OFFER,                         MP_TX_PKT_V1,      true,             MSC_CONTRACTDEX_BLOCK},
+        { MSC_TYPE_CONTRACTDEX_TRADE,                     MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
+        { MSC_TYPE_CONTRACTDEX_CANCEL_ECOSYSTEM,          MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
+        { MSC_TYPE_CREATE_CONTRACT,                       MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
+        { MSC_TYPE_PEGGED_CURRENCY,                       MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
+        { MSC_TYPE_REDEMPTION_PEGGED,                     MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
+        { MSC_TYPE_SEND_PEGGED_CURRENCY,                  MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
+        { MSC_TYPE_CONTRACTDEX_CLOSE_POSITION,            MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
+        { MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK,    MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
+        { MSC_TYPE_TRADE_OFFER,                           MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
+        { MSC_TYPE_DEX_BUY_OFFER,                         MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
+        { MSC_TYPE_ACCEPT_OFFER_BTC,                      MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
+        { MSC_TYPE_CHANGE_ORACLE_REF,                     MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
+        { MSC_TYPE_SET_ORACLE,                            MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
+        { MSC_TYPE_ORACLE_BACKUP,                         MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
+        { MSC_TYPE_CLOSE_ORACLE,                          MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
+        { MSC_TYPE_COMMIT_CHANNEL,                        MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
+        { MSC_TYPE_WITHDRAWAL_FROM_CHANNEL,               MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
+        { MSC_TYPE_INSTANT_TRADE,                         MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
+        { MSC_TYPE_TRANSFER,                              MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
+        { MSC_TYPE_CREATE_CHANNEL,                        MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
+        { MSC_TYPE_CONTRACT_INSTANT,                      MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
+        { MSC_TYPE_NEW_ID_REGISTRATION,                   MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
+        { MSC_TYPE_UPDATE_ID_REGISTRATION,                MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
+        { MSC_TYPE_DEX_PAYMENT,                           MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
 
     };
 
@@ -126,7 +147,7 @@ CMainConsensusParams::CMainConsensusParams()
     MSC_VESTING_BLOCK = 0;
     MSC_NODE_REWARD = 777;
 }
-  
+
 /**
  * Constructor for testnet consensus parameters.
  */
