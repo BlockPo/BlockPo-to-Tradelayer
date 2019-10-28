@@ -27,11 +27,9 @@ extern CFeeRate minRelayTxFee;
  */
 int64_t GetDustThld(const CScript& scriptPubKey)
 {
-  const CTxOut txOut(CAmount(0), scriptPubKey);
-    CAmount amount = GetDustThreshold(txOut, minRelayTxFee);
-    PrintToLog("amount of Dust : %d\n",static_cast<int64_t>(amount));
-    
-    return static_cast<int64_t>(200 * amount);
+    const CTxOut txOut(CAmount(0), scriptPubKey);
+    CAmount amount = 20 * GetDustThreshold(txOut, ::minRelayTxFee);
+    return static_cast<int64_t>(amount);
 }
 
 /**

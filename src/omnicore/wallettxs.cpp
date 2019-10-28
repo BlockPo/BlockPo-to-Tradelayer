@@ -5,12 +5,12 @@
 #include "omnicore/rules.h"
 #include "omnicore/script.h"
 #include "omnicore/utilsbitcoin.h"
-
 #include "amount.h"
 #include "base58.h"
 #include "wallet/coincontrol.h"
 #include "init.h"
 #include "validation.h"
+#include "policy/policy.h"
 #include "pubkey.h"
 #include "script/standard.h"
 #include "sync.h"
@@ -20,6 +20,7 @@
 #ifdef ENABLE_WALLET
 #include "script/ismine.h"
 #include "wallet/wallet.h"
+#include "wallet/fees.h"
 #endif
 
 #include <stdint.h>
@@ -110,6 +111,42 @@ bool CheckFee(const std::string& fromAddress, size_t nDataSize)
     return inputTotal >= minFee;
 }
 
+static int64_t GetEstimatedFeePerKb()
+{
+    int64_t nFee = 50000; // 0.0005 BTC;
+
+#ifdef ENABLE_WALLET
+    CWalletRef pwalletMain = NULL;
+    if (vpwallets.size() > 0){
+        pwalletMain = vpwallets[0];
+    }
+
+    if (pwalletMain) {
+       CCoinControl coin_control;
+       nFee = GetMinimumFee(1000, coin_control, mempool, ::feeEstimator, nullptr);
+    }
+#endif
+
+    PrintToLog("%s(): nFee: %d\n",__func__, nFee);
+    return nFee;
+}
+
+static CAmount GetEconomicThreshold(const CTxOut& txOut)
+{
+    // Minimum value needed to relay the transaction
+    CAmount nThresholdDust = GetDustThreshold(txOut,minRelayTxFee);
+
+    // Use the estimated fee that is also used to contruct transactions.
+    // We use the absolute minimum, so we divide by 3, to get rid of the
+    // safety margin used for the dust threshold used for relaying.
+    CFeeRate estimatedFeeRate(GetEstimatedFeePerKb());
+    CAmount nThresholdFees = GetDustThreshold(txOut,estimatedFeeRate) / 3;
+
+    if (msc_debug_wallettxs) PrintToLog("%s(): nThresholdDust: %d, nThresholdFees: %d\n",__func__,nThresholdDust,nThresholdFees);
+
+    return std::max(nThresholdDust, nThresholdFees);
+}
+
 /**
  * Checks, whether the output qualifies as input for a transaction.
  */
@@ -124,7 +161,6 @@ bool CheckInput(const CTxOut& txOut, int nHeight, CTxDestination& dest)
        return false;
     }
     if (!ExtractDestination(txOut.scriptPubKey, dest)) {
-       PrintToLog("!ExtractDestination \n");
        return false;
     }
 
@@ -228,11 +264,20 @@ int64_t SelectCoins(const std::string& fromAddress, CCoinControl& coinControl, i
             if (!CheckInput(txOut, nHeight, dest)) {
                 continue;
             }
+
             if (!IsMine(*pwalletMain, dest)) {
                 continue;
             }
+
             if (pwalletMain->IsSpent(txid, n)) {
                continue;
+            }
+
+            if (txOut.nValue < GetEconomicThreshold(txOut)) {
+                if (msc_debug_wallettxs)
+                PrintToLog("%s: output value below economic threshold: %s:%d, value: %d\n",
+                      __func__, txid.GetHex(), n, txOut.nValue);
+                continue;
             }
 
             CTxDestination cfromAddress = DecodeDestination(fromAddress); // new change
