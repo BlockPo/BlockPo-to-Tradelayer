@@ -83,6 +83,7 @@ bool msc_debug_instant_trade                    = 0;
 bool msc_debug_contract_instant_trade           = 0;
 bool msc_create_channel                         = 0;
 bool msc_debug_new_id_registration              = 0;
+bool msc_debug_wallettxs                        = 0;
 /**
  * LogPrintf() has been broken a couple of times now
  * by well-meaning people adding mutexes in the most straightforward way.

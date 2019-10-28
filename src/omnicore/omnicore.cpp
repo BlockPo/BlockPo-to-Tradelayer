@@ -966,7 +966,7 @@ static bool HandleDExPayments(const CTransaction& tx, int nBlock, const std::str
 {
     uint64_t nValue;
     int count = 0;
-  
+
     for (unsigned int n = 0; n < tx.vout.size(); ++n)
     {
         CTxDestination dest;
@@ -2852,7 +2852,10 @@ int mastercore::WalletTxBuilder(const std::string& senderAddress, const std::str
   // Then add a paytopubkeyhash output for the recipient (if needed) - note we do this last as we want this to be the highest vout
   if (!receiverAddress.empty()) {
     CScript scriptPubKey = GetScriptForDestination(DecodeDestination(receiverAddress));
-    vecSend.push_back(std::make_pair(scriptPubKey, 0 < referenceAmount ? referenceAmount : 50000000));
+    vecSend.push_back(std::make_pair(scriptPubKey, 0 < referenceAmount ? referenceAmount : GetDustThld(scriptPubKey)));
+
+    int64_t result = GetDustThld(scriptPubKey);
+    PrintToLog("%s():amount of Dust : %d\n",__func__,result);
   }
 
   // Now we have what we need to pass to the wallet to create the transaction, perform some checks first

@@ -85,6 +85,7 @@ extern bool msc_debug_instant_trade;
 extern bool msc_create_channel;
 extern bool msc_debug_contract_instant_trade;
 extern bool msc_debug_new_id_registration;
+extern bool msc_debug_wallettxs;
 /* When we switch to C++11, this can be switched to variadic templates instead
  * of this macro-based construction (see tinyformat.h).
  */
