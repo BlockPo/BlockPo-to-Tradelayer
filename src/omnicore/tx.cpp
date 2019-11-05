@@ -92,7 +92,7 @@ std::string mastercore::strTransactionType(uint16_t txType)
 
     case MSC_TYPE_CONTRACTDEX_TRADE: return "Future Contract";
     case MSC_TYPE_CONTRACTDEX_CANCEL_ECOSYSTEM: return "ContractDex cancel-ecosystem";
-    case MSC_TYPE_CREATE_CONTRACT: return "Create Contract";
+    case MSC_TYPE_CREATE_CONTRACT: return "Create Native Contract";
     case MSC_TYPE_PEGGED_CURRENCY: return "Pegged Currency";
     case MSC_TYPE_REDEMPTION_PEGGED: return "Redemption Pegged Currency";
     case MSC_TYPE_SEND_PEGGED_CURRENCY: return "Send Pegged Currency";
@@ -1049,8 +1049,7 @@ bool CMPTransaction::interpret_CreateContractDex()
 /**Tx 29 */
 bool CMPTransaction::interpret_ContractDexTrade()
 {
-  // PrintToLog("Inside of trade contractdexTrade function\n");
-
+  
   int i = 0;
   std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);

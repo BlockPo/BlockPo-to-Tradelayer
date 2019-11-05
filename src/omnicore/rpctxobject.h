@@ -24,6 +24,15 @@ void populateRPCTypeGrant(CMPTransaction& omniObj, UniValue& txobj);
 void populateRPCTypeRevoke(CMPTransaction& omniOobj, UniValue& txobj);
 void populateRPCTypeChangeIssuer(CMPTransaction& omniObj, UniValue& txobj);
 void populateRPCTypeActivation(CMPTransaction& omniObj, UniValue& txobj);
+void populateRPCTypeCreateContract(CMPTransaction& omniObj, UniValue& txobj);
+void populateRPCTypeVestingTokens(CMPTransaction& omniObj, UniValue& txobj);
+void populateRPCTypeCreateOracle(CMPTransaction& omniObj, UniValue& txobj);
+void populateRPCTypeMetaDExTrade(CMPTransaction& omniObj, UniValue& txobj);
+void populateRPCTypeContractDexTrade(CMPTransaction& omniObj, UniValue& txobj);
+void populateRPCTypeContractDexCancelEcosystem(CMPTransaction& omniObj, UniValue& txobj);
+void populateRPCTypeCreatePeggedCurrency(CMPTransaction& omniObj, UniValue& txobj);
+// void populateRPCTypeSendPeggedCurrency(CMPTransaction& omniObj, UniValue& txobj);
+
 
 int populateRPCSendAllSubSends(const uint256& txid, UniValue& subSends);
 
