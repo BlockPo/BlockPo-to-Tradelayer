@@ -1049,7 +1049,7 @@ bool CMPTransaction::interpret_CreateContractDex()
 /**Tx 29 */
 bool CMPTransaction::interpret_ContractDexTrade()
 {
-  
+
   int i = 0;
   std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
@@ -1489,7 +1489,7 @@ bool CMPTransaction::interpret_Change_OracleRef()
     {
         PrintToLog("\t version: %d\n", version);
         PrintToLog("\t messageType: %d\n",type);
-        PrintToLog("\t propertyId: %d\n", propertyId);
+        PrintToLog("\t contractId: %d\n", contractId);
     }
 
     return true;

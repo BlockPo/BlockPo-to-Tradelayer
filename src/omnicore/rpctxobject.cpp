@@ -186,9 +186,67 @@ void populateRPCTypeInfo(CMPTransaction& mp_obj, UniValue& txobj, uint32_t txTyp
         case MSC_TYPE_PEGGED_CURRENCY:
             populateRPCTypeCreatePeggedCurrency(mp_obj, txobj);
             break;
-        // case MSC_TYPE_SEND_PEGGED_CURRENCY:
-        //     populateRPCTypeSendPeggedCurrency(mp_obj, txobj);
-        //     break;
+        case MSC_TYPE_SEND_PEGGED_CURRENCY:
+            populateRPCTypeSendPeggedCurrency(mp_obj, txobj);
+            break;
+        case MSC_TYPE_REDEMPTION_PEGGED:
+            populateRPCTypeRedemptionPegged(mp_obj, txobj);
+            break;
+        case MSC_TYPE_CONTRACTDEX_CLOSE_POSITION:
+            populateRPCTypeContractDexClosePosition(mp_obj, txobj);
+            break;
+        case MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK:
+            populateRPCTypeContractDex_Cancel_Orders_By_Block(mp_obj, txobj);
+            break;
+        case MSC_TYPE_TRADE_OFFER:
+            populateRPCTypeTradeOffer(mp_obj, txobj);
+            break;
+        case MSC_TYPE_DEX_BUY_OFFER:
+            populateRPCTypeDExBuy(mp_obj, txobj);
+            break;
+        case MSC_TYPE_ACCEPT_OFFER_BTC:
+            populateRPCTypeAcceptOfferBTC(mp_obj, txobj);
+            break;
+        case MSC_TYPE_CHANGE_ORACLE_REF:
+            populateRPCTypeChange_OracleRef(mp_obj, txobj);
+            break;
+        case MSC_TYPE_SET_ORACLE:
+            populateRPCTypeSet_Oracle(mp_obj, txobj);
+            break;
+        case MSC_TYPE_ORACLE_BACKUP:
+            populateRPCTypeOracleBackup(mp_obj, txobj);
+            break;
+        case MSC_TYPE_CLOSE_ORACLE:
+            populateRPCTypeCloseOracle(mp_obj, txobj);
+            break;
+        case MSC_TYPE_COMMIT_CHANNEL:
+            populateRPCTypeCommitChannel(mp_obj, txobj);
+            break;
+        case MSC_TYPE_WITHDRAWAL_FROM_CHANNEL:
+            populateRPCTypeWithdrawal_FromChannel(mp_obj, txobj);
+            break;
+        case MSC_TYPE_INSTANT_TRADE:
+            populateRPCTypeInstant_Trade(mp_obj, txobj);
+            break;
+        case MSC_TYPE_TRANSFER:
+            populateRPCTypeTransfer(mp_obj, txobj);
+            break;
+        case MSC_TYPE_CREATE_CHANNEL:
+            populateRPCTypeCreate_Channel(mp_obj, txobj);
+            break;
+        case MSC_TYPE_CONTRACT_INSTANT:
+            populateRPCTypeContract_Instant(mp_obj, txobj);
+            break;
+        case MSC_TYPE_NEW_ID_REGISTRATION:
+            populateRPCTypeNew_Id_Registration(mp_obj, txobj);
+            break;
+        case MSC_TYPE_UPDATE_ID_REGISTRATION:
+            populateRPCTypeUpdate_Id_Registration(mp_obj, txobj);
+            break;
+        case MSC_TYPE_DEX_PAYMENT:
+            populateRPCTypeDEx_Payment(mp_obj, txobj);
+            break;
+
     }
 }
 
@@ -371,7 +429,6 @@ int populateRPCSendAllSubSends(const uint256& txid, UniValue& subSends)
 
 void populateRPCTypeCreateContract(CMPTransaction& omniObj, UniValue& txobj)
 {
-  uint32_t propertyId = _my_sps->findSPByTX(omniObj.getHash());
 
   txobj.push_back(Pair("contract name", omniObj.getSPName()));
   txobj.push_back(Pair("notional size", FormatDivisibleMP(omniObj.getNotionalSize())));
@@ -383,7 +440,6 @@ void populateRPCTypeCreateContract(CMPTransaction& omniObj, UniValue& txobj)
 
 void populateRPCTypeVestingTokens(CMPTransaction& omniObj, UniValue& txobj)
 {
-  uint32_t propertyId = _my_sps->findSPByTX(omniObj.getHash());
 
   txobj.push_back(Pair("propertyname", omniObj.getSPName()));
   txobj.push_back(Pair("propertyId", (uint64_t) omniObj.getProperty()));
@@ -393,7 +449,6 @@ void populateRPCTypeVestingTokens(CMPTransaction& omniObj, UniValue& txobj)
 
 void populateRPCTypeCreateOracle(CMPTransaction& omniObj, UniValue& txobj)
 {
-  uint32_t propertyId = _my_sps->findSPByTX(omniObj.getHash());
 
   txobj.push_back(Pair("contract name", omniObj.getSPName()));
   txobj.push_back(Pair("notional size", FormatDivisibleMP(omniObj.getNotionalSize())));
@@ -408,10 +463,9 @@ void populateRPCTypeCreateOracle(CMPTransaction& omniObj, UniValue& txobj)
 
 void populateRPCTypeMetaDExTrade(CMPTransaction& omniObj, UniValue& txobj)
 {
-  uint32_t propertyId = _my_sps->findSPByTX(omniObj.getHash());
 
   txobj.push_back(Pair("propertyname", omniObj.getSPName()));
-  txobj.push_back(Pair("propertyId", (uint64_t) propertyId));
+  txobj.push_back(Pair("propertyId", (uint64_t) omniObj.getPropertyId()));
   txobj.push_back(Pair("amount", FormatDivisibleMP(omniObj.getAmountForSale())));
   txobj.push_back(Pair("desire property", FormatDivisibleMP(omniObj.getDesiredProperty())));
   txobj.push_back(Pair("desired value", FormatDivisibleMP(omniObj.getDesiredValue())));
@@ -420,9 +474,8 @@ void populateRPCTypeMetaDExTrade(CMPTransaction& omniObj, UniValue& txobj)
 
 void populateRPCTypeContractDexTrade(CMPTransaction& omniObj, UniValue& txobj)
 {
-  uint32_t propertyId = _my_sps->findSPByTX(omniObj.getHash());
 
-  txobj.push_back(Pair("contractId", (uint64_t) propertyId));
+  txobj.push_back(Pair("contractId", (uint64_t) omniObj.getPropertyId()));
   txobj.push_back(Pair("amount", FormatDivisibleMP(omniObj.getContractAmount())));
   txobj.push_back(Pair("effective price", FormatDivisibleMP(omniObj.getEffectivePrice())));
 
@@ -436,18 +489,157 @@ void populateRPCTypeContractDexTrade(CMPTransaction& omniObj, UniValue& txobj)
 
 void populateRPCTypeContractDexCancelEcosystem(CMPTransaction& omniObj, UniValue& txobj)
 {
-  uint32_t propertyId = _my_sps->findSPByTX(omniObj.getHash());
-
   txobj.push_back(Pair("Ecosystem", (uint64_t)omniObj.getEcosystem()));
-
 }
 
 void populateRPCTypeCreatePeggedCurrency(CMPTransaction& omniObj, UniValue& txobj)
+{
+  txobj.push_back(Pair("propertyId", (uint64_t) omniObj.getPropertyId()));
+  txobj.push_back(Pair("amount", FormatDivisibleMP(omniObj.getXAmount())));
+  txobj.push_back(Pair("contract related", (uint64_t) omniObj.getContractId()));
+}
+
+void populateRPCTypeSendPeggedCurrency(CMPTransaction& omniObj, UniValue& txobj)
+{
+  txobj.push_back(Pair("propertyId", (uint64_t) omniObj.getPropertyId()));
+  txobj.push_back(Pair("amount", FormatDivisibleMP(omniObj.getXAmount())));
+}
+
+void populateRPCTypeRedemptionPegged(CMPTransaction& omniObj, UniValue& txobj)
 {
   uint32_t propertyId = _my_sps->findSPByTX(omniObj.getHash());
 
   txobj.push_back(Pair("propertyId", (uint64_t) propertyId));
   txobj.push_back(Pair("amount", FormatDivisibleMP(omniObj.getXAmount())));
   txobj.push_back(Pair("contract related", (uint64_t) omniObj.getContractId()));
+
+}
+
+void populateRPCTypeContractDexClosePosition(CMPTransaction& omniObj, UniValue& txobj)
+{
+  txobj.push_back(Pair("ecosystem", FormatDivisibleMP(omniObj.getXAmount())));
+  txobj.push_back(Pair("contractId", (uint64_t) omniObj.getContractId()));
+}
+
+void populateRPCTypeContractDex_Cancel_Orders_By_Block(CMPTransaction& omniObj, UniValue& txobj)
+{
+  txobj.push_back(Pair("block", (uint64_t) omniObj.getBlock()));
+  txobj.push_back(Pair("block index", (uint64_t) omniObj.getIndexInBlock()));
+}
+
+void populateRPCTypeTradeOffer(CMPTransaction& omniObj, UniValue& txobj)
+{
+  uint32_t propertyId = _my_sps->findSPByTX(omniObj.getHash());
+
+  txobj.push_back(Pair("propertyId", (uint64_t) propertyId));
+  txobj.push_back(Pair("amount offered", (uint64_t) omniObj.getAmount()));
+  txobj.push_back(Pair("amount desired", (uint64_t) omniObj.getBlock()));
+  txobj.push_back(Pair("time limit", (uint64_t) omniObj.getTimeLimit()));
+  txobj.push_back(Pair("min fee", (uint64_t) omniObj.getMinFee()));
+  txobj.push_back(Pair("subAction", (uint64_t) omniObj.getSubAction()));
+}
+
+void populateRPCTypeDExBuy(CMPTransaction& omniObj, UniValue& txobj)
+{
+  uint32_t propertyId = _my_sps->findSPByTX(omniObj.getHash());
+
+  txobj.push_back(Pair("propertyId", (uint64_t) propertyId));
+  txobj.push_back(Pair("amount offered", (uint64_t) omniObj.getAmount()));
+  txobj.push_back(Pair("effective price", (uint64_t) omniObj.getEffectivePrice()));
+  txobj.push_back(Pair("time limit", (uint64_t) omniObj.getTimeLimit()));
+  txobj.push_back(Pair("min fee", (uint64_t) omniObj.getMinFee()));
+  txobj.push_back(Pair("subAction", (uint64_t) omniObj.getSubAction()));
+}
+
+void populateRPCTypeAcceptOfferBTC(CMPTransaction& omniObj, UniValue& txobj)
+{
+  uint32_t propertyId = _my_sps->findSPByTX(omniObj.getHash());
+
+  txobj.push_back(Pair("propertyId", (uint64_t) propertyId));
+  txobj.push_back(Pair("amount", FormatDivisibleMP(omniObj.getXAmount())));
+
+}
+
+void populateRPCTypeChange_OracleRef(CMPTransaction& omniObj, UniValue& txobj)
+{
+  txobj.push_back(Pair("contractId", (uint64_t) omniObj.getContractId()));
+}
+
+void populateRPCTypeSet_Oracle(CMPTransaction& omniObj, UniValue& txobj)
+{
+  txobj.push_back(Pair("contractId", (uint64_t) omniObj.getContractId()));
+  txobj.push_back(Pair("high price", (uint64_t) omniObj.getHighPrice()));
+  txobj.push_back(Pair("low price", (uint64_t) omniObj.getLowPrice()));
+
+}
+
+void populateRPCTypeOracleBackup(CMPTransaction& omniObj, UniValue& txobj)
+{
+  txobj.push_back(Pair("contractId", (uint64_t) omniObj.getContractId()));
+}
+
+void populateRPCTypeCloseOracle(CMPTransaction& omniObj, UniValue& txobj)
+{
+  txobj.push_back(Pair("contractId", (uint64_t) omniObj.getContractId()));
+}
+
+void populateRPCTypeCommitChannel(CMPTransaction& omniObj, UniValue& txobj)
+{
+
+  txobj.push_back(Pair("propertyId", (uint64_t) omniObj.getPropertyId()));
+  txobj.push_back(Pair("amount_commited", (uint64_t) omniObj.getAmountCommited()));
+}
+
+void populateRPCTypeWithdrawal_FromChannel(CMPTransaction& omniObj, UniValue& txobj)
+{
+  txobj.push_back(Pair("propertyId", (uint64_t) omniObj.getPropertyId()));
+  txobj.push_back(Pair("amount to withdraw", (uint64_t) omniObj.getAmountToWith()));
+}
+
+void populateRPCTypeInstant_Trade(CMPTransaction& omniObj, UniValue& txobj)
+{
+  txobj.push_back(Pair("propertyId", (uint64_t) omniObj.getPropertyId()));
+  txobj.push_back(Pair("amount for sale", (uint64_t) omniObj.getAmountForSale()));
+  txobj.push_back(Pair("block for expiry", (uint64_t) omniObj.getBlockForExpiry()));
+  txobj.push_back(Pair("desired property", (uint64_t) omniObj.getDesiredProperty()));
+  txobj.push_back(Pair("desired value", (uint64_t) omniObj.getDesiredValue()));
+}
+
+
+void populateRPCTypeTransfer(CMPTransaction& omniObj, UniValue& txobj)
+{
+  txobj.push_back(Pair("propertyId", (uint64_t) omniObj.getProperty()));
+  txobj.push_back(Pair("amount", (uint64_t) omniObj.getXAmount()));
+}
+
+void populateRPCTypeCreate_Channel(CMPTransaction& omniObj, UniValue& txobj)
+{
+  txobj.push_back(Pair("first address",  omniObj.getSender()));
+  txobj.push_back(Pair("second address", omniObj.getReceiver()));
+  txobj.push_back(Pair("blocks", (uint64_t) omniObj.getBlockForExpiry()));
+}
+
+void populateRPCTypeContract_Instant(CMPTransaction& omniObj, UniValue& txobj)
+{
+  txobj.push_back(Pair("propertyId", (uint64_t) omniObj.getProperty()));
+  txobj.push_back(Pair("amount", (uint64_t) omniObj.getAmountForSale()));
+  txobj.push_back(Pair("block for expiry", (uint64_t) omniObj.getBlockForExpiry()));
+  txobj.push_back(Pair("price", (uint64_t) omniObj.getPrice()));
+  txobj.push_back(Pair("trading action", (uint64_t) omniObj.getItradingAction()));
+  txobj.push_back(Pair("leverage", (uint64_t) omniObj.getIleverage()));
+}
+
+void populateRPCTypeNew_Id_Registration(CMPTransaction& omniObj, UniValue& txobj)
+{
+
+}
+
+void populateRPCTypeUpdate_Id_Registration(CMPTransaction& omniObj, UniValue& txobj)
+{
+
+}
+
+void populateRPCTypeDEx_Payment(CMPTransaction& omniObj, UniValue& txobj)
+{
 
 }

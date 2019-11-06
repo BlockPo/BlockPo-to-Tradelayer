@@ -310,6 +310,10 @@ public:
     uint32_t getActivationBlock() const { return activation_block; }
     uint32_t getMinClientVersion() const { return min_client_version; }
     unsigned int getIndexInBlock() const { return tx_idx; }
+    uint8_t getTimeLimit() const { return timeLimit; }
+    uint64_t getMinFee() const { return minFee; };
+    uint8_t getSubAction() const { return subAction; };
+    uint32_t getPropertyId() const { return propertyId; }
 
     /** Oracles */
     uint64_t getHighPrice() const { return oracle_high; }
@@ -320,6 +324,12 @@ public:
     uint64_t getAmountForSale() const { return amount_forsale; }
     uint32_t getDesiredProperty() const { return desired_property; }
     uint64_t getDesiredValue() const { return desired_value; }
+    uint64_t getAmountCommited() const { return amount_commited; }
+    uint64_t getAmountToWith() const { return amount_to_withdraw; }
+    int getBlockForExpiry() const { return block_forexpiry; }
+    uint64_t getPrice() const { return price; }
+    uint8_t getItradingAction() { return itrading_action; }
+    uint64_t getIleverage() { return ileverage; }
 
 
     /** New things for Contracts */
