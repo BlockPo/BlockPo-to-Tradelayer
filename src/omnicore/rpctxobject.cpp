@@ -631,15 +631,15 @@ void populateRPCTypeContract_Instant(CMPTransaction& omniObj, UniValue& txobj)
 
 void populateRPCTypeNew_Id_Registration(CMPTransaction& omniObj, UniValue& txobj)
 {
-
+ /** Do we need this? (public information?)*/
 }
 
 void populateRPCTypeUpdate_Id_Registration(CMPTransaction& omniObj, UniValue& txobj)
 {
-
+/** Do we need this? (public information?)*/
 }
 
 void populateRPCTypeDEx_Payment(CMPTransaction& omniObj, UniValue& txobj)
 {
-
+/** If it needs more info*/
 }

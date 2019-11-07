@@ -1974,7 +1974,7 @@ bool CMPTransaction::interpret_DEx_Payment()
   {
       PrintToLog("%s(): inside the function\n",__func__);
       PrintToLog("\t sender: %s\n", sender);
-      PrintToLog("\t receiver: %s\n", website);
+      PrintToLog("\t receiver: %s\n", receiver);
   }
 
   return true;
