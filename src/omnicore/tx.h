@@ -178,7 +178,7 @@ private:
     bool interpret_Deactivation();
     bool interpret_Alert();
     bool interpret_AcceptOfferBTC();
-    ///////////////////////////////////////////////
+
     /** New things for Contract */
     bool interpret_ContractDexTrade();
     bool interpret_CreateContractDex();
@@ -208,7 +208,6 @@ private:
     bool interpret_New_Id_Registration();
     bool interpret_Update_Id_Registration();
     bool interpret_DEx_Payment();
-    ///////////////////////////////////////////////
 
     /**
      * Logic and "effects"
@@ -254,7 +253,6 @@ private:
     int logicMath_New_Id_Registration();
     int logicMath_Update_Id_Registration();
     int logicMath_DEx_Payment();
-    ///////////////////////////////////////////////
 
     /**
      * Logic helpers
@@ -290,6 +288,7 @@ public:
     std::string getPayload() const { return HexStr(pkt, pkt + pkt_size); }
     uint64_t getAmount() const { return nValue; }
     uint64_t getNewAmount() const { return nNewValue; }
+    uint64_t getXAmount() const { return amount; }
     uint8_t getEcosystem() const { return ecosystem; }
     uint32_t getPreviousId() const { return prev_prop_id; }
     std::string getSPCategory() const { return category; }
@@ -311,24 +310,42 @@ public:
     uint32_t getActivationBlock() const { return activation_block; }
     uint32_t getMinClientVersion() const { return min_client_version; }
     unsigned int getIndexInBlock() const { return tx_idx; }
+    uint8_t getTimeLimit() const { return timeLimit; }
+    uint64_t getMinFee() const { return minFee; };
+    uint8_t getSubAction() const { return subAction; };
+    uint32_t getPropertyId() const { return propertyId; }
+
+    /** Oracles */
+    uint64_t getHighPrice() const { return oracle_high; }
+    uint64_t getLowPrice() const { return oracle_low; }
+    int getBlock() const { return block; }
 
     /** Instan trade (Channels) */
     uint64_t getAmountForSale() const { return amount_forsale; }
     uint32_t getDesiredProperty() const { return desired_property; }
     uint64_t getDesiredValue() const { return desired_value; }
-    ////////////////////////////////
+    uint64_t getAmountCommited() const { return amount_commited; }
+    uint64_t getAmountToWith() const { return amount_to_withdraw; }
+    int getBlockForExpiry() const { return block_forexpiry; }
+    uint64_t getPrice() const { return price; }
+    uint8_t getItradingAction() { return itrading_action; }
+    uint64_t getIleverage() { return ileverage; }
+
+
     /** New things for Contracts */
     uint32_t getMarginRequirement() const { return margin_requirement; }
     uint32_t getNotionalSize() const { return notional_size; }
     uint32_t getContractId() const { return contractId; }
     uint64_t getContractAmount() const { return amount; }
-    ////////////////////////////////
-
-    ///////////////////////////////////////////////
-    /** New things for Contract */
+    uint32_t getCollateral() const { return collateral_currency; }
+    int getBlockUntilExpiration() const { return blocks_until_expiration;}
     int getLogicMath_ContractDexTrade() { return logicMath_ContractDexTrade(); }
     int getLogicMath_CreateContractDex() { return logicMath_CreateContractDex(); }
-    ///////////////////////////////////////////////
+    uint8_t getTradingAction() { return trading_action; }
+    uint64_t getLeverage() { return leverage; }
+    uint64_t getEffectivePrice() { return effective_price; }
+
+
 
     /** Creates a new CMPTransaction object. */
     CMPTransaction()

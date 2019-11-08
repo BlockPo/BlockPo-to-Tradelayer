@@ -2639,6 +2639,67 @@ UniValue tl_getcache(const JSONRPCRequest& request)
     return balanceObj;
 }
 
+UniValue tl_getalltxonblock(const JSONRPCRequest& request)
+{
+    if (request.params.size() != 1)
+      throw runtime_error(
+			"tl_getalltxonblock\"block\"\n"
+			"\nGet detailed information about every Trade Layer transaction in block.\n"
+	    "\nArguments:\n"
+	    "1. txid                 (number, required) the block height \n"
+	    "\nResult:\n"
+	    "{\n"
+	    "  \"txid\" : \"hash\",                  (string) the hex-encoded hash of the transaction\n"
+	    "  \"sendingaddress\" : \"address\",     (string) the Bitcoin address of the sender\n"
+	    "  \"referenceaddress\" : \"address\",   (string) a Bitcoin address used as reference (if any)\n"
+	    "  \"ismine\" : true|false,            (boolean) whether the transaction involes an address in the wallet\n"
+	    "  \"confirmations\" : nnnnnnnnnn,     (number) the number of transaction confirmations\n"
+	    "  \"fee\" : \"n.nnnnnnnn\",             (string) the transaction fee in bitcoins\n"
+	    "  \"blocktime\" : nnnnnnnnnn,         (number) the timestamp of the block that contains the transaction\n"
+	    "  \"valid\" : true|false,             (boolean) whether the transaction is valid\n"
+	    "  \"version\" : n,                    (number) the transaction version\n"
+	    "  \"type_int\" : n,                   (number) the transaction type as number\n"
+	    "  \"type\" : \"type\",                  (string) the transaction type as string\n"
+	    "  [...]                             (mixed) other transaction type specific properties\n"
+	    "}\n"
+	    "\nbExamples:\n"
+	    + HelpExampleCli("tl_getalltxonblock", "\"52021\"")
+	    + HelpExampleRpc("tl_getalltxonblock", "\"54215\"")
+	    );
+
+    UniValue response(UniValue::VARR);
+
+    int blockHeight = request.params[0].get_int();
+
+    // next let's obtain the block for this height
+    CBlock block;
+    {
+        LOCK(cs_main);
+        CBlockIndex* pBlockIndex = chainActive[blockHeight];
+
+        if (!ReadBlockFromDisk(block, pBlockIndex, Params().GetConsensus()))
+            throw JSONRPCError(RPC_INTERNAL_ERROR, "Failed to read block from disk");
+    }
+
+    // now we want to loop through each of the transactions in the block and run against CMPTxList::exists
+    // those that return positive add to our response array
+
+    LOCK(cs_tally);
+
+    for(const auto tx : block.vtx)
+    {
+        if (p_txlistdb->exists(tx->GetHash()))
+        {
+             UniValue txobj(UniValue::VOBJ);
+             int populateResult = populateRPCTransactionObject(tx->GetHash(), txobj);
+             if (populateResult != 0) PopulateFailure(populateResult);
+             response.push_back(txobj);
+         }
+    }
+
+    return response;
+}
+
 static const CRPCCommand commands[] =
 { //  category                             name                            actor (function)               okSafeMode
   //  ------------------------------------ ------------------------------- ------------------------------ ----------
@@ -2685,6 +2746,7 @@ static const CRPCCommand commands[] =
   { "trade layer (data retieval)" , "tl_check_kyc",                 &tl_check_kyc,                  {} },
   { "trade layer (data retieval)" , "tl_list_natives",              &tl_list_natives,               {} },
   { "trade layer (data retieval)" , "tl_list_oracles",              &tl_list_oracles,               {} },
+  { "trade layer (data retieval)" , "tl_getalltxonblock",           &tl_getalltxonblock,            {} },
   { "trade layer (data retieval)" , "tl_check_withdrawals",         &tl_check_withdrawals,          {} }
 };
 
