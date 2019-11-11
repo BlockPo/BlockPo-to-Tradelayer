@@ -85,6 +85,7 @@ std::vector<TransactionRestriction> CConsensusParams::GetRestrictions() const
         { MSC_TYPE_NEW_ID_REGISTRATION,                   MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
         { MSC_TYPE_UPDATE_ID_REGISTRATION,                MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
         { MSC_TYPE_DEX_PAYMENT,                           MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
+        { MSC_TYPE_CREATE_ORACLE_CONTRACT,                MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
 
     };
 
@@ -413,27 +414,38 @@ bool IsFeatureActivated(uint16_t featureId, int transactionBlock)
  */
 bool IsTransactionTypeAllowed(int txBlock, uint32_t txProperty, uint16_t txType, uint16_t version)
 {
+    PrintToLog("%s(): txBlock: %d, ecosystem: %d, type: %d, version: %d\n",__func__, txBlock, txProperty, txType, version);
+
     const std::vector<TransactionRestriction>& vTxRestrictions = ConsensusParams().GetRestrictions();
 
     for (std::vector<TransactionRestriction>::const_iterator it = vTxRestrictions.begin(); it != vTxRestrictions.end(); ++it)
     {
         const TransactionRestriction& entry = *it;
+        PrintToLog("%s(): entry.txType: %d; txType: %d\n",__func__,entry.txType, txType);
+
         if (entry.txType != txType || entry.txVersion != version) {
+            PrintToLog("%s(): first continue\n",__func__);
             continue;
         }
         // a property identifier of 0 (= BTC) may be used as wildcard
+        PrintToLog("%s(): txProperty: %d\n",__func__, txProperty);
         if (OMNI_PROPERTY_BTC == txProperty && !entry.allowWildcard) {
+            PrintToLog("%s(): second continue\n",__func__);
             continue;
         }
         // transactions are not restricted in the test ecosystem
         if (isTestEcosystemProperty(txProperty)) {
+            PrintToLog("%s(): isTestEcosystemProperty\n",__func__);
             return true;
         }
         if (txBlock >= entry.activationBlock) {
+            PrintToLog("%s(): txBlock: %d; entry.activationBlock: %d\n",__func__,txBlock, entry.activationBlock);
+            PrintToLog("%s(): txBlock >= entry.activationBlock\n",__func__);
             return true;
         }
     }
 
+    PrintToLog("%s(): return false\n",__func__);
     return false;
 }
 
