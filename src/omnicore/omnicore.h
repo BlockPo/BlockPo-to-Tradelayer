@@ -449,7 +449,7 @@ int mastercore_handler_block_begin(int nBlockNow, CBlockIndex const *pBlockIndex
 int mastercore_handler_block_end(int nBlockNow, CBlockIndex const *pBlockIndex, unsigned int);
 bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx, const CBlockIndex *pBlockIndex);
 int mastercore_save_state( CBlockIndex const *pBlockIndex );
-void creatingVestingTokens();
+void creatingVestingTokens(int block);
 void lookingin_globalvector_pastlivesperpetuals(std::vector<std::map<std::string, std::string>> &lives_g, MatrixTLS M_file, std::vector<std::string> addrs_vg, std::vector<std::map<std::string, std::string>> &lives_h);
 void lookingaddrs_inside_M_file(std::string addrs, MatrixTLS M_file, std::vector<std::map<std::string, std::string>> &lives_g, std::vector<std::map<std::string, std::string>> &lives_h);
 int finding_idxforaddress(std::string addrs, std::vector<std::map<std::string, std::string>> lives);

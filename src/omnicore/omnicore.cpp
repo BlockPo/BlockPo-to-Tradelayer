@@ -591,7 +591,7 @@ void CheckWalletUpdate(bool forceUpdate)
 #endif
 }
 
-void creatingVestingTokens()
+void creatingVestingTokens(int block)
 {
   extern int64_t amountVesting;
   extern int64_t totalVesting;
@@ -607,6 +607,7 @@ void creatingVestingTokens()
   newSP.prop_type = ALL_PROPERTY_TYPE_DIVISIBLE;
   newSP.num_tokens = amountVesting;
   newSP.attribute_type = ALL_PROPERTY_TYPE_VESTING;
+  newSP.init_block = block;
 
   const uint32_t propertyIdVesting = _my_sps->putSP(OMNI_PROPERTY_ALL, newSP);
   assert(propertyIdVesting > 0);
@@ -2626,7 +2627,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   const CConsensusParams &params = ConsensusParams();
   vestingActivationBlock = params.MSC_VESTING_BLOCK;
 
-  if (static_cast<int>(pBlockIndex->nHeight) == params.MSC_VESTING_BLOCK) creatingVestingTokens();
+  if (static_cast<int>(pBlockIndex->nHeight) == params.MSC_VESTING_BLOCK) creatingVestingTokens( GetHeight());
 
   int deadline = sp.init_block + expirationBlock;
   if ( tradeBlock != 0 && deadline != 0 ) checkExpiration = tradeBlock == deadline ? 1 : 0;
