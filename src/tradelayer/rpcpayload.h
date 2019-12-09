@@ -1,0 +1,4 @@
+#ifndef TRADELAYER_RPCPAYLOAD_H
+#define TRADELAYER_RPCPAYLOAD_H
+
+#endif

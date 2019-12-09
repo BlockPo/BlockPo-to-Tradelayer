@@ -1,78 +1,78 @@
-OMNICORE_H = \
-  omnicore/activation.h \
-  omnicore/consensushash.h \
-  omnicore/convert.h \
-  omnicore/createpayload.h \
-  omnicore/createtx.h \
-  omnicore/dbtradelist.h \
-  omnicore/dex.h \
-  omnicore/encoding.h \
-  omnicore/errors.h \
-  omnicore/log.h \
-  omnicore/mdex.h \
-  omnicore/notifications.h \
-  omnicore/omnicore.h \
-  omnicore/parse_string.h \
-  omnicore/pending.h \
-  omnicore/persistence.h \
-  omnicore/rpc.h \
-  omnicore/rpcpayload.h \
-  omnicore/rpcrequirements.h \
-  omnicore/rpctx.h \
-  omnicore/rpctxobject.h \
-  omnicore/rpcvalues.h \
-  omnicore/rules.h \
-  omnicore/script.h \
-  omnicore/sp.h \
-  omnicore/tally.h \
-  omnicore/tx.h \
-  omnicore/uint256_extensions.h \
-  omnicore/utilsbitcoin.h \
-  omnicore/version.h \
-  omnicore/walletcache.h \
-  omnicore/walletutils.h \
-  omnicore/externfns.h
+TRADELAYER_H = \
+  tradelayer/activation.h \
+  tradelayer/consensushash.h \
+  tradelayer/convert.h \
+  tradelayer/createpayload.h \
+  tradelayer/createtx.h \
+  tradelayer/dbtradelist.h \
+  tradelayer/dex.h \
+  tradelayer/encoding.h \
+  tradelayer/errors.h \
+  tradelayer/log.h \
+  tradelayer/mdex.h \
+  tradelayer/notifications.h \
+  tradelayer/tradelayer.h \
+  tradelayer/parse_string.h \
+  tradelayer/pending.h \
+  tradelayer/persistence.h \
+  tradelayer/rpc.h \
+  tradelayer/rpcpayload.h \
+  tradelayer/rpcrequirements.h \
+  tradelayer/rpctx.h \
+  tradelayer/rpctxobject.h \
+  tradelayer/rpcvalues.h \
+  tradelayer/rules.h \
+  tradelayer/script.h \
+  tradelayer/sp.h \
+  tradelayer/tally.h \
+  tradelayer/tx.h \
+  tradelayer/uint256_extensions.h \
+  tradelayer/utilsbitcoin.h \
+  tradelayer/version.h \
+  tradelayer/walletcache.h \
+  tradelayer/walletutils.h \
+  tradelayer/externfns.h
 
-OMNICORE_CPP = \
-  omnicore/activation.cpp \
-  omnicore/consensushash.cpp \
-  omnicore/convert.cpp \
-  omnicore/createpayload.cpp \
-  omnicore/createtx.cpp \
-  omnicore/dex.cpp \
-  omnicore/encoding.cpp \
-  omnicore/log.cpp \
-  omnicore/mdex.cpp \
-  omnicore/notifications.cpp \
-  omnicore/omnicore.cpp \
-  omnicore/parse_string.cpp \
-  omnicore/pending.cpp \
-  omnicore/persistence.cpp \
-  omnicore/rpc.cpp \
-  omnicore/rpcpayload.cpp \
-  omnicore/rpcrequirements.cpp \
-  omnicore/rpctx.cpp \
-  omnicore/rpctxobject.cpp \
-  omnicore/rpcvalues.cpp \
-  omnicore/rules.cpp \
-  omnicore/script.cpp \
-  omnicore/sp.cpp \
-  omnicore/tally.cpp \
-  omnicore/tx.cpp \
-  omnicore/utilsbitcoin.cpp \
-  omnicore/version.cpp \
-  omnicore/walletcache.cpp \
-  omnicore/externfns.cpp
+TRADELAYER_CPP = \
+  tradelayer/activation.cpp \
+  tradelayer/consensushash.cpp \
+  tradelayer/convert.cpp \
+  tradelayer/createpayload.cpp \
+  tradelayer/createtx.cpp \
+  tradelayer/dex.cpp \
+  tradelayer/encoding.cpp \
+  tradelayer/log.cpp \
+  tradelayer/mdex.cpp \
+  tradelayer/notifications.cpp \
+  tradelayer/tradelayer.cpp \
+  tradelayer/parse_string.cpp \
+  tradelayer/pending.cpp \
+  tradelayer/persistence.cpp \
+  tradelayer/rpc.cpp \
+  tradelayer/rpcpayload.cpp \
+  tradelayer/rpcrequirements.cpp \
+  tradelayer/rpctx.cpp \
+  tradelayer/rpctxobject.cpp \
+  tradelayer/rpcvalues.cpp \
+  tradelayer/rules.cpp \
+  tradelayer/script.cpp \
+  tradelayer/sp.cpp \
+  tradelayer/tally.cpp \
+  tradelayer/tx.cpp \
+  tradelayer/utilsbitcoin.cpp \
+  tradelayer/version.cpp \
+  tradelayer/walletcache.cpp \
+  tradelayer/externfns.cpp
 
 libbitcoin_server_a_SOURCES += \
-  $(OMNICORE_CPP) \
-  $(OMNICORE_H)
+  $(TRADELAYER_CPP) \
+  $(TRADELAYER_H)
 
-omnicore/libbitcoin_server_a-version.$(OBJEXT): obj/build.h # build info
+tradelayer/libbitcoin_server_a-version.$(OBJEXT): obj/build.h # build info
 
-CLEAN_OMNICORE = omnicore/*.gcda omnicore/*.gcno
+CLEAN_TRADELAYER = tradelayer/*.gcda tradelayer/*.gcno
 
-CLEANFILES += $(CLEAN_OMNICORE)
+CLEANFILES += $(CLEAN_TRADELAYER)
 
 if ENABLE_TESTS
 include Makefile.omnitest.include

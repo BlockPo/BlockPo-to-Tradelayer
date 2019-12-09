@@ -18,7 +18,7 @@
 #include <httpserver.h>
 #include <httprpc.h>
 #include <utilstrencodings.h>
-#include "omnicore/tradelayer_matrices.h"
+#include "tradelayer/tradelayer_matrices.h"
 #include <boost/thread.hpp>
 
 #include <stdio.h>
@@ -179,7 +179,7 @@ bool AppInit(int argc, char* argv[])
 int main(int argc, char* argv[])
 {
   extern int64_t factorE;
-  extern int64_t priceIndex; 
+  extern int64_t priceIndex;
   extern int64_t allPrice;
   extern double denMargin;
   extern int n_cols;
@@ -201,13 +201,13 @@ int main(int argc, char* argv[])
   extern double DecayRate;
   extern double LongTailDecay;
   extern int64_t SatoshiH;
-  
+
 #include "initial_conditions.h"
-  
+
   SetupEnvironment();
-  
+
   // Connect bitcoind signal handlers
   noui_connect();
-  
+
   return (AppInit(argc, argv) ? EXIT_SUCCESS : EXIT_FAILURE);
 }

@@ -47,7 +47,7 @@
 #include <boost/algorithm/string/join.hpp>
 #include <boost/thread.hpp>
 
-#include "omnicore/omnicore.h"
+#include "tradelayer/tradelayer.h"
 
 #if defined(NDEBUG)
 # error "Litecoin cannot be compiled without assertions."

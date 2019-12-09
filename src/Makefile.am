@@ -175,43 +175,43 @@ BITCOIN_CORE_H = \
   zmq/zmqconfig.h\
   zmq/zmqnotificationinterface.h \
   zmq/zmqpublishnotifier.h \
-	omnicore/log.h \
-  omnicore/omnicore.h \
-  omnicore/persistence.h \
-  omnicore/tally.h \
-  omnicore/activation.h \
-  omnicore/consensushash.h \
-  omnicore/convert.h \
-  omnicore/encoding.h \
-  omnicore/errors.h \
-  omnicore/notifications.h \
-  omnicore/pending.h \
-  omnicore/rules.h \
-  omnicore/script.h \
-  omnicore/sp.h \
-  omnicore/tx.h \
-  omnicore/utilsbitcoin.h \
-  omnicore/version.h \
-  omnicore/walletcache.h \
-  omnicore/wallettxs.h \
-  omnicore/uint256_extensions.h \
-  omnicore/rpcrawtx.h \
-  omnicore/createtx.h \
-  omnicore/rpc.h \
-  omnicore/rpctxobject.h \
-  omnicore/rpcvalues.h \
-	omnicore/rpcrawtx.h \
-  omnicore/fetchwallettx.h \
-  omnicore/rpcrequirements.h \
-  omnicore/rpctx.h \
-  omnicore/parse_string.h \
-  omnicore/createpayload.h \
-  omnicore/rpcpayload.h \
-  omnicore/varint.h \
-  omnicore/dex.h \
-  omnicore/mdex.h \
-  omnicore/externfns.h \
-  omnicore/operators_algo_clearing.h
+	tradelayer/log.h \
+  tradelayer/tradelayer.h \
+  tradelayer/persistence.h \
+  tradelayer/tally.h \
+  tradelayer/activation.h \
+  tradelayer/consensushash.h \
+  tradelayer/convert.h \
+  tradelayer/encoding.h \
+  tradelayer/errors.h \
+  tradelayer/notifications.h \
+  tradelayer/pending.h \
+  tradelayer/rules.h \
+  tradelayer/script.h \
+  tradelayer/sp.h \
+  tradelayer/tx.h \
+  tradelayer/utilsbitcoin.h \
+  tradelayer/version.h \
+  tradelayer/walletcache.h \
+  tradelayer/wallettxs.h \
+  tradelayer/uint256_extensions.h \
+  tradelayer/rpcrawtx.h \
+  tradelayer/createtx.h \
+  tradelayer/rpc.h \
+  tradelayer/rpctxobject.h \
+  tradelayer/rpcvalues.h \
+	tradelayer/rpcrawtx.h \
+  tradelayer/fetchwallettx.h \
+  tradelayer/rpcrequirements.h \
+  tradelayer/rpctx.h \
+  tradelayer/parse_string.h \
+  tradelayer/createpayload.h \
+  tradelayer/rpcpayload.h \
+  tradelayer/varint.h \
+  tradelayer/dex.h \
+  tradelayer/mdex.h \
+  tradelayer/externfns.h \
+  tradelayer/operators_algo_clearing.h
 
 obj/build.h: FORCE
 	@$(MKDIR_P) $(builddir)/obj
@@ -261,41 +261,41 @@ libbitcoin_server_a_SOURCES = \
   validation.cpp \
   validationinterface.cpp \
   versionbits.cpp \
-	omnicore/log.cpp \
-  omnicore/omnicore.cpp \
-  omnicore/persistence.cpp \
-  omnicore/tally.cpp \
-  omnicore/activation.cpp \
-  omnicore/consensushash.cpp \
-  omnicore/convert.cpp \
-	omnicore/createtx.cpp \
-  omnicore/encoding.cpp \
-  omnicore/notifications.cpp \
-  omnicore/pending.cpp \
-  omnicore/rules.cpp \
-  omnicore/script.cpp \
-  omnicore/sp.cpp \
-  omnicore/tx.cpp \
-  omnicore/utilsbitcoin.cpp \
-  omnicore/version.cpp \
-  omnicore/walletcache.cpp \
-  omnicore/wallettxs.cpp \
-  omnicore/rpc.cpp \
-  omnicore/rpctxobject.cpp \
-  omnicore/rpcvalues.cpp \
-	omnicore/rpcrawtx.cpp \
-  omnicore/fetchwallettx.cpp \
-  omnicore/rpcrequirements.cpp \
-  omnicore/rpctx.cpp \
-  omnicore/parse_string.cpp \
-  omnicore/createpayload.cpp \
-  omnicore/rpcpayload.cpp \
-  omnicore/varint.cpp \
-  omnicore/mdex.cpp \
-  omnicore/dex.cpp \
-  omnicore/globals.cpp\
-  omnicore/externfns.cpp\
-  omnicore/operators_algo_clearing.cpp\
+	tradelayer/log.cpp \
+  tradelayer/tradelayer.cpp \
+  tradelayer/persistence.cpp \
+  tradelayer/tally.cpp \
+  tradelayer/activation.cpp \
+  tradelayer/consensushash.cpp \
+  tradelayer/convert.cpp \
+	tradelayer/createtx.cpp \
+  tradelayer/encoding.cpp \
+  tradelayer/notifications.cpp \
+  tradelayer/pending.cpp \
+  tradelayer/rules.cpp \
+  tradelayer/script.cpp \
+  tradelayer/sp.cpp \
+  tradelayer/tx.cpp \
+  tradelayer/utilsbitcoin.cpp \
+  tradelayer/version.cpp \
+  tradelayer/walletcache.cpp \
+  tradelayer/wallettxs.cpp \
+  tradelayer/rpc.cpp \
+  tradelayer/rpctxobject.cpp \
+  tradelayer/rpcvalues.cpp \
+	tradelayer/rpcrawtx.cpp \
+  tradelayer/fetchwallettx.cpp \
+  tradelayer/rpcrequirements.cpp \
+  tradelayer/rpctx.cpp \
+  tradelayer/parse_string.cpp \
+  tradelayer/createpayload.cpp \
+  tradelayer/rpcpayload.cpp \
+  tradelayer/varint.cpp \
+  tradelayer/mdex.cpp \
+  tradelayer/dex.cpp \
+  tradelayer/globals.cpp\
+  tradelayer/externfns.cpp\
+  tradelayer/operators_algo_clearing.cpp\
 $(BITCOIN_CORE_H)
 
 if ENABLE_ZMQ
