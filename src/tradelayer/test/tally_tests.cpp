@@ -1,4 +1,4 @@
-#include "omnicore/tally.h"
+#include "tradelayer/tally.h"
 
 #include "test/test_bitcoin.h"
 

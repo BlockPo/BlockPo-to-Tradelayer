@@ -85,11 +85,11 @@ enum TransactionType {
   MSC_TYPE_GRANT_PROPERTY_TOKENS      = 55,
   MSC_TYPE_REVOKE_PROPERTY_TOKENS     = 56,
   MSC_TYPE_CHANGE_ISSUER_ADDRESS      = 70,
-  tradelayer_MESSAGE_TYPE_DEACTIVATION  = 65533,
+  OMNICORE_MESSAGE_TYPE_DEACTIVATION  = 65533,
   OMNICORE_MESSAGE_TYPE_ACTIVATION    = 65534,
   OMNICORE_MESSAGE_TYPE_ALERT         = 65535,
 
-  MSC_TYPE_TRAcleaDE_OFFER                         = 20,
+  MSC_TYPE_TRADE_OFFER                         = 20,
   MSC_TYPE_DEX_BUY_OFFER                       = 21,
   MSC_TYPE_ACCEPT_OFFER_BTC                    = 22,
   MSC_TYPE_METADEX_TRADE                       = 25,

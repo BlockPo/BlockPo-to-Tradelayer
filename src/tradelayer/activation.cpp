@@ -1,4 +1,4 @@
-tradelayer/**
+/**
  * @file activation.cpp
  *
  * This file contains feature activation utility code.
@@ -84,7 +84,7 @@ void CheckLiveActivations(int blockHeight)
         if (liveActivation.activationBlock > blockHeight) {
             continue;
         }
-        if (tradelayer_VERSION < liveActivation.minClientVersion) {
+        if (OMNICORE_VERSION < liveActivation.minClientVersion) {
             std::string msgText = strprintf("Shutting down due to unsupported feature activation (%d: %s)", liveActivation.featureId, liveActivation.featureName);
             PrintToLog(msgText);
             PrintToConsole(msgText);

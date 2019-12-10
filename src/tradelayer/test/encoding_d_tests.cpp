@@ -1,6 +1,6 @@
-#include "omnicore/encoding.h"
+#include "tradelayer/encoding.h"
 
-#include "omnicore/script.h"
+#include "tradelayer/script.h"
 
 #include "script/script.h"
 #include "test/test_bitcoin.h"

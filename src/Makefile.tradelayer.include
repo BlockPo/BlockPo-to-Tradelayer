@@ -75,5 +75,5 @@ CLEAN_TRADELAYER = tradelayer/*.gcda tradelayer/*.gcno
 CLEANFILES += $(CLEAN_TRADELAYER)
 
 if ENABLE_TESTS
-include Makefile.omnitest.include
+include Makefile.tradelayertest.include
 endif

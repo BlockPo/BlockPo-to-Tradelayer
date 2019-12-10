@@ -615,5 +615,5 @@ include Makefile.qttest.include
 endif
 
 # Omni Core
-include Makefile.omnicore.include
+include Makefile.tradelayer.include
 #
