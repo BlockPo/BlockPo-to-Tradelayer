@@ -146,7 +146,7 @@ OmniTxBuilder& OmniTxBuilder::addOpReturn(const std::vector<unsigned char>& data
 {
     std::vector<std::pair<CScript, int64_t> > outputs;
 
-    if (!OmniCore_Encode_ClassD(data, outputs)) {
+    if (!TradeLayer_Encode_ClassD(data, outputs)) {
         return *this;
     }
 

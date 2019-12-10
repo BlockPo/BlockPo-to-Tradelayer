@@ -22,4 +22,4 @@ bool UnitTest();
 bool isNonMainNet();
 }
 
-#endif // OMNICORE_BITCOIN_H
+#endif // TRADELAYER_BITCOIN_H

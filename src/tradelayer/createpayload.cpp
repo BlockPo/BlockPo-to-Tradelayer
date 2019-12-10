@@ -303,7 +303,7 @@ std::vector<unsigned char> CreatePayload_ActivateFeature(uint16_t featureId, uin
     return payload;
 }
 
-std::vector<unsigned char> CreatePayload_OmniCoreAlert(uint16_t alertType, uint32_t expiryValue, const std::string& alertMessage)
+std::vector<unsigned char> CreatePayload_TradeLayerAlert(uint16_t alertType, uint32_t expiryValue, const std::string& alertMessage)
 {
     std::vector<unsigned char> payload;
 

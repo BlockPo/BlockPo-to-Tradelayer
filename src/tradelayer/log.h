@@ -89,7 +89,7 @@ extern bool msc_debug_wallettxs;
 /* When we switch to C++11, this can be switched to variadic templates instead
  * of this macro-based construction (see tinyformat.h).
  */
-#define MAKE_OMNI_CORE_ERROR_AND_LOG_FUNC(n)                                    \
+#define MAKE_TRADE_LAYER_ERROR_AND_LOG_FUNC(n)                                    \
     template<TINYFORMAT_ARGTYPES(n)>                                            \
     static inline int PrintToLog(const char* format, TINYFORMAT_VARARGS(n))     \
     {                                                                           \
@@ -111,9 +111,9 @@ extern bool msc_debug_wallettxs;
         return ConsolePrint(tfm::format("%s", TINYFORMAT_PASSARGS(n)));         \
     }
 
-TINYFORMAT_FOREACH_ARGNUM(MAKE_OMNI_CORE_ERROR_AND_LOG_FUNC)
+TINYFORMAT_FOREACH_ARGNUM(MAKE_TRADE_LAYER_ERROR_AND_LOG_FUNC)
 
-#undef MAKE_OMNI_CORE_ERROR_AND_LOG_FUNC
+#undef MAKE_TRADE_LAYER_ERROR_AND_LOG_FUNC
 
 
 #endif // TRADELAYER_LOG_H

@@ -408,7 +408,7 @@ UniValue tl_createpayload_sendalert(const JSONRPCRequest& request)
     uint32_t expiryValue = static_cast<uint32_t>(tempExpiryValue);
     std::string alertMessage = ParseText(request.params[2]);
 
-    std::vector<unsigned char> payload = CreatePayload_OmniCoreAlert(alertType, expiryValue, alertMessage);
+    std::vector<unsigned char> payload = CreatePayload_TradeLayerAlert(alertType, expiryValue, alertMessage);
 
     return HexStr(payload.begin(), payload.end());
 }

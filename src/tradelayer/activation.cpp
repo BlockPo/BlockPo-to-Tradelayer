@@ -84,7 +84,7 @@ void CheckLiveActivations(int blockHeight)
         if (liveActivation.activationBlock > blockHeight) {
             continue;
         }
-        if (OMNICORE_VERSION < liveActivation.minClientVersion) {
+        if (TL_VERSION < liveActivation.minClientVersion) {
             std::string msgText = strprintf("Shutting down due to unsupported feature activation (%d: %s)", liveActivation.featureId, liveActivation.featureName);
             PrintToLog(msgText);
             PrintToConsole(msgText);
@@ -126,7 +126,7 @@ void ClearActivations()
 }
 
 /**
- * Determines whether the sender is an authorized source for Omni Core feature activation.
+ * Determines whether the sender is an authorized source for Trade Layer feature activation.
  *
  * The option "-omniactivationallowsender=source" can be used to whitelist additional sources,
  * and the option "-omniactivationignoresender=source" can be used to ignore a source.
@@ -139,7 +139,7 @@ bool CheckActivationAuthorization(const std::string& sender)
    // std::set<std::string> whitelisted;
 
     // Mainnet - 4 out of 5 signatures required from developers & board members
-    // TODO: New key is required for Omni Lite
+    // TODO: New key is required for Trade Layer
     //whitelisted.insert("LZKEY");
 
     // Testnet / Regtest
@@ -179,7 +179,7 @@ bool CheckDeactivationAuthorization(const std::string& sender)
    // std::set<std::string> whitelisted;
 
     // Mainnet - 3 out of 5 signatures required from developers & board members
-    // TODO: New key is required for Omni Lite
+    // TODO: New key is required for Trade Layer
     //whitelisted.insert("LZKEY");
 
     // Testnet / Regtest

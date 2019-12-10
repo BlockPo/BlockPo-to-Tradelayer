@@ -22,7 +22,7 @@ std::vector<unsigned char> CreatePayload_CloseCrowdsale(uint32_t propertyId);
 std::vector<unsigned char> CreatePayload_Grant(uint32_t propertyId, uint64_t amount);
 std::vector<unsigned char> CreatePayload_Revoke(uint32_t propertyId, uint64_t amount);
 std::vector<unsigned char> CreatePayload_ChangeIssuer(uint32_t propertyId);
-std::vector<unsigned char> CreatePayload_OmniCoreAlert(uint16_t alertType, uint32_t expiryValue, const std::string& alertMessage);
+std::vector<unsigned char> CreatePayload_TradeLayerCoreAlert(uint16_t alertType, uint32_t expiryValue, const std::string& alertMessage);
 std::vector<unsigned char> CreatePayload_DeactivateFeature(uint16_t featureId);
 std::vector<unsigned char> CreatePayload_ActivateFeature(uint16_t featureId, uint32_t activationBlock, uint32_t minClientVersion);
 std::vector<unsigned char> CreatePayload_CreateContract(uint8_t ecosystem, uint32_t denomType, std::string name, uint32_t blocks_until_expiration, uint32_t notional_size, uint32_t collateral_currency, uint32_t margin_requirement);
@@ -53,4 +53,5 @@ std::vector<unsigned char> CreatePayload_Create_Channel(std::string channelAddre
 std::vector<unsigned char> CreatePayload_New_Id_Registration(std::string website, std::string name, uint8_t tokens, uint8_t ltc, uint8_t natives, uint8_t oracles);
 std::vector<unsigned char> CreatePayload_Update_Id_Registration();
 std::vector<unsigned char> CreatePayload_DEx_Payment();
-#endif // OMNICORE_CREATEPAYLOAD_H
+std::vector<unsigned char> CreatePayload_TradeLayerAlert(uint16_t alertType, uint32_t expiryValue, const std::string& alertMessage);
+#endif // TRADELAYER_CREATEPAYLOAD_H

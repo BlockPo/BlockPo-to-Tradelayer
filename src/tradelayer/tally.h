@@ -74,4 +74,4 @@ public:
 };
 
 
-#endif // OMNICORE_TALLY_H
+#endif // TRADELAYER_TALLY_H

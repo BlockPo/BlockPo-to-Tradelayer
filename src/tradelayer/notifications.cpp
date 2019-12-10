@@ -20,7 +20,7 @@
 namespace mastercore
 {
 
-//! Vector of currently active Omni alerts
+//! Vector of currently active Trade Layer alerts
 std::vector<AlertData> currentOmniAlerts;
 
 /**
@@ -36,7 +36,7 @@ void DeleteAlerts(const std::string& sender)
             PrintToLog("Removing deleted alert (from:%s type:%d expiry:%d message:%s)\n", alert.alert_sender,
                 alert.alert_type, alert.alert_expiry, alert.alert_message);
             it = currentOmniAlerts.erase(it);
-            //uiInterface.OmniStateChanged();
+            //uiInterface.TLStateChanged();
         } else {
             it++;
         }
@@ -51,7 +51,7 @@ void DeleteAlerts(const std::string& sender)
 void ClearAlerts()
 {
     currentOmniAlerts.clear();
-    //uiInterface.OmniStateChanged();
+    //uiInterface.TLStateChanged();
 }
 
 /**
@@ -77,7 +77,7 @@ void AddAlert(const std::string& sender, uint16_t alertType, uint32_t alertExpir
 }
 
 /**
- * Determines whether the sender is an authorized source for Omni Core alerts.
+ * Determines whether the sender is an authorized source for Trade Layer alerts.
  *
  * The option "-omnialertallowsender=source" can be used to whitelist additional sources,
  * and the option "-omnialertignoresender=source" can be used to ignore a source.
@@ -119,7 +119,7 @@ bool CheckAlertAuthorization(const std::string& sender)
 /**
  * Alerts including meta data.
  */
-std::vector<AlertData> GetOmniCoreAlerts()
+std::vector<AlertData> GetTradeLayerAlerts()
 {
     return currentOmniAlerts;
 }
@@ -127,7 +127,7 @@ std::vector<AlertData> GetOmniCoreAlerts()
 /**
  * Human readable alert messages.
  */
-std::vector<std::string> GetOmniCoreAlertMessages()
+std::vector<std::string> GetTradeLayerAlertMessages()
 {
     std::vector<std::string> vstr;
     for (std::vector<AlertData>::iterator it = currentOmniAlerts.begin(); it != currentOmniAlerts.end(); it++) {
@@ -149,7 +149,7 @@ bool CheckExpiredAlerts(unsigned int curBlock, uint64_t curTime)
                     PrintToLog("Expiring alert (from %s: type:%d expiry:%d message:%s)\n", alert.alert_sender,
                         alert.alert_type, alert.alert_expiry, alert.alert_message);
                     it = currentOmniAlerts.erase(it);
-                    //uiInterface.OmniStateChanged();
+                    //uiInterface.TLStateChanged();
                 } else {
                     it++;
                 }
@@ -159,17 +159,17 @@ bool CheckExpiredAlerts(unsigned int curBlock, uint64_t curTime)
                     PrintToLog("Expiring alert (from %s: type:%d expiry:%d message:%s)\n", alert.alert_sender,
                         alert.alert_type, alert.alert_expiry, alert.alert_message);
                     it = currentOmniAlerts.erase(it);
-                    //uiInterface.OmniStateChanged();
+                    //uiInterface.TLStateChanged();
                 } else {
                     it++;
                 }
             break;
             case ALERT_CLIENT_VERSION_EXPIRY:
-                if (OMNICORE_VERSION > alert.alert_expiry) {
+                if (TL_VERSION > alert.alert_expiry) {
                     PrintToLog("Expiring alert (form: %s type:%d expiry:%d message:%s)\n", alert.alert_sender,
                         alert.alert_type, alert.alert_expiry, alert.alert_message);
                     it = currentOmniAlerts.erase(it);
-                    //uiInterface.OmniStateChanged();
+                    //uiInterface.TLStateChanged();
                 } else {
                     it++;
                 }
@@ -178,7 +178,7 @@ bool CheckExpiredAlerts(unsigned int curBlock, uint64_t curTime)
                     PrintToLog("Removing invalid alert (from:%s type:%d expiry:%d message:%s)\n", alert.alert_sender,
                         alert.alert_type, alert.alert_expiry, alert.alert_message);
                     it = currentOmniAlerts.erase(it);
-                    //uiInterface.OmniStateChanged();
+                    //uiInterface.TLStateChanged();
             break;
         }
     }

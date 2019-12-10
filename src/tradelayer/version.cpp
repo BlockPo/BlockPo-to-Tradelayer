@@ -27,26 +27,26 @@
 #    endif
 #endif
 
-#ifdef OMNICORE_VERSION_STATUS
-#    define OMNICORE_VERSION_SUFFIX STRINGIZE(OMNICORE_VERSION_STATUS)
+#ifdef TL_VERSION_STATUS
+#    define TL_VERSION_SUFFIX STRINGIZE(TL_VERSION_STATUS)
 #else
-#    define OMNICORE_VERSION_SUFFIX ""
+#    define TL_VERSION_SUFFIX ""
 #endif
 
-//! Returns formatted Omni Core version, e.g. "1.2.0" or "1.3.4.1"
-const std::string OmniCoreVersion()
+//! Returns formatted Trade Layer version, e.g. "1.2.0" or "1.3.4.1"
+const std::string TradeLayerVersion()
 {
-    if (OMNICORE_VERSION_BUILD) {
+    if (TL_VERSION_BUILD) {
         return strprintf("%d.%d.%d.%d",
-                OMNICORE_VERSION_MAJOR,
-                OMNICORE_VERSION_MINOR,
-                OMNICORE_VERSION_PATCH,
-                OMNICORE_VERSION_BUILD);
+                TL_VERSION_MAJOR,
+                TL_VERSION_MINOR,
+                TL_VERSION_PATCH,
+                TL_VERSION_BUILD);
     } else {
         return strprintf("%d.%d.%d",
-                OMNICORE_VERSION_MAJOR,
-                OMNICORE_VERSION_MINOR,
-                OMNICORE_VERSION_PATCH);
+                TL_VERSION_MAJOR,
+                TL_VERSION_MINOR,
+                TL_VERSION_PATCH);
     }
 }
 

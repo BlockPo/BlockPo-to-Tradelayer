@@ -755,7 +755,7 @@ UniValue tl_sendalert(const JSONRPCRequest& request)
     std::string alertMessage = ParseText(request.params[3]);
 
     // create a payload for the transaction
-    std::vector<unsigned char> payload = CreatePayload_OmniCoreAlert(alertType, expiryValue, alertMessage);
+    std::vector<unsigned char> payload = CreatePayload_TradeLayerAlert(alertType, expiryValue, alertMessage);
 
     // request the wallet build the transaction (and if needed commit it)
     uint256 txid;

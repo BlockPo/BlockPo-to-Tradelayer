@@ -1694,7 +1694,7 @@ int64_t mastercore::getVWAPPriceContracts(std::string namec)
 std::string CMPMetaDEx::displayUnitPrice() const
 {
      rational_t tmpDisplayPrice;
-     if (getDesProperty() == OMNI_PROPERTY_ALL || getDesProperty() == OMNI_PROPERTY_TALL) {
+     if (getDesProperty() == TL_PROPERTY_ALL || getDesProperty() == TL_PROPERTY_TALL) {
          tmpDisplayPrice = unitPrice();
          if (isPropertyDivisible(getProperty())) tmpDisplayPrice = tmpDisplayPrice * COIN;
      } else {
@@ -1713,11 +1713,6 @@ std::string CMPMetaDEx::displayUnitPrice() const
      return displayValue;
 }
 
-/**
- * Used for display of unit prices with 50 decimal places at RPC layer.
- *
- * Note: unit price is no longer always shown in OMNI and/or inverted
- */
 std::string CMPMetaDEx::displayFullUnitPrice() const
 {
   rational_t tempUnitPrice = unitPrice();

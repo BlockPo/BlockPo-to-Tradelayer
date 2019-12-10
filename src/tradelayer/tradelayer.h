@@ -1,5 +1,5 @@
-#ifndef TRADELAYER_OMNICORE_H
-#define TRADELAYER_OMNICORE_H
+#ifndef TRADELAYER_TL_H
+#define TRADELAYER_TL_H
 
 class CBitcoinAddress;
 class CBlockIndex;
@@ -52,14 +52,14 @@ int const MAX_STATE_HISTORY = 50;
 // maximum size of string fields
 #define SP_STRING_FIELD_LEN 256
 
-// Omni Layer Transaction Class
+// Trade Layer Transaction Class
 #define NO_MARKER    0
-#define OMNI_CLASS_A 1
-#define OMNI_CLASS_B 2
-#define OMNI_CLASS_C 3 // uncompressed OP_RETURN
-#define OMNI_CLASS_D 4 // compressed OP_RETURN
+#define TL_CLASS_A 1
+#define TL_CLASS_B 2
+#define TL_CLASS_C 3 // uncompressed OP_RETURN
+#define TL_CLASS_D 4 // compressed OP_RETURN
 
-// Omni Layer Transaction (Packet) Version
+// Trade Layer Transaction (Packet) Version
 #define MP_TX_PKT_V0  0
 #define MP_TX_PKT_V1  1
 
@@ -85,9 +85,9 @@ enum TransactionType {
   MSC_TYPE_GRANT_PROPERTY_TOKENS      = 55,
   MSC_TYPE_REVOKE_PROPERTY_TOKENS     = 56,
   MSC_TYPE_CHANGE_ISSUER_ADDRESS      = 70,
-  OMNICORE_MESSAGE_TYPE_DEACTIVATION  = 65533,
-  OMNICORE_MESSAGE_TYPE_ACTIVATION    = 65534,
-  OMNICORE_MESSAGE_TYPE_ALERT         = 65535,
+  TL_MESSAGE_TYPE_DEACTIVATION        = 65533,
+  TL_MESSAGE_TYPE_ACTIVATION          = 65534,
+  TL_MESSAGE_TYPE_ALERT               = 65535,
 
   MSC_TYPE_TRADE_OFFER                         = 20,
   MSC_TYPE_DEX_BUY_OFFER                       = 21,
@@ -167,11 +167,11 @@ enum FILETYPES {
 #define PKT_ERROR_ORACLE         (-110000)
 #define PKT_ERROR_CHANNELS       (-120000)
 
-#define OMNI_PROPERTY_BTC             0
-#define OMNI_PROPERTY_ALL             1
-#define OMNI_PROPERTY_TALL            2
-#define OMNI_PROPERTY_VESTING         3
-#define OMNI_PROPERTY_ALL_ISSUANCE    6
+#define TL_PROPERTY_BTC             0
+#define TL_PROPERTY_ALL             1
+#define TL_PROPERTY_TALL            2
+#define TL_PROPERTY_VESTING         3
+#define TL_PROPERTY_ALL_ISSUANCE    6
 #define TOTAL_AMOUNT_VESTING_TOKENS   1500000*COIN
 
 #define BUY            1
@@ -224,11 +224,8 @@ long int FormatShortIntegerMP(int64_t n);
 uint64_t int64ToUint64(int64_t value);
 std::string FormatDivisibleZeroClean(int64_t n);
 
-/** Returns the Exodus address. */
-const std::string ExodusAddress();
-
 /** Returns the marker for transactions. */
-const std::vector<unsigned char> GetOmMarker();
+const std::vector<unsigned char> GetTLMarker();
 
 //! Used to indicate, whether to automatically commit created transactions
 extern bool autoCommit;
@@ -236,7 +233,7 @@ extern bool autoCommit;
 //! Global lock for state objects
 extern CCriticalSection cs_tally;
 
-/** LevelDB based storage for storing Omni transaction data.  This will become the new master database, holding serialized Omni transactions.
+/** LevelDB based storage for storing Trade Layer transaction data.  This will become the new master database, holding serialized Trade Layer transactions.
  *  Note, intention is to consolidate and clean up data storage
  */
 
@@ -251,18 +248,18 @@ extern CCriticalSection cs_tally;
    channel() : multisig(""), first(""), second(""), expiry_height(0), last_exchange_block(0) {}
  };
 
-class COmniTransactionDB : public CDBBase
+class CtlTransactionDB : public CDBBase
 {
 public:
-    COmniTransactionDB(const boost::filesystem::path& path, bool fWipe)
+    CtlTransactionDB(const boost::filesystem::path& path, bool fWipe)
     {
         leveldb::Status status = Open(path, fWipe);
         PrintToConsole("Loading master transactions database: %s\n", status.ToString());
     }
 
-    virtual ~COmniTransactionDB()
+    virtual ~CtlTransactionDB()
     {
-        if (msc_debug_persistence) PrintToLog("COmniTransactionDB closed\n");
+        if (msc_debug_persistence) PrintToLog("CtlTransactionDB closed\n");
     }
 
     /* These functions would be expanded upon to store a serialized version of the transaction and associated state data
@@ -424,12 +421,6 @@ int64_t getMPbalance(const std::string& address, uint32_t propertyId, TallyType 
 int64_t getUserAvailableMPbalance(const std::string& address, uint32_t propertyId);
 int64_t getUserReserveMPbalance(const std::string& address, uint32_t propertyId);
 
-/** Global handler to initialize Omni Core. */
-int omnicorelite_init();
-
-/** Global handler to shut down Omni Core. */
-int omnicorelite_shutdown();
-
 /** Global handler to total wallet balances. */
 void CheckWalletUpdate(bool forceUpdate = false);
 
@@ -465,7 +456,7 @@ namespace mastercore
 {
   extern std::unordered_map<std::string, CMPTally> mp_tally_map;
   extern CMPTxList *p_txlistdb;
-  extern COmniTransactionDB *p_OmniTXDB;
+  extern CtlTransactionDB *p_TradeTXDB;
   extern CMPTradeList *t_tradelistdb;
 
   // TODO: move, rename
@@ -531,4 +522,4 @@ namespace mastercore
 
 }
 
-#endif // OMNICORE_OMNICORE_H
+#endif // TRADELAYER_TL_H

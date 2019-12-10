@@ -85,9 +85,9 @@ std::string mastercore::strTransactionType(uint16_t txType)
     case MSC_TYPE_GRANT_PROPERTY_TOKENS: return "Grant Property Tokens";
     case MSC_TYPE_REVOKE_PROPERTY_TOKENS: return "Revoke Property Tokens";
     case MSC_TYPE_CHANGE_ISSUER_ADDRESS: return "Change Issuer Address";
-    case OMNICORE_MESSAGE_TYPE_ALERT: return "ALERT";
-    case OMNICORE_MESSAGE_TYPE_DEACTIVATION: return "Feature Deactivation";
-    case OMNICORE_MESSAGE_TYPE_ACTIVATION: return "Feature Activation";
+    case TL_MESSAGE_TYPE_ALERT: return "ALERT";
+    case TL_MESSAGE_TYPE_DEACTIVATION: return "Feature Deactivation";
+    case TL_MESSAGE_TYPE_ACTIVATION: return "Feature Activation";
     case MSC_TYPE_METADEX_TRADE: return "Metadex Order";
 
     case MSC_TYPE_CONTRACTDEX_TRADE: return "Future Contract";
@@ -122,7 +122,7 @@ std::string mastercore::strTransactionType(uint16_t txType)
 static std::string intToClass(int encodingClass)
 {
     switch (encodingClass) {
-        case OMNI_CLASS_D:
+        case TL_CLASS_D:
             return "D";
     }
 
@@ -194,13 +194,13 @@ bool CMPTransaction::interpret_Transaction()
     case MSC_TYPE_CHANGE_ISSUER_ADDRESS:
       return interpret_ChangeIssuer();
 
-    case OMNICORE_MESSAGE_TYPE_DEACTIVATION:
+    case TL_MESSAGE_TYPE_DEACTIVATION:
       return interpret_Deactivation();
 
-    case OMNICORE_MESSAGE_TYPE_ACTIVATION:
+    case TL_MESSAGE_TYPE_ACTIVATION:
       return interpret_Activation();
 
-    case OMNICORE_MESSAGE_TYPE_ALERT:
+    case TL_MESSAGE_TYPE_ALERT:
       return interpret_Alert();
 
     case MSC_TYPE_METADEX_TRADE:
@@ -2031,13 +2031,13 @@ int CMPTransaction::interpretPacket()
         case MSC_TYPE_CHANGE_ISSUER_ADDRESS:
             return logicMath_ChangeIssuer();
 
-        case OMNICORE_MESSAGE_TYPE_DEACTIVATION:
+        case TL_MESSAGE_TYPE_DEACTIVATION:
             return logicMath_Deactivation();
 
-        case OMNICORE_MESSAGE_TYPE_ACTIVATION:
+        case TL_MESSAGE_TYPE_ACTIVATION:
             return logicMath_Activation();
 
-        case OMNICORE_MESSAGE_TYPE_ALERT:
+        case TL_MESSAGE_TYPE_ALERT:
             return logicMath_Alert();
 
         case MSC_TYPE_CREATE_CONTRACT:
@@ -2259,7 +2259,7 @@ int CMPTransaction::logicMath_SendVestingTokens()
 {
   assert(update_tally_map(sender, property, -nValue, BALANCE));
   assert(update_tally_map(receiver, property, nValue, BALANCE));
-  assert(update_tally_map(receiver, OMNI_PROPERTY_ALL, nValue, UNVESTED));
+  assert(update_tally_map(receiver, TL_PROPERTY_ALL, nValue, UNVESTED));
 
   vestingAddresses.push_back(receiver);
 
@@ -2297,10 +2297,10 @@ int CMPTransaction::logicMath_SendAll()
 
     while (0 != (propertyId = ptally->next())) {
         // only transfer tokens in the specified ecosystem
-        if (ecosystem == OMNI_PROPERTY_ALL && isTestEcosystemProperty(propertyId)) {
+        if (ecosystem == TL_PROPERTY_ALL && isTestEcosystemProperty(propertyId)) {
             continue;
         }
-        if (ecosystem == OMNI_PROPERTY_TALL && isMainEcosystemProperty(propertyId)) {
+        if (ecosystem == TL_PROPERTY_TALL && isMainEcosystemProperty(propertyId)) {
             continue;
         }
 
@@ -2338,7 +2338,7 @@ int CMPTransaction::logicMath_CreatePropertyFixed()
       blockHash = pindex->GetBlockHash();
     }
 
-    if (OMNI_PROPERTY_ALL != ecosystem && OMNI_PROPERTY_TALL != ecosystem) {
+    if (TL_PROPERTY_ALL != ecosystem && TL_PROPERTY_TALL != ecosystem) {
         PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, (uint32_t) ecosystem);
         return (PKT_ERROR_SP -21);
     }
@@ -2408,7 +2408,7 @@ int CMPTransaction::logicMath_CreatePropertyVariable()
         blockHash = pindex->GetBlockHash();
     }
 
-    if (OMNI_PROPERTY_ALL != ecosystem && OMNI_PROPERTY_TALL != ecosystem) {
+    if (TL_PROPERTY_ALL != ecosystem && TL_PROPERTY_TALL != ecosystem) {
         PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, (uint32_t) ecosystem);
         return (PKT_ERROR_SP -21);
     }
@@ -2572,7 +2572,7 @@ int CMPTransaction::logicMath_CreatePropertyManaged()
         blockHash = pindex->GetBlockHash();
     }
 
-    if (OMNI_PROPERTY_ALL != ecosystem && OMNI_PROPERTY_TALL != ecosystem) {
+    if (TL_PROPERTY_ALL != ecosystem && TL_PROPERTY_TALL != ecosystem) {
         PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, (uint32_t) ecosystem);
         return (PKT_ERROR_SP -21);
     }
@@ -3176,7 +3176,7 @@ int CMPTransaction::logicMath_ContractDexCancelEcosystem()
     return (PKT_ERROR_CONTRACTDEX -20);
   }
 
-  if (OMNI_PROPERTY_ALL != ecosystem && OMNI_PROPERTY_TALL != ecosystem) {
+  if (TL_PROPERTY_ALL != ecosystem && TL_PROPERTY_TALL != ecosystem) {
     PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, ecosystem);
     return (PKT_ERROR_SP -21);
   }
@@ -3202,7 +3202,7 @@ int CMPTransaction::logicMath_ContractDexClosePosition()
         return (PKT_ERROR_CONTRACTDEX -20);
     }
 
-    if (OMNI_PROPERTY_ALL != ecosystem && OMNI_PROPERTY_TALL != ecosystem) {
+    if (TL_PROPERTY_ALL != ecosystem && TL_PROPERTY_TALL != ecosystem) {
         PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, ecosystem);
         return (PKT_ERROR_SP -21);
     }
@@ -3237,7 +3237,7 @@ int CMPTransaction::logicMath_ContractDex_Cancel_Orders_By_Block()
      return (PKT_ERROR_METADEX -22);
   }
 
-  if (OMNI_PROPERTY_ALL != ecosystem && OMNI_PROPERTY_TALL != ecosystem) {
+  if (TL_PROPERTY_ALL != ecosystem && TL_PROPERTY_TALL != ecosystem) {
       PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, ecosystem);
       return (PKT_ERROR_SP -21);
   }
@@ -3269,7 +3269,7 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
         blockHash = pindex->GetBlockHash();
     }
 
-    if (OMNI_PROPERTY_ALL != ecosystem && OMNI_PROPERTY_TALL != ecosystem) {
+    if (TL_PROPERTY_ALL != ecosystem && TL_PROPERTY_TALL != ecosystem) {
         PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, (uint32_t) ecosystem);
         return (PKT_ERROR_SP -21);
     }
@@ -3879,7 +3879,7 @@ int CMPTransaction::logicMath_CreateOracleContract()
       return (PKT_ERROR_ORACLE -10);
   }
 
-  if (OMNI_PROPERTY_ALL != ecosystem && OMNI_PROPERTY_TALL != ecosystem) {
+  if (TL_PROPERTY_ALL != ecosystem && TL_PROPERTY_TALL != ecosystem) {
       PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, (uint32_t) ecosystem);
       return (PKT_ERROR_SP -21);
   }

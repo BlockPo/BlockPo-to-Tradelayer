@@ -1539,8 +1539,8 @@ UniValue tl_getinfo(const JSONRPCRequest& request)
     UniValue infoResponse(UniValue::VOBJ);
 
     // provide the mastercore and bitcoin version and if available commit id
-    infoResponse.push_back(Pair("tradelayer_version_int", OMNICORE_VERSION));
-    infoResponse.push_back(Pair("tradelayer_coreversion", OmniCoreVersion()));
+    infoResponse.push_back(Pair("tradelayer_version_int", TL_VERSION));
+    infoResponse.push_back(Pair("tradelayer_coreversion", TradeLayerVersion()));
     infoResponse.push_back(Pair("litecoinversion", BitcoinCoreVersion()));
     infoResponse.push_back(Pair("commitinfo", BuildCommit()));
 
@@ -1559,8 +1559,8 @@ UniValue tl_getinfo(const JSONRPCRequest& request)
 
     // handle alerts
     UniValue alerts(UniValue::VARR);
-    std::vector<AlertData> omniAlerts = GetOmniCoreAlerts();
-    for (std::vector<AlertData>::iterator it = omniAlerts.begin(); it != omniAlerts.end(); it++) {
+    std::vector<AlertData> tlAlerts = GetTradeLayerAlerts();
+    for (std::vector<AlertData>::iterator it = tlAlerts.begin(); it != tlAlerts.end(); it++) {
         AlertData alert = *it;
         UniValue alertResponse(UniValue::VOBJ);
         std::string alertTypeStr;
@@ -2434,14 +2434,6 @@ UniValue tl_getactivedexsells(const JSONRPCRequest& request)
     return response;
 }
 
-UniValue tl_getexodus(const JSONRPCRequest& request)
-{
-
-    UniValue balanceObj(UniValue::VOBJ);
-    std::string address = ExodusAddress();
-    balanceObj.push_back(Pair("exodus address: ", address));
-    return balanceObj;
-}
 
 UniValue tl_getsum_upnl(const JSONRPCRequest& request)
 {
@@ -2737,7 +2729,6 @@ static const CRPCCommand commands[] =
   { "trade layer (data retieval)" , "tl_getreserve",                &tl_getreserve,                 {} },
   { "trade layer (data retieval)" , "tl_getallprice",               &tl_getallprice,                {} },
   { "trade layer (data retieval)" , "tl_getmarketprice",            &tl_getmarketprice,             {} },
-  { "trade layer (data retieval)" , "tl_getexodus",                 &tl_getexodus,                  {} },
   { "trade layer (data retieval)" , "tl_getsum_upnl",               &tl_getsum_upnl,                {} },
   { "trade layer (data retieval)" , "tl_check_commits",             &tl_check_commits,              {} },
   { "trade layer (data retieval)" , "tl_get_channelreserve",        &tl_get_channelreserve,         {} },

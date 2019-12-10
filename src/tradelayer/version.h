@@ -6,22 +6,22 @@
 /* #else */
 
 //
-// Omni Core version information are also to be defined in configure.ac.
+// Trade Layer version information are also to be defined in configure.ac.
 //
 // During the configuration, this information are used for other places.
 //
 
 // Increase with every consensus affecting change
-#define OMNICORE_VERSION_MAJOR       0
+#define TL_VERSION_MAJOR       0
 
 // Increase with every non-consensus affecting feature
-#define OMNICORE_VERSION_MINOR       0
+#define TL_VERSION_MINOR       0
 
 // Increase with every patch, which is not a feature or consensus affecting
-#define OMNICORE_VERSION_PATCH       4
+#define TL_VERSION_PATCH       4
 
 // Non-public build number/revision (usually zero)
-#define OMNICORE_VERSION_BUILD       0
+#define TL_VERSION_BUILD       0
 
 //#endif // HAVE_CONFIG_H
 
@@ -35,15 +35,15 @@
 
 #include <string>
 
-//! Omni Core client version
-static const int OMNICORE_VERSION =
-                    +100000000000 * OMNICORE_VERSION_MAJOR
-                    +    10000000 * OMNICORE_VERSION_MINOR
-                    +        1000 * OMNICORE_VERSION_PATCH
-                    +           1 * OMNICORE_VERSION_BUILD;
+//! Trade Layer client version
+static const int TL_VERSION =
+                    +100000000000 * TL_VERSION_MAJOR
+                    +    10000000 * TL_VERSION_MINOR
+                    +        1000 * TL_VERSION_PATCH
+                    +           1 * TL_VERSION_BUILD;
 
-//! Returns formatted Omni Core version, e.g. "1.2.0"
-const std::string OmniCoreVersion();
+//! Returns formatted Trade Layer version, e.g. "1.2.0"
+const std::string TradeLayerVersion();
 
 //! Returns formatted Bitcoin Core version, e.g. "0.10", "0.9.3"
 const std::string BitcoinCoreVersion();

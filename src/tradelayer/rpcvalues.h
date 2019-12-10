@@ -53,4 +53,4 @@ int64_t ParseDExFee(const UniValue& value);
 uint8_t ParseDExAction(const UniValue& value);
 uint64_t ParsePercent(const UniValue& value, bool isDivisible);
 
-#endif // OMNICORE_RPCVALUES_H
+#endif // TRADELAYER_RPCVALUES_H

@@ -21,11 +21,11 @@
  * The request is rejected, if the size of the payload with marker is larger than
  * the allowed data carrier size ("-datacarriersize=n").
  */
-bool OmniCore_Encode_ClassD(const std::vector<unsigned char>& vchPayload,
+bool TradeLayer_Encode_ClassD(const std::vector<unsigned char>& vchPayload,
         std::vector<std::pair <CScript, int64_t> >& vecOutputs)
 {
     std::vector<unsigned char> vchData;
-    std::vector<unsigned char> vchOmBytes = GetOmMarker();
+    std::vector<unsigned char> vchOmBytes = GetTLMarker();
     vchData.insert(vchData.end(), vchOmBytes.begin(), vchOmBytes.end());
     vchData.insert(vchData.end(), vchPayload.begin(), vchPayload.end());
     if (vchData.size() > nMaxDatacarrierBytes) { return false; }

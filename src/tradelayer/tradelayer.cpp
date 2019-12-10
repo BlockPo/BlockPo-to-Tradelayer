@@ -107,12 +107,6 @@ typedef boost::multiprecision::cpp_dec_float_100 dec_float;
 
 CCriticalSection cs_tally;
 
-static string exodus_address = "1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P";
-
-static const string exodus_mainnet = "1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P";
-static const string exodus_testnet = "mffpEfNWbCjDFEUGHadLB36bzfi8xQD3VY";  // one of our litecoin testnet (private) addresses
-// static const string getmoney_testnet = "moneyqMan7uh8FqdCA2BV5yZ8qVrc9ikLP";
-
 static int nWaterlineBlock = 0;
 
 //! Available balances of wallet properties
@@ -149,7 +143,7 @@ extern std::vector<std::string> vestingAddresses;
 
 CMPTxList *mastercore::p_txlistdb;
 CMPTradeList *mastercore::t_tradelistdb;
-COmniTransactionDB *mastercore::p_OmniTXDB;
+CtlTransactionDB *mastercore::p_TradeTXDB;
 extern MatrixTLS *pt_ndatabase;
 extern int n_cols;
 extern int n_rows;
@@ -209,11 +203,11 @@ std::string mastercore::strMPProperty(uint32_t propertyId)
     {
       switch (propertyId)
 	{
-	case OMNI_PROPERTY_BTC: str = "BTC";
+	case TL_PROPERTY_BTC: str = "BTC";
 	  break;
-	case OMNI_PROPERTY_ALL: str = "ALL";
+	case TL_PROPERTY_ALL: str = "ALL";
 	  break;
-	case OMNI_PROPERTY_TALL: str = "TALL";
+	case TL_PROPERTY_TALL: str = "TALL";
 	  break;
 	default:
 	  str = strprintf("SP token: %d", propertyId);
@@ -409,14 +403,14 @@ int64_t getUserReserveMPbalance(const std::string& address, uint32_t propertyId)
 
 bool mastercore::isTestEcosystemProperty(uint32_t propertyId)
 {
-  if ((OMNI_PROPERTY_TALL == propertyId) || (TEST_ECO_PROPERTY_1 <= propertyId)) return true;
+  if ((TL_PROPERTY_TALL == propertyId) || (TEST_ECO_PROPERTY_1 <= propertyId)) return true;
 
   return false;
 }
 
 bool mastercore::isMainEcosystemProperty(uint32_t propertyId)
 {
-  if ((OMNI_PROPERTY_BTC != propertyId) && !isTestEcosystemProperty(propertyId)) return true;
+  if ((TL_PROPERTY_BTC != propertyId) && !isTestEcosystemProperty(propertyId)) return true;
 
   return false;
 }
@@ -556,16 +550,16 @@ void CMPTradeList::NotifyPeggedCurrency(const uint256& txid, string address, uin
 void CheckWalletUpdate(bool forceUpdate)
 {
   if (!WalletCacheUpdate()) {
-    // no balance changes were detected that affect wallet addresses, signal a generic change to overall Omni state
+    // no balance changes were detected that affect wallet addresses, signal a generic change to overall Trade Layer state
     if (!forceUpdate) {
-      // uiInterface.OmniStateChanged();
+      // uiInterface.TLStateChanged();
       return;
     }
   }
 #ifdef ENABLE_WALLET
     LOCK(cs_tally);
 
-     // balance changes were found in the wallet, update the global totals and signal a Omni balance change
+     // balance changes were found in the wallet, update the global totals and signal a balance change
      global_balance_money.clear();
 
     // populate global balance totals and wallet property list - note global balances do not include additional balances from watch-only addresses
@@ -586,8 +580,8 @@ void CheckWalletUpdate(bool forceUpdate)
             global_balance_money[propertyId] += getUserAvailableMPbalance(address, propertyId);
         }
     }
-    // signal an Omni balance change
-    // uiInterface.OmniBalanceChanged();
+    // signal an Trade Layer balance change
+    // uiInterface.TLBalanceChanged();
 #endif
 }
 
@@ -609,7 +603,7 @@ void creatingVestingTokens(int block)
   newSP.attribute_type = ALL_PROPERTY_TYPE_VESTING;
   newSP.init_block = block;
 
-  const uint32_t propertyIdVesting = _my_sps->putSP(OMNI_PROPERTY_ALL, newSP);
+  const uint32_t propertyIdVesting = _my_sps->putSP(TL_PROPERTY_ALL, newSP);
   assert(propertyIdVesting > 0);
 
   assert(update_tally_map(admin_addrs, propertyIdVesting, totalVesting, BALANCE));
@@ -625,8 +619,8 @@ int mastercore::GetEncodingClass(const CTransaction& tx, int nBlock)
     bool hasOpReturn = false;
 
     /* Fast Search
-     * Perform a string comparison on hex for each scriptPubKey & look directly for omni marker bytes
-     * This allows to drop non-Omni transactions with less work
+     * Perform a string comparison on hex for each scriptPubKey & look directly for Trade Layer marker bytes
+     * This allows to drop non- Trade Layer transactions with less work
      */
     std::string strClassD = "5054"; /*the PT marker*/
     bool examineClosely = false;
@@ -665,7 +659,7 @@ int mastercore::GetEncodingClass(const CTransaction& tx, int nBlock)
                 continue;
             }
             if (!scriptPushes.empty()) {
-                std::vector<unsigned char> vchMarker = GetOmMarker();
+                std::vector<unsigned char> vchMarker = GetTLMarker();
                 std::vector<unsigned char> vchPushed = ParseHex(scriptPushes[0]);
                 if (vchPushed.size() < vchMarker.size()) {
                     continue;
@@ -678,7 +672,7 @@ int mastercore::GetEncodingClass(const CTransaction& tx, int nBlock)
     }
 
     if (hasOpReturn) {
-        return OMNI_CLASS_D;
+        return TL_CLASS_D;
     }
 
     return NO_MARKER;
@@ -753,10 +747,10 @@ static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, 
     mp_tx.Set(wtx.GetHash(), nBlock, idx, nTime);
 
     // ### CLASS IDENTIFICATION AND MARKER CHECK ###
-    int omniClass = GetEncodingClass(wtx, nBlock);
+    int tlClass = GetEncodingClass(wtx, nBlock);
 
-    if (omniClass == NO_MARKER) {
-        return -1; // No Omni marker, thus not a valid Omni transaction
+    if (tlClass == NO_MARKER) {
+        return -1; // No Trade Layer marker, thus not a valid protocol transaction
     }
 
     if (!bRPConly || msc_debug_parser_readonly) {
@@ -875,7 +869,7 @@ static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, 
     if (msc_debug_parser_data) PrintToLog("Ending reference identification\nFinal decision on reference identification is: %s\n", strReference);
 
     // ### CLASS D SPECIFIC PARSING ###
-    if (omniClass == OMNI_CLASS_D) {
+    if (tlClass == TL_CLASS_D) {
         std::vector<std::string> op_return_script_data;
 
         // ### POPULATE OP RETURN SCRIPT DATA ###
@@ -897,7 +891,7 @@ static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, 
                 }
                 // TODO: maybe encapsulate the following sort of messy code
                 if (!vstrPushes.empty()) {
-                    std::vector<unsigned char> vchMarker = GetOmMarker();
+                    std::vector<unsigned char> vchMarker = GetTLMarker();
                     std::vector<unsigned char> vchPushed = ParseHex(vstrPushes[0]);
                     if (vchPushed.size() < vchMarker.size()) {
                         continue;
@@ -942,7 +936,7 @@ static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, 
 
     // ### SET MP TX INFO ###
     if (msc_debug_verbose) PrintToLog("single_pkt: %s\n", HexStr(single_pkt, packet_size + single_pkt));
-    mp_tx.Set(strSender, strReference, 0, wtx.GetHash(), nBlock, idx, (unsigned char *)&single_pkt, packet_size, omniClass, (inAll-outAll));
+    mp_tx.Set(strSender, strReference, 0, wtx.GetHash(), nBlock, idx, (unsigned char *)&single_pkt, packet_size, tlClass, (inAll-outAll));
 
     return 0;
 }
@@ -977,7 +971,7 @@ static bool HandleDExPayments(const CTransaction& tx, int nBlock, const std::str
 
             if (msc_debug_handle_dex_payment) PrintToLog("%s: destination address: %s, sender's address: %s \n", __func__, address, strSender);
 
-            if (address == ExodusAddress() || address == strSender)
+            if (address == strSender)
                 continue;
 
             if (msc_debug_handle_dex_payment) PrintToLog("payment #%d %s %s\n", count, address, FormatIndivisibleMP(tx.vout[n].nValue));
@@ -1296,7 +1290,7 @@ int input_mp_offers_string(const std::string& s)
     uint256 txid = uint256S(vstr[i++]);
     uint8_t option = 2;
     // TODO: should this be here? There are usually no sanity checks..
-      // if (OMNI_PROPERTY_BTC != prop_desired) return -1;
+      // if (TL_PROPERTY_BTC != prop_desired) return -1;
 
     const std::string combo = STR_SELLOFFER_ADDR_PROP_COMBO(sellerAddr, prop);
     CMPOffer newOffer(offerBlock, amountOriginal, prop, btcDesired, minFee, blocktimelimit, txid, option);
@@ -1824,8 +1818,8 @@ static int write_msc_balances(std::ofstream& file, SHA256_CTX* shaCtx)
 
 static int write_globals_state(ofstream &file, SHA256_CTX *shaCtx)
 {
-  unsigned int nextSPID = _my_sps->peekNextSPID(OMNI_PROPERTY_ALL);
-  unsigned int nextTestSPID = _my_sps->peekNextSPID(OMNI_PROPERTY_TALL);
+  unsigned int nextSPID = _my_sps->peekNextSPID(TL_PROPERTY_ALL);
+  unsigned int nextTestSPID = _my_sps->peekNextSPID(TL_PROPERTY_TALL);
 
   std::string lineOut = strprintf("%d,%d", nextSPID, nextTestSPID);
 
@@ -2168,13 +2162,13 @@ void clear_all_state()
      // s_stolistdb->Clear();
      t_tradelistdb->Clear();
      p_txlistdb->Clear();
-     p_OmniTXDB->Clear();
+     p_TradeTXDB->Clear();
 
      assert(p_txlistdb->setDBVersion() == DB_VERSION); // new set of databases, set DB version
 }
 
 /**
- * Global handler to initialize Omni Core.
+ * Global handler to initialize Trade Layer.
  *
  * @return An exit code, indicating success or failure
  */
@@ -2187,7 +2181,7 @@ int mastercore_init()
     return 0;
   }
 
-  PrintToLog("\nInitializing Omni Core Lite\n");
+  PrintToLog("\nInitializing Trade Layer\n");
   PrintToLog("Startup time: %s\n", DateTimeStrFormat("%Y-%m-%d %H:%M:%S", GetTime()));
   // PrintToLog("Build date: %s, based on commit: %s\n", BuildDate(), BuildCommit());
 
@@ -2197,7 +2191,7 @@ int mastercore_init()
   // check for --autocommit option and set transaction commit flag accordingly
   if (!gArgs.GetBoolArg("-autocommit", true)) {
     PrintToLog("Process was started with --autocommit set to false. "
-	       "Created Omni transactions will not be committed to wallet or broadcast.\n");
+	       "Created Trade Layer transactions will not be committed to wallet or broadcast.\n");
     autoCommit = false;
   }
 
@@ -2209,11 +2203,11 @@ int mastercore_init()
       boost::filesystem::path persistPath = GetDataDir() / "OCL_persist";
       boost::filesystem::path txlistPath = GetDataDir() / "OCL_txlist";
       boost::filesystem::path spPath = GetDataDir() / "OCL_spinfo";
-      boost::filesystem::path omniTXDBPath = GetDataDir() / "OCL_TXDB";
+      boost::filesystem::path tlTXDBPath = GetDataDir() / "OCL_TXDB";
       if (boost::filesystem::exists(persistPath)) boost::filesystem::remove_all(persistPath);
       if (boost::filesystem::exists(txlistPath)) boost::filesystem::remove_all(txlistPath);
       if (boost::filesystem::exists(spPath)) boost::filesystem::remove_all(spPath);
-      if (boost::filesystem::exists(omniTXDBPath)) boost::filesystem::remove_all(omniTXDBPath);
+      if (boost::filesystem::exists(tlTXDBPath)) boost::filesystem::remove_all(tlTXDBPath);
       PrintToLog("Success clearing persistence files in datadir %s\n", GetDataDir().string());
       startClean = true;
     } catch (const boost::filesystem::filesystem_error& e) {
@@ -2223,7 +2217,7 @@ int mastercore_init()
 
   p_txlistdb = new CMPTxList(GetDataDir() / "OCL_txlist", fReindex);
   _my_sps = new CMPSPInfo(GetDataDir() / "OCL_spinfo", fReindex);
-  p_OmniTXDB = new COmniTransactionDB(GetDataDir() / "OCL_TXDB", fReindex);
+  p_TradeTXDB = new CtlTransactionDB(GetDataDir() / "OCL_TXDB", fReindex);
   t_tradelistdb = new CMPTradeList(GetDataDir()/"OCL_tradelist", fReindex);
   MPPersistencePath = GetDataDir() / "OCL_persist";
   TryCreateDirectory(MPPersistencePath);
@@ -2275,13 +2269,13 @@ int mastercore_init()
   // initial scan
   msc_initial_scan(nWaterlineBlock);
 
-  PrintToLog("Omni Core Lite initialization completed\n");
+  PrintToLog("Trade Layer initialization completed\n");
 
   return 0;
 }
 
 /**
- * Global handler to shut down Omni Core.
+ * Global handler to shut down Trade Layer.
  *
  * In particular, the LevelDB databases of the global state objects are closed
  * properly.
@@ -2304,14 +2298,14 @@ int mastercore_shutdown()
     delete _my_sps;
     _my_sps = NULL;
   }
-  if (p_OmniTXDB) {
-    delete p_OmniTXDB;
-    p_OmniTXDB = NULL;
+  if (p_TradeTXDB) {
+    delete p_TradeTXDB;
+    p_TradeTXDB = NULL;
   }
 
   mastercoreInitialized = 0;
 
-  PrintToLog("\nOmni Core Lite shutdown completed\n");
+  PrintToLog("\nTrade Layer shutdown completed\n");
   PrintToLog("Shutdown time: %s\n", DateTimeStrFormat("%Y-%m-%d %H:%M:%S", GetTime()));
 
   return 0;
@@ -2320,7 +2314,7 @@ int mastercore_shutdown()
 /**
  * This handler is called for every new transaction that comes in (actually in block parsing loop).
  *
- * @return True, if the transaction was a valid Omni transaction
+ * @return True, if the transaction was a valid Trade Layer transaction
  */
 bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx, const CBlockIndex* pBlockIndex)
 {
@@ -2453,15 +2447,15 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
 
       if(msc_debug_handler_tx)
       {
-          PrintToLog("\nALLs UNVESTED = %d\n", getMPbalance(vestingAddresses[0], OMNI_PROPERTY_ALL, UNVESTED));
-          PrintToLog("ALLs BALANCE = %d\n", getMPbalance(vestingAddresses[0], OMNI_PROPERTY_ALL, BALANCE));
+          PrintToLog("\nALLs UNVESTED = %d\n", getMPbalance(vestingAddresses[0], TL_PROPERTY_ALL, UNVESTED));
+          PrintToLog("ALLs BALANCE = %d\n", getMPbalance(vestingAddresses[0], TL_PROPERTY_ALL, BALANCE));
       }
 
       for (unsigned int i = 0; i < vestingAddresses.size(); i++)
       {
 	        if(msc_debug_handler_tx) PrintToLog("\nIteration #%d Inside Vesting function. Address = %s\n", i, vestingAddresses[i]);
-	        int64_t vestingBalance = getMPbalance(vestingAddresses[i], OMNI_PROPERTY_VESTING, BALANCE);
-	        int64_t unvestedALLBal = getMPbalance(vestingAddresses[i], OMNI_PROPERTY_ALL, UNVESTED);
+	        int64_t vestingBalance = getMPbalance(vestingAddresses[i], TL_PROPERTY_VESTING, BALANCE);
+	        int64_t unvestedALLBal = getMPbalance(vestingAddresses[i], TL_PROPERTY_ALL, UNVESTED);
       	  if (vestingBalance != 0 && unvestedALLBal != 0)
       	    {
       	      if (XAxis >= 0 && XAxis <= 300000)
@@ -2485,8 +2479,8 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
       	      PrintToLog("linearWeighted = %s\n", FormatDivisibleMP(linearWeighted));
           }
 
-		      assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, -linearWeighted, UNVESTED));
-		      assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, linearWeighted, BALANCE));
+		      assert(update_tally_map(vestingAddresses[i], TL_PROPERTY_ALL, -linearWeighted, UNVESTED));
+		      assert(update_tally_map(vestingAddresses[i], TL_PROPERTY_ALL, linearWeighted, BALANCE));
   } else if (XAxis > 300000 && XAxis <= 10000000)
       		{ /** y = 100K+7/940900000(x^2-600Kx+90) */
       		  //PrintToLog("\nQuadratic Function\n");
@@ -2519,8 +2513,8 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
       		      PrintToLog("quadWeighted = %d\n", FormatDivisibleMP(quadWeighted));
             }
 
-      		  assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, -quadWeighted, UNVESTED));
-      		  assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, quadWeighted, BALANCE));
+      		  assert(update_tally_map(vestingAddresses[i], TL_PROPERTY_ALL, -quadWeighted, UNVESTED));
+      		  assert(update_tally_map(vestingAddresses[i], TL_PROPERTY_ALL, quadWeighted, BALANCE));
       		}
       	      else if (XAxis > 10000000 && XAxis <= 1000000000)
       		{ /** y =  -1650000 + (152003 * ln(x)) */
@@ -2545,23 +2539,23 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
 
       		  if (logWeighted)
       		    {
-      		      if (getMPbalance(vestingAddresses[i], OMNI_PROPERTY_ALL, UNVESTED) >= logWeighted)
+      		      if (getMPbalance(vestingAddresses[i], TL_PROPERTY_ALL, UNVESTED) >= logWeighted)
       			{
-      			  assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, -logWeighted, UNVESTED));
-      			  assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, logWeighted, BALANCE));
+      			  assert(update_tally_map(vestingAddresses[i], TL_PROPERTY_ALL, -logWeighted, UNVESTED));
+      			  assert(update_tally_map(vestingAddresses[i], TL_PROPERTY_ALL, logWeighted, BALANCE));
       			}
       		   else
       			{
-      			  int64_t remaining = getMPbalance(vestingAddresses[i], OMNI_PROPERTY_ALL, UNVESTED);
-      			  if (getMPbalance(vestingAddresses[i], OMNI_PROPERTY_ALL, UNVESTED) >= remaining && remaining >= 0)
+      			  int64_t remaining = getMPbalance(vestingAddresses[i], TL_PROPERTY_ALL, UNVESTED);
+      			  if (getMPbalance(vestingAddresses[i], TL_PROPERTY_ALL, UNVESTED) >= remaining && remaining >= 0)
       			    {
-      			      assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, -remaining, UNVESTED));
-      			      assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, remaining, BALANCE));
+      			      assert(update_tally_map(vestingAddresses[i], TL_PROPERTY_ALL, -remaining, UNVESTED));
+      			      assert(update_tally_map(vestingAddresses[i], TL_PROPERTY_ALL, remaining, BALANCE));
       			    }
       			}
       		    }
       		}
-      	      else if (XAxis > 1000000000 && getMPbalance(vestingAddresses[i], OMNI_PROPERTY_ALL, UNVESTED) != 0)
+      	      else if (XAxis > 1000000000 && getMPbalance(vestingAddresses[i], TL_PROPERTY_ALL, UNVESTED) != 0)
       		{
       		  // PrintToLog("\nLogarithmic Function\n");
 
@@ -2580,18 +2574,18 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
       		  rational_t logRationalw(numLog128/COIN, TOTAL_AMOUNT_VESTING_TOKENS);
       		  int64_t logWeighted = mastercore::RationalToInt64(logRationalw);
 
-      		  if (getMPbalance(vestingAddresses[i], OMNI_PROPERTY_ALL, UNVESTED))
+      		  if (getMPbalance(vestingAddresses[i], TL_PROPERTY_ALL, UNVESTED))
       		    {
-      		      if (getMPbalance(vestingAddresses[i], OMNI_PROPERTY_ALL, UNVESTED) < logWeighted)
+      		      if (getMPbalance(vestingAddresses[i], TL_PROPERTY_ALL, UNVESTED) < logWeighted)
       			{
-      			  int64_t remaining = getMPbalance(vestingAddresses[i], OMNI_PROPERTY_ALL, UNVESTED);
-      			  assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, -remaining, UNVESTED));
-      			  assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, remaining, BALANCE));
+      			  int64_t remaining = getMPbalance(vestingAddresses[i], TL_PROPERTY_ALL, UNVESTED);
+      			  assert(update_tally_map(vestingAddresses[i], TL_PROPERTY_ALL, -remaining, UNVESTED));
+      			  assert(update_tally_map(vestingAddresses[i], TL_PROPERTY_ALL, remaining, BALANCE));
       			}
       		      else
       			{
-      			  assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, -logWeighted, UNVESTED));
-      			  assert(update_tally_map(vestingAddresses[i], OMNI_PROPERTY_ALL, logWeighted, BALANCE));
+      			  assert(update_tally_map(vestingAddresses[i], TL_PROPERTY_ALL, -logWeighted, UNVESTED));
+      			  assert(update_tally_map(vestingAddresses[i], TL_PROPERTY_ALL, logWeighted, BALANCE));
       			}
       		    }
       		}
@@ -2599,8 +2593,8 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
 	}
       if(msc_debug_handler_tx)
       {
-          PrintToLog("\nALLs UNVESTED = %d\n", getMPbalance(vestingAddresses[0], OMNI_PROPERTY_ALL, UNVESTED));
-          PrintToLog("ALLs BALANCE = %d\n", getMPbalance(vestingAddresses[0], OMNI_PROPERTY_ALL, BALANCE));
+          PrintToLog("\nALLs UNVESTED = %d\n", getMPbalance(vestingAddresses[0], TL_PROPERTY_ALL, UNVESTED));
+          PrintToLog("ALLs BALANCE = %d\n", getMPbalance(vestingAddresses[0], TL_PROPERTY_ALL, BALANCE));
       }
 
       Lastx_Axis = x_Axis;
@@ -2665,7 +2659,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
     if (interp_ret != PKT_ERROR - 2) {
       bool bValid = (0 <= interp_ret);
       p_txlistdb->recordTX(tx.GetHash(), bValid, nBlock, mp_obj.getType(), mp_obj.getNewAmount());
-      p_OmniTXDB->RecordTransaction(tx.GetHash(), idx);
+      p_TradeTXDB->RecordTransaction(tx.GetHash(), idx);
 
     }
 
@@ -2796,7 +2790,7 @@ inline int64_t clamp_function(int64_t diff, int64_t nclamp)
  */
 bool mastercore::UseEncodingClassC(size_t nDataSize)
 {
-    size_t nTotalSize = nDataSize + GetOmMarker().size(); // Marker "ol"
+    size_t nTotalSize = nDataSize + GetTLMarker().size(); // Marker "ol"
     bool fDataEnabled = gArgs.GetBoolArg("-datacarrier", true);
     int nBlockNow = GetHeight();
     if (!IsAllowedOutputType(TX_NULL_DATA, nBlockNow)) {
@@ -2805,7 +2799,7 @@ bool mastercore::UseEncodingClassC(size_t nDataSize)
     return nTotalSize <= nMaxDatacarrierBytes && fDataEnabled;
 }
 
-// This function requests the wallet create an Omni transaction using the supplied parameters and payload
+// This function requests the wallet create an Trade Layer transaction using the supplied parameters and payload
 int mastercore::WalletTxBuilder(const std::string& senderAddress, const std::string& receiverAddress, int64_t referenceAmount,
 				const std::vector<unsigned char>& data, uint256& txid, std::string& rawHex, bool commit,
 				unsigned int minInputs)
@@ -2819,13 +2813,8 @@ int mastercore::WalletTxBuilder(const std::string& senderAddress, const std::str
 
   if (pwalletMain == NULL) return MP_ERR_WALLET_ACCESS;
 
-  /**
-     Omni Core Lite's core purpose is to be light weight thus:
-     + multisig and plain address encoding are banned
-     + nulldata encoding must use compression (varint)
-  **/
 
-  if (nMaxDatacarrierBytes < (data.size()+GetOmMarker().size())) return MP_ERR_PAYLOAD_TOO_BIG;
+  if (nMaxDatacarrierBytes < (data.size()+GetTLMarker().size())) return MP_ERR_PAYLOAD_TOO_BIG;
 
   //TODO verify datacarrier is enabled at startup, otherwise won't be able to send transactions
 
@@ -2847,7 +2836,7 @@ int mastercore::WalletTxBuilder(const std::string& senderAddress, const std::str
 
   // Encode the data outputs
 
-  if(!OmniCore_Encode_ClassD(data,vecSend)) { return MP_ENCODING_ERROR; }
+  if(!TradeLayer_Encode_ClassD(data,vecSend)) { return MP_ENCODING_ERROR; }
 
 
   // Then add a paytopubkeyhash output for the recipient (if needed) - note we do this last as we want this to be the highest vout
@@ -2923,7 +2912,7 @@ int mastercore::WalletTxBuilder(const std::string& senderAddress, const std::str
 
 }
 
-void COmniTransactionDB::RecordTransaction(const uint256& txid, uint32_t posInBlock)
+void CtlTransactionDB::RecordTransaction(const uint256& txid, uint32_t posInBlock)
 {
      assert(pdb);
 
@@ -2934,7 +2923,7 @@ void COmniTransactionDB::RecordTransaction(const uint256& txid, uint32_t posInBl
      ++nWritten;
 }
 
-uint32_t COmniTransactionDB::FetchTransactionPosition(const uint256& txid)
+uint32_t CtlTransactionDB::FetchTransactionPosition(const uint256& txid)
 {
     assert(pdb);
 
@@ -2966,7 +2955,7 @@ void CMPTxList::LoadActivations(int blockHeight)
          std::vector<std::string> vstr;
          boost::split(vstr, itData, boost::is_any_of(":"), token_compress_on);
          if (4 != vstr.size()) continue; // unexpected number of tokens
-         if (atoi(vstr[2]) != OMNICORE_MESSAGE_TYPE_ACTIVATION || atoi(vstr[0]) != 1) continue; // we only care about valid activations
+         if (atoi(vstr[2]) != TL_MESSAGE_TYPE_ACTIVATION || atoi(vstr[0]) != 1) continue; // we only care about valid activations
          uint256 txid = uint256S(it->key().ToString());;
          loadOrder.push_back(std::make_pair(atoi(vstr[1]), txid));
      }
@@ -3002,7 +2991,7 @@ void CMPTxList::LoadActivations(int blockHeight)
              PrintToLog("ERROR: While loading activation transaction %s: failed interpret_Transaction.\n", hash.GetHex());
              continue;
          }
-         if (OMNICORE_MESSAGE_TYPE_ACTIVATION != mp_obj.getType()) {
+         if (TL_MESSAGE_TYPE_ACTIVATION != mp_obj.getType()) {
              PrintToLog("ERROR: While loading activation transaction %s: levelDB type mismatch, not an activation.\n", hash.GetHex());
              continue;
          }
@@ -3015,12 +3004,6 @@ void CMPTxList::LoadActivations(int blockHeight)
      delete it;
      CheckLiveActivations(blockHeight);
 
-
-    // This alert never expires as long as custom activations are used
-    // if (mapArgs.count("-omniactivationallowsender") || mapArgs.count("-omniactivationignoresender")) {
-    //     AddAlert("omnicore", ALERT_CLIENT_VERSION_EXPIRY, std::numeric_limits<uint32_t>::max(),
-    //              "Authorization for feature activation has been modified.  Data provided by this client should not be trusted.");
-    // }
 }
 
 void CMPTxList::LoadAlerts(int blockHeight)
@@ -3036,7 +3019,7 @@ void CMPTxList::LoadAlerts(int blockHeight)
          std::vector<std::string> vstr;
          boost::split(vstr, itData, boost::is_any_of(":"), token_compress_on);
          if (4 != vstr.size()) continue; // unexpected number of tokens
-         if (atoi(vstr[2]) != OMNICORE_MESSAGE_TYPE_ALERT || atoi(vstr[0]) != 1) continue; // not a valid alert
+         if (atoi(vstr[2]) != TL_MESSAGE_TYPE_ALERT || atoi(vstr[0]) != 1) continue; // not a valid alert
          uint256 txid = uint256S(it->key().ToString());;
          loadOrder.push_back(std::make_pair(atoi(vstr[1]), txid));
      }
@@ -3061,7 +3044,7 @@ void CMPTxList::LoadAlerts(int blockHeight)
              PrintToLog("ERROR: While loading alert %s: failed interpret_Transaction.\n", txid.GetHex());
              continue;
          }
-         if (OMNICORE_MESSAGE_TYPE_ALERT != mp_obj.getType()) {
+         if (TL_MESSAGE_TYPE_ALERT != mp_obj.getType()) {
              PrintToLog("ERROR: While loading alert %s: levelDB type mismatch, not an alert.\n", txid.GetHex());
              continue;
          }
@@ -3518,7 +3501,7 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
     // clear the global wallet property list, perform a forced wallet update and tell the UI that state is no longer valid, and UI views need to be reinit
     global_wallet_property_list.clear();
     CheckWalletUpdate(true);
-    //uiInterface.OmniStateInvalidated();
+    //uiInterface.TLStateInvalidated();
 
     if (nWaterlineBlock < nBlockPrev) {
       // scan from the block after the best active block to catch up to the active chain
@@ -3937,7 +3920,7 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   extern volatile int64_t factorALLtoLTC;
 
   /********************************************************************/
-  if (prop1 == OMNI_PROPERTY_ALL)
+  if (prop1 == TL_PROPERTY_ALL)
     {
       if (msc_debug_tradedb) PrintToLog("factorALLtoLTC =%s, amount1 = %s: CMPMetaDEx\n", FormatDivisibleMP(factorALLtoLTC), FormatDivisibleMP(amount1));
       arith_uint256 volumeALL256_t = mastercore::ConvertTo256(factorALLtoLTC)*mastercore::ConvertTo256(amount1)/COIN;
@@ -3945,7 +3928,7 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
       volumeALL64_t = mastercore::ConvertTo64(volumeALL256_t);
       if (msc_debug_tradedb) PrintToLog("ALLs involved in the traded 64 Bits ~ %s ALL\n", FormatDivisibleMP(volumeALL64_t));
     }
-  else if (prop2 == OMNI_PROPERTY_ALL)
+  else if (prop2 == TL_PROPERTY_ALL)
     {
       if (msc_debug_tradedb) PrintToLog("factorALLtoLTC =%s, amount1 = %s: CMPMetaDEx\n", FormatDivisibleMP(factorALLtoLTC), FormatDivisibleMP(amount2));
       arith_uint256 volumeALL256_t = mastercore::ConvertTo256(factorALLtoLTC)*mastercore::ConvertTo256(amount2)/COIN;
@@ -5077,17 +5060,6 @@ uint64_t int64ToUint64(int64_t value)
   return uvalue;
 }
 
-const std::string ExodusAddress()
-{
-  if(RegTest()){
-    return setExoduss;
-  } else if (isNonMainNet()) {
-    return exodus_testnet;
-  } else {
-    return exodus_mainnet;
-  }
-}
-
 /**
  * @retrieve commits for a channel
  */
@@ -5804,7 +5776,7 @@ bool mastercore::Instant_x_Trade(const uint256& txid, uint8_t tradingAction, std
 /**
  * @return The marker for class D transactions.
  */
-const std::vector<unsigned char> GetOmMarker()
+const std::vector<unsigned char> GetTLMarker()
 {
      static unsigned char pch[] = {0x50, 0x54}; // Hex-encoded: "PT"
 

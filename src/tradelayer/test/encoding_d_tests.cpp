@@ -33,7 +33,7 @@ BOOST_AUTO_TEST_CASE(class_d_marker)
         "0000101");
 
     std::vector<std::pair<CScript, int64_t> > vecOutputs;
-    BOOST_CHECK(OmniCore_Encode_ClassD(vchPayload, vecOutputs));
+    BOOST_CHECK(TradeLayer_Encode_ClassD(vchPayload, vecOutputs));
 
     // One output was created
     BOOST_CHECK_EQUAL(vecOutputs.size(), 1);
@@ -82,13 +82,13 @@ BOOST_AUTO_TEST_CASE(class_d_with_empty_payload)
     nMaxDatacarrierBytes = 0; // byte
 
     std::vector<std::pair<CScript, int64_t> > vecOutputs;
-    BOOST_CHECK(!OmniCore_Encode_ClassD(vchEmptyPayload, vecOutputs));
+    BOOST_CHECK(!TradeLayer_Encode_ClassD(vchEmptyPayload, vecOutputs));
     BOOST_CHECK_EQUAL(vecOutputs.size(), 0);
 
     // Exactly the size of the marker
     nMaxDatacarrierBytes = 2; // byte
 
-    BOOST_CHECK(OmniCore_Encode_ClassD(vchEmptyPayload, vecOutputs));
+    BOOST_CHECK(TradeLayer_Encode_ClassD(vchEmptyPayload, vecOutputs));
     BOOST_CHECK_EQUAL(vecOutputs.size(), 1);
 
     // Restore original data carrier size settings

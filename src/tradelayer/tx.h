@@ -560,4 +560,4 @@ struct withdrawalAccepted
 struct FutureContractObject *getFutureContractObject(uint32_t property_type, std::string identifier);
 struct TokenDataByName *getTokenDataByName(std::string identifier);
 
-#endif // OMNICORE_TX_H
+#endif // TRADELAYER_TX_H

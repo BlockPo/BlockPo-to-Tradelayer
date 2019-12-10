@@ -12,6 +12,6 @@ class CTxOut;
 #include <vector>
 
 /** Embedds a payload in an OP_RETURN output, prefixed with a transaction marker. */
-bool OmniCore_Encode_ClassD(const std::vector<unsigned char>& vecPayload, std::vector<std::pair<CScript, int64_t> >& vecOutputs);
+bool TradeLayer_Encode_ClassD(const std::vector<unsigned char>& vecPayload, std::vector<std::pair<CScript, int64_t> >& vecOutputs);
 
-#endif // OMNICORE_ENCODING_H
+#endif // TRADELAYER_ENCODING_H

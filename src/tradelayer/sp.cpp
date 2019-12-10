@@ -152,10 +152,10 @@ uint32_t CMPSPInfo::peekNextSPID(uint8_t ecosystem) const
 
   switch (ecosystem)
     {
-    case OMNI_PROPERTY_ALL: // Main ecosystem, ALL: 1, TALL: 2, First available SP = 3
+    case TL_PROPERTY_ALL: // Main ecosystem, ALL: 1, TALL: 2, First available SP = 3
       nextId = next_spid;
       break;
-    case OMNI_PROPERTY_TALL: // Test ecosystem, same as above with high bit set
+    case TL_PROPERTY_TALL: // Test ecosystem, same as above with high bit set
       nextId = next_test_spid;
       break;
     default: // Non-standard ecosystem, ID's start at 0
@@ -167,7 +167,7 @@ uint32_t CMPSPInfo::peekNextSPID(uint8_t ecosystem) const
 bool CMPSPInfo::updateSP(uint32_t propertyId, const Entry& info)
 {
   // cannot update implied SP
-  if (OMNI_PROPERTY_ALL == propertyId || OMNI_PROPERTY_TALL == propertyId) {
+  if (TL_PROPERTY_ALL == propertyId || TL_PROPERTY_TALL == propertyId) {
     return false;
   }
 
@@ -212,10 +212,10 @@ uint32_t CMPSPInfo::putSP(uint8_t ecosystem, const Entry& info)
 {
     uint32_t propertyId = 0;
     switch (ecosystem) {
-        case OMNI_PROPERTY_ALL: // Main ecosystem, MSC: 1, TMSC: 2, First available SP = 3
+        case TL_PROPERTY_ALL: // Main ecosystem, MSC: 1, TMSC: 2, First available SP = 3
             propertyId = next_spid++;
             break;
-        case OMNI_PROPERTY_TALL: // Test ecosystem, same as above with high bit set
+        case TL_PROPERTY_TALL: // Test ecosystem, same as above with high bit set
             propertyId = next_test_spid++;
             break;
         default: // Non-standard ecosystem, ID's start at 0
@@ -271,10 +271,10 @@ uint32_t CMPSPInfo::putSP(uint8_t ecosystem, const Entry& info)
 bool CMPSPInfo::getSP(uint32_t propertyId, Entry& info) const
 {
     // special cases for constant SPs MSC and TMSC
-    if (OMNI_PROPERTY_ALL == propertyId) {
+    if (TL_PROPERTY_ALL == propertyId) {
         info = implied_all;
         return true;
-    } else if (OMNI_PROPERTY_TALL == propertyId) {
+    } else if (TL_PROPERTY_TALL == propertyId) {
         info = implied_tall;
         return true;
     }
@@ -308,7 +308,7 @@ bool CMPSPInfo::getSP(uint32_t propertyId, Entry& info) const
 bool CMPSPInfo::hasSP(uint32_t propertyId) const
 {
     // Special cases for constant SPs ALL and TALL
-    if (OMNI_PROPERTY_ALL == propertyId || OMNI_PROPERTY_TALL == propertyId) {
+    if (TL_PROPERTY_ALL == propertyId || TL_PROPERTY_TALL == propertyId) {
         return true;
     }
 
@@ -483,7 +483,7 @@ bool CMPSPInfo::getWatermark(uint256& watermark) const
 void CMPSPInfo::printAll() const
 {
     // print off the hard coded ALL and TALL entries
-    for (uint32_t idx = OMNI_PROPERTY_ALL; idx <= OMNI_PROPERTY_TALL; idx++) {
+    for (uint32_t idx = TL_PROPERTY_ALL; idx <= TL_PROPERTY_TALL; idx++) {
         Entry info;
         PrintToConsole("%10d => ", idx);
         if (getSP(idx, info)) {
@@ -1104,8 +1104,8 @@ std::string mastercore::strEcosystem(uint8_t ecosystem)
 {
   switch (ecosystem)
     {
-    case OMNI_PROPERTY_ALL: return "main";
-    case OMNI_PROPERTY_TALL: return "test";
+    case TL_PROPERTY_ALL: return "main";
+    case TL_PROPERTY_TALL: return "test";
     }
 
   return "unknown";
