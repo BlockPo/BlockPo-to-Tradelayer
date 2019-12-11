@@ -94,7 +94,7 @@ static CZMQNotificationInterface* pzmqNotificationInterface = nullptr;
 
 static const char* FEE_ESTIMATES_FILENAME="fee_estimates.dat";
 
-// Omni Core Lite initialization and shutdown handlers
+// Trade Layer initialization and shutdown handlers
 extern int mastercore_init();
 extern int mastercore_shutdown();
 extern int CheckWalletUpdate(bool forceUpdate = false);
@@ -258,7 +258,7 @@ void Shutdown()
         pblocktree.reset();
     }
 
-    //! Omni Core Lite shutdown
+    //! Trade Layer shutdown
     mastercore_shutdown();
 
 #ifdef ENABLE_WALLET
@@ -305,7 +305,7 @@ static void HandleSIGTERM(int)
 static void HandleSIGHUP(int)
 {
     fReopenDebugLog = true;
-    fReopenOmniCoreLiteLog = true;
+    fReopenTradeLayerLog = true;
 }
 #else
 static BOOL WINAPI consoleCtrlHandler(DWORD dwCtrlType)
@@ -1614,18 +1614,18 @@ bool AppInitMain()
         ::feeEstimator.Read(est_filein);
     fFeeEstimatesInitialized = true;
 
-    // ********************************************************* Step 7.5: load omni core lite
+    // ********************************************************* Step 7.5: load trade layer
 
     // if (!fTxIndex) {
     //     // ask the user if they would like us to modify their config file for them
     //     std::string msg = _("Disabled transaction index detected.\n\n"
-    //                         "Omni Core Lite requires an enabled transaction index. To enable "
+    //                         "Trade Layer requires an enabled transaction index. To enable "
     //                         "transaction indexing, please use the \"-txindex\" option as "
     //                         "command line argument or add \"txindex=1\" to your client "
     //                         "configuration file within your data directory.\n\n"
     //                         "Configuration file"); // allow translation of main text body while still allowing differing config file string
     //     msg += ": " + GetConfigFile().string() + "\n\n";
-    //     msg += _("Would you like Omni Core Lite to attempt to update your configuration file accordingly?");
+    //     msg += _("Would you like Trade Layer to attempt to update your configuration file accordingly?");
     //     bool fRet = uiInterface.ThreadSafeMessageBox(msg, "", CClientUIInterface::MSG_INFORMATION | CClientUIInterface::BTN_OK | CClientUIInterface::MODAL | CClientUIInterface::BTN_ABORT);
     //     if (fRet) {
     //         // add txindex=1 to config file in GetConfigFile()
@@ -1635,7 +1635,7 @@ bool AppInitMain()
     //             std::string failMsg = _("Unable to update configuration file at");
     //             failMsg += ":\n" + GetConfigFile().string() + "\n\n";
     //             failMsg += _("The file may be write protected or you may not have the required permissions to edit it.\n");
-    //             failMsg += _("Please add txindex=1 to your configuration file manually.\n\nOmni Core Lite will now shutdown.");
+    //             failMsg += _("Please add txindex=1 to your configuration file manually.\n\nTrade Layer will now shutdown.");
     //             return InitError(failMsg);
     //         }
     //         fprintf(fp, "\ntxindex=1\n");
@@ -1643,15 +1643,15 @@ bool AppInitMain()
     //         fclose(fp);
     //         std::string strUpdated = _(
     //                 "Your configuration file has been updated.\n\n"
-    //                 "Omni Core Lite will now shutdown - please restart the client for your new configuration to take effect.");
+    //                 "Trade Layer will now shutdown - please restart the client for your new configuration to take effect.");
     //         uiInterface.ThreadSafeMessageBox(strUpdated, "", CClientUIInterface::MSG_INFORMATION | CClientUIInterface::BTN_OK | CClientUIInterface::MODAL);
     //         return false;
     //     } else {
-    //         return InitError(_("Please add txindex=1 to your configuration file manually.\n\nOmni Core Lite will now shutdown."));
+    //         return InitError(_("Please add txindex=1 to your configuration file manually.\n\nTrade Layer will now shutdown."));
     //     }
     // }
 
-    uiInterface.InitMessage(_("Parsing Omni Lite transactions..."));
+    uiInterface.InitMessage(_("Parsing Trade Layer transactions..."));
 
     mastercore_init();
 
@@ -1663,7 +1663,7 @@ bool AppInitMain()
     LogPrintf("No wallet support compiled in!\n");
 #endif // !ENABLE_WALLET
 
-    // Omni Core Lite code should be initialized and wallet should now be loaded, perform an initial populat$
+    // Trade Layer code should be initialized and wallet should now be loaded, perform an initial populat$
     CheckWalletUpdate();
 
     // ********************************************************* Step 9: data directory maintenance

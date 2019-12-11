@@ -56,7 +56,7 @@ printf " Creating the addresses ..."
 ADDRess=()
 for (( i=1; i<=${N}; i++ ))
 do
-    ADDRess[$i]=$($SRCDIR/litecoin-cli -datadir=$DATADIR --regtest  getnewaddress OMNIAccount${i})
+    ADDRess[$i]=$($SRCDIR/litecoin-cli -datadir=$DATADIR --regtest  getnewaddress TLAccount${i})
     echo ${ADDRess[$i]} >> graphInfoAddresses.txt
 done
 
@@ -74,7 +74,7 @@ printf "Generating one block\n"
 $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest  generate 1
 ##################################################################
 printf "\n________________________________________\n"
-printf "   * Participating in the Exodus crowdsale to obtain M OMNIs: To get OMNIs in the first address ADDR\n"
+printf "   * Participating in the Exodus crowdsale to obtain M Tokens: To get Tokens in the first address ADDR\n"
 
 for (( i=1; i<=${N}; i++ ))
 do
@@ -283,6 +283,6 @@ $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_getfullposition ${ADDRess[1]}
 
 ###############################################################
 
-printf "Stoping omnicored and litecoin-cli:\n"
+printf "Stoping tradelayer and litecoin-cli:\n"
 $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest stop
 # /home/lihki/Documentos/tradelayer-local/src/litecoin-cli -datadir=/home/lihki/.litecoin --regtest stop

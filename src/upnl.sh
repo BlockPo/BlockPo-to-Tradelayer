@@ -148,5 +148,5 @@ $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
 
 
 printf "\n//////////////////////////////////////////\n"
-printf "Stoping omnicored and litecoin-cli:\n"
+printf "Stoping tradelayer and litecoin-cli:\n"
 $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest stop

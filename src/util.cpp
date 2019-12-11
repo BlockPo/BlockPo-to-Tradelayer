@@ -90,8 +90,8 @@ ArgsManager gArgs;
 bool fPrintToConsole = false;
 bool fPrintToDebugLog = true;
 
-/** Flag to indicate, whether the Omni Core log file should be reopened. */
-std::atomic<bool> fReopenOmniCoreLiteLog(false);
+/** Flag to indicate, whether the Trade Layer log file should be reopened. */
+std::atomic<bool> fReopenTradeLayerLog(false);
 
 bool fLogTimestamps = DEFAULT_LOGTIMESTAMPS;
 bool fLogTimeMicros = DEFAULT_LOGTIMEMICROS;

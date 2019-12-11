@@ -47,7 +47,7 @@
 #include <boost/algorithm/string/join.hpp>
 #include <boost/thread.hpp>
 
-#include "omnicore/omnicore.h"
+#include "tradelayer/tradelayer.h"
 
 #if defined(NDEBUG)
 # error "Litecoin cannot be compiled without assertions."
@@ -2267,14 +2267,14 @@ bool CChainState::DisconnectTip(CValidationState& state, const CChainParams& cha
     // Let wallets know transactions went from 1-confirmed to
     // 0-confirmed or conflicted:
 
-    //! Omni Core: begin block disconnect notification
-    // LogPrint("handler", "Omni Core handler: block disconnect begin [height: %d, reindex: %d]\n", GetHeight(), (int)fReindex);
+    //! Trade Layer: begin block disconnect notification
+    // LogPrint("handler", "Trade Layer handler: block disconnect begin [height: %d, reindex: %d]\n", GetHeight(), (int)fReindex);
     mastercore_handler_disc_begin(GetHeight(), pindexDelete);
 
     GetMainSignals().BlockDisconnected(pblock);
 
-    //! Omni Core: end of block disconnect notification
-    // LogPrint("handler", "Omni Core handler: block disconnect end [height: %d, reindex: %d]\n", GetHeight(), (int)fReindex);
+    //! Trade Layer: end of block disconnect notification
+    // LogPrint("handler", "Trade Layer handler: block disconnect end [height: %d, reindex: %d]\n", GetHeight(), (int)fReindex);
     mastercore_handler_disc_end(GetHeight(), pindexDelete);
 
     return true;
@@ -2398,13 +2398,13 @@ bool CChainState::ConnectTip(CValidationState& state, const CChainParams& chainp
     int64_t nTime5 = GetTimeMicros(); nTimeChainState += nTime5 - nTime4;
     LogPrint(BCLog::BENCH, "  - Writing chainstate: %.2fms [%.2fs (%.2fms/blk)]\n", (nTime5 - nTime4) * MILLI, nTimeChainState * MICRO, nTimeChainState * MILLI / nBlocksTotal);
 
-    //! Omni Core: transaction position within the block
+    //! Trade Layer: transaction position within the block
     unsigned int nTxIdx = 0;
-    //! Omni Core: number of meta transactions found
+    //! Trade Layer: number of meta transactions found
     unsigned int nNumMetaTxs = 0;
 
-    //! Omni Core: begin block connect notification
-    // LogPrint("handler", "Omni Core handler: block connect begin [height: %d]\n", GetHeight());
+    //! Trade Layer: begin block connect notification
+    // LogPrint("handler", "Trade Layer handler: block connect begin [height: %d]\n", GetHeight());
     mastercore_handler_block_begin(GetHeight(), pindexNew);
 
     // Remove conflicting transactions from the mempool.;
@@ -2416,7 +2416,7 @@ bool CChainState::ConnectTip(CValidationState& state, const CChainParams& chainp
     UpdateTip(pindexNew, chainparams);
 
     for(CTransactionRef tx : blockConnecting.vtx){
-        //! Omni Core: new confirmed transaction notification
+        //! Trade Layer: new confirmed transaction notification
         if (mastercore_handler_tx(*(tx.get()), GetHeight(), nTxIdx++, pindexNew)) ++nNumMetaTxs;
     }
 
