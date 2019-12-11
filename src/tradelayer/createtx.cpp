@@ -105,20 +105,20 @@ CMutableTransaction TxBuilder::build()
     return transaction;
 }
 
-/** Creates a new Omni transaction builder. */
-OmniTxBuilder::OmniTxBuilder()
+/** Creates a new Trade Layer transaction builder. */
+TLTxBuilder::TLTxBuilder()
   : TxBuilder()
 {
 }
 
-/** Creates a new Omni transaction builder to extend a transaction. */
-OmniTxBuilder::OmniTxBuilder(const CMutableTransaction& transactionIn)
+/** Creates a new Trade Layer transaction builder to extend a transaction. */
+TLTxBuilder::TLTxBuilder(const CMutableTransaction& transactionIn)
   : TxBuilder(transactionIn)
 {
 }
 
 /** Adds a collection of previous outputs as inputs to the transaction. */
-OmniTxBuilder& OmniTxBuilder::addInputs(const std::vector<PrevTxsEntry>& prevTxs)
+TLTxBuilder& TLTxBuilder::addInputs(const std::vector<PrevTxsEntry>& prevTxs)
 {
     for (std::vector<PrevTxsEntry>::const_iterator it = prevTxs.begin();
             it != prevTxs.end(); ++it) {
@@ -129,7 +129,7 @@ OmniTxBuilder& OmniTxBuilder::addInputs(const std::vector<PrevTxsEntry>& prevTxs
 }
 
 /** Adds an output for the reference address. */
-OmniTxBuilder& OmniTxBuilder::addReference(const std::string& destination, int64_t value)
+TLTxBuilder& TLTxBuilder::addReference(const std::string& destination, int64_t value)
 {
 
     CTxDestination address = DecodeDestination(destination);
@@ -138,11 +138,11 @@ OmniTxBuilder& OmniTxBuilder::addReference(const std::string& destination, int64
     int64_t minValue = GetDustThld(scriptPubKey);
     value = std::max(minValue, value);
 
-    return (OmniTxBuilder&) TxBuilder::addOutput(scriptPubKey, value);
+    return (TLTxBuilder&) TxBuilder::addOutput(scriptPubKey, value);
 }
 
 /** Embeds a payload with class D (op-return) encoding. */
-OmniTxBuilder& OmniTxBuilder::addOpReturn(const std::vector<unsigned char>& data)
+TLTxBuilder& TLTxBuilder::addOpReturn(const std::vector<unsigned char>& data)
 {
     std::vector<std::pair<CScript, int64_t> > outputs;
 
@@ -150,15 +150,15 @@ OmniTxBuilder& OmniTxBuilder::addOpReturn(const std::vector<unsigned char>& data
         return *this;
     }
 
-    return (OmniTxBuilder&) TxBuilder::addOutputs(outputs);
+    return (TLTxBuilder&) TxBuilder::addOutputs(outputs);
 }
 
 /** Adds an output for change. */
-OmniTxBuilder& OmniTxBuilder::addChange(const std::string& destination, const CCoinsViewCache& view, int64_t txFee, uint32_t position)
+TLTxBuilder& TLTxBuilder::addChange(const std::string& destination, const CCoinsViewCache& view, int64_t txFee, uint32_t position)
 {
     CTxDestination addr = DecodeDestination(destination);
 
-    return (OmniTxBuilder&) TxBuilder::addChange(addr, view, txFee, position);
+    return (TLTxBuilder&) TxBuilder::addChange(addr, view, txFee, position);
 }
 
 /** Adds previous transaction outputs to coins view. */

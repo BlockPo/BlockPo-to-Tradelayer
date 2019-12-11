@@ -50,7 +50,7 @@ static void PendingActivationCompleted(const FeatureActivation& activation)
 {
     // DeletePendingActivation(activation.featureId);
     // vecCompletedActivations.push_back(activation);
-    // uiInterface.OmniStateChanged();
+    // uiInterface.tlStateChanged();
 }
 
 /**
@@ -70,7 +70,7 @@ void AddPendingActivation(uint16_t featureId, int activationBlock, uint32_t minC
 
     vecPendingActivations.push_back(featureActivation);
 
-    //uiInterface.OmniStateChanged();
+    //uiInterface.tlStateChanged();
 }
 
 /**
@@ -122,16 +122,16 @@ void ClearActivations()
 {
     vecPendingActivations.clear();
     vecCompletedActivations.clear();
-    // uiInterface.OmniStateChanged();
+    // uiInterface.tlStateChanged();
 }
 
 /**
  * Determines whether the sender is an authorized source for Trade Layer feature activation.
  *
- * The option "-omniactivationallowsender=source" can be used to whitelist additional sources,
- * and the option "-omniactivationignoresender=source" can be used to ignore a source.
+ * The option "-tlactivationallowsender=source" can be used to whitelist additional sources,
+ * and the option "-tlactivationignoresender=source" can be used to ignore a source.
  *
- * To consider any activation as authorized, "-omniactivationallowsender=any" can be used. This
+ * To consider any activation as authorized, "-tlactivationallowsender=any" can be used. This
  * should only be done for testing purposes!
  */
 bool CheckActivationAuthorization(const std::string& sender)
@@ -143,11 +143,11 @@ bool CheckActivationAuthorization(const std::string& sender)
     //whitelisted.insert("LZKEY");
 
     // Testnet / Regtest
-    // use -omniactivationallowsender for testing
+    // use -tlactivationallowsender for testing
 
     // Add manually whitelisted sources
-    /*if (mapArgs.count("-omniactivationallowsender")) {
-        const std::vector<std::string>& sources = mapMultiArgs["-omniactivationallowsender"];
+    /*if (mapArgs.count("-tlactivationallowsender")) {
+        const std::vector<std::string>& sources = mapMultiArgs["-tlactivationallowsender"];
 
         for (std::vector<std::string>::const_iterator it = sources.begin(); it != sources.end(); ++it) {
             whitelisted.insert(*it);
@@ -155,8 +155,8 @@ bool CheckActivationAuthorization(const std::string& sender)
     }
 
     // Remove manually ignored sources
-    if (mapArgs.count("-omniactivationignoresender")) {
-        const std::vector<std::string>& sources = mapMultiArgs["-omniactivationignoresender"];
+    if (mapArgs.count("-tlactivationignoresender")) {
+        const std::vector<std::string>& sources = mapMultiArgs["-tlactivationignoresender"];
 
         for (std::vector<std::string>::const_iterator it = sources.begin(); it != sources.end(); ++it) {
             whitelisted.erase(*it);
@@ -172,7 +172,7 @@ bool CheckActivationAuthorization(const std::string& sender)
 /**
  * Determines whether the sender is an authorized source to deactivate features.
  *
- * The custom options "-omniactivationallowsender=source" and "-omniactivationignoresender=source" are also applied to deactivations.
+ * The custom options "-tlactivationallowsender=source" and "-tlactivationignoresender=source" are also applied to deactivations.
  */
 bool CheckDeactivationAuthorization(const std::string& sender)
 {
@@ -183,11 +183,11 @@ bool CheckDeactivationAuthorization(const std::string& sender)
     //whitelisted.insert("LZKEY");
 
     // Testnet / Regtest
-    // use -omniactivationallowsender for testing
+    // use -tlactivationallowsender for testing
 
     // Add manually whitelisted sources - custom sources affect both activation and deactivation
-    /*if (mapArgs.count("-omniactivationallowsender")) {
-        const std::vector<std::string>& sources = gArgs.Args["-omniactivationallowsender"];
+    /*if (mapArgs.count("-tlactivationallowsender")) {
+        const std::vector<std::string>& sources = gArgs.Args["-tlactivationallowsender"];
 
         for (std::vector<std::string>::const_iterator it = sources.begin(); it != sources.end(); ++it) {
             whitelisted.insert(*it);
@@ -195,8 +195,8 @@ bool CheckDeactivationAuthorization(const std::string& sender)
     }
 
     // Remove manually ignored sources - custom sources affect both activation and deactivation
-    if (mapArgs.count("-omniactivationignoresender")) {
-        const std::vector<std::string>& sources = mapMultiArgs["-omniactivationignoresender"];
+    if (mapArgs.count("-tlactivationignoresender")) {
+        const std::vector<std::string>& sources = mapMultiArgs["-tlactivationignoresender"];
 
         for (std::vector<std::string>::const_iterator it = sources.begin(); it != sources.end(); ++it) {
             whitelisted.erase(*it);

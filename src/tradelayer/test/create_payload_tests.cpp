@@ -9,7 +9,7 @@
 #include <vector>
 #include <string>
 
-BOOST_FIXTURE_TEST_SUITE(omnicore_create_payload_tests, BasicTestingSetup)
+BOOST_FIXTURE_TEST_SUITE(tradelayer_create_payload_tests, BasicTestingSetup)
 
 BOOST_AUTO_TEST_CASE(payload_simple_send)
 {

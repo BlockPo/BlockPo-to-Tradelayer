@@ -117,7 +117,6 @@ std::set<uint32_t> global_wallet_property_list;
 /**
  * Used to indicate, whether to automatically commit created transactions.
  *
- * Can be set with configuration "-autocommit" or RPC "setautocommit_OMNI".
  */
 
 bool autoCommit = true;
@@ -697,7 +696,7 @@ static unsigned int nCacheMiss = 0;
 static bool FillTxInputCache(const CTransaction& tx)
 {
     LOCK(cs_tx_cache);
-    static unsigned int nCacheSize = gArgs.GetArg("-omnitxcache", 500000);
+    static unsigned int nCacheSize = gArgs.GetArg("-tltxcache", 500000);
 
     if (view.GetCacheSize() > nCacheSize) {
         PrintToLog("%s(): clearing cache before insertion [size=%d, hit=%d, miss=%d]\n",
@@ -1144,7 +1143,7 @@ static bool HandleLtcInstantTrade(const CTransaction& tx, int nBlock, const std:
  */
 static int msc_initial_scan(int nFirstBlock)
 {
-    int nTimeBetweenProgressReports = gArgs.GetArg("-omniprogressfrequency", 30);  // seconds
+    int nTimeBetweenProgressReports = gArgs.GetArg("-tlprogressfrequency", 30);  // seconds
     int64_t nNow = GetTime();
     unsigned int nTxsTotal = 0;
     unsigned int nTxsFoundTotal = 0;

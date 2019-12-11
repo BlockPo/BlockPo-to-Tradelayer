@@ -7,7 +7,7 @@ class uint256;
 
 namespace mastercore
 {
-//! Global vector of Omni transactions in the wallet
+//! Global vector of Trade Layer transactions in the wallet
 extern std::vector<uint256> walletTXIDCache;
 
 /** Adds a txid to the wallet txid cache, performing duplicate detection */

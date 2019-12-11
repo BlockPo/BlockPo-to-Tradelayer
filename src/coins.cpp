@@ -220,7 +220,7 @@ unsigned int CCoinsViewCache::GetCacheSize() const {
     return cacheCoins.size();
 }
 
-/** For Omni-lite Port*/
+/** For Trade Layer Port*/
 const CTxOut &CCoinsViewCache::GetOutputFor(const CTxIn& input) const
 {
     const Coin& coin = AccessCoin(input.prevout);

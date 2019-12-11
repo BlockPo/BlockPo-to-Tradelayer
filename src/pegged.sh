@@ -128,6 +128,6 @@ $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_getcontract_reserve ${ADDR} 4
 printf "\n Checking position of ADDR:\n"
 $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_getposition ${ADDR} 4
 printf "\n//////////////////////////////////////////\n"
-printf "Stoping omnicored and litecoin-cli:\n"
+printf "Stoping tradelayer and litecoin-cli:\n"
 $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest stop
-# /home/lihki/Documentos/omnicore-litecoin-local/src/litecoin-cli -datadir=/home/lihki/.litecoin --regtest stop
+# /home/lihki/Documentos/tradelayer-litecoin-local/src/litecoin-cli -datadir=/home/lihki/.litecoin --regtest stop

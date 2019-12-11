@@ -32,11 +32,11 @@ namespace mastercore
       return true;
     }
 
-    // if (!mapArgs.count("-omnishowblockconsensushash")) {
+    // if (!mapArgs.count("-tlshowblockconsensushash")) {
     //   return false;
     // }
 
-    // const std::vector<std::string>& vecBlocks = mapMultiArgs["-omnishowblockconsensushash"];
+    // const std::vector<std::string>& vecBlocks = mapMultiArgs["-tlshowblockconsensushash"];
     // for (std::vector<std::string>::const_iterator it = vecBlocks.begin(); it != vecBlocks.end(); ++it) {
     //     int64_t paramBlock = StrToInt64(*it, false);
     //     if (paramBlock < 1) continue; // ignore non numeric values
@@ -139,7 +139,7 @@ namespace mastercore
   /**
   * Obtains a hash of the active state to use for consensus verification and checkpointing.
   *
-  * For increased flexibility, so other implementations like OmniWallet and OmniChest can
+  * For increased flexibility, so other implementations like Trade Layer Wallet can
   * also apply this methodology without necessarily using the same exact data types (which
   * would be needed to hash the data bytes directly), create a string in the following
   * format for each entry to use for hashing:

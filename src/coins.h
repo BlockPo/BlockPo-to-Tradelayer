@@ -82,7 +82,7 @@ public:
 
     CTxOut &GetTxOut() { return out; }
     const CTxOut &GetTxOut() const { return out; }
-    
+
     uint32_t GetHeight() const { return nHeight >> 1; }
 };
 
@@ -298,7 +298,7 @@ public:
     //! Check whether all prevouts of the transaction are present in the UTXO set represented by this view
     bool HaveInputs(const CTransaction& tx) const;
 
-    /** For Omni-lite Port */
+    /** For Trade Layer Port */
     const CTxOut &GetOutputFor(const CTxIn& input) const;
 
     friend class CCoinsModifier;
@@ -307,7 +307,7 @@ private:
     CCoinsMap::iterator FetchCoin(const COutPoint &outpoint) const;
 };
 
-/** Adding this class to work with Omni-lite */
+/** Adding this class to work with Trade Layer */
 
 /**
  * A reference to a mutable cache entry. Encapsulating it allows us to run

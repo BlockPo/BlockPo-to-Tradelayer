@@ -62,7 +62,7 @@ void RequireCollateral(const std::string& address, std::string name_traded)
 void RequirePrimaryToken(uint32_t propertyId)
 {
     if (propertyId < 1 || 2 < propertyId) {
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "Property identifier must be 1 (OMNI) or 2 (TOMNI)");
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "Property identifier must be 1 (TL) or 2 (TTL)");
     }
 }
 

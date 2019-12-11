@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SRCDIR=/home/lihkir/Documents/TradeLayer/omnicore-litecoin-lihki-local/src
+SRCDIR=/home/lihkir/Documents/TradeLayer/tradelayer-litecoin-lihki-local/src
 DATADIR=/home/lihkir/.litecoin
 NUL=/dev/null
 printf "\n//////////////////////////////////////////\n"
@@ -63,6 +63,6 @@ printf "Checking the orderbook:\n"
 $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_getactivedexsells ${ADDR}
 #################################################################
 printf "\n//////////////////////////////////////////\n"
-printf "Stoping omnicored and litecoin-cli:\n"
+printf "Stoping tradelayer and litecoin-cli:\n"
 $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest stop
-# /home/lihki/Documentos/omnicore-litecoin-local/src/litecoin-cli -datadir=/home/lihki/.litecoin --regtest stop
+# /home/lihki/Documentos/tradelayer-litecoin-local/src/litecoin-cli -datadir=/home/lihki/.litecoin --regtest stop

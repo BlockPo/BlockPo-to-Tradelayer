@@ -16,7 +16,7 @@
 // Is resetted to a norm value in each test
 extern unsigned nMaxDatacarrierBytes;
 
-BOOST_FIXTURE_TEST_SUITE(omnicore_encoding_d_tests, BasicTestingSetup)
+BOOST_FIXTURE_TEST_SUITE(tradelayer_encoding_d_tests, BasicTestingSetup)
 
 BOOST_AUTO_TEST_CASE(class_d_marker)
 {

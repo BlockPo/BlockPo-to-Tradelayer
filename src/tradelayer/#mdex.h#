@@ -1,7 +1,7 @@
-#ifndef OMNICORE_MDEX_H
-#define OMNICORE_MDEX_H
+#ifndef TRADELAYER_MDEX_H
+#define TRADELAYER_MDEX_H
 
-#include "omnicore/tx.h"
+#include "tradelayer/tx.h"
 
 #include "uint256.h"
 
@@ -153,7 +153,7 @@ class CMPContractDex : public CMPMetaDEx
  CMPContractDex(const std::string& addr, int b, uint32_t c, int64_t nValue, uint32_t cd, int64_t ad, const uint256& tx, uint32_t i, uint8_t suba, uint64_t effp, uint8_t act)
    : CMPMetaDEx(addr, b, c, nValue, cd, ad, tx, i, suba), effective_price(effp), trading_action(act) {}
 
-  /*Remember: Needed for omnicore.cpp "ar"*/
+  /*Remember: Needed for tradelayer.cpp "ar"*/
  CMPContractDex(const std::string& addr, int b, uint32_t c, int64_t nValue, uint32_t cd, int64_t ad, const uint256& tx, uint32_t i, uint8_t suba, int64_t ar, uint64_t effp, uint8_t act)
    : CMPMetaDEx(addr, b, c, nValue, cd, ad, tx, i, suba, ar), effective_price(effp), trading_action(act) {}
 
@@ -221,7 +221,7 @@ namespace mastercore
 
   cd_PricesMap *get_PricesCd(uint32_t prop);
   cd_Set *get_IndexesCd(cd_PricesMap *p, uint64_t price);
-  
+
   void LoopBiDirectional(cd_PricesMap* const ppriceMap, uint8_t trdAction, MatchReturnType &NewReturn, const CMPContractDex *pnew, const uint32_t propertyForSale);
   void x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPrices, typename cd_PricesMap::reverse_iterator &it_bwdPrices, uint8_t trdAction, x_trCMPContractDex *pnew, const uint64_t sellerPrice, const uint32_t propertyForSale, MatchReturnType &NewReturn);
   int ContractDex_ADD(const std::string& sender_addr, uint32_t prop, int64_t amount, int block, const uint256& txid, unsigned int idx, uint64_t effective_price, uint8_t trading_action, int64_t amount_to_reserve);
@@ -267,4 +267,4 @@ namespace mastercore
   const CMPContractDex* ContractDex_RetrieveTrade(const uint256&);
 }
 
-#endif // OMNICORE_MDEX_H
+#endif // TRADELAYER_MDEX_H

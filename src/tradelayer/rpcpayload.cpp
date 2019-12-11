@@ -720,7 +720,7 @@ UniValue tl_createpayload_dexoffer(const JSONRPCRequest& request)
 			"\nPayload to place, update or cancel a sell offer on the traditional distributed Trade Layer/LTC exchange.\n"
 
 			"\nArguments:\n"
-			"1. propertyidoffer     (number, required) the identifier of the tokens to list for sale (must be 1 for OMNI or 2 for TOMNI)\n"
+			"1. propertyidoffer     (number, required) the identifier of the tokens to list for sale \n"
 			"2. amountoffering      (string, required) the amount of tokens to list for sale\n"
 			"3. price               (string, required) the price in litecoin of the offer \n"
 			"4. paymentwindow       (number, required) a time limit in blocks a buyer has to pay following a successful accepting order\n"
@@ -1045,7 +1045,7 @@ static const CRPCCommand commands[] =
 
 
 
-void RegisterOmniPayloadCreationRPCCommands(CRPCTable &tableRPC)
+void RegisterTLPayloadCreationRPCCommands(CRPCTable &tableRPC)
 {
     for (unsigned int vcidx = 0; vcidx < ARRAYLEN(commands); vcidx++)
         tableRPC.appendCommand(commands[vcidx].name, &commands[vcidx]);

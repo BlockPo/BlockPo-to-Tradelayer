@@ -17,7 +17,7 @@ struct FeatureActivation
     std::string featureName;
 };
 
-/** Determines whether the sender is an authorized source for Omni Core activations. */
+/** Determines whether the sender is an authorized source for Trade Layer activations. */
 bool CheckActivationAuthorization(const std::string& sender);
 /** Determines whether the sender is an authorized source to deactivate features. */
 bool CheckDeactivationAuthorization(const std::string& sender);

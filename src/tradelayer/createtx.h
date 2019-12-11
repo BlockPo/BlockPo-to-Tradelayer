@@ -29,9 +29,9 @@ struct PrevTxsEntry
 };
 
 // TODO:
-// CMutableTransaction tx = OmniTxBuilder().addInput(input).addOpReturn(data).build();
+// CMutableTransaction tx = TLTxBuilder().addInput(input).addOpReturn(data).build();
 // ... currently doesn't work, because addInput() returns a reference to a TxBuilder,
-// but not to an OmniTxBuilder.
+// but not to an TLTxBuilder.
 
 /**
  * Builder to create transactions.
@@ -127,10 +127,10 @@ protected:
 };
 
 /**
- * Builder to create Omni transactions.
+ * Builder to create TL transactions.
  *
- * The OmniTxBuilder class is an extension of the TxBuilder, with additional
- * methods to build Omni transactions. Payloads can be embedded with class B
+ * The TLTxBuilder class is an extension of the TxBuilder, with additional
+ * methods to build Trade Layer transactions. Payloads can be embedded with class B
  * (bare-multisig) or class C (op-return) encoding.
  *
  * The output values are based on the dust threshold, but may optionally be
@@ -140,32 +140,32 @@ protected:
  *
  * @code
  *   // add a bare-multisig encoded payload to an existing transaction:
- *   CMutableTransaction modifiedTx = OmniTxBuilder(basisTx)
+ *   CMutableTransaction modifiedTx = TLTxBuilder(basisTx)
  *           .addMultisig(payload, obfuscationSeed, redeemingPubKey)
  *           .build();
  * @endcode
  */
-class OmniTxBuilder: public TxBuilder
+class TLTxBuilder: public TxBuilder
 {
 public:
     /**
-     * Creates a new Omni transaction builder.
+     * Creates a new Trade Layer transaction builder.
      */
-    OmniTxBuilder();
+    TLTxBuilder();
 
     /**
-     * Creates a new Omni transaction builder to extend a transaction.
+     * Creates a new Trade Layer transaction builder to extend a transaction.
      *
      * @param transactionIn The transaction used to build upon
      */
-    OmniTxBuilder(const CMutableTransaction& transactionIn);
+    TLTxBuilder(const CMutableTransaction& transactionIn);
 
     /**
      * Adds a collection of previous outputs as inputs to the transaction.
      *
      * @param outPoint The transaction outpoint to add
      */
-    OmniTxBuilder& addInputs(const std::vector<PrevTxsEntry>& prevTxs);
+    TLTxBuilder& addInputs(const std::vector<PrevTxsEntry>& prevTxs);
 
     /**
      * Adds an output for the reference address.
@@ -175,7 +175,7 @@ public:
      * @param destination The reference address
      * @param value       The optional reference amount
      */
-    OmniTxBuilder& addReference(const std::string& destination, int64_t value = 0);
+    TLTxBuilder& addReference(const std::string& destination, int64_t value = 0);
 
     /**
      * Embeds a payload with class C (op-return) encoding.
@@ -184,7 +184,7 @@ public:
      *
      * @param data The payload to embed
      */
-    OmniTxBuilder& addOpReturn(const std::vector<unsigned char>& data);
+    TLTxBuilder& addOpReturn(const std::vector<unsigned char>& data);
 
     /**
      * Adds an output for change.
@@ -203,7 +203,7 @@ public:
      * @param txFee       The desired transaction fees
      * @param position    The position of the change output (default: first position)
      */
-    OmniTxBuilder& addChange(const std::string& destination, const CCoinsViewCache& view, int64_t txFee, uint32_t position = 0);
+    TLTxBuilder& addChange(const std::string& destination, const CCoinsViewCache& view, int64_t txFee, uint32_t position = 0);
 };
 
 /**
@@ -215,4 +215,4 @@ public:
 void InputsToView(const std::vector<PrevTxsEntry>& prevTxs, CCoinsViewCache& view);
 
 
-#endif // OMNICORE_CREATETX_H
+#endif // TRADELAYER_CREATETX_H

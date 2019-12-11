@@ -108,13 +108,13 @@ extern std::atomic<bool> fReopentradelayerLog;
 /**
  * Returns path for debug log file.
  *
- * The log file can be specified via startup option "--omnilogfile=/path/to/tradelayer.log",
+ * The log file can be specified via startup option "--tllogfile=/path/to/tradelayer.log",
  * and if none is provided, then the client's datadir is used as default location.
  */
 static boost::filesystem::path GetLogPath()
 {
     boost::filesystem::path pathLogFile;
-    std::string strLogPath = gArgs.GetArg("-omnilogfile", "");
+    std::string strLogPath = gArgs.GetArg("-tllogfile", "");
 
     if (!strLogPath.empty()) {
         pathLogFile = boost::filesystem::path(strLogPath);
@@ -244,19 +244,19 @@ int ConsolePrint(const std::string& str)
 }
 
 /**
- * Determine whether to override compiled debug levels via enumerating startup option --omnidebug.
+ * Determine whether to override compiled debug levels via enumerating startup option --tldebug.
  *
- * Example usage (granular categories)    : --omnidebug=parser --omnidebug=metadex1 --omnidebug=ui
- * Example usage (enable all categories)  : --omnidebug=all
- * Example usage (disable all debugging)  : --omnidebug=none
- * Example usage (disable all except XYZ) : --omnidebug=none --omnidebug=parser --omnidebug=sto
+ * Example usage (granular categories)    : --tldebug=parser --tldebug=metadex1 --tldebug=ui
+ * Example usage (enable all categories)  : --tldebug=all
+ * Example usage (disable all debugging)  : --tldebug=none
+ * Example usage (disable all except XYZ) : --tldebug=none --tldebug=parser --tldebug=sto
  */
 void InitDebugLogLevels()
 {
   if (!gArgs.IsArgSet("-tradelayerdebug"))
       return;
 
-  const std::vector<std::string>& debugLevels = gArgs.GetArgs("-omnidebug");
+  const std::vector<std::string>& debugLevels = gArgs.GetArgs("-tldebug");
 
   for (std::vector<std::string>::const_iterator it = debugLevels.begin(); it != debugLevels.end(); ++it) {
           if (*it == "parser_data") msc_debug_parser_data = true;

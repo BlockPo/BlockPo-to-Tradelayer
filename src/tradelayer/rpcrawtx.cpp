@@ -31,9 +31,9 @@ UniValue tl_decodetransaction(const JSONRPCRequest& request)
 {
     if (request.params.size() < 1 || request.params.size() > 3)
         throw std::runtime_error(
-            "omni_decodetransaction \"rawtx\" ( \"prevtxs\" height )\n"
+            "tl_decodetransaction \"rawtx\" ( \"prevtxs\" height )\n"
 
-            "\nDecodes an Omni transaction.\n"
+            "\nDecodes an Trade Layer transaction.\n"
 
             "\nIf the inputs of the transaction are not in the chain, then they must be provided, because "
             "the transaction inputs are used to identify the sender of a transaction.\n"
@@ -68,8 +68,8 @@ UniValue tl_decodetransaction(const JSONRPCRequest& request)
             "}\n"
 
             "\nExamples:\n"
-            + HelpExampleCli("omni_decodetransaction", "\"010000000163af14ce6d477e1c793507e32a5b7696288fa89705c0d02a3f66beb3c5b8afee0100000000ffffffff02ac020000000000004751210261ea979f6a06f9dafe00fb1263ea0aca959875a7073556a088cdfadcd494b3752102a3fd0a8a067e06941e066f78d930bfc47746f097fcd3f7ab27db8ddf37168b6b52ae22020000000000001976a914946cb2e08075bcbaf157e47bcb67eb2b2339d24288ac00000000\" \"[{\\\"txid\\\":\\\"eeafb8c5b3be663f2ad0c00597a88f2896765b2ae30735791c7e476dce14af63\\\",\\\"vout\\\":1,\\\"scriptPubKey\\\":\\\"76a9149084c0bd89289bc025d0264f7f23148fb683d56c88ac\\\",\\\"value\\\":0.0001123}]\"")
-            + HelpExampleRpc("omni_decodetransaction", "\"010000000163af14ce6d477e1c793507e32a5b7696288fa89705c0d02a3f66beb3c5b8afee0100000000ffffffff02ac020000000000004751210261ea979f6a06f9dafe00fb1263ea0aca959875a7073556a088cdfadcd494b3752102a3fd0a8a067e06941e066f78d930bfc47746f097fcd3f7ab27db8ddf37168b6b52ae22020000000000001976a914946cb2e08075bcbaf157e47bcb67eb2b2339d24288ac00000000\", [{\"txid\":\"eeafb8c5b3be663f2ad0c00597a88f2896765b2ae30735791c7e476dce14af63\",\"vout\":1,\"scriptPubKey\":\"76a9149084c0bd89289bc025d0264f7f23148fb683d56c88ac\",\"value\":0.0001123}]")
+            + HelpExampleCli("tl_decodetransaction", "\"010000000163af14ce6d477e1c793507e32a5b7696288fa89705c0d02a3f66beb3c5b8afee0100000000ffffffff02ac020000000000004751210261ea979f6a06f9dafe00fb1263ea0aca959875a7073556a088cdfadcd494b3752102a3fd0a8a067e06941e066f78d930bfc47746f097fcd3f7ab27db8ddf37168b6b52ae22020000000000001976a914946cb2e08075bcbaf157e47bcb67eb2b2339d24288ac00000000\" \"[{\\\"txid\\\":\\\"eeafb8c5b3be663f2ad0c00597a88f2896765b2ae30735791c7e476dce14af63\\\",\\\"vout\\\":1,\\\"scriptPubKey\\\":\\\"76a9149084c0bd89289bc025d0264f7f23148fb683d56c88ac\\\",\\\"value\\\":0.0001123}]\"")
+            + HelpExampleRpc("tl_decodetransaction", "\"010000000163af14ce6d477e1c793507e32a5b7696288fa89705c0d02a3f66beb3c5b8afee0100000000ffffffff02ac020000000000004751210261ea979f6a06f9dafe00fb1263ea0aca959875a7073556a088cdfadcd494b3752102a3fd0a8a067e06941e066f78d930bfc47746f097fcd3f7ab27db8ddf37168b6b52ae22020000000000001976a914946cb2e08075bcbaf157e47bcb67eb2b2339d24288ac00000000\", [{\"txid\":\"eeafb8c5b3be663f2ad0c00597a88f2896765b2ae30735791c7e476dce14af63\",\"vout\":1,\"scriptPubKey\":\"76a9149084c0bd89289bc025d0264f7f23148fb683d56c88ac\",\"value\":0.0001123}]")
         );
 
     CTransaction tx = ParseTransaction(request.params[0]);
@@ -112,7 +112,7 @@ UniValue tl_createrawtx_opreturn(const JSONRPCRequest& request)
 {
     if (request.params.size() != 2)
         throw std::runtime_error(
-            "omni_createrawtx_opreturn \"rawtx\" \"payload\"\n"
+            "tl_createrawtx_opreturn \"rawtx\" \"payload\"\n"
 
             "\nAdds a payload with class D (op-return) encoding to the transaction.\n"
 
@@ -128,15 +128,15 @@ UniValue tl_createrawtx_opreturn(const JSONRPCRequest& request)
             "\"rawtx\"                 (string) the hex-encoded modified raw transaction\n"
 
             "\nExamples\n"
-            + HelpExampleCli("omni_createrawtx_opreturn", "\"01000000000000000000\" \"00000000000000020000000006dac2c0\"")
-            + HelpExampleRpc("omni_createrawtx_opreturn", "\"01000000000000000000\", \"00000000000000020000000006dac2c0\"")
+            + HelpExampleCli("tl_createrawtx_opreturn", "\"01000000000000000000\" \"00000000000000020000000006dac2c0\"")
+            + HelpExampleRpc("tl_createrawtx_opreturn", "\"01000000000000000000\", \"00000000000000020000000006dac2c0\"")
         );
 
     CMutableTransaction tx = ParseMutableTransaction(request.params[0]);
     std::vector<unsigned char> payload = ParseHexV(request.params[1], "payload");
 
     // extend the transaction
-    tx = OmniTxBuilder(tx)
+    tx = TLTxBuilder(tx)
             .addOpReturn(payload)
             .build();
 
@@ -147,7 +147,7 @@ UniValue tl_createrawtx_input(const JSONRPCRequest& request)
 {
     if (request.params.size() != 3)
         throw std::runtime_error(
-            "omni_createrawtx_input \"rawtx\" \"txid\" n\n"
+            "tl_createrawtx_input \"rawtx\" \"txid\" n\n"
 
             "\nAdds a transaction input to the transaction.\n"
 
@@ -162,8 +162,8 @@ UniValue tl_createrawtx_input(const JSONRPCRequest& request)
             "\"rawtx\"                 (string) the hex-encoded modified raw transaction\n"
 
             "\nExamples\n"
-            + HelpExampleCli("omni_createrawtx_input", "\"01000000000000000000\" \"b006729017df05eda586df9ad3f8ccfee5be340aadf88155b784d1fc0e8342ee\" 0")
-            + HelpExampleRpc("omni_createrawtx_input", "\"01000000000000000000\", \"b006729017df05eda586df9ad3f8ccfee5be340aadf88155b784d1fc0e8342ee\", 0")
+            + HelpExampleCli("tl_createrawtx_input", "\"01000000000000000000\" \"b006729017df05eda586df9ad3f8ccfee5be340aadf88155b784d1fc0e8342ee\" 0")
+            + HelpExampleRpc("tl_createrawtx_input", "\"01000000000000000000\", \"b006729017df05eda586df9ad3f8ccfee5be340aadf88155b784d1fc0e8342ee\", 0")
         );
 
     CMutableTransaction tx = ParseMutableTransaction(request.params[0]);
@@ -171,7 +171,7 @@ UniValue tl_createrawtx_input(const JSONRPCRequest& request)
     uint32_t nOut = ParseOutputIndex(request.params[2]);
 
     // extend the transaction
-    tx = OmniTxBuilder(tx)
+    tx = TLTxBuilder(tx)
             .addInput(txid, nOut)
             .build();
 
@@ -182,7 +182,7 @@ UniValue tl_createrawtx_reference(const JSONRPCRequest& request)
 {
     if (request.params.size() < 2 || request.params.size() > 3)
         throw std::runtime_error(
-            "omni_createrawtx_reference \"rawtx\" \"destination\" ( amount )\n"
+            "tl_createrawtx_reference \"rawtx\" \"destination\" ( amount )\n"
 
             "\nAdds a reference output to the transaction.\n"
 
@@ -199,8 +199,8 @@ UniValue tl_createrawtx_reference(const JSONRPCRequest& request)
             "\"rawtx\"                 (string) the hex-encoded modified raw transaction\n"
 
             "\nExamples\n"
-            + HelpExampleCli("omni_createrawtx_reference", "\"0100000001a7a9402ecd77f3c9f745793c9ec805bfa2e14b89877581c734c774864247e6f50400000000ffffffff03aa0a0000000000001976a9146d18edfe073d53f84dd491dae1379f8fb0dfe5d488ac5c0d0000000000004751210252ce4bdd3ce38b4ebbc5a6e1343608230da508ff12d23d85b58c964204c4cef3210294cc195fc096f87d0f813a337ae7e5f961b1c8a18f1f8604a909b3a5121f065b52aeaa0a0000000000001976a914946cb2e08075bcbaf157e47bcb67eb2b2339d24288ac00000000\" \"1CE8bBr1dYZRMnpmyYsFEoexa1YoPz2mfB\" 0.005")
-            + HelpExampleRpc("omni_createrawtx_reference", "\"0100000001a7a9402ecd77f3c9f745793c9ec805bfa2e14b89877581c734c774864247e6f50400000000ffffffff03aa0a0000000000001976a9146d18edfe073d53f84dd491dae1379f8fb0dfe5d488ac5c0d0000000000004751210252ce4bdd3ce38b4ebbc5a6e1343608230da508ff12d23d85b58c964204c4cef3210294cc195fc096f87d0f813a337ae7e5f961b1c8a18f1f8604a909b3a5121f065b52aeaa0a0000000000001976a914946cb2e08075bcbaf157e47bcb67eb2b2339d24288ac00000000\", \"1CE8bBr1dYZRMnpmyYsFEoexa1YoPz2mfB\", 0.005")
+            + HelpExampleCli("tl_createrawtx_reference", "\"0100000001a7a9402ecd77f3c9f745793c9ec805bfa2e14b89877581c734c774864247e6f50400000000ffffffff03aa0a0000000000001976a9146d18edfe073d53f84dd491dae1379f8fb0dfe5d488ac5c0d0000000000004751210252ce4bdd3ce38b4ebbc5a6e1343608230da508ff12d23d85b58c964204c4cef3210294cc195fc096f87d0f813a337ae7e5f961b1c8a18f1f8604a909b3a5121f065b52aeaa0a0000000000001976a914946cb2e08075bcbaf157e47bcb67eb2b2339d24288ac00000000\" \"1CE8bBr1dYZRMnpmyYsFEoexa1YoPz2mfB\" 0.005")
+            + HelpExampleRpc("tl_createrawtx_reference", "\"0100000001a7a9402ecd77f3c9f745793c9ec805bfa2e14b89877581c734c774864247e6f50400000000ffffffff03aa0a0000000000001976a9146d18edfe073d53f84dd491dae1379f8fb0dfe5d488ac5c0d0000000000004751210252ce4bdd3ce38b4ebbc5a6e1343608230da508ff12d23d85b58c964204c4cef3210294cc195fc096f87d0f813a337ae7e5f961b1c8a18f1f8604a909b3a5121f065b52aeaa0a0000000000001976a914946cb2e08075bcbaf157e47bcb67eb2b2339d24288ac00000000\", \"1CE8bBr1dYZRMnpmyYsFEoexa1YoPz2mfB\", 0.005")
         );
 
     CMutableTransaction tx = ParseMutableTransaction(request.params[0]);
@@ -208,7 +208,7 @@ UniValue tl_createrawtx_reference(const JSONRPCRequest& request)
     int64_t amount = (request.params.size() > 2) ? AmountFromValue(request.params[2]) : 0;
 
     // extend the transaction
-    tx = OmniTxBuilder(tx)
+    tx = TLTxBuilder(tx)
             .addReference(destination, amount)
             .build();
 
@@ -219,7 +219,7 @@ UniValue tl_createrawtx_change(const JSONRPCRequest& request)
 {
     if (request.params.size() < 4 || request.params.size() > 5)
         throw std::runtime_error(
-            "omni_createrawtx_change \"rawtx\" \"prevtxs\" \"destination\" fee ( position )\n"
+            "tl_createrawtx_change \"rawtx\" \"prevtxs\" \"destination\" fee ( position )\n"
 
             "\nAdds a change output to the transaction.\n"
 
@@ -255,8 +255,8 @@ UniValue tl_createrawtx_change(const JSONRPCRequest& request)
             "\"rawtx\"                 (string) the hex-encoded modified raw transaction\n"
 
             "\nExamples\n"
-            + HelpExampleCli("omni_createrawtx_change", "\"0100000001b15ee60431ef57ec682790dec5a3c0d83a0c360633ea8308fbf6d5fc10a779670400000000ffffffff025c0d00000000000047512102f3e471222bb57a7d416c82bf81c627bfcd2bdc47f36e763ae69935bba4601ece21021580b888ff56feb27f17f08802ebed26258c23697d6a462d43fc13b565fda2dd52aeaa0a0000000000001976a914946cb2e08075bcbaf157e47bcb67eb2b2339d24288ac00000000\" \"[{\\\"txid\\\":\\\"6779a710fcd5f6fb0883ea3306360c3ad8c0a3c5de902768ec57ef3104e65eb1\\\",\\\"vout\\\":4,\\\"scriptPubKey\\\":\\\"76a9147b25205fd98d462880a3e5b0541235831ae959e588ac\\\",\\\"value\\\":0.00068257}]\" \"1CE8bBr1dYZRMnpmyYsFEoexa1YoPz2mfB\" 0.00003500 1")
-            + HelpExampleRpc("omni_createrawtx_change", "\"0100000001b15ee60431ef57ec682790dec5a3c0d83a0c360633ea8308fbf6d5fc10a779670400000000ffffffff025c0d00000000000047512102f3e471222bb57a7d416c82bf81c627bfcd2bdc47f36e763ae69935bba4601ece21021580b888ff56feb27f17f08802ebed26258c23697d6a462d43fc13b565fda2dd52aeaa0a0000000000001976a914946cb2e08075bcbaf157e47bcb67eb2b2339d24288ac00000000\", [{\"txid\":\"6779a710fcd5f6fb0883ea3306360c3ad8c0a3c5de902768ec57ef3104e65eb1\",\"vout\":4,\"scriptPubKey\":\"76a9147b25205fd98d462880a3e5b0541235831ae959e588ac\",\"value\":0.00068257}], \"1CE8bBr1dYZRMnpmyYsFEoexa1YoPz2mfB\", 0.00003500, 1")
+            + HelpExampleCli("tl_createrawtx_change", "\"0100000001b15ee60431ef57ec682790dec5a3c0d83a0c360633ea8308fbf6d5fc10a779670400000000ffffffff025c0d00000000000047512102f3e471222bb57a7d416c82bf81c627bfcd2bdc47f36e763ae69935bba4601ece21021580b888ff56feb27f17f08802ebed26258c23697d6a462d43fc13b565fda2dd52aeaa0a0000000000001976a914946cb2e08075bcbaf157e47bcb67eb2b2339d24288ac00000000\" \"[{\\\"txid\\\":\\\"6779a710fcd5f6fb0883ea3306360c3ad8c0a3c5de902768ec57ef3104e65eb1\\\",\\\"vout\\\":4,\\\"scriptPubKey\\\":\\\"76a9147b25205fd98d462880a3e5b0541235831ae959e588ac\\\",\\\"value\\\":0.00068257}]\" \"1CE8bBr1dYZRMnpmyYsFEoexa1YoPz2mfB\" 0.00003500 1")
+            + HelpExampleRpc("tl_createrawtx_change", "\"0100000001b15ee60431ef57ec682790dec5a3c0d83a0c360633ea8308fbf6d5fc10a779670400000000ffffffff025c0d00000000000047512102f3e471222bb57a7d416c82bf81c627bfcd2bdc47f36e763ae69935bba4601ece21021580b888ff56feb27f17f08802ebed26258c23697d6a462d43fc13b565fda2dd52aeaa0a0000000000001976a914946cb2e08075bcbaf157e47bcb67eb2b2339d24288ac00000000\", [{\"txid\":\"6779a710fcd5f6fb0883ea3306360c3ad8c0a3c5de902768ec57ef3104e65eb1\",\"vout\":4,\"scriptPubKey\":\"76a9147b25205fd98d462880a3e5b0541235831ae959e588ac\",\"value\":0.00068257}], \"1CE8bBr1dYZRMnpmyYsFEoexa1YoPz2mfB\", 0.00003500, 1")
         );
 
     CMutableTransaction tx = ParseMutableTransaction(request.params[0]);
@@ -271,7 +271,7 @@ UniValue tl_createrawtx_change(const JSONRPCRequest& request)
     InputsToView(prevTxsParsed, viewTemp);
 
     // extend the transaction
-    tx = OmniTxBuilder(tx)
+    tx = TLTxBuilder(tx)
             .addChange(destination, viewTemp, txFee, nOut)
             .build();
 
@@ -289,7 +289,7 @@ static const CRPCCommand commands[] =
 
 };
 
-void RegisterOmniRawTransactionRPCCommands(CRPCTable &tableRPC)
+void RegisterTLRawTransactionRPCCommands(CRPCTable &tableRPC)
 {
     for (unsigned int vcidx = 0; vcidx < ARRAYLEN(commands); vcidx++)
         tableRPC.appendCommand(commands[vcidx].name, &commands[vcidx]);

@@ -58,7 +58,7 @@ printf " Creating the addresses ..."
 ADDRess=()
 for (( i=1; i<=${N}; i++ ))
 do
-    ADDRess[$i]=$($SRCDIR/litecoin-cli -datadir=$DATADIR --regtest  getnewaddress OMNIAccount${i})
+    ADDRess[$i]=$($SRCDIR/litecoin-cli -datadir=$DATADIR --regtest  getnewaddress TLAccount${i})
     echo ${ADDRess[$i]} >> graphInfoAddresses.txt
 done
 
@@ -81,7 +81,7 @@ $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest  generate 1
 ##################################################################
 
 printf "\n________________________________________\n"
-printf "   * Participating in the Exodus crowdsale to obtain M OMNIs: To get OMNIs in the first address ADDR\n"
+printf "   * Participating in the Exodus crowdsale to obtain M Tokens: To get Tokens in the first address ADDR\n"
 
 for (( i=1; i<=${N}; i++ ))
 do
@@ -130,7 +130,7 @@ do
     printf "Sending USDTs from base address to the addresses #$i\n"
     $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_sendgrant ${ADDRBase} ${ADDRess[$i]} 5 ${amountusdts_manyaddr}
     $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
-    
+
     printf "\n________________________________________\n"
     printf "Checking USDT balances for the address #$i:\n"
     $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_getbalance ${ADDRess[$i]} 5
@@ -154,7 +154,7 @@ do
     printf "Sending ALLs from base address to the addresses #$i\n"
     $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_sendgrant ${ADDRBase} ${ADDRess[$i]} 6 ${amountusdts_manyaddr}
     $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
-    
+
     printf "\n________________________________________\n"
     printf "Checking ALL balances for the address #$i:\n"
     $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_getbalance ${ADDRess[$i]} 6
@@ -187,19 +187,19 @@ do
     	PRICE=$((RANDOM%10+7000))
     	printf "\nRandom Price:\n"
     	printf $PRICE
-	
+
     	printf "\nAmount for sale Buyer #$i ContractDEx\n"
     	AMOUNT=$((RANDOM%1000+6000))
     	printf "\nRandom Amount:\n"
     	printf $AMOUNT
     	printf "\n"
-	
+
     	$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[$i]} "ALL F18" ${AMOUNT} ${PRICE} 1 2
 	if (( $i % ${Ng} == 0 ))
 	then
 	    $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
 	fi
-	
+
     done
     ##################################################################
     for (( i=1; i<=${N}-1; i++ ))
@@ -210,23 +210,23 @@ do
 	# PRICEDEx=$((RANDOM%80000+10000))
 	# printf "\nRandom Price DEx:\n"
 	# printf $PRICEDEx
-		
+
 	# printf "\nAmount for sale Buyer #$i DEx\n"
 	# AMOUNTDEx=$((RANDOM%8+1))
 	# printf "\nRandom Amount DEx:\n"
 	# printf $AMOUNTDEx
-	
+
 	# printf "\n________________________________________\n"
 	# $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_senddexoffer ${ADDRess[$i]} 6 ${AMOUNTDEx} ${PRICEDEx} ${PAYMENTWINDOW} ${MINFEEACCEPTED} 2 1
 	# if (( $i % ${Ng} == 0 ))
 	# then
 	#     $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
 	# fi
-	
+
 	# printf "\n________________________________________\n"
 	# printf "Checking the orderbook DEx:\n"
 	# $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_getactivedexsells ${ADDRess[$i]}
-	
+
 	# printf "\n________________________________________\n"
 	# printf "Accepting DEX offer DEx:\n"
 	# $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_senddexaccept ${ADDRess[$i+1]} ${ADDRess[$i]} 6 ${AMOUNTDEx}
@@ -234,63 +234,63 @@ do
 	# then
 	#     $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
 	# fi
-	
+
 	# printf "\n________________________________________\n"
 	# printf "Checking the orderbook DEx:\n"
 	# $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_getactivedexsells ${ADDRess[$i]}
-	
+
 	# # End DEx Traded
 	#################################################################
 	# Begin MetaDex traded
-	
+
 	printf "\n________________________________________\n"
 	printf "Sending metadex trade:\n"
-	
+
 	printf "\nAmount ALL #$i\n"
 	AMOUNTALL=$((RANDOM%1+9))
 	printf "\nRandom Amount ALL:\n"
 	printf $AMOUNTALL
 	printf "\n"
-	
+
 	printf "\nAmount dUSD #$i\n"
 	AMOUNTdUSD=$((RANDOM%10+70000))
 	printf "\nRandom Amount dUSD:\n"
 	printf $AMOUNTdUSD
 	printf "\n"
-	
+
 	$SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_sendtrade ${ADDRess[$i+1]} 6 ${AMOUNTALL} 5 ${AMOUNTdUSD}
 	if (( $i % ${Ng} == 0 ))
 	then
 	    $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
 	fi
-	
+
 	$SRCDIR/litecoin-cli -datadir=$DATADIR --regtest tl_sendtrade ${ADDRess[$i]} 5 ${AMOUNTdUSD} 6 ${AMOUNTALL}
 	if (( $i % ${Ng} == 0 ))
 	then
 	    $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
 	fi
-	
+
 	# End MetaDex traded
 	#################################################################
     	# Match CMPCOntractDEx
-	
+
     	printf "\n________________________________________\n"
     	printf "Price for sale Seller #$i ContractDEx match\n"
     	PRICE=$((RANDOM%10+7000))
     	printf "\nRandom Price  ContractDEx match:\n"
     	printf $PRICE
-	
+
     	printf "\nAmount for sale Seller #$i ContractDEx match\n"
     	AMOUNT=$((RANDOM%1000+6000))
     	printf "\nRandom Amount ContractDEx match:\n"
     	printf $AMOUNT
     	printf "\n"
-	
+
     	$SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_tradecontract ${ADDRess[$i]} "ALL F18" ${AMOUNT} ${PRICE} 2 2
     	if (( $i % ${Ng} == 0 ))
 	then
 	    $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest generate 1
-	fi	
+	fi
     done
 done
 # End of CMPContractDEx
@@ -306,9 +306,8 @@ $SRCDIR/litecoin-cli -datadir=$DATADIR -regtest tl_getcontract_orderbook "ALL F1
 
 ./litecoin-cli -datadir=$DATADIR -regrest tl_listproperties
 
-printf "Stoping omnicored and litecoin-cli:\n"
+printf "Stoping tradelayer and litecoin-cli:\n"
 $SRCDIR/litecoin-cli -datadir=$DATADIR --regtest stop
 # /home/lihki/Documentos/tradelayer-local/src/litecoin-cli -datadir=/home/lihki/.litecoin --regtest stop
 
 ###############################################################
-

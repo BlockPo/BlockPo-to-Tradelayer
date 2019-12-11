@@ -1427,7 +1427,7 @@ UniValue tl_listtransactions(const JSONRPCRequest& request)
     if (nEndBlock < 0) throw JSONRPCError(RPC_INVALID_PARAMETER, "Negative end block");
 
     // obtain a sorted list of trade layer wallet transactions (including STO receipts and pending)
-    std::map<std::string,uint256> walletTransactions = FetchWalletOmniTransactions(nFrom+nCount, nStartBlock, nEndBlock);
+    std::map<std::string,uint256> walletTransactions = FetchWalletTLTransactions(nFrom+nCount, nStartBlock, nEndBlock);
 
     // reverse iterate over (now ordered) transactions and populate RPC objects for each one
     UniValue response(UniValue::VARR);
@@ -2741,7 +2741,7 @@ static const CRPCCommand commands[] =
   { "trade layer (data retieval)" , "tl_check_withdrawals",         &tl_check_withdrawals,          {} }
 };
 
-void RegisterOmniDataRetrievalRPCCommands(CRPCTable &tableRPC)
+void RegisterTLDataRetrievalRPCCommands(CRPCTable &tableRPC)
 {
     for (unsigned int vcidx = 0; vcidx < ARRAYLEN(commands); vcidx++)
         tableRPC.appendCommand(commands[vcidx].name, &commands[vcidx]);

@@ -21,7 +21,7 @@ namespace mastercore
 {
 
 //! Vector of currently active Trade Layer alerts
-std::vector<AlertData> currentOmniAlerts;
+std::vector<AlertData> currentTlAlerts;
 
 /**
  * Deletes previously broadcast alerts from sender from the alerts vector
@@ -30,12 +30,12 @@ std::vector<AlertData> currentOmniAlerts;
  */
 void DeleteAlerts(const std::string& sender)
 {
-    for (std::vector<AlertData>::iterator it = currentOmniAlerts.begin(); it != currentOmniAlerts.end(); ) {
+    for (std::vector<AlertData>::iterator it = currentTlAlerts.begin(); it != currentTlAlerts.end(); ) {
         AlertData alert = *it;
         if (sender == alert.alert_sender) {
             PrintToLog("Removing deleted alert (from:%s type:%d expiry:%d message:%s)\n", alert.alert_sender,
                 alert.alert_type, alert.alert_expiry, alert.alert_message);
-            it = currentOmniAlerts.erase(it);
+            it = currentTlAlerts.erase(it);
             //uiInterface.TLStateChanged();
         } else {
             it++;
@@ -50,7 +50,7 @@ void DeleteAlerts(const std::string& sender)
  */
 void ClearAlerts()
 {
-    currentOmniAlerts.clear();
+    currentTlAlerts.clear();
     //uiInterface.TLStateChanged();
 }
 
@@ -72,17 +72,17 @@ void AddAlert(const std::string& sender, uint16_t alertType, uint32_t alertExpir
         return;
     }
 
-    currentOmniAlerts.push_back(newAlert);
+    currentTlAlerts.push_back(newAlert);
     PrintToLog("New alert added: %s, %d, %d, %s\n", sender, alertType, alertExpiry, alertMessage);
 }
 
 /**
  * Determines whether the sender is an authorized source for Trade Layer alerts.
  *
- * The option "-omnialertallowsender=source" can be used to whitelist additional sources,
- * and the option "-omnialertignoresender=source" can be used to ignore a source.
+ * The option "-tlalertallowsender=source" can be used to whitelist additional sources,
+ * and the option "-tlalertignoresender=source" can be used to ignore a source.
  *
- * To consider any alert as authorized, "-omnialertallowsender=any" can be used. This
+ * To consider any alert as authorized, "-tlalertallowsender=any" can be used. This
  * should only be done for testing purposes!
  */
 bool CheckAlertAuthorization(const std::string& sender)
@@ -92,8 +92,8 @@ bool CheckAlertAuthorization(const std::string& sender)
     // TODO : NEW ALERT USERS
 
     // Add manually whitelisted sources
-    /*if (mapArgs.count("-omnialertallowsender")) {
-        const std::vector<std::string>& sources = mapMultiArgs["-omnialertallowsender"];
+    /*if (mapArgs.count("-tlalertallowsender")) {
+        const std::vector<std::string>& sources = mapMultiArgs["-tlalertallowsender"];
 
         for (std::vector<std::string>::const_iterator it = sources.begin(); it != sources.end(); ++it) {
             whitelisted.insert(*it);
@@ -101,8 +101,8 @@ bool CheckAlertAuthorization(const std::string& sender)
     }
 
     // Remove manually ignored sources
-    if (mapArgs.count("-omnialertignoresender")) {
-        const std::vector<std::string>& sources = mapMultiArgs["-omnialertignoresender"];
+    if (mapArgs.count("-tlalertignoresender")) {
+        const std::vector<std::string>& sources = mapMultiArgs["-tlalertignoresender"];
 
         for (std::vector<std::string>::const_iterator it = sources.begin(); it != sources.end(); ++it) {
             whitelisted.erase(*it);
@@ -121,7 +121,7 @@ bool CheckAlertAuthorization(const std::string& sender)
  */
 std::vector<AlertData> GetTradeLayerAlerts()
 {
-    return currentOmniAlerts;
+    return currentTlAlerts;
 }
 
 /**
@@ -130,7 +130,7 @@ std::vector<AlertData> GetTradeLayerAlerts()
 std::vector<std::string> GetTradeLayerAlertMessages()
 {
     std::vector<std::string> vstr;
-    for (std::vector<AlertData>::iterator it = currentOmniAlerts.begin(); it != currentOmniAlerts.end(); it++) {
+    for (std::vector<AlertData>::iterator it = currentTlAlerts.begin(); it != currentTlAlerts.end(); it++) {
         vstr.push_back((*it).alert_message);
     }
     return vstr;
@@ -141,14 +141,14 @@ std::vector<std::string> GetTradeLayerAlertMessages()
  */
 bool CheckExpiredAlerts(unsigned int curBlock, uint64_t curTime)
 {
-    for (std::vector<AlertData>::iterator it = currentOmniAlerts.begin(); it != currentOmniAlerts.end(); ) {
+    for (std::vector<AlertData>::iterator it = currentTlAlerts.begin(); it != currentTlAlerts.end(); ) {
         AlertData alert = *it;
         switch (alert.alert_type) {
             case ALERT_BLOCK_EXPIRY:
                 if (curBlock >= alert.alert_expiry) {
                     PrintToLog("Expiring alert (from %s: type:%d expiry:%d message:%s)\n", alert.alert_sender,
                         alert.alert_type, alert.alert_expiry, alert.alert_message);
-                    it = currentOmniAlerts.erase(it);
+                    it = currentTlAlerts.erase(it);
                     //uiInterface.TLStateChanged();
                 } else {
                     it++;
@@ -158,7 +158,7 @@ bool CheckExpiredAlerts(unsigned int curBlock, uint64_t curTime)
                 if (curTime > alert.alert_expiry) {
                     PrintToLog("Expiring alert (from %s: type:%d expiry:%d message:%s)\n", alert.alert_sender,
                         alert.alert_type, alert.alert_expiry, alert.alert_message);
-                    it = currentOmniAlerts.erase(it);
+                    it = currentTlAlerts.erase(it);
                     //uiInterface.TLStateChanged();
                 } else {
                     it++;
@@ -168,7 +168,7 @@ bool CheckExpiredAlerts(unsigned int curBlock, uint64_t curTime)
                 if (TL_VERSION > alert.alert_expiry) {
                     PrintToLog("Expiring alert (form: %s type:%d expiry:%d message:%s)\n", alert.alert_sender,
                         alert.alert_type, alert.alert_expiry, alert.alert_message);
-                    it = currentOmniAlerts.erase(it);
+                    it = currentTlAlerts.erase(it);
                     //uiInterface.TLStateChanged();
                 } else {
                     it++;
@@ -177,7 +177,7 @@ bool CheckExpiredAlerts(unsigned int curBlock, uint64_t curTime)
             default: // unrecognized alert type
                     PrintToLog("Removing invalid alert (from:%s type:%d expiry:%d message:%s)\n", alert.alert_sender,
                         alert.alert_type, alert.alert_expiry, alert.alert_message);
-                    it = currentOmniAlerts.erase(it);
+                    it = currentTlAlerts.erase(it);
                     //uiInterface.TLStateChanged();
             break;
         }

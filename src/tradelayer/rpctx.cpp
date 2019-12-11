@@ -1,7 +1,7 @@
 /**
  * @file rpctx.cpp
  *
- * This file contains RPC calls for creating and sending Omni transactions.
+ * This file contains RPC calls for creating and sending Trade Layer transactions.
  */
 
 #include "tradelayer/rpctx.h"
@@ -1428,7 +1428,7 @@ UniValue tl_senddexoffer(const JSONRPCRequest& request)
 			"\nArguments:\n"
 
 			"1. fromaddress         (string, required) the address to send from\n"
-			"2. propertyidoffer     (number, required) the identifier of the tokens to list for sale (must be 1 for OMNI or 2 for TOMNI)\n"
+			"2. propertyidoffer     (number, required) the identifier of the tokens to list for sale\n"
 			"3. amountoffering      (string, required) the amount of tokens to list for sale\n"
 			"4. price               (string, required) the price in litecoin of the offer \n"
 			"5. paymentwindow       (number, required) a time limit in blocks a buyer has to pay following a successful accepting order\n"
@@ -2191,7 +2191,7 @@ static const CRPCCommand commands[] =
 #endif
 };
 
-void RegisterOmniTransactionCreationRPCCommands(CRPCTable &tableRPC)
+void RegisterTLTransactionCreationRPCCommands(CRPCTable &tableRPC)
 {
     for (unsigned int vcidx = 0; vcidx < ARRAYLEN(commands); vcidx++)
         tableRPC.appendCommand(commands[vcidx].name, &commands[vcidx]);

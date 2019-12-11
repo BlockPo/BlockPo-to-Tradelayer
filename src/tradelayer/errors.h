@@ -161,7 +161,7 @@ inline std::string error_str(int ec) {
       ec_str = "Amount desired out of range or zero";
       break;
     case PKT_ERROR_METADEX -35:
-      ec_str = "One side of the trade must be OMNI or TOMNI";
+      ec_str = "One side of the trade must be TL or TTL";
       break;
     case DEX_ERROR_SELLOFFER -101:
       ec_str = "Value out of range or zero";
