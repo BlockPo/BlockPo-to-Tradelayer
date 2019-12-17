@@ -2427,7 +2427,8 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   /***********************************************************************/
   /** Vesting Tokens to Balance **/
 
-  int64_t x_Axis = globalVolumeALL_LTC;
+  // int64_t x_Axis = globalVolumeALL_LTC;
+  int64_t x_Axis = 1000000000000;
   int64_t LogAxis = mastercore::DoubleToInt64(log(static_cast<double>(x_Axis)/COIN));
 
   rational_t Factor1over3(1, 3);

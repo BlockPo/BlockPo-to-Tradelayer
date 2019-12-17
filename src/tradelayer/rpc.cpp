@@ -59,6 +59,7 @@
 using std::runtime_error;
 using namespace mastercore;
 
+extern int64_t totalVesting;
 extern int64_t factorE;
 extern volatile int64_t globalNumPrice;
 extern volatile int64_t globalDenPrice;
@@ -66,6 +67,7 @@ extern uint64_t marketP[NPTYPES];
 extern std::map<uint32_t, std::map<std::string, double>> addrs_upnlc;
 extern std::map<std::string, int64_t> sum_upnls;
 extern std::map<uint32_t, int64_t> cachefees;
+extern volatile int64_t globalVolumeALL_LTC;
 
 using mastercore::StrToInt64;
 using mastercore::DoubleToInt64;
@@ -2692,6 +2694,35 @@ UniValue tl_getalltxonblock(const JSONRPCRequest& request)
     return response;
 }
 
+UniValue tl_getvesting_supply(const JSONRPCRequest& request)
+{
+    if (request.params.size() != 0)
+        throw runtime_error(
+            "tl_getvesting_supply \n"
+            "\nReturns the amount of tokens emmited into account address until actual block.\n"
+            "\nResult:\n"
+            "{\n"
+            "  \"supply\" : \"n.nnnnnnnn\",   (number) the available balance of vesting tokens in the admin address\n"
+            "  \"blockheight\" : \"n.\",      (number) last block\n"
+            "}\n"
+            "\nExamples:\n"
+            + HelpExampleCli("tl_getvesting_supply", "\"\"")
+            + HelpExampleRpc("tl_getvesting_supply", "\"\",")
+        );
+
+    // geting data
+    rational_t Factor1over3(1, 3);
+    int64_t Factor1over3_64t = mastercore::RationalToInt64(Factor1over3);
+    int64_t amount = Factor1over3_64t * globalVolumeALL_LTC;
+
+    UniValue balanceObj(UniValue::VOBJ);
+
+    balanceObj.push_back(Pair("supply", FormatByType(amount,1)));
+    balanceObj.push_back(Pair("blockheigh", FormatMP(GetHeight(),2)));
+
+    return balanceObj;
+}
+
 static const CRPCCommand commands[] =
 { //  category                             name                            actor (function)               okSafeMode
   //  ------------------------------------ ------------------------------- ------------------------------ ----------
@@ -2738,7 +2769,8 @@ static const CRPCCommand commands[] =
   { "trade layer (data retieval)" , "tl_list_natives",              &tl_list_natives,               {} },
   { "trade layer (data retieval)" , "tl_list_oracles",              &tl_list_oracles,               {} },
   { "trade layer (data retieval)" , "tl_getalltxonblock",           &tl_getalltxonblock,            {} },
-  { "trade layer (data retieval)" , "tl_check_withdrawals",         &tl_check_withdrawals,          {} }
+  { "trade layer (data retieval)" , "tl_check_withdrawals",         &tl_check_withdrawals,          {} },
+  { "trade layer (data retieval)" , "tl_getvesting_supply",         &tl_getvesting_supply,          {} }
 };
 
 void RegisterTLDataRetrievalRPCCommands(CRPCTable &tableRPC)
