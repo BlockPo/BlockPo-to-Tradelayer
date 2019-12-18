@@ -2713,7 +2713,8 @@ UniValue tl_getvesting_supply(const JSONRPCRequest& request)
     // geting data
     rational_t Factor1over3(1, 3);
     int64_t Factor1over3_64t = mastercore::RationalToInt64(Factor1over3);
-    int64_t amount = Factor1over3_64t * globalVolumeALL_LTC;
+    arith_uint256 uAmount = ConvertTo256(Factor1over3_64t) * ConvertTo256(globalVolumeALL_LTC);
+    int64_t amount = ConvertTo64(uAmount);
 
     UniValue balanceObj(UniValue::VOBJ);
 
