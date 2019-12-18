@@ -2717,8 +2717,8 @@ UniValue tl_getvesting_supply(const JSONRPCRequest& request)
 
     UniValue balanceObj(UniValue::VOBJ);
 
-    balanceObj.push_back(Pair("supply", FormatByType(amount,1)));
-    balanceObj.push_back(Pair("blockheigh", FormatMP(GetHeight(),2)));
+    balanceObj.push_back(Pair("supply", FormatDivisibleMP(amount)));
+    balanceObj.push_back(Pair("blockheigh", FormatIndivisibleMP(GetHeight())));
 
     return balanceObj;
 }
