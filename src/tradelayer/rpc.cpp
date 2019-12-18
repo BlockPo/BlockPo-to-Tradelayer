@@ -2724,6 +2724,42 @@ UniValue tl_getvesting_supply(const JSONRPCRequest& request)
     return balanceObj;
 }
 
+UniValue tl_getvolume(const JSONRPCRequest& request)
+{
+    if (request.params.size() != 5)
+        throw runtime_error(
+            "tl_getvolume \n"
+            "\nReturns the LTC volume traded between two properties (or in one contract) sort amount of blocks.\n"
+            "\nArguments:\n"
+            "1. first property           (number, required) property or contract id \n"
+            "2. second property          (number, optional) property related with first one\n"
+            "3. first block              (number, required) older limit block\n"
+            "4. second block             (number, required) newer limit block\n"
+            "5. contract type            (number, optional) 0: natives, 1: oracles\n"
+            "\nResult:\n"
+            "{\n"
+            "  \"supply\" : \"n.nnnnnnnn\",   (number) the available balance of vesting tokens in the admin address\n"
+            "  \"blockheight\" : \"n.\",      (number) last block\n"
+            "}\n"
+            "\nExamples:\n"
+            + HelpExampleCli("tl_getvolume", "\"\"")
+            + HelpExampleRpc("tl_getvolume", "\"\",")
+        );
+
+    uint32_t fpropertyId = ParsePropertyId(request.params[0]);
+    uint32_t spropertyId = ParsePropertyId(request.params[1]);
+    uint32_t fblock = request.params[3].get_int();
+    uint32_t sblock = request.params[4].get_int();
+    uint8_t flag = ParseBinary(request.params[5]);
+
+    UniValue balanceObj(UniValue::VOBJ);
+
+    // balanceObj.push_back(Pair("volume", FormatDivisibleMP(amount)));
+    // balanceObj.push_back(Pair("blockheigh", FormatIndivisibleMP(GetHeight())));
+
+    return balanceObj;
+}
+
 static const CRPCCommand commands[] =
 { //  category                             name                            actor (function)               okSafeMode
   //  ------------------------------------ ------------------------------- ------------------------------ ----------
@@ -2771,7 +2807,8 @@ static const CRPCCommand commands[] =
   { "trade layer (data retieval)" , "tl_list_oracles",              &tl_list_oracles,               {} },
   { "trade layer (data retieval)" , "tl_getalltxonblock",           &tl_getalltxonblock,            {} },
   { "trade layer (data retieval)" , "tl_check_withdrawals",         &tl_check_withdrawals,          {} },
-  { "trade layer (data retieval)" , "tl_getvesting_supply",         &tl_getvesting_supply,          {} }
+  { "trade layer (data retieval)" , "tl_getvesting_supply",         &tl_getvesting_supply,          {} },
+  { "trade layer (data retieval)" , "tl_getvolume",                 &tl_getvolume,                  {} }
 };
 
 void RegisterTLDataRetrievalRPCCommands(CRPCTable &tableRPC)
