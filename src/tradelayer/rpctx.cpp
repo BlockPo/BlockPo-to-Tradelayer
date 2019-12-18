@@ -32,7 +32,7 @@ using std::runtime_error;
 using namespace mastercore;
 
 extern volatile int64_t LTCPriceOffer;
-extern std::string setExoduss;
+extern std::string admin_addrs;
 
 UniValue tl_sendrawtx(const JSONRPCRequest& request)
 {
@@ -1797,32 +1797,6 @@ UniValue tl_closeoracle(const JSONRPCRequest& request)
     }
 }
 
-UniValue tl_setexodus(const JSONRPCRequest& request)
-{
-    if (request.params.size() < 1 )
-        throw runtime_error(
-            "tl_setexodus \"fromaddress\" \"toaddress\" propertyid \"amount\" ( override )\n"
-
-            "\nsetting exodus address.\n"
-
-            "\nArguments:\n"
-            "1. fromaddress          (string, required) the address to send from\n"
-            "\nResult:\n"
-            "\"hash\"                  (string) the hex-encoded transaction hash\n"
-
-            "\nExamples:\n"
-            + HelpExampleCli("tl_senddexaccept", "\"35URq1NN3xL6GeRKUP6vzaQVcxoJiiJKd8\" \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\" 1 \"15.0\"")
-            + HelpExampleRpc("tl_senddexaccept", "\"35URq1NN3xL6GeRKUP6vzaQVcxoJiiJKd8\", \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\", 1, \"15.0\"")
-        );
-
-    // obtain parameters & info
-    setExoduss = ParseAddress(request.params[0]);
-    PrintToLog("setExoduss : %s",setExoduss);
-    uint256 txid;
-
-    return txid.GetHex();
-
-}
 
 UniValue tl_commit_tochannel(const JSONRPCRequest& request)
 {
@@ -2145,6 +2119,33 @@ UniValue tl_send_dex_payment(const JSONRPCRequest& request)
 //
 // }
 
+UniValue tl_setadmin(const JSONRPCRequest& request)
+{
+    if (request.params.size() != 1 )
+        throw runtime_error(
+            "tl_setadmin \"fromaddress\" \"toaddress\" propertyid \"amount\" ( override )\n"
+
+            "\nsetting exodus address.\n"
+
+            "\nArguments:\n"
+            "1. fromaddress          (string, required) the address to send from\n"
+            "\nResult:\n"
+            "\"hash\"                  (string) the hex-encoded transaction hash\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("tl_senddexaccept", "\"35URq1NN3xL6GeRKUP6vzaQVcxoJiiJKd8\" \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\" 1 \"15.0\"")
+            + HelpExampleRpc("tl_senddexaccept", "\"35URq1NN3xL6GeRKUP6vzaQVcxoJiiJKd8\", \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\", 1, \"15.0\"")
+        );
+
+    // obtain parameters & info
+    admin_addrs = ParseAddress(request.params[0]);
+    PrintToLog("setadmin : %s",admin_addrs);
+    uint256 txid;
+
+    return txid.GetHex();
+
+}
+
 static const CRPCCommand commands[] =
 { //  category                             name                            actor (function)               okSafeMode
   //  ------------------------------------ ------------------------------- ------------------------------ ----------
@@ -2183,11 +2184,12 @@ static const CRPCCommand commands[] =
     { "trade layer (transaction creation)", "tl_commit_tochannel",             &tl_commit_tochannel,                {} },
     { "trade layer (transaction creation)", "tl_withdrawal_fromchannel",       &tl_withdrawal_fromchannel,          {} },
     { "trade layer (transaction creation)", "tl_create_channel",               &tl_create_channel,                  {} },
-    { "trade layer (transaction creation)", "tl_setexodus",                    &tl_setexodus,                       {} },
+    // { "trade layer (transaction creation)", "tl_setexodus",                    &tl_setexodus,                       {} },
     { "trade layer (transaction cration)",  "tl_new_id_registration",          &tl_new_id_registration,             {} },
     { "trade layer (transaction cration)",  "tl_update_id_registration",       &tl_update_id_registration,          {} },
     { "trade layer (transaction cration)",  "tl_send_dex_payment",             &tl_send_dex_payment,                {} },
-    { "trade layer (transaction creation)", "tl_commit_tochannel",             &tl_commit_tochannel,                {} }
+    { "trade layer (transaction creation)", "tl_commit_tochannel",             &tl_commit_tochannel,                {} },
+    { "trade layer (transaction creation)", "tl_setadmin",                     &tl_setadmin,                        {} }
 #endif
 };
 

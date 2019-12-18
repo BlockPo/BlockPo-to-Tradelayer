@@ -605,6 +605,8 @@ void creatingVestingTokens(int block)
   const uint32_t propertyIdVesting = _my_sps->putSP(TL_PROPERTY_ALL, newSP);
   assert(propertyIdVesting > 0);
 
+  PrintToLog("%s(): admin_addrs : %s \n",__func__,admin_addrs);
+
   assert(update_tally_map(admin_addrs, propertyIdVesting, totalVesting, BALANCE));
 }
 
@@ -2426,7 +2428,6 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   }
   /***********************************************************************/
   /** Vesting Tokens to Balance **/
-
   int64_t x_Axis = globalVolumeALL_LTC;
   int64_t LogAxis = mastercore::DoubleToInt64(log(static_cast<double>(x_Axis)/COIN));
 
@@ -2439,6 +2440,8 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   bool cond_first = x_Axis != 0;
   bool cond_secnd = x_Axis != Lastx_Axis;
   bool cond_third = vestingAddresses.size() != 0;
+
+  PrintToLog("%s(): cond_first: %d, cond_secnd: %d, cond_third: %d \n",__func__, cond_first, cond_secnd, cond_third);
 
   if (findConjTrueValue(cond_first, cond_secnd, cond_third))
   {
@@ -2620,7 +2623,8 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   const CConsensusParams &params = ConsensusParams();
   vestingActivationBlock = params.MSC_VESTING_BLOCK;
 
-  if (static_cast<int>(pBlockIndex->nHeight) == params.MSC_VESTING_BLOCK) creatingVestingTokens( GetHeight());
+  // if (static_cast<int>(pBlockIndex->nHeight) == params.MSC_VESTING_BLOCK) creatingVestingTokens( GetHeight());
+  if (static_cast<int>(pBlockIndex->nHeight) == 200) creatingVestingTokens( GetHeight());
 
   int deadline = sp.init_block + expirationBlock;
   if ( tradeBlock != 0 && deadline != 0 ) checkExpiration = tradeBlock == deadline ? 1 : 0;
