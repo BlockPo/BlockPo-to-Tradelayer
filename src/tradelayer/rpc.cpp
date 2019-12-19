@@ -67,6 +67,7 @@ extern uint64_t marketP[NPTYPES];
 extern std::map<uint32_t, std::map<std::string, double>> addrs_upnlc;
 extern std::map<std::string, int64_t> sum_upnls;
 extern std::map<uint32_t, int64_t> cachefees;
+extern std::map<int, std::map<uint32_t,int64_t>> MapPropVolume;
 extern volatile int64_t globalVolumeALL_LTC;
 
 using mastercore::StrToInt64;
@@ -2628,8 +2629,6 @@ UniValue tl_getcache(const JSONRPCRequest& request)
 
     balanceObj.push_back(Pair("amount", FormatByType(amount,1)));
 
-
-
     return balanceObj;
 }
 
@@ -2724,33 +2723,42 @@ UniValue tl_getvesting_supply(const JSONRPCRequest& request)
     return balanceObj;
 }
 
-UniValue tl_getvolume(const JSONRPCRequest& request)
+UniValue tl_getvolume_bypair(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 5)
+    if (request.params.size() < 2)
         throw runtime_error(
-            "tl_getvolume \n"
+            "tl_getvolume_bypair \n"
             "\nReturns the LTC volume traded between two properties (or in one contract) sort amount of blocks.\n"
             "\nArguments:\n"
             "1. first property           (number, required) property or contract id \n"
             "2. second property          (number, optional) property related with first one\n"
             "3. first block              (number, required) older limit block\n"
-            "4. second block             (number, required) newer limit block\n"
-            "5. contract type            (number, optional) 0: natives, 1: oracles\n"
+            "4. second block             (number, optional) newer limit block\n"
             "\nResult:\n"
             "{\n"
             "  \"supply\" : \"n.nnnnnnnn\",   (number) the available balance of vesting tokens in the admin address\n"
             "  \"blockheight\" : \"n.\",      (number) last block\n"
             "}\n"
             "\nExamples:\n"
-            + HelpExampleCli("tl_getvolume", "\"\"")
-            + HelpExampleRpc("tl_getvolume", "\"\",")
+            + HelpExampleCli("tl_getvolume_bypair", "\"\"")
+            + HelpExampleRpc("tl_getvolume_bypair", "\"\",")
         );
 
     uint32_t fpropertyId = ParsePropertyId(request.params[0]);
     uint32_t spropertyId = ParsePropertyId(request.params[1]);
-    uint32_t fblock = request.params[3].get_int();
-    uint32_t sblock = request.params[4].get_int();
-    uint8_t flag = ParseBinary(request.params[5]);
+    uint32_t fblock = request.params[2].get_int();
+    uint32_t sblock = request.params[3].get_int();
+
+
+    // geting data from map!
+
+
+      // fpropertyId = ParsePropertyId(request.params[0]);
+      // spropertyId = ParsePropertyId(request.params[1]);
+      // sblock = request.params[3].get_int();
+      // sblock = request.params[4].get_int();
+      // flag = ParseBinary(request.params[5]);
+
 
     UniValue balanceObj(UniValue::VOBJ);
 
@@ -2808,7 +2816,7 @@ static const CRPCCommand commands[] =
   { "trade layer (data retieval)" , "tl_getalltxonblock",           &tl_getalltxonblock,            {} },
   { "trade layer (data retieval)" , "tl_check_withdrawals",         &tl_check_withdrawals,          {} },
   { "trade layer (data retieval)" , "tl_getvesting_supply",         &tl_getvesting_supply,          {} },
-  { "trade layer (data retieval)" , "tl_getvolume",                 &tl_getvolume,                  {} }
+  { "trade layer (data retieval)" , "tl_getvolume_bypair",          &tl_getvolume_bypair,           {} }
 };
 
 void RegisterTLDataRetrievalRPCCommands(CRPCTable &tableRPC)

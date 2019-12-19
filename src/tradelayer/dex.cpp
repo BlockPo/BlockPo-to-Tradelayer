@@ -35,6 +35,7 @@
 
 extern int64_t factorE;
 extern uint64_t marketP[NPTYPES];
+extern std::map<int, std::map<uint32_t,int64_t>> MapPropVolume;
 
 namespace mastercore
 {
@@ -605,7 +606,6 @@ int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addre
     if (!p_accept && msc_debug_dex)
     {
        // there must be an active accept order for this payment
-       PrintToLog("first return!\n");
        return (DEX_ERROR_PAYMENT -1);
     }
 
@@ -645,6 +645,10 @@ int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addre
 
     // -------------------------------------------------------------------------
 
+    // adding LTC volume added by this property
+    MapPropVolume[block][propertyId] += amountPaid;
+
+    // -------------------------------------------------------------------------
     if (msc_debug_dex) PrintToLog("amountPurchased: %d\n",amountPurchased);
     const int64_t amountRemaining = p_accept->getAcceptAmountRemaining(); // actual amount desired, in the Accept
 

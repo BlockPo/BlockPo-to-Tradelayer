@@ -520,6 +520,9 @@ namespace mastercore
   //Fees for contract instant trades
   bool ContInst_Fees(const std::string& firstAddr,const std::string& secondAddr,const std::string& channelAddr, int64_t amountToReserve,uint16_t type, uint32_t colateral);
 
+  // Map of LTC volume
+  int64_t LtcVolumen(uint32_t propertyId, int fblock, int sblock);
+
 }
 
 #endif // TRADELAYER_TL_H

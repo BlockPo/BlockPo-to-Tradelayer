@@ -177,6 +177,9 @@ extern std::map<std::string,vector<withdrawalAccepted>> withdrawal_Map;
 /** Map of active channels**/
 extern std::map<std::string,channel> channels_Map;
 
+/** Map of LTC Volume**/
+extern std::map<int, std::map<uint32_t,int64_t>> MapPropVolume;
+
 using mastercore::StrToInt64;
 
 // indicate whether persistence is enabled at this point, or not
@@ -5775,7 +5778,28 @@ bool mastercore::Instant_x_Trade(const uint256& txid, uint8_t tradingAction, std
   return true;
 }
 
+int64_t mastercore::LtcVolumen(uint32_t propertyId, int fblock, int sblock)
+{
+    int64_t Amount = 0;
 
+    for(std::map<int, std::map<uint32_t,int64_t>>::iterator it = MapPropVolume.begin(); it != MapPropVolume.end();it++)
+    {
+        static int xblock = it->first;
+
+        if (xblock < fblock || xblock < sblock)
+            continue;
+
+        std::map<uint32_t, int64_t> blockMap = it->second;
+
+        std::map<uint32_t, int64_t>::iterator itt = blockMap.find(propertyId);
+        Amount += itt->second;
+
+    }
+
+    PrintToLog("%s(): final Amount: %d\n",__func__,Amount);
+
+    return Amount;
+}
 /**
  * @return The marker for class D transactions.
  */
