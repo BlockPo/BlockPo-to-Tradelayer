@@ -966,7 +966,7 @@ int ParseTransaction(const CTransaction& tx, int nBlock, unsigned int idx, CMPTr
  */
 static bool HandleDExPayments(const CTransaction& tx, int nBlock, const std::string& strSender)
 {
-    uint64_t nValue;
+    uint64_t nvalue;
     int count = 0;
 
     for (unsigned int n = 0; n < tx.vout.size(); ++n)
@@ -983,14 +983,14 @@ static bool HandleDExPayments(const CTransaction& tx, int nBlock, const std::str
 
             if (msc_debug_handle_dex_payment) PrintToLog("payment #%d %s %s\n", count, address, FormatIndivisibleMP(tx.vout[n].nValue));
 
-            nValue = static_cast<uint64_t>(tx.vout[n].nValue);
+            nvalue = static_cast<uint64_t>(tx.vout[n].nValue);
             // check everything and pay BTC for the property we are buying here...
             if (0 == DEx_payment(tx.GetHash(), n, address, strSender, tx.vout[n].nValue, nBlock)) ++count;
         }
     }
 
     /** Adding LTC into volume */
-    arith_uint256 ltcsreceived_256t = ConvertTo256(static_cast<int64_t>(nValue));
+    arith_uint256 ltcsreceived_256t = ConvertTo256(static_cast<int64_t>(nvalue));
     uint64_t ltcsreceived = ConvertTo64(ltcsreceived_256t)/COIN;
     globalVolumeALL_LTC += ltcsreceived;
     const int64_t globalVolumeALL_LTCh = globalVolumeALL_LTC;
@@ -1003,7 +1003,7 @@ static bool HandleDExPayments(const CTransaction& tx, int nBlock, const std::str
 static bool HandleLtcInstantTrade(const CTransaction& tx, int nBlock, const std::string& sender, const std::string& receiver, uint32_t property, uint64_t amount_forsale, uint32_t desired_property, uint64_t desired_value, unsigned int idx)
 {
 
-    uint64_t nValue;
+    uint64_t nvalue;
     int count = 0;
 
     if (property != 0) return false;
@@ -1017,9 +1017,9 @@ static bool HandleLtcInstantTrade(const CTransaction& tx, int nBlock, const std:
 
             if (msc_debug_handle_instant) PrintToLog("%s(): destination address: %s, dest address: %s \n", __func__, address, receiver);
 
-            nValue = static_cast<uint64_t>(tx.vout[n].nValue);
+            nvalue = static_cast<uint64_t>(tx.vout[n].nValue);
 
-            if (address == receiver && nValue >= amount_forsale)
+            if (address == receiver && nvalue >= amount_forsale)
             {
                 if (msc_debug_handle_instant) PrintToLog("%s: litecoins found..., receiver address: %s, litecoin amount: %d\n", __func__, receiver, tx.vout[n].nValue);
                 count++;
@@ -1047,7 +1047,7 @@ static bool HandleLtcInstantTrade(const CTransaction& tx, int nBlock, const std:
     }
 
     /** Adding LTC into volume */
-    arith_uint256 ltcsreceived_256t = ConvertTo256(static_cast<int64_t>(nValue));
+    arith_uint256 ltcsreceived_256t = ConvertTo256(static_cast<int64_t>(nvalue));
     uint64_t ltcsreceived = ConvertTo64(ltcsreceived_256t)/COIN;
     globalVolumeALL_LTC += ltcsreceived;
     const int64_t globalVolumeALL_LTCh = globalVolumeALL_LTC;
@@ -5785,17 +5785,23 @@ int64_t mastercore::LtcVolumen(uint32_t propertyId, int fblock, int sblock)
 {
     int64_t Amount = 0;
 
-    for(std::map<int, std::map<uint32_t,int64_t>>::iterator it = MapPropVolume.find(fblock); it != MapPropVolume.end();it++)
+
+    for(std::map<int, std::map<uint32_t,int64_t>>::iterator it = MapPropVolume.begin(); it != MapPropVolume.end();it++)
     {
         static int xblock = it->first;
 
-        if (xblock < sblock)
+        PrintToLog("%s(): actual block: %d\n", __func__, xblock);
+
+        if(xblock < fblock)
             continue;
+        else if(sblock < xblock)
+            break;
 
         std::map<uint32_t, int64_t> blockMap = it->second;
 
         std::map<uint32_t, int64_t>::iterator itt = blockMap.find(propertyId);
         Amount += itt->second;
+        PrintToLog("%s(): adding amount: %d, at block: %d\n",__func__, Amount, xblock);
 
     }
 
@@ -5808,12 +5814,14 @@ int64_t mastercore::MdexVolumen(uint32_t fproperty, uint32_t sproperty, int fblo
 {
     int64_t Amount = 0;
 
-    for(std::map<int, std::map<std::pair<uint32_t, uint32_t>, int64_t>>::iterator it = MapMetaVolume.find(fblock); it != MapMetaVolume.end();it++)
+    for(std::map<int, std::map<std::pair<uint32_t, uint32_t>, int64_t>>::iterator it = MapMetaVolume.begin(); it != MapMetaVolume.end();it++)
     {
         static int xblock = it->first;
 
-        if (xblock < sblock)
+        if(xblock < fblock)
             continue;
+        else if(sblock < xblock)
+            break;
 
         std::map<std::pair<uint32_t, uint32_t>, int64_t> blockMap = it->second;
 

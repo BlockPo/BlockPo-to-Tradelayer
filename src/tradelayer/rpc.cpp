@@ -2747,6 +2747,8 @@ UniValue tl_getdexvolume(const JSONRPCRequest& request)
     uint32_t fblock = request.params[1].get_int();
     uint32_t sblock = request.params[2].get_int();
 
+    if (fblock == 0 || sblock == 0)
+        throw JSONRPCError(RPC_INTERNAL_ERROR, "Block must be greater than 0");
 
     // geting data from map!
     int64_t amount = mastercore::LtcVolumen(propertyId, fblock, sblock);
