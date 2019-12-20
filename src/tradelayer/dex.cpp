@@ -648,6 +648,8 @@ int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addre
     // adding LTC volume added by this property
     MapPropVolume[block][propertyId] += amountPaid;
 
+    PrintToLog("%s(): amountPaid inside MapPropVolume: %d\n", __func__, amountPaid);
+
     // -------------------------------------------------------------------------
     if (msc_debug_dex) PrintToLog("amountPurchased: %d\n",amountPurchased);
     const int64_t amountRemaining = p_accept->getAcceptAmountRemaining(); // actual amount desired, in the Accept

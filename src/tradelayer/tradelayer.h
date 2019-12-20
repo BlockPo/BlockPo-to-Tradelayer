@@ -523,6 +523,9 @@ namespace mastercore
   // Map of LTC volume
   int64_t LtcVolumen(uint32_t propertyId, int fblock, int sblock);
 
+  //Map of MetaDEx volume
+  int64_t MdexVolumen(uint32_t fproperty, uint32_t sproperty, int fblock, int sblock);
+
 }
 
 #endif // TRADELAYER_TL_H

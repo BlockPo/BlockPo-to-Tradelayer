@@ -180,6 +180,9 @@ extern std::map<std::string,channel> channels_Map;
 /** Map of LTC Volume**/
 extern std::map<int, std::map<uint32_t,int64_t>> MapPropVolume;
 
+/** Map of properties */
+extern std::map<int, std::map<std::pair<uint32_t, uint32_t>, int64_t>> MapMetaVolume;
+
 using mastercore::StrToInt64;
 
 // indicate whether persistence is enabled at this point, or not
@@ -5782,11 +5785,11 @@ int64_t mastercore::LtcVolumen(uint32_t propertyId, int fblock, int sblock)
 {
     int64_t Amount = 0;
 
-    for(std::map<int, std::map<uint32_t,int64_t>>::iterator it = MapPropVolume.begin(); it != MapPropVolume.end();it++)
+    for(std::map<int, std::map<uint32_t,int64_t>>::iterator it = MapPropVolume.find(fblock); it != MapPropVolume.end();it++)
     {
         static int xblock = it->first;
 
-        if (xblock < fblock || xblock < sblock)
+        if (xblock < sblock)
             continue;
 
         std::map<uint32_t, int64_t> blockMap = it->second;
@@ -5800,6 +5803,32 @@ int64_t mastercore::LtcVolumen(uint32_t propertyId, int fblock, int sblock)
 
     return Amount;
 }
+
+int64_t mastercore::MdexVolumen(uint32_t fproperty, uint32_t sproperty, int fblock, int sblock)
+{
+    int64_t Amount = 0;
+
+    for(std::map<int, std::map<std::pair<uint32_t, uint32_t>, int64_t>>::iterator it = MapMetaVolume.find(fblock); it != MapMetaVolume.end();it++)
+    {
+        static int xblock = it->first;
+
+        if (xblock < sblock)
+            continue;
+
+        std::map<std::pair<uint32_t, uint32_t>, int64_t> blockMap = it->second;
+
+        std::map<std::pair<uint32_t, uint32_t>, int64_t>::iterator itt = blockMap.find(std::make_pair(fproperty,sproperty));
+        Amount += itt->second;
+
+    }
+
+    PrintToLog("%s(): final Amount: %d\n",__func__,Amount);
+
+    return Amount;
+}
+
+
+
 /**
  * @return The marker for class D transactions.
  */

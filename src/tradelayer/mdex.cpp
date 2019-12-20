@@ -56,6 +56,7 @@ extern std::map<uint32_t, std::map<uint32_t, std::vector<int64_t>>> denVWAPVecto
 extern std::map<uint32_t, std::map<uint32_t, int64_t>> VWAPMapSubVector;
 extern std::map<uint32_t, std::vector<int64_t>> mapContractAmountTimesPrice;
 extern std::map<uint32_t, std::vector<int64_t>> mapContractVolume;
+extern std::map<int, std::map<std::pair<uint32_t, uint32_t>, int64_t>> MapMetaVolume;
 extern std::map<uint32_t, int64_t> VWAPMapContracts;
 extern std::map<uint32_t, int64_t> cachefees;
 extern int n_cols;
@@ -1546,6 +1547,11 @@ MatchReturnType x_Trade(CMPMetaDEx* const pnew)
 		       FormatDivisibleMP(VWAPMapSubVector[pnew->getProperty()][pnew->getDesProperty()]));
 	    PrintToLog("\n********************************************************************************\n");
   }
+
+  /***********************************************************************************************/
+  // Adding volume into Map
+  (pnew->getProperty() < pnew->getDesProperty()) ? MapMetaVolume[pnew->getBlock()][std::make_pair(pnew->getProperty(),pnew->getDesProperty())] = buyer_amountGot : MapMetaVolume[pnew->getBlock()][std::make_pair(pnew->getDesProperty(),pnew->getProperty())] = seller_amountGot;
+
 	/***********************************************************************************************/
 	int64_t buyer_amountGotAfterFee = buyer_amountGot;
 	int64_t tradingFee = 0;

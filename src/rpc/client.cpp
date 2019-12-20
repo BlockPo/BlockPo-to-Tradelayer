@@ -311,10 +311,15 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_get_channelreserve", 1, "arg1" },
     { "tl_check_kyc", 1, "arg1" },
 
-    { "tl_getvolume_bypair", 0, "arg1" },
-    { "tl_getvolume_bypair", 1, "arg2" },
-    { "tl_getvolume_bypair", 2, "arg3" },
-    { "tl_getvolume_bypair", 3, "arg4" }
+    { "tl_getdexvolume", 0, "arg1" },
+    { "tl_getdexvolume", 1, "arg2" },
+    { "tl_getdexvolume", 2, "arg3" },
+
+    { "tl_getmdexvolume", 0, "arg1" },
+    { "tl_getmdexvolume", 1, "arg2" },
+    { "tl_getmdexvolume", 2, "arg3" },
+    { "tl_getmdexvolume", 3, "arg4" }
+
 
 
 };

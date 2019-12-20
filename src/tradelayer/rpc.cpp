@@ -2723,47 +2723,76 @@ UniValue tl_getvesting_supply(const JSONRPCRequest& request)
     return balanceObj;
 }
 
-UniValue tl_getvolume_bypair(const JSONRPCRequest& request)
+UniValue tl_getdexvolume(const JSONRPCRequest& request)
 {
     if (request.params.size() < 2)
         throw runtime_error(
-            "tl_getvolume_bypair \n"
-            "\nReturns the LTC volume traded between two properties (or in one contract) sort amount of blocks.\n"
+            "tl_getdexvolume \n"
+            "\nReturns the LTC volume in sort amount of blocks.\n"
             "\nArguments:\n"
-            "1. first property           (number, required) property or contract id \n"
-            "2. second property          (number, optional) property related with first one\n"
-            "3. first block              (number, required) older limit block\n"
-            "4. second block             (number, optional) newer limit block\n"
+            "1. property                 (number, required) property \n"
+            "2. first block              (number, required) older limit block\n"
+            "3. second block             (number, optional) newer limit block\n"
             "\nResult:\n"
             "{\n"
-            "  \"supply\" : \"n.nnnnnnnn\",   (number) the available balance of vesting tokens in the admin address\n"
+            "  \"supply\" : \"n.nnnnnnnn\",   (number) the LTC volume traded \n"
             "  \"blockheight\" : \"n.\",      (number) last block\n"
             "}\n"
             "\nExamples:\n"
-            + HelpExampleCli("tl_getvolume_bypair", "\"\"")
-            + HelpExampleRpc("tl_getvolume_bypair", "\"\",")
+            + HelpExampleCli("tl_getdexvolume", "\"\"")
+            + HelpExampleRpc("tl_getdexvolume", "\"\",")
         );
 
-    uint32_t fpropertyId = ParsePropertyId(request.params[0]);
-    uint32_t spropertyId = ParsePropertyId(request.params[1]);
+    uint32_t propertyId = ParsePropertyId(request.params[0]);
+    uint32_t fblock = request.params[1].get_int();
+    uint32_t sblock = request.params[2].get_int();
+
+
+    // geting data from map!
+    int64_t amount = mastercore::LtcVolumen(propertyId, fblock, sblock);
+
+    UniValue balanceObj(UniValue::VOBJ);
+
+    balanceObj.push_back(Pair("volume", FormatDivisibleMP(amount)));
+    balanceObj.push_back(Pair("blockheigh", FormatIndivisibleMP(GetHeight())));
+
+    return balanceObj;
+}
+
+UniValue tl_getmdexvolume(const JSONRPCRequest& request)
+{
+    if (request.params.size() < 2)
+        throw runtime_error(
+            "tl_getdexvolume \n"
+            "\nReturns the first token volume traded in sort amount of blocks.\n"
+            "\nArguments:\n"
+            "1. propertyA                 (number, required) first property index \n"
+            "2. propertyB                 (number, required) second property index \n"
+            "2. first block               (number, required) older limit block\n"
+            "4. second block              (number, optional) newer limit block\n"
+            "\nResult:\n"
+            "{\n"
+            "  \"volume\" : \"n.nnnnnnnn\",   (number) the available volume (of property A) traded\n"
+            "  \"blockheight\" : \"n.\",      (number) last block\n"
+            "}\n"
+            "\nExamples:\n"
+            + HelpExampleCli("tl_getdexvolume", "\"\"")
+            + HelpExampleRpc("tl_getdexvolume", "\"\",")
+        );
+
+    uint32_t fproperty = ParsePropertyId(request.params[0]);
+    uint32_t sproperty = ParsePropertyId(request.params[1]);
     uint32_t fblock = request.params[2].get_int();
     uint32_t sblock = request.params[3].get_int();
 
 
     // geting data from map!
-
-
-      // fpropertyId = ParsePropertyId(request.params[0]);
-      // spropertyId = ParsePropertyId(request.params[1]);
-      // sblock = request.params[3].get_int();
-      // sblock = request.params[4].get_int();
-      // flag = ParseBinary(request.params[5]);
-
+    int64_t amount = mastercore::MdexVolumen(fproperty, sproperty,fblock, sblock);
 
     UniValue balanceObj(UniValue::VOBJ);
 
-    // balanceObj.push_back(Pair("volume", FormatDivisibleMP(amount)));
-    // balanceObj.push_back(Pair("blockheigh", FormatIndivisibleMP(GetHeight())));
+    balanceObj.push_back(Pair("volume", FormatDivisibleMP(amount)));
+    balanceObj.push_back(Pair("blockheigh", FormatIndivisibleMP(GetHeight())));
 
     return balanceObj;
 }
@@ -2816,7 +2845,8 @@ static const CRPCCommand commands[] =
   { "trade layer (data retieval)" , "tl_getalltxonblock",           &tl_getalltxonblock,            {} },
   { "trade layer (data retieval)" , "tl_check_withdrawals",         &tl_check_withdrawals,          {} },
   { "trade layer (data retieval)" , "tl_getvesting_supply",         &tl_getvesting_supply,          {} },
-  { "trade layer (data retieval)" , "tl_getvolume_bypair",          &tl_getvolume_bypair,           {} }
+  { "trade layer (data retieval)" , "tl_getdexvolume",              &tl_getdexvolume,               {} },
+  { "trade layer (data retieval)" , "tl_getmdexvolume",              &tl_getmdexvolume,               {} }
 };
 
 void RegisterTLDataRetrievalRPCCommands(CRPCTable &tableRPC)
