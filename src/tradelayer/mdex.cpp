@@ -1551,6 +1551,7 @@ MatchReturnType x_Trade(CMPMetaDEx* const pnew)
   /***********************************************************************************************/
   // Adding volume into Map
   (pnew->getProperty() < pnew->getDesProperty()) ? MapMetaVolume[pnew->getBlock()][std::make_pair(pnew->getProperty(),pnew->getDesProperty())] = buyer_amountGot : MapMetaVolume[pnew->getBlock()][std::make_pair(pnew->getDesProperty(),pnew->getProperty())] = seller_amountGot;
+  PrintToLog("%s(): Adding volume into map: Property: %d, Desproperty : %d, buyeramountgot : %d\n", __func__, pnew->getProperty(), pnew->getDesProperty(), buyer_amountGot);
 
 	/***********************************************************************************************/
 	int64_t buyer_amountGotAfterFee = buyer_amountGot;

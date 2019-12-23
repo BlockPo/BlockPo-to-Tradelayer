@@ -2763,7 +2763,7 @@ UniValue tl_getdexvolume(const JSONRPCRequest& request)
 
 UniValue tl_getmdexvolume(const JSONRPCRequest& request)
 {
-    if (request.params.size() < 2)
+    if (request.params.size() < 3)
         throw runtime_error(
             "tl_getdexvolume \n"
             "\nReturns the first token volume traded in sort amount of blocks.\n"
@@ -2787,6 +2787,11 @@ UniValue tl_getmdexvolume(const JSONRPCRequest& request)
     uint32_t fblock = request.params[2].get_int();
     uint32_t sblock = request.params[3].get_int();
 
+    if (fblock == 0 || sblock == 0)
+        throw JSONRPCError(RPC_INTERNAL_ERROR, "Block must be greater than 0");
+
+    if (fproperty <= sproperty )
+            throw JSONRPCError(RPC_INTERNAL_ERROR, "first property index must be the smaller");
 
     // geting data from map!
     int64_t amount = mastercore::MdexVolumen(fproperty, sproperty,fblock, sblock);
