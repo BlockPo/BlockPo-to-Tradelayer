@@ -67,6 +67,7 @@ extern uint64_t marketP[NPTYPES];
 extern std::map<uint32_t, std::map<std::string, double>> addrs_upnlc;
 extern std::map<std::string, int64_t> sum_upnls;
 extern std::map<uint32_t, int64_t> cachefees;
+extern std::map<int, std::map<uint32_t,int64_t>> MapPropVolume;
 extern volatile int64_t globalVolumeALL_LTC;
 
 using mastercore::StrToInt64;
@@ -2628,8 +2629,6 @@ UniValue tl_getcache(const JSONRPCRequest& request)
 
     balanceObj.push_back(Pair("amount", FormatByType(amount,1)));
 
-
-
     return balanceObj;
 }
 
@@ -2724,6 +2723,87 @@ UniValue tl_getvesting_supply(const JSONRPCRequest& request)
     return balanceObj;
 }
 
+UniValue tl_getdexvolume(const JSONRPCRequest& request)
+{
+    if (request.params.size() < 2)
+        throw runtime_error(
+            "tl_getdexvolume \n"
+            "\nReturns the LTC volume in sort amount of blocks.\n"
+            "\nArguments:\n"
+            "1. property                 (number, required) property \n"
+            "2. first block              (number, required) older limit block\n"
+            "3. second block             (number, optional) newer limit block\n"
+            "\nResult:\n"
+            "{\n"
+            "  \"supply\" : \"n.nnnnnnnn\",   (number) the LTC volume traded \n"
+            "  \"blockheight\" : \"n.\",      (number) last block\n"
+            "}\n"
+            "\nExamples:\n"
+            + HelpExampleCli("tl_getdexvolume", "\"\"")
+            + HelpExampleRpc("tl_getdexvolume", "\"\",")
+        );
+
+    uint32_t propertyId = ParsePropertyId(request.params[0]);
+    uint32_t fblock = request.params[1].get_int();
+    uint32_t sblock = request.params[2].get_int();
+
+    if (fblock == 0 || sblock == 0)
+        throw JSONRPCError(RPC_INTERNAL_ERROR, "Block must be greater than 0");
+
+    // geting data from map!
+    int64_t amount = mastercore::LtcVolumen(propertyId, fblock, sblock);
+
+    UniValue balanceObj(UniValue::VOBJ);
+
+    balanceObj.push_back(Pair("volume", FormatDivisibleMP(amount)));
+    balanceObj.push_back(Pair("blockheigh", FormatIndivisibleMP(GetHeight())));
+
+    return balanceObj;
+}
+
+UniValue tl_getmdexvolume(const JSONRPCRequest& request)
+{
+    if (request.params.size() < 3)
+        throw runtime_error(
+            "tl_getdexvolume \n"
+            "\nReturns the first token volume traded in sort amount of blocks.\n"
+            "\nArguments:\n"
+            "1. propertyA                 (number, required) first property index \n"
+            "2. propertyB                 (number, required) second property index \n"
+            "2. first block               (number, required) older limit block\n"
+            "4. second block              (number, optional) newer limit block\n"
+            "\nResult:\n"
+            "{\n"
+            "  \"volume\" : \"n.nnnnnnnn\",   (number) the available volume (of property A) traded\n"
+            "  \"blockheight\" : \"n.\",      (number) last block\n"
+            "}\n"
+            "\nExamples:\n"
+            + HelpExampleCli("tl_getdexvolume", "\"\"")
+            + HelpExampleRpc("tl_getdexvolume", "\"\",")
+        );
+
+    uint32_t fproperty = ParsePropertyId(request.params[0]);
+    uint32_t sproperty = ParsePropertyId(request.params[1]);
+    uint32_t fblock = request.params[2].get_int();
+    uint32_t sblock = request.params[3].get_int();
+
+    if (fblock == 0 || sblock == 0)
+        throw JSONRPCError(RPC_INTERNAL_ERROR, "Block must be greater than 0");
+
+    if (fproperty <= sproperty )
+            throw JSONRPCError(RPC_INTERNAL_ERROR, "first property index must be the smaller");
+
+    // geting data from map!
+    int64_t amount = mastercore::MdexVolumen(fproperty, sproperty,fblock, sblock);
+
+    UniValue balanceObj(UniValue::VOBJ);
+
+    balanceObj.push_back(Pair("volume", FormatDivisibleMP(amount)));
+    balanceObj.push_back(Pair("blockheigh", FormatIndivisibleMP(GetHeight())));
+
+    return balanceObj;
+}
+
 static const CRPCCommand commands[] =
 { //  category                             name                            actor (function)               okSafeMode
   //  ------------------------------------ ------------------------------- ------------------------------ ----------
@@ -2771,7 +2851,9 @@ static const CRPCCommand commands[] =
   { "trade layer (data retieval)" , "tl_list_oracles",              &tl_list_oracles,               {} },
   { "trade layer (data retieval)" , "tl_getalltxonblock",           &tl_getalltxonblock,            {} },
   { "trade layer (data retieval)" , "tl_check_withdrawals",         &tl_check_withdrawals,          {} },
-  { "trade layer (data retieval)" , "tl_getvesting_supply",         &tl_getvesting_supply,          {} }
+  { "trade layer (data retieval)" , "tl_getvesting_supply",         &tl_getvesting_supply,          {} },
+  { "trade layer (data retieval)" , "tl_getdexvolume",              &tl_getdexvolume,               {} },
+  { "trade layer (data retieval)" , "tl_getmdexvolume",              &tl_getmdexvolume,               {} }
 };
 
 void RegisterTLDataRetrievalRPCCommands(CRPCTable &tableRPC)

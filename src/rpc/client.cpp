@@ -278,10 +278,6 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_new_id_registration", 5, "arg4" },
     { "tl_new_id_registration", 6, "arg5" },
     { "tl_new_id_registration", 7, "arg6" },
-    // { "tl_send_dex_payment", 2, "arg2" },
-
-
-
 
     /* Trade Layer - data retrieval calls */
     { "tl_setautocommit", 0, "arg0" },
@@ -313,7 +309,18 @@ static const CRPCConvertParam vRPCConvertParams[] =
     {"tl_getaverage_entry",1,"arg1" },
     { "tl_getcache", 0, "arg0" }, // NOTE: only to test persistence
     { "tl_get_channelreserve", 1, "arg1" },
-    { "tl_check_kyc", 1, "arg1" }
+    { "tl_check_kyc", 1, "arg1" },
+
+    { "tl_getdexvolume", 0, "arg1" },
+    { "tl_getdexvolume", 1, "arg2" },
+    { "tl_getdexvolume", 2, "arg3" },
+
+    { "tl_getmdexvolume", 0, "arg1" },
+    { "tl_getmdexvolume", 1, "arg2" },
+    { "tl_getmdexvolume", 2, "arg3" },
+    { "tl_getmdexvolume", 3, "arg4" }
+
+
 
 };
 

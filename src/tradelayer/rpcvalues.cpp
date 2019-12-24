@@ -358,3 +358,12 @@ uint32_t ParseContractDen(const UniValue& value)
 
     return static_cast<uint32_t>(Nvalue);
 }
+
+uint8_t ParseBinary(const UniValue& value)
+{
+    int64_t action = value.get_int64();
+    if (action != 0 && action != 1) {
+        throw JSONRPCError(RPC_TYPE_ERROR, "Invalid action (0 = natives, 1 = oracles)");
+    }
+    return static_cast<uint8_t>(action);
+}

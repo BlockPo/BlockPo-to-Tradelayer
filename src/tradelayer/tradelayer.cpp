@@ -177,6 +177,12 @@ extern std::map<std::string,vector<withdrawalAccepted>> withdrawal_Map;
 /** Map of active channels**/
 extern std::map<std::string,channel> channels_Map;
 
+/** Map of LTC Volume**/
+extern std::map<int, std::map<uint32_t,int64_t>> MapPropVolume;
+
+/** Map of properties */
+extern std::map<int, std::map<std::pair<uint32_t, uint32_t>, int64_t>> MapMetaVolume;
+
 using mastercore::StrToInt64;
 
 // indicate whether persistence is enabled at this point, or not
@@ -960,7 +966,7 @@ int ParseTransaction(const CTransaction& tx, int nBlock, unsigned int idx, CMPTr
  */
 static bool HandleDExPayments(const CTransaction& tx, int nBlock, const std::string& strSender)
 {
-    uint64_t nValue;
+    uint64_t nvalue;
     int count = 0;
 
     for (unsigned int n = 0; n < tx.vout.size(); ++n)
@@ -977,14 +983,14 @@ static bool HandleDExPayments(const CTransaction& tx, int nBlock, const std::str
 
             if (msc_debug_handle_dex_payment) PrintToLog("payment #%d %s %s\n", count, address, FormatIndivisibleMP(tx.vout[n].nValue));
 
-            nValue = static_cast<uint64_t>(tx.vout[n].nValue);
+            nvalue = static_cast<uint64_t>(tx.vout[n].nValue);
             // check everything and pay BTC for the property we are buying here...
             if (0 == DEx_payment(tx.GetHash(), n, address, strSender, tx.vout[n].nValue, nBlock)) ++count;
         }
     }
 
     /** Adding LTC into volume */
-    arith_uint256 ltcsreceived_256t = ConvertTo256(static_cast<int64_t>(nValue));
+    arith_uint256 ltcsreceived_256t = ConvertTo256(static_cast<int64_t>(nvalue));
     uint64_t ltcsreceived = ConvertTo64(ltcsreceived_256t)/COIN;
     globalVolumeALL_LTC += ltcsreceived;
     const int64_t globalVolumeALL_LTCh = globalVolumeALL_LTC;
@@ -997,7 +1003,7 @@ static bool HandleDExPayments(const CTransaction& tx, int nBlock, const std::str
 static bool HandleLtcInstantTrade(const CTransaction& tx, int nBlock, const std::string& sender, const std::string& receiver, uint32_t property, uint64_t amount_forsale, uint32_t desired_property, uint64_t desired_value, unsigned int idx)
 {
 
-    uint64_t nValue;
+    uint64_t nvalue;
     int count = 0;
 
     if (property != 0) return false;
@@ -1011,9 +1017,9 @@ static bool HandleLtcInstantTrade(const CTransaction& tx, int nBlock, const std:
 
             if (msc_debug_handle_instant) PrintToLog("%s(): destination address: %s, dest address: %s \n", __func__, address, receiver);
 
-            nValue = static_cast<uint64_t>(tx.vout[n].nValue);
+            nvalue = static_cast<uint64_t>(tx.vout[n].nValue);
 
-            if (address == receiver && nValue >= amount_forsale)
+            if (address == receiver && nvalue >= amount_forsale)
             {
                 if (msc_debug_handle_instant) PrintToLog("%s: litecoins found..., receiver address: %s, litecoin amount: %d\n", __func__, receiver, tx.vout[n].nValue);
                 count++;
@@ -1041,7 +1047,7 @@ static bool HandleLtcInstantTrade(const CTransaction& tx, int nBlock, const std:
     }
 
     /** Adding LTC into volume */
-    arith_uint256 ltcsreceived_256t = ConvertTo256(static_cast<int64_t>(nValue));
+    arith_uint256 ltcsreceived_256t = ConvertTo256(static_cast<int64_t>(nvalue));
     uint64_t ltcsreceived = ConvertTo64(ltcsreceived_256t)/COIN;
     globalVolumeALL_LTC += ltcsreceived;
     const int64_t globalVolumeALL_LTCh = globalVolumeALL_LTC;
@@ -1496,6 +1502,45 @@ int input_mp_mdexorder_string(const std::string& s)
     return 0;
 }
 
+int input_mp_dexvolume_string(const std::string& s)
+{
+    std::vector<std::string> vstr;
+    boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
+
+    int block = boost::lexical_cast<int>(vstr[0]);
+    uint32_t propertyId = boost::lexical_cast<int>(vstr[1]);
+    int64_t amount = boost::lexical_cast<int>(vstr[2]);
+
+    std::map<int, std::map<uint32_t,int64_t>>::iterator it = MapPropVolume.find(block);
+
+    std::map<uint32_t,int64_t> pMap = it->second;
+
+    if(!pMap.insert(std::make_pair(propertyId,amount)).second) return -1;
+
+    return 0;
+
+}
+
+int input_mp_mdexvolume_string(const std::string& s)
+{
+    std::vector<std::string> vstr;
+    boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
+
+    int block = boost::lexical_cast<int>(vstr[0]);
+    uint32_t property1 = boost::lexical_cast<int>(vstr[1]);
+    uint32_t property2 = boost::lexical_cast<int>(vstr[2]);
+    int64_t amount = boost::lexical_cast<int>(vstr[3]);
+
+    std::map<int, std::map<std::pair<uint32_t, uint32_t>, int64_t>>::iterator it = MapMetaVolume.find(block);
+
+    std::map<std::pair<uint32_t, uint32_t>, int64_t> pMap = it->second;
+
+    pMap[std::make_pair(property1,property2)] = amount;
+
+    return 0;
+
+}
+
 static int msc_file_load(const string &filename, int what, bool verifyHash = false)
 {
   int lines = 0;
@@ -1552,6 +1597,10 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
         break;
 
     case FILETYPE_ACTIVE_CHANNELS:
+        inputLineFunc = input_activechannels_string;
+        break;
+
+    case FILETYPE_DEX_VOLUME:
         inputLineFunc = input_activechannels_string;
         break;
 
@@ -1638,6 +1687,8 @@ static char const * const statePrefix[NUM_FILETYPES] = {
     "cachefees",
     "withdrawals",
     "activechannels",
+    "dexvolume",
+    "mdexvolume",
 
 };
 
@@ -1961,15 +2012,81 @@ static int write_mp_withdrawals(std::ofstream& file, SHA256_CTX* shaCtx)
 /**Saving map of active channels**/
 static int write_mp_active_channels(std::ofstream& file, SHA256_CTX* shaCtx)
 {
+  std::string lineOut;
+
+  for (std::map<std::string,channel>::iterator it = channels_Map.begin(); it != channels_Map.end(); ++it)
+  {
+      // decompose the key for address
+      std::string chnAddr = it->first;
+      channel chnObj = it->second;
+
+      lineOut.append(strprintf("%s,%s,%s,%s,%d,%d", chnAddr, chnObj.multisig, chnObj.first, chnObj.second, chnObj.expiry_height, chnObj.last_exchange_block));
+
+  }
+
+  // add the line to the hash
+  SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
+
+  // write the line
+  file << lineOut << endl;
+
+  return 0;
+}
+
+/** Saving DexMap volume **/
+static int write_mp_dexvolume(std::ofstream& file, SHA256_CTX* shaCtx)
+{
+  std::string lineOut;
+
+  for(std::map<int, std::map<uint32_t,int64_t>>::iterator it = MapPropVolume.begin(); it != MapPropVolume.end();it++)
+  {
+      // decompose the key for address
+      const uint32_t block = it->first;
+
+      std::map<uint32_t,int64_t> pMap = it->second;
+
+      for(std::map<uint32_t,int64_t>::iterator itt = pMap.begin(); itt != pMap.end(); ++itt)
+      {
+          const uint32_t propertyId = itt->first;
+          const int64_t amount = itt->second;
+          lineOut.append(strprintf("%d,%d,%d", block, propertyId, amount));
+
+      }
+  }
+
+  // add the line to the hash
+  SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
+
+  // write the line
+  file << lineOut << endl;
+
+  return 0;
+}
+
+/** Saving MDEx Map volume **/
+static int write_mp_mdexvolume(std::ofstream& file, SHA256_CTX* shaCtx)
+{
     std::string lineOut;
 
-    for (std::map<std::string,channel>::iterator it = channels_Map.begin(); it != channels_Map.end(); ++it)
+    for(std::map<int, std::map<std::pair<uint32_t, uint32_t>, int64_t>>::iterator it = MapMetaVolume.begin(); it != MapMetaVolume.end();it++)
     {
         // decompose the key for address
-        std::string chnAddr = it->first;
-        channel chnObj = it->second;
+        const uint32_t block = it->first;
 
-        lineOut.append(strprintf("%s,%s,%s,%s,%d,%d", chnAddr, chnObj.multisig, chnObj.first, chnObj.second, chnObj.expiry_height, chnObj.last_exchange_block));
+        std::map<std::pair<uint32_t, uint32_t>, int64_t> pMap = it->second;
+
+        for (const auto &p : pMap)
+        {
+            const std::pair<uint32_t, uint32_t> pIr = p.first;
+
+            const uint32_t property1 = pIr.first;
+            const uint32_t property2 = pIr.second;
+            const int64_t amount = p.second;
+
+            lineOut.append(strprintf("%d,%d,%d,%d", block, property1, property2, amount));
+
+        }
+
 
     }
 
@@ -1980,6 +2097,7 @@ static int write_mp_active_channels(std::ofstream& file, SHA256_CTX* shaCtx)
     file << lineOut << endl;
 
     return 0;
+
 }
 
 static int write_state_file( CBlockIndex const *pBlockIndex, int what )
@@ -2035,6 +2153,13 @@ static int write_state_file( CBlockIndex const *pBlockIndex, int what )
   case FILETYPE_ACTIVE_CHANNELS:
       result = write_mp_active_channels(file, &shaCtx);
       break;
+
+  case FILETYPE_DEX_VOLUME:
+      result = write_mp_dexvolume(file, &shaCtx);
+      break;
+
+  case FILETYPE_MDEX_VOLUME:
+      result = write_mp_mdexvolume(file, &shaCtx);
 
   }
 
@@ -2129,6 +2254,7 @@ int mastercore_save_state( CBlockIndex const *pBlockIndex )
     write_state_file(pBlockIndex, FILETYPE_CACHEFEES);
     write_state_file(pBlockIndex, FILETYPE_WITHDRAWALS);
     write_state_file(pBlockIndex, FILETYPE_ACTIVE_CHANNELS);
+    write_state_file(pBlockIndex, FILETYPE_DEX_VOLUME);
 
     // clean-up the directory
     prune_state_files(pBlockIndex);
@@ -5774,6 +5900,64 @@ bool mastercore::Instant_x_Trade(const uint256& txid, uint8_t tradingAction, std
 
   return true;
 }
+
+int64_t mastercore::LtcVolumen(uint32_t propertyId, int fblock, int sblock)
+{
+    int64_t Amount = 0;
+
+
+    for(std::map<int, std::map<uint32_t,int64_t>>::iterator it = MapPropVolume.begin(); it != MapPropVolume.end();it++)
+    {
+        static int xblock = it->first;
+
+        PrintToLog("%s(): actual block: %d\n", __func__, xblock);
+
+        if(xblock < fblock)
+            continue;
+        else if(sblock < xblock)
+            break;
+
+        std::map<uint32_t, int64_t> blockMap = it->second;
+
+        std::map<uint32_t, int64_t>::iterator itt = blockMap.find(propertyId);
+        Amount += itt->second;
+        PrintToLog("%s(): adding amount: %d, at block: %d\n",__func__, Amount, xblock);
+
+    }
+
+    PrintToLog("%s(): final Amount: %d\n",__func__,Amount);
+
+    return Amount;
+}
+
+int64_t mastercore::MdexVolumen(uint32_t fproperty, uint32_t sproperty, int fblock, int sblock)
+{
+    int64_t Amount = 0;
+
+    for(std::map<int, std::map<std::pair<uint32_t, uint32_t>, int64_t>>::iterator it = MapMetaVolume.begin(); it != MapMetaVolume.end();it++)
+    {
+        static int xblock = it->first;
+
+        PrintToLog("%s(): actual block: %d\n", __func__, xblock);
+
+
+        if(xblock < fblock)
+            continue;
+        else if(sblock < xblock)
+            break;
+
+        std::map<std::pair<uint32_t, uint32_t>, int64_t> blockMap = it->second;
+
+        std::map<std::pair<uint32_t, uint32_t>, int64_t>::iterator itt = blockMap.find(std::make_pair(fproperty,sproperty));
+        Amount += itt->second;
+
+    }
+
+    PrintToLog("%s(): final Amount: %d\n",__func__,Amount);
+
+    return Amount;
+}
+
 
 
 /**

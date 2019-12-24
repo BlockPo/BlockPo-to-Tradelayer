@@ -3565,11 +3565,11 @@ int CMPTransaction::logicMath_TradeOffer()
       return (PKT_ERROR_TRADEOFFER -22);
     }
 
-    if(!t_tradelistdb->checkKYCRegister(sender,4))
-    {
-        PrintToLog("%s: tx disable from kyc register!\n",__func__);
-        return (PKT_ERROR_KYC -10);
-    }
+    // if(!t_tradelistdb->checkKYCRegister(sender,4))
+    // {
+    //     PrintToLog("%s: tx disable from kyc register!\n",__func__);
+    //     return (PKT_ERROR_KYC -10);
+    // }
 
     if (MAX_INT_8_BYTES < nValue) {
         PrintToLog("%s(): rejected: value out of range or zero: %d\n", __func__, nValue);
@@ -3758,11 +3758,11 @@ int CMPTransaction::logicMath_AcceptOfferBTC()
     PrintToLog("%s(): rejected: value out of range or zero: %d\n", __func__, nValue);
   }
 
-  if(!t_tradelistdb->checkKYCRegister(sender,4) || !t_tradelistdb->checkKYCRegister(receiver,4))
-  {
-      PrintToLog("%s: tx disable from kyc register!\n",__func__);
-      return (PKT_ERROR_KYC -10);
-  }
+  // if(!t_tradelistdb->checkKYCRegister(sender,4) || !t_tradelistdb->checkKYCRegister(receiver,4))
+  // {
+  //     PrintToLog("%s: tx disable from kyc register!\n",__func__);
+  //     return (PKT_ERROR_KYC -10);
+  // }
 
   // the min fee spec requirement is checked in the following function
   int rc = DEx_acceptCreate(sender, receiver, propertyId, nValue, block, tx_fee_paid, &nNewValue);

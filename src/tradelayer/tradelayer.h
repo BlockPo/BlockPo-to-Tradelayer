@@ -140,6 +140,8 @@ enum FILETYPES {
   FILETYPE_CACHEFEES,
   FILETYPE_WITHDRAWALS,
   FILETYPE_ACTIVE_CHANNELS,
+  FILETYPE_DEX_VOLUME,
+  FILETYPE_MDEX_VOLUME,
   NUM_FILETYPES
 };
 
@@ -519,6 +521,12 @@ namespace mastercore
 
   //Fees for contract instant trades
   bool ContInst_Fees(const std::string& firstAddr,const std::string& secondAddr,const std::string& channelAddr, int64_t amountToReserve,uint16_t type, uint32_t colateral);
+
+  // Map of LTC volume
+  int64_t LtcVolumen(uint32_t propertyId, int fblock, int sblock);
+
+  //Map of MetaDEx volume
+  int64_t MdexVolumen(uint32_t fproperty, uint32_t sproperty, int fblock, int sblock);
 
 }
 

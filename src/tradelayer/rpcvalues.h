@@ -52,5 +52,6 @@ uint8_t ParseDExPaymentWindow(const UniValue& value);
 int64_t ParseDExFee(const UniValue& value);
 uint8_t ParseDExAction(const UniValue& value);
 uint64_t ParsePercent(const UniValue& value, bool isDivisible);
+uint8_t ParseBinary(const UniValue& value);
 
 #endif // TRADELAYER_RPCVALUES_H
