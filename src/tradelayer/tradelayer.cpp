@@ -2068,20 +2068,20 @@ static int write_mp_mdexvolume(std::ofstream& file, SHA256_CTX* shaCtx)
 {
     std::string lineOut;
 
-    for(std::map<int, std::map<std::pair<uint32_t, uint32_t>, int64_t>>::iterator it; it = MapMetaVolume.begin(); it != MapMetaVolume.end();it++)
+    for(std::map<int, std::map<std::pair<uint32_t, uint32_t>, int64_t>>::iterator it = MapMetaVolume.begin(); it != MapMetaVolume.end();it++)
     {
         // decompose the key for address
         const uint32_t block = it->first;
 
         std::map<std::pair<uint32_t, uint32_t>, int64_t> pMap = it->second;
 
-        for (std::map<std::pair<uint32_t, uint32_t>, int64_t>::iterator itt; itt = pMap.begin(); itt != pMap.end(), itt++)
+        for (const auto &p : pMap)
         {
-            const std::pair<uint32_t, uint32_t> pIr;
+            const std::pair<uint32_t, uint32_t> pIr = p.first;
 
             const uint32_t property1 = pIr.first;
             const uint32_t property2 = pIr.second;
-            const int64_t amount = itt->second;
+            const int64_t amount = p.second;
 
             lineOut.append(strprintf("%d,%d,%d,%d", block, property1, property2, amount));
 
