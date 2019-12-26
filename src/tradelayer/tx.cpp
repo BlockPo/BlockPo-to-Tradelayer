@@ -476,13 +476,13 @@ bool CMPTransaction::interpret_CreatePropertyVariable()
     memcpy(data, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(data)-1)); j++;
     i = i + strlen(name) + strlen(url) + strlen(data) + 3; // data sizes + 3 null terminators
 
-    std::vector<uint8_t> vecPropertyIdDesiredBytes = GetNextVarIntBytes(i);
+    // std::vector<uint8_t> vecPropertyIdDesiredBytes = GetNextVarIntBytes(i);
     std::vector<uint8_t> vecAmountPerUnitBytes = GetNextVarIntBytes(i);
-    std::vector<uint8_t> vecDeadlineBytes = GetNextVarIntBytes(i);
-    memcpy(&early_bird, &pkt[i], 1);
-    i++;
-    memcpy(&percentage, &pkt[i], 1);
-    i++;
+    // std::vector<uint8_t> vecDeadlineBytes = GetNextVarIntBytes(i);
+    // memcpy(&early_bird, &pkt[i], 1);
+    // i++;
+    // memcpy(&percentage, &pkt[i], 1);
+    // i++;
 
     if (!vecPropTypeBytes.empty()) {
         prop_type = DecompressInteger(vecPropTypeBytes);
@@ -492,18 +492,6 @@ bool CMPTransaction::interpret_CreatePropertyVariable()
         prev_prop_id = DecompressInteger(vecPrevPropIdBytes);
     } else return false;
 
-    if (!vecPropertyIdDesiredBytes.empty()) {
-        property = DecompressInteger(vecPropertyIdDesiredBytes);
-    } else return false;
-
-    if (!vecAmountPerUnitBytes.empty()) {
-        nValue = DecompressInteger(vecAmountPerUnitBytes);
-        nNewValue = nValue;
-    } else return false;
-
-    if (!vecDeadlineBytes.empty()) {
-        deadline = DecompressInteger(vecDeadlineBytes);
-    } else return false;
 
     if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly) {
         PrintToLog("\t       ecosystem: %d\n", ecosystem);
@@ -514,9 +502,6 @@ bool CMPTransaction::interpret_CreatePropertyVariable()
         PrintToLog("\t            data: %s\n", data);
         PrintToLog("\tproperty desired: %d (%s)\n", property, strMPProperty(property));
         PrintToLog("\t tokens per unit: %s\n", FormatByType(nValue, prop_type));
-        PrintToLog("\t        deadline: %s (%x)\n", DateTimeStrFormat("%Y-%m-%d %H:%M:%S", deadline), deadline);
-        PrintToLog("\tearly bird bonus: %d\n", early_bird);
-        PrintToLog("\t    issuer bonus: %d\n", percentage);
     }
 
     return true;
@@ -2687,6 +2672,7 @@ int CMPTransaction::logicMath_GrantTokens()
   dataPt.push_back(0);
   sp.historicalData.insert(std::make_pair(txid, dataPt));
   sp.update_block = blockHash;
+  sp.num_tokens += nValue; // updating created tokens
 
   // Persist the number of granted tokens
   assert(_my_sps->updateSP(property, sp));
@@ -3514,10 +3500,11 @@ int CMPTransaction::logicMath_RedemptionPegged()
             sender,
             contractId);
            return (PKT_ERROR_SEND -24);
-        } else {
-           collateralId = sp.collateral_currency;
-           notSize = static_cast<int64_t>(sp.notional_size);
         }
+
+        collateralId = sp.collateral_currency;
+        notSize = static_cast<int64_t>(sp.notional_size);
+        sp.num_tokens -= amount;
     }
 
     arith_uint256 conNeeded = ConvertTo256(amount) / ConvertTo256(notSize);
@@ -4377,12 +4364,8 @@ int CMPTransaction::logicMath_Instant_Trade()
 
       if (msc_debug_instant_trade) PrintToLog("expiry height after update: %d\n",chn.expiry_height);
 
-      if (difference < dayblocks)
-      {
-          // updating expiry_height
-          chn.expiry_height += difference;
-
-      }
+      // updating expiry_height
+      if (difference < dayblocks) chn.expiry_height += difference;
 
 
   } else {
@@ -4753,7 +4736,8 @@ int CMPTransaction::logicMath_DEx_Payment()
               block);
       return (PKT_ERROR_METADEX -22);
   }
-  PrintToLog("%s(): inside the function\n",__func__);
+  
+  // PrintToLog("%s(): inside the function\n",__func__);
 
   rc = 2;
 

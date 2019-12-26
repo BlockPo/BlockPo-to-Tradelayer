@@ -2749,8 +2749,8 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   const CConsensusParams &params = ConsensusParams();
   vestingActivationBlock = params.MSC_VESTING_BLOCK;
 
-  // if (static_cast<int>(pBlockIndex->nHeight) == params.MSC_VESTING_BLOCK) creatingVestingTokens( GetHeight());
-  if (static_cast<int>(pBlockIndex->nHeight) == 200) creatingVestingTokens( GetHeight());
+  if (static_cast<int>(pBlockIndex->nHeight) == params.MSC_VESTING_BLOCK) creatingVestingTokens( GetHeight());
+
 
   int deadline = sp.init_block + expirationBlock;
   if ( tradeBlock != 0 && deadline != 0 ) checkExpiration = tradeBlock == deadline ? 1 : 0;
