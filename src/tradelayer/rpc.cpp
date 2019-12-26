@@ -2804,6 +2804,49 @@ UniValue tl_getmdexvolume(const JSONRPCRequest& request)
     return balanceObj;
 }
 
+UniValue tl_getcurrencytotal(const JSONRPCRequest& request)
+{
+    if (request.params.size() != 1)
+        throw runtime_error(
+            "tl_getcurrencyvolume \n"
+            "\nGet total outstanding supply for token \n"
+            "\nArguments:\n"
+            "1. propertyId                 (number, required) propertyId of token \n"
+            "\nResult:\n"
+            "{\n"
+            "  \"total:\" : \"n.nnnnnnnn\",   (number) the amount created for token\n"
+            "  \"blockheight\" : \"n.\",      (number) last block\n"
+            "}\n"
+            "\nExamples:\n"
+            + HelpExampleCli("tl_getcurrencytotal", "\"\"")
+            + HelpExampleRpc("tl_getcurrencytotal", "\"\",")
+        );
+
+    uint32_t propertyId = ParsePropertyId(request.params[0]);
+
+    RequireNotContract(propertyId);
+
+    CMPSPInfo::Entry sp;
+    {
+        LOCK(cs_tally);
+        if (!_my_sps->getSP(propertyId, sp)) {
+            throw JSONRPCError(RPC_INVALID_PARAMETER, "Property identifier does not exist");
+        }
+    }
+
+    // geting data !
+    int64_t amount = sp.num_tokens;
+
+    UniValue balanceObj(UniValue::VOBJ);
+
+    balanceObj.push_back(Pair("total", FormatDivisibleMP(amount)));
+    balanceObj.push_back(Pair("blockheigh", FormatIndivisibleMP(GetHeight())));
+
+    return balanceObj;
+}
+
+
+
 static const CRPCCommand commands[] =
 { //  category                             name                            actor (function)               okSafeMode
   //  ------------------------------------ ------------------------------- ------------------------------ ----------
@@ -2853,7 +2896,8 @@ static const CRPCCommand commands[] =
   { "trade layer (data retieval)" , "tl_check_withdrawals",         &tl_check_withdrawals,          {} },
   { "trade layer (data retieval)" , "tl_getvesting_supply",         &tl_getvesting_supply,          {} },
   { "trade layer (data retieval)" , "tl_getdexvolume",              &tl_getdexvolume,               {} },
-  { "trade layer (data retieval)" , "tl_getmdexvolume",              &tl_getmdexvolume,               {} }
+  { "trade layer (data retieval)" , "tl_getmdexvolume",             &tl_getmdexvolume,              {} },
+  { "trade layer (data retieval)" , "tl_getcurrencytotal",          &tl_getcurrencytotal,           {} }
 };
 
 void RegisterTLDataRetrievalRPCCommands(CRPCTable &tableRPC)
