@@ -1601,8 +1601,11 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
         break;
 
     case FILETYPE_DEX_VOLUME:
-        inputLineFunc = input_activechannels_string;
+        inputLineFunc = input_mp_dexvolume_string;
         break;
+
+    case FILETYPE_MDEX_VOLUME:
+        inputLineFunc = input_mp_mdexvolume_string;
 
     default:
       return -1;
