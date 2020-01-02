@@ -3476,7 +3476,7 @@ int CMPTransaction::logicMath_RedemptionPegged()
     int64_t nBalance = getMPbalance(sender, propertyId, BALANCE);
     // int64_t nContracts = getMPbalance(sender, contractId, CONTRACTDEX_RESERVE);
     int64_t negContracts = getMPbalance(sender, contractId, NEGATIVE_BALANCE);
-    int64_t posContracts = getMPbalance(sender, contractId, POSSITIVE_BALANCE);
+    int64_t posContracts = getMPbalance(sender, contractId, POSITIVE_BALANCE);
 
     if (nBalance < (int64_t) amount) {
         PrintToLog("%s(): rejected: sender %s has insufficient balance of pegged currency %d [%s < %s]\n",
@@ -3523,9 +3523,9 @@ int CMPTransaction::logicMath_RedemptionPegged()
            int64_t dif = posContracts - contractsNeeded;
            if (dif >= 0)
            {
-               assert(update_tally_map(sender, contractId, -contractsNeeded, POSSITIVE_BALANCE));
+               assert(update_tally_map(sender, contractId, -contractsNeeded, POSITIVE_BALANCE));
            } else {
-               assert(update_tally_map(sender, contractId, -posContracts, POSSITIVE_BALANCE));
+               assert(update_tally_map(sender, contractId, -posContracts, POSITIVE_BALANCE));
                assert(update_tally_map(sender, contractId, -dif, NEGATIVE_BALANCE));
            }
 
@@ -4736,7 +4736,7 @@ int CMPTransaction::logicMath_DEx_Payment()
               block);
       return (PKT_ERROR_METADEX -22);
   }
-  
+
   // PrintToLog("%s(): inside the function\n",__func__);
 
   rc = 2;

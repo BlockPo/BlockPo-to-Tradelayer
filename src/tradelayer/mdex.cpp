@@ -210,8 +210,8 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       uint64_t amountpnew = pnew->getAmountForSale();
       uint64_t amountpold = pold->getAmountForSale();
 
-      int64_t poldPositiveBalanceB = getMPbalance(pold->getAddr(), property_traded, POSSITIVE_BALANCE);
-      int64_t pnewPositiveBalanceB = getMPbalance(pnew->getAddr(), property_traded, POSSITIVE_BALANCE);
+      int64_t poldPositiveBalanceB = getMPbalance(pold->getAddr(), property_traded, POSITIVE_BALANCE);
+      int64_t pnewPositiveBalanceB = getMPbalance(pnew->getAddr(), property_traded, POSITIVE_BALANCE);
       int64_t poldNegativeBalanceB = getMPbalance(pold->getAddr(), property_traded, NEGATIVE_BALANCE);
       int64_t pnewNegativeBalanceB = getMPbalance(pnew->getAddr(), property_traded, NEGATIVE_BALANCE);
 
@@ -286,10 +286,10 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
 	    {
 	      difference_s = possitive_sell - nCouldBuy;
 	      if (difference_s >= 0)
-		assert(update_tally_map(seller_address, property_traded, -nCouldBuy, POSSITIVE_BALANCE));
+		assert(update_tally_map(seller_address, property_traded, -nCouldBuy, POSITIVE_BALANCE));
 	      else
 		{
-		  assert(update_tally_map(seller_address, property_traded, -possitive_sell, POSSITIVE_BALANCE));
+		  assert(update_tally_map(seller_address, property_traded, -possitive_sell, POSITIVE_BALANCE));
 		  assert(update_tally_map(seller_address, property_traded, -difference_s, NEGATIVE_BALANCE));
 		}
 	    }
@@ -304,15 +304,15 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
 	      else
 		{
 		  assert(update_tally_map(buyer_address, property_traded, -negative_buy, NEGATIVE_BALANCE));
-		  assert(update_tally_map(buyer_address, property_traded, -difference_b, POSSITIVE_BALANCE));
+		  assert(update_tally_map(buyer_address, property_traded, -difference_b, POSITIVE_BALANCE));
 		}
 	    }
 	  else if ( possitive_buy != 0 || possitive_buy == 0 || negative_buy == 0 )
-	    assert(update_tally_map(buyer_address, property_traded, nCouldBuy, POSSITIVE_BALANCE));
+	    assert(update_tally_map(buyer_address, property_traded, nCouldBuy, POSITIVE_BALANCE));
 	}
       /********************************************************/
-      int64_t poldPositiveBalanceL = getMPbalance(pold->getAddr(), property_traded, POSSITIVE_BALANCE);
-      int64_t pnewPositiveBalanceL = getMPbalance(pnew->getAddr(), property_traded, POSSITIVE_BALANCE);
+      int64_t poldPositiveBalanceL = getMPbalance(pold->getAddr(), property_traded, POSITIVE_BALANCE);
+      int64_t pnewPositiveBalanceL = getMPbalance(pnew->getAddr(), property_traded, POSITIVE_BALANCE);
       int64_t poldNegativeBalanceL = getMPbalance(pold->getAddr(), property_traded, NEGATIVE_BALANCE);
       int64_t pnewNegativeBalanceL = getMPbalance(pnew->getAddr(), property_traded, NEGATIVE_BALANCE);
 
@@ -322,7 +322,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       NewReturn = TRADED;
       CMPContractDex contract_replacement = *pold;
       int64_t creplNegativeBalance = getMPbalance(contract_replacement.getAddr(), property_traded, NEGATIVE_BALANCE);
-      int64_t creplPositiveBalance = getMPbalance(contract_replacement.getAddr(), property_traded, POSSITIVE_BALANCE);
+      int64_t creplPositiveBalance = getMPbalance(contract_replacement.getAddr(), property_traded, POSITIVE_BALANCE);
 
       if(msc_debug_x_trade_bidirectional)
       {
@@ -2364,7 +2364,7 @@ int mastercore::ContractDex_ADD_ORDERBOOK_EDGE(const std::string& sender_addr, u
 int mastercore::ContractDex_CLOSE_POSITION(const uint256& txid, unsigned int block, const std::string& sender_addr, unsigned char ecosystem, uint32_t contractId, uint32_t collateralCurrency)
 {
     int64_t shortPosition = getMPbalance(sender_addr,contractId, NEGATIVE_BALANCE);
-    int64_t longPosition = getMPbalance(sender_addr,contractId, POSSITIVE_BALANCE);
+    int64_t longPosition = getMPbalance(sender_addr,contractId, POSITIVE_BALANCE);
 
     if (msc_debug_close_position)
     {
@@ -2392,7 +2392,7 @@ int mastercore::ContractDex_CLOSE_POSITION(const uint256& txid, unsigned int blo
     }
 
     int64_t shortPositionAf = getMPbalance(sender_addr,contractId, NEGATIVE_BALANCE);
-    int64_t longPositionAf= getMPbalance(sender_addr,contractId, POSSITIVE_BALANCE);
+    int64_t longPositionAf= getMPbalance(sender_addr,contractId, POSITIVE_BALANCE);
 
     if(msc_debug_close_position) PrintToLog("%s: shortPosition Now: %d, longPosition Now: %d\n",__func__, shortPositionAf, longPositionAf);
 

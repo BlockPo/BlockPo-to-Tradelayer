@@ -12,7 +12,7 @@ enum TallyType {
         PENDING = 3,
         METADEX_RESERVE = 4,
         CONTRACTDEX_RESERVE = 5, // margin acount
-        POSSITIVE_BALANCE = 6,
+        POSITIVE_BALANCE = 6,
         NEGATIVE_BALANCE = 7,
         REALIZED_PROFIT = 8,
         REALIZED_LOSSES = 9,

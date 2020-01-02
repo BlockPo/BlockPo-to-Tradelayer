@@ -1688,7 +1688,7 @@ UniValue tl_getcurrentconsensushash(const JSONRPCRequest& request)
 
 bool PositionToJSON(const std::string& address, uint32_t property, UniValue& balance_obj, bool divisible)
 {
-    int64_t longPosition  = getMPbalance(address, property, POSSITIVE_BALANCE);
+    int64_t longPosition  = getMPbalance(address, property, POSITIVE_BALANCE);
     int64_t shortPosition = getMPbalance(address, property, NEGATIVE_BALANCE);
     int64_t liqPrice = getMPbalance(address, property, LIQUIDATION_PRICE);
     balance_obj.push_back(Pair("longPosition", FormatByType(longPosition,2)));
@@ -1702,7 +1702,7 @@ bool PositionToJSON(const std::string& address, uint32_t property, UniValue& bal
 bool FullPositionToJSON(const std::string& address, uint32_t property, UniValue& position_obj, bool divisible, CMPSPInfo::Entry sProperty)
 {
   // const int64_t factor = 100000000;
-  int64_t longPosition = getMPbalance(address, property, POSSITIVE_BALANCE);
+  int64_t longPosition = getMPbalance(address, property, POSITIVE_BALANCE);
   int64_t shortPosition = getMPbalance(address, property, NEGATIVE_BALANCE);
   int64_t liqPrice = getMPbalance(address, property, LIQUIDATION_PRICE);
   int64_t valueLong = longPosition * (uint64_t) sProperty.notional_size;

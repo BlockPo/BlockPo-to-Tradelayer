@@ -56,7 +56,7 @@ namespace mastercore
     int64_t acceptReserve = tallyObj.getMoney(propertyId, ACCEPT_RESERVE);
     int64_t metaDExReserve = tallyObj.getMoney(propertyId, METADEX_RESERVE);
     int64_t contractdexReserved = tallyObj.getMoney(propertyId, CONTRACTDEX_RESERVE);
-    int64_t positiveBalance = tallyObj.getMoney(propertyId, POSSITIVE_BALANCE);
+    int64_t positiveBalance = tallyObj.getMoney(propertyId, POSITIVE_BALANCE);
     int64_t negativeBalance = tallyObj.getMoney(propertyId, NEGATIVE_BALANCE);
     int64_t realizedProfit = tallyObj.getMoney(propertyId, REALIZED_PROFIT);
     int64_t realizedLosses = tallyObj.getMoney(propertyId, REALIZED_LOSSES);
