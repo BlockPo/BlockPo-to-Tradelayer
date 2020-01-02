@@ -254,7 +254,7 @@ int DEx_BuyOfferCreate(const std::string& addressMaker, uint32_t propertyId, int
             if (sp.prop_type != ALL_PROPERTY_TYPE_CONTRACT)
 	              continue;
 
-            int64_t longs = getMPbalance(addressMaker, propertyId, POSSITIVE_BALANCE);
+            int64_t longs = getMPbalance(addressMaker, propertyId, POSITIVE_BALANCE);
             int64_t shorts = getMPbalance(addressMaker, propertyId, NEGATIVE_BALANCE);
             int64_t notional = static_cast<int64_t>(sp.notional_size);
 

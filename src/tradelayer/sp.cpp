@@ -996,7 +996,7 @@ int CMPSPInfo::rollingContractsBlock(const CBlockIndex* pBlockIndex)
                return 0;
            }
 
-           int64_t positiveBalanceB = getMPbalance(owner,contractId2, POSSITIVE_BALANCE);
+           int64_t positiveBalanceB = getMPbalance(owner,contractId2, POSITIVE_BALANCE);
            int64_t negativeBalanceB = getMPbalance(owner,contractId2, NEGATIVE_BALANCE);
 
            if(msc_debug_sp) PrintToLog("%s(): positiveBalanceB: %d, negativeBalanceB: %d\n",__func__, positiveBalanceB, negativeBalanceB);
@@ -1006,7 +1006,7 @@ int CMPSPInfo::rollingContractsBlock(const CBlockIndex* pBlockIndex)
            int64_t newReserved = ConvertTo64(toReserve) * factorE;  // TODO: use multiply_int64_t
 
            if(positiveBalanceB >= 0 && negativeBalanceB == 0)
-               assert(update_tally_map(owner, contractId2, newReserved, POSSITIVE_BALANCE));
+               assert(update_tally_map(owner, contractId2, newReserved, POSITIVE_BALANCE));
 
            else if (positiveBalanceB == 0 && negativeBalanceB >= 0)
            {
@@ -1014,7 +1014,7 @@ int CMPSPInfo::rollingContractsBlock(const CBlockIndex* pBlockIndex)
 
                if (diffn > 0)
                {
-                    assert(update_tally_map(owner, contractId2, diffn, POSSITIVE_BALANCE));
+                    assert(update_tally_map(owner, contractId2, diffn, POSITIVE_BALANCE));
                     assert(update_tally_map(owner, contractId2, -negativeBalanceB, NEGATIVE_BALANCE));
 
                } else
