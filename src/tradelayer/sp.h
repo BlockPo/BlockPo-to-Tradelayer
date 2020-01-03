@@ -201,7 +201,6 @@ public:
 
     void printAll() const;
 
-    int rollingContractsBlock(const CBlockIndex* pBlockIndex);
 };
 
 /** A live crowdsale.
