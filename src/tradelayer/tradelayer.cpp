@@ -3650,7 +3650,6 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
   // marginMain(pBlockIndex->nHeight);
   // addInterestPegged(nBlockPrev,pBlockIndex);
   // eraseExpiredCrowdsale(pBlockIndex);
-  _my_sps->rollingContractsBlock(pBlockIndex); // NOTE: we are checking every contract expiration
   return 0;
 }
 
