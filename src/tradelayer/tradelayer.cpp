@@ -2502,7 +2502,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
     /** TWAP vector **/
 
     if(msc_debug_handler_tx) PrintToLog("\nTWAP Prices = \n");
-    struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, "ALL F18");
+    struct FutureContractObject *pfuture = getFutureContractObject("ALL F18");
     uint32_t property_traded = pfuture->fco_propertyId;
 
     // PrintToLog("\nVector CDExtwap_vec =\n");
@@ -2743,7 +2743,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   CMPSPInfo::Entry sp;
   if ( id_contract != 0 )
     {
-      if (_my_sps->getSP(id_contract, sp) && sp.prop_type == ALL_PROPERTY_TYPE_CONTRACT)
+      if (_my_sps->getSP(id_contract, sp) && sp.isContract())
 	{
 	  expirationBlock = static_cast<int>(sp.blocks_until_expiration);
 	  tradeBlock = static_cast<int>(pBlockIndex->nHeight);
@@ -4282,13 +4282,13 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
 
   std::fstream fileglobalPNLALL_DUSD;
   fileglobalPNLALL_DUSD.open ("globalPNLALL_DUSD.txt", std::fstream::in | std::fstream::out | std::fstream::app);
-  if ( contractId == ALL_PROPERTY_TYPE_CONTRACT )
+  if ( contractId == ALL_PROPERTY_TYPE_NATIVE_CONTRACT )
     saveDataGraphs(fileglobalPNLALL_DUSD, std::to_string(globalPNLALL_DUSD));
   fileglobalPNLALL_DUSD.close();
 
   std::fstream fileglobalVolumeALL_DUSD;
   fileglobalVolumeALL_DUSD.open ("globalVolumeALL_DUSD.txt", std::fstream::in | std::fstream::out | std::fstream::app);
-  if ( contractId == ALL_PROPERTY_TYPE_CONTRACT )
+  if ( contractId == ALL_PROPERTY_TYPE_NATIVE_CONTRACT )
     saveDataGraphs(fileglobalVolumeALL_DUSD, std::to_string(FormatShortIntegerMP(globalVolumeALL_DUSD)));
   fileglobalVolumeALL_DUSD.close();
 
@@ -4809,7 +4809,7 @@ bool mastercore::marginMain(int Block)
         if (_my_sps->getSP(contractId, sp))
         {
             if(msc_debug_margin_main) PrintToLog("%s: Property Id: %d\n", __func__, contractId);
-            if (sp.prop_type != ALL_PROPERTY_TYPE_CONTRACT)
+            if (!sp.isContract())
             {
                 if(msc_debug_margin_main) PrintToLog("%s: Property is not future contract\n",__func__);
                 continue;
@@ -4844,7 +4844,7 @@ bool mastercore::marginMain(int Block)
                 continue;
 
             // checking position margin
-            int64_t posMargin = pos_margin(contractId, address, sp.prop_type, sp.margin_requirement);
+            int64_t posMargin = pos_margin(contractId, address, sp.margin_requirement);
 
             // if there's no position, something is wrong!
             if (posMargin < 0)
@@ -5023,7 +5023,7 @@ void mastercore::update_sum_upnls()
         CMPSPInfo::Entry sp;
         if (_my_sps->getSP(contractId, sp))
         {
-            if (sp.prop_type != ALL_PROPERTY_TYPE_CONTRACT)
+            if (!sp.isContract())
                 continue;
 
             std::map<uint32_t, std::map<std::string, double>>::iterator it = addrs_upnlc.find(contractId);
@@ -5043,14 +5043,21 @@ void mastercore::update_sum_upnls()
 }
 
 /* margin needed for a given position */
-int64_t mastercore::pos_margin(uint32_t contractId, std::string address, uint16_t prop_type, uint32_t margin_requirement)
+int64_t mastercore::pos_margin(uint32_t contractId, std::string address, uint32_t margin_requirement)
 {
         arith_uint256 maintMargin;
 
-        if (prop_type != ALL_PROPERTY_TYPE_CONTRACT)
+        LOCK(cs_tally);
+        CMPSPInfo::Entry sp;
+
+        if(_my_sps->getSP(contractId, sp))
         {
-            if(msc_debug_pos_margin) PrintToLog("%s: this is not a future contract\n", __func__);
-            return -1;
+
+            if (!sp.isContract())
+            {
+                if(msc_debug_pos_margin) PrintToLog("%s: this is not a future contract\n", __func__);
+                return -1;
+            }
         }
 
         int64_t longs = getMPbalance(address,contractId,POSITIVE_BALANCE);
@@ -5146,7 +5153,7 @@ bool mastercore::closeChannels(int Block)
             CMPSPInfo::Entry sp;
             if (_my_sps->getSP(propertyId, sp))
             {
-                if (sp.prop_type == ALL_PROPERTY_TYPE_CONTRACT)
+                if (sp.isContract())
                 {
                     PrintToLog("%s: Property is a future contract\n", __func__);
                     continue;
@@ -5723,7 +5730,7 @@ bool mastercore::ContInst_Fees(const std::string& firstAddr,const std::string& s
         PrintToLog("%s: colateral: %d\n", __func__,colateral);
     }
 
-    if (type == ALL_PROPERTY_TYPE_CONTRACT)
+    if (type == ALL_PROPERTY_TYPE_NATIVE_CONTRACT)
     {
         // 0.5% minus for firstAddr, 0.5% minus for secondAddr
         fee = (ConvertTo256(amountToReserve) * ConvertTo256(5)) / ConvertTo256(1000);

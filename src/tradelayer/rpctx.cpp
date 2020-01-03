@@ -1045,7 +1045,7 @@ UniValue tl_cancelallcontractsbyaddress(const JSONRPCRequest& request)
   uint8_t ecosystem = ParseEcosystem(request.params[1]);
   std::string name_traded = ParseText(request.params[2]);
 
-  struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, name_traded);
+  struct FutureContractObject *pfuture = getFutureContractObject(name_traded);
   uint32_t contractId = pfuture->fco_propertyId;
 
   // perform checks
@@ -1156,7 +1156,7 @@ UniValue tl_getmax_peggedcurrency(const JSONRPCRequest& request)
   //get # short contract
 
   std::string name_traded = ParseText(request.params[1]);
-  struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, name_traded);
+  struct FutureContractObject *pfuture = getFutureContractObject(name_traded);
   uint32_t contractId = pfuture->fco_propertyId;
 
   int64_t shortPosition = getMPbalance(fromAddress, contractId, NEGATIVE_BALANCE);
@@ -1206,7 +1206,7 @@ UniValue tl_sendissuance_pegged(const JSONRPCRequest& request)
   std::string name_traded = ParseText(request.params[6]);
   uint64_t amount = ParseAmount(request.params[7], isPropertyDivisible(propertyId));
 
-  struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, name_traded);
+  struct FutureContractObject *pfuture = getFutureContractObject(name_traded);
   uint32_t contractId = pfuture->fco_propertyId;
 
   // perform checks
@@ -1275,7 +1275,7 @@ UniValue tl_send_pegged(const JSONRPCRequest& request)
   std::string toAddress = ParseAddress(request.params[1]);
   std::string name_pegged = ParseText(request.params[2]);
 
-  struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_PEGGEDS, name_pegged);
+  struct FutureContractObject *pfuture = getFutureContractObject(name_pegged);
   uint32_t propertyId = pfuture->fco_propertyId;
 
   RequirePeggedCurrency(propertyId);
@@ -1333,12 +1333,12 @@ UniValue tl_redemption_pegged(const JSONRPCRequest& request)
 
   std::string name_pegged = ParseText(request.params[1]);
   std::string name_contract = ParseText(request.params[3]);
-  struct FutureContractObject *pfuture_pegged = getFutureContractObject(ALL_PROPERTY_TYPE_PEGGEDS, name_pegged);
+  struct FutureContractObject *pfuture_pegged = getFutureContractObject(name_pegged);
   uint32_t propertyId = pfuture_pegged->fco_propertyId;
 
   uint64_t amount = ParseAmount(request.params[2], true);
 
-  struct FutureContractObject *pfuture_contract = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, name_contract);
+  struct FutureContractObject *pfuture_contract = getFutureContractObject(name_contract);
   uint32_t contractId = pfuture_contract->fco_propertyId;
 
   // perform checks
@@ -1596,7 +1596,7 @@ UniValue tl_setoracle(const JSONRPCRequest& request)
     std::string name_contract = ParseText(request.params[1]);
     uint64_t high = ParseEffectivePrice(request.params[2]);
     uint64_t low = ParseEffectivePrice(request.params[3]);
-    struct FutureContractObject *pfuture_contract = getFutureContractObject(ALL_PROPERTY_TYPE_ORACLE_CONTRACT, name_contract);
+    struct FutureContractObject *pfuture_contract = getFutureContractObject(name_contract);
     uint32_t contractId = pfuture_contract->fco_propertyId;
     std::string oracleAddress = pfuture_contract->fco_issuer;
 
@@ -1654,7 +1654,7 @@ UniValue tl_change_oracleref(const JSONRPCRequest& request)
     std::string fromAddress = ParseAddress(request.params[0]);
     std::string toAddress = ParseAddress(request.params[1]);
     std::string name_contract = ParseText(request.params[2]);
-    struct FutureContractObject *pfuture_contract = getFutureContractObject(ALL_PROPERTY_TYPE_ORACLE_CONTRACT, name_contract);
+    struct FutureContractObject *pfuture_contract = getFutureContractObject(name_contract);
     uint32_t contractId = pfuture_contract->fco_propertyId;
     std::string oracleAddress = pfuture_contract->fco_issuer;
 
@@ -1710,7 +1710,7 @@ UniValue tl_oraclebackup(const JSONRPCRequest& request)
     // obtain parameters & info
     std::string fromAddress = ParseAddress(request.params[0]);
     std::string name_contract = ParseText(request.params[1]);
-    struct FutureContractObject *pfuture_contract = getFutureContractObject(ALL_PROPERTY_TYPE_ORACLE_CONTRACT, name_contract);
+    struct FutureContractObject *pfuture_contract = getFutureContractObject(name_contract);
     uint32_t contractId = pfuture_contract->fco_propertyId;
     std::string backupAddress = pfuture_contract->fco_backup_address;
 
@@ -1765,7 +1765,7 @@ UniValue tl_closeoracle(const JSONRPCRequest& request)
     // obtain parameters & info
     std::string backupAddress = ParseAddress(request.params[0]);
     std::string name_contract = ParseText(request.params[1]);
-    struct FutureContractObject *pfuture_contract = getFutureContractObject(ALL_PROPERTY_TYPE_ORACLE_CONTRACT, name_contract);
+    struct FutureContractObject *pfuture_contract = getFutureContractObject(name_contract);
     uint32_t contractId = pfuture_contract->fco_propertyId;
     std::string bckup_address = pfuture_contract->fco_backup_address;
 

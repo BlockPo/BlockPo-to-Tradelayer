@@ -122,7 +122,7 @@ enum TransactionType {
 
 #define ALL_PROPERTY_TYPE_INDIVISIBLE                 1
 #define ALL_PROPERTY_TYPE_DIVISIBLE                   2
-#define ALL_PROPERTY_TYPE_CONTRACT                    3
+#define ALL_PROPERTY_TYPE_NATIVE_CONTRACT             3
 #define ALL_PROPERTY_TYPE_VESTING                     4
 #define ALL_PROPERTY_TYPE_PEGGEDS                     5
 #define ALL_PROPERTY_TYPE_ORACLE_CONTRACT             6
@@ -510,7 +510,7 @@ namespace mastercore
 
   int64_t sum_check_upnl(std::string address); //  sum of all upnls for a given address.
 
-  int64_t pos_margin(uint32_t contractId, std::string address, uint16_t prop_type, uint32_t margin_requirement); // return mainteinance margin for a given contrand and address
+  int64_t pos_margin(uint32_t contractId, std::string address, uint32_t margin_requirement); // return mainteinance margin for a given contrand and address
 
   bool makeWithdrawals(int Block); // make the withdrawals for multisig channels
 

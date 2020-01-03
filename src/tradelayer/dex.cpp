@@ -251,7 +251,7 @@ int DEx_BuyOfferCreate(const std::string& addressMaker, uint32_t propertyId, int
         if (_my_sps->getSP(propertyId, sp))
         {
             if (msc_debug_dex) PrintToLog("Property Id: %d\n",propertyId);
-            if (sp.prop_type != ALL_PROPERTY_TYPE_CONTRACT)
+            if (!sp.isContract())
 	              continue;
 
             int64_t longs = getMPbalance(addressMaker, propertyId, POSITIVE_BALANCE);

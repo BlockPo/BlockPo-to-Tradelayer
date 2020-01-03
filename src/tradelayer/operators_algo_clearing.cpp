@@ -756,7 +756,7 @@ void calculate_pnltrk_bypath(std::vector<std::map<std::string, std::string>> &pa
 	      std::string addrssr = edge_path["addrs_src"];
 	      int64_t PNL_trkInt64 = mastercore::DoubleToInt64(PNL_trk);
 
-	      struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, "ALL F18");
+	      struct FutureContractObject *pfuture = getFutureContractObject("ALL F18");
 	      uint32_t NotionalSize = pfuture->fco_notional_size;
 
 	      arith_uint256 volumeALL256_t = mastercore::ConvertTo256(NotionalSize)*mastercore::ConvertTo256(PNL_trkInt64)/COIN;

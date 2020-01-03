@@ -1012,7 +1012,7 @@ bool CMPTransaction::interpret_CreateContractDex()
     margin_requirement = DecompressInteger(vecMarginRequirement);
   } else return false;
 
-  prop_type = ALL_PROPERTY_TYPE_CONTRACT;
+  (blocks_until_expiration == 0) ? prop_type = ALL_PROPERTY_TYPE_PERPETUAL_CONTRACTS : prop_type = ALL_PROPERTY_TYPE_NATIVE_CONTRACT;
 
   if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
   {
@@ -1435,7 +1435,8 @@ bool CMPTransaction::interpret_CreateOracleContract()
     margin_requirement = DecompressInteger(vecMarginRequirement);
   } else return false;
 
-  prop_type = ALL_PROPERTY_TYPE_ORACLE_CONTRACT;
+  (blocks_until_expiration == 0) ? prop_type = ALL_PROPERTY_TYPE_PERPETUAL_ORACLE : prop_type = ALL_PROPERTY_TYPE_ORACLE_CONTRACT;
+
 
   if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
   {
@@ -3084,10 +3085,10 @@ int CMPTransaction::logicMath_ContractDexTrade()
 
   int result;
 
-  struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, name_traded);
+  struct FutureContractObject *pfuture = getFutureContractObject(name_traded);
   id_contract = pfuture->fco_propertyId;
 
-  (pfuture->fco_prop_type == ALL_PROPERTY_TYPE_CONTRACT) ? result = 5 : result = 6;
+  (pfuture->fco_prop_type == ALL_PROPERTY_TYPE_NATIVE_CONTRACT) ? result = 5 : result = 6;
 
   if(!t_tradelistdb->checkKYCRegister(sender,result))
       return PKT_ERROR_KYC -10;
@@ -3167,7 +3168,7 @@ int CMPTransaction::logicMath_ContractDexCancelEcosystem()
     return (PKT_ERROR_SP -21);
   }
 
-  struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, name_traded);
+  struct FutureContractObject *pfuture = getFutureContractObject(name_traded);
   uint32_t contractId = pfuture->fco_propertyId;
 
   int rc = ContractDex_CANCEL_EVERYTHING(txid, block, sender, ecosystem, contractId);
@@ -4569,7 +4570,7 @@ int CMPTransaction::logicMath_Contract_Instant()
 
   int result;
 
-  (sp.prop_type == ALL_PROPERTY_TYPE_CONTRACT) ? result = 5 : result = 6;
+  (sp.prop_type == ALL_PROPERTY_TYPE_NATIVE_CONTRACT) ? result = 5 : result = 6;
 
   if(!t_tradelistdb->checkKYCRegister(sender,result))
   {
@@ -4745,7 +4746,7 @@ int CMPTransaction::logicMath_DEx_Payment()
 }
 
 
-struct FutureContractObject *getFutureContractObject(uint32_t property_type, std::string identifier)
+struct FutureContractObject *getFutureContractObject(std::string identifier)
 {
   struct FutureContractObject *pt_fco = new FutureContractObject;
 
@@ -4756,7 +4757,7 @@ struct FutureContractObject *getFutureContractObject(uint32_t property_type, std
       CMPSPInfo::Entry sp;
       if (_my_sps->getSP(propertyId, sp))
 	{
-	  if ( (sp.prop_type == ALL_PROPERTY_TYPE_CONTRACT || sp.prop_type == ALL_PROPERTY_TYPE_ORACLE_CONTRACT) && sp.name == identifier )
+	  if ( sp.isContract() && sp.name == identifier )
 	    {
 	      pt_fco->fco_denomination = sp.denomination;
 	      pt_fco->fco_blocks_until_expiration = sp.blocks_until_expiration;
@@ -4771,7 +4772,7 @@ struct FutureContractObject *getFutureContractObject(uint32_t property_type, std
 	      pt_fco->fco_propertyId = propertyId;
         pt_fco->fco_prop_type = sp.prop_type;
 	    }
-	  else if ( sp.prop_type == ALL_PROPERTY_TYPE_PEGGEDS && sp.name == identifier )
+	  else if ( sp.isPegged() && sp.name == identifier )
 	    {
 	      pt_fco->fco_denomination = sp.denomination;
 	      pt_fco->fco_blocks_until_expiration = sp.blocks_until_expiration;

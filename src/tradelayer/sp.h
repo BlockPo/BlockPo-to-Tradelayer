@@ -165,9 +165,11 @@ public:
 
         bool isDivisible() const;
         void print() const;
-      	bool isContract() const;
+      	bool isNativeContract() const;
+        bool isSwap() const;
         bool isPegged() const;
         bool isOracle() const;
+        bool isContract() const;
     };
 
  private:
@@ -287,13 +289,14 @@ extern CrowdMap my_crowds;
 
 std::string strPropertyType(uint16_t propertyType);
 std::string strEcosystem(uint8_t ecosystem);
-//////////////////////////////////////
-/** New things for Contracts */
+
 bool isPropertyContract(uint32_t propertyId);
 bool isPropertyPegged(uint32_t propertyId);
+bool isPropertySwap(uint32_t propertyId);
+bool isPropertyNativeContract(uint32_t propertyId);
 int addInterestPegged(int nBlockPrev, const CBlockIndex* pBlockIndex);
 uint64_t edgeOrderbook(uint32_t contractId, uint8_t tradingAction);
-//////////////////////////////////////
+
 std::string getPropertyName(uint32_t propertyId);
 bool isPropertyDivisible(uint32_t propertyId);
 bool IsPropertyIdValid(uint32_t propertyId);
