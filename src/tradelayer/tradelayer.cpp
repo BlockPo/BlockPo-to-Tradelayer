@@ -2739,39 +2739,46 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   CMPTransaction mp_obj;
   mp_obj.unlockLogic();
 
-  int expirationBlock = 0, tradeBlock = 0, checkExpiration = 0;
-  CMPSPInfo::Entry sp;
-  if ( id_contract != 0 )
-    {
-      if (_my_sps->getSP(id_contract, sp) && sp.isContract())
-	{
-	  expirationBlock = static_cast<int>(sp.blocks_until_expiration);
-	  tradeBlock = static_cast<int>(pBlockIndex->nHeight);
-	}
-    }
-
-  lastBlockg = static_cast<int>(pBlockIndex->nHeight);
   const CConsensusParams &params = ConsensusParams();
   vestingActivationBlock = params.MSC_VESTING_BLOCK;
 
   if (static_cast<int>(pBlockIndex->nHeight) == params.MSC_VESTING_BLOCK) creatingVestingTokens( GetHeight());
 
+  int expirationBlock = 0, tradeBlock = 0, checkExpiration = 0;
 
-  int deadline = sp.init_block + expirationBlock;
-  if ( tradeBlock != 0 && deadline != 0 ) checkExpiration = tradeBlock == deadline ? 1 : 0;
+  uint32_t nextSPID = _my_sps->peekNextSPID(1);
 
-  if (checkExpiration) {
-    idx_expiration += 1;
-    if ( idx_expiration == 2 ) {
-      expirationAchieve = 1;
-      sp.expirated = true;
-    } else expirationAchieve = 0;
-  } else expirationAchieve = 0;
+  // checking expiration block for each contract
+  for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
+  {
+      CMPSPInfo::Entry sp;
+      if (_my_sps->getSP(propertyId, sp) && sp.isContract() && !sp.expirated)
+      {
+	        expirationBlock = static_cast<int>(sp.blocks_until_expiration);
+	        tradeBlock = static_cast<int>(pBlockIndex->nHeight);
+          lastBlockg = static_cast<int>(pBlockIndex->nHeight);
+
+
+          int deadline = sp.init_block + expirationBlock;
+          if ( tradeBlock != 0 && deadline != 0 ) checkExpiration = tradeBlock == deadline ? 1 : 0;
+
+          if (checkExpiration)
+          {
+              idx_expiration += 1;
+              if ( idx_expiration == 2 )
+              {
+                  expirationAchieve = 1;
+                  sp.expirated = true; // into entry register
+              } else expirationAchieve = 0;
+          } else expirationAchieve = 0;
+      }
+  }
 
   bool fFoundTx = false;
   int pop_ret = parseTransaction(false, tx, nBlock, idx, mp_obj, nBlockTime);
 
-  if (0 == pop_ret) {
+  if (0 == pop_ret)
+  {
     assert(mp_obj.getEncodingClass() != NO_MARKER);
     assert(mp_obj.getSender().empty() == false);
 
@@ -2787,7 +2794,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
         HandleLtcInstantTrade(tx, nBlock, mp_obj.getSender(), mp_obj.getReceiver(), mp_obj.getProperty(), mp_obj.getAmountForSale(), mp_obj.getDesiredProperty(), mp_obj.getDesiredValue(), mp_obj.getIndexInBlock());
 
     //NOTE: we need to return this number 2 from mp_obj.interpretPacket() (tx.cpp)
-  } else if (interp_ret == 2) {
+    } else if (interp_ret == 2) {
         HandleDExPayments(tx, nBlock, mp_obj.getSender());
     }
 
