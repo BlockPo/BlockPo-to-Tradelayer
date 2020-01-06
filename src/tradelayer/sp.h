@@ -86,8 +86,7 @@ public:
         bool fixed;
         bool manual;
 
-        ////////////////////////////
-        /** New things for Contracts */
+        // New things for Contracts
         uint32_t blocks_until_expiration;
         uint32_t notional_size;
         uint32_t collateral_currency;
@@ -104,6 +103,7 @@ public:
         uint64_t oracle_high;
         uint64_t oracle_low;
         int oracle_last_update;
+        bool expirated;  // if the contract expired
 
         // for pegged currency
         uint32_t contract_associated;
@@ -145,7 +145,7 @@ public:
             READWRITE(manual);
             READWRITE(historicalData);
             READWRITE(contracts_needed);
-            ////////////////////////////
+
             /** New things for Contracts */
             READWRITE(blocks_until_expiration);
             READWRITE(notional_size);
@@ -160,6 +160,7 @@ public:
             READWRITE(oracle_high);
             READWRITE(oracle_low);
             READWRITE(oracle_last_update);
+            READWRITE(expirated);
             ////////////////////////////
         }
 
@@ -250,34 +251,6 @@ public:
     void saveCrowdSale(std::ofstream& file, SHA256_CTX* shaCtx, const std::string& addr) const;
 };
 
-/**  NOTE: May be we can create contract type class, finding data in memory instead of db */
-//
-// class ContractSP
-// {
-// private:
-//     uint32_t numeration;
-//     uint32_t denomination;
-//     uint32_t blocks_until_expiration;
-//     uint32_t notional_size;
-//     uint32_t collateral_currency;
-//     uint32_t margin_requirement;
-//     /* int64_t ticksize; */
-//     uint32_t contractId;
-//     int init_block;
-//
-// public:
-//     ContractSP();
-//     ContractSP(uint32_t num, uint32_t den, uint32_t buex, uint32_t ns, uint32_t col, uint32_t mar, int blk, int64_t tick, uint32_t id);
-//
-//     uint32_t getNumeration () const { return numeration; }
-//     uint32_t getContractId() const { return contractId; }
-//     uint32_t getDenomination() const { return denomination; }
-//     int64_t getDeadline() const { return (init_block + static_cast<int>(blocks_until_expiration)); }
-//     uint32_t getNotionalSize () const { return notional_size; }
-//     uint32_t getMarginRequirement () const { return margin_requirement; }
-//     int getInitBlock () const { return init_block; }
-//     /* int64_t getTickSize () const { return ticksize; } */
-// };
 
 namespace mastercore
 {

@@ -2764,6 +2764,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
     idx_expiration += 1;
     if ( idx_expiration == 2 ) {
       expirationAchieve = 1;
+      sp.expirated = true;
     } else expirationAchieve = 0;
   } else expirationAchieve = 0;
 
@@ -2807,6 +2808,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
 
   return fFoundTx;
 }
+
 
 bool TxValidNodeReward(std::string ConsensusHash, std::string Tx)
 {

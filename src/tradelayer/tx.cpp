@@ -3060,6 +3060,7 @@ int CMPTransaction::logicMath_CreateContractDex()
   newSP.denomination = denomination;
   newSP.ecosystemSP = ecosystem;
   newSP.attribute_type = attribute_type;
+  newSP.expirated = false;
 
   const uint32_t propertyId = _my_sps->putSP(ecosystem, newSP);
   assert(propertyId > 0);
@@ -3921,6 +3922,7 @@ int CMPTransaction::logicMath_CreateOracleContract()
   newSP.ecosystemSP = ecosystem;
   newSP.attribute_type = attribute_type;
   newSP.backup_address = receiver;
+  newSP.expirated = false;
 
   const uint32_t propertyId = _my_sps->putSP(ecosystem, newSP);
   assert(propertyId > 0);
@@ -4771,6 +4773,7 @@ struct FutureContractObject *getFutureContractObject(std::string identifier)
         pt_fco->fco_backup_address = sp.backup_address;
 	      pt_fco->fco_propertyId = propertyId;
         pt_fco->fco_prop_type = sp.prop_type;
+        pt_fco->fco_expirated = sp.expirated;
 	    }
 	  else if ( sp.isPegged() && sp.name == identifier )
 	    {

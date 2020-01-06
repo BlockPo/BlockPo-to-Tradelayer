@@ -488,6 +488,7 @@ struct FutureContractObject
   uint32_t fco_margin_requirement;
   uint32_t fco_propertyId;
   uint16_t fco_prop_type;
+  bool fco_expirated;
 
   int fco_init_block;
   std::string fco_name;
