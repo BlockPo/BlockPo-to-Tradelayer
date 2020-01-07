@@ -136,6 +136,7 @@ extern double globalPNLALL_DUSD;
 extern int64_t globalVolumeALL_DUSD;
 extern int lastBlockg;
 extern int twapBlockg;
+extern int newTwapBlock;
 extern int vestingActivationBlock;
 extern volatile int64_t globalVolumeALL_LTC;
 extern std::vector<std::string> vestingAddresses;
@@ -162,6 +163,9 @@ extern std::map<uint32_t, int64_t> VWAPMapContracts;
 extern std::string setExoduss;
 /************************************************/
 /** TWAP containers **/
+
+// for liquidation price
+extern std::map<uint32_t, int64_t> cdex_twap_liq;
 extern std::map<uint32_t, std::vector<uint64_t>> cdextwap_ele;
 extern std::map<uint32_t, std::vector<uint64_t>> cdextwap_vec;
 extern std::map<uint32_t, std::map<uint32_t, std::vector<uint64_t>>> mdextwap_ele;
@@ -2443,6 +2447,30 @@ int mastercore_shutdown()
   return 0;
 }
 
+// function fills cdex_twap_liq map (twap prices for last nBlocks)
+inline void twapForLiquidation(uint32_t contractId, int blocks)
+{
+      uint64_t sum = 0;
+      int count = 0;
+      std::map<uint32_t, std::vector<uint64_t>>::iterator it = cdextwap_vec.find(contractId);
+      std::vector<uint64_t> auxVec = it->second;
+
+      for (std::vector<uint64_t>::iterator itt = auxVec.end(); itt != auxVec.begin();++itt)
+      {
+           if(count >= blocks)
+               break;
+
+           sum += *(itt);
+           count++;
+      }
+
+      rational_t twap_priceRatCDEx(sum/COIN, blocks);
+      int64_t twap_priceCDEx = mastercore::RationalToInt64(twap_priceRatCDEx);
+      PrintToLog("%s():\nTvwap Price CDEx = %s\n",__func__, FormatDivisibleMP(twap_priceCDEx));
+      cdex_twap_liq[contractId] = twap_priceCDEx;
+
+  }
+
 /**
  * This handler is called for every new transaction that comes in (actually in block parsing loop).
  *
@@ -2501,10 +2529,16 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
     /**********************************************************************/
     /** TWAP vector **/
 
+    /* * NOTE: first we calculate oracles twap for 3 blocks
+       *
+       *
+     */
+
     if(msc_debug_handler_tx) PrintToLog("\nTWAP Prices = \n");
     struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, "ALL F18");
     uint32_t property_traded = pfuture->fco_propertyId;
 
+    twapForLiquidation(property_traded,3);
     // PrintToLog("\nVector CDExtwap_vec =\n");
     // for (unsigned int i = 0; i < cdextwap_vec[property_traded].size(); i++)
     //   PrintToLog("%s\n", FormatDivisibleMP(cdextwap_vec[property_traded][i]));
@@ -4308,23 +4342,26 @@ void Filling_Twap_Vec(std::map<uint32_t, std::vector<uint64_t>> &twap_ele, std::
   std::vector<uint64_t> twap_minmax;
   if (msc_debug_tradedb) PrintToLog("\nCheck here CDEx:\t nBlockNow = %d\t twapBlockg = %d\n", nBlockNow, twapBlockg);
 
+  // twap for 50 blocks
   if (nBlockNow == twapBlockg)
-    twap_ele[property_traded].push_back(effective_price);
-  else
-    {
-      if (twap_ele[property_traded].size() != 0)
-	{
-	  twap_minmax = min_max(twap_ele[property_traded]);
-	  uint64_t numerator = twap_ele[property_traded].front()+twap_minmax[0]+twap_minmax[1]+twap_ele[property_traded].back();
-	  rational_t twapRat(numerator/COIN, 4);
-	  int64_t twap_elej = mastercore::RationalToInt64(twapRat);
-	  if (msc_debug_tradedb) PrintToLog("\ntwap_elej CDEx = %s\n", FormatDivisibleMP(twap_elej));
-	  cdextwap_vec[property_traded].push_back(twap_elej);
-	}
-      twap_ele[property_traded].clear();
+  {
       twap_ele[property_traded].push_back(effective_price);
-    }
+  } else {
+      if (twap_ele[property_traded].size() != 0)
+	    {
+	        twap_minmax = min_max(twap_ele[property_traded]);
+	        uint64_t numerator = twap_ele[property_traded].front()+twap_minmax[0]+twap_minmax[1]+twap_ele[property_traded].back();
+	        rational_t twapRat(numerator/COIN, 4);
+          int64_t twap_elej = mastercore::RationalToInt64(twapRat);
+          if (msc_debug_tradedb) PrintToLog("\ntwap_elej CDEx = %s\n", FormatDivisibleMP(twap_elej));
+          cdextwap_vec[property_traded].push_back(twap_elej);
+	    }
+          twap_ele[property_traded].clear();
+          twap_ele[property_traded].push_back(effective_price);
+  }
+
   twapBlockg = nBlockNow;
+
 }
 
 void Filling_Twap_Vec(std::map<uint32_t, std::map<uint32_t, std::vector<uint64_t>>> &twap_ele,
@@ -5961,8 +5998,6 @@ int64_t mastercore::MdexVolumen(uint32_t fproperty, uint32_t sproperty, int fblo
 
     return Amount;
 }
-
-
 
 /**
  * @return The marker for class D transactions.
