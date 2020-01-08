@@ -6020,6 +6020,7 @@ int64_t mastercore::getOracleTwap(uint32_t contractId, int nBlocks)
           count++;
      }
 
+     return sum;
 }
 
 /**
