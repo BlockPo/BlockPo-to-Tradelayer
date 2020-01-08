@@ -160,6 +160,7 @@ extern std::map<uint32_t, std::vector<int64_t>> mapContractAmountTimesPrice;
 extern std::map<uint32_t, std::vector<int64_t>> mapContractVolume;
 extern std::map<uint32_t, int64_t> VWAPMapContracts;
 //extern volatile std::vector<std::map<std::string, std::string>> path_eleg;
+extern std::map<uint32_t,oracledata> oraclePrices;
 extern std::string setExoduss;
 /************************************************/
 /** TWAP containers **/
@@ -2447,23 +2448,26 @@ int mastercore_shutdown()
   return 0;
 }
 
-// function fills cdex_twap_liq map (twap prices for last nBlocks)
-inline void twapForLiquidation(uint32_t contractId, int blocks)
+// NOTE: change this function using vwap instead of twap
+// for oracles we need vwap for last 3 blocks but using the prices map (we have that yet)
+void mastercore::twapForLiquidation(uint32_t contractId, int blocks)
 {
       uint64_t sum = 0;
       int count = 0;
       std::map<uint32_t, std::vector<uint64_t>>::iterator it = cdextwap_vec.find(contractId);
       std::vector<uint64_t> auxVec = it->second;
 
-      for (std::vector<uint64_t>::iterator itt = auxVec.end(); itt != auxVec.begin();++itt)
+      for (std::vector<uint64_t>::iterator itt = auxVec.begin(); itt != auxVec.end(); ++itt)
       {
-           if(count >= blocks)
-               break;
+           // if(count >= blocks)
+           //     break;
 
            sum += *(itt);
            count++;
+           PrintToLog("%s(): count : %d\n",__func__,count);
       }
 
+      PrintToLog("%s(): sum : %d\n",__func__,sum);
       rational_t twap_priceRatCDEx(sum/COIN, blocks);
       int64_t twap_priceCDEx = mastercore::RationalToInt64(twap_priceRatCDEx);
       PrintToLog("%s():\nTvwap Price CDEx = %s\n",__func__, FormatDivisibleMP(twap_priceCDEx));
@@ -2499,6 +2503,8 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
     mastercore_init();
   }
 
+  twapForLiquidation(5,3);
+
   // clear pending, if any
   // NOTE1: Every incoming TX is checked, not just MP-ones because:
   // if for some reason the incoming TX doesn't pass our parser validation steps successfuly, I'd still want to clear pending amounts for that TX.
@@ -2510,7 +2516,6 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   int64_t nBlockTime = pBlockIndex->GetBlockTime();
 
   int nBlockNow = GetHeight();
-
   /***********************************************************************/
   /** Calling The Settlement Algorithm **/
 
@@ -2538,7 +2543,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
     struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, "ALL F18");
     uint32_t property_traded = pfuture->fco_propertyId;
 
-    twapForLiquidation(property_traded,3);
+
     // PrintToLog("\nVector CDExtwap_vec =\n");
     // for (unsigned int i = 0; i < cdextwap_vec[property_traded].size(); i++)
     //   PrintToLog("%s\n", FormatDivisibleMP(cdextwap_vec[property_traded][i]));
@@ -5997,6 +6002,24 @@ int64_t mastercore::MdexVolumen(uint32_t fproperty, uint32_t sproperty, int fblo
     PrintToLog("%s(): final Amount: %d\n",__func__,Amount);
 
     return Amount;
+}
+
+int64_t mastercore::getOracleTwap(uint32_t contractId, int nBlocks)
+{
+     int64_t sum = 0;
+     int count = 0;
+
+     for(std::map<uint32_t,oracledata>::iterator it = oraclePrices.end(); it != oraclePrices.begin(); ++it)
+     {
+          if (nBlocks >= count)
+              break;
+
+          const oracledata ord = it->second;
+          arith_uint256 aSum += (ConvertTo256(ord.high) + ConvertTo256(ord.low)) / ConvertTo256(2) ;
+          sum += ConvertTo64(aSum);
+          count++;
+     }
+
 }
 
 /**

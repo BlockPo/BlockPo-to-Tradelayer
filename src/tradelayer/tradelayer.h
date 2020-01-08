@@ -528,6 +528,10 @@ namespace mastercore
   //Map of MetaDEx volume
   int64_t MdexVolumen(uint32_t fproperty, uint32_t sproperty, int fblock, int sblock);
 
+  void twapForLiquidation(uint32_t contractId, int blocks);
+
+  int64_t getOracleTwap(uint32_t contractId, int nBlocks);
+
 }
 
 #endif // TRADELAYER_TL_H

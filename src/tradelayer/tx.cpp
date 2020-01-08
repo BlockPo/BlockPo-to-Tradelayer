@@ -1014,8 +1014,8 @@ bool CMPTransaction::interpret_CreateContractDex()
 
   prop_type = ALL_PROPERTY_TYPE_CONTRACT;
 
-  if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
-  {
+  // if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+  // {
       PrintToLog("\t version: %d\n", version);
       PrintToLog("\t messageType: %d\n",type);
       PrintToLog("\t denomination: %d\n", denomination);
@@ -1026,7 +1026,7 @@ bool CMPTransaction::interpret_CreateContractDex()
       PrintToLog("\t ecosystem: %d\n", ecosystem);
       PrintToLog("\t name: %s\n", name);
       PrintToLog("\t prop_type: %d\n", prop_type);
-  }
+  // }
 
   return true;
 }
@@ -3060,6 +3060,8 @@ int CMPTransaction::logicMath_CreateContractDex()
   newSP.ecosystemSP = ecosystem;
   newSP.attribute_type = attribute_type;
 
+  PrintToLog("%s(): init block inside create contract: %d\n", __func__, newSP.init_block);
+
   const uint32_t propertyId = _my_sps->putSP(ecosystem, newSP);
   assert(propertyId > 0);
 
@@ -3089,9 +3091,11 @@ int CMPTransaction::logicMath_ContractDexTrade()
 
   (pfuture->fco_prop_type == ALL_PROPERTY_TYPE_CONTRACT) ? result = 5 : result = 6;
 
-  if(!t_tradelistdb->checkKYCRegister(sender,result))
-      return PKT_ERROR_KYC -10;
+  // if(!t_tradelistdb->checkKYCRegister(sender,result))
+  //     return PKT_ERROR_KYC -10;
+  //
 
+  PrintToLog("%s(): fco_init_block: %d; fco_blocks_until_expiration: %d; actual block: %d\n",__func__,pfuture->fco_init_block,pfuture->fco_blocks_until_expiration,block);
 
   if (block > pfuture->fco_init_block + static_cast<int>(pfuture->fco_blocks_until_expiration) || block < pfuture->fco_init_block)
       return PKT_ERROR_SP -38;
@@ -3142,8 +3146,9 @@ int CMPTransaction::logicMath_ContractDexTrade()
   NodeRewardObj.SendNodeReward(sender);
 
   /*********************************************/
-
+  PrintToLog("%s(): checkpoint 1\n");
   t_tradelistdb->recordNewTrade(txid, sender, id_contract, desired_property, block, tx_idx, 0);
+  PrintToLog("%s(): checkpoint 2\n");
   int rc = ContractDex_ADD(sender, id_contract, amount, block, txid, tx_idx, effective_price, trading_action,0);
 
   return rc;
