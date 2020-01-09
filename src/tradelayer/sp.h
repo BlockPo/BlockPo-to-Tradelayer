@@ -103,7 +103,8 @@ public:
         std::string backup_address;
         uint64_t oracle_high;
         uint64_t oracle_low;
-        int oracle_last_update;
+        uint64_t oracle_close;
+        // int oracle_last_update;
 
         // for pegged currency
         uint32_t contract_associated;
@@ -159,7 +160,8 @@ public:
             READWRITE(backup_address);
             READWRITE(oracle_high);
             READWRITE(oracle_low);
-            READWRITE(oracle_last_update);
+            READWRITE(oracle_close);
+            // READWRITE(oracle_last_update);
             ////////////////////////////
         }
 

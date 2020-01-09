@@ -42,7 +42,7 @@ std::vector<unsigned char> CreatePayload_CreateOracleContract(uint8_t ecosystem,
 std::vector<unsigned char> CreatePayload_Change_OracleRef(uint32_t contractId);
 std::vector<unsigned char> CreatePayload_OracleBackup(uint32_t contractId);
 std::vector<unsigned char> CreatePayload_Close_Oracle(uint32_t contractId);
-std::vector<unsigned char> CreatePayload_Set_Oracle(uint32_t contractId, uint64_t high, uint64_t low);
+std::vector<unsigned char> CreatePayload_Set_Oracle(uint32_t contractId, uint64_t high, uint64_t low, uint64_t close);
 std::vector<unsigned char> CreatePayload_Commit_Channel(uint32_t propertyId, uint64_t amount);
 std::vector<unsigned char> CreatePayload_Withdrawal_FromChannel(uint32_t propertyId, uint64_t amount);
 std::vector<unsigned char> CreatePayload_Instant_Trade(uint32_t propertyId, uint64_t amount, uint32_t blockheight_expiry, uint32_t propertyDesired, uint64_t amountDesired);

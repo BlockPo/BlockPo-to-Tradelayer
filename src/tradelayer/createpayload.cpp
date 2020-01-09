@@ -658,7 +658,7 @@ std::vector<unsigned char> CreatePayload_Change_OracleRef(uint32_t contractId)
 }
 
 /* Tx 105 */
-std::vector<unsigned char> CreatePayload_Set_Oracle(uint32_t contractId, uint64_t high, uint64_t low)
+std::vector<unsigned char> CreatePayload_Set_Oracle(uint32_t contractId, uint64_t high, uint64_t low, uint64_t close)
 {
     std::vector<unsigned char> payload;
 
@@ -670,12 +670,14 @@ std::vector<unsigned char> CreatePayload_Set_Oracle(uint32_t contractId, uint64_
     std::vector<uint8_t> vecContractId = CompressInteger((uint64_t)contractId);
     std::vector<uint8_t> vecHigh = CompressInteger(high);
     std::vector<uint8_t> vecLow = CompressInteger(low);
+    std::vector<uint8_t> vecClose = CompressInteger(close);
 
     payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
     payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
     payload.insert(payload.end(), vecContractId.begin(), vecContractId.end());
     payload.insert(payload.end(), vecHigh.begin(), vecHigh.end());
     payload.insert(payload.end(), vecLow.begin(), vecLow.end());
+    payload.insert(payload.end(), vecClose.begin(), vecClose.end());
 
     return payload;
 }

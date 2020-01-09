@@ -160,7 +160,7 @@ extern std::map<uint32_t, std::vector<int64_t>> mapContractAmountTimesPrice;
 extern std::map<uint32_t, std::vector<int64_t>> mapContractVolume;
 extern std::map<uint32_t, int64_t> VWAPMapContracts;
 //extern volatile std::vector<std::map<std::string, std::string>> path_eleg;
-extern std::map<uint32_t,oracledata> oraclePrices;
+extern std::map<uint32_t,std::map<int,oracledata>> oraclePrices;
 extern std::string setExoduss;
 /************************************************/
 /** TWAP containers **/
@@ -2503,7 +2503,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
     mastercore_init();
   }
 
-  twapForLiquidation(5,3);
+  int64_t twap = mastercore::getOracleTwap(5,3);
 
   // clear pending, if any
   // NOTE1: Every incoming TX is checked, not just MP-ones because:
@@ -6009,13 +6009,17 @@ int64_t mastercore::getOracleTwap(uint32_t contractId, int nBlocks)
      int64_t sum = 0;
      int count = 0;
 
-     for(std::map<uint32_t,oracledata>::iterator it = oraclePrices.end(); it != oraclePrices.begin(); ++it)
+     std::map<uint32_t,std::map<int,oracledata>>::iterator it = oraclePrices.find(contractId);
+
+     std::map<int,oracledata> orMap = it->second;
+
+     for(std::map<int,oracledata>::iterator itt = orMap.end(); itt != orMap.begin(); ++itt)
      {
           if (nBlocks >= count)
               break;
 
-          const oracledata ord = it->second;
-          arith_uint256 aSum += (ConvertTo256(ord.high) + ConvertTo256(ord.low)) / ConvertTo256(2) ;
+          const oracledata ord = itt->second;
+          arith_uint256 aSum = (ConvertTo256(ord.high) + ConvertTo256(ord.low) + ConvertTo256(ord.close)) / ConvertTo256(3) ;
           sum += ConvertTo64(aSum);
           count++;
      }

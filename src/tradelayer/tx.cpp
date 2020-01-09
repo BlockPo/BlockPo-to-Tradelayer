@@ -50,7 +50,7 @@ typedef boost::rational<boost::multiprecision::checked_int128_t> rational_t;
 typedef boost::multiprecision::cpp_dec_float_100 dec_float;
 typedef boost::multiprecision::checked_int128_t int128_t;
 extern std::map<std::string,uint32_t> peggedIssuers;
-extern std::map<uint32_t,oracledata> oraclePrices;
+extern std::map<uint32_t,std::map<int,oracledata>> oraclePrices;
 extern std::map<std::string,vector<withdrawalAccepted>> withdrawal_Map;
 extern std::map<std::string,channel> channels_Map;
 extern int64_t factorE;
@@ -1503,11 +1503,16 @@ bool CMPTransaction::interpret_Set_Oracle()
         oracle_low = DecompressInteger(vecLowBytes);
     } else return false;
 
+    if (!vecLowBytes.empty()) {
+        oracle_close = DecompressInteger(vecLowBytes);
+    } else return false;
+
     if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
     {
         PrintToLog("\t version: %d\n", version);
         PrintToLog("\t oracle high price: %d\n",oracle_high);
         PrintToLog("\t oracle low price: %d\n",oracle_low);
+        PrintToLog("\t oracle close price: %d\n",oracle_close);
         PrintToLog("\t propertyId: %d\n", propertyId);
     }
 
@@ -4027,14 +4032,23 @@ int CMPTransaction::logicMath_Set_Oracle()
     // ------------------------------------------
 
     // putting data on memory
-    oraclePrices[contractId].block = block;
-    oraclePrices[contractId].high = oracle_high;
-    oraclePrices[contractId].low = oracle_low;
+    std::map<uint32_t,std::map<int,oracledata>>::iterator it = oraclePrices.find(propertyId);
+
+    std::map<int,oracledata> odMap = it->second;
+
+    std::map<int,oracledata>::iterator itt = odMap.find(block);
+
+    oracledata orElem = itt->second;
+
+    orElem.high = oracle_high;
+    orElem.low = oracle_low;
+    orElem.close = oracle_close;
 
     // saving on db
     sp.oracle_high = oracle_high;
     sp.oracle_low = oracle_low;
-    sp.oracle_last_update = block;
+    sp.oracle_close = oracle_close;
+    // sp.oracle_last_update = block;
 
     assert(_my_sps->updateSP(contractId, sp));
 
