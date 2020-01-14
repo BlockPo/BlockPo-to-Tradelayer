@@ -1571,7 +1571,7 @@ UniValue tl_senddexaccept(const JSONRPCRequest& request)
 
 UniValue tl_setoracle(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 4)
+    if (request.params.size() != 5)
         throw runtime_error(
             "tl_setoracle \"fromaddress\" \"contract name\" price\n"
 

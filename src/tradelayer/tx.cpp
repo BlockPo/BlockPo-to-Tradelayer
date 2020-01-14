@@ -1490,6 +1490,7 @@ bool CMPTransaction::interpret_Set_Oracle()
     std::vector<uint8_t> vecContIdBytes = GetNextVarIntBytes(i);
     std::vector<uint8_t> vecHighBytes = GetNextVarIntBytes(i);
     std::vector<uint8_t> vecLowBytes = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecCloseBytes = GetNextVarIntBytes(i);
 
     if (!vecContIdBytes.empty()) {
         contractId = DecompressInteger(vecContIdBytes);
@@ -1504,7 +1505,7 @@ bool CMPTransaction::interpret_Set_Oracle()
     } else return false;
 
     if (!vecLowBytes.empty()) {
-        oracle_close = DecompressInteger(vecLowBytes);
+        oracle_close = DecompressInteger(vecCloseBytes);
     } else return false;
 
     if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
@@ -4031,28 +4032,44 @@ int CMPTransaction::logicMath_Set_Oracle()
 
     // ------------------------------------------
 
-    // putting data on memory
-    std::map<uint32_t,std::map<int,oracledata>>::iterator it = oraclePrices.find(propertyId);
+    oracledata Ol;
 
-    std::map<int,oracledata> odMap = it->second;
+    Ol.high = oracle_high;
+    Ol.low = oracle_low;
+    Ol.close = oracle_close;
 
-    std::map<int,oracledata>::iterator itt = odMap.find(block);
+    oraclePrices[contractId][block] = Ol;
 
-    oracledata orElem = itt->second;
 
-    orElem.high = oracle_high;
-    orElem.low = oracle_low;
-    orElem.close = oracle_close;
+    // PrintToLog("%s():Ol element:,high:%d, low:%d, close:%d\n",__func__, Ol.high, Ol.low, Ol.close);
+
 
     // saving on db
     sp.oracle_high = oracle_high;
     sp.oracle_low = oracle_low;
     sp.oracle_close = oracle_close;
-    // sp.oracle_last_update = block;
+
+
+   if(oraclePrices.empty())
+       PrintToLog("%s(): element was not inserted !\n",__func__);
+   else
+       PrintToLog("%s(): element was INSERTED \n",__func__);
+    //
+    // std::map<uint32_t,std::map<int,oracledata>>::iterator it = oraclePrices.find(contractId);
+    //
+    //
+    // std::map<int,oracledata> m = it->second;
+    //
+    // std::map<int,oracledata>::iterator itt = m.find(block);
+    //
+    // oracledata Or = itt->second;
+    //
+    // PrintToLog("%s(): oracle data for contract: block: %d,high:%d, low:%d, close:%d\n",block, Or.high, Or.low, Or.close);
+
 
     assert(_my_sps->updateSP(contractId, sp));
 
-    if (msc_debug_set_oracle) PrintToLog("oracle data for contract: block: %d,high:%d, low:%d\n",block, oracle_high, oracle_low);
+    // if (msc_debug_set_oracle) PrintToLog("oracle data for contract: block: %d,high:%d, low:%d, close:%d\n",block, oracle_high, oracle_low, oracle_close);
 
     return 0;
 }

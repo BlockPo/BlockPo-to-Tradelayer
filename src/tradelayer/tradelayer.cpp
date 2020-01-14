@@ -2504,6 +2504,8 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   }
 
   int64_t twap = mastercore::getOracleTwap(5,3);
+  PrintToLog("%s():twap3 for Oracles: %d\n",__func__,twap);
+
 
   // clear pending, if any
   // NOTE1: Every incoming TX is checked, not just MP-ones because:
@@ -6008,21 +6010,28 @@ int64_t mastercore::getOracleTwap(uint32_t contractId, int nBlocks)
 {
      int64_t sum = 0;
      int count = 0;
+     arith_uint256 aSum = 0;
 
      std::map<uint32_t,std::map<int,oracledata>>::iterator it = oraclePrices.find(contractId);
 
      std::map<int,oracledata> orMap = it->second;
 
-     for(std::map<int,oracledata>::iterator itt = orMap.end(); itt != orMap.begin(); ++itt)
+     for(auto itt = orMap.rbegin(); itt != orMap.rend(); ++itt)
      {
-          if (nBlocks >= count)
+          if(msc_debug_oracle_twap) PrintToLog("%s(): actual block: %d\n", __func__, itt->first);
+
+          if (count >= nBlocks)
               break;
 
           const oracledata ord = itt->second;
-          arith_uint256 aSum = (ConvertTo256(ord.high) + ConvertTo256(ord.low) + ConvertTo256(ord.close)) / ConvertTo256(3) ;
-          sum += ConvertTo64(aSum);
+          aSum += (ConvertTo256(ord.high) + ConvertTo256(ord.low) + ConvertTo256(ord.close)) / ConvertTo256(3) ;
           count++;
+
+          if(msc_debug_oracle_twap) PrintToLog("%s(): count: %d\n", __func__, count);
      }
+
+     sum = ConvertTo64((aSum / ConvertTo256(static_cast<int64_t>(nBlocks))));
+     if(msc_debug_oracle_twap) PrintToLog("%s(): sum: %d\n", __func__, sum);
 
      return sum;
 }
