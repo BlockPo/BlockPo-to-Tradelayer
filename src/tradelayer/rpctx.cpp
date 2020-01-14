@@ -1571,7 +1571,7 @@ UniValue tl_senddexaccept(const JSONRPCRequest& request)
 
 UniValue tl_setoracle(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 4)
+    if (request.params.size() != 5)
         throw runtime_error(
             "tl_setoracle \"fromaddress\" \"contract name\" price\n"
 
@@ -1582,6 +1582,7 @@ UniValue tl_setoracle(const JSONRPCRequest& request)
             "2. contract name        (string, required) the name of the Future Contract\n"
             "3. high price           (number, required) the highest price of the asset\n"
             "4. low price            (number, required) the lowest price of the asset\n"
+            "5. close price          (number, required) the close price of the asset\n"
 
             "\nResult:\n"
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
@@ -1596,6 +1597,7 @@ UniValue tl_setoracle(const JSONRPCRequest& request)
     std::string name_contract = ParseText(request.params[1]);
     uint64_t high = ParseEffectivePrice(request.params[2]);
     uint64_t low = ParseEffectivePrice(request.params[3]);
+    uint64_t close = ParseEffectivePrice(request.params[4]);
     struct FutureContractObject *pfuture_contract = getFutureContractObject(ALL_PROPERTY_TYPE_ORACLE_CONTRACT, name_contract);
     uint32_t contractId = pfuture_contract->fco_propertyId;
     std::string oracleAddress = pfuture_contract->fco_issuer;
@@ -1610,7 +1612,7 @@ UniValue tl_setoracle(const JSONRPCRequest& request)
 
 
     // create a payload for the transaction
-    std::vector<unsigned char> payload = CreatePayload_Set_Oracle(contractId,high,low);
+    std::vector<unsigned char> payload = CreatePayload_Set_Oracle(contractId,high,low, close);
 
     // request the wallet build the transaction (and if needed commit it)
     uint256 txid;

@@ -50,7 +50,7 @@ typedef boost::rational<boost::multiprecision::checked_int128_t> rational_t;
 typedef boost::multiprecision::cpp_dec_float_100 dec_float;
 typedef boost::multiprecision::checked_int128_t int128_t;
 extern std::map<std::string,uint32_t> peggedIssuers;
-extern std::map<uint32_t,oracledata> oraclePrices;
+extern std::map<uint32_t,std::map<int,oracledata>> oraclePrices;
 extern std::map<std::string,vector<withdrawalAccepted>> withdrawal_Map;
 extern std::map<std::string,channel> channels_Map;
 extern int64_t factorE;
@@ -1014,8 +1014,8 @@ bool CMPTransaction::interpret_CreateContractDex()
 
   prop_type = ALL_PROPERTY_TYPE_CONTRACT;
 
-  if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
-  {
+  // if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+  // {
       PrintToLog("\t version: %d\n", version);
       PrintToLog("\t messageType: %d\n",type);
       PrintToLog("\t denomination: %d\n", denomination);
@@ -1026,7 +1026,7 @@ bool CMPTransaction::interpret_CreateContractDex()
       PrintToLog("\t ecosystem: %d\n", ecosystem);
       PrintToLog("\t name: %s\n", name);
       PrintToLog("\t prop_type: %d\n", prop_type);
-  }
+  // }
 
   return true;
 }
@@ -1490,6 +1490,7 @@ bool CMPTransaction::interpret_Set_Oracle()
     std::vector<uint8_t> vecContIdBytes = GetNextVarIntBytes(i);
     std::vector<uint8_t> vecHighBytes = GetNextVarIntBytes(i);
     std::vector<uint8_t> vecLowBytes = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecCloseBytes = GetNextVarIntBytes(i);
 
     if (!vecContIdBytes.empty()) {
         contractId = DecompressInteger(vecContIdBytes);
@@ -1503,11 +1504,16 @@ bool CMPTransaction::interpret_Set_Oracle()
         oracle_low = DecompressInteger(vecLowBytes);
     } else return false;
 
+    if (!vecLowBytes.empty()) {
+        oracle_close = DecompressInteger(vecCloseBytes);
+    } else return false;
+
     if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
     {
         PrintToLog("\t version: %d\n", version);
         PrintToLog("\t oracle high price: %d\n",oracle_high);
         PrintToLog("\t oracle low price: %d\n",oracle_low);
+        PrintToLog("\t oracle close price: %d\n",oracle_close);
         PrintToLog("\t propertyId: %d\n", propertyId);
     }
 
@@ -3060,6 +3066,8 @@ int CMPTransaction::logicMath_CreateContractDex()
   newSP.ecosystemSP = ecosystem;
   newSP.attribute_type = attribute_type;
 
+  PrintToLog("%s(): init block inside create contract: %d\n", __func__, newSP.init_block);
+
   const uint32_t propertyId = _my_sps->putSP(ecosystem, newSP);
   assert(propertyId > 0);
 
@@ -3089,9 +3097,11 @@ int CMPTransaction::logicMath_ContractDexTrade()
 
   (pfuture->fco_prop_type == ALL_PROPERTY_TYPE_CONTRACT) ? result = 5 : result = 6;
 
-  if(!t_tradelistdb->checkKYCRegister(sender,result))
-      return PKT_ERROR_KYC -10;
+  // if(!t_tradelistdb->checkKYCRegister(sender,result))
+  //     return PKT_ERROR_KYC -10;
+  //
 
+  PrintToLog("%s(): fco_init_block: %d; fco_blocks_until_expiration: %d; actual block: %d\n",__func__,pfuture->fco_init_block,pfuture->fco_blocks_until_expiration,block);
 
   if (block > pfuture->fco_init_block + static_cast<int>(pfuture->fco_blocks_until_expiration) || block < pfuture->fco_init_block)
       return PKT_ERROR_SP -38;
@@ -3142,8 +3152,9 @@ int CMPTransaction::logicMath_ContractDexTrade()
   NodeRewardObj.SendNodeReward(sender);
 
   /*********************************************/
-
+  PrintToLog("%s(): checkpoint 1\n");
   t_tradelistdb->recordNewTrade(txid, sender, id_contract, desired_property, block, tx_idx, 0);
+  PrintToLog("%s(): checkpoint 2\n");
   int rc = ContractDex_ADD(sender, id_contract, amount, block, txid, tx_idx, effective_price, trading_action,0);
 
   return rc;
@@ -4021,19 +4032,44 @@ int CMPTransaction::logicMath_Set_Oracle()
 
     // ------------------------------------------
 
-    // putting data on memory
-    oraclePrices[contractId].block = block;
-    oraclePrices[contractId].high = oracle_high;
-    oraclePrices[contractId].low = oracle_low;
+    oracledata Ol;
+
+    Ol.high = oracle_high;
+    Ol.low = oracle_low;
+    Ol.close = oracle_close;
+
+    oraclePrices[contractId][block] = Ol;
+
+
+    // PrintToLog("%s():Ol element:,high:%d, low:%d, close:%d\n",__func__, Ol.high, Ol.low, Ol.close);
+
 
     // saving on db
     sp.oracle_high = oracle_high;
     sp.oracle_low = oracle_low;
-    sp.oracle_last_update = block;
+    sp.oracle_close = oracle_close;
+
+
+   if(oraclePrices.empty())
+       PrintToLog("%s(): element was not inserted !\n",__func__);
+   else
+       PrintToLog("%s(): element was INSERTED \n",__func__);
+    //
+    // std::map<uint32_t,std::map<int,oracledata>>::iterator it = oraclePrices.find(contractId);
+    //
+    //
+    // std::map<int,oracledata> m = it->second;
+    //
+    // std::map<int,oracledata>::iterator itt = m.find(block);
+    //
+    // oracledata Or = itt->second;
+    //
+    // PrintToLog("%s(): oracle data for contract: block: %d,high:%d, low:%d, close:%d\n",block, Or.high, Or.low, Or.close);
+
 
     assert(_my_sps->updateSP(contractId, sp));
 
-    if (msc_debug_set_oracle) PrintToLog("oracle data for contract: block: %d,high:%d, low:%d\n",block, oracle_high, oracle_low);
+    // if (msc_debug_set_oracle) PrintToLog("oracle data for contract: block: %d,high:%d, low:%d, close:%d\n",block, oracle_high, oracle_low, oracle_close);
 
     return 0;
 }

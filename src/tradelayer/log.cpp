@@ -75,7 +75,7 @@ bool msc_debug_dex                              = 0;
 bool msc_debug_contractdex_tx                   = 0;
 bool msc_debug_create_pegged                    = 0;
 bool msc_debug_accept_offerbtc                  = 0;
-bool msc_debug_set_oracle                       = 0;
+bool msc_debug_set_oracle                       = 1;
 bool msc_debug_send_pegged                      = 0;
 bool msc_debug_commit_channel                   = 0;
 bool msc_debug_withdrawal_from_channel          = 0;
@@ -84,6 +84,7 @@ bool msc_debug_contract_instant_trade           = 0;
 bool msc_create_channel                         = 0;
 bool msc_debug_new_id_registration              = 0;
 bool msc_debug_wallettxs                        = 0;
+bool msc_debug_oracle_twap                      = 0;
 /**
  * LogPrintf() has been broken a couple of times now
  * by well-meaning people adding mutexes in the most straightforward way.

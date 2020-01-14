@@ -136,6 +136,7 @@ extern double globalPNLALL_DUSD;
 extern int64_t globalVolumeALL_DUSD;
 extern int lastBlockg;
 extern int twapBlockg;
+extern int newTwapBlock;
 extern int vestingActivationBlock;
 extern volatile int64_t globalVolumeALL_LTC;
 extern std::vector<std::string> vestingAddresses;
@@ -159,9 +160,13 @@ extern std::map<uint32_t, std::vector<int64_t>> mapContractAmountTimesPrice;
 extern std::map<uint32_t, std::vector<int64_t>> mapContractVolume;
 extern std::map<uint32_t, int64_t> VWAPMapContracts;
 //extern volatile std::vector<std::map<std::string, std::string>> path_eleg;
+extern std::map<uint32_t,std::map<int,oracledata>> oraclePrices;
 extern std::string setExoduss;
 /************************************************/
 /** TWAP containers **/
+
+// for liquidation price
+extern std::map<uint32_t, int64_t> cdex_twap_liq;
 extern std::map<uint32_t, std::vector<uint64_t>> cdextwap_ele;
 extern std::map<uint32_t, std::vector<uint64_t>> cdextwap_vec;
 extern std::map<uint32_t, std::map<uint32_t, std::vector<uint64_t>>> mdextwap_ele;
@@ -2443,6 +2448,33 @@ int mastercore_shutdown()
   return 0;
 }
 
+// NOTE: change this function using vwap instead of twap
+// for oracles we need vwap for last 3 blocks but using the prices map (we have that yet)
+void mastercore::twapForLiquidation(uint32_t contractId, int blocks)
+{
+      uint64_t sum = 0;
+      int count = 0;
+      std::map<uint32_t, std::vector<uint64_t>>::iterator it = cdextwap_vec.find(contractId);
+      std::vector<uint64_t> auxVec = it->second;
+
+      for (std::vector<uint64_t>::iterator itt = auxVec.begin(); itt != auxVec.end(); ++itt)
+      {
+           // if(count >= blocks)
+           //     break;
+
+           sum += *(itt);
+           count++;
+           PrintToLog("%s(): count : %d\n",__func__,count);
+      }
+
+      PrintToLog("%s(): sum : %d\n",__func__,sum);
+      rational_t twap_priceRatCDEx(sum/COIN, blocks);
+      int64_t twap_priceCDEx = mastercore::RationalToInt64(twap_priceRatCDEx);
+      PrintToLog("%s():\nTvwap Price CDEx = %s\n",__func__, FormatDivisibleMP(twap_priceCDEx));
+      cdex_twap_liq[contractId] = twap_priceCDEx;
+
+  }
+
 /**
  * This handler is called for every new transaction that comes in (actually in block parsing loop).
  *
@@ -2471,6 +2503,10 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
     mastercore_init();
   }
 
+  int64_t twap = mastercore::getOracleTwap(5,3);
+  PrintToLog("%s():twap3 for Oracles: %d\n",__func__,twap);
+
+
   // clear pending, if any
   // NOTE1: Every incoming TX is checked, not just MP-ones because:
   // if for some reason the incoming TX doesn't pass our parser validation steps successfuly, I'd still want to clear pending amounts for that TX.
@@ -2482,7 +2518,6 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   int64_t nBlockTime = pBlockIndex->GetBlockTime();
 
   int nBlockNow = GetHeight();
-
   /***********************************************************************/
   /** Calling The Settlement Algorithm **/
 
@@ -2501,9 +2536,15 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
     /**********************************************************************/
     /** TWAP vector **/
 
+    /* * NOTE: first we calculate oracles twap for 3 blocks
+       *
+       *
+     */
+
     if(msc_debug_handler_tx) PrintToLog("\nTWAP Prices = \n");
     struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, "ALL F18");
     uint32_t property_traded = pfuture->fco_propertyId;
+
 
     // PrintToLog("\nVector CDExtwap_vec =\n");
     // for (unsigned int i = 0; i < cdextwap_vec[property_traded].size(); i++)
@@ -4308,23 +4349,26 @@ void Filling_Twap_Vec(std::map<uint32_t, std::vector<uint64_t>> &twap_ele, std::
   std::vector<uint64_t> twap_minmax;
   if (msc_debug_tradedb) PrintToLog("\nCheck here CDEx:\t nBlockNow = %d\t twapBlockg = %d\n", nBlockNow, twapBlockg);
 
+  // twap for 50 blocks
   if (nBlockNow == twapBlockg)
-    twap_ele[property_traded].push_back(effective_price);
-  else
-    {
-      if (twap_ele[property_traded].size() != 0)
-	{
-	  twap_minmax = min_max(twap_ele[property_traded]);
-	  uint64_t numerator = twap_ele[property_traded].front()+twap_minmax[0]+twap_minmax[1]+twap_ele[property_traded].back();
-	  rational_t twapRat(numerator/COIN, 4);
-	  int64_t twap_elej = mastercore::RationalToInt64(twapRat);
-	  if (msc_debug_tradedb) PrintToLog("\ntwap_elej CDEx = %s\n", FormatDivisibleMP(twap_elej));
-	  cdextwap_vec[property_traded].push_back(twap_elej);
-	}
-      twap_ele[property_traded].clear();
+  {
       twap_ele[property_traded].push_back(effective_price);
-    }
+  } else {
+      if (twap_ele[property_traded].size() != 0)
+	    {
+	        twap_minmax = min_max(twap_ele[property_traded]);
+	        uint64_t numerator = twap_ele[property_traded].front()+twap_minmax[0]+twap_minmax[1]+twap_ele[property_traded].back();
+	        rational_t twapRat(numerator/COIN, 4);
+          int64_t twap_elej = mastercore::RationalToInt64(twapRat);
+          if (msc_debug_tradedb) PrintToLog("\ntwap_elej CDEx = %s\n", FormatDivisibleMP(twap_elej));
+          cdextwap_vec[property_traded].push_back(twap_elej);
+	    }
+          twap_ele[property_traded].clear();
+          twap_ele[property_traded].push_back(effective_price);
+  }
+
   twapBlockg = nBlockNow;
+
 }
 
 void Filling_Twap_Vec(std::map<uint32_t, std::map<uint32_t, std::vector<uint64_t>>> &twap_ele,
@@ -5962,7 +6006,35 @@ int64_t mastercore::MdexVolumen(uint32_t fproperty, uint32_t sproperty, int fblo
     return Amount;
 }
 
+int64_t mastercore::getOracleTwap(uint32_t contractId, int nBlocks)
+{
+     int64_t sum = 0;
+     int count = 0;
+     arith_uint256 aSum = 0;
 
+     std::map<uint32_t,std::map<int,oracledata>>::iterator it = oraclePrices.find(contractId);
+
+     std::map<int,oracledata> orMap = it->second;
+
+     for(auto itt = orMap.rbegin(); itt != orMap.rend(); ++itt)
+     {
+          if(msc_debug_oracle_twap) PrintToLog("%s(): actual block: %d\n", __func__, itt->first);
+
+          if (count >= nBlocks)
+              break;
+
+          const oracledata ord = itt->second;
+          aSum += (ConvertTo256(ord.high) + ConvertTo256(ord.low) + ConvertTo256(ord.close)) / ConvertTo256(3) ;
+          count++;
+
+          if(msc_debug_oracle_twap) PrintToLog("%s(): count: %d\n", __func__, count);
+     }
+
+     sum = ConvertTo64((aSum / ConvertTo256(static_cast<int64_t>(nBlocks))));
+     if(msc_debug_oracle_twap) PrintToLog("%s(): sum: %d\n", __func__, sum);
+
+     return sum;
+}
 
 /**
  * @return The marker for class D transactions.

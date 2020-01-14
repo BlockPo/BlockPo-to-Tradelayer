@@ -269,6 +269,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_listtransactions", 4, "arg4" },
     { "tl_setoracle", 2, "arg2" },
     { "tl_setoracle", 3, "arg3" },
+    { "tl_setoracle", 4, "arg4" },
     { "tl_commit_tochannel", 2, "arg2" },
     { "tl_commit_tochannel", 4, "arg4" },
     { "tl_withdrawal_fromchannel", 2, "arg2" },

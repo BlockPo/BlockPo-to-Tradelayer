@@ -71,6 +71,10 @@ int64_t amountVesting;
 int64_t totalVesting;
 int lastBlockg;
 int twapBlockg;
+
+// for liquidation prices
+int newTwapBlock;
+
 int vestingActivationBlock;
 volatile int64_t LTCPriceOffer;
 volatile int64_t factorALLtoLTC;
@@ -85,6 +89,9 @@ int BlockS;
 std::string setExoduss;
 /*****************************************/
 /** TWAP containers **/
+
+// TWAP prices for n blocks used for liquidation prices
+std::map<uint32_t, int64_t> cdex_twap_liq;
 
 std::map<uint32_t, std::vector<uint64_t>> cdextwap_ele;
 std::map<uint32_t, std::vector<uint64_t>> cdextwap_vec;
@@ -104,7 +111,7 @@ int64_t SatoshiH;
 
 /*****************************************/
 /** Oracles **/
-std::map<uint32_t,oracledata> oraclePrices;
+std::map<uint32_t,std::map<int,oracledata>> oraclePrices;
 
 /*****************************************/
 /** Withdrawals on channels **/
