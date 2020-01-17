@@ -2248,6 +2248,16 @@ int CMPTransaction::logicMath_SimpleSend()
 /** Tx 5 */
 int CMPTransaction::logicMath_SendVestingTokens()
 {
+  if (!IsTransactionTypeAllowed(block, property, type, version)) {
+      PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+              __func__,
+              type,
+              version,
+              property,
+              block);
+      return (PKT_ERROR_SEND -22);
+  }
+  
   assert(update_tally_map(sender, property, -nValue, BALANCE));
   assert(update_tally_map(receiver, property, nValue, BALANCE));
   assert(update_tally_map(receiver, TL_PROPERTY_ALL, nValue, UNVESTED));
