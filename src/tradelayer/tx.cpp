@@ -2248,6 +2248,17 @@ int CMPTransaction::logicMath_SimpleSend()
 /** Tx 5 */
 int CMPTransaction::logicMath_SendVestingTokens()
 {
+
+  if (!SanityChecks(receiver, block)) {
+      PrintToLog("%s(): rejected: sanity checks for send vesting tokens failed\n",
+              __func__,
+              type,
+              version,
+              property,
+              block);
+      return (PKT_ERROR_SEND -22);
+  }
+
   assert(update_tally_map(sender, property, -nValue, BALANCE));
   assert(update_tally_map(receiver, property, nValue, BALANCE));
   assert(update_tally_map(receiver, TL_PROPERTY_ALL, nValue, UNVESTED));
