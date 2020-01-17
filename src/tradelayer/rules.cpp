@@ -169,7 +169,7 @@ CTestNetConsensusParams::CTestNetConsensusParams()
     MSC_MANUALSP_BLOCK = 0;
     MSC_SEND_ALL_BLOCK = 0;
     MSC_CONTRACTDEX_BLOCK = 0;
-    MSC_VESTING_BLOCK = 0;
+    MSC_VESTING_BLOCK = 1334800;
     MSC_NODE_REWARD = 777;
 }
 
