@@ -2676,7 +2676,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
       		  if(msc_debug_handler_tx) PrintToLog("quad64_t = %s, LastQuad = %s\n", FormatDivisibleMP(quad64_t), FormatDivisibleMP(LastQuad));
 
       		  multiply(numQuad128, (int64_t)quadBalance, (int64_t)vestingBalance);
-      		  if(msc_debug_handler_tx) PrintToLog("numQuad128 = %s\n", xToString(numQuad128/COIN));
+      		  // if(msc_debug_handler_tx) PrintToLog("numQuad128 = %s\n", xToString(numQuad128/COIN));
 
       		  rational_t quadRationalw(numQuad128/COIN, (int64_t)TOTAL_AMOUNT_VESTING_TOKENS);
       		  int64_t quadWeighted = mastercore::RationalToInt64(quadRationalw);
@@ -2705,7 +2705,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
 
       		 if(msc_debug_handler_tx) PrintToLog("logBalance = %s, vestingBalance = %s\n", FormatDivisibleMP(logBalance), FormatDivisibleMP(vestingBalance));
       		 multiply(numLog128, (int64_t)logBalance, (int64_t)vestingBalance);
-      		 if(msc_debug_handler_tx) PrintToLog("numLog128 = %s\n", xToString(numLog128/COIN));
+      		 // if(msc_debug_handler_tx) PrintToLog("numLog128 = %s\n", xToString(numLog128/COIN));
 
       		  rational_t logRationalw(numLog128/COIN, TOTAL_AMOUNT_VESTING_TOKENS);
       		  int64_t logWeighted = mastercore::RationalToInt64(logRationalw);
@@ -2743,7 +2743,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
 
       		  if(msc_debug_handler_tx) PrintToLog("logBalance = %s, vestingBalance = %s\n", FormatDivisibleMP(logBalance), FormatDivisibleMP(vestingBalance));
       		  multiply(numLog128, (int64_t)logBalance, (int64_t)vestingBalance);
-      		  if(msc_debug_handler_tx) PrintToLog("numLog128 = %s\n", xToString(numLog128/COIN));
+      		  // if(msc_debug_handler_tx) PrintToLog("numLog128 = %s\n", xToString(numLog128/COIN));
 
       		  rational_t logRationalw(numLog128/COIN, TOTAL_AMOUNT_VESTING_TOKENS);
       		  int64_t logWeighted = mastercore::RationalToInt64(logRationalw);
