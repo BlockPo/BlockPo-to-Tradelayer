@@ -153,26 +153,27 @@ CMainConsensusParams::CMainConsensusParams()
 /**
  * Constructor for testnet consensus parameters.
  */
-CTestNetConsensusParams::CTestNetConsensusParams()
-{
-    GENESIS_BLOCK = 0;
-    // Notice range for feature activations:
-    MIN_ACTIVATION_BLOCKS = 0;
-    MAX_ACTIVATION_BLOCKS = 999999;
-    // Script related:
-    PUBKEYHASH_BLOCK = 0;
-    SCRIPTHASH_BLOCK = 0;
-    NULLDATA_BLOCK = 0;
-    // Transaction restrictions:
-    MSC_ALERT_BLOCK = 0;
-    MSC_SEND_BLOCK = 0;
-    MSC_SP_BLOCK = 0;
-    MSC_MANUALSP_BLOCK = 0;
-    MSC_SEND_ALL_BLOCK = 0;
-    MSC_CONTRACTDEX_BLOCK = 0;
-    MSC_VESTING_BLOCK = 1334800;
-    MSC_NODE_REWARD = 777;
-}
+ CTestNetConsensusParams::CTestNetConsensusParams()
+ {
+     GENESIS_BLOCK = 0;
+     // Notice range for feature activations:
+     MIN_ACTIVATION_BLOCKS = 0;
+     MAX_ACTIVATION_BLOCKS = 999999;
+     // Script related:
+     PUBKEYHASH_BLOCK = 0;
+     SCRIPTHASH_BLOCK = 0;
+     NULLDATA_BLOCK = 0;
+     // Transaction restrictions:
+     MSC_ALERT_BLOCK = 0;
+     MSC_SEND_BLOCK = 1336253;
+     MSC_SP_BLOCK = 1336253;
+     MSC_MANUALSP_BLOCK = 1336253;
+     MSC_SEND_ALL_BLOCK = 1336253;
+     MSC_CONTRACTDEX_BLOCK = 1336253;
+     MSC_VESTING_BLOCK = 1336267;
+     MSC_NODE_REWARD = 1336253;
+ }
+
 
 /**
  * Constructor for regtest consensus parameters.
