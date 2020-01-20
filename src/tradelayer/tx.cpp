@@ -2257,7 +2257,18 @@ int CMPTransaction::logicMath_SendVestingTokens()
               block);
       return (PKT_ERROR_SEND -22);
   }
-  
+
+  int64_t nBalance = getMPbalance(sender, property, BALANCE);
+  if (nBalance < (int64_t) nValue) {
+      PrintToLog("%s(): rejected: sender %s has insufficient balance of property %d [%s < %s]\n",
+              __func__,
+              sender,
+              property,
+              FormatMP(property, nBalance),
+              FormatMP(property, nValue));
+      return (PKT_ERROR_SEND -25);
+  }
+
   assert(update_tally_map(sender, property, -nValue, BALANCE));
   assert(update_tally_map(receiver, property, nValue, BALANCE));
   assert(update_tally_map(receiver, TL_PROPERTY_ALL, nValue, UNVESTED));
