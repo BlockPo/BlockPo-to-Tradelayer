@@ -86,7 +86,7 @@ std::vector<TransactionRestriction> CConsensusParams::GetRestrictions() const
         { MSC_TYPE_UPDATE_ID_REGISTRATION,                MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
         { MSC_TYPE_DEX_PAYMENT,                           MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
         { MSC_TYPE_CREATE_ORACLE_CONTRACT,                MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
-        { MSC_TYPE_SEND_VESTING,                          MP_TX_PKT_V0,      true,             MSC_VESTING_BLOCK    },
+        { MSC_TYPE_SEND_VESTING,                          MP_TX_PKT_V0,      true,             MSC_VESTING_BLOCK}
 
     };
 
@@ -170,7 +170,7 @@ CTestNetConsensusParams::CTestNetConsensusParams()
     MSC_MANUALSP_BLOCK = 0;
     MSC_SEND_ALL_BLOCK = 0;
     MSC_CONTRACTDEX_BLOCK = 0;
-    MSC_VESTING_BLOCK = 0;
+    MSC_VESTING_BLOCK = 1334800;
     MSC_NODE_REWARD = 777;
 }
 

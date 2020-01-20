@@ -597,30 +597,54 @@ void CheckWalletUpdate(bool forceUpdate)
 #endif
 }
 
+
+/**
+ * Returns the Admin address for vesting tokens.
+ *
+ * Main network:
+ *   ... ? ...
+ *
+ * Test network:
+ *   moCYruRphhYgejzH75bxWD49qRFan8eGES
+ *
+ * @return The specific address
+ */
+const string getAdminAddress()
+{
+    if (isNonMainNet()) {
+        // testnet address
+        const string testAddress = "moCYruRphhYgejzH75bxWD49qRFan8eGES";
+        return testAddress;
+    } else {
+        // NOTE: we need the Mainnet adddress
+        const string mainAddress = "";
+        return mainAddress;
+    }
+}
+
 void creatingVestingTokens(int block)
 {
-  extern int64_t amountVesting;
-  extern int64_t totalVesting;
-  extern std::string admin_addrs;
+   extern int64_t amountVesting;
+   extern int64_t totalVesting;
 
-  CMPSPInfo::Entry newSP;
+   CMPSPInfo::Entry newSP;
 
-  newSP.name = "Vesting Tokens";
-  newSP.data = "Divisible Tokens";
-  newSP.url  = "www.tradelayer.org";
-  newSP.category = "N/A";
-  newSP.subcategory = "N/A";
-  newSP.prop_type = ALL_PROPERTY_TYPE_DIVISIBLE;
-  newSP.num_tokens = amountVesting;
-  newSP.attribute_type = ALL_PROPERTY_TYPE_VESTING;
-  newSP.init_block = block;
+   newSP.name = "Vesting Tokens";
+   newSP.data = "Divisible Tokens";
+   newSP.url  = "www.tradelayer.org";
+   newSP.category = "N/A";
+   newSP.subcategory = "N/A";
+   newSP.prop_type = ALL_PROPERTY_TYPE_DIVISIBLE;
+   newSP.num_tokens = amountVesting;
+   newSP.attribute_type = ALL_PROPERTY_TYPE_VESTING;
+   newSP.init_block = block;
 
-  const uint32_t propertyIdVesting = _my_sps->putSP(TL_PROPERTY_ALL, newSP);
-  assert(propertyIdVesting > 0);
+   const uint32_t propertyIdVesting = _my_sps->putSP(TL_PROPERTY_ALL, newSP);
+   assert(propertyIdVesting > 0);
 
-  PrintToLog("%s(): admin_addrs : %s \n",__func__,admin_addrs);
+   PrintToLog("%s(): admin_addrs : %s \n",__func__,getAdminAddress());
 
-  assert(update_tally_map(admin_addrs, propertyIdVesting, totalVesting, BALANCE));
+   assert(update_tally_map(getAdminAddress(), propertyIdVesting, totalVesting, BALANCE));
 }
 
 /**
