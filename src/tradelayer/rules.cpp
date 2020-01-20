@@ -86,7 +86,7 @@ std::vector<TransactionRestriction> CConsensusParams::GetRestrictions() const
         { MSC_TYPE_UPDATE_ID_REGISTRATION,                MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
         { MSC_TYPE_DEX_PAYMENT,                           MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
         { MSC_TYPE_CREATE_ORACLE_CONTRACT,                MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
-        { MSC_TYPE_SEND_VESTING,                          MP_TX_PKT_V0,      true,             MSC_VESTING_BLOCK},
+        { MSC_TYPE_SEND_VESTING,                          MP_TX_PKT_V0,      true,             MSC_VESTING_BLOCK}
 
     };
 
