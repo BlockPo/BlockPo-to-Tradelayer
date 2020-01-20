@@ -613,7 +613,7 @@ const string getAdminAddress()
 {
     if (isNonMainNet()) {
         // testnet address
-        const string testAddress = "moCYruRphhYgejzH75bxWD49qRFan8eGES";
+        const string testAddress = "moiFSSEFvkBGgE14tVhDTGLeT4qQE7Nk1d";
         return testAddress;
     } else {
         // NOTE: we need the Mainnet adddress
