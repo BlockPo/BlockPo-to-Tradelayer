@@ -162,6 +162,7 @@ extern std::map<uint32_t, int64_t> VWAPMapContracts;
 //extern volatile std::vector<std::map<std::string, std::string>> path_eleg;
 extern std::map<uint32_t,std::map<int,oracledata>> oraclePrices;
 extern std::string setExoduss;
+extern std::string admin_addrs;
 /************************************************/
 /** TWAP containers **/
 
@@ -642,8 +643,9 @@ void creatingVestingTokens(int block)
    const uint32_t propertyIdVesting = _my_sps->putSP(TL_PROPERTY_ALL, newSP);
    assert(propertyIdVesting > 0);
 
-   PrintToLog("%s(): admin_addrs : %s \n",__func__,getAdminAddress());
+   PrintToLog("%s(): admin_addrs : %s, propertyIdVesting: %d \n",__func__,getAdminAddress(), propertyIdVesting);
 
+   //NOTE: we have to change this admin_addrs for getAdminAddress function call
    assert(update_tally_map(getAdminAddress(), propertyIdVesting, totalVesting, BALANCE));
 }
 
@@ -2631,6 +2633,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   int64_t Factor1over3_64t = mastercore::RationalToInt64(Factor1over3);
 
   int64_t XAxis = x_Axis/COIN;
+  // int64_t XAxis = x_Axis
   if(msc_debug_handler_tx) PrintToLog("\nXAxis Decimal Scale = %d, x_Axis = %s, Lastx_Axis = %s\n", XAxis, FormatDivisibleMP(x_Axis), FormatDivisibleMP(Lastx_Axis));
 
   bool cond_first = x_Axis != 0;
@@ -2659,7 +2662,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
       	      if (XAxis >= 0 && XAxis <= 300000)
       	  	{/** y = 1/3x **/
 
-		      //PrintToLog("\nLinear Function\n");
+		      PrintToLog("\nLinear Function\n");
 		      arith_uint256 line256_t = mastercore::ConvertTo256(Factor1over3_64t)*mastercore::ConvertTo256(x_Axis)/COIN;
 		      line64_t = mastercore::ConvertTo64(line256_t);
 
@@ -2669,6 +2672,10 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
       	  int64_t linew64_t = mastercore::ConvertTo64(linew256_t);
 
       	  rational_t linearRationalw(linew64_t, (int64_t)TOTAL_AMOUNT_VESTING_TOKENS);
+
+          PrintToLog("%s(): line64_t = %d\n",__func__,linew64_t);
+          PrintToLog("%s(): TOTAL_AMOUNT_VESTING_TOKENS = %d\n",__func__,TOTAL_AMOUNT_VESTING_TOKENS);
+
       	  int64_t linearWeighted = mastercore::RationalToInt64(linearRationalw);
 
       	  if(msc_debug_handler_tx)
@@ -2677,8 +2684,8 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
       	      PrintToLog("linearWeighted = %s\n", FormatDivisibleMP(linearWeighted));
           }
 
-		      assert(update_tally_map(vestingAddresses[i], TL_PROPERTY_ALL, -linearWeighted, UNVESTED));
-		      assert(update_tally_map(vestingAddresses[i], TL_PROPERTY_ALL, linearWeighted, BALANCE));
+		      update_tally_map(vestingAddresses[i], TL_PROPERTY_ALL, -linearWeighted, UNVESTED);
+		      update_tally_map(vestingAddresses[i], TL_PROPERTY_ALL, linearWeighted, BALANCE);
   } else if (XAxis > 300000 && XAxis <= 10000000)
       		{ /** y = 100K+7/940900000(x^2-600Kx+90) */
       		  //PrintToLog("\nQuadratic Function\n");
@@ -2711,8 +2718,8 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
       		      PrintToLog("quadWeighted = %d\n", FormatDivisibleMP(quadWeighted));
             }
 
-      		  assert(update_tally_map(vestingAddresses[i], TL_PROPERTY_ALL, -quadWeighted, UNVESTED));
-      		  assert(update_tally_map(vestingAddresses[i], TL_PROPERTY_ALL, quadWeighted, BALANCE));
+      		  update_tally_map(vestingAddresses[i], TL_PROPERTY_ALL, -quadWeighted, UNVESTED);
+      		  update_tally_map(vestingAddresses[i], TL_PROPERTY_ALL, quadWeighted, BALANCE);
       		}
       	      else if (XAxis > 10000000 && XAxis <= 1000000000)
       		{ /** y =  -1650000 + (152003 * ln(x)) */
@@ -2739,16 +2746,16 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
       		    {
       		      if (getMPbalance(vestingAddresses[i], TL_PROPERTY_ALL, UNVESTED) >= logWeighted)
       			{
-      			  assert(update_tally_map(vestingAddresses[i], TL_PROPERTY_ALL, -logWeighted, UNVESTED));
-      			  assert(update_tally_map(vestingAddresses[i], TL_PROPERTY_ALL, logWeighted, BALANCE));
+      			  update_tally_map(vestingAddresses[i], TL_PROPERTY_ALL, -logWeighted, UNVESTED);
+      			  update_tally_map(vestingAddresses[i], TL_PROPERTY_ALL, logWeighted, BALANCE);
       			}
       		   else
       			{
       			  int64_t remaining = getMPbalance(vestingAddresses[i], TL_PROPERTY_ALL, UNVESTED);
       			  if (getMPbalance(vestingAddresses[i], TL_PROPERTY_ALL, UNVESTED) >= remaining && remaining >= 0)
       			    {
-      			      assert(update_tally_map(vestingAddresses[i], TL_PROPERTY_ALL, -remaining, UNVESTED));
-      			      assert(update_tally_map(vestingAddresses[i], TL_PROPERTY_ALL, remaining, BALANCE));
+      			      update_tally_map(vestingAddresses[i], TL_PROPERTY_ALL, -remaining, UNVESTED);
+      			      update_tally_map(vestingAddresses[i], TL_PROPERTY_ALL, remaining, BALANCE);
       			    }
       			}
       		    }
@@ -2777,13 +2784,13 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
       		      if (getMPbalance(vestingAddresses[i], TL_PROPERTY_ALL, UNVESTED) < logWeighted)
       			{
       			  int64_t remaining = getMPbalance(vestingAddresses[i], TL_PROPERTY_ALL, UNVESTED);
-      			  assert(update_tally_map(vestingAddresses[i], TL_PROPERTY_ALL, -remaining, UNVESTED));
-      			  assert(update_tally_map(vestingAddresses[i], TL_PROPERTY_ALL, remaining, BALANCE));
+      			  update_tally_map(vestingAddresses[i], TL_PROPERTY_ALL, -remaining, UNVESTED);
+      			  update_tally_map(vestingAddresses[i], TL_PROPERTY_ALL, remaining, BALANCE);
       			}
       		      else
       			{
-      			  assert(update_tally_map(vestingAddresses[i], TL_PROPERTY_ALL, -logWeighted, UNVESTED));
-      			  assert(update_tally_map(vestingAddresses[i], TL_PROPERTY_ALL, logWeighted, BALANCE));
+      			  update_tally_map(vestingAddresses[i], TL_PROPERTY_ALL, -logWeighted, UNVESTED);
+      			  update_tally_map(vestingAddresses[i], TL_PROPERTY_ALL, logWeighted, BALANCE);
       			}
       		    }
       		}
