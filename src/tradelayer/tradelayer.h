@@ -213,6 +213,9 @@ const int dayblocks = 576;
 const rational_t factor = rational_t(80,100);  // critical limit
 const rational_t factor2 = rational_t(20,100); // normal limits
 
+// define 1 year in blocks:
+#define ONE_YEAR 210240
+
 
 // forward declarations
 std::string FormatDivisibleMP(int64_t amount, bool fSign = false);
@@ -531,6 +534,9 @@ namespace mastercore
   void twapForLiquidation(uint32_t contractId, int blocks);
 
   int64_t getOracleTwap(uint32_t contractId, int nBlocks);
+
+  // check for vesting
+  bool SanityChecks(string receiver, int aBlock);
 
 }
 

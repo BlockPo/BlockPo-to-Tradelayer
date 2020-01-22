@@ -6067,6 +6067,32 @@ int64_t mastercore::getOracleTwap(uint32_t contractId, int nBlocks)
      return sum;
 }
 
+bool mastercore::SanityChecks(string receiver, int aBlock)
+{
+    const CConsensusParams &params = ConsensusParams();
+    vestingActivationBlock = params.MSC_VESTING_BLOCK;
+
+    PrintToLog("%s(): vestingActivationBlock: %d\n", __func__, vestingActivationBlock);
+
+    int timeFrame = aBlock - params.MSC_VESTING_BLOCK;
+
+    PrintToLog("%s(): timeFrame: %d\n", __func__,timeFrame);
+    // is this the first transaction ?
+    for(auto it = vestingAddresses.begin(); it != vestingAddresses.end(); ++it)
+    {
+        if(receiver == *(it))
+        {
+            if(timeFrame > ONE_YEAR)
+                return true;
+            else
+                return false;
+        }
+     }
+
+     return true;
+
+}
+
 /**
  * @return The marker for class D transactions.
  */
