@@ -113,14 +113,14 @@ CMPSPInfo::CMPSPInfo(const boost::filesystem::path& path, bool fWipe)
   implied_all.num_tokens = 700000;
   implied_all.category = "N/A";
   implied_all.subcategory = "N/A";
-  implied_all.name = "property 1";
+  implied_all.name = "ALL";
   implied_all.url = "";
   implied_all.data = "";
   implied_tall.prop_type = ALL_PROPERTY_TYPE_DIVISIBLE;
   implied_tall.num_tokens = 700000;
   implied_tall.category = "N/A";
   implied_tall.subcategory = "N/A";
-  implied_tall.name = "test property 2";
+  implied_tall.name = "test ALL";
   implied_tall.url = "";
   implied_tall.data = "";
 
