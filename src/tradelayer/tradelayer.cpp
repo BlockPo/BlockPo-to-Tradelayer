@@ -6041,12 +6041,17 @@ bool mastercore::SanityChecks(string receiver, int aBlock)
     const CConsensusParams &params = ConsensusParams();
     vestingActivationBlock = params.MSC_VESTING_BLOCK;
 
+    PrintToLog("%s(): vestingActivationBlock: %d\n", __func__, vestingActivationBlock);
+
+    int timeFrame = aBlock - params.MSC_VESTING_BLOCK;
+
+    PrintToLog("%s(): timeFrame: %d\n", __func__,timeFrame);
     // is this the first transaction ?
     for(auto it = vestingAddresses.begin(); it != vestingAddresses.end(); ++it)
     {
         if(receiver == *(it))
         {
-            if((aBlock - params.MSC_VESTING_BLOCK) > ONE_YEAR)
+            if(timeFrame > ONE_YEAR)
                 return true;
             else
                 return false;

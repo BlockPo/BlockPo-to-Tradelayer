@@ -216,6 +216,7 @@ const rational_t factor2 = rational_t(20,100); // normal limits
 // define 1 year in blocks:
 #define ONE_YEAR 210240
 
+
 // forward declarations
 std::string FormatDivisibleMP(int64_t amount, bool fSign = false);
 std::string FormatDivisibleShortMP(int64_t amount);

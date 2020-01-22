@@ -2251,11 +2251,7 @@ int CMPTransaction::logicMath_SendVestingTokens()
 
   if (!SanityChecks(receiver, block)) {
       PrintToLog("%s(): rejected: sanity checks for send vesting tokens failed\n",
-              __func__,
-              type,
-              version,
-              property,
-              block);
+              __func__);
       return (PKT_ERROR_SEND -22);
   }
 
