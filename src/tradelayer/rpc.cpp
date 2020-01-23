@@ -135,7 +135,7 @@ void OracleToJSON(const CMPSPInfo::Entry& sProperty, UniValue& property_obj)
   property_obj.push_back(Pair("blocks until expiration", std::to_string(sProperty.blocks_until_expiration)));
   property_obj.push_back(Pair("last high price", std::to_string(sProperty.oracle_high)));
   property_obj.push_back(Pair("last low price", std::to_string(sProperty.oracle_low)));
-  property_obj.push_back(Pair("last update block", std::to_string(sProperty.oracle_last_update)));
+  property_obj.push_back(Pair("last close price", std::to_string(sProperty.oracle_close)));
 }
 
 bool BalanceToJSON(const std::string& address, uint32_t property, UniValue& balance_obj, bool divisible)
@@ -815,7 +815,7 @@ UniValue tl_getproperty(const JSONRPCRequest& request)
       response.push_back(Pair("backup address", sp.backup_address));
       response.push_back(Pair("hight price", FormatDivisibleShortMP(sp.oracle_high)));
       response.push_back(Pair("low price", FormatDivisibleShortMP(sp.oracle_low)));
-      response.push_back(Pair("last update block", std::to_string(sp.oracle_last_update)));
+      response.push_back(Pair("close price", std::to_string(sp.oracle_close)));
 
     } else if (sp.isPegged()) {
       response.push_back(Pair("contract associated",(uint64_t) sp.contract_associated));

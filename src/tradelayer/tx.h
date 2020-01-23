@@ -107,6 +107,7 @@ private:
     /*uint32_t nextContractId;*/
     uint64_t oracle_high;
     uint64_t oracle_low;
+    uint64_t oracle_close;
     uint32_t blocks_until_expiration;
     uint32_t notional_size;
     uint32_t collateral_currency;
@@ -316,8 +317,9 @@ public:
     uint32_t getPropertyId() const { return propertyId; }
 
     /** Oracles */
-    uint64_t getHighPrice() const { return oracle_high; }
-    uint64_t getLowPrice() const { return oracle_low; }
+       uint64_t getHighPrice() const { return oracle_high; }
+       uint64_t getLowPrice() const { return oracle_low; }
+       uint64_t getClosePrice() const { return oracle_close; }
     int getBlock() const { return block; }
 
     /** Instan trade (Channels) */
@@ -538,14 +540,14 @@ class BlockClass
 int64_t LosingSatoshiLongTail(int BlockNow, int64_t Reward);
 /**********************************************************************/
 
+
 struct oracledata
 {
-  int block;
   int64_t high;
   int64_t low;
+  int64_t close;
   uint32_t contractId;
 };
-
 
 struct withdrawalAccepted
 {
@@ -560,5 +562,6 @@ struct withdrawalAccepted
 
 struct FutureContractObject *getFutureContractObject(std::string identifier);
 struct TokenDataByName *getTokenDataByName(std::string identifier);
+struct TokenDataByName *getTokenDataById(uint32_t propertyId);
 
 #endif // TRADELAYER_TX_H

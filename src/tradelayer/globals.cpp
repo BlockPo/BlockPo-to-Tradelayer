@@ -104,7 +104,7 @@ int64_t SatoshiH;
 
 /*****************************************/
 /** Oracles **/
-std::map<uint32_t,oracledata> oraclePrices;
+std::map<uint32_t,std::map<int,oracledata>> oraclePrices;
 
 /*****************************************/
 /** Withdrawals on channels **/

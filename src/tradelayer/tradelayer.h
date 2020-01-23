@@ -70,6 +70,9 @@ int const MAX_STATE_HISTORY = 50;
 
 #define COIN256   10000000000000000
 
+// Oracle twaps blocks
+#define oBlocks 9
+
 // Transaction types, from the spec
 enum TransactionType {
   MSC_TYPE_SIMPLE_SEND                =  0,
@@ -527,6 +530,8 @@ namespace mastercore
 
   //Map of MetaDEx volume
   int64_t MdexVolumen(uint32_t fproperty, uint32_t sproperty, int fblock, int sblock);
+
+  int64_t getOracleTwap(uint32_t contractId, int nBlocks);
 
 }
 

@@ -253,6 +253,7 @@ void settlement_algorithm_fifo(MatrixTLS &M_file, int64_t interest, int64_t twap
       counting_paths += 1;
       //PrintToLog("\n\nPath for Exit Price #%d:\n\n", counting_paths);
       //printing_path_maini(*it_path_main);
+      
       checking_zeronetted_bypath(*it_path_main);
       computing_livesvectors_forlongshort(*it_path_main, lives_longs, lives_shorts);
       computing_settlement_exitprice(*it_path_main, sum_oflives, PNL_total, gamma_p, gamma_q, interest, twap_price);

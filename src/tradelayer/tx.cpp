@@ -50,7 +50,7 @@ typedef boost::rational<boost::multiprecision::checked_int128_t> rational_t;
 typedef boost::multiprecision::cpp_dec_float_100 dec_float;
 typedef boost::multiprecision::checked_int128_t int128_t;
 extern std::map<std::string,uint32_t> peggedIssuers;
-extern std::map<uint32_t,oracledata> oraclePrices;
+extern std::map<uint32_t,std::map<int,oracledata>> oraclePrices;
 extern std::map<std::string,vector<withdrawalAccepted>> withdrawal_Map;
 extern std::map<std::string,channel> channels_Map;
 extern int64_t factorE;
@@ -4024,15 +4024,28 @@ int CMPTransaction::logicMath_Set_Oracle()
 
     // ------------------------------------------
 
-    // putting data on memory
-    oraclePrices[contractId].block = block;
-    oraclePrices[contractId].high = oracle_high;
-    oraclePrices[contractId].low = oracle_low;
+      oracledata Ol;
 
-    // saving on db
-    sp.oracle_high = oracle_high;
-    sp.oracle_low = oracle_low;
-    sp.oracle_last_update = block;
+      Ol.high = oracle_high;
+      Ol.low = oracle_low;
+      Ol.close = oracle_close;
+
+      oraclePrices[contractId][block] = Ol;
+
+
+      // PrintToLog("%s():Ol element:,high:%d, low:%d, close:%d\n",__func__, Ol.high, Ol.low, Ol.close);
+
+
+      // saving on db
+      sp.oracle_high = oracle_high;
+      sp.oracle_low = oracle_low;
+      sp.oracle_close = oracle_close;
+
+
+     if(oraclePrices.empty())
+         PrintToLog("%s(): element was not inserted !\n",__func__);
+     else
+         PrintToLog("%s(): element was INSERTED \n",__func__);
 
     assert(_my_sps->updateSP(contractId, sp));
 
@@ -4816,6 +4829,30 @@ struct TokenDataByName *getTokenDataByName(std::string identifier)
 	  pt_data->data_propertyId = propertyId;
 	}
     }
+  return pt_data;
+}
+
+struct TokenDataByName *getTokenDataById(uint32_t propertyId)
+{
+  struct TokenDataByName *pt_data = new TokenDataByName;
+
+  LOCK(cs_tally);
+  uint32_t nextSPID = _my_sps->peekNextSPID(1);
+  CMPSPInfo::Entry sp;
+  if (_my_sps->getSP(propertyId, sp))
+	{
+	  pt_data->data_denomination = sp.denomination;
+	  pt_data->data_blocks_until_expiration = sp.blocks_until_expiration;
+	  pt_data->data_notional_size = sp.notional_size;
+	  pt_data->data_collateral_currency = sp.collateral_currency;
+	  pt_data->data_margin_requirement = sp.margin_requirement;
+	  pt_data->data_name = sp.name;
+	  pt_data->data_subcategory = sp.subcategory;
+	  pt_data->data_issuer = sp.issuer;
+	  pt_data->data_init_block = sp.init_block;
+	  pt_data->data_propertyId = propertyId;
+	}
+
   return pt_data;
 }
 
