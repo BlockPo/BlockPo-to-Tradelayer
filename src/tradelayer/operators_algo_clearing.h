@@ -44,8 +44,7 @@ void clearing_operator_fifo(VectorTLS &vdata, MatrixTLS &M_file, int index_init,
 
 void adding_newtwocols_trdamount(MatrixTLS &M_file, MatrixTLS &database);
 
-void settlement_algorithm_fifo(MatrixTLS &M_file, int64_t interest, int64_t twap_price);
-
+void settlement_algorithm_fifo(MatrixTLS &M_file, int64_t interest, int64_t twap_price, uint32_t contractId, uint32_t collateral, uint32_t numId, uint32_t denId);
 void updating_lasttwocols_fromdatabase(std::string addrs, MatrixTLS &M_file, int i, long int live_updated);
 
 void building_edge(std::map<std::string, std::string> &path_first, std::string addrs_src, std::string addrs_trk, std::string status_src, std::string status_trk, double entry_price, double exit_price, long int lives, int index_row, int path_number, long int amount_path, int ghost_edge);

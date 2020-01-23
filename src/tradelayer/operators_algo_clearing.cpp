@@ -17,7 +17,8 @@ extern VectorTLS *pt_netted_npartly_anypos;
 extern VectorTLS *pt_open_incr_anypos;
 extern VectorTLS *pt_open_incr_long;
 extern MatrixTLS *pt_ndatabase; MatrixTLS &ndatabase = *pt_ndatabase;
-
+extern std::map<uint32_t, int64_t> VWAPMapContracts;
+extern std::map<uint32_t, std::map<uint32_t, int64_t>> VWAPMapSubVector;
 /**************************************************************/
 /** Functions for Settlement Algorithm */
 struct status_amounts *get_status_amounts_open_incr(VectorTLS &v, int q)
@@ -166,7 +167,7 @@ void adding_newtwocols_trdamount(MatrixTLS &M_file, MatrixTLS &database)
     }
 }
 
-void settlement_algorithm_fifo(MatrixTLS &M_file, int64_t interest, int64_t twap_price)
+void settlement_algorithm_fifo(MatrixTLS &M_file, int64_t interest, int64_t twap_price, uint32_t contractId, uint32_t collateral, uint32_t numId, uint32_t denId)
 {
   extern int n_cols;
   extern int n_rows;
@@ -253,7 +254,7 @@ void settlement_algorithm_fifo(MatrixTLS &M_file, int64_t interest, int64_t twap
       counting_paths += 1;
       //PrintToLog("\n\nPath for Exit Price #%d:\n\n", counting_paths);
       //printing_path_maini(*it_path_main);
-      
+
       checking_zeronetted_bypath(*it_path_main);
       computing_livesvectors_forlongshort(*it_path_main, lives_longs, lives_shorts);
       computing_settlement_exitprice(*it_path_main, sum_oflives, PNL_total, gamma_p, gamma_q, interest, twap_price);
@@ -267,11 +268,11 @@ void settlement_algorithm_fifo(MatrixTLS &M_file, int64_t interest, int64_t twap
   /**********************************************************************/
   /** Checking VWAP Price for Settlement**/
 
-  int64_t VWAPContractPrice = mastercore::getVWAPPriceContracts("ALL F18");
+  int64_t VWAPContractPrice = VWAPMapContracts[contractId];;
   //PrintToLog("\nVWAPContractPrice = %s\n", FormatDivisibleMP(VWAPContractPrice));
   vwap_exit_price = static_cast<long double>(VWAPContractPrice)/COIN;
 
-  int64_t VWAPMetaDExPrice = mastercore::getVWAPPriceByPair("ALL", "dUSD");
+  int64_t VWAPMetaDExPrice = VWAPMapSubVector[numId][denId];
   PrintToLog("\nVWAPMetaDExPrice = %s\n", FormatDivisibleMP(VWAPMetaDExPrice));
 
   /**********************************************************************/

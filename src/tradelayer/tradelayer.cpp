@@ -2519,7 +2519,7 @@ bool CallingSettlement()
             if (sp.prop_type == ALL_PROPERTY_TYPE_NATIVE_CONTRACT  || sp.prop_type == ALL_PROPERTY_TYPE_ORACLE_CONTRACT)
                 continue;
 
-            int64_t twap_price;
+            int64_t twap_price = 0;
 
             if (sp.prop_type == ALL_PROPERTY_TYPE_PERPETUAL_ORACLE)
             {
@@ -2534,8 +2534,10 @@ bool CallingSettlement()
 
             if(msc_calling_settlement) PrintToLog("\nCalling the Settlement Algorithm:\n\n");
 
-            //NOTE: we need generalization for all contracts
-            settlement_algorithm_fifo(M_file, interest, twap_priceCDEx);
+            //NOTE: We need num and den for contract as a property of itself in sp.h
+            uint32_t numId;
+            uint32_t denId;
+            settlement_algorithm_fifo(M_file, interest, twap_priceCDEx, propertyId, sp.collateral_currency, numId, denId);
         }
     }
 
