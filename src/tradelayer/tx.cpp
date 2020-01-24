@@ -2275,7 +2275,7 @@ int CMPTransaction::logicMath_SendVestingTokens()
               FormatMP(property, nValue));
       return (PKT_ERROR_SEND -25);
   }
-  
+
   assert(update_tally_map(sender, property, -nValue, BALANCE));
   assert(update_tally_map(receiver, property, nValue, BALANCE));
   assert(update_tally_map(receiver, TL_PROPERTY_ALL, nValue, UNVESTED));
@@ -4409,7 +4409,7 @@ int CMPTransaction::logicMath_Instant_Trade()
 
   // if property = 0 ; we are exchanging litecoins
   // if (false)
-  if (property > 0 && desired_property > 0)
+  if (property > LTC && desired_property > 0)
   {
       assert(update_tally_map(chnAddrs.second, property, amount_forsale, BALANCE));
       assert(update_tally_map(sender, property, -amount_forsale, CHANNEL_RESERVE));
