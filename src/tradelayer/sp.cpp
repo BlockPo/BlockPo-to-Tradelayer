@@ -120,7 +120,7 @@ CMPSPInfo::CMPSPInfo(const boost::filesystem::path& path, bool fWipe)
   implied_tall.num_tokens = 700000;
   implied_tall.category = "N/A";
   implied_tall.subcategory = "N/A";
-  implied_tall.name = "test ALL";
+  implied_tall.name = "sLTC";
   implied_tall.url = "";
   implied_tall.data = "";
 

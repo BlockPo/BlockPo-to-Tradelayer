@@ -180,14 +180,28 @@ enum FILETYPES {
 #define SELL           2
 #define ACTIONINVALID  3
 
-#define CONTRACT_ALL        3
-#define CONTRACT_ALL_DUSD   4
-#define CONTRACT_ALL_LTC    5
-#define CONTRACT_LTC_DJPY   6
-#define CONTRACT_LTC_DUSD   7
-#define CONTRACT_LTC_DEUR   8
-#define CONTRACT_sLTC_ALL   9
 
+//Main Cardinal Definitions
+#define LTC        0
+#define ALL        1
+#define sLTC       2
+#define dUSD       3
+#define dEUR       4
+#define dJPY       5
+#define dCNY       6
+#define ALL_LTC    7
+#define LTC_USD    8
+#define LTC_EUR    9
+#define JPY       10
+#define CNY       11
+
+// #define CONTRACT_ALL        3
+// #define CONTRACT_ALL_DUSD   4
+// #define CONTRACT_ALL_LTC    5
+// #define CONTRACT_LTC_DJPY   6
+// #define CONTRACT_LTC_DUSD   7
+// #define CONTRACT_LTC_DEUR   8
+// #define CONTRACT_sLTC_ALL   9
 
 // channels definitions
 #define TYPE_COMMIT                     "commit"
