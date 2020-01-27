@@ -852,7 +852,7 @@ UniValue tl_listproperties(const JSONRPCRequest& request)
   LOCK(cs_tally);
 
   uint32_t nextSPID = _my_sps->peekNextSPID(1);
-  for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++) {
+  for (uint32_t propertyId = 0; propertyId < nextSPID; propertyId++) {
     CMPSPInfo::Entry sp;
     if (_my_sps->getSP(propertyId, sp)) {
       UniValue propertyObj(UniValue::VOBJ);

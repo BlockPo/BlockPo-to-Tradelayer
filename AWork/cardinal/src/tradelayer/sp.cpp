@@ -107,24 +107,35 @@ CMPSPInfo::CMPSPInfo(const boost::filesystem::path& path, bool fWipe)
   leveldb::Status status = Open(path, fWipe);
   PrintToLog("Loading smart property database: %s\n", status.ToString());
 
-  // special cases for constant SPs ALL and TALL
-  // implied_all.issuer = ExodusAddress().ToString();
-  implied_all.prop_type = ALL_PROPERTY_TYPE_DIVISIBLE;
-  implied_all.num_tokens = 700000;
-  implied_all.category = "N/A";
-  implied_all.subcategory = "N/A";
-  implied_all.name = "ALL";
-  implied_all.url = "";
-  implied_all.data = "";
-  implied_tall.prop_type = ALL_PROPERTY_TYPE_DIVISIBLE;
-  implied_tall.num_tokens = 700000;
-  implied_tall.category = "N/A";
-  implied_tall.subcategory = "N/A";
-  implied_tall.name = "sLTC";
-  implied_tall.url = "";
-  implied_tall.data = "";
+  /** basic name info of default properties (we need a default Entry for ech contract)*/
+  std::string  pNames [] = {"LTC", "ALL", "sLTC", "dUSD", "dEUR", "dJPY", "dCNY", "ALL_LTC", "LTC_USD", "LTC_EUR", "JPY", "CNY"};
+
+  /** property type for default properties */
+  int pTypes [] = {ALL_PROPERTY_TYPE_DIVISIBLE, ALL_PROPERTY_TYPE_DIVISIBLE, ALL_PROPERTY_TYPE_DIVISIBLE, ALL_PROPERTY_TYPE_DIVISIBLE,
+  ALL_PROPERTY_TYPE_DIVISIBLE, ALL_PROPERTY_TYPE_DIVISIBLE, ALL_PROPERTY_TYPE_DIVISIBLE, ALL_PROPERTY_TYPE_CONTRACT, ALL_PROPERTY_TYPE_CONTRACT,
+  ALL_PROPERTY_TYPE_CONTRACT, ALL_PROPERTY_TYPE_DIVISIBLE, ALL_PROPERTY_TYPE_DIVISIBLE};
+
+
+  for (int i = 0; i < NUM_DEFAULT; i++)
+  {
+      CMPSPInfo::Entry sp;
+      sp.name = pNames[i];
+      sp.prop_type = pTypes[i];
+      vEntry.push_back(sp);
+  }
+
+  // implied_all.prop_type = ALL_PROPERTY_TYPE_DIVISIBLE;
+  // implied_all.num_tokens = 700000;
+  // implied_all.category = "N/A";
+  // implied_all.subcategory = "N/A";
+  // implied_all.name = "ALL";
+  // implied_all.url = "";
+  // implied_all.data = "";
 
   init();
+
+
+
 }
 
 CMPSPInfo::~CMPSPInfo()
@@ -270,12 +281,9 @@ uint32_t CMPSPInfo::putSP(uint8_t ecosystem, const Entry& info)
 
 bool CMPSPInfo::getSP(uint32_t propertyId, Entry& info) const
 {
-    // special cases for constant SPs MSC and TMSC
-    if (TL_PROPERTY_ALL == propertyId) {
-        info = implied_all;
-        return true;
-    } else if (TL_PROPERTY_TALL == propertyId) {
-        info = implied_tall;
+    //special cases for default properties
+    if (propertyId < NUM_DEFAULT) {
+        info = vEntry[static_cast<int>(propertyId)];
         return true;
     }
 
@@ -453,6 +461,7 @@ void CMPSPInfo::setWatermark(const uint256& watermark)
         PrintToLog("%s(): ERROR: failed to write watermark: %s\n", __func__, status.ToString());
     }
 }
+
 
 bool CMPSPInfo::getWatermark(uint256& watermark) const
 {

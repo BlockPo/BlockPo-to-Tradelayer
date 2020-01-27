@@ -173,9 +173,8 @@ public:
     };
 
  private:
-    /** implied version of ALL and TALL so they don't hit the leveldb */
-    Entry implied_all;
-    Entry implied_tall;
+    /** defaul properties so they don't hit the leveldb */
+    std::vector<Entry> vEntry;
 
     uint32_t next_spid;
     uint32_t next_test_spid;
@@ -187,7 +186,7 @@ public:
     /** Extends clearing of CDBBase. */
     void Clear();
 
-    void init(uint32_t nextSPID = 0x3UL, uint32_t nextTestSPID = TEST_ECO_PROPERTY_1);
+    void init(uint32_t nextSPID = 0xCUL, uint32_t nextTestSPID = TEST_ECO_PROPERTY_1);
 
     uint32_t peekNextSPID(uint8_t ecosystem) const;
     bool updateSP(uint32_t propertyId, const Entry& info);
@@ -249,35 +248,6 @@ public:
     void print(const std::string& address, FILE* fp = stdout) const;
     void saveCrowdSale(std::ofstream& file, SHA256_CTX* shaCtx, const std::string& addr) const;
 };
-
-/**  NOTE: May be we can create contract type class, finding data in memory instead of db */
-//
-// class ContractSP
-// {
-// private:
-//     uint32_t numeration;
-//     uint32_t denomination;
-//     uint32_t blocks_until_expiration;
-//     uint32_t notional_size;
-//     uint32_t collateral_currency;
-//     uint32_t margin_requirement;
-//     /* int64_t ticksize; */
-//     uint32_t contractId;
-//     int init_block;
-//
-// public:
-//     ContractSP();
-//     ContractSP(uint32_t num, uint32_t den, uint32_t buex, uint32_t ns, uint32_t col, uint32_t mar, int blk, int64_t tick, uint32_t id);
-//
-//     uint32_t getNumeration () const { return numeration; }
-//     uint32_t getContractId() const { return contractId; }
-//     uint32_t getDenomination() const { return denomination; }
-//     int64_t getDeadline() const { return (init_block + static_cast<int>(blocks_until_expiration)); }
-//     uint32_t getNotionalSize () const { return notional_size; }
-//     uint32_t getMarginRequirement () const { return margin_requirement; }
-//     int getInitBlock () const { return init_block; }
-//     /* int64_t getTickSize () const { return ticksize; } */
-// };
 
 namespace mastercore
 {
