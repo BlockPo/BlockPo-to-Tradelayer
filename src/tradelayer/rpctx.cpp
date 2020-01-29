@@ -835,7 +835,7 @@ UniValue tl_sendtrade(const JSONRPCRequest& request)
 
 UniValue tl_createcontract(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 9)
+  if (request.params.size() != 10)
     throw runtime_error(
 			"tl_createcontract \"fromaddress\" ecosystem type previousid \"category\" \"subcategory\" \"name\" \"url\" \"data\" propertyiddesired tokensperunit deadline ( earlybonus issuerpercentage )\n"
 
@@ -844,7 +844,8 @@ UniValue tl_createcontract(const JSONRPCRequest& request)
 			"\nArguments:\n"
 			"1. fromaddress               (string, required) the address to send from\n"
 			"2. ecosystem                 (string, required) the ecosystem to create the tokens in (1 for main ecosystem, 2 for test ecosystem)\n"
-			"3. numerator                 (number, required) 4: ALL, 5: sLTC, 6: LTC.\n"
+			"3. numerator                 (number, required) propertyId (Asset) \n"
+      "3. denominator               (number, required) propertyId of denominator\n"
 			"4. name                      (string, required) the name of the new tokens to create\n"
 			"5. blocks until expiration   (number, required) life of contract, in blocks\n"
 			"6. notional size             (number, required) notional size\n"
@@ -863,20 +864,21 @@ UniValue tl_createcontract(const JSONRPCRequest& request)
 
   std::string fromAddress = ParseAddress(request.params[0]);
   uint8_t ecosystem = ParseEcosystem(request.params[1]);
-  uint32_t type = ParseContractType(request.params[2]);
-  std::string name = ParseText(request.params[3]);
-  uint32_t blocks_until_expiration = request.params[4].get_int();
-  uint32_t notional_size = ParseAmount32t(request.params[5]);
-  uint32_t collateral_currency = request.params[6].get_int();
-  uint32_t margin_requirement = ParseAmount32t(request.params[7]);
-  uint8_t inverse = ParseBinary(request.params[8]);
+  uint32_t num = ParsePropertyId(request.params[2]);
+  uint32_t den = ParsePropertyId(request.params[3]);
+  std::string name = ParseText(request.params[4]);
+  uint32_t blocks_until_expiration = request.params[5].get_int();
+  uint32_t notional_size = ParseAmount32t(request.params[6]);
+  uint32_t collateral_currency = request.params[7].get_int();
+  uint32_t margin_requirement = ParseAmount32t(request.params[8]);
+  uint8_t inverse = ParseBinary(request.params[9]);
 
-  PrintToLog("\nRPC tl_createcontract: notional_size = %s\t margin_requirement = %s\t blocks_until_expiration = %d\t collateral_currency=%d\t ecosystem = %d\t type = %d\n", FormatDivisibleMP(notional_size), FormatDivisibleMP(margin_requirement), blocks_until_expiration, collateral_currency, ecosystem, type);
+  PrintToLog("\nRPC tl_createcontract: notional_size = %s\t margin_requirement = %s\t blocks_until_expiration = %d\t collateral_currency=%d\t ecosystem = %d\t num = %d, den = %d\n", FormatDivisibleMP(notional_size), FormatDivisibleMP(margin_requirement), blocks_until_expiration, collateral_currency, ecosystem, num, den);
 
   RequirePropertyName(name);
   RequireSaneName(name);
 
-  std::vector<unsigned char> payload = CreatePayload_CreateContract(ecosystem, type, name, blocks_until_expiration, notional_size, collateral_currency, margin_requirement,inverse);
+  std::vector<unsigned char> payload = CreatePayload_CreateContract(ecosystem, num, den, name, blocks_until_expiration, notional_size, collateral_currency, margin_requirement,inverse);
 
   uint256 txid;
   std::string rawHex;
@@ -902,7 +904,7 @@ UniValue tl_createcontract(const JSONRPCRequest& request)
 
 UniValue tl_create_oraclecontract(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 10)
+  if (request.params.size() != 11)
     throw runtime_error(
 			"tl_create_oraclecontract \"address\" ecosystem type previousid \"category\" \"subcategory\" \"name\" \"url\" \"data\" propertyiddesired tokensperunit deadline ( earlybonus issuerpercentage )\n"
 
@@ -911,14 +913,15 @@ UniValue tl_create_oraclecontract(const JSONRPCRequest& request)
 			"\nArguments:\n"
 			"1. oracle address            (string, required) the address to send from (admin)\n"
 			"2. ecosystem                 (string, required) the ecosystem to create the tokens in (1 for main ecosystem, 2 for test ecosystem)\n"
-			"3. numerator                 (number, required) 4: ALL, 5: sLTC, 6: LTC.\n"
-			"4. name                      (string, required) the name of the new tokens to create\n"
-			"5. blocks until expiration   (number, required) life of contract, in blocks\n"
-			"6. notional size             (number, required) notional size\n"
-			"7. collateral currency       (number, required) collateral currency\n"
-			"8. margin requirement        (number, required) margin requirement\n"
-      "9. backup address            (string, required) backup admin address contract\n"
-      "10. quoting                  (number, required) 0: inverse quoting contract, 1: normal quoting\n"
+      "3. numerator                 (number, required) propertyId of Asset\n"
+			"4. denominator                (number, required) propertyId of denominator.\n"
+			"5. name                      (string, required) the name of the new tokens to create\n"
+			"6. blocks until expiration   (number, required) life of contract, in blocks\n"
+			"7. notional size             (number, required) notional size\n"
+			"8. collateral currency       (number, required) collateral currency\n"
+			"9. margin requirement        (number, required) margin requirement\n"
+      "10. backup address            (string, required) backup admin address contract\n"
+      "11. quoting                  (number, required) 0: inverse quoting contract, 1: normal quoting\n"
 
 			"\nResult:\n"
 			"\"hash\"                  (string) the hex-encoded transaction hash\n"
@@ -930,21 +933,22 @@ UniValue tl_create_oraclecontract(const JSONRPCRequest& request)
 
   std::string fromAddress = ParseAddress(request.params[0]);
   uint8_t ecosystem = ParseEcosystem(request.params[1]);
-  uint32_t type = ParseContractType(request.params[2]);
-  std::string name = ParseText(request.params[3]);
-  uint32_t blocks_until_expiration = request.params[4].get_int();
-  uint32_t notional_size = ParseAmount32t(request.params[5]);
-  uint32_t collateral_currency = request.params[6].get_int();
-  uint32_t margin_requirement = ParseAmount32t(request.params[7]);
-  std::string oracleAddress = ParseAddress(request.params[8]);
-  uint8_t inverse = ParseBinary(request.params[9]);
+  uint32_t num = ParsePropertyId(request.params[2]);
+  uint32_t den = ParsePropertyId(request.params[3]);
+  std::string name = ParseText(request.params[4]);
+  uint32_t blocks_until_expiration = request.params[5].get_int();
+  uint32_t notional_size = ParseAmount32t(request.params[6]);
+  uint32_t collateral_currency = request.params[7].get_int();
+  uint32_t margin_requirement = ParseAmount32t(request.params[8]);
+  std::string oracleAddress = ParseAddress(request.params[9]);
+  uint8_t inverse = ParseBinary(request.params[10]);
 
-  PrintToLog("\nRPC tl_create_oraclecontract: notional_size = %s\t margin_requirement = %s\t blocks_until_expiration = %d\t collateral_currency=%d\t ecosystem = %d\t type = %d\n", FormatDivisibleMP(notional_size), FormatDivisibleMP(margin_requirement), blocks_until_expiration, collateral_currency, ecosystem, type);
+  PrintToLog("\nRPC tl_create_oraclecontract: notional_size = %s\t margin_requirement = %s\t blocks_until_expiration = %d\t collateral_currency=%d\t ecosystem = %d\t num = %d, den = %d\n", FormatDivisibleMP(notional_size), FormatDivisibleMP(margin_requirement), blocks_until_expiration, collateral_currency, ecosystem, num, den);
 
   RequirePropertyName(name);
   RequireSaneName(name);
 
-  std::vector<unsigned char> payload = CreatePayload_CreateOracleContract(ecosystem, type, name, blocks_until_expiration, notional_size, collateral_currency, margin_requirement, inverse);
+  std::vector<unsigned char> payload = CreatePayload_CreateOracleContract(ecosystem, num, den, name, blocks_until_expiration, notional_size, collateral_currency, margin_requirement, inverse);
 
   uint256 txid;
   std::string rawHex;

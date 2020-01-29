@@ -1041,7 +1041,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
    *
    *
    */
-    // NOTE: Check this function later (got issues!) 
+    // NOTE: Check this function later (got issues!)
     // mastercore::ContractDex_Fees(pnew->getAddr(),pold->getAddr(), nCouldBuy, property_traded);
 
     if(msc_debug_x_trade_bidirectional)
@@ -1153,8 +1153,8 @@ bool mastercore::ContractDex_Fees(std::string addressTaker,std::string addressMa
             // Create the metadex object with specific params
 
             uint256 txid;
-            int block = 0;
-            unsigned int idx = 0;
+            // int block = 0;
+            // unsigned int idx = 0;
 
             CMPSPInfo::Entry spp;
             _my_sps->getSP(sp.collateral_currency, spp);
@@ -2184,7 +2184,7 @@ int mastercore::ContractDex_CANCEL_FOR_BLOCK(const uint256& txid,  int block,uns
 
         for (cd_PricesMap::iterator it = prices.begin(); it != prices.end(); ++it)
         {
-            uint64_t price = it->first;
+            // uint64_t price = it->first;
             cd_Set &indexes = it->second;
 
             for (cd_Set::iterator it = indexes.begin(); it != indexes.end();)

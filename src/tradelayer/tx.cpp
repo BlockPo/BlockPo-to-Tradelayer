@@ -994,7 +994,7 @@ bool CMPTransaction::interpret_CreateContractDex()
   } else return false;
 
   if (!vecDenomTypeBytes.empty()) {
-    denomination = DecompressInteger(vecDenomTypeBytes);
+    denominator = DecompressInteger(vecDenomTypeBytes);
   } else return false;
 
   if (!vecBlocksUntilExpiration.empty()) {
@@ -1025,7 +1025,8 @@ bool CMPTransaction::interpret_CreateContractDex()
   // {
       PrintToLog("\t version: %d\n", version);
       PrintToLog("\t messageType: %d\n",type);
-      PrintToLog("\t denomination: %d\n", denomination);
+      PrintToLog("\t numerator: %d\n", numerator);
+      PrintToLog("\t denominator: %d\n", denominator);
       PrintToLog("\t blocks until expiration : %d\n", blocks_until_expiration);
       PrintToLog("\t notional size : %d\n", notional_size);
       PrintToLog("\t collateral currency: %d\n", collateral_currency);
@@ -1391,7 +1392,9 @@ bool CMPTransaction::interpret_CreateOracleContract()
 
   memcpy(&ecosystem, &pkt[i], 1);
   i++;
-  std::vector<uint8_t> vecDenomTypeBytes = GetNextVarIntBytes(i);
+
+  std::vector<uint8_t> vecNum = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecDen = GetNextVarIntBytes(i);
 
   const char* p = i + (char*) &pkt;
   std::vector<std::string> spstr;
@@ -1424,9 +1427,6 @@ bool CMPTransaction::interpret_CreateOracleContract()
     type = DecompressInteger(vecTypeBytes);
   } else return false;
 
-  if (!vecDenomTypeBytes.empty()) {
-    denomination = DecompressInteger(vecDenomTypeBytes);
-  } else return false;
 
   if (!vecBlocksUntilExpiration.empty()) {
     blocks_until_expiration = DecompressInteger(vecBlocksUntilExpiration);
@@ -1450,13 +1450,22 @@ bool CMPTransaction::interpret_CreateOracleContract()
 
   } else return false;
 
+  if (!vecNum.empty()) {
+    numerator = DecompressInteger(vecMarginRequirement);
+  } else return false;
+
+  if (!vecDen.empty()) {
+    denominator = DecompressInteger(vecMarginRequirement);
+  } else return false;
+
   prop_type = ALL_PROPERTY_TYPE_ORACLE_CONTRACT;
 
   if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
   {
       PrintToLog("\t version: %d\n", version);
       PrintToLog("\t messageType: %d\n",type);
-      PrintToLog("\t denomination: %d\n", denomination);
+      PrintToLog("\t numerator: %d\n", numerator);
+      PrintToLog("\t denominator: %d\n", denominator);
       PrintToLog("\t blocks until expiration : %d\n", blocks_until_expiration);
       PrintToLog("\t notional size : %d\n", notional_size);
       PrintToLog("\t collateral currency: %d\n", collateral_currency);
@@ -3077,15 +3086,15 @@ int CMPTransaction::logicMath_CreateContractDex()
     return (PKT_ERROR_SP -37);
   }
 
-  // PrintToLog("type of denomination: %d\n",denomination);
+  // PrintToLog("type of denominator: %d\n",denominator);
 
-  // if (denomination != TL_dUSD && denomination != TL_dEUR && denomination!= TL_dYEN && denomination != TL_ALL && denomination != TL_sLTC && denomination!= TL_LTC) {
-  //   PrintToLog("rejected: denomination invalid\n");
+  // if (denominator != TL_dUSD && denominator != TL_dEUR && denominator!= TL_dYEN && denominator != TL_ALL && denominator != TL_sLTC && denominator!= TL_LTC) {
+  //   PrintToLog("rejected: denominator invalid\n");
   //   return (PKT_ERROR_SP -37);
   // }
 
   // if (numerator != TL_ALL && numerator != TL_sLTC && numerator != TL_LTC) {
-  //   PrintToLog("rejected: denomination invalid\n");
+  //   PrintToLog("rejected: denominator invalid\n");
   //   return (PKT_ERROR_SP -37);
   // }
 
@@ -3106,7 +3115,8 @@ int CMPTransaction::logicMath_CreateContractDex()
   newSP.collateral_currency = collateral_currency;
   newSP.margin_requirement = margin_requirement;
   newSP.init_block = block;
-  newSP.denomination = denomination;
+  newSP.numerator = numerator;
+  newSP.denominator = denominator;
   newSP.ecosystemSP = ecosystem;
   newSP.attribute_type = attribute_type;
   newSP.inverse_quoted = inverse_quoted;
@@ -3376,7 +3386,7 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
         }
 
         notSize = static_cast<int64_t>(sp.notional_size);
-        den = sp.denomination;
+        den = sp.denominator;
     }
 
     int64_t position = getMPbalance(sender, contractId, NEGATIVE_BALANCE);
@@ -3396,7 +3406,7 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
         for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++) {
             CMPSPInfo::Entry sp;
             if (_my_sps->getSP(propertyId, sp)) {
-                if (sp.prop_type == ALL_PROPERTY_TYPE_PEGGEDS && sp.denomination == den){
+                if (sp.prop_type == ALL_PROPERTY_TYPE_PEGGEDS && sp.denominator == den){
                     npropertyId = propertyId;
                     break;
                 }
@@ -3406,7 +3416,7 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
 
     // ------------------------------------------
 
-    if (npropertyId == 0) {   // putting the first one pegged currency of this denomination
+    if (npropertyId == 0) {   // putting the first one pegged currency of this denominator
         CMPSPInfo::Entry newSP;
         newSP.issuer = sender;
         newSP.txid = txid;
@@ -3420,7 +3430,7 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
         newSP.num_tokens = amountNeeded;
         newSP.contracts_needed = contracts;
         newSP.contract_associated = contractId;
-        newSP.denomination = den;
+        newSP.denominator = den;
         newSP.series = strprintf("Nº 1 - %d",(amountNeeded / factorE));
         npropertyId = _my_sps->putSP(ecosystem, newSP);
 
@@ -3943,15 +3953,15 @@ int CMPTransaction::logicMath_CreateOracleContract()
       return (PKT_ERROR_SP -37);
   }
 
-  // PrintToLog("type of denomination: %d\n",denomination);
+  // PrintToLog("type of denominator: %d\n",denominator);
 
-  // if (denomination != TL_dUSD && denomination != TL_dEUR && denomination!= TL_dYEN && denomination != TL_ALL && denomination != TL_sLTC && denomination!= TL_LTC) {
-  //   PrintToLog("rejected: denomination invalid\n");
+  // if (denominator != TL_dUSD && denominator != TL_dEUR && denominator!= TL_dYEN && denominator != TL_ALL && denominator != TL_sLTC && denominator!= TL_LTC) {
+  //   PrintToLog("rejected: denominator invalid\n");
   //   return (PKT_ERROR_SP -37);
   // }
 
   // if (numerator != TL_ALL && numerator != TL_sLTC && numerator != TL_LTC) {
-  //   PrintToLog("rejected: denomination invalid\n");
+  //   PrintToLog("rejected: denominator invalid\n");
   //   return (PKT_ERROR_SP -37);
   // }
 
@@ -3972,7 +3982,8 @@ int CMPTransaction::logicMath_CreateOracleContract()
   newSP.collateral_currency = collateral_currency;
   newSP.margin_requirement = margin_requirement;
   newSP.init_block = block;
-  newSP.denomination = denomination;
+  newSP.numerator = numerator;
+  newSP.denominator = denominator;
   newSP.ecosystemSP = ecosystem;
   newSP.attribute_type = attribute_type;
   newSP.backup_address = receiver;
@@ -4840,7 +4851,8 @@ struct FutureContractObject *getFutureContractObject(uint32_t property_type, std
 	{
 	  if ( (sp.prop_type == ALL_PROPERTY_TYPE_CONTRACT || sp.prop_type == ALL_PROPERTY_TYPE_ORACLE_CONTRACT) && sp.name == identifier )
 	    {
-	      pt_fco->fco_denomination = sp.denomination;
+        pt_fco->fco_denominator = sp.numerator;
+	      pt_fco->fco_denominator = sp.denominator;
 	      pt_fco->fco_blocks_until_expiration = sp.blocks_until_expiration;
 	      pt_fco->fco_notional_size = sp.notional_size;
 	      pt_fco->fco_collateral_currency = sp.collateral_currency;
@@ -4855,7 +4867,7 @@ struct FutureContractObject *getFutureContractObject(uint32_t property_type, std
 	    }
 	  else if ( sp.prop_type == ALL_PROPERTY_TYPE_PEGGEDS && sp.name == identifier )
 	    {
-	      pt_fco->fco_denomination = sp.denomination;
+	      pt_fco->fco_denominator = sp.denominator;
 	      pt_fco->fco_blocks_until_expiration = sp.blocks_until_expiration;
 	      pt_fco->fco_notional_size = sp.notional_size;
 	      pt_fco->fco_collateral_currency = sp.collateral_currency;
@@ -4882,7 +4894,7 @@ struct TokenDataByName *getTokenDataByName(std::string identifier)
       CMPSPInfo::Entry sp;
       if (_my_sps->getSP(propertyId, sp) && sp.name == identifier)
 	{
-	  pt_data->data_denomination = sp.denomination;
+	  pt_data->data_denominator = sp.denominator;
 	  pt_data->data_blocks_until_expiration = sp.blocks_until_expiration;
 	  pt_data->data_notional_size = sp.notional_size;
 	  pt_data->data_collateral_currency = sp.collateral_currency;

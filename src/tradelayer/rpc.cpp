@@ -778,7 +778,7 @@ UniValue tl_getproperty(const JSONRPCRequest& request)
     int64_t nTotalTokens = getTotalTokens(propertyId);
     std::string strCreationHash = sp.txid.GetHex();
     std::string strTotalTokens = FormatMP(propertyId, nTotalTokens);
-    std::string denomination = "";
+    std::string denominator = "";
 
     UniValue response(UniValue::VOBJ);
     response.push_back(Pair("propertyid", (uint64_t) propertyId));
@@ -798,15 +798,15 @@ UniValue tl_getproperty(const JSONRPCRequest& request)
       response.push_back(Pair("blocks until expiration", std::to_string(sp.blocks_until_expiration)));
       response.push_back(Pair("inverse quoted:", std::to_string(sp.inverse_quoted)));
 
-      if (sp.denomination == TL_dUSD){
-	denomination = "Dollar";
-      } else if (sp.denomination == TL_dEUR)  {
-	denomination = "Euro";
-      } else if (sp.denomination == TL_dYEN) {
-	denomination = "Yen";
+      if (sp.denominator == TL_dUSD){
+	denominator = "Dollar";
+      } else if (sp.denominator == TL_dEUR)  {
+	denominator = "Euro";
+      } else if (sp.denominator == TL_dYEN) {
+	denominator = "Yen";
       }
 
-      response.push_back(Pair("denomination", denomination));
+      response.push_back(Pair("denominator", denominator));
 
     } else if (sp.prop_type == ALL_PROPERTY_TYPE_ORACLE_CONTRACT) {
       response.push_back(Pair("notional size", FormatDivisibleShortMP(sp.notional_size)));
