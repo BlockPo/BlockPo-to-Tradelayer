@@ -52,6 +52,7 @@ typedef boost::multiprecision::checked_int128_t int128_t;
 extern std::map<std::string,uint32_t> peggedIssuers;
 extern std::map<uint32_t,std::map<int,oracledata>> oraclePrices;
 extern std::map<std::string,vector<withdrawalAccepted>> withdrawal_Map;
+extern std::map<uint32_t, std::map<uint32_t, int64_t>> market_priceMap;
 extern std::map<std::string,channel> channels_Map;
 extern int64_t factorE;
 extern int64_t priceIndex;
@@ -3161,6 +3162,7 @@ int CMPTransaction::logicMath_ContractDexTrade()
   if (block > pfuture->fco_init_block + static_cast<int>(pfuture->fco_blocks_until_expiration) || block < pfuture->fco_init_block)
       return PKT_ERROR_SP -38;
 
+
   uint32_t colateralh = pfuture->fco_collateral_currency;
   int64_t marginRe = static_cast<int64_t>(pfuture->fco_margin_requirement);
   int64_t nBalance = getMPbalance(sender, colateralh, BALANCE);
@@ -3169,10 +3171,14 @@ int CMPTransaction::logicMath_ContractDexTrade()
 
   // // rational_t conv = notionalChange(pfuture->fco_propertyId);
 
+  int64_t uPrice = 1;
+  (inverse_quoted == 1) ? uPrice = market_priceMap[numerator][denominator] : uPrice = 1;
+
+
   rational_t conv = rational_t(1,1);
   int64_t num = conv.numerator().convert_to<int64_t>();
   int64_t den = conv.denominator().convert_to<int64_t>();
-  arith_uint256 amountTR = (ConvertTo256(amount)*ConvertTo256(marginRe)*ConvertTo256(num))/(ConvertTo256(den)*ConvertTo256(leverage));
+  arith_uint256 amountTR = (ConvertTo256(amount) * ConvertTo256(marginRe)*ConvertTo256(num))/(ConvertTo256(den) * ConvertTo256(leverage) * ConvertTo256(uPrice));
   int64_t amountToReserve = ConvertTo64(amountTR);
 
   if (nBalance < amountToReserve || nBalance == 0)
@@ -3207,9 +3213,7 @@ int CMPTransaction::logicMath_ContractDexTrade()
   NodeRewardObj.SendNodeReward(sender);
 
   /*********************************************/
-  PrintToLog("%s(): checkpoint 1\n");
   t_tradelistdb->recordNewTrade(txid, sender, id_contract, desired_property, block, tx_idx, 0);
-  PrintToLog("%s(): checkpoint 2\n");
   int rc = ContractDex_ADD(sender, id_contract, amount, block, txid, tx_idx, effective_price, trading_action,0);
 
   return rc;

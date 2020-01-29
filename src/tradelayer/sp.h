@@ -266,7 +266,6 @@ std::string strEcosystem(uint8_t ecosystem);
 bool isPropertyContract(uint32_t propertyId);
 bool isPropertyPegged(uint32_t propertyId);
 int addInterestPegged(int nBlockPrev, const CBlockIndex* pBlockIndex);
-uint64_t edgeOrderbook(uint32_t contractId, uint8_t tradingAction);
 //////////////////////////////////////
 std::string getPropertyName(uint32_t propertyId);
 bool isPropertyDivisible(uint32_t propertyId);

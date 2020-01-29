@@ -227,6 +227,8 @@ namespace mastercore
   md_PricesMap* get_Prices(uint32_t prop);
   md_Set* get_Indexes(md_PricesMap* p, rational_t price);
 
+  uint64_t edgeOrderbook(uint32_t contractId, uint8_t tradingAction);
+
   // ---------------
 
   struct ChnDEx_compare
