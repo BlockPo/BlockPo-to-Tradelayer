@@ -1766,7 +1766,7 @@ UniValue tl_getfullposition(const JSONRPCRequest& request)
   positionObj.push_back(Pair("symbol", sp.name));
   positionObj.push_back(Pair("notional_size", (uint64_t) sp.notional_size)); // value of position = short or long position (balance) * notional_size
   // PTJ -> short/longPosition /liquidation price
-  bool flag = false;
+  // bool flag = false;
 
   FullPositionToJSON(address, propertyId, positionObj,sp.isContract(), sp);
 

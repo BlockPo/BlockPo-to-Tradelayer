@@ -96,6 +96,7 @@ public:
         int init_block;
         uint32_t ecosystemSP;
         uint32_t numerator;
+        uint32_t denominator;
         uint32_t denomination;
         /* int64_t ticksize; */
         std::string series;
@@ -103,7 +104,9 @@ public:
         uint64_t oracle_high;
         uint64_t oracle_low;
         uint64_t oracle_close;
-        bool expirated;  // if the contract expired
+
+        bool inverse_quoted;
+        bool expirated;
 
         // for pegged currency
         uint32_t contract_associated;
@@ -160,7 +163,7 @@ public:
             READWRITE(oracle_high);
             READWRITE(oracle_low);
             READWRITE(oracle_close);
-            READWRITE(expirated);
+            READWRITE(inverse_quoted);
             ////////////////////////////
         }
 

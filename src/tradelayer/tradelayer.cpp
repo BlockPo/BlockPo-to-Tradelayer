@@ -2502,9 +2502,8 @@ bool CallingSettlement()
             if (!_my_sps->getSP(propertyId, sp))
                return false;
 
-            //NOTE: We need to check numerator and denomination
-            uint32_t property_num = sp.numerator;
-            uint32_t property_den = sp.denomination;
+            uint64_t property_num = sp.numerator;
+            uint64_t property_den = sp.denominator;
 
             uint64_t num_mdex=accumulate(mdextwap_vec[property_num][property_den].begin(),mdextwap_vec[property_num][property_den].end(),0.0);
 
@@ -2535,9 +2534,7 @@ bool CallingSettlement()
             if(msc_calling_settlement) PrintToLog("\nCalling the Settlement Algorithm:\n\n");
 
             //NOTE: We need num and den for contract as a property of itself in sp.h
-            uint32_t numId;
-            uint32_t denId;
-            settlement_algorithm_fifo(M_file, interest, twap_priceCDEx, propertyId, sp.collateral_currency, numId, denId);
+            settlement_algorithm_fifo(M_file, interest, twap_priceCDEx, propertyId, sp.collateral_currency, sp.numerator, sp.denomination, sp.inverse_quoted);
         }
     }
 

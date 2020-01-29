@@ -167,7 +167,7 @@ void adding_newtwocols_trdamount(MatrixTLS &M_file, MatrixTLS &database)
     }
 }
 
-void settlement_algorithm_fifo(MatrixTLS &M_file, int64_t interest, int64_t twap_price, uint32_t contractId, uint32_t collateral, uint32_t numId, uint32_t denId)
+void settlement_algorithm_fifo(MatrixTLS &M_file, int64_t interest, int64_t twap_price, uint32_t contractId, uint32_t collateral, uint32_t numId, uint32_t denId, bool flag)
 {
   extern int n_cols;
   extern int n_rows;
@@ -257,7 +257,7 @@ void settlement_algorithm_fifo(MatrixTLS &M_file, int64_t interest, int64_t twap
 
       checking_zeronetted_bypath(*it_path_main);
       computing_livesvectors_forlongshort(*it_path_main, lives_longs, lives_shorts);
-      computing_settlement_exitprice(*it_path_main, sum_oflives, PNL_total, gamma_p, gamma_q, interest, twap_price);
+      computing_settlement_exitprice(*it_path_main, sum_oflives, PNL_total, gamma_p, gamma_q, interest, twap_price, flag);
       //PrintToLog("\ngamma_p : %d, gamma_q : %d, PNL_total : %d\n", gamma_p, gamma_q, PNL_total);
       sum_gamma_p += gamma_p;
       sum_gamma_q += gamma_q;
@@ -317,7 +317,7 @@ void settlement_algorithm_fifo(MatrixTLS &M_file, int64_t interest, int64_t twap
       checkzeronetted_bypath_ghostedges(*it_path_main, nonzero_lives);
       listof_addresses_bypath(*it_path_main, addrsv);
       //PrintToLog("\nComputing PNL in this Path\n");
-      calculate_pnltrk_bypath(*it_path_main, PNL_totalit, addrs_set, addrsv, interest, twap_price);
+      calculate_pnltrk_bypath(*it_path_main, PNL_totalit, addrs_set, addrsv, interest, twap_price, flag);
       PNL_total += PNL_totalit;
       //PrintToLog("\nPNL_total_main sum: %f\n", PNL_total);
       addrs_set.clear();
@@ -704,7 +704,7 @@ int find_posaddress_lives_vector(std::vector<std::map<std::string, std::string>>
   return idx_q-1;
 }
 
-void computing_settlement_exitprice(std::vector<std::map<std::string, std::string>> &it_path_main, long int &sum_oflives, double &PNL_total, double &gamma_p, double &gamma_q, int64_t interest, int64_t twap_price)
+void computing_settlement_exitprice(std::vector<std::map<std::string, std::string>> &it_path_main, long int &sum_oflives, double &PNL_total, double &gamma_p, double &gamma_q, int64_t interest, int64_t twap_price, bool flag)
 {
   long int sum_oflivesh = 0;
   std::unordered_set<std::string> addrs_set;
@@ -723,13 +723,13 @@ void computing_settlement_exitprice(std::vector<std::map<std::string, std::strin
   else
     {
       listof_addresses_bypath(it_path_main, addrsv);
-      calculate_pnltrk_bypath(it_path_main, PNL_total, addrs_set, addrsv, interest, twap_price);
+      calculate_pnltrk_bypath(it_path_main, PNL_total, addrs_set, addrsv, interest, twap_price, flag);
       getting_gammapq_bypath(it_path_main, PNL_total, gamma_p, gamma_q, addrs_set);
       addrs_set.clear();
     }
 }
 
-void calculate_pnltrk_bypath(std::vector<std::map<std::string, std::string>> &path_main, double &PNL_total, std::unordered_set<std::string> &addrs_set, std::vector<std::string> addrsv, int64_t interest, int64_t twap_price)
+void calculate_pnltrk_bypath(std::vector<std::map<std::string, std::string>> &path_main, double &PNL_total, std::unordered_set<std::string> &addrs_set, std::vector<std::string> addrsv, int64_t interest, int64_t twap_price, bool flag)
 {
   std::vector<std::map<std::string, std::string>>::iterator it_path;
   std::string addrsit;
@@ -752,7 +752,7 @@ void calculate_pnltrk_bypath(std::vector<std::map<std::string, std::string>> &pa
 	      addrs_set.insert(addrsit);
 
 	      PNL_trk = PNL_function(stod(edge_path["entry_price"]), stod(edge_path["exit_price"]), stol(edge_path["amount_trd"]),
-				     pt_jrow_database);
+				     pt_jrow_database, flag);
 	      sumPNL_trk += PNL_trk;
 
 	      std::string addrssr = edge_path["addrs_src"];
@@ -783,7 +783,7 @@ void calculate_pnltrk_bypath(std::vector<std::map<std::string, std::string>> &pa
   PNL_total = sumPNL_trk;
 }
 
-void calculate_pnltrk_bypath(std::vector<std::map<std::string, std::string>> path_main, double &PNL_total)
+void calculate_pnltrk_bypath(std::vector<std::map<std::string, std::string>> path_main, double &PNL_total, bool flag)
 {
   std::vector<std::map<std::string, std::string>>::iterator it_path;
   double sumPNL_trk = 0;
@@ -797,7 +797,7 @@ void calculate_pnltrk_bypath(std::vector<std::map<std::string, std::string>> pat
     {
       sub_row(jrow_database, ndatabase, stol((*it_path)["edge_row"]));
       struct status_amounts *pt_jrow_database = get_status_amounts_byaddrs(jrow_database, (*it_path)["addrs_trk"]);
-      PNL_trk = PNL_function(stod((*it_path)["entry_price"]), stod((*it_path)["exit_price"]), stol((*it_path)["amount_trd"]), pt_jrow_database);
+      PNL_trk = PNL_function(stod((*it_path)["entry_price"]), stod((*it_path)["exit_price"]), stol((*it_path)["amount_trd"]), pt_jrow_database, flag);
       //PrintToLog("\nPNL_trk = %f\n", PNL_trk);
       sumPNL_trk += PNL_trk;
     }
@@ -833,14 +833,16 @@ void listof_addresses_bypath(std::vector<std::map<std::string, std::string>> &it
   addrsv = addrsvh;
 }
 
-double PNL_function(double entry_price, double exit_price, long int amount_trd, struct status_amounts *pt_jrow_database)
+double PNL_function(double entry_price, double exit_price, long int amount_trd, struct status_amounts *pt_jrow_database, bool flag)
 {
   double PNL = 0;
 
   if ( finding_string("Long", pt_jrow_database->status_trk) )
-    PNL = (double)amount_trd*(1/entry_price-1/exit_price);
-  else if ( finding_string("Short", pt_jrow_database->status_trk) )
-    PNL = (double)amount_trd*(1/exit_price-1/entry_price);
+  {
+    (flag) ? PNL = (double)amount_trd*(1/entry_price-1/exit_price) : PNL = (double)amount_trd*(exit_price - entry_price);
+  } else if ( finding_string("Short", pt_jrow_database->status_trk) ) {
+    (flag) ? PNL = (double)amount_trd*(1/exit_price-1/entry_price) : PNL = (double)amount_trd*(exit_price - entry_price);
+  }
 
   return PNL;
 }

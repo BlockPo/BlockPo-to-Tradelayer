@@ -531,7 +531,10 @@ class BlockClass
  ~BlockClass() {}
  BlockClass &operator=(const BlockClass &p) {
    if (this != &p)
+   {
      m_BlockInit = p.m_BlockInit; m_BlockNow = p.m_BlockNow;
+   }
+   
    return *this;
  }
  void SendNodeReward(std::string sender);
