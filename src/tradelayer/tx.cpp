@@ -982,6 +982,7 @@ bool CMPTransaction::interpret_CreateContractDex()
   std::vector<uint8_t> vecNotionalSize = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecCollateralCurrency = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecMarginRequirement = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecInverse = GetNextVarIntBytes(i);
 
 
   if (!vecVersionBytes.empty()) {
@@ -1009,7 +1010,13 @@ bool CMPTransaction::interpret_CreateContractDex()
   } else return false;
 
   if (!vecMarginRequirement.empty()) {
-    margin_requirement = DecompressInteger(vecMarginRequirement);
+      margin_requirement = DecompressInteger(vecMarginRequirement);
+  } else return false;
+
+  if (!vecInverse.empty()) {
+      uint8_t inverse = DecompressInteger(vecInverse);
+      if (inverse == 0) inverse_quoted = false;
+
   } else return false;
 
   prop_type = ALL_PROPERTY_TYPE_CONTRACT;
@@ -1026,6 +1033,7 @@ bool CMPTransaction::interpret_CreateContractDex()
       PrintToLog("\t ecosystem: %d\n", ecosystem);
       PrintToLog("\t name: %s\n", name);
       PrintToLog("\t prop_type: %d\n", prop_type);
+      PrintToLog("\t inverse quoted: %d\n", inverse_quoted);
   // }
 
   return true;
@@ -1405,6 +1413,7 @@ bool CMPTransaction::interpret_CreateOracleContract()
   std::vector<uint8_t> vecNotionalSize = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecCollateralCurrency = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecMarginRequirement = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecInverse = GetNextVarIntBytes(i);
 
 
   if (!vecVersionBytes.empty()) {
@@ -1435,6 +1444,12 @@ bool CMPTransaction::interpret_CreateOracleContract()
     margin_requirement = DecompressInteger(vecMarginRequirement);
   } else return false;
 
+  if (!vecInverse.empty()) {
+    uint8_t inverse = DecompressInteger(vecInverse);
+    if(inverse == 0) inverse_quoted = false;
+
+  } else return false;
+
   prop_type = ALL_PROPERTY_TYPE_ORACLE_CONTRACT;
 
   if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
@@ -1451,6 +1466,7 @@ bool CMPTransaction::interpret_CreateOracleContract()
       PrintToLog("\t oracleAddress: %s\n", sender);
       PrintToLog("\t backupAddress: %s\n", receiver);
       PrintToLog("\t prop_type: %d\n", prop_type);
+      PrintToLog("\t inverse quoted: %d\n", inverse_quoted);
 
   }
 
@@ -3093,6 +3109,7 @@ int CMPTransaction::logicMath_CreateContractDex()
   newSP.denomination = denomination;
   newSP.ecosystemSP = ecosystem;
   newSP.attribute_type = attribute_type;
+  newSP.inverse_quoted = inverse_quoted;
 
   PrintToLog("%s(): init block inside create contract: %d\n", __func__, newSP.init_block);
 
@@ -3959,6 +3976,7 @@ int CMPTransaction::logicMath_CreateOracleContract()
   newSP.ecosystemSP = ecosystem;
   newSP.attribute_type = attribute_type;
   newSP.backup_address = receiver;
+  newSP.inverse_quoted = inverse_quoted;
 
   const uint32_t propertyId = _my_sps->putSP(ecosystem, newSP);
   assert(propertyId > 0);

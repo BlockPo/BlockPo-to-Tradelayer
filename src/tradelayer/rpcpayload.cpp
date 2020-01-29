@@ -448,7 +448,7 @@ UniValue tl_createpayload_sendtrade(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_createcontract(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 7)
+  if (request.params.size() != 8)
     throw runtime_error(
 			"tl_createpayload_createcontract \" ecosystem type previousid \"category\" \"subcategory\" \"name\" \"url\" \"data\" propertyiddesired tokensperunit deadline ( earlybonus issuerpercentage )\n"
 
@@ -462,6 +462,7 @@ UniValue tl_createpayload_createcontract(const JSONRPCRequest& request)
 			"5. notional size             (number, required) notional size\n"
 			"6. collateral currency       (number, required) collateral currency\n"
       "7. margin requirement        (number, required) margin requirement\n"
+      "8. quoting                   (number, required) 0: inverse quoting contract, 1: normal quoting\n"
 
 			"\nResult:\n"
 			"\"payload\"             (string) the hex-encoded payload\n"
@@ -478,8 +479,9 @@ UniValue tl_createpayload_createcontract(const JSONRPCRequest& request)
   uint32_t notional_size = ParseNewValues(request.params[4]);
   uint32_t collateral_currency = ParseNewValues(request.params[5]);
   uint32_t margin_requirement = ParseAmount(request.params[6], true);
+  uint8_t inverse = ParseBinary(request.params[7]);
 
-  std::vector<unsigned char> payload = CreatePayload_CreateContract(ecosystem, type, name, blocks_until_expiration, notional_size, collateral_currency, margin_requirement);
+  std::vector<unsigned char> payload = CreatePayload_CreateContract(ecosystem, type, name, blocks_until_expiration, notional_size, collateral_currency, margin_requirement, inverse);
 
   return HexStr(payload.begin(), payload.end());
 }

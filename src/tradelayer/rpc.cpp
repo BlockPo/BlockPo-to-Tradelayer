@@ -796,6 +796,7 @@ UniValue tl_getproperty(const JSONRPCRequest& request)
       response.push_back(Pair("collateral currency", std::to_string(sp.collateral_currency)));
       response.push_back(Pair("margin requirement", FormatDivisibleShortMP(sp.margin_requirement)));
       response.push_back(Pair("blocks until expiration", std::to_string(sp.blocks_until_expiration)));
+      response.push_back(Pair("inverse quoted:", std::to_string(sp.inverse_quoted)));
 
       if (sp.denomination == TL_dUSD){
 	denomination = "Dollar";
@@ -816,6 +817,7 @@ UniValue tl_getproperty(const JSONRPCRequest& request)
       response.push_back(Pair("hight price", FormatDivisibleShortMP(sp.oracle_high)));
       response.push_back(Pair("low price", FormatDivisibleShortMP(sp.oracle_low)));
       response.push_back(Pair("last close price", FormatDivisibleShortMP(sp.oracle_close)));
+      response.push_back(Pair("inverse quoted:", std::to_string(sp.inverse_quoted)));
 
     } else if (sp.prop_type == ALL_PROPERTY_TYPE_PEGGEDS) {
       response.push_back(Pair("contract associated",(uint64_t) sp.contract_associated));

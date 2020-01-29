@@ -102,6 +102,7 @@ private:
     uint32_t propertyId;
     uint32_t contractId;
     uint64_t amount;
+    bool inverse_quoted = true;
 
     /* uint64_t ticksize; */
     /*uint32_t nextContractId;*/

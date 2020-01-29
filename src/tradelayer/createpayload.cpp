@@ -325,7 +325,7 @@ std::vector<unsigned char> CreatePayload_TradeLayerAlert(uint16_t alertType, uin
     return payload;
 }
 
-std::vector<unsigned char> CreatePayload_CreateContract(uint8_t ecosystem, uint32_t denomType, std::string name, uint32_t blocks_until_expiration, uint32_t notional_size, uint32_t collateral_currency, uint32_t margin_requirement)
+std::vector<unsigned char> CreatePayload_CreateContract(uint8_t ecosystem, uint32_t denomType, std::string name, uint32_t blocks_until_expiration, uint32_t notional_size, uint32_t collateral_currency, uint32_t margin_requirement, uint8_t inverse)
 {
   std::vector<unsigned char> payload;
 
@@ -340,6 +340,8 @@ std::vector<unsigned char> CreatePayload_CreateContract(uint8_t ecosystem, uint3
   std::vector<uint8_t> vecNotionalSize = CompressInteger((uint64_t)notional_size);
   std::vector<uint8_t> vecCollateralCurrency = CompressInteger((uint64_t)collateral_currency);
   std::vector<uint8_t> vecMarginRequirement = CompressInteger((uint64_t)margin_requirement);
+  std::vector<uint8_t> vecInverse = CompressInteger((uint64_t)inverse);
+
 
   if ((name).size() > 255) name = name.substr(0,255);
   payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
@@ -352,6 +354,7 @@ std::vector<unsigned char> CreatePayload_CreateContract(uint8_t ecosystem, uint3
   payload.insert(payload.end(), vecNotionalSize.begin(), vecNotionalSize.end());
   payload.insert(payload.end(), vecCollateralCurrency.begin(), vecCollateralCurrency.end());
   payload.insert(payload.end(), vecMarginRequirement.begin(), vecMarginRequirement.end());
+  payload.insert(payload.end(), vecInverse.begin(), vecInverse.end());
   return payload;
 }
 
@@ -607,7 +610,7 @@ std::vector<unsigned char> CreatePayload_MetaDExTrade(uint32_t propertyIdForSale
 }
 
 /* Tx 103 */
-std::vector<unsigned char> CreatePayload_CreateOracleContract(uint8_t ecosystem, uint32_t denomType, std::string name, uint32_t blocks_until_expiration, uint32_t notional_size, uint32_t collateral_currency, uint32_t margin_requirement)
+std::vector<unsigned char> CreatePayload_CreateOracleContract(uint8_t ecosystem, uint32_t denomType, std::string name, uint32_t blocks_until_expiration, uint32_t notional_size, uint32_t collateral_currency, uint32_t margin_requirement, uint8_t inverse)
 {
   std::vector<unsigned char> payload;
 
@@ -622,6 +625,7 @@ std::vector<unsigned char> CreatePayload_CreateOracleContract(uint8_t ecosystem,
   std::vector<uint8_t> vecNotionalSize = CompressInteger((uint64_t)notional_size);
   std::vector<uint8_t> vecCollateralCurrency = CompressInteger((uint64_t)collateral_currency);
   std::vector<uint8_t> vecMarginRequirement = CompressInteger((uint64_t)margin_requirement);
+  std::vector<uint8_t> vecInverse = CompressInteger((uint64_t)inverse);
 
   if ((name).size() > 255) name = name.substr(0,255);
   payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
@@ -634,6 +638,7 @@ std::vector<unsigned char> CreatePayload_CreateOracleContract(uint8_t ecosystem,
   payload.insert(payload.end(), vecNotionalSize.begin(), vecNotionalSize.end());
   payload.insert(payload.end(), vecCollateralCurrency.begin(), vecCollateralCurrency.end());
   payload.insert(payload.end(), vecMarginRequirement.begin(), vecMarginRequirement.end());
+  payload.insert(payload.end(), vecInverse.begin(), vecInverse.end());
 
   return payload;
 }

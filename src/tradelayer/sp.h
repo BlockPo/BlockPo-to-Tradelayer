@@ -104,6 +104,8 @@ public:
         uint64_t oracle_high;
         uint64_t oracle_low;
         uint64_t oracle_close;
+
+        bool inverse_quoted;
         // int oracle_last_update;
 
         // for pegged currency
@@ -161,7 +163,7 @@ public:
             READWRITE(oracle_high);
             READWRITE(oracle_low);
             READWRITE(oracle_close);
-            // READWRITE(oracle_last_update);
+            READWRITE(inverse_quoted);
             ////////////////////////////
         }
 
