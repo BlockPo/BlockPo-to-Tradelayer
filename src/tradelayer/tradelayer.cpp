@@ -999,7 +999,7 @@ int ParseTransaction(const CTransaction& tx, int nBlock, unsigned int idx, CMPTr
  */
 static bool HandleDExPayments(const CTransaction& tx, int nBlock, const std::string& strSender)
 {
-    uint64_t nvalue;
+    uint64_t nvalue = 0;
     int count = 0;
 
     for (unsigned int n = 0; n < tx.vout.size(); ++n)
@@ -1036,7 +1036,7 @@ static bool HandleDExPayments(const CTransaction& tx, int nBlock, const std::str
 static bool HandleLtcInstantTrade(const CTransaction& tx, int nBlock, const std::string& sender, const std::string& receiver, uint32_t property, uint64_t amount_forsale, uint32_t desired_property, uint64_t desired_value, unsigned int idx)
 {
 
-    uint64_t nvalue;
+    uint64_t nvalue = 0;
     int count = 0;
 
     if (property != 0) return false;

@@ -1002,30 +1002,3 @@ std::string mastercore::strEcosystem(uint8_t ecosystem)
 
   return "unknown";
 }
-
-uint64_t mastercore::edgeOrderbook(uint32_t contractId, uint8_t tradingAction)
-{
-    uint64_t price = 0;
-    uint64_t result = 0;
-    std::vector<uint64_t> vecContractDexPrices;
-
-    cd_PricesMap* const ppriceMap = get_PricesCd(contractId); // checking the ask price of contract A
-    for (cd_PricesMap::iterator it = ppriceMap->begin(); it != ppriceMap->end(); ++it) {
-        const cd_Set& indexes = it->second;
-        for (cd_Set::const_iterator it = indexes.begin(); it != indexes.end(); ++it) {
-            const CMPContractDex& obj = *it;
-            if (obj.getTradingAction() == tradingAction || obj.getAmountForSale() <= 0) continue;
-            price = obj.getEffectivePrice();
-            if(msc_debug_sp) PrintToLog("%s(): choosen price: %d\n",__func__, price);
-            vecContractDexPrices.push_back(price);
-        }
-    }
-
-    if (tradingAction == BUY && !vecContractDexPrices.empty()){
-       result = vecContractDexPrices.front();
-    } else if (tradingAction == SELL && !vecContractDexPrices.empty()){
-       result = vecContractDexPrices.back();
-    }
-
-    return static_cast<uint64_t>(result);
-}
