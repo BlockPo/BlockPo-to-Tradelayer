@@ -1607,7 +1607,7 @@ UniValue tl_setoracle(const JSONRPCRequest& request)
     uint64_t high = ParseEffectivePrice(request.params[2]);
     uint64_t low = ParseEffectivePrice(request.params[3]);
     uint64_t close = ParseEffectivePrice(request.params[4]);
-    struct FutureContractObject *pfuture_contract = getFutureContractObject(ALL_PROPERTY_TYPE_ORACLE_CONTRACT, name_contract);
+    struct FutureContractObject *pfuture_contract = getFutureContractObject(name_contract);
     uint32_t contractId = pfuture_contract->fco_propertyId;
     std::string oracleAddress = pfuture_contract->fco_issuer;
 

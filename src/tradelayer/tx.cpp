@@ -4928,7 +4928,7 @@ struct TokenDataByName *getTokenDataById(uint32_t propertyId)
   CMPSPInfo::Entry sp;
   if (_my_sps->getSP(propertyId, sp))
 	{
-	  pt_data->data_denomination = sp.denomination;
+	  pt_data->data_denominator = sp.denominator;
 	  pt_data->data_blocks_until_expiration = sp.blocks_until_expiration;
 	  pt_data->data_notional_size = sp.notional_size;
 	  pt_data->data_collateral_currency = sp.collateral_currency;
