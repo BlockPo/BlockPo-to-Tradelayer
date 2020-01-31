@@ -61,11 +61,23 @@ bool CMPSPInfo::Entry::isDivisible() const
   return false;
 }
 
-bool CMPSPInfo::Entry::isContract() const
+bool CMPSPInfo::Entry::isNativeContract() const
 {
   switch (prop_type)
     {
-    case ALL_PROPERTY_TYPE_CONTRACT:
+    case ALL_PROPERTY_TYPE_NATIVE_CONTRACT:
+      return true;
+    }
+  return false;
+}
+
+bool CMPSPInfo::Entry::isSwap() const
+{
+  switch (prop_type)
+    {
+      case ALL_PROPERTY_TYPE_PERPETUAL_ORACLE:
+      return true;
+      case ALL_PROPERTY_TYPE_PERPETUAL_CONTRACTS:
       return true;
     }
   return false;
@@ -77,6 +89,8 @@ bool CMPSPInfo::Entry::isOracle() const
     {
     case ALL_PROPERTY_TYPE_ORACLE_CONTRACT:
       return true;
+    case ALL_PROPERTY_TYPE_PERPETUAL_ORACLE:
+      return true;
     }
   return false;
 }
@@ -87,6 +101,25 @@ bool CMPSPInfo::Entry::isPegged() const
     {
     case ALL_PROPERTY_TYPE_PEGGEDS:
       return true;
+    }
+  return false;
+}
+
+bool CMPSPInfo::Entry::isContract() const
+{
+    switch (prop_type)
+        {
+            case ALL_PROPERTY_TYPE_NATIVE_CONTRACT:
+                return true;
+
+            case ALL_PROPERTY_TYPE_ORACLE_CONTRACT:
+                return true;
+
+            case ALL_PROPERTY_TYPE_PERPETUAL_ORACLE:
+                return true;
+
+            case ALL_PROPERTY_TYPE_PERPETUAL_CONTRACTS:
+                return true;
     }
   return false;
 }
@@ -640,6 +673,15 @@ bool mastercore::isPropertyContract(uint32_t propertyId)
   CMPSPInfo::Entry sp;
 
   if (_my_sps->getSP(propertyId, sp)) return sp.isContract();
+
+  return true;
+}
+
+bool mastercore::isPropertySwap(uint32_t propertyId)
+{
+  CMPSPInfo::Entry sp;
+
+  if (_my_sps->getSP(propertyId, sp)) return sp.isSwap();
 
   return true;
 }

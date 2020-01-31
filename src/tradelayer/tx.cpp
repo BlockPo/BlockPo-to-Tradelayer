@@ -1020,7 +1020,7 @@ bool CMPTransaction::interpret_CreateContractDex()
 
   } else return false;
 
-  prop_type = ALL_PROPERTY_TYPE_CONTRACT;
+  (blocks_until_expiration == 0) ? prop_type = ALL_PROPERTY_TYPE_PERPETUAL_CONTRACTS : prop_type = ALL_PROPERTY_TYPE_NATIVE_CONTRACT;
 
   // if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
   // {
@@ -1445,6 +1445,9 @@ bool CMPTransaction::interpret_CreateOracleContract()
     margin_requirement = DecompressInteger(vecMarginRequirement);
   } else return false;
 
+
+  (blocks_until_expiration == 0) ? prop_type = ALL_PROPERTY_TYPE_PERPETUAL_ORACLE : prop_type = ALL_PROPERTY_TYPE_ORACLE_CONTRACT;
+
   if (!vecInverse.empty()) {
     uint8_t inverse = DecompressInteger(vecInverse);
     if(inverse == 0) inverse_quoted = false;
@@ -1459,7 +1462,6 @@ bool CMPTransaction::interpret_CreateOracleContract()
     denominator = DecompressInteger(vecMarginRequirement);
   } else return false;
 
-  prop_type = ALL_PROPERTY_TYPE_ORACLE_CONTRACT;
 
   if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
   {
@@ -3120,9 +3122,11 @@ int CMPTransaction::logicMath_CreateContractDex()
   newSP.denominator = denominator;
   newSP.ecosystemSP = ecosystem;
   newSP.attribute_type = attribute_type;
+  newSP.expirated = false;
   newSP.inverse_quoted = inverse_quoted;
 
   PrintToLog("%s(): init block inside create contract: %d\n", __func__, newSP.init_block);
+
 
   const uint32_t propertyId = _my_sps->putSP(ecosystem, newSP);
   assert(propertyId > 0);
@@ -3148,10 +3152,10 @@ int CMPTransaction::logicMath_ContractDexTrade()
 
   int result;
 
-  struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, name_traded);
+  struct FutureContractObject *pfuture = getFutureContractObject(name_traded);
   id_contract = pfuture->fco_propertyId;
 
-  (pfuture->fco_prop_type == ALL_PROPERTY_TYPE_CONTRACT) ? result = 5 : result = 6;
+  (pfuture->fco_prop_type == ALL_PROPERTY_TYPE_NATIVE_CONTRACT) ? result = 5 : result = 6;
 
   // if(!t_tradelistdb->checkKYCRegister(sender,result))
   //     return PKT_ERROR_KYC -10;
@@ -3237,7 +3241,7 @@ int CMPTransaction::logicMath_ContractDexCancelEcosystem()
     return (PKT_ERROR_SP -21);
   }
 
-  struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, name_traded);
+  struct FutureContractObject *pfuture = getFutureContractObject(name_traded);
   uint32_t contractId = pfuture->fco_propertyId;
 
   int rc = ContractDex_CANCEL_EVERYTHING(txid, block, sender, ecosystem, contractId);
@@ -3991,6 +3995,7 @@ int CMPTransaction::logicMath_CreateOracleContract()
   newSP.ecosystemSP = ecosystem;
   newSP.attribute_type = attribute_type;
   newSP.backup_address = receiver;
+  newSP.expirated = false;
   newSP.inverse_quoted = inverse_quoted;
 
   const uint32_t propertyId = _my_sps->putSP(ecosystem, newSP);
@@ -4092,7 +4097,6 @@ int CMPTransaction::logicMath_Set_Oracle()
 
 
     // ------------------------------------------
-
     oracledata Ol;
 
     Ol.high = oracle_high;
@@ -4126,6 +4130,7 @@ int CMPTransaction::logicMath_Set_Oracle()
     // oracledata Or = itt->second;
     //
     // PrintToLog("%s(): oracle data for contract: block: %d,high:%d, low:%d, close:%d\n",block, Or.high, Or.low, Or.close);
+
 
 
     assert(_my_sps->updateSP(contractId, sp));
@@ -4666,7 +4671,7 @@ int CMPTransaction::logicMath_Contract_Instant()
 
   int result;
 
-  (sp.prop_type == ALL_PROPERTY_TYPE_CONTRACT) ? result = 5 : result = 6;
+  (sp.prop_type == ALL_PROPERTY_TYPE_NATIVE_CONTRACT) ? result = 5 : result = 6;
 
   if(!t_tradelistdb->checkKYCRegister(sender,result))
   {
@@ -4842,7 +4847,7 @@ int CMPTransaction::logicMath_DEx_Payment()
 }
 
 
-struct FutureContractObject *getFutureContractObject(uint32_t property_type, std::string identifier)
+struct FutureContractObject *getFutureContractObject(std::string identifier)
 {
   struct FutureContractObject *pt_fco = new FutureContractObject;
 
@@ -4853,7 +4858,7 @@ struct FutureContractObject *getFutureContractObject(uint32_t property_type, std
       CMPSPInfo::Entry sp;
       if (_my_sps->getSP(propertyId, sp))
 	{
-	  if ( (sp.prop_type == ALL_PROPERTY_TYPE_CONTRACT || sp.prop_type == ALL_PROPERTY_TYPE_ORACLE_CONTRACT) && sp.name == identifier )
+	  if ( sp.isContract() && sp.name == identifier )
 	    {
         pt_fco->fco_denominator = sp.numerator;
 	      pt_fco->fco_denominator = sp.denominator;
@@ -4868,8 +4873,9 @@ struct FutureContractObject *getFutureContractObject(uint32_t property_type, std
         pt_fco->fco_backup_address = sp.backup_address;
 	      pt_fco->fco_propertyId = propertyId;
         pt_fco->fco_prop_type = sp.prop_type;
+        pt_fco->fco_expirated = sp.expirated;
 	    }
-	  else if ( sp.prop_type == ALL_PROPERTY_TYPE_PEGGEDS && sp.name == identifier )
+	  else if ( sp.isPegged() && sp.name == identifier )
 	    {
 	      pt_fco->fco_denominator = sp.denominator;
 	      pt_fco->fco_blocks_until_expiration = sp.blocks_until_expiration;
@@ -4910,6 +4916,30 @@ struct TokenDataByName *getTokenDataByName(std::string identifier)
 	  pt_data->data_propertyId = propertyId;
 	}
     }
+  return pt_data;
+}
+
+struct TokenDataByName *getTokenDataById(uint32_t propertyId)
+{
+  struct TokenDataByName *pt_data = new TokenDataByName;
+
+  LOCK(cs_tally);
+  uint32_t nextSPID = _my_sps->peekNextSPID(1);
+  CMPSPInfo::Entry sp;
+  if (_my_sps->getSP(propertyId, sp))
+	{
+	  pt_data->data_denomination = sp.denomination;
+	  pt_data->data_blocks_until_expiration = sp.blocks_until_expiration;
+	  pt_data->data_notional_size = sp.notional_size;
+	  pt_data->data_collateral_currency = sp.collateral_currency;
+	  pt_data->data_margin_requirement = sp.margin_requirement;
+	  pt_data->data_name = sp.name;
+	  pt_data->data_subcategory = sp.subcategory;
+	  pt_data->data_issuer = sp.issuer;
+	  pt_data->data_init_block = sp.init_block;
+	  pt_data->data_propertyId = propertyId;
+	}
+
   return pt_data;
 }
 

@@ -543,7 +543,7 @@ UniValue tl_createpayload_cancelallcontractsbyaddress(const JSONRPCRequest& requ
   uint8_t ecosystem = ParseEcosystem(request.params[0]);
   std::string name_traded = ParseText(request.params[1]);
 
-  struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, name_traded);
+  struct FutureContractObject *pfuture = getFutureContractObject(name_traded);
   uint32_t contractId = pfuture->fco_propertyId;
 
   std::vector<unsigned char> payload = CreatePayload_ContractDexCancelEcosystem(ecosystem, contractId);
@@ -611,7 +611,7 @@ UniValue tl_createpayload_sendissuance_pegged(const JSONRPCRequest& request)
   std::string name_traded = ParseText(request.params[5]);
   uint64_t amount = ParseAmount(request.params[6], isPropertyDivisible(propertyId));
 
-  struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, name_traded);
+  struct FutureContractObject *pfuture = getFutureContractObject(name_traded);
   uint32_t contractId = pfuture->fco_propertyId;
 
   std::vector<unsigned char> payload = CreatePayload_IssuancePegged(ecosystem, type, previousId, name, propertyId, contractId, amount);
@@ -642,7 +642,7 @@ UniValue tl_createpayload_send_pegged(const JSONRPCRequest& request)
 
   std::string name_pegged = ParseText(request.params[0]);
 
-  struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_PEGGEDS, name_pegged);
+  struct FutureContractObject *pfuture = getFutureContractObject(name_pegged);
   uint32_t propertyId = pfuture->fco_propertyId;
 
   int64_t amount = ParseAmount(request.params[1], true);
@@ -674,12 +674,12 @@ UniValue tl_createpayload_redemption_pegged(const JSONRPCRequest& request)
 
     std::string name_pegged = ParseText(request.params[0]);
     std::string name_contract = ParseText(request.params[2]);
-    struct FutureContractObject *pfuture_pegged = getFutureContractObject(ALL_PROPERTY_TYPE_PEGGEDS, name_pegged);
+    struct FutureContractObject *pfuture_pegged = getFutureContractObject(name_pegged);
     uint32_t propertyId = pfuture_pegged->fco_propertyId;
 
     uint64_t amount = ParseAmount(request.params[1], true);
 
-    struct FutureContractObject *pfuture_contract = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, name_contract);
+    struct FutureContractObject *pfuture_contract = getFutureContractObject(name_contract);
     uint32_t contractId = pfuture_contract->fco_propertyId;
 
     std::vector<unsigned char> payload = CreatePayload_RedemptionPegged(propertyId, contractId, amount);

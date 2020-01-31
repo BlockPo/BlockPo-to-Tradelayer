@@ -86,7 +86,9 @@ public:
         bool fixed;
         bool manual;
 
+
         /** New things for Contracts */
+
         uint32_t blocks_until_expiration;
         uint32_t notional_size;
         uint32_t collateral_currency;
@@ -97,6 +99,7 @@ public:
         uint32_t ecosystemSP;
         uint32_t numerator;
         uint32_t denominator;
+
         /* int64_t ticksize; */
         std::string series;
         std::string backup_address;
@@ -105,7 +108,10 @@ public:
         uint64_t oracle_close;
 
         bool inverse_quoted;
+        bool expirated;
+
         // int oracle_last_update;
+
 
         // for pegged currency
         uint32_t contract_associated;
@@ -169,9 +175,11 @@ public:
 
         bool isDivisible() const;
         void print() const;
-      	bool isContract() const;
+      	bool isNativeContract() const;
+        bool isSwap() const;
         bool isPegged() const;
         bool isOracle() const;
+        bool isContract() const;
     };
 
  private:
@@ -252,6 +260,7 @@ public:
     void saveCrowdSale(std::ofstream& file, SHA256_CTX* shaCtx, const std::string& addr) const;
 };
 
+
 namespace mastercore
 {
 typedef std::map<std::string, CMPCrowd> CrowdMap;
@@ -261,12 +270,13 @@ extern CrowdMap my_crowds;
 
 std::string strPropertyType(uint16_t propertyType);
 std::string strEcosystem(uint8_t ecosystem);
-//////////////////////////////////////
-/** New things for Contracts */
+
 bool isPropertyContract(uint32_t propertyId);
 bool isPropertyPegged(uint32_t propertyId);
+bool isPropertySwap(uint32_t propertyId);
+bool isPropertyNativeContract(uint32_t propertyId);
 int addInterestPegged(int nBlockPrev, const CBlockIndex* pBlockIndex);
-//////////////////////////////////////
+
 std::string getPropertyName(uint32_t propertyId);
 bool isPropertyDivisible(uint32_t propertyId);
 bool IsPropertyIdValid(uint32_t propertyId);

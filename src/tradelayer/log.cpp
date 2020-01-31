@@ -84,6 +84,8 @@ bool msc_debug_contract_instant_trade           = 0;
 bool msc_create_channel                         = 0;
 bool msc_debug_new_id_registration              = 0;
 bool msc_debug_wallettxs                        = 0;
+bool msc_calling_settlement                     = 0;
+bool msc_debug_vesting                          = 0;
 bool msc_debug_oracle_twap                      = 0;
 /**
  * LogPrintf() has been broken a couple of times now

@@ -44,8 +44,7 @@ void clearing_operator_fifo(VectorTLS &vdata, MatrixTLS &M_file, int index_init,
 
 void adding_newtwocols_trdamount(MatrixTLS &M_file, MatrixTLS &database);
 
-void settlement_algorithm_fifo(MatrixTLS &M_file, int64_t interest, int64_t twap_price);
-
+void settlement_algorithm_fifo(MatrixTLS &M_file, int64_t interest, int64_t twap_price, uint32_t contractId, uint32_t collateral, uint32_t numId, uint32_t denId, bool flag);
 void updating_lasttwocols_fromdatabase(std::string addrs, MatrixTLS &M_file, int i, long int live_updated);
 
 void building_edge(std::map<std::string, std::string> &path_first, std::string addrs_src, std::string addrs_trk, std::string status_src, std::string status_trk, double entry_price, double exit_price, long int lives, int index_row, int path_number, long int amount_path, int ghost_edge);
@@ -80,15 +79,15 @@ void counting_lives_longshorts(std::vector<std::map<std::string, std::string>> &
 
 void computing_livesvector_global(std::vector<std::map<std::string, std::string>> lives_longs, std::vector<std::map<std::string, std::string>> lives_shorts, std::vector<std::map<std::string, std::string>> &lives_longs_vg, std::vector<std::map<std::string, std::string>> &lives_shorts_vg);
 
-void computing_settlement_exitprice(std::vector<std::map<std::string, std::string>> &it_path_main, long int &sum_oflives, double &PNL_total, double &gamma_p, double &gamma_q, int64_t interest, int64_t twap_price);
+void computing_settlement_exitprice(std::vector<std::map<std::string, std::string>> &it_path_main, long int &sum_oflives, double &PNL_total, double &gamma_p, double &gamma_q, int64_t interest, int64_t twap_price, bool flag);
 
-void calculate_pnltrk_bypath(std::vector<std::map<std::string, std::string>> &path_main, double &PNL_total, std::unordered_set<std::string> &addrs_set, std::vector<std::string> addrsv, int64_t interest, int64_t twap_price);
+void calculate_pnltrk_bypath(std::vector<std::map<std::string, std::string>> &path_main, double &PNL_total, std::unordered_set<std::string> &addrs_set, std::vector<std::string> addrsv, int64_t interest, int64_t twap_price, bool flag);
 
 void listof_addresses_bypath(std::vector<std::map<std::string, std::string>> &it_path_main, std::vector<std::string> &addrsv);
 
 void listof_addresses_lives(std::vector<std::map<std::string, std::string>> lives, std::vector<std::string> &addrsv);
 
-double PNL_function(double entry_price, double exit_price, long int amount_trd, struct status_amounts *pt_jrow_database);
+double PNL_function(double entry_price, double exit_price, long int amount_trd, struct status_amounts *pt_jrow_database, bool flag);
 
 void getting_gammapq_bypath(std::vector<std::map<std::string, std::string>> &path_main, double PNL_total, double &gamma_p, double &gamma_q, std::unordered_set<std::string> addrs_set);
 
@@ -102,7 +101,7 @@ void checkzeronetted_bypath_ghostedges(std::vector<std::map<std::string, std::st
 
 long int checkpath_livesnonzero(std::vector<std::map<std::string, std::string>> path_maini);
 
-void calculate_pnltrk_bypath(std::vector<std::map<std::string, std::string>> path_main, double &PNL_total);
+void calculate_pnltrk_bypath(std::vector<std::map<std::string, std::string>> path_main, double &PNL_total, bool flag);
 
 bool find_address_lives_vector(std::vector<std::map<std::string, std::string>> lives_v, std::string address);
 

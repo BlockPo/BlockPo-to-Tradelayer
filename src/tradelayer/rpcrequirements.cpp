@@ -45,7 +45,7 @@ void RequireBalance(const std::string& address, uint32_t propertyId, int64_t amo
 void RequireCollateral(const std::string& address, std::string name_traded)
 {
 
-  struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, name_traded);
+  struct FutureContractObject *pfuture = getFutureContractObject(name_traded);
 
     uint32_t propertyId = pfuture->fco_collateral_currency;
     int64_t balance = getMPbalance(address, propertyId, BALANCE);
@@ -192,7 +192,7 @@ void RequireNotContract(uint32_t propertyId)
     if (!mastercore::_my_sps->getSP(propertyId, sp)) {
         throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
     }
-    if (sp.prop_type == ALL_PROPERTY_TYPE_CONTRACT) {
+    if (sp.isContract()) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Property must not be future contract\n");
     }
 }
@@ -204,7 +204,7 @@ void RequireContract(uint32_t propertyId)
     if (!mastercore::_my_sps->getSP(propertyId, sp)) {
         throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
     }
-    if (sp.prop_type != ALL_PROPERTY_TYPE_CONTRACT) {
+    if (!sp.isContract()) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "contractId must be future contract\n");
     }
 }
@@ -217,7 +217,7 @@ void RequireOracleContract(uint32_t propertyId)
         throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
     }
 
-    if (sp.prop_type !=ALL_PROPERTY_TYPE_ORACLE_CONTRACT) {
+    if (!sp.isOracle()) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "contractId must be oracle future contract\n");
     }
 }
@@ -230,7 +230,7 @@ void RequirePeggedCurrency(uint32_t propertyId)
       throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
     }
 
-    if (sp.prop_type != ALL_PROPERTY_TYPE_PEGGEDS) {
+    if (!sp.isPegged()) {
       throw JSONRPCError(RPC_INVALID_PARAMETER, "propertyId must be a pegged currency\n");
     }
 }
@@ -305,7 +305,7 @@ void RequireShort(std::string& fromAddress, uint32_t contractId, uint64_t amount
         throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
     }
 
-    if (sp.prop_type == ALL_PROPERTY_TYPE_CONTRACT) {
+    if (sp.isContract()) {
         int64_t notionalSize = static_cast<int64_t>(sp.notional_size);
         int64_t position = getMPbalance(fromAddress, contractId, NEGATIVE_BALANCE);
         // rational_t conv = mastercore::notionalChange(contractId);

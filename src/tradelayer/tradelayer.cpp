@@ -176,6 +176,7 @@ extern std::map<uint32_t, std::map<uint32_t, std::vector<uint64_t>>> mdextwap_ve
 extern std::map<uint32_t, std::map<std::string, double>> addrs_upnlc;
 extern std::map<std::string, int64_t> sum_upnls;
 extern std::map<uint32_t, int64_t> cachefees;
+extern std::map<uint32_t,std::map<int,oracledata>> oraclePrices;
 
 /** Pending withdrawals **/
 extern std::map<std::string,vector<withdrawalAccepted>> withdrawal_Map;
@@ -1237,7 +1238,7 @@ static int msc_initial_scan(int nFirstBlock)
         PrintToLog("Scan stopped early at block %d of block %d\n", nBlock, nLastBlock);
     }
 
-    // PrintToConsole("%d transactions processed, %d meta transactions found\n", nTxsTotal, nTxsFoundTotal);
+    PrintToLog("%d transactions processed, %d meta transactions found\n", nTxsTotal, nTxsFoundTotal);
 
     return 0;
 }
@@ -1889,7 +1890,6 @@ static int write_msc_balances(std::ofstream& file, SHA256_CTX* shaCtx)
                     upnl,
                     nupnl,
                     unvested));
-          //  PrintToConsole("Inside write_msc_balances ...no problem with strprintf!!!\n");
         }
 
         if (false == emptyWallet) {
@@ -1922,7 +1922,8 @@ static int write_globals_state(ofstream &file, SHA256_CTX *shaCtx)
 
 static int write_mp_crowdsales(std::ofstream& file, SHA256_CTX* shaCtx)
 {
-    for (CrowdMap::const_iterator it = my_crowds.begin(); it != my_crowds.end(); ++it) {
+    for (CrowdMap::const_iterator it = my_crowds.begin(); it != my_crowds.end(); ++it)
+    {
         // decompose the key for address
         const CMPCrowd& crowd = it->second;
         crowd.saveCrowdSale(file, shaCtx, it->first);
@@ -1933,65 +1934,72 @@ static int write_mp_crowdsales(std::ofstream& file, SHA256_CTX* shaCtx)
 
 static int write_mp_contractdex(ofstream &file, SHA256_CTX *shaCtx)
 {
-  for (cd_PropertiesMap::iterator my_it = contractdex.begin(); my_it != contractdex.end(); ++my_it)
-  {
-    cd_PricesMap &prices = my_it->second;
-    for (cd_PricesMap::iterator it = prices.begin(); it != prices.end(); ++it)
+    for (cd_PropertiesMap::iterator my_it = contractdex.begin(); my_it != contractdex.end(); ++my_it)
     {
-      cd_Set &indexes = (it->second);
-      for (cd_Set::iterator it = indexes.begin(); it != indexes.end(); ++it)
-      {
-        CMPContractDex contract = *it;
-        contract.saveOffer(file, shaCtx);
-      }
+        cd_PricesMap &prices = my_it->second;
+
+        for (cd_PricesMap::iterator it = prices.begin(); it != prices.end(); ++it)
+        {
+            cd_Set &indexes = (it->second);
+
+            for (cd_Set::iterator it = indexes.begin(); it != indexes.end(); ++it)
+            {
+                CMPContractDex contract = *it;
+                contract.saveOffer(file, shaCtx);
+            }
+        }
     }
-  }
-  return 0;
+
+    return 0;
 }
 
 static int write_market_pricescd(ofstream &file, SHA256_CTX *shaCtx)
 {
-  std::string lineOut;
+     std::string lineOut;
 
-  for (int i = 0; i < NPTYPES; i++) lineOut.append(strprintf("%d", marketP[i]));
-  // add the line to the hash
-  SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
-  // write the line
-  file << lineOut << endl;
+     for (int i = 0; i < NPTYPES; i++) lineOut.append(strprintf("%d", marketP[i]));
+     // add the line to the hash
+     SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
+     // write the line
+     file << lineOut << endl;
 
-  return 0;
+     return 0;
 }
 
 static int write_mp_metadex(ofstream &file, SHA256_CTX *shaCtx)
 {
-  for (md_PropertiesMap::iterator my_it = metadex.begin(); my_it != metadex.end(); ++my_it)
-  {
-    md_PricesMap & prices = my_it->second;
-    for (md_PricesMap::iterator it = prices.begin(); it != prices.end(); ++it)
+    for (md_PropertiesMap::iterator my_it = metadex.begin(); my_it != metadex.end(); ++my_it)
     {
-      md_Set & indexes = (it->second);
-      for (md_Set::iterator it = indexes.begin(); it != indexes.end(); ++it)
-      {
-        CMPMetaDEx meta = *it;
-        meta.saveOffer(file, shaCtx);
-      }
-    }
-  }
+        md_PricesMap & prices = my_it->second;
 
-  return 0;
+        for (md_PricesMap::iterator it = prices.begin(); it != prices.end(); ++it)
+        {
+            md_Set & indexes = (it->second);
+
+            for (md_Set::iterator it = indexes.begin(); it != indexes.end(); ++it)
+            {
+                CMPMetaDEx meta = *it;
+                meta.saveOffer(file, shaCtx);
+            }
+        }
+    }
+
+    return 0;
 }
 
 static int write_mp_offers(ofstream &file, SHA256_CTX *shaCtx)
 {
-  OfferMap::const_iterator iter;
-  for (iter = my_offers.begin(); iter != my_offers.end(); ++iter) {
-    // decompose the key for address
-    std::vector<std::string> vstr;
-    boost::split(vstr, (*iter).first, boost::is_any_of("-"), token_compress_on);
-    CMPOffer const &offer = (*iter).second;
-    offer.saveOffer(file, shaCtx, vstr[0]);
-  }
-  return 0;
+    OfferMap::const_iterator iter;
+    for (iter = my_offers.begin(); iter != my_offers.end(); ++iter)
+    {
+        // decompose the key for address
+        std::vector<std::string> vstr;
+        boost::split(vstr, (*iter).first, boost::is_any_of("-"), token_compress_on);
+        CMPOffer const &offer = (*iter).second;
+        offer.saveOffer(file, shaCtx, vstr[0]);
+    }
+
+    return 0;
 }
 
 
@@ -1999,7 +2007,8 @@ static int write_mp_cachefees(std::ofstream& file, SHA256_CTX* shaCtx)
 {
     std::string lineOut;
 
-    for (std::map<uint32_t, int64_t>::iterator itt = cachefees.begin(); itt != cachefees.end(); ++itt) {
+    for (std::map<uint32_t, int64_t>::iterator itt = cachefees.begin(); itt != cachefees.end(); ++itt)
+    {
         // decompose the key for address
         uint32_t propertyId = itt->first;
         int64_t cache = itt->second;
@@ -2048,55 +2057,55 @@ static int write_mp_withdrawals(std::ofstream& file, SHA256_CTX* shaCtx)
 /**Saving map of active channels**/
 static int write_mp_active_channels(std::ofstream& file, SHA256_CTX* shaCtx)
 {
-  std::string lineOut;
+    std::string lineOut;
 
-  for (std::map<std::string,channel>::iterator it = channels_Map.begin(); it != channels_Map.end(); ++it)
-  {
-      // decompose the key for address
-      std::string chnAddr = it->first;
-      channel chnObj = it->second;
+    for (std::map<std::string,channel>::iterator it = channels_Map.begin(); it != channels_Map.end(); ++it)
+    {
+        // decompose the key for address
+        std::string chnAddr = it->first;
+        channel chnObj = it->second;
 
-      lineOut.append(strprintf("%s,%s,%s,%s,%d,%d", chnAddr, chnObj.multisig, chnObj.first, chnObj.second, chnObj.expiry_height, chnObj.last_exchange_block));
+        lineOut.append(strprintf("%s,%s,%s,%s,%d,%d", chnAddr, chnObj.multisig, chnObj.first, chnObj.second, chnObj.expiry_height, chnObj.last_exchange_block));
 
-  }
+    }
 
-  // add the line to the hash
-  SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
+    // add the line to the hash
+    SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
 
-  // write the line
-  file << lineOut << endl;
+    // write the line
+    file << lineOut << endl;
 
-  return 0;
+    return 0;
 }
 
 /** Saving DexMap volume **/
 static int write_mp_dexvolume(std::ofstream& file, SHA256_CTX* shaCtx)
 {
-  std::string lineOut;
+    std::string lineOut;
 
-  for(std::map<int, std::map<uint32_t,int64_t>>::iterator it = MapPropVolume.begin(); it != MapPropVolume.end();it++)
-  {
-      // decompose the key for address
-      const uint32_t block = it->first;
+    for(std::map<int, std::map<uint32_t,int64_t>>::iterator it = MapPropVolume.begin(); it != MapPropVolume.end();it++)
+    {
+        // decompose the key for address
+        const uint32_t block = it->first;
 
-      std::map<uint32_t,int64_t> pMap = it->second;
+        std::map<uint32_t,int64_t> pMap = it->second;
 
-      for(std::map<uint32_t,int64_t>::iterator itt = pMap.begin(); itt != pMap.end(); ++itt)
-      {
-          const uint32_t propertyId = itt->first;
-          const int64_t amount = itt->second;
-          lineOut.append(strprintf("%d,%d,%d", block, propertyId, amount));
+        for(std::map<uint32_t,int64_t>::iterator itt = pMap.begin(); itt != pMap.end(); ++itt)
+        {
+            const uint32_t propertyId = itt->first;
+            const int64_t amount = itt->second;
+            lineOut.append(strprintf("%d,%d,%d", block, propertyId, amount));
 
-      }
-  }
+        }
+    }
 
-  // add the line to the hash
-  SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
+    // add the line to the hash
+    SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
 
-  // write the line
-  file << lineOut << endl;
+    // write the line
+    file << lineOut << endl;
 
-  return 0;
+    return 0;
 }
 
 /** Saving MDEx Map volume **/
@@ -2138,143 +2147,149 @@ static int write_mp_mdexvolume(std::ofstream& file, SHA256_CTX* shaCtx)
 
 static int write_state_file( CBlockIndex const *pBlockIndex, int what )
 {
-  boost::filesystem::path path = MPPersistencePath / strprintf("%s-%s.dat", statePrefix[what], pBlockIndex->GetBlockHash().ToString());
-  const std::string strFile = path.string();
+    boost::filesystem::path path = MPPersistencePath / strprintf("%s-%s.dat", statePrefix[what], pBlockIndex->GetBlockHash().ToString());
+    const std::string strFile = path.string();
 
-  std::ofstream file;
-  file.open(strFile.c_str());
+    std::ofstream file;
+    file.open(strFile.c_str());
 
-  SHA256_CTX shaCtx;
-  SHA256_Init(&shaCtx);
+    SHA256_CTX shaCtx;
+    SHA256_Init(&shaCtx);
 
-  int result = 0;
+    int result = 0;
 
-  switch(what) {
-  case FILETYPE_BALANCES:
-    result = write_msc_balances(file, &shaCtx);
-    break;
+    switch(what) {
+    case FILETYPE_BALANCES:
+        result = write_msc_balances(file, &shaCtx);
+        break;
 
-  case FILETYPE_GLOBALS:
-    result = write_globals_state(file, &shaCtx);
-    break;
+    case FILETYPE_GLOBALS:
+        result = write_globals_state(file, &shaCtx);
+        break;
 
-  case FILETYPE_CROWDSALES:
-    result = write_mp_crowdsales(file, &shaCtx);
-    break;
+    case FILETYPE_CROWDSALES:
+        result = write_mp_crowdsales(file, &shaCtx);
+        break;
 
-  case FILETYPE_CDEXORDERS:
-     result = write_mp_contractdex(file, &shaCtx);
-     break;
+    case FILETYPE_CDEXORDERS:
+        result = write_mp_contractdex(file, &shaCtx);
+        break;
 
-  case FILETYPE_MARKETPRICES:
-     result = write_market_pricescd(file, &shaCtx);
-     break;
+    case FILETYPE_MARKETPRICES:
+        result = write_market_pricescd(file, &shaCtx);
+        break;
 
-  case FILETYPE_OFFERS:
-     result = write_mp_offers(file, &shaCtx);
-     break;
+    case FILETYPE_OFFERS:
+        result = write_mp_offers(file, &shaCtx);
+        break;
 
-  case FILETYPE_MDEXORDERS:
-      result = write_mp_metadex(file, &shaCtx);
-      break;
+    case FILETYPE_MDEXORDERS:
+        result = write_mp_metadex(file, &shaCtx);
+        break;
 
-  case FILETYPE_CACHEFEES:
-      result = write_mp_cachefees(file, &shaCtx);
-      break;
+    case FILETYPE_CACHEFEES:
+        result = write_mp_cachefees(file, &shaCtx);
+        break;
 
-  case FILETYPE_WITHDRAWALS:
-      result = write_mp_withdrawals(file, &shaCtx);
-      break;
+    case FILETYPE_WITHDRAWALS:
+        result = write_mp_withdrawals(file, &shaCtx);
+        break;
 
-  case FILETYPE_ACTIVE_CHANNELS:
-      result = write_mp_active_channels(file, &shaCtx);
-      break;
+    case FILETYPE_ACTIVE_CHANNELS:
+        result = write_mp_active_channels(file, &shaCtx);
+        break;
 
-  case FILETYPE_DEX_VOLUME:
-      result = write_mp_dexvolume(file, &shaCtx);
-      break;
+    case FILETYPE_DEX_VOLUME:
+        result = write_mp_dexvolume(file, &shaCtx);
+        break;
 
-  case FILETYPE_MDEX_VOLUME:
-      result = write_mp_mdexvolume(file, &shaCtx);
+    case FILETYPE_MDEX_VOLUME:
+        result = write_mp_mdexvolume(file, &shaCtx);
 
-  }
+    }
 
-  // generate and wite the double hash of all the contents written
-  uint256 hash1;
-  SHA256_Final((unsigned char*)&hash1, &shaCtx);
-  uint256 hash2;
-  SHA256((unsigned char*)&hash1, sizeof(hash1), (unsigned char*)&hash2);
-  file << "!" << hash2.ToString() << endl;
+    // generate and wite the double hash of all the contents written
+    uint256 hash1;
+    SHA256_Final((unsigned char*)&hash1, &shaCtx);
+    uint256 hash2;
+    SHA256((unsigned char*)&hash1, sizeof(hash1), (unsigned char*)&hash2);
+    file << "!" << hash2.ToString() << endl;
 
-  file.flush();
-  file.close();
-  return result;
+    file.flush();
+    file.close();
+
+    return result;
 }
 
 static bool is_state_prefix( std::string const &str )
 {
-  for (int i = 0; i < NUM_FILETYPES; ++i) {
-    if (boost::equals(str,  statePrefix[i])) {
-      return true;
+    for (int i = 0; i < NUM_FILETYPES; ++i)
+    {
+        if (boost::equals(str,  statePrefix[i]))
+            return true;
     }
-  }
 
-  return false;
+    return false;
 }
 
 static void prune_state_files( CBlockIndex const *topIndex )
 {
-  // build a set of blockHashes for which we have any state files
-  std::set<uint256> statefulBlockHashes;
+    // build a set of blockHashes for which we have any state files
+    std::set<uint256> statefulBlockHashes;
 
-  boost::filesystem::directory_iterator dIter(MPPersistencePath);
-  boost::filesystem::directory_iterator endIter;
-  for (; dIter != endIter; ++dIter) {
-    std::string fName = dIter->path().empty() ? "<invalid>" : (*--dIter->path().end()).string();
-    if (false == boost::filesystem::is_regular_file(dIter->status())) {
-      // skip funny business
-      PrintToLog("Non-regular file found in persistence directory : %s\n", fName);
-      continue;
+    boost::filesystem::directory_iterator dIter(MPPersistencePath);
+    boost::filesystem::directory_iterator endIter;
+    for (; dIter != endIter; ++dIter)
+    {
+        std::string fName = dIter->path().empty() ? "<invalid>" : (*--dIter->path().end()).string();
+        if (false == boost::filesystem::is_regular_file(dIter->status()))
+        {
+            // skip funny business
+            PrintToLog("Non-regular file found in persistence directory : %s\n", fName);
+            continue;
+        }
+
+        std::vector<std::string> vstr;
+        boost::split(vstr, fName, boost::is_any_of("-."), token_compress_on);
+        if (  vstr.size() == 3 && is_state_prefix(vstr[0]) && boost::equals(vstr[2], "dat"))
+        {
+            uint256 blockHash;
+            blockHash.SetHex(vstr[1]);
+            statefulBlockHashes.insert(blockHash);
+        } else {
+            PrintToLog("None state file found in persistence directory : %s\n", fName);
+        }
     }
 
-    std::vector<std::string> vstr;
-    boost::split(vstr, fName, boost::is_any_of("-."), token_compress_on);
-    if (  vstr.size() == 3 &&
-          is_state_prefix(vstr[0]) &&
-          boost::equals(vstr[2], "dat")) {
-      uint256 blockHash;
-      blockHash.SetHex(vstr[1]);
-      statefulBlockHashes.insert(blockHash);
-    } else {
-      PrintToLog("None state file found in persistence directory : %s\n", fName);
+    // for each blockHash in the set, determine the distance from the given block
+    std::set<uint256>::const_iterator iter;
+    for (iter = statefulBlockHashes.begin(); iter != statefulBlockHashes.end(); ++iter)
+    {
+        // look up the CBlockIndex for height info
+        CBlockIndex const *curIndex = GetBlockIndex(*iter);
+
+        // if we have nothing int the index, or this block is too old..
+        if (NULL == curIndex || (topIndex->nHeight - curIndex->nHeight) > MAX_STATE_HISTORY )
+        {
+            if (msc_debug_persistence)
+            {
+                if (curIndex)
+                {
+                    PrintToLog("State from Block:%s is no longer need, removing files (age-from-tip: %d)\n", (*iter).ToString(), topIndex->nHeight - curIndex->nHeight);
+                } else {
+                    PrintToLog("State from Block:%s is no longer need, removing files (not in index)\n", (*iter).ToString());
+                }
+            }
+
+            // destroy the associated files!
+            std::string strBlockHash = iter->ToString();
+            for (int i = 0; i < NUM_FILETYPES; ++i)
+            {
+                boost::filesystem::path path = MPPersistencePath / strprintf("%s-%s.dat", statePrefix[i], strBlockHash);
+                boost::filesystem::remove(path);
+            }
+        }
     }
-  }
-
-  // for each blockHash in the set, determine the distance from the given block
-  std::set<uint256>::const_iterator iter;
-  for (iter = statefulBlockHashes.begin(); iter != statefulBlockHashes.end(); ++iter) {
-    // look up the CBlockIndex for height info
-    CBlockIndex const *curIndex = GetBlockIndex(*iter);
-
-    // if we have nothing int the index, or this block is too old..
-    if (NULL == curIndex || (topIndex->nHeight - curIndex->nHeight) > MAX_STATE_HISTORY ) {
-     if (msc_debug_persistence)
-     {
-      if (curIndex) {
-        PrintToLog("State from Block:%s is no longer need, removing files (age-from-tip: %d)\n", (*iter).ToString(), topIndex->nHeight - curIndex->nHeight);
-      } else {
-        PrintToLog("State from Block:%s is no longer need, removing files (not in index)\n", (*iter).ToString());
-      }
-     }
-
-      // destroy the associated files!
-      std::string strBlockHash = iter->ToString();
-      for (int i = 0; i < NUM_FILETYPES; ++i) {
-        boost::filesystem::path path = MPPersistencePath / strprintf("%s-%s.dat", statePrefix[i], strBlockHash);
-        boost::filesystem::remove(path);
-      }
-    }
-  }
 }
 
 int mastercore_save_state( CBlockIndex const *pBlockIndex )
@@ -2319,7 +2334,7 @@ void clear_all_state()
     ResetConsensusParams();
     // ClearActivations();
     // ClearAlerts();
-    //
+
     // LevelDB based storage
      _my_sps->Clear();
      // s_stolistdb->Clear();
@@ -2502,32 +2517,22 @@ void mastercore::twapForLiquidation(uint32_t contractId, int blocks)
   }
 
 /**
- * This handler is called for every new transaction that comes in (actually in block parsing loop).
+ * Calling for Settement (if any)
  *
- * @return True, if the transaction was a valid Trade Layer transaction
+ * @return True, if everything is ok
  */
-bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx, const CBlockIndex* pBlockIndex)
+bool CallingSettlement()
 {
-  extern volatile int id_contract;
-  extern std::vector<std::string> vestingAddresses;
-  extern volatile int64_t Lastx_Axis;
-  extern volatile int64_t LastLinear;
-  extern volatile int64_t LastQuad;
-  extern volatile int64_t LastLog;
-  extern std::vector<std::map<std::string, std::string>> lives_longs_vg;
-  extern std::vector<std::map<std::string, std::string>> lives_shorts_vg;
-  extern int BlockS;
-  // std::vector<std::string> addrsl_vg;
-  // std::vector<std::string> addrss_vg;
+    extern int BlockS;
 
-  ui128 numLog128;
-  ui128 numQuad128;
+    int nBlockNow = GetHeight();
 
-  LOCK(cs_tally);
+    uint32_t nextSPID = _my_sps->peekNextSPID(1);
 
-  if (!mastercoreInitialized) {
-    mastercore_init();
-  }
+    for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
+    {
+        if(!mastercore::isPropertyContract(propertyId))
+            continue;
 
   int64_t twap = mastercore::getOracleTwap(5,3);
   PrintToLog("%s():twap3 for Oracles: %d\n",__func__,twap);
@@ -2539,29 +2544,39 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   // NOTE2: Plus I wanna clear the amount before that TX is parsed by our protocol, in case we ever consider pending amounts in internal calculations.
   PendingDelete(tx.GetHash());
 
-  // we do not care about parsing blocks prior to our waterline (empty blockchain defense)
-  if (nBlock < nWaterlineBlock) return false;
-  int64_t nBlockTime = pBlockIndex->GetBlockTime();
+        if (nBlockNow%BlockS == 0 && nBlockNow != 0 && path_elef.size() != 0 && lastBlockg != nBlockNow)
+        {
 
+            if(msc_calling_settlement) PrintToLog("\nSettlement every 8 hours here. nBlockNow = %d\n", nBlockNow);
+            pt_ndatabase = new MatrixTLS(path_elef.size(), n_cols); MatrixTLS &ndatabase = *pt_ndatabase;
+            MatrixTLS M_file(path_elef.size(), n_cols);
+            fillingMatrix(M_file, ndatabase, path_elef);
+            n_rows = size(M_file, 0);
+            if(msc_calling_settlement) PrintToLog("Matrix for Settlement: dim = (%d, %d)\n\n", n_rows, n_cols);
+
+            /** TWAP vector **/
+            if(msc_calling_settlement) PrintToLog("\nTWAP Prices = \n");
+            // struct FutureContractObject *pfuture = getFutureContractObject("ALL F18");
+            // uint32_t property_traded = pfuture->fco_propertyId;
   int nBlockNow = GetHeight();
   /***********************************************************************/
   /** Calling The Settlement Algorithm **/
 
-  if (nBlockNow%BlockS == 0 && nBlockNow != 0 && path_elef.size() != 0 && lastBlockg != nBlockNow) {
+            uint64_t num_cdex = accumulate(cdextwap_vec[propertyId].begin(), cdextwap_vec[propertyId].end(), 0.0);
 
-    /*****************************************************************************/
+            rational_t twap_priceRatCDEx(num_cdex/COIN, cdextwap_vec[propertyId].size());
+            int64_t twap_priceCDEx = mastercore::RationalToInt64(twap_priceRatCDEx);
+            if(msc_debug_handler_tx) PrintToLog("\nTvwap Price CDEx = %s\n", FormatDivisibleMP(twap_priceCDEx));
 
-    if(msc_debug_handler_tx) PrintToLog("\nSettlement every 8 hours here. nBlockNow = %d\n", nBlockNow);
-    pt_ndatabase = new MatrixTLS(path_elef.size(), n_cols); MatrixTLS &ndatabase = *pt_ndatabase;
-    MatrixTLS M_file(path_elef.size(), n_cols);
-    fillingMatrix(M_file, ndatabase, path_elef);
-    n_rows = size(M_file, 0);
-    if(msc_debug_handler_tx) PrintToLog("Matrix for Settlement: dim = (%d, %d)\n\n", n_rows, n_cols);
-    //printing_matrix(M_file);
 
-    /**********************************************************************/
-    /** TWAP vector **/
+            CMPSPInfo::Entry sp;
+            if (!_my_sps->getSP(propertyId, sp))
+               return false;
 
+            uint64_t property_num = sp.numerator;
+            uint64_t property_den = sp.denominator;
+
+            uint64_t num_mdex=accumulate(mdextwap_vec[property_num][property_den].begin(),mdextwap_vec[property_num][property_den].end(),0.0);
     /* * NOTE: first we calculate oracles twap for 3 blocks
        *
        *
@@ -2576,37 +2591,36 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
     // for (unsigned int i = 0; i < cdextwap_vec[property_traded].size(); i++)
     //   PrintToLog("%s\n", FormatDivisibleMP(cdextwap_vec[property_traded][i]));
 
-    uint64_t num_cdex = accumulate(cdextwap_vec[property_traded].begin(), cdextwap_vec[property_traded].end(), 0.0);
+            rational_t twap_priceRatMDEx(num_mdex/COIN, mdextwap_vec[property_num][property_den].size());
+            int64_t twap_priceMDEx = mastercore::RationalToInt64(twap_priceRatMDEx);
+            if(msc_calling_settlement) PrintToLog("\nTvwap Price MDEx = %s\n", FormatDivisibleMP(twap_priceMDEx));
 
-    rational_t twap_priceRatCDEx(num_cdex/COIN, cdextwap_vec[property_traded].size());
-    int64_t twap_priceCDEx = mastercore::RationalToInt64(twap_priceRatCDEx);
-    if(msc_debug_handler_tx) PrintToLog("\nTvwap Price CDEx = %s\n", FormatDivisibleMP(twap_priceCDEx));
 
-    struct TokenDataByName *pfuture_ALL = getTokenDataByName("ALL");
-    struct TokenDataByName *pfuture_USD = getTokenDataByName("dUSD");
+            /** Interest formula:  **/
 
-    uint32_t property_all = pfuture_ALL->data_propertyId;
-    uint32_t property_usd = pfuture_USD->data_propertyId;
+            /** futures don't use this formula **/
+            if (sp.prop_type == ALL_PROPERTY_TYPE_NATIVE_CONTRACT  || sp.prop_type == ALL_PROPERTY_TYPE_ORACLE_CONTRACT)
+                continue;
 
-    // PrintToLog("\nVector MDExtwap_vec =\n");
-    // for (unsigned int i = 0; i < mdextwap_vec[property_all][property_usd].size(); i++)
-    //   PrintToLog("%s\n", FormatDivisibleMP(mdextwap_vec[property_all][property_usd][i]));
+            int64_t twap_price = 0;
 
-    uint64_t num_mdex=accumulate(mdextwap_vec[property_all][property_usd].begin(),mdextwap_vec[property_all][property_usd].end(),0.0);
+            if (sp.prop_type == ALL_PROPERTY_TYPE_PERPETUAL_ORACLE)
+            {
+                  twap_price = getOracleTwap(propertyId, oBlocks);
+            } else if (sp.prop_type == ALL_PROPERTY_TYPE_PERPETUAL_CONTRACTS){
+                  twap_price = twap_priceMDEx;
+            }
 
-    rational_t twap_priceRatMDEx(num_mdex/COIN, mdextwap_vec[property_all][property_usd].size());
-    int64_t twap_priceMDEx = mastercore::RationalToInt64(twap_priceRatMDEx);
-    if(msc_debug_handler_tx) PrintToLog("\nTvwap Price MDEx = %s\n", FormatDivisibleMP(twap_priceMDEx));
+            int64_t interest = clamp_function(abs(twap_priceCDEx-twap_price), 0.05);
+            if(msc_calling_settlement) PrintToLog("Interes to Pay = %s", FormatDivisibleMP(interest));
 
-    /** Interest formula:  **/
 
-    int64_t interest = clamp_function(abs(twap_priceCDEx-twap_priceMDEx), 0.05);
-    if(msc_debug_handler_tx) PrintToLog("Interes to Pay = %s", FormatDivisibleMP(interest));
+            if(msc_calling_settlement) PrintToLog("\nCalling the Settlement Algorithm:\n\n");
 
-    /*****************************************************************************/
-    cout << "\n\n";
-    if(msc_debug_handler_tx) PrintToLog("\nCalling the Settlement Algorithm:\n\n");
-    settlement_algorithm_fifo(M_file, interest, twap_priceCDEx);
+            //NOTE: We need num and den for contract as a property of itself in sp.h
+            settlement_algorithm_fifo(M_file, interest, twap_priceCDEx, propertyId, sp.collateral_currency, sp.numerator, sp.denomination, sp.inverse_quoted);
+        }
+    }
 
     /**********************************************************************/
     /** Unallocating Dynamic Memory **/
@@ -2623,8 +2637,260 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
     mapContractVolume.clear();
     VWAPMapContracts.clear();
     cdextwap_vec.clear();
+
+   return true;
+}
+
+bool VestingTokens()
+{
+    extern std::vector<std::string> vestingAddresses;
+    extern volatile int64_t Lastx_Axis;
+    extern volatile int64_t LastLinear;
+    extern volatile int64_t LastQuad;
+    extern volatile int64_t LastLog;
+  int64_t XAxis = x_Axis/COIN;
+  // int64_t XAxis = x_Axis
+  if(msc_debug_handler_tx) PrintToLog("\nXAxis Decimal Scale = %d, x_Axis = %s, Lastx_Axis = %s\n", XAxis, FormatDivisibleMP(x_Axis), FormatDivisibleMP(Lastx_Axis));
+
+    ui128 numLog128;
+    ui128 numQuad128;
+
+    /** Vesting Tokens to Balance **/
+    int64_t x_Axis = globalVolumeALL_LTC;
+    int64_t LogAxis = mastercore::DoubleToInt64(log(static_cast<double>(x_Axis)/COIN));
+
+    rational_t Factor1over3(1, 3);
+    int64_t Factor1over3_64t = mastercore::RationalToInt64(Factor1over3);
+
+    int64_t XAxis = x_Axis/COIN;
+    if(msc_debug_vesting) PrintToLog("\nXAxis Decimal Scale = %d, x_Axis = %s, Lastx_Axis = %s\n", XAxis, FormatDivisibleMP(x_Axis), FormatDivisibleMP(Lastx_Axis));
+
+    bool cond_first = x_Axis != 0;
+    bool cond_secnd = x_Axis != Lastx_Axis;
+    bool cond_third = vestingAddresses.size() != 0;
+
+
+    PrintToLog("%s(): cond_first: %d, cond_secnd: %d, cond_third: %d \n",__func__, cond_first, cond_secnd, cond_third);
+		      PrintToLog("\nLinear Function\n");
+		      arith_uint256 line256_t = mastercore::ConvertTo256(Factor1over3_64t)*mastercore::ConvertTo256(x_Axis)/COIN;
+		      line64_t = mastercore::ConvertTo64(line256_t);
+
+
+    if (findConjTrueValue(cond_first, cond_secnd, cond_third))
+    {
+        int64_t line64_t = 0, quad64_t = 0, log64_t  = 0;
+
+
+        if(msc_debug_vesting)
+       {
+           PrintToLog("\nALLs UNVESTED = %d\n", getMPbalance(vestingAddresses[0], TL_PROPERTY_ALL, UNVESTED));
+           PrintToLog("ALLs BALANCE = %d\n", getMPbalance(vestingAddresses[0], TL_PROPERTY_ALL, BALANCE));
+       }
+       
+      rational_t linearRationalw(linew64_t, (int64_t)TOTAL_AMOUNT_VESTING_TOKENS);
+
+          PrintToLog("%s(): line64_t = %d\n",__func__,linew64_t);
+          PrintToLog("%s(): TOTAL_AMOUNT_VESTING_TOKENS = %d\n",__func__,TOTAL_AMOUNT_VESTING_TOKENS);
+
+      	  int64_t linearWeighted = mastercore::RationalToInt64(linearRationalw);
+
+
+       for (unsigned int i = 0; i < vestingAddresses.size(); i++)
+       {
+	         if(msc_debug_vesting) PrintToLog("\nIteration #%d Inside Vesting function. Address = %s\n", i, vestingAddresses[i]);
+	         int64_t vestingBalance = getMPbalance(vestingAddresses[i], TL_PROPERTY_VESTING, BALANCE);
+	         int64_t unvestedALLBal = getMPbalance(vestingAddresses[i], TL_PROPERTY_ALL, UNVESTED);
+      	   if (vestingBalance != 0 && unvestedALLBal != 0)
+      	   {
+      	       if (XAxis >= 0 && XAxis <= 300000)
+      	  	   {/** y = 1/3x **/
+		               //PrintToLog("\nLinear Function\n");
+		               arith_uint256 line256_t = mastercore::ConvertTo256(Factor1over3_64t)*mastercore::ConvertTo256(x_Axis)/COIN;
+		               line64_t = mastercore::ConvertTo64(line256_t);
+
+		               if(msc_debug_vesting) PrintToLog("line64_t = %s, LastLinear = %s\n", FormatDivisibleMP(line64_t), FormatDivisibleMP(LastLinear));
+      	           int64_t linearBalance = line64_t-LastLinear;
+      	           arith_uint256 linew256_t = mastercore::ConvertTo256(linearBalance)*mastercore::ConvertTo256(vestingBalance)/COIN;
+      	           int64_t linew64_t = mastercore::ConvertTo64(linew256_t);
+
+      	           rational_t linearRationalw(linew64_t, (int64_t)TOTAL_AMOUNT_VESTING_TOKENS);
+      	           int64_t linearWeighted = mastercore::RationalToInt64(linearRationalw);
+
+      	           if(msc_debug_vesting)
+                   {
+                       PrintToLog("linearBalance = %s, vestingBalance = %s\n", FormatDivisibleMP(linearBalance), FormatDivisibleMP(vestingBalance));
+      	               PrintToLog("linearWeighted = %s\n", FormatDivisibleMP(linearWeighted));
+                   }
+
+		               assert(update_tally_map(vestingAddresses[i], TL_PROPERTY_ALL, -linearWeighted, UNVESTED));
+		               assert(update_tally_map(vestingAddresses[i], TL_PROPERTY_ALL, linearWeighted, BALANCE));
+             } else if (XAxis > 300000 && XAxis <= 10000000) {
+                 /** y = 100K+7/940900000(x^2-600Kx+90) */
+      		       //PrintToLog("\nQuadratic Function\n");
+
+		             dec_float SecndTermnf = dec_float(7)*dec_float(XAxis)*dec_float(XAxis)/dec_float(940900000);
+		             int64_t SecndTermn64_t = mastercore::StrToInt64(SecndTermnf.str(DISPLAY_PRECISION_LEN, std::ios_base::fixed), true);
+		             if(msc_debug_vesting) PrintToLog("SecndTermnf = %d\n", FormatDivisibleMP(SecndTermn64_t));
+
+		             dec_float ThirdTermnf = dec_float(7)*dec_float(600000)*dec_float(XAxis)/dec_float(940900000);
+		             int64_t ThirdTermn64_t = mastercore::StrToInt64(ThirdTermnf.str(DISPLAY_PRECISION_LEN, std::ios_base::fixed), true);
+		             if(msc_debug_vesting) PrintToLog("ThirdTermnf = %d\n", FormatDivisibleMP(ThirdTermn64_t));
+
+		             dec_float ForthTermnf = dec_float(7)*dec_float(90000000000)/dec_float(940900000);
+		             int64_t ForthTermn64_t = mastercore::StrToInt64(ForthTermnf.str(DISPLAY_PRECISION_LEN, std::ios_base::fixed), true);
+		             if(msc_debug_vesting) PrintToLog("ForthTermnf = %d\n", FormatDivisibleMP(ForthTermn64_t));
+
+		             quad64_t = (int64_t)(100000*COIN) + SecndTermn64_t - ThirdTermn64_t + ForthTermn64_t;
+		             int64_t quadBalance = quad64_t - LastQuad;
+		             if(msc_debug_vesting) PrintToLog("quad64_t = %s, LastQuad = %s\n", FormatDivisibleMP(quad64_t), FormatDivisibleMP(LastQuad));
+
+		             multiply(numQuad128, (int64_t)quadBalance, (int64_t)vestingBalance);
+		             if(msc_debug_vesting) PrintToLog("numQuad128 = %s\n", xToString(numQuad128/COIN));
+
+		             rational_t quadRationalw(numQuad128/COIN, (int64_t)TOTAL_AMOUNT_VESTING_TOKENS);
+		             int64_t quadWeighted = mastercore::RationalToInt64(quadRationalw);
+
+		             if(msc_debug_vesting)
+                 {
+                     PrintToLog("quadBalance = %s, vestingBalance = %s\n", FormatDivisibleMP(quadBalance), FormatDivisibleMP(vestingBalance));
+		                 PrintToLog("quadWeighted = %d\n", FormatDivisibleMP(quadWeighted));
+                 }
+
+		             assert(update_tally_map(vestingAddresses[i], TL_PROPERTY_ALL, -quadWeighted, UNVESTED));
+		             assert(update_tally_map(vestingAddresses[i], TL_PROPERTY_ALL, quadWeighted, BALANCE));
+      		     } else if (XAxis > 10000000 && XAxis <= 1000000000) {
+                   /** y =  -1650000 + (152003 * ln(x)) */
+
+                  if(msc_debug_vesting) PrintToLog("\nLogarithmic Function\n");
+
+      		        arith_uint256 secndTermn256_t = mastercore::ConvertTo256((int64_t)(152003*COIN))*mastercore::ConvertTo256(LogAxis)/COIN;
+      		        int64_t secndTermn64_t = mastercore::ConvertTo64(secndTermn256_t);
+      		        if(msc_debug_vesting) PrintToLog("secndTermn64_t = %s\n", FormatDivisibleMP(secndTermn64_t));
+
+      		        log64_t = (int64_t)secndTermn64_t - (int64_t)(1650000*COIN);
+      		        if(msc_debug_vesting) PrintToLog("log64_t = %s\n", FormatDivisibleMP(log64_t));
+      		        int64_t logBalance = log64_t - LastLog;
+
+      		        if(msc_debug_vesting) PrintToLog("logBalance = %s, vestingBalance = %s\n", FormatDivisibleMP(logBalance), FormatDivisibleMP(vestingBalance));
+      		        multiply(numLog128, (int64_t)logBalance, (int64_t)vestingBalance);
+      		        if(msc_debug_vesting) PrintToLog("numLog128 = %s\n", xToString(numLog128/COIN));
+
+      		       rational_t logRationalw(numLog128/COIN, TOTAL_AMOUNT_VESTING_TOKENS);
+      		       int64_t logWeighted = mastercore::RationalToInt64(logRationalw);
+      		       if(msc_debug_vesting) PrintToLog("logWeighted = %s, LastLog = %s\n", FormatDivisibleMP(logWeighted), FormatDivisibleMP(LastLog));
+
+      		       if (logWeighted)
+      		       {
+      		           if (getMPbalance(vestingAddresses[i], TL_PROPERTY_ALL, UNVESTED) >= logWeighted)
+      			         {
+      			             assert(update_tally_map(vestingAddresses[i], TL_PROPERTY_ALL, -logWeighted, UNVESTED));
+      			             assert(update_tally_map(vestingAddresses[i], TL_PROPERTY_ALL, logWeighted, BALANCE));
+      			         } else {
+      			             int64_t remaining = getMPbalance(vestingAddresses[i], TL_PROPERTY_ALL, UNVESTED);
+      			             if (getMPbalance(vestingAddresses[i], TL_PROPERTY_ALL, UNVESTED) >= remaining && remaining >= 0)
+      			             {
+      			                 assert(update_tally_map(vestingAddresses[i], TL_PROPERTY_ALL, -remaining, UNVESTED));
+      			                 assert(update_tally_map(vestingAddresses[i], TL_PROPERTY_ALL, remaining, BALANCE));
+      			             }
+      			         }
+      		       }
+      		     } else if (XAxis > 1000000000 && getMPbalance(vestingAddresses[i], TL_PROPERTY_ALL, UNVESTED) != 0) {
+      		         // PrintToLog("\nLogarithmic Function\n");
+      		         arith_uint256 secndTermn256_t = mastercore::ConvertTo256((int64_t)(152003*COIN))*mastercore::ConvertTo256(LogAxis)/COIN;
+      		         int64_t secndTermn64_t = mastercore::ConvertTo64(secndTermn256_t);
+      		         if(msc_debug_vesting) PrintToLog("secndTermn64_t = %s\n", FormatDivisibleMP(secndTermn64_t));
+
+      		         log64_t = (int64_t)secndTermn64_t - (int64_t)(1650000*COIN);
+      		         if(msc_debug_vesting) PrintToLog("log64_t = %s\n", FormatDivisibleMP(log64_t));
+      		         int64_t logBalance = log64_t - LastLog;
+
+      		         if(msc_debug_vesting) PrintToLog("logBalance = %s, vestingBalance = %s\n", FormatDivisibleMP(logBalance), FormatDivisibleMP(vestingBalance));
+      		         multiply(numLog128, (int64_t)logBalance, (int64_t)vestingBalance);
+      		         if(msc_debug_vesting) PrintToLog("numLog128 = %s\n", xToString(numLog128/COIN));
+
+      		         rational_t logRationalw(numLog128/COIN, TOTAL_AMOUNT_VESTING_TOKENS);
+      		         int64_t logWeighted = mastercore::RationalToInt64(logRationalw);
+
+      		         if (getMPbalance(vestingAddresses[i], TL_PROPERTY_ALL, UNVESTED))
+      		         {
+      		             if (getMPbalance(vestingAddresses[i], TL_PROPERTY_ALL, UNVESTED) < logWeighted)
+      			           {
+      			               int64_t remaining = getMPbalance(vestingAddresses[i], TL_PROPERTY_ALL, UNVESTED);
+      			               assert(update_tally_map(vestingAddresses[i], TL_PROPERTY_ALL, -remaining, UNVESTED));
+      			               assert(update_tally_map(vestingAddresses[i], TL_PROPERTY_ALL, remaining, BALANCE));
+      			           } else {
+      			              assert(update_tally_map(vestingAddresses[i], TL_PROPERTY_ALL, -logWeighted, UNVESTED));
+      			              assert(update_tally_map(vestingAddresses[i], TL_PROPERTY_ALL, logWeighted, BALANCE));
+      			           }
+
+      	 	           }
+      	       }
+	       }
+	  }
+
+    if(msc_debug_vesting)
+    {
+          PrintToLog("\nALLs UNVESTED = %d\n", getMPbalance(vestingAddresses[0], TL_PROPERTY_ALL, UNVESTED));
+          PrintToLog("ALLs BALANCE = %d\n", getMPbalance(vestingAddresses[0], TL_PROPERTY_ALL, BALANCE));
+    }
+
+
+//     Lastx_Axis = x_Axis;
+//     LastLinear = line64_t;
+//     LastQuad = quad64_t;
+//     LastLog = log64_t;
+// 		      update_tally_map(vestingAddresses[i], TL_PROPERTY_ALL, -linearWeighted, UNVESTED);
+// 		      update_tally_map(vestingAddresses[i], TL_PROPERTY_ALL, linearWeighted, BALANCE);
+//   } else if (XAxis > 300000 && XAxis <= 10000000)
+//       		{ /** y = 100K+7/940900000(x^2-600Kx+90) */
+//       		  //PrintToLog("\nQuadratic Function\n");
+
+//     }
+
+    return true;
+}
+
+/**
+ * This handler is called for every new transaction that comes in (actually in block parsing loop).
+ *
+ * @return True, if the transaction was a valid Trade Layer transaction
+ */
+bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx, const CBlockIndex* pBlockIndex)
+{
+  // extern volatile int id_contract;
+
+  extern std::vector<std::map<std::string, std::string>> lives_longs_vg;
+  extern std::vector<std::map<std::string, std::string>> lives_shorts_vg;
+  // extern int BlockS;
+  // std::vector<std::string> addrsl_vg;
+  // std::vector<std::string> addrss_vg;
+
+  LOCK(cs_tally);
+      		  multiply(numQuad128, (int64_t)quadBalance, (int64_t)vestingBalance);
+      		  // if(msc_debug_handler_tx) PrintToLog("numQuad128 = %s\n", xToString(numQuad128/COIN));
+
+  if (!mastercoreInitialized) {
+    mastercore_init();
   }
+
+  // clear pending, if any
+  // NOTE1: Every incoming TX is checked, not just MP-ones because:
+  // if for some reason the incoming TX doesn't pass our parser validation steps successfuly, I'd still want to clear pending amounts for that TX.
+  // NOTE2: Plus I wanna clear the amount before that TX is parsed by our protocol, in case we ever consider pending amounts in internal calculations.
+  PendingDelete(tx.GetHash());
+
+
+  // we do not care about parsing blocks prior to our waterline (empty blockchain defense)
+  if (nBlock < nWaterlineBlock) return false;
+  int64_t nBlockTime = pBlockIndex->GetBlockTime();
+
+
   /***********************************************************************/
+  /** Calling The Settlement Algorithm **/
+  /* NOTE: now we are checking all contracts */
+  if(!CallingSettlement()) return false ;
+  
+   /***********************************************************************/
   /** Vesting Tokens to Balance **/
   int64_t x_Axis = globalVolumeALL_LTC;
   int64_t LogAxis = mastercore::DoubleToInt64(log(static_cast<double>(x_Axis)/COIN));
@@ -2807,42 +3073,50 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
       LastQuad = quad64_t;
       LastLog = log64_t;
     }
-  /***********************************************/
+    
   CMPTransaction mp_obj;
   mp_obj.unlockLogic();
 
-  int expirationBlock = 0, tradeBlock = 0, checkExpiration = 0;
-  CMPSPInfo::Entry sp;
-  if ( id_contract != 0 )
-    {
-      if (_my_sps->getSP(id_contract, sp) && sp.prop_type == ALL_PROPERTY_TYPE_CONTRACT)
-	{
-	  expirationBlock = static_cast<int>(sp.blocks_until_expiration);
-	  tradeBlock = static_cast<int>(pBlockIndex->nHeight);
-	}
-    }
-
-  lastBlockg = static_cast<int>(pBlockIndex->nHeight);
   const CConsensusParams &params = ConsensusParams();
   vestingActivationBlock = params.MSC_VESTING_BLOCK;
 
   if (static_cast<int>(pBlockIndex->nHeight) == params.MSC_VESTING_BLOCK) creatingVestingTokens( GetHeight());
 
+  int expirationBlock = 0, tradeBlock = 0, checkExpiration = 0;
 
-  int deadline = sp.init_block + expirationBlock;
-  if ( tradeBlock != 0 && deadline != 0 ) checkExpiration = tradeBlock == deadline ? 1 : 0;
+  uint32_t nextSPID = _my_sps->peekNextSPID(1);
 
-  if (checkExpiration) {
-    idx_expiration += 1;
-    if ( idx_expiration == 2 ) {
-      expirationAchieve = 1;
-    } else expirationAchieve = 0;
-  } else expirationAchieve = 0;
+  // checking expiration block for each contract
+  for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
+  {
+      CMPSPInfo::Entry sp;
+      if (_my_sps->getSP(propertyId, sp) && sp.isContract() && !sp.expirated)
+      {
+	        expirationBlock = static_cast<int>(sp.blocks_until_expiration);
+	        tradeBlock = static_cast<int>(pBlockIndex->nHeight);
+          lastBlockg = static_cast<int>(pBlockIndex->nHeight);
+
+
+          int deadline = sp.init_block + expirationBlock;
+          if ( tradeBlock != 0 && deadline != 0 ) checkExpiration = tradeBlock == deadline ? 1 : 0;
+
+          if (checkExpiration)
+          {
+              idx_expiration += 1;
+              if ( idx_expiration == 2 )
+              {
+                  expirationAchieve = 1;
+                  sp.expirated = true; // into entry register
+              } else expirationAchieve = 0;
+          } else expirationAchieve = 0;
+      }
+  }
 
   bool fFoundTx = false;
   int pop_ret = parseTransaction(false, tx, nBlock, idx, mp_obj, nBlockTime);
 
-  if (0 == pop_ret) {
+  if (0 == pop_ret)
+  {
     assert(mp_obj.getEncodingClass() != NO_MARKER);
     assert(mp_obj.getSender().empty() == false);
 
@@ -2858,7 +3132,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
         HandleLtcInstantTrade(tx, nBlock, mp_obj.getSender(), mp_obj.getReceiver(), mp_obj.getProperty(), mp_obj.getAmountForSale(), mp_obj.getDesiredProperty(), mp_obj.getDesiredValue(), mp_obj.getIndexInBlock());
 
     //NOTE: we need to return this number 2 from mp_obj.interpretPacket() (tx.cpp)
-  } else if (interp_ret == 2) {
+    } else if (interp_ret == 2) {
         HandleDExPayments(tx, nBlock, mp_obj.getSender());
     }
 
@@ -2879,6 +3153,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
 
   return fFoundTx;
 }
+
 
 bool TxValidNodeReward(std::string ConsensusHash, std::string Tx)
 {
@@ -4354,13 +4629,13 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
 
   std::fstream fileglobalPNLALL_DUSD;
   fileglobalPNLALL_DUSD.open ("globalPNLALL_DUSD.txt", std::fstream::in | std::fstream::out | std::fstream::app);
-  if ( contractId == ALL_PROPERTY_TYPE_CONTRACT )
+  if ( contractId == ALL_PROPERTY_TYPE_NATIVE_CONTRACT )
     saveDataGraphs(fileglobalPNLALL_DUSD, std::to_string(globalPNLALL_DUSD));
   fileglobalPNLALL_DUSD.close();
 
   std::fstream fileglobalVolumeALL_DUSD;
   fileglobalVolumeALL_DUSD.open ("globalVolumeALL_DUSD.txt", std::fstream::in | std::fstream::out | std::fstream::app);
-  if ( contractId == ALL_PROPERTY_TYPE_CONTRACT )
+  if ( contractId == ALL_PROPERTY_TYPE_NATIVE_CONTRACT )
     saveDataGraphs(fileglobalVolumeALL_DUSD, std::to_string(FormatShortIntegerMP(globalVolumeALL_DUSD)));
   fileglobalVolumeALL_DUSD.close();
 
@@ -4884,7 +5159,7 @@ bool mastercore::marginMain(int Block)
         if (_my_sps->getSP(contractId, sp))
         {
             if(msc_debug_margin_main) PrintToLog("%s: Property Id: %d\n", __func__, contractId);
-            if (sp.prop_type != ALL_PROPERTY_TYPE_CONTRACT)
+            if (!sp.isContract())
             {
                 if(msc_debug_margin_main) PrintToLog("%s: Property is not future contract\n",__func__);
                 continue;
@@ -4919,7 +5194,7 @@ bool mastercore::marginMain(int Block)
                 continue;
 
             // checking position margin
-            int64_t posMargin = pos_margin(contractId, address, sp.prop_type, sp.margin_requirement);
+            int64_t posMargin = pos_margin(contractId, address, sp.margin_requirement);
 
             // if there's no position, something is wrong!
             if (posMargin < 0)
@@ -5098,7 +5373,7 @@ void mastercore::update_sum_upnls()
         CMPSPInfo::Entry sp;
         if (_my_sps->getSP(contractId, sp))
         {
-            if (sp.prop_type != ALL_PROPERTY_TYPE_CONTRACT)
+            if (!sp.isContract())
                 continue;
 
             std::map<uint32_t, std::map<std::string, double>>::iterator it = addrs_upnlc.find(contractId);
@@ -5118,14 +5393,21 @@ void mastercore::update_sum_upnls()
 }
 
 /* margin needed for a given position */
-int64_t mastercore::pos_margin(uint32_t contractId, std::string address, uint16_t prop_type, uint32_t margin_requirement)
+int64_t mastercore::pos_margin(uint32_t contractId, std::string address, uint32_t margin_requirement)
 {
         arith_uint256 maintMargin;
 
-        if (prop_type != ALL_PROPERTY_TYPE_CONTRACT)
+        LOCK(cs_tally);
+        CMPSPInfo::Entry sp;
+
+        if(_my_sps->getSP(contractId, sp))
         {
-            if(msc_debug_pos_margin) PrintToLog("%s: this is not a future contract\n", __func__);
-            return -1;
+
+            if (!sp.isContract())
+            {
+                if(msc_debug_pos_margin) PrintToLog("%s: this is not a future contract\n", __func__);
+                return -1;
+            }
         }
 
         int64_t longs = getMPbalance(address,contractId,POSITIVE_BALANCE);
@@ -5221,7 +5503,7 @@ bool mastercore::closeChannels(int Block)
             CMPSPInfo::Entry sp;
             if (_my_sps->getSP(propertyId, sp))
             {
-                if (sp.prop_type == ALL_PROPERTY_TYPE_CONTRACT)
+                if (sp.isContract())
                 {
                     PrintToLog("%s: Property is a future contract\n", __func__);
                     continue;
@@ -5798,7 +6080,7 @@ bool mastercore::ContInst_Fees(const std::string& firstAddr,const std::string& s
         PrintToLog("%s: colateral: %d\n", __func__,colateral);
     }
 
-    if (type == ALL_PROPERTY_TYPE_CONTRACT)
+    if (type == ALL_PROPERTY_TYPE_NATIVE_CONTRACT)
     {
         // 0.5% minus for firstAddr, 0.5% minus for secondAddr
         fee = (ConvertTo256(amountToReserve) * ConvertTo256(5)) / ConvertTo256(1000);
@@ -6058,6 +6340,7 @@ int64_t mastercore::getOracleTwap(uint32_t contractId, int nBlocks)
           aSum += (ConvertTo256(ord.high) + ConvertTo256(ord.low) + ConvertTo256(ord.close)) / ConvertTo256(3) ;
           count++;
 
+
           if(msc_debug_oracle_twap) PrintToLog("%s(): count: %d\n", __func__, count);
      }
 
@@ -6066,6 +6349,7 @@ int64_t mastercore::getOracleTwap(uint32_t contractId, int nBlocks)
 
      return sum;
 }
+
 
 bool mastercore::SanityChecks(string receiver, int aBlock)
 {

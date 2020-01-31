@@ -495,6 +495,7 @@ struct FutureContractObject
   uint32_t fco_margin_requirement;
   uint32_t fco_propertyId;
   uint16_t fco_prop_type;
+  bool fco_expirated;
 
   int fco_init_block;
   std::string fco_name;
@@ -534,9 +535,11 @@ class BlockClass
  BlockClass(const BlockClass &p) : m_BlockInit(p.m_BlockInit), m_BlockNow(p.m_BlockNow) {}
  ~BlockClass() {}
  BlockClass &operator=(const BlockClass &p) {
-   if (this != &p){
+   if (this != &p)
+   {
      m_BlockInit = p.m_BlockInit; m_BlockNow = p.m_BlockNow;
    }
+   
    return *this;
  }
  void SendNodeReward(std::string sender);
@@ -545,6 +548,7 @@ class BlockClass
 int64_t LosingSatoshiLongTail(int BlockNow, int64_t Reward);
 /**********************************************************************/
 
+
 struct oracledata
 {
   int64_t high;
@@ -552,7 +556,6 @@ struct oracledata
   int64_t close;
   uint32_t contractId;
 };
-
 
 struct withdrawalAccepted
 {
@@ -565,7 +568,8 @@ struct withdrawalAccepted
 };
 
 
-struct FutureContractObject *getFutureContractObject(uint32_t property_type, std::string identifier);
+struct FutureContractObject *getFutureContractObject(std::string identifier);
 struct TokenDataByName *getTokenDataByName(std::string identifier);
+struct TokenDataByName *getTokenDataById(uint32_t propertyId);
 
 #endif // TRADELAYER_TX_H

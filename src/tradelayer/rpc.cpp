@@ -790,12 +790,13 @@ UniValue tl_getproperty(const JSONRPCRequest& request)
     response.push_back(Pair("totaltokens", strTotalTokens));
     response.push_back(Pair("creation block", sp.init_block));
 
-    if (sp.prop_type == ALL_PROPERTY_TYPE_CONTRACT){
+    if (sp.isNativeContract()){
 
       response.push_back(Pair("notional size", FormatDivisibleShortMP(sp.notional_size)));
       response.push_back(Pair("collateral currency", std::to_string(sp.collateral_currency)));
       response.push_back(Pair("margin requirement", FormatDivisibleShortMP(sp.margin_requirement)));
       response.push_back(Pair("blocks until expiration", std::to_string(sp.blocks_until_expiration)));
+
       response.push_back(Pair("inverse quoted:", std::to_string(sp.inverse_quoted)));
 
       if (sp.denominator == TL_dUSD){
@@ -808,7 +809,7 @@ UniValue tl_getproperty(const JSONRPCRequest& request)
 
       response.push_back(Pair("denominator", denominator));
 
-    } else if (sp.prop_type == ALL_PROPERTY_TYPE_ORACLE_CONTRACT) {
+    } else if (sp.isOracle()) {
       response.push_back(Pair("notional size", FormatDivisibleShortMP(sp.notional_size)));
       response.push_back(Pair("collateral currency", std::to_string(sp.collateral_currency)));
       response.push_back(Pair("margin requirement", FormatDivisibleShortMP(sp.margin_requirement)));
@@ -819,7 +820,7 @@ UniValue tl_getproperty(const JSONRPCRequest& request)
       response.push_back(Pair("last close price", FormatDivisibleShortMP(sp.oracle_close)));
       response.push_back(Pair("inverse quoted:", std::to_string(sp.inverse_quoted)));
 
-    } else if (sp.prop_type == ALL_PROPERTY_TYPE_PEGGEDS) {
+    } else if (sp.isPegged()) {
       response.push_back(Pair("contract associated",(uint64_t) sp.contract_associated));
       response.push_back(Pair("series", sp.series));
     }
@@ -909,7 +910,7 @@ UniValue tl_list_natives(const JSONRPCRequest& request)
 
     if (_my_sps->getSP(propertyId, sp))
     {
-      if(sp.prop_type != ALL_PROPERTY_TYPE_CONTRACT)
+      if(!sp.isNativeContract())
           continue;
 
       UniValue propertyObj(UniValue::VOBJ);
@@ -924,7 +925,7 @@ UniValue tl_list_natives(const JSONRPCRequest& request)
     CMPSPInfo::Entry sp;
     if (_my_sps->getSP(propertyId, sp)) {
 
-      if(sp.prop_type != ALL_PROPERTY_TYPE_CONTRACT)
+      if(!sp.isNativeContract())
           continue;
 
       UniValue propertyObj(UniValue::VOBJ);
@@ -968,7 +969,7 @@ UniValue tl_list_oracles(const JSONRPCRequest& request)
 
     if (_my_sps->getSP(propertyId, sp))
     {
-      if(sp.prop_type != ALL_PROPERTY_TYPE_ORACLE_CONTRACT)
+      if(!sp.isOracle())
           continue;
 
       UniValue propertyObj(UniValue::VOBJ);
@@ -983,7 +984,7 @@ UniValue tl_list_oracles(const JSONRPCRequest& request)
     CMPSPInfo::Entry sp;
     if (_my_sps->getSP(propertyId, sp)) {
 
-      if(sp.prop_type != ALL_PROPERTY_TYPE_ORACLE_CONTRACT)
+      if(!sp.isOracle())
           continue;
 
       UniValue propertyObj(UniValue::VOBJ);
@@ -1750,7 +1751,7 @@ UniValue tl_getfullposition(const JSONRPCRequest& request)
   std::string address = ParseAddress(request.params[0]);
   std::string name_traded = ParseText(request.params[1]);
 
-  struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, name_traded);
+  struct FutureContractObject *pfuture = getFutureContractObject(name_traded);
   uint32_t propertyId = pfuture->fco_propertyId;
 
   RequireContract(propertyId);
@@ -1768,7 +1769,9 @@ UniValue tl_getfullposition(const JSONRPCRequest& request)
   positionObj.push_back(Pair("symbol", sp.name));
   positionObj.push_back(Pair("notional_size", (uint64_t) sp.notional_size)); // value of position = short or long position (balance) * notional_size
   // PTJ -> short/longPosition /liquidation price
-  FullPositionToJSON(address, propertyId, positionObj,isPropertyContract(propertyId), sp);
+  // bool flag = false;
+
+  FullPositionToJSON(address, propertyId, positionObj,sp.isContract(), sp);
 
   LOCK(cs_tally);
 
@@ -1968,7 +1971,7 @@ UniValue tl_getcontract_orderbook(const JSONRPCRequest& request)
       std::string name_traded = ParseText(request.params[0]);
       uint8_t tradingaction = ParseContractDexAction(request.params[1]);
 
-      struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, name_traded);
+      struct FutureContractObject *pfuture = getFutureContractObject(name_traded);
       uint32_t propertyIdForSale = pfuture->fco_propertyId;
 
       std::vector<CMPContractDex> vecContractDexObjects;
@@ -2025,7 +2028,7 @@ UniValue tl_gettradehistory(const JSONRPCRequest& request)
   // obtain property identifiers for pair & check valid parameters
   std::string name_traded = ParseText(request.params[0]);
 
-  struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, name_traded);
+  struct FutureContractObject *pfuture = getFutureContractObject(name_traded);
   uint32_t contractId = pfuture->fco_propertyId;
 
   RequireContract(contractId);
