@@ -52,6 +52,7 @@ typedef boost::multiprecision::checked_int128_t int128_t;
 extern std::map<std::string,uint32_t> peggedIssuers;
 extern std::map<uint32_t,std::map<int,oracledata>> oraclePrices;
 extern std::map<std::string,vector<withdrawalAccepted>> withdrawal_Map;
+extern std::map<uint32_t, std::map<uint32_t, int64_t>> market_priceMap;
 extern std::map<std::string,channel> channels_Map;
 extern int64_t factorE;
 extern int64_t priceIndex;
@@ -982,6 +983,7 @@ bool CMPTransaction::interpret_CreateContractDex()
   std::vector<uint8_t> vecNotionalSize = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecCollateralCurrency = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecMarginRequirement = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecInverse = GetNextVarIntBytes(i);
 
 
   if (!vecVersionBytes.empty()) {
@@ -993,7 +995,7 @@ bool CMPTransaction::interpret_CreateContractDex()
   } else return false;
 
   if (!vecDenomTypeBytes.empty()) {
-    denomination = DecompressInteger(vecDenomTypeBytes);
+    denominator = DecompressInteger(vecDenomTypeBytes);
   } else return false;
 
   if (!vecBlocksUntilExpiration.empty()) {
@@ -1009,16 +1011,23 @@ bool CMPTransaction::interpret_CreateContractDex()
   } else return false;
 
   if (!vecMarginRequirement.empty()) {
-    margin_requirement = DecompressInteger(vecMarginRequirement);
+      margin_requirement = DecompressInteger(vecMarginRequirement);
+  } else return false;
+
+  if (!vecInverse.empty()) {
+      uint8_t inverse = DecompressInteger(vecInverse);
+      if (inverse == 0) inverse_quoted = false;
+
   } else return false;
 
   (blocks_until_expiration == 0) ? prop_type = ALL_PROPERTY_TYPE_PERPETUAL_CONTRACTS : prop_type = ALL_PROPERTY_TYPE_NATIVE_CONTRACT;
 
-  if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
-  {
+  // if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+  // {
       PrintToLog("\t version: %d\n", version);
       PrintToLog("\t messageType: %d\n",type);
-      PrintToLog("\t denomination: %d\n", denomination);
+      PrintToLog("\t numerator: %d\n", numerator);
+      PrintToLog("\t denominator: %d\n", denominator);
       PrintToLog("\t blocks until expiration : %d\n", blocks_until_expiration);
       PrintToLog("\t notional size : %d\n", notional_size);
       PrintToLog("\t collateral currency: %d\n", collateral_currency);
@@ -1026,7 +1035,8 @@ bool CMPTransaction::interpret_CreateContractDex()
       PrintToLog("\t ecosystem: %d\n", ecosystem);
       PrintToLog("\t name: %s\n", name);
       PrintToLog("\t prop_type: %d\n", prop_type);
-  }
+      PrintToLog("\t inverse quoted: %d\n", inverse_quoted);
+  // }
 
   return true;
 }
@@ -1383,7 +1393,9 @@ bool CMPTransaction::interpret_CreateOracleContract()
 
   memcpy(&ecosystem, &pkt[i], 1);
   i++;
-  std::vector<uint8_t> vecDenomTypeBytes = GetNextVarIntBytes(i);
+
+  std::vector<uint8_t> vecNum = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecDen = GetNextVarIntBytes(i);
 
   const char* p = i + (char*) &pkt;
   std::vector<std::string> spstr;
@@ -1405,6 +1417,7 @@ bool CMPTransaction::interpret_CreateOracleContract()
   std::vector<uint8_t> vecNotionalSize = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecCollateralCurrency = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecMarginRequirement = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecInverse = GetNextVarIntBytes(i);
 
 
   if (!vecVersionBytes.empty()) {
@@ -1415,9 +1428,6 @@ bool CMPTransaction::interpret_CreateOracleContract()
     type = DecompressInteger(vecTypeBytes);
   } else return false;
 
-  if (!vecDenomTypeBytes.empty()) {
-    denomination = DecompressInteger(vecDenomTypeBytes);
-  } else return false;
 
   if (!vecBlocksUntilExpiration.empty()) {
     blocks_until_expiration = DecompressInteger(vecBlocksUntilExpiration);
@@ -1435,14 +1445,30 @@ bool CMPTransaction::interpret_CreateOracleContract()
     margin_requirement = DecompressInteger(vecMarginRequirement);
   } else return false;
 
+
   (blocks_until_expiration == 0) ? prop_type = ALL_PROPERTY_TYPE_PERPETUAL_ORACLE : prop_type = ALL_PROPERTY_TYPE_ORACLE_CONTRACT;
+
+  if (!vecInverse.empty()) {
+    uint8_t inverse = DecompressInteger(vecInverse);
+    if(inverse == 0) inverse_quoted = false;
+
+  } else return false;
+
+  if (!vecNum.empty()) {
+    numerator = DecompressInteger(vecMarginRequirement);
+  } else return false;
+
+  if (!vecDen.empty()) {
+    denominator = DecompressInteger(vecMarginRequirement);
+  } else return false;
 
 
   if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
   {
       PrintToLog("\t version: %d\n", version);
       PrintToLog("\t messageType: %d\n",type);
-      PrintToLog("\t denomination: %d\n", denomination);
+      PrintToLog("\t numerator: %d\n", numerator);
+      PrintToLog("\t denominator: %d\n", denominator);
       PrintToLog("\t blocks until expiration : %d\n", blocks_until_expiration);
       PrintToLog("\t notional size : %d\n", notional_size);
       PrintToLog("\t collateral currency: %d\n", collateral_currency);
@@ -1452,6 +1478,7 @@ bool CMPTransaction::interpret_CreateOracleContract()
       PrintToLog("\t oracleAddress: %s\n", sender);
       PrintToLog("\t backupAddress: %s\n", receiver);
       PrintToLog("\t prop_type: %d\n", prop_type);
+      PrintToLog("\t inverse quoted: %d\n", inverse_quoted);
 
   }
 
@@ -1491,6 +1518,7 @@ bool CMPTransaction::interpret_Set_Oracle()
     std::vector<uint8_t> vecContIdBytes = GetNextVarIntBytes(i);
     std::vector<uint8_t> vecHighBytes = GetNextVarIntBytes(i);
     std::vector<uint8_t> vecLowBytes = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecCloseBytes = GetNextVarIntBytes(i);
 
     if (!vecContIdBytes.empty()) {
         contractId = DecompressInteger(vecContIdBytes);
@@ -1504,11 +1532,16 @@ bool CMPTransaction::interpret_Set_Oracle()
         oracle_low = DecompressInteger(vecLowBytes);
     } else return false;
 
+    if (!vecLowBytes.empty()) {
+        oracle_close = DecompressInteger(vecCloseBytes);
+    } else return false;
+
     if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
     {
         PrintToLog("\t version: %d\n", version);
         PrintToLog("\t oracle high price: %d\n",oracle_high);
         PrintToLog("\t oracle low price: %d\n",oracle_low);
+        PrintToLog("\t oracle close price: %d\n",oracle_close);
         PrintToLog("\t propertyId: %d\n", propertyId);
     }
 
@@ -2243,6 +2276,34 @@ int CMPTransaction::logicMath_SimpleSend()
 /** Tx 5 */
 int CMPTransaction::logicMath_SendVestingTokens()
 {
+
+  if (!SanityChecks(receiver, block)) {
+      PrintToLog("%s(): rejected: sanity checks for send vesting tokens failed\n",
+              __func__);
+      return (PKT_ERROR_SEND -21);
+  }
+
+  if (!IsTransactionTypeAllowed(block, property, type, version)) {
+      PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+              __func__,
+              type,
+              version,
+              property,
+              block);
+      return (PKT_ERROR_SEND -22);
+  }
+
+  int64_t nBalance = getMPbalance(sender, property, BALANCE);
+  if (nBalance < (int64_t) nValue) {
+      PrintToLog("%s(): rejected: sender %s has insufficient balance of property %d [%s < %s]\n",
+              __func__,
+              sender,
+              property,
+              FormatMP(property, nBalance),
+              FormatMP(property, nValue));
+      return (PKT_ERROR_SEND -25);
+  }
+
   assert(update_tally_map(sender, property, -nValue, BALANCE));
   assert(update_tally_map(receiver, property, nValue, BALANCE));
   assert(update_tally_map(receiver, TL_PROPERTY_ALL, nValue, UNVESTED));
@@ -3028,15 +3089,15 @@ int CMPTransaction::logicMath_CreateContractDex()
     return (PKT_ERROR_SP -37);
   }
 
-  // PrintToLog("type of denomination: %d\n",denomination);
+  // PrintToLog("type of denominator: %d\n",denominator);
 
-  // if (denomination != TL_dUSD && denomination != TL_dEUR && denomination!= TL_dYEN && denomination != TL_ALL && denomination != TL_sLTC && denomination!= TL_LTC) {
-  //   PrintToLog("rejected: denomination invalid\n");
+  // if (denominator != TL_dUSD && denominator != TL_dEUR && denominator!= TL_dYEN && denominator != TL_ALL && denominator != TL_sLTC && denominator!= TL_LTC) {
+  //   PrintToLog("rejected: denominator invalid\n");
   //   return (PKT_ERROR_SP -37);
   // }
 
   // if (numerator != TL_ALL && numerator != TL_sLTC && numerator != TL_LTC) {
-  //   PrintToLog("rejected: denomination invalid\n");
+  //   PrintToLog("rejected: denominator invalid\n");
   //   return (PKT_ERROR_SP -37);
   // }
 
@@ -3057,10 +3118,15 @@ int CMPTransaction::logicMath_CreateContractDex()
   newSP.collateral_currency = collateral_currency;
   newSP.margin_requirement = margin_requirement;
   newSP.init_block = block;
-  newSP.denomination = denomination;
+  newSP.numerator = numerator;
+  newSP.denominator = denominator;
   newSP.ecosystemSP = ecosystem;
   newSP.attribute_type = attribute_type;
   newSP.expirated = false;
+  newSP.inverse_quoted = inverse_quoted;
+
+  PrintToLog("%s(): init block inside create contract: %d\n", __func__, newSP.init_block);
+
 
   const uint32_t propertyId = _my_sps->putSP(ecosystem, newSP);
   assert(propertyId > 0);
@@ -3091,12 +3157,15 @@ int CMPTransaction::logicMath_ContractDexTrade()
 
   (pfuture->fco_prop_type == ALL_PROPERTY_TYPE_NATIVE_CONTRACT) ? result = 5 : result = 6;
 
-  if(!t_tradelistdb->checkKYCRegister(sender,result))
-      return PKT_ERROR_KYC -10;
+  // if(!t_tradelistdb->checkKYCRegister(sender,result))
+  //     return PKT_ERROR_KYC -10;
+  //
 
+  PrintToLog("%s(): fco_init_block: %d; fco_blocks_until_expiration: %d; actual block: %d\n",__func__,pfuture->fco_init_block,pfuture->fco_blocks_until_expiration,block);
 
   if (block > pfuture->fco_init_block + static_cast<int>(pfuture->fco_blocks_until_expiration) || block < pfuture->fco_init_block)
       return PKT_ERROR_SP -38;
+
 
   uint32_t colateralh = pfuture->fco_collateral_currency;
   int64_t marginRe = static_cast<int64_t>(pfuture->fco_margin_requirement);
@@ -3106,10 +3175,14 @@ int CMPTransaction::logicMath_ContractDexTrade()
 
   // // rational_t conv = notionalChange(pfuture->fco_propertyId);
 
+  int64_t uPrice = 1;
+  (inverse_quoted == 1) ? uPrice = market_priceMap[numerator][denominator] : uPrice = 1;
+
+
   rational_t conv = rational_t(1,1);
   int64_t num = conv.numerator().convert_to<int64_t>();
   int64_t den = conv.denominator().convert_to<int64_t>();
-  arith_uint256 amountTR = (ConvertTo256(amount)*ConvertTo256(marginRe)*ConvertTo256(num))/(ConvertTo256(den)*ConvertTo256(leverage));
+  arith_uint256 amountTR = (ConvertTo256(amount) * ConvertTo256(marginRe)*ConvertTo256(num))/(ConvertTo256(den) * ConvertTo256(leverage) * ConvertTo256(uPrice));
   int64_t amountToReserve = ConvertTo64(amountTR);
 
   if (nBalance < amountToReserve || nBalance == 0)
@@ -3144,7 +3217,6 @@ int CMPTransaction::logicMath_ContractDexTrade()
   NodeRewardObj.SendNodeReward(sender);
 
   /*********************************************/
-
   t_tradelistdb->recordNewTrade(txid, sender, id_contract, desired_property, block, tx_idx, 0);
   int rc = ContractDex_ADD(sender, id_contract, amount, block, txid, tx_idx, effective_price, trading_action,0);
 
@@ -3322,7 +3394,7 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
         }
 
         notSize = static_cast<int64_t>(sp.notional_size);
-        den = sp.denomination;
+        den = sp.denominator;
     }
 
     int64_t position = getMPbalance(sender, contractId, NEGATIVE_BALANCE);
@@ -3342,7 +3414,7 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
         for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++) {
             CMPSPInfo::Entry sp;
             if (_my_sps->getSP(propertyId, sp)) {
-                if (sp.prop_type == ALL_PROPERTY_TYPE_PEGGEDS && sp.denomination == den){
+                if (sp.prop_type == ALL_PROPERTY_TYPE_PEGGEDS && sp.denominator == den){
                     npropertyId = propertyId;
                     break;
                 }
@@ -3352,7 +3424,7 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
 
     // ------------------------------------------
 
-    if (npropertyId == 0) {   // putting the first one pegged currency of this denomination
+    if (npropertyId == 0) {   // putting the first one pegged currency of this denominator
         CMPSPInfo::Entry newSP;
         newSP.issuer = sender;
         newSP.txid = txid;
@@ -3366,7 +3438,7 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
         newSP.num_tokens = amountNeeded;
         newSP.contracts_needed = contracts;
         newSP.contract_associated = contractId;
-        newSP.denomination = den;
+        newSP.denominator = den;
         newSP.series = strprintf("Nº 1 - %d",(amountNeeded / factorE));
         npropertyId = _my_sps->putSP(ecosystem, newSP);
 
@@ -3889,15 +3961,15 @@ int CMPTransaction::logicMath_CreateOracleContract()
       return (PKT_ERROR_SP -37);
   }
 
-  // PrintToLog("type of denomination: %d\n",denomination);
+  // PrintToLog("type of denominator: %d\n",denominator);
 
-  // if (denomination != TL_dUSD && denomination != TL_dEUR && denomination!= TL_dYEN && denomination != TL_ALL && denomination != TL_sLTC && denomination!= TL_LTC) {
-  //   PrintToLog("rejected: denomination invalid\n");
+  // if (denominator != TL_dUSD && denominator != TL_dEUR && denominator!= TL_dYEN && denominator != TL_ALL && denominator != TL_sLTC && denominator!= TL_LTC) {
+  //   PrintToLog("rejected: denominator invalid\n");
   //   return (PKT_ERROR_SP -37);
   // }
 
   // if (numerator != TL_ALL && numerator != TL_sLTC && numerator != TL_LTC) {
-  //   PrintToLog("rejected: denomination invalid\n");
+  //   PrintToLog("rejected: denominator invalid\n");
   //   return (PKT_ERROR_SP -37);
   // }
 
@@ -3918,11 +3990,13 @@ int CMPTransaction::logicMath_CreateOracleContract()
   newSP.collateral_currency = collateral_currency;
   newSP.margin_requirement = margin_requirement;
   newSP.init_block = block;
-  newSP.denomination = denomination;
+  newSP.numerator = numerator;
+  newSP.denominator = denominator;
   newSP.ecosystemSP = ecosystem;
   newSP.attribute_type = attribute_type;
   newSP.backup_address = receiver;
   newSP.expirated = false;
+  newSP.inverse_quoted = inverse_quoted;
 
   const uint32_t propertyId = _my_sps->putSP(ecosystem, newSP);
   assert(propertyId > 0);
@@ -4023,33 +4097,45 @@ int CMPTransaction::logicMath_Set_Oracle()
 
 
     // ------------------------------------------
+    oracledata Ol;
 
-      oracledata Ol;
+    Ol.high = oracle_high;
+    Ol.low = oracle_low;
+    Ol.close = oracle_close;
 
-      Ol.high = oracle_high;
-      Ol.low = oracle_low;
-      Ol.close = oracle_close;
-
-      oraclePrices[contractId][block] = Ol;
-
-
-      // PrintToLog("%s():Ol element:,high:%d, low:%d, close:%d\n",__func__, Ol.high, Ol.low, Ol.close);
+    oraclePrices[contractId][block] = Ol;
 
 
-      // saving on db
-      sp.oracle_high = oracle_high;
-      sp.oracle_low = oracle_low;
-      sp.oracle_close = oracle_close;
+    // PrintToLog("%s():Ol element:,high:%d, low:%d, close:%d\n",__func__, Ol.high, Ol.low, Ol.close);
 
 
-     if(oraclePrices.empty())
-         PrintToLog("%s(): element was not inserted !\n",__func__);
-     else
-         PrintToLog("%s(): element was INSERTED \n",__func__);
+    // saving on db
+    sp.oracle_high = oracle_high;
+    sp.oracle_low = oracle_low;
+    sp.oracle_close = oracle_close;
+
+
+   if(oraclePrices.empty())
+       PrintToLog("%s(): element was not inserted !\n",__func__);
+   else
+       PrintToLog("%s(): element was INSERTED \n",__func__);
+    //
+    // std::map<uint32_t,std::map<int,oracledata>>::iterator it = oraclePrices.find(contractId);
+    //
+    //
+    // std::map<int,oracledata> m = it->second;
+    //
+    // std::map<int,oracledata>::iterator itt = m.find(block);
+    //
+    // oracledata Or = itt->second;
+    //
+    // PrintToLog("%s(): oracle data for contract: block: %d,high:%d, low:%d, close:%d\n",block, Or.high, Or.low, Or.close);
+
+
 
     assert(_my_sps->updateSP(contractId, sp));
 
-    if (msc_debug_set_oracle) PrintToLog("oracle data for contract: block: %d,high:%d, low:%d\n",block, oracle_high, oracle_low);
+    // if (msc_debug_set_oracle) PrintToLog("oracle data for contract: block: %d,high:%d, low:%d, close:%d\n",block, oracle_high, oracle_low, oracle_close);
 
     return 0;
 }
@@ -4361,7 +4447,7 @@ int CMPTransaction::logicMath_Instant_Trade()
 
   // if property = 0 ; we are exchanging litecoins
   // if (false)
-  if (property > 0 && desired_property > 0)
+  if (property > LTC && desired_property > 0)
   {
       assert(update_tally_map(chnAddrs.second, property, amount_forsale, BALANCE));
       assert(update_tally_map(sender, property, -amount_forsale, CHANNEL_RESERVE));
@@ -4774,7 +4860,8 @@ struct FutureContractObject *getFutureContractObject(std::string identifier)
 	{
 	  if ( sp.isContract() && sp.name == identifier )
 	    {
-	      pt_fco->fco_denomination = sp.denomination;
+        pt_fco->fco_denominator = sp.numerator;
+	      pt_fco->fco_denominator = sp.denominator;
 	      pt_fco->fco_blocks_until_expiration = sp.blocks_until_expiration;
 	      pt_fco->fco_notional_size = sp.notional_size;
 	      pt_fco->fco_collateral_currency = sp.collateral_currency;
@@ -4790,7 +4877,7 @@ struct FutureContractObject *getFutureContractObject(std::string identifier)
 	    }
 	  else if ( sp.isPegged() && sp.name == identifier )
 	    {
-	      pt_fco->fco_denomination = sp.denomination;
+	      pt_fco->fco_denominator = sp.denominator;
 	      pt_fco->fco_blocks_until_expiration = sp.blocks_until_expiration;
 	      pt_fco->fco_notional_size = sp.notional_size;
 	      pt_fco->fco_collateral_currency = sp.collateral_currency;
@@ -4817,7 +4904,7 @@ struct TokenDataByName *getTokenDataByName(std::string identifier)
       CMPSPInfo::Entry sp;
       if (_my_sps->getSP(propertyId, sp) && sp.name == identifier)
 	{
-	  pt_data->data_denomination = sp.denomination;
+	  pt_data->data_denominator = sp.denominator;
 	  pt_data->data_blocks_until_expiration = sp.blocks_until_expiration;
 	  pt_data->data_notional_size = sp.notional_size;
 	  pt_data->data_collateral_currency = sp.collateral_currency;

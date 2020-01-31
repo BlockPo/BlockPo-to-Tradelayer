@@ -1041,7 +1041,8 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
    *
    *
    */
-    mastercore::ContractDex_Fees(pnew->getAddr(),pold->getAddr(), nCouldBuy, property_traded);
+    // NOTE: Check this function later (got issues!)
+    // mastercore::ContractDex_Fees(pnew->getAddr(),pold->getAddr(), nCouldBuy, property_traded);
 
     if(msc_debug_x_trade_bidirectional)
     {
@@ -1152,8 +1153,8 @@ bool mastercore::ContractDex_Fees(std::string addressTaker,std::string addressMa
             // Create the metadex object with specific params
 
             uint256 txid;
-            int block = 0;
-            unsigned int idx = 0;
+            // int block = 0;
+            // unsigned int idx = 0;
 
             CMPSPInfo::Entry spp;
             _my_sps->getSP(sp.collateral_currency, spp);
@@ -2040,55 +2041,25 @@ int mastercore::ContractDex_ADD_MARKET_PRICE(const std::string& sender_addr, uin
 {
     int rc = METADEX_ERROR -1;
 
-    if (trading_action == BUY)
+    if(trading_action != BUY && trading_action != SELL)
+        return -1;
+
+    uint64_t ask = edgeOrderbook(contractId, trading_action);
+
+    CMPContractDex new_cdex(sender_addr, block, contractId, amount, 0, 0, txid, idx, CMPTransaction::ADD, ask, trading_action);
+
+    if(msc_debug_contract_add_market) PrintToLog("effective price of new_cdex /buy/: %d\n",new_cdex.getEffectivePrice());
+    if (0 >= new_cdex.getEffectivePrice()) return METADEX_ERROR -66;
+
+
+    while(true)
     {
-        uint64_t ask = edgeOrderbook(contractId,BUY);
+        x_Trade(&new_cdex);
+        if (new_cdex.getAmountForSale() == 0)
+	         break;
 
-        CMPContractDex new_cdex(sender_addr, block, contractId, amount, 0, 0, txid, idx, CMPTransaction::ADD, ask, trading_action);
-
-        // Ensure this is not a badly priced trade (for example due to zero amounts)
-        if(msc_debug_contract_add_market) PrintToLog("effective price of new_cdex /buy/: %d\n",new_cdex.getEffectivePrice());
-        if (0 >= new_cdex.getEffectivePrice()) return METADEX_ERROR -66;
-
-        uint64_t newvalue;
-
-        while(true)
-       {
-           // oldvalue = new_cdex.getAmountForSale();
-           x_Trade(&new_cdex);
-           newvalue = new_cdex.getAmountForSale();
-           if (newvalue == 0)
-	             break;
-           uint64_t price = edgeOrderbook(contractId,BUY);
-           new_cdex.setPrice(price);
-       }
-
-    }
-    else if (trading_action == SELL)
-    {
-        uint64_t bid = edgeOrderbook(contractId,SELL);
-        if(msc_debug_contract_add_market) PrintToLog("bid: %d\n",bid);
-        CMPContractDex new_cdex(sender_addr, block, contractId, amount, 0, 0, txid, idx, CMPTransaction::ADD, bid, trading_action);
-        //  Ensure this is not a badly priced trade (for example due to zero amounts
-
-        if(msc_debug_contract_add_market) PrintToLog("effective price of new_cdex/sell/: %d\n",new_cdex.getEffectivePrice());
-        if (0 >= new_cdex.getEffectivePrice()) return METADEX_ERROR -66;
-
-        uint64_t newvalue;
-
-        while(true)
-        {
-            // oldvalue = new_cdex.getAmountForSale();
-            x_Trade(&new_cdex);
-            newvalue = new_cdex.getAmountForSale();
-            if (newvalue == 0)
-	              break;
-
-            uint64_t price = edgeOrderbook(contractId,BUY);
-            new_cdex.setPrice(price);
-
-        }
-
+        uint64_t price = edgeOrderbook(contractId,trading_action);
+        new_cdex.setPrice(price);
     }
 
     return rc;
@@ -2183,7 +2154,7 @@ int mastercore::ContractDex_CANCEL_FOR_BLOCK(const uint256& txid,  int block,uns
 
         for (cd_PricesMap::iterator it = prices.begin(); it != prices.end(); ++it)
         {
-            uint64_t price = it->first;
+            // uint64_t price = it->first;
             cd_Set &indexes = it->second;
 
             for (cd_Set::iterator it = indexes.begin(); it != indexes.end();)
@@ -2432,4 +2403,31 @@ int64_t mastercore::getPairMarketPrice(std::string num, std::string den)
     }
 
   return market_priceMap[numId][denId];
+}
+
+uint64_t mastercore::edgeOrderbook(uint32_t contractId, uint8_t tradingAction)
+{
+    uint64_t price = 0;
+    uint64_t result = 0;
+    std::vector<uint64_t> vecContractDexPrices;
+
+    cd_PricesMap* const ppriceMap = get_PricesCd(contractId); // checking the ask price of contract A
+    for (cd_PricesMap::iterator it = ppriceMap->begin(); it != ppriceMap->end(); ++it) {
+        const cd_Set& indexes = it->second;
+        for (cd_Set::const_iterator it = indexes.begin(); it != indexes.end(); ++it) {
+            const CMPContractDex& obj = *it;
+            if (obj.getTradingAction() == tradingAction || obj.getAmountForSale() <= 0) continue;
+            price = obj.getEffectivePrice();
+            if(msc_debug_sp) PrintToLog("%s(): choosen price: %d\n",__func__, price);
+            vecContractDexPrices.push_back(price);
+        }
+    }
+
+    if (tradingAction == BUY && !vecContractDexPrices.empty()){
+       result = vecContractDexPrices.front();
+    } else if (tradingAction == SELL && !vecContractDexPrices.empty()){
+       result = vecContractDexPrices.back();
+    }
+
+    return static_cast<uint64_t>(result);
 }

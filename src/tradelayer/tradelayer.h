@@ -183,14 +183,28 @@ enum FILETYPES {
 #define SELL           2
 #define ACTIONINVALID  3
 
-#define CONTRACT_ALL        3
-#define CONTRACT_ALL_DUSD   4
-#define CONTRACT_ALL_LTC    5
-#define CONTRACT_LTC_DJPY   6
-#define CONTRACT_LTC_DUSD   7
-#define CONTRACT_LTC_DEUR   8
-#define CONTRACT_sLTC_ALL   9
 
+//Main Cardinal Definitions
+#define LTC        0
+#define ALL        1
+#define sLTC       2
+#define dUSD       3
+#define dEUR       4
+#define dJPY       5
+#define dCNY       6
+#define ALL_LTC    7
+#define LTC_USD    8
+#define LTC_EUR    9
+#define JPY       10
+#define CNY       11
+
+// #define CONTRACT_ALL        3
+// #define CONTRACT_ALL_DUSD   4
+// #define CONTRACT_ALL_LTC    5
+// #define CONTRACT_LTC_DJPY   6
+// #define CONTRACT_LTC_DUSD   7
+// #define CONTRACT_LTC_DEUR   8
+// #define CONTRACT_sLTC_ALL   9
 
 // channels definitions
 #define TYPE_COMMIT                     "commit"
@@ -215,6 +229,9 @@ const int dayblocks = 576;
 // limits for margin dynamic
 const rational_t factor = rational_t(80,100);  // critical limit
 const rational_t factor2 = rational_t(20,100); // normal limits
+
+// define 1 year in blocks:
+#define ONE_YEAR 210240
 
 
 // forward declarations
@@ -531,7 +548,12 @@ namespace mastercore
   //Map of MetaDEx volume
   int64_t MdexVolumen(uint32_t fproperty, uint32_t sproperty, int fblock, int sblock);
 
+  void twapForLiquidation(uint32_t contractId, int blocks);
+
   int64_t getOracleTwap(uint32_t contractId, int nBlocks);
+
+  // check for vesting
+  bool SanityChecks(string receiver, int aBlock);
 
 }
 

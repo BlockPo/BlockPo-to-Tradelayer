@@ -102,6 +102,9 @@ private:
     uint32_t propertyId;
     uint32_t contractId;
     uint64_t amount;
+    uint32_t numerator;
+    uint32_t denominator;
+    bool inverse_quoted = true;
 
     /* uint64_t ticksize; */
     /*uint32_t nextContractId;*/
@@ -115,7 +118,7 @@ private:
     uint32_t ecosystemSP;
     uint32_t attribute_type;
     uint64_t leverage;
-    uint32_t denomination;
+    // uint32_t denomination;
 
 
     // Alert
@@ -317,9 +320,9 @@ public:
     uint32_t getPropertyId() const { return propertyId; }
 
     /** Oracles */
-       uint64_t getHighPrice() const { return oracle_high; }
-       uint64_t getLowPrice() const { return oracle_low; }
-       uint64_t getClosePrice() const { return oracle_close; }
+    uint64_t getHighPrice() const { return oracle_high; }
+    uint64_t getLowPrice() const { return oracle_low; }
+    uint64_t getClosePrice() const { return oracle_close; }
     int getBlock() const { return block; }
 
     /** Instan trade (Channels) */
@@ -415,7 +418,8 @@ public:
         amount = 0;
         amountDesired = 0;
         timeLimit = 0;
-        denomination = 0;
+        denominator = 0;
+        numerator = 0;
 
         //Multisig channels
         amount_commited = 0;
@@ -483,7 +487,8 @@ int ParseTransaction(const CTransaction& tx, int nBlock, unsigned int idx, CMPTr
 
 struct FutureContractObject
 {
-  uint32_t fco_denomination;
+  uint32_t fco_numerator;
+  uint32_t fco_denominator;
   uint32_t fco_blocks_until_expiration;
   uint32_t fco_notional_size;
   uint32_t fco_collateral_currency;
@@ -501,7 +506,7 @@ struct FutureContractObject
 
 struct TokenDataByName
 {
-  uint32_t data_denomination;
+  uint32_t data_denominator;
   uint32_t data_blocks_until_expiration;
   uint32_t data_notional_size;
   uint32_t data_collateral_currency;
