@@ -50,7 +50,7 @@ bool msc_debug_consensus_hash_every_transaction = 0;
 bool msc_debug_alerts                           = 1;
 bool msc_debug_handle_dex_payment               = 0;
 bool msc_debug_handle_instant                   = 0;
-bool msc_debug_handler_tx                       = 1;
+bool msc_debug_handler_tx                       = 0;
 bool msc_debug_tradedb                          = 0;
 bool msc_debug_margin_main                      = 0;
 bool msc_debug_pos_margin                       = 0;
@@ -84,7 +84,7 @@ bool msc_debug_contract_instant_trade           = 0;
 bool msc_create_channel                         = 0;
 bool msc_debug_new_id_registration              = 0;
 bool msc_debug_wallettxs                        = 0;
-bool msc_calling_settlement                     = 0;
+bool msc_calling_settlement                     = 1;
 bool msc_debug_vesting                          = 0;
 bool msc_debug_oracle_twap                      = 0;
 /**

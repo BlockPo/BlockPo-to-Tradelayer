@@ -961,7 +961,9 @@ bool CMPTransaction::interpret_CreateContractDex()
 
   memcpy(&ecosystem, &pkt[i], 1);
   i++;
-  std::vector<uint8_t> vecDenomTypeBytes = GetNextVarIntBytes(i);
+
+  std::vector<uint8_t> vecNum = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecDen = GetNextVarIntBytes(i);
 
   const char* p = i + (char*) &pkt;
   std::vector<std::string> spstr;
@@ -994,8 +996,13 @@ bool CMPTransaction::interpret_CreateContractDex()
     type = DecompressInteger(vecTypeBytes);
   } else return false;
 
-  if (!vecDenomTypeBytes.empty()) {
-    denominator = DecompressInteger(vecDenomTypeBytes);
+
+  if (!vecNum.empty()) {
+    numerator = DecompressInteger(vecNum);
+  } else return false;
+
+  if (!vecDen.empty()) {
+    denominator = DecompressInteger(vecDen);
   } else return false;
 
   if (!vecBlocksUntilExpiration.empty()) {
@@ -1095,15 +1102,15 @@ bool CMPTransaction::interpret_ContractDexTrade()
     leverage = DecompressInteger(vecLeverage);
   } else return false;
 
-  if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
-  {
+  // if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+  // {
       PrintToLog("\t leverage: %d\n", leverage);
       PrintToLog("\t messageType: %d\n",type);
       PrintToLog("\t contractName: %s\n", name_traded);
       PrintToLog("\t amount of contracts : %d\n", amount);
       PrintToLog("\t effective price : %d\n", effective_price);
       PrintToLog("\t trading action : %d\n", trading_action);
-  }
+  // }
 
   return true;
 }
@@ -1394,9 +1401,6 @@ bool CMPTransaction::interpret_CreateOracleContract()
   memcpy(&ecosystem, &pkt[i], 1);
   i++;
 
-  std::vector<uint8_t> vecNum = GetNextVarIntBytes(i);
-  std::vector<uint8_t> vecDen = GetNextVarIntBytes(i);
-
   const char* p = i + (char*) &pkt;
   std::vector<std::string> spstr;
   for (int j = 0; j < 1; j++) {
@@ -1454,21 +1458,21 @@ bool CMPTransaction::interpret_CreateOracleContract()
 
   } else return false;
 
-  if (!vecNum.empty()) {
-    numerator = DecompressInteger(vecMarginRequirement);
-  } else return false;
-
-  if (!vecDen.empty()) {
-    denominator = DecompressInteger(vecMarginRequirement);
-  } else return false;
+  // if (!vecNum.empty()) {
+  //   numerator = DecompressInteger(vecMarginRequirement);
+  // } else return false;
+  //
+  // if (!vecDen.empty()) {
+  //   denominator = DecompressInteger(vecMarginRequirement);
+  // } else return false;
 
 
   if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
   {
       PrintToLog("\t version: %d\n", version);
       PrintToLog("\t messageType: %d\n",type);
-      PrintToLog("\t numerator: %d\n", numerator);
-      PrintToLog("\t denominator: %d\n", denominator);
+      // PrintToLog("\t numerator: %d\n", numerator);
+      // PrintToLog("\t denominator: %d\n", denominator);
       PrintToLog("\t blocks until expiration : %d\n", blocks_until_expiration);
       PrintToLog("\t notional size : %d\n", notional_size);
       PrintToLog("\t collateral currency: %d\n", collateral_currency);
@@ -3161,27 +3165,42 @@ int CMPTransaction::logicMath_ContractDexTrade()
   //     return PKT_ERROR_KYC -10;
   //
 
-  PrintToLog("%s(): fco_init_block: %d; fco_blocks_until_expiration: %d; actual block: %d\n",__func__,pfuture->fco_init_block,pfuture->fco_blocks_until_expiration,block);
+  // PrintToLog("%s(): fco_init_block: %d; fco_blocks_until_expiration: %d; actual block: %d\n",__func__,pfuture->fco_init_block,pfuture->fco_blocks_until_expiration,block);
 
   if (block > pfuture->fco_init_block + static_cast<int>(pfuture->fco_blocks_until_expiration) || block < pfuture->fco_init_block)
+  {
+      PrintToLog("%s(): ERROR: Contract expirated \n", __func__);
       return PKT_ERROR_SP -38;
+  }
 
 
   uint32_t colateralh = pfuture->fco_collateral_currency;
   int64_t marginRe = static_cast<int64_t>(pfuture->fco_margin_requirement);
   int64_t nBalance = getMPbalance(sender, colateralh, BALANCE);
 
+  bool inverse_quoted = pfuture->fco_quoted;
+
   if(msc_debug_contractdex_tx) PrintToLog("%s():colateralh: %d, marginRe: %d, nBalance: %d\n",__func__, colateralh, marginRe, nBalance);
 
   // // rational_t conv = notionalChange(pfuture->fco_propertyId);
 
-  int64_t uPrice = 1;
-  (inverse_quoted == 1) ? uPrice = market_priceMap[numerator][denominator] : uPrice = 1;
+  int64_t uPrice;
 
+  PrintToLog("inverse quoted: %d\n", inverse_quoted);
+
+  if(inverse_quoted  && market_priceMap[numerator][denominator] > 0)
+  {
+      uPrice = market_priceMap[numerator][denominator];
+
+  } else if (!inverse_quoted)
+      uPrice = 1;
 
   rational_t conv = rational_t(1,1);
   int64_t num = conv.numerator().convert_to<int64_t>();
   int64_t den = conv.denominator().convert_to<int64_t>();
+
+  PrintToLog("%s(): checkpoint  1: num: %d, den: %d, marginRe: %d,leverage: %d, uPrice: %d\n",__func__, num, den, marginRe, leverage, uPrice);
+
   arith_uint256 amountTR = (ConvertTo256(amount) * ConvertTo256(marginRe)*ConvertTo256(num))/(ConvertTo256(den) * ConvertTo256(leverage) * ConvertTo256(uPrice));
   int64_t amountToReserve = ConvertTo64(amountTR);
 
@@ -3219,6 +3238,7 @@ int CMPTransaction::logicMath_ContractDexTrade()
   /*********************************************/
   t_tradelistdb->recordNewTrade(txid, sender, id_contract, desired_property, block, tx_idx, 0);
   int rc = ContractDex_ADD(sender, id_contract, amount, block, txid, tx_idx, effective_price, trading_action,0);
+
 
   return rc;
 }
@@ -3990,8 +4010,6 @@ int CMPTransaction::logicMath_CreateOracleContract()
   newSP.collateral_currency = collateral_currency;
   newSP.margin_requirement = margin_requirement;
   newSP.init_block = block;
-  newSP.numerator = numerator;
-  newSP.denominator = denominator;
   newSP.ecosystemSP = ecosystem;
   newSP.attribute_type = attribute_type;
   newSP.backup_address = receiver;
@@ -4874,6 +4892,7 @@ struct FutureContractObject *getFutureContractObject(std::string identifier)
 	      pt_fco->fco_propertyId = propertyId;
         pt_fco->fco_prop_type = sp.prop_type;
         pt_fco->fco_expirated = sp.expirated;
+        pt_fco->fco_quoted = sp.inverse_quoted;
 	    }
 	  else if ( sp.isPegged() && sp.name == identifier )
 	    {
@@ -4924,7 +4943,7 @@ struct TokenDataByName *getTokenDataById(uint32_t propertyId)
   struct TokenDataByName *pt_data = new TokenDataByName;
 
   LOCK(cs_tally);
-  uint32_t nextSPID = _my_sps->peekNextSPID(1);
+  // uint32_t nextSPID = _my_sps->peekNextSPID(1);
   CMPSPInfo::Entry sp;
   if (_my_sps->getSP(propertyId, sp))
 	{

@@ -2534,8 +2534,8 @@ bool CallingSettlement()
         if(!mastercore::isPropertyContract(propertyId))
             continue;
 
-        int64_t twap = mastercore::getOracleTwap(5,3);
-        PrintToLog("%s():twap3 for Oracles: %d\n",__func__,twap);
+        // int64_t twap = mastercore::getOracleTwap(5,3);
+        // PrintToLog("%s():twap3 for Oracles: %d\n",__func__,twap);
 
 
         if (nBlockNow%BlockS == 0 && nBlockNow != 0 && path_elef.size() != 0 && lastBlockg != nBlockNow)
@@ -2568,7 +2568,7 @@ bool CallingSettlement()
 
 
             if(msc_debug_handler_tx) PrintToLog("\nTWAP Prices = \n");
-            struct FutureContractObject *pfuture = getFutureContractObject("ALL F18");
+            // struct FutureContractObject *pfuture = getFutureContractObject("ALL F18");
             // uint32_t property_traded = pfuture->fco_propertyId;
 
             rational_t twap_priceRatMDEx(num_mdex/COIN, mdextwap_vec[property_num][property_den].size());
@@ -2854,7 +2854,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   /***********************************************************************/
   /** Calling The Settlement Algorithm **/
   /* NOTE: now we are checking all contracts */
-  CallingSettlement();
+  // CallingSettlement();
 
    /***********************************************************************/
   /** Vesting Tokens to Balance **/
@@ -2884,15 +2884,21 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
 
 
           int deadline = sp.init_block + expirationBlock;
+
+          PrintToLog("%s(): deadline: %d, lastBlockg : %d\n",__func__,deadline,lastBlockg);
+
           if ( tradeBlock != 0 && deadline != 0 ) checkExpiration = tradeBlock == deadline ? 1 : 0;
 
           if (checkExpiration)
           {
+              sp.expirated = true; // into entry register
+              PrintToLog("%s(): EXPIRATED!!!!!!!!!!!!!!!!!!!!!!!!!!!\n",__func__);
+              
               idx_expiration += 1;
               if ( idx_expiration == 2 )
               {
                   expirationAchieve = 1;
-                  sp.expirated = true; // into entry register
+
               } else expirationAchieve = 0;
           } else expirationAchieve = 0;
       }
@@ -4408,7 +4414,7 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
 
   int64_t volumeToCompare = 0;
   bool perpetualBool = callingPerpetualSettlement(globalPNLALL_DUSD, globalVolumeALL_DUSD, volumeToCompare);
-  if (perpetualBool) PrintToLog("Perpetual Settlement Online");
+  if (perpetualBool) PrintToLog("%s():Perpetual Settlement Online\n",__func__);
 
   if (msc_debug_tradedb) PrintToLog("\nglobalPNLALL_DUSD = %d, globalVolumeALL_DUSD = %d, contractId = %d\n", globalPNLALL_DUSD, globalVolumeALL_DUSD, contractId);
 
