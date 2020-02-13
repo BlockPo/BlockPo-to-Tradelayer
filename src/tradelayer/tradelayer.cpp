@@ -2893,7 +2893,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
           {
               sp.expirated = true; // into entry register
               PrintToLog("%s(): EXPIRATED!!!!!!!!!!!!!!!!!!!!!!!!!!!\n",__func__);
-              
+
               idx_expiration += 1;
               if ( idx_expiration == 2 )
               {
@@ -4396,6 +4396,7 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   globalVolumeALL_DUSD += nCouldBuy0;
 
 
+  PrintToLog("%s(): BEFORE SAVING TXT FILES !!!!\n",__func__);
 
   arith_uint256 volumeALL256_t = mastercore::ConvertTo256(NotionalSize)*mastercore::ConvertTo256(nCouldBuy0)/COIN;
   if (msc_debug_tradedb) PrintToLog("ALLs involved in the traded 256 Bits ~ %s ALL\n", volumeALL256_t.ToString());
@@ -4420,14 +4421,14 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
 
   std::fstream fileglobalPNLALL_DUSD;
   fileglobalPNLALL_DUSD.open ("globalPNLALL_DUSD.txt", std::fstream::in | std::fstream::out | std::fstream::app);
-  if ( contractId == ALL_PROPERTY_TYPE_NATIVE_CONTRACT )
-    saveDataGraphs(fileglobalPNLALL_DUSD, std::to_string(globalPNLALL_DUSD));
+  // if ( contractId == ALL_PROPERTY_TYPE_NATIVE_CONTRACT )
+  saveDataGraphs(fileglobalPNLALL_DUSD, std::to_string(globalPNLALL_DUSD));
   fileglobalPNLALL_DUSD.close();
 
   std::fstream fileglobalVolumeALL_DUSD;
   fileglobalVolumeALL_DUSD.open ("globalVolumeALL_DUSD.txt", std::fstream::in | std::fstream::out | std::fstream::app);
-  if ( contractId == ALL_PROPERTY_TYPE_NATIVE_CONTRACT )
-    saveDataGraphs(fileglobalVolumeALL_DUSD, std::to_string(FormatShortIntegerMP(globalVolumeALL_DUSD)));
+  // if ( contractId == ALL_PROPERTY_TYPE_NATIVE_CONTRACT )
+  saveDataGraphs(fileglobalVolumeALL_DUSD, std::to_string(FormatShortIntegerMP(globalVolumeALL_DUSD)));
   fileglobalVolumeALL_DUSD.close();
 
   Status status;
