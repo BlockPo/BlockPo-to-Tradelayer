@@ -1132,8 +1132,8 @@ bool mastercore::ContractDex_Fees(std::string addressTaker,std::string addressMa
 
     if (sp.prop_type == ALL_PROPERTY_TYPE_ORACLE_CONTRACT)
     {
-        arith_uint256 uTakerFee = (ConvertTo256(nCouldBuy) * ConvertTo256(marginRe) * ConvertTo256(25)) / (ConvertTo256(1000) * ConvertTo256(COIN));  //2.5%
-        arith_uint256 uMakerFee = (ConvertTo256(nCouldBuy) * ConvertTo256(marginRe)) / (ConvertTo256(100) * ConvertTo256(COIN));  // 1%
+        arith_uint256 uTakerFee = (ConvertTo256(nCouldBuy) * ConvertTo256(marginRe) * ConvertTo256(25)) / (ConvertTo256(1000) * ConvertTo256(COIN) *ConvertTo256(BASISPOINT));  // 2.5% basis point
+        arith_uint256 uMakerFee = (ConvertTo256(nCouldBuy) * ConvertTo256(marginRe)) / (ConvertTo256(100) * ConvertTo256(COIN) * ConvertTo256(BASISPOINT));  // 1% basis point
 
         cacheFee = ConvertTo64(uMakerFee / ConvertTo256(2));
         takerFee = ConvertTo64(uTakerFee);
@@ -1141,12 +1141,12 @@ bool mastercore::ContractDex_Fees(std::string addressTaker,std::string addressMa
 
         if (msc_debug_contractdex_fees) PrintToLog("%s: oracles cacheFee: %d, oracles takerFee: %d, oracles makerFee: %d\n",__func__,cacheFee, takerFee, makerFee);
 
-        // 0.5% to oracle maintaineer
+        // 0.5% basis point to oracle maintaineer
         update_tally_map(sp.issuer,sp.collateral_currency, cacheFee,BALANCE);
 
         if (sp.collateral_currency == 4) //ALLS
         {
-          // 0.5% to feecache
+          // 0.5% basis point to feecache
           cachefees[sp.collateral_currency] += cacheFee;
 
         }else {
@@ -1170,8 +1170,8 @@ bool mastercore::ContractDex_Fees(std::string addressTaker,std::string addressMa
 
     } else {      //natives
 
-          arith_uint256 uTakerFee = (ConvertTo256(nCouldBuy) * ConvertTo256(marginRe)) / (ConvertTo256(100) * ConvertTo256(COIN));
-          arith_uint256 uMakerFee = (ConvertTo256(nCouldBuy) * ConvertTo256(marginRe) * ConvertTo256(5)) / (ConvertTo256(1000) * ConvertTo256(COIN));
+          arith_uint256 uTakerFee = (ConvertTo256(nCouldBuy) * ConvertTo256(marginRe)) / (ConvertTo256(100) * ConvertTo256(COIN) * ConvertTo256(BASISPOINT));
+          arith_uint256 uMakerFee = (ConvertTo256(nCouldBuy) * ConvertTo256(marginRe) * ConvertTo256(5)) / (ConvertTo256(1000) * ConvertTo256(COIN) * ConvertTo256(BASISPOINT));
 
           takerFee = ConvertTo64(uTakerFee);
           makerFee = ConvertTo64(uMakerFee);
@@ -1185,7 +1185,7 @@ bool mastercore::ContractDex_Fees(std::string addressTaker,std::string addressMa
     update_tally_map(addressMaker,sp.collateral_currency, makerFee,BALANCE);
 
     //sum check
-    assert(takerFee == makerFee + 3*cacheFee); // 2.5% = 1% +3* 0.5 %
+    assert(takerFee == makerFee + 3*cacheFee); // 2.5% = 1% + 3*0.5%
 
     return true;
 
@@ -1198,9 +1198,9 @@ bool mastercore::MetaDEx_Fees(const CMPMetaDEx *pnew,const CMPMetaDEx *pold, int
        return false;
     }
 
-    arith_uint256 uTakerFee = (ConvertTo256(buyer_amountGot) * ConvertTo256(5)) / ConvertTo256(100);
-    arith_uint256 uMakerFee = (ConvertTo256(buyer_amountGot) * ConvertTo256(4)) / ConvertTo256(100);
-    arith_uint256 uCacheFee = ConvertTo256(buyer_amountGot) / ConvertTo256(100);
+    arith_uint256 uTakerFee = (ConvertTo256(buyer_amountGot) * ConvertTo256(5)) / (ConvertTo256(100) * ConvertTo256(BASISPOINT));
+    arith_uint256 uMakerFee = (ConvertTo256(buyer_amountGot) * ConvertTo256(4)) / (ConvertTo256(100) * ConvertTo256(BASISPOINT));
+    arith_uint256 uCacheFee = ConvertTo256(buyer_amountGot) / (ConvertTo256(100) * ConvertTo256(BASISPOINT));
 
     int64_t takerFee = ConvertTo64(uTakerFee);
     int64_t makerFee = ConvertTo64(uMakerFee);
