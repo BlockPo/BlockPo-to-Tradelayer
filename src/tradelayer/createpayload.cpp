@@ -612,7 +612,7 @@ std::vector<unsigned char> CreatePayload_MetaDExTrade(uint32_t propertyIdForSale
 }
 
 /* Tx 103 */
-std::vector<unsigned char> CreatePayload_CreateOracleContract(uint8_t ecosystem, uint32_t num, uint32_t den, std::string name, uint32_t blocks_until_expiration, uint32_t notional_size, uint32_t collateral_currency, uint32_t margin_requirement, uint8_t inverse)
+std::vector<unsigned char> CreatePayload_CreateOracleContract(uint8_t ecosystem, std::string name, uint32_t blocks_until_expiration, uint32_t notional_size, uint32_t collateral_currency, uint32_t margin_requirement, uint8_t inverse)
 {
   std::vector<unsigned char> payload;
 
@@ -622,8 +622,6 @@ std::vector<unsigned char> CreatePayload_CreateOracleContract(uint8_t ecosystem,
   std::vector<uint8_t> vecMessageType = CompressInteger((uint64_t)messageType);
   std::vector<uint8_t> vecMessageVer = CompressInteger((uint64_t)messageVer);
   std::vector<uint8_t> vecEcosystem = CompressInteger((uint64_t)ecosystem);
-  std::vector<uint8_t> vecNum = CompressInteger((uint64_t)num);
-  std::vector<uint8_t> vecDen = CompressInteger((uint64_t)den);
   std::vector<uint8_t> vecBlocksUntilExpiration = CompressInteger((uint64_t)blocks_until_expiration);
   std::vector<uint8_t> vecNotionalSize = CompressInteger((uint64_t)notional_size);
   std::vector<uint8_t> vecCollateralCurrency = CompressInteger((uint64_t)collateral_currency);
@@ -634,8 +632,6 @@ std::vector<unsigned char> CreatePayload_CreateOracleContract(uint8_t ecosystem,
   payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
   payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
   payload.insert(payload.end(), vecEcosystem.begin(), vecEcosystem.end());
-  payload.insert(payload.end(), vecNum.begin(), vecNum.end());
-  payload.insert(payload.end(), vecDen.begin(), vecDen.end());
   payload.insert(payload.end(), name.begin(), name.end());
   payload.push_back('\0');
   payload.insert(payload.end(), vecBlocksUntilExpiration.begin(), vecBlocksUntilExpiration.end());

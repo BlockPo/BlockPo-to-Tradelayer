@@ -496,6 +496,7 @@ struct FutureContractObject
   uint32_t fco_propertyId;
   uint16_t fco_prop_type;
   bool fco_expirated;
+  bool fco_quoted;
 
   int fco_init_block;
   std::string fco_name;
@@ -539,7 +540,7 @@ class BlockClass
    {
      m_BlockInit = p.m_BlockInit; m_BlockNow = p.m_BlockNow;
    }
-   
+
    return *this;
  }
  void SendNodeReward(std::string sender);
