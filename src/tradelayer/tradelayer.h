@@ -53,7 +53,7 @@ int const MAX_STATE_HISTORY = 50;
 #define SP_STRING_FIELD_LEN 256
 
 // Trade Layer Transaction Class
-#define NO_MARKER    0
+#define NO_MARKER  0
 #define TL_CLASS_A 1
 #define TL_CLASS_B 2
 #define TL_CLASS_C 3 // uncompressed OP_RETURN
@@ -69,6 +69,9 @@ int const MAX_STATE_HISTORY = 50;
 #define MAX_CLASS_D_SEARCH_BYTES   200
 
 #define COIN256   10000000000000000
+
+// basis point factor
+#define BASISPOINT 100
 
 // Oracle twaps blocks
 #define oBlocks 9
