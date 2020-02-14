@@ -71,7 +71,7 @@ int const MAX_STATE_HISTORY = 50;
 #define COIN256   10000000000000000
 
 // basis point factor
-#define int64_t BASISPOINT 100
+#define BASISPOINT 100
 
 // Oracle twaps blocks
 #define oBlocks 9
