@@ -367,6 +367,7 @@ OfferMap mastercore::my_offers;
 AcceptMap mastercore::my_accepts;
 CMPSPInfo *mastercore::_my_sps;
 CrowdMap mastercore::my_crowds;
+
 // this is the master list of all amounts for all addresses for all properties, map is unsorted
 std::unordered_map<std::string, CMPTally> mastercore::mp_tally_map;
 
@@ -2491,30 +2492,30 @@ int mastercore_shutdown()
 
 // NOTE: change this function using vwap instead of twap
 // for oracles we need vwap for last 3 blocks but using the prices map (we have that yet)
-void mastercore::twapForLiquidation(uint32_t contractId, int blocks)
-{
-      uint64_t sum = 0;
-      int count = 0;
-      std::map<uint32_t, std::vector<uint64_t>>::iterator it = cdextwap_vec.find(contractId);
-      std::vector<uint64_t> auxVec = it->second;
-
-      for (std::vector<uint64_t>::iterator itt = auxVec.begin(); itt != auxVec.end(); ++itt)
-      {
-           // if(count >= blocks)
-           //     break;
-
-           sum += *(itt);
-           count++;
-           PrintToLog("%s(): count : %d\n",__func__,count);
-      }
-
-      PrintToLog("%s(): sum : %d\n",__func__,sum);
-      rational_t twap_priceRatCDEx(sum/COIN, blocks);
-      int64_t twap_priceCDEx = mastercore::RationalToInt64(twap_priceRatCDEx);
-      PrintToLog("%s():\nTvwap Price CDEx = %s\n",__func__, FormatDivisibleMP(twap_priceCDEx));
-      cdex_twap_liq[contractId] = twap_priceCDEx;
-
-  }
+// void mastercore::twapForLiquidation(uint32_t contractId, int blocks)
+// {
+//       uint64_t sum = 0;
+//       int count = 0;
+//       std::map<uint32_t, std::vector<uint64_t>>::iterator it = cdextwap_vec.find(contractId);
+//       std::vector<uint64_t> auxVec = it->second;
+//
+//       for (std::vector<uint64_t>::iterator itt = auxVec.begin(); itt != auxVec.end(); ++itt)
+//       {
+//            // if(count >= blocks)
+//            //     break;
+//
+//            sum += *(itt);
+//            count++;
+//            PrintToLog("%s(): count : %d\n",__func__,count);
+//       }
+//
+//       PrintToLog("%s(): sum : %d\n",__func__,sum);
+//       rational_t twap_priceRatCDEx(sum/COIN, blocks);
+//       int64_t twap_priceCDEx = mastercore::RationalToInt64(twap_priceRatCDEx);
+//       PrintToLog("%s():\nTvwap Price CDEx = %s\n",__func__, FormatDivisibleMP(twap_priceCDEx));
+//       cdex_twap_liq[contractId] = twap_priceCDEx;
+//
+//   }
 
 /**
  * Calling for Settement (if any)
@@ -2533,10 +2534,6 @@ bool CallingSettlement()
     {
         if(!mastercore::isPropertyContract(propertyId))
             continue;
-
-        // int64_t twap = mastercore::getOracleTwap(5,3);
-        // PrintToLog("%s():twap3 for Oracles: %d\n",__func__,twap);
-
 
         if (nBlockNow%BlockS == 0 && nBlockNow != 0 && path_elef.size() != 0 && lastBlockg != nBlockNow)
         {

@@ -913,13 +913,13 @@ UniValue tl_create_oraclecontract(const JSONRPCRequest& request)
 			"\nArguments:\n"
 			"1. oracle address            (string, required) the address to send from (admin)\n"
 			"2. ecosystem                 (string, required) the ecosystem to create the tokens in (1 for main ecosystem, 2 for test ecosystem)\n"
-			"5. name                      (string, required) the name of the new tokens to create\n"
-			"6. blocks until expiration   (number, required) life of contract, in blocks\n"
-			"7. notional size             (number, required) notional size\n"
-			"8. collateral currency       (number, required) collateral currency\n"
-			"9. margin requirement        (number, required) margin requirement\n"
-      "10. backup address            (string, required) backup admin address contract\n"
-      "11. quoting                  (number, required) 0: inverse quoting contract, 1: normal quoting\n"
+			"3. name                      (string, required) the name of the new tokens to create\n"
+			"4. blocks until expiration   (number, required) life of contract, in blocks\n"
+			"5. notional size             (number, required) notional size\n"
+			"6. collateral currency       (number, required) collateral currency\n"
+			"7. margin requirement        (number, required) margin requirement\n"
+      "8. backup address            (string, required) backup admin address contract\n"
+      "9. quoting                  (number, required) 0: inverse quoting contract, 1: normal quoting\n"
 
 			"\nResult:\n"
 			"\"hash\"                  (string) the hex-encoded transaction hash\n"
@@ -931,8 +931,6 @@ UniValue tl_create_oraclecontract(const JSONRPCRequest& request)
 
   std::string fromAddress = ParseAddress(request.params[0]);
   uint8_t ecosystem = ParseEcosystem(request.params[1]);
-  // uint32_t num = ParsePropertyId(request.params[2]);
-  // uint32_t den = ParsePropertyId(request.params[3]);
   std::string name = ParseText(request.params[2]);
   uint32_t blocks_until_expiration = request.params[3].get_int();
   uint32_t notional_size = ParseAmount32t(request.params[4]);
