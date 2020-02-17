@@ -4015,6 +4015,9 @@ int CMPTransaction::logicMath_CreateOracleContract()
   newSP.backup_address = receiver;
   newSP.expirated = false;
   newSP.inverse_quoted = inverse_quoted;
+  newSP.oracle_high = 0;
+  newSP.oracle_low = 0;
+  newSP.oracle_close = 0;
 
   const uint32_t propertyId = _my_sps->putSP(ecosystem, newSP);
   assert(propertyId > 0);
