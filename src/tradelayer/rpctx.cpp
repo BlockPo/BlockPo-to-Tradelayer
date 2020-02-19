@@ -1578,7 +1578,7 @@ UniValue tl_setoracle(const JSONRPCRequest& request)
 {
     if (request.params.size() != 5)
         throw runtime_error(
-            "tl_setoracle \"fromaddress\" \"contract name\" price\n"
+            "tl_setoracle \"fromaddress\" \"contract name\" \"high\" \"low \" \"close\" \n"
 
             "\nSet the price for an oracle address.\n"
 
@@ -1617,7 +1617,7 @@ UniValue tl_setoracle(const JSONRPCRequest& request)
 
 
     // create a payload for the transaction
-    std::vector<unsigned char> payload = CreatePayload_Set_Oracle(contractId,high,low, close);
+    std::vector<unsigned char> payload = CreatePayload_Set_Oracle(contractId, high, low, close);
 
     // request the wallet build the transaction (and if needed commit it)
     uint256 txid;

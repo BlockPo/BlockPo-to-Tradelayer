@@ -133,9 +133,9 @@ void OracleToJSON(const CMPSPInfo::Entry& sProperty, UniValue& property_obj)
   property_obj.push_back(Pair("collateral currency", std::to_string(sProperty.collateral_currency)));
   property_obj.push_back(Pair("margin requirement", FormatDivisibleShortMP(sProperty.margin_requirement)));
   property_obj.push_back(Pair("blocks until expiration", std::to_string(sProperty.blocks_until_expiration)));
-  property_obj.push_back(Pair("last high price", std::to_string(sProperty.oracle_high)));
-  property_obj.push_back(Pair("last low price", std::to_string(sProperty.oracle_low)));
-  property_obj.push_back(Pair("last close price", std::to_string(sProperty.oracle_close)));
+  property_obj.push_back(Pair("last high price", FormatDivisibleShortMP(sProperty.oracle_high)));
+  property_obj.push_back(Pair("last low price", FormatDivisibleShortMP(sProperty.oracle_low)));
+  property_obj.push_back(Pair("last close price",FormatDivisibleShortMP(sProperty.oracle_close)));
 }
 
 bool BalanceToJSON(const std::string& address, uint32_t property, UniValue& balance_obj, bool divisible)
