@@ -3159,6 +3159,8 @@ int CMPTransaction::logicMath_ContractDexTrade()
   struct FutureContractObject *pfuture = getFutureContractObject(name_traded);
   id_contract = pfuture->fco_propertyId;
 
+  uint32_t expiration = pfuture->fco_blocks_until_expiration;
+
   (pfuture->fco_prop_type == ALL_PROPERTY_TYPE_NATIVE_CONTRACT) ? result = 5 : result = 6;
 
   // if(!t_tradelistdb->checkKYCRegister(sender,result))
@@ -3167,7 +3169,7 @@ int CMPTransaction::logicMath_ContractDexTrade()
 
   // PrintToLog("%s(): fco_init_block: %d; fco_blocks_until_expiration: %d; actual block: %d\n",__func__,pfuture->fco_init_block,pfuture->fco_blocks_until_expiration,block);
 
-  if (block > pfuture->fco_init_block + static_cast<int>(pfuture->fco_blocks_until_expiration) || block < pfuture->fco_init_block)
+  if (block > pfuture->fco_init_block + static_cast<int>(pfuture->fco_blocks_until_expiration) || block < pfuture->fco_init_block || expiration > 0)
   {
       PrintToLog("%s(): ERROR: Contract expirated \n", __func__);
       return PKT_ERROR_SP -38;
