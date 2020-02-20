@@ -2528,12 +2528,15 @@ bool CallingSettlement()
 
     int nBlockNow = GetHeight();
 
-    uint32_t nextSPID = _my_sps->peekNextSPID(1);
+    // uint32_t nextSPID = _my_sps->peekNextSPID(1);
 
-    for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
-    {
-        if(!mastercore::isPropertyContract(propertyId))
-            continue;
+    // for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
+    // {
+
+        int32_t propertyId = 5;
+
+        // if(!mastercore::isPropertyContract(propertyId))
+        //     continue;
 
         if (nBlockNow%BlockS == 0 && nBlockNow != 0 && path_elef.size() != 0 && lastBlockg != nBlockNow)
         {
@@ -2576,8 +2579,8 @@ bool CallingSettlement()
             /** Interest formula:  **/
 
             /** futures don't use this formula **/
-            if (sp.prop_type == ALL_PROPERTY_TYPE_NATIVE_CONTRACT  || sp.prop_type == ALL_PROPERTY_TYPE_ORACLE_CONTRACT)
-                continue;
+            // if (sp.prop_type == ALL_PROPERTY_TYPE_NATIVE_CONTRACT  || sp.prop_type == ALL_PROPERTY_TYPE_ORACLE_CONTRACT)
+            //     continue;
 
             int64_t twap_price = 0;
 
@@ -2597,7 +2600,7 @@ bool CallingSettlement()
             //NOTE: We need num and den for contract as a property of itself in sp.h
             settlement_algorithm_fifo(M_file, interest, twap_priceCDEx, propertyId, sp.collateral_currency, sp.numerator, sp.denominator, sp.inverse_quoted);
         }
-    }
+    // }
 
     /**********************************************************************/
     /** Unallocating Dynamic Memory **/
@@ -6150,16 +6153,14 @@ bool mastercore::SanityChecks(string receiver, int aBlock)
     int timeFrame = aBlock - params.MSC_VESTING_BLOCK;
 
     PrintToLog("%s(): timeFrame: %d\n", __func__,timeFrame);
+
     // is this the first transaction ?
     for(auto it = vestingAddresses.begin(); it != vestingAddresses.end(); ++it)
     {
-        if(receiver == *(it))
-        {
-            if(timeFrame > ONE_YEAR)
-                return true;
-            else
-                return false;
-        }
+        if(receiver == *(it) && timeFrame > ONE_YEAR)
+            return true;
+        else
+            return false;
      }
 
      return true;

@@ -3167,9 +3167,9 @@ int CMPTransaction::logicMath_ContractDexTrade()
   //     return PKT_ERROR_KYC -10;
   //
 
-  // PrintToLog("%s(): fco_init_block: %d; fco_blocks_until_expiration: %d; actual block: %d\n",__func__,pfuture->fco_init_block,pfuture->fco_blocks_until_expiration,block);
+  PrintToLog("%s(): fco_init_block: %d; fco_blocks_until_expiration: %d; actual block: %d\n",__func__,pfuture->fco_init_block,pfuture->fco_blocks_until_expiration,block);
 
-  if (block > pfuture->fco_init_block + static_cast<int>(pfuture->fco_blocks_until_expiration) || block < pfuture->fco_init_block && expiration > 0)
+  if ((block > pfuture->fco_init_block + static_cast<int>(pfuture->fco_blocks_until_expiration) || block < pfuture->fco_init_block) && expiration > 0)
   {
       PrintToLog("%s(): ERROR: Contract expirated \n", __func__);
       return PKT_ERROR_SP -38;
