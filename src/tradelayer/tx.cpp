@@ -1121,25 +1121,8 @@ bool CMPTransaction::interpret_ContractDexCancelEcosystem()
   int i = 0;
   std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
-
-  // PrintToLog("i after two elements: %d\n",i);
-  const char* p = i + (char*) &pkt;
-  std::vector<std::string> spstr;
-  for (int j = 0; j < 1; j++) {
-    spstr.push_back(std::string(p));
-    p += spstr.back().size() + 1;
-  }
-
-  if (isOverrun(p)) {
-    PrintToLog("%s(): rejected: malformed string value(s)\n", __func__);
-    return false;
-  }
-
-  int j = 0;
-  memcpy(name_traded, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(name_traded)-1)); j++;
-  i = i + strlen(name_traded) + 1;
-
   std::vector<uint8_t> vecEcosystemBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecContractIdBytes = GetNextVarIntBytes(i);
 
   if (!vecTypeBytes.empty()) {
     type = DecompressInteger(vecTypeBytes);
@@ -1153,12 +1136,17 @@ bool CMPTransaction::interpret_ContractDexCancelEcosystem()
     ecosystem = DecompressInteger(vecEcosystemBytes);
   } else return false;
 
-  if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
-  {
+  if (!vecContractIdBytes.empty()) {
+    contractId = DecompressInteger(vecContractIdBytes);
+  } else return false;
+
+  // if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+  // {
      PrintToLog("\t version: %d\n", version);
      PrintToLog("\t messageType: %d\n",type);
      PrintToLog("\t ecosystem: %d\n", ecosystem);
-  }
+     PrintToLog("\t contractId: %d\n", contractId);
+  // }
 
   return true;
 }
@@ -3206,6 +3194,9 @@ int CMPTransaction::logicMath_ContractDexTrade()
   arith_uint256 amountTR = (ConvertTo256(amount) * ConvertTo256(marginRe)*ConvertTo256(num))/(ConvertTo256(den) * ConvertTo256(leverage) * ConvertTo256(uPrice));
   int64_t amountToReserve = ConvertTo64(amountTR);
 
+  PrintToLog("%s(): amountToReserve %d\n",__func__,amountToReserve);
+
+
   if (nBalance < amountToReserve || nBalance == 0)
     {
       PrintToLog("%s(): rejected: sender %s has insufficient balance for contracts %d [%s < %s] \n",
@@ -3263,8 +3254,6 @@ int CMPTransaction::logicMath_ContractDexCancelEcosystem()
     return (PKT_ERROR_SP -21);
   }
 
-  struct FutureContractObject *pfuture = getFutureContractObject(name_traded);
-  uint32_t contractId = pfuture->fco_propertyId;
 
   int rc = ContractDex_CANCEL_EVERYTHING(txid, block, sender, ecosystem, contractId);
 

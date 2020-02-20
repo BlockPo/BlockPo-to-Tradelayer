@@ -2117,20 +2117,20 @@ int mastercore::ContractDex_CANCEL_EVERYTHING(const uint256& txid, unsigned int 
 	              arith_uint256 amountMargin = (ConvertTo256(amountForSale) * ConvertTo256(marginRe) * ConvertTo256(num) / (ConvertTo256(den) * ConvertTo256(factorE)));
 	              int64_t redeemed = ConvertTo64(amountMargin);
 
-                if (msc_debug_contract_cancel_every)
-                {
+                // if (msc_debug_contract_cancel_every)
+                // {
     	              PrintToLog("collateral currency id of contract : %d\n",collateralCurrency);
     	              PrintToLog("margin requirement of contract : %d\n",marginRe);
     	              PrintToLog("amountForSale: %d\n",amountForSale);
     	              PrintToLog("Address: %d\n",addr);
     	              PrintToLog("--------------------------------------------\n");
-                }
+                // }
 	              // move from reserve to balance the collateral
 	              if (balance > redeemed && balance > 0 && redeemed > 0)
-			{
+			          {
 	                  assert(update_tally_map(addr, collateralCurrency, redeemed, BALANCE));
-	                  assert(update_tally_map(addr, collateralCurrency, -redeemed, CONTRACTDEX_RESERVE));
-			}
+	                  assert(update_tally_map(addr, collateralCurrency, -redeemed, CONTRACTDEX_MARGIN));
+			          }
 
 	              bValid = true;
 	              // p_txlistdb->recordContractDexCancelTX(txid, it->getHash(), bValid, block, it->getProperty(), it->getAmountForSale
