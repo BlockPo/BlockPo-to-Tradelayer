@@ -44,14 +44,68 @@ BOOST_AUTO_TEST_CASE(requirebalance)
     BOOST_CHECK_EQUAL(99999,balanceUnconfirmed);
 }
 
-// BOOST_AUTO_TEST_CASE(payload_send_all)
-// {
-//     // Send to owners [type 4, version 0]
-//     std::vector<unsigned char> vch = CreatePayload_SendAll(
-//         static_cast<uint8_t>(2));          // ecosystem: Test
-//
-//     BOOST_CHECK_EQUAL(HexStr(vch), "000402");
-// }
+// no inverse quoted
+BOOST_AUTO_TEST_CASE(collateral)
+{
+    int64_t uPrice = 100000000; // 1
+    uint32_t propertyId = 4;
+    int64_t contract_amount = 2000;
+    int64_t amount = 400000000000; // 4000 units
+    uint64_t leverage = 2;
+    std::string address = "moCYruRphhYgejzH75bxWD49qRFan8eGES";
+    uint32_t margin_requirement = 100000000;  // 1
+
+    BOOST_CHECK(mastercore::update_tally_map(address, propertyId, amount, BALANCE));
+
+    arith_uint256 amountTR = (ConvertTo256(COIN) * mastercore::ConvertTo256(contract_amount) * mastercore::ConvertTo256(margin_requirement)) / (mastercore::ConvertTo256(leverage) * mastercore::ConvertTo256(uPrice));
+    int64_t amountToReserve = mastercore::ConvertTo64(amountTR);
+
+    int64_t nBalance = getMPbalance(address, propertyId, BALANCE);
+
+    BOOST_CHECK_EQUAL(400000000000,nBalance);
+
+    BOOST_CHECK_EQUAL(100000000000,amountToReserve);
+
+    BOOST_CHECK(nBalance >= amountToReserve && nBalance > 0);
+
+    int64_t balanceUnconfirmed = getUserAvailableMPbalance(address, propertyId);
+
+    BOOST_CHECK_EQUAL(400000000000,balanceUnconfirmed);
+
+}
+
+// no inverse quoted
+BOOST_AUTO_TEST_CASE(collateral_inverse_quoted)
+{
+    uint32_t propertyId = 4;
+    int64_t contract_amount = 2000;
+    int64_t amount = 400000000000; // 4000 units
+    uint64_t leverage = 2;
+    std::string address = "moCYruRphhYgejzH75bxWD49qRFan8eGES";
+    rational_t conv = rational_t(1,1);
+    uint32_t margin_requirement = 100000000;  // 1
+
+    // BTC/dUSD , 1 BTC = $10000
+    int64_t uPrice = 1000000000000;
+
+    BOOST_CHECK(mastercore::update_tally_map(address, propertyId, amount, BALANCE));
+
+    arith_uint256 amountTR = (ConvertTo256(COIN) * mastercore::ConvertTo256(contract_amount) * mastercore::ConvertTo256(margin_requirement)) / (mastercore::ConvertTo256(leverage) * mastercore::ConvertTo256(uPrice));
+    int64_t amountToReserve = mastercore::ConvertTo64(amountTR);
+
+    int64_t nBalance = getMPbalance(address, propertyId, BALANCE);
+
+    BOOST_CHECK_EQUAL(400000000000,nBalance);
+
+    BOOST_CHECK_EQUAL(10000000,amountToReserve);
+
+    BOOST_CHECK(nBalance >= amountToReserve && nBalance > 0);
+
+    int64_t balanceUnconfirmed = getUserAvailableMPbalance(address, propertyId);
+
+    BOOST_CHECK_EQUAL(400000000000,balanceUnconfirmed);
+
+}
 
 
 
