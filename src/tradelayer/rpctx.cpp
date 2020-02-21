@@ -1036,7 +1036,7 @@ UniValue tl_cancelallcontractsbyaddress(const JSONRPCRequest& request)
 			"\nArguments:\n"
 			"1. fromaddress          (string, required) the address to trade with\n"
 			"2. ecosystem            (number, required) the ecosystem of the offers to cancel (1 for main ecosystem, 2 for test ecosystem)\n"
-			"3. contractId           (number, required) the Id of Future Contract \n"
+			"3. contract Name        (string, required) the Id of Future Contract \n"
 			"\nResult:\n"
 			"\"hash\"                  (string) the hex-encoded transaction hash\n"
 
