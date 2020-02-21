@@ -3183,15 +3183,11 @@ int CMPTransaction::logicMath_ContractDexTrade()
       uPrice = market_priceMap[numerator][denominator];
 
   } else if (!inverse_quoted)
-      uPrice = 1;
+      uPrice = COIN;
 
-  rational_t conv = rational_t(1,1);
-  int64_t num = conv.numerator().convert_to<int64_t>();
-  int64_t den = conv.denominator().convert_to<int64_t>();
+  PrintToLog("%s(): marginRe: %d,leverage: %d, uPrice: %d\n",__func__, marginRe, leverage, uPrice);
 
-  PrintToLog("%s(): checkpoint  1: num: %d, den: %d, marginRe: %d,leverage: %d, uPrice: %d\n",__func__, num, den, marginRe, leverage, uPrice);
-
-  arith_uint256 amountTR = (ConvertTo256(amount) * ConvertTo256(marginRe)*ConvertTo256(num))/(ConvertTo256(den) * ConvertTo256(leverage) * ConvertTo256(uPrice));
+  arith_uint256 amountTR = (ConvertTo256(COIN) * ConvertTo256(amount) * ConvertTo256(marginRe)) / (ConvertTo256(leverage) * ConvertTo256(uPrice));
   int64_t amountToReserve = ConvertTo64(amountTR);
 
   PrintToLog("%s(): amountToReserve %d\n",__func__,amountToReserve);
