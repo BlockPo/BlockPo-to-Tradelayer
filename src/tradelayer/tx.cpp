@@ -347,12 +347,7 @@ bool CMPTransaction::interpret_SendVestingTokens()
 
   std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
-  std::vector<uint8_t> vecPropIdBytes = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecAmountBytes = GetNextVarIntBytes(i);
-
-  if (!vecPropIdBytes.empty()) {
-    property = DecompressInteger(vecPropIdBytes);
-  } else return false;
 
   if (!vecAmountBytes.empty()) {
     nValue = DecompressInteger(vecAmountBytes);
@@ -360,7 +355,7 @@ bool CMPTransaction::interpret_SendVestingTokens()
   } else return false;
 
   if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly) {
-    PrintToLog("\t        property: %d (%s)\n", property, strMPProperty(property));
+    PrintToLog("\t        property: %d (%s)\n", TL_PROPERTY_VESTING, strMPProperty(property));
     PrintToLog("\t           value: %s\n", FormatMP(property, nValue));
   }
 
@@ -2275,29 +2270,29 @@ int CMPTransaction::logicMath_SendVestingTokens()
       return (PKT_ERROR_SEND -21);
   }
 
-  if (!IsTransactionTypeAllowed(block, property, type, version)) {
+  if (!IsTransactionTypeAllowed(block, TL_PROPERTY_VESTING, type, version)) {
       PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
               __func__,
               type,
               version,
-              property,
+              TL_PROPERTY_VESTING,
               block);
       return (PKT_ERROR_SEND -22);
   }
 
-  int64_t nBalance = getMPbalance(sender, property, BALANCE);
+  int64_t nBalance = getMPbalance(sender, TL_PROPERTY_VESTING, BALANCE);
   if (nBalance < (int64_t) nValue) {
       PrintToLog("%s(): rejected: sender %s has insufficient balance of property %d [%s < %s]\n",
               __func__,
               sender,
-              property,
-              FormatMP(property, nBalance),
-              FormatMP(property, nValue));
+              TL_PROPERTY_VESTING,
+              FormatMP(TL_PROPERTY_VESTING, nBalance),
+              FormatMP(TL_PROPERTY_VESTING, nValue));
       return (PKT_ERROR_SEND -25);
   }
 
-  assert(update_tally_map(sender, property, -nValue, BALANCE));
-  assert(update_tally_map(receiver, property, nValue, BALANCE));
+  assert(update_tally_map(sender, TL_PROPERTY_VESTING, -nValue, BALANCE));
+  assert(update_tally_map(receiver, TL_PROPERTY_VESTING, nValue, BALANCE));
   assert(update_tally_map(receiver, TL_PROPERTY_ALL, nValue, UNVESTED));
 
   vestingAddresses.push_back(receiver);
