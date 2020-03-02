@@ -45,22 +45,27 @@ void RequireBalance(const std::string& address, uint32_t propertyId, int64_t amo
 
 void RequireCollateral(const std::string& address, std::string name_traded, int64_t amount, uint64_t leverage)
 {
-    int64_t uPrice = 1;
-
-    rational_t conv = rational_t(1,1);
-    int64_t num = conv.numerator().convert_to<int64_t>();
-    int64_t den = conv.denominator().convert_to<int64_t>();
+    int64_t uPrice;
 
     struct FutureContractObject *pfuture = getFutureContractObject(name_traded);
     uint32_t propertyId = pfuture->fco_collateral_currency;
+    bool inverse_quoted = pfuture->fco_quoted;
 
-    arith_uint256 amountTR = (COIN * mastercore::ConvertTo256(amount) * mastercore::ConvertTo256(pfuture->fco_margin_requirement)*mastercore::ConvertTo256(num))/(mastercore::ConvertTo256(den) * mastercore::ConvertTo256(leverage) * mastercore::ConvertTo256(uPrice));
+    if(inverse_quoted  && market_priceMap[pfuture->fco_numerator][pfuture->fco_denominator] > 0)
+    {
+        uPrice = market_priceMap[pfuture->fco_numerator][pfuture->fco_denominator];
+
+    } else if (!inverse_quoted)
+        uPrice = COIN;
+
+
+    arith_uint256 amountTR = (COIN * mastercore::ConvertTo256(amount) * mastercore::ConvertTo256(pfuture->fco_margin_requirement))/(mastercore::ConvertTo256(leverage) * mastercore::ConvertTo256(uPrice));
     int64_t amountToReserve = mastercore::ConvertTo64(amountTR);
-
-    // (pfuture->fco_quoted == 1) ? uPrice = market_priceMap[pfuture->fco_numerator][pfuture->fco_denominator] : uPrice = 1;
 
     int64_t nBalance = getMPbalance(address, propertyId, BALANCE);
 
+    PrintToLog("%s(): nBalance: %d , amountToReserve: %d \n",__func__, nBalance, amountToReserve);
+    
     if (nBalance < amountToReserve || nBalance == 0)
         throw JSONRPCError(RPC_TYPE_ERROR, "Sender has insufficient balance for collateral");
 
@@ -211,6 +216,22 @@ void RequireNotContract(uint32_t propertyId)
 
 void RequireContract(uint32_t propertyId)
 {
+    LOCK(cs_tally);
+    CMPSPInfo::Entry sp;
+    if (!mastercore::_my_sps->getSP(propertyId, sp)) {
+        throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
+    }
+    if (!sp.isContract()) {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "contractId must be future contract\n");
+    }
+}
+
+// NOTE: improve this function
+void RequireContract(std::string name_contract)
+{
+    struct FutureContractObject *pfuture = getFutureContractObject(name_contract);
+    uint32_t propertyId = pfuture->fco_propertyId;
+
     LOCK(cs_tally);
     CMPSPInfo::Entry sp;
     if (!mastercore::_my_sps->getSP(propertyId, sp)) {
