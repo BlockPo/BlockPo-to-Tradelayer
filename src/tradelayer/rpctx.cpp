@@ -995,6 +995,8 @@ UniValue tl_tradecontract(const JSONRPCRequest& request)
   uint8_t trading_action = ParseContractDexAction(request.params[4]);
   uint64_t leverage = ParseLeverage(request.params[5]);
 
+  RequireContract(name_traded);
+
   RequireCollateral(fromAddress, name_traded, amountForSale,leverage);
 
   std::vector<unsigned char> payload = CreatePayload_ContractDexTrade(name_traded, amountForSale, effective_price, trading_action, leverage);
