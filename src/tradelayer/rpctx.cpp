@@ -2195,7 +2195,6 @@ static const CRPCCommand commands[] =
     { "trade layer (transaction cration)",  "tl_new_id_registration",          &tl_new_id_registration,             {} },
     { "trade layer (transaction cration)",  "tl_update_id_registration",       &tl_update_id_registration,          {} },
     { "trade layer (transaction cration)",  "tl_send_dex_payment",             &tl_send_dex_payment,                {} },
-    { "trade layer (transaction creation)", "tl_commit_tochannel",             &tl_commit_tochannel,                {} },
     { "trade layer (transaction creation)", "tl_setadmin",                     &tl_setadmin,                        {} }
 #endif
 };
