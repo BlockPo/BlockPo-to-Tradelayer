@@ -52,8 +52,7 @@ UniValue tl_createpayload_sendvestingtokens(const JSONRPCRequest& request)
             "\nPayload to send vesting tokens.\n"
 
             "\nArguments:\n"
-            "1. propertyid           (number, required) the identifier of the tokens to send\n"
-            "2. amount               (string, required) the amount to send\n"
+            "1. amount               (string, required) the amount to send\n"
 
             "\nResult:\n"
             "\"payload\"             (string) the hex-encoded payload\n"
@@ -63,10 +62,9 @@ UniValue tl_createpayload_sendvestingtokens(const JSONRPCRequest& request)
             + HelpExampleRpc("tl_createpayload_sendvestingtokens", "1, \"100.0\"")
         );
 
-    uint32_t propertyId = ParsePropertyId(request.params[0]);
-    int64_t amount = ParseAmount(request.params[1], isPropertyDivisible(propertyId));
+    int64_t amount = ParseAmount(request.params[0], isPropertyDivisible(ALL_PROPERTY_TYPE_VESTING));
 
-    std::vector<unsigned char> payload = CreatePayload_SendVestingTokens(propertyId, amount);
+    std::vector<unsigned char> payload = CreatePayload_SendVestingTokens(amount);
 
     return HexStr(payload.begin(), payload.end());
 }
@@ -791,15 +789,14 @@ UniValue tl_createpayload_dexaccept(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_sendvesting(const JSONRPCRequest& request)
 {
-  if (request.params.size() < 2 || request.params.size() > 2)
+  if (request.params.size() != 1)
     throw runtime_error(
 			"tl_createpayload_sendvesting \"fromaddress\" \"toaddress\" propertyid \"amount\" ( \"referenceamount\" )\n"
 
 			"\nCreate and broadcast a simple send transaction.\n"
 
 			"\nArguments:\n"
-			"1. propertyid           (number, required) the identifier of the tokens to send\n"
-			"2. amount               (string, required) the amount of vesting tokens to send\n"
+			"1. amount               (string, required) the amount of vesting tokens to send\n"
 
 			"\nResult:\n"
 			"\"hash\"                  (string) the hex-encoded transaction hash\n"
@@ -810,14 +807,11 @@ UniValue tl_createpayload_sendvesting(const JSONRPCRequest& request)
 			);
 
   // obtain parameters & info
-  uint32_t propertyId = ParsePropertyId(request.params[0]); /** id=3 Vesting Tokens**/
-  int64_t amount = ParseAmount(request.params[1], true);
-
-  PrintToLog("propertyid = %d\n", propertyId);
+  int64_t amount = ParseAmount(request.params[0], true);
   PrintToLog("amount = %d\n", amount);
 
     // create a payload for the transaction
-    std::vector<unsigned char> payload = CreatePayload_SendVestingTokens(propertyId, amount);
+    std::vector<unsigned char> payload = CreatePayload_SendVestingTokens(amount);
 
     return HexStr(payload.begin(), payload.end());
 

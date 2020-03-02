@@ -132,7 +132,7 @@ UniValue tl_send(const JSONRPCRequest& request)
 
 UniValue tl_sendvesting(const JSONRPCRequest& request)
 {
-  if (request.params.size() < 4 || request.params.size() > 6)
+  if (request.params.size() != 3)
     throw runtime_error(
 			"tl_send \"fromaddress\" \"toaddress\" propertyid \"amount\" ( \"referenceamount\" )\n"
 
@@ -141,8 +141,7 @@ UniValue tl_sendvesting(const JSONRPCRequest& request)
 			"\nArguments:\n"
 			"1. fromaddress          (string, required) the address to send from\n"
 			"2. toaddress            (string, required) the address of the receiver\n"
-			"3. propertyid           (number, required) the identifier of the tokens to send\n"
-			"4. amount               (string, required) the amount of vesting tokens to send\n"
+			"3. amount               (string, required) the amount of vesting tokens to send\n"
 
 			"\nResult:\n"
 			"\"hash\"                  (string) the hex-encoded transaction hash\n"
@@ -155,16 +154,14 @@ UniValue tl_sendvesting(const JSONRPCRequest& request)
   // obtain parameters & info
   std::string fromAddress = ParseAddress(request.params[0]);
   std::string toAddress = ParseAddress(request.params[1]);
-  uint32_t propertyId = ParsePropertyId(request.params[2]); /** id=3 Vesting Tokens**/
-  int64_t amount = ParseAmount(request.params[3], true);
+  int64_t amount = ParseAmount(request.params[2], true);
 
-  PrintToLog("propertyid = %d\n", propertyId);
   PrintToLog("amount = %d\n", amount);
   PrintToLog("fromAddress = %s", fromAddress);
   PrintToLog("toAddress = %s", toAddress);
 
   // create a payload for the transaction
-  std::vector<unsigned char> payload = CreatePayload_SendVestingTokens(propertyId, amount);
+  std::vector<unsigned char> payload = CreatePayload_SendVestingTokens(amount);
 
   // request the wallet build the transaction (and if needed commit it)
   uint256 txid;
@@ -178,7 +175,7 @@ UniValue tl_sendvesting(const JSONRPCRequest& request)
     if (!autoCommit) {
       return rawHex;
     } else {
-      PendingAdd(txid, fromAddress, MSC_TYPE_SEND_VESTING, propertyId, amount);
+      PendingAdd(txid, fromAddress,MSC_TYPE_SEND_VESTING, ALL_PROPERTY_TYPE_VESTING, amount);
       return txid.GetHex();
     }
   }

@@ -646,9 +646,10 @@ void creatingVestingTokens(int block)
    assert(propertyIdVesting > 0);
 
    PrintToLog("%s(): admin_addrs : %s, propertyIdVesting: %d \n",__func__,getAdminAddress(), propertyIdVesting);
-
+   // PrintToLog("%s(): admin_addrs : %s, propertyIdVesting: %d \n",__func__, admin_addrs, propertyIdVesting);
    //NOTE: we have to change this admin_addrs for getAdminAddress function call
    assert(update_tally_map(getAdminAddress(), propertyIdVesting, totalVesting, BALANCE));
+   assert(update_tally_map(admin_addrs, propertyIdVesting, totalVesting, BALANCE));
 }
 
 /**
