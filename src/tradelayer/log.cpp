@@ -179,7 +179,7 @@ int LogFilePrint(const std::string& str)
     if (true)
     {
         // else if (fPrintToDebugLog && AreBaseParamsConfigured()) {
-        static bool fStartedNewLine = true;
+        // static bool fStartedNewLine = true;
         boost::call_once(&DebugLogInit, debugLogInitFlag);
 
         if (fileout == NULL)
@@ -208,7 +208,7 @@ int LogFilePrint(const std::string& str)
          if (!str.empty() && str[str.size()-1] == '\n') {
             //fStartedNewLine = true;
          } else {
-            fStartedNewLine = false;
+            // fStartedNewLine = false;
          }
          ret += fwrite(str.data(), 1, str.size(), fileout);
     }
