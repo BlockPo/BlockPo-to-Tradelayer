@@ -1961,13 +1961,13 @@ UniValue tl_new_id_registration(const JSONRPCRequest& request)
         throw runtime_error(
             "tl_new_id_registration \"sender\" \"address\" \"website url\" \"company name\" \n"
 
-            "\nsetting identity registrar Id number for address.\n"
+            "\n KYC: setting identity registrar Id number for address.\n"
 
             "\nArguments:\n"
             "1. sender                       (string, required) sender address\n"
             "2. channel address              (string, required) channel address\n"
-            "3. website url                  (string, required) the second address that commit into the channel\n"
-            "4. company name                 (string, required) multisig address of channel\n"
+            "3. website url                  (string, required) official web site of company\n"
+            "4. company name                 (string, required) official name of company\n"
             "5. token/token permission       (int, required) trading token for tokens (0 = false, 1 = true)\n"
             "6. ltc/token permission         (int, required) trading litecoins for tokens (0 = false, 1 = true)\n"
             "7. native-contract permission   (int, required) trading native contracts (0 = false, 1 = true)\n"
