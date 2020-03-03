@@ -392,6 +392,7 @@ public:
 	      memset(&name_traded, 0, sizeof(name_traded));
         memset(&channel_address, 0, sizeof(channel_address));
         memset(&website, 0, sizeof(website));
+        memset(&hash, 0, sizeof(hash));
         memset(&company_name, 0, sizeof(company_name));
         deadline = 0;
         early_bird = 0;

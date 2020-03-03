@@ -86,7 +86,8 @@ std::vector<TransactionRestriction> CConsensusParams::GetRestrictions() const
         { MSC_TYPE_UPDATE_ID_REGISTRATION,                MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
         { MSC_TYPE_DEX_PAYMENT,                           MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
         { MSC_TYPE_CREATE_ORACLE_CONTRACT,                MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
-        { MSC_TYPE_SEND_VESTING,                          MP_TX_PKT_V0,      true,             MSC_VESTING_BLOCK}
+        { MSC_TYPE_SEND_VESTING,                          MP_TX_PKT_V0,      true,             MSC_VESTING_BLOCK},
+        { MSC_TYPE_ATTESTATION,                           MP_TX_PKT_V0,      true,             MSC_TYPE_ATTESTATION_BLOCK}
 
     };
 
@@ -148,6 +149,7 @@ CMainConsensusParams::CMainConsensusParams()
     MSC_CONTRACTDEX_BLOCK = 999999;
     MSC_VESTING_BLOCK = 0;
     MSC_NODE_REWARD = 777;
+    MSC_TYPE_ATTESTATION_BLOCK = 0;
 }
 
 /**
@@ -172,6 +174,7 @@ CMainConsensusParams::CMainConsensusParams()
      MSC_CONTRACTDEX_BLOCK = 1383833;
      MSC_VESTING_BLOCK = 1383833;
      MSC_NODE_REWARD = 1383833;
+     MSC_TYPE_ATTESTATION_BLOCK = 0;
  }
 
 
@@ -197,6 +200,7 @@ CRegTestConsensusParams::CRegTestConsensusParams()
     MSC_CONTRACTDEX_BLOCK = 0;
     MSC_VESTING_BLOCK = 100;  // just for regtest
     MSC_NODE_REWARD = 777;
+    MSC_TYPE_ATTESTATION_BLOCK = 0;
 }
 
 //! Consensus parameters for mainnet
