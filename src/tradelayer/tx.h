@@ -147,9 +147,11 @@ private:
     uint64_t ileverage;
     uint64_t itrading_action;
     uint64_t instant_amount;
+
     //KYC
     char company_name[SP_STRING_FIELD_LEN];
     char website[SP_STRING_FIELD_LEN];
+    char hash[SP_STRING_FIELD_LEN];
     int block_forexpiry;
     uint8_t tokens, ltc, natives, oracles;
 
@@ -212,6 +214,7 @@ private:
     bool interpret_New_Id_Registration();
     bool interpret_Update_Id_Registration();
     bool interpret_DEx_Payment();
+    bool interpret_Attestation();
 
     /**
      * Logic and "effects"
@@ -257,6 +260,7 @@ private:
     int logicMath_New_Id_Registration();
     int logicMath_Update_Id_Registration();
     int logicMath_DEx_Payment();
+    int logicMath_Attestation();
 
     /**
      * Logic helpers

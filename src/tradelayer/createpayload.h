@@ -54,4 +54,5 @@ std::vector<unsigned char> CreatePayload_New_Id_Registration(std::string website
 std::vector<unsigned char> CreatePayload_Update_Id_Registration();
 std::vector<unsigned char> CreatePayload_DEx_Payment();
 std::vector<unsigned char> CreatePayload_TradeLayerAlert(uint16_t alertType, uint32_t expiryValue, const std::string& alertMessage);
+std::vector<unsigned char> CreatePayload_Attestation(std::string hash);
 #endif // TRADELAYER_CREATEPAYLOAD_H

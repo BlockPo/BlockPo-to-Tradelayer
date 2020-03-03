@@ -122,7 +122,8 @@ enum TransactionType {
   MSC_TYPE_CONTRACT_INSTANT                   = 114,
   MSC_TYPE_NEW_ID_REGISTRATION                = 115,
   MSC_TYPE_UPDATE_ID_REGISTRATION             = 116,
-  MSC_TYPE_DEX_PAYMENT                        = 117
+  MSC_TYPE_DEX_PAYMENT                        = 117,
+  MSC_TYPE_ATTESTATION                        = 118
 
 };
 

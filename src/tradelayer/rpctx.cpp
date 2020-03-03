@@ -2098,6 +2098,50 @@ UniValue tl_send_dex_payment(const JSONRPCRequest& request)
     }
 }
 
+UniValue tl_attestation(const JSONRPCRequest& request)
+{
+    if (request.params.size() > 2)
+        throw runtime_error(
+            "tl_attestation \"fromaddress\" \"toaddress\"amount\" \n"
+
+            "\nCreate and broadcast a kyc attestation.\n"
+
+            "\nArguments:\n"
+            "1. sender address       (string, required) sender\n"
+            "2. string hash          (string, optional) the hash\n"
+            "\nResult:\n"
+            "\"hash\"                  (string) the hex-encoded transaction hash\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("tl_attestation", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\"")
+            + HelpExampleRpc("tl_attestation", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\"")
+        );
+
+    // obtain parameters & info
+    std::string hash;
+    std::string fromAddress = ParseAddress(request.params[0]);
+    (request.params.size() == 1) ? hash = ParseText(request.params[1]) : "";
+
+    // create a payload for the transaction
+    std::vector<unsigned char> payload = CreatePayload_Attestation(hash);
+
+    // request the wallet build the transaction (and if needed commit it)
+    uint256 txid;
+    std::string rawHex;
+    int result = WalletTxBuilder(fromAddress, "", 0, payload, txid, rawHex, autoCommit);
+
+    // check error and return the txid (or raw hex depending on autocommit)
+    if (result != 0) {
+        throw JSONRPCError(result, error_str(result));
+    } else {
+        if (!autoCommit) {
+            return rawHex;
+        } else {
+            return txid.GetHex();
+        }
+    }
+}
+
 // UniValue tl_setexodus(const JSONRPCRequest& request)
 // {
 //     if (request.params.size() < 1 )
@@ -2194,7 +2238,8 @@ static const CRPCCommand commands[] =
     { "trade layer (transaction cration)",  "tl_new_id_registration",          &tl_new_id_registration,             {} },
     { "trade layer (transaction cration)",  "tl_update_id_registration",       &tl_update_id_registration,          {} },
     { "trade layer (transaction cration)",  "tl_send_dex_payment",             &tl_send_dex_payment,                {} },
-    { "trade layer (transaction creation)", "tl_setadmin",                     &tl_setadmin,                        {} }
+    { "trade layer (transaction creation)", "tl_setadmin",                     &tl_setadmin,                        {} },
+    { "trade layer (transaction creation)", "tl_attestation",                  &tl_attestation,                     {} }
 #endif
 };
 

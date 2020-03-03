@@ -45,7 +45,7 @@ void RequireBalance(const std::string& address, uint32_t propertyId, int64_t amo
 
 void RequireCollateral(const std::string& address, std::string name_traded, int64_t amount, uint64_t leverage)
 {
-    int64_t uPrice;
+    int64_t uPrice = 1;
 
     struct FutureContractObject *pfuture = getFutureContractObject(name_traded);
     uint32_t propertyId = pfuture->fco_collateral_currency;
@@ -65,7 +65,7 @@ void RequireCollateral(const std::string& address, std::string name_traded, int6
     int64_t nBalance = getMPbalance(address, propertyId, BALANCE);
 
     PrintToLog("%s(): nBalance: %d , amountToReserve: %d \n",__func__, nBalance, amountToReserve);
-    
+
     if (nBalance < amountToReserve || nBalance == 0)
         throw JSONRPCError(RPC_TYPE_ERROR, "Sender has insufficient balance for collateral");
 

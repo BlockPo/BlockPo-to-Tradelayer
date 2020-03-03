@@ -115,6 +115,7 @@ std::string mastercore::strTransactionType(uint16_t txType)
     case MSC_TYPE_NEW_ID_REGISTRATION: return "New Id Registration";
     case MSC_TYPE_UPDATE_ID_REGISTRATION: return "Update Id Registration";
     case MSC_TYPE_DEX_PAYMENT: return "DEx payment";
+    case MSC_TYPE_ATTESTATION: return "KYC Attestation";
     default: return "* unknown type *";
     }
 }
@@ -281,6 +282,9 @@ bool CMPTransaction::interpret_Transaction()
 
     case MSC_TYPE_DEX_PAYMENT:
         return interpret_DEx_Payment();
+
+    case MSC_TYPE_ATTESTATION:
+            return interpret_Attestation();
 
     }
 
@@ -1975,10 +1979,43 @@ bool CMPTransaction::interpret_DEx_Payment()
   std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
 
 
-  // if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
-  if(true)
+  if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
   {
       PrintToLog("%s(): inside the function\n",__func__);
+      PrintToLog("\t sender: %s\n", sender);
+      PrintToLog("\t receiver: %s\n", receiver);
+  }
+
+  return true;
+}
+
+/** Tx  118*/
+bool CMPTransaction::interpret_Attestation()
+{
+  int i = 0;
+
+  std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+
+  const char* p = i + (char*) &pkt;
+  std::vector<std::string> spstr;
+  for (int j = 0; j < 1; j++) {
+    spstr.push_back(std::string(p));
+    p += spstr.back().size() + 1;
+  }
+
+  if (isOverrun(p)) {
+    PrintToLog("%s(): rejected: malformed string value(s)\n", __func__);
+    return false;
+  }
+
+  int j = 0;
+  memcpy(hash, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(hash)-1)); j++;
+  i = i + strlen(hash) + 1;
+
+  if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+  {
+      PrintToLog("%s(): hash: %s\n",__func__,hash);
       PrintToLog("\t sender: %s\n", sender);
       PrintToLog("\t receiver: %s\n", receiver);
   }
@@ -2123,6 +2160,9 @@ int CMPTransaction::interpretPacket()
 
         case MSC_TYPE_DEX_PAYMENT:
             return logicMath_DEx_Payment();
+
+        case MSC_TYPE_ATTESTATION:
+            return logicMath_Attestation();
 
 
     }
@@ -4849,6 +4889,13 @@ int CMPTransaction::logicMath_DEx_Payment()
   return rc;
 }
 
+/** Tx 118 */
+int CMPTransaction::logicMath_Attestation()
+{
+  PrintToLog("%s(): inside logic for Attestation\n",__func__);
+  return 0;
+
+}
 
 struct FutureContractObject *getFutureContractObject(std::string identifier)
 {
