@@ -208,11 +208,27 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_createpayload_contract_instant_trade", 4, "arg4"},
     // { "tl_createpayload_contract_instant_trade", 5, "arg5"},
 
+    { "tl_createpayload_create_oraclecontract", 0, "arg1"},
+    { "tl_createpayload_create_oraclecontract", 2, "arg3"},
+    { "tl_createpayload_create_oraclecontract", 3, "arg4"},
+    { "tl_createpayload_create_oraclecontract", 4, "arg5"},
+    { "tl_createpayload_create_oraclecontract", 5, "arg6"},
+    { "tl_createpayload_create_oraclecontract", 7, "arg8"},
+
 
     { "tl_createpayload_pnl_update", 0, "arg0"},
     { "tl_createpayload_pnl_update", 2, "arg2"},
     { "tl_createpayload_pnl_update", 3, "arg3"},
     { "tl_createpayload_pnl_update", 4, "arg4"},
+
+    { "tl_createpayload_setoracle", 1, "arg1" },
+    { "tl_createpayload_setoracle", 2, "arg2" },
+    { "tl_createpayload_setoracle", 3, "arg3" },
+
+    { "tl_createpayload_new_id_registration", 2, "arg2" },
+    { "tl_createpayload_new_id_registration", 3, "arg3" },
+    { "tl_createpayload_new_id_registration", 4, "arg4" },
+    { "tl_createpayload_new_id_registration", 5, "arg5" },
 
     /* Trade Layer - raw transaction calls */
     { "tl_decodetransaction", 1, "arg1" },

@@ -1005,6 +1005,206 @@ UniValue tl_createpayload_dex_payment(const JSONRPCRequest& request)
 
 }
 
+UniValue tl_createpayload_change_oracleref(const JSONRPCRequest& request)
+{
+    if (request.params.size() != 1)
+        throw runtime_error(
+            "tl_createpayload_change_oracleref \"fromaddress\" \"toaddress\" contract name\n"
+
+            "\n Payload to change the issuer on record of the Oracle Future Contract.\n"
+
+            "\nArguments:\n"
+            "1. contract name        (string, required) the name of the Future Contract\n"
+
+            "\nResult:\n"
+            "\"hash\"                  (string) the hex-encoded transaction hash\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("tl_createpayload_change_oracleref", "\"Contract 1\"")
+            + HelpExampleRpc("tl_createpayload_change_oracleref", "\"Contract 1\"")
+        );
+
+    // obtain parameters & info
+    std::string name_contract = ParseText(request.params[0]);
+    struct FutureContractObject *pfuture_contract = getFutureContractObject(name_contract);
+    uint32_t contractId = pfuture_contract->fco_propertyId;
+
+    // create a payload for the transaction
+    std::vector<unsigned char> payload = CreatePayload_Change_OracleRef(contractId);
+
+    return HexStr(payload.begin(), payload.end());
+
+}
+
+UniValue tl_createpayload_create_oraclecontract(const JSONRPCRequest& request)
+{
+  if (request.params.size() != 8)
+    throw runtime_error(
+			"tl_createpayload_create_oraclecontract \"address\" ecosystem type previousid \"category\" \"subcategory\" \"name\" \"url\" \"data\" propertyiddesired tokensperunit deadline ( earlybonus issuerpercentage )\n"
+
+			"Payload for create new Oracle Future Contract."
+
+			"\nArguments:\n"
+			"1. ecosystem                 (string, required) the ecosystem to create the tokens in (1 for main ecosystem, 2 for test ecosystem)\n"
+			"2. name                      (string, required) the name of the new tokens to create\n"
+			"3. blocks until expiration   (number, required) life of contract, in blocks\n"
+			"4. notional size             (number, required) notional size\n"
+			"5. collateral currency       (number, required) collateral currency\n"
+			"6. margin requirement        (number, required) margin requirement\n"
+      "7. backup address            (string, required) backup admin address contract\n"
+      "8. quoting                  (number, required) 0: inverse quoting contract, 1: normal quoting\n"
+
+			"\nResult:\n"
+			"\"hash\"                  (string) the hex-encoded transaction hash\n"
+
+			"\nExamples:\n"
+			+ HelpExampleCli("tl_createpayload_create_oraclecontract", "2 1 0 \"Companies\" \"Bitcoin Mining\" \"Quantum Miner\" \"\" \"\" 2 \"100\" 1483228800 30 2 4461 100 1 25")
+			+ HelpExampleRpc("tl_createpayload_create_oraclecontract", "2, 1, 0, \"Companies\", \"Bitcoin Mining\", \"Quantum Miner\", \"\", \"\", 2, \"100\", 1483228800, 30, 2, 4461, 100, 1, 25")
+			);
+
+      uint8_t ecosystem = ParseEcosystem(request.params[0]);
+      std::string name = ParseText(request.params[1]);
+      uint32_t blocks_until_expiration = request.params[2].get_int();
+      uint32_t notional_size = ParseAmount32t(request.params[3]);
+      uint32_t collateral_currency = request.params[4].get_int();
+      uint32_t margin_requirement = ParseAmount32t(request.params[5]);
+      std::string oracleAddress = ParseAddress(request.params[6]);
+      uint8_t inverse = ParseBinary(request.params[7]);
+
+      std::vector<unsigned char> payload = CreatePayload_CreateOracleContract(ecosystem, name, blocks_until_expiration, notional_size, collateral_currency, margin_requirement, inverse);
+
+      return HexStr(payload.begin(), payload.end());
+}
+
+UniValue tl_createpayload_setoracle(const JSONRPCRequest& request)
+{
+    if (request.params.size() != 4)
+        throw runtime_error(
+            "tl_createpayload_setoracle  \"contract name\" \"high\" \"low \" \"close\" \n"
+
+            "\nPayload to set the price for an oracle address.\n"
+
+            "\nArguments:\n"
+            "1. contract name        (string, required) the name of the Future Contract\n"
+            "2. high price           (number, required) the highest price of the asset\n"
+            "3. low price            (number, required) the lowest price of the asset\n"
+            "4. close price          (number, required) the close price of the asset\n"
+
+            "\nResult:\n"
+            "\"hash\"                  (string) the hex-encoded transaction hash\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("tl_createpayload_setoracle", "\"Contract 1\"")
+            + HelpExampleRpc("tl_createpayload_setoracle", "\"Contract 1\"")
+        );
+
+    // obtain parameters & info
+    std::string name_contract = ParseText(request.params[0]);
+    uint64_t high = ParseEffectivePrice(request.params[1]);
+    uint64_t low = ParseEffectivePrice(request.params[2]);
+    uint64_t close = ParseEffectivePrice(request.params[3]);
+    struct FutureContractObject *pfuture_contract = getFutureContractObject(name_contract);
+    uint32_t contractId = pfuture_contract->fco_propertyId;
+
+    // create a payload for the transaction
+    std::vector<unsigned char> payload = CreatePayload_Set_Oracle(contractId, high, low, close);
+
+    return HexStr(payload.begin(), payload.end());
+}
+
+UniValue tl_createpayload_closeoracle(const JSONRPCRequest& request)
+{
+    if (request.params.size() != 1)
+        throw runtime_error(
+            "tl_createpayload_closeoracle \"contract name\n"
+
+            "\nPayload to close an Oracle Future Contract.\n"
+
+            "\nArguments:\n"
+            "1. contract name          (string, required) the name of the Oracle Future Contract\n"
+
+            "\nResult:\n"
+            "\"hash\"                  (string) the hex-encoded transaction hash\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("tl_createpayload_closeoracle", "\"Contract 1\"")
+            + HelpExampleRpc("tl_createpayload_closeoracle", "\"Contract 1\"")
+        );
+
+    // obtain parameters & info
+    std::string name_contract = ParseText(request.params[0]);
+    struct FutureContractObject *pfuture_contract = getFutureContractObject(name_contract);
+    uint32_t contractId = pfuture_contract->fco_propertyId;
+
+    // create a payload for the transaction
+    std::vector<unsigned char> payload = CreatePayload_Close_Oracle(contractId);
+
+    return HexStr(payload.begin(), payload.end());
+}
+
+UniValue tl_createpayload_new_id_registration(const JSONRPCRequest& request)
+{
+    if (request.params.size() != 6)
+        throw runtime_error(
+            "tl_createpayload_new_id_registration  \"website url\" \"company name\" \n"
+
+            "\nPayload for KYC: setting identity registrar Id number for address.\n"
+
+            "\nArguments:\n"
+            "1. website url                  (string, required) official web site of company\n"
+            "2. company name                 (string, required) official name of company\n"
+            "3. token/token permission       (int, required) trading token for tokens (0 = false, 1 = true)\n"
+            "4. ltc/token permission         (int, required) trading litecoins for tokens (0 = false, 1 = true)\n"
+            "5. native-contract permission   (int, required) trading native contracts (0 = false, 1 = true)\n"
+            "6. oracle-contract permission   (int, required) trading oracle contracts (0 = false, 1 = true)\n"
+
+            "\nResult:\n"
+            "\"hash\"                  (string) the hex-encoded transaction hash\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("tl_createpayload_new_id_registration", "\"www.companyone.com\" company one , 1,0,0,0 \"")
+            + HelpExampleRpc("tl_createpayload_new_id_registration", "\"www.companyone.com\",company one, 1,1,0,0 \"")
+        );
+
+    // obtain parameters & info
+    std::string website = ParseText(request.params[0]);
+    std::string name = ParseText(request.params[1]);
+    uint8_t tokens = ParsePermission(request.params[2]);
+    uint8_t ltc = ParsePermission(request.params[3]);
+    uint8_t natives = ParsePermission(request.params[4]);
+    uint8_t oracles = ParsePermission(request.params[5]);
+
+    // create a payload for the transaction
+    std::vector<unsigned char> payload = CreatePayload_New_Id_Registration(website, name, tokens, ltc, natives, oracles);
+
+    return HexStr(payload.begin(), payload.end());
+}
+
+UniValue tl_createpayload_update_id_registration(const JSONRPCRequest& request)
+{
+    if (request.params.size() != 0)
+        throw runtime_error(
+            "tl_createpayload_update_id_registration \n"
+
+            "\nPayload to update the address on id registration.\n"
+
+            "\nArguments:\n"
+            "no arguments\n"
+
+            "\nResult:\n"
+            "\"hash\"                  (string) the hex-encoded transaction hash\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("tl_createpayload_update_id_registration", "\"\" , \"\"")
+            + HelpExampleRpc("tl_createpayload_update_id_registration", "\"\",  \"\"")
+        );
+
+    // create a payload for the transaction
+    std::vector<unsigned char> payload = CreatePayload_Update_Id_Registration();
+
+    return HexStr(payload.begin(), payload.end());
+}
+
 static const CRPCCommand commands[] =
   { //  category                         name                                             actor (function)                               okSafeMode
     //  -------------------------------- -----------------------------------------       ----------------------------------------        ----------
@@ -1038,7 +1238,14 @@ static const CRPCCommand commands[] =
     { "trade layer (payload creation)", "tl_createpayload_pnl_update",                    &tl_createpayload_pnl_update,                      {}   },
     { "trade layer (payload creation)", "tl_createpayload_transfer",                      &tl_createpayload_transfer,                        {}   },
     { "trade layer (payload creation)", "tl_createpayload_dex_payment",                   &tl_createpayload_dex_payment,                     {}   },
-    { "trade layer (payload creation)", "tl_createpayload_contract_instant_trade",        &tl_createpayload_contract_instant_trade,          {}   }
+    { "trade layer (payload creation)", "tl_createpayload_contract_instant_trade",        &tl_createpayload_contract_instant_trade,          {}   },
+    { "trade layer (payload creation)", "tl_createpayload_change_oracleref",              &tl_createpayload_change_oracleref,                {}   },
+    { "trade layer (payload creation)", "tl_createpayload_create_oraclecontract",         &tl_createpayload_create_oraclecontract,           {}   },
+    { "trade layer (payload creation)", "tl_createpayload_setoracle",                     &tl_createpayload_setoracle,                       {}   },
+    { "trade layer (payload creation)", "tl_createpayload_closeoracle",                   &tl_createpayload_closeoracle,                     {}   },
+    { "trade layer (payload creation)", "tl_createpayload_new_id_registration",           &tl_createpayload_new_id_registration,             {}   },
+    { "trade layer (payload creation)", "tl_createpayload_update_id_registration",        &tl_createpayload_update_id_registration,          {}   },
+
   };
 
 
