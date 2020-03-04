@@ -2100,15 +2100,16 @@ UniValue tl_send_dex_payment(const JSONRPCRequest& request)
 
 UniValue tl_attestation(const JSONRPCRequest& request)
 {
-    if (request.params.size() > 2)
+    if (request.params.size() > 3)
         throw runtime_error(
             "tl_attestation \"fromaddress\" \"toaddress\"amount\" \n"
 
             "\nCreate and broadcast a kyc attestation.\n"
 
             "\nArguments:\n"
-            "1. sender address       (string, required) sender\n"
-            "2. string hash          (string, optional) the hash\n"
+            "1. sender address       (string, required) authority address\n"
+            "2. receiver address     (string, required) receiver address\n"
+            "3. string hash          (string, optional) the hash\n"
             "\nResult:\n"
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
 
@@ -2120,7 +2121,10 @@ UniValue tl_attestation(const JSONRPCRequest& request)
     // obtain parameters & info
     std::string hash;
     std::string fromAddress = ParseAddress(request.params[0]);
-    (request.params.size() == 1) ? hash = ParseText(request.params[1]) : "";
+    std::string receiverAddress = ParseAddress(request.params[1]);
+    (request.params.size() == 3) ? hash = ParseText(request.params[2]) : "";
+
+    PrintToLog("%s(): hash: %s\n",__func__,hash);
 
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_Attestation(hash);
@@ -2128,7 +2132,7 @@ UniValue tl_attestation(const JSONRPCRequest& request)
     // request the wallet build the transaction (and if needed commit it)
     uint256 txid;
     std::string rawHex;
-    int result = WalletTxBuilder(fromAddress, "", 0, payload, txid, rawHex, autoCommit);
+    int result = WalletTxBuilder(fromAddress, receiverAddress, 0, payload, txid, rawHex, autoCommit);
 
     // check error and return the txid (or raw hex depending on autocommit)
     if (result != 0) {

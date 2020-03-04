@@ -2563,13 +2563,12 @@ UniValue tl_check_withdrawals(const JSONRPCRequest& request)
 
 UniValue tl_check_kyc(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 2)
+  if (request.params.size() != 1)
     throw runtime_error(
-			"tl_check_withdrawals senderAddress \n"
-			"\nRetrieves the history of withdrawal for a given address in the channel\n"
+			"tl_check_kyc senderAddress \n"
+			"\nKYC validation\n"
 			"\nArguments:\n"
 			"1. address                       (string, required) the address registered\n"
-      "2. register                      (int, required)  2,3,4 or 5\n"
 			"\nResult:\n"
 			"[                                      (array of JSON objects)\n"
 			"  {\n"
@@ -2593,11 +2592,11 @@ UniValue tl_check_kyc(const JSONRPCRequest& request)
   // obtain property identifiers for pair & check valid parameters
   std::string result;
   std::string address = ParseAddress(request.params[0]);
-  int registered = static_cast<int>(ParseNewValues(request.params[1]));
+  // int registered = static_cast<int>(ParseNewValues(request.params[1]));
   // RequireContract(contractId);
 
 
-  (!t_tradelistdb->checkKYCRegister(address, registered)) ? result = "disabled" : result = "enabled";
+  (!t_tradelistdb->checkKYCRegister(address)) ? result = "disabled" : result = "enabled";
 
   UniValue balanceObj(UniValue::VOBJ);
   balanceObj.push_back(Pair("result: ", result));

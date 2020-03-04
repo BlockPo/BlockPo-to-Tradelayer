@@ -1,7 +1,6 @@
 // Master Protocol transaction code
 
 #include "tradelayer/tx.h"
-
 #include "tradelayer/activation.h"
 #include "tradelayer/convert.h"
 #include "tradelayer/dex.h"
@@ -1109,6 +1108,7 @@ bool CMPTransaction::interpret_ContractDexTrade()
       PrintToLog("\t amount of contracts : %d\n", amount);
       PrintToLog("\t effective price : %d\n", effective_price);
       PrintToLog("\t trading action : %d\n", trading_action);
+
   // }
 
   return true;
@@ -2013,9 +2013,10 @@ bool CMPTransaction::interpret_Attestation()
   memcpy(hash, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(hash)-1)); j++;
   i = i + strlen(hash) + 1;
 
-  if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+  // if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+  if(true)
   {
-      PrintToLog("%s(): hash: %s\n",__func__,hash);
+      PrintToLog("%s(): hash: %s\n",__func__, hash);
       PrintToLog("\t sender: %s\n", sender);
       PrintToLog("\t receiver: %s\n", receiver);
   }
@@ -3186,8 +3187,8 @@ int CMPTransaction::logicMath_ContractDexTrade()
 
   (pfuture->fco_prop_type == ALL_PROPERTY_TYPE_NATIVE_CONTRACT) ? result = 5 : result = 6;
 
-  if(!t_tradelistdb->checkKYCRegister(sender,result))
-      return PKT_ERROR_KYC -10;
+  // if(!t_tradelistdb->checkKYCRegister(sender,result))
+  //     return PKT_ERROR_KYC -10;
 
 
   PrintToLog("%s(): fco_init_block: %d; fco_blocks_until_expiration: %d; actual block: %d\n",__func__,pfuture->fco_init_block,pfuture->fco_blocks_until_expiration,block);
@@ -3769,11 +3770,11 @@ int CMPTransaction::logicMath_DExBuy()
       return (PKT_ERROR_TRADEOFFER -22);
     }
 
-    if(!t_tradelistdb->checkKYCRegister(sender,4))
-    {
-        PrintToLog("%s: tx disable from kyc register!\n",__func__);
-        return (PKT_ERROR_KYC -10);
-    }
+    // if(!t_tradelistdb->checkKYCRegister(sender,4))
+    // {
+    //     PrintToLog("%s: tx disable from kyc register!\n",__func__);
+    //     return (PKT_ERROR_KYC -10);
+    // }
 
     if (MAX_INT_8_BYTES < nValue) {
         PrintToLog("%s(): rejected: value out of range or zero: %d\n", __func__, nValue);
@@ -3861,11 +3862,11 @@ int CMPTransaction::logicMath_AcceptOfferBTC()
     PrintToLog("%s(): rejected: value out of range or zero: %d\n", __func__, nValue);
   }
 
-  if(!t_tradelistdb->checkKYCRegister(sender,4) || !t_tradelistdb->checkKYCRegister(receiver,4))
-  {
-      PrintToLog("%s: tx disable from kyc register!\n",__func__);
-      return (PKT_ERROR_KYC -10);
-  }
+  // if(!t_tradelistdb->checkKYCRegister(sender,4) || !t_tradelistdb->checkKYCRegister(receiver,4))
+  // {
+  //     PrintToLog("%s: tx disable from kyc register!\n",__func__);
+  //     return (PKT_ERROR_KYC -10);
+  // }
 
   // the min fee spec requirement is checked in the following function
   int rc = DEx_acceptCreate(sender, receiver, propertyId, nValue, block, tx_fee_paid, &nNewValue);
@@ -4716,11 +4717,11 @@ int CMPTransaction::logicMath_Contract_Instant()
 
   (sp.prop_type == ALL_PROPERTY_TYPE_NATIVE_CONTRACT) ? result = 5 : result = 6;
 
-  if(!t_tradelistdb->checkKYCRegister(sender,result))
-  {
-      PrintToLog("%s: tx disable from kyc register!\n",__func__);
-      return (PKT_ERROR_KYC -10);
-  }
+  // if(!t_tradelistdb->checkKYCRegister(sender,result))
+  // {
+  //     PrintToLog("%s: tx disable from kyc register!\n",__func__);
+  //     return (PKT_ERROR_KYC -10);
+  // }
 
   uint32_t colateralh = sp.collateral_currency;
   int64_t marginRe = static_cast<int64_t>(sp.margin_requirement);
@@ -4828,7 +4829,7 @@ int CMPTransaction::logicMath_New_Id_Registration()
   // ---------------------------------------
   if (msc_debug_new_id_registration) PrintToLog("%s(): channelAddres in register: %s \n",__func__,receiver);
 
-  t_tradelistdb->recordNewIdRegister(txid, receiver, website, company_name, tokens, ltc, natives, oracles, block, tx_idx);
+  t_tradelistdb->recordNewIdRegister(txid, receiver, website, block, tx_idx, KYC_1);
 
   // std::string dummy = "1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P";
   // t_tradelistdb->updateIdRegister(txid,sender, dummy,block, tx_idx);
@@ -4892,7 +4893,25 @@ int CMPTransaction::logicMath_DEx_Payment()
 /** Tx 118 */
 int CMPTransaction::logicMath_Attestation()
 {
-  PrintToLog("%s(): inside logic for Attestation\n",__func__);
+  if (!IsTransactionTypeAllowed(block, property, type, version)) {
+      PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+              __func__,
+              type,
+              version,
+              property,
+              block);
+      return (PKT_ERROR_METADEX -22);
+  }
+
+  if(!t_tradelistdb->checkKYCRegister(sender))
+  {
+      PrintToLog("%s(): KYC TYPE 0\n");
+  } else
+      t_tradelistdb->recordNewIdRegister(txid, receiver, "", block, tx_idx, KYC_0);
+
+
+
+
   return 0;
 
 }
