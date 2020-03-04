@@ -936,7 +936,9 @@ UniValue tl_create_oraclecontract(const JSONRPCRequest& request)
   std::string oracleAddress = ParseAddress(request.params[7]);
   uint8_t inverse = ParseBinary(request.params[8]);
 
-  PrintToLog("\nRPC tl_create_oraclecontract: notional_size = %s\t margin_requirement = %s\t blocks_until_expiration = %d\t collateral_currency=%d\t ecosystem = %d \n", FormatDivisibleMP(notional_size), FormatDivisibleMP(margin_requirement), blocks_until_expiration, collateral_currency, ecosystem);
+  PrintToLog("%s(): address: %s **************************************************************************\n",__func__, fromAddress);
+
+  // PrintToLog("\nRPC tl_create_oraclecontract: notional_size = %s\t margin_requirement = %s\t blocks_until_expiration = %d\t collateral_currency=%d\t ecosystem = %d \n", FormatDivisibleMP(notional_size), FormatDivisibleMP(margin_requirement), blocks_until_expiration, collateral_currency, ecosystem);
 
   RequirePropertyName(name);
   RequireSaneName(name);
@@ -988,40 +990,36 @@ UniValue tl_tradecontract(const JSONRPCRequest& request)
 			+ HelpExampleRpc("tl_tradecontract", "31,\"250.0\",1,\"10.0,\"70.0,\"80.0\"")
 			);
 
-  std::string fromAddress = ParseAddress(request.params[0]);
-  std::string name_traded = ParseText(request.params[1]);
-  int64_t amountForSale = ParseAmountContract(request.params[2]);
-  uint64_t effective_price = ParseEffectivePrice(request.params[3]);
-  uint8_t trading_action = ParseContractDexAction(request.params[4]);
-  uint64_t leverage = ParseLeverage(request.params[5]);
+      std::string fromAddress = ParseAddress(request.params[0]);
+      std::string name_traded = ParseText(request.params[1]);
+      int64_t amountForSale = ParseAmountContract(request.params[2]);
+      uint64_t effective_price = ParseEffectivePrice(request.params[3]);
+      uint8_t trading_action = ParseContractDexAction(request.params[4]);
+      uint64_t leverage = ParseLeverage(request.params[5]);
 
-  RequireContract(name_traded);
+      RequireContract(name_traded);
 
-  RequireCollateral(fromAddress, name_traded, amountForSale,leverage);
+      RequireCollateral(fromAddress, name_traded, amountForSale,leverage);
 
-  std::vector<unsigned char> payload = CreatePayload_ContractDexTrade(name_traded, amountForSale, effective_price, trading_action, leverage);
+      std::vector<unsigned char> payload = CreatePayload_ContractDexTrade(name_traded, amountForSale, effective_price, trading_action, leverage);
 
-  uint256 txid;
-  std::string rawHex;
-  int result = WalletTxBuilder(fromAddress, "", 0, payload, txid, rawHex, autoCommit);
-  PrintToConsole("Result of WalletTxBuilder: %d\n",result);
+      uint256 txid;
+      std::string rawHex;
+      int result = WalletTxBuilder(fromAddress, "", 0, payload, txid, rawHex, autoCommit);
+      PrintToConsole("Result of WalletTxBuilder: %d\n",result);
 
-  if (result != 0)
-    {
-      throw JSONRPCError(result, error_str(result));
-    }
-  else
-    {
-      if (!autoCommit)
-	{
-	  return rawHex;
-        }
-      else
-	{ //TODO: PendingAdd function
-	  // PendingAdd(txid, fromAddress, MSC_TYPE_CONTRACTDEX_TRADE, propertyIdForSale, amountForSale);
-	  return txid.GetHex();
-        }
-    }
+      if (result != 0)
+      {
+          throw JSONRPCError(result, error_str(result));
+      } else {
+          if (!autoCommit)
+	        {
+	            return rawHex;
+          } else { //TODO: PendingAdd function
+	            // PendingAdd(txid, fromAddress, MSC_TYPE_CONTRACTDEX_TRADE, propertyIdForSale, amountForSale);
+	            return txid.GetHex();
+          }
+      }
 }
 
 UniValue tl_cancelallcontractsbyaddress(const JSONRPCRequest& request)
