@@ -1102,9 +1102,10 @@ UniValue tl_closeposition(const JSONRPCRequest& request)
     std::string fromAddress = ParseAddress(request.params[0]);
     uint8_t ecosystem = ParseEcosystem(request.params[1]);
     uint32_t contractId = ParsePropertyId(request.params[2]);
+    
     // perform checks
     RequireContract(contractId);
-    // TODO: check, if there are matching offers to cancel
+    RequireNoOrders(fromAddress, contractId);
 
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_ContractDexClosePosition(ecosystem, contractId);
