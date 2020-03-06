@@ -2595,8 +2595,8 @@ UniValue tl_check_kyc(const JSONRPCRequest& request)
   // int registered = static_cast<int>(ParseNewValues(request.params[1]));
   // RequireContract(contractId);
 
-
-  (!t_tradelistdb->checkKYCRegister(address)) ? result = "disabled" : result = "enabled";
+  int kyc_id;
+  (!t_tradelistdb->checkKYCRegister(address, kyc_id)) ? result = "disabled" : result = "enabled";
 
   UniValue balanceObj(UniValue::VOBJ);
   balanceObj.push_back(Pair("result: ", result));

@@ -3924,13 +3924,13 @@ void CMPTradeList::recordNewInstantTrade(const uint256& txid, const std::string&
   if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
 }
 
-void CMPTradeList::recordNewIdRegister(const uint256& txid, const std::string& address, const std::string& website, int blockNum, int blockIndex, int kyc_type)
+void CMPTradeList::recordNewIdRegister(const uint256& txid, const std::string& address, const std::string& website, int blockNum, int blockIndex)
 {
   // tokens : v[3], ltc/tokens: v[4], native contracts: v[5], oracle contracts : v[6]
   if (!pdb) return;
   int nextId = t_tradelistdb->getNextId();
   PrintToLog("%s: id_number = %d\n",__func__, nextId);
-  std::string strValue = strprintf("%s:%s:%d:%d:%d:%s:%s:%s", address, website, blockNum, blockIndex, nextId, txid.ToString(),kyc_type, TYPE_NEW_ID_REGISTER);
+  std::string strValue = strprintf("%s:%s:%d:%d:%d:%s:%s", address, website, blockNum, blockIndex, nextId, txid.ToString(), TYPE_NEW_ID_REGISTER);
   PrintToLog("%s: strValue: %s\n", __func__, strValue);
   const string key = to_string(blockNum) + "+" + txid.ToString(); // order by blockNum
   Status status = pdb->Put(writeoptions, key, strValue);
@@ -4076,7 +4076,7 @@ bool CMPTradeList::checkRegister(const std::string& address, int registered)
     return status;
 }
 
-bool CMPTradeList::checkKYCRegister(const std::string& address)
+bool CMPTradeList::checkKYCRegister(const std::string& address, int& kyc_id)
 {
     bool status = false;
     std::string strKey, newKey, newValue;
@@ -4097,32 +4097,28 @@ bool CMPTradeList::checkKYCRegister(const std::string& address)
 
         // ensure correct amount of tokens in value string
         boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
-        if (vstr.size() != 8)
+        if (vstr.size() != 7)
         {
             // PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
             // PrintToConsole("TRADEDB error - unexpected number of tokens in value %d \n",vstr.size());
             continue;
         }
 
-        std::string type = vstr[7];
-
-        PrintToLog("%s: type: %s\n",__func__,type);
+        std::string type = vstr[6];
 
         if( type != TYPE_NEW_ID_REGISTER)
           continue;
 
-
-        PrintToLog("%s: strKey: %s\n", __func__, strKey);
-
         std::string regAddr = vstr[0];
-
-        PrintToLog("%s: regAddr: %s\n", __func__, regAddr);
 
         if(address != regAddr) continue;
 
         status = true;
 
         PrintToLog("%s: Address Found! %s\n", __func__);
+
+        // returning the kyc_id
+        kyc_id = boost::lexical_cast<int>(vstr[4]);
 
         break;
 
@@ -4132,6 +4128,18 @@ bool CMPTradeList::checkKYCRegister(const std::string& address)
     delete it;
 
     return status;
+}
+
+void CMPTradeList::recordAttestation(const uint256& txid, const std::string& sender, const std::string& receiver, int blockNum, int blockIndex, int kyc_id)
+{
+  if (!pdb) return;
+  std::string strValue = strprintf("%s:%s:%d:%d:%d:%s:%s", sender, receiver, blockNum, blockIndex, kyc_id, txid.ToString(), TYPE_NEW_ATTESTATION);
+  PrintToLog("%s: strValue: %s\n", __func__, strValue);
+  const string key = to_string(blockNum) + "+" + txid.ToString(); // order by blockNum
+  Status status = pdb->Put(writeoptions, key, strValue);
+
+  ++nWritten;
+  PrintToLog("%s: %s\n", __FUNCTION__, status.ToString());
 }
 
 void CMPTradeList::recordNewInstContTrade(const uint256& txid, const std::string& firstAddr, const std::string& secondAddr, uint32_t property, uint64_t amount_forsale, uint64_t price ,int blockNum, int blockIndex)

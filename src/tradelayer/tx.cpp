@@ -4829,7 +4829,7 @@ int CMPTransaction::logicMath_New_Id_Registration()
   // ---------------------------------------
   if (msc_debug_new_id_registration) PrintToLog("%s(): channelAddres in register: %s \n",__func__,receiver);
 
-  t_tradelistdb->recordNewIdRegister(txid, receiver, website, block, tx_idx, KYC_1);
+  t_tradelistdb->recordNewIdRegister(txid, receiver, website, block, tx_idx);
 
   // std::string dummy = "1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P";
   // t_tradelistdb->updateIdRegister(txid,sender, dummy,block, tx_idx);
@@ -4903,14 +4903,12 @@ int CMPTransaction::logicMath_Attestation()
       return (PKT_ERROR_METADEX -22);
   }
 
-  if(!t_tradelistdb->checkKYCRegister(sender))
-  {
-      PrintToLog("%s(): KYC TYPE 0\n");
-  } else
-      t_tradelistdb->recordNewIdRegister(txid, receiver, "", block, tx_idx, KYC_0);
+  int kyc_id;
 
+  if(!t_tradelistdb->checkKYCRegister(sender,kyc_id))
+      kyc_id = KYC_0;
 
-
+  t_tradelistdb->recordAttestation(txid, sender, receiver, block, tx_idx, kyc_id);
 
   return 0;
 
