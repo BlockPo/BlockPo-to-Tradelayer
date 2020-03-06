@@ -162,7 +162,6 @@ extern std::map<uint32_t, int64_t> VWAPMapContracts;
 //extern volatile std::vector<std::map<std::string, std::string>> path_eleg;
 extern std::map<uint32_t,std::map<int,oracledata>> oraclePrices;
 extern std::string setExoduss;
-extern std::string admin_addrs;
 /************************************************/
 /** TWAP containers **/
 
@@ -646,10 +645,9 @@ void creatingVestingTokens(int block)
    assert(propertyIdVesting > 0);
 
    PrintToLog("%s(): admin_addrs : %s, propertyIdVesting: %d \n",__func__,getAdminAddress(), propertyIdVesting);
-   // PrintToLog("%s(): admin_addrs : %s, propertyIdVesting: %d \n",__func__, admin_addrs, propertyIdVesting);
+
    //NOTE: we have to change this admin_addrs for getAdminAddress function call
    assert(update_tally_map(getAdminAddress(), propertyIdVesting, totalVesting, BALANCE));
-   assert(update_tally_map(admin_addrs, propertyIdVesting, totalVesting, BALANCE));
 }
 
 /**
