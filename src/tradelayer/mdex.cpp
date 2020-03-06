@@ -1042,7 +1042,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
    *
    */
     // NOTE: Check this function later (got issues!)
-    // mastercore::ContractDex_Fees(pnew->getAddr(),pold->getAddr(), nCouldBuy, property_traded);
+    mastercore::ContractDex_Fees(pnew->getAddr(),pold->getAddr(), nCouldBuy, property_traded);
 
     if(msc_debug_x_trade_bidirectional)
     {
@@ -1152,16 +1152,16 @@ bool mastercore::ContractDex_Fees(std::string addressTaker,std::string addressMa
         }else {
             // Create the metadex object with specific params
 
-            uint256 txid;
+            // uint256 txid;
             // int block = 0;
             // unsigned int idx = 0;
 
-            CMPSPInfo::Entry spp;
-            _my_sps->getSP(sp.collateral_currency, spp);
-            if (msc_debug_contractdex_fees) PrintToLog("name of collateral currency:%s \n",spp.name);
-
-            int64_t VWAPMetaDExPrice = mastercore::getVWAPPriceByPair(spp.name, "ALL");
-            if (msc_debug_contractdex_fees) PrintToLog("\nVWAPMetaDExPrice = %s\n", FormatDivisibleMP(VWAPMetaDExPrice));
+            // CMPSPInfo::Entry spp;
+            // _my_sps->getSP(sp.collateral_currency, spp);
+            // if (msc_debug_contractdex_fees) PrintToLog("name of collateral currency:%s \n",spp.name);
+            //
+            // int64_t VWAPMetaDExPrice = mastercore::getVWAPPriceByPair(spp.name, "ALL");
+            // if (msc_debug_contractdex_fees) PrintToLog("\nVWAPMetaDExPrice = %s\n", FormatDivisibleMP(VWAPMetaDExPrice));
             // int64_t amount_desired = 1; // we need to ajust this to market prices
             // CMPMetaDEx new_mdex(addressTaker, block, sp.collateral_currency, cacheFee, 1, amount_desired, txid, idx, CMPTransaction::ADD);
             // mastercore::MetaDEx_INSERT(new_mdex);
