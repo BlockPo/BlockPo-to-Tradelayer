@@ -32,7 +32,6 @@ using std::runtime_error;
 using namespace mastercore;
 
 extern volatile int64_t LTCPriceOffer;
-extern std::string admin_addrs;
 
 UniValue tl_sendrawtx(const JSONRPCRequest& request)
 {
@@ -2142,8 +2141,8 @@ UniValue tl_setadmin(const JSONRPCRequest& request)
         );
 
     // obtain parameters & info
-    admin_addrs = ParseAddress(request.params[0]);
-    PrintToLog("setadmin : %s",admin_addrs);
+    // admin_addrs = ParseAddress(request.params[0]);
+    // PrintToLog("setadmin : %s",admin_addrs);
     uint256 txid;
 
     return txid.GetHex();
