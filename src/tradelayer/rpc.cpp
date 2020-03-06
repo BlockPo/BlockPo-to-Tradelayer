@@ -2610,18 +2610,17 @@ UniValue tl_getcache(const JSONRPCRequest& request)
     if (request.params.size() != 1)
         throw runtime_error(
             "tl_getmargin \"address\" propertyid\n"
-            "\nReturns the token reserve account using in futures contracts, for a given address and property.\n"
+            "\nReturns the fee cach for a given property.\n"
             "\nArguments:\n"
-            "1. address              (string, required) the address\n"
-            "2. propertyid           (number, required) the contract identifier\n"
+            "1. propertyid           (number, required) the contract identifier\n"
             "\nResult:\n"
             "{\n"
             "  \"balance\" : \"n.nnnnnnnn\",   (string) the available balance of the address\n"
             "  \"reserved\" : \"n.nnnnnnnn\"   (string) the amount reserved by sell offers and accepts\n"
             "}\n"
             "\nExamples:\n"
-            + HelpExampleCli("tl_getmargin", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" 1")
-            + HelpExampleRpc("tl_getmargin", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", 1")
+            + HelpExampleCli("tl_getcache", "\"\" 1")
+            + HelpExampleRpc("tl_getcache", "\"\", 1")
         );
 
     uint32_t propertyId = ParsePropertyId(request.params[0]);
