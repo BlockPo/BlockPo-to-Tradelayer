@@ -2219,6 +2219,37 @@ int mastercore::ContractDex_CANCEL_FOR_BLOCK(const uint256& txid,  int block,uns
   return rc;
 }
 
+bool mastercore::ContractDex_CHECK_ORDERS(const std::string& sender_addr, uint32_t contractId)
+{
+    bool bValid = false;
+    for (cd_PropertiesMap::iterator my_it = contractdex.begin(); my_it != contractdex.end(); ++my_it)
+    {
+        cd_PricesMap &prices = my_it->second;
+
+        for (cd_PricesMap::iterator it = prices.begin(); it != prices.end(); ++it)
+        {
+            // uint64_t price = it->first;
+            cd_Set &indexes = it->second;
+
+            for (cd_Set::iterator it = indexes.begin(); it != indexes.end();)
+            {
+	              string addr = it->getAddr();
+                uint32_t contract = it->getProperty();
+ 	              if (addr != sender_addr || contract != contractId)
+                {
+	                  ++it;
+	                  continue;
+	              }
+
+	              bValid = true;
+                break;
+            }
+        }
+    }
+
+    return bValid;
+}
+
 int mastercore::ContractDex_CANCEL_IN_ORDER(const std::string& sender_addr, uint32_t contractId)
 {
     int rc = METADEX_ERROR -40;
