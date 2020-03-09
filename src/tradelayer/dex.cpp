@@ -243,7 +243,7 @@ int DEx_BuyOfferCreate(const std::string& addressMaker, uint32_t propertyId, int
     LOCK(cs_tally);
 
     arith_uint256 sumValues;
-    uint32_t nextSPID = _my_sps->peekNextSPID(1);
+    uint32_t nextSPID = _my_sps->peekNextSPID();
 
     for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
     {
@@ -576,7 +576,7 @@ int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addre
     CMPAccept* p_accept;
 
     // logic here: we look only into main properties if there's some match
-    for (propertyId = 1; propertyId < _my_sps->peekNextSPID(1); propertyId++)
+    for (propertyId = 1; propertyId < _my_sps->peekNextSPID(); propertyId++)
     {
         CMPSPInfo::Entry sp;
         if (msc_debug_dex) PrintToLog("propertyId: %d\n",propertyId);

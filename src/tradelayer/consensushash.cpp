@@ -337,10 +337,8 @@ namespace mastercore
     // Note: we are loading every SP from the DB to check the issuer, if using consensus_hash_every_block debug option this
     //       will slow things down dramatically.  Not an issue to do it once every 10,000 blocks for checkpoint verification.
     // Placeholders: "propertyid|issueraddress"
-    for (uint8_t ecosystem = 1; ecosystem <= 2; ecosystem++)
-      {
-	uint32_t startPropertyId = (ecosystem == 1) ? 1 : TEST_ECO_PROPERTY_1;
-	for (uint32_t propertyId = startPropertyId; propertyId < _my_sps->peekNextSPID(ecosystem); propertyId++)
+	uint32_t startPropertyId = 1;
+	for (uint32_t propertyId = startPropertyId; propertyId < _my_sps->peekNextSPID(); propertyId++)
 	  {
 	    CMPSPInfo::Entry sp;
 	    if (!_my_sps->getSP(propertyId, sp))
@@ -352,7 +350,6 @@ namespace mastercore
 	    if (msc_debug_consensus_hash) PrintToLog("Adding property to consensus hash: %s\n", dataStr);
 	    SHA256_Update(&shaCtx, dataStr.c_str(), dataStr.length());
 	  }
-      }
 
     // extract the final result and return the hash
     uint256 consensusHash;

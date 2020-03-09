@@ -189,7 +189,6 @@ void MetaDexObjectToJSON(const CMPMetaDEx& obj, UniValue& metadex_obj)
     // add data to JSON object
     metadex_obj.push_back(Pair("address", obj.getAddr()));
     metadex_obj.push_back(Pair("txid", obj.getHash().GetHex()));
-    if (obj.getAction() == 4) metadex_obj.push_back(Pair("ecosystem", isTestEcosystemProperty(obj.getProperty()) ? "test" : "main"));
     metadex_obj.push_back(Pair("propertyidforsale", (uint64_t) obj.getProperty()));
     metadex_obj.push_back(Pair("propertyidforsaleisdivisible", propertyIdForSaleIsDivisible));
     metadex_obj.push_back(Pair("amountforsale", FormatMP(obj.getProperty(), obj.getAmountForSale())));
@@ -854,7 +853,7 @@ UniValue tl_listproperties(const JSONRPCRequest& request)
 
   LOCK(cs_tally);
 
-  uint32_t nextSPID = _my_sps->peekNextSPID(1);
+  uint32_t nextSPID = _my_sps->peekNextSPID();
   for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++) {
     CMPSPInfo::Entry sp;
     if (_my_sps->getSP(propertyId, sp)) {
@@ -865,17 +864,6 @@ UniValue tl_listproperties(const JSONRPCRequest& request)
     }
   }
 
-  uint32_t nextTestSPID = _my_sps->peekNextSPID(2);
-  for (uint32_t propertyId = TEST_ECO_PROPERTY_1; propertyId < nextTestSPID; propertyId++) {
-    CMPSPInfo::Entry sp;
-    if (_my_sps->getSP(propertyId, sp)) {
-      UniValue propertyObj(UniValue::VOBJ);
-      propertyObj.push_back(Pair("propertyid", (uint64_t) propertyId));
-      PropertyToJSON(sp, propertyObj); // name, data, url, divisible
-
-      response.push_back(propertyObj);
-    }
-  }
   return response;
 }
 
@@ -904,7 +892,7 @@ UniValue tl_list_natives(const JSONRPCRequest& request)
 
   LOCK(cs_tally);
 
-  uint32_t nextSPID = _my_sps->peekNextSPID(1);
+  uint32_t nextSPID = _my_sps->peekNextSPID();
   for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++) {
     CMPSPInfo::Entry sp;
 
@@ -920,7 +908,7 @@ UniValue tl_list_natives(const JSONRPCRequest& request)
     }
   }
 
-  uint32_t nextTestSPID = _my_sps->peekNextSPID(2);
+  uint32_t nextTestSPID = _my_sps->peekNextSPID();
   for (uint32_t propertyId = TEST_ECO_PROPERTY_1; propertyId < nextTestSPID; propertyId++) {
     CMPSPInfo::Entry sp;
     if (_my_sps->getSP(propertyId, sp)) {
@@ -963,7 +951,7 @@ UniValue tl_list_oracles(const JSONRPCRequest& request)
 
   LOCK(cs_tally);
 
-  uint32_t nextSPID = _my_sps->peekNextSPID(1);
+  uint32_t nextSPID = _my_sps->peekNextSPID();
   for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++) {
     CMPSPInfo::Entry sp;
 
@@ -975,21 +963,6 @@ UniValue tl_list_oracles(const JSONRPCRequest& request)
       UniValue propertyObj(UniValue::VOBJ);
       propertyObj.push_back(Pair("propertyid", (uint64_t) propertyId));
       OracleToJSON(sp, propertyObj); // name, data, url,...
-      response.push_back(propertyObj);
-    }
-  }
-
-  uint32_t nextTestSPID = _my_sps->peekNextSPID(2);
-  for (uint32_t propertyId = TEST_ECO_PROPERTY_1; propertyId < nextTestSPID; propertyId++) {
-    CMPSPInfo::Entry sp;
-    if (_my_sps->getSP(propertyId, sp)) {
-
-      if(!sp.isOracle())
-          continue;
-
-      UniValue propertyObj(UniValue::VOBJ);
-      propertyObj.push_back(Pair("propertyid", (uint64_t) propertyId));
-      OracleToJSON(sp, propertyObj);
       response.push_back(propertyObj);
     }
   }
@@ -1884,7 +1857,6 @@ UniValue tl_getorderbook(const JSONRPCRequest& request)
             "  {\n"
             "    \"address\" : \"address\",                         (string) the Bitcoin address of the trader\n"
             "    \"txid\" : \"hash\",                               (string) the hex-encoded hash of the transaction of the order\n"
-            "    \"ecosystem\" : \"main\"|\"test\",                   (string) the ecosytem in which the order was made (if \"cancel-ecosystem\")\n"
             "    \"propertyidforsale\" : n,                       (number) the identifier of the tokens put up for sale\n"
             "    \"propertyidforsaleisdivisible\" : true|false,   (boolean) whether the tokens for sale are divisible\n"
             "    \"amountforsale\" : \"n.nnnnnnnn\",                (string) the amount of tokens initially offered\n"
@@ -1915,7 +1887,6 @@ UniValue tl_getorderbook(const JSONRPCRequest& request)
         propertyIdDesired = ParsePropertyId(request.params[1]);
         RequireExistingProperty(propertyIdDesired);
         RequireNotContract(propertyIdDesired);
-        RequireSameEcosystem(propertyIdForSale, propertyIdDesired);
         RequireDifferentIds(propertyIdForSale, propertyIdDesired);
     }
 
@@ -1954,7 +1925,6 @@ UniValue tl_getcontract_orderbook(const JSONRPCRequest& request)
 			"  {\n"
 			"    \"address\" : \"address\",                         (string) the Bitcoin address of the trader\n"
 			"    \"txid\" : \"hash\",                               (string) the hex-encoded hash of the transaction of the order\n"
-			"    \"ecosystem\" : \"main\"|\"test\",                   (string) the ecosytem in which the order was made (if \"cancel-ecosystem\")\n"
 			"    \"propertyidforsale\" : n,                       (number) the identifier of the tokens put up for sale\n"
 			"    \"propertyidforsaleisdivisible\" : true|false,   (boolean) whether the tokens for sale are divisible\n"
 			"    \"amountforsale\" : \"n.nnnnnnnn\",                (string) the amount of tokens initially offered\n"

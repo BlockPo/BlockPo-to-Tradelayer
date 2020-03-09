@@ -173,28 +173,16 @@ void CMPSPInfo::Clear()
   init();
 }
 
-void CMPSPInfo::init(uint32_t nextSPID, uint32_t nextTestSPID)
+void CMPSPInfo::init(uint32_t nextSPID)
 {
   next_spid = nextSPID;
-  next_test_spid = nextTestSPID;
 }
 
-uint32_t CMPSPInfo::peekNextSPID(uint8_t ecosystem) const
+uint32_t CMPSPInfo::peekNextSPID() const
 {
-  uint32_t nextId = 0;
+    uint32_t nextId = next_spid;
 
-  switch (ecosystem)
-    {
-    case TL_PROPERTY_ALL: // Main ecosystem, ALL: 1, TALL: 2, First available SP = 3
-      nextId = next_spid;
-      break;
-    case TL_PROPERTY_TALL: // Test ecosystem, same as above with high bit set
-      nextId = next_test_spid;
-      break;
-    default: // Non-standard ecosystem, ID's start at 0
-      nextId = 0;
-    }
-  return nextId;
+    return nextId;
 }
 
 bool CMPSPInfo::updateSP(uint32_t propertyId, const Entry& info)
@@ -241,19 +229,9 @@ bool CMPSPInfo::updateSP(uint32_t propertyId, const Entry& info)
   return true;
 }
 
-uint32_t CMPSPInfo::putSP(uint8_t ecosystem, const Entry& info)
+uint32_t CMPSPInfo::putSP(const Entry& info)
 {
-    uint32_t propertyId = 0;
-    switch (ecosystem) {
-        case TL_PROPERTY_ALL: // Main ecosystem, MSC: 1, TMSC: 2, First available SP = 3
-            propertyId = next_spid++;
-            break;
-        case TL_PROPERTY_TALL: // Test ecosystem, same as above with high bit set
-            propertyId = next_test_spid++;
-            break;
-        default: // Non-standard ecosystem, ID's start at 0
-            propertyId = 0;
-    }
+    uint32_t propertyId = next_spid++;
 
     // DB key for property entry
     CDataStream ssSpKey(SER_DISK, CLIENT_VERSION);
@@ -646,9 +624,7 @@ bool mastercore::IsPropertyIdValid(uint32_t propertyId)
   uint32_t nextId = 0;
 
   if (propertyId < TEST_ECO_PROPERTY_1) {
-    nextId = _my_sps->peekNextSPID(1);
-  } else {
-    nextId = _my_sps->peekNextSPID(2);
+    nextId = _my_sps->peekNextSPID();
   }
 
   if (propertyId < nextId) {
@@ -875,9 +851,9 @@ bool mastercore::isCrowdsalePurchase(const uint256& txid, const std::string& add
     }
 
     // if we still haven't found txid, check non active crowdsales to this address
-    for (uint8_t ecosystem = 1; ecosystem <= 2; ecosystem++) {
-        uint32_t startPropertyId = (ecosystem == 1) ? 1 : TEST_ECO_PROPERTY_1;
-        for (uint32_t loopPropertyId = startPropertyId; loopPropertyId < _my_sps->peekNextSPID(ecosystem); loopPropertyId++) {
+    for (uint8_t id = 1; id <= 2; id++) {
+        uint32_t startPropertyId = (id == 1) ? 1 : TEST_ECO_PROPERTY_1;
+        for (uint32_t loopPropertyId = startPropertyId; loopPropertyId < _my_sps->peekNextSPID(); loopPropertyId++) {
             CMPSPInfo::Entry sp;
             if (!_my_sps->getSP(loopPropertyId, sp)) continue;
             if (sp.issuer != address) continue;
@@ -1034,13 +1010,13 @@ std::string mastercore::strPropertyType(uint16_t propertyType)
   return "unknown";
 }
 
-std::string mastercore::strEcosystem(uint8_t ecosystem)
-{
-  switch (ecosystem)
-    {
-    case TL_PROPERTY_ALL: return "main";
-    case TL_PROPERTY_TALL: return "test";
-    }
-
-  return "unknown";
-}
+// std::string mastercore::strEcosystem(uint8_t ecosystem)
+// {
+//   switch (ecosystem)
+//     {
+//     case TL_PROPERTY_ALL: return "main";
+//     case TL_PROPERTY_TALL: return "test";
+//     }
+//
+//   return "unknown";
+// }

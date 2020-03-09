@@ -112,12 +112,6 @@ void RequireExistingProperty(uint32_t propertyId)
   }
 }
 
-void RequireSameEcosystem(uint32_t propertyId, uint32_t otherId)
-{
-  if (mastercore::isTestEcosystemProperty(propertyId) != mastercore::isTestEcosystemProperty(otherId)) {
-    throw JSONRPCError(RPC_INVALID_PARAMETER, "Properties must be in the same ecosystem");
-  }
-}
 
 void RequireDifferentIds(uint32_t propertyId, uint32_t otherId)
 {
@@ -385,7 +379,7 @@ void RequireContractTxId(std::string& txid)
 void RequireSaneName(std::string& name)
 {
     LOCK(cs_tally);
-    uint32_t nextSPID = mastercore::_my_sps->peekNextSPID(1);
+    uint32_t nextSPID = mastercore::_my_sps->peekNextSPID();
     for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++) {
         CMPSPInfo::Entry sp;
         if (mastercore::_my_sps->getSP(propertyId, sp)) {

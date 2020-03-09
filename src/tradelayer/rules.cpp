@@ -416,7 +416,7 @@ bool IsFeatureActivated(uint16_t featureId, int transactionBlock)
  */
 bool IsTransactionTypeAllowed(int txBlock, uint32_t txProperty, uint16_t txType, uint16_t version)
 {
-    PrintToLog("%s(): txBlock: %d, ecosystem: %d, type: %d, version: %d\n",__func__, txBlock, txProperty, txType, version);
+    PrintToLog("%s(): txBlock: %d, txProperty: %d, type: %d, version: %d\n",__func__, txBlock, txProperty, txType, version);
 
     const std::vector<TransactionRestriction>& vTxRestrictions = ConsensusParams().GetRestrictions();
 
@@ -435,11 +435,7 @@ bool IsTransactionTypeAllowed(int txBlock, uint32_t txProperty, uint16_t txType,
             PrintToLog("%s(): second continue\n",__func__);
             continue;
         }
-        // transactions are not restricted in the test ecosystem
-        if (isTestEcosystemProperty(txProperty)) {
-            PrintToLog("%s(): isTestEcosystemProperty\n",__func__);
-            return true;
-        }
+        
         if (txBlock >= entry.activationBlock) {
             PrintToLog("%s(): txBlock: %d; entry.activationBlock: %d\n",__func__,txBlock, entry.activationBlock);
             PrintToLog("%s(): txBlock >= entry.activationBlock\n",__func__);
