@@ -1813,7 +1813,7 @@ UniValue tl_getposition(const JSONRPCRequest& request)
 			"\nReturns the position for the future contract for a given address and property.\n"
 			"\nArguments:\n"
 			"1. address              (string, required) the address\n"
-			"2. contractid           (number, required) the future contract identifier\n"
+			"2. name of contract     (string, required) the future contract name\n"
 			"\nResult:\n"
 			"{\n"
 			"  \"shortPosition\" : \"n.nnnnnnnn\",   (string) short position of the address \n"
@@ -1825,12 +1825,17 @@ UniValue tl_getposition(const JSONRPCRequest& request)
 			);
 
   std::string address = ParseAddress(request.params[0]);
-  uint32_t propertyId = ParsePropertyId(request.params[1]);
+  std::string name = ParseText(request.params[1]);
 
-  RequireContract(propertyId);
+
+  RequireContract(name);
+
+  struct FutureContractObject *pfuture = getFutureContractObject(name);
+  uint32_t contractId = pfuture->fco_propertyId;
+
 
   UniValue balanceObj(UniValue::VOBJ);
-  PositionToJSON(address, propertyId, balanceObj, isPropertyContract(propertyId));
+  PositionToJSON(address, contractId, balanceObj, isPropertyContract(contractId));
 
   return balanceObj;
 }
