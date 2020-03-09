@@ -914,7 +914,6 @@ UniValue tl_create_oraclecontract(const JSONRPCRequest& request)
 			);
 
   std::string fromAddress = ParseAddress(request.params[0]);
-
   std::string name = ParseText(request.params[1]);
   uint32_t blocks_until_expiration = request.params[2].get_int();
   uint32_t notional_size = ParseAmount32t(request.params[3]);
