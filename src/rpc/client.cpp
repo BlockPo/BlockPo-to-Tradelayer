@@ -225,11 +225,6 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_createpayload_setoracle", 2, "arg2" },
     { "tl_createpayload_setoracle", 3, "arg3" },
 
-    { "tl_createpayload_new_id_registration", 2, "arg2" },
-    { "tl_createpayload_new_id_registration", 3, "arg3" },
-    { "tl_createpayload_new_id_registration", 4, "arg4" },
-    { "tl_createpayload_new_id_registration", 5, "arg5" },
-
     /* Trade Layer - raw transaction calls */
     { "tl_decodetransaction", 1, "arg1" },
     { "tl_decodetransaction", 2, "arg2" },
@@ -296,10 +291,6 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_withdrawal_fromchannel", 2, "arg2" },
     { "tl_withdrawal_fromchannel", 4, "arg4" },
     { "tl_create_channel", 3, "arg3" },
-    { "tl_new_id_registration", 4, "arg3" },
-    { "tl_new_id_registration", 5, "arg4" },
-    { "tl_new_id_registration", 6, "arg5" },
-    { "tl_new_id_registration", 7, "arg6" },
 
     /* Trade Layer - data retrieval calls */
     { "tl_setautocommit", 0, "arg0" },

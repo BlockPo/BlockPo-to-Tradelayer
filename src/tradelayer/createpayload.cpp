@@ -877,7 +877,7 @@ std::vector<unsigned char> CreatePayload_Create_Channel(std::string channelAddre
   return payload;
 }
 
-std::vector<unsigned char> CreatePayload_New_Id_Registration(std::string website, std::string name, uint8_t tokens, uint8_t ltc, uint8_t natives, uint8_t oracles)
+std::vector<unsigned char> CreatePayload_New_Id_Registration(std::string website, std::string name)
 {
   std::vector<unsigned char> payload;
 
@@ -886,21 +886,13 @@ std::vector<unsigned char> CreatePayload_New_Id_Registration(std::string website
 
   std::vector<uint8_t> vecMessageType = CompressInteger((uint64_t)messageType);
   std::vector<uint8_t> vecMessageVer = CompressInteger((uint64_t)messageVer);
-  std::vector<uint8_t> vecTokens = CompressInteger((uint64_t)tokens);
-  std::vector<uint8_t> vecLtc = CompressInteger((uint64_t)ltc);
-  std::vector<uint8_t> vecNatives = CompressInteger((uint64_t)natives);
-  std::vector<uint8_t> vecOracles = CompressInteger((uint64_t)oracles);
 
   if ((website).size() > 255) website = website.substr(0,255);
   if ((name).size() > 255) name = name.substr(0,255);
 
   payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
   payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
-  payload.insert(payload.end(), vecTokens.begin(), vecTokens.end());
-  payload.insert(payload.end(), vecLtc.begin(), vecLtc.end());
-  payload.insert(payload.end(), vecNatives.begin(), vecNatives.end());
-  payload.insert(payload.end(), vecOracles.begin(), vecOracles.end());
-
+  
   payload.insert(payload.end(), website.begin(), website.end());
   payload.push_back('\0');
   payload.insert(payload.end(), name.begin(), name.end());
@@ -944,7 +936,7 @@ std::vector<unsigned char> CreatePayload_DEx_Payment()
 std::vector<unsigned char> CreatePayload_Attestation(std::string hash)
 {
   std::vector<unsigned char> payload;
-  
+
   uint64_t messageType = 118;
   uint64_t messageVer = 0;
 

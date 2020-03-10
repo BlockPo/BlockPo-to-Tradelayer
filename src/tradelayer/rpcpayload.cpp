@@ -1144,7 +1144,7 @@ UniValue tl_createpayload_closeoracle(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_new_id_registration(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 6)
+    if (request.params.size() != 2)
         throw runtime_error(
             "tl_createpayload_new_id_registration  \"website url\" \"company name\" \n"
 
@@ -1153,10 +1153,6 @@ UniValue tl_createpayload_new_id_registration(const JSONRPCRequest& request)
             "\nArguments:\n"
             "1. website url                  (string, required) official web site of company\n"
             "2. company name                 (string, required) official name of company\n"
-            "3. token/token permission       (int, required) trading token for tokens (0 = false, 1 = true)\n"
-            "4. ltc/token permission         (int, required) trading litecoins for tokens (0 = false, 1 = true)\n"
-            "5. native-contract permission   (int, required) trading native contracts (0 = false, 1 = true)\n"
-            "6. oracle-contract permission   (int, required) trading oracle contracts (0 = false, 1 = true)\n"
 
             "\nResult:\n"
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
@@ -1169,13 +1165,8 @@ UniValue tl_createpayload_new_id_registration(const JSONRPCRequest& request)
     // obtain parameters & info
     std::string website = ParseText(request.params[0]);
     std::string name = ParseText(request.params[1]);
-    uint8_t tokens = ParsePermission(request.params[2]);
-    uint8_t ltc = ParsePermission(request.params[3]);
-    uint8_t natives = ParsePermission(request.params[4]);
-    uint8_t oracles = ParsePermission(request.params[5]);
-
     // create a payload for the transaction
-    std::vector<unsigned char> payload = CreatePayload_New_Id_Registration(website, name, tokens, ltc, natives, oracles);
+    std::vector<unsigned char> payload = CreatePayload_New_Id_Registration(website, name);
 
     return HexStr(payload.begin(), payload.end());
 }

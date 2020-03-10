@@ -218,7 +218,6 @@ enum FILETYPES {
 #define TYPE_CONTRACT_INSTANT_TRADE     "contract_instat_trade"
 #define TYPE_CREATE_CHANNEL             "create channel"
 #define TYPE_NEW_ID_REGISTER            "new id register"
-#define TYPE_NEW_ATTESTATION            "new attestation"
 
 // Currency in existance (options for createcontract)
 uint32_t const TL_dUSD  = 1;
@@ -380,8 +379,6 @@ class CMPTradeList : public CDBBase
 
   void recordMatchedTrade(const uint256 txid1, const uint256 txid2, string address1, string address2, unsigned int prop1, unsigned int prop2, uint64_t amount1, uint64_t amount2, int blockNum, int64_t fee);
 
-  void recordAttestation(const uint256& txid, const std::string& sender, const std::string& receiver, int blockNum, int blockIndex, int kyc_id);
-
   void recordMatchedTrade(const uint256 txid1, const uint256 txid2, string address1, string address2, uint64_t effective_price, uint64_t amount_maker, uint64_t amount_taker, int blockNum1, int blockNum2, uint32_t property_traded, string tradeStatus, int64_t lives_s0, int64_t lives_s1, int64_t lives_s2, int64_t lives_s3, int64_t lives_b0, int64_t lives_b1, int64_t lives_b2, int64_t lives_b3, string s_maker0, string s_taker0, string s_maker1, string s_taker1, string s_maker2, string s_taker2, string s_maker3, string s_taker3, int64_t nCouldBuy0, int64_t nCouldBuy1, int64_t nCouldBuy2, int64_t nCouldBuy3, uint64_t amountpnew, uint64_t amountpold);
   void recordForUPNL(const uint256 txid, string address, uint32_t property_traded, int64_t effectivePrice);
   void recordNewTrade(const uint256& txid, const std::string& address, uint32_t propertyIdForSale, uint32_t propertyIdDesired, int blockNum, int blockIndex);
@@ -394,7 +391,7 @@ class CMPTradeList : public CDBBase
   void recordNewInstantTrade(const uint256& txid, const std::string& sender, const std::string& receiver, uint32_t propertyIdForSale, uint64_t amount_forsale, uint32_t propertyIdDesired, uint64_t amount_desired, int blockNum, int blockIndex);
   void recordNewTransfer(const uint256& txid, const std::string& sender, const std::string& receiver, uint32_t propertyId, uint64_t amount, int blockNum, int blockIndex);
   void recordNewInstContTrade(const uint256& txid, const std::string& firstAddr, const std::string& secondAddr, uint32_t property, uint64_t amount_forsale, uint64_t price ,int blockNum, int blockIndex);
-  void recordNewIdRegister(const uint256& txid, const std::string& address, const std::string& website, int blockNum, int blockIndex);
+  void recordNewIdRegister(const uint256& txid, const std::string& address, const std::string& name, const std::string& website, int blockNum, int blockIndex, int kyc_type);
   bool getAllCommits(const std::string& senderAddress, UniValue& tradeArray);
   bool getAllWithdrawals(const std::string& senderAddress, UniValue& tradeArray);
   bool getChannelInfo(const std::string& channelAddress, UniValue& tradeArray);

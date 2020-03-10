@@ -1957,7 +1957,7 @@ UniValue tl_create_channel(const JSONRPCRequest& request)
 
 UniValue tl_new_id_registration(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 8)
+    if (request.params.size() != 3)
         throw runtime_error(
             "tl_new_id_registration \"sender\" \"address\" \"website url\" \"company name\" \n"
 
@@ -1965,13 +1965,8 @@ UniValue tl_new_id_registration(const JSONRPCRequest& request)
 
             "\nArguments:\n"
             "1. sender                       (string, required) sender address\n"
-            "2. channel address              (string, required) channel address\n"
-            "3. website url                  (string, required) official web site of company\n"
-            "4. company name                 (string, required) official name of company\n"
-            "5. token/token permission       (int, required) trading token for tokens (0 = false, 1 = true)\n"
-            "6. ltc/token permission         (int, required) trading litecoins for tokens (0 = false, 1 = true)\n"
-            "7. native-contract permission   (int, required) trading native contracts (0 = false, 1 = true)\n"
-            "8. oracle-contract permission   (int, required) trading oracle contracts (0 = false, 1 = true)\n"
+            "2. website url                  (string, required) official web site of company\n"
+            "3. company name                 (string, required) official name of company\n"
 
             "\nResult:\n"
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
@@ -1983,21 +1978,16 @@ UniValue tl_new_id_registration(const JSONRPCRequest& request)
 
     // obtain parameters & info
     std::string sender = ParseAddress(request.params[0]);
-    std::string address = ParseAddress(request.params[1]);
-    std::string website = ParseText(request.params[2]);
-    std::string name = ParseText(request.params[3]);
-    uint8_t tokens = ParsePermission(request.params[4]);
-    uint8_t ltc = ParsePermission(request.params[5]);
-    uint8_t natives = ParsePermission(request.params[6]);
-    uint8_t oracles = ParsePermission(request.params[7]);
+    std::string website = ParseText(request.params[1]);
+    std::string name = ParseText(request.params[2]);
 
     // create a payload for the transaction
-    std::vector<unsigned char> payload = CreatePayload_New_Id_Registration(website, name, tokens, ltc, natives, oracles);
+    std::vector<unsigned char> payload = CreatePayload_New_Id_Registration(website, name);
 
     // request the wallet build the transaction (and if needed commit it)
     uint256 txid;
     std::string rawHex;
-    int result = WalletTxBuilder(sender, address, 0, payload, txid, rawHex, autoCommit);
+    int result = WalletTxBuilder(sender, "", 0, payload, txid, rawHex, autoCommit);
     // check error and return the txid (or raw hex depending on autocommit)
     if (result != 0) {
         throw JSONRPCError(result, error_str(result));
@@ -2100,7 +2090,7 @@ UniValue tl_send_dex_payment(const JSONRPCRequest& request)
 
 UniValue tl_attestation(const JSONRPCRequest& request)
 {
-    if (request.params.size() > 3)
+    if (request.params.size() < 1 || request.params.size() > 3)
         throw runtime_error(
             "tl_attestation \"fromaddress\" \"toaddress\"amount\" \n"
 

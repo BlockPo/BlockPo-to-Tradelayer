@@ -1903,13 +1903,6 @@ bool CMPTransaction::interpret_New_Id_Registration()
   std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
 
-  std::vector<uint8_t> vecTokens = GetNextVarIntBytes(i);
-  std::vector<uint8_t> vecLtc = GetNextVarIntBytes(i);
-  std::vector<uint8_t> vecNatives = GetNextVarIntBytes(i);
-  std::vector<uint8_t> vecOracles = GetNextVarIntBytes(i);
-
-  memcpy(&ecosystem, &pkt[i], 1);
-
   const char* p = i + (char*) &pkt;
   std::vector<std::string> spstr;
   for (int j = 0; j < 2; j++) {
@@ -1927,32 +1920,14 @@ bool CMPTransaction::interpret_New_Id_Registration()
   memcpy(company_name, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(company_name)-1)); j++;
   i = i + strlen(website) + strlen(company_name) + 2;
 
-  if (!vecTokens.empty()) {
-      tokens = DecompressInteger(vecTokens);
-  } else return false;
 
-  if (!vecLtc.empty()) {
-      ltc = DecompressInteger(vecLtc);
-  } else return false;
-
-  if (!vecNatives.empty()) {
-      natives = DecompressInteger(vecNatives);
-  } else return false;
-
-  if (!vecOracles.empty()) {
-      oracles = DecompressInteger(vecOracles);
-  } else return false;
-
-  if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
-  {
+  // if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+  // {
       PrintToLog("\t address: %s\n", sender);
       PrintToLog("\t website: %s\n", website);
       PrintToLog("\t company name: %s\n", company_name);
-      PrintToLog("\t tokens: %d\n", tokens);
-      PrintToLog("\t ltc: %d\n", ltc);
-      PrintToLog("\t natives: %d\n", natives);
-      PrintToLog("\t oracles: %d\n", oracles);
-  }
+
+  // }
 
   return true;
 }
@@ -4829,7 +4804,7 @@ int CMPTransaction::logicMath_New_Id_Registration()
   // ---------------------------------------
   if (msc_debug_new_id_registration) PrintToLog("%s(): channelAddres in register: %s \n",__func__,receiver);
 
-  t_tradelistdb->recordNewIdRegister(txid, receiver, website, block, tx_idx);
+  t_tradelistdb->recordNewIdRegister(txid, sender, company_name, website, block, tx_idx, KYC_1);
 
   // std::string dummy = "1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P";
   // t_tradelistdb->updateIdRegister(txid,sender, dummy,block, tx_idx);
@@ -4908,7 +4883,7 @@ int CMPTransaction::logicMath_Attestation()
   if(!t_tradelistdb->checkKYCRegister(sender,kyc_id))
       kyc_id = KYC_0;
 
-  t_tradelistdb->recordAttestation(txid, sender, receiver, block, tx_idx, kyc_id);
+  t_tradelistdb->recordNewIdRegister(txid, receiver, "", "", block, tx_idx, kyc_id);
 
   return 0;
 

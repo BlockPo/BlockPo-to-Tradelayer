@@ -50,7 +50,7 @@ std::vector<unsigned char> CreatePayload_Contract_Instant_Trade(uint32_t contrac
 std::vector<unsigned char> CreatePayload_PNL_Update(uint32_t propertyId, uint64_t amount, uint32_t blockheight_expiry);
 std::vector<unsigned char> CreatePayload_Transfer(uint32_t propertyId, uint64_t amount);
 std::vector<unsigned char> CreatePayload_Create_Channel(std::string channelAddress, uint32_t blocks);
-std::vector<unsigned char> CreatePayload_New_Id_Registration(std::string website, std::string name, uint8_t tokens, uint8_t ltc, uint8_t natives, uint8_t oracles);
+std::vector<unsigned char> CreatePayload_New_Id_Registration(std::string website, std::string name);
 std::vector<unsigned char> CreatePayload_Update_Id_Registration();
 std::vector<unsigned char> CreatePayload_DEx_Payment();
 std::vector<unsigned char> CreatePayload_TradeLayerAlert(uint16_t alertType, uint32_t expiryValue, const std::string& alertMessage);
