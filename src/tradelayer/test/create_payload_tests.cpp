@@ -24,7 +24,7 @@ BOOST_AUTO_TEST_CASE(payload_simple_send)
 BOOST_AUTO_TEST_CASE(payload_send_all)
 {
     // Send to owners [type 4, version 0]
-    std::vector<unsigned char> vch = CreatePayload_SendAll();          // ecosystem: Test
+    std::vector<unsigned char> vch = CreatePayload_SendAll();      
 
     BOOST_CHECK_EQUAL(HexStr(vch), "000402");
 }
@@ -57,10 +57,10 @@ BOOST_AUTO_TEST_CASE(payload_meta_dex_new_trade)
         "00190180e59a771f80e497d012");
 }
 
-BOOST_AUTO_TEST_CASE(payload_contractdex_cancel_ecosystem)
+BOOST_AUTO_TEST_CASE(payload_contractdex_cancel_all)
 {
 
-    std::vector<unsigned char> vch = CreatePayload_ContractDexCancelEcosystem(
+    std::vector<unsigned char> vch = CreatePayload_ContractDexCancelAll(
         static_cast<uint8_t>(7)     // contractId
         );
 
@@ -302,7 +302,7 @@ BOOST_AUTO_TEST_CASE(payload_change_property_manager)
 
 BOOST_AUTO_TEST_CASE(payload_cancel_orders_by_address)
 {
-    std::vector<unsigned char> vch = CreatePayload_ContractDexCancelEcosystem(
+    std::vector<unsigned char> vch = CreatePayload_ContractDexCancelAll(
         static_cast<uint64_t>(7)         // contractId
     );
     BOOST_CHECK_EQUAL(HexStr(vch),"00200107");

@@ -922,8 +922,6 @@ UniValue tl_create_oraclecontract(const JSONRPCRequest& request)
   std::string oracleAddress = ParseAddress(request.params[6]);
   uint8_t inverse = ParseBinary(request.params[7]);
 
-  // PrintToLog("\nRPC tl_create_oraclecontract: notional_size = %s\t margin_requirement = %s\t blocks_until_expiration = %d\t collateral_currency=%d\t ecosystem = %d \n", FormatDivisibleMP(notional_size), FormatDivisibleMP(margin_requirement), blocks_until_expiration, collateral_currency, ecosystem);
-
   RequirePropertyName(name);
   RequireSaneName(name);
 
@@ -1038,7 +1036,7 @@ UniValue tl_cancelallcontractsbyaddress(const JSONRPCRequest& request)
   RequireContractOrder(fromAddress, contractId);
 
   // create a payload for the transaction
-  std::vector<unsigned char> payload = CreatePayload_ContractDexCancelEcosystem(contractId);
+  std::vector<unsigned char> payload = CreatePayload_ContractDexCancelAll(contractId);
 
   // request the wallet build the transaction (and if needed commit it)
   uint256 txid;

@@ -377,7 +377,7 @@ std::vector<unsigned char> CreatePayload_ContractDexTrade(std::string name_trade
   return payload;
 }
 
-std::vector<unsigned char> CreatePayload_ContractDexCancelEcosystem(uint32_t contractId)
+std::vector<unsigned char> CreatePayload_ContractDexCancelAll(uint32_t contractId)
 {
   std::vector<unsigned char> payload;
 

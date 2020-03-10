@@ -27,7 +27,7 @@ std::vector<unsigned char> CreatePayload_DeactivateFeature(uint16_t featureId);
 std::vector<unsigned char> CreatePayload_ActivateFeature(uint16_t featureId, uint32_t activationBlock, uint32_t minClientVersion);
 std::vector<unsigned char> CreatePayload_CreateContract(uint32_t num, uint32_t den, std::string name, uint32_t blocks_until_expiration, uint32_t notional_size, uint32_t collateral_currency, uint32_t margin_requirement, uint8_t inverse);
 std::vector<unsigned char> CreatePayload_ContractDexTrade(std::string contractName, uint64_t amountForSale, uint64_t effective_price, uint8_t trading_action, uint64_t leverage);
-std::vector<unsigned char> CreatePayload_ContractDexCancelEcosystem(uint32_t contractId);
+std::vector<unsigned char> CreatePayload_ContractDexCancelAll(uint32_t contractId);
 std::vector<unsigned char> CreatePayload_ContractDexCancelOrderByTxId(int block, unsigned int idx);
 std::vector<unsigned char> CreatePayload_ContractDexClosePosition(uint32_t contractId);
 std::vector<unsigned char> CreatePayload_ContractDexCancelPrice(uint32_t propertyIdForSale, uint64_t amountForSale, uint32_t propertyIdDesired, uint64_t amountDesired, uint64_t effective_price, uint8_t trading_action);
