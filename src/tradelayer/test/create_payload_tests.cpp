@@ -24,8 +24,7 @@ BOOST_AUTO_TEST_CASE(payload_simple_send)
 BOOST_AUTO_TEST_CASE(payload_send_all)
 {
     // Send to owners [type 4, version 0]
-    std::vector<unsigned char> vch = CreatePayload_SendAll(
-        static_cast<uint8_t>(2));          // ecosystem: Test
+    std::vector<unsigned char> vch = CreatePayload_SendAll();      
 
     BOOST_CHECK_EQUAL(HexStr(vch), "000402");
 }
@@ -58,11 +57,10 @@ BOOST_AUTO_TEST_CASE(payload_meta_dex_new_trade)
         "00190180e59a771f80e497d012");
 }
 
-BOOST_AUTO_TEST_CASE(payload_contractdex_cancel_ecosystem)
+BOOST_AUTO_TEST_CASE(payload_contractdex_cancel_all)
 {
 
-    std::vector<unsigned char> vch = CreatePayload_ContractDexCancelEcosystem(
-        static_cast<uint8_t>(1),    // ecosystem: Main
+    std::vector<unsigned char> vch = CreatePayload_ContractDexCancelAll(
         static_cast<uint8_t>(7)     // contractId
         );
 
@@ -84,7 +82,6 @@ BOOST_AUTO_TEST_CASE(payload_create_property)
 {
     // Create property [type 50, version 0]
     std::vector<unsigned char> vch = CreatePayload_IssuanceFixed(
-        static_cast<uint8_t>(1),             // ecosystem: main
         static_cast<uint16_t>(1),            // property type: indivisible tokens
         static_cast<uint32_t>(0),            // previous property: none
         std::string("Lihki Coin"),           // name
@@ -100,7 +97,6 @@ BOOST_AUTO_TEST_CASE(payload_create_property_empty)
 {
     // Create property [type 50, version 0]
     std::vector<unsigned char> vch = CreatePayload_IssuanceFixed(
-        static_cast<uint8_t>(1),         // ecosystem: main
         static_cast<uint16_t>(1),        // property type: indivisible tokens
         static_cast<uint32_t>(0),        // previous property: none
         std::string(""),                 // name
@@ -115,7 +111,6 @@ BOOST_AUTO_TEST_CASE(payload_create_property_full)
 {
     // Create property [type 50, version 0]
     std::vector<unsigned char> vch = CreatePayload_IssuanceFixed(
-        static_cast<uint8_t>(1),         // ecosystem: main
         static_cast<uint16_t>(1),        // property type: indivisible tokens
         static_cast<uint32_t>(0),        // previous property: none
 
@@ -131,7 +126,6 @@ BOOST_AUTO_TEST_CASE(payload_create_crowdsale)
 {
     // Create crowdsale [type 51, version 0]
     std::vector<unsigned char> vch = CreatePayload_IssuanceVariable(
-        static_cast<uint8_t>(1),             // ecosystem: main
         static_cast<uint16_t>(1),            // property type: indivisible tokens
         static_cast<uint32_t>(0),            // previous property: none
         std::string("Companies"),            // name
@@ -151,7 +145,6 @@ BOOST_AUTO_TEST_CASE(payload_create_crowdsale_empty)
 {
     // Create crowdsale [type 51, version 0]
     std::vector<unsigned char> vch = CreatePayload_IssuanceVariable(
-        static_cast<uint8_t>(1),            // ecosystem: main
         static_cast<uint16_t>(1),           // property type: indivisible tokens
         static_cast<uint32_t>(0),           // previous property: none
         std::string(""),                    // name
@@ -170,7 +163,6 @@ BOOST_AUTO_TEST_CASE(payload_create_crowdsale_full)
 {
     // Create crowdsale [type 51, version 0]
     std::vector<unsigned char> vch = CreatePayload_IssuanceVariable(
-        static_cast<uint8_t>(1),            // ecosystem: main
         static_cast<uint16_t>(1),           // property type: indivisible tokens
         static_cast<uint32_t>(0),           // previous property: none
         std::string(700, 'x'),              // name
@@ -197,7 +189,6 @@ BOOST_AUTO_TEST_CASE(payload_create_managed_property)
 {
     // create managed property [type 54, version 0]
     std::vector<unsigned char> vch = CreatePayload_IssuanceManaged(
-        static_cast<uint8_t>(1),             // ecosystem: main
         static_cast<uint16_t>(1),            // property type: indivisible tokens
         static_cast<uint32_t>(0),            // previous property: none
         std::string("Companies"),            // name
@@ -211,8 +202,6 @@ BOOST_AUTO_TEST_CASE(payload_create_managed_property_empty)
 {
     // create managed property [type 54, version 0]
     std::vector<unsigned char> vch = CreatePayload_IssuanceManaged(
-
-        static_cast<uint8_t>(1),   // ecosystem: main
         static_cast<uint16_t>(1),  // property type: indivisible tokens
         static_cast<uint32_t>(0),  // previous property: none
         std::string(""),           // name
@@ -226,8 +215,6 @@ BOOST_AUTO_TEST_CASE(payload_create_managed_property_full)
 {
     // create managed property [type 54, version 0]
     std::vector<unsigned char> vch = CreatePayload_IssuanceManaged(
-
-        static_cast<uint8_t>(1),   // ecosystem: main
         static_cast<uint16_t>(1),  // property type: indivisible tokens
         static_cast<uint32_t>(0),  // previous property: none
         std::string(700, 'x'),     // name
@@ -292,7 +279,6 @@ BOOST_AUTO_TEST_CASE(payload_change_property_manager)
 // BOOST_AUTO_TEST_CASE(payload_create_contract)
 // {
 //     std::vector<unsigned char> vch = CreatePayload_CreateContract(
-//         static_cast<uint8_t>(1),             // ecosystem: main
 //         static_cast<uint32_t>(1),            // denomType: 1 (dUSD)
 //         std::string("ALL/dUSD"),             // name
 //         static_cast<uint32_t>(3000),         // blocks until expiration
@@ -316,8 +302,7 @@ BOOST_AUTO_TEST_CASE(payload_change_property_manager)
 
 BOOST_AUTO_TEST_CASE(payload_cancel_orders_by_address)
 {
-    std::vector<unsigned char> vch = CreatePayload_ContractDexCancelEcosystem(
-        static_cast<uint8_t>(1),             // ecosystem
+    std::vector<unsigned char> vch = CreatePayload_ContractDexCancelAll(
         static_cast<uint64_t>(7)         // contractId
     );
     BOOST_CHECK_EQUAL(HexStr(vch),"00200107");
@@ -334,7 +319,6 @@ BOOST_AUTO_TEST_CASE(payload_cancel_orders_by_block)
 BOOST_AUTO_TEST_CASE(payload_issuance_pegged)
 {
     std::vector<unsigned char> vch = CreatePayload_IssuancePegged(
-        static_cast<uint8_t>(1),             // ecosystem: main
         static_cast<uint16_t>(1),            // property type
         static_cast<uint32_t>(0),            // previous propertyId
         std::string("dUSD"),                 // name
@@ -370,7 +354,6 @@ BOOST_AUTO_TEST_CASE(payload_close_position)
 {
 
     std::vector<unsigned char> vch = CreatePayload_ContractDexClosePosition(
-        static_cast<uint8_t>(1),         // ecosystem
         static_cast<uint32_t>(5)        // contractId
     );
 

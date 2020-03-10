@@ -96,7 +96,7 @@ public:
         uint32_t attribute_type;
         int64_t contracts_needed;
         int init_block;
-        uint32_t ecosystemSP;
+        // uint32_t ecosystemSP;
         uint32_t numerator;
         uint32_t denominator;
 
@@ -197,11 +197,11 @@ public:
     /** Extends clearing of CDBBase. */
     void Clear();
 
-    void init(uint32_t nextSPID = 0x3UL, uint32_t nextTestSPID = TEST_ECO_PROPERTY_1);
+    void init(uint32_t nextSPID = 0x3UL);
 
-    uint32_t peekNextSPID(uint8_t ecosystem) const;
+    uint32_t peekNextSPID() const;
     bool updateSP(uint32_t propertyId, const Entry& info);
-    uint32_t putSP(uint8_t ecosystem, const Entry& info);
+    uint32_t putSP(const Entry& info);
     bool getSP(uint32_t propertyId, Entry& info) const;
     bool hasSP(uint32_t propertyId) const;
     uint32_t findSPByTX(const uint256& txid) const;
@@ -269,7 +269,7 @@ extern CMPSPInfo* _my_sps;
 extern CrowdMap my_crowds;
 
 std::string strPropertyType(uint16_t propertyType);
-std::string strEcosystem(uint8_t ecosystem);
+// std::string strEcosystem(uint8_t ecosystem);
 
 bool isPropertyContract(uint32_t propertyId);
 bool isPropertyPegged(uint32_t propertyId);

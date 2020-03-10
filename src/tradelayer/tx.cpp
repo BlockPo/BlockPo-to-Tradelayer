@@ -369,12 +369,9 @@ bool CMPTransaction::interpret_SendAll()
 
     std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
     std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
-    memcpy(&ecosystem, &pkt[i], 1);
-
-    property = ecosystem; // provide a hint for the UI, TODO: better handling!
 
     if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly) {
-        PrintToLog("\t       ecosystem: %d\n", (int)ecosystem);
+        PrintToLog("\t       inside interpret: %d\n");
     }
 
     return true;
@@ -388,8 +385,8 @@ bool CMPTransaction::interpret_CreatePropertyFixed()
     std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
     std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
 
-    memcpy(&ecosystem, &pkt[i], 1);
-    i++;
+    // memcpy(&ecosystem, &pkt[i], 1);
+    // i++;
 
     std::vector<uint8_t> vecPropTypeBytes = GetNextVarIntBytes(i);
     std::vector<uint8_t> vecPrevPropIdBytes = GetNextVarIntBytes(i);
@@ -428,7 +425,7 @@ bool CMPTransaction::interpret_CreatePropertyFixed()
     } else return false;
 
     if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly) {
-        PrintToLog("\t       ecosystem: %d\n", ecosystem);
+        // PrintToLog("\t       ecosystem: %d\n", ecosystem);
         PrintToLog("\t   property type: %d (%s)\n", prop_type, strPropertyType(prop_type));
         PrintToLog("\tprev property id: %d\n", prev_prop_id);
         PrintToLog("\t            name: %s\n", name);
@@ -448,8 +445,8 @@ bool CMPTransaction::interpret_CreatePropertyVariable()
     std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
     std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
 
-    memcpy(&ecosystem, &pkt[i], 1);
-    i++;
+    // memcpy(&ecosystem, &pkt[i], 1);
+    // i++;
 
     std::vector<uint8_t> vecPropTypeBytes = GetNextVarIntBytes(i);
     std::vector<uint8_t> vecPrevPropIdBytes = GetNextVarIntBytes(i);
@@ -490,7 +487,6 @@ bool CMPTransaction::interpret_CreatePropertyVariable()
 
 
     if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly) {
-        PrintToLog("\t       ecosystem: %d\n", ecosystem);
         PrintToLog("\t   property type: %d (%s)\n", prop_type, strPropertyType(prop_type));
         PrintToLog("\tprev property id: %d\n", prev_prop_id);
         PrintToLog("\t            name: %s\n", name);
@@ -531,8 +527,8 @@ bool CMPTransaction::interpret_CreatePropertyManaged()
     std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
     std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
 
-    memcpy(&ecosystem, &pkt[i], 1);
-    i++;
+    // memcpy(&ecosystem, &pkt[i], 1);
+    // i++;
 
     std::vector<uint8_t> vecPropTypeBytes = GetNextVarIntBytes(i);
     std::vector<uint8_t> vecPrevPropIdBytes = GetNextVarIntBytes(i);
@@ -564,7 +560,6 @@ bool CMPTransaction::interpret_CreatePropertyManaged()
     } else return false;
 
     if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly) {
-        PrintToLog("\t       ecosystem: %d\n", ecosystem);
         PrintToLog("\t   property type: %d (%s)\n", prop_type, strPropertyType(prop_type));
         PrintToLog("\tprev property id: %d\n", prev_prop_id);
         PrintToLog("\t            name: %s\n", name);
@@ -954,8 +949,8 @@ bool CMPTransaction::interpret_CreateContractDex()
   std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
 
-  memcpy(&ecosystem, &pkt[i], 1);
-  i++;
+  // memcpy(&ecosystem, &pkt[i], 1);
+  // i++;
 
   std::vector<uint8_t> vecNum = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecDen = GetNextVarIntBytes(i);
@@ -1034,7 +1029,6 @@ bool CMPTransaction::interpret_CreateContractDex()
       PrintToLog("\t notional size : %d\n", notional_size);
       PrintToLog("\t collateral currency: %d\n", collateral_currency);
       PrintToLog("\t margin requirement: %d\n", margin_requirement);
-      PrintToLog("\t ecosystem: %d\n", ecosystem);
       PrintToLog("\t name: %s\n", name);
       PrintToLog("\t prop_type: %d\n", prop_type);
       PrintToLog("\t inverse quoted: %d\n", inverse_quoted);
@@ -1127,9 +1121,9 @@ bool CMPTransaction::interpret_ContractDexCancelEcosystem()
     version = DecompressInteger(vecVersionBytes);
   } else return false;
 
-  if (!vecEcosystemBytes.empty()) {
-    ecosystem = DecompressInteger(vecEcosystemBytes);
-  } else return false;
+  // if (!vecEcosystemBytes.empty()) {
+  //   ecosystem = DecompressInteger(vecEcosystemBytes);
+  // } else return false;
 
   if (!vecContractIdBytes.empty()) {
     contractId = DecompressInteger(vecContractIdBytes);
@@ -1139,7 +1133,6 @@ bool CMPTransaction::interpret_ContractDexCancelEcosystem()
   // {
      PrintToLog("\t version: %d\n", version);
      PrintToLog("\t messageType: %d\n",type);
-     PrintToLog("\t ecosystem: %d\n", ecosystem);
      PrintToLog("\t contractId: %d\n", contractId);
   // }
 
@@ -1164,9 +1157,9 @@ bool CMPTransaction::interpret_ContractDexClosePosition()
         version = DecompressInteger(vecVersionBytes);
     } else return false;
 
-    if (!vecEcosystemBytes.empty()) {
-        ecosystem = DecompressInteger(vecEcosystemBytes);
-    } else return false;
+    // if (!vecEcosystemBytes.empty()) {
+    //     ecosystem = DecompressInteger(vecEcosystemBytes);
+    // } else return false;
 
     if (!vecContractIdBytes.empty()) {
         contractId = DecompressInteger(vecContractIdBytes);
@@ -1176,7 +1169,6 @@ bool CMPTransaction::interpret_ContractDexClosePosition()
     {
         PrintToLog("\t version: %d\n", version);
         PrintToLog("\t messageType: %d\n",type);
-        PrintToLog("\t ecosystem: %d\n", ecosystem);
         PrintToLog("\t contractId: %d\n", contractId);
     }
 
@@ -1228,8 +1220,9 @@ bool CMPTransaction::interpret_CreatePeggedCurrency()
     std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
     std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
 
-    memcpy(&ecosystem, &pkt[i], 1);
-    i++;
+    // memcpy(&ecosystem, &pkt[i], 1);
+    // i++;
+
     std::vector<uint8_t> vecPropTypeBytes = GetNextVarIntBytes(i);
     std::vector<uint8_t> vecPrevPropIdBytes = GetNextVarIntBytes(i);
     const char* p = i + (char*) &pkt;
@@ -1282,7 +1275,6 @@ bool CMPTransaction::interpret_CreatePeggedCurrency()
     {
         PrintToLog("\t version: %d\n", version);
         PrintToLog("\t messageType: %d\n",type);
-        PrintToLog("\t ecosystem: %d\n", ecosystem);
         PrintToLog("\t property type: %d\n",prop_type);
         PrintToLog("\t prev prop id: %d\n",prev_prop_id);
         PrintToLog("\t contractId: %d\n", contractId);
@@ -1381,8 +1373,8 @@ bool CMPTransaction::interpret_CreateOracleContract()
   std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
 
-  memcpy(&ecosystem, &pkt[i], 1);
-  i++;
+  // memcpy(&ecosystem, &pkt[i], 1);
+  // i++;
 
   const char* p = i + (char*) &pkt;
   std::vector<std::string> spstr;
@@ -1460,7 +1452,6 @@ bool CMPTransaction::interpret_CreateOracleContract()
       PrintToLog("\t notional size : %d\n", notional_size);
       PrintToLog("\t collateral currency: %d\n", collateral_currency);
       PrintToLog("\t margin requirement: %d\n", margin_requirement);
-      PrintToLog("\t ecosystem: %d\n", ecosystem);
       PrintToLog("\t name: %s\n", name);
       PrintToLog("\t oracleAddress: %s\n", sender);
       PrintToLog("\t backupAddress: %s\n", receiver);
@@ -1904,7 +1895,7 @@ bool CMPTransaction::interpret_New_Id_Registration()
   std::vector<uint8_t> vecNatives = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecOracles = GetNextVarIntBytes(i);
 
-  memcpy(&ecosystem, &pkt[i], 1);
+  // memcpy(&ecosystem, &pkt[i], 1);
 
   const char* p = i + (char*) &pkt;
   std::vector<std::string> spstr;
@@ -2212,7 +2203,7 @@ int CMPTransaction::logicHelper_CrowdsaleParticipation()
 /** Tx 0 */
 int CMPTransaction::logicMath_SimpleSend()
 {
-    if (!IsTransactionTypeAllowed(block, property, type, version)) {
+    if (!IsTransactionTypeAllowed(block, type, version)) {
         PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
                 __func__,
                 type,
@@ -2270,7 +2261,7 @@ int CMPTransaction::logicMath_SendVestingTokens()
       return (PKT_ERROR_SEND -21);
   }
 
-  if (!IsTransactionTypeAllowed(block, TL_PROPERTY_VESTING, type, version)) {
+  if (!IsTransactionTypeAllowed(block, type, version)) {
       PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
               __func__,
               type,
@@ -2303,12 +2294,12 @@ int CMPTransaction::logicMath_SendVestingTokens()
 /** Tx 4 */
 int CMPTransaction::logicMath_SendAll()
 {
-    if (!IsTransactionTypeAllowed(block, ecosystem, type, version)) {
+    if (!IsTransactionTypeAllowed(block, type, version)) {
         PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
                 __func__,
                 type,
                 version,
-                ecosystem,
+                property,
                 block);
         return (PKT_ERROR_SEND_ALL -22);
     }
@@ -2330,13 +2321,6 @@ int CMPTransaction::logicMath_SendAll()
     int numberOfPropertiesSent = 0;
 
     while (0 != (propertyId = ptally->next())) {
-        // only transfer tokens in the specified ecosystem
-        if (ecosystem == TL_PROPERTY_ALL && isTestEcosystemProperty(propertyId)) {
-            continue;
-        }
-        if (ecosystem == TL_PROPERTY_TALL && isMainEcosystemProperty(propertyId)) {
-            continue;
-        }
 
         int64_t moneyAvailable = ptally->getMoney(propertyId, BALANCE);
         if (moneyAvailable > 0) {
@@ -2372,12 +2356,7 @@ int CMPTransaction::logicMath_CreatePropertyFixed()
       blockHash = pindex->GetBlockHash();
     }
 
-    if (TL_PROPERTY_ALL != ecosystem && TL_PROPERTY_TALL != ecosystem) {
-        PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, (uint32_t) ecosystem);
-        return (PKT_ERROR_SP -21);
-    }
-
-    if (!IsTransactionTypeAllowed(block, ecosystem, type, version)) {
+    if (!IsTransactionTypeAllowed(block, type, version)) {
         PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
                 __func__,
                 type,
@@ -2418,7 +2397,7 @@ int CMPTransaction::logicMath_CreatePropertyFixed()
     newSP.creation_block = blockHash;
     newSP.update_block = newSP.creation_block;
 
-    const uint32_t propertyId = _my_sps->putSP(ecosystem, newSP);
+    const uint32_t propertyId = _my_sps->putSP(newSP);
     assert(propertyId > 0);
     assert(update_tally_map(sender, propertyId, nValue, BALANCE));
 
@@ -2442,20 +2421,7 @@ int CMPTransaction::logicMath_CreatePropertyVariable()
         blockHash = pindex->GetBlockHash();
     }
 
-    if (TL_PROPERTY_ALL != ecosystem && TL_PROPERTY_TALL != ecosystem) {
-        PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, (uint32_t) ecosystem);
-        return (PKT_ERROR_SP -21);
-    }
-
-    if (isTestEcosystemProperty(ecosystem) != isTestEcosystemProperty(property)) {
-        PrintToLog("%s(): rejected: ecosystem %d of tokens to issue and desired property %d not in same ecosystem\n",
-                __func__,
-                ecosystem,
-                property);
-        return (PKT_ERROR_SP -50);
-    }
-
-    if (!IsTransactionTypeAllowed(block, ecosystem, type, version)) {
+    if (!IsTransactionTypeAllowed(block, type, version)) {
         PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
                 __func__,
                 type,
@@ -2515,7 +2481,7 @@ int CMPTransaction::logicMath_CreatePropertyVariable()
     newSP.creation_block = blockHash;
     newSP.update_block = newSP.creation_block;
 
-    const uint32_t propertyId = _my_sps->putSP(ecosystem, newSP);
+    const uint32_t propertyId = _my_sps->putSP(newSP);
     assert(propertyId > 0);
     my_crowds.insert(std::make_pair(sender, CMPCrowd(propertyId, nValue, property, deadline, early_bird, percentage, 0, 0)));
 
@@ -2539,7 +2505,7 @@ int CMPTransaction::logicMath_CloseCrowdsale()
         blockHash = pindex->GetBlockHash();
     }
 
-    if (!IsTransactionTypeAllowed(block, property, type, version)) {
+    if (!IsTransactionTypeAllowed(block, type, version)) {
         PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
                 __func__,
                 type,
@@ -2606,12 +2572,7 @@ int CMPTransaction::logicMath_CreatePropertyManaged()
         blockHash = pindex->GetBlockHash();
     }
 
-    if (TL_PROPERTY_ALL != ecosystem && TL_PROPERTY_TALL != ecosystem) {
-        PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, (uint32_t) ecosystem);
-        return (PKT_ERROR_SP -21);
-    }
-
-    if (!IsTransactionTypeAllowed(block, ecosystem, type, version)) {
+    if (!IsTransactionTypeAllowed(block, type, version)) {
         PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
                 __func__,
                 type,
@@ -2647,7 +2608,7 @@ int CMPTransaction::logicMath_CreatePropertyManaged()
     newSP.creation_block = blockHash;
     newSP.update_block = newSP.creation_block;
 
-    uint32_t propertyId = _my_sps->putSP(ecosystem, newSP);
+    uint32_t propertyId = _my_sps->putSP(newSP);
     assert(propertyId > 0);
 
     PrintToLog("CREATED MANUAL PROPERTY id: %d admin: %s\n", propertyId, sender);
@@ -2670,7 +2631,7 @@ int CMPTransaction::logicMath_GrantTokens()
     blockHash = pindex->GetBlockHash();
   }
 
-  if (!IsTransactionTypeAllowed(block, property, type, version)) {
+  if (!IsTransactionTypeAllowed(block, type, version)) {
     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
   	       __func__,
   	       type,
@@ -2754,7 +2715,7 @@ int CMPTransaction::logicMath_RevokeTokens()
         blockHash = pindex->GetBlockHash();
     }
 
-    if (!IsTransactionTypeAllowed(block, property, type, version)) {
+    if (!IsTransactionTypeAllowed(block, type, version)) {
         PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
                 __func__,
                 type,
@@ -2824,7 +2785,7 @@ int CMPTransaction::logicMath_ChangeIssuer()
         blockHash = pindex->GetBlockHash();
     }
 
-    if (!IsTransactionTypeAllowed(block, property, type, version)) {
+    if (!IsTransactionTypeAllowed(block, type, version)) {
         PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
                 __func__,
                 type,
@@ -2875,7 +2836,7 @@ int CMPTransaction::logicMath_ChangeIssuer()
 /** Tx 65533 */
 int CMPTransaction::logicMath_Deactivation()
 {
-    if (!IsTransactionTypeAllowed(block, property, type, version)) {
+    if (!IsTransactionTypeAllowed(block, type, version)) {
         PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
                 __func__,
                 type,
@@ -2910,7 +2871,7 @@ int CMPTransaction::logicMath_Deactivation()
 /** Tx 65534 */
 int CMPTransaction::logicMath_Activation()
 {
-    if (!IsTransactionTypeAllowed(block, property, type, version)) {
+    if (!IsTransactionTypeAllowed(block, type, version)) {
         PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
                 __func__,
                 type,
@@ -2945,7 +2906,7 @@ int CMPTransaction::logicMath_Activation()
 /** Tx 65535 */
 int CMPTransaction::logicMath_Alert()
 {
-    if (!IsTransactionTypeAllowed(block, property, type, version)) {
+    if (!IsTransactionTypeAllowed(block, type, version)) {
         PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
                 __func__,
                 type,
@@ -2980,7 +2941,7 @@ int CMPTransaction::logicMath_Alert()
 
 int CMPTransaction::logicMath_MetaDExTrade()
 {
-  if (!IsTransactionTypeAllowed(block, property, type, version)) {
+  if (!IsTransactionTypeAllowed(block, type, version)) {
       PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
               __func__,
               type,
@@ -2996,14 +2957,6 @@ int CMPTransaction::logicMath_MetaDExTrade()
               property,
               desired_property);
       return (PKT_ERROR_METADEX -29);
-  }
-
-  if (isTestEcosystemProperty(property) != isTestEcosystemProperty(desired_property)) {
-      PrintToLog("%s(): rejected: property for sale %d and desired property %d not in same ecosystem\n",
-              __func__,
-              property,
-              desired_property);
-      return (PKT_ERROR_METADEX -30);
   }
 
   if (!IsPropertyIdValid(property)) {
@@ -3061,7 +3014,7 @@ int CMPTransaction::logicMath_CreateContractDex()
       blockHash = pindex->GetBlockHash();
   }
 
-  if (!IsTransactionTypeAllowed(block, ecosystem, type, version)) {
+  if (!IsTransactionTypeAllowed(block, type, version)) {
       PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
           __func__,
           type,
@@ -3107,7 +3060,6 @@ int CMPTransaction::logicMath_CreateContractDex()
   newSP.init_block = block;
   newSP.numerator = numerator;
   newSP.denominator = denominator;
-  newSP.ecosystemSP = ecosystem;
   newSP.attribute_type = attribute_type;
   newSP.expirated = false;
   newSP.inverse_quoted = inverse_quoted;
@@ -3115,7 +3067,7 @@ int CMPTransaction::logicMath_CreateContractDex()
   PrintToLog("%s(): init block inside create contract: %d\n", __func__, newSP.init_block);
 
 
-  const uint32_t propertyId = _my_sps->putSP(ecosystem, newSP);
+  const uint32_t propertyId = _my_sps->putSP(newSP);
   assert(propertyId > 0);
 
   return 0;
@@ -3232,7 +3184,7 @@ int CMPTransaction::logicMath_ContractDexTrade()
 /** Tx 32 */
 int CMPTransaction::logicMath_ContractDexCancelEcosystem()
 {
-  if (!IsTransactionTypeAllowed(block, ecosystem, type, version)) {
+  if (!IsTransactionTypeAllowed(block, type, version)) {
     PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
 	       __func__,
 	       type,
@@ -3242,13 +3194,7 @@ int CMPTransaction::logicMath_ContractDexCancelEcosystem()
     return (PKT_ERROR_CONTRACTDEX -20);
   }
 
-  if (TL_PROPERTY_ALL != ecosystem && TL_PROPERTY_TALL != ecosystem) {
-    PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, ecosystem);
-    return (PKT_ERROR_SP -21);
-  }
-
-
-  int rc = ContractDex_CANCEL_EVERYTHING(txid, block, sender, ecosystem, contractId);
+  int rc = ContractDex_CANCEL_EVERYTHING(txid, block, sender, contractId);
 
   return rc;
 }
@@ -3256,7 +3202,7 @@ int CMPTransaction::logicMath_ContractDexCancelEcosystem()
 /** Tx 33 */
 int CMPTransaction::logicMath_ContractDexClosePosition()
 {
-    if (!IsTransactionTypeAllowed(block, ecosystem, type, version)) {
+    if (!IsTransactionTypeAllowed(block, type, version)) {
         PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
             __func__,
             type,
@@ -3264,11 +3210,6 @@ int CMPTransaction::logicMath_ContractDexClosePosition()
             property,
             block);
         return (PKT_ERROR_CONTRACTDEX -20);
-    }
-
-    if (TL_PROPERTY_ALL != ecosystem && TL_PROPERTY_TALL != ecosystem) {
-        PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, ecosystem);
-        return (PKT_ERROR_SP -21);
     }
 
     CMPSPInfo::Entry sp;
@@ -3284,14 +3225,14 @@ int CMPTransaction::logicMath_ContractDexClosePosition()
     }
 
     uint32_t collateralCurrency = sp.collateral_currency;
-    int rc = ContractDex_CLOSE_POSITION(txid, block, sender, ecosystem, contractId, collateralCurrency);
+    int rc = ContractDex_CLOSE_POSITION(txid, block, sender, contractId, collateralCurrency);
 
     return rc;
 }
 
 int CMPTransaction::logicMath_ContractDex_Cancel_Orders_By_Block()
 {
-  if (!IsTransactionTypeAllowed(block, ecosystem, type, version)) {
+  if (!IsTransactionTypeAllowed(block, type, version)) {
       PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
               __func__,
               type,
@@ -3299,14 +3240,10 @@ int CMPTransaction::logicMath_ContractDex_Cancel_Orders_By_Block()
               propertyId,
               block);
      return (PKT_ERROR_METADEX -22);
-  }
 
-  if (TL_PROPERTY_ALL != ecosystem && TL_PROPERTY_TALL != ecosystem) {
-      PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, ecosystem);
-      return (PKT_ERROR_SP -21);
-  }
+    }
 
-    ContractDex_CANCEL_FOR_BLOCK(txid, block, tx_idx, sender, ecosystem);
+    ContractDex_CANCEL_FOR_BLOCK(txid, block, tx_idx, sender);
 
     return 0;
 }
@@ -3333,12 +3270,7 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
         blockHash = pindex->GetBlockHash();
     }
 
-    if (TL_PROPERTY_ALL != ecosystem && TL_PROPERTY_TALL != ecosystem) {
-        PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, (uint32_t) ecosystem);
-        return (PKT_ERROR_SP -21);
-    }
-
-    if (!IsTransactionTypeAllowed(block, ecosystem, type, version)) {
+    if (!IsTransactionTypeAllowed(block, type, version)) {
         PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
                 __func__,
                 type,
@@ -3414,7 +3346,7 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
 
     {
         LOCK(cs_tally);
-        uint32_t nextSPID = _my_sps->peekNextSPID(1);
+        uint32_t nextSPID = _my_sps->peekNextSPID();
         for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++) {
             CMPSPInfo::Entry sp;
             if (_my_sps->getSP(propertyId, sp)) {
@@ -3444,7 +3376,7 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
         newSP.contract_associated = contractId;
         newSP.denominator = den;
         newSP.series = strprintf("Nº 1 - %d",(amountNeeded / factorE));
-        npropertyId = _my_sps->putSP(ecosystem, newSP);
+        npropertyId = _my_sps->putSP(newSP);
 
     } else {
         CMPSPInfo::Entry newSP;
@@ -3483,7 +3415,7 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
 
 int CMPTransaction::logicMath_SendPeggedCurrency()
 {
-    if (!IsTransactionTypeAllowed(block, propertyId, type, version)) {
+    if (!IsTransactionTypeAllowed(block, type, version)) {
         PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
             __func__,
             type,
@@ -3535,7 +3467,7 @@ int CMPTransaction::logicMath_SendPeggedCurrency()
 
 int CMPTransaction::logicMath_RedemptionPegged()
 {
-    if (!IsTransactionTypeAllowed(block, propertyId, type, version)) {
+    if (!IsTransactionTypeAllowed(block, type, version)) {
         PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
                 __func__,
                 type,
@@ -3620,7 +3552,7 @@ int CMPTransaction::logicMath_RedemptionPegged()
 
 int CMPTransaction::logicMath_TradeOffer()
 {
-    if (!IsTransactionTypeAllowed(block, propertyId, type, version)) {
+    if (!IsTransactionTypeAllowed(block, type, version)) {
         PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
             __func__,
             type,
@@ -3721,7 +3653,7 @@ int CMPTransaction::logicMath_TradeOffer()
 /*Tx 21*/
 int CMPTransaction::logicMath_DExBuy()
 {
-    if (!IsTransactionTypeAllowed(block, propertyId, type, version)) {
+    if (!IsTransactionTypeAllowed(block, type, version)) {
      PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
              __func__,
              type,
@@ -3944,12 +3876,7 @@ int CMPTransaction::logicMath_CreateOracleContract()
       return (PKT_ERROR_ORACLE -10);
   }
 
-  if (TL_PROPERTY_ALL != ecosystem && TL_PROPERTY_TALL != ecosystem) {
-      PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, (uint32_t) ecosystem);
-      return (PKT_ERROR_SP -21);
-  }
-
-  if (!IsTransactionTypeAllowed(block, ecosystem, type, version)) {
+  if (!IsTransactionTypeAllowed(block, type, version)) {
       PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
           __func__,
           type,
@@ -3964,18 +3891,6 @@ int CMPTransaction::logicMath_CreateOracleContract()
       PrintToLog("%s(): rejected: property name must not be empty\n", __func__);
       return (PKT_ERROR_SP -37);
   }
-
-  // PrintToLog("type of denominator: %d\n",denominator);
-
-  // if (denominator != TL_dUSD && denominator != TL_dEUR && denominator!= TL_dYEN && denominator != TL_ALL && denominator != TL_sLTC && denominator!= TL_LTC) {
-  //   PrintToLog("rejected: denominator invalid\n");
-  //   return (PKT_ERROR_SP -37);
-  // }
-
-  // if (numerator != TL_ALL && numerator != TL_sLTC && numerator != TL_LTC) {
-  //   PrintToLog("rejected: denominator invalid\n");
-  //   return (PKT_ERROR_SP -37);
-  // }
 
   // -----------------------------------------------
 
@@ -3994,7 +3909,6 @@ int CMPTransaction::logicMath_CreateOracleContract()
   newSP.collateral_currency = collateral_currency;
   newSP.margin_requirement = margin_requirement;
   newSP.init_block = block;
-  newSP.ecosystemSP = ecosystem;
   newSP.attribute_type = attribute_type;
   newSP.backup_address = receiver;
   newSP.expirated = false;
@@ -4003,7 +3917,7 @@ int CMPTransaction::logicMath_CreateOracleContract()
   newSP.oracle_low = 0;
   newSP.oracle_close = 0;
 
-  const uint32_t propertyId = _my_sps->putSP(ecosystem, newSP);
+  const uint32_t propertyId = _my_sps->putSP(newSP);
   assert(propertyId > 0);
 
   return 0;
@@ -4024,7 +3938,7 @@ int CMPTransaction::logicMath_Change_OracleRef()
         blockHash = pindex->GetBlockHash();
     }
 
-    if (!IsTransactionTypeAllowed(block, property, type, version)) {
+    if (!IsTransactionTypeAllowed(block, type, version)) {
         PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
                 __func__,
                 type,
@@ -4077,7 +3991,7 @@ int CMPTransaction::logicMath_Set_Oracle()
         blockHash = pindex->GetBlockHash();
     }
 
-    if (!IsTransactionTypeAllowed(block, property, type, version)) {
+    if (!IsTransactionTypeAllowed(block, type, version)) {
         PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
                 __func__,
                 type,
@@ -4160,7 +4074,7 @@ int CMPTransaction::logicMath_OracleBackup()
         blockHash = pindex->GetBlockHash();
     }
 
-    if (!IsTransactionTypeAllowed(block, property, type, version)) {
+    if (!IsTransactionTypeAllowed(block, type, version)) {
         PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
                 __func__,
                 type,
@@ -4208,7 +4122,7 @@ int CMPTransaction::logicMath_CloseOracle()
         blockHash = pindex->GetBlockHash();
     }
 
-    if (!IsTransactionTypeAllowed(block, property, type, version)) {
+    if (!IsTransactionTypeAllowed(block, type, version)) {
         PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
                 __func__,
                 type,
@@ -4257,7 +4171,7 @@ int CMPTransaction::logicMath_CommitChannel()
         blockHash = pindex->GetBlockHash();
     }
 
-    if (!IsTransactionTypeAllowed(block, property, type, version)) {
+    if (!IsTransactionTypeAllowed(block, type, version)) {
         PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
                 __func__,
                 type,
@@ -4312,7 +4226,7 @@ int CMPTransaction::logicMath_Withdrawal_FromChannel()
         blockHash = pindex->GetBlockHash();
     }
 
-    if (!IsTransactionTypeAllowed(block, property, type, version)) {
+    if (!IsTransactionTypeAllowed(block, type, version)) {
         PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
                 __func__,
                 type,
@@ -4378,7 +4292,7 @@ int CMPTransaction::logicMath_Instant_Trade()
 {
   int rc = 0;
 
-  if (!IsTransactionTypeAllowed(block, property, type, version)) {
+  if (!IsTransactionTypeAllowed(block, type, version)) {
       PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
               __func__,
               type,
@@ -4394,14 +4308,6 @@ int CMPTransaction::logicMath_Instant_Trade()
               property,
               desired_property);
       return (PKT_ERROR_CHANNELS -11);
-  }
-
-  if (isTestEcosystemProperty(property) != isTestEcosystemProperty(desired_property)) {
-      PrintToLog("%s(): rejected: property for sale %d and desired property %d not in same ecosystem\n",
-              __func__,
-              property,
-              desired_property);
-      return (PKT_ERROR_CHANNELS -12);
   }
 
   if (!IsPropertyIdValid(property)) {
@@ -4502,7 +4408,7 @@ int CMPTransaction::logicMath_Update_PNL()
       blockHash = pindex->GetBlockHash();
   }
 
-  if (!IsTransactionTypeAllowed(block, property, type, version)) {
+  if (!IsTransactionTypeAllowed(block, type, version)) {
       PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
               __func__,
               type,
@@ -4545,7 +4451,7 @@ int CMPTransaction::logicMath_Transfer()
       blockHash = pindex->GetBlockHash();
   }
 
-  if (!IsTransactionTypeAllowed(block, property, type, version)) {
+  if (!IsTransactionTypeAllowed(block, type, version)) {
       PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
               __func__,
               type,
@@ -4591,7 +4497,7 @@ int CMPTransaction::logicMath_Create_Channel()
         blockHash = pindex->GetBlockHash();
     }
 
-    if (!IsTransactionTypeAllowed(block, property, type, version)) {
+    if (!IsTransactionTypeAllowed(block, type, version)) {
         PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
                 __func__,
                 type,
@@ -4628,7 +4534,7 @@ int CMPTransaction::logicMath_Contract_Instant()
   int rc = 0;
 
 
-  if (!IsTransactionTypeAllowed(block, property, type, version)) {
+  if (!IsTransactionTypeAllowed(block, type, version)) {
       PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
               __func__,
               type,
@@ -4777,7 +4683,7 @@ int CMPTransaction::logicMath_New_Id_Registration()
       blockHash = pindex->GetBlockHash();
   }
 
-  if (!IsTransactionTypeAllowed(block, property, type, version)) {
+  if (!IsTransactionTypeAllowed(block, type, version)) {
       PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
               __func__,
               type,
@@ -4812,7 +4718,7 @@ int CMPTransaction::logicMath_Update_Id_Registration()
       blockHash = pindex->GetBlockHash();
   }
 
-  if (!IsTransactionTypeAllowed(block, property, type, version)) {
+  if (!IsTransactionTypeAllowed(block, type, version)) {
       PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
               __func__,
               type,
@@ -4834,7 +4740,7 @@ int CMPTransaction::logicMath_DEx_Payment()
 {
   int rc = 0;
 
-  if (!IsTransactionTypeAllowed(block, property, type, version)) {
+  if (!IsTransactionTypeAllowed(block, type, version)) {
       PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
               __func__,
               type,
@@ -4857,7 +4763,7 @@ struct FutureContractObject *getFutureContractObject(std::string identifier)
   struct FutureContractObject *pt_fco = new FutureContractObject;
 
   LOCK(cs_tally);
-  uint32_t nextSPID = _my_sps->peekNextSPID(1);
+  uint32_t nextSPID = _my_sps->peekNextSPID();
   for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
     {
       CMPSPInfo::Entry sp;
@@ -4904,7 +4810,7 @@ struct TokenDataByName *getTokenDataByName(std::string identifier)
   struct TokenDataByName *pt_data = new TokenDataByName;
 
   LOCK(cs_tally);
-  uint32_t nextSPID = _my_sps->peekNextSPID(1);
+  uint32_t nextSPID = _my_sps->peekNextSPID();
   for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
     {
       CMPSPInfo::Entry sp;

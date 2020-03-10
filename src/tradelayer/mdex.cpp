@@ -1646,7 +1646,7 @@ MatchReturnType x_Trade(CMPContractDex* const pnew)
 int64_t mastercore::getVWAPPriceByPair(std::string num, std::string den)
 {
   LOCK(cs_tally);
-  uint32_t nextSPID = _my_sps->peekNextSPID(1);
+  uint32_t nextSPID = _my_sps->peekNextSPID();
 
   uint32_t numId = 0;
   uint32_t denId = 0;
@@ -1675,7 +1675,7 @@ int64_t mastercore::getVWAPPriceByPair(std::string num, std::string den)
 int64_t mastercore::getVWAPPriceContracts(std::string namec)
 {
   LOCK(cs_tally);
-  uint32_t nextSPID = _my_sps->peekNextSPID(1);
+  uint32_t nextSPID = _my_sps->peekNextSPID();
 
   uint32_t nameId = 0;
   for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
@@ -2065,7 +2065,7 @@ int mastercore::ContractDex_ADD_MARKET_PRICE(const std::string& sender_addr, uin
     return rc;
 }
 
-int mastercore::ContractDex_CANCEL_EVERYTHING(const uint256& txid, unsigned int block, const std::string& sender_addr, unsigned char ecosystem, uint32_t contractId)
+int mastercore::ContractDex_CANCEL_EVERYTHING(const uint256& txid, unsigned int block, const std::string& sender_addr, uint32_t contractId)
 {
     int rc = METADEX_ERROR -40;
     bool bValid = false;
@@ -2073,10 +2073,6 @@ int mastercore::ContractDex_CANCEL_EVERYTHING(const uint256& txid, unsigned int 
     for (cd_PropertiesMap::iterator my_it = contractdex.begin(); my_it != contractdex.end(); ++my_it)
     {
         unsigned int prop = my_it->first;
-
-        // skip property, if it is not in the expected ecosystem
-        if (isMainEcosystemProperty(ecosystem) && !isMainEcosystemProperty(prop)) continue;
-        if (isTestEcosystemProperty(ecosystem) && !isTestEcosystemProperty(prop)) continue;
 
         if (msc_debug_contract_cancel_every) PrintToLog(" ## property: %u\n", prop);
         cd_PricesMap &prices = my_it->second;
@@ -2144,7 +2140,7 @@ int mastercore::ContractDex_CANCEL_EVERYTHING(const uint256& txid, unsigned int 
     return rc;
 }
 
-int mastercore::ContractDex_CANCEL_FOR_BLOCK(const uint256& txid,  int block,unsigned int idx, const std::string& sender_addr, unsigned char ecosystem)
+int mastercore::ContractDex_CANCEL_FOR_BLOCK(const uint256& txid,  int block,unsigned int idx, const std::string& sender_addr)
 {
     int rc = METADEX_ERROR -40;
     bool bValid = false;
@@ -2363,7 +2359,7 @@ int mastercore::ContractDex_ADD_ORDERBOOK_EDGE(const std::string& sender_addr, u
 }
 
 /*NEW FUNCTION*/
-int mastercore::ContractDex_CLOSE_POSITION(const uint256& txid, unsigned int block, const std::string& sender_addr, unsigned char ecosystem, uint32_t contractId, uint32_t collateralCurrency)
+int mastercore::ContractDex_CLOSE_POSITION(const uint256& txid, unsigned int block, const std::string& sender_addr, uint32_t contractId, uint32_t collateralCurrency)
 {
     int64_t shortPosition = getMPbalance(sender_addr,contractId, NEGATIVE_BALANCE);
     int64_t longPosition = getMPbalance(sender_addr,contractId, POSITIVE_BALANCE);
@@ -2410,7 +2406,7 @@ int mastercore::ContractDex_CLOSE_POSITION(const uint256& txid, unsigned int blo
 int64_t mastercore::getPairMarketPrice(std::string num, std::string den)
 {
   LOCK(cs_tally);
-  uint32_t nextSPID = _my_sps->peekNextSPID(1);
+  uint32_t nextSPID = _my_sps->peekNextSPID();
 
   uint32_t numId = 0;
   uint32_t denId = 0;
