@@ -561,8 +561,11 @@ bool CMPTransaction::interpret_CreatePropertyManaged()
     do
     {
         std::vector<uint8_t> vecKyc = GetNextVarIntBytes(i);
-        int num = DecompressInteger(vecKyc);
-        kyc_Ids.push_back(num);
+        if (!vecKyc.empty())
+        {
+            int num = DecompressInteger(vecKyc);
+            kyc_Ids.push_back(num);
+        }
 
     } while(i < pkt_size);
 
