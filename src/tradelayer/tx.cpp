@@ -558,6 +558,21 @@ bool CMPTransaction::interpret_CreatePropertyManaged()
     memcpy(data, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(data)-1)); j++;
     i = i + strlen(name) + strlen(url) + strlen(data) + 3; // data sizes + 3 null terminators
 
+    do
+    {
+        std::vector<uint8_t> vecKyc = GetNextVarIntBytes(i);
+        if(vecKyc.empty()) break;
+        int num = DecompressInteger(vecKyc);
+        kyc_Ids.push_back(num);
+
+    } while(i < pkt_size);
+
+    for (std::vector<int>::iterator itt = kyc_Ids.begin(); itt != kyc_Ids.end(); ++itt)
+    {
+        int num = *itt;
+        PrintToLog("%s(): number inside vector: %d\n",__func__, num);
+    }
+
     if (!vecPropTypeBytes.empty()) {
         prop_type = DecompressInteger(vecPropTypeBytes);
     } else return false;

@@ -153,7 +153,7 @@ std::vector<unsigned char> CreatePayload_IssuanceVariable(uint8_t ecosystem, uin
     return payload;
 }
 
-std::vector<unsigned char> CreatePayload_IssuanceManaged(uint8_t ecosystem, uint16_t propertyType, uint32_t previousPropertyId, std::string name, std::string url, std::string data)
+std::vector<unsigned char> CreatePayload_IssuanceManaged(uint8_t ecosystem, uint16_t propertyType, uint32_t previousPropertyId, std::string name, std::string url, std::string data, std::vector<int> numbers)
 {
     std::vector<unsigned char> payload;
 
@@ -164,6 +164,14 @@ std::vector<unsigned char> CreatePayload_IssuanceManaged(uint8_t ecosystem, uint
     std::vector<uint8_t> vecMessageVer = CompressInteger((uint64_t)messageVer);
     std::vector<uint8_t> vecPropertyType = CompressInteger((uint64_t)propertyType);
     std::vector<uint8_t> vecPrevPropertyId = CompressInteger((uint64_t)previousPropertyId);
+
+    std::vector<std::vector<uint8_t>> auxVec;
+
+    for (std::vector<int>::iterator it = numbers.begin(); it != numbers.end();++it)
+    {
+        std::vector<uint8_t> vecNum = CompressInteger((uint64_t) *it);
+        auxVec.push_back(vecNum);
+    }
 
     if (name.size() > 255) name = name.substr(0,255);
     if (url.size() > 255) url = url.substr(0,255);
@@ -180,6 +188,12 @@ std::vector<unsigned char> CreatePayload_IssuanceManaged(uint8_t ecosystem, uint
     payload.push_back('\0');
     payload.insert(payload.end(), data.begin(), data.end());
     payload.push_back('\0');
+
+    for (std::vector<std::vector<uint8_t>>::iterator itt = auxVec.begin(); itt != auxVec.end(); ++itt)
+    {
+        const std::vector<uint8_t> vec = *itt;
+        payload.insert(payload.end(), vec.begin(), vec.end());
+    }
 
     return payload;
 }
@@ -892,7 +906,7 @@ std::vector<unsigned char> CreatePayload_New_Id_Registration(std::string website
 
   payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
   payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
-  
+
   payload.insert(payload.end(), website.begin(), website.end());
   payload.push_back('\0');
   payload.insert(payload.end(), name.begin(), name.end());

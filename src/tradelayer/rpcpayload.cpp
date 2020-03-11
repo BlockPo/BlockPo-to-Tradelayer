@@ -212,9 +212,9 @@ UniValue tl_createpayload_issuancemanaged(const JSONRPCRequest& request)
     std::string url = ParseText(request.params[4]);
     std::string data = ParseText(request.params[5]);
 
-    std::vector<unsigned char> payload = CreatePayload_IssuanceManaged(ecosystem, type, previousId, name, url, data);
-
-    return HexStr(payload.begin(), payload.end());
+    // std::vector<unsigned char> payload = CreatePayload_IssuanceManaged(ecosystem, type, previousId, name, url, data);
+    //
+    // return HexStr(payload.begin(), payload.end());
 }
 
 UniValue tl_createpayload_sendgrant(const JSONRPCRequest& request)

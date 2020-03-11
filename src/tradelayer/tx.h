@@ -154,6 +154,7 @@ private:
     char hash[SP_STRING_FIELD_LEN];
     int block_forexpiry;
     uint8_t tokens, ltc, natives, oracles;
+    std::vector<int> kyc_Ids; //kyc vector
 
 
     // Indicates whether the transaction can be used to execute logic

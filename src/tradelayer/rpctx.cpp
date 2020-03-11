@@ -366,7 +366,7 @@ UniValue tl_sendissuancefixed(const JSONRPCRequest& request)
 
 UniValue tl_sendissuancemanaged(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 7)
+    if (request.params.size() != 8)
         throw runtime_error(
             "tl_sendissuancemanaged \"fromaddress\" ecosystem type previousid \"name\" \"url\" \"data\"\n"
 
@@ -380,7 +380,11 @@ UniValue tl_sendissuancemanaged(const JSONRPCRequest& request)
             "5. name                 (string, required) the name of the new tokens to create\n"
             "6. url                  (string, required) an URL for further information about the new tokens (can be \"\")\n"
             "7. data                 (string, required) a description for the new tokens (can be \"\")\n"
-
+            "8. kyc options          (array, optional) A json with the kyc allowed.\n"
+            "    [\n"
+            "      \"2,3,5\"         (number) kyc id\n"
+            "      ,...\n"
+            "    ]\n"
             "\nResult:\n"
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
 
@@ -394,23 +398,37 @@ UniValue tl_sendissuancemanaged(const JSONRPCRequest& request)
     uint8_t ecosystem = ParseEcosystem(request.params[1]);
     uint16_t type = ParsePropertyType(request.params[2]);
     uint32_t previousId = ParsePreviousPropertyId(request.params[3]);
+
     // RequireNotContract(previousId);  TODO: check this condition
     std::string name = ParseText(request.params[4]);
     std::string url = ParseText(request.params[5]);
     std::string data = ParseText(request.params[6]);
+
+    UniValue kycOptions(UniValue::VARR);
+    if (!request.params[7].isNull())
+        kycOptions = request.params[7].get_array();
+
+    std::vector<int> numbers;
+
+    for (unsigned int idx = 0; idx < kycOptions.size(); idx++)
+    {
+            const UniValue& num = kycOptions[idx];
+            numbers.push_back(num.get_int());
+            PrintToLog("%s(): num : %d \n",__func__, num.get_int());
+    }
 
     // perform checks
     RequirePropertyName(name);
     RequireSaneName(name);
 
     // create a payload for the transaction
-    std::vector<unsigned char> payload = CreatePayload_IssuanceManaged(ecosystem, type, previousId, name, url, data);
+    std::vector<unsigned char> payload = CreatePayload_IssuanceManaged(ecosystem, type, previousId, name, url, data, numbers);
 
     // request the wallet build the transaction (and if needed commit it)
     uint256 txid;
     std::string rawHex;
     int result = WalletTxBuilder(fromAddress, "", 0, payload, txid, rawHex, autoCommit);
-    PrintToConsole("result of WalletTxBuilder: %d\n",result);
+
     // check error and return the txid (or raw hex depending on autocommit)
     if (result != 0) {
         throw JSONRPCError(result, error_str(result));
