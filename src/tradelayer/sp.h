@@ -66,7 +66,7 @@ public:
         std::string data;
         int64_t num_tokens;
 
-        // crowdsale generated SP
+        // crowdsale generated
         uint32_t property_desired;
         int64_t deadline;
         uint8_t early_bird;
@@ -122,6 +122,9 @@ public:
         //   txid -> granted amount, revoked amount
         std::map<uint256, std::vector<int64_t> > historicalData;
 
+        //kyc
+        std::vector<int> kyc; //kyc vector
+
         Entry();
 
         ADD_SERIALIZE_METHODS;
@@ -170,6 +173,7 @@ public:
             READWRITE(oracle_low);
             READWRITE(oracle_close);
             READWRITE(inverse_quoted);
+            READWRITE(kyc);
             ////////////////////////////
         }
 
@@ -300,12 +304,5 @@ unsigned int eraseExpiredCrowdsale(const CBlockIndex* pBlockIndex);
 bool isPropertyContract(uint32_t propertyId);
 
 }
-
-/* class CMPSPInfoContract : CMPSPInfo */
-/* { */
-/*  public: */
-
-/*  private: */
-/* }; */
 
 #endif // TRADELAYER_SP_H

@@ -1002,6 +1002,22 @@ bool CMPTransaction::interpret_CreateContractDex()
   std::vector<uint8_t> vecMarginRequirement = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecInverse = GetNextVarIntBytes(i);
 
+  do
+  {
+      std::vector<uint8_t> vecKyc = GetNextVarIntBytes(i);
+      if (!vecKyc.empty())
+      {
+          int num = DecompressInteger(vecKyc);
+          kyc_Ids.push_back(num);
+      }
+
+  } while(i < pkt_size);
+
+  for (std::vector<int>::iterator itt = kyc_Ids.begin(); itt != kyc_Ids.end(); ++itt)
+  {
+      int num = *itt;
+      PrintToLog("%s(): number inside vector: %d\n",__func__, num);
+  }
 
   if (!vecVersionBytes.empty()) {
     version = DecompressInteger(vecVersionBytes);
@@ -2679,11 +2695,20 @@ int CMPTransaction::logicMath_CreatePropertyManaged()
     newSP.manual = true;
     newSP.creation_block = blockHash;
     newSP.update_block = newSP.creation_block;
+    newSP.kyc = kyc_Ids;
 
     uint32_t propertyId = _my_sps->putSP(ecosystem, newSP);
     assert(propertyId > 0);
 
     PrintToLog("CREATED MANUAL PROPERTY id: %d admin: %s\n", propertyId, sender);
+
+    CMPSPInfo::Entry sp;
+    _my_sps->getSP(propertyId,sp);
+
+    // for(std::vector<int>::iterator it = (sp.kyc).begin(); it != (sp.kyc).end(); ++it)
+    // {
+    //     PrintToLog("%s(): kyc inside: %d\n",__func__,*(it));
+    // }
 
     return 0;
 }
@@ -3049,14 +3074,32 @@ int CMPTransaction::logicMath_MetaDExTrade()
       return (PKT_ERROR_METADEX -32);
   }
 
+  int kyc_id;
+
+  if(!t_tradelistdb->checkKYCRegister(sender,kyc_id)){
+    PrintToLog("%s(): rejected: kyc ckeck failed\n", __func__);
+    return (PKT_ERROR_METADEX -33);
+  }
+
+  if(!t_tradelistdb->kycPropertyMatch(property,kyc_id)){
+    PrintToLog("%s(): rejected: property %d can't be traded with this kyc\n", __func__, property);
+    return (PKT_ERROR_METADEX -34);
+  }
+
+  if(!t_tradelistdb->kycPropertyMatch(desired_property,kyc_id)){
+    PrintToLog("%s(): rejected: property %d can't be traded with this kyc\n", __func__,desired_property);
+    return (PKT_ERROR_METADEX -34);
+  }
+
+
   if (nNewValue <= 0 || MAX_INT_8_BYTES < nNewValue) {
       PrintToLog("%s(): rejected: amount for sale out of range or zero: %d\n", __func__, nNewValue);
-      return (PKT_ERROR_METADEX -33);
+      return (PKT_ERROR_METADEX -34);
   }
 
   if (desired_value <= 0 || MAX_INT_8_BYTES < desired_value) {
       PrintToLog("%s(): rejected: desired amount out of range or zero: %d\n", __func__, desired_value);
-      return (PKT_ERROR_METADEX -34);
+      return (PKT_ERROR_METADEX -35);
   }
 
   int64_t nBalance = getMPbalance(sender, property, BALANCE);
@@ -3144,6 +3187,7 @@ int CMPTransaction::logicMath_CreateContractDex()
   newSP.attribute_type = attribute_type;
   newSP.expirated = false;
   newSP.inverse_quoted = inverse_quoted;
+  newSP.kyc = kyc_Ids;
 
   PrintToLog("%s(): init block inside create contract: %d\n", __func__, newSP.init_block);
 

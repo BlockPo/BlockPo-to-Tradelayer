@@ -4132,6 +4132,22 @@ bool CMPTradeList::checkKYCRegister(const std::string& address, int& kyc_id)
     return status;
 }
 
+bool CMPTradeList::kycPropertyMatch(int kyc_id, uint32_t propertyId)
+{
+    CMPSPInfo::Entry sp;
+    if (false == _my_sps->getSP(propertyId, sp)) {
+       return false; // property ID does not exist
+    }
+
+    // looking for the kyc id in sp register
+    for(std::vector<int>::iterator it = (sp.kyc).begin(); it != (sp.kyc).end(); ++it)
+    {
+        if (kyc_id == *it) return true;
+    }
+
+    return false;
+}
+
 void CMPTradeList::recordNewInstContTrade(const uint256& txid, const std::string& firstAddr, const std::string& secondAddr, uint32_t property, uint64_t amount_forsale, uint64_t price ,int blockNum, int blockIndex)
 {
   if (!pdb) return;

@@ -183,7 +183,7 @@ UniValue tl_createpayload_issuancefixed(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_issuancemanaged(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 6)
+    if (request.params.size() != 7)
         throw runtime_error(
             "tl_createpayload_issuancemanaged \" ecosystem type previousid \"name\" \"url\" \"data\"\n"
 
@@ -196,7 +196,11 @@ UniValue tl_createpayload_issuancemanaged(const JSONRPCRequest& request)
             "4. name                 (string, required) the name of the new tokens to create\n"
             "5. url                  (string, required) an URL for further information about the new tokens (can be \"\")\n"
             "6. data                 (string, required) a description for the new tokens (can be \"\")\n"
-
+            "7. kyc options          (array, optional) A json with the kyc allowed.\n"
+            "    [\n"
+            "      \"2,3,5\"         (number) kyc id\n"
+            "      ,...\n"
+            "    ]\n"
             "\nResult:\n"
             "\"payload\"             (string) the hex-encoded payload\n"
 
@@ -212,9 +216,22 @@ UniValue tl_createpayload_issuancemanaged(const JSONRPCRequest& request)
     std::string url = ParseText(request.params[4]);
     std::string data = ParseText(request.params[5]);
 
-    // std::vector<unsigned char> payload = CreatePayload_IssuanceManaged(ecosystem, type, previousId, name, url, data);
-    //
-    // return HexStr(payload.begin(), payload.end());
+    UniValue kycOptions(UniValue::VARR);
+    if (!request.params[7].isNull())
+        kycOptions = request.params[7].get_array();
+
+    std::vector<int> numbers;
+
+    for (unsigned int idx = 0; idx < kycOptions.size(); idx++)
+    {
+            const UniValue& num = kycOptions[idx];
+            numbers.push_back(num.get_int());
+            PrintToLog("%s(): num : %d \n",__func__, num.get_int());
+    }
+
+    std::vector<unsigned char> payload = CreatePayload_IssuanceManaged(ecosystem, type, previousId, name, url, data, numbers);
+
+    return HexStr(payload.begin(), payload.end());
 }
 
 UniValue tl_createpayload_sendgrant(const JSONRPCRequest& request)
@@ -446,7 +463,7 @@ UniValue tl_createpayload_sendtrade(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_createcontract(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 9)
+  if (request.params.size() != 10)
     throw runtime_error(
 			"tl_createpayload_createcontract \" ecosystem type previousid \"category\" \"subcategory\" \"name\" \"url\" \"data\" propertyiddesired tokensperunit deadline ( earlybonus issuerpercentage )\n"
 
@@ -462,7 +479,11 @@ UniValue tl_createpayload_createcontract(const JSONRPCRequest& request)
 			"7. collateral currency       (number, required) collateral currency\n"
       "8. margin requirement        (number, required) margin requirement\n"
       "9. quoting                   (number, required) 0: inverse quoting contract, 1: normal quoting\n"
-
+      "10. kyc options          (array, optional) A json with the kyc allowed.\n"
+      "    [\n"
+      "      \"2,3,5\"         (number) kyc id\n"
+      "      ,...\n"
+      "    ]\n"
 			"\nResult:\n"
 			"\"payload\"             (string) the hex-encoded payload\n"
 
@@ -481,7 +502,20 @@ UniValue tl_createpayload_createcontract(const JSONRPCRequest& request)
   uint32_t margin_requirement = ParseAmount(request.params[7], true);
   uint8_t inverse = ParseBinary(request.params[8]);
 
-  std::vector<unsigned char> payload = CreatePayload_CreateContract(ecosystem, num, den, name, blocks_until_expiration, notional_size, collateral_currency, margin_requirement, inverse);
+  UniValue kycOptions(UniValue::VARR);
+  if (!request.params[9].isNull())
+      kycOptions = request.params[9].get_array();
+
+  std::vector<int> numbers;
+
+  for (unsigned int idx = 0; idx < kycOptions.size(); idx++)
+  {
+          const UniValue& num = kycOptions[idx];
+          numbers.push_back(num.get_int());
+          PrintToLog("%s(): num : %d \n",__func__, num.get_int());
+  }
+
+  std::vector<unsigned char> payload = CreatePayload_CreateContract(ecosystem, num, den, name, blocks_until_expiration, notional_size, collateral_currency, margin_requirement, inverse, numbers);
 
   return HexStr(payload.begin(), payload.end());
 }
@@ -1038,7 +1072,7 @@ UniValue tl_createpayload_change_oracleref(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_create_oraclecontract(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 8)
+  if (request.params.size() != 9)
     throw runtime_error(
 			"tl_createpayload_create_oraclecontract \"address\" ecosystem type previousid \"category\" \"subcategory\" \"name\" \"url\" \"data\" propertyiddesired tokensperunit deadline ( earlybonus issuerpercentage )\n"
 
@@ -1053,7 +1087,11 @@ UniValue tl_createpayload_create_oraclecontract(const JSONRPCRequest& request)
 			"6. margin requirement        (number, required) margin requirement\n"
       "7. backup address            (string, required) backup admin address contract\n"
       "8. quoting                  (number, required) 0: inverse quoting contract, 1: normal quoting\n"
-
+      "9. kyc options          (array, optional) A json with the kyc allowed.\n"
+      "    [\n"
+      "      \"2,3,5\"         (number) kyc id\n"
+      "      ,...\n"
+      "    ]\n"
 			"\nResult:\n"
 			"\"hash\"                  (string) the hex-encoded transaction hash\n"
 
@@ -1071,7 +1109,20 @@ UniValue tl_createpayload_create_oraclecontract(const JSONRPCRequest& request)
       std::string oracleAddress = ParseAddress(request.params[6]);
       uint8_t inverse = ParseBinary(request.params[7]);
 
-      std::vector<unsigned char> payload = CreatePayload_CreateOracleContract(ecosystem, name, blocks_until_expiration, notional_size, collateral_currency, margin_requirement, inverse);
+      UniValue kycOptions(UniValue::VARR);
+      if (!request.params[8].isNull())
+          kycOptions = request.params[8].get_array();
+
+      std::vector<int> numbers;
+
+      for (unsigned int idx = 0; idx < kycOptions.size(); idx++)
+      {
+              const UniValue& num = kycOptions[idx];
+              numbers.push_back(num.get_int());
+              PrintToLog("%s(): num : %d \n",__func__, num.get_int());
+      }
+
+      std::vector<unsigned char> payload = CreatePayload_CreateOracleContract(ecosystem, name, blocks_until_expiration, notional_size, collateral_currency, margin_requirement, inverse, numbers);
 
       return HexStr(payload.begin(), payload.end());
 }
