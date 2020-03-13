@@ -66,10 +66,6 @@ amountVesting = (1500000/nVestingAddrs)*COIN;
 volumeToVWAP = 10;
 //BlockS = 720; /** testnet **/
 BlockS = 50;
-/** Admin address **/
-//admin_addrs = "moCYruRphhYgejzH75bxWD49qRFan8eGES"; /** testnet **/
-// admin_addrs = "QdgkwBVmz3uAtXiQdbbiAsTp1SDQS9zRt9"; /** regtest **/
-
 CompoundRate = 1.00002303;
 DecayRate = 0.99998;
 LongTailDecay = 0.99999992;

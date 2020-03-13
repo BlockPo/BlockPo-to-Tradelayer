@@ -1042,7 +1042,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
    *
    */
     // NOTE: Check this function later (got issues!)
-    // mastercore::ContractDex_Fees(pnew->getAddr(),pold->getAddr(), nCouldBuy, property_traded);
+    mastercore::ContractDex_Fees(pnew->getAddr(),pold->getAddr(), nCouldBuy, property_traded);
 
     if(msc_debug_x_trade_bidirectional)
     {
@@ -1152,16 +1152,16 @@ bool mastercore::ContractDex_Fees(std::string addressTaker,std::string addressMa
         }else {
             // Create the metadex object with specific params
 
-            uint256 txid;
+            // uint256 txid;
             // int block = 0;
             // unsigned int idx = 0;
 
-            CMPSPInfo::Entry spp;
-            _my_sps->getSP(sp.collateral_currency, spp);
-            if (msc_debug_contractdex_fees) PrintToLog("name of collateral currency:%s \n",spp.name);
-
-            int64_t VWAPMetaDExPrice = mastercore::getVWAPPriceByPair(spp.name, "ALL");
-            if (msc_debug_contractdex_fees) PrintToLog("\nVWAPMetaDExPrice = %s\n", FormatDivisibleMP(VWAPMetaDExPrice));
+            // CMPSPInfo::Entry spp;
+            // _my_sps->getSP(sp.collateral_currency, spp);
+            // if (msc_debug_contractdex_fees) PrintToLog("name of collateral currency:%s \n",spp.name);
+            //
+            // int64_t VWAPMetaDExPrice = mastercore::getVWAPPriceByPair(spp.name, "ALL");
+            // if (msc_debug_contractdex_fees) PrintToLog("\nVWAPMetaDExPrice = %s\n", FormatDivisibleMP(VWAPMetaDExPrice));
             // int64_t amount_desired = 1; // we need to ajust this to market prices
             // CMPMetaDEx new_mdex(addressTaker, block, sp.collateral_currency, cacheFee, 1, amount_desired, txid, idx, CMPTransaction::ADD);
             // mastercore::MetaDEx_INSERT(new_mdex);
@@ -1646,7 +1646,7 @@ MatchReturnType x_Trade(CMPContractDex* const pnew)
 int64_t mastercore::getVWAPPriceByPair(std::string num, std::string den)
 {
   LOCK(cs_tally);
-  uint32_t nextSPID = _my_sps->peekNextSPID(1);
+  uint32_t nextSPID = _my_sps->peekNextSPID();
 
   uint32_t numId = 0;
   uint32_t denId = 0;
@@ -1675,7 +1675,7 @@ int64_t mastercore::getVWAPPriceByPair(std::string num, std::string den)
 int64_t mastercore::getVWAPPriceContracts(std::string namec)
 {
   LOCK(cs_tally);
-  uint32_t nextSPID = _my_sps->peekNextSPID(1);
+  uint32_t nextSPID = _my_sps->peekNextSPID();
 
   uint32_t nameId = 0;
   for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
@@ -2065,7 +2065,7 @@ int mastercore::ContractDex_ADD_MARKET_PRICE(const std::string& sender_addr, uin
     return rc;
 }
 
-int mastercore::ContractDex_CANCEL_EVERYTHING(const uint256& txid, unsigned int block, const std::string& sender_addr, unsigned char ecosystem, uint32_t contractId)
+int mastercore::ContractDex_CANCEL_EVERYTHING(const uint256& txid, unsigned int block, const std::string& sender_addr, uint32_t contractId)
 {
     int rc = METADEX_ERROR -40;
     bool bValid = false;
@@ -2073,10 +2073,6 @@ int mastercore::ContractDex_CANCEL_EVERYTHING(const uint256& txid, unsigned int 
     for (cd_PropertiesMap::iterator my_it = contractdex.begin(); my_it != contractdex.end(); ++my_it)
     {
         unsigned int prop = my_it->first;
-
-        // skip property, if it is not in the expected ecosystem
-        if (isMainEcosystemProperty(ecosystem) && !isMainEcosystemProperty(prop)) continue;
-        if (isTestEcosystemProperty(ecosystem) && !isTestEcosystemProperty(prop)) continue;
 
         if (msc_debug_contract_cancel_every) PrintToLog(" ## property: %u\n", prop);
         cd_PricesMap &prices = my_it->second;
@@ -2144,7 +2140,7 @@ int mastercore::ContractDex_CANCEL_EVERYTHING(const uint256& txid, unsigned int 
     return rc;
 }
 
-int mastercore::ContractDex_CANCEL_FOR_BLOCK(const uint256& txid,  int block,unsigned int idx, const std::string& sender_addr, unsigned char ecosystem)
+int mastercore::ContractDex_CANCEL_FOR_BLOCK(const uint256& txid,  int block,unsigned int idx, const std::string& sender_addr)
 {
     int rc = METADEX_ERROR -40;
     bool bValid = false;
@@ -2217,6 +2213,37 @@ int mastercore::ContractDex_CANCEL_FOR_BLOCK(const uint256& txid,  int block,uns
   }
 
   return rc;
+}
+
+bool mastercore::ContractDex_CHECK_ORDERS(const std::string& sender_addr, uint32_t contractId)
+{
+    bool bValid = false;
+    for (cd_PropertiesMap::iterator my_it = contractdex.begin(); my_it != contractdex.end(); ++my_it)
+    {
+        cd_PricesMap &prices = my_it->second;
+
+        for (cd_PricesMap::iterator it = prices.begin(); it != prices.end(); ++it)
+        {
+            // uint64_t price = it->first;
+            cd_Set &indexes = it->second;
+
+            for (cd_Set::iterator it = indexes.begin(); it != indexes.end();)
+            {
+	              string addr = it->getAddr();
+                uint32_t contract = it->getProperty();
+ 	              if (addr != sender_addr || contract != contractId)
+                {
+	                  ++it;
+	                  continue;
+	              }
+
+	              bValid = true;
+                break;
+            }
+        }
+    }
+
+    return bValid;
 }
 
 int mastercore::ContractDex_CANCEL_IN_ORDER(const std::string& sender_addr, uint32_t contractId)
@@ -2332,7 +2359,7 @@ int mastercore::ContractDex_ADD_ORDERBOOK_EDGE(const std::string& sender_addr, u
 }
 
 /*NEW FUNCTION*/
-int mastercore::ContractDex_CLOSE_POSITION(const uint256& txid, unsigned int block, const std::string& sender_addr, unsigned char ecosystem, uint32_t contractId, uint32_t collateralCurrency)
+int mastercore::ContractDex_CLOSE_POSITION(const uint256& txid, unsigned int block, const std::string& sender_addr, uint32_t contractId, uint32_t collateralCurrency)
 {
     int64_t shortPosition = getMPbalance(sender_addr,contractId, NEGATIVE_BALANCE);
     int64_t longPosition = getMPbalance(sender_addr,contractId, POSITIVE_BALANCE);
@@ -2379,7 +2406,7 @@ int mastercore::ContractDex_CLOSE_POSITION(const uint256& txid, unsigned int blo
 int64_t mastercore::getPairMarketPrice(std::string num, std::string den)
 {
   LOCK(cs_tally);
-  uint32_t nextSPID = _my_sps->peekNextSPID(1);
+  uint32_t nextSPID = _my_sps->peekNextSPID();
 
   uint32_t numId = 0;
   uint32_t denId = 0;

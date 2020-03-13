@@ -83,6 +83,7 @@ BOOST_AUTO_TEST_CASE(collateral_inverse_quoted)
     uint64_t leverage = 2;
     std::string address = "moCYruRphhYgejzH75bxWD49qRFan8eGES";
     // rational_t conv = rational_t(1,1);
+
     uint32_t margin_requirement = 100000000;  // 1
 
     // BTC/dUSD , 1 BTC = $10000

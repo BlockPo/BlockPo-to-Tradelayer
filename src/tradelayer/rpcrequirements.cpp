@@ -42,7 +42,6 @@ void RequireBalance(const std::string& address, uint32_t propertyId, int64_t amo
     }
 }
 
-
 void RequireCollateral(const std::string& address, std::string name_traded, int64_t amount, uint64_t leverage)
 {
     int64_t uPrice = 1;
@@ -75,12 +74,20 @@ void RequireCollateral(const std::string& address, std::string name_traded, int6
 
 }
 
-
 void RequirePrimaryToken(uint32_t propertyId)
 {
     if (propertyId < 1 || 2 < propertyId) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Property identifier must be 1 (TL) or 2 (TTL)");
     }
+}
+
+/* checking there's no active orders */
+void RequireNoOrders(std::string sender, uint32_t propertyId)
+{
+    if(mastercore::ContractDex_CHECK_ORDERS(sender, propertyId)) {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "Cancel orders before close position\n");
+    }
+
 }
 
 void RequirePropertyName(const std::string& name)
@@ -105,12 +112,6 @@ void RequireExistingProperty(uint32_t propertyId)
   }
 }
 
-void RequireSameEcosystem(uint32_t propertyId, uint32_t otherId)
-{
-  if (mastercore::isTestEcosystemProperty(propertyId) != mastercore::isTestEcosystemProperty(otherId)) {
-    throw JSONRPCError(RPC_INVALID_PARAMETER, "Properties must be in the same ecosystem");
-  }
-}
 
 void RequireDifferentIds(uint32_t propertyId, uint32_t otherId)
 {
@@ -378,7 +379,7 @@ void RequireContractTxId(std::string& txid)
 void RequireSaneName(std::string& name)
 {
     LOCK(cs_tally);
-    uint32_t nextSPID = mastercore::_my_sps->peekNextSPID(1);
+    uint32_t nextSPID = mastercore::_my_sps->peekNextSPID();
     for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++) {
         CMPSPInfo::Entry sp;
         if (mastercore::_my_sps->getSP(propertyId, sp)) {
@@ -398,23 +399,8 @@ void RequirePeggedSaneName(std::string& name)
 
 void RequireContractOrder(std::string& fromAddress, uint32_t contractId)
 {
-  LOCK(cs_tally);
-  bool found = false;
-  for (mastercore::cd_PropertiesMap::const_iterator my_it = mastercore::contractdex.begin(); my_it != mastercore::contractdex.end(); ++my_it) {
-      const mastercore::cd_PricesMap& prices = my_it->second;
-      for (mastercore::cd_PricesMap::const_iterator it = prices.begin(); it != prices.end(); ++it) {
-          const mastercore::cd_Set& indexes = it->second;
-          for (mastercore::cd_Set::const_iterator it = indexes.begin(); it != indexes.end(); ++it) {
-              const CMPContractDex& obj = *it;
-              if (obj.getProperty() != contractId || obj.getAddr() != fromAddress) continue;
-              PrintToLog("Order found!\n");
-              found = true;
-              break;
-          }
-      }
-  }
 
-  if (!found) {
+  if (!mastercore::ContractDex_CHECK_ORDERS(fromAddress, contractId)) {
         throw JSONRPCError(RPC_INVALID_PARAMETER,"There's no order in this future contract\n");
   }
 

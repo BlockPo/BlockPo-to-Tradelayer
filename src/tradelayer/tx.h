@@ -63,7 +63,6 @@ private:
     unsigned int property;
 
     // CreatePropertyFixed, CreatePropertyVariable, CreatePropertyMananged, MetaDEx, SendAll
-    unsigned char ecosystem;
     unsigned int distribution_property;
 
     // CreatePropertyFixed, CreatePropertyVariable, CreatePropertyMananged
@@ -115,11 +114,8 @@ private:
     uint32_t notional_size;
     uint32_t collateral_currency;
     uint32_t margin_requirement;
-    uint32_t ecosystemSP;
     uint32_t attribute_type;
     uint64_t leverage;
-    // uint32_t denomination;
-
 
     // Alert
     uint16_t alert_type;
@@ -298,7 +294,6 @@ public:
     uint64_t getAmount() const { return nValue; }
     uint64_t getNewAmount() const { return nNewValue; }
     uint64_t getXAmount() const { return amount; }
-    uint8_t getEcosystem() const { return ecosystem; }
     uint32_t getPreviousId() const { return prev_prop_id; }
     std::string getSPCategory() const { return category; }
     std::string getSPSubCategory() const { return subcategory; }
@@ -381,7 +376,6 @@ public:
         nValue = 0;
         nNewValue = 0;
         property = 0;
-        ecosystem = 0;
         prop_type = 0;
         prev_prop_id = 0;
         memset(&category, 0, sizeof(category));

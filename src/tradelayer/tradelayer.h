@@ -509,10 +509,7 @@ namespace mastercore
   int WalletTxBuilder(const std::string& senderAddress, const std::string& receiverAddress, int64_t referenceAmount,
 		      const std::vector<unsigned char>& data, uint256& txid, std::string& rawHex, bool commit, unsigned int minInputs = 1);
 
-  bool isTestEcosystemProperty(uint32_t propertyId);
-  bool isMainEcosystemProperty(uint32_t propertyId);
-
-  uint32_t GetNextPropertyId(bool maineco); // maybe move into sp
+  uint32_t GetNextPropertyId(); // maybe move into sp
 
   CMPTally* getTally(const std::string& address);
 

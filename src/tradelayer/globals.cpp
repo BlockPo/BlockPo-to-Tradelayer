@@ -83,7 +83,6 @@ volatile int64_t Lastx_Axis;
 volatile int64_t LastLinear;
 volatile int64_t LastQuad;
 volatile int64_t LastLog;
-std::string admin_addrs;
 int volumeToVWAP;
 int BlockS;
 std::string setExoduss;

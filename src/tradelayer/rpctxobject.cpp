@@ -301,8 +301,6 @@ void populateRPCTypeSimpleSend(CMPTransaction& tlObj, UniValue& txobj)
 void populateRPCTypeSendAll(CMPTransaction& tlObj, UniValue& txobj)
 {
     UniValue subSends(UniValue::VARR);
-    if (tlObj.getEcosystem() == 1) txobj.push_back(Pair("ecosystem", "main"));
-    if (tlObj.getEcosystem() == 2) txobj.push_back(Pair("ecosystem", "test"));
     if (populateRPCSendAllSubSends(tlObj.getHash(), subSends) > 0) txobj.push_back(Pair("subsends", subSends));
 }
 
@@ -313,7 +311,6 @@ void populateRPCTypeCreatePropertyFixed(CMPTransaction& tlObj, UniValue& txobj)
     if (propertyId > 0) txobj.push_back(Pair("propertyid", (uint64_t) propertyId));
     if (propertyId > 0) txobj.push_back(Pair("divisible", isPropertyDivisible(propertyId)));
 
-    txobj.push_back(Pair("ecosystem", strEcosystem(tlObj.getEcosystem())));
     txobj.push_back(Pair("propertytype", strPropertyType(tlObj.getPropertyType())));
     txobj.push_back(Pair("propertyname", tlObj.getSPName()));
     txobj.push_back(Pair("data", tlObj.getSPData()));
@@ -328,8 +325,6 @@ void populateRPCTypeCreatePropertyVariable(CMPTransaction& tlObj, UniValue& txob
     uint32_t propertyId = _my_sps->findSPByTX(tlObj.getHash());
     if (propertyId > 0) txobj.push_back(Pair("propertyid", (uint64_t) propertyId));
     if (propertyId > 0) txobj.push_back(Pair("divisible", isPropertyDivisible(propertyId)));
-
-    txobj.push_back(Pair("ecosystem", strEcosystem(tlObj.getEcosystem())));
     txobj.push_back(Pair("propertytype", strPropertyType(tlObj.getPropertyType())));
     txobj.push_back(Pair("propertyname", tlObj.getSPName()));
     txobj.push_back(Pair("data", tlObj.getSPData()));
@@ -351,7 +346,6 @@ void populateRPCTypeCreatePropertyManual(CMPTransaction& tlObj, UniValue& txobj)
     if (propertyId > 0) txobj.push_back(Pair("propertyid", (uint64_t) propertyId));
     if (propertyId > 0) txobj.push_back(Pair("divisible", isPropertyDivisible(propertyId)));
 
-    txobj.push_back(Pair("ecosystem", strEcosystem(tlObj.getEcosystem())));
     txobj.push_back(Pair("propertytype", strPropertyType(tlObj.getPropertyType())));
     txobj.push_back(Pair("propertyname", tlObj.getSPName()));
     txobj.push_back(Pair("data", tlObj.getSPData()));
@@ -489,7 +483,7 @@ void populateRPCTypeContractDexTrade(CMPTransaction& tlObj, UniValue& txobj)
 
 void populateRPCTypeContractDexCancelEcosystem(CMPTransaction& tlObj, UniValue& txobj)
 {
-  txobj.push_back(Pair("Ecosystem", (uint64_t)tlObj.getEcosystem()));
+  txobj.push_back(Pair("cancel all orders",""));
 }
 
 void populateRPCTypeCreatePeggedCurrency(CMPTransaction& tlObj, UniValue& txobj)
@@ -517,7 +511,6 @@ void populateRPCTypeRedemptionPegged(CMPTransaction& tlObj, UniValue& txobj)
 
 void populateRPCTypeContractDexClosePosition(CMPTransaction& tlObj, UniValue& txobj)
 {
-  txobj.push_back(Pair("ecosystem", FormatDivisibleMP(tlObj.getXAmount())));
   txobj.push_back(Pair("contractId", (uint64_t) tlObj.getContractId()));
 }
 

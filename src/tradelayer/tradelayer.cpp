@@ -162,7 +162,6 @@ extern std::map<uint32_t, int64_t> VWAPMapContracts;
 //extern volatile std::vector<std::map<std::string, std::string>> path_eleg;
 extern std::map<uint32_t,std::map<int,oracledata>> oraclePrices;
 extern std::string setExoduss;
-extern std::string admin_addrs;
 /************************************************/
 /** TWAP containers **/
 
@@ -414,19 +413,6 @@ int64_t getUserReserveMPbalance(const std::string& address, uint32_t propertyId)
     return money;
 }
 
-bool mastercore::isTestEcosystemProperty(uint32_t propertyId)
-{
-  if ((TL_PROPERTY_TALL == propertyId) || (TEST_ECO_PROPERTY_1 <= propertyId)) return true;
-
-  return false;
-}
-
-bool mastercore::isMainEcosystemProperty(uint32_t propertyId)
-{
-  if ((TL_PROPERTY_BTC != propertyId) && !isTestEcosystemProperty(propertyId)) return true;
-
-  return false;
-}
 
 std::string mastercore::getTokenLabel(uint32_t propertyId)
 {
@@ -531,13 +517,9 @@ bool mastercore::update_tally_map(const std::string& who, uint32_t propertyId, i
 // 10) need a locking mechanism between Core & Qt -- to retrieve the tally, for instance, this and similar to this: LOCK(wallet->cs_wallet);
 //
 
-uint32_t mastercore::GetNextPropertyId(bool maineco)
+uint32_t mastercore::GetNextPropertyId()
 {
-  if (maineco) {
-    return _my_sps->peekNextSPID(1);
-  } else {
-    return _my_sps->peekNextSPID(2);
-  }
+    return _my_sps->peekNextSPID();
 }
 
 // Perform any actions that need to be taken when the total number of tokens for a property ID changes
@@ -642,14 +624,13 @@ void creatingVestingTokens(int block)
    newSP.attribute_type = ALL_PROPERTY_TYPE_VESTING;
    newSP.init_block = block;
 
-   const uint32_t propertyIdVesting = _my_sps->putSP(TL_PROPERTY_ALL, newSP);
+   const uint32_t propertyIdVesting = _my_sps->putSP(newSP);
    assert(propertyIdVesting > 0);
 
    PrintToLog("%s(): admin_addrs : %s, propertyIdVesting: %d \n",__func__,getAdminAddress(), propertyIdVesting);
-   // PrintToLog("%s(): admin_addrs : %s, propertyIdVesting: %d \n",__func__, admin_addrs, propertyIdVesting);
+
    //NOTE: we have to change this admin_addrs for getAdminAddress function call
    assert(update_tally_map(getAdminAddress(), propertyIdVesting, totalVesting, BALANCE));
-   assert(update_tally_map(admin_addrs, propertyIdVesting, totalVesting, BALANCE));
 }
 
 /**
@@ -1345,15 +1326,15 @@ int input_mp_offers_string(const std::string& s)
 
 int input_globals_state_string(const string &s)
 {
-  unsigned int nextSPID, nextTestSPID;
+  unsigned int nextSPID;
   std::vector<std::string> vstr;
   boost::split(vstr, s, boost::is_any_of(" ,="), token_compress_on);
-  if (2 != vstr.size()) return -1;
+  if (1 != vstr.size()) return -1;
 
   int i = 0;
   nextSPID = boost::lexical_cast<unsigned int>(vstr[i++]);
-  nextTestSPID = boost::lexical_cast<unsigned int>(vstr[i++]);
-  _my_sps->init(nextSPID, nextTestSPID);
+  // nextTestSPID = boost::lexical_cast<unsigned int>(vstr[i++]);
+  _my_sps->init(nextSPID);
   return 0;
 }
 
@@ -1908,10 +1889,10 @@ static int write_msc_balances(std::ofstream& file, SHA256_CTX* shaCtx)
 
 static int write_globals_state(ofstream &file, SHA256_CTX *shaCtx)
 {
-  unsigned int nextSPID = _my_sps->peekNextSPID(TL_PROPERTY_ALL);
-  unsigned int nextTestSPID = _my_sps->peekNextSPID(TL_PROPERTY_TALL);
+  unsigned int nextSPID = _my_sps->peekNextSPID();
+  // unsigned int nextTestSPID = _my_sps->peekNextSPID(TL_PROPERTY_TALL);
 
-  std::string lineOut = strprintf("%d,%d", nextSPID, nextTestSPID);
+  std::string lineOut = strprintf("%d", nextSPID);
 
   // add the line to the hash
   SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
@@ -2491,32 +2472,6 @@ int mastercore_shutdown()
   return 0;
 }
 
-// NOTE: change this function using vwap instead of twap
-// for oracles we need vwap for last 3 blocks but using the prices map (we have that yet)
-// void mastercore::twapForLiquidation(uint32_t contractId, int blocks)
-// {
-//       uint64_t sum = 0;
-//       int count = 0;
-//       std::map<uint32_t, std::vector<uint64_t>>::iterator it = cdextwap_vec.find(contractId);
-//       std::vector<uint64_t> auxVec = it->second;
-//
-//       for (std::vector<uint64_t>::iterator itt = auxVec.begin(); itt != auxVec.end(); ++itt)
-//       {
-//            // if(count >= blocks)
-//            //     break;
-//
-//            sum += *(itt);
-//            count++;
-//            PrintToLog("%s(): count : %d\n",__func__,count);
-//       }
-//
-//       PrintToLog("%s(): sum : %d\n",__func__,sum);
-//       rational_t twap_priceRatCDEx(sum/COIN, blocks);
-//       int64_t twap_priceCDEx = mastercore::RationalToInt64(twap_priceRatCDEx);
-//       PrintToLog("%s():\nTvwap Price CDEx = %s\n",__func__, FormatDivisibleMP(twap_priceCDEx));
-//       cdex_twap_liq[contractId] = twap_priceCDEx;
-//
-//   }
 
 /**
  * Calling for Settement (if any)
@@ -2871,7 +2826,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
 
   int expirationBlock = 0, tradeBlock = 0, checkExpiration = 0;
 
-  uint32_t nextSPID = _my_sps->peekNextSPID(1);
+  uint32_t nextSPID = _my_sps->peekNextSPID();
 
   // checking expiration block for each contract
   for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
@@ -4951,7 +4906,7 @@ bool mastercore::marginMain(int Block)
   //checking in map for address and the UPNL.
     if(msc_debug_margin_main) PrintToLog("%s: Block in marginMain: %d\n", __func__, Block);
     LOCK(cs_tally);
-    uint32_t nextSPID = _my_sps->peekNextSPID(1);
+    uint32_t nextSPID = _my_sps->peekNextSPID();
     for (uint32_t contractId = 1; contractId < nextSPID; contractId++)
     {
         CMPSPInfo::Entry sp;
@@ -5024,14 +4979,13 @@ bool mastercore::marginMain(int Block)
             if (factor <= percent)
             {
                 const uint256 txid;
-                unsigned char ecosystem = '\0';
                 if(msc_debug_margin_main)
                 {
                     PrintToLog("%s: factor <= percent : %d <= %d\n",__func__, xToString(factor), xToString(percent));
                     PrintToLog("%s: margin call!\n", __func__);
                 }
 
-                ContractDex_CLOSE_POSITION(txid, Block, address, ecosystem, contractId, collateralCurrency);
+                ContractDex_CLOSE_POSITION(txid, Block, address, contractId, collateralCurrency);
                 continue;
 
             // if the upnl loss is more than 20% and minus 80% of the Margin
@@ -5165,7 +5119,7 @@ void mastercore::update_sum_upnls()
         sum_upnls.clear();
 
     LOCK(cs_tally);
-    uint32_t nextSPID = _my_sps->peekNextSPID(1);
+    uint32_t nextSPID = _my_sps->peekNextSPID();
 
     for (uint32_t contractId = 1; contractId < nextSPID; contractId++)
     {
@@ -5295,7 +5249,7 @@ bool mastercore::closeChannels(int Block)
 
         LOCK(cs_tally);
 
-        uint32_t nextSPID = _my_sps->peekNextSPID(1);
+        uint32_t nextSPID = _my_sps->peekNextSPID();
 
         for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
         {
