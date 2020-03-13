@@ -2281,6 +2281,18 @@ int CMPTransaction::logicMath_SimpleSend()
         return (PKT_ERROR_SEND -24);
     }
 
+    int kyc_id;
+
+    if(!t_tradelistdb->checkKYCRegister(sender,kyc_id)){
+      PrintToLog("%s(): rejected: kyc ckeck failed\n", __func__);
+      return (PKT_ERROR_KYC -10);
+    }
+
+    if(!t_tradelistdb->kycPropertyMatch(property,kyc_id)){
+      PrintToLog("%s(): rejected: property %d can't be traded with this kyc\n", __func__, property);
+      return (PKT_ERROR_KYC -20);
+    }
+
     int64_t nBalance = getMPbalance(sender, property, BALANCE);
     if (nBalance < (int64_t) nValue) {
         PrintToLog("%s(): rejected: sender %s has insufficient balance of property %d [%s < %s]\n",
@@ -3078,12 +3090,12 @@ int CMPTransaction::logicMath_MetaDExTrade()
 
   if(!t_tradelistdb->checkKYCRegister(sender,kyc_id)){
     PrintToLog("%s(): rejected: kyc ckeck failed\n", __func__);
-    return (PKT_ERROR_METADEX -33);
+    return (PKT_ERROR_KYC -10);
   }
 
   if(!t_tradelistdb->kycPropertyMatch(property,kyc_id)){
     PrintToLog("%s(): rejected: property %d can't be traded with this kyc\n", __func__, property);
-    return (PKT_ERROR_METADEX -34);
+    return (PKT_ERROR_KYC -20);
   }
 
   if(!t_tradelistdb->kycPropertyMatch(desired_property,kyc_id)){
@@ -3223,8 +3235,18 @@ int CMPTransaction::logicMath_ContractDexTrade()
 
   (pfuture->fco_prop_type == ALL_PROPERTY_TYPE_NATIVE_CONTRACT) ? result = 5 : result = 6;
 
-  // if(!t_tradelistdb->checkKYCRegister(sender,result))
-  //     return PKT_ERROR_KYC -10;
+  int kyc_id;
+
+  if(!t_tradelistdb->checkKYCRegister(sender,kyc_id)){
+    PrintToLog("%s(): rejected: kyc ckeck failed\n", __func__);
+    return (PKT_ERROR_KYC -10);
+  }
+
+  if(!t_tradelistdb->kycPropertyMatch(id_contract,kyc_id)){
+    PrintToLog("%s(): rejected: contract %d can't be traded with this kyc\n", __func__, property);
+    return (PKT_ERROR_KYC -20);
+  }
+
 
 
   PrintToLog("%s(): fco_init_block: %d; fco_blocks_until_expiration: %d; actual block: %d\n",__func__,pfuture->fco_init_block,pfuture->fco_blocks_until_expiration,block);
@@ -4489,6 +4511,23 @@ int CMPTransaction::logicMath_Instant_Trade()
       return (PKT_ERROR_CHANNELS -14);
   }
 
+  int kyc_id;
+
+  if(!t_tradelistdb->checkKYCRegister(sender,kyc_id)){
+    PrintToLog("%s(): rejected: kyc ckeck failed\n", __func__);
+    return (PKT_ERROR_KYC -10);
+  }
+
+  if(!t_tradelistdb->kycPropertyMatch(property,kyc_id)){
+    PrintToLog("%s(): rejected: property %d can't be traded with this kyc\n", __func__, property);
+    return (PKT_ERROR_KYC -20);
+  }
+
+  if(!t_tradelistdb->kycPropertyMatch(desired_property,kyc_id)){
+    PrintToLog("%s(): rejected: property %d can't be traded with this kyc\n", __func__, desired_property);
+    return (PKT_ERROR_KYC -20);
+  }
+
   channel chnAddrs = t_tradelistdb->getChannelAddresses(sender);
 
   if (sender.empty() && chnAddrs.first.empty() && chnAddrs.second.empty()) {
@@ -4753,11 +4792,17 @@ int CMPTransaction::logicMath_Contract_Instant()
 
   (sp.prop_type == ALL_PROPERTY_TYPE_NATIVE_CONTRACT) ? result = 5 : result = 6;
 
-  // if(!t_tradelistdb->checkKYCRegister(sender,result))
-  // {
-  //     PrintToLog("%s: tx disable from kyc register!\n",__func__);
-  //     return (PKT_ERROR_KYC -10);
-  // }
+  int kyc_id;
+
+  if(!t_tradelistdb->checkKYCRegister(sender,kyc_id)){
+    PrintToLog("%s(): rejected: kyc ckeck failed\n", __func__);
+    return (PKT_ERROR_KYC -10);
+  }
+
+  if(!t_tradelistdb->kycPropertyMatch(property,kyc_id)){
+    PrintToLog("%s(): rejected: contract %d can't be traded with this kyc\n", __func__, property);
+    return (PKT_ERROR_KYC -20);
+  }
 
   uint32_t colateralh = sp.collateral_currency;
   int64_t marginRe = static_cast<int64_t>(sp.margin_requirement);
@@ -4861,6 +4906,14 @@ int CMPTransaction::logicMath_New_Id_Registration()
               block);
       return (PKT_ERROR_TOKENS -22);
   }
+
+  int kyc_id;
+
+  if(!t_tradelistdb->checkKYCRegister(sender,kyc_id)){
+    PrintToLog("%s(): rejected: kyc ckeck failed\n", __func__);
+    return (PKT_ERROR_KYC -10);
+  }
+
 
   // ---------------------------------------
   if (msc_debug_new_id_registration) PrintToLog("%s(): channelAddres in register: %s \n",__func__,receiver);

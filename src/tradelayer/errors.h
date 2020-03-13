@@ -296,7 +296,10 @@ inline std::string error_str(int ec) {
       ec_str = "Address is already frozen";
       break;
     case PKT_ERROR_KYC -10:
-      ec_str = "Tx disable from kyc register";
+      ec_str = "Address is not in kyc register";
+      break;
+    case PKT_ERROR_KYC -20:
+      ec_str = "Property can't be traded with this kyc";
       break;
     case PKT_ERROR_CONTRACTDEX -10:
       ec_str = "Trade out of deadline";
