@@ -4816,8 +4816,8 @@ int CMPTransaction::logicMath_New_Id_Registration()
 
   int kyc_id;
 
-  if(!t_tradelistdb->checkKYCRegister(sender,kyc_id)){
-    PrintToLog("%s(): rejected: kyc ckeck failed\n", __func__);
+  if(t_tradelistdb->checkKYCRegister(sender,kyc_id)){
+    PrintToLog("%s(): rejected: address is on kyc register yet\n", __func__);
     return (PKT_ERROR_KYC -10);
   }
 

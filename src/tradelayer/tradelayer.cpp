@@ -4087,6 +4087,72 @@ bool CMPTradeList::checkKYCRegister(const std::string& address, int& kyc_id)
     return status;
 }
 
+bool CMPTradeList::kycLoop(UniValue& response)
+{
+    bool status = false;
+    std::string strKey, newKey, newValue;
+
+    std::vector<std::string> vstr;
+
+    if (!pdb) return status;
+
+
+    leveldb::Iterator* it = NewIterator(); // Allocation proccess
+
+    for(it->SeekToLast(); it->Valid(); it->Prev())
+    {
+        // search key to see if this is a matching trade
+        strKey = it->key().ToString();
+        // PrintToLog("key of this match: %s ****************************\n",strKey);
+        std::string strValue = it->value().ToString();
+
+        // ensure correct amount of tokens in value string
+        boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
+        if (vstr.size() != 9)
+        {
+            // PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
+            // PrintToConsole("TRADEDB error - unexpected number of tokens in value %d \n",vstr.size());
+            continue;
+        }
+
+        std::string type = vstr[8];
+
+        if( type != TYPE_NEW_ID_REGISTER)
+          continue;
+
+        //  address, name, website, blockNum, blockIndex, nextId, kyc_type, txid.ToString(), TYPE_NEW_ID_REGISTER
+
+        std::string regAddr = vstr[0];
+        std::string name = vstr[1];
+        std::string website = vstr[2];
+        int blockNum = boost::lexical_cast<int>(vstr[3]);
+        int nextId = boost::lexical_cast<int>(vstr[4]);
+        int kyc_type = boost::lexical_cast<int>(vstr[6]);
+
+        // returning the kyc_id
+        int kyc_id = boost::lexical_cast<int>(vstr[6]);
+
+
+        // PrintToLog("%s: kyc_id %s\n", __func__,kyc_id);
+        UniValue propertyObj(UniValue::VOBJ);
+
+        propertyObj.push_back(Pair("address", regAddr));
+        propertyObj.push_back(Pair("name", name));
+        propertyObj.push_back(Pair("website", website));
+        propertyObj.push_back(Pair("block", (uint64_t) blockNum));
+        propertyObj.push_back(Pair("kyc id", (uint64_t) kyc_id));
+        propertyObj.push_back(Pair("kyc type", (uint64_t) kyc_type));
+
+        response.push_back(propertyObj);
+        status = true;
+    }
+
+    // clean up
+    delete it;
+
+    return status;
+}
+
 bool CMPTradeList::kycPropertyMatch(int kyc_id, uint32_t propertyId)
 {
     CMPSPInfo::Entry sp;
