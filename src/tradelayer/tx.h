@@ -143,11 +143,14 @@ private:
     uint64_t ileverage;
     uint64_t itrading_action;
     uint64_t instant_amount;
+
     //KYC
     char company_name[SP_STRING_FIELD_LEN];
     char website[SP_STRING_FIELD_LEN];
+    char hash[SP_STRING_FIELD_LEN];
     int block_forexpiry;
     uint8_t tokens, ltc, natives, oracles;
+    std::vector<int> kyc_Ids; //kyc vector
 
 
     // Indicates whether the transaction can be used to execute logic
@@ -208,6 +211,7 @@ private:
     bool interpret_New_Id_Registration();
     bool interpret_Update_Id_Registration();
     bool interpret_DEx_Payment();
+    bool interpret_Attestation();
 
     /**
      * Logic and "effects"
@@ -253,6 +257,7 @@ private:
     int logicMath_New_Id_Registration();
     int logicMath_Update_Id_Registration();
     int logicMath_DEx_Payment();
+    int logicMath_Attestation();
 
     /**
      * Logic helpers
@@ -382,6 +387,7 @@ public:
 	      memset(&name_traded, 0, sizeof(name_traded));
         memset(&channel_address, 0, sizeof(channel_address));
         memset(&website, 0, sizeof(website));
+        memset(&hash, 0, sizeof(hash));
         memset(&company_name, 0, sizeof(company_name));
         deadline = 0;
         early_bird = 0;

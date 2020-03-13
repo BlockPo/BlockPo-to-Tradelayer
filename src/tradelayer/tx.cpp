@@ -1,7 +1,6 @@
 // Master Protocol transaction code
 
 #include "tradelayer/tx.h"
-
 #include "tradelayer/activation.h"
 #include "tradelayer/convert.h"
 #include "tradelayer/dex.h"
@@ -115,6 +114,7 @@ std::string mastercore::strTransactionType(uint16_t txType)
     case MSC_TYPE_NEW_ID_REGISTRATION: return "New Id Registration";
     case MSC_TYPE_UPDATE_ID_REGISTRATION: return "Update Id Registration";
     case MSC_TYPE_DEX_PAYMENT: return "DEx payment";
+    case MSC_TYPE_ATTESTATION: return "KYC Attestation";
     default: return "* unknown type *";
     }
 }
@@ -281,6 +281,9 @@ bool CMPTransaction::interpret_Transaction()
 
     case MSC_TYPE_DEX_PAYMENT:
         return interpret_DEx_Payment();
+
+    case MSC_TYPE_ATTESTATION:
+            return interpret_Attestation();
 
     }
 
@@ -550,6 +553,23 @@ bool CMPTransaction::interpret_CreatePropertyManaged()
     memcpy(url, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(url)-1)); j++;
     memcpy(data, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(data)-1)); j++;
     i = i + strlen(name) + strlen(url) + strlen(data) + 3; // data sizes + 3 null terminators
+
+    do
+    {
+        std::vector<uint8_t> vecKyc = GetNextVarIntBytes(i);
+        if (!vecKyc.empty())
+        {
+            int num = DecompressInteger(vecKyc);
+            kyc_Ids.push_back(num);
+        }
+
+    } while(i < pkt_size);
+
+    for (std::vector<int>::iterator itt = kyc_Ids.begin(); itt != kyc_Ids.end(); ++itt)
+    {
+        int num = *itt;
+        PrintToLog("%s(): number inside vector: %d\n",__func__, num);
+    }
 
     if (!vecPropTypeBytes.empty()) {
         prop_type = DecompressInteger(vecPropTypeBytes);
@@ -977,6 +997,22 @@ bool CMPTransaction::interpret_CreateContractDex()
   std::vector<uint8_t> vecMarginRequirement = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecInverse = GetNextVarIntBytes(i);
 
+  do
+  {
+      std::vector<uint8_t> vecKyc = GetNextVarIntBytes(i);
+      if (!vecKyc.empty())
+      {
+          int num = DecompressInteger(vecKyc);
+          kyc_Ids.push_back(num);
+      }
+
+  } while(i < pkt_size);
+
+  for (std::vector<int>::iterator itt = kyc_Ids.begin(); itt != kyc_Ids.end(); ++itt)
+  {
+      int num = *itt;
+      PrintToLog("%s(): number inside vector: %d\n",__func__, num);
+  }
 
   if (!vecVersionBytes.empty()) {
     version = DecompressInteger(vecVersionBytes);
@@ -1099,6 +1135,7 @@ bool CMPTransaction::interpret_ContractDexTrade()
       PrintToLog("\t amount of contracts : %d\n", amount);
       PrintToLog("\t effective price : %d\n", effective_price);
       PrintToLog("\t trading action : %d\n", trading_action);
+
   // }
 
   return true;
@@ -1890,13 +1927,6 @@ bool CMPTransaction::interpret_New_Id_Registration()
   std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
 
-  std::vector<uint8_t> vecTokens = GetNextVarIntBytes(i);
-  std::vector<uint8_t> vecLtc = GetNextVarIntBytes(i);
-  std::vector<uint8_t> vecNatives = GetNextVarIntBytes(i);
-  std::vector<uint8_t> vecOracles = GetNextVarIntBytes(i);
-
-  // memcpy(&ecosystem, &pkt[i], 1);
-
   const char* p = i + (char*) &pkt;
   std::vector<std::string> spstr;
   for (int j = 0; j < 2; j++) {
@@ -1914,32 +1944,14 @@ bool CMPTransaction::interpret_New_Id_Registration()
   memcpy(company_name, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(company_name)-1)); j++;
   i = i + strlen(website) + strlen(company_name) + 2;
 
-  if (!vecTokens.empty()) {
-      tokens = DecompressInteger(vecTokens);
-  } else return false;
 
-  if (!vecLtc.empty()) {
-      ltc = DecompressInteger(vecLtc);
-  } else return false;
-
-  if (!vecNatives.empty()) {
-      natives = DecompressInteger(vecNatives);
-  } else return false;
-
-  if (!vecOracles.empty()) {
-      oracles = DecompressInteger(vecOracles);
-  } else return false;
-
-  if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
-  {
+  // if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+  // {
       PrintToLog("\t address: %s\n", sender);
       PrintToLog("\t website: %s\n", website);
       PrintToLog("\t company name: %s\n", company_name);
-      PrintToLog("\t tokens: %d\n", tokens);
-      PrintToLog("\t ltc: %d\n", ltc);
-      PrintToLog("\t natives: %d\n", natives);
-      PrintToLog("\t oracles: %d\n", oracles);
-  }
+
+  // }
 
   return true;
 }
@@ -1966,10 +1978,44 @@ bool CMPTransaction::interpret_DEx_Payment()
   std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
 
 
+  if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+  {
+      PrintToLog("%s(): inside the function\n",__func__);
+      PrintToLog("\t sender: %s\n", sender);
+      PrintToLog("\t receiver: %s\n", receiver);
+  }
+
+  return true;
+}
+
+/** Tx  118*/
+bool CMPTransaction::interpret_Attestation()
+{
+  int i = 0;
+
+  std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+
+  const char* p = i + (char*) &pkt;
+  std::vector<std::string> spstr;
+  for (int j = 0; j < 1; j++) {
+    spstr.push_back(std::string(p));
+    p += spstr.back().size() + 1;
+  }
+
+  if (isOverrun(p)) {
+    PrintToLog("%s(): rejected: malformed string value(s)\n", __func__);
+    return false;
+  }
+
+  int j = 0;
+  memcpy(hash, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(hash)-1)); j++;
+  i = i + strlen(hash) + 1;
+
   // if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
   if(true)
   {
-      PrintToLog("%s(): inside the function\n",__func__);
+      PrintToLog("%s(): hash: %s\n",__func__, hash);
       PrintToLog("\t sender: %s\n", sender);
       PrintToLog("\t receiver: %s\n", receiver);
   }
@@ -2115,6 +2161,9 @@ int CMPTransaction::interpretPacket()
         case MSC_TYPE_DEX_PAYMENT:
             return logicMath_DEx_Payment();
 
+        case MSC_TYPE_ATTESTATION:
+            return logicMath_Attestation();
+
 
     }
 
@@ -2221,6 +2270,18 @@ int CMPTransaction::logicMath_SimpleSend()
     if (!IsPropertyIdValid(property)) {
         PrintToLog("%s(): rejected: property %d does not exist\n", __func__, property);
         return (PKT_ERROR_SEND -24);
+    }
+
+    int kyc_id;
+
+    if(!t_tradelistdb->checkKYCRegister(sender,kyc_id)){
+      PrintToLog("%s(): rejected: kyc ckeck failed\n", __func__);
+      return (PKT_ERROR_KYC -10);
+    }
+
+    if(!t_tradelistdb->kycPropertyMatch(property,kyc_id)){
+      PrintToLog("%s(): rejected: property %d can't be traded with this kyc\n", __func__, property);
+      return (PKT_ERROR_KYC -20);
     }
 
     int64_t nBalance = getMPbalance(sender, property, BALANCE);
@@ -2607,11 +2668,20 @@ int CMPTransaction::logicMath_CreatePropertyManaged()
     newSP.manual = true;
     newSP.creation_block = blockHash;
     newSP.update_block = newSP.creation_block;
+    newSP.kyc = kyc_Ids;
 
     uint32_t propertyId = _my_sps->putSP(newSP);
     assert(propertyId > 0);
 
     PrintToLog("CREATED MANUAL PROPERTY id: %d admin: %s\n", propertyId, sender);
+
+    CMPSPInfo::Entry sp;
+    _my_sps->getSP(propertyId,sp);
+
+    // for(std::vector<int>::iterator it = (sp.kyc).begin(); it != (sp.kyc).end(); ++it)
+    // {
+    //     PrintToLog("%s(): kyc inside: %d\n",__func__,*(it));
+    // }
 
     return 0;
 }
@@ -2969,14 +3039,32 @@ int CMPTransaction::logicMath_MetaDExTrade()
       return (PKT_ERROR_METADEX -32);
   }
 
+  int kyc_id;
+
+  if(!t_tradelistdb->checkKYCRegister(sender,kyc_id)){
+    PrintToLog("%s(): rejected: kyc ckeck failed\n", __func__);
+    return (PKT_ERROR_KYC -10);
+  }
+
+  if(!t_tradelistdb->kycPropertyMatch(property,kyc_id)){
+    PrintToLog("%s(): rejected: property %d can't be traded with this kyc\n", __func__, property);
+    return (PKT_ERROR_KYC -20);
+  }
+
+  if(!t_tradelistdb->kycPropertyMatch(desired_property,kyc_id)){
+    PrintToLog("%s(): rejected: property %d can't be traded with this kyc\n", __func__,desired_property);
+    return (PKT_ERROR_METADEX -34);
+  }
+
+
   if (nNewValue <= 0 || MAX_INT_8_BYTES < nNewValue) {
       PrintToLog("%s(): rejected: amount for sale out of range or zero: %d\n", __func__, nNewValue);
-      return (PKT_ERROR_METADEX -33);
+      return (PKT_ERROR_METADEX -34);
   }
 
   if (desired_value <= 0 || MAX_INT_8_BYTES < desired_value) {
       PrintToLog("%s(): rejected: desired amount out of range or zero: %d\n", __func__, desired_value);
-      return (PKT_ERROR_METADEX -34);
+      return (PKT_ERROR_METADEX -35);
   }
 
   int64_t nBalance = getMPbalance(sender, property, BALANCE);
@@ -3063,6 +3151,7 @@ int CMPTransaction::logicMath_CreateContractDex()
   newSP.attribute_type = attribute_type;
   newSP.expirated = false;
   newSP.inverse_quoted = inverse_quoted;
+  newSP.kyc = kyc_Ids;
 
   PrintToLog("%s(): init block inside create contract: %d\n", __func__, newSP.init_block);
 
@@ -3098,9 +3187,17 @@ int CMPTransaction::logicMath_ContractDexTrade()
 
   (pfuture->fco_prop_type == ALL_PROPERTY_TYPE_NATIVE_CONTRACT) ? result = 5 : result = 6;
 
-  // if(!t_tradelistdb->checkKYCRegister(sender,result)){
-    //     return PKT_ERROR_KYC -10;
-   // }
+  int kyc_id;
+
+  if(!t_tradelistdb->checkKYCRegister(sender,kyc_id)){
+    PrintToLog("%s(): rejected: kyc ckeck failed\n", __func__);
+    return (PKT_ERROR_KYC -10);
+  }
+
+  if(!t_tradelistdb->kycPropertyMatch(id_contract,kyc_id)){
+    PrintToLog("%s(): rejected: contract %d can't be traded with this kyc\n", __func__, property);
+    return (PKT_ERROR_KYC -20);
+  }
 
 
 
@@ -4320,6 +4417,23 @@ int CMPTransaction::logicMath_Instant_Trade()
       return (PKT_ERROR_CHANNELS -14);
   }
 
+  int kyc_id;
+
+  if(!t_tradelistdb->checkKYCRegister(sender,kyc_id)){
+    PrintToLog("%s(): rejected: kyc ckeck failed\n", __func__);
+    return (PKT_ERROR_KYC -10);
+  }
+
+  if(!t_tradelistdb->kycPropertyMatch(property,kyc_id)){
+    PrintToLog("%s(): rejected: property %d can't be traded with this kyc\n", __func__, property);
+    return (PKT_ERROR_KYC -20);
+  }
+
+  if(!t_tradelistdb->kycPropertyMatch(desired_property,kyc_id)){
+    PrintToLog("%s(): rejected: property %d can't be traded with this kyc\n", __func__, desired_property);
+    return (PKT_ERROR_KYC -20);
+  }
+
   channel chnAddrs = t_tradelistdb->getChannelAddresses(sender);
 
   if (sender.empty() && chnAddrs.first.empty() && chnAddrs.second.empty()) {
@@ -4584,11 +4698,18 @@ int CMPTransaction::logicMath_Contract_Instant()
 
   (sp.prop_type == ALL_PROPERTY_TYPE_NATIVE_CONTRACT) ? result = 5 : result = 6;
 
-  // if(!t_tradelistdb->checkKYCRegister(sender,result))
-  // {
-  //     PrintToLog("%s: tx disable from kyc register!\n",__func__);
-  //     return (PKT_ERROR_KYC -10);
-  // }
+  int kyc_id;
+
+  if(!t_tradelistdb->checkKYCRegister(sender,kyc_id)){
+    PrintToLog("%s(): rejected: kyc ckeck failed\n", __func__);
+    return (PKT_ERROR_KYC -10);
+  }
+
+  if(!t_tradelistdb->kycPropertyMatch(property,kyc_id)){
+    PrintToLog("%s(): rejected: contract %d can't be traded with this kyc\n", __func__, property);
+    return (PKT_ERROR_KYC -20);
+  }
+
 
   uint32_t colateralh = sp.collateral_currency;
   int64_t marginRe = static_cast<int64_t>(sp.margin_requirement);
@@ -4693,10 +4814,18 @@ int CMPTransaction::logicMath_New_Id_Registration()
       return (PKT_ERROR_TOKENS -22);
   }
 
+  int kyc_id;
+
+  if(!t_tradelistdb->checkKYCRegister(sender,kyc_id)){
+    PrintToLog("%s(): rejected: kyc ckeck failed\n", __func__);
+    return (PKT_ERROR_KYC -10);
+  }
+
+
   // ---------------------------------------
   if (msc_debug_new_id_registration) PrintToLog("%s(): channelAddres in register: %s \n",__func__,receiver);
 
-  t_tradelistdb->recordNewIdRegister(txid, receiver, website, company_name, tokens, ltc, natives, oracles, block, tx_idx);
+  t_tradelistdb->recordNewIdRegister(txid, sender, company_name, website, block, tx_idx, KYC_1);
 
   // std::string dummy = "1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P";
   // t_tradelistdb->updateIdRegister(txid,sender, dummy,block, tx_idx);
@@ -4757,6 +4886,29 @@ int CMPTransaction::logicMath_DEx_Payment()
   return rc;
 }
 
+/** Tx 118 */
+int CMPTransaction::logicMath_Attestation()
+{
+  if (!IsTransactionTypeAllowed(block, property, type, version)) {
+      PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+              __func__,
+              type,
+              version,
+              property,
+              block);
+      return (PKT_ERROR_METADEX -22);
+  }
+
+  int kyc_id;
+
+  if(!t_tradelistdb->checkKYCRegister(sender,kyc_id))
+      kyc_id = KYC_0;
+
+  t_tradelistdb->recordNewIdRegister(txid, receiver, "", "", block, tx_idx, kyc_id);
+
+  return 0;
+
+}
 
 struct FutureContractObject *getFutureContractObject(std::string identifier)
 {

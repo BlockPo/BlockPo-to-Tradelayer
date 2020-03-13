@@ -358,7 +358,7 @@ UniValue tl_sendissuancefixed(const JSONRPCRequest& request)
 
 UniValue tl_sendissuancemanaged(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 6)
+    if (request.params.size() != 7)
         throw runtime_error(
             "tl_sendissuancemanaged \"fromaddress\" type previousid \"name\" \"url\" \"data\"\n"
 
@@ -371,7 +371,12 @@ UniValue tl_sendissuancemanaged(const JSONRPCRequest& request)
             "4. name                 (string, required) the name of the new tokens to create\n"
             "5. url                  (string, required) an URL for further information about the new tokens (can be \"\")\n"
             "6. data                 (string, required) a description for the new tokens (can be \"\")\n"
-
+            "7. kyc options          (array, optional) A json with the kyc allowed.\n"
+            "    [\n"
+            "      \"2,3,5\"         (number) kyc id\n"
+            "      ,...\n"
+            "    ]\n"
+      
             "\nResult:\n"
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
 
@@ -384,23 +389,37 @@ UniValue tl_sendissuancemanaged(const JSONRPCRequest& request)
     std::string fromAddress = ParseAddress(request.params[0]);
     uint16_t type = ParsePropertyType(request.params[1]);
     uint32_t previousId = ParsePreviousPropertyId(request.params[2]);
+
     // RequireNotContract(previousId);  TODO: check this condition
     std::string name = ParseText(request.params[3]);
     std::string url = ParseText(request.params[4]);
     std::string data = ParseText(request.params[5]);
+
+    UniValue kycOptions(UniValue::VARR);
+    if (!request.params[6].isNull())
+        kycOptions = request.params[6].get_array();
+
+    std::vector<int> numbers;
+
+    for (unsigned int idx = 0; idx < kycOptions.size(); idx++)
+    {
+            const UniValue& num = kycOptions[idx];
+            numbers.push_back(num.get_int());
+            PrintToLog("%s(): num : %d \n",__func__, num.get_int());
+    }
 
     // perform checks
     RequirePropertyName(name);
     RequireSaneName(name);
 
     // create a payload for the transaction
-    std::vector<unsigned char> payload = CreatePayload_IssuanceManaged(type, previousId, name, url, data);
+    std::vector<unsigned char> payload = CreatePayload_IssuanceManaged(type, previousId, name, url, data,numbers);
 
     // request the wallet build the transaction (and if needed commit it)
     uint256 txid;
     std::string rawHex;
     int result = WalletTxBuilder(fromAddress, "", 0, payload, txid, rawHex, autoCommit);
-    PrintToConsole("result of WalletTxBuilder: %d\n",result);
+
     // check error and return the txid (or raw hex depending on autocommit)
     if (result != 0) {
         throw JSONRPCError(result, error_str(result));
@@ -822,7 +841,7 @@ UniValue tl_sendtrade(const JSONRPCRequest& request)
 
 UniValue tl_createcontract(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 9)
+  if (request.params.size() != 10)
     throw runtime_error(
 			"tl_createcontract \"fromaddress\" type previousid \"category\" \"subcategory\" \"name\" \"url\" \"data\" propertyiddesired tokensperunit deadline ( earlybonus issuerpercentage )\n"
 
@@ -838,7 +857,11 @@ UniValue tl_createcontract(const JSONRPCRequest& request)
 			"7. collateral currency       (number, required) collateral currency\n"
 			"8. margin requirement        (number, required) margin requirement\n"
       "9. quoting                   (number, required) 0: inverse quoting contract, 1: normal quoting\n"
-
+      "10. kyc options          (array, optional) A json with the kyc allowed.\n"
+      "    [\n"
+      "      \"2,3,5\"         (number) kyc id\n"
+      "      ,...\n"
+      "    ]\n"
 
 			"\nResult:\n"
 			"\"hash\"                  (string) the hex-encoded transaction hash\n"
@@ -857,13 +880,27 @@ UniValue tl_createcontract(const JSONRPCRequest& request)
   uint32_t collateral_currency = request.params[6].get_int();
   uint32_t margin_requirement = ParseAmount32t(request.params[7]);
   uint8_t inverse = ParseBinary(request.params[8]);
+  
+    UniValue kycOptions(UniValue::VARR);
+  if (!request.params[9].isNull())
+      kycOptions = request.params[9].get_array();
+
+  std::vector<int> numbers;
+
+  for (unsigned int idx = 0; idx < kycOptions.size(); idx++)
+  {
+          const UniValue& num = kycOptions[idx];
+          numbers.push_back(num.get_int());
+          PrintToLog("%s(): num : %d \n",__func__, num.get_int());
+  }
 
   PrintToLog("\nRPC tl_createcontract: notional_size = %s\t margin_requirement = %s\t blocks_until_expiration = %d\t collateral_currency=%d\t num = %d, den = %d\n", FormatDivisibleMP(notional_size), FormatDivisibleMP(margin_requirement), blocks_until_expiration, collateral_currency, num, den);
 
   RequirePropertyName(name);
   RequireSaneName(name);
 
-  std::vector<unsigned char> payload = CreatePayload_CreateContract(num, den, name, blocks_until_expiration, notional_size, collateral_currency, margin_requirement,inverse);
+  std::vector<unsigned char> payload = CreatePayload_CreateContract(num, den, name, blocks_until_expiration, notional_size, collateral_currency, margin_requirement,inverse, numbers);
+
 
   uint256 txid;
   std::string rawHex;
@@ -889,7 +926,7 @@ UniValue tl_createcontract(const JSONRPCRequest& request)
 
 UniValue tl_create_oraclecontract(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 8)
+  if (request.params.size() != 10)
     throw runtime_error(
 			"tl_create_oraclecontract \"address\" type previousid \"category\" \"subcategory\" \"name\" \"url\" \"data\" propertyiddesired tokensperunit deadline ( earlybonus issuerpercentage )\n"
 
@@ -904,7 +941,12 @@ UniValue tl_create_oraclecontract(const JSONRPCRequest& request)
 			"6. margin requirement        (number, required) margin requirement\n"
       "7. backup address            (string, required) backup admin address contract\n"
       "8. quoting                  (number, required) 0: inverse quoting contract, 1: normal quoting\n"
-
+      "9. kyc options          (array, optional) A json with the kyc allowed.\n"
+      "    [\n"
+      "      \"2,3,5\"         (number) kyc id\n"
+      "      ,...\n"
+      "    ]\n"
+    
 			"\nResult:\n"
 			"\"hash\"                  (string) the hex-encoded transaction hash\n"
 
@@ -921,11 +963,26 @@ UniValue tl_create_oraclecontract(const JSONRPCRequest& request)
   uint32_t margin_requirement = ParseAmount32t(request.params[5]);
   std::string oracleAddress = ParseAddress(request.params[6]);
   uint8_t inverse = ParseBinary(request.params[7]);
+  
+  UniValue kycOptions(UniValue::VARR);
+  if (!request.params[8].isNull())
+      kycOptions = request.params[8].get_array();
+
+  std::vector<int> numbers;
+
+  for (unsigned int idx = 0; idx < kycOptions.size(); idx++)
+  {
+          const UniValue& num = kycOptions[idx];
+          numbers.push_back(num.get_int());
+          PrintToLog("%s(): num : %d \n",__func__, num.get_int());
+  }
+
 
   RequirePropertyName(name);
   RequireSaneName(name);
 
-  std::vector<unsigned char> payload = CreatePayload_CreateOracleContract(name, blocks_until_expiration, notional_size, collateral_currency, margin_requirement, inverse);
+  std::vector<unsigned char> payload = CreatePayload_CreateOracleContract(name, blocks_until_expiration, notional_size, collateral_currency, margin_requirement, inverse, numbers);
+
 
   uint256 txid;
   std::string rawHex;
@@ -1926,7 +1983,7 @@ UniValue tl_create_channel(const JSONRPCRequest& request)
 
 UniValue tl_new_id_registration(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 8)
+    if (request.params.size() != 3)
         throw runtime_error(
             "tl_new_id_registration \"sender\" \"address\" \"website url\" \"company name\" \n"
 
@@ -1934,13 +1991,8 @@ UniValue tl_new_id_registration(const JSONRPCRequest& request)
 
             "\nArguments:\n"
             "1. sender                       (string, required) sender address\n"
-            "2. channel address              (string, required) channel address\n"
-            "3. website url                  (string, required) official web site of company\n"
-            "4. company name                 (string, required) official name of company\n"
-            "5. token/token permission       (int, required) trading token for tokens (0 = false, 1 = true)\n"
-            "6. ltc/token permission         (int, required) trading litecoins for tokens (0 = false, 1 = true)\n"
-            "7. native-contract permission   (int, required) trading native contracts (0 = false, 1 = true)\n"
-            "8. oracle-contract permission   (int, required) trading oracle contracts (0 = false, 1 = true)\n"
+            "2. website url                  (string, required) official web site of company\n"
+            "3. company name                 (string, required) official name of company\n"
 
             "\nResult:\n"
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
@@ -1952,21 +2004,16 @@ UniValue tl_new_id_registration(const JSONRPCRequest& request)
 
     // obtain parameters & info
     std::string sender = ParseAddress(request.params[0]);
-    std::string address = ParseAddress(request.params[1]);
-    std::string website = ParseText(request.params[2]);
-    std::string name = ParseText(request.params[3]);
-    uint8_t tokens = ParsePermission(request.params[4]);
-    uint8_t ltc = ParsePermission(request.params[5]);
-    uint8_t natives = ParsePermission(request.params[6]);
-    uint8_t oracles = ParsePermission(request.params[7]);
+    std::string website = ParseText(request.params[1]);
+    std::string name = ParseText(request.params[2]);
 
     // create a payload for the transaction
-    std::vector<unsigned char> payload = CreatePayload_New_Id_Registration(website, name, tokens, ltc, natives, oracles);
+    std::vector<unsigned char> payload = CreatePayload_New_Id_Registration(website, name);
 
     // request the wallet build the transaction (and if needed commit it)
     uint256 txid;
     std::string rawHex;
-    int result = WalletTxBuilder(sender, address, 0, payload, txid, rawHex, autoCommit);
+    int result = WalletTxBuilder(sender, "", 0, payload, txid, rawHex, autoCommit);
     // check error and return the txid (or raw hex depending on autocommit)
     if (result != 0) {
         throw JSONRPCError(result, error_str(result));
@@ -2054,6 +2101,54 @@ UniValue tl_send_dex_payment(const JSONRPCRequest& request)
     uint256 txid;
     std::string rawHex;
     int result = WalletTxBuilder(fromAddress, toAddress, amount, payload, txid, rawHex, autoCommit);
+
+    // check error and return the txid (or raw hex depending on autocommit)
+    if (result != 0) {
+        throw JSONRPCError(result, error_str(result));
+    } else {
+        if (!autoCommit) {
+            return rawHex;
+        } else {
+            return txid.GetHex();
+        }
+    }
+}
+
+UniValue tl_attestation(const JSONRPCRequest& request)
+{
+    if (request.params.size() < 1 || request.params.size() > 3)
+        throw runtime_error(
+            "tl_attestation \"fromaddress\" \"toaddress\"amount\" \n"
+
+            "\nCreate and broadcast a kyc attestation.\n"
+
+            "\nArguments:\n"
+            "1. sender address       (string, required) authority address\n"
+            "2. receiver address     (string, required) receiver address\n"
+            "3. string hash          (string, optional) the hash\n"
+            "\nResult:\n"
+            "\"hash\"                  (string) the hex-encoded transaction hash\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("tl_attestation", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\"")
+            + HelpExampleRpc("tl_attestation", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\"")
+        );
+
+    // obtain parameters & info
+    std::string hash;
+    std::string fromAddress = ParseAddress(request.params[0]);
+    std::string receiverAddress = ParseAddress(request.params[1]);
+    (request.params.size() == 3) ? hash = ParseText(request.params[2]) : "";
+
+    PrintToLog("%s(): hash: %s\n",__func__,hash);
+
+    // create a payload for the transaction
+    std::vector<unsigned char> payload = CreatePayload_Attestation(hash);
+
+    // request the wallet build the transaction (and if needed commit it)
+    uint256 txid;
+    std::string rawHex;
+    int result = WalletTxBuilder(fromAddress, receiverAddress, 0, payload, txid, rawHex, autoCommit);
 
     // check error and return the txid (or raw hex depending on autocommit)
     if (result != 0) {
@@ -2163,7 +2258,8 @@ static const CRPCCommand commands[] =
     { "trade layer (transaction cration)",  "tl_new_id_registration",          &tl_new_id_registration,             {} },
     { "trade layer (transaction cration)",  "tl_update_id_registration",       &tl_update_id_registration,          {} },
     { "trade layer (transaction cration)",  "tl_send_dex_payment",             &tl_send_dex_payment,                {} },
-    { "trade layer (transaction creation)", "tl_setadmin",                     &tl_setadmin,                        {} }
+    { "trade layer (transaction creation)", "tl_setadmin",                     &tl_setadmin,                        {} },
+    { "trade layer (transaction creation)", "tl_attestation",                  &tl_attestation,                     {} }
 #endif
 };
 

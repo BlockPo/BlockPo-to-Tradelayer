@@ -162,6 +162,9 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_createpayload_issuancefixed", 5, "arg5" },
     { "tl_createpayload_issuancemanaged", 0, "arg0" },
     { "tl_createpayload_issuancemanaged", 1, "arg1" },
+    { "tl_createpayload_issuancemanaged", 2, "arg2" },
+    { "tl_createpayload_issuancemanaged", 6, "arg6" },
+
     { "tl_createpayload_issuancecrowdsale", 0, "arg0" },
     { "tl_createpayload_issuancecrowdsale", 1, "arg1" },
     { "tl_createpayload_issuancecrowdsale", 5, "arg5" },
@@ -179,6 +182,11 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_createpayload_createcontract", 3, "arg3"},
     { "tl_createpayload_createcontract", 4, "arg4"},
     { "tl_createpayload_createcontract", 5, "arg5"},
+    { "tl_createpayload_createcontract", 6, "arg6"},
+    { "tl_createpayload_createcontract", 7, "arg7"},
+    { "tl_createpayload_createcontract", 8, "arg8"},
+    { "tl_createpayload_createcontract", 9, "arg9"},
+
     { "tl_createpayload_tradecontract", 2, "arg2"},
     { "tl_createpayload_tradecontract", 3, "arg3"},
     { "tl_createpayload_cancelallcontractsbyaddress", 0, "arg0"},
@@ -202,11 +210,14 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_createpayload_contract_instant_trade", 4, "arg4"},
     // { "tl_createpayload_contract_instant_trade", 5, "arg5"},
 
-    { "tl_createpayload_create_oraclecontract", 1, "arg1"},
+    { "tl_createpayload_create_oraclecontract", 0, "arg0"},
     { "tl_createpayload_create_oraclecontract", 2, "arg2"},
     { "tl_createpayload_create_oraclecontract", 3, "arg3"},
     { "tl_createpayload_create_oraclecontract", 4, "arg4"},
-    { "tl_createpayload_create_oraclecontract", 6, "arg6"},
+    { "tl_createpayload_create_oraclecontract", 5, "arg5"},
+    { "tl_createpayload_create_oraclecontract", 7, "arg7"},
+    { "tl_createpayload_create_oraclecontract", 8, "arg8"},
+
 
 
     { "tl_createpayload_pnl_update", 0, "arg0"},
@@ -217,11 +228,6 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_createpayload_setoracle", 1, "arg1" },
     { "tl_createpayload_setoracle", 2, "arg2" },
     { "tl_createpayload_setoracle", 3, "arg3" },
-
-    { "tl_createpayload_new_id_registration", 2, "arg2" },
-    { "tl_createpayload_new_id_registration", 3, "arg3" },
-    { "tl_createpayload_new_id_registration", 4, "arg4" },
-    { "tl_createpayload_new_id_registration", 5, "arg5" },
 
     /* Trade Layer - raw transaction calls */
     { "tl_decodetransaction", 1, "arg1" },
@@ -238,17 +244,27 @@ static const CRPCConvertParam vRPCConvertParams[] =
     // { "tl_sendvesting", 2, "arg2" },
     { "tl_sendissuancemanaged", 1, "arg1" },
     { "tl_sendissuancemanaged", 2, "arg2" },
+
+    { "tl_sendissuancemanaged", 3, "arg3" },
+    { "tl_sendissuancemanaged", 7, "arg7" },
+  
     { "tl_createcontract", 1, "arg1"},
     { "tl_createcontract", 3, "arg3"},
-    { "tl_createcontract", 4, "arg4"},
     { "tl_createcontract", 5, "arg5"},
     { "tl_createcontract", 6, "arg6"},
     { "tl_createcontract", 7, "arg7"},
-    { "tl_create_oraclecontract", 2, "arg3"},
-    { "tl_create_oraclecontract", 3, "arg4"},
-    { "tl_create_oraclecontract", 4, "arg5"},
-    { "tl_create_oraclecontract", 5, "arg6"},
-    { "tl_create_oraclecontract", 7, "arg8"},
+    { "tl_createcontract", 8, "arg8"},
+    { "tl_createcontract", 9, "arg9"},
+    { "tl_createcontract", 10, "arg10"},
+    { "tl_create_oraclecontract", 1, "arg1"},
+    // { "tl_create_oraclecontract", 2, "arg2"},
+    // { "tl_create_oraclecontract", 3, "arg3"},
+    { "tl_create_oraclecontract", 3, "arg3"},
+    { "tl_create_oraclecontract", 4, "arg4"},
+    { "tl_create_oraclecontract", 5, "arg5"},
+    { "tl_create_oraclecontract", 6, "arg6"},
+    { "tl_create_oraclecontract", 8, "arg8"},
+    { "tl_create_oraclecontract", 9, "arg9"},
     { "tl_tradecontract", 3, "arg3"},
     { "tl_tradecontract", 4, "arg4"},
     { "tl_sendgrant", 2, "arg2"},
@@ -280,10 +296,6 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_withdrawal_fromchannel", 2, "arg2" },
     { "tl_withdrawal_fromchannel", 4, "arg4" },
     { "tl_create_channel", 3, "arg3" },
-    { "tl_new_id_registration", 4, "arg3" },
-    { "tl_new_id_registration", 5, "arg4" },
-    { "tl_new_id_registration", 6, "arg5" },
-    { "tl_new_id_registration", 7, "arg6" },
 
     /* Trade Layer - data retrieval calls */
     { "tl_setautocommit", 0, "arg0" },

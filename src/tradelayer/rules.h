@@ -82,6 +82,9 @@ public:
     int MSC_VESTING_BLOCK;
     int MSC_NODE_REWARD;
 
+    /** KYC*/
+    int MSC_TYPE_ATTESTATION_BLOCK;
+
     /** Returns a mapping of transaction types, and the blocks at which they are enabled. */
     virtual std::vector<TransactionRestriction> GetRestrictions() const;
 

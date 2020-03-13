@@ -122,7 +122,8 @@ enum TransactionType {
   MSC_TYPE_CONTRACT_INSTANT                   = 114,
   MSC_TYPE_NEW_ID_REGISTRATION                = 115,
   MSC_TYPE_UPDATE_ID_REGISTRATION             = 116,
-  MSC_TYPE_DEX_PAYMENT                        = 117
+  MSC_TYPE_DEX_PAYMENT                        = 117,
+  MSC_TYPE_ATTESTATION                        = 118
 
 };
 
@@ -235,6 +236,10 @@ const rational_t factor2 = rational_t(20,100); // normal limits
 
 // define 1 year in blocks:
 #define ONE_YEAR 210240
+
+// define KYC types
+#define KYC_0      0
+#define KYC_1      1
 
 
 // forward declarations
@@ -386,8 +391,7 @@ class CMPTradeList : public CDBBase
   void recordNewInstantTrade(const uint256& txid, const std::string& sender, const std::string& receiver, uint32_t propertyIdForSale, uint64_t amount_forsale, uint32_t propertyIdDesired, uint64_t amount_desired, int blockNum, int blockIndex);
   void recordNewTransfer(const uint256& txid, const std::string& sender, const std::string& receiver, uint32_t propertyId, uint64_t amount, int blockNum, int blockIndex);
   void recordNewInstContTrade(const uint256& txid, const std::string& firstAddr, const std::string& secondAddr, uint32_t property, uint64_t amount_forsale, uint64_t price ,int blockNum, int blockIndex);
-  void recordNewIdRegister(const uint256& txid, const std::string& address, const std::string& website, const std::string& name, uint8_t tokens, uint8_t ltc, uint8_t natives, uint8_t oracles, int blockNum, int blockIndex);
-
+  void recordNewIdRegister(const uint256& txid, const std::string& address, const std::string& name, const std::string& website, int blockNum, int blockIndex, int kyc_type);
   bool getAllCommits(const std::string& senderAddress, UniValue& tradeArray);
   bool getAllWithdrawals(const std::string& senderAddress, UniValue& tradeArray);
   bool getChannelInfo(const std::string& channelAddress, UniValue& tradeArray);
@@ -398,7 +402,8 @@ class CMPTradeList : public CDBBase
 
   //KYC
   bool updateIdRegister(const uint256& txid, const std::string& address, const std::string& newAddr, int blockNum, int blockIndex);
-  bool checkKYCRegister(const std::string& address, int registered);
+  bool checkKYCRegister(const std::string& address, int& kyc_id);
+  bool kycPropertyMatch(int kyc_id, uint32_t propertyId);
 
   int deleteAboveBlock(int blockNum);
   bool exists(const uint256 &txid);

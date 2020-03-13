@@ -149,7 +149,8 @@ std::vector<unsigned char> CreatePayload_IssuanceVariable(uint16_t propertyType,
     return payload;
 }
 
-std::vector<unsigned char> CreatePayload_IssuanceManaged(uint16_t propertyType, uint32_t previousPropertyId, std::string name, std::string url, std::string data)
+
+std::vector<unsigned char> CreatePayload_IssuanceManaged(uint16_t propertyType, uint32_t previousPropertyId, std::string name, std::string url, std::string data, std::vector<int> kycVec)
 {
     std::vector<unsigned char> payload;
 
@@ -160,6 +161,14 @@ std::vector<unsigned char> CreatePayload_IssuanceManaged(uint16_t propertyType, 
     std::vector<uint8_t> vecMessageVer = CompressInteger((uint64_t)messageVer);
     std::vector<uint8_t> vecPropertyType = CompressInteger((uint64_t)propertyType);
     std::vector<uint8_t> vecPrevPropertyId = CompressInteger((uint64_t)previousPropertyId);
+
+    std::vector<std::vector<uint8_t>> auxVec;
+
+    for (std::vector<int>::iterator it = kycVec.begin(); it != kycVec.end();++it)
+    {
+        std::vector<uint8_t> vecNum = CompressInteger((uint64_t) *it);
+        auxVec.push_back(vecNum);
+    }
 
     if (name.size() > 255) name = name.substr(0,255);
     if (url.size() > 255) url = url.substr(0,255);
@@ -175,6 +184,12 @@ std::vector<unsigned char> CreatePayload_IssuanceManaged(uint16_t propertyType, 
     payload.push_back('\0');
     payload.insert(payload.end(), data.begin(), data.end());
     payload.push_back('\0');
+
+    for (std::vector<std::vector<uint8_t>>::iterator itt = auxVec.begin(); itt != auxVec.end(); ++itt)
+    {
+        const std::vector<uint8_t> vec = *itt;
+        payload.insert(payload.end(), vec.begin(), vec.end());
+    }
 
     return payload;
 }
@@ -318,7 +333,7 @@ std::vector<unsigned char> CreatePayload_TradeLayerAlert(uint16_t alertType, uin
     return payload;
 }
 
-std::vector<unsigned char> CreatePayload_CreateContract(uint32_t num, uint32_t den, std::string name, uint32_t blocks_until_expiration, uint32_t notional_size, uint32_t collateral_currency, uint32_t margin_requirement, uint8_t inverse)
+std::vector<unsigned char> CreatePayload_CreateContract(uint32_t num, uint32_t den, std::string name, uint32_t blocks_until_expiration, uint32_t notional_size, uint32_t collateral_currency, uint32_t margin_requirement, uint8_t inverse, std::vector<int> kycVec)
 {
   std::vector<unsigned char> payload;
 
@@ -335,6 +350,13 @@ std::vector<unsigned char> CreatePayload_CreateContract(uint32_t num, uint32_t d
   std::vector<uint8_t> vecMarginRequirement = CompressInteger((uint64_t)margin_requirement);
   std::vector<uint8_t> vecInverse = CompressInteger((uint64_t)inverse);
 
+  std::vector<std::vector<uint8_t>> auxVec;
+
+  for (std::vector<int>::iterator it = kycVec.begin(); it != kycVec.end();++it)
+  {
+      std::vector<uint8_t> vecNum = CompressInteger((uint64_t) *it);
+      auxVec.push_back(vecNum);
+  }
 
   if ((name).size() > 255) name = name.substr(0,255);
   payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
@@ -348,6 +370,13 @@ std::vector<unsigned char> CreatePayload_CreateContract(uint32_t num, uint32_t d
   payload.insert(payload.end(), vecCollateralCurrency.begin(), vecCollateralCurrency.end());
   payload.insert(payload.end(), vecMarginRequirement.begin(), vecMarginRequirement.end());
   payload.insert(payload.end(), vecInverse.begin(), vecInverse.end());
+
+  for (std::vector<std::vector<uint8_t>>::iterator itt = auxVec.begin(); itt != auxVec.end(); ++itt)
+  {
+      const std::vector<uint8_t> vec = *itt;
+      payload.insert(payload.end(), vec.begin(), vec.end());
+  }
+
   return payload;
 }
 
@@ -597,7 +626,8 @@ std::vector<unsigned char> CreatePayload_MetaDExTrade(uint32_t propertyIdForSale
 }
 
 /* Tx 103 */
-std::vector<unsigned char> CreatePayload_CreateOracleContract(std::string name, uint32_t blocks_until_expiration, uint32_t notional_size, uint32_t collateral_currency, uint32_t margin_requirement, uint8_t inverse)
+
+std::vector<unsigned char> CreatePayload_CreateOracleContract(std::string name, uint32_t blocks_until_expiration, uint32_t notional_size, uint32_t collateral_currency, uint32_t margin_requirement, uint8_t inverse, std::vector<int> kycVec)
 {
   std::vector<unsigned char> payload;
 
@@ -612,6 +642,14 @@ std::vector<unsigned char> CreatePayload_CreateOracleContract(std::string name, 
   std::vector<uint8_t> vecMarginRequirement = CompressInteger((uint64_t)margin_requirement);
   std::vector<uint8_t> vecInverse = CompressInteger((uint64_t)inverse);
 
+  std::vector<std::vector<uint8_t>> auxVec;
+
+  for (std::vector<int>::iterator it = kycVec.begin(); it != kycVec.end();++it)
+  {
+      std::vector<uint8_t> vecNum = CompressInteger((uint64_t) *it);
+      auxVec.push_back(vecNum);
+  }
+
   if ((name).size() > 255) name = name.substr(0,255);
   payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
   payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
@@ -622,6 +660,12 @@ std::vector<unsigned char> CreatePayload_CreateOracleContract(std::string name, 
   payload.insert(payload.end(), vecCollateralCurrency.begin(), vecCollateralCurrency.end());
   payload.insert(payload.end(), vecMarginRequirement.begin(), vecMarginRequirement.end());
   payload.insert(payload.end(), vecInverse.begin(), vecInverse.end());
+
+  for (std::vector<std::vector<uint8_t>>::iterator itt = auxVec.begin(); itt != auxVec.end(); ++itt)
+  {
+      const std::vector<uint8_t> vec = *itt;
+      payload.insert(payload.end(), vec.begin(), vec.end());
+  }
 
   return payload;
 }
@@ -862,7 +906,7 @@ std::vector<unsigned char> CreatePayload_Create_Channel(std::string channelAddre
   return payload;
 }
 
-std::vector<unsigned char> CreatePayload_New_Id_Registration(std::string website, std::string name, uint8_t tokens, uint8_t ltc, uint8_t natives, uint8_t oracles)
+std::vector<unsigned char> CreatePayload_New_Id_Registration(std::string website, std::string name)
 {
   std::vector<unsigned char> payload;
 
@@ -871,20 +915,12 @@ std::vector<unsigned char> CreatePayload_New_Id_Registration(std::string website
 
   std::vector<uint8_t> vecMessageType = CompressInteger((uint64_t)messageType);
   std::vector<uint8_t> vecMessageVer = CompressInteger((uint64_t)messageVer);
-  std::vector<uint8_t> vecTokens = CompressInteger((uint64_t)tokens);
-  std::vector<uint8_t> vecLtc = CompressInteger((uint64_t)ltc);
-  std::vector<uint8_t> vecNatives = CompressInteger((uint64_t)natives);
-  std::vector<uint8_t> vecOracles = CompressInteger((uint64_t)oracles);
 
   if ((website).size() > 255) website = website.substr(0,255);
   if ((name).size() > 255) name = name.substr(0,255);
 
   payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
   payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
-  payload.insert(payload.end(), vecTokens.begin(), vecTokens.end());
-  payload.insert(payload.end(), vecLtc.begin(), vecLtc.end());
-  payload.insert(payload.end(), vecNatives.begin(), vecNatives.end());
-  payload.insert(payload.end(), vecOracles.begin(), vecOracles.end());
 
   payload.insert(payload.end(), website.begin(), website.end());
   payload.push_back('\0');
@@ -922,6 +958,26 @@ std::vector<unsigned char> CreatePayload_DEx_Payment()
 
   payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
   payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
+
+  return payload;
+}
+
+std::vector<unsigned char> CreatePayload_Attestation(std::string hash)
+{
+  std::vector<unsigned char> payload;
+
+  uint64_t messageType = 118;
+  uint64_t messageVer = 0;
+
+  std::vector<uint8_t> vecMessageType = CompressInteger((uint64_t)messageType);
+  std::vector<uint8_t> vecMessageVer = CompressInteger((uint64_t)messageVer);
+
+  if ((hash).size() > 255) hash = hash.substr(0,255);
+
+  payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
+  payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
+  payload.insert(payload.end(), hash.begin(), hash.end());
+  payload.push_back('\0');
 
   return payload;
 }
