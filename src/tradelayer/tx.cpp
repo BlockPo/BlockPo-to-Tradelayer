@@ -4889,7 +4889,7 @@ int CMPTransaction::logicMath_DEx_Payment()
 /** Tx 118 */
 int CMPTransaction::logicMath_Attestation()
 {
-  if (!IsTransactionTypeAllowed(block, property, type, version)) {
+  if (!IsTransactionTypeAllowed(block, type, version)) {
       PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
               __func__,
               type,
