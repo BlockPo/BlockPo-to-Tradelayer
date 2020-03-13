@@ -2823,6 +2823,35 @@ UniValue tl_getcurrencytotal(const JSONRPCRequest& request)
     return balanceObj;
 }
 
+UniValue tl_listkyc(const JSONRPCRequest& request)
+{
+  if (false) //TODO: put fHelp boolean
+    throw runtime_error(
+			"tl_listproperties\n"
+			"\nLists all kyc registers.\n"
+			"\nResult:\n"
+			"[                                (array of JSON objects)\n"
+			"  {\n"
+			"    \"propertyid\" : n,                (number) the identifier of the tokens\n"
+			"    \"name\" : \"name\",                 (string) the name of the tokens\n"
+			"    \"data\" : \"information\",          (string) additional information or a description\n"
+			"    \"url\" : \"uri\",                   (string) an URI, for example pointing to a website\n"
+			"    \"divisible\" : true|false         (boolean) whether the tokens are divisible\n"
+			"  },\n"
+			"  ...\n"
+			"]\n"
+			"\nExamples:\n"
+			+ HelpExampleCli("tl_listkyc", "")
+			+ HelpExampleRpc("tl_listkyc", "")
+			);
+
+  UniValue response(UniValue::VARR);
+
+  t_tradelistdb->kycLoop(response);
+
+  return response;
+}
+
 
 
 static const CRPCCommand commands[] =
@@ -2875,7 +2904,8 @@ static const CRPCCommand commands[] =
   { "trade layer (data retieval)" , "tl_getvesting_supply",         &tl_getvesting_supply,          {} },
   { "trade layer (data retieval)" , "tl_getdexvolume",              &tl_getdexvolume,               {} },
   { "trade layer (data retieval)" , "tl_getmdexvolume",             &tl_getmdexvolume,              {} },
-  { "trade layer (data retieval)" , "tl_getcurrencytotal",          &tl_getcurrencytotal,           {} }
+  { "trade layer (data retieval)" , "tl_getcurrencytotal",          &tl_getcurrencytotal,           {} },
+  { "trade layer (data retieval)" , "tl_listkyc",                   &tl_listkyc,                    {} }
 };
 
 void RegisterTLDataRetrievalRPCCommands(CRPCTable &tableRPC)

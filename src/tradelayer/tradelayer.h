@@ -404,6 +404,7 @@ class CMPTradeList : public CDBBase
   bool updateIdRegister(const uint256& txid, const std::string& address, const std::string& newAddr, int blockNum, int blockIndex);
   bool checkKYCRegister(const std::string& address, int& kyc_id);
   bool kycPropertyMatch(int kyc_id, uint32_t propertyId);
+  bool kycLoop(UniValue& response);
 
   int deleteAboveBlock(int blockNum);
   bool exists(const uint256 &txid);
