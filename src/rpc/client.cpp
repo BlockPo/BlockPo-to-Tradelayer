@@ -162,8 +162,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_createpayload_issuancefixed", 5, "arg5" },
     { "tl_createpayload_issuancemanaged", 0, "arg0" },
     { "tl_createpayload_issuancemanaged", 1, "arg1" },
-    { "tl_createpayload_issuancemanaged", 2, "arg2" },
-    { "tl_createpayload_issuancemanaged", 6, "arg6" },
+    { "tl_createpayload_issuancemanaged", 5, "arg5" },
 
     { "tl_createpayload_issuancecrowdsale", 0, "arg0" },
     { "tl_createpayload_issuancecrowdsale", 1, "arg1" },
@@ -185,7 +184,6 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_createpayload_createcontract", 6, "arg6"},
     { "tl_createpayload_createcontract", 7, "arg7"},
     { "tl_createpayload_createcontract", 8, "arg8"},
-    { "tl_createpayload_createcontract", 9, "arg9"},
 
     { "tl_createpayload_tradecontract", 2, "arg2"},
     { "tl_createpayload_tradecontract", 3, "arg3"},
@@ -210,13 +208,12 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_createpayload_contract_instant_trade", 4, "arg4"},
     // { "tl_createpayload_contract_instant_trade", 5, "arg5"},
 
-    { "tl_createpayload_create_oraclecontract", 0, "arg0"},
+    { "tl_createpayload_create_oraclecontract", 1, "arg1"},
     { "tl_createpayload_create_oraclecontract", 2, "arg2"},
     { "tl_createpayload_create_oraclecontract", 3, "arg3"},
     { "tl_createpayload_create_oraclecontract", 4, "arg4"},
     { "tl_createpayload_create_oraclecontract", 5, "arg5"},
     { "tl_createpayload_create_oraclecontract", 7, "arg7"},
-    { "tl_createpayload_create_oraclecontract", 8, "arg8"},
 
 
 
@@ -244,27 +241,23 @@ static const CRPCConvertParam vRPCConvertParams[] =
     // { "tl_sendvesting", 2, "arg2" },
     { "tl_sendissuancemanaged", 1, "arg1" },
     { "tl_sendissuancemanaged", 2, "arg2" },
+    { "tl_sendissuancemanaged", 6, "arg6" },
 
-    { "tl_sendissuancemanaged", 3, "arg3" },
-    { "tl_sendissuancemanaged", 7, "arg7" },
-  
     { "tl_createcontract", 1, "arg1"},
-    { "tl_createcontract", 3, "arg3"},
+    { "tl_createcontract", 2, "arg2"},
+    { "tl_createcontract", 4, "arg4"},
     { "tl_createcontract", 5, "arg5"},
     { "tl_createcontract", 6, "arg6"},
     { "tl_createcontract", 7, "arg7"},
     { "tl_createcontract", 8, "arg8"},
     { "tl_createcontract", 9, "arg9"},
-    { "tl_createcontract", 10, "arg10"},
-    { "tl_create_oraclecontract", 1, "arg1"},
-    // { "tl_create_oraclecontract", 2, "arg2"},
-    // { "tl_create_oraclecontract", 3, "arg3"},
+
+    { "tl_create_oraclecontract", 2, "arg2"},
     { "tl_create_oraclecontract", 3, "arg3"},
     { "tl_create_oraclecontract", 4, "arg4"},
     { "tl_create_oraclecontract", 5, "arg5"},
-    { "tl_create_oraclecontract", 6, "arg6"},
+    { "tl_create_oraclecontract", 7, "arg7"},
     { "tl_create_oraclecontract", 8, "arg8"},
-    { "tl_create_oraclecontract", 9, "arg9"},
     { "tl_tradecontract", 3, "arg3"},
     { "tl_tradecontract", 4, "arg4"},
     { "tl_sendgrant", 2, "arg2"},
