@@ -176,22 +176,21 @@ UniValue tl_createpayload_issuancefixed(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_issuancemanaged(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 7)
+    if (request.params.size() != 6)
         throw runtime_error(
             "tl_createpayload_issuancemanaged \" type previousid \"name\" \"url\" \"data\"\n"
 
             "\nPayload to create new tokens with manageable supply.\n"
 
             "\nArguments:\n"
-            "1. ecosystem            (string, required) the ecosystem to create the tokens in (1 for main ecosystem, 2 for test ecosystem)\n"
-            "2. type                 (number, required) the type of the tokens to create: (1 for indivisible tokens, 2 for divisible tokens)\n"
-            "3. previousid           (number, required) an identifier of a predecessor token (use 0 for new tokens)\n"
-            "4. name                 (string, required) the name of the new tokens to create\n"
-            "5. url                  (string, required) an URL for further information about the new tokens (can be \"\")\n"
-            "6. data                 (string, required) a description for the new tokens (can be \"\")\n"
-            "7. kyc options          (array, optional) A json with the kyc allowed.\n"
+            "1. type                 (number, required) the type of the tokens to create: (1 for indivisible tokens, 2 for divisible tokens)\n"
+            "2. previousid           (number, required) an identifier of a predecessor token (use 0 for new tokens)\n"
+            "3. name                 (string, required) the name of the new tokens to create\n"
+            "4. url                  (string, required) an URL for further information about the new tokens (can be \"\")\n"
+            "5. data                 (string, required) a description for the new tokens (can be \"\")\n"
+            "6. kyc options          (array, optional) A json with the kyc allowed.\n"
             "    [\n"
-            "      \"2,3,5\"         (number) kyc id\n"
+            "      2,3,5             (number) kyc id\n"
             "      ,...\n"
             "    ]\n"
             "\nResult:\n"
@@ -209,8 +208,8 @@ UniValue tl_createpayload_issuancemanaged(const JSONRPCRequest& request)
     std::string data = ParseText(request.params[4]);
 
     UniValue kycOptions(UniValue::VARR);
-    if (!request.params[7].isNull())
-        kycOptions = request.params[7].get_array();
+    if (!request.params[5].isNull())
+        kycOptions = request.params[5].get_array();
 
     std::vector<int> numbers;
 
@@ -455,7 +454,7 @@ UniValue tl_createpayload_sendtrade(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_createcontract(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 10)
+  if (request.params.size() != 9)
 
     throw runtime_error(
 			"tl_createpayload_createcontract \" type previousid \"category\" \"subcategory\" \"name\" \"url\" \"data\" propertyiddesired tokensperunit deadline ( earlybonus issuerpercentage )\n"
@@ -473,10 +472,10 @@ UniValue tl_createpayload_createcontract(const JSONRPCRequest& request)
       "8. quoting                   (number, required) 0: inverse quoting contract, 1: normal quoting\n"
       "9. kyc options          (array, optional) A json with the kyc allowed.\n"
       "    [\n"
-      "      \"2,3,5\"         (number) kyc id\n"
+      "      2,3,5         (number) kyc id\n"
       "      ,...\n"
       "    ]\n"
-    
+
 			"\nResult:\n"
 			"\"payload\"             (string) the hex-encoded payload\n"
 
@@ -495,8 +494,8 @@ UniValue tl_createpayload_createcontract(const JSONRPCRequest& request)
   uint8_t inverse = ParseBinary(request.params[7]);
 
   UniValue kycOptions(UniValue::VARR);
-  if (!request.params[9].isNull())
-      kycOptions = request.params[9].get_array();
+  if (!request.params[8].isNull())
+      kycOptions = request.params[8].get_array();
 
   std::vector<int> numbers;
 
@@ -1059,7 +1058,7 @@ UniValue tl_createpayload_change_oracleref(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_create_oraclecontract(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 9)
+  if (request.params.size() != 8)
     throw runtime_error(
 			"tl_createpayload_create_oraclecontract \"address\" type previousid \"category\" \"subcategory\" \"name\" \"url\" \"data\" propertyiddesired tokensperunit deadline ( earlybonus issuerpercentage )\n"
 
@@ -1072,13 +1071,13 @@ UniValue tl_createpayload_create_oraclecontract(const JSONRPCRequest& request)
 			"4. collateral currency       (number, required) collateral currency\n"
 			"5. margin requirement        (number, required) margin requirement\n"
       "6. backup address            (string, required) backup admin address contract\n"
-      "7. quoting                  (number, required) 0: inverse quoting contract, 1: normal quoting\n"
-      "8. kyc options          (array, optional) A json with the kyc allowed.\n"
+      "7. quoting                   (number, required) 0: inverse quoting contract, 1: normal quoting\n"
+      "8. kyc options               (array, optional) A json with the kyc allowed.\n"
       "    [\n"
-      "      \"2,3,5\"         (number) kyc id\n"
+      "      2,3,5                  (number) kyc id\n"
       "      ,...\n"
       "    ]\n"
-    
+
 			"\nResult:\n"
 			"\"hash\"                  (string) the hex-encoded transaction hash\n"
 
@@ -1096,8 +1095,8 @@ UniValue tl_createpayload_create_oraclecontract(const JSONRPCRequest& request)
       uint8_t inverse = ParseBinary(request.params[6]);
 
       UniValue kycOptions(UniValue::VARR);
-      if (!request.params[8].isNull())
-          kycOptions = request.params[8].get_array();
+      if (!request.params[7].isNull())
+          kycOptions = request.params[7].get_array();
 
       std::vector<int> numbers;
 

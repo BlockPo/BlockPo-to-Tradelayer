@@ -373,10 +373,10 @@ UniValue tl_sendissuancemanaged(const JSONRPCRequest& request)
             "6. data                 (string, required) a description for the new tokens (can be \"\")\n"
             "7. kyc options          (array, optional) A json with the kyc allowed.\n"
             "    [\n"
-            "      \"2,3,5\"         (number) kyc id\n"
+            "      2,3,5         (number) kyc id\n"
             "      ,...\n"
             "    ]\n"
-      
+
             "\nResult:\n"
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
 
@@ -859,7 +859,7 @@ UniValue tl_createcontract(const JSONRPCRequest& request)
       "9. quoting                   (number, required) 0: inverse quoting contract, 1: normal quoting\n"
       "10. kyc options          (array, optional) A json with the kyc allowed.\n"
       "    [\n"
-      "      \"2,3,5\"         (number) kyc id\n"
+      "      2,3,5         (number) kyc id\n"
       "      ,...\n"
       "    ]\n"
 
@@ -880,7 +880,7 @@ UniValue tl_createcontract(const JSONRPCRequest& request)
   uint32_t collateral_currency = request.params[6].get_int();
   uint32_t margin_requirement = ParseAmount32t(request.params[7]);
   uint8_t inverse = ParseBinary(request.params[8]);
-  
+
     UniValue kycOptions(UniValue::VARR);
   if (!request.params[9].isNull())
       kycOptions = request.params[9].get_array();
@@ -926,7 +926,7 @@ UniValue tl_createcontract(const JSONRPCRequest& request)
 
 UniValue tl_create_oraclecontract(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 10)
+  if (request.params.size() != 9)
     throw runtime_error(
 			"tl_create_oraclecontract \"address\" type previousid \"category\" \"subcategory\" \"name\" \"url\" \"data\" propertyiddesired tokensperunit deadline ( earlybonus issuerpercentage )\n"
 
@@ -943,10 +943,10 @@ UniValue tl_create_oraclecontract(const JSONRPCRequest& request)
       "8. quoting                  (number, required) 0: inverse quoting contract, 1: normal quoting\n"
       "9. kyc options          (array, optional) A json with the kyc allowed.\n"
       "    [\n"
-      "      \"2,3,5\"         (number) kyc id\n"
+      "      2,3,5         (number) kyc id\n"
       "      ,...\n"
       "    ]\n"
-    
+
 			"\nResult:\n"
 			"\"hash\"                  (string) the hex-encoded transaction hash\n"
 
@@ -963,7 +963,7 @@ UniValue tl_create_oraclecontract(const JSONRPCRequest& request)
   uint32_t margin_requirement = ParseAmount32t(request.params[5]);
   std::string oracleAddress = ParseAddress(request.params[6]);
   uint8_t inverse = ParseBinary(request.params[7]);
-  
+
   UniValue kycOptions(UniValue::VARR);
   if (!request.params[8].isNull())
       kycOptions = request.params[8].get_array();
