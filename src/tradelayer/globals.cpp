@@ -64,6 +64,7 @@ std::map<uint32_t, std::vector<int64_t>> mapContractVolume;
 std::map<uint32_t, int64_t> VWAPMapContracts;
 
 std::map<uint32_t, int64_t> cachefees;
+std::map<uint32_t, int64_t> cachefees_oracles;
 VectorTLS *pt_expiration_dates;
 std::vector<std::string> vestingAddresses;
 int nVestingAddrs;
