@@ -4694,10 +4694,6 @@ int CMPTransaction::logicMath_Contract_Instant()
       return (PKT_ERROR_CHANNELS -16);
   }
 
-  int result;
-
-  (sp.prop_type == ALL_PROPERTY_TYPE_NATIVE_CONTRACT) ? result = 5 : result = 6;
-
   int kyc_id;
 
   if(!t_tradelistdb->checkKYCRegister(sender,kyc_id)){
@@ -4715,14 +4711,13 @@ int CMPTransaction::logicMath_Contract_Instant()
   int64_t marginRe = static_cast<int64_t>(sp.margin_requirement);
   int64_t nBalance = getMPbalance(sender, colateralh, CHANNEL_RESERVE);
 
-
-  rational_t conv = rational_t(1,1);
-  int64_t num = conv.numerator().convert_to<int64_t>();
-  int64_t den = conv.denominator().convert_to<int64_t>();
-  arith_uint256 amountTR = (ConvertTo256(instant_amount)*ConvertTo256(marginRe)*ConvertTo256(num))/(ConvertTo256(den)*ConvertTo256(ileverage));
+  arith_uint256 amountTR = (ConvertTo256(instant_amount)*ConvertTo256(marginRe))/ConvertTo256(ileverage);
   int64_t amountToReserve = ConvertTo64(amountTR);
 
   if(msc_debug_contract_instant_trade) PrintToLog("%s: AmountToReserve: %d, channel Balance: %d\n", __func__, amountToReserve,nBalance);
+
+  if(msc_debug_contract_instant_trade) PrintToLog("%s: sender: %s, channel Address: %s\n", __func__, sender, chnAddrs.multisig);
+
 
   //fees
   if(!mastercore::ContInst_Fees(chnAddrs.first, chnAddrs.second, chnAddrs.multisig, amountToReserve, sp.prop_type, sp.collateral_currency))
@@ -4731,25 +4726,14 @@ int CMPTransaction::logicMath_Contract_Instant()
       return (PKT_ERROR_CHANNELS -18);
   }
 
-  if (nBalance < (2 * amountToReserve) || nBalance == 0)
-  {
-      PrintToLog("%s(): rejected: sender %s has insufficient balance for contracts %d [%s < %s] \n",
-      __func__,
-      sender,
-      colateralh,
-      FormatMP(colateralh, nBalance),
-      FormatMP(colateralh, amountToReserve));
-      return (PKT_ERROR_CHANNELS -17);
-  }
-  else {
 
-      if (amountToReserve > 0)
-       {
-           assert(update_tally_map(sender, colateralh, -amountToReserve, CHANNEL_RESERVE));
-           assert(update_tally_map(chnAddrs.first, colateralh, ConvertTo64(amountTR), CONTRACTDEX_MARGIN));
-           assert(update_tally_map(chnAddrs.second, colateralh, ConvertTo64(amountTR), CONTRACTDEX_MARGIN));
-       }
+  if (amountToReserve > 0)
+  {
+      assert(update_tally_map(sender, colateralh, -amountToReserve, CHANNEL_RESERVE));
+      assert(update_tally_map(chnAddrs.first, colateralh, ConvertTo64(amountTR), CONTRACTDEX_MARGIN));
+      assert(update_tally_map(chnAddrs.second, colateralh, ConvertTo64(amountTR), CONTRACTDEX_MARGIN));
   }
+
 
    /*********************************************/
    /**Logic for Node Reward**/

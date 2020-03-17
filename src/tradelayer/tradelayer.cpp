@@ -175,6 +175,7 @@ extern std::map<uint32_t, std::map<uint32_t, std::vector<uint64_t>>> mdextwap_ve
 extern std::map<uint32_t, std::map<std::string, double>> addrs_upnlc;
 extern std::map<std::string, int64_t> sum_upnls;
 extern std::map<uint32_t, int64_t> cachefees;
+extern std::map<uint32_t, int64_t> cachefees_oracles;
 extern std::map<uint32_t,std::map<int,oracledata>> oraclePrices;
 
 /** Pending withdrawals **/
@@ -1440,6 +1441,20 @@ int input_cachefees_string(const std::string& s)
    return 0;
 }
 
+int input_cachefees_oracles_string(const std::string& s)
+{
+   std::vector<std::string> vstr;
+   boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
+
+   uint32_t propertyId = boost::lexical_cast<uint32_t>(vstr[0]);
+
+   int64_t amount = boost::lexical_cast<int64_t>(vstr[1]);;
+
+   if (!cachefees_oracles.insert(std::make_pair(propertyId, amount)).second) return -1;
+
+   return 0;
+}
+
 int input_withdrawals_string(const std::string& s)
 {
     std::vector<std::string> vstr;
@@ -1609,6 +1624,10 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
         inputLineFunc = input_cachefees_string;
         break;
 
+    case FILETYPE_CACHEFEES_ORACLES:
+        inputLineFunc = input_cachefees_oracles_string;
+        break;
+
     case FILETYPE_WITHDRAWALS:
         inputLineFunc = input_withdrawals_string;
         break;
@@ -1705,6 +1724,7 @@ static char const * const statePrefix[NUM_FILETYPES] = {
     "offers",
     "mdexorders",
     "cachefees",
+    "cachefeesoracles",
     "withdrawals",
     "activechannels",
     "dexvolume",
@@ -2008,6 +2028,28 @@ static int write_mp_cachefees(std::ofstream& file, SHA256_CTX* shaCtx)
     return 0;
 }
 
+static int write_mp_cachefees_oracles(std::ofstream& file, SHA256_CTX* shaCtx)
+{
+    std::string lineOut;
+
+    for (std::map<uint32_t, int64_t>::iterator itt = cachefees_oracles.begin(); itt != cachefees_oracles.end(); ++itt)
+    {
+        // decompose the key for address
+        uint32_t propertyId = itt->first;
+        int64_t cache = itt->second;
+
+        lineOut.append(strprintf("%d,%d",propertyId, cache));
+    }
+
+    // add the line to the hash
+    SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
+
+    // write the line
+    file << lineOut << endl;
+
+    return 0;
+}
+
 /** Saving pending withdrawals **/
 static int write_mp_withdrawals(std::ofstream& file, SHA256_CTX* shaCtx)
 {
@@ -2174,6 +2216,10 @@ static int write_state_file( CBlockIndex const *pBlockIndex, int what )
         result = write_mp_cachefees(file, &shaCtx);
         break;
 
+    case FILETYPE_CACHEFEES_ORACLES:
+        result = write_mp_cachefees_oracles(file, &shaCtx);
+        break;
+
     case FILETYPE_WITHDRAWALS:
         result = write_mp_withdrawals(file, &shaCtx);
         break;
@@ -2286,6 +2332,7 @@ int mastercore_save_state( CBlockIndex const *pBlockIndex )
     write_state_file(pBlockIndex, FILETYPE_OFFERS);
     write_state_file(pBlockIndex, FILETYPE_MDEXORDERS);
     write_state_file(pBlockIndex, FILETYPE_CACHEFEES);
+    write_state_file(pBlockIndex, FILETYPE_CACHEFEES_ORACLES);
     write_state_file(pBlockIndex, FILETYPE_WITHDRAWALS);
     write_state_file(pBlockIndex, FILETYPE_ACTIVE_CHANNELS);
     write_state_file(pBlockIndex, FILETYPE_DEX_VOLUME);
@@ -5899,27 +5946,23 @@ bool mastercore::ContInst_Fees(const std::string& firstAddr,const std::string& s
         PrintToLog("%s: colateral: %d\n", __func__,colateral);
     }
 
-    if (type == ALL_PROPERTY_TYPE_NATIVE_CONTRACT)
+    if (type == ALL_PROPERTY_TYPE_ORACLE_CONTRACT)
     {
-        // 0.5% minus for firstAddr, 0.5% minus for secondAddr
-        fee = (ConvertTo256(amountToReserve) * ConvertTo256(5)) / ConvertTo256(1000);
+        // 1% basis point minus for firstAddr, 0.5% basis point minus for secondAddr
+        fee = ConvertTo256(amountToReserve) / (ConvertTo256(100) * ConvertTo256(BASISPOINT));
 
-    } else if (type == ALL_PROPERTY_TYPE_ORACLE_CONTRACT){
-        // 1.25% minus each
-        fee = (ConvertTo256(amountToReserve) * ConvertTo256(5)) / (ConvertTo256(4000) * ConvertTo256(COIN));
+    } else if (type == ALL_PROPERTY_TYPE_NATIVE_CONTRACT){
+        // 1.25% basis point minus each
+        fee = (ConvertTo256(amountToReserve) * ConvertTo256(5)) / (ConvertTo256(4000) * ConvertTo256(COIN) * ConvertTo256(BASISPOINT));
     }
 
-    PrintToLog("%s: checkpoin 1\n",__func__);
-
     int64_t uFee = ConvertTo64(fee);
-
 
     // checking if each address can pay the totalAmount + uFee:
 
     int64_t totalAmount = uFee + amountToReserve;
     int64_t firstRem = static_cast<int64_t>(t_tradelistdb->getRemaining(channelAddr, firstAddr, colateral));
 
-    PrintToLog("%s: checkpoin 2\n",__func__);
 
     if (firstRem < totalAmount)
     {
@@ -5929,7 +5972,6 @@ bool mastercore::ContInst_Fees(const std::string& firstAddr,const std::string& s
             return false;
     }
 
-    PrintToLog("%s: checkpoin 3\n",__func__);
 
     int64_t secondRem = static_cast<int64_t>(t_tradelistdb->getRemaining(channelAddr, secondAddr, colateral));
 
@@ -5942,13 +5984,14 @@ bool mastercore::ContInst_Fees(const std::string& firstAddr,const std::string& s
 
     if(msc_debug_contract_inst_fee) PrintToLog("%s: uFee: %d\n",__func__,uFee);
 
-    update_tally_map(channelAddr, colateral, -2*uFee, CHANNEL_RESERVE);
+    update_tally_map(channelAddr, colateral, -2 * uFee, CHANNEL_RESERVE);
 
-    PrintToLog("%s: checkpoin 5\n",__func__);
-    // % to feecache
-    cachefees[colateral] += 2*uFee;
+    // % to native feecache
+    cachefees[colateral] += uFee;
 
-    PrintToLog("%s: checkpoin 6\n",__func__);
+    // % to oracle feecache
+    cachefees_oracles[colateral] += uFee;
+
     return true;
 }
 
@@ -6005,8 +6048,6 @@ bool mastercore::Instant_x_Trade(const uint256& txid, uint8_t tradingAction, std
         else if (secondNeg != 0)
             assert(update_tally_map(secondAddr, property, -secondNeg, NEGATIVE_BALANCE));
     }
-
-  // fees here?
 
   std::string Status_s0 = "EmptyStr", Status_s1 = "EmptyStr", Status_s2 = "EmptyStr", Status_s3 = "EmptyStr";
   std::string Status_b0 = "EmptyStr", Status_b1 = "EmptyStr", Status_b2 = "EmptyStr", Status_b3 = "EmptyStr";
