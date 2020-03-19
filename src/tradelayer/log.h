@@ -91,6 +91,7 @@ extern bool msc_debug_wallettxs;
 extern bool msc_calling_settlement;
 extern bool msc_debug_vesting;
 extern bool msc_debug_oracle_twap;
+extern bool msc_debug_search_all;
 /* When we switch to C++11, this can be switched to variadic templates instead
  * of this macro-based construction (see tinyformat.h).
  */

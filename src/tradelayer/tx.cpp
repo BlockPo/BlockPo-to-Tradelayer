@@ -559,15 +559,15 @@ bool CMPTransaction::interpret_CreatePropertyManaged()
         std::vector<uint8_t> vecKyc = GetNextVarIntBytes(i);
         if (!vecKyc.empty())
         {
-            int num = DecompressInteger(vecKyc);
+            int64_t num = static_cast<int64_t>(DecompressInteger(vecKyc));
             kyc_Ids.push_back(num);
         }
 
     } while(i < pkt_size);
 
-    for (std::vector<int>::iterator itt = kyc_Ids.begin(); itt != kyc_Ids.end(); ++itt)
+    for (std::vector<int64_t>::iterator itt = kyc_Ids.begin(); itt != kyc_Ids.end(); ++itt)
     {
-        int num = *itt;
+        int64_t num = *itt;
         PrintToLog("%s(): number inside vector: %d\n",__func__, num);
     }
 
@@ -1002,15 +1002,15 @@ bool CMPTransaction::interpret_CreateContractDex()
       std::vector<uint8_t> vecKyc = GetNextVarIntBytes(i);
       if (!vecKyc.empty())
       {
-          int num = DecompressInteger(vecKyc);
+          int64_t num = static_cast<int64_t>(DecompressInteger(vecKyc));
           kyc_Ids.push_back(num);
       }
 
   } while(i < pkt_size);
 
-  for (std::vector<int>::iterator itt = kyc_Ids.begin(); itt != kyc_Ids.end(); ++itt)
+  for (std::vector<int64_t>::iterator itt = kyc_Ids.begin(); itt != kyc_Ids.end(); ++itt)
   {
-      int num = *itt;
+      int64_t num = *itt;
       PrintToLog("%s(): number inside vector: %d\n",__func__, num);
   }
 
@@ -2274,7 +2274,7 @@ int CMPTransaction::logicMath_SimpleSend()
 
     int kyc_id;
 
-    if(!t_tradelistdb->checkKYCRegister(sender,kyc_id)){
+    if(!t_tradelistdb->checkAttestationReg(sender,kyc_id)){
       PrintToLog("%s(): rejected: kyc ckeck failed\n", __func__);
       return (PKT_ERROR_KYC -10);
     }
@@ -2668,7 +2668,21 @@ int CMPTransaction::logicMath_CreatePropertyManaged()
     newSP.manual = true;
     newSP.creation_block = blockHash;
     newSP.update_block = newSP.creation_block;
-    newSP.kyc = kyc_Ids;
+
+
+    for(std::vector<int64_t>::iterator it = kyc_Ids.begin(); it != kyc_Ids.end(); ++it)
+    {
+        const int64_t aux = *it;
+        newSP.kyc.push_back(aux);
+    }
+
+
+    for(std::vector<int64_t>::iterator itt = newSP.kyc.begin(); itt != newSP.kyc.end(); ++itt)
+    {
+        const int64_t numb = *itt;
+        PrintToLog("%s(): kyc id inside newSP.kyc vector: %d\n",__func__, numb);
+    }
+
 
     uint32_t propertyId = _my_sps->putSP(newSP);
     assert(propertyId > 0);
@@ -3041,7 +3055,7 @@ int CMPTransaction::logicMath_MetaDExTrade()
 
   int kyc_id;
 
-  if(!t_tradelistdb->checkKYCRegister(sender,kyc_id)){
+  if(!t_tradelistdb->checkAttestationReg(sender,kyc_id)){
     PrintToLog("%s(): rejected: kyc ckeck failed\n", __func__);
     return (PKT_ERROR_KYC -10);
   }
@@ -3151,7 +3165,12 @@ int CMPTransaction::logicMath_CreateContractDex()
   newSP.attribute_type = attribute_type;
   newSP.expirated = false;
   newSP.inverse_quoted = inverse_quoted;
-  newSP.kyc = kyc_Ids;
+
+  for(std::vector<int64_t>::iterator it = kyc_Ids.begin(); it != kyc_Ids.end(); ++it)
+  {
+      const int64_t aux = *it;
+      newSP.kyc.push_back(aux);
+  }
 
   PrintToLog("%s(): init block inside create contract: %d\n", __func__, newSP.init_block);
 
@@ -3189,7 +3208,7 @@ int CMPTransaction::logicMath_ContractDexTrade()
 
   int kyc_id;
 
-  if(!t_tradelistdb->checkKYCRegister(sender,kyc_id)){
+  if(!t_tradelistdb->checkAttestationReg(sender,kyc_id)){
     PrintToLog("%s(): rejected: kyc ckeck failed\n", __func__);
     return (PKT_ERROR_KYC -10);
   }
@@ -4419,7 +4438,7 @@ int CMPTransaction::logicMath_Instant_Trade()
 
   int kyc_id;
 
-  if(!t_tradelistdb->checkKYCRegister(sender,kyc_id)){
+  if(!t_tradelistdb->checkAttestationReg(sender,kyc_id)){
     PrintToLog("%s(): rejected: kyc ckeck failed\n", __func__);
     return (PKT_ERROR_KYC -10);
   }
@@ -4696,7 +4715,7 @@ int CMPTransaction::logicMath_Contract_Instant()
 
   int kyc_id;
 
-  if(!t_tradelistdb->checkKYCRegister(sender,kyc_id)){
+  if(!t_tradelistdb->checkAttestationReg(sender,kyc_id)){
     PrintToLog("%s(): rejected: kyc ckeck failed\n", __func__);
     return (PKT_ERROR_KYC -10);
   }
@@ -4809,7 +4828,7 @@ int CMPTransaction::logicMath_New_Id_Registration()
   // ---------------------------------------
   if (msc_debug_new_id_registration) PrintToLog("%s(): channelAddres in register: %s \n",__func__,receiver);
 
-  t_tradelistdb->recordNewIdRegister(txid, sender, company_name, website, block, tx_idx, KYC_1);
+  t_tradelistdb->recordNewIdRegister(txid, sender, company_name, website, block, tx_idx);
 
   // std::string dummy = "1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P";
   // t_tradelistdb->updateIdRegister(txid,sender, dummy,block, tx_idx);
@@ -4888,7 +4907,9 @@ int CMPTransaction::logicMath_Attestation()
   if(!t_tradelistdb->checkKYCRegister(sender,kyc_id))
       kyc_id = KYC_0;
 
-  t_tradelistdb->recordNewIdRegister(txid, receiver, "", "", block, tx_idx, kyc_id);
+  PrintToLog("%s(): kyc_id: %d\n",__func__,kyc_id);
+
+  t_tradelistdb->recordNewAttestation(txid, receiver, block, tx_idx, kyc_id);
 
   return 0;
 

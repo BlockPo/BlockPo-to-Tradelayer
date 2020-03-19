@@ -2140,7 +2140,7 @@ UniValue tl_attestation(const JSONRPCRequest& request)
     std::string receiverAddress = ParseAddress(request.params[1]);
     (request.params.size() == 3) ? hash = ParseText(request.params[2]) : "";
 
-    PrintToLog("%s(): hash: %s\n",__func__,hash);
+    // PrintToLog("%s(): hash: %s\n",__func__,hash);
 
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_Attestation(hash);

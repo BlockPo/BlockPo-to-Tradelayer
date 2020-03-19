@@ -309,6 +309,7 @@ namespace mastercore
   int64_t getPairMarketPrice(std::string num, std::string den);
   int64_t getVWAPPriceByPair(std::string num, std::string den);
   int64_t getVWAPPriceContracts(std::string namec);
+  bool MetaDEx_Search_ALL(uint64_t& amount, uint32_t propertyOffered);
 
   bool MetaDEx_Fees(const CMPMetaDEx *pnew, const CMPMetaDEx *pold, int64_t nCouldBuy);
 
