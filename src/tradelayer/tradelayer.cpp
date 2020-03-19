@@ -2863,6 +2863,12 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   /** Vesting Tokens to Balance **/
   VestingTokens();
 
+  // uint64_t amount;
+  //
+  // /** Cache buying tokens  **/
+  // if(!mastercore::MetaDEx_Search_ALL(amount, 4))
+  //     PrintToLog("%s(): there's no ALLs in mDex orderbook\n",__func__);
+
   CMPTransaction mp_obj;
   mp_obj.unlockLogic();
 
@@ -3926,14 +3932,30 @@ void CMPTradeList::recordNewInstantTrade(const uint256& txid, const std::string&
   if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
 }
 
-void CMPTradeList::recordNewIdRegister(const uint256& txid, const std::string& address, const std::string& name, const std::string& website, int blockNum, int blockIndex, int kyc_type)
+void CMPTradeList::recordNewIdRegister(const uint256& txid, const std::string& address, const std::string& name, const std::string& website, int blockNum, int blockIndex)
 {
 
   if (!pdb) return;
+
   int nextId = t_tradelistdb->getNextId();
-  PrintToLog("%s: id_number = %d\n",__func__, nextId);
-  std::string strValue = strprintf("%s:%s:%s:%d:%d:%d:%d:%s:%s", address, name, website, blockNum, blockIndex, nextId, kyc_type, txid.ToString(), TYPE_NEW_ID_REGISTER);
-  PrintToLog("%s: strValue: %s\n", __func__, strValue);
+
+  PrintToLog("%s(): id_number = %d\n",__func__, nextId);
+  std::string strValue = strprintf("%s:%s:%s:%d:%d:%d:%s:%s", address, name, website, blockNum, blockIndex, nextId, txid.ToString(), TYPE_NEW_ID_REGISTER);
+  PrintToLog("%s(): strValue: %s\n", __func__, strValue);
+  const string key = to_string(blockNum) + "+" + txid.ToString(); // order by blockNum
+  Status status = pdb->Put(writeoptions, key, strValue);
+
+  ++nWritten;
+  PrintToLog("%s: %s\n", __FUNCTION__, status.ToString());
+}
+
+
+void CMPTradeList::recordNewAttestation(const uint256& txid, const std::string& address, int blockNum, int blockIndex, int kyc_id)
+{
+
+  if (!pdb) return;
+  std::string strValue = strprintf("%s:%d:%d:%d:%s:%s", address, blockNum, blockIndex, kyc_id, txid.ToString(), TYPE_ATTESTATION);
+  PrintToLog("%s(): strValue: %s\n", __func__, strValue);
   const string key = to_string(blockNum) + "+" + txid.ToString(); // order by blockNum
   Status status = pdb->Put(writeoptions, key, strValue);
 
@@ -4012,71 +4034,71 @@ bool CMPTradeList::updateIdRegister(const uint256& txid, const std::string& addr
     return status;
 }
 
-bool CMPTradeList::checkRegister(const std::string& address, int registered)
-{
-    bool status = false;
-    std::string strKey, newKey, newValue;
-
-    std::vector<std::string> vstr;
-
-    if (!pdb) return status;
-
-
-    leveldb::Iterator* it = NewIterator(); // Allocation proccess
-
-    for(it->SeekToLast(); it->Valid(); it->Prev())
-    {
-        // search key to see if this is a matching trade
-        strKey = it->key().ToString();
-        // PrintToLog("key of this match: %s ****************************\n",strKey);
-        std::string strValue = it->value().ToString();
-
-        // ensure correct amount of tokens in value string
-        boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
-        if (vstr.size() != 12)
-        {
-            // PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
-            // PrintToConsole("TRADEDB error - unexpected number of tokens in value %d \n",vstr.size());
-            continue;
-        }
-
-        std::string type = vstr[11];
-
-        PrintToLog("%s: type: %s\n",__func__,type);
-
-        if( type != TYPE_NEW_ID_REGISTER)
-          continue;
-
-
-        PrintToLog("%s: strKey: %s\n", __func__, strKey);
-
-        std::string regAddr = vstr[0];
-
-        PrintToLog("%s: regAddr: %s\n", __func__, regAddr);
-
-        if(address != regAddr) continue;
-
-        if (registered < 3 || 6 < registered)
-        {
-            PrintToLog("%s: Register out of range\n",__func__);
-            return false;
-        }
-
-        std::string output = vstr[registered];
-
-        PrintToLog("%s: output == %s\n",__func__, output);
-
-        if (output == "1") status = true;
-
-        break;
-
-    }
-
-    // clean up
-    delete it;
-
-    return status;
-}
+// bool CMPTradeList::checkRegister(const std::string& address, int registered)
+// {
+//     bool status = false;
+//     std::string strKey, newKey, newValue;
+//
+//     std::vector<std::string> vstr;
+//
+//     if (!pdb) return status;
+//
+//
+//     leveldb::Iterator* it = NewIterator(); // Allocation proccess
+//
+//     for(it->SeekToLast(); it->Valid(); it->Prev())
+//     {
+//         // search key to see if this is a matching trade
+//         strKey = it->key().ToString();
+//         // PrintToLog("key of this match: %s ****************************\n",strKey);
+//         std::string strValue = it->value().ToString();
+//
+//         // ensure correct amount of tokens in value string
+//         boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
+//         if (vstr.size() != 12)
+//         {
+//             // PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
+//             // PrintToConsole("TRADEDB error - unexpected number of tokens in value %d \n",vstr.size());
+//             continue;
+//         }
+//
+//         std::string type = vstr[11];
+//
+//         PrintToLog("%s: type: %s\n",__func__,type);
+//
+//         if( type != TYPE_NEW_ID_REGISTER)
+//           continue;
+//
+//
+//         PrintToLog("%s: strKey: %s\n", __func__, strKey);
+//
+//         std::string regAddr = vstr[0];
+//
+//         PrintToLog("%s: regAddr: %s\n", __func__, regAddr);
+//
+//         if(address != regAddr) continue;
+//
+//         if (registered < 3 || 6 < registered)
+//         {
+//             PrintToLog("%s: Register out of range\n",__func__);
+//             return false;
+//         }
+//
+//         std::string output = vstr[registered];
+//
+//         PrintToLog("%s: output == %s\n",__func__, output);
+//
+//         if (output == "1") status = true;
+//
+//         break;
+//
+//     }
+//
+//     // clean up
+//     delete it;
+//
+//     return status;
+// }
 
 bool CMPTradeList::checkKYCRegister(const std::string& address, int& kyc_id)
 {
@@ -4099,28 +4121,91 @@ bool CMPTradeList::checkKYCRegister(const std::string& address, int& kyc_id)
 
         // ensure correct amount of tokens in value string
         boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
-        if (vstr.size() != 9)
+        if (vstr.size() != 8)
         {
             // PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
             // PrintToConsole("TRADEDB error - unexpected number of tokens in value %d \n",vstr.size());
             continue;
         }
 
-        std::string type = vstr[8];
+        std::string type = vstr[7];
 
-        if( type != TYPE_NEW_ID_REGISTER)
-          continue;
+        PrintToLog("%s: type: %s\n", __func__, type);
+
+        if(type != TYPE_NEW_ID_REGISTER)
+            continue;
 
         std::string regAddr = vstr[0];
+
+        PrintToLog("%s: regAddr: %s, address: %s\n", __func__,regAddr,address);
+
 
         if(address != regAddr) continue;
 
         status = true;
 
-        PrintToLog("%s: Address Found! %s\n", __func__);
+        PrintToLog("%s: Address Found! %s\n", __func__,address);
 
         // returning the kyc_id
-        kyc_id = boost::lexical_cast<int>(vstr[6]);
+        kyc_id = boost::lexical_cast<int>(vstr[5]);
+
+        PrintToLog("%s: kyc_id %s\n", __func__,kyc_id);
+
+        break;
+
+    }
+
+    // clean up
+    delete it;
+
+    return status;
+}
+
+bool CMPTradeList::checkAttestationReg(const std::string& address, int& kyc_id)
+{
+    bool status = false;
+    std::string strKey, newKey, newValue;
+
+    std::vector<std::string> vstr;
+
+    if (!pdb) return status;
+
+
+    leveldb::Iterator* it = NewIterator(); // Allocation proccess
+
+    for(it->SeekToLast(); it->Valid(); it->Prev())
+    {
+        // search key to see if this is a matching trade
+        strKey = it->key().ToString();
+        // PrintToLog("key of this match: %s ****************************\n",strKey);
+        std::string strValue = it->value().ToString();
+
+        // ensure correct amount of tokens in value string
+        boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
+
+        if (vstr.size() != 6)
+            continue;
+
+        std::string type = vstr[5];
+
+        PrintToLog("%s: type: %s\n", __func__, type);
+
+        if(type != TYPE_ATTESTATION)
+            continue;
+
+        std::string regAddr = vstr[0];
+
+        PrintToLog("%s: regAddr: %s, address: %s\n", __func__,regAddr,address);
+
+
+        if(address != regAddr) continue;
+
+        status = true;
+
+        PrintToLog("%s: Address Found! %s\n", __func__,address);
+
+        // returning the kyc_id
+        kyc_id = boost::lexical_cast<int>(vstr[3]);
 
         PrintToLog("%s: kyc_id %s\n", __func__,kyc_id);
 
@@ -4155,14 +4240,14 @@ bool CMPTradeList::kycLoop(UniValue& response)
 
         // ensure correct amount of tokens in value string
         boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
-        if (vstr.size() != 9)
+        if (vstr.size() != 8)
         {
             // PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
             // PrintToConsole("TRADEDB error - unexpected number of tokens in value %d \n",vstr.size());
             continue;
         }
 
-        std::string type = vstr[8];
+        std::string type = vstr[7];
 
         if( type != TYPE_NEW_ID_REGISTER)
           continue;
@@ -4173,11 +4258,10 @@ bool CMPTradeList::kycLoop(UniValue& response)
         std::string name = vstr[1];
         std::string website = vstr[2];
         int blockNum = boost::lexical_cast<int>(vstr[3]);
-        int nextId = boost::lexical_cast<int>(vstr[4]);
-        int kyc_type = boost::lexical_cast<int>(vstr[6]);
+        // int nextId = boost::lexical_cast<int>(vstr[4]);
 
         // returning the kyc_id
-        int kyc_id = boost::lexical_cast<int>(vstr[6]);
+        int kyc_id = boost::lexical_cast<int>(vstr[5]);
 
 
         // PrintToLog("%s: kyc_id %s\n", __func__,kyc_id);
@@ -4188,7 +4272,6 @@ bool CMPTradeList::kycLoop(UniValue& response)
         propertyObj.push_back(Pair("website", website));
         propertyObj.push_back(Pair("block", (uint64_t) blockNum));
         propertyObj.push_back(Pair("kyc id", (uint64_t) kyc_id));
-        propertyObj.push_back(Pair("kyc type", (uint64_t) kyc_type));
 
         response.push_back(propertyObj);
         status = true;
@@ -4200,16 +4283,22 @@ bool CMPTradeList::kycLoop(UniValue& response)
     return status;
 }
 
-bool CMPTradeList::kycPropertyMatch(int kyc_id, uint32_t propertyId)
+bool CMPTradeList::kycPropertyMatch(uint32_t propertyId, int kyc_id)
 {
     CMPSPInfo::Entry sp;
-    if (false == _my_sps->getSP(propertyId, sp)) {
+    if (!_my_sps->getSP(propertyId, sp)) {
        return false; // property ID does not exist
     }
 
     // looking for the kyc id in sp register
-    for(std::vector<int>::iterator it = (sp.kyc).begin(); it != (sp.kyc).end(); ++it)
+    std::vector<int64_t> vecKyc = sp.kyc;
+
+    if (sp.kyc.empty())
+        PrintToLog("%s(): EMPTY VECTOR\n",__func__);
+
+    for(std::vector<int64_t>::iterator it = vecKyc.begin(); it != vecKyc.end(); ++it)
     {
+        PrintToLog("%s(): number inside array: %d\n",__func__,(*it));
         if (kyc_id == *it) return true;
     }
 
@@ -5860,12 +5949,12 @@ int CMPTradeList::getNextId()
 
         // ensure correct amount of tokens in value string
         boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
-        if (vstr.size() != 9) {
+        if (vstr.size() != 8) {
             PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
             continue;
         }
 
-        std::string type = vstr[8];
+        std::string type = vstr[7];
 
         PrintToLog("%s: type: %s\n",__func__,type);
 

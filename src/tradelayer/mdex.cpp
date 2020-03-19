@@ -2458,3 +2458,47 @@ uint64_t mastercore::edgeOrderbook(uint32_t contractId, uint8_t tradingAction)
 
     return static_cast<uint64_t>(result);
 }
+
+bool mastercore::MetaDEx_Search_ALL(uint64_t& amount, uint32_t propertyOffered)
+{
+    bool bValid = false;
+
+    for (md_PropertiesMap::iterator my_it = metadex.begin(); my_it != metadex.end(); ++my_it)
+    {
+        unsigned int prop = my_it->first;
+
+        // if (msc_debug_contract_cancel_every) PrintToLog(" ## property: %u\n", prop);
+        md_PricesMap &prices = my_it->second;
+
+        for (md_PricesMap::iterator it = prices.begin(); it != prices.end(); ++it)
+        {
+            const rational_t price = it->first;
+            md_Set &indexes = it->second;
+
+            if (msc_debug_search_all) PrintToLog("  # Price Level: %s\n", xToString(price));
+
+            for (md_Set::iterator it = indexes.begin(); it != indexes.end();)
+            {
+	              if (msc_debug_search_all) PrintToLog("%s= %s\n", xToString(price), it->ToString());
+
+	              if (it->getProperty() != ALL && it->getDesProperty() != propertyOffered)
+                {
+	                  ++it;
+	                  continue;
+	              }
+
+	              if (msc_debug_search_all) PrintToLog("%s(): ALLS FOUND! %s\n", __func__, it->ToString());
+
+                if (msc_debug_search_all) PrintToLog("%s(): amount of ALL: %d, desproperty: %d\n", __func__, it->getAmountForSale(), it->getDesProperty());
+
+                // uint64_t available = it->getAmountForSale();
+
+                // x_Trade(pnew);
+
+	              bValid = true;
+            }
+        }
+    }
+
+    return bValid;
+}

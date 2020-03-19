@@ -123,7 +123,7 @@ public:
         std::map<uint256, std::vector<int64_t> > historicalData;
 
         //kyc
-        std::vector<int> kyc; //kyc vector
+        std::vector<int64_t> kyc; //kyc vector
 
         Entry();
 

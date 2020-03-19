@@ -219,6 +219,7 @@ enum FILETYPES {
 #define TYPE_CONTRACT_INSTANT_TRADE     "contract_instat_trade"
 #define TYPE_CREATE_CHANNEL             "create channel"
 #define TYPE_NEW_ID_REGISTER            "new id register"
+#define TYPE_ATTESTATION                "attestation"
 
 // Currency in existance (options for createcontract)
 uint32_t const TL_dUSD  = 1;
@@ -238,9 +239,8 @@ const rational_t factor2 = rational_t(20,100); // normal limits
 // define 1 year in blocks:
 #define ONE_YEAR 210240
 
-// define KYC types
+// define KYC id = 0 for self attestations
 #define KYC_0      0
-#define KYC_1      1
 
 
 // forward declarations
@@ -392,7 +392,8 @@ class CMPTradeList : public CDBBase
   void recordNewInstantTrade(const uint256& txid, const std::string& sender, const std::string& receiver, uint32_t propertyIdForSale, uint64_t amount_forsale, uint32_t propertyIdDesired, uint64_t amount_desired, int blockNum, int blockIndex);
   void recordNewTransfer(const uint256& txid, const std::string& sender, const std::string& receiver, uint32_t propertyId, uint64_t amount, int blockNum, int blockIndex);
   void recordNewInstContTrade(const uint256& txid, const std::string& firstAddr, const std::string& secondAddr, uint32_t property, uint64_t amount_forsale, uint64_t price ,int blockNum, int blockIndex);
-  void recordNewIdRegister(const uint256& txid, const std::string& address, const std::string& name, const std::string& website, int blockNum, int blockIndex, int kyc_type);
+  void recordNewIdRegister(const uint256& txid, const std::string& address, const std::string& name, const std::string& website, int blockNum, int blockIndex);
+  void recordNewAttestation(const uint256& txid, const std::string& address, int blockNum, int blockIndex, int kyc_id);
   bool getAllCommits(const std::string& senderAddress, UniValue& tradeArray);
   bool getAllWithdrawals(const std::string& senderAddress, UniValue& tradeArray);
   bool getChannelInfo(const std::string& channelAddress, UniValue& tradeArray);
@@ -404,7 +405,8 @@ class CMPTradeList : public CDBBase
   //KYC
   bool updateIdRegister(const uint256& txid, const std::string& address, const std::string& newAddr, int blockNum, int blockIndex);
   bool checkKYCRegister(const std::string& address, int& kyc_id);
-  bool kycPropertyMatch(int kyc_id, uint32_t propertyId);
+  bool checkAttestationReg(const std::string& address, int& kyc_id);
+  bool kycPropertyMatch(uint32_t propertyId, int kyc_id);
   bool kycLoop(UniValue& response);
 
   int deleteAboveBlock(int blockNum);
