@@ -2461,26 +2461,25 @@ uint64_t mastercore::edgeOrderbook(uint32_t contractId, uint8_t tradingAction)
 
 bool mastercore::MetaDEx_Search_ALL(uint64_t& amount, uint32_t propertyOffered)
 {
-    bool bValid = false;
+    bool bBuyerSatisfied = false;
 
     for (md_PropertiesMap::iterator my_it = metadex.begin(); my_it != metadex.end(); ++my_it)
     {
-        unsigned int prop = my_it->first;
 
         // if (msc_debug_contract_cancel_every) PrintToLog(" ## property: %u\n", prop);
         md_PricesMap &prices = my_it->second;
 
-        for (md_PricesMap::iterator it = prices.begin(); it != prices.end(); ++it)
+        for (md_PricesMap::iterator itt = prices.begin(); itt != prices.end(); ++itt)
         {
-            const rational_t price = it->first;
-            md_Set &indexes = it->second;
+            const rational_t price = itt->first;
+            md_Set &indexes = itt->second;
 
-            if (msc_debug_search_all) PrintToLog("  # Price Level: %s\n", xToString(price));
+            // if (msc_debug_search_all) PrintToLog("  # Price Level: %s\n", xToString(price));
 
             for (md_Set::iterator it = indexes.begin(); it != indexes.end();)
             {
-	              if (msc_debug_search_all) PrintToLog("%s= %s\n", xToString(price), it->ToString());
 
+                // for testing ALL is 4
 	              if (it->getProperty() != ALL && it->getDesProperty() != propertyOffered)
                 {
 	                  ++it;
@@ -2489,16 +2488,66 @@ bool mastercore::MetaDEx_Search_ALL(uint64_t& amount, uint32_t propertyOffered)
 
 	              if (msc_debug_search_all) PrintToLog("%s(): ALLS FOUND! %s\n", __func__, it->ToString());
 
-                if (msc_debug_search_all) PrintToLog("%s(): amount of ALL: %d, desproperty: %d\n", __func__, it->getAmountForSale(), it->getDesProperty());
+                if (msc_debug_search_all) PrintToLog("%s(): amount of ALL: %d, desproperty: %d; amount of desproperty: %d\n", __func__, it->getAmountForSale(), it->getDesProperty(), it->getAmountDesired());
 
-                // uint64_t available = it->getAmountForSale();
 
-                // x_Trade(pnew);
+                arith_uint256 iCouldBuy = (ConvertTo256(amount) * ConvertTo256(it->getAmountForSale())) / ConvertTo256(it->getAmountDesired());
 
-	              bValid = true;
+                int64_t nCouldBuy = 0;
+
+                if (iCouldBuy < ConvertTo256(it->getAmountRemaining())) {
+                  nCouldBuy = ConvertTo64(iCouldBuy);
+                  PrintToLog("%s(): nCouldBuy < it->getAmountRemaining()\n", __func__);
+                } else {
+                  nCouldBuy = it->getAmountRemaining();
+                }
+
+                if (msc_debug_search_all) PrintToLog("%s(): nCouldBuy: %d\n", __func__, nCouldBuy);
+
+                if (nCouldBuy == 0)
+                {
+                    PrintToLog("-- buyer has not enough tokens for sale to purchase one unit!\n");
+                    ++it;
+                    continue;
+                }
+
+                // taking ALLs from seller
+                assert(update_tally_map(it->getAddr(), it->getProperty(), -nCouldBuy, METADEX_RESERVE));
+
+                // discounting the amount
+                amount -= static_cast<uint64_t>(nCouldBuy);
+
+                const int64_t seller_amountLeft = it->getAmountForSale() - nCouldBuy;
+
+                CMPMetaDEx seller_replacement = *it;
+                seller_replacement.setAmountRemaining(seller_amountLeft, "seller_replacement");
+
+                // erase the old seller element
+                indexes.erase(it++);
+
+                // insert the updated one in place of the old
+                if (0 < seller_replacement.getAmountRemaining())
+                {
+                    PrintToLog("++ inserting seller_replacement: %s\n", seller_replacement.ToString());
+                    indexes.insert(seller_replacement);
+                }
+
             }
+
+            if (0 == amount)
+            {
+                bBuyerSatisfied = true;
+                break;
+            }
+
+        }
+
+        if (0 == amount)
+        {
+            bBuyerSatisfied = true;
+            break;
         }
     }
 
-    return bValid;
+    return bBuyerSatisfied;
 }

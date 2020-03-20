@@ -2863,11 +2863,20 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   /** Vesting Tokens to Balance **/
   VestingTokens();
 
-  // uint64_t amount;
-  //
+  // uint64_t amount = 300000000000; //3000
+
   // /** Cache buying tokens  **/
-  // if(!mastercore::MetaDEx_Search_ALL(amount, 4))
+  // if(!mastercore::MetaDEx_Search_ALL(amount, 5))
   //     PrintToLog("%s(): there's no ALLs in mDex orderbook\n",__func__);
+
+  /**
+      1) search caché in order to see the properties ids and the amounts.
+      2) search for each prop id, exchange for ALLs with available orders in orderbook
+      3) check the ALLs in cache.
+
+  **/
+  mastercore::feeCacheBuy();
+
 
   CMPTransaction mp_obj;
   mp_obj.unlockLogic();
@@ -6321,6 +6330,31 @@ bool mastercore::SanityChecks(string receiver, int aBlock)
      }
 
      return true;
+
+}
+
+bool mastercore::feeCacheBuy()
+{
+    bool result = false;
+    
+    for(std::map<uint32_t, int64_t>::iterator it = cachefees_oracles.begin(); it != cachefees_oracles.end(); ++it)
+    {
+        uint32_t propertyId = it->first;
+
+        if (propertyId == ALL)
+            continue;
+
+        uint64_t amount = static_cast<uint64_t>(it->second);
+
+        if(mastercore::MetaDEx_Search_ALL(amount, propertyId))
+            it->second = amount;
+        else
+            cachefees_oracles.erase(it);
+
+
+    }
+
+    return result;
 
 }
 
