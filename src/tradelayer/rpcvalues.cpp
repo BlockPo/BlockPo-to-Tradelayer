@@ -367,3 +367,23 @@ uint8_t ParseBinary(const UniValue& value)
     }
     return static_cast<uint8_t>(action);
 }
+
+std::vector<int> ParseArray(const UniValue& value)
+{
+    UniValue kycOptions(UniValue::VARR);
+    if (value.isNull())
+        throw JSONRPCError(RPC_TYPE_ERROR, "array is empty");
+
+    kycOptions = value.get_array();
+
+    std::vector<int> numbers;
+
+    for (unsigned int idx = 0; idx < kycOptions.size(); idx++)
+    {
+            const UniValue& num = kycOptions[idx];
+            numbers.push_back(num.get_int());
+            PrintToLog("%s(): num : %d \n",__func__, num.get_int());
+    }
+
+    return numbers;
+}

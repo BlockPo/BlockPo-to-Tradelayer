@@ -206,19 +206,7 @@ UniValue tl_createpayload_issuancemanaged(const JSONRPCRequest& request)
     std::string name = ParseText(request.params[2]);
     std::string url = ParseText(request.params[3]);
     std::string data = ParseText(request.params[4]);
-
-    UniValue kycOptions(UniValue::VARR);
-    if (!request.params[5].isNull())
-        kycOptions = request.params[5].get_array();
-
-    std::vector<int> numbers;
-
-    for (unsigned int idx = 0; idx < kycOptions.size(); idx++)
-    {
-            const UniValue& num = kycOptions[idx];
-            numbers.push_back(num.get_int());
-            PrintToLog("%s(): num : %d \n",__func__, num.get_int());
-    }
+    std::vector<int> numbers = ParseArray(request.params[5]);
 
     std::vector<unsigned char> payload = CreatePayload_IssuanceManaged(type, previousId, name, url, data, numbers);
 
@@ -492,19 +480,7 @@ UniValue tl_createpayload_createcontract(const JSONRPCRequest& request)
   uint32_t collateral_currency = ParseNewValues(request.params[5]);
   uint32_t margin_requirement = ParseAmount(request.params[6], true);
   uint8_t inverse = ParseBinary(request.params[7]);
-
-  UniValue kycOptions(UniValue::VARR);
-  if (!request.params[8].isNull())
-      kycOptions = request.params[8].get_array();
-
-  std::vector<int> numbers;
-
-  for (unsigned int idx = 0; idx < kycOptions.size(); idx++)
-  {
-          const UniValue& num = kycOptions[idx];
-          numbers.push_back(num.get_int());
-          PrintToLog("%s(): num : %d \n",__func__, num.get_int());
-  }
+  std::vector<int> numbers = ParseArray(request.params[8]);
 
   std::vector<unsigned char> payload = CreatePayload_CreateContract(num, den, name, blocks_until_expiration, notional_size, collateral_currency, margin_requirement, inverse, numbers);
 
@@ -1093,19 +1069,7 @@ UniValue tl_createpayload_create_oraclecontract(const JSONRPCRequest& request)
       uint32_t margin_requirement = ParseAmount32t(request.params[4]);
       std::string oracleAddress = ParseAddress(request.params[5]);
       uint8_t inverse = ParseBinary(request.params[6]);
-
-      UniValue kycOptions(UniValue::VARR);
-      if (!request.params[7].isNull())
-          kycOptions = request.params[7].get_array();
-
-      std::vector<int> numbers;
-
-      for (unsigned int idx = 0; idx < kycOptions.size(); idx++)
-      {
-              const UniValue& num = kycOptions[idx];
-              numbers.push_back(num.get_int());
-              PrintToLog("%s(): num : %d \n",__func__, num.get_int());
-      }
+      std::vector<int> numbers = ParseArray(request.params[7]);
 
       std::vector<unsigned char> payload = CreatePayload_CreateOracleContract(name, blocks_until_expiration, notional_size, collateral_currency, margin_requirement, inverse, numbers);
 
