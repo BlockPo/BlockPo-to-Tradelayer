@@ -394,19 +394,7 @@ UniValue tl_sendissuancemanaged(const JSONRPCRequest& request)
     std::string name = ParseText(request.params[3]);
     std::string url = ParseText(request.params[4]);
     std::string data = ParseText(request.params[5]);
-
-    UniValue kycOptions(UniValue::VARR);
-    if (!request.params[6].isNull())
-        kycOptions = request.params[6].get_array();
-
-    std::vector<int> numbers;
-
-    for (unsigned int idx = 0; idx < kycOptions.size(); idx++)
-    {
-            const UniValue& num = kycOptions[idx];
-            numbers.push_back(num.get_int());
-            PrintToLog("%s(): num : %d \n",__func__, num.get_int());
-    }
+    std::vector<int> numbers = ParseArray(request.params[6]);
 
     // perform checks
     RequirePropertyName(name);
@@ -880,19 +868,7 @@ UniValue tl_createcontract(const JSONRPCRequest& request)
   uint32_t collateral_currency = request.params[6].get_int();
   uint32_t margin_requirement = ParseAmount32t(request.params[7]);
   uint8_t inverse = ParseBinary(request.params[8]);
-
-    UniValue kycOptions(UniValue::VARR);
-  if (!request.params[9].isNull())
-      kycOptions = request.params[9].get_array();
-
-  std::vector<int> numbers;
-
-  for (unsigned int idx = 0; idx < kycOptions.size(); idx++)
-  {
-          const UniValue& num = kycOptions[idx];
-          numbers.push_back(num.get_int());
-          PrintToLog("%s(): num : %d \n",__func__, num.get_int());
-  }
+  std::vector<int> numbers = ParseArray(request.params[9]);
 
   PrintToLog("\nRPC tl_createcontract: notional_size = %s\t margin_requirement = %s\t blocks_until_expiration = %d\t collateral_currency=%d\t num = %d, den = %d\n", FormatDivisibleMP(notional_size), FormatDivisibleMP(margin_requirement), blocks_until_expiration, collateral_currency, num, den);
 
@@ -963,20 +939,7 @@ UniValue tl_create_oraclecontract(const JSONRPCRequest& request)
   uint32_t margin_requirement = ParseAmount32t(request.params[5]);
   std::string oracleAddress = ParseAddress(request.params[6]);
   uint8_t inverse = ParseBinary(request.params[7]);
-
-  UniValue kycOptions(UniValue::VARR);
-  if (!request.params[8].isNull())
-      kycOptions = request.params[8].get_array();
-
-  std::vector<int> numbers;
-
-  for (unsigned int idx = 0; idx < kycOptions.size(); idx++)
-  {
-          const UniValue& num = kycOptions[idx];
-          numbers.push_back(num.get_int());
-          PrintToLog("%s(): num : %d \n",__func__, num.get_int());
-  }
-
+  std::vector<int> numbers = ParseArray(request.params[8]);
 
   RequirePropertyName(name);
   RequireSaneName(name);
