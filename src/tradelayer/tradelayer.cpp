@@ -102,10 +102,10 @@ using std::string;
 using std::vector;
 
 using namespace mastercore;
-typedef boost::multiprecision::uint128_t ui128;
 typedef boost::multiprecision::cpp_dec_float_100 dec_float;
 
 CCriticalSection cs_tally;
+typedef boost::multiprecision::uint128_t ui128;
 
 static int nWaterlineBlock = 0;
 
@@ -191,6 +191,8 @@ extern std::map<int, std::map<uint32_t,int64_t>> MapPropVolume;
 extern std::map<int, std::map<std::pair<uint32_t, uint32_t>, int64_t>> MapMetaVolume;
 
 using mastercore::StrToInt64;
+
+uint64_t amount = 50000000000; //500
 
 // indicate whether persistence is enabled at this point, or not
 // used to write/read files, for breakout mode, debugging, etc.
@@ -2874,11 +2876,14 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   /** Vesting Tokens to Balance **/
   VestingTokens();
 
-  // uint64_t amount;
-  //
-  // /** Cache buying tokens  **/
-  // if(!mastercore::MetaDEx_Search_ALL(amount, 4))
-  //     PrintToLog("%s(): there's no ALLs in mDex orderbook\n",__func__);
+
+  /** feeCacheBuy:
+      1) search caché in order to see the properties ids and the amounts.
+      2) search for each prop id, exchange for ALLs with available orders in orderbook
+      3) check the ALLs in cache.
+
+  **/
+  mastercore::feeCacheBuy();
 
   CMPTransaction mp_obj;
   mp_obj.unlockLogic();
@@ -6332,6 +6337,46 @@ bool mastercore::SanityChecks(string receiver, int aBlock)
      }
 
      return true;
+
+}
+
+bool mastercore::feeCacheBuy()
+{
+    bool result = false;
+
+    if(cachefees_oracles.empty())
+    {
+        PrintToLog("%s(): cachefees_oracles is empty\n",__func__);
+        return result;
+    }
+
+
+    for(auto it = cachefees_oracles.begin(); it != cachefees_oracles.end(); ++it)
+    {
+        uint32_t propertyId = it->first;
+
+        if (propertyId == ALL)
+            continue;
+
+        uint64_t amount = static_cast<uint64_t>(it->second);
+
+        PrintToLog("%s(): amount before trading (in cache): %d\n",__func__, amount);
+
+
+        if(mastercore::MetaDEx_Search_ALL(amount, propertyId))
+        {
+            it->second = amount;
+            PrintToLog("%s(): amount after trading (in cache): %d\n",__func__, amount);
+            result = true;
+
+        } else {
+            PrintToLog("%s(): mDEx without ALL offers\n",__func__);
+
+        }
+
+    }
+
+    return result;
 
 }
 

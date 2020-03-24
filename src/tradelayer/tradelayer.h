@@ -564,6 +564,9 @@ namespace mastercore
   // check for vesting
   bool SanityChecks(string receiver, int aBlock);
 
+  // fee cache buying Alls in mDEx
+  bool feeCacheBuy();
+
 }
 
 #endif // TRADELAYER_TL_H

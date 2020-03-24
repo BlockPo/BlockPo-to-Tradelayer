@@ -59,6 +59,7 @@ extern std::map<uint32_t, std::vector<int64_t>> mapContractVolume;
 extern std::map<int, std::map<std::pair<uint32_t, uint32_t>, int64_t>> MapMetaVolume;
 extern std::map<uint32_t, int64_t> VWAPMapContracts;
 extern std::map<uint32_t, int64_t> cachefees;
+extern std::map<uint32_t, int64_t> cachefees_oracles;
 extern int n_cols;
 extern int n_rows;
 extern MatrixTLS *pt_ndatabase;
@@ -2461,27 +2462,22 @@ uint64_t mastercore::edgeOrderbook(uint32_t contractId, uint8_t tradingAction)
 
 bool mastercore::MetaDEx_Search_ALL(uint64_t& amount, uint32_t propertyOffered)
 {
-    bool bValid = false;
+    bool bBuyerSatisfied = false;
 
     for (md_PropertiesMap::iterator my_it = metadex.begin(); my_it != metadex.end(); ++my_it)
     {
-        unsigned int prop = my_it->first;
 
-        // if (msc_debug_contract_cancel_every) PrintToLog(" ## property: %u\n", prop);
         md_PricesMap &prices = my_it->second;
 
-        for (md_PricesMap::iterator it = prices.begin(); it != prices.end(); ++it)
+        for (md_PricesMap::iterator itt = prices.begin(); itt != prices.end(); ++itt)
         {
-            const rational_t price = it->first;
-            md_Set &indexes = it->second;
-
-            if (msc_debug_search_all) PrintToLog("  # Price Level: %s\n", xToString(price));
+            const rational_t price = itt->first;
+            md_Set &indexes = itt->second;
 
             for (md_Set::iterator it = indexes.begin(); it != indexes.end();)
             {
-	              if (msc_debug_search_all) PrintToLog("%s= %s\n", xToString(price), it->ToString());
 
-	              if (it->getProperty() != ALL && it->getDesProperty() != propertyOffered)
+	              if (it->getProperty() != ALL || it->getDesProperty() != propertyOffered)
                 {
 	                  ++it;
 	                  continue;
@@ -2489,16 +2485,84 @@ bool mastercore::MetaDEx_Search_ALL(uint64_t& amount, uint32_t propertyOffered)
 
 	              if (msc_debug_search_all) PrintToLog("%s(): ALLS FOUND! %s\n", __func__, it->ToString());
 
-                if (msc_debug_search_all) PrintToLog("%s(): amount of ALL: %d, desproperty: %d\n", __func__, it->getAmountForSale(), it->getDesProperty());
+                if (msc_debug_search_all) PrintToLog("%s(): amount of ALL: %d, desproperty: %d; amount of desproperty: %d\n", __func__, it->getAmountForSale(), it->getDesProperty(), it->getAmountDesired());
 
-                // uint64_t available = it->getAmountForSale();
+                // amount of All to buy
+                arith_uint256 iCouldBuy = (ConvertTo256(amount) * ConvertTo256(it->getAmountForSale())) / ConvertTo256(it->getAmountDesired());
 
-                // x_Trade(pnew);
+                int64_t nCouldBuy = 0;
 
-	              bValid = true;
+                if (iCouldBuy < ConvertTo256(it->getAmountRemaining())) {
+                  nCouldBuy = ConvertTo64(iCouldBuy);
+                  PrintToLog("%s(): nCouldBuy < it->getAmountRemaining()\n", __func__);
+                } else {
+                  nCouldBuy = it->getAmountRemaining();
+                }
+
+                // amount of tokens to pay
+                arith_uint256 iWouldPay = DivideAndRoundUp((ConvertTo256(nCouldBuy) * ConvertTo256(it->getAmountDesired())), ConvertTo256(it->getAmountForSale()));
+                int64_t nWouldPay = ConvertTo64(iWouldPay);
+
+                if (msc_debug_search_all) PrintToLog("%s(): nWouldPay: %d\n", __func__, nWouldPay);
+
+                if (msc_debug_search_all) PrintToLog("%s(): nCouldBuy: %d\n", __func__, nCouldBuy);
+
+                if (nCouldBuy == 0)
+                {
+                    PrintToLog("-- buyer has not enough tokens for sale to purchase one unit!\n");
+                    ++it;
+                    continue;
+                }
+
+                // preconditions
+                assert(0 < it->getAmountRemaining());
+                assert(0 < amount);
+
+                // taking ALLs from seller
+                assert(update_tally_map(it->getAddr(), it->getProperty(), -nCouldBuy, METADEX_RESERVE));
+                cachefees_oracles[ALL] = nCouldBuy;
+
+                // giving the tokens from cache
+                assert(update_tally_map(it->getAddr(), it->getDesProperty(), nWouldPay, BALANCE));
+
+                const int64_t seller_amountLeft = it->getAmountForSale() - nCouldBuy;
+
+                // postconditions
+                PrintToLog("%s(): amountForSale : %d, nCouldBuy : %d, seller_amountLeft: %d\n",__func__, it->getAmountForSale(), nCouldBuy, seller_amountLeft);
+                assert( it->getAmountForSale() == nCouldBuy + seller_amountLeft);
+
+                // discounting the amount
+                amount -= static_cast<uint64_t>(nCouldBuy);
+
+                CMPMetaDEx seller_replacement = *it;
+                seller_replacement.setAmountRemaining(seller_amountLeft, "seller_replacement");
+
+                // erase the old seller element
+                indexes.erase(it++);
+
+                // insert the updated one in place of the old
+                if (0 < seller_replacement.getAmountRemaining())
+                {
+                    PrintToLog("++ inserting seller_replacement: %s\n", seller_replacement.ToString());
+                    indexes.insert(seller_replacement);
+                }
+
             }
+
+            if (amount == 0)
+            {
+                bBuyerSatisfied = true;
+                break;
+            }
+
+        }
+
+        if (amount == 0)
+        {
+            bBuyerSatisfied = true;
+            break;
         }
     }
 
-    return bValid;
+    return bBuyerSatisfied;
 }
