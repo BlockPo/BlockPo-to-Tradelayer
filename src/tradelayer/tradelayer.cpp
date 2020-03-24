@@ -597,11 +597,19 @@ void CheckWalletUpdate(bool forceUpdate)
  */
 const string getAdminAddress()
 {
-    if (isNonMainNet()) {
+    if (RegTest())
+    {
+        // regtest (private key: cRs6niSYMs5pSpHT6kB7V1Urj3zqyE9sJwUiQYorfini1kw11C8z)
+        const string regAddress = "mgrNNyDCdAWeYfkvcarsQKRzMhEFQiDmnH";
+        return regAddress;
+
+    } else if (TestNet()) {
         // testnet address
         const string testAddress = "moiFSSEFvkBGgE14tVhDTGLeT4qQE7Nk1d";
         return testAddress;
-    } else {
+
+    } else if (MainNet()) {
+
         // NOTE: we need the Mainnet adddress
         const string mainAddress = "";
         return mainAddress;
@@ -632,6 +640,9 @@ void creatingVestingTokens(int block)
 
    //NOTE: we have to change this admin_addrs for getAdminAddress function call
    assert(update_tally_map(getAdminAddress(), propertyIdVesting, totalVesting, BALANCE));
+
+   // NOTE: just for testing : putting ALLS into admin address
+   assert(update_tally_map(getAdminAddress(), ALL, totalVesting, BALANCE));
 }
 
 /**
