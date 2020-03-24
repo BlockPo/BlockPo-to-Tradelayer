@@ -2275,7 +2275,18 @@ int CMPTransaction::logicMath_SimpleSend()
     int kyc_id;
 
     if(!t_tradelistdb->checkAttestationReg(sender,kyc_id)){
-      PrintToLog("%s(): rejected: kyc ckeck failed\n", __func__);
+      PrintToLog("%s(): rejected: kyc ckeck for sender failed\n", __func__);
+      return (PKT_ERROR_KYC -10);
+    }
+
+    if(!t_tradelistdb->kycPropertyMatch(property,kyc_id)){
+      PrintToLog("%s(): rejected: property %d can't be traded with this kyc\n", __func__, property);
+      return (PKT_ERROR_KYC -20);
+    }
+
+
+    if(!t_tradelistdb->checkAttestationReg(receiver,kyc_id)){
+      PrintToLog("%s(): rejected: kyc ckeck for receiver failed\n", __func__);
       return (PKT_ERROR_KYC -10);
     }
 
@@ -2733,6 +2744,29 @@ int CMPTransaction::logicMath_GrantTokens()
   if (!IsPropertyIdValid(property)) {
     PrintToLog("%s(): rejected: property %d does not exist\n", __func__, property);
     return (PKT_ERROR_TOKENS -24);
+  }
+
+  int kyc_id;
+
+  if(!t_tradelistdb->checkAttestationReg(sender,kyc_id)){
+    PrintToLog("%s(): rejected: kyc ckeck for sender failed\n", __func__);
+    return (PKT_ERROR_KYC -10);
+  }
+
+  if(!t_tradelistdb->kycPropertyMatch(property,kyc_id)){
+    PrintToLog("%s(): rejected: property %d can't be traded with this kyc\n", __func__, property);
+    return (PKT_ERROR_KYC -20);
+  }
+
+
+  if(!t_tradelistdb->checkAttestationReg(receiver,kyc_id)){
+    PrintToLog("%s(): rejected: kyc ckeck for receiver failed\n", __func__);
+    return (PKT_ERROR_KYC -10);
+  }
+
+  if(!t_tradelistdb->kycPropertyMatch(property,kyc_id)){
+    PrintToLog("%s(): rejected: property %d can't be traded with this kyc\n", __func__, property);
+    return (PKT_ERROR_KYC -20);
   }
 
   CMPSPInfo::Entry sp;

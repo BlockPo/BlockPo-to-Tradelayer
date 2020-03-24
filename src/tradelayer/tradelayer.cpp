@@ -102,10 +102,10 @@ using std::string;
 using std::vector;
 
 using namespace mastercore;
-typedef boost::multiprecision::uint128_t ui128;
 typedef boost::multiprecision::cpp_dec_float_100 dec_float;
 
 CCriticalSection cs_tally;
+typedef boost::multiprecision::uint128_t ui128;
 
 static int nWaterlineBlock = 0;
 
@@ -2866,13 +2866,13 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   VestingTokens();
 
 
-  /**
+  /** feeCacheBuy:
       1) search caché in order to see the properties ids and the amounts.
       2) search for each prop id, exchange for ALLs with available orders in orderbook
       3) check the ALLs in cache.
 
   **/
-  mastercore::feeCacheBuy(nBlock);
+  mastercore::feeCacheBuy();
 
   CMPTransaction mp_obj;
   mp_obj.unlockLogic();
@@ -6329,13 +6329,9 @@ bool mastercore::SanityChecks(string receiver, int aBlock)
 
 }
 
-bool mastercore::feeCacheBuy(int block)
+bool mastercore::feeCacheBuy()
 {
     bool result = false;
-
-    /** NOTE: we need a periodic check (how many blocks?)**/
-    if (block != 250)
-        return result;
 
     if(cachefees_oracles.empty())
     {
@@ -6366,8 +6362,6 @@ bool mastercore::feeCacheBuy(int block)
             PrintToLog("%s(): mDEx without ALL offers\n",__func__);
 
         }
-
-
 
     }
 

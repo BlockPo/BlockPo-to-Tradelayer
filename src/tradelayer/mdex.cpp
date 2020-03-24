@@ -2477,8 +2477,7 @@ bool mastercore::MetaDEx_Search_ALL(uint64_t& amount, uint32_t propertyOffered)
             for (md_Set::iterator it = indexes.begin(); it != indexes.end();)
             {
 
-                // for testing ALL is 4
-	              if (it->getProperty() != 4 || it->getDesProperty() != propertyOffered)
+	              if (it->getProperty() != ALL || it->getDesProperty() != propertyOffered)
                 {
 	                  ++it;
 	                  continue;
@@ -2521,7 +2520,7 @@ bool mastercore::MetaDEx_Search_ALL(uint64_t& amount, uint32_t propertyOffered)
 
                 // taking ALLs from seller
                 assert(update_tally_map(it->getAddr(), it->getProperty(), -nCouldBuy, METADEX_RESERVE));
-                cachefees_oracles[4] = nCouldBuy;
+                cachefees_oracles[ALL] = nCouldBuy;
 
                 // giving the tokens from cache
                 assert(update_tally_map(it->getAddr(), it->getDesProperty(), nWouldPay, BALANCE));
@@ -2550,7 +2549,7 @@ bool mastercore::MetaDEx_Search_ALL(uint64_t& amount, uint32_t propertyOffered)
 
             }
 
-            if (0 == amount)
+            if (amount == 0)
             {
                 bBuyerSatisfied = true;
                 break;
@@ -2558,7 +2557,7 @@ bool mastercore::MetaDEx_Search_ALL(uint64_t& amount, uint32_t propertyOffered)
 
         }
 
-        if (0 == amount)
+        if (amount == 0)
         {
             bBuyerSatisfied = true;
             break;
