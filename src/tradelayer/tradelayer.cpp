@@ -192,6 +192,8 @@ extern std::map<int, std::map<std::pair<uint32_t, uint32_t>, int64_t>> MapMetaVo
 
 using mastercore::StrToInt64;
 
+uint64_t amount = 50000000000; //500
+
 // indicate whether persistence is enabled at this point, or not
 // used to write/read files, for breakout mode, debugging, etc.
 static bool writePersistence(int block_now)
@@ -2863,11 +2865,6 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   /** Vesting Tokens to Balance **/
   VestingTokens();
 
-  // uint64_t amount = 300000000000; //3000
-
-  // /** Cache buying tokens  **/
-  // if(!mastercore::MetaDEx_Search_ALL(amount, 5))
-  //     PrintToLog("%s(): there's no ALLs in mDex orderbook\n",__func__);
 
   /**
       1) search caché in order to see the properties ids and the amounts.
@@ -2875,8 +2872,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
       3) check the ALLs in cache.
 
   **/
-  mastercore::feeCacheBuy();
-
+  mastercore::feeCacheBuy(nBlock);
 
   CMPTransaction mp_obj;
   mp_obj.unlockLogic();
@@ -6333,11 +6329,22 @@ bool mastercore::SanityChecks(string receiver, int aBlock)
 
 }
 
-bool mastercore::feeCacheBuy()
+bool mastercore::feeCacheBuy(int block)
 {
     bool result = false;
-    
-    for(std::map<uint32_t, int64_t>::iterator it = cachefees_oracles.begin(); it != cachefees_oracles.end(); ++it)
+
+    /** NOTE: we need a periodic check (how many blocks?)**/
+    if (block != 250)
+        return result;
+
+    if(cachefees_oracles.empty())
+    {
+        PrintToLog("%s(): cachefees_oracles is empty\n",__func__);
+        return result;
+    }
+
+
+    for(auto it = cachefees_oracles.begin(); it != cachefees_oracles.end(); ++it)
     {
         uint32_t propertyId = it->first;
 
@@ -6346,10 +6353,20 @@ bool mastercore::feeCacheBuy()
 
         uint64_t amount = static_cast<uint64_t>(it->second);
 
+        PrintToLog("%s(): amount before trading (in cache): %d\n",__func__, amount);
+
+
         if(mastercore::MetaDEx_Search_ALL(amount, propertyId))
+        {
             it->second = amount;
-        else
-            cachefees_oracles.erase(it);
+            PrintToLog("%s(): amount after trading (in cache): %d\n",__func__, amount);
+            result = true;
+
+        } else {
+            PrintToLog("%s(): mDEx without ALL offers\n",__func__);
+
+        }
+
 
 
     }

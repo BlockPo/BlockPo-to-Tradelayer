@@ -321,6 +321,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_getcache", 0, "arg0" }, // NOTE: only to test persistence
     { "tl_get_channelreserve", 1, "arg1" },
     { "tl_check_kyc", 1, "arg1" },
+    { "tl_getoraclecache", 0, "arg0" },
 
     { "tl_getdexvolume", 0, "arg1" },
     { "tl_getdexvolume", 1, "arg2" },

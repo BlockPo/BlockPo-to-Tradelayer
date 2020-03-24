@@ -67,6 +67,7 @@ extern uint64_t marketP[NPTYPES];
 extern std::map<uint32_t, std::map<std::string, double>> addrs_upnlc;
 extern std::map<std::string, int64_t> sum_upnls;
 extern std::map<uint32_t, int64_t> cachefees;
+extern std::map<uint32_t, int64_t> cachefees_oracles;
 extern std::map<int, std::map<uint32_t,int64_t>> MapPropVolume;
 extern volatile int64_t globalVolumeALL_LTC;
 
@@ -2605,7 +2606,38 @@ UniValue tl_getcache(const JSONRPCRequest& request)
 
     UniValue balanceObj(UniValue::VOBJ);
 
-    balanceObj.push_back(Pair("amount", FormatByType(amount,1)));
+    balanceObj.push_back(Pair("amount", FormatByType(amount,2)));
+
+    return balanceObj;
+}
+
+UniValue tl_getoraclecache(const JSONRPCRequest& request)
+{
+    if (request.params.size() != 1)
+        throw runtime_error(
+            "tl_getmargin \"address\" propertyid\n"
+            "\nReturns the oracle fee cache for a given property.\n"
+            "\nArguments:\n"
+            "1. propertyid           (number, required) the contract identifier\n"
+            "\nResult:\n"
+            "{\n"
+            "  \"balance\" : \"n.nnnnnnnn\",   (string) the available balance of the address\n"
+            "  \"reserved\" : \"n.nnnnnnnn\"   (string) the amount reserved by sell offers and accepts\n"
+            "}\n"
+            "\nExamples:\n"
+            + HelpExampleCli("tl_getcache", "\"\" 1")
+            + HelpExampleRpc("tl_getcache", "\"\", 1")
+        );
+
+    uint32_t propertyId = ParsePropertyId(request.params[0]);
+
+    // geting data from cache!
+    std::map<uint32_t, int64_t>::iterator it =  cachefees_oracles.find(propertyId);
+    int64_t amount = it->second;
+
+    UniValue balanceObj(UniValue::VOBJ);
+
+    balanceObj.push_back(Pair("amount", FormatByType(amount,2)));
 
     return balanceObj;
 }
@@ -2905,7 +2937,8 @@ static const CRPCCommand commands[] =
   { "trade layer (data retieval)" , "tl_getdexvolume",              &tl_getdexvolume,               {} },
   { "trade layer (data retieval)" , "tl_getmdexvolume",             &tl_getmdexvolume,              {} },
   { "trade layer (data retieval)" , "tl_getcurrencytotal",          &tl_getcurrencytotal,           {} },
-  { "trade layer (data retieval)" , "tl_listkyc",                   &tl_listkyc,                    {} }
+  { "trade layer (data retieval)" , "tl_listkyc",                   &tl_listkyc,                    {} },
+  { "trade layer (data retieval)" , "tl_getoraclecache",            &tl_getoraclecache,             {} }
 };
 
 void RegisterTLDataRetrievalRPCCommands(CRPCTable &tableRPC)

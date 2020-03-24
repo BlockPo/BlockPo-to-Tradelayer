@@ -59,6 +59,7 @@ extern std::map<uint32_t, std::vector<int64_t>> mapContractVolume;
 extern std::map<int, std::map<std::pair<uint32_t, uint32_t>, int64_t>> MapMetaVolume;
 extern std::map<uint32_t, int64_t> VWAPMapContracts;
 extern std::map<uint32_t, int64_t> cachefees;
+extern std::map<uint32_t, int64_t> cachefees_oracles;
 extern int n_cols;
 extern int n_rows;
 extern MatrixTLS *pt_ndatabase;
@@ -2466,7 +2467,6 @@ bool mastercore::MetaDEx_Search_ALL(uint64_t& amount, uint32_t propertyOffered)
     for (md_PropertiesMap::iterator my_it = metadex.begin(); my_it != metadex.end(); ++my_it)
     {
 
-        // if (msc_debug_contract_cancel_every) PrintToLog(" ## property: %u\n", prop);
         md_PricesMap &prices = my_it->second;
 
         for (md_PricesMap::iterator itt = prices.begin(); itt != prices.end(); ++itt)
@@ -2474,13 +2474,11 @@ bool mastercore::MetaDEx_Search_ALL(uint64_t& amount, uint32_t propertyOffered)
             const rational_t price = itt->first;
             md_Set &indexes = itt->second;
 
-            // if (msc_debug_search_all) PrintToLog("  # Price Level: %s\n", xToString(price));
-
             for (md_Set::iterator it = indexes.begin(); it != indexes.end();)
             {
 
                 // for testing ALL is 4
-	              if (it->getProperty() != ALL && it->getDesProperty() != propertyOffered)
+	              if (it->getProperty() != 4 || it->getDesProperty() != propertyOffered)
                 {
 	                  ++it;
 	                  continue;
@@ -2490,7 +2488,7 @@ bool mastercore::MetaDEx_Search_ALL(uint64_t& amount, uint32_t propertyOffered)
 
                 if (msc_debug_search_all) PrintToLog("%s(): amount of ALL: %d, desproperty: %d; amount of desproperty: %d\n", __func__, it->getAmountForSale(), it->getDesProperty(), it->getAmountDesired());
 
-
+                // amount of All to buy
                 arith_uint256 iCouldBuy = (ConvertTo256(amount) * ConvertTo256(it->getAmountForSale())) / ConvertTo256(it->getAmountDesired());
 
                 int64_t nCouldBuy = 0;
@@ -2502,6 +2500,12 @@ bool mastercore::MetaDEx_Search_ALL(uint64_t& amount, uint32_t propertyOffered)
                   nCouldBuy = it->getAmountRemaining();
                 }
 
+                // amount of tokens to pay
+                arith_uint256 iWouldPay = DivideAndRoundUp((ConvertTo256(nCouldBuy) * ConvertTo256(it->getAmountDesired())), ConvertTo256(it->getAmountForSale()));
+                int64_t nWouldPay = ConvertTo64(iWouldPay);
+
+                if (msc_debug_search_all) PrintToLog("%s(): nWouldPay: %d\n", __func__, nWouldPay);
+
                 if (msc_debug_search_all) PrintToLog("%s(): nCouldBuy: %d\n", __func__, nCouldBuy);
 
                 if (nCouldBuy == 0)
@@ -2511,13 +2515,25 @@ bool mastercore::MetaDEx_Search_ALL(uint64_t& amount, uint32_t propertyOffered)
                     continue;
                 }
 
+                // preconditions
+                assert(0 < it->getAmountRemaining());
+                assert(0 < amount);
+
                 // taking ALLs from seller
                 assert(update_tally_map(it->getAddr(), it->getProperty(), -nCouldBuy, METADEX_RESERVE));
+                cachefees_oracles[4] = nCouldBuy;
+
+                // giving the tokens from cache
+                assert(update_tally_map(it->getAddr(), it->getDesProperty(), nWouldPay, BALANCE));
+
+                const int64_t seller_amountLeft = it->getAmountForSale() - nCouldBuy;
+
+                // postconditions
+                PrintToLog("%s(): amountForSale : %d, nCouldBuy : %d, seller_amountLeft: %d\n",__func__, it->getAmountForSale(), nCouldBuy, seller_amountLeft);
+                assert( it->getAmountForSale() == nCouldBuy + seller_amountLeft);
 
                 // discounting the amount
                 amount -= static_cast<uint64_t>(nCouldBuy);
-
-                const int64_t seller_amountLeft = it->getAmountForSale() - nCouldBuy;
 
                 CMPMetaDEx seller_replacement = *it;
                 seller_replacement.setAmountRemaining(seller_amountLeft, "seller_replacement");

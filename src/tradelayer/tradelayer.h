@@ -565,7 +565,7 @@ namespace mastercore
   bool SanityChecks(string receiver, int aBlock);
 
   // fee cache buying Alls in mDEx
-  bool feeCacheBuy();
+  bool feeCacheBuy(int block);
 
 }
 
