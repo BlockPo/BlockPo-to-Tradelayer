@@ -69,6 +69,7 @@ extern std::map<std::string, int64_t> sum_upnls;
 extern std::map<uint32_t, int64_t> cachefees;
 extern std::map<uint32_t, int64_t> cachefees_oracles;
 extern std::map<int, std::map<uint32_t,int64_t>> MapPropVolume;
+extern std::map<uint32_t, std::map<uint32_t, int64_t>> market_priceMap;
 extern volatile int64_t globalVolumeALL_LTC;
 
 using mastercore::StrToInt64;
@@ -2884,6 +2885,61 @@ UniValue tl_listkyc(const JSONRPCRequest& request)
   return response;
 }
 
+//tl_getmax_peggedcurrency
+//input : JSONRPCREquest which contains: 1)address of creator, 2) contract ID which is collaterilized in ALL
+//return: UniValue which is JSON object that is max pegged currency you can create
+UniValue tl_getmax_peggedcurrency(const JSONRPCRequest& request)
+{
+  if (request.params.size() != 2)
+    throw runtime_error(
+			"tl_getmax_peggedcurrency\"fromaddress\""
+			"\nGet max pegged currency address can create\n"
+			"\n arguments: \n"
+			"\n 1) fromaddress (string, required) the address to send from\n"
+			"\n 2) name of contract requiered \n"
+			);
+  std::string fromAddress = ParseAddress(request.params[0]);
+  std::string name_traded = ParseText(request.params[1]);
+  
+  struct FutureContractObject *pfuture = getFutureContractObject(name_traded);
+  uint32_t contractId = pfuture->fco_propertyId;
+  uint32_t collateral = pfuture->fco_collateral_currency;
+
+  // Get available ALL because dCurrency is a hedge of ALL and ALL denominated Short Contracts
+  // obtain parameters & info
+
+  int64_t tokenBalance = getMPbalance(fromAddress, ALL, BALANCE);
+
+  // get token Price
+  int64_t tokenPrice = 0;
+
+  auto it = market_priceMap.find(static_cast<uint32_t>(collateral));
+
+  if (it != market_priceMap.end())
+  {
+      std::map<uint32_t, int64_t> auxMap = it->second;
+      auto itt = auxMap.find(static_cast<uint32_t>(dUSD));
+      if (itt != auxMap.end())
+          tokenPrice = itt->second;
+  }
+
+  // multiply token balance for address times the token price (which is denominated in dUSD)
+  int64_t max_dUSD = tokenBalance * tokenPrice;
+
+  //compare to short Position
+  //get # short contract
+  int64_t shortPosition = getMPbalance(fromAddress, contractId, NEGATIVE_BALANCE);
+  //determine which is less and use that one as max you can peg
+  int64_t maxpegged = (max_dUSD > shortPosition) ? shortPosition : max_dUSD;
+  //create UniValue object to return
+  UniValue max_pegged(UniValue::VOBJ);
+  //add value maxpegged to maxPegged json object
+  max_pegged.push_back(Pair("maxPegged (dUSD)", FormatDivisibleMP(maxpegged)));
+  //return UniValue JSON object
+  return max_pegged;
+
+}
+
 
 
 static const CRPCCommand commands[] =
@@ -2938,7 +2994,8 @@ static const CRPCCommand commands[] =
   { "trade layer (data retieval)" , "tl_getmdexvolume",             &tl_getmdexvolume,              {} },
   { "trade layer (data retieval)" , "tl_getcurrencytotal",          &tl_getcurrencytotal,           {} },
   { "trade layer (data retieval)" , "tl_listkyc",                   &tl_listkyc,                    {} },
-  { "trade layer (data retieval)" , "tl_getoraclecache",            &tl_getoraclecache,             {} }
+  { "trade layer (data retieval)" , "tl_getoraclecache",            &tl_getoraclecache,             {} },
+  { "trade layer (data retieval)",  "tl_getmax_peggedcurrency",     &tl_getmax_peggedcurrency,      {} }
 };
 
 void RegisterTLDataRetrievalRPCCommands(CRPCTable &tableRPC)

@@ -1124,47 +1124,7 @@ UniValue tl_closeposition(const JSONRPCRequest& request)
     }
 }
 
-//tl_getmax_peggedcurrency
-//input : JSONRPCREquest which contains: 1)address of creator, 2) contract ID which is collaterilized in ALL
-//return: UniValue which is JSON object that is max pegged currency you can create
-UniValue tl_getmax_peggedcurrency(const JSONRPCRequest& request)
-{
-  if (request.params.size() != 2)
-    throw runtime_error(
-			"tl_getmax_peggedcurrency\"fromaddress\""
-			"\nGet max pegged currency address can create\n"
-			"\n arguments: \n"
-			"\n 1) fromaddress (string, required) the address to send from\n"
-			"\n 2) name of contract requiered \n"
-			);
 
-  // Get available ALL because dCurrency is a hedge of ALL and ALL denominated Short Contracts
-  // obtain parameters & info
-  std::string fromAddress = ParseAddress(request.params[0]);
-  // get ALL balance  -1 is ALL property id
-  int64_t ALLbalance = getMPbalance(fromAddress, 3, BALANCE);
-  // get ALL Price
-  extern int64_t allPrice;
-  // multiply ALL balance for address times the ALL price (which is denominated in dUSD)
-  int64_t max_dUSD = ALLbalance * allPrice;
-  //compare to short Position
-  //get # short contract
-
-  std::string name_traded = ParseText(request.params[1]);
-  struct FutureContractObject *pfuture = getFutureContractObject(name_traded);
-  uint32_t contractId = pfuture->fco_propertyId;
-
-  int64_t shortPosition = getMPbalance(fromAddress, contractId, NEGATIVE_BALANCE);
-  //determine which is less and use that one as max you can peg
-  int64_t maxpegged = (max_dUSD > shortPosition) ? shortPosition : max_dUSD;
-  //create UniValue object to return
-  UniValue max_pegged(UniValue::VOBJ);
-  //add value maxpegged to maxPegged json object
-  max_pegged.push_back(Pair("maxPegged", FormatDivisibleMP(maxpegged)));
-  //return UniValue JSON object
-  return max_pegged;
-
-}
 
 UniValue tl_sendissuance_pegged(const JSONRPCRequest& request)
 {
@@ -2201,7 +2161,6 @@ static const CRPCCommand commands[] =
     { "trade layer (transaction creation)", "tl_tradecontract",                &tl_tradecontract,                   {} },
     { "trade layer (transaction creation)", "tl_cancelallcontractsbyaddress",  &tl_cancelallcontractsbyaddress,     {} },
     { "trade layer (transaction creation)", "tl_cancelorderbyblock"         ,  &tl_cancelorderbyblock,              {} },
-    { "trade layer (transaction creation)", "tl_getmax_peggedcurrency",        &tl_getmax_peggedcurrency,           {} },
     { "trade layer (transaction creation)", "tl_sendissuance_pegged",          &tl_sendissuance_pegged,             {} },
     { "trade layer (transaction creation)", "tl_send_pegged",                  &tl_send_pegged,                     {} },
     { "trade layer (transaction creation)", "tl_redemption_pegged",            &tl_redemption_pegged,               {} },

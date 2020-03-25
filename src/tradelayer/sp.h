@@ -279,7 +279,7 @@ bool isPropertyContract(uint32_t propertyId);
 bool isPropertyPegged(uint32_t propertyId);
 bool isPropertySwap(uint32_t propertyId);
 bool isPropertyNativeContract(uint32_t propertyId);
-int addInterestPegged(int nBlockPrev, const CBlockIndex* pBlockIndex);
+// int addInterestPegged(int nBlockPrev, const CBlockIndex* pBlockIndex);
 
 std::string getPropertyName(uint32_t propertyId);
 bool isPropertyDivisible(uint32_t propertyId);

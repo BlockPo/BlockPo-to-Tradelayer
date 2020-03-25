@@ -16,7 +16,6 @@ uint64_t marketPrice;
 int64_t globalNumPrice;
 int64_t globalDenPrice;
 int64_t priceIndex;
-int64_t allPrice;
 double percentLiqPrice;
 int64_t factorE;
 double denMargin;
@@ -120,9 +119,9 @@ std::map<std::string,vector<withdrawalAccepted>> withdrawal_Map;
 /** Active channels **/
 std::map<std::string,channel> channels_Map;
 
-/*****************************************/
 /** LTC  Cumulative volume per property **/
 std::map<int, std::map<uint32_t,int64_t>> MapPropVolume; // block, property, LTC Amount
+
 
 /**  Cumulative volume by pair of properties
  *   Block, property1,property2 -> put the amount of property1 traded.
