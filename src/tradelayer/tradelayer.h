@@ -193,7 +193,7 @@ enum FILETYPES {
 #define LTC        0
 #define ALL        1
 #define sLTC       2
-#define dUSD       3
+#define dUSD       3  // vesting tokens?
 #define dEUR       4
 #define dJPY       5
 #define dCNY       6
