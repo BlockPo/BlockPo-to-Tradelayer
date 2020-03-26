@@ -2269,13 +2269,13 @@ bool CChainState::DisconnectTip(CValidationState& state, const CChainParams& cha
 
     //! Trade Layer: begin block disconnect notification
     // LogPrint("handler", "Trade Layer handler: block disconnect begin [height: %d, reindex: %d]\n", GetHeight(), (int)fReindex);
-    mastercore_handler_disc_begin(GetHeight(), pindexDelete);
+    mastercore_handler_disc_begin(pindexDelete->nHeight, pindexDelete);
 
     GetMainSignals().BlockDisconnected(pblock);
 
     //! Trade Layer: end of block disconnect notification
     // LogPrint("handler", "Trade Layer handler: block disconnect end [height: %d, reindex: %d]\n", GetHeight(), (int)fReindex);
-    mastercore_handler_disc_end(GetHeight(), pindexDelete);
+    mastercore_handler_disc_end(pindexDelete->nHeight, pindexDelete);
 
     return true;
 }
@@ -2417,10 +2417,10 @@ bool CChainState::ConnectTip(CValidationState& state, const CChainParams& chainp
 
     for(CTransactionRef tx : blockConnecting.vtx){
         //! Trade Layer: new confirmed transaction notification
-        if (mastercore_handler_tx(*(tx.get()), GetHeight(), nTxIdx++, pindexNew)) ++nNumMetaTxs;
+        if (mastercore_handler_tx(*(tx.get()), pindexNew->nHeight, nTxIdx++, pindexNew)) ++nNumMetaTxs;
     }
 
-    mastercore_handler_block_end(GetHeight(), pindexNew, nNumMetaTxs);
+    mastercore_handler_block_end(pindexNew->nHeight, pindexNew, nNumMetaTxs);
 
     int64_t nTime6 = GetTimeMicros(); nTimePostConnect += nTime6 - nTime5; nTimeTotal += nTime6 - nTime1;
     LogPrint(BCLog::BENCH, "  - Connect postprocess: %.2fms [%.2fs (%.2fms/blk)]\n", (nTime6 - nTime5) * MILLI, nTimePostConnect * MICRO, nTimePostConnect * MILLI / nBlocksTotal);
