@@ -2724,7 +2724,7 @@ bool VestingTokens(int block)
         if (vestingBalance != 0 && unvestedALLBal != 0)
         {
 
-            int64_t iRealVesting = mastercore::DoubleToInt64(static_cast<double>(realVesting));
+            int64_t iRealVesting = mastercore::DoubleToInt64(realVesting);
             arith_uint256 iAmount = mastercore::ConvertTo256(iRealVesting)*mastercore::ConvertTo256(vestingBalance)/(100 * COIN);
             int64_t nAmount = mastercore::ConvertTo64(iAmount);
 
