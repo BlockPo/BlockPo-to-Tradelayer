@@ -150,6 +150,7 @@ enum FILETYPES {
   FILETYPE_ACTIVE_CHANNELS,
   FILETYPE_DEX_VOLUME,
   FILETYPE_MDEX_VOLUME,
+  FILETYPE_GLOBAL_VARS,
   NUM_FILETYPES
 };
 
@@ -193,7 +194,7 @@ enum FILETYPES {
 #define LTC        0
 #define ALL        1
 #define sLTC       2
-#define dUSD       3
+#define dUSD       3  // vesting tokens?
 #define dEUR       4
 #define dJPY       5
 #define dCNY       6
