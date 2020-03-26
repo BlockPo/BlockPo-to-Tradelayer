@@ -610,12 +610,12 @@ const string getAdminAddress()
         const string testAddress = "moiFSSEFvkBGgE14tVhDTGLeT4qQE7Nk1d";
         return testAddress;
 
-    } else if (MainNet()) {
-
-        // NOTE: we need the Mainnet adddress
-        const string mainAddress = "";
-        return mainAddress;
     }
+
+    // NOTE: we need the Mainnet adddress
+    const string mainAddress = "";
+    return mainAddress;
+
 }
 
 void creatingVestingTokens(int block)
@@ -1352,6 +1352,22 @@ int input_globals_state_string(const string &s)
   return 0;
 }
 
+int input_global_vars_string(const string &s)
+{
+  std::vector<std::string> vstr;
+  boost::split(vstr, s, boost::is_any_of(" ,="), token_compress_on);
+  if (1 != vstr.size()) return -1;
+
+  int i = 0;
+  lastVesting = boost::lexical_cast<double>(vstr[i++]);
+  int64_t lastVolume = boost::lexical_cast<int64_t>(vstr[i++]);
+
+  globalVolumeALL_LTC = lastVolume;
+
+  PrintToLog("%s(): lastVesting (returned): %f, globalVolumeALL_LTC (returned): %d\n",__func__,lastVesting, lastVolume);
+
+  return 0;
+}
 // addr,propertyId,nValue,property_desired,deadline,early_bird,percentage,txid
 int input_mp_crowdsale_string(const std::string& s)
 {
@@ -1656,6 +1672,9 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
     case FILETYPE_MDEX_VOLUME:
         inputLineFunc = input_mp_mdexvolume_string;
 
+    case FILETYPE_GLOBAL_VARS:
+        inputLineFunc = input_global_vars_string;
+
     default:
       return -1;
   }
@@ -1742,6 +1761,7 @@ static char const * const statePrefix[NUM_FILETYPES] = {
     "activechannels",
     "dexvolume",
     "mdexvolume",
+    "globalvars",
 
 };
 
@@ -1967,6 +1987,24 @@ static int write_mp_contractdex(ofstream &file, SHA256_CTX *shaCtx)
     }
 
     return 0;
+}
+
+static int write_global_vars(ofstream &file, SHA256_CTX *shaCtx)
+{
+     std::string lineOut;
+
+     int64_t lastVolume = globalVolumeALL_LTC;
+
+     PrintToLog("%s(): lastVesting: %f, globalVolumeALL_LTC: %d\n",__func__,lastVesting, lastVolume);
+
+     lineOut.append(strprintf("%f", lastVesting));
+     lineOut.append(strprintf("%d", lastVolume));
+     // add the line to the hash
+     SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
+     // write the line
+     file << lineOut << endl;
+
+     return 0;
 }
 
 static int write_market_pricescd(ofstream &file, SHA256_CTX *shaCtx)
@@ -2248,6 +2286,10 @@ static int write_state_file( CBlockIndex const *pBlockIndex, int what )
     case FILETYPE_MDEX_VOLUME:
         result = write_mp_mdexvolume(file, &shaCtx);
 
+    case FILETYPE_GLOBAL_VARS:
+        result = write_global_vars(file, &shaCtx);
+        break;
+
     }
 
     // generate and wite the double hash of all the contents written
@@ -2349,6 +2391,7 @@ int mastercore_save_state( CBlockIndex const *pBlockIndex )
     write_state_file(pBlockIndex, FILETYPE_WITHDRAWALS);
     write_state_file(pBlockIndex, FILETYPE_ACTIVE_CHANNELS);
     write_state_file(pBlockIndex, FILETYPE_DEX_VOLUME);
+    write_state_file(pBlockIndex, FILETYPE_GLOBAL_VARS);
 
     // clean-up the directory
     prune_state_files(pBlockIndex);
@@ -2647,8 +2690,6 @@ bool VestingTokens(int block)
     int64_t x_Axis = globalVolumeALL_LTC;
     // int64_t x_Axis = 1000000000000; //10000
     // if (block >= 120) x_Axis = 2000000000000;  // 20000
-
-    int64_t LogAxis = mastercore::DoubleToInt64(log(static_cast<double>(x_Axis)/COIN));
 
     rational_t Factor1over3(100, 3);
     int64_t Factor1over3_64t = mastercore::RationalToInt64(Factor1over3);
