@@ -43,6 +43,7 @@ md_PropertiesMap mastercore::metadex;
 chn_PropertiesMap mastercore::chndex;
 
 extern volatile uint64_t marketPrice;
+extern volatile int64_t globalVolumeALL_LTC;
 extern volatile int idx_q;
 extern int64_t factorE;
 extern uint64_t marketP[NPTYPES];
@@ -1038,12 +1039,17 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
 	}
 
   /**
-   * Fees calculations for maker and taker.
-   *
+   * Adding LTC volume traded in contracts.
    *
    */
-    // NOTE: Check this function later (got issues!)
-    mastercore::ContractDex_Fees(pnew->getAddr(),pold->getAddr(), nCouldBuy, property_traded);
+  mastercore::ContractDex_ADD_LTCVolume(nCouldBuy, property_traded);
+
+  /**
+   * Fees calculations for maker and taker.
+   *
+   */
+  mastercore::ContractDex_Fees(pnew->getAddr(),pold->getAddr(), nCouldBuy, property_traded);
+
 
     if(msc_debug_x_trade_bidirectional)
     {
@@ -1187,6 +1193,42 @@ bool mastercore::ContractDex_Fees(std::string addressTaker,std::string addressMa
 
     //sum check
     assert(takerFee == makerFee + 3*cacheFee); // 2.5% = 1% + 3*0.5%
+
+    return true;
+
+}
+
+bool mastercore::ContractDex_ADD_LTCVolume(int64_t nCouldBuy, uint32_t contractId)
+{
+    //trade amount * contract notional * the LTC price
+    CMPSPInfo::Entry sp;
+    if (!_my_sps->getSP(contractId, sp))
+       return false;
+
+    int64_t notional = static_cast<int64_t>(sp.notional_size);
+    int64_t collateral = static_cast<int64_t>(sp.collateral_currency);
+
+    // get token Price in LTC
+    int64_t tokenPrice = 0;
+
+    auto it = market_priceMap.find(static_cast<uint32_t>(LTC));
+
+    // market_priceMap[LTC][propertyId]
+    if (it != market_priceMap.end())
+    {
+        std::map<uint32_t, int64_t> auxMap = it->second;
+        auto itt = auxMap.find(collateral);
+        if(itt != auxMap.end())
+            tokenPrice = itt->second;
+        else
+            return false;
+    } else
+       return false;
+
+    arith_uint256 globalVolume = ConvertTo256(nCouldBuy) * ConvertTo256(notional) * ConvertTo256(tokenPrice);
+    globalVolumeALL_LTC = ConvertTo64(globalVolume);
+
+    PrintToLog("%s: globalVolumeALL_LTC: %d, nCouldBuy: %d, notional: %d, tokenPrice: %d\n",__func__,ConvertTo64(globalVolume), nCouldBuy, notional, tokenPrice);
 
     return true;
 

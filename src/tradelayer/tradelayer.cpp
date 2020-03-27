@@ -1026,6 +1026,7 @@ static bool HandleDExPayments(const CTransaction& tx, int nBlock, const std::str
     globalVolumeALL_LTC += ltcsreceived;
     const int64_t globalVolumeALL_LTCh = globalVolumeALL_LTC;
 
+
     if (msc_debug_handle_dex_payment) PrintToLog("%s(): ltcsreceived: %d, globalVolumeALL_LTC: %d \n",__func__,ltcsreceived, globalVolumeALL_LTCh);
 
     return (count > 0);
