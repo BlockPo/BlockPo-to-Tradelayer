@@ -115,6 +115,7 @@ std::string mastercore::strTransactionType(uint16_t txType)
     case MSC_TYPE_UPDATE_ID_REGISTRATION: return "Update Id Registration";
     case MSC_TYPE_DEX_PAYMENT: return "DEx payment";
     case MSC_TYPE_ATTESTATION: return "KYC Attestation";
+    case MSC_TYPE_CREATE_ORACLE_CONTRACT : return "Create Oracle Contract";
     default: return "* unknown type *";
     }
 }
@@ -565,12 +566,6 @@ bool CMPTransaction::interpret_CreatePropertyManaged()
 
     } while(i < pkt_size);
 
-    for (std::vector<int64_t>::iterator itt = kyc_Ids.begin(); itt != kyc_Ids.end(); ++itt)
-    {
-        int64_t num = *itt;
-        PrintToLog("%s(): number inside vector: %d\n",__func__, num);
-    }
-
     if (!vecPropTypeBytes.empty()) {
         prop_type = DecompressInteger(vecPropTypeBytes);
     } else return false;
@@ -1007,12 +1002,6 @@ bool CMPTransaction::interpret_CreateContractDex()
       }
 
   } while(i < pkt_size);
-
-  for (std::vector<int64_t>::iterator itt = kyc_Ids.begin(); itt != kyc_Ids.end(); ++itt)
-  {
-      int64_t num = *itt;
-      PrintToLog("%s(): number inside vector: %d\n",__func__, num);
-  }
 
   if (!vecVersionBytes.empty()) {
     version = DecompressInteger(vecVersionBytes);
@@ -1470,13 +1459,17 @@ bool CMPTransaction::interpret_CreateOracleContract()
 
   } else return false;
 
-  // if (!vecNum.empty()) {
-  //   numerator = DecompressInteger(vecMarginRequirement);
-  // } else return false;
-  //
-  // if (!vecDen.empty()) {
-  //   denominator = DecompressInteger(vecMarginRequirement);
-  // } else return false;
+
+  do
+  {
+      std::vector<uint8_t> vecKyc = GetNextVarIntBytes(i);
+      if (!vecKyc.empty())
+      {
+          int64_t num = static_cast<int64_t>(DecompressInteger(vecKyc));
+          kyc_Ids.push_back(num);
+      }
+
+  } while(i < pkt_size);
 
 
   if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
@@ -3234,7 +3227,7 @@ int CMPTransaction::logicMath_ContractDexTrade()
   int result;
 
   struct FutureContractObject *pfuture = getFutureContractObject(name_traded);
-  id_contract = pfuture->fco_propertyId;
+  uint32_t contractId = pfuture->fco_propertyId;
 
   uint32_t expiration = pfuture->fco_blocks_until_expiration;
 
@@ -3247,8 +3240,8 @@ int CMPTransaction::logicMath_ContractDexTrade()
     return (PKT_ERROR_KYC -10);
   }
 
-  if(!t_tradelistdb->kycPropertyMatch(id_contract,kyc_id)){
-    PrintToLog("%s(): rejected: contract %d can't be traded with this kyc\n", __func__, property);
+  if(!t_tradelistdb->kycPropertyMatch(contractId,kyc_id)){
+    PrintToLog("%s(): rejected: contract %d can't be traded with this kyc\n", __func__, contractId);
     return (PKT_ERROR_KYC -20);
   }
 
@@ -3324,9 +3317,8 @@ int CMPTransaction::logicMath_ContractDexTrade()
   NodeRewardObj.SendNodeReward(sender);
 
   /*********************************************/
-  t_tradelistdb->recordNewTrade(txid, sender, id_contract, desired_property, block, tx_idx, 0);
-  int rc = ContractDex_ADD(sender, id_contract, amount, block, txid, tx_idx, effective_price, trading_action,0);
-
+  t_tradelistdb->recordNewTrade(txid, sender, contractId, desired_property, block, tx_idx, 0);
+  int rc = ContractDex_ADD(sender, contractId, amount, block, txid, tx_idx, effective_price, trading_action,0);
 
   return rc;
 }
@@ -4066,6 +4058,13 @@ int CMPTransaction::logicMath_CreateOracleContract()
   newSP.oracle_high = 0;
   newSP.oracle_low = 0;
   newSP.oracle_close = 0;
+
+  for(std::vector<int64_t>::iterator it = kyc_Ids.begin(); it != kyc_Ids.end(); ++it)
+  {
+      const int64_t aux = *it;
+      newSP.kyc.push_back(aux);
+  }
+
 
   const uint32_t propertyId = _my_sps->putSP(newSP);
   assert(propertyId > 0);
@@ -4939,7 +4938,19 @@ int CMPTransaction::logicMath_Attestation()
   int kyc_id;
 
   if(!t_tradelistdb->checkKYCRegister(sender,kyc_id))
+  {
       kyc_id = KYC_0;
+
+      if (sender != receiver)
+      {
+          PrintToLog("%s(): rejected: sender (%s) can't assign attestation to other address\n",
+              __func__,
+              sender);
+          return (PKT_ERROR_METADEX -22);
+      }
+
+  }
+
 
   PrintToLog("%s(): kyc_id: %d\n",__func__,kyc_id);
 

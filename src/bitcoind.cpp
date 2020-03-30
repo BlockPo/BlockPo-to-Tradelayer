@@ -180,7 +180,6 @@ int main(int argc, char* argv[])
 {
   extern int64_t factorE;
   extern int64_t priceIndex;
-  extern int64_t allPrice;
   extern double denMargin;
   extern int n_cols;
   extern int nVestingAddrs;

@@ -88,6 +88,7 @@ bool msc_calling_settlement                     = 1;
 bool msc_debug_vesting                          = 0;
 bool msc_debug_oracle_twap                      = 0;
 bool msc_debug_search_all                       = 1;
+bool msc_debug_add_contract_ltc_vol             = 1;
 /**
  * LogPrintf() has been broken a couple of times now
  * by well-meaning people adding mutexes in the most straightforward way.

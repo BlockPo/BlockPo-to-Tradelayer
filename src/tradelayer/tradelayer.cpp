@@ -645,6 +645,7 @@ void creatingVestingTokens(int block)
 
    // NOTE: just for testing : putting ALLS into admin address
    assert(update_tally_map(getAdminAddress(), ALL, totalVesting, BALANCE));
+
 }
 
 /**
