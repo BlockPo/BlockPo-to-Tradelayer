@@ -313,6 +313,8 @@ namespace mastercore
 
   bool MetaDEx_Fees(const CMPMetaDEx *pnew, const CMPMetaDEx *pold, int64_t nCouldBuy);
 
+  bool ContractDex_ADD_LTCVolume(int64_t nCouldBuy,uint32_t contractId);
+
   // Locates a trade in the MetaDEx maps via txid and returns the trade object
   const CMPMetaDEx* MetaDEx_RetrieveTrade(const uint256& txid);
   const CMPContractDex* ContractDex_RetrieveTrade(const uint256&);

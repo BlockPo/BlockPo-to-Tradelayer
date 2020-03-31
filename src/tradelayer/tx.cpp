@@ -115,6 +115,7 @@ std::string mastercore::strTransactionType(uint16_t txType)
     case MSC_TYPE_UPDATE_ID_REGISTRATION: return "Update Id Registration";
     case MSC_TYPE_DEX_PAYMENT: return "DEx payment";
     case MSC_TYPE_ATTESTATION: return "KYC Attestation";
+    case MSC_TYPE_CREATE_ORACLE_CONTRACT : return "Create Oracle Contract";
     default: return "* unknown type *";
     }
 }
@@ -565,12 +566,6 @@ bool CMPTransaction::interpret_CreatePropertyManaged()
 
     } while(i < pkt_size);
 
-    for (std::vector<int64_t>::iterator itt = kyc_Ids.begin(); itt != kyc_Ids.end(); ++itt)
-    {
-        int64_t num = *itt;
-        PrintToLog("%s(): number inside vector: %d\n",__func__, num);
-    }
-
     if (!vecPropTypeBytes.empty()) {
         prop_type = DecompressInteger(vecPropTypeBytes);
     } else return false;
@@ -1007,12 +1002,6 @@ bool CMPTransaction::interpret_CreateContractDex()
       }
 
   } while(i < pkt_size);
-
-  for (std::vector<int64_t>::iterator itt = kyc_Ids.begin(); itt != kyc_Ids.end(); ++itt)
-  {
-      int64_t num = *itt;
-      PrintToLog("%s(): number inside vector: %d\n",__func__, num);
-  }
 
   if (!vecVersionBytes.empty()) {
     version = DecompressInteger(vecVersionBytes);
@@ -1470,13 +1459,17 @@ bool CMPTransaction::interpret_CreateOracleContract()
 
   } else return false;
 
-  // if (!vecNum.empty()) {
-  //   numerator = DecompressInteger(vecMarginRequirement);
-  // } else return false;
-  //
-  // if (!vecDen.empty()) {
-  //   denominator = DecompressInteger(vecMarginRequirement);
-  // } else return false;
+
+  do
+  {
+      std::vector<uint8_t> vecKyc = GetNextVarIntBytes(i);
+      if (!vecKyc.empty())
+      {
+          int64_t num = static_cast<int64_t>(DecompressInteger(vecKyc));
+          kyc_Ids.push_back(num);
+      }
+
+  } while(i < pkt_size);
 
 
   if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
@@ -3234,7 +3227,7 @@ int CMPTransaction::logicMath_ContractDexTrade()
   int result;
 
   struct FutureContractObject *pfuture = getFutureContractObject(name_traded);
-  id_contract = pfuture->fco_propertyId;
+  uint32_t contractId = pfuture->fco_propertyId;
 
   uint32_t expiration = pfuture->fco_blocks_until_expiration;
 
@@ -3247,8 +3240,8 @@ int CMPTransaction::logicMath_ContractDexTrade()
     return (PKT_ERROR_KYC -10);
   }
 
-  if(!t_tradelistdb->kycPropertyMatch(id_contract,kyc_id)){
-    PrintToLog("%s(): rejected: contract %d can't be traded with this kyc\n", __func__, property);
+  if(!t_tradelistdb->kycPropertyMatch(contractId,kyc_id)){
+    PrintToLog("%s(): rejected: contract %d can't be traded with this kyc\n", __func__, contractId);
     return (PKT_ERROR_KYC -20);
   }
 
@@ -3324,9 +3317,8 @@ int CMPTransaction::logicMath_ContractDexTrade()
   NodeRewardObj.SendNodeReward(sender);
 
   /*********************************************/
-  t_tradelistdb->recordNewTrade(txid, sender, id_contract, desired_property, block, tx_idx, 0);
-  int rc = ContractDex_ADD(sender, id_contract, amount, block, txid, tx_idx, effective_price, trading_action,0);
-
+  t_tradelistdb->recordNewTrade(txid, sender, contractId, desired_property, block, tx_idx, 0);
+  int rc = ContractDex_ADD(sender, contractId, amount, block, txid, tx_idx, effective_price, trading_action,0);
 
   return rc;
 }
@@ -4067,6 +4059,13 @@ int CMPTransaction::logicMath_CreateOracleContract()
   newSP.oracle_low = 0;
   newSP.oracle_close = 0;
 
+  for(std::vector<int64_t>::iterator it = kyc_Ids.begin(); it != kyc_Ids.end(); ++it)
+  {
+      const int64_t aux = *it;
+      newSP.kyc.push_back(aux);
+  }
+
+
   const uint32_t propertyId = _my_sps->putSP(newSP);
   assert(propertyId > 0);
 
@@ -4533,20 +4532,9 @@ int CMPTransaction::logicMath_Instant_Trade()
       assert(update_tally_map(sender, desired_property, -desired_value, CHANNEL_RESERVE));
 
       t_tradelistdb->recordNewInstantTrade(txid, sender, chnAddrs.first, property, amount_forsale, desired_property, desired_value, block, tx_idx);
-
-      // NOTE: require discount for address and tokens (to consider commits and withdrawals too)
-
+      
       // updating last exchange block
-      std::map<std::string,channel>::iterator it = channels_Map.find(sender);
-      channel& chn = it->second;
-
-      int difference = block - chn.last_exchange_block;
-
-      if (msc_debug_instant_trade) PrintToLog("expiry height after update: %d\n",chn.expiry_height);
-
-      // updating expiry_height
-      if (difference < dayblocks) chn.expiry_height += difference;
-
+      mastercore::updateLastExBlock(block, sender);
 
   } else {
 
@@ -4759,10 +4747,8 @@ int CMPTransaction::logicMath_Contract_Instant()
     return (PKT_ERROR_KYC -20);
   }
 
-
-  uint32_t colateralh = sp.collateral_currency;
   int64_t marginRe = static_cast<int64_t>(sp.margin_requirement);
-  int64_t nBalance = getMPbalance(sender, colateralh, CHANNEL_RESERVE);
+  int64_t nBalance = getMPbalance(sender, sp.collateral_currency, CHANNEL_RESERVE);
 
   arith_uint256 amountTR = (ConvertTo256(instant_amount)*ConvertTo256(marginRe))/ConvertTo256(ileverage);
   int64_t amountToReserve = ConvertTo64(amountTR);
@@ -4771,20 +4757,11 @@ int CMPTransaction::logicMath_Contract_Instant()
 
   if(msc_debug_contract_instant_trade) PrintToLog("%s: sender: %s, channel Address: %s\n", __func__, sender, chnAddrs.multisig);
 
-
-  //fees
-  if(!mastercore::ContInst_Fees(chnAddrs.first, chnAddrs.second, chnAddrs.multisig, amountToReserve, sp.prop_type, sp.collateral_currency))
-  {
-      PrintToLog("\n %s: no enogh money to pay fees\n", __func__);
-      return (PKT_ERROR_CHANNELS -18);
-  }
-
-
   if (amountToReserve > 0)
   {
-      assert(update_tally_map(sender, colateralh, -amountToReserve, CHANNEL_RESERVE));
-      assert(update_tally_map(chnAddrs.first, colateralh, ConvertTo64(amountTR), CONTRACTDEX_MARGIN));
-      assert(update_tally_map(chnAddrs.second, colateralh, ConvertTo64(amountTR), CONTRACTDEX_MARGIN));
+      assert(update_tally_map(sender, sp.collateral_currency, -amountToReserve, CHANNEL_RESERVE));
+      assert(update_tally_map(chnAddrs.first, sp.collateral_currency, ConvertTo64(amountTR), CONTRACTDEX_MARGIN));
+      assert(update_tally_map(chnAddrs.second, sp.collateral_currency, ConvertTo64(amountTR), CONTRACTDEX_MARGIN));
   }
 
 
@@ -4799,23 +4776,10 @@ int CMPTransaction::logicMath_Contract_Instant()
    // NodeRewardObj.SendNodeReward(sender);
 
    /********************************************************/
-
    // updating last exchange block
-   std::map<std::string,channel>::iterator it = channels_Map.find(sender);
-   channel& chn = it->second;
+   mastercore::updateLastExBlock(block, sender);
 
-   int difference = block - chn.last_exchange_block;
-
-   if(msc_debug_contract_instant_trade) PrintToLog("%s: expiry height after update: %d\n",__func__, chn.expiry_height);
-
-   if (difference < dayblocks)
-   {
-       // updating expiry_height
-       chn.expiry_height += difference;
-
-   }
-
-   mastercore::Instant_x_Trade(txid, itrading_action, chnAddrs.multisig, chnAddrs.first, chnAddrs.second, property, instant_amount, price, block, tx_idx);
+   mastercore::Instant_x_Trade(txid, itrading_action, chnAddrs.multisig, chnAddrs.first, chnAddrs.second, property, instant_amount, price, sp.collateral_currency, sp.prop_type, block, tx_idx);
 
    // t_tradelistdb->recordNewInstContTrade(txid, receiver, sender, propertyId, amount_commited, block, tx_idx);
    // NOTE: add discount from channel of fees + amountToReserve
@@ -4939,7 +4903,19 @@ int CMPTransaction::logicMath_Attestation()
   int kyc_id;
 
   if(!t_tradelistdb->checkKYCRegister(sender,kyc_id))
+  {
       kyc_id = KYC_0;
+
+      if (sender != receiver)
+      {
+          PrintToLog("%s(): rejected: sender (%s) can't assign attestation to other address\n",
+              __func__,
+              sender);
+          return (PKT_ERROR_METADEX -22);
+      }
+
+  }
+
 
   PrintToLog("%s(): kyc_id: %d\n",__func__,kyc_id);
 

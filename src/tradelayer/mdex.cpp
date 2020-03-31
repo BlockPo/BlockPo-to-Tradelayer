@@ -43,6 +43,7 @@ md_PropertiesMap mastercore::metadex;
 chn_PropertiesMap mastercore::chndex;
 
 extern volatile uint64_t marketPrice;
+extern volatile int64_t globalVolumeALL_LTC;
 extern volatile int idx_q;
 extern int64_t factorE;
 extern uint64_t marketP[NPTYPES];
@@ -1038,12 +1039,17 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
 	}
 
   /**
-   * Fees calculations for maker and taker.
-   *
+   * Adding LTC volume traded in contracts.
    *
    */
-    // NOTE: Check this function later (got issues!)
-    mastercore::ContractDex_Fees(pnew->getAddr(),pold->getAddr(), nCouldBuy, property_traded);
+  mastercore::ContractDex_ADD_LTCVolume(nCouldBuy, property_traded);
+
+  /**
+   * Fees calculations for maker and taker.
+   *
+   */
+  mastercore::ContractDex_Fees(pnew->getAddr(),pold->getAddr(), nCouldBuy, property_traded);
+
 
     if(msc_debug_x_trade_bidirectional)
     {
@@ -1187,6 +1193,51 @@ bool mastercore::ContractDex_Fees(std::string addressTaker,std::string addressMa
 
     //sum check
     assert(takerFee == makerFee + 3*cacheFee); // 2.5% = 1% + 3*0.5%
+
+    return true;
+
+}
+
+bool mastercore::ContractDex_ADD_LTCVolume(int64_t nCouldBuy, uint32_t contractId)
+{
+    //trade amount * contract notional * the LTC price
+    CMPSPInfo::Entry sp;
+    if (!_my_sps->getSP(contractId, sp)){
+        if (msc_debug_add_contract_ltc_vol) PrintToLog("%s(): Contract (id: %d) not found in database \n",__func__, contractId);
+        return false;
+    }
+
+    int64_t notional = static_cast<int64_t>(sp.notional_size);
+    int64_t collateral = static_cast<int64_t>(sp.collateral_currency);
+
+    // get token Price in LTC
+    int64_t tokenPrice = 0;
+
+    auto it = market_priceMap.find(static_cast<uint32_t>(LTC));
+
+    // market_priceMap[LTC][propertyId]
+    if (it != market_priceMap.end())
+    {
+        std::map<uint32_t, int64_t> auxMap = it->second;
+        auto itt = auxMap.find(collateral);
+        if(itt != auxMap.end())
+            tokenPrice = itt->second;
+        else {
+            if(msc_debug_add_contract_ltc_vol) PrintToLog("%s(): price for collateral (id: %d) in DEx not found \n",__func__, collateral);
+            return false;
+        }
+
+    } else{
+        if (msc_debug_add_contract_ltc_vol) PrintToLog("%s(): DEx without trade history \n",__func__);
+        return false;
+    }
+
+    if (msc_debug_add_contract_ltc_vol) PrintToLog("%s(): nCouldBuy: %d, notional: %d, tokenPrice: %d \n",__func__, nCouldBuy, notional, tokenPrice);
+    arith_uint256 globalVolume = (ConvertTo256(nCouldBuy) * ConvertTo256(notional) * ConvertTo256(tokenPrice)) / (ConvertTo256(COIN) * ConvertTo256(COIN));
+
+    globalVolumeALL_LTC = ConvertTo64(globalVolume);
+
+    if (msc_debug_add_contract_ltc_vol) PrintToLog("%s(): volume added: %d \n",__func__, ConvertTo64(globalVolume));
 
     return true;
 
@@ -2471,7 +2522,6 @@ bool mastercore::MetaDEx_Search_ALL(uint64_t& amount, uint32_t propertyOffered)
 
         for (md_PricesMap::iterator itt = prices.begin(); itt != prices.end(); ++itt)
         {
-            const rational_t price = itt->first;
             md_Set &indexes = itt->second;
 
             for (md_Set::iterator it = indexes.begin(); it != indexes.end();)
@@ -2509,7 +2559,7 @@ bool mastercore::MetaDEx_Search_ALL(uint64_t& amount, uint32_t propertyOffered)
 
                 if (nCouldBuy == 0)
                 {
-                    PrintToLog("-- buyer has not enough tokens for sale to purchase one unit!\n");
+                    if (msc_debug_search_all) PrintToLog("-- buyer has not enough tokens for sale to purchase one unit!\n");
                     ++it;
                     continue;
                 }
@@ -2528,7 +2578,7 @@ bool mastercore::MetaDEx_Search_ALL(uint64_t& amount, uint32_t propertyOffered)
                 const int64_t seller_amountLeft = it->getAmountForSale() - nCouldBuy;
 
                 // postconditions
-                PrintToLog("%s(): amountForSale : %d, nCouldBuy : %d, seller_amountLeft: %d\n",__func__, it->getAmountForSale(), nCouldBuy, seller_amountLeft);
+                if (msc_debug_search_all) PrintToLog("%s(): amountForSale : %d, nCouldBuy : %d, seller_amountLeft: %d\n",__func__, it->getAmountForSale(), nCouldBuy, seller_amountLeft);
                 assert( it->getAmountForSale() == nCouldBuy + seller_amountLeft);
 
                 // discounting the amount
@@ -2543,7 +2593,7 @@ bool mastercore::MetaDEx_Search_ALL(uint64_t& amount, uint32_t propertyOffered)
                 // insert the updated one in place of the old
                 if (0 < seller_replacement.getAmountRemaining())
                 {
-                    PrintToLog("++ inserting seller_replacement: %s\n", seller_replacement.ToString());
+                    if (msc_debug_search_all) PrintToLog("++ inserting seller_replacement: %s\n", seller_replacement.ToString());
                     indexes.insert(seller_replacement);
                 }
 

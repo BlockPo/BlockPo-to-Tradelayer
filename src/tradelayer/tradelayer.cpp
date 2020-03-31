@@ -645,6 +645,7 @@ void creatingVestingTokens(int block)
 
    // NOTE: just for testing : putting ALLS into admin address
    assert(update_tally_map(getAdminAddress(), ALL, totalVesting, BALANCE));
+
 }
 
 /**
@@ -1025,6 +1026,7 @@ static bool HandleDExPayments(const CTransaction& tx, int nBlock, const std::str
     uint64_t ltcsreceived = ConvertTo64(ltcsreceived_256t)/COIN;
     globalVolumeALL_LTC += ltcsreceived;
     const int64_t globalVolumeALL_LTCh = globalVolumeALL_LTC;
+
 
     if (msc_debug_handle_dex_payment) PrintToLog("%s(): ltcsreceived: %d, globalVolumeALL_LTC: %d \n",__func__,ltcsreceived, globalVolumeALL_LTCh);
 
@@ -5959,7 +5961,7 @@ std::string updateStatus(int64_t oldPos, int64_t newPos)
         return "None";
 }
 
-bool mastercore::ContInst_Fees(const std::string& firstAddr,const std::string& secondAddr,const std::string& channelAddr, int64_t amountToReserve,uint16_t type, uint32_t colateral)
+bool mastercore::ContInst_Fees(const std::string& firstAddr,const std::string& secondAddr,const std::string& channelAddr, int64_t amountToReserve, uint16_t type, uint32_t colateral)
 {
     arith_uint256 fee;
 
@@ -5983,31 +5985,9 @@ bool mastercore::ContInst_Fees(const std::string& firstAddr,const std::string& s
 
     int64_t uFee = ConvertTo64(fee);
 
-    // checking if each address can pay the totalAmount + uFee:
+    int64_t totalAmount = amountToReserve - uFee;
 
-    int64_t totalAmount = uFee + amountToReserve;
-    int64_t firstRem = static_cast<int64_t>(t_tradelistdb->getRemaining(channelAddr, firstAddr, colateral));
-
-
-    if (firstRem < totalAmount)
-    {
-
-            if(msc_debug_contract_inst_fee) PrintToLog("%s:address %s doesn't have enough money %d\n", __func__, firstAddr);
-
-            return false;
-    }
-
-
-    int64_t secondRem = static_cast<int64_t>(t_tradelistdb->getRemaining(channelAddr, secondAddr, colateral));
-
-    if (secondRem < totalAmount)
-    {
-            if(msc_debug_contract_inst_fee) PrintToLog("%s:address %s doesn't have enough money %d\n", __func__, secondAddr);
-            return false;
-    }
-
-
-    if(msc_debug_contract_inst_fee) PrintToLog("%s: uFee: %d\n",__func__,uFee);
+    if(msc_debug_contract_inst_fee) PrintToLog("%s: uFee: %d, amountToReserve: %d, totalAmount : %d\n",__func__,uFee, amountToReserve, totalAmount);
 
     update_tally_map(channelAddr, colateral, -2 * uFee, CHANNEL_RESERVE);
 
@@ -6022,7 +6002,7 @@ bool mastercore::ContInst_Fees(const std::string& firstAddr,const std::string& s
 
 
 
-bool mastercore::Instant_x_Trade(const uint256& txid, uint8_t tradingAction, std::string& channelAddr, std::string& firstAddr, std::string& secondAddr, uint32_t property, int64_t amount_forsale, uint64_t price, int block, int tx_idx)
+bool mastercore::Instant_x_Trade(const uint256& txid, uint8_t tradingAction, std::string& channelAddr, std::string& firstAddr, std::string& secondAddr, uint32_t property, int64_t amount_forsale, uint64_t price, uint32_t collateral, uint16_t type, int block, int tx_idx)
 {
 
     int64_t firstPoss = getMPbalance(firstAddr, property, POSITIVE_BALANCE);
@@ -6074,77 +6054,82 @@ bool mastercore::Instant_x_Trade(const uint256& txid, uint8_t tradingAction, std
             assert(update_tally_map(secondAddr, property, -secondNeg, NEGATIVE_BALANCE));
     }
 
-  std::string Status_s0 = "EmptyStr", Status_s1 = "EmptyStr", Status_s2 = "EmptyStr", Status_s3 = "EmptyStr";
-  std::string Status_b0 = "EmptyStr", Status_b1 = "EmptyStr", Status_b2 = "EmptyStr", Status_b3 = "EmptyStr";
+    std::string Status_s0 = "EmptyStr", Status_s1 = "EmptyStr", Status_s2 = "EmptyStr", Status_s3 = "EmptyStr";
+    std::string Status_b0 = "EmptyStr", Status_b1 = "EmptyStr", Status_b2 = "EmptyStr", Status_b3 = "EmptyStr";
 
-  // old positions
-  int64_t oldFrs = setPosition(firstPoss,firstNeg);
-  int64_t oldSec = setPosition(secondPoss,secondNeg);
+    // old positions
+    int64_t oldFrs = setPosition(firstPoss,firstNeg);
+    int64_t oldSec = setPosition(secondPoss,secondNeg);
 
-  std::string Status_maker0 = updateStatus(oldFrs,first_p);
-  std::string Status_taker0 = updateStatus(oldSec,second_p);
+    std::string Status_maker0 = updateStatus(oldFrs,first_p);
+    std::string Status_taker0 = updateStatus(oldSec,second_p);
 
-  if(msc_debug_instant_x_trade)
-  {
-      PrintToLog("%s: old first position: %d, old second position: %d \n", __func__, oldFrs, oldSec);
-      PrintToLog("%s: new first position: %d, new second position: %d \n", __func__, first_p, second_p);
-      PrintToLog("%s: Status_marker0: %s, Status_taker0: %s \n",__func__,Status_maker0, Status_taker0);
-      PrintToLog("%s: amount_forsale: %d\n", __func__, amount_forsale);
-  }
+    if(msc_debug_instant_x_trade)
+    {
+        PrintToLog("%s: old first position: %d, old second position: %d \n", __func__, oldFrs, oldSec);
+        PrintToLog("%s: new first position: %d, new second position: %d \n", __func__, first_p, second_p);
+        PrintToLog("%s: Status_marker0: %s, Status_taker0: %s \n",__func__,Status_maker0, Status_taker0);
+        PrintToLog("%s: amount_forsale: %d\n", __func__, amount_forsale);
+    }
 
-  uint64_t amountTraded ,newPosMaker ,newPosTaker;
+    uint64_t amountTraded ,newPosMaker ,newPosTaker;
 
-  (amount_forsale < 0) ? amountTraded = static_cast<uint64_t>(-amount_forsale) : amountTraded = static_cast<uint64_t>(amount_forsale);
+    (amount_forsale < 0) ? amountTraded = static_cast<uint64_t>(-amount_forsale) : amountTraded = static_cast<uint64_t>(amount_forsale);
 
-  (first_p < 0) ? newPosMaker = static_cast<uint64_t>(-first_p) : newPosMaker = static_cast<uint64_t>(first_p);
+    (first_p < 0) ? newPosMaker = static_cast<uint64_t>(-first_p) : newPosMaker = static_cast<uint64_t>(first_p);
 
-  (second_p < 0) ? newPosTaker = static_cast<uint64_t>(-second_p) : newPosTaker = static_cast<uint64_t>(second_p);
+    (second_p < 0) ? newPosTaker = static_cast<uint64_t>(-second_p) : newPosTaker = static_cast<uint64_t>(second_p);
 
-  if(msc_debug_instant_x_trade)
-  {
-      PrintToLog("%s: newPosMaker: %d\n", __func__, newPosMaker);
-      PrintToLog("%s: newPosTaker: %d\n", __func__, newPosTaker);
-      PrintToLog("%s: amountTraded: %d\n", __func__, amountTraded);
-  }
+    if(msc_debug_instant_x_trade)
+    {
+        PrintToLog("%s: newPosMaker: %d\n", __func__, newPosMaker);
+        PrintToLog("%s: newPosTaker: %d\n", __func__, newPosTaker);
+        PrintToLog("%s: amountTraded: %d\n", __func__, amountTraded);
+    }
 
-  // (const uint256 txid1, const uint256 txid2, string address1, string address2, uint64_t effective_price, uint64_t amount_maker, uint64_t amount_taker, int blockNum1, int blockNum2, uint32_t property_traded, string tradeStatus, int64_t lives_s0, int64_t lives_s1, int64_t lives_s2, int64_t lives_s3, int64_t lives_b0, int64_t lives_b1, int64_t lives_b2, int64_t lives_b3, string s_maker0, string s_taker0, string s_maker1, string s_taker1, string s_maker2, string s_taker2, string s_maker3, string //s_taker3, int64_t nCouldBuy0, int64_t nCouldBuy1, int64_t nCouldBuy2, int64_t nCouldBuy3,uint64_t amountpnew, uint64_t amountpold)
+    /**
+    * Adding LTC volume traded in contracts.
+    *
+    */
+    mastercore::ContractDex_ADD_LTCVolume(amount_forsale, property);
 
+    mastercore::ContInst_Fees(firstAddr, secondAddr, channelAddr, amountTraded, type, collateral);
 
-  t_tradelistdb->recordMatchedTrade(txid,
-         txid,
-         firstAddr,
-         secondAddr,
-         price,
-         amountTraded,
-         amountTraded,
-         block,
-         block,
-         property,
-         "Matched",
-         newPosMaker,
-         0,
-         0,
-         0,
-         newPosTaker,
-         0,
-         0,
-         0,
-         Status_maker0,
-         Status_taker0,
-         "EmptyStr",
-         "EmptyStr",
-         "EmptyStr",
-         "EmptyStr",
-         "EmptyStr",
-         "EmptyStr",
-         amountTraded,
-         0,
-         0,
-         0,
-         amountTraded,
-         amountTraded);
+    t_tradelistdb->recordMatchedTrade(txid,
+           txid,
+           firstAddr,
+           secondAddr,
+           price,
+           amountTraded,
+           amountTraded,
+           block,
+           block,
+           property,
+           "Matched",
+           newPosMaker,
+           0,
+           0,
+           0,
+           newPosTaker,
+           0,
+           0,
+           0,
+           Status_maker0,
+           Status_taker0,
+           "EmptyStr",
+           "EmptyStr",
+           "EmptyStr",
+           "EmptyStr",
+           "EmptyStr",
+           "EmptyStr",
+           amountTraded,
+           0,
+           0,
+           0,
+           amountTraded,
+           amountTraded);
 
-  return true;
+    return true;
 }
 
 int64_t mastercore::LtcVolumen(uint32_t propertyId, int fblock, int sblock)
@@ -6299,6 +6284,44 @@ bool mastercore::feeCacheBuy()
     return result;
 
 }
+
+/**
+ *  Updating last exchange block
+ */
+bool mastercore::updateLastExBlock(int nBlock, std::string sender)
+{
+    bool result = false;
+
+    std::map<std::string,channel>::iterator it = channels_Map.find(sender);
+
+    if (it == channels_Map.end())
+    {
+        if(msc_debug_update_last_block) PrintToLog("%s(): trade channel not found!; (channel: %s)\n",__func__, sender);
+        return result;
+
+    }
+
+    channel& chn = it->second;
+
+    int difference = nBlock - chn.last_exchange_block;
+
+    if (difference < 0)
+    {
+        if(msc_debug_update_last_block) PrintToLog("%s(): difference is negative!\n",__func__);
+        return result;
+    }
+
+    if(msc_debug_update_last_block) PrintToLog("%s: expiry height after update: %d\n",__func__, chn.expiry_height);
+
+    if (difference < dayblocks)
+    {
+        // updating expiry_height
+        chn.expiry_height += difference;
+    }
+
+    return result;
+}
+
 
 /**
  * @return The marker for class D transactions.
