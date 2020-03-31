@@ -93,6 +93,7 @@ extern bool msc_debug_vesting;
 extern bool msc_debug_oracle_twap;
 extern bool msc_debug_search_all;
 extern bool msc_debug_add_contract_ltc_vol;
+extern bool msc_debug_update_last_block;
 /* When we switch to C++11, this can be switched to variadic templates instead
  * of this macro-based construction (see tinyformat.h).
  */

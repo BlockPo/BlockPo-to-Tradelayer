@@ -4532,20 +4532,9 @@ int CMPTransaction::logicMath_Instant_Trade()
       assert(update_tally_map(sender, desired_property, -desired_value, CHANNEL_RESERVE));
 
       t_tradelistdb->recordNewInstantTrade(txid, sender, chnAddrs.first, property, amount_forsale, desired_property, desired_value, block, tx_idx);
-
-      // NOTE: require discount for address and tokens (to consider commits and withdrawals too)
-
+      
       // updating last exchange block
-      std::map<std::string,channel>::iterator it = channels_Map.find(sender);
-      channel& chn = it->second;
-
-      int difference = block - chn.last_exchange_block;
-
-      if (msc_debug_instant_trade) PrintToLog("expiry height after update: %d\n",chn.expiry_height);
-
-      // updating expiry_height
-      if (difference < dayblocks) chn.expiry_height += difference;
-
+      mastercore::updateLastExBlock(block, sender);
 
   } else {
 
@@ -4758,10 +4747,8 @@ int CMPTransaction::logicMath_Contract_Instant()
     return (PKT_ERROR_KYC -20);
   }
 
-
-  uint32_t colateralh = sp.collateral_currency;
   int64_t marginRe = static_cast<int64_t>(sp.margin_requirement);
-  int64_t nBalance = getMPbalance(sender, colateralh, CHANNEL_RESERVE);
+  int64_t nBalance = getMPbalance(sender, sp.collateral_currency, CHANNEL_RESERVE);
 
   arith_uint256 amountTR = (ConvertTo256(instant_amount)*ConvertTo256(marginRe))/ConvertTo256(ileverage);
   int64_t amountToReserve = ConvertTo64(amountTR);
@@ -4770,20 +4757,11 @@ int CMPTransaction::logicMath_Contract_Instant()
 
   if(msc_debug_contract_instant_trade) PrintToLog("%s: sender: %s, channel Address: %s\n", __func__, sender, chnAddrs.multisig);
 
-
-  //fees
-  if(!mastercore::ContInst_Fees(chnAddrs.first, chnAddrs.second, chnAddrs.multisig, amountToReserve, sp.prop_type, sp.collateral_currency))
-  {
-      PrintToLog("\n %s: no enogh money to pay fees\n", __func__);
-      return (PKT_ERROR_CHANNELS -18);
-  }
-
-
   if (amountToReserve > 0)
   {
-      assert(update_tally_map(sender, colateralh, -amountToReserve, CHANNEL_RESERVE));
-      assert(update_tally_map(chnAddrs.first, colateralh, ConvertTo64(amountTR), CONTRACTDEX_MARGIN));
-      assert(update_tally_map(chnAddrs.second, colateralh, ConvertTo64(amountTR), CONTRACTDEX_MARGIN));
+      assert(update_tally_map(sender, sp.collateral_currency, -amountToReserve, CHANNEL_RESERVE));
+      assert(update_tally_map(chnAddrs.first, sp.collateral_currency, ConvertTo64(amountTR), CONTRACTDEX_MARGIN));
+      assert(update_tally_map(chnAddrs.second, sp.collateral_currency, ConvertTo64(amountTR), CONTRACTDEX_MARGIN));
   }
 
 
@@ -4798,23 +4776,10 @@ int CMPTransaction::logicMath_Contract_Instant()
    // NodeRewardObj.SendNodeReward(sender);
 
    /********************************************************/
-
    // updating last exchange block
-   std::map<std::string,channel>::iterator it = channels_Map.find(sender);
-   channel& chn = it->second;
+   mastercore::updateLastExBlock(block, sender);
 
-   int difference = block - chn.last_exchange_block;
-
-   if(msc_debug_contract_instant_trade) PrintToLog("%s: expiry height after update: %d\n",__func__, chn.expiry_height);
-
-   if (difference < dayblocks)
-   {
-       // updating expiry_height
-       chn.expiry_height += difference;
-
-   }
-
-   mastercore::Instant_x_Trade(txid, itrading_action, chnAddrs.multisig, chnAddrs.first, chnAddrs.second, property, instant_amount, price, block, tx_idx);
+   mastercore::Instant_x_Trade(txid, itrading_action, chnAddrs.multisig, chnAddrs.first, chnAddrs.second, property, instant_amount, price, sp.collateral_currency, sp.prop_type, block, tx_idx);
 
    // t_tradelistdb->recordNewInstContTrade(txid, receiver, sender, propertyId, amount_commited, block, tx_idx);
    // NOTE: add discount from channel of fees + amountToReserve

@@ -547,8 +547,7 @@ namespace mastercore
   bool closeChannels(int Block);
 
   // x_Trade function for contracts on instant trade
-  bool Instant_x_Trade(const uint256& txid, uint8_t tradingAction, std::string& channelAddr, std::string& firstAddr, std::string& secondAddr, uint32_t property, int64_t amount_forsale, uint64_t price, int block, int tx_idx);
-
+  bool Instant_x_Trade(const uint256& txid, uint8_t tradingAction, std::string& channelAddr, std::string& firstAddr, std::string& secondAddr, uint32_t property, int64_t amount_forsale, uint64_t price, uint32_t collateral, uint16_t type, int block, int tx_idx);
   //Fees for contract instant trades
   bool ContInst_Fees(const std::string& firstAddr,const std::string& secondAddr,const std::string& channelAddr, int64_t amountToReserve,uint16_t type, uint32_t colateral);
 
@@ -567,6 +566,9 @@ namespace mastercore
 
   // fee cache buying Alls in mDEx
   bool feeCacheBuy();
+
+  // updating the expiration block for channels
+  bool updateLastExBlock(int nBlock, std::string sender);
 
 }
 
