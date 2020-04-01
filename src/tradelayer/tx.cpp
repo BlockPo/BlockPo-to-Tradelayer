@@ -1011,7 +1011,6 @@ bool CMPTransaction::interpret_CreateContractDex()
     type = DecompressInteger(vecTypeBytes);
   } else return false;
 
-
   if (!vecNum.empty()) {
     numerator = DecompressInteger(vecNum);
   } else return false;
@@ -1044,8 +1043,8 @@ bool CMPTransaction::interpret_CreateContractDex()
 
   (blocks_until_expiration == 0) ? prop_type = ALL_PROPERTY_TYPE_PERPETUAL_CONTRACTS : prop_type = ALL_PROPERTY_TYPE_NATIVE_CONTRACT;
 
-  // if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
-  // {
+  if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+  {
       PrintToLog("\t version: %d\n", version);
       PrintToLog("\t messageType: %d\n",type);
       PrintToLog("\t numerator: %d\n", numerator);
@@ -1057,7 +1056,7 @@ bool CMPTransaction::interpret_CreateContractDex()
       PrintToLog("\t name: %s\n", name);
       PrintToLog("\t prop_type: %d\n", prop_type);
       PrintToLog("\t inverse quoted: %d\n", inverse_quoted);
-  // }
+  }
 
   return true;
 }
@@ -1065,69 +1064,68 @@ bool CMPTransaction::interpret_CreateContractDex()
 /**Tx 29 */
 bool CMPTransaction::interpret_ContractDexTrade()
 {
+    int i = 0;
+    std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
 
-  int i = 0;
-  std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
-  std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+    const char* p = i + (char*) &pkt;
+    std::vector<std::string> spstr;
+    for (int j = 0; j < 1; j++)
+    {
+        spstr.push_back(std::string(p));
+        p += spstr.back().size() + 1;
+    }
 
-  // PrintToLog("i after two elements: %d\n",i);
-  const char* p = i + (char*) &pkt;
-  std::vector<std::string> spstr;
-  for (int j = 0; j < 1; j++) {
-    spstr.push_back(std::string(p));
-    p += spstr.back().size() + 1;
-  }
+    if (isOverrun(p))
+    {
+        PrintToLog("%s(): rejected: malformed string value(s)\n", __func__);
+        return false;
+    }
 
-  if (isOverrun(p)) {
-    PrintToLog("%s(): rejected: malformed string value(s)\n", __func__);
-    return false;
-  }
+    int j = 0;
+    memcpy(name_traded, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(name_traded)-1)); j++;
+    i = i + strlen(name_traded) + 1;
 
-  int j = 0;
-  memcpy(name_traded, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(name_traded)-1)); j++;
-  i = i + strlen(name_traded) + 1;
+    std::vector<uint8_t> vecAmountForSaleBytes = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecEffectivePriceBytes = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecTradingActionBytes = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecLeverage = GetNextVarIntBytes(i);
 
-  std::vector<uint8_t> vecAmountForSaleBytes = GetNextVarIntBytes(i);
-  std::vector<uint8_t> vecEffectivePriceBytes = GetNextVarIntBytes(i);
-  std::vector<uint8_t> vecTradingActionBytes = GetNextVarIntBytes(i);
-  std::vector<uint8_t> vecLeverage = GetNextVarIntBytes(i);
+    if (!vecTypeBytes.empty()) {
+      type = DecompressInteger(vecTypeBytes);
+    } else return false;
 
-  if (!vecTypeBytes.empty()) {
-    type = DecompressInteger(vecTypeBytes);
-  } else return false;
+    if (!vecVersionBytes.empty()) {
+      version = DecompressInteger(vecVersionBytes);
+    } else return false;
 
-  if (!vecVersionBytes.empty()) {
-    version = DecompressInteger(vecVersionBytes);
-  } else return false;
+    if (!vecAmountForSaleBytes.empty()) {
+      amount = DecompressInteger(vecAmountForSaleBytes);
+    } else return false;
 
-  if (!vecAmountForSaleBytes.empty()) {
-    amount = DecompressInteger(vecAmountForSaleBytes);
-  } else return false;
+    if (!vecEffectivePriceBytes.empty()) {
+      effective_price = DecompressInteger(vecEffectivePriceBytes);
+    } else return false;
 
-  if (!vecEffectivePriceBytes.empty()) {
-    effective_price = DecompressInteger(vecEffectivePriceBytes);
-  } else return false;
+    if (!vecTradingActionBytes.empty()) {
+      trading_action = DecompressInteger(vecTradingActionBytes);
+    } else return false;
 
-  if (!vecTradingActionBytes.empty()) {
-    trading_action = DecompressInteger(vecTradingActionBytes);
-  } else return false;
+    if (!vecLeverage.empty()) {
+      leverage = DecompressInteger(vecLeverage);
+    } else return false;
 
-  if (!vecLeverage.empty()) {
-    leverage = DecompressInteger(vecLeverage);
-  } else return false;
+    if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+    {
+        PrintToLog("\t leverage: %d\n", leverage);
+        PrintToLog("\t messageType: %d\n",type);
+        PrintToLog("\t contractName: %s\n", name_traded);
+        PrintToLog("\t amount of contracts : %d\n", amount);
+        PrintToLog("\t effective price : %d\n", effective_price);
+        PrintToLog("\t trading action : %d\n", trading_action);
+     }
 
-  // if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
-  // {
-      PrintToLog("\t leverage: %d\n", leverage);
-      PrintToLog("\t messageType: %d\n",type);
-      PrintToLog("\t contractName: %s\n", name_traded);
-      PrintToLog("\t amount of contracts : %d\n", amount);
-      PrintToLog("\t effective price : %d\n", effective_price);
-      PrintToLog("\t trading action : %d\n", trading_action);
-
-  // }
-
-  return true;
+     return true;
 }
 
 /** Tx 32 */
@@ -1155,12 +1153,12 @@ bool CMPTransaction::interpret_ContractDexCancelEcosystem()
     contractId = DecompressInteger(vecContractIdBytes);
   } else return false;
 
-  // if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
-  // {
+  if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+  {
      PrintToLog("\t version: %d\n", version);
      PrintToLog("\t messageType: %d\n",type);
      PrintToLog("\t contractId: %d\n", contractId);
-  // }
+  }
 
   return true;
 }
@@ -1476,8 +1474,6 @@ bool CMPTransaction::interpret_CreateOracleContract()
   {
       PrintToLog("\t version: %d\n", version);
       PrintToLog("\t messageType: %d\n",type);
-      // PrintToLog("\t numerator: %d\n", numerator);
-      // PrintToLog("\t denominator: %d\n", denominator);
       PrintToLog("\t blocks until expiration : %d\n", blocks_until_expiration);
       PrintToLog("\t notional size : %d\n", notional_size);
       PrintToLog("\t collateral currency: %d\n", collateral_currency);
@@ -1938,13 +1934,13 @@ bool CMPTransaction::interpret_New_Id_Registration()
   i = i + strlen(website) + strlen(company_name) + 2;
 
 
-  // if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
-  // {
+  if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+  {
       PrintToLog("\t address: %s\n", sender);
       PrintToLog("\t website: %s\n", website);
       PrintToLog("\t company name: %s\n", company_name);
 
-  // }
+  }
 
   return true;
 }
@@ -2005,8 +2001,7 @@ bool CMPTransaction::interpret_Attestation()
   memcpy(hash, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(hash)-1)); j++;
   i = i + strlen(hash) + 1;
 
-  // if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
-  if(true)
+  if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
   {
       PrintToLog("%s(): hash: %s\n",__func__, hash);
       PrintToLog("\t sender: %s\n", sender);
@@ -2693,14 +2688,6 @@ int CMPTransaction::logicMath_CreatePropertyManaged()
 
     PrintToLog("CREATED MANUAL PROPERTY id: %d admin: %s\n", propertyId, sender);
 
-    CMPSPInfo::Entry sp;
-    _my_sps->getSP(propertyId,sp);
-
-    // for(std::vector<int>::iterator it = (sp.kyc).begin(); it != (sp.kyc).end(); ++it)
-    // {
-    //     PrintToLog("%s(): kyc inside: %d\n",__func__,*(it));
-    // }
-
     return 0;
 }
 
@@ -3158,18 +3145,6 @@ int CMPTransaction::logicMath_CreateContractDex()
     return (PKT_ERROR_SP -37);
   }
 
-  // PrintToLog("type of denominator: %d\n",denominator);
-
-  // if (denominator != TL_dUSD && denominator != TL_dEUR && denominator!= TL_dYEN && denominator != TL_ALL && denominator != TL_sLTC && denominator!= TL_LTC) {
-  //   PrintToLog("rejected: denominator invalid\n");
-  //   return (PKT_ERROR_SP -37);
-  // }
-
-  // if (numerator != TL_ALL && numerator != TL_sLTC && numerator != TL_LTC) {
-  //   PrintToLog("rejected: denominator invalid\n");
-  //   return (PKT_ERROR_SP -37);
-  // }
-
   // -----------------------------------------------
 
   CMPSPInfo::Entry newSP;
@@ -3210,21 +3185,8 @@ int CMPTransaction::logicMath_CreateContractDex()
 
 int CMPTransaction::logicMath_ContractDexTrade()
 {
-  PrintToLog("%s(): inside functionnn\n",__func__);
-  uint256 blockHash;
-  {
-    LOCK(cs_main);
 
-    CBlockIndex* pindex = chainActive[block];
-    if (pindex == NULL)
-    {
-	      PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
-	      return (PKT_ERROR_SP -20);
-    }
-    blockHash = pindex->GetBlockHash();
-  }
-
-  int result;
+  int result = 0;
 
   struct FutureContractObject *pfuture = getFutureContractObject(name_traded);
   uint32_t contractId = pfuture->fco_propertyId;
@@ -3244,8 +3206,6 @@ int CMPTransaction::logicMath_ContractDexTrade()
     PrintToLog("%s(): rejected: contract %d can't be traded with this kyc\n", __func__, contractId);
     return (PKT_ERROR_KYC -20);
   }
-
-
 
   PrintToLog("%s(): fco_init_block: %d; fco_blocks_until_expiration: %d; actual block: %d\n",__func__,pfuture->fco_init_block,pfuture->fco_blocks_until_expiration,block);
 
@@ -3906,90 +3866,6 @@ int CMPTransaction::logicMath_AcceptOfferBTC()
   // the min fee spec requirement is checked in the following function
   int rc = DEx_acceptCreate(sender, receiver, propertyId, nValue, block, tx_fee_paid, &nNewValue);
 
-  // NOTE: LTC are now added on DEx_payment function!
-
-  /*
-  int64_t unitPrice = 0;
-  std::string sellerS = "", buyerS = "";
-
-  if (!rc)
-    {
-
-      std::string addressFilter = receiver;
-      int curBlock = GetHeight();
-      if (msc_debug_accept_offerbtc) PrintToLog("\ncurBlock = %d\n", curBlock);
-
-      LOCK(cs_tally);
-
-      for (OfferMap::iterator it = my_offers.begin(); it != my_offers.end(); ++it)
-	{
-	  const CMPOffer &offer = it->second;
-	  const std::string &sellCombo = it->first;
-	  std::string seller = sellCombo.substr(0, sellCombo.size() - 2);
-
-	  if (!addressFilter.empty() && seller != addressFilter) continue;
-
-	  std::string txid = offer.getHash().GetHex();
-	  uint32_t propertyId = offer.getProperty();
-	  int64_t sellOfferAmount = offer.getOfferAmountOriginal();
-	  int64_t sellBitcoinDesired = offer.getBTCDesiredOriginal();
-	  int64_t amountAvailable = getMPbalance(seller, propertyId, SELLOFFER_RESERVE);
-	  uint8_t option = offer.getOption();
-
-	  rational_t unitPriceFloat(sellBitcoinDesired, sellOfferAmount);
-	  if(msc_debug_accept_offerbtc) PrintToLog("\nunitPriceFloat = %s\n", xToString(unitPriceFloat));
-
-	  unitPrice = mastercore::StrToInt64(xToString(unitPriceFloat), true);
-	  if(msc_debug_accept_offerbtc) PrintToLog("\nunitPriceFloat int64_t= %s\n", FormatDivisibleMP(unitPrice));
-
-	  int64_t bitcoinDesired = calculateDesiredBTC(sellOfferAmount, sellBitcoinDesired, amountAvailable);
-	  int64_t sumLtcs = 0;
-
-	  for (AcceptMap::const_iterator ait = my_accepts.begin(); ait != my_accepts.end(); ++ait)
-	    {
-	      const CMPAccept& accept = ait->second;
-	      const std::string& acceptCombo = ait->first;
-
-	      if (accept.getHash() == offer.getHash())
-		{
-		  std::string buyer = acceptCombo.substr((acceptCombo.find("+") + 1), (acceptCombo.size()-(acceptCombo.find("+") + 1)));
-		  int64_t amountOffered = accept.getAcceptAmountRemaining();
-		  int64_t amountToPayInBTC = calculateDesiredBTC(accept.getOfferAmountOriginal(), accept.getBTCDesiredOriginal(), amountOffered);
-
-		  if (option == 1)
-		    {
-		      arith_uint256 ltcsreceived_256t = ConvertTo256(unitPrice)*ConvertTo256(amountOffered);
-		      uint64_t ltcsreceived = ConvertTo64(ltcsreceived_256t)/COIN;
-		      sumLtcs += ltcsreceived;
-		      sellerS = buyer;
-		      globalVolumeALL_LTC += ltcsreceived;
-		    }
-		  else if (option == 2)
-		    {
-		      buyerS = buyer;
-		      globalVolumeALL_LTC += amountToPayInBTC;
-		    }
-		}
-
-	      if (option == 2)
-		{
-		  sellerS = seller;
-		  globalVolumeALL_LTC += bitcoinDesired;
-		}
-	      else if (option == 1)
-		{
-		  buyerS = seller;
-		  globalVolumeALL_LTC += sellBitcoinDesired - sumLtcs;
-		}
-	    }
-	}
-    }
-
-  const int64_t globalVolumeALL_LTCh = globalVolumeALL_LTC;
-  if(msc_debug_accept_offerbtc) PrintToLog("\nglobalVolumeALL_LTC in DEx= %d\n", FormatDivisibleMP(globalVolumeALL_LTCh));
-  factorALLtoLTC = unitPrice;
-  */
-
   return rc;
 }
 
@@ -3997,28 +3873,27 @@ int CMPTransaction::logicMath_AcceptOfferBTC()
 /** Tx 103 */
 int CMPTransaction::logicMath_CreateOracleContract()
 {
-  uint256 blockHash;
-  {
-    LOCK(cs_main);
+    uint256 blockHash;
+    {
+        LOCK(cs_main);
+        CBlockIndex* pindex = chainActive[block];
 
-    CBlockIndex* pindex = chainActive[block];
+        if (pindex == NULL)
+        {
+            PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
+            return (PKT_ERROR_SP -20);
+        }
 
-      if (pindex == NULL)
-      {
-	        PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
-	        return (PKT_ERROR_SP -20);
-      }
+        blockHash = pindex->GetBlockHash();
+    }
 
-      blockHash = pindex->GetBlockHash();
-  }
+    if (sender == receiver)
+    {
+        PrintToLog("%s(): ERROR: oracle and backup addresses can't be the same!\n", __func__, block);
+        return (PKT_ERROR_ORACLE -10);
+    }
 
-  if (sender == receiver)
-  {
-      PrintToLog("%s(): ERROR: oracle and backup addresses can't be the same!\n", __func__, block);
-      return (PKT_ERROR_ORACLE -10);
-  }
-
-  if (!IsTransactionTypeAllowed(block, type, version)) {
+    if (!IsTransactionTypeAllowed(block, type, version)) {
       PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
           __func__,
           type,
@@ -4026,50 +3901,49 @@ int CMPTransaction::logicMath_CreateOracleContract()
           propertyId,
           block);
       return (PKT_ERROR_SP -22);
-  }
+    }
 
-  if ('\0' == name[0])
-  {
-      PrintToLog("%s(): rejected: property name must not be empty\n", __func__);
-      return (PKT_ERROR_SP -37);
-  }
+    if ('\0' == name[0])
+    {
+        PrintToLog("%s(): rejected: property name must not be empty\n", __func__);
+        return (PKT_ERROR_SP -37);
+    }
 
-  // -----------------------------------------------
+    // -----------------------------------------------
 
-  CMPSPInfo::Entry newSP;
-  newSP.txid = txid;
-  newSP.issuer = sender;
-  newSP.prop_type = prop_type;
-  newSP.subcategory.assign(subcategory);
-  newSP.name.assign(name);
-  newSP.fixed = false;
-  newSP.manual = true;
-  newSP.creation_block = blockHash;
-  newSP.update_block = blockHash;
-  newSP.blocks_until_expiration = blocks_until_expiration;
-  newSP.notional_size = notional_size;
-  newSP.collateral_currency = collateral_currency;
-  newSP.margin_requirement = margin_requirement;
-  newSP.init_block = block;
-  newSP.attribute_type = attribute_type;
-  newSP.backup_address = receiver;
-  newSP.expirated = false;
-  newSP.inverse_quoted = inverse_quoted;
-  newSP.oracle_high = 0;
-  newSP.oracle_low = 0;
-  newSP.oracle_close = 0;
+    CMPSPInfo::Entry newSP;
+    newSP.txid = txid;
+    newSP.issuer = sender;
+    newSP.prop_type = prop_type;
+    newSP.subcategory.assign(subcategory);
+    newSP.name.assign(name);
+    newSP.fixed = false;
+    newSP.manual = true;
+    newSP.creation_block = blockHash;
+    newSP.update_block = blockHash;
+    newSP.blocks_until_expiration = blocks_until_expiration;
+    newSP.notional_size = notional_size;
+    newSP.collateral_currency = collateral_currency;
+    newSP.margin_requirement = margin_requirement;
+    newSP.init_block = block;
+    newSP.attribute_type = attribute_type;
+    newSP.backup_address = receiver;
+    newSP.expirated = false;
+    newSP.inverse_quoted = inverse_quoted;
+    newSP.oracle_high = 0;
+    newSP.oracle_low = 0;
+    newSP.oracle_close = 0;
 
-  for(std::vector<int64_t>::iterator it = kyc_Ids.begin(); it != kyc_Ids.end(); ++it)
-  {
-      const int64_t aux = *it;
-      newSP.kyc.push_back(aux);
-  }
+    for(std::vector<int64_t>::iterator it = kyc_Ids.begin(); it != kyc_Ids.end(); ++it)
+    {
+        const int64_t aux = *it;
+        newSP.kyc.push_back(aux);
+    }
 
+    const uint32_t propertyId = _my_sps->putSP(newSP);
+    assert(propertyId > 0);
 
-  const uint32_t propertyId = _my_sps->putSP(newSP);
-  assert(propertyId > 0);
-
-  return 0;
+    return 0;
 }
 
 /** Tx 104 */
@@ -4078,11 +3952,12 @@ int CMPTransaction::logicMath_Change_OracleRef()
     uint256 blockHash;
     {
         LOCK(cs_main);
-
         CBlockIndex* pindex = chainActive[block];
-        if (pindex == NULL) {
+
+        if (pindex == NULL)
+        {
             PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
-            return (PKT_ERROR_TOKENS -20);
+            return (PKT_ERROR_SP -20);
         }
         blockHash = pindex->GetBlockHash();
     }
@@ -4128,18 +4003,6 @@ int CMPTransaction::logicMath_Change_OracleRef()
 /** Tx 105 */
 int CMPTransaction::logicMath_Set_Oracle()
 {
-    uint256 blockHash;
-    {
-        LOCK(cs_main);
-
-        CBlockIndex* pindex = chainActive[block];
-        if (pindex == NULL) {
-            PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
-            return (PKT_ERROR_TOKENS -20);
-        }
-        blockHash = pindex->GetBlockHash();
-    }
-
     if (!IsTransactionTypeAllowed(block, type, version)) {
         PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
                 __func__,
@@ -4214,12 +4077,14 @@ int CMPTransaction::logicMath_OracleBackup()
     uint256 blockHash;
     {
         LOCK(cs_main);
-
         CBlockIndex* pindex = chainActive[block];
-        if (pindex == NULL) {
+
+        if (pindex == NULL)
+        {
             PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
-            return (PKT_ERROR_TOKENS -20);
+            return (PKT_ERROR_SP -20);
         }
+
         blockHash = pindex->GetBlockHash();
     }
 
@@ -4259,18 +4124,6 @@ int CMPTransaction::logicMath_OracleBackup()
 /** Tx 107 */
 int CMPTransaction::logicMath_CloseOracle()
 {
-    uint256 blockHash;
-    {
-        LOCK(cs_main);
-
-        CBlockIndex* pindex = chainActive[block];
-        if (pindex == NULL) {
-            PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
-            return (PKT_ERROR_TOKENS -20);
-        }
-        blockHash = pindex->GetBlockHash();
-    }
-
     if (!IsTransactionTypeAllowed(block, type, version)) {
         PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
                 __func__,
@@ -4308,18 +4161,6 @@ int CMPTransaction::logicMath_CloseOracle()
 /** Tx 108 */
 int CMPTransaction::logicMath_CommitChannel()
 {
-    uint256 blockHash;
-    {
-        LOCK(cs_main);
-
-        CBlockIndex* pindex = chainActive[block];
-        if (pindex == NULL) {
-            PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
-            return (PKT_ERROR_TOKENS -20);
-        }
-        blockHash = pindex->GetBlockHash();
-    }
-
     if (!IsTransactionTypeAllowed(block, type, version)) {
         PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
                 __func__,
@@ -4523,7 +4364,6 @@ int CMPTransaction::logicMath_Instant_Trade()
   // ------------------------------------------
 
   // if property = 0 ; we are exchanging litecoins
-  // if (false)
   if (property > LTC && desired_property > 0)
   {
       assert(update_tally_map(chnAddrs.second, property, amount_forsale, BALANCE));
@@ -4532,7 +4372,7 @@ int CMPTransaction::logicMath_Instant_Trade()
       assert(update_tally_map(sender, desired_property, -desired_value, CHANNEL_RESERVE));
 
       t_tradelistdb->recordNewInstantTrade(txid, sender, chnAddrs.first, property, amount_forsale, desired_property, desired_value, block, tx_idx);
-      
+
       // updating last exchange block
       mastercore::updateLastExBlock(block, sender);
 
@@ -4551,18 +4391,6 @@ int CMPTransaction::logicMath_Instant_Trade()
 /** Tx 111 */
 int CMPTransaction::logicMath_Update_PNL()
 {
-  uint256 blockHash;
-  {
-      LOCK(cs_main);
-
-      CBlockIndex* pindex = chainActive[block];
-      if (pindex == NULL) {
-          PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
-          return (PKT_ERROR_TOKENS -20);
-      }
-      blockHash = pindex->GetBlockHash();
-  }
-
   if (!IsTransactionTypeAllowed(block, type, version)) {
       PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
               __func__,
@@ -4594,18 +4422,6 @@ int CMPTransaction::logicMath_Update_PNL()
 /** Tx 112 */
 int CMPTransaction::logicMath_Transfer()
 {
-  uint256 blockHash;
-  {
-      LOCK(cs_main);
-
-      CBlockIndex* pindex = chainActive[block];
-      if (pindex == NULL) {
-          PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
-          return (PKT_ERROR_TOKENS -20);
-      }
-      blockHash = pindex->GetBlockHash();
-  }
-
   if (!IsTransactionTypeAllowed(block, type, version)) {
       PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
               __func__,
@@ -4640,18 +4456,6 @@ int CMPTransaction::logicMath_Transfer()
 /** Tx 113*/
 int CMPTransaction::logicMath_Create_Channel()
 {
-    uint256 blockHash;
-    {
-        LOCK(cs_main);
-
-        CBlockIndex* pindex = chainActive[block];
-        if (pindex == NULL) {
-            PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
-            return (PKT_ERROR_TOKENS -20);
-        }
-        blockHash = pindex->GetBlockHash();
-    }
-
     if (!IsTransactionTypeAllowed(block, type, version)) {
         PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
                 __func__,
@@ -4686,133 +4490,125 @@ int CMPTransaction::logicMath_Create_Channel()
 /** Tx 114 */
 int CMPTransaction::logicMath_Contract_Instant()
 {
-  int rc = 0;
+    int rc = 0;
+
+    if (!IsTransactionTypeAllowed(block, type, version)) {
+        PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+            __func__,
+            type,
+            version,
+            property,
+            block);
+        return (PKT_ERROR_METADEX -22);
+    }
 
 
-  if (!IsTransactionTypeAllowed(block, type, version)) {
-      PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
-              __func__,
-              type,
-              version,
-              property,
-              block);
-      return (PKT_ERROR_METADEX -22);
-  }
+    if (!IsPropertyIdValid(property))
+    {
+        PrintToLog("%s(): rejected: property for sale %d does not exist\n", __func__, property);
+        return (PKT_ERROR_CHANNELS -13);
+    }
+
+    if (!IsPropertyIdValid(desired_property))
+    {
+        PrintToLog("%s(): rejected: desired property %d does not exist\n", __func__, desired_property);
+        return (PKT_ERROR_CHANNELS -14);
+    }
+
+    channel chnAddrs = t_tradelistdb->getChannelAddresses(sender);
+
+    if (sender.empty() || chnAddrs.first.empty() || chnAddrs.second.empty())
+    {
+        PrintToLog("%s(): rejected: some address doesn't belong to multisig channel\n", __func__);
+        return (PKT_ERROR_CHANNELS -15);
+    }
+
+    if (chnAddrs.expiry_height < block)
+    {
+        PrintToLog("%s(): rejected: out of channel deadline: actual block: %d, deadline: %d\n", __func__, block, chnAddrs.expiry_height);
+        return (PKT_ERROR_CHANNELS -16);
+    }
+
+    CMPSPInfo::Entry sp;
+    if (!_my_sps->getSP(property, sp))
+        return (PKT_ERROR_CHANNELS -13);
 
 
-  if (!IsPropertyIdValid(property)) {
-      PrintToLog("%s(): rejected: property for sale %d does not exist\n", __func__, property);
-      return (PKT_ERROR_CHANNELS -13);
-  }
+    if (block > sp.init_block + static_cast<int>(sp.blocks_until_expiration) || block < sp.init_block)
+    {
+         int initblock = sp.init_block ;
+         int deadline = initblock + static_cast<int>(sp.blocks_until_expiration);
+         PrintToLog("\nTrade out of deadline!!: actual block: %d, deadline: %d\n",initblock,deadline);
+         return (PKT_ERROR_CHANNELS -16);
+    }
 
-  if (!IsPropertyIdValid(desired_property)) {
-      PrintToLog("%s(): rejected: desired property %d does not exist\n", __func__, desired_property);
-      return (PKT_ERROR_CHANNELS -14);
-  }
+    int kyc_id;
 
-  channel chnAddrs = t_tradelistdb->getChannelAddresses(sender);
+    if(!t_tradelistdb->checkAttestationReg(sender,kyc_id))
+    {
+        PrintToLog("%s(): rejected: kyc ckeck failed\n", __func__);
+        return (PKT_ERROR_KYC -10);
+    }
 
-  if (sender.empty() || chnAddrs.first.empty() || chnAddrs.second.empty()) {
-      PrintToLog("%s(): rejected: some address doesn't belong to multisig channel\n", __func__);
-      return (PKT_ERROR_CHANNELS -15);
-  }
+    if(!t_tradelistdb->kycPropertyMatch(property,kyc_id))
+    {
+       PrintToLog("%s(): rejected: contract %d can't be traded with this kyc\n", __func__, property);
+       return (PKT_ERROR_KYC -20);
+    }
 
-  if (chnAddrs.expiry_height < block) {
-      PrintToLog("%s(): rejected: out of channel deadline: actual block: %d, deadline: %d\n", __func__, block, chnAddrs.expiry_height);
-      return (PKT_ERROR_CHANNELS -16);
-  }
+    int64_t marginRe = static_cast<int64_t>(sp.margin_requirement);
+    int64_t nBalance = getMPbalance(sender, sp.collateral_currency, CHANNEL_RESERVE);
 
-  CMPSPInfo::Entry sp;
-  if (!_my_sps->getSP(property, sp))
-      return (PKT_ERROR_CHANNELS -13);
+    arith_uint256 amountTR = (ConvertTo256(instant_amount)*ConvertTo256(marginRe))/ConvertTo256(ileverage);
+    int64_t amountToReserve = ConvertTo64(amountTR);
 
+    if(msc_debug_contract_instant_trade) PrintToLog("%s: AmountToReserve: %d, channel Balance: %d\n", __func__, amountToReserve,nBalance);
 
-  if (block > sp.init_block + static_cast<int>(sp.blocks_until_expiration) || block < sp.init_block)
-  {
-      int initblock = sp.init_block ;
-      int deadline = initblock + static_cast<int>(sp.blocks_until_expiration);
-      PrintToLog("\nTrade out of deadline!!: actual block: %d, deadline: %d\n",initblock,deadline);
-      return (PKT_ERROR_CHANNELS -16);
-  }
+    if(msc_debug_contract_instant_trade) PrintToLog("%s: sender: %s, channel Address: %s\n", __func__, sender, chnAddrs.multisig);
 
-  int kyc_id;
-
-  if(!t_tradelistdb->checkAttestationReg(sender,kyc_id)){
-    PrintToLog("%s(): rejected: kyc ckeck failed\n", __func__);
-    return (PKT_ERROR_KYC -10);
-  }
-
-  if(!t_tradelistdb->kycPropertyMatch(property,kyc_id)){
-    PrintToLog("%s(): rejected: contract %d can't be traded with this kyc\n", __func__, property);
-    return (PKT_ERROR_KYC -20);
-  }
-
-  int64_t marginRe = static_cast<int64_t>(sp.margin_requirement);
-  int64_t nBalance = getMPbalance(sender, sp.collateral_currency, CHANNEL_RESERVE);
-
-  arith_uint256 amountTR = (ConvertTo256(instant_amount)*ConvertTo256(marginRe))/ConvertTo256(ileverage);
-  int64_t amountToReserve = ConvertTo64(amountTR);
-
-  if(msc_debug_contract_instant_trade) PrintToLog("%s: AmountToReserve: %d, channel Balance: %d\n", __func__, amountToReserve,nBalance);
-
-  if(msc_debug_contract_instant_trade) PrintToLog("%s: sender: %s, channel Address: %s\n", __func__, sender, chnAddrs.multisig);
-
-  if (amountToReserve > 0)
-  {
-      assert(update_tally_map(sender, sp.collateral_currency, -amountToReserve, CHANNEL_RESERVE));
-      assert(update_tally_map(chnAddrs.first, sp.collateral_currency, ConvertTo64(amountTR), CONTRACTDEX_MARGIN));
-      assert(update_tally_map(chnAddrs.second, sp.collateral_currency, ConvertTo64(amountTR), CONTRACTDEX_MARGIN));
-  }
+    if (amountToReserve > 0)
+    {
+        assert(update_tally_map(sender, sp.collateral_currency, -amountToReserve, CHANNEL_RESERVE));
+        assert(update_tally_map(chnAddrs.first, sp.collateral_currency, ConvertTo64(amountTR), CONTRACTDEX_MARGIN));
+        assert(update_tally_map(chnAddrs.second, sp.collateral_currency, ConvertTo64(amountTR), CONTRACTDEX_MARGIN));
+    }
 
 
-   /*********************************************/
-   /**Logic for Node Reward**/
+    /*********************************************/
+    /**Logic for Node Reward**/
 
-   // const CConsensusParams &params = ConsensusParams();
-   // int BlockInit = params.MSC_NODE_REWARD;
-   // int nBlockNow = GetHeight();
-   //
-   // BlockClass NodeRewardObj(BlockInit, nBlockNow);
-   // NodeRewardObj.SendNodeReward(sender);
+    // const CConsensusParams &params = ConsensusParams();
+    // int BlockInit = params.MSC_NODE_REWARD;
+    // int nBlockNow = GetHeight();
+    //
+    // BlockClass NodeRewardObj(BlockInit, nBlockNow);
+    // NodeRewardObj.SendNodeReward(sender);
 
-   /********************************************************/
-   // updating last exchange block
-   mastercore::updateLastExBlock(block, sender);
+    /********************************************************/
+    // updating last exchange block
+    mastercore::updateLastExBlock(block, sender);
 
-   mastercore::Instant_x_Trade(txid, itrading_action, chnAddrs.multisig, chnAddrs.first, chnAddrs.second, property, instant_amount, price, sp.collateral_currency, sp.prop_type, block, tx_idx);
+    mastercore::Instant_x_Trade(txid, itrading_action, chnAddrs.multisig, chnAddrs.first, chnAddrs.second, property, instant_amount, price, sp.collateral_currency, sp.prop_type, block, tx_idx);
 
-   // t_tradelistdb->recordNewInstContTrade(txid, receiver, sender, propertyId, amount_commited, block, tx_idx);
-   // NOTE: add discount from channel of fees + amountToReserve
+    t_tradelistdb->recordNewInstContTrade(txid, receiver, sender, propertyId, amount_commited, price, block, tx_idx);
 
-   if (msc_debug_contract_instant_trade)PrintToLog("%s: End of Logic Instant Contract Trade\n\n",__func__);
+    if (msc_debug_contract_instant_trade)PrintToLog("%s: End of Logic Instant Contract Trade\n\n",__func__);
 
 
-   return rc;
+    return rc;
 }
 
 /** Tx 115 */
 int CMPTransaction::logicMath_New_Id_Registration()
 {
-  uint256 blockHash;
-  {
-      LOCK(cs_main);
-
-      CBlockIndex* pindex = chainActive[block];
-      if (pindex == NULL) {
-          PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
-          return (PKT_ERROR_TOKENS -20);
-      }
-      blockHash = pindex->GetBlockHash();
-  }
-
-  if (!IsTransactionTypeAllowed(block, type, version)) {
-      PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
-              __func__,
-              type,
-              version,
-              property,
-              block);
-      return (PKT_ERROR_TOKENS -22);
+    if (!IsTransactionTypeAllowed(block, type, version)) {
+        PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+            __func__,
+            type,
+            version,
+            property,
+            block);
+        return (PKT_ERROR_TOKENS -22);
   }
 
   int kyc_id;
@@ -4836,26 +4632,14 @@ int CMPTransaction::logicMath_New_Id_Registration()
 /** Tx 116 */
 int CMPTransaction::logicMath_Update_Id_Registration()
 {
-  uint256 blockHash;
-  {
-      LOCK(cs_main);
-
-      CBlockIndex* pindex = chainActive[block];
-      if (pindex == NULL) {
-          PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
-          return (PKT_ERROR_TOKENS -20);
-      }
-      blockHash = pindex->GetBlockHash();
-  }
-
-  if (!IsTransactionTypeAllowed(block, type, version)) {
-      PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
-              __func__,
-              type,
-              version,
-              property,
-              block);
-      return (PKT_ERROR_TOKENS -22);
+    if (!IsTransactionTypeAllowed(block, type, version)) {
+        PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+            __func__,
+            type,
+            version,
+            property,
+            block);
+        return (PKT_ERROR_TOKENS -22);
   }
 
   // ---------------------------------------
@@ -4868,7 +4652,7 @@ int CMPTransaction::logicMath_Update_Id_Registration()
 /** Tx 117 */
 int CMPTransaction::logicMath_DEx_Payment()
 {
-  int rc = 0;
+  int rc = 2;
 
   if (!IsTransactionTypeAllowed(block, type, version)) {
       PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
@@ -4880,9 +4664,6 @@ int CMPTransaction::logicMath_DEx_Payment()
       return (PKT_ERROR_METADEX -22);
   }
 
-  // PrintToLog("%s(): inside the function\n",__func__);
-
-  rc = 2;
 
   return rc;
 }
@@ -4890,39 +4671,38 @@ int CMPTransaction::logicMath_DEx_Payment()
 /** Tx 118 */
 int CMPTransaction::logicMath_Attestation()
 {
-  if (!IsTransactionTypeAllowed(block, type, version)) {
-      PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
-              __func__,
-              type,
-              version,
-              property,
-              block);
-      return (PKT_ERROR_METADEX -22);
-  }
+    if (!IsTransactionTypeAllowed(block, type, version)) {
+        PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+            __func__,
+            type,
+            version,
+            property,
+            block);
+        return (PKT_ERROR_METADEX -22);
+    }
 
-  int kyc_id;
+    int kyc_id;
 
-  if(!t_tradelistdb->checkKYCRegister(sender,kyc_id))
-  {
-      kyc_id = KYC_0;
+    if(!t_tradelistdb->checkKYCRegister(sender,kyc_id))
+    {
+        kyc_id = KYC_0;
 
-      if (sender != receiver)
-      {
-          PrintToLog("%s(): rejected: sender (%s) can't assign attestation to other address\n",
-              __func__,
-              sender);
-          return (PKT_ERROR_METADEX -22);
-      }
+        if (sender != receiver)
+        {
+            PrintToLog("%s(): rejected: sender (%s) can't assign attestation to other address\n",
+                __func__,
+                sender);
+            return (PKT_ERROR_METADEX -22);
+        }
 
-  }
+    }
 
 
-  PrintToLog("%s(): kyc_id: %d\n",__func__,kyc_id);
+    PrintToLog("%s(): kyc_id: %d\n",__func__,kyc_id);
 
-  t_tradelistdb->recordNewAttestation(txid, receiver, block, tx_idx, kyc_id);
+    t_tradelistdb->recordNewAttestation(txid, receiver, block, tx_idx, kyc_id);
 
-  return 0;
-
+    return 0;
 }
 
 struct FutureContractObject *getFutureContractObject(std::string identifier)
@@ -5027,64 +4807,66 @@ struct TokenDataByName *getTokenDataById(uint32_t propertyId)
 
 void BlockClass::SendNodeReward(std::string sender)
 {
-  PrintToLog("\nm_BlockInit = %d\t m_BockNow = %s\t sender = %s\n", m_BlockInit, m_BlockNow, sender);
+    if(msc_debug_send_reward) PrintToLog("\nm_BlockInit = %d\t m_BockNow = %s\t sender = %s\n", m_BlockInit, m_BlockNow, sender);
 
-  extern double CompoundRate;
-  extern double DecayRate;
-  extern double LongTailDecay;
+    extern double CompoundRate;
+    extern double DecayRate;
+    extern double LongTailDecay;
 
-  extern double RewardSecndI;
-  extern double RewardFirstI;
+    extern double RewardSecndI;
+    extern double RewardFirstI;
 
-  int64_t Reward = 0;
+    int64_t Reward = 0;
 
-  if (m_BlockNow > m_BlockInit && m_BlockNow <= 100000)
+    if (m_BlockNow > m_BlockInit && m_BlockNow <= 100000)
     {
-      double SpeedUp = 0.1*pow(CompoundRate, static_cast<double>(m_BlockNow - m_BlockInit));
-      Reward = DoubleToInt64(SpeedUp);
-      if (m_BlockNow == 100000)
-	{
-	  mReward.lock();
-	  RewardFirstI = Reward;
-	  mReward.unlock();
-	}
-      PrintToLog("\nI1: Reward to Balance = %s\n", FormatDivisibleMP(Reward));
-    }
-  else if (m_BlockNow > 100000 && m_BlockNow <= 220000)
-    {
-      double SpeedDw = RewardFirstI*pow(DecayRate, static_cast<double>(m_BlockNow - (m_BlockInit+100000)));
-      Reward = DoubleToInt64(SpeedDw);
-      if (m_BlockNow == 220000)
-	{
-	  mReward.lock();
-	  RewardSecndI = Reward;
-	  mReward.unlock();
-	}
-      PrintToLog("I2: \nReward to Balance = %s\n", FormatDivisibleMP(Reward));
-    }
-  else if (m_BlockNow > 220000)
-    {
-      double SpeedDw = RewardSecndI*pow(LongTailDecay, static_cast<double>(m_BlockNow - (m_BlockInit+220000)));
-      Reward = LosingSatoshiLongTail(m_BlockNow, DoubleToInt64(SpeedDw));
-      PrintToLog("\nI3: Reward to Balance = %s\n", FormatDivisibleMP(Reward));
+        double SpeedUp = 0.1*pow(CompoundRate, static_cast<double>(m_BlockNow - m_BlockInit));
+        Reward = DoubleToInt64(SpeedUp);
+        if (m_BlockNow == 100000)
+	      {
+	          mReward.lock();
+	          RewardFirstI = Reward;
+	          mReward.unlock();
+	      }
+
+        if(msc_debug_send_reward) PrintToLog("\nI1: Reward to Balance = %s\n", FormatDivisibleMP(Reward));
+
+    } else if (m_BlockNow > 100000 && m_BlockNow <= 220000) {
+        double SpeedDw = RewardFirstI*pow(DecayRate, static_cast<double>(m_BlockNow - (m_BlockInit+100000)));
+        Reward = DoubleToInt64(SpeedDw);
+
+        if (m_BlockNow == 220000)
+	      {
+	          mReward.lock();
+	          RewardSecndI = Reward;
+	          mReward.unlock();
+	      }
+
+        if(msc_debug_send_reward) PrintToLog("I2: \nReward to Balance = %s\n", FormatDivisibleMP(Reward));
+
+    } else if (m_BlockNow > 220000) {
+        double SpeedDw = RewardSecndI*pow(LongTailDecay, static_cast<double>(m_BlockNow - (m_BlockInit+220000)));
+        Reward = LosingSatoshiLongTail(m_BlockNow, DoubleToInt64(SpeedDw));
+
+        if(msc_debug_send_reward) PrintToLog("\nI3: Reward to Balance = %s\n", FormatDivisibleMP(Reward));
     }
 }
 
 int64_t LosingSatoshiLongTail(int BlockNow, int64_t Reward)
 {
-  extern int64_t SatoshiH;
-  int64_t RewardH = Reward;
+    extern int64_t SatoshiH;
+    int64_t RewardH = Reward;
 
-  bool RBool1 = (BlockNow > 220000   && BlockNow <= 720000)   && BlockNow%2 == 0;
-  bool RBool2 = (BlockNow > 720000   && BlockNow <= 1500000)  && BlockNow%3 == 0;
-  bool RBool3 = (BlockNow > 1500000  && BlockNow <= 7500000)  && BlockNow%4 == 0;
-  bool RBool4 = (BlockNow > 7500000  && BlockNow <= 15000000) && BlockNow%5 == 0;
-  bool RBool5 = (BlockNow > 15000000 && BlockNow <= 30000000) && BlockNow%6 == 0;
+    bool RBool1 = (BlockNow > 220000   && BlockNow <= 720000)   && BlockNow%2 == 0;
+    bool RBool2 = (BlockNow > 720000   && BlockNow <= 1500000)  && BlockNow%3 == 0;
+    bool RBool3 = (BlockNow > 1500000  && BlockNow <= 7500000)  && BlockNow%4 == 0;
+    bool RBool4 = (BlockNow > 7500000  && BlockNow <= 15000000) && BlockNow%5 == 0;
+    bool RBool5 = (BlockNow > 15000000 && BlockNow <= 30000000) && BlockNow%6 == 0;
 
-  bool BoolReward = (((RBool1 || RBool2) || RBool3) || RBool4) || RBool5;
-  if (BoolReward)
-    RewardH -= SatoshiH;
+    bool BoolReward = (((RBool1 || RBool2) || RBool3) || RBool4) || RBool5;
+    if (BoolReward)
+        RewardH -= SatoshiH;
 
-  return RewardH;
+    return RewardH;
 }
 /**********************************************************************/
