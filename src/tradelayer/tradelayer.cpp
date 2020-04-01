@@ -1023,7 +1023,7 @@ static bool HandleDExPayments(const CTransaction& tx, int nBlock, const std::str
 
     /** Adding LTC into volume */
     arith_uint256 ltcsreceived_256t = ConvertTo256(static_cast<int64_t>(nvalue));
-    uint64_t ltcsreceived = ConvertTo64(ltcsreceived_256t)/COIN;
+    int64_t ltcsreceived = ConvertTo64(ltcsreceived_256t)/COIN;
     globalVolumeALL_LTC += ltcsreceived;
     const int64_t globalVolumeALL_LTCh = globalVolumeALL_LTC;
 
@@ -1063,16 +1063,7 @@ static bool HandleLtcInstantTrade(const CTransaction& tx, int nBlock, const std:
     if (count > 0)
     {
         // updating last exchange block
-        std::map<std::string,channel>::iterator it = channels_Map.find(sender);
-        channel& chn = it->second;
-
-        int difference = nBlock - chn.last_exchange_block;
-
-        if (msc_debug_handle_instant) PrintToLog("%s: expiry height after update: %d\n",__func__, chn.expiry_height);
-
-        // updating expiry_height
-        if (difference < dayblocks)
-            chn.expiry_height += difference;
+        mastercore::updateLastExBlock(nBlock, sender);
 
         t_tradelistdb->recordNewInstantTrade(tx.GetHash(), sender,receiver, property, amount_forsale, desired_property, desired_value, nBlock, idx);
 
@@ -2686,8 +2677,11 @@ bool VestingTokens(int block)
 {
     extern std::vector<std::string> vestingAddresses;
 
-    if (vestingAddresses.size() == 0)
-       return false;
+    if (vestingAddresses.empty())
+    {
+        if(msc_debug_vesting) PrintToLog("%s(): there's no vesting address registered\n",__func__);
+        return false;
+    }
 
     int64_t x_Axis = globalVolumeALL_LTC;
     // int64_t x_Axis = 1000000000000; //10000
@@ -2707,23 +2701,24 @@ bool VestingTokens(int block)
 
     if (realVesting == 0)
     {
-        PrintToLog("%s(): realVesting = %f, lastVesting : %f\n",__func__, realVesting, lastVesting);
+        if(msc_debug_vesting) PrintToLog("%s(): realVesting = %f, lastVesting : %f\n",__func__, realVesting, lastVesting);
         return false;
     }
 
-    if(msc_debug_handler_tx) PrintToLog("%s(): lastVesting = %f, realVesting : %f, thisBlockVesting: %f\n",__func__, lastVesting, realVesting, thisBlockVesting);
-    if(msc_debug_handler_tx) PrintToLog("%s(): amount vesting on this block = %f, block ; %d, x_Axis: %d, std::log10(x_Axis) : %d, factor : %f\n",__func__, thisBlockVesting, block, XAxis, std::log10(XAxis), factor);
+    if(msc_debug_vesting) PrintToLog("%s(): lastVesting = %f, realVesting : %f, thisBlockVesting: %f\n",__func__, lastVesting, realVesting, thisBlockVesting);
+    if(msc_debug_vesting) PrintToLog("%s(): amount vesting on this block = %f, block ; %d, x_Axis: %d, std::log10(x_Axis) : %d, factor : %f\n",__func__, thisBlockVesting, block, XAxis, std::log10(XAxis), factor);
 
     for (unsigned int i = 0; i < vestingAddresses.size(); i++)
     {
-        if(msc_debug_handler_tx) PrintToLog("\nIteration #%d Inside Vesting function. Address = %s\n", i, vestingAddresses[i]);
+        if(msc_debug_vesting) PrintToLog("\nIteration #%d Inside Vesting function. Address = %s\n", i, vestingAddresses[i]);
+
         int64_t vestingBalance = getMPbalance(vestingAddresses[i], TL_PROPERTY_VESTING, BALANCE);
         int64_t unvestedALLBal = getMPbalance(vestingAddresses[i], ALL, UNVESTED);
 
-        if(msc_debug_handler_tx) PrintToLog("\nALLs UNVESTED = %d\n", getMPbalance(vestingAddresses[0], TL_PROPERTY_ALL, UNVESTED));
-        if(msc_debug_handler_tx) PrintToLog("ALLs BALANCE = %d\n", getMPbalance(vestingAddresses[0], TL_PROPERTY_ALL, BALANCE));
+        if(msc_debug_vesting) PrintToLog("\nALLs UNVESTED = %d\n", getMPbalance(vestingAddresses[0], TL_PROPERTY_ALL, UNVESTED));
+        if(msc_debug_vesting) PrintToLog("ALLs BALANCE = %d\n", getMPbalance(vestingAddresses[0], TL_PROPERTY_ALL, BALANCE));
 
-        if (vestingBalance != 0 && unvestedALLBal != 0)
+        if (vestingBalance != 0 && unvestedALLBal != 0 && x_Axis != 0)
         {
 
             int64_t iRealVesting = mastercore::DoubleToInt64(realVesting);
@@ -2732,8 +2727,8 @@ bool VestingTokens(int block)
 
             rational_t linearRationalw(nAmount, (int64_t)COIN);
 
-            if(msc_debug_handler_tx) PrintToLog("%s(): nAmount = %d\n",__func__,nAmount);
-            if(msc_debug_handler_tx) PrintToLog("%s(): TOTAL_AMOUNT_VESTING_TOKENS = %d\n",__func__,TOTAL_AMOUNT_VESTING_TOKENS);
+            if(msc_debug_vesting) PrintToLog("%s(): nAmount = %d\n",__func__,nAmount);
+            if(msc_debug_vesting) PrintToLog("%s(): TOTAL_AMOUNT_VESTING_TOKENS = %d\n",__func__,TOTAL_AMOUNT_VESTING_TOKENS);
 
             int64_t weighted = mastercore::RationalToInt64(linearRationalw);
 
