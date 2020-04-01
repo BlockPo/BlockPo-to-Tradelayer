@@ -1235,7 +1235,7 @@ bool mastercore::ContractDex_ADD_LTCVolume(int64_t nCouldBuy, uint32_t contractI
     if (msc_debug_add_contract_ltc_vol) PrintToLog("%s(): nCouldBuy: %d, notional: %d, tokenPrice: %d \n",__func__, nCouldBuy, notional, tokenPrice);
     arith_uint256 globalVolume = (ConvertTo256(nCouldBuy) * ConvertTo256(notional) * ConvertTo256(tokenPrice)) / (ConvertTo256(COIN) * ConvertTo256(COIN));
 
-    globalVolumeALL_LTC = ConvertTo64(globalVolume);
+    globalVolumeALL_LTC += ConvertTo64(globalVolume);
 
     if (msc_debug_add_contract_ltc_vol) PrintToLog("%s(): volume added: %d \n",__func__, ConvertTo64(globalVolume));
 
