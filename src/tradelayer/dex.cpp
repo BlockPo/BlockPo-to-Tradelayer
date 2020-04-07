@@ -9,6 +9,7 @@
 
 #include "tradelayer/convert.h"
 #include "tradelayer/errors.h"
+#include "tradelayer/externfns.h"
 #include "tradelayer/log.h"
 #include "tradelayer/tradelayer.h"
 #include "tradelayer/rules.h"
@@ -35,6 +36,7 @@
 
 extern int64_t factorE;
 extern uint64_t marketP[NPTYPES];
+extern std::map<uint32_t, std::map<uint32_t, int64_t>> market_priceMap;
 extern std::map<int, std::map<uint32_t,int64_t>> MapPropVolume;
 
 namespace mastercore
@@ -243,7 +245,7 @@ int DEx_BuyOfferCreate(const std::string& addressMaker, uint32_t propertyId, int
     LOCK(cs_tally);
 
     arith_uint256 sumValues;
-    uint32_t nextSPID = _my_sps->peekNextSPID(1);
+    uint32_t nextSPID = _my_sps->peekNextSPID();
 
     for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
     {
@@ -576,7 +578,7 @@ int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addre
     CMPAccept* p_accept;
 
     // logic here: we look only into main properties if there's some match
-    for (propertyId = 1; propertyId < _my_sps->peekNextSPID(1); propertyId++)
+    for (propertyId = 1; propertyId < _my_sps->peekNextSPID(); propertyId++)
     {
         CMPSPInfo::Entry sp;
         if (msc_debug_dex) PrintToLog("propertyId: %d\n",propertyId);
@@ -648,7 +650,12 @@ int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addre
     // adding LTC volume added by this property
     MapPropVolume[block][propertyId] += amountPaid;
 
-    PrintToLog("%s(): amountPaid for propertyId : %d,  inside MapPropVolume: %d\n", __func__, propertyId, amountPaid);
+    // adding Last token/ ltc price
+    rational_t market_pricetokens_LTC(amountPurchased, amountPaid);
+    int64_t market_p_tokens_LTC = mastercore::RationalToInt64(market_pricetokens_LTC);
+    market_priceMap[LTC][propertyId] = market_p_tokens_LTC;
+
+    if(msc_debug_dex) PrintToLog("%s(): amountPaid for propertyId : %d,  inside MapPropVolume: %d, market_p_tokens_LTC : %d\n", __func__, propertyId, amountPaid, market_p_tokens_LTC);
 
     // -------------------------------------------------------------------------
     if (msc_debug_dex) PrintToLog("amountPurchased: %d\n",amountPurchased);

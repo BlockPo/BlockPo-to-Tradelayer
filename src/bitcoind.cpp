@@ -180,7 +180,6 @@ int main(int argc, char* argv[])
 {
   extern int64_t factorE;
   extern int64_t priceIndex;
-  extern int64_t allPrice;
   extern double denMargin;
   extern int n_cols;
   extern int nVestingAddrs;
@@ -196,7 +195,6 @@ int main(int argc, char* argv[])
   extern VectorTLS *pt_netted_npartly_anypos;
   extern VectorTLS *pt_changepos_status;
   extern VectorTLS *pt_expiration_dates;
-  extern std::string admin_addrs;
   extern double CompoundRate;
   extern double DecayRate;
   extern double LongTailDecay;

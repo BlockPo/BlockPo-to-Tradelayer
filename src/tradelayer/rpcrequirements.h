@@ -9,7 +9,6 @@ void RequirePrimaryToken(uint32_t propertyId);
 void RequirePropertyName(const std::string& name);
 void RequirePeggedSaneName(std::string& name);
 void RequireExistingProperty(uint32_t propertyId);
-void RequireSameEcosystem(uint32_t propertyId, uint32_t otherId);
 void RequireDifferentIds(uint32_t propertyId, uint32_t otherId);
 void RequireCrowdsale(uint32_t propertyId);
 void RequireActiveCrowdsale(uint32_t propertyId);
@@ -23,10 +22,12 @@ void RequireForPegged(const std::string& address, uint32_t propertyId, uint32_t 
 void RequireNotVesting(uint32_t propertyId);
 void RequireNotContract(uint32_t propertyId);
 void RequireContract(uint32_t propertyId);
+void RequireContract(std::string name_contract);
 void RequireOracleContract(uint32_t propertyId);
+void RequireNoOrders(std::string sender, uint32_t propertyId);
 void RequireAssociation(uint32_t propertyId,uint32_t contractId); // origin contract for pegged
 void RequirePeggedCurrency(uint32_t propertyId);
-void RequireCollateral(const std::string& address, std::string name_traded);
+void RequireCollateral(const std::string& address, std::string name_traded, int64_t amount, uint64_t leverage);
 void RequireMatchingDExOffer(const std::string& address, uint32_t propertyId);
 void RequireNoOtherDExOffer(const std::string& address, uint32_t propertyId);
 void RequireContractOrder(std::string& fromAddress, uint32_t contractId);
