@@ -43,7 +43,6 @@ UniValue tl_createpayload_simplesend(const JSONRPCRequest& request)
     return HexStr(payload.begin(), payload.end());
 }
 
-
 UniValue tl_createpayload_sendall(const JSONRPCRequest& request)
 {
     if (request.params.size() != 0)
@@ -1175,7 +1174,7 @@ UniValue tl_createpayload_update_id_registration(const JSONRPCRequest& request)
 static const CRPCCommand commands[] =
   { //  category                         name                                             actor (function)                               okSafeMode
     //  -------------------------------- -----------------------------------------       ----------------------------------------        ----------
-    { "trade layer (payload creation)", "tl_createpayload_simplesend",                    &tl_createpayload_simplesend,                      {}   },  
+    { "trade layer (payload creation)", "tl_createpayload_simplesend",                    &tl_createpayload_simplesend,                      {}   },
     { "trade layer (payload creation)", "tl_createpayload_sendall",                       &tl_createpayload_sendall,                         {}   },
     { "trade layer (payload creation)", "tl_createpayload_issuancecrowdsale",             &tl_createpayload_issuancecrowdsale,               {}   },
     { "trade layer (payload creation)", "tl_createpayload_issuancefixed",                 &tl_createpayload_issuancefixed,                   {}   },
