@@ -86,7 +86,8 @@ std::vector<TransactionRestriction> CConsensusParams::GetRestrictions() const
         { MSC_TYPE_UPDATE_ID_REGISTRATION,                MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
         { MSC_TYPE_DEX_PAYMENT,                           MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
         { MSC_TYPE_CREATE_ORACLE_CONTRACT,                MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
-        { MSC_TYPE_SEND_VESTING,                          MP_TX_PKT_V0,      true,             MSC_VESTING_BLOCK}
+        { MSC_TYPE_SEND_VESTING,                          MP_TX_PKT_V0,      true,             MSC_VESTING_BLOCK},
+        { MSC_TYPE_ATTESTATION,                           MP_TX_PKT_V0,      true,             MSC_TYPE_ATTESTATION_BLOCK}
 
     };
 
@@ -148,6 +149,7 @@ CMainConsensusParams::CMainConsensusParams()
     MSC_CONTRACTDEX_BLOCK = 999999;
     MSC_VESTING_BLOCK = 0;
     MSC_NODE_REWARD = 777;
+    MSC_TYPE_ATTESTATION_BLOCK = 0;
 }
 
 /**
@@ -165,13 +167,14 @@ CMainConsensusParams::CMainConsensusParams()
      NULLDATA_BLOCK = 0;
      // Transaction restrictions:
      MSC_ALERT_BLOCK = 0;
-     MSC_SEND_BLOCK = 1336253;
-     MSC_SP_BLOCK = 1336253;
-     MSC_MANUALSP_BLOCK = 1336253;
-     MSC_SEND_ALL_BLOCK = 1336253;
-     MSC_CONTRACTDEX_BLOCK = 1336253;
-     MSC_VESTING_BLOCK = 1336267;
-     MSC_NODE_REWARD = 1336253;
+     MSC_SEND_BLOCK = 1400765;
+     MSC_SP_BLOCK = 1400765;
+     MSC_MANUALSP_BLOCK = 1400765;
+     MSC_SEND_ALL_BLOCK = 1400765;
+     MSC_CONTRACTDEX_BLOCK = 1400765;
+     MSC_VESTING_BLOCK = 1400765;
+     MSC_NODE_REWARD = 1400765;
+     MSC_TYPE_ATTESTATION_BLOCK = 1400765;
  }
 
 
@@ -195,8 +198,9 @@ CRegTestConsensusParams::CRegTestConsensusParams()
     MSC_MANUALSP_BLOCK = 0;
     MSC_SEND_ALL_BLOCK = 0;
     MSC_CONTRACTDEX_BLOCK = 0;
-    MSC_VESTING_BLOCK = 1;
+    MSC_VESTING_BLOCK = 100;  // just for regtest
     MSC_NODE_REWARD = 777;
+    MSC_TYPE_ATTESTATION_BLOCK = 0;
 }
 
 //! Consensus parameters for mainnet
@@ -414,10 +418,8 @@ bool IsFeatureActivated(uint16_t featureId, int transactionBlock)
  * Certain transactions use a property identifier of 0 (= BTC) as wildcard, which
  * must explicitly be allowed.
  */
-bool IsTransactionTypeAllowed(int txBlock, uint32_t txProperty, uint16_t txType, uint16_t version)
+bool IsTransactionTypeAllowed(int txBlock, uint16_t txType, uint16_t version)
 {
-    PrintToLog("%s(): txBlock: %d, ecosystem: %d, type: %d, version: %d\n",__func__, txBlock, txProperty, txType, version);
-
     const std::vector<TransactionRestriction>& vTxRestrictions = ConsensusParams().GetRestrictions();
 
     for (std::vector<TransactionRestriction>::const_iterator it = vTxRestrictions.begin(); it != vTxRestrictions.end(); ++it)
@@ -429,20 +431,9 @@ bool IsTransactionTypeAllowed(int txBlock, uint32_t txProperty, uint16_t txType,
             PrintToLog("%s(): first continue\n",__func__);
             continue;
         }
-        // a property identifier of 0 (= BTC) may be used as wildcard
-        PrintToLog("%s(): txProperty: %d\n",__func__, txProperty);
-        if (TL_PROPERTY_BTC == txProperty && !entry.allowWildcard) {
-            PrintToLog("%s(): second continue\n",__func__);
-            continue;
-        }
-        // transactions are not restricted in the test ecosystem
-        if (isTestEcosystemProperty(txProperty)) {
-            PrintToLog("%s(): isTestEcosystemProperty\n",__func__);
-            return true;
-        }
+
         if (txBlock >= entry.activationBlock) {
             PrintToLog("%s(): txBlock: %d; entry.activationBlock: %d\n",__func__,txBlock, entry.activationBlock);
-            PrintToLog("%s(): txBlock >= entry.activationBlock\n",__func__);
             return true;
         }
     }

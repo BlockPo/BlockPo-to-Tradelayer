@@ -47,7 +47,7 @@ bool msc_debug_walletcache                      = 0;
 bool msc_debug_consensus_hash                   = 0;
 bool msc_debug_consensus_hash_every_block       = 0;
 bool msc_debug_consensus_hash_every_transaction = 0;
-bool msc_debug_alerts                           = 1;
+bool msc_debug_alerts                           = 0;
 bool msc_debug_handle_dex_payment               = 0;
 bool msc_debug_handle_instant                   = 0;
 bool msc_debug_handler_tx                       = 1;
@@ -75,7 +75,7 @@ bool msc_debug_dex                              = 0;
 bool msc_debug_contractdex_tx                   = 0;
 bool msc_debug_create_pegged                    = 0;
 bool msc_debug_accept_offerbtc                  = 0;
-bool msc_debug_set_oracle                       = 1;
+bool msc_debug_set_oracle                       = 0;
 bool msc_debug_send_pegged                      = 0;
 bool msc_debug_commit_channel                   = 0;
 bool msc_debug_withdrawal_from_channel          = 0;
@@ -87,6 +87,10 @@ bool msc_debug_wallettxs                        = 0;
 bool msc_calling_settlement                     = 0;
 bool msc_debug_vesting                          = 0;
 bool msc_debug_oracle_twap                      = 0;
+bool msc_debug_search_all                       = 0;
+bool msc_debug_add_contract_ltc_vol             = 0;
+bool msc_debug_update_last_block                = 0;
+bool msc_debug_send_reward                      = 0;
 /**
  * LogPrintf() has been broken a couple of times now
  * by well-meaning people adding mutexes in the most straightforward way.
@@ -179,7 +183,7 @@ int LogFilePrint(const std::string& str)
     if (true)
     {
         // else if (fPrintToDebugLog && AreBaseParamsConfigured()) {
-        static bool fStartedNewLine = true;
+        // static bool fStartedNewLine = true;
         boost::call_once(&DebugLogInit, debugLogInitFlag);
 
         if (fileout == NULL)
@@ -208,7 +212,7 @@ int LogFilePrint(const std::string& str)
          if (!str.empty() && str[str.size()-1] == '\n') {
             //fStartedNewLine = true;
          } else {
-            fStartedNewLine = false;
+            // fStartedNewLine = false;
          }
          ret += fwrite(str.data(), 1, str.size(), fileout);
     }

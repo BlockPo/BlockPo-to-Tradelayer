@@ -53,7 +53,7 @@ int const MAX_STATE_HISTORY = 50;
 #define SP_STRING_FIELD_LEN 256
 
 // Trade Layer Transaction Class
-#define NO_MARKER    0
+#define NO_MARKER  0
 #define TL_CLASS_A 1
 #define TL_CLASS_B 2
 #define TL_CLASS_C 3 // uncompressed OP_RETURN
@@ -69,6 +69,9 @@ int const MAX_STATE_HISTORY = 50;
 #define MAX_CLASS_D_SEARCH_BYTES   200
 
 #define COIN256   10000000000000000
+
+// basis point factor
+#define BASISPOINT 100
 
 // Oracle twaps blocks
 #define oBlocks 9
@@ -119,7 +122,8 @@ enum TransactionType {
   MSC_TYPE_CONTRACT_INSTANT                   = 114,
   MSC_TYPE_NEW_ID_REGISTRATION                = 115,
   MSC_TYPE_UPDATE_ID_REGISTRATION             = 116,
-  MSC_TYPE_DEX_PAYMENT                        = 117
+  MSC_TYPE_DEX_PAYMENT                        = 117,
+  MSC_TYPE_ATTESTATION                        = 118
 
 };
 
@@ -141,10 +145,12 @@ enum FILETYPES {
   FILETYPE_MDEXORDERS,
   FILETYPE_OFFERS,
   FILETYPE_CACHEFEES,
+  FILETYPE_CACHEFEES_ORACLES,
   FILETYPE_WITHDRAWALS,
   FILETYPE_ACTIVE_CHANNELS,
   FILETYPE_DEX_VOLUME,
   FILETYPE_MDEX_VOLUME,
+  FILETYPE_GLOBAL_VARS,
   NUM_FILETYPES
 };
 
@@ -188,7 +194,7 @@ enum FILETYPES {
 #define LTC        0
 #define ALL        1
 #define sLTC       2
-#define dUSD       3
+#define dUSD       3  // vesting tokens?
 #define dEUR       4
 #define dJPY       5
 #define dCNY       6
@@ -214,6 +220,7 @@ enum FILETYPES {
 #define TYPE_CONTRACT_INSTANT_TRADE     "contract_instat_trade"
 #define TYPE_CREATE_CHANNEL             "create channel"
 #define TYPE_NEW_ID_REGISTER            "new id register"
+#define TYPE_ATTESTATION                "attestation"
 
 // Currency in existance (options for createcontract)
 uint32_t const TL_dUSD  = 1;
@@ -232,6 +239,9 @@ const rational_t factor2 = rational_t(20,100); // normal limits
 
 // define 1 year in blocks:
 #define ONE_YEAR 210240
+
+// define KYC id = 0 for self attestations
+#define KYC_0      0
 
 
 // forward declarations
@@ -383,8 +393,8 @@ class CMPTradeList : public CDBBase
   void recordNewInstantTrade(const uint256& txid, const std::string& sender, const std::string& receiver, uint32_t propertyIdForSale, uint64_t amount_forsale, uint32_t propertyIdDesired, uint64_t amount_desired, int blockNum, int blockIndex);
   void recordNewTransfer(const uint256& txid, const std::string& sender, const std::string& receiver, uint32_t propertyId, uint64_t amount, int blockNum, int blockIndex);
   void recordNewInstContTrade(const uint256& txid, const std::string& firstAddr, const std::string& secondAddr, uint32_t property, uint64_t amount_forsale, uint64_t price ,int blockNum, int blockIndex);
-  void recordNewIdRegister(const uint256& txid, const std::string& address, const std::string& website, const std::string& name, uint8_t tokens, uint8_t ltc, uint8_t natives, uint8_t oracles, int blockNum, int blockIndex);
-
+  void recordNewIdRegister(const uint256& txid, const std::string& address, const std::string& name, const std::string& website, int blockNum, int blockIndex);
+  void recordNewAttestation(const uint256& txid, const std::string& address, int blockNum, int blockIndex, int kyc_id);
   bool getAllCommits(const std::string& senderAddress, UniValue& tradeArray);
   bool getAllWithdrawals(const std::string& senderAddress, UniValue& tradeArray);
   bool getChannelInfo(const std::string& channelAddress, UniValue& tradeArray);
@@ -395,7 +405,10 @@ class CMPTradeList : public CDBBase
 
   //KYC
   bool updateIdRegister(const uint256& txid, const std::string& address, const std::string& newAddr, int blockNum, int blockIndex);
-  bool checkKYCRegister(const std::string& address, int registered);
+  bool checkKYCRegister(const std::string& address, int& kyc_id);
+  bool checkAttestationReg(const std::string& address, int& kyc_id);
+  bool kycPropertyMatch(uint32_t propertyId, int kyc_id);
+  bool kycLoop(UniValue& response);
 
   int deleteAboveBlock(int blockNum);
   bool exists(const uint256 &txid);
@@ -501,10 +514,7 @@ namespace mastercore
   int WalletTxBuilder(const std::string& senderAddress, const std::string& receiverAddress, int64_t referenceAmount,
 		      const std::vector<unsigned char>& data, uint256& txid, std::string& rawHex, bool commit, unsigned int minInputs = 1);
 
-  bool isTestEcosystemProperty(uint32_t propertyId);
-  bool isMainEcosystemProperty(uint32_t propertyId);
-
-  uint32_t GetNextPropertyId(bool maineco); // maybe move into sp
+  uint32_t GetNextPropertyId(); // maybe move into sp
 
   CMPTally* getTally(const std::string& address);
 
@@ -537,8 +547,7 @@ namespace mastercore
   bool closeChannels(int Block);
 
   // x_Trade function for contracts on instant trade
-  bool Instant_x_Trade(const uint256& txid, uint8_t tradingAction, std::string& channelAddr, std::string& firstAddr, std::string& secondAddr, uint32_t property, int64_t amount_forsale, uint64_t price, int block, int tx_idx);
-
+  bool Instant_x_Trade(const uint256& txid, uint8_t tradingAction, std::string& channelAddr, std::string& firstAddr, std::string& secondAddr, uint32_t property, int64_t amount_forsale, uint64_t price, uint32_t collateral, uint16_t type, int block, int tx_idx);
   //Fees for contract instant trades
   bool ContInst_Fees(const std::string& firstAddr,const std::string& secondAddr,const std::string& channelAddr, int64_t amountToReserve,uint16_t type, uint32_t colateral);
 
@@ -554,6 +563,12 @@ namespace mastercore
 
   // check for vesting
   bool SanityChecks(string receiver, int aBlock);
+
+  // fee cache buying Alls in mDEx
+  bool feeCacheBuy();
+
+  // updating the expiration block for channels
+  bool updateLastExBlock(int nBlock, std::string sender);
 
 }
 

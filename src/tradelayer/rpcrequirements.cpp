@@ -28,6 +28,7 @@ extern int64_t factorE;
 extern uint64_t marketP[NPTYPES];
 extern int lastBlockg;
 extern int vestingActivationBlock;
+extern std::map<uint32_t, std::map<uint32_t, int64_t>> market_priceMap;
 
 void RequireBalance(const std::string& address, uint32_t propertyId, int64_t amount)
 {
@@ -41,29 +42,52 @@ void RequireBalance(const std::string& address, uint32_t propertyId, int64_t amo
     }
 }
 
-
-void RequireCollateral(const std::string& address, std::string name_traded)
+void RequireCollateral(const std::string& address, std::string name_traded, int64_t amount, uint64_t leverage)
 {
+    int64_t uPrice = 1;
 
-  struct FutureContractObject *pfuture = getFutureContractObject(name_traded);
-
+    struct FutureContractObject *pfuture = getFutureContractObject(name_traded);
     uint32_t propertyId = pfuture->fco_collateral_currency;
-    int64_t balance = getMPbalance(address, propertyId, BALANCE);
-    if (balance == 0) {
-        throw JSONRPCError(RPC_TYPE_ERROR, "Sender has insufficient balance");
-    }
-    int64_t balanceUnconfirmed = getUserAvailableMPbalance(address, propertyId);
-    if (balanceUnconfirmed == 0) {
-        throw JSONRPCError(RPC_TYPE_ERROR, "Sender has insufficient balance (due to pending transactions)");
-    }
-}
+    bool inverse_quoted = pfuture->fco_quoted;
 
+    if(inverse_quoted  && market_priceMap[pfuture->fco_numerator][pfuture->fco_denominator] > 0)
+    {
+        uPrice = market_priceMap[pfuture->fco_numerator][pfuture->fco_denominator];
+
+    } else if (!inverse_quoted)
+        uPrice = COIN;
+
+
+    arith_uint256 amountTR = (COIN * mastercore::ConvertTo256(amount) * mastercore::ConvertTo256(pfuture->fco_margin_requirement))/(mastercore::ConvertTo256(leverage) * mastercore::ConvertTo256(uPrice));
+    int64_t amountToReserve = mastercore::ConvertTo64(amountTR);
+
+    int64_t nBalance = getMPbalance(address, propertyId, BALANCE);
+
+    PrintToLog("%s(): nBalance: %d , amountToReserve: %d \n",__func__, nBalance, amountToReserve);
+
+    if (nBalance < amountToReserve || nBalance == 0)
+        throw JSONRPCError(RPC_TYPE_ERROR, "Sender has insufficient balance for collateral");
+
+    int64_t balanceUnconfirmed = getUserAvailableMPbalance(address, propertyId);
+    if (balanceUnconfirmed == 0)
+        throw JSONRPCError(RPC_TYPE_ERROR, "Sender has insufficient balance (due to pending transactions)");
+
+}
 
 void RequirePrimaryToken(uint32_t propertyId)
 {
     if (propertyId < 1 || 2 < propertyId) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Property identifier must be 1 (TL) or 2 (TTL)");
     }
+}
+
+/* checking there's no active orders */
+void RequireNoOrders(std::string sender, uint32_t propertyId)
+{
+    if(mastercore::ContractDex_CHECK_ORDERS(sender, propertyId)) {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "Cancel orders before close position\n");
+    }
+
 }
 
 void RequirePropertyName(const std::string& name)
@@ -88,12 +112,6 @@ void RequireExistingProperty(uint32_t propertyId)
   }
 }
 
-void RequireSameEcosystem(uint32_t propertyId, uint32_t otherId)
-{
-  if (mastercore::isTestEcosystemProperty(propertyId) != mastercore::isTestEcosystemProperty(otherId)) {
-    throw JSONRPCError(RPC_INVALID_PARAMETER, "Properties must be in the same ecosystem");
-  }
-}
 
 void RequireDifferentIds(uint32_t propertyId, uint32_t otherId)
 {
@@ -199,6 +217,22 @@ void RequireNotContract(uint32_t propertyId)
 
 void RequireContract(uint32_t propertyId)
 {
+    LOCK(cs_tally);
+    CMPSPInfo::Entry sp;
+    if (!mastercore::_my_sps->getSP(propertyId, sp)) {
+        throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
+    }
+    if (!sp.isContract()) {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "contractId must be future contract\n");
+    }
+}
+
+// NOTE: improve this function
+void RequireContract(std::string name_contract)
+{
+    struct FutureContractObject *pfuture = getFutureContractObject(name_contract);
+    uint32_t propertyId = pfuture->fco_propertyId;
+
     LOCK(cs_tally);
     CMPSPInfo::Entry sp;
     if (!mastercore::_my_sps->getSP(propertyId, sp)) {
@@ -345,7 +379,7 @@ void RequireContractTxId(std::string& txid)
 void RequireSaneName(std::string& name)
 {
     LOCK(cs_tally);
-    uint32_t nextSPID = mastercore::_my_sps->peekNextSPID(1);
+    uint32_t nextSPID = mastercore::_my_sps->peekNextSPID();
     for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++) {
         CMPSPInfo::Entry sp;
         if (mastercore::_my_sps->getSP(propertyId, sp)) {
@@ -365,23 +399,8 @@ void RequirePeggedSaneName(std::string& name)
 
 void RequireContractOrder(std::string& fromAddress, uint32_t contractId)
 {
-  LOCK(cs_tally);
-  bool found = false;
-  for (mastercore::cd_PropertiesMap::const_iterator my_it = mastercore::contractdex.begin(); my_it != mastercore::contractdex.end(); ++my_it) {
-      const mastercore::cd_PricesMap& prices = my_it->second;
-      for (mastercore::cd_PricesMap::const_iterator it = prices.begin(); it != prices.end(); ++it) {
-          const mastercore::cd_Set& indexes = it->second;
-          for (mastercore::cd_Set::const_iterator it = indexes.begin(); it != indexes.end(); ++it) {
-              const CMPContractDex& obj = *it;
-              if (obj.getProperty() != contractId || obj.getAddr() != fromAddress) continue;
-              PrintToLog("Order found!\n");
-              found = true;
-              break;
-          }
-      }
-  }
 
-  if (!found) {
+  if (!mastercore::ContractDex_CHECK_ORDERS(fromAddress, contractId)) {
         throw JSONRPCError(RPC_INVALID_PARAMETER,"There's no order in this future contract\n");
   }
 

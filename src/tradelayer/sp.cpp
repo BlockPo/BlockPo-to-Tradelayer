@@ -37,8 +37,6 @@ extern uint64_t ask[10];
 extern uint64_t bid[10];
 
 extern int64_t priceIndex;
-extern int64_t allPrice;
-int64_t nMarketPrice = 888; // NOTE:just for testing
 extern volatile uint64_t marketPrice;
 extern int64_t factorE;
 extern std::map<std::string,uint32_t> peggedIssuers;
@@ -173,28 +171,16 @@ void CMPSPInfo::Clear()
   init();
 }
 
-void CMPSPInfo::init(uint32_t nextSPID, uint32_t nextTestSPID)
+void CMPSPInfo::init(uint32_t nextSPID)
 {
   next_spid = nextSPID;
-  next_test_spid = nextTestSPID;
 }
 
-uint32_t CMPSPInfo::peekNextSPID(uint8_t ecosystem) const
+uint32_t CMPSPInfo::peekNextSPID() const
 {
-  uint32_t nextId = 0;
+    uint32_t nextId = next_spid;
 
-  switch (ecosystem)
-    {
-    case TL_PROPERTY_ALL: // Main ecosystem, ALL: 1, TALL: 2, First available SP = 3
-      nextId = next_spid;
-      break;
-    case TL_PROPERTY_TALL: // Test ecosystem, same as above with high bit set
-      nextId = next_test_spid;
-      break;
-    default: // Non-standard ecosystem, ID's start at 0
-      nextId = 0;
-    }
-  return nextId;
+    return nextId;
 }
 
 bool CMPSPInfo::updateSP(uint32_t propertyId, const Entry& info)
@@ -241,19 +227,9 @@ bool CMPSPInfo::updateSP(uint32_t propertyId, const Entry& info)
   return true;
 }
 
-uint32_t CMPSPInfo::putSP(uint8_t ecosystem, const Entry& info)
+uint32_t CMPSPInfo::putSP(const Entry& info)
 {
-    uint32_t propertyId = 0;
-    switch (ecosystem) {
-        case TL_PROPERTY_ALL: // Main ecosystem, MSC: 1, TMSC: 2, First available SP = 3
-            propertyId = next_spid++;
-            break;
-        case TL_PROPERTY_TALL: // Test ecosystem, same as above with high bit set
-            propertyId = next_test_spid++;
-            break;
-        default: // Non-standard ecosystem, ID's start at 0
-            propertyId = 0;
-    }
+    uint32_t propertyId = next_spid++;
 
     // DB key for property entry
     CDataStream ssSpKey(SER_DISK, CLIENT_VERSION);
@@ -646,9 +622,7 @@ bool mastercore::IsPropertyIdValid(uint32_t propertyId)
   uint32_t nextId = 0;
 
   if (propertyId < TEST_ECO_PROPERTY_1) {
-    nextId = _my_sps->peekNextSPID(1);
-  } else {
-    nextId = _my_sps->peekNextSPID(2);
+    nextId = _my_sps->peekNextSPID();
   }
 
   if (propertyId < nextId) {
@@ -875,9 +849,9 @@ bool mastercore::isCrowdsalePurchase(const uint256& txid, const std::string& add
     }
 
     // if we still haven't found txid, check non active crowdsales to this address
-    for (uint8_t ecosystem = 1; ecosystem <= 2; ecosystem++) {
-        uint32_t startPropertyId = (ecosystem == 1) ? 1 : TEST_ECO_PROPERTY_1;
-        for (uint32_t loopPropertyId = startPropertyId; loopPropertyId < _my_sps->peekNextSPID(ecosystem); loopPropertyId++) {
+    for (uint8_t id = 1; id <= 2; id++) {
+        uint32_t startPropertyId = (id == 1) ? 1 : TEST_ECO_PROPERTY_1;
+        for (uint32_t loopPropertyId = startPropertyId; loopPropertyId < _my_sps->peekNextSPID(); loopPropertyId++) {
             CMPSPInfo::Entry sp;
             if (!_my_sps->getSP(loopPropertyId, sp)) continue;
             if (sp.issuer != address) continue;
@@ -931,45 +905,45 @@ void mastercore::eraseMaxedCrowdsale(const std::string& address, int64_t blockTi
 }
 
 
-int mastercore::addInterestPegged(int nBlockPrev, const CBlockIndex* pBlockIndex)
-{
-    allPrice = 888;
-    for (std::unordered_map<std::string, CMPTally>::iterator it = mp_tally_map.begin(); it != mp_tally_map.end(); ++it) {
-            uint32_t id = 0;
-            std::string address = it->first;
-            (it->second).init();
-
-            // searching for pegged currency
-            while (0 != (id = (it->second).next())) {
-                CMPSPInfo::Entry newSp;
-                if (!_my_sps->getSP(id, newSp) || newSp.prop_type != ALL_PROPERTY_TYPE_PEGGEDS) {
-                    continue;
-                }
-
-                // checking for deadline block
-                CMPSPInfo::Entry spp;
-                _my_sps->getSP(newSp.contract_associated, spp);
-                int actualBlock = static_cast<int>(pBlockIndex->nHeight);
-                int deadline = static_cast<int>(spp.blocks_until_expiration) + spp.init_block;
-                if (deadline != actualBlock) { continue; }
-
-                int64_t diff = priceIndex - nMarketPrice;
-                // int64_t tokens = static_cast<int64_t>(newSp.num_tokens);
-                // arith_uint256 num_tokens = ConvertTo256(tokens) / ConvertTo256(factorE);
-                arith_uint256 interest = ConvertTo256(diff) / ConvertTo256(nMarketPrice);
-
-                //adding interest to pegged
-                int64_t nPegged = getMPbalance(address, id, BALANCE);
-                arith_uint256 all = ConvertTo256(nPegged) * interest / ConvertTo256(allPrice);
-                int64_t intAll = ConvertTo64(all);
-                assert(update_tally_map(address, id, intAll, BALANCE));
-
-            }
-
-        }
-
-    return 1;
-}
+// int mastercore::addInterestPegged(int nBlockPrev, const CBlockIndex* pBlockIndex)
+// {
+//     allPrice = 888;
+//     for (std::unordered_map<std::string, CMPTally>::iterator it = mp_tally_map.begin(); it != mp_tally_map.end(); ++it) {
+//             uint32_t id = 0;
+//             std::string address = it->first;
+//             (it->second).init();
+//
+//             // searching for pegged currency
+//             while (0 != (id = (it->second).next())) {
+//                 CMPSPInfo::Entry newSp;
+//                 if (!_my_sps->getSP(id, newSp) || newSp.prop_type != ALL_PROPERTY_TYPE_PEGGEDS) {
+//                     continue;
+//                 }
+//
+//                 // checking for deadline block
+//                 CMPSPInfo::Entry spp;
+//                 _my_sps->getSP(newSp.contract_associated, spp);
+//                 int actualBlock = static_cast<int>(pBlockIndex->nHeight);
+//                 int deadline = static_cast<int>(spp.blocks_until_expiration) + spp.init_block;
+//                 if (deadline != actualBlock) { continue; }
+//
+//                 int64_t diff = priceIndex - nMarketPrice;
+//                 // int64_t tokens = static_cast<int64_t>(newSp.num_tokens);
+//                 // arith_uint256 num_tokens = ConvertTo256(tokens) / ConvertTo256(factorE);
+//                 arith_uint256 interest = ConvertTo256(diff) / ConvertTo256(nMarketPrice);
+//
+//                 //adding interest to pegged
+//                 int64_t nPegged = getMPbalance(address, id, BALANCE);
+//                 arith_uint256 all = ConvertTo256(nPegged) * interest / ConvertTo256(allPrice);
+//                 int64_t intAll = ConvertTo64(all);
+//                 assert(update_tally_map(address, id, intAll, BALANCE));
+//
+//             }
+//
+//         }
+//
+//     return 1;
+// }
 
 unsigned int mastercore::eraseExpiredCrowdsale(const CBlockIndex* pBlockIndex)
 {
@@ -1034,13 +1008,13 @@ std::string mastercore::strPropertyType(uint16_t propertyType)
   return "unknown";
 }
 
-std::string mastercore::strEcosystem(uint8_t ecosystem)
-{
-  switch (ecosystem)
-    {
-    case TL_PROPERTY_ALL: return "main";
-    case TL_PROPERTY_TALL: return "test";
-    }
-
-  return "unknown";
-}
+// std::string mastercore::strEcosystem(uint8_t ecosystem)
+// {
+//   switch (ecosystem)
+//     {
+//     case TL_PROPERTY_ALL: return "main";
+//     case TL_PROPERTY_TALL: return "test";
+//     }
+//
+//   return "unknown";
+// }
