@@ -72,6 +72,20 @@ tl.getAccountAddress = function(account, cb){
     })}
 }
 
+tl.addMultisigAddress = function(signerAmount, pubkeys, cb){
+  cliend.cmd('addmultisigaddress', signerAmount,pubkeys,function(err,data,resHeaders){
+      if (err) return console.log(err)
+  return cb(data)
+  })
+}
+
+tl.getAddressInfo = function(address, cb){
+  cliend.cmd('getaddressinfo', address,function(err,data,resHeaders){
+      if (err) return console.log(err)
+  return cb(data)
+  })
+}
+
 tl.getAddressesByAccount = function(cb){
     client.cmd('getaddressesbyaccount',function(err,addresses,resHeaders){
       if (err) return console.log(err)
@@ -381,7 +395,6 @@ tl.sendAll = function(address1, address2, ecosystem, cb){
 
 tl.sendIssuanceFixed = function(params, cb){
     var address = params.fromaddress
-    var ecosystem = params.ecosystem
     var type = params.type
     var previousid = params.previousid
 
@@ -421,7 +434,6 @@ tl.sendGrant = function(address1, address2, id, amount, note, cb){
 
 tl.sendIssuanceManaged = function(params, cb){
     var address = params.fromaddress
-    var ecosystem = params.ecosystem
     var type = params.type
     var previousid = params.previousid
     var category = params.category
@@ -429,7 +441,8 @@ tl.sendIssuanceManaged = function(params, cb){
     var name = params.name
     var url = params.url
     var data = params.data
-    client.cmd('tl_sendissuancemanaged', address, ecosystem, type, previousid, category, subcategory, name, url, data, function(err, data, resHeaders){
+    var kyc = params.kyc
+    client.cmd('tl_sendissuancemanaged', address, type, previousid, category, subcategory, name, url, data, kyc function(err, data, resHeaders){
         console.log(data)
         return cb(data)
     })
@@ -783,9 +796,9 @@ tl.createpayload_issuanceFixed = function(divisible, previousid, name, url, blur
   })
 }
 
-tl.createpayload_issuanceManaged = function(divisible, previousid, name, url, blurb){
+tl.createpayload_issuanceManaged = function(divisible, previousid, name, url, blurb,kyc){
   if(divisible!=0||divisible!=1){divisible=1}
-    client.cmd('tl_createpayload_issuancefixed', divisible, previousid, name, url, function(err,data, resHeaders){
+    client.cmd('tl_createpayload_issuancefixed', divisible, previousid, name, url,kyc, function(err,data, resHeaders){
     if(err){return err}else{return data}
   })
 }
