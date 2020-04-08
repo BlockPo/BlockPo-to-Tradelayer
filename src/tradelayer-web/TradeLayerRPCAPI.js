@@ -298,7 +298,7 @@ tl.getSTO = function(txid, recipients, cb){
     })
 }
 
-tl.getDivisibleProperty = function(propertyid){
+tl.getDivisibleProperty = function(propertyid,cb){
      client.cmd("tl_getproperty",'result','divisible', propertyid,function(err, data, resHeaders){
   if (err) return console.log(err);
  
@@ -480,13 +480,16 @@ tl.createOracleContract = function( numeratorid, title, durationInBlocks, notion
 
 var rawPubScripts = []
 
-tl.buildRaw= function(payload, inputs, vOuts, refaddresses){
+tl.buildRaw= function(payload, inputs, vOuts, refaddresses,inputAmount, cb){
 	var txstring = ""
   //the vOuts are meant to be which outputs were the selected inputs in their respective tx?
   //e.g. if the first input was the 3rd output, it should have the txid it was in as 0 in inputs and 2 as the 0 position value in vOuts
   //then if the second input was the first output, then vOut[1] would be 0, and so on.
   //refaddresses is plural because we may support Send-to-Many in the future but in this version all tx take a single reference address
-	client.cmd('tl_createrawtx_input', txstring, inputs, vouts, function(err, data, resHeaders){
+	if(inputs = null||inputs=undefined||inputs = ''){
+    return cb(console.log("err no input"))
+  }
+  client.cmd('tl_createrawtx_input', txstring, inputs, vouts, function(err, data, resHeaders){
 		if(err==null){
 			txstring = data
 		}else{return err}
@@ -544,15 +547,29 @@ tl.buildRaw= function(payload, inputs, vOuts, refaddresses){
 					var vOut = vOuts[0]
 					rawPubScripts = []
 					rawPubScripts.push(data.out[vOut].script)
-					var fee = 0.00001*(inputs.length*0.11+0.04+0.038*3)
+					var fee = 1000
+          var dust = 555
+          
+          if(inputAmount==null||inputAmount==undefined||inputAmount==0||inputAmount==''){
+                inputAmount=data.out[vOut]
+          }
+
+          inputAmount-=fee
+          inputAmount-=dust
+
 					if(inputs.length>1){
 						rest.get('https://blockchain.info/rawtx/'+inputs[1]).on('complete', function(data){
 						vOut = vOuts[1]
             rawPubScripts.push(data.out[vOut].script)
-						return tl.addChangeAddress(txstring, rawPubScripts, inputs, vOuts, changeAddress, amount,fee)
+
+						  tl.addChangeAddress(txstring, rawPubScripts, inputs, vOuts, changeAddress, inputAmount,fee,function(payload){
+                return cb(payload)
+              })
 						})
 					}else{
-						return tl.addChangeAddress(txstring, rawPubScripts,inputs, vOuts, changeAddress, amount,fee)
+						tl.addChangeAddress(txstring, rawPubScripts,inputs, vOuts, changeAddress, amount,fee,function(payload){
+              return cb(payload)
+            })
 					}
 			  })
       })
@@ -560,7 +577,7 @@ tl.buildRaw= function(payload, inputs, vOuts, refaddresses){
 	})
 }
 
-tl.addChangeAddress = function(txstring, rawPubScripts,inputs, vOuts,changeAddress, amount,cb){
+tl.addChangeAddress = function(txstring, rawPubScripts,inputs, vOuts,changeAddress, amount,fee,cb){
 	var data = "[{\'txid\': \'"+inputs+"\',\'vout\':"+vOuts+",\'scriptPubKey\':\'"+rawPubScripts+",\"value \":"+amount+"}]"
 	client.cmd('tl_createrawtx_change', txstring, data, changeAddress, fee, function(err, payload, resHeaders){
 		if(err == null){
