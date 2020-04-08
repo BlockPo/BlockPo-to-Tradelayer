@@ -1228,7 +1228,7 @@ static int msc_initial_scan(int nFirstBlock)
         PrintToLog("Scan stopped early at block %d of block %d\n", nBlock, nLastBlock);
     }
 
-    PrintToLog("%d transactions processed, %d meta transactions found\n", nTxsTotal, nTxsFoundTotal);
+    // PrintToLog("%d transactions processed, %d meta transactions found\n", nTxsTotal, nTxsFoundTotal);
 
     return 0;
 }
@@ -2756,16 +2756,6 @@ bool VestingTokens(int block)
  */
 bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx, const CBlockIndex* pBlockIndex)
 {
-  // extern volatile int id_contract;
-
-  extern std::vector<std::map<std::string, std::string>> lives_longs_vg;
-  extern std::vector<std::map<std::string, std::string>> lives_shorts_vg;
-  // extern int BlockS;
-  // std::vector<std::string> addrsl_vg;
-  // std::vector<std::string> addrss_vg;
-
-  ui128 numLog128;
-  ui128 numQuad128;
 
   LOCK(cs_tally);
 
@@ -2795,7 +2785,6 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
       1) search caché in order to see the properties ids and the amounts.
       2) search for each prop id, exchange for ALLs with available orders in orderbook
       3) check the ALLs in cache.
-
   **/
   mastercore::feeCacheBuy();
 
@@ -2827,14 +2816,14 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
 
           int deadline = sp.init_block + expirationBlock;
 
-          PrintToLog("%s(): deadline: %d, lastBlockg : %d\n",__func__,deadline,lastBlockg);
+          // if(msc_debug_handler_tx) PrintToLog("%s(): deadline: %d, lastBlockg : %d\n",__func__,deadline,lastBlockg);
 
           if ( tradeBlock != 0 && deadline != 0 ) checkExpiration = tradeBlock == deadline ? 1 : 0;
 
           if (checkExpiration)
           {
               sp.expirated = true; // into entry register
-              PrintToLog("%s(): EXPIRATED!!!!!!!!!!!!!!!!!!!!!!!!!!!\n",__func__);
+              // if(msc_debug_handler_tx) PrintToLog("%s(): EXPIRATED!!!!!!!!!!!!!!!!!!!!!!!!!!!\n",__func__);
 
               idx_expiration += 1;
               if ( idx_expiration == 2 )
@@ -2856,7 +2845,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
 
        int interp_ret = mp_obj.interpretPacket();
 
-        PrintToLog("%s(): interp_ret: %d\n",__func__,interp_ret);
+       // if(msc_debug_handler_tx) PrintToLog("%s(): interp_ret: %d\n",__func__,interp_ret);
 
     // Only structurally valid transactions get recorded in levelDB
     // PKT_ERROR - 2 = interpret_Transaction failed, structurally invalid payload
@@ -2882,7 +2871,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
 
   if (fFoundTx && msc_debug_consensus_hash_every_transaction) {
     uint256 consensusHash = GetConsensusHash();
-    PrintToLog("Consensus hash for transaction %s: %s\n", tx.GetHash().GetHex(), consensusHash.GetHex());
+    if(msc_debug_handler_tx) PrintToLog("Consensus hash for transaction %s: %s\n", tx.GetHash().GetHex(), consensusHash.GetHex());
   }
 
   return fFoundTx;

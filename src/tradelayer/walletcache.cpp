@@ -88,7 +88,7 @@ void WalletTXIDCacheInit()
  */
 int WalletCacheUpdate()
 {
-    if (msc_debug_walletcache) PrintToLog("WALLETCACHE: Update requested\n");
+    // if (msc_debug_walletcache) PrintToLog("WALLETCACHE: Update requested\n");
     int numChanges = 0;
     std::set<std::string> changedAddresses;
 
@@ -100,7 +100,7 @@ int WalletCacheUpdate()
         // determine if this address is in the wallet
         int addressIsMine = IsMyAddress(address);
         if (!addressIsMine) {
-            if (msc_debug_walletcache) PrintToLog("WALLETCACHE: Ignoring non-wallet address %s\n", address);
+            // if (msc_debug_walletcache) PrintToLog("WALLETCACHE: Ignoring non-wallet address %s\n", address);
             continue; // ignore this address, not in wallet
         }
 
@@ -114,7 +114,7 @@ int WalletCacheUpdate()
             ++numChanges;
             changedAddresses.insert(address);
             walletBalancesCache.insert(std::make_pair(address,tally));
-            if (msc_debug_walletcache) PrintToLog("WALLETCACHE: *CACHE MISS* - %s not in cache\n", address);
+            // if (msc_debug_walletcache) PrintToLog("WALLETCACHE: *CACHE MISS* - %s not in cache\n", address);
             continue;
         }
 
@@ -128,12 +128,12 @@ int WalletCacheUpdate()
                 changedAddresses.insert(address);
                 walletBalancesCache.erase(search_it);
                 walletBalancesCache.insert(std::make_pair(address,tally));
-                if (msc_debug_walletcache) PrintToLog("WALLETCACHE: *CACHE MISS* - %s balance for property %d differs\n", address, propertyId);
+                // if (msc_debug_walletcache) PrintToLog("WALLETCACHE: *CACHE MISS* - %s balance for property %d differs\n", address, propertyId);
                 break;
             }
         }
     }
-    if (msc_debug_walletcache) PrintToLog("WALLETCACHE: Update finished - there were %d changes\n", numChanges);
+    // if (msc_debug_walletcache) PrintToLog("WALLETCACHE: Update finished - there were %d changes\n", numChanges);
     return numChanges;
 }
 

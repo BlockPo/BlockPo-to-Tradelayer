@@ -45,6 +45,7 @@ except AttributeError:
 class ChainstateWriteCrashTest(BitcoinTestFramework):
     def set_test_params(self):
         self.num_nodes = 4
+        self.rpc_timeout = 180
         self.setup_clean_chain = False
 
         # Set -maxmempool=0 to turn off mempool memory sharing with dbcache
