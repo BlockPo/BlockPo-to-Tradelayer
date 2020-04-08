@@ -38,6 +38,7 @@ class HTTPBasicsTest (BitcoinTestFramework):
 
         headers = {"Authorization": "Basic " + str_to_b64str(authpair)}
 
+        self.log.info("Testing tl_getinfo")
         conn = http.client.HTTPConnection(url.hostname, url.port)
         conn.connect()
         conn.request('POST', '/', '{"method": "tl_getinfo"}', headers)
@@ -49,9 +50,10 @@ class HTTPBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['tradelayer_coreversion'], "0.0.4")
         assert_equal(out['result']['litecoinversion'], "0.16.3")
         assert_equal(out['result']['blocktransactions'], 0)
-        assert_equal(out['result']['block'], 112)
+        assert_equal(out['result']['block'], 200)
         conn.close()
 
+        self.log.info("Testing tl_listproperties")
         conn = http.client.HTTPConnection(url.hostname, url.port)
         conn.connect()
         conn.request('POST', '/', '{"method": "tl_listproperties"}', headers)
