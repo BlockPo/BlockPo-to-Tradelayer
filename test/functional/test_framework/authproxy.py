@@ -64,7 +64,6 @@ def EncodeDecimal(o):
 
 class AuthServiceProxy():
     __id_count = 0
-
     # ensure_ascii: escape unicode as \uXXXX, passed to json.dumps
     def __init__(self, service_url, service_name=None, timeout=HTTP_TIMEOUT, connection=None, ensure_ascii=True):
         self.__service_url = service_url
@@ -76,6 +75,7 @@ class AuthServiceProxy():
         passwd = None if self.__url.password is None else self.__url.password.encode('utf8')
         authpair = user + b':' + passwd
         self.__auth_header = b'Basic ' + base64.b64encode(authpair)
+
 
         if connection:
             # Callables re-use the connection of the original proxy
