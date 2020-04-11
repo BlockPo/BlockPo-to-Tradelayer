@@ -51,9 +51,9 @@ class TestNode(P2PInterface):
         self.block_reject_map = {}
         self.tx_reject_map = {}
 
-        # When the pingmap is non-empty we're waiting for 
+        # When the pingmap is non-empty we're waiting for
         # a response
-        self.pingMap = {} 
+        self.pingMap = {}
         self.lastInv = []
         self.closed = False
 
@@ -145,7 +145,7 @@ class TestNode(P2PInterface):
 #    nodes will be tested based on the outcome for the block.  If False,
 #    then inv's accumulate until all blocks are processed (or max inv size
 #    is reached) and then sent out in one inv message.  Then the final block
-#    will be synced across all connections, and the outcome of the final 
+#    will be synced across all connections, and the outcome of the final
 #    block will be tested.
 # sync_every_tx: analogous to behavior for sync_every_block, except if outcome
 #    on the final tx is None, then contents of entire mempool are compared
@@ -180,7 +180,7 @@ class TestManager():
     def wait_for_disconnections(self):
         def disconnected():
             return all(node.closed for node in self.p2p_connections)
-        wait_until(disconnected, timeout=10, lock=mininode_lock)
+        wait_until(disconnected, timeout=20, lock=mininode_lock)
 
     def wait_for_verack(self):
         return all(node.wait_for_verack() for node in self.p2p_connections)
@@ -201,7 +201,7 @@ class TestManager():
             )
 
         # --> error if not requested
-        wait_until(blocks_requested, attempts=20*num_blocks, lock=mininode_lock)
+        wait_until(blocks_requested, attempts=80*num_blocks, lock=mininode_lock)
 
         # Send getheaders message
         [ c.send_getheaders() for c in self.p2p_connections ]
@@ -221,7 +221,7 @@ class TestManager():
             )
 
         # --> error if not requested
-        wait_until(transaction_requested, attempts=20*num_events, lock=mininode_lock)
+        wait_until(transaction_requested, attempts=80*num_events, lock=mininode_lock)
 
         # Get the mempool
         [ c.send_mempool() for c in self.p2p_connections ]

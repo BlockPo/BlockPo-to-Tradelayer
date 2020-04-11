@@ -679,9 +679,8 @@ class CompactBlocksTest(BitcoinTestFramework):
         with mininode_lock:
             assert "blocktxn" not in test_node.last_message
 
-    def activate_segwit(self, node): # NOTE: a FOR loop to avoid the rpc hangout
-        for i in range (0,432):
-            node.generate(1)
+    def activate_segwit(self, node):
+        node.generate(432)
         assert_equal(get_bip9_status(node, "segwit")["status"], 'active')
 
     def test_end_to_end_block_relay(self, node, listeners):

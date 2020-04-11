@@ -63,7 +63,15 @@ class BIP66Test(BitcoinTestFramework):
         self.nodes[0].p2p.wait_for_verack()
 
         self.log.info("Mining %d blocks", DERSIG_HEIGHT - 2)
+
+        # blockSum = []
+        # for i in range(0,DERSIG_HEIGHT - 2):
+        #     blockSum.append(self.nodes[0].generate(1))
+        #
+        # self.coinbase_blocks = blockSum
+
         self.coinbase_blocks = self.nodes[0].generate(DERSIG_HEIGHT - 2)
+
         self.nodeaddress = self.nodes[0].getnewaddress()
 
         self.log.info("Test that a transaction with non-DER signature can still appear in a block")

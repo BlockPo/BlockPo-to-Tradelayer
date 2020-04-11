@@ -1,3 +1,4 @@
 n3Ex3mg7DdwTkXjw2WP1uNKZz2uxnBTh7S	 OpenLongPosition	 100	 mfY111owp59JzBrAceTtw4SpbVs3EWwZik	 OpenShortPosition	 100	 100	 5
 n3Ex3mg7DdwTkXjw2WP1uNKZz2uxnBTh7S	 OpenLongPosition	 100	 mfY111owp59JzBrAceTtw4SpbVs3EWwZik	 OpenShortPosition	 100	 100	 5
 n3Ex3mg7DdwTkXjw2WP1uNKZz2uxnBTh7S	 OpenLongPosition	 100	 mfY111owp59JzBrAceTtw4SpbVs3EWwZik	 OpenShortPosition	 100	 100	 5
+n3Ex3mg7DdwTkXjw2WP1uNKZz2uxnBTh7S	 OpenLongPosition	 100	 mfY111owp59JzBrAceTtw4SpbVs3EWwZik	 OpenShortPosition	 100	 100	 5
