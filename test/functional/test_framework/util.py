@@ -202,7 +202,7 @@ def satoshi_round(amount):
 
 def wait_until(predicate, *, attempts=float('inf'), timeout=float('inf'), lock=None):
     if attempts == float('inf') and timeout == float('inf'):
-        timeout = 60
+        timeout = 360
     attempt = 0
     timeout += time.time()
 
@@ -215,7 +215,7 @@ def wait_until(predicate, *, attempts=float('inf'), timeout=float('inf'), lock=N
             if predicate():
                 return
         attempt += 1
-        time.sleep(0.05)
+        time.sleep(0.01)
 
     # Print the cause of the timeout
     assert_greater_than(attempts, attempt)

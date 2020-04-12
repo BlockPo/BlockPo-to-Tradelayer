@@ -180,7 +180,7 @@ class TestManager():
     def wait_for_disconnections(self):
         def disconnected():
             return all(node.closed for node in self.p2p_connections)
-        wait_until(disconnected, timeout=20, lock=mininode_lock)
+        wait_until(disconnected, timeout=180, lock=mininode_lock)
 
     def wait_for_verack(self):
         return all(node.wait_for_verack() for node in self.p2p_connections)
@@ -201,7 +201,7 @@ class TestManager():
             )
 
         # --> error if not requested
-        wait_until(blocks_requested, attempts=80*num_blocks, lock=mininode_lock)
+        wait_until(blocks_requested, attempts=160*num_blocks, lock=mininode_lock)
 
         # Send getheaders message
         [ c.send_getheaders() for c in self.p2p_connections ]
@@ -221,7 +221,7 @@ class TestManager():
             )
 
         # --> error if not requested
-        wait_until(transaction_requested, attempts=80*num_events, lock=mininode_lock)
+        wait_until(transaction_requested, attempts=160*num_events, lock=mininode_lock)
 
         # Get the mempool
         [ c.send_mempool() for c in self.p2p_connections ]

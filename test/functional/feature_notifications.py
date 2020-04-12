@@ -44,7 +44,7 @@ class NotificationsTest(BitcoinTestFramework):
 
         # wait at most 10 seconds for expected file size before reading the content
         # wait_until(lambda: os.path.isfile(self.block_filename) and os.stat(self.block_filename).st_size >= (block_count * 65), timeout=10)
-        wait_until(lambda: len(os.listdir(self.blocknotify_dir)) == block_count, timeout=10)
+        wait_until(lambda: len(os.listdir(self.blocknotify_dir)) == block_count, timeout=60)
 
         # file content should equal the generated blocks hashes
         # with open(self.block_filename, 'r') as f:
