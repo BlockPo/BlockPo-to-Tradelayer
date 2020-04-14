@@ -2123,13 +2123,21 @@ UniValue tl_getallprice(const JSONRPCRequest& request)
         );
 
     UniValue balanceObj(UniValue::VOBJ);
-    uint64_t num = static_cast<uint64_t>(globalNumPrice);
-    uint64_t den = static_cast<uint64_t>(globalDenPrice);
-    arith_uint256 price = (ConvertTo256(num) *ConvertTo256(factorE)/ (ConvertTo256(den)));
-    int64_t iPrice = ConvertTo64(price);
-    balanceObj.push_back(Pair("unitprice", FormatByType(static_cast<uint64_t>(iPrice),2)));
-    balanceObj.push_back(Pair("num", FormatByType(static_cast<uint64_t>(num*factorE),2)));
-    balanceObj.push_back(Pair("den", FormatByType(static_cast<uint64_t>(den*factorE),2)));
+
+    // get token Price
+    int64_t allPrice = 0;
+
+    auto it = market_priceMap.find(static_cast<uint32_t>(ALL));
+
+    if (it != market_priceMap.end())
+    {
+        std::map<uint32_t, int64_t> auxMap = it->second;
+        auto itt = auxMap.find(static_cast<uint32_t>(dUSD));
+        if (itt != auxMap.end())
+            allPrice = itt->second;
+    }
+
+    balanceObj.push_back(Pair("unitprice", FormatByType(static_cast<uint64_t>(allPrice),2)));
     return balanceObj;
 }
 
@@ -2743,7 +2751,7 @@ UniValue tl_getdexvolume(const JSONRPCRequest& request)
             "\nArguments:\n"
             "1. property                 (number, required) property \n"
             "2. first block              (number, required) older limit block\n"
-            "3. second block             (number, optional) newer limit block\n"
+            "3. second block             (number, required) newer limit block\n"
             "\nResult:\n"
             "{\n"
             "  \"supply\" : \"n.nnnnnnnn\",   (number) the LTC volume traded \n"
@@ -2761,6 +2769,9 @@ UniValue tl_getdexvolume(const JSONRPCRequest& request)
     if (fblock == 0 || sblock == 0)
         throw JSONRPCError(RPC_INTERNAL_ERROR, "Block must be greater than 0");
 
+    if (sblock < fblock)
+            throw JSONRPCError(RPC_INTERNAL_ERROR, "Second block must be greater than first");
+
     // geting data from map!
     int64_t amount = mastercore::LtcVolumen(propertyId, fblock, sblock);
 
@@ -2776,7 +2787,7 @@ UniValue tl_getmdexvolume(const JSONRPCRequest& request)
 {
     if (request.params.size() < 3)
         throw runtime_error(
-            "tl_getdexvolume \n"
+            "tl_getmdexvolume \n"
             "\nReturns the first token volume traded in sort amount of blocks.\n"
             "\nArguments:\n"
             "1. propertyA                 (number, required) first property index \n"
@@ -2796,13 +2807,16 @@ UniValue tl_getmdexvolume(const JSONRPCRequest& request)
     uint32_t fproperty = ParsePropertyId(request.params[0]);
     uint32_t sproperty = ParsePropertyId(request.params[1]);
     uint32_t fblock = request.params[2].get_int();
-    uint32_t sblock = request.params[3].get_int();
+    uint32_t sblock = ParsePropertyId(request.params[3].get_int());
 
     if (fblock == 0 || sblock == 0)
         throw JSONRPCError(RPC_INTERNAL_ERROR, "Block must be greater than 0");
 
     if (fproperty <= sproperty )
-            throw JSONRPCError(RPC_INTERNAL_ERROR, "first property index must be the smaller");
+        throw JSONRPCError(RPC_INTERNAL_ERROR, "First property index must be the smaller");
+
+    if (sblock < fblock)
+        throw JSONRPCError(RPC_INTERNAL_ERROR, "Second block must be greater than first");
 
     // geting data from map!
     int64_t amount = mastercore::MdexVolumen(fproperty, sproperty,fblock, sblock);
@@ -2900,7 +2914,7 @@ UniValue tl_getmax_peggedcurrency(const JSONRPCRequest& request)
 			);
   std::string fromAddress = ParseAddress(request.params[0]);
   std::string name_traded = ParseText(request.params[1]);
-  
+
   struct FutureContractObject *pfuture = getFutureContractObject(name_traded);
   uint32_t contractId = pfuture->fco_propertyId;
   uint32_t collateral = pfuture->fco_collateral_currency;
