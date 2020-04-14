@@ -15,6 +15,7 @@ import urllib.parse
 class HTTPBasicsTest (BitcoinTestFramework):
     def set_test_params(self):
         self.num_nodes = 1
+        self.setup_clean_chain = True
 
     def setup_chain(self):
         super().setup_chain()
@@ -76,6 +77,7 @@ class HTTPBasicsTest (BitcoinTestFramework):
         assert_equal(out['result'][0]['category'], "N/A")
         assert_equal(out['result'][0]['subcategory'], "N/A")
 
+
         self.log.info("Testing tl_getbalance")
         conn = http.client.HTTPConnection(url.hostname, url.port)
         conn.connect()
@@ -113,6 +115,7 @@ class HTTPBasicsTest (BitcoinTestFramework):
         # self.log.info(out)
         assert_equal(out['result']['unitprice'],'0.00000000')
 
+
         self.log.info("Testing tl_getdexvolume")
         conn = http.client.HTTPConnection(url.hostname, url.port)
         conn.connect()
@@ -125,9 +128,61 @@ class HTTPBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['blockheigh'],'100')
 
 
+        self.log.info("Testing tl_getmdexvolume")
+        conn = http.client.HTTPConnection(url.hostname, url.port)
+        conn.connect()
+        conn.request('POST', '/', '{"method": "tl_getmdexvolume", "params": [1,2,1,100]}', headers)
+        resp = conn.getresponse()
+        input = (resp.read().decode('utf-8'))
+        out = json.loads(input)
+        # self.log.info(out)
+        assert_equal(out['result']['volume'],'0.00000000')
+        assert_equal(out['result']['blockheigh'],'100')
+
+
+        self.log.info("Testing tl_getproperty")
+        conn = http.client.HTTPConnection(url.hostname, url.port)
+        conn.connect()
+        conn.request('POST', '/', '{"method": "tl_getproperty", "params": [1]}', headers)
+        resp = conn.getresponse()
+        input = (resp.read().decode('utf-8'))
+        out = json.loads(input)
+        # self.log.info(out)
+        assert_equal(out['result']['propertyid'],1)
+        assert_equal(out['result']['name'],'ALL')
+        assert_equal(out['result']['data'],'')
+        assert_equal(out['result']['url'],'')
+        assert_equal(out['result']['divisible'],True)
+        assert_equal(out['result']['totaltokens'],'1500000.00000000')
+
+        conn.request('POST', '/', '{"method": "tl_getproperty", "params": [3]}', headers)
+        resp = conn.getresponse()
+        input = (resp.read().decode('utf-8'))
+        out = json.loads(input)
+        # self.log.info(out)
+        assert_equal(out['result']['propertyid'],3)
+        assert_equal(out['result']['name'],'Vesting Tokens')
+        assert_equal(out['result']['data'],'Divisible Tokens')
+        assert_equal(out['result']['url'],'www.tradelayer.org')
+        assert_equal(out['result']['divisible'],True)
+        assert_equal(out['result']['totaltokens'],'1500000.00000000')
+        assert_equal(out['result']['creation block'],100)
+
+
+        self.log.info("Testing tl_getvesting_supply")
+        conn = http.client.HTTPConnection(url.hostname, url.port)
+        conn.connect()
+        conn.request('POST', '/', '{"method": "tl_getvesting_supply"}', headers)
+        resp = conn.getresponse()
+        input = (resp.read().decode('utf-8'))
+        out = json.loads(input)
+        # self.log.info(out)
+        assert_equal(out['result']['supply'],'0.00000000')
+        assert_equal(out['result']['blockheight'],'100')
 
         conn.close()
 
+        self.stop_nodes()
 
 if __name__ == '__main__':
     HTTPBasicsTest ().main ()

@@ -639,7 +639,7 @@ int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addre
     if (IsFeatureActivated(FEATURE_DEXMATH, block))
     {
         PrintToLog("IsFeatureActivated(FEATURE_DEXMATH, block) true\n");
-        amountPurchased = calculateDExPurchase(amountOffered, amountDesired, amountPaid);
+        amountPurchased = mastercore::calculateDExPurchase(amountOffered, amountDesired, amountPaid);
     } else {
         // Fallback to original calculation:
         amountPurchased = legacy::calculateDExPurchase(amountOffered, amountDesired, amountPaid);

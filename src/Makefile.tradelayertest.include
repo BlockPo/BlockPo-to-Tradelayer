@@ -6,7 +6,9 @@ TRADELAYER_TEST_CPP = \
   tradelayer/test/tally_tests.cpp \
   tradelayer/test/create_payload_tests.cpp \
   tradelayer/test/x_trade_tests.cpp \
-  tradelayer/test/requirements_tests.cpp
+  tradelayer/test/requirements_tests.cpp \
+  tradelayer/test/dex_purchase_tests.cpp \
+  tradelayer/test/lock_tests.cpp
 
 BITCOIN_TESTS += \
   $(TRADELAYER_TEST_CPP) \

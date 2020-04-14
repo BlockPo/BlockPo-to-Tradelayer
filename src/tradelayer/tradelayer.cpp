@@ -595,6 +595,9 @@ void CheckWalletUpdate(bool forceUpdate)
  * Test network:
  *   moCYruRphhYgejzH75bxWD49qRFan8eGES
  *
+ * Regtest network:
+ *   mgrNNyDCdAWeYfkvcarsQKRzMhEFQiDmnH
+ *
  * @return The specific address
  */
 const string getAdminAddress()
@@ -6205,8 +6208,11 @@ int64_t mastercore::getOracleTwap(uint32_t contractId, int nBlocks)
 }
 
 
-bool mastercore::SanityChecks(string receiver, int aBlock)
+bool mastercore::SanityChecks(string sender, int aBlock)
 {
+    if (getAdminAddress() == sender)
+        return true;
+        
     const CConsensusParams &params = ConsensusParams();
     vestingActivationBlock = params.MSC_VESTING_BLOCK;
 
@@ -6216,10 +6222,10 @@ bool mastercore::SanityChecks(string receiver, int aBlock)
 
     PrintToLog("%s(): timeFrame: %d\n", __func__,timeFrame);
 
-    // is this the first transaction ?
+    // is this the first transaction from address in the list?
     for(auto it = vestingAddresses.begin(); it != vestingAddresses.end(); ++it)
     {
-        if(receiver == *(it) && timeFrame > ONE_YEAR)
+        if(sender == *(it) && timeFrame > ONE_YEAR)
             return true;
         else
             return false;

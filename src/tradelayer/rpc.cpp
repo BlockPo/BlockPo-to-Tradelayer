@@ -2737,7 +2737,7 @@ UniValue tl_getvesting_supply(const JSONRPCRequest& request)
     UniValue balanceObj(UniValue::VOBJ);
 
     balanceObj.push_back(Pair("supply", FormatDivisibleMP(amount)));
-    balanceObj.push_back(Pair("blockheigh", FormatIndivisibleMP(GetHeight())));
+    balanceObj.push_back(Pair("blockheight", FormatIndivisibleMP(GetHeight())));
 
     return balanceObj;
 }
@@ -2812,7 +2812,7 @@ UniValue tl_getmdexvolume(const JSONRPCRequest& request)
     if (fblock == 0 || sblock == 0)
         throw JSONRPCError(RPC_INTERNAL_ERROR, "Block must be greater than 0");
 
-    if (fproperty <= sproperty )
+    if (sproperty < fproperty )
         throw JSONRPCError(RPC_INTERNAL_ERROR, "First property index must be the smaller");
 
     if (sblock < fblock)

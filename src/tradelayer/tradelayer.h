@@ -562,7 +562,7 @@ namespace mastercore
   int64_t getOracleTwap(uint32_t contractId, int nBlocks);
 
   // check for vesting
-  bool SanityChecks(string receiver, int aBlock);
+  bool SanityChecks(string sender, int aBlock);
 
   // fee cache buying Alls in mDEx
   bool feeCacheBuy();
