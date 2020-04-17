@@ -425,20 +425,18 @@ bool IsTransactionTypeAllowed(int txBlock, uint16_t txType, uint16_t version)
     for (std::vector<TransactionRestriction>::const_iterator it = vTxRestrictions.begin(); it != vTxRestrictions.end(); ++it)
     {
         const TransactionRestriction& entry = *it;
-        PrintToLog("%s(): entry.txType: %d; txType: %d\n",__func__,entry.txType, txType);
 
         if (entry.txType != txType || entry.txVersion != version) {
-            PrintToLog("%s(): first continue\n",__func__);
+            // PrintToLog("%s(): first continue\n",__func__);
             continue;
         }
 
         if (txBlock >= entry.activationBlock) {
-            PrintToLog("%s(): txBlock: %d; entry.activationBlock: %d\n",__func__,txBlock, entry.activationBlock);
+            // PrintToLog("%s(): txBlock: %d; entry.activationBlock: %d\n",__func__,txBlock, entry.activationBlock);
             return true;
         }
     }
 
-    PrintToLog("%s(): return false\n",__func__);
     return false;
 }
 

@@ -114,7 +114,7 @@ UniValue tl_createpayload_issuancecrowdsale(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_issuancefixed(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 6)
+    if (request.params.size() != 7)
         throw runtime_error(
             "tl_createpayload_issuancefixed \" type previousid \"name\" \"url\" \"data\" \"amount\"\n"
 
@@ -127,7 +127,11 @@ UniValue tl_createpayload_issuancefixed(const JSONRPCRequest& request)
             "4. url                  (string, required) an URL for further information about the new tokens (can be \"\")\n"
             "5. data                 (string, required) a description for the new tokens (can be \"\")\n"
             "6. amount              (string, required) the number of tokens to create\n"
-
+            "7. kyc options          (array, optional) A json with the kyc allowed.\n"
+            "    [\n"
+            "      2,3,5             (number) kyc id\n"
+            "      ,...\n"
+            "    ]\n"
             "\nResult:\n"
             "\"payload\"             (string) the hex-encoded payload\n"
 
@@ -142,8 +146,9 @@ UniValue tl_createpayload_issuancefixed(const JSONRPCRequest& request)
     std::string url = ParseText(request.params[3]);
     std::string data = ParseText(request.params[4]);
     int64_t amount = ParseAmount(request.params[5], type);
+    std::vector<int> numbers = ParseArray(request.params[6]);
 
-    std::vector<unsigned char> payload = CreatePayload_IssuanceFixed(type, previousId, name, url, data, amount);
+    std::vector<unsigned char> payload = CreatePayload_IssuanceFixed(type, previousId, name, url, data, amount, numbers);
 
     return HexStr(payload.begin(), payload.end());
 }
@@ -1175,7 +1180,7 @@ UniValue tl_createpayload_update_id_registration(const JSONRPCRequest& request)
 static const CRPCCommand commands[] =
   { //  category                         name                                             actor (function)                               okSafeMode
     //  -------------------------------- -----------------------------------------       ----------------------------------------        ----------
-    { "trade layer (payload creation)", "tl_createpayload_simplesend",                    &tl_createpayload_simplesend,                      {}   },  
+    { "trade layer (payload creation)", "tl_createpayload_simplesend",                    &tl_createpayload_simplesend,                      {}   },
     { "trade layer (payload creation)", "tl_createpayload_sendall",                       &tl_createpayload_sendall,                         {}   },
     { "trade layer (payload creation)", "tl_createpayload_issuancecrowdsale",             &tl_createpayload_issuancecrowdsale,               {}   },
     { "trade layer (payload creation)", "tl_createpayload_issuancefixed",                 &tl_createpayload_issuancefixed,                   {}   },

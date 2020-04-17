@@ -299,7 +299,7 @@ UniValue tl_sendissuancecrowdsale(const JSONRPCRequest& request)
 
 UniValue tl_sendissuancefixed(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 7)
+    if (request.params.size() != 8)
         throw runtime_error(
             "tl_sendissuancefixed \"fromaddress\" type previousid \"name\" \"url\" \"data\" \"amount\"\n"
 
@@ -313,7 +313,11 @@ UniValue tl_sendissuancefixed(const JSONRPCRequest& request)
             "5. url                  (string, required) an URL for further information about the new tokens (can be \"\")\n"
             "6. data                 (string, required) a description for the new tokens (can be \"\")\n"
             "7. amount               (string, required) the number of tokens to create\n"
-
+            "8. kyc options          (array, optional) A json with the kyc allowed.\n"
+            "    [\n"
+            "      2,3,5         (number) kyc id\n"
+            "      ,...\n"
+            "    ]\n"
             "\nResult:\n"
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
 
@@ -326,18 +330,18 @@ UniValue tl_sendissuancefixed(const JSONRPCRequest& request)
     std::string fromAddress = ParseAddress(request.params[0]);
     uint16_t type = ParsePropertyType(request.params[1]);
     uint32_t previousId = ParsePreviousPropertyId(request.params[2]);
-    RequireNotContract(previousId);
     std::string name = ParseText(request.params[3]);
     std::string url = ParseText(request.params[4]);
     std::string data = ParseText(request.params[5]);
     int64_t amount = ParseAmount(request.params[6], type);
+    std::vector<int> numbers = ParseArray(request.params[7]);
 
     // perform checks
     RequirePropertyName(name);
     RequireSaneName(name);
 
     // create a payload for the transaction
-    std::vector<unsigned char> payload = CreatePayload_IssuanceFixed(type, previousId, name, url, data, amount);
+    std::vector<unsigned char> payload = CreatePayload_IssuanceFixed(type, previousId, name, url, data, amount, numbers);
 
     // request the wallet build the transaction (and if needed commit it)
     uint256 txid;
@@ -1410,7 +1414,9 @@ UniValue tl_senddexoffer(const JSONRPCRequest& request)
 
   std::vector<unsigned char> payload;
 
-  RequireNoOtherDExOffer(fromAddress, propertyIdForSale);
+
+  if (action != 3) RequireNoOtherDExOffer(fromAddress, propertyIdForSale);
+
 
   if (option == 1)
   {

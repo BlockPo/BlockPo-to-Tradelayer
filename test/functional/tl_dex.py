@@ -2,7 +2,7 @@
 # Copyright (c) 2015-2017 The Bitcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
-"""Test basic for Creating tokens ."""
+"""Test DEx functions ."""
 
 from test_framework.test_framework import BitcoinTestFramework
 from test_framework.util import str_to_b64str, assert_equal
@@ -34,7 +34,7 @@ class HTTPBasicsTest (BitcoinTestFramework):
         self.nodes[0].generate(200)
 
         ################################################################################
-        # Checking RPC tl_sendissuancemanaged and tl_sendgrant (in the first 200 blocks of the chain) #
+        # Checking RPC tl_senddexoffer and tl_getactivedexsells (in the first 200 blocks of the chain) #
         ################################################################################
 
         url = urllib.parse.urlparse(self.nodes[0].url)
@@ -79,7 +79,7 @@ class HTTPBasicsTest (BitcoinTestFramework):
         self.nodes[0].generate(1)
 
 
-        self.log.info("Checking the LTC balance in sender")
+        self.log.info("Checking the LTC balance every address")
         for addr in addresses:
             conn.request('POST', '/', '{"method": "getbalance", "params":["john"]}', headers)
             resp = conn.getresponse()
@@ -91,17 +91,18 @@ class HTTPBasicsTest (BitcoinTestFramework):
             assert_equal(out['result'],0.1)
 
 
-        self.log.info("Creating new tokens (sendissuancemanaged)")
+        self.log.info("Creating new tokens (sendissuancefixed)")
         array = [0]
-        params = str([addresses[0],2,0,"lihki","","",array]).replace("'",'"')
+        params = str([addresses[0],2,0,"lihki","","","3000",array]).replace("'",'"')
         # self.log.info(params)
-        conn.request('POST', '/', '{"method": "tl_sendissuancemanaged", "params":'+params+'}', headers)
+        conn.request('POST', '/', '{"method": "tl_sendissuancefixed", "params":'+params+'}', headers)
         resp = conn.getresponse()
         assert_equal(resp.status, 200)
         input = (resp.read().decode('utf-8'))
         out = json.loads(input)
         assert_equal(out['error'], None)
         # self.log.info(out)
+
 
 
         self.log.info("Self Attestation for addresses")
@@ -134,10 +135,9 @@ class HTTPBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['data'],'')
         assert_equal(out['result']['url'],'')
         assert_equal(out['result']['divisible'],True)
-        assert_equal(out['result']['totaltokens'],'0.00000000')
+        assert_equal(out['result']['totaltokens'],'3000.00000000')
 
-
-        self.log.info("Checking token balance equal zero in every address")
+        self.log.info("Checking token balance in every address")
         for addr in addresses:
             params = str([addr, 4]).replace("'",'"')
             conn.request('POST', '/', '{"method": "tl_getbalance", "params":'+params+'}', headers)
@@ -146,15 +146,53 @@ class HTTPBasicsTest (BitcoinTestFramework):
             input = (resp.read().decode('utf-8'))
             out = json.loads(input)
             # self.log.info(out)
+            amount = ""
             assert_equal(out['error'], None)
-            assert_equal(out['result']['balance'],'0.00000000')
+            if addr == addresses[0]:
+                 amount = '3000.00000000'
+            else:
+                 amount = '0.00000000'
+
+            assert_equal(out['result']['balance'], amount)
             assert_equal(out['result']['reserve'],'0.00000000')
 
 
-        self.log.info("Sending 2000 tokens to receiver (sendgrant)")
-        params = str([addresses[0], addresses[1], 4, "2000"]).replace("'",'"')
+        self.log.info("Sending a DEx sell tokens offer")
+        params = str([addresses[0], 4, "1000", "300", 10000, "0.00001", "2", 1]).replace("'",'"')
         # self.log.info(params)
-        conn.request('POST', '/', '{"method": "tl_sendgrant", "params":'+params+'}', headers)
+        conn.request('POST', '/', '{"method": "tl_senddexoffer", "params":'+params+'}', headers)
+        resp = conn.getresponse()
+        assert_equal(resp.status, 200)
+        input = (resp.read().decode('utf-8'))
+        out = json.loads(input)
+        assert_equal(out['error'], None)
+        # self.log.info(out)
+
+
+        self.nodes[0].generate(1)
+
+        self.log.info("Checking the offer in DEx")
+        params = str([addresses[0]]).replace("'",'"')
+        conn.request('POST', '/', '{"method": "tl_getactivedexsells", "params":'+params+'}', headers)
+        resp = conn.getresponse()
+        assert_equal(resp.status, 200)
+        input = (resp.read().decode('utf-8'))
+        out = json.loads(input)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result'][0]['propertyid'], 4)
+        assert_equal(out['result'][0]['action'], 2)
+        assert_equal(out['result'][0]['seller'], addresses[0])
+        assert_equal(out['result'][0]['ltcsdesired'], '300.00000000')
+        assert_equal(out['result'][0]['amountavailable'], '1000.00000000')
+        assert_equal(out['result'][0]['amountoffered'], '0.00000000')
+        assert_equal(out['result'][0]['unitprice'], '0.30000000')
+        assert_equal(out['result'][0]['minimumfee'], '0.00001000')
+
+        self.log.info("Cancelling the DEx offer")
+        params = str([addresses[0], 4, "1000", "300", 10000, "0.00001", "2", 3]).replace("'",'"')
+        # self.log.info(params)
+        conn.request('POST', '/', '{"method": "tl_senddexoffer", "params":'+params+'}', headers)
         resp = conn.getresponse()
         assert_equal(resp.status, 200)
         input = (resp.read().decode('utf-8'))
@@ -165,45 +203,17 @@ class HTTPBasicsTest (BitcoinTestFramework):
         self.nodes[0].generate(1)
 
 
-        self.log.info("Checking tokens in receiver address")
-        params = str([addresses[1], 4]).replace("'",'"')
-        conn.request('POST', '/', '{"method": "tl_getbalance", "params":'+params+'}', headers)
+        self.log.info("Checking the offer in DEx again")
+        params = str([addresses[0]]).replace("'",'"')
+        conn.request('POST', '/', '{"method": "tl_getactivedexsells", "params":'+params+'}', headers)
         resp = conn.getresponse()
         assert_equal(resp.status, 200)
         input = (resp.read().decode('utf-8'))
         out = json.loads(input)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['balance'],'2000.00000000')
-        assert_equal(out['result']['reserve'],'0.00000000')
+        assert_equal(out['result'], [])
 
-
-        self.log.info("Sending 1000 tokens to from receiver to last address (using tl_send)")
-        params = str([addresses[1], addresses[2], 4,"1000"]).replace("'",'"')
-        # self.log.info(params)
-        conn.request('POST', '/', '{"method": "tl_send", "params":'+params+'}', headers)
-        resp = conn.getresponse()
-        assert_equal(resp.status, 200)
-        input = (resp.read().decode('utf-8'))
-        out = json.loads(input)
-        # self.log.info(out)
-        assert_equal(out['error'], None)
-
-        self.nodes[0].generate(1)
-
-
-        self.log.info("Checking tokens in receiver address and last address")
-        for i in range(2,3):
-            params = str([addresses[i], 4]).replace("'",'"')
-            conn.request('POST', '/', '{"method": "tl_getbalance", "params":'+params+'}', headers)
-            resp = conn.getresponse()
-            assert_equal(resp.status, 200)
-            input = (resp.read().decode('utf-8'))
-            out = json.loads(input)
-            # self.log.info(out)
-            assert_equal(out['error'], None)
-            assert_equal(out['result']['balance'],'1000.00000000')
-            assert_equal(out['result']['reserve'],'0.00000000')
 
         conn.close()
 

@@ -415,6 +415,17 @@ bool CMPTransaction::interpret_CreatePropertyFixed()
 
     std::vector<uint8_t> vecAmountBytes = GetNextVarIntBytes(i);
 
+    do
+    {
+        std::vector<uint8_t> vecKyc = GetNextVarIntBytes(i);
+        if (!vecKyc.empty())
+        {
+            int64_t num = static_cast<int64_t>(DecompressInteger(vecKyc));
+            kyc_Ids.push_back(num);
+        }
+
+    } while(i < pkt_size);
+
     if (!vecPropTypeBytes.empty()) {
         prop_type = DecompressInteger(vecPropTypeBytes);
     } else return false;
@@ -2456,6 +2467,13 @@ int CMPTransaction::logicMath_CreatePropertyFixed()
     newSP.fixed = true;
     newSP.creation_block = blockHash;
     newSP.update_block = newSP.creation_block;
+    newSP.init_block = block;
+
+    for(std::vector<int64_t>::iterator it = kyc_Ids.begin(); it != kyc_Ids.end(); ++it)
+    {
+        const int64_t aux = *it;
+        newSP.kyc.push_back(aux);
+    }
 
     const uint32_t propertyId = _my_sps->putSP(newSP);
     assert(propertyId > 0);
@@ -3680,6 +3698,7 @@ int CMPTransaction::logicMath_TradeOffer()
       int rc = PKT_ERROR_TRADEOFFER;
 
     // figure out which Action this is based on amount for sale, version & etc.
+    // TODO: delete old version
     switch (version)
     {
         case MP_TX_PKT_V0:
@@ -3687,16 +3706,19 @@ int CMPTransaction::logicMath_TradeOffer()
             if (0 != nValue) {
 
                 if (!DEx_offerExists(sender, propertyId)) {
-                    PrintToLog("%s():Dex offer doesn't exist\n");
+                    PrintToLog("%s():checkpoint 1\n");
                     rc = DEx_offerCreate(sender, propertyId, nValue, block, amountDesired, minFee, timeLimit, txid, &nNewValue);
                 } else {
+                    PrintToLog("%s():checkpoint 2\n");
                     rc = DEx_offerUpdate(sender, propertyId, nValue, block, amountDesired, minFee, timeLimit, txid, &nNewValue);
                 }
             } else {
                 // what happens if nValue is 0 for V0 ?  ANSWER: check if exists and it does -- cancel, otherwise invalid
+                PrintToLog("%s():checkpoint 3\n");
                 if (DEx_offerExists(sender, propertyId)) {
                     rc = DEx_offerDestroy(sender, propertyId);
                 } else {
+                    PrintToLog("%s():checkpoint 4\n");
                     PrintToLog("%s(): rejected: sender %s has no active sell offer for property: %d\n", __func__, sender, propertyId);
                     rc = (PKT_ERROR_TRADEOFFER -49);
                 }
@@ -3707,7 +3729,7 @@ int CMPTransaction::logicMath_TradeOffer()
 
         case MP_TX_PKT_V1:
         {
-            PrintToLog("%s():Case MP_TX_PKT_V1\n");
+            PrintToLog("%s():checkpoint 4\n");
             if (DEx_offerExists(sender, propertyId)) {
                 if (CANCEL != subAction && UPDATE != subAction) {
                     PrintToLog("%s(): rejected: sender %s has an active sell offer for property: %d\n", __func__, sender, property);

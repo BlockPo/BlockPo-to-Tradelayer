@@ -243,6 +243,10 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_sendissuancemanaged", 2, "arg2" },
     { "tl_sendissuancemanaged", 6, "arg6" },
 
+    { "tl_sendissuancefixed", 1, "arg1" },
+    { "tl_sendissuancefixed", 2, "arg2" },
+    { "tl_sendissuancefixed", 7, "arg7" },
+
     { "tl_createcontract", 1, "arg1"},
     { "tl_createcontract", 2, "arg2"},
     { "tl_createcontract", 4, "arg4"},

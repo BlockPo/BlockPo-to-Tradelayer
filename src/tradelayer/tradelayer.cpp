@@ -1991,7 +1991,7 @@ static int write_global_vars(ofstream &file, SHA256_CTX *shaCtx)
 
      int64_t lastVolume = globalVolumeALL_LTC;
 
-     PrintToLog("%s(): lastVesting: %f, globalVolumeALL_LTC: %d\n",__func__,lastVesting, lastVolume);
+     // PrintToLog("%s(): lastVesting: %d, globalVolumeALL_LTC: %d\n",__func__,lastVesting, lastVolume);
 
      lineOut.append(strprintf("%f", lastVesting));
      lineOut.append(strprintf("%d", lastVolume));
@@ -6212,7 +6212,7 @@ bool mastercore::SanityChecks(string sender, int aBlock)
 {
     if (getAdminAddress() == sender)
         return true;
-        
+
     const CConsensusParams &params = ConsensusParams();
     vestingActivationBlock = params.MSC_VESTING_BLOCK;
 

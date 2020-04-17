@@ -24,7 +24,7 @@ BOOST_AUTO_TEST_CASE(payload_simple_send)
 BOOST_AUTO_TEST_CASE(payload_send_all)
 {
     // Send to owners [type 4, version 0]
-    std::vector<unsigned char> vch = CreatePayload_SendAll();      
+    std::vector<unsigned char> vch = CreatePayload_SendAll();
 
     BOOST_CHECK_EQUAL(HexStr(vch), "000402");
 }
@@ -81,13 +81,17 @@ BOOST_AUTO_TEST_CASE(payload_accept_dex_offer)
 BOOST_AUTO_TEST_CASE(payload_create_property)
 {
     // Create property [type 50, version 0]
+    std::vector<int> numbers;
+    numbers.push_back(0);
     std::vector<unsigned char> vch = CreatePayload_IssuanceFixed(
         static_cast<uint16_t>(1),            // property type: indivisible tokens
         static_cast<uint32_t>(0),            // previous property: none
         std::string("Lihki Coin"),           // name
         std::string("www.parcero.col"),      // url
         std::string(""),                     // data
-        static_cast<int64_t>(1000000));      // number of units to create
+        static_cast<int64_t>(1000000),       // number of units to create
+        numbers);
+
 
     BOOST_CHECK_EQUAL(HexStr(vch),
         "00320101004c69686b6920436f696e007777772e7061726365726f2e636f6c0000c0843d");
@@ -96,13 +100,16 @@ BOOST_AUTO_TEST_CASE(payload_create_property)
 BOOST_AUTO_TEST_CASE(payload_create_property_empty)
 {
     // Create property [type 50, version 0]
+    std::vector<int> numbers;
+    numbers.push_back(0);
     std::vector<unsigned char> vch = CreatePayload_IssuanceFixed(
         static_cast<uint16_t>(1),        // property type: indivisible tokens
         static_cast<uint32_t>(0),        // previous property: none
         std::string(""),                 // name
         std::string(""),                 // url
         std::string(""),                 // data
-        static_cast<int64_t>(1000000));  // number of units to create
+        static_cast<int64_t>(1000000),  // number of units to create
+        numbers);
 
     BOOST_CHECK_EQUAL(vch.size(), 11);
 }
@@ -110,6 +117,8 @@ BOOST_AUTO_TEST_CASE(payload_create_property_empty)
 BOOST_AUTO_TEST_CASE(payload_create_property_full)
 {
     // Create property [type 50, version 0]
+    std::vector<int> numbers;
+    numbers.push_back(0);
     std::vector<unsigned char> vch = CreatePayload_IssuanceFixed(
         static_cast<uint16_t>(1),        // property type: indivisible tokens
         static_cast<uint32_t>(0),        // previous property: none
@@ -117,7 +126,8 @@ BOOST_AUTO_TEST_CASE(payload_create_property_full)
         std::string(700, 'x'),           // name
         std::string(700, 'x'),           // url
         std::string(700, 'x'),           // data
-        static_cast<int64_t>(1000000));  // number of units to create
+        static_cast<int64_t>(1000000),  // number of units to create
+        numbers);
 
     BOOST_CHECK_EQUAL(vch.size(), 776);
 }

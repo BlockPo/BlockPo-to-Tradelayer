@@ -79,7 +79,7 @@ std::vector<unsigned char> CreatePayload_SendAll()
     return payload;
 }
 
-std::vector<unsigned char> CreatePayload_IssuanceFixed(uint16_t propertyType, uint32_t previousPropertyId, std::string name, std::string url, std::string data, uint64_t amount)
+std::vector<unsigned char> CreatePayload_IssuanceFixed(uint16_t propertyType, uint32_t previousPropertyId, std::string name, std::string url, std::string data, uint64_t amount, std::vector<int> kycVec)
 {
     std::vector<unsigned char> payload;
 
@@ -91,6 +91,14 @@ std::vector<unsigned char> CreatePayload_IssuanceFixed(uint16_t propertyType, ui
     std::vector<uint8_t> vecPropertyType = CompressInteger((uint64_t)propertyType);
     std::vector<uint8_t> vecPrevPropertyId = CompressInteger((uint64_t)previousPropertyId);
     std::vector<uint8_t> vecAmount = CompressInteger((uint64_t)amount);
+
+    std::vector<std::vector<uint8_t>> auxVec;
+
+    for (std::vector<int>::iterator it = kycVec.begin(); it != kycVec.end();++it)
+    {
+        std::vector<uint8_t> vecNum = CompressInteger((uint64_t) *it);
+        auxVec.push_back(vecNum);
+    }
 
     if (name.size() > 255) name = name.substr(0,255);
     if (url.size() > 255) url = url.substr(0,255);
@@ -107,6 +115,12 @@ std::vector<unsigned char> CreatePayload_IssuanceFixed(uint16_t propertyType, ui
     payload.insert(payload.end(), data.begin(), data.end());
     payload.push_back('\0');
     payload.insert(payload.end(), vecAmount.begin(), vecAmount.end());
+
+    for (std::vector<std::vector<uint8_t>>::iterator itt = auxVec.begin(); itt != auxVec.end(); ++itt)
+    {
+        const std::vector<uint8_t> vec = *itt;
+        payload.insert(payload.end(), vec.begin(), vec.end());
+    }
 
     return payload;
 }
@@ -534,7 +548,7 @@ std::vector<unsigned char> CreatePayload_DExSell(uint32_t propertyId, uint64_t a
     std::vector<unsigned char> payload;
 
     uint64_t messageType = 20;
-    uint64_t messageVer = 0;
+    uint64_t messageVer = 1;
 
     std::vector<uint8_t> vecMessageType = CompressInteger((uint64_t)messageType);
     std::vector<uint8_t> vecMessageVer = CompressInteger((uint64_t)messageVer);
