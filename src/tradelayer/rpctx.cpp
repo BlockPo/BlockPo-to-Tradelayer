@@ -1415,7 +1415,7 @@ UniValue tl_senddexoffer(const JSONRPCRequest& request)
   std::vector<unsigned char> payload;
 
 
-  if (action != 3) RequireNoOtherDExOffer(fromAddress, propertyIdForSale);
+  if (action == 1) RequireNoOtherDExOffer(fromAddress, propertyIdForSale);
 
 
   if (option == 1)
@@ -2091,6 +2091,93 @@ UniValue tl_attestation(const JSONRPCRequest& request)
     }
 }
 
+UniValue tl_sendcancelalltrades(const JSONRPCRequest& request)
+{
+    if (request.params.size() != 1)
+        throw runtime_error(
+            "tl_sendcancelalltrades \"\"\" \n"
+
+            "\nCancel all metaDEx orders.\n"
+            "\nArguments:\n"
+            "1. address       (string, required) authority address\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("tl_sendcancelalltrades", "\"\"")
+            + HelpExampleRpc("tl_sendcancelalltrades", "\"\"")
+        );
+
+    // obtain parameters & info
+    std::string fromAddress = ParseAddress(request.params[0]);
+
+    // PrintToLog("%s(): hash: %s\n",__func__,hash);
+
+    // create a payload for the transaction
+    std::vector<unsigned char> payload = CreatePayload_MetaDExCancelAll();
+
+    // request the wallet build the transaction (and if needed commit it)
+    uint256 txid;
+    std::string rawHex;
+    int result = WalletTxBuilder(fromAddress, "", 0, payload, txid, rawHex, autoCommit);
+
+    // check error and return the txid (or raw hex depending on autocommit)
+    if (result != 0) {
+        throw JSONRPCError(result, error_str(result));
+    } else {
+        if (!autoCommit) {
+            return rawHex;
+        } else {
+            return txid.GetHex();
+        }
+    }
+}
+
+
+
+  UniValue tl_sendcancel_contract_order(const JSONRPCRequest& request)
+  {
+      if (request.params.size() != 1)
+          throw runtime_error(
+              "tl_sendcancel_contract_order \"address \"hash\" \n"
+
+              "\nCancel specific contract order .\n"
+              "\nArguments:\n"
+              "1. address       (string, required) sender address\n"
+              "1. hash          (string, required) transaction hash\n"
+
+              "\nExamples:\n"
+              + HelpExampleCli("tl_sendcancel_contract_order", "\"\"")
+              + HelpExampleRpc("tl_sendcancel_contract_order", "\"\"")
+          );
+
+      // obtain parameters & info
+      std::string fromAddress = ParseAddress(request.params[0]);
+      uint256 txS = ParseHashO(request.params[0], "txid");
+
+      std::string stxS = txS.ToString();
+
+      // PrintToLog("%s(): hash: %s\n",__func__,hash);
+
+      // create a payload for the transaction
+      std::vector<unsigned char> payload = CreatePayload_ContractDExCancel(stxS);
+
+      // request the wallet build the transaction (and if needed commit it)
+      uint256 txid;
+      std::string rawHex;
+      int result = WalletTxBuilder(fromAddress, "", 0, payload, txid, rawHex, autoCommit);
+
+      // check error and return the txid (or raw hex depending on autocommit)
+      if (result != 0) {
+          throw JSONRPCError(result, error_str(result));
+      } else {
+          if (!autoCommit) {
+              return rawHex;
+          } else {
+              return txid.GetHex();
+          }
+      }
+  }
+
+
 static const CRPCCommand commands[] =
 { //  category                             name                            actor (function)               okSafeMode
   //  ------------------------------------ ------------------------------- ------------------------------ ----------
@@ -2118,6 +2205,7 @@ static const CRPCCommand commands[] =
     { "trade layer (transaction creation)", "tl_redemption_pegged",            &tl_redemption_pegged,               {} },
     { "trade layer (transaction creation)", "tl_closeposition",                &tl_closeposition,                   {} },
     { "trade layer (transaction creation)", "tl_sendtrade",                    &tl_sendtrade,                       {} },
+    { "trade layer (transaction creation)", "tl_sendcancelalltrades",          &tl_sendcancelalltrades,             {} },
     { "trade layer (transaction creation)", "tl_senddexoffer",                 &tl_senddexoffer,                    {} },
     { "trade layer (transaction creation)", "tl_senddexaccept",                &tl_senddexaccept,                   {} },
     { "trade layer (transaction creation)", "tl_create_oraclecontract",        &tl_create_oraclecontract,           {} },

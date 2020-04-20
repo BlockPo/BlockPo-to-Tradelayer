@@ -95,6 +95,7 @@ extern bool msc_debug_search_all;
 extern bool msc_debug_add_contract_ltc_vol;
 extern bool msc_debug_update_last_block;
 extern bool msc_debug_send_reward;
+extern bool msc_debug_contract_cancel;
 
 /* When we switch to C++11, this can be switched to variadic templates instead
  * of this macro-based construction (see tinyformat.h).

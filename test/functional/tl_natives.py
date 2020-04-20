@@ -2,7 +2,7 @@
 # Copyright (c) 2015-2017 The Bitcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
-"""Test MetaDEx functions."""
+"""Test ContractDEx functions (natives)."""
 
 from test_framework.test_framework import BitcoinTestFramework
 from test_framework.util import str_to_b64str, assert_equal
@@ -106,21 +106,6 @@ class HTTPBasicsTest (BitcoinTestFramework):
         self.nodes[0].generate(1)
 
 
-        self.log.info("Creating new tokens  (dan)")
-        array = [0]
-        params = str([addresses[1],2,0,"dan","","","100000",array]).replace("'",'"')
-        # self.log.info(params)
-        conn.request('POST', '/', '{"method": "tl_sendissuancefixed", "params":'+params+'}', headers)
-        resp = conn.getresponse()
-        assert_equal(resp.status, 200)
-        input = (resp.read().decode('utf-8'))
-        out = json.loads(input)
-        assert_equal(out['error'], None)
-        # self.log.info(out)
-
-        self.nodes[0].generate(1)
-
-
         self.log.info("Self Attestation for addresses")
         for addr in addresses:
             params = str([addr,addr,""]).replace("'",'"')
@@ -154,22 +139,6 @@ class HTTPBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['totaltokens'],'100000.00000000')
 
 
-        self.log.info("Checking the property: dan ")
-        conn.request('POST', '/', '{"method": "tl_getproperty", "params": [5]}', headers)
-        resp = conn.getresponse()
-        assert_equal(resp.status, 200)
-        input = (resp.read().decode('utf-8'))
-        out = json.loads(input)
-        assert_equal(out['error'], None)
-        # self.log.info(out)
-        assert_equal(out['result']['propertyid'],5)
-        assert_equal(out['result']['name'],'dan')
-        assert_equal(out['result']['data'],'')
-        assert_equal(out['result']['url'],'')
-        assert_equal(out['result']['divisible'],True)
-        assert_equal(out['result']['totaltokens'],'100000.00000000')
-
-
         self.log.info("Checking tokens balance in lihki's owner ")
         params = str([addresses[0], 4]).replace("'",'"')
         # self.log.info(params)
@@ -184,24 +153,12 @@ class HTTPBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['reserve'],'0.00000000')
 
 
-        self.log.info("Checking tokens balance in dan's owner ")
-        params = str([addresses[1], 5]).replace("'",'"')
-        # self.log.info(params)
-        conn.request('POST', '/', '{"method": "tl_getbalance", "params":'+params+'}', headers)
-        resp = conn.getresponse()
-        assert_equal(resp.status, 200)
-        input = (resp.read().decode('utf-8'))
-        out = json.loads(input)
-        # self.log.info(out)
-        assert_equal(out['error'], None)
-        assert_equal(out['result']['balance'],'100000.00000000')
-        assert_equal(out['result']['reserve'],'0.00000000')
 
-
-        self.log.info("Sending a trade in MetaDEx")
-        params = str([addresses[0], 4, "500", 5, "2000"]).replace("'",'"')
-        # self.log.info(params)
-        conn.request('POST', '/', '{"method": "tl_sendtrade", "params":'+params+'}', headers)
+        self.log.info("Creating native Contract")
+        array = [0]
+        params = str([addresses[0], 1, 4, "ALL/Lhk", 5000, "1", 4, "0.1", 1, array]).replace("'",'"')
+        self.log.info(params)
+        conn.request('POST', '/', '{"method": "tl_createcontract", "params":'+params+'}', headers)
         resp = conn.getresponse()
         assert_equal(resp.status, 200)
         input = (resp.read().decode('utf-8'))
@@ -210,6 +167,25 @@ class HTTPBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
 
         self.nodes[0].generate(1)
+
+        self.log.info("Checking the native contract")
+        conn.request('POST', '/', '{"method": "tl_getproperty", "params": [5]}', headers)
+        resp = conn.getresponse()
+        assert_equal(resp.status, 200)
+        input = (resp.read().decode('utf-8'))
+        out = json.loads(input)
+        assert_equal(out['error'], None)
+        self.log.info(out)
+        assert_equal(out['result']['propertyid'],5)
+        assert_equal(out['result']['name'],'ALL/Lhk')
+        assert_equal(out['result']['issuer'], addresses[0])
+        assert_equal(out['result']['notional size'], '1')
+        assert_equal(out['result']['collateral currency'], 4)
+        assert_equal(out['result']['margin requirement'], '0.1')
+        assert_equal(out['result']['blocks until expiration'], 5000)
+        assert_equal(out['result']['inverse quoted'], 1)
+
+        assert(False)
 
 
         self.log.info("Checking the trade in orderbook")

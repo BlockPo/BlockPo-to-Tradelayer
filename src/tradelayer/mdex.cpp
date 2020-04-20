@@ -2616,3 +2616,144 @@ bool mastercore::MetaDEx_Search_ALL(uint64_t& amount, uint32_t propertyOffered)
 
     return bBuyerSatisfied;
 }
+
+/**
+ * Scans the orderbook and remove everything for an address.
+ */
+int mastercore::MetaDEx_CANCEL_EVERYTHING(const uint256& txid, unsigned int block, const std::string& sender_addr)
+{
+    int rc = METADEX_ERROR -40;
+
+    if (msc_debug_metadex2) PrintToLog("%s()\n", __FUNCTION__);
+
+    for (md_PropertiesMap::iterator my_it = metadex.begin(); my_it != metadex.end(); ++my_it) {
+        unsigned int prop = my_it->first;
+
+        if (msc_debug_metadex2) PrintToLog(" ## property: %u\n", prop);
+        md_PricesMap& prices = my_it->second;
+
+        for (md_PricesMap::iterator it = prices.begin(); it != prices.end(); ++it) {
+            rational_t price = it->first;
+            md_Set& indexes = it->second;
+
+            PrintToLog("  # Price Level: %s\n", xToString(price));
+
+            for (md_Set::iterator it = indexes.begin(); it != indexes.end();) {
+                PrintToLog("%s= %s\n", xToString(price), it->ToString());
+
+                if (it->getAddr() != sender_addr) {
+                    ++it;
+                    continue;
+                }
+
+                rc = 0;
+                PrintToLog("%s(): REMOVING %s\n", __func__, it->ToString());
+
+                // move from reserve to balance
+                assert(update_tally_map(it->getAddr(), it->getProperty(), -it->getAmountRemaining(), METADEX_RESERVE));
+                assert(update_tally_map(it->getAddr(), it->getProperty(), it->getAmountRemaining(), BALANCE));
+
+                // record the cancellation
+                bool bValid = true;
+                // pDbTransactionList->recordMetaDExCancelTX(txid, it->getHash(), bValid, block, it->getProperty(), it->getAmountRemaining());
+
+                indexes.erase(it++);
+            }
+        }
+    }
+
+
+    return rc;
+}
+
+
+/**
+ * Scans the orderbook for an specific contract order.
+ */
+ int mastercore::ContractDex_CANCEL(const std::string& sender_addr, const std::string& hash)
+ {
+     int rc = METADEX_ERROR -40;
+     bool bValid = false;
+
+     for (cd_PropertiesMap::iterator my_it = contractdex.begin(); my_it != contractdex.end(); ++my_it) {
+         unsigned int prop = my_it->first;
+
+         if(msc_debug_contract_cancel) PrintToLog(" ## property: %u\n", prop);
+         cd_PricesMap &prices = my_it->second;
+
+         for (cd_PricesMap::iterator it = prices.begin(); it != prices.end(); ++it) {
+             uint64_t price = it->first;
+             cd_Set &indexes = it->second;
+
+             for (cd_Set::iterator it = indexes.begin(); it != indexes.end();) {
+
+                 if(msc_debug_contract_cancel)
+                 {
+                     PrintToLog("%s= %s\n", xToString(price), it->ToString());
+                     PrintToLog("address: %d\n",it->getAddr());
+                     PrintToLog("propertyid: %d\n",it->getProperty());
+                     PrintToLog("amount for sale: %d\n",it->getAmountForSale());
+                 }
+
+                 if (it->getAddr() != sender_addr ||  it->getAmountForSale() == 0 || it->getHash().ToString() != hash) {
+                     ++it;
+                     continue;
+                 }
+
+                 string addr = it->getAddr();
+                 int64_t amountForSale = it->getAmountForSale();
+
+                 uint32_t contractId = it->getProperty();
+
+                 CMPSPInfo::Entry sp;
+                 if(!_my_sps->getSP(contractId, sp))
+                     return rc;
+
+                 uint32_t collateralCurrency = sp.collateral_currency;
+                 int64_t marginRe = static_cast<int64_t>(sp.margin_requirement);
+
+
+                 // rational_t conv = notionalChange(contractId);
+                 rational_t conv = rational_t(1,1);
+                 int64_t num = conv.numerator().convert_to<int64_t>();
+                 int64_t den = conv.denominator().convert_to<int64_t>();
+                 int64_t balance = getMPbalance(addr,collateralCurrency,BALANCE);
+
+                 if(msc_debug_contract_cancel)
+                 {
+                     PrintToLog("collateral currency id of contract : %d\n",collateralCurrency);
+                     PrintToLog("margin requirement of contract : %d\n",marginRe);
+                     PrintToLog("amountForSale: %d\n",amountForSale);
+                     PrintToLog("Address: %d\n",addr);
+                 }
+                 // arith_uint256 amountMargin = ConvertTo256(amountForSale) * ConvertTo256(marginRe) * ConvertTo256(num) / ConvertTo256(den);
+                 arith_uint256 amountMargin = ConvertTo256(amountForSale) * ConvertTo256(num) / ConvertTo256(den);
+                 int64_t redeemed = ConvertTo64(amountMargin);
+                 if(msc_debug_contract_cancel_inorder) PrintToLog("redeemed: %d\n",redeemed);
+
+                 // move from reserve to balance the collateral
+                 if (balance > redeemed && balance > 0 && redeemed > 0) {
+                     assert(update_tally_map(addr, collateralCurrency, redeemed, BALANCE));
+                     assert(update_tally_map(addr, collateralCurrency, -redeemed, CONTRACTDEX_MARGIN));
+                 // // record the cancellation
+                 }
+
+                 bValid = true;
+                 if(msc_debug_contract_cancel) PrintToLog("%s(): order found!\n",__func__);
+                 // p_txlistdb->recordContractDexCancelTX(txid, it->getHash(), bValid, block, it->getProperty(), it->getAmountForSale
+                 indexes.erase(it++);
+                 rc = 0;
+                 return rc;
+             }
+
+         }
+     }
+
+     if (!bValid && msc_debug_contract_cancel)
+     {
+        PrintToLog("CANCEL IN ORDER: You don't have active orders\n");
+        rc = 1;
+     }
+
+     return rc;
+ }

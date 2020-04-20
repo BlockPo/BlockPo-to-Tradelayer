@@ -116,6 +116,8 @@ std::string mastercore::strTransactionType(uint16_t txType)
     case MSC_TYPE_DEX_PAYMENT: return "DEx payment";
     case MSC_TYPE_ATTESTATION: return "KYC Attestation";
     case MSC_TYPE_CREATE_ORACLE_CONTRACT : return "Create Oracle Contract";
+    case MSC_TYPE_METADEX_CANCEL_ALL : return "Cancel all MetaDEx orders";
+    case MSC_TYPE_CONTRACTDEX_CANCEL : return "Cancel specific contract order";
     default: return "* unknown type *";
     }
 }
@@ -208,6 +210,9 @@ bool CMPTransaction::interpret_Transaction()
     case MSC_TYPE_METADEX_TRADE:
       return interpret_MetaDExTrade();
 
+    case MSC_TYPE_METADEX_CANCEL_ALL:
+        return interpret_MetaDExCancelAll();
+
     case MSC_TYPE_CREATE_CONTRACT:
       return interpret_CreateContractDex();
 
@@ -219,6 +224,9 @@ bool CMPTransaction::interpret_Transaction()
 
     case MSC_TYPE_CONTRACTDEX_CANCEL_ECOSYSTEM:
       return interpret_ContractDexCancelEcosystem();
+
+    case MSC_TYPE_CONTRACTDEX_CANCEL:
+      return interpret_ContractDExCancel();
 
     case MSC_TYPE_PEGGED_CURRENCY:
       return interpret_CreatePeggedCurrency();
@@ -284,7 +292,7 @@ bool CMPTransaction::interpret_Transaction()
         return interpret_DEx_Payment();
 
     case MSC_TYPE_ATTESTATION:
-            return interpret_Attestation();
+        return interpret_Attestation();
 
     }
 
@@ -1137,6 +1145,52 @@ bool CMPTransaction::interpret_ContractDexTrade()
      }
 
      return true;
+}
+
+/** Tx 31 */
+bool CMPTransaction::interpret_ContractDExCancel()
+{
+    int i = 0;
+    std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecEcosystemBytes = GetNextVarIntBytes(i);
+
+    const char* p = i + (char*) &pkt;
+    std::vector<std::string> spstr;
+    for (int j = 0; j < 1; j++)
+    {
+        spstr.push_back(std::string(p));
+        p += spstr.back().size() + 1;
+    }
+
+    if (isOverrun(p))
+    {
+        PrintToLog("%s(): rejected: malformed string value(s)\n", __func__);
+        return false;
+    }
+
+    int j = 0;
+    memcpy(hash, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(hash)-1)); j++;
+    i = i + strlen(hash) + 1;
+
+
+    if (!vecTypeBytes.empty()) {
+        type = DecompressInteger(vecTypeBytes);
+    } else return false;
+
+    if (!vecVersionBytes.empty()) {
+        version = DecompressInteger(vecVersionBytes);
+    } else return false;
+
+
+    if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+    {
+        PrintToLog("\t version: %d\n", version);
+        PrintToLog("\t messageType: %d\n",type);
+        PrintToLog("\t hash: %d\n", hash);
+    }
+
+    return true;
 }
 
 /** Tx 32 */
@@ -2022,6 +2076,21 @@ bool CMPTransaction::interpret_Attestation()
   return true;
 }
 
+/** Tx 26 */
+bool CMPTransaction::interpret_MetaDExCancelAll()
+{
+    int i = 0;
+
+    std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+
+    if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly) {
+        PrintToLog("\t       inside interpret: %d\n");
+    }
+
+    return true;
+}
+
 // ---------------------- CORE LOGIC -------------------------
 
 /**
@@ -2103,6 +2172,9 @@ int CMPTransaction::interpretPacket()
         case MSC_TYPE_CONTRACTDEX_CLOSE_POSITION:
             return logicMath_ContractDexClosePosition();
 
+        case MSC_TYPE_CONTRACTDEX_CANCEL:
+            return logicMath_ContractDExCancel();
+
         case MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK:
             return logicMath_ContractDex_Cancel_Orders_By_Block();
 
@@ -2117,6 +2189,9 @@ int CMPTransaction::interpretPacket()
 
         case MSC_TYPE_METADEX_TRADE:
             return logicMath_MetaDExTrade();
+
+        case MSC_TYPE_METADEX_CANCEL_ALL:
+            return logicMath_MetaDExCancelAll();
 
         case MSC_TYPE_CREATE_ORACLE_CONTRACT:
             return logicMath_CreateOracleContract();
@@ -3301,15 +3376,30 @@ int CMPTransaction::logicMath_ContractDexTrade()
   return rc;
 }
 
+/** Tx 31 */
+int CMPTransaction::logicMath_ContractDExCancel()
+{
+  if (!IsTransactionTypeAllowed(block, type, version)) {
+    PrintToLog("%s(): rejected: type %d or version %d not permitted at block %d\n",
+	       __func__,
+	       type,
+	       version,
+	       block);
+    return (PKT_ERROR_CONTRACTDEX -20);
+  }
+
+  int rc = ContractDex_CANCEL(sender,hash);
+
+  return rc;
+}
+
 /** Tx 32 */
 int CMPTransaction::logicMath_ContractDexCancelEcosystem()
 {
   if (!IsTransactionTypeAllowed(block, type, version)) {
-    PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+    PrintToLog("%s(): rejected: type %d or version %d not permitted at block %d\n",
 	       __func__,
 	       type,
-	       version,
-	       property,
 	       block);
     return (PKT_ERROR_CONTRACTDEX -20);
   }
@@ -4725,6 +4815,23 @@ int CMPTransaction::logicMath_Attestation()
     t_tradelistdb->recordNewAttestation(txid, receiver, block, tx_idx, kyc_id);
 
     return 0;
+}
+
+/** Tx 26 */
+int CMPTransaction::logicMath_MetaDExCancelAll()
+{
+  if (!IsTransactionTypeAllowed(block, type, version)) {
+    PrintToLog("%s(): rejected: type %d or version %d not permitted at block %d\n",
+	       __func__,
+	       type,
+	       version,
+	       block);
+    return (PKT_ERROR_CONTRACTDEX -20);
+  }
+
+  int rc = MetaDEx_CANCEL_EVERYTHING(txid, block, sender);
+
+  return rc;
 }
 
 struct FutureContractObject *getFutureContractObject(std::string identifier)

@@ -193,6 +193,7 @@ private:
     bool interpret_ContractDexClosePosition();
     bool interpret_ContractDex_Cancel_Orders_By_Block();
     bool interpret_MetaDExTrade();
+    bool interpret_MetaDExCancelAll();
     bool interpret_TradeOffer();
     bool interpret_DExBuy();
     bool interpret_SendVestingTokens();
@@ -212,6 +213,7 @@ private:
     bool interpret_Update_Id_Registration();
     bool interpret_DEx_Payment();
     bool interpret_Attestation();
+    bool interpret_ContractDExCancel();
 
     /**
      * Logic and "effects"
@@ -238,6 +240,7 @@ private:
     int logicMath_ContractDexClosePosition();
     int logicMath_ContractDex_Cancel_Orders_By_Block();
     int logicMath_MetaDExTrade();
+    int logicMath_MetaDExCancelAll();
     int logicMath_TradeOffer();
     int logicMath_AcceptOfferBTC();
     int logicMath_DExBuy();
@@ -258,6 +261,7 @@ private:
     int logicMath_Update_Id_Registration();
     int logicMath_DEx_Payment();
     int logicMath_Attestation();
+    int logicMath_ContractDExCancel();
 
     /**
      * Logic helpers

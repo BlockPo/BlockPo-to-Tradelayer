@@ -1878,6 +1878,7 @@ UniValue tl_getorderbook(const JSONRPCRequest& request)
             + HelpExampleRpc("tl_getorderbook", "2")
 			    );
 
+
     bool filterDesired = (request.params.size() > 1);
     uint32_t propertyIdForSale = ParsePropertyId(request.params[0]);
     uint32_t propertyIdDesired = 0;

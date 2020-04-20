@@ -996,5 +996,41 @@ std::vector<unsigned char> CreatePayload_Attestation(std::string hash)
   return payload;
 }
 
+std::vector<unsigned char> CreatePayload_MetaDExCancelAll()
+{
+  std::vector<unsigned char> payload;
+
+  uint64_t messageType = 26;
+  uint64_t messageVer = 0;
+
+  std::vector<uint8_t> vecMessageType = CompressInteger((uint64_t)messageType);
+  std::vector<uint8_t> vecMessageVer = CompressInteger((uint64_t)messageVer);
+
+  payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
+  payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
+
+  return payload;
+}
+
+std::vector<unsigned char> CreatePayload_ContractDExCancel(std::string hash)
+{
+  std::vector<unsigned char> payload;
+
+  uint64_t messageType = 31;
+  uint64_t messageVer = 0;
+
+  std::vector<uint8_t> vecMessageType = CompressInteger((uint64_t)messageType);
+  std::vector<uint8_t> vecMessageVer = CompressInteger((uint64_t)messageVer);
+
+  if ((hash).size() > 255) hash = hash.substr(0,255);
+
+  payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
+  payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
+  payload.insert(payload.end(), hash.begin(), hash.end());
+  payload.push_back('\0');
+
+  return payload;
+}
+
 #undef PUSH_BACK_BYTES
 #undef PUSH_BACK_BYTES_PTR

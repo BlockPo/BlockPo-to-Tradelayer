@@ -161,7 +161,7 @@ class HTTPBasicsTest (BitcoinTestFramework):
 
 
         self.log.info("Sending a DEx sell tokens offer")
-        params = str([addresses[0], 4, "1000", "1", 250, "0.00001", "2", 1]).replace("'",'"')
+        params = str([addresses[0], 4, "1000", "20", 250, "0.00001", "2", 1]).replace("'",'"')
         # self.log.info(params)
         conn.request('POST', '/', '{"method": "tl_senddexoffer", "params":'+params+'}', headers)
         resp = conn.getresponse()
@@ -170,7 +170,6 @@ class HTTPBasicsTest (BitcoinTestFramework):
         out = json.loads(input)
         assert_equal(out['error'], None)
         # self.log.info(out)
-
 
         self.nodes[0].generate(1)
 
@@ -186,10 +185,10 @@ class HTTPBasicsTest (BitcoinTestFramework):
         assert_equal(out['result'][0]['propertyid'], 4)
         assert_equal(out['result'][0]['action'], 2)
         assert_equal(out['result'][0]['seller'], addresses[0])
-        assert_equal(out['result'][0]['ltcsdesired'], '1.00000000')
+        assert_equal(out['result'][0]['ltcsdesired'], '20.00000000')
         assert_equal(out['result'][0]['amountavailable'], '1000.00000000')
         assert_equal(out['result'][0]['amountoffered'], '0.00000000')
-        assert_equal(out['result'][0]['unitprice'], '0.00100000')
+        assert_equal(out['result'][0]['unitprice'], '0.02000000')
         assert_equal(out['result'][0]['minimumfee'], '0.00001000')
 
         self.log.info("Cancelling the DEx offer")
@@ -219,7 +218,7 @@ class HTTPBasicsTest (BitcoinTestFramework):
 
 
         self.log.info("Putting a new DEx sell tokens offer")
-        params = str([addresses[0], 4, "1000", "1", 250, "0.00001", "2", 1]).replace("'",'"')
+        params = str([addresses[0], 4, "1000", "30", 250, "0.00001", "2", 1]).replace("'",'"')
         # self.log.info(params)
         conn.request('POST', '/', '{"method": "tl_senddexoffer", "params":'+params+'}', headers)
         resp = conn.getresponse()
@@ -243,11 +242,45 @@ class HTTPBasicsTest (BitcoinTestFramework):
         assert_equal(out['result'][0]['propertyid'], 4)
         assert_equal(out['result'][0]['action'], 2)
         assert_equal(out['result'][0]['seller'], addresses[0])
+        assert_equal(out['result'][0]['ltcsdesired'], '30.00000000')
+        assert_equal(out['result'][0]['amountavailable'], '1000.00000000')
+        assert_equal(out['result'][0]['amountoffered'], '0.00000000')
+        assert_equal(out['result'][0]['unitprice'], '0.03000000')
+        assert_equal(out['result'][0]['minimumfee'], '0.00001000')
+
+
+        self.log.info("Changing the new DEx sell tokens offer")
+        params = str([addresses[0], 4, "1000", "1", 250, "0.00001", "2", 2]).replace("'",'"')
+        # self.log.info(params)
+        conn.request('POST', '/', '{"method": "tl_senddexoffer", "params":'+params+'}', headers)
+        resp = conn.getresponse()
+        assert_equal(resp.status, 200)
+        input = (resp.read().decode('utf-8'))
+        out = json.loads(input)
+        assert_equal(out['error'], None)
+        # self.log.info(out)
+
+
+        self.nodes[0].generate(1)
+
+        self.log.info("Checking the new offer in DEx")
+        params = str([addresses[0]]).replace("'",'"')
+        conn.request('POST', '/', '{"method": "tl_getactivedexsells", "params":'+params+'}', headers)
+        resp = conn.getresponse()
+        assert_equal(resp.status, 200)
+        input = (resp.read().decode('utf-8'))
+        out = json.loads(input)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result'][0]['propertyid'], 4)
+        assert_equal(out['result'][0]['action'], 2)
+        assert_equal(out['result'][0]['seller'], addresses[0])
         assert_equal(out['result'][0]['ltcsdesired'], '1.00000000')
         assert_equal(out['result'][0]['amountavailable'], '1000.00000000')
         assert_equal(out['result'][0]['amountoffered'], '0.00000000')
         assert_equal(out['result'][0]['unitprice'], '0.00100000')
         assert_equal(out['result'][0]['minimumfee'], '0.00001000')
+
 
         self.log.info("Accepting the full offer")
         params = str([addresses[1], addresses[0], 4, "1000"]).replace("'",'"')
@@ -283,7 +316,7 @@ class HTTPBasicsTest (BitcoinTestFramework):
         assert_equal(out['result'][0]['accepts'][0]['buyer'], addresses[1])
         assert_equal(out['result'][0]['accepts'][0]['amountdesired'], '1000.00000000')
         assert_equal(out['result'][0]['accepts'][0]['ltcstopay'], '1.00000000')
-        assert_equal(out['result'][0]['accepts'][0]['block'], 206)
+        assert_equal(out['result'][0]['accepts'][0]['block'], 207)
         assert_equal(out['result'][0]['accepts'][0]['blocksleft'], 241)
 
         self.log.info("Paying the tokens")
