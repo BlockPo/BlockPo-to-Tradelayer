@@ -983,7 +983,7 @@ UniValue tl_tradecontract(const JSONRPCRequest& request)
 
 			"\nArguments:\n"
 			"1. fromaddress          (string, required) the address to trade with\n"
-			"2. propertyidforsale    (number, required) the identifier of the contract to list for trade\n"
+			"2. name of contract     (string, required) the identifier of the contract to list for trade\n"
 			"3. amountforsale        (number, required) the amount of contracts to trade\n"
 			"4. effective price      (number, required) limit price desired in exchange\n"
 			"5. trading action       (number, required) 1 to BUY contracts, 2 to SELL contracts \n"
@@ -2135,7 +2135,7 @@ UniValue tl_sendcancelalltrades(const JSONRPCRequest& request)
 
   UniValue tl_sendcancel_contract_order(const JSONRPCRequest& request)
   {
-      if (request.params.size() != 1)
+      if (request.params.size() != 2)
           throw runtime_error(
               "tl_sendcancel_contract_order \"address \"hash\" \n"
 
@@ -2151,9 +2151,8 @@ UniValue tl_sendcancelalltrades(const JSONRPCRequest& request)
 
       // obtain parameters & info
       std::string fromAddress = ParseAddress(request.params[0]);
-      uint256 txS = ParseHashO(request.params[0], "txid");
+      std::string stxS = ParseHash(request.params[1]);
 
-      std::string stxS = txS.ToString();
 
       // PrintToLog("%s(): hash: %s\n",__func__,hash);
 
@@ -2198,8 +2197,9 @@ static const CRPCCommand commands[] =
     { "hidden",                             "tl_sendalert",                    &tl_sendalert,                       {} },
     { "trade layer (transaction creation)", "tl_createcontract",               &tl_createcontract,                  {} },
     { "trade layer (transaction creation)", "tl_tradecontract",                &tl_tradecontract,                   {} },
+    { "trade layer (transaction creation)", "tl_sendcancel_contract_order",    &tl_sendcancel_contract_order,       {} },
     { "trade layer (transaction creation)", "tl_cancelallcontractsbyaddress",  &tl_cancelallcontractsbyaddress,     {} },
-    { "trade layer (transaction creation)", "tl_cancelorderbyblock"         ,  &tl_cancelorderbyblock,              {} },
+    { "trade layer (transaction creation)", "tl_cancelorderbyblock",           &tl_cancelorderbyblock,              {} },
     { "trade layer (transaction creation)", "tl_sendissuance_pegged",          &tl_sendissuance_pegged,             {} },
     { "trade layer (transaction creation)", "tl_send_pegged",                  &tl_send_pegged,                     {} },
     { "trade layer (transaction creation)", "tl_redemption_pegged",            &tl_redemption_pegged,               {} },

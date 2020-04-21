@@ -57,7 +57,7 @@ bool msc_debug_pos_margin                       = 0;
 bool msc_debug_contract_inst_fee                = 0;
 bool msc_debug_instant_x_trade                  = 0;
 bool msc_debug_x_trade_bidirectional            = 0;
-bool msc_debug_contractdex_fees                 = 0;
+bool msc_debug_contractdex_fees                 = 1;
 bool msc_debug_metadex_fees                     = 0;
 bool msc_debug_metadex1                         = 0;
 bool msc_debug_metadex2                         = 0;
@@ -91,7 +91,8 @@ bool msc_debug_search_all                       = 0;
 bool msc_debug_add_contract_ltc_vol             = 0;
 bool msc_debug_update_last_block                = 0;
 bool msc_debug_send_reward                      = 0;
-bool msc_debug_contract_cancel                  = 0;
+bool msc_debug_contract_cancel                  = 1;
+bool msc_debug_fee_cache_buy                    = 0;
 /**
  * LogPrintf() has been broken a couple of times now
  * by well-meaning people adding mutexes in the most straightforward way.

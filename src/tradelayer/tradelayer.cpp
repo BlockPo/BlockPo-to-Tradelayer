@@ -6241,7 +6241,7 @@ bool mastercore::feeCacheBuy()
 
     if(cachefees_oracles.empty())
     {
-        PrintToLog("%s(): cachefees_oracles is empty\n",__func__);
+        if (msc_debug_fee_cache_buy) PrintToLog("%s(): cachefees_oracles is empty\n",__func__);
         return result;
     }
 
@@ -6255,17 +6255,17 @@ bool mastercore::feeCacheBuy()
 
         uint64_t amount = static_cast<uint64_t>(it->second);
 
-        PrintToLog("%s(): amount before trading (in cache): %d\n",__func__, amount);
+        if (msc_debug_fee_cache_buy) PrintToLog("%s(): amount before trading (in cache): %d\n",__func__, amount);
 
 
         if(mastercore::MetaDEx_Search_ALL(amount, propertyId))
         {
             it->second = amount;
-            PrintToLog("%s(): amount after trading (in cache): %d\n",__func__, amount);
+            if (msc_debug_fee_cache_buy) PrintToLog("%s(): amount after trading (in cache): %d\n",__func__, amount);
             result = true;
 
         } else {
-            PrintToLog("%s(): mDEx without ALL offers\n",__func__);
+            if (msc_debug_fee_cache_buy) PrintToLog("%s(): mDEx without ALL offers\n",__func__);
 
         }
 

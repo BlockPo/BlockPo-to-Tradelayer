@@ -210,7 +210,7 @@ void ContractDexObjectToJSON(const CMPContractDex& obj, UniValue& contractdex_ob
     // add data to JSON object
     contractdex_obj.push_back(Pair("address", obj.getAddr()));
     contractdex_obj.push_back(Pair("txid", obj.getHash().GetHex()));
-    contractdex_obj.push_back(Pair("propertyidforsale", (uint64_t) obj.getProperty()));
+    contractdex_obj.push_back(Pair("contractid", (uint64_t) obj.getProperty()));
     contractdex_obj.push_back(Pair("amountforsale", FormatMP(1,obj.getAmountForSale())));
     contractdex_obj.push_back(Pair("tradingaction", obj.getTradingAction()));
     contractdex_obj.push_back(Pair("effectiveprice",  FormatMP(1,obj.getEffectivePrice())));
@@ -798,7 +798,7 @@ UniValue tl_getproperty(const JSONRPCRequest& request)
       response.push_back(Pair("margin requirement", FormatDivisibleShortMP(sp.margin_requirement)));
       response.push_back(Pair("blocks until expiration", std::to_string(sp.blocks_until_expiration)));
 
-      response.push_back(Pair("inverse quoted:", std::to_string(sp.inverse_quoted)));
+      response.push_back(Pair("inverse quoted", std::to_string(sp.inverse_quoted)));
 
       if (sp.denominator == TL_dUSD){
 	denominator = "Dollar";
@@ -1921,7 +1921,7 @@ UniValue tl_getcontract_orderbook(const JSONRPCRequest& request)
 			"tl_getcontract_orderbook contractid tradingaction\n"
 			"\nList active offers on the distributed futures contracts exchange.\n"
 			"\nArguments:\n"
-			"1. contractid           (number, required) filter orders by contract identifier for sale\n"
+			"1. name of contract     (string, required) filter orders by contract identifier for sale\n"
 			"2. tradingaction        (number, required) filter orders by trading action desired (Buy = 1, Sell = 2)\n"
 			"\nResult:\n"
 			"[                                              (array of JSON objects)\n"

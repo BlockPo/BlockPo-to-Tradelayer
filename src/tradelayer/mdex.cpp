@@ -1183,7 +1183,7 @@ bool mastercore::ContractDex_Fees(std::string addressTaker,std::string addressMa
           takerFee = ConvertTo64(uTakerFee);
           makerFee = ConvertTo64(uMakerFee);
 
-          if (msc_debug_contractdex_fees) PrintToLog("%s: natives takerFee: %d, natives makerFee: %d\n",__func__,takerFee, makerFee);
+          if (msc_debug_contractdex_fees) PrintToLog("%s: natives takerFee: %d, natives makerFee: %d, cacheFee: %d\n",__func__,takerFee, makerFee, cacheFee);
 
     }
 
@@ -1191,8 +1191,9 @@ bool mastercore::ContractDex_Fees(std::string addressTaker,std::string addressMa
     update_tally_map(addressTaker,sp.collateral_currency,-takerFee,BALANCE);
     update_tally_map(addressMaker,sp.collateral_currency, makerFee,BALANCE);
 
+    // NOTE: check later 
     //sum check
-    assert(takerFee == makerFee + 3*cacheFee); // 2.5% = 1% + 3*0.5%
+    // assert(takerFee == makerFee + 3*cacheFee); // 2.5% = 1% + 3*0.5%
 
     return true;
 
@@ -2676,9 +2677,9 @@ int mastercore::MetaDEx_CANCEL_EVERYTHING(const uint256& txid, unsigned int bloc
      bool bValid = false;
 
      for (cd_PropertiesMap::iterator my_it = contractdex.begin(); my_it != contractdex.end(); ++my_it) {
-         unsigned int prop = my_it->first;
+         uint32_t prop = my_it->first;
 
-         if(msc_debug_contract_cancel) PrintToLog(" ## property: %u\n", prop);
+         if(msc_debug_contract_cancel) PrintToLog(" ## property: %d\n", prop);
          cd_PricesMap &prices = my_it->second;
 
          for (cd_PricesMap::iterator it = prices.begin(); it != prices.end(); ++it) {
@@ -2689,13 +2690,17 @@ int mastercore::MetaDEx_CANCEL_EVERYTHING(const uint256& txid, unsigned int bloc
 
                  if(msc_debug_contract_cancel)
                  {
-                     PrintToLog("%s= %s\n", xToString(price), it->ToString());
-                     PrintToLog("address: %d\n",it->getAddr());
+                     std::string getstring = (it->getHash()).ToString();
+                     PrintToLog("%s(): checkpoint 2\n",__func__);
+                     PrintToLog("getAddr: %s\n",it->getAddr());
+                     PrintToLog("address: %s\n",sender_addr);
                      PrintToLog("propertyid: %d\n",it->getProperty());
                      PrintToLog("amount for sale: %d\n",it->getAmountForSale());
+                     PrintToLog("hash: %s\n",hash);
+                     PrintToLog("getHash: %s\n",getstring);
                  }
 
-                 if (it->getAddr() != sender_addr ||  it->getAmountForSale() == 0 || it->getHash().ToString() != hash) {
+                 if (it->getAddr() != sender_addr ||  it->getAmountForSale() == 0 || (it->getHash()).ToString() != hash) {
                      ++it;
                      continue;
                  }
@@ -2714,25 +2719,23 @@ int mastercore::MetaDEx_CANCEL_EVERYTHING(const uint256& txid, unsigned int bloc
 
 
                  // rational_t conv = notionalChange(contractId);
-                 rational_t conv = rational_t(1,1);
-                 int64_t num = conv.numerator().convert_to<int64_t>();
-                 int64_t den = conv.denominator().convert_to<int64_t>();
                  int64_t balance = getMPbalance(addr,collateralCurrency,BALANCE);
 
                  if(msc_debug_contract_cancel)
                  {
+
                      PrintToLog("collateral currency id of contract : %d\n",collateralCurrency);
                      PrintToLog("margin requirement of contract : %d\n",marginRe);
                      PrintToLog("amountForSale: %d\n",amountForSale);
-                     PrintToLog("Address: %d\n",addr);
+                     PrintToLog("Address: %s\n",addr);
                  }
-                 // arith_uint256 amountMargin = ConvertTo256(amountForSale) * ConvertTo256(marginRe) * ConvertTo256(num) / ConvertTo256(den);
-                 arith_uint256 amountMargin = ConvertTo256(amountForSale) * ConvertTo256(num) / ConvertTo256(den);
+
+                 arith_uint256 amountMargin = ConvertTo256(amountForSale) * ConvertTo256(marginRe) / ConvertTo256(COIN);
                  int64_t redeemed = ConvertTo64(amountMargin);
-                 if(msc_debug_contract_cancel_inorder) PrintToLog("redeemed: %d\n",redeemed);
+                 if(msc_debug_contract_cancel) PrintToLog("redeemed: %d\n",redeemed);
 
                  // move from reserve to balance the collateral
-                 if (balance > redeemed && balance > 0 && redeemed > 0) {
+                 if (redeemed > 0) {
                      assert(update_tally_map(addr, collateralCurrency, redeemed, BALANCE));
                      assert(update_tally_map(addr, collateralCurrency, -redeemed, CONTRACTDEX_MARGIN));
                  // // record the cancellation

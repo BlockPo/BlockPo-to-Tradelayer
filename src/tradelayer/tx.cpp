@@ -1153,7 +1153,6 @@ bool CMPTransaction::interpret_ContractDExCancel()
     int i = 0;
     std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
     std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
-    std::vector<uint8_t> vecEcosystemBytes = GetNextVarIntBytes(i);
 
     const char* p = i + (char*) &pkt;
     std::vector<std::string> spstr;

@@ -19,7 +19,6 @@
 #include <boost/assign/list_of.hpp>
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string.hpp>
-
 #include <string>
 #include <vector>
 
@@ -87,7 +86,6 @@ uint8_t ParseEcosystem(const UniValue& value)
 uint8_t ParsePermission(const UniValue& value)
 {
     int64_t number = value.get_int64();
-    PrintToLog("%s: number: %d\n",__func__,number);
     if (number != 0 && number != 1) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid number (0 = false, 1 = true)");
     }
@@ -382,8 +380,13 @@ std::vector<int> ParseArray(const UniValue& value)
     {
             const UniValue& num = kycOptions[idx];
             numbers.push_back(num.get_int());
-            PrintToLog("%s(): num : %d \n",__func__, num.get_int());
     }
 
     return numbers;
+}
+
+std::string ParseHash(const UniValue& value)
+{
+     uint256 result = ParseHashV(value, "txid");
+     return result.ToString();
 }

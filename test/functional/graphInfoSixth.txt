@@ -1,0 +1,7 @@
+QPSjRxsHsH84d4w4s9h4TkcAe3PU3oTJuH	 OpenLongPosition	 1000	 QXd44rWHqGQsxp88jzaXCJ2QLCR9Pm54JD	 OpenShortPosition	 1000	 1000	 980.5
+QUj9Cr1sPnt5DxBJTMZJjiRVjwcbEJQv1N	 OpenLongPosition	 1000	 QaDzhYuUiQdCL3QbgcP8Uio62AeCr9DW84	 OpenShortPosition	 1000	 1000	 980.5
+QSYT3MgkhQnxBPQqeJbsiDQ78oGyXfapJS	 OpenLongPosition	 1000	 QeZDP1wywStYVULG57iEmznBt4mxF9d7Vi	 OpenShortPosition	 1000	 1000	 980.5
+Qdys6xbLb1jQ5o8VX3YyFPYhZ8YD6zeuEf	 OpenLongPosition	 1000	 QdHSrqpXjAkgc31qLEdLb8ocxiZYtsin34	 OpenShortPosition	 1000	 1000	 980.5
+Qd6YKfgbzBnQz2hKtZUVuHiey5ruWsgyBn	 OpenLongPosition	 1000	 QW8qNBNWQ7m2b5Za4rCdh3QLgYr5BDufSo	 OpenShortPosition	 1000	 1000	 980.5
+Qj5iZRrS7wVLBy7igMvvDTUkdN7rRieTbm	 OpenLongPosition	 1000	 QhfybU1QiNKQdxAG5s2JXiMkNQeKy9xyez	 OpenShortPosition	 1000	 1000	 980.5
+Qgg1TxbruYruDh6vmgDPxmfMLuiaVr1cab	 OpenLongPosition	 1000	 Qi8Dtqhs6XbPqhfFrhLc83j1dNyusxEitB	 OpenShortPosition	 1000	 1000	 980.5
