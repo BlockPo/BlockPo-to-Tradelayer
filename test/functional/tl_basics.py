@@ -5,7 +5,7 @@
 """Test basic data RPCs ."""
 
 from test_framework.test_framework import BitcoinTestFramework
-from test_framework.util import str_to_b64str, assert_equal
+from test_framework.util import str_to_b64str, assert_equal, tradelayer_HTTP
 
 import os
 import json
@@ -43,14 +43,11 @@ class HTTPBasicsTest (BitcoinTestFramework):
 
         headers = {"Authorization": "Basic " + str_to_b64str(authpair)}
 
-        self.log.info("Testing tl_getinfo")
         conn = http.client.HTTPConnection(url.hostname, url.port)
-        conn.connect()
-        conn.request('POST', '/', '{"method": "tl_getinfo"}', headers)
-        resp = conn.getresponse()
-        input = (resp.read().decode('utf-8'))
-        out = json.loads(input)
-        assert_equal(resp.status, 200)
+
+
+        self.log.info("Testing tl_getinfo")
+        out = tradelayer_HTTP(conn, headers, True, "tl_getinfo")
         assert_equal(out['result']['tradelayer_version_int'], 4000)
         assert_equal(out['result']['tradelayer_coreversion'], "0.0.4")
         assert_equal(out['result']['litecoinversion'], "0.16.3")
@@ -59,14 +56,8 @@ class HTTPBasicsTest (BitcoinTestFramework):
 
 
         self.log.info("Testing tl_listproperties")
-        conn = http.client.HTTPConnection(url.hostname, url.port)
-        conn.connect()
-        conn.request('POST', '/', '{"method": "tl_listproperties"}', headers)
-        resp = conn.getresponse()
-        input = (resp.read().decode('utf-8'))
-        out = json.loads(input)
+        out = tradelayer_HTTP(conn, headers, True, "tl_listproperties")
         # self.log.info(out)
-        assert_equal(resp.status, 200)
 
         # Checking the first property in the list
         assert_equal(out['result'][0]['propertyid'], 1)
@@ -79,74 +70,48 @@ class HTTPBasicsTest (BitcoinTestFramework):
 
 
         self.log.info("Testing tl_getbalance")
-        conn = http.client.HTTPConnection(url.hostname, url.port)
-        conn.connect()
-        conn.request('POST', '/', '{"method": "tl_getbalance", "params": ["mgrNNyDCdAWeYfkvcarsQKRzMhEFQiDmnH", 1]}', headers)
-        resp = conn.getresponse()
-        input = (resp.read().decode('utf-8'))
-        out = json.loads(input)
+        address = 'mgrNNyDCdAWeYfkvcarsQKRzMhEFQiDmnH'
+        params = str([address, 1]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
         # self.log.info(out)
-        assert_equal(resp.status, 200)
         assert_equal(out['result']['balance'],'1500000.00000000')
         assert_equal(out['result']['reserve'],'0.00000000')
 
 
         self.log.info("Testing tl_getallbalancesforid")
-        conn = http.client.HTTPConnection(url.hostname, url.port)
-        conn.connect()
-        conn.request('POST', '/', '{"method": "tl_getallbalancesforid", "params": [3]}', headers)
-        resp = conn.getresponse()
-        input = (resp.read().decode('utf-8'))
-        out = json.loads(input)
+        params = str([3])
+        out = tradelayer_HTTP(conn, headers, True, "tl_getallbalancesforid",params)
         # self.log.info(out)
-        assert_equal(resp.status, 200)
         assert_equal(out['result'][0]['address'],'mgrNNyDCdAWeYfkvcarsQKRzMhEFQiDmnH')
         assert_equal(out['result'][0]['balance'],'1500000.00000000')
         assert_equal(out['result'][0]['reserve'],'0.00000000')
 
 
         self.log.info("Testing tl_getallprice")
-        conn = http.client.HTTPConnection(url.hostname, url.port)
-        conn.connect()
-        conn.request('POST', '/', '{"method": "tl_getallprice"}', headers)
-        resp = conn.getresponse()
-        input = (resp.read().decode('utf-8'))
-        out = json.loads(input)
+        out = tradelayer_HTTP(conn, headers, True, "tl_getallprice",params)
         # self.log.info(out)
         assert_equal(out['result']['unitprice'],'0.00000000')
 
 
         self.log.info("Testing tl_getdexvolume")
-        conn = http.client.HTTPConnection(url.hostname, url.port)
-        conn.connect()
-        conn.request('POST', '/', '{"method": "tl_getdexvolume", "params": [1,1,100]}', headers)
-        resp = conn.getresponse()
-        input = (resp.read().decode('utf-8'))
-        out = json.loads(input)
+        params = str([1,1,100])
+        out = tradelayer_HTTP(conn, headers, True, "tl_getdexvolume",params)
         # self.log.info(out)
         assert_equal(out['result']['volume'],'0.00000000')
         assert_equal(out['result']['blockheigh'],'100')
 
 
         self.log.info("Testing tl_getmdexvolume")
-        conn = http.client.HTTPConnection(url.hostname, url.port)
-        conn.connect()
-        conn.request('POST', '/', '{"method": "tl_getmdexvolume", "params": [1,2,1,100]}', headers)
-        resp = conn.getresponse()
-        input = (resp.read().decode('utf-8'))
-        out = json.loads(input)
+        params = str([1,2,1,100])
+        out = tradelayer_HTTP(conn, headers, True, "tl_getmdexvolume",params)
         # self.log.info(out)
         assert_equal(out['result']['volume'],'0.00000000')
         assert_equal(out['result']['blockheigh'],'100')
 
 
         self.log.info("Testing tl_getproperty")
-        conn = http.client.HTTPConnection(url.hostname, url.port)
-        conn.connect()
-        conn.request('POST', '/', '{"method": "tl_getproperty", "params": [1]}', headers)
-        resp = conn.getresponse()
-        input = (resp.read().decode('utf-8'))
-        out = json.loads(input)
+        params = str([1])
+        out = tradelayer_HTTP(conn, headers, True, "tl_getproperty",params)
         # self.log.info(out)
         assert_equal(out['result']['propertyid'],1)
         assert_equal(out['result']['name'],'ALL')
@@ -155,10 +120,8 @@ class HTTPBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['divisible'],True)
         assert_equal(out['result']['totaltokens'],'1500000.00000000')
 
-        conn.request('POST', '/', '{"method": "tl_getproperty", "params": [3]}', headers)
-        resp = conn.getresponse()
-        input = (resp.read().decode('utf-8'))
-        out = json.loads(input)
+        params = str([3])
+        out = tradelayer_HTTP(conn, headers, True, "tl_getproperty",params)
         # self.log.info(out)
         assert_equal(out['result']['propertyid'],3)
         assert_equal(out['result']['name'],'Vesting Tokens')
@@ -170,12 +133,7 @@ class HTTPBasicsTest (BitcoinTestFramework):
 
 
         self.log.info("Testing tl_getvesting_supply")
-        conn = http.client.HTTPConnection(url.hostname, url.port)
-        conn.connect()
-        conn.request('POST', '/', '{"method": "tl_getvesting_supply"}', headers)
-        resp = conn.getresponse()
-        input = (resp.read().decode('utf-8'))
-        out = json.loads(input)
+        out = tradelayer_HTTP(conn, headers, True, "tl_getvesting_supply")
         # self.log.info(out)
         assert_equal(out['result']['supply'],'0.00000000')
         assert_equal(out['result']['blockheight'],'100')
