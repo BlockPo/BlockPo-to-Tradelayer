@@ -69,8 +69,8 @@ var parameters = {type:2,
 			  kyc: [2,3,5]
              }
 
-function createPropertyWithMultisig(address,parameters,cb){
-	client.createpayload_issuanceManaged(params,function(err, op_payload){
+function createRegistrarWithMultisig(address,url, name,cb){
+	client.createpayload_newIdRegistrar(params,function(err, op_payload){
 		rest.get('https://blockchain.info/rawaddr/'+address).on('complete',function(data){
 			var amount = data.final_balance //note this is an integer in Satoshis
 			var input = data.tx[0] //this only works if the multisig has just 1 input, will make this more resilient
@@ -87,7 +87,7 @@ var redeemkey = ''
 //the array of inputs
 createMultisig(["",""],function(data){
 	redeemkey = data.redeemkey
-	createPropertyWithMultisig(data.address,params,function(tx){
+	createRegistrarWithMultisig(data.address,url,companyName,function(tx){
 		txExport=tx
 		
 		if(noSign==false){
@@ -118,7 +118,7 @@ createMultisig(["",""],function(data){
   })
 
 function updateAdminAddress(oldAddress, newAddress,propertyid,cb){
-	tl.createpayload_changeIssuer(propertyid,function(op_payload){\
+	tl.createpayload_updateIdRegistrar(function(op_payload){
 		rest.get('https://blockchain.info/rawaddr/'+oldAddress).on('complete',function(data){
 			var input = data.tx[0]//we are assuming this first tx in the array is the most recent, otherwise will need a fix
 			client.buildRaw(op_payload,input,[0],newAddress,amount, function(tx_payload){//inputs are missing from param 2
@@ -128,8 +128,8 @@ function updateAdminAddress(oldAddress, newAddress,propertyid,cb){
 	})
 }
 
-function sendGrant(adminAddress,targetAddress,propertyid, amount, cb){
-	tl.createpayload_sendGrant(propertyid,amount,function(op_payload){
+function sendAttestation(adminAddress,targetAddress, memo, cb){
+	tl.createpayload_sendAttestation(memo,function(op_payload){
 		rest.get('https://blockchain.info/rawaddr/'+adminAddress).on('complete',function(data){
 			var input = data.tx[0]//we are assuming this first tx in the array is the most recent, otherwise will need a fix
 			client.buildRaw(op_payload,input,[0],targetAddress,'', function(tx_payload){//inputs are missing from param 2
@@ -138,9 +138,9 @@ function sendGrant(adminAddress,targetAddress,propertyid, amount, cb){
 		})
 	})
 }
-
+/*
 function revoke(adminAddress,propertyid, amount, cb){
-	tl.createpayload_sendGrant(propertyid,amount,function(op_payload){
+	tl.createpayload_sendGrant(propertyid,amount,function(data){
 		rest.get('https://blockchain.info/rawaddr/'+adminAddress).on('complete',function(data){
 			var input = data.tx[0]//we are assuming this first tx in the array is the most recent, otherwise will need a fix
 			client.buildRaw(op_payload,input,[0],'','', function(tx_payload){//inputs are missing from param 2
@@ -149,6 +149,8 @@ function revoke(adminAddress,propertyid, amount, cb){
 		})
 	})
 }
+we should have a revoke tx for KYC companies to maintain more control
+*/
 
 /*
 updateAdminAddress('','',123,function(tx){\
