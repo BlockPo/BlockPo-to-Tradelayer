@@ -819,7 +819,7 @@ UniValue tl_getproperty(const JSONRPCRequest& request)
       response.push_back(Pair("hight price", FormatDivisibleShortMP(sp.oracle_high)));
       response.push_back(Pair("low price", FormatDivisibleShortMP(sp.oracle_low)));
       response.push_back(Pair("last close price", FormatDivisibleShortMP(sp.oracle_close)));
-      response.push_back(Pair("inverse quoted:", std::to_string(sp.inverse_quoted)));
+      response.push_back(Pair("inverse quoted", std::to_string(sp.inverse_quoted)));
 
     } else if (sp.isPegged()) {
       response.push_back(Pair("contract associated",(uint64_t) sp.contract_associated));

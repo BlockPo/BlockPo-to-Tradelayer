@@ -2208,6 +2208,7 @@ static const CRPCCommand commands[] =
     { "trade layer (transaction creation)", "tl_sendcancelalltrades",          &tl_sendcancelalltrades,             {} },
     { "trade layer (transaction creation)", "tl_senddexoffer",                 &tl_senddexoffer,                    {} },
     { "trade layer (transaction creation)", "tl_senddexaccept",                &tl_senddexaccept,                   {} },
+    { "trade layer (transaction cration)",  "tl_send_dex_payment",             &tl_send_dex_payment,                {} },
     { "trade layer (transaction creation)", "tl_create_oraclecontract",        &tl_create_oraclecontract,           {} },
     { "trade layer (transaction creation)", "tl_setoracle",                    &tl_setoracle,                       {} },
     { "trade layer (transaction creation)", "tl_change_oracleref",             &tl_change_oracleref,                {} },
@@ -2218,7 +2219,6 @@ static const CRPCCommand commands[] =
     { "trade layer (transaction creation)", "tl_create_channel",               &tl_create_channel,                  {} },
     { "trade layer (transaction cration)",  "tl_new_id_registration",          &tl_new_id_registration,             {} },
     { "trade layer (transaction cration)",  "tl_update_id_registration",       &tl_update_id_registration,          {} },
-    { "trade layer (transaction cration)",  "tl_send_dex_payment",             &tl_send_dex_payment,                {} },
     { "trade layer (transaction creation)", "tl_attestation",                  &tl_attestation,                     {} }
 #endif
 };
