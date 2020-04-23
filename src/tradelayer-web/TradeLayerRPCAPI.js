@@ -665,13 +665,8 @@ tl.signRaw = function(txstring, privkey, redeemkey, input, vout, pubscript,cb){
         
     tl_getexodus //hilariously we included a modular exodus address system as a makeshift way of punting on re-doing the UXTO Dex transactions with OP_Returns, which is a to-do for the backlog
 
-    tl_getsum_upnl
-
-    tl_create_oraclecontract           
-    tl_setoracle
-    tl_change_oracleref
+    tl_getsum_upnl           
     tl_oraclebackup
-    tl_closeoracle
     tl_commit_tochannel
     tl_withdrawal_fromchannel
     tl_create_channel  
@@ -857,7 +852,42 @@ tl.createpayload_sendTrade = function(propertyidforsale, amount1, propertyiddesi
 }
 
 tl.createpayload_createOracleContract = function(numeratorid, title, durationInBlocks, notional, denominatorCollateralid, marginReq,cb){
-  client.cmd('tl_createpayload_createoraclecontract', numeratorid, title, durationInBlocks, notional,denominatorCollateralid, marginReq, function(err,data,resHeaders){
+  client.cmd('tl_createpayload_create_oraclecontract', numeratorid, title, durationInBlocks, notional,denominatorCollateralid, marginReq, function(err,data,resHeaders){
+    if(err == null){
+      return cb(data)
+    }else{return err}
+  })
+}
+
+tl.createpayload_change_oracleAddressToRef = function(contractTitle){
+    client.cmd('tl_createpayload_change_oracleref', contractTitle, function(err,data,resHeaders){
+      if(err == null){
+        return cb(data)
+      }else{return err}
+   })
+}
+
+tl.getpayload_publishOracleData = function(contractTitle, high, low, close){
+    client.cmd('tl_createpayload_change_oracleref', contractTitle, high, low, close, function(err,data,resHeaders){
+      if(err == null){
+        return cb(data)
+      }else{return err}
+   })
+}
+
+
+tl.getpayload_oraclebackup = function(contractTitle){
+  //the reference address is the new backup, including if the backup address, now admin addess, is changed from being adming to some new address
+  //even then the reference address here is still the back-up. The usage of hot vs. cold keys applies here: admin can be hot, back-ups are always cold.
+  client.cmd('tl_createpayload_oraclebackup', contractTitle, function(err,data,resHeaders){
+      if(err == null){
+        return cb(data)
+      }else{return err}
+   })
+}
+
+tl.createpayload_closeOracle =  function(contractTitle){
+  client.cmd('tl_createpayload_closeoracle', contractTitle, function(err,data,resHeaders){
     if(err == null){
       return cb(data)
     }else{return err}
@@ -901,11 +931,36 @@ tl.createpayload_transfer = function(propertyid, amount,cb){
   })
 }
 
-tl.getalltxonblock = function(height,cb){
+tl.createpayload_newIdRegistrar = function(url, companyName){
+  client.cmd('tl_createpayload_new_id_registration', url, companyName, function(err,data,resHeaders){
+    if(err == null){
+      return cb(data)
+    }else{return err}
+  })
+}
+
+tl.createpayload_updateIdRegistrar = function(){
+  //this tx needs a reference address, it has no parameters because it just transfers a registrar id to that addr
+  client.cmd('tl_createpayload_update_id_registration', function(err,data,resHeaders){
+    if(err == null){
+      return cb(data)
+    }else{return err}
+  }) 
+}
+
+tl.createpayload_attestation = function(memo){
+  //parameter is optional, could be used to create legal provability around compliance
+  client.cmd('tl_createpayload_attestation',memo function(err,data,resHeaders){
+    if(err == null){
+      return cb(data)
+    }else{return err}
+  })
+}
+
+tl.getAllTxForABlock = function(height,cb){
   client.cmd('tl_getalltxonblock',height, function(err,data,resHeaders){
     if(err){return err}else{return cb(data)}
   })
 }
-
     
 exports.tl = tl
