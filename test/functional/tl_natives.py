@@ -5,14 +5,14 @@
 """Test ContractDEx functions (natives)."""
 
 from test_framework.test_framework import BitcoinTestFramework
-from test_framework.util import str_to_b64str, assert_equal
+from test_framework.util import *
 
 import os
 import json
 import http.client
 import urllib.parse
 
-class HTTPBasicsTest (BitcoinTestFramework):
+class NativesBasicsTest (BitcoinTestFramework):
     def set_test_params(self):
         self.num_nodes = 1
         self.setup_clean_chain = True
@@ -51,85 +51,35 @@ class HTTPBasicsTest (BitcoinTestFramework):
         conn.connect()
 
         self.log.info("Creating sender address")
-
-        for i in accounts:
-            # self.log.info(i)
-            conn.request('POST', '/', '{"method": "getnewaddress", "params":["'+str(i)+'"]}', headers)
-            resp = conn.getresponse()
-            assert_equal(resp.status, 200)
-            input = (resp.read().decode('utf-8'))
-            out = json.loads(input)
-            # self.log.info(out)
-            addresses.append(out['result'])
-
+        addresses = tradelayer_createAddresses(accounts, conn, headers)
 
         self.log.info("Funding addresses with LTC")
+        amount = 1.1
+        tradelayer_fundingAddresses(addresses, amount, conn, headers)
 
-        for addr in addresses:
-             params = str([addr, 1.1]).replace("'",'"')
-             # self.log.info(params)
-             conn.request('POST', '/', '{"method": "sendtoaddress", "params":'+params+'}', headers)
-             resp = conn.getresponse()
-             assert_equal(resp.status, 200)
-             input = (resp.read().decode('utf-8'))
-             out = json.loads(input)
-             # self.log.info(out)
-             assert_equal(out['error'], None)
-
-        self.nodes[0].generate(1)
-
-
-        self.log.info("Checking the LTC balance in every address")
-        for addr in addresses:
-            conn.request('POST', '/', '{"method": "getbalance", "params":["john"]}', headers)
-            resp = conn.getresponse()
-            assert_equal(resp.status, 200)
-            input = (resp.read().decode('utf-8'))
-            out = json.loads(input)
-            # self.log.info(out)
-            assert_equal(out['error'], None)
-            assert_equal(out['result'],1.1)
+        self.log.info("Checking the LTC balance in every account")
+        tradelayer_checkingBalance(accounts, amount, conn, headers)
 
 
         self.log.info("Creating new tokens  (lihki)")
         array = [0]
         params = str([addresses[0],2,0,"lihki","","","100000",array]).replace("'",'"')
-        # self.log.info(params)
-        conn.request('POST', '/', '{"method": "tl_sendissuancefixed", "params":'+params+'}', headers)
-        resp = conn.getresponse()
-        assert_equal(resp.status, 200)
-        input = (resp.read().decode('utf-8'))
-        out = json.loads(input)
+        out = tradelayer_HTTP(conn, headers, True, "tl_sendissuancefixed",params)
         assert_equal(out['error'], None)
         # self.log.info(out)
 
         self.nodes[0].generate(1)
 
-
         self.log.info("Self Attestation for addresses")
-        for addr in addresses:
-            params = str([addr,addr,""]).replace("'",'"')
-            # self.log.info(params)
-            conn.request('POST', '/', '{"method": "tl_attestation", "params":'+params+'}', headers)
-            resp = conn.getresponse()
-            assert_equal(resp.status, 200)
-            input = (resp.read().decode('utf-8'))
-            out = json.loads(input)
-            assert_equal(out['error'], None)
-            # self.log.info(out)
-
-        self.nodes[0].generate(1)
+        tradelayer_selfAttestation(addresses,conn, headers)
 
         # TODO:
         # self.log.info("Checking attestations")
 
 
         self.log.info("Checking the property: lihki")
-        conn.request('POST', '/', '{"method": "tl_getproperty", "params": [4]}', headers)
-        resp = conn.getresponse()
-        assert_equal(resp.status, 200)
-        input = (resp.read().decode('utf-8'))
-        out = json.loads(input)
+        params = str([4])
+        out = tradelayer_HTTP(conn, headers, True, "tl_getproperty",params)
         assert_equal(out['error'], None)
         # self.log.info(out)
         assert_equal(out['result']['propertyid'],4)
@@ -142,12 +92,7 @@ class HTTPBasicsTest (BitcoinTestFramework):
 
         self.log.info("Checking tokens balance in lihki's owner ")
         params = str([addresses[0], 4]).replace("'",'"')
-        # self.log.info(params)
-        conn.request('POST', '/', '{"method": "tl_getbalance", "params":'+params+'}', headers)
-        resp = conn.getresponse()
-        assert_equal(resp.status, 200)
-        input = (resp.read().decode('utf-8'))
-        out = json.loads(input)
+        out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
         assert_equal(out['result']['balance'],'100000.00000000')
@@ -156,12 +101,7 @@ class HTTPBasicsTest (BitcoinTestFramework):
 
         self.log.info("Sending 50000 tokens to second address")
         params = str([addresses[0], addresses[1], 4, "50000"]).replace("'",'"')
-        # self.log.info(params)
-        conn.request('POST', '/', '{"method": "tl_send", "params":'+params+'}', headers)
-        resp = conn.getresponse()
-        assert_equal(resp.status, 200)
-        input = (resp.read().decode('utf-8'))
-        out = json.loads(input)
+        out = tradelayer_HTTP(conn, headers, True, "tl_send",params)
         assert_equal(out['error'], None)
         # self.log.info(out)
 
@@ -170,11 +110,7 @@ class HTTPBasicsTest (BitcoinTestFramework):
 
         self.log.info("Checking tokens in receiver address")
         params = str([addresses[1], 4]).replace("'",'"')
-        conn.request('POST', '/', '{"method": "tl_getbalance", "params":'+params+'}', headers)
-        resp = conn.getresponse()
-        assert_equal(resp.status, 200)
-        input = (resp.read().decode('utf-8'))
-        out = json.loads(input)
+        out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
         assert_equal(out['result']['balance'],'50000.00000000')
@@ -184,12 +120,7 @@ class HTTPBasicsTest (BitcoinTestFramework):
         self.log.info("Creating native Contract")
         array = [0]
         params = str([addresses[0], 1, 4, "ALL/Lhk", 5000, "1", 4, "0.1", 0, array]).replace("'",'"')
-        # self.log.info(params)
-        conn.request('POST', '/', '{"method": "tl_createcontract", "params":'+params+'}', headers)
-        resp = conn.getresponse()
-        assert_equal(resp.status, 200)
-        input = (resp.read().decode('utf-8'))
-        out = json.loads(input)
+        out = tradelayer_HTTP(conn, headers, True, "tl_createcontract",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
 
@@ -197,11 +128,8 @@ class HTTPBasicsTest (BitcoinTestFramework):
 
 
         self.log.info("Checking the native contract")
-        conn.request('POST', '/', '{"method": "tl_getproperty", "params": [5]}', headers)
-        resp = conn.getresponse()
-        assert_equal(resp.status, 200)
-        input = (resp.read().decode('utf-8'))
-        out = json.loads(input)
+        params = str([5])
+        out = tradelayer_HTTP(conn, headers, True, "tl_getproperty",params)
         assert_equal(out['error'], None)
         # self.log.info(out)
         assert_equal(out['result']['propertyid'],5)
@@ -217,12 +145,7 @@ class HTTPBasicsTest (BitcoinTestFramework):
         #NOTE: we need to test this for all leverages
         self.log.info("Buying contracts")
         params = str([addresses[1], "ALL/Lhk", "1000", "780.5", 1, "1"]).replace("'",'"')
-        # self.log.info(params)
-        conn.request('POST', '/', '{"method": "tl_tradecontract", "params":'+params+'}', headers)
-        resp = conn.getresponse()
-        assert_equal(resp.status, 200)
-        input = (resp.read().decode('utf-8'))
-        out = json.loads(input)
+        out = tradelayer_HTTP(conn, headers, True, "tl_tradecontract",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
         hash = str(out['result']).replace("'","")
@@ -233,11 +156,7 @@ class HTTPBasicsTest (BitcoinTestFramework):
 
         self.log.info("Checking colateral balance now in sender address")
         params = str([addresses[1], 4]).replace("'",'"')
-        conn.request('POST', '/', '{"method": "tl_getbalance", "params":'+params+'}', headers)
-        resp = conn.getresponse()
-        assert_equal(resp.status, 200)
-        input = (resp.read().decode('utf-8'))
-        out = json.loads(input)
+        out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
         assert_equal(out['result']['balance'],'49900.00000000')
@@ -246,12 +165,7 @@ class HTTPBasicsTest (BitcoinTestFramework):
 
         self.log.info("Checking orderbook")
         params = str(["ALL/Lhk", 1]).replace("'",'"')
-        # self.log.info(params)
-        conn.request('POST', '/', '{"method": "tl_getcontract_orderbook", "params":'+params+'}', headers)
-        resp = conn.getresponse()
-        assert_equal(resp.status, 200)
-        input = (resp.read().decode('utf-8'))
-        out = json.loads(input)
+        out = tradelayer_HTTP(conn, headers, True, "tl_getcontract_orderbook",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
         assert_equal(out['result'][0]['address'], addresses[1])
@@ -265,12 +179,7 @@ class HTTPBasicsTest (BitcoinTestFramework):
         self.log.info("Canceling Contract order")
         address = '"'+addresses[1]+'"'
         params = str([addresses[1], hash]).replace("'",'"')
-        # self.log.info(params)
-        conn.request('POST', '/', '{"method": "tl_sendcancel_contract_order", "params":'+params+'}', headers)
-        resp = conn.getresponse()
-        assert_equal(resp.status, 200)
-        input = (resp.read().decode('utf-8'))
-        out = json.loads(input)
+        out = tradelayer_HTTP(conn, headers, True, "tl_sendcancel_contract_order",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
 
@@ -279,12 +188,7 @@ class HTTPBasicsTest (BitcoinTestFramework):
 
         self.log.info("Checking orderbook")
         params = str(["ALL/Lhk", 1]).replace("'",'"')
-        # self.log.info(params)
-        conn.request('POST', '/', '{"method": "tl_getcontract_orderbook", "params":'+params+'}', headers)
-        resp = conn.getresponse()
-        # assert_equal(resp.status, 200)
-        input = (resp.read().decode('utf-8'))
-        out = json.loads(input)
+        out = tradelayer_HTTP(conn, headers, True, "tl_getcontract_orderbook",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
         assert_equal(out['result'], [])
@@ -292,11 +196,7 @@ class HTTPBasicsTest (BitcoinTestFramework):
         #NOTE: we need to test this for all leverages
         self.log.info("Checking restored colateral in sender address")
         params = str([addresses[1], 4]).replace("'",'"')
-        conn.request('POST', '/', '{"method": "tl_getbalance", "params":'+params+'}', headers)
-        resp = conn.getresponse()
-        assert_equal(resp.status, 200)
-        input = (resp.read().decode('utf-8'))
-        out = json.loads(input)
+        out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
         assert_equal(out['result']['balance'],'50000.00000000')
@@ -305,12 +205,7 @@ class HTTPBasicsTest (BitcoinTestFramework):
 
         self.log.info("Buying contracts again")
         params = str([addresses[1], "ALL/Lhk", "1000", "980.5", 1, "1"]).replace("'",'"')
-        # self.log.info(params)
-        conn.request('POST', '/', '{"method": "tl_tradecontract", "params":'+params+'}', headers)
-        resp = conn.getresponse()
-        # assert_equal(resp.status, 200)
-        input = (resp.read().decode('utf-8'))
-        out = json.loads(input)
+        out = tradelayer_HTTP(conn, headers, True, "tl_tradecontract",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
         hash = str(out['result']).replace("'","")
@@ -319,11 +214,7 @@ class HTTPBasicsTest (BitcoinTestFramework):
 
         self.log.info("Checking orderbook")
         params = str(["ALL/Lhk", 1]).replace("'",'"')
-        conn.request('POST', '/', '{"method": "tl_getcontract_orderbook", "params":'+params+'}', headers)
-        resp = conn.getresponse()
-        # assert_equal(resp.status, 200)
-        input = (resp.read().decode('utf-8'))
-        out = json.loads(input)
+        out = tradelayer_HTTP(conn, headers, True, "tl_getcontract_orderbook",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
         assert_equal(out['result'][0]['address'], addresses[1])
@@ -336,12 +227,7 @@ class HTTPBasicsTest (BitcoinTestFramework):
 
         self.log.info("Another address selling contracts")
         params = str([addresses[0], "ALL/Lhk", "1000", "980.5", 2, "1"]).replace("'",'"')
-        # self.log.info(params)
-        conn.request('POST', '/', '{"method": "tl_tradecontract", "params":'+params+'}', headers)
-        resp = conn.getresponse()
-        assert_equal(resp.status, 200)
-        input = (resp.read().decode('utf-8'))
-        out = json.loads(input)
+        out = tradelayer_HTTP(conn, headers, True, "tl_tradecontract",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
 
@@ -350,11 +236,7 @@ class HTTPBasicsTest (BitcoinTestFramework):
 
         self.log.info("Checking orderbook")
         params = str(["ALL/Lhk", 1]).replace("'",'"')
-        conn.request('POST', '/', '{"method": "tl_getcontract_orderbook", "params":'+params+'}', headers)
-        resp = conn.getresponse()
-        assert_equal(resp.status, 200)
-        input = (resp.read().decode('utf-8'))
-        out = json.loads(input)
+        out = tradelayer_HTTP(conn, headers, True, "tl_getcontract_orderbook",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
         assert_equal(out['result'],[])
@@ -362,11 +244,7 @@ class HTTPBasicsTest (BitcoinTestFramework):
 
         self.log.info("Checking position in first address")
         params = str([addresses[1], "ALL/Lhk"]).replace("'",'"')
-        conn.request('POST', '/', '{"method": "tl_getposition", "params":'+params+'}', headers)
-        resp = conn.getresponse()
-        assert_equal(resp.status, 200)
-        input = (resp.read().decode('utf-8'))
-        out = json.loads(input)
+        out = tradelayer_HTTP(conn, headers, True, "tl_getposition",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
         assert_equal(out['result']['longPosition'],'1000.00000000')
@@ -375,11 +253,7 @@ class HTTPBasicsTest (BitcoinTestFramework):
 
         self.log.info("Checking position in second address")
         params = str([addresses[0], "ALL/Lhk"]).replace("'",'"')
-        conn.request('POST', '/', '{"method": "tl_getposition", "params":'+params+'}', headers)
-        resp = conn.getresponse()
-        assert_equal(resp.status, 200)
-        input = (resp.read().decode('utf-8'))
-        out = json.loads(input)
+        out = tradelayer_HTTP(conn, headers, True, "tl_getposition",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
         assert_equal(out['result']['longPosition'],'0.00000000')
@@ -390,4 +264,4 @@ class HTTPBasicsTest (BitcoinTestFramework):
         self.stop_nodes()
 
 if __name__ == '__main__':
-    HTTPBasicsTest ().main ()
+    NativesBasicsTest ().main ()

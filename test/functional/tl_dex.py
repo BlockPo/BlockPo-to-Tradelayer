@@ -57,7 +57,7 @@ class DExBasicsTest (BitcoinTestFramework):
         addresses = tradelayer_createAddresses(accounts, conn, headers)
 
         self.log.info("Funding addresses with LTC")
-        amount = 1.1
+        amount = 2
         tradelayer_fundingAddresses(addresses, amount, conn, headers)
 
         self.log.info("Checking the LTC balance in every account")
@@ -65,7 +65,7 @@ class DExBasicsTest (BitcoinTestFramework):
 
         self.log.info("Creating new tokens (sendissuancefixed)")
         array = [0]
-        params = str([addresses[0],2,0,"lihki","","","6000",array]).replace("'",'"')
+        params = str([addresses[0],2,0,"lihki","","","90000000",array]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_sendissuancefixed",params)
         # self.log.info(out)
 
@@ -85,7 +85,7 @@ class DExBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['data'],'')
         assert_equal(out['result']['url'],'')
         assert_equal(out['result']['divisible'],True)
-        assert_equal(out['result']['totaltokens'],'6000.00000000')
+        assert_equal(out['result']['totaltokens'],'90000000.00000000')
 
         self.log.info("Checking token balance in every address")
         for addr in addresses:
@@ -95,7 +95,7 @@ class DExBasicsTest (BitcoinTestFramework):
             amount = ""
             assert_equal(out['error'], None)
             if addr == addresses[0]:
-                 amount = '6000.00000000'
+                 amount = '90000000.00000000'
             else:
                  amount = '0.00000000'
 
@@ -245,7 +245,7 @@ class DExBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['balance'], '4000.00000000')
+        assert_equal(out['result']['balance'], '89998000.00000000')
         assert_equal(out['result']['reserve'],'0.00000000')
 
         self.log.info("Checking token balance in buyer address")
@@ -376,6 +376,73 @@ class DExBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         assert_equal(out['result']['balance'], '0.00000000')
         assert_equal(out['result']['reserve'],'0.00000000')
+
+
+        self.log.info("Checking a small token offer")
+        params = str([addresses[0], 4, "0.00000001", "20", 250, "0.00001", "2", 1]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_senddexoffer",params)
+        assert_equal(out['error'], None)
+        # self.log.info(out)
+
+        self.nodes[0].generate(1)
+
+        self.log.info("Checking the offer in DEx")
+        params = str([addresses[0]]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getactivedexsells",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result'][0]['propertyid'], 4)
+        assert_equal(out['result'][0]['action'], 2)
+        assert_equal(out['result'][0]['seller'], addresses[0])
+        assert_equal(out['result'][0]['ltcsdesired'], '20.00000000')
+        assert_equal(out['result'][0]['amountavailable'], '0.00000001')
+        assert_equal(out['result'][0]['amountoffered'], '0.00000000')
+        assert_equal(out['result'][0]['unitprice'], '2000000000.00000000')
+        assert_equal(out['result'][0]['minimumfee'], '0.00001000')
+
+        self.log.info("Checking a smaller token offer")
+        params = str([addresses[0], 4, "0.000000001", "20", 250, "0.00001", "2", 1]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_senddexoffer",params)
+        assert_equal(out['error']['code'], -3)
+        assert_equal(out['error']['message'],'Invalid amount ???')
+        # self.log.info(out)
+
+        self.log.info("Sending 20000000 tokens to second address")
+        params = str([addresses[0], addresses[1], 4, "20000000"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_send",params)
+        # self.log.info(out)
+
+        self.nodes[0].generate(1)
+
+
+        self.log.info("Checking tokens in receiver address")
+        params = str([addresses[1], 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['balance'],'20001000.00000000')
+        assert_equal(out['result']['reserve'],'0.00000000')
+
+        self.log.info("Checking a big token offer")
+        params = str([addresses[1], 4, "10000000.98765432", "20", 250, "0.00001", "2", 1]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_senddexoffer",params)
+        # self.log.info(out)
+
+        self.nodes[0].generate(1)
+
+        self.log.info("Checking the offer in DEx")
+        params = str([addresses[1]]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getactivedexsells",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result'][0]['propertyid'], 4)
+        assert_equal(out['result'][0]['action'], 2)
+        assert_equal(out['result'][0]['seller'], addresses[1])
+        assert_equal(out['result'][0]['ltcsdesired'], '20.00000000')
+        assert_equal(out['result'][0]['amountavailable'], '10000000.98765432')
+        assert_equal(out['result'][0]['amountoffered'], '0.00000000')
+        assert_equal(out['result'][0]['unitprice'], '0.00000200') # should be: 0.00000199999 (here we are rounding up)
+        assert_equal(out['result'][0]['minimumfee'], '0.00001000')
 
         conn.close()
 

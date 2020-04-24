@@ -543,6 +543,38 @@ UniValue tl_getbalance(const JSONRPCRequest& request)
     return balanceObj;
 }
 
+// display an unvested balance via RPC
+// UniValue tl_getunvested(const JSONRPCRequest& request)
+// {
+//     if (request.params.size() != 2)
+//         throw runtime_error(
+//             "tl_getbalance \"address\" propertyid\n"
+//             "\nReturns the token balance for a given address and property.\n"
+//             "\nArguments:\n"
+//             "1. address              (string, required) the address\n"
+//             "2. propertyid           (number, required) the property identifier\n"
+//             "\nResult:\n"
+//             "{\n"
+//             "  \"balance\" : \"n.nnnnnnnn\",   (string) the available balance of the address\n"
+//             "  \"reserved\" : \"n.nnnnnnnn\"   (string) the amount reserved by sell offers and accepts\n"
+//             "}\n"
+//             "\nExamples:\n"
+//             + HelpExampleCli("tl_getbalance", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" 1")
+//             + HelpExampleRpc("tl_getbalance", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", 1")
+//         );
+//
+//     std::string address = ParseAddress(request.params[0]);
+//     uint32_t propertyId = ParsePropertyId(request.params[1]);
+//
+//     // RequireExistingProperty(propertyId);
+//     // RequireNotContract(propertyId);
+//
+//     UniValue balanceObj(UniValue::VOBJ);
+//     BalanceToJSON(address, propertyId, balanceObj, isPropertyDivisible(propertyId));
+//
+//     return balanceObj;
+// }
+
 UniValue tl_getreserve(const JSONRPCRequest& request)
 {
     if (request.params.size() != 2)
