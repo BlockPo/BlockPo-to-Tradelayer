@@ -25,8 +25,8 @@ function createMultisig(coldPubKeyArray,cb){
 	if(myAddresses.length<1){
 		client.getnewaddress(null, function(data){
 			client.getAddressInfo(data,function(data){
-				myAddresses.push({address:data.address,pubkey:data.scriptPubkey,type:'aux'})
-				coldPubKeyArray.push(data.scriptPubkey)
+				myAddresses.push({address:data.address,pubkey:data.scriptPubKey,type:'aux'})
+				coldPubKeyArray.push(data.scriptPubKey)
 				var signers= coldPubKeyArray.length -1
 				client.addMultsigAddress(signers,coldPubKeyArray,function(data){
 					myAddresses.push({address:data.address,redeemkey:data.redeemkey,type:'admin'})
@@ -86,10 +86,9 @@ var txExport =''
 var redeemkey = ''
 //the array of inputs
 createMultisig(["",""],function(data){
-	redeemkey = data.redeemkey
+	redeemkey = data.redeemScript
 	createRegistrarWithMultisig(data.address,url,companyName,function(tx){
 		txExport=tx
-		
 		if(noSign==false){
 			rest.get('https://blockchain.info/rawtx/$tx_hash').on('complete',function(data){
 				var privkey =''

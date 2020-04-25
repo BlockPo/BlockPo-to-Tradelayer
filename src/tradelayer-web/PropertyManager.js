@@ -25,12 +25,12 @@ function createMultisig(coldPubKeyArray,cb){
 	if(myAddresses.length<1){
 		client.getnewaddress(null, function(data){
 			client.getAddressInfo(data,function(data){
-				myAddresses.push({address:data.address,pubkey:data.scriptPubkey,type:'aux'})
-				coldPubKeyArray.push(data.scriptPubkey)
+				myAddresses.push({address:data.address,pubkey:data.scriptPubKey,type:'aux'})
+				coldPubKeyArray.push(data.scriptPubKey)
 				var signers= coldPubKeyArray.length -1
 				client.addMultsigAddress(signers,coldPubKeyArray,function(data){
-					myAddresses.push({address:data.address,redeemkey:data.redeemkey,type:'admin'})
-					thisAdminAddress= {address:data.address,redeemkey:data.redeemkey,type:'admin'}
+					myAddresses.push({address:data.address,redeemkey:data.redeemScript,type:'admin'})
+					thisAdminAddress= {address:data.address,redeemkey:data.redeemScript,type:'admin'}
 					return cb(data)
 				})
 			})
@@ -86,7 +86,7 @@ var txExport =''
 var redeemkey = ''
 //the array of inputs
 createMultisig(["",""],function(data){
-	redeemkey = data.redeemkey
+	redeemkey = data.redeemScript
 	createPropertyWithMultisig(data.address,params,function(tx){
 		txExport=tx
 		

@@ -617,7 +617,7 @@ tl.getContractInfo =  function(index, oracleContracts, nativeContracts,cb){
   	})
 }
 
-tl_createNativeContract= function(thisAddress, numeratorid, title, durationInBlocks, notional,denominatorCollateralid, marginReq,cb){
+tl_createNativeContract= function(thisAddress, numeratorid, title, durationInBlocks, notional,denominatorCollateralId, marginReq,cb){
 	////tl_createcontract ${ADDR} 1 4 "ALL/dUSD" 1000 1 4 0.5 #leverage = 10
 	client.cmd('tl_createcontract', thisAddress, 1, numeratorid, title, durationInBlocks, notional,denominatorCollateralid, marginReq, function(err,data,resHeaders){
 		if(err == null){
@@ -626,7 +626,7 @@ tl_createNativeContract= function(thisAddress, numeratorid, title, durationInBlo
 	}) 
 }
 
-tl.createOracleContract = function(thisAddress, numeratorid, title, durationInBlocks, notional,denominatorCollateralid, marginReq, backUpAddr,cb){
+tl.createOracleContract = function(thisAddress, numeratorid, title, durationInBlocks, notional,denominatorCollateralId, marginReq, backUpAddr,cb){
 	//tl_create_oraclecontract ${ADDR} 1 4 "OIL dUSD" 1000 1 4 0.5 ${ADDR2}
 	client.cmd('tl_createoraclecontract', thisAddress, 1, numeratorid, title, durationInBlocks, notional,denominatorCollateralid, marginReq, backUpAddr, function(err,data,resHeaders){
 		if(err == null){
