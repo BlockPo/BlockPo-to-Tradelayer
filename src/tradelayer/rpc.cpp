@@ -2610,8 +2610,8 @@ UniValue tl_check_kyc(const JSONRPCRequest& request)
 			"  ...\n"
 			"]\n"
 			"\nExamples:\n"
-			+ HelpExampleCli("tl_check_withdrawals", "address1")
-			+ HelpExampleRpc("tl_check_withdrawals", "address1")
+			+ HelpExampleCli("tl_check_kyc", "address1")
+			+ HelpExampleRpc("tl_check_kyc", "address1")
 			);
 
   // obtain property identifiers for pair & check valid parameters

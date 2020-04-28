@@ -5109,7 +5109,7 @@ bool mastercore::marginMain(int Block)
                 PrintToLog("\n%s: ordersMargin= %d\n", __func__, ordersMargin);
                 PrintToLog("%s: upnl= %d\n", __func__, upnl);
                 PrintToLog("%s: factor= %d\n", __func__, factor);
-                PrintToLog("%s: proportion upnl/initMargin= %d\n", __func__, xToString(percent));
+                // PrintToLog("%s: proportion upnl/initMargin= %d\n", __func__, xToString(percent));
                 PrintToLog("\n--------------------------------------------------\n");
             }
             // if the upnl loss is more than 80% of the initial Margin
@@ -5118,7 +5118,7 @@ bool mastercore::marginMain(int Block)
                 const uint256 txid;
                 if(msc_debug_margin_main)
                 {
-                    PrintToLog("%s: factor <= percent : %d <= %d\n",__func__, xToString(factor), xToString(percent));
+                    // PrintToLog("%s: factor <= percent : %d <= %d\n",__func__, xToString(factor), xToString(percent));
                     PrintToLog("%s: margin call!\n", __func__);
                 }
 
@@ -5130,7 +5130,7 @@ bool mastercore::marginMain(int Block)
                 if(msc_debug_margin_main)
                 {
                     PrintToLog("%s: CALLING CANCEL IN ORDER\n", __func__);
-                    PrintToLog("%s: factor2 <= percent : %s <= %s\n", __func__, xToString(factor2),xToString(percent));
+                    // PrintToLog("%s: factor2 <= percent : %s <= %s\n", __func__, xToString(factor2),xToString(percent));
                 }
 
                 int64_t fbalance, diff;

@@ -1191,7 +1191,7 @@ bool mastercore::ContractDex_Fees(std::string addressTaker,std::string addressMa
     update_tally_map(addressTaker,sp.collateral_currency,-takerFee,BALANCE);
     update_tally_map(addressMaker,sp.collateral_currency, makerFee,BALANCE);
 
-    // NOTE: check later 
+    // NOTE: check later
     //sum check
     // assert(takerFee == makerFee + 3*cacheFee); // 2.5% = 1% + 3*0.5%
 
@@ -2655,7 +2655,7 @@ int mastercore::MetaDEx_CANCEL_EVERYTHING(const uint256& txid, unsigned int bloc
                 assert(update_tally_map(it->getAddr(), it->getProperty(), it->getAmountRemaining(), BALANCE));
 
                 // record the cancellation
-                bool bValid = true;
+                // bool bValid = true;
                 // pDbTransactionList->recordMetaDExCancelTX(txid, it->getHash(), bValid, block, it->getProperty(), it->getAmountRemaining());
 
                 indexes.erase(it++);
@@ -2716,10 +2716,6 @@ int mastercore::MetaDEx_CANCEL_EVERYTHING(const uint256& txid, unsigned int bloc
 
                  uint32_t collateralCurrency = sp.collateral_currency;
                  int64_t marginRe = static_cast<int64_t>(sp.margin_requirement);
-
-
-                 // rational_t conv = notionalChange(contractId);
-                 int64_t balance = getMPbalance(addr,collateralCurrency,BALANCE);
 
                  if(msc_debug_contract_cancel)
                  {
