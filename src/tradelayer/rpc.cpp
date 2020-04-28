@@ -173,6 +173,16 @@ void ReserveToJSON(const std::string& address, uint32_t property, UniValue& bala
     }
 }
 
+void UnvestedToJSON(const std::string& address, uint32_t property, UniValue& balance_obj, bool divisible)
+{
+    int64_t unvested = getMPbalance(address, property, UNVESTED);
+    if (divisible) {
+        balance_obj.push_back(Pair("unvested", FormatDivisibleMP(unvested)));
+    } else {
+        balance_obj.push_back(Pair("unvvested", FormatIndivisibleMP(unvested)));
+    }
+}
+
 void ChannelToJSON(const std::string& address, uint32_t property, UniValue& balance_obj, bool divisible)
 {
     int64_t margin = getMPbalance(address, property, CHANNEL_RESERVE);
@@ -544,36 +554,33 @@ UniValue tl_getbalance(const JSONRPCRequest& request)
 }
 
 // display an unvested balance via RPC
-// UniValue tl_getunvested(const JSONRPCRequest& request)
-// {
-//     if (request.params.size() != 2)
-//         throw runtime_error(
-//             "tl_getbalance \"address\" propertyid\n"
-//             "\nReturns the token balance for a given address and property.\n"
-//             "\nArguments:\n"
-//             "1. address              (string, required) the address\n"
-//             "2. propertyid           (number, required) the property identifier\n"
-//             "\nResult:\n"
-//             "{\n"
-//             "  \"balance\" : \"n.nnnnnnnn\",   (string) the available balance of the address\n"
-//             "  \"reserved\" : \"n.nnnnnnnn\"   (string) the amount reserved by sell offers and accepts\n"
-//             "}\n"
-//             "\nExamples:\n"
-//             + HelpExampleCli("tl_getbalance", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" 1")
-//             + HelpExampleRpc("tl_getbalance", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", 1")
-//         );
-//
-//     std::string address = ParseAddress(request.params[0]);
-//     uint32_t propertyId = ParsePropertyId(request.params[1]);
-//
-//     // RequireExistingProperty(propertyId);
-//     // RequireNotContract(propertyId);
-//
-//     UniValue balanceObj(UniValue::VOBJ);
-//     BalanceToJSON(address, propertyId, balanceObj, isPropertyDivisible(propertyId));
-//
-//     return balanceObj;
-// }
+UniValue tl_getunvested(const JSONRPCRequest& request)
+{
+    if (request.params.size() != 1)
+        throw runtime_error(
+            "tl_getunvested \"address\" \n"
+            "\nReturns the token balance for unvested ALLs (via vesting tokens).\n"
+            "\nArguments:\n"
+            "1. address              (string, required) the address\n"
+            "\nResult:\n"
+            "{\n"
+            "  \"unvested\" : \"n.nnnnnnnn\",   (string) the unvested balance of ALLs in the address\n"
+            "}\n"
+            "\nExamples:\n"
+            + HelpExampleCli("tl_getunvested", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" ")
+            + HelpExampleRpc("tl_getunvested", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", ")
+        );
+
+    std::string address = ParseAddress(request.params[0]);
+
+    // RequireExistingProperty(propertyId);
+    // RequireNotContract(propertyId);
+
+    UniValue balanceObj(UniValue::VOBJ);
+    UnvestedToJSON(address, ALL, balanceObj, isPropertyDivisible(ALL));
+
+    return balanceObj;
+}
 
 UniValue tl_getreserve(const JSONRPCRequest& request)
 {
@@ -3042,7 +3049,8 @@ static const CRPCCommand commands[] =
   { "trade layer (data retieval)" , "tl_getcurrencytotal",          &tl_getcurrencytotal,           {} },
   { "trade layer (data retieval)" , "tl_listkyc",                   &tl_listkyc,                    {} },
   { "trade layer (data retieval)" , "tl_getoraclecache",            &tl_getoraclecache,             {} },
-  { "trade layer (data retieval)",  "tl_getmax_peggedcurrency",     &tl_getmax_peggedcurrency,      {} }
+  { "trade layer (data retieval)",  "tl_getmax_peggedcurrency",     &tl_getmax_peggedcurrency,      {} },
+  { "trade layer (data retieval)",  "tl_getunvested",               &tl_getunvested,                {} }
 };
 
 void RegisterTLDataRetrievalRPCCommands(CRPCTable &tableRPC)

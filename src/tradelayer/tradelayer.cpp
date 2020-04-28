@@ -604,8 +604,8 @@ const string getAdminAddress()
 {
     if (RegTest())
     {
-        // regtest (private key: cRs6niSYMs5pSpHT6kB7V1Urj3zqyE9sJwUiQYorfini1kw11C8z)
-        const string regAddress = "mgrNNyDCdAWeYfkvcarsQKRzMhEFQiDmnH";
+        // regtest (private key: cTkpBcU7YzbJBi7U59whwahAMcYwKT78yjZ2zZCbLsCZ32Qp5Wta)
+        const string regAddress = "QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPb";
         return regAddress;
 
     } else if (TestNet()) {
@@ -1029,7 +1029,6 @@ static bool HandleDExPayments(const CTransaction& tx, int nBlock, const std::str
     int64_t ltcsreceived = ConvertTo64(ltcsreceived_256t)/COIN;
     globalVolumeALL_LTC += ltcsreceived;
     const int64_t globalVolumeALL_LTCh = globalVolumeALL_LTC;
-
 
     if (msc_debug_handle_dex_payment) PrintToLog("%s(): ltcsreceived: %d, globalVolumeALL_LTC: %d \n",__func__,ltcsreceived, globalVolumeALL_LTCh);
 
@@ -2686,14 +2685,21 @@ bool VestingTokens(int block)
         return false;
     }
 
-    int64_t x_Axis = globalVolumeALL_LTC;
+    int64_t XAxis = globalVolumeALL_LTC;
+
+    if(msc_debug_vesting) PrintToLog("%s(): globalVolumeALL_LTC: %d \n",__func__,XAxis);
+
     // int64_t x_Axis = 1000000000000; //10000
     // if (block >= 120) x_Axis = 2000000000000;  // 20000
 
     rational_t Factor1over3(100, 3);
     int64_t Factor1over3_64t = mastercore::RationalToInt64(Factor1over3);
 
-    int64_t XAxis = x_Axis/COIN;
+    if (XAxis <= 1000)
+    {
+        if(msc_debug_vesting) PrintToLog("%s(): 0 percent of vesting (LTC) less than 1000 LTC: %d\n",__func__,XAxis);
+        return false;
+    }
 
     double factor = static_cast<double>(Factor1over3_64t) / COIN;
 
@@ -2718,10 +2724,11 @@ bool VestingTokens(int block)
         int64_t vestingBalance = getMPbalance(vestingAddresses[i], TL_PROPERTY_VESTING, BALANCE);
         int64_t unvestedALLBal = getMPbalance(vestingAddresses[i], ALL, UNVESTED);
 
-        if(msc_debug_vesting) PrintToLog("\nALLs UNVESTED = %d\n", getMPbalance(vestingAddresses[0], TL_PROPERTY_ALL, UNVESTED));
-        if(msc_debug_vesting) PrintToLog("ALLs BALANCE = %d\n", getMPbalance(vestingAddresses[0], TL_PROPERTY_ALL, BALANCE));
+        if(msc_debug_vesting) PrintToLog("\nALLs UNVESTED in address = %d\n", unvestedALLBal);
+        if(msc_debug_vesting) PrintToLog("ALLs BALANCE in address = %d\n", getMPbalance(vestingAddresses[i], ALL, BALANCE));
+        if(msc_debug_vesting) PrintToLog("Vesting tokens in address = %d\n", vestingBalance);
 
-        if (vestingBalance != 0 && unvestedALLBal != 0 && x_Axis != 0)
+        if (vestingBalance != 0 && unvestedALLBal != 0 && XAxis != 0)
         {
 
             int64_t iRealVesting = mastercore::DoubleToInt64(realVesting);
@@ -2734,6 +2741,9 @@ bool VestingTokens(int block)
             if(msc_debug_vesting) PrintToLog("%s(): TOTAL_AMOUNT_VESTING_TOKENS = %d\n",__func__,TOTAL_AMOUNT_VESTING_TOKENS);
 
             int64_t weighted = mastercore::RationalToInt64(linearRationalw);
+
+            if(msc_debug_vesting) PrintToLog("%s(): weighted = %d\n",__func__,weighted);
+
 
             assert(update_tally_map(vestingAddresses[i], ALL, -weighted, UNVESTED));
             assert(update_tally_map(vestingAddresses[i], ALL, weighted, BALANCE));
@@ -6208,7 +6218,7 @@ int64_t mastercore::getOracleTwap(uint32_t contractId, int nBlocks)
 }
 
 
-bool mastercore::SanityChecks(string sender, int aBlock)
+bool mastercore::sanityChecks(string sender, int aBlock)
 {
     if (getAdminAddress() == sender)
         return true;
@@ -6225,13 +6235,11 @@ bool mastercore::SanityChecks(string sender, int aBlock)
     // is this the first transaction from address in the list?
     for(auto it = vestingAddresses.begin(); it != vestingAddresses.end(); ++it)
     {
-        if(sender == *(it) && timeFrame > ONE_YEAR)
+        if(sender == *(it) && timeFrame > params.ONE_YEAR)
             return true;
-        else
-            return false;
-     }
+    }
 
-     return true;
+    return false;
 
 }
 

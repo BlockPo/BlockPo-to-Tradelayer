@@ -2400,7 +2400,7 @@ int CMPTransaction::logicMath_SimpleSend()
 int CMPTransaction::logicMath_SendVestingTokens()
 {
 
-  if (!SanityChecks(sender, block)) {
+  if (!sanityChecks(sender, block)) {
       PrintToLog("%s(): rejected: sanity checks for send vesting tokens failed\n",
               __func__);
       return (PKT_ERROR_SEND -21);
@@ -2426,6 +2426,8 @@ int CMPTransaction::logicMath_SendVestingTokens()
               FormatMP(TL_PROPERTY_VESTING, nValue));
       return (PKT_ERROR_SEND -25);
   }
+
+  PrintToLog("%s(): nValue:  %d\n",__func__, nValue);
 
   assert(update_tally_map(sender, TL_PROPERTY_VESTING, -nValue, BALANCE));
   assert(update_tally_map(receiver, TL_PROPERTY_VESTING, nValue, BALANCE));

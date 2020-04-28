@@ -88,6 +88,9 @@ public:
     /* MetaDEx*/
     int MSC_METADEX_CANCEL_ALL_BLOCK;
 
+    /* Vesting Tokens*/
+    int ONE_YEAR;
+
 
     /** Returns a mapping of transaction types, and the blocks at which they are enabled. */
     virtual std::vector<TransactionRestriction> GetRestrictions() const;

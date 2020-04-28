@@ -239,8 +239,6 @@ const int dayblocks = 576;
 const rational_t factor = rational_t(80,100);  // critical limit
 const rational_t factor2 = rational_t(20,100); // normal limits
 
-// define 1 year in blocks:
-#define ONE_YEAR 210240
 
 // define KYC id = 0 for self attestations
 #define KYC_0      0
@@ -564,7 +562,7 @@ namespace mastercore
   int64_t getOracleTwap(uint32_t contractId, int nBlocks);
 
   // check for vesting
-  bool SanityChecks(string sender, int aBlock);
+  bool sanityChecks(string sender, int aBlock);
 
   // fee cache buying Alls in mDEx
   bool feeCacheBuy();
