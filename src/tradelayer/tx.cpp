@@ -3986,6 +3986,7 @@ int CMPTransaction::logicMath_AcceptOfferBTC()
 /** Tx 103 */
 int CMPTransaction::logicMath_CreateOracleContract()
 {
+
     uint256 blockHash;
     {
         LOCK(cs_main);
@@ -4002,9 +4003,10 @@ int CMPTransaction::logicMath_CreateOracleContract()
 
     if (sender == receiver)
     {
-        PrintToLog("%s(): ERROR: oracle and backup addresses can't be the same!\n", __func__, block);
+        PrintToLog("%s(): ERROR: oracle and backup addresses can't be the same!\n", __func__);
         return (PKT_ERROR_ORACLE -10);
     }
+
 
     if (!IsTransactionTypeAllowed(block, type, version)) {
       PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
@@ -4015,6 +4017,7 @@ int CMPTransaction::logicMath_CreateOracleContract()
           block);
       return (PKT_ERROR_SP -22);
     }
+
 
     if ('\0' == name[0])
     {

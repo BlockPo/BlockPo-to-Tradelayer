@@ -66,36 +66,12 @@ class KYCBasicsTest (BitcoinTestFramework):
 
 
         self.log.info("Creating KYC of Tradelayer ")
-        params = str([addresses[0], "TradeLayer.org","TradeLayer registrars"]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, True, "tl_new_id_registration",params)
-        self.log.info(out)
-
-        self.nodes[0].generate(1)
-
-
-        self.log.info("Checking the KYC ")
-        params = str([addresses[0]]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, False, "tl_check_kyc",params)
-        self.log.info(out)
-
-        assert_equal(out['result']['result: '],'enabled')
-
-        self.log.info("Checking the KYC list ")
-        out = tradelayer_HTTP(conn, headers, False, "tl_listkyc")
-        # self.log.info(out)
-        assert_equal(out['result'][0]['address'], addresses[0])
-        assert_equal(out['result'][0]['name'], 'TradeLayer registrars')
-        assert_equal(out['result'][0]['website'], 'TradeLayer.org')
-        assert_equal(out['result'][0]['block'], 202)
-        assert_equal(out['result'][0]['kyc id'], 1)
-
-
-        self.log.info("Creating another KYC for Tradelayer ")
         params = str([addresses[1], "TradeLayer.org","TradeLayer registrars"]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_new_id_registration",params)
         self.log.info(out)
 
         self.nodes[0].generate(1)
+
 
         self.log.info("Checking the KYC ")
         params = str([addresses[1]]).replace("'",'"')
@@ -107,27 +83,119 @@ class KYCBasicsTest (BitcoinTestFramework):
         self.log.info("Checking the KYC list ")
         out = tradelayer_HTTP(conn, headers, False, "tl_listkyc")
         # self.log.info(out)
-
         assert_equal(out['result'][0]['address'], addresses[1])
+        assert_equal(out['result'][0]['name'], 'TradeLayer registrars')
+        assert_equal(out['result'][0]['website'], 'TradeLayer.org')
+        assert_equal(out['result'][0]['block'], 202)
+        assert_equal(out['result'][0]['kyc id'], 1)
+
+
+        self.log.info("Creating another KYC for Tradelayer ")
+        params = str([addresses[2], "TradeLayer.org","TradeLayer registrars"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_new_id_registration",params)
+        self.log.info(out)
+
+        self.nodes[0].generate(1)
+
+        self.log.info("Checking the KYC ")
+        params = str([addresses[2]]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_check_kyc",params)
+        self.log.info(out)
+
+        assert_equal(out['result']['result: '],'enabled')
+
+        self.log.info("Checking the KYC list ")
+        out = tradelayer_HTTP(conn, headers, False, "tl_listkyc")
+        # self.log.info(out)
+
+        assert_equal(out['result'][0]['address'], addresses[2])
         assert_equal(out['result'][0]['name'], 'TradeLayer registrars')
         assert_equal(out['result'][0]['website'], 'TradeLayer.org')
         assert_equal(out['result'][0]['block'], 203)
         assert_equal(out['result'][0]['kyc id'], 2)
 
-        assert(False)
-        
-        # self.log.info("Creating new tokens (sendissuancefixed)")
-        # array = [0]
-        # params = str([addresses[2],2,0,"lihki","","","90000000",array]).replace("'",'"')
-        # out = tradelayer_HTTP(conn, headers, True, "tl_sendissuancefixed",params)
-        # # self.log.info(out)
+        self.log.info("Self Attestation for addresses")
+        params = str([addresses[2], addresses[2]]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_attestation",params)
+        self.log.info(out)
 
-        # self.log.info("Self Attestation for addresses")
-        # tradelayer_selfAttestation(addresses,conn, headers)
+        self.nodes[0].generate(1)
+
 
         # TODO:
         # self.log.info("Checking attestations")
 
+
+        self.log.info("Creating new tokens Dcoin(sendissuancefixed)")
+        array = [0]
+        params = str([addresses[2],2,0,"dCoin","","","90000000",array]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_sendissuancefixed",params)
+        self.log.info(out)
+
+
+        self.nodes[0].generate(1)
+
+        self.log.info("Creating new tokens Ecoin(sendissuancefixed)")
+        array = [2]
+        params = str([addresses[2],2,0,"eCoin","","","90000000",array]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_sendissuancefixed",params)
+        self.log.info(out)
+
+
+        self.nodes[0].generate(1)
+
+        self.log.info("Checking the property 4")
+        params = str([4])
+        out = tradelayer_HTTP(conn, headers, True, "tl_getproperty",params)
+        assert_equal(out['error'], None)
+        # self.log.info(out)
+        assert_equal(out['result']['propertyid'],4)
+        assert_equal(out['result']['name'],'dCoin')
+        assert_equal(out['result']['data'],'')
+        assert_equal(out['result']['url'],'')
+        assert_equal(out['result']['divisible'],True)
+        assert_equal(out['result']['totaltokens'],'90000000.00000000')
+
+        self.log.info("Checking the property 5")
+        params = str([5])
+        out = tradelayer_HTTP(conn, headers, True, "tl_getproperty",params)
+        assert_equal(out['error'], None)
+        # self.log.info(out)
+        assert_equal(out['result']['propertyid'],5)
+        assert_equal(out['result']['name'],'eCoin')
+        assert_equal(out['result']['data'],'')
+        assert_equal(out['result']['url'],'')
+        assert_equal(out['result']['divisible'],True)
+        assert_equal(out['result']['totaltokens'],'90000000.00000000')
+
+        self.log.info("Creating oracles Contract")
+        array = [0]
+        params = str([addresses[2], "Oracle 1", 10000, "1", 4, "0.1", addresses[2], 0, array]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_create_oraclecontract",params)
+        self.log.info(out)
+        assert_equal(out['error'], None)
+
+        self.nodes[0].generate(1)
+
+        assert(False)
+        
+        self.log.info("Checking the oracle contract")
+        params = str([5])
+        out = tradelayer_HTTP(conn, headers, True, "tl_getproperty",params)
+        assert_equal(out['error'], None)
+        # self.log.info(out)
+
+        assert_equal(out['result']['propertyid'],6)
+        assert_equal(out['result']['name'],'Oracle 1')
+        assert_equal(out['result']['issuer'], addresses[2])
+        assert_equal(out['result']['notional size'], '1')
+        assert_equal(out['result']['collateral currency'], '4')
+        assert_equal(out['result']['margin requirement'], '0.1')
+        assert_equal(out['result']['blocks until expiration'], '10000')
+        assert_equal(out['result']['inverse quoted'], '0')
+        assert_equal(out['result']['hight price'], '0')
+        assert_equal(out['result']['low price'], '0')
+        assert_equal(out['result']['last close price'], '0')
 
         conn.close()
 
