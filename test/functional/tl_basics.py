@@ -70,7 +70,7 @@ class HTTPBasicsTest (BitcoinTestFramework):
 
 
         self.log.info("Testing tl_getbalance")
-        address = 'mgrNNyDCdAWeYfkvcarsQKRzMhEFQiDmnH'
+        address = 'QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPb'
         params = str([address, 1]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
         # self.log.info(out)

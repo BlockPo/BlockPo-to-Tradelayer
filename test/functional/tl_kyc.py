@@ -170,17 +170,16 @@ class KYCBasicsTest (BitcoinTestFramework):
 
         self.log.info("Creating oracles Contract")
         array = [0]
-        params = str([addresses[2], "Oracle 1", 10000, "1", 4, "0.1", addresses[2], 0, array]).replace("'",'"')
+        params = str([addresses[2], "Oracle 1", 10000, "1", 4, "0.1", addresses[3], 0, array]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_create_oraclecontract",params)
         self.log.info(out)
         assert_equal(out['error'], None)
 
         self.nodes[0].generate(1)
 
-        assert(False)
-        
+
         self.log.info("Checking the oracle contract")
-        params = str([5])
+        params = str([6])
         out = tradelayer_HTTP(conn, headers, True, "tl_getproperty",params)
         assert_equal(out['error'], None)
         # self.log.info(out)
