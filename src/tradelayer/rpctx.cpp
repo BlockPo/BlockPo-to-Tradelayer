@@ -1875,7 +1875,7 @@ UniValue tl_create_channel(const JSONRPCRequest& request)
             "1. first address            (string, required) the first address that commit into the channel\n"
             "2. second address           (string, required) the second address that commit into the channel\n"
             "3. channel address          (string, required) multisig address of channel\n"
-            "4. blocks          (string, required) blocks until channel expiration\n"
+            "4. blocks                   (string, required) blocks until channel expiration\n"
             "\nResult:\n"
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
 

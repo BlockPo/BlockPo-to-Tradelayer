@@ -4785,7 +4785,7 @@ int CMPTransaction::logicMath_Attestation()
 
     PrintToLog("%s(): kyc_id: %d\n",__func__,kyc_id);
 
-    t_tradelistdb->recordNewAttestation(txid, receiver, block, tx_idx, kyc_id);
+    t_tradelistdb->recordNewAttestation(txid, sender, receiver, block, tx_idx, kyc_id);
 
     return 0;
 }

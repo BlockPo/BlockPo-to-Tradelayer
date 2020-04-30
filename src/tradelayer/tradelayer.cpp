@@ -3885,11 +3885,11 @@ void CMPTradeList::recordNewIdRegister(const uint256& txid, const std::string& a
 }
 
 
-void CMPTradeList::recordNewAttestation(const uint256& txid, const std::string& address, int blockNum, int blockIndex, int kyc_id)
+void CMPTradeList::recordNewAttestation(const uint256& txid, const std::string& sender, const std::string& receiver, int blockNum, int blockIndex, int kyc_id)
 {
 
   if (!pdb) return;
-  std::string strValue = strprintf("%s:%d:%d:%d:%s:%s", address, blockNum, blockIndex, kyc_id, txid.ToString(), TYPE_ATTESTATION);
+  std::string strValue = strprintf("%s:%s:%d:%d:%d:%s:%s", sender, receiver, blockNum, blockIndex, kyc_id, txid.ToString(), TYPE_ATTESTATION);
   PrintToLog("%s(): strValue: %s\n", __func__, strValue);
   const string key = to_string(blockNum) + "+" + txid.ToString(); // order by blockNum
   Status status = pdb->Put(writeoptions, key, strValue);
@@ -4118,31 +4118,31 @@ bool CMPTradeList::checkAttestationReg(const std::string& address, int& kyc_id)
         // ensure correct amount of tokens in value string
         boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
 
-        if (vstr.size() != 6)
+        if (vstr.size() != 7)
             continue;
 
-        std::string type = vstr[5];
+        std::string type = vstr[6];
 
-        PrintToLog("%s: type: %s\n", __func__, type);
+        if(msc_debug_check_attestation_reg) PrintToLog("%s(): type: %s\n", __func__, type);
 
         if(type != TYPE_ATTESTATION)
             continue;
 
-        std::string regAddr = vstr[0];
+        std::string regAddr = vstr[1];
 
-        PrintToLog("%s: regAddr: %s, address: %s\n", __func__,regAddr,address);
+        if(msc_debug_check_attestation_reg) PrintToLog("%s(): regAddr: %s, address: %s\n", __func__,regAddr,address);
 
 
         if(address != regAddr) continue;
 
         status = true;
 
-        PrintToLog("%s: Address Found! %s\n", __func__,address);
+        if(msc_debug_check_attestation_reg) PrintToLog("%s(): Address Found! %s\n", __func__,address);
 
         // returning the kyc_id
-        kyc_id = boost::lexical_cast<int>(vstr[3]);
+        kyc_id = boost::lexical_cast<int>(vstr[4]);
 
-        PrintToLog("%s: kyc_id %s\n", __func__,kyc_id);
+        if(msc_debug_check_attestation_reg) PrintToLog("%s(): kyc_id %s\n", __func__,kyc_id);
 
         break;
 
@@ -4210,6 +4210,57 @@ bool CMPTradeList::kycLoop(UniValue& response)
 
         response.push_back(propertyObj);
         status = true;
+    }
+
+    // clean up
+    delete it;
+
+    return status;
+}
+
+bool CMPTradeList::attLoop(UniValue& response)
+{
+    bool status = false;
+    std::string strKey, newKey, newValue;
+    std::vector<std::string> vstr;
+
+    if (!pdb) return status;
+
+    leveldb::Iterator* it = NewIterator(); // Allocation proccess
+
+    for(it->SeekToLast(); it->Valid(); it->Prev())
+    {
+        // search key to see if this is a matching trade
+        strKey = it->key().ToString();
+
+        // PrintToLog("key of this match: %s ****************************\n",strKey);
+        std::string strValue = it->value().ToString();
+
+        // ensure correct amount of tokens in value string
+        boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
+
+        if (vstr.size() != 7)
+            continue;
+
+        std::string type = vstr[6];
+
+        if(type != TYPE_ATTESTATION)
+            continue;
+
+        std::string sender = vstr[0];
+        std::string receiver = vstr[1];
+        int blockNum = boost::lexical_cast<int>(vstr[2]);
+        int kyc_id = boost::lexical_cast<int>(vstr[4]);
+
+        UniValue propertyObj(UniValue::VOBJ);
+
+        propertyObj.push_back(Pair("att sender", sender));
+        propertyObj.push_back(Pair("att receiver", receiver));
+        propertyObj.push_back(Pair("kyc_id", (uint64_t) kyc_id));
+        propertyObj.push_back(Pair("block", (uint64_t) blockNum));
+
+        response.push_back(propertyObj);
+
     }
 
     // clean up

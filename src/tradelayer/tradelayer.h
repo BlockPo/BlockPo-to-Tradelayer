@@ -394,7 +394,7 @@ class CMPTradeList : public CDBBase
   void recordNewTransfer(const uint256& txid, const std::string& sender, const std::string& receiver, uint32_t propertyId, uint64_t amount, int blockNum, int blockIndex);
   void recordNewInstContTrade(const uint256& txid, const std::string& firstAddr, const std::string& secondAddr, uint32_t property, uint64_t amount_forsale, uint64_t price ,int blockNum, int blockIndex);
   void recordNewIdRegister(const uint256& txid, const std::string& address, const std::string& name, const std::string& website, int blockNum, int blockIndex);
-  void recordNewAttestation(const uint256& txid, const std::string& address, int blockNum, int blockIndex, int kyc_id);
+  void recordNewAttestation(const uint256& txid, const std::string& sender, const std::string& receiver, int blockNum, int blockIndex, int kyc_id);
   bool getAllCommits(const std::string& senderAddress, UniValue& tradeArray);
   bool getAllWithdrawals(const std::string& senderAddress, UniValue& tradeArray);
   bool getChannelInfo(const std::string& channelAddress, UniValue& tradeArray);
@@ -409,6 +409,7 @@ class CMPTradeList : public CDBBase
   bool checkAttestationReg(const std::string& address, int& kyc_id);
   bool kycPropertyMatch(uint32_t propertyId, int kyc_id);
   bool kycLoop(UniValue& response);
+  bool attLoop(UniValue& response);
 
   int deleteAboveBlock(int blockNum);
   bool exists(const uint256 &txid);

@@ -93,6 +93,7 @@ bool msc_debug_update_last_block                = 0;
 bool msc_debug_send_reward                      = 0;
 bool msc_debug_contract_cancel                  = 1;
 bool msc_debug_fee_cache_buy                    = 0;
+bool msc_debug_check_attestation_reg            = 0;
 /**
  * LogPrintf() has been broken a couple of times now
  * by well-meaning people adding mutexes in the most straightforward way.

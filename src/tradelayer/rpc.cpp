@@ -105,6 +105,18 @@ void PropertyToJSON(const CMPSPInfo::Entry& sProperty, UniValue& property_obj)
     property_obj.push_back(Pair("divisible", sProperty.isDivisible()));
     property_obj.push_back(Pair("category", sProperty.category));
     property_obj.push_back(Pair("subcategory", sProperty.subcategory));
+
+    std::vector<int64_t> iKyc = sProperty.kyc;
+    std::string sKyc;
+
+    for(std::vector<int64_t>::iterator it = iKyc.begin(); it != iKyc.end(); ++it)
+    {
+        sKyc += to_string((*it));
+        if (it != std::prev(iKyc.end())) sKyc += ",";
+    }
+
+    if(!iKyc.empty()) property_obj.push_back(Pair("kyc_ids allowed","["+sKyc+"]"));
+
 }
 
 void ContractToJSON(const CMPSPInfo::Entry& sProperty, UniValue& property_obj)
@@ -2939,6 +2951,35 @@ UniValue tl_listkyc(const JSONRPCRequest& request)
   return response;
 }
 
+UniValue tl_list_attestation(const JSONRPCRequest& request)
+{
+  if (false) //TODO: put fHelp boolean
+    throw runtime_error(
+			"tl_listattestation\n"
+			"\nLists all kyc attestations.\n"
+			"\nResult:\n"
+			"[                                (array of JSON objects)\n"
+			"  {\n"
+			"    \"propertyid\" : n,                (number) the identifier of the tokens\n"
+			"    \"name\" : \"name\",                 (string) the name of the tokens\n"
+			"    \"data\" : \"information\",          (string) additional information or a description\n"
+			"    \"url\" : \"uri\",                   (string) an URI, for example pointing to a website\n"
+			"    \"divisible\" : true|false         (boolean) whether the tokens are divisible\n"
+			"  },\n"
+			"  ...\n"
+			"]\n"
+			"\nExamples:\n"
+			+ HelpExampleCli("tl_list_attestation", "")
+			+ HelpExampleRpc("tl_list_attestation", "")
+			);
+
+  UniValue response(UniValue::VARR);
+
+  t_tradelistdb->attLoop(response);
+
+  return response;
+}
+
 //tl_getmax_peggedcurrency
 //input : JSONRPCREquest which contains: 1)address of creator, 2) contract ID which is collaterilized in ALL
 //return: UniValue which is JSON object that is max pegged currency you can create
@@ -3050,7 +3091,8 @@ static const CRPCCommand commands[] =
   { "trade layer (data retieval)" , "tl_listkyc",                   &tl_listkyc,                    {} },
   { "trade layer (data retieval)" , "tl_getoraclecache",            &tl_getoraclecache,             {} },
   { "trade layer (data retieval)",  "tl_getmax_peggedcurrency",     &tl_getmax_peggedcurrency,      {} },
-  { "trade layer (data retieval)",  "tl_getunvested",               &tl_getunvested,                {} }
+  { "trade layer (data retieval)",  "tl_getunvested",               &tl_getunvested,                {} },
+  { "trade layer (data retieval)",  "tl_list_attestation",          &tl_list_attestation,           {} }
 };
 
 void RegisterTLDataRetrievalRPCCommands(CRPCTable &tableRPC)
