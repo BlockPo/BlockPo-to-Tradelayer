@@ -630,13 +630,13 @@ UniValue tl_get_channelreserve(const JSONRPCRequest& request)
     if (request.params.size() != 2)
         throw runtime_error(
             "tl_getchannelreserve \"address\" propertyid\n"
-            "\nReturns the token reserve account for a given channel address and property.\n"
+            "\nReturns the token reserve account for a given channel address.\n"
             "\nArguments:\n"
             "1. channel address      (string, required) the address\n"
             "2. propertyid           (number, required) the contract identifier\n"
             "\nResult:\n"
             "{\n"
-            "  \"channel address\" : \"n.nnnnnnnn\",   (string) the available balance of the address\n"
+            "  \"channel reserve\" : \"n.nnnnnnnn\",   (string) the available balance of the address\n"
             "}\n"
             "\nExamples:\n"
             + HelpExampleCli("tl_get_channelreserve", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" 1")

@@ -34,7 +34,7 @@ class ChannelsBasicsTest (BitcoinTestFramework):
         self.nodes[0].generate(200)
 
         ################################################################################
-        # Checking RPC tl_sendtrade (in the first 200 blocks of the chain) #
+        # Checking all tl rpcs related with tradechannels (in the first 200 blocks of the chain) #
         ################################################################################
 
         url = urllib.parse.urlparse(self.nodes[0].url)
@@ -54,6 +54,22 @@ class ChannelsBasicsTest (BitcoinTestFramework):
         self.log.info("Creating addresses")
         addresses = tradelayer_createAddresses(accounts, conn, headers)
 
+        self.log.info("Creating multisig address")
+        params = str([2, [addresses[0], addresses[1]]]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "addmultisigaddress",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        multisig = out['result']['address']
+        self.log.info("multisig:"+multisig)
+        self.log.info("address0:"+addresses[0])
+        self.log.info("address1:"+addresses[1])
+
+        self.log.info("Checking multisig")
+        params = str([multisig]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "validateaddress",params)
+        # self.log.info(out)
+        assert_equal(out['result']['embedded']['script'],'multisig')
+
 
         self.log.info("Funding addresses with LTC")
         amount = 1.1
@@ -66,7 +82,7 @@ class ChannelsBasicsTest (BitcoinTestFramework):
 
         self.log.info("Creating new tokens  (lihki)")
         array = [0]
-        params = str([addresses[1],2,0,"lihki","","","20000000000",array]).replace("'",'"')
+        params = str([addresses[0],2,0,"lihki","","","20000000000",array]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_sendissuancefixed",params)
         assert_equal(out['error'], None)
         # self.log.info(out)
@@ -86,7 +102,7 @@ class ChannelsBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         # self.log.info(out)
         assert_equal(out['result']['propertyid'],4)
-        assert_equal(out['result']['issuer'],addresses[1])
+        assert_equal(out['result']['issuer'],addresses[0])
         assert_equal(out['result']['name'],'lihki')
         assert_equal(out['result']['data'],'')
         assert_equal(out['result']['url'],'')
@@ -94,28 +110,29 @@ class ChannelsBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['totaltokens'],'20000000000.00000000')
 
 
-        self.log.info("Creating trade channel") #NOTE: we have to use a multisig in addresses[0]
-        params = str([addresses[1], addresses[2], addresses[0], 1000]).replace("'",'"')
+        self.log.info("Creating trade channel")
+        params = str([addresses[0], addresses[1], multisig, 1000]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_create_channel",params)
-        assert_equal(out['error'], None)
         # self.log.info(out)
+        assert_equal(out['error'], None)
 
         self.nodes[0].generate(1)
 
 
-        self.log.info("Checking the trade channel") #NOTE: we have to use a multisig in addresses[0]
-        params = str([addresses[0]]).replace("'",'"')
+        self.log.info("Checking the trade channel")
+        params = str([multisig]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_getchannel_info",params)
+        # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['multisig address'], addresses[0])
-        assert_equal(out['result']['first address'], addresses[1])
-        assert_equal(out['result']['second address'], addresses[2])
+        assert_equal(out['result']['multisig address'], multisig)
+        assert_equal(out['result']['first address'], addresses[0])
+        assert_equal(out['result']['second address'], addresses[1])
         assert_equal(out['result']['expiry block'],1204)
         assert_equal(out['result']['status'], 'active')
 
 
         self.log.info("Commiting to trade channel") #NOTE: we have to use a multisig in addresses[0]
-        params = str([addresses[1],addresses[0], 4, '1000']).replace("'",'"')
+        params = str([addresses[0], multisig, 4, '1000']).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_commit_tochannel",params)
         assert_equal(out['error'], None)
         # self.log.info(out)
@@ -124,13 +141,80 @@ class ChannelsBasicsTest (BitcoinTestFramework):
 
 
         self.log.info("Checking the commit")
-        params = str([addresses[1]]).replace("'",'"')
+        params = str([addresses[0]]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_check_commits",params)
+        # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result'][0]['sender'], addresses[1])
+        assert_equal(out['result'][0]['sender'], addresses[0])
         assert_equal(out['result'][0]['propertyId'], '4')
         assert_equal(out['result'][0]['amount'], '1000.00000000')
         assert_equal(out['result'][0]['block'],205)
+
+        self.log.info("Checking reserve in channel")
+        params = str([multisig, 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_get_channelreserve",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['channel reserve'], '1000.00000000')
+
+        self.log.info("Commiting to trade channel again") #NOTE: we have to use a multisig in addresses[0]
+        params = str([addresses[0], multisig, 4, '875']).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_commit_tochannel",params)
+        assert_equal(out['error'], None)
+        # self.log.info(out)
+
+        self.nodes[0].generate(1)
+
+        self.log.info("Checking the commit")
+        params = str([addresses[0]]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_check_commits",params)
+        self.log.info(out)
+        assert_equal(out['error'], None)
+
+        if out['result'][0]['block'] == 205:
+            i = 0
+        else:
+            i = 1
+
+        assert_equal(out['result'][i]['sender'], addresses[0])
+        assert_equal(out['result'][i]['propertyId'], '4')
+        assert_equal(out['result'][i]['amount'], '1000.00000000')
+        assert_equal(out['result'][i+1]['sender'], addresses[0])
+        assert_equal(out['result'][i+1]['propertyId'], '4')
+        assert_equal(out['result'][i+1]['amount'], '875.00000000')
+        assert_equal(out['result'][i+1]['block'],206)
+
+        self.log.info("Checking reserve in channel")
+        params = str([multisig, 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_get_channelreserve",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['channel reserve'], '1875.00000000')
+
+        self.log.info("Withdrawal from channel ") #NOTE: we have to use a multisig in addresses[0]
+        params = str([addresses[0], multisig, 4, '700']).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_withdrawal_fromchannel",params)
+        assert_equal(out['error'], None)
+        self.log.info(out)
+
+        self.nodes[0].generate(1)
+
+        self.log.info("Checking reserve in channel")
+        params = str([multisig, 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_get_channelreserve",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['channel reserve'], '1875.00000000')
+
+        self.log.info("mining 7 blocks")
+        self.nodes[0].generate(7)
+
+        self.log.info("Checking reserve in channel")
+        params = str([multisig, 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_get_channelreserve",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['channel reserve'], '1175.00000000')
 
 
         conn.close()

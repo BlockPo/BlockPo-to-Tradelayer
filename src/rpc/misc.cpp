@@ -32,7 +32,6 @@
 #endif
 
 #include <univalue.h>
-
 #ifdef ENABLE_WALLET
 class DescribeAddressVisitor : public boost::static_visitor<UniValue>
 {
@@ -219,6 +218,7 @@ UniValue validateaddress(const JSONRPCRequest& request)
         isminetype mine = pwallet ? IsMine(*pwallet, dest) : ISMINE_NO;
         ret.push_back(Pair("ismine", bool(mine & ISMINE_SPENDABLE)));
         ret.push_back(Pair("iswatchonly", bool(mine & ISMINE_WATCH_ONLY)));
+
         UniValue detail = boost::apply_visitor(DescribeAddressVisitor(pwallet), dest);
         ret.pushKVs(detail);
         if (pwallet && pwallet->mapAddressBook.count(dest)) {

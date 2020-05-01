@@ -1822,7 +1822,7 @@ UniValue tl_withdrawal_fromchannel(const JSONRPCRequest& request)
             "\nwithdrawal from the channel.\n"
 
             "\nArguments:\n"
-            "1. sender                 (string, required) the sender address that commit into the channel\n"
+            "1. sender                 (string, required) the address that claims for withdrawal from channel\n"
             "2. channel address        (string, required) multisig address of channel\n"
             "3. propertyId             (number, required) the propertyId of token commited into the channel\n"
             "4. amount                 (number, required) amount to withdrawal from channel\n"

@@ -12,6 +12,7 @@
 #include "pubkey.h"
 #include "rpc/protocol.h"
 #include "rpc/server.h"
+#include "rpc/util.h"
 #include "script/script.h"
 #include "uint256.h"
 
@@ -390,24 +391,4 @@ std::string ParseHash(const UniValue& value)
 {
      uint256 result = ParseHashV(value, "txid");
      return result.ToString();
-}
-
-std::string ParseMultisig(const UniValue& value)
-{
-    CTxDestination dest = DecodeDestination(value.get_str());
-    if (!IsValidDestination(dest)) {
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid address");
-    }
-
-    txnouttype which_type;
-    std::vector<std::vector<unsigned char> > vSolutions;
-
-    CScript scriptPubKey = GetScriptForDestination(dest);
-    SafeSolver(scriptPubKey, which_type, vSolutions);
-
-   if (which_type != TX_MULTISIG) {
-       throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Address is not multisig");
-   }
-
-   return EncodeDestination(dest);
 }
