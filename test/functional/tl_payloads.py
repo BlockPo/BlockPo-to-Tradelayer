@@ -315,10 +315,19 @@ class PayloadsBasicsTest (BitcoinTestFramework):
 
 
         self.log.info("Testing tl_createpayload_update_id_registration")
+        params = str(['Oracle 1']).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_createpayload_update_id_registration")
         # self.log.info(out)
         assert_equal(out['error'], None)
         assert_equal(out['result'], '0074')
+
+        self.log.info("Testing tl_createpayload_attestation")
+        # sha-1 hash (input: blockpo)
+        params = str([' 2507f85b9992c0d518f56c8e1a7cd43e1282c898']).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_createpayload_attestation",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result'], '0076203235303766383562393939326330643531386635366338653161376364343365313238326338393800')
 
 
         self.stop_nodes()
