@@ -455,10 +455,10 @@ UniValue tl_createpayload_createcontract(const JSONRPCRequest& request)
   uint32_t num = ParsePropertyId(request.params[0]);
   uint32_t den = ParsePropertyId(request.params[1]);
   std::string name = ParseText(request.params[2]);
-  uint32_t blocks_until_expiration = ParseNewValues(request.params[3]);
-  uint32_t notional_size = ParseNewValues(request.params[4]);
-  uint32_t collateral_currency = ParseNewValues(request.params[5]);
-  uint32_t margin_requirement = ParseAmount(request.params[6], true);
+  uint32_t blocks_until_expiration = request.params[3].get_int();
+  uint32_t notional_size = ParseAmount32t(request.params[4]);
+  uint32_t collateral_currency = request.params[5].get_int();
+  uint32_t margin_requirement = ParseAmount32t(request.params[6]);
   uint8_t inverse = ParseBinary(request.params[7]);
   std::vector<int> numbers = ParseArray(request.params[8]);
 
@@ -477,7 +477,7 @@ UniValue tl_createpayload_tradecontract(const JSONRPCRequest& request)
 			"\nPayload to place a trade offer on the distributed Futures Contracts exchange.\n"
 
 			"\nArguments:\n"
-		  "1. propertyidforsale    (number, required) the identifier of the contract to list for trade\n"
+		  "1. name                 (number, required) the name of the contract to list for trade\n"
 			"2. amountforsale        (number, required) the amount of contracts to trade\n"
 			"3. effective price      (number, required) limit price desired in exchange\n"
 			"4. trading action       (number, required) 1 to BUY contracts, 2 to SELL contracts \n"
@@ -510,7 +510,7 @@ UniValue tl_createpayload_cancelallcontractsbyaddress(const JSONRPCRequest& requ
 			"\nPayload to cancel all offers on a given Futures Contract .\n"
 
 			"\nArguments:\n"
-			"1. contractId           (number, required) the Id of Future Contract \n"
+			"1. name                 (string, required) the Name of Future Contract \n"
 			"\nResult:\n"
 			"\"payload\"             (string) the hex-encoded payload\n"
 
@@ -782,9 +782,8 @@ UniValue tl_createpayload_sendvesting(const JSONRPCRequest& request)
 			+ HelpExampleRpc("tl_createpayload_sendvesting", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\", \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\", 1, \"100.0\"")
 			);
 
-  // obtain parameters & info
-  int64_t amount = ParseAmount(request.params[0], true);
-  PrintToLog("amount = %d\n", amount);
+    // obtain parameters & info
+    int64_t amount = ParseAmount(request.params[0], true);
 
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_SendVestingTokens(amount);
@@ -825,13 +824,6 @@ UniValue tl_createpayload_instant_trade(const JSONRPCRequest& request)
   uint32_t propertyDesired = ParsePropertyId(request.params[3]);
   int64_t amountDesired = ParseAmount(request.params[4],true);
 
-
-  PrintToLog("propertyid = %d\n", propertyId);
-  PrintToLog("amount = %d\n", amount);
-  PrintToLog("blockheight_expiry = %d\n", blockheight_expiry);
-  PrintToLog("propertyDesired = %d\n", propertyDesired);
-  PrintToLog("amountDesired = %d\n", amountDesired);
-
   // create a payload for the transaction
   std::vector<unsigned char> payload = CreatePayload_Instant_Trade(propertyId, amount, blockheight_expiry, propertyDesired, amountDesired);
 
@@ -871,12 +863,6 @@ UniValue tl_createpayload_contract_instant_trade(const JSONRPCRequest& request)
   uint8_t trading_action = ParseContractDexAction(request.params[4]);
   uint64_t leverage = ParseLeverage(request.params[5]);
 
-
-  PrintToLog("propertyid = %d\n", contractId);
-  PrintToLog("amount = %d\n", amount);
-  PrintToLog("blockheight_expiry = %d\n", blockheight_expiry);
-  PrintToLog("price= %d\n", price);
-
   // create a payload for the transaction
   std::vector<unsigned char> payload = CreatePayload_Contract_Instant_Trade(contractId, amount, blockheight_expiry, price, trading_action, leverage);
 
@@ -910,10 +896,6 @@ UniValue tl_createpayload_pnl_update(const JSONRPCRequest& request)
   int64_t amount = ParseAmount(request.params[1], true);
   uint32_t blockheight_expiry = request.params[2].get_int();
 
-  PrintToLog("propertyid = %d\n", propertyId);
-  PrintToLog("amount = %d\n", amount);
-  PrintToLog("blockheight_expiry = %d\n", blockheight_expiry);
-
   // create a payload for the transaction
   std::vector<unsigned char> payload = CreatePayload_PNL_Update(propertyId, amount, blockheight_expiry);
 
@@ -946,10 +928,6 @@ UniValue tl_createpayload_transfer(const JSONRPCRequest& request)
   // obtain parameters & info
   uint32_t propertyId = ParsePropertyId(request.params[0]);
   int64_t amount = ParseAmount(request.params[1], true);
-
-
-  PrintToLog("propertyid = %d\n", propertyId);
-  PrintToLog("amount = %d\n", amount);
 
   // create a payload for the transaction
   std::vector<unsigned char> payload = CreatePayload_Transfer(propertyId, amount);
