@@ -764,22 +764,22 @@ UniValue tl_createpayload_dexaccept(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_sendvesting(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 1)
-    throw runtime_error(
-			"tl_createpayload_sendvesting \"fromaddress\" \"toaddress\" propertyid \"amount\" ( \"referenceamount\" )\n"
+    if (request.params.size() != 1)
+        throw runtime_error(
+			         "tl_createpayload_sendvesting \"fromaddress\" \"toaddress\" propertyid \"amount\" ( \"referenceamount\" )\n"
 
-			"\nCreate and broadcast a simple send transaction.\n"
+			          "\nCreate and broadcast a simple send transaction.\n"
 
-			"\nArguments:\n"
-			"1. amount               (string, required) the amount of vesting tokens to send\n"
+			          "\nArguments:\n"
+			          "1. amount               (string, required) the amount of vesting tokens to send\n"
 
-			"\nResult:\n"
-			"\"hash\"                  (string) the hex-encoded transaction hash\n"
+			          "\nResult:\n"
+			          "\"hash\"                  (string) the hex-encoded transaction hash\n"
 
-			"\nExamples:\n"
-			+ HelpExampleCli("tl_createpayload_sendvesting", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\" \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\" 1 \"100.0\"")
-			+ HelpExampleRpc("tl_createpayload_sendvesting", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\", \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\", 1, \"100.0\"")
-			);
+			          "\nExamples:\n"
+			          + HelpExampleCli("tl_createpayload_sendvesting", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\" \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\" 1 \"100.0\"")
+			          + HelpExampleRpc("tl_createpayload_sendvesting", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\", \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\", 1, \"100.0\"")
+			  );
 
     // obtain parameters & info
     int64_t amount = ParseAmount(request.params[0], true);
@@ -1154,6 +1154,36 @@ UniValue tl_createpayload_update_id_registration(const JSONRPCRequest& request)
     return HexStr(payload.begin(), payload.end());
 }
 
+UniValue tl_createpayload_attestation(const JSONRPCRequest& request)
+{
+    if (request.params.size() > 1)
+        throw runtime_error(
+            "tl_createpayload_update_id_registration \n"
+
+            "\nPayload to update the address on id registration.\n"
+
+            "\nArguments:\n"
+            "1. string hash            (string, optional) the hash\n"
+
+            "\nResult:\n"
+            "\"hash\"                  (string) the hex-encoded transaction hash\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("tl_createpayload_update_id_registration", "\"\" , \"\"")
+            + HelpExampleRpc("tl_createpayload_update_id_registration", "\"\",  \"\"")
+        );
+
+
+    std::string hash;
+    (request.params.size() == 1) ? hash = ParseText(request.params[0]) : "";
+
+    PrintToLog("%s(): request.params.size(): %d\n",__func__,request.params.size());
+    // create a payload for the transaction
+    std::vector<unsigned char> payload = CreatePayload_Attestation(hash);
+
+    return HexStr(payload.begin(), payload.end());
+}
+
 static const CRPCCommand commands[] =
   { //  category                         name                                             actor (function)                               okSafeMode
     //  -------------------------------- -----------------------------------------       ----------------------------------------        ----------
@@ -1193,6 +1223,7 @@ static const CRPCCommand commands[] =
     { "trade layer (payload creation)", "tl_createpayload_closeoracle",                   &tl_createpayload_closeoracle,                     {}   },
     { "trade layer (payload creation)", "tl_createpayload_new_id_registration",           &tl_createpayload_new_id_registration,             {}   },
     { "trade layer (payload creation)", "tl_createpayload_update_id_registration",        &tl_createpayload_update_id_registration,          {}   },
+    { "trade layer (payload creation)", "tl_createpayload_attestation",                   &tl_createpayload_attestation,                     {}   }
 
   };
 
