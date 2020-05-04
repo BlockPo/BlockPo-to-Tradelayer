@@ -299,7 +299,7 @@ UniValue tl_sendissuancecrowdsale(const JSONRPCRequest& request)
 
 UniValue tl_sendissuancefixed(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 7)
+    if (request.params.size() != 8)
         throw runtime_error(
             "tl_sendissuancefixed \"fromaddress\" type previousid \"name\" \"url\" \"data\" \"amount\"\n"
 
@@ -313,7 +313,11 @@ UniValue tl_sendissuancefixed(const JSONRPCRequest& request)
             "5. url                  (string, required) an URL for further information about the new tokens (can be \"\")\n"
             "6. data                 (string, required) a description for the new tokens (can be \"\")\n"
             "7. amount               (string, required) the number of tokens to create\n"
-
+            "8. kyc options          (array, optional) A json with the kyc allowed.\n"
+            "    [\n"
+            "      2,3,5         (number) kyc id\n"
+            "      ,...\n"
+            "    ]\n"
             "\nResult:\n"
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
 
@@ -326,18 +330,18 @@ UniValue tl_sendissuancefixed(const JSONRPCRequest& request)
     std::string fromAddress = ParseAddress(request.params[0]);
     uint16_t type = ParsePropertyType(request.params[1]);
     uint32_t previousId = ParsePreviousPropertyId(request.params[2]);
-    RequireNotContract(previousId);
     std::string name = ParseText(request.params[3]);
     std::string url = ParseText(request.params[4]);
     std::string data = ParseText(request.params[5]);
     int64_t amount = ParseAmount(request.params[6], type);
+    std::vector<int> numbers = ParseArray(request.params[7]);
 
     // perform checks
     RequirePropertyName(name);
     RequireSaneName(name);
 
     // create a payload for the transaction
-    std::vector<unsigned char> payload = CreatePayload_IssuanceFixed(type, previousId, name, url, data, amount);
+    std::vector<unsigned char> payload = CreatePayload_IssuanceFixed(type, previousId, name, url, data, amount, numbers);
 
     // request the wallet build the transaction (and if needed commit it)
     uint256 txid;
@@ -979,7 +983,7 @@ UniValue tl_tradecontract(const JSONRPCRequest& request)
 
 			"\nArguments:\n"
 			"1. fromaddress          (string, required) the address to trade with\n"
-			"2. propertyidforsale    (number, required) the identifier of the contract to list for trade\n"
+			"2. name of contract     (string, required) the identifier of the contract to list for trade\n"
 			"3. amountforsale        (number, required) the amount of contracts to trade\n"
 			"4. effective price      (number, required) limit price desired in exchange\n"
 			"5. trading action       (number, required) 1 to BUY contracts, 2 to SELL contracts \n"
@@ -1410,7 +1414,9 @@ UniValue tl_senddexoffer(const JSONRPCRequest& request)
 
   std::vector<unsigned char> payload;
 
-  RequireNoOtherDExOffer(fromAddress, propertyIdForSale);
+
+  if (action == 1) RequireNoOtherDExOffer(fromAddress, propertyIdForSale);
+
 
   if (option == 1)
   {
@@ -1816,7 +1822,7 @@ UniValue tl_withdrawal_fromchannel(const JSONRPCRequest& request)
             "\nwithdrawal from the channel.\n"
 
             "\nArguments:\n"
-            "1. sender                 (string, required) the sender address that commit into the channel\n"
+            "1. sender                 (string, required) the address that claims for withdrawal from channel\n"
             "2. channel address        (string, required) multisig address of channel\n"
             "3. propertyId             (number, required) the propertyId of token commited into the channel\n"
             "4. amount                 (number, required) amount to withdrawal from channel\n"
@@ -1869,7 +1875,7 @@ UniValue tl_create_channel(const JSONRPCRequest& request)
             "1. first address            (string, required) the first address that commit into the channel\n"
             "2. second address           (string, required) the second address that commit into the channel\n"
             "3. channel address          (string, required) multisig address of channel\n"
-            "4. blocks          (string, required) blocks until channel expiration\n"
+            "4. blocks                   (string, required) blocks until channel expiration\n"
             "\nResult:\n"
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
 
@@ -2085,59 +2091,91 @@ UniValue tl_attestation(const JSONRPCRequest& request)
     }
 }
 
-// UniValue tl_setexodus(const JSONRPCRequest& request)
-// {
-//     if (request.params.size() < 1 )
-//         throw runtime_error(
-//             "tl_setexodus \"fromaddress\" \"toaddress\" propertyid \"amount\" ( override )\n"
-//
-//             "\nsetting exodus address.\n"
-//
-//             "\nArguments:\n"
-//             "1. fromaddress          (string, required) the address to send from\n"
-//             "\nResult:\n"
-//             "\"hash\"                  (string) the hex-encoded transaction hash\n"
-//
-//             "\nExamples:\n"
-//             + HelpExampleCli("tl_senddexaccept", "\"35URq1NN3xL6GeRKUP6vzaQVcxoJiiJKd8\" \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\" 1 \"15.0\"")
-//             + HelpExampleRpc("tl_senddexaccept", "\"35URq1NN3xL6GeRKUP6vzaQVcxoJiiJKd8\", \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\", 1, \"15.0\"")
-//         );
-//
-//     // obtain parameters & info
-//     setExoduss = ParseAddress(request.params[0]);
-//     PrintToLog("setExoduss : %s",setExoduss);
-//     uint256 txid;
-//
-//     return txid.GetHex();
-//
-// }
-
-UniValue tl_setadmin(const JSONRPCRequest& request)
+UniValue tl_sendcancelalltrades(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 1 )
+    if (request.params.size() != 1)
         throw runtime_error(
-            "tl_setadmin \"fromaddress\" \"toaddress\" propertyid \"amount\" ( override )\n"
+            "tl_sendcancelalltrades \"\"\" \n"
 
-            "\nsetting exodus address.\n"
-
+            "\nCancel all metaDEx orders.\n"
             "\nArguments:\n"
-            "1. fromaddress          (string, required) the address to send from\n"
-            "\nResult:\n"
-            "\"hash\"                  (string) the hex-encoded transaction hash\n"
+            "1. address       (string, required) authority address\n"
 
             "\nExamples:\n"
-            + HelpExampleCli("tl_senddexaccept", "\"35URq1NN3xL6GeRKUP6vzaQVcxoJiiJKd8\" \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\" 1 \"15.0\"")
-            + HelpExampleRpc("tl_senddexaccept", "\"35URq1NN3xL6GeRKUP6vzaQVcxoJiiJKd8\", \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\", 1, \"15.0\"")
+            + HelpExampleCli("tl_sendcancelalltrades", "\"\"")
+            + HelpExampleRpc("tl_sendcancelalltrades", "\"\"")
         );
 
     // obtain parameters & info
-    // admin_addrs = ParseAddress(request.params[0]);
-    // PrintToLog("setadmin : %s",admin_addrs);
+    std::string fromAddress = ParseAddress(request.params[0]);
+
+    // PrintToLog("%s(): hash: %s\n",__func__,hash);
+
+    // create a payload for the transaction
+    std::vector<unsigned char> payload = CreatePayload_MetaDExCancelAll();
+
+    // request the wallet build the transaction (and if needed commit it)
     uint256 txid;
+    std::string rawHex;
+    int result = WalletTxBuilder(fromAddress, "", 0, payload, txid, rawHex, autoCommit);
 
-    return txid.GetHex();
-
+    // check error and return the txid (or raw hex depending on autocommit)
+    if (result != 0) {
+        throw JSONRPCError(result, error_str(result));
+    } else {
+        if (!autoCommit) {
+            return rawHex;
+        } else {
+            return txid.GetHex();
+        }
+    }
 }
+
+
+
+  UniValue tl_sendcancel_contract_order(const JSONRPCRequest& request)
+  {
+      if (request.params.size() != 2)
+          throw runtime_error(
+              "tl_sendcancel_contract_order \"address \"hash\" \n"
+
+              "\nCancel specific contract order .\n"
+              "\nArguments:\n"
+              "1. address       (string, required) sender address\n"
+              "1. hash          (string, required) transaction hash\n"
+
+              "\nExamples:\n"
+              + HelpExampleCli("tl_sendcancel_contract_order", "\"\"")
+              + HelpExampleRpc("tl_sendcancel_contract_order", "\"\"")
+          );
+
+      // obtain parameters & info
+      std::string fromAddress = ParseAddress(request.params[0]);
+      std::string stxS = ParseHash(request.params[1]);
+
+
+      // PrintToLog("%s(): hash: %s\n",__func__,hash);
+
+      // create a payload for the transaction
+      std::vector<unsigned char> payload = CreatePayload_ContractDExCancel(stxS);
+
+      // request the wallet build the transaction (and if needed commit it)
+      uint256 txid;
+      std::string rawHex;
+      int result = WalletTxBuilder(fromAddress, "", 0, payload, txid, rawHex, autoCommit);
+
+      // check error and return the txid (or raw hex depending on autocommit)
+      if (result != 0) {
+          throw JSONRPCError(result, error_str(result));
+      } else {
+          if (!autoCommit) {
+              return rawHex;
+          } else {
+              return txid.GetHex();
+          }
+      }
+  }
+
 
 static const CRPCCommand commands[] =
 { //  category                             name                            actor (function)               okSafeMode
@@ -2159,15 +2197,18 @@ static const CRPCCommand commands[] =
     { "hidden",                             "tl_sendalert",                    &tl_sendalert,                       {} },
     { "trade layer (transaction creation)", "tl_createcontract",               &tl_createcontract,                  {} },
     { "trade layer (transaction creation)", "tl_tradecontract",                &tl_tradecontract,                   {} },
+    { "trade layer (transaction creation)", "tl_sendcancel_contract_order",    &tl_sendcancel_contract_order,       {} },
     { "trade layer (transaction creation)", "tl_cancelallcontractsbyaddress",  &tl_cancelallcontractsbyaddress,     {} },
-    { "trade layer (transaction creation)", "tl_cancelorderbyblock"         ,  &tl_cancelorderbyblock,              {} },
+    { "trade layer (transaction creation)", "tl_cancelorderbyblock",           &tl_cancelorderbyblock,              {} },
     { "trade layer (transaction creation)", "tl_sendissuance_pegged",          &tl_sendissuance_pegged,             {} },
     { "trade layer (transaction creation)", "tl_send_pegged",                  &tl_send_pegged,                     {} },
     { "trade layer (transaction creation)", "tl_redemption_pegged",            &tl_redemption_pegged,               {} },
     { "trade layer (transaction creation)", "tl_closeposition",                &tl_closeposition,                   {} },
     { "trade layer (transaction creation)", "tl_sendtrade",                    &tl_sendtrade,                       {} },
+    { "trade layer (transaction creation)", "tl_sendcancelalltrades",          &tl_sendcancelalltrades,             {} },
     { "trade layer (transaction creation)", "tl_senddexoffer",                 &tl_senddexoffer,                    {} },
     { "trade layer (transaction creation)", "tl_senddexaccept",                &tl_senddexaccept,                   {} },
+    { "trade layer (transaction cration)",  "tl_send_dex_payment",             &tl_send_dex_payment,                {} },
     { "trade layer (transaction creation)", "tl_create_oraclecontract",        &tl_create_oraclecontract,           {} },
     { "trade layer (transaction creation)", "tl_setoracle",                    &tl_setoracle,                       {} },
     { "trade layer (transaction creation)", "tl_change_oracleref",             &tl_change_oracleref,                {} },
@@ -2176,11 +2217,8 @@ static const CRPCCommand commands[] =
     { "trade layer (transaction creation)", "tl_commit_tochannel",             &tl_commit_tochannel,                {} },
     { "trade layer (transaction creation)", "tl_withdrawal_fromchannel",       &tl_withdrawal_fromchannel,          {} },
     { "trade layer (transaction creation)", "tl_create_channel",               &tl_create_channel,                  {} },
-    // { "trade layer (transaction creation)", "tl_setexodus",                    &tl_setexodus,                       {} },
     { "trade layer (transaction cration)",  "tl_new_id_registration",          &tl_new_id_registration,             {} },
     { "trade layer (transaction cration)",  "tl_update_id_registration",       &tl_update_id_registration,          {} },
-    { "trade layer (transaction cration)",  "tl_send_dex_payment",             &tl_send_dex_payment,                {} },
-    { "trade layer (transaction creation)", "tl_setadmin",                     &tl_setadmin,                        {} },
     { "trade layer (transaction creation)", "tl_attestation",                  &tl_attestation,                     {} }
 #endif
 };

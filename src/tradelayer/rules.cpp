@@ -87,7 +87,10 @@ std::vector<TransactionRestriction> CConsensusParams::GetRestrictions() const
         { MSC_TYPE_DEX_PAYMENT,                           MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
         { MSC_TYPE_CREATE_ORACLE_CONTRACT,                MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
         { MSC_TYPE_SEND_VESTING,                          MP_TX_PKT_V0,      true,             MSC_VESTING_BLOCK},
-        { MSC_TYPE_ATTESTATION,                           MP_TX_PKT_V0,      true,             MSC_TYPE_ATTESTATION_BLOCK}
+        { MSC_TYPE_METADEX_CANCEL_ALL,                    MP_TX_PKT_V0,      true,             MSC_METADEX_CANCEL_ALL_BLOCK},
+        { MSC_TYPE_ATTESTATION,                           MP_TX_PKT_V0,      true,             MSC_ATTESTATION_BLOCK},
+        { MSC_TYPE_CONTRACTDEX_CANCEL,                    MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK}
+
 
     };
 
@@ -148,8 +151,10 @@ CMainConsensusParams::CMainConsensusParams()
     MSC_SEND_ALL_BLOCK = 9999999;
     MSC_CONTRACTDEX_BLOCK = 999999;
     MSC_VESTING_BLOCK = 0;
+    ONE_YEAR = 210240;
     MSC_NODE_REWARD = 777;
-    MSC_TYPE_ATTESTATION_BLOCK = 0;
+    MSC_ATTESTATION_BLOCK = 0;
+    MSC_METADEX_CANCEL_ALL_BLOCK = 99999999;
 }
 
 /**
@@ -167,14 +172,16 @@ CMainConsensusParams::CMainConsensusParams()
      NULLDATA_BLOCK = 0;
      // Transaction restrictions:
      MSC_ALERT_BLOCK = 0;
-     MSC_SEND_BLOCK = 1400765;
-     MSC_SP_BLOCK = 1400765;
-     MSC_MANUALSP_BLOCK = 1400765;
-     MSC_SEND_ALL_BLOCK = 1400765;
-     MSC_CONTRACTDEX_BLOCK = 1400765;
-     MSC_VESTING_BLOCK = 1400765;
-     MSC_NODE_REWARD = 1400765;
-     MSC_TYPE_ATTESTATION_BLOCK = 1400765;
+     MSC_SEND_BLOCK = 1450000;
+     MSC_SP_BLOCK = 1450000;
+     MSC_MANUALSP_BLOCK = 1450000;
+     MSC_SEND_ALL_BLOCK = 1450000;
+     MSC_CONTRACTDEX_BLOCK = 1450000;
+     MSC_VESTING_BLOCK = 1450000;
+     ONE_YEAR = 210240;
+     MSC_NODE_REWARD = 1450000;
+     MSC_ATTESTATION_BLOCK = 1450000;
+     MSC_METADEX_CANCEL_ALL_BLOCK = 1450000;
  }
 
 
@@ -199,8 +206,10 @@ CRegTestConsensusParams::CRegTestConsensusParams()
     MSC_SEND_ALL_BLOCK = 0;
     MSC_CONTRACTDEX_BLOCK = 0;
     MSC_VESTING_BLOCK = 100;  // just for regtest
+    ONE_YEAR = 500;
     MSC_NODE_REWARD = 777;
-    MSC_TYPE_ATTESTATION_BLOCK = 0;
+    MSC_ATTESTATION_BLOCK = 0;
+    MSC_METADEX_CANCEL_ALL_BLOCK = 0;
 }
 
 //! Consensus parameters for mainnet
@@ -425,20 +434,18 @@ bool IsTransactionTypeAllowed(int txBlock, uint16_t txType, uint16_t version)
     for (std::vector<TransactionRestriction>::const_iterator it = vTxRestrictions.begin(); it != vTxRestrictions.end(); ++it)
     {
         const TransactionRestriction& entry = *it;
-        PrintToLog("%s(): entry.txType: %d; txType: %d\n",__func__,entry.txType, txType);
 
         if (entry.txType != txType || entry.txVersion != version) {
-            PrintToLog("%s(): first continue\n",__func__);
+            // PrintToLog("%s(): first continue\n",__func__);
             continue;
         }
 
         if (txBlock >= entry.activationBlock) {
-            PrintToLog("%s(): txBlock: %d; entry.activationBlock: %d\n",__func__,txBlock, entry.activationBlock);
+            // PrintToLog("%s(): txBlock: %d; entry.activationBlock: %d\n",__func__,txBlock, entry.activationBlock);
             return true;
         }
     }
 
-    PrintToLog("%s(): return false\n",__func__);
     return false;
 }
 

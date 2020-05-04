@@ -6,6 +6,8 @@ class CTransaction;
 struct CMutableTransaction;
 struct PrevTxsEntry;
 
+#include "rpc/server.h"
+
 #include <univalue.h>
 
 #include <stdint.h>
@@ -37,7 +39,6 @@ CTransaction ParseTransaction(const UniValue& value);
 CMutableTransaction ParseMutableTransaction(const UniValue& value);
 CPubKey ParsePubKeyOrAddress(const UniValue& value);
 uint32_t ParseOutputIndex(const UniValue& value);
-
 /** Parses previous transaction outputs. */
 std::vector<PrevTxsEntry> ParsePrevTxs(const UniValue& value);
 int64_t ParseAmountContract(const UniValue& value, int propertyType);
@@ -54,5 +55,6 @@ uint8_t ParseDExAction(const UniValue& value);
 uint64_t ParsePercent(const UniValue& value, bool isDivisible);
 uint8_t ParseBinary(const UniValue& value);
 std::vector<int> ParseArray(const UniValue& value);
+std::string ParseHash(const UniValue& value);
 
 #endif // TRADELAYER_RPCVALUES_H

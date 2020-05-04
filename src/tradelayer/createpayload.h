@@ -12,7 +12,7 @@ std::vector<unsigned char> CreatePayload_DExSell(uint32_t propertyId, uint64_t a
 std::vector<unsigned char> CreatePayload_DEx(uint32_t propertyId, uint64_t amount, uint64_t price, uint8_t timeLimit, uint64_t minFee, uint8_t subAction);
 std::vector<unsigned char> CreatePayload_DExAccept(uint32_t propertyId, uint64_t amount);
 std::vector<unsigned char> CreatePayload_IssuanceFixed(uint16_t propertyType, uint32_t previousPropertyId, std::string name, std::string url,
-                                                       std::string data, uint64_t amount);
+                                                       std::string data, uint64_t amount, std::vector<int> kycVec);
 std::vector<unsigned char> CreatePayload_IssuanceVariable(uint16_t propertyType, uint32_t previousPropertyId,
                                                           std::string name, std::string url, std::string data, uint32_t propertyIdDesired,
                                                           uint64_t amountPerUnit, uint64_t deadline, uint8_t earlyBonus, uint8_t issuerPercentage);
@@ -38,7 +38,7 @@ std::vector<unsigned char> CreatePayload_SendPeggedCurrency(uint32_t propertyId,
 std::vector<unsigned char> CreatePayload_MetaDExTrade(uint32_t propertyIdForSale, uint64_t amountForSale, uint32_t propertyIdDesired, uint64_t amountDesired);
 std::vector<unsigned char> CreatePayload_MetaDExCancelPrice(uint32_t propertyIdForSale, uint64_t amountForSale, uint32_t propertyIdDesired, uint64_t amountDesired);
 std::vector<unsigned char> CreatePayload_MetaDExCancelPair(uint32_t propertyIdForSale, uint32_t propertyIdDesired);
-std::vector<unsigned char> CreatePayload_MetaDExCancelEcosystem();
+std::vector<unsigned char> CreatePayload_MetaDExCancelAll();
 std::vector<unsigned char> CreatePayload_CreateOracleContract(std::string name, uint32_t blocks_until_expiration, uint32_t notional_size, uint32_t collateral_currency, uint32_t margin_requirement, uint8_t inverse, std::vector<int> kycVec);
 std::vector<unsigned char> CreatePayload_Change_OracleRef(uint32_t contractId);
 std::vector<unsigned char> CreatePayload_OracleBackup(uint32_t contractId);
@@ -56,4 +56,6 @@ std::vector<unsigned char> CreatePayload_Update_Id_Registration();
 std::vector<unsigned char> CreatePayload_DEx_Payment();
 std::vector<unsigned char> CreatePayload_TradeLayerAlert(uint16_t alertType, uint32_t expiryValue, const std::string& alertMessage);
 std::vector<unsigned char> CreatePayload_Attestation(std::string hash);
+std::vector<unsigned char> CreatePayload_MetaDExCancelEcosystem();
+std::vector<unsigned char> CreatePayload_ContractDExCancel(std::string hash);
 #endif // TRADELAYER_CREATEPAYLOAD_H

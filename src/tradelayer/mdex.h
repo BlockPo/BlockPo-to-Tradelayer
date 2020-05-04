@@ -318,6 +318,8 @@ namespace mastercore
   // Locates a trade in the MetaDEx maps via txid and returns the trade object
   const CMPMetaDEx* MetaDEx_RetrieveTrade(const uint256& txid);
   const CMPContractDex* ContractDex_RetrieveTrade(const uint256&);
+
+  int ContractDex_CANCEL(const std::string& sender_addr, const std::string& hash);
 }
 
 #endif // TRADELAYER_MDEX_H

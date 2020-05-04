@@ -185,6 +185,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_createpayload_createcontract", 7, "arg7"},
     { "tl_createpayload_createcontract", 8, "arg8"},
 
+
     { "tl_createpayload_tradecontract", 2, "arg2"},
     { "tl_createpayload_tradecontract", 3, "arg3"},
     { "tl_createpayload_cancelallcontractsbyaddress", 0, "arg0"},
@@ -242,6 +243,10 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_sendissuancemanaged", 1, "arg1" },
     { "tl_sendissuancemanaged", 2, "arg2" },
     { "tl_sendissuancemanaged", 6, "arg6" },
+
+    { "tl_sendissuancefixed", 1, "arg1" },
+    { "tl_sendissuancefixed", 2, "arg2" },
+    { "tl_sendissuancefixed", 7, "arg7" },
 
     { "tl_createcontract", 1, "arg1"},
     { "tl_createcontract", 2, "arg2"},

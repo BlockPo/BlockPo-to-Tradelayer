@@ -116,6 +116,8 @@ std::string mastercore::strTransactionType(uint16_t txType)
     case MSC_TYPE_DEX_PAYMENT: return "DEx payment";
     case MSC_TYPE_ATTESTATION: return "KYC Attestation";
     case MSC_TYPE_CREATE_ORACLE_CONTRACT : return "Create Oracle Contract";
+    case MSC_TYPE_METADEX_CANCEL_ALL : return "Cancel all MetaDEx orders";
+    case MSC_TYPE_CONTRACTDEX_CANCEL : return "Cancel specific contract order";
     default: return "* unknown type *";
     }
 }
@@ -208,6 +210,9 @@ bool CMPTransaction::interpret_Transaction()
     case MSC_TYPE_METADEX_TRADE:
       return interpret_MetaDExTrade();
 
+    case MSC_TYPE_METADEX_CANCEL_ALL:
+        return interpret_MetaDExCancelAll();
+
     case MSC_TYPE_CREATE_CONTRACT:
       return interpret_CreateContractDex();
 
@@ -219,6 +224,9 @@ bool CMPTransaction::interpret_Transaction()
 
     case MSC_TYPE_CONTRACTDEX_CANCEL_ECOSYSTEM:
       return interpret_ContractDexCancelEcosystem();
+
+    case MSC_TYPE_CONTRACTDEX_CANCEL:
+      return interpret_ContractDExCancel();
 
     case MSC_TYPE_PEGGED_CURRENCY:
       return interpret_CreatePeggedCurrency();
@@ -284,7 +292,7 @@ bool CMPTransaction::interpret_Transaction()
         return interpret_DEx_Payment();
 
     case MSC_TYPE_ATTESTATION:
-            return interpret_Attestation();
+        return interpret_Attestation();
 
     }
 
@@ -375,7 +383,7 @@ bool CMPTransaction::interpret_SendAll()
     std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
 
     if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly) {
-        PrintToLog("\t       inside interpret: %d\n");
+        PrintToLog("\t       inside interpret \n");
     }
 
     return true;
@@ -414,6 +422,17 @@ bool CMPTransaction::interpret_CreatePropertyFixed()
     i = i + strlen(name) + strlen(url) + strlen(data) + 3; // data sizes + 3 null terminators
 
     std::vector<uint8_t> vecAmountBytes = GetNextVarIntBytes(i);
+
+    do
+    {
+        std::vector<uint8_t> vecKyc = GetNextVarIntBytes(i);
+        if (!vecKyc.empty())
+        {
+            int64_t num = static_cast<int64_t>(DecompressInteger(vecKyc));
+            kyc_Ids.push_back(num);
+        }
+
+    } while(i < pkt_size);
 
     if (!vecPropTypeBytes.empty()) {
         prop_type = DecompressInteger(vecPropTypeBytes);
@@ -1126,6 +1145,51 @@ bool CMPTransaction::interpret_ContractDexTrade()
      }
 
      return true;
+}
+
+/** Tx 31 */
+bool CMPTransaction::interpret_ContractDExCancel()
+{
+    int i = 0;
+    std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+
+    const char* p = i + (char*) &pkt;
+    std::vector<std::string> spstr;
+    for (int j = 0; j < 1; j++)
+    {
+        spstr.push_back(std::string(p));
+        p += spstr.back().size() + 1;
+    }
+
+    if (isOverrun(p))
+    {
+        PrintToLog("%s(): rejected: malformed string value(s)\n", __func__);
+        return false;
+    }
+
+    int j = 0;
+    memcpy(hash, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(hash)-1)); j++;
+    i = i + strlen(hash) + 1;
+
+
+    if (!vecTypeBytes.empty()) {
+        type = DecompressInteger(vecTypeBytes);
+    } else return false;
+
+    if (!vecVersionBytes.empty()) {
+        version = DecompressInteger(vecVersionBytes);
+    } else return false;
+
+
+    if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+    {
+        PrintToLog("\t version: %d\n", version);
+        PrintToLog("\t messageType: %d\n",type);
+        PrintToLog("\t hash: %d\n", hash);
+    }
+
+    return true;
 }
 
 /** Tx 32 */
@@ -2011,6 +2075,21 @@ bool CMPTransaction::interpret_Attestation()
   return true;
 }
 
+/** Tx 26 */
+bool CMPTransaction::interpret_MetaDExCancelAll()
+{
+    int i = 0;
+
+    std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+
+    if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly) {
+        PrintToLog("\t       inside interpret: %d\n");
+    }
+
+    return true;
+}
+
 // ---------------------- CORE LOGIC -------------------------
 
 /**
@@ -2092,6 +2171,9 @@ int CMPTransaction::interpretPacket()
         case MSC_TYPE_CONTRACTDEX_CLOSE_POSITION:
             return logicMath_ContractDexClosePosition();
 
+        case MSC_TYPE_CONTRACTDEX_CANCEL:
+            return logicMath_ContractDExCancel();
+
         case MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK:
             return logicMath_ContractDex_Cancel_Orders_By_Block();
 
@@ -2106,6 +2188,9 @@ int CMPTransaction::interpretPacket()
 
         case MSC_TYPE_METADEX_TRADE:
             return logicMath_MetaDExTrade();
+
+        case MSC_TYPE_METADEX_CANCEL_ALL:
+            return logicMath_MetaDExCancelAll();
 
         case MSC_TYPE_CREATE_ORACLE_CONTRACT:
             return logicMath_CreateOracleContract();
@@ -2315,7 +2400,7 @@ int CMPTransaction::logicMath_SimpleSend()
 int CMPTransaction::logicMath_SendVestingTokens()
 {
 
-  if (!SanityChecks(receiver, block)) {
+  if (!sanityChecks(sender, block)) {
       PrintToLog("%s(): rejected: sanity checks for send vesting tokens failed\n",
               __func__);
       return (PKT_ERROR_SEND -21);
@@ -2341,6 +2426,8 @@ int CMPTransaction::logicMath_SendVestingTokens()
               FormatMP(TL_PROPERTY_VESTING, nValue));
       return (PKT_ERROR_SEND -25);
   }
+
+  PrintToLog("%s(): nValue:  %d\n",__func__, nValue);
 
   assert(update_tally_map(sender, TL_PROPERTY_VESTING, -nValue, BALANCE));
   assert(update_tally_map(receiver, TL_PROPERTY_VESTING, nValue, BALANCE));
@@ -2456,6 +2543,13 @@ int CMPTransaction::logicMath_CreatePropertyFixed()
     newSP.fixed = true;
     newSP.creation_block = blockHash;
     newSP.update_block = newSP.creation_block;
+    newSP.init_block = block;
+
+    for(std::vector<int64_t>::iterator it = kyc_Ids.begin(); it != kyc_Ids.end(); ++it)
+    {
+        const int64_t aux = *it;
+        newSP.kyc.push_back(aux);
+    }
 
     const uint32_t propertyId = _my_sps->putSP(newSP);
     assert(propertyId > 0);
@@ -2712,7 +2806,7 @@ int CMPTransaction::logicMath_GrantTokens()
   	       type,
   	       version,
   	       property,
-                block);
+           block);
     return (PKT_ERROR_TOKENS -22);
   }
 
@@ -3080,7 +3174,7 @@ int CMPTransaction::logicMath_MetaDExTrade()
   }
 
   if(!t_tradelistdb->kycPropertyMatch(desired_property,kyc_id)){
-    PrintToLog("%s(): rejected: property %d can't be traded with this kyc\n", __func__,desired_property);
+    PrintToLog("%s(): rejected: property %d can't be traded with this kyc\n", __func__, desired_property);
     return (PKT_ERROR_METADEX -34);
   }
 
@@ -3174,9 +3268,6 @@ int CMPTransaction::logicMath_CreateContractDex()
       newSP.kyc.push_back(aux);
   }
 
-  PrintToLog("%s(): init block inside create contract: %d\n", __func__, newSP.init_block);
-
-
   const uint32_t propertyId = _my_sps->putSP(newSP);
   assert(propertyId > 0);
 
@@ -3207,7 +3298,7 @@ int CMPTransaction::logicMath_ContractDexTrade()
     return (PKT_ERROR_KYC -20);
   }
 
-  PrintToLog("%s(): fco_init_block: %d; fco_blocks_until_expiration: %d; actual block: %d\n",__func__,pfuture->fco_init_block,pfuture->fco_blocks_until_expiration,block);
+  PrintToLog("%s(): fco_init_block: %d; fco_blocks_until_expiration: %d; actual block: %d\n",__func__, pfuture->fco_init_block, pfuture->fco_blocks_until_expiration, block);
 
   if ((block > pfuture->fco_init_block + static_cast<int>(pfuture->fco_blocks_until_expiration) || block < pfuture->fco_init_block) && expiration > 0)
   {
@@ -3283,15 +3374,31 @@ int CMPTransaction::logicMath_ContractDexTrade()
   return rc;
 }
 
+/** Tx 31 */
+int CMPTransaction::logicMath_ContractDExCancel()
+{
+  if (!IsTransactionTypeAllowed(block, type, version)) {
+    PrintToLog("%s(): rejected: type %d or version %d not permitted at block %d\n",
+	       __func__,
+	       type,
+	       version,
+	       block);
+    return (PKT_ERROR_CONTRACTDEX -20);
+  }
+
+  int rc = ContractDex_CANCEL(sender,hash);
+
+  return rc;
+}
+
 /** Tx 32 */
 int CMPTransaction::logicMath_ContractDexCancelEcosystem()
 {
   if (!IsTransactionTypeAllowed(block, type, version)) {
-    PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+    PrintToLog("%s(): rejected: type %d or version %d not permitted at block %d\n",
 	       __func__,
 	       type,
-	       version,
-	       property,
+         version,
 	       block);
     return (PKT_ERROR_CONTRACTDEX -20);
   }
@@ -3320,7 +3427,6 @@ int CMPTransaction::logicMath_ContractDexClosePosition()
         if (!_my_sps->getSP(contractId, sp)) {
             PrintToLog(" %s() : Property identifier %d does not exist\n",
                 __func__,
-                sender,
                 contractId);
             return (PKT_ERROR_SEND -24);
         }
@@ -3389,7 +3495,6 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
 
     if ('\0' == name[0]) {
         PrintToLog("%s(): rejected: property name must not be empty\n", __func__);
-        PrintToLog("rejected: property name must not be empty\n");
         return (PKT_ERROR_SP -37);
     }
 
@@ -3410,22 +3515,18 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
         if (!_my_sps->getSP(contractId, sp)) {
             PrintToLog(" %s() : Property identifier %d does not exist\n",
                 __func__,
-                sender,
                 contractId);
             return (PKT_ERROR_SEND -24);
 
         if(!sp.isContract()) {
             PrintToLog(" %s() : Property related is not a contract\n",
-                __func__,
-                sender,
-                contractId);
+                __func__);
             return (PKT_ERROR_CONTRACTDEX -21);
         }
 
         } else if (sp.collateral_currency != propertyId) {
             PrintToLog(" %s() : Future contract has not this collateral currency %d\n",
             __func__,
-            sender,
             propertyId);
             return (PKT_ERROR_CONTRACTDEX -22);
 
@@ -3442,7 +3543,7 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
     contracts = ConvertTo64(Contracts * ConvertTo256(factorE));
 
     if (nBalance < amountNeeded || position < contracts) {
-        PrintToLog("rejected:Sender has not required short position on this contract or balance enough\n");
+        PrintToLog("%s(): rejected:Sender has not required short position on this contract or balance enough\n",__func__);
         return (PKT_ERROR_CONTRACTDEX -23);
     }
 
@@ -3576,7 +3677,6 @@ int CMPTransaction::logicMath_RedemptionPegged()
                 version,
                 propertyId,
                 block);
-        PrintToLog("rejected: type %d or version %d not permitted for property %d at block %d\n");
         return (PKT_ERROR_SEND -22);
     }
 
@@ -3609,7 +3709,6 @@ int CMPTransaction::logicMath_RedemptionPegged()
         if (!_my_sps->getSP(contractId, sp)) {
             PrintToLog(" %s() : Property identifier %d does not exist\n",
             __func__,
-            sender,
             contractId);
            return (PKT_ERROR_SEND -24);
         }
@@ -3680,6 +3779,7 @@ int CMPTransaction::logicMath_TradeOffer()
       int rc = PKT_ERROR_TRADEOFFER;
 
     // figure out which Action this is based on amount for sale, version & etc.
+    // TODO: delete old version
     switch (version)
     {
         case MP_TX_PKT_V0:
@@ -3687,7 +3787,6 @@ int CMPTransaction::logicMath_TradeOffer()
             if (0 != nValue) {
 
                 if (!DEx_offerExists(sender, propertyId)) {
-                    PrintToLog("%s():Dex offer doesn't exist\n");
                     rc = DEx_offerCreate(sender, propertyId, nValue, block, amountDesired, minFee, timeLimit, txid, &nNewValue);
                 } else {
                     rc = DEx_offerUpdate(sender, propertyId, nValue, block, amountDesired, minFee, timeLimit, txid, &nNewValue);
@@ -3707,7 +3806,6 @@ int CMPTransaction::logicMath_TradeOffer()
 
         case MP_TX_PKT_V1:
         {
-            PrintToLog("%s():Case MP_TX_PKT_V1\n");
             if (DEx_offerExists(sender, propertyId)) {
                 if (CANCEL != subAction && UPDATE != subAction) {
                     PrintToLog("%s(): rejected: sender %s has an active sell offer for property: %d\n", __func__, sender, property);
@@ -3725,7 +3823,6 @@ int CMPTransaction::logicMath_TradeOffer()
 
             switch (subAction) {
                 case NEW:
-                    PrintToLog("%s():Subaction: NEW\n");
                     rc = DEx_offerCreate(sender, propertyId, nValue, block, amountDesired, minFee, timeLimit, txid, &nNewValue);
                     break;
 
@@ -3789,7 +3886,6 @@ int CMPTransaction::logicMath_DExBuy()
 	  if (0 != nValue) {
 
 	    if (!DEx_offerExists(sender, propertyId)) {
-	      PrintToLog("%s():Dex offer doesn't exist\n");
 	      rc = DEx_BuyOfferCreate(sender, propertyId, nValue, block, effective_price, minFee, timeLimit, txid, &nNewValue);
 	    } else {
 	      rc = DEx_offerUpdate(sender, propertyId, nValue, block, effective_price, minFee, timeLimit, txid, &nNewValue);
@@ -3809,7 +3905,6 @@ int CMPTransaction::logicMath_DExBuy()
 
         case MP_TX_PKT_V1:
         {
-            PrintToLog("%s():Case MP_TX_PKT_V1\n");
             if (DEx_offerExists(sender, propertyId)) {
                 if (CANCEL != subAction && UPDATE != subAction) {
                     PrintToLog("%s(): rejected: sender %s has an active sell offer for property: %d\n", __func__, sender, property);
@@ -3827,7 +3922,6 @@ int CMPTransaction::logicMath_DExBuy()
 
             switch (subAction) {
                 case NEW:
-                    PrintToLog("%s():Subaction: NEW\n");
                     rc = DEx_BuyOfferCreate(sender, propertyId, nValue, block, effective_price, minFee, timeLimit, txid, &nNewValue);
                     break;
 
@@ -3873,6 +3967,7 @@ int CMPTransaction::logicMath_AcceptOfferBTC()
 /** Tx 103 */
 int CMPTransaction::logicMath_CreateOracleContract()
 {
+
     uint256 blockHash;
     {
         LOCK(cs_main);
@@ -3889,9 +3984,10 @@ int CMPTransaction::logicMath_CreateOracleContract()
 
     if (sender == receiver)
     {
-        PrintToLog("%s(): ERROR: oracle and backup addresses can't be the same!\n", __func__, block);
+        PrintToLog("%s(): ERROR: oracle and backup addresses can't be the same!\n", __func__);
         return (PKT_ERROR_ORACLE -10);
     }
+
 
     if (!IsTransactionTypeAllowed(block, type, version)) {
       PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
@@ -3902,6 +3998,7 @@ int CMPTransaction::logicMath_CreateOracleContract()
           block);
       return (PKT_ERROR_SP -22);
     }
+
 
     if ('\0' == name[0])
     {
@@ -4050,18 +4147,6 @@ int CMPTransaction::logicMath_Set_Oracle()
        PrintToLog("%s(): element was not inserted !\n",__func__);
    else
        PrintToLog("%s(): element was INSERTED \n",__func__);
-    //
-    // std::map<uint32_t,std::map<int,oracledata>>::iterator it = oraclePrices.find(contractId);
-    //
-    //
-    // std::map<int,oracledata> m = it->second;
-    //
-    // std::map<int,oracledata>::iterator itt = m.find(block);
-    //
-    // oracledata Or = itt->second;
-    //
-    // PrintToLog("%s(): oracle data for contract: block: %d,high:%d, low:%d, close:%d\n",block, Or.high, Or.low, Or.close);
-
 
 
     assert(_my_sps->updateSP(contractId, sp));
@@ -4538,7 +4623,7 @@ int CMPTransaction::logicMath_Contract_Instant()
     {
          int initblock = sp.init_block ;
          int deadline = initblock + static_cast<int>(sp.blocks_until_expiration);
-         PrintToLog("\nTrade out of deadline!!: actual block: %d, deadline: %d\n",initblock,deadline);
+         PrintToLog("\nTrade out of deadline!!: actual block: %d, deadline: %d\n", initblock, deadline);
          return (PKT_ERROR_CHANNELS -16);
     }
 
@@ -4592,7 +4677,7 @@ int CMPTransaction::logicMath_Contract_Instant()
 
     t_tradelistdb->recordNewInstContTrade(txid, receiver, sender, propertyId, amount_commited, price, block, tx_idx);
 
-    if (msc_debug_contract_instant_trade)PrintToLog("%s: End of Logic Instant Contract Trade\n\n",__func__);
+    if (msc_debug_contract_instant_trade)PrintToLog("%s(): End of Logic Instant Contract Trade\n\n",__func__);
 
 
     return rc;
@@ -4700,9 +4785,26 @@ int CMPTransaction::logicMath_Attestation()
 
     PrintToLog("%s(): kyc_id: %d\n",__func__,kyc_id);
 
-    t_tradelistdb->recordNewAttestation(txid, receiver, block, tx_idx, kyc_id);
+    t_tradelistdb->recordNewAttestation(txid, sender, receiver, block, tx_idx, kyc_id);
 
     return 0;
+}
+
+/** Tx 26 */
+int CMPTransaction::logicMath_MetaDExCancelAll()
+{
+  if (!IsTransactionTypeAllowed(block, type, version)) {
+    PrintToLog("%s(): rejected: type %d or version %d not permitted at block %d\n",
+	       __func__,
+	       type,
+	       version,
+	       block);
+    return (PKT_ERROR_CONTRACTDEX -20);
+  }
+
+  int rc = MetaDEx_CANCEL_EVERYTHING(txid, block, sender);
+
+  return rc;
 }
 
 struct FutureContractObject *getFutureContractObject(std::string identifier)

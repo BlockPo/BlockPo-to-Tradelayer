@@ -99,8 +99,10 @@ enum TransactionType {
   MSC_TYPE_DEX_BUY_OFFER                       = 21,
   MSC_TYPE_ACCEPT_OFFER_BTC                    = 22,
   MSC_TYPE_METADEX_TRADE                       = 25,
+  MSC_TYPE_METADEX_CANCEL_ALL                  = 26,
   MSC_TYPE_CONTRACTDEX_TRADE                   = 29,
   MSC_TYPE_CONTRACTDEX_CANCEL_PRICE            = 30,
+  MSC_TYPE_CONTRACTDEX_CANCEL                  = 31,
   MSC_TYPE_CONTRACTDEX_CANCEL_ECOSYSTEM        = 32,
   MSC_TYPE_CONTRACTDEX_CLOSE_POSITION          = 33,
   MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK  = 34,
@@ -237,8 +239,6 @@ const int dayblocks = 576;
 const rational_t factor = rational_t(80,100);  // critical limit
 const rational_t factor2 = rational_t(20,100); // normal limits
 
-// define 1 year in blocks:
-#define ONE_YEAR 210240
 
 // define KYC id = 0 for self attestations
 #define KYC_0      0
@@ -394,7 +394,7 @@ class CMPTradeList : public CDBBase
   void recordNewTransfer(const uint256& txid, const std::string& sender, const std::string& receiver, uint32_t propertyId, uint64_t amount, int blockNum, int blockIndex);
   void recordNewInstContTrade(const uint256& txid, const std::string& firstAddr, const std::string& secondAddr, uint32_t property, uint64_t amount_forsale, uint64_t price ,int blockNum, int blockIndex);
   void recordNewIdRegister(const uint256& txid, const std::string& address, const std::string& name, const std::string& website, int blockNum, int blockIndex);
-  void recordNewAttestation(const uint256& txid, const std::string& address, int blockNum, int blockIndex, int kyc_id);
+  void recordNewAttestation(const uint256& txid, const std::string& sender, const std::string& receiver, int blockNum, int blockIndex, int kyc_id);
   bool getAllCommits(const std::string& senderAddress, UniValue& tradeArray);
   bool getAllWithdrawals(const std::string& senderAddress, UniValue& tradeArray);
   bool getChannelInfo(const std::string& channelAddress, UniValue& tradeArray);
@@ -409,6 +409,7 @@ class CMPTradeList : public CDBBase
   bool checkAttestationReg(const std::string& address, int& kyc_id);
   bool kycPropertyMatch(uint32_t propertyId, int kyc_id);
   bool kycLoop(UniValue& response);
+  bool attLoop(UniValue& response);
 
   int deleteAboveBlock(int blockNum);
   bool exists(const uint256 &txid);
@@ -562,7 +563,7 @@ namespace mastercore
   int64_t getOracleTwap(uint32_t contractId, int nBlocks);
 
   // check for vesting
-  bool SanityChecks(string receiver, int aBlock);
+  bool sanityChecks(string sender, int aBlock);
 
   // fee cache buying Alls in mDEx
   bool feeCacheBuy();

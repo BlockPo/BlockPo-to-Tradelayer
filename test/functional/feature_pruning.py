@@ -79,7 +79,7 @@ class PruneTest(BitcoinTestFramework):
             mine_large_block(self.nodes[0], self.utxo_cache_0)
 
         # Wait for blk00000.dat to be pruned
-        wait_until(lambda: not os.path.isfile(self.prunedir+"blk00000.dat"), timeout=30)
+        wait_until(lambda: not os.path.isfile(self.prunedir+"blk00000.dat"), timeout=60)
 
         self.log.info("Success")
         usage = calc_usage(self.prunedir)
@@ -114,7 +114,7 @@ class PruneTest(BitcoinTestFramework):
             # Create connections in the order so both nodes can see the reorg at the same time
             connect_nodes(self.nodes[1], 0)
             connect_nodes(self.nodes[2], 0)
-            sync_blocks(self.nodes[0:3])
+            sync_blocks(self.nodes[0:3], timeout=300)
 
         self.log.info("Usage can be over target because of high stale rate: %d" % calc_usage(self.prunedir))
 
@@ -155,7 +155,7 @@ class PruneTest(BitcoinTestFramework):
         self.log.info("Reconnect nodes")
         connect_nodes(self.nodes[0], 1)
         connect_nodes(self.nodes[2], 1)
-        sync_blocks(self.nodes[0:3], timeout=120)
+        sync_blocks(self.nodes[0:3], timeout=300)
 
         self.log.info("Verify height on node 2: %d" % self.nodes[2].getblockcount())
         self.log.info("Usage possibly still high bc of stale blocks in block files: %d" % calc_usage(self.prunedir))

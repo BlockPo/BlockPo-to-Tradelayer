@@ -105,6 +105,18 @@ void PropertyToJSON(const CMPSPInfo::Entry& sProperty, UniValue& property_obj)
     property_obj.push_back(Pair("divisible", sProperty.isDivisible()));
     property_obj.push_back(Pair("category", sProperty.category));
     property_obj.push_back(Pair("subcategory", sProperty.subcategory));
+
+    std::vector<int64_t> iKyc = sProperty.kyc;
+    std::string sKyc;
+
+    for(std::vector<int64_t>::iterator it = iKyc.begin(); it != iKyc.end(); ++it)
+    {
+        sKyc += to_string((*it));
+        if (it != std::prev(iKyc.end())) sKyc += ",";
+    }
+
+    if(!iKyc.empty()) property_obj.push_back(Pair("kyc_ids allowed","["+sKyc+"]"));
+
 }
 
 void ContractToJSON(const CMPSPInfo::Entry& sProperty, UniValue& property_obj)
@@ -173,6 +185,16 @@ void ReserveToJSON(const std::string& address, uint32_t property, UniValue& bala
     }
 }
 
+void UnvestedToJSON(const std::string& address, uint32_t property, UniValue& balance_obj, bool divisible)
+{
+    int64_t unvested = getMPbalance(address, property, UNVESTED);
+    if (divisible) {
+        balance_obj.push_back(Pair("unvested", FormatDivisibleMP(unvested)));
+    } else {
+        balance_obj.push_back(Pair("unvvested", FormatIndivisibleMP(unvested)));
+    }
+}
+
 void ChannelToJSON(const std::string& address, uint32_t property, UniValue& balance_obj, bool divisible)
 {
     int64_t margin = getMPbalance(address, property, CHANNEL_RESERVE);
@@ -210,7 +232,7 @@ void ContractDexObjectToJSON(const CMPContractDex& obj, UniValue& contractdex_ob
     // add data to JSON object
     contractdex_obj.push_back(Pair("address", obj.getAddr()));
     contractdex_obj.push_back(Pair("txid", obj.getHash().GetHex()));
-    contractdex_obj.push_back(Pair("propertyidforsale", (uint64_t) obj.getProperty()));
+    contractdex_obj.push_back(Pair("contractid", (uint64_t) obj.getProperty()));
     contractdex_obj.push_back(Pair("amountforsale", FormatMP(1,obj.getAmountForSale())));
     contractdex_obj.push_back(Pair("tradingaction", obj.getTradingAction()));
     contractdex_obj.push_back(Pair("effectiveprice",  FormatMP(1,obj.getEffectivePrice())));
@@ -543,6 +565,35 @@ UniValue tl_getbalance(const JSONRPCRequest& request)
     return balanceObj;
 }
 
+// display an unvested balance via RPC
+UniValue tl_getunvested(const JSONRPCRequest& request)
+{
+    if (request.params.size() != 1)
+        throw runtime_error(
+            "tl_getunvested \"address\" \n"
+            "\nReturns the token balance for unvested ALLs (via vesting tokens).\n"
+            "\nArguments:\n"
+            "1. address              (string, required) the address\n"
+            "\nResult:\n"
+            "{\n"
+            "  \"unvested\" : \"n.nnnnnnnn\",   (string) the unvested balance of ALLs in the address\n"
+            "}\n"
+            "\nExamples:\n"
+            + HelpExampleCli("tl_getunvested", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" ")
+            + HelpExampleRpc("tl_getunvested", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", ")
+        );
+
+    std::string address = ParseAddress(request.params[0]);
+
+    // RequireExistingProperty(propertyId);
+    // RequireNotContract(propertyId);
+
+    UniValue balanceObj(UniValue::VOBJ);
+    UnvestedToJSON(address, ALL, balanceObj, isPropertyDivisible(ALL));
+
+    return balanceObj;
+}
+
 UniValue tl_getreserve(const JSONRPCRequest& request)
 {
     if (request.params.size() != 2)
@@ -579,13 +630,13 @@ UniValue tl_get_channelreserve(const JSONRPCRequest& request)
     if (request.params.size() != 2)
         throw runtime_error(
             "tl_getchannelreserve \"address\" propertyid\n"
-            "\nReturns the token reserve account for a given channel address and property.\n"
+            "\nReturns the token reserve account for a given channel address.\n"
             "\nArguments:\n"
             "1. channel address      (string, required) the address\n"
             "2. propertyid           (number, required) the contract identifier\n"
             "\nResult:\n"
             "{\n"
-            "  \"channel address\" : \"n.nnnnnnnn\",   (string) the available balance of the address\n"
+            "  \"channel reserve\" : \"n.nnnnnnnn\",   (string) the available balance of the address\n"
             "}\n"
             "\nExamples:\n"
             + HelpExampleCli("tl_get_channelreserve", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" 1")
@@ -798,7 +849,7 @@ UniValue tl_getproperty(const JSONRPCRequest& request)
       response.push_back(Pair("margin requirement", FormatDivisibleShortMP(sp.margin_requirement)));
       response.push_back(Pair("blocks until expiration", std::to_string(sp.blocks_until_expiration)));
 
-      response.push_back(Pair("inverse quoted:", std::to_string(sp.inverse_quoted)));
+      response.push_back(Pair("inverse quoted", std::to_string(sp.inverse_quoted)));
 
       if (sp.denominator == TL_dUSD){
 	denominator = "Dollar";
@@ -819,7 +870,7 @@ UniValue tl_getproperty(const JSONRPCRequest& request)
       response.push_back(Pair("hight price", FormatDivisibleShortMP(sp.oracle_high)));
       response.push_back(Pair("low price", FormatDivisibleShortMP(sp.oracle_low)));
       response.push_back(Pair("last close price", FormatDivisibleShortMP(sp.oracle_close)));
-      response.push_back(Pair("inverse quoted:", std::to_string(sp.inverse_quoted)));
+      response.push_back(Pair("inverse quoted", std::to_string(sp.inverse_quoted)));
 
     } else if (sp.isPegged()) {
       response.push_back(Pair("contract associated",(uint64_t) sp.contract_associated));
@@ -1878,6 +1929,7 @@ UniValue tl_getorderbook(const JSONRPCRequest& request)
             + HelpExampleRpc("tl_getorderbook", "2")
 			    );
 
+
     bool filterDesired = (request.params.size() > 1);
     uint32_t propertyIdForSale = ParsePropertyId(request.params[0]);
     uint32_t propertyIdDesired = 0;
@@ -1920,7 +1972,7 @@ UniValue tl_getcontract_orderbook(const JSONRPCRequest& request)
 			"tl_getcontract_orderbook contractid tradingaction\n"
 			"\nList active offers on the distributed futures contracts exchange.\n"
 			"\nArguments:\n"
-			"1. contractid           (number, required) filter orders by contract identifier for sale\n"
+			"1. name of contract     (string, required) filter orders by contract identifier for sale\n"
 			"2. tradingaction        (number, required) filter orders by trading action desired (Buy = 1, Sell = 2)\n"
 			"\nResult:\n"
 			"[                                              (array of JSON objects)\n"
@@ -2123,13 +2175,21 @@ UniValue tl_getallprice(const JSONRPCRequest& request)
         );
 
     UniValue balanceObj(UniValue::VOBJ);
-    uint64_t num = static_cast<uint64_t>(globalNumPrice);
-    uint64_t den = static_cast<uint64_t>(globalDenPrice);
-    arith_uint256 price = (ConvertTo256(num) *ConvertTo256(factorE)/ (ConvertTo256(den)));
-    int64_t iPrice = ConvertTo64(price);
-    balanceObj.push_back(Pair("unitprice", FormatByType(static_cast<uint64_t>(iPrice),2)));
-    balanceObj.push_back(Pair("num", FormatByType(static_cast<uint64_t>(num*factorE),2)));
-    balanceObj.push_back(Pair("den", FormatByType(static_cast<uint64_t>(den*factorE),2)));
+
+    // get token Price
+    int64_t allPrice = 0;
+
+    auto it = market_priceMap.find(static_cast<uint32_t>(ALL));
+
+    if (it != market_priceMap.end())
+    {
+        std::map<uint32_t, int64_t> auxMap = it->second;
+        auto itt = auxMap.find(static_cast<uint32_t>(dUSD));
+        if (itt != auxMap.end())
+            allPrice = itt->second;
+    }
+
+    balanceObj.push_back(Pair("unitprice", FormatByType(static_cast<uint64_t>(allPrice),2)));
     return balanceObj;
 }
 
@@ -2562,8 +2622,8 @@ UniValue tl_check_kyc(const JSONRPCRequest& request)
 			"  ...\n"
 			"]\n"
 			"\nExamples:\n"
-			+ HelpExampleCli("tl_check_withdrawals", "address1")
-			+ HelpExampleRpc("tl_check_withdrawals", "address1")
+			+ HelpExampleCli("tl_check_kyc", "address1")
+			+ HelpExampleRpc("tl_check_kyc", "address1")
 			);
 
   // obtain property identifiers for pair & check valid parameters
@@ -2729,7 +2789,7 @@ UniValue tl_getvesting_supply(const JSONRPCRequest& request)
     UniValue balanceObj(UniValue::VOBJ);
 
     balanceObj.push_back(Pair("supply", FormatDivisibleMP(amount)));
-    balanceObj.push_back(Pair("blockheigh", FormatIndivisibleMP(GetHeight())));
+    balanceObj.push_back(Pair("blockheight", FormatIndivisibleMP(GetHeight())));
 
     return balanceObj;
 }
@@ -2743,7 +2803,7 @@ UniValue tl_getdexvolume(const JSONRPCRequest& request)
             "\nArguments:\n"
             "1. property                 (number, required) property \n"
             "2. first block              (number, required) older limit block\n"
-            "3. second block             (number, optional) newer limit block\n"
+            "3. second block             (number, required) newer limit block\n"
             "\nResult:\n"
             "{\n"
             "  \"supply\" : \"n.nnnnnnnn\",   (number) the LTC volume traded \n"
@@ -2761,6 +2821,9 @@ UniValue tl_getdexvolume(const JSONRPCRequest& request)
     if (fblock == 0 || sblock == 0)
         throw JSONRPCError(RPC_INTERNAL_ERROR, "Block must be greater than 0");
 
+    if (sblock < fblock)
+            throw JSONRPCError(RPC_INTERNAL_ERROR, "Second block must be greater than first");
+
     // geting data from map!
     int64_t amount = mastercore::LtcVolumen(propertyId, fblock, sblock);
 
@@ -2776,7 +2839,7 @@ UniValue tl_getmdexvolume(const JSONRPCRequest& request)
 {
     if (request.params.size() < 3)
         throw runtime_error(
-            "tl_getdexvolume \n"
+            "tl_getmdexvolume \n"
             "\nReturns the first token volume traded in sort amount of blocks.\n"
             "\nArguments:\n"
             "1. propertyA                 (number, required) first property index \n"
@@ -2796,13 +2859,16 @@ UniValue tl_getmdexvolume(const JSONRPCRequest& request)
     uint32_t fproperty = ParsePropertyId(request.params[0]);
     uint32_t sproperty = ParsePropertyId(request.params[1]);
     uint32_t fblock = request.params[2].get_int();
-    uint32_t sblock = request.params[3].get_int();
+    uint32_t sblock = ParsePropertyId(request.params[3].get_int());
 
     if (fblock == 0 || sblock == 0)
         throw JSONRPCError(RPC_INTERNAL_ERROR, "Block must be greater than 0");
 
-    if (fproperty <= sproperty )
-            throw JSONRPCError(RPC_INTERNAL_ERROR, "first property index must be the smaller");
+    if (sproperty < fproperty )
+        throw JSONRPCError(RPC_INTERNAL_ERROR, "First property index must be the smaller");
+
+    if (sblock < fblock)
+        throw JSONRPCError(RPC_INTERNAL_ERROR, "Second block must be greater than first");
 
     // geting data from map!
     int64_t amount = mastercore::MdexVolumen(fproperty, sproperty,fblock, sblock);
@@ -2885,6 +2951,35 @@ UniValue tl_listkyc(const JSONRPCRequest& request)
   return response;
 }
 
+UniValue tl_list_attestation(const JSONRPCRequest& request)
+{
+  if (false) //TODO: put fHelp boolean
+    throw runtime_error(
+			"tl_listattestation\n"
+			"\nLists all kyc attestations.\n"
+			"\nResult:\n"
+			"[                                (array of JSON objects)\n"
+			"  {\n"
+			"    \"propertyid\" : n,                (number) the identifier of the tokens\n"
+			"    \"name\" : \"name\",                 (string) the name of the tokens\n"
+			"    \"data\" : \"information\",          (string) additional information or a description\n"
+			"    \"url\" : \"uri\",                   (string) an URI, for example pointing to a website\n"
+			"    \"divisible\" : true|false         (boolean) whether the tokens are divisible\n"
+			"  },\n"
+			"  ...\n"
+			"]\n"
+			"\nExamples:\n"
+			+ HelpExampleCli("tl_list_attestation", "")
+			+ HelpExampleRpc("tl_list_attestation", "")
+			);
+
+  UniValue response(UniValue::VARR);
+
+  t_tradelistdb->attLoop(response);
+
+  return response;
+}
+
 //tl_getmax_peggedcurrency
 //input : JSONRPCREquest which contains: 1)address of creator, 2) contract ID which is collaterilized in ALL
 //return: UniValue which is JSON object that is max pegged currency you can create
@@ -2900,7 +2995,7 @@ UniValue tl_getmax_peggedcurrency(const JSONRPCRequest& request)
 			);
   std::string fromAddress = ParseAddress(request.params[0]);
   std::string name_traded = ParseText(request.params[1]);
-  
+
   struct FutureContractObject *pfuture = getFutureContractObject(name_traded);
   uint32_t contractId = pfuture->fco_propertyId;
   uint32_t collateral = pfuture->fco_collateral_currency;
@@ -2995,7 +3090,9 @@ static const CRPCCommand commands[] =
   { "trade layer (data retieval)" , "tl_getcurrencytotal",          &tl_getcurrencytotal,           {} },
   { "trade layer (data retieval)" , "tl_listkyc",                   &tl_listkyc,                    {} },
   { "trade layer (data retieval)" , "tl_getoraclecache",            &tl_getoraclecache,             {} },
-  { "trade layer (data retieval)",  "tl_getmax_peggedcurrency",     &tl_getmax_peggedcurrency,      {} }
+  { "trade layer (data retieval)",  "tl_getmax_peggedcurrency",     &tl_getmax_peggedcurrency,      {} },
+  { "trade layer (data retieval)",  "tl_getunvested",               &tl_getunvested,                {} },
+  { "trade layer (data retieval)",  "tl_list_attestation",          &tl_list_attestation,           {} }
 };
 
 void RegisterTLDataRetrievalRPCCommands(CRPCTable &tableRPC)

@@ -4,6 +4,7 @@
 #include "tradelayer/parse_string.h"
 #include "tradelayer/wallettxs.h"
 #include "tradelayer/log.h"
+#include "tradelayer/script.h"
 #include "tradelayer/sp.h"
 #include "base58.h"
 #include "core_io.h"
@@ -11,6 +12,7 @@
 #include "pubkey.h"
 #include "rpc/protocol.h"
 #include "rpc/server.h"
+#include "rpc/util.h"
 #include "script/script.h"
 #include "uint256.h"
 
@@ -19,7 +21,6 @@
 #include <boost/assign/list_of.hpp>
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string.hpp>
-
 #include <string>
 #include <vector>
 
@@ -87,7 +88,6 @@ uint8_t ParseEcosystem(const UniValue& value)
 uint8_t ParsePermission(const UniValue& value)
 {
     int64_t number = value.get_int64();
-    PrintToLog("%s: number: %d\n",__func__,number);
     if (number != 0 && number != 1) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid number (0 = false, 1 = true)");
     }
@@ -331,9 +331,9 @@ uint8_t ParseDExAction(const UniValue& value)
 uint8_t ParseDExPaymentWindow(const UniValue& value)
 {
   int64_t blocks = value.get_int64();
-  // if (blocks < 1 || 255 < blocks) {
-  //     throw JSONRPCError(RPC_TYPE_ERROR, "Payment window must be within 1-255 blocks");
-  // }
+  if (blocks < 1 || 255 < blocks) {
+      throw JSONRPCError(RPC_TYPE_ERROR, "Payment window must be within 1-255 blocks");
+  }
   return static_cast<uint8_t>(blocks);
 }
 
@@ -382,8 +382,13 @@ std::vector<int> ParseArray(const UniValue& value)
     {
             const UniValue& num = kycOptions[idx];
             numbers.push_back(num.get_int());
-            PrintToLog("%s(): num : %d \n",__func__, num.get_int());
     }
 
     return numbers;
+}
+
+std::string ParseHash(const UniValue& value)
+{
+     uint256 result = ParseHashV(value, "txid");
+     return result.ToString();
 }

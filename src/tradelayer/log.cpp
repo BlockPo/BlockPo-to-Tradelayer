@@ -42,7 +42,7 @@ bool msc_debug_persistence                      = 0;
 bool msc_debug_ui                               = 0;
 bool msc_debug_pending                          = 0;
 bool msc_debug_packets                          = 0;
-bool msc_debug_packets_readonly                 = 0;
+bool msc_debug_packets_readonly                 = 1;
 bool msc_debug_walletcache                      = 0;
 bool msc_debug_consensus_hash                   = 0;
 bool msc_debug_consensus_hash_every_block       = 0;
@@ -71,7 +71,7 @@ bool msc_debug_contract_cancel_inorder          = 0;
 bool msc_debug_add_orderbook_edge               = 0;
 bool msc_debug_close_position                   = 0;
 bool msc_debug_get_pair_market_price            = 0;
-bool msc_debug_dex                              = 0;
+bool msc_debug_dex                              = 1;
 bool msc_debug_contractdex_tx                   = 0;
 bool msc_debug_create_pegged                    = 0;
 bool msc_debug_accept_offerbtc                  = 0;
@@ -85,12 +85,15 @@ bool msc_create_channel                         = 0;
 bool msc_debug_new_id_registration              = 0;
 bool msc_debug_wallettxs                        = 0;
 bool msc_calling_settlement                     = 0;
-bool msc_debug_vesting                          = 0;
+bool msc_debug_vesting                          = 1;
 bool msc_debug_oracle_twap                      = 0;
 bool msc_debug_search_all                       = 0;
 bool msc_debug_add_contract_ltc_vol             = 0;
 bool msc_debug_update_last_block                = 0;
 bool msc_debug_send_reward                      = 0;
+bool msc_debug_contract_cancel                  = 1;
+bool msc_debug_fee_cache_buy                    = 0;
+bool msc_debug_check_attestation_reg            = 0;
 /**
  * LogPrintf() has been broken a couple of times now
  * by well-meaning people adding mutexes in the most straightforward way.

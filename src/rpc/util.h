@@ -5,12 +5,15 @@
 #ifndef BITCOIN_RPC_UTIL_H
 #define BITCOIN_RPC_UTIL_H
 
+#include "rpc/server.h"
+#include "script/standard.h"
+
 #include <string>
 #include <vector>
 
 class CKeyStore;
 class CPubKey;
-class CScript;
+class CWallet;
 
 CPubKey HexToPubKey(const std::string& hex_in);
 CPubKey AddrToPubKey(CKeyStore* const keystore, const std::string& addr_in);

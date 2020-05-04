@@ -166,7 +166,7 @@ int DEx_offerCreate(const std::string& addressSeller, uint32_t propertyId, int64
     }
 
     const std::string key = STR_SELLOFFER_ADDR_PROP_COMBO(addressSeller, propertyId);
-    if (msc_debug_dex) PrintToLog("%s(%s|%s), nValue=%d)\n &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&", __func__, addressSeller, key, amountOffered);
+    if (msc_debug_dex) PrintToLog("%s(%s|%s), nValue=%d)\n", __func__, addressSeller, key, amountOffered);
 
     const int64_t balanceReallyAvailable = getMPbalance(addressSeller, propertyId, BALANCE);
 
@@ -282,7 +282,9 @@ int DEx_BuyOfferCreate(const std::string& addressMaker, uint32_t propertyId, int
         }
     }
 
-    if (ready)
+    // NOTE: check conditions to buy tokens using litecoin
+    // if (ready)
+    if (true)
     {
         CMPOffer sellOffer(block, amountOffered, propertyId, price, minAcceptFee, paymentWindow, txid, 1);
         my_offers.insert(std::make_pair(key, sellOffer));
@@ -386,7 +388,7 @@ int DEx_acceptCreate(const std::string& addressTaker, const std::string& address
     }
 
     if (offer.getOption() == 1)
-    {   // if we are buying tokens
+    {   // if maket maker is buying tokens
 
         if (msc_debug_dex)
         {
@@ -400,11 +402,20 @@ int DEx_acceptCreate(const std::string& addressTaker, const std::string& address
         }
 
         int64_t amountInBalance = getMPbalance(addressTaker, propertyId, BALANCE);
+
+        if (msc_debug_dex) PrintToLog("%s(): amountInBalance: %d, amountAccepted: %d\n",__func__, amountInBalance, amountAccepted);
+
+        if (amountInBalance == 0){
+            PrintToLog("%s(): rejected: amount of token in seller  is zero \n",__func__);
+            return rc;
+        }
+    
+
         if (amountInBalance >= amountAccepted) {
             assert(update_tally_map(addressTaker, propertyId, -amountAccepted, BALANCE));
             assert(update_tally_map(addressTaker, propertyId, amountAccepted, ACCEPT_RESERVE));
         } else {
-            PrintToLog("amountInBalance < amountAccepted ???\n");
+            if (msc_debug_dex) PrintToLog("amountInBalance < amountAccepted ???\n");
         }
 
         CMPAccept acceptOffer(amountAccepted, block, offer.getBlockTimeLimit(), offer.getProperty(), offer.getOfferAmountOriginal(), offer.getBTCDesiredOriginal(), offer.getHash());
@@ -421,7 +432,7 @@ int DEx_acceptCreate(const std::string& addressTaker, const std::string& address
         amountReserved = amountAccepted;
     } else {
         amountReserved = amountRemainingForSale;
-        PrintToLog("%s: buyer wants to reserve %d tokens, but only %d tokens are available\n", __func__, amountAccepted, amountRemainingForSale);
+        if (msc_debug_dex) PrintToLog("%s: buyer wants to reserve %d tokens, but only %d tokens are available\n", __func__, amountAccepted, amountRemainingForSale);
     }
 
     if (amountReserved > 0) {
@@ -639,7 +650,7 @@ int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addre
     if (IsFeatureActivated(FEATURE_DEXMATH, block))
     {
         PrintToLog("IsFeatureActivated(FEATURE_DEXMATH, block) true\n");
-        amountPurchased = calculateDExPurchase(amountOffered, amountDesired, amountPaid);
+        amountPurchased = mastercore::calculateDExPurchase(amountOffered, amountDesired, amountPaid);
     } else {
         // Fallback to original calculation:
         amountPurchased = legacy::calculateDExPurchase(amountOffered, amountDesired, amountPaid);
