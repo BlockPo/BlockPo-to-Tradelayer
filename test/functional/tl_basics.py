@@ -82,7 +82,7 @@ class HTTPBasicsTest (BitcoinTestFramework):
         params = str([3])
         out = tradelayer_HTTP(conn, headers, True, "tl_getallbalancesforid",params)
         # self.log.info(out)
-        assert_equal(out['result'][0]['address'],'mgrNNyDCdAWeYfkvcarsQKRzMhEFQiDmnH')
+        assert_equal(out['result'][0]['address'], address)
         assert_equal(out['result'][0]['balance'],'1500000.00000000')
         assert_equal(out['result'][0]['reserve'],'0.00000000')
 

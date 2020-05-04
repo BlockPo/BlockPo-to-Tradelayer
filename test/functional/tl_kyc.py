@@ -70,7 +70,7 @@ class KYCBasicsTest (BitcoinTestFramework):
         self.log.info("Creating KYC of Tradelayer ")
         params = str([addresses[0], "TradeLayer.org","TradeLayer registrars"]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_new_id_registration",params)
-        self.log.info(out)
+        # self.log.info(out)
 
         self.nodes[0].generate(1)
 
@@ -78,13 +78,13 @@ class KYCBasicsTest (BitcoinTestFramework):
         self.log.info("Checking the KYC ")
         params = str([addresses[0]]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_check_kyc",params)
-        self.log.info(out)
+        # self.log.info(out)
 
         assert_equal(out['result']['result: '],'enabled')
 
         self.log.info("Checking the KYC list ")
         out = tradelayer_HTTP(conn, headers, False, "tl_listkyc")
-        self.log.info(out)
+        # self.log.info(out)
         assert_equal(out['result'][0]['address'], addresses[0])
         assert_equal(out['result'][0]['name'], 'TradeLayer registrars')
         assert_equal(out['result'][0]['website'], 'TradeLayer.org')
@@ -95,20 +95,20 @@ class KYCBasicsTest (BitcoinTestFramework):
         self.log.info("Creating another KYC for Tradelayer ")
         params = str([addresses[1], "TradeLayer.org","TradeLayer registrars"]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_new_id_registration",params)
-        self.log.info(out)
+        # self.log.info(out)
 
         self.nodes[0].generate(1)
 
         self.log.info("Checking the KYC ")
         params = str([addresses[1]]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_check_kyc",params)
-        self.log.info(out)
+        # self.log.info(out)
 
         assert_equal(out['result']['result: '],'enabled')
 
         self.log.info("Checking the KYC list ")
         out = tradelayer_HTTP(conn, headers, False, "tl_listkyc")
-        self.log.info(out)
+        # self.log.info(out)
 
         assert_equal(out['result'][0]['address'], addresses[1])
         assert_equal(out['result'][0]['name'], 'TradeLayer registrars')
@@ -119,19 +119,19 @@ class KYCBasicsTest (BitcoinTestFramework):
         self.log.info("Self Attestation for address 2")
         params = str([addresses[2], addresses[2]]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_attestation",params)
-        self.log.info(out)
+        # self.log.info(out)
 
         self.nodes[0].generate(1)
 
         self.log.info("Checking attestations")
         out = tradelayer_HTTP(conn, headers, False, "tl_list_attestation")
-        self.log.info(out)
+        # self.log.info(out)
 
         self.log.info("Creating new tokens Dcoin(sendissuancefixed)")
         array = [0]
         params = str([addresses[2],2,0,"dCoin","","","90000000",array]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_sendissuancefixed",params)
-        self.log.info(out)
+        # self.log.info(out)
 
 
         self.nodes[0].generate(1)
@@ -140,7 +140,7 @@ class KYCBasicsTest (BitcoinTestFramework):
         array = [2]
         params = str([addresses[2],2,0,"eCoin","","","90000000",array]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_sendissuancefixed",params)
-        self.log.info(out)
+        # self.log.info(out)
 
 
         self.nodes[0].generate(1)

@@ -188,7 +188,7 @@ class VestingBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['unvested'],'1000.00000000')
 
         # 2000 LTC implies release 10% of ALLs from unvested to balance
-        self.log.info("Creating LTV volume in DEx")
+        self.log.info("Creating LTC volume in DEx")
         self.log.info("Sending a DEx sell tokens offer")
         params = str([addresses[2], 4, "1000", "2000", 250, "0.00001", "2", 1]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_senddexoffer",params)

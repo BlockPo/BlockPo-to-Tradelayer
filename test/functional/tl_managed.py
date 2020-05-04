@@ -98,7 +98,7 @@ class ManagedBasicsTest (BitcoinTestFramework):
         self.log.info("Sending 2000 tokens to receiver (sendgrant)")
         params = str([addresses[0], addresses[1], 4, "2000"]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_sendgrant",params)
-        self.log.info(out)
+        # self.log.info(out)
 
         self.nodes[0].generate(1)
 
