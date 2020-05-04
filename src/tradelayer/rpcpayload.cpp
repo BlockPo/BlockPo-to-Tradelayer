@@ -1158,9 +1158,9 @@ UniValue tl_createpayload_attestation(const JSONRPCRequest& request)
 {
     if (request.params.size() > 1)
         throw runtime_error(
-            "tl_createpayload_update_id_registration \n"
+            "tl_createpayload_attestation \n"
 
-            "\nPayload to update the address on id registration.\n"
+            "\nPayload of attestation tx.\n"
 
             "\nArguments:\n"
             "1. string hash            (string, optional) the hash\n"
@@ -1169,15 +1169,14 @@ UniValue tl_createpayload_attestation(const JSONRPCRequest& request)
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
 
             "\nExamples:\n"
-            + HelpExampleCli("tl_createpayload_update_id_registration", "\"\" , \"\"")
-            + HelpExampleRpc("tl_createpayload_update_id_registration", "\"\",  \"\"")
+            + HelpExampleCli("tl_createpayload_attestation", "\"2507f85b9992c0d518f56c8e1a7cd43e1282c898\" , \"\"")
+            + HelpExampleRpc("tl_createpayload_attestation", "\"2507f85b9992c0d518f56c8e1a7cd43e1282c898\",  \"\"")
         );
 
 
     std::string hash;
     (request.params.size() == 1) ? hash = ParseText(request.params[0]) : "";
 
-    PrintToLog("%s(): request.params.size(): %d\n",__func__,request.params.size());
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_Attestation(hash);
 
