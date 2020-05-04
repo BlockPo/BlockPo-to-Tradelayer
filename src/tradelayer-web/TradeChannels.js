@@ -13,3 +13,7 @@ var myChannels = []
 var Channel = {'multisigAddr':'','counterparty':{},'positions':[],collateralid:1,'myMargin':0,'myPNL':0,'counterpartyMargin':0}
 var counterpartyProfiles = []
 var Profile = {'alias':'','regulatoryStatus':'unregulated','myHistoricalVolume':0,'avgSignBackTime':300,'cancelRate':0.02,'RepRating':70}
+
+var channelManager = {}
+
+channelManager.returnTopCounterparties

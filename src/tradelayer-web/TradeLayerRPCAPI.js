@@ -478,6 +478,18 @@ tl.createOracleContract = function( numeratorid, title, durationInBlocks, notion
   })
 }
 
+tl.changeOracleRef = function(fromaddress, refaddress, contractTitle,cb){
+     client.cmd('tl_change_oracleref',fromaddress,refaddress,contractTitle,function(err,data,resHeaders){
+        return cb(data)
+     })
+}
+
+tl.publishOracleData = function(fromaddress, title, high, low, close, cb){
+      client.cmd('tl_setoracle',fromaddress, title, high, low, close, function(err,data,resHeaders){
+        return cb(data)
+      })
+}
+
 var rawPubScripts = []
 
 tl.buildRaw= function(payload, inputs, vOuts, refaddresses,inputAmount, cb){

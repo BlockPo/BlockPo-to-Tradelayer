@@ -86,7 +86,7 @@ var txExport =''
 var redeemkey = ''
 //the array of inputs
 createMultisig(["",""],function(data){
-	redeemkey = data.redeemScript
+	redeemkey = data.redeemkey
 	createPropertyWithMultisig(data.address,params,function(tx){
 		txExport=tx
 		
