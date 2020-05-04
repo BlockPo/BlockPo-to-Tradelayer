@@ -1,2 +1,0 @@
-QgKDCYT6XweyZ5LFXTYCmyrTAsLf4zhAhC	 OpenLongPosition	 1000	 QS5btkghnzEGd6nWXok42n8mNEBsnTWNCR	 OpenShortPosition	 1000	 1000	 980.5
-QQwrPmu6DFotJDzzsF16Z5CJqa2kNS3Z62	 OpenLongPosition	 1000	 QgLhj9vUnzC3qsbdYpuiYcqbXjn7m88L2F	 OpenShortPosition	 1000	 1000	 980.5
