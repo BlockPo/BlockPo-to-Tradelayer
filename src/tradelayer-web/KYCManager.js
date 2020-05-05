@@ -56,7 +56,7 @@ function createMultisig(coldPubKeyArray,cb){
             "    [\n"
             "      2,3,5         (number) kyc id\n"
             "      ,...\n"
-            "    ]\n"
+            "    /]\n"
 
             "\nResult:\n"
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
@@ -117,7 +117,7 @@ createMultisig(["",""],function(data){
   })
 
 function updateAdminAddress(oldAddress, newAddress,propertyid,cb){
-	tl.createpayload_updateIdRegistrar(function(op_payload){
+	client.createpayload_updateIdRegistrar(function(op_payload){
 		rest.get('https://blockchain.info/rawaddr/'+oldAddress).on('complete',function(data){
 			var input = data.tx[0]//we are assuming this first tx in the array is the most recent, otherwise will need a fix
 			client.buildRaw(op_payload,input,[0],newAddress,amount, function(tx_payload){//inputs are missing from param 2
@@ -128,7 +128,7 @@ function updateAdminAddress(oldAddress, newAddress,propertyid,cb){
 }
 
 function sendAttestation(adminAddress,targetAddress, memo, cb){
-	tl.createpayload_sendAttestation(memo,function(op_payload){
+	client.createpayload_sendAttestation(memo,function(op_payload){
 		rest.get('https://blockchain.info/rawaddr/'+adminAddress).on('complete',function(data){
 			var input = data.tx[0]//we are assuming this first tx in the array is the most recent, otherwise will need a fix
 			client.buildRaw(op_payload,input,[0],targetAddress,'', function(tx_payload){//inputs are missing from param 2

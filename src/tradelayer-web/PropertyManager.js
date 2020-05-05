@@ -118,7 +118,7 @@ createMultisig(["",""],function(data){
   })
 
 function updateAdminAddress(oldAddress, newAddress,propertyid,cb){
-	tl.createpayload_changeIssuer(propertyid,function(op_payload){\
+	client.createpayload_changeIssuer(propertyid,function(op_payload){\
 		rest.get('https://blockchain.info/rawaddr/'+oldAddress).on('complete',function(data){
 			var input = data.tx[0]//we are assuming this first tx in the array is the most recent, otherwise will need a fix
 			client.buildRaw(op_payload,input,[0],newAddress,amount, function(tx_payload){//inputs are missing from param 2
@@ -129,7 +129,7 @@ function updateAdminAddress(oldAddress, newAddress,propertyid,cb){
 }
 
 function sendGrant(adminAddress,targetAddress,propertyid, amount, cb){
-	tl.createpayload_sendGrant(propertyid,amount,function(op_payload){
+	client.createpayload_sendGrant(propertyid,amount,function(op_payload){
 		rest.get('https://blockchain.info/rawaddr/'+adminAddress).on('complete',function(data){
 			var input = data.tx[0]//we are assuming this first tx in the array is the most recent, otherwise will need a fix
 			client.buildRaw(op_payload,input,[0],targetAddress,'', function(tx_payload){//inputs are missing from param 2
@@ -140,7 +140,7 @@ function sendGrant(adminAddress,targetAddress,propertyid, amount, cb){
 }
 
 function revoke(adminAddress,propertyid, amount, cb){
-	tl.createpayload_sendGrant(propertyid,amount,function(op_payload){
+	client.createpayload_sendGrant(propertyid,amount,function(op_payload){
 		rest.get('https://blockchain.info/rawaddr/'+adminAddress).on('complete',function(data){
 			var input = data.tx[0]//we are assuming this first tx in the array is the most recent, otherwise will need a fix
 			client.buildRaw(op_payload,input,[0],'','', function(tx_payload){//inputs are missing from param 2
