@@ -198,7 +198,7 @@ private:
     bool interpret_DExBuy();
     bool interpret_SendVestingTokens();
     bool interpret_CreateOracleContract();
-    bool interpret_Change_OracleRef();
+    bool interpret_Change_OracleAdm();
     bool interpret_Set_Oracle();
     bool interpret_OracleBackup();
     bool interpret_CloseOracle();
@@ -246,7 +246,7 @@ private:
     int logicMath_DExBuy();
     int logicMath_SendVestingTokens();
     int logicMath_CreateOracleContract();
-    int logicMath_Change_OracleRef();
+    int logicMath_Change_OracleAdm();
     int logicMath_Set_Oracle();
     int logicMath_OracleBackup();
     int logicMath_CloseOracle();

@@ -274,9 +274,9 @@ class PayloadsBasicsTest (BitcoinTestFramework):
         assert_equal(out['result'], '0075')
 
 
-        self.log.info("Testing tl_createpayload_change_oracleref")
+        self.log.info("Testing tl_createpayload_change_oracleadm")
         params = str(['ALL/Lhk']).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, False, "tl_createpayload_change_oracleref", params)
+        out = tradelayer_HTTP(conn, headers, False, "tl_createpayload_change_oracleadm", params)
         # self.log.info(out)
         assert_equal(out['error'], None)
         assert_equal(out['result'], '006800')

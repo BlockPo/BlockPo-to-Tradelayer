@@ -253,7 +253,7 @@ bool CMPTransaction::interpret_Transaction()
       return interpret_AcceptOfferBTC();
 
     case MSC_TYPE_CHANGE_ORACLE_REF:
-      return interpret_Change_OracleRef();
+      return interpret_Change_OracleAdm();
 
     case MSC_TYPE_SET_ORACLE:
       return interpret_Set_Oracle();
@@ -1554,7 +1554,7 @@ bool CMPTransaction::interpret_CreateOracleContract()
 }
 
 /** Tx 104 */
-bool CMPTransaction::interpret_Change_OracleRef()
+bool CMPTransaction::interpret_Change_OracleAdm()
 {
     int i = 0;
 
@@ -2196,7 +2196,7 @@ int CMPTransaction::interpretPacket()
             return logicMath_CreateOracleContract();
 
         case MSC_TYPE_CHANGE_ORACLE_REF:
-            return logicMath_Change_OracleRef();
+            return logicMath_Change_OracleAdm();
 
         case MSC_TYPE_SET_ORACLE:
             return logicMath_Set_Oracle();
@@ -4044,7 +4044,7 @@ int CMPTransaction::logicMath_CreateOracleContract()
 }
 
 /** Tx 104 */
-int CMPTransaction::logicMath_Change_OracleRef()
+int CMPTransaction::logicMath_Change_OracleAdm()
 {
     uint256 blockHash;
     {
