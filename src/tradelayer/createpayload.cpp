@@ -685,7 +685,7 @@ std::vector<unsigned char> CreatePayload_CreateOracleContract(std::string name, 
 }
 
 /* Tx 104 */
-std::vector<unsigned char> CreatePayload_Change_OracleRef(uint32_t contractId)
+std::vector<unsigned char> CreatePayload_Change_OracleAdm(uint32_t contractId)
 {
     std::vector<unsigned char> payload;
 

@@ -958,13 +958,13 @@ UniValue tl_createpayload_dex_payment(const JSONRPCRequest& request)
 
 }
 
-UniValue tl_createpayload_change_oracleref(const JSONRPCRequest& request)
+UniValue tl_createpayload_change_oracleadm(const JSONRPCRequest& request)
 {
     if (request.params.size() != 1)
         throw runtime_error(
-            "tl_createpayload_change_oracleref \"fromaddress\" \"toaddress\" contract name\n"
+            "tl_createpayload_change_oracleadm \" contract name\n"
 
-            "\n Payload to change the issuer on record of the Oracle Future Contract.\n"
+            "\n Payload to change the admin on record of the Oracle Future Contract.\n"
 
             "\nArguments:\n"
             "1. contract name        (string, required) the name of the Future Contract\n"
@@ -973,8 +973,8 @@ UniValue tl_createpayload_change_oracleref(const JSONRPCRequest& request)
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
 
             "\nExamples:\n"
-            + HelpExampleCli("tl_createpayload_change_oracleref", "\"Contract 1\"")
-            + HelpExampleRpc("tl_createpayload_change_oracleref", "\"Contract 1\"")
+            + HelpExampleCli("tl_createpayload_change_oracleadm", "\"Contract 1\"")
+            + HelpExampleRpc("tl_createpayload_change_oracleadm", "\"Contract 1\"")
         );
 
     // obtain parameters & info
@@ -983,7 +983,7 @@ UniValue tl_createpayload_change_oracleref(const JSONRPCRequest& request)
     uint32_t contractId = pfuture_contract->fco_propertyId;
 
     // create a payload for the transaction
-    std::vector<unsigned char> payload = CreatePayload_Change_OracleRef(contractId);
+    std::vector<unsigned char> payload = CreatePayload_Change_OracleAdm(contractId);
 
     return HexStr(payload.begin(), payload.end());
 
@@ -1216,7 +1216,7 @@ static const CRPCCommand commands[] =
     { "trade layer (payload creation)", "tl_createpayload_transfer",                      &tl_createpayload_transfer,                        {}   },
     { "trade layer (payload creation)", "tl_createpayload_dex_payment",                   &tl_createpayload_dex_payment,                     {}   },
     { "trade layer (payload creation)", "tl_createpayload_contract_instant_trade",        &tl_createpayload_contract_instant_trade,          {}   },
-    { "trade layer (payload creation)", "tl_createpayload_change_oracleref",              &tl_createpayload_change_oracleref,                {}   },
+    { "trade layer (payload creation)", "tl_createpayload_change_oracleadm",              &tl_createpayload_change_oracleadm,                {}   },
     { "trade layer (payload creation)", "tl_createpayload_create_oraclecontract",         &tl_createpayload_create_oraclecontract,           {}   },
     { "trade layer (payload creation)", "tl_createpayload_setoracle",                     &tl_createpayload_setoracle,                       {}   },
     { "trade layer (payload creation)", "tl_createpayload_closeoracle",                   &tl_createpayload_closeoracle,                     {}   },

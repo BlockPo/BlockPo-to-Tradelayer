@@ -1590,13 +1590,13 @@ UniValue tl_setoracle(const JSONRPCRequest& request)
     }
 }
 
-UniValue tl_change_oracleref(const JSONRPCRequest& request)
+UniValue tl_change_oracleadm(const JSONRPCRequest& request)
 {
     if (request.params.size() != 3)
         throw runtime_error(
-            "tl_change_oracleref \"fromaddress\" \"toaddress\" contract name\n"
+            "tl_change_oracleadm \"fromaddress\" \"toaddress\" contract name\n"
 
-            "\nChange the issuer on record of the Oracle Future Contract.\n"
+            "\nChange the admin on record of the Oracle Future Contract.\n"
 
             "\nArguments:\n"
             "1. fromaddress          (string, required) the address associated with the oracle Future Contract\n"
@@ -1607,8 +1607,8 @@ UniValue tl_change_oracleref(const JSONRPCRequest& request)
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
 
             "\nExamples:\n"
-            + HelpExampleCli("tl_change_oracleref", "\"1ARjWDkZ7kT9fwjPrjcQyvbXDkEySzKHwu\" ,\"3HTHRxu3aSDV4de+akjC7VmsiUp7c6dfbvs\" ,\"Contract 1\"")
-            + HelpExampleRpc("tl_change_oracleref", "\"1ARjWDkZ7kT9fwjPrjcQyvbXDkEySzKHwu\", \"3HTHRxu3aSDV4deakjC7VmsiUp7c6dfbvs\", \"Contract 1\"")
+            + HelpExampleCli("tl_change_oracleadm", "\"1ARjWDkZ7kT9fwjPrjcQyvbXDkEySzKHwu\" ,\"3HTHRxu3aSDV4de+akjC7VmsiUp7c6dfbvs\" ,\"Contract 1\"")
+            + HelpExampleRpc("tl_change_oracleadm", "\"1ARjWDkZ7kT9fwjPrjcQyvbXDkEySzKHwu\", \"3HTHRxu3aSDV4deakjC7VmsiUp7c6dfbvs\", \"Contract 1\"")
         );
 
     // obtain parameters & info
@@ -1628,7 +1628,7 @@ UniValue tl_change_oracleref(const JSONRPCRequest& request)
 
 
     // create a payload for the transaction
-    std::vector<unsigned char> payload = CreatePayload_Change_OracleRef(contractId);
+    std::vector<unsigned char> payload = CreatePayload_Change_OracleAdm(contractId);
 
     // request the wallet build the transaction (and if needed commit it)
     uint256 txid;
@@ -2211,7 +2211,7 @@ static const CRPCCommand commands[] =
     { "trade layer (transaction cration)",  "tl_send_dex_payment",             &tl_send_dex_payment,                {} },
     { "trade layer (transaction creation)", "tl_create_oraclecontract",        &tl_create_oraclecontract,           {} },
     { "trade layer (transaction creation)", "tl_setoracle",                    &tl_setoracle,                       {} },
-    { "trade layer (transaction creation)", "tl_change_oracleref",             &tl_change_oracleref,                {} },
+    { "trade layer (transaction creation)", "tl_change_oracleadm",             &tl_change_oracleadm,                {} },
     { "trade layer (transaction creation)", "tl_oraclebackup",                 &tl_oraclebackup,                    {} },
     { "trade layer (transaction creation)", "tl_closeoracle",                  &tl_closeoracle,                     {} },
     { "trade layer (transaction creation)", "tl_commit_tochannel",             &tl_commit_tochannel,                {} },

@@ -40,7 +40,7 @@ std::vector<unsigned char> CreatePayload_MetaDExCancelPrice(uint32_t propertyIdF
 std::vector<unsigned char> CreatePayload_MetaDExCancelPair(uint32_t propertyIdForSale, uint32_t propertyIdDesired);
 std::vector<unsigned char> CreatePayload_MetaDExCancelAll();
 std::vector<unsigned char> CreatePayload_CreateOracleContract(std::string name, uint32_t blocks_until_expiration, uint32_t notional_size, uint32_t collateral_currency, uint32_t margin_requirement, uint8_t inverse, std::vector<int> kycVec);
-std::vector<unsigned char> CreatePayload_Change_OracleRef(uint32_t contractId);
+std::vector<unsigned char> CreatePayload_Change_OracleAdm(uint32_t contractId);
 std::vector<unsigned char> CreatePayload_OracleBackup(uint32_t contractId);
 std::vector<unsigned char> CreatePayload_Close_Oracle(uint32_t contractId);
 std::vector<unsigned char> CreatePayload_Set_Oracle(uint32_t contractId, uint64_t high, uint64_t low, uint64_t close);
