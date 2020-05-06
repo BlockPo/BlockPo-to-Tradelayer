@@ -94,6 +94,20 @@ bool msc_debug_send_reward                      = 0;
 bool msc_debug_contract_cancel                  = 1;
 bool msc_debug_fee_cache_buy                    = 0;
 bool msc_debug_check_attestation_reg            = 0;
+bool msc_debug_sanity_checks                    = 0;
+bool msc_debug_ltc_volume                       = 0;
+bool msc_debug_mdex_volume                      = 0;
+bool msc_debug_update_status                    = 0;
+bool msc_debug_get_channel_addr                 = 0;
+bool msc_debug_get_remaining                    = 0;
+bool msc_debug_make_withdrawal                  = 0;
+bool msc_debug_check_kyc_register               = 0;
+bool msc_debug_update_id_register               = 0;
+bool msc_debug_get_transaction_address          = 0;
+bool msc_debug_is_mpin_block_range              = 0;
+bool msc_debug_record_payment_tx                = 0;
+bool msc_tx_valid_node_reward                   = 0;
+
 /**
  * LogPrintf() has been broken a couple of times now
  * by well-meaning people adding mutexes in the most straightforward way.
