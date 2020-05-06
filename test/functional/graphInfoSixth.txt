@@ -1,3 +1,0 @@
-QeLrRZfnGddnaVoPHS5zgVbfVthgL37sN3	 OpenLongPosition	 1000	 QjRzSwo95yuWYTLn78CqR9RcjhiC5nMxnx	 OpenShortPosition	 1000	 1000	 980.5
-QZdAG97UYfmreV7GmCjzAqkg5Txc22QYQe	 OpenLongPosition	 1000	 QXe3Si45H6VdiDuGNv4ioPUmigR5y75Kaz	 OpenShortPosition	 1000	 1000	 980.5
-Qek37Yq6B3RqZGzG68ejWXDTT55w8fhg6u	 OpenLongPosition	 1000	 QUNrRX5gA5VtCbfAwUMcAwDF7HGWr9fhMb	 OpenShortPosition	 1000	 1000	 980.5
