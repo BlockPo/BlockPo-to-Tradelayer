@@ -166,7 +166,7 @@ class OraclesBasicsTest (BitcoinTestFramework):
 
         self.log.info("Changing oracle admin")
         params = str([addresses[0], addresses[1], "Oracle 1"]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, True, "tl_change_oracleref",params)
+        out = tradelayer_HTTP(conn, headers, True, "tl_change_oracleadm",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
 

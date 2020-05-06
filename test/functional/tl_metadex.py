@@ -272,7 +272,7 @@ class MetaDExBasicsTest (BitcoinTestFramework):
         self.log.info("Checking the trade in orderbook")
         params = str([4])
         out = tradelayer_HTTP(conn, headers, True, "tl_getorderbook",params)
-        self.log.info(out)
+        # self.log.info(out)
         assert_equal(out['error'], None)
         assert_equal(out['result'][0]['address'], addresses[3])
         assert_equal(out['result'][0]['propertyidforsale'],4)

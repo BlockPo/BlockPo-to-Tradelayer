@@ -126,6 +126,11 @@ class KYCBasicsTest (BitcoinTestFramework):
         self.log.info("Checking attestations")
         out = tradelayer_HTTP(conn, headers, False, "tl_list_attestation")
         # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result'][0]['att sender'], addresses[2])
+        assert_equal(out['result'][0]['att receiver'], addresses[2])
+        assert_equal(out['result'][0]['kyc_id'], 0)
+
 
         self.log.info("Creating new tokens Dcoin(sendissuancefixed)")
         array = [0]
@@ -259,14 +264,23 @@ class KYCBasicsTest (BitcoinTestFramework):
         self.log.info("Sending attestation from admin address")
         params = str([addresses[0], addresses[3]]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_attestation",params)
-        self.log.info(out)
+        # self.log.info(out)
 
         self.nodes[0].generate(1)
 
 
         self.log.info("Checking attestations")
         out = tradelayer_HTTP(conn, headers, False, "tl_list_attestation")
-        self.log.info(out)
+        # self.log.info(out)
+
+        assert_equal(out['error'], None)
+        assert_equal(out['result'][0]['att sender'], addresses[0])
+        assert_equal(out['result'][0]['att receiver'], addresses[3])
+        assert_equal(out['result'][0]['kyc_id'], 1)
+
+        assert_equal(out['result'][1]['att sender'], addresses[2])
+        assert_equal(out['result'][1]['att receiver'], addresses[2])
+        assert_equal(out['result'][1]['kyc_id'], 0)
 
         conn.close()
 
