@@ -396,10 +396,6 @@ bool CMPTransaction::interpret_CreatePropertyFixed()
 
     std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
     std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
-
-    // memcpy(&ecosystem, &pkt[i], 1);
-    // i++;
-
     std::vector<uint8_t> vecPropTypeBytes = GetNextVarIntBytes(i);
     std::vector<uint8_t> vecPrevPropIdBytes = GetNextVarIntBytes(i);
 
@@ -467,10 +463,6 @@ bool CMPTransaction::interpret_CreatePropertyVariable()
 
     std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
     std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
-
-    // memcpy(&ecosystem, &pkt[i], 1);
-    // i++;
-
     std::vector<uint8_t> vecPropTypeBytes = GetNextVarIntBytes(i);
     std::vector<uint8_t> vecPrevPropIdBytes = GetNextVarIntBytes(i);
 
@@ -494,11 +486,6 @@ bool CMPTransaction::interpret_CreatePropertyVariable()
 
     // std::vector<uint8_t> vecPropertyIdDesiredBytes = GetNextVarIntBytes(i);
     std::vector<uint8_t> vecAmountPerUnitBytes = GetNextVarIntBytes(i);
-    // std::vector<uint8_t> vecDeadlineBytes = GetNextVarIntBytes(i);
-    // memcpy(&early_bird, &pkt[i], 1);
-    // i++;
-    // memcpy(&percentage, &pkt[i], 1);
-    // i++;
 
     if (!vecPropTypeBytes.empty()) {
         prop_type = DecompressInteger(vecPropTypeBytes);
@@ -549,10 +536,6 @@ bool CMPTransaction::interpret_CreatePropertyManaged()
 
     std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
     std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
-
-    // memcpy(&ecosystem, &pkt[i], 1);
-    // i++;
-
     std::vector<uint8_t> vecPropTypeBytes = GetNextVarIntBytes(i);
     std::vector<uint8_t> vecPrevPropIdBytes = GetNextVarIntBytes(i);
 
@@ -979,16 +962,10 @@ bool CMPTransaction::interpret_MetaDExTrade()
 bool CMPTransaction::interpret_CreateContractDex()
 {
   int i = 0;
-
   std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
-
-  // memcpy(&ecosystem, &pkt[i], 1);
-  // i++;
-
   std::vector<uint8_t> vecNum = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecDen = GetNextVarIntBytes(i);
-
   const char* p = i + (char*) &pkt;
   std::vector<std::string> spstr;
   for (int j = 0; j < 1; j++) {
@@ -1307,10 +1284,6 @@ bool CMPTransaction::interpret_CreatePeggedCurrency()
 
     std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
     std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
-
-    // memcpy(&ecosystem, &pkt[i], 1);
-    // i++;
-
     std::vector<uint8_t> vecPropTypeBytes = GetNextVarIntBytes(i);
     std::vector<uint8_t> vecPrevPropIdBytes = GetNextVarIntBytes(i);
     const char* p = i + (char*) &pkt;
@@ -1460,10 +1433,6 @@ bool CMPTransaction::interpret_CreateOracleContract()
 
   std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
-
-  // memcpy(&ecosystem, &pkt[i], 1);
-  // i++;
-
   const char* p = i + (char*) &pkt;
   std::vector<std::string> spstr;
   for (int j = 0; j < 1; j++) {

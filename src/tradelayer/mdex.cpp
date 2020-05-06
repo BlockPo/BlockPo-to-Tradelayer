@@ -2633,9 +2633,9 @@ int mastercore::MetaDEx_CANCEL_EVERYTHING(const uint256& txid, unsigned int bloc
         if (msc_debug_metadex2) PrintToLog(" ## property: %u\n", prop);
         md_PricesMap& prices = my_it->second;
 
-        for (md_PricesMap::iterator it = prices.begin(); it != prices.end(); ++it) {
-            rational_t price = it->first;
-            md_Set& indexes = it->second;
+        for (md_PricesMap::iterator itt = prices.begin(); itt != prices.end(); ++itt) {
+            rational_t price = itt->first;
+            md_Set& indexes = itt->second;
 
             PrintToLog("  # Price Level: %s\n", xToString(price));
 
@@ -2682,16 +2682,15 @@ int mastercore::MetaDEx_CANCEL_EVERYTHING(const uint256& txid, unsigned int bloc
          if(msc_debug_contract_cancel) PrintToLog(" ## property: %d\n", prop);
          cd_PricesMap &prices = my_it->second;
 
-         for (cd_PricesMap::iterator it = prices.begin(); it != prices.end(); ++it) {
-             uint64_t price = it->first;
-             cd_Set &indexes = it->second;
+         for (cd_PricesMap::iterator itt = prices.begin(); itt != prices.end(); ++itt) {
+             // uint64_t price = it->first;
+             cd_Set &indexes = itt->second;
 
              for (cd_Set::iterator it = indexes.begin(); it != indexes.end();) {
 
                  if(msc_debug_contract_cancel)
                  {
                      std::string getstring = (it->getHash()).ToString();
-                     PrintToLog("%s(): checkpoint 2\n",__func__);
                      PrintToLog("getAddr: %s\n",it->getAddr());
                      PrintToLog("address: %s\n",sender_addr);
                      PrintToLog("propertyid: %d\n",it->getProperty());

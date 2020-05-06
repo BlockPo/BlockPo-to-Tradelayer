@@ -98,6 +98,19 @@ extern bool msc_debug_send_reward;
 extern bool msc_debug_contract_cancel;
 extern bool msc_debug_fee_cache_buy;
 extern bool msc_debug_check_attestation_reg;
+extern bool msc_debug_sanity_checks;
+extern bool msc_debug_ltc_volume;
+extern bool msc_debug_mdex_volume;
+extern bool msc_debug_update_status;
+extern bool msc_debug_get_channel_addr;
+extern bool msc_debug_get_remaining;
+extern bool msc_debug_make_withdrawal;
+extern bool msc_debug_check_kyc_register;
+extern bool msc_debug_update_id_register;
+extern bool msc_debug_get_transaction_address;
+extern bool msc_debug_is_mpin_block_range;
+extern bool msc_debug_record_payment_tx;
+extern bool msc_tx_valid_node_reward;
 
 /* When we switch to C++11, this can be switched to variadic templates instead
  * of this macro-based construction (see tinyformat.h).

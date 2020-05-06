@@ -215,7 +215,7 @@ int DEx_offerCreate(const std::string& addressSeller, uint32_t propertyId, int64
 
 int DEx_BuyOfferCreate(const std::string& addressMaker, uint32_t propertyId, int64_t amountOffered, int block, int64_t price, int64_t minAcceptFee, uint8_t paymentWindow, const uint256& txid, uint64_t* nAmended)
 {
-    bool ready = false;
+    // bool ready = false;
     int rc = DEX_ERROR_SELLOFFER;
 
     // sanity checks
@@ -276,7 +276,7 @@ int DEx_BuyOfferCreate(const std::string& addressMaker, uint32_t propertyId, int
             {
                 // price = price of entire order   .
 	              if (msc_debug_dex) PrintToLog("You can buy tokens now\n");
-	              ready = true;
+	              // ready = true;
 	              break;
             }
         }
@@ -409,7 +409,7 @@ int DEx_acceptCreate(const std::string& addressTaker, const std::string& address
             PrintToLog("%s(): rejected: amount of token in seller  is zero \n",__func__);
             return rc;
         }
-    
+
 
         if (amountInBalance >= amountAccepted) {
             assert(update_tally_map(addressTaker, propertyId, -amountAccepted, BALANCE));
