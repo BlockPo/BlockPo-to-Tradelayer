@@ -2815,8 +2815,8 @@ UniValue tl_getdexvolume(const JSONRPCRequest& request)
         );
 
     uint32_t propertyId = ParsePropertyId(request.params[0]);
-    uint32_t fblock = request.params[1].get_int();
-    uint32_t sblock = request.params[2].get_int();
+    int fblock = request.params[1].get_int();
+    int sblock = request.params[2].get_int();
 
     if (fblock == 0 || sblock == 0)
         throw JSONRPCError(RPC_INTERNAL_ERROR, "Block must be greater than 0");
@@ -2858,8 +2858,8 @@ UniValue tl_getmdexvolume(const JSONRPCRequest& request)
 
     uint32_t fproperty = ParsePropertyId(request.params[0]);
     uint32_t sproperty = ParsePropertyId(request.params[1]);
-    uint32_t fblock = request.params[2].get_int();
-    uint32_t sblock = ParsePropertyId(request.params[3].get_int());
+    int fblock = request.params[2].get_int();
+    int sblock = request.params[3].get_int();
 
     if (fblock == 0 || sblock == 0)
         throw JSONRPCError(RPC_INTERNAL_ERROR, "Block must be greater than 0");
