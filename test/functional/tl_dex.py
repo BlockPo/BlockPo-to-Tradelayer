@@ -72,8 +72,19 @@ class DExBasicsTest (BitcoinTestFramework):
         self.log.info("Self Attestation for addresses")
         tradelayer_selfAttestation(addresses,conn, headers)
 
-        # TODO:
-        # self.log.info("Checking attestations")
+        self.log.info("Checking attestations")
+        out = tradelayer_HTTP(conn, headers, False, "tl_list_attestation")
+        # self.log.info(out)
+
+        result = []
+        registers = out['result']
+
+        for addr in addresses:
+            for i in registers:
+                if i['att sender'] == addr and i['att receiver'] == addr and i['kyc_id'] == 0:
+                     result.append(True)
+
+        assert_equal(result, [True, True, True, True])
 
         self.log.info("Checking the property")
         params = str([4])

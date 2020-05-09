@@ -1192,8 +1192,9 @@ static int msc_initial_scan(int nFirstBlock)
     const int nLastBlock = GetHeight();
 
     // this function is useless if there are not enough blocks in the blockchain yet!
-    if (nFirstBlock < 0 || nLastBlock < nFirstBlock) return -1;
-    PrintToLog("%s: Scanning for transactions in block %d to block %d..\n", __func__, nFirstBlock, nLastBlock);
+    if (nFirstBlock < 0 || nLastBlock < nFirstBlock){
+        return -1;
+    }
 
     // used to print the progress to the console and notifies the UI
     ProgressReporter progressReporter(chainActive[nFirstBlock], chainActive[nLastBlock]);
@@ -1224,7 +1225,7 @@ static int msc_initial_scan(int nFirstBlock)
         CBlock block;
         if (!ReadBlockFromDisk(block, pblockindex, Params().GetConsensus())) break;
           for(CTransactionRef& tx : block.vtx) {
-             if (mastercore_handler_tx(*(tx.get()), nBlock, nTxNum, pblockindex)) ++nTxsFoundInBlock;
+             if (mastercore_handler_tx(*tx, nBlock, nTxNum, pblockindex)) ++nTxsFoundInBlock;
              ++nTxNum;
           }
 
@@ -4216,6 +4217,8 @@ bool CMPTradeList::attLoop(UniValue& response)
 
         // ensure correct amount of tokens in value string
         boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
+
+        PrintToLog("%s(): vstr: %s\n",__func__,strValue);
 
         if (vstr.size() != 7)
             continue;
