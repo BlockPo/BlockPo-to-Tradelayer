@@ -162,7 +162,7 @@ CMainConsensusParams::CMainConsensusParams()
  */
  CTestNetConsensusParams::CTestNetConsensusParams()
  {
-     GENESIS_BLOCK = 0;
+     GENESIS_BLOCK = 1450000;  // NOTE: this is important to not waste time
      // Notice range for feature activations:
      MIN_ACTIVATION_BLOCKS = 0;
      MAX_ACTIVATION_BLOCKS = 999999;
