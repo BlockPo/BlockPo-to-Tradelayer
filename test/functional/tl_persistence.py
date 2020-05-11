@@ -18,7 +18,7 @@ class PersistenceBasicsTest (BitcoinTestFramework):
         self.num_nodes = 1
         self.setup_clean_chain = True
         # Use self.extra_args to change command-line arguments for the nodes
-        self.extra_args = [["-dbcache=16000"]]
+        self.extra_args = [["-txindex=1"]]  # NOTE: EXTREMELY IMPORTANT in order to use the persistence!
 
     def setup_chain(self):
         super().setup_chain()
@@ -74,7 +74,6 @@ class PersistenceBasicsTest (BitcoinTestFramework):
         # self.log.info(out)
         assert_equal(out['error'], None)
         privatekey0 = out['result']
-
         params = str([addresses[1]]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "dumpprivkey",params)
         # self.log.info(out)
@@ -117,11 +116,13 @@ class PersistenceBasicsTest (BitcoinTestFramework):
 
         self.nodes[0].generate(1)
 
+
         self.log.info("Checking the property: lihki")
         params = str([4])
-        out = tradelayer_HTTP(conn, headers, True, "tl_getproperty",params)
+        out = tradelayer_HTTP(conn, headers, False, "tl_getproperty",params)
         assert_equal(out['error'], None)
         # self.log.info(out)
+
         assert_equal(out['result']['propertyid'],4)
         assert_equal(out['result']['issuer'],addresses[0])
         assert_equal(out['result']['name'],'lihki')
@@ -129,6 +130,16 @@ class PersistenceBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['url'],'')
         assert_equal(out['result']['divisible'],True)
         assert_equal(out['result']['totaltokens'],'20000000000.00000000')
+
+
+        self.log.info("Checking tokens in issuer address")
+        params = str([addresses[0], 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['balance'],'20000000000.00000000')
+        assert_equal(out['result']['reserve'],'0.00000000')
+
 
         self.log.info("Self Attestation for addresses")
         tradelayer_selfAttestation(addresses,conn, headers)
@@ -148,9 +159,10 @@ class PersistenceBasicsTest (BitcoinTestFramework):
 
         self.nodes[0].generate(1)
 
+
         self.log.info("Checking attestations")
         out = tradelayer_HTTP(conn, headers, False, "tl_list_attestation")
-        self.log.info(out)
+        # self.log.info(out)
         result = []
         registers = out['result']
         for addr in addresses:
@@ -165,7 +177,38 @@ class PersistenceBasicsTest (BitcoinTestFramework):
         assert_equal(result, [True, True, True, True])
 
 
+        self.log.info("Sending a DEx sell tokens offer")
+        params = str([addresses[0], 4, "1000", "1", 250, "0.00001", "2", 1]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_senddexoffer",params)
+        assert_equal(out['error'], None)
+        # self.log.info(out)
+
         self.nodes[0].generate(1)
+
+
+        self.log.info("Checking the offer in DEx")
+        params = str([addresses[0]]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getactivedexsells",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result'][0]['propertyid'], 4)
+        assert_equal(out['result'][0]['action'], 2)
+        assert_equal(out['result'][0]['seller'], addresses[0])
+        assert_equal(out['result'][0]['ltcsdesired'], '1.00000000')
+        assert_equal(out['result'][0]['amountavailable'], '1000.00000000')
+        assert_equal(out['result'][0]['amountoffered'], '0.00000000')
+        assert_equal(out['result'][0]['unitprice'], '0.00100000')
+        assert_equal(out['result'][0]['minimumfee'], '0.00001000')
+
+
+        self.log.info("Persistence: checking tokens in issuer address")
+        params = str([addresses[0], 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['balance'],'19999999000.00000000')
+        assert_equal(out['result']['reserve'],'0.00000000')
+
 
         self.log.info("Stopping and restaring the node")
         self.restart_node(0) #stop and start
@@ -182,8 +225,8 @@ class PersistenceBasicsTest (BitcoinTestFramework):
         self.log.info("Persistence: checking the property lihki")
         params = str([4])
         out = tradelayer_HTTP(conn, headers, False, "tl_getproperty",params)
-        # assert_equal(out['error'], None)
-        self.log.info(out)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
         assert_equal(out['result']['propertyid'],4)
         assert_equal(out['result']['issuer'],addresses[0])
         assert_equal(out['result']['name'],'lihki')
@@ -192,27 +235,170 @@ class PersistenceBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['divisible'],True)
         assert_equal(out['result']['totaltokens'],'20000000000.00000000')
 
-        self.log.info("Persistence : checking attestations")
+        self.log.info("Persistence: checking tokens in issuer address")
+        params = str([addresses[0], 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['balance'],'19999999000.00000000')
+        assert_equal(out['result']['reserve'],'0.00000000')
+
+        self.log.info("Persistence: checking attestations")
         out = tradelayer_HTTP(conn, headers, False, "tl_list_attestation")
-        self.log.info(out)
+        # self.log.info(out)
 
-        self.log.info("Persistence : checking tl_geinfo")
-        out = tradelayer_HTTP(conn, headers, False, "tl_getinfo")
-        self.log.info(out)
+        result2 = []
+        registers = out['result']
+        for addr in addresses:
+            for i in registers:
+                if i['att sender'] == addr and i['att receiver'] == addr and i['kyc_id'] == 0:
+                     result2.append(True)
 
-        # result2 = []
-        # registers = out['result']
-        # for addr in addresses:
-        #     for i in registers:
-        #         if i['att sender'] == addr and i['att receiver'] == addr and i['kyc_id'] == 0:
-        #              result2.append(True)
-        #
-        # for i in registers:
-        #     if i['att sender'] == notaryAddr and i['kyc_id'] == 1:
-        #         result2.append(True)
+        for i in registers:
+            if i['att sender'] == notaryAddr and i['kyc_id'] == 1:
+                result2.append(True)
 
-        # assert_equal(result2, [True, True, True, True])
+        assert_equal(result2, [True, True, True, True])
 
+        self.log.info("Persistence: checking the offer in DEx")
+        params = str([addresses[0]]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getactivedexsells",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result'][0]['propertyid'], 4)
+        assert_equal(out['result'][0]['action'], 2)
+        assert_equal(out['result'][0]['seller'], addresses[0])
+        assert_equal(out['result'][0]['ltcsdesired'], '1.00000000')
+        assert_equal(out['result'][0]['amountavailable'], '1000.00000000')
+        assert_equal(out['result'][0]['amountoffered'], '0.00000000')
+        assert_equal(out['result'][0]['unitprice'], '0.00100000')
+        assert_equal(out['result'][0]['minimumfee'], '0.00001000')
+
+        self.log.info("Accepting the full offer")
+        params = str([addresses[1], addresses[0], 4, "1000"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_senddexaccept",params)
+        assert_equal(out['error'], None)
+        # self.log.info(out)
+
+        self.nodes[0].generate(1)
+
+        self.log.info("Checking the offer status")
+        params = str([addresses[0]]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getactivedexsells",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result'][0]['propertyid'], 4)
+        assert_equal(out['result'][0]['action'], 2)
+        assert_equal(out['result'][0]['seller'], addresses[0])
+        assert_equal(out['result'][0]['ltcsdesired'], '0.00000000')
+        assert_equal(out['result'][0]['amountavailable'], '0.00000000')
+        assert_equal(out['result'][0]['amountoffered'], '1000.00000000')
+        assert_equal(out['result'][0]['unitprice'], '0.00100000')
+        assert_equal(out['result'][0]['minimumfee'], '0.00001000')
+
+        assert_equal(out['result'][0]['accepts'][0]['buyer'], addresses[1])
+        assert_equal(out['result'][0]['accepts'][0]['amountdesired'], '1000.00000000')
+        assert_equal(out['result'][0]['accepts'][0]['ltcstopay'], '1.00000000')
+        assert_equal(out['result'][0]['accepts'][0]['block'], 208)
+        assert_equal(out['result'][0]['accepts'][0]['blocksleft'], 250)
+
+        self.log.info("2nd Stop and restart for the node")
+        self.restart_node(0) #2nd restart
+
+
+        url = urllib.parse.urlparse(self.nodes[0].url)
+        #New authpair
+        authpair = url.username + ':' + url.password
+        headers = {"Authorization": "Basic " + str_to_b64str(authpair)}
+        conn = http.client.HTTPConnection(url.hostname, url.port)
+        conn.connect()
+
+        self.log.info("Persistence: checking the offer status")
+        params = str([addresses[0]]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getactivedexsells",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result'][0]['propertyid'], 4)
+        assert_equal(out['result'][0]['action'], 2 )
+        assert_equal(out['result'][0]['seller'], addresses[0])
+        assert_equal(out['result'][0]['ltcsdesired'], '0.00000000')
+        assert_equal(out['result'][0]['amountavailable'], '0.00000000')
+        assert_equal(out['result'][0]['amountoffered'], '1000.00000000')
+        assert_equal(out['result'][0]['unitprice'], '0.00100000')
+        assert_equal(out['result'][0]['minimumfee'], '0.00001000')
+
+        assert_equal(out['result'][0]['accepts'][0]['buyer'], addresses[1])
+        assert_equal(out['result'][0]['accepts'][0]['amountdesired'], '1000.00000000')
+        assert_equal(out['result'][0]['accepts'][0]['ltcstopay'], '1.00000000')
+        assert_equal(out['result'][0]['accepts'][0]['block'], 208)
+        assert_equal(out['result'][0]['accepts'][0]['blocksleft'], 250)
+
+
+        self.log.info("Paying the tokens")
+        params = str([addresses[1], addresses[0], "1.0"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_send_dex_payment",params)
+        # self.log.info(out)
+
+        self.nodes[0].generate(1)
+
+        self.log.info("Checking token balance in seller address")
+        params = str([addresses[0], 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['balance'], '19999999000.00000000')
+        assert_equal(out['result']['reserve'],'0.00000000')
+
+        self.log.info("Checking token balance in buyer address")
+        params = str([addresses[1], 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['balance'], '1000.00000000')
+        assert_equal(out['result']['reserve'],'0.00000000')
+
+        self.log.info("Checking the offer status")
+        params = str([addresses[0]]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getactivedexsells",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result'],[])
+
+
+        self.log.info("3rd Stop and restart for the node")
+        self.restart_node(0) #3rd restart
+
+
+        url = urllib.parse.urlparse(self.nodes[0].url)
+        #New authpair
+        authpair = url.username + ':' + url.password
+        headers = {"Authorization": "Basic " + str_to_b64str(authpair)}
+        conn = http.client.HTTPConnection(url.hostname, url.port)
+        conn.connect()
+
+
+        self.log.info("Persistence: checking token balance in seller address")
+        params = str([addresses[0], 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['balance'], '19999999000.00000000')
+        assert_equal(out['result']['reserve'],'0.00000000')
+
+        self.log.info("Persistence: checking token balance in buyer address")
+        params = str([addresses[1], 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['balance'], '1000.00000000')
+        assert_equal(out['result']['reserve'],'0.00000000')
+
+        self.log.info("Persistence: checking the offer status")
+        params = str([addresses[0]]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getactivedexsells",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result'],[])
 
         conn.close()
 
