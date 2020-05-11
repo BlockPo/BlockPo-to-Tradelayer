@@ -109,9 +109,9 @@ void PropertyToJSON(const CMPSPInfo::Entry& sProperty, UniValue& property_obj)
     std::vector<int64_t> iKyc = sProperty.kyc;
     std::string sKyc;
 
-    for(std::vector<int64_t>::iterator it = iKyc.begin(); it != iKyc.end(); ++it)
+    for(auto it = iKyc.begin(); it != iKyc.end(); ++it)
     {
-        sKyc += to_string((*it));
+        sKyc += to_string(*it);
         if (it != std::prev(iKyc.end())) sKyc += ",";
     }
 
@@ -150,6 +150,7 @@ void OracleToJSON(const CMPSPInfo::Entry& sProperty, UniValue& property_obj)
   property_obj.push_back(Pair("last high price", FormatDivisibleShortMP(sProperty.oracle_high)));
   property_obj.push_back(Pair("last low price", FormatDivisibleShortMP(sProperty.oracle_low)));
   property_obj.push_back(Pair("last close price",FormatDivisibleShortMP(sProperty.oracle_close)));
+
 }
 
 bool BalanceToJSON(const std::string& address, uint32_t property, UniValue& balance_obj, bool divisible)
@@ -166,13 +167,11 @@ bool BalanceToJSON(const std::string& address, uint32_t property, UniValue& bala
         balance_obj.push_back(Pair("reserve", FormatIndivisibleMP(nReserve)));
     }
 
-
-
     if (nAvailable == 0) {
         return false;
-    } else {
-        return true;
     }
+
+    return true;
 }
 
 void ReserveToJSON(const std::string& address, uint32_t property, UniValue& balance_obj, bool divisible)
@@ -271,7 +270,6 @@ void ContractDexObjectsToJSON(std::vector<CMPContractDex>& vContractDexObjs, Uni
     }
 }
 
-///////////////////////////////////////////////
 // obtain the payload for a transaction
 UniValue tl_getpayload(const JSONRPCRequest& request)
 {
@@ -851,15 +849,15 @@ UniValue tl_getproperty(const JSONRPCRequest& request)
 
       response.push_back(Pair("inverse quoted", std::to_string(sp.inverse_quoted)));
 
-      if (sp.denominator == TL_dUSD){
-	denominator = "Dollar";
-      } else if (sp.denominator == TL_dEUR)  {
-	denominator = "Euro";
-      } else if (sp.denominator == TL_dYEN) {
-	denominator = "Yen";
-      }
+  //     if (sp.denominator == TL_dUSD){
+	// denominator = "Dollar";
+  //     } else if (sp.denominator == TL_dEUR)  {
+	// denominator = "Euro";
+  //     } else if (sp.denominator == TL_dYEN) {
+	// denominator = "Yen";
+  //     }
 
-      response.push_back(Pair("denominator", denominator));
+      // response.push_back(Pair("denominator", denominator));
 
     } else if (sp.isOracle()) {
       response.push_back(Pair("notional size", FormatDivisibleShortMP(sp.notional_size)));
@@ -957,21 +955,6 @@ UniValue tl_list_natives(const JSONRPCRequest& request)
       UniValue propertyObj(UniValue::VOBJ);
       propertyObj.push_back(Pair("propertyid", (uint64_t) propertyId));
       ContractToJSON(sp, propertyObj); // name, data, url,...
-      response.push_back(propertyObj);
-    }
-  }
-
-  uint32_t nextTestSPID = _my_sps->peekNextSPID();
-  for (uint32_t propertyId = TEST_ECO_PROPERTY_1; propertyId < nextTestSPID; propertyId++) {
-    CMPSPInfo::Entry sp;
-    if (_my_sps->getSP(propertyId, sp)) {
-
-      if(!sp.isNativeContract())
-          continue;
-
-      UniValue propertyObj(UniValue::VOBJ);
-      propertyObj.push_back(Pair("propertyid", (uint64_t) propertyId));
-      ContractToJSON(sp, propertyObj);
       response.push_back(propertyObj);
     }
   }
@@ -1812,7 +1795,7 @@ UniValue tl_getfullposition(const JSONRPCRequest& request)
   }
 
   // pnl
-  uint32_t collateralCurrency = sp.collateral_currency;
+  uint32_t& collateralCurrency = sp.collateral_currency;
   uint64_t realizedProfits  = static_cast<uint64_t>(factorE * getMPbalance(address, collateralCurrency, REALIZED_PROFIT));
   uint64_t realizedLosses  = static_cast<uint64_t>(factorE * getMPbalance(address, collateralCurrency, REALIZED_LOSSES));
 
@@ -1858,7 +1841,6 @@ UniValue tl_getposition(const JSONRPCRequest& request)
 
   struct FutureContractObject *pfuture = getFutureContractObject(name);
   uint32_t contractId = pfuture->fco_propertyId;
-
 
   UniValue balanceObj(UniValue::VOBJ);
   PositionToJSON(address, contractId, balanceObj, isPropertyContract(contractId));
@@ -2066,7 +2048,7 @@ UniValue tl_gettradehistory(const JSONRPCRequest& request)
   UniValue response(UniValue::VARR);
 
   LOCK(cs_tally);
-  PrintToConsole("Inside the rpc gettradehistory \n");
+
   t_tradelistdb->getMatchingTrades(contractId, response);
 
   return response;
@@ -2108,7 +2090,6 @@ UniValue tl_gettradehistory_unfiltered(const JSONRPCRequest& request)
     // request pair trade history from trade db
     UniValue response(UniValue::VARR);
     LOCK(cs_tally);
-    PrintToConsole("Inside the rpc gettradehistory \n");
 
     // gets unfiltered list of trades
     t_tradelistdb->getMatchingTradesUnfiltered(contractId,response);
@@ -2150,8 +2131,11 @@ UniValue tl_getpeggedhistory(const JSONRPCRequest& request)
 
     // request pair trade history from trade db
     UniValue response(UniValue::VARR);
+
     LOCK(cs_tally);
+
     t_tradelistdb->getCreatedPegged(propertyId,response);
+
     return response;
 }
 
@@ -2180,14 +2164,11 @@ UniValue tl_getallprice(const JSONRPCRequest& request)
     int64_t allPrice = 0;
 
     auto it = market_priceMap.find(static_cast<uint32_t>(ALL));
+    std::map<uint32_t, int64_t>& auxMap = it->second;
 
-    if (it != market_priceMap.end())
-    {
-        std::map<uint32_t, int64_t> auxMap = it->second;
-        auto itt = auxMap.find(static_cast<uint32_t>(dUSD));
-        if (itt != auxMap.end())
-            allPrice = itt->second;
-    }
+    auto itt = auxMap.find(static_cast<uint32_t>(dUSD));
+    if (itt != auxMap.end())
+         allPrice = itt->second;
 
     balanceObj.push_back(Pair("unitprice", FormatByType(static_cast<uint64_t>(allPrice),2)));
     return balanceObj;
@@ -2285,11 +2266,9 @@ UniValue tl_getpnl(const JSONRPCRequest& request)
   int64_t nupnl  = getMPbalance(address, contractId, REALIZED_LOSSES);
 
   if (upnl > 0 && nupnl == 0) {
-    PrintToLog("upnl after if: %d\n",upnl);
     balanceObj.push_back(Pair("positivepnl", FormatByType(static_cast<uint64_t>(upnl),2)));
     balanceObj.push_back(Pair("negativepnl", FormatByType(0,2)));
   } else if (nupnl > 0 && upnl == 0) {
-    PrintToLog("nupnl after if: %d\n",nupnl);
     balanceObj.push_back(Pair("positivepnl", FormatByType(0,2)));
     balanceObj.push_back(Pair("negativepnl", FormatByType(static_cast<uint64_t>(nupnl),2)));
   } else{
@@ -2502,10 +2481,9 @@ UniValue tl_getsum_upnl(const JSONRPCRequest& request)
 
   std::string address = ParseAddress(request.params[0]);
 
-
   UniValue balanceObj(UniValue::VOBJ);
 
-  std::map<std::string, int64_t>:: iterator it = sum_upnls.find(address);
+  auto it = sum_upnls.find(address);
   int64_t upnl = it->second;
   balanceObj.push_back(Pair("upnl", FormatByType(upnl,2)));
 
@@ -2586,8 +2564,6 @@ UniValue tl_check_withdrawals(const JSONRPCRequest& request)
   // obtain property identifiers for pair & check valid parameters
   std::string address = ParseAddress(request.params[0]);
 
-  // RequireContract(contractId);
-
   // request pair trade history from trade db
   UniValue response(UniValue::VARR);
 
@@ -2662,12 +2638,12 @@ UniValue tl_getcache(const JSONRPCRequest& request)
     uint32_t propertyId = ParsePropertyId(request.params[0]);
 
     // geting data from cache!
-    std::map<uint32_t, int64_t>::iterator it =  cachefees.find(propertyId);
+    auto it =  cachefees.find(propertyId);
     int64_t amount = it->second;
 
     UniValue balanceObj(UniValue::VOBJ);
 
-    balanceObj.push_back(Pair("amount", FormatByType(amount,2)));
+    balanceObj.push_back(Pair("amount", FormatByType(amount, 2)));
 
     return balanceObj;
 }
@@ -2693,7 +2669,7 @@ UniValue tl_getoraclecache(const JSONRPCRequest& request)
     uint32_t propertyId = ParsePropertyId(request.params[0]);
 
     // geting data from cache!
-    std::map<uint32_t, int64_t>::iterator it =  cachefees_oracles.find(propertyId);
+    auto it =  cachefees_oracles.find(propertyId);
     int64_t amount = it->second;
 
     UniValue balanceObj(UniValue::VOBJ);
@@ -2980,6 +2956,7 @@ UniValue tl_list_attestation(const JSONRPCRequest& request)
   return response;
 }
 
+
 //tl_getmax_peggedcurrency
 //input : JSONRPCREquest which contains: 1)address of creator, 2) contract ID which is collaterilized in ALL
 //return: UniValue which is JSON object that is max pegged currency you can create
@@ -3007,16 +2984,11 @@ UniValue tl_getmax_peggedcurrency(const JSONRPCRequest& request)
 
   // get token Price
   int64_t tokenPrice = 0;
-
   auto it = market_priceMap.find(static_cast<uint32_t>(collateral));
-
-  if (it != market_priceMap.end())
-  {
-      std::map<uint32_t, int64_t> auxMap = it->second;
-      auto itt = auxMap.find(static_cast<uint32_t>(dUSD));
-      if (itt != auxMap.end())
-          tokenPrice = itt->second;
-  }
+  std::map<uint32_t, int64_t>& auxMap = it->second;
+  auto itt = auxMap.find(static_cast<uint32_t>(dUSD));
+  if (itt != auxMap.end())
+      tokenPrice = itt->second;
 
   // multiply token balance for address times the token price (which is denominated in dUSD)
   int64_t max_dUSD = tokenBalance * tokenPrice;

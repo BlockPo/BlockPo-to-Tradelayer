@@ -83,12 +83,16 @@ BOOST_AUTO_TEST_CASE(payload_create_property)
     // Create property [type 50, version 0]
     std::vector<int> numbers;
     numbers.push_back(0);
+    std::string name = "Lihki Coin";
+    std::string url = "www.parcero.col";
+    std::string data = "";
+
     std::vector<unsigned char> vch = CreatePayload_IssuanceFixed(
         static_cast<uint16_t>(1),            // property type: indivisible tokens
         static_cast<uint32_t>(0),            // previous property: none
-        std::string("Lihki Coin"),           // name
-        std::string("www.parcero.col"),      // url
-        std::string(""),                     // data
+        name,                                // name
+        url,                                 // url
+        data,                                // data
         static_cast<int64_t>(1000000),       // number of units to create
         numbers);
 
@@ -102,12 +106,16 @@ BOOST_AUTO_TEST_CASE(payload_create_property_empty)
     // Create property [type 50, version 0]
     std::vector<int> numbers;
     numbers.push_back(0);
+    std::string name = "";
+    std::string url = "";
+    std::string data = "";
+
     std::vector<unsigned char> vch = CreatePayload_IssuanceFixed(
         static_cast<uint16_t>(1),        // property type: indivisible tokens
         static_cast<uint32_t>(0),        // previous property: none
-        std::string(""),                 // name
-        std::string(""),                 // url
-        std::string(""),                 // data
+        name,                 // name
+        url,                 // url
+        data,                 // data
         static_cast<int64_t>(1000000),  // number of units to create
         numbers);
 
@@ -119,13 +127,16 @@ BOOST_AUTO_TEST_CASE(payload_create_property_full)
     // Create property [type 50, version 0]
     std::vector<int> numbers;
     numbers.push_back(0);
+    std::string name = std::string(700, 'x');
+    std::string url = std::string(700, 'x');
+    std::string data = std::string(700, 'x');
+
     std::vector<unsigned char> vch = CreatePayload_IssuanceFixed(
         static_cast<uint16_t>(1),        // property type: indivisible tokens
         static_cast<uint32_t>(0),        // previous property: none
-
-        std::string(700, 'x'),           // name
-        std::string(700, 'x'),           // url
-        std::string(700, 'x'),           // data
+        name,           // name
+        url,           // url
+        data,           // data
         static_cast<int64_t>(1000000),  // number of units to create
         numbers);
 
@@ -135,12 +146,16 @@ BOOST_AUTO_TEST_CASE(payload_create_property_full)
 BOOST_AUTO_TEST_CASE(payload_create_crowdsale)
 {
     // Create crowdsale [type 51, version 0]
+    std::string name = "Companies";
+    std::string url = "builder.bitwatch.co";
+    std::string data = "Quantum Miner";
+
     std::vector<unsigned char> vch = CreatePayload_IssuanceVariable(
         static_cast<uint16_t>(1),            // property type: indivisible tokens
         static_cast<uint32_t>(0),            // previous property: none
-        std::string("Companies"),            // name
-        std::string("builder.bitwatch.co"),  // url
-        std::string("Quantum Miner"),        // data
+        name,            // name
+        url,             // url
+        data,            // data
         static_cast<uint32_t>(1),            // property desired: MSC
         static_cast<int64_t>(100),           // tokens per unit vested
         static_cast<uint64_t>(7731414000L),  // deadline: 31 Dec 2214 23:00:00 UTC
@@ -154,12 +169,16 @@ BOOST_AUTO_TEST_CASE(payload_create_crowdsale)
 BOOST_AUTO_TEST_CASE(payload_create_crowdsale_empty)
 {
     // Create crowdsale [type 51, version 0]
+    std::string name = "";
+    std::string url = "";
+    std::string data = "";
+
     std::vector<unsigned char> vch = CreatePayload_IssuanceVariable(
         static_cast<uint16_t>(1),           // property type: indivisible tokens
         static_cast<uint32_t>(0),           // previous property: none
-        std::string(""),                    // name
-        std::string(""),                    // url
-        std::string(""),                    // data
+        name,                    // name
+        url,                    // url
+        data,                    // data
         static_cast<uint32_t>(1),           // property desired: MSC
         static_cast<int64_t>(100),          // tokens per unit vested
         static_cast<uint64_t>(7731414000L), // deadline: 31 Dec 2214 23:00:00 UTC
@@ -172,12 +191,16 @@ BOOST_AUTO_TEST_CASE(payload_create_crowdsale_empty)
 BOOST_AUTO_TEST_CASE(payload_create_crowdsale_full)
 {
     // Create crowdsale [type 51, version 0]
+    std::string name = std::string(700, 'x');
+    std::string url = std::string(700, 'x');
+    std::string data = std::string(700, 'x');
+
     std::vector<unsigned char> vch = CreatePayload_IssuanceVariable(
         static_cast<uint16_t>(1),           // property type: indivisible tokens
         static_cast<uint32_t>(0),           // previous property: none
-        std::string(700, 'x'),              // name
-        std::string(700, 'x'),              // url
-        std::string(700, 'x'),              // data
+        name,              // name
+        url,              // url
+        data,              // data
         static_cast<uint32_t>(1),           // property desired: MSC
         static_cast<int64_t>(100),          // tokens per unit vested
         static_cast<uint64_t>(7731414000L), // deadline: 31 Dec 2214 23:00:00 UTC
@@ -335,10 +358,11 @@ BOOST_AUTO_TEST_CASE(payload_cancel_orders_by_block)
 
 BOOST_AUTO_TEST_CASE(payload_issuance_pegged)
 {
+  std::string name = "dUSD";
     std::vector<unsigned char> vch = CreatePayload_IssuancePegged(
         static_cast<uint16_t>(1),            // property type
         static_cast<uint32_t>(0),            // previous propertyId
-        std::string("dUSD"),                 // name
+        name,                                // name
         static_cast<uint32_t>(2),            // propertyId
         static_cast<uint32_t>(3),            // contractId
         static_cast<uint32_t>(78563)         // amount

@@ -64,6 +64,7 @@
 #include <boost/exception/to_string.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
+ #include <boost/math/special_functions/sign.hpp>
 #include <boost/multiprecision/cpp_int.hpp>
 #include <boost/lexical_cast.hpp>
 #include <openssl/sha.h>
@@ -5864,7 +5865,7 @@ int CMPTradeList::getNextId()
 
 }
 
-int64_t setPosition(int64_t positive, int64_t negative)
+inline int64_t setPosition(int64_t positive, int64_t negative)
 {
     if (positive > 0 && negative == 0)
         return positive;
@@ -5874,55 +5875,60 @@ int64_t setPosition(int64_t positive, int64_t negative)
         return 0;
 }
 
-std::string updateStatus(int64_t oldPos, int64_t newPos)
+std::string mastercore::updateStatus(int64_t oldPos, int64_t newPos)
 {
+    bool newBig = false;
+    bool longSide = false; // old and new are long
+    bool shortSide = false; // old and new are short
 
-    if(msc_debug_update_status) PrintToLog("%s: old position: %d, new position: %d \n", __func__, oldPos, newPos);
+    int signOld = boost::math::sign(oldPos);
+    int signNew = boost::math::sign(newPos);
 
-    if(oldPos == 0 && newPos > 0)
-        return "OpenLongPosition";
+    if(oldPos == newPos)
+        return "None";
 
-    else if (oldPos == 0 && newPos < 0)
-        return "OpenShortPosition";
+    if (signNew == 0)
+        return ((signOld == 1) ? "LongPosNetted" : "ShortPosNetted");
 
-    else if (oldPos > newPos && oldPos > 0 && newPos > 0)
-        return "LongPosNettedPartly";
+    else if(signOld == 0)
+        return ((signNew == 1) ? "OpenLongPosition" : "OpenShortPosition");
 
-    else if (oldPos < newPos && oldPos < 0 && newPos < 0)
-        return "ShortPosNettedPartly";
+    if(newPos > oldPos)
+        newBig = true;
 
-    else if (oldPos < newPos && oldPos > 0 && newPos > 0)
-        return "LongPosIncreased";
-
-    else if (oldPos > newPos && oldPos < 0 && newPos < 0)
-        return "ShortPosIncreased";
-
-    else if (newPos == 0 && oldPos > 0)
-        return "LongPosNetted";
-
-    else if (newPos == 0 && oldPos < 0)
-        return "ShortPosNetted";
-
-    else if (newPos > 0 && oldPos < 0)
+    if (signNew == 1 && signOld == -1){
         return "OpenLongPosByShortPosNetted";
 
-    else if (newPos < 0 && oldPos > 0)
+    } else if (signNew == -1 && signOld == 1)
         return "OpenShortPosByLongPosNetted";
-    else
-        return "None";
+
+    if (signOld == -1 && signNew == -1)
+        shortSide = true;
+
+    else if (signOld == 1 && signNew == 1)
+        longSide = true;
+
+    if(newBig) {
+        if (shortSide)
+            return"ShortPosNettedPartly";
+        else
+            return "LongPosIncreased";
+    } else {
+        if(longSide)
+            return "LongPosNettedPartly";
+        else
+            return "ShortPosIncreased";
+    }
+
+    return "None";
+
 }
 
 bool mastercore::ContInst_Fees(const std::string& firstAddr, const std::string& secondAddr,const std::string& channelAddr, int64_t amountToReserve, uint16_t type, uint32_t colateral)
 {
     arith_uint256 fee;
 
-    if(msc_debug_contract_inst_fee)
-    {
-        PrintToLog("%s(): firstAddr: %d\n", __func__, firstAddr);
-        PrintToLog("%s(): secondAddr: %d\n", __func__, secondAddr);
-        PrintToLog("%s(): amountToReserve: %d\n", __func__, amountToReserve);
-        PrintToLog("%s(): colateral: %d\n", __func__,colateral);
-    }
+    if(msc_debug_contract_inst_fee) PrintToLog("%s(): firstAddr: %d, secondAddr: %d, amountToReserve: %d, colateral: %d\n", __func__, firstAddr, secondAddr, amountToReserve, colateral);
 
     switch (type)
     {
@@ -6007,15 +6013,12 @@ bool mastercore::Instant_x_Trade(const uint256& txid, uint8_t tradingAction, con
             assert(update_tally_map(secondAddr, property, -secondNeg, NEGATIVE_BALANCE));
     }
 
-    std::string Status_s0 = "EmptyStr", Status_s1 = "EmptyStr", Status_s2 = "EmptyStr", Status_s3 = "EmptyStr";
-    std::string Status_b0 = "EmptyStr", Status_b1 = "EmptyStr", Status_b2 = "EmptyStr", Status_b3 = "EmptyStr";
-
     // old positions
     int64_t oldFrs = setPosition(firstPoss,firstNeg);
     int64_t oldSec = setPosition(secondPoss,secondNeg);
 
-    std::string Status_maker0 = updateStatus(oldFrs,first_p);
-    std::string Status_taker0 = updateStatus(oldSec,second_p);
+    std::string Status_maker0 = mastercore::updateStatus(oldFrs,first_p);
+    std::string Status_taker0 = mastercore::updateStatus(oldSec,second_p);
 
     if(msc_debug_instant_x_trade)
     {

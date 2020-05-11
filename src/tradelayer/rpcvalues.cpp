@@ -28,12 +28,13 @@ using mastercore::StrToInt64;
 
 std::string ParseAddress(const UniValue& value)
 {
-    CTxDestination dest = DecodeDestination(value.get_str());
+    std::string address = value.get_str();
+    CTxDestination dest = DecodeDestination(address);
     if (!IsValidDestination(dest)) {
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid address");
     }
 
-    return EncodeDestination(dest);
+    return address;
 }
 
 std::string ParseAddressOrEmpty(const UniValue& value)
