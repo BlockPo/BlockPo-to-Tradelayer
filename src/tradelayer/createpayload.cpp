@@ -79,7 +79,7 @@ std::vector<unsigned char> CreatePayload_SendAll()
     return payload;
 }
 
-std::vector<unsigned char> CreatePayload_IssuanceFixed(uint16_t propertyType, uint32_t previousPropertyId, std::string name, std::string url, std::string data, uint64_t amount, std::vector<int> kycVec)
+std::vector<unsigned char> CreatePayload_IssuanceFixed(uint16_t propertyType, uint32_t previousPropertyId, std::string& name, std::string& url, std::string& data, uint64_t amount, std::vector<int>& kycVec)
 {
     std::vector<unsigned char> payload;
 
@@ -125,7 +125,7 @@ std::vector<unsigned char> CreatePayload_IssuanceFixed(uint16_t propertyType, ui
     return payload;
 }
 
-std::vector<unsigned char> CreatePayload_IssuanceVariable(uint16_t propertyType, uint32_t previousPropertyId, std::string name, std::string url, std::string data, uint32_t propertyIdDesired, uint64_t amountPerUnit, uint64_t deadline, uint8_t earlyBonus, uint8_t issuerPercentage)
+std::vector<unsigned char> CreatePayload_IssuanceVariable(uint16_t propertyType, uint32_t previousPropertyId, std::string& name, std::string& url, std::string& data, uint32_t propertyIdDesired, uint64_t amountPerUnit, uint64_t deadline, uint8_t earlyBonus, uint8_t issuerPercentage)
 {
     std::vector<unsigned char> payload;
 
@@ -164,7 +164,7 @@ std::vector<unsigned char> CreatePayload_IssuanceVariable(uint16_t propertyType,
 }
 
 
-std::vector<unsigned char> CreatePayload_IssuanceManaged(uint16_t propertyType, uint32_t previousPropertyId, std::string name, std::string url, std::string data, std::vector<int> kycVec)
+std::vector<unsigned char> CreatePayload_IssuanceManaged(uint16_t propertyType, uint32_t previousPropertyId, std::string& name, std::string& url, std::string& data, std::vector<int>& kycVec)
 {
     std::vector<unsigned char> payload;
 
@@ -347,7 +347,7 @@ std::vector<unsigned char> CreatePayload_TradeLayerAlert(uint16_t alertType, uin
     return payload;
 }
 
-std::vector<unsigned char> CreatePayload_CreateContract(uint32_t num, uint32_t den, std::string name, uint32_t blocks_until_expiration, uint32_t notional_size, uint32_t collateral_currency, uint32_t margin_requirement, uint8_t inverse, std::vector<int> kycVec)
+std::vector<unsigned char> CreatePayload_CreateContract(uint32_t num, uint32_t den, std::string& name, uint32_t blocks_until_expiration, uint32_t notional_size, uint32_t collateral_currency, uint32_t margin_requirement, uint8_t inverse, std::vector<int>& kycVec)
 {
   std::vector<unsigned char> payload;
 
@@ -394,7 +394,7 @@ std::vector<unsigned char> CreatePayload_CreateContract(uint32_t num, uint32_t d
   return payload;
 }
 
-std::vector<unsigned char> CreatePayload_ContractDexTrade(std::string name_traded, uint64_t amountForSale, uint64_t effective_price, uint8_t trading_action, uint64_t leverage)
+std::vector<unsigned char> CreatePayload_ContractDexTrade(std::string& name_traded, uint64_t amountForSale, uint64_t effective_price, uint8_t trading_action, uint64_t leverage)
 {
   std::vector<unsigned char> payload;
 
@@ -406,7 +406,9 @@ std::vector<unsigned char> CreatePayload_ContractDexTrade(std::string name_trade
   std::vector<uint8_t> vecAmountForSale = CompressInteger((uint64_t)amountForSale);
   std::vector<uint8_t> vecEffectivePrice = CompressInteger((uint64_t)effective_price);
   std::vector<uint8_t> vecTradingAction = CompressInteger((uint64_t)trading_action);
-    std::vector<uint8_t> vecLeverage = CompressInteger(leverage);
+  std::vector<uint8_t> vecLeverage = CompressInteger(leverage);
+
+  if ((name_traded).size() > 255) name_traded = name_traded.substr(0,255);
 
   payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
   payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
@@ -460,12 +462,13 @@ std::vector<unsigned char> CreatePayload_ContractDexCancelOrderByTxId(int block,
 
     uint64_t messageType = 34;
     uint64_t messageVer = 0;
-    uint32_t tblock = static_cast<uint32_t>(block);
-    uint32_t tidx = static_cast<uint32_t>(idx);
+    uint64_t tblock = static_cast<uint64_t>(block);
+    uint64_t tidx = static_cast<uint64_t>(idx);
+
     std::vector<uint8_t> vecMessageType = CompressInteger((uint64_t)messageType);
     std::vector<uint8_t> vecMessageVer = CompressInteger((uint64_t)messageVer);
-    std::vector<uint8_t> vecBlock = CompressInteger((uint64_t)tblock);
-    std::vector<uint8_t> vecIdx = CompressInteger((uint64_t)tidx);
+    std::vector<uint8_t> vecBlock = CompressInteger(tblock);
+    std::vector<uint8_t> vecIdx = CompressInteger(tidx);
     payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
     payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
     payload.insert(payload.end(), vecBlock.begin(), vecBlock.end());
@@ -474,7 +477,7 @@ std::vector<unsigned char> CreatePayload_ContractDexCancelOrderByTxId(int block,
     return payload;
 }
 
-std::vector<unsigned char> CreatePayload_IssuancePegged(uint16_t propertyType, uint32_t previousPropertyId, std::string name, uint32_t propertyId, uint32_t contractId, uint64_t amount)
+std::vector<unsigned char> CreatePayload_IssuancePegged(uint16_t propertyType, uint32_t previousPropertyId, std::string& name, uint32_t propertyId, uint32_t contractId, uint64_t amount)
 {
     std::vector<unsigned char> payload;
 
@@ -641,7 +644,7 @@ std::vector<unsigned char> CreatePayload_MetaDExTrade(uint32_t propertyIdForSale
 
 /* Tx 103 */
 
-std::vector<unsigned char> CreatePayload_CreateOracleContract(std::string name, uint32_t blocks_until_expiration, uint32_t notional_size, uint32_t collateral_currency, uint32_t margin_requirement, uint8_t inverse, std::vector<int> kycVec)
+std::vector<unsigned char> CreatePayload_CreateOracleContract(std::string& name, uint32_t blocks_until_expiration, uint32_t notional_size, uint32_t collateral_currency, uint32_t margin_requirement, uint8_t inverse, std::vector<int>& kycVec)
 {
   std::vector<unsigned char> payload;
 
@@ -898,7 +901,7 @@ std::vector<unsigned char> CreatePayload_Transfer(uint32_t propertyId, uint64_t 
   return payload;
 }
 
-std::vector<unsigned char> CreatePayload_Create_Channel(std::string channelAddress, uint32_t blocks)
+std::vector<unsigned char> CreatePayload_Create_Channel(std::string& channelAddress, uint32_t blocks)
 {
   std::vector<unsigned char> payload;
 
@@ -920,7 +923,7 @@ std::vector<unsigned char> CreatePayload_Create_Channel(std::string channelAddre
   return payload;
 }
 
-std::vector<unsigned char> CreatePayload_New_Id_Registration(std::string website, std::string name)
+std::vector<unsigned char> CreatePayload_New_Id_Registration(std::string& website, std::string& name)
 {
   std::vector<unsigned char> payload;
 
@@ -976,7 +979,7 @@ std::vector<unsigned char> CreatePayload_DEx_Payment()
   return payload;
 }
 
-std::vector<unsigned char> CreatePayload_Attestation(std::string hash)
+std::vector<unsigned char> CreatePayload_Attestation(std::string& hash)
 {
   std::vector<unsigned char> payload;
 
@@ -1012,7 +1015,7 @@ std::vector<unsigned char> CreatePayload_MetaDExCancelAll()
   return payload;
 }
 
-std::vector<unsigned char> CreatePayload_ContractDExCancel(std::string hash)
+std::vector<unsigned char> CreatePayload_ContractDExCancel(std::string& hash)
 {
   std::vector<unsigned char> payload;
 

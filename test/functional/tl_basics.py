@@ -47,7 +47,7 @@ class HTTPBasicsTest (BitcoinTestFramework):
 
 
         self.log.info("Testing tl_getinfo")
-        out = tradelayer_HTTP(conn, headers, True, "tl_getinfo")
+        out = tradelayer_HTTP(conn, headers, False, "tl_getinfo")
         assert_equal(out['result']['tradelayer_version_int'], 4000)
         assert_equal(out['result']['tradelayer_coreversion'], "0.0.4")
         assert_equal(out['result']['litecoinversion'], "0.16.3")
