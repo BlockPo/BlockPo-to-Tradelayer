@@ -33,9 +33,6 @@
 
 using namespace mastercore;
 
-extern uint64_t ask[10];
-extern uint64_t bid[10];
-
 extern int64_t priceIndex;
 extern volatile uint64_t marketPrice;
 extern int64_t factorE;
@@ -494,11 +491,11 @@ void CMPSPInfo::printAll() const
     // print off the hard coded ALL and TALL entries
     for (uint32_t idx = TL_PROPERTY_ALL; idx <= TL_PROPERTY_TALL; idx++) {
         Entry info;
-        PrintToConsole("%10d => ", idx);
+        PrintToLog("%10d => ", idx);
         if (getSP(idx, info)) {
             info.print();
         } else {
-            PrintToConsole("<Internal Error on implicit SP>\n");
+            PrintToLog("<Internal Error on implicit SP>\n");
         }
     }
 
@@ -516,10 +513,10 @@ void CMPSPInfo::printAll() const
             ssValue >> propertyId;
         } catch (const std::exception& e) {
             PrintToLog("%s(): ERROR: %s\n", __func__, e.what());
-            PrintToConsole("<Malformed key in DB>\n");
+            PrintToLog("<Malformed key in DB>\n");
             continue;
         }
-        PrintToConsole("%10s => ", propertyId);
+        PrintToLog("%10s => ", propertyId);
 
         // deserialize the persisted data
         leveldb::Slice slSpValue = iter->value();
@@ -528,7 +525,7 @@ void CMPSPInfo::printAll() const
             CDataStream ssSpValue(slSpValue.data(), slSpValue.data() + slSpValue.size(), SER_DISK, CLIENT_VERSION);
             ssSpValue >> info;
         } catch (const std::exception& e) {
-            PrintToConsole("<Malformed value in DB>\n");
+            PrintToLog("<Malformed value in DB>\n");
             PrintToLog("%s(): ERROR: %s\n", __func__, e.what());
             continue;
         }
@@ -1007,14 +1004,3 @@ std::string mastercore::strPropertyType(uint16_t propertyType)
 
   return "unknown";
 }
-
-// std::string mastercore::strEcosystem(uint8_t ecosystem)
-// {
-//   switch (ecosystem)
-//     {
-//     case TL_PROPERTY_ALL: return "main";
-//     case TL_PROPERTY_TALL: return "test";
-//     }
-//
-//   return "unknown";
-// }

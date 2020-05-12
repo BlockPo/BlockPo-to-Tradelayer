@@ -2487,29 +2487,24 @@ int64_t mastercore::getPairMarketPrice(std::string num, std::string den)
 
 uint64_t mastercore::edgeOrderbook(uint32_t contractId, uint8_t tradingAction)
 {
-    uint64_t price = 0;
-    uint64_t result = 0;
-    std::vector<uint64_t> vecContractDexPrices;
+    uint64_t candPrice = (tradingAction == BUY) ?  std::numeric_limits<uint64_t>::max() : 0;
 
     cd_PricesMap* const ppriceMap = get_PricesCd(contractId); // checking the ask price of contract A
-    for (cd_PricesMap::iterator it = ppriceMap->begin(); it != ppriceMap->end(); ++it) {
+    for (cd_PricesMap::iterator it = ppriceMap->begin(); it != ppriceMap->end(); ++it)
+    {
         const cd_Set& indexes = it->second;
-        for (cd_Set::const_iterator it = indexes.begin(); it != indexes.end(); ++it) {
+        for (cd_Set::const_iterator it = indexes.begin(); it != indexes.end(); ++it)
+        {
             const CMPContractDex& obj = *it;
-            if (obj.getTradingAction() == tradingAction || obj.getAmountForSale() <= 0) continue;
-            price = obj.getEffectivePrice();
+            if (obj.getTradingAction() == tradingAction || obj.getAmountForSale() == 0) continue;
+                uint64_t price = obj.getEffectivePrice();
+            if ((tradingAction == BUY && price < candPrice) || (tradingAction == SELL && price > candPrice))
+                candPrice = price;
             if(msc_debug_sp) PrintToLog("%s(): choosen price: %d\n",__func__, price);
-            vecContractDexPrices.push_back(price);
         }
     }
 
-    if (tradingAction == BUY && !vecContractDexPrices.empty()){
-       result = vecContractDexPrices.front();
-    } else if (tradingAction == SELL && !vecContractDexPrices.empty()){
-       result = vecContractDexPrices.back();
-    }
-
-    return static_cast<uint64_t>(result);
+    return candPrice;
 }
 
 bool mastercore::MetaDEx_Search_ALL(uint64_t& amount, uint32_t propertyOffered)
@@ -2637,7 +2632,7 @@ int mastercore::MetaDEx_CANCEL_EVERYTHING(const uint256& txid, unsigned int bloc
             rational_t price = itt->first;
             md_Set& indexes = itt->second;
 
-            PrintToLog("  # Price Level: %s\n", xToString(price));
+            if (msc_debug_metadex2) PrintToLog("  # Price Level: %s\n", xToString(price));
 
             for (md_Set::iterator it = indexes.begin(); it != indexes.end();) {
                 PrintToLog("%s= %s\n", xToString(price), it->ToString());
@@ -2648,8 +2643,6 @@ int mastercore::MetaDEx_CANCEL_EVERYTHING(const uint256& txid, unsigned int bloc
                 }
 
                 rc = 0;
-                PrintToLog("%s(): REMOVING %s\n", __func__, it->ToString());
-
                 // move from reserve to balance
                 assert(update_tally_map(it->getAddr(), it->getProperty(), -it->getAmountRemaining(), METADEX_RESERVE));
                 assert(update_tally_map(it->getAddr(), it->getProperty(), it->getAmountRemaining(), BALANCE));
@@ -2704,7 +2697,7 @@ int mastercore::MetaDEx_CANCEL_EVERYTHING(const uint256& txid, unsigned int bloc
                      continue;
                  }
 
-                 string addr = it->getAddr();
+                 std::string addr = it->getAddr();
                  int64_t amountForSale = it->getAmountForSale();
 
                  uint32_t contractId = it->getProperty();
@@ -2749,7 +2742,7 @@ int mastercore::MetaDEx_CANCEL_EVERYTHING(const uint256& txid, unsigned int bloc
 
      if (!bValid && msc_debug_contract_cancel)
      {
-        PrintToLog("CANCEL IN ORDER: You don't have active orders\n");
+        PrintToLog("%s(): CANCEL IN ORDER: You don't have active orders\n",__func__);
         rc = 1;
      }
 
