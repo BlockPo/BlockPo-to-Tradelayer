@@ -3760,6 +3760,14 @@ int mastercore_handler_block_end(int nBlockNow, CBlockIndex const * pBlockIndex,
         mastercore_init();
     }
 
+    // deleting Expired DEx accepts
+    unsigned int how_many_erased = eraseExpiredAccepts(nBlockNow);
+
+    if (how_many_erased) {
+        PrintToLog("%s(%d); erased %u accepts this block, line %d, file: %s\n",
+          __func__, how_many_erased, nBlockNow, __LINE__, __FILE__);
+     }
+     
     // check the alert status, do we need to do anything else here?
     CheckExpiredAlerts(nBlockNow, pBlockIndex->GetBlockTime());
 

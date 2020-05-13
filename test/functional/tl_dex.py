@@ -456,8 +456,88 @@ class DExBasicsTest (BitcoinTestFramework):
         assert_equal(out['result'][0]['unitprice'], '0.00000200') # should be: 0.00000199999 (here we are rounding up)
         assert_equal(out['result'][0]['minimumfee'], '0.00001000')
 
-        conn.close()
 
+        self.log.info("Cancelling the DEx offer")
+        params = str([addresses[1], 4, "10000000.98765432", "20", 250, "0.00001", "2", 3]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_senddexoffer",params)
+        # self.log.info(out)
+
+        self.nodes[0].generate(1)
+
+
+        self.log.info("Checking the offer in DEx ")
+        params = str([addresses[1]]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getactivedexsells",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result'], [])
+
+
+        self.log.info("Testing the payment window")
+
+        self.log.info("Sending a new DEx offer")
+        params = str([addresses[1], 4, "600", "1", 10, "0.00001", "2", 1]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_senddexoffer",params)
+        # self.log.info(out)
+
+        self.nodes[0].generate(1)
+
+        self.log.info("Checking the offer in DEx ")
+        params = str([addresses[1]]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getactivedexsells",params)
+        # self.log.info(out)
+
+        assert_equal(out['error'], None)
+        assert_equal(out['result'][0]['propertyid'], 4)
+        assert_equal(out['result'][0]['action'], 2)
+        assert_equal(out['result'][0]['seller'], addresses[1])
+        assert_equal(out['result'][0]['ltcsdesired'], '1.00000000')
+        assert_equal(out['result'][0]['amountavailable'], '600.00000000')
+        assert_equal(out['result'][0]['amountoffered'], '0.00000000')
+        assert_equal(out['result'][0]['unitprice'], '0.00166667') # (here we are rounding up)
+        assert_equal(out['result'][0]['minimumfee'], '0.00001000')
+
+        self.log.info("Accepting the full offer")
+        params = str([addresses[3], addresses[1], 4, "600"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_senddexaccept",params)
+        assert_equal(out['error'], None)
+        # self.log.info(out)
+
+        self.nodes[0].generate(1)
+
+
+        self.log.info("Checking the offer in DEx ")
+        params = str([addresses[1]]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getactivedexsells",params)
+        # self.log.info(out)
+
+        assert_equal(out['error'], None)
+        assert_equal(out['result'][0]['propertyid'], 4)
+        assert_equal(out['result'][0]['action'], 2)
+        assert_equal(out['result'][0]['seller'], addresses[1])
+        assert_equal(out['result'][0]['ltcsdesired'], '0.00000000')
+
+        assert_equal(out['result'][0]['amountavailable'], '0.00000000')
+        assert_equal(out['result'][0]['amountoffered'], '600.00000000')
+        assert_equal(out['result'][0]['unitprice'], '0.00166667')
+        assert_equal(out['result'][0]['minimumfee'], '0.00001000')
+
+        assert_equal(out['result'][0]['accepts'][0]['buyer'], addresses[3])
+        assert_equal(out['result'][0]['accepts'][0]['amountdesired'], '600.00000000')
+        assert_equal(out['result'][0]['accepts'][0]['ltcstopay'], '1.00000000')
+        assert_equal(out['result'][0]['accepts'][0]['blocksleft'], 10)
+
+        self.log.info("Mining 10 blocks ")
+        self.nodes[0].generate(10)
+
+        self.log.info("Checking the offer in DEx again")
+        params = str([addresses[1]]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getactivedexsells",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['accepts'], [])
+
+        conn.close()
         self.stop_nodes()
 
 if __name__ == '__main__':

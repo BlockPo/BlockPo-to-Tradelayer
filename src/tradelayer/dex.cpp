@@ -741,7 +741,6 @@ unsigned int eraseExpiredAccepts(int blockNow)
         int blocksPaymentWindow = static_cast<int>(acceptOrder.getBlockTimeLimit());
 
         if (blocksSinceAccept >= blocksPaymentWindow) {
-            PrintToLog("%s: sell offer: %s\n", __func__, acceptOrder.getHash().GetHex());
             PrintToLog("%s: erasing at block: %d, order confirmed at block: %d, payment window: %d\n",
                     __func__, blockNow, acceptOrder.getAcceptBlock(), acceptOrder.getBlockTimeLimit());
 
@@ -757,6 +756,7 @@ unsigned int eraseExpiredAccepts(int blockNow)
             my_accepts.erase(it++);
 
             ++how_many_erased;
+            
         } else it++;
     }
 
