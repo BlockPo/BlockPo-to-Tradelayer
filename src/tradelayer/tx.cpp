@@ -3245,15 +3245,11 @@ int CMPTransaction::logicMath_CreateContractDex()
 
 int CMPTransaction::logicMath_ContractDexTrade()
 {
-
-  int result = 0;
-
   struct FutureContractObject *pfuture = getFutureContractObject(name_traded);
-  uint32_t contractId = pfuture->fco_propertyId;
+  uint32_t contractId = (pfuture) ? pfuture->fco_propertyId : 0;
+  uint32_t expiration = (pfuture) ? pfuture->fco_blocks_until_expiration : 0;
 
-  uint32_t expiration = pfuture->fco_blocks_until_expiration;
-
-  (pfuture->fco_prop_type == ALL_PROPERTY_TYPE_NATIVE_CONTRACT) ? result = 5 : result = 6;
+  // (pfuture->fco_prop_type == ALL_PROPERTY_TYPE_NATIVE_CONTRACT) ? result = 5 : result = 6;
 
   int kyc_id;
 
