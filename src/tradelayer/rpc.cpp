@@ -360,7 +360,7 @@ UniValue mscrpc(const JSONRPCRequest& request)
     if (1 < request.params.size()) extra2 = atoi(request.params[1].get_str());
     if (2 < request.params.size()) extra3 = atoi(request.params[2].get_str());
 
-    PrintToConsole("%s(extra=%d,extra2=%d,extra3=%d)\n", __FUNCTION__, extra, extra2, extra3);
+    PrintToLog("%s(extra=%d,extra2=%d,extra3=%d)\n", __FUNCTION__, extra, extra2, extra3);
 
     bool bDivisible = isPropertyDivisible(extra2);
 
@@ -372,10 +372,10 @@ UniValue mscrpc(const JSONRPCRequest& request)
             int64_t total = 0;
             // display all balances
             for (std::unordered_map<std::string, CMPTally>::iterator my_it = mp_tally_map.begin(); my_it != mp_tally_map.end(); ++my_it) {
-                PrintToConsole("%34s => ", my_it->first);
+                PrintToLog("%34s => ", my_it->first);
                 total += (my_it->second).print(extra2, bDivisible);
             }
-            PrintToConsole("total for property %d  = %X is %s\n", extra2, extra2, FormatDivisibleMP(total));
+            PrintToLog("total for property %d  = %X is %s\n", extra2, extra2, FormatDivisibleMP(total));
             break;
         }
         case 1:
@@ -399,13 +399,13 @@ UniValue mscrpc(const JSONRPCRequest& request)
             uint32_t id = 0;
             // for each address display all currencies it holds
             for (std::unordered_map<std::string, CMPTally>::iterator my_it = mp_tally_map.begin(); my_it != mp_tally_map.end(); ++my_it) {
-                PrintToConsole("%34s => ", my_it->first);
+                PrintToLog("%34s => ", my_it->first);
                 (my_it->second).print(extra2);
                 (my_it->second).init();
                 while (0 != (id = (my_it->second).next())) {
-                    PrintToConsole("Id: %u=0x%X ", id, id);
+                    PrintToLog("Id: %u=0x%X ", id, id);
                 }
-                PrintToConsole("\n");
+                PrintToLog("\n");
             }
             break;
         }
@@ -420,7 +420,7 @@ UniValue mscrpc(const JSONRPCRequest& request)
         case 5:
         {
             LOCK(cs_tally);
-            PrintToConsole("isMPinBlockRange(%d,%d)=%s\n", extra2, extra3, isMPinBlockRange(extra2, extra3, false) ? "YES" : "NO");
+            PrintToLog("isMPinBlockRange(%d,%d)=%s\n", extra2, extra3, isMPinBlockRange(extra2, extra3, false) ? "YES" : "NO");
             break;
         }
         case 6:
@@ -440,31 +440,31 @@ UniValue mscrpc(const JSONRPCRequest& request)
         }
         case 9:
         {
-            PrintToConsole("Locking cs_tally for %d milliseconds..\n", extra2);
+            PrintToLog("Locking cs_tally for %d milliseconds..\n", extra2);
             LOCK(cs_tally);
             MilliSleep(extra2);
-            PrintToConsole("Unlocking cs_tally now\n");
+            PrintToLog("Unlocking cs_tally now\n");
             break;
         }
         case 10:
         {
-            PrintToConsole("Locking cs_main for %d milliseconds..\n", extra2);
+            PrintToLog("Locking cs_main for %d milliseconds..\n", extra2);
             LOCK(cs_main);
             MilliSleep(extra2);
-            PrintToConsole("Unlocking cs_main now\n");
+            PrintToLog("Unlocking cs_main now\n");
             break;
         }
 #ifdef ENABLE_WALLET
         case 11:
         {
-            PrintToConsole("Locking pwalletMain->cs_wallet for %d milliseconds..\n", extra2);
+            PrintToLog("Locking pwalletMain->cs_wallet for %d milliseconds..\n", extra2);
             CWalletRef pwalletMain = NULL;
             if (vpwallets.size() > 0){
                 pwalletMain = vpwallets[0];
             }
             LOCK(pwalletMain->cs_wallet);
             MilliSleep(extra2);
-            PrintToConsole("Unlocking pwalletMain->cs_wallet now\n");
+            PrintToLog("Unlocking pwalletMain->cs_wallet now\n");
             break;
         }
 #endif
@@ -476,7 +476,7 @@ UniValue mscrpc(const JSONRPCRequest& request)
         case 15:
         {
             // test each byte boundary during compression - TODO: talk to dexx about changing into BOOST unit test
-            PrintToConsole("Running varint compression tests...\n");
+            PrintToLog("Running varint compression tests...\n");
             int passed = 0;
             int failed = 0;
             std::vector<uint64_t> testValues;
@@ -509,18 +509,18 @@ UniValue mscrpc(const JSONRPCRequest& request)
                 for (it = compressedBytes.begin(); it != compressedBytes.end(); it++) {
                     ss << " " << std::setw(2) << static_cast<unsigned>(*it); // \\x
                 }
-                PrintToConsole("Integer: %d... compressed varint bytes:%s... decompressed integer %d... ",n,ss.str(),result);
+                PrintToLog("Integer: %d... compressed varint bytes:%s... decompressed integer %d... ",n,ss.str(),result);
                 if (result == n) {
-                    PrintToConsole("PASS\n");
+                    PrintToLog("PASS\n");
                     passed++;
                 } else {
-                    PrintToConsole("FAIL\n");
+                    PrintToLog("FAIL\n");
                     failed++;
                 }
             }
-            PrintToConsole("Varint compression tests complete.\n");
-            PrintToConsole("======================================\n");
-            PrintToConsole("Passed: %d     Failed: %d\n", passed, failed);
+            PrintToLog("Varint compression tests complete.\n");
+            PrintToLog("======================================\n");
+            PrintToLog("Passed: %d     Failed: %d\n", passed, failed);
             break;
         }
 
@@ -715,7 +715,7 @@ UniValue tl_getallbalancesforid(const JSONRPCRequest& request)
     for (std::unordered_map<std::string, CMPTally>::iterator it = mp_tally_map.begin(); it != mp_tally_map.end(); ++it) {
         uint32_t id = 0;
         bool includeAddress = false;
-        std::string address = it->first;
+        const std::string& address = it->first;
         (it->second).init();
         while (0 != (id = (it->second).next())) {
             if (id == propertyId) {
@@ -1134,8 +1134,11 @@ UniValue tl_getcrowdsale(const JSONRPCRequest& request)
     response.push_back(Pair("addedissuertokens", FormatMP(propertyId, sp.missedTokens)));
 
     // TODO: return fields every time?
-    if (!active) response.push_back(Pair("closedearly", sp.close_early));
-    if (!active) response.push_back(Pair("maxtokens", sp.max_tokens));
+    if (!active){
+        response.push_back(Pair("closedearly", sp.close_early));
+        response.push_back(Pair("maxtokens", sp.max_tokens));
+    }
+
     if (sp.close_early) response.push_back(Pair("endedtime", sp.timeclosed));
     if (sp.close_early && !sp.max_tokens) response.push_back(Pair("closetx", txidClosed));
 
@@ -1258,7 +1261,7 @@ UniValue tl_getgrants(const JSONRPCRequest& request)
     CMPSPInfo::Entry sp;
     {
         LOCK(cs_tally);
-        if (false == _my_sps->getSP(propertyId, sp)) {
+        if (!_my_sps->getSP(propertyId, sp)) {
             throw JSONRPCError(RPC_INVALID_PARAMETER, "Property identifier does not exist");
         }
     }
@@ -1447,7 +1450,7 @@ UniValue tl_listtransactions(const JSONRPCRequest& request)
     // reverse iterate over (now ordered) transactions and populate RPC objects for each one
     UniValue response(UniValue::VARR);
     for (std::map<std::string,uint256>::reverse_iterator it = walletTransactions.rbegin(); it != walletTransactions.rend(); it++) {
-        uint256 txHash = it->second;
+        const uint256& txHash = it->second;
         UniValue txobj(UniValue::VOBJ);
         int populateResult = populateRPCTransactionObject(txHash, txobj, addressParam);
         if (0 == populateResult) response.push_back(txobj);
@@ -1761,7 +1764,7 @@ UniValue tl_getfullposition(const JSONRPCRequest& request)
   std::string name_traded = ParseText(request.params[1]);
 
   struct FutureContractObject *pfuture = getFutureContractObject(name_traded);
-  uint32_t propertyId = pfuture->fco_propertyId;
+  uint32_t propertyId = (pfuture) ? pfuture->fco_propertyId : 0;
 
   RequireContract(propertyId);
 
@@ -1796,8 +1799,8 @@ UniValue tl_getfullposition(const JSONRPCRequest& request)
 
   // pnl
   uint32_t& collateralCurrency = sp.collateral_currency;
-  uint64_t realizedProfits  = static_cast<uint64_t>(factorE * getMPbalance(address, collateralCurrency, REALIZED_PROFIT));
-  uint64_t realizedLosses  = static_cast<uint64_t>(factorE * getMPbalance(address, collateralCurrency, REALIZED_LOSSES));
+  uint64_t realizedProfits  = static_cast<uint64_t>(COIN * getMPbalance(address, collateralCurrency, REALIZED_PROFIT));
+  uint64_t realizedLosses  = static_cast<uint64_t>(COIN * getMPbalance(address, collateralCurrency, REALIZED_LOSSES));
 
   if (realizedProfits > 0 && realizedLosses == 0) {
     positionObj.push_back(Pair("positivepnl", FormatByType(realizedProfits,2)));
@@ -1836,11 +1839,10 @@ UniValue tl_getposition(const JSONRPCRequest& request)
   std::string address = ParseAddress(request.params[0]);
   std::string name = ParseText(request.params[1]);
 
-
   RequireContract(name);
 
   struct FutureContractObject *pfuture = getFutureContractObject(name);
-  uint32_t contractId = pfuture->fco_propertyId;
+  uint32_t contractId = (pfuture) ? pfuture->fco_propertyId : 0;
 
   UniValue balanceObj(UniValue::VOBJ);
   PositionToJSON(address, contractId, balanceObj, isPropertyContract(contractId));
@@ -1936,7 +1938,8 @@ UniValue tl_getorderbook(const JSONRPCRequest& request)
                 for (md_Set::const_iterator it = indexes.begin(); it != indexes.end(); ++it) {
                     const CMPMetaDEx& obj = *it;
                     if (obj.getProperty() != propertyIdForSale) continue;
-                    if (!filterDesired || obj.getDesProperty() == propertyIdDesired) vecMetaDexObjects.push_back(obj);
+                    if (!filterDesired || obj.getDesProperty() == propertyIdDesired)
+                        vecMetaDexObjects.push_back(obj);
                 }
             }
         }
@@ -1983,7 +1986,7 @@ UniValue tl_getcontract_orderbook(const JSONRPCRequest& request)
       uint8_t tradingaction = ParseContractDexAction(request.params[1]);
 
       struct FutureContractObject *pfuture = getFutureContractObject(name_traded);
-      uint32_t propertyIdForSale = pfuture->fco_propertyId;
+      uint32_t propertyIdForSale = (pfuture) ? pfuture->fco_propertyId : 0;
 
       std::vector<CMPContractDex> vecContractDexObjects;
       {
@@ -1994,9 +1997,7 @@ UniValue tl_getcontract_orderbook(const JSONRPCRequest& request)
     	        const cd_Set& indexes = it->second;
     	        for (cd_Set::const_iterator it = indexes.begin(); it != indexes.end(); ++it) {
     	            const CMPContractDex& obj = *it;
-    	            if (obj.getProperty() != propertyIdForSale) continue;
-    	            if (obj.getTradingAction() != tradingaction) continue;
-    	            if (obj.getAmountForSale() <= 0) continue;
+    	            if (obj.getProperty() != propertyIdForSale || obj.getTradingAction() != tradingaction || obj.getAmountForSale() == 0) continue;
     	            vecContractDexObjects.push_back(obj);
     	        }
            }
@@ -2015,7 +2016,7 @@ UniValue tl_gettradehistory(const JSONRPCRequest& request)
 			"tl_gettradehistory contractid propertyid ( count )\n"
 			"\nRetrieves the history of trades on the distributed contract exchange for the specified market.\n"
 			"\nArguments:\n"
-			"1. contractid           (number, required) the id of future contract\n"
+			"1. name                                (string, required) the name of future contract\n"
 			"\nResult:\n"
 			"[                                      (array of JSON objects)\n"
 			"  {\n"
@@ -2040,7 +2041,7 @@ UniValue tl_gettradehistory(const JSONRPCRequest& request)
   std::string name_traded = ParseText(request.params[0]);
 
   struct FutureContractObject *pfuture = getFutureContractObject(name_traded);
-  uint32_t contractId = pfuture->fco_propertyId;
+  uint32_t contractId = (pfuture) ? pfuture->fco_propertyId : 0;
 
   RequireContract(contractId);
 
@@ -2164,11 +2165,13 @@ UniValue tl_getallprice(const JSONRPCRequest& request)
     int64_t allPrice = 0;
 
     auto it = market_priceMap.find(static_cast<uint32_t>(ALL));
-    std::map<uint32_t, int64_t>& auxMap = it->second;
-
-    auto itt = auxMap.find(static_cast<uint32_t>(dUSD));
-    if (itt != auxMap.end())
-         allPrice = itt->second;
+    if (it != market_priceMap.end())
+    {
+        std::map<uint32_t, int64_t>& auxMap = it->second;
+        auto itt = auxMap.find(static_cast<uint32_t>(dUSD));
+        if (itt != auxMap.end())
+            allPrice = itt->second;
+    }
 
     balanceObj.push_back(Pair("unitprice", FormatByType(static_cast<uint64_t>(allPrice),2)));
     return balanceObj;
@@ -2355,7 +2358,6 @@ UniValue tl_getactivedexsells(const JSONRPCRequest& request)
     std::string addressFilter;  //TODO: Fix amountavalable when the maker are selling  (we need invert this) "amountavailable": "10.00000000",
                                 //                                                                           "amountoffered": "90.00000000",
 
-
     if (request.params.size() > 0) {
         addressFilter = ParseAddressOrEmpty(request.params[0]);
     }
@@ -2483,8 +2485,11 @@ UniValue tl_getsum_upnl(const JSONRPCRequest& request)
 
   UniValue balanceObj(UniValue::VOBJ);
 
+  int64_t upnl = 0;
   auto it = sum_upnls.find(address);
-  int64_t upnl = it->second;
+  if (it != sum_upnls.end())
+      upnl = it->second;
+
   balanceObj.push_back(Pair("upnl", FormatByType(upnl,2)));
 
   return balanceObj;
@@ -2638,8 +2643,10 @@ UniValue tl_getcache(const JSONRPCRequest& request)
     uint32_t propertyId = ParsePropertyId(request.params[0]);
 
     // geting data from cache!
+    int64_t amount = 0;
     auto it =  cachefees.find(propertyId);
-    int64_t amount = it->second;
+    if (it != cachefees.end())
+        amount = it->second;
 
     UniValue balanceObj(UniValue::VOBJ);
 
@@ -2669,8 +2676,10 @@ UniValue tl_getoraclecache(const JSONRPCRequest& request)
     uint32_t propertyId = ParsePropertyId(request.params[0]);
 
     // geting data from cache!
+    int64_t amount = 0;
     auto it =  cachefees_oracles.find(propertyId);
-    int64_t amount = it->second;
+    if (it != cachefees_oracles.end())
+        amount = it->second;
 
     UniValue balanceObj(UniValue::VOBJ);
 
@@ -2984,11 +2993,15 @@ UniValue tl_getmax_peggedcurrency(const JSONRPCRequest& request)
 
   // get token Price
   int64_t tokenPrice = 0;
-  auto it = market_priceMap.find(static_cast<uint32_t>(collateral));
-  std::map<uint32_t, int64_t>& auxMap = it->second;
-  auto itt = auxMap.find(static_cast<uint32_t>(dUSD));
-  if (itt != auxMap.end())
-      tokenPrice = itt->second;
+  auto it = market_priceMap.find(collateral);
+  if (it != market_priceMap.end())
+  {
+      std::map<uint32_t, int64_t>& auxMap = it->second;
+      auto itt = auxMap.find(static_cast<uint32_t>(dUSD));
+      if (itt != auxMap.end())
+          tokenPrice = itt->second;
+  }
+
 
   // multiply token balance for address times the token price (which is denominated in dUSD)
   int64_t max_dUSD = tokenBalance * tokenPrice;
