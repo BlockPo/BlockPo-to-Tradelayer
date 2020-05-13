@@ -126,8 +126,6 @@ static int64_t GetEstimatedFeePerKb()
        nFee = GetMinimumFee(1000, coin_control, mempool, ::feeEstimator, nullptr);
     }
 #endif
-
-    PrintToLog("%s(): nFee: %d\n",__func__, nFee);
     return nFee;
 }
 
