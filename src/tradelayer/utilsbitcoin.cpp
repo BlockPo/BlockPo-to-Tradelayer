@@ -40,7 +40,7 @@ uint32_t GetLatestBlockTime()
  */
 CBlockIndex* GetBlockIndex(const uint256& hash)
 {
-    CBlockIndex* pBlockIndex = NULL;
+    CBlockIndex* pBlockIndex = nullptr;
     LOCK(cs_main);
     BlockMap::const_iterator it = mapBlockIndex.find(hash);
     if (it != mapBlockIndex.end()) {

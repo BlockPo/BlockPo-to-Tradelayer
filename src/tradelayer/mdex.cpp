@@ -76,7 +76,7 @@ md_PricesMap* mastercore::get_Prices(uint32_t prop)
 
     if (it != metadex.end()) return &(it->second);
 
-    return (md_PricesMap*) NULL;
+    return static_cast<md_PricesMap*>(nullptr);
 }
 
 chn_PricesMap* mastercore::get_chnPrices(uint32_t prop)
@@ -85,7 +85,7 @@ chn_PricesMap* mastercore::get_chnPrices(uint32_t prop)
 
     if (it != chndex.end()) return &(it->second);
 
-    return (chn_PricesMap*) NULL;
+    return static_cast<chn_PricesMap*>(nullptr);
 }
 
 md_Set* mastercore::get_Indexes(md_PricesMap* p, rational_t price)
@@ -94,7 +94,8 @@ md_Set* mastercore::get_Indexes(md_PricesMap* p, rational_t price)
 
     if (it != p->end()) return &(it->second);
 
-    return (md_Set*) NULL;
+    return static_cast<md_Set*>(nullptr);
+
 }
 
 chn_Set* mastercore::get_chnIndexes(chn_PricesMap* p, rational_t price)
@@ -103,7 +104,7 @@ chn_Set* mastercore::get_chnIndexes(chn_PricesMap* p, rational_t price)
 
     if (it != p->end()) return &(it->second);
 
-    return (chn_Set*) NULL;
+    return static_cast<chn_Set*>(nullptr);
 }
 
 cd_PropertiesMap mastercore::contractdex;
@@ -114,7 +115,7 @@ cd_PricesMap *mastercore::get_PricesCd(uint32_t prop)
 
     if (it != contractdex.end()) return &(it->second);
 
-    return (cd_PricesMap*) NULL;
+    return static_cast<cd_PricesMap*>(nullptr);
 }
 
 cd_Set *mastercore::get_IndexesCd(cd_PricesMap *p, uint64_t price)
@@ -123,7 +124,7 @@ cd_Set *mastercore::get_IndexesCd(cd_PricesMap *p, uint64_t price)
 
     if (it != p->end()) return &(it->second);
 
-    return (cd_Set*) NULL;
+    return static_cast<cd_Set*>(nullptr);
 }
 
 void mastercore::LoopBiDirectional(cd_PricesMap* const ppriceMap, uint8_t trdAction, MatchReturnType &NewReturn, CMPContractDex* const pnew, const uint32_t propertyForSale)
@@ -1953,7 +1954,7 @@ bool mastercore::MetaDEx_INSERT(const CMPMetaDEx& objMetaDEx)
 
     // Create an empty set of metadex objects (to use in case no set currently exists at this price)
     md_Set temp_indexes;
-    md_Set *p_indexes = NULL;
+    md_Set *p_indexes = nullptr;
 
     // Prepare for return code
     std::pair <md_Set::iterator, bool> ret;
@@ -1989,7 +1990,7 @@ bool mastercore::ContractDex_INSERT(const CMPContractDex &objContractDex)
 
   // Create an empty set of contractdex objects (to use in case no set currently exists at this price)
   cd_Set temp_indexes;
-  cd_Set *p_indexes = NULL;
+  cd_Set *p_indexes = nullptr;
 
   // Prepare for return code
   std::pair <cd_Set::iterator, bool> ret;

@@ -378,7 +378,7 @@ CMPTally* mastercore::getTally(const std::string& address)
 {
     std::unordered_map<std::string, CMPTally>::iterator it = mp_tally_map.find(address);
     if (it != mp_tally_map.end()) return &(it->second);
-    return (CMPTally *) NULL;
+    return static_cast<CMPTally*>(nullptr);
 }
 
 // look at balance for an address
@@ -1208,7 +1208,7 @@ static int msc_initial_scan(int nFirstBlock)
         }
 
         CBlockIndex* pblockindex = chainActive[nBlock];
-        if (NULL == pblockindex) break;
+        if (nullptr == pblockindex) break;
         std::string strBlockHash = pblockindex->GetBlockHash().GetHex();
 
         if (msc_debug_exo) PrintToLog("%s(%d; max=%d):%s, line %d, file: %s\n",
@@ -1600,7 +1600,7 @@ int input_mp_mdexvolume_string(const std::string& s)
 static int msc_file_load(const string &filename, int what, bool verifyHash = false)
 {
   int lines = 0;
-  int (*inputLineFunc)(const string &) = NULL;
+  int (*inputLineFunc)(const string &) = nullptr;
 
   SHA256_CTX shaCtx;
   SHA256_Init(&shaCtx);
@@ -1779,12 +1779,12 @@ static int load_most_relevant_state()
   }
 
   CBlockIndex const *spBlockIndex = GetBlockIndex(spWatermark);
-  if (NULL == spBlockIndex) {
+  if (nullptr == spBlockIndex) {
     //trigger a full reparse, if the watermark isn't a real block
     return -1;
   }
 
-  while (NULL != spBlockIndex && !chainActive.Contains(spBlockIndex)) {
+  while (nullptr != spBlockIndex && !chainActive.Contains(spBlockIndex)) {
     int remainingSPs = _my_sps->popBlock(spBlockIndex->GetBlockHash());
     if (remainingSPs < 0) {
       // trigger a full reparse, if the levelDB cannot roll back
@@ -1793,7 +1793,7 @@ static int load_most_relevant_state()
       // potential optimization here?
     }*/
     spBlockIndex = spBlockIndex->pprev;
-    if (spBlockIndex != NULL) {
+    if (spBlockIndex != nullptr) {
         _my_sps->setWatermark(spBlockIndex->GetBlockHash());
     }
   }
@@ -1816,7 +1816,7 @@ static int load_most_relevant_state()
         uint256 blockHash;
         blockHash.SetHex(vstr[1]);
         CBlockIndex *pBlockIndex = GetBlockIndex(blockHash);
-        if (pBlockIndex == NULL || !chainActive.Contains(pBlockIndex)) {
+        if (pBlockIndex == nullptr || !chainActive.Contains(pBlockIndex)) {
             continue;
         }
 
@@ -1831,8 +1831,8 @@ static int load_most_relevant_state()
   // Note: to avoid rolling back all the way to the genesis block (which appears as if client is hung) abort after MAX_STATE_HISTORY attempts
   CBlockIndex const *curTip = spBlockIndex;
   int abortRollBackBlock;
-  if (curTip != NULL) abortRollBackBlock = curTip->nHeight - (MAX_STATE_HISTORY+1);
-  while (NULL != curTip && persistedBlocks.size() > 0 && curTip->nHeight > abortRollBackBlock) {
+  if (curTip != nullptr) abortRollBackBlock = curTip->nHeight - (MAX_STATE_HISTORY+1);
+  while (nullptr != curTip && persistedBlocks.size() > 0 && curTip->nHeight > abortRollBackBlock) {
     if (persistedBlocks.find(spBlockIndex->GetBlockHash()) != persistedBlocks.end()) {
       int success = -1;
       for (int i = 0; i < NUM_FILETYPES; ++i) {
@@ -1859,7 +1859,7 @@ static int load_most_relevant_state()
       return -1;
     }
     curTip = curTip->pprev;
-    if (curTip != NULL) {
+    if (curTip != nullptr) {
         _my_sps->setWatermark(curTip->GetBlockHash());
     }
   }
@@ -2351,7 +2351,7 @@ static void prune_state_files( CBlockIndex const *topIndex )
         CBlockIndex const *curIndex = GetBlockIndex(*iter);
 
         // if we have nothing int the index, or this block is too old..
-        if (NULL == curIndex || (topIndex->nHeight - curIndex->nHeight) > MAX_STATE_HISTORY )
+        if (nullptr == curIndex || (topIndex->nHeight - curIndex->nHeight) > MAX_STATE_HISTORY )
         {
             if (msc_debug_persistence)
             {
@@ -2550,19 +2550,19 @@ int mastercore_shutdown()
 
   if (p_txlistdb) {
     delete p_txlistdb;
-    p_txlistdb = NULL;
+    p_txlistdb = nullptr;
   }
   if (t_tradelistdb) {
     delete t_tradelistdb;
-    t_tradelistdb = NULL;
+    t_tradelistdb = nullptr;
   }
   if (_my_sps) {
     delete _my_sps;
-    _my_sps = NULL;
+    _my_sps = nullptr;
   }
   if (p_TradeTXDB) {
     delete p_TradeTXDB;
-    p_TradeTXDB = NULL;
+    p_TradeTXDB = nullptr;
   }
 
   mastercoreInitialized = 0;
@@ -2680,6 +2680,53 @@ bool CallingSettlement()
    return true;
 }
 
+
+/**
+ * Calling for Expiration (if any)
+ *
+ * @return True, if everything is ok
+ */
+bool CallingExpiration(CBlockIndex const * pBlockIndex)
+{
+  int expirationBlock = 0, tradeBlock = 0, checkExpiration = 0;
+
+  uint32_t nextSPID = _my_sps->peekNextSPID();
+
+  // checking expiration block for each contract
+  for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
+  {
+      CMPSPInfo::Entry sp;
+      if (_my_sps->getSP(propertyId, sp) && sp.isContract() && !sp.expirated)
+      {
+	        expirationBlock = static_cast<int>(sp.blocks_until_expiration);
+	        tradeBlock = static_cast<int>(pBlockIndex->nHeight);
+          lastBlockg = static_cast<int>(pBlockIndex->nHeight);
+
+
+          int deadline = sp.init_block + expirationBlock;
+
+          // if(msc_debug_handler_tx) PrintToLog("%s(): deadline: %d, lastBlockg : %d\n",__func__,deadline,lastBlockg);
+
+          if ( tradeBlock != 0 && deadline != 0 ) checkExpiration = tradeBlock == deadline ? 1 : 0;
+
+          if (checkExpiration)
+          {
+              sp.expirated = true; // into entry register
+              // if(msc_debug_handler_tx) PrintToLog("%s(): EXPIRATED!!!!!!!!!!!!!!!!!!!!!!!!!!!\n",__func__);
+
+              idx_expiration += 1;
+              if ( idx_expiration == 2 )
+              {
+                  expirationAchieve = 1;
+
+              } else expirationAchieve = 0;
+          } else expirationAchieve = 0;
+      }
+   }
+
+   return true;
+}
+
 bool VestingTokens(int block)
 {
     extern std::vector<std::string> vestingAddresses;
@@ -2778,83 +2825,25 @@ bool VestingTokens(int block)
 bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx, const CBlockIndex* pBlockIndex)
 {
 
-  LOCK(cs_tally);
+   LOCK(cs_tally);
 
-  if (!mastercoreInitialized) {
-    mastercore_init();
-  }
-
-  // clear pending, if any
-  // NOTE1: Every incoming TX is checked, not just MP-ones because:
-  // if for some reason the incoming TX doesn't pass our parser validation steps successfuly, I'd still want to clear pending amounts for that TX.
-  // NOTE2: Plus I wanna clear the amount before that TX is parsed by our protocol, in case we ever consider pending amounts in internal calculations.
-  PendingDelete(tx.GetHash());
-
-
-  // we do not care about parsing blocks prior to our waterline (empty blockchain defense)
-  if (nBlock < nWaterlineBlock) return false;
-  int64_t nBlockTime = pBlockIndex->GetBlockTime();
-
-
-  /***********************************************************************/
-  /** Calling The Settlement Algorithm **/
-  /* NOTE: now we are checking all contracts */
-  // CallingSettlement();
-   /***********************************************************************/
-
-  /** feeCacheBuy:
-      1) search caché in order to see the properties ids and the amounts.
-      2) search for each prop id, exchange for ALLs with available orders in orderbook
-      3) check the ALLs in cache.
-  **/
-  mastercore::feeCacheBuy();
-
-  CMPTransaction mp_obj;
-  mp_obj.unlockLogic();
-
-  const CConsensusParams &params = ConsensusParams();
-  vestingActivationBlock = params.MSC_VESTING_BLOCK;
-
-  if (static_cast<int>(nBlock) == params.MSC_VESTING_BLOCK) creatingVestingTokens(nBlock);
-
-  /** Vesting Tokens to Balance **/
-  if(static_cast<int>(nBlock) > params.MSC_VESTING_BLOCK) VestingTokens(nBlock);
-
-  int expirationBlock = 0, tradeBlock = 0, checkExpiration = 0;
-
-  uint32_t nextSPID = _my_sps->peekNextSPID();
-
-  // checking expiration block for each contract
-  for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
-  {
-      CMPSPInfo::Entry sp;
-      if (_my_sps->getSP(propertyId, sp) && sp.isContract() && !sp.expirated)
-      {
-	        expirationBlock = static_cast<int>(sp.blocks_until_expiration);
-	        tradeBlock = static_cast<int>(pBlockIndex->nHeight);
-          lastBlockg = static_cast<int>(pBlockIndex->nHeight);
-
-
-          int deadline = sp.init_block + expirationBlock;
-
-          // if(msc_debug_handler_tx) PrintToLog("%s(): deadline: %d, lastBlockg : %d\n",__func__,deadline,lastBlockg);
-
-          if ( tradeBlock != 0 && deadline != 0 ) checkExpiration = tradeBlock == deadline ? 1 : 0;
-
-          if (checkExpiration)
-          {
-              sp.expirated = true; // into entry register
-              // if(msc_debug_handler_tx) PrintToLog("%s(): EXPIRATED!!!!!!!!!!!!!!!!!!!!!!!!!!!\n",__func__);
-
-              idx_expiration += 1;
-              if ( idx_expiration == 2 )
-              {
-                  expirationAchieve = 1;
-
-              } else expirationAchieve = 0;
-          } else expirationAchieve = 0;
-      }
+   if (!mastercoreInitialized) {
+     mastercore_init();
    }
+
+   // clear pending, if any
+   // NOTE1: Every incoming TX is checked, not just MP-ones because:
+   // if for some reason the incoming TX doesn't pass our parser validation steps successfuly, I'd still want to clear pending amounts for that TX.
+   // NOTE2: Plus I wanna clear the amount before that TX is parsed by our protocol, in case we ever consider pending amounts in internal calculations.
+   PendingDelete(tx.GetHash());
+
+   // we do not care about parsing blocks prior to our waterline (empty blockchain defense)
+   if (nBlock < nWaterlineBlock) return false;
+   int64_t nBlockTime = pBlockIndex->GetBlockTime();
+
+
+   CMPTransaction mp_obj;
+   mp_obj.unlockLogic();
 
    bool fFoundTx = false;
    int pop_ret = parseTransaction(false, tx, nBlock, idx, mp_obj, nBlockTime);
@@ -3031,12 +3020,12 @@ int mastercore::WalletTxBuilder(const std::string& senderAddress, const std::str
 {
 #ifdef ENABLE_WALLET
 
-  CWalletRef pwalletMain = NULL;
+  CWalletRef pwalletMain = nullptr;
   if (vpwallets.size() > 0){
     pwalletMain = vpwallets[0];
   }
 
-  if (pwalletMain == NULL) return MP_ERR_WALLET_ACCESS;
+  if (pwalletMain == nullptr) return MP_ERR_WALLET_ACCESS;
 
   if (nMaxDatacarrierBytes < (data.size()+GetTLMarker().size())) return MP_ERR_PAYLOAD_TOO_BIG;
 
@@ -3197,12 +3186,12 @@ void CMPTxList::LoadActivations(int blockHeight)
               continue;
          }
 
-         if (blockHash.IsNull() || (NULL == GetBlockIndex(blockHash))) {
+         if (blockHash.IsNull() || (nullptr == GetBlockIndex(blockHash))) {
              PrintToLog("ERROR: While loading activation transaction %s: failed to retrieve block hash.\n", hash.GetHex());
              continue;
          }
          CBlockIndex* pBlockIndex = GetBlockIndex(blockHash);
-         if (NULL == pBlockIndex) {
+         if (nullptr == pBlockIndex) {
              PrintToLog("ERROR: While loading activation transaction %s: failed to retrieve block index.\n", hash.GetHex());
              continue;
          }
@@ -3289,7 +3278,7 @@ void CMPTxList::LoadAlerts(int blockHeight)
      {
          LOCK(cs_main);
          CBlockIndex* pBlockIndex = chainActive[blockHeight-1];
-         if (pBlockIndex != NULL) {
+         if (pBlockIndex != nullptr) {
              blockTime = pBlockIndex->GetBlockTime();
          }
      }
@@ -3742,10 +3731,35 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
   makeWithdrawals(pBlockIndex->nHeight);
   CheckLiveActivations(pBlockIndex->nHeight);
   update_sum_upnls();
+
+  const CConsensusParams &params = ConsensusParams();
+  vestingActivationBlock = params.MSC_VESTING_BLOCK;
+
+  /** Creating Vesting Tokens **/
+  if (static_cast<int>(pBlockIndex->nHeight) == params.MSC_VESTING_BLOCK) creatingVestingTokens(pBlockIndex->nHeight);
+
+  /** Vesting Tokens to Balance **/
+  if(static_cast<int>(pBlockIndex->nHeight) > params.MSC_VESTING_BLOCK) VestingTokens(pBlockIndex->nHeight);
+
   // marginMain(pBlockIndex->nHeight);
   // addInterestPegged(nBlockPrev,pBlockIndex);
   // eraseExpiredCrowdsale(pBlockIndex);
-  return 0;
+
+  /****************************************************************************/
+  // Calling The Settlement Algorithm
+  // NOTE: now we are checking all contracts
+  // CallingSettlement();
+
+  /*****************************************************************************/
+  // feeCacheBuy:
+  //   1) search caché in order to see the properties ids and the amounts.
+  //   2) search for each prop id, exchange for ALLs with available orders in orderbook
+  //   3) check the ALLs in cache.
+  //mastercore::feeCacheBuy();
+
+  /*****************************************************************************/
+  //CallingExpiration(pBlockIndex);
+   return 0;
 }
 
 // called once per block, after the block has been processed

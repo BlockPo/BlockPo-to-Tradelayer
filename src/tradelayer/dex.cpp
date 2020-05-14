@@ -67,7 +67,7 @@ CMPOffer* DEx_getOffer(const std::string& addressSeller, uint32_t propertyId)
 
     if (it != my_offers.end()) return &(it->second);
 
-    return NULL;
+    return static_cast<CMPOffer*>(nullptr);
 }
 
 /**
@@ -94,7 +94,7 @@ CMPAccept* DEx_getAccept(const std::string& addressSeller, uint32_t propertyId, 
 
     if (it != my_accepts.end()) return &(it->second);
 
-    return NULL;
+    return static_cast<CMPAccept*>(nullptr);
 }
 
 

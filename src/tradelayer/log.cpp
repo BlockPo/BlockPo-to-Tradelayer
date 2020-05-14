@@ -123,8 +123,8 @@ static boost::once_flag debugLogInitFlag = BOOST_ONCE_INIT;
  * We use boost::call_once() to make sure these are initialized
  * in a thread-safe manner the first time called:
  */
-static FILE* fileout = NULL;
-static boost::mutex* mutexDebugLog = NULL;
+static FILE* fileout = nullptr;
+static boost::mutex* mutexDebugLog = nullptr;
 
 /** Flag to indicate, whether the Trade Layer log file should be reopened. */
 extern std::atomic<bool> fReopentradelayerLog;
@@ -155,14 +155,14 @@ static boost::filesystem::path GetLogPath()
  */
 static void DebugLogInit()
 {
-    assert(fileout == NULL);
-    assert(mutexDebugLog == NULL);
+    assert(fileout == nullptr);
+    assert(mutexDebugLog == nullptr);
 
     boost::filesystem::path pathDebug = GetLogPath();
     fileout = fopen(pathDebug.string().c_str(), "a");
 
     if (fileout) {
-        setbuf(fileout, NULL); // Unbuffered
+        setbuf(fileout, nullptr); // Unbuffered
     } else {
         PrintToConsole("Failed to open debug log file: %s\n", pathDebug.string());
     }
@@ -203,7 +203,7 @@ int LogFilePrint(const std::string& str)
         // static bool fStartedNewLine = true;
         boost::call_once(&DebugLogInit, debugLogInitFlag);
 
-        if (fileout == NULL)
+        if (fileout == nullptr)
         {
             return ret;
         }
@@ -216,8 +216,8 @@ int LogFilePrint(const std::string& str)
          {
             fReopentradelayerLog = false;
             boost::filesystem::path pathDebug = GetLogPath();
-            if (freopen(pathDebug.string().c_str(), "a", fileout) != NULL)
-                setbuf(fileout, NULL); // Unbuffered
+            if (freopen(pathDebug.string().c_str(), "a", fileout) != nullptr)
+                setbuf(fileout, nullptr); // Unbuffered
 
          }
 
@@ -348,22 +348,22 @@ void ShrinkDebugLog()
     if (file && boost::filesystem::file_size(pathLog) > LOG_SHRINKSIZE) {
         // Restart the file with some of the end
         char* pch = new char[LOG_BUFFERSIZE];
-        if (NULL != pch) {
+        if (nullptr != pch) {
             fseek(file, -LOG_BUFFERSIZE, SEEK_END);
             int nBytes = fread(pch, 1, LOG_BUFFERSIZE, file);
             fclose(file);
-            file = NULL;
+            file = nullptr;
 
             file = fopen(pathLog.string().c_str(), "w");
             if (file) {
                 fwrite(pch, 1, nBytes, file);
                 fclose(file);
-                file = NULL;
+                file = nullptr;
             }
             delete[] pch;
         }
-    } else if (NULL != file) {
+    } else if (nullptr != file) {
         fclose(file);
-        file = NULL;
+        file = nullptr;
     }
 }

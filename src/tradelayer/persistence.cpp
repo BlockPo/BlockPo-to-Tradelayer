@@ -60,7 +60,7 @@ void CDBBase::Close()
 {
     if (pdb) {
         delete pdb;
-        pdb = NULL;
+        pdb = nullptr;
     }
 }
 

@@ -2218,7 +2218,7 @@ int CMPTransaction::logicHelper_CrowdsaleParticipation()
     CMPCrowd* pcrowdsale = getCrowd(receiver);
 
     // No active crowdsale
-    if (pcrowdsale == NULL) {
+    if (pcrowdsale == nullptr) {
         return (PKT_ERROR_CROWD -1);
     }
     // Active crowdsale, but not for this property
@@ -2428,7 +2428,7 @@ int CMPTransaction::logicMath_SendAll()
     }
 
     CMPTally* ptally = getTally(sender);
-    if (ptally == NULL) {
+    if (ptally == nullptr) {
         PrintToLog("%s(): rejected: sender %s has no tokens to send\n", __func__, sender);
         return (PKT_ERROR_SEND_ALL -54);
     }
@@ -2465,7 +2465,7 @@ int CMPTransaction::logicMath_CreatePropertyFixed()
       LOCK(cs_main);
 
       CBlockIndex* pindex = chainActive[block];
-      if (pindex == NULL) {
+      if (pindex == nullptr) {
 	PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
 	return (PKT_ERROR_SP -20);
       }
@@ -2537,7 +2537,7 @@ int CMPTransaction::logicMath_CreatePropertyVariable()
         LOCK(cs_main);
 
         CBlockIndex* pindex = chainActive[block];
-        if (pindex == NULL) {
+        if (pindex == nullptr) {
             PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
             return (PKT_ERROR_SP -20);
         }
@@ -2579,7 +2579,7 @@ int CMPTransaction::logicMath_CreatePropertyVariable()
         return (PKT_ERROR_SP -38);
     }
 
-    if (NULL != getCrowd(sender)) {
+    if (nullptr != getCrowd(sender)) {
         PrintToLog("%s(): rejected: sender %s has an active crowdsale\n", __func__, sender);
         return (PKT_ERROR_SP -39);
     }
@@ -2621,7 +2621,7 @@ int CMPTransaction::logicMath_CloseCrowdsale()
         LOCK(cs_main);
 
         CBlockIndex* pindex = chainActive[block];
-        if (pindex == NULL) {
+        if (pindex == nullptr) {
             PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
             return (PKT_ERROR_SP -20);
         }
@@ -2688,7 +2688,7 @@ int CMPTransaction::logicMath_CreatePropertyManaged()
         LOCK(cs_main);
 
         CBlockIndex* pindex = chainActive[block];
-        if (pindex == NULL) {
+        if (pindex == nullptr) {
             PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
             return (PKT_ERROR_SP -20);
         }
@@ -2762,7 +2762,7 @@ int CMPTransaction::logicMath_GrantTokens()
     LOCK(cs_main);
 
     CBlockIndex* pindex = chainActive[block];
-    if (pindex == NULL) {
+    if (pindex == nullptr) {
       PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
       return (PKT_ERROR_SP -20);
     }
@@ -2869,7 +2869,7 @@ int CMPTransaction::logicMath_RevokeTokens()
         LOCK(cs_main);
 
         CBlockIndex* pindex = chainActive[block];
-        if (pindex == NULL) {
+        if (pindex == nullptr) {
             PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
             return (PKT_ERROR_TOKENS -20);
         }
@@ -2939,7 +2939,7 @@ int CMPTransaction::logicMath_ChangeIssuer()
         LOCK(cs_main);
 
         CBlockIndex* pindex = chainActive[block];
-        if (pindex == NULL) {
+        if (pindex == nullptr) {
             PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
             return (PKT_ERROR_TOKENS -20);
         }
@@ -2969,7 +2969,7 @@ int CMPTransaction::logicMath_ChangeIssuer()
         return (PKT_ERROR_TOKENS -43);
     }
 
-    if (NULL != getCrowd(sender)) {
+    if (nullptr != getCrowd(sender)) {
         PrintToLog("%s(): rejected: sender %s has an active crowdsale\n", __func__, sender);
         return (PKT_ERROR_TOKENS -39);
     }
@@ -2979,7 +2979,7 @@ int CMPTransaction::logicMath_ChangeIssuer()
         return (PKT_ERROR_TOKENS -45);
     }
 
-    if (NULL != getCrowd(receiver)) {
+    if (nullptr != getCrowd(receiver)) {
         PrintToLog("%s(): rejected: receiver %s has an active crowdsale\n", __func__, receiver);
         return (PKT_ERROR_TOKENS -46);
     }
@@ -3186,7 +3186,7 @@ int CMPTransaction::logicMath_CreateContractDex()
 
     CBlockIndex* pindex = chainActive[block];
 
-      if (pindex == NULL) {
+      if (pindex == nullptr) {
 	PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
 	return (PKT_ERROR_SP -20);
       }
@@ -3435,7 +3435,7 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
         LOCK(cs_main);
 
         CBlockIndex* pindex = chainActive[block];
-        if (pindex == NULL) {
+        if (pindex == nullptr) {
             PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
             return (PKT_ERROR_SP -20);
         }
@@ -3938,7 +3938,7 @@ int CMPTransaction::logicMath_CreateOracleContract()
         LOCK(cs_main);
         CBlockIndex* pindex = chainActive[block];
 
-        if (pindex == NULL)
+        if (pindex == nullptr)
         {
             PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
             return (PKT_ERROR_SP -20);
@@ -4016,7 +4016,7 @@ int CMPTransaction::logicMath_Change_OracleAdm()
         LOCK(cs_main);
         CBlockIndex* pindex = chainActive[block];
 
-        if (pindex == NULL)
+        if (pindex == nullptr)
         {
             PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
             return (PKT_ERROR_SP -20);
@@ -4129,7 +4129,7 @@ int CMPTransaction::logicMath_OracleBackup()
         LOCK(cs_main);
         CBlockIndex* pindex = chainActive[block];
 
-        if (pindex == NULL)
+        if (pindex == nullptr)
         {
             PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
             return (PKT_ERROR_SP -20);
@@ -4259,7 +4259,7 @@ int CMPTransaction::logicMath_Withdrawal_FromChannel()
         LOCK(cs_main);
 
         CBlockIndex* pindex = chainActive[block];
-        if (pindex == NULL) {
+        if (pindex == nullptr) {
             PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
             return (PKT_ERROR_TOKENS -20);
         }
