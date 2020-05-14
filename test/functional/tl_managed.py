@@ -80,7 +80,7 @@ class ManagedBasicsTest (BitcoinTestFramework):
 
         self.log.info("Creating new tokens (sendissuancemanaged)")
         array = [0]
-        params = str([addresses[0],2,0,"lihki","","",array]).replace("'",'"')
+        params = str([addresses[0], 2, 0, "lihki", "", "", array]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_sendissuancemanaged",params)
         # self.log.info(out)
 
@@ -91,6 +91,7 @@ class ManagedBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, True, "tl_getproperty",params)
         assert_equal(out['result']['propertyid'],4)
         assert_equal(out['result']['name'],'lihki')
+        assert_equal(out['result']['issuer'], addresses[0])
         assert_equal(out['result']['data'],'')
         assert_equal(out['result']['url'],'')
         assert_equal(out['result']['divisible'],True)
@@ -141,6 +142,59 @@ class ManagedBasicsTest (BitcoinTestFramework):
             assert_equal(out['error'], None)
             assert_equal(out['result']['balance'],'1000.00000000')
             assert_equal(out['result']['reserve'],'0.00000000')
+
+        self.log.info("Trying to change the issuer")
+        params = str([addresses[0], addresses[1], 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_sendchangeissuer",params)
+        # self.log.info(out)
+
+        self.nodes[0].generate(1)
+
+        self.log.info("Checking the property (with new issuer)")
+        params = str([4])
+        out = tradelayer_HTTP(conn, headers, True, "tl_getproperty",params)
+        assert_equal(out['result']['propertyid'],4)
+        assert_equal(out['result']['name'],'lihki')
+        assert_equal(out['result']['issuer'], addresses[1])
+        assert_equal(out['result']['data'],'')
+        assert_equal(out['result']['url'],'')
+        assert_equal(out['result']['divisible'],True)
+        assert_equal(out['result']['totaltokens'],'2000.00000000')
+
+
+        self.log.info("Sending 264 tokens from issuer to himself (tl_sendgrant)")
+        params = str([addresses[1], addresses[1], 4, "264"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_sendgrant",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+
+        self.nodes[0].generate(1)
+
+        self.log.info("Checking issuer's balance")
+        params = str([addresses[1], 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['balance'],'1264.00000000')
+        assert_equal(out['result']['reserve'],'0.00000000')
+
+
+        self.log.info("Sending 888 tokens from issuer to himself (tl_send)")
+        params = str([addresses[1], addresses[1], 4, "888"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_send",params)
+        # self.log.info(out)
+        assert_equal(out['error']['message'], 'Property identifier does not refer to a managed property')
+
+        self.nodes[0].generate(1)
+
+
+        self.log.info("Checking issuer's balance now")
+        params = str([addresses[1], 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
+        self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['balance'],'1264.00000000')
+        assert_equal(out['result']['reserve'],'0.00000000')
 
         conn.close()
 

@@ -1761,7 +1761,7 @@ UniValue tl_getfullposition(const JSONRPCRequest& request)
   std::string name_traded = ParseText(request.params[1]);
 
   struct FutureContractObject *pfuture = getFutureContractObject(name_traded);
-  uint32_t propertyId = pfuture->fco_propertyId;
+  uint32_t propertyId = (pfuture) ? pfuture->fco_propertyId : 0;
 
   RequireContract(propertyId);
 
@@ -1840,7 +1840,7 @@ UniValue tl_getposition(const JSONRPCRequest& request)
   RequireContract(name);
 
   struct FutureContractObject *pfuture = getFutureContractObject(name);
-  uint32_t contractId = pfuture->fco_propertyId;
+  uint32_t contractId = (pfuture) ? pfuture->fco_propertyId : 0;
 
   UniValue balanceObj(UniValue::VOBJ);
   PositionToJSON(address, contractId, balanceObj, isPropertyContract(contractId));
@@ -1983,7 +1983,7 @@ UniValue tl_getcontract_orderbook(const JSONRPCRequest& request)
       uint8_t tradingaction = ParseContractDexAction(request.params[1]);
 
       struct FutureContractObject *pfuture = getFutureContractObject(name_traded);
-      uint32_t propertyIdForSale = pfuture->fco_propertyId;
+      uint32_t propertyIdForSale = (pfuture) ? pfuture->fco_propertyId : 0;
 
       std::vector<CMPContractDex> vecContractDexObjects;
       {
@@ -2040,7 +2040,7 @@ UniValue tl_gettradehistory(const JSONRPCRequest& request)
   std::string name_traded = ParseText(request.params[0]);
 
   struct FutureContractObject *pfuture = getFutureContractObject(name_traded);
-  uint32_t contractId = pfuture->fco_propertyId;
+  uint32_t contractId = (pfuture) ? pfuture->fco_propertyId : 0;
 
   RequireContract(contractId);
 
@@ -2974,8 +2974,8 @@ UniValue tl_getmax_peggedcurrency(const JSONRPCRequest& request)
   std::string name_traded = ParseText(request.params[1]);
 
   struct FutureContractObject *pfuture = getFutureContractObject(name_traded);
-  uint32_t contractId = pfuture->fco_propertyId;
-  uint32_t collateral = pfuture->fco_collateral_currency;
+  uint32_t contractId = (pfuture) ? pfuture->fco_propertyId : 0;
+  uint32_t collateral = (pfuture) ? pfuture->fco_collateral_currency : 0;
 
   // Get available ALL because dCurrency is a hedge of ALL and ALL denominated Short Contracts
   // obtain parameters & info
