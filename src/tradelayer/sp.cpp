@@ -608,7 +608,7 @@ CMPCrowd* mastercore::getCrowd(const std::string& address)
 
     if (my_it != my_crowds.end()) return &(my_it->second);
 
-    return (CMPCrowd *)NULL;
+    return static_cast<CMPCrowd *>(nullptr);
 }
 
 bool mastercore::IsPropertyIdValid(uint32_t propertyId)
@@ -944,7 +944,7 @@ void mastercore::eraseMaxedCrowdsale(const std::string& address, int64_t blockTi
 
 unsigned int mastercore::eraseExpiredCrowdsale(const CBlockIndex* pBlockIndex)
 {
-    if (pBlockIndex == NULL) return 0;
+    if (pBlockIndex == nullptr) return 0;
 
     const int64_t blockTime = pBlockIndex->GetBlockTime();
     const int blockHeight = pBlockIndex->nHeight;

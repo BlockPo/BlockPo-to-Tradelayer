@@ -301,7 +301,7 @@ UniValue tl_getpayload(const JSONRPCRequest& request)
     int blockHeight = GetHeight();
     if (!blockHash.IsNull()) {
         CBlockIndex* pBlockIndex = GetBlockIndex(blockHash);
-        if (NULL != pBlockIndex) {
+        if (nullptr != pBlockIndex) {
             blockTime = pBlockIndex->nTime;
             blockHeight = pBlockIndex->nHeight;
         }
@@ -458,7 +458,7 @@ UniValue mscrpc(const JSONRPCRequest& request)
         case 11:
         {
             PrintToLog("Locking pwalletMain->cs_wallet for %d milliseconds..\n", extra2);
-            CWalletRef pwalletMain = NULL;
+            CWalletRef pwalletMain = nullptr;
             if (vpwallets.size() > 0){
                 pwalletMain = vpwallets[0];
             }
@@ -768,7 +768,7 @@ UniValue tl_getallbalancesforaddress(const JSONRPCRequest& request)
 
     CMPTally* addressTally = getTally(address);
 
-    if (NULL == addressTally) { // addressTally object does not exist
+    if (nullptr == addressTally) { // addressTally object does not exist
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Address not found");
     }
 

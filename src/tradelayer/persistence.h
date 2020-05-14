@@ -38,7 +38,7 @@ protected:
     //! Number of entries written
     unsigned int nWritten;
 
-    CDBBase() : pdb(NULL), nRead(0), nWritten(0)
+    CDBBase() : pdb(nullptr), nRead(0), nWritten(0)
     {
         options.paranoid_checks = true;
         options.create_if_missing = true;
@@ -65,7 +65,7 @@ protected:
      */
     leveldb::Iterator* NewIterator() const
     {
-        assert(pdb != NULL);
+        assert(pdb != nullptr);
         return pdb->NewIterator(iteroptions);
     }
 

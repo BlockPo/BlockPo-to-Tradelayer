@@ -57,12 +57,12 @@ std::map<std::string, uint256> FetchWalletTLTransactions(unsigned int count, int
 {
     std::map<std::string, uint256> mapResponse;
 #ifdef ENABLE_WALLET
-    CWalletRef pwalletMain = NULL;
+    CWalletRef pwalletMain = nullptr;
     if (vpwallets.size() > 0){
         pwalletMain = vpwallets[0];
     }
 
-    if (pwalletMain == NULL) {
+    if (pwalletMain == nullptr) {
         return mapResponse;
     }
     std::set<uint256> seenHashes;
@@ -75,7 +75,7 @@ std::map<std::string, uint256> FetchWalletTLTransactions(unsigned int count, int
     // Iterate backwards through wallet transactions until we have count items to return:
     for (CWallet::TxItems::reverse_iterator it = txOrdered.rbegin(); it != txOrdered.rend(); ++it) {
         const CWalletTx* pwtx = it->second.first;
-        if (pwtx == NULL) continue;
+        if (pwtx == nullptr) continue;
         const uint256& txHash = pwtx->GetHash();
         {
             LOCK(cs_tally);
@@ -83,9 +83,9 @@ std::map<std::string, uint256> FetchWalletTLTransactions(unsigned int count, int
         }
 
         const uint256& blockHash = pwtx->hashBlock;
-        if (blockHash.IsNull() || (NULL == GetBlockIndex(blockHash))) continue;
+        if (blockHash.IsNull() || (nullptr == GetBlockIndex(blockHash))) continue;
         const CBlockIndex* pBlockIndex = GetBlockIndex(blockHash);
-        if (NULL == pBlockIndex) continue;
+        if (nullptr == pBlockIndex) continue;
         int blockHeight = pBlockIndex->nHeight;
         if (blockHeight < startBlock || blockHeight > endBlock) continue;
         int blockPosition = GetTransactionByteOffset(txHash);
