@@ -2350,7 +2350,7 @@ int CMPTransaction::logicMath_SimpleSend()
 
     // ------------------------------------------
 
-    if (receiver.empty()) {
+    if (sender == receiver) {
         PrintToLog("%s(): rejected: sender sending tokens to himself\n", __func__, property);
         return (PKT_ERROR_SEND -26);
     }
