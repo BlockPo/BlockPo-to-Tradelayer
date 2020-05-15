@@ -181,9 +181,9 @@ class ManagedBasicsTest (BitcoinTestFramework):
 
         self.log.info("Sending 888 tokens from issuer to himself (tl_send)")
         params = str([addresses[1], addresses[1], 4, "888"]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, True, "tl_send",params)
+        out = tradelayer_HTTP(conn, headers, False, "tl_send",params)
         # self.log.info(out)
-        assert_equal(out['error']['message'], 'Property identifier does not refer to a managed property')
+        assert_equal(out['error']['message'], 'sending tokens to same address')
 
         self.nodes[0].generate(1)
 
@@ -191,7 +191,7 @@ class ManagedBasicsTest (BitcoinTestFramework):
         self.log.info("Checking issuer's balance now")
         params = str([addresses[1], 4]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
-        self.log.info(out)
+        # self.log.info(out)
         assert_equal(out['error'], None)
         assert_equal(out['result']['balance'],'1264.00000000')
         assert_equal(out['result']['reserve'],'0.00000000')
