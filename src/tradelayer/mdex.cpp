@@ -2228,7 +2228,9 @@ int mastercore::ContractDex_CANCEL_FOR_BLOCK(const uint256& txid,  int block,uns
 	              int64_t num = conv.numerator().convert_to<int64_t>();
 	              int64_t den = conv.denominator().convert_to<int64_t>();
 
-	              arith_uint256 amountMargin = (ConvertTo256(amountForSale) * ConvertTo256(marginRe) * ConvertTo256(num) / (ConvertTo256(den) * ConvertTo256(factorE)));
+                // NOTE: check margin request (for inverse and normal quoting)
+	              // arith_uint256 amountMargin = (ConvertTo256(amountForSale) * ConvertTo256(marginRe)) / ConvertTo256(COIN);
+                arith_uint256 amountMargin = ConvertTo256(amountForSale) * ConvertTo256(num) / ConvertTo256(den);
 	              int64_t redeemed = ConvertTo64(amountMargin);
 
                 if(msc_debug_contract_cancel_forblock)

@@ -1175,7 +1175,6 @@ bool CMPTransaction::interpret_ContractDexCancelEcosystem()
   int i = 0;
   std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
-  std::vector<uint8_t> vecEcosystemBytes = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecContractIdBytes = GetNextVarIntBytes(i);
 
   if (!vecTypeBytes.empty()) {
@@ -1186,13 +1185,10 @@ bool CMPTransaction::interpret_ContractDexCancelEcosystem()
     version = DecompressInteger(vecVersionBytes);
   } else return false;
 
-  // if (!vecEcosystemBytes.empty()) {
-  //   ecosystem = DecompressInteger(vecEcosystemBytes);
-  // } else return false;
-
   if (!vecContractIdBytes.empty()) {
     contractId = DecompressInteger(vecContractIdBytes);
   } else return false;
+
 
   if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
   {
