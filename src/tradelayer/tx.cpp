@@ -3321,7 +3321,7 @@ int CMPTransaction::logicMath_ContractDexTrade()
       if (amountToReserve > 0)
 	{
 	  assert(update_tally_map(sender, colateralh, -amountToReserve, BALANCE));
-	  assert(update_tally_map(sender, colateralh,  amountToReserve, CONTRACTDEX_MARGIN));
+	  assert(update_tally_map(sender, colateralh,  amountToReserve, CONTRACTDEX_RESERVE));
 	}
       // int64_t reserva = getMPbalance(sender, colateralh, CONTRACTDEX_MARGIN);
       // std::string reserved = FormatDivisibleMP(reserva,false);
@@ -3339,7 +3339,7 @@ int CMPTransaction::logicMath_ContractDexTrade()
 
   /*********************************************/
   t_tradelistdb->recordNewTrade(txid, sender, contractId, desired_property, block, tx_idx, 0);
-  int rc = ContractDex_ADD(sender, contractId, amount, block, txid, tx_idx, effective_price, trading_action,0);
+  int rc = ContractDex_ADD(sender, contractId, amount, block, txid, tx_idx, effective_price, trading_action, amountToReserve);
 
   return rc;
 }

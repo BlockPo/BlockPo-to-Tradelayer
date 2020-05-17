@@ -171,7 +171,7 @@ class NativesBasicsTest (BitcoinTestFramework):
         # self.log.info(out)
         assert_equal(out['error'], None)
         assert_equal(out['result']['balance'],'49900.00000000')
-        assert_equal(out['result']['reserve'],'0.00000000')
+        assert_equal(out['result']['reserve'],'100.00000000')
 
 
         self.log.info("Checking orderbook")
@@ -371,21 +371,21 @@ class NativesBasicsTest (BitcoinTestFramework):
 
         idx = out['result'][0]['idx']
         block = out['result'][0]['block']
-        #
-        # self.log.info("Canceling using tl_cancelorderbyblock")
-        # params = str([addresses[1], block, idx]).replace("'",'"')
-        # out = tradelayer_HTTP(conn, headers, True, "tl_cancelorderbyblock",params)
-        # # self.log.info(out)
-        # assert_equal(out['error'], None)
-        #
-        # self.nodes[0].generate(1)
-        #
-        # self.log.info("Checking orderbook (buy side)")
-        # params = str(["ALL/Lhk", 1]).replace("'",'"')
-        # out = tradelayer_HTTP(conn, headers, True, "tl_getcontract_orderbook",params)
-        # # self.log.info(out)
-        # assert_equal(out['error'], None)
-        # assert_equal(out['result'],[])
+
+        self.log.info("Canceling using tl_cancelorderbyblock")
+        params = str([addresses[1], block, idx]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_cancelorderbyblock",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+
+        self.nodes[0].generate(1)
+
+        self.log.info("Checking orderbook (buy side)")
+        params = str(["ALL/Lhk", 1]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getcontract_orderbook",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result'],[])
 
         conn.close()
 

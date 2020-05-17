@@ -424,6 +424,7 @@ public:
         timeLimit = 0;
         denominator = 0;
         numerator = 0;
+        leverage = 0;
 
         //Multisig channels
         amount_commited = 0;

@@ -625,12 +625,31 @@ class PersistenceBasicsTest (BitcoinTestFramework):
 
 
         self.log.info("Withdrawal from channel ")
-        params = str([addresses[0], multisig, 4, '100']).replace("'",'"')
+        params = str([addresses[0], multisig, 4, '50']).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_withdrawal_fromchannel",params)
         assert_equal(out['error'], None)
         # self.log.info(out)
 
         self.nodes[0].generate(1)
+
+
+        self.log.info("Withdrawal from channel ")
+        params = str([addresses[0], multisig, 4, '50']).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_withdrawal_fromchannel",params)
+        assert_equal(out['error'], None)
+        # self.log.info(out)
+
+        self.nodes[0].generate(1)
+
+
+        self.log.info("Checking tokens balance for first address")
+        params = str([addresses[0], 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['balance'],'19999998800.04000000')
+        assert_equal(out['result']['reserve'],'0.00000000')
+
 
         self.log.info("Checking reserve in channel")
         params = str([multisig, 4]).replace("'",'"')
@@ -638,6 +657,21 @@ class PersistenceBasicsTest (BitcoinTestFramework):
         # self.log.info(out)
         assert_equal(out['error'], None)
         assert_equal(out['result']['channel reserve'], '100.00000000')
+
+        self.log.info("Checking withdrawals")
+        params = str([addresses[0]]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_check_withdrawals", params)
+        # self.log.info(out)
+        assert_equal(out['result'][0]['channel_address'], multisig)
+        assert_equal(out['result'][0]['sender'], addresses[0])
+        assert_equal(out['result'][0]['withdrawal_amount'], '50.00000000')
+        assert_equal(out['result'][0]['property_id'], '4')
+
+        assert_equal(out['result'][1]['channel_address'], multisig)
+        assert_equal(out['result'][1]['sender'], addresses[0])
+        assert_equal(out['result'][1]['withdrawal_amount'], '50.00000000')
+        assert_equal(out['result'][1]['property_id'], '4')
+
 
         self.log.info("6th Restart for the node")
         self.restart_node(0)
@@ -658,11 +692,55 @@ class PersistenceBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         assert_equal(out['result']['channel reserve'], '100.00000000')
 
-        self.log.info("mining 7 blocks")
-        self.nodes[0].generate(7)
+
+        self.log.info("Persistence: checking withdrawals")
+        params = str([addresses[0]]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_check_withdrawals", params)
+        # self.log.info(out)
+        assert_equal(out['result'][0]['channel_address'], multisig)
+        assert_equal(out['result'][0]['sender'], addresses[0])
+        assert_equal(out['result'][0]['withdrawal_amount'], '50.00000000')
+        assert_equal(out['result'][0]['property_id'], '4')
+
+        assert_equal(out['result'][1]['channel_address'], multisig)
+        assert_equal(out['result'][1]['sender'], addresses[0])
+        assert_equal(out['result'][1]['withdrawal_amount'], '50.00000000')
+        assert_equal(out['result'][1]['property_id'], '4')
+
+
+        self.log.info("mining 6 blocks")
+        self.nodes[0].generate(6)
+
+        self.log.info("Checking tokens balance for first address")
+        params = str([addresses[0], 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['balance'],'19999998850.04000000')
+        assert_equal(out['result']['reserve'],'0.00000000')
 
 
         self.log.info("Checking reserve in channel")
+        params = str([multisig, 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_get_channelreserve",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['channel reserve'], '50.00000000')
+
+
+        self.log.info("mining 1 more block")
+        self.nodes[0].generate(1)
+
+        self.log.info("Checking tokens balance for first address again")
+        params = str([addresses[0], 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['balance'],'19999998900.04000000')
+        assert_equal(out['result']['reserve'],'0.00000000')
+
+
+        self.log.info("Checking reserve in channel again")
         params = str([multisig, 4]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_get_channelreserve",params)
         # self.log.info(out)
@@ -714,7 +792,7 @@ class PersistenceBasicsTest (BitcoinTestFramework):
         assert_equal(out['result'][0]['amountforsale'], '10.00000000')
         assert_equal(out['result'][0]['tradingaction'], 1)
         assert_equal(out['result'][0]['effectiveprice'], '780.50000000')
-        assert_equal(out['result'][0]['block'], 224)
+        assert_equal(out['result'][0]['block'], 225)
 
         self.log.info("7th Restart for the node")
         self.restart_node(0)
@@ -752,7 +830,7 @@ class PersistenceBasicsTest (BitcoinTestFramework):
         assert_equal(out['result'][0]['amountforsale'], '10.00000000')
         assert_equal(out['result'][0]['tradingaction'], 1)
         assert_equal(out['result'][0]['effectiveprice'], '780.50000000')
-        assert_equal(out['result'][0]['block'], 224)
+        assert_equal(out['result'][0]['block'], 225)
 
         self.log.info("Persistence: checking LTC volume in DEx")
         params = str([4, 1, 300]).replace("'",'"')

@@ -167,17 +167,19 @@ class CMPContractDex : public CMPMetaDEx
  private:
   uint64_t effective_price;
   uint8_t trading_action;
+  int64_t amount_reserved;
+
 
  public:
  CMPContractDex()
-   : effective_price(0), trading_action(0) {}
+   : effective_price(0), trading_action(0), amount_reserved(0) {}
 
- CMPContractDex(const std::string& addr, int b, uint32_t c, int64_t nValue, uint32_t cd, int64_t ad, const uint256& tx, uint32_t i, uint8_t suba, uint64_t effp, uint8_t act)
-   : CMPMetaDEx(addr, b, c, nValue, cd, ad, tx, i, suba), effective_price(effp), trading_action(act) {}
+ CMPContractDex(const std::string& addr, int b, uint32_t c, int64_t nValue, uint32_t cd, int64_t ad, const uint256& tx, uint32_t i, uint8_t suba, uint64_t effp, uint8_t act, uint64_t amr)
+   : CMPMetaDEx(addr, b, c, nValue, cd, ad, tx, i, suba), effective_price(effp), trading_action(act), amount_reserved(amr) {}
 
   /*Remember: Needed for tradelayer.cpp "ar"*/
- CMPContractDex(const std::string& addr, int b, uint32_t c, int64_t nValue, uint32_t cd, int64_t ad, const uint256& tx, uint32_t i, uint8_t suba, int64_t ar, uint64_t effp, uint8_t act)
-   : CMPMetaDEx(addr, b, c, nValue, cd, ad, tx, i, suba, ar), effective_price(effp), trading_action(act) {}
+ CMPContractDex(const std::string& addr, int b, uint32_t c, int64_t nValue, uint32_t cd, int64_t ad, const uint256& tx, uint32_t i, uint8_t suba, int64_t ar, uint64_t effp, uint8_t act, uint64_t amr)
+   : CMPMetaDEx(addr, b, c, nValue, cd, ad, tx, i, suba, ar), effective_price(effp), trading_action(act), amount_reserved(amr) {}
 
  CMPContractDex(const CMPTransaction &tx)
    : CMPMetaDEx(tx), effective_price(tx.effective_price), trading_action(tx.trading_action) {}
@@ -189,6 +191,7 @@ class CMPContractDex : public CMPMetaDEx
 
   uint64_t getEffectivePrice() const { return effective_price; }
   uint8_t getTradingAction() const { return trading_action; }
+  uint64_t getAmountReserved() const { return amount_reserved; }
 
   std::string displayFullContractPrice() const;
   std::string ToString() const;
@@ -271,7 +274,7 @@ namespace mastercore
 
   void LoopBiDirectional(cd_PricesMap* const ppriceMap, uint8_t trdAction, MatchReturnType &NewReturn, CMPContractDex* const pnew, const uint32_t propertyForSale);
   void x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPrices, typename cd_PricesMap::reverse_iterator &it_bwdPrices, uint8_t trdAction, CMPContractDex* const pnew, const uint64_t sellerPrice, const uint32_t propertyForSale, MatchReturnType &NewReturn);
-  int ContractDex_ADD(const std::string& sender_addr, uint32_t prop, int64_t amount, int block, const uint256& txid, unsigned int idx, uint64_t effective_price, uint8_t trading_action, int64_t amount_to_reserve);
+  int ContractDex_ADD(const std::string& sender_addr, uint32_t prop, int64_t amount, int block, const uint256& txid, unsigned int idx, uint64_t effective_price, uint8_t trading_action, int64_t amountToReserve);
   bool ContractDex_INSERT(const CMPContractDex &objContractDex);
   void ContractDex_debug_print(bool bShowPriceLevel, bool bDisplay);
   const CMPContractDex *ContractDex_RetrieveTrade(const uint256& txid);
@@ -291,7 +294,7 @@ namespace mastercore
   int ContractDex_ADD_ORDERBOOK_EDGE(const std::string& sender_addr, uint32_t contractId, int64_t amount, int block, const uint256& txid, unsigned int idx, uint8_t trading_action, int64_t amount_to_reserve);
   int ContractDex_ADD_MARKET_PRICE(const std::string& sender_addr, uint32_t contractId, int64_t amount, int block, const uint256& txid, unsigned int idx, uint8_t trading_action, int64_t amount_to_reserve);
   int ContractDex_CANCEL_FOR_BLOCK(const uint256& txid, int block,unsigned int idx, const std::string& sender_addr);
-  bool ContractDex_Fees(std::string addressTaker,std::string addressMaker, int64_t nCouldBuy,uint32_t contractId);
+  bool ContractDex_Fees(const CMPContractDex* maker, const CMPContractDex* taker, int64_t nCouldBuy);
   bool ContractDex_CHECK_ORDERS(const std::string& sender_addr, uint32_t contractId);
   ///////////////////////////////////
 

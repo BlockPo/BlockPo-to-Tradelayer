@@ -225,7 +225,7 @@ class OraclesBasicsTest (BitcoinTestFramework):
         # self.log.info(out)
         assert_equal(out['error'], None)
         assert_equal(out['result']['balance'],'49900.00000000')
-        assert_equal(out['result']['reserve'],'0.00000000')
+        assert_equal(out['result']['reserve'],'100.00000000')
 
 
         self.log.info("Checking orderbook")
