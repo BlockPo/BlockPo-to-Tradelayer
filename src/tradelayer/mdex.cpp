@@ -178,11 +178,13 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       bool boolTrdAction = pold->getTradingAction() == pnew->getTradingAction();
       bool boolAddresses = pold->getAddr() != pnew->getAddr();
 
+      if (!boolAddresses) PrintToLog("%s(): trading with yourself is not allowed\n",__func__);
+
       if ( findTrueValue(boolProperty, boolTrdAction, !boolAddresses) )
     	{
-	  ++offerIt;
-	  continue;
-	}
+	        ++offerIt;
+	        continue;
+	    }
 
       idx_q += 1;
       // const int idx_qp = idx_q;
@@ -190,6 +192,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       /********************************************************/
       /** Preconditions */
       assert(pold->getProperty() == pnew->getProperty());
+
 
       if(msc_debug_x_trade_bidirectional)
       {
@@ -1194,7 +1197,7 @@ bool mastercore::ContractDex_Fees(const CMPContractDex* maker, const CMPContract
 
 
     // NOTE: check later (is ok take from BALANCE the fees?)
-    
+
     //sum check
     // assert(takerFee == makerFee + 3*cacheFee); // 2.5% = 1% + 3*0.5%
 
@@ -1414,6 +1417,7 @@ MatchReturnType x_Trade(CMPMetaDEx* const pnew)
 	  ++offerIt;
 	  continue;
 	}
+
 
 	if (msc_debug_metadex1) PrintToLog("MATCH FOUND, Trade: %s = %s\n", xToString(sellersPrice), pold->ToString());
 
@@ -1677,9 +1681,6 @@ MatchReturnType x_Trade(CMPMetaDEx* const pnew)
 }
 
 
-
-///////////////////////////////////////
-/** New things for Contracts */
 MatchReturnType x_Trade(CMPContractDex* const pnew)
 {
   const uint32_t propertyForSale = pnew->getProperty();

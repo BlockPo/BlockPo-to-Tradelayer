@@ -318,6 +318,7 @@ class NativesBasicsTest (BitcoinTestFramework):
         assert_equal(out['result'][0]['effectiveprice'], '900.10000000')
         # assert_equal(out['result'][0]['block'], 206)
 
+
         self.log.info("Cancel orders using tl_cancelallcontractsbyaddress")
         params = str([addresses[0], "ALL/Lhk"]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_cancelallcontractsbyaddress",params)
@@ -386,6 +387,103 @@ class NativesBasicsTest (BitcoinTestFramework):
         # self.log.info(out)
         assert_equal(out['error'], None)
         assert_equal(out['result'],[])
+
+        self.log.info("Checking the partial fill")
+        self.log.info("Sending buy order")
+        params = str([addresses[0], "ALL/Lhk", "1000", "800.1", 1, "1"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_tradecontract",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+
+        self.nodes[0].generate(1)
+
+        self.log.info("Checking orderbook (buy side)")
+        params = str(["ALL/Lhk", 1]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getcontract_orderbook",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result'][0]['address'], addresses[0])
+        assert_equal(out['result'][0]['contractid'], 5)
+        assert_equal(out['result'][0]['amountforsale'], '1000.00000000')
+        assert_equal(out['result'][0]['tradingaction'], 1)
+        assert_equal(out['result'][0]['effectiveprice'], '800.10000000')
+        assert_equal(out['result'][0]['block'], 215)
+        assert_equal(out['result'][0]['idx'], 1)
+
+        self.log.info("Sending sell order")
+        params = str([addresses[1], "ALL/Lhk", "500", "800.1", 2, "1"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_tradecontract",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+
+        self.nodes[0].generate(1)
+
+        self.log.info("Checking position in addresses")
+        params = str([addresses[0], "ALL/Lhk"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getposition",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['longPosition'],'0.00000000')
+        assert_equal(out['result']['shortPosition'],'500.00000000')
+
+        params = str([addresses[1], "ALL/Lhk"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getposition",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['longPosition'],'500.00000000')
+        assert_equal(out['result']['shortPosition'],'0.00000000')
+
+
+        self.log.info("Checking orderbook again (buy side)")
+        params = str(["ALL/Lhk", 1]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getcontract_orderbook",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result'][0]['address'], addresses[0])
+        assert_equal(out['result'][0]['contractid'], 5)
+        assert_equal(out['result'][0]['amountforsale'], '500.00000000')
+        assert_equal(out['result'][0]['tradingaction'], 1)
+        assert_equal(out['result'][0]['effectiveprice'], '800.10000000')
+        assert_equal(out['result'][0]['block'], 215)
+        assert_equal(out['result'][0]['idx'], 1)
+
+        self.log.info("Putting order without collateral")
+
+        self.log.info("Sending sell order")
+        params = str([addresses[2], "ALL/Lhk", "300", "800.1", 2, "1"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_tradecontract",params)
+        # self.log.info(out)
+        assert_equal(out['error']['message'], 'Sender has insufficient balance for collateral')
+
+        self.log.info("Sending sell order with more than max leverage")
+        params = str([addresses[1], "ALL/Lhk", "500", "800.1", 2, "1000"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_tradecontract",params)
+        # self.log.info(out)
+        assert_equal(out['error']['message'], 'Leverage out of range')
+
+        self.log.info("Checking trading against yourself")
+        self.log.info("Sending buy sell")
+        params = str([addresses[0], "ALL/Lhk", "500", "800.1", 2, "1"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_tradecontract",params)
+        # self.log.info(out)
+        # assert_equal(out['error'], None)
+
+        self.nodes[0].generate(1)
+
+
+        self.log.info("Checking orderbook again (sell side)")
+        params = str(["ALL/Lhk", 2]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getcontract_orderbook",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result'][0]['address'], addresses[0])
+        assert_equal(out['result'][0]['contractid'], 5)
+        assert_equal(out['result'][0]['amountforsale'], '500.00000000')
+        assert_equal(out['result'][0]['tradingaction'], 2)
+        assert_equal(out['result'][0]['effectiveprice'], '800.10000000')
+        assert_equal(out['result'][0]['block'], 217)
+        assert_equal(out['result'][0]['idx'], 1)
+
 
         conn.close()
 
