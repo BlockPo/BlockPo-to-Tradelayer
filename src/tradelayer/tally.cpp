@@ -210,10 +210,10 @@ int64_t CMPTally::print(uint32_t propertyId, bool bDivisible) const
     }
 
     if (bDivisible) {
-        PrintToConsole("BALANCE %22s PENDING %22s\n",
+        PrintToLog("BALANCE %22s PENDING %22s\n",
                 FormatDivisibleMP(balance, true), FormatDivisibleMP(pending, true));
     } else {
-        PrintToConsole("BALANCE %14d PENDING %14d\n",
+        PrintToLog("BALANCE %14d PENDING %14d\n",
                 balance, pending);
     }
 

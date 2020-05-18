@@ -4319,6 +4319,7 @@ int CMPTransaction::logicMath_Withdrawal_FromChannel()
 
     if (msc_debug_withdrawal_from_channel) PrintToLog("checking wthd element : address: %s, deadline: %d, propertyId: %d, amount: %d \n", wthd.address, wthd.deadline_block, wthd.propertyId, wthd.amount);
 
+
     withdrawal_Map[receiver].push_back(wthd);
 
     t_tradelistdb->recordNewWithdrawal(txid, receiver, sender, propertyId, amount_to_withdraw, block, tx_idx);

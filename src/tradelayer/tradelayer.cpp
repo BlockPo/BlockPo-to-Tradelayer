@@ -1464,7 +1464,6 @@ int input_cachefees_string(const std::string& s)
    boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
 
    uint32_t propertyId = boost::lexical_cast<uint32_t>(vstr[0]);
-
    int64_t amount = boost::lexical_cast<int64_t>(vstr[1]);;
 
    if (!cachefees.insert(std::make_pair(propertyId, amount)).second) return -1;
@@ -1478,7 +1477,6 @@ int input_cachefees_oracles_string(const std::string& s)
    boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
 
    uint32_t propertyId = boost::lexical_cast<uint32_t>(vstr[0]);
-
    int64_t amount = boost::lexical_cast<int64_t>(vstr[1]);;
 
    if (!cachefees_oracles.insert(std::make_pair(propertyId, amount)).second) return -1;
@@ -1500,10 +1498,18 @@ int input_withdrawals_string(const std::string& s)
     w.amount = boost::lexical_cast<int64_t>(vstr[4]);
 
     std::map<std::string,vector<withdrawalAccepted>>::iterator it = withdrawal_Map.find(chnAddr);
-    vector<withdrawalAccepted>& whAc = it->second;
-    whAc.push_back(w);
 
-    if(!withdrawal_Map.insert(std::make_pair(chnAddr,whAc)).second) return -1;
+    // channel found !
+    if(it != withdrawal_Map.end()){
+        vector<withdrawalAccepted>& whAc = it->second;
+        whAc.push_back(w);
+        return 0;
+    }
+
+    // if there's no channel yet
+    vector<withdrawalAccepted> whAcc;
+    whAcc.push_back(w);
+    if(!withdrawal_Map.insert(std::make_pair(chnAddr,whAcc)).second) return -1;
 
     return 0;
 
@@ -1568,10 +1574,15 @@ int input_mp_dexvolume_string(const std::string& s)
     int64_t amount = boost::lexical_cast<int>(vstr[2]);
 
     std::map<int, std::map<uint32_t,int64_t>>::iterator it = MapPropVolume.find(block);
+    if (it != MapPropVolume.end()){
+        std::map<uint32_t,int64_t>& pMap = it->second;
+        pMap[propertyId] = amount;
+        return 0;
+    }
 
-    std::map<uint32_t,int64_t>& pMap = it->second;
-
-    if(!pMap.insert(std::make_pair(propertyId,amount)).second) return -1;
+    std::map<uint32_t,int64_t> pMapp;
+    pMapp[propertyId] = amount;
+    if(!MapPropVolume.insert(std::make_pair(block, pMapp)).second) return -1;
 
     return 0;
 
@@ -1588,10 +1599,16 @@ int input_mp_mdexvolume_string(const std::string& s)
     int64_t amount = boost::lexical_cast<int>(vstr[3]);
 
     std::map<int, std::map<std::pair<uint32_t, uint32_t>, int64_t>>::iterator it = MapMetaVolume.find(block);
+    if (it != MapMetaVolume.end()){
+        std::map<std::pair<uint32_t, uint32_t>, int64_t>& pMap = it->second;
+        pMap[std::make_pair(property1,property2)] = amount;
+        return 0;
+    }
 
-    std::map<std::pair<uint32_t, uint32_t>, int64_t>& pMap = it->second;
+    std::map<std::pair<uint32_t, uint32_t>, int64_t> pMapp;
+    pMapp[std::make_pair(property1,property2)] = amount;
 
-    pMap[std::make_pair(property1,property2)] = amount;
+    if(!MapMetaVolume.insert(std::make_pair(block, pMapp)).second) return -1;
 
     return 0;
 
@@ -1979,7 +1996,7 @@ static int write_mp_contractdex(ofstream &file, SHA256_CTX *shaCtx)
 
             for (cd_Set::iterator it = indexes.begin(); it != indexes.end(); ++it)
             {
-                CMPContractDex contract = *it;
+                const CMPContractDex& contract = *it;
                 contract.saveOffer(file, shaCtx);
             }
         }
@@ -1993,8 +2010,6 @@ static int write_global_vars(ofstream &file, SHA256_CTX *shaCtx)
      std::string lineOut;
 
      int64_t lastVolume = globalVolumeALL_LTC;
-
-     // PrintToLog("%s(): lastVesting: %d, globalVolumeALL_LTC: %d\n",__func__,lastVesting, lastVolume);
 
      lineOut.append(strprintf("%f", lastVesting));
      lineOut.append(strprintf("%d", lastVolume));
@@ -2031,7 +2046,7 @@ static int write_mp_metadex(ofstream &file, SHA256_CTX *shaCtx)
 
             for (md_Set::iterator it = indexes.begin(); it != indexes.end(); ++it)
             {
-                CMPMetaDEx meta = *it;
+                const CMPMetaDEx& meta = *it;
                 meta.saveOffer(file, shaCtx);
             }
         }
@@ -2060,7 +2075,7 @@ static int write_mp_cachefees(std::ofstream& file, SHA256_CTX* shaCtx)
 {
     std::string lineOut;
 
-    for (std::map<uint32_t, int64_t>::iterator itt = cachefees.begin(); itt != cachefees.end(); ++itt)
+    for (std::map<uint32_t, int64_t>::const_iterator itt = cachefees.begin(); itt != cachefees.end(); ++itt)
     {
         // decompose the key for address
         const uint32_t& propertyId = itt->first;
@@ -2082,7 +2097,7 @@ static int write_mp_cachefees_oracles(std::ofstream& file, SHA256_CTX* shaCtx)
 {
     std::string lineOut;
 
-    for (std::map<uint32_t, int64_t>::iterator itt = cachefees_oracles.begin(); itt != cachefees_oracles.end(); ++itt)
+    for (std::map<uint32_t, int64_t>::const_iterator itt = cachefees_oracles.begin(); itt != cachefees_oracles.end(); ++itt)
     {
         // decompose the key for address
         const uint32_t& propertyId = itt->first;
@@ -2113,7 +2128,7 @@ static int write_mp_withdrawals(std::ofstream& file, SHA256_CTX* shaCtx)
 
         for(std::vector<withdrawalAccepted>::iterator itt = whd.begin(); itt != whd.end(); ++itt)
         {
-            withdrawalAccepted  w = *(itt);
+            const withdrawalAccepted&  w = *itt;
             lineOut.append(strprintf("%s,%s,%d,%d,%d", chnAddr, w.address, w.deadline_block, w.propertyId, w.amount));
 
         }
@@ -2134,11 +2149,11 @@ static int write_mp_active_channels(std::ofstream& file, SHA256_CTX* shaCtx)
 {
     std::string lineOut;
 
-    for (std::map<std::string,channel>::iterator it = channels_Map.begin(); it != channels_Map.end(); ++it)
+    for (std::map<std::string,channel>::const_iterator it = channels_Map.begin(); it != channels_Map.end(); ++it)
     {
         // decompose the key for address
         const std::string& chnAddr = it->first;
-        channel& chnObj = it->second;
+        const channel& chnObj = it->second;
 
         lineOut.append(strprintf("%s,%s,%s,%s,%d,%d", chnAddr, chnObj.multisig, chnObj.first, chnObj.second, chnObj.expiry_height, chnObj.last_exchange_block));
 
@@ -4313,6 +4328,7 @@ void CMPTradeList::recordNewWithdrawal(const uint256& txid, const std::string& c
   const string key = to_string(blockNum) + "+" + txid.ToString(); // order by blockNum
   Status status = pdb->Put(writeoptions, txid.ToString(), strValue);
   ++nWritten;
+
   if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
 }
 
@@ -5355,21 +5371,20 @@ bool mastercore::makeWithdrawals(int Block)
 {
     for(std::map<std::string,vector<withdrawalAccepted>>::iterator it = withdrawal_Map.begin(); it != withdrawal_Map.end(); ++it)
     {
-        std::string channelAddress = it->first;
+        const std::string& channelAddress = it->first;
         vector<withdrawalAccepted> &accepted = it->second;
 
         for (std::vector<withdrawalAccepted>::iterator itt = accepted.begin() ; itt != accepted.end();)
         {
-            withdrawalAccepted wthd = *itt;
+            const withdrawalAccepted& wthd = *itt;
             const int deadline = wthd.deadline_block;
 
-            if (Block != deadline)
-            {
+            if (Block != deadline){
                 ++itt;
                 continue;
             }
 
-            const std::string address = wthd.address;
+            const std::string& address = wthd.address;
             const uint32_t propertyId = wthd.propertyId;
             const int64_t amount = static_cast<int64_t>(wthd.amount);
 
@@ -5397,14 +5412,14 @@ bool mastercore::closeChannels(int Block)
 
     for(std::map<std::string,channel>::iterator it = channels_Map.begin(); it != channels_Map.end();)
     {
-        std::string channelAddress = it->first;
-        channel &chn = it->second;
+        const channel &chn = it->second;
         const int& expiry = chn.expiry_height;
 
         if (Block != expiry)
         {
             ++it;
             continue;
+
         }
 
         LOCK(cs_tally);
@@ -5439,7 +5454,7 @@ bool mastercore::closeChannels(int Block)
         }
 
         // deleting element from map
-        channels_Map.erase (it);
+        channels_Map.erase(it);
         // maybe last step is put some information on db
 
     }
@@ -5498,7 +5513,7 @@ bool CMPTradeList::getAllCommits(const std::string& senderAddress, UniValue& tra
 
        // populate trade object and add to the trade array, correcting for orientation of trade
        UniValue trade(UniValue::VOBJ);
-       if (tradeArray.size() <= 20)
+       if (tradeArray.size() <= 100)
        {
            trade.push_back(Pair("sender", sender));
            trade.push_back(Pair("propertyId",FormatByType(propertyId,1)));
@@ -5609,10 +5624,8 @@ bool CMPTradeList::checkChannelAddress(const std::string& channelAddress)
 
         // checking now on channels_Map
         std::map<std::string,channel>::iterator it = channels_Map.find(channelAddress);
-        std::string chnAddr = it->first;
-
-        if(channelAddress != chnAddr)
-            continue;
+        if (it == channels_Map.end())
+            break;
 
         status = true;
         break;
@@ -5743,7 +5756,7 @@ channel CMPTradeList::getChannelAddresses(const std::string& channelAddress)
           // ensure correct amount of tokens in value string
           boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
           if (vstr.size() != 5) {
-              PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
+              // PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
               continue;
           }
 
@@ -5795,12 +5808,12 @@ bool CMPTradeList::getAllWithdrawals(const std::string& senderAddress, UniValue&
 
         // ensure correct amount of tokens in value string
         boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
-        if (vstr.size() != 8) {
+        if (vstr.size() != 7) {
             //PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
             continue;
         }
 
-        const std::string& type = vstr[7];
+        const std::string& type = vstr[6];
 
         if(type != TYPE_WITHDRAWAL)
             continue;
@@ -5810,23 +5823,22 @@ bool CMPTradeList::getAllWithdrawals(const std::string& senderAddress, UniValue&
         if(sender != senderAddress)
             continue;
 
-        // const std::string& cAddress = vstr[0];
+        const std::string& cAddress = vstr[0];
         uint32_t propertyId = boost::lexical_cast<uint32_t>(vstr[2]);
         int64_t withdrawalAmount = boost::lexical_cast<int64_t>(vstr[3]);
-        uint32_t vOut = boost::lexical_cast<uint32_t>(vstr[4]);
-        int blockNum = boost::lexical_cast<int>(vstr[5]);
-        int blockIndex = boost::lexical_cast<int>(vstr[6]);
+        int blockNum = boost::lexical_cast<int>(vstr[4]);
+        int txid = boost::lexical_cast<int>(vstr[5]);
 
         // populate trade object and add to the trade array, correcting for orientation of trade
         UniValue trade(UniValue::VOBJ);
-        if (tradeArray.size() <= 20)
+        if (tradeArray.size() <= 100)
         {
+            trade.push_back(Pair("channel_address", cAddress));
             trade.push_back(Pair("sender", sender));
-            trade.push_back(Pair("withdrawalAmount", FormatByType(withdrawalAmount,2)));
-            trade.push_back(Pair("propertyId", FormatByType(propertyId,1)));
-            trade.push_back(Pair("vOut", FormatByType(vOut,1)));
-            trade.push_back(Pair("block",blockNum));
-            trade.push_back(Pair("block_index",blockIndex));
+            trade.push_back(Pair("withdrawal_amount", FormatByType(withdrawalAmount,2)));
+            trade.push_back(Pair("property_id", FormatByType(propertyId,1)));
+            trade.push_back(Pair("request_block", blockNum));
+            trade.push_back(Pair("tx_id", txid));
             tradeArray.push_back(trade);
             ++count;
         }
@@ -6115,8 +6127,9 @@ int64_t mastercore::LtcVolumen(uint32_t propertyId, int& fblock, int& sblock)
         else if(sblock < xblock) break;
 
         std::map<uint32_t, int64_t>& blockMap = it->second;
-        std::map<uint32_t, int64_t>::iterator itt = blockMap.find(propertyId);
-        amount += itt->second;
+        auto itt = blockMap.find(propertyId);
+        if (itt != blockMap.end())
+            amount += itt->second;
 
         if (msc_debug_ltc_volume) PrintToLog("%s(): adding amount: %d, at block: %d\n",__func__, amount, xblock);
 
@@ -6139,8 +6152,9 @@ int64_t mastercore::MdexVolumen(uint32_t fproperty, uint32_t sproperty, int& fbl
         else if(sblock < xblock) break;
 
         std::map<std::pair<uint32_t, uint32_t>, int64_t>& blockMap = it->second;
-        std::map<std::pair<uint32_t, uint32_t>, int64_t>::iterator itt = blockMap.find(std::make_pair(fproperty,sproperty));
-        amount += itt->second;
+        auto itt = blockMap.find(std::make_pair(fproperty,sproperty));
+        if(itt != blockMap.end())
+            amount += itt->second;
 
     }
 
@@ -6155,7 +6169,6 @@ int64_t mastercore::getOracleTwap(uint32_t contractId, int nBlocks)
      arith_uint256 aSum = 0;
 
      std::map<uint32_t,std::map<int,oracledata>>::iterator it = oraclePrices.find(contractId);
-
      std::map<int,oracledata>& orMap = it->second;
 
      for(auto itt = orMap.rbegin(); itt != orMap.rend(); ++itt)
@@ -6245,7 +6258,7 @@ bool mastercore::feeCacheBuy()
 }
 
 /**
- *  Updating last exchange block
+ *  Updating last exchange block in channels
  */
 bool mastercore::updateLastExBlock(int& nBlock, const std::string& sender)
 {
@@ -6278,7 +6291,7 @@ bool mastercore::updateLastExBlock(int& nBlock, const std::string& sender)
         chn.expiry_height += difference;
     }
 
-    return result;
+    return true;
 }
 
 
