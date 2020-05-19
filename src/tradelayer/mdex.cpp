@@ -1895,7 +1895,7 @@ void CMPMetaDEx::saveOffer(std::ofstream& file, SHA256_CTX* shaCtx) const
 
 void CMPContractDex::saveOffer(std::ofstream& file, SHA256_CTX* shaCtx) const
 {
-    std::string lineOut = strprintf("%s,%d,%d,%d,%d,%d,%d,%d,%s,%d,%d,%d",
+    std::string lineOut = strprintf("%s,%d,%d,%d,%d,%d,%d,%d,%s,%d,%d,%d,%d",
         getAddr(),
         getBlock(),
         getAmountForSale(),
@@ -1907,7 +1907,8 @@ void CMPContractDex::saveOffer(std::ofstream& file, SHA256_CTX* shaCtx) const
         getHash().ToString(),
         getAmountRemaining(),
         effective_price,
-        trading_action
+        trading_action,
+        amount_reserved
     );
 
     // add the line to the hash
@@ -2099,26 +2100,30 @@ int mastercore::ContractDex_ADD_MARKET_PRICE(const std::string& sender_addr, uin
 {
     int rc = METADEX_ERROR -1;
 
-    if(trading_action != BUY && trading_action != SELL)
+    if(trading_action != BUY && trading_action != SELL){
+        PrintToLog("%s(): ERROR: invalid trading action: %d\n",__func__, trading_action);
         return -1;
+    }
 
-    uint64_t ask = edgeOrderbook(contractId, trading_action);
-
-    CMPContractDex new_cdex(sender_addr, block, contractId, amount, 0, 0, txid, idx, CMPTransaction::ADD, ask, trading_action, 0);
-
-    if(msc_debug_contract_add_market) PrintToLog("effective price of new_cdex /buy/: %d\n",new_cdex.getEffectivePrice());
+    uint64_t edge = edgeOrderbook(contractId, trading_action);
+    CMPContractDex new_cdex(sender_addr, block, contractId, amount, 0, 0, txid, idx, CMPTransaction::ADD, edge, trading_action, 0);
+    if(msc_debug_contract_add_market) PrintToLog("%s(): effective price of new_cdex : %d, edge price : %d, trading_action: %d\n",__func__, new_cdex.getEffectivePrice(), edge, trading_action);
     if (0 >= new_cdex.getEffectivePrice()) return METADEX_ERROR -66;
-
 
     while(true)
     {
         x_Trade(&new_cdex);
         if (new_cdex.getAmountForSale() == 0)
-	         break;
+        {
+            rc = 0;
+            break;
+        }
 
-        uint64_t price = edgeOrderbook(contractId,trading_action);
+        uint64_t price = edgeOrderbook(contractId, trading_action);
         new_cdex.setPrice(price);
     }
+
+    if(msc_debug_contract_add_market) PrintToLog("%s(): final amount in order : %d\n",__func__, new_cdex.getAmountForSale());
 
     return rc;
 }
@@ -2396,46 +2401,34 @@ int mastercore::ContractDex_ADD_ORDERBOOK_EDGE(const std::string& sender_addr, u
 /*NEW FUNCTION*/
 int mastercore::ContractDex_CLOSE_POSITION(const uint256& txid, unsigned int block, const std::string& sender_addr, uint32_t contractId, uint32_t collateralCurrency)
 {
+    int rc = -1;
     int64_t shortPosition = getMPbalance(sender_addr,contractId, NEGATIVE_BALANCE);
     int64_t longPosition = getMPbalance(sender_addr,contractId, POSITIVE_BALANCE);
 
-    if (msc_debug_close_position)
-    {
-        PrintToLog("shortPosition before: %d\n",shortPosition);
-        PrintToLog("longPosition before: %d\n",longPosition);
-    }
+    if(msc_debug_close_position) PrintToLog("%s(): shortPosition before: %d, longPosition before: %d\n",__func__, shortPosition, longPosition);
+
+    if (shortPosition == 0 && longPosition == 0)
+        return rc;
 
     LOCK(cs_tally);
 
     // Clearing the position
-    unsigned int idx=0;
-    if (shortPosition > 0 && longPosition == 0)
-    {
-        if(msc_debug_close_position) PrintToLog("Short Position closing...\n");
-        ContractDex_ADD_MARKET_PRICE(sender_addr,contractId, shortPosition, block, txid, idx,BUY, 0);
-    } else if (longPosition > 0 && shortPosition == 0){
-        if(msc_debug_close_position) PrintToLog("Long Position closing...\n");
-        ContractDex_ADD_MARKET_PRICE(sender_addr,contractId, longPosition, block, txid, idx, SELL, 0);
-    }
+    unsigned int idx = 0;
+    std::pair <int64_t, uint8_t> result;
+    (shortPosition > 0 && longPosition == 0) ? (result.first = shortPosition, result.second = BUY) : (longPosition > 0 && shortPosition == 0) ? (result.first = longPosition, result.second = SELL) : (result.first = 0, result.second = 0);
 
-    // cleaning liquidation price
-    int64_t liqPrice = getMPbalance(sender_addr,contractId, LIQUIDATION_PRICE);
-    if (liqPrice > 0){
-        update_tally_map(sender_addr, contractId, -liqPrice, LIQUIDATION_PRICE);
-    }
+    if(msc_debug_close_position) PrintToLog("%s(): result.first: %d, result.second: %d\n",__func__, result.first, result.second);
 
-    int64_t shortPositionAf = getMPbalance(sender_addr,contractId, NEGATIVE_BALANCE);
-    int64_t longPositionAf= getMPbalance(sender_addr,contractId, POSITIVE_BALANCE);
+    rc = ContractDex_ADD_MARKET_PRICE(sender_addr, contractId, result.first, block, txid, idx, result.second, 0);
 
-    if(msc_debug_close_position) PrintToLog("%s: shortPosition Now: %d, longPosition Now: %d\n",__func__, shortPositionAf, longPositionAf);
+    int64_t shortPositionAf = getMPbalance(sender_addr, contractId, NEGATIVE_BALANCE);
+    int64_t longPositionAf= getMPbalance(sender_addr, contractId, POSITIVE_BALANCE);
 
-    if (shortPositionAf == 0 && longPositionAf == 0){
-        if(msc_debug_close_position) PrintToLog("POSITION CLOSED!!!\n");
-    } else {
-        if(msc_debug_close_position) PrintToLog("ERROR: Position partialy Closed\n");
-    }
+    if(msc_debug_close_position) PrintToLog("%s(): shortPosition after: %d, longPosition after: %d, rc: %d\n",__func__, shortPositionAf, longPositionAf, rc);
 
-    return 0;
+    (shortPositionAf == 0 && longPositionAf == 0 && msc_debug_close_position) ? PrintToLog("%s(): POSITION CLOSED!!!\n",__func__) : PrintToLog("%s(): Position partialy Closed\n", __func__);
+
+    return rc;
 }
 
 int64_t mastercore::getPairMarketPrice(std::string num, std::string den)

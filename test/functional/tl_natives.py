@@ -484,6 +484,59 @@ class NativesBasicsTest (BitcoinTestFramework):
         assert_equal(out['result'][0]['block'], 217)
         assert_equal(out['result'][0]['idx'], 1)
 
+        self.log.info("Cancel orders using tl_cancelallcontractsbyaddress")
+        params = str([addresses[0], "ALL/Lhk"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_cancelallcontractsbyaddress",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+
+        self.nodes[0].generate(1)
+
+        self.log.info("Checking orderbook again (buy side)")
+        params = str(["ALL/Lhk", 1]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getcontract_orderbook",params)
+        # self.log.info(out)
+        assert_equal(out['result'], [])
+
+        self.log.info("Checking orderbook again (sell side)")
+        params = str(["ALL/Lhk", 2]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getcontract_orderbook",params)
+        # self.log.info(out)
+        assert_equal(out['result'], [])
+
+
+        self.log.info("Closing positions")
+        self.log.info("Preparing the orderbook")
+        params = str([addresses[1], "ALL/Lhk", "500", "500.1", 2, "1"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_tradecontract",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+
+        self.nodes[0].generate(1)
+
+
+        params = str([addresses[0], "ALL/Lhk"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getposition",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['longPosition'],'0.00000000')
+        assert_equal(out['result']['shortPosition'],'500.00000000')
+
+        params = str([addresses[0], 5]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_closeposition",params)
+        # self.log.info(out)
+        # assert_equal(out['error'], None)
+
+        self.nodes[0].generate(1)
+
+
+        params = str([addresses[0], "ALL/Lhk"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getposition",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['longPosition'],'0.00000000')
+        assert_equal(out['result']['shortPosition'],'0.00000000')
+
 
         conn.close()
 
