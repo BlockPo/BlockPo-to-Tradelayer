@@ -1159,7 +1159,7 @@ int ParseTransaction(const CTransaction& tx, int nBlock, unsigned int idx, CMPTr
                  "Still scanning.. at block %d of %d.\nProgress: %.2f %% (about %s remaining)",
                  nCurrentBlock, nLastBlock, dProgress, remainingTimeAsString(nRemainingTime));
 
-         PrintToConsole(strProgress);
+         PrintToLog(strProgress);
          // uiInterface.InitMessage(strProgressUI);
      }
  };
@@ -1239,7 +1239,7 @@ static int msc_initial_scan(int nFirstBlock)
         PrintToLog("Scan stopped early at block %d of block %d\n", nBlock, nLastBlock);
     }
 
-    // PrintToLog("%d transactions processed, %d meta transactions found\n", nTxsTotal, nTxsFoundTotal);
+    PrintToLog("%d transactions processed, %d meta transactions found\n", nTxsTotal, nTxsFoundTotal);
 
     return 0;
 }
@@ -1321,6 +1321,7 @@ int input_mp_offers_string(const std::string& s)
 
     int i = 0;
 
+    // NOTE: Review this persistence !!!
     std::string sellerAddr = vstr[i++];
     int offerBlock = boost::lexical_cast<int>(vstr[i++]);
     int64_t amountOriginal = boost::lexical_cast<int64_t>(vstr[i++]);
@@ -1425,6 +1426,8 @@ int input_mp_contractdexorder_string(const std::string& s)
     if (12 != vstr.size()) return -1;
 
     int i = 0;
+
+    //NOTE: we need to add the amountReserved !!!
 
     std::string addr = vstr[i++];
     int block = boost::lexical_cast<int>(vstr[i++]);
@@ -1544,7 +1547,6 @@ int input_mp_mdexorder_string(const std::string& s)
     if (10 != vstr.size()) return -1;
 
     int i = 0;
-
     std::string addr = vstr[i++];
     int block = boost::lexical_cast<int>(vstr[i++]);
     int64_t amount_forsale = boost::lexical_cast<int64_t>(vstr[i++]);
@@ -2319,7 +2321,7 @@ static int write_state_file( CBlockIndex const *pBlockIndex, int what )
     return result;
 }
 
-static bool is_state_prefix( std::string const &str )
+static bool is_state_prefix(std::string const &str)
 {
     for (int i = 0; i < NUM_FILETYPES; ++i)
     {
@@ -2330,7 +2332,7 @@ static bool is_state_prefix( std::string const &str )
     return false;
 }
 
-static void prune_state_files( CBlockIndex const *topIndex )
+static void prune_state_files(CBlockIndex const *topIndex)
 {
     // build a set of blockHashes for which we have any state files
     std::set<uint256> statefulBlockHashes;
@@ -2348,7 +2350,7 @@ static void prune_state_files( CBlockIndex const *topIndex )
 
         std::vector<std::string> vstr;
         boost::split(vstr, fName, boost::is_any_of("-."), token_compress_on);
-        if (  vstr.size() == 3 && is_state_prefix(vstr[0]) && boost::equals(vstr[2], "dat"))
+        if (vstr.size() == 3 && is_state_prefix(vstr[0]) && boost::equals(vstr[2], "dat"))
         {
             uint256 blockHash;
             blockHash.SetHex(vstr[1]);
@@ -3025,7 +3027,7 @@ bool mastercore::UseEncodingClassC(size_t nDataSize)
     if (!IsAllowedOutputType(TX_NULL_DATA, nBlockNow)) {
         fDataEnabled = false;
     }
-    return nTotalSize <= nMaxDatacarrierBytes && fDataEnabled;
+    return (nTotalSize <= nMaxDatacarrierBytes && fDataEnabled);
 }
 
 // This function requests the wallet create an Trade Layer transaction using the supplied parameters and payload
@@ -3112,10 +3114,10 @@ int mastercore::WalletTxBuilder(const std::string& senderAddress, const std::str
 
       // Ensure the requested number of inputs was available, so there may be more
       if (vInputs.size() >= minInputs) {
-	//Build a new transaction and try to select one additional input to
-	//shift the bytes per sigops ratio in our favor
-	++minInputs;
-	return WalletTxBuilder(senderAddress, receiverAddress, referenceAmount, data, txid, rawHex, commit, minInputs);
+	        //Build a new transaction and try to select one additional input to
+	        //shift the bytes per sigops ratio in our favor
+	        ++minInputs;
+	        return WalletTxBuilder(senderAddress, receiverAddress, referenceAmount, data, txid, rawHex, commit, minInputs);
       } else {
 	        PrintToLog("%s WARNING: %s has %d sigops, and may not confirm in time\n",
 		      __func__, wtxNew.GetHash().GetHex(), nSigOps);
@@ -3146,7 +3148,6 @@ void CtlTransactionDB::RecordTransaction(const uint256& txid, uint32_t posInBloc
 
      const std::string key = txid.ToString();
      const std::string value = strprintf("%d", posInBlock);
-
      Status status = pdb->Put(writeoptions, key, value);
      ++nWritten;
 }
@@ -4001,72 +4002,6 @@ bool CMPTradeList::updateIdRegister(const uint256& txid, const std::string& addr
     return status;
 }
 
-// bool CMPTradeList::checkRegister(const std::string& address, int registered)
-// {
-//     bool status = false;
-//     std::string strKey, newKey, newValue;
-//
-//     std::vector<std::string> vstr;
-//
-//     if (!pdb) return status;
-//
-//
-//     leveldb::Iterator* it = NewIterator(); // Allocation proccess
-//
-//     for(it->SeekToLast(); it->Valid(); it->Prev())
-//     {
-//         // search key to see if this is a matching trade
-//         strKey = it->key().ToString();
-//         // PrintToLog("key of this match: %s ****************************\n",strKey);
-//         std::string strValue = it->value().ToString();
-//
-//         // ensure correct amount of tokens in value string
-//         boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
-//         if (vstr.size() != 12)
-//         {
-//             // PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
-//             // PrintToConsole("TRADEDB error - unexpected number of tokens in value %d \n",vstr.size());
-//             continue;
-//         }
-//
-//         std::string type = vstr[11];
-//
-//         PrintToLog("%s: type: %s\n",__func__,type);
-//
-//         if( type != TYPE_NEW_ID_REGISTER)
-//           continue;
-//
-//
-//         PrintToLog("%s: strKey: %s\n", __func__, strKey);
-//
-//         std::string regAddr = vstr[0];
-//
-//         PrintToLog("%s: regAddr: %s\n", __func__, regAddr);
-//
-//         if(address != regAddr) continue;
-//
-//         if (registered < 3 || 6 < registered)
-//         {
-//             PrintToLog("%s: Register out of range\n",__func__);
-//             return false;
-//         }
-//
-//         std::string output = vstr[registered];
-//
-//         PrintToLog("%s: output == %s\n",__func__, output);
-//
-//         if (output == "1") status = true;
-//
-//         break;
-//
-//     }
-//
-//     // clean up
-//     delete it;
-//
-//     return status;
-// }
-
 bool CMPTradeList::checkKYCRegister(const std::string& address, int& kyc_id)
 {
     bool status = false;
@@ -4865,7 +4800,6 @@ bool CMPTradeList::getMatchingTrades(uint32_t propertyId, UniValue& tradeArray)
   if (!pdb) return false;
   int count = 0;
   std::vector<std::string> vstr;
-
   leveldb::Iterator* it = NewIterator(); // Allocation proccess
 
   for(it->SeekToLast(); it->Valid(); it->Prev()) {
@@ -4924,8 +4858,6 @@ bool CMPTradeList::getMatchingTradesUnfiltered(uint32_t propertyId, UniValue& tr
   if (!pdb) return false;
   int count = 0;
   std::vector<std::string> vstr;
-
-
   leveldb::Iterator* it = NewIterator(); // Allocation proccess
 
   for(it->SeekToLast(); it->Valid(); it->Prev()) {
@@ -4985,7 +4917,6 @@ bool CMPTradeList::getCreatedPegged(uint32_t propertyId, UniValue& tradeArray)
 
   int count = 0;
   std::vector<std::string> vstr;
-
   leveldb::Iterator* it = NewIterator(); // Allocation proccess
 
   for(it->SeekToFirst(); it->Valid(); it->Next()) {
@@ -5027,47 +4958,6 @@ bool CMPTradeList::getCreatedPegged(uint32_t propertyId, UniValue& tradeArray)
   if (count) { return true; } else { return false; }
 }
 
-
-/* TODO: use this for redeem the ALLs tokens
-int64_t CMPTradeList::getTradeAllsByTxId(uint256& txid)  // function that return the initial margin (ALLs) for a trade txid
-{
-  if (!pdb) return false;
-
-  int count = 0;
-  int64_t alls = 0;
-  std::string txidStr = txid.ToString();
-  PrintToConsole("txid from argument : %s \n",txidStr);
-  std::vector<std::string> vstr;
-
-  leveldb::Iterator* it = NewIterator(); // Allocation proccess
-
-  for(it->SeekToFirst(); it->Valid(); it->Next()) {
-      // search key to see if this is a matching trade
-      std::string strKey = it->key().ToString();
-      std::string strValue = it->value().ToString();
-
-      // ensure correct amount of tokens in value string
-      boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
-      if (vstr.size() != 6) {
-          PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
-          continue;
-      }
-
-      if (strKey != txidStr){
-          continue;
-      }
-
-     // decode the details from the value string
-      alls = boost::lexical_cast<int64_t>(vstr[5]);
-      PrintToLog("txid from db: %s\n",strKey);
-      PrintToLog("alls for margin: %s\n",alls);
-      PrintToLog("count : %d\n",count);
-      ++count;
-  }
-  // clean up
-  delete it; // Desallocation proccess
-  return alls;
-}*/
 
 rational_t mastercore::notionalChange(uint32_t contractId)
 {
@@ -5284,10 +5174,13 @@ bool mastercore::marginMain(int Block)
 }
 
 
-int64_t mastercore::sum_check_upnl(std::string address)
+int64_t mastercore::sum_check_upnl(const std::string& address)
 {
+    int64_t upnl = 0;
     std::map<std::string, int64_t>::iterator it = sum_upnls.find(address);
-    int64_t upnl = it->second;
+    if (it != sum_upnls.end())
+        upnl = it->second;
+
     return upnl;
 }
 
@@ -5326,7 +5219,7 @@ void mastercore::update_sum_upnls()
 }
 
 /* margin needed for a given position */
-int64_t mastercore::pos_margin(uint32_t contractId, std::string address, uint32_t margin_requirement)
+int64_t mastercore::pos_margin(uint32_t contractId, const std::string& address, uint32_t margin_requirement)
 {
         arith_uint256 maintMargin;
 
@@ -5739,12 +5632,10 @@ bool CMPTradeList::getChannelInfo(const std::string& channelAddress, UniValue& t
    */
 channel CMPTradeList::getChannelAddresses(const std::string& channelAddress)
 {
-      std::vector<std::string> vstr;
       channel ret;
-      std::string strKey;
-
       if (!pdb) return ret;
-
+      std::string strKey;
+      std::vector<std::string> vstr;
       leveldb::Iterator* it = NewIterator(); // Allocation proccess
 
       for(it->SeekToLast(); it->Valid(); it->Prev())
@@ -5797,7 +5688,6 @@ bool CMPTradeList::getAllWithdrawals(const std::string& senderAddress, UniValue&
     if (!pdb) return false;
     int count = 0;
     std::vector<std::string> vstr;
-
     leveldb::Iterator* it = NewIterator(); // Allocation proccess
 
     for(it->SeekToLast(); it->Valid(); it->Prev())
@@ -5856,7 +5746,6 @@ int CMPTradeList::getNextId()
     if (!pdb) return -1;
 
     int count = 0;
-
     std::vector<std::string> vstr;
 
     leveldb::Iterator* it = NewIterator(); // Allocation proccess
