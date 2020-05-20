@@ -179,7 +179,7 @@ public:
 
         bool isDivisible() const;
         void print() const;
-      	bool isNativeContract() const;
+      	bool isNative() const;
         bool isSwap() const;
         bool isPegged() const;
         bool isOracle() const;
