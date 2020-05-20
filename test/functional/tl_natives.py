@@ -244,6 +244,12 @@ class NativesBasicsTest (BitcoinTestFramework):
 
         self.nodes[0].generate(1)
 
+        # we need to se here the margin for addresses[0]
+        params = str([addresses[0], 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getreserve",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['reserve'],'100.00000000')
 
         self.log.info("Checking orderbook")
         params = str(["ALL/Lhk", 1]).replace("'",'"')
@@ -305,6 +311,13 @@ class NativesBasicsTest (BitcoinTestFramework):
 
         self.nodes[0].generate(1)
 
+        # we need to se here the margin for addresses[0]
+        params = str([addresses[0], 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getreserve",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['reserve'],'200.00000000')
+
 
         self.log.info("Checking orderbook (sell side)")
         params = str(["ALL/Lhk", 2]).replace("'",'"')
@@ -331,6 +344,13 @@ class NativesBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
 
         self.nodes[0].generate(1)
+
+        # we need to se here the margin for addresses[0]
+        params = str([addresses[0], 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getreserve",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['reserve'],'100.00000000')
 
 
         self.log.info("Checking orderbook (buy side)")
@@ -397,6 +417,14 @@ class NativesBasicsTest (BitcoinTestFramework):
 
         self.nodes[0].generate(1)
 
+        # we need to se here the margin for addresses[0]
+        params = str([addresses[0], 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getreserve",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['reserve'],'200.00000000')
+
+
         self.log.info("Checking orderbook (buy side)")
         params = str(["ALL/Lhk", 1]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_getcontract_orderbook",params)
@@ -425,6 +453,13 @@ class NativesBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         assert_equal(out['result']['longPosition'],'0.00000000')
         assert_equal(out['result']['shortPosition'],'500.00000000')
+
+        # we need to se here the margin for addresses[0]
+        params = str([addresses[0], 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getreserve",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['reserve'],'199.99500000')
 
         params = str([addresses[1], "ALL/Lhk"]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_getposition",params)
@@ -492,6 +527,14 @@ class NativesBasicsTest (BitcoinTestFramework):
 
         self.nodes[0].generate(1)
 
+        # we need to se here the margin for addresses[0]
+        params = str([addresses[0], 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getreserve",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['reserve'],'99.99500000')
+
+
         self.log.info("Checking orderbook again (buy side)")
         params = str(["ALL/Lhk", 1]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_getcontract_orderbook",params)
@@ -522,6 +565,14 @@ class NativesBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['longPosition'],'0.00000000')
         assert_equal(out['result']['shortPosition'],'500.00000000')
 
+        # we need to se here the margin for addresses[0]
+        params = str([addresses[0], 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getreserve",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['reserve'],'99.99500000')
+
+
         params = str([addresses[0], 5]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_closeposition",params)
         # self.log.info(out)
@@ -537,6 +588,100 @@ class NativesBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['longPosition'],'0.00000000')
         assert_equal(out['result']['shortPosition'],'0.00000000')
 
+        # we need to se here the margin for addresses[0]
+        params = str([addresses[0], 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getreserve",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['reserve'],'0.00000000')
+
+
+        self.log.info("Checking margins for short and long position")
+        params = str([addresses[0], "ALL/Lhk", "500", "500.1", 1, "1"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_tradecontract",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+
+        params = str([addresses[1], "ALL/Lhk", "500", "500.1", 2, "1"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_tradecontract",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+
+        self.nodes[0].generate(1)
+
+        params = str([addresses[0], "ALL/Lhk"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getposition",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['longPosition'],'500.00000000')
+        assert_equal(out['result']['shortPosition'],'0.00000000')
+
+        # we need to se here the margin for addresses[0]
+        params = str([addresses[0], 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getreserve",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['reserve'],'50.00000000')
+
+        params = str([addresses[1], "ALL/Lhk"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getposition",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['longPosition'],'0.00000000')
+        assert_equal(out['result']['shortPosition'],'500.00000000')
+
+        params = str([addresses[2], "ALL/Lhk"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getposition",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['longPosition'],'0.00000000')
+        assert_equal(out['result']['shortPosition'],'0.00000000')
+
+        self.log.info("Sending 2000 tokens to third address")
+        params = str([addresses[0], addresses[2], 4, "2000"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_send",params)
+        assert_equal(out['error'], None)
+        # self.log.info(out)
+
+        self.nodes[0].generate(1)
+
+        params = str([addresses[2], "ALL/Lhk", "1000", "400.1", 1, "1"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_tradecontract",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+
+        self.nodes[0].generate(1)
+
+        self.log.info("First address from long to short position")
+
+        params = str([addresses[0], "ALL/Lhk", "1000", "400.1", 2, "1"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_tradecontract",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+
+        self.nodes[0].generate(1)
+
+        params = str([addresses[0], "ALL/Lhk"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getposition",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['longPosition'],'0.00000000')
+        assert_equal(out['result']['shortPosition'],'500.00000000')
+
+        # we need to se here the margin for addresses[0]
+        params = str([addresses[0], 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getreserve",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['reserve'],'150.00000000')
+
+
+        params = str([addresses[2], "ALL/Lhk"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getposition",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['longPosition'],'1000.00000000')
+        assert_equal(out['result']['shortPosition'],'0.00000000')
 
         conn.close()
 

@@ -1192,11 +1192,9 @@ bool mastercore::ContractDex_Fees(const CMPContractDex* maker, const CMPContract
     }
 
     // -% to taker, +% to maker
-    update_tally_map(taker->getAddr(), sp.collateral_currency, -takerFee, BALANCE);
-    update_tally_map(maker->getAddr(), sp.collateral_currency, makerFee, BALANCE);
+    assert(update_tally_map(taker->getAddr(), sp.collateral_currency, -takerFee, CONTRACTDEX_RESERVE));
+    assert(update_tally_map(maker->getAddr(), sp.collateral_currency, makerFee, BALANCE));
 
-
-    // NOTE: check later (is ok take from BALANCE the fees?)
 
     //sum check
     // assert(takerFee == makerFee + 3*cacheFee); // 2.5% = 1% + 3*0.5%
@@ -2426,7 +2424,17 @@ int mastercore::ContractDex_CLOSE_POSITION(const uint256& txid, unsigned int blo
 
     if(msc_debug_close_position) PrintToLog("%s(): shortPosition after: %d, longPosition after: %d, rc: %d\n",__func__, shortPositionAf, longPositionAf, rc);
 
-    (shortPositionAf == 0 && longPositionAf == 0 && msc_debug_close_position) ? PrintToLog("%s(): POSITION CLOSED!!!\n",__func__) : PrintToLog("%s(): Position partialy Closed\n", __func__);
+    if (shortPositionAf == 0 && longPositionAf == 0)
+    {
+        if(msc_debug_close_position) PrintToLog("%s(): POSITION CLOSED!!!\n",__func__);
+        // releasing the reserve
+        int64_t reserve = getMPbalance(sender_addr, collateralCurrency, CONTRACTDEX_RESERVE);
+        assert(update_tally_map(sender_addr, collateralCurrency, reserve, BALANCE));
+        assert(update_tally_map(sender_addr, collateralCurrency, -reserve, CONTRACTDEX_RESERVE));
+
+    } else
+        PrintToLog("%s(): Position partialy Closed\n", __func__);
+
 
     return rc;
 }
