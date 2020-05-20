@@ -38,7 +38,7 @@ function publishingLoop(cb){
 		if(loops%volSpikeFrequency){
 			rangeModifier += Math.random()
 		}
-		rangeModifier *=1-(1/modHalfLife)
+		rangeModifier *=1-(1/modHalfLife*2)
 
 			if(loops%publishEveryNPeriods){
 						client.publishOracleData(adminAddress,contractTitle,price,price,price,function(data){
