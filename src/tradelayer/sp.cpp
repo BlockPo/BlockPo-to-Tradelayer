@@ -33,10 +33,6 @@
 
 using namespace mastercore;
 
-extern int64_t priceIndex;
-extern volatile uint64_t marketPrice;
-extern int64_t factorE;
-extern std::map<std::string,uint32_t> peggedIssuers;
 typedef boost::multiprecision::uint128_t ui128;
 
 CMPSPInfo::Entry::Entry()
@@ -183,7 +179,7 @@ uint32_t CMPSPInfo::peekNextSPID() const
 bool CMPSPInfo::updateSP(uint32_t propertyId, const Entry& info)
 {
   // cannot update implied SP
-  if (TL_PROPERTY_ALL == propertyId || TL_PROPERTY_TALL == propertyId) {
+  if (ALL == propertyId || sLTC == propertyId) {
     return false;
   }
 
@@ -276,11 +272,11 @@ uint32_t CMPSPInfo::putSP(const Entry& info)
 
 bool CMPSPInfo::getSP(uint32_t propertyId, Entry& info) const
 {
-    // special cases for constant SPs MSC and TMSC
-    if (TL_PROPERTY_ALL == propertyId) {
+    // special cases for ALL and sLTC
+    if (ALL == propertyId) {
         info = implied_all;
         return true;
-    } else if (TL_PROPERTY_TALL == propertyId) {
+    } else if (sLTC == propertyId){
         info = implied_tall;
         return true;
     }
@@ -313,8 +309,8 @@ bool CMPSPInfo::getSP(uint32_t propertyId, Entry& info) const
 
 bool CMPSPInfo::hasSP(uint32_t propertyId) const
 {
-    // Special cases for constant SPs ALL and TALL
-    if (TL_PROPERTY_ALL == propertyId || TL_PROPERTY_TALL == propertyId) {
+    // Special cases for ALL and sLTC
+    if (ALL == propertyId || sLTC == propertyId) {
         return true;
     }
 
@@ -614,11 +610,11 @@ CMPCrowd* mastercore::getCrowd(const std::string& address)
 bool mastercore::IsPropertyIdValid(uint32_t propertyId)
 {
   // is true, because we can exchange litecoins too
-  if (propertyId == 0) return true;
+  if (propertyId == LTC) return true;
 
   uint32_t nextId = 0;
 
-  if (propertyId < TEST_ECO_PROPERTY_1) {
+  if (propertyId < MAX_PROPERTY_N) {
     nextId = _my_sps->peekNextSPID();
   }
 
@@ -847,7 +843,7 @@ bool mastercore::isCrowdsalePurchase(const uint256& txid, const std::string& add
 
     // if we still haven't found txid, check non active crowdsales to this address
     for (uint8_t id = 1; id <= 2; id++) {
-        uint32_t startPropertyId = (id == 1) ? 1 : TEST_ECO_PROPERTY_1;
+        uint32_t startPropertyId = (id == 1) ? 1 : MAX_PROPERTY_N;
         for (uint32_t loopPropertyId = startPropertyId; loopPropertyId < _my_sps->peekNextSPID(); loopPropertyId++) {
             CMPSPInfo::Entry sp;
             if (!_my_sps->getSP(loopPropertyId, sp)) continue;

@@ -40,7 +40,7 @@ typedef boost::rational<boost::multiprecision::checked_int128_t> rational_t;
 
 int const MAX_STATE_HISTORY = 50;
 
-#define TEST_ECO_PROPERTY_1 (0x80000003UL)
+#define MAX_PROPERTY_N (0x80000003UL)
 
 // increment this value to force a refresh of the state (similar to --startclean)
 #define DB_VERSION 1

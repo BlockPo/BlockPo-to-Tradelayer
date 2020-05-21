@@ -60,7 +60,6 @@ using std::runtime_error;
 using namespace mastercore;
 
 extern int64_t totalVesting;
-extern int64_t factorE;
 extern volatile int64_t globalNumPrice;
 extern volatile int64_t globalDenPrice;
 extern uint64_t marketP[NPTYPES];
@@ -925,15 +924,17 @@ UniValue tl_listproperties(const JSONRPCRequest& request)
   LOCK(cs_tally);
 
   uint32_t nextSPID = _my_sps->peekNextSPID();
-  for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++) {
-    CMPSPInfo::Entry sp;
-    if (_my_sps->getSP(propertyId, sp)) {
-      UniValue propertyObj(UniValue::VOBJ);
-      propertyObj.push_back(Pair("propertyid", (uint64_t) propertyId));
-      PropertyToJSON(sp, propertyObj); // name, data, url, divisible
-      KYCToJSON(sp, propertyObj);
-      response.push_back(propertyObj);
-    }
+  for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
+  {
+      CMPSPInfo::Entry sp;
+      if(_my_sps->getSP(propertyId, sp))
+      {
+          UniValue propertyObj(UniValue::VOBJ);
+          propertyObj.push_back(Pair("propertyid", (uint64_t) propertyId));
+          PropertyToJSON(sp, propertyObj); // name, data, url, divisible
+          KYCToJSON(sp, propertyObj);
+          response.push_back(propertyObj);
+     }
   }
 
   return response;
@@ -965,19 +966,19 @@ UniValue tl_list_natives(const JSONRPCRequest& request)
   LOCK(cs_tally);
 
   uint32_t nextSPID = _my_sps->peekNextSPID();
-  for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++) {
-    CMPSPInfo::Entry sp;
+  for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
+  {
+      CMPSPInfo::Entry sp;
+      if (_my_sps->getSP(propertyId, sp))
+      {
+          if(!sp.isNative())
+              continue;
 
-    if (_my_sps->getSP(propertyId, sp))
-    {
-      if(!sp.isNative())
-          continue;
-
-      UniValue propertyObj(UniValue::VOBJ);
-      propertyObj.push_back(Pair("propertyid", (uint64_t) propertyId));
-      ContractToJSON(sp, propertyObj); // name, data, url,...
-      response.push_back(propertyObj);
-    }
+          UniValue propertyObj(UniValue::VOBJ);
+          propertyObj.push_back(Pair("propertyid", (uint64_t) propertyId));
+          ContractToJSON(sp, propertyObj); // name, data, url,...
+          response.push_back(propertyObj);
+      }
   }
 
   return response;
@@ -1009,19 +1010,20 @@ UniValue tl_list_oracles(const JSONRPCRequest& request)
   LOCK(cs_tally);
 
   uint32_t nextSPID = _my_sps->peekNextSPID();
-  for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++) {
-    CMPSPInfo::Entry sp;
+  for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
+  {
+      CMPSPInfo::Entry sp;
 
-    if (_my_sps->getSP(propertyId, sp))
-    {
-      if(!sp.isOracle())
-          continue;
+      if (_my_sps->getSP(propertyId, sp))
+      {
+          if(!sp.isOracle())
+              continue;
 
-      UniValue propertyObj(UniValue::VOBJ);
-      propertyObj.push_back(Pair("propertyid", (uint64_t) propertyId));
-      OracleToJSON(sp, propertyObj); // name, data, url,...
-      response.push_back(propertyObj);
-    }
+          UniValue propertyObj(UniValue::VOBJ);
+          propertyObj.push_back(Pair("propertyid", (uint64_t) propertyId));
+          OracleToJSON(sp, propertyObj); // name, data, url,...
+          response.push_back(propertyObj);
+      }
   }
 
   return response;
@@ -2930,31 +2932,31 @@ UniValue tl_getcurrencytotal(const JSONRPCRequest& request)
 
 UniValue tl_listkyc(const JSONRPCRequest& request)
 {
-  if (false) //TODO: put fHelp boolean
-    throw runtime_error(
-			"tl_listproperties\n"
-			"\nLists all kyc registers.\n"
-			"\nResult:\n"
-			"[                                (array of JSON objects)\n"
-			"  {\n"
-			"    \"propertyid\" : n,                (number) the identifier of the tokens\n"
-			"    \"name\" : \"name\",                 (string) the name of the tokens\n"
-			"    \"data\" : \"information\",          (string) additional information or a description\n"
-			"    \"url\" : \"uri\",                   (string) an URI, for example pointing to a website\n"
-			"    \"divisible\" : true|false         (boolean) whether the tokens are divisible\n"
-			"  },\n"
-			"  ...\n"
-			"]\n"
-			"\nExamples:\n"
-			+ HelpExampleCli("tl_listkyc", "")
-			+ HelpExampleRpc("tl_listkyc", "")
-			);
+    if (false) //TODO: put fHelp boolean
+      throw runtime_error(
+			  "tl_listproperties\n"
+			  "\nLists all kyc registers.\n"
+			  "\nResult:\n"
+			  "[                                (array of JSON objects)\n"
+			  "  {\n"
+			  "    \"propertyid\" : n,                (number) the identifier of the tokens\n"
+			  "    \"name\" : \"name\",                 (string) the name of the tokens\n"
+			  "    \"data\" : \"information\",          (string) additional information or a description\n"
+			  "    \"url\" : \"uri\",                   (string) an URI, for example pointing to a website\n"
+			  "    \"divisible\" : true|false         (boolean) whether the tokens are divisible\n"
+			  "  },\n"
+			  "  ...\n"
+			  "]\n"
+			  "\nExamples:\n"
+			  + HelpExampleCli("tl_listkyc", "")
+			  + HelpExampleRpc("tl_listkyc", "")
+		  );
 
-  UniValue response(UniValue::VARR);
+    UniValue response(UniValue::VARR);
 
-  t_tradelistdb->kycLoop(response);
+    t_tradelistdb->kycLoop(response);
 
-  return response;
+    return response;
 }
 
 UniValue tl_list_attestation(const JSONRPCRequest& request)
@@ -2992,20 +2994,20 @@ UniValue tl_list_attestation(const JSONRPCRequest& request)
 //return: UniValue which is JSON object that is max pegged currency you can create
 UniValue tl_getmax_peggedcurrency(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 2)
-    throw runtime_error(
-			"tl_getmax_peggedcurrency\"fromaddress\""
-			"\nGet max pegged currency address can create\n"
-			"\n arguments: \n"
-			"\n 1) fromaddress (string, required) the address to send from\n"
-			"\n 2) name of contract requiered \n"
+    if (request.params.size() != 2)
+      throw runtime_error(
+			  "tl_getmax_peggedcurrency\"fromaddress\""
+			  "\nGet max pegged currency address can create\n"
+			  "\n arguments: \n"
+			  "\n 1) fromaddress (string, required) the address to send from\n"
+			  "\n 2) name of contract requiered \n"
 			);
-  std::string fromAddress = ParseAddress(request.params[0]);
-  std::string name_traded = ParseText(request.params[1]);
+    std::string fromAddress = ParseAddress(request.params[0]);
+    std::string name_traded = ParseText(request.params[1]);
 
-  struct FutureContractObject *pfuture = getFutureContractObject(name_traded);
-  uint32_t contractId = pfuture->fco_propertyId;
-  uint32_t collateral = pfuture->fco_collateral_currency;
+    struct FutureContractObject *pfuture = getFutureContractObject(name_traded);
+    uint32_t contractId = (pfuture) ? pfuture->fco_propertyId : 0;
+    uint32_t collateral = (pfuture) ? pfuture->fco_collateral_currency : 0;
 
   // Get available ALL because dCurrency is a hedge of ALL and ALL denominated Short Contracts
   // obtain parameters & info
