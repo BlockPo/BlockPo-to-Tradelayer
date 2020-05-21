@@ -106,6 +106,41 @@ void PropertyToJSON(const CMPSPInfo::Entry& sProperty, UniValue& property_obj)
     property_obj.push_back(Pair("category", sProperty.category));
     property_obj.push_back(Pair("subcategory", sProperty.subcategory));
 
+
+}
+
+void ContractToJSON(const CMPSPInfo::Entry& sProperty, UniValue& property_obj)
+{
+  property_obj.push_back(Pair("name", sProperty.name));
+  property_obj.push_back(Pair("data", sProperty.data));
+  property_obj.push_back(Pair("url", sProperty.url));
+  property_obj.push_back(Pair("admin", sProperty.issuer));
+  property_obj.push_back(Pair("creationtxid", sProperty.txid.GetHex()));
+  property_obj.push_back(Pair("creation block", sProperty.init_block));
+  property_obj.push_back(Pair("notional size", FormatDivisibleShortMP(sProperty.notional_size)));
+  property_obj.push_back(Pair("collateral currency", std::to_string(sProperty.collateral_currency)));
+  property_obj.push_back(Pair("margin requirement", FormatDivisibleShortMP(sProperty.margin_requirement)));
+  property_obj.push_back(Pair("blocks until expiration", std::to_string(sProperty.blocks_until_expiration)));
+  property_obj.push_back(Pair("open interest", "not_available_yet"));
+  property_obj.push_back(Pair("inverse quoted", std::to_string(sProperty.inverse_quoted)));
+
+  if (sProperty.isOracle())
+  {
+      property_obj.push_back(Pair("backup address", sProperty.backup_address));
+      property_obj.push_back(Pair("hight price", FormatDivisibleShortMP(sProperty.oracle_high)));
+      property_obj.push_back(Pair("low price", FormatDivisibleShortMP(sProperty.oracle_low)));
+      property_obj.push_back(Pair("last close price", FormatDivisibleShortMP(sProperty.oracle_close)));
+      property_obj.push_back(Pair("type", "oracle"));
+
+  } else if (sProperty.isNative()){
+      property_obj.push_back(Pair("type", "native"));
+
+  }
+
+}
+
+void KYCToJSON(const CMPSPInfo::Entry& sProperty, UniValue& property_obj)
+{
     std::vector<int64_t> iKyc = sProperty.kyc;
     std::string sKyc;
 
@@ -116,21 +151,6 @@ void PropertyToJSON(const CMPSPInfo::Entry& sProperty, UniValue& property_obj)
     }
 
     if(!iKyc.empty()) property_obj.push_back(Pair("kyc_ids allowed","["+sKyc+"]"));
-
-}
-
-void ContractToJSON(const CMPSPInfo::Entry& sProperty, UniValue& property_obj)
-{
-  property_obj.push_back(Pair("name", sProperty.name));
-  property_obj.push_back(Pair("data", sProperty.data));
-  property_obj.push_back(Pair("url", sProperty.url));
-  property_obj.push_back(Pair("issuer", sProperty.issuer));
-  property_obj.push_back(Pair("creationtxid", sProperty.txid.GetHex()));
-  property_obj.push_back(Pair("creation block", sProperty.init_block));
-  property_obj.push_back(Pair("notional size", FormatDivisibleShortMP(sProperty.notional_size)));
-  property_obj.push_back(Pair("collateral currency", std::to_string(sProperty.collateral_currency)));
-  property_obj.push_back(Pair("margin requirement", FormatDivisibleShortMP(sProperty.margin_requirement)));
-  property_obj.push_back(Pair("blocks until expiration", std::to_string(sProperty.blocks_until_expiration)));
 
 }
 
@@ -833,14 +853,14 @@ UniValue tl_getproperty(const JSONRPCRequest& request)
     UniValue response(UniValue::VOBJ);
     response.push_back(Pair("propertyid", (uint64_t) propertyId));
     PropertyToJSON(sp, response); // name, data, url, divisible
-
+    KYCToJSON(sp, response);
     response.push_back(Pair("issuer", sp.issuer));
     response.push_back(Pair("creationtxid", strCreationHash));
     response.push_back(Pair("fixedissuance", sp.fixed));
     response.push_back(Pair("totaltokens", strTotalTokens));
     response.push_back(Pair("creation block", sp.init_block));
 
-    if (sp.isNativeContract()){
+    if (sp.isNative()){
 
       response.push_back(Pair("notional size", FormatDivisibleShortMP(sp.notional_size)));
       response.push_back(Pair("collateral currency", std::to_string(sp.collateral_currency)));
@@ -911,6 +931,7 @@ UniValue tl_listproperties(const JSONRPCRequest& request)
       UniValue propertyObj(UniValue::VOBJ);
       propertyObj.push_back(Pair("propertyid", (uint64_t) propertyId));
       PropertyToJSON(sp, propertyObj); // name, data, url, divisible
+      KYCToJSON(sp, propertyObj);
       response.push_back(propertyObj);
     }
   }
@@ -949,7 +970,7 @@ UniValue tl_list_natives(const JSONRPCRequest& request)
 
     if (_my_sps->getSP(propertyId, sp))
     {
-      if(!sp.isNativeContract())
+      if(!sp.isNative())
           continue;
 
       UniValue propertyObj(UniValue::VOBJ);
@@ -3020,6 +3041,50 @@ UniValue tl_getmax_peggedcurrency(const JSONRPCRequest& request)
 
 }
 
+UniValue tl_getcontract(const JSONRPCRequest& request)
+{
+    if (request.params.size() != 1)
+        throw runtime_error(
+            "tl_getcontract contractId\n"
+            "\nReturns details for about the tokens or smart property to lookup.\n"
+            "\nArguments:\n"
+            "1. contractid                        (number, required) the identifier of the tokens or property\n"
+            "\nResult:\n"
+            "{\n"
+            "  \"contractid\" : n,                 (number) the identifier\n"
+            "  \"name\" : \"name\",                 (string) the name of the tokens\n"
+            "  \"data\" : \"information\",          (string) additional information or a description\n"
+            "  \"url\" : \"uri\",                   (string) an URI, for example pointing to a website\n"
+            "  \"divisible\" : true|false,        (boolean) whether the tokens are divisible\n"
+            "  \"issuer\" : \"address\",            (string) the Bitcoin address of the issuer on record\n"
+            "  \"creationtxid\" : \"hash\",         (string) the hex-encoded creation transaction hash\n"
+            "  \"fixedissuance\" : true|false,    (boolean) whether the token supply is fixed\n"
+            "  \"totaltokens\" : \"n.nnnnnnnn\"     (string) the total number of tokens in existence\n"
+            "}\n"
+            "\nExamples:\n"
+            + HelpExampleCli("tl_getcontract", "3")
+            + HelpExampleRpc("tl_getcontract", "3")
+        );
+
+    uint32_t contractId = ParsePropertyId(request.params[0]);
+
+    RequireContract(contractId);
+
+    CMPSPInfo::Entry sp;
+    {
+        LOCK(cs_tally);
+        _my_sps->getSP(contractId, sp);
+    }
+
+    UniValue response(UniValue::VOBJ);
+    response.push_back(Pair("propertyid", (uint64_t) contractId));
+    ContractToJSON(sp, response); // name, data, url,
+    KYCToJSON(sp, response);
+
+    return response;
+}
+
+
 
 
 static const CRPCCommand commands[] =
@@ -3077,7 +3142,8 @@ static const CRPCCommand commands[] =
   { "trade layer (data retieval)" , "tl_getoraclecache",            &tl_getoraclecache,             {} },
   { "trade layer (data retieval)",  "tl_getmax_peggedcurrency",     &tl_getmax_peggedcurrency,      {} },
   { "trade layer (data retieval)",  "tl_getunvested",               &tl_getunvested,                {} },
-  { "trade layer (data retieval)",  "tl_list_attestation",          &tl_list_attestation,           {} }
+  { "trade layer (data retieval)",  "tl_list_attestation",          &tl_list_attestation,           {} },
+  { "trade layer (data retieval)",  "tl_getcontract",               &tl_getcontract,                {} }
 };
 
 void RegisterTLDataRetrievalRPCCommands(CRPCTable &tableRPC)

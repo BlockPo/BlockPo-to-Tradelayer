@@ -56,7 +56,7 @@ bool CMPSPInfo::Entry::isDivisible() const
   return false;
 }
 
-bool CMPSPInfo::Entry::isNativeContract() const
+bool CMPSPInfo::Entry::isNative() const
 {
   switch (prop_type)
     {
