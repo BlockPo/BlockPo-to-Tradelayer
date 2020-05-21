@@ -3050,7 +3050,7 @@ UniValue tl_getcontract(const JSONRPCRequest& request)
             "tl_getcontract contractId\n"
             "\nReturns details for about the tokens or smart property to lookup.\n"
             "\nArguments:\n"
-            "1. contractid                        (number, required) the identifier of the tokens or property\n"
+            "1. name                        (string, required) the name  of the future contract\n"
             "\nResult:\n"
             "{\n"
             "  \"contractid\" : n,                 (number) the identifier\n"
@@ -3064,22 +3064,19 @@ UniValue tl_getcontract(const JSONRPCRequest& request)
             "  \"totaltokens\" : \"n.nnnnnnnn\"     (string) the total number of tokens in existence\n"
             "}\n"
             "\nExamples:\n"
-            + HelpExampleCli("tl_getcontract", "3")
-            + HelpExampleRpc("tl_getcontract", "3")
+            + HelpExampleCli("tl_getcontract", "Contract1")
+            + HelpExampleRpc("tl_getcontract", "Contract1")
         );
 
-    uint32_t contractId = ParsePropertyId(request.params[0]);
-
-    RequireContract(contractId);
+    std::string name = ParseText(request.params[0]);
+    RequireContract(name);
 
     CMPSPInfo::Entry sp;
-    {
-        LOCK(cs_tally);
-        _my_sps->getSP(contractId, sp);
-    }
+    uint32_t propertyId;
+    getEntryFromName(name, propertyId, sp);
 
     UniValue response(UniValue::VOBJ);
-    response.push_back(Pair("propertyid", (uint64_t) contractId));
+    response.push_back(Pair("propertyid", (uint64_t) propertyId));
     ContractToJSON(sp, response); // name, data, url,
     KYCToJSON(sp, response);
 

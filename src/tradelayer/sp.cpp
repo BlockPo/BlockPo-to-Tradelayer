@@ -669,6 +669,17 @@ std::string mastercore::getPropertyName(uint32_t propertyId)
     return "Property Name Not Found";
 }
 
+bool mastercore::getEntryFromName(const std::string& name, uint32_t& propertyId, CMPSPInfo::Entry& sp)
+{
+    uint32_t nextSPID = _my_sps->peekNextSPID();
+    for (propertyId = 1; propertyId < nextSPID; propertyId++)
+    {
+        if (_my_sps->getSP(propertyId, sp) && name == sp.name) return true;
+    }
+
+    return false;
+}
+
 bool mastercore::isCrowdsaleActive(uint32_t propertyId)
 {
     for (CrowdMap::const_iterator it = my_crowds.begin(); it != my_crowds.end(); ++it) {
