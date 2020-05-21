@@ -42,10 +42,8 @@ md_PropertiesMap mastercore::metadex;
 
 chn_PropertiesMap mastercore::chndex;
 
-extern volatile uint64_t marketPrice;
 extern volatile int64_t globalVolumeALL_LTC;
 extern volatile int idx_q;
-extern int64_t factorE;
 extern uint64_t marketP[NPTYPES];
 extern int expirationAchieve;
 extern std::map<uint32_t, std::map<uint32_t, int64_t>> market_priceMap;
@@ -2221,7 +2219,7 @@ int mastercore::ContractDex_CANCEL_FOR_BLOCK(const uint256& txid,  int block,uns
 	              // int64_t num = conv.numerator().convert_to<int64_t>();
 	              // int64_t den = conv.denominator().convert_to<int64_t>();
 
-	              arith_uint256 amountMargin = (ConvertTo256(amountForSale) * ConvertTo256(marginRe)) / ConvertTo256(factorE);
+	              arith_uint256 amountMargin = (ConvertTo256(amountForSale) * ConvertTo256(marginRe)) / ConvertTo256(COIN);
 	              int64_t redeemed = ConvertTo64(amountMargin);
 
                 if(msc_debug_contract_cancel_forblock)

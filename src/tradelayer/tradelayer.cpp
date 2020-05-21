@@ -1028,7 +1028,7 @@ int ParseTransaction(const CTransaction& tx, int nBlock, unsigned int idx, CMPTr
      /** Adding LTC into volume */
      if (count > 0)
      {
-         arith_uint256 ltcsreceived_256t = ConvertTo256(static_cast<int64_t>(nvalue));
+         arith_uint256 ltcsreceived_256t = ConvertTo256(nvalue);
          int64_t ltcsreceived = ConvertTo64(ltcsreceived_256t)/COIN;
          globalVolumeALL_LTC += ltcsreceived;
          const int64_t globalVolumeALL_LTCh = globalVolumeALL_LTC;
@@ -1079,7 +1079,7 @@ int ParseTransaction(const CTransaction& tx, int nBlock, unsigned int idx, CMPTr
          if (msc_debug_handle_instant) PrintToLog("%s: Successfully litecoins traded \n", __func__);
 
          /** Adding LTC into volume */
-         arith_uint256 ltcsreceived_256t = ConvertTo256(static_cast<int64_t>(nvalue));
+         arith_uint256 ltcsreceived_256t = ConvertTo256(nvalue);
          uint64_t ltcsreceived = ConvertTo64(ltcsreceived_256t)/COIN;
          globalVolumeALL_LTC += ltcsreceived;
          const int64_t globalVolumeALL_LTCh = globalVolumeALL_LTC;
@@ -5141,7 +5141,7 @@ bool mastercore::marginMain(int Block)
 
                          if(msc_debug_margin_main) PrintToLog("%s: option: %d, upnl: %d, posMargin: %d\n", __func__, option,upnl,posMargin);
 
-                         arith_uint256 contracts = DivideAndRoundUp(ConvertTo256(posMargin) + ConvertTo256(-upnl), ConvertTo256(static_cast<int64_t>(sp.margin_requirement)));
+                         arith_uint256 contracts = DivideAndRoundUp(ConvertTo256(posMargin) + ConvertTo256(-upnl), ConvertTo256(sp.margin_requirement));
                          int64_t icontracts = ConvertTo64(contracts);
 
                          if(msc_debug_margin_main)
@@ -5247,9 +5247,9 @@ int64_t mastercore::pos_margin(uint32_t contractId, const std::string& address, 
 
         if (longs > 0 && shorts == 0)
         {
-            maintMargin = (ConvertTo256(longs) * ConvertTo256(static_cast<int64_t>(margin_requirement))) / ConvertTo256(factorE);
+            maintMargin = (ConvertTo256(longs) * ConvertTo256(margin_requirement)) / ConvertTo256(COIN);
         } else if (shorts > 0 && longs == 0){
-            maintMargin = (ConvertTo256(shorts) * ConvertTo256(static_cast<int64_t>(margin_requirement))) / ConvertTo256(factorE);
+            maintMargin = (ConvertTo256(shorts) * ConvertTo256(margin_requirement)) / ConvertTo256(COIN);
         } else {
             if(msc_debug_pos_margin) PrintToLog("%s: there's no position avalaible\n", __func__);
             return -2;
@@ -5339,8 +5339,8 @@ bool mastercore::closeChannels(int Block)
 
             if (second_rem > 0)
             {
-              assert(update_tally_map(chn.multisig, propertyId, -first_rem, CHANNEL_RESERVE));
-              assert(update_tally_map(chn.second, propertyId, first_rem, BALANCE));
+              assert(update_tally_map(chn.multisig, propertyId, -second_rem, CHANNEL_RESERVE));
+              assert(update_tally_map(chn.second, propertyId, second_rem, BALANCE));
               status = true;
             }
 
@@ -5634,14 +5634,13 @@ channel CMPTradeList::getChannelAddresses(const std::string& channelAddress)
 {
       channel ret;
       if (!pdb) return ret;
-      std::string strKey;
       std::vector<std::string> vstr;
       leveldb::Iterator* it = NewIterator(); // Allocation proccess
 
       for(it->SeekToLast(); it->Valid(); it->Prev())
       {
           // search key to see if this is a matching trade
-          strKey = it->key().ToString();
+          std::string strKey = it->key().ToString();
           std::string strValue = it->value().ToString();
 
           // ensure correct amount of tokens in value string
@@ -5792,7 +5791,6 @@ inline int64_t setPosition(int64_t positive, int64_t negative)
 
 std::string mastercore::updateStatus(int64_t oldPos, int64_t newPos)
 {
-    bool newBig = false;
     bool longSide = false; // old and new are long
     bool shortSide = false; // old and new are short
 
@@ -5808,8 +5806,6 @@ std::string mastercore::updateStatus(int64_t oldPos, int64_t newPos)
     else if(signOld == 0)
         return ((signNew == 1) ? "OpenLongPosition" : "OpenShortPosition");
 
-    if(newPos > oldPos)
-        newBig = true;
 
     if (signNew == 1 && signOld == -1){
         return "OpenLongPosByShortPosNetted";
@@ -5823,7 +5819,7 @@ std::string mastercore::updateStatus(int64_t oldPos, int64_t newPos)
     else if (signOld == 1 && signNew == 1)
         longSide = true;
 
-    if(newBig) {
+    if(newPos > oldPos) {
         if (shortSide)
             return"ShortPosNettedPartly";
         else
@@ -6074,7 +6070,7 @@ int64_t mastercore::getOracleTwap(uint32_t contractId, int nBlocks)
           if(msc_debug_oracle_twap) PrintToLog("%s(): count: %d\n", __func__, count);
      }
 
-     int64_t sum = ConvertTo64((aSum / ConvertTo256(static_cast<int64_t>(nBlocks))));
+     int64_t sum = ConvertTo64((aSum / ConvertTo256(nBlocks)));
      if(msc_debug_oracle_twap) PrintToLog("%s(): sum: %d\n", __func__, sum);
 
      return sum;

@@ -24,7 +24,6 @@
 
 using boost::algorithm::token_compress_on;
 typedef boost::rational<boost::multiprecision::checked_int128_t> rational_t;
-extern int64_t factorE;
 extern uint64_t marketP[NPTYPES];
 extern int lastBlockg;
 extern int vestingActivationBlock;
