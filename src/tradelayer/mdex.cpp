@@ -1209,9 +1209,6 @@ bool mastercore::ContractDex_ADD_LTCVolume(int64_t nCouldBuy, uint32_t contractI
         return false;
     }
 
-    int64_t notional = static_cast<int64_t>(sp.notional_size);
-    int64_t collateral = static_cast<int64_t>(sp.collateral_currency);
-
     // get token Price in LTC
     int64_t tokenPrice = 0;
 
@@ -1219,12 +1216,12 @@ bool mastercore::ContractDex_ADD_LTCVolume(int64_t nCouldBuy, uint32_t contractI
     if (it != market_priceMap.end())
     {
         std::map<uint32_t, int64_t>& auxMap = it->second;
-        auto itt = auxMap.find(collateral);
+        auto itt = auxMap.find(sp.collateral_currency);
         if(itt != auxMap.end())
         {
             tokenPrice = itt->second;
         } else {
-            if(msc_debug_add_contract_ltc_vol) PrintToLog("%s(): price for collateral (id: %d) in DEx not found \n",__func__, collateral);
+            if(msc_debug_add_contract_ltc_vol) PrintToLog("%s(): price for collateral (id: %d) in DEx not found \n",__func__, sp.collateral_currency);
             return false;
         }
 
@@ -1233,8 +1230,8 @@ bool mastercore::ContractDex_ADD_LTCVolume(int64_t nCouldBuy, uint32_t contractI
         return false;
     }
 
-    if (msc_debug_add_contract_ltc_vol) PrintToLog("%s(): nCouldBuy: %d, notional: %d, tokenPrice: %d \n",__func__, nCouldBuy, notional, tokenPrice);
-    arith_uint256 globalVolume = (ConvertTo256(nCouldBuy) * ConvertTo256(notional) * ConvertTo256(tokenPrice)) / (ConvertTo256(COIN) * ConvertTo256(COIN));
+    if (msc_debug_add_contract_ltc_vol) PrintToLog("%s(): nCouldBuy: %d, notional: %d, tokenPrice: %d \n",__func__, nCouldBuy, sp.notional_size, tokenPrice);
+    arith_uint256 globalVolume = (ConvertTo256(nCouldBuy) * ConvertTo256(sp.notional_size) * ConvertTo256(tokenPrice)) / (ConvertTo256(COIN) * ConvertTo256(COIN));
 
     globalVolumeALL_LTC += ConvertTo64(globalVolume);
 
