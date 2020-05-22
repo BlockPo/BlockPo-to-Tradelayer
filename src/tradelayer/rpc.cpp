@@ -190,7 +190,7 @@ void UnvestedToJSON(const std::string& address, uint32_t property, UniValue& bal
     if (divisible) {
         balance_obj.push_back(Pair("unvested", FormatDivisibleMP(unvested)));
     } else {
-        balance_obj.push_back(Pair("unvvested", FormatIndivisibleMP(unvested)));
+        balance_obj.push_back(Pair("unvested", FormatIndivisibleMP(unvested)));
     }
 }
 
@@ -3006,8 +3006,6 @@ UniValue tl_getmax_peggedcurrency(const JSONRPCRequest& request)
   return max_pegged;
 
 }
-
-
 
 static const CRPCCommand commands[] =
 { //  category                             name                            actor (function)               okSafeMode

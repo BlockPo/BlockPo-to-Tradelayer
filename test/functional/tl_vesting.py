@@ -169,6 +169,14 @@ class VestingBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['balance'],'0.00000000')
         assert_equal(out['result']['reserve'],'0.00000000')
 
+
+        self.log.info("Checking unvested ALLs ")
+        params = str([addresses[1]]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_getunvested",params)
+        # self.log.info(out)
+        assert_equal(out['result']['unvested'],'0.00000000')
+
+
         self.log.info("Waiting for one year")
         for i in range(200):
             self.nodes[0].generate(1)
