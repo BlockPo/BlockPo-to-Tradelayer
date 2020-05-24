@@ -13,6 +13,7 @@ TRADELAYER_TEST_CPP = \
   tradelayer/test/uint256_extensions_tests.cpp \
   tradelayer/test/rounduint64_tests.cpp \
   tradelayer/test/checkpoint_tests.cpp \
+  tradelayer/test/contractdex_tests.cpp \
   tradelayer/test/lock_tests.cpp
 
 BITCOIN_TESTS += \

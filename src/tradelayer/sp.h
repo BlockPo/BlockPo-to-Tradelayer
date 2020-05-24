@@ -179,7 +179,7 @@ public:
 
         bool isDivisible() const;
         void print() const;
-      	bool isNativeContract() const;
+      	bool isNative() const;
         bool isSwap() const;
         bool isPegged() const;
         bool isOracle() const;
@@ -303,6 +303,7 @@ void eraseMaxedCrowdsale(const std::string& address, int64_t blockTime, int bloc
 unsigned int eraseExpiredCrowdsale(const CBlockIndex* pBlockIndex);
 bool isPropertyContract(uint32_t propertyId);
 
+bool getEntryFromName(const std::string& name, uint32_t& propertyId, CMPSPInfo::Entry& sp);
 }
 
 #endif // TRADELAYER_SP_H

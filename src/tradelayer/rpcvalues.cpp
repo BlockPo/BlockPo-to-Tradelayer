@@ -161,14 +161,14 @@ uint8_t ParseIssuerBonus(const UniValue& value)
 
 CTransaction ParseTransaction(const UniValue& value)
 {
-    const CTransaction tx;
+    CMutableTransaction tx;
     if (value.isNull() || value.get_str().empty()) {
-        return tx;
+        return CTransaction(tx);
     }
 
-    // if (!DecodeHexTx(mutableTx, value.get_str())) {
-    //     throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "Transaction deserialization failed");
-    // }
+    if (!DecodeHexTx(tx, value.get_str())) {
+        throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "Transaction deserialization failed");
+    }
 
     return tx;
 }
@@ -252,7 +252,7 @@ int64_t ParseAmountContract(const UniValue& value, int propertyType)
 uint64_t ParseLeverage(const UniValue& value)
 {
     int64_t amount = mastercore::StrToInt64(value.get_str(), true);
-    if (amount < 100000000 || 1000000000 < amount) {
+    if (amount < COIN || 10*COIN < amount) {
         throw JSONRPCError(RPC_TYPE_ERROR, "Leverage out of range");
     }
     return static_cast<uint64_t>(amount);
@@ -352,7 +352,6 @@ uint32_t ParseContractType(const UniValue& value)
 uint32_t ParseContractDen(const UniValue& value)
 {
     int64_t Nvalue = value.get_int64();
-    PrintToConsole(" Nvalue: %d\n",Nvalue);
     if (Nvalue != 1 && Nvalue != 2 && Nvalue != 3 && Nvalue != 4 && Nvalue != 5 && Nvalue != 6) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "denomination no valid");
     }

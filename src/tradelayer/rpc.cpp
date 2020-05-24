@@ -60,7 +60,6 @@ using std::runtime_error;
 using namespace mastercore;
 
 extern int64_t totalVesting;
-extern int64_t factorE;
 extern volatile int64_t globalNumPrice;
 extern volatile int64_t globalDenPrice;
 extern uint64_t marketP[NPTYPES];
@@ -106,6 +105,41 @@ void PropertyToJSON(const CMPSPInfo::Entry& sProperty, UniValue& property_obj)
     property_obj.push_back(Pair("category", sProperty.category));
     property_obj.push_back(Pair("subcategory", sProperty.subcategory));
 
+
+}
+
+void ContractToJSON(const CMPSPInfo::Entry& sProperty, UniValue& property_obj)
+{
+  property_obj.push_back(Pair("name", sProperty.name));
+  property_obj.push_back(Pair("data", sProperty.data));
+  property_obj.push_back(Pair("url", sProperty.url));
+  property_obj.push_back(Pair("admin", sProperty.issuer));
+  property_obj.push_back(Pair("creationtxid", sProperty.txid.GetHex()));
+  property_obj.push_back(Pair("creation block", sProperty.init_block));
+  property_obj.push_back(Pair("notional size", FormatDivisibleShortMP(sProperty.notional_size)));
+  property_obj.push_back(Pair("collateral currency", std::to_string(sProperty.collateral_currency)));
+  property_obj.push_back(Pair("margin requirement", FormatDivisibleShortMP(sProperty.margin_requirement)));
+  property_obj.push_back(Pair("blocks until expiration", std::to_string(sProperty.blocks_until_expiration)));
+  property_obj.push_back(Pair("open interest", "not_available_yet"));
+  property_obj.push_back(Pair("inverse quoted", std::to_string(sProperty.inverse_quoted)));
+
+  if (sProperty.isOracle())
+  {
+      property_obj.push_back(Pair("backup address", sProperty.backup_address));
+      property_obj.push_back(Pair("hight price", FormatDivisibleShortMP(sProperty.oracle_high)));
+      property_obj.push_back(Pair("low price", FormatDivisibleShortMP(sProperty.oracle_low)));
+      property_obj.push_back(Pair("last close price", FormatDivisibleShortMP(sProperty.oracle_close)));
+      property_obj.push_back(Pair("type", "oracle"));
+
+  } else if (sProperty.isNative()){
+      property_obj.push_back(Pair("type", "native"));
+
+  }
+
+}
+
+void KYCToJSON(const CMPSPInfo::Entry& sProperty, UniValue& property_obj)
+{
     std::vector<int64_t> iKyc = sProperty.kyc;
     std::string sKyc;
 
@@ -116,21 +150,6 @@ void PropertyToJSON(const CMPSPInfo::Entry& sProperty, UniValue& property_obj)
     }
 
     if(!iKyc.empty()) property_obj.push_back(Pair("kyc_ids allowed","["+sKyc+"]"));
-
-}
-
-void ContractToJSON(const CMPSPInfo::Entry& sProperty, UniValue& property_obj)
-{
-  property_obj.push_back(Pair("name", sProperty.name));
-  property_obj.push_back(Pair("data", sProperty.data));
-  property_obj.push_back(Pair("url", sProperty.url));
-  property_obj.push_back(Pair("issuer", sProperty.issuer));
-  property_obj.push_back(Pair("creationtxid", sProperty.txid.GetHex()));
-  property_obj.push_back(Pair("creation block", sProperty.init_block));
-  property_obj.push_back(Pair("notional size", FormatDivisibleShortMP(sProperty.notional_size)));
-  property_obj.push_back(Pair("collateral currency", std::to_string(sProperty.collateral_currency)));
-  property_obj.push_back(Pair("margin requirement", FormatDivisibleShortMP(sProperty.margin_requirement)));
-  property_obj.push_back(Pair("blocks until expiration", std::to_string(sProperty.blocks_until_expiration)));
 
 }
 
@@ -301,7 +320,7 @@ UniValue tl_getpayload(const JSONRPCRequest& request)
     int blockHeight = GetHeight();
     if (!blockHash.IsNull()) {
         CBlockIndex* pBlockIndex = GetBlockIndex(blockHash);
-        if (NULL != pBlockIndex) {
+        if (nullptr != pBlockIndex) {
             blockTime = pBlockIndex->nTime;
             blockHeight = pBlockIndex->nHeight;
         }
@@ -360,7 +379,7 @@ UniValue mscrpc(const JSONRPCRequest& request)
     if (1 < request.params.size()) extra2 = atoi(request.params[1].get_str());
     if (2 < request.params.size()) extra3 = atoi(request.params[2].get_str());
 
-    PrintToConsole("%s(extra=%d,extra2=%d,extra3=%d)\n", __FUNCTION__, extra, extra2, extra3);
+    PrintToLog("%s(extra=%d,extra2=%d,extra3=%d)\n", __FUNCTION__, extra, extra2, extra3);
 
     bool bDivisible = isPropertyDivisible(extra2);
 
@@ -372,10 +391,10 @@ UniValue mscrpc(const JSONRPCRequest& request)
             int64_t total = 0;
             // display all balances
             for (std::unordered_map<std::string, CMPTally>::iterator my_it = mp_tally_map.begin(); my_it != mp_tally_map.end(); ++my_it) {
-                PrintToConsole("%34s => ", my_it->first);
+                PrintToLog("%34s => ", my_it->first);
                 total += (my_it->second).print(extra2, bDivisible);
             }
-            PrintToConsole("total for property %d  = %X is %s\n", extra2, extra2, FormatDivisibleMP(total));
+            PrintToLog("total for property %d  = %X is %s\n", extra2, extra2, FormatDivisibleMP(total));
             break;
         }
         case 1:
@@ -399,13 +418,13 @@ UniValue mscrpc(const JSONRPCRequest& request)
             uint32_t id = 0;
             // for each address display all currencies it holds
             for (std::unordered_map<std::string, CMPTally>::iterator my_it = mp_tally_map.begin(); my_it != mp_tally_map.end(); ++my_it) {
-                PrintToConsole("%34s => ", my_it->first);
+                PrintToLog("%34s => ", my_it->first);
                 (my_it->second).print(extra2);
                 (my_it->second).init();
                 while (0 != (id = (my_it->second).next())) {
-                    PrintToConsole("Id: %u=0x%X ", id, id);
+                    PrintToLog("Id: %u=0x%X ", id, id);
                 }
-                PrintToConsole("\n");
+                PrintToLog("\n");
             }
             break;
         }
@@ -420,7 +439,7 @@ UniValue mscrpc(const JSONRPCRequest& request)
         case 5:
         {
             LOCK(cs_tally);
-            PrintToConsole("isMPinBlockRange(%d,%d)=%s\n", extra2, extra3, isMPinBlockRange(extra2, extra3, false) ? "YES" : "NO");
+            PrintToLog("isMPinBlockRange(%d,%d)=%s\n", extra2, extra3, isMPinBlockRange(extra2, extra3, false) ? "YES" : "NO");
             break;
         }
         case 6:
@@ -440,31 +459,31 @@ UniValue mscrpc(const JSONRPCRequest& request)
         }
         case 9:
         {
-            PrintToConsole("Locking cs_tally for %d milliseconds..\n", extra2);
+            PrintToLog("Locking cs_tally for %d milliseconds..\n", extra2);
             LOCK(cs_tally);
             MilliSleep(extra2);
-            PrintToConsole("Unlocking cs_tally now\n");
+            PrintToLog("Unlocking cs_tally now\n");
             break;
         }
         case 10:
         {
-            PrintToConsole("Locking cs_main for %d milliseconds..\n", extra2);
+            PrintToLog("Locking cs_main for %d milliseconds..\n", extra2);
             LOCK(cs_main);
             MilliSleep(extra2);
-            PrintToConsole("Unlocking cs_main now\n");
+            PrintToLog("Unlocking cs_main now\n");
             break;
         }
 #ifdef ENABLE_WALLET
         case 11:
         {
-            PrintToConsole("Locking pwalletMain->cs_wallet for %d milliseconds..\n", extra2);
-            CWalletRef pwalletMain = NULL;
+            PrintToLog("Locking pwalletMain->cs_wallet for %d milliseconds..\n", extra2);
+            CWalletRef pwalletMain = nullptr;
             if (vpwallets.size() > 0){
                 pwalletMain = vpwallets[0];
             }
             LOCK(pwalletMain->cs_wallet);
             MilliSleep(extra2);
-            PrintToConsole("Unlocking pwalletMain->cs_wallet now\n");
+            PrintToLog("Unlocking pwalletMain->cs_wallet now\n");
             break;
         }
 #endif
@@ -476,7 +495,7 @@ UniValue mscrpc(const JSONRPCRequest& request)
         case 15:
         {
             // test each byte boundary during compression - TODO: talk to dexx about changing into BOOST unit test
-            PrintToConsole("Running varint compression tests...\n");
+            PrintToLog("Running varint compression tests...\n");
             int passed = 0;
             int failed = 0;
             std::vector<uint64_t> testValues;
@@ -509,18 +528,18 @@ UniValue mscrpc(const JSONRPCRequest& request)
                 for (it = compressedBytes.begin(); it != compressedBytes.end(); it++) {
                     ss << " " << std::setw(2) << static_cast<unsigned>(*it); // \\x
                 }
-                PrintToConsole("Integer: %d... compressed varint bytes:%s... decompressed integer %d... ",n,ss.str(),result);
+                PrintToLog("Integer: %d... compressed varint bytes:%s... decompressed integer %d... ",n,ss.str(),result);
                 if (result == n) {
-                    PrintToConsole("PASS\n");
+                    PrintToLog("PASS\n");
                     passed++;
                 } else {
-                    PrintToConsole("FAIL\n");
+                    PrintToLog("FAIL\n");
                     failed++;
                 }
             }
-            PrintToConsole("Varint compression tests complete.\n");
-            PrintToConsole("======================================\n");
-            PrintToConsole("Passed: %d     Failed: %d\n", passed, failed);
+            PrintToLog("Varint compression tests complete.\n");
+            PrintToLog("======================================\n");
+            PrintToLog("Passed: %d     Failed: %d\n", passed, failed);
             break;
         }
 
@@ -715,7 +734,7 @@ UniValue tl_getallbalancesforid(const JSONRPCRequest& request)
     for (std::unordered_map<std::string, CMPTally>::iterator it = mp_tally_map.begin(); it != mp_tally_map.end(); ++it) {
         uint32_t id = 0;
         bool includeAddress = false;
-        std::string address = it->first;
+        const std::string& address = it->first;
         (it->second).init();
         while (0 != (id = (it->second).next())) {
             if (id == propertyId) {
@@ -768,7 +787,7 @@ UniValue tl_getallbalancesforaddress(const JSONRPCRequest& request)
 
     CMPTally* addressTally = getTally(address);
 
-    if (NULL == addressTally) { // addressTally object does not exist
+    if (nullptr == addressTally) { // addressTally object does not exist
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Address not found");
     }
 
@@ -833,14 +852,14 @@ UniValue tl_getproperty(const JSONRPCRequest& request)
     UniValue response(UniValue::VOBJ);
     response.push_back(Pair("propertyid", (uint64_t) propertyId));
     PropertyToJSON(sp, response); // name, data, url, divisible
-
+    KYCToJSON(sp, response);
     response.push_back(Pair("issuer", sp.issuer));
     response.push_back(Pair("creationtxid", strCreationHash));
     response.push_back(Pair("fixedissuance", sp.fixed));
     response.push_back(Pair("totaltokens", strTotalTokens));
     response.push_back(Pair("creation block", sp.init_block));
 
-    if (sp.isNativeContract()){
+    if (sp.isNative()){
 
       response.push_back(Pair("notional size", FormatDivisibleShortMP(sp.notional_size)));
       response.push_back(Pair("collateral currency", std::to_string(sp.collateral_currency)));
@@ -905,14 +924,17 @@ UniValue tl_listproperties(const JSONRPCRequest& request)
   LOCK(cs_tally);
 
   uint32_t nextSPID = _my_sps->peekNextSPID();
-  for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++) {
-    CMPSPInfo::Entry sp;
-    if (_my_sps->getSP(propertyId, sp)) {
-      UniValue propertyObj(UniValue::VOBJ);
-      propertyObj.push_back(Pair("propertyid", (uint64_t) propertyId));
-      PropertyToJSON(sp, propertyObj); // name, data, url, divisible
-      response.push_back(propertyObj);
-    }
+  for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
+  {
+      CMPSPInfo::Entry sp;
+      if(_my_sps->getSP(propertyId, sp))
+      {
+          UniValue propertyObj(UniValue::VOBJ);
+          propertyObj.push_back(Pair("propertyid", (uint64_t) propertyId));
+          PropertyToJSON(sp, propertyObj); // name, data, url, divisible
+          KYCToJSON(sp, propertyObj);
+          response.push_back(propertyObj);
+     }
   }
 
   return response;
@@ -944,19 +966,19 @@ UniValue tl_list_natives(const JSONRPCRequest& request)
   LOCK(cs_tally);
 
   uint32_t nextSPID = _my_sps->peekNextSPID();
-  for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++) {
-    CMPSPInfo::Entry sp;
+  for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
+  {
+      CMPSPInfo::Entry sp;
+      if (_my_sps->getSP(propertyId, sp))
+      {
+          if(!sp.isNative())
+              continue;
 
-    if (_my_sps->getSP(propertyId, sp))
-    {
-      if(!sp.isNativeContract())
-          continue;
-
-      UniValue propertyObj(UniValue::VOBJ);
-      propertyObj.push_back(Pair("propertyid", (uint64_t) propertyId));
-      ContractToJSON(sp, propertyObj); // name, data, url,...
-      response.push_back(propertyObj);
-    }
+          UniValue propertyObj(UniValue::VOBJ);
+          propertyObj.push_back(Pair("propertyid", (uint64_t) propertyId));
+          ContractToJSON(sp, propertyObj); // name, data, url,...
+          response.push_back(propertyObj);
+      }
   }
 
   return response;
@@ -988,19 +1010,20 @@ UniValue tl_list_oracles(const JSONRPCRequest& request)
   LOCK(cs_tally);
 
   uint32_t nextSPID = _my_sps->peekNextSPID();
-  for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++) {
-    CMPSPInfo::Entry sp;
+  for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
+  {
+      CMPSPInfo::Entry sp;
 
-    if (_my_sps->getSP(propertyId, sp))
-    {
-      if(!sp.isOracle())
-          continue;
+      if (_my_sps->getSP(propertyId, sp))
+      {
+          if(!sp.isOracle())
+              continue;
 
-      UniValue propertyObj(UniValue::VOBJ);
-      propertyObj.push_back(Pair("propertyid", (uint64_t) propertyId));
-      OracleToJSON(sp, propertyObj); // name, data, url,...
-      response.push_back(propertyObj);
-    }
+          UniValue propertyObj(UniValue::VOBJ);
+          propertyObj.push_back(Pair("propertyid", (uint64_t) propertyId));
+          OracleToJSON(sp, propertyObj); // name, data, url,...
+          response.push_back(propertyObj);
+      }
   }
 
   return response;
@@ -1134,8 +1157,11 @@ UniValue tl_getcrowdsale(const JSONRPCRequest& request)
     response.push_back(Pair("addedissuertokens", FormatMP(propertyId, sp.missedTokens)));
 
     // TODO: return fields every time?
-    if (!active) response.push_back(Pair("closedearly", sp.close_early));
-    if (!active) response.push_back(Pair("maxtokens", sp.max_tokens));
+    if (!active){
+        response.push_back(Pair("closedearly", sp.close_early));
+        response.push_back(Pair("maxtokens", sp.max_tokens));
+    }
+
     if (sp.close_early) response.push_back(Pair("endedtime", sp.timeclosed));
     if (sp.close_early && !sp.max_tokens) response.push_back(Pair("closetx", txidClosed));
 
@@ -1258,7 +1284,7 @@ UniValue tl_getgrants(const JSONRPCRequest& request)
     CMPSPInfo::Entry sp;
     {
         LOCK(cs_tally);
-        if (false == _my_sps->getSP(propertyId, sp)) {
+        if (!_my_sps->getSP(propertyId, sp)) {
             throw JSONRPCError(RPC_INVALID_PARAMETER, "Property identifier does not exist");
         }
     }
@@ -1447,7 +1473,7 @@ UniValue tl_listtransactions(const JSONRPCRequest& request)
     // reverse iterate over (now ordered) transactions and populate RPC objects for each one
     UniValue response(UniValue::VARR);
     for (std::map<std::string,uint256>::reverse_iterator it = walletTransactions.rbegin(); it != walletTransactions.rend(); it++) {
-        uint256 txHash = it->second;
+        const uint256& txHash = it->second;
         UniValue txobj(UniValue::VOBJ);
         int populateResult = populateRPCTransactionObject(txHash, txobj, addressParam);
         if (0 == populateResult) response.push_back(txobj);
@@ -1796,8 +1822,8 @@ UniValue tl_getfullposition(const JSONRPCRequest& request)
 
   // pnl
   uint32_t& collateralCurrency = sp.collateral_currency;
-  uint64_t realizedProfits  = static_cast<uint64_t>(factorE * getMPbalance(address, collateralCurrency, REALIZED_PROFIT));
-  uint64_t realizedLosses  = static_cast<uint64_t>(factorE * getMPbalance(address, collateralCurrency, REALIZED_LOSSES));
+  uint64_t realizedProfits  = static_cast<uint64_t>(COIN * getMPbalance(address, collateralCurrency, REALIZED_PROFIT));
+  uint64_t realizedLosses  = static_cast<uint64_t>(COIN * getMPbalance(address, collateralCurrency, REALIZED_LOSSES));
 
   if (realizedProfits > 0 && realizedLosses == 0) {
     positionObj.push_back(Pair("positivepnl", FormatByType(realizedProfits,2)));
@@ -1835,7 +1861,6 @@ UniValue tl_getposition(const JSONRPCRequest& request)
 
   std::string address = ParseAddress(request.params[0]);
   std::string name = ParseText(request.params[1]);
-
 
   RequireContract(name);
 
@@ -1936,7 +1961,8 @@ UniValue tl_getorderbook(const JSONRPCRequest& request)
                 for (md_Set::const_iterator it = indexes.begin(); it != indexes.end(); ++it) {
                     const CMPMetaDEx& obj = *it;
                     if (obj.getProperty() != propertyIdForSale) continue;
-                    if (!filterDesired || obj.getDesProperty() == propertyIdDesired) vecMetaDexObjects.push_back(obj);
+                    if (!filterDesired || obj.getDesProperty() == propertyIdDesired)
+                        vecMetaDexObjects.push_back(obj);
                 }
             }
         }
@@ -1994,9 +2020,7 @@ UniValue tl_getcontract_orderbook(const JSONRPCRequest& request)
     	        const cd_Set& indexes = it->second;
     	        for (cd_Set::const_iterator it = indexes.begin(); it != indexes.end(); ++it) {
     	            const CMPContractDex& obj = *it;
-    	            if (obj.getProperty() != propertyIdForSale) continue;
-    	            if (obj.getTradingAction() != tradingaction) continue;
-    	            if (obj.getAmountForSale() <= 0) continue;
+    	            if (obj.getProperty() != propertyIdForSale || obj.getTradingAction() != tradingaction || obj.getAmountForSale() == 0) continue;
     	            vecContractDexObjects.push_back(obj);
     	        }
            }
@@ -2015,7 +2039,7 @@ UniValue tl_gettradehistory(const JSONRPCRequest& request)
 			"tl_gettradehistory contractid propertyid ( count )\n"
 			"\nRetrieves the history of trades on the distributed contract exchange for the specified market.\n"
 			"\nArguments:\n"
-			"1. contractid           (number, required) the id of future contract\n"
+			"1. name                                (string, required) the name of future contract\n"
 			"\nResult:\n"
 			"[                                      (array of JSON objects)\n"
 			"  {\n"
@@ -2164,11 +2188,13 @@ UniValue tl_getallprice(const JSONRPCRequest& request)
     int64_t allPrice = 0;
 
     auto it = market_priceMap.find(static_cast<uint32_t>(ALL));
-    std::map<uint32_t, int64_t>& auxMap = it->second;
-
-    auto itt = auxMap.find(static_cast<uint32_t>(dUSD));
-    if (itt != auxMap.end())
-         allPrice = itt->second;
+    if (it != market_priceMap.end())
+    {
+        std::map<uint32_t, int64_t>& auxMap = it->second;
+        auto itt = auxMap.find(static_cast<uint32_t>(dUSD));
+        if (itt != auxMap.end())
+            allPrice = itt->second;
+    }
 
     balanceObj.push_back(Pair("unitprice", FormatByType(static_cast<uint64_t>(allPrice),2)));
     return balanceObj;
@@ -2355,7 +2381,6 @@ UniValue tl_getactivedexsells(const JSONRPCRequest& request)
     std::string addressFilter;  //TODO: Fix amountavalable when the maker are selling  (we need invert this) "amountavailable": "10.00000000",
                                 //                                                                           "amountoffered": "90.00000000",
 
-
     if (request.params.size() > 0) {
         addressFilter = ParseAddressOrEmpty(request.params[0]);
     }
@@ -2483,8 +2508,11 @@ UniValue tl_getsum_upnl(const JSONRPCRequest& request)
 
   UniValue balanceObj(UniValue::VOBJ);
 
+  int64_t upnl = 0;
   auto it = sum_upnls.find(address);
-  int64_t upnl = it->second;
+  if (it != sum_upnls.end())
+      upnl = it->second;
+
   balanceObj.push_back(Pair("upnl", FormatByType(upnl,2)));
 
   return balanceObj;
@@ -2638,8 +2666,10 @@ UniValue tl_getcache(const JSONRPCRequest& request)
     uint32_t propertyId = ParsePropertyId(request.params[0]);
 
     // geting data from cache!
+    int64_t amount = 0;
     auto it =  cachefees.find(propertyId);
-    int64_t amount = it->second;
+    if (it != cachefees.end())
+        amount = it->second;
 
     UniValue balanceObj(UniValue::VOBJ);
 
@@ -2669,8 +2699,10 @@ UniValue tl_getoraclecache(const JSONRPCRequest& request)
     uint32_t propertyId = ParsePropertyId(request.params[0]);
 
     // geting data from cache!
+    int64_t amount = 0;
     auto it =  cachefees_oracles.find(propertyId);
-    int64_t amount = it->second;
+    if (it != cachefees_oracles.end())
+        amount = it->second;
 
     UniValue balanceObj(UniValue::VOBJ);
 
@@ -2900,31 +2932,31 @@ UniValue tl_getcurrencytotal(const JSONRPCRequest& request)
 
 UniValue tl_listkyc(const JSONRPCRequest& request)
 {
-  if (false) //TODO: put fHelp boolean
-    throw runtime_error(
-			"tl_listproperties\n"
-			"\nLists all kyc registers.\n"
-			"\nResult:\n"
-			"[                                (array of JSON objects)\n"
-			"  {\n"
-			"    \"propertyid\" : n,                (number) the identifier of the tokens\n"
-			"    \"name\" : \"name\",                 (string) the name of the tokens\n"
-			"    \"data\" : \"information\",          (string) additional information or a description\n"
-			"    \"url\" : \"uri\",                   (string) an URI, for example pointing to a website\n"
-			"    \"divisible\" : true|false         (boolean) whether the tokens are divisible\n"
-			"  },\n"
-			"  ...\n"
-			"]\n"
-			"\nExamples:\n"
-			+ HelpExampleCli("tl_listkyc", "")
-			+ HelpExampleRpc("tl_listkyc", "")
-			);
+    if (false) //TODO: put fHelp boolean
+      throw runtime_error(
+			  "tl_listproperties\n"
+			  "\nLists all kyc registers.\n"
+			  "\nResult:\n"
+			  "[                                (array of JSON objects)\n"
+			  "  {\n"
+			  "    \"propertyid\" : n,                (number) the identifier of the tokens\n"
+			  "    \"name\" : \"name\",                 (string) the name of the tokens\n"
+			  "    \"data\" : \"information\",          (string) additional information or a description\n"
+			  "    \"url\" : \"uri\",                   (string) an URI, for example pointing to a website\n"
+			  "    \"divisible\" : true|false         (boolean) whether the tokens are divisible\n"
+			  "  },\n"
+			  "  ...\n"
+			  "]\n"
+			  "\nExamples:\n"
+			  + HelpExampleCli("tl_listkyc", "")
+			  + HelpExampleRpc("tl_listkyc", "")
+		  );
 
-  UniValue response(UniValue::VARR);
+    UniValue response(UniValue::VARR);
 
-  t_tradelistdb->kycLoop(response);
+    t_tradelistdb->kycLoop(response);
 
-  return response;
+    return response;
 }
 
 UniValue tl_list_attestation(const JSONRPCRequest& request)
@@ -2962,20 +2994,20 @@ UniValue tl_list_attestation(const JSONRPCRequest& request)
 //return: UniValue which is JSON object that is max pegged currency you can create
 UniValue tl_getmax_peggedcurrency(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 2)
-    throw runtime_error(
-			"tl_getmax_peggedcurrency\"fromaddress\""
-			"\nGet max pegged currency address can create\n"
-			"\n arguments: \n"
-			"\n 1) fromaddress (string, required) the address to send from\n"
-			"\n 2) name of contract requiered \n"
+    if (request.params.size() != 2)
+      throw runtime_error(
+			  "tl_getmax_peggedcurrency\"fromaddress\""
+			  "\nGet max pegged currency address can create\n"
+			  "\n arguments: \n"
+			  "\n 1) fromaddress (string, required) the address to send from\n"
+			  "\n 2) name of contract requiered \n"
 			);
-  std::string fromAddress = ParseAddress(request.params[0]);
-  std::string name_traded = ParseText(request.params[1]);
+    std::string fromAddress = ParseAddress(request.params[0]);
+    std::string name_traded = ParseText(request.params[1]);
 
-  struct FutureContractObject *pfuture = getFutureContractObject(name_traded);
-  uint32_t contractId = (pfuture) ? pfuture->fco_propertyId : 0;
-  uint32_t collateral = (pfuture) ? pfuture->fco_collateral_currency : 0;
+    struct FutureContractObject *pfuture = getFutureContractObject(name_traded);
+    uint32_t contractId = (pfuture) ? pfuture->fco_propertyId : 0;
+    uint32_t collateral = (pfuture) ? pfuture->fco_collateral_currency : 0;
 
   // Get available ALL because dCurrency is a hedge of ALL and ALL denominated Short Contracts
   // obtain parameters & info
@@ -2984,11 +3016,15 @@ UniValue tl_getmax_peggedcurrency(const JSONRPCRequest& request)
 
   // get token Price
   int64_t tokenPrice = 0;
-  auto it = market_priceMap.find(static_cast<uint32_t>(collateral));
-  std::map<uint32_t, int64_t>& auxMap = it->second;
-  auto itt = auxMap.find(static_cast<uint32_t>(dUSD));
-  if (itt != auxMap.end())
-      tokenPrice = itt->second;
+  auto it = market_priceMap.find(collateral);
+  if (it != market_priceMap.end())
+  {
+      std::map<uint32_t, int64_t>& auxMap = it->second;
+      auto itt = auxMap.find(static_cast<uint32_t>(dUSD));
+      if (itt != auxMap.end())
+          tokenPrice = itt->second;
+  }
+
 
   // multiply token balance for address times the token price (which is denominated in dUSD)
   int64_t max_dUSD = tokenBalance * tokenPrice;
@@ -3005,6 +3041,46 @@ UniValue tl_getmax_peggedcurrency(const JSONRPCRequest& request)
   //return UniValue JSON object
   return max_pegged;
 
+}
+
+UniValue tl_getcontract(const JSONRPCRequest& request)
+{
+    if (request.params.size() != 1)
+        throw runtime_error(
+            "tl_getcontract contractId\n"
+            "\nReturns details for about the tokens or smart property to lookup.\n"
+            "\nArguments:\n"
+            "1. name                        (string, required) the name  of the future contract\n"
+            "\nResult:\n"
+            "{\n"
+            "  \"contractid\" : n,                 (number) the identifier\n"
+            "  \"name\" : \"name\",                 (string) the name of the tokens\n"
+            "  \"data\" : \"information\",          (string) additional information or a description\n"
+            "  \"url\" : \"uri\",                   (string) an URI, for example pointing to a website\n"
+            "  \"divisible\" : true|false,        (boolean) whether the tokens are divisible\n"
+            "  \"issuer\" : \"address\",            (string) the Bitcoin address of the issuer on record\n"
+            "  \"creationtxid\" : \"hash\",         (string) the hex-encoded creation transaction hash\n"
+            "  \"fixedissuance\" : true|false,    (boolean) whether the token supply is fixed\n"
+            "  \"totaltokens\" : \"n.nnnnnnnn\"     (string) the total number of tokens in existence\n"
+            "}\n"
+            "\nExamples:\n"
+            + HelpExampleCli("tl_getcontract", "Contract1")
+            + HelpExampleRpc("tl_getcontract", "Contract1")
+        );
+
+    std::string name = ParseText(request.params[0]);
+    RequireContract(name);
+
+    CMPSPInfo::Entry sp;
+    uint32_t propertyId;
+    getEntryFromName(name, propertyId, sp);
+
+    UniValue response(UniValue::VOBJ);
+    response.push_back(Pair("propertyid", (uint64_t) propertyId));
+    ContractToJSON(sp, response); // name, data, url,
+    KYCToJSON(sp, response);
+
+    return response;
 }
 
 static const CRPCCommand commands[] =
@@ -3062,7 +3138,8 @@ static const CRPCCommand commands[] =
   { "trade layer (data retieval)" , "tl_getoraclecache",            &tl_getoraclecache,             {} },
   { "trade layer (data retieval)",  "tl_getmax_peggedcurrency",     &tl_getmax_peggedcurrency,      {} },
   { "trade layer (data retieval)",  "tl_getunvested",               &tl_getunvested,                {} },
-  { "trade layer (data retieval)",  "tl_list_attestation",          &tl_list_attestation,           {} }
+  { "trade layer (data retieval)",  "tl_list_attestation",          &tl_list_attestation,           {} },
+  { "trade layer (data retieval)",  "tl_getcontract",               &tl_getcontract,                {} }
 };
 
 void RegisterTLDataRetrievalRPCCommands(CRPCTable &tableRPC)

@@ -151,7 +151,7 @@ class NativesBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['margin requirement'], '0.1')
         assert_equal(out['result']['blocks until expiration'], '1000')
         assert_equal(out['result']['inverse quoted'], '0')
-
+        
 
         #NOTE: we need to test this for all leverages
         self.log.info("Buying contracts")

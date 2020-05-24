@@ -40,7 +40,7 @@ typedef boost::rational<boost::multiprecision::checked_int128_t> rational_t;
 
 int const MAX_STATE_HISTORY = 50;
 
-#define TEST_ECO_PROPERTY_1 (0x80000003UL)
+#define MAX_PROPERTY_N (0x80000003UL)
 
 // increment this value to force a refresh of the state (similar to --startclean)
 #define DB_VERSION 1
@@ -521,7 +521,7 @@ namespace mastercore
 
   CMPTally* getTally(const std::string& address);
 
-  int64_t getTotalTokens(uint32_t propertyId, int64_t* n_owners_total = NULL);
+  int64_t getTotalTokens(uint32_t propertyId, int64_t* n_owners_total = nullptr);
 
   std::string strTransactionType(uint16_t txType);
 
@@ -531,7 +531,7 @@ namespace mastercore
   /** Determines, whether it is valid to use a Class C transaction for a given payload size. */
   bool UseEncodingClassC(size_t nDataSize);
 
-  bool getValidMPTX(const uint256 &txid, int *block = NULL, unsigned int *type = NULL, uint64_t *nAmended = NULL);
+  bool getValidMPTX(const uint256 &txid, int *block = nullptr, unsigned int *type = nullptr, uint64_t *nAmended = nullptr);
 
   bool update_tally_map(const std::string& who, uint32_t propertyId, int64_t amount, TallyType ttype);
 
@@ -541,9 +541,9 @@ namespace mastercore
 
   void update_sum_upnls(); // update the sum of all upnls for all addresses.
 
-  int64_t sum_check_upnl(std::string address); //  sum of all upnls for a given address.
+  int64_t sum_check_upnl(const std::string& address); //  sum of all upnls for a given address.
 
-  int64_t pos_margin(uint32_t contractId, std::string address, uint32_t margin_requirement); // return mainteinance margin for a given contrand and address
+  int64_t pos_margin(uint32_t contractId, const std::string& address, uint32_t margin_requirement); // return mainteinance margin for a given contrand and address
 
   bool makeWithdrawals(int Block); // make the withdrawals for multisig channels
 

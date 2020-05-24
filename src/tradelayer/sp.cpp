@@ -33,13 +33,6 @@
 
 using namespace mastercore;
 
-extern uint64_t ask[10];
-extern uint64_t bid[10];
-
-extern int64_t priceIndex;
-extern volatile uint64_t marketPrice;
-extern int64_t factorE;
-extern std::map<std::string,uint32_t> peggedIssuers;
 typedef boost::multiprecision::uint128_t ui128;
 
 CMPSPInfo::Entry::Entry()
@@ -59,7 +52,7 @@ bool CMPSPInfo::Entry::isDivisible() const
   return false;
 }
 
-bool CMPSPInfo::Entry::isNativeContract() const
+bool CMPSPInfo::Entry::isNative() const
 {
   switch (prop_type)
     {
@@ -186,7 +179,7 @@ uint32_t CMPSPInfo::peekNextSPID() const
 bool CMPSPInfo::updateSP(uint32_t propertyId, const Entry& info)
 {
   // cannot update implied SP
-  if (TL_PROPERTY_ALL == propertyId || TL_PROPERTY_TALL == propertyId) {
+  if (ALL == propertyId || sLTC == propertyId) {
     return false;
   }
 
@@ -279,11 +272,11 @@ uint32_t CMPSPInfo::putSP(const Entry& info)
 
 bool CMPSPInfo::getSP(uint32_t propertyId, Entry& info) const
 {
-    // special cases for constant SPs MSC and TMSC
-    if (TL_PROPERTY_ALL == propertyId) {
+    // special cases for ALL and sLTC
+    if (ALL == propertyId) {
         info = implied_all;
         return true;
-    } else if (TL_PROPERTY_TALL == propertyId) {
+    } else if (sLTC == propertyId){
         info = implied_tall;
         return true;
     }
@@ -316,8 +309,8 @@ bool CMPSPInfo::getSP(uint32_t propertyId, Entry& info) const
 
 bool CMPSPInfo::hasSP(uint32_t propertyId) const
 {
-    // Special cases for constant SPs ALL and TALL
-    if (TL_PROPERTY_ALL == propertyId || TL_PROPERTY_TALL == propertyId) {
+    // Special cases for ALL and sLTC
+    if (ALL == propertyId || sLTC == propertyId) {
         return true;
     }
 
@@ -494,11 +487,11 @@ void CMPSPInfo::printAll() const
     // print off the hard coded ALL and TALL entries
     for (uint32_t idx = TL_PROPERTY_ALL; idx <= TL_PROPERTY_TALL; idx++) {
         Entry info;
-        PrintToConsole("%10d => ", idx);
+        PrintToLog("%10d => ", idx);
         if (getSP(idx, info)) {
             info.print();
         } else {
-            PrintToConsole("<Internal Error on implicit SP>\n");
+            PrintToLog("<Internal Error on implicit SP>\n");
         }
     }
 
@@ -516,10 +509,10 @@ void CMPSPInfo::printAll() const
             ssValue >> propertyId;
         } catch (const std::exception& e) {
             PrintToLog("%s(): ERROR: %s\n", __func__, e.what());
-            PrintToConsole("<Malformed key in DB>\n");
+            PrintToLog("<Malformed key in DB>\n");
             continue;
         }
-        PrintToConsole("%10s => ", propertyId);
+        PrintToLog("%10s => ", propertyId);
 
         // deserialize the persisted data
         leveldb::Slice slSpValue = iter->value();
@@ -528,7 +521,7 @@ void CMPSPInfo::printAll() const
             CDataStream ssSpValue(slSpValue.data(), slSpValue.data() + slSpValue.size(), SER_DISK, CLIENT_VERSION);
             ssSpValue >> info;
         } catch (const std::exception& e) {
-            PrintToConsole("<Malformed value in DB>\n");
+            PrintToLog("<Malformed value in DB>\n");
             PrintToLog("%s(): ERROR: %s\n", __func__, e.what());
             continue;
         }
@@ -611,17 +604,17 @@ CMPCrowd* mastercore::getCrowd(const std::string& address)
 
     if (my_it != my_crowds.end()) return &(my_it->second);
 
-    return (CMPCrowd *)NULL;
+    return static_cast<CMPCrowd *>(nullptr);
 }
 
 bool mastercore::IsPropertyIdValid(uint32_t propertyId)
 {
   // is true, because we can exchange litecoins too
-  if (propertyId == 0) return true;
+  if (propertyId == LTC) return true;
 
   uint32_t nextId = 0;
 
-  if (propertyId < TEST_ECO_PROPERTY_1) {
+  if (propertyId < MAX_PROPERTY_N) {
     nextId = _my_sps->peekNextSPID();
   }
 
@@ -674,6 +667,17 @@ std::string mastercore::getPropertyName(uint32_t propertyId)
     CMPSPInfo::Entry sp;
     if (_my_sps->getSP(propertyId, sp)) return sp.name;
     return "Property Name Not Found";
+}
+
+bool mastercore::getEntryFromName(const std::string& name, uint32_t& propertyId, CMPSPInfo::Entry& sp)
+{
+    uint32_t nextSPID = _my_sps->peekNextSPID();
+    for (propertyId = 1; propertyId < nextSPID; propertyId++)
+    {
+        if (_my_sps->getSP(propertyId, sp) && name == sp.name) return true;
+    }
+
+    return false;
 }
 
 bool mastercore::isCrowdsaleActive(uint32_t propertyId)
@@ -850,7 +854,7 @@ bool mastercore::isCrowdsalePurchase(const uint256& txid, const std::string& add
 
     // if we still haven't found txid, check non active crowdsales to this address
     for (uint8_t id = 1; id <= 2; id++) {
-        uint32_t startPropertyId = (id == 1) ? 1 : TEST_ECO_PROPERTY_1;
+        uint32_t startPropertyId = (id == 1) ? 1 : MAX_PROPERTY_N;
         for (uint32_t loopPropertyId = startPropertyId; loopPropertyId < _my_sps->peekNextSPID(); loopPropertyId++) {
             CMPSPInfo::Entry sp;
             if (!_my_sps->getSP(loopPropertyId, sp)) continue;
@@ -947,7 +951,7 @@ void mastercore::eraseMaxedCrowdsale(const std::string& address, int64_t blockTi
 
 unsigned int mastercore::eraseExpiredCrowdsale(const CBlockIndex* pBlockIndex)
 {
-    if (pBlockIndex == NULL) return 0;
+    if (pBlockIndex == nullptr) return 0;
 
     const int64_t blockTime = pBlockIndex->GetBlockTime();
     const int blockHeight = pBlockIndex->nHeight;
@@ -1007,14 +1011,3 @@ std::string mastercore::strPropertyType(uint16_t propertyType)
 
   return "unknown";
 }
-
-// std::string mastercore::strEcosystem(uint8_t ecosystem)
-// {
-//   switch (ecosystem)
-//     {
-//     case TL_PROPERTY_ALL: return "main";
-//     case TL_PROPERTY_TALL: return "test";
-//     }
-//
-//   return "unknown";
-// }

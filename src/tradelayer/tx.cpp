@@ -53,9 +53,6 @@ extern std::map<uint32_t,std::map<int,oracledata>> oraclePrices;
 extern std::map<std::string,vector<withdrawalAccepted>> withdrawal_Map;
 extern std::map<uint32_t, std::map<uint32_t, int64_t>> market_priceMap;
 extern std::map<std::string,channel> channels_Map;
-extern int64_t factorE;
-extern int64_t priceIndex;
-extern int64_t allPrice;
 extern double denMargin;
 extern uint64_t marketP[NPTYPES];
 extern volatile int id_contract;
@@ -1283,10 +1280,8 @@ bool CMPTransaction::interpret_CreatePeggedCurrency()
     std::vector<uint8_t> vecPrevPropIdBytes = GetNextVarIntBytes(i);
     const char* p = i + (char*) &pkt;
     std::vector<std::string> spstr;
-    for (int j = 0; j < 1; j++){
-        spstr.push_back(std::string(p));
-        p += spstr.back().size() + 1;
-    }
+    spstr.push_back(std::string(p));
+    p += spstr.back().size() + 1;
 
     if (isOverrun(p)) {
         PrintToLog("%s(): rejected: malformed string value(s)\n", __func__);
@@ -1430,10 +1425,8 @@ bool CMPTransaction::interpret_CreateOracleContract()
   std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
   const char* p = i + (char*) &pkt;
   std::vector<std::string> spstr;
-  for (int j = 0; j < 1; j++) {
-    spstr.push_back(std::string(p));
-    p += spstr.back().size() + 1;
-  }
+  spstr.push_back(std::string(p));
+  p += spstr.back().size() + 1;
 
   if (isOverrun(p)) {
     PrintToLog("%s(): rejected: malformed string value(s)\n", __func__);
@@ -1834,10 +1827,8 @@ bool CMPTransaction::interpret_Create_Channel()
 
   const char* p = i + (char*) &pkt;
   std::vector<std::string> spstr;
-  for (int j = 0; j < 1; j++) {
-    spstr.push_back(std::string(p));
-    p += spstr.back().size() + 1;
-  }
+  spstr.push_back(std::string(p));
+  p += spstr.back().size() + 1;
 
   if (isOverrun(p)) {
     PrintToLog("%s(): rejected: malformed string value(s)\n", __func__);
@@ -2015,10 +2006,8 @@ bool CMPTransaction::interpret_Attestation()
 
   const char* p = i + (char*) &pkt;
   std::vector<std::string> spstr;
-  for (int j = 0; j < 1; j++) {
-    spstr.push_back(std::string(p));
-    p += spstr.back().size() + 1;
-  }
+  spstr.push_back(std::string(p));
+  p += spstr.back().size() + 1;
 
   if (isOverrun(p)) {
     PrintToLog("%s(): rejected: malformed string value(s)\n", __func__);
@@ -2234,7 +2223,7 @@ int CMPTransaction::logicHelper_CrowdsaleParticipation()
     CMPCrowd* pcrowdsale = getCrowd(receiver);
 
     // No active crowdsale
-    if (pcrowdsale == NULL) {
+    if (pcrowdsale == nullptr) {
         return (PKT_ERROR_CROWD -1);
     }
     // Active crowdsale, but not for this property
@@ -2449,7 +2438,7 @@ int CMPTransaction::logicMath_SendAll()
     }
 
     CMPTally* ptally = getTally(sender);
-    if (ptally == NULL) {
+    if (ptally == nullptr) {
         PrintToLog("%s(): rejected: sender %s has no tokens to send\n", __func__, sender);
         return (PKT_ERROR_SEND_ALL -54);
     }
@@ -2486,9 +2475,9 @@ int CMPTransaction::logicMath_CreatePropertyFixed()
       LOCK(cs_main);
 
       CBlockIndex* pindex = chainActive[block];
-      if (pindex == NULL) {
-	PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
-	return (PKT_ERROR_SP -20);
+      if (pindex == nullptr) {
+	        PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
+	        return (PKT_ERROR_SP -20);
       }
       blockHash = pindex->GetBlockHash();
     }
@@ -2537,7 +2526,7 @@ int CMPTransaction::logicMath_CreatePropertyFixed()
 
     for(std::vector<int64_t>::iterator it = kyc_Ids.begin(); it != kyc_Ids.end(); ++it)
     {
-        const int64_t aux = *it;
+        const int64_t& aux = *it;
         newSP.kyc.push_back(aux);
     }
 
@@ -2558,7 +2547,7 @@ int CMPTransaction::logicMath_CreatePropertyVariable()
         LOCK(cs_main);
 
         CBlockIndex* pindex = chainActive[block];
-        if (pindex == NULL) {
+        if (pindex == nullptr) {
             PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
             return (PKT_ERROR_SP -20);
         }
@@ -2600,7 +2589,7 @@ int CMPTransaction::logicMath_CreatePropertyVariable()
         return (PKT_ERROR_SP -38);
     }
 
-    if (NULL != getCrowd(sender)) {
+    if (nullptr != getCrowd(sender)) {
         PrintToLog("%s(): rejected: sender %s has an active crowdsale\n", __func__, sender);
         return (PKT_ERROR_SP -39);
     }
@@ -2642,7 +2631,7 @@ int CMPTransaction::logicMath_CloseCrowdsale()
         LOCK(cs_main);
 
         CBlockIndex* pindex = chainActive[block];
-        if (pindex == NULL) {
+        if (pindex == nullptr) {
             PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
             return (PKT_ERROR_SP -20);
         }
@@ -2709,7 +2698,7 @@ int CMPTransaction::logicMath_CreatePropertyManaged()
         LOCK(cs_main);
 
         CBlockIndex* pindex = chainActive[block];
-        if (pindex == NULL) {
+        if (pindex == nullptr) {
             PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
             return (PKT_ERROR_SP -20);
         }
@@ -2755,17 +2744,9 @@ int CMPTransaction::logicMath_CreatePropertyManaged()
 
     for(std::vector<int64_t>::iterator it = kyc_Ids.begin(); it != kyc_Ids.end(); ++it)
     {
-        const int64_t aux = *it;
+        const int64_t& aux = *it;
         newSP.kyc.push_back(aux);
     }
-
-
-    for(std::vector<int64_t>::iterator itt = newSP.kyc.begin(); itt != newSP.kyc.end(); ++itt)
-    {
-        const int64_t numb = *itt;
-        PrintToLog("%s(): kyc id inside newSP.kyc vector: %d\n",__func__, numb);
-    }
-
 
     uint32_t propertyId = _my_sps->putSP(newSP);
     assert(propertyId > 0);
@@ -2783,7 +2764,7 @@ int CMPTransaction::logicMath_GrantTokens()
     LOCK(cs_main);
 
     CBlockIndex* pindex = chainActive[block];
-    if (pindex == NULL) {
+    if (pindex == nullptr) {
       PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
       return (PKT_ERROR_SP -20);
     }
@@ -2890,7 +2871,7 @@ int CMPTransaction::logicMath_RevokeTokens()
         LOCK(cs_main);
 
         CBlockIndex* pindex = chainActive[block];
-        if (pindex == NULL) {
+        if (pindex == nullptr) {
             PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
             return (PKT_ERROR_TOKENS -20);
         }
@@ -2960,7 +2941,7 @@ int CMPTransaction::logicMath_ChangeIssuer()
         LOCK(cs_main);
 
         CBlockIndex* pindex = chainActive[block];
-        if (pindex == NULL) {
+        if (pindex == nullptr) {
             PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
             return (PKT_ERROR_TOKENS -20);
         }
@@ -2990,7 +2971,7 @@ int CMPTransaction::logicMath_ChangeIssuer()
         return (PKT_ERROR_TOKENS -43);
     }
 
-    if (NULL != getCrowd(sender)) {
+    if (nullptr != getCrowd(sender)) {
         PrintToLog("%s(): rejected: sender %s has an active crowdsale\n", __func__, sender);
         return (PKT_ERROR_TOKENS -39);
     }
@@ -3000,7 +2981,7 @@ int CMPTransaction::logicMath_ChangeIssuer()
         return (PKT_ERROR_TOKENS -45);
     }
 
-    if (NULL != getCrowd(receiver)) {
+    if (nullptr != getCrowd(receiver)) {
         PrintToLog("%s(): rejected: receiver %s has an active crowdsale\n", __func__, receiver);
         return (PKT_ERROR_TOKENS -46);
     }
@@ -3168,7 +3149,6 @@ int CMPTransaction::logicMath_MetaDExTrade()
     return (PKT_ERROR_METADEX -34);
   }
 
-
   if (nNewValue <= 0 || MAX_INT_8_BYTES < nNewValue) {
       PrintToLog("%s(): rejected: amount for sale out of range or zero: %d\n", __func__, nNewValue);
       return (PKT_ERROR_METADEX -34);
@@ -3203,13 +3183,13 @@ int CMPTransaction::logicMath_CreateContractDex()
 {
   uint256 blockHash;
   {
-    LOCK(cs_main);
+      LOCK(cs_main);
+      CBlockIndex* pindex = chainActive[block];
 
-    CBlockIndex* pindex = chainActive[block];
-
-      if (pindex == NULL) {
-	PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
-	return (PKT_ERROR_SP -20);
+      if (pindex == nullptr)
+      {
+	        PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
+	        return (PKT_ERROR_SP -20);
       }
       blockHash = pindex->GetBlockHash();
   }
@@ -3254,7 +3234,7 @@ int CMPTransaction::logicMath_CreateContractDex()
 
   for(std::vector<int64_t>::iterator it = kyc_Ids.begin(); it != kyc_Ids.end(); ++it)
   {
-      const int64_t aux = *it;
+      const int64_t& aux = *it;
       newSP.kyc.push_back(aux);
   }
 
@@ -3266,15 +3246,11 @@ int CMPTransaction::logicMath_CreateContractDex()
 
 int CMPTransaction::logicMath_ContractDexTrade()
 {
-
-  int result = 0;
-
   struct FutureContractObject *pfuture = getFutureContractObject(name_traded);
-  uint32_t contractId = pfuture->fco_propertyId;
+  uint32_t contractId = (pfuture) ? pfuture->fco_propertyId : 0;
+  uint32_t expiration = (pfuture) ? pfuture->fco_blocks_until_expiration : 0;
 
-  uint32_t expiration = pfuture->fco_blocks_until_expiration;
-
-  (pfuture->fco_prop_type == ALL_PROPERTY_TYPE_NATIVE_CONTRACT) ? result = 5 : result = 6;
+  // (pfuture->fco_prop_type == ALL_PROPERTY_TYPE_NATIVE_CONTRACT) ? result = 5 : result = 6;
 
   int kyc_id;
 
@@ -3430,6 +3406,8 @@ int CMPTransaction::logicMath_ContractDexClosePosition()
 
 int CMPTransaction::logicMath_ContractDex_Cancel_Orders_By_Block()
 {
+  int rc = 0;
+
   if (!IsTransactionTypeAllowed(block, type, version)) {
       PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
               __func__,
@@ -3441,9 +3419,9 @@ int CMPTransaction::logicMath_ContractDex_Cancel_Orders_By_Block()
 
     }
 
-    ContractDex_CANCEL_FOR_BLOCK(txid, block, tx_idx, sender);
+    rc = ContractDex_CANCEL_FOR_BLOCK(txid, block, tx_idx, sender);
 
-    return 0;
+    return rc;
 }
 
 /** Tx 100 */
@@ -3460,7 +3438,7 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
         LOCK(cs_main);
 
         CBlockIndex* pindex = chainActive[block];
-        if (pindex == NULL) {
+        if (pindex == nullptr) {
             PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
             return (PKT_ERROR_SP -20);
         }
@@ -3528,9 +3506,9 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
 
     int64_t position = getMPbalance(sender, contractId, NEGATIVE_BALANCE);
     arith_uint256 rAmount = ConvertTo256(amount); // Alls needed
-    arith_uint256 Contracts = DivideAndRoundUp(rAmount * ConvertTo256(notSize), ConvertTo256(factorE));
+    arith_uint256 Contracts = DivideAndRoundUp(rAmount * ConvertTo256(notSize), ConvertTo256(COIN));
     amountNeeded = ConvertTo64(rAmount);
-    contracts = ConvertTo64(Contracts * ConvertTo256(factorE));
+    contracts = ConvertTo64(Contracts * ConvertTo256(COIN));
 
     if (nBalance < amountNeeded || position < contracts) {
         PrintToLog("%s(): rejected:Sender has not required short position on this contract or balance enough\n",__func__);
@@ -3568,15 +3546,15 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
         newSP.contracts_needed = contracts;
         newSP.contract_associated = contractId;
         newSP.denominator = den;
-        newSP.series = strprintf("Nº 1 - %d",(amountNeeded / factorE));
+        newSP.series = strprintf("Nº 1 - %d",(amountNeeded / COIN));
         npropertyId = _my_sps->putSP(newSP);
 
     } else {
         CMPSPInfo::Entry newSP;
         _my_sps->getSP(npropertyId, newSP);
-        int64_t inf = (newSP.num_tokens) / factorE + 1 ;
+        int64_t inf = (newSP.num_tokens) / COIN + 1 ;
         newSP.num_tokens += ConvertTo64(rAmount);
-        int64_t sup = (newSP.num_tokens) / factorE ;
+        int64_t sup = (newSP.num_tokens) / COIN ;
         newSP.series = strprintf("Nº %d - %d",inf,sup);
         _my_sps->updateSP(npropertyId, newSP);
     }
@@ -3963,7 +3941,7 @@ int CMPTransaction::logicMath_CreateOracleContract()
         LOCK(cs_main);
         CBlockIndex* pindex = chainActive[block];
 
-        if (pindex == NULL)
+        if (pindex == nullptr)
         {
             PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
             return (PKT_ERROR_SP -20);
@@ -4023,7 +4001,7 @@ int CMPTransaction::logicMath_CreateOracleContract()
 
     for(std::vector<int64_t>::iterator it = kyc_Ids.begin(); it != kyc_Ids.end(); ++it)
     {
-        const int64_t aux = *it;
+        const int64_t& aux = *it;
         newSP.kyc.push_back(aux);
     }
 
@@ -4041,7 +4019,7 @@ int CMPTransaction::logicMath_Change_OracleAdm()
         LOCK(cs_main);
         CBlockIndex* pindex = chainActive[block];
 
-        if (pindex == NULL)
+        if (pindex == nullptr)
         {
             PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
             return (PKT_ERROR_SP -20);
@@ -4123,20 +4101,17 @@ int CMPTransaction::logicMath_Set_Oracle()
 
     oraclePrices[contractId][block] = Ol;
 
-
     // PrintToLog("%s():Ol element:,high:%d, low:%d, close:%d\n",__func__, Ol.high, Ol.low, Ol.close);
-
 
     // saving on db
     sp.oracle_high = oracle_high;
     sp.oracle_low = oracle_low;
     sp.oracle_close = oracle_close;
 
-
-   if(oraclePrices.empty())
-       PrintToLog("%s(): element was not inserted !\n",__func__);
-   else
-       PrintToLog("%s(): element was INSERTED \n",__func__);
+   if (msc_debug_set_oracle)
+   {
+       (oraclePrices.empty()) ? PrintToLog("%s(): element was not inserted !\n",__func__) : PrintToLog("%s(): element was INSERTED \n",__func__);
+   }
 
 
     assert(_my_sps->updateSP(contractId, sp));
@@ -4154,7 +4129,7 @@ int CMPTransaction::logicMath_OracleBackup()
         LOCK(cs_main);
         CBlockIndex* pindex = chainActive[block];
 
-        if (pindex == NULL)
+        if (pindex == nullptr)
         {
             PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
             return (PKT_ERROR_SP -20);
@@ -4284,7 +4259,7 @@ int CMPTransaction::logicMath_Withdrawal_FromChannel()
         LOCK(cs_main);
 
         CBlockIndex* pindex = chainActive[block];
-        if (pindex == NULL) {
+        if (pindex == nullptr) {
             PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
             return (PKT_ERROR_TOKENS -20);
         }
@@ -4344,6 +4319,7 @@ int CMPTransaction::logicMath_Withdrawal_FromChannel()
 
     if (msc_debug_withdrawal_from_channel) PrintToLog("checking wthd element : address: %s, deadline: %d, propertyId: %d, amount: %d \n", wthd.address, wthd.deadline_block, wthd.propertyId, wthd.amount);
 
+
     withdrawal_Map[receiver].push_back(wthd);
 
     t_tradelistdb->recordNewWithdrawal(txid, receiver, sender, propertyId, amount_to_withdraw, block, tx_idx);
@@ -4392,12 +4368,12 @@ int CMPTransaction::logicMath_Instant_Trade()
     return (PKT_ERROR_KYC -10);
   }
 
-  if(!t_tradelistdb->kycPropertyMatch(property,kyc_id)){
+  if(!t_tradelistdb->kycPropertyMatch(property, kyc_id)){
     PrintToLog("%s(): rejected: property %d can't be traded with this kyc\n", __func__, property);
     return (PKT_ERROR_KYC -20);
   }
 
-  if(!t_tradelistdb->kycPropertyMatch(desired_property,kyc_id)){
+  if(!t_tradelistdb->kycPropertyMatch(desired_property, kyc_id)){
     PrintToLog("%s(): rejected: property %d can't be traded with this kyc\n", __func__, desired_property);
     return (PKT_ERROR_KYC -20);
   }
@@ -4761,7 +4737,6 @@ int CMPTransaction::logicMath_Attestation()
     if(!t_tradelistdb->checkKYCRegister(sender,kyc_id))
     {
         kyc_id = KYC_0;
-
         if (sender != receiver)
         {
             PrintToLog("%s(): rejected: sender (%s) can't assign attestation to other address\n",
