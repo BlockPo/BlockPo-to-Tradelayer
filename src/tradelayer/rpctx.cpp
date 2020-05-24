@@ -2055,13 +2055,55 @@ UniValue tl_attestation(const JSONRPCRequest& request)
         );
 
     // obtain parameters & info
-    std::string hash;
     std::string fromAddress = ParseAddress(request.params[0]);
     std::string receiverAddress = ParseAddress(request.params[1]);
-    (request.params.size() == 3) ? hash = ParseText(request.params[2]) : "";
+    std::string hash = (request.params.size() == 3) ? ParseText(request.params[2]) : "";
 
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_Attestation(hash);
+
+    // request the wallet build the transaction (and if needed commit it)
+    uint256 txid;
+    std::string rawHex;
+    int result = WalletTxBuilder(fromAddress, receiverAddress, 0, payload, txid, rawHex, autoCommit);
+
+    // check error and return the txid (or raw hex depending on autocommit)
+    if (result != 0) {
+        throw JSONRPCError(result, error_str(result));
+    } else {
+        if (!autoCommit) {
+            return rawHex;
+        } else {
+            return txid.GetHex();
+        }
+    }
+}
+
+UniValue tl_revoke_attestation(const JSONRPCRequest& request)
+{
+    if (request.params.size() != 2)
+        throw runtime_error(
+            "tl_revoke_attestation \"fromaddress\" \"toaddress\" \n"
+
+            "\nRevoke the kyc attestation.\n"
+
+            "\nArguments:\n"
+            "1. sender address       (string, required) authority address\n"
+            "2. receiver address     (string, required) receiver address\n"
+            "\nResult:\n"
+            "\"hash\"                  (string) the hex-encoded transaction hash\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("tl_revoke_attestation", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\", \"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PtMtv41\"")
+            + HelpExampleRpc("tl_revoke_attestation", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\", \"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSgRTv2\"")
+        );
+
+    // obtain parameters & info
+    std::string fromAddress = ParseAddress(request.params[0]);
+    std::string receiverAddress = ParseAddress(request.params[1]);
+
+    // create a payload for the transaction
+    std::vector<unsigned char> payload = CreatePayload_Revoke_Attestation();
 
     // request the wallet build the transaction (and if needed commit it)
     uint256 txid;
@@ -2203,7 +2245,8 @@ static const CRPCCommand commands[] =
     { "trade layer (transaction creation)", "tl_create_channel",               &tl_create_channel,                  {} },
     { "trade layer (transaction cration)",  "tl_new_id_registration",          &tl_new_id_registration,             {} },
     { "trade layer (transaction cration)",  "tl_update_id_registration",       &tl_update_id_registration,          {} },
-    { "trade layer (transaction creation)", "tl_attestation",                  &tl_attestation,                     {} }
+    { "trade layer (transaction creation)", "tl_attestation",                  &tl_attestation,                     {} },
+    { "trade layer (transaction creation)", "tl_revoke_attestation",           &tl_revoke_attestation,              {} }
 #endif
 };
 

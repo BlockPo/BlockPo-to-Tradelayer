@@ -125,7 +125,8 @@ enum TransactionType {
   MSC_TYPE_NEW_ID_REGISTRATION                = 115,
   MSC_TYPE_UPDATE_ID_REGISTRATION             = 116,
   MSC_TYPE_DEX_PAYMENT                        = 117,
-  MSC_TYPE_ATTESTATION                        = 118
+  MSC_TYPE_ATTESTATION                        = 118,
+  MSC_TYPE_REVOKE_ATTESTATION                 = 119
 
 };
 
@@ -395,6 +396,7 @@ class CMPTradeList : public CDBBase
   void recordNewInstContTrade(const uint256& txid, const std::string& firstAddr, const std::string& secondAddr, uint32_t property, uint64_t amount_forsale, uint64_t price ,int blockNum, int blockIndex);
   void recordNewIdRegister(const uint256& txid, const std::string& address, const std::string& name, const std::string& website, int blockNum, int blockIndex);
   void recordNewAttestation(const uint256& txid, const std::string& sender, const std::string& receiver, int blockNum, int blockIndex, int kyc_id);
+  bool deleteAttestationReg(const std::string& sender,  const std::string& receiver);
   bool getAllCommits(const std::string& senderAddress, UniValue& tradeArray);
   bool getAllWithdrawals(const std::string& senderAddress, UniValue& tradeArray);
   bool getChannelInfo(const std::string& channelAddress, UniValue& tradeArray);

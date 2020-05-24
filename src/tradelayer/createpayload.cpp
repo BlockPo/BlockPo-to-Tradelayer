@@ -999,6 +999,22 @@ std::vector<unsigned char> CreatePayload_Attestation(std::string& hash)
   return payload;
 }
 
+std::vector<unsigned char> CreatePayload_Revoke_Attestation()
+{
+  std::vector<unsigned char> payload;
+
+  uint64_t messageType = 119;
+  uint64_t messageVer = 0;
+
+  std::vector<uint8_t> vecMessageType = CompressInteger((uint64_t)messageType);
+  std::vector<uint8_t> vecMessageVer = CompressInteger((uint64_t)messageVer);
+
+  payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
+  payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
+
+  return payload;
+}
+
 std::vector<unsigned char> CreatePayload_MetaDExCancelAll()
 {
   std::vector<unsigned char> payload;
