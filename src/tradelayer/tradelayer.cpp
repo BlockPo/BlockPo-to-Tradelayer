@@ -1042,10 +1042,10 @@ int ParseTransaction(const CTransaction& tx, int nBlock, unsigned int idx, CMPTr
 
  static bool HandleLtcInstantTrade(const CTransaction& tx, int nBlock, const std::string& sender, const std::string& receiver, uint32_t property, uint64_t amount_forsale, uint32_t desired_property, uint64_t desired_value, unsigned int idx)
  {
-     if (property != LTC) return false;
-
      bool count = false;
      uint64_t nvalue = 0;
+     
+     if (property != LTC) return count;
 
      for (unsigned int n = 0; n < tx.vout.size(); ++n)
      {
@@ -1072,7 +1072,7 @@ int ParseTransaction(const CTransaction& tx, int nBlock, unsigned int idx, CMPTr
      if (count)
      {
          // updating last exchange block
-         mastercore::updateLastExBlock(nBlock, sender);
+         assert(mastercore::updateLastExBlock(nBlock, sender));
 
          t_tradelistdb->recordNewInstantTrade(tx.GetHash(), sender,receiver, property, amount_forsale, desired_property, desired_value, nBlock, idx);
 
@@ -6062,7 +6062,7 @@ int64_t mastercore::LtcVolumen(uint32_t propertyId, int& fblock, int& sblock)
 {
     int64_t amount = 0;
 
-    for(std::map<int, std::map<uint32_t,int64_t>>::iterator it = MapPropVolume.begin(); it != MapPropVolume.end();it++)
+    for(auto it = MapPropVolume.begin(); it != MapPropVolume.end();it++)
     {
         const int& xblock = it->first;
         if (msc_debug_ltc_volume) PrintToLog("%s(): actual block: %d\n", __func__, xblock);
@@ -6086,7 +6086,7 @@ int64_t mastercore::MdexVolumen(uint32_t fproperty, uint32_t sproperty, int& fbl
 {
     int64_t amount = 0;
 
-    for(std::map<int, std::map<std::pair<uint32_t, uint32_t>, int64_t>>::iterator it = MapMetaVolume.begin(); it != MapMetaVolume.end();it++)
+    for(auto it = MapMetaVolume.begin(); it != MapMetaVolume.end();it++)
     {
         const int& xblock = it->first;
 

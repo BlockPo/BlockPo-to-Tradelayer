@@ -26,7 +26,7 @@ BOOST_AUTO_TEST_CASE(payload_send_all)
     // Send to owners [type 4, version 0]
     std::vector<unsigned char> vch = CreatePayload_SendAll();
 
-    BOOST_CHECK_EQUAL(HexStr(vch), "000402");
+    BOOST_CHECK_EQUAL(HexStr(vch), "0004");
 }
 
 BOOST_AUTO_TEST_CASE(payload_dex_offer)
@@ -41,7 +41,7 @@ BOOST_AUTO_TEST_CASE(payload_dex_offer)
         static_cast<uint8_t>(1));         // sub-action: new offer
 
     BOOST_CHECK_EQUAL(HexStr(vch),
-        "00140180c2d72f80dac4090a904e01");
+        "01140180c2d72f80dac4090a904e01");
 }
 
 BOOST_AUTO_TEST_CASE(payload_meta_dex_new_trade)
@@ -65,7 +65,7 @@ BOOST_AUTO_TEST_CASE(payload_contractdex_cancel_all)
         );
 
     BOOST_CHECK_EQUAL(HexStr(vch),
-        "00200107");
+        "002007");
 }
 
 BOOST_AUTO_TEST_CASE(payload_accept_dex_offer)
@@ -98,7 +98,7 @@ BOOST_AUTO_TEST_CASE(payload_create_property)
 
 
     BOOST_CHECK_EQUAL(HexStr(vch),
-        "00320101004c69686b6920436f696e007777772e7061726365726f2e636f6c0000c0843d");
+        "003201004c69686b6920436f696e007777772e7061726365726f2e636f6c0000c0843d00");
 }
 
 BOOST_AUTO_TEST_CASE(payload_create_property_empty)
@@ -163,7 +163,7 @@ BOOST_AUTO_TEST_CASE(payload_create_crowdsale)
         static_cast<uint8_t>(12));           // issuer bonus: 12 %
 
     BOOST_CHECK_EQUAL(HexStr(vch),
-        "0033010100436f6d70616e696573006275696c6465722e62697477617463682e636f005175616e74756d204d696e6572000164f087d0e61c0a0c");
+        "00330100436f6d70616e696573006275696c6465722e62697477617463682e636f005175616e74756d204d696e6572000164f087d0e61c0a0c");
 }
 
 BOOST_AUTO_TEST_CASE(payload_create_crowdsale_empty)
@@ -185,15 +185,15 @@ BOOST_AUTO_TEST_CASE(payload_create_crowdsale_empty)
         static_cast<uint8_t>(10),           // early bird bonus: 10 % per week
         static_cast<uint8_t>(12));          // issuer bonus: 12 %
 
-    BOOST_CHECK_EQUAL(vch.size(), 17);
+    BOOST_CHECK_EQUAL(vch.size(), 16);
 }
 
 BOOST_AUTO_TEST_CASE(payload_create_crowdsale_full)
 {
     // Create crowdsale [type 51, version 0]
-    std::string name = std::string(700, 'x');
-    std::string url = std::string(700, 'x');
-    std::string data = std::string(700, 'x');
+    std::string name = std::string(255, 'x');
+    std::string url = std::string(255, 'x');
+    std::string data = std::string(255, 'x');
 
     std::vector<unsigned char> vch = CreatePayload_IssuanceVariable(
         static_cast<uint16_t>(1),           // property type: indivisible tokens
@@ -207,7 +207,7 @@ BOOST_AUTO_TEST_CASE(payload_create_crowdsale_full)
         static_cast<uint8_t>(10),           // early bird bonus: 10 % per week
         static_cast<uint8_t>(12));          // issuer bonus: 12 %
 
-    BOOST_CHECK_EQUAL(vch.size(), 782);
+    BOOST_CHECK_EQUAL(vch.size(), 781);
 }
 
 BOOST_AUTO_TEST_CASE(payload_close_crowdsale)
@@ -221,46 +221,60 @@ BOOST_AUTO_TEST_CASE(payload_close_crowdsale)
 BOOST_AUTO_TEST_CASE(payload_create_managed_property)
 {
     // create managed property [type 54, version 0]
-    // std::vector<unsigned char> vch = CreatePayload_IssuanceManaged(
-    //     static_cast<uint8_t>(1),             // ecosystem: main
-    //     static_cast<uint16_t>(1),            // property type: indivisible tokens
-    //     static_cast<uint32_t>(0),            // previous property: none
-    //     std::string("Companies"),            // name
-    //     std::string("Bitcoin Mining"),       // url
-    //     std::string(""));                    // data
+    std::vector<int> numbers;
+    numbers.push_back(0);
+    std::string name = "Name";
+    std::string url = "www.website.com";
+    std::string data = "some data";
 
-    // BOOST_CHECK_EQUAL(HexStr(vch),"0036010100436f6d70616e69657300426974636f696e204d696e696e670000");
+    std::vector<unsigned char> vch = CreatePayload_IssuanceManaged(
+        static_cast<uint16_t>(1),            // property type: indivisible tokens
+        static_cast<uint32_t>(0),            // previous property: none
+        name,                                // name
+        url,                                 // url
+        data,                                // data
+        numbers);
+
+    BOOST_CHECK_EQUAL(HexStr(vch),"003601004e616d65007777772e776562736974652e636f6d00736f6d6520646174610000");
 }
 
 BOOST_AUTO_TEST_CASE(payload_create_managed_property_empty)
 {
     // create managed property [type 54, version 0]
-    // std::vector<unsigned char> vch = CreatePayload_IssuanceManaged(
-    //
-    //     static_cast<uint8_t>(1),   // ecosystem: main
-    //     static_cast<uint16_t>(1),  // property type: indivisible tokens
-    //     static_cast<uint32_t>(0),  // previous property: none
-    //     std::string(""),           // name
-    //     std::string(""),           // url
-    //     std::string(""));          // data
-    //
-    // BOOST_CHECK_EQUAL(vch.size(), 8);
+    std::vector<int> numbers;
+    numbers.push_back(0);
+    std::string name = "";
+    std::string url = "";
+    std::string data = "";
+    std::vector<unsigned char> vch = CreatePayload_IssuanceManaged(
+        static_cast<uint16_t>(1),   // property type: indivisible tokens
+        static_cast<uint32_t>(0),   // previous property: none
+        name,                       // name
+        url,                        // url
+        data,                       // data
+        numbers);
+
+    BOOST_CHECK_EQUAL(vch.size(), 8);
 
 }
 
 BOOST_AUTO_TEST_CASE(payload_create_managed_property_full)
 {
     // create managed property [type 54, version 0]
-    // std::vector<unsigned char> vch = CreatePayload_IssuanceManaged(
-    //
-    //     static_cast<uint8_t>(1),   // ecosystem: main
-    //     static_cast<uint16_t>(1),  // property type: indivisible tokens
-    //     static_cast<uint32_t>(0),  // previous property: none
-    //     std::string(700, 'x'),     // name
-    //     std::string(700, 'x'),     // url
-    //     std::string(700, 'x')      // data
-    // );
-    // BOOST_CHECK_EQUAL(vch.size(), 773);
+    std::vector<int> numbers;
+    numbers.push_back(0);
+    numbers.push_back(1);
+    std::string name = std::string(700, 'x');
+    std::string url = std::string(700, 'x');
+    std::string data = std::string(700, 'x');
+    std::vector<unsigned char> vch = CreatePayload_IssuanceManaged(
+        static_cast<uint16_t>(1),   // property type: indivisible tokens
+        static_cast<uint32_t>(0),   // previous property: none
+        name,                       // name
+        url,                        // url
+        data,                       // data
+        numbers);
+    BOOST_CHECK_EQUAL(vch.size(), 774);
 
 }
 
@@ -345,7 +359,7 @@ BOOST_AUTO_TEST_CASE(payload_cancel_orders_by_address)
     std::vector<unsigned char> vch = CreatePayload_ContractDexCancelAll(
         static_cast<uint64_t>(7)         // contractId
     );
-    BOOST_CHECK_EQUAL(HexStr(vch),"00200107");
+    BOOST_CHECK_EQUAL(HexStr(vch),"002007");
 }
 
 BOOST_AUTO_TEST_CASE(payload_cancel_orders_by_block)
@@ -354,7 +368,7 @@ BOOST_AUTO_TEST_CASE(payload_cancel_orders_by_block)
         static_cast<int>(1),                  // block
         static_cast<unsigned int>(7)         // idx
     );
-    BOOST_CHECK_EQUAL(HexStr(vch),"00200107");}
+    BOOST_CHECK_EQUAL(HexStr(vch),"00220107");}
 
 BOOST_AUTO_TEST_CASE(payload_issuance_pegged)
 {
@@ -367,7 +381,7 @@ BOOST_AUTO_TEST_CASE(payload_issuance_pegged)
         static_cast<uint32_t>(3),            // contractId
         static_cast<uint32_t>(78563)         // amount
     );
-        BOOST_CHECK_EQUAL(HexStr(vch),"006401010064555344000203e3e504");
+        BOOST_CHECK_EQUAL(HexStr(vch),"0064010064555344000203e3e504");
 }
 
 BOOST_AUTO_TEST_CASE(payload_send_pegged)
@@ -398,8 +412,8 @@ BOOST_AUTO_TEST_CASE(payload_close_position)
         static_cast<uint32_t>(5)        // contractId
     );
 
-    BOOST_CHECK_EQUAL(HexStr(vch),"00210105");
-    BOOST_CHECK_EQUAL(vch.size(), 4);
+    BOOST_CHECK_EQUAL(HexStr(vch),"002105");
+    BOOST_CHECK_EQUAL(vch.size(), 3);
 }
 
 BOOST_AUTO_TEST_CASE(payload_send_trade)
@@ -426,7 +440,7 @@ BOOST_AUTO_TEST_CASE(payload_send_dex_offer)
         static_cast<uint32_t>(1)          // sub action
     );
 
-    BOOST_CHECK_EQUAL(HexStr(vch),"001401d80404d0010301");
+    BOOST_CHECK_EQUAL(HexStr(vch),"011401d80404d0010301");
     BOOST_CHECK_EQUAL(vch.size(), 10);
 }
 

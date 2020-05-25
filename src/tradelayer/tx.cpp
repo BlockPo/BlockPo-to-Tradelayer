@@ -2431,6 +2431,10 @@ int CMPTransaction::logicMath_SendAll()
     }
 
     // ------------------------------------------
+    if (sender == receiver) {
+        PrintToLog("%s(): rejected: sender sending tokens to himself\n", __func__, property);
+        return (PKT_ERROR_SEND -26);
+    }
 
     // Special case: if can't find the receiver -- assume send to self!
     if (receiver.empty()) {
@@ -3171,11 +3175,8 @@ int CMPTransaction::logicMath_MetaDExTrade()
   }
 
   // ------------------------------------------
-
   t_tradelistdb->recordNewTrade(txid, sender, property, desired_property, block, tx_idx);
-  int rc = MetaDEx_ADD(sender, property, nNewValue, block, desired_property, desired_value, txid, tx_idx);
-
-  return rc;
+  return (MetaDEx_ADD(sender, property, nNewValue, block, desired_property, desired_value, txid, tx_idx));
 }
 
 /** Tx 40 */
@@ -3281,8 +3282,6 @@ int CMPTransaction::logicMath_ContractDexTrade()
 
   if(msc_debug_contractdex_tx) PrintToLog("%s():colateralh: %d, marginRe: %d, nBalance: %d\n",__func__, colateralh, marginRe, nBalance);
 
-  // // rational_t conv = notionalChange(pfuture->fco_propertyId);
-
   int64_t uPrice;
 
   PrintToLog("inverse quoted: %d\n", inverse_quoted);
@@ -3325,7 +3324,6 @@ int CMPTransaction::logicMath_ContractDexTrade()
 
   /*********************************************/
   /**Logic for Node Reward**/
-
   const CConsensusParams &params = ConsensusParams();
   int BlockInit = params.MSC_NODE_REWARD;
   int nBlockNow = GetHeight();
@@ -3335,9 +3333,7 @@ int CMPTransaction::logicMath_ContractDexTrade()
 
   /*********************************************/
   t_tradelistdb->recordNewTrade(txid, sender, contractId, desired_property, block, tx_idx, 0);
-  int rc = ContractDex_ADD(sender, contractId, amount, block, txid, tx_idx, effective_price, trading_action, amountToReserve);
-
-  return rc;
+  return (ContractDex_ADD(sender, contractId, amount, block, txid, tx_idx, effective_price, trading_action, amountToReserve));
 }
 
 /** Tx 31 */
@@ -3352,9 +3348,7 @@ int CMPTransaction::logicMath_ContractDExCancel()
     return (PKT_ERROR_CONTRACTDEX -20);
   }
 
-  int rc = ContractDex_CANCEL(sender,hash);
-
-  return rc;
+  return (ContractDex_CANCEL(sender,hash));
 }
 
 /** Tx 32 */
@@ -3369,9 +3363,7 @@ int CMPTransaction::logicMath_ContractDexCancelEcosystem()
     return (PKT_ERROR_CONTRACTDEX -20);
   }
 
-  int rc = ContractDex_CANCEL_EVERYTHING(txid, block, sender, contractId);
-
-  return rc;
+  return (ContractDex_CANCEL_EVERYTHING(txid, block, sender, contractId));
 }
 
 /** Tx 33 */
@@ -3398,16 +3390,11 @@ int CMPTransaction::logicMath_ContractDexClosePosition()
         }
     }
 
-    uint32_t collateralCurrency = sp.collateral_currency;
-    int rc = ContractDex_CLOSE_POSITION(txid, block, sender, contractId, collateralCurrency);
-
-    return rc;
+    return (ContractDex_CLOSE_POSITION(txid, block, sender, contractId, sp.collateral_currency));
 }
 
 int CMPTransaction::logicMath_ContractDex_Cancel_Orders_By_Block()
 {
-  int rc = 0;
-
   if (!IsTransactionTypeAllowed(block, type, version)) {
       PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
               __func__,
@@ -3419,9 +3406,7 @@ int CMPTransaction::logicMath_ContractDex_Cancel_Orders_By_Block()
 
     }
 
-    rc = ContractDex_CANCEL_FOR_BLOCK(txid, block, tx_idx, sender);
-
-    return rc;
+    return (ContractDex_CANCEL_FOR_BLOCK(txid, block, tx_idx, sender));
 }
 
 /** Tx 100 */
@@ -3742,9 +3727,9 @@ int CMPTransaction::logicMath_TradeOffer()
         return (PKT_ERROR_SEND -23);
     }
 
-  // ------------------------------------------
+    // ------------------------------------------
 
-      int rc = PKT_ERROR_TRADEOFFER;
+    int rc = PKT_ERROR_TRADEOFFER;
 
     // figure out which Action this is based on amount for sale, version & etc.
     // TODO: delete old version
@@ -3812,9 +3797,9 @@ int CMPTransaction::logicMath_TradeOffer()
         default:
             rc = (PKT_ERROR -500); // neither V0 nor V1
             break;
-};
+    };
 
-  return rc;
+    return rc;
 }
 
 /*Tx 21*/
@@ -3926,9 +3911,7 @@ int CMPTransaction::logicMath_AcceptOfferBTC()
   // }
 
   // the min fee spec requirement is checked in the following function
-  int rc = DEx_acceptCreate(sender, receiver, propertyId, nValue, block, tx_fee_paid, &nNewValue);
-
-  return rc;
+  return (DEx_acceptCreate(sender, receiver, propertyId, nValue, block, tx_fee_paid, &nNewValue));
 }
 
 
@@ -4319,7 +4302,6 @@ int CMPTransaction::logicMath_Withdrawal_FromChannel()
 
     if (msc_debug_withdrawal_from_channel) PrintToLog("checking wthd element : address: %s, deadline: %d, propertyId: %d, amount: %d \n", wthd.address, wthd.deadline_block, wthd.propertyId, wthd.amount);
 
-
     withdrawal_Map[receiver].push_back(wthd);
 
     t_tradelistdb->recordNewWithdrawal(txid, receiver, sender, propertyId, amount_to_withdraw, block, tx_idx);
@@ -4425,7 +4407,7 @@ int CMPTransaction::logicMath_Instant_Trade()
       t_tradelistdb->recordNewInstantTrade(txid, sender, chnAddrs.first, property, amount_forsale, desired_property, desired_value, block, tx_idx);
 
       // updating last exchange block
-      mastercore::updateLastExBlock(block, sender);
+      assert(mastercore::updateLastExBlock(block, sender));
 
   } else {
 
@@ -4459,7 +4441,6 @@ int CMPTransaction::logicMath_Update_PNL()
 
 
   // ------------------------------------------
-
 
   //logic for PNLS
   assert(update_tally_map(sender, propertyId, -pnl_amount, CHANNEL_RESERVE));
@@ -4553,7 +4534,6 @@ int CMPTransaction::logicMath_Contract_Instant()
         return (PKT_ERROR_METADEX -22);
     }
 
-
     if (!IsPropertyIdValid(property))
     {
         PrintToLog("%s(): rejected: property for sale %d does not exist\n", __func__, property);
@@ -4637,7 +4617,7 @@ int CMPTransaction::logicMath_Contract_Instant()
 
     /********************************************************/
     // updating last exchange block
-    mastercore::updateLastExBlock(block, sender);
+    assert(mastercore::updateLastExBlock(block, sender));
 
     mastercore::Instant_x_Trade(txid, itrading_action, chnAddrs.multisig, chnAddrs.first, chnAddrs.second, property, instant_amount, price, sp.collateral_currency, sp.prop_type, block, tx_idx);
 
@@ -4675,8 +4655,6 @@ int CMPTransaction::logicMath_New_Id_Registration()
 
   t_tradelistdb->recordNewIdRegister(txid, sender, company_name, website, block, tx_idx);
 
-  // std::string dummy = "1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P";
-  // t_tradelistdb->updateIdRegister(txid,sender, dummy,block, tx_idx);
   return 0;
 }
 
@@ -4695,7 +4673,7 @@ int CMPTransaction::logicMath_Update_Id_Registration()
 
   // ---------------------------------------
 
-  t_tradelistdb->updateIdRegister(txid,sender, receiver,block, tx_idx);
+  assert(t_tradelistdb->updateIdRegister(txid,sender, receiver,block, tx_idx));
 
   return 0;
 }
@@ -4767,7 +4745,7 @@ int CMPTransaction::logicMath_Revoke_Attestation()
         return (PKT_ERROR_METADEX -22);
     }
 
-    t_tradelistdb->deleteAttestationReg(sender, receiver);
+    assert(t_tradelistdb->deleteAttestationReg(sender, receiver));
 
     return 0;
 }
@@ -4784,9 +4762,7 @@ int CMPTransaction::logicMath_MetaDExCancelAll()
     return (PKT_ERROR_CONTRACTDEX -20);
   }
 
-  int rc = MetaDEx_CANCEL_EVERYTHING(txid, block, sender);
-
-  return rc;
+  return (MetaDEx_CANCEL_EVERYTHING(txid, block, sender));
 }
 
 struct FutureContractObject *getFutureContractObject(std::string identifier)

@@ -101,5 +101,47 @@ BOOST_AUTO_TEST_CASE(uint256_const)
     BOOST_CHECK_EQUAL(std::numeric_limits<int64_t>::max(), ConvertTo64(mastercore::uint256_const::max_int64));
 }
 
+arith_uint256 amountReserved(int64_t amount, uint32_t margin_requirement, uint64_t leverage, int64_t uPrice)
+{
+    return (ConvertTo256(COIN) * ConvertTo256(amount) * ConvertTo256(margin_requirement)) / (ConvertTo256(leverage) * ConvertTo256(uPrice));
+}
+
+BOOST_AUTO_TEST_CASE(contractdex_trade_amount)
+{
+   int64_t uPrice = 1000000000 * COIN;      // price = 1 billion of dUSD
+   uint64_t leverage = 10 * COIN;           // max leverage
+   uint32_t marginRequirement = 42 * COIN;  // 42 tokens per contract (almost the maximum)
+
+   // 1 contract
+   BOOST_CHECK_EQUAL(ConvertTo64(amountReserved(1 * COIN, marginRequirement, leverage, uPrice)),  ConvertTo64(ConvertTo256(0)));  // 0.42 (in practice it's 0)
+
+   // 1000 contracts
+   BOOST_CHECK_EQUAL(ConvertTo64(amountReserved(1000 * COIN, marginRequirement, leverage, uPrice)), ConvertTo64(ConvertTo256(420)));  // 420  (in practice it's 0.0000042)
+
+   // 1000 000 contracts
+   BOOST_CHECK_EQUAL(ConvertTo64(amountReserved(1000000 * COIN, marginRequirement, leverage, uPrice)), ConvertTo64(ConvertTo256(420000)));  // 420 000  (in practice it's 0.0042)
+
+   // 1000 000 000 contracts
+   BOOST_CHECK_EQUAL(ConvertTo64(amountReserved(1000000000 * COIN, marginRequirement, leverage, uPrice)), ConvertTo64(ConvertTo256(420000000)));  // 420 000 000  (in practice it's 4.2)
+
+}
+
+BOOST_AUTO_TEST_CASE(contractdex_trade_leverage)
+{
+   int64_t amount = 1000000000 * COIN;      // price = 1 billion contracts
+   int64_t uPrice = 1000000000 * COIN;      // price = 1 billion of dUSD
+   uint32_t marginRequirement = 42 * COIN;  // 42 tokens per contract (almost the maximum)
+
+   // leverage 1
+   BOOST_CHECK_EQUAL(ConvertTo64(amountReserved(amount, marginRequirement, 1 * COIN, uPrice)),  ConvertTo64(ConvertTo256(4200000000))); // (in practice it's 4.2)
+
+   // leverage 2
+   BOOST_CHECK_EQUAL(ConvertTo64(amountReserved(amount, marginRequirement, 2 * COIN, uPrice)), ConvertTo64(ConvertTo256(2100000000)));  // (in practice it's 2.1)
+
+   // leverage 10
+   BOOST_CHECK_EQUAL(ConvertTo64(amountReserved(amount, marginRequirement, 10 * COIN, uPrice)), ConvertTo64(ConvertTo256(420000000)));  //(in practice it's 0.42)
+
+
+}
 
 BOOST_AUTO_TEST_SUITE_END()

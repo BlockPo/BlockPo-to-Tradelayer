@@ -404,7 +404,7 @@ UniValue tl_sendissuancemanaged(const JSONRPCRequest& request)
     RequireSaneName(name);
 
     // create a payload for the transaction
-    std::vector<unsigned char> payload = CreatePayload_IssuanceManaged(type, previousId, name, url, data,numbers);
+    std::vector<unsigned char> payload = CreatePayload_IssuanceManaged(type, previousId, name, url, data, numbers);
 
     // request the wallet build the transaction (and if needed commit it)
     uint256 txid;
