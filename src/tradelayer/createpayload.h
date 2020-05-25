@@ -55,6 +55,7 @@ std::vector<unsigned char> CreatePayload_Update_Id_Registration();
 std::vector<unsigned char> CreatePayload_DEx_Payment();
 std::vector<unsigned char> CreatePayload_TradeLayerAlert(uint16_t alertType, uint32_t expiryValue, const std::string& alertMessage);
 std::vector<unsigned char> CreatePayload_Attestation(std::string& hash);
+std::vector<unsigned char> CreatePayload_Revoke_Attestation();
 std::vector<unsigned char> CreatePayload_MetaDExCancelEcosystem();
 std::vector<unsigned char> CreatePayload_ContractDExCancel(std::string& hash);
 #endif // TRADELAYER_CREATEPAYLOAD_H

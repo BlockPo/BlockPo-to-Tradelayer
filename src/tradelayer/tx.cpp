@@ -112,6 +112,7 @@ std::string mastercore::strTransactionType(uint16_t txType)
     case MSC_TYPE_UPDATE_ID_REGISTRATION: return "Update Id Registration";
     case MSC_TYPE_DEX_PAYMENT: return "DEx payment";
     case MSC_TYPE_ATTESTATION: return "KYC Attestation";
+    case MSC_TYPE_REVOKE_ATTESTATION: return "KYC Revoke Attestation";
     case MSC_TYPE_CREATE_ORACLE_CONTRACT : return "Create Oracle Contract";
     case MSC_TYPE_METADEX_CANCEL_ALL : return "Cancel all MetaDEx orders";
     case MSC_TYPE_CONTRACTDEX_CANCEL : return "Cancel specific contract order";
@@ -290,6 +291,9 @@ bool CMPTransaction::interpret_Transaction()
 
     case MSC_TYPE_ATTESTATION:
         return interpret_Attestation();
+
+    case MSC_TYPE_REVOKE_ATTESTATION:
+        return interpret_Revoke_Attestation();
 
     }
 
@@ -1172,7 +1176,6 @@ bool CMPTransaction::interpret_ContractDexCancelEcosystem()
   int i = 0;
   std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
-  std::vector<uint8_t> vecEcosystemBytes = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecContractIdBytes = GetNextVarIntBytes(i);
 
   if (!vecTypeBytes.empty()) {
@@ -1186,6 +1189,7 @@ bool CMPTransaction::interpret_ContractDexCancelEcosystem()
   if (!vecContractIdBytes.empty()) {
     contractId = DecompressInteger(vecContractIdBytes);
   } else return false;
+
 
   if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
   {
@@ -1204,7 +1208,6 @@ bool CMPTransaction::interpret_ContractDexClosePosition()
 
     std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
     std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
-    std::vector<uint8_t> vecEcosystemBytes = GetNextVarIntBytes(i);
     std::vector<uint8_t> vecContractIdBytes = GetNextVarIntBytes(i);
 
     if (!vecTypeBytes.empty()) {
@@ -2025,6 +2028,24 @@ bool CMPTransaction::interpret_Attestation()
   return true;
 }
 
+/** Tx  119*/
+bool CMPTransaction::interpret_Revoke_Attestation()
+{
+  int i = 0;
+
+  std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+
+  if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+  {
+      PrintToLog("%s(): hash: %s\n",__func__, hash);
+      PrintToLog("\t sender: %s\n", sender);
+      PrintToLog("\t receiver: %s\n", receiver);
+  }
+
+  return true;
+}
+
 /** Tx 26 */
 bool CMPTransaction::interpret_MetaDExCancelAll()
 {
@@ -2187,6 +2208,9 @@ int CMPTransaction::interpretPacket()
         case MSC_TYPE_ATTESTATION:
             return logicMath_Attestation();
 
+        case MSC_TYPE_REVOKE_ATTESTATION:
+            return logicMath_Revoke_Attestation();
+
 
     }
 
@@ -2331,6 +2355,11 @@ int CMPTransaction::logicMath_SimpleSend()
 
     // ------------------------------------------
 
+    if (sender == receiver) {
+        PrintToLog("%s(): rejected: sender sending tokens to himself\n", __func__, property);
+        return (PKT_ERROR_SEND -26);
+    }
+
     // Special case: if can't find the receiver -- assume send to self!
     if (receiver.empty()) {
         receiver = sender;
@@ -2381,7 +2410,7 @@ int CMPTransaction::logicMath_SendVestingTokens()
 
   assert(update_tally_map(sender, TL_PROPERTY_VESTING, -nValue, BALANCE));
   assert(update_tally_map(receiver, TL_PROPERTY_VESTING, nValue, BALANCE));
-  assert(update_tally_map(receiver, TL_PROPERTY_ALL, nValue, UNVESTED));
+  assert(update_tally_map(receiver, ALL, nValue, UNVESTED));
 
   vestingAddresses.push_back(receiver);
 
@@ -3288,7 +3317,7 @@ int CMPTransaction::logicMath_ContractDexTrade()
       if (amountToReserve > 0)
 	{
 	  assert(update_tally_map(sender, colateralh, -amountToReserve, BALANCE));
-	  assert(update_tally_map(sender, colateralh,  amountToReserve, CONTRACTDEX_MARGIN));
+	  assert(update_tally_map(sender, colateralh,  amountToReserve, CONTRACTDEX_RESERVE));
 	}
       // int64_t reserva = getMPbalance(sender, colateralh, CONTRACTDEX_MARGIN);
       // std::string reserved = FormatDivisibleMP(reserva,false);
@@ -3306,7 +3335,7 @@ int CMPTransaction::logicMath_ContractDexTrade()
 
   /*********************************************/
   t_tradelistdb->recordNewTrade(txid, sender, contractId, desired_property, block, tx_idx, 0);
-  int rc = ContractDex_ADD(sender, contractId, amount, block, txid, tx_idx, effective_price, trading_action,0);
+  int rc = ContractDex_ADD(sender, contractId, amount, block, txid, tx_idx, effective_price, trading_action, amountToReserve);
 
   return rc;
 }
@@ -4722,6 +4751,23 @@ int CMPTransaction::logicMath_Attestation()
     PrintToLog("%s(): kyc_id: %d\n",__func__,kyc_id);
 
     t_tradelistdb->recordNewAttestation(txid, sender, receiver, block, tx_idx, kyc_id);
+
+    return 0;
+}
+
+/** Tx 119 */
+int CMPTransaction::logicMath_Revoke_Attestation()
+{
+    if (!IsTransactionTypeAllowed(block, type, version)) {
+        PrintToLog("%s(): rejected: type %d or version %d not permitted at block %d\n",
+            __func__,
+            type,
+            version,
+            block);
+        return (PKT_ERROR_METADEX -22);
+    }
+
+    t_tradelistdb->deleteAttestationReg(sender, receiver);
 
     return 0;
 }

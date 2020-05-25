@@ -18,6 +18,7 @@ class ChannelsBasicsTest (BitcoinTestFramework):
         self.setup_clean_chain = True
         # Use self.extra_args to change command-line arguments for the nodes
         # self.extra_args = [["-deprecatedrpc=signrawtransaction"]]
+        self.extra_args = [["-txindex=1"]]
 
     def setup_chain(self):
         super().setup_chain()

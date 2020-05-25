@@ -103,6 +103,9 @@ UniValue tl_send(const JSONRPCRequest& request)
     int64_t referenceAmount = (request.params.size() > 4) ? ParseAmount(request.params[4], true): 0;
 
     // perform checks
+    if (fromAddress == toAddress)
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "sending tokens to same address");
+
     RequireExistingProperty(propertyId);
     RequireNotContract(propertyId);
     RequireBalance(fromAddress, propertyId, amount);
@@ -1045,7 +1048,7 @@ UniValue tl_cancelallcontractsbyaddress(const JSONRPCRequest& request)
   std::string name_traded = ParseText(request.params[1]);
 
   struct FutureContractObject *pfuture = getFutureContractObject(name_traded);
-  uint32_t contractId = pfuture->fco_propertyId;
+  uint32_t contractId = (pfuture) ? pfuture->fco_propertyId : 0;
 
   // perform checks
   RequireContract(contractId);
@@ -1157,7 +1160,7 @@ UniValue tl_sendissuance_pegged(const JSONRPCRequest& request)
   uint64_t amount = ParseAmount(request.params[6], isPropertyDivisible(propertyId));
 
   struct FutureContractObject *pfuture = getFutureContractObject(name_traded);
-  uint32_t contractId = pfuture->fco_propertyId;
+  uint32_t contractId = (pfuture) ? pfuture->fco_propertyId : 0;
 
   // perform checks
   RequirePeggedSaneName(name);
@@ -1226,7 +1229,7 @@ UniValue tl_send_pegged(const JSONRPCRequest& request)
   std::string name_pegged = ParseText(request.params[2]);
 
   struct FutureContractObject *pfuture = getFutureContractObject(name_pegged);
-  uint32_t propertyId = pfuture->fco_propertyId;
+  uint32_t propertyId = (pfuture) ? pfuture->fco_propertyId : 0;
 
   RequirePeggedCurrency(propertyId);
 
@@ -1284,12 +1287,12 @@ UniValue tl_redemption_pegged(const JSONRPCRequest& request)
   std::string name_pegged = ParseText(request.params[1]);
   std::string name_contract = ParseText(request.params[3]);
   struct FutureContractObject *pfuture_pegged = getFutureContractObject(name_pegged);
-  uint32_t propertyId = pfuture_pegged->fco_propertyId;
+  uint32_t propertyId = (pfuture_pegged) ? pfuture_pegged->fco_propertyId : 0;
 
   uint64_t amount = ParseAmount(request.params[2], true);
 
   struct FutureContractObject *pfuture_contract = getFutureContractObject(name_contract);
-  uint32_t contractId = pfuture_contract->fco_propertyId;
+  uint32_t contractId = (pfuture_contract) ? pfuture_contract->fco_propertyId : 0;
 
   // perform checks
   RequireExistingProperty(propertyId);
@@ -1550,8 +1553,8 @@ UniValue tl_setoracle(const JSONRPCRequest& request)
     uint64_t close = ParseEffectivePrice(request.params[4]);
 
     struct FutureContractObject *pfuture_contract = getFutureContractObject(name_contract);
-    uint32_t contractId = pfuture_contract->fco_propertyId;
-    std::string oracleAddress = pfuture_contract->fco_issuer;
+    uint32_t contractId = (pfuture_contract) ? pfuture_contract->fco_propertyId : 0;
+    std::string oracleAddress = (pfuture_contract) ? pfuture_contract->fco_issuer : "";
 
     // checks
     if (oracleAddress != fromAddress)
@@ -1607,8 +1610,8 @@ UniValue tl_change_oracleadm(const JSONRPCRequest& request)
     std::string name_contract = ParseText(request.params[2]);
 
     struct FutureContractObject *pfuture_contract = getFutureContractObject(name_contract);
-    uint32_t contractId = pfuture_contract->fco_propertyId;
-    std::string oracleAddress = pfuture_contract->fco_issuer;
+    uint32_t contractId = (pfuture_contract) ? pfuture_contract->fco_propertyId : 0;
+    std::string oracleAddress = (pfuture_contract) ? pfuture_contract->fco_issuer : "";
 
     // checks
     if (oracleAddress != fromAddress)
@@ -1664,8 +1667,8 @@ UniValue tl_oraclebackup(const JSONRPCRequest& request)
     std::string name_contract = ParseText(request.params[1]);
 
     struct FutureContractObject *pfuture_contract = getFutureContractObject(name_contract);
-    uint32_t contractId = pfuture_contract->fco_propertyId;
-    std::string backupAddress = pfuture_contract->fco_backup_address;
+    uint32_t contractId = (pfuture_contract) ? pfuture_contract->fco_propertyId : 0;
+    std::string backupAddress = (pfuture_contract) ? pfuture_contract->fco_backup_address : "";
 
     // checks
     if (backupAddress != fromAddress)
@@ -1719,8 +1722,8 @@ UniValue tl_closeoracle(const JSONRPCRequest& request)
     std::string name_contract = ParseText(request.params[1]);
 
     struct FutureContractObject *pfuture_contract = getFutureContractObject(name_contract);
-    uint32_t contractId = pfuture_contract->fco_propertyId;
-    std::string bckup_address = pfuture_contract->fco_backup_address;
+    uint32_t contractId = (pfuture_contract) ? pfuture_contract->fco_propertyId : 0;
+    std::string bckup_address = (pfuture_contract) ? pfuture_contract->fco_backup_address : "";
 
     // checks
     if (bckup_address != backupAddress)
@@ -2052,13 +2055,55 @@ UniValue tl_attestation(const JSONRPCRequest& request)
         );
 
     // obtain parameters & info
-    std::string hash;
     std::string fromAddress = ParseAddress(request.params[0]);
     std::string receiverAddress = ParseAddress(request.params[1]);
-    (request.params.size() == 3) ? hash = ParseText(request.params[2]) : "";
+    std::string hash = (request.params.size() == 3) ? ParseText(request.params[2]) : "";
 
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_Attestation(hash);
+
+    // request the wallet build the transaction (and if needed commit it)
+    uint256 txid;
+    std::string rawHex;
+    int result = WalletTxBuilder(fromAddress, receiverAddress, 0, payload, txid, rawHex, autoCommit);
+
+    // check error and return the txid (or raw hex depending on autocommit)
+    if (result != 0) {
+        throw JSONRPCError(result, error_str(result));
+    } else {
+        if (!autoCommit) {
+            return rawHex;
+        } else {
+            return txid.GetHex();
+        }
+    }
+}
+
+UniValue tl_revoke_attestation(const JSONRPCRequest& request)
+{
+    if (request.params.size() != 2)
+        throw runtime_error(
+            "tl_revoke_attestation \"fromaddress\" \"toaddress\" \n"
+
+            "\nRevoke the kyc attestation.\n"
+
+            "\nArguments:\n"
+            "1. sender address       (string, required) authority address\n"
+            "2. receiver address     (string, required) receiver address\n"
+            "\nResult:\n"
+            "\"hash\"                  (string) the hex-encoded transaction hash\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("tl_revoke_attestation", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\", \"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PtMtv41\"")
+            + HelpExampleRpc("tl_revoke_attestation", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\", \"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSgRTv2\"")
+        );
+
+    // obtain parameters & info
+    std::string fromAddress = ParseAddress(request.params[0]);
+    std::string receiverAddress = ParseAddress(request.params[1]);
+
+    // create a payload for the transaction
+    std::vector<unsigned char> payload = CreatePayload_Revoke_Attestation();
 
     // request the wallet build the transaction (and if needed commit it)
     uint256 txid;
@@ -2200,7 +2245,8 @@ static const CRPCCommand commands[] =
     { "trade layer (transaction creation)", "tl_create_channel",               &tl_create_channel,                  {} },
     { "trade layer (transaction cration)",  "tl_new_id_registration",          &tl_new_id_registration,             {} },
     { "trade layer (transaction cration)",  "tl_update_id_registration",       &tl_update_id_registration,          {} },
-    { "trade layer (transaction creation)", "tl_attestation",                  &tl_attestation,                     {} }
+    { "trade layer (transaction creation)", "tl_attestation",                  &tl_attestation,                     {} },
+    { "trade layer (transaction creation)", "tl_revoke_attestation",           &tl_revoke_attestation,              {} }
 #endif
 };
 

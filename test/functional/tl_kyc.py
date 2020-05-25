@@ -16,6 +16,7 @@ class KYCBasicsTest (BitcoinTestFramework):
     def set_test_params(self):
         self.num_nodes = 1
         self.setup_clean_chain = True
+        self.extra_args = [["-txindex=1"]]
 
     def setup_chain(self):
         super().setup_chain()
@@ -66,10 +67,9 @@ class KYCBasicsTest (BitcoinTestFramework):
         self.log.info("Checking the LTC balance in every account")
         tradelayer_checkingBalance(accounts, amount, conn, headers)
 
-
         self.log.info("Creating KYC of Tradelayer ")
         params = str([addresses[0], "TradeLayer.org","TradeLayer registrars"]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, True, "tl_new_id_registration",params)
+        out = tradelayer_HTTP(conn, headers, False, "tl_new_id_registration",params)
         # self.log.info(out)
 
         self.nodes[0].generate(1)
@@ -94,7 +94,7 @@ class KYCBasicsTest (BitcoinTestFramework):
 
         self.log.info("Creating another KYC for Tradelayer ")
         params = str([addresses[1], "TradeLayer.org","TradeLayer registrars"]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, True, "tl_new_id_registration",params)
+        out = tradelayer_HTTP(conn, headers, False, "tl_new_id_registration",params)
         # self.log.info(out)
 
         self.nodes[0].generate(1)
@@ -126,11 +126,11 @@ class KYCBasicsTest (BitcoinTestFramework):
         self.log.info("Checking attestations")
         out = tradelayer_HTTP(conn, headers, False, "tl_list_attestation")
         # self.log.info(out)
+
         assert_equal(out['error'], None)
         assert_equal(out['result'][0]['att sender'], addresses[2])
         assert_equal(out['result'][0]['att receiver'], addresses[2])
         assert_equal(out['result'][0]['kyc_id'], 0)
-
 
         self.log.info("Creating new tokens Dcoin(sendissuancefixed)")
         array = [0]
@@ -147,8 +147,8 @@ class KYCBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, True, "tl_sendissuancefixed",params)
         # self.log.info(out)
 
-
         self.nodes[0].generate(1)
+
 
         self.log.info("Checking the property 4")
         params = str([4])
@@ -162,6 +162,7 @@ class KYCBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['divisible'],True)
         assert_equal(out['result']['totaltokens'],'90000000.00000000')
 
+
         self.log.info("Checking the property 5")
         params = str([5])
         out = tradelayer_HTTP(conn, headers, True, "tl_getproperty",params)
@@ -173,6 +174,7 @@ class KYCBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['url'],'')
         assert_equal(out['result']['divisible'],True)
         assert_equal(out['result']['totaltokens'],'90000000.00000000')
+
 
         self.log.info("Creating oracle Contract 1")
         array = [0]
@@ -202,6 +204,7 @@ class KYCBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['low price'], '0')
         assert_equal(out['result']['last close price'], '0')
         assert_equal(out['result']['kyc_ids allowed'], '[0]')
+
 
         self.log.info("Creating oracle Contract 2")
         array = [1]
@@ -281,6 +284,62 @@ class KYCBasicsTest (BitcoinTestFramework):
         assert_equal(out['result'][1]['att sender'], addresses[2])
         assert_equal(out['result'][1]['att receiver'], addresses[2])
         assert_equal(out['result'][1]['kyc_id'], 0)
+
+
+        self.log.info("Creating new address")
+        params = str(['other']).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "getnewaddress", params)
+        foreignAddr = out['result']
+        # self.log.info(out)
+
+        self.log.info("Sending 3456 dCoins to new address")
+        params = str([addresses[2], foreignAddr, 4, "3456"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_send",params)
+        # self.log.info(out)
+
+        self.nodes[0].generate(1)
+
+        self.log.info("Checking tokens balances in new address ")
+        params = str([foreignAddr, 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['balance'],'0.00000000')
+        assert_equal(out['result']['reserve'],'0.00000000')
+
+        self.log.info("Trading oracle Contract 3 with no KYC")
+
+        params = str([addresses[2], "Oracle 3", "1000", "980.5", 1, "1"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_tradecontract",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        hash = str(out['result']).replace("'","")
+
+        self.nodes[0].generate(1)
+
+        self.log.info("Checking orderbook")
+        params = str(["Oracle 3", 1]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getcontract_orderbook",params)
+        # self.log.info(out)
+        assert_equal(out['result'], [])
+        assert_equal(out['error'], None)
+
+        self.log.info("Revoking attestation")
+        params = str([addresses[0], addresses[3]]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_revoke_attestation",params)
+        # self.log.info(out)
+
+        self.nodes[0].generate(1)
+
+        self.log.info("Checking attestations")
+        out = tradelayer_HTTP(conn, headers, False, "tl_list_attestation")
+        # self.log.info(out)
+
+        assert_equal(out['error'], None)
+        assert_equal(out['result'][0]['att sender'], addresses[2])
+        assert_equal(out['result'][0]['att receiver'], addresses[2])
+        assert_equal(out['result'][0]['kyc_id'], 0)
+
 
         conn.close()
 

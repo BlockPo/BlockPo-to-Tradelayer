@@ -64,14 +64,14 @@ bool msc_debug_metadex2                         = 0;
 bool msc_debug_metadex3                         = 0;
 bool msc_debug_metadex_add                      = 0;
 bool msc_debug_contractdex_add                  = 0;
-bool msc_debug_contract_add_market              = 0;
+bool msc_debug_contract_add_market              = 1;
 bool msc_debug_contract_cancel_every            = 0;
-bool msc_debug_contract_cancel_forblock         = 0;
+bool msc_debug_contract_cancel_forblock         = 1;
 bool msc_debug_contract_cancel_inorder          = 0;
 bool msc_debug_add_orderbook_edge               = 0;
-bool msc_debug_close_position                   = 0;
+bool msc_debug_close_position                   = 1;
 bool msc_debug_get_pair_market_price            = 0;
-bool msc_debug_dex                              = 1;
+bool msc_debug_dex                              = 0;
 bool msc_debug_contractdex_tx                   = 0;
 bool msc_debug_create_pegged                    = 0;
 bool msc_debug_accept_offerbtc                  = 0;
@@ -107,6 +107,7 @@ bool msc_debug_get_transaction_address          = 0;
 bool msc_debug_is_mpin_block_range              = 0;
 bool msc_debug_record_payment_tx                = 0;
 bool msc_tx_valid_node_reward                   = 0;
+bool msc_debug_delete_att_register              = 0;
 
 /**
  * LogPrintf() has been broken a couple of times now

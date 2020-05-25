@@ -46,8 +46,8 @@ void RequireCollateral(const std::string& address, std::string name_traded, int6
     int64_t uPrice = 1;
 
     struct FutureContractObject *pfuture = getFutureContractObject(name_traded);
-    uint32_t propertyId = pfuture->fco_collateral_currency;
-    bool inverse_quoted = pfuture->fco_quoted;
+    uint32_t propertyId = (pfuture) ? pfuture->fco_collateral_currency : 0;
+    bool inverse_quoted = (pfuture) ? pfuture->fco_quoted : false;
 
     if(inverse_quoted  && market_priceMap[pfuture->fco_numerator][pfuture->fco_denominator] > 0)
     {
@@ -230,7 +230,7 @@ void RequireContract(uint32_t propertyId)
 void RequireContract(std::string name_contract)
 {
     struct FutureContractObject *pfuture = getFutureContractObject(name_contract);
-    uint32_t propertyId = pfuture->fco_propertyId;
+    uint32_t propertyId = (pfuture) ? pfuture->fco_propertyId : 0;
 
     LOCK(cs_tally);
     CMPSPInfo::Entry sp;

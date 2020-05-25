@@ -16,6 +16,7 @@ class VestingBasicsTest (BitcoinTestFramework):
     def set_test_params(self):
         self.num_nodes = 1
         self.setup_clean_chain = True
+        self.extra_args = [["-txindex=1"]]
 
     def setup_chain(self):
         super().setup_chain()
@@ -167,6 +168,14 @@ class VestingBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         assert_equal(out['result']['balance'],'0.00000000')
         assert_equal(out['result']['reserve'],'0.00000000')
+
+
+        self.log.info("Checking unvested ALLs ")
+        params = str([addresses[1]]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_getunvested",params)
+        # self.log.info(out)
+        assert_equal(out['result']['unvested'],'0.00000000')
+
 
         self.log.info("Waiting for one year")
         for i in range(200):

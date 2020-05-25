@@ -213,6 +213,7 @@ private:
     bool interpret_Update_Id_Registration();
     bool interpret_DEx_Payment();
     bool interpret_Attestation();
+    bool interpret_Revoke_Attestation();
     bool interpret_ContractDExCancel();
 
     /**
@@ -261,6 +262,7 @@ private:
     int logicMath_Update_Id_Registration();
     int logicMath_DEx_Payment();
     int logicMath_Attestation();
+    int logicMath_Revoke_Attestation();
     int logicMath_ContractDExCancel();
 
     /**
@@ -424,6 +426,7 @@ public:
         timeLimit = 0;
         denominator = 0;
         numerator = 0;
+        leverage = 0;
 
         //Multisig channels
         amount_commited = 0;

@@ -16,6 +16,7 @@ class OraclesBasicsTest (BitcoinTestFramework):
     def set_test_params(self):
         self.num_nodes = 1
         self.setup_clean_chain = True
+        self.extra_args = [["-txindex=1"]]
 
     def setup_chain(self):
         super().setup_chain()
@@ -224,7 +225,7 @@ class OraclesBasicsTest (BitcoinTestFramework):
         # self.log.info(out)
         assert_equal(out['error'], None)
         assert_equal(out['result']['balance'],'49900.00000000')
-        assert_equal(out['result']['reserve'],'0.00000000')
+        assert_equal(out['result']['reserve'],'100.00000000')
 
 
         self.log.info("Checking orderbook")

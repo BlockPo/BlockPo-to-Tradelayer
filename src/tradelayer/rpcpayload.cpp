@@ -521,7 +521,7 @@ UniValue tl_createpayload_cancelallcontractsbyaddress(const JSONRPCRequest& requ
   std::string name_traded = ParseText(request.params[0]);
 
   struct FutureContractObject *pfuture = getFutureContractObject(name_traded);
-  uint32_t contractId = pfuture->fco_propertyId;
+  uint32_t contractId = (pfuture) ? pfuture->fco_propertyId : 0;
 
   std::vector<unsigned char> payload = CreatePayload_ContractDexCancelAll(contractId);
 
@@ -585,7 +585,7 @@ UniValue tl_createpayload_sendissuance_pegged(const JSONRPCRequest& request)
   uint64_t amount = ParseAmount(request.params[5], isPropertyDivisible(propertyId));
 
   struct FutureContractObject *pfuture = getFutureContractObject(name_traded);
-  uint32_t contractId = pfuture->fco_propertyId;
+  uint32_t contractId = (pfuture) ? pfuture->fco_propertyId : 0;
 
   std::vector<unsigned char> payload = CreatePayload_IssuancePegged(type, previousId, name, propertyId, contractId, amount);
 
@@ -616,7 +616,7 @@ UniValue tl_createpayload_send_pegged(const JSONRPCRequest& request)
   std::string name_pegged = ParseText(request.params[0]);
 
   struct FutureContractObject *pfuture = getFutureContractObject(name_pegged);
-  uint32_t propertyId = pfuture->fco_propertyId;
+  uint32_t propertyId = (pfuture) ? pfuture->fco_propertyId : 0;
 
   int64_t amount = ParseAmount(request.params[1], true);
 
@@ -648,12 +648,12 @@ UniValue tl_createpayload_redemption_pegged(const JSONRPCRequest& request)
     std::string name_pegged = ParseText(request.params[0]);
     std::string name_contract = ParseText(request.params[2]);
     struct FutureContractObject *pfuture_pegged = getFutureContractObject(name_pegged);
-    uint32_t propertyId = pfuture_pegged->fco_propertyId;
+    uint32_t propertyId = (pfuture_pegged) ?pfuture_pegged->fco_propertyId : 0;
 
     uint64_t amount = ParseAmount(request.params[1], true);
 
     struct FutureContractObject *pfuture_contract = getFutureContractObject(name_contract);
-    uint32_t contractId = pfuture_contract->fco_propertyId;
+    uint32_t contractId = (pfuture_contract) ? pfuture_contract->fco_propertyId : 0;
 
     std::vector<unsigned char> payload = CreatePayload_RedemptionPegged(propertyId, contractId, amount);
 
@@ -980,7 +980,7 @@ UniValue tl_createpayload_change_oracleadm(const JSONRPCRequest& request)
     // obtain parameters & info
     std::string name_contract = ParseText(request.params[0]);
     struct FutureContractObject *pfuture_contract = getFutureContractObject(name_contract);
-    uint32_t contractId = pfuture_contract->fco_propertyId;
+    uint32_t contractId = (pfuture_contract) ? pfuture_contract->fco_propertyId : 0;
 
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_Change_OracleAdm(contractId);
@@ -1062,7 +1062,7 @@ UniValue tl_createpayload_setoracle(const JSONRPCRequest& request)
     uint64_t low = ParseEffectivePrice(request.params[2]);
     uint64_t close = ParseEffectivePrice(request.params[3]);
     struct FutureContractObject *pfuture_contract = getFutureContractObject(name_contract);
-    uint32_t contractId = pfuture_contract->fco_propertyId;
+    uint32_t contractId = (pfuture_contract) ? pfuture_contract->fco_propertyId : 0;
 
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_Set_Oracle(contractId, high, low, close);
@@ -1092,7 +1092,7 @@ UniValue tl_createpayload_closeoracle(const JSONRPCRequest& request)
     // obtain parameters & info
     std::string name_contract = ParseText(request.params[0]);
     struct FutureContractObject *pfuture_contract = getFutureContractObject(name_contract);
-    uint32_t contractId = pfuture_contract->fco_propertyId;
+    uint32_t contractId = (pfuture_contract) ? pfuture_contract->fco_propertyId : 0;
 
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_Close_Oracle(contractId);

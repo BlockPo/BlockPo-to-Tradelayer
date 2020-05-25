@@ -209,7 +209,7 @@ void UnvestedToJSON(const std::string& address, uint32_t property, UniValue& bal
     if (divisible) {
         balance_obj.push_back(Pair("unvested", FormatDivisibleMP(unvested)));
     } else {
-        balance_obj.push_back(Pair("unvvested", FormatIndivisibleMP(unvested)));
+        balance_obj.push_back(Pair("unvested", FormatIndivisibleMP(unvested)));
     }
 }
 
@@ -3082,9 +3082,6 @@ UniValue tl_getcontract(const JSONRPCRequest& request)
 
     return response;
 }
-
-
-
 
 static const CRPCCommand commands[] =
 { //  category                             name                            actor (function)               okSafeMode
