@@ -235,7 +235,7 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         assert_equal(out['result'][0]['address'], addresses[1])
         assert_equal(out['result'][0]['contractid'], 5)
-        assert_equal(out['result'][0]['amountforsale'], '1000.00000000')
+        assert_equal(out['result'][0]['amountforsale'], 1000)
         assert_equal(out['result'][0]['tradingaction'], 1)
         assert_equal(out['result'][0]['effectiveprice'], '780.50000000')
         assert_equal(out['result'][0]['block'], 209)
@@ -284,7 +284,7 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         assert_equal(out['result'][0]['address'], addresses[1])
         assert_equal(out['result'][0]['contractid'], 5)
-        assert_equal(out['result'][0]['amountforsale'], '1000.00000000')
+        assert_equal(out['result'][0]['amountforsale'], 1000)
         assert_equal(out['result'][0]['tradingaction'], 1)
         assert_equal(out['result'][0]['effectiveprice'], '980.50000000')
         # assert_equal(out['result'][0]['block'], 206)
@@ -314,8 +314,8 @@ class OraclesBasicsTest (BitcoinTestFramework):
 
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['longPosition'],'1000.00000000')
-        assert_equal(out['result']['shortPosition'],'0.00000000')
+        assert_equal(out['result']['longPosition'], 1000)
+        assert_equal(out['result']['shortPosition'], 0)
 
 
         self.log.info("Checking position in second address")
@@ -324,8 +324,8 @@ class OraclesBasicsTest (BitcoinTestFramework):
 
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['longPosition'],'0.00000000')
-        assert_equal(out['result']['shortPosition'],'1000.00000000')
+        assert_equal(out['result']['longPosition'], 0)
+        assert_equal(out['result']['shortPosition'], 1000)
 
         conn.close()
 

@@ -251,7 +251,7 @@ void ContractDexObjectToJSON(const CMPContractDex& obj, UniValue& contractdex_ob
     contractdex_obj.push_back(Pair("address", obj.getAddr()));
     contractdex_obj.push_back(Pair("txid", obj.getHash().GetHex()));
     contractdex_obj.push_back(Pair("contractid", (uint64_t) obj.getProperty()));
-    contractdex_obj.push_back(Pair("amountforsale", FormatMP(1,obj.getAmountForSale())));
+    contractdex_obj.push_back(Pair("amountforsale", obj.getAmountForSale()));
     contractdex_obj.push_back(Pair("tradingaction", obj.getTradingAction()));
     contractdex_obj.push_back(Pair("effectiveprice",  FormatMP(1,obj.getEffectivePrice())));
     contractdex_obj.push_back(Pair("block", obj.getBlock()));
@@ -1729,8 +1729,8 @@ bool PositionToJSON(const std::string& address, uint32_t property, UniValue& bal
     int64_t longPosition  = getMPbalance(address, property, POSITIVE_BALANCE);
     int64_t shortPosition = getMPbalance(address, property, NEGATIVE_BALANCE);
     int64_t liqPrice = getMPbalance(address, property, LIQUIDATION_PRICE);
-    balance_obj.push_back(Pair("longPosition", FormatByType(longPosition,2)));
-    balance_obj.push_back(Pair("shortPosition", FormatByType(shortPosition,2)));
+    balance_obj.push_back(Pair("longPosition", longPosition));
+    balance_obj.push_back(Pair("shortPosition", shortPosition));
     balance_obj.push_back(Pair("liquidationPrice", FormatByType(liqPrice,2)));
 
     return true;

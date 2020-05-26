@@ -3293,7 +3293,7 @@ int CMPTransaction::logicMath_ContractDexTrade()
   } else if (!inverse_quoted)
       uPrice = COIN;
 
-  PrintToLog("%s(): marginRe: %d,leverage: %d, uPrice: %d\n",__func__, marginRe, leverage, uPrice);
+  PrintToLog("%s(): amount: %d, marginRe: %d, leverage: %d, uPrice: %d\n",__func__, amount, marginRe, leverage, uPrice);
 
   arith_uint256 amountTR = (ConvertTo256(COIN) * ConvertTo256(amount) * ConvertTo256(marginRe)) / (ConvertTo256(leverage) * ConvertTo256(uPrice));
   int64_t amountToReserve = ConvertTo64(amountTR);

@@ -55,7 +55,8 @@ BOOST_AUTO_TEST_CASE(edge_orderbook)
   			1,   // subaction
   			0,   // amount remaining
   			500000000,   // effective_price
-  			2);  // trading_action
+  			2,  // trading_action
+        0);   // amount to reserve
 
     CMPContractDex seller2("1NNQKWM8mC35pBNPxV1noWFZEw7A5X6zXz", // address
 	      172,  // block
@@ -68,7 +69,8 @@ BOOST_AUTO_TEST_CASE(edge_orderbook)
 	      1,    // subaction
 	      0,    // amount remaining
 	      600000000,    // effective_price
-	      2);   // trading_action
+	      2,    // trading_action
+        0);   // amount to reserve
 
     CMPContractDex seller3("1Nx8KWM8mC35pBNPxV1noWFZEw7A5X6zXz", // address
 	      172,  // block
@@ -81,7 +83,8 @@ BOOST_AUTO_TEST_CASE(edge_orderbook)
 	      1,    // subaction
 	      0,    // amount remaining
 	      700000000,    // effective_price
-	      2);   // trading_action
+	      2,    // trading_action
+        0);   // amount to reserve
 
     CMPContractDex seller4("1Nx8KWM8mC35pBNPxV1noWFZEw7A5X6zXz", // address
 	      172,  // block
@@ -94,7 +97,8 @@ BOOST_AUTO_TEST_CASE(edge_orderbook)
 	      1,    // subaction
 	      0,    // amount remaining
 	      800000000,    // effective_price
-	      2);   // trading_action
+	      2,    // trading_action
+        0);   // amount to reserve
 
     CMPContractDex buyer1("2dexX7zmPen1yBz2H9ZF62AK5TGGqGTZH", // address
    	    172, // block
@@ -107,7 +111,8 @@ BOOST_AUTO_TEST_CASE(edge_orderbook)
    			1,   // subaction
    			0,   // amount remaining
    			400000000,   // effective_price
-   			1);  // trading_action
+   			1,  // trading_action
+        0);   // amount to reserve
 
     CMPContractDex buyer2("1NNQKWM8mP35pBNPxV1noWFZEw7A5X6zXz", // address
         172,  // block
@@ -120,7 +125,8 @@ BOOST_AUTO_TEST_CASE(edge_orderbook)
         1,    // subaction
         0,    // amount remaining
         300000000,    // effective_price
-        1);   // trading_action
+        1,    // trading_action
+        0);   // amount to reserve
 
     CMPContractDex buyer3("19x8KWM8mC35pBNPxV1noWFZEw7A5X6YXz", // address
         172,  // block
@@ -133,8 +139,8 @@ BOOST_AUTO_TEST_CASE(edge_orderbook)
         1,    // subaction
         0,    // amount remaining
         200000000,    // effective_price
-        1);   // trading_action
-
+        1,   // trading_action
+        0);   // amount to reserve
 
     CMPContractDex buyer4("19x8KWM8mC35pBNPxV1noWFZEw7A5X6zXz", // address
         172,  // block
@@ -147,7 +153,8 @@ BOOST_AUTO_TEST_CASE(edge_orderbook)
         1,    // subaction
         0,    // amount remaining
         100000000,    // effective_price
-        1);   // trading_action
+        1,   // trading_action
+        0);   // amount to reserve
 
     //inserting in orderbook
     BOOST_CHECK(ContractDex_INSERT(seller1)); // prices: 500000000

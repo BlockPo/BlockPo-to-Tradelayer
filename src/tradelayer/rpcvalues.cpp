@@ -236,7 +236,7 @@ std::vector<PrevTxsEntry> ParsePrevTxs(const UniValue& value)
 /** New things for Future Contracts */
 int64_t ParseAmountContract(const UniValue& value)
 {
-  int64_t amount = mastercore::StrToInt64(value.get_str(), true);
+  int64_t amount = mastercore::StrToInt64(value.get_str(), false);
   if (amount < 1) {
     throw JSONRPCError(RPC_TYPE_ERROR, "Invalid amount");
   }
@@ -251,8 +251,8 @@ int64_t ParseAmountContract(const UniValue& value, int propertyType)
 
 uint64_t ParseLeverage(const UniValue& value)
 {
-    int64_t amount = mastercore::StrToInt64(value.get_str(), true);
-    if (amount < COIN || 10*COIN < amount) {
+    int64_t amount = mastercore::StrToInt64(value.get_str(), false);
+    if (amount < 1 || 10 < amount) {
         throw JSONRPCError(RPC_TYPE_ERROR, "Leverage out of range");
     }
     return static_cast<uint64_t>(amount);
