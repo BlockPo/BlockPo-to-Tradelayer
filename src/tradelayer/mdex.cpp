@@ -1050,7 +1050,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
    * Fees calculations for maker and taker.
    *
    */
-  mastercore::ContractDex_Fees(pnew, pold, nCouldBuy);
+  mastercore::ContractDex_Fees(pold, pnew, nCouldBuy);
 
 
     if(msc_debug_x_trade_bidirectional)
@@ -1128,36 +1128,36 @@ static const std::string getTradeReturnType(MatchReturnType ret)
 
 bool mastercore::ContractDex_Fees(const CMPContractDex* maker, const CMPContractDex* taker, int64_t nCouldBuy)
 {
-    int64_t takerFee, makerFee, cacheFee;
+    int64_t takerFee = 0, makerFee = 0, cacheFee = 0, oracleOp = 0;
     uint32_t contractId = maker->getProperty();
 
     CMPSPInfo::Entry sp;
     if (!_my_sps->getSP(contractId, sp))
        return false;
 
-    int64_t marginRe = static_cast<int64_t>(sp.margin_requirement);
-
     if (msc_debug_contractdex_fees) PrintToLog("%s: addressTaker: %d, addressMaker: %d, nCouldBuy: %d, contractIds: %d\n",__func__, taker->getAddr(), maker->getAddr(), nCouldBuy, contractId);
 
 
     if (sp.prop_type == ALL_PROPERTY_TYPE_ORACLE_CONTRACT)
     {
-        arith_uint256 uTakerFee = (ConvertTo256(nCouldBuy) * ConvertTo256(marginRe) * ConvertTo256(25)) / (ConvertTo256(1000) * ConvertTo256(BASISPOINT));  // 2.5% basis point
-        arith_uint256 uMakerFee = (ConvertTo256(nCouldBuy) * ConvertTo256(marginRe)) / (ConvertTo256(100) * ConvertTo256(BASISPOINT));  // 1% basis point
+        arith_uint256 uTakerFee = (ConvertTo256(nCouldBuy) * ConvertTo256(sp.margin_requirement) * ConvertTo256(25)) / (ConvertTo256(1000) * ConvertTo256(BASISPOINT));  // 2.5 basis point
+        arith_uint256 uMakerFee = (ConvertTo256(nCouldBuy) * ConvertTo256(sp.margin_requirement)) / (ConvertTo256(100) * ConvertTo256(BASISPOINT));  // 1 basis point
 
-        cacheFee = ConvertTo64(uMakerFee / ConvertTo256(2));
-        takerFee = ConvertTo64(uTakerFee);
-        makerFee = ConvertTo64(uMakerFee);
+        cacheFee = ConvertTo64(uMakerFee / ConvertTo256(2));  //0.5 basis point
+        oracleOp = makerFee = takerFee = ConvertTo64(uTakerFee);
 
         if (msc_debug_contractdex_fees) PrintToLog("%s: oracles cacheFee: %d, oracles takerFee: %d, oracles makerFee: %d\n",__func__,cacheFee, takerFee, makerFee);
 
-        // 0.5% basis point to oracle maintaineer
-        update_tally_map(sp.issuer,sp.collateral_currency, cacheFee,BALANCE);
+        // sumcheck: 2.5 bsp  =  1 bsp +  1 bsp + 0.5
+        // assert(takerFee == (makerFee + oracleOp + cacheFee));
+
+        // 0.5 basis point to oracle maintaineer
+        assert(update_tally_map(sp.issuer,sp.collateral_currency, oracleOp, BALANCE));
 
         if (sp.collateral_currency == 4) //ALLS
         {
-          // 0.5% basis point to feecache
-          cachefees[sp.collateral_currency] += cacheFee;
+            //0.5 basis point to feecache
+            cachefees_oracles[sp.collateral_currency] += cacheFee;
 
         }else {
             // Create the metadex object with specific params
@@ -1180,23 +1180,26 @@ bool mastercore::ContractDex_Fees(const CMPContractDex* maker, const CMPContract
 
     } else {      //natives
 
-          arith_uint256 uTakerFee = (ConvertTo256(nCouldBuy) * ConvertTo256(marginRe)) / (ConvertTo256(100) * ConvertTo256(BASISPOINT));
-          arith_uint256 uMakerFee = (ConvertTo256(nCouldBuy) * ConvertTo256(marginRe) * ConvertTo256(5)) / (ConvertTo256(1000) * ConvertTo256(BASISPOINT));
+          arith_uint256 uTakerFee = (ConvertTo256(nCouldBuy) * ConvertTo256(sp.margin_requirement)) / (ConvertTo256(100) * ConvertTo256(BASISPOINT));
+          arith_uint256 uMakerFee = (ConvertTo256(nCouldBuy) * ConvertTo256(sp.margin_requirement) * ConvertTo256(5)) / (ConvertTo256(1000) * ConvertTo256(BASISPOINT));
 
           takerFee = ConvertTo64(uTakerFee);
-          makerFee = ConvertTo64(uMakerFee);
+          cacheFee = makerFee = ConvertTo64(uMakerFee);
+
+          // sumcheck: 1 bsp  =  0.005 bsp +  0.5 bsp
+          // assert(takerFee == (makerFee + cacheFee));
+
+          // 0.5 basis point to feecache
+          cachefees[sp.collateral_currency] += cacheFee;
 
           if (msc_debug_contractdex_fees) PrintToLog("%s: natives takerFee: %d, natives makerFee: %d, cacheFee: %d\n",__func__,takerFee, makerFee, cacheFee);
 
     }
 
-    // -% to taker, +% to maker
+    // - to taker, + to maker
     assert(update_tally_map(taker->getAddr(), sp.collateral_currency, -takerFee, CONTRACTDEX_RESERVE));
     assert(update_tally_map(maker->getAddr(), sp.collateral_currency, makerFee, BALANCE));
 
-
-    //sum check
-    // assert(takerFee == makerFee + 3*cacheFee); // 2.5% = 1% + 3*0.5%
 
     return true;
 
