@@ -48,7 +48,7 @@ class FeesBasicsTest (BitcoinTestFramework):
         headers = {"Authorization": "Basic " + str_to_b64str(authpair)}
 
         addresses = []
-        accounts = ["john", "doe", "another"]
+        accounts = ["john", "doe", "another", "mark"]
 
         conn = http.client.HTTPConnection(url.hostname, url.port)
         conn.connect()
@@ -76,6 +76,7 @@ class FeesBasicsTest (BitcoinTestFramework):
 
         self.nodes[0].generate(1)
 
+
         self.log.info("Creating new tokens  (dan)")
         array = [0,1]
         params = str([addresses[0], 2, 0, "dan", "", "", "20000000000",array]).replace("'",'"')
@@ -91,7 +92,6 @@ class FeesBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, False, "tl_getproperty",params)
         assert_equal(out['error'], None)
         # self.log.info(out)
-
         assert_equal(out['result']['propertyid'],4)
         assert_equal(out['result']['issuer'],addresses[0])
         assert_equal(out['result']['name'],'lihki')
@@ -109,12 +109,12 @@ class FeesBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['balance'],'20000000000.00000000')
         assert_equal(out['result']['reserve'],'0.00000000')
 
+
         self.log.info("Checking the property: lihki")
         params = str([5])
         out = tradelayer_HTTP(conn, headers, False, "tl_getproperty",params)
         assert_equal(out['error'], None)
         # self.log.info(out)
-
         assert_equal(out['result']['propertyid'], 5)
         assert_equal(out['result']['issuer'],addresses[0])
         assert_equal(out['result']['name'],'dan')
@@ -147,8 +147,8 @@ class FeesBasicsTest (BitcoinTestFramework):
                 if i['att sender'] == addr and i['att receiver'] == addr and i['kyc_id'] == 0:
                      result.append(True)
 
+        assert_equal(result, [True, True, True, True])
 
-        assert_equal(result, [True, True, True])
 
         self.log.info("Sending 2000 tokens to second address")
         params = str([addresses[0], addresses[1], 4, "2000"]).replace("'",'"')
@@ -168,6 +168,7 @@ class FeesBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['balance'],'19999998000.00000000')
         assert_equal(out['result']['reserve'],'0.00000000')
 
+
         self.log.info("Checking lihki tokens balance second address ")
         params = str([addresses[1], 4]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
@@ -176,6 +177,7 @@ class FeesBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['balance'],'2000.00000000')
         assert_equal(out['result']['reserve'],'0.00000000')
         oldbalance1 = float(out['result']['balance'])
+
 
         self.log.info("Creating native Contract")
         array = [0]
@@ -201,19 +203,22 @@ class FeesBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['blocks until expiration'], '1000')
         assert_equal(out['result']['inverse quoted'], '0')
 
+
         params = str([4]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_getcache",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
         assert_equal(out['result']['amount'], '0.00000000')
 
-        self.log.info("Trading contract")
+
+        self.log.info("Checking fees for Natives Contracts (leverage 1x)")
         params = str([addresses[0], "ALL/Lhk", "1000", "400.1", 1, "1"]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_tradecontract",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
 
         self.nodes[0].generate(1)
+
 
         self.log.info("Checking balance and reserve ")
         params = str([addresses[0], 4]).replace("'",'"')
@@ -226,6 +231,7 @@ class FeesBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['reserve'],'100.00000000')
         assert_equal(oldbalance, balance + reserve)
 
+
         self.log.info("Trading contract")
         params = str([addresses[1], "ALL/Lhk", "1000", "400.1", 2, "1"]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_tradecontract",params)
@@ -233,6 +239,7 @@ class FeesBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
 
         self.nodes[0].generate(1)
+
 
         params = str([addresses[0], 4]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
@@ -246,6 +253,7 @@ class FeesBasicsTest (BitcoinTestFramework):
         # 0.5 basis point
         rebate = 0.00005 * reserve
         assert_equal(oldbalance , balance - rebate + reserve)
+        oldreserve = reserve
 
 
         params = str([addresses[1], 4]).replace("'",'"')
@@ -260,17 +268,286 @@ class FeesBasicsTest (BitcoinTestFramework):
         # 1 basis point
         fee = 0.0001 * reserve
         assert_equal(oldbalance1 , balance1 + fee + reserve1)
+        oldbalance1 = balance1
 
 
+        self.log.info("Checking native cache")
         params = str([4]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_getcache",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
         assert_equal(out['result']['amount'], '0.00500000')
 
-        # checking for different leverages
+
+        self.log.info("Checking orderbook")
+        params = str(["ALL/Lhk", 1]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getcontract_orderbook",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result'], [])
+
+
+        self.log.info("Checking orderbook")
+        params = str(["ALL/Lhk", 2]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getcontract_orderbook",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result'], [])
+
+
+        # self.log.info("Checking fees for Natives Contracts (leverage 2x)")
+        # params = str([addresses[0], "ALL/Lhk", "1000", "400.1", 1, "2"]).replace("'",'"')
+        # out = tradelayer_HTTP(conn, headers, False, "tl_tradecontract",params)
+        # # self.log.info(out)
+        # assert_equal(out['error'], None)
+        #
+        # self.nodes[0].generate(1)
+        #
+        #
+        # # from balance to reserve = (0.1 * 1000) / 2  = 50
+        # self.log.info("Checking balance and reserve ")
+        # params = str([addresses[0], 4]).replace("'",'"')
+        # out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
+        # # self.log.info(out)
+        # assert_equal(out['error'], None)
+        # balance = float(out['result']['balance'])
+        # reserve = float(out['result']['reserve'])
+        # assert_equal(out['result']['balance'],'19999997850.00500000')
+        # assert_equal(out['result']['reserve'],'150.00000000')
+        #
+        #
+        # params = str([addresses[1], "ALL/Lhk", "1000", "400.1", 2, "2"]).replace("'",'"')
+        # out = tradelayer_HTTP(conn, headers, False, "tl_tradecontract",params)
+        # # self.log.info(out)
+        # assert_equal(out['error'], None)
+        #
+        # self.nodes[0].generate(1)
+        #
+        # # from balance to reserve = (0.1 * 1000) / 2  = 50
+        # self.log.info("Checking balance and reserve ")
+        # params = str([addresses[1], 4]).replace("'",'"')
+        # out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
+        # self.log.info(out)
+        # assert_equal(out['error'], None)
+        # balance1 = float(out['result']['balance'])
+        # reserve1 = float(out['result']['reserve'])
+        # assert_equal(out['result']['balance'],'1850.00000000')
+        # assert_equal(out['result']['reserve'],'149.98500000')
+
+        # 1 basis point
+        # fee = 0.0001 * 50
+        # assert_equal(oldbalance1 , balance1 + fee + reserve1)
+
+        self.log.info("Creating oracle Contract")
+        array = [0]
+        params = str([addresses[2], "Oracle 1", 10000, "1", 4, "0.1", addresses[3], 0, array]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_create_oraclecontract",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+
+        self.nodes[0].generate(1)
+
+
+        self.log.info("Checking the oracle contract")
+        params = str([7])
+        out = tradelayer_HTTP(conn, headers, True, "tl_getproperty",params)
+        assert_equal(out['error'], None)
+        # self.log.info(out)
+        assert_equal(out['result']['propertyid'], 7)
+        assert_equal(out['result']['name'],'Oracle 1')
+        assert_equal(out['result']['issuer'], addresses[2])
+        assert_equal(out['result']['notional size'], '1')
+        assert_equal(out['result']['collateral currency'], '4')
+        assert_equal(out['result']['margin requirement'], '0.1')
+        assert_equal(out['result']['blocks until expiration'], '10000')
+        assert_equal(out['result']['inverse quoted'], '0')
+        assert_equal(out['result']['hight price'], '0')
+        assert_equal(out['result']['low price'], '0')
+        assert_equal(out['result']['last close price'], '0')
+
+
+        self.log.info("Setting oracle prices")
+        params = str([addresses[2], "Oracle 1", "602.1", "450.6", "500.1"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_setoracle",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+
+        self.nodes[0].generate(1)
+
+
+        self.log.info("Checking the prices in oracle")
+        params = str([7])
+        out = tradelayer_HTTP(conn, headers, True, "tl_getproperty",params)
+        assert_equal(out['error'], None)
+        # self.log.info(out)
+        assert_equal(out['result']['hight price'], '602.1')
+        assert_equal(out['result']['low price'], '450.6')
+        assert_equal(out['result']['last close price'], '500.1')
+
+
+        self.log.info("Checking fees for Oracle Contracts (leverage 1x)")
+        params = str([addresses[0], "Oracle 1", "1000", "400.1", 1, "1"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_tradecontract",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+
+        self.nodes[0].generate(1)
+
+
+        self.log.info("Checking balance and reserve ")
+        params = str([addresses[0], 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        balance = float(out['result']['balance'])
+        reserve = float(out['result']['reserve'])
+        assert_equal(out['result']['balance'],'19999997800.00500000')
+        assert_equal(out['result']['reserve'],'200.00000000')
+
+
+        self.log.info("Trading contract")
+        params = str([addresses[1], "Oracle 1", "1000", "400.1", 2, "1"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_tradecontract",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+
+        self.nodes[0].generate(1)
+
+
+        params = str([addresses[0], 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        balance = float(out['result']['balance'])
+        reserve = float(out['result']['reserve'])
+        assert_equal(out['result']['balance'],'19999997800.01500000')
+        assert_equal(out['result']['reserve'],'200.00000000')
+
+
+        self.log.info("Checking fee for contract' s owner")
+        params = str([addresses[2], 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        balance = float(out['result']['balance'])
+        reserve = float(out['result']['reserve'])
+
+        # 1 bsp to balance
+        assert_equal(out['result']['balance'],'0.01000000')
+        assert_equal(out['result']['reserve'],'0.00000000')
+
+
+        params = str([addresses[1], 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        balance1 = float(out['result']['balance'])
+        reserve1 = float(out['result']['reserve'])
+        assert_equal(out['result']['balance'],'1800.00000000')
+
+        # -2.5 bsp from reserve
+        assert_equal(out['result']['reserve'],'199.96500000')
+
+
+        self.log.info("Checking oracle cache")
+        params = str([4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_getoraclecache",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['amount'], '0.00500000')
+
+
+        self.log.info("Checking orderbook")
+        params = str(["Oracle 1", 1]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getcontract_orderbook",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result'], [])
+
+
+        self.log.info("Checking orderbook")
+        params = str(["Oracle 1", 2]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getcontract_orderbook",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result'], [])
+
 
         # then check in the DEx1
+        # ...
+
+        # then check in the MetaDEx
+        self.log.info("Sending a trade in MetaDEx")
+        params = str([addresses[1], 4, "500", 5, "2000"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_sendtrade",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+
+        self.nodes[0].generate(1)
+
+
+        self.log.info("Checking the trade in orderbook")
+        params = str([4])
+        out = tradelayer_HTTP(conn, headers, True, "tl_getorderbook",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result'][0]['address'], addresses[1])
+        assert_equal(out['result'][0]['propertyidforsale'],4)
+        assert_equal(out['result'][0]['amountforsale'],'500.00000000')
+        assert_equal(out['result'][0]['propertyiddesired'],5)
+        assert_equal(out['result'][0]['amountdesired'],'2000.00000000')
+
+        params = str([addresses[0], 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        balance1 = float(out['result']['balance'])
+        reserve1 = float(out['result']['reserve'])
+
+        assert_equal(out['result']['balance'],'19999997800.01500000')
+        assert_equal(out['result']['reserve'],'200.00000000')
+
+
+        params = str([addresses[1], 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        balance1 = float(out['result']['balance'])
+        reserve1 = float(out['result']['reserve'])
+        assert_equal(out['result']['balance'],'1300.00000000')
+        assert_equal(out['result']['reserve'],'199.96500000')
+
+
+        self.log.info("Sending another trade in MetaDEx")
+        params = str([addresses[0], 5, "2000", 4, "500"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_sendtrade",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+
+        self.nodes[0].generate(1)
+
+
+        params = str([addresses[1], 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        balance1 = float(out['result']['balance'])
+        reserve1 = float(out['result']['reserve'])
+        # maker rebate = 4bsp = 0.2 to balance
+        assert_equal(out['result']['balance'],'1300.20000000')
+        assert_equal(out['result']['reserve'],'199.96500000')
+
+
+        params = str([addresses[0], 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+
+        # maker fee = 5bsp = 0.25 from balance
+        assert_equal(out['result']['balance'],'19999998299.76500000')
+        assert_equal(out['result']['reserve'],'200.00000000')
+
+
 
         conn.close()
 

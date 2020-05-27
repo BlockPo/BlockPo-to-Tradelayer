@@ -1143,13 +1143,14 @@ bool mastercore::ContractDex_Fees(const CMPContractDex* maker, const CMPContract
         arith_uint256 uTakerFee = (ConvertTo256(nCouldBuy) * ConvertTo256(sp.margin_requirement) * ConvertTo256(25)) / (ConvertTo256(1000) * ConvertTo256(BASISPOINT));  // 2.5 basis point
         arith_uint256 uMakerFee = (ConvertTo256(nCouldBuy) * ConvertTo256(sp.margin_requirement)) / (ConvertTo256(100) * ConvertTo256(BASISPOINT));  // 1 basis point
 
-        cacheFee = ConvertTo64(uMakerFee / ConvertTo256(2));  //0.5 basis point
-        oracleOp = makerFee = takerFee = ConvertTo64(uTakerFee);
+        oracleOp = makerFee = ConvertTo64(uMakerFee);  // 1 basis point
+        cacheFee = makerFee / 2 ;                      // 0.5 basis point
+        takerFee = ConvertTo64(uTakerFee);             // 2.5 basis point
 
         if (msc_debug_contractdex_fees) PrintToLog("%s: oracles cacheFee: %d, oracles takerFee: %d, oracles makerFee: %d\n",__func__,cacheFee, takerFee, makerFee);
 
         // sumcheck: 2.5 bsp  =  1 bsp +  1 bsp + 0.5
-        // assert(takerFee == (makerFee + oracleOp + cacheFee));
+        assert(takerFee == (makerFee + oracleOp + cacheFee));
 
         // 0.5 basis point to oracle maintaineer
         assert(update_tally_map(sp.issuer,sp.collateral_currency, oracleOp, BALANCE));
@@ -1192,11 +1193,14 @@ bool mastercore::ContractDex_Fees(const CMPContractDex* maker, const CMPContract
           // 0.5 basis point to feecache
           cachefees[sp.collateral_currency] += cacheFee;
 
-          if (msc_debug_contractdex_fees) PrintToLog("%s: natives takerFee: %d, natives makerFee: %d, cacheFee: %d\n",__func__,takerFee, makerFee, cacheFee);
+          if (msc_debug_contractdex_fees) PrintToLog("%s: natives takerFee: %d, natives makerFee: %d, cacheFee: %d\n",__func__, takerFee, makerFee, cacheFee);
 
     }
 
     // - to taker, + to maker
+    int64_t before = getMPbalance(maker->getAddr(), sp.collateral_currency, BALANCE);
+    PrintToLog("%s(): balance before add maker rebate: %d\n",__func__, before);
+
     assert(update_tally_map(taker->getAddr(), sp.collateral_currency, -takerFee, CONTRACTDEX_RESERVE));
     assert(update_tally_map(maker->getAddr(), sp.collateral_currency, makerFee, BALANCE));
 
@@ -1270,8 +1274,10 @@ bool mastercore::MetaDEx_Fees(const CMPMetaDEx *pnew,const CMPMetaDEx *pold, int
     if(msc_debug_metadex_fees) PrintToLog("%s: propertyId: %d\n",__func__,pold->getProperty());
 
     // -% to taker, +% to maker
-    update_tally_map(pnew->getAddr(), pnew->getDesProperty(), -takerFee,BALANCE);
-    update_tally_map(pold->getAddr(), pold->getProperty(), makerFee,BALANCE);
+    int64_t before = getMPbalance(pnew->getAddr(), pnew->getDesProperty(), BALANCE);
+    PrintToLog("%s(): balance in taker before: %d\n",__func__, before);
+    update_tally_map(pnew->getAddr(), pnew->getDesProperty(), -takerFee, BALANCE);
+    update_tally_map(pold->getAddr(), pold->getProperty(), makerFee, BALANCE);
 
     // to feecache
     cachefees[pnew->getProperty()] += cacheFee;
