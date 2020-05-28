@@ -156,7 +156,7 @@ class NativesBasicsTest (BitcoinTestFramework):
         #NOTE: we need to test this for all leverages
         self.log.info("Buying contracts")
         params = str([addresses[1], "ALL/Lhk", "1000", "780.5", 1, "1"]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, True, "tl_tradecontract",params)
+        out = tradelayer_HTTP(conn, headers, False, "tl_tradecontract",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
         hash = str(out['result']).replace("'","")

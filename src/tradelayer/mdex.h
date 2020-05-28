@@ -323,6 +323,7 @@ namespace mastercore
   const CMPContractDex* ContractDex_RetrieveTrade(const uint256&);
 
   int ContractDex_CANCEL(const std::string& sender_addr, const std::string& hash);
+
 }
 
 #endif // TRADELAYER_MDEX_H

@@ -22,6 +22,8 @@
 #include <string>
 #include "tradelayer_matrices.h"
 
+using namespace mastercore;
+
 using boost::algorithm::token_compress_on;
 typedef boost::rational<boost::multiprecision::checked_int128_t> rational_t;
 extern uint64_t marketP[NPTYPES];
@@ -43,31 +45,26 @@ void RequireBalance(const std::string& address, uint32_t propertyId, int64_t amo
 
 void RequireCollateral(const std::string& address, std::string name_traded, int64_t amount, uint64_t leverage)
 {
-    int64_t uPrice = 1;
+    //NOTE: add changes to inverse quoted
+    int64_t uPrice = COIN;
+    uint32_t propertyId = 0;
+    CMPSPInfo::Entry sp;
+    std::pair<int64_t, int64_t> factor;
 
-    struct FutureContractObject *pfuture = getFutureContractObject(name_traded);
-    uint32_t propertyId = (pfuture) ? pfuture->fco_collateral_currency : 0;
-    bool inverse_quoted = (pfuture) ? pfuture->fco_quoted : false;
+    getEntryFromName(name_traded, propertyId, sp);
 
-    if(inverse_quoted  && market_priceMap[pfuture->fco_numerator][pfuture->fco_denominator] > 0)
-    {
-        uPrice = market_priceMap[pfuture->fco_numerator][pfuture->fco_denominator];
+    // max = 2.5 basis point in oracles, max = 1.0 basis point in natives
+    (sp.isOracle()) ? (factor.first = 25, factor.second = 10000) : (sp.isNative()) ? (factor.first = 1, factor.second = 10000) : (factor.first = 1, factor.second = 1);
 
-    } else if (!inverse_quoted)
-        uPrice = COIN;
+    arith_uint256 amountTR = ((ConvertTo256(factor.first) + ConvertTo256(factor.second)) * (ConvertTo256(COIN) * ConvertTo256(amount) * ConvertTo256(sp.margin_requirement)) / (ConvertTo256(leverage) * ConvertTo256(uPrice) * ConvertTo256(factor.first) * ConvertTo256(factor.second)));
+    int64_t amountToReserve = ConvertTo64(amountTR);
 
-
-    arith_uint256 amountTR = (COIN * mastercore::ConvertTo256(amount) * mastercore::ConvertTo256(pfuture->fco_margin_requirement))/(mastercore::ConvertTo256(leverage) * mastercore::ConvertTo256(uPrice));
-    int64_t amountToReserve = mastercore::ConvertTo64(amountTR);
-
-    int64_t nBalance = getMPbalance(address, propertyId, BALANCE);
-
-    PrintToLog("%s(): nBalance: %d , amountToReserve: %d \n",__func__, nBalance, amountToReserve);
+    int64_t nBalance = getMPbalance(address, sp.collateral_currency, BALANCE);
 
     if (nBalance < amountToReserve || nBalance == 0)
         throw JSONRPCError(RPC_TYPE_ERROR, "Sender has insufficient balance for collateral");
 
-    int64_t balanceUnconfirmed = getUserAvailableMPbalance(address, propertyId);
+    int64_t balanceUnconfirmed = getUserAvailableMPbalance(address, sp.collateral_currency);
     if (balanceUnconfirmed == 0)
         throw JSONRPCError(RPC_TYPE_ERROR, "Sender has insufficient balance (due to pending transactions)");
 
@@ -83,7 +80,7 @@ void RequirePrimaryToken(uint32_t propertyId)
 /* checking there's no active orders */
 void RequireNoOrders(std::string sender, uint32_t propertyId)
 {
-    if(mastercore::ContractDex_CHECK_ORDERS(sender, propertyId)) {
+    if(ContractDex_CHECK_ORDERS(sender, propertyId)) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Cancel orders before close position\n");
     }
 
@@ -106,7 +103,7 @@ void RequireDifferentAddrs(const std::string& oracleAddress,const std::string& b
 void RequireExistingProperty(uint32_t propertyId)
 {
   LOCK(cs_tally);
-  if (!mastercore::IsPropertyIdValid(propertyId)) {
+  if (!IsPropertyIdValid(propertyId)) {
     throw JSONRPCError(RPC_INVALID_PARAMETER, "Property identifier does not exist");
   }
 }
@@ -123,7 +120,7 @@ void RequireCrowdsale(uint32_t propertyId)
 {
     LOCK(cs_tally);
     CMPSPInfo::Entry sp;
-    if (!mastercore::_my_sps->getSP(propertyId, sp)) {
+    if (!_my_sps->getSP(propertyId, sp)) {
         throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
     }
     if (sp.fixed || sp.manual) {
@@ -134,7 +131,7 @@ void RequireCrowdsale(uint32_t propertyId)
 void RequireActiveCrowdsale(uint32_t propertyId)
 {
     LOCK(cs_tally);
-    if (!mastercore::isCrowdsaleActive(propertyId)) {
+    if (!isCrowdsaleActive(propertyId)) {
         throw JSONRPCError(RPC_TYPE_ERROR, "Property identifier does not refer to an active crowdsale");
     }
 }
@@ -143,7 +140,7 @@ void RequireManagedProperty(uint32_t propertyId)
 {
     LOCK(cs_tally);
     CMPSPInfo::Entry sp;
-    if (!mastercore::_my_sps->getSP(propertyId, sp)) {
+    if (!_my_sps->getSP(propertyId, sp)) {
         throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
     }
     if (sp.fixed || !sp.manual) {
@@ -155,7 +152,7 @@ void RequireAssociation(uint32_t propertyId,uint32_t contractId)
 {
   LOCK(cs_tally);
   CMPSPInfo::Entry sp;
-  if (!mastercore::_my_sps->getSP(propertyId, sp)) {
+  if (!_my_sps->getSP(propertyId, sp)) {
       throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
   }
   if (sp.contract_associated != contractId) {
@@ -167,7 +164,7 @@ void RequireTokenIssuer(const std::string& address, uint32_t propertyId)
 {
     LOCK(cs_tally);
     CMPSPInfo::Entry sp;
-    if (!mastercore::_my_sps->getSP(propertyId, sp)) {
+    if (!_my_sps->getSP(propertyId, sp)) {
         throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
     }
     if (address != sp.issuer) {
@@ -184,7 +181,7 @@ void RequireSaneReferenceAmount(int64_t amount)
 
 void RequireHeightInChain(int blockHeight)
 {
-    if (blockHeight < 0 || mastercore::GetHeight() < blockHeight) {
+    if (blockHeight < 0 || GetHeight() < blockHeight) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Block height is out of range");
     }
 }
@@ -193,7 +190,7 @@ void RequireNotVesting(uint32_t propertyId)
 {
   LOCK(cs_tally);
   CMPSPInfo::Entry sp;
-  if (!mastercore::_my_sps->getSP(propertyId, sp)) {
+  if (!_my_sps->getSP(propertyId, sp)) {
     throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
   }
 
@@ -206,7 +203,7 @@ void RequireNotContract(uint32_t propertyId)
 {
     LOCK(cs_tally);
     CMPSPInfo::Entry sp;
-    if (!mastercore::_my_sps->getSP(propertyId, sp)) {
+    if (!_my_sps->getSP(propertyId, sp)) {
         throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
     }
     if (sp.isContract()) {
@@ -218,7 +215,7 @@ void RequireContract(uint32_t propertyId)
 {
     LOCK(cs_tally);
     CMPSPInfo::Entry sp;
-    if (!mastercore::_my_sps->getSP(propertyId, sp)) {
+    if (!_my_sps->getSP(propertyId, sp)) {
         throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
     }
     if (!sp.isContract()) {
@@ -234,7 +231,7 @@ void RequireContract(std::string name_contract)
 
     LOCK(cs_tally);
     CMPSPInfo::Entry sp;
-    if (!mastercore::_my_sps->getSP(propertyId, sp)) {
+    if (!_my_sps->getSP(propertyId, sp)) {
         throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
     }
     if (!sp.isContract()) {
@@ -246,7 +243,7 @@ void RequireOracleContract(uint32_t propertyId)
 {
     LOCK(cs_tally);
     CMPSPInfo::Entry sp;
-    if (!mastercore::_my_sps->getSP(propertyId, sp)) {
+    if (!_my_sps->getSP(propertyId, sp)) {
         throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
     }
 
@@ -259,7 +256,7 @@ void RequirePeggedCurrency(uint32_t propertyId)
 {
     LOCK(cs_tally);
     CMPSPInfo::Entry sp;
-    if (!mastercore::_my_sps->getSP(propertyId, sp)) {
+    if (!_my_sps->getSP(propertyId, sp)) {
       throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
     }
 
@@ -290,7 +287,7 @@ void RequireForPegged(const std::string& address, uint32_t propertyId, uint32_t 
 void RequireMatchingDExOffer(const std::string& address, uint32_t propertyId)
 {
     LOCK(cs_tally);
-    if (!mastercore::DEx_offerExists(address, propertyId)) {
+    if (!DEx_offerExists(address, propertyId)) {
         throw JSONRPCError(RPC_TYPE_ERROR, "No matching sell offer on the distributed exchange");
     }
 }
@@ -298,7 +295,7 @@ void RequireMatchingDExOffer(const std::string& address, uint32_t propertyId)
 void RequireNoOtherDExOffer(const std::string& address, uint32_t propertyId)
 {
     LOCK(cs_tally);
-    if (mastercore::DEx_offerExists(address, propertyId)) {
+    if (DEx_offerExists(address, propertyId)) {
         throw JSONRPCError(RPC_TYPE_ERROR, "Another active sell offer from the given address already exists on the distributed exchange");
     }
 }
@@ -306,7 +303,7 @@ void RequireNoOtherDExOffer(const std::string& address, uint32_t propertyId)
 void RequireSaneDExFee(const std::string& address, uint32_t propertyId)
 {
     LOCK(cs_tally);
-    const CMPOffer* poffer = mastercore::DEx_getOffer(address, propertyId);
+    const CMPOffer* poffer = DEx_getOffer(address, propertyId);
     if (poffer == nullptr) {
         throw JSONRPCError(RPC_DATABASE_ERROR, "Unable to load sell offer from the distributed exchange");
     }
@@ -318,7 +315,7 @@ void RequireSaneDExFee(const std::string& address, uint32_t propertyId)
 void RequireSaneDExPaymentWindow(const std::string& address, uint32_t propertyId)
 {
     LOCK(cs_tally);
-    const CMPOffer* poffer = mastercore::DEx_getOffer(address, propertyId);
+    const CMPOffer* poffer = DEx_getOffer(address, propertyId);
     if (poffer == nullptr) {
         throw JSONRPCError(RPC_DATABASE_ERROR, "Unable to load sell offer from the distributed exchange");
     }
@@ -334,20 +331,20 @@ void RequireShort(std::string& fromAddress, uint32_t contractId, uint64_t amount
     // int index = static_cast<int>(contractId);
 
     CMPSPInfo::Entry sp;
-    if (!mastercore::_my_sps->getSP(contractId, sp)) {
+    if (!_my_sps->getSP(contractId, sp)) {
         throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
     }
 
     if (sp.isContract()) {
         int64_t notionalSize = static_cast<int64_t>(sp.notional_size);
         int64_t position = getMPbalance(fromAddress, contractId, NEGATIVE_BALANCE);
-        // rational_t conv = mastercore::notionalChange(contractId);
+        // rational_t conv = notionalChange(contractId);
         rational_t conv = rational_t(1,1);
         int64_t num = conv.numerator().convert_to<int64_t>();
         int64_t denom = conv.denominator().convert_to<int64_t>();
-        arith_uint256 Amount = mastercore::ConvertTo256(num) * mastercore::ConvertTo256(amount) / mastercore::ConvertTo256(denom); // Alls needed
-        arith_uint256 contracts = mastercore::DivideAndRoundUp(Amount * mastercore::ConvertTo256(notionalSize), mastercore::ConvertTo256(1)) ;
-        contractsNeeded = mastercore::ConvertTo64(contracts);
+        arith_uint256 Amount = ConvertTo256(num) * ConvertTo256(amount) / ConvertTo256(denom); // Alls needed
+        arith_uint256 contracts = DivideAndRoundUp(Amount * ConvertTo256(notionalSize), ConvertTo256(1)) ;
+        contractsNeeded = ConvertTo64(contracts);
         if (contractsNeeded > position) {
             throw JSONRPCError(RPC_INVALID_PARAMETER, "Not enough short position\n");
         }
@@ -362,7 +359,7 @@ void RequireContractTxId(std::string& txid)
     std::string result;
     uint256 tx;
     tx.SetHex(txid);
-    if (!mastercore::p_txlistdb->getTX(tx, result)) {
+    if (!p_txlistdb->getTX(tx, result)) {
           throw JSONRPCError(RPC_INVALID_PARAMETER, "TxId doesn't exist\n");
     }
 
@@ -378,10 +375,10 @@ void RequireContractTxId(std::string& txid)
 void RequireSaneName(std::string& name)
 {
     LOCK(cs_tally);
-    uint32_t nextSPID = mastercore::_my_sps->peekNextSPID();
+    uint32_t nextSPID = _my_sps->peekNextSPID();
     for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++) {
         CMPSPInfo::Entry sp;
-        if (mastercore::_my_sps->getSP(propertyId, sp)) {
+        if (_my_sps->getSP(propertyId, sp)) {
             PrintToConsole("Property Id: %d\n",propertyId);
             if (sp.name == name){
                 throw JSONRPCError(RPC_INVALID_PARAMETER,"We have another property with the same name\n");
@@ -399,7 +396,7 @@ void RequirePeggedSaneName(std::string& name)
 void RequireContractOrder(std::string& fromAddress, uint32_t contractId)
 {
 
-  if (!mastercore::ContractDex_CHECK_ORDERS(fromAddress, contractId)) {
+  if (!ContractDex_CHECK_ORDERS(fromAddress, contractId)) {
         throw JSONRPCError(RPC_INVALID_PARAMETER,"There's no order in this future contract\n");
   }
 
