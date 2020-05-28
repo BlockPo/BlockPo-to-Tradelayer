@@ -3276,11 +3276,10 @@ int CMPTransaction::logicMath_ContractDexTrade()
 
   uint32_t colateralh = pfuture->fco_collateral_currency;
   int64_t marginRe = static_cast<int64_t>(pfuture->fco_margin_requirement);
-  int64_t nBalance = getMPbalance(sender, colateralh, BALANCE);
 
   bool inverse_quoted = pfuture->fco_quoted;
 
-  if(msc_debug_contractdex_tx) PrintToLog("%s():colateralh: %d, marginRe: %d, nBalance: %d\n",__func__, colateralh, marginRe, nBalance);
+  if(msc_debug_contractdex_tx) PrintToLog("%s():colateralh: %d, marginRe: %d\n",__func__, colateralh, marginRe);
 
   int64_t uPrice;
 
@@ -3295,32 +3294,27 @@ int CMPTransaction::logicMath_ContractDexTrade()
 
   PrintToLog("%s(): amount: %d, marginRe: %d, leverage: %d, uPrice: %d\n",__func__, amount, marginRe, leverage, uPrice);
 
-  arith_uint256 amountTR = (ConvertTo256(COIN) * ConvertTo256(amount) * ConvertTo256(marginRe)) / (ConvertTo256(leverage) * ConvertTo256(uPrice));
-  int64_t amountToReserve = ConvertTo64(amountTR);
+  int64_t nBalance = 0;
+  int64_t amountToReserve = 0;
 
-  PrintToLog("%s(): amountToReserve %d\n",__func__,amountToReserve);
-
-
-  if (nBalance < amountToReserve || nBalance == 0)
-    {
-      PrintToLog("%s(): rejected: sender %s has insufficient balance for contracts %d [%s < %s] \n",
-		 __func__,
-		 sender,
-		 property,
-		 FormatMP(property, nBalance),
-		 FormatMP(property, amountToReserve));
-      return (PKT_ERROR_SEND -25);
-    }
-  else
-    {
+  if (!mastercore::checkReserve(sender, amount, contractId, leverage, nBalance, amountToReserve) || nBalance == 0)
+  {
+        PrintToLog("%s(): rejected: sender %s has insufficient balance for contracts %d [%s < %s] \n",
+		      __func__,
+		      sender,
+		      property,
+		      FormatMP(property, nBalance),
+		      FormatMP(property, amountToReserve));
+        return (PKT_ERROR_SEND -25);
+  }else {
       if (amountToReserve > 0)
-	{
-	  assert(update_tally_map(sender, colateralh, -amountToReserve, BALANCE));
-	  assert(update_tally_map(sender, colateralh,  amountToReserve, CONTRACTDEX_RESERVE));
-	}
+	    {
+	        assert(update_tally_map(sender, colateralh, -amountToReserve, BALANCE));
+	        assert(update_tally_map(sender, colateralh,  amountToReserve, CONTRACTDEX_RESERVE));
+	    }
       // int64_t reserva = getMPbalance(sender, colateralh, CONTRACTDEX_MARGIN);
       // std::string reserved = FormatDivisibleMP(reserva,false);
-    }
+  }
 
   /*********************************************/
   /**Logic for Node Reward**/

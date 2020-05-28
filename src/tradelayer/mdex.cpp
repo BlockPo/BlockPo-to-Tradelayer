@@ -2728,3 +2728,26 @@ int mastercore::MetaDEx_CANCEL_EVERYTHING(const uint256& txid, unsigned int bloc
 
      return rc;
  }
+
+
+ bool mastercore::checkReserve(const std::string& address, int64_t amount, uint32_t contractId, uint64_t leverage, int64_t& nBalance, int64_t& amountToReserve)
+ {
+      //NOTE: add changes to inverse quoted
+      int64_t uPrice = COIN;
+      CMPSPInfo::Entry sp;
+      assert(_my_sps->getSP(contractId, sp));
+      std::pair<int64_t, int64_t> factor;
+
+     // max = 2.5 basis point in oracles, max = 1.0 basis point in natives
+     (sp.isOracle()) ? (factor.first = 100025, factor.second = 100000) : (sp.isNative()) ? (factor.first = 10001, factor.second = 10000) : (factor.first = 1, factor.second = 1);
+
+     arith_uint256 amountTR = (ConvertTo256(factor.first) * ConvertTo256(COIN) * ConvertTo256(amount) * ConvertTo256(sp.margin_requirement)) / (ConvertTo256(leverage) * ConvertTo256(uPrice) * ConvertTo256(factor.second));
+     amountToReserve = ConvertTo64(amountTR);
+
+     PrintToLog("%s(): amountToReserve %d\n",__func__, amountToReserve);
+
+     nBalance = getMPbalance(address, sp.collateral_currency, BALANCE);
+
+     return (nBalance < amountToReserve || nBalance == 0) ? false : true;
+
+ }

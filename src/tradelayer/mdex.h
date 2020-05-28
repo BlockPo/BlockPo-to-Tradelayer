@@ -324,6 +324,7 @@ namespace mastercore
 
   int ContractDex_CANCEL(const std::string& sender_addr, const std::string& hash);
 
+  bool checkReserve(const std::string& address, int64_t amount, uint32_t contractId, uint64_t leverage, int64_t& nBalance, int64_t& amountToReserve);
 }
 
 #endif // TRADELAYER_MDEX_H

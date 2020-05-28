@@ -54,10 +54,12 @@ void RequireCollateral(const std::string& address, std::string name_traded, int6
     getEntryFromName(name_traded, propertyId, sp);
 
     // max = 2.5 basis point in oracles, max = 1.0 basis point in natives
-    (sp.isOracle()) ? (factor.first = 25, factor.second = 10000) : (sp.isNative()) ? (factor.first = 1, factor.second = 10000) : (factor.first = 1, factor.second = 1);
+    (sp.isOracle()) ? (factor.first = 100025, factor.second = 100000) : (sp.isNative()) ? (factor.first = 10001, factor.second = 10000) : (factor.first = 1, factor.second = 1);
 
-    arith_uint256 amountTR = ((ConvertTo256(factor.first) + ConvertTo256(factor.second)) * (ConvertTo256(COIN) * ConvertTo256(amount) * ConvertTo256(sp.margin_requirement)) / (ConvertTo256(leverage) * ConvertTo256(uPrice) * ConvertTo256(factor.first) * ConvertTo256(factor.second)));
+    arith_uint256 amountTR = (ConvertTo256(factor.first) * ConvertTo256(COIN) * ConvertTo256(amount) * ConvertTo256(sp.margin_requirement)) / (ConvertTo256(leverage) * ConvertTo256(uPrice) * ConvertTo256(factor.second));
     int64_t amountToReserve = ConvertTo64(amountTR);
+
+    PrintToLog("%s(): amountToReserve : %d\n",__func__, amountToReserve);
 
     int64_t nBalance = getMPbalance(address, sp.collateral_currency, BALANCE);
 

@@ -170,8 +170,8 @@ class NativesBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['balance'],'49900.00000000')
-        assert_equal(out['result']['reserve'],'100.00000000')
+        assert_equal(out['result']['balance'],'49899.99000000')
+        assert_equal(out['result']['reserve'],'100.01000000')
 
 
         self.log.info("Checking orderbook")
@@ -249,7 +249,7 @@ class NativesBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, True, "tl_getreserve",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['reserve'],'99.99000000')
+        assert_equal(out['result']['reserve'],'100.00000000')
 
         self.log.info("Checking orderbook")
         params = str(["ALL/Lhk", 1]).replace("'",'"')
@@ -316,7 +316,7 @@ class NativesBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, True, "tl_getreserve",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['reserve'],'199.99000000')
+        assert_equal(out['result']['reserve'],'200.01000000')
 
 
         self.log.info("Checking orderbook (sell side)")
@@ -350,7 +350,7 @@ class NativesBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, True, "tl_getreserve",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['reserve'],'99.99000000')
+        assert_equal(out['result']['reserve'],'100.00000000')
 
 
         self.log.info("Checking orderbook (buy side)")
@@ -422,7 +422,7 @@ class NativesBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, True, "tl_getreserve",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['reserve'],'199.99000000')
+        assert_equal(out['result']['reserve'],'200.01000000')
 
 
         self.log.info("Checking orderbook (buy side)")
@@ -459,7 +459,7 @@ class NativesBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, True, "tl_getreserve",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['reserve'],'199.99000000')
+        assert_equal(out['result']['reserve'],'200.01000000')
 
         params = str([addresses[1], "ALL/Lhk"]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_getposition",params)
@@ -532,7 +532,7 @@ class NativesBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, True, "tl_getreserve",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['reserve'],'99.99000000')
+        assert_equal(out['result']['reserve'],'100.00000000')
 
 
         self.log.info("Checking orderbook again (buy side)")
@@ -570,7 +570,7 @@ class NativesBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, True, "tl_getreserve",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['reserve'],'99.99000000')
+        assert_equal(out['result']['reserve'],'100.00000000')
 
 
         params = str([addresses[0], 5]).replace("'",'"')
@@ -623,7 +623,7 @@ class NativesBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, True, "tl_getreserve",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['reserve'],'50.00000000')
+        assert_equal(out['result']['reserve'],'50.00500000')
 
         params = str([addresses[1], "ALL/Lhk"]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_getposition",params)
@@ -675,7 +675,7 @@ class NativesBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, True, "tl_getreserve",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['reserve'],'149.99000000')
+        assert_equal(out['result']['reserve'],'150.00500000')
 
 
         params = str([addresses[2], "ALL/Lhk"]).replace("'",'"')
