@@ -1198,9 +1198,6 @@ bool mastercore::ContractDex_Fees(const CMPContractDex* maker, const CMPContract
     }
 
     // - to taker, + to maker
-    int64_t before = getMPbalance(maker->getAddr(), sp.collateral_currency, BALANCE);
-    PrintToLog("%s(): balance before add maker rebate: %d\n",__func__, before);
-
     assert(update_tally_map(taker->getAddr(), sp.collateral_currency, -takerFee, CONTRACTDEX_RESERVE));
     assert(update_tally_map(maker->getAddr(), sp.collateral_currency, makerFee, BALANCE));
 
@@ -1274,8 +1271,6 @@ bool mastercore::MetaDEx_Fees(const CMPMetaDEx *pnew,const CMPMetaDEx *pold, int
     if(msc_debug_metadex_fees) PrintToLog("%s: propertyId: %d\n",__func__,pold->getProperty());
 
     // -% to taker, +% to maker
-    int64_t before = getMPbalance(pnew->getAddr(), pnew->getDesProperty(), BALANCE);
-    PrintToLog("%s(): balance in taker before: %d\n",__func__, before);
     update_tally_map(pnew->getAddr(), pnew->getDesProperty(), -takerFee, BALANCE);
     update_tally_map(pold->getAddr(), pold->getProperty(), makerFee, BALANCE);
 
@@ -2743,8 +2738,6 @@ int mastercore::MetaDEx_CANCEL_EVERYTHING(const uint256& txid, unsigned int bloc
 
      arith_uint256 amountTR = (ConvertTo256(factor.first) * ConvertTo256(COIN) * ConvertTo256(amount) * ConvertTo256(sp.margin_requirement)) / (ConvertTo256(leverage) * ConvertTo256(uPrice) * ConvertTo256(factor.second));
      amountToReserve = ConvertTo64(amountTR);
-
-     PrintToLog("%s(): amountToReserve %d\n",__func__, amountToReserve);
 
      nBalance = getMPbalance(address, sp.collateral_currency, BALANCE);
 

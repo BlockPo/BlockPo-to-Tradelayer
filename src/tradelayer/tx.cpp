@@ -3265,8 +3265,6 @@ int CMPTransaction::logicMath_ContractDexTrade()
     return (PKT_ERROR_KYC -20);
   }
 
-  PrintToLog("%s(): fco_init_block: %d; fco_blocks_until_expiration: %d; actual block: %d\n",__func__, pfuture->fco_init_block, pfuture->fco_blocks_until_expiration, block);
-
   if ((block > pfuture->fco_init_block + static_cast<int>(pfuture->fco_blocks_until_expiration) || block < pfuture->fco_init_block) && expiration > 0)
   {
       PrintToLog("%s(): ERROR: Contract expirated \n", __func__);
@@ -3283,16 +3281,12 @@ int CMPTransaction::logicMath_ContractDexTrade()
 
   int64_t uPrice;
 
-  PrintToLog("inverse quoted: %d\n", inverse_quoted);
-
   if(inverse_quoted  && market_priceMap[numerator][denominator] > 0)
   {
       uPrice = market_priceMap[numerator][denominator];
 
   } else if (!inverse_quoted)
       uPrice = COIN;
-
-  PrintToLog("%s(): amount: %d, marginRe: %d, leverage: %d, uPrice: %d\n",__func__, amount, marginRe, leverage, uPrice);
 
   int64_t nBalance = 0;
   int64_t amountToReserve = 0;

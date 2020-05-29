@@ -59,8 +59,6 @@ void RequireCollateral(const std::string& address, std::string name_traded, int6
     arith_uint256 amountTR = (ConvertTo256(factor.first) * ConvertTo256(COIN) * ConvertTo256(amount) * ConvertTo256(sp.margin_requirement)) / (ConvertTo256(leverage) * ConvertTo256(uPrice) * ConvertTo256(factor.second));
     int64_t amountToReserve = ConvertTo64(amountTR);
 
-    PrintToLog("%s(): amountToReserve : %d\n",__func__, amountToReserve);
-
     int64_t nBalance = getMPbalance(address, sp.collateral_currency, BALANCE);
 
     if (nBalance < amountToReserve || nBalance == 0)
