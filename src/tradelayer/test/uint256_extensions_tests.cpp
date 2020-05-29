@@ -1,4 +1,5 @@
 #include "tradelayer/uint256_extensions.h"
+#include "tradelayer/tradelayer.h"
 #include "test/test_bitcoin.h"
 
 #include <arith_uint256.h>
@@ -140,6 +141,36 @@ BOOST_AUTO_TEST_CASE(contractdex_trade_leverage)
 
    // leverage 10
    BOOST_CHECK_EQUAL(ConvertTo64(amountReserved(amount, marginRequirement, 10 * COIN, uPrice)), ConvertTo64(ConvertTo256(420000000)));  //(in practice it's 0.42)
+
+
+}
+
+int64_t checkReserve(int64_t nBalance, int64_t amount, uint32_t marginRequirement, uint64_t leverage, bool oracle)
+{
+    int64_t uPrice = COIN;
+    std::pair<int64_t, int64_t> factor;
+    // max = 2.5 basis point in oracles, max = 1.0 basis point in natives
+    (oracle) ? (factor.first = 100025, factor.second = 100000) : (factor.first = 10001, factor.second = 10000);
+
+    arith_uint256 amountTR = (ConvertTo256(factor.first) * ConvertTo256(COIN) * ConvertTo256(amount) * ConvertTo256(marginRequirement)) / (ConvertTo256(leverage) * ConvertTo256(uPrice) * ConvertTo256(factor.second));
+
+    return (ConvertTo64(amountTR));
+}
+
+
+BOOST_AUTO_TEST_CASE(check_reserve)
+{
+  int64_t nBalance = 1000000000000;
+  int64_t amount = 1000; // contracts
+  uint32_t marginRequirement = 10000000; // 0.1
+
+  uint64_t leverage = 1;
+  bool oracle = true;
+
+  BOOST_CHECK_EQUAL(checkReserve(nBalance, amount, marginRequirement, leverage, oracle), 10002500000);
+
+  oracle = false;
+  BOOST_CHECK_EQUAL(checkReserve(nBalance, amount, marginRequirement, leverage, oracle), 10001000000);
 
 
 }

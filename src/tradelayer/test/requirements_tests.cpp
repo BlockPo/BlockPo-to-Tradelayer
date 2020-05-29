@@ -108,6 +108,4 @@ BOOST_AUTO_TEST_CASE(collateral_inverse_quoted)
 
 }
 
-
-
 BOOST_AUTO_TEST_SUITE_END()

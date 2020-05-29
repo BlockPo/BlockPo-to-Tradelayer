@@ -1002,7 +1002,7 @@ UniValue tl_tradecontract(const JSONRPCRequest& request)
 
       RequireContract(name_traded);
 
-      RequireCollateral(fromAddress, name_traded, amountForSale,leverage);
+      RequireCollateral(fromAddress, name_traded, amountForSale, leverage);
 
       std::vector<unsigned char> payload = CreatePayload_ContractDexTrade(name_traded, amountForSale, effective_price, trading_action, leverage);
 
