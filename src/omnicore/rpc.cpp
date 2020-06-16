@@ -1595,7 +1595,7 @@ UniValue tl_getposition(const JSONRPCRequest& request)
   std::string address = ParseAddress(request.params[0]);
   uint32_t propertyId = ParsePropertyId(request.params[1]);
 
-  RequireContract(propertyId);
+  // RequireContract(propertyId);
 
   UniValue balanceObj(UniValue::VOBJ);
   PositionToJSON(address, propertyId, balanceObj, isPropertyContract(propertyId));

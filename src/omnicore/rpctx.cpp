@@ -337,7 +337,7 @@ UniValue tl_sendissuancefixed(const JSONRPCRequest& request)
     uint8_t ecosystem = ParseEcosystem(request.params[1]);
     uint16_t type = ParsePropertyType(request.params[2]);
     uint32_t previousId = ParsePreviousPropertyId(request.params[3]);
-    RequireNotContract(previousId);
+    // RequireNotContract(previousId);
     std::string name = ParseText(request.params[4]);
     std::string url = ParseText(request.params[5]);
     std::string data = ParseText(request.params[6]);

@@ -2136,56 +2136,58 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   if (nBlockNow%BlockS == 0 && nBlockNow != 0 && path_elef.size() != 0 && lastBlockg != nBlockNow) {
 
     /*****************************************************************************/
-    
-    PrintToLog("\nSettlement every 8 hours here. nBlockNow = %d\n", nBlockNow);
+
+    PrintToLog("\nSETTLEMENT : every 8 hours here. nBlockNow = %d\n", nBlockNow);
     pt_ndatabase = new MatrixTLS(path_elef.size(), n_cols); MatrixTLS &ndatabase = *pt_ndatabase;
     MatrixTLS M_file(path_elef.size(), n_cols);
     fillingMatrix(M_file, ndatabase, path_elef);
     n_rows = size(M_file, 0);
     PrintToLog("Matrix for Settlement: dim = (%d, %d)\n\n", n_rows, n_cols);
     //printing_matrix(M_file);
-    
+
     /**********************************************************************/
     /** TWAP vector **/
 
-    PrintToLog("\nTWAP Prices = \n");
-    struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, "ALL F18");
-    uint32_t property_traded = pfuture->fco_propertyId;
+    // PrintToLog("\nTWAP Prices = \n");
+    // struct FutureContractObject *pfuture = getFutureContractObject(ALL_PROPERTY_TYPE_CONTRACT, "ALL F18");
+    // uint32_t property_traded = pfuture->fco_propertyId;
 
     // PrintToLog("\nVector CDExtwap_vec =\n");
     // for (unsigned int i = 0; i < cdextwap_vec[property_traded].size(); i++)
     //   PrintToLog("%s\n", FormatDivisibleMP(cdextwap_vec[property_traded][i]));
 
-    uint64_t num_cdex = accumulate(cdextwap_vec[property_traded].begin(), cdextwap_vec[property_traded].end(), 0.0);
+    // uint64_t num_cdex = accumulate(cdextwap_vec[property_traded].begin(), cdextwap_vec[property_traded].end(), 0.0);
 
-    rational_t twap_priceRatCDEx(num_cdex/COIN, cdextwap_vec[property_traded].size());
-    int64_t twap_priceCDEx = mastercore::RationalToInt64(twap_priceRatCDEx);
-    PrintToLog("\nTvwap Price CDEx = %s\n", FormatDivisibleMP(twap_priceCDEx));
+    // rational_t twap_priceRatCDEx(num_cdex/COIN, cdextwap_vec[property_traded].size());
+    // int64_t twap_priceCDEx = mastercore::RationalToInt64(twap_priceRatCDEx);
+    // PrintToLog("\nTvwap Price CDEx = %s\n", FormatDivisibleMP(twap_priceCDEx));
 
-    struct TokenDataByName *pfuture_ALL = getTokenDataByName("ALL");
-    struct TokenDataByName *pfuture_USD = getTokenDataByName("dUSD");
-    
-    uint32_t property_all = pfuture_ALL->data_propertyId;
-    uint32_t property_usd = pfuture_USD->data_propertyId;
+    // struct TokenDataByName *pfuture_ALL = getTokenDataByName("ALL");
+    // struct TokenDataByName *pfuture_USD = getTokenDataByName("dUSD");
+    //
+    // uint32_t property_all = pfuture_ALL->data_propertyId;
+    // uint32_t property_usd = pfuture_USD->data_propertyId;
 
     // PrintToLog("\nVector MDExtwap_vec =\n");
     // for (unsigned int i = 0; i < mdextwap_vec[property_all][property_usd].size(); i++)
     //   PrintToLog("%s\n", FormatDivisibleMP(mdextwap_vec[property_all][property_usd][i]));
-    
-    uint64_t num_mdex=accumulate(mdextwap_vec[property_all][property_usd].begin(),mdextwap_vec[property_all][property_usd].end(),0.0);
-   
-    rational_t twap_priceRatMDEx(num_mdex/COIN, mdextwap_vec[property_all][property_usd].size());
-    int64_t twap_priceMDEx = mastercore::RationalToInt64(twap_priceRatMDEx);
-    PrintToLog("\nTvwap Price MDEx = %s\n", FormatDivisibleMP(twap_priceMDEx));
+
+    // uint64_t num_mdex=accumulate(mdextwap_vec[property_all][property_usd].begin(),mdextwap_vec[property_all][property_usd].end(),0.0);
+
+    // rational_t twap_priceRatMDEx(num_mdex/COIN, mdextwap_vec[property_all][property_usd].size());
+    // int64_t twap_priceMDEx = mastercore::RationalToInt64(twap_priceRatMDEx);
+    // PrintToLog("\nTvwap Price MDEx = %s\n", FormatDivisibleMP(twap_priceMDEx));
 
     /** Interest formula:  **/
 
-    int64_t interest = clamp_function(abs(twap_priceCDEx-twap_priceMDEx), 0.05);
-    PrintToLog("Interes to Pay = %s", FormatDivisibleMP(interest));
+    // int64_t interest = clamp_function(abs(twap_priceCDEx-twap_priceMDEx), 0.05);
+    // PrintToLog("Interes to Pay = %s", FormatDivisibleMP(interest));
 
     /*****************************************************************************/
     cout << "\n\n";
     PrintToLog("\nCalling the Settlement Algorithm:\n\n");
+    int64_t twap_priceCDEx  = 0;
+    int64_t interest = 0;
     settlement_algorithm_fifo(M_file, interest, twap_priceCDEx);
 
     /**********************************************************************/
@@ -2214,18 +2216,19 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   int64_t Factor1over3_64t = mastercore::RationalToInt64(Factor1over3);
 
   int64_t XAxis = x_Axis/COIN;
-  PrintToLog("\nXAxis Decimal Scale = %d, x_Axis = %s, Lastx_Axis = %s\n", XAxis, FormatDivisibleMP(x_Axis), FormatDivisibleMP(Lastx_Axis));
+  // PrintToLog("\nXAxis Decimal Scale = %d, x_Axis = %s, Lastx_Axis = %s\n", XAxis, FormatDivisibleMP(x_Axis), FormatDivisibleMP(Lastx_Axis));
 
   bool cond_first = x_Axis != 0;
   bool cond_secnd = x_Axis != Lastx_Axis;
   bool cond_third = vestingAddresses.size() != 0;
 
-  if (findConjTrueValue(cond_first, cond_secnd, cond_third))
+  // if (findConjTrueValue(cond_first, cond_secnd, cond_third))
+   if (false)
     {
       int64_t line64_t = 0, quad64_t = 0, log64_t  = 0;
 
-      PrintToLog("\nALLs UNVESTED = %d\n", getMPbalance(vestingAddresses[0], OMNI_PROPERTY_ALL, UNVESTED));
-      PrintToLog("ALLs BALANCE = %d\n", getMPbalance(vestingAddresses[0], OMNI_PROPERTY_ALL, BALANCE));
+      // PrintToLog("\nALLs UNVESTED = %d\n", getMPbalance(vestingAddresses[0], OMNI_PROPERTY_ALL, UNVESTED));
+      // PrintToLog("ALLs BALANCE = %d\n", getMPbalance(vestingAddresses[0], OMNI_PROPERTY_ALL, BALANCE));
 
       for (unsigned int i = 0; i < vestingAddresses.size(); i++)
       	{
@@ -2362,8 +2365,8 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
 	    }
 	}
 
-      PrintToLog("\nALLs UNVESTED = %d\n", getMPbalance(vestingAddresses[0], OMNI_PROPERTY_ALL, UNVESTED));
-      PrintToLog("ALLs BALANCE = %d\n", getMPbalance(vestingAddresses[0], OMNI_PROPERTY_ALL, BALANCE));
+      // PrintToLog("\nALLs UNVESTED = %d\n", getMPbalance(vestingAddresses[0], OMNI_PROPERTY_ALL, UNVESTED));
+      // PrintToLog("ALLs BALANCE = %d\n", getMPbalance(vestingAddresses[0], OMNI_PROPERTY_ALL, BALANCE));
 
       Lastx_Axis = x_Axis;
       LastLinear = line64_t;
@@ -4432,7 +4435,7 @@ const std::string ExodusAddress()
     return exodus_testnet;
   } else {
     return exodus_mainnet;
-  } 
+  }
 }
 
 /**
