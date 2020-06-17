@@ -2744,3 +2744,30 @@ int mastercore::MetaDEx_CANCEL_EVERYTHING(const uint256& txid, unsigned int bloc
      return (nBalance < amountToReserve || nBalance == 0) ? false : true;
 
  }
+
+// auxiliar function
+void addLives(int64_t& totalLives, int32_t contractId, const CMPTally& tally, TallyType side){
+    totalLives += tally.getMoney(contractId, side);
+}
+
+ // counts the number of all contracts in every position
+int64_t mastercore::getTotalLives(uint32_t contractId, TallyType side)
+{
+   int64_t totalLives = 0;
+
+   LOCK(cs_tally);
+
+   CMPSPInfo::Entry sp;
+   if (! _my_sps->getSP(contractId, sp) && !sp.isContract()) {
+     return 0; // property ID does not exist or is not a contract
+   }
+
+   // we need only short or long tally
+   if (side != POSITIVE_BALANCE && side != POSITIVE_BALANCE)
+      return 0;
+
+   // for each tally account, we sum just contracts (all shorts, or all longs)
+   for_each(mp_tally_map.begin(), mp_tally_map.end(), [&totalLives, contractId, side](const std::pair<std::string, CMPTally>& elem){ addLives(totalLives, contractId, elem.second, side); });
+
+   return totalLives;
+ }
