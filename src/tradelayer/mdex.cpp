@@ -2746,14 +2746,16 @@ int mastercore::MetaDEx_CANCEL_EVERYTHING(const uint256& txid, unsigned int bloc
  }
 
 // auxiliar function
-void addLives(int64_t& totalLives, int32_t contractId, const CMPTally& tally, TallyType side){
-    totalLives += tally.getMoney(contractId, side);
+void addLives(int64_t& totalLongs, int64_t& totalShorts, int32_t contractId, const CMPTally& tally){
+    totalLongs += tally.getMoney(contractId, POSITIVE_BALANCE);
+    totalShorts += tally.getMoney(contractId, NEGATIVE_BALANCE);
 }
 
  // counts the number of all contracts in every position
-int64_t mastercore::getTotalLives(uint32_t contractId, TallyType side)
+int64_t mastercore::getTotalLives(uint32_t contractId)
 {
-   int64_t totalLives = 0;
+   int64_t totalLongs = 0;
+   int64_t totalShorts = 0;
 
    LOCK(cs_tally);
 
@@ -2762,12 +2764,12 @@ int64_t mastercore::getTotalLives(uint32_t contractId, TallyType side)
      return 0; // property ID does not exist or is not a contract
    }
 
-   // we need only short or long tally
-   if (side != POSITIVE_BALANCE && side != POSITIVE_BALANCE)
-      return 0;
-
    // for each tally account, we sum just contracts (all shorts, or all longs)
-   for_each(mp_tally_map.begin(), mp_tally_map.end(), [&totalLives, contractId, side](const std::pair<std::string, CMPTally>& elem){ addLives(totalLives, contractId, elem.second, side); });
+   for_each(mp_tally_map.begin(), mp_tally_map.end(), [&totalLongs, &totalShorts, contractId](const std::pair<std::string, CMPTally>& elem){ addLives(totalLongs, totalShorts, contractId, elem.second); });
 
-   return totalLives;
+   PrintToLog("%s(): totalLongs : %d, totalShorts : %d\n",__func__, totalLongs, totalShorts);
+
+   assert(totalLongs == totalShorts);
+
+   return totalLongs;
  }

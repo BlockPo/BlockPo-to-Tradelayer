@@ -277,6 +277,14 @@ class NativesBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['shortPosition'], 1000)
 
 
+        self.log.info("Checking the open interest")
+        params = str(["ALL/Lhk"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getopen_interest",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['totalLives'], 1000)
+
+
         self.log.info("Checking when the price does not match")
 
 
@@ -469,6 +477,13 @@ class NativesBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['shortPosition'], 0)
 
 
+        self.log.info("Checking the open interest")
+        params = str(["ALL/Lhk"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getopen_interest",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['totalLives'], 500)
+
         self.log.info("Checking orderbook again (buy side)")
         params = str(["ALL/Lhk", 1]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_getcontract_orderbook",params)
@@ -639,6 +654,14 @@ class NativesBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['longPosition'], 0)
         assert_equal(out['result']['shortPosition'], 0)
 
+
+        self.log.info("Checking the open interest")
+        params = str(["ALL/Lhk"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getopen_interest",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['totalLives'], 500)
+
         self.log.info("Sending 2000 tokens to third address")
         params = str([addresses[0], addresses[2], 4, "2000"]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_send",params)
@@ -684,6 +707,15 @@ class NativesBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         assert_equal(out['result']['longPosition'], 1000)
         assert_equal(out['result']['shortPosition'], 0)
+
+
+        self.log.info("Checking the open interest")
+        params = str(["ALL/Lhk"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getopen_interest",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['totalLives'], 1000)
+
 
         self.log.info("Checking orderbook again (buy side)")
         params = str(["ALL/Lhk", 1]).replace("'",'"')
@@ -759,6 +791,13 @@ class NativesBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
 
         self.nodes[0].generate(1)
+
+        self.log.info("Checking the open interest")
+        params = str(["ALL/Lhk"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getopen_interest",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['totalLives'], 1500)
 
 
         self.log.info("Checking orderbook again (buy side)")
@@ -945,6 +984,37 @@ class NativesBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, True, "tl_getcontract_orderbook",params)
         # self.log.info(out)
         assert_equal(out['result'], [])
+
+        self.log.info("Checking all positions")
+        params = str([addresses[0], "ALL/Lhk"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getposition",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['longPosition'], 1500)
+        assert_equal(out['result']['shortPosition'], 0)
+
+
+        params = str([addresses[1], "ALL/Lhk"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getposition",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['longPosition'], 0)
+        assert_equal(out['result']['shortPosition'], 2500)
+
+
+        params = str([addresses[2], "ALL/Lhk"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getposition",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['longPosition'], 1000)
+        assert_equal(out['result']['shortPosition'], 0)
+
+        self.log.info("Checking the open interest")
+        params = str(["ALL/Lhk"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getopen_interest",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['totalLives'], 2500)
 
         conn.close()
 
