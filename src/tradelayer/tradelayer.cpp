@@ -1044,7 +1044,7 @@ int ParseTransaction(const CTransaction& tx, int nBlock, unsigned int idx, CMPTr
  {
      bool count = false;
      uint64_t nvalue = 0;
-     
+
      if (property != LTC) return count;
 
      for (unsigned int n = 0; n < tx.vout.size(); ++n)
@@ -4242,7 +4242,7 @@ bool CMPTradeList::attLoop(UniValue& response)
         // ensure correct amount of tokens in value string
         boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
 
-        PrintToLog("%s(): vstr: %s\n",__func__,strValue);
+        // PrintToLog("%s(): vstr: %s\n",__func__,strValue);
 
         if (vstr.size() != 7)
             continue;
@@ -4418,7 +4418,7 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   double UPNL1 = 0, UPNL2 = 0;
   /********************************************************************/
   const string key =  sblockNum2 + "+" + txid1.ToString() + "+" + txid2.ToString(); //order with block of taker.
-  const string value = strprintf("%s:%s:%lu:%lu:%lu:%d:%d:%s:%s:%d:%d:%d:%s:%s:%d:%d:%d", address1, address2, effective_price, amount_maker, amount_taker, blockNum1, blockNum2, s_maker0, s_taker0, lives_s0, lives_b0, property_traded, txid1.ToString(), txid2.ToString(), nCouldBuy0,amountpold, amountpnew);
+  const string value = strprintf("%s:%s:%lu:%lu:%lu:%d:%d:%s:%s:%d:%d:%d:%s:%s:%d:%d:%d", address1, address2, effective_price, amount_maker, amount_taker, blockNum1, blockNum2, s_maker0, s_taker0, lives_s0, lives_b0, property_traded, txid1.ToString(), txid2.ToString(), nCouldBuy0, amountpold, amountpnew);
 
   const string line0 = gettingLineOut(address1, s_maker0, lives_s0, address2, s_taker0, lives_b0, nCouldBuy0, effective_price);
   const string line1 = gettingLineOut(address1, s_maker1, lives_s1, address2, s_taker1, lives_b1, nCouldBuy1, effective_price);
@@ -6236,6 +6236,53 @@ bool mastercore::updateLastExBlock(int& nBlock, const std::string& sender)
     }
 
     return true;
+}
+
+void CMPTradeList::getContractTrades(const std::string& address, uint32_t contractId, UniValue& response)
+{
+    if (!pdb) return;
+    leveldb::Iterator* it = NewIterator();
+    for(it->SeekToFirst(); it->Valid(); it->Next())
+    {
+        std::string strKey = it->key().ToString();
+        std::string strValue = it->value().ToString();
+        std::vector<std::string> vecValues;
+
+        boost::split(vecValues, strValue, boost::is_any_of(":"), token_compress_on);
+        if (vecValues.size() != 17) {
+            // PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
+            continue;
+        }
+
+        const std::string& address1 = vecValues[0];
+        const std::string& address2 = vecValues[1];
+
+        bool first = (address1 != address);
+        bool second = (address2 != address);
+
+        if(first && second) continue;
+
+        std::string matched = (first) ? address1 : address2;
+
+        PrintToLog("%s(): strValue: %s\n",__func__, strValue);
+
+        uint64_t price = boost::lexical_cast<uint64_t>(vecValues[2]);
+        uint64_t amount = boost::lexical_cast<uint64_t>(vecValues[9]);
+        uint64_t blockNum = boost::lexical_cast<uint64_t>(vecValues[6]);
+        uint64_t leverage = 1; // for now
+
+        UniValue propertyObj(UniValue::VOBJ);
+        propertyObj.push_back(Pair("address matched", matched));
+        propertyObj.push_back(Pair("entry price", FormatDivisibleMP(price)));
+        propertyObj.push_back(Pair("amount", amount));
+        propertyObj.push_back(Pair("leverage", leverage));
+        propertyObj.push_back(Pair("block", blockNum));
+
+        response.push_back(propertyObj);
+    }
+
+    delete it;
+
 }
 
 
