@@ -2242,7 +2242,7 @@ UniValue tl_getupnl(const JSONRPCRequest& request)
 
   LOCK(cs_tally);
 
-  t_tradelistdb->getContractTrades(address, contractId, response);
+  t_tradelistdb->getUpnInfo(address, contractId, response);
 
 
   return response;

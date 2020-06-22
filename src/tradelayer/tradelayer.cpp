@@ -5676,7 +5676,7 @@ bool CMPTradeList::getChannelInfo(const std::string& channelAddress, UniValue& t
     }
 
     // channel status:
-    std::map<std::string,channel>::iterator itt = channels_Map.find(channelAddress);
+    auto itt = channels_Map.find(channelAddress);
     (itt != channels_Map.end()) ? tradeArray.push_back(Pair("status","active")) : tradeArray.push_back(Pair("status","closed"));
 
        // clean up
@@ -6238,10 +6238,23 @@ bool mastercore::updateLastExBlock(int& nBlock, const std::string& sender)
     return true;
 }
 
-void CMPTradeList::getContractTrades(const std::string& address, uint32_t contractId, UniValue& response)
+void calculateUPNL(std::vector<double>& sum_upnl, uint64_t entry_price, uint64_t amount, uint64_t exit_price)
+{
+    double UPNL = (double)amount * COIN * (1/(double)entry_price - 1/(double)exit_price);
+    // PrintToLog("%s(): amount : %d, entry_price : %d, exit_price : %d, UPNL : %d\n",__func__, amount, entry_price, exit_price, UPNL);
+    sum_upnl.push_back(UPNL);
+}
+
+void CMPTradeList::getUpnInfo(const std::string& address, uint32_t contractId, UniValue& response)
 {
     if (!pdb) return;
+    int count = 0;
+    std::vector<double> sumUpnl;
+
+    //twap of last 3 blocks
+    const uint64_t& exitPrice = getOracleTwap(contractId, oBlocks);
     leveldb::Iterator* it = NewIterator();
+
     for(it->SeekToFirst(); it->Valid(); it->Next())
     {
         std::string strKey = it->key().ToString();
@@ -6261,27 +6274,37 @@ void CMPTradeList::getContractTrades(const std::string& address, uint32_t contra
         bool second = (address2 != address);
 
         if(first && second) continue;
+        count++;
 
         std::string matched = (first) ? address1 : address2;
 
-        PrintToLog("%s(): strValue: %s\n",__func__, strValue);
+        // PrintToLog("%s(): strValue: %s\n",__func__, strValue);
 
         uint64_t price = boost::lexical_cast<uint64_t>(vecValues[2]);
         uint64_t amount = boost::lexical_cast<uint64_t>(vecValues[9]);
         uint64_t blockNum = boost::lexical_cast<uint64_t>(vecValues[6]);
         uint64_t leverage = 1; // for now
 
-        UniValue propertyObj(UniValue::VOBJ);
-        propertyObj.push_back(Pair("address matched", matched));
-        propertyObj.push_back(Pair("entry price", FormatDivisibleMP(price)));
-        propertyObj.push_back(Pair("amount", amount));
-        propertyObj.push_back(Pair("leverage", leverage));
-        propertyObj.push_back(Pair("block", blockNum));
+        // partial upnl
+        calculateUPNL(sumUpnl, price, amount, exitPrice);
 
-        response.push_back(propertyObj);
+        UniValue registerObj(UniValue::VOBJ);
+        registerObj.push_back(Pair("address matched", matched));
+        registerObj.push_back(Pair("entry price", FormatDivisibleMP(price)));
+        registerObj.push_back(Pair("amount", amount));
+        registerObj.push_back(Pair("leverage", leverage));
+        registerObj.push_back(Pair("block", blockNum));
+
+        response.push_back(registerObj);
+
     }
 
     delete it;
+
+    const int64_t totalUpnl = accumulate(sumUpnl.begin(), sumUpnl.end(), 0.0) * COIN;
+    UniValue upnlObj(UniValue::VOBJ);
+    upnlObj.push_back(Pair("upnl", FormatDivisibleMP(totalUpnl, true)));
+    response.push_back(upnlObj);
 
 }
 
