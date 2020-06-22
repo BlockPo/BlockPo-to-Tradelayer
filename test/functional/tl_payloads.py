@@ -169,7 +169,7 @@ class PayloadsBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, False, "tl_createpayload_cancelallcontractsbyaddress", params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result'], '0020b7eedcb903')
+        assert_equal(out['result'], '002000')
 
 
         self.log.info("Testing tl_createpayload_closeposition")
@@ -193,7 +193,7 @@ class PayloadsBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, False, "tl_createpayload_send_pegged", params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result'], '00660080e497d012')
+        assert_equal(out['result'], '0066b7eedcb90380e497d012')
 
 
         self.log.info("Testing tl_createpayload_redemption_pegged")

@@ -346,7 +346,7 @@ std::vector<unsigned char> CreatePayload_TradeLayerAlert(uint16_t alertType, uin
     return payload;
 }
 
-std::vector<unsigned char> CreatePayload_CreateContract(uint32_t num, uint32_t den, std::string& name, uint32_t blocks_until_expiration, uint32_t notional_size, uint32_t collateral_currency, uint32_t margin_requirement, uint8_t inverse, std::vector<int>& kycVec)
+std::vector<unsigned char> CreatePayload_CreateContract(uint32_t num, uint32_t den, std::string& name, uint32_t blocks_until_expiration, uint32_t notional_size, uint32_t collateral_currency, uint64_t margin_requirement, uint8_t inverse, std::vector<int>& kycVec)
 {
     std::vector<unsigned char> payload;
 
@@ -360,7 +360,7 @@ std::vector<unsigned char> CreatePayload_CreateContract(uint32_t num, uint32_t d
     std::vector<uint8_t> vecBlocksUntilExpiration = CompressInteger((uint64_t)blocks_until_expiration);
     std::vector<uint8_t> vecNotionalSize = CompressInteger((uint64_t)notional_size);
     std::vector<uint8_t> vecCollateralCurrency = CompressInteger((uint64_t)collateral_currency);
-    std::vector<uint8_t> vecMarginRequirement = CompressInteger((uint64_t)margin_requirement);
+    std::vector<uint8_t> vecMarginRequirement = CompressInteger(margin_requirement);
     std::vector<uint8_t> vecInverse = CompressInteger((uint64_t)inverse);
 
     std::vector<std::vector<uint8_t>> auxVec;
@@ -641,7 +641,7 @@ std::vector<unsigned char> CreatePayload_MetaDExTrade(uint32_t propertyIdForSale
 
 /* Tx 103 */
 
-std::vector<unsigned char> CreatePayload_CreateOracleContract(std::string& name, uint32_t blocks_until_expiration, uint32_t notional_size, uint32_t collateral_currency, uint32_t margin_requirement, uint8_t inverse, std::vector<int>& kycVec)
+std::vector<unsigned char> CreatePayload_CreateOracleContract(std::string& name, uint32_t blocks_until_expiration, uint32_t notional_size, uint32_t collateral_currency, uint64_t margin_requirement, uint8_t inverse, std::vector<int>& kycVec)
 {
     std::vector<unsigned char> payload;
 
