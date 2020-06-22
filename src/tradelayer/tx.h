@@ -113,7 +113,7 @@ private:
     uint32_t blocks_until_expiration;
     uint32_t notional_size;
     uint32_t collateral_currency;
-    uint32_t margin_requirement;
+    uint64_t margin_requirement;
     uint32_t attribute_type;
     uint64_t leverage;
 
@@ -344,7 +344,7 @@ public:
 
 
     /** New things for Contracts */
-    uint32_t getMarginRequirement() const { return margin_requirement; }
+    uint64_t getMarginRequirement() const { return margin_requirement; }
     uint32_t getNotionalSize() const { return notional_size; }
     uint32_t getContractId() const { return contractId; }
     uint64_t getContractAmount() const { return amount; }
@@ -499,7 +499,7 @@ struct FutureContractObject
   uint32_t fco_blocks_until_expiration;
   uint32_t fco_notional_size;
   uint32_t fco_collateral_currency;
-  uint32_t fco_margin_requirement;
+  uint64_t fco_margin_requirement;
   uint32_t fco_propertyId;
   uint16_t fco_prop_type;
   bool fco_expirated;
@@ -518,7 +518,7 @@ struct TokenDataByName
   uint32_t data_blocks_until_expiration;
   uint32_t data_notional_size;
   uint32_t data_collateral_currency;
-  uint32_t data_margin_requirement;
+  uint64_t data_margin_requirement;
   uint32_t data_propertyId;
 
   int data_init_block;

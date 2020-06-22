@@ -2767,7 +2767,7 @@ int64_t mastercore::getTotalLives(uint32_t contractId)
    // for each tally account, we sum just contracts (all shorts, or all longs)
    for_each(mp_tally_map.begin(), mp_tally_map.end(), [&totalLongs, &totalShorts, contractId](const std::pair<std::string, CMPTally>& elem){ addLives(totalLongs, totalShorts, contractId, elem.second); });
 
-   PrintToLog("%s(): totalLongs : %d, totalShorts : %d\n",__func__, totalLongs, totalShorts);
+   if(msc_debug_get_total_lives ) PrintToLog("%s(): totalLongs : %d, totalShorts : %d\n",__func__, totalLongs, totalShorts);
 
    assert(totalLongs == totalShorts);
 
