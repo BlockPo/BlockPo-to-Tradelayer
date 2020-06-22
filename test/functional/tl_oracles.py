@@ -327,6 +327,14 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['longPosition'], 0)
         assert_equal(out['result']['shortPosition'], 1000)
 
+        self.log.info("Checking the open interest")
+        params = str(["Oracle 1"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getopen_interest",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['totalLives'], 1000)
+
+
         conn.close()
 
         self.stop_nodes()
