@@ -70,6 +70,16 @@ void RequireCollateral(const std::string& address, std::string name_traded, int6
 
 }
 
+void RequirePosition(const std::string& address, uint32_t contractId)
+{
+    const int64_t longs = getMPbalance(address, contractId, POSITIVE_BALANCE);
+    const int64_t shorts = getMPbalance(address, contractId, NEGATIVE_BALANCE);
+
+    if (longs == 0 && shorts == 0) {
+        throw JSONRPCError(RPC_TYPE_ERROR, "Sender has not position in this contract");
+    }
+}
+
 void RequirePrimaryToken(uint32_t propertyId)
 {
     if (propertyId < 1 || 2 < propertyId) {

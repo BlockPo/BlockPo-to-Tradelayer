@@ -6238,40 +6238,28 @@ bool mastercore::updateLastExBlock(int& nBlock, const std::string& sender)
     return true;
 }
 
-int64_t getPosition(const std::string& address, uint32_t contractId)
+// long: true, short: false
+bool getPosition(const std::string& status)
 {
-    const int64_t longs = getMPbalance(address, contractId, POSITIVE_BALANCE);
-    const int64_t shorts = getMPbalance(address, contractId, NEGATIVE_BALANCE);
-
-    return ((longs > 0 && shorts == 0) ? longs : (longs == 0 && shorts >  0) ? -shorts : 0);
-
+    auto it = std::find_if(longActions.begin(), longActions.end(), [status] (const std::string& s) { return (s == status); } );
+    return ((it != longActions.end()) ? true : false);
 }
 
-void calculateUPNL(std::vector<double>& sum_upnl, uint64_t entry_price, uint64_t amount, uint64_t exit_price, int64_t position, bool inverse_quoted)
+void calculateUPNL(std::vector<double>& sum_upnl, uint64_t entry_price, uint64_t amount, uint64_t exit_price, bool position, bool inverse_quoted)
 {
     double UPNL = 0;
     (inverse_quoted) ? UPNL = (double)amount * COIN * (1/(double)entry_price-1/(double)exit_price) : UPNL = (double) amount * COIN *(exit_price - entry_price);
-    if(position < 0) UPNL *= -1;
-    PrintToLog("%s(): amount : %d, entry_price : %d, exit_price : %d, UPNL : %d\n",__func__, amount, entry_price, exit_price, UPNL);
+    if(!position) UPNL *= -1;
     sum_upnl.push_back(UPNL);
 }
 
 void CMPTradeList::getUpnInfo(const std::string& address, uint32_t contractId, UniValue& response)
 {
     if (!pdb) return;
-    int64_t position = getPosition(address, contractId);
 
-    // exit if actual position is 0
-    if (position == 0) {
-        PrintToLog("%s() Position = 0 \n",__func__);
-        return;
-    }
-
+    // impossible condition
     CMPSPInfo::Entry sp;
-    if (! _my_sps->getSP(contractId, sp)) {
-        PrintToLog("%s() Contract does not exist \n",__func__); // property ID does not exist
-        return;
-    }
+    assert( _my_sps->getSP(contractId, sp));
 
     //twap of last 3 blocks
     const uint64_t& exitPrice = getOracleTwap(contractId, oBlocks);
@@ -6301,19 +6289,32 @@ void CMPTradeList::getUpnInfo(const std::string& address, uint32_t contractId, U
         if(first && second) continue;
         count++;
 
-        const std::string& matched = (first) ? address1 : address2;
+        if(msc_debug_get_upn_info) PrintToLog("%s(): searching for address: %s\n",__func__, address);
 
-        // PrintToLog("%s(): strValue: %s\n",__func__, strValue);
+        const std::string& status1  = vecValues[7];
+        const std::string& status2  = vecValues[8];
+
+        // taking the matched address and the status of that trade (short or long)
+        std::pair <std::string, bool> args;
+        (first) ? (args.first = address1, args.second = getPosition(status2)) : (args.first = address2, args.second = getPosition(status1));
+
+
+        if (msc_debug_get_upn_info)
+        {
+            PrintToLog("%s(): strValue: %s\n",__func__, strValue);
+            PrintToLog("%s(): position bool: %d\n",__func__, args.second);
+            PrintToLog("%s(): address matched: %d\n",__func__, args.first);
+        }
 
         uint64_t price = boost::lexical_cast<uint64_t>(vecValues[2]);
         uint64_t amount = boost::lexical_cast<uint64_t>(vecValues[14]);
         uint64_t blockNum = boost::lexical_cast<uint64_t>(vecValues[6]);
 
         // partial upnl
-        calculateUPNL(sumUpnl, price, amount, exitPrice, position, true);
+        calculateUPNL(sumUpnl, price, amount, exitPrice, args.second, sp.inverse_quoted);
 
         UniValue registerObj(UniValue::VOBJ);
-        registerObj.push_back(Pair("address matched", matched));
+        registerObj.push_back(Pair("address matched", args.first));
         registerObj.push_back(Pair("entry price", FormatDivisibleMP(price)));
         registerObj.push_back(Pair("amount", amount));
         registerObj.push_back(Pair("block", blockNum));
@@ -6322,10 +6323,6 @@ void CMPTradeList::getUpnInfo(const std::string& address, uint32_t contractId, U
     }
 
     delete it;
-
-    // for (auto &u : sumUpnl){
-    //     PrintToLog("%s() element inside sumUpnl vector: %d\n",__func__, u);
-    // }
 
     const int64_t totalUpnl = accumulate(sumUpnl.begin(), sumUpnl.end(), 0.0) * COIN;
     UniValue upnlObj(UniValue::VOBJ);

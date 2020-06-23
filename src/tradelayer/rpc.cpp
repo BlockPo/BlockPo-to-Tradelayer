@@ -2237,6 +2237,9 @@ UniValue tl_getupnl(const JSONRPCRequest& request)
   RequireExistingProperty(contractId);
   RequireContract(contractId);
 
+  // if position is 0, upnl is 0
+  RequirePosition(address, contractId);
+
   // request trade history from trade db
   UniValue response(UniValue::VARR);
 

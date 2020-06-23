@@ -131,7 +131,8 @@ class UpnlBasicsTest (BitcoinTestFramework):
 
         self.log.info("Creating oracles Contract")
         array = [0]
-        params = str([addresses[0], "Oracle 1", 10000, "1", 4, "0.1", addresses[2], 0, array]).replace("'",'"')
+        #  NOTE: contract inverse quoted
+        params = str([addresses[0], "Oracle 1", 10000, "1", 4, "0.1", addresses[2], 1, array]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_create_oraclecontract",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
@@ -152,7 +153,7 @@ class UpnlBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['collateral currency'], '4')
         assert_equal(out['result']['margin requirement'], '0.1')
         assert_equal(out['result']['blocks until expiration'], '10000')
-        assert_equal(out['result']['inverse quoted'], '0')
+        assert_equal(out['result']['inverse quoted'], '1')
         assert_equal(out['result']['hight price'], '0')
         assert_equal(out['result']['low price'], '0')
         assert_equal(out['result']['last close price'], '0')
@@ -287,12 +288,50 @@ class UpnlBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         assert_equal(out['result'][3]['upnl'], '+9.21689015')
 
+
         self.log.info("Checking upnl for address1")
         params = str([addresses[1], "Oracle 1"]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_getupnl",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
         assert_equal(out['result'][3]['upnl'], '-9.21689015')
+
+
+        self.log.info("Checking orderbook")
+        params = str(["Oracle 1", 1]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getcontract_orderbook",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result'], [])
+
+        self.log.info("trading more contracts")
+        params = str([addresses[0], "Oracle 1", "3000", "740.5", 1, "1"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_tradecontract",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        hash = str(out['result']).replace("'","")
+        # self.log.info(hash)
+
+        self.nodes[0].generate(1)
+
+
+        params = str([addresses[1], "Oracle 1", "3000", "740.5", 2, "1"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_tradecontract",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        hash = str(out['result']).replace("'","")
+        # self.log.info(hash)
+
+        self.nodes[0].generate(1)
+
+
+        self.log.info("Checking upnl for address0")
+        params = str([addresses[0], "Oracle 1"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_getupnl",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result'][4]['upnl'], '-1.30433202')
+
 
         conn.close()
 
