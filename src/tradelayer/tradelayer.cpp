@@ -6238,21 +6238,46 @@ bool mastercore::updateLastExBlock(int& nBlock, const std::string& sender)
     return true;
 }
 
-void calculateUPNL(std::vector<double>& sum_upnl, uint64_t entry_price, uint64_t amount, uint64_t exit_price)
+int64_t getPosition(const std::string& address, uint32_t contractId)
 {
-    double UPNL = (double)amount * COIN * (1/(double)entry_price - 1/(double)exit_price);
-    // PrintToLog("%s(): amount : %d, entry_price : %d, exit_price : %d, UPNL : %d\n",__func__, amount, entry_price, exit_price, UPNL);
+    const int64_t longs = getMPbalance(address, contractId, POSITIVE_BALANCE);
+    const int64_t shorts = getMPbalance(address, contractId, NEGATIVE_BALANCE);
+
+    return ((longs > 0 && shorts == 0) ? longs : (longs == 0 && shorts >  0) ? -shorts : 0);
+
+}
+
+void calculateUPNL(std::vector<double>& sum_upnl, uint64_t entry_price, uint64_t amount, uint64_t exit_price, int64_t position, bool inverse_quoted)
+{
+    double UPNL = 0;
+    (inverse_quoted) ? UPNL = (double)amount * COIN * (1/(double)entry_price-1/(double)exit_price) : UPNL = (double) amount * COIN *(exit_price - entry_price);
+    if(position < 0) UPNL *= -1;
+    PrintToLog("%s(): amount : %d, entry_price : %d, exit_price : %d, UPNL : %d\n",__func__, amount, entry_price, exit_price, UPNL);
     sum_upnl.push_back(UPNL);
 }
 
 void CMPTradeList::getUpnInfo(const std::string& address, uint32_t contractId, UniValue& response)
 {
     if (!pdb) return;
-    int count = 0;
-    std::vector<double> sumUpnl;
+    int64_t position = getPosition(address, contractId);
+
+    // exit if actual position is 0
+    if (position == 0) {
+        PrintToLog("%s() Position = 0 \n",__func__);
+        return;
+    }
+
+    CMPSPInfo::Entry sp;
+    if (! _my_sps->getSP(contractId, sp)) {
+        PrintToLog("%s() Contract does not exist \n",__func__); // property ID does not exist
+        return;
+    }
 
     //twap of last 3 blocks
     const uint64_t& exitPrice = getOracleTwap(contractId, oBlocks);
+
+    int count = 0;
+    std::vector<double> sumUpnl;
     leveldb::Iterator* it = NewIterator();
 
     for(it->SeekToFirst(); it->Valid(); it->Next())
@@ -6276,30 +6301,31 @@ void CMPTradeList::getUpnInfo(const std::string& address, uint32_t contractId, U
         if(first && second) continue;
         count++;
 
-        std::string matched = (first) ? address1 : address2;
+        const std::string& matched = (first) ? address1 : address2;
 
         // PrintToLog("%s(): strValue: %s\n",__func__, strValue);
 
         uint64_t price = boost::lexical_cast<uint64_t>(vecValues[2]);
-        uint64_t amount = boost::lexical_cast<uint64_t>(vecValues[9]);
+        uint64_t amount = boost::lexical_cast<uint64_t>(vecValues[14]);
         uint64_t blockNum = boost::lexical_cast<uint64_t>(vecValues[6]);
-        uint64_t leverage = 1; // for now
 
         // partial upnl
-        calculateUPNL(sumUpnl, price, amount, exitPrice);
+        calculateUPNL(sumUpnl, price, amount, exitPrice, position, true);
 
         UniValue registerObj(UniValue::VOBJ);
         registerObj.push_back(Pair("address matched", matched));
         registerObj.push_back(Pair("entry price", FormatDivisibleMP(price)));
         registerObj.push_back(Pair("amount", amount));
-        registerObj.push_back(Pair("leverage", leverage));
         registerObj.push_back(Pair("block", blockNum));
-
         response.push_back(registerObj);
 
     }
 
     delete it;
+
+    // for (auto &u : sumUpnl){
+    //     PrintToLog("%s() element inside sumUpnl vector: %d\n",__func__, u);
+    // }
 
     const int64_t totalUpnl = accumulate(sumUpnl.begin(), sumUpnl.end(), 0.0) * COIN;
     UniValue upnlObj(UniValue::VOBJ);

@@ -2240,8 +2240,6 @@ UniValue tl_getupnl(const JSONRPCRequest& request)
   // request trade history from trade db
   UniValue response(UniValue::VARR);
 
-  LOCK(cs_tally);
-
   t_tradelistdb->getUpnInfo(address, contractId, response);
 
 

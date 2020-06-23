@@ -271,12 +271,28 @@ class UpnlBasicsTest (BitcoinTestFramework):
 
         self.nodes[0].generate(1)
 
+        self.log.info("Checking position in address0")
+        params = str([addresses[0], "Oracle 1"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getposition",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['longPosition'], 0)
+        assert_equal(out['result']['shortPosition'], 2500)
+
+
         self.log.info("Checking upnl for address0")
         params = str([addresses[0], "Oracle 1"]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_getupnl",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result'][3]['upnl'], '-20.61393504')
+        assert_equal(out['result'][3]['upnl'], '+9.21689015')
+
+        self.log.info("Checking upnl for address1")
+        params = str([addresses[1], "Oracle 1"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_getupnl",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result'][3]['upnl'], '-9.21689015')
 
         conn.close()
 
