@@ -5278,7 +5278,7 @@ void mastercore::update_sum_upnls()
 }
 
 /* margin needed for a given position */
-int64_t mastercore::pos_margin(uint32_t contractId, const std::string& address, uint32_t margin_requirement)
+int64_t mastercore::pos_margin(uint32_t contractId, const std::string& address, uint64_t margin_requirement)
 {
         arith_uint256 maintMargin;
 

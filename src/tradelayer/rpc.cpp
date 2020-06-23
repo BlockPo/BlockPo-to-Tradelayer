@@ -2984,6 +2984,38 @@ UniValue tl_list_attestation(const JSONRPCRequest& request)
   return response;
 }
 
+UniValue tl_getopen_interest(const JSONRPCRequest& request)
+{
+    if (request.params.size() != 1)
+      throw runtime_error(
+			  "tl_getopen_interest\n"
+			  "\nAmounts of live contracts.\n"
+        "\nArguments:\n"
+        "1. name                          (string, required) name of the future contract \n"
+			  "\nResult:\n"
+			  "[                                (array of JSON objects)\n"
+			  "  {\n"
+			  "    \"total live contracts\" : n      (number) total amount of contracts lives\n"
+			  "  },\n"
+			  "  ...\n"
+			  "]\n"
+			  "\nExamples:\n"
+			  + HelpExampleCli("tl_getopen_interest", "Contract 1")
+			  + HelpExampleRpc("tl_getopen_interest", "Contract 1")
+		  );
+
+    std::string name = ParseText(request.params[0]);
+
+    struct FutureContractObject *pfuture = getFutureContractObject(name);
+    uint32_t contractId = (pfuture) ? pfuture->fco_propertyId : 0;
+
+    UniValue amountObj(UniValue::VOBJ);
+    int64_t totalContracts = mastercore::getTotalLives(contractId);
+
+    amountObj.push_back(Pair("totalLives", totalContracts));
+
+    return amountObj;
+}
 
 //tl_getmax_peggedcurrency
 //input : JSONRPCREquest which contains: 1)address of creator, 2) contract ID which is collaterilized in ALL
@@ -3135,7 +3167,8 @@ static const CRPCCommand commands[] =
   { "trade layer (data retieval)",  "tl_getmax_peggedcurrency",     &tl_getmax_peggedcurrency,      {} },
   { "trade layer (data retieval)",  "tl_getunvested",               &tl_getunvested,                {} },
   { "trade layer (data retieval)",  "tl_list_attestation",          &tl_list_attestation,           {} },
-  { "trade layer (data retieval)",  "tl_getcontract",               &tl_getcontract,                {} }
+  { "trade layer (data retieval)",  "tl_getcontract",               &tl_getcontract,                {} },
+  { "trade layer (data retieval)",  "tl_getopen_interest",          &tl_getopen_interest,           {} }
 };
 
 void RegisterTLDataRetrievalRPCCommands(CRPCTable &tableRPC)
