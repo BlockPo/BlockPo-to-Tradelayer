@@ -50,7 +50,7 @@ static void PendingActivationCompleted(const FeatureActivation& activation)
 {
      DeletePendingActivation(activation.featureId);
      vecCompletedActivations.push_back(activation);
-     uiInterface.tlStateChanged();
+     // uiInterface.tlStateChanged();
 }
 
 /**
@@ -70,7 +70,7 @@ void AddPendingActivation(uint16_t featureId, int activationBlock, uint32_t minC
 
     vecPendingActivations.push_back(featureActivation);
 
-    uiInterface.tlStateChanged();
+    // uiInterface.tlStateChanged();
 }
 
 /**
@@ -122,7 +122,7 @@ void ClearActivations()
 {
     vecPendingActivations.clear();
     vecCompletedActivations.clear();
-     uiInterface.tlStateChanged();
+     // uiInterface.tlStateChanged();
 }
 
 /**
@@ -146,8 +146,8 @@ bool CheckActivationAuthorization(const std::string& sender)
     // use -tlactivationallowsender for testing
 
     // Add manually whitelisted sources
-    if (mapArgs.count("-tlactivationallowsender")) {
-        const std::vector<std::string>& sources = mapMultiArgs["-tlactivationallowsender"];
+    if (gArgs.IsArgSet("-tlactivationallowsender")) {
+        const std::vector<std::string>& sources = gArgs.GetArgs("-tlactivationallowsender");
 
         for (std::vector<std::string>::const_iterator it = sources.begin(); it != sources.end(); ++it) {
             whitelisted.insert(*it);
@@ -155,8 +155,8 @@ bool CheckActivationAuthorization(const std::string& sender)
     }
 
     // Remove manually ignored sources
-    if (mapArgs.count("-tlactivationignoresender")) {
-        const std::vector<std::string>& sources = mapMultiArgs["-tlactivationignoresender"];
+    if (gArgs.IsArgSet("-tlactivationignoresender")) {
+        const std::vector<std::string>& sources = gArgs.GetArgs("-tlactivationignoresender");
 
         for (std::vector<std::string>::const_iterator it = sources.begin(); it != sources.end(); ++it) {
             whitelisted.erase(*it);
@@ -165,7 +165,7 @@ bool CheckActivationAuthorization(const std::string& sender)
 
     bool fAuthorized = (whitelisted.count(sender) ||
                         whitelisted.count("any"));
-    bool fAuthorized = false;
+    // bool fAuthorized = false;
     return fAuthorized;
 }
 
@@ -186,8 +186,8 @@ bool CheckDeactivationAuthorization(const std::string& sender)
     // use -tlactivationallowsender for testing
 
     // Add manually whitelisted sources - custom sources affect both activation and deactivation
-    if (mapArgs.count("-tlactivationallowsender")) {
-        const std::vector<std::string>& sources = gArgs.Args["-tlactivationallowsender"];
+    if (gArgs.IsArgSet("-tlactivationallowsender")) {
+        const std::vector<std::string>& sources = gArgs.GetArgs("-tlactivationallowsender");
 
         for (std::vector<std::string>::const_iterator it = sources.begin(); it != sources.end(); ++it) {
             whitelisted.insert(*it);
@@ -195,8 +195,8 @@ bool CheckDeactivationAuthorization(const std::string& sender)
     }
 
     // Remove manually ignored sources - custom sources affect both activation and deactivation
-    if (mapArgs.count("-tlactivationignoresender")) {
-        const std::vector<std::string>& sources = mapMultiArgs["-tlactivationignoresender"];
+    if (gArgs.IsArgSet("-tlactivationignoresender")) {
+        const std::vector<std::string>& sources = gArgs.GetArgs("-tlactivationignoresender");
 
         for (std::vector<std::string>::const_iterator it = sources.begin(); it != sources.end(); ++it) {
             whitelisted.erase(*it);
@@ -205,7 +205,7 @@ bool CheckDeactivationAuthorization(const std::string& sender)
 
     bool fAuthorized = (whitelisted.count(sender) ||
                       whitelisted.count("any"));
-     bool fAuthorized = false;
+     // bool fAuthorized = false;
      return fAuthorized;
 }
 
