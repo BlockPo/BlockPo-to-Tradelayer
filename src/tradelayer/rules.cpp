@@ -194,7 +194,9 @@ CRegTestConsensusParams::CRegTestConsensusParams()
     GENESIS_BLOCK = 0;
     // Notice range for feature activations:
     MIN_ACTIVATION_BLOCKS = 5;
-    MAX_ACTIVATION_BLOCKS = 10;
+
+    //NOTE: testing
+    MAX_ACTIVATION_BLOCKS = 1000;
     // Script related:
     PUBKEYHASH_BLOCK = 0;
     SCRIPTHASH_BLOCK = 0;
@@ -202,7 +204,11 @@ CRegTestConsensusParams::CRegTestConsensusParams()
     // Transaction restrictions:
     MSC_ALERT_BLOCK = 0;
     MSC_SEND_BLOCK = 0;
-    MSC_SP_BLOCK = 0;
+
+    // NOTE: this is the value we are changing (from 999999 to 400)
+    // in test tl_activation.py
+    MSC_SP_BLOCK = 999999;
+
     MSC_MANUALSP_BLOCK = 0;
     MSC_SEND_ALL_BLOCK = 0;
     MSC_CONTRACTDEX_BLOCK = 0;
@@ -321,9 +327,13 @@ bool ActivateFeature(uint16_t featureId, int activationBlock, uint32_t minClient
 {
     PrintToLog("Feature activation requested (ID %d to go active as of block: %d)\n", featureId, activationBlock);
 
-    const CConsensusParams& params = ConsensusParams();
+    CConsensusParams& params = MutableConsensusParams();
 
     // check activation block is allowed
+
+    PrintToLog("%s(): activationBlock %d, transactionBlock + params.MIN_ACTIVATION_BLOCKS : %d",__func__,activationBlock,(transactionBlock + params.MIN_ACTIVATION_BLOCKS));
+    PrintToLog("%s(): transactionBlock + params.MAX_ACTIVATION_BLOCKS : %d",__func__,(transactionBlock + params.MAX_ACTIVATION_BLOCKS));
+
     if ((activationBlock < (transactionBlock + params.MIN_ACTIVATION_BLOCKS)) ||
         (activationBlock > (transactionBlock + params.MAX_ACTIVATION_BLOCKS))) {
             PrintToLog("Feature activation of ID %d refused due to notice checks\n", featureId);
@@ -338,9 +348,18 @@ bool ActivateFeature(uint16_t featureId, int activationBlock, uint32_t minClient
 
     // check feature is recognized and activation is successful
     std::string featureName = GetFeatureName(featureId);
+
+    PrintToLog("%s(): TL_VERSION : %d, minClientVersion : %d\n",__func__, TL_VERSION, minClientVersion);
     bool supported = TL_VERSION >= minClientVersion;
     switch (featureId) {
-        // No currently outstanding features
+      case FEATURE_FIXED:
+              params.MSC_SP_BLOCK = activationBlock;
+              break;
+
+      default:
+           supported = false;
+           break;
+
     }
 
     PrintToLog("Feature activation of ID %d processed. %s will be enabled at block %d.\n", featureId, featureName, activationBlock);

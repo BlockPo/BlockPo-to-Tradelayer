@@ -87,7 +87,6 @@ void CheckLiveActivations(int blockHeight)
         if (TL_VERSION < liveActivation.minClientVersion) {
             std::string msgText = strprintf("Shutting down due to unsupported feature activation (%d: %s)", liveActivation.featureId, liveActivation.featureName);
             PrintToLog(msgText);
-            PrintToConsole(msgText);
             if (!gArgs.GetBoolArg("-overrideforcedshutdown", false)) {
                 //AbortNode(msgText, msgText);  TODO FIX AbortNode
             }
@@ -151,6 +150,7 @@ bool CheckActivationAuthorization(const std::string& sender)
 
         for (std::vector<std::string>::const_iterator it = sources.begin(); it != sources.end(); ++it) {
             whitelisted.insert(*it);
+            PrintToLog("%s(): address allowed: %s\n",__func__, *it);
         }
     }
 
@@ -160,6 +160,7 @@ bool CheckActivationAuthorization(const std::string& sender)
 
         for (std::vector<std::string>::const_iterator it = sources.begin(); it != sources.end(); ++it) {
             whitelisted.erase(*it);
+            PrintToLog("%s(): address deleted: %s\n",__func__, *it);
         }
     }
 

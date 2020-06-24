@@ -10,12 +10,18 @@
 namespace mastercore
 {
 //! Feature identifier placeholder
+const uint16_t FEATURE_FIXED = 1;
+
 const uint16_t FEATURE_NA = 9999;
+
 const uint16_t FEATURE_DEXMATH = 5;
+
 //! Feature identifier to enable the fee cache and strip 0.05% fees from non-Trade Layer pairs
 const uint16_t FEATURE_FEES = 9;
+
 //! Feature identifier to enable Send All transactions
 const uint16_t FEATURE_CONTRACTDEX = 11;
+
 /** A structure to represent transaction restrictions*/
 
 //! When (propertyTotalTokens / TL_FEE_THRESHOLD) is reached fee distribution will occur
