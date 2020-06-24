@@ -163,7 +163,7 @@ CMainConsensusParams::CMainConsensusParams()
  */
  CTestNetConsensusParams::CTestNetConsensusParams()
  {
-     GENESIS_BLOCK = 1491174;  // NOTE: this is important to not waste time
+     GENESIS_BLOCK = 1537678;  // NOTE: this is important to not waste time
      // Notice range for feature activations:
      MIN_ACTIVATION_BLOCKS = 0;
      MAX_ACTIVATION_BLOCKS = 999999;
@@ -171,18 +171,20 @@ CMainConsensusParams::CMainConsensusParams()
      PUBKEYHASH_BLOCK = 0;
      SCRIPTHASH_BLOCK = 0;
      NULLDATA_BLOCK = 0;
+     
      // Transaction restrictions:
-     MSC_ALERT_BLOCK = 0;
-     MSC_SEND_BLOCK = 1491174;
-     MSC_SP_BLOCK = 1491174;
-     MSC_MANUALSP_BLOCK = 1491174;
-     MSC_SEND_ALL_BLOCK = 1491174;
-     MSC_CONTRACTDEX_BLOCK = 1491174;
-     MSC_VESTING_BLOCK = 1491174;
+     MSC_ALERT_BLOCK = 99999999;
+     MSC_SEND_BLOCK = 99999999;
+     // MSC_SP_BLOCK = 1491174;
+     MSC_SP_BLOCK = 99999999;
+     MSC_MANUALSP_BLOCK = 99999999;
+     MSC_SEND_ALL_BLOCK = 99999999;
+     MSC_CONTRACTDEX_BLOCK = 99999999;
+     MSC_VESTING_BLOCK = 99999999;
      ONE_YEAR = 210240;
-     MSC_NODE_REWARD = 1491174;
-     MSC_ATTESTATION_BLOCK = 1491174;
-     MSC_METADEX_CANCEL_ALL_BLOCK = 1491174;
+     MSC_NODE_REWARD = 99999999;
+     MSC_ATTESTATION_BLOCK = 99999999;
+     MSC_METADEX_CANCEL_ALL_BLOCK = 99999999;
  }
 
 
