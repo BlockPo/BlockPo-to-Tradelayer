@@ -48,9 +48,9 @@ static void DeletePendingActivation(uint16_t featureId)
  */
 static void PendingActivationCompleted(const FeatureActivation& activation)
 {
-    // DeletePendingActivation(activation.featureId);
-    // vecCompletedActivations.push_back(activation);
-    // uiInterface.tlStateChanged();
+     DeletePendingActivation(activation.featureId);
+     vecCompletedActivations.push_back(activation);
+     // uiInterface.tlStateChanged();
 }
 
 /**
@@ -70,7 +70,7 @@ void AddPendingActivation(uint16_t featureId, int activationBlock, uint32_t minC
 
     vecPendingActivations.push_back(featureActivation);
 
-    //uiInterface.tlStateChanged();
+    // uiInterface.tlStateChanged();
 }
 
 /**
@@ -87,7 +87,6 @@ void CheckLiveActivations(int blockHeight)
         if (TL_VERSION < liveActivation.minClientVersion) {
             std::string msgText = strprintf("Shutting down due to unsupported feature activation (%d: %s)", liveActivation.featureId, liveActivation.featureName);
             PrintToLog(msgText);
-            PrintToConsole(msgText);
             if (!gArgs.GetBoolArg("-overrideforcedshutdown", false)) {
                 //AbortNode(msgText, msgText);  TODO FIX AbortNode
             }
@@ -122,7 +121,7 @@ void ClearActivations()
 {
     vecPendingActivations.clear();
     vecCompletedActivations.clear();
-    // uiInterface.tlStateChanged();
+     // uiInterface.tlStateChanged();
 }
 
 /**
@@ -136,36 +135,38 @@ void ClearActivations()
  */
 bool CheckActivationAuthorization(const std::string& sender)
 {
-   // std::set<std::string> whitelisted;
+    std::set<std::string> whitelisted;
 
     // Mainnet - 4 out of 5 signatures required from developers & board members
     // TODO: New key is required for Trade Layer
-    //whitelisted.insert("LZKEY");
+    whitelisted.insert("LZKEY");
 
     // Testnet / Regtest
     // use -tlactivationallowsender for testing
 
     // Add manually whitelisted sources
-    /*if (mapArgs.count("-tlactivationallowsender")) {
-        const std::vector<std::string>& sources = mapMultiArgs["-tlactivationallowsender"];
+    if (gArgs.IsArgSet("-tlactivationallowsender")) {
+        const std::vector<std::string>& sources = gArgs.GetArgs("-tlactivationallowsender");
 
         for (std::vector<std::string>::const_iterator it = sources.begin(); it != sources.end(); ++it) {
             whitelisted.insert(*it);
+            PrintToLog("%s(): address allowed: %s\n",__func__, *it);
         }
     }
 
     // Remove manually ignored sources
-    if (mapArgs.count("-tlactivationignoresender")) {
-        const std::vector<std::string>& sources = mapMultiArgs["-tlactivationignoresender"];
+    if (gArgs.IsArgSet("-tlactivationignoresender")) {
+        const std::vector<std::string>& sources = gArgs.GetArgs("-tlactivationignoresender");
 
         for (std::vector<std::string>::const_iterator it = sources.begin(); it != sources.end(); ++it) {
             whitelisted.erase(*it);
+            PrintToLog("%s(): address deleted: %s\n",__func__, *it);
         }
-    }*/
+    }
 
-    //bool fAuthorized = (whitelisted.count(sender) ||
-    //                    whitelisted.count("any"));
-    bool fAuthorized = false;
+    bool fAuthorized = (whitelisted.count(sender) ||
+                        whitelisted.count("any"));
+    // bool fAuthorized = false;
     return fAuthorized;
 }
 
@@ -176,18 +177,18 @@ bool CheckActivationAuthorization(const std::string& sender)
  */
 bool CheckDeactivationAuthorization(const std::string& sender)
 {
-   // std::set<std::string> whitelisted;
+    std::set<std::string> whitelisted;
 
     // Mainnet - 3 out of 5 signatures required from developers & board members
     // TODO: New key is required for Trade Layer
-    //whitelisted.insert("LZKEY");
+    whitelisted.insert("LZKEY");
 
     // Testnet / Regtest
     // use -tlactivationallowsender for testing
 
     // Add manually whitelisted sources - custom sources affect both activation and deactivation
-    /*if (mapArgs.count("-tlactivationallowsender")) {
-        const std::vector<std::string>& sources = gArgs.Args["-tlactivationallowsender"];
+    if (gArgs.IsArgSet("-tlactivationallowsender")) {
+        const std::vector<std::string>& sources = gArgs.GetArgs("-tlactivationallowsender");
 
         for (std::vector<std::string>::const_iterator it = sources.begin(); it != sources.end(); ++it) {
             whitelisted.insert(*it);
@@ -195,17 +196,17 @@ bool CheckDeactivationAuthorization(const std::string& sender)
     }
 
     // Remove manually ignored sources - custom sources affect both activation and deactivation
-    if (mapArgs.count("-tlactivationignoresender")) {
-        const std::vector<std::string>& sources = mapMultiArgs["-tlactivationignoresender"];
+    if (gArgs.IsArgSet("-tlactivationignoresender")) {
+        const std::vector<std::string>& sources = gArgs.GetArgs("-tlactivationignoresender");
 
         for (std::vector<std::string>::const_iterator it = sources.begin(); it != sources.end(); ++it) {
             whitelisted.erase(*it);
         }
-    }*/
+    }
 
-//    bool fAuthorized = (whitelisted.count(sender) ||
-//                      whitelisted.count("any"));
-     bool fAuthorized = false;
+    bool fAuthorized = (whitelisted.count(sender) ||
+                      whitelisted.count("any"));
+     // bool fAuthorized = false;
      return fAuthorized;
 }
 

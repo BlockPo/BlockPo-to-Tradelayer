@@ -163,7 +163,7 @@ CMainConsensusParams::CMainConsensusParams()
  */
  CTestNetConsensusParams::CTestNetConsensusParams()
  {
-     GENESIS_BLOCK = 1491174;  // NOTE: this is important to not waste time
+     GENESIS_BLOCK = 1537678;  // NOTE: this is important to not waste time
      // Notice range for feature activations:
      MIN_ACTIVATION_BLOCKS = 0;
      MAX_ACTIVATION_BLOCKS = 999999;
@@ -171,18 +171,20 @@ CMainConsensusParams::CMainConsensusParams()
      PUBKEYHASH_BLOCK = 0;
      SCRIPTHASH_BLOCK = 0;
      NULLDATA_BLOCK = 0;
+
      // Transaction restrictions:
-     MSC_ALERT_BLOCK = 0;
-     MSC_SEND_BLOCK = 1491174;
-     MSC_SP_BLOCK = 1491174;
-     MSC_MANUALSP_BLOCK = 1491174;
-     MSC_SEND_ALL_BLOCK = 1491174;
-     MSC_CONTRACTDEX_BLOCK = 1491174;
-     MSC_VESTING_BLOCK = 1491174;
+     MSC_ALERT_BLOCK = 1537678;
+     MSC_SEND_BLOCK = 99999999;
+     // MSC_SP_BLOCK = 1491174;
+     MSC_SP_BLOCK = 99999999;
+     MSC_MANUALSP_BLOCK = 99999999;
+     MSC_SEND_ALL_BLOCK = 99999999;
+     MSC_CONTRACTDEX_BLOCK = 99999999;
+     MSC_VESTING_BLOCK = 99999999;
      ONE_YEAR = 210240;
-     MSC_NODE_REWARD = 1491174;
-     MSC_ATTESTATION_BLOCK = 1491174;
-     MSC_METADEX_CANCEL_ALL_BLOCK = 1491174;
+     MSC_NODE_REWARD = 99999999;
+     MSC_ATTESTATION_BLOCK = 99999999;
+     MSC_METADEX_CANCEL_ALL_BLOCK = 99999999;
  }
 
 
@@ -194,7 +196,9 @@ CRegTestConsensusParams::CRegTestConsensusParams()
     GENESIS_BLOCK = 0;
     // Notice range for feature activations:
     MIN_ACTIVATION_BLOCKS = 5;
-    MAX_ACTIVATION_BLOCKS = 10;
+
+    //NOTE: testing
+    MAX_ACTIVATION_BLOCKS = 1000;
     // Script related:
     PUBKEYHASH_BLOCK = 0;
     SCRIPTHASH_BLOCK = 0;
@@ -202,7 +206,11 @@ CRegTestConsensusParams::CRegTestConsensusParams()
     // Transaction restrictions:
     MSC_ALERT_BLOCK = 0;
     MSC_SEND_BLOCK = 0;
-    MSC_SP_BLOCK = 0;
+
+    // NOTE: this is the value we are changing (from 999999 to 400)
+    // in test tl_activation.py
+    MSC_SP_BLOCK = 999999;
+
     MSC_MANUALSP_BLOCK = 0;
     MSC_SEND_ALL_BLOCK = 0;
     MSC_CONTRACTDEX_BLOCK = 0;
@@ -321,9 +329,13 @@ bool ActivateFeature(uint16_t featureId, int activationBlock, uint32_t minClient
 {
     PrintToLog("Feature activation requested (ID %d to go active as of block: %d)\n", featureId, activationBlock);
 
-    const CConsensusParams& params = ConsensusParams();
+    CConsensusParams& params = MutableConsensusParams();
 
     // check activation block is allowed
+
+    PrintToLog("%s(): activationBlock %d, transactionBlock + params.MIN_ACTIVATION_BLOCKS : %d",__func__,activationBlock,(transactionBlock + params.MIN_ACTIVATION_BLOCKS));
+    PrintToLog("%s(): transactionBlock + params.MAX_ACTIVATION_BLOCKS : %d",__func__,(transactionBlock + params.MAX_ACTIVATION_BLOCKS));
+
     if ((activationBlock < (transactionBlock + params.MIN_ACTIVATION_BLOCKS)) ||
         (activationBlock > (transactionBlock + params.MAX_ACTIVATION_BLOCKS))) {
             PrintToLog("Feature activation of ID %d refused due to notice checks\n", featureId);
@@ -338,9 +350,18 @@ bool ActivateFeature(uint16_t featureId, int activationBlock, uint32_t minClient
 
     // check feature is recognized and activation is successful
     std::string featureName = GetFeatureName(featureId);
+
+    PrintToLog("%s(): TL_VERSION : %d, minClientVersion : %d\n",__func__, TL_VERSION, minClientVersion);
     bool supported = TL_VERSION >= minClientVersion;
     switch (featureId) {
-        // No currently outstanding features
+      case FEATURE_FIXED:
+              params.MSC_SP_BLOCK = activationBlock;
+              break;
+
+      default:
+           supported = false;
+           break;
+
     }
 
     PrintToLog("Feature activation of ID %d processed. %s will be enabled at block %d.\n", featureId, featureName, activationBlock);
@@ -376,10 +397,12 @@ bool DeactivateFeature(uint16_t featureId, int transactionBlock)
 
     std::string featureName = GetFeatureName(featureId);
     switch (featureId) {
-        // No currently outstanding features
-        default:
+      case FEATURE_FIXED:
+          MutableConsensusParams().MSC_SP_BLOCK = 9999999;
+          break;
+      default:
             return false;
-        break;
+      break;
     }
 
     PrintToLog("Feature deactivation of ID %d processed. %s has been disabled.\n", featureId, featureName);
@@ -407,11 +430,13 @@ std::string GetFeatureName(uint16_t featureId)
  */
 bool IsFeatureActivated(uint16_t featureId, int transactionBlock)
 {
-    // const CConsensusParams& params = ConsensusParams();
+    const CConsensusParams& params = ConsensusParams();
     int activationBlock = std::numeric_limits<int>::max();
 
     switch (featureId) {
-        // No currently outstanding features
+      case FEATURE_FIXED:
+          activationBlock = params.MSC_SP_BLOCK;
+          break;
         default:
             return false;
     }

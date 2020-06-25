@@ -2433,7 +2433,7 @@ void clear_all_state()
     my_pending.clear();
     contractdex.clear();
     ResetConsensusParams();
-    // ClearActivations();
+    ClearActivations();
     // ClearAlerts();
 
     // LevelDB based storage
