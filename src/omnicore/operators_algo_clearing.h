@@ -50,6 +50,8 @@ void updating_lasttwocols_fromdatabase(std::string addrs, MatrixTLS &M_file, int
 
 void building_edge(std::map<std::string, std::string> &path_first, std::string addrs_src, std::string addrs_trk, std::string status_src, std::string status_trk, double entry_price, double exit_price, long int lives, int index_row, int path_number, long int amount_path, int ghost_edge);
 
+void building_edge(std::map<std::string, std::string> &path_first, std::string addrs_src, std::string addrs_trk, std::string status_src, std::string status_trk, double entry_price, double exit_price, long int lives_src, long int lives_trk, int index_row, int path_number, long int amount_path, int ghost_edge);
+
 void printing_edges(std::map<std::string, std::string> &path_first);
 
 bool find_open_incr_anypos(std::string &s, VectorTLS *v);

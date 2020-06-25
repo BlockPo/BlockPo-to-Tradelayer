@@ -2,6 +2,6 @@
 
 echo "Doing Make Locally"
 ./autogen.sh
-./configure --without-gui --disable-tests
-make --jobs=8
+./configure --without-gui --with-incompatible-bdb
+make --jobs=4
 echo "Done"
