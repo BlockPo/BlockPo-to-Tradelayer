@@ -397,10 +397,12 @@ bool DeactivateFeature(uint16_t featureId, int transactionBlock)
 
     std::string featureName = GetFeatureName(featureId);
     switch (featureId) {
-        // No currently outstanding features
-        default:
+      case FEATURE_FIXED:
+          MutableConsensusParams().MSC_SP_BLOCK = 9999999;
+          break;
+      default:
             return false;
-        break;
+      break;
     }
 
     PrintToLog("Feature deactivation of ID %d processed. %s has been disabled.\n", featureId, featureName);
@@ -428,11 +430,13 @@ std::string GetFeatureName(uint16_t featureId)
  */
 bool IsFeatureActivated(uint16_t featureId, int transactionBlock)
 {
-    // const CConsensusParams& params = ConsensusParams();
+    const CConsensusParams& params = ConsensusParams();
     int activationBlock = std::numeric_limits<int>::max();
 
     switch (featureId) {
-        // No currently outstanding features
+      case FEATURE_FIXED:
+          activationBlock = params.MSC_SP_BLOCK;
+          break;
         default:
             return false;
     }

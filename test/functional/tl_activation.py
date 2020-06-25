@@ -134,6 +134,31 @@ class ActivationBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['divisible'],True)
         assert_equal(out['result']['totaltokens'],'3000.00000000')
 
+        self.log.info("Testing tl_senddeactivation")
+
+        # adminAddress, activation number 1, in block 400, minim tl version = 1.
+        params = str([adminAddress, 1]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_senddeactivation",params)
+        # self.log.info(out)
+
+        self.nodes[0].generate(1)
+
+
+        self.log.info("Creating new tokens (must be rejected)")
+        array = [0]
+        params = str([addresses[0],2,0,"dan","","","4000",array]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_sendissuancefixed",params)
+        # self.log.info(out)
+
+        self.nodes[0].generate(1)
+
+
+        self.log.info("Checking the property (doesn't exist)")
+        params = str([5])
+        out = tradelayer_HTTP(conn, headers, False, "tl_getproperty",params)
+        # self.log.info(out)
+        assert_equal(out['error']['message'], 'Property identifier does not exist')
+
         conn.close()
 
         self.stop_nodes()
