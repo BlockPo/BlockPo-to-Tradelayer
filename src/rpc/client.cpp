@@ -295,6 +295,11 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_withdrawal_fromchannel", 4, "arg4" },
     { "tl_create_channel", 3, "arg3" },
 
+    { "tl_sendactivation", 1, "arg1"},
+    { "tl_sendactivation", 2, "arg2"},
+    { "tl_sendactivation", 3, "arg3"},
+
+
     /* Trade Layer - data retrieval calls */
     { "tl_setautocommit", 0, "arg0" },
     { "tl_getcrowdsale", 0, "arg0" },
