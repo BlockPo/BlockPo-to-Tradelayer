@@ -171,9 +171,9 @@ CMainConsensusParams::CMainConsensusParams()
      PUBKEYHASH_BLOCK = 0;
      SCRIPTHASH_BLOCK = 0;
      NULLDATA_BLOCK = 0;
-     
+
      // Transaction restrictions:
-     MSC_ALERT_BLOCK = 99999999;
+     MSC_ALERT_BLOCK = 1537678;
      MSC_SEND_BLOCK = 99999999;
      // MSC_SP_BLOCK = 1491174;
      MSC_SP_BLOCK = 99999999;
