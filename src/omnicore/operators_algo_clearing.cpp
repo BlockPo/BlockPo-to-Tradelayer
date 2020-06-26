@@ -181,58 +181,76 @@ void settlement_algorithm_fifo(MatrixTLS &M_file, int64_t interest, int64_t twap
   VectorTLS vdata(n_cols);
   
   for (int i = 0; i < n_rows; ++i)
-    {
-      for (int j = 0; j < n_cols; ++j) vdata[j] = M_file[i][j];
+  {
+  	for (int j = 0; j < n_cols; ++j) vdata[j] = M_file[i][j];
       
-      struct status_amounts *pt_vdata_long  = get_status_amounts_open_incr(vdata, 0);
-      struct status_amounts *pt_vdata_short = get_status_amounts_open_incr(vdata, 1);
+    struct status_amounts *pt_vdata_long  = get_status_amounts_open_incr(vdata, 0);
+    struct status_amounts *pt_vdata_short = get_status_amounts_open_incr(vdata, 1);
       
-      std::vector<std::map<std::string, std::string>> path_maini;
+ 	std::vector<std::map<std::string, std::string>> path_maini;
       
-      if (finding(pt_vdata_long->status_trk, open_incr_long) || finding(pt_vdata_short->status_trk, open_incr_short))
+    if (finding(pt_vdata_long->status_trk, open_incr_long) || finding(pt_vdata_short->status_trk, open_incr_short))
 	{
 	  path_number += 1;
+	  
 	  PrintToLog("\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
-	  PrintToLog("New Edge Source: Row #%d\n\n", i);
-	  /** Lives initialize to zero: They will be count in the tracking process**/
+	  // First Edge for this new Path/Branch
 	  building_edge(edge_source, pt_vdata_long->addrs_src, pt_vdata_long->addrs_trk, pt_vdata_long->status_src,
-			pt_vdata_long->status_trk, pt_vdata_long->matched_price, pt_vdata_long->matched_price, 0, i, path_number,
-			pt_vdata_long->amount_trd, 0);
+	  				pt_vdata_long->status_trk, pt_vdata_long->matched_price, pt_vdata_long->lives_src, 
+	  				pt_vdata_long->lives_trk, i, path_number, pt_vdata_long->amount_trd, 0);
+	  
+	  if (finding(pt_vdata_long->status_trk, open_incr_long) && finding(pt_vdata_short->status_trk, open_incr_short))
+	  {
+	  	PrintToLog("New Edge Source: Row #%d\n\n", i);
+	  }	
+	  else
+	  	PrintToLog("New Branch Source: Row #%d\n\n", i);
+
 	  path_maini.push_back(edge_source);
 	  printing_edges(edge_source);
 	  
 	  if (finding(pt_vdata_long->status_trk, open_incr_long))
-	    {
-	      int counting_netted_long = 0;
-	      long int amount_trd_sum_long = 0;
-	      
-	      PrintToLog("\n*************************************************");
-	      PrintToLog("\nTracking Long Position for: %s", pt_vdata_long->addrs_trk);
-	      clearing_operator_fifo(vdata, M_file, i, pt_vdata_long, 0, counting_netted_long, amount_trd_sum_long, path_maini,
-				     path_number, pt_vdata_long->nlives_trk);
-	    }
+	  {
+	  	int counting_netted_long = 0;
+	    long int amount_trd_sum_long = 0;
+
+	    PrintToLog("\n*************************************************");
+	    PrintToLog("\nTracking Long Position for: %s", pt_vdata_long->addrs_trk);
+	    clearing_operator_fifo(vdata, M_file, i, pt_vdata_long, 0, counting_netted_long, amount_trd_sum_long, path_maini,
+				     			 path_number, pt_vdata_long->nlives_trk);
+	  }
 	  
 	  if(finding(pt_vdata_short->status_trk, open_incr_short))
-	    {
-	      int counting_netted_short = 0;
-	      long int amount_trd_sum_short = 0;
-	      PrintToLog("\n*************************************************");
-	      PrintToLog("\nTracking Short Position for: %s", pt_vdata_short->addrs_trk);
-	      clearing_operator_fifo(vdata, M_file, i, pt_vdata_short, 1, counting_netted_short, amount_trd_sum_short, path_maini,
-				     path_number, pt_vdata_short->nlives_trk);
-	    }
-	  
+	  {
+	    int counting_netted_short = 0;
+	    long int amount_trd_sum_short = 0;
+	    PrintToLog("\n*************************************************");
+	    PrintToLog("\nTracking Short Position for: %s", pt_vdata_short->addrs_trk);
+	    clearing_operator_fifo(vdata, M_file, i, pt_vdata_short, 1, counting_netted_short, amount_trd_sum_short, path_maini,
+	    					   path_number, pt_vdata_short->nlives_trk);
+	  }
+
 	  if (path_maini.size() != 0) 
-            {
-              PrintToLog("\n\nPath #%d:\n\n", path_number);
-	      for (std::vector<std::map<std::string, std::string>>::iterator it = path_maini.begin(); it != path_maini.end(); ++it)
-		printing_edges(*it);
-	    }
+	  {
+	  	PrintToLog("\nPath Element #%d of the Main Graph:\n\n", path_number);
+  		for (it_path_maini = path_maini.begin(); it_path_maini != path_maini.end(); ++it_path_maini)
+        	printing_edges(*it_path_maini);
+      }
+  
 	  path_main.push_back(path_maini);
 	}
-    }
+  }
+
   PrintToLog("\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
-  PrintToLog("\nChecking Lives by Path:\n\n");
+  if (path_main.size() != 0) 
+  {
+  	PrintToLog("\n\nMain Graph for Settlement:\n\n");
+  	for (it_path_main = path_main.begin(); it_path_main != path_main.end(); ++it_path_main)
+  		printing_path_maini(*it_path_main);
+  }
+
+  PrintToLog("\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+  PrintToLog("\nSecond Part: Checking Lives by Path:\n\n");
   
   std::vector<std::map<std::string, std::string>> lives_longs;
   std::vector<std::map<std::string, std::string>> lives_shorts;
@@ -330,6 +348,10 @@ void clearing_operator_fifo(VectorTLS &vdata, MatrixTLS &M_file, int index_init,
   long int d_amounts = 0;
   std::map<std::string, std::string> path_first;
 
+  PrintToLog("\n---------------------------------------------------\n");
+  PrintToLog("LAUNCHING FIFO CLEARING\n");
+  PrintToLog("...\n");
+
   for (int i = index_init + 1; i < n_rows; ++i)
     {
       VectorTLS jrow_database(n_cols);
@@ -403,6 +425,9 @@ void clearing_operator_fifo(VectorTLS &vdata, MatrixTLS &M_file, int index_init,
 	    }
         }
     }
+
+  PrintToLog("\nFINISHING FIFO SEARCH");
+  PrintToLog("\n---------------------------------------------------\n");
   
   /** Computing Lives by Address **/
   if (counting_netted == 0)
