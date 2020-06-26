@@ -286,15 +286,21 @@ class UpnlBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, False, "tl_getupnl",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result'][3]['upnl'], '+9.21689015')
+        assert_equal(out['result'][0]['upnl'], '+9.21689015')
 
+        self.log.info("Checking upnl for address0 (with verbose option)")
+        params = str([addresses[0], "Oracle 1", 1]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_getupnl",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result'][3]['upnl'], '+9.21689015')
 
         self.log.info("Checking upnl for address1")
         params = str([addresses[1], "Oracle 1"]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_getupnl",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result'][3]['upnl'], '-9.21689015')
+        assert_equal(out['result'][0]['upnl'], '-9.21689015')
 
 
         self.log.info("Checking orderbook")
@@ -330,7 +336,7 @@ class UpnlBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, False, "tl_getupnl",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result'][4]['upnl'], '-1.30433202')
+        assert_equal(out['result'][0]['upnl'], '-1.30433202')
 
 
         conn.close()

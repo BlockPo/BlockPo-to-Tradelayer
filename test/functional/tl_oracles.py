@@ -330,7 +330,7 @@ class OraclesBasicsTest (BitcoinTestFramework):
         self.log.info("Checking upnl for address0")
         params = str([addresses[0], "Oracle 1"]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_getupnl",params)
-        self.log.info(out)
+        # self.log.info(out)
         assert_equal(out['error'], None)
 
         conn.close()
