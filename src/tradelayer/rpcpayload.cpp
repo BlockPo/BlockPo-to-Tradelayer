@@ -457,7 +457,7 @@ UniValue tl_createpayload_createcontract(const JSONRPCRequest& request)
   uint32_t blocks_until_expiration = request.params[3].get_int();
   uint32_t notional_size = ParseAmount32t(request.params[4]);
   uint32_t collateral_currency = request.params[5].get_int();
-  uint32_t margin_requirement = ParseAmount32t(request.params[6]);
+  uint64_t margin_requirement = ParseAmount64t(request.params[6]);
   uint8_t inverse = ParseBinary(request.params[7]);
   std::vector<int> numbers = ParseArray(request.params[8]);
 
@@ -1025,7 +1025,7 @@ UniValue tl_createpayload_create_oraclecontract(const JSONRPCRequest& request)
       uint32_t blocks_until_expiration = request.params[1].get_int();
       uint32_t notional_size = ParseAmount32t(request.params[2]);
       uint32_t collateral_currency = request.params[3].get_int();
-      uint32_t margin_requirement = ParseAmount32t(request.params[4]);
+      uint64_t margin_requirement = ParseAmount64t(request.params[4]);
       std::string oracleAddress = ParseAddress(request.params[5]);
       uint8_t inverse = ParseBinary(request.params[6]);
       std::vector<int> numbers = ParseArray(request.params[7]);

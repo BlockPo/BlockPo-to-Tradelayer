@@ -102,7 +102,7 @@ BOOST_AUTO_TEST_CASE(uint256_const)
     BOOST_CHECK_EQUAL(std::numeric_limits<int64_t>::max(), ConvertTo64(mastercore::uint256_const::max_int64));
 }
 
-arith_uint256 amountReserved(int64_t amount, uint32_t margin_requirement, uint64_t leverage, int64_t uPrice)
+arith_uint256 amountReserved(int64_t amount, uint64_t margin_requirement, uint64_t leverage, int64_t uPrice)
 {
     return (ConvertTo256(COIN) * ConvertTo256(amount) * ConvertTo256(margin_requirement)) / (ConvertTo256(leverage) * ConvertTo256(uPrice));
 }
@@ -111,7 +111,7 @@ BOOST_AUTO_TEST_CASE(contractdex_trade_amount)
 {
    int64_t uPrice = 1000000000 * COIN;      // price = 1 billion of dUSD
    uint64_t leverage = 10 * COIN;           // max leverage
-   uint32_t marginRequirement = 42 * COIN;  // 42 tokens per contract (almost the maximum)
+   uint64_t marginRequirement = 42 * COIN;  // 42 tokens per contract (almost the maximum)
 
    // 1 contract
    BOOST_CHECK_EQUAL(ConvertTo64(amountReserved(1 * COIN, marginRequirement, leverage, uPrice)),  ConvertTo64(ConvertTo256(0)));  // 0.42 (in practice it's 0)
@@ -145,7 +145,7 @@ BOOST_AUTO_TEST_CASE(contractdex_trade_leverage)
 
 }
 
-int64_t checkReserve(int64_t nBalance, int64_t amount, uint32_t marginRequirement, uint64_t leverage, bool oracle)
+int64_t checkReserve(int64_t nBalance, int64_t amount, uint64_t marginRequirement, uint64_t leverage, bool oracle)
 {
     int64_t uPrice = COIN;
     std::pair<int64_t, int64_t> factor;
@@ -162,7 +162,7 @@ BOOST_AUTO_TEST_CASE(check_reserve)
 {
   int64_t nBalance = 1000000000000;
   int64_t amount = 1000; // contracts
-  uint32_t marginRequirement = 10000000; // 0.1
+  uint64_t marginRequirement = 10000000; // 0.1
 
   uint64_t leverage = 1;
   bool oracle = true;

@@ -92,7 +92,7 @@ public:
         uint32_t blocks_until_expiration;
         uint32_t notional_size;
         uint32_t collateral_currency;
-        uint32_t margin_requirement;
+        uint64_t margin_requirement;
         uint32_t attribute_type;
         int64_t contracts_needed;
         int init_block;

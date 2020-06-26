@@ -338,7 +338,7 @@ BOOST_AUTO_TEST_CASE(payload_change_property_manager)
 //         static_cast<uint32_t>(3000),         // blocks until expiration
 //         static_cast<uint32_t>(2),            // notional size
 //         static_cast<uint32_t>(3),            // collateral currency
-//         static_cast<uint32_t>(3)             // margin rpcrequirements
+//         static_cast<uint64_t>(3)             // margin rpcrequirements
 //     );
 //     BOOST_CHECK_EQUAL(HexStr(vch),"00280101414c4c2f6455534400b81702030300");
 // }

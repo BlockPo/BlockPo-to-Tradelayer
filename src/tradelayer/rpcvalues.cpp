@@ -270,16 +270,25 @@ uint32_t ParseNewValues(const UniValue& value)
 uint32_t ParseAmount32t(const UniValue& value)
 {
   int64_t amount = StrToInt64(value.getValStr(), true);
-  if (amount < 0) {
-    throw JSONRPCError(RPC_TYPE_ERROR, "Price should be positive");
+  if (amount <= 0) {
+    throw JSONRPCError(RPC_TYPE_ERROR, "Amount should be positive");
   }
   return static_cast<uint32_t>(amount);
+}
+
+uint64_t ParseAmount64t(const UniValue& value)
+{
+  int64_t amount = StrToInt64(value.getValStr(), true);
+  if (amount <= 0) {
+    throw JSONRPCError(RPC_TYPE_ERROR, "Amount should be positive");
+  }
+  return static_cast<uint64_t>(amount);
 }
 
 uint64_t ParseEffectivePrice(const UniValue& value)
 {
   int64_t effPrice = StrToInt64(value.getValStr(), true);
-  if (effPrice < 0) {
+  if (effPrice <= 0) {
     throw JSONRPCError(RPC_TYPE_ERROR, "Price should be positive");
   }
   return effPrice;
@@ -289,7 +298,7 @@ uint64_t ParseEffectivePrice(const UniValue& value)
 uint64_t ParseEffectivePrice(const UniValue& value, uint32_t contractId)
 {
   int64_t effPrice = StrToInt64(value.getValStr(), true);
-  if (effPrice < 0) {
+  if (effPrice <= 0) {
     throw JSONRPCError(RPC_TYPE_ERROR, "Price should be positive");
   }
 
@@ -314,7 +323,7 @@ uint8_t ParseContractDexAction(const UniValue& value)
 int64_t ParseDExFee(const UniValue& value)
 {
     int64_t fee = StrToInt64(value.get_str(), true);  // BTC is divisible
-    if (fee < 0) {
+    if (fee <= 0) {
         throw JSONRPCError(RPC_TYPE_ERROR, "Mininmum accept fee must be positive");
     }
     return fee;
