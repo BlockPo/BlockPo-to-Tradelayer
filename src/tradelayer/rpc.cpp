@@ -2208,7 +2208,7 @@ UniValue tl_getupnl(const JSONRPCRequest& request)
 			"\nRetrieves the unrealized PNL for trades on the distributed contract exchange for the specified market.\n"
 			"\nArguments:\n"
 			"1. address           (string, required) address of owner\n"
-			"2. name              (string, required) the name of future contract\n"
+			"2. name or id        (string, required) the name (or id number) of future contract\n"
       "3. verbose           (number, optional) 1 : if you need the list of matched trades\n"
 			"\nResult:\n"
 			"[                                      (array of JSON objects)\n"
@@ -2229,11 +2229,8 @@ UniValue tl_getupnl(const JSONRPCRequest& request)
   }
 
   std::string address = ParseAddress(request.params[0]);
-  std::string name = ParseText(request.params[1]);
+  uint32_t contractId = ParseNameOrId(request.params[1]);
   bool showVerbose = (request.params.size() > 2 && ParseBinary(request.params[2]) == 1) ? true : false;
-
-  struct FutureContractObject *pfuture = getFutureContractObject(name);
-  uint32_t contractId = (pfuture) ? pfuture->fco_propertyId : 0;
 
 
   RequireExistingProperty(contractId);
@@ -2993,7 +2990,7 @@ UniValue tl_getopen_interest(const JSONRPCRequest& request)
 			  "tl_getopen_interest\n"
 			  "\nAmounts of live contracts.\n"
         "\nArguments:\n"
-        "1. name                          (string, required) name of the future contract \n"
+        "1. name or id                    (string, required) name (or id number) of the future contract \n"
 			  "\nResult:\n"
 			  "[                                (array of JSON objects)\n"
 			  "  {\n"
@@ -3002,14 +2999,11 @@ UniValue tl_getopen_interest(const JSONRPCRequest& request)
 			  "  ...\n"
 			  "]\n"
 			  "\nExamples:\n"
-			  + HelpExampleCli("tl_getopen_interest", "Contract 1")
-			  + HelpExampleRpc("tl_getopen_interest", "Contract 1")
+			  + HelpExampleCli("tl_getopen_interest", "Contract 1, 1")
+			  + HelpExampleRpc("tl_getopen_interest", "Contract 1, 1")
 		  );
 
-    std::string name = ParseText(request.params[0]);
-
-    struct FutureContractObject *pfuture = getFutureContractObject(name);
-    uint32_t contractId = (pfuture) ? pfuture->fco_propertyId : 0;
+    uint32_t contractId = ParseNameOrId(request.params[0]);
 
     UniValue amountObj(UniValue::VOBJ);
     int64_t totalContracts = mastercore::getTotalLives(contractId);
@@ -3077,10 +3071,10 @@ UniValue tl_getcontract(const JSONRPCRequest& request)
 {
     if (request.params.size() != 1)
         throw runtime_error(
-            "tl_getcontract contractId\n"
+            "tl_getcontract contract\n"
             "\nReturns details for about the tokens or smart property to lookup.\n"
             "\nArguments:\n"
-            "1. name                        (string, required) the name  of the future contract\n"
+            "1. name or id                        (string, required) the name  of the future contract, or the number id\n"
             "\nResult:\n"
             "{\n"
             "  \"contractid\" : n,                 (number) the identifier\n"
@@ -3098,12 +3092,10 @@ UniValue tl_getcontract(const JSONRPCRequest& request)
             + HelpExampleRpc("tl_getcontract", "Contract1")
         );
 
-    std::string name = ParseText(request.params[0]);
-    RequireContract(name);
+    uint32_t propertyId = ParseNameOrId(request.params[0]);
 
     CMPSPInfo::Entry sp;
-    uint32_t propertyId;
-    getEntryFromName(name, propertyId, sp);
+    assert(_my_sps->getSP(propertyId, sp));
 
     UniValue response(UniValue::VOBJ);
     response.push_back(Pair("propertyid", (uint64_t) propertyId));

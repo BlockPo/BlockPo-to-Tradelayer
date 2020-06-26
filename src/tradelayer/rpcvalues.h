@@ -57,5 +57,6 @@ uint64_t ParsePercent(const UniValue& value, bool isDivisible);
 uint8_t ParseBinary(const UniValue& value);
 std::vector<int> ParseArray(const UniValue& value);
 std::string ParseHash(const UniValue& value);
+uint32_t ParseNameOrId(const UniValue& value);
 
 #endif // TRADELAYER_RPCVALUES_H
