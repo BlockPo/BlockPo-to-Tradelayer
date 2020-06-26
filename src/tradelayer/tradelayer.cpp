@@ -6253,13 +6253,12 @@ void calculateUPNL(std::vector<double>& sum_upnl, uint64_t entry_price, uint64_t
     sum_upnl.push_back(UPNL);
 }
 
-void CMPTradeList::getUpnInfo(const std::string& address, uint32_t contractId, UniValue& response)
+void CMPTradeList::getUpnInfo(const std::string& address, uint32_t contractId, UniValue& response, bool showVerbose)
 {
     if (!pdb) return;
 
-    // impossible condition
     CMPSPInfo::Entry sp;
-    assert( _my_sps->getSP(contractId, sp));
+    _my_sps->getSP(contractId, sp);
 
     //twap of last 3 blocks
     const uint64_t& exitPrice = getOracleTwap(contractId, oBlocks);
@@ -6313,13 +6312,15 @@ void CMPTradeList::getUpnInfo(const std::string& address, uint32_t contractId, U
         // partial upnl
         calculateUPNL(sumUpnl, price, amount, exitPrice, args.second, sp.inverse_quoted);
 
-        UniValue registerObj(UniValue::VOBJ);
-        registerObj.push_back(Pair("address matched", args.first));
-        registerObj.push_back(Pair("entry price", FormatDivisibleMP(price)));
-        registerObj.push_back(Pair("amount", amount));
-        registerObj.push_back(Pair("block", blockNum));
-        response.push_back(registerObj);
-
+        if(showVerbose)
+        {
+            UniValue registerObj(UniValue::VOBJ);
+            registerObj.push_back(Pair("address matched", args.first));
+            registerObj.push_back(Pair("entry price", FormatDivisibleMP(price)));
+            registerObj.push_back(Pair("amount", amount));
+            registerObj.push_back(Pair("block", blockNum));
+            response.push_back(registerObj);
+        }
     }
 
     delete it;

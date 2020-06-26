@@ -2202,13 +2202,14 @@ UniValue tl_getallprice(const JSONRPCRequest& request)
 
 UniValue tl_getupnl(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 2) {
+  if (request.params.size() < 2 || request.params.size() > 3) {
     throw runtime_error(
 			"tl_getupnl address name\n"
 			"\nRetrieves the unrealized PNL for trades on the distributed contract exchange for the specified market.\n"
 			"\nArguments:\n"
 			"1. address           (string, required) address of owner\n"
 			"2. name              (string, required) the name of future contract\n"
+      "3. verbose           (number, optional) 1 : if you need the list of matched trades\n"
 			"\nResult:\n"
 			"[                                      (array of JSON objects)\n"
 			"  {\n"
@@ -2222,13 +2223,14 @@ UniValue tl_getupnl(const JSONRPCRequest& request)
       "   }\n"
 			"]\n"
 			"\nExamples:\n"
-			+ HelpExampleCli("tl_getupnl", "address1 , Contract 1")
-			+ HelpExampleRpc("tl_getupnl", "address2 , Contract 1")
+			+ HelpExampleCli("tl_getupnl", "address1 , Contract 1, 1")
+			+ HelpExampleRpc("tl_getupnl", "address2 , Contract 1, 1")
 			);
   }
 
   std::string address = ParseAddress(request.params[0]);
   std::string name = ParseText(request.params[1]);
+  bool showVerbose = (request.params.size() > 2 && ParseBinary(request.params[2]) == 1) ? true : false;
 
   struct FutureContractObject *pfuture = getFutureContractObject(name);
   uint32_t contractId = (pfuture) ? pfuture->fco_propertyId : 0;
@@ -2243,7 +2245,7 @@ UniValue tl_getupnl(const JSONRPCRequest& request)
   // request trade history from trade db
   UniValue response(UniValue::VARR);
 
-  t_tradelistdb->getUpnInfo(address, contractId, response);
+  t_tradelistdb->getUpnInfo(address, contractId, response, showVerbose);
 
 
   return response;

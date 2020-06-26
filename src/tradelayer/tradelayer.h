@@ -439,7 +439,7 @@ class CMPTradeList : public CDBBase
   void getTradesForPair(uint32_t propertyIdSideA, uint32_t propertyIdSideB, UniValue& response, uint64_t count);
   int getMPTradeCountTotal();
   int getNextId();
-  void getUpnInfo(const std::string& address, uint32_t contractId, UniValue& response);
+  void getUpnInfo(const std::string& address, uint32_t contractId, UniValue& response, bool showVerbose);
 };
 
 class CMPSettlementMatchList : public CDBBase
