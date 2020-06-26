@@ -2202,55 +2202,53 @@ UniValue tl_getallprice(const JSONRPCRequest& request)
 
 UniValue tl_getupnl(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 2) {
+  if (request.params.size() < 2 || request.params.size() > 3) {
     throw runtime_error(
-			"tl_getpnl addres contractid\n"
+			"tl_getupnl address name\n"
 			"\nRetrieves the unrealized PNL for trades on the distributed contract exchange for the specified market.\n"
 			"\nArguments:\n"
 			"1. address           (string, required) address of owner\n"
-			"2. contractid           (number, required) the id of future contract\n"
+			"2. name              (string, required) the name of future contract\n"
+      "3. verbose           (number, optional) 1 : if you need the list of matched trades\n"
 			"\nResult:\n"
 			"[                                      (array of JSON objects)\n"
 			"  {\n"
-			"    \"block\" : nnnnnn,                      (number) the index of the block that contains the trade match\n"
-			"    \"unitprice\" : \"n.nnnnnnnnnnn...\" ,     (string) the unit price used to execute this trade (received/sold)\n"
-			"    \"inverseprice\" : \"n.nnnnnnnnnnn...\",   (string) the inverse unit price (sold/received)\n"
-			"    \"sellertxid\" : \"hash\",                 (string) the hash of the transaction of the seller\n"
-			"    \"address\" : \"address\",                 (string) the Bitcoin address of the seller\n"
-			"    \"amountsold\" : \"n.nnnnnnnn\",           (string) the number of tokens sold in this trade\n"
-			"    \"amountreceived\" : \"n.nnnnnnnn\",       (string) the number of tokens traded in exchange\n"
-			"    \"matchingtxid\" : \"hash\",               (string) the hash of the transaction that was matched against\n"
-			"    \"matchingaddress\" : \"address\"          (string) the Bitcoin address of the other party of this trade\n"
-			"  },\n"
+			"    \"event 1 \"        : nnnnnn,                 (number) the index of the block that contains the trade match\n"
+			"    \"matched address\" : \"n.nnnnnnnnnnn...\" ,  (string) the unit price used to execute this trade (received/sold)\n"
+			"    \"price\"           : \"n.nnnnnnnnnnn...\",   (string) the inverse unit price (sold/received)\n"
+      "    \"amount  \"        : \"n.nnnnnnnnnnn...\",   (number) the inverse unit price (sold/received)\n"
+      "    \"leverage  \"      : \"n.nnnnnnnnnnn...\",   (number) the inverse unit price (sold/received)\n"
 			"  ...\n"
+			"  ...\n"
+      "   }\n"
 			"]\n"
 			"\nExamples:\n"
-			+ HelpExampleCli("tl_getupnl", "address 12 ")
-			+ HelpExampleRpc("tl_getupnl", "address, 500")
+			+ HelpExampleCli("tl_getupnl", "address1 , Contract 1, 1")
+			+ HelpExampleRpc("tl_getupnl", "address2 , Contract 1, 1")
 			);
   }
 
   std::string address = ParseAddress(request.params[0]);
-  uint32_t contractId = ParsePropertyId(request.params[1]);
+  std::string name = ParseText(request.params[1]);
+  bool showVerbose = (request.params.size() > 2 && ParseBinary(request.params[2]) == 1) ? true : false;
+
+  struct FutureContractObject *pfuture = getFutureContractObject(name);
+  uint32_t contractId = (pfuture) ? pfuture->fco_propertyId : 0;
+
 
   RequireExistingProperty(contractId);
   RequireContract(contractId);
 
-  UniValue balanceObj(UniValue::VOBJ);
-  double upnl = addrs_upnlc[contractId][address];
+  // if position is 0, upnl is 0
+  RequirePosition(address, contractId);
 
-  if (upnl > 0) {
-    balanceObj.push_back(Pair("positiveupnl", FormatByType(mastercore::DoubleToInt64(upnl),2)));
-    balanceObj.push_back(Pair("negativeupnl", FormatByType(0,2)));
-  } else if (upnl < 0) {
-    balanceObj.push_back(Pair("positiveupnl", FormatByType(0,2)));
-    balanceObj.push_back(Pair("negativeupnl", FormatByType(mastercore::DoubleToInt64(-upnl),2)));
-  } else {
-    balanceObj.push_back(Pair("positiveupnl", FormatByType(0,2)));
-    balanceObj.push_back(Pair("negativeupnl", FormatByType(0,2)));
-  }
+  // request trade history from trade db
+  UniValue response(UniValue::VARR);
 
-  return balanceObj;
+  t_tradelistdb->getUpnInfo(address, contractId, response, showVerbose);
+
+
+  return response;
 }
 
 UniValue tl_getpnl(const JSONRPCRequest& request)

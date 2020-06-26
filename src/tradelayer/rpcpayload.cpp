@@ -523,6 +523,8 @@ UniValue tl_createpayload_cancelallcontractsbyaddress(const JSONRPCRequest& requ
   struct FutureContractObject *pfuture = getFutureContractObject(name_traded);
   uint32_t contractId = (pfuture) ? pfuture->fco_propertyId : 0;
 
+  PrintToLog("%s() contractId : %d\n",__func__, contractId);
+
   std::vector<unsigned char> payload = CreatePayload_ContractDexCancelAll(contractId);
 
   return HexStr(payload.begin(), payload.end());

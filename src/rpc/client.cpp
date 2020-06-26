@@ -343,7 +343,9 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_getmdexvolume", 1, "arg2" },
     { "tl_getmdexvolume", 2, "arg3" },
     { "tl_getmdexvolume", 3, "arg4" },
-    { "tl_getcurrencytotal", 0, "arg0" }
+    { "tl_getcurrencytotal", 0, "arg0" },
+
+    {"tl_getupnl", 2, "arg2"}
 
 
 };

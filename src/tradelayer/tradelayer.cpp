@@ -4242,7 +4242,7 @@ bool CMPTradeList::attLoop(UniValue& response)
         // ensure correct amount of tokens in value string
         boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
 
-        PrintToLog("%s(): vstr: %s\n",__func__,strValue);
+        // PrintToLog("%s(): vstr: %s\n",__func__,strValue);
 
         if (vstr.size() != 7)
             continue;
@@ -4418,7 +4418,7 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   double UPNL1 = 0, UPNL2 = 0;
   /********************************************************************/
   const string key =  sblockNum2 + "+" + txid1.ToString() + "+" + txid2.ToString(); //order with block of taker.
-  const string value = strprintf("%s:%s:%lu:%lu:%lu:%d:%d:%s:%s:%d:%d:%d:%s:%s:%d:%d:%d", address1, address2, effective_price, amount_maker, amount_taker, blockNum1, blockNum2, s_maker0, s_taker0, lives_s0, lives_b0, property_traded, txid1.ToString(), txid2.ToString(), nCouldBuy0,amountpold, amountpnew);
+  const string value = strprintf("%s:%s:%lu:%lu:%lu:%d:%d:%s:%s:%d:%d:%d:%s:%s:%d:%d:%d", address1, address2, effective_price, amount_maker, amount_taker, blockNum1, blockNum2, s_maker0, s_taker0, lives_s0, lives_b0, property_traded, txid1.ToString(), txid2.ToString(), nCouldBuy0, amountpold, amountpnew);
 
   const string line0 = gettingLineOut(address1, s_maker0, lives_s0, address2, s_taker0, lives_b0, nCouldBuy0, effective_price);
   const string line1 = gettingLineOut(address1, s_maker1, lives_s1, address2, s_taker1, lives_b1, nCouldBuy1, effective_price);
@@ -5676,7 +5676,7 @@ bool CMPTradeList::getChannelInfo(const std::string& channelAddress, UniValue& t
     }
 
     // channel status:
-    std::map<std::string,channel>::iterator itt = channels_Map.find(channelAddress);
+    auto itt = channels_Map.find(channelAddress);
     (itt != channels_Map.end()) ? tradeArray.push_back(Pair("status","active")) : tradeArray.push_back(Pair("status","closed"));
 
        // clean up
@@ -6236,6 +6236,100 @@ bool mastercore::updateLastExBlock(int& nBlock, const std::string& sender)
     }
 
     return true;
+}
+
+// long: true, short: false
+bool getPosition(const std::string& status)
+{
+    auto it = std::find_if(longActions.begin(), longActions.end(), [status] (const std::string& s) { return (s == status); } );
+    return ((it != longActions.end()) ? true : false);
+}
+
+void calculateUPNL(std::vector<double>& sum_upnl, uint64_t entry_price, uint64_t amount, uint64_t exit_price, bool position, bool inverse_quoted)
+{
+    double UPNL = 0;
+    (inverse_quoted) ? UPNL = (double)amount * COIN * (1/(double)entry_price-1/(double)exit_price) : UPNL = (double) amount * COIN *(exit_price - entry_price);
+    if(!position) UPNL *= -1;
+    sum_upnl.push_back(UPNL);
+}
+
+void CMPTradeList::getUpnInfo(const std::string& address, uint32_t contractId, UniValue& response, bool showVerbose)
+{
+    if (!pdb) return;
+
+    CMPSPInfo::Entry sp;
+    _my_sps->getSP(contractId, sp);
+
+    //twap of last 3 blocks
+    const uint64_t& exitPrice = getOracleTwap(contractId, oBlocks);
+
+    int count = 0;
+    std::vector<double> sumUpnl;
+    leveldb::Iterator* it = NewIterator();
+
+    for(it->SeekToFirst(); it->Valid(); it->Next())
+    {
+        std::string strKey = it->key().ToString();
+        std::string strValue = it->value().ToString();
+        std::vector<std::string> vecValues;
+
+        boost::split(vecValues, strValue, boost::is_any_of(":"), token_compress_on);
+        if (vecValues.size() != 17) {
+            // PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
+            continue;
+        }
+
+        const std::string& address1 = vecValues[0];
+        const std::string& address2 = vecValues[1];
+
+        bool first = (address1 != address);
+        bool second = (address2 != address);
+
+        if(first && second) continue;
+        count++;
+
+        if(msc_debug_get_upn_info) PrintToLog("%s(): searching for address: %s\n",__func__, address);
+
+        const std::string& status1  = vecValues[7];
+        const std::string& status2  = vecValues[8];
+
+        // taking the matched address and the status of that trade (short or long)
+        std::pair <std::string, bool> args;
+        (first) ? (args.first = address1, args.second = getPosition(status2)) : (args.first = address2, args.second = getPosition(status1));
+
+
+        if (msc_debug_get_upn_info)
+        {
+            PrintToLog("%s(): strValue: %s\n",__func__, strValue);
+            PrintToLog("%s(): position bool: %d\n",__func__, args.second);
+            PrintToLog("%s(): address matched: %d\n",__func__, args.first);
+        }
+
+        uint64_t price = boost::lexical_cast<uint64_t>(vecValues[2]);
+        uint64_t amount = boost::lexical_cast<uint64_t>(vecValues[14]);
+        uint64_t blockNum = boost::lexical_cast<uint64_t>(vecValues[6]);
+
+        // partial upnl
+        calculateUPNL(sumUpnl, price, amount, exitPrice, args.second, sp.inverse_quoted);
+
+        if(showVerbose)
+        {
+            UniValue registerObj(UniValue::VOBJ);
+            registerObj.push_back(Pair("address matched", args.first));
+            registerObj.push_back(Pair("entry price", FormatDivisibleMP(price)));
+            registerObj.push_back(Pair("amount", amount));
+            registerObj.push_back(Pair("block", blockNum));
+            response.push_back(registerObj);
+        }
+    }
+
+    delete it;
+
+    const int64_t totalUpnl = accumulate(sumUpnl.begin(), sumUpnl.end(), 0.0) * COIN;
+    UniValue upnlObj(UniValue::VOBJ);
+    upnlObj.push_back(Pair("upnl", FormatDivisibleMP(totalUpnl, true)));
+    response.push_back(upnlObj);
+
 }
 
 

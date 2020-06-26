@@ -108,6 +108,7 @@ bool msc_debug_is_mpin_block_range              = 0;
 bool msc_debug_record_payment_tx                = 0;
 bool msc_tx_valid_node_reward                   = 0;
 bool msc_debug_delete_att_register              = 0;
+bool msc_debug_get_upn_info                     = 0;
 bool msc_debug_get_total_lives                  = 0;
 
 /**

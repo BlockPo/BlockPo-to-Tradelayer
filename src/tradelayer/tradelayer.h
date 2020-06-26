@@ -244,6 +244,10 @@ const rational_t factor2 = rational_t(20,100); // normal limits
 // define KYC id = 0 for self attestations
 #define KYC_0      0
 
+// upnl calculations
+const std::vector<std::string> longActions{ "ShortPosNetted", "OpenLongPosition", "OpenLongPosByShortPosNetted", "LongPosIncreased", "ShortPosNettedPartly"};
+
+
 
 // forward declarations
 std::string FormatDivisibleMP(int64_t amount, bool fSign = false);
@@ -435,6 +439,7 @@ class CMPTradeList : public CDBBase
   void getTradesForPair(uint32_t propertyIdSideA, uint32_t propertyIdSideB, UniValue& response, uint64_t count);
   int getMPTradeCountTotal();
   int getNextId();
+  void getUpnInfo(const std::string& address, uint32_t contractId, UniValue& response, bool showVerbose);
 };
 
 class CMPSettlementMatchList : public CDBBase
