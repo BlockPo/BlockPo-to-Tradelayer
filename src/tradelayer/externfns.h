@@ -40,28 +40,28 @@ void vwap_num_den(std::vector<int64_t> vn, std::vector<int64_t> vd, int64_t &n, 
 
 namespace mastercore
 {
-  int64_t DoubleToInt64(double d);
-  int64_t RationalToInt64(rational_t r);
+    int64_t DoubleToInt64(double d);
+    int64_t RationalToInt64(rational_t r);
 }
 
 template<typename T> void print_stdvector(T const &vec)
 {
-  typename T::const_iterator pos;
-  typename T::const_iterator end(vec.end());
+    typename T::const_iterator pos;
+    typename T::const_iterator end(vec.end());
 
-  PrintToLog("\n\nPrinting std::vector: [\t ");
-  for (pos=vec.begin(); pos!=end; ++pos) {
-    PrintToLog("%s\t", FormatDivisibleMP(*pos));
-  }
-  PrintToLog("]\n\n");
+    PrintToLog("\n\nPrinting std::vector: [\t ");
+    for (pos=vec.begin(); pos!=end; ++pos) {
+        PrintToLog("%s\t", FormatDivisibleMP(*pos));
+    }
+    PrintToLog("]\n\n");
 }
 
 template<typename T> std::vector<T> min_max(std::vector<T> &vec)
 {
-  auto result = std::minmax_element(vec.begin(),vec.end());
-  vec[0]=*result.first;
-  vec[1]=*result.second;
-  return vec;
+    auto result = std::minmax_element(vec.begin(),vec.end());
+    vec[0]=*result.first;
+    vec[1]=*result.second;
+    return vec;
 }
 
 #endif

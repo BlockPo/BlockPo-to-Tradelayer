@@ -65,6 +65,7 @@ std::map<std::string, uint256> FetchWalletTLTransactions(unsigned int count, int
     if (pwalletMain == nullptr) {
         return mapResponse;
     }
+
     std::set<uint256> seenHashes;
     std::list<CAccountingEntry> acentries;
     CWallet::TxItems txOrdered;
@@ -72,8 +73,10 @@ std::map<std::string, uint256> FetchWalletTLTransactions(unsigned int count, int
         LOCK(pwalletMain->cs_wallet);
         txOrdered = pwalletMain->wtxOrdered;
     }
+    
     // Iterate backwards through wallet transactions until we have count items to return:
-    for (CWallet::TxItems::reverse_iterator it = txOrdered.rbegin(); it != txOrdered.rend(); ++it) {
+    for (CWallet::TxItems::reverse_iterator it = txOrdered.rbegin(); it != txOrdered.rend(); ++it)
+    {
         const CWalletTx* pwtx = it->second.first;
         if (pwtx == nullptr) continue;
         const uint256& txHash = pwtx->GetHash();
@@ -98,7 +101,8 @@ std::map<std::string, uint256> FetchWalletTLTransactions(unsigned int count, int
     // Insert pending transactions (sets block as 999999 and position as wallet position)
     // TODO: resolve potential deadlock caused by cs_wallet, cs_pending
     // LOCK(cs_pending);
-    for (PendingMap::const_iterator it = my_pending.begin(); it != my_pending.end(); ++it) {
+    for (PendingMap::const_iterator it = my_pending.begin(); it != my_pending.end(); ++it)
+    {
         const uint256& txHash = it->first;
         int blockHeight = 9999999;
         if (blockHeight < startBlock || blockHeight > endBlock) continue;
@@ -111,6 +115,7 @@ std::map<std::string, uint256> FetchWalletTLTransactions(unsigned int count, int
                 blockPosition = wtx.nOrderPos;
             }
         }
+
         std::string sortKey = strprintf("%07d%010d", blockHeight, blockPosition);
         mapResponse.insert(std::make_pair(sortKey, txHash));
     }

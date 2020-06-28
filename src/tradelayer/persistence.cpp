@@ -16,12 +16,14 @@
  */
 leveldb::Status CDBBase::Open(const boost::filesystem::path& path, bool fWipe)
 {
-      if (fWipe) {
-         if (msc_debug_persistence) PrintToLog("Wiping LevelDB in %s\n", path.string());
-         leveldb::DestroyDB(path.string(), options);
-     }
-     TryCreateDirectory(path);
-     if (msc_debug_persistence) PrintToLog("Opening LevelDB in %s\n", path.string());
+    if (fWipe)
+    {
+        if (msc_debug_persistence) PrintToLog("Wiping LevelDB in %s\n", path.string());
+        leveldb::DestroyDB(path.string(), options);
+    }
+
+    TryCreateDirectory(path);
+    if (msc_debug_persistence) PrintToLog("Opening LevelDB in %s\n", path.string());
 
     return leveldb::DB::Open(options, path.string(), &pdb);
 }

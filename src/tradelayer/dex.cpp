@@ -201,7 +201,7 @@ int DEx_offerCreate(const std::string& addressSeller, uint32_t propertyId, int64
     if (amountOffered > 0) {
         assert(update_tally_map(addressSeller, propertyId, -amountOffered, BALANCE));
         assert(update_tally_map(addressSeller, propertyId, amountOffered, SELLOFFER_RESERVE));
-        CMPOffer sellOffer(block, amountOffered, propertyId, amountDesired, minAcceptFee, paymentWindow, txid, 2);
+        CMPOffer sellOffer(block, amountOffered, propertyId, amountDesired, minAcceptFee, paymentWindow, txid,0, 2);
         my_offers.insert(std::make_pair(key, sellOffer));
 
         rc = 0;
@@ -282,7 +282,7 @@ int DEx_BuyOfferCreate(const std::string& addressMaker, uint32_t propertyId, int
     // if (ready)
     if (true)
     {
-        CMPOffer sellOffer(block, amountOffered, propertyId, price, minAcceptFee, paymentWindow, txid, 1);
+        CMPOffer sellOffer(block, amountOffered, propertyId, price, minAcceptFee, paymentWindow, txid, 0, 1);
         my_offers.insert(std::make_pair(key, sellOffer));
         rc = 0;
     } else {
@@ -739,7 +739,7 @@ unsigned int eraseExpiredAccepts(int blockNow)
             my_accepts.erase(it++);
 
             ++how_many_erased;
-            
+
         } else it++;
     }
 
