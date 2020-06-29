@@ -119,6 +119,32 @@ class RPCValuesBasicsTest (BitcoinTestFramework):
 
         self.nodes[0].generate(1)
 
+        self.log.info("Checking the native contract (using an unknown name)")
+        params = '["qWeRtY9.1-boXjk"]'
+        out = tradelayer_HTTP(conn, headers, False, "tl_getcontract",params)
+        assert_equal(out['error']['message'], 'Contract not found!')
+        # self.log.info(out)
+
+        self.log.info("Checking the native contract (using number 0)")
+        params = '["0"]'
+        out = tradelayer_HTTP(conn, headers, False, "tl_getcontract",params)
+        assert_equal(out['error']['message'], "Contract not found!")
+        # self.log.info(out)
+        
+
+        self.log.info("Checking the native contract (using number with decimals)")
+        params = '["5.5851111111114522"]'
+        out = tradelayer_HTTP(conn, headers, False, "tl_getcontract",params)
+        assert_equal(out['error'], None)
+        # self.log.info(out)
+        assert_equal(out['result']['propertyid'],5)
+        assert_equal(out['result']['name'],'ALL/Lhk')
+        assert_equal(out['result']['admin'], addresses[0])
+        assert_equal(out['result']['notional size'], '1')
+        assert_equal(out['result']['collateral currency'], '4')
+        assert_equal(out['result']['margin requirement'], '0.1')
+        assert_equal(out['result']['blocks until expiration'], '1000')
+        assert_equal(out['result']['inverse quoted'], '0')
 
         self.log.info("Checking the native contract (using number 5)")
         params = '["5"]'

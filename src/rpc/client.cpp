@@ -273,7 +273,6 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_sendtrade", 1, "arg1" },
     { "tl_sendtrade", 3, "arg3" },
     { "tl_getmax_peggedcurrency", 1, "arg1" },
-    { "tl_getmax_peggedcurrency", 2, "arg2" },
     { "tl_sendissuance_pegged", 1, "arg1" },
     { "tl_sendissuance_pegged", 2, "arg2" },
     { "tl_sendissuance_pegged", 4, "arg3" },
@@ -344,6 +343,8 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_getmdexvolume", 2, "arg3" },
     { "tl_getmdexvolume", 3, "arg4" },
     { "tl_getcurrencytotal", 0, "arg0" },
+
+    { "tl_gettradehistory", 0, "arg0" },
 
     {"tl_getupnl", 2, "arg2"}
 
