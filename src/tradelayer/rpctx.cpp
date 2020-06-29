@@ -1280,7 +1280,6 @@ UniValue tl_redemption_pegged(const JSONRPCRequest& request)
 
   std::string name_pegged = ParseText(request.params[1]);
   uint32_t contractId = ParseNameOrId(request.params[3]);
-  
   struct FutureContractObject *pfuture_pegged = getFutureContractObject(name_pegged);
   uint32_t propertyId = (pfuture_pegged) ? pfuture_pegged->fco_propertyId : 0;
 
