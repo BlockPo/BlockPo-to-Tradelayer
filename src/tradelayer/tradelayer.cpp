@@ -1321,22 +1321,21 @@ int input_mp_offers_string(const std::string& s)
 
     int i = 0;
 
-    // NOTE: Review this persistence !!!
     std::string sellerAddr = vstr[i++];
     int offerBlock = boost::lexical_cast<int>(vstr[i++]);
     int64_t amountOriginal = boost::lexical_cast<int64_t>(vstr[i++]);
     uint32_t prop = boost::lexical_cast<uint32_t>(vstr[i++]);
     int64_t btcDesired = boost::lexical_cast<int64_t>(vstr[i++]);
-    // uint32_t prop_desired = boost::lexical_cast<uint32_t>(vstr[i++]);
     int64_t minFee = boost::lexical_cast<int64_t>(vstr[i++]);
     uint8_t blocktimelimit = boost::lexical_cast<unsigned int>(vstr[i++]); // lexical_cast can't handle char!
     uint256 txid = uint256S(vstr[i++]);
-    uint8_t option = 2;
+    uint8_t subaction = boost::lexical_cast<uint8_t>(vstr[i++]);
+    uint8_t option = boost::lexical_cast<uint8_t>(vstr[i++]);
     // TODO: should this be here? There are usually no sanity checks..
       // if (TL_PROPERTY_BTC != prop_desired) return -1;
 
     const std::string combo = STR_SELLOFFER_ADDR_PROP_COMBO(sellerAddr, prop);
-    CMPOffer newOffer(offerBlock, amountOriginal, prop, btcDesired, minFee, blocktimelimit, txid, option);
+    CMPOffer newOffer(offerBlock, amountOriginal, prop, btcDesired, minFee, blocktimelimit, txid, subaction, option);
 
     if (!my_offers.insert(std::make_pair(combo, newOffer)).second) return -1;
 
@@ -1440,10 +1439,11 @@ int input_mp_contractdexorder_string(const std::string& s)
     uint256 txid = uint256S(vstr[i++]);
     int64_t amount_remaining = boost::lexical_cast<int64_t>(vstr[i++]);
     uint64_t effective_price = boost::lexical_cast<uint64_t>(vstr[i++]);
-    uint8_t trading_action = boost::lexical_cast<unsigned int>(vstr[i++]);
+    uint8_t trading_action = boost::lexical_cast<uint8_t>(vstr[i++]);
+    int64_t amount_reserved = boost::lexical_cast<int64_t>(vstr[i++]);
 
     CMPContractDex mdexObj(addr, block, property, amount_forsale, desired_property,
-            amount_desired, txid, idx, subaction, amount_remaining, effective_price, trading_action);
+            amount_desired, txid, idx, subaction, amount_remaining, effective_price, trading_action, amount_reserved);
 
     if (!ContractDex_INSERT(mdexObj)) return -1;
 

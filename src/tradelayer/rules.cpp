@@ -209,7 +209,7 @@ CRegTestConsensusParams::CRegTestConsensusParams()
 
     // NOTE: this is the value we are changing (from 999999 to 400)
     // in test tl_activation.py
-    MSC_SP_BLOCK = 999999;
+    MSC_SP_BLOCK = 200;
 
     MSC_MANUALSP_BLOCK = 0;
     MSC_SEND_ALL_BLOCK = 0;

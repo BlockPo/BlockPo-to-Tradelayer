@@ -79,10 +79,10 @@ public:
     }
 
     CMPOffer(int block, int64_t amountOffered, uint32_t propertyId, int64_t amountDesired,
-             int64_t minAcceptFee, uint8_t paymentWindow, const uint256& tx, uint8_t option)
+             int64_t minAcceptFee, uint8_t paymentWindow, const uint256& tx,uint8_t sub_action, uint8_t option)
       : offerBlock(block), offer_amount_original(amountOffered), property(propertyId),
         BTC_desired_original(amountDesired), min_fee(minAcceptFee), blocktimelimit(paymentWindow),
-        txid(tx), subaction(0), option_(option)
+        txid(tx), subaction(sub_action), option_(option)
     {
         // if (msc_debug_dex) PrintToLog("%s(%d): %s\n", __func__, amountOffered, txid.GetHex());
     }
@@ -96,7 +96,7 @@ public:
 
     void saveOffer(std::ofstream& file, SHA256_CTX* shaCtx, const std::string& address) const
     {
-        std::string lineOut = strprintf("%s,%d,%d,%d,%d,%d,%d,%d,%s",
+        std::string lineOut = strprintf("%s,%d,%d,%d,%d,%d,%d,%d,%s,%d,%d",
                 address,
                 offerBlock,
                 offer_amount_original,
@@ -105,7 +105,9 @@ public:
                 (TL_PROPERTY_BTC),
                 min_fee,
                 blocktimelimit,
-                txid.ToString()
+                txid.ToString(),
+                subaction,
+                option_
         );
 
         // add the line to the hash

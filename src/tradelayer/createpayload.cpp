@@ -24,6 +24,16 @@
     vector.insert(vector.end(), reinterpret_cast<unsigned char *>((ptr)),\
     reinterpret_cast<unsigned char *>((ptr)) + (size));
 
+static void push_back_compressed(int value, std::vector<std::vector<uint8_t>>& auxVec)
+{
+    std::vector<uint8_t> vecNum = CompressInteger((uint64_t) value);
+    auxVec.push_back(vecNum);
+}
+
+static void payload_insert(const std::vector<uint8_t>& value, std::vector<unsigned char>& payload)
+{
+    payload.insert(payload.end(), value.begin(), value.end());
+}
 
 std::vector<unsigned char> CreatePayload_SimpleSend(uint32_t propertyId, uint64_t amount)
 {
@@ -82,6 +92,7 @@ std::vector<unsigned char> CreatePayload_SendAll()
 std::vector<unsigned char> CreatePayload_IssuanceFixed(uint16_t propertyType, uint32_t previousPropertyId, std::string& name, std::string& url, std::string& data, uint64_t amount, std::vector<int>& kycVec)
 {
     std::vector<unsigned char> payload;
+    std::vector<std::vector<uint8_t>> auxVec;
 
     uint64_t messageType = 50;
     uint64_t messageVer = 0;
@@ -92,13 +103,7 @@ std::vector<unsigned char> CreatePayload_IssuanceFixed(uint16_t propertyType, ui
     std::vector<uint8_t> vecPrevPropertyId = CompressInteger((uint64_t)previousPropertyId);
     std::vector<uint8_t> vecAmount = CompressInteger((uint64_t)amount);
 
-    std::vector<std::vector<uint8_t>> auxVec;
-
-    for (std::vector<int>::iterator it = kycVec.begin(); it != kycVec.end();++it)
-    {
-        std::vector<uint8_t> vecNum = CompressInteger((uint64_t) *it);
-        auxVec.push_back(vecNum);
-    }
+    for_each(kycVec.begin(), kycVec.end(), [&auxVec](int elem) { push_back_compressed(elem, auxVec); });
 
     if (name.size() > 255) name = name.substr(0,255);
     if (url.size() > 255) url = url.substr(0,255);
@@ -116,11 +121,7 @@ std::vector<unsigned char> CreatePayload_IssuanceFixed(uint16_t propertyType, ui
     payload.push_back('\0');
     payload.insert(payload.end(), vecAmount.begin(), vecAmount.end());
 
-    for (std::vector<std::vector<uint8_t>>::iterator itt = auxVec.begin(); itt != auxVec.end(); ++itt)
-    {
-        const std::vector<uint8_t>& vec = *itt;
-        payload.insert(payload.end(), vec.begin(), vec.end());
-    }
+    for_each(auxVec.begin(), auxVec.end(), [&payload] (const std::vector<uint8_t>& value) { payload_insert(value, payload); });
 
     return payload;
 }
@@ -143,6 +144,7 @@ std::vector<unsigned char> CreatePayload_IssuanceVariable(uint16_t propertyType,
     if (name.size() > 255) name = name.substr(0,255);
     if (url.size() > 255) url = url.substr(0,255);
     if (data.size() > 255) data = data.substr(0,255);
+
 
     payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
     payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
@@ -167,6 +169,7 @@ std::vector<unsigned char> CreatePayload_IssuanceVariable(uint16_t propertyType,
 std::vector<unsigned char> CreatePayload_IssuanceManaged(uint16_t propertyType, uint32_t previousPropertyId, std::string& name, std::string& url, std::string& data, std::vector<int>& kycVec)
 {
     std::vector<unsigned char> payload;
+    std::vector<std::vector<uint8_t>> auxVec;
 
     uint64_t messageType = 54;
     uint64_t messageVer = 0;
@@ -176,13 +179,8 @@ std::vector<unsigned char> CreatePayload_IssuanceManaged(uint16_t propertyType, 
     std::vector<uint8_t> vecPropertyType = CompressInteger((uint64_t)propertyType);
     std::vector<uint8_t> vecPrevPropertyId = CompressInteger((uint64_t)previousPropertyId);
 
-    std::vector<std::vector<uint8_t>> auxVec;
+    for_each(kycVec.begin(), kycVec.end(), [&auxVec](int elem) { push_back_compressed(elem, auxVec); });
 
-    for (std::vector<int>::iterator it = kycVec.begin(); it != kycVec.end();++it)
-    {
-        std::vector<uint8_t> vecNum = CompressInteger((uint64_t) *it);
-        auxVec.push_back(vecNum);
-    }
 
     if (name.size() > 255) name = name.substr(0,255);
     if (url.size() > 255) url = url.substr(0,255);
@@ -199,11 +197,7 @@ std::vector<unsigned char> CreatePayload_IssuanceManaged(uint16_t propertyType, 
     payload.insert(payload.end(), data.begin(), data.end());
     payload.push_back('\0');
 
-    for (std::vector<std::vector<uint8_t>>::iterator itt = auxVec.begin(); itt != auxVec.end(); ++itt)
-    {
-        const std::vector<uint8_t>& vec = *itt;
-        payload.insert(payload.end(), vec.begin(), vec.end());
-    }
+    for_each(auxVec.begin(), auxVec.end(), [&payload] (const std::vector<uint8_t>& value) { payload_insert(value, payload); });
 
     return payload;
 }
@@ -349,6 +343,7 @@ std::vector<unsigned char> CreatePayload_TradeLayerAlert(uint16_t alertType, uin
 std::vector<unsigned char> CreatePayload_CreateContract(uint32_t num, uint32_t den, std::string& name, uint32_t blocks_until_expiration, uint32_t notional_size, uint32_t collateral_currency, uint64_t margin_requirement, uint8_t inverse, std::vector<int>& kycVec)
 {
     std::vector<unsigned char> payload;
+    std::vector<std::vector<uint8_t>> auxVec;
 
     uint64_t messageType = 40;
     uint64_t messageVer = 0;
@@ -363,13 +358,7 @@ std::vector<unsigned char> CreatePayload_CreateContract(uint32_t num, uint32_t d
     std::vector<uint8_t> vecMarginRequirement = CompressInteger(margin_requirement);
     std::vector<uint8_t> vecInverse = CompressInteger((uint64_t)inverse);
 
-    std::vector<std::vector<uint8_t>> auxVec;
-
-    for (std::vector<int>::iterator it = kycVec.begin(); it != kycVec.end();++it)
-    {
-        std::vector<uint8_t> vecNum = CompressInteger((uint64_t) *it);
-        auxVec.push_back(vecNum);
-    }
+    for_each(kycVec.begin(), kycVec.end(), [&auxVec](int elem) { push_back_compressed(elem, auxVec); });
 
     if ((name).size() > 255) name = name.substr(0,255);
     payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
@@ -384,11 +373,7 @@ std::vector<unsigned char> CreatePayload_CreateContract(uint32_t num, uint32_t d
     payload.insert(payload.end(), vecMarginRequirement.begin(), vecMarginRequirement.end());
     payload.insert(payload.end(), vecInverse.begin(), vecInverse.end());
 
-    for(std::vector<std::vector<uint8_t>>::iterator itt = auxVec.begin(); itt != auxVec.end(); ++itt)
-    {
-        const std::vector<uint8_t>& vec = *itt;
-        payload.insert(payload.end(), vec.begin(), vec.end());
-    }
+    for_each(auxVec.begin(), auxVec.end(), [&payload] (const std::vector<uint8_t>& value) { payload_insert(value, payload); });
 
     return payload;
 }
@@ -644,6 +629,7 @@ std::vector<unsigned char> CreatePayload_MetaDExTrade(uint32_t propertyIdForSale
 std::vector<unsigned char> CreatePayload_CreateOracleContract(std::string& name, uint32_t blocks_until_expiration, uint32_t notional_size, uint32_t collateral_currency, uint64_t margin_requirement, uint8_t inverse, std::vector<int>& kycVec)
 {
     std::vector<unsigned char> payload;
+    std::vector<std::vector<uint8_t>> auxVec;
 
     uint64_t messageType = 103;
     uint64_t messageVer = 0;
@@ -656,13 +642,7 @@ std::vector<unsigned char> CreatePayload_CreateOracleContract(std::string& name,
     std::vector<uint8_t> vecMarginRequirement = CompressInteger((uint64_t)margin_requirement);
     std::vector<uint8_t> vecInverse = CompressInteger((uint64_t)inverse);
 
-    std::vector<std::vector<uint8_t>> auxVec;
-
-    for (std::vector<int>::iterator it = kycVec.begin(); it != kycVec.end();++it)
-    {
-        std::vector<uint8_t> vecNum = CompressInteger((uint64_t) *it);
-        auxVec.push_back(vecNum);
-    }
+    for_each(kycVec.begin(), kycVec.end(), [&auxVec](int elem) { push_back_compressed(elem, auxVec); });
 
     if ((name).size() > 255) name = name.substr(0,255);
     payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
@@ -675,11 +655,7 @@ std::vector<unsigned char> CreatePayload_CreateOracleContract(std::string& name,
     payload.insert(payload.end(), vecMarginRequirement.begin(), vecMarginRequirement.end());
     payload.insert(payload.end(), vecInverse.begin(), vecInverse.end());
 
-    for (std::vector<std::vector<uint8_t>>::iterator itt = auxVec.begin(); itt != auxVec.end(); ++itt)
-    {
-        const std::vector<uint8_t>& vec = *itt;
-        payload.insert(payload.end(), vec.begin(), vec.end());
-    }
+    for_each(auxVec.begin(), auxVec.end(), [&payload] (const std::vector<uint8_t>& value) { payload_insert(value, payload); });
 
     return payload;
 }

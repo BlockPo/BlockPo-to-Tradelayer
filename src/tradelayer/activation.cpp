@@ -33,11 +33,7 @@ std::vector<FeatureActivation> vecCompletedActivations;
 static void DeletePendingActivation(uint16_t featureId)
 {
    for (std::vector<FeatureActivation>::iterator it = vecPendingActivations.begin(); it != vecPendingActivations.end(); ) {
-       if ((*it).featureId == featureId) {
-           it = vecPendingActivations.erase(it);
-       } else {
-           ++it;
-       }
+       (it->featureId == featureId) ? it = vecPendingActivations.erase(it) : ++it;
    }
 }
 
@@ -164,10 +160,7 @@ bool CheckActivationAuthorization(const std::string& sender)
         }
     }
 
-    bool fAuthorized = (whitelisted.count(sender) ||
-                        whitelisted.count("any"));
-    // bool fAuthorized = false;
-    return fAuthorized;
+    return (whitelisted.count(sender) || whitelisted.count("any"));
 }
 
 /**
@@ -204,10 +197,7 @@ bool CheckDeactivationAuthorization(const std::string& sender)
         }
     }
 
-    bool fAuthorized = (whitelisted.count(sender) ||
-                      whitelisted.count("any"));
-     // bool fAuthorized = false;
-     return fAuthorized;
+    return (whitelisted.count(sender) || whitelisted.count("any"));
 }
 
 } // namespace mastercore

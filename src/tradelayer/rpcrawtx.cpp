@@ -29,7 +29,7 @@ using mastercore::view;
 
 UniValue tl_decodetransaction(const JSONRPCRequest& request)
 {
-    if (request.params.size() < 1 || request.params.size() > 3)
+    if (request.params.size() < 1 || request.params.size() > 3 || request.fHelp)
         throw std::runtime_error(
             "tl_decodetransaction \"rawtx\" ( \"prevtxs\" height )\n"
 
@@ -110,7 +110,7 @@ UniValue tl_decodetransaction(const JSONRPCRequest& request)
 
 UniValue tl_createrawtx_opreturn(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 2)
+    if (request.params.size() != 2 || request.fHelp)
         throw std::runtime_error(
             "tl_createrawtx_opreturn \"rawtx\" \"payload\"\n"
 
@@ -145,7 +145,7 @@ UniValue tl_createrawtx_opreturn(const JSONRPCRequest& request)
 
 UniValue tl_createrawtx_input(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 3)
+    if (request.params.size() != 3 || request.fHelp)
         throw std::runtime_error(
             "tl_createrawtx_input \"rawtx\" \"txid\" n\n"
 
@@ -180,7 +180,7 @@ UniValue tl_createrawtx_input(const JSONRPCRequest& request)
 
 UniValue tl_createrawtx_reference(const JSONRPCRequest& request)
 {
-    if (request.params.size() < 2 || request.params.size() > 3)
+    if (request.params.size() < 2 || request.params.size() > 3 || request.fHelp)
         throw std::runtime_error(
             "tl_createrawtx_reference \"rawtx\" \"destination\" ( amount )\n"
 
@@ -217,7 +217,7 @@ UniValue tl_createrawtx_reference(const JSONRPCRequest& request)
 
 UniValue tl_createrawtx_change(const JSONRPCRequest& request)
 {
-    if (request.params.size() < 4 || request.params.size() > 5)
+    if (request.params.size() < 4 || request.params.size() > 5 || request.fHelp)
         throw std::runtime_error(
             "tl_createrawtx_change \"rawtx\" \"prevtxs\" \"destination\" fee ( position )\n"
 

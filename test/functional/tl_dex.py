@@ -101,7 +101,7 @@ class DExBasicsTest (BitcoinTestFramework):
 
         self.log.info("Checking the property")
         params = str([4])
-        out = tradelayer_HTTP(conn, headers, True, "tl_getproperty",params)
+        out = tradelayer_HTTP(conn, headers, False, "tl_getproperty",params)
         assert_equal(out['error'], None)
         # self.log.info(out)
         assert_equal(out['result']['propertyid'],4)
