@@ -15,6 +15,7 @@ TRADELAYER_TEST_CPP = \
   tradelayer/test/checkpoint_tests.cpp \
   tradelayer/test/contractdex_tests.cpp \
   tradelayer/test/rpcvalues_tests.cpp \
+  tradelayer/test/dex_functions_tests.cpp \
   tradelayer/test/lock_tests.cpp
 
 BITCOIN_TESTS += \

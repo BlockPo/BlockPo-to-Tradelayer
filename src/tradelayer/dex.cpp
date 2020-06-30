@@ -96,25 +96,25 @@ CMPAccept* DEx_getAccept(const std::string& addressSeller, uint32_t propertyId, 
 }
 
 
-namespace legacy
-{
 /**
  * Legacy calculation of Master Core 0.0.9.
  *
  * @see:
  * https://github.com/mastercoin-MSC/mastercore/blob/mscore-0.0.9/src/mastercore_dex.cpp#L439-L449
  */
-static int64_t calculateDesiredBTC(const int64_t amountOffered, const int64_t amountDesired, const int64_t amountAvailable)
+namespace legacy //NOTE: it can overflow  with: LTCs =  amount_des * balanceReallyAvailable
+{
+int64_t calculateDesiredLTC(const int64_t amountOffered, const int64_t amountDesired, const int64_t amountAvailable)
 {
     uint64_t nValue = static_cast<uint64_t>(amountOffered);
     uint64_t amount_des = static_cast<uint64_t>(amountDesired);
     uint64_t balanceReallyAvailable = static_cast<uint64_t>(amountAvailable);
 
-    double BTC;
+    double LTCs;
 
-    BTC = amount_des * balanceReallyAvailable;
-    BTC /= (double) nValue;
-    amount_des = rounduint64(BTC);
+    LTCs = amount_des * balanceReallyAvailable;
+    LTCs /= (double) nValue;
+    amount_des = rounduint64(LTCs);
 
     return static_cast<int64_t>(amount_des);
 }
@@ -126,7 +126,7 @@ static int64_t calculateDesiredBTC(const int64_t amountOffered, const int64_t am
  * TODO: don't expose it!
  * @return The amount of bitcoins desired
  */
-int64_t calculateDesiredBTC(const int64_t amountOffered, const int64_t amountDesired, const int64_t amountAvailable)
+int64_t calculateDesiredLTC(const int64_t amountOffered, const int64_t amountDesired, const int64_t amountAvailable)
 {
     if (amountOffered == 0) {
         return 0; // divide by null protection
@@ -188,12 +188,12 @@ int DEx_offerCreate(const std::string& addressSeller, uint32_t propertyId, int64
                         addressSeller, FormatDivisibleMP(amountOffered), strMPProperty(propertyId),
                         FormatDivisibleMP(balanceReallyAvailable), strMPProperty(propertyId));
 
-        // AND we must also re-adjust the BTC desired in this case...
-        amountDesired = legacy::calculateDesiredBTC(amountOffered, amountDesired, balanceReallyAvailable);
+        // AND we must also re-adjust the LTC desired in this case...
+        amountDesired = calculateDesiredLTC(amountOffered, amountDesired, balanceReallyAvailable);
         amountOffered = balanceReallyAvailable;
         if (nAmended) *nAmended = amountOffered;
 
-        PrintToLog("%s: adjusting order: updated amount for sale: %s %s, offered for: %s BTC\n", __func__,
+        PrintToLog("%s: adjusting order: updated amount for sale: %s %s, offered for: %s LTC\n", __func__,
                         FormatDivisibleMP(amountOffered), strMPProperty(propertyId), FormatDivisibleMP(amountDesired));
     }
     // -------------------------------------------------------------------------
@@ -377,7 +377,7 @@ int DEx_acceptCreate(const std::string& addressTaker, const std::string& address
         return DEX_ERROR_ACCEPT -205;
     }
 
-    // ensure the correct BTC fee was paid in this acceptance message
+    // ensure the correct LTC fee was paid in this acceptance message
     if (feePaid < offer.getMinFee()) {
         PrintToLog("%s: rejected: transaction fee too small [%d < %d]\n", __func__, feePaid, offer.getMinFee());
         return DEX_ERROR_ACCEPT -105;
@@ -390,7 +390,7 @@ int DEx_acceptCreate(const std::string& addressTaker, const std::string& address
         {
             PrintToLog("getProperty: %d\n",offer.getProperty());
             PrintToLog("getOfferAmountOriginal: %d\n",offer.getOfferAmountOriginal());
-            PrintToLog("getBTCDesiredOriginal: %d\n",offer.getBTCDesiredOriginal());
+            PrintToLog("getLTCDesiredOriginal: %d\n",offer.getLTCDesiredOriginal());
         }
 
         if (amountAccepted > offer.getOfferAmountOriginal()) {
@@ -413,7 +413,7 @@ int DEx_acceptCreate(const std::string& addressTaker, const std::string& address
             if (msc_debug_dex) PrintToLog("amountInBalance < amountAccepted ???\n");
         }
 
-        CMPAccept acceptOffer(amountAccepted, block, offer.getBlockTimeLimit(), offer.getProperty(), offer.getOfferAmountOriginal(), offer.getBTCDesiredOriginal(), offer.getHash());
+        CMPAccept acceptOffer(amountAccepted, block, offer.getBlockTimeLimit(), offer.getProperty(), offer.getOfferAmountOriginal(), offer.getLTCDesiredOriginal(), offer.getHash());
         my_accepts.insert(std::make_pair(keyAcceptOrder, acceptOffer));
 
         return 0;
@@ -434,7 +434,7 @@ int DEx_acceptCreate(const std::string& addressTaker, const std::string& address
         assert(update_tally_map(addressMaker, propertyId, -amountReserved, SELLOFFER_RESERVE));
         assert(update_tally_map(addressMaker, propertyId, amountReserved, ACCEPT_RESERVE));
 
-        CMPAccept acceptOffer(amountReserved, block, offer.getBlockTimeLimit(), offer.getProperty(), offer.getOfferAmountOriginal(), offer.getBTCDesiredOriginal(), offer.getHash());
+        CMPAccept acceptOffer(amountReserved, block, offer.getBlockTimeLimit(), offer.getProperty(), offer.getOfferAmountOriginal(), offer.getLTCDesiredOriginal(), offer.getHash());
         my_accepts.insert(std::make_pair(keyAcceptOrder, acceptOffer));
 
         rc = 0;
@@ -503,22 +503,22 @@ namespace legacy
  * @see:
  * https://github.com/mastercoin-MSC/mastercore/blob/mscore-0.0.9/src/mastercore_dex.cpp#L660-L668
  */
-static int64_t calculateDExPurchase(const int64_t amountOffered, const int64_t amountDesired, const int64_t amountPaid)
+int64_t calculateDExPurchase(const int64_t amountOffered, const int64_t amountDesired, const int64_t amountPaid)
 {
     uint64_t acceptOfferAmount = static_cast<uint64_t>(amountOffered);
-    uint64_t acceptBTCDesired = static_cast<uint64_t>(amountDesired);
-    uint64_t BTC_paid = static_cast<uint64_t>(amountPaid);
+    uint64_t acceptLTCDesired = static_cast<uint64_t>(amountDesired);
+    uint64_t LTC_paid = static_cast<uint64_t>(amountPaid);
 
-    const double BTC_desired_original = acceptBTCDesired;
+    const double LTC_desired_original = acceptLTCDesired;
     const double offer_amount_original = acceptOfferAmount;
 
     if (msc_debug_dex)
     {
-        PrintToLog("BTC_paid : %d\n", BTC_paid);
-        PrintToLog("BTC_desired_original : %d\n", BTC_desired_original);
+        PrintToLog("LTC_paid : %d\n", LTC_paid);
+        PrintToLog("LTC_desired_original : %d\n", LTC_desired_original);
     }
 
-    double perc_X = (double) BTC_paid / BTC_desired_original;
+    double perc_X = (double) LTC_paid / LTC_desired_original;
     double Purchased = offer_amount_original * perc_X;
 
     uint64_t units_purchased = rounduint64(Purchased);
@@ -560,7 +560,7 @@ int64_t calculateDExPurchase(const int64_t amountOffered, const int64_t amountDe
 }
 
 /**
- * Handles incoming BTC payment for the offer in tradelayer.cpp
+ * Handles incoming LTC payment for the offer in tradelayer.cpp
  */
 int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addressSeller, const std::string& addressBuyer, int64_t amountPaid, int block, uint64_t* nAmended)
 {
@@ -605,7 +605,7 @@ int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addre
     }
 
     // -------------------------------------------------------------------------
-    const int64_t amountDesired = p_accept->getBTCDesiredOriginal();
+    const int64_t amountDesired = p_accept->getLTCDesiredOriginal();
     const int64_t amountOffered = p_accept->getOfferAmountOriginal();
 
     if (msc_debug_dex) PrintToLog("%s(): amountDesired : %d, amountOffered : %d\n",__func__, amountDesired, amountOffered);
