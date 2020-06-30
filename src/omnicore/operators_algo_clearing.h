@@ -40,7 +40,7 @@ VectorTLS status_open_incr(VectorTLS &status_q, int q);
 
 VectorTLS status_netted_npartly(VectorTLS &status_q, int q);
 
-void clearing_operator_fifo(VectorTLS &vdata, MatrixTLS &M_file, int index_init, struct status_amounts *pt_pos, int idx_long_short, int &counting_netted, long int amount_trd_sum, std::vector<std::map<std::string, std::string>> &path_main, int path_number, long int opened_contracts);
+void clearing_operator_fifo(VectorTLS &vdata, MatrixTLS &M_file, int index_init, struct status_amounts *pt_pos, int idx_long_short, int &counting_netted, long int amount_trd_sum, std::vector<std::map<std::string, std::string>> &path_main, int path_number, long int opened_contracts, int idx_b);
 
 void adding_newtwocols_trdamount(MatrixTLS &M_file, MatrixTLS &database);
 

@@ -187,7 +187,8 @@ void settlement_algorithm_fifo(MatrixTLS &M_file, int64_t interest, int64_t twap
     struct status_amounts *pt_vdata_long  = get_status_amounts_open_incr(vdata, 0);
     struct status_amounts *pt_vdata_short = get_status_amounts_open_incr(vdata, 1);
       
- 	std::vector<std::map<std::string, std::string>> path_maini;
+ 	std::vector<std::map<std::string, std::string>> path_maini; /** ith Path element for Main Graph **/
+ 	int idx_b = 0; /** Branch Index: idx_b = 1 (Branch) idx_b = 0 (Source Edge) **/
       
     if (finding(pt_vdata_long->status_trk, open_incr_long) || finding(pt_vdata_short->status_trk, open_incr_short))
 	{
@@ -200,12 +201,12 @@ void settlement_algorithm_fifo(MatrixTLS &M_file, int64_t interest, int64_t twap
 	  				pt_vdata_long->lives_trk, i, path_number, pt_vdata_long->amount_trd, 0);
 	  
 	  if (finding(pt_vdata_long->status_trk, open_incr_long) && finding(pt_vdata_short->status_trk, open_incr_short))
-	  {
 	  	PrintToLog("New Edge Source: Row #%d\n\n", i);
-	  }	
-	  else
-	  	PrintToLog("New Branch Source: Row #%d\n\n", i);
-
+	  else{
+	  	idx_b = 1;
+	  	PrintToLog("Posible Branch Source: Row #%d\n\n", i);
+	  }
+	  	
 	  path_maini.push_back(edge_source);
 	  printing_edges(edge_source);
 	  
@@ -217,7 +218,7 @@ void settlement_algorithm_fifo(MatrixTLS &M_file, int64_t interest, int64_t twap
 	    PrintToLog("\n*************************************************");
 	    PrintToLog("\nTracking Long Position for: %s", pt_vdata_long->addrs_trk);
 	    clearing_operator_fifo(vdata, M_file, i, pt_vdata_long, 0, counting_netted_long, amount_trd_sum_long, path_maini,
-				     			 path_number, pt_vdata_long->nlives_trk);
+				     			 path_number, pt_vdata_long->nlives_trk, idx_b);
 	  }
 	  
 	  if(finding(pt_vdata_short->status_trk, open_incr_short))
@@ -227,7 +228,7 @@ void settlement_algorithm_fifo(MatrixTLS &M_file, int64_t interest, int64_t twap
 	    PrintToLog("\n*************************************************");
 	    PrintToLog("\nTracking Short Position for: %s", pt_vdata_short->addrs_trk);
 	    clearing_operator_fifo(vdata, M_file, i, pt_vdata_short, 1, counting_netted_short, amount_trd_sum_short, path_maini,
-	    					   path_number, pt_vdata_short->nlives_trk);
+	    					   path_number, pt_vdata_short->nlives_trk, idx_b);
 	  }
 
 	  if (path_maini.size() != 0) 
@@ -246,232 +247,240 @@ void settlement_algorithm_fifo(MatrixTLS &M_file, int64_t interest, int64_t twap
   {
   	PrintToLog("\n\nMain Graph for Settlement:\n\n");
   	for (it_path_main = path_main.begin(); it_path_main != path_main.end(); ++it_path_main)
+  	{
   		printing_path_maini(*it_path_main);
+  		std::cout<< "\n";
+  	}
   }
 
   PrintToLog("\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
   PrintToLog("\nSecond Part: Checking Lives by Path:\n\n");
   
-  std::vector<std::map<std::string, std::string>> lives_longs;
-  std::vector<std::map<std::string, std::string>> lives_shorts;
-  std::vector<std::map<std::string, std::string>> ghost_edges_array;
+  // std::vector<std::map<std::string, std::string>> lives_longs;
+  // std::vector<std::map<std::string, std::string>> lives_shorts;
+  // std::vector<std::map<std::string, std::string>> ghost_edges_array;
   
-  double vwap_exit_price = 0;
-  double PNL_total = 0;
-  int counting_paths = 0;
-  long int sum_oflives = 0;
-  double exit_price_desired = 0;
-  double gamma_p = 0;
-  double gamma_q = 0;
-  double sum_gamma_p = 0;
-  double sum_gamma_q = 0;
+  // double vwap_exit_price = 0;
+  // double PNL_total = 0;
+  // int counting_paths = 0;
+  // long int sum_oflives = 0;
+  // double exit_price_desired = 0;
+  // double gamma_p = 0;
+  // double gamma_q = 0;
+  // double sum_gamma_p = 0;
+  // double sum_gamma_q = 0;
 
-  for (it_path_main = path_main.begin(); it_path_main != path_main.end(); ++it_path_main)
-    {
-      PrintToLog("*******************************************");
-      counting_paths += 1;
-      PrintToLog("\n\nPath for Exit Price #%d:\n\n", counting_paths);
-      printing_path_maini(*it_path_main);
-      checking_zeronetted_bypath(*it_path_main);
-      computing_livesvectors_forlongshort(*it_path_main, lives_longs, lives_shorts);
-      computing_settlement_exitprice(*it_path_main, sum_oflives, PNL_total, gamma_p, gamma_q, interest, twap_price);
-      PrintToLog("\ngamma_p : %d, gamma_q : %d, PNL_total : %d\n", gamma_p, gamma_q, PNL_total);
-      sum_gamma_p += gamma_p;
-      sum_gamma_q += gamma_q;
-    }
-  exit_price_desired = sum_gamma_p/sum_gamma_q;
-  PrintToLog("\nexit_price_desired = %d\n", exit_price_desired);
+  // for (it_path_main = path_main.begin(); it_path_main != path_main.end(); ++it_path_main)
+  //   {
+  //     PrintToLog("*******************************************");
+  //     counting_paths += 1;
+  //     PrintToLog("\n\nPath for Exit Price #%d:\n\n", counting_paths);
+  //     printing_path_maini(*it_path_main);
+  //     checking_zeronetted_bypath(*it_path_main);
+  //     computing_livesvectors_forlongshort(*it_path_main, lives_longs, lives_shorts);
+  //     computing_settlement_exitprice(*it_path_main, sum_oflives, PNL_total, gamma_p, gamma_q, interest, twap_price);
+  //     PrintToLog("\ngamma_p : %d, gamma_q : %d, PNL_total : %d\n", gamma_p, gamma_q, PNL_total);
+  //     sum_gamma_p += gamma_p;
+  //     sum_gamma_q += gamma_q;
+  //   }
+  // exit_price_desired = sum_gamma_p/sum_gamma_q;
+  // PrintToLog("\nexit_price_desired = %d\n", exit_price_desired);
 
-  /** Checking VWAP Price for Settlement **/
+  // /** Checking VWAP Price for Settlement **/
 
-  int64_t VWAPContractPrice = mastercore::getVWAPPriceContracts("ALL F18");
-  PrintToLog("\nVWAPContractPrice = %s\n", FormatDivisibleMP(VWAPContractPrice));
-  vwap_exit_price = static_cast<long double>(VWAPContractPrice)/COIN;
+  // int64_t VWAPContractPrice = mastercore::getVWAPPriceContracts("ALL F18");
+  // PrintToLog("\nVWAPContractPrice = %s\n", FormatDivisibleMP(VWAPContractPrice));
+  // vwap_exit_price = static_cast<long double>(VWAPContractPrice)/COIN;
 
-  int64_t VWAPMetaDExPrice = mastercore::getVWAPPriceByPair("ALL", "dUSD");
-  PrintToLog("\nVWAPMetaDExPrice = %s\n", FormatDivisibleMP(VWAPMetaDExPrice));
+  // int64_t VWAPMetaDExPrice = mastercore::getVWAPPriceByPair("ALL", "dUSD");
+  // PrintToLog("\nVWAPMetaDExPrice = %s\n", FormatDivisibleMP(VWAPMetaDExPrice));
 
-  PrintToLog("\n----------------------------------------------------------\n");
-  PrintToLog("\n\nLocal Vector of Longs Lives\n\n");
-  printing_lives_vector(lives_longs);
+  // PrintToLog("\n----------------------------------------------------------\n");
+  // PrintToLog("\n\nLocal Vector of Longs Lives\n\n");
+  // printing_lives_vector(lives_longs);
   
-  PrintToLog("\n\nLocal Vector of Shorts Lives\n\n");
-  printing_lives_vector(lives_shorts);
+  // PrintToLog("\n\nLocal Vector of Shorts Lives\n\n");
+  // printing_lives_vector(lives_shorts);
 
-  counting_lives_longshorts(lives_longs, lives_shorts);
+  // counting_lives_longshorts(lives_longs, lives_shorts);
 
-  PrintToLog("\n----------------------------------------------------------\n");
+  // PrintToLog("\n----------------------------------------------------------\n");
 
-  PrintToLog("\nGhost Edges Vector:\n");
-  calculating_ghost_edges(lives_longs, lives_shorts, vwap_exit_price, ghost_edges_array);
+  // PrintToLog("\nGhost Edges Vector:\n");
+  // calculating_ghost_edges(lives_longs, lives_shorts, vwap_exit_price, ghost_edges_array);
 
-  std::vector<std::map<std::string, std::string>>::iterator it_ghost;
-  for (it_ghost = ghost_edges_array.begin(); it_ghost != ghost_edges_array.end(); ++it_ghost) printing_edges(*it_ghost);
+  // std::vector<std::map<std::string, std::string>>::iterator it_ghost;
+  // for (it_ghost = ghost_edges_array.begin(); it_ghost != ghost_edges_array.end(); ++it_ghost) printing_edges(*it_ghost);
 
-  PrintToLog("\n__________________________________________________________\n");
+  // PrintToLog("\n__________________________________________________________\n");
 
-  joining_pathmain_ghostedges(path_main, ghost_edges_array);
-  int k = 0;
-  long int nonzero_lives;
-  double PNL_totalit;
+  // joining_pathmain_ghostedges(path_main, ghost_edges_array);
+  // int k = 0;
+  // long int nonzero_lives;
+  // double PNL_totalit;
 
-  std::unordered_set<std::string> addrs_set;
-  std::vector<std::string> addrsv;
+  // std::unordered_set<std::string> addrs_set;
+  // std::vector<std::string> addrsv;
 
-  for (it_path_main = path_main.begin(); it_path_main != path_main.end(); ++it_path_main)
-    {
-      k += 1;
-      PrintToLog("\nPath #%d: with Ghost Nodes\n", k);
-      printing_path_maini(*it_path_main);
-      nonzero_lives = checkpath_livesnonzero(*it_path_main);
-      checkzeronetted_bypath_ghostedges(*it_path_main, nonzero_lives);
-      listof_addresses_bypath(*it_path_main, addrsv);
-      PrintToLog("\nComputing PNL in this Path\n");
-      calculate_pnltrk_bypath(*it_path_main, PNL_totalit, addrs_set, addrsv, interest, twap_price);
-      PNL_total += PNL_totalit;
-      PrintToLog("\nPNL_total_main sum: %f\n", PNL_total);
-      addrs_set.clear();
-    }
+  // for (it_path_main = path_main.begin(); it_path_main != path_main.end(); ++it_path_main)
+  //   {
+  //     k += 1;
+  //     PrintToLog("\nPath #%d: with Ghost Nodes\n", k);
+  //     printing_path_maini(*it_path_main);
+  //     nonzero_lives = checkpath_livesnonzero(*it_path_main);
+  //     checkzeronetted_bypath_ghostedges(*it_path_main, nonzero_lives);
+  //     listof_addresses_bypath(*it_path_main, addrsv);
+  //     PrintToLog("\nComputing PNL in this Path\n");
+  //     calculate_pnltrk_bypath(*it_path_main, PNL_totalit, addrs_set, addrsv, interest, twap_price);
+  //     PNL_total += PNL_totalit;
+  //     PrintToLog("\nPNL_total_main sum: %f\n", PNL_total);
+  //     addrs_set.clear();
+  //   }
 
-  PrintToLog("\n____________________________________________________\n");
-  PrintToLog("\nChecking PNL global (Total Sum PNL by Path):\n");
-  PrintToLog("\nPNL_total_main = %f", PNL_total);
+  // PrintToLog("\n____________________________________________________\n");
+  // PrintToLog("\nChecking PNL global (Total Sum PNL by Path):\n");
+  // PrintToLog("\nPNL_total_main = %f", PNL_total);
 }
 
-void clearing_operator_fifo(VectorTLS &vdata, MatrixTLS &M_file, int index_init, struct status_amounts *pt_pos, int idx_long_short, int &counting_netted, long int amount_trd_sum, std::vector<std::map<std::string, std::string>> &path_main, int path_number, long int opened_contracts)
+void clearing_operator_fifo(VectorTLS &vdata, MatrixTLS &M_file, int index_init, struct status_amounts *pt_pos, int idx_long_short, int &counting_netted, long int amount_trd_sum, std::vector<std::map<std::string, std::string>> &path_main, int path_number, long int opened_contracts, int idx_b)
 {
-  extern int n_rows;
-  extern int n_cols;
+	extern int n_rows;
+	extern int n_cols;
 
-  VectorTLS status_z(2);
-  std::string addrs_opening = pt_pos->addrs_trk;
-  long int d_amounts = 0;
-  std::map<std::string, std::string> path_first;
+  	VectorTLS status_z(2);
+  	std::string addrs_opening = pt_pos->addrs_trk;
+  	long int d_amounts = 0;
+  	std::map<std::string, std::string> path_first;
 
-  PrintToLog("\n---------------------------------------------------\n");
-  PrintToLog("LAUNCHING FIFO CLEARING\n");
-  PrintToLog("...\n");
+  	PrintToLog("\n---------------------------------------------------\n");
+  	PrintToLog("LAUNCHING FIFO CLEARING\n");
+  	PrintToLog("...\n");
 
-  for (int i = index_init + 1; i < n_rows; ++i)
-    {
-      VectorTLS jrow_database(n_cols);
-      sub_row(jrow_database, M_file, i);
+  	for (int i = index_init + 1; i < n_rows; ++i)
+  	{
+      	VectorTLS jrow_database(n_cols);
+      	sub_row(jrow_database, M_file, i);
 
-      if ( finding(addrs_opening, jrow_database) )
+      	if ( finding(addrs_opening, jrow_database) )
         {
-	  struct status_amounts *pt_status_addrs_trk = get_status_amounts_byaddrs(jrow_database, addrs_opening);
-	  VectorTLS status_netted = status_netted_npartly(status_z, idx_long_short);
+	  		struct status_amounts *pt_status_addrs_trk = get_status_amounts_byaddrs(jrow_database, addrs_opening);
+	  		VectorTLS status_netted = status_netted_npartly(status_z, idx_long_short);
 
-	  if ( finding(pt_status_addrs_trk->status_trk, status_netted) && pt_status_addrs_trk->nlives_trk != 0 )
-	    {
-	      counting_netted +=1;
-	      amount_trd_sum += pt_status_addrs_trk->nlives_trk;
+	  		if ( finding(pt_status_addrs_trk->status_trk, status_netted) && pt_status_addrs_trk->nlives_trk != 0 )
+	    	{
+	      		counting_netted +=1;
+	      		amount_trd_sum += pt_status_addrs_trk->nlives_trk;
 	      
-          PrintToLog("\n\nNetted Event in the Row #%d\t Address Tracked: %s\n", i, addrs_opening.c_str());
-	      printing_vector(jrow_database);
+          		PrintToLog("\n\nNetted Event in the Row #%d\t Address Tracked: %s\n", i, addrs_opening.c_str());
+	      		printing_vector(jrow_database);
 
-	      PrintToLog("\n\nopened_contracts = %d, nlives_trk = %d, amount_trd_sum = %d\n", opened_contracts, pt_status_addrs_trk->nlives_trk, amount_trd_sum);
-	      d_amounts = opened_contracts - amount_trd_sum;
+	      		PrintToLog("\n\nopened_contracts = %d, nlives_trk = %d, amount_trd_sum = %d\n", opened_contracts, pt_status_addrs_trk->nlives_trk, amount_trd_sum);
+	      		d_amounts = opened_contracts - amount_trd_sum;
 	      
-        PrintToLog("\n\nReview of d_amounts before cases:\t%ld", d_amounts);
+        		PrintToLog("\n\nReview of d_amounts before cases:\t%ld", d_amounts);
 
-	      if ( d_amounts > 0 )
-		{
-		  PrintToLog("\n\nd_amounts = %ld > 0", d_amounts);
-		  updating_lasttwocols_fromdatabase(addrs_opening, M_file, i, 0);
+	      		if ( d_amounts > 0 )
+				{
+		  			PrintToLog("\n\nd_amounts = %ld > 0", d_amounts);
+		  			updating_lasttwocols_fromdatabase(addrs_opening, M_file, i, 0);
 
-		  PrintToLog("\n\nCheck last two columns Updated: Row #%d \n %s \t %s", i, M_file[i][8], M_file[i][9]);
-		  PrintToLog("\nOpened contrats: %ld > Sum amounts traded: %ld\n", opened_contracts, amount_trd_sum);
+		  			PrintToLog("\n\nCheck last two columns Updated: Row #%d \n %s \t %s", i, M_file[i][8], M_file[i][9]);
+		  			PrintToLog("\nOpened contrats: %ld > Sum amounts traded: %ld\n", opened_contracts, amount_trd_sum);
 
-		  building_edge(path_first, pt_status_addrs_trk->addrs_src, pt_status_addrs_trk->addrs_trk,
-				pt_status_addrs_trk->status_src, pt_status_addrs_trk->status_trk, pt_pos->matched_price,
-				pt_status_addrs_trk->matched_price, pt_status_addrs_trk->lives_src, d_amounts, i, path_number, pt_status_addrs_trk->nlives_trk, 0);
-		  path_main.push_back(path_first);
-		  PrintToLog("\nEdge:\n");
-		  printing_edges(path_first);
+		  			building_edge(path_first, pt_status_addrs_trk->addrs_src, pt_status_addrs_trk->addrs_trk,
+					pt_status_addrs_trk->status_src, pt_status_addrs_trk->status_trk, pt_pos->matched_price,
+					pt_status_addrs_trk->matched_price, pt_status_addrs_trk->lives_src, d_amounts, i, path_number, pt_status_addrs_trk->nlives_trk, 0);
+		  			path_main.push_back(path_first);
+		  		
+		  			PrintToLog("\nEdge:\n");
+		  			printing_edges(path_first);
 
-		  continue;
-		}
-	      if ( d_amounts < 0)
-		{
-		  PrintToLog("\n\nd_amounts = %ld < 0", d_amounts);
-		  updating_lasttwocols_fromdatabase(addrs_opening, M_file, i, labs(d_amounts));
-		  PrintToLog("\n\nCheck last two columns Updated: Row #%d \n %s \t %s", i, M_file[i][8], M_file[i][9]);
-		  PrintToLog("\nOpened contrats: %ld < Sum amounts traded: %ld\n", opened_contracts, amount_trd_sum);
+		  			continue;
+				}
 
-		  building_edge(path_first, pt_status_addrs_trk->addrs_src, pt_status_addrs_trk->addrs_trk, pt_status_addrs_trk->status_src, pt_status_addrs_trk->status_trk, pt_pos->matched_price, pt_status_addrs_trk->matched_price, 0, i, path_number, pt_status_addrs_trk->nlives_trk-labs(d_amounts), 0);
-		  path_main.push_back(path_first);
-		  PrintToLog("\nEdge:\n");
-		  printing_edges(path_first);
+	      		if ( d_amounts < 0)
+				{
+		  			PrintToLog("\n\nd_amounts = %ld < 0", d_amounts);
+		  			updating_lasttwocols_fromdatabase(addrs_opening, M_file, i, labs(d_amounts));
+		  			PrintToLog("\n\nCheck last two columns Updated: Row #%d \n %s \t %s", i, M_file[i][8], M_file[i][9]);
+		  			PrintToLog("\nOpened contrats: %ld < Sum amounts traded: %ld\n", opened_contracts, amount_trd_sum);
 
-		  break;
-		}
-	      if ( d_amounts == 0)
-		{
-		  PrintToLog("\n\nd_amounts = %ld = 0", d_amounts);
-		  updating_lasttwocols_fromdatabase(addrs_opening, M_file, i, 0);
-		  PrintToLog("\n\nCheck last two columns Updated: Row #%d \n %s \t %s", i, M_file[i][8], M_file[i][9]);
-		  PrintToLog("\nOpened contrats: %ld = Sum amounts traded: %ld\n", opened_contracts, amount_trd_sum);
+		  			building_edge(path_first, pt_status_addrs_trk->addrs_src, pt_status_addrs_trk->addrs_trk, pt_status_addrs_trk->status_src, pt_status_addrs_trk->status_trk, pt_pos->matched_price, pt_status_addrs_trk->matched_price, 0, i, path_number, pt_status_addrs_trk->nlives_trk-labs(d_amounts), 0);
+		  			path_main.push_back(path_first);
+		  			PrintToLog("\nEdge:\n");
+		  			printing_edges(path_first);
 
-		  building_edge(path_first, pt_status_addrs_trk->addrs_src, pt_status_addrs_trk->addrs_trk,
-				pt_status_addrs_trk->status_src, pt_status_addrs_trk->status_trk, pt_pos->matched_price,
-				pt_status_addrs_trk->matched_price, 0, i, path_number, pt_status_addrs_trk->nlives_trk, 0);
-		  path_main.push_back(path_first);
-		  PrintToLog("\nEdge:\n");
-		  printing_edges(path_first);
+		  			break;
+				}
 
-		  break;
-		}
-	    }
-        }
+	      		if ( d_amounts == 0)
+				{
+		  			PrintToLog("\n\nd_amounts = %ld = 0", d_amounts);
+		  			updating_lasttwocols_fromdatabase(addrs_opening, M_file, i, 0);
+		  			PrintToLog("\n\nCheck last two columns Updated: Row #%d \n %s \t %s", i, M_file[i][8], M_file[i][9]);
+		  			PrintToLog("\nOpened contrats: %ld = Sum amounts traded: %ld\n", opened_contracts, amount_trd_sum);
+
+		  			building_edge(path_first, pt_status_addrs_trk->addrs_src, pt_status_addrs_trk->addrs_trk,
+					pt_status_addrs_trk->status_src, pt_status_addrs_trk->status_trk, pt_pos->matched_price,
+					pt_status_addrs_trk->matched_price, 0, i, path_number, pt_status_addrs_trk->nlives_trk, 0);
+		  			path_main.push_back(path_first);
+		  			PrintToLog("\nEdge:\n");
+		  			printing_edges(path_first);
+
+		  			break;
+				}
+	   		}
+    	}
     }
 
-  PrintToLog("\nFINISHING FIFO SEARCH");
-  PrintToLog("\n---------------------------------------------------\n");
+    if (idx_b == 1) path_main.erase(path_main.begin());;
+
+  	PrintToLog("\nFINISHING FIFO SEARCH");
+  	PrintToLog("\n---------------------------------------------------\n");
   
-  /** Computing Lives by Address **/
-  if (counting_netted == 0)
-    {
-      if (addrs_opening == path_main[0]["addrs_src"])
-	path_main[0]["lives_src"]=std::to_string(opened_contracts);
-      else
-	path_main[0]["lives_trk"]=std::to_string(opened_contracts);
-    }
-  else
-    {
-      if (d_amounts > 0)
-	{
-	  if (addrs_opening == path_main[0]["addrs_src"])
-	    path_main[0]["lives_src"]=std::to_string(d_amounts);
-	  else
-	    path_main[0]["lives_trk"]=std::to_string(d_amounts);
-	}
-      else if (d_amounts < 0 || d_amounts == 0) {}
-    }
+  	/** Computing Lives by Address **/
+  // 	if (counting_netted == 0)
+  //   {
+  //   	if (addrs_opening == path_main[0]["addrs_src"])
+  //   		path_main[0]["lives_src"]=std::to_string(opened_contracts);
+  //     	else
+  //     		path_main[0]["lives_trk"]=std::to_string(opened_contracts);
+  //   }
+  // 	else
+  //   {
+  //   	if (d_amounts > 0)
+		// {
+	 //  		if (addrs_opening == path_main[0]["addrs_src"])
+	 //    		path_main[0]["lives_src"]=std::to_string(d_amounts);
+	 //  		else
+	 //    		path_main[0]["lives_trk"]=std::to_string(d_amounts);
+		// }
+  //     	else if (d_amounts < 0 || d_amounts == 0) {}
+  //   }
 }
 
 void updating_lasttwocols_fromdatabase(std::string addrs, MatrixTLS &M_file, int i, long int live_updated)
 {
-  if ( addrs == M_file[i][0] )
-    M_file[i][8] = std::to_string(live_updated);
-  else
-    M_file[i][9] = std::to_string(live_updated);
+	if ( addrs == M_file[i][0] )
+    	M_file[i][8] = std::to_string(live_updated);
+  	else
+    	M_file[i][9] = std::to_string(live_updated);
 }
 
 void building_edge(std::map<std::string, std::string> &path_first, std::string addrs_src, std::string addrs_trk, std::string status_src, std::string status_trk, double entry_price, double exit_price, long int lives, int index_row, int path_number, long int amount_path, int ghost_edge)
 {
-  path_first["addrs_src"]   = addrs_src;
-  path_first["addrs_trk"]   = addrs_trk;
-  path_first["status_src"]  = status_src;
-  path_first["status_trk"]  = status_trk;
-  path_first["entry_price"] = std::to_string(entry_price);
-  path_first["exit_price"]  = std::to_string(exit_price);
-  path_first["lives_src"]   = std::to_string(lives);
-  path_first["lives_trk"]   = std::to_string(lives);
-  path_first["amount_trd"]  = std::to_string(amount_path);
-  path_first["edge_row"]    = std::to_string(index_row);
-  path_first["path_number"] = std::to_string(path_number);
-  path_first["ghost_edge"]  = std::to_string(ghost_edge);
+	path_first["addrs_src"]   = addrs_src;
+  	path_first["addrs_trk"]   = addrs_trk;
+  	path_first["status_src"]  = status_src;
+  	path_first["status_trk"]  = status_trk;
+  	path_first["entry_price"] = std::to_string(entry_price);
+  	path_first["exit_price"]  = std::to_string(exit_price);
+  	path_first["lives_src"]   = std::to_string(lives);
+  	path_first["lives_trk"]   = std::to_string(lives);
+  	path_first["amount_trd"]  = std::to_string(amount_path);
+  	path_first["edge_row"]    = std::to_string(index_row);
+  	path_first["path_number"] = std::to_string(path_number);
+  	path_first["ghost_edge"]  = std::to_string(ghost_edge);
 }
 
 void building_edge(std::map<std::string, std::string> &path_first, std::string addrs_src, std::string addrs_trk, std::string status_src, std::string status_trk, double entry_price, double exit_price, long int lives_src, long int lives_trk, int index_row, int path_number, long int amount_path, int ghost_edge)
