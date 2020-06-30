@@ -5,7 +5,7 @@
 """Test Payloads RPCs ."""
 
 from test_framework.test_framework import BitcoinTestFramework
-from test_framework.util import str_to_b64str, assert_equal, tradelayer_HTTP
+from test_framework.util import *
 
 import os
 import json
@@ -30,7 +30,10 @@ class PayloadsBasicsTest (BitcoinTestFramework):
 
     def run_test(self):
 
+        self.log.info("Preparing the workspace...")
 
+        # mining 200 blocks
+        self.nodes[0].generate(200)
         ################################################################################
         # Checking RPC calls for payloads retrieval                                    #
         ################################################################################
@@ -43,6 +46,107 @@ class PayloadsBasicsTest (BitcoinTestFramework):
         headers = {"Authorization": "Basic " + str_to_b64str(authpair)}
 
         conn = http.client.HTTPConnection(url.hostname, url.port)
+        conn.connect()
+
+
+        addresses = []
+        accounts = ["john", "doe", "another"]
+
+        self.log.info("Creating sender address")
+        addresses = tradelayer_createAddresses(accounts, conn, headers)
+
+        self.log.info("Funding addresses with LTC")
+        amount = 1.1
+        tradelayer_fundingAddresses(addresses, amount, conn, headers)
+
+        self.log.info("Checking the LTC balance in every account")
+        tradelayer_checkingBalance(accounts, amount, conn, headers)
+
+
+        self.log.info("Creating new tokens  (lihki)")
+        array = [0]
+        params = str([addresses[0],2,0,"lihki","","","100000",array]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_sendissuancefixed",params)
+        assert_equal(out['error'], None)
+        # self.log.info(out)
+
+        self.nodes[0].generate(1)
+
+        self.log.info("Self Attestation for addresses")
+        tradelayer_selfAttestation(addresses,conn, headers)
+
+        self.log.info("Checking attestations")
+        out = tradelayer_HTTP(conn, headers, False, "tl_list_attestation")
+        # self.log.info(out)
+
+        result = []
+        registers = out['result']
+
+        for addr in addresses:
+            for i in registers:
+                if i['att sender'] == addr and i['att receiver'] == addr and i['kyc_id'] == 0:
+                     result.append(True)
+
+        assert_equal(result, [True, True, True])
+
+        self.log.info("Checking the property: lihki")
+        params = str([4])
+        out = tradelayer_HTTP(conn, headers, True, "tl_getproperty",params)
+        assert_equal(out['error'], None)
+        # self.log.info(out)
+        assert_equal(out['result']['propertyid'],4)
+        assert_equal(out['result']['name'],'lihki')
+        assert_equal(out['result']['data'],'')
+        assert_equal(out['result']['url'],'')
+        assert_equal(out['result']['divisible'],True)
+        assert_equal(out['result']['totaltokens'],'100000.00000000')
+
+
+        self.log.info("Checking tokens balance in lihki's owner ")
+        params = str([addresses[0], 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['balance'],'100000.00000000')
+        assert_equal(out['result']['reserve'],'0.00000000')
+
+
+        self.log.info("Sending 50000 tokens to second address")
+        params = str([addresses[0], addresses[1], 4, "50000"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_send",params)
+        assert_equal(out['error'], None)
+        # self.log.info(out)
+
+        self.nodes[0].generate(1)
+
+
+        self.log.info("Checking tokens in receiver address")
+        params = str([addresses[1], 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['balance'],'50000.00000000')
+        assert_equal(out['result']['reserve'],'0.00000000')
+
+
+        self.log.info("Creating native Contract")
+        array = [0]
+        params = str([addresses[0], 1, 4, "ALL/Lhk", 1000, "1", 4, "0.1", 0, array]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_createcontract",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+
+        self.nodes[0].generate(1)
+
+
+        self.log.info("Creating oracles Contract")
+        array = [0]
+        params = str([addresses[0], "Oracle 1", 10000, "1", 4, "0.1", addresses[2], 0, array]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_create_oraclecontract",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+
+        self.nodes[0].generate(1)
 
 
         self.log.info("Testing tl_createpayload_simplesend")
@@ -169,7 +273,7 @@ class PayloadsBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, False, "tl_createpayload_cancelallcontractsbyaddress", params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result'], '002000')
+        assert_equal(out['result'], '002005')
 
 
         self.log.info("Testing tl_createpayload_closeposition")
@@ -185,7 +289,7 @@ class PayloadsBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, False, "tl_createpayload_sendissuance_pegged", params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result'], '00640200506567676564000500809aa9ccb207')
+        assert_equal(out['result'], '00640200506567676564000505ed13')
 
 
         self.log.info("Testing tl_createpayload_send_pegged")
@@ -193,7 +297,7 @@ class PayloadsBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, False, "tl_createpayload_send_pegged", params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result'], '0066b7eedcb90380e497d012')
+        assert_equal(out['result'], '00660080e497d012')
 
 
         self.log.info("Testing tl_createpayload_redemption_pegged")
@@ -201,7 +305,7 @@ class PayloadsBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, False, "tl_createpayload_redemption_pegged", params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result'], '0065000080e497d012')
+        assert_equal(out['result'], '0065000580e497d012')
 
 
         self.log.info("Testing tl_createpayload_cancelorderbyblock")
@@ -280,7 +384,7 @@ class PayloadsBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, False, "tl_createpayload_change_oracleadm", params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result'], '006800')
+        assert_equal(out['result'], '006805')
 
 
         self.log.info("Testing tl_createpayload_create_oraclecontract")
@@ -296,7 +400,7 @@ class PayloadsBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, False, "tl_createpayload_setoracle", params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result'], '00690080a7e58f950180b2b885e70180cf84c8da01')
+        assert_equal(out['result'], '00690680a7e58f950180b2b885e70180cf84c8da01')
 
 
         self.log.info("Testing tl_createpayload_closeoracle")
@@ -304,7 +408,7 @@ class PayloadsBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, False, "tl_createpayload_closeoracle", params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result'], '006b00')
+        assert_equal(out['result'], '006b06')
 
 
         self.log.info("Testing tl_createpayload_new_id_registration")
@@ -324,11 +428,11 @@ class PayloadsBasicsTest (BitcoinTestFramework):
 
         self.log.info("Testing tl_createpayload_attestation")
         # sha-1 hash (input: blockpo)
-        params = str([' 2507f85b9992c0d518f56c8e1a7cd43e1282c898']).replace("'",'"')
+        params = str(['2507f85b9992c0d518f56c8e1a7cd43e1282c898']).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_createpayload_attestation",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result'], '0076203235303766383562393939326330643531386635366338653161376364343365313238326338393800')
+        assert_equal(out['result'], '00763235303766383562393939326330643531386635366338653161376364343365313238326338393800')
 
 
         self.stop_nodes()

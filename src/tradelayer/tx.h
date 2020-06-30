@@ -510,6 +510,12 @@ struct FutureContractObject
   std::string fco_subcategory;
   std::string fco_issuer;
   std::string fco_backup_address;
+
+  FutureContractObject():fco_numerator(0), fco_denominator(0),
+  fco_blocks_until_expiration(0), fco_notional_size(0), fco_collateral_currency(0),
+  fco_margin_requirement(0), fco_propertyId(0), fco_prop_type(0), fco_expirated(false),
+  fco_quoted(false), fco_init_block(0), fco_name(""), fco_subcategory(""), fco_issuer(""), fco_backup_address("")  {}
+  
 };
 
 struct TokenDataByName

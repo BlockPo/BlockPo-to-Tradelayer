@@ -6,6 +6,7 @@
 #include "tradelayer/log.h"
 #include "tradelayer/script.h"
 #include "tradelayer/sp.h"
+#include "tradelayer/tx.h"
 #include "base58.h"
 #include "core_io.h"
 #include "primitives/transaction.h"
@@ -400,4 +401,29 @@ std::string ParseHash(const UniValue& value)
 {
      uint256 result = ParseHashV(value, "txid");
      return result.ToString();
+}
+
+uint32_t ParseNameOrId(const UniValue& value)
+{
+    int64_t amount = mastercore::StrToInt64(value.get_str(), false);
+
+    if (amount != 0)
+    {
+        uint32_t am = static_cast<uint32_t>(amount);
+        CMPSPInfo::Entry sp;
+        if (!mastercore::_my_sps->getSP(am, sp) || !sp.isContract()) {
+            throw JSONRPCError(RPC_DATABASE_ERROR, "Contract Id not found");
+        }
+
+        return am;
+    }
+
+    struct FutureContractObject *pfuture = getFutureContractObject(value.get_str());
+    uint32_t propertyId = pfuture->fco_propertyId;
+
+    if (propertyId == 0) {
+        throw JSONRPCError(RPC_TYPE_ERROR, "Contract not found!");
+    }
+
+    return propertyId;
 }

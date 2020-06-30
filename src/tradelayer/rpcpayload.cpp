@@ -509,7 +509,7 @@ UniValue tl_createpayload_cancelallcontractsbyaddress(const JSONRPCRequest& requ
 			"\nPayload to cancel all offers on a given Futures Contract .\n"
 
 			"\nArguments:\n"
-			"1. name                 (string, required) the Name of Future Contract \n"
+			"1. name or id           (string, required) the Name (or id) of Future Contract \n"
 			"\nResult:\n"
 			"\"payload\"             (string) the hex-encoded payload\n"
 
@@ -518,12 +518,7 @@ UniValue tl_createpayload_cancelallcontractsbyaddress(const JSONRPCRequest& requ
 			+ HelpExampleRpc("tl_createpayload_cancelallcontractsbyaddress", "\" 3")
 			);
 
-  std::string name_traded = ParseText(request.params[0]);
-
-  struct FutureContractObject *pfuture = getFutureContractObject(name_traded);
-  uint32_t contractId = (pfuture) ? pfuture->fco_propertyId : 0;
-
-  PrintToLog("%s() contractId : %d\n",__func__, contractId);
+  uint32_t contractId = ParseNameOrId(request.params[0]);
 
   std::vector<unsigned char> payload = CreatePayload_ContractDexCancelAll(contractId);
 
@@ -770,7 +765,7 @@ UniValue tl_createpayload_sendvesting(const JSONRPCRequest& request)
         throw runtime_error(
 			         "tl_createpayload_sendvesting \"fromaddress\" \"toaddress\" propertyid \"amount\" ( \"referenceamount\" )\n"
 
-			          "\nCreate and broadcast a simple send transaction.\n"
+			          "\nCreate and broadcast a send vesting transaction.\n"
 
 			          "\nArguments:\n"
 			          "1. amount               (string, required) the amount of vesting tokens to send\n"
@@ -969,7 +964,7 @@ UniValue tl_createpayload_change_oracleadm(const JSONRPCRequest& request)
             "\n Payload to change the admin on record of the Oracle Future Contract.\n"
 
             "\nArguments:\n"
-            "1. contract name        (string, required) the name of the Future Contract\n"
+            "1. name or id             (string, required) the name (or id) of the Future Contract\n"
 
             "\nResult:\n"
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
@@ -980,10 +975,7 @@ UniValue tl_createpayload_change_oracleadm(const JSONRPCRequest& request)
         );
 
     // obtain parameters & info
-    std::string name_contract = ParseText(request.params[0]);
-    struct FutureContractObject *pfuture_contract = getFutureContractObject(name_contract);
-    uint32_t contractId = (pfuture_contract) ? pfuture_contract->fco_propertyId : 0;
-
+    uint32_t contractId = ParseNameOrId(request.params[0]);
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_Change_OracleAdm(contractId);
 
@@ -1045,7 +1037,7 @@ UniValue tl_createpayload_setoracle(const JSONRPCRequest& request)
             "\nPayload to set the price for an oracle address.\n"
 
             "\nArguments:\n"
-            "1. contract name        (string, required) the name of the Future Contract\n"
+            "1. name or id           (string, required) the name (or id) of the Future Contract\n"
             "2. high price           (number, required) the highest price of the asset\n"
             "3. low price            (number, required) the lowest price of the asset\n"
             "4. close price          (number, required) the close price of the asset\n"
@@ -1059,12 +1051,10 @@ UniValue tl_createpayload_setoracle(const JSONRPCRequest& request)
         );
 
     // obtain parameters & info
-    std::string name_contract = ParseText(request.params[0]);
+    uint32_t contractId = ParseNameOrId(request.params[0]);
     uint64_t high = ParseEffectivePrice(request.params[1]);
     uint64_t low = ParseEffectivePrice(request.params[2]);
     uint64_t close = ParseEffectivePrice(request.params[3]);
-    struct FutureContractObject *pfuture_contract = getFutureContractObject(name_contract);
-    uint32_t contractId = (pfuture_contract) ? pfuture_contract->fco_propertyId : 0;
 
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_Set_Oracle(contractId, high, low, close);
@@ -1081,7 +1071,7 @@ UniValue tl_createpayload_closeoracle(const JSONRPCRequest& request)
             "\nPayload to close an Oracle Future Contract.\n"
 
             "\nArguments:\n"
-            "1. contract name          (string, required) the name of the Oracle Future Contract\n"
+            "1. name or id            (string, required) the name (or id) of the Oracle Future Contract\n"
 
             "\nResult:\n"
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
@@ -1092,9 +1082,7 @@ UniValue tl_createpayload_closeoracle(const JSONRPCRequest& request)
         );
 
     // obtain parameters & info
-    std::string name_contract = ParseText(request.params[0]);
-    struct FutureContractObject *pfuture_contract = getFutureContractObject(name_contract);
-    uint32_t contractId = (pfuture_contract) ? pfuture_contract->fco_propertyId : 0;
+    uint32_t contractId = ParseNameOrId(request.params[0]);
 
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_Close_Oracle(contractId);

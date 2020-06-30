@@ -2885,9 +2885,8 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
         //NOTE: we need to return this number 2 from mp_obj.interpretPacket() (tx.cpp)
         } else if (interp_ret == 2) {
             HandleDExPayments(tx, nBlock, mp_obj.getSender());
-        }
 
-        if (interp_ret != PKT_ERROR - 2) {
+        } else if (interp_ret != PKT_ERROR - 2) {
             bool bValid = (0 <= interp_ret);
             p_txlistdb->recordTX(tx.GetHash(), bValid, nBlock, mp_obj.getType(), mp_obj.getNewAmount());
             p_TradeTXDB->RecordTransaction(tx.GetHash(), idx);
@@ -2914,10 +2913,7 @@ bool TxValidNodeReward(std::string ConsensusHash, std::string Tx)
 
   PrintToLog("\nLastTwoCharConsensus = %s\t LastTwoCharTx = %s\n", LastTwoCharConsensus,LastTwoCharTx);
 
-  if (LastTwoCharConsensus == LastTwoCharTx)
-    return true;
-  else
-    return false;
+  return ((LastTwoCharConsensus == LastTwoCharTx) ? true : false);
 }
 
 void lookingin_globalvector_pastlivesperpetuals(std::vector<std::map<std::string, std::string>> &lives_g, MatrixTLS M_file, std::vector<std::string> addrs_vg, std::vector<std::map<std::string, std::string>> &lives_h)
@@ -3482,12 +3478,7 @@ bool CMPTxList::getTX(const uint256 &txid, string &value)
 
   ++nRead;
 
-  if (status.ok())
-   {
-     return true;
-   }
-
-   return false;
+  return ((status.ok()) ? true : false);
 }
 
 void CMPTxList::printStats()

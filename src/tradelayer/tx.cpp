@@ -4760,44 +4760,44 @@ struct FutureContractObject *getFutureContractObject(std::string identifier)
   LOCK(cs_tally);
   uint32_t nextSPID = _my_sps->peekNextSPID();
   for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
-    {
+  {
       CMPSPInfo::Entry sp;
       if (_my_sps->getSP(propertyId, sp))
-	{
-	  if ( sp.isContract() && sp.name == identifier )
 	    {
-        pt_fco->fco_denominator = sp.numerator;
-	      pt_fco->fco_denominator = sp.denominator;
-	      pt_fco->fco_blocks_until_expiration = sp.blocks_until_expiration;
-	      pt_fco->fco_notional_size = sp.notional_size;
-	      pt_fco->fco_collateral_currency = sp.collateral_currency;
-	      pt_fco->fco_margin_requirement = sp.margin_requirement;
-	      pt_fco->fco_name = sp.name;
-	      pt_fco->fco_subcategory = sp.subcategory;
-	      pt_fco->fco_issuer = sp.issuer;
-	      pt_fco->fco_init_block = sp.init_block;
-        pt_fco->fco_backup_address = sp.backup_address;
-	      pt_fco->fco_propertyId = propertyId;
-        pt_fco->fco_prop_type = sp.prop_type;
-        pt_fco->fco_expirated = sp.expirated;
-        pt_fco->fco_quoted = sp.inverse_quoted;
+	        if ( sp.isContract() && sp.name == identifier )
+	        {
+              pt_fco->fco_denominator = sp.numerator;
+	            pt_fco->fco_denominator = sp.denominator;
+	            pt_fco->fco_blocks_until_expiration = sp.blocks_until_expiration;
+	            pt_fco->fco_notional_size = sp.notional_size;
+	            pt_fco->fco_collateral_currency = sp.collateral_currency;
+	            pt_fco->fco_margin_requirement = sp.margin_requirement;
+	            pt_fco->fco_name = sp.name;
+	            pt_fco->fco_subcategory = sp.subcategory;
+	            pt_fco->fco_issuer = sp.issuer;
+	            pt_fco->fco_init_block = sp.init_block;
+              pt_fco->fco_backup_address = sp.backup_address;
+	            pt_fco->fco_propertyId = propertyId;
+              pt_fco->fco_prop_type = sp.prop_type;
+              pt_fco->fco_expirated = sp.expirated;
+              pt_fco->fco_quoted = sp.inverse_quoted;
+	        } else if ( sp.isPegged() && sp.name == identifier ){
+	            pt_fco->fco_denominator = sp.denominator;
+	            pt_fco->fco_blocks_until_expiration = sp.blocks_until_expiration;
+	            pt_fco->fco_notional_size = sp.notional_size;
+	            pt_fco->fco_collateral_currency = sp.collateral_currency;
+	            pt_fco->fco_margin_requirement = sp.margin_requirement;
+	            pt_fco->fco_name = sp.name;
+	            pt_fco->fco_subcategory = sp.subcategory;
+	            pt_fco->fco_issuer = sp.issuer;
+	            pt_fco->fco_init_block = sp.init_block;
+	            pt_fco->fco_propertyId = propertyId;
+	        }
 	    }
-	  else if ( sp.isPegged() && sp.name == identifier )
-	    {
-	      pt_fco->fco_denominator = sp.denominator;
-	      pt_fco->fco_blocks_until_expiration = sp.blocks_until_expiration;
-	      pt_fco->fco_notional_size = sp.notional_size;
-	      pt_fco->fco_collateral_currency = sp.collateral_currency;
-	      pt_fco->fco_margin_requirement = sp.margin_requirement;
-	      pt_fco->fco_name = sp.name;
-	      pt_fco->fco_subcategory = sp.subcategory;
-	      pt_fco->fco_issuer = sp.issuer;
-	      pt_fco->fco_init_block = sp.init_block;
-	      pt_fco->fco_propertyId = propertyId;
-	    }
-	}
-    }
+  }
+
   return pt_fco;
+  
 }
 
 struct TokenDataByName *getTokenDataByName(std::string identifier)

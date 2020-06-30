@@ -90,6 +90,13 @@ class ActivationBasicsTest (BitcoinTestFramework):
 
         assert_equal(result, [True, True, True, True])
 
+        # deactivation here to write 999999999 in the MSC_SP_BLOCK param
+        params = str([adminAddress, 1]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_senddeactivation",params)
+        # self.log.info(out)
+
+        self.nodes[0].generate(1)
+
         self.log.info("Creating new tokens (must be rejected)")
         array = [0]
         params = str([addresses[0],2,0,"lihki","","","3000",array]).replace("'",'"')

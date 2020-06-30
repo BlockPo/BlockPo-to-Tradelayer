@@ -1030,7 +1030,7 @@ UniValue tl_cancelallcontractsbyaddress(const JSONRPCRequest& request)
 
 			"\nArguments:\n"
 			"1. fromaddress          (string, required) the address to trade with\n"
-			"2. contract Name        (string, required) the Id of Future Contract \n"
+			"2. name or id           (string, required) the name (or id) of Future Contract \n"
 			"\nResult:\n"
 			"\"hash\"                  (string) the hex-encoded transaction hash\n"
 
@@ -1041,10 +1041,7 @@ UniValue tl_cancelallcontractsbyaddress(const JSONRPCRequest& request)
 
   // obtain parameters & info
   std::string fromAddress = ParseAddress(request.params[0]);
-  std::string name_traded = ParseText(request.params[1]);
-
-  struct FutureContractObject *pfuture = getFutureContractObject(name_traded);
-  uint32_t contractId = (pfuture) ? pfuture->fco_propertyId : 0;
+  uint32_t contractId = ParseNameOrId(request.params[1]);
 
   // perform checks
   RequireContract(contractId);
@@ -1136,7 +1133,7 @@ UniValue tl_sendissuance_pegged(const JSONRPCRequest& request)
 			"4. previousid            (number, required) an identifier of a predecessor token (use 0 for new tokens)\n"
 			"5. name                  (string, required) the name of the new pegged to create\n"
 			"6. collateralcurrency    (number, required) the collateral currency for the new pegged \n"
-			"7. future contract name  (number, required) the future contract name for the new pegged \n"
+			"7. contract name or id   (string, required) the future contract name (or id) for the new pegged \n"
 			"8. amount of pegged      (number, required) amount of pegged to create \n"
 			"\nResult:\n"
 			"\"hash\"                 (string) the hex-encoded transaction hash\n"
@@ -1152,11 +1149,8 @@ UniValue tl_sendissuance_pegged(const JSONRPCRequest& request)
   uint32_t previousId = ParsePreviousPropertyId(request.params[2]);
   std::string name = ParseText(request.params[3]);
   uint32_t propertyId = ParsePropertyId(request.params[4]);
-  std::string name_traded = ParseText(request.params[5]);
+  uint32_t contractId = ParseNameOrId(request.params[5]);
   uint64_t amount = ParseAmount(request.params[6], isPropertyDivisible(propertyId));
-
-  struct FutureContractObject *pfuture = getFutureContractObject(name_traded);
-  uint32_t contractId = (pfuture) ? pfuture->fco_propertyId : 0;
 
   // perform checks
   RequirePeggedSaneName(name);
@@ -1281,14 +1275,11 @@ UniValue tl_redemption_pegged(const JSONRPCRequest& request)
   std::string fromAddress = ParseAddress(request.params[0]);
 
   std::string name_pegged = ParseText(request.params[1]);
-  std::string name_contract = ParseText(request.params[3]);
+  uint32_t contractId = ParseNameOrId(request.params[3]);
   struct FutureContractObject *pfuture_pegged = getFutureContractObject(name_pegged);
   uint32_t propertyId = (pfuture_pegged) ? pfuture_pegged->fco_propertyId : 0;
 
   uint64_t amount = ParseAmount(request.params[2], true);
-
-  struct FutureContractObject *pfuture_contract = getFutureContractObject(name_contract);
-  uint32_t contractId = (pfuture_contract) ? pfuture_contract->fco_propertyId : 0;
 
   // perform checks
   RequireExistingProperty(propertyId);
@@ -1543,14 +1534,15 @@ UniValue tl_setoracle(const JSONRPCRequest& request)
 
     // obtain parameters & info
     std::string fromAddress = ParseAddress(request.params[0]);
-    std::string name_contract = ParseText(request.params[1]);
+    uint32_t contractId = ParseNameOrId(request.params[1]);
     uint64_t high = ParseEffectivePrice(request.params[2]);
     uint64_t low = ParseEffectivePrice(request.params[3]);
     uint64_t close = ParseEffectivePrice(request.params[4]);
 
-    struct FutureContractObject *pfuture_contract = getFutureContractObject(name_contract);
-    uint32_t contractId = (pfuture_contract) ? pfuture_contract->fco_propertyId : 0;
-    std::string oracleAddress = (pfuture_contract) ? pfuture_contract->fco_issuer : "";
+    CMPSPInfo::Entry sp;
+    assert(_my_sps->getSP(contractId, sp));
+
+    const std::string& oracleAddress = sp.issuer;
 
     // checks
     if (oracleAddress != fromAddress)
@@ -1590,7 +1582,7 @@ UniValue tl_change_oracleadm(const JSONRPCRequest& request)
             "\nArguments:\n"
             "1. fromaddress          (string, required) the address associated with the oracle Future Contract\n"
             "2. toaddress            (string, required) the address to transfer administrative control to\n"
-            "3. contract name        (string, required) the name of the Future Contract\n"
+            "3. name or id           (string, required) the name (or id) of the Future Contract\n"
 
             "\nResult:\n"
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
@@ -1603,11 +1595,12 @@ UniValue tl_change_oracleadm(const JSONRPCRequest& request)
     // obtain parameters & info
     std::string fromAddress = ParseAddress(request.params[0]);
     std::string toAddress = ParseAddress(request.params[1]);
-    std::string name_contract = ParseText(request.params[2]);
+    uint32_t contractId = ParseNameOrId(request.params[2]);
 
-    struct FutureContractObject *pfuture_contract = getFutureContractObject(name_contract);
-    uint32_t contractId = (pfuture_contract) ? pfuture_contract->fco_propertyId : 0;
-    std::string oracleAddress = (pfuture_contract) ? pfuture_contract->fco_issuer : "";
+    CMPSPInfo::Entry sp;
+    assert(_my_sps->getSP(contractId, sp));
+
+    const std::string& oracleAddress = sp.issuer;
 
     // checks
     if (oracleAddress != fromAddress)
@@ -1660,11 +1653,13 @@ UniValue tl_oraclebackup(const JSONRPCRequest& request)
 
     // obtain parameters & info
     std::string fromAddress = ParseAddress(request.params[0]);
-    std::string name_contract = ParseText(request.params[1]);
+    uint32_t contractId = ParseNameOrId(request.params[1]);
 
-    struct FutureContractObject *pfuture_contract = getFutureContractObject(name_contract);
-    uint32_t contractId = (pfuture_contract) ? pfuture_contract->fco_propertyId : 0;
-    std::string backupAddress = (pfuture_contract) ? pfuture_contract->fco_backup_address : "";
+
+    CMPSPInfo::Entry sp;
+    assert(_my_sps->getSP(contractId, sp));
+
+    const std::string& backupAddress = sp.backup_address;
 
     // checks
     if (backupAddress != fromAddress)
@@ -1703,7 +1698,7 @@ UniValue tl_closeoracle(const JSONRPCRequest& request)
 
             "\nArguments:\n"
             "1. backup address         (string, required) the backup address associated with the oracle Future Contract\n"
-            "2. contract name          (string, required) the name of the Oracle Future Contract\n"
+            "2. name or id             (string, required) the name of the Oracle Future Contract\n"
 
             "\nResult:\n"
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
@@ -1715,11 +1710,12 @@ UniValue tl_closeoracle(const JSONRPCRequest& request)
 
     // obtain parameters & info
     std::string backupAddress = ParseAddress(request.params[0]);
-    std::string name_contract = ParseText(request.params[1]);
+    uint32_t contractId = ParseNameOrId(request.params[1]);
 
-    struct FutureContractObject *pfuture_contract = getFutureContractObject(name_contract);
-    uint32_t contractId = (pfuture_contract) ? pfuture_contract->fco_propertyId : 0;
-    std::string bckup_address = (pfuture_contract) ? pfuture_contract->fco_backup_address : "";
+    CMPSPInfo::Entry sp;
+    assert(_my_sps->getSP(contractId, sp));
+
+    const std::string& bckup_address  = sp.backup_address;
 
     // checks
     if (bckup_address != backupAddress)
