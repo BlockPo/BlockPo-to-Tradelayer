@@ -95,31 +95,6 @@ CMPAccept* DEx_getAccept(const std::string& addressSeller, uint32_t propertyId, 
     return static_cast<CMPAccept*>(nullptr);
 }
 
-
-/**
- * Legacy calculation of Master Core 0.0.9.
- *
- * @see:
- * https://github.com/mastercoin-MSC/mastercore/blob/mscore-0.0.9/src/mastercore_dex.cpp#L439-L449
- */
-namespace legacy //NOTE: it can overflow  with: LTCs =  amount_des * balanceReallyAvailable
-{
-int64_t calculateDesiredLTC(const int64_t amountOffered, const int64_t amountDesired, const int64_t amountAvailable)
-{
-    uint64_t nValue = static_cast<uint64_t>(amountOffered);
-    uint64_t amount_des = static_cast<uint64_t>(amountDesired);
-    uint64_t balanceReallyAvailable = static_cast<uint64_t>(amountAvailable);
-
-    double LTCs;
-
-    LTCs = amount_des * balanceReallyAvailable;
-    LTCs /= (double) nValue;
-    amount_des = rounduint64(LTCs);
-
-    return static_cast<int64_t>(amount_des);
-}
-}
-
 /**
  * Determines the amount of bitcoins desired, in case it needs to be recalculated.
  *
@@ -495,44 +470,6 @@ int DEx_acceptDestroy(const std::string& addressBuyer, const std::string& addres
     return 0;
 }
 
-namespace legacy
-{
-/**
- * Legacy calculation of Master Core 0.0.9.
- *
- * @see:
- * https://github.com/mastercoin-MSC/mastercore/blob/mscore-0.0.9/src/mastercore_dex.cpp#L660-L668
- */
-int64_t calculateDExPurchase(const int64_t amountOffered, const int64_t amountDesired, const int64_t amountPaid)
-{
-    uint64_t acceptOfferAmount = static_cast<uint64_t>(amountOffered);
-    uint64_t acceptLTCDesired = static_cast<uint64_t>(amountDesired);
-    uint64_t LTC_paid = static_cast<uint64_t>(amountPaid);
-
-    const double LTC_desired_original = acceptLTCDesired;
-    const double offer_amount_original = acceptOfferAmount;
-
-    if (msc_debug_dex)
-    {
-        PrintToLog("LTC_paid : %d\n", LTC_paid);
-        PrintToLog("LTC_desired_original : %d\n", LTC_desired_original);
-    }
-
-    double perc_X = (double) LTC_paid / LTC_desired_original;
-    double Purchased = offer_amount_original * perc_X;
-
-    uint64_t units_purchased = rounduint64(Purchased);
-
-    if (msc_debug_dex)
-    {
-        PrintToLog("Purchased : %d\n", Purchased);
-        PrintToLog("units_purchased : %d\n", units_purchased);
-    }
-
-    return static_cast<int64_t>(units_purchased);
-}
-
-} // namespace legacy
 
 /**
  * Determines the purchased amount of tokens.
@@ -620,23 +557,14 @@ int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addre
     int64_t amountPurchased = 0;
 
    /**
-    * As long as this feature is disabled, floating point math is used to
-    * determine the purchased amount.
-    *
-    * After this feature is enabled, plain integer math is used to determine
+    * Plain integer math is used to determine
     * the purchased amount. The purchased amount is rounded up, which may be
     * in favor of the buyer, to avoid small leftovers of 1 willet.
     *
     * This is not exploitable due to transaction fees.
     */
-    if (IsFeatureActivated(FEATURE_DEXMATH, block))
-    {
-        PrintToLog("IsFeatureActivated(FEATURE_DEXMATH, block) true\n");
-        amountPurchased = mastercore::calculateDExPurchase(amountOffered, amountDesired, amountPaid);
-    } else {
-        // Fallback to original calculation:
-        amountPurchased = legacy::calculateDExPurchase(amountOffered, amountDesired, amountPaid);
-    }
+     amountPurchased = mastercore::calculateDExPurchase(amountOffered, amountDesired, amountPaid);
+
 
     // -------------------------------------------------------------------------
 

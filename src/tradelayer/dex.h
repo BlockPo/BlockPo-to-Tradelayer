@@ -251,12 +251,6 @@ int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addre
 int64_t calculateDExPurchase(const int64_t amountOffered, const int64_t amountDesired, const int64_t amountPaid);
 unsigned int eraseExpiredAccepts(int block);
 
-namespace legacy
-{
-  int64_t calculateDesiredLTC(const int64_t amountOffered, const int64_t amountDesired, const int64_t amountAvailable);
-  int64_t calculateDExPurchase(const int64_t amountOffered, const int64_t amountDesired, const int64_t amountPaid);
-}
-
 }
 
 
