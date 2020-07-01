@@ -2380,18 +2380,16 @@ UniValue tl_getactivedexsells(const JSONRPCRequest& request)
         int64_t amountOffered = getMPbalance(seller, propertyId, ACCEPT_RESERVE);
         uint8_t option = offer.getOption();
 
-        // TODO: no math, and especially no rounding here (!)
-
         // calculate unit price and updated amount of bitcoin desired
-        double unitPriceFloat = 0.0;
+        arith_uint256 aUnitPrice = 0;
         if ((sellOfferAmount > 0) && (sellBitcoinDesired > 0)) {
-            unitPriceFloat = (double) sellBitcoinDesired / (double) sellOfferAmount; // divide by zero protection
-            if (!isPropertyDivisible(propertyId)) {
-                unitPriceFloat /= 100000000.0;
-            }
+            aUnitPrice = (COIN * (ConvertTo256(sellBitcoinDesired)) / ConvertTo256(sellOfferAmount)) ; // divide by zero protection
         }
 
-        int64_t unitPrice = rounduint64(unitPriceFloat * COIN);
+        int64_t unitPrice = ConvertTo64(aUnitPrice);
+
+        PrintToLog("%s(): sellBitcoinDesired: %d, sellOfferAmount : %d, unitPrice: %d\n",__func__, sellBitcoinDesired, sellOfferAmount, unitPrice);
+
         int64_t bitcoinDesired = calculateDesiredLTC(sellOfferAmount, sellBitcoinDesired, amountAvailable);
         int64_t sumAccepted = 0;
         int64_t sumLtcs = 0;

@@ -96,10 +96,10 @@ CMPAccept* DEx_getAccept(const std::string& addressSeller, uint32_t propertyId, 
 }
 
 /**
- * Determines the amount of bitcoins desired, in case it needs to be recalculated.
+ * Determines the amount of litecoins desired, in case it needs to be recalculated.
  *
  * TODO: don't expose it!
- * @return The amount of bitcoins desired
+ * @return The amount of litecoins desired
  */
 int64_t calculateDesiredLTC(const int64_t amountOffered, const int64_t amountDesired, const int64_t amountAvailable)
 {
@@ -142,20 +142,13 @@ int DEx_offerCreate(const std::string& addressSeller, uint32_t propertyId, int64
 
     const int64_t balanceReallyAvailable = getMPbalance(addressSeller, propertyId, BALANCE);
 
-    /**
-     * After this feature is enabled, it is no longer valid to create orders, which offer more than
-     * the seller has available, and the amounts are no longer adjusted based on the actual balance.
-     */
-    if (IsFeatureActivated(FEATURE_DEXMATH, block)) {
-        if (amountOffered > balanceReallyAvailable) {
-            PrintToLog("%s: rejected: sender %s has insufficient balance of property %d [%s < %s]\n", __func__,
+    if (amountOffered > balanceReallyAvailable) {
+        PrintToLog("%s: rejected: sender %s has insufficient balance of property %d [%s < %s]\n", __func__,
                         addressSeller, propertyId, FormatDivisibleMP(balanceReallyAvailable), FormatDivisibleMP(amountOffered));
-            return (DEX_ERROR_SELLOFFER -25);
-        }
-    }
+        return (DEX_ERROR_SELLOFFER -25);
+      }
 
     // -------------------------------------------------------------------------
-    // legacy::
 
     // if offering more than available -- put everything up on sale
     if (amountOffered > balanceReallyAvailable) {

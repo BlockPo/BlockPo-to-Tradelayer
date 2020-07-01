@@ -153,7 +153,7 @@ class DExBasicsTest (BitcoinTestFramework):
 
         self.log.info("Checking the offer in DEx")
         params = str([addresses[0]]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, True, "tl_getactivedexsells",params)
+        out = tradelayer_HTTP(conn, headers, False, "tl_getactivedexsells",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
         assert_equal(out['result'][0]['propertyid'], 4)
@@ -465,7 +465,7 @@ class DExBasicsTest (BitcoinTestFramework):
         assert_equal(out['result'][0]['ltcsdesired'], '20.00000000')
         assert_equal(out['result'][0]['amountavailable'], '10000000.98765432')
         assert_equal(out['result'][0]['amountoffered'], '0.00000000')
-        assert_equal(out['result'][0]['unitprice'], '0.00000200') # should be: 0.00000199999 (here we are rounding up)
+        assert_equal(out['result'][0]['unitprice'], '0.00000199') # should be: 0.00000199999 (we only have 8 decimals)
         assert_equal(out['result'][0]['minimumfee'], '0.00001000')
 
 
@@ -573,7 +573,7 @@ class DExBasicsTest (BitcoinTestFramework):
         assert_equal(out['result'][0]['ltcsdesired'], '1.00000000')
         assert_equal(out['result'][0]['amountavailable'], '600.00000000')
         assert_equal(out['result'][0]['amountoffered'], '0.00000000')
-        assert_equal(out['result'][0]['unitprice'], '0.00166667') # (here we are rounding up)
+        assert_equal(out['result'][0]['unitprice'], '0.00166666')
         assert_equal(out['result'][0]['minimumfee'], '0.00001000')
 
         self.log.info("Accepting the full offer")
@@ -598,7 +598,7 @@ class DExBasicsTest (BitcoinTestFramework):
 
         assert_equal(out['result'][0]['amountavailable'], '0.00000000')
         assert_equal(out['result'][0]['amountoffered'], '600.00000000')
-        assert_equal(out['result'][0]['unitprice'], '0.00166667')
+        assert_equal(out['result'][0]['unitprice'], '0.00166666')
         assert_equal(out['result'][0]['minimumfee'], '0.00001000')
 
         assert_equal(out['result'][0]['accepts'][0]['buyer'], addresses[3])
@@ -615,6 +615,8 @@ class DExBasicsTest (BitcoinTestFramework):
         # self.log.info(out)
         assert_equal(out['error'], None)
         assert_equal(out['result'][0]['accepts'], [])
+
+        #TODO: more testing for the indivisible tokens
 
         conn.close()
         self.stop_nodes()
