@@ -95,7 +95,7 @@ std::string mastercore::strTransactionType(uint16_t txType)
     case MSC_TYPE_SEND_PEGGED_CURRENCY: return "Send Pegged Currency";
     case MSC_TYPE_CONTRACTDEX_CLOSE_POSITION: return "Close Position";
     case MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK: return "Cancel Orders by Block";
-    case MSC_TYPE_TRADE_OFFER: return "DEx Sell Offer";
+    case MSC_TYPE_DEX_SELL_OFFER: return "DEx Sell Offer";
     case MSC_TYPE_DEX_BUY_OFFER: return "DEx Buy Offer";
     case MSC_TYPE_ACCEPT_OFFER_BTC: return "DEx Accept Offer BTC";
     case MSC_TYPE_CHANGE_ORACLE_REF: return "Oracle Change Reference";
@@ -241,8 +241,8 @@ bool CMPTransaction::interpret_Transaction()
     case MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK:
       return interpret_ContractDex_Cancel_Orders_By_Block();
 
-    case MSC_TYPE_TRADE_OFFER:
-      return interpret_TradeOffer();
+    case MSC_TYPE_DEX_SELL_OFFER:
+      return interpret_DExSell();
 
     case MSC_TYPE_DEX_BUY_OFFER:
       return interpret_DExBuy();
@@ -751,7 +751,7 @@ bool CMPTransaction::interpret_Alert()
 }
 
 /*Tx 20*/
-bool CMPTransaction::interpret_TradeOffer()
+bool CMPTransaction::interpret_DExSell()
 {
     int i = 0;
 
@@ -2148,8 +2148,8 @@ int CMPTransaction::interpretPacket()
         case MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK:
             return logicMath_ContractDex_Cancel_Orders_By_Block();
 
-        case MSC_TYPE_TRADE_OFFER:
-            return logicMath_TradeOffer();
+        case MSC_TYPE_DEX_SELL_OFFER:
+            return logicMath_DExSell();
 
         case MSC_TYPE_DEX_BUY_OFFER:
             return logicMath_DExBuy();
@@ -3233,11 +3233,8 @@ int CMPTransaction::logicMath_CreateContractDex()
   newSP.expirated = false;
   newSP.inverse_quoted = inverse_quoted;
 
-  for(std::vector<int64_t>::iterator it = kyc_Ids.begin(); it != kyc_Ids.end(); ++it)
-  {
-      const int64_t& aux = *it;
-      newSP.kyc.push_back(aux);
-  }
+  std::vector<int64_t>& kyc = newSP.kyc;
+  for_each(kyc_Ids.begin(), kyc_Ids.end(), [&kyc] (const int64_t& elem) { kyc.push_back(elem);});
 
   const uint32_t propertyId = _my_sps->putSP(newSP);
   assert(propertyId > 0);
@@ -3271,22 +3268,21 @@ int CMPTransaction::logicMath_ContractDexTrade()
       return PKT_ERROR_SP -38;
   }
 
-
   uint32_t colateralh = pfuture->fco_collateral_currency;
-  int64_t marginRe = static_cast<int64_t>(pfuture->fco_margin_requirement);
-
-  bool inverse_quoted = pfuture->fco_quoted;
-
-  if(msc_debug_contractdex_tx) PrintToLog("%s():colateralh: %d, marginRe: %d\n",__func__, colateralh, marginRe);
-
-  int64_t uPrice;
-
-  if(inverse_quoted  && market_priceMap[numerator][denominator] > 0)
-  {
-      uPrice = market_priceMap[numerator][denominator];
-
-  } else if (!inverse_quoted)
-      uPrice = COIN;
+  // int64_t marginRe = static_cast<int64_t>(pfuture->fco_margin_requirement);
+  //
+  // bool inverse_quoted = pfuture->fco_quoted;
+  //
+  // if(msc_debug_contractdex_tx) PrintToLog("%s():colateralh: %d, marginRe: %d\n",__func__, colateralh, marginRe);
+  //
+  // int64_t uPrice = 0;
+  //
+  // if(inverse_quoted  && market_priceMap[numerator][denominator] > 0)
+  // {
+  //     uPrice = market_priceMap[numerator][denominator];
+  //
+  // } else if (!inverse_quoted)
+  //     uPrice = COIN;
 
   int64_t nBalance = 0;
   int64_t amountToReserve = 0;
@@ -3692,14 +3688,13 @@ int CMPTransaction::logicMath_RedemptionPegged()
     return 0;
 }
 
-int CMPTransaction::logicMath_TradeOffer()
+int CMPTransaction::logicMath_DExSell()
 {
     if (!IsTransactionTypeAllowed(block, type, version)) {
-        PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+        PrintToLog("%s(): rejected: type %d or version %d not permitted for this transaction at block %d\n",
             __func__,
             type,
             version,
-            propertyId,
             block);
       return (PKT_ERROR_TRADEOFFER -22);
     }
@@ -3764,14 +3759,17 @@ int CMPTransaction::logicMath_TradeOffer()
 
             switch (subAction) {
                 case NEW:
+                    PrintToLog("%s(): NEW",__func__);
                     rc = DEx_offerCreate(sender, propertyId, nValue, block, amountDesired, minFee, timeLimit, txid, &nNewValue);
                     break;
 
                 case UPDATE:
+                    PrintToLog("%s(): UPDATE",__func__);
                     rc = DEx_offerUpdate(sender, propertyId, nValue, block, amountDesired, minFee, timeLimit, txid, &nNewValue);
                     break;
 
                 case CANCEL:
+                    PrintToLog("%s(): DESTROY",__func__);
                     rc = DEx_offerDestroy(sender, propertyId);
                     break;
 
@@ -3970,11 +3968,8 @@ int CMPTransaction::logicMath_CreateOracleContract()
     newSP.oracle_low = 0;
     newSP.oracle_close = 0;
 
-    for(std::vector<int64_t>::iterator it = kyc_Ids.begin(); it != kyc_Ids.end(); ++it)
-    {
-        const int64_t& aux = *it;
-        newSP.kyc.push_back(aux);
-    }
+    std::vector<int64_t>& kyc = newSP.kyc;
+    for_each(kyc_Ids.begin(), kyc_Ids.end(), [&kyc] (const int64_t& elem) { kyc.push_back(elem);});
 
     const uint32_t propertyId = _my_sps->putSP(newSP);
     assert(propertyId > 0);
@@ -4797,7 +4792,7 @@ struct FutureContractObject *getFutureContractObject(std::string identifier)
   }
 
   return pt_fco;
-  
+
 }
 
 struct TokenDataByName *getTokenDataByName(std::string identifier)

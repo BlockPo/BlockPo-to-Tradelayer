@@ -95,7 +95,7 @@ enum TransactionType {
   TL_MESSAGE_TYPE_ACTIVATION          = 65534,
   TL_MESSAGE_TYPE_ALERT               = 65535,
 
-  MSC_TYPE_TRADE_OFFER                         = 20,
+  MSC_TYPE_DEX_SELL_OFFER                      = 20,
   MSC_TYPE_DEX_BUY_OFFER                       = 21,
   MSC_TYPE_ACCEPT_OFFER_BTC                    = 22,
   MSC_TYPE_METADEX_TRADE                       = 25,

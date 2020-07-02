@@ -194,7 +194,7 @@ private:
     bool interpret_ContractDex_Cancel_Orders_By_Block();
     bool interpret_MetaDExTrade();
     bool interpret_MetaDExCancelAll();
-    bool interpret_TradeOffer();
+    bool interpret_DExSell();
     bool interpret_DExBuy();
     bool interpret_SendVestingTokens();
     bool interpret_CreateOracleContract();
@@ -242,8 +242,8 @@ private:
     int logicMath_ContractDex_Cancel_Orders_By_Block();
     int logicMath_MetaDExTrade();
     int logicMath_MetaDExCancelAll();
-    int logicMath_TradeOffer();
     int logicMath_AcceptOfferBTC();
+    int logicMath_DExSell();
     int logicMath_DExBuy();
     int logicMath_SendVestingTokens();
     int logicMath_CreateOracleContract();
@@ -515,7 +515,7 @@ struct FutureContractObject
   fco_blocks_until_expiration(0), fco_notional_size(0), fco_collateral_currency(0),
   fco_margin_requirement(0), fco_propertyId(0), fco_prop_type(0), fco_expirated(false),
   fco_quoted(false), fco_init_block(0), fco_name(""), fco_subcategory(""), fco_issuer(""), fco_backup_address("")  {}
-  
+
 };
 
 struct TokenDataByName

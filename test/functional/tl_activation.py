@@ -91,7 +91,7 @@ class ActivationBasicsTest (BitcoinTestFramework):
         assert_equal(result, [True, True, True, True])
 
         # deactivation here to write 999999999 in the MSC_SP_BLOCK param
-        params = str([adminAddress, 1]).replace("'",'"')
+        params = str([adminAddress, 8]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_senddeactivation",params)
         # self.log.info(out)
 
@@ -114,8 +114,8 @@ class ActivationBasicsTest (BitcoinTestFramework):
 
         self.log.info("Testing tl_sendactivation")
 
-        # adminAddress, activation number 1, in block 400, minim tl version = 1.
-        params = str([adminAddress, 1, 400, 1]).replace("'",'"')
+        # adminAddress, activation number 8, in block 400, minim tl version = 1.
+        params = str([adminAddress, 8, 400, 1]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_sendactivation",params)
         # self.log.info(out)
 
@@ -143,8 +143,8 @@ class ActivationBasicsTest (BitcoinTestFramework):
 
         self.log.info("Testing tl_senddeactivation")
 
-        # adminAddress, activation number 1, in block 400, minim tl version = 1.
-        params = str([adminAddress, 1]).replace("'",'"')
+        # adminAddress, deactivation number 8, in block 400, minim tl version = 1.
+        params = str([adminAddress, 8]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_senddeactivation",params)
         # self.log.info(out)
 
@@ -164,6 +164,7 @@ class ActivationBasicsTest (BitcoinTestFramework):
         params = str([5])
         out = tradelayer_HTTP(conn, headers, False, "tl_getproperty",params)
         # self.log.info(out)
+
         assert_equal(out['error']['message'], 'Property identifier does not exist')
 
         conn.close()

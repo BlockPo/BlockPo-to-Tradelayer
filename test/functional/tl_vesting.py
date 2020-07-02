@@ -105,6 +105,7 @@ class VestingBasicsTest (BitcoinTestFramework):
 
         assert_equal(result, [True, True, True, True, True])
 
+
         self.log.info("Checking vesting tokens property")
         params = str([3])
         out = tradelayer_HTTP(conn, headers, True, "tl_getproperty",params)
@@ -216,7 +217,6 @@ class VestingBasicsTest (BitcoinTestFramework):
         # self.log.info(out)
 
         self.nodes[0].generate(1)
-
 
         self.log.info("Checking the offer in DEx")
         params = str([addresses[2]]).replace("'",'"')
