@@ -12,6 +12,7 @@
 #include "tradelayer/pending.h"
 #include "tradelayer/rpcrequirements.h"
 #include "tradelayer/rpcvalues.h"
+#include "tradelayer/rules.h"
 #include "tradelayer/sp.h"
 #include "tradelayer/tx.h"
 
@@ -1384,11 +1385,14 @@ UniValue tl_senddexoffer(const JSONRPCRequest& request)
 			+ HelpExampleRpc("tl_senddexoffer", "\"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\", 1, \"1.5\", \"0.75\", 25, \"0.0005\", 1")
 			);
   }
+
+
+
   // obtain parameters & info
 
   std::string fromAddress = ParseAddress(request.params[0]);
   uint32_t propertyIdForSale = ParsePropertyId(request.params[1]);
-  int64_t amountForSale = ParseAmount(request.params[2], true); // TMSC/MSC is divisible
+  int64_t amountForSale = ParseAmount(request.params[2], isPropertyDivisible(propertyIdForSale));
   int64_t price = ParseAmount(request.params[3], true); // BTC is divisible
   uint8_t paymentWindow = ParseDExPaymentWindow(request.params[4]);
   int64_t minAcceptFee = ParseDExFee(request.params[5]);
@@ -1403,11 +1407,11 @@ UniValue tl_senddexoffer(const JSONRPCRequest& request)
   {
       payload = CreatePayload_DEx(propertyIdForSale, amountForSale, price, paymentWindow, minAcceptFee, action);
   } else {
+      RequireFeatureActivated(FEATURE_DEX_SELL);
       RequireBalance(fromAddress, propertyIdForSale, amountForSale);
       payload = CreatePayload_DExSell(propertyIdForSale, amountForSale, price, paymentWindow, minAcceptFee, action);
   }
 
-  LTCPriceOffer = price;
   // request the wallet build the transaction (and if needed commit it)
   uint256 txid;
   std::string rawHex;

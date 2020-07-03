@@ -348,8 +348,8 @@ bool ActivateFeature(uint16_t featureId, int activationBlock, uint32_t minClient
     // check activation block is allowed
 
     if(msc_debug_activate_feature){
-        PrintToLog("%s(): activationBlock %d, transactionBlock + params.MIN_ACTIVATION_BLOCKS : %d",__func__,activationBlock,(transactionBlock + params.MIN_ACTIVATION_BLOCKS));
-        PrintToLog("%s(): transactionBlock + params.MAX_ACTIVATION_BLOCKS : %d",__func__,(transactionBlock + params.MAX_ACTIVATION_BLOCKS));
+        PrintToLog("%s(): activationBlock %d, transactionBlock + params.MIN_ACTIVATION_BLOCKS : %d\n",__func__,activationBlock,(transactionBlock + params.MIN_ACTIVATION_BLOCKS));
+        PrintToLog("%s(): transactionBlock + params.MAX_ACTIVATION_BLOCKS : %d\n",__func__,(transactionBlock + params.MAX_ACTIVATION_BLOCKS));
     }
 
     if ((activationBlock < (transactionBlock + params.MIN_ACTIVATION_BLOCKS)) ||

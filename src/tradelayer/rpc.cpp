@@ -2386,7 +2386,7 @@ UniValue tl_getactivedexsells(const JSONRPCRequest& request)
             aUnitPrice = (COIN * (ConvertTo256(sellBitcoinDesired)) / ConvertTo256(sellOfferAmount)) ; // divide by zero protection
         }
 
-        int64_t unitPrice = ConvertTo64(aUnitPrice);
+        int64_t unitPrice = (isPropertyDivisible(propertyId)) ? ConvertTo64(aUnitPrice) : ConvertTo64(aUnitPrice) / COIN;
 
         PrintToLog("%s(): sellBitcoinDesired: %d, sellOfferAmount : %d, unitPrice: %d\n",__func__, sellBitcoinDesired, sellOfferAmount, unitPrice);
 
@@ -2414,11 +2414,11 @@ UniValue tl_getactivedexsells(const JSONRPCRequest& request)
                     uint64_t ltcsreceived = rounduint64(unitPrice * amountOffered / 100000000);
                     sumLtcs += ltcsreceived;
                     matchedAccept.push_back(Pair("seller", buyer));
-                    matchedAccept.push_back(Pair("amountoffered", FormatDivisibleMP(amountOffered)));
+                    matchedAccept.push_back(Pair("amountoffered", FormatMP(propertyId, amountOffered)));
                     matchedAccept.push_back(Pair("ltcstoreceive", FormatDivisibleMP(ltcsreceived)));
                 } else if (option == 2) {
                     matchedAccept.push_back(Pair("buyer", buyer));
-                    matchedAccept.push_back(Pair("amountdesired", FormatDivisibleMP(amountOffered)));
+                    matchedAccept.push_back(Pair("amountdesired", FormatMP(propertyId, amountOffered)));
                     matchedAccept.push_back(Pair("ltcstopay", FormatDivisibleMP(amountToPayInLTC)));
                 }
 
@@ -2435,13 +2435,13 @@ UniValue tl_getactivedexsells(const JSONRPCRequest& request)
         if (option == 2) {
             responseObj.push_back(Pair("seller", seller));
             responseObj.push_back(Pair("ltcsdesired", FormatDivisibleMP(bitcoinDesired)));
-            responseObj.push_back(Pair("amountavailable", FormatDivisibleMP(sellOfferAmount - amountOffered)));
-            responseObj.push_back(Pair("amountoffered", FormatDivisibleMP(amountOffered)));
+            responseObj.push_back(Pair("amountavailable", FormatMP(propertyId, sellOfferAmount - amountOffered)));
+            responseObj.push_back(Pair("amountoffered", FormatMP(propertyId, amountOffered)));
 
         } else if (option == 1){
             responseObj.push_back(Pair("buyer", seller));
             responseObj.push_back(Pair("ltcstopay", FormatDivisibleMP(sellBitcoinDesired - sumLtcs)));
-            responseObj.push_back(Pair("amountdesired", FormatDivisibleMP(sellOfferAmount - sumAccepted)));
+            responseObj.push_back(Pair("amountdesired", FormatMP(propertyId, sellOfferAmount - sumAccepted)));
             responseObj.push_back(Pair("amountaccepted", FormatDivisibleMP(sumAccepted)));
 
         }
