@@ -1362,7 +1362,7 @@ UniValue tl_senddexoffer(const JSONRPCRequest& request)
 {
   if (request.params.size() != 8 || request.fHelp) {
     throw runtime_error(
-			"tl_senddexsell \"fromaddress\" propertyidforsale \"amountforsale\" \"amountdesired\" paymentwindow minacceptfee action\n"
+			"tl_senddexoffer \"fromaddress\" propertyidforsale \"amountforsale\" \"amountdesired\" paymentwindow minacceptfee action\n"
 
 			"\nPlace, update or cancel a sell offer on the traditional distributed Trade Layer/LTC exchange.\n"
 
@@ -1462,6 +1462,7 @@ UniValue tl_senddexaccept(const JSONRPCRequest& request)
 
     // perform checks
     // RequirePrimaryToken(propertyId);
+    RequireFeatureActivated(FEATURE_DEX_SELL);
     RequireMatchingDExOffer(toAddress, propertyId);
 
     if (!override) { // reject unsafe accepts - note client maximum tx fee will always be respected regardless of override here
@@ -2010,6 +2011,8 @@ UniValue tl_send_dex_payment(const JSONRPCRequest& request)
     std::string toAddress = ParseAddress(request.params[1]);
     int64_t amount = ParseAmount(request.params[2], true);
 
+    RequireFeatureActivated(FEATURE_DEX_SELL);
+    
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_DEx_Payment();
 
