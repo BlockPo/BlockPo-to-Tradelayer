@@ -3,6 +3,7 @@
 #include "tradelayer/dex.h"
 #include "tradelayer/mdex.h"
 #include "tradelayer/tradelayer.h"
+#include "tradelayer/rules.h"
 #include "tradelayer/sp.h"
 #include "tradelayer/utilsbitcoin.h"
 #include "tradelayer/uint256_extensions.h"
@@ -410,4 +411,12 @@ void RequireContractOrder(std::string& fromAddress, uint32_t contractId)
         throw JSONRPCError(RPC_INVALID_PARAMETER,"There's no order in this future contract\n");
   }
 
+}
+
+
+void RequireFeatureActivated(const uint16_t feature)
+{
+    if (!IsFeatureActivated(feature, GetHeight())) {
+       throw JSONRPCError(RPC_TYPE_ERROR, "Feature is not Activated");
+    }
 }

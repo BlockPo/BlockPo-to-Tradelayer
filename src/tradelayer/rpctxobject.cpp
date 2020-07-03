@@ -198,7 +198,7 @@ void populateRPCTypeInfo(CMPTransaction& mp_obj, UniValue& txobj, uint32_t txTyp
         case MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK:
             populateRPCTypeContractDex_Cancel_Orders_By_Block(mp_obj, txobj);
             break;
-        case MSC_TYPE_TRADE_OFFER:
+        case MSC_TYPE_DEX_SELL_OFFER:
             populateRPCTypeTradeOffer(mp_obj, txobj);
             break;
         case MSC_TYPE_DEX_BUY_OFFER:

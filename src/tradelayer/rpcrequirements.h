@@ -38,6 +38,7 @@ void RequireSaneDExFee(const std::string& address, uint32_t propertyId);
 void RequireSaneName(std::string& name);
 void RequireDifferentAddrs(const std::string& oracleAddress, const std::string& backupAddress);
 void RequireShort(std::string& fromAddress, uint32_t contractId, uint64_t amount);
+void RequireFeatureActivated(const uint16_t feature);
 ////////////////////////////////////////////////////////////////////////////////
 
 

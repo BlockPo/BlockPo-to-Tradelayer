@@ -67,7 +67,7 @@ int64_t ParseAmount(const UniValue& value, bool isDivisible)
 {
     int64_t amount = mastercore::StrToInt64(value.get_str(), isDivisible);
     if (amount < 1) {
-        throw JSONRPCError(RPC_TYPE_ERROR, "Invalid amount ???");
+        throw JSONRPCError(RPC_TYPE_ERROR, "Invalid amount");
     }
     return amount;
 }
