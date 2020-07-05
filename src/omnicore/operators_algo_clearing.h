@@ -114,4 +114,6 @@ void getting_globallives_long_short(std::vector<std::map<std::string, std::strin
 
 void printing_lives_vector(std::vector<std::map<std::string, std::string>> lives);
 
+std::vector<std::string> AddressesList(std::vector<std::vector<std::map<std::string, std::string>>> &path_main);
+
 #endif
