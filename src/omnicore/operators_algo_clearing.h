@@ -116,4 +116,6 @@ void printing_lives_vector(std::vector<std::map<std::string, std::string>> lives
 
 std::vector<std::string> AddressesList(std::vector<std::vector<std::map<std::string, std::string>>> &path_main);
 
+void building_lives_edges(std::map<std::string, std::string> &path_first, std::string addrs, std::string status, long int lives, double entry_price, long int edge_row, long int path_number);
+
 #endif

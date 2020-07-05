@@ -280,7 +280,7 @@ void settlement_algorithm_fifo(MatrixTLS &M_file, int64_t interest, int64_t twap
   		PrintToLog("%s\n", *it);
 
   	PrintToLog("\n*************************************************");
-  	PrintToLog("\nCounting Lives contracts in the Main Graph\n");
+  	PrintToLog("\nComputing Lives contracts in the Main Graph\n");
 
   	std::vector<std::map<std::string, std::string>> LivesLongs;
   	std::vector<std::map<std::string, std::string>> LivesShorts;
@@ -290,17 +290,16 @@ void settlement_algorithm_fifo(MatrixTLS &M_file, int64_t interest, int64_t twap
   	for (std::vector<std::string>::iterator it_addrs = AddrsV.begin(); it_addrs != AddrsV.end(); ++it_addrs)
   	{
   		std::string &AddrsLives = *it_addrs;
-		PrintToLog("\nFinding Lives for: %s\n", AddrsLives);
-		
-		std::string NLives = "None";
-		int IdPosition = 0;
-		int idX = 0;
-		int idY = 0;
-		
-		int idR = 0;
+
+		std::string Status 	= "None";
+		long int NLives 	= 0;
+		long int EdgeRow 	= 0;
+		long int PathNumber = 0;
+		double ExitPrice 	= 0;
+		int IdPosition 		= 0;
+
 		for (std::vector<std::vector<std::map<std::string, std::string>>>::iterator it_path_main = path_main.begin(); it_path_main != path_main.end(); ++it_path_main)
 		{
-			int idC = 0;
 			for (std::vector<std::map<std::string, std::string>>::iterator it_path_maini = (*it_path_main).begin(); it_path_maini != (*it_path_main).end(); ++it_path_maini)
 			{
 				std::map<std::string, std::string> &GraphEdge = *it_path_maini; 
@@ -308,97 +307,83 @@ void settlement_algorithm_fifo(MatrixTLS &M_file, int64_t interest, int64_t twap
 				if (PtStatusByEdge->addrs_src == AddrsLives)
 				{
 					IdPosition = finding_string("Long", PtStatusByEdge->status_src) ? 0 : 1;
-					NLives = std::to_string(PtStatusByEdge->lives_src);
-					idX = idR;
-					idY = idC;
+					Status = PtStatusByEdge->status_src;					
+					NLives = PtStatusByEdge->lives_src;
+					ExitPrice = PtStatusByEdge->exit_price;
+					EdgeRow = PtStatusByEdge->edge_row;
+					PathNumber = PtStatusByEdge->path_number;
 				}
 				else if (PtStatusByEdge->addrs_trk == AddrsLives)
 				{
 					IdPosition = finding_string("Long", PtStatusByEdge->status_trk) ? 0 : 1;
-					NLives = std::to_string(PtStatusByEdge->lives_trk);
-					idX = idR;
-					idY = idC;
+					Status = PtStatusByEdge->status_trk;
+					NLives = PtStatusByEdge->lives_trk;
+					ExitPrice = PtStatusByEdge->exit_price;
+					EdgeRow = PtStatusByEdge->edge_row;
+					PathNumber = PtStatusByEdge->path_number;
 				}
 				else
 					continue;
-				idC++;
 			}
-			idR++;
 		}
 
-		PrintToLog("\n%s\t%d\t%s\n", AddrsLives, IdPosition, NLives);
 		if (IdPosition == 0)
 		{
-			LivesLongsEle[AddrsLives] = NLives;
+			building_lives_edges(LivesLongsEle, AddrsLives, Status, NLives, ExitPrice, EdgeRow, PathNumber);
 			LivesLongs.push_back(LivesLongsEle);
 		}
 		else
-		{
-			LivesShortsEle[AddrsLives] = NLives;
+		{	
+			building_lives_edges(LivesShortsEle, AddrsLives, Status, NLives, ExitPrice, EdgeRow, PathNumber);
 			LivesShorts.push_back(LivesShortsEle);
 		}
   	}
 
-  	PrintToLog("\n*************************************************");
-  	PrintToLog("\nVectors of LivesLongs in the Main Graph\n");
-  	for (std::vector<std::map<std::string, std::string>>::iterator itLives = LivesLongs.begin(); itLives != LivesLongs.end(); ++itLives)
+  	PrintToLog("\nDone!!\n");
+  	PrintToLog("\n*************************************************\n");
+
+  	double exit_price_desired 	= 0;
+  	long int sum_oflives 	  	= 0;
+  	double PNL_total 	 		= 0;
+  	double gamma_p 		 		= 0;
+  	double gamma_q 		 		= 0;
+  	double sum_gamma_p 	 		= 0;
+  	double sum_gamma_q 	 		= 0;
+
+  	for (it_path_main = path_main.begin(); it_path_main != path_main.end(); ++it_path_main)
   	{
-  		for(auto it = (*itLives).cbegin(); it != (*itLives).cend(); ++it)
-  			PrintToLog("\n%s\t%s\n", it->first, it->second);
-  	}
+    	computing_settlement_exitprice(*it_path_main, sum_oflives, PNL_total, gamma_p, gamma_q, interest, twap_price);
+    	PrintToLog("\ngamma_p : %d, gamma_q : %d, PNL_total : %d\n", gamma_p, gamma_q, PNL_total);
+    	sum_gamma_p += gamma_p;
+    	sum_gamma_q += gamma_q; 
+    }
+  	exit_price_desired = sum_gamma_p/sum_gamma_q;
+  	PrintToLog("\nexit_price_desired = %d\n", exit_price_desired);
 
   	PrintToLog("\n*************************************************");
-  	PrintToLog("\nVectors of LivesShots in the Main Graph\n");
-  	for (std::vector<std::map<std::string, std::string>>::iterator itLives = LivesShorts.begin(); itLives != LivesShorts.end(); ++itLives)
-  	{
-  		for(auto it = (*itLives).cbegin(); it != (*itLives).cend(); ++it)
-  			PrintToLog("\n%s\t%s\n", it->first, it->second);
-  	}
+  	PrintToLog("\nChecking VWAP Price for Settlement\n");
 
-  	// for (it_path_main = path_main.begin(); it_path_main != path_main.end(); ++it_path_main)
-  	//   {
-  	//     PrintToLog("*******************************************");
-  	//     counting_paths += 1;
-  	//     PrintToLog("\n\nPath for Exit Price #%d:\n\n", counting_paths);
-  	//     printing_path_maini(*it_path_main);
+	double vwap_exit_price = 0;
+  	
+  	int64_t VWAPContractPrice = mastercore::getVWAPPriceContracts("ALL F18");
+  	PrintToLog("\nVWAPContractPrice = %s\n", FormatDivisibleMP(VWAPContractPrice));
+  	vwap_exit_price = static_cast<long double>(VWAPContractPrice)/COIN;
 
-	// checking_zeronetted_bypath(*it_path_main);
-    // computing_livesvectors_forlongshort(*it_path_main, lives_longs, lives_shorts);
-    // computing_settlement_exitprice(*it_path_main, sum_oflives, PNL_total, gamma_p, gamma_q, interest, twap_price);
-    // PrintToLog("\ngamma_p : %d, gamma_q : %d, PNL_total : %d\n", gamma_p, gamma_q, PNL_total);
-    // sum_gamma_p += gamma_p;
-    // sum_gamma_q += gamma_q; 
-    // }
-  	// exit_price_desired = sum_gamma_p/sum_gamma_q;
-  	// PrintToLog("\nexit_price_desired = %d\n", exit_price_desired);
+  	int64_t VWAPMetaDExPrice = mastercore::getVWAPPriceByPair("ALL", "dUSD");
+  	PrintToLog("\nVWAPMetaDExPrice = %s\n", FormatDivisibleMP(VWAPMetaDExPrice));
 
-  	// /** Checking VWAP Price for Settlement **/
+  	counting_lives_longshorts(LivesLongs, LivesShorts);
 
-  	// int64_t VWAPContractPrice = mastercore::getVWAPPriceContracts("ALL F18");
-  	// PrintToLog("\nVWAPContractPrice = %s\n", FormatDivisibleMP(VWAPContractPrice));
-  	// vwap_exit_price = static_cast<long double>(VWAPContractPrice)/COIN;
+  	PrintToLog("\n*************************************************");
+  	PrintToLog("\nGhost Edges Vector:\n");
 
-  	// int64_t VWAPMetaDExPrice = mastercore::getVWAPPriceByPair("ALL", "dUSD");
-  	// PrintToLog("\nVWAPMetaDExPrice = %s\n", FormatDivisibleMP(VWAPMetaDExPrice));
+  	std::vector<std::map<std::string, std::string>> ghost_edges_array;
+  	calculating_ghost_edges(LivesLongs, LivesShorts, exit_price_desired, ghost_edges_array);
 
-  	// PrintToLog("\n----------------------------------------------------------\n");
-  	// PrintToLog("\n\nLocal Vector of Longs Lives\n\n");
-  	// printing_lives_vector(lives_longs);
-  
-  	// PrintToLog("\n\nLocal Vector of Shorts Lives\n\n");
-  	// printing_lives_vector(lives_shorts);
+  	std::vector<std::map<std::string, std::string>>::iterator it_ghost;
+  	for (it_ghost = ghost_edges_array.begin(); it_ghost != ghost_edges_array.end(); ++it_ghost) printing_edges(*it_ghost);
 
-  	// counting_lives_longshorts(lives_longs, lives_shorts);
-
-  	// PrintToLog("\n----------------------------------------------------------\n");
-
-  	// PrintToLog("\nGhost Edges Vector:\n");
-  	// calculating_ghost_edges(lives_longs, lives_shorts, vwap_exit_price, ghost_edges_array);
-
-  	// std::vector<std::map<std::string, std::string>>::iterator it_ghost;
-  	// for (it_ghost = ghost_edges_array.begin(); it_ghost != ghost_edges_array.end(); ++it_ghost) printing_edges(*it_ghost);
-
-  	// PrintToLog("\n__________________________________________________________\n");
+  	PrintToLog("\n*************************************************");
 
   	// joining_pathmain_ghostedges(path_main, ghost_edges_array);
   	// int k = 0;
@@ -409,8 +394,8 @@ void settlement_algorithm_fifo(MatrixTLS &M_file, int64_t interest, int64_t twap
   	// std::vector<std::string> addrsv;
 
   	// for (it_path_main = path_main.begin(); it_path_main != path_main.end(); ++it_path_main)
-  	//   {
-  	//     k += 1;
+  	// {
+  	// 	k += 1;
   	//     PrintToLog("\nPath #%d: with Ghost Nodes\n", k);
   	//     printing_path_maini(*it_path_main);
   	//     nonzero_lives = checkpath_livesnonzero(*it_path_main);
@@ -421,9 +406,9 @@ void settlement_algorithm_fifo(MatrixTLS &M_file, int64_t interest, int64_t twap
   	//     PNL_total += PNL_totalit;
   	//     PrintToLog("\nPNL_total_main sum: %f\n", PNL_total);
   	//     addrs_set.clear();
-  	//   }
+  	// }
 
-  	// PrintToLog("\n____________________________________________________\n");
+  	// PrintToLog("\n*************************************************");
   	// PrintToLog("\nChecking PNL global (Total Sum PNL by Path):\n");
   	// PrintToLog("\nPNL_total_main = %f", PNL_total);
   	PrintToLog("\n\n");
@@ -588,12 +573,22 @@ void building_edge(std::map<std::string, std::string> &path_first, std::string a
 
 void building_lives_edges(std::map<std::string, std::string> &path_first, std::string addrs, std::string status, long int lives, double entry_price, struct status_amounts_edge *pt_status_byedge)
 {
-  path_first["addrs"] = addrs;
-  path_first["status"] = status;
-  path_first["lives"] =  std::to_string(lives);
+  path_first["addrs"] 		= addrs;
+  path_first["status"] 		= status;
+  path_first["lives"] 		= std::to_string(lives);
   path_first["entry_price"] = std::to_string(entry_price);
-  path_first["edge_row"] = std::to_string(pt_status_byedge->edge_row);
+  path_first["edge_row"] 	= std::to_string(pt_status_byedge->edge_row);
   path_first["path_number"] = std::to_string(pt_status_byedge->path_number);
+}
+
+void building_lives_edges(std::map<std::string, std::string> &path_first, std::string addrs, std::string status, long int lives, double entry_price, long int edge_row, long int path_number)
+{
+  path_first["addrs"] 		= addrs;
+  path_first["status"] 		= status;
+  path_first["lives"]  		= std::to_string(lives);
+  path_first["entry_price"] = std::to_string(entry_price);
+  path_first["edge_row"]    = std::to_string(edge_row);
+  path_first["path_number"] = std::to_string(path_number);
 }
 
 void printing_edges(std::map<std::string, std::string> &path_first)
@@ -740,29 +735,29 @@ void checking_zeronetted_bypath(std::vector<std::map<std::string, std::string>> 
 
 void computing_livesvectors_forlongshort(std::vector<std::map<std::string, std::string>> &it_path_main, std::vector<std::map<std::string, std::string>> &lives_longs, std::vector<std::map<std::string, std::string>> &lives_shorts)
 {
-  std::map<std::string, std::string> path_ele;
+	std::map<std::string, std::string> path_ele;
 
-  for (std::vector<std::map<std::string, std::string>>::iterator it = it_path_main.begin(); it != it_path_main.end(); ++it)
+  	for (std::vector<std::map<std::string, std::string>>::iterator it = it_path_main.begin(); it != it_path_main.end(); ++it)
     {
-      struct status_amounts_edge *pt_status_byedge = get_status_byedge(*it);
-      if ( pt_status_byedge->lives_src != 0 )
-	{
-	  building_lives_edges(path_ele, pt_status_byedge->addrs_src, pt_status_byedge->status_src, pt_status_byedge->lives_src, pt_status_byedge->exit_price, pt_status_byedge);
+    	struct status_amounts_edge *pt_status_byedge = get_status_byedge(*it);
+      	if ( pt_status_byedge->lives_src != 0 )
+		{
+	  		building_lives_edges(path_ele, pt_status_byedge->addrs_src, pt_status_byedge->status_src, pt_status_byedge->lives_src, pt_status_byedge->exit_price, pt_status_byedge);
 
-	  if ( finding_string("Long", pt_status_byedge->status_src) )
-	    lives_longs.push_back(path_ele);
-	  else if ( finding_string("Short", pt_status_byedge->status_src) )
-	    lives_shorts.push_back(path_ele);
-	}
-      if ( pt_status_byedge->lives_trk != 0 )
-	{
-	  building_lives_edges(path_ele, pt_status_byedge->addrs_trk, pt_status_byedge->status_trk, pt_status_byedge->lives_trk, pt_status_byedge->entry_price, pt_status_byedge);
+	  		if ( finding_string("Long", pt_status_byedge->status_src) )
+	    		lives_longs.push_back(path_ele);
+	  		else if ( finding_string("Short", pt_status_byedge->status_src) )
+	    		lives_shorts.push_back(path_ele);
+		}
+      	if ( pt_status_byedge->lives_trk != 0 )
+		{
+	  		building_lives_edges(path_ele, pt_status_byedge->addrs_trk, pt_status_byedge->status_trk, pt_status_byedge->lives_trk, pt_status_byedge->entry_price, pt_status_byedge);
 
-	  if ( finding_string("Long", pt_status_byedge->status_trk) )
-	    lives_longs.push_back(path_ele);
-	  else if ( finding_string("Short", pt_status_byedge->status_trk) )
-	    lives_shorts.push_back(path_ele);
-	}
+	  		if ( finding_string("Long", pt_status_byedge->status_trk) )
+	    		lives_longs.push_back(path_ele);
+	  		else if ( finding_string("Short", pt_status_byedge->status_trk) )
+	    		lives_shorts.push_back(path_ele);
+		}
     }
 }
 
