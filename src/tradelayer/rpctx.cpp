@@ -2012,7 +2012,7 @@ UniValue tl_send_dex_payment(const JSONRPCRequest& request)
     int64_t amount = ParseAmount(request.params[2], true);
 
     RequireFeatureActivated(FEATURE_DEX_SELL);
-    
+
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_DEx_Payment();
 
@@ -2159,7 +2159,143 @@ UniValue tl_sendcancelalltrades(const JSONRPCRequest& request)
     }
 }
 
+UniValue tl_sendcancel_order(const JSONRPCRequest& request)
+{
+    if (request.params.size() != 2 || request.fHelp)
+        throw runtime_error(
+           "tl_sendcancel_order \"address \"hash\" \n"
 
+           "\nCancel specific metaDEx order .\n"
+           "\nArguments:\n"
+           "1. address       (string, required) sender address\n"
+           "2. txid          (string, required) transaction hash\n"
+
+           "\nExamples:\n"
+           + HelpExampleCli("tl_sendcancel_order", "\"\"")
+           + HelpExampleRpc("tl_sendcancel_order", "\"\"")
+        );
+
+    // obtain parameters & info
+    std::string fromAddress = ParseAddress(request.params[0]);
+    std::string stxS = ParseHash(request.params[1]);
+
+    // create a payload for the transaction
+    std::vector<unsigned char> payload = CreatePayload_DExCancel(stxS);
+
+    // request the wallet build the transaction (and if needed commit it)
+    uint256 txid;
+    std::string rawHex;
+    int result = WalletTxBuilder(fromAddress, "", 0, payload, txid, rawHex, autoCommit);
+
+    // check error and return the txid (or raw hex depending on autocommit)
+    if (result != 0) {
+        throw JSONRPCError(result, error_str(result));
+    } else {
+        if (!autoCommit) {
+            return rawHex;
+          } else {
+              return txid.GetHex();
+          }
+    }
+}
+
+UniValue tl_sendcanceltradesbypair(const JSONRPCRequest& request)
+{
+    if (request.params.size() != 3 || request.fHelp)
+        throw runtime_error(
+          "tl_sendcanceltradesbypair \"address \"propertyidforsale\" \"propertyiddesired\"\n"
+
+          "\nCancel specific contract order .\n"
+          "\nArguments:\n"
+          "1. fromaddress               (string, required) sender address\n"
+          "2. propertyidforsale         (string, required) the identifier of the tokens listed for sale\n"
+          "3. propertyiddesired         (string, required) the identifier of the tokens desired in exchange\n"
+          "\nExamples:\n"
+          + HelpExampleCli("\"tl_sendcanceltradesbypair\"",  "\"3BydPiSLPP3DR5cf726hDQ89fpqWLxPKLR\" 1 31")
+          + HelpExampleRpc("tl_sendcanceltradesbypair", "\"3BydPiSLPP3DR5cf726hDQ89fpqWLxPKLR\", 1, 31")
+        );
+
+    // obtain parameters & info
+    std::string fromAddress = ParseAddress(request.params[0]);
+    uint32_t propertyIdForSale = ParsePropertyId(request.params[1]);
+    uint32_t propertyIdDesired = ParsePropertyId(request.params[2]);
+
+    // perform checks
+    RequireExistingProperty(propertyIdForSale);
+    RequireExistingProperty(propertyIdDesired);
+
+    RequireDifferentIds(propertyIdForSale, propertyIdDesired);
+
+    // create a payload for the transaction
+    std::vector<unsigned char> payload = CreatePayload_MetaDExCancelPair(propertyIdForSale, propertyIdDesired);
+
+    // request the wallet build the transaction (and if needed commit it)
+    uint256 txid;
+    std::string rawHex;
+    int result = WalletTxBuilder(fromAddress, "", 0, payload, txid, rawHex, autoCommit);
+
+    // check error and return the txid (or raw hex depending on autocommit)
+    if (result != 0) {
+        throw JSONRPCError(result, error_str(result));
+    } else {
+        if (!autoCommit) {
+            return rawHex;
+        } else {
+                return txid.GetHex();
+        }
+    }
+}
+
+UniValue tl_sendcanceltradesbyprice(const JSONRPCRequest& request)
+{
+    if (request.params.size() != 5 || request.fHelp)
+        throw runtime_error(
+          "tl_sendcanceltradesbyprice \"address \"propertyidforsale\" \"propertyiddesired\"\n"
+
+          "\nCancel specific contract order .\n"
+          "\nArguments:\n"
+          "1. fromaddress          (string, required) the address to trade with\n"
+    			"2. propertyidforsale    (number, required) the identifier of the tokens to list for sale\n"
+    			"3. amountforsale        (string, required) the amount of tokens to list for sale\n"
+    			"4. propertiddesired     (number, required) the identifier of the tokens desired in exchange\n"
+    			"5. amountdesired        (string, required) the amount of tokens desired in exchange\n"
+          "\nExamples:\n"
+          + HelpExampleCli("\"tl_sendcanceltradesbyprice\"",  "\"3BydPiSLPP3DR5cf726hDQ89fpqWLxPKLR\" 1 31,6,71")
+          + HelpExampleRpc("tl_sendcanceltradesbyprice", "\"3BydPiSLPP3DR5cf726hDQ89fpqWLxPKLR\", 1, 31,2,56")
+        );
+
+    // obtain parameters & info
+    std::string fromAddress = ParseAddress(request.params[0]);
+    uint32_t propertyIdForSale = ParsePropertyId(request.params[1]);
+    int64_t amountForSale = ParseAmount(request.params[2], isPropertyDivisible(propertyIdForSale));
+    uint32_t propertyIdDesired = ParsePropertyId(request.params[3]);
+    int64_t amountDesired = ParseAmount(request.params[4], isPropertyDivisible(propertyIdDesired));
+
+    // perform checks
+    RequireExistingProperty(propertyIdForSale);
+    RequireExistingProperty(propertyIdDesired);
+
+    RequireDifferentIds(propertyIdForSale, propertyIdDesired);
+
+    // create a payload for the transaction
+    std::vector<unsigned char> payload = CreatePayload_MetaDExCancelPrice(propertyIdForSale, amountForSale, propertyIdDesired, amountDesired);
+
+    // request the wallet build the transaction (and if needed commit it)
+    uint256 txid;
+    std::string rawHex;
+    int result = WalletTxBuilder(fromAddress, "", 0, payload, txid, rawHex, autoCommit);
+
+    // check error and return the txid (or raw hex depending on autocommit)
+    if (result != 0) {
+        throw JSONRPCError(result, error_str(result));
+    } else {
+        if (!autoCommit) {
+            return rawHex;
+        } else {
+                return txid.GetHex();
+        }
+    }
+}
 
 UniValue tl_sendcancel_contract_order(const JSONRPCRequest& request)
 {
@@ -2170,7 +2306,7 @@ UniValue tl_sendcancel_contract_order(const JSONRPCRequest& request)
            "\nCancel specific contract order .\n"
            "\nArguments:\n"
            "1. address       (string, required) sender address\n"
-           "2. hash          (string, required) transaction hash\n"
+           "2. txid          (string, required) transaction hash\n"
 
            "\nExamples:\n"
            + HelpExampleCli("tl_sendcancel_contract_order", "\"\"")
@@ -2245,7 +2381,9 @@ static const CRPCCommand commands[] =
     { "trade layer (transaction cration)",  "tl_new_id_registration",          &tl_new_id_registration,             {} },
     { "trade layer (transaction cration)",  "tl_update_id_registration",       &tl_update_id_registration,          {} },
     { "trade layer (transaction creation)", "tl_attestation",                  &tl_attestation,                     {} },
-    { "trade layer (transaction creation)", "tl_revoke_attestation",           &tl_revoke_attestation,              {} }
+    { "trade layer (transaction creation)", "tl_revoke_attestation",           &tl_revoke_attestation,              {} },
+    { "trade layer (transaction creation)", "tl_sendcancel_order",             &tl_sendcancel_order,                {} },
+    { "trade layer (transaction creation)", "tl_sendcanceltradesbypair",       &tl_sendcanceltradesbypair,          {} }
 #endif
 };
 

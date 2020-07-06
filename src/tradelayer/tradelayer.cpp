@@ -3164,6 +3164,49 @@ uint32_t CtlTransactionDB::FetchTransactionPosition(const uint256& txid)
     return posInBlock;
 }
 
+
+void CMPTxList::recordMetaDExCancelTX(const uint256& txidMaster, const uint256& txidSub, bool fValid, int nBlock, unsigned int propertyId, uint64_t nValue)
+{
+    if (!pdb) return;
+
+    // Prep - setup vars
+    unsigned int type = 99992104;
+    unsigned int refNumber = 1;
+    uint64_t existingAffectedTXCount = 0;
+    std::string txidMasterStr = txidMaster.ToString() + "-C";
+
+    // Step 1 - Check TXList to see if this cancel TXID exists
+    // Step 2a - If doesn't exist leave number of affected txs & ref set to 1
+    // Step 2b - If does exist add +1 to existing ref and set this ref as new number of affected
+    std::vector<std::string> vstr;
+    std::string strValue;
+    leveldb::Status status = pdb->Get(readoptions, txidMasterStr, &strValue);
+    if (status.ok()) {
+        // parse the string returned
+        boost::split(vstr, strValue, boost::is_any_of(":"), boost::token_compress_on);
+
+        // obtain the existing affected tx count
+        if (4 <= vstr.size()) {
+            existingAffectedTXCount = atoi(vstr[3]);
+            refNumber = existingAffectedTXCount + 1;
+        }
+    }
+
+    // Step 3 - Create new/update master record for cancel tx in TXList
+    const std::string key = txidMasterStr;
+    const std::string value = strprintf("%u:%d:%u:%lu", fValid ? 1 : 0, nBlock, type, refNumber);
+    PrintToLog("METADEXCANCELDEBUG : Writing master record %s(%s, valid=%s, block= %d, type= %d, number of affected transactions= %d)\n", __func__, txidMaster.ToString(), fValid ? "YES" : "NO", nBlock, type, refNumber);
+    status = pdb->Put(writeoptions, key, value);
+
+    // Step 4 - Write sub-record with cancel details
+    const std::string txidStr = txidMaster.ToString() + "-C";
+    const std::string subKey = STR_REF_SUBKEY_TXID_REF_COMBO(txidStr, refNumber);
+    const std::string subValue = strprintf("%s:%d:%lu", txidSub.ToString(), propertyId, nValue);
+    PrintToLog("METADEXCANCELDEBUG : Writing sub-record %s with value %s\n", subKey, subValue);
+    status = pdb->Put(writeoptions, subKey, subValue);
+    if (msc_debug_txdb) PrintToLog("%s(): store: %s=%s, status: %s\n", __func__, subKey, subValue, status.ToString());
+}
+
 void CMPTxList::LoadActivations(int blockHeight)
 {
      if (!pdb) return;
