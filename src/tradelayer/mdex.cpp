@@ -2685,9 +2685,9 @@ int mastercore::MetaDEx_CANCEL_AT_PRICE(const uint256& txid, unsigned int block,
     CMPMetaDEx mdex(sender_addr, 0, prop, amount, property_desired, amount_desired, uint256(), 0, CMPTransaction::CANCEL_AT_PRICE);
     md_PricesMap* prices = get_Prices(prop);
     const CMPMetaDEx* p_mdex = nullptr;
-    
+
     if (!prices) {
-        PrintToLog("%s() NOTHING FOUND for %s\n", __FUNCTION__, mdex.ToString());
+        PrintToLog("%s() NOTHING FOUND for %s\n", __func__, mdex.ToString());
         return rc -1;
     }
 
@@ -2702,15 +2702,16 @@ int mastercore::MetaDEx_CANCEL_AT_PRICE(const uint256& txid, unsigned int block,
         for (md_Set::iterator iitt = indexes->begin(); iitt != indexes->end();) {
             p_mdex = &(*iitt);
 
-            if (msc_debug_metadex3) PrintToLog("%s(): %s\n", __FUNCTION__, p_mdex->ToString());
-
+            if (msc_debug_metadex3) PrintToLog("%s(): %s\n", __func__, p_mdex->ToString());
+            
             if ((p_mdex->getDesProperty() != property_desired) || (p_mdex->getAddr() != sender_addr)) {
                 ++iitt;
                 continue;
             }
 
             rc = 0;
-            PrintToLog("%s(): REMOVING %s\n", __FUNCTION__, p_mdex->ToString());
+
+            PrintToLog("%s(): REMOVING %s\n", __func__, p_mdex->ToString());
 
             // move from reserve to main
             assert(update_tally_map(p_mdex->getAddr(), p_mdex->getProperty(), -p_mdex->getAmountRemaining(), METADEX_RESERVE));
@@ -2755,7 +2756,7 @@ int mastercore::MetaDEx_CANCEL_ALL_FOR_PAIR(const uint256& txid, unsigned int bl
             rc = 0;
             PrintToLog("%s(): REMOVING %s\n", __FUNCTION__, p_mdex->ToString());
 
-            // move from reserve to main
+            // move from reserve to balance
             assert(update_tally_map(p_mdex->getAddr(), p_mdex->getProperty(), -p_mdex->getAmountRemaining(), METADEX_RESERVE));
             assert(update_tally_map(p_mdex->getAddr(), p_mdex->getProperty(), p_mdex->getAmountRemaining(), BALANCE));
 

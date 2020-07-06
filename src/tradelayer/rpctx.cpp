@@ -803,6 +803,7 @@ UniValue tl_sendtrade(const JSONRPCRequest& request)
   int64_t amountDesired = ParseAmount(request.params[4], isPropertyDivisible(propertyIdDesired));
 
   // perform checks
+  RequireFeatureActivated(FEATURE_METADEX);
   RequireExistingProperty(propertyIdForSale);
   RequireNotContract(propertyIdForSale);
   RequireNotVesting(propertyIdForSale);
@@ -1317,7 +1318,7 @@ UniValue tl_cancelorderbyblock(const JSONRPCRequest& request)
         throw runtime_error(
             "tl_cancelorderbyblock \"fromaddress\"\n"
 
-            "\nCancel an specific offer on the distributed token exchange.\n"
+            "\nCancel an specific offer on the MetaDEx.\n"
 
             "\nArguments:\n"
             "1. address         (string, required) the txid of order to cancel\n"
@@ -1336,6 +1337,8 @@ UniValue tl_cancelorderbyblock(const JSONRPCRequest& request)
     std::string fromAddress = ParseAddress(request.params[0]);
     int block = static_cast<int>(ParseNewValues(request.params[1]));
     int idx = static_cast<int>(ParseNewValues(request.params[2]));
+
+    RequireFeatureActivated(FEATURE_METADEX);
 
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_ContractDexCancelOrderByTxId(block,idx);
@@ -2139,6 +2142,8 @@ UniValue tl_sendcancelalltrades(const JSONRPCRequest& request)
     // obtain parameters & info
     std::string fromAddress = ParseAddress(request.params[0]);
 
+    RequireFeatureActivated(FEATURE_METADEX);
+
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_MetaDExCancelAll();
 
@@ -2178,6 +2183,8 @@ UniValue tl_sendcancel_order(const JSONRPCRequest& request)
     // obtain parameters & info
     std::string fromAddress = ParseAddress(request.params[0]);
     std::string stxS = ParseHash(request.params[1]);
+
+    RequireFeatureActivated(FEATURE_METADEX);
 
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_DExCancel(stxS);
@@ -2221,9 +2228,9 @@ UniValue tl_sendcanceltradesbypair(const JSONRPCRequest& request)
     uint32_t propertyIdDesired = ParsePropertyId(request.params[2]);
 
     // perform checks
+    RequireFeatureActivated(FEATURE_METADEX);
     RequireExistingProperty(propertyIdForSale);
     RequireExistingProperty(propertyIdDesired);
-
     RequireDifferentIds(propertyIdForSale, propertyIdDesired);
 
     // create a payload for the transaction
@@ -2272,6 +2279,7 @@ UniValue tl_sendcanceltradesbyprice(const JSONRPCRequest& request)
     int64_t amountDesired = ParseAmount(request.params[4], isPropertyDivisible(propertyIdDesired));
 
     // perform checks
+    RequireFeatureActivated(FEATURE_METADEX);
     RequireExistingProperty(propertyIdForSale);
     RequireExistingProperty(propertyIdDesired);
 
@@ -2383,7 +2391,8 @@ static const CRPCCommand commands[] =
     { "trade layer (transaction creation)", "tl_attestation",                  &tl_attestation,                     {} },
     { "trade layer (transaction creation)", "tl_revoke_attestation",           &tl_revoke_attestation,              {} },
     { "trade layer (transaction creation)", "tl_sendcancel_order",             &tl_sendcancel_order,                {} },
-    { "trade layer (transaction creation)", "tl_sendcanceltradesbypair",       &tl_sendcanceltradesbypair,          {} }
+    { "trade layer (transaction creation)", "tl_sendcanceltradesbypair",       &tl_sendcanceltradesbypair,          {} },
+    { "trade layer (transaction creation)", "tl_sendcanceltradesbyprice",      &tl_sendcanceltradesbyprice,         {} }
 #endif
 };
 

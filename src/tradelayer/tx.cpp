@@ -1389,7 +1389,7 @@ bool CMPTransaction::interpret_MetaDExCancel_ByPrice()
     } else return false;
 
     if (!vecAmountForSale.empty()) {
-        amount_forsale = DecompressInteger(vecPropertyIdForSale);
+        amount_forsale = DecompressInteger(vecAmountForSale);
     } else return false;
 
     if (!vecAmountDesired.empty()) {
@@ -3629,8 +3629,8 @@ int CMPTransaction::logicMath_MetaDExCancel_ByPrice()
      }
 
      // ------------------------------------------
-
-     return (MetaDEx_CANCEL_AT_PRICE(txid, block, sender, propertyId, desired_property, desired_property, desired_value));
+     
+     return (MetaDEx_CANCEL_AT_PRICE(txid, block, sender, propertyId, amount_forsale, desired_property, desired_value));
 }
 
 /** Tx 100 */
