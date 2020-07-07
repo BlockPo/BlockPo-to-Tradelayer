@@ -323,7 +323,8 @@ namespace mastercore
   const CMPMetaDEx* MetaDEx_RetrieveTrade(const uint256& txid);
   const CMPContractDex* ContractDex_RetrieveTrade(const uint256&);
   int ContractDex_CANCEL(const std::string& sender_addr, const std::string& hash);
-  bool checkReserve(const std::string& address, int64_t amount, uint32_t contractId, uint64_t leverage, int64_t& nBalance, int64_t& amountToReserve);
+  bool checkReserve(const std::string& address, int64_t amount, uint32_t propertyId, int64_t& nBalance);
+  bool checkContractReserve(const std::string& address, int64_t amount, uint32_t contractId, uint64_t leverage, int64_t& nBalance, int64_t& amountToReserve);
   int64_t getTotalLives(uint32_t contractId);
 }
 

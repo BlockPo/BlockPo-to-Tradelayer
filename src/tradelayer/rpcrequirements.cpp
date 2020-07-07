@@ -420,3 +420,20 @@ void RequireFeatureActivated(const uint16_t feature)
        throw JSONRPCError(RPC_TYPE_ERROR, "Feature is not Activated");
     }
 }
+
+
+void RequireAmountForFee(const std::string& address, uint32_t propertyId, int64_t amount)
+{
+    arith_uint256 am = ConvertTo256(amount) + DivideAndRoundUp(ConvertTo256(amount) * ConvertTo256(5), ConvertTo256(BASISPOINT) * ConvertTo256(BASISPOINT));
+    int64_t amountToReserve = ConvertTo64(am);
+
+    int64_t nBalance = getMPbalance(address, propertyId, BALANCE);
+
+    if (nBalance < amountToReserve || nBalance == 0)
+        throw JSONRPCError(RPC_TYPE_ERROR, "Sender has insufficient balance");
+
+    int64_t balanceUnconfirmed = getUserAvailableMPbalance(address, propertyId);
+    if (balanceUnconfirmed == 0)
+        throw JSONRPCError(RPC_TYPE_ERROR, "Sender has insufficient balance (due to pending transactions)");
+
+}

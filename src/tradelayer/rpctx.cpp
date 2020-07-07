@@ -159,6 +159,9 @@ UniValue tl_sendvesting(const JSONRPCRequest& request)
   std::string toAddress = ParseAddress(request.params[1]);
   int64_t amount = ParseAmount(request.params[2], true);
 
+
+  RequireFeatureActivated(FEATURE_VESTING);
+
   // create a payload for the transaction
   std::vector<unsigned char> payload = CreatePayload_SendVestingTokens(amount);
 
@@ -746,7 +749,7 @@ UniValue tl_sendalert(const JSONRPCRequest& request)
     }
     uint16_t alertType = static_cast<uint16_t>(tempAlertType);
     int64_t tempExpiryValue = request.params[2].get_int64();
-    if (tempExpiryValue < 1 || 4294967295LL < tempExpiryValue) {
+    if (tempExpiryValue < 1 || 4294967295L < tempExpiryValue) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Expiry value is out of range");
     }
     uint32_t expiryValue = static_cast<uint32_t>(tempExpiryValue);
@@ -810,6 +813,9 @@ UniValue tl_sendtrade(const JSONRPCRequest& request)
   RequireExistingProperty(propertyIdDesired);
   RequireNotContract(propertyIdDesired);
   RequireNotVesting(propertyIdDesired);
+
+  //checking amount+fee 
+  RequireAmountForFee(fromAddress, propertyIdForSale, amountForSale);
 
   // create a payload for the transaction
   std::vector<unsigned char> payload = CreatePayload_MetaDExTrade(propertyIdForSale, amountForSale, propertyIdDesired, amountDesired);
@@ -978,7 +984,7 @@ UniValue tl_tradecontract(const JSONRPCRequest& request)
 
 			"\nArguments:\n"
 			"1. fromaddress          (string, required) the address to trade with\n"
-			"2. name of contract     (string, required) the identifier of the contract to list for trade\n"
+			"2. name or id           (string, required) the name or the identifier of the contract to list for trade\n"
 			"3. amountforsale        (number, required) the amount of contracts to trade\n"
 			"4. effective price      (number, required) limit price desired in exchange\n"
 			"5. trading action       (number, required) 1 to BUY contracts, 2 to SELL contracts \n"
@@ -1389,10 +1395,7 @@ UniValue tl_senddexoffer(const JSONRPCRequest& request)
 			);
   }
 
-
-
   // obtain parameters & info
-
   std::string fromAddress = ParseAddress(request.params[0]);
   uint32_t propertyIdForSale = ParsePropertyId(request.params[1]);
   int64_t amountForSale = ParseAmount(request.params[2], isPropertyDivisible(propertyIdForSale));
@@ -1408,6 +1411,7 @@ UniValue tl_senddexoffer(const JSONRPCRequest& request)
 
   if (option == 1)
   {
+      RequireFeatureActivated(FEATURE_DEX_BUY);
       payload = CreatePayload_DEx(propertyIdForSale, amountForSale, price, paymentWindow, minAcceptFee, action);
   } else {
       RequireFeatureActivated(FEATURE_DEX_SELL);
@@ -1464,7 +1468,6 @@ UniValue tl_senddexaccept(const JSONRPCRequest& request)
     bool override = (request.params.size() > 4) ? request.params[4].get_bool(): false;
 
     // perform checks
-    // RequirePrimaryToken(propertyId);
     RequireFeatureActivated(FEATURE_DEX_SELL);
     RequireMatchingDExOffer(toAddress, propertyId);
 

@@ -3315,8 +3315,8 @@ int CMPTransaction::logicMath_MetaDExTrade()
       return (PKT_ERROR_METADEX -35);
   }
 
-  int64_t nBalance = getMPbalance(sender, property, BALANCE);
-  if (nBalance < (int64_t) nNewValue) {
+  int64_t nBalance = 0;
+  if (!mastercore::checkReserve(sender, nNewValue, property, nBalance)) {
       PrintToLog("%s(): rejected: sender %s has insufficient balance of property %d [%s < %s]\n",
               __func__,
               sender,
@@ -3439,7 +3439,7 @@ int CMPTransaction::logicMath_ContractDexTrade()
   int64_t nBalance = 0;
   int64_t amountToReserve = 0;
 
-  if (!mastercore::checkReserve(sender, amount, contractId, leverage, nBalance, amountToReserve) || nBalance == 0)
+  if (!mastercore::checkContractReserve(sender, amount, contractId, leverage, nBalance, amountToReserve) || nBalance == 0)
   {
         PrintToLog("%s(): rejected: sender %s has insufficient balance for contracts %d [%s < %s] \n",
 		      __func__,
@@ -3629,7 +3629,7 @@ int CMPTransaction::logicMath_MetaDExCancel_ByPrice()
      }
 
      // ------------------------------------------
-     
+
      return (MetaDEx_CANCEL_AT_PRICE(txid, block, sender, propertyId, amount_forsale, desired_property, desired_value));
 }
 

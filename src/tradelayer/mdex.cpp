@@ -1249,18 +1249,16 @@ bool mastercore::ContractDex_ADD_LTCVolume(int64_t nCouldBuy, uint32_t contractI
 
 bool mastercore::MetaDEx_Fees(const CMPMetaDEx *pnew,const CMPMetaDEx *pold, int64_t buyer_amountGot)
 {
-    if(pnew->getBlock() == 0 && pnew->getHash() == uint256() && pnew->getIdx() == 0) {
-       if(msc_debug_metadex_fees) PrintToLog("%s: Buy from  ContractDex_Fees \n",__func__);
-       return false;
+    if(pnew->getBlock() == 0 && pnew->getHash() == uint256() && pnew->getIdx() == 0)
+    {
+        if(msc_debug_metadex_fees) PrintToLog("%s: Buy from  ContractDex_Fees \n",__func__);
+        return false;
     }
 
-    arith_uint256 uTakerFee = (ConvertTo256(buyer_amountGot) * ConvertTo256(5)) / (ConvertTo256(100) * ConvertTo256(BASISPOINT));
-    arith_uint256 uMakerFee = (ConvertTo256(buyer_amountGot) * ConvertTo256(4)) / (ConvertTo256(100) * ConvertTo256(BASISPOINT));
-    arith_uint256 uCacheFee = ConvertTo256(buyer_amountGot) / (ConvertTo256(100) * ConvertTo256(BASISPOINT));
-
-    int64_t takerFee = ConvertTo64(uTakerFee);
-    int64_t makerFee = ConvertTo64(uMakerFee);
+    arith_uint256 uCacheFee = ConvertTo256(buyer_amountGot) / (ConvertTo256(BASISPOINT) * ConvertTo256(BASISPOINT));
     int64_t cacheFee = ConvertTo64(uCacheFee);
+    int64_t takerFee = 5 * cacheFee;
+    int64_t makerFee = 4 * cacheFee;
 
     if(msc_debug_metadex_fees) PrintToLog("%s: buyer_amountGot: %d, cacheFee: %d, takerFee: %d, makerFee: %d\n",__func__, buyer_amountGot, cacheFee, takerFee, makerFee);
     //sum check
@@ -1271,13 +1269,15 @@ bool mastercore::MetaDEx_Fees(const CMPMetaDEx *pnew,const CMPMetaDEx *pold, int
     if(msc_debug_metadex_fees) PrintToLog("%s: propertyId: %d\n",__func__,pold->getProperty());
 
     // -% to taker, +% to maker
-    update_tally_map(pnew->getAddr(), pnew->getDesProperty(), -takerFee, BALANCE);
-    update_tally_map(pold->getAddr(), pold->getProperty(), makerFee, BALANCE);
+    if(cacheFee != 0)
+    {
+         assert(update_tally_map(pnew->getAddr(), pnew->getDesProperty(), -takerFee, BALANCE));
+         assert(update_tally_map(pold->getAddr(), pold->getProperty(), makerFee, BALANCE));
+         cachefees[pnew->getProperty()] += cacheFee;
+         return true;
+    }
 
-    // to feecache
-    cachefees[pnew->getProperty()] += cacheFee;
-
-    return true;
+    return false;
 
 }
 
@@ -2703,7 +2703,7 @@ int mastercore::MetaDEx_CANCEL_AT_PRICE(const uint256& txid, unsigned int block,
             p_mdex = &(*iitt);
 
             if (msc_debug_metadex3) PrintToLog("%s(): %s\n", __func__, p_mdex->ToString());
-            
+
             if ((p_mdex->getDesProperty() != property_desired) || (p_mdex->getAddr() != sender_addr)) {
                 ++iitt;
                 continue;
@@ -2855,8 +2855,17 @@ int mastercore::MetaDEx_CANCEL_ALL_FOR_PAIR(const uint256& txid, unsigned int bl
      return rc;
  }
 
+bool mastercore::checkReserve(const std::string& address, int64_t amount, uint32_t propertyId, int64_t& nBalance)
+{
+    arith_uint256 am = ConvertTo256(amount) + DivideAndRoundUp(ConvertTo256(amount) * ConvertTo256(5), ConvertTo256(BASISPOINT) * ConvertTo256(BASISPOINT));
+    int64_t amountToReserve = ConvertTo64(am);
+    
+    nBalance = getMPbalance(address, propertyId, BALANCE);
 
- bool mastercore::checkReserve(const std::string& address, int64_t amount, uint32_t contractId, uint64_t leverage, int64_t& nBalance, int64_t& amountToReserve)
+    return (nBalance < amountToReserve || nBalance == 0) ? false : true;
+}
+
+ bool mastercore::checkContractReserve(const std::string& address, int64_t amount, uint32_t contractId, uint64_t leverage, int64_t& nBalance, int64_t& amountToReserve)
  {
       //NOTE: add changes to inverse quoted
       int64_t uPrice = COIN;
