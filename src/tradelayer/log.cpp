@@ -99,7 +99,7 @@ bool msc_debug_ltc_volume                       = 0;
 bool msc_debug_mdex_volume                      = 0;
 bool msc_debug_update_status                    = 0;
 bool msc_debug_get_channel_addr                 = 0;
-bool msc_debug_get_remaining                    = 0;
+bool msc_debug_get_remaining                    = 1;
 bool msc_debug_make_withdrawal                  = 1;
 bool msc_debug_check_kyc_register               = 0;
 bool msc_debug_update_id_register               = 0;
@@ -110,9 +110,9 @@ bool msc_tx_valid_node_reward                   = 0;
 bool msc_debug_delete_att_register              = 0;
 bool msc_debug_get_upn_info                     = 0;
 bool msc_debug_get_total_lives                  = 0;
-bool msc_debug_activate_feature                 = 1;
+bool msc_debug_activate_feature                 = 0;
 bool msc_debug_deactivate_feature               = 0;
-bool msc_debug_is_transaction_type_allowed      = 1;
+bool msc_debug_is_transaction_type_allowed      = 0;
 
 /**
  * LogPrintf() has been broken a couple of times now

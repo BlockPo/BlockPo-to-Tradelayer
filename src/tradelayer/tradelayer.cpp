@@ -2151,7 +2151,7 @@ static int write_mp_active_channels(std::ofstream& file, SHA256_CTX* shaCtx)
 {
     std::string lineOut;
 
-    for (std::map<std::string,channel>::const_iterator it = channels_Map.begin(); it != channels_Map.end(); ++it)
+    for (auto it = channels_Map.begin(); it != channels_Map.end(); ++it)
     {
         // decompose the key for address
         const std::string& chnAddr = it->first;
@@ -3737,7 +3737,8 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
   // handle any features that go live with this block
   makeWithdrawals(pBlockIndex->nHeight);
   CheckLiveActivations(pBlockIndex->nHeight);
-  update_sum_upnls();
+  closeChannels(pBlockIndex->nHeight);
+  // update_sum_upnls();
 
   const CConsensusParams &params = ConsensusParams();
   vestingActivationBlock = params.MSC_VESTING_BLOCK;
@@ -5353,21 +5354,23 @@ bool mastercore::closeChannels(int Block)
 {
     bool status = false;
 
-    for(std::map<std::string,channel>::iterator it = channels_Map.begin(); it != channels_Map.end();)
+    for(auto it = channels_Map.begin(); it != channels_Map.end();)
     {
         const channel &chn = it->second;
         const int& expiry = chn.expiry_height;
 
-        if (Block != expiry)
+        if (Block < expiry)
         {
             ++it;
             continue;
 
         }
 
+        PrintToLog("%s(): Found!, expiry: %d, Block: %d\n",__func__, expiry, Block);
+
         LOCK(cs_tally);
 
-        uint32_t nextSPID = _my_sps->peekNextSPID();
+        const uint32_t& nextSPID = _my_sps->peekNextSPID();
 
         for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
         {
@@ -5377,27 +5380,31 @@ bool mastercore::closeChannels(int Block)
                 if (sp.isContract()) continue;
             }
 
+            //NOTE: Check the account for first and second address (include trades here)
             uint64_t first_rem = t_tradelistdb->getRemaining(chn.multisig, chn.first, propertyId);
             uint64_t second_rem = t_tradelistdb->getRemaining(chn.multisig, chn.second, propertyId);
+            int64_t balance = getMPbalance(chn.multisig, propertyId, CHANNEL_RESERVE);
 
-            if (first_rem > 0)
-            {
-              assert(update_tally_map(chn.multisig, propertyId, -first_rem, CHANNEL_RESERVE));
-              assert(update_tally_map(chn.first, propertyId, first_rem, BALANCE));
-              status = true;
-            }
+            PrintToLog("%s() first_rem: %d, second_rem: %d, balance: %d\n",__func__, first_rem, second_rem, balance);
 
-            if (second_rem > 0)
-            {
-              assert(update_tally_map(chn.multisig, propertyId, -second_rem, CHANNEL_RESERVE));
-              assert(update_tally_map(chn.second, propertyId, second_rem, BALANCE));
-              status = true;
-            }
+            // if (first_rem > 0)
+            // {
+            //   assert(update_tally_map(chn.multisig, propertyId, -first_rem, CHANNEL_RESERVE));
+            //   assert(update_tally_map(chn.first, propertyId, first_rem, BALANCE));
+            // }
+            //
+            // if (second_rem > 0)
+            // {
+            //     assert(update_tally_map(chn.multisig, propertyId, -second_rem, CHANNEL_RESERVE));
+            //     assert(update_tally_map(chn.second, propertyId, second_rem, BALANCE));
+            // }
+
+            status = true;
 
         }
 
         // deleting element from map
-        channels_Map.erase(it);
+        channels_Map.erase(it++);
         // maybe last step is put some information on db
 
     }
@@ -5480,8 +5487,8 @@ bool CMPTradeList::getAllCommits(const std::string& senderAddress, UniValue& tra
 
    if (!pdb) return 0;
 
-   uint64_t sumCommits = 0;
-   uint64_t sumWithdr = 0;
+   int64_t sumCommits = 0;
+   int64_t sumWithdr = 0;
    std::vector<std::string> vstr;
 
    leveldb::Iterator* it = NewIterator(); // Allocation proccess
@@ -5514,13 +5521,12 @@ bool CMPTradeList::getAllCommits(const std::string& senderAddress, UniValue& tra
        if(propertyId != propId)
            continue;
 
-       uint64_t amount = boost::lexical_cast<uint64_t>(vstr[3]);
+       int64_t amount = boost::lexical_cast<int64_t>(vstr[3]);
 
-       if(msc_debug_get_remaining) PrintToLog("%s(): amount: %d\n",__func__, amount);
 
        std::string type = vstr[6];
 
-       if(msc_debug_get_remaining) PrintToLog("%s(): type : %s\n",__func__, type);
+       if(msc_debug_get_remaining) PrintToLog("%s(): amount: %d, type : %s\n",__func__, amount, type);
 
        (type == TYPE_COMMIT) ? sumCommits += amount : sumWithdr += amount;
 
@@ -6198,8 +6204,7 @@ bool mastercore::feeCacheBuy()
 bool mastercore::updateLastExBlock(int& nBlock, const std::string& sender)
 {
     bool result = false;
-
-    std::map<std::string,channel>::iterator it = channels_Map.find(sender);
+    auto it = channels_Map.find(sender);
 
     if (it == channels_Map.end())
     {
@@ -6212,11 +6217,7 @@ bool mastercore::updateLastExBlock(int& nBlock, const std::string& sender)
 
     int difference = nBlock - chn.last_exchange_block;
 
-    if (difference < 0)
-    {
-        if(msc_debug_update_last_block) PrintToLog("%s(): difference is negative!\n",__func__);
-        return result;
-    }
+    assert(difference >= 0);
 
     if(msc_debug_update_last_block) PrintToLog("%s: expiry height after update: %d\n",__func__, chn.expiry_height);
 

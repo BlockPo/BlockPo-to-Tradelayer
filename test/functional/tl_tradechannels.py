@@ -445,6 +445,26 @@ class ChannelsBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['reserve'],'0.00000000')
         conn.close()
 
+
+        self.log.info("Checking the trade channel")
+        params = str([multisig]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getchannel_info",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['multisig address'], multisig)
+        assert_equal(out['result']['first address'], addresses[0])
+        assert_equal(out['result']['second address'], addresses[1])
+        assert_equal(out['result']['expiry block'],1208)
+        assert_equal(out['result']['status'], 'active')
+
+        self.log.info("Checking the expiration of trade channel")
+        self.nodes[0].generate(1250)
+
+        params = str([multisig]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getchannel_info",params)
+        # self.log.info(out)
+        assert_equal(out['result']['status'], 'closed')
+
         self.stop_nodes()
 
 if __name__ == '__main__':

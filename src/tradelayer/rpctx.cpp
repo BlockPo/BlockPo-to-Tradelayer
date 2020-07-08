@@ -1779,6 +1779,7 @@ UniValue tl_commit_tochannel(const JSONRPCRequest& request)
     uint32_t propertyId = ParsePropertyId(request.params[2]);
     int64_t amount = ParseAmount(request.params[3], true);
 
+    RequireFeatureActivated(FEATURE_TRADECHANNELS_TOKENS);
     RequireExistingProperty(propertyId);
     RequireBalance(senderAddress, propertyId, amount);
 
@@ -1829,6 +1830,7 @@ UniValue tl_withdrawal_fromchannel(const JSONRPCRequest& request)
     uint32_t propertyId = ParsePropertyId(request.params[2]);
     int64_t amount = ParseAmount(request.params[3], true);
 
+    RequireFeatureActivated(FEATURE_TRADECHANNELS_TOKENS);
     RequireExistingProperty(propertyId);
 
     // create a payload for the transaction
@@ -2012,7 +2014,7 @@ UniValue tl_send_dex_payment(const JSONRPCRequest& request)
     int64_t amount = ParseAmount(request.params[2], true);
 
     RequireFeatureActivated(FEATURE_DEX_SELL);
-    
+
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_DEx_Payment();
 
