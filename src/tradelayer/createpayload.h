@@ -58,4 +58,7 @@ std::vector<unsigned char> CreatePayload_Attestation(std::string& hash);
 std::vector<unsigned char> CreatePayload_Revoke_Attestation();
 std::vector<unsigned char> CreatePayload_MetaDExCancelEcosystem();
 std::vector<unsigned char> CreatePayload_ContractDExCancel(std::string& hash);
+std::vector<unsigned char> CreatePayload_DExCancel(std::string& hash);
+std::vector<unsigned char> CreatePayload_MetaDExCancelPair(uint32_t propertyIdForSale, uint32_t propertyIdDesired);
+std::vector<unsigned char>CreatePayload_MetaDExCancelPrice(uint32_t propertyIdForSale, int64_t amountForSale, uint32_t propertyIdDesired, int64_t amountDesired);
 #endif // TRADELAYER_CREATEPAYLOAD_H
