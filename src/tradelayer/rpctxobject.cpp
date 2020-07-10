@@ -231,9 +231,6 @@ void populateRPCTypeInfo(CMPTransaction& mp_obj, UniValue& txobj, uint32_t txTyp
         case MSC_TYPE_TRANSFER:
             populateRPCTypeTransfer(mp_obj, txobj);
             break;
-        case MSC_TYPE_CREATE_CHANNEL:
-            populateRPCTypeCreate_Channel(mp_obj, txobj);
-            break;
         case MSC_TYPE_CONTRACT_INSTANT:
             populateRPCTypeContract_Instant(mp_obj, txobj);
             break;

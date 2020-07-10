@@ -195,28 +195,16 @@ class ChannelsBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['totaltokens'],'10000000000.00000000')
 
 
-        self.log.info("Creating trade channel")
-        params = str([addresses[0], addresses[1], multisig, 1000]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, False, "tl_create_channel",params)
-        # self.log.info(out)
-        assert_equal(out['error'], None)
-
-        self.nodes[0].generate(1)
-
-
-        self.log.info("Checking the trade channel")
-        params = str([multisig]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, True, "tl_getchannel_info",params)
-        # self.log.info(out)
-        assert_equal(out['error'], None)
-        assert_equal(out['result']['multisig address'], multisig)
-        assert_equal(out['result']['first address'], addresses[0])
-        assert_equal(out['result']['second address'], addresses[1])
-        # assert_equal(out['result']['expiry block'],1205)
-        assert_equal(out['result']['status'], 'active')
+        # self.log.info("Creating trade channel")
+        # params = str([addresses[0], addresses[1], multisig, 1000]).replace("'",'"')
+        # out = tradelayer_HTTP(conn, headers, False, "tl_create_channel",params)
+        # # self.log.info(out)
+        # assert_equal(out['error'], None)
+        #
+        # self.nodes[0].generate(1)
 
 
-        self.log.info("Commiting to trade channel") #NOTE: we have to use a multisig in addresses[0]
+        self.log.info("Commiting to trade channel")
         params = str([addresses[0], multisig, 4, '1000']).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_commit_tochannel",params)
         assert_equal(out['error'], None)
@@ -235,6 +223,17 @@ class ChannelsBasicsTest (BitcoinTestFramework):
         assert_equal(out['result'][0]['amount'], '1000.00000000')
         # assert_equal(out['result'][0]['block'],206)
 
+        self.log.info("Checking the trade channel")
+        params = str([multisig]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getchannel_info",params)
+        self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['multisig address'], multisig)
+        assert_equal(out['result']['first address'], addresses[0])
+        assert_equal(out['result']['second address'], 'pending')
+        assert_equal(out['result']['expiry block'], 784)
+        assert_equal(out['result']['status'], 'active')
+
 
         self.log.info("Checking reserve in channel")
         params = str([multisig, 4]).replace("'",'"')
@@ -252,6 +251,8 @@ class ChannelsBasicsTest (BitcoinTestFramework):
 
         self.nodes[0].generate(1)
 
+        assert(0)
+        
         self.log.info("Address 1 commiting to trade channel")
         params = str([addresses[1], multisig, 5, '2000']).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_commit_tochannel",params)

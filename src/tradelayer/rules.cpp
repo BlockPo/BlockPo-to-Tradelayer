@@ -78,7 +78,6 @@ std::vector<TransactionRestriction> CConsensusParams::GetRestrictions() const
         { MSC_TYPE_WITHDRAWAL_FROM_CHANNEL,               MP_TX_PKT_V0,      true,             MSC_TRADECHANNEL_TOKENS_BLOCK},
         { MSC_TYPE_INSTANT_TRADE,                         MP_TX_PKT_V0,      true,             MSC_TRADECHANNEL_TOKENS_BLOCK},
         { MSC_TYPE_TRANSFER,                              MP_TX_PKT_V0,      true,             MSC_TRADECHANNEL_TOKENS_BLOCK},
-        { MSC_TYPE_CREATE_CHANNEL,                        MP_TX_PKT_V0,      true,             MSC_TRADECHANNEL_TOKENS_BLOCK},
         { MSC_TYPE_CONTRACT_INSTANT,                      MP_TX_PKT_V0,      true,             MSC_TRADECHANNEL_CONTRACTS_BLOCK},
         { MSC_TYPE_NEW_ID_REGISTRATION,                   MP_TX_PKT_V0,      true,             MSC_KYC_BLOCK},
         { MSC_TYPE_UPDATE_ID_REGISTRATION,                MP_TX_PKT_V0,      true,             MSC_KYC_BLOCK},

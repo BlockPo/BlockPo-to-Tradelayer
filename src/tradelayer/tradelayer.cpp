@@ -5487,8 +5487,8 @@ bool CMPTradeList::getAllCommits(const std::string& senderAddress, UniValue& tra
 
    if (!pdb) return 0;
 
-   int64_t sumCommits = 0;
-   int64_t sumWithdr = 0;
+   uint64_t sumCommits = 0;
+   uint64_t sumWithdr = 0;
    std::vector<std::string> vstr;
 
    leveldb::Iterator* it = NewIterator(); // Allocation proccess
@@ -5521,7 +5521,7 @@ bool CMPTradeList::getAllCommits(const std::string& senderAddress, UniValue& tra
        if(propertyId != propId)
            continue;
 
-       int64_t amount = boost::lexical_cast<int64_t>(vstr[3]);
+       uint64_t amount = boost::lexical_cast<uint64_t>(vstr[3]);
 
 
        std::string type = vstr[6];
@@ -5584,7 +5584,7 @@ bool CMPTradeList::checkChannelAddress(const std::string& channelAddress)
     delete it; // Desallocation proccess
     return status;
 
-  }
+}
 
   /**
    *  Does the address is related to some active channel?
@@ -5617,10 +5617,9 @@ bool CMPTradeList::checkChannelAddress(const std::string& channelAddress)
              continue;
 
          // checking now on channels_Map (active channels)
-         std::map<std::string,channel>::iterator it = channels_Map.find(strKey);
+         auto it = channels_Map.find(strKey);
 
-         if(it == channels_Map.end())
-             continue;
+         if(it == channels_Map.end()) continue;
 
          channelAddr = strKey;
          status = true;
@@ -5657,6 +5656,8 @@ bool CMPTradeList::getChannelInfo(const std::string& channelAddress, UniValue& t
 
         if(strKey != channelAddress)
             continue;
+
+        PrintToLog("%s(): channelAddress : %s, strValue: %s\n",__func__, channelAddress, strValue);
 
         const std::string& frAddr = vstr[0];
         const std::string& secAddr = vstr[1];
@@ -6323,6 +6324,105 @@ void CMPTradeList::getUpnInfo(const std::string& address, uint32_t contractId, U
     response.push_back(upnlObj);
 
 }
+
+void mastercore::createChannel(const std::string& sender, const std::string& receiver, int block, int tx_id)
+{
+    channel chn;
+    chn.multisig = receiver;
+    chn.first = sender;
+    chn.expiry_height = block + dayblocks;
+
+    if(msc_create_channel) PrintToLog("checking channel elements : channel address: %s, first address: %d, expiry_height: %d \n", chn.multisig, chn.first, chn.expiry_height);
+
+    channels_Map[chn.multisig] = chn;
+
+    t_tradelistdb->recordNewChannel(chn.multisig, chn.first, chn.second, chn.expiry_height, tx_id);
+
+}
+
+/**
+ *  If channel doesn't have second address, we try to add it
+ */
+bool CMPTradeList::tryAddSecond(const std::string& candidate)
+{
+    bool status = false;
+    bool update = false;
+    if (!pdb) return status;
+    std::vector<std::string> vstr;
+    std::string channelAddr, newValue;
+
+    leveldb::Iterator* it = NewIterator(); // Allocation proccess
+
+    for(it->SeekToLast(); it->Valid(); it->Prev())
+    {
+        // search key to see if this is a matching trade
+        std::string strKey = it->key().ToString();
+        std::string strValue = it->value().ToString();
+
+        // ensure correct amount of tokens in value strin
+        boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
+
+        if (vstr.size() != 5) {
+            //PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
+            continue;
+        }
+
+        const std::string& frAddr = vstr[0];
+        const std::string& secAddr = vstr[1];
+
+        // if candidate is one of the channel's addresses: break.
+        if (candidate == frAddr || candidate == secAddr){
+            status = true;
+            break;
+        }
+
+        // address is not part of channel!
+        if (secAddr != "pending")
+            break;
+
+        // checking now on channels_Map (active channels)
+        auto it = channels_Map.find(strKey);
+
+        // inactive channel
+        if(it == channels_Map.end())
+            break;
+
+        channelAddr = strKey;
+        int blockNum = boost::lexical_cast<int>(vstr[2]);
+        int blockIndex = boost::lexical_cast<int>(vstr[3]);
+
+        newValue = strprintf("%s:%s:%d:%d:%s",frAddr, secAddr, blockNum, blockIndex, TYPE_CREATE_CHANNEL);
+        update = status = true;
+        break;
+    }
+
+    // clean up
+    delete it;
+
+    if (update)
+    {
+        Status status1 = pdb->Delete(writeoptions, channelAddr);
+        Status status2 = pdb->Put(writeoptions, channelAddr, newValue);
+    }
+
+    ++nWritten;
+
+    return status;
+
+}
+
+
+bool mastercore::channelSanityChecks(const std::string& sender, const std::string& receiver, int block, int tx_idx)
+{
+    if(!t_tradelistdb->checkChannelAddress(receiver))
+    {
+        createChannel(sender, receiver, block, tx_idx);
+        return true;
+    } else
+        return (t_tradelistdb->tryAddSecond(sender));
+}
+
+
 
 
 /**

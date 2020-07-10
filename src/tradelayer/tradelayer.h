@@ -120,7 +120,6 @@ enum TransactionType {
   MSC_TYPE_INSTANT_TRADE                      = 110,
   MSC_TYPE_PNL_UPDATE                         = 111,
   MSC_TYPE_TRANSFER                           = 112,
-  MSC_TYPE_CREATE_CHANNEL                     = 113,
   MSC_TYPE_CONTRACT_INSTANT                   = 114,
   MSC_TYPE_NEW_ID_REGISTRATION                = 115,
   MSC_TYPE_UPDATE_ID_REGISTRATION             = 116,
@@ -270,9 +269,6 @@ extern bool autoCommit;
 //! Global lock for state objects
 extern CCriticalSection cs_tally;
 
-/** LevelDB based storage for storing Trade Layer transaction data.  This will become the new master database, holding serialized Trade Layer transactions.
- *  Note, intention is to consolidate and clean up data storage
- */
 
  struct channel
  {
@@ -282,9 +278,12 @@ extern CCriticalSection cs_tally;
    int expiry_height;
    int last_exchange_block;
 
-   channel() : multisig(""), first(""), second(""), expiry_height(0), last_exchange_block(0) {}
+   channel() : multisig(""), first(""), second("pending"), expiry_height(0), last_exchange_block(0) {}
  };
 
+/* LevelDB based storage for  Trade Layer transaction data.  This will become the new master database, holding serialized Trade Layer transactions.
+ *  Note, intention is to consolidate and clean up data storage
+ */
 class CtlTransactionDB : public CDBBase
 {
 public:
@@ -408,6 +407,7 @@ class CMPTradeList : public CDBBase
   channel getChannelAddresses(const std::string& channelAddress);
   bool checkChannelRelation(const std::string& address, std::string& channelAddr);
   uint64_t getRemaining(const std::string& channelAddress, const std::string& senderAddress, uint32_t propertyId);
+  bool tryAddSecond(const std::string& candidate);
 
   //KYC
   bool updateIdRegister(const uint256& txid, const std::string& address, const std::string& newAddr, int blockNum, int blockIndex);
@@ -580,6 +580,10 @@ namespace mastercore
   bool updateLastExBlock(int& nBlock, const std::string& sender);
 
   std::string updateStatus(int64_t oldPos, int64_t newPos);
+
+  void createChannel(const std::string& sender, const std::string& receiver, int block, int tx_id);
+
+  bool channelSanityChecks(const std::string& sender, const std::string& receiver, int block, int tx_idx);
 
 }
 

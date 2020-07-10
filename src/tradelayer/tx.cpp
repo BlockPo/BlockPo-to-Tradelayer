@@ -106,7 +106,6 @@ std::string mastercore::strTransactionType(uint16_t txType)
     case MSC_TYPE_WITHDRAWAL_FROM_CHANNEL: return "Channel Withdrawal";
     case MSC_TYPE_INSTANT_TRADE: return "Channel Instant Trade";
     case MSC_TYPE_TRANSFER: return "Channel Transfer";
-    case MSC_TYPE_CREATE_CHANNEL: return "Channel Creation";
     case MSC_TYPE_CONTRACT_INSTANT: return "Channel Contract Instant Trade";
     case MSC_TYPE_NEW_ID_REGISTRATION: return "New Id Registration";
     case MSC_TYPE_UPDATE_ID_REGISTRATION: return "Update Id Registration";
@@ -273,9 +272,6 @@ bool CMPTransaction::interpret_Transaction()
 
     case MSC_TYPE_TRANSFER:
         return interpret_Transfer();
-
-    case MSC_TYPE_CREATE_CHANNEL:
-        return interpret_Create_Channel();
 
     case MSC_TYPE_CONTRACT_INSTANT:
         return interpret_Contract_Instant();
@@ -1816,54 +1812,54 @@ bool CMPTransaction::interpret_Transfer()
 }
 
 
-/** Tx 113 */
-bool CMPTransaction::interpret_Create_Channel()
-{
-  int i = 0;
-
-  std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
-  std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
-  std::vector<uint8_t> vecBlocks = GetNextVarIntBytes(i);
-
-  const char* p = i + (char*) &pkt;
-  std::vector<std::string> spstr;
-  spstr.push_back(std::string(p));
-  p += spstr.back().size() + 1;
-
-  if (isOverrun(p)) {
-    PrintToLog("%s(): rejected: malformed string value(s)\n", __func__);
-    return false;
-  }
-
-  int j = 0;
-  memcpy(channel_address, spstr[j].c_str(), spstr[j].length()); j++;
-  i = i + strlen(channel_address) + 1; // data sizes + null terminators
-
-
-  if (!vecTypeBytes.empty()) {
-      type = DecompressInteger(vecTypeBytes);
-  } else return false;
-
-  if (!vecVersionBytes.empty()) {
-      version = DecompressInteger(vecVersionBytes);
-  } else return false;
-
-  if (!vecBlocks.empty()) {
-      block_forexpiry = DecompressInteger(vecBlocks);
-  } else return false;
-
-  if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
-  {
-      PrintToLog("\t version: %d\n", version);
-      PrintToLog("\t messageType: %d\n",type);
-      PrintToLog("\t channelAddress : %d\n",channel_address);
-      PrintToLog("\t first address : %d\n", sender);
-      PrintToLog("\t second address : %d\n", receiver);
-      PrintToLog("\t blocks : %d\n", block_forexpiry);
-  }
-
-  return true;
-}
+// /** Tx 113 */
+// bool CMPTransaction::interpret_Create_Channel()
+// {
+//   int i = 0;
+//
+//   std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+//   std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+//   std::vector<uint8_t> vecBlocks = GetNextVarIntBytes(i);
+//
+//   const char* p = i + (char*) &pkt;
+//   std::vector<std::string> spstr;
+//   spstr.push_back(std::string(p));
+//   p += spstr.back().size() + 1;
+//
+//   if (isOverrun(p)) {
+//     PrintToLog("%s(): rejected: malformed string value(s)\n", __func__);
+//     return false;
+//   }
+//
+//   int j = 0;
+//   memcpy(channel_address, spstr[j].c_str(), spstr[j].length()); j++;
+//   i = i + strlen(channel_address) + 1; // data sizes + null terminators
+//
+//
+//   if (!vecTypeBytes.empty()) {
+//       type = DecompressInteger(vecTypeBytes);
+//   } else return false;
+//
+//   if (!vecVersionBytes.empty()) {
+//       version = DecompressInteger(vecVersionBytes);
+//   } else return false;
+//
+//   if (!vecBlocks.empty()) {
+//       block_forexpiry = DecompressInteger(vecBlocks);
+//   } else return false;
+//
+//   if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+//   {
+//       PrintToLog("\t version: %d\n", version);
+//       PrintToLog("\t messageType: %d\n",type);
+//       PrintToLog("\t channelAddress : %d\n",channel_address);
+//       PrintToLog("\t first address : %d\n", sender);
+//       PrintToLog("\t second address : %d\n", receiver);
+//       PrintToLog("\t blocks : %d\n", block_forexpiry);
+//   }
+//
+//   return true;
+// }
 
 /** Tx 114 */
 bool CMPTransaction::interpret_Contract_Instant()
@@ -2189,9 +2185,6 @@ int CMPTransaction::interpretPacket()
 
         case MSC_TYPE_TRANSFER:
             return logicMath_Transfer();
-
-        case MSC_TYPE_CREATE_CHANNEL:
-            return logicMath_Create_Channel();
 
         case MSC_TYPE_CONTRACT_INSTANT:
             return logicMath_Contract_Instant();
@@ -4187,10 +4180,11 @@ int CMPTransaction::logicMath_CommitChannel()
         return (PKT_ERROR_TOKENS -22);
     }
 
-    if (!t_tradelistdb->checkChannelAddress(receiver)) {
-        PrintToLog("%s(): rejected: address %s doesn't belong to multisig channel\n", __func__, receiver);
-        return (PKT_ERROR_CHANNELS -10);
+    if (!channelSanityChecks(sender, receiver, block, tx_idx)){
+        PrintToLog("%s(): rejected: invalid address or channel is inactive\n", __func__, property);
+        return (PKT_ERROR_TOKENS -23);
     }
+
 
     if (!IsPropertyIdValid(propertyId)) {
         PrintToLog("%s(): rejected: property %d does not exist\n", __func__, property);
@@ -4200,7 +4194,7 @@ int CMPTransaction::logicMath_CommitChannel()
 
     // ------------------------------------------
 
-    // logic for the commit Here
+
 
     if(msc_debug_commit_channel) PrintToLog("%s():sender: %s, channelAddress: %s\n",__func__, sender, receiver);
 
@@ -4209,10 +4203,6 @@ int CMPTransaction::logicMath_CommitChannel()
     assert(update_tally_map(receiver, propertyId, amount_commited, CHANNEL_RESERVE));
 
     t_tradelistdb->recordNewCommit(txid, receiver, sender, propertyId, amount_commited, block, tx_idx);
-
-    int64_t amountCheck = getMPbalance(receiver, propertyId,CHANNEL_RESERVE);
-
-    if(msc_debug_commit_channel) PrintToLog("amount inside channel multisig: %s\n",amountCheck);
 
     return 0;
 }
@@ -4248,7 +4238,7 @@ int CMPTransaction::logicMath_Withdrawal_FromChannel()
     }
 
     if (!t_tradelistdb->checkChannelAddress(receiver)) {
-        PrintToLog("%s(): rejected: address %s doesn't belong to multisig channel\n", __func__, receiver);
+        PrintToLog("%s(): rejected: receiver: %s doesn't belong to multisig channel\n", __func__, receiver);
         return (PKT_ERROR_CHANNELS -10);
     }
 
@@ -4345,7 +4335,7 @@ int CMPTransaction::logicMath_Instant_Trade()
 
   channel chnAddrs = t_tradelistdb->getChannelAddresses(sender);
 
-  if (sender.empty() && chnAddrs.first.empty() && chnAddrs.second.empty()) {
+  if (chnAddrs.multisig.empty() && chnAddrs.first.empty() && chnAddrs.second.empty()) {
       PrintToLog("%s(): rejected: some address doesn't belong to multisig channel \n", __func__);
       return (PKT_ERROR_CHANNELS -15);
   }
@@ -4452,12 +4442,23 @@ int CMPTransaction::logicMath_Transfer()
       return (PKT_ERROR_CHANNELS -13);
   }
 
+  channel chnAddrs = t_tradelistdb->getChannelAddresses(sender);
+
+  if (chnAddrs.multisig.empty() && chnAddrs.first.empty() && chnAddrs.second.empty()) {
+      PrintToLog("%s(): rejected: address doesn't belong to multisig channel \n", __func__);
+      return (PKT_ERROR_CHANNELS -15);
+  }
+
+  // if receiver channel doesn't exist, create it
+  if (!t_tradelistdb->checkChannelAddress(receiver)) {
+      createChannel(sender, receiver, block,tx_idx);
+  }
+
 
   // ------------------------------------------
 
 
   // TRANSFER logic here
-
   assert(update_tally_map(sender, propertyId, -amount, CHANNEL_RESERVE));
   assert(update_tally_map(receiver, propertyId, amount, CHANNEL_RESERVE));
 
@@ -4466,40 +4467,6 @@ int CMPTransaction::logicMath_Transfer()
 
   return 0;
 
-}
-
-/** Tx 113*/
-int CMPTransaction::logicMath_Create_Channel()
-{
-    if (!IsTransactionTypeAllowed(block, type, version)) {
-        PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
-                __func__,
-                type,
-                version,
-                property,
-                block);
-        return (PKT_ERROR_TOKENS -22);
-    }
-
-
-    // ------------------------------------------
-
-    int expiry_height = block + block_forexpiry;
-
-    channel chn;
-
-    chn.multisig = channel_address;
-    chn.first = sender;
-    chn.second = receiver;
-    chn.expiry_height = expiry_height;
-
-    if(msc_create_channel) PrintToLog("checking channel elements : channel address: %s, first address: %d, second address: %d, expiry_height: %d \n", chn.multisig, chn.first, chn.second, chn.expiry_height);
-
-    channels_Map[channel_address] = chn;
-
-    t_tradelistdb->recordNewChannel(channel_address,sender,receiver, expiry_height, tx_idx);
-
-    return 0;
 }
 
 /** Tx 114 */

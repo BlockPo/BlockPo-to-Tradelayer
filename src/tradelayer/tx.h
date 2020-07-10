@@ -5,10 +5,8 @@ class CMPMetaDEx;
 class CMPOffer;
 class CTransaction;
 class ChnDEx;
-////////////////////////////
-/** New things for Contracts */
 class CMPContractDex;
-////////////////////////////
+
 #include "tradelayer/tradelayer.h"
 
 #include "uint256.h"

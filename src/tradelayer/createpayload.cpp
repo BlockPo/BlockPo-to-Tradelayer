@@ -874,27 +874,6 @@ std::vector<unsigned char> CreatePayload_Transfer(uint32_t propertyId, uint64_t 
     return payload;
 }
 
-std::vector<unsigned char> CreatePayload_Create_Channel(std::string& channelAddress, uint32_t blocks)
-{
-    std::vector<unsigned char> payload;
-
-    uint64_t messageType = 113;
-    uint64_t messageVer = 0;
-
-    std::vector<uint8_t> vecMessageType = CompressInteger((uint64_t)messageType);
-    std::vector<uint8_t> vecMessageVer = CompressInteger((uint64_t)messageVer);
-    std::vector<uint8_t> vecBlocks = CompressInteger((uint64_t)blocks);
-
-    if ((channelAddress).size() > 255) channelAddress = channelAddress.substr(0,255);
-
-    payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
-    payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
-    payload.insert(payload.end(), vecBlocks.begin(), vecBlocks.end());
-    payload.insert(payload.end(), channelAddress.begin(), channelAddress.end());
-    payload.push_back('\0');
-
-    return payload;
-}
 
 std::vector<unsigned char> CreatePayload_New_Id_Registration(std::string& website, std::string& name)
 {
