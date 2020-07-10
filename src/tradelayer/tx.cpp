@@ -4181,7 +4181,7 @@ int CMPTransaction::logicMath_CommitChannel()
     }
 
     if (!channelSanityChecks(sender, receiver, block, tx_idx)){
-        PrintToLog("%s(): rejected: invalid address or channel is inactive\n", __func__, property);
+        PrintToLog("%s(): rejected: invalid address or channel is inactive\n", __func__);
         return (PKT_ERROR_TOKENS -23);
     }
 

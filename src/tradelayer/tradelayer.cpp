@@ -4304,7 +4304,7 @@ void CMPTradeList::recordNewCommit(const uint256& txid, const std::string& chann
   const string key = to_string(blockNum) + "+" + txid.ToString(); // order by blockNum
   Status status = pdb->Put(writeoptions, txid.ToString(), strValue);
   ++nWritten;
-  if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
+  if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __func__, status.ToString());
 }
 
 void CMPTradeList::recordNewWithdrawal(const uint256& txid, const std::string& channelAddress, const std::string& sender, uint32_t propertyId, uint64_t amountToWithdrawal, int blockNum, int blockIndex)
@@ -5359,6 +5359,8 @@ bool mastercore::closeChannels(int Block)
         const channel &chn = it->second;
         const int& expiry = chn.expiry_height;
 
+        PrintToLog("%s() actual block: %d, expiry: %d\n",__func__, Block, expiry);
+
         if (Block < expiry)
         {
             ++it;
@@ -5667,7 +5669,7 @@ bool CMPTradeList::getChannelInfo(const std::string& channelAddress, UniValue& t
         tradeArray.push_back(Pair("multisig address", strKey));
         tradeArray.push_back(Pair("first address", frAddr));
         tradeArray.push_back(Pair("second address", secAddr));
-        tradeArray.push_back(Pair("expiry block",blockNum));
+        tradeArray.push_back(Pair("expiry block", blockNum));
         status = true;
 
       break;
@@ -6332,7 +6334,7 @@ void mastercore::createChannel(const std::string& sender, const std::string& rec
     chn.first = sender;
     chn.expiry_height = block + dayblocks;
 
-    if(msc_create_channel) PrintToLog("checking channel elements : channel address: %s, first address: %d, expiry_height: %d \n", chn.multisig, chn.first, chn.expiry_height);
+    if(msc_create_channel) PrintToLog("%s(): checking channel elements : channel address: %s, first address: %d, second address: %d, expiry_height: %d \n",__func__, chn.multisig, chn.first, chn.second, chn.expiry_height);
 
     channels_Map[chn.multisig] = chn;
 
@@ -6372,13 +6374,16 @@ bool CMPTradeList::tryAddSecond(const std::string& candidate)
 
         // if candidate is one of the channel's addresses: break.
         if (candidate == frAddr || candidate == secAddr){
+            PrintToLog("%s(): candidate == frAddr or candidate == secAddr, break\n",__func__);
             status = true;
             break;
         }
 
         // address is not part of channel!
-        if (secAddr != "pending")
-            break;
+        if (secAddr != "pending"){
+              PrintToLog("%s(): secAddr != pending, break\n",__func__);
+              break;
+        }
 
         // checking now on channels_Map (active channels)
         auto it = channels_Map.find(strKey);
@@ -6391,7 +6396,7 @@ bool CMPTradeList::tryAddSecond(const std::string& candidate)
         int blockNum = boost::lexical_cast<int>(vstr[2]);
         int blockIndex = boost::lexical_cast<int>(vstr[3]);
 
-        newValue = strprintf("%s:%s:%d:%d:%s",frAddr, secAddr, blockNum, blockIndex, TYPE_CREATE_CHANNEL);
+        newValue = strprintf("%s:%s:%d:%d:%s",frAddr, candidate, blockNum, blockIndex, TYPE_CREATE_CHANNEL);
         update = status = true;
         break;
     }
@@ -6403,9 +6408,8 @@ bool CMPTradeList::tryAddSecond(const std::string& candidate)
     {
         Status status1 = pdb->Delete(writeoptions, channelAddr);
         Status status2 = pdb->Put(writeoptions, channelAddr, newValue);
+        ++nWritten;
     }
-
-    ++nWritten;
 
     return status;
 
@@ -6416,10 +6420,13 @@ bool mastercore::channelSanityChecks(const std::string& sender, const std::strin
 {
     if(!t_tradelistdb->checkChannelAddress(receiver))
     {
+        // PrintToLog("%s(): creating channel : %s\n", __func__, receiver);
         createChannel(sender, receiver, block, tx_idx);
         return true;
-    } else
+    } else{
+        // PrintToLog("%s(): going to tryAddSecond\n", __func__);
         return (t_tradelistdb->tryAddSecond(sender));
+    }
 }
 
 
