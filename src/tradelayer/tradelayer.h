@@ -224,6 +224,10 @@ enum FILETYPES {
 #define TYPE_NEW_ID_REGISTER            "new id register"
 #define TYPE_ATTESTATION                "attestation"
 
+// channel status
+#define ACTIVE_CHANNEL                  "active"
+#define CLOSED_CHANNEL                  "closed"
+
 // Currency in existance (options for createcontract)
 uint32_t const TL_dUSD  = 1;
 uint32_t const TL_dEUR  = 2;
@@ -408,6 +412,7 @@ class CMPTradeList : public CDBBase
   bool checkChannelRelation(const std::string& address, std::string& channelAddr);
   uint64_t getRemaining(const std::string& channelAddress, const std::string& senderAddress, uint32_t propertyId);
   bool tryAddSecond(const std::string& candidate);
+  bool setChannelClosed(const std::string& channelAddr);
 
   //KYC
   bool updateIdRegister(const uint256& txid, const std::string& address, const std::string& newAddr, int blockNum, int blockIndex);
