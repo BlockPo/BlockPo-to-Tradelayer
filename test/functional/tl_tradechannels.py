@@ -341,6 +341,7 @@ class ChannelsBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         assert_equal(out['result']['channel reserve'], '1875.00000000')
 
+
         self.log.info("mining 7 blocks")
         self.nodes[0].generate(7)
 
@@ -480,8 +481,7 @@ class ChannelsBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['balance'],'9999998000.00000000')
         assert_equal(out['result']['reserve'],'0.00000000')
         conn.close()
-
-        #NOTE: conclict with updateLastExBlock (785 != 1008)
+        
         self.log.info("Checking the trade channel")
         params = str([multisig]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_getchannel_info",params)

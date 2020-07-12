@@ -4277,8 +4277,6 @@ int CMPTransaction::logicMath_Withdrawal_FromChannel()
 
     withdrawal_Map[receiver].push_back(wthd);
 
-    t_tradelistdb->recordNewWithdrawal(txid, receiver, sender, propertyId, amount_to_withdraw, block, tx_idx);
-
     return 0;
 }
 
