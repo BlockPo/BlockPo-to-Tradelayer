@@ -58,6 +58,13 @@ tl.listAccounts = function(cb){
     })
 }
 
+tl.fundRawTransaction = function(txstring,optionObj,cb){
+    cliet.cmd('fundRawTransaction',txstring, optionObj,function(data){
+      return cb(data)
+    })
+}
+
+
 tl.getAccountAddress = function(account, cb){
     if(account == null){
     client.cmd('getaccountaddress',function(err,data,resHeaders){
@@ -496,7 +503,7 @@ tl.publishOracleData = function(fromaddress, title, high, low, close, cb){
 
 var rawPubScripts = []
 
-tl.buildRaw= function(payload, inputs, vOuts, refaddresses,inputAmount, cb){
+tl.buildRaw= function(payload, inputs, vOuts, refaddresses,inputAmount, UXTOAmount, cb){
 	var txstring = ""
   //the vOuts are meant to be which outputs were the selected inputs in their respective tx?
   //e.g. if the first input was the 3rd output, it should have the txid it was in as 0 in inputs and 2 as the 0 position value in vOuts
@@ -509,7 +516,7 @@ tl.buildRaw= function(payload, inputs, vOuts, refaddresses,inputAmount, cb){
 		if(err==null){
 			txstring = data
 		}else{return err}
-		client.cmd('tl_createrawtx_reference', txstring, refaddresses, function(err, data, resHeaders){
+		client.cmd('tl_createrawtx_reference', txstring, refaddresses, UXTOAmount, function(err, data, resHeaders){
 			if(err==null){
 				txstring = data
 			}else{return err}

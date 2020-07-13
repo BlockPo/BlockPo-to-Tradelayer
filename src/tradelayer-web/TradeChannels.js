@@ -69,7 +69,9 @@ channelManager.buildUXTOToTokenTrade = function(channeladdress, tokenSellerAddre
 	tl.getBlock(null,function(data){
 		var height = data.height+3
 		tl.createpayload_instant_trade(id1, amount, height, id2, amount2, function(payload){
-			client.buildRaw(payload,multisigInput,[0],tokenSellerAddress,)
+			client.buildRaw(payload,multisigInput,[0],tokenSellerAddress,function(txString){
+				client.
+			})
 		})
 	}
 
