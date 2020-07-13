@@ -69,13 +69,13 @@ channelManager.buildUXTOToTokenTrade = function(channeladdress, tokenSellerAddre
 	tl.getBlock(null,function(data){
 		var height = data.height+3
 		tl.createpayload_instant_trade(id1, amount, height, id2, amount2, function(payload){
-			client.buildRaw(payload,multisigInput,[0],tokenSellerAddress,function(txString){
-				client.
+			tl.buildRaw(payload,multisigInput,[0],tokenSellerAddress,UXTOAmount, function(txString){
+				tl.fundRawTransaction(txstring,{'replaceable':true},function(data){
+					return data
+				})
 			})
 		})
 	}
-
-		
 } 
 
 channelManager.buildContractTrade = function(channeladdress, contractid,amount, refAddrIsBuyer, secondSigner=true)
