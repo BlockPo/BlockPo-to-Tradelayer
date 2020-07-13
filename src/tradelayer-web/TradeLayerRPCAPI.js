@@ -145,6 +145,10 @@ tl.getBlockhash = function(block, cb){
 }
  
 tl.getBlock = function(hash, cb){
+      if(hash==null){
+      client.cmd('getBestBlockhash',function(data){
+          hash ==data
+      }
      client.cmd("getblock", hash,function(err, data, resHeaders){
   if (err) return console.log(err);
  
@@ -629,7 +633,7 @@ tl.getContractInfo =  function(index, oracleContracts, nativeContracts,cb){
   	})
 }
 
-tl_createNativeContract= function(thisAddress, numeratorid, title, durationInBlocks, notional,denominatorCollateralId, marginReq,cb){
+tl.createNativeContract= function(thisAddress, numeratorid, title, durationInBlocks, notional,denominatorCollateralId, marginReq,cb){
 	////tl_createcontract ${ADDR} 1 4 "ALL/dUSD" 1000 1 4 0.5 #leverage = 10
 	client.cmd('tl_createcontract', thisAddress, 1, numeratorid, title, durationInBlocks, notional,denominatorCollateralid, marginReq, function(err,data,resHeaders){
 		if(err == null){
