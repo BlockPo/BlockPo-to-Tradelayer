@@ -854,7 +854,7 @@ std::vector<unsigned char> CreatePayload_PNL_Update(uint32_t propertyId, uint64_
     return payload;
 }
 
-std::vector<unsigned char> CreatePayload_Transfer(uint32_t propertyId, uint64_t amount)
+std::vector<unsigned char> CreatePayload_Transfer()
 {
     std::vector<unsigned char> payload;
 
@@ -863,13 +863,9 @@ std::vector<unsigned char> CreatePayload_Transfer(uint32_t propertyId, uint64_t 
 
     std::vector<uint8_t> vecMessageType = CompressInteger((uint64_t)messageType);
     std::vector<uint8_t> vecMessageVer = CompressInteger((uint64_t)messageVer);
-    std::vector<uint8_t> vecPropertyId = CompressInteger((uint64_t)propertyId);
-    std::vector<uint8_t> vecAmount = CompressInteger((uint64_t)amount);
 
     payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
     payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
-    payload.insert(payload.end(), vecPropertyId.begin(), vecPropertyId.end());
-    payload.insert(payload.end(), vecAmount.begin(), vecAmount.end());
 
     return payload;
 }

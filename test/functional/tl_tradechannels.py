@@ -93,6 +93,13 @@ class ChannelsBasicsTest (BitcoinTestFramework):
         # self.log.info("address0:"+addresses[0])
         # self.log.info("address1:"+addresses[1])
 
+        # A normal address using as receiver channel in transfer tx
+        self.log.info("Creating another 'multisig' address")
+        params = str(["tango"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "getnewaddress", params)
+        multisig1 = out['result']
+        # self.log.info("multisig1:"+multisig1)
+
 
         self.log.info("Checking multisig")
         params = str([multisig]).replace("'",'"')
@@ -493,6 +500,90 @@ class ChannelsBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['expiry block'], 1008)
         assert_equal(out['result']['status'], 'active')
 
+
+
+        self.log.info("Testing transfer rpc")
+
+        self.log.info("Funding the channel with 1 LTCs")
+        params = str([multisig, 1]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "sendtoaddress", params)
+        # self.log.info(out)
+        txid1 = out['result']
+
+        self.nodes[0].generate(1)
+
+
+        self.log.info("Checking the transaction")
+        params = str([txid1]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "gettransaction", params)
+        # self.log.info(out)
+        vout1 = out['result']['details'][0]['vout']
+        # self.log.info(vout)
+
+
+        self.log.info("Creating rawtx transaction")
+        params = '[[{"txid":"'+txid1+'","vout":'+str(vout1)+'}],{"'+multisig+'":0.98, "'+multisig1+'":0.01}, 0, true]'
+        out = tradelayer_HTTP(conn, headers, False, "createrawtransaction", params)
+        assert_equal(out['error'], None)
+        hex = out['result']
+        # self.log.info(hex)
+
+
+        self.log.info("Creating payload for transfer")
+        out = tradelayer_HTTP(conn, headers, False, "tl_createpayload_transfer")
+        assert_equal(out['error'], None)
+        payload = out['result']
+        self.log.info(payload)
+
+
+        self.log.info("Adding the op return to transaction")
+        params = str([hex,payload]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_createrawtx_opreturn", params)
+        assert_equal(out['error'], None)
+        # self.log.info(out)
+        hex = out['result']
+        # self.log.info(hex)
+
+
+        # NOTE: see multi.sh test
+        params = '["'+hex+'",[{"txid":"'+txid1+'","vout":'+str(vout1)+', "scriptPubKey":"'+scriptPubKey+'","redeemScript":"'+redeemScript+'","amount":1}],["'+privatekey0+'"]]'
+        self.log.info("Signing raw transaction with address 0")
+        # self.log.info(params)
+        out = tradelayer_HTTP(conn, headers, False, "signrawtransaction",params)
+        # assert_equal(out['error'], None)
+        hex = out['result']['hex']
+        # self.log.info(hex)
+
+        self.log.info("Signing raw transaction with address 1")
+        params = '["'+hex+'",[{"txid":"'+txid1+'","vout":'+str(vout1)+', "scriptPubKey":"'+scriptPubKey+'","redeemScript":"'+redeemScript+'","amount":1}],["'+privatekey1+'"]]'
+        out = tradelayer_HTTP(conn, headers, False, "signrawtransaction",params)
+        assert_equal(out['error'], None)
+        hex = out['result']['hex']
+        # self.log.info(hex)
+
+
+        self.log.info("Sending raw transaction")
+        params = '["'+hex+'", true]'
+        out = tradelayer_HTTP(conn, headers, False, "sendrawtransaction",params)
+        # assert_equal(out['error'], None)
+        # self.log.info(out)
+        tx = out['result']
+
+        self.nodes[0].generate(1)
+
+
+        self.log.info("Checking transaction")
+        params = str([tx, 1]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "getrawtransaction",params)
+        # self.log.info(out)
+
+
+        self.log.info("Checking tokens in receiver channel")
+        params = str([multisig1, 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_get_channelreserve",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['channel reserve'], '175.00000000')
 
         self.log.info("Checking the expiration of trade channel")
         self.nodes[0].generate(800)

@@ -4326,10 +4326,10 @@ void CMPTradeList::recordNewWithdrawal(const uint256& txid, const std::string& c
   if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
 }
 
-void CMPTradeList::recordNewTransfer(const uint256& txid, const std::string& sender, const std::string& receiver, uint32_t propertyId, uint64_t amount, int blockNum, int blockIndex)
+void CMPTradeList::recordNewTransfer(const uint256& txid, const std::string& sender, const std::string& receiver, int blockNum, int blockIndex)
 {
   if (!pdb) return;
-  std::string strValue = strprintf("%s:%s:%d:%d:%d:%d:%s", sender, receiver, propertyId, amount, blockNum, blockIndex, TYPE_TRANSFER);
+  std::string strValue = strprintf("%s:%s:%d:%d:%s", sender, receiver, blockNum, blockIndex, TYPE_TRANSFER);
   const string key = to_string(blockNum) + "+" + txid.ToString(); // order by blockNum
   Status status = pdb->Put(writeoptions, txid.ToString(), strValue);
   ++nWritten;
@@ -5400,47 +5400,54 @@ bool mastercore::closeChannels(int Block)
 
         }
 
-        LOCK(cs_tally);
-
-        const uint32_t& nextSPID = _my_sps->peekNextSPID();
-
-        // retrieving funds from channel
-        for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
+        if(!t_tradelistdb->checkTranfer(chn.multisig))
         {
-            CMPSPInfo::Entry sp;
-            if (_my_sps->getSP(propertyId, sp) && sp.isContract())
+
+            LOCK(cs_tally);
+
+            const uint32_t& nextSPID = _my_sps->peekNextSPID();
+
+            // retrieving funds from channel
+            for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
             {
-                continue;
+                CMPSPInfo::Entry sp;
+                if (_my_sps->getSP(propertyId, sp) && sp.isContract())
+                {
+                    continue;
+                }
+
+                //NOTE: Check the account for first and second address (include trades here)
+                uint64_t first_rem = t_tradelistdb->getRemaining(chn.multisig, chn.first, propertyId);
+                uint64_t second_rem = t_tradelistdb->getRemaining(chn.multisig, chn.second, propertyId);
+                uint64_t balance = static_cast<uint64_t>(getMPbalance(chn.multisig, propertyId, CHANNEL_RESERVE));
+
+                PrintToLog("%s() first_rem: %d, second_rem: %d, balance: %d, propertyId : %d\n",__func__, first_rem, second_rem, balance, propertyId);
+
+                assert(balance == first_rem + second_rem);
+
+                if (first_rem > 0)
+                {
+                  assert(update_tally_map(chn.multisig, propertyId, -first_rem, CHANNEL_RESERVE));
+                  assert(update_tally_map(chn.first, propertyId, first_rem, BALANCE));
+                }
+
+                if (second_rem > 0)
+                {
+                    assert(update_tally_map(chn.multisig, propertyId, -second_rem, CHANNEL_RESERVE));
+                    assert(update_tally_map(chn.second, propertyId, second_rem, BALANCE));
+                }
+
             }
-
-            //NOTE: Check the account for first and second address (include trades here)
-            uint64_t first_rem = t_tradelistdb->getRemaining(chn.multisig, chn.first, propertyId);
-            uint64_t second_rem = t_tradelistdb->getRemaining(chn.multisig, chn.second, propertyId);
-            uint64_t balance = static_cast<uint64_t>(getMPbalance(chn.multisig, propertyId, CHANNEL_RESERVE));
-
-            PrintToLog("%s() first_rem: %d, second_rem: %d, balance: %d, propertyId : %d\n",__func__, first_rem, second_rem, balance, propertyId);
-
-            assert(balance == first_rem + second_rem);
-
-            if (first_rem > 0)
-            {
-              assert(update_tally_map(chn.multisig, propertyId, -first_rem, CHANNEL_RESERVE));
-              assert(update_tally_map(chn.first, propertyId, first_rem, BALANCE));
-            }
-
-            if (second_rem > 0)
-            {
-                assert(update_tally_map(chn.multisig, propertyId, -second_rem, CHANNEL_RESERVE));
-                assert(update_tally_map(chn.second, propertyId, second_rem, BALANCE));
-            }
-
-            // adding info in db
-            status = t_tradelistdb->setChannelClosed(chn.multisig);
-
+        } else {
+                PrintToLog("%s() all funds has been transfered in this channel (%s)\n",__func__, chn.multisig);
         }
+
+        // adding info in db
+        status = t_tradelistdb->setChannelClosed(chn.multisig);
 
         // deleting element from map
         channels_Map.erase(it++);
+
 
     }
 
@@ -5510,8 +5517,9 @@ bool CMPTradeList::getAllCommits(const std::string& senderAddress, UniValue& tra
        }
    }
    // clean up
-   delete it; // Desallocation proccess
-   if (count) { return true; } else { return false; }
+   delete it;
+
+   return ((count) ? true : false);
  }
 
 
@@ -6548,6 +6556,78 @@ bool mastercore::channelSanityChecks(const std::string& sender, const std::strin
         PrintToLog("%s(): going to tryAddSecond\n", __func__);
         return (t_tradelistdb->tryAddSecond(sender, receiver));
     }
+}
+
+bool CMPTradeList::checkTranfer(const std::string& address)
+{
+    bool status = false;
+    if (!pdb) return status;
+
+    leveldb::Iterator* it = NewIterator();
+
+    for(it->SeekToFirst(); it->Valid(); it->Next())
+    {
+        std::string strKey = it->key().ToString();
+        std::string strValue = it->value().ToString();
+        std::vector<std::string> vstr;
+
+        boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
+        if (vstr.size() != 5) {
+            // PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
+            continue;
+        }
+
+        const std::string& addr = vstr[0];
+
+        if(address != addr){
+            continue;
+        }
+
+        status = true;
+        break;
+
+    }
+
+    delete it;
+
+    return status;
+
+}
+
+
+bool mastercore::transferAll(const std::string& sender, const std::string& receiver)
+{
+    bool status = false;
+
+    LOCK(cs_tally);
+
+    const uint32_t& nextSPID = _my_sps->peekNextSPID();
+
+    // retrieving funds from channel
+    for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
+    {
+        CMPSPInfo::Entry sp;
+        if (_my_sps->getSP(propertyId, sp) && sp.isContract())
+        {
+          continue;
+        }
+
+        uint64_t remaining = getMPbalance(sender, propertyId, CHANNEL_RESERVE);
+
+        if (remaining == 0) {
+            continue;
+        }
+
+        PrintToLog("%s(): remaining : %d, propertyId : %d\n",__func__, remaining, propertyId);
+
+        assert(update_tally_map(sender, propertyId, -remaining, CHANNEL_RESERVE));
+        assert(update_tally_map(receiver, propertyId, remaining, CHANNEL_RESERVE));
+
+        status = true;
+    }
+
+    return status;
+
 }
 
 /**

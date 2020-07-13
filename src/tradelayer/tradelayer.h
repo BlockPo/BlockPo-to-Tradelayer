@@ -399,7 +399,7 @@ class CMPTradeList : public CDBBase
   void recordNewWithdrawal(const uint256& txid, const std::string& channelAddress, const std::string& sender, uint32_t propertyId, uint64_t amountToWithdrawal, int blockNum, int blockIndex);
   void recordNewChannel(const std::string& channelAddress, const std::string& frAddr, const std::string& secAddr, int blockNum, int blockIndex);
   void recordNewInstantTrade(const uint256& txid, const std::string& channelAddr, const std::string& first, const std::string& second, uint32_t propertyIdForSale, uint64_t amount_forsale, uint32_t propertyIdDesired, uint64_t amount_desired, int blockNum, int blockIndex);
-  void recordNewTransfer(const uint256& txid, const std::string& sender, const std::string& receiver, uint32_t propertyId, uint64_t amount, int blockNum, int blockIndex);
+  void recordNewTransfer(const uint256& txid, const std::string& sender, const std::string& receiver, int blockNum, int blockIndex);
   void recordNewInstContTrade(const uint256& txid, const std::string& firstAddr, const std::string& secondAddr, uint32_t property, uint64_t amount_forsale, uint64_t price ,int blockNum, int blockIndex);
   void recordNewIdRegister(const uint256& txid, const std::string& address, const std::string& name, const std::string& website, int blockNum, int blockIndex);
   void recordNewAttestation(const uint256& txid, const std::string& sender, const std::string& receiver, int blockNum, int blockIndex, int kyc_id);
@@ -415,7 +415,7 @@ class CMPTradeList : public CDBBase
   bool setChannelClosed(const std::string& channelAddr);
   uint64_t addWithAndCommits(const std::string& channelAddr, const std::string& senderAddr, uint32_t propertyId);
   uint64_t addTrades(const std::string& channelAddr, const std::string& senderAddr, uint32_t propertyId);
-  
+
   //KYC
   bool updateIdRegister(const uint256& txid, const std::string& address, const std::string& newAddr, int blockNum, int blockIndex);
   bool checkKYCRegister(const std::string& address, int& kyc_id);
@@ -447,6 +447,7 @@ class CMPTradeList : public CDBBase
   int getMPTradeCountTotal();
   int getNextId();
   void getUpnInfo(const std::string& address, uint32_t contractId, UniValue& response, bool showVerbose);
+  bool checkTranfer(const std::string& address);
 };
 
 class CMPSettlementMatchList : public CDBBase
@@ -593,6 +594,8 @@ namespace mastercore
   bool channelSanityChecks(const std::string& sender, const std::string& receiver, int block, int tx_idx);
 
   bool checkWithdrawal(const std::string& channelAddress, const std::string& sender);
+
+  bool transferAll(const std::string& sender, const std::string& receiver);
 
 }
 

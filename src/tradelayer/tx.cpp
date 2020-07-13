@@ -1781,8 +1781,6 @@ bool CMPTransaction::interpret_Transfer()
 
   std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
-  std::vector<uint8_t> vecPropertyId = GetNextVarIntBytes(i);
-  std::vector<uint8_t> vecAmount = GetNextVarIntBytes(i);
 
   if (!vecTypeBytes.empty()) {
       type = DecompressInteger(vecTypeBytes);
@@ -1792,74 +1790,14 @@ bool CMPTransaction::interpret_Transfer()
       version = DecompressInteger(vecVersionBytes);
   } else return false;
 
-  if (!vecPropertyId.empty()) {
-      property = DecompressInteger(vecPropertyId);
-  } else return false;
-
-  if (!vecAmount.empty()) {
-      amount = DecompressInteger(vecAmount);
-  } else return false;
-
   if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
   {
       PrintToLog("\t version: %d\n", version);
       PrintToLog("\t messageType: %d\n",type);
-      PrintToLog("\t property: %d\n", property);
-      PrintToLog("\t amount : %d\n", amount);
   }
 
   return true;
 }
-
-
-// /** Tx 113 */
-// bool CMPTransaction::interpret_Create_Channel()
-// {
-//   int i = 0;
-//
-//   std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
-//   std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
-//   std::vector<uint8_t> vecBlocks = GetNextVarIntBytes(i);
-//
-//   const char* p = i + (char*) &pkt;
-//   std::vector<std::string> spstr;
-//   spstr.push_back(std::string(p));
-//   p += spstr.back().size() + 1;
-//
-//   if (isOverrun(p)) {
-//     PrintToLog("%s(): rejected: malformed string value(s)\n", __func__);
-//     return false;
-//   }
-//
-//   int j = 0;
-//   memcpy(channel_address, spstr[j].c_str(), spstr[j].length()); j++;
-//   i = i + strlen(channel_address) + 1; // data sizes + null terminators
-//
-//
-//   if (!vecTypeBytes.empty()) {
-//       type = DecompressInteger(vecTypeBytes);
-//   } else return false;
-//
-//   if (!vecVersionBytes.empty()) {
-//       version = DecompressInteger(vecVersionBytes);
-//   } else return false;
-//
-//   if (!vecBlocks.empty()) {
-//       block_forexpiry = DecompressInteger(vecBlocks);
-//   } else return false;
-//
-//   if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
-//   {
-//       PrintToLog("\t version: %d\n", version);
-//       PrintToLog("\t messageType: %d\n",type);
-//       PrintToLog("\t channelAddress : %d\n",channel_address);
-//       PrintToLog("\t first address : %d\n", sender);
-//       PrintToLog("\t second address : %d\n", receiver);
-//       PrintToLog("\t blocks : %d\n", block_forexpiry);
-//   }
-//
-//   return true;
-// }
 
 /** Tx 114 */
 bool CMPTransaction::interpret_Contract_Instant()
@@ -4437,10 +4375,6 @@ int CMPTransaction::logicMath_Transfer()
       return (PKT_ERROR_TOKENS -22);
   }
 
-  if (!IsPropertyIdValid(propertyId)) {
-      PrintToLog("%s(): rejected: property %d does not exist\n", __func__, property);
-      return (PKT_ERROR_CHANNELS -13);
-  }
 
   channel chnAddrs = t_tradelistdb->getChannelAddresses(sender);
 
@@ -4450,20 +4384,19 @@ int CMPTransaction::logicMath_Transfer()
   }
 
   // if receiver channel doesn't exist, create it
-  if (!t_tradelistdb->checkChannelAddress(receiver)) {
-      createChannel(sender, receiver, block,tx_idx);
-  }
+  // if (!t_tradelistdb->checkChannelAddress(receiver)) {
+  //     createChannel(sender, receiver, block,tx_idx);
+  // }
 
 
   // ------------------------------------------
 
-
   // TRANSFER logic here
-  assert(update_tally_map(sender, propertyId, -amount, CHANNEL_RESERVE));
-  assert(update_tally_map(receiver, propertyId, amount, CHANNEL_RESERVE));
+  if(transferAll(sender, receiver)){
+    // recordNewTransfer
+    t_tradelistdb->recordNewTransfer(txid, sender,receiver,block, tx_idx);
+  }
 
-  // recordNewTransfer
-  t_tradelistdb->recordNewTransfer(txid, sender,receiver, propertyId, amount, block, tx_idx);
 
   return 0;
 
