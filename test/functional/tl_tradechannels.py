@@ -287,7 +287,7 @@ class ChannelsBasicsTest (BitcoinTestFramework):
         assert_equal(out['result'][1-i]['block'],209)
 
 
-        self.log.info("Commiting to trade channel (it' must be rejected)")
+        self.log.info("Commiting to trade channel (it must be rejected)")
         params = str([addresses[3], multisig, 4, '1000']).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_commit_tochannel",params)
         assert_equal(out['error'], None)
@@ -481,7 +481,7 @@ class ChannelsBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['balance'],'9999998000.00000000')
         assert_equal(out['result']['reserve'],'0.00000000')
         conn.close()
-        
+
         self.log.info("Checking the trade channel")
         params = str([multisig]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_getchannel_info",params)

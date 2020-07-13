@@ -4196,7 +4196,7 @@ int CMPTransaction::logicMath_CommitChannel()
 
 
 
-    if(msc_debug_commit_channel) PrintToLog("%s():sender: %s, channelAddress: %s\n",__func__, sender, receiver);
+    if(msc_debug_commit_channel) PrintToLog("%s():sender: %s, channelAddress: %s, amount_commited: %d, propertyId: %d\n",__func__, sender, receiver, amount_commited, propertyId);
 
     //putting money into channel reserve
     assert(update_tally_map(sender, propertyId, -amount_commited, BALANCE));
@@ -4276,6 +4276,8 @@ int CMPTransaction::logicMath_Withdrawal_FromChannel()
     if (msc_debug_withdrawal_from_channel) PrintToLog("checking wthd element : address: %s, deadline: %d, propertyId: %d, amount: %d \n", wthd.address, wthd.deadline_block, wthd.propertyId, wthd.amount);
 
     withdrawal_Map[receiver].push_back(wthd);
+
+    t_tradelistdb->recordNewWithdrawal(txid, receiver, sender, propertyId, amount_to_withdraw, block, tx_idx);
 
     return 0;
 }
@@ -4375,7 +4377,7 @@ int CMPTransaction::logicMath_Instant_Trade()
       assert(update_tally_map(chnAddrs.first, desired_property, desired_value, BALANCE));
       assert(update_tally_map(sender, desired_property, -desired_value, CHANNEL_RESERVE));
 
-      t_tradelistdb->recordNewInstantTrade(txid, sender, chnAddrs.first, property, amount_forsale, desired_property, desired_value, block, tx_idx);
+      t_tradelistdb->recordNewInstantTrade(txid, sender, chnAddrs.first, chnAddrs.second, property, amount_forsale, desired_property, desired_value, block, tx_idx);
 
       // updating last exchange block
       assert(mastercore::updateLastExBlock(block, sender));

@@ -398,7 +398,7 @@ class CMPTradeList : public CDBBase
   void recordNewCommit(const uint256& txid, const std::string& channelAddress, const std::string& sender, uint32_t propertyId, uint64_t amountCommited, int blockNum, int blockIndex);
   void recordNewWithdrawal(const uint256& txid, const std::string& channelAddress, const std::string& sender, uint32_t propertyId, uint64_t amountToWithdrawal, int blockNum, int blockIndex);
   void recordNewChannel(const std::string& channelAddress, const std::string& frAddr, const std::string& secAddr, int blockNum, int blockIndex);
-  void recordNewInstantTrade(const uint256& txid, const std::string& sender, const std::string& receiver, uint32_t propertyIdForSale, uint64_t amount_forsale, uint32_t propertyIdDesired, uint64_t amount_desired, int blockNum, int blockIndex);
+  void recordNewInstantTrade(const uint256& txid, const std::string& channelAddr, const std::string& first, const std::string& second, uint32_t propertyIdForSale, uint64_t amount_forsale, uint32_t propertyIdDesired, uint64_t amount_desired, int blockNum, int blockIndex);
   void recordNewTransfer(const uint256& txid, const std::string& sender, const std::string& receiver, uint32_t propertyId, uint64_t amount, int blockNum, int blockIndex);
   void recordNewInstContTrade(const uint256& txid, const std::string& firstAddr, const std::string& secondAddr, uint32_t property, uint64_t amount_forsale, uint64_t price ,int blockNum, int blockIndex);
   void recordNewIdRegister(const uint256& txid, const std::string& address, const std::string& name, const std::string& website, int blockNum, int blockIndex);
@@ -410,10 +410,12 @@ class CMPTradeList : public CDBBase
   bool checkChannelAddress(const std::string& channelAddress);
   channel getChannelAddresses(const std::string& channelAddress);
   bool checkChannelRelation(const std::string& address, std::string& channelAddr);
-  uint64_t getRemaining(const std::string& channelAddress, const std::string& senderAddress, uint32_t propertyId);  
+  uint64_t getRemaining(const std::string& channelAddress, const std::string& senderAddress, uint32_t propertyId);
   bool tryAddSecond(const std::string& candidate, const std::string& channelAddr);
   bool setChannelClosed(const std::string& channelAddr);
-
+  uint64_t addWithAndCommits(const std::string& channelAddr, const std::string& senderAddr, uint32_t propertyId);
+  uint64_t addTrades(const std::string& channelAddr, const std::string& senderAddr, uint32_t propertyId);
+  
   //KYC
   bool updateIdRegister(const uint256& txid, const std::string& address, const std::string& newAddr, int blockNum, int blockIndex);
   bool checkKYCRegister(const std::string& address, int& kyc_id);
@@ -589,6 +591,8 @@ namespace mastercore
   void createChannel(const std::string& sender, const std::string& receiver, int block, int tx_id);
 
   bool channelSanityChecks(const std::string& sender, const std::string& receiver, int block, int tx_idx);
+
+  bool checkWithdrawal(const std::string& channelAddress, const std::string& sender);
 
 }
 
