@@ -4477,7 +4477,7 @@ int CMPTransaction::logicMath_Instant_LTC_Trade()
   }
 
 
-  /*channel chnAddrs = t_tradelistdb->getChannelAddresses(sender);
+  channel chnAddrs = t_tradelistdb->getChannelAddresses(sender);
 
   if (chnAddrs.multisig.empty() && chnAddrs.first.empty() && chnAddrs.second.empty()) {
       PrintToLog("%s(): rejected: some address doesn't belong to multisig channel \n", __func__);
@@ -4489,7 +4489,7 @@ int CMPTransaction::logicMath_Instant_LTC_Trade()
       return (PKT_ERROR_CHANNELS -16);
   }
 
-  int64_t nBalance = getMPbalance(sender, property, CHANNEL_RESERVE);
+  /*int64_t nBalance = getMPbalance(sender, property, CHANNEL_RESERVE);
   if (property > 0 && nBalance < (int64_t) amount_forsale) {
       PrintToLog("%s(): rejected: channel address %s has insufficient balance of property %d [%s < %s]\n",
               __func__,
@@ -4500,9 +4500,10 @@ int CMPTransaction::logicMath_Instant_LTC_Trade()
       return (PKT_ERROR_CHANNELS -17);
   }
   */
-  
-  // ------------------------------------------
 
+  // ------------------------------------------
+   // NOTE: sender is the multisig address, receiver is the seller.
+   PrintToLog("%s(): sender: %s, receiver: %s, amount_forsale: %d, price: %d, property: %d\n",__func__,sender, receiver, amount_forsale, price, property);
    return rc;
 }
 

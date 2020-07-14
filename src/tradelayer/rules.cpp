@@ -86,8 +86,8 @@ std::vector<TransactionRestriction> CConsensusParams::GetRestrictions() const
         { MSC_TYPE_METADEX_CANCEL_ALL,                    MP_TX_PKT_V0,      true,             MSC_METADEX_BLOCK},
         { MSC_TYPE_ATTESTATION,                           MP_TX_PKT_V0,      true,             MSC_KYC_BLOCK},
         { MSC_TYPE_REVOKE_ATTESTATION,                    MP_TX_PKT_V0,      true,             MSC_KYC_BLOCK},
-        { MSC_TYPE_CONTRACTDEX_CANCEL,                    MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK}
-
+        { MSC_TYPE_CONTRACTDEX_CANCEL,                    MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
+        { MSC_TYPE_INSTANT_LTC_TRADE,                     MP_TX_PKT_V0,      true,             MSC_TRADECHANNEL_TOKENS_BLOCK}
 
     };
 

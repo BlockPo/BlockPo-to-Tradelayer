@@ -829,7 +829,7 @@ UniValue tl_createpayload_instant_trade(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_instant_ltc_trade(const JSONRPCRequest& request)
 {
-  if (request.params.size() < 3 || request.fHelp)
+  if (request.params.size() != 3 || request.fHelp)
     throw runtime_error(
 			"tl_createpayload_instant_ltc_trade \"fromaddress\" \"toaddress\" propertyid \"amount\" \n"
 
@@ -837,7 +837,7 @@ UniValue tl_createpayload_instant_ltc_trade(const JSONRPCRequest& request)
 
 			"\nArguments:\n"
 			"1. propertyId            (number, required) the identifier of the property offered\n"
-			"2. amount offered        (string, required) the amount of tokens offered for the first address of channel\n"
+			"2. amount offered        (string, required) the amount of tokens offered for the address\n"
       "3. price                 (string, required) total price of tokens in LTC\n"
 
 			"\nResult:\n"
@@ -1237,8 +1237,8 @@ static const CRPCCommand commands[] =
     { "trade layer (payload creation)", "tl_createpayload_closeoracle",                   &tl_createpayload_closeoracle,                     {}   },
     { "trade layer (payload creation)", "tl_createpayload_new_id_registration",           &tl_createpayload_new_id_registration,             {}   },
     { "trade layer (payload creation)", "tl_createpayload_update_id_registration",        &tl_createpayload_update_id_registration,          {}   },
-    { "trade layer (payload creation)", "tl_createpayload_attestation",                   &tl_createpayload_attestation,                     {}   }
-
+    { "trade layer (payload creation)", "tl_createpayload_attestation",                   &tl_createpayload_attestation,                     {}   },
+    { "trade layer (payload creation)", "tl_createpayload_instant_ltc_trade",             &tl_createpayload_instant_ltc_trade,               {}   }
   };
 
 

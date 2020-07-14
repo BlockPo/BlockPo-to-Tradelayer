@@ -1040,44 +1040,44 @@ int ParseTransaction(const CTransaction& tx, int nBlock, unsigned int idx, CMPTr
      return (count > 0);
  }
 
- static bool Instant_payment(const uint256& txid, const std::string& sender, const std::string& receiver, uint32_t property, uint64_t amount_forsale, uint64_t nvalue, uint64_t price)
- {
-   bool status = false;
-   std::string channelAddr;
+static bool Instant_payment(const uint256& txid, const std::string& channelAddr, const std::string& seller, uint32_t property, uint64_t amount_forsale, uint64_t nvalue, uint64_t price, int block, int idx)
+{
+    bool status = false;
 
-   arith_uint256 amount_forsale256 = ConvertTo256(amount_forsale);
-   arith_uint256 amountLTC_Desired256 = ConvertTo256(price);
-   arith_uint256 amountLTC_Paid256 = (nvalue > price) ? amountLTC_Desired256 : ConvertTo256(nvalue);
+    PrintToLog("%s(): channelAddr : %s, seller : %s, property : %d, amount_forsale : %d, nvalue : %d, price : %d, block: %d, idx : %d\n",__func__, channelAddr, seller, property, amount_forsale, nvalue, price, block, idx);
 
-   // actual calculation; round up
-   arith_uint256 amountPurchased256 = DivideAndRoundUp((amountLTC_Paid256 * amount_forsale256), amountLTC_Desired256);
+    arith_uint256 amount_forsale256 = ConvertTo256(amount_forsale);
+    arith_uint256 amountLTC_Desired256 = ConvertTo256(price);
+    arith_uint256 amountLTC_Paid256 = (nvalue > price) ? amountLTC_Desired256 : ConvertTo256(nvalue);
 
-   // convert back to int64_t
-   int64_t amount = ConvertTo64(amountPurchased256);
+    // actual calculation; round up
+    arith_uint256 amountPurchased256 = DivideAndRoundUp((amountLTC_Paid256 * amount_forsale256), amountLTC_Desired256);
+    // convert back to int64_t
+    int64_t amount_purchased = ConvertTo64(amountPurchased256);
 
+    channel chn = t_tradelistdb->getChannelAddresses(channelAddr);
 
-   // function to retrieve multisig channel using receiver o sender.
-   if (t_tradelistdb->checkChannelRelation(sender, channelAddr))
-   {
-       // NOTE: check for balance of receiver address in channel here
+    std::string buyer = (chn.first == seller) ? chn.second : chn.first;
 
-       assert(update_tally_map(sender, property, amount, BALANCE));
-       assert(update_tally_map(channelAddr, property, -amount, CHANNEL_RESERVE));
+    PrintToLog("%s(): seller : %s, channelAddr : %s, amount_purchased: %d\n",__func__, seller, channelAddr, amount_purchased);
 
-       return !status;
-   }
+    // NOTE: check for balance of seller address in channel here
 
-   return status;
+    assert(update_tally_map(buyer, property, amount_purchased, BALANCE));
+    assert(update_tally_map(channelAddr, property, -amount_purchased, CHANNEL_RESERVE));
+
+    t_tradelistdb->recordNewInstantLTCTrade(txid, channelAddr, seller , buyer, property, amount_purchased, price, block, idx);
+
+    return status;
 
  }
 
- static bool HandleLtcInstantTrade(const CTransaction& tx, int nBlock, const std::string& sender, const std::string& receiver, uint32_t property, uint64_t amount_forsale, uint64_t price)
+ static bool HandleLtcInstantTrade(const CTransaction& tx, int nBlock, int idx, const std::string& sender, const std::string& receiver, uint32_t property, uint64_t amount_forsale, uint64_t price)
  {
      bool count = false;
      uint64_t nvalue = 0;
 
      PrintToLog("%s(): nBlock : %d, sender : %s, receiver : %s, property : %d, amount_forsale : %d, price : %d\n",__func__, nBlock, sender, receiver, property, amount_forsale, price);
-
      for (unsigned int n = 0; n < tx.vout.size(); ++n)
      {
          CTxDestination dest;
@@ -1085,8 +1085,9 @@ int ParseTransaction(const CTransaction& tx, int nBlock, unsigned int idx, CMPTr
          {
              std::string address = EncodeDestination(dest);
 
-             if(address != receiver)
+             if(address != receiver){
                  continue;
+             }
 
              if (msc_debug_handle_instant) PrintToLog("%s(): destination address: %s, dest address: %s \n", __func__, address, receiver);
 
@@ -1100,7 +1101,7 @@ int ParseTransaction(const CTransaction& tx, int nBlock, unsigned int idx, CMPTr
          if (msc_debug_handle_instant) PrintToLog("%s: litecoins found..., receiver address: %s, litecoin amount: %d\n", __func__, receiver, nvalue);
          // function to update tally in order to paid litecoins
 
-         if (Instant_payment(tx.GetHash(), sender, receiver, property, amount_forsale, nvalue, price)) count = true;
+         if (Instant_payment(tx.GetHash(), sender, receiver, property, amount_forsale, nvalue, price, nBlock, idx)) count = true;
      }
 
      if (count)
@@ -1108,9 +1109,7 @@ int ParseTransaction(const CTransaction& tx, int nBlock, unsigned int idx, CMPTr
          // // updating last exchange block
          // assert(mastercore::updateLastExBlock(nBlock, sender));
          //
-         //  //NOTE: check this function later
-         // t_tradelistdb->recordNewInstantTrade(tx.GetHash(), sender,receiver,"pending", property, amount_forsale, desired_property, desired_value, nBlock, idx);
-         //
+
          // if (msc_debug_handle_instant) PrintToLog("%s: Successfully litecoins traded \n", __func__);
          //
          // /** Adding LTC into volume */
@@ -2915,7 +2914,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
        // if interpretPacket returns 1, that means we have an instant trade between LTCs and tokens.
        if (interp_ret == 1)
        {
-            HandleLtcInstantTrade(tx, nBlock, mp_obj.getSender(), mp_obj.getReceiver(), mp_obj.getProperty(), mp_obj.getAmountForSale(), mp_obj.getPrice());
+            HandleLtcInstantTrade(tx, nBlock, mp_obj.getIndexInBlock(), mp_obj.getSender(), mp_obj.getReceiver(), mp_obj.getProperty(), mp_obj.getAmountForSale(), mp_obj.getPrice());
 
         //NOTE: we need to return this number 2 from mp_obj.interpretPacket() (tx.cpp)
         } else if (interp_ret == 2) {
@@ -3940,6 +3939,16 @@ void CMPTradeList::recordNewInstantTrade(const uint256& txid, const std::string&
 {
   if (!pdb) return;
   std::string strValue = strprintf("%s:%s:%s:%d:%d:%d:%d:%d:%d:%s", channelAddr, first, second, propertyIdForSale, amount_forsale, propertyIdDesired, amount_desired, blockNum, blockIndex, TYPE_INSTANT_TRADE);
+  const string key = to_string(blockNum) + "+" + txid.ToString(); // order by blockNum
+  Status status = pdb->Put(writeoptions, key, strValue);
+  ++nWritten;
+  if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __func__, status.ToString());
+}
+
+void CMPTradeList::recordNewInstantLTCTrade(const uint256& txid, const std::string& channelAddr, const std::string& seller, const std::string& buyer, uint32_t propertyIdForSale, uint64_t amount_purchased, uint64_t price, int blockNum, int blockIndex)
+{
+  if (!pdb) return;
+  std::string strValue = strprintf("%s:%s:%s:%d:%d:%d:%d:%d:%s", channelAddr, seller, buyer, propertyIdForSale, amount_purchased, price, blockNum, blockIndex, MSC_TYPE_INSTANT_LTC_TRADE);
   const string key = to_string(blockNum) + "+" + txid.ToString(); // order by blockNum
   Status status = pdb->Put(writeoptions, key, strValue);
   ++nWritten;
