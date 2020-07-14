@@ -216,6 +216,8 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_createpayload_create_oraclecontract", 5, "arg5"},
     { "tl_createpayload_create_oraclecontract", 7, "arg7"},
 
+    { "tl_createpayload_instant_ltc_trade", 0, "arg0"},
+
 
 
     { "tl_createpayload_pnl_update", 0, "arg0"},

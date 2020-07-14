@@ -291,6 +291,9 @@ bool CMPTransaction::interpret_Transaction()
     case MSC_TYPE_REVOKE_ATTESTATION:
         return interpret_Revoke_Attestation();
 
+    case MSC_TYPE_INSTANT_LTC_TRADE:
+        return interpret_Instant_LTC_Trade();
+
     }
 
   return false;
@@ -1799,6 +1802,48 @@ bool CMPTransaction::interpret_Transfer()
   return true;
 }
 
+/** Tx 113 */
+bool CMPTransaction::interpret_Instant_LTC_Trade()
+{
+  int i = 0;
+
+  std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecPropertyId = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecAmountForSale = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecPrice = GetNextVarIntBytes(i);
+
+  if (!vecTypeBytes.empty()) {
+      type = DecompressInteger(vecTypeBytes);
+  } else return false;
+
+  if (!vecVersionBytes.empty()) {
+      version = DecompressInteger(vecVersionBytes);
+  } else return false;
+
+  if (!vecPropertyId.empty()) {
+      property = DecompressInteger(vecPropertyId);
+  } else return false;
+
+  if (!vecAmountForSale.empty()) {
+      amount_forsale = DecompressInteger(vecAmountForSale);
+  } else return false;
+
+  if (!vecPrice.empty()) {
+      price = DecompressInteger(vecPrice);
+  } else return false;
+
+  if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+  {
+      PrintToLog("\t version: %d\n", version);
+      PrintToLog("\t messageType: %d\n",type);
+      PrintToLog("\t property: %d\n", property);
+      PrintToLog("\t amount : %d\n", amount_forsale);
+      PrintToLog("\t price : %d\n", price);
+  }
+
+  return true;
+}
 /** Tx 114 */
 bool CMPTransaction::interpret_Contract_Instant()
 {
@@ -2141,6 +2186,9 @@ int CMPTransaction::interpretPacket()
 
         case MSC_TYPE_REVOKE_ATTESTATION:
             return logicMath_Revoke_Attestation();
+
+        case MSC_TYPE_INSTANT_LTC_TRADE:
+            return logicMath_Instant_LTC_Trade();
 
 
     }
@@ -4307,7 +4355,6 @@ int CMPTransaction::logicMath_Instant_Trade()
 
   // ------------------------------------------
 
-  // if property = 0 ; we are exchanging litecoins
   if (property > LTC && desired_property > 0)
   {
       assert(update_tally_map(chnAddrs.second, property, amount_forsale, BALANCE));
@@ -4319,13 +4366,6 @@ int CMPTransaction::logicMath_Instant_Trade()
 
       // updating last exchange block
       assert(mastercore::updateLastExBlock(block, sender));
-
-  } else {
-
-      assert(update_tally_map(chnAddrs.first, desired_property, desired_value, BALANCE));
-      assert(update_tally_map(sender, desired_property, -desired_value, CHANNEL_RESERVE));
-      rc = 1;
-      if(msc_debug_instant_trade) PrintToLog("Trading litecoins vs tokens\n");
 
   }
 
@@ -4400,6 +4440,70 @@ int CMPTransaction::logicMath_Transfer()
 
   return 0;
 
+}
+
+/** Tx 113 */
+int CMPTransaction::logicMath_Instant_LTC_Trade()
+{
+  int rc = 1;
+
+  if (!IsTransactionTypeAllowed(block, type, version)) {
+      PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+              __func__,
+              type,
+              version,
+              property,
+              block);
+      return (PKT_ERROR_METADEX -22);
+  }
+
+
+  if (!IsPropertyIdValid(property)) {
+      PrintToLog("%s(): rejected: property for sale %d does not exist\n", __func__, property);
+      return (PKT_ERROR_CHANNELS -13);
+  }
+
+
+  int kyc_id;
+
+  if(!t_tradelistdb->checkAttestationReg(sender,kyc_id)){
+    PrintToLog("%s(): rejected: kyc ckeck failed\n", __func__);
+    return (PKT_ERROR_KYC -10);
+  }
+
+  if(!t_tradelistdb->kycPropertyMatch(property, kyc_id)){
+    PrintToLog("%s(): rejected: property %d can't be traded with this kyc\n", __func__, property);
+    return (PKT_ERROR_KYC -20);
+  }
+
+
+  /*channel chnAddrs = t_tradelistdb->getChannelAddresses(sender);
+
+  if (chnAddrs.multisig.empty() && chnAddrs.first.empty() && chnAddrs.second.empty()) {
+      PrintToLog("%s(): rejected: some address doesn't belong to multisig channel \n", __func__);
+      return (PKT_ERROR_CHANNELS -15);
+  }
+
+  if (chnAddrs.expiry_height < block) {
+      PrintToLog("%s(): rejected: out of channel deadline: actual block: %d, deadline: %d\n", __func__, block, chnAddrs.expiry_height);
+      return (PKT_ERROR_CHANNELS -16);
+  }
+
+  int64_t nBalance = getMPbalance(sender, property, CHANNEL_RESERVE);
+  if (property > 0 && nBalance < (int64_t) amount_forsale) {
+      PrintToLog("%s(): rejected: channel address %s has insufficient balance of property %d [%s < %s]\n",
+              __func__,
+              sender,
+              property,
+              FormatMP(property, nBalance),
+              FormatMP(property, amount_forsale));
+      return (PKT_ERROR_CHANNELS -17);
+  }
+  */
+  
+  // ------------------------------------------
+
+   return rc;
 }
 
 /** Tx 114 */

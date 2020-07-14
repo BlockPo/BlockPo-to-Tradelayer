@@ -593,6 +593,8 @@ class ChannelsBasicsTest (BitcoinTestFramework):
         # self.log.info(out)
         assert_equal(out['result']['status'], 'closed')
 
+        #checking litecoins for tokens exchange 
+
         self.stop_nodes()
 
 if __name__ == '__main__':

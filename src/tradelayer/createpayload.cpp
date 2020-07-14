@@ -870,6 +870,28 @@ std::vector<unsigned char> CreatePayload_Transfer()
     return payload;
 }
 
+std::vector<unsigned char> CreatePayload_Instant_LTC_Trade(uint32_t propertyId, uint64_t amount, uint64_t totalPrice)
+{
+    std::vector<unsigned char> payload;
+
+    uint64_t messageType = 113;
+    uint64_t messageVer = 0;
+
+    std::vector<uint8_t> vecMessageType = CompressInteger((uint64_t)messageType);
+    std::vector<uint8_t> vecMessageVer = CompressInteger((uint64_t)messageVer);
+    std::vector<uint8_t> vecPropertyId = CompressInteger((uint64_t)propertyId);
+    std::vector<uint8_t> vecAmount = CompressInteger(amount);
+    std::vector<uint8_t> vecTotalPrice = CompressInteger(totalPrice);
+
+    payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
+    payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
+    payload.insert(payload.end(), vecPropertyId.begin(), vecPropertyId.end());
+    payload.insert(payload.end(), vecAmount.begin(), vecAmount.end());
+    payload.insert(payload.end(), vecTotalPrice.begin(), vecTotalPrice.end());
+
+    return payload;
+}
+
 
 std::vector<unsigned char> CreatePayload_New_Id_Registration(std::string& website, std::string& name)
 {

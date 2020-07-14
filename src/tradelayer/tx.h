@@ -213,6 +213,7 @@ private:
     bool interpret_Attestation();
     bool interpret_Revoke_Attestation();
     bool interpret_ContractDExCancel();
+    bool interpret_Instant_LTC_Trade();
 
     /**
      * Logic and "effects"
@@ -262,6 +263,7 @@ private:
     int logicMath_Attestation();
     int logicMath_Revoke_Attestation();
     int logicMath_ContractDExCancel();
+    int logicMath_Instant_LTC_Trade();
 
     /**
      * Logic helpers

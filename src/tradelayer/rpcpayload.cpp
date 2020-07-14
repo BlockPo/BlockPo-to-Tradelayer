@@ -795,7 +795,7 @@ UniValue tl_createpayload_instant_trade(const JSONRPCRequest& request)
     throw runtime_error(
 			"tl_createpayload_instant_trade \"fromaddress\" \"toaddress\" propertyid \"amount\" ( \"referenceamount\" )\n"
 
-			"\nCreate an instant trade payload.\n"
+			"\nCreate a token for token instant trade payload.\n"
 
 			"\nArguments:\n"
 			"1. propertyId            (number, required) the identifier of the property\n"
@@ -822,6 +822,39 @@ UniValue tl_createpayload_instant_trade(const JSONRPCRequest& request)
 
   // create a payload for the transaction
   std::vector<unsigned char> payload = CreatePayload_Instant_Trade(propertyId, amount, blockheight_expiry, propertyDesired, amountDesired);
+
+  return HexStr(payload.begin(), payload.end());
+
+}
+
+UniValue tl_createpayload_instant_ltc_trade(const JSONRPCRequest& request)
+{
+  if (request.params.size() < 3 || request.fHelp)
+    throw runtime_error(
+			"tl_createpayload_instant_ltc_trade \"fromaddress\" \"toaddress\" propertyid \"amount\" \n"
+
+			"\nCreate an ltc for tokens instant trade payload.\n"
+
+			"\nArguments:\n"
+			"1. propertyId            (number, required) the identifier of the property offered\n"
+			"2. amount offered        (string, required) the amount of tokens offered for the first address of channel\n"
+      "3. price                 (string, required) total price of tokens in LTC\n"
+
+			"\nResult:\n"
+			"\"hash\"                  (string) the hex-encoded transaction hash\n"
+
+			"\nExamples:\n"
+			+ HelpExampleCli("tl_createpayload_instant_ltc_trade", "1 \"100.0\" \"2.0\"")
+			+ HelpExampleRpc("tl_createpayload_instant_ltc_trade", " 1, \"100.0\" \"2.0\"")
+			);
+
+  // obtain parameters & info
+  uint32_t propertyId = ParsePropertyId(request.params[0]);
+  int64_t amount = ParseAmount(request.params[1], isPropertyDivisible(propertyId));
+  int64_t totalPrice = ParseAmount(request.params[2],true);
+
+  // create a payload for the transaction
+  std::vector<unsigned char> payload = CreatePayload_Instant_LTC_Trade(propertyId, amount, totalPrice);
 
   return HexStr(payload.begin(), payload.end());
 

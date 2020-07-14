@@ -57,4 +57,5 @@ std::vector<unsigned char> CreatePayload_Attestation(std::string& hash);
 std::vector<unsigned char> CreatePayload_Revoke_Attestation();
 std::vector<unsigned char> CreatePayload_MetaDExCancelEcosystem();
 std::vector<unsigned char> CreatePayload_ContractDExCancel(std::string& hash);
+std::vector<unsigned char> CreatePayload_Instant_LTC_Trade(uint32_t propertyId, uint64_t amount, uint64_t totalPrice);
 #endif // TRADELAYER_CREATEPAYLOAD_H

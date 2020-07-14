@@ -1040,12 +1040,43 @@ int ParseTransaction(const CTransaction& tx, int nBlock, unsigned int idx, CMPTr
      return (count > 0);
  }
 
- static bool HandleLtcInstantTrade(const CTransaction& tx, int nBlock, const std::string& sender, const std::string& receiver, uint32_t property, uint64_t amount_forsale, uint32_t desired_property, uint64_t desired_value, unsigned int idx)
+ static bool Instant_payment(const uint256& txid, const std::string& sender, const std::string& receiver, uint32_t property, uint64_t amount_forsale, uint64_t nvalue, uint64_t price)
+ {
+   bool status = false;
+   std::string channelAddr;
+
+   arith_uint256 amount_forsale256 = ConvertTo256(amount_forsale);
+   arith_uint256 amountLTC_Desired256 = ConvertTo256(price);
+   arith_uint256 amountLTC_Paid256 = (nvalue > price) ? amountLTC_Desired256 : ConvertTo256(nvalue);
+
+   // actual calculation; round up
+   arith_uint256 amountPurchased256 = DivideAndRoundUp((amountLTC_Paid256 * amount_forsale256), amountLTC_Desired256);
+
+   // convert back to int64_t
+   int64_t amount = ConvertTo64(amountPurchased256);
+
+
+   // function to retrieve multisig channel using receiver o sender.
+   if (t_tradelistdb->checkChannelRelation(sender, channelAddr))
+   {
+       // NOTE: check for balance of receiver address in channel here
+
+       assert(update_tally_map(sender, property, amount, BALANCE));
+       assert(update_tally_map(channelAddr, property, -amount, CHANNEL_RESERVE));
+
+       return !status;
+   }
+
+   return status;
+
+ }
+
+ static bool HandleLtcInstantTrade(const CTransaction& tx, int nBlock, const std::string& sender, const std::string& receiver, uint32_t property, uint64_t amount_forsale, uint64_t price)
  {
      bool count = false;
      uint64_t nvalue = 0;
 
-     if (property != LTC) return count;
+     PrintToLog("%s(): nBlock : %d, sender : %s, receiver : %s, property : %d, amount_forsale : %d, price : %d\n",__func__, nBlock, sender, receiver, property, amount_forsale, price);
 
      for (unsigned int n = 0; n < tx.vout.size(); ++n)
      {
@@ -1059,33 +1090,36 @@ int ParseTransaction(const CTransaction& tx, int nBlock, unsigned int idx, CMPTr
 
              if (msc_debug_handle_instant) PrintToLog("%s(): destination address: %s, dest address: %s \n", __func__, address, receiver);
 
-             nvalue = static_cast<uint64_t>(tx.vout[n].nValue);
+             nvalue += static_cast<uint64_t>(tx.vout[n].nValue);
 
-             if (nvalue >= amount_forsale)
-             {
-                 if (msc_debug_handle_instant) PrintToLog("%s: litecoins found..., receiver address: %s, litecoin amount: %d\n", __func__, receiver, tx.vout[n].nValue);
-                 count = true;
-             }
          }
+     }
+
+     if (nvalue >= price)
+     {
+         if (msc_debug_handle_instant) PrintToLog("%s: litecoins found..., receiver address: %s, litecoin amount: %d\n", __func__, receiver, nvalue);
+         // function to update tally in order to paid litecoins
+
+         if (Instant_payment(tx.GetHash(), sender, receiver, property, amount_forsale, nvalue, price)) count = true;
      }
 
      if (count)
      {
-         // updating last exchange block
-         assert(mastercore::updateLastExBlock(nBlock, sender));
-
-          //NOTE: check this function later
-         t_tradelistdb->recordNewInstantTrade(tx.GetHash(), sender,receiver,"pending", property, amount_forsale, desired_property, desired_value, nBlock, idx);
-
-         if (msc_debug_handle_instant) PrintToLog("%s: Successfully litecoins traded \n", __func__);
-
-         /** Adding LTC into volume */
-         arith_uint256 ltcsreceived_256t = ConvertTo256(nvalue);
-         uint64_t ltcsreceived = ConvertTo64(ltcsreceived_256t)/COIN;
-         globalVolumeALL_LTC += ltcsreceived;
-         const int64_t globalVolumeALL_LTCh = globalVolumeALL_LTC;
-
-         if (msc_debug_handle_instant) PrintToLog("%s(): ltcsreceived: %d, globalVolumeALL_LTC: %d \n",__func__,ltcsreceived, globalVolumeALL_LTCh);
+         // // updating last exchange block
+         // assert(mastercore::updateLastExBlock(nBlock, sender));
+         //
+         //  //NOTE: check this function later
+         // t_tradelistdb->recordNewInstantTrade(tx.GetHash(), sender,receiver,"pending", property, amount_forsale, desired_property, desired_value, nBlock, idx);
+         //
+         // if (msc_debug_handle_instant) PrintToLog("%s: Successfully litecoins traded \n", __func__);
+         //
+         // /** Adding LTC into volume */
+         // arith_uint256 ltcsreceived_256t = ConvertTo256(nvalue);
+         // uint64_t ltcsreceived = ConvertTo64(ltcsreceived_256t)/COIN;
+         // globalVolumeALL_LTC += ltcsreceived;
+         // const int64_t globalVolumeALL_LTCh = globalVolumeALL_LTC;
+         //
+         // if (msc_debug_handle_instant) PrintToLog("%s(): ltcsreceived: %d, globalVolumeALL_LTC: %d \n",__func__,ltcsreceived, globalVolumeALL_LTCh);
 
      }
 
@@ -2881,7 +2915,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
        // if interpretPacket returns 1, that means we have an instant trade between LTCs and tokens.
        if (interp_ret == 1)
        {
-            HandleLtcInstantTrade(tx, nBlock, mp_obj.getSender(), mp_obj.getReceiver(), mp_obj.getProperty(), mp_obj.getAmountForSale(), mp_obj.getDesiredProperty(), mp_obj.getDesiredValue(), mp_obj.getIndexInBlock());
+            HandleLtcInstantTrade(tx, nBlock, mp_obj.getSender(), mp_obj.getReceiver(), mp_obj.getProperty(), mp_obj.getAmountForSale(), mp_obj.getPrice());
 
         //NOTE: we need to return this number 2 from mp_obj.interpretPacket() (tx.cpp)
         } else if (interp_ret == 2) {
@@ -5726,8 +5760,9 @@ bool CMPTradeList::checkChannelAddress(const std::string& channelAddress)
 
          // checking now on channels_Map (active channels)
          auto it = channels_Map.find(strKey);
-         if(it == channels_Map.end())
+         if(it == channels_Map.end()){
              continue;
+         }
 
          channelAddr = strKey;
          status = true;
@@ -6629,6 +6664,7 @@ bool mastercore::transferAll(const std::string& sender, const std::string& recei
     return status;
 
 }
+
 
 /**
  * @return The marker for class D transactions.
