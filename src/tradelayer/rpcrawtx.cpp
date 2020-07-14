@@ -175,7 +175,7 @@ UniValue tl_createrawtx_input(const JSONRPCRequest& request)
             .addInput(txid, nOut)
             .build();
 
-    return EncodeHexTx(tx);
+    return EncodeHexTx(CTransaction(tx));
 }
 
 UniValue tl_createrawtx_reference(const JSONRPCRequest& request)
@@ -212,7 +212,7 @@ UniValue tl_createrawtx_reference(const JSONRPCRequest& request)
             .addReference(destination, amount)
             .build();
 
-    return EncodeHexTx(tx);
+    return EncodeHexTx(CTransaction(tx));
 }
 
 UniValue tl_createrawtx_change(const JSONRPCRequest& request)
@@ -275,7 +275,7 @@ UniValue tl_createrawtx_change(const JSONRPCRequest& request)
             .addChange(destination, viewTemp, txFee, nOut)
             .build();
 
-    return EncodeHexTx(tx);
+    return EncodeHexTx(CTransaction(tx));
 }
 
 static const CRPCCommand commands[] =

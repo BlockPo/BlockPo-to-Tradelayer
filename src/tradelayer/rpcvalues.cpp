@@ -171,16 +171,13 @@ CTransaction ParseTransaction(const UniValue& value)
         throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "Transaction deserialization failed");
     }
 
-    return tx;
+    return CTransaction(tx);
 }
 
 CMutableTransaction ParseMutableTransaction(const UniValue& value)
 {
-    CMutableTransaction mutableTx;
-    if (!DecodeHexTx(mutableTx, value.get_str())) {
-        throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "Transaction deserialization failed");
-    }
-    return mutableTx;
+    CTransaction tx = ParseTransaction(value);
+    return CMutableTransaction(tx);
 }
 
 CPubKey ParsePubKeyOrAddress(const UniValue& value)
