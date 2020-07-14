@@ -59,7 +59,7 @@ tl.listAccounts = function(cb){
 }
 
 tl.fundRawTransaction = function(txstring,optionObj,cb){
-    cliet.cmd('fundRawTransaction',txstring, optionObj,function(data){
+    client.cmd('fundRawTransaction',txstring, optionObj,function(data){
       return cb(data)
     })
 }
