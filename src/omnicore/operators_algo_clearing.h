@@ -23,6 +23,13 @@ struct status_amounts_edge
   double entry_price, exit_price;
 };
 
+struct EdgeInfo
+{
+  std::string addrs_src, status_src, addrs_trk, status_trk;
+  long int lives_src, lives_trk, amount_trd_src, amount_trd_trk, edge_row, path_number, ghost_edge;
+  double entry_price, exit_price;
+};
+
 struct status_lives_edge
 {
   std::string addrs, status;
@@ -35,6 +42,8 @@ struct status_lives_edge
 struct status_amounts *get_status_amounts_open_incr(VectorTLS &v, int q);
 
 struct status_amounts *get_status_amounts_byaddrs(VectorTLS &v, std::string addrs);
+
+struct EdgeInfo *GetEdgeInfo(std::map<std::string, std::string> &edge);
 
 VectorTLS status_open_incr(VectorTLS &status_q, int q);
 
@@ -117,5 +126,9 @@ void printing_lives_vector(std::vector<std::map<std::string, std::string>> lives
 std::vector<std::string> AddressesList(std::vector<std::vector<std::map<std::string, std::string>>> &path_main);
 
 void building_lives_edges(std::map<std::string, std::string> &path_first, std::string addrs, std::string status, long int lives, double entry_price, long int edge_row, long int path_number);
+
+void PrintingEdge(std::map<std::string, std::string> &path_first);
+
+void PrintingGraph(std::vector<std::map<std::string, std::string>> &it_path_maini);
 
 #endif
