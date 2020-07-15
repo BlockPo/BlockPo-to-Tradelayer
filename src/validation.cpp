@@ -2404,8 +2404,11 @@ bool CChainState::ConnectTip(CValidationState& state, const CChainParams& chainp
     unsigned int nNumMetaTxs = 0;
 
     //! Trade Layer: begin block connect notification
-    // LogPrint("handler", "Trade Layer handler: block connect begin [height: %d]\n", GetHeight());
-    mastercore_handler_block_begin(GetHeight(), pindexNew);
+    {
+       LOCK(cs_main);
+       // LogPrint("handler", "Trade Layer handler: block connect begin [height: %d]\n", GetHeight());
+       mastercore_handler_block_begin(GetHeight(), pindexNew);
+    }
 
     // Remove conflicting transactions from the mempool.;
     mempool.removeForBlock(blockConnecting.vtx, pindexNew->nHeight);

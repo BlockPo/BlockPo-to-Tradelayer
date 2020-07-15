@@ -115,6 +115,7 @@ std::string mastercore::strTransactionType(uint16_t txType)
     case MSC_TYPE_CREATE_ORACLE_CONTRACT : return "Create Oracle Contract";
     case MSC_TYPE_METADEX_CANCEL_ALL : return "Cancel all MetaDEx orders";
     case MSC_TYPE_CONTRACTDEX_CANCEL : return "Cancel specific contract order";
+    case MSC_TYPE_INSTANT_LTC_TRADE : return "Instant LTC for Tokens trade";
     default: return "* unknown type *";
     }
 }
@@ -1833,13 +1834,15 @@ bool CMPTransaction::interpret_Instant_LTC_Trade()
       price = DecompressInteger(vecPrice);
   } else return false;
 
-  if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+  if (true || (!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
   {
       PrintToLog("\t version: %d\n", version);
       PrintToLog("\t messageType: %d\n",type);
       PrintToLog("\t property: %d\n", property);
       PrintToLog("\t amount : %d\n", amount_forsale);
       PrintToLog("\t price : %d\n", price);
+      PrintToLog("\t sender : %s\n", sender);
+      PrintToLog("\t receiver : %d\n", receiver);
   }
 
   return true;
@@ -4465,7 +4468,6 @@ int CMPTransaction::logicMath_Instant_LTC_Trade()
 
 
   int kyc_id;
-
   if(!t_tradelistdb->checkAttestationReg(sender,kyc_id)){
     PrintToLog("%s(): rejected: kyc ckeck failed\n", __func__);
     return (PKT_ERROR_KYC -10);
@@ -4477,15 +4479,17 @@ int CMPTransaction::logicMath_Instant_LTC_Trade()
   }
 
 
-  channel chnAddrs = t_tradelistdb->getChannelAddresses(sender);
-
-  if (chnAddrs.multisig.empty() && chnAddrs.first.empty() && chnAddrs.second.empty()) {
-      PrintToLog("%s(): rejected: some address doesn't belong to multisig channel \n", __func__);
-      return (PKT_ERROR_CHANNELS -15);
+  std::string chnAddr;
+  if(!t_tradelistdb->checkChannelRelation(sender, chnAddr) && !t_tradelistdb->checkChannelRelation(receiver, chnAddr)){
+        PrintToLog("%s(): addresses (%s, %s) are not related with any channel\n", __func__, sender, receiver);
+        return (PKT_ERROR_CHANNELS -15);
   }
 
-  if (chnAddrs.expiry_height < block) {
-      PrintToLog("%s(): rejected: out of channel deadline: actual block: %d, deadline: %d\n", __func__, block, chnAddrs.expiry_height);
+
+  channel chn = t_tradelistdb->getChannelAddresses(chnAddr);
+
+  if (chn.expiry_height < block) {
+      PrintToLog("%s(): rejected: out of channel deadline: actual block: %d, deadline: %d\n", __func__, block, chn.expiry_height);
       return (PKT_ERROR_CHANNELS -16);
   }
 
@@ -4501,9 +4505,10 @@ int CMPTransaction::logicMath_Instant_LTC_Trade()
   }
   */
 
-  // ------------------------------------------
-   // NOTE: sender is the multisig address, receiver is the seller.
+   // ------------------------------------------
+   // NOTE: sender is the buyer, receiver is the seller.
    PrintToLog("%s(): sender: %s, receiver: %s, amount_forsale: %d, price: %d, property: %d\n",__func__,sender, receiver, amount_forsale, price, property);
+
    return rc;
 }
 

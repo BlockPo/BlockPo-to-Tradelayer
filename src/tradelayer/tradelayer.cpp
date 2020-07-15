@@ -1040,11 +1040,11 @@ int ParseTransaction(const CTransaction& tx, int nBlock, unsigned int idx, CMPTr
      return (count > 0);
  }
 
-static bool Instant_payment(const uint256& txid, const std::string& channelAddr, const std::string& seller, uint32_t property, uint64_t amount_forsale, uint64_t nvalue, uint64_t price, int block, int idx)
+static bool Instant_payment(const uint256& txid, const std::string& buyer, const std::string& seller, uint32_t property, uint64_t amount_forsale, uint64_t nvalue, uint64_t price, int block, int idx)
 {
     bool status = false;
 
-    PrintToLog("%s(): channelAddr : %s, seller : %s, property : %d, amount_forsale : %d, nvalue : %d, price : %d, block: %d, idx : %d\n",__func__, channelAddr, seller, property, amount_forsale, nvalue, price, block, idx);
+    PrintToLog("%s(): buyer : %s, seller : %s, property : %d, amount_forsale : %d, nvalue : %d, price : %d, block: %d, idx : %d\n",__func__, buyer, seller, property, amount_forsale, nvalue, price, block, idx);
 
     arith_uint256 amount_forsale256 = ConvertTo256(amount_forsale);
     arith_uint256 amountLTC_Desired256 = ConvertTo256(price);
@@ -1055,11 +1055,10 @@ static bool Instant_payment(const uint256& txid, const std::string& channelAddr,
     // convert back to int64_t
     int64_t amount_purchased = ConvertTo64(amountPurchased256);
 
-    channel chn = t_tradelistdb->getChannelAddresses(channelAddr);
+    std::string channelAddr;
+    t_tradelistdb->checkChannelRelation(seller, channelAddr);
 
-    std::string buyer = (chn.first == seller) ? chn.second : chn.first;
-
-    PrintToLog("%s(): seller : %s, channelAddr : %s, amount_purchased: %d\n",__func__, seller, channelAddr, amount_purchased);
+    PrintToLog("%s(): seller : %s, buyer: %s, channelAddr : %s, amount_purchased: %d\n",__func__, seller, buyer, channelAddr, amount_purchased);
 
     // NOTE: check for balance of seller address in channel here
 
@@ -2920,7 +2919,9 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
         } else if (interp_ret == 2) {
             HandleDExPayments(tx, nBlock, mp_obj.getSender());
 
-        } else if (interp_ret != PKT_ERROR - 2) {
+        }
+
+        if (interp_ret != PKT_ERROR - 2) {
             bool bValid = (0 <= interp_ret);
             p_txlistdb->recordTX(tx.GetHash(), bValid, nBlock, mp_obj.getType(), mp_obj.getNewAmount());
             p_TradeTXDB->RecordTransaction(tx.GetHash(), idx);
@@ -3082,9 +3083,6 @@ int mastercore::WalletTxBuilder(const std::string& senderAddress, const std::str
   CCoinControl coinControl;
   coinControl.fAllowOtherInputs = true;
   CWalletTx wtxNew;
-  CAmount nFeeRet = 0;
-  int nChangePosInOut = -1;
-  std::string strFailReason;
   std::vector<std::pair<CScript, int64_t> > vecSend;
   CReserveKey reserveKey(pwalletMain);
 
@@ -3120,7 +3118,10 @@ int mastercore::WalletTxBuilder(const std::string& senderAddress, const std::str
       vecRecipients.push_back(recipient);
     }
 
-  // Ask the wallet to create the transaction (note mining fee determined by Bitcoin Core params)
+  CAmount nFeeRet = 0;
+  int nChangePosInOut = -1;
+  std::string strFailReason;
+  // Ask the wallet to create the transaction (note mining fee determined by Litecoin Core params)
   if (!pwalletMain->CreateTransaction(vecRecipients, wtxNew, reserveKey, nFeeRet, nChangePosInOut, strFailReason, coinControl, true))
     {
       return MP_ERR_CREATE_TX;
