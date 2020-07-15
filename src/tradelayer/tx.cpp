@@ -4322,34 +4322,40 @@ int CMPTransaction::logicMath_Instant_Trade()
     return (PKT_ERROR_KYC -20);
   }
 
-  channel chnAddrs = t_tradelistdb->getChannelAddresses(sender);
-
-  if (chnAddrs.multisig.empty() && chnAddrs.first.empty() && chnAddrs.second.empty()) {
-      PrintToLog("%s(): rejected: some address doesn't belong to multisig channel \n", __func__);
-      return (PKT_ERROR_CHANNELS -15);
+  std::string chnAddr;
+  if(!t_tradelistdb->checkChannelRelation(sender, chnAddr) && !t_tradelistdb->checkChannelRelation(receiver, chnAddr)){
+        PrintToLog("%s(): addresses (%s, %s) are not related with any channel\n", __func__, sender, receiver);
+        return (PKT_ERROR_CHANNELS -15);
   }
 
-  if (chnAddrs.expiry_height < block) {
-      PrintToLog("%s(): rejected: out of channel deadline: actual block: %d, deadline: %d\n", __func__, block, chnAddrs.expiry_height);
+  channel chn = t_tradelistdb->getChannelAddresses(chnAddr);
+
+  if (chn.multisig.empty() && chn.first.empty() && chn.second.empty()) {
+      PrintToLog("%s(): rejected: some address doesn't belong to multisig channel \n", __func__);
       return (PKT_ERROR_CHANNELS -16);
   }
 
-  int64_t nBalance = getMPbalance(sender, property, CHANNEL_RESERVE);
+  if (chn.expiry_height < block) {
+      PrintToLog("%s(): rejected: out of channel deadline: actual block: %d, deadline: %d\n", __func__, block, chn.expiry_height);
+      return (PKT_ERROR_CHANNELS -17);
+  }
+
+  int64_t nBalance = getMPbalance(chnAddr, property, CHANNEL_RESERVE);
   if (property > 0 && nBalance < (int64_t) amount_forsale) {
       PrintToLog("%s(): rejected: channel address %s has insufficient balance of property %d [%s < %s]\n",
               __func__,
-              sender,
+              chnAddr,
               property,
               FormatMP(property, nBalance),
               FormatMP(property, amount_forsale));
       return (PKT_ERROR_CHANNELS -17);
   }
 
-  nBalance = getMPbalance(sender, desired_property, CHANNEL_RESERVE);
+  nBalance = getMPbalance(chnAddr, desired_property, CHANNEL_RESERVE);
   if (desired_property > 0 && nBalance < (int64_t) desired_value) {
       PrintToLog("%s(): rejected: channel address %s has insufficient balance of property %d [%s < %s]\n",
               __func__,
-              sender,
+              chnAddr,
               desired_property,
               FormatMP(desired_property, nBalance),
               FormatMP(desired_property, desired_value));
@@ -4360,12 +4366,12 @@ int CMPTransaction::logicMath_Instant_Trade()
 
   if (property > LTC && desired_property > 0)
   {
-      assert(update_tally_map(chnAddrs.second, property, amount_forsale, BALANCE));
-      assert(update_tally_map(sender, property, -amount_forsale, CHANNEL_RESERVE));
-      assert(update_tally_map(chnAddrs.first, desired_property, desired_value, BALANCE));
-      assert(update_tally_map(sender, desired_property, -desired_value, CHANNEL_RESERVE));
+      assert(update_tally_map(chn.second, property, amount_forsale, BALANCE));
+      assert(update_tally_map(chn.multisig, property, -amount_forsale, CHANNEL_RESERVE));
+      assert(update_tally_map(chn.first, desired_property, desired_value, BALANCE));
+      assert(update_tally_map(chn.multisig, desired_property, -desired_value, CHANNEL_RESERVE));
 
-      t_tradelistdb->recordNewInstantTrade(txid, sender, chnAddrs.first, chnAddrs.second, property, amount_forsale, desired_property, desired_value, block, tx_idx);
+      t_tradelistdb->recordNewInstantTrade(txid, chn.multisig, chn.first, chn.second, property, amount_forsale, desired_property, desired_value, block, tx_idx);
 
       // updating last exchange block
       assert(mastercore::updateLastExBlock(block, sender));
@@ -4493,19 +4499,19 @@ int CMPTransaction::logicMath_Instant_LTC_Trade()
       return (PKT_ERROR_CHANNELS -16);
   }
 
-  /*int64_t nBalance = getMPbalance(sender, property, CHANNEL_RESERVE);
+  int64_t nBalance = getMPbalance(chnAddr, property, CHANNEL_RESERVE);
   if (property > 0 && nBalance < (int64_t) amount_forsale) {
       PrintToLog("%s(): rejected: channel address %s has insufficient balance of property %d [%s < %s]\n",
               __func__,
-              sender,
+              chnAddr,
               property,
               FormatMP(property, nBalance),
               FormatMP(property, amount_forsale));
       return (PKT_ERROR_CHANNELS -17);
   }
-  */
 
    // ------------------------------------------
+   
    // NOTE: sender is the buyer, receiver is the seller.
    PrintToLog("%s(): sender: %s, receiver: %s, amount_forsale: %d, price: %d, property: %d\n",__func__,sender, receiver, amount_forsale, price, property);
 

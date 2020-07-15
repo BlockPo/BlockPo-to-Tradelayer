@@ -1044,7 +1044,7 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
 {
     bool status = false;
 
-    PrintToLog("%s(): buyer : %s, seller : %s, property : %d, amount_forsale : %d, nvalue : %d, price : %d, block: %d, idx : %d\n",__func__, buyer, seller, property, amount_forsale, nvalue, price, block, idx);
+    if(msc_debug_instant_payment) PrintToLog("%s(): buyer : %s, seller : %s, property : %d, amount_forsale : %d, nvalue : %d, price : %d, block: %d, idx : %d\n",__func__, buyer, seller, property, amount_forsale, nvalue, price, block, idx);
 
     arith_uint256 amount_forsale256 = ConvertTo256(amount_forsale);
     arith_uint256 amountLTC_Desired256 = ConvertTo256(price);
@@ -1058,14 +1058,26 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
     std::string channelAddr;
     t_tradelistdb->checkChannelRelation(seller, channelAddr);
 
-    PrintToLog("%s(): seller : %s, buyer: %s, channelAddr : %s, amount_purchased: %d\n",__func__, seller, buyer, channelAddr, amount_purchased);
+    int64_t remaining = static_cast<int64_t>(t_tradelistdb->getRemaining(channelAddr, seller, property));
 
-    // NOTE: check for balance of seller address in channel here
+    if(msc_debug_instant_payment)
+    {
+        PrintToLog("%s(): seller : %s, buyer: %s, channelAddr : %s, amount_purchased: %d\n",__func__, seller, buyer, channelAddr, amount_purchased);
+        PrintToLog("%s(): remaining amount for seller (%s) : %d\n",__func__, seller, remaining);
+    }
 
-    assert(update_tally_map(buyer, property, amount_purchased, BALANCE));
-    assert(update_tally_map(channelAddr, property, -amount_purchased, CHANNEL_RESERVE));
+    if (remaining >= amount_purchased)
+    {
+        assert(update_tally_map(buyer, property, amount_purchased, BALANCE));
+        assert(update_tally_map(channelAddr, property, -amount_purchased, CHANNEL_RESERVE));
 
-    t_tradelistdb->recordNewInstantLTCTrade(txid, channelAddr, seller , buyer, property, amount_purchased, price, block, idx);
+        t_tradelistdb->recordNewInstantLTCTrade(txid, channelAddr, seller , buyer, property, amount_purchased, price, block, idx);
+
+        // updating last exchange block
+        assert(mastercore::updateLastExBlock(block, channelAddr));
+
+        return !status;
+    }
 
     return status;
 
@@ -1076,7 +1088,8 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
      bool count = false;
      uint64_t nvalue = 0;
 
-     PrintToLog("%s(): nBlock : %d, sender : %s, receiver : %s, property : %d, amount_forsale : %d, price : %d\n",__func__, nBlock, sender, receiver, property, amount_forsale, price);
+     if (msc_debug_handle_instant) PrintToLog("%s(): nBlock : %d, sender : %s, receiver : %s, property : %d, amount_forsale : %d, price : %d\n",__func__, nBlock, sender, receiver, property, amount_forsale, price);
+
      for (unsigned int n = 0; n < tx.vout.size(); ++n)
      {
          CTxDestination dest;
@@ -1095,7 +1108,9 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
          }
      }
 
-     if (nvalue >= price)
+     if (msc_debug_handle_instant) PrintToLog("%s(): nvalue : %d, price: %d \n",__func__, nvalue, price);
+
+     if (nvalue > 0)
      {
          if (msc_debug_handle_instant) PrintToLog("%s: litecoins found..., receiver address: %s, litecoin amount: %d\n", __func__, receiver, nvalue);
          // function to update tally in order to paid litecoins
@@ -1105,20 +1120,18 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
 
      if (count)
      {
-         // // updating last exchange block
-         // assert(mastercore::updateLastExBlock(nBlock, sender));
-         //
+         if (msc_debug_handle_instant) PrintToLog("%s: Successfully litecoins traded \n", __func__);
 
-         // if (msc_debug_handle_instant) PrintToLog("%s: Successfully litecoins traded \n", __func__);
-         //
-         // /** Adding LTC into volume */
-         // arith_uint256 ltcsreceived_256t = ConvertTo256(nvalue);
-         // uint64_t ltcsreceived = ConvertTo64(ltcsreceived_256t)/COIN;
-         // globalVolumeALL_LTC += ltcsreceived;
-         // const int64_t globalVolumeALL_LTCh = globalVolumeALL_LTC;
-         //
-         // if (msc_debug_handle_instant) PrintToLog("%s(): ltcsreceived: %d, globalVolumeALL_LTC: %d \n",__func__,ltcsreceived, globalVolumeALL_LTCh);
+         /** Adding LTC into volume */
+         arith_uint256 ltcsreceived_256t = ConvertTo256(nvalue);
+         uint64_t ltcsreceived = ConvertTo64(ltcsreceived_256t)/COIN;
+         globalVolumeALL_LTC += ltcsreceived;
+         const int64_t globalVolumeALL_LTCh = globalVolumeALL_LTC;
 
+         if (msc_debug_handle_instant) PrintToLog("%s(): ltcsreceived: %d, globalVolumeALL_LTC: %d \n",__func__,ltcsreceived, globalVolumeALL_LTCh);
+
+     } else {
+         PrintToLog("%s(): ERROR: instant ltc payment failed \n",__func__);
      }
 
      return count;
@@ -2906,6 +2919,8 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
        int interp_ret = mp_obj.interpretPacket();
 
        if(msc_debug_handler_tx) PrintToLog("%s(): interp_ret: %d\n",__func__,interp_ret);
+
+       PrintToLog("%s(): interp_ret: %d\n",__func__,interp_ret);
 
        // Only structurally valid transactions get recorded in levelDB
        // PKT_ERROR - 2 = interpret_Transaction failed, structurally invalid payload
@@ -5758,7 +5773,7 @@ bool CMPTradeList::checkChannelAddress(const std::string& channelAddress)
          boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
 
          if (vstr.size() != 6) {
-             PrintToLog("%s(): db error - incorrect size of register: (%s)\n", __func__, strValue);
+             // PrintToLog("%s(): db error - incorrect size of register: (%s)\n", __func__, strValue);
              continue;
          }
 

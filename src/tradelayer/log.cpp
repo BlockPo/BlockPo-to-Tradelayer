@@ -113,6 +113,7 @@ bool msc_debug_get_total_lives                  = 0;
 bool msc_debug_activate_feature                 = 0;
 bool msc_debug_deactivate_feature               = 0;
 bool msc_debug_is_transaction_type_allowed      = 0;
+bool msc_debug_instant_payment                  = 1;
 
 /**
  * LogPrintf() has been broken a couple of times now

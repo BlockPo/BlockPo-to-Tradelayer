@@ -199,7 +199,7 @@ class RawTransactionBasicsTest (BitcoinTestFramework):
 
         # Destination here is yourself (we are sending 1 LTC from addresses[1] to addresses[0])
         self.log.info("Creating raw reference")
-        params = str([hex, addresses[0], 1]).replace("'",'"')
+        params = str([hex, addresses[0], 0.5]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_createrawtx_reference",params)
         # self.log.info(out)
 
@@ -261,7 +261,7 @@ class RawTransactionBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['balance'],'1000.00000000')
+        assert_equal(out['result']['balance'],'500.00000000')
         assert_equal(out['result']['reserve'],'0.00000000')
 
         self.stop_nodes()

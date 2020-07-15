@@ -117,6 +117,7 @@ extern bool msc_debug_get_total_lives;
 extern bool msc_debug_activate_feature;
 extern bool msc_debug_deactivate_feature;
 extern bool msc_debug_is_transaction_type_allowed;
+extern bool msc_debug_instant_payment;
 
 /* When we switch to C++11, this can be switched to variadic templates instead
  * of this macro-based construction (see tinyformat.h).
