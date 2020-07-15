@@ -363,7 +363,7 @@ class ChannelsBasicsTest (BitcoinTestFramework):
 
         # addr0 making instant trade with addr1 (tokens for tokens)
         self.log.info("Funding the channel with 2 LTC")
-        params = str([multisig, 2]).replace("'",'"')
+        params = str([addresses[0], 2]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "sendtoaddress", params)
         # self.log.info(out)
         txid = out['result']
@@ -380,7 +380,7 @@ class ChannelsBasicsTest (BitcoinTestFramework):
 
 
         self.log.info("Creating rawtx transaction")
-        params = '[[{"txid":"'+txid+'","vout":'+str(vout)+'}],{"'+multisig+'":1.98, "'+addresses[1]+'":0.01}, 0, true]'
+        params = '[[{"txid":"'+txid+'","vout":'+str(vout)+'}], { }, 0, true]'
         out = tradelayer_HTTP(conn, headers, False, "createrawtransaction", params)
         assert_equal(out['error'], None)
         hex = out['result']
@@ -405,7 +405,7 @@ class ChannelsBasicsTest (BitcoinTestFramework):
 
 
         # NOTE: see multi.sh test
-        params = '["'+hex+'",[{"txid":"'+txid+'","vout":'+str(vout)+', "scriptPubKey":"'+scriptPubKey+'","redeemScript":"'+redeemScript+'","amount":2}],["'+privatekey0+'"]]'
+        params = '["'+hex+'",[],["'+privatekey0+'"]]'
         self.log.info("Signing raw transaction with address 0")
         # self.log.info(params)
         out = tradelayer_HTTP(conn, headers, False, "signrawtransaction",params)
@@ -415,7 +415,7 @@ class ChannelsBasicsTest (BitcoinTestFramework):
 
 
         self.log.info("Signing raw transaction with address 1")
-        params = '["'+hex+'",[{"txid":"'+txid+'","vout":'+str(vout)+', "scriptPubKey":"'+scriptPubKey+'","redeemScript":"'+redeemScript+'","amount":2}],["'+privatekey1+'"]]'
+        params = '["'+hex+'",[],["'+privatekey1+'"]]'
         out = tradelayer_HTTP(conn, headers, False, "signrawtransaction",params)
         assert_equal(out['error'], None)
         hex = out['result']['hex']
@@ -593,9 +593,6 @@ class ChannelsBasicsTest (BitcoinTestFramework):
         # self.log.info(out)
         assert_equal(out['result']['status'], 'closed')
 
-
-
-        #checking litecoins for tokens exchange ###########################
 
         self.stop_nodes()
 

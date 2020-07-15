@@ -1721,7 +1721,7 @@ bool CMPTransaction::interpret_Instant_Trade()
     desired_value = DecompressInteger(vecAmountDesiredBytes);
   } else return false;
 
-  if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+  if (true || (!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
   {
       PrintToLog("\t version: %d\n", version);
       PrintToLog("\t messageType: %d\n",type);
@@ -1730,6 +1730,8 @@ bool CMPTransaction::interpret_Instant_Trade()
       PrintToLog("\t blockheight_expiry : %d\n", block_forexpiry);
       PrintToLog("\t property desired : %d\n", desired_property);
       PrintToLog("\t amount desired : %d\n", desired_value);
+      PrintToLog("\t sender : %d\n", sender);
+      PrintToLog("\t receiver : %d\n", receiver);
   }
 
   return true;
@@ -4364,6 +4366,7 @@ int CMPTransaction::logicMath_Instant_Trade()
 
   // ------------------------------------------
 
+  PrintToLog("%s(): channel: %d, first: %d, second: %d\n",__func__, chn.multisig, chn.first, chn.second);
   if (property > LTC && desired_property > 0)
   {
       assert(update_tally_map(chn.second, property, amount_forsale, BALANCE));
@@ -4374,7 +4377,7 @@ int CMPTransaction::logicMath_Instant_Trade()
       t_tradelistdb->recordNewInstantTrade(txid, chn.multisig, chn.first, chn.second, property, amount_forsale, desired_property, desired_value, block, tx_idx);
 
       // updating last exchange block
-      assert(mastercore::updateLastExBlock(block, sender));
+      assert(mastercore::updateLastExBlock(block, chn.multisig));
 
   }
 
@@ -4511,7 +4514,7 @@ int CMPTransaction::logicMath_Instant_LTC_Trade()
   }
 
    // ------------------------------------------
-   
+
    // NOTE: sender is the buyer, receiver is the seller.
    PrintToLog("%s(): sender: %s, receiver: %s, amount_forsale: %d, price: %d, property: %d\n",__func__,sender, receiver, amount_forsale, price, property);
 
