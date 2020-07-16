@@ -369,7 +369,7 @@ class PayloadsBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, False, "tl_createpayload_transfer", params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result'], '00700480dce6bc943e')
+        assert_equal(out['result'], '0070')
 
 
         self.log.info("Testing tl_createpayload_dex_payment")
