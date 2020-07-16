@@ -887,9 +887,11 @@ UniValue tl_getproperty(const JSONRPCRequest& request)
 
 UniValue tl_listproperties(const JSONRPCRequest& request)
 {
-  if (request.fHelp)
+  if (request.params.size() > 1 || request.fHelp)
     throw runtime_error(
 			"tl_listproperties\n"
+      "\nArguments:\n"
+      "1. verbose                      (number, optional) 1 if more info is needed\n"
 			"\nLists all tokens or smart properties.\n"
 			"\nResult:\n"
 			"[                                (array of JSON objects)\n"
@@ -903,9 +905,11 @@ UniValue tl_listproperties(const JSONRPCRequest& request)
 			"  ...\n"
 			"]\n"
 			"\nExamples:\n"
-			+ HelpExampleCli("tl_listproperties", "")
-			+ HelpExampleRpc("tl_listproperties", "")
+			+ HelpExampleCli("tl_listproperties", "1")
+			+ HelpExampleRpc("tl_listproperties", "1")
 			);
+
+  uint8_t showVerbose = (request.params.size() == 1) ? ParseBinary(request.params[0]) : 0;
 
   UniValue response(UniValue::VARR);
 
@@ -914,15 +918,52 @@ UniValue tl_listproperties(const JSONRPCRequest& request)
   uint32_t nextSPID = _my_sps->peekNextSPID();
   for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
   {
+      UniValue propertyObj(UniValue::VOBJ);
       CMPSPInfo::Entry sp;
       if(_my_sps->getSP(propertyId, sp))
       {
-          UniValue propertyObj(UniValue::VOBJ);
+          int64_t nTotalTokens = getTotalTokens(propertyId);
+          std::string strCreationHash = sp.txid.GetHex();
+          std::string strTotalTokens = FormatMP(propertyId, nTotalTokens);
           propertyObj.push_back(Pair("propertyid", (uint64_t) propertyId));
           PropertyToJSON(sp, propertyObj); // name, data, url, divisible
           KYCToJSON(sp, propertyObj);
-          response.push_back(propertyObj);
-     }
+
+          if(showVerbose)
+          {
+              propertyObj.push_back(Pair("issuer", sp.issuer));
+              propertyObj.push_back(Pair("creationtxid", strCreationHash));
+              propertyObj.push_back(Pair("fixedissuance", sp.fixed));
+              propertyObj.push_back(Pair("creation block", sp.init_block));
+              propertyObj.push_back(Pair("totaltokens", strTotalTokens));
+              if (sp.isNative())
+              {
+                  propertyObj.push_back(Pair("notional size", FormatDivisibleShortMP(sp.notional_size)));
+                  propertyObj.push_back(Pair("collateral currency", std::to_string(sp.collateral_currency)));
+                  propertyObj.push_back(Pair("margin requirement", FormatDivisibleShortMP(sp.margin_requirement)));
+                  propertyObj.push_back(Pair("blocks until expiration", std::to_string(sp.blocks_until_expiration)));
+                  propertyObj.push_back(Pair("inverse quoted", std::to_string(sp.inverse_quoted)));
+
+              } else if (sp.isOracle()) {
+                  propertyObj.push_back(Pair("notional size", FormatDivisibleShortMP(sp.notional_size)));
+                  propertyObj.push_back(Pair("collateral currency", std::to_string(sp.collateral_currency)));
+                  propertyObj.push_back(Pair("margin requirement", FormatDivisibleShortMP(sp.margin_requirement)));
+                  propertyObj.push_back(Pair("blocks until expiration", std::to_string(sp.blocks_until_expiration)));
+                  propertyObj.push_back(Pair("backup address", sp.backup_address));
+                  propertyObj.push_back(Pair("hight price", FormatDivisibleShortMP(sp.oracle_high)));
+                  propertyObj.push_back(Pair("low price", FormatDivisibleShortMP(sp.oracle_low)));
+                  propertyObj.push_back(Pair("last close price", FormatDivisibleShortMP(sp.oracle_close)));
+                  propertyObj.push_back(Pair("inverse quoted", std::to_string(sp.inverse_quoted)));
+
+              } else if (sp.isPegged()) {
+                  propertyObj.push_back(Pair("contract associated",(uint64_t) sp.contract_associated));
+                  propertyObj.push_back(Pair("series", sp.series));
+              }
+          }
+
+      }
+
+      response.push_back(propertyObj);
   }
 
   return response;
