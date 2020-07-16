@@ -328,44 +328,52 @@ void settlement_algorithm_fifo(MatrixTLS &M_file, int64_t interest, int64_t twap
 				if (PtStatusByEdge->addrs_src == AddrsLives)
 				{
           NEvents += 1;
-				// 	IdPosition = finding_string("Long", PtStatusByEdge->status_src) ? 0 : 1;
-				// 	Status = PtStatusByEdge->status_src;					
-				// 	NLives = PtStatusByEdge->lives_src;
-				// 	EntryPrice = PtStatusByEdge->entry_price;
-				// 	EdgeRow = PtStatusByEdge->edge_row;
-				// 	PathNumber = PtStatusByEdge->path_number;
+					IdPosition = finding_string("Long", PtStatusByEdge->status_src) ? 0 : 1;
+					Status = PtStatusByEdge->status_src;					
+					NLives = PtStatusByEdge->lives_src;
+					EntryPrice = PtStatusByEdge->entry_price;
+					EdgeRow = PtStatusByEdge->edge_row;
+					PathNumber = PtStatusByEdge->path_number;
 				}				
         else if (PtStatusByEdge->addrs_trk == AddrsLives)
 				{
           NEvents += 1;
-				// 	IdPosition = finding_string("Long", PtStatusByEdge->status_trk) ? 0 : 1;
-				// 	Status = PtStatusByEdge->status_trk;
-				// 	NLives = PtStatusByEdge->lives_trk;
-				// 	EntryPrice = PtStatusByEdge->entry_price;
-				// 	EdgeRow = PtStatusByEdge->edge_row;
-				// 	PathNumber = PtStatusByEdge->path_number;
+					IdPosition = finding_string("Long", PtStatusByEdge->status_trk) ? 0 : 1;
+					Status = PtStatusByEdge->status_trk;
+					NLives = PtStatusByEdge->lives_trk;
+					EntryPrice = PtStatusByEdge->entry_price;
+					EdgeRow = PtStatusByEdge->edge_row;
+					PathNumber = PtStatusByEdge->path_number;
 				}
         else
 					continue;
 			}
 		}
-    PrintToLog("\nNLives for AddrsLives: %s = \n", NEvents);
-    // if (NEvents == 1)
-    // {
-    //   if (IdPosition == 0)
-    //   {
-    //     building_lives_edges(LivesLongsEle, AddrsLives, Status, NLives, EntryPrice, EdgeRow, PathNumber);
-    //     LivesLongs.push_back(LivesLongsEle);
-    //     printing_edges_lives(LivesLongsEle);
-    //   }
-    //   else
-    //   {  
-    //     building_lives_edges(LivesShortsEle, AddrsLives, Status, NLives, EntryPrice, EdgeRow, PathNumber);
-    //     LivesShorts.push_back(LivesShortsEle);
-    //     printing_edges_lives(LivesShortsEle);
-    //   }      
-    // }
+    
+    if (NEvents == 1)
+    {
+      if (IdPosition == 0)
+      {
+        building_lives_edges(LivesLongsEle, AddrsLives, Status, NLives, EntryPrice, EdgeRow, PathNumber);
+        LivesLongs.push_back(LivesLongsEle);
+        printing_edges_lives(LivesLongsEle);
+      }
+      else
+      {  
+        building_lives_edges(LivesShortsEle, AddrsLives, Status, NLives, EntryPrice, EdgeRow, PathNumber);
+        LivesShorts.push_back(LivesShortsEle);
+        printing_edges_lives(LivesShortsEle);
+      }      
+    }
   }
+
+  PrintToLog("\nLives Longs Vector\n");
+  for (std::vector<std::map<std::string, std::string>>::iterator it = LivesLongs.begin(); it != LivesLongs.begin(); ++it)
+    printing_edges_lives(*it);
+
+  PrintToLog("\nLives Short Vector\n");
+  for (std::vector<std::map<std::string, std::string>>::iterator it = LivesShorts.begin(); it != LivesShorts.begin(); ++it)
+    printing_edges_lives(*it);
 
   PrintToLog("\nDone!!\n");
   PrintToLog("\n*************************************************\n");
