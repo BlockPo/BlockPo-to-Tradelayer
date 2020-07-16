@@ -63,8 +63,8 @@ class MetaDExBasicsTest (BitcoinTestFramework):
 
         self.log.info("Creating new tokens  (lihki)")
         array = [0]
-        params = str([addresses[0],2,0,"lihki","","","20000000000",array]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, True, "tl_sendissuancefixed",params)
+        params = str([addresses[0],2,0,"lihki","","","90000000000",array]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_sendissuancefixed",params)
         assert_equal(out['error'], None)
         # self.log.info(out)
 
@@ -109,7 +109,7 @@ class MetaDExBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['data'],'')
         assert_equal(out['result']['url'],'')
         assert_equal(out['result']['divisible'],True)
-        assert_equal(out['result']['totaltokens'],'20000000000.00000000')
+        assert_equal(out['result']['totaltokens'],'90000000000.00000000')
 
 
 
@@ -131,7 +131,7 @@ class MetaDExBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['balance'],'20000000000.00000000')
+        assert_equal(out['result']['balance'],'90000000000.00000000')
         assert_equal(out['result']['reserve'],'0.00000000')
 
 
@@ -214,8 +214,9 @@ class MetaDExBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['balance'],'19999999000.40000000')
+        assert_equal(out['result']['balance'],'89999999000.40000000')
         assert_equal(out['result']['reserve'],'0.00000000')
+
 
         params = str([addresses[0], 5]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
@@ -240,8 +241,8 @@ class MetaDExBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['reserve'],'0.00000000')
 
 
-        self.log.info("Sending 10000000000 lihki tokens to fourth address")
-        params = str([addresses[0], addresses[3], 4, "10000000000"]).replace("'",'"')
+        self.log.info("Sending 20000000000 lihki tokens to fourth address")
+        params = str([addresses[0], addresses[3], 4, "20000000000"]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_send",params)
         assert_equal(out['error'], None)
         # self.log.info(out)
@@ -254,8 +255,9 @@ class MetaDExBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['balance'],'10000000000.00000000')
+        assert_equal(out['result']['balance'],'20000000000.00000000')
         assert_equal(out['result']['reserve'],'0.00000000')
+
 
         self.log.info("Sending 1 dan token to third address")
         params = str([addresses[1], addresses[2], 5, "1"]).replace("'",'"')
@@ -276,22 +278,13 @@ class MetaDExBasicsTest (BitcoinTestFramework):
 
         self.log.info("Sending a big trade in MetaDEx")
         params = str([addresses[3], 4, "10000000000", 5, "0.00000002"]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, True, "tl_sendtrade",params)
+        out = tradelayer_HTTP(conn, headers, False, "tl_sendtrade",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
+        txid = out['result']
 
         self.nodes[0].generate(1)
 
-        self.log.info("Checking the trade in orderbook")
-        params = str([4])
-        out = tradelayer_HTTP(conn, headers, True, "tl_getorderbook",params)
-        # self.log.info(out)
-        assert_equal(out['error'], None)
-        assert_equal(out['result'][0]['address'], addresses[3])
-        assert_equal(out['result'][0]['propertyidforsale'],4)
-        assert_equal(out['result'][0]['amountforsale'],'10000000000.00000000')
-        assert_equal(out['result'][0]['propertyiddesired'],5)
-        assert_equal(out['result'][0]['amountdesired'],'0.00000002')
 
         self.log.info("Sending a small trade in MetaDEx")
         params = str([addresses[2], 5, "0.00000001", 4, "5000000000"]).replace("'",'"')
@@ -318,8 +311,145 @@ class MetaDExBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['balance'],'0.00000001')
         assert_equal(out['result']['reserve'],'0.00000000')
 
-        conn.close()
 
+        self.log.info("Checking lihki tokens in fourth address")
+        params = str([addresses[3], 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['balance'],'10002000000.00000000')
+        assert_equal(out['result']['reserve'],'0.00000000')
+
+
+        self.log.info("Cancel specific order MetaDEx")
+        params = str([addresses[3], txid]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_sendcancel_order",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+
+        self.nodes[0].generate(1)
+
+
+        self.log.info("Checking the trade in orderbook")
+        params = str([4])
+        out = tradelayer_HTTP(conn, headers, True, "tl_getorderbook",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result'], [])
+
+
+        self.log.info("Checking lihki tokens in fourth address")
+        params = str([addresses[3], 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['balance'],'15002000000.00000000')
+        assert_equal(out['result']['reserve'],'0.00000000')
+
+
+        self.log.info("Sending the trade again")
+        params = str([addresses[3], 4, "2000000", 5, "4000"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_sendtrade",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+
+        self.nodes[0].generate(1)
+
+
+        self.log.info("Checking the trade in orderbook")
+        params = str([4])
+        out = tradelayer_HTTP(conn, headers, True, "tl_getorderbook",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result'][0]['address'], addresses[3])
+        assert_equal(out['result'][0]['propertyidforsale'], 4)
+        assert_equal(out['result'][0]['amountforsale'], '2000000.00000000')
+        assert_equal(out['result'][0]['propertyiddesired'], 5)
+        assert_equal(out['result'][0]['amountdesired'], '4000.00000000')
+        txid = out['result'][0]['txid']
+
+
+        self.log.info("Cancel by pair")
+        params = str([addresses[3], 4, 5]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_sendcanceltradesbypair", params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+
+        self.nodes[0].generate(1)
+
+
+        self.log.info("Checking the trade in orderbook")
+        params = str([4])
+        out = tradelayer_HTTP(conn, headers, True, "tl_getorderbook",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result'], [])
+
+
+        self.log.info("Checking lihki tokens in fourth address")
+        params = str([addresses[3], 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['balance'],'15002000000.00000000')
+        assert_equal(out['result']['reserve'],'0.00000000')
+
+
+        self.log.info("Sending another trade again")
+        params = str([addresses[3], 4, "2000000", 5, "4000"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_sendtrade",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+
+        self.nodes[0].generate(1)
+
+
+        self.log.info("Checking the trade in orderbook")
+        params = str([4])
+        out = tradelayer_HTTP(conn, headers, True, "tl_getorderbook",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result'][0]['address'], addresses[3])
+        assert_equal(out['result'][0]['propertyidforsale'], 4)
+        assert_equal(out['result'][0]['amountforsale'], '2000000.00000000')
+        assert_equal(out['result'][0]['propertyiddesired'], 5)
+        assert_equal(out['result'][0]['amountdesired'], '4000.00000000')
+        txid = out['result'][0]['txid']
+
+
+        self.log.info("Cancel by price")
+        params = str([addresses[3], 4, "2000000", 5, "4000"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_sendcanceltradesbyprice", params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+
+        self.nodes[0].generate(1)
+
+
+        self.log.info("Checking the trade in orderbook")
+        params = str([4])
+        out = tradelayer_HTTP(conn, headers, True, "tl_getorderbook",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result'], [])
+
+
+        self.log.info("Checking lihki tokens in fourth address")
+        params = str([addresses[3], 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['balance'],'15002000000.00000000')
+        assert_equal(out['result']['reserve'],'0.00000000')
+
+
+        self.log.info("Checking fee restrictions")
+        params = str([addresses[3], 4, "14997499400", 5, "4000"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_sendtrade",params)
+        # self.log.info(out)
+        assert_equal(out['error']['message'], 'Sender has insufficient balance')
+
+        conn.close()
         self.stop_nodes()
 
 if __name__ == '__main__':

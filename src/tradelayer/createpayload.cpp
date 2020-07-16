@@ -1020,5 +1020,71 @@ std::vector<unsigned char> CreatePayload_ContractDExCancel(std::string& hash)
     return payload;
 }
 
+
+std::vector<unsigned char> CreatePayload_DExCancel(std::string& hash)
+{
+    std::vector<unsigned char> payload;
+
+    uint64_t messageType = 35;
+    uint64_t messageVer = 0;
+
+    std::vector<uint8_t> vecMessageType = CompressInteger((uint64_t)messageType);
+    std::vector<uint8_t> vecMessageVer = CompressInteger((uint64_t)messageVer);
+
+    if ((hash).size() > 255) hash = hash.substr(0,255);
+
+    payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
+    payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
+    payload.insert(payload.end(), hash.begin(), hash.end());
+    payload.push_back('\0');
+
+    return payload;
+
+}
+
+std::vector<unsigned char> CreatePayload_MetaDExCancelPair(uint32_t propertyIdForSale, uint32_t propertyIdDesired)
+{
+  std::vector<unsigned char> payload;
+
+  uint64_t messageType = 36;
+  uint64_t messageVer = 0;
+
+  std::vector<uint8_t> vecMessageType = CompressInteger((uint64_t)messageType);
+  std::vector<uint8_t> vecMessageVer = CompressInteger((uint64_t)messageVer);
+  std::vector<uint8_t> vecPropertyIdForSale = CompressInteger((uint64_t)propertyIdForSale);
+  std::vector<uint8_t> vecPropertyIdDesired = CompressInteger((uint64_t)propertyIdDesired);
+
+  payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
+  payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
+  payload.insert(payload.end(), vecPropertyIdForSale.begin(), vecPropertyIdForSale.end());
+  payload.insert(payload.end(), vecPropertyIdDesired.begin(), vecPropertyIdDesired.end());
+
+  return payload;
+}
+
+std::vector<unsigned char>CreatePayload_MetaDExCancelPrice(uint32_t propertyIdForSale, int64_t amountForSale, uint32_t propertyIdDesired, int64_t amountDesired)
+{
+  std::vector<unsigned char> payload;
+
+  uint64_t messageType = 37;
+  uint64_t messageVer = 0;
+
+  std::vector<uint8_t> vecMessageType = CompressInteger((uint64_t)messageType);
+  std::vector<uint8_t> vecMessageVer = CompressInteger((uint64_t)messageVer);
+  std::vector<uint8_t> vecPropertyIdForSale = CompressInteger((uint64_t)propertyIdForSale);
+  std::vector<uint8_t> vecAmountForSale = CompressInteger(amountForSale);
+  std::vector<uint8_t> vecPropertyIdDesired = CompressInteger((uint64_t)propertyIdDesired);
+  std::vector<uint8_t> vecAmountDesired = CompressInteger(amountDesired);
+
+  payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
+  payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
+  payload.insert(payload.end(), vecPropertyIdForSale.begin(), vecPropertyIdForSale.end());
+  payload.insert(payload.end(), vecAmountForSale.begin(), vecAmountForSale.end());
+  payload.insert(payload.end(), vecPropertyIdDesired.begin(), vecPropertyIdDesired.end());
+  payload.insert(payload.end(), vecAmountDesired.begin(), vecAmountDesired.end());
+
+  return payload;
+}
+
 #undef PUSH_BACK_BYTES
 #undef PUSH_BACK_BYTES_PTR

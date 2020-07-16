@@ -116,6 +116,9 @@ std::string mastercore::strTransactionType(uint16_t txType)
     case MSC_TYPE_METADEX_CANCEL_ALL : return "Cancel all MetaDEx orders";
     case MSC_TYPE_CONTRACTDEX_CANCEL : return "Cancel specific contract order";
     case MSC_TYPE_INSTANT_LTC_TRADE : return "Instant LTC for Tokens trade";
+    case MSC_TYPE_METADEX_CANCEL: return "Cancel specific MetaDEx order";
+    case MSC_TYPE_METADEX_CANCEL_BY_PRICE: return "MetaDEx cancel-price";
+    case MSC_TYPE_METADEX_CANCEL_BY_PAIR: return "MetaDEx cancel-by-pair";
     default: return "* unknown type *";
     }
 }
@@ -294,6 +297,15 @@ bool CMPTransaction::interpret_Transaction()
 
     case MSC_TYPE_INSTANT_LTC_TRADE:
         return interpret_Instant_LTC_Trade();
+
+    case MSC_TYPE_METADEX_CANCEL:
+        return interpret_MetaDExCancel();
+
+    case MSC_TYPE_METADEX_CANCEL_BY_PAIR:
+        return interpret_MetaDExCancel_ByPair();
+
+    case MSC_TYPE_METADEX_CANCEL_BY_PRICE:
+        return interpret_MetaDExCancel_ByPrice();
 
     }
 
@@ -1269,6 +1281,136 @@ bool CMPTransaction::interpret_ContractDex_Cancel_Orders_By_Block()
     return true;
 }
 
+/** Tx 35 */
+bool CMPTransaction::interpret_MetaDExCancel()
+{
+    int i = 0;
+    std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+
+    const char* p = i + (char*) &pkt;
+    std::vector<std::string> spstr;
+    for (int j = 0; j < 1; j++)
+    {
+        spstr.push_back(std::string(p));
+        p += spstr.back().size() + 1;
+    }
+
+    if (isOverrun(p))
+    {
+        PrintToLog("%s(): rejected: malformed string value(s)\n", __func__);
+        return false;
+    }
+
+    int j = 0;
+    memcpy(hash, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(hash)-1)); j++;
+    i = i + strlen(hash) + 1;
+
+
+    if (!vecTypeBytes.empty()) {
+        type = DecompressInteger(vecTypeBytes);
+    } else return false;
+
+    if (!vecVersionBytes.empty()) {
+        version = DecompressInteger(vecVersionBytes);
+    } else return false;
+
+
+    if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+    {
+        PrintToLog("\t version: %d\n", version);
+        PrintToLog("\t messageType: %d\n",type);
+        PrintToLog("\t hash: %d\n", hash);
+    }
+
+    return true;
+}
+
+/** Tx 36 */
+bool CMPTransaction::interpret_MetaDExCancel_ByPair()
+{
+    int i = 0;
+    std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecPropertyIdForSale = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecPropertyIdDesired = GetNextVarIntBytes(i);
+
+    if (!vecTypeBytes.empty()) {
+        type = DecompressInteger(vecTypeBytes);
+    } else return false;
+
+    if (!vecVersionBytes.empty()) {
+        version = DecompressInteger(vecVersionBytes);
+    } else return false;
+
+    if (!vecPropertyIdForSale.empty()) {
+        propertyId = DecompressInteger(vecPropertyIdForSale);
+    } else return false;
+
+    if (!vecPropertyIdDesired.empty()) {
+        desired_property = DecompressInteger(vecPropertyIdDesired);
+    } else return false;
+
+
+    if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+    {
+        PrintToLog("\t version: %d\n", version);
+        PrintToLog("\t messageType: %d\n",type);
+        PrintToLog("\t propertyIdForSale: %d\n", propertyId);
+        PrintToLog("\t propertyIdDesired: %d\n", desired_property);
+    }
+
+    return true;
+}
+
+/** Tx 37 */
+bool CMPTransaction::interpret_MetaDExCancel_ByPrice()
+{
+    int i = 0;
+    std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecPropertyIdForSale = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecAmountForSale = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecPropertyIdDesired = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecAmountDesired = GetNextVarIntBytes(i);
+
+    if (!vecTypeBytes.empty()) {
+        type = DecompressInteger(vecTypeBytes);
+    } else return false;
+
+    if (!vecVersionBytes.empty()) {
+        version = DecompressInteger(vecVersionBytes);
+    } else return false;
+
+    if (!vecPropertyIdForSale.empty()) {
+        propertyId = DecompressInteger(vecPropertyIdForSale);
+    } else return false;
+
+    if (!vecAmountForSale.empty()) {
+        amount_forsale = DecompressInteger(vecAmountForSale);
+    } else return false;
+
+    if (!vecAmountDesired.empty()) {
+        desired_value = DecompressInteger(vecAmountDesired);
+    } else return false;
+
+    if (!vecPropertyIdDesired.empty()) {
+        desired_property = DecompressInteger(vecPropertyIdDesired);
+    } else return false;
+
+    if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+    {
+        PrintToLog("\t version: %d\n", version);
+        PrintToLog("\t messageType: %d\n",type);
+        PrintToLog("\t propertyIdForSale: %d\n", propertyId);
+        PrintToLog("\t amountForSale: %d\n", amount_forsale);
+        PrintToLog("\t propertyIdDesired: %d\n", desired_property);
+        PrintToLog("\t amountDesired: %d\n", desired_value);
+    }
+
+    return true;
+}
+
   /** Tx 101 */
 bool CMPTransaction::interpret_CreatePeggedCurrency()
 {
@@ -2195,6 +2337,14 @@ int CMPTransaction::interpretPacket()
         case MSC_TYPE_INSTANT_LTC_TRADE:
             return logicMath_Instant_LTC_Trade();
 
+        case MSC_TYPE_METADEX_CANCEL:
+            return logicMath_MetaDExCancel();
+
+        case MSC_TYPE_METADEX_CANCEL_BY_PAIR:
+            return logicMath_MetaDExCancel_ByPair();
+
+        case MSC_TYPE_METADEX_CANCEL_BY_PRICE:
+            return logicMath_MetaDExCancel_ByPrice();
 
     }
 
@@ -3147,8 +3297,8 @@ int CMPTransaction::logicMath_MetaDExTrade()
       return (PKT_ERROR_METADEX -35);
   }
 
-  int64_t nBalance = getMPbalance(sender, property, BALANCE);
-  if (nBalance < (int64_t) nNewValue) {
+  int64_t nBalance = 0;
+  if (!mastercore::checkReserve(sender, nNewValue, property, nBalance)) {
       PrintToLog("%s(): rejected: sender %s has insufficient balance of property %d [%s < %s]\n",
               __func__,
               sender,
@@ -3271,7 +3421,7 @@ int CMPTransaction::logicMath_ContractDexTrade()
   int64_t nBalance = 0;
   int64_t amountToReserve = 0;
 
-  if (!mastercore::checkReserve(sender, amount, contractId, leverage, nBalance, amountToReserve) || nBalance == 0)
+  if (!mastercore::checkContractReserve(sender, amount, contractId, leverage, nBalance, amountToReserve) || nBalance == 0)
   {
         PrintToLog("%s(): rejected: sender %s has insufficient balance for contracts %d [%s < %s] \n",
 		      __func__,
@@ -3375,6 +3525,94 @@ int CMPTransaction::logicMath_ContractDex_Cancel_Orders_By_Block()
     }
 
     return (ContractDex_CANCEL_FOR_BLOCK(txid, block, tx_idx, sender));
+}
+
+/** Tx 35 */
+int CMPTransaction::logicMath_MetaDExCancel()
+{
+    if (!IsTransactionTypeAllowed(block, type, version)) {
+        PrintToLog("%s(): rejected: type %d or version %d not permitted at block %d\n",
+	        __func__,
+	        type,
+	        version,
+	        block);
+     return (PKT_ERROR_METADEX -20);
+    }
+
+    return (MetaDEx_CANCEL(txid, sender, block, hash));
+}
+
+
+/** Tx 36 */
+int CMPTransaction::logicMath_MetaDExCancel_ByPair()
+{
+  if (!IsTransactionTypeAllowed(block, type, version)) {
+         PrintToLog("%s(): rejected: type %d or version %d not permitted at block %d\n",
+                 __func__,
+                 type,
+                 version,
+                 block);
+         return (PKT_ERROR_METADEX -22);
+     }
+
+     if (property == desired_property) {
+         PrintToLog("%s(): rejected: property for sale %d and desired property %d must not be equal\n",
+                 __func__,
+                 property,
+                 desired_property);
+         return (PKT_ERROR_METADEX -29);
+     }
+
+     if (!IsPropertyIdValid(property)) {
+         PrintToLog("%s(): rejected: property for sale %d does not exist\n", __func__, property);
+         return (PKT_ERROR_METADEX -31);
+     }
+
+     if (!IsPropertyIdValid(desired_property)) {
+         PrintToLog("%s(): rejected: desired property %d does not exist\n", __func__, desired_property);
+         return (PKT_ERROR_METADEX -32);
+     }
+
+     // ------------------------------------------
+
+     return (MetaDEx_CANCEL_ALL_FOR_PAIR(txid, block, sender, propertyId, desired_property));
+
+}
+
+
+/** Tx 37 */
+int CMPTransaction::logicMath_MetaDExCancel_ByPrice()
+{
+  if (!IsTransactionTypeAllowed(block, type, version)) {
+         PrintToLog("%s(): rejected: type %d or version %d not permitted at block %d\n",
+                 __func__,
+                 type,
+                 version,
+                 block);
+         return (PKT_ERROR_METADEX -22);
+     }
+
+     if (property == desired_property) {
+         PrintToLog("%s(): rejected: property for sale %d and desired property %d must not be equal\n",
+                 __func__,
+                 property,
+                 desired_property);
+         return (PKT_ERROR_METADEX -29);
+     }
+
+     if (!IsPropertyIdValid(property)) {
+         PrintToLog("%s(): rejected: property for sale %d does not exist\n", __func__, property);
+         return (PKT_ERROR_METADEX -31);
+     }
+
+     if (!IsPropertyIdValid(desired_property)) {
+         PrintToLog("%s(): rejected: desired property %d does not exist\n", __func__, desired_property);
+         return (PKT_ERROR_METADEX -32);
+     }
+
+     // ------------------------------------------
+
+     return (MetaDEx_CANCEL_AT_PRICE(txid, block, sender, propertyId, amount_forsale, desired_property, desired_value));
 }
 
 /** Tx 100 */
@@ -4761,7 +4999,7 @@ int CMPTransaction::logicMath_MetaDExCancelAll()
 	       type,
 	       version,
 	       block);
-    return (PKT_ERROR_CONTRACTDEX -20);
+    return (PKT_ERROR_METADEX -20);
   }
 
   return (MetaDEx_CANCEL_EVERYTHING(txid, block, sender));

@@ -214,6 +214,9 @@ private:
     bool interpret_Revoke_Attestation();
     bool interpret_ContractDExCancel();
     bool interpret_Instant_LTC_Trade();
+    bool interpret_MetaDExCancel();
+    bool interpret_MetaDExCancel_ByPair();
+    bool interpret_MetaDExCancel_ByPrice();
 
     /**
      * Logic and "effects"
@@ -264,6 +267,9 @@ private:
     int logicMath_Revoke_Attestation();
     int logicMath_ContractDExCancel();
     int logicMath_Instant_LTC_Trade();
+    int logicMath_MetaDExCancel();
+    int logicMath_MetaDExCancel_ByPair();
+    int logicMath_MetaDExCancel_ByPrice();
 
     /**
      * Logic helpers

@@ -302,6 +302,9 @@ namespace mastercore
   int MetaDEx_CANCEL_AT_PRICE(const uint256&, uint32_t, const std::string&, uint32_t, int64_t, uint32_t, int64_t);
   int MetaDEx_CANCEL_ALL_FOR_PAIR(const uint256&, uint32_t, const std::string&, uint32_t, uint32_t);
   int MetaDEx_CANCEL_EVERYTHING(const uint256& txid, uint32_t block, const std::string& sender_addr);
+  int MetaDEx_CANCEL(const uint256& txid, const std::string& sender_addr, unsigned int block, const std::string& hash);
+  int MetaDEx_CANCEL_ALL_FOR_PAIR(const uint256& txid, unsigned int block, const std::string& sender_addr, uint32_t prop, uint32_t property_desired);
+  int MetaDEx_CANCEL_AT_PRICE(const uint256& txid, unsigned int block, const std::string& sender_addr, uint32_t prop, int64_t amount, uint32_t property_desired, int64_t amount_desired);
   int MetaDEx_SHUTDOWN();
   int MetaDEx_SHUTDOWN_ALLPAIR();
   bool MetaDEx_INSERT(const CMPMetaDEx& objMetaDEx);
@@ -309,9 +312,9 @@ namespace mastercore
   bool MetaDEx_isOpen(const uint256& txid, uint32_t propertyIdForSale = 0);
   int MetaDEx_getStatus(const uint256& txid, uint32_t propertyIdForSale, int64_t amountForSale, int64_t totalSold = -1);
   std::string MetaDEx_getStatusText(int tradeStatus);
-  int64_t getPairMarketPrice(std::string num, std::string den);
-  int64_t getVWAPPriceByPair(std::string num, std::string den);
-  int64_t getVWAPPriceContracts(std::string namec);
+  int64_t getPairMarketPrice(const std::string& num, const std::string& den);
+  int64_t getVWAPPriceByPair(const std::string& num, const std::string& den);
+  int64_t getVWAPPriceContracts(const std::string& namec);
   bool MetaDEx_Search_ALL(uint64_t& amount, uint32_t propertyOffered);
   bool MetaDEx_Fees(const CMPMetaDEx *pnew, const CMPMetaDEx *pold, int64_t nCouldBuy);
   bool ContractDex_ADD_LTCVolume(int64_t nCouldBuy,uint32_t contractId);
@@ -320,7 +323,8 @@ namespace mastercore
   const CMPMetaDEx* MetaDEx_RetrieveTrade(const uint256& txid);
   const CMPContractDex* ContractDex_RetrieveTrade(const uint256&);
   int ContractDex_CANCEL(const std::string& sender_addr, const std::string& hash);
-  bool checkReserve(const std::string& address, int64_t amount, uint32_t contractId, uint64_t leverage, int64_t& nBalance, int64_t& amountToReserve);
+  bool checkReserve(const std::string& address, int64_t amount, uint32_t propertyId, int64_t& nBalance);
+  bool checkContractReserve(const std::string& address, int64_t amount, uint32_t contractId, uint64_t leverage, int64_t& nBalance, int64_t& amountToReserve);
   int64_t getTotalLives(uint32_t contractId);
 }
 
