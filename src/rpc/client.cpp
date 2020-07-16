@@ -216,6 +216,8 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_createpayload_create_oraclecontract", 5, "arg5"},
     { "tl_createpayload_create_oraclecontract", 7, "arg7"},
 
+    { "tl_createpayload_instant_ltc_trade", 0, "arg0"},
+
 
 
     { "tl_createpayload_pnl_update", 0, "arg0"},
@@ -292,7 +294,6 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_commit_tochannel", 4, "arg4" },
     { "tl_withdrawal_fromchannel", 2, "arg2" },
     { "tl_withdrawal_fromchannel", 4, "arg4" },
-    { "tl_create_channel", 3, "arg3" },
 
     { "tl_sendactivation", 1, "arg1"},
     { "tl_sendactivation", 2, "arg2"},

@@ -621,5 +621,5 @@ def tradelayer_checkingBalance(accounts, amount, conn, headers):
 def tradelayer_selfAttestation(addresses,conn, headers):
     for addr in addresses:
         params = str([addr,addr,""]).replace("'",'"')
-        tradelayer_HTTP(conn, headers, True, "tl_attestation", params)
+        tradelayer_HTTP(conn, headers, False, "tl_attestation", params)
     tradelayer_HTTP(conn, headers, True, "generate", str([1]))

@@ -5,10 +5,8 @@ class CMPMetaDEx;
 class CMPOffer;
 class CTransaction;
 class ChnDEx;
-////////////////////////////
-/** New things for Contracts */
 class CMPContractDex;
-////////////////////////////
+
 #include "tradelayer/tradelayer.h"
 
 #include "uint256.h"
@@ -215,6 +213,7 @@ private:
     bool interpret_Attestation();
     bool interpret_Revoke_Attestation();
     bool interpret_ContractDExCancel();
+    bool interpret_Instant_LTC_Trade();
     bool interpret_MetaDExCancel();
     bool interpret_MetaDExCancel_ByPair();
     bool interpret_MetaDExCancel_ByPrice();
@@ -267,6 +266,7 @@ private:
     int logicMath_Attestation();
     int logicMath_Revoke_Attestation();
     int logicMath_ContractDExCancel();
+    int logicMath_Instant_LTC_Trade();
     int logicMath_MetaDExCancel();
     int logicMath_MetaDExCancel_ByPair();
     int logicMath_MetaDExCancel_ByPrice();

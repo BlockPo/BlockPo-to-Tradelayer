@@ -77,11 +77,11 @@ bool msc_debug_create_pegged                    = 0;
 bool msc_debug_accept_offerbtc                  = 0;
 bool msc_debug_set_oracle                       = 0;
 bool msc_debug_send_pegged                      = 0;
-bool msc_debug_commit_channel                   = 0;
+bool msc_debug_commit_channel                   = 1;
 bool msc_debug_withdrawal_from_channel          = 0;
 bool msc_debug_instant_trade                    = 0;
 bool msc_debug_contract_instant_trade           = 0;
-bool msc_create_channel                         = 0;
+bool msc_create_channel                         = 1;
 bool msc_debug_new_id_registration              = 0;
 bool msc_debug_wallettxs                        = 0;
 bool msc_calling_settlement                     = 0;
@@ -98,8 +98,8 @@ bool msc_debug_sanity_checks                    = 0;
 bool msc_debug_ltc_volume                       = 0;
 bool msc_debug_mdex_volume                      = 0;
 bool msc_debug_update_status                    = 0;
-bool msc_debug_get_channel_addr                 = 0;
-bool msc_debug_get_remaining                    = 0;
+bool msc_debug_get_channel_addr                 = 1;
+bool msc_debug_get_remaining                    = 1;
 bool msc_debug_make_withdrawal                  = 1;
 bool msc_debug_check_kyc_register               = 0;
 bool msc_debug_update_id_register               = 0;
@@ -110,9 +110,10 @@ bool msc_tx_valid_node_reward                   = 0;
 bool msc_debug_delete_att_register              = 0;
 bool msc_debug_get_upn_info                     = 0;
 bool msc_debug_get_total_lives                  = 0;
-bool msc_debug_activate_feature                 = 1;
+bool msc_debug_activate_feature                 = 0;
 bool msc_debug_deactivate_feature               = 0;
-bool msc_debug_is_transaction_type_allowed      = 1;
+bool msc_debug_is_transaction_type_allowed      = 0;
+bool msc_debug_instant_payment                  = 1;
 
 /**
  * LogPrintf() has been broken a couple of times now

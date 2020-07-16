@@ -1785,6 +1785,7 @@ UniValue tl_commit_tochannel(const JSONRPCRequest& request)
     uint32_t propertyId = ParsePropertyId(request.params[2]);
     int64_t amount = ParseAmount(request.params[3], true);
 
+    RequireFeatureActivated(FEATURE_TRADECHANNELS_TOKENS);
     RequireExistingProperty(propertyId);
     RequireBalance(senderAddress, propertyId, amount);
 
@@ -1835,6 +1836,7 @@ UniValue tl_withdrawal_fromchannel(const JSONRPCRequest& request)
     uint32_t propertyId = ParsePropertyId(request.params[2]);
     int64_t amount = ParseAmount(request.params[3], true);
 
+    RequireFeatureActivated(FEATURE_TRADECHANNELS_TOKENS);
     RequireExistingProperty(propertyId);
 
     // create a payload for the transaction
@@ -1857,52 +1859,6 @@ UniValue tl_withdrawal_fromchannel(const JSONRPCRequest& request)
     }
 }
 
-UniValue tl_create_channel(const JSONRPCRequest& request)
-{
-    if (request.params.size() != 4 || request.fHelp)
-        throw runtime_error(
-            "tl_create_channel \"sender\" \"channel address\" \"propertyId\" \"amount\"vout\n"
-
-            "\nsetting multisig address channel.\n"
-
-            "\nArguments:\n"
-            "1. first address            (string, required) the first address that commit into the channel\n"
-            "2. second address           (string, required) the second address that commit into the channel\n"
-            "3. channel address          (string, required) multisig address of channel\n"
-            "4. blocks                   (string, required) blocks until channel expiration\n"
-            "\nResult:\n"
-            "\"hash\"                  (string) the hex-encoded transaction hash\n"
-
-            "\nExamples:\n"
-            + HelpExampleCli("tl_withdrawal_fromchannel", "\"1M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\" \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\" 3 100 \"1\"")
-            + HelpExampleRpc("tl_withdrawal_fromchannel", "\"1M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\", \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\",3, 100, \"1\"")
-        );
-
-    // obtain parameters & info
-    std::string firstAddress = ParseAddress(request.params[0]);
-    std::string secondAddress = ParseAddress(request.params[1]);
-    std::string channelAddress = ParseAddress(request.params[2]);
-    uint32_t blocks = request.params[3].get_int();
-
-    // create a payload for the transaction
-    std::vector<unsigned char> payload = CreatePayload_Create_Channel(channelAddress,blocks);
-
-    // request the wallet build the transaction (and if needed commit it)
-    uint256 txid;
-    std::string rawHex;
-    int result = WalletTxBuilder(firstAddress, secondAddress, 0, payload, txid, rawHex, autoCommit);
-
-    // check error and return the txid (or raw hex depending on autocommit)
-    if (result != 0) {
-        throw JSONRPCError(result, error_str(result));
-    } else {
-        if (!autoCommit) {
-            return rawHex;
-        } else {
-            return txid.GetHex();
-        }
-    }
-}
 
 UniValue tl_new_id_registration(const JSONRPCRequest& request)
 {
@@ -2388,7 +2344,6 @@ static const CRPCCommand commands[] =
     { "trade layer (transaction creation)", "tl_closeoracle",                  &tl_closeoracle,                     {} },
     { "trade layer (transaction creation)", "tl_commit_tochannel",             &tl_commit_tochannel,                {} },
     { "trade layer (transaction creation)", "tl_withdrawal_fromchannel",       &tl_withdrawal_fromchannel,          {} },
-    { "trade layer (transaction creation)", "tl_create_channel",               &tl_create_channel,                  {} },
     { "trade layer (transaction cration)",  "tl_new_id_registration",          &tl_new_id_registration,             {} },
     { "trade layer (transaction cration)",  "tl_update_id_registration",       &tl_update_id_registration,          {} },
     { "trade layer (transaction creation)", "tl_attestation",                  &tl_attestation,                     {} },

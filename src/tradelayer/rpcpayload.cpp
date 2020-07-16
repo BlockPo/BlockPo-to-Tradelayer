@@ -795,7 +795,7 @@ UniValue tl_createpayload_instant_trade(const JSONRPCRequest& request)
     throw runtime_error(
 			"tl_createpayload_instant_trade \"fromaddress\" \"toaddress\" propertyid \"amount\" ( \"referenceamount\" )\n"
 
-			"\nCreate an instant trade payload.\n"
+			"\nCreate a token for token instant trade payload.\n"
 
 			"\nArguments:\n"
 			"1. propertyId            (number, required) the identifier of the property\n"
@@ -822,6 +822,39 @@ UniValue tl_createpayload_instant_trade(const JSONRPCRequest& request)
 
   // create a payload for the transaction
   std::vector<unsigned char> payload = CreatePayload_Instant_Trade(propertyId, amount, blockheight_expiry, propertyDesired, amountDesired);
+
+  return HexStr(payload.begin(), payload.end());
+
+}
+
+UniValue tl_createpayload_instant_ltc_trade(const JSONRPCRequest& request)
+{
+  if (request.params.size() != 3 || request.fHelp)
+    throw runtime_error(
+			"tl_createpayload_instant_ltc_trade \"fromaddress\" \"toaddress\" propertyid \"amount\" \n"
+
+			"\nCreate an ltc for tokens instant trade payload.\n"
+
+			"\nArguments:\n"
+			"1. propertyId            (number, required) the identifier of the property offered\n"
+			"2. amount offered        (string, required) the amount of tokens offered for the address\n"
+      "3. price                 (string, required) total price of tokens in LTC\n"
+
+			"\nResult:\n"
+			"\"hash\"                  (string) the hex-encoded transaction hash\n"
+
+			"\nExamples:\n"
+			+ HelpExampleCli("tl_createpayload_instant_ltc_trade", "1 \"100.0\" \"2.0\"")
+			+ HelpExampleRpc("tl_createpayload_instant_ltc_trade", " 1, \"100.0\" \"2.0\"")
+			);
+
+  // obtain parameters & info
+  uint32_t propertyId = ParsePropertyId(request.params[0]);
+  int64_t amount = ParseAmount(request.params[1], isPropertyDivisible(propertyId));
+  int64_t totalPrice = ParseAmount(request.params[2],true);
+
+  // create a payload for the transaction
+  std::vector<unsigned char> payload = CreatePayload_Instant_LTC_Trade(propertyId, amount, totalPrice);
 
   return HexStr(payload.begin(), payload.end());
 
@@ -903,30 +936,22 @@ UniValue tl_createpayload_pnl_update(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_transfer(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 2 || request.fHelp)
+  if (request.fHelp)
     throw runtime_error(
-			"tl_createpayload_transfer \"fromaddress\" \"toaddress\" propertyid \"amount\" ( \"referenceamount\" )\n"
+			"tl_createpayload_transfer \"fromaddress\" \"toaddress\" ( \"referenceamount\" )\n"
 
 			"\nCreate an transfer payload.\n"
-
-			"\nArguments:\n"
-			"1. propertyId            (number, required) the identifier of the property\n"
-			"2. amount                (string, required) the amount of the property traded\n"
 
 			"\nResult:\n"
 			"\"hash\"                  (string) the hex-encoded transaction hash\n"
 
 			"\nExamples:\n"
-			+ HelpExampleCli("tl_createpayload_transfer", "\" 1 \"15.0\"")
-			+ HelpExampleRpc("tl_createpayload_transfer", "\", 1 \"15.0\"")
+			+ HelpExampleCli("tl_createpayload_transfer", "")
+			+ HelpExampleRpc("tl_createpayload_transfer", "")
 			);
 
-  // obtain parameters & info
-  uint32_t propertyId = ParsePropertyId(request.params[0]);
-  int64_t amount = ParseAmount(request.params[1], true);
-
   // create a payload for the transaction
-  std::vector<unsigned char> payload = CreatePayload_Transfer(propertyId, amount);
+  std::vector<unsigned char> payload = CreatePayload_Transfer();
 
   return HexStr(payload.begin(), payload.end());
 
@@ -1212,8 +1237,8 @@ static const CRPCCommand commands[] =
     { "trade layer (payload creation)", "tl_createpayload_closeoracle",                   &tl_createpayload_closeoracle,                     {}   },
     { "trade layer (payload creation)", "tl_createpayload_new_id_registration",           &tl_createpayload_new_id_registration,             {}   },
     { "trade layer (payload creation)", "tl_createpayload_update_id_registration",        &tl_createpayload_update_id_registration,          {}   },
-    { "trade layer (payload creation)", "tl_createpayload_attestation",                   &tl_createpayload_attestation,                     {}   }
-
+    { "trade layer (payload creation)", "tl_createpayload_attestation",                   &tl_createpayload_attestation,                     {}   },
+    { "trade layer (payload creation)", "tl_createpayload_instant_ltc_trade",             &tl_createpayload_instant_ltc_trade,               {}   }
   };
 
 

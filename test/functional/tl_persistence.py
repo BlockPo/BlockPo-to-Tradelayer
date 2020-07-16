@@ -533,27 +533,6 @@ class PersistenceBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['reserve'],'0.00000000')
 
 
-        self.log.info("Creating trade channel")
-        params = str([addresses[0], addresses[1], multisig, 1000]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, False, "tl_create_channel",params)
-        # self.log.info(out)
-        assert_equal(out['error'], None)
-
-        self.nodes[0].generate(1)
-
-
-        self.log.info("Checking the trade channel")
-        params = str([multisig]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, True, "tl_getchannel_info",params)
-        # self.log.info(out)
-        assert_equal(out['error'], None)
-        assert_equal(out['result']['multisig address'], multisig)
-        assert_equal(out['result']['first address'], addresses[0])
-        assert_equal(out['result']['second address'], addresses[1])
-        # assert_equal(out['result']['expiry block'],1205)
-        assert_equal(out['result']['status'], 'active')
-
-
         self.log.info("Commiting to trade channel")
         params = str([addresses[0], multisig, 4, '100']).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_commit_tochannel",params)
@@ -600,7 +579,7 @@ class PersistenceBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         assert_equal(out['result']['multisig address'], multisig)
         assert_equal(out['result']['first address'], addresses[0])
-        assert_equal(out['result']['second address'], addresses[1])
+        assert_equal(out['result']['second address'], 'pending')
         # assert_equal(out['result']['expiry block'],1205)
         assert_equal(out['result']['status'], 'active')
 
@@ -792,7 +771,7 @@ class PersistenceBasicsTest (BitcoinTestFramework):
         assert_equal(out['result'][0]['amountforsale'], 10)
         assert_equal(out['result'][0]['tradingaction'], 1)
         assert_equal(out['result'][0]['effectiveprice'], '780.50000000')
-        assert_equal(out['result'][0]['block'], 225)
+        assert_equal(out['result'][0]['block'], 224)
 
         self.log.info("7th Restart for the node")
         self.restart_node(0)
@@ -830,7 +809,7 @@ class PersistenceBasicsTest (BitcoinTestFramework):
         assert_equal(out['result'][0]['amountforsale'], 10.00000000)
         assert_equal(out['result'][0]['tradingaction'], 1)
         assert_equal(out['result'][0]['effectiveprice'], '780.50000000')
-        assert_equal(out['result'][0]['block'], 225)
+        assert_equal(out['result'][0]['block'], 224)
 
         self.log.info("Persistence: checking LTC volume in DEx")
         params = str([4, 1, 300]).replace("'",'"')

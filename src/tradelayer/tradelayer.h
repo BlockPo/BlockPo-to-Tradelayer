@@ -110,26 +110,26 @@ enum TransactionType {
   MSC_TYPE_METADEX_CANCEL_BY_PAIR              = 36,
   MSC_TYPE_METADEX_CANCEL_BY_PRICE             = 37,
   MSC_TYPE_CREATE_CONTRACT                     = 40,
-  MSC_TYPE_PEGGED_CURRENCY                     = 100,
-  MSC_TYPE_REDEMPTION_PEGGED                   = 101,
-  MSC_TYPE_SEND_PEGGED_CURRENCY                = 102,
-  MSC_TYPE_CREATE_ORACLE_CONTRACT              = 103,
-  MSC_TYPE_CHANGE_ORACLE_REF                   = 104,
-  MSC_TYPE_SET_ORACLE                          = 105,
-  MSC_TYPE_ORACLE_BACKUP                       = 106,
-  MSC_TYPE_CLOSE_ORACLE                        = 107,
-  MSC_TYPE_COMMIT_CHANNEL                      = 108,
-  MSC_TYPE_WITHDRAWAL_FROM_CHANNEL             = 109,
-  MSC_TYPE_INSTANT_TRADE                       = 110,
-  MSC_TYPE_PNL_UPDATE                          = 111,
-  MSC_TYPE_TRANSFER                            = 112,
-  MSC_TYPE_CREATE_CHANNEL                      = 113,
-  MSC_TYPE_CONTRACT_INSTANT                    = 114,
-  MSC_TYPE_NEW_ID_REGISTRATION                 = 115,
-  MSC_TYPE_UPDATE_ID_REGISTRATION              = 116,
-  MSC_TYPE_DEX_PAYMENT                         = 117,
-  MSC_TYPE_ATTESTATION                         = 118,
-  MSC_TYPE_REVOKE_ATTESTATION                  = 119
+  MSC_TYPE_PEGGED_CURRENCY                    = 100,
+  MSC_TYPE_REDEMPTION_PEGGED                  = 101,
+  MSC_TYPE_SEND_PEGGED_CURRENCY               = 102,
+  MSC_TYPE_CREATE_ORACLE_CONTRACT             = 103,
+  MSC_TYPE_CHANGE_ORACLE_REF                  = 104,
+  MSC_TYPE_SET_ORACLE                         = 105,
+  MSC_TYPE_ORACLE_BACKUP                      = 106,
+  MSC_TYPE_CLOSE_ORACLE                       = 107,
+  MSC_TYPE_COMMIT_CHANNEL                     = 108,
+  MSC_TYPE_WITHDRAWAL_FROM_CHANNEL            = 109,
+  MSC_TYPE_INSTANT_TRADE                      = 110,
+  MSC_TYPE_PNL_UPDATE                         = 111,
+  MSC_TYPE_TRANSFER                           = 112,
+  MSC_TYPE_INSTANT_LTC_TRADE                  = 113,
+  MSC_TYPE_CONTRACT_INSTANT                   = 114,
+  MSC_TYPE_NEW_ID_REGISTRATION                = 115,
+  MSC_TYPE_UPDATE_ID_REGISTRATION             = 116,
+  MSC_TYPE_DEX_PAYMENT                        = 117,
+  MSC_TYPE_ATTESTATION                        = 118,
+  MSC_TYPE_REVOKE_ATTESTATION                 = 119
 
 };
 
@@ -228,6 +228,10 @@ enum FILETYPES {
 #define TYPE_NEW_ID_REGISTER            "new id register"
 #define TYPE_ATTESTATION                "attestation"
 
+// channel status
+#define ACTIVE_CHANNEL                  "active"
+#define CLOSED_CHANNEL                  "closed"
+
 // Currency in existance (options for createcontract)
 uint32_t const TL_dUSD  = 1;
 uint32_t const TL_dEUR  = 2;
@@ -273,9 +277,6 @@ extern bool autoCommit;
 //! Global lock for state objects
 extern CCriticalSection cs_tally;
 
-/** LevelDB based storage for storing Trade Layer transaction data.  This will become the new master database, holding serialized Trade Layer transactions.
- *  Note, intention is to consolidate and clean up data storage
- */
 
  struct channel
  {
@@ -285,9 +286,12 @@ extern CCriticalSection cs_tally;
    int expiry_height;
    int last_exchange_block;
 
-   channel() : multisig(""), first(""), second(""), expiry_height(0), last_exchange_block(0) {}
+   channel() : multisig(""), first(""), second("pending"), expiry_height(0), last_exchange_block(0) {}
  };
 
+/* LevelDB based storage for  Trade Layer transaction data.  This will become the new master database, holding serialized Trade Layer transactions.
+ *  Note, intention is to consolidate and clean up data storage
+ */
 class CtlTransactionDB : public CDBBase
 {
 public:
@@ -398,8 +402,9 @@ class CMPTradeList : public CDBBase
   void recordNewCommit(const uint256& txid, const std::string& channelAddress, const std::string& sender, uint32_t propertyId, uint64_t amountCommited, int blockNum, int blockIndex);
   void recordNewWithdrawal(const uint256& txid, const std::string& channelAddress, const std::string& sender, uint32_t propertyId, uint64_t amountToWithdrawal, int blockNum, int blockIndex);
   void recordNewChannel(const std::string& channelAddress, const std::string& frAddr, const std::string& secAddr, int blockNum, int blockIndex);
-  void recordNewInstantTrade(const uint256& txid, const std::string& sender, const std::string& receiver, uint32_t propertyIdForSale, uint64_t amount_forsale, uint32_t propertyIdDesired, uint64_t amount_desired, int blockNum, int blockIndex);
-  void recordNewTransfer(const uint256& txid, const std::string& sender, const std::string& receiver, uint32_t propertyId, uint64_t amount, int blockNum, int blockIndex);
+  void recordNewInstantTrade(const uint256& txid, const std::string& channelAddr, const std::string& first, const std::string& second, uint32_t propertyIdForSale, uint64_t amount_forsale, uint32_t propertyIdDesired, uint64_t amount_desired,int blockNum, int blockIndex);
+  void recordNewInstantLTCTrade(const uint256& txid, const std::string& channelAddr, const std::string& seller, const std::string& buyer, uint32_t propertyIdForSale, uint64_t amount_purchased, uint64_t price, int blockNum, int blockIndex);
+  void recordNewTransfer(const uint256& txid, const std::string& sender, const std::string& receiver, int blockNum, int blockIndex);
   void recordNewInstContTrade(const uint256& txid, const std::string& firstAddr, const std::string& secondAddr, uint32_t property, uint64_t amount_forsale, uint64_t price ,int blockNum, int blockIndex);
   void recordNewIdRegister(const uint256& txid, const std::string& address, const std::string& name, const std::string& website, int blockNum, int blockIndex);
   void recordNewAttestation(const uint256& txid, const std::string& sender, const std::string& receiver, int blockNum, int blockIndex, int kyc_id);
@@ -411,6 +416,10 @@ class CMPTradeList : public CDBBase
   channel getChannelAddresses(const std::string& channelAddress);
   bool checkChannelRelation(const std::string& address, std::string& channelAddr);
   uint64_t getRemaining(const std::string& channelAddress, const std::string& senderAddress, uint32_t propertyId);
+  bool tryAddSecond(const std::string& candidate, const std::string& channelAddr);
+  bool setChannelClosed(const std::string& channelAddr);
+  uint64_t addWithAndCommits(const std::string& channelAddr, const std::string& senderAddr, uint32_t propertyId);
+  uint64_t addTrades(const std::string& channelAddr, const std::string& senderAddr, uint32_t propertyId);
 
   //KYC
   bool updateIdRegister(const uint256& txid, const std::string& address, const std::string& newAddr, int blockNum, int blockIndex);
@@ -443,6 +452,7 @@ class CMPTradeList : public CDBBase
   int getMPTradeCountTotal();
   int getNextId();
   void getUpnInfo(const std::string& address, uint32_t contractId, UniValue& response, bool showVerbose);
+  bool checkTranfer(const std::string& address);
 };
 
 class CMPSettlementMatchList : public CDBBase
@@ -583,6 +593,14 @@ namespace mastercore
   bool updateLastExBlock(int& nBlock, const std::string& sender);
 
   std::string updateStatus(int64_t oldPos, int64_t newPos);
+
+  void createChannel(const std::string& sender, const std::string& receiver, int block, int tx_id);
+
+  bool channelSanityChecks(const std::string& sender, const std::string& receiver, int block, int tx_idx);
+
+  bool checkWithdrawal(const std::string& channelAddress, const std::string& sender);
+
+  bool transferAll(const std::string& sender, const std::string& receiver);
 
 }
 
