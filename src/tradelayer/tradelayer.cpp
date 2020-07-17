@@ -647,8 +647,7 @@ void creatingVestingTokens(int block)
    //NOTE: we have to change this admin_addrs for getAdminAddress function call
    assert(update_tally_map(getAdminAddress(), propertyIdVesting, totalVesting, BALANCE));
 
-   // NOTE: just for testing : putting ALLS into admin address
-   assert(update_tally_map(getAdminAddress(), ALL, totalVesting, BALANCE));
+   // assert(update_tally_map(getAdminAddress(), ALL, totalVesting, BALANCE));
 
 }
 
@@ -2794,41 +2793,46 @@ bool VestingTokens(int block)
 {
     extern std::vector<std::string> vestingAddresses;
 
+    PrintToLog("%s() block : %d\n",__func__, block);
+
     if (vestingAddresses.empty())
     {
         if(msc_debug_vesting) PrintToLog("%s(): there's no vesting address registered\n",__func__);
         return false;
     }
 
-    int64_t XAxis = globalVolumeALL_LTC;
+    // Note: this is used to simplify the testing
+    int64_t XAxis = (RegTest()) ? globalVolumeALL_LTC * 100 : globalVolumeALL_LTC;
 
     if(msc_debug_vesting) PrintToLog("%s(): globalVolumeALL_LTC: %d \n",__func__,XAxis);
 
-    rational_t Factor1over3(100, 3);
-    int64_t Factor1over3_64t = mastercore::RationalToInt64(Factor1over3);
+    rational_t Factor1over4(1,4);
+    const int64_t Factor1over4_64t = mastercore::RationalToInt64(Factor1over4);
 
-    if (XAxis <= 1000)
+    if (XAxis <= 10000)
     {
         if(msc_debug_vesting) PrintToLog("%s(): 0 percent of vesting (LTC) less than 1000 LTC: %d\n",__func__,XAxis);
         return false;
     }
 
-    double factor = static_cast<double>(Factor1over3_64t) / COIN;
+    double factor = static_cast<double>(Factor1over4_64t) / COIN;
 
-    // thisblockvesting = (log10(ltc volume) - 3) * 33.33333
-    double thisBlockVesting = (std::log10(XAxis) - 3) * factor;
+    // accumVesting % = (Log10(Cum_LTC_Volume)-4)/4
+    // 100% vested at 100,000,000  LTCs volume
+    double accumVesting = (std::log10(XAxis) - 4) * factor;
 
-    double realVesting = thisBlockVesting - lastVesting;
+    // vesting %
+    double realVesting = accumVesting - lastVesting;
 
     if (realVesting == 0)
     {
-        if(msc_debug_vesting) PrintToLog("%s(): realVesting = %f, lastVesting : %f\n",__func__, realVesting, lastVesting);
+        if(msc_debug_vesting) PrintToLog("%s(): 0 percent vesting in this block: %d\n",__func__,block);
         return false;
     }
 
     if(msc_debug_vesting) {
-        PrintToLog("%s(): lastVesting = %f, realVesting : %f, thisBlockVesting: %f\n",__func__, lastVesting, realVesting, thisBlockVesting);
-        PrintToLog("%s(): amount vesting on this block = %f, block ; %d, x_Axis: %d, std::log10(x_Axis) : %d, factor : %f\n",__func__, thisBlockVesting, block, XAxis, std::log10(XAxis), factor);
+        PrintToLog("%s(): lastVesting = %f, realVesting : %f, accumVesting: %f\n",__func__, lastVesting, realVesting, accumVesting);
+        PrintToLog("%s(): amount vesting on this block = %f, block ; %d, x_Axis: %d, std::log10(x_Axis) : %d, factor : %f\n",__func__, accumVesting, block, XAxis, std::log10(XAxis), factor);
     }
 
     for (auto &addr : vestingAddresses)
@@ -2848,27 +2852,19 @@ bool VestingTokens(int block)
         {
 
             int64_t iRealVesting = mastercore::DoubleToInt64(realVesting);
-            arith_uint256 iAmount = mastercore::ConvertTo256(iRealVesting)*mastercore::ConvertTo256(vestingBalance)/(100 * COIN);
+            arith_uint256 iAmount = mastercore::ConvertTo256(iRealVesting) * mastercore::ConvertTo256(vestingBalance) / ConvertTo256(COIN);
             int64_t nAmount = mastercore::ConvertTo64(iAmount);
-
-            rational_t linearRationalw(nAmount, (int64_t)COIN);
 
             if(msc_debug_vesting) {
                 PrintToLog("%s(): nAmount = %d\n",__func__,nAmount);
-                PrintToLog("%s(): TOTAL_AMOUNT_VESTING_TOKENS = %d\n",__func__,TOTAL_AMOUNT_VESTING_TOKENS);
             }
 
-            int64_t weighted = mastercore::RationalToInt64(linearRationalw);
-
-            if(msc_debug_vesting) PrintToLog("%s(): weighted = %d\n",__func__,weighted);
-
-
-            assert(update_tally_map(addr, ALL, -weighted, UNVESTED));
-            assert(update_tally_map(addr, ALL, weighted, BALANCE));
+            assert(update_tally_map(addr, ALL, -nAmount, UNVESTED));
+            assert(update_tally_map(addr, ALL, nAmount, BALANCE));
         }
     }
 
-    lastVesting = thisBlockVesting;
+    lastVesting = accumVesting;
 
     if(msc_debug_handler_tx)
     {
@@ -6338,8 +6334,9 @@ int64_t mastercore::getOracleTwap(uint32_t contractId, int nBlocks)
 
 bool mastercore::sanityChecks(const std::string& sender, int& aBlock)
 {
-    if (getAdminAddress() == sender)
+    if (getAdminAddress() == sender){
         return true;
+    }
 
     const CConsensusParams &params = ConsensusParams();
     vestingActivationBlock = params.MSC_VESTING_BLOCK;

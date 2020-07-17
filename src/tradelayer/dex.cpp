@@ -547,8 +547,6 @@ int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addre
         return (DEX_ERROR_PAYMENT -2);
     }
 
-    int64_t amountPurchased = 0;
-
    /**
     * Plain integer math is used to determine
     * the purchased amount. The purchased amount is rounded up, which may be
@@ -556,7 +554,7 @@ int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addre
     *
     * This is not exploitable due to transaction fees.
     */
-     amountPurchased = mastercore::calculateDExPurchase(amountOffered, amountDesired, amountPaid);
+     int64_t amountPurchased = mastercore::calculateDExPurchase(amountOffered, amountDesired, amountPaid);
 
 
     // -------------------------------------------------------------------------
@@ -628,6 +626,8 @@ int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addre
             if(msc_debug_dex) PrintToLog(" 0 == reserveSell && 0 == reserveAccept true\n");
             DEx_offerDestroy(addressSeller, propertyId);
         }
+        
+        rc = 0;
     }
 
     return rc;
