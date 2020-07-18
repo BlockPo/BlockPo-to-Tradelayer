@@ -5,6 +5,7 @@
 #include "omnicore/mdex.h"
 #include "omnicore/omnicore.h"
 #include "amount.h"
+#include "externfns.h"
 #include <unordered_set>
 #include <limits>
 #include <iostream>
@@ -293,10 +294,10 @@ void settlement_algorithm_fifo(MatrixTLS &M_file, int64_t interest, int64_t twap
 
 
   PrintToLog("\n*************************************************");
-  PrintToLog("\nAddresses in this Graph\n");
-  
+  PrintToLog("\nAddresses with Lives Non Zero\n\n");
   std::vector<std::string> AddrsV = AddressesList(path_main);
-  for (std::vector<std::string>::iterator it = AddrsV.begin(); it != AddrsV.end(); ++it)
+  std::vector<std::string> AddrsLivesNonZero = LivesNonZero(path_main, AddrsV);
+  for (std::vector<std::string>::iterator it = AddrsLivesNonZero.begin(); it != AddrsLivesNonZero.end(); ++it)
     PrintToLog("%s\n", *it);
 
   PrintToLog("\n*************************************************");
@@ -307,73 +308,73 @@ void settlement_algorithm_fifo(MatrixTLS &M_file, int64_t interest, int64_t twap
   std::map<std::string, std::string> LivesLongsEle;
   std::map<std::string, std::string> LivesShortsEle;
 
+  std::vector<std::vector<std::map<std::string, std::string>>>::reverse_iterator rit_path_main;
+  std::vector<std::map<std::string, std::string>>::reverse_iterator rit_path_maini;
+  
   for (std::vector<std::string>::iterator it_addrs = AddrsV.begin(); it_addrs != AddrsV.end(); ++it_addrs)
   {
-    std::string &AddrsLives = *it_addrs;
-
-		std::string Status 	= "None";
-		long int NLives 	  = 0;
-		long int EdgeRow 	  = 0;
-		long int PathNumber = 0;
-		double EntryPrice 	  = 0;
-		int IdPosition 		  = 0;
-    int NEvents         = 0;
-
-    for (std::vector<std::vector<std::map<std::string, std::string>>>::iterator it_path_main = path_main.begin(); it_path_main != path_main.end(); ++it_path_main)
+    // std::string &AddrsLives = *it_addrs;
+    
+		// std::string Status 	= "None";
+		// long int NLives 	  = 0;
+		// long int EdgeRow 	  = 0;
+		// long int PathNumber = 0;
+		// double EntryPrice 	= 0;
+		// int IdPosition 		  = 0;
+  //   int NEvents         = 0;
+    
+    for (rit_path_main = path_main.rbegin(); rit_path_main != path_main.rend(); ++rit_path_main)
     {
-			for (std::vector<std::map<std::string, std::string>>::iterator it_path_maini = (*it_path_main).begin(); it_path_maini != (*it_path_main).end(); ++it_path_maini)
+			for (rit_path_maini = (*rit_path_main).rbegin(); rit_path_maini != (*rit_path_main).rend(); ++rit_path_maini)
 			{
-        std::map<std::string, std::string> &GraphEdge = *it_path_maini; 
-				struct EdgeInfo *PtStatusByEdge = GetEdgeInfo(GraphEdge);
-				if (PtStatusByEdge->addrs_src == AddrsLives)
-				{
-          NEvents += 1;
-					IdPosition = finding_string("Long", PtStatusByEdge->status_src) ? 0 : 1;
-					Status = PtStatusByEdge->status_src;					
-					NLives = PtStatusByEdge->lives_src;
-					EntryPrice = PtStatusByEdge->entry_price;
-					EdgeRow = PtStatusByEdge->edge_row;
-					PathNumber = PtStatusByEdge->path_number;
-				}				
-        else if (PtStatusByEdge->addrs_trk == AddrsLives)
-				{
-          NEvents += 1;
-					IdPosition = finding_string("Long", PtStatusByEdge->status_trk) ? 0 : 1;
-					Status = PtStatusByEdge->status_trk;
-					NLives = PtStatusByEdge->lives_trk;
-					EntryPrice = PtStatusByEdge->entry_price;
-					EdgeRow = PtStatusByEdge->edge_row;
-					PathNumber = PtStatusByEdge->path_number;
-				}
-        else
-					continue;
+        // std::map<std::string, std::string> &GraphEdge = *it_path_maini;
+        // struct EdgeInfo *PtStatusByEdge = GetEdgeInfo(GraphEdge);
+				
+        // if (PtStatusByEdge->addrs_src == AddrsLives)
+				// {
+    //       NEvents += 1;
+				// 	IdPosition = finding_string("Long", PtStatusByEdge->status_src) ? 0 : 1;
+				// 	Status = PtStatusByEdge->status_src;					
+				// 	NLives = PtStatusByEdge->lives_src;
+				// 	EntryPrice = PtStatusByEdge->entry_price;
+				// 	EdgeRow = PtStatusByEdge->edge_row;
+				// 	PathNumber = PtStatusByEdge->path_number;
+				// }				
+    //     else if (PtStatusByEdge->addrs_trk == AddrsLives)
+				// {
+    //       NEvents += 1;
+				// 	IdPosition = finding_string("Long", PtStatusByEdge->status_trk) ? 0 : 1;
+				// 	Status = PtStatusByEdge->status_trk;
+				// 	NLives = PtStatusByEdge->lives_trk;
+				// 	EntryPrice = PtStatusByEdge->entry_price;
+				// 	EdgeRow = PtStatusByEdge->edge_row;
+				// 	PathNumber = PtStatusByEdge->path_number;
+				// }
+    //     else
+				// 	continue;
 			}
 		}
-    
-    if (NEvents == 1)
-    {
-      if (IdPosition == 0)
-      {
-        building_lives_edges(LivesLongsEle, AddrsLives, Status, NLives, EntryPrice, EdgeRow, PathNumber);
-        LivesLongs.push_back(LivesLongsEle);
-        printing_edges_lives(LivesLongsEle);
-      }
-      else
-      {  
-        building_lives_edges(LivesShortsEle, AddrsLives, Status, NLives, EntryPrice, EdgeRow, PathNumber);
-        LivesShorts.push_back(LivesShortsEle);
-        printing_edges_lives(LivesShortsEle);
-      }      
-    }
+
+    // if (NEvents == 1)
+    // {
+    //   if (IdPosition == 0)
+    //   {
+    //     building_lives_edges(LivesLongsEle, AddrsLives, Status, NLives, EntryPrice, EdgeRow, PathNumber);
+    //     LivesLongs.push_back(LivesLongsEle);
+    //   }
+    //   else
+    //   {  
+    //     building_lives_edges(LivesShortsEle, AddrsLives, Status, NLives, EntryPrice, EdgeRow, PathNumber);
+    //     LivesShorts.push_back(LivesShortsEle);
+    //   }      
+    // }
   }
 
-  PrintToLog("\nLives Longs Vector\n");
-  for (std::vector<std::map<std::string, std::string>>::iterator it = LivesLongs.begin(); it != LivesLongs.begin(); ++it)
-    printing_edges_lives(*it);
+  // PrintToLog("\nLives Longs Vector\n");
+  // printing_lives_vector(LivesLongs);
 
-  PrintToLog("\nLives Short Vector\n");
-  for (std::vector<std::map<std::string, std::string>>::iterator it = LivesShorts.begin(); it != LivesShorts.begin(); ++it)
-    printing_edges_lives(*it);
+  // PrintToLog("\nLives Short Vector\n");
+  // printing_lives_vector(LivesShorts);
 
   PrintToLog("\nDone!!\n");
   PrintToLog("\n*************************************************\n");
@@ -997,17 +998,59 @@ std::vector<std::string> AddressesList(std::vector<std::vector<std::map<std::str
 		for (it_in = (*it_out).begin(); it_in != (*it_out).end(); ++it_in)
 		{
 			std::map<std::string, std::string> &it_ele = *it_in;
-			if ( !find_string_strv(it_ele["addrs_src"], AddrsV) )
+
+			if ( !find_string_strv(it_ele["addrs_src"], AddrsV))
 			{
 				AddrsV.push_back(it_ele["addrs_src"]);
 			}
+
 			if ( !find_string_strv(it_ele["addrs_trk"], AddrsV) )
 			{
 				AddrsV.push_back(it_ele["addrs_trk"]);
 			}
 		}
 	}
-	return AddrsV;
+	
+  return AddrsV;
+}
+
+std::vector<std::string> LivesNonZero(std::vector<std::vector<std::map<std::string, std::string>>> &path_main, std::vector<std::string> AddrsV)
+{
+  std::vector<std::string> Result;
+  std::vector<std::map<std::string, std::string>>::reverse_iterator it_in;
+  std::vector<std::vector<std::map<std::string, std::string>>>::reverse_iterator it_out;
+
+  for (std::vector<std::string>::iterator it_addrs = AddrsV.begin(); it_addrs != AddrsV.end(); ++it_addrs)
+  {
+    int NLives = 0;
+    bool Loop = true;
+    std::string &Addrsh = *it_addrs;
+
+    for (it_out = path_main.rbegin(); it_out != path_main.rend() && Loop; ++it_out)
+    {
+      for (it_in = (*it_out).rbegin(); it_in != (*it_out).rend() && Loop; ++it_in)
+      {
+        std::map<std::string, std::string> &it_ele = *it_in;
+        LivesNotZeroHelper(it_ele["addrs_src"], Addrsh, it_ele["lives_src"], Result, Loop);
+        LivesNotZeroHelper(it_ele["addrs_trk"], Addrsh, it_ele["lives_trk"], Result, Loop);
+      }
+    }
+  }  
+  
+  return Result;
+}
+
+void LivesNotZeroHelper(std::string AddrsTrk, std::string AddrsI, std::string LivesTrk, std::vector<std::string> &Result, bool &Loop)
+{
+  if (finding_string(AddrsTrk, AddrsI))
+  {
+    if (stol(LivesTrk) != 0)
+    {
+      Result.push_back(AddrsI);
+      Loop = false;
+    }
+    else Loop = false;
+  }
 }
 
 void listof_addresses_bypath(std::vector<std::map<std::string, std::string>> &it_path_main, std::vector<std::string> &addrsv)

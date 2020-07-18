@@ -131,4 +131,8 @@ void PrintingEdge(std::map<std::string, std::string> &path_first);
 
 void PrintingGraph(std::vector<std::map<std::string, std::string>> &it_path_maini);
 
+std::vector<std::string> LivesNonZero(std::vector<std::vector<std::map<std::string, std::string>>> &path_main, std::vector<std::string> AddrsV);
+
+void LivesNotZeroHelper(std::string AddrsTrk, std::string AddrsI, std::string LivesTrk, std::vector<std::string> &Result, bool &Loop);
+
 #endif

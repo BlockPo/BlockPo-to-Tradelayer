@@ -154,7 +154,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       bool boolProperty  = pold->getProperty() != propertyForSale;
       bool boolTrdAction = pold->getTradingAction() == pnew->getTradingAction();
       bool boolAddresses = pold->getAddr() != pnew->getAddr();
-
+      
       if ( findTrueValue(boolProperty, boolTrdAction, !boolAddresses) )
     	{
 	  ++offerIt;
