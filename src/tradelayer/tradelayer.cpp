@@ -1001,7 +1001,7 @@ int ParseTransaction(const CTransaction& tx, int nBlock, unsigned int idx, CMPTr
  */
  static bool HandleDExPayments(const CTransaction& tx, int nBlock, const std::string& strSender)
  {
-     uint64_t nvalue = 0;
+     int64_t nvalue = 0;
      int count = 0;
 
      for (unsigned int n = 0; n < tx.vout.size(); ++n)
@@ -1018,21 +1018,19 @@ int ParseTransaction(const CTransaction& tx, int nBlock, unsigned int idx, CMPTr
 
              if (msc_debug_handle_dex_payment) PrintToLog("payment #%d %s %s\n", count, address, FormatIndivisibleMP(tx.vout[n].nValue));
 
-             nvalue = static_cast<uint64_t>(tx.vout[n].nValue);
+             nvalue = tx.vout[n].nValue;
              // check everything and pay BTC for the property we are buying here...
-             if (0 == DEx_payment(tx.GetHash(), n, address, strSender, tx.vout[n].nValue, nBlock)) ++count;
+             if (0 == DEx_payment(tx.GetHash(), n, address, strSender, nvalue, nBlock)) ++count;
          }
      }
 
      /** Adding LTC into volume */
      if (count > 0)
      {
-         arith_uint256 ltcsreceived_256t = ConvertTo256(nvalue);
-         int64_t ltcsreceived = ConvertTo64(ltcsreceived_256t)/COIN;
-         globalVolumeALL_LTC += ltcsreceived;
+         globalVolumeALL_LTC += nvalue;
          const int64_t globalVolumeALL_LTCh = globalVolumeALL_LTC;
 
-         if (msc_debug_handle_dex_payment) PrintToLog("%s(): ltcsreceived: %d, globalVolumeALL_LTC: %d \n",__func__,ltcsreceived, globalVolumeALL_LTCh);
+         if (msc_debug_handle_dex_payment) PrintToLog("%s(): nvalue: %d, globalVolumeALL_LTC: %d \n",__func__, nvalue, globalVolumeALL_LTCh);
 
      }
 
@@ -1102,7 +1100,7 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
 
              if (msc_debug_handle_instant) PrintToLog("%s(): destination address: %s, dest address: %s \n", __func__, address, receiver);
 
-             nvalue += static_cast<uint64_t>(tx.vout[n].nValue);
+             nvalue += tx.vout[n].nValue;
 
          }
      }
@@ -1122,12 +1120,10 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
          if (msc_debug_handle_instant) PrintToLog("%s: Successfully litecoins traded \n", __func__);
 
          /** Adding LTC into volume */
-         arith_uint256 ltcsreceived_256t = ConvertTo256(nvalue);
-         uint64_t ltcsreceived = ConvertTo64(ltcsreceived_256t)/COIN;
-         globalVolumeALL_LTC += ltcsreceived;
+         globalVolumeALL_LTC += nvalue;
          const int64_t globalVolumeALL_LTCh = globalVolumeALL_LTC;
 
-         if (msc_debug_handle_instant) PrintToLog("%s(): ltcsreceived: %d, globalVolumeALL_LTC: %d \n",__func__,ltcsreceived, globalVolumeALL_LTCh);
+         if (msc_debug_handle_instant) PrintToLog("%s(): nvalue: %d, globalVolumeALL_LTC: %d \n",__func__, nvalue, globalVolumeALL_LTCh);
 
      } else {
          PrintToLog("%s(): ERROR: instant ltc payment failed \n",__func__);
@@ -2791,8 +2787,6 @@ bool CallingExpiration(CBlockIndex const * pBlockIndex)
 
 bool VestingTokens(int block)
 {
-    extern std::vector<std::string> vestingAddresses;
-
     PrintToLog("%s() block : %d\n",__func__, block);
 
     if (vestingAddresses.empty())
@@ -2802,24 +2796,23 @@ bool VestingTokens(int block)
     }
 
     // Note: this is used to simplify the testing
-    int64_t XAxis = (RegTest()) ? globalVolumeALL_LTC * 100 : globalVolumeALL_LTC;
+    int64_t xAxis = (RegTest()) ? globalVolumeALL_LTC * 100 : globalVolumeALL_LTC;
 
-    if(msc_debug_vesting) PrintToLog("%s(): globalVolumeALL_LTC: %d \n",__func__,XAxis);
+    if(msc_debug_vesting) PrintToLog("%s(): globalVolumeALL_LTC: %d \n",__func__,xAxis);
 
-    rational_t Factor1over4(1,4);
-    const int64_t Factor1over4_64t = mastercore::RationalToInt64(Factor1over4);
 
-    if (XAxis <= 10000)
+    if (xAxis <= 10000 * COIN)
     {
-        if(msc_debug_vesting) PrintToLog("%s(): 0 percent of vesting (LTC) less than 1000 LTC: %d\n",__func__,XAxis);
+        if(msc_debug_vesting) PrintToLog("%s(): 0 percent of vesting (LTC) less than 1000 LTC: %d\n",__func__, xAxis);
         return false;
     }
 
-    double factor = static_cast<double>(Factor1over4_64t) / COIN;
+    const double amount = (double) xAxis / COIN;
 
-    // accumVesting % = (Log10(Cum_LTC_Volume)-4)/4
-    // 100% vested at 100,000,000  LTCs volume
-    double accumVesting = (std::log10(XAxis) - 4) * factor;
+    // accumVesting % = (Log10(Cum_LTC_Volume)-4)/4; 100% vested at 100,000,000  LTCs volume
+    double accumVesting = (std::log10(amount) - 4) / 4;
+
+    PrintToLog("%s(): accumVesting: %f\n",__func__, accumVesting);
 
     // vesting %
     double realVesting = accumVesting - lastVesting;
@@ -2832,12 +2825,12 @@ bool VestingTokens(int block)
 
     if(msc_debug_vesting) {
         PrintToLog("%s(): lastVesting = %f, realVesting : %f, accumVesting: %f\n",__func__, lastVesting, realVesting, accumVesting);
-        PrintToLog("%s(): amount vesting on this block = %f, block ; %d, x_Axis: %d, std::log10(x_Axis) : %d, factor : %f\n",__func__, accumVesting, block, XAxis, std::log10(XAxis), factor);
+        PrintToLog("%s(): amount vesting on this block = %f, block ; %d, x_Axis: %d, std::log10(amount) : %f\n",__func__, accumVesting, block, xAxis, std::log10(amount));
     }
 
     for (auto &addr : vestingAddresses)
     {
-        if(msc_debug_vesting) PrintToLog("\nInside Vesting function. Address = %s\n", addr);
+        if(msc_debug_vesting) PrintToLog("\nAddress = %s\n", addr);
 
         int64_t vestingBalance = getMPbalance(addr, TL_PROPERTY_VESTING, BALANCE);
         int64_t unvestedALLBal = getMPbalance(addr, ALL, UNVESTED);
@@ -2848,7 +2841,7 @@ bool VestingTokens(int block)
             PrintToLog("Vesting tokens in address = %d\n", vestingBalance);
         }
 
-        if (vestingBalance != 0 && unvestedALLBal != 0 && XAxis != 0)
+        if (vestingBalance != 0 && unvestedALLBal != 0 && xAxis != 0)
         {
 
             int64_t iRealVesting = mastercore::DoubleToInt64(realVesting);
@@ -2918,8 +2911,6 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
 
        PrintToLog("%s(): interp_ret: %d\n",__func__,interp_ret);
 
-       // Only structurally valid transactions get recorded in levelDB
-       // PKT_ERROR - 2 = interpret_Transaction failed, structurally invalid payload
 
        // if interpretPacket returns 1, that means we have an instant trade between LTCs and tokens.
        if (interp_ret == 1)
@@ -2932,6 +2923,8 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
 
         }
 
+        // Only structurally valid transactions get recorded in levelDB
+        // PKT_ERROR - 2 = interpret_Transaction failed, structurally invalid payload
         if (interp_ret != PKT_ERROR - 2) {
             bool bValid = (0 <= interp_ret);
             p_txlistdb->recordTX(tx.GetHash(), bValid, nBlock, mp_obj.getType(), mp_obj.getNewAmount());
