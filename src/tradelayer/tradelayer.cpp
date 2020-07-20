@@ -1388,6 +1388,42 @@ int input_mp_offers_string(const std::string& s)
     return 0;
 }
 
+// seller-address, property, buyer-address, amount, fee, block
+// 13z1JFtDMGTYQvtMq5gs4LmCztK3rmEZga,1, 148EFCFXbk2LrUhEHDfs9y3A5dJ4tttKVd,100000,11000,299126
+// 13z1JFtDMGTYQvtMq5gs4LmCztK3rmEZga,1,1Md8GwMtWpiobRnjRabMT98EW6Jh4rEUNy,50000000,11000,299132
+static int input_mp_accepts_string(const std::string& s)
+{
+    int nBlock;
+    unsigned char blocktimelimit;
+    std::vector<std::string> vstr;
+    boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
+    int64_t amountRemaining, amountOriginal, offerOriginal, btcDesired;
+    unsigned int prop;
+    std::string sellerAddr, buyerAddr, txidStr;
+    int i = 0;
+
+    if (10 != vstr.size()) return -1;
+
+    sellerAddr = vstr[i++];
+    prop = boost::lexical_cast<unsigned int>(vstr[i++]);
+    buyerAddr = vstr[i++];
+    nBlock = atoi(vstr[i++]);
+    amountRemaining = boost::lexical_cast<int64_t>(vstr[i++]);
+    amountOriginal = boost::lexical_cast<uint64_t>(vstr[i++]);
+    blocktimelimit = atoi(vstr[i++]);
+    offerOriginal = boost::lexical_cast<int64_t>(vstr[i++]);
+    btcDesired = boost::lexical_cast<int64_t>(vstr[i++]);
+    txidStr = vstr[i++];
+
+    const std::string combo = STR_ACCEPT_ADDR_PROP_ADDR_COMBO(sellerAddr, buyerAddr, prop);
+    CMPAccept newAccept(amountOriginal, amountRemaining, nBlock, blocktimelimit, prop, offerOriginal, btcDesired, uint256S(txidStr));
+    if (my_accepts.insert(std::make_pair(combo, newAccept)).second) {
+        return 0;
+    } else {
+        return -1;
+    }
+}
+
 int input_globals_state_string(const string &s)
 {
   unsigned int nextSPID;
@@ -1471,8 +1507,6 @@ int input_mp_contractdexorder_string(const std::string& s)
     if (12 != vstr.size()) return -1;
 
     int i = 0;
-
-    //NOTE: we need to add the amountReserved !!!
 
     std::string addr = vstr[i++];
     int block = boost::lexical_cast<int>(vstr[i++]);
@@ -1700,6 +1734,11 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
         inputLineFunc = input_mp_offers_string;
         break;
 
+    case FILETYPE_ACCEPTS:
+        my_accepts.clear();
+        inputLineFunc = input_mp_accepts_string;
+        break;
+
     case FILETYPE_MDEXORDERS:
         // FIXME
         // memory leak ... gotta unallocate inner layers first....
@@ -1737,9 +1776,11 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
     case FILETYPE_MDEX_VOLUME:
         MapMetaVolume.clear();
         inputLineFunc = input_mp_mdexvolume_string;
+        break;
 
     case FILETYPE_GLOBAL_VARS:
         inputLineFunc = input_global_vars_string;
+        break;
 
     default:
       return -1;
@@ -1807,8 +1848,7 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
     }
   }
 
-  // PrintToLog("%s(%s), loaded lines= %d, res= %d\n", __FUNCTION__, filename, lines, res);
-  // LogPrintf("%s(): file: %s , loaded lines= %d, res= %d\n", __FUNCTION__, filename, lines, res);
+  PrintToLog("%s(%s), loaded lines= %d, res= %d\n", __func__, filename, lines, res);
 
   return res;
 }
@@ -1821,6 +1861,7 @@ static char const * const statePrefix[NUM_FILETYPES] = {
     "marketprices",
     "offers",
     "mdexorders",
+    "accepts",
     "cachefees",
     "cachefeesoracles",
     "withdrawals",
@@ -2118,25 +2159,38 @@ static int write_mp_offers(ofstream &file, SHA256_CTX *shaCtx)
     return 0;
 }
 
+static int write_mp_accepts(std::ofstream& file, SHA256_CTX* shaCtx)
+{
+    AcceptMap::const_iterator iter;
+    for (iter = my_accepts.begin(); iter != my_accepts.end(); ++iter) {
+        // decompose the key for address
+        std::vector<std::string> vstr;
+        boost::split(vstr, iter->first, boost::is_any_of("-+"), boost::token_compress_on);
+        const CMPAccept& accept = iter->second;
+        accept.saveAccept(file, shaCtx, vstr[0], vstr[2]);
+    }
+
+    return 0;
+}
 
 static int write_mp_cachefees(std::ofstream& file, SHA256_CTX* shaCtx)
 {
     std::string lineOut;
 
-    for (std::map<uint32_t, int64_t>::const_iterator itt = cachefees.begin(); itt != cachefees.end(); ++itt)
+    for (auto itt = cachefees.begin(); itt != cachefees.end(); ++itt)
     {
         // decompose the key for address
         const uint32_t& propertyId = itt->first;
         const int64_t& cache = itt->second;
 
         lineOut.append(strprintf("%d,%d",propertyId, cache));
+        // add the line to the hash
+        SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
+        // write the line
+        file << lineOut << endl;
     }
 
-    // add the line to the hash
-    SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
 
-    // write the line
-    file << lineOut << endl;
 
     return 0;
 }
@@ -2145,20 +2199,18 @@ static int write_mp_cachefees_oracles(std::ofstream& file, SHA256_CTX* shaCtx)
 {
     std::string lineOut;
 
-    for (std::map<uint32_t, int64_t>::const_iterator itt = cachefees_oracles.begin(); itt != cachefees_oracles.end(); ++itt)
+    for (auto itt = cachefees_oracles.begin(); itt != cachefees_oracles.end(); ++itt)
     {
         // decompose the key for address
         const uint32_t& propertyId = itt->first;
         const int64_t& cache = itt->second;
 
         lineOut.append(strprintf("%d,%d",propertyId, cache));
+        // add the line to the hash
+        SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
+        // write the line
+        file << lineOut << endl;
     }
-
-    // add the line to the hash
-    SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
-
-    // write the line
-    file << lineOut << endl;
 
     return 0;
 }
@@ -2168,26 +2220,24 @@ static int write_mp_withdrawals(std::ofstream& file, SHA256_CTX* shaCtx)
 {
     std::string lineOut;
 
-    for (std::map<std::string,vector<withdrawalAccepted>>::iterator it = withdrawal_Map.begin(); it != withdrawal_Map.end(); ++it)
+    for (auto it = withdrawal_Map.begin(); it != withdrawal_Map.end(); ++it)
     {
         // decompose the key for address
         const std::string& chnAddr = it->first;
         vector<withdrawalAccepted>& whd = it->second;
 
-        for(std::vector<withdrawalAccepted>::iterator itt = whd.begin(); itt != whd.end(); ++itt)
+        for(auto itt = whd.begin(); itt != whd.end(); ++itt)
         {
             const withdrawalAccepted&  w = *itt;
             lineOut.append(strprintf("%s,%s,%d,%d,%d", chnAddr, w.address, w.deadline_block, w.propertyId, w.amount));
+            // add the line to the hash
+            SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
+            // write the line
+            file << lineOut << endl;
 
         }
 
     }
-
-    // add the line to the hash
-    SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
-
-    // write the line
-    file << lineOut << endl;
 
     return 0;
 }
@@ -2204,14 +2254,11 @@ static int write_mp_active_channels(std::ofstream& file, SHA256_CTX* shaCtx)
         const channel& chnObj = it->second;
 
         lineOut.append(strprintf("%s,%s,%s,%s,%d,%d", chnAddr, chnObj.multisig, chnObj.first, chnObj.second, chnObj.expiry_height, chnObj.last_exchange_block));
-
+        // add the line to the hash
+        SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
+        // write the line
+        file << lineOut << endl;
     }
-
-    // add the line to the hash
-    SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
-
-    // write the line
-    file << lineOut << endl;
 
     return 0;
 }
@@ -2221,11 +2268,10 @@ static int write_mp_dexvolume(std::ofstream& file, SHA256_CTX* shaCtx)
 {
     std::string lineOut;
 
-    for(std::map<int, std::map<uint32_t,int64_t>>::iterator it = MapPropVolume.begin(); it != MapPropVolume.end();it++)
+    for(auto it = MapPropVolume.begin(); it != MapPropVolume.end();it++)
     {
         // decompose the key for address
         const uint32_t& block = it->first;
-
         std::map<uint32_t,int64_t>& pMap = it->second;
 
         for(std::map<uint32_t,int64_t>::iterator itt = pMap.begin(); itt != pMap.end(); ++itt)
@@ -2233,15 +2279,12 @@ static int write_mp_dexvolume(std::ofstream& file, SHA256_CTX* shaCtx)
             const uint32_t& propertyId = itt->first;
             const int64_t& amount = itt->second;
             lineOut.append(strprintf("%d,%d,%d", block, propertyId, amount));
-
+            // add the line to the hash
+            SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
+            // write the line
+            file << lineOut << endl;
         }
     }
-
-    // add the line to the hash
-    SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
-
-    // write the line
-    file << lineOut << endl;
 
     return 0;
 }
@@ -2251,11 +2294,10 @@ static int write_mp_mdexvolume(std::ofstream& file, SHA256_CTX* shaCtx)
 {
     std::string lineOut;
 
-    for(std::map<int, std::map<std::pair<uint32_t, uint32_t>, int64_t>>::iterator it = MapMetaVolume.begin(); it != MapMetaVolume.end();it++)
+    for(auto it = MapMetaVolume.begin(); it != MapMetaVolume.end();it++)
     {
         // decompose the key for address
         const uint32_t& block = it->first;
-
         std::map<std::pair<uint32_t, uint32_t>, int64_t>& pMap = it->second;
 
         for (const auto &p : pMap)
@@ -2267,17 +2309,13 @@ static int write_mp_mdexvolume(std::ofstream& file, SHA256_CTX* shaCtx)
             const int64_t& amount = p.second;
 
             lineOut.append(strprintf("%d,%d,%d,%d", block, property1, property2, amount));
-
+            // add the line to the hash
+            SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
+            // write the line
+            file << lineOut << endl;
         }
 
-
     }
-
-    // add the line to the hash
-    SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
-
-    // write the line
-    file << lineOut << endl;
 
     return 0;
 
@@ -2319,6 +2357,10 @@ static int write_state_file( CBlockIndex const *pBlockIndex, int what )
 
     case FILETYPE_OFFERS:
         result = write_mp_offers(file, &shaCtx);
+        break;
+
+    case FILETYPE_ACCEPTS:
+        result = write_mp_accepts(file, &shaCtx);
         break;
 
     case FILETYPE_MDEXORDERS:
@@ -2446,6 +2488,7 @@ int mastercore_save_state( CBlockIndex const *pBlockIndex )
     write_state_file(pBlockIndex, FILETYPE_CDEXORDERS);
     write_state_file(pBlockIndex, FILETYPE_MARKETPRICES);
     write_state_file(pBlockIndex, FILETYPE_OFFERS);
+    write_state_file(pBlockIndex, FILETYPE_ACCEPTS);
     write_state_file(pBlockIndex, FILETYPE_MDEXORDERS);
     write_state_file(pBlockIndex, FILETYPE_CACHEFEES);
     write_state_file(pBlockIndex, FILETYPE_CACHEFEES_ORACLES);
