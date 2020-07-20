@@ -157,6 +157,7 @@ enum FILETYPES {
   FILETYPE_DEX_VOLUME,
   FILETYPE_MDEX_VOLUME,
   FILETYPE_GLOBAL_VARS,
+  FILE_TYPE_VESTING_ADDRESSES,
   NUM_FILETYPES
 };
 
@@ -602,6 +603,9 @@ namespace mastercore
 
   bool transferAll(const std::string& sender, const std::string& receiver);
 
+  const string getAdminAddress();
+
+  int64_t calculateUnvested(int64_t amountSended, int64_t senderUnv);
 }
 
 #endif // TRADELAYER_TL_H

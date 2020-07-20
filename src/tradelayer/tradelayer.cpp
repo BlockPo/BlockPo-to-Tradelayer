@@ -601,7 +601,7 @@ void CheckWalletUpdate(bool forceUpdate)
  *
  * @return The specific address
  */
-const string getAdminAddress()
+const string mastercore::getAdminAddress()
 {
     if (RegTest())
     {
@@ -1657,6 +1657,22 @@ int input_mp_mdexvolume_string(const std::string& s)
 
 }
 
+int input_vestingaddresses_string(const std::string& s)
+{
+   std::vector<std::string> vstr;
+   size_t elements = vestingAddresses.size();
+
+   boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
+
+   const std::string& address = vstr[0];
+
+   PrintToLog("%s(): address: %s\n",__func__, address);
+
+   vestingAddresses.push_back(address);
+
+   return ((vestingAddresses.size() > elements) ? -1 : 0);
+}
+
 static int msc_file_load(const string &filename, int what, bool verifyHash = false)
 {
   int lines = 0;
@@ -1732,9 +1748,16 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
     case FILETYPE_MDEX_VOLUME:
         MapMetaVolume.clear();
         inputLineFunc = input_mp_mdexvolume_string;
+        break;
 
     case FILETYPE_GLOBAL_VARS:
         inputLineFunc = input_global_vars_string;
+        break;
+
+    case FILE_TYPE_VESTING_ADDRESSES:
+        vestingAddresses.clear();
+        inputLineFunc = input_vestingaddresses_string;
+        break;
 
     default:
       return -1;
@@ -1802,7 +1825,7 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
     }
   }
 
-  // PrintToLog("%s(%s), loaded lines= %d, res= %d\n", __FUNCTION__, filename, lines, res);
+  PrintToLog("%s(%s), loaded lines= %d, res= %d\n", __func__, filename, lines, res);
   // LogPrintf("%s(): file: %s , loaded lines= %d, res= %d\n", __FUNCTION__, filename, lines, res);
 
   return res;
@@ -1823,6 +1846,7 @@ static char const * const statePrefix[NUM_FILETYPES] = {
     "dexvolume",
     "mdexvolume",
     "globalvars",
+    "vestingaddresses",
 
 };
 
@@ -2118,7 +2142,7 @@ static int write_mp_cachefees(std::ofstream& file, SHA256_CTX* shaCtx)
 {
     std::string lineOut;
 
-    for (std::map<uint32_t, int64_t>::const_iterator itt = cachefees.begin(); itt != cachefees.end(); ++itt)
+    for (auto itt = cachefees.begin(); itt != cachefees.end(); ++itt)
     {
         // decompose the key for address
         const uint32_t& propertyId = itt->first;
@@ -2140,7 +2164,7 @@ static int write_mp_cachefees_oracles(std::ofstream& file, SHA256_CTX* shaCtx)
 {
     std::string lineOut;
 
-    for (std::map<uint32_t, int64_t>::const_iterator itt = cachefees_oracles.begin(); itt != cachefees_oracles.end(); ++itt)
+    for (auto itt = cachefees_oracles.begin(); itt != cachefees_oracles.end(); ++itt)
     {
         // decompose the key for address
         const uint32_t& propertyId = itt->first;
@@ -2163,13 +2187,13 @@ static int write_mp_withdrawals(std::ofstream& file, SHA256_CTX* shaCtx)
 {
     std::string lineOut;
 
-    for (std::map<std::string,vector<withdrawalAccepted>>::iterator it = withdrawal_Map.begin(); it != withdrawal_Map.end(); ++it)
+    for (auto it = withdrawal_Map.begin(); it != withdrawal_Map.end(); ++it)
     {
         // decompose the key for address
         const std::string& chnAddr = it->first;
         vector<withdrawalAccepted>& whd = it->second;
 
-        for(std::vector<withdrawalAccepted>::iterator itt = whd.begin(); itt != whd.end(); ++itt)
+        for(auto itt = whd.begin(); itt != whd.end(); ++itt)
         {
             const withdrawalAccepted&  w = *itt;
             lineOut.append(strprintf("%s,%s,%d,%d,%d", chnAddr, w.address, w.deadline_block, w.propertyId, w.amount));
@@ -2199,14 +2223,12 @@ static int write_mp_active_channels(std::ofstream& file, SHA256_CTX* shaCtx)
         const channel& chnObj = it->second;
 
         lineOut.append(strprintf("%s,%s,%s,%s,%d,%d", chnAddr, chnObj.multisig, chnObj.first, chnObj.second, chnObj.expiry_height, chnObj.last_exchange_block));
+        // add the line to the hash
+        SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
+        // write the line
+        file << lineOut << endl;
 
     }
-
-    // add the line to the hash
-    SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
-
-    // write the line
-    file << lineOut << endl;
 
     return 0;
 }
@@ -2216,14 +2238,13 @@ static int write_mp_dexvolume(std::ofstream& file, SHA256_CTX* shaCtx)
 {
     std::string lineOut;
 
-    for(std::map<int, std::map<uint32_t,int64_t>>::iterator it = MapPropVolume.begin(); it != MapPropVolume.end();it++)
+    for(auto it = MapPropVolume.begin(); it != MapPropVolume.end();it++)
     {
         // decompose the key for address
         const uint32_t& block = it->first;
-
         std::map<uint32_t,int64_t>& pMap = it->second;
 
-        for(std::map<uint32_t,int64_t>::iterator itt = pMap.begin(); itt != pMap.end(); ++itt)
+        for(auto itt = pMap.begin(); itt != pMap.end(); ++itt)
         {
             const uint32_t& propertyId = itt->first;
             const int64_t& amount = itt->second;
@@ -2246,13 +2267,11 @@ static int write_mp_mdexvolume(std::ofstream& file, SHA256_CTX* shaCtx)
 {
     std::string lineOut;
 
-    for(std::map<int, std::map<std::pair<uint32_t, uint32_t>, int64_t>>::iterator it = MapMetaVolume.begin(); it != MapMetaVolume.end();it++)
+    for(auto it = MapMetaVolume.begin(); it != MapMetaVolume.end();it++)
     {
         // decompose the key for address
         const uint32_t& block = it->first;
-
         std::map<std::pair<uint32_t, uint32_t>, int64_t>& pMap = it->second;
-
         for (const auto &p : pMap)
         {
             const std::pair<uint32_t, uint32_t>& pIr = p.first;
@@ -2276,6 +2295,27 @@ static int write_mp_mdexvolume(std::ofstream& file, SHA256_CTX* shaCtx)
 
     return 0;
 
+}
+
+void savingLine(const std::string& address, std::ofstream& file, SHA256_CTX* shaCtx)
+{
+    std::string lineOut;
+    lineOut.append(strprintf("%s",address));
+    // add the line to the hash
+    SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
+
+    PrintToLog("%s(): lineOut: %s\n",__func__, lineOut);
+
+    // write the line
+    file << lineOut << endl;
+}
+
+/** Saving vesting token addresses **/
+static int write_mp_vesting_addresses(std::ofstream& file, SHA256_CTX* shaCtx)
+{
+    for_each(vestingAddresses.begin(), vestingAddresses.end(), [&file, shaCtx] (const std::string& address) { savingLine(address, file, shaCtx);});
+
+    return 0;
 }
 
 static int write_state_file( CBlockIndex const *pBlockIndex, int what )
@@ -2347,6 +2387,9 @@ static int write_state_file( CBlockIndex const *pBlockIndex, int what )
         result = write_global_vars(file, &shaCtx);
         break;
 
+    case FILE_TYPE_VESTING_ADDRESSES:
+        result = write_mp_vesting_addresses(file, &shaCtx);
+        break;
     }
 
     // generate and wite the double hash of all the contents written
@@ -2448,6 +2491,7 @@ int mastercore_save_state( CBlockIndex const *pBlockIndex )
     write_state_file(pBlockIndex, FILETYPE_ACTIVE_CHANNELS);
     write_state_file(pBlockIndex, FILETYPE_DEX_VOLUME);
     write_state_file(pBlockIndex, FILETYPE_GLOBAL_VARS);
+    write_state_file(pBlockIndex, FILE_TYPE_VESTING_ADDRESSES);
 
     // clean-up the directory
     prune_state_files(pBlockIndex);
@@ -2796,26 +2840,33 @@ bool VestingTokens(int block)
     }
 
     // Note: this is used to simplify the testing
-    int64_t xAxis = (RegTest()) ? globalVolumeALL_LTC * 100 : globalVolumeALL_LTC;
+    const int64_t xAxis = (RegTest()) ? globalVolumeALL_LTC * 100 : globalVolumeALL_LTC;
 
     if(msc_debug_vesting) PrintToLog("%s(): globalVolumeALL_LTC: %d \n",__func__,xAxis);
 
 
     if (xAxis <= 10000 * COIN)
     {
-        if(msc_debug_vesting) PrintToLog("%s(): 0 percent of vesting (LTC) less than 1000 LTC: %d\n",__func__, xAxis);
+        if(msc_debug_vesting) PrintToLog("%s(): 0 percent of vesting (LTC) less than 10,000 LTC volume: %d\n",__func__, xAxis);
+        return false;
+    }
+
+    if (100000000 * COIN < xAxis)
+    {
+        if(msc_debug_vesting) PrintToLog("%s(): Vesting Tokens completed at 100,000,000 LTC volume: %d\n",__func__, xAxis);
         return false;
     }
 
     const double amount = (double) xAxis / COIN;
 
     // accumVesting % = (Log10(Cum_LTC_Volume)-4)/4; 100% vested at 100,000,000  LTCs volume
-    double accumVesting = (std::log10(amount) - 4) / 4;
-
-    PrintToLog("%s(): accumVesting: %f\n",__func__, accumVesting);
+    const double accumVesting = (std::log10(amount) - 4) / 4;
 
     // vesting %
-    double realVesting = accumVesting - lastVesting;
+    const double realVesting = accumVesting - lastVesting;
+
+    PrintToLog("%s(): accumVesting: %f, realVesting: %f\n",__func__, accumVesting, realVesting);
+
 
     if (realVesting == 0)
     {
@@ -6723,6 +6774,15 @@ bool mastercore::transferAll(const std::string& sender, const std::string& recei
 
 }
 
+int64_t mastercore::calculateUnvested(int64_t amountSended, int64_t senderUnv)
+{
+    arith_uint256 uAmountSended = ConvertTo256(amountSended);
+    arith_uint256 uSenderUnv = ConvertTo256(senderUnv);
+    // actual calculation; round up
+    arith_uint256 amountPurchased256 = DivideAndRoundUp(uSenderUnv, uAmountSended);
+    // convert back to int64_t
+    return ConvertTo64(amountPurchased256);
+ }
 
 /**
  * @return The marker for class D transactions.
