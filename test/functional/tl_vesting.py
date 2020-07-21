@@ -9,6 +9,8 @@ from test_framework.util import *
 
 import os
 import json
+import math
+import pylab as pl
 import http.client
 import urllib.parse
 
@@ -31,11 +33,14 @@ class VestingBasicsTest (BitcoinTestFramework):
 
         self.log.info("Preparing the workspace...")
 
-        # mining 200 blocks
-        self.nodes[0].generate(500)
+        # mining 1000 blocks, total budget: 14949.77187643 LTC
+        for i in range(0,2):
+            self.nodes[0].generate(500)
+            blocks = 500*(i+1)
+            self.log.info(str(blocks)+" blocks mined...")
 
         ################################################################################
-        # Checking RPC tl_sendvesting and related (in the first 200 blocks of the chain) #
+        # Checking RPC tl_sendvesting and related (starting in block 1000)             #
         ################################################################################
 
         url = urllib.parse.urlparse(self.nodes[0].url)
@@ -46,19 +51,35 @@ class VestingBasicsTest (BitcoinTestFramework):
         headers = {"Authorization": "Basic " + str_to_b64str(authpair)}
 
         addresses = []
-        accounts = ["john", "doe", "another", "mark"]
+        accounts = ["john", "doe", "another", "mark", "tango"]
+
+        # for graphs for addresses[1]
+        vested = []
+        unvested = []
+        volume_ltc = []
+
+        #vested ALL for addresses[4]
+        bvested = []
 
         conn = http.client.HTTPConnection(url.hostname, url.port)
         conn.connect()
 
+        self.log.info("watching LTC general balance")
+        params = str([""]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "getbalance",params)
+        self.log.info(out)
+        assert_equal(out['error'], None)
+
         adminAddress = 'QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPb'
         privkey = 'cTkpBcU7YzbJBi7U59whwahAMcYwKT78yjZ2zZCbLsCZ32Qp5Wta'
+
 
         self.log.info("importing admin address")
         params = str([privkey]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "importprivkey",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
+
 
         self.log.info("watching private key of admin address")
         params = str([adminAddress]).replace("'",'"')
@@ -71,16 +92,30 @@ class VestingBasicsTest (BitcoinTestFramework):
         addresses = tradelayer_createAddresses(accounts, conn, headers)
 
         addresses.append(adminAddress)
-
         # self.log.info(addresses)
 
 
         self.log.info("Funding addresses with LTC")
-        amount = 2001
+        amount = 2
         tradelayer_fundingAddresses(addresses, amount, conn, headers)
+
+        self.nodes[0].generate(1)
+
 
         self.log.info("Checking the LTC balance in every account")
         tradelayer_checkingBalance(accounts, amount, conn, headers)
+
+
+        self.log.info("Funding addresses[3] with 12000 LTC")
+        amount = 2000
+        params = str([addresses[3], amount]).replace("'",'"')
+        for i in range(0,6):
+            out = tradelayer_HTTP(conn, headers, False, "sendtoaddress",params)
+            # self.log.info(out)
+            assert_equal(out['error'], None)
+
+            self.nodes[0].generate(1)
+
 
         self.log.info("Creating new tokens (sendissuancefixed)")
         array = [0]
@@ -103,7 +138,7 @@ class VestingBasicsTest (BitcoinTestFramework):
                 if i['att sender'] == addr and i['att receiver'] == addr and i['kyc_id'] == 0:
                      result.append(True)
 
-        assert_equal(result, [True, True, True, True, True])
+        assert_equal(result, [True, True, True, True, True, True])
 
 
         self.log.info("Checking vesting tokens property")
@@ -117,6 +152,7 @@ class VestingBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['divisible'],True)
         assert_equal(out['result']['totaltokens'],'1500000.00000000')
 
+
         self.log.info("Checking the property")
         params = str([4])
         out = tradelayer_HTTP(conn, headers, True, "tl_getproperty",params)
@@ -129,6 +165,7 @@ class VestingBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['divisible'],True)
         assert_equal(out['result']['totaltokens'],'90000000.00000000')
 
+
         self.log.info("sendvesting from  adminAddress to first address")
         params = str([adminAddress, addresses[0], "2000"]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_sendvesting",params)
@@ -137,6 +174,7 @@ class VestingBasicsTest (BitcoinTestFramework):
 
         self.nodes[0].generate(1)
 
+
         self.log.info("Checking tokens in receiver address")
         params = str([addresses[0], 3]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
@@ -144,6 +182,7 @@ class VestingBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         assert_equal(out['result']['balance'],'2000.00000000')
         assert_equal(out['result']['reserve'],'0.00000000')
+
 
         self.log.info("Checking unvested ALLs ")
         params = str([addresses[0]]).replace("'",'"')
@@ -157,10 +196,10 @@ class VestingBasicsTest (BitcoinTestFramework):
         params = str([addresses[0], addresses[1], "1000"]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_sendvesting",params)
         # self.log.info(out)
-
         assert_equal(out['error'], None)
 
         self.nodes[0].generate(1)
+
 
         self.log.info("Checking tokens in receiver address")
         params = str([addresses[1], 3]).replace("'",'"')
@@ -178,8 +217,13 @@ class VestingBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['unvested'],'0.00000000')
 
 
+        out = tradelayer_HTTP(conn, headers, True, "tl_getinfo")
+        block = out['result']['block']
+        self.log.info("block height :"+str(block))
+
+
         self.log.info("Waiting for one year")
-        for i in range(200):
+        for i in range(20):
             self.nodes[0].generate(1)
 
 
@@ -193,12 +237,40 @@ class VestingBasicsTest (BitcoinTestFramework):
         self.nodes[0].generate(1)
 
 
-        self.log.info("Checking tokens in receiver address")
+        self.log.info("sendvesting from first to 5th addresses")
+        params = str([addresses[0], addresses[4], "500"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_sendvesting",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+
+        self.nodes[0].generate(1)
+
+
+        self.log.info("Restarting for the node, in order to test persistence")
+        self.restart_node(0) #stop and start
+
+
+        url = urllib.parse.urlparse(self.nodes[0].url)
+        #New authpair
+        authpair = url.username + ':' + url.password
+        headers = {"Authorization": "Basic " + str_to_b64str(authpair)}
+        conn = http.client.HTTPConnection(url.hostname, url.port)
+        conn.connect()
+
+
+        self.log.info("Checking tokens in receiver addresses")
         params = str([addresses[1], 3]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_getbalance",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
         assert_equal(out['result']['balance'],'1000.00000000')
+        assert_equal(out['result']['reserve'],'0.00000000')
+
+        params = str([addresses[4], 3]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_getbalance",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['balance'],'500.00000000')
         assert_equal(out['result']['reserve'],'0.00000000')
 
 
@@ -208,10 +280,17 @@ class VestingBasicsTest (BitcoinTestFramework):
         # self.log.info(out)
         assert_equal(out['result']['unvested'],'1000.00000000')
 
-        # 2000 LTC implies release 10% of ALLs from unvested to balance
+        params = str([addresses[4]]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_getunvested",params)
+        # self.log.info(out)
+        assert_equal(out['result']['unvested'],'500.00000000')
+
+
+        # 200 LTC implies release 7.5% of ALLs from unvested to balance
+        # NOTE: In regtest 200 LTC volume is equivalent to 20000 (x100) LTCs in testnet or mainnet
         self.log.info("Creating LTC volume in DEx")
         self.log.info("Sending a DEx sell tokens offer")
-        params = str([addresses[2], 4, "1000", "2000", 250, "0.00001", "2", 1]).replace("'",'"')
+        params = str([addresses[2], 4, "1000", "200", 250, "0.00001", "2", 1]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_senddexoffer",params)
         assert_equal(out['error'], None)
         # self.log.info(out)
@@ -226,10 +305,9 @@ class VestingBasicsTest (BitcoinTestFramework):
         assert_equal(out['result'][0]['propertyid'], 4)
         assert_equal(out['result'][0]['action'], 2)
         assert_equal(out['result'][0]['seller'], addresses[2])
-        assert_equal(out['result'][0]['ltcsdesired'], '2000.00000000')
+        assert_equal(out['result'][0]['ltcsdesired'], '200.00000000')
         assert_equal(out['result'][0]['amountavailable'], '1000.00000000')
-        assert_equal(out['result'][0]['amountoffered'], '0.00000000')
-        assert_equal(out['result'][0]['unitprice'], '2.00000000')
+        assert_equal(out['result'][0]['unitprice'], '0.20000000')
         assert_equal(out['result'][0]['minimumfee'], '0.00001000')
 
         self.log.info("Accepting the full offer")
@@ -251,19 +329,16 @@ class VestingBasicsTest (BitcoinTestFramework):
         assert_equal(out['result'][0]['seller'], addresses[2])
         assert_equal(out['result'][0]['ltcsdesired'], '0.00000000')
         assert_equal(out['result'][0]['amountavailable'], '0.00000000')
-        assert_equal(out['result'][0]['amountoffered'], '1000.00000000')
-        assert_equal(out['result'][0]['unitprice'], '2.00000000')
+        assert_equal(out['result'][0]['unitprice'], '0.20000000')
         assert_equal(out['result'][0]['minimumfee'], '0.00001000')
 
         assert_equal(out['result'][0]['accepts'][0]['buyer'], addresses[3])
         assert_equal(out['result'][0]['accepts'][0]['amountdesired'], '1000.00000000')
-        assert_equal(out['result'][0]['accepts'][0]['ltcstopay'], '2000.00000000')
-        # assert_equal(out['result'][0]['accepts'][0]['block'], 208)
-        # assert_equal(out['result'][0]['accepts'][0]['blocksleft'], 241)
+        assert_equal(out['result'][0]['accepts'][0]['ltcstopay'], '200.00000000')
 
 
         self.log.info("Paying the tokens")
-        params = str([addresses[3], addresses[2], "2000"]).replace("'",'"')
+        params = str([addresses[3], addresses[2], "200"]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_send_dex_payment",params)
         # self.log.info(out)
 
@@ -280,14 +355,14 @@ class VestingBasicsTest (BitcoinTestFramework):
 
 
         self.log.info("Checking LTC Volume")
-        params = str([4, 1, 2000]).replace("'",'"')
+        params = str([4, 1, 3000]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_getdexvolume",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['volume'], '2000.00000000')
+        assert_equal(out['result']['volume'], '200.00000000')
+        volume0 = float(out['result']['volume'])
 
-
-        self.nodes[0].generate(2)
+        self.nodes[0].generate(1)
 
 
         self.log.info("Checking vesting in related address")
@@ -295,15 +370,266 @@ class VestingBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, False, "tl_getbalance",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['balance'],'100.34333180')  # 10% of vesting (NOTE: check the round up)
+        assert_equal(out['result']['balance'],'75.25749000')  # 7.5% of vesting (NOTE: check the round up)
         assert_equal(out['result']['reserve'],'0.00000000')
+        vested0 = float(out['result']['balance'])
+
+
+        params = str([addresses[4], 1]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_getbalance",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        # assert_equal(out['result']['balance'],'75.25749000')  # 7.5% of vesting (NOTE: check the round up)
+        assert_equal(out['result']['reserve'],'0.00000000')
+        vested1 = float(out['result']['balance'])
+        bvested.append(vested1)
 
 
         self.log.info("Checking unvested ALLs ")
         params = str([addresses[1]]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_getunvested",params)
         # self.log.info(out)
-        assert_equal(out['result']['unvested'],'899.65666820')
+        assert_equal(out['result']['unvested'],'924.74251000')
+        unvested0 = float(out['result']['unvested'])
+        volume_ltc.append(volume0)
+        vested.append(vested0)
+        unvested.append(unvested0)
+
+
+        # 400 LTC implies release 15.05% of ALLs from unvested to balance
+        # Remember: 400 LTCs in regtest are 40000 (x100) LTCs in testnet/mainnet
+        self.log.info("Sending a DEx sell tokens offer")
+        params = str([addresses[2], 4, "1000000", "200000", 250, "0.00001", "2", 1]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_senddexoffer",params)
+        assert_equal(out['error'], None)
+        # self.log.info(out)
+
+        self.nodes[0].generate(1)
+
+
+        self.log.info("Checking the offer in DEx")
+        params = str([addresses[2]]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getactivedexsells",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result'][0]['propertyid'], 4)
+        assert_equal(out['result'][0]['action'], 2)
+        assert_equal(out['result'][0]['seller'], addresses[2])
+        assert_equal(out['result'][0]['ltcsdesired'], '200000.00000000')
+        assert_equal(out['result'][0]['amountavailable'], '1000000.00000000')
+        assert_equal(out['result'][0]['unitprice'], '0.20000000')
+        assert_equal(out['result'][0]['minimumfee'], '0.00001000')
+
+
+        self.log.info("Accepting the part of the offer")
+        params = str([addresses[3], addresses[2], 4, "1000"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_senddexaccept",params)
+        assert_equal(out['error'], None)
+        # self.log.info(out)
+
+        self.nodes[0].generate(1)
+
+
+        self.log.info("Checking the offer status")
+        params = str([addresses[2]]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getactivedexsells",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result'][0]['accepts'][0]['buyer'], addresses[3])
+        assert_equal(out['result'][0]['accepts'][0]['amountdesired'], '1000.00000000')
+        assert_equal(out['result'][0]['accepts'][0]['ltcstopay'], '200.00000000')
+
+
+        self.log.info("Paying the tokens")
+        params = str([addresses[3], addresses[2], "200"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_send_dex_payment",params)
+        # self.log.info(out)
+
+        self.nodes[0].generate(1)
+
+
+        self.log.info("Checking token balance in buyer address")
+        params = str([addresses[3], 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['balance'], '2000.00000000')
+        assert_equal(out['result']['reserve'],'0.00000000')
+
+
+        self.log.info("Checking LTC Volume")
+        params = str([4, 1, 99999]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getdexvolume",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['volume'], '400.00000000')
+        volume1 = float(out['result']['volume'])
+
+        self.nodes[0].generate(2)
+
+
+        self.log.info("Checking vesting in related addresses")
+        params = str([addresses[1], 1]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_getbalance",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['balance'],'150.51498000')  # 15.05% of vesting (NOTE: check the round up)
+        assert_equal(out['result']['reserve'],'0.00000000')
+        vested1 = float(out['result']['balance'])
+
+        params = str([addresses[4], 1]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_getbalance",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        # assert_equal(out['result']['balance'],'150.51498000')  # 15.05% of vesting (NOTE: check the round up)
+        assert_equal(out['result']['reserve'],'0.00000000')
+        vested2 = float(out['result']['balance'])
+        bvested.append(vested2)
+
+        self.log.info("Checking unvested ALLs ")
+        params = str([addresses[1]]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_getunvested",params)
+        # self.log.info(out)
+        assert_equal(out['result']['unvested'],'849.48502000')
+        unvested1 = float(out['result']['unvested'])
+        volume_ltc.append(volume1)
+        vested.append(vested1)
+        unvested.append(unvested1)
+
+        # Adding 200 LTCs in each step
+        for i in range(0,20):
+            self.log.info("Loop number:"+str(i))
+
+            # self.log.info("Checking the offer in DEx")
+            # params = str([addresses[2]]).replace("'",'"')
+            # out = tradelayer_HTTP(conn, headers, True, "tl_getactivedexsells",params)
+            # self.log.info(out)
+
+            self.log.info("Accepting the part of the offer")
+            params = str([addresses[3], addresses[2], 4, "1000"]).replace("'",'"')
+            out = tradelayer_HTTP(conn, headers, True, "tl_senddexaccept",params)
+            assert_equal(out['error'], None)
+            # self.log.info(out)
+
+            self.nodes[0].generate(1)
+
+            self.log.info("Checking the offer status")
+            params = str([addresses[2]]).replace("'",'"')
+            out = tradelayer_HTTP(conn, headers, True, "tl_getactivedexsells",params)
+            # self.log.info(out)
+            assert_equal(out['error'], None)
+            assert_equal(out['result'][0]['accepts'][0]['buyer'], addresses[3])
+            assert_equal(out['result'][0]['accepts'][0]['amountdesired'], '1000.00000000')
+            assert_equal(out['result'][0]['accepts'][0]['ltcstopay'], '200.00000000')
+
+            self.log.info("Paying the tokens")
+            params = str([addresses[3], addresses[2], "200"]).replace("'",'"')
+            out = tradelayer_HTTP(conn, headers, True, "tl_send_dex_payment",params)
+            # self.log.info(out)
+
+            self.nodes[0].generate(1)
+
+
+            self.log.info("Checking token balance in buyer address")
+            params = str([addresses[3], 4]).replace("'",'"')
+            out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
+            # self.log.info(out)
+            assert_equal(out['error'], None)
+            nresult = 2000 + 1000 * (i+1)
+            sresult = str(nresult)+'.00000000'
+            assert_equal(out['result']['balance'], sresult)
+            assert_equal(out['result']['reserve'],'0.00000000')
+
+            self.log.info("Checking LTC Volume")
+            params = str([4, 1, 99999]).replace("'",'"')
+            out = tradelayer_HTTP(conn, headers, True, "tl_getdexvolume",params)
+            # self.log.info(out)
+            assert_equal(out['error'], None)
+            nvolume = 400 + 200 * (i+1)
+            svolume = str(nvolume)+'.00000000'
+            assert_equal(out['result']['volume'], svolume)
+            volume1 = float(out['result']['volume'])
+
+            self.nodes[0].generate(2)
+
+            self.log.info("Checking vesting in in addresses[1]")
+            params = str([addresses[1], 1]).replace("'",'"')
+            out = tradelayer_HTTP(conn, headers, False, "tl_getbalance",params)
+            # self.log.info(out)
+            assert_equal(out['error'], None)
+            assert_equal(out['result']['reserve'],'0.00000000')
+            vested1 = float(out['result']['balance'])
+
+            self.log.info("Checking unvested ALLs in addresses[1]")
+            params = str([addresses[1]]).replace("'",'"')
+            out = tradelayer_HTTP(conn, headers, False, "tl_getunvested",params)
+            # self.log.info(out)
+            unvested1 = float(out['result']['unvested'])
+            assert_equal(unvested1 + vested1, 1000)
+
+            volume_ltc.append(volume1)
+            vested.append(vested1)
+            unvested.append(unvested1)
+
+            self.log.info("Checking vesting in addresses[4]")
+            params = str([addresses[4], 1]).replace("'",'"')
+            out = tradelayer_HTTP(conn, headers, False, "tl_getbalance",params)
+            # self.log.info(out)
+            assert_equal(out['error'], None)
+            assert_equal(out['result']['reserve'],'0.00000000')
+            vested2 = float(out['result']['balance'])
+            bvested.append(vested2)
+
+            self.log.info("Checking unvested ALLs in addresses[4]")
+            params = str([addresses[4]]).replace("'",'"')
+            out = tradelayer_HTTP(conn, headers, False, "tl_getunvested",params)
+            # self.log.info(out)
+            unvested2 = float(out['result']['unvested'])
+            assert_equal(unvested2 + vested2, 500)
+
+
+        self.log.info("Checking LTC Volume")
+        params = str([4, 1, 99999]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getdexvolume",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['volume'], '4400.00000000')
+
+        # At this volume the vesting must be 41.08 %
+        self.log.info("Checking final vesting in addresses[1]")
+        params = str([addresses[1], 1]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_getbalance",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['balance'],'410.86307000')
+
+        self.log.info("Checking final unvested ALLs in addresses[1]")
+        params = str([addresses[1]]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_getunvested",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['unvested'], '589.13693000')
+
+
+        self.log.info("Checking final vesting in addresses[4]")
+        params = str([addresses[4], 1]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_getbalance",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['balance'],'205.43153500')
+
+        self.log.info("Checking final unvested ALLs in addresses[4]")
+        params = str([addresses[4]]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_getunvested",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['unvested'], '294.56846500')
+
+
+        pl.plot(volume_ltc, vested,'-b', label='vested amount for addresses[1]')
+        pl.plot(volume_ltc, bvested,'-r', label='vested amount for addresses[3]')
+        pl.legend(loc='upper left')
+        pl.show()
 
         conn.close()
 

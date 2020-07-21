@@ -2529,7 +2529,7 @@ int CMPTransaction::logicMath_SendVestingTokens()
       return (PKT_ERROR_SEND -22);
   }
 
-  int64_t nBalance = getMPbalance(sender, TL_PROPERTY_VESTING, BALANCE);
+  const int64_t nBalance = getMPbalance(sender, TL_PROPERTY_VESTING, BALANCE);
   if (nBalance < (int64_t) nValue) {
       PrintToLog("%s(): rejected: sender %s has insufficient balance of property %d [%s < %s]\n",
               __func__,
@@ -2540,11 +2540,15 @@ int CMPTransaction::logicMath_SendVestingTokens()
       return (PKT_ERROR_SEND -25);
   }
 
-  PrintToLog("%s(): nValue:  %d\n",__func__, nValue);
+  const int64_t uBalance = getMPbalance(sender, ALL, UNVESTED);
+  const int64_t rUnvest = (sender == getAdminAddress()) ? nValue : calculateUnvested(nValue, nBalance, uBalance);
+
+  PrintToLog("%s(): nValue:  %d, uBalance: %d,  nBalance: %d, rUnvest: %d, sender : %s, receiver : %s\n",__func__, nValue, uBalance, nBalance, rUnvest, sender, receiver);
 
   assert(update_tally_map(sender, TL_PROPERTY_VESTING, -nValue, BALANCE));
   assert(update_tally_map(receiver, TL_PROPERTY_VESTING, nValue, BALANCE));
-  assert(update_tally_map(receiver, ALL, nValue, UNVESTED));
+  assert(update_tally_map(sender, ALL, -rUnvest, UNVESTED));
+  assert(update_tally_map(receiver, ALL, rUnvest, UNVESTED));
 
   vestingAddresses.push_back(receiver);
 

@@ -2418,7 +2418,7 @@ UniValue tl_getactivedexsells(const JSONRPCRequest& request)
         int64_t sellOfferAmount = offer.getOfferAmountOriginal(); //badly named - "Original" implies off the wire, but is amended amount
         int64_t sellBitcoinDesired = offer.getLTCDesiredOriginal(); //badly named - "Original" implies off the wire, but is amended amount
         int64_t amountAvailable = getMPbalance(seller, propertyId, SELLOFFER_RESERVE);
-        int64_t amountOffered = getMPbalance(seller, propertyId, ACCEPT_RESERVE);
+        int64_t amountAccepted = getMPbalance(seller, propertyId, ACCEPT_RESERVE);
         uint8_t option = offer.getOption();
 
         // calculate unit price and updated amount of bitcoin desired
@@ -2446,20 +2446,20 @@ UniValue tl_getactivedexsells(const JSONRPCRequest& request)
                 std::string buyer = acceptCombo.substr((acceptCombo.find("+") + 1), (acceptCombo.size()-(acceptCombo.find("+") + 1)));
                 int blockOfAccept = accept.getAcceptBlock();
                 int blocksLeftToPay = (blockOfAccept + offer.getBlockTimeLimit()) - curBlock;
-                int64_t amountOffered = accept.getAcceptAmountRemaining();
+                int64_t amountAccepted = accept.getAcceptAmountRemaining();
                 // TODO: don't recalculate!
 
-                int64_t amountToPayInLTC = calculateDesiredLTC(accept.getOfferAmountOriginal(), accept.getLTCDesiredOriginal(), amountOffered);
+                int64_t amountToPayInLTC = calculateDesiredLTC(accept.getOfferAmountOriginal(), accept.getLTCDesiredOriginal(), amountAccepted);
                 if (option == 1) {
-                    sumAccepted += amountOffered;
-                    uint64_t ltcsreceived = rounduint64(unitPrice * amountOffered / 100000000);
+                    sumAccepted += amountAccepted;
+                    uint64_t ltcsreceived = rounduint64(unitPrice * amountAccepted / COIN);
                     sumLtcs += ltcsreceived;
                     matchedAccept.push_back(Pair("seller", buyer));
-                    matchedAccept.push_back(Pair("amountoffered", FormatMP(propertyId, amountOffered)));
+                    matchedAccept.push_back(Pair("amount", FormatMP(propertyId, amountAccepted)));
                     matchedAccept.push_back(Pair("ltcstoreceive", FormatDivisibleMP(ltcsreceived)));
                 } else if (option == 2) {
                     matchedAccept.push_back(Pair("buyer", buyer));
-                    matchedAccept.push_back(Pair("amountdesired", FormatMP(propertyId, amountOffered)));
+                    matchedAccept.push_back(Pair("amountdesired", FormatMP(propertyId, amountAccepted)));
                     matchedAccept.push_back(Pair("ltcstopay", FormatDivisibleMP(amountToPayInLTC)));
                 }
 
@@ -2476,14 +2476,13 @@ UniValue tl_getactivedexsells(const JSONRPCRequest& request)
         if (option == 2) {
             responseObj.push_back(Pair("seller", seller));
             responseObj.push_back(Pair("ltcsdesired", FormatDivisibleMP(bitcoinDesired)));
-            responseObj.push_back(Pair("amountavailable", FormatMP(propertyId, sellOfferAmount - amountOffered)));
-            responseObj.push_back(Pair("amountoffered", FormatMP(propertyId, amountOffered)));
+            responseObj.push_back(Pair("amountavailable", FormatMP(propertyId, amountAvailable)));
 
         } else if (option == 1){
             responseObj.push_back(Pair("buyer", seller));
             responseObj.push_back(Pair("ltcstopay", FormatDivisibleMP(sellBitcoinDesired - sumLtcs)));
             responseObj.push_back(Pair("amountdesired", FormatMP(propertyId, sellOfferAmount - sumAccepted)));
-            responseObj.push_back(Pair("amountaccepted", FormatDivisibleMP(sumAccepted)));
+            responseObj.push_back(Pair("accepted", FormatMP(propertyId, amountAccepted)));
 
         }
         responseObj.push_back(Pair("unitprice", FormatDivisibleMP(unitPrice)));

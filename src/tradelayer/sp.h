@@ -86,8 +86,8 @@ public:
         bool fixed;
         bool manual;
 
-
-        /** New things for Contracts */
+        //vesting
+        double last_vesting;
 
         uint32_t blocks_until_expiration;
         uint32_t notional_size;
@@ -110,9 +110,6 @@ public:
         bool inverse_quoted;
         bool expirated;
 
-        // int oracle_last_update;
-
-
         // for pegged currency
         uint32_t contract_associated;
 
@@ -123,7 +120,7 @@ public:
         std::map<uint256, std::vector<int64_t> > historicalData;
 
         //kyc
-        std::vector<int64_t> kyc; //kyc vector
+        std::vector<int64_t> kyc;
 
         Entry();
 
@@ -174,6 +171,7 @@ public:
             READWRITE(oracle_close);
             READWRITE(inverse_quoted);
             READWRITE(kyc);
+            READWRITE(last_vesting);
             ////////////////////////////
         }
 

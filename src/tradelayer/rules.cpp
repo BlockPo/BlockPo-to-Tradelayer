@@ -233,7 +233,7 @@ CRegTestConsensusParams::CRegTestConsensusParams()
     MSC_NODE_REWARD = 777;
     MSC_TRADECHANNEL_TOKENS_BLOCK = 0;
     MSC_TRADECHANNEL_CONTRACTS_BLOCK = 0;
-    ONE_YEAR = 500;
+    ONE_YEAR = 930;
 
 }
 

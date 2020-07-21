@@ -193,7 +193,6 @@ extern std::map<int, std::map<std::pair<uint32_t, uint32_t>, int64_t>> MapMetaVo
 
 using mastercore::StrToInt64;
 
-double lastVesting;
 
 // indicate whether persistence is enabled at this point, or not
 // used to write/read files, for breakout mode, debugging, etc.
@@ -601,7 +600,7 @@ void CheckWalletUpdate(bool forceUpdate)
  *
  * @return The specific address
  */
-const string getAdminAddress()
+const string mastercore::getAdminAddress()
 {
     if (RegTest())
     {
@@ -638,6 +637,7 @@ void creatingVestingTokens(int block)
    newSP.num_tokens = amountVesting;
    newSP.attribute_type = ALL_PROPERTY_TYPE_VESTING;
    newSP.init_block = block;
+   newSP.last_vesting = 0;
 
    const uint32_t propertyIdVesting = _my_sps->putSP(newSP);
    assert(propertyIdVesting > 0);
@@ -646,9 +646,7 @@ void creatingVestingTokens(int block)
 
    //NOTE: we have to change this admin_addrs for getAdminAddress function call
    assert(update_tally_map(getAdminAddress(), propertyIdVesting, totalVesting, BALANCE));
-
-   // NOTE: just for testing : putting ALLS into admin address
-   assert(update_tally_map(getAdminAddress(), ALL, totalVesting, BALANCE));
+   assert(update_tally_map(getAdminAddress(), ALL, totalVesting, UNVESTED));
 
 }
 
@@ -1002,7 +1000,7 @@ int ParseTransaction(const CTransaction& tx, int nBlock, unsigned int idx, CMPTr
  */
  static bool HandleDExPayments(const CTransaction& tx, int nBlock, const std::string& strSender)
  {
-     uint64_t nvalue = 0;
+     int64_t nvalue = 0;
      int count = 0;
 
      for (unsigned int n = 0; n < tx.vout.size(); ++n)
@@ -1019,21 +1017,19 @@ int ParseTransaction(const CTransaction& tx, int nBlock, unsigned int idx, CMPTr
 
              if (msc_debug_handle_dex_payment) PrintToLog("payment #%d %s %s\n", count, address, FormatIndivisibleMP(tx.vout[n].nValue));
 
-             nvalue = static_cast<uint64_t>(tx.vout[n].nValue);
+             nvalue = tx.vout[n].nValue;
              // check everything and pay BTC for the property we are buying here...
-             if (0 == DEx_payment(tx.GetHash(), n, address, strSender, tx.vout[n].nValue, nBlock)) ++count;
+             if (0 == DEx_payment(tx.GetHash(), n, address, strSender, nvalue, nBlock)) ++count;
          }
      }
 
      /** Adding LTC into volume */
      if (count > 0)
      {
-         arith_uint256 ltcsreceived_256t = ConvertTo256(nvalue);
-         int64_t ltcsreceived = ConvertTo64(ltcsreceived_256t)/COIN;
-         globalVolumeALL_LTC += ltcsreceived;
+         globalVolumeALL_LTC += nvalue;
          const int64_t globalVolumeALL_LTCh = globalVolumeALL_LTC;
 
-         if (msc_debug_handle_dex_payment) PrintToLog("%s(): ltcsreceived: %d, globalVolumeALL_LTC: %d \n",__func__,ltcsreceived, globalVolumeALL_LTCh);
+         if (msc_debug_handle_dex_payment) PrintToLog("%s(): nvalue: %d, globalVolumeALL_LTC: %d \n",__func__, nvalue, globalVolumeALL_LTCh);
 
      }
 
@@ -1103,7 +1099,7 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
 
              if (msc_debug_handle_instant) PrintToLog("%s(): destination address: %s, dest address: %s \n", __func__, address, receiver);
 
-             nvalue += static_cast<uint64_t>(tx.vout[n].nValue);
+             nvalue += tx.vout[n].nValue;
 
          }
      }
@@ -1123,12 +1119,10 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
          if (msc_debug_handle_instant) PrintToLog("%s: Successfully litecoins traded \n", __func__);
 
          /** Adding LTC into volume */
-         arith_uint256 ltcsreceived_256t = ConvertTo256(nvalue);
-         uint64_t ltcsreceived = ConvertTo64(ltcsreceived_256t)/COIN;
-         globalVolumeALL_LTC += ltcsreceived;
+         globalVolumeALL_LTC += nvalue;
          const int64_t globalVolumeALL_LTCh = globalVolumeALL_LTC;
 
-         if (msc_debug_handle_instant) PrintToLog("%s(): ltcsreceived: %d, globalVolumeALL_LTC: %d \n",__func__,ltcsreceived, globalVolumeALL_LTCh);
+         if (msc_debug_handle_instant) PrintToLog("%s(): nvalue: %d, globalVolumeALL_LTC: %d \n",__func__, nvalue, globalVolumeALL_LTCh);
 
      } else {
          PrintToLog("%s(): ERROR: instant ltc payment failed \n",__func__);
@@ -1445,7 +1439,6 @@ int input_global_vars_string(const string &s)
   if (1 != vstr.size()) return -1;
 
   int i = 0;
-  lastVesting = boost::lexical_cast<double>(vstr[i++]);
   int64_t lastVolume = boost::lexical_cast<int64_t>(vstr[i++]);
 
   globalVolumeALL_LTC = lastVolume;
@@ -1696,6 +1689,22 @@ int input_mp_mdexvolume_string(const std::string& s)
 
 }
 
+int input_vestingaddresses_string(const std::string& s)
+{
+   std::vector<std::string> vstr;
+   size_t elements = vestingAddresses.size();
+
+   boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
+
+   const std::string& address = vstr[0];
+
+   PrintToLog("%s(): address: %s\n",__func__, address);
+
+   vestingAddresses.push_back(address);
+
+   return ((vestingAddresses.size() > elements) ? 0 : -1);
+}
+
 static int msc_file_load(const string &filename, int what, bool verifyHash = false)
 {
   int lines = 0;
@@ -1781,6 +1790,12 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
     case FILETYPE_GLOBAL_VARS:
         inputLineFunc = input_global_vars_string;
         break;
+
+    case FILE_TYPE_VESTING_ADDRESSES:
+        vestingAddresses.clear();
+        inputLineFunc = input_vestingaddresses_string;
+        break;
+
 
     default:
       return -1;
@@ -1869,6 +1884,7 @@ static char const * const statePrefix[NUM_FILETYPES] = {
     "dexvolume",
     "mdexvolume",
     "globalvars",
+    "vestingaddresses",
 
 };
 
@@ -2100,7 +2116,6 @@ static int write_global_vars(ofstream &file, SHA256_CTX *shaCtx)
 
      int64_t lastVolume = globalVolumeALL_LTC;
 
-     lineOut.append(strprintf("%f", lastVesting));
      lineOut.append(strprintf("%d", lastVolume));
      // add the line to the hash
      SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
@@ -2258,6 +2273,7 @@ static int write_mp_active_channels(std::ofstream& file, SHA256_CTX* shaCtx)
         SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
         // write the line
         file << lineOut << endl;
+
     }
 
     return 0;
@@ -2274,7 +2290,7 @@ static int write_mp_dexvolume(std::ofstream& file, SHA256_CTX* shaCtx)
         const uint32_t& block = it->first;
         std::map<uint32_t,int64_t>& pMap = it->second;
 
-        for(std::map<uint32_t,int64_t>::iterator itt = pMap.begin(); itt != pMap.end(); ++itt)
+        for(auto itt = pMap.begin(); itt != pMap.end(); ++itt)
         {
             const uint32_t& propertyId = itt->first;
             const int64_t& amount = itt->second;
@@ -2299,7 +2315,6 @@ static int write_mp_mdexvolume(std::ofstream& file, SHA256_CTX* shaCtx)
         // decompose the key for address
         const uint32_t& block = it->first;
         std::map<std::pair<uint32_t, uint32_t>, int64_t>& pMap = it->second;
-
         for (const auto &p : pMap)
         {
             const std::pair<uint32_t, uint32_t>& pIr = p.first;
@@ -2319,6 +2334,25 @@ static int write_mp_mdexvolume(std::ofstream& file, SHA256_CTX* shaCtx)
 
     return 0;
 
+}
+
+void savingLine(const std::string& address, std::ofstream& file, SHA256_CTX* shaCtx)
+{
+    std::string lineOut;
+    lineOut.append(strprintf("%s",address));
+    // add the line to the hash
+    SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
+
+    // write the line
+    file << lineOut << endl;
+}
+
+/** Saving vesting token addresses **/
+static int write_mp_vesting_addresses(std::ofstream& file, SHA256_CTX* shaCtx)
+{
+    for_each(vestingAddresses.begin(), vestingAddresses.end(), [&file, shaCtx] (const std::string& address) { savingLine(address, file, shaCtx);});
+
+    return 0;
 }
 
 static int write_state_file( CBlockIndex const *pBlockIndex, int what )
@@ -2394,6 +2428,9 @@ static int write_state_file( CBlockIndex const *pBlockIndex, int what )
         result = write_global_vars(file, &shaCtx);
         break;
 
+    case FILE_TYPE_VESTING_ADDRESSES:
+        result = write_mp_vesting_addresses(file, &shaCtx);
+        break;
     }
 
     // generate and wite the double hash of all the contents written
@@ -2496,6 +2533,7 @@ int mastercore_save_state( CBlockIndex const *pBlockIndex )
     write_state_file(pBlockIndex, FILETYPE_ACTIVE_CHANNELS);
     write_state_file(pBlockIndex, FILETYPE_DEX_VOLUME);
     write_state_file(pBlockIndex, FILETYPE_GLOBAL_VARS);
+    write_state_file(pBlockIndex, FILE_TYPE_VESTING_ADDRESSES);
 
     // clean-up the directory
     prune_state_files(pBlockIndex);
@@ -2835,7 +2873,7 @@ bool CallingExpiration(CBlockIndex const * pBlockIndex)
 
 bool VestingTokens(int block)
 {
-    extern std::vector<std::string> vestingAddresses;
+    if(msc_debug_vesting) PrintToLog("%s() block : %d\n",__func__, block);
 
     if (vestingAddresses.empty())
     {
@@ -2843,40 +2881,54 @@ bool VestingTokens(int block)
         return false;
     }
 
-    int64_t XAxis = globalVolumeALL_LTC;
+    // Note: this is used to simplify the testing
+    const int64_t xAxis = (RegTest()) ? globalVolumeALL_LTC * 100 : globalVolumeALL_LTC;
 
-    if(msc_debug_vesting) PrintToLog("%s(): globalVolumeALL_LTC: %d \n",__func__,XAxis);
+    if(msc_debug_vesting) PrintToLog("%s(): globalVolumeALL_LTC: %d \n",__func__,xAxis);
 
-    rational_t Factor1over3(100, 3);
-    int64_t Factor1over3_64t = mastercore::RationalToInt64(Factor1over3);
 
-    if (XAxis <= 1000)
+    if (xAxis <= 10000 * COIN)
     {
-        if(msc_debug_vesting) PrintToLog("%s(): 0 percent of vesting (LTC) less than 1000 LTC: %d\n",__func__,XAxis);
+        if(msc_debug_vesting) PrintToLog("%s(): 0 percent of vesting (LTC) less than 10,000 LTC volume: %d\n",__func__, xAxis);
         return false;
     }
 
-    double factor = static_cast<double>(Factor1over3_64t) / COIN;
+    if (100000000 * COIN < xAxis)
+    {
+        if(msc_debug_vesting) PrintToLog("%s(): Vesting Tokens completed at 100,000,000 LTC volume: %d\n",__func__, xAxis);
+        return false;
+    }
 
-    // thisblockvesting = (log10(ltc volume) - 3) * 33.33333
-    double thisBlockVesting = (std::log10(XAxis) - 3) * factor;
+    const double amount = (double) xAxis / COIN;
 
-    double realVesting = thisBlockVesting - lastVesting;
+    // accumVesting % = (Log10(Cum_LTC_Volume)-4)/4; 100% vested at 100,000,000  LTCs volume
+    const double accumVesting = (std::log10(amount) - 4) / 4;
+
+    CMPSPInfo::Entry sp;
+    if (!_my_sps->getSP(VT, sp)) {
+       return false; // property ID does not exist
+    }
+
+    // vesting %
+    const double realVesting = accumVesting - sp.last_vesting;
+
+    PrintToLog("%s(): accumVesting: %f, realVesting: %f, last_vesting: %f\n",__func__, accumVesting, realVesting, sp.last_vesting);
+
 
     if (realVesting == 0)
     {
-        if(msc_debug_vesting) PrintToLog("%s(): realVesting = %f, lastVesting : %f\n",__func__, realVesting, lastVesting);
+        if(msc_debug_vesting) PrintToLog("%s(): 0 percent vesting in this block: %d\n",__func__,block);
         return false;
     }
 
     if(msc_debug_vesting) {
-        PrintToLog("%s(): lastVesting = %f, realVesting : %f, thisBlockVesting: %f\n",__func__, lastVesting, realVesting, thisBlockVesting);
-        PrintToLog("%s(): amount vesting on this block = %f, block ; %d, x_Axis: %d, std::log10(x_Axis) : %d, factor : %f\n",__func__, thisBlockVesting, block, XAxis, std::log10(XAxis), factor);
+        PrintToLog("%s(): lastVesting = %f, realVesting : %f, accumVesting: %f\n",__func__, sp.last_vesting, realVesting, accumVesting);
+        PrintToLog("%s(): amount vesting on this block = %f, block ; %d, x_Axis: %d, std::log10(amount) : %f\n",__func__, accumVesting, block, xAxis, std::log10(amount));
     }
 
     for (auto &addr : vestingAddresses)
     {
-        if(msc_debug_vesting) PrintToLog("\nInside Vesting function. Address = %s\n", addr);
+        if(msc_debug_vesting) PrintToLog("\nAddress = %s\n", addr);
 
         int64_t vestingBalance = getMPbalance(addr, TL_PROPERTY_VESTING, BALANCE);
         int64_t unvestedALLBal = getMPbalance(addr, ALL, UNVESTED);
@@ -2887,31 +2939,24 @@ bool VestingTokens(int block)
             PrintToLog("Vesting tokens in address = %d\n", vestingBalance);
         }
 
-        if (vestingBalance != 0 && unvestedALLBal != 0 && XAxis != 0)
+        if (vestingBalance != 0 && unvestedALLBal != 0 && xAxis != 0)
         {
 
             int64_t iRealVesting = mastercore::DoubleToInt64(realVesting);
-            arith_uint256 iAmount = mastercore::ConvertTo256(iRealVesting)*mastercore::ConvertTo256(vestingBalance)/(100 * COIN);
+            arith_uint256 iAmount = mastercore::ConvertTo256(iRealVesting) * mastercore::ConvertTo256(vestingBalance) / ConvertTo256(COIN);
             int64_t nAmount = mastercore::ConvertTo64(iAmount);
-
-            rational_t linearRationalw(nAmount, (int64_t)COIN);
 
             if(msc_debug_vesting) {
                 PrintToLog("%s(): nAmount = %d\n",__func__,nAmount);
-                PrintToLog("%s(): TOTAL_AMOUNT_VESTING_TOKENS = %d\n",__func__,TOTAL_AMOUNT_VESTING_TOKENS);
             }
 
-            int64_t weighted = mastercore::RationalToInt64(linearRationalw);
-
-            if(msc_debug_vesting) PrintToLog("%s(): weighted = %d\n",__func__,weighted);
-
-
-            assert(update_tally_map(addr, ALL, -weighted, UNVESTED));
-            assert(update_tally_map(addr, ALL, weighted, BALANCE));
+            assert(update_tally_map(addr, ALL, -nAmount, UNVESTED));
+            assert(update_tally_map(addr, ALL, nAmount, BALANCE));
         }
     }
 
-    lastVesting = thisBlockVesting;
+    sp.last_vesting = accumVesting;
+    assert(_my_sps->updateSP(VT, sp));
 
     if(msc_debug_handler_tx)
     {
@@ -2961,12 +3006,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
 
        int interp_ret = mp_obj.interpretPacket();
 
-       if(msc_debug_handler_tx) PrintToLog("%s(): interp_ret: %d\n",__func__,interp_ret);
-
-       PrintToLog("%s(): interp_ret: %d\n",__func__,interp_ret);
-
-       // Only structurally valid transactions get recorded in levelDB
-       // PKT_ERROR - 2 = interpret_Transaction failed, structurally invalid payload
+       if(msc_debug_handler_tx) PrintToLog("%s(): interp_ret: %d\n",__func__, interp_ret);
 
        // if interpretPacket returns 1, that means we have an instant trade between LTCs and tokens.
        if (interp_ret == 1)
@@ -2979,6 +3019,8 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
 
         }
 
+        // Only structurally valid transactions get recorded in levelDB
+        // PKT_ERROR - 2 = interpret_Transaction failed, structurally invalid payload
         if (interp_ret != PKT_ERROR - 2) {
             bool bValid = (0 <= interp_ret);
             p_txlistdb->recordTX(tx.GetHash(), bValid, nBlock, mp_obj.getType(), mp_obj.getNewAmount());
@@ -6381,8 +6423,9 @@ int64_t mastercore::getOracleTwap(uint32_t contractId, int nBlocks)
 
 bool mastercore::sanityChecks(const std::string& sender, int& aBlock)
 {
-    if (getAdminAddress() == sender)
+    if (getAdminAddress() == sender){
         return true;
+    }
 
     const CConsensusParams &params = ConsensusParams();
     vestingActivationBlock = params.MSC_VESTING_BLOCK;
@@ -6776,6 +6819,16 @@ bool mastercore::transferAll(const std::string& sender, const std::string& recei
 
 }
 
+int64_t mastercore::calculateUnvested(int64_t amountSended, int64_t balance, int64_t unvested)
+{
+    arith_uint256 uAmountSended = ConvertTo256(amountSended);
+    arith_uint256 uUnvested = ConvertTo256(unvested);
+    arith_uint256 uBalance = ConvertTo256(balance);
+    // actual calculation; round up
+    arith_uint256 amountPurchased256 = DivideAndRoundUp(uAmountSended * uUnvested, uBalance);
+    // convert back to int64_t
+    return ConvertTo64(amountPurchased256);
+ }
 
 /**
  * @return The marker for class D transactions.
