@@ -193,7 +193,6 @@ extern std::map<int, std::map<std::pair<uint32_t, uint32_t>, int64_t>> MapMetaVo
 
 using mastercore::StrToInt64;
 
-double lastVesting;
 
 // indicate whether persistence is enabled at this point, or not
 // used to write/read files, for breakout mode, debugging, etc.
@@ -638,6 +637,7 @@ void creatingVestingTokens(int block)
    newSP.num_tokens = amountVesting;
    newSP.attribute_type = ALL_PROPERTY_TYPE_VESTING;
    newSP.init_block = block;
+   newSP.last_vesting = 0;
 
    const uint32_t propertyIdVesting = _my_sps->putSP(newSP);
    assert(propertyIdVesting > 0);
@@ -646,8 +646,7 @@ void creatingVestingTokens(int block)
 
    //NOTE: we have to change this admin_addrs for getAdminAddress function call
    assert(update_tally_map(getAdminAddress(), propertyIdVesting, totalVesting, BALANCE));
-
-   // assert(update_tally_map(getAdminAddress(), ALL, totalVesting, BALANCE));
+   assert(update_tally_map(getAdminAddress(), ALL, totalVesting, UNVESTED));
 
 }
 
@@ -1404,7 +1403,6 @@ int input_global_vars_string(const string &s)
   if (1 != vstr.size()) return -1;
 
   int i = 0;
-  lastVesting = boost::lexical_cast<double>(vstr[i++]);
   int64_t lastVolume = boost::lexical_cast<int64_t>(vstr[i++]);
 
   globalVolumeALL_LTC = lastVolume;
@@ -1670,7 +1668,7 @@ int input_vestingaddresses_string(const std::string& s)
 
    vestingAddresses.push_back(address);
 
-   return ((vestingAddresses.size() > elements) ? -1 : 0);
+   return ((vestingAddresses.size() > elements) ? 0 : -1);
 }
 
 static int msc_file_load(const string &filename, int what, bool verifyHash = false)
@@ -2078,7 +2076,6 @@ static int write_global_vars(ofstream &file, SHA256_CTX *shaCtx)
 
      int64_t lastVolume = globalVolumeALL_LTC;
 
-     lineOut.append(strprintf("%f", lastVesting));
      lineOut.append(strprintf("%d", lastVolume));
      // add the line to the hash
      SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
@@ -2303,8 +2300,6 @@ void savingLine(const std::string& address, std::ofstream& file, SHA256_CTX* sha
     lineOut.append(strprintf("%s",address));
     // add the line to the hash
     SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
-
-    PrintToLog("%s(): lineOut: %s\n",__func__, lineOut);
 
     // write the line
     file << lineOut << endl;
@@ -2831,7 +2826,7 @@ bool CallingExpiration(CBlockIndex const * pBlockIndex)
 
 bool VestingTokens(int block)
 {
-    PrintToLog("%s() block : %d\n",__func__, block);
+    if(msc_debug_vesting) PrintToLog("%s() block : %d\n",__func__, block);
 
     if (vestingAddresses.empty())
     {
@@ -2862,10 +2857,15 @@ bool VestingTokens(int block)
     // accumVesting % = (Log10(Cum_LTC_Volume)-4)/4; 100% vested at 100,000,000  LTCs volume
     const double accumVesting = (std::log10(amount) - 4) / 4;
 
-    // vesting %
-    const double realVesting = accumVesting - lastVesting;
+    CMPSPInfo::Entry sp;
+    if (!_my_sps->getSP(VT, sp)) {
+       return false; // property ID does not exist
+    }
 
-    PrintToLog("%s(): accumVesting: %f, realVesting: %f\n",__func__, accumVesting, realVesting);
+    // vesting %
+    const double realVesting = accumVesting - sp.last_vesting;
+
+    PrintToLog("%s(): accumVesting: %f, realVesting: %f, last_vesting: %f\n",__func__, accumVesting, realVesting, sp.last_vesting);
 
 
     if (realVesting == 0)
@@ -2875,7 +2875,7 @@ bool VestingTokens(int block)
     }
 
     if(msc_debug_vesting) {
-        PrintToLog("%s(): lastVesting = %f, realVesting : %f, accumVesting: %f\n",__func__, lastVesting, realVesting, accumVesting);
+        PrintToLog("%s(): lastVesting = %f, realVesting : %f, accumVesting: %f\n",__func__, sp.last_vesting, realVesting, accumVesting);
         PrintToLog("%s(): amount vesting on this block = %f, block ; %d, x_Axis: %d, std::log10(amount) : %f\n",__func__, accumVesting, block, xAxis, std::log10(amount));
     }
 
@@ -2908,7 +2908,8 @@ bool VestingTokens(int block)
         }
     }
 
-    lastVesting = accumVesting;
+    sp.last_vesting = accumVesting;
+    assert(_my_sps->updateSP(VT, sp));
 
     if(msc_debug_handler_tx)
     {
@@ -2958,10 +2959,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
 
        int interp_ret = mp_obj.interpretPacket();
 
-       if(msc_debug_handler_tx) PrintToLog("%s(): interp_ret: %d\n",__func__,interp_ret);
-
-       PrintToLog("%s(): interp_ret: %d\n",__func__,interp_ret);
-
+       if(msc_debug_handler_tx) PrintToLog("%s(): interp_ret: %d\n",__func__, interp_ret);
 
        // if interpretPacket returns 1, that means we have an instant trade between LTCs and tokens.
        if (interp_ret == 1)
@@ -6774,12 +6772,13 @@ bool mastercore::transferAll(const std::string& sender, const std::string& recei
 
 }
 
-int64_t mastercore::calculateUnvested(int64_t amountSended, int64_t senderUnv)
+int64_t mastercore::calculateUnvested(int64_t amountSended, int64_t balance, int64_t unvested)
 {
     arith_uint256 uAmountSended = ConvertTo256(amountSended);
-    arith_uint256 uSenderUnv = ConvertTo256(senderUnv);
+    arith_uint256 uUnvested = ConvertTo256(unvested);
+    arith_uint256 uBalance = ConvertTo256(balance);
     // actual calculation; round up
-    arith_uint256 amountPurchased256 = DivideAndRoundUp(uSenderUnv, uAmountSended);
+    arith_uint256 amountPurchased256 = DivideAndRoundUp(uAmountSended * uUnvested, uBalance);
     // convert back to int64_t
     return ConvertTo64(amountPurchased256);
  }

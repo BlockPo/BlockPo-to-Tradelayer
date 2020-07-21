@@ -2541,12 +2541,13 @@ int CMPTransaction::logicMath_SendVestingTokens()
   }
 
   const int64_t uBalance = getMPbalance(sender, ALL, UNVESTED);
-  const int64_t rUnvest = (sender == getAdminAddress()) ? nValue : calculateUnvested(nValue, uBalance);
+  const int64_t rUnvest = (sender == getAdminAddress()) ? nValue : calculateUnvested(nValue, nBalance, uBalance);
 
-  PrintToLog("%s(): nValue:  %d, uBalance: %d, rUnvest: %d, sender : %s, receiver : %s\n",__func__, nValue, uBalance, rUnvest, sender, receiver);
+  PrintToLog("%s(): nValue:  %d, uBalance: %d,  nBalance: %d, rUnvest: %d, sender : %s, receiver : %s\n",__func__, nValue, uBalance, nBalance, rUnvest, sender, receiver);
 
   assert(update_tally_map(sender, TL_PROPERTY_VESTING, -nValue, BALANCE));
   assert(update_tally_map(receiver, TL_PROPERTY_VESTING, nValue, BALANCE));
+  assert(update_tally_map(sender, ALL, -rUnvest, UNVESTED));
   assert(update_tally_map(receiver, ALL, rUnvest, UNVESTED));
 
   vestingAddresses.push_back(receiver);

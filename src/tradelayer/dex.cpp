@@ -90,7 +90,12 @@ CMPAccept* DEx_getAccept(const std::string& addressSeller, uint32_t propertyId, 
     std::string key = STR_ACCEPT_ADDR_PROP_ADDR_COMBO(addressSeller, addressBuyer, propertyId);
     AcceptMap::iterator it = my_accepts.find(key);
 
-    if (it != my_accepts.end()) return &(it->second);
+    if (it != my_accepts.end()) {
+      PrintToLog("%s(): ORDER FOUND!, getAcceptBlock : %d\n",__func__, (it->second).getAcceptBlock());
+      return &(it->second);
+    }
+
+    PrintToLog("%s(): accept order not found!\n",__func__);
 
     return static_cast<CMPAccept*>(nullptr);
 }
@@ -498,7 +503,7 @@ int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addre
     int rc = DEX_ERROR_PAYMENT;
     uint32_t propertyId;
 
-    CMPAccept* p_accept;
+    CMPAccept* p_accept = nullptr;
 
     // logic here: we look only into main properties if there's some match
     for (propertyId = 1; propertyId < _my_sps->peekNextSPID(); propertyId++)
@@ -543,7 +548,7 @@ int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addre
     // divide by 0 protection
     if (0 == amountDesired)
     {
-        if (msc_debug_dex) PrintToLog("%s: ERROR: desired amount of accept order is zero", __func__);
+        if (msc_debug_dex) PrintToLog("%s(): ERROR: desired amount of accept order is zero", __func__);
         return (DEX_ERROR_PAYMENT -2);
     }
 
@@ -590,7 +595,7 @@ int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addre
 
     if (amountPurchased > 0)
     {
-        if(msc_debug_dex) PrintToLog("%s: seller %s offered %s %s for %s LTC\n", __func__,
+        if(msc_debug_dex) PrintToLog("%s(): seller %s offered %s %s for %s LTC\n", __func__,
 	      addressSeller, FormatDivisibleMP(amountOffered), strMPProperty(propertyId), FormatDivisibleMP(amountDesired));
 
         if(msc_debug_dex) PrintToLog("%s: buyer %s pays %s LTC to purchase %s %s\n", __func__,
@@ -600,8 +605,9 @@ int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addre
         assert(update_tally_map(addressBuyer, propertyId, amountPurchased, BALANCE));
 
         if(msc_debug_dex) PrintToLog("AmountPurchased : %d\n",amountPurchased);
-        // bool valid = true;
-        // p_txlistdb->recordPaymentTX(txid, valid, block, vout, propertyId, amountPurchased, addressBuyer, addressSeller);
+
+        bool valid = true;
+        p_txlistdb->recordPaymentTX(txid, valid, block, vout, propertyId, amountPurchased, addressBuyer, addressSeller);
 
         rc = 0;
         if(msc_debug_dex) PrintToLog("#######################################################\n");
@@ -626,7 +632,7 @@ int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addre
             if(msc_debug_dex) PrintToLog(" 0 == reserveSell && 0 == reserveAccept true\n");
             DEx_offerDestroy(addressSeller, propertyId);
         }
-        
+
         rc = 0;
     }
 

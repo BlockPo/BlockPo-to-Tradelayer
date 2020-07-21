@@ -201,7 +201,7 @@ enum FILETYPES {
 #define LTC        0
 #define ALL        1
 #define sLTC       2
-#define dUSD       3  // vesting tokens?
+#define VT         3  // vesting tokens?
 #define dEUR       4
 #define dJPY       5
 #define dCNY       6
@@ -210,6 +210,7 @@ enum FILETYPES {
 #define LTC_EUR    9
 #define JPY       10
 #define CNY       11
+#define dUSD      12
 
 // #define CONTRACT_ALL        3
 // #define CONTRACT_ALL_DUSD   4
@@ -605,7 +606,7 @@ namespace mastercore
 
   const string getAdminAddress();
 
-  int64_t calculateUnvested(int64_t amountSended, int64_t senderUnv);
+  int64_t calculateUnvested(int64_t amountSended, int64_t balance, int64_t unvested);
 }
 
 #endif // TRADELAYER_TL_H
