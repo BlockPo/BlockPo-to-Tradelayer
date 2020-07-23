@@ -386,6 +386,13 @@ class ChannelsBasicsTest (BitcoinTestFramework):
         hex = out['result']
         # self.log.info(hex)
 
+        # Destination here is yourself (we are sending 1 LTC from addresses[1] to addresses[0])
+        self.log.info("Creating raw reference")
+        params = str([hex, addresses[0], 1.5]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_createrawtx_reference",params)
+        # self.log.info(out)
+
+        hex = out['result']
 
         self.log.info("Creating payload for instant trade")
         params = str([4, '1000',300, 5, '2000']).replace("'",'"')
@@ -429,7 +436,7 @@ class ChannelsBasicsTest (BitcoinTestFramework):
         # self.log.info(out)
         tx = out['result']
 
-        self.nodes[0].generate(1)
+        self.nodes[0].generate(2)
 
 
         self.log.info("Checking transaction")

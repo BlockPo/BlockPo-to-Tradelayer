@@ -69,14 +69,19 @@ class HTTPBasicsTest (BitcoinTestFramework):
         assert_equal(out['result'][0]['category'], "N/A")
         assert_equal(out['result'][0]['subcategory'], "N/A")
 
-
         self.log.info("Testing tl_getbalance")
         address = 'QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPb'
         params = str([address, 1]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
         # self.log.info(out)
         assert_equal(out['result']['balance'],'1500000.00000000')
-        assert_equal(out['result']['reserve'],'0.00000000')
+
+
+        self.log.info("Testing tl_getunvested")
+        params = str([address]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getunvested",params)
+        # self.log.info(out)
+        assert_equal(out['result']['unvested'],'1500000.00000000')
 
 
         self.log.info("Testing tl_getallbalancesforid")

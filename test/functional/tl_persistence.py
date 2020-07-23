@@ -196,7 +196,6 @@ class PersistenceBasicsTest (BitcoinTestFramework):
         assert_equal(out['result'][0]['seller'], addresses[0])
         assert_equal(out['result'][0]['ltcsdesired'], '1.00000000')
         assert_equal(out['result'][0]['amountavailable'], '1000.00000000')
-        assert_equal(out['result'][0]['amountoffered'], '0.00000000')
         assert_equal(out['result'][0]['unitprice'], '0.00100000')
         assert_equal(out['result'][0]['minimumfee'], '0.00001000')
 
@@ -270,7 +269,6 @@ class PersistenceBasicsTest (BitcoinTestFramework):
         assert_equal(out['result'][0]['seller'], addresses[0])
         assert_equal(out['result'][0]['ltcsdesired'], '1.00000000')
         assert_equal(out['result'][0]['amountavailable'], '1000.00000000')
-        assert_equal(out['result'][0]['amountoffered'], '0.00000000')
         assert_equal(out['result'][0]['unitprice'], '0.00100000')
         assert_equal(out['result'][0]['minimumfee'], '0.00001000')
 
@@ -292,7 +290,6 @@ class PersistenceBasicsTest (BitcoinTestFramework):
         assert_equal(out['result'][0]['seller'], addresses[0])
         assert_equal(out['result'][0]['ltcsdesired'], '0.00000000')
         assert_equal(out['result'][0]['amountavailable'], '0.00000000')
-        assert_equal(out['result'][0]['amountoffered'], '1000.00000000')
         assert_equal(out['result'][0]['unitprice'], '0.00100000')
         assert_equal(out['result'][0]['minimumfee'], '0.00001000')
 
@@ -323,7 +320,6 @@ class PersistenceBasicsTest (BitcoinTestFramework):
         assert_equal(out['result'][0]['seller'], addresses[0])
         assert_equal(out['result'][0]['ltcsdesired'], '0.00000000')
         assert_equal(out['result'][0]['amountavailable'], '0.00000000')
-        assert_equal(out['result'][0]['amountoffered'], '1000.00000000')
         assert_equal(out['result'][0]['unitprice'], '0.00100000')
         assert_equal(out['result'][0]['minimumfee'], '0.00001000')
 

@@ -135,7 +135,7 @@ TODO : New chain checkpoints
  */
 CMainConsensusParams::CMainConsensusParams()
 {
-    GENESIS_BLOCK = 1171000;
+    GENESIS_BLOCK = 99999999;
     // Notice range for feature activations:
     MIN_ACTIVATION_BLOCKS = 2048;  // ~2 weeks
     MAX_ACTIVATION_BLOCKS = 12288; // ~12 weeks
@@ -144,7 +144,7 @@ CMainConsensusParams::CMainConsensusParams()
     SCRIPTHASH_BLOCK = 0;
     NULLDATA_BLOCK = 0;
     // Transaction restrictions:
-    MSC_ALERT_BLOCK = 0;
+    MSC_ALERT_BLOCK = 99999999;
     MSC_SEND_BLOCK = 99999999;
     MSC_SP_BLOCK = 99999999;
     MSC_MANUALSP_BLOCK = 99999999;
@@ -167,8 +167,7 @@ CMainConsensusParams::CMainConsensusParams()
  */
  CTestNetConsensusParams::CTestNetConsensusParams()
  {
-     // NOTE: this is important to not waste time
-     GENESIS_BLOCK = 1537678;
+     GENESIS_BLOCK = 1569000;
      // Notice range for feature activations:
      MIN_ACTIVATION_BLOCKS = 0;
      MAX_ACTIVATION_BLOCKS = 99999999;

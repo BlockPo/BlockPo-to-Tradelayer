@@ -600,7 +600,7 @@ void CheckWalletUpdate(bool forceUpdate)
  *
  * @return The specific address
  */
-const string mastercore::getAdminAddress()
+const string mastercore::getVestingAdmin()
 {
     if (RegTest())
     {
@@ -610,16 +610,17 @@ const string mastercore::getAdminAddress()
 
     } else if (TestNet()) {
         // testnet address
-        const string testAddress = "moiFSSEFvkBGgE14tVhDTGLeT4qQE7Nk1d";
+        const string testAddress = "n4meoEMb4x544JPe1EkVPTrMqBQMYxqGV8";
         return testAddress;
 
     }
 
-    // NOTE: we need the Mainnet adddress
-    const string mainAddress = "";
+    const string mainAddress = "MANxfoWpwqEbSBe5ujKnCSTkfgjAwKre49";
     return mainAddress;
 
 }
+
+
 
 void creatingVestingTokens(int block)
 {
@@ -642,12 +643,14 @@ void creatingVestingTokens(int block)
    const uint32_t propertyIdVesting = _my_sps->putSP(newSP);
    assert(propertyIdVesting > 0);
 
-   if(msc_debug_vesting) PrintToLog("%s(): admin_addrs : %s, propertyIdVesting: %d \n",__func__,getAdminAddress(), propertyIdVesting);
+   if(msc_debug_vesting) PrintToLog("%s(): admin_addrs : %s, propertyIdVesting: %d \n",__func__,getVestingAdmin(), propertyIdVesting);
 
-   //NOTE: we have to change this admin_addrs for getAdminAddress function call
-   assert(update_tally_map(getAdminAddress(), propertyIdVesting, totalVesting, BALANCE));
-   assert(update_tally_map(getAdminAddress(), ALL, totalVesting, UNVESTED));
 
+   assert(update_tally_map(getVestingAdmin(), propertyIdVesting, totalVesting, BALANCE));
+   assert(update_tally_map(getVestingAdmin(), ALL, totalVesting, UNVESTED));
+
+   // only for testing
+   if (RegTest()) assert(update_tally_map(getVestingAdmin(), ALL, totalVesting, BALANCE));
 }
 
 /**
@@ -6423,7 +6426,7 @@ int64_t mastercore::getOracleTwap(uint32_t contractId, int nBlocks)
 
 bool mastercore::sanityChecks(const std::string& sender, int& aBlock)
 {
-    if (getAdminAddress() == sender){
+    if (getVestingAdmin() == sender){
         return true;
     }
 
