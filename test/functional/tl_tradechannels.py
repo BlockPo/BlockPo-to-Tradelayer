@@ -362,7 +362,7 @@ class ChannelsBasicsTest (BitcoinTestFramework):
 
 
         # addr0 making instant trade with addr1 (tokens for tokens)
-        self.log.info("Funding the channel with 2 LTC")
+        self.log.info("Funding the addresses[0] with 2 LTC")
         params = str([addresses[0], 2]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "sendtoaddress", params)
         # self.log.info(out)

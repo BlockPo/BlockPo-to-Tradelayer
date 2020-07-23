@@ -54,18 +54,28 @@ class FixedBasicsTest (BitcoinTestFramework):
         self.log.info("Creating sender address")
         addresses = tradelayer_createAddresses(accounts, conn, headers)
 
+        # funding another address with NO KYC
+        params = str(["bob"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "getnewaddress", params)
+        noallowed = out['result']
+        # self.log.info(notaryAddr)
+
+        params = str([noallowed, '0.2']).replace("'",'"')
+        tradelayer_HTTP(conn, headers, True, "sendtoaddress", params)
+
+        self.nodes[0].generate(1)
+
         self.log.info("Funding addresses with LTC")
-        amount = 0.1
+        amount = 0.2
         tradelayer_fundingAddresses(addresses, amount, conn, headers)
 
         self.log.info("Checking the LTC balance in every account")
         tradelayer_checkingBalance(accounts, amount, conn, headers)
 
-
         self.log.info("Creating new tokens (sendissuancefixed)")
         array = [0]
         params = str([addresses[0],2,0,"lihki","","","3000",array]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, True, "tl_sendissuancefixed",params)
+        out = tradelayer_HTTP(conn, headers, False, "tl_sendissuancefixed",params)
         # self.log.info(out)
 
         self.log.info("Self Attestation for addresses")
@@ -114,6 +124,23 @@ class FixedBasicsTest (BitcoinTestFramework):
             assert_equal(out['result']['balance'], amount)
             assert_equal(out['result']['reserve'],'0.00000000')
 
+        # kyc testing
+        self.log.info("Sending 987 tokens to not allowed address (no kyc)")
+        params = str([addresses[0], noallowed, 4, "987"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_send",params)
+        # self.log.info(out)
+
+        self.nodes[0].generate(1)
+
+
+        self.log.info("Checking tokens in receiver address (must be 0.0000000)")
+        params = str([noallowed, 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['balance'],'0.00000000')
+        assert_equal(out['result']['reserve'],'0.00000000')
+        #end kyc testing
 
         self.log.info("Sending 2000 tokens to receiver (tl_send)")
         params = str([addresses[0], addresses[1], 4, "2000"]).replace("'",'"')
