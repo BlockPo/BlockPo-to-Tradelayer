@@ -7,7 +7,6 @@
  */
 
 #include "tradelayer/activation.h"
-
 #include "tradelayer/log.h"
 #include "tradelayer/utilsbitcoin.h"
 #include "tradelayer/version.h"

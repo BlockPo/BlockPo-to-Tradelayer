@@ -1526,16 +1526,6 @@ int input_mp_contractdexorder_string(const std::string& s)
     return 0;
 }
 
-int input_market_prices_string(const std::string& s)
-{
-   std::vector<std::string> vstr;
-   boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
-
-   if (NPTYPES != vstr.size()) return -1;
-   for (int i = 0; i < NPTYPES; i++) marketP[i] = boost::lexical_cast<uint64_t>(vstr[i]);
-
-   return 0;
-}
 
 int input_cachefees_string(const std::string& s)
 {
@@ -1737,10 +1727,6 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
         inputLineFunc = input_mp_contractdexorder_string;
         break;
 
-    case FILETYPE_MARKETPRICES:
-        inputLineFunc = input_market_prices_string;
-        break;
-
     case FILETYPE_OFFERS:
         my_offers.clear();
         inputLineFunc = input_mp_offers_string;
@@ -1876,7 +1862,6 @@ static char const * const statePrefix[NUM_FILETYPES] = {
     "globals",
     "crowdsales",
     "cdexorders",
-    "marketprices",
     "offers",
     "mdexorders",
     "accepts",
@@ -2128,18 +2113,6 @@ static int write_global_vars(ofstream &file, SHA256_CTX *shaCtx)
      return 0;
 }
 
-static int write_market_pricescd(ofstream &file, SHA256_CTX *shaCtx)
-{
-     std::string lineOut;
-
-     for (int i = 0; i < NPTYPES; i++) lineOut.append(strprintf("%d", marketP[i]));
-     // add the line to the hash
-     SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
-     // write the line
-     file << lineOut << endl;
-
-     return 0;
-}
 
 static int write_mp_metadex(ofstream &file, SHA256_CTX *shaCtx)
 {
@@ -2388,10 +2361,6 @@ static int write_state_file( CBlockIndex const *pBlockIndex, int what )
         result = write_mp_contractdex(file, &shaCtx);
         break;
 
-    case FILETYPE_MARKETPRICES:
-        result = write_market_pricescd(file, &shaCtx);
-        break;
-
     case FILETYPE_OFFERS:
         result = write_mp_offers(file, &shaCtx);
         break;
@@ -2526,7 +2495,6 @@ int mastercore_save_state( CBlockIndex const *pBlockIndex )
     write_state_file(pBlockIndex, FILETYPE_GLOBALS);
     write_state_file(pBlockIndex, FILETYPE_CROWDSALES);
     write_state_file(pBlockIndex, FILETYPE_CDEXORDERS);
-    write_state_file(pBlockIndex, FILETYPE_MARKETPRICES);
     write_state_file(pBlockIndex, FILETYPE_OFFERS);
     write_state_file(pBlockIndex, FILETYPE_ACCEPTS);
     write_state_file(pBlockIndex, FILETYPE_MDEXORDERS);
@@ -4414,6 +4382,40 @@ bool CMPTradeList::kycLoop(UniValue& response)
     return status;
 }
 
+bool CMPTradeList::kycConsensusHash(SHA256_CTX& shaCtx)
+{
+    if (!pdb) {
+       PrintToLog("%s(): Error loading KYC for consensus hashing, hash should not be trusted!\n",__func__);
+       return false;
+    }
+
+    leveldb::Iterator* it = NewIterator();
+    for(it->SeekToLast(); it->Valid(); it->Prev())
+    {
+        // search key to see if this is a matching trade
+        std::string strKey = it->key().ToString();
+        std::string strValue = it->value().ToString();
+        std::vector<std::string> vstr;
+
+        // ensure correct amount of tokens in value string
+        boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
+        if (vstr.size() != 8) continue;
+
+        const std::string& type = vstr[7];
+        if( type != TYPE_NEW_ID_REGISTER) continue;
+
+        std::string dataStr = kycGenerateConsensusString(vstr);
+
+        if (msc_debug_consensus_hash) PrintToLog("Adding KYC entry to consensus hash: %s\n", dataStr);
+        SHA256_Update(&shaCtx, dataStr.c_str(), dataStr.length());
+    }
+
+    // clean up
+    delete it;
+
+    return true;
+}
+
 bool CMPTradeList::attLoop(UniValue& response)
 {
     bool status = false;
@@ -4462,6 +4464,42 @@ bool CMPTradeList::attLoop(UniValue& response)
     delete it;
 
     return status;
+}
+
+bool CMPTradeList::attConsensusHash(SHA256_CTX& shaCtx)
+{
+    if (!pdb) {
+       PrintToLog("%s(): Error loading Attestation for consensus hashing, hash should not be trusted!\n",__func__);
+       return false;
+    }
+
+    leveldb::Iterator* it = NewIterator();
+    for(it->SeekToLast(); it->Valid(); it->Prev())
+    {
+        // search key to see if this is a matching trade
+        std::string strKey = it->key().ToString();
+        std::string strValue = it->value().ToString();
+        std::vector<std::string> vstr;
+        // ensure correct amount of tokens in value string
+        boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
+        if (vstr.size() != 7)
+            continue;
+
+        std::string type = vstr[6];
+
+        if(type != TYPE_ATTESTATION)
+            continue;
+
+        std::string dataStr = attGenerateConsensusString(vstr);
+
+        if (msc_debug_consensus_hash) PrintToLog("Adding Attestation entry to consensus hash: %s\n", dataStr);
+        SHA256_Update(&shaCtx, dataStr.c_str(), dataStr.length());
+    }
+
+    // clean up
+    delete it;
+
+    return true;
 }
 
 bool CMPTradeList::kycPropertyMatch(uint32_t propertyId, int kyc_id)

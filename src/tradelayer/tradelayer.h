@@ -26,6 +26,7 @@ class CTransaction;
 #include "leveldb/status.h"
 
 #include <stdint.h>
+#include <openssl/sha.h>
 
 #include <map>
 #include <string>
@@ -147,7 +148,6 @@ enum FILETYPES {
   FILETYPE_GLOBALS,
   FILETYPE_CROWDSALES,
   FILETYPE_CDEXORDERS,
-  FILETYPE_MARKETPRICES,
   FILETYPE_MDEXORDERS,
   FILETYPE_OFFERS,
   FILETYPE_ACCEPTS,
@@ -456,6 +456,8 @@ class CMPTradeList : public CDBBase
   int getNextId();
   void getUpnInfo(const std::string& address, uint32_t contractId, UniValue& response, bool showVerbose);
   bool checkTranfer(const std::string& address);
+  bool kycConsensusHash(SHA256_CTX& shaCtx);
+  bool attConsensusHash(SHA256_CTX& shaCtx);
 };
 
 class CMPSettlementMatchList : public CDBBase

@@ -3,14 +3,15 @@
  *
  * This file contains the function to generate consensus hashes.
  */
-
+#include "tradelayer/activation.h"
 #include "tradelayer/consensushash.h"
 #include "tradelayer/dex.h"
 #include "tradelayer/mdex.h"
 #include "tradelayer/log.h"
-#include "tradelayer/tradelayer.h"
 #include "tradelayer/parse_string.h"
+#include "tradelayer/persistence.h"
 #include "tradelayer/sp.h"
+#include "tradelayer/tradelayer.h"
 
 #include "arith_uint256.h"
 #include "uint256.h"
@@ -23,10 +24,16 @@
 #include <openssl/sha.h>
 #include "tradelayer_matrices.h"
 
-extern uint64_t marketP[NPTYPES];
+extern std::map<std::string,channel> channels_Map;
+extern std::map<uint32_t, int64_t> cachefees;
+extern std::map<uint32_t, int64_t> cachefees_oracles;
+extern std::vector<std::string> vestingAddresses;
 
 namespace mastercore
 {
+
+CMPTradeList *d_tradelistdb;
+
 
 bool ShouldConsensusHashBlock(int block)
 {
@@ -125,17 +132,40 @@ std::string GenerateConsensusString(const uint32_t propertyId, const std::string
     return strprintf("%d|%s", propertyId, address);
 }
 
-std::string GenerateConsensusString(volatile uint64_t price[NPTYPES]) //FIXME: volatile issue (¡¡Use lock/mutex!!)
-{
-    return strprintf("%d|%d|%d|%d|%d|%d|%d|%d|%d|%d",
-		     (void*)price[0],(void*)price[1],(void*)price[2],(void*)price[3],
-		     (void*)price[4],(void*)price[5],(void*)price[6],(void*)price[7],
-		     (void*)price[8],(void*)price[9]);
 
-    // PrintToLog("%d|%d|%d|%d|%d|%d|%d|%d|%d|%d \n",
-    //      price[0],price[1],price[2],price[3],
-    //      price[4],price[5],price[6],price[7],
-    //      price[8],price[9]);
+// Generates a consensus string for hashing based on a channel object
+std::string GenerateConsensusString(const channel& chn)
+{
+    return strprintf("%s|%s|%s|%d|%d",
+		     chn.multisig, chn.first, chn.second, chn.expiry_height,
+		     chn.last_exchange_block);
+}
+
+// Generates a consensus string for hashing based on a kyc register
+std::string kycGenerateConsensusString(const std::vector<std::string>& vstr)
+{
+    return strprintf("%s|%s|%s|%s|%s",
+		     vstr[0], vstr[1], vstr[2], vstr[3],
+		     vstr[5]);
+}
+
+// Generates a consensus string for hashing based on a attestation register
+std::string attGenerateConsensusString(const std::vector<std::string>& vstr)
+{
+    return strprintf("%s|%s|%d|%d",
+		     vstr[0], vstr[1], vstr[2], vstr[4]);
+}
+
+// Generates a consensus string for hashing based on a cachefee (natives and oracles) register
+std::string GenerateConsensusString(const uint32_t& propertyId, const int64_t& cache)
+{
+    return strprintf("%d|%d",propertyId, cache);
+}
+
+// Generates a consensus string for hashing based on features activation register
+std::string GenerateConsensusString(const mastercore::FeatureActivation& feat)
+{
+    return strprintf("%d|%d|%d|%s", feat.featureId, feat.activationBlock, feat.minClientVersion, feat.featureName);
 }
 
 /**
@@ -171,15 +201,49 @@ std::string GenerateConsensusString(volatile uint64_t price[NPTYPES]) //FIXME: v
 *
 * Note: ordered ascending by txid.
 *
-* ---STAGE 5 - CROWDSALES---
+* ---STAGE 5 - CONTRACTDEX TRADES---
+* Format specifiers & placeholders:
+*   "%s|%s|%d|%d|%d|%d|%d" - "txid|address|propertyidforsale|amountforsale|propertyiddesired|amountdesired|amountremaining"
+*
+* Note: ordered ascending by txid.
+*
+* ---STAGE 6 - CROWDSALES---
 * Format specifiers & placeholders:
 *   "%d|%d|%d|%d|%d" - "propertyid|propertyiddesired|deadline|usertokens|issuertokens"
 *
 * Note: ordered by property ID.
 *
-* ---STAGE 6 - PROPERTIES---
+* ---STAGE 7 - PROPERTIES---
 * Format specifiers & placeholders:
 *   "%d|%s" - "propertyid|issueraddress"
+*
+* ---STAGE 8 - TRADE CHANNELS---
+* Format specifiers & placeholders:
+*   "%s|%s|%s|%s|%d|%d" - "multisigaddress|multisigaddress|firstaddress|secondaddress|expiryheight|lastexchangeblock"
+*
+* ---STAGE 9 - KYC LIST---
+* Format specifiers & placeholders:
+*   "%s|%s|%s|%d|%d" - "address|name|website|block|kycid"
+*
+* ---STAGE 10 - ATTESTATION LIST---
+* Format specifiers & placeholders:
+*   "%s|%s|%s|%s|%d|%d" - "multisigaddress|multisigaddress|firstaddress|secondaddress|expiryheight|lastexchangeblock"
+*
+* ---STAGE 11 - FEE CACHE NATIVES---
+* Format specifiers & placeholders:
+*   "%s|%s|%s|%s|%d|%d" - "multisigaddress|multisigaddress|firstaddress|secondaddress|expiryheight|lastexchangeblock"
+*
+* ---STAGE 12 - FEE CACHE ORACLES---
+* Format specifiers & placeholders:
+*   "%s|%s|%s|%s|%d|%d" - "multisigaddress|multisigaddress|firstaddress|secondaddress|expiryheight|lastexchangeblock"
+*
+* ---STAGE 12 - VESTING ADDRESSES---
+* Format specifiers & placeholders:
+*   "%s" - "address"
+*
+* ---STAGE 13 - FEATURES ACTIVATIONS---
+* Format specifiers & placeholders:
+*   "%d|%d|%d|%s" - "featureid|activationblock|minclientversion|featurename"
 *
 * Note: ordered by property ID.
 *
@@ -317,9 +381,9 @@ uint256 GetConsensusHash()
     }
 
     // Generates a consensus string for hashing based on Futures Contracts market prices
-    std::string marketStr = GenerateConsensusString(marketP);
-    if (msc_debug_consensus_hash) PrintToLog("Adding ContractDex Market Prices to consensus hash: %s\n", marketStr);
-    SHA256_Update(&shaCtx, marketStr.c_str(), marketStr.length());
+    // std::string marketStr = GenerateConsensusString(marketP);
+    // if (msc_debug_consensus_hash) PrintToLog("Adding ContractDex Market Prices to consensus hash: %s\n", marketStr);
+    // SHA256_Update(&shaCtx, marketStr.c_str(), marketStr.length());
 
     // Crowdsales - loop through open crowdsales and add to the consensus hash (ordered by property ID)
     // Note: the variables of the crowdsale (amount, bonus etc) are not part of the crowdsale map and not included here to
@@ -358,6 +422,113 @@ uint256 GetConsensusHash()
 
         std::string dataStr = GenerateConsensusString(propertyId, sp.issuer);
         if (msc_debug_consensus_hash) PrintToLog("Adding property to consensus hash: %s\n", dataStr);
+        SHA256_Update(&shaCtx, dataStr.c_str(), dataStr.length());
+    }
+
+    // Trade Channels
+    // Placeholders: "multisigaddress|multisigaddress|firstaddress|secondaddress|expiryheight|lastexchangeblock"
+    std::vector<std::pair<std::string, std::string> > vecChannels;
+    for(auto it = channels_Map.begin(); it != channels_Map.end(); ++it)
+    {
+         const std::string& multisig = it->first;
+         const channel& chn = it->second;
+         std::string dataStr = GenerateConsensusString(chn);
+         vecChannels.push_back(std::make_pair(multisig, dataStr));
+    }
+    // ordering  channels by multisig address
+    std::sort (vecChannels.begin(), vecChannels.end());
+    for (auto it = vecChannels.begin(); it != vecChannels.end(); ++it)
+    {
+        std::string dataStr = it->second;
+        if (msc_debug_consensus_hash) PrintToLog("Adding Trade Channels entry to consensus hash: %s\n", dataStr);
+        SHA256_Update(&shaCtx, dataStr.c_str(), dataStr.length());
+    }
+
+    // KYC list
+    // Placeholders: "address|name|website|block|kycid"
+    d_tradelistdb->kycConsensusHash(shaCtx);
+
+    // Attestation list
+    // Placeholders: "address|name|website|block|kycid"
+    d_tradelistdb->attConsensusHash(shaCtx);
+
+    // Cache fee (natives)
+    // Placeholders: "propertyid|cacheamount"
+    for (auto itt = cachefees.begin(); itt != cachefees.end(); ++itt)
+    {
+        // decompose the key for address
+        const uint32_t& propertyId = itt->first;
+        const int64_t& cache = itt->second;
+        std::string dataStr = GenerateConsensusString(propertyId, cache);
+        if (msc_debug_consensus_hash) PrintToLog("Adding Fee cache (natives) entry to consensus hash: %s\n", dataStr);
+        SHA256_Update(&shaCtx, dataStr.c_str(), dataStr.length());
+    }
+
+    // Cache fee (oracles)
+    // Placeholders: "propertyid|cacheamount"
+    for (auto itt = cachefees_oracles.begin(); itt != cachefees_oracles.end(); ++itt)
+    {
+        // decompose the key for address
+        const uint32_t& propertyId = itt->first;
+        const int64_t& cache = itt->second;
+        std::string dataStr = GenerateConsensusString(propertyId, cache);
+        if (msc_debug_consensus_hash) PrintToLog("Adding Fee cache (oracles) entry to consensus hash: %s\n", dataStr);
+        SHA256_Update(&shaCtx, dataStr.c_str(), dataStr.length());
+    }
+
+    // Vesting addresses
+    // Placeholders: "addresses"
+    std::sort (vestingAddresses.begin(), vestingAddresses.end());
+    for (auto it = vestingAddresses.begin(); it != vestingAddresses.end(); ++it)
+    {
+        // decompose the key for address
+        const std::string& address = *it;
+        std::string dataStr = strprintf("%s", address);
+        if (msc_debug_consensus_hash) PrintToLog("Adding Vesting addresses entry to consensus hash: %s\n", dataStr);
+        SHA256_Update(&shaCtx, dataStr.c_str(), dataStr.length());
+    }
+
+    // Pending Activations
+    // Placeholders: "featureid|activationblock|minclientversion|featurename"
+    std::vector<mastercore::FeatureActivation> pendings = mastercore::GetPendingActivations();
+    std::vector<std::pair<uint16_t, std::string> > sortPendings;
+
+    for(auto it = pendings.begin(); it != pendings.end(); ++it)
+    {
+         const mastercore::FeatureActivation& feat = *it;
+         std::string dataStr = GenerateConsensusString(feat);
+         sortPendings.push_back(std::make_pair(feat.featureId, dataStr));
+    }
+
+    // sorting using featureId
+    std::sort(sortPendings.begin(), sortPendings.end());
+
+    for(auto itt = sortPendings.begin(); itt != sortPendings.end(); ++itt)
+    {
+        std::string dataStr = itt->second;
+        if (msc_debug_consensus_hash) PrintToLog("Adding Pensing features activations entry to consensus hash: %s\n", dataStr);
+        SHA256_Update(&shaCtx, dataStr.c_str(), dataStr.length());
+    }
+
+    // Completed Activations
+    // Placeholders: "featureid|activationblock|minclientversion|featurename"
+    std::vector<mastercore::FeatureActivation> completed = mastercore::GetCompletedActivations();
+    std::vector<std::pair<uint16_t, std::string> > sortCompleted;
+
+    for(auto it = completed.begin(); it != completed.end(); ++it)
+    {
+         const mastercore::FeatureActivation& feat = *it;
+         std::string dataStr = GenerateConsensusString(feat);
+         sortCompleted.push_back(std::make_pair(feat.featureId, dataStr));
+    }
+
+    // sorting using featureId
+    std::sort(sortCompleted.begin(), sortCompleted.end());
+
+    for(auto itt = sortCompleted.begin(); itt != sortCompleted.end(); ++itt)
+    {
+        std::string dataStr = itt->second;
+        if (msc_debug_consensus_hash) PrintToLog("Adding Completed features activations entry to consensus hash: %s\n", dataStr);
         SHA256_Update(&shaCtx, dataStr.c_str(), dataStr.length());
     }
 
