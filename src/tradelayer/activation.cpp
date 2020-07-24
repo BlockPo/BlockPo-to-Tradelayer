@@ -9,6 +9,7 @@
 #include "tradelayer/activation.h"
 
 #include "tradelayer/log.h"
+#include "tradelayer/utilsbitcoin.h"
 #include "tradelayer/version.h"
 
 #include "ui_interface.h"
@@ -133,15 +134,17 @@ bool CheckActivationAuthorization(const std::string& sender)
 {
     std::set<std::string> whitelisted;
 
-    // Mainnet - 4 out of 5 signatures required from developers & board members
-    // TODO: New key is required for Trade Layer
-    whitelisted.insert("LZKEY");
+    // TODO: Mainnet - 2 out of 3 signatures required from developers & board members
+    // whitelisted.insert("???");
 
-    // Testnet / Regtest
+    // Testnet - 2 out of 3 signatures required from developers & board members
+    whitelisted.insert("QWE8RTYmnciyB8efsMJxnPbKrC7tfGhpNr");
+
+    // Regtest
     // use -tlactivationallowsender for testing
 
     // Add manually whitelisted sources
-    if (gArgs.IsArgSet("-tlactivationallowsender")) {
+    if (gArgs.IsArgSet("-tlactivationallowsender") && RegTest()) {
         const std::vector<std::string>& sources = gArgs.GetArgs("-tlactivationallowsender");
 
         for (std::vector<std::string>::const_iterator it = sources.begin(); it != sources.end(); ++it) {
@@ -151,7 +154,7 @@ bool CheckActivationAuthorization(const std::string& sender)
     }
 
     // Remove manually ignored sources
-    if (gArgs.IsArgSet("-tlactivationignoresender")) {
+    if (gArgs.IsArgSet("-tlactivationignoresender") && RegTest()) {
         const std::vector<std::string>& sources = gArgs.GetArgs("-tlactivationignoresender");
 
         for (std::vector<std::string>::const_iterator it = sources.begin(); it != sources.end(); ++it) {
@@ -172,15 +175,17 @@ bool CheckDeactivationAuthorization(const std::string& sender)
 {
     std::set<std::string> whitelisted;
 
-    // Mainnet - 3 out of 5 signatures required from developers & board members
-    // TODO: New key is required for Trade Layer
-    whitelisted.insert("LZKEY");
+    // TODO: Mainnet - 2 out of 3 signatures required from developers & board members
+    // whitelisted.insert("???");
 
-    // Testnet / Regtest
+    // Testnet - 2 out of 3 signatures required from developers & board members
+    whitelisted.insert("QWE8RTYmnciyB8efsMJxnPbKrC7tfGhpNr");
+
+    // Regtest
     // use -tlactivationallowsender for testing
 
     // Add manually whitelisted sources - custom sources affect both activation and deactivation
-    if (gArgs.IsArgSet("-tlactivationallowsender")) {
+    if (gArgs.IsArgSet("-tlactivationallowsender") && RegTest()) {
         const std::vector<std::string>& sources = gArgs.GetArgs("-tlactivationallowsender");
 
         for (std::vector<std::string>::const_iterator it = sources.begin(); it != sources.end(); ++it) {
@@ -189,7 +194,7 @@ bool CheckDeactivationAuthorization(const std::string& sender)
     }
 
     // Remove manually ignored sources - custom sources affect both activation and deactivation
-    if (gArgs.IsArgSet("-tlactivationignoresender")) {
+    if (gArgs.IsArgSet("-tlactivationignoresender") && RegTest()) {
         const std::vector<std::string>& sources = gArgs.GetArgs("-tlactivationignoresender");
 
         for (std::vector<std::string>::const_iterator it = sources.begin(); it != sources.end(); ++it) {

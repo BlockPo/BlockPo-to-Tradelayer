@@ -605,7 +605,7 @@ namespace mastercore
 
   bool transferAll(const std::string& sender, const std::string& receiver);
 
-  const string getAdminAddress();
+  const string getVestingAdmin();
 
   int64_t calculateUnvested(int64_t amountSended, int64_t balance, int64_t unvested);
 }

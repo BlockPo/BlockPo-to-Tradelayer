@@ -626,10 +626,10 @@ class VestingBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['unvested'], '294.56846500')
 
 
-        pl.plot(volume_ltc, vested,'-b', label='vested amount for addresses[1]')
-        pl.plot(volume_ltc, bvested,'-r', label='vested amount for addresses[3]')
-        pl.legend(loc='upper left')
-        pl.show()
+        # pl.plot(volume_ltc, vested,'-b', label='vested amount for addresses[1]')
+        # pl.plot(volume_ltc, bvested,'-r', label='vested amount for addresses[3]')
+        # pl.legend(loc='upper left')
+        # pl.show()
 
         conn.close()
 

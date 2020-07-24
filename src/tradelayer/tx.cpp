@@ -2541,7 +2541,7 @@ int CMPTransaction::logicMath_SendVestingTokens()
   }
 
   const int64_t uBalance = getMPbalance(sender, ALL, UNVESTED);
-  const int64_t rUnvest = (sender == getAdminAddress()) ? nValue : calculateUnvested(nValue, nBalance, uBalance);
+  const int64_t rUnvest = (sender == getVestingAdmin()) ? nValue : calculateUnvested(nValue, nBalance, uBalance);
 
   PrintToLog("%s(): nValue:  %d, uBalance: %d,  nBalance: %d, rUnvest: %d, sender : %s, receiver : %s\n",__func__, nValue, uBalance, nBalance, rUnvest, sender, receiver);
 

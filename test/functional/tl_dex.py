@@ -185,7 +185,6 @@ class DExBasicsTest (BitcoinTestFramework):
         assert_equal(out['result'][0]['seller'], addresses[0])
         assert_equal(out['result'][0]['ltcsdesired'], '20.00000000')
         assert_equal(out['result'][0]['amountavailable'], '1000.00000000')
-        assert_equal(out['result'][0]['amountoffered'], '0.00000000')
         assert_equal(out['result'][0]['unitprice'], '0.02000000')
         assert_equal(out['result'][0]['minimumfee'], '0.00001000')
 
@@ -224,7 +223,6 @@ class DExBasicsTest (BitcoinTestFramework):
         assert_equal(out['result'][0]['seller'], addresses[0])
         assert_equal(out['result'][0]['ltcsdesired'], '30.00000000')
         assert_equal(out['result'][0]['amountavailable'], '1000.00000000')
-        assert_equal(out['result'][0]['amountoffered'], '0.00000000')
         assert_equal(out['result'][0]['unitprice'], '0.03000000')
         assert_equal(out['result'][0]['minimumfee'], '0.00001000')
 
@@ -248,7 +246,6 @@ class DExBasicsTest (BitcoinTestFramework):
         assert_equal(out['result'][0]['seller'], addresses[0])
         assert_equal(out['result'][0]['ltcsdesired'], '1.00000000')
         assert_equal(out['result'][0]['amountavailable'], '1000.00000000')
-        assert_equal(out['result'][0]['amountoffered'], '0.00000000')
         assert_equal(out['result'][0]['unitprice'], '0.00100000')
         assert_equal(out['result'][0]['minimumfee'], '0.00001000')
 
@@ -271,7 +268,6 @@ class DExBasicsTest (BitcoinTestFramework):
         assert_equal(out['result'][0]['seller'], addresses[0])
         assert_equal(out['result'][0]['ltcsdesired'], '0.00000000')
         assert_equal(out['result'][0]['amountavailable'], '0.00000000')
-        assert_equal(out['result'][0]['amountoffered'], '1000.00000000')
         assert_equal(out['result'][0]['unitprice'], '0.00100000')
         assert_equal(out['result'][0]['minimumfee'], '0.00001000')
 
@@ -330,7 +326,6 @@ class DExBasicsTest (BitcoinTestFramework):
         assert_equal(out['result'][0]['buyer'], addresses[2])
         assert_equal(out['result'][0]['ltcstopay'], '1.00000000')
         assert_equal(out['result'][0]['amountdesired'], '1000.00000000')
-        assert_equal(out['result'][0]['amountaccepted'], '0.00000000')
         assert_equal(out['result'][0]['unitprice'], '0.00100000')
         assert_equal(out['result'][0]['minimumfee'], '0.00001000')
 
@@ -368,7 +363,6 @@ class DExBasicsTest (BitcoinTestFramework):
         assert_equal(out['result'][0]['buyer'], addresses[2])
         assert_equal(out['result'][0]['ltcstopay'], '1.00000000')
         assert_equal(out['result'][0]['amountdesired'], '1000.00000000')
-        assert_equal(out['result'][0]['amountaccepted'], '0.00000000')
         assert_equal(out['result'][0]['unitprice'], '0.00100000')
         assert_equal(out['result'][0]['minimumfee'], '0.00001000')
 
@@ -392,14 +386,15 @@ class DExBasicsTest (BitcoinTestFramework):
         # assert_equal(out['result'][0]['ltcstopay'], '1.00000000')
 
         assert_equal(out['result'][0]['amountdesired'], '0.00000000')
-        assert_equal(out['result'][0]['amountaccepted'], '1000.00000000')
+        assert_equal(out['result'][0]['accepted'], '0.00000000')
         assert_equal(out['result'][0]['unitprice'], '0.00100000')
         assert_equal(out['result'][0]['minimumfee'], '0.00001000')
 
         assert_equal(out['result'][0]['accepts'][0]['seller'], addresses[3])
-        assert_equal(out['result'][0]['accepts'][0]['amountoffered'], '1000.00000000')
+        assert_equal(out['result'][0]['accepts'][0]['amount'], '1000.00000000')
         assert_equal(out['result'][0]['accepts'][0]['ltcstoreceive'], '1.00000000')
         assert_equal(out['result'][0]['accepts'][0]['blocksleft'], 241)
+
 
         self.log.info("Paying the tokens")
         params = str([addresses[2], addresses[3], "1.0"]).replace("'",'"')
@@ -444,7 +439,6 @@ class DExBasicsTest (BitcoinTestFramework):
         assert_equal(out['result'][0]['seller'], addresses[0])
         assert_equal(out['result'][0]['ltcsdesired'], '20.00000000')
         assert_equal(out['result'][0]['amountavailable'], '0.00000001')
-        assert_equal(out['result'][0]['amountoffered'], '0.00000000')
         assert_equal(out['result'][0]['unitprice'], '2000000000.00000000')
         assert_equal(out['result'][0]['minimumfee'], '0.00001000')
 
@@ -488,7 +482,6 @@ class DExBasicsTest (BitcoinTestFramework):
         assert_equal(out['result'][0]['seller'], addresses[1])
         assert_equal(out['result'][0]['ltcsdesired'], '20.00000000')
         assert_equal(out['result'][0]['amountavailable'], '10000000.98765432')
-        assert_equal(out['result'][0]['amountoffered'], '0.00000000')
         assert_equal(out['result'][0]['unitprice'], '0.00000199') # should be: 0.00000199999 (we only have 8 decimals)
         assert_equal(out['result'][0]['minimumfee'], '0.00001000')
 
@@ -521,13 +514,12 @@ class DExBasicsTest (BitcoinTestFramework):
         params = str([adminAddress]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_getactivedexsells",params)
         # self.log.info(out)
-        assert_equal(out['error'], None)
+        # assert_equal(out['error'], None)
         assert_equal(out['result'][0]['propertyid'], 1)
         assert_equal(out['result'][0]['action'], 2)
         assert_equal(out['result'][0]['seller'], adminAddress)
         assert_equal(out['result'][0]['ltcsdesired'], '1.00000000')
         assert_equal(out['result'][0]['amountavailable'], '100.00000000')
-        assert_equal(out['result'][0]['amountoffered'], '0.00000000')
         assert_equal(out['result'][0]['unitprice'], '0.01000000') # should be: 0.00000199999 (here we are rounding up)
         assert_equal(out['result'][0]['minimumfee'], '0.00001000')
 
@@ -549,7 +541,6 @@ class DExBasicsTest (BitcoinTestFramework):
         assert_equal(out['result'][0]['seller'], adminAddress)
         assert_equal(out['result'][0]['ltcsdesired'], '0.00000000')
 
-        assert_equal(out['result'][0]['amountoffered'], '100.00000000')
         assert_equal(out['result'][0]['amountavailable'], '0.00000000')
         assert_equal(out['result'][0]['unitprice'], '0.01000000')
         assert_equal(out['result'][0]['minimumfee'], '0.00001000')
@@ -596,7 +587,6 @@ class DExBasicsTest (BitcoinTestFramework):
         assert_equal(out['result'][0]['seller'], addresses[1])
         assert_equal(out['result'][0]['ltcsdesired'], '1.00000000')
         assert_equal(out['result'][0]['amountavailable'], '600.00000000')
-        assert_equal(out['result'][0]['amountoffered'], '0.00000000')
         assert_equal(out['result'][0]['unitprice'], '0.00166666')
         assert_equal(out['result'][0]['minimumfee'], '0.00001000')
 
@@ -621,7 +611,6 @@ class DExBasicsTest (BitcoinTestFramework):
         assert_equal(out['result'][0]['ltcsdesired'], '0.00000000')
 
         assert_equal(out['result'][0]['amountavailable'], '0.00000000')
-        assert_equal(out['result'][0]['amountoffered'], '600.00000000')
         assert_equal(out['result'][0]['unitprice'], '0.00166666')
         assert_equal(out['result'][0]['minimumfee'], '0.00001000')
 
@@ -640,7 +629,6 @@ class DExBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         assert_equal(out['result'][0]['accepts'], [])
 
-        #TODO: more testing for the indivisible tokens
 
         self.log.info("Creating indivisible tokens (sendissuancefixed)")
         array = [0]
@@ -688,7 +676,6 @@ class DExBasicsTest (BitcoinTestFramework):
         assert_equal(out['result'][1]['seller'], addresses[2])
         assert_equal(out['result'][1]['ltcsdesired'], '1.00000000')
         assert_equal(out['result'][1]['amountavailable'], '200')
-        assert_equal(out['result'][1]['amountoffered'], '0')
         assert_equal(out['result'][1]['unitprice'], '0.00500000')
         assert_equal(out['result'][1]['minimumfee'], '0.00001000')
 
@@ -710,7 +697,6 @@ class DExBasicsTest (BitcoinTestFramework):
         assert_equal(out['result'][1]['seller'], addresses[2])
         assert_equal(out['result'][1]['ltcsdesired'], '0.00000000')
         assert_equal(out['result'][1]['amountavailable'], '0')
-        assert_equal(out['result'][1]['amountoffered'], '200')
         assert_equal(out['result'][1]['unitprice'], '0.00500000')
         assert_equal(out['result'][1]['minimumfee'], '0.00001000')
 
