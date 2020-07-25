@@ -340,15 +340,23 @@ void settlement_algorithm_fifo(MatrixTLS &M_file, int64_t interest, int64_t twap
           EntryPrice = PtStatusByEdge->entry_price;
           EdgeRow = PtStatusByEdge->edge_row;
           PathNumber = PtStatusByEdge->path_number;
-          
-          bool BoolOpen = finding_string("Open", PtStatusByEdge->status_src);
-          bool BoolIncr = finding_string("Increased", PtStatusByEdge->status_src);
-          bool BoolNett = finding_string("NettedPartly", PtStatusByEdge->status_src);
-          
-          if (findTrueValue(BoolOpen, BoolIncr, BoolNett))
+
+          if (finding_string("Open", PtStatusByEdge->status_src))
           {
+            PrintToLog("\n* Open. Last Action for: %s = %s; Edge Row = %d\n", AddrsLives, Status, EdgeRow);
             PushBackLives(IdPosition, AddrsLives, Status, NLives, EntryPrice, EdgeRow, PathNumber, LivesLongsEle, LivesLongs, LivesShortsEle, LivesShorts);
             Loop = false;
+          }
+          else if (finding_string("Increased", PtStatusByEdge->status_src))
+          {
+            PrintToLog("\n* Increased. Last Action for: %s = %s; Edge Row = %d\n", AddrsLives, Status, EdgeRow);
+            IncreasedLastPos(path_main, EdgeRow, AddrsLives, LivesLongsEle, LivesLongs, LivesShortsEle, LivesShorts);
+            Loop =  false;
+          }
+          else if (finding_string("NettedPartly", PtStatusByEdge->status_src))
+          {
+            PrintToLog("\n* NettedPartly. Last Action for: %s = %s; Edge Row = %d\n", AddrsLives, Status, EdgeRow);
+            Loop =  false;
           }
 				}				
         else if (PtStatusByEdge->addrs_trk == AddrsLives)
@@ -361,14 +369,22 @@ void settlement_algorithm_fifo(MatrixTLS &M_file, int64_t interest, int64_t twap
 					EdgeRow = PtStatusByEdge->edge_row;
 					PathNumber = PtStatusByEdge->path_number;
 
-          bool BoolOpen = finding_string("Open", PtStatusByEdge->status_trk);
-          bool BoolIncr = finding_string("Increased", PtStatusByEdge->status_trk);
-          bool BoolNett = finding_string("NettedPartly", PtStatusByEdge->status_trk);
-
-          if (findTrueValue(BoolOpen, BoolIncr, BoolNett))
+          if (finding_string("Open", PtStatusByEdge->status_trk))
           {
+            PrintToLog("\n* Open. Last Action for: %s = %s; Edge Row = %d\n", AddrsLives, Status, EdgeRow);
             PushBackLives(IdPosition, AddrsLives, Status, NLives, EntryPrice, EdgeRow, PathNumber, LivesLongsEle, LivesLongs, LivesShortsEle, LivesShorts);
             Loop = false;
+          }
+          else if (finding_string("Increased", PtStatusByEdge->status_trk))
+          {
+            IncreasedLastPos(path_main, EdgeRow, AddrsLives, LivesLongsEle, LivesLongs, LivesShortsEle, LivesShorts);
+            PrintToLog("\n* Increased. Last Action for: %s = %s; Edge Row = %d\n", AddrsLives, Status, EdgeRow);
+            Loop =  false;
+          }
+          else if (finding_string("NettedPartly", PtStatusByEdge->status_trk))
+          {
+            PrintToLog("\n* NettedPartly. Last Action for: %s = %s; Edge Row = %d\n", AddrsLives, Status, EdgeRow);
+            Loop =  false;
           }
 				}
         else
@@ -471,6 +487,59 @@ void PushBackLives(int IdPosition, std::string AddrsLives, std::string Status, l
     LivesShorts.push_back(LivesShortsEle);
   }
 }      
+
+void IncreasedLastPos(std::vector<std::vector<std::map<std::string, std::string>>> path_main, long int LastEdgeRow, std::string AddrsLives, std::map<std::string, std::string> LivesLongsEle, std::vector<std::map<std::string, std::string>> &LivesLongs, std::map<std::string, std::string> LivesShortsEle, std::vector<std::map<std::string, std::string>> &LivesShorts)
+{
+  std::vector<std::vector<std::map<std::string, std::string>>>::reverse_iterator rit_path_main;
+  std::vector<std::map<std::string, std::string>>::reverse_iterator rit_path_maini;
+
+  std::string Status  = "None";
+  long int EdgeRow    = 0;
+  long int PathNumber = 0;
+  long int AmountTrd  = 0;
+  double EntryPrice   = 0;
+  int IdPosition      = 0;
+  int NEvents         = 0;
+
+  bool Loop = true;
+
+  for (rit_path_main = path_main.rbegin(); rit_path_main != path_main.rend() && Loop; ++rit_path_main)
+  {
+    for (rit_path_maini = (*rit_path_main).rbegin(); rit_path_maini != (*rit_path_main).rend() && Loop; ++rit_path_maini)
+    {
+      std::map<std::string, std::string> &GraphEdge = *rit_path_maini;
+      struct EdgeInfo *PtStatusByEdge = GetEdgeInfo(GraphEdge);
+
+      EdgeRow = PtStatusByEdge->edge_row;
+
+      /*******************************************************/
+      /** Look back for Increase Events Until Open is Found **/
+      if (EdgeRow < LastEdgeRow)
+      {
+        if (PtStatusByEdge->addrs_src == AddrsLives)
+        {
+          PrintToLog("\nEdgeRow = %d\n", EdgeRow);
+          PrintingEdge(GraphEdge);
+
+          IdPosition = finding_string("Long", PtStatusByEdge->status_src) ? 0 : 1;
+          Status     = PtStatusByEdge->status_src;          
+          AmountTrd  = PtStatusByEdge->amount_trd_src; /** AmountTrd Represent Lives Because there is Increased Events **/
+          EntryPrice = PtStatusByEdge->entry_price;
+          EdgeRow    = PtStatusByEdge->edge_row;
+          PathNumber = PtStatusByEdge->path_number;
+          Loop = finding_string("Open", PtStatusByEdge->status_src) ? false : true; /** When Open appear the Loop Finish**/
+
+          PushBackLives(IdPosition, AddrsLives, Status, AmountTrd, EntryPrice, EdgeRow, PathNumber, LivesLongsEle, LivesLongs, LivesShortsEle, LivesShorts);        
+        }
+        else if (PtStatusByEdge->addrs_trk == AddrsLives)
+        {
+          PrintToLog("\nEdgeRow = %d\n", EdgeRow);
+          PrintingEdge(GraphEdge);
+        } 
+      }       
+    }
+  }
+}
 
 void clearing_operator_fifo(VectorTLS &vdata, MatrixTLS &M_file, int index_init, struct status_amounts *pt_pos, int idx_long_short, int &counting_netted, long int amount_trd_sum, std::vector<std::map<std::string, std::string>> &path_main, int path_number, long int opened_contracts, int idx_b)
 {
