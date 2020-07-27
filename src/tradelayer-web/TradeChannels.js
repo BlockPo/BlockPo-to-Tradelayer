@@ -109,9 +109,7 @@ channelManager.buildTokenToTokenTrade = function(channeladdress, id1,amount, id2
 		var height = data.height+3
 		tl.createpayload_instant_trade(id1, amount, height, id2, amount2, function(payload){
 			tl.buildRaw(payload,multisigInput,[0],tokenSellerAddress,0.00000546, function(txString){
-				tl.fundRawTransaction(txstring,{'replaceable':true},function(data){
 					return cb(data)
-				})
 			})
 		})
 	}
