@@ -472,6 +472,8 @@ tl.sendContractTrade = function(params, cb){
     })
 }
 
+
+
 tl.cancelAllContractsByAddress = function(address, contractid, cb){
 	client.cmd('tl_cancelallcontractsbyaddress', address, contractid,function(err,data,resHeaders){
 		console.log(data)
@@ -501,9 +503,21 @@ tl.publishOracleData = function(fromaddress, title, high, low, close, cb){
       })
 }
 
+tl.commitToChannel = function(sendingAddress,channelAddress,propertyid,amount, cb){
+      client.cmd('tl_commit_tochannel',sendingAddress,channelAddress,propertyid,amount,function(err, data, resHeaders){
+        return cb(data)
+      })
+}
+
+tl.withdrawalFromChannel = function(originalSender,channelAddress,propertyid,amount,cb){
+      client.cmd('tl_withdrawal_fromchannel',sendingAddress,channelAddress,propertyid,amount,function(err, data, resHeaders){
+        return cb(data)
+      })
+}
+
 var rawPubScripts = []
 
-tl.buildRaw= function(payload, inputs, vOuts, refaddresses,inputAmount, UXTOAmount, cb){
+tl.buildRaw= function(payload, inputs, vOuts, refaddresses,inputAmount, UTXOAmount, cb){
 	var txstring = ""
   //the vOuts are meant to be which outputs were the selected inputs in their respective tx?
   //e.g. if the first input was the 3rd output, it should have the txid it was in as 0 in inputs and 2 as the 0 position value in vOuts
@@ -512,6 +526,7 @@ tl.buildRaw= function(payload, inputs, vOuts, refaddresses,inputAmount, UXTOAmou
 	if(inputs = null||inputs=undefined||inputs = ''){
     return cb(console.log("err no input"))
   }
+  if(UTXOAmount==null||UXTOAmount==0){UTXOAmount=0.00000546}
   client.cmd('tl_createrawtx_input', txstring, inputs, vouts, function(err, data, resHeaders){
 		if(err==null){
 			txstring = data
@@ -656,6 +671,15 @@ tl.createOracleContract = function(thisAddress, numeratorid, title, durationInBl
 			return cb(data)
 		}else{return err}
 	})
+}
+
+tl.simpleSign = function(txstring, cb){
+  //will not work if the local wallet can't find the relevant key(s)
+  client.cmd('signrawtransaction', null, null, function(err, data, resHeaders){
+        if(err == null){
+          return cb(data)
+        }else{return err}
+      })
 }
 
 tl.signRaw = function(txstring, privkey, redeemkey, input, vout, pubscript,cb){

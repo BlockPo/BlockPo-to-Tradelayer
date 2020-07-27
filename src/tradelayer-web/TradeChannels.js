@@ -16,62 +16,101 @@ var Profile = {'alias':'','regulatoryStatus':'unregulated','myHistoricalVolume':
 
 var channelManager = {}
 
-channelManager.queryDealers = function(minAvgLatency, maxRejectionRate, maxRejectionTime, minVolume){
+channelManager.queryDealers = function(minAvgLatency, maxRejectionRate, maxRejectionTime, minVolume, cb){
 	//calls server to return data with the above params
-	var thisURI = serverURI+'/'
-	rest.get(thisURI+minAvgLatency+'/'+maxRejectionRate+'/'+maxRejectionTime+'/'+minVolume).on('complete',function(data){
-		var table = data.dealers
+	var thisURI = serverURI
+	var wholeURI=thisURI+minAvgLatency+'/'+maxRejectionRate+'/'+maxReject
+	rest.get(wholeURI).on('complete',function(data){
+		return cb(data)
 	})
 }
 
-channelManager.sendIndicatorOfInterest= function(contract, buySell,amount, price, specialType, secondSigner=true)
+channelManager.sendIndicatorOfInterest= function(contract, buySell,amount, price, specialType, secondSigner=true,cb){
+	var thisURI = serverURI
+	var wholeURI=thisURI+"sendIoI"
+	if(specialType=='null'){specialType='limit'}
+	var params = {'contract':contract,'buySell':buySell,'amount':amount,'price':price,'specialType':specialType,'secondSigner':secondSigner}
+	rest.post(wholeURI,params).on('complete',function(data){
+		return cb(data)
+	})
+}
 
 //Replaces order api call.
 
-channelManager.getBook= function(contract, amount, reputationMin, volumeMin){
+channelManager.getBook= function(contract, amount, reputationMin, volumeMin, cb){
 
 	//Returns an orderbook snapshot just like people are used to.
-	var thisURI = serverURI+'/'
+	var thisURI = serverURI
 	rest.get(thisURI+minAvgLatency+'/'+maxRejectionRate+'/'+maxRejectionTime+'/'+minVolume).on('complete',function(data){
-		var table = data.quotes
-
+		return cb(data)
 	})
 }
 
 
-channelManager.takeIndicatorOfInterest= function(contract, buySell, amount, price, specialType, firstSigner, pubkey)
+channelManager.takeIndicatorOfInterest= function(contract, buySell, amount, price, specialType, firstSigner=true, pubkey,cb){
+	var thisURI = serverURI
+	var wholeURI=thisURI+"takeIoI"
+	if(specialType=='null'){specialType='limit'}
+	var params = {'contract':contract,'buySell':buySell,'amount':amount,'price':price,'specialType':specialType,'firstSigner':firstSigner}
+	rest.post(wholeURI,params).on('complete',function(data){
+		return cb(data)
+	})
+}
 
 //Liquidity taking, does carry risk of getting squeezed on the option value, but usually will come back confirming quickly. Pubkey is needed if no pre-existing channel has been established with the given offeror. But how is a user to know? The logic inside the wallet has to check its pre-established inventory, see if the quote lines up with any existing channels, transfer capital to a channel or otherwise establish if it not pre-existing, and then form/sign the proposed quote-match and send to the dealer. The particular atomicity of these quote-interactions, ideally, will be obscured by a two-click process.
 
-channelManager.submitCoSignedTrade= function(txString)
+channelManager.submitTX= function(txString,cb){
+	var thisURI = serverURI
+	var wholeURI=thisURI+"takeIoI"
+	if(specialType=='null'){specialType='limit'}
+	var params = {'contract':contract,'buySell':buySell,'amount':amount,'price':price,'specialType':specialType,'firstSigner':firstSigner}
+	rest.post(wholeURI,params).on('complete',function(data){
+		return cb(data)
+	})
+}
 
-//This passes the signed trade to the server to relay a confirmation to the liquidity taker and broadcast to the blockchain.
+//This passes the string back and forth
 
-channelManager.submitPartSignedTrade= function(txString)
+channelMananger.proposeChannel = function(pubkey,ipaddress, dealerid, cb){
+	if(ipaddress==null){
+		ipaddress=serverURI 
+		var wholeURI = serverURI+"proposeChannel"
+	}else{var wholeURI = ipaddress}
+	if(dealerid==null){
+		dealerid = "route"	
+	}
+	var params = {'pubkey':pubkey,'ipaddress':ipaddress,'dealerid':dealerid}
+	rest.post(wholeURI,params).on('complete',function(data){
+		return cb(data)
+	})
+}
 
-//This is the initial part of the handshake that the submitCoSignedTrade completes.
-
-channelMananger.proposeChannel = function(pubkey)
-
-channelManager.buildTransfer = function(cacheAddress){
-
+channelManager.buildTransfer = function(cacheAddress, channelAddress, cacheInput, inputAmount, propertyid, amount, cb){
+	tl.createpayload_transfer(propertyid,amount,function(payload){
+		tl.buildRaw(payload,cacheInput,[0],channelAddress,inputAmount,function(txString){
+			tl.simpleSign(txString,function(data){
+				return cb(txString)
+			})
+			
+		})
+	})
 }
 
 channelManager.buildCommit = function(fromAddress,toAddress){}
 
 channelManager.buildWithdraw = function(originalAddress,channelAddress){}
 
-channelManager.buildWithdrawLocalWallet = function(addressSet)
+channelManager.buildWithdrawLocalWallet = function(addressSet){}
 
-channelManager.buildTokenToTokenTrade = function(channeladdress, id1,amount, id2, amount, secondSigner=true)
+channelManager.buildTokenToTokenTrade = function(channeladdress, id1,amount, id2, amount, secondSigner=true){}
 
-channelManager.buildUXTOToTokenTrade = function(channeladdress, tokenSellerAddress, id1=0,amount, id2, amount2, blockheight_expiry, secondSigner=true, multisigInput,purchaseInput){
+channelManager.buildUXTOToTokenTrade = function(channeladdress, tokenSellerAddress, id1=0,amount, id2, amount2, blockheight_expiry, secondSigner=true, multisigInput,purchaseInput,cb){
 	tl.getBlock(null,function(data){
 		var height = data.height+3
 		tl.createpayload_instant_trade(id1, amount, height, id2, amount2, function(payload){
 			tl.buildRaw(payload,multisigInput,[0],tokenSellerAddress,UXTOAmount, function(txString){
 				tl.fundRawTransaction(txstring,{'replaceable':true},function(data){
-					return data
+					return cb(data)
 				})
 			})
 		})
