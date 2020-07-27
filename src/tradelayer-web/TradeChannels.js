@@ -96,19 +96,32 @@ channelManager.buildTransfer = function(cacheAddress, channelAddress, cacheInput
 	})
 }
 
-channelManager.buildCommit = function(fromAddress,toAddress){}
+channelManager.buildCommit = function(fromAddress,toAddress){
+	tl.createpayload_commit()
+}
 
 channelManager.buildWithdraw = function(originalAddress,channelAddress){}
 
 channelManager.buildWithdrawLocalWallet = function(addressSet){}
 
-channelManager.buildTokenToTokenTrade = function(channeladdress, id1,amount, id2, amount, secondSigner=true){}
-
-channelManager.buildUXTOToTokenTrade = function(channeladdress, tokenSellerAddress, id1=0,amount, id2, amount2, blockheight_expiry, secondSigner=true, multisigInput,purchaseInput,cb){
+channelManager.buildTokenToTokenTrade = function(channeladdress, id1,amount, id2, amount, secondSigner=true,cb){
 	tl.getBlock(null,function(data){
 		var height = data.height+3
 		tl.createpayload_instant_trade(id1, amount, height, id2, amount2, function(payload){
-			tl.buildRaw(payload,multisigInput,[0],tokenSellerAddress,UXTOAmount, function(txString){
+			tl.buildRaw(payload,multisigInput,[0],tokenSellerAddress,0.00000546, function(txString){
+				tl.fundRawTransaction(txstring,{'replaceable':true},function(data){
+					return cb(data)
+				})
+			})
+		})
+	}
+}
+
+channelManager.buildLTCTokenTrade = function(channeladdress, channelInput, tokenSellerAddress, propertyid, amountOfTokens, LTCPrice, blockheight_expiry, secondSigner=true,cb){
+	tl.getBlock(null,function(data){
+		var height = data.height+3
+		tl.createpayload_instant_LTC_trade(propertyid, amount, blockheight_expiry, LTCPrice, function(payload){
+			tl.buildRaw(payload,channelInput,[0],tokenSellerAddress,UXTOAmount, function(txString){
 				tl.fundRawTransaction(txstring,{'replaceable':true},function(data){
 					return cb(data)
 				})
@@ -117,6 +130,19 @@ channelManager.buildUXTOToTokenTrade = function(channeladdress, tokenSellerAddre
 	}
 } 
 
-channelManager.buildContractTrade = function(channeladdress, contractid,amount, refAddrIsBuyer, secondSigner=true)
+channelManager.buildContractTrade = function(channeladdress, channelInput, contractid,amount, buySell, secondSigner=true,cb){
+	var leverage = 10
+	if(buySell=='buy'){buySell=1}else if(buySell=='sell'){buySell=2}
+	tl.getBlock(null,function(data){
+		var height = data.height+3
+		tl.createpayload_contract_instant_trade(contractid, amount, height, price, buySell, leverage, function(payload){
+			tl.buildRaw(payload,channelInput,[0],null,0.00000546, function(txString){
+				tl.fundRawTransaction(txstring,{'replaceable':true},function(data){
+					return cb(data)
+				})
+			})
+		})
+	}
+}
 
 //Prompts to initiate creation of a new multisig channel via the server relay with a new counterparty. This would flow in the wallet, such that the client code would pingback information about the quote the user selected, then ping this call, then returning a new channel, propose the part-signed tx to the channel.

@@ -527,15 +527,16 @@ tl.buildRaw= function(payload, inputs, vOuts, refaddresses,inputAmount, UTXOAmou
     return cb(console.log("err no input"))
   }
   if(UTXOAmount==null||UXTOAmount==0){UTXOAmount=0.00000546}
-  client.cmd('tl_createrawtx_input', txstring, inputs, vouts, function(err, data, resHeaders){
+  client.cmd('tl_createrawtx_input', txstring, inputs, vouts, function(err, txstring, resHeaders){
 		if(err==null){
 			txstring = data
 		}else{return err}
-		client.cmd('tl_createrawtx_reference', txstring, refaddresses, UXTOAmount, function(err, data, resHeaders){
+    if(refaddresses==null){UTXOAmount=0.00000546}
+		client.cmd('tl_createrawtx_reference', txstring, refaddresses, UTXOAmount, function(err, txstring, resHeaders){
 			if(err==null){
 				txstring = data
 			}else{return err}
-			client.cmd('tl_createrawtx_opreturn', txstring, payload, function(err, data, resHeaders){
+			client.cmd('tl_createrawtx_opreturn', txstring, payload, function(err, txstring, resHeaders){
 				if(err==null){
 				txstring = data
 				}else{return err}

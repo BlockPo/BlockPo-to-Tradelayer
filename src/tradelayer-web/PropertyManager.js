@@ -91,7 +91,7 @@ createMultisig(["",""],function(data){
 		txExport=tx
 		
 		if(noSign==false){
-			rest.get('https://blockchain.info/rawtx/$tx_hash').on('complete',function(data){
+			rest.get('https://blockchain.info/rawtx/+$tx_hash').on('complete',function(data){
 				var privkey =''
 				var input = ''//this is the tx id of the BTC or LTC funding transaction sent to the multisig
 				  //if you fund the aux. address it will be able to automatically send and then cite that input
