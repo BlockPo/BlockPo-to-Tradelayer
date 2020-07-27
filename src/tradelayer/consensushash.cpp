@@ -46,7 +46,7 @@ bool ShouldConsensusHashBlock(int block)
     }
 
     const std::vector<std::string>& vecBlocks = gArgs.GetArgs("-tlshowblockconsensushash");
-    for (std::vector<std::string>::const_iterator it = vecBlocks.begin(); it != vecBlocks.end(); ++it)
+    for (auto it = vecBlocks.begin(); it != vecBlocks.end(); ++it)
     {
         int64_t paramBlock = StrToInt64(*it, false);
         if (paramBlock < 1) continue; // ignore non numeric values
@@ -70,28 +70,25 @@ std::string GenerateConsensusString(const CMPTally& tallyObj, const std::string&
     int64_t negativeBalance = tallyObj.getMoney(propertyId, NEGATIVE_BALANCE);
     int64_t realizedProfit = tallyObj.getMoney(propertyId, REALIZED_PROFIT);
     int64_t realizedLosses = tallyObj.getMoney(propertyId, REALIZED_LOSSES);
-    int64_t count = tallyObj.getMoney(propertyId, COUNT);
     int64_t remaining = tallyObj.getMoney(propertyId, REMAINING);
-    int64_t liquidationPrice = tallyObj.getMoney(propertyId, LIQUIDATION_PRICE);
-    int64_t upnl = tallyObj.getMoney(propertyId, UPNL);
     int64_t unvested = tallyObj.getMoney(propertyId, UNVESTED);
 
     // return a blank string if all balances are empty
-    if (!balance && !sellOfferReserve && !acceptReserve && !metaDExReserve && !contractdexReserved && !positiveBalance && !negativeBalance && !realizedProfit && !realizedLosses && !count && !remaining && !liquidationPrice && !upnl && !unvested) {
+    if (!balance && !sellOfferReserve && !acceptReserve && !metaDExReserve && !contractdexReserved && !positiveBalance && !negativeBalance && !realizedProfit && !realizedLosses && !remaining && !unvested) {
       return "";
     }
 
-    return strprintf("%s|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d",  address, propertyId, balance, sellOfferReserve, acceptReserve,
-		     metaDExReserve,contractdexReserved, positiveBalance, negativeBalance, realizedProfit, realizedLosses, count,
-		     remaining, liquidationPrice, upnl, unvested);
+    return strprintf("%s|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d",  address, propertyId, balance, sellOfferReserve, acceptReserve,
+		     metaDExReserve,contractdexReserved, positiveBalance, negativeBalance, realizedProfit, realizedLosses,
+		     remaining, unvested);
 }
 
 // Generates a consensus string for hashing based on a DEx sell offer object
 std::string GenerateConsensusString(const CMPOffer& offerObj, const std::string& address)
 {
-    return strprintf("%s|%s|%d|%d|%d|%d|%d",
-		     offerObj.getHash().GetHex(), address, offerObj.getProperty(), offerObj.getOfferAmountOriginal(),
-		     offerObj.getLTCDesiredOriginal(), offerObj.getMinFee(), offerObj.getBlockTimeLimit());
+    return strprintf("%s|%s|%d|%d|%d|%d|%d|%d|%d|%d",
+		     offerObj.getHash().GetHex(), address, offerObj.getOfferBlock(), offerObj.getProperty(), offerObj.getOfferAmountOriginal(),
+		     offerObj.getLTCDesiredOriginal(), offerObj.getMinFee(), offerObj.getBlockTimeLimit(), offerObj.getSubaction(), offerObj.getOption());
 }
 
 // Generates a consensus string for hashing based on a DEx accept object
@@ -102,21 +99,6 @@ std::string GenerateConsensusString(const CMPAccept& acceptObj, const std::strin
              acceptObj.getAcceptBlock());
 }
 
-// Generates a consensus string for hashing based on a MetaDEx object
-std::string GenerateConsensusString(const CMPMetaDEx& tradeObj)
-{
-   return strprintf("%s|%s|%d|%d|%d|%d|%d",
-		    tradeObj.getHash().GetHex(), tradeObj.getAddr(), tradeObj.getProperty(), tradeObj.getAmountForSale(),
-		    tradeObj.getDesProperty(), tradeObj.getAmountDesired(), tradeObj.getAmountRemaining());
-}
-
-// Generates a consensus string for hashing based on a ContractDex object
-std::string GenerateConsensusString(const CMPContractDex& ContObj)
-{
-    return strprintf("%s|%s|%d|%d|%d|%d|%d|%d|%d",
-		     ContObj.getHash().GetHex(), ContObj.getAddr(), ContObj.getProperty(), ContObj.getAmountForSale(),
-		     ContObj.getDesProperty(), ContObj.getAmountDesired(), ContObj.getAmountRemaining(), ContObj.getEffectivePrice(), ContObj.getTradingAction());
-}
 
 // Generates a consensus string for hashing based on a crowdsale object
 std::string GenerateConsensusString(const CMPCrowd& crowdObj)
@@ -157,7 +139,7 @@ std::string attGenerateConsensusString(const std::vector<std::string>& vstr)
 }
 
 // Generates a consensus string for hashing based on a cachefee (natives and oracles) register
-std::string GenerateConsensusString(const uint32_t& propertyId, const int64_t& cache)
+std::string feeGenerateConsensusString(const uint32_t& propertyId, const int64_t& cache)
 {
     return strprintf("%d|%d",propertyId, cache);
 }
@@ -289,7 +271,6 @@ uint256 GetConsensusHash()
     // DEx sell offers - loop through the DEx and add each sell offer to the consensus hash (ordered by txid)
     // Placeholders: "txid|address|propertyid|offeramount|btcdesired|minfee|timelimit"
     std::vector<std::pair<arith_uint256, std::string> > vecDExOffers;
-
     for (OfferMap::iterator it = my_offers.begin(); it != my_offers.end(); ++it)
     {
         const CMPOffer& selloffer = it->second;
@@ -340,7 +321,7 @@ uint256 GetConsensusHash()
             for (md_Set::const_iterator it = indexes.begin(); it != indexes.end(); ++it)
             {
 	              const CMPMetaDEx& obj = *it;
-	              std::string dataStr = GenerateConsensusString(obj);
+	              std::string dataStr = obj.GenerateConsensusString();
 	              vecMetaDExTrades.push_back(std::make_pair(arith_uint256(obj.getHash().ToString()), dataStr));
             }
         }
@@ -366,7 +347,7 @@ uint256 GetConsensusHash()
             for (cd_Set::const_iterator it = indexes.begin(); it != indexes.end(); ++it)
             {
 	              const CMPContractDex& obj = *it;
-	              std::string dataStr = GenerateConsensusString(obj);          /*-------the txid-------|---consensus string---*/
+	              std::string dataStr = obj.GenerateConsensusString();          /*-------the txid-------|---consensus string---*/
 	              vecContractDexTrades.push_back(std::make_pair(arith_uint256(obj.getHash().ToString()), dataStr));
             }
         }
@@ -379,11 +360,6 @@ uint256 GetConsensusHash()
         if (msc_debug_consensus_hash) PrintToLog("Adding ContractDex trade data to consensus hash: %s\n", dataStr);
         SHA256_Update(&shaCtx, dataStr.c_str(), dataStr.length());
     }
-
-    // Generates a consensus string for hashing based on Futures Contracts market prices
-    // std::string marketStr = GenerateConsensusString(marketP);
-    // if (msc_debug_consensus_hash) PrintToLog("Adding ContractDex Market Prices to consensus hash: %s\n", marketStr);
-    // SHA256_Update(&shaCtx, marketStr.c_str(), marketStr.length());
 
     // Crowdsales - loop through open crowdsales and add to the consensus hash (ordered by property ID)
     // Note: the variables of the crowdsale (amount, bonus etc) are not part of the crowdsale map and not included here to
@@ -444,13 +420,14 @@ uint256 GetConsensusHash()
         SHA256_Update(&shaCtx, dataStr.c_str(), dataStr.length());
     }
 
+    //FIXME: big timeouts accessing the db !!!
     // KYC list
     // Placeholders: "address|name|website|block|kycid"
-    d_tradelistdb->kycConsensusHash(shaCtx);
+    // d_tradelistdb->kycConsensusHash(shaCtx);
 
     // Attestation list
     // Placeholders: "address|name|website|block|kycid"
-    d_tradelistdb->attConsensusHash(shaCtx);
+    // d_tradelistdb->attConsensusHash(shaCtx);
 
     // Cache fee (natives)
     // Placeholders: "propertyid|cacheamount"
@@ -459,7 +436,7 @@ uint256 GetConsensusHash()
         // decompose the key for address
         const uint32_t& propertyId = itt->first;
         const int64_t& cache = itt->second;
-        std::string dataStr = GenerateConsensusString(propertyId, cache);
+        std::string dataStr = feeGenerateConsensusString(propertyId, cache);
         if (msc_debug_consensus_hash) PrintToLog("Adding Fee cache (natives) entry to consensus hash: %s\n", dataStr);
         SHA256_Update(&shaCtx, dataStr.c_str(), dataStr.length());
     }
@@ -471,7 +448,7 @@ uint256 GetConsensusHash()
         // decompose the key for address
         const uint32_t& propertyId = itt->first;
         const int64_t& cache = itt->second;
-        std::string dataStr = GenerateConsensusString(propertyId, cache);
+        std::string dataStr = feeGenerateConsensusString(propertyId, cache);
         if (msc_debug_consensus_hash) PrintToLog("Adding Fee cache (oracles) entry to consensus hash: %s\n", dataStr);
         SHA256_Update(&shaCtx, dataStr.c_str(), dataStr.length());
     }
@@ -559,7 +536,7 @@ uint256 GetMetaDExHash(const uint32_t propertyId)
                 for (md_Set::const_iterator it = indexes.begin(); it != indexes.end(); ++it)
                 {
                     const CMPMetaDEx& obj = *it;
-                    std::string dataStr = GenerateConsensusString(obj);
+                    std::string dataStr = obj.GenerateConsensusString();
                     vecMetaDExTrades.push_back(std::make_pair(arith_uint256(obj.getHash().ToString()), dataStr));
                 }
             }

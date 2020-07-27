@@ -51,7 +51,7 @@ class TestNode():
             self.rpc_timeout = timewait
         else:
             # Wait for up to 60 seconds for the RPC server to respond
-            self.rpc_timeout = 180
+            self.rpc_timeout = 360
         if binary is None:
             self.binary = os.getenv("LITECOIND", "litecoind")
         else:
@@ -61,7 +61,7 @@ class TestNode():
         # Most callers will just need to add extra args to the standard list below. For those callers that need more flexibity, they can just set the args property directly.
         self.extra_args = extra_args
         self.args = [self.binary, "-datadir=" + self.datadir, "-server", "-keypool=1", "-discover=0", "-rest", "-logtimemicros", "-debug", "-debugexclude=libevent", "-debugexclude=leveldb", "-mocktime=" + str(mocktime), "-uacomment=testnode%d" % i]
-    
+
         self.cli = TestNodeCLI(os.getenv("LITECOINCLI", "litecoin-cli"), self.datadir)
         self.use_cli = use_cli
 
@@ -130,7 +130,7 @@ class TestNode():
             except ValueError as e:  # cookie file not found and no rpcuser or rpcassword. bitcoind still starting
                 if "No RPC credentials" not in str(e):
                     raise
-            time.sleep(1.0 / poll_per_s)
+            time.sleep(8.0 / poll_per_s)
         raise AssertionError("Unable to connect to litecoind")
 
     def get_wallet_rpc(self, wallet_name):

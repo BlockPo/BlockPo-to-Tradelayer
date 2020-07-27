@@ -453,7 +453,7 @@ int64_t mastercore::getTotalTokens(uint32_t propertyId, int64_t* n_owners_total)
 
       totalTokens += tally.getMoney(propertyId, BALANCE);
       totalTokens += tally.getMoney(propertyId, CHANNEL_RESERVE); // channel commits
-      totalTokens += tally.getMoney(propertyId, CONTRACTDEX_MARGIN); // amount in margin
+      totalTokens += tally.getMoney(propertyId, CONTRACTDEX_RESERVE); // amount in margin
 
       if (prev != totalTokens) {
 	      prev = totalTokens;
@@ -1311,10 +1311,9 @@ int input_msc_balances_string(const std::string& s)
         boost::split(curProperty, *iter, boost::is_any_of(":"), boost::token_compress_on);
         if (curProperty.size() != 2) return -1;
 
-        /*New things for contracts: save contractdex tally *////////////////////
         std::vector<std::string> curBalance;
         boost::split(curBalance, curProperty[1], boost::is_any_of(","), boost::token_compress_on);
-        if (curBalance.size() != 15) return -1;
+        if (curBalance.size() != 11) return -1;
 
 
         uint32_t propertyId = boost::lexical_cast<uint32_t>(curProperty[0]);
@@ -1327,12 +1326,8 @@ int input_msc_balances_string(const std::string& s)
         int64_t negativeBalance = boost::lexical_cast<int64_t>(curBalance[6]);
         int64_t realizeProfit = boost::lexical_cast<int64_t>(curBalance[7]);
         int64_t realizeLosses = boost::lexical_cast<int64_t>(curBalance[8]);
-        int64_t count = boost::lexical_cast<int64_t>(curBalance[9]);
-        int64_t remaining = boost::lexical_cast<int64_t>(curBalance[10]);
-        int64_t liquidationPrice = boost::lexical_cast<int64_t>(curBalance[11]);
-        int64_t upnl = boost::lexical_cast<int64_t>(curBalance[12]);
-        int64_t nupnl = boost::lexical_cast<int64_t>(curBalance[13]);
-        int64_t unvested = boost::lexical_cast<int64_t>(curBalance[14]);
+        int64_t remaining = boost::lexical_cast<int64_t>(curBalance[9]);
+        int64_t unvested = boost::lexical_cast<int64_t>(curBalance[10]);
 
         if (balance) update_tally_map(strAddress, propertyId, balance, BALANCE);
         if (sellReserved) update_tally_map(strAddress, propertyId, sellReserved, SELLOFFER_RESERVE);
@@ -1344,11 +1339,7 @@ int input_msc_balances_string(const std::string& s)
         if (negativeBalance) update_tally_map(strAddress, propertyId, negativeBalance, NEGATIVE_BALANCE);
         if (realizeProfit) update_tally_map(strAddress, propertyId, realizeProfit, REALIZED_PROFIT);
         if (realizeLosses) update_tally_map(strAddress, propertyId, realizeLosses, REALIZED_LOSSES);
-        if (count) update_tally_map(strAddress, propertyId, count, COUNT);
         if (remaining) update_tally_map(strAddress, propertyId, remaining, REMAINING);
-        if (liquidationPrice) update_tally_map(strAddress, propertyId, liquidationPrice, LIQUIDATION_PRICE);
-        if (upnl) update_tally_map(strAddress, propertyId, upnl, UPNL);
-        if (upnl) update_tally_map(strAddress, propertyId, nupnl, NUPNL);
         if (unvested) update_tally_map(strAddress, propertyId, unvested, UNVESTED);
     }
 
@@ -1998,27 +1989,23 @@ static int write_msc_balances(std::ofstream& file, SHA256_CTX* shaCtx)
             int64_t sellReserved = (*iter).second.getMoney(propertyId, SELLOFFER_RESERVE);
             int64_t acceptReserved = (*iter).second.getMoney(propertyId, ACCEPT_RESERVE);
             int64_t metadexReserved = (*iter).second.getMoney(propertyId, METADEX_RESERVE);
-
             int64_t contractdexReserved = (*iter).second.getMoney(propertyId, CONTRACTDEX_RESERVE);
             int64_t positiveBalance = (*iter).second.getMoney(propertyId, POSITIVE_BALANCE);
             int64_t negativeBalance = (*iter).second.getMoney(propertyId, NEGATIVE_BALANCE);
             int64_t realizedProfit = (*iter).second.getMoney(propertyId, REALIZED_PROFIT);
             int64_t realizedLosses = (*iter).second.getMoney(propertyId, REALIZED_LOSSES);
-            int64_t count = (*iter).second.getMoney(propertyId, COUNT);
             int64_t remaining = (*iter).second.getMoney(propertyId, REMAINING);
-            int64_t liquidationPrice = (*iter).second.getMoney(propertyId, LIQUIDATION_PRICE);
-            int64_t upnl = (*iter).second.getMoney(propertyId, UPNL);
-            int64_t nupnl = (*iter).second.getMoney(propertyId, NUPNL);
+            // int64_t liquidationPrice = (*iter).second.getMoney(propertyId, LIQUIDATION_PRICE);
             int64_t unvested = (*iter).second.getMoney(propertyId, UNVESTED);
             // we don't allow 0 balances to read in, so if we don't write them
             // it makes things match up better between persisted state and processed state
-            if (0 == balance && 0 == sellReserved && 0 == acceptReserved && 0 == metadexReserved && contractdexReserved == 0 && positiveBalance == 0 && negativeBalance == 0 && realizedProfit == 0 && realizedLosses == 0 && count == 0 && remaining == 0 && liquidationPrice == 0 && upnl == 0 && nupnl == 0 && unvested == 0) {
+            if (0 == balance && 0 == sellReserved && 0 == acceptReserved && 0 == metadexReserved && contractdexReserved == 0 && positiveBalance == 0 && negativeBalance == 0 && realizedProfit == 0 && realizedLosses == 0 && remaining == 0 && unvested == 0) {
                 continue;
             }
 
             emptyWallet = false;
 
-            lineOut.append(strprintf("%d:%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d;",
+            lineOut.append(strprintf("%d:%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d;",
                     propertyId,
                     balance,
                     sellReserved,
@@ -2029,11 +2016,7 @@ static int write_msc_balances(std::ofstream& file, SHA256_CTX* shaCtx)
                     negativeBalance,
                     realizedProfit,
                     realizedLosses,
-                    count,
                     remaining,
-                    liquidationPrice,
-                    upnl,
-                    nupnl,
                     unvested));
         }
 
@@ -5315,7 +5298,7 @@ bool mastercore::marginMain(int Block)
             std::string channelAddr;
             int64_t initMargin;
 
-            initMargin = getMPbalance(address,collateralCurrency,CONTRACTDEX_MARGIN);
+            initMargin = getMPbalance(address,collateralCurrency,CONTRACTDEX_RESERVE);
 
             rational_t percent = rational_t(-upnl,initMargin);
 
@@ -5354,7 +5337,7 @@ bool mastercore::marginMain(int Block)
                 }
 
                 int64_t fbalance, diff;
-                int64_t margin = getMPbalance(address,collateralCurrency,CONTRACTDEX_MARGIN);
+                int64_t margin = getMPbalance(address,collateralCurrency,CONTRACTDEX_RESERVE);
                 int64_t ibalance = getMPbalance(address,collateralCurrency, BALANCE);
                 int64_t left = - 0.2 * margin - upnl;
 
@@ -5402,7 +5385,7 @@ bool mastercore::marginMain(int Block)
                     {
                         if(msc_debug_margin_main) PrintToLog("\n%s: balance >= left\n", __func__);
                         update_tally_map(address, collateralCurrency, -left, BALANCE);
-                        update_tally_map(address, collateralCurrency, left, CONTRACTDEX_MARGIN);
+                        update_tally_map(address, collateralCurrency, left, CONTRACTDEX_RESERVE);
                         continue;
 
                     } else { // not enough money in balance to recover margin, so we use position
@@ -5411,7 +5394,7 @@ bool mastercore::marginMain(int Block)
                          if (balance > 0)
                          {
                              update_tally_map(address, collateralCurrency, -balance, BALANCE);
-                             update_tally_map(address, collateralCurrency, balance, CONTRACTDEX_MARGIN);
+                             update_tally_map(address, collateralCurrency, balance, CONTRACTDEX_RESERVE);
                          }
 
                          const uint256 txid;

@@ -1954,6 +1954,26 @@ void CMPContractDex::saveOffer(std::ofstream& file, SHA256_CTX* shaCtx) const
     file << lineOut << std::endl;
 }
 
+
+// Generates a consensus string for hashing based on a MetaDEx object
+std::string CMPMetaDEx::GenerateConsensusString() const
+{
+   return strprintf("%s|%s|%d|%d|%d|%d|%d",
+		    getHash().GetHex(), getAddr(), getProperty(), getAmountForSale(),
+		    getDesProperty(), getAmountDesired(), getAmountRemaining());
+}
+
+// Generates a consensus string for hashing based on a ContractDex object
+std::string CMPContractDex::GenerateConsensusString() const
+{
+    return strprintf("%s|%s|%d|%d|%d|%d|%d|%d",
+         getHash().GetHex(), getAddr(), getProperty(), getAmountForSale(),
+         getAmountRemaining(), getEffectivePrice(), getTradingAction(), getAmountReserved());
+}
+
+
+
+
 void saveDataGraphs(std::fstream &file, std::string lineOutSixth1, std::string lineOutSixth2, std::string lineOutSixth3, bool savedata_bool)
 {
     std::string lineSixth1 = lineOutSixth1;
@@ -2859,7 +2879,7 @@ bool mastercore::checkReserve(const std::string& address, int64_t amount, uint32
 {
     arith_uint256 am = ConvertTo256(amount) + DivideAndRoundUp(ConvertTo256(amount) * ConvertTo256(5), ConvertTo256(BASISPOINT) * ConvertTo256(BASISPOINT));
     int64_t amountToReserve = ConvertTo64(am);
-    
+
     nBalance = getMPbalance(address, propertyId, BALANCE);
 
     return (nBalance < amountToReserve || nBalance == 0) ? false : true;

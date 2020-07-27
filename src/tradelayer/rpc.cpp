@@ -1736,19 +1736,22 @@ UniValue tl_getcurrentconsensushash(const JSONRPCRequest& request)
             + HelpExampleRpc("tl_getcurrentconsensushash", "")
         );
 
-    LOCK(cs_main); // TODO - will this ensure we don't take in a new block in the couple of ms it takes to calculate the consensus hash?
-
-    int block = GetHeight();
-
-    CBlockIndex* pblockindex = chainActive[block];
-    uint256 blockHash = pblockindex->GetBlockHash();
-
-    uint256 consensusHash = GetConsensusHash();
-
     UniValue response(UniValue::VOBJ);
-    response.push_back(Pair("block", block));
-    response.push_back(Pair("blockhash", blockHash.GetHex()));
-    response.push_back(Pair("consensushash", consensusHash.GetHex()));
+    
+    {
+        LOCK(cs_main); // TODO - will this ensure we don't take in a new block in the couple of ms it takes to calculate the consensus hash?
+
+        int block = GetHeight();
+
+        CBlockIndex* pblockindex = chainActive[block];
+        uint256 blockHash = pblockindex->GetBlockHash();
+
+        uint256 consensusHash = GetConsensusHash();
+
+        response.push_back(Pair("block", block));
+        response.push_back(Pair("blockhash", blockHash.GetHex()));
+        response.push_back(Pair("consensushash", consensusHash.GetHex()));
+    }
 
     return response;
 }
@@ -1757,10 +1760,9 @@ bool PositionToJSON(const std::string& address, uint32_t property, UniValue& bal
 {
     int64_t longPosition  = getMPbalance(address, property, POSITIVE_BALANCE);
     int64_t shortPosition = getMPbalance(address, property, NEGATIVE_BALANCE);
-    int64_t liqPrice = getMPbalance(address, property, LIQUIDATION_PRICE);
     balance_obj.push_back(Pair("longPosition", longPosition));
     balance_obj.push_back(Pair("shortPosition", shortPosition));
-    balance_obj.push_back(Pair("liquidationPrice", FormatByType(liqPrice,2)));
+    // balance_obj.push_back(Pair("liquidationPrice", FormatByType(liqPrice,2)));
 
     return true;
 }
@@ -1771,13 +1773,12 @@ bool FullPositionToJSON(const std::string& address, uint32_t property, UniValue&
   // const int64_t factor = 100000000;
   int64_t longPosition = getMPbalance(address, property, POSITIVE_BALANCE);
   int64_t shortPosition = getMPbalance(address, property, NEGATIVE_BALANCE);
-  int64_t liqPrice = getMPbalance(address, property, LIQUIDATION_PRICE);
   int64_t valueLong = longPosition * (uint64_t) sProperty.notional_size;
   int64_t valueShort = shortPosition * (uint64_t) sProperty.notional_size;
 
   position_obj.push_back(Pair("longPosition", FormatByType(longPosition, 1)));
   position_obj.push_back(Pair("shortPosition", FormatByType(shortPosition, 1)));
-  position_obj.push_back(Pair("liquidationPrice", FormatByType(liqPrice,2)));
+  // position_obj.push_back(Pair("liquidationPrice", FormatByType(liqPrice,2)));
   position_obj.push_back(Pair("valueLong", FormatByType(valueLong, 1)));
   position_obj.push_back(Pair("valueShort", FormatByType(valueShort, 1)));
 

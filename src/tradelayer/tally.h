@@ -16,15 +16,9 @@ enum TallyType {
         NEGATIVE_BALANCE = 7,
         REALIZED_PROFIT = 8,
         REALIZED_LOSSES = 9,
-        COUNT = 10,
-        REMAINING = 11,
-        LIQUIDATION_PRICE = 12,
-        UPNL = 13, // positive
-        NUPNL = 14, // negative
-	      UNVESTED = 15,
-        CONTRACTDEX_MARGIN = 16,   //TODO: need save to db
-        CHANNEL_RESERVE = 17,
-        //////////////////////////////////////
+        REMAINING = 10,
+	      UNVESTED = 11,
+        CHANNEL_RESERVE = 12,
         TALLY_TYPE_COUNT
 };
 
