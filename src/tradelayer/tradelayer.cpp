@@ -1682,8 +1682,6 @@ int input_vestingaddresses_string(const std::string& s)
 
    const std::string& address = vstr[0];
 
-   PrintToLog("%s(): address: %s\n",__func__, address);
-
    vestingAddresses.push_back(address);
 
    return ((vestingAddresses.size() > elements) ? 0 : -1);
@@ -2203,6 +2201,7 @@ static int write_mp_withdrawals(std::ofstream& file, SHA256_CTX* shaCtx)
         for(auto itt = whd.begin(); itt != whd.end(); ++itt)
         {
             const withdrawalAccepted&  w = *itt;
+            // PrintToLog("%s(): w =  chnAddr: %s, w.address : %s, w.deadline_block : %d, w.propertyId : %d, w.amount : %d\n",__func__,  chnAddr, w.address, w.deadline_block, w.propertyId, w.amount);
             lineOut.append(strprintf("%s,%s,%d,%d,%d", chnAddr, w.address, w.deadline_block, w.propertyId, w.amount));
             // add the line to the hash
             SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
@@ -2478,14 +2477,15 @@ int mastercore_save_state( CBlockIndex const *pBlockIndex )
     write_state_file(pBlockIndex, FILETYPE_GLOBALS);
     write_state_file(pBlockIndex, FILETYPE_CROWDSALES);
     write_state_file(pBlockIndex, FILETYPE_CDEXORDERS);
+    write_state_file(pBlockIndex, FILETYPE_MDEXORDERS);
     write_state_file(pBlockIndex, FILETYPE_OFFERS);
     write_state_file(pBlockIndex, FILETYPE_ACCEPTS);
-    write_state_file(pBlockIndex, FILETYPE_MDEXORDERS);
     write_state_file(pBlockIndex, FILETYPE_CACHEFEES);
     write_state_file(pBlockIndex, FILETYPE_CACHEFEES_ORACLES);
     write_state_file(pBlockIndex, FILETYPE_WITHDRAWALS);
     write_state_file(pBlockIndex, FILETYPE_ACTIVE_CHANNELS);
     write_state_file(pBlockIndex, FILETYPE_DEX_VOLUME);
+    write_state_file(pBlockIndex, FILETYPE_MDEX_VOLUME);
     write_state_file(pBlockIndex, FILETYPE_GLOBAL_VARS);
     write_state_file(pBlockIndex, FILE_TYPE_VESTING_ADDRESSES);
 
@@ -4387,10 +4387,7 @@ bool CMPTradeList::kycConsensusHash(SHA256_CTX& shaCtx)
         const std::string& type = vstr[7];
         if( type != TYPE_NEW_ID_REGISTER) continue;
 
-        std::string dataStr = kycGenerateConsensusString(vstr);
 
-        if (msc_debug_consensus_hash) PrintToLog("Adding KYC entry to consensus hash: %s\n", dataStr);
-        SHA256_Update(&shaCtx, dataStr.c_str(), dataStr.length());
     }
 
     // clean up

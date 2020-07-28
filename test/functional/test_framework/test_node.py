@@ -51,7 +51,7 @@ class TestNode():
             self.rpc_timeout = timewait
         else:
             # Wait for up to 60 seconds for the RPC server to respond
-            self.rpc_timeout = 360
+            self.rpc_timeout = 180
         if binary is None:
             self.binary = os.getenv("LITECOIND", "litecoind")
         else:
@@ -130,7 +130,7 @@ class TestNode():
             except ValueError as e:  # cookie file not found and no rpcuser or rpcassword. bitcoind still starting
                 if "No RPC credentials" not in str(e):
                     raise
-            time.sleep(8.0 / poll_per_s)
+            time.sleep(1.0 / poll_per_s)
         raise AssertionError("Unable to connect to litecoind")
 
     def get_wallet_rpc(self, wallet_name):

@@ -32,8 +32,6 @@ extern std::vector<std::string> vestingAddresses;
 namespace mastercore
 {
 
-CMPTradeList *d_tradelistdb;
-
 
 bool ShouldConsensusHashBlock(int block)
 {
@@ -403,41 +401,34 @@ uint256 GetConsensusHash()
 
     // Trade Channels
     // Placeholders: "multisigaddress|multisigaddress|firstaddress|secondaddress|expiryheight|lastexchangeblock"
-    std::vector<std::pair<std::string, std::string> > vecChannels;
     for(auto it = channels_Map.begin(); it != channels_Map.end(); ++it)
     {
-         const std::string& multisig = it->first;
          const channel& chn = it->second;
          std::string dataStr = GenerateConsensusString(chn);
-         vecChannels.push_back(std::make_pair(multisig, dataStr));
-    }
-    // ordering  channels by multisig address
-    std::sort (vecChannels.begin(), vecChannels.end());
-    for (auto it = vecChannels.begin(); it != vecChannels.end(); ++it)
-    {
-        std::string dataStr = it->second;
-        if (msc_debug_consensus_hash) PrintToLog("Adding Trade Channels entry to consensus hash: %s\n", dataStr);
-        SHA256_Update(&shaCtx, dataStr.c_str(), dataStr.length());
+         if (msc_debug_consensus_hash) PrintToLog("Adding Trade Channels entry to consensus hash: %s\n", dataStr);
+         //channels oredered by multisig address (map key)
+         SHA256_Update(&shaCtx, dataStr.c_str(), dataStr.length());
+
     }
 
-    //FIXME: big timeouts accessing the db !!!
     // KYC list
     // Placeholders: "address|name|website|block|kycid"
-    // d_tradelistdb->kycConsensusHash(shaCtx);
+    //NOTE: Possible optimization: different batch for every kind of register in db
+    t_tradelistdb->kycConsensusHash(shaCtx);
 
     // Attestation list
     // Placeholders: "address|name|website|block|kycid"
-    // d_tradelistdb->attConsensusHash(shaCtx);
+    t_tradelistdb->attConsensusHash(shaCtx);
 
     // Cache fee (natives)
     // Placeholders: "propertyid|cacheamount"
     for (auto itt = cachefees.begin(); itt != cachefees.end(); ++itt)
     {
-        // decompose the key for address
         const uint32_t& propertyId = itt->first;
         const int64_t& cache = itt->second;
         std::string dataStr = feeGenerateConsensusString(propertyId, cache);
         if (msc_debug_consensus_hash) PrintToLog("Adding Fee cache (natives) entry to consensus hash: %s\n", dataStr);
+        // cache fee is a map (ordered by propertyId key)
         SHA256_Update(&shaCtx, dataStr.c_str(), dataStr.length());
     }
 
@@ -445,11 +436,11 @@ uint256 GetConsensusHash()
     // Placeholders: "propertyid|cacheamount"
     for (auto itt = cachefees_oracles.begin(); itt != cachefees_oracles.end(); ++itt)
     {
-        // decompose the key for address
         const uint32_t& propertyId = itt->first;
         const int64_t& cache = itt->second;
         std::string dataStr = feeGenerateConsensusString(propertyId, cache);
         if (msc_debug_consensus_hash) PrintToLog("Adding Fee cache (oracles) entry to consensus hash: %s\n", dataStr);
+        // map ordered by propertyId key
         SHA256_Update(&shaCtx, dataStr.c_str(), dataStr.length());
     }
 
@@ -458,7 +449,6 @@ uint256 GetConsensusHash()
     std::sort (vestingAddresses.begin(), vestingAddresses.end());
     for (auto it = vestingAddresses.begin(); it != vestingAddresses.end(); ++it)
     {
-        // decompose the key for address
         const std::string& address = *it;
         std::string dataStr = strprintf("%s", address);
         if (msc_debug_consensus_hash) PrintToLog("Adding Vesting addresses entry to consensus hash: %s\n", dataStr);
@@ -479,7 +469,6 @@ uint256 GetConsensusHash()
 
     // sorting using featureId
     std::sort(sortPendings.begin(), sortPendings.end());
-
     for(auto itt = sortPendings.begin(); itt != sortPendings.end(); ++itt)
     {
         std::string dataStr = itt->second;
@@ -501,7 +490,6 @@ uint256 GetConsensusHash()
 
     // sorting using featureId
     std::sort(sortCompleted.begin(), sortCompleted.end());
-
     for(auto itt = sortCompleted.begin(); itt != sortCompleted.end(); ++itt)
     {
         std::string dataStr = itt->second;

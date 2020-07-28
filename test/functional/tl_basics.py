@@ -144,6 +144,15 @@ class HTTPBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['supply'],'0.00000000')
         assert_equal(out['result']['blockheight'],'100')
 
+
+        self.nodes[0].generate(1)
+
+        #get consensush hash before block 200
+        self.log.info("Checking consensus hash")
+        out = tradelayer_HTTP(conn, headers, False, "tl_getcurrentconsensushash")
+        # self.log.info(out)
+        assert_equal (out['result']['consensushash'],"bdcf8449947235e95d8180dcf6b441d24c85d7c80bbcb79606698c5eadddb10e")
+
         conn.close()
 
         self.stop_nodes()
