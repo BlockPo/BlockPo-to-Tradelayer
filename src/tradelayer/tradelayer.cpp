@@ -4387,7 +4387,10 @@ bool CMPTradeList::kycConsensusHash(SHA256_CTX& shaCtx)
         const std::string& type = vstr[7];
         if( type != TYPE_NEW_ID_REGISTER) continue;
 
+        std::string dataStr = kycGenerateConsensusString(vstr);
 
+        if (msc_debug_consensus_hash) PrintToLog("Adding KYC entry to consensus hash: %s\n", dataStr);
+        SHA256_Update(&shaCtx, dataStr.c_str(), dataStr.length());
     }
 
     // clean up
