@@ -583,6 +583,7 @@ struct withdrawalAccepted
   int deadline_block;
   uint32_t propertyId;
   uint64_t amount;
+  uint256 txid;
 
   withdrawalAccepted() : address(""), deadline_block(0), propertyId(0), amount(0) {}
 };

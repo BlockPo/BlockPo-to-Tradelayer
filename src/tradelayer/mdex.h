@@ -135,6 +135,7 @@ class CMPMetaDEx
 
   void saveOffer(std::ofstream& file, SHA256_CTX* shaCtx) const;
 
+  std::string GenerateConsensusString() const;
 
 };
 
@@ -206,6 +207,10 @@ class CMPContractDex : public CMPMetaDEx
   /*New things for Contracts*/
   friend MatchReturnType x_Trade(CMPContractDex* const pnew);
   ///////////////////////////////
+
+  // Generates a consensus string for hashing based on a ContractDex object
+  std::string GenerateConsensusString() const;
+
 };
 
 namespace mastercore

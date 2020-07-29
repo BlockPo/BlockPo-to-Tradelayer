@@ -567,7 +567,6 @@ class PersistenceBasicsTest (BitcoinTestFramework):
         conn = http.client.HTTPConnection(url.hostname, url.port)
         conn.connect()
 
-
         self.log.info("Persistence: checking the trade channel")
         params = str([multisig]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_getchannel_info",params)
@@ -659,6 +658,12 @@ class PersistenceBasicsTest (BitcoinTestFramework):
         conn = http.client.HTTPConnection(url.hostname, url.port)
         conn.connect()
 
+
+        out = tradelayer_HTTP(conn, headers, False, "tl_getinfo")
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        block = out['result']['block']
+        self.log.info("Blockheight: "+str(block))
 
         self.log.info("Checking reserve in channel")
         params = str([multisig, 4]).replace("'",'"')

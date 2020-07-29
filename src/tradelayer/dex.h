@@ -57,6 +57,7 @@ private:
     uint8_t option_; // buyer=1, seller=2.
 
 public:
+    int getOfferBlock() const { return offerBlock; }
     uint256 getHash() const { return txid; }
     uint32_t getProperty() const { return property; }
     int64_t getMinFee() const { return min_fee ; }
@@ -96,13 +97,12 @@ public:
 
     void saveOffer(std::ofstream& file, SHA256_CTX* shaCtx, const std::string& address) const
     {
-        std::string lineOut = strprintf("%s,%d,%d,%d,%d,%d,%d,%d,%s,%d,%d",
+        std::string lineOut = strprintf("%s,%d,%d,%d,%d,%d,%d,%s,%d,%d",
                 address,
                 offerBlock,
                 offer_amount_original,
                 property,
                 LTC_desired_original,
-                (TL_PROPERTY_BTC),
                 min_fee,
                 blocktimelimit,
                 txid.ToString(),
