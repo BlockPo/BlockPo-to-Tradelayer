@@ -4505,10 +4505,25 @@ int CMPTransaction::logicMath_Withdrawal_FromChannel()
     wthd.deadline_block = block + 7;
     wthd.propertyId = propertyId;
     wthd.amount = amount_to_withdraw;
+    wthd.txid = txid;
+
 
     if (msc_debug_withdrawal_from_channel) PrintToLog("checking wthd element : address: %s, deadline: %d, propertyId: %d, amount: %d \n", wthd.address, wthd.deadline_block, wthd.propertyId, wthd.amount);
 
-    withdrawal_Map[receiver].push_back(wthd);
+
+    auto it = withdrawal_Map.find(receiver);
+
+    // channel found !
+    if(it != withdrawal_Map.end())
+    {
+        vector<withdrawalAccepted>& whAc = it->second;
+        whAc.push_back(wthd);
+
+    } else {
+        vector<withdrawalAccepted> whAcc;
+        whAcc.push_back(wthd);
+        withdrawal_Map.insert(std::make_pair(receiver,whAcc));
+    }
 
     t_tradelistdb->recordNewWithdrawal(txid, receiver, sender, propertyId, amount_to_withdraw, block, tx_idx);
 
