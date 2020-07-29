@@ -567,7 +567,6 @@ class PersistenceBasicsTest (BitcoinTestFramework):
         conn = http.client.HTTPConnection(url.hostname, url.port)
         conn.connect()
 
-
         self.log.info("Persistence: checking the trade channel")
         params = str([multisig]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_getchannel_info",params)
@@ -677,7 +676,7 @@ class PersistenceBasicsTest (BitcoinTestFramework):
         self.log.info("Persistence: checking withdrawals")
         params = str([addresses[0]]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_check_withdrawals", params)
-        self.log.info(out)
+        # self.log.info(out)
         assert_equal(out['result'][0]['channel_address'], multisig)
         assert_equal(out['result'][0]['sender'], addresses[0])
         assert_equal(out['result'][0]['withdrawal_amount'], '50.00000000')

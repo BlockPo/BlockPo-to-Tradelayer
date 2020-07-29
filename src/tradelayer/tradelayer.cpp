@@ -129,7 +129,6 @@ extern int64_t globalNumPrice;
 extern int64_t globalDenPrice;
 extern int64_t factorE;
 extern double denMargin;
-extern uint64_t marketP[NPTYPES];
 extern std::vector<std::map<std::string, std::string>> path_ele;
 extern int idx_expiration;
 extern int expirationAchieve;
@@ -162,7 +161,6 @@ extern std::map<uint32_t, std::vector<int64_t>> mapContractVolume;
 extern std::map<uint32_t, int64_t> VWAPMapContracts;
 //extern volatile std::vector<std::map<std::string, std::string>> path_eleg;
 extern std::map<uint32_t,std::map<int,oracledata>> oraclePrices;
-extern std::string setExoduss;
 /************************************************/
 /** TWAP containers **/
 
@@ -1315,8 +1313,7 @@ int input_msc_balances_string(const std::string& s)
 
         std::vector<std::string> curBalance;
         boost::split(curBalance, curProperty[1], boost::is_any_of(","), boost::token_compress_on);
-        if (curBalance.size() != 11) return -1;
-
+        if (curBalance.size() != 12) return -1;
 
         uint32_t propertyId = boost::lexical_cast<uint32_t>(curProperty[0]);
         int64_t balance = boost::lexical_cast<int64_t>(curBalance[0]);
@@ -1330,6 +1327,7 @@ int input_msc_balances_string(const std::string& s)
         int64_t realizeLosses = boost::lexical_cast<int64_t>(curBalance[8]);
         int64_t remaining = boost::lexical_cast<int64_t>(curBalance[9]);
         int64_t unvested = boost::lexical_cast<int64_t>(curBalance[10]);
+        int64_t channelReserve = boost::lexical_cast<int64_t>(curBalance[11]);
 
         if (balance) update_tally_map(strAddress, propertyId, balance, BALANCE);
         if (sellReserved) update_tally_map(strAddress, propertyId, sellReserved, SELLOFFER_RESERVE);
@@ -1343,6 +1341,7 @@ int input_msc_balances_string(const std::string& s)
         if (realizeLosses) update_tally_map(strAddress, propertyId, realizeLosses, REALIZED_LOSSES);
         if (remaining) update_tally_map(strAddress, propertyId, remaining, REMAINING);
         if (unvested) update_tally_map(strAddress, propertyId, unvested, UNVESTED);
+        if (channelReserve) update_tally_map(strAddress, propertyId, channelReserve, CHANNEL_RESERVE);
     }
 
     return 0;
@@ -1633,10 +1632,10 @@ int input_mp_dexvolume_string(const std::string& s)
     boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
 
     int block = boost::lexical_cast<int>(vstr[0]);
-    uint32_t propertyId = boost::lexical_cast<int>(vstr[1]);
-    int64_t amount = boost::lexical_cast<int>(vstr[2]);
+    uint32_t propertyId = boost::lexical_cast<uint32_t>(vstr[1]);
+    int64_t amount = boost::lexical_cast<int64_t>(vstr[2]);
 
-    std::map<int, std::map<uint32_t,int64_t>>::iterator it = MapPropVolume.find(block);
+    auto it = MapPropVolume.find(block);
     if (it != MapPropVolume.end()){
         std::map<uint32_t,int64_t>& pMap = it->second;
         pMap[propertyId] = amount;
@@ -1657,11 +1656,11 @@ int input_mp_mdexvolume_string(const std::string& s)
     boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
 
     int block = boost::lexical_cast<int>(vstr[0]);
-    uint32_t property1 = boost::lexical_cast<int>(vstr[1]);
-    uint32_t property2 = boost::lexical_cast<int>(vstr[2]);
-    int64_t amount = boost::lexical_cast<int>(vstr[3]);
+    uint32_t property1 = boost::lexical_cast<uint32_t>(vstr[1]);
+    uint32_t property2 = boost::lexical_cast<uint32_t>(vstr[2]);
+    int64_t amount = boost::lexical_cast<int64_t>(vstr[3]);
 
-    std::map<int, std::map<std::pair<uint32_t, uint32_t>, int64_t>>::iterator it = MapMetaVolume.find(block);
+    auto it = MapMetaVolume.find(block);
     if (it != MapMetaVolume.end()){
         std::map<std::pair<uint32_t, uint32_t>, int64_t>& pMap = it->second;
         pMap[std::make_pair(property1,property2)] = amount;
@@ -2019,17 +2018,17 @@ static int write_msc_balances(std::ofstream& file, SHA256_CTX* shaCtx)
             int64_t realizedProfit = (*iter).second.getMoney(propertyId, REALIZED_PROFIT);
             int64_t realizedLosses = (*iter).second.getMoney(propertyId, REALIZED_LOSSES);
             int64_t remaining = (*iter).second.getMoney(propertyId, REMAINING);
-            // int64_t liquidationPrice = (*iter).second.getMoney(propertyId, LIQUIDATION_PRICE);
             int64_t unvested = (*iter).second.getMoney(propertyId, UNVESTED);
+            int64_t channelReserve = (*iter).second.getMoney(propertyId, CHANNEL_RESERVE);
             // we don't allow 0 balances to read in, so if we don't write them
             // it makes things match up better between persisted state and processed state
-            if (0 == balance && 0 == sellReserved && 0 == acceptReserved && 0 == metadexReserved && contractdexReserved == 0 && positiveBalance == 0 && negativeBalance == 0 && realizedProfit == 0 && realizedLosses == 0 && remaining == 0 && unvested == 0) {
+            if (0 == balance && 0 == sellReserved && 0 == acceptReserved && 0 == metadexReserved && contractdexReserved == 0 && positiveBalance == 0 && negativeBalance == 0 && realizedProfit == 0 && realizedLosses == 0 && remaining == 0 && unvested == 0 && channelReserve == 0) {
                 continue;
             }
 
             emptyWallet = false;
 
-            lineOut.append(strprintf("%d:%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d;",
+            lineOut.append(strprintf("%d:%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d;",
                     propertyId,
                     balance,
                     sellReserved,
@@ -2041,7 +2040,8 @@ static int write_msc_balances(std::ofstream& file, SHA256_CTX* shaCtx)
                     realizedProfit,
                     realizedLosses,
                     remaining,
-                    unvested));
+                    unvested,
+                    channelReserve));
         }
 
         if (!emptyWallet) {
@@ -2283,7 +2283,7 @@ static int write_mp_dexvolume(std::ofstream& file, SHA256_CTX* shaCtx)
 /** Saving MDEx Map volume **/
 static int write_mp_mdexvolume(std::ofstream& file, SHA256_CTX* shaCtx)
 {
-    for(auto it = MapMetaVolume.begin(); it != MapMetaVolume.end();it++)
+    for(auto it = MapMetaVolume.begin(); it != MapMetaVolume.end(); ++it)
     {
         // decompose the key for address
         const uint32_t& block = it->first;
@@ -2497,9 +2497,7 @@ int mastercore_save_state(CBlockIndex const *pBlockIndex)
     write_state_file(pBlockIndex, FILETYPE_ACCEPTS);
     write_state_file(pBlockIndex, FILETYPE_CACHEFEES);
     write_state_file(pBlockIndex, FILETYPE_CACHEFEES_ORACLES);
-
-    // FIXME: issues with persistence for withdrawals 
-    // write_state_file(pBlockIndex, FILETYPE_WITHDRAWALS);
+    write_state_file(pBlockIndex, FILETYPE_WITHDRAWALS);
     write_state_file(pBlockIndex, FILETYPE_ACTIVE_CHANNELS);
     write_state_file(pBlockIndex, FILETYPE_DEX_VOLUME);
     write_state_file(pBlockIndex, FILETYPE_MDEX_VOLUME);
@@ -2533,6 +2531,11 @@ void clear_all_state()
     ResetConsensusParams();
     ClearActivations();
     // ClearAlerts();
+    channels_Map.clear();
+    withdrawal_Map.clear();
+    MapPropVolume.clear();
+    MapMetaVolume.clear();
+    vestingAddresses.clear();
 
     // LevelDB based storage
      _my_sps->Clear();
@@ -3806,7 +3809,6 @@ bool mastercore::isMPinBlockRange(int starting_block, int ending_block, bool bDe
 // uint64_t nNew = 0;
 //
 // if (getValidMPTX(txid, &block, &type, &nNew)) // if true -- the TX is a valid MP TX
-
 bool mastercore::getValidMPTX(const uint256 &txid, int *block, unsigned int *type, uint64_t *nAmended)
 {
   string result;
@@ -3884,7 +3886,6 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
   }
 
   // handle any features that go live with this block
-
   makeWithdrawals(pBlockIndex->nHeight);
   CheckLiveActivations(pBlockIndex->nHeight);
   closeChannels(pBlockIndex->nHeight);

@@ -1737,7 +1737,7 @@ UniValue tl_getcurrentconsensushash(const JSONRPCRequest& request)
         );
 
     UniValue response(UniValue::VOBJ);
-    
+
     {
         LOCK(cs_main); // TODO - will this ensure we don't take in a new block in the couple of ms it takes to calculate the consensus hash?
 
