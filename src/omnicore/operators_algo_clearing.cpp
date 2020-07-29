@@ -299,253 +299,262 @@ void settlement_algorithm_fifo(MatrixTLS &M_file, int64_t interest, int64_t twap
   std::vector<std::string> AddrsLivesNonZero = LivesNonZero(path_main, AddrsV);
   for (std::vector<std::string>::iterator it = AddrsLivesNonZero.begin(); it != AddrsLivesNonZero.end(); ++it)
     PrintToLog("%s\n", *it);
-
+  
   PrintToLog("\n*************************************************");
   PrintToLog("\nComputing Lives contracts in the Main Graph\n");
-
+  
   std::vector<std::map<std::string, std::string>> LivesLongs;
   std::vector<std::map<std::string, std::string>> LivesShorts;
   std::map<std::string, std::string> LivesLongsEle;
   std::map<std::string, std::string> LivesShortsEle;
-
+  
   std::vector<std::vector<std::map<std::string, std::string>>>::reverse_iterator rit_path_main;
   std::vector<std::map<std::string, std::string>>::reverse_iterator rit_path_maini;
-
+  
   for (std::vector<std::string>::iterator it_addrs = AddrsV.begin(); it_addrs != AddrsV.end(); ++it_addrs)
-  {
-    std::string &AddrsLives = *it_addrs;
-
-		std::string Status 	= "None";
-		long int NLives 	  = 0;
-		long int EdgeRow 	  = 0;
-		long int PathNumber = 0;
-		double EntryPrice 	= 0;
-		int IdPosition 		  = 0;
-    int NEvents         = 0;
-    bool Loop = true;
-
-    for (rit_path_main = path_main.rbegin(); rit_path_main != path_main.rend() && Loop; ++rit_path_main)
     {
-			for (rit_path_maini = (*rit_path_main).rbegin(); rit_path_maini != (*rit_path_main).rend() && Loop; ++rit_path_maini)
-			{
-        std::map<std::string, std::string> &GraphEdge = *rit_path_maini;
-        struct EdgeInfo *PtStatusByEdge = GetEdgeInfo(GraphEdge);
-				
-        if (PtStatusByEdge->addrs_src == AddrsLives)
-				{
-          NEvents += 1;
-          IdPosition = finding_string("Long", PtStatusByEdge->status_src) ? 0 : 1;
-          Status = PtStatusByEdge->status_src;          
-          NLives = PtStatusByEdge->lives_src;
-          EntryPrice = PtStatusByEdge->entry_price;
-          EdgeRow = PtStatusByEdge->edge_row;
-          PathNumber = PtStatusByEdge->path_number;
-
-          if (finding_string("Open", PtStatusByEdge->status_src))
-          {
-            PrintToLog("\n* Open. Last Action for: %s = %s; Edge Row = %d\n", AddrsLives, Status, EdgeRow);
-            PushBackLives(IdPosition, AddrsLives, Status, NLives, EntryPrice, EdgeRow, PathNumber, LivesLongsEle, LivesLongs, LivesShortsEle, LivesShorts);
-            Loop = false;
-          }
-          else if (finding_string("Increased", PtStatusByEdge->status_src))
-          {
-            PrintToLog("\n* Increased. Last Action for: %s = %s; Edge Row = %d\n", AddrsLives, Status, EdgeRow);
-            IncreasedLastPos(path_main, EdgeRow, AddrsLives, LivesLongsEle, LivesLongs, LivesShortsEle, LivesShorts);
-            Loop =  false;
-          }
-          else if (finding_string("NettedPartly", PtStatusByEdge->status_src))
-          {
-            PrintToLog("\n* NettedPartly. Last Action for: %s = %s; Edge Row = %d\n", AddrsLives, Status, EdgeRow);
-            Loop =  false;
-          }
-				}				
-        else if (PtStatusByEdge->addrs_trk == AddrsLives)
-				{
-          NEvents += 1;
-					IdPosition = finding_string("Long", PtStatusByEdge->status_trk) ? 0 : 1;
-					Status = PtStatusByEdge->status_trk;
-					NLives = PtStatusByEdge->lives_trk;
-					EntryPrice = PtStatusByEdge->entry_price;
-					EdgeRow = PtStatusByEdge->edge_row;
-					PathNumber = PtStatusByEdge->path_number;
-
-          if (finding_string("Open", PtStatusByEdge->status_trk))
-          {
-            PrintToLog("\n* Open. Last Action for: %s = %s; Edge Row = %d\n", AddrsLives, Status, EdgeRow);
-            PushBackLives(IdPosition, AddrsLives, Status, NLives, EntryPrice, EdgeRow, PathNumber, LivesLongsEle, LivesLongs, LivesShortsEle, LivesShorts);
-            Loop = false;
-          }
-          else if (finding_string("Increased", PtStatusByEdge->status_trk))
-          {
-            IncreasedLastPos(path_main, EdgeRow, AddrsLives, LivesLongsEle, LivesLongs, LivesShortsEle, LivesShorts);
-            PrintToLog("\n* Increased. Last Action for: %s = %s; Edge Row = %d\n", AddrsLives, Status, EdgeRow);
-            Loop =  false;
-          }
-          else if (finding_string("NettedPartly", PtStatusByEdge->status_trk))
-          {
-            PrintToLog("\n* NettedPartly. Last Action for: %s = %s; Edge Row = %d\n", AddrsLives, Status, EdgeRow);
-            Loop =  false;
-          }
-				}
-        else
-					continue;
-			}
+      std::string &AddrsLives = *it_addrs;
+      
+      std::string Status  = "None";
+      long int NLives 	  = 0;
+      long int EdgeRow 	  = 0;
+      long int PathNumber = 0;
+      double EntryPrice   = 0;
+      int IdPosition 	  = 0;
+      int NEvents         = 0;
+      bool Loop = true;
+      
+      for (rit_path_main = path_main.rbegin(); rit_path_main != path_main.rend() && Loop; ++rit_path_main)
+	{
+	  for (rit_path_maini = (*rit_path_main).rbegin(); rit_path_maini != (*rit_path_main).rend() && Loop; ++rit_path_maini)
+	    {
+	      std::map<std::string, std::string> &GraphEdge = *rit_path_maini;
+	      struct EdgeInfo *PtStatusByEdge = GetEdgeInfo(GraphEdge);
+	      
+	      if (PtStatusByEdge->addrs_src == AddrsLives)
+		{
+		  NEvents += 1;
+		  IdPosition = finding_string("Long", PtStatusByEdge->status_src) ? 0 : 1;
+		  Status = PtStatusByEdge->status_src;          
+		  NLives = PtStatusByEdge->lives_src;
+		  EntryPrice = PtStatusByEdge->entry_price;
+		  EdgeRow = PtStatusByEdge->edge_row;
+		  PathNumber = PtStatusByEdge->path_number;
+		  
+		  if (finding_string("Open", PtStatusByEdge->status_src))
+		    {
+		      // PrintToLog("\n* Open. Last Action for: %s = %s; Edge Row = %d\n", AddrsLives, Status, EdgeRow);
+		      PushBackLives(IdPosition, AddrsLives, Status, NLives, EntryPrice, EdgeRow, PathNumber, LivesLongsEle,
+				    LivesLongs, LivesShortsEle, LivesShorts);
+		      Loop = false;
+		    }
+		  else if (finding_string("Increased", PtStatusByEdge->status_src))
+		    {
+		      // PrintToLog("\n* Increased. Last Action for: %s = %s; Edge Row = %d\n", AddrsLives, Status, EdgeRow);
+		      IncreasedLastPos(path_main, EdgeRow, AddrsLives, LivesLongsEle, LivesLongs, LivesShortsEle, LivesShorts);
+		      Loop =  false;
+		    }
+		  else if (finding_string("NettedPartly", PtStatusByEdge->status_src))
+		    {
+		      // PrintToLog("\n* NettedPartly. Last Action for: %s = %s; Edge Row = %d\n", AddrsLives, Status, EdgeRow);
+		      PushBackLives(IdPosition, AddrsLives, Status, NLives, EntryPrice, EdgeRow, PathNumber, LivesLongsEle,
+				    LivesLongs, LivesShortsEle, LivesShorts);
+		      Loop =  false;
+		    }
+		}				
+	      else if (PtStatusByEdge->addrs_trk == AddrsLives)
+		{
+		  NEvents += 1;
+		  IdPosition = finding_string("Long", PtStatusByEdge->status_trk) ? 0 : 1;
+		  Status = PtStatusByEdge->status_trk;
+		  NLives = PtStatusByEdge->lives_trk;
+		  EntryPrice = PtStatusByEdge->entry_price;
+		  EdgeRow = PtStatusByEdge->edge_row;
+		  PathNumber = PtStatusByEdge->path_number;
+		  
+		  if (finding_string("Open", PtStatusByEdge->status_trk))
+		    {
+		      // PrintToLog("\n* Open. Last Action for: %s = %s; Edge Row = %d\n", AddrsLives, Status, EdgeRow);
+		      PushBackLives(IdPosition, AddrsLives, Status, NLives, EntryPrice, EdgeRow, PathNumber, LivesLongsEle,
+				    LivesLongs, LivesShortsEle, LivesShorts);
+		      Loop = false;
+		    }
+		  else if (finding_string("Increased", PtStatusByEdge->status_trk))
+		    {
+		      IncreasedLastPos(path_main, EdgeRow, AddrsLives, LivesLongsEle, LivesLongs, LivesShortsEle, LivesShorts);
+		      // PrintToLog("\n* Increased. Last Action for: %s = %s; Edge Row = %d\n", AddrsLives, Status, EdgeRow);
+		      Loop =  false;
+		    }
+		  else if (finding_string("NettedPartly", PtStatusByEdge->status_trk))
+		    {
+		      // PrintToLog("\n* NettedPartly. Last Action for: %s = %s; Edge Row = %d\n", AddrsLives, Status, EdgeRow);
+		      PushBackLives(IdPosition, AddrsLives, Status, NLives, EntryPrice, EdgeRow, PathNumber, LivesLongsEle,
+				    LivesLongs, LivesShortsEle, LivesShorts);
+		      Loop =  false;
+		    }
 		}
-  }
-
-  PrintToLog("\nLives Longs Vector\n");
-  printing_lives_vector(LivesLongs);
-
-  PrintToLog("\nLives Short Vector\n");
-  printing_lives_vector(LivesShorts);
-
-  PrintToLog("\nDone!!\n");
+	      else
+		continue;
+	    }
+	}
+    }
+  
   PrintToLog("\n*************************************************\n");
-
-  // double exit_price_desired = 0;
-  // long int sum_oflives 	  	= 0;
-  // double PNL_total 	 		    = 0;
-  // double gamma_p 		 		    = 0;
-  // double gamma_q 		 		    = 0;
-  // double sum_gamma_p 	 		  = 0;
-  // double sum_gamma_q 	 		  = 0;
-
+  
+  double exit_price_desired = 0;
+  long int sum_oflives 	    = 0;
+  double PNL_total 	    = 0;
+  double gamma_p 	    = 0;
+  double gamma_q 	    = 0;
+  double sum_gamma_p 	    = 0;
+  double sum_gamma_q 	    = 0;
+  
+  for (it_path_main = path_main.begin(); it_path_main != path_main.end(); ++it_path_main)
+    {
+      computing_settlement_exitprice(*it_path_main, sum_oflives, PNL_total, gamma_p, gamma_q, interest, twap_price);
+      PrintToLog("\ngamma_p : %d, gamma_q : %d, PNL_total : %d\n", gamma_p, gamma_q, PNL_total);
+      sum_gamma_p += gamma_p;
+      sum_gamma_q += gamma_q; 
+    }
+  exit_price_desired = sum_gamma_p/sum_gamma_q;
+  PrintToLog("\nexit_price_desired = %d\n", exit_price_desired);
+  
+  // PrintToLog("\n*************************************************");
+  // PrintToLog("\nChecking VWAP Price for Settlement\n");
+  
+  // double vwap_exit_price = 0;
+  
+  // int64_t VWAPContractPrice = mastercore::getVWAPPriceContracts("ALL F18");
+  // PrintToLog("\nVWAPContractPrice = %s\n", FormatDivisibleMP(VWAPContractPrice));
+  // vwap_exit_price = static_cast<long double>(VWAPContractPrice)/COIN;
+  
+  // int64_t VWAPMetaDExPrice = mastercore::getVWAPPriceByPair("ALL", "dUSD");
+  // PrintToLog("\nVWAPMetaDExPrice = %s\n", FormatDivisibleMP(VWAPMetaDExPrice));
+  
+  counting_lives_longshorts(LivesLongs, LivesShorts);
+  
+  PrintToLog("\n*************************************************");
+  PrintToLog("\nGhost Edges Vector:\n");
+  
+  std::vector<std::map<std::string, std::string>> ghost_edges_array;
+  calculating_ghost_edges(LivesLongs, LivesShorts, exit_price_desired, ghost_edges_array);
+  
+  std::vector<std::map<std::string, std::string>>::iterator it_ghost;
+  for (it_ghost = ghost_edges_array.begin(); it_ghost != ghost_edges_array.end(); ++it_ghost) printing_edges(*it_ghost);
+  
+  PrintToLog("\n*************************************************");
+  
+  // joining_pathmain_ghostedges(path_main, ghost_edges_array);
+  // int k = 0;
+  // long int nonzero_lives;
+  // double PNL_totalit;
+  
+  // std::unordered_set<std::string> addrs_set;
+  // std::vector<std::string> addrsv;
+  
   // for (it_path_main = path_main.begin(); it_path_main != path_main.end(); ++it_path_main)
   // {
-  //   computing_settlement_exitprice(*it_path_main, sum_oflives, PNL_total, gamma_p, gamma_q, interest, twap_price);
-  //   PrintToLog("\ngamma_p : %d, gamma_q : %d, PNL_total : %d\n", gamma_p, gamma_q, PNL_total);
-  //   sum_gamma_p += gamma_p;
-  //   sum_gamma_q += gamma_q; 
+  // 	k += 1;
+  //     PrintToLog("\nPath #%d: with Ghost Nodes\n", k);
+  //     printing_path_maini(*it_path_main);
+  //     nonzero_lives = checkpath_livesnonzero(*it_path_main);
+  //     checkzeronetted_bypath_ghostedges(*it_path_main, nonzero_lives);
+  //     listof_addresses_bypath(*it_path_main, addrsv);
+  //     PrintToLog("\nComputing PNL in this Path\n");
+  //     calculate_pnltrk_bypath(*it_path_main, PNL_totalit, addrs_set, addrsv, interest, twap_price);
+  //     PNL_total += PNL_totalit;
+  //     PrintToLog("\nPNL_total_main sum: %f\n", PNL_total);
+  //     addrs_set.clear();
   // }
-  // exit_price_desired = sum_gamma_p/sum_gamma_q;
-  // PrintToLog("\nexit_price_desired = %d\n", exit_price_desired);
-
-  	// PrintToLog("\n*************************************************");
-  	// PrintToLog("\nChecking VWAP Price for Settlement\n");
-
-	  // double vwap_exit_price = 0;
-  	
-  	// int64_t VWAPContractPrice = mastercore::getVWAPPriceContracts("ALL F18");
-  	// PrintToLog("\nVWAPContractPrice = %s\n", FormatDivisibleMP(VWAPContractPrice));
-  	// vwap_exit_price = static_cast<long double>(VWAPContractPrice)/COIN;
-
-  	// int64_t VWAPMetaDExPrice = mastercore::getVWAPPriceByPair("ALL", "dUSD");
-  	// PrintToLog("\nVWAPMetaDExPrice = %s\n", FormatDivisibleMP(VWAPMetaDExPrice));
-
-  	// counting_lives_longshorts(LivesLongs, LivesShorts);
-
-  	// PrintToLog("\n*************************************************");
-  	// PrintToLog("\nGhost Edges Vector:\n");
-
-  	// std::vector<std::map<std::string, std::string>> ghost_edges_array;
-  	// calculating_ghost_edges(LivesLongs, LivesShorts, exit_price_desired, ghost_edges_array);
-
-  	// std::vector<std::map<std::string, std::string>>::iterator it_ghost;
-  	// for (it_ghost = ghost_edges_array.begin(); it_ghost != ghost_edges_array.end(); ++it_ghost) printing_edges(*it_ghost);
-
-  	// PrintToLog("\n*************************************************");
-
-  	// joining_pathmain_ghostedges(path_main, ghost_edges_array);
-  	// int k = 0;
-  	// long int nonzero_lives;
-  	// double PNL_totalit;
-
-  	// std::unordered_set<std::string> addrs_set;
-  	// std::vector<std::string> addrsv;
-
-  	// for (it_path_main = path_main.begin(); it_path_main != path_main.end(); ++it_path_main)
-  	// {
-  	// 	k += 1;
-  	//     PrintToLog("\nPath #%d: with Ghost Nodes\n", k);
-  	//     printing_path_maini(*it_path_main);
-  	//     nonzero_lives = checkpath_livesnonzero(*it_path_main);
-  	//     checkzeronetted_bypath_ghostedges(*it_path_main, nonzero_lives);
-  	//     listof_addresses_bypath(*it_path_main, addrsv);
-  	//     PrintToLog("\nComputing PNL in this Path\n");
-  	//     calculate_pnltrk_bypath(*it_path_main, PNL_totalit, addrs_set, addrsv, interest, twap_price);
-  	//     PNL_total += PNL_totalit;
-  	//     PrintToLog("\nPNL_total_main sum: %f\n", PNL_total);
-  	//     addrs_set.clear();
-  	// }
-
-  	// PrintToLog("\n*************************************************");
-  	// PrintToLog("\nChecking PNL global (Total Sum PNL by Path):\n");
-  	// PrintToLog("\nPNL_total_main = %f", PNL_total);
-  	PrintToLog("\n\n");
+  
+  // PrintToLog("\n*************************************************");
+  // PrintToLog("\nChecking PNL global (Total Sum PNL by Path):\n");
+  // PrintToLog("\nPNL_total_main = %f", PNL_total);
+  PrintToLog("\n\n");
 }
 
 void PushBackLives(int IdPosition, std::string AddrsLives, std::string Status, long int NLives, double EntryPrice, long int EdgeRow, long int PathNumber, std::map<std::string, std::string> LivesLongsEle, std::vector<std::map<std::string, std::string>> &LivesLongs, std::map<std::string, std::string> LivesShortsEle, std::vector<std::map<std::string, std::string>> &LivesShorts)
 {
   if (IdPosition == 0)
-  {
-    building_lives_edges(LivesLongsEle, AddrsLives, Status, NLives, EntryPrice, EdgeRow, PathNumber);
-    LivesLongs.push_back(LivesLongsEle);
-  }
+    {
+      building_lives_edges(LivesLongsEle, AddrsLives, Status, NLives, EntryPrice, EdgeRow, PathNumber);
+      LivesLongs.push_back(LivesLongsEle);
+    }
   else
-  {
-    building_lives_edges(LivesShortsEle, AddrsLives, Status, NLives, EntryPrice, EdgeRow, PathNumber);
-    LivesShorts.push_back(LivesShortsEle);
-  }
+    {
+      building_lives_edges(LivesShortsEle, AddrsLives, Status, NLives, EntryPrice, EdgeRow, PathNumber);
+      LivesShorts.push_back(LivesShortsEle);
+    }
 }      
 
 void IncreasedLastPos(std::vector<std::vector<std::map<std::string, std::string>>> path_main, long int LastEdgeRow, std::string AddrsLives, std::map<std::string, std::string> LivesLongsEle, std::vector<std::map<std::string, std::string>> &LivesLongs, std::map<std::string, std::string> LivesShortsEle, std::vector<std::map<std::string, std::string>> &LivesShorts)
 {
   std::vector<std::vector<std::map<std::string, std::string>>>::reverse_iterator rit_path_main;
   std::vector<std::map<std::string, std::string>>::reverse_iterator rit_path_maini;
-
+  
   std::string Status  = "None";
   long int EdgeRow    = 0;
   long int PathNumber = 0;
   long int AmountTrd  = 0;
   double EntryPrice   = 0;
   int IdPosition      = 0;
-  int NEvents         = 0;
-
   bool Loop = true;
-
+  
   for (rit_path_main = path_main.rbegin(); rit_path_main != path_main.rend() && Loop; ++rit_path_main)
-  {
-    for (rit_path_maini = (*rit_path_main).rbegin(); rit_path_maini != (*rit_path_main).rend() && Loop; ++rit_path_maini)
     {
-      std::map<std::string, std::string> &GraphEdge = *rit_path_maini;
-      struct EdgeInfo *PtStatusByEdge = GetEdgeInfo(GraphEdge);
-
-      EdgeRow = PtStatusByEdge->edge_row;
-
-      /*******************************************************/
-      /** Look back for Increase Events Until Open is Found **/
-      if (EdgeRow < LastEdgeRow)
-      {
-        if (PtStatusByEdge->addrs_src == AddrsLives)
-        {
-          PrintToLog("\nEdgeRow = %d\n", EdgeRow);
-          PrintingEdge(GraphEdge);
-
-          IdPosition = finding_string("Long", PtStatusByEdge->status_src) ? 0 : 1;
-          Status     = PtStatusByEdge->status_src;          
-          AmountTrd  = PtStatusByEdge->amount_trd_src; /** AmountTrd Represent Lives Because there is Increased Events **/
-          EntryPrice = PtStatusByEdge->entry_price;
-          EdgeRow    = PtStatusByEdge->edge_row;
-          PathNumber = PtStatusByEdge->path_number;
-          Loop = finding_string("Open", PtStatusByEdge->status_src) ? false : true; /** When Open appear the Loop Finish**/
-
-          PushBackLives(IdPosition, AddrsLives, Status, AmountTrd, EntryPrice, EdgeRow, PathNumber, LivesLongsEle, LivesLongs, LivesShortsEle, LivesShorts);        
-        }
-        else if (PtStatusByEdge->addrs_trk == AddrsLives)
-        {
-          PrintToLog("\nEdgeRow = %d\n", EdgeRow);
-          PrintingEdge(GraphEdge);
-        } 
-      }       
+      for (rit_path_maini = (*rit_path_main).rbegin(); rit_path_maini != (*rit_path_main).rend() && Loop; ++rit_path_maini)
+	{
+	  std::map<std::string, std::string> &GraphEdge = *rit_path_maini;
+	  struct EdgeInfo *PtStatusByEdge = GetEdgeInfo(GraphEdge);
+	  
+	  EdgeRow = PtStatusByEdge->edge_row;
+	  
+	  /*******************************************************/
+	  /** Look back for Increase Events Until Open is Found **/
+	  if (EdgeRow <= LastEdgeRow)
+	    {
+	      if (PtStatusByEdge->addrs_src == AddrsLives)
+		{
+		  // PrintToLog("\nEdgeRow = %d\n", EdgeRow);
+		  // PrintingEdge(GraphEdge);
+		  
+		  IdPosition = finding_string("Long", PtStatusByEdge->status_src) ? 0 : 1;
+		  Status     = PtStatusByEdge->status_src;          
+		  AmountTrd  = PtStatusByEdge->amount_trd_src; /** AmountTrd Represent Lives Increased Events **/
+		  EntryPrice = PtStatusByEdge->entry_price;
+		  EdgeRow    = PtStatusByEdge->edge_row;
+		  PathNumber = PtStatusByEdge->path_number;
+		  Loop = finding_string("Open", PtStatusByEdge->status_src) ? false : true; /** When Open appear Finish**/
+		  
+		  PushBackLives(IdPosition, AddrsLives, Status, AmountTrd, EntryPrice, EdgeRow, PathNumber, LivesLongsEle,
+				LivesLongs, LivesShortsEle, LivesShorts);        
+		}
+	      else if (PtStatusByEdge->addrs_trk == AddrsLives)
+		{
+		  // PrintToLog("\nEdgeRow = %d\n", EdgeRow);
+		  // PrintingEdge(GraphEdge);
+		  
+		  IdPosition = finding_string("Long", PtStatusByEdge->status_trk) ? 0 : 1;
+		  Status     = PtStatusByEdge->status_trk;          
+		  AmountTrd  = PtStatusByEdge->amount_trd_trk; /** AmountTrd Represent Lives Increased Events **/
+		  EntryPrice = PtStatusByEdge->entry_price;
+		  EdgeRow    = PtStatusByEdge->edge_row;
+		  PathNumber = PtStatusByEdge->path_number;
+		  Loop = finding_string("Open", PtStatusByEdge->status_trk) ? false : true; /** When Open appear Finish**/
+		  
+		  PushBackLives(IdPosition, AddrsLives, Status, AmountTrd, EntryPrice, EdgeRow, PathNumber, LivesLongsEle,
+				LivesLongs, LivesShortsEle, LivesShorts);
+		} 
+	    }       
+	}
     }
-  }
 }
 
 void clearing_operator_fifo(VectorTLS &vdata, MatrixTLS &M_file, int index_init, struct status_amounts *pt_pos, int idx_long_short, int &counting_netted, long int amount_trd_sum, std::vector<std::map<std::string, std::string>> &path_main, int path_number, long int opened_contracts, int idx_b)
 {
-	extern int n_rows;
-	extern int n_cols;
-
+  extern int n_rows;
+  extern int n_cols;
+  
   VectorTLS status_z(2);
   std::string addrs_opening = pt_pos->addrs_trk;
   long int d_amounts = 0;
@@ -1109,23 +1118,22 @@ std::vector<std::string> LivesNonZero(std::vector<std::vector<std::map<std::stri
   std::vector<std::string> Result;
   std::vector<std::map<std::string, std::string>>::reverse_iterator it_in;
   std::vector<std::vector<std::map<std::string, std::string>>>::reverse_iterator it_out;
-
+  
   for (std::vector<std::string>::iterator it_addrs = AddrsV.begin(); it_addrs != AddrsV.end(); ++it_addrs)
-  {
-    int NLives = 0;
-    bool Loop = true;
-    std::string &Addrsh = *it_addrs;
-
-    for (it_out = path_main.rbegin(); it_out != path_main.rend() && Loop; ++it_out)
     {
-      for (it_in = (*it_out).rbegin(); it_in != (*it_out).rend() && Loop; ++it_in)
-      {
-        std::map<std::string, std::string> &it_ele = *it_in;
-        LivesNotZeroHelper(it_ele["addrs_src"], Addrsh, it_ele["lives_src"], Result, Loop);
-        LivesNotZeroHelper(it_ele["addrs_trk"], Addrsh, it_ele["lives_trk"], Result, Loop);
-      }
-    }
-  }  
+      bool Loop = true;
+      std::string &Addrsh = *it_addrs;
+      
+      for (it_out = path_main.rbegin(); it_out != path_main.rend() && Loop; ++it_out)
+	{
+	  for (it_in = (*it_out).rbegin(); it_in != (*it_out).rend() && Loop; ++it_in)
+	    {
+	      std::map<std::string, std::string> &it_ele = *it_in;
+	      LivesNotZeroHelper(it_ele["addrs_src"], Addrsh, it_ele["lives_src"], Result, Loop);
+	      LivesNotZeroHelper(it_ele["addrs_trk"], Addrsh, it_ele["lives_trk"], Result, Loop);
+	    }
+	}
+    }  
   
   return Result;
 }
@@ -1133,14 +1141,14 @@ std::vector<std::string> LivesNonZero(std::vector<std::vector<std::map<std::stri
 void LivesNotZeroHelper(std::string AddrsTrk, std::string AddrsI, std::string LivesTrk, std::vector<std::string> &Result, bool &Loop)
 {
   if (finding_string(AddrsTrk, AddrsI))
-  {
-    if (stol(LivesTrk) != 0)
     {
-      Result.push_back(AddrsI);
-      Loop = false;
+      if (stol(LivesTrk) != 0)
+	{
+	  Result.push_back(AddrsI);
+	  Loop = false;
+	}
+      else Loop = false;
     }
-    else Loop = false;
-  }
 }
 
 void listof_addresses_bypath(std::vector<std::map<std::string, std::string>> &it_path_main, std::vector<std::string> &addrsv)
