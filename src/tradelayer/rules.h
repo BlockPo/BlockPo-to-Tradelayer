@@ -18,6 +18,7 @@ const uint16_t FEATURE_METADEX                  = 5;
 const uint16_t FEATURE_TRADECHANNELS_TOKENS     = 6;
 const uint16_t FEATURE_TRADECHANNELS_CONTRACTS  = 7;
 const uint16_t FEATURE_FIXED                    = 8;
+const uint16_t FEATURE_MANAGED                  = 9;
 
 
 struct TransactionRestriction

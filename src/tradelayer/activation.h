@@ -15,6 +15,7 @@ struct FeatureActivation
     int activationBlock;
     uint32_t minClientVersion;
     std::string featureName;
+    bool status;
 };
 
 /** Determines whether the sender is an authorized source for Trade Layer activations. */

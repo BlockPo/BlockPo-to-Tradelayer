@@ -393,6 +393,9 @@ bool ActivateFeature(uint16_t featureId, int activationBlock, uint32_t minClient
       case FEATURE_FIXED:
               params.MSC_SP_BLOCK = activationBlock;
               break;
+      case FEATURE_MANAGED:
+              params.MSC_MANUALSP_BLOCK = activationBlock;
+              break;
       default:
            supported = false;
            break;
@@ -453,6 +456,9 @@ bool DeactivateFeature(uint16_t featureId, int transactionBlock)
       case FEATURE_FIXED:
           MutableConsensusParams().MSC_SP_BLOCK = 99999999;
           break;
+      case FEATURE_MANAGED:
+          MutableConsensusParams().MSC_MANUALSP_BLOCK = 99999999;
+          break;
       default:
             return false;
       break;
@@ -480,6 +486,7 @@ std::string GetFeatureName(uint16_t featureId)
         case FEATURE_METADEX: return "Distributed Meta Token Exchange";
         case FEATURE_TRADECHANNELS_TOKENS: return "Trade Channels Token Exchange";
         case FEATURE_FIXED : return "Create Fixed Tokens";
+        case FEATURE_MANAGED : return "Create Managed Tokens";
         default: return "Unknown feature";
     }
 }
@@ -513,7 +520,10 @@ bool IsFeatureActivated(uint16_t featureId, int transactionBlock)
               break;
       case FEATURE_FIXED:
               activationBlock = params.MSC_SP_BLOCK;
-          break;
+              break;
+      case FEATURE_MANAGED:
+              activationBlock = params.MSC_MANUALSP_BLOCK;
+              break;
         default:
             return false;
     }

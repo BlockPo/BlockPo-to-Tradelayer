@@ -3514,6 +3514,7 @@ int CMPTxList::getMPTransactionCountTotal()
      for(it->SeekToFirst(); it->Valid(); it->Next())
      {
          skey = it->key();
+         PrintToLog("%s(): skey: %s\n",__func__, skey.ToString());
          if (skey.ToString().length() == 64) { ++count; } //extra entries for cancels and purchases are more than 64 chars long
      }
      delete it;
@@ -3529,6 +3530,7 @@ int CMPTxList::getMPTransactionCountBlock(int block)
      {
          skey = it->key();
          svalue = it->value();
+         PrintToLog("%s(): skey: %s, svalue: %s\n",__func__, skey.ToString(), svalue.ToString());
          if (skey.ToString().length() == 64)
          {
              string strValue = svalue.ToString();

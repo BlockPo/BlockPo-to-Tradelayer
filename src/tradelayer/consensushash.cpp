@@ -145,7 +145,8 @@ std::string feeGenerateConsensusString(const uint32_t& propertyId, const int64_t
 // Generates a consensus string for hashing based on features activation register
 std::string GenerateConsensusString(const mastercore::FeatureActivation& feat)
 {
-    return strprintf("%d|%d|%d|%s", feat.featureId, feat.activationBlock, feat.minClientVersion, feat.featureName);
+    const std::string status = (feat.status) ? "completed" : "pending";
+    return strprintf("%d|%d|%d|%s|%s", feat.featureId, feat.activationBlock, feat.minClientVersion, feat.featureName, status);
 }
 
 /**
