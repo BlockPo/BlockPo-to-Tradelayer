@@ -276,12 +276,11 @@ void settlement_algorithm_fifo(MatrixTLS &M_file, int64_t interest, int64_t twap
   	for (it_path_main = path_main.begin(); it_path_main != path_main.end(); ++it_path_main)
       PrintingGraph(*it_path_main);
   }
-
+  
   PrintToLog("\n\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
-  PrintToLog("\nSecond Part: Lives Vectors and Ghost Nodes\n\n");
+  PrintToLog("Second Part: Lives Vectors and Ghost Nodes\n\n");
   
   // std::vector<std::map<std::string, std::string>> ghost_edges_array;
-  
   // double vwap_exit_price = 0;
   // double PNL_total = 0;
   // int counting_paths = 0;
@@ -412,7 +411,7 @@ void settlement_algorithm_fifo(MatrixTLS &M_file, int64_t interest, int64_t twap
   for (it_path_main = path_main.begin(); it_path_main != path_main.end(); ++it_path_main)
     {
       computing_settlement_exitprice(*it_path_main, sum_oflives, PNL_total, gamma_p, gamma_q, interest, twap_price);
-      PrintToLog("\ngamma_p : %d, gamma_q : %d, PNL_total : %d\n", gamma_p, gamma_q, PNL_total);
+      // PrintToLog("\ngamma_p : %d, gamma_q : %d, PNL_total : %d\n", gamma_p, gamma_q, PNL_total);
       sum_gamma_p += gamma_p;
       sum_gamma_q += gamma_q; 
     }
@@ -670,18 +669,18 @@ void updating_lasttwocols_fromdatabase(std::string addrs, MatrixTLS &M_file, int
 
 void building_edge(std::map<std::string, std::string> &path_first, std::string addrs_src, std::string addrs_trk, std::string status_src, std::string status_trk, double entry_price, double exit_price, long int lives, int index_row, int path_number, long int amount_path, int ghost_edge)
 {
-    path_first["addrs_src"]   = addrs_src;
-  	path_first["addrs_trk"]   = addrs_trk;
-  	path_first["status_src"]  = status_src;
-  	path_first["status_trk"]  = status_trk;
-  	path_first["entry_price"] = std::to_string(entry_price);
-  	path_first["exit_price"]  = std::to_string(exit_price);
-  	path_first["lives_src"]   = std::to_string(lives);
-  	path_first["lives_trk"]   = std::to_string(lives);
-  	path_first["amount_trd"]  = std::to_string(amount_path);
-  	path_first["edge_row"]    = std::to_string(index_row);
-  	path_first["path_number"] = std::to_string(path_number);
-  	path_first["ghost_edge"]  = std::to_string(ghost_edge);
+  path_first["addrs_src"]   = addrs_src;
+  path_first["addrs_trk"]   = addrs_trk;
+  path_first["status_src"]  = status_src;
+  path_first["status_trk"]  = status_trk;
+  path_first["entry_price"] = std::to_string(entry_price);
+  path_first["exit_price"]  = std::to_string(exit_price);
+  path_first["lives_src"]   = std::to_string(lives);
+  path_first["lives_trk"]   = std::to_string(lives);
+  path_first["amount_trd"]  = std::to_string(amount_path);
+  path_first["edge_row"]    = std::to_string(index_row);
+  path_first["path_number"] = std::to_string(path_number);
+  path_first["ghost_edge"]  = std::to_string(ghost_edge);
 }
 
 void building_edge(std::map<std::string, std::string> &path_first, std::string addrs_src, std::string addrs_trk, std::string status_src, std::string status_trk, double entry_price, double exit_price, long int lives_src, long int lives_trk, int index_row, int path_number, long int amount_path, int ghost_edge)
@@ -703,19 +702,19 @@ void building_edge(std::map<std::string, std::string> &path_first, std::string a
 
 void building_lives_edges(std::map<std::string, std::string> &path_first, std::string addrs, std::string status, long int lives, double entry_price, struct status_amounts_edge *pt_status_byedge)
 {
-  path_first["addrs"] 		= addrs;
-  path_first["status"] 		= status;
-  path_first["lives"] 		= std::to_string(lives);
+  path_first["addrs"] 	    = addrs;
+  path_first["status"] 	    = status;
+  path_first["lives"] 	    = std::to_string(lives);
   path_first["entry_price"] = std::to_string(entry_price);
-  path_first["edge_row"] 	= std::to_string(pt_status_byedge->edge_row);
+  path_first["edge_row"]    = std::to_string(pt_status_byedge->edge_row);
   path_first["path_number"] = std::to_string(pt_status_byedge->path_number);
 }
 
 void building_lives_edges(std::map<std::string, std::string> &path_first, std::string addrs, std::string status, long int lives, double entry_price, long int edge_row, long int path_number)
 {
-  path_first["addrs"] 		= addrs;
-  path_first["status"] 		= status;
-  path_first["lives"]  		= std::to_string(lives);
+  path_first["addrs"] 	    = addrs;
+  path_first["status"] 	    = status;
+  path_first["lives"]  	    = std::to_string(lives);
   path_first["entry_price"] = std::to_string(entry_price);
   path_first["edge_row"]    = std::to_string(edge_row);
   path_first["path_number"] = std::to_string(path_number);
@@ -1239,59 +1238,73 @@ void calculating_ghost_edges(std::vector<std::map<std::string, std::string>> liv
   long int amount_itlongs  = 0;
   long int amount_itshorts = 0;
   unsigned index_start = 0;
-
+  
   std::vector<std::map<std::string, std::string>>::iterator it_longs;
   std::vector<std::map<std::string, std::string>>::iterator it_shorts;
   std::map<std::string, std::string> short_ele;
   std::map<std::string, std::string> long_ele;
-
   std::map<std::string, std::string> edge_ele;
-
+  
   for (unsigned i = 0; i < lives_longs.size(); i++)
     {
       long_ele = lives_longs[i];
       amount_itlongs = stol(long_ele["lives"]);
-
+      
       for (unsigned j = index_start; j < lives_shorts.size(); j++)
 	{
 	  short_ele = lives_shorts[j];
 	  amount_itshorts = stol(short_ele["lives"]);
-
-	  if ( amount_itlongs > amount_itshorts )
+	  
+	  if (amount_itlongs > amount_itshorts)
 	    {
 	      amount_itlongs = amount_itlongs - amount_itshorts;
-
-	      building_edge(edge_ele, short_ele["addrs"], long_ele["addrs"], short_ele["status"], long_ele["status"], stod(long_ele["entry_price"]), exit_price_desired, 0, stol(long_ele["edge_row"]), stol(long_ele["path_number"]), amount_itshorts, 1);
-
+	      PrintToLog("\namount_itshorts = %d\t amount_itlongs = %d\n", amount_itshorts, amount_itlongs);
+	      
+	      building_edge(edge_ele, short_ele["addrs"], long_ele["addrs"], short_ele["status"], long_ele["status"],
+			    stod(long_ele["entry_price"]), exit_price_desired, amount_itshorts, amount_itshorts,
+			    stol(long_ele["edge_row"]), stol(long_ele["path_number"]), amount_itshorts, 1);
+	      
 	      ghost_edges_array.push_back(edge_ele);
-	      building_edge(edge_ele, long_ele["addrs"], short_ele["addrs"], long_ele["status"], short_ele["status"], stod(short_ele["entry_price"]), exit_price_desired, 0, stol(short_ele["edge_row"]), stol(short_ele["path_number"]), amount_itshorts, 1);
+	      building_edge(edge_ele, long_ele["addrs"], short_ele["addrs"], long_ele["status"], short_ele["status"],
+			    stod(short_ele["entry_price"]), exit_price_desired, amount_itshorts, amount_itshorts,
+			    stol(short_ele["edge_row"]), stol(short_ele["path_number"]), amount_itshorts, 1);
 	      ghost_edges_array.push_back(edge_ele);
-
+	      
 	      continue;
 	    }
-	  if ( amount_itlongs < amount_itshorts )
+	  if (amount_itlongs < amount_itshorts)
 	    {
 	      index_start = j;
 	      lives_shorts[j]["lives"] = std::to_string(amount_itshorts - amount_itlongs);
-
-	      building_edge(edge_ele, short_ele["addrs"], long_ele["addrs"], short_ele["status"], long_ele["status"], stod(long_ele["entry_price"]), exit_price_desired, 0, stol(long_ele["edge_row"]), stol(long_ele["path_number"]), amount_itlongs, 1);
+	      PrintToLog("\namount_itshorts = %d\t amount_itlongs = %d\n", amount_itshorts - amount_itlongs, amount_itlongs);
+	      
+	      building_edge(edge_ele, short_ele["addrs"], long_ele["addrs"], short_ele["status"], long_ele["status"],
+			    stod(long_ele["entry_price"]), exit_price_desired, amount_itlongs, amount_itlongs,
+			    stol(long_ele["edge_row"]), stol(long_ele["path_number"]), amount_itlongs, 1);
 	      ghost_edges_array.push_back(edge_ele);
-
-	      building_edge(edge_ele, long_ele["addrs"], short_ele["addrs"], long_ele["status"], short_ele["status"], stod(short_ele["entry_price"]), exit_price_desired, 0, stol(short_ele["edge_row"]), stol(short_ele["path_number"]), amount_itlongs, 1);
+	      
+	      building_edge(edge_ele, long_ele["addrs"], short_ele["addrs"], long_ele["status"], short_ele["status"],
+			    stod(short_ele["entry_price"]), exit_price_desired, amount_itlongs, amount_itlongs,
+			    stol(short_ele["edge_row"]), stol(short_ele["path_number"]), amount_itlongs, 1);
 	      ghost_edges_array.push_back(edge_ele);
-
+	      
 	      break;
 	    }
 	  if ( amount_itlongs == amount_itshorts )
 	    {
 	      index_start = j+1;
-
-	      building_edge(edge_ele, short_ele["addrs"], long_ele["addrs"], short_ele["status"], long_ele["status"], stod(long_ele["entry_price"]), exit_price_desired, 0, stol(long_ele["edge_row"]), stol(long_ele["path_number"]), amount_itlongs, 1);
+	      PrintToLog("\namount_itshorts = %d\t amount_itlongs = %d\n", amount_itshorts, amount_itlongs);
+	      
+	      building_edge(edge_ele, short_ele["addrs"], long_ele["addrs"], short_ele["status"], long_ele["status"],
+			    stod(long_ele["entry_price"]), exit_price_desired, amount_itlongs, amount_itlongs,
+			    stol(long_ele["edge_row"]), stol(long_ele["path_number"]), amount_itlongs, 1);
 	      ghost_edges_array.push_back(edge_ele);
-
-	      building_edge(edge_ele, long_ele["addrs"], short_ele["addrs"], long_ele["status"], short_ele["status"], stod(short_ele["entry_price"]), exit_price_desired, 0, stol(short_ele["edge_row"]), stol(short_ele["path_number"]), amount_itlongs, 1);
+	      
+	      building_edge(edge_ele, long_ele["addrs"], short_ele["addrs"], long_ele["status"], short_ele["status"],
+			    stod(short_ele["entry_price"]), exit_price_desired, amount_itlongs, amount_itlongs,
+			    stol(short_ele["edge_row"]), stol(short_ele["path_number"]), amount_itlongs, 1);
 	      ghost_edges_array.push_back(edge_ele);
-
+	      
 	      break;
 	    }
 	}
