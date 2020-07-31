@@ -316,7 +316,7 @@ UniValue tl_sendissuancefixed(const JSONRPCRequest& request)
             "5. url                  (string, required) an URL for further information about the new tokens (can be \"\")\n"
             "6. data                 (string, required) a description for the new tokens (can be \"\")\n"
             "7. amount               (string, required) the number of tokens to create\n"
-            "8. kyc options          (array, optional) A json with the kyc allowed.\n"
+            "8. kyc options          (array, required) A json with the kyc allowed.\n"
             "    [\n"
             "      2,3,5         (number) kyc id\n"
             "      ,...\n"
@@ -378,7 +378,7 @@ UniValue tl_sendissuancemanaged(const JSONRPCRequest& request)
             "4. name                 (string, required) the name of the new tokens to create\n"
             "5. url                  (string, required) an URL for further information about the new tokens (can be \"\")\n"
             "6. data                 (string, required) a description for the new tokens (can be \"\")\n"
-            "7. kyc options          (array, optional) A json with the kyc allowed.\n"
+            "7. kyc options          (array, required) A json with the kyc allowed.\n"
             "    [\n"
             "      2,3,5         (number) kyc id\n"
             "      ,...\n"
@@ -814,7 +814,7 @@ UniValue tl_sendtrade(const JSONRPCRequest& request)
   RequireNotContract(propertyIdDesired);
   RequireNotVesting(propertyIdDesired);
 
-  //checking amount+fee 
+  //checking amount+fee
   RequireAmountForFee(fromAddress, propertyIdForSale, amountForSale);
 
   // create a payload for the transaction
@@ -856,7 +856,7 @@ UniValue tl_createcontract(const JSONRPCRequest& request)
 			"7. collateral currency       (number, required) collateral currency\n"
 			"8. margin requirement        (number, required) margin requirement\n"
       "9. quoting                   (number, required) 0: inverse quoting contract, 1: normal quoting\n"
-      "10. kyc options          (array, optional) A json with the kyc allowed.\n"
+      "10. kyc options              (array, required) A json with the kyc allowed.\n"
       "    [\n"
       "      2,3,5         (number) kyc id\n"
       "      ,...\n"
@@ -921,8 +921,8 @@ UniValue tl_create_oraclecontract(const JSONRPCRequest& request)
 			"5. collateral currency       (number, required) collateral currency\n"
 			"6. margin requirement        (number, required) margin requirement\n"
       "7. backup address            (string, required) backup admin address contract\n"
-      "8. quoting                  (number, required) 0: inverse quoting contract, 1: normal quoting\n"
-      "9. kyc options          (array, optional) A json with the kyc allowed.\n"
+      "8. quoting                   (number, required) 0: inverse quoting contract, 1: normal quoting\n"
+      "9. kyc options               (array, required) A json with the kyc allowed.\n"
       "    [\n"
       "      2,3,5         (number) kyc id\n"
       "      ,...\n"

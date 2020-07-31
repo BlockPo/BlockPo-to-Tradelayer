@@ -639,7 +639,6 @@ void creatingVestingTokens(int block)
    newSP.attribute_type = ALL_PROPERTY_TYPE_VESTING;
    newSP.init_block = block;
    newSP.last_vesting = 0;
-
    const uint32_t propertyIdVesting = _my_sps->putSP(newSP);
    assert(propertyIdVesting > 0);
 
@@ -2065,8 +2064,6 @@ static int write_globals_state(ofstream &file, SHA256_CTX *shaCtx)
 
   // add the line to the hash
   SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
-
-  PrintToLog("%s(): saving global state lineOut : %s\n",__func__, lineOut);
 
   // write the line
   file << lineOut << std::endl;
