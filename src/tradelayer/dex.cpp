@@ -155,22 +155,6 @@ int DEx_offerCreate(const std::string& addressSeller, uint32_t propertyId, int64
 
     // -------------------------------------------------------------------------
 
-    // if offering more than available -- put everything up on sale
-    if (amountOffered > balanceReallyAvailable) {
-        PrintToLog("%s: adjusting order: %s offers %s %s, but has only %s %s available\n", __func__,
-                        addressSeller, FormatDivisibleMP(amountOffered), strMPProperty(propertyId),
-                        FormatDivisibleMP(balanceReallyAvailable), strMPProperty(propertyId));
-
-        // AND we must also re-adjust the LTC desired in this case...
-        amountDesired = calculateDesiredLTC(amountOffered, amountDesired, balanceReallyAvailable);
-        amountOffered = balanceReallyAvailable;
-        if (nAmended) *nAmended = amountOffered;
-
-        PrintToLog("%s: adjusting order: updated amount for sale: %s %s, offered for: %s LTC\n", __func__,
-                        FormatDivisibleMP(amountOffered), strMPProperty(propertyId), FormatDivisibleMP(amountDesired));
-    }
-    // -------------------------------------------------------------------------
-
     if (amountOffered > 0) {
         assert(update_tally_map(addressSeller, propertyId, -amountOffered, BALANCE));
         assert(update_tally_map(addressSeller, propertyId, amountOffered, SELLOFFER_RESERVE));
