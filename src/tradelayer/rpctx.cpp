@@ -1886,6 +1886,8 @@ UniValue tl_new_id_registration(const JSONRPCRequest& request)
     std::string website = ParseText(request.params[1]);
     std::string name = ParseText(request.params[2]);
 
+    RequireFeatureActivated(FEATURE_KYC);
+
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_New_Id_Registration(website, name);
 
@@ -1928,6 +1930,9 @@ UniValue tl_update_id_registration(const JSONRPCRequest& request)
     // obtain parameters & info
     std::string address = ParseAddress(request.params[0]);
     std::string newAddr = ParseAddress(request.params[1]);
+
+    RequireFeatureActivated(FEATURE_KYC);
+    
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_Update_Id_Registration();
 
@@ -2020,6 +2025,8 @@ UniValue tl_attestation(const JSONRPCRequest& request)
     std::string receiverAddress = ParseAddress(request.params[1]);
     std::string hash = (request.params.size() == 3) ? ParseText(request.params[2]) : "";
 
+    RequireFeatureActivated(FEATURE_KYC);
+
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_Attestation(hash);
 
@@ -2062,6 +2069,8 @@ UniValue tl_revoke_attestation(const JSONRPCRequest& request)
     // obtain parameters & info
     std::string fromAddress = ParseAddress(request.params[0]);
     std::string receiverAddress = ParseAddress(request.params[1]);
+
+    RequireFeatureActivated(FEATURE_KYC);
 
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_Revoke_Attestation();
