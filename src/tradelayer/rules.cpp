@@ -177,8 +177,8 @@ CMainConsensusParams::CMainConsensusParams()
      NULLDATA_BLOCK = 0;
 
      // Transaction restrictions:
-     MSC_ALERT_BLOCK = 1537678;
-     MSC_SEND_BLOCK = 99999999;
+     MSC_ALERT_BLOCK = 1569000;
+     MSC_SEND_BLOCK = 1569000;
      // MSC_SP_BLOCK = 1491174;
      MSC_SP_BLOCK = 99999999;
      MSC_MANUALSP_BLOCK = 99999999;
