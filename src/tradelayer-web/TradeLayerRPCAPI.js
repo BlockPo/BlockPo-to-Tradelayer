@@ -170,7 +170,7 @@ tl.sendRawTransaction = function(tx, cb){
  
   })
     }catch(e){
-      return e
+      return cb(e)
     }
     return cb(data)
 }
@@ -206,7 +206,7 @@ tl.decodeRawTransaction = function(rawtx, cb){
   })
 }
 
-// tllayer Specific RPC calls
+// tradelayer Specific RPC calls
 tl.getTlBalance = function(addr, propertyid, cb){
      client.cmd("tl_getbalance", addr, propertyid,function(err, data, resHeaders){
   if (err) return console.log(err);
@@ -340,6 +340,30 @@ tl.getTradeHistoryAddress= function(address, trades, propertyfilter, cb){
         }else{client.cmd("tl_gettradehistoryforaddress", address, trades, propertyfilter, function(err, data, resHeaders){
         return cb(data)
         })}
+}
+
+tl.getCommits = function(senderAddress){
+    client.cmd("tl_check_commits", senderAddress,function(err, data, resHeaders){
+        if (err) return console.log(err);
+ 
+        return cb(data)
+    })
+}
+
+tl.getWithdrawals = function(senderAddress){
+    client.cmd("tl_check_withdrawals", senderAddress,function(err, data, resHeaders){
+        if (err) return console.log(err);
+ 
+        return cb(data)
+    }) 
+}
+
+tl.getChannelInfo = function(channelAddress){
+    client.cmd("tl_getchannel_info", channelAddress,function(err, data, resHeaders){
+        if (err) return console.log(err);
+ 
+        return cb(data)
+    })
 }
 
 tl.listPendingTransactions= function(addressfilter, cb){
