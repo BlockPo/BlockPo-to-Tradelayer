@@ -125,14 +125,19 @@ channelManager.takeIndicatorOfInterest= function(contract, buySell, amount, pric
 	})
 }
 
-channelManager.submitTX= function(txString,cb){
-	var thisURI = serverURI
-	var wholeURI=thisURI+"takeIoI"
-	if(specialType=='null'){specialType='limit'}
-	var params = {'contract':contract,'buySell':buySell,'amount':amount,'price':price,'specialType':specialType,'firstSigner':firstSigner}
-	rest.post(wholeURI,params).on('complete',function(data){
-		return cb(data)
-	})
+channelManager.submitTX= function(txString,counterpartyAlias,direct,cb){
+	if(direct ==false){
+		var thisURI = serverURI
+		var wholeURI=thisURI+"submitTX"
+		if(specialType=='null'){specialType='limit'}
+		var params = {'counterparty':counterpartyAlias,'txstring':txString}
+		rest.post(wholeURI,params).on('complete',function(data){
+			return cb(data)
+		})
+	}else if(direct==true){
+		var thisURI = counterpartyAlias //we're assuming the CP alias is an IP address and thus a viable URI
+		//WS channel look-up, match URI, use WS to broadcast string to that 1 subscriber channel
+	}
 }
 
 //This passes the string back and forth
@@ -156,6 +161,7 @@ channelMananger.proposeChannel = function(pubkey,ipaddress, dealerid, cb){
 }
 
 channelManager.buildTransfer = function(cacheAddress, channelAddress, cacheInput, inputAmount, propertyid, amount, cb){
+	//local RPC but node doesn't need to be online, same with other build functions
 	tl.createpayload_transfer(propertyid,amount,function(payload){
 		tl.buildRaw(payload,cacheInput,[0],channelAddress,inputAmount,function(txString){
 			tl.simpleSign(txString,function(data){
@@ -173,6 +179,7 @@ channelManager.sendRaw= function(txString){
 }
 
 channelManager.scanCommitsWithdrawals = function(multisigChannelObj,cb){
+	//assumes local RPC use
 	var channelFlowData = {firstAddressPendingCommits:[], firstAddressPendingWithdrawals:[],
 						   secondAddressPendingCommits:[], secondAddressPendingWithdrawals:[],
 						   firstAddressHistoricalCommits:[], firstAddressHistoricalWithdrawals:[],
@@ -230,6 +237,7 @@ channelManager.reconcileFlowDataToChannelMap= function(channelFlowData){
 }
 
 channelManager.decodeTransactions = function(txids,detailsArray,iterator){
+	//assumes local RPC use
 	tl.getTransaction(txids[iterator],function(data){
 		detailsArray.push(data)
 		iterator+=1
