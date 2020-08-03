@@ -3447,7 +3447,7 @@ int CMPTransaction::logicMath_ContractDexTrade()
   /*********************************************/
   /**Logic for Node Reward**/
   const CConsensusParams &params = ConsensusParams();
-  int BlockInit = params.MSC_NODE_REWARD;
+  int BlockInit = params.MSC_NODE_REWARD_BLOCK;
   int nBlockNow = GetHeight();
 
   BlockClass NodeRewardObj(BlockInit, nBlockNow);

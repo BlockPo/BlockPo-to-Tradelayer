@@ -152,7 +152,7 @@ CMainConsensusParams::CMainConsensusParams()
     MSC_CONTRACTDEX_BLOCK = 99999999;
     MSC_CONTRACTDEX_ORACLES_BLOCK = 99999999;
     MSC_VESTING_BLOCK = 99999999;
-    MSC_NODE_REWARD = 99999999;
+    MSC_NODE_REWARD_BLOCK = 99999999;
     MSC_KYC_BLOCK = 99999999;
     MSC_DEXSELL_BLOCK = 99999999;
     MSC_DEXBUY_BLOCK = 99999999;
@@ -186,8 +186,8 @@ CMainConsensusParams::CMainConsensusParams()
      MSC_CONTRACTDEX_BLOCK = 99999999;
      MSC_CONTRACTDEX_ORACLES_BLOCK = 99999999;
      MSC_VESTING_BLOCK = 1569000;
-     MSC_NODE_REWARD = 99999999;
-     MSC_KYC_BLOCK = 99999999;
+     MSC_NODE_REWARD_BLOCK = 99999999;
+     MSC_KYC_BLOCK = 1569000;
      MSC_DEXSELL_BLOCK = 99999999;
      MSC_DEXBUY_BLOCK = 99999999;
      MSC_METADEX_BLOCK = 99999999;
@@ -229,7 +229,7 @@ CRegTestConsensusParams::CRegTestConsensusParams()
     MSC_DEXSELL_BLOCK = 0;
     MSC_DEXBUY_BLOCK = 0;
     MSC_METADEX_BLOCK = 0;
-    MSC_NODE_REWARD = 777;
+    MSC_NODE_REWARD_BLOCK = 777;
     MSC_TRADECHANNEL_TOKENS_BLOCK = 0;
     MSC_TRADECHANNEL_CONTRACTS_BLOCK = 0;
     ONE_YEAR = 930;
@@ -396,6 +396,9 @@ bool ActivateFeature(uint16_t featureId, int activationBlock, uint32_t minClient
       case FEATURE_MANAGED:
               params.MSC_MANUALSP_BLOCK = activationBlock;
               break;
+      case FEATURE_NODE_REWARD:
+              params.MSC_NODE_REWARD_BLOCK = activationBlock;
+              break;
       default:
            supported = false;
            break;
@@ -459,6 +462,9 @@ bool DeactivateFeature(uint16_t featureId, int transactionBlock)
       case FEATURE_MANAGED:
           MutableConsensusParams().MSC_MANUALSP_BLOCK = 99999999;
           break;
+      case FEATURE_NODE_REWARD:
+          MutableConsensusParams().MSC_NODE_REWARD_BLOCK = 99999999;
+          break;
       default:
             return false;
       break;
@@ -487,6 +493,7 @@ std::string GetFeatureName(uint16_t featureId)
         case FEATURE_TRADECHANNELS_TOKENS: return "Trade Channels Token Exchange";
         case FEATURE_FIXED : return "Create Fixed Tokens";
         case FEATURE_MANAGED : return "Create Managed Tokens";
+        case FEATURE_NODE_REWARD : return "Node Reward activation";
         default: return "Unknown feature";
     }
 }
@@ -523,6 +530,9 @@ bool IsFeatureActivated(uint16_t featureId, int transactionBlock)
               break;
       case FEATURE_MANAGED:
               activationBlock = params.MSC_MANUALSP_BLOCK;
+              break;
+      case FEATURE_NODE_REWARD:
+              activationBlock = params.MSC_NODE_REWARD_BLOCK;
               break;
         default:
             return false;

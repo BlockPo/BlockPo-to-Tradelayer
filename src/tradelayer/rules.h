@@ -19,6 +19,7 @@ const uint16_t FEATURE_TRADECHANNELS_TOKENS     = 6;
 const uint16_t FEATURE_TRADECHANNELS_CONTRACTS  = 7;
 const uint16_t FEATURE_FIXED                    = 8;
 const uint16_t FEATURE_MANAGED                  = 9;
+const uint16_t FEATURE_NODE_REWARD              = 10;
 
 
 struct TransactionRestriction
@@ -83,7 +84,7 @@ public:
     int MSC_DEXBUY_BLOCK;
     int MSC_CONTRACTDEX_BLOCK;
     int MSC_CONTRACTDEX_ORACLES_BLOCK;
-    int MSC_NODE_REWARD;
+    int MSC_NODE_REWARD_BLOCK;
     int MSC_TRADECHANNEL_TOKENS_BLOCK;
     int MSC_TRADECHANNEL_CONTRACTS_BLOCK;
 
