@@ -1198,6 +1198,62 @@ UniValue tl_createpayload_attestation(const JSONRPCRequest& request)
     return HexStr(payload.begin(), payload.end());
 }
 
+UniValue tl_createpayload_commit_tochannel(const JSONRPCRequest& request)
+{
+    if (request.params.size() != 2 || request.fHelp)
+        throw runtime_error(
+            "tl_createpayload_commit_tochannel \n"
+
+            "\nPayload of commit to channel tx.\n"
+
+            "\nArguments:\n"
+            "1. propertyId             (number, required) the propertyId of token commited into the channel\n"
+            "2. amount                 (number, required) amount of tokens traded in the channel\n"
+            "\nResult:\n"
+            "\"hash\"                  (string) the hex-encoded transaction hash\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("tl_createpayload_commit_tochannel", "\"2\" ,\"5\"")
+            + HelpExampleRpc("tl_createpayload_commit_tochannel", "\"2\",\"5\"")
+        );
+
+    uint32_t propertyId = ParsePropertyId(request.params[0]);
+    int64_t amount = ParseAmount(request.params[1], isPropertyDivisible(propertyId));
+
+    // create a payload for the transaction
+    std::vector<unsigned char> payload = CreatePayload_Commit_Channel(propertyId, amount);
+
+    return HexStr(payload.begin(), payload.end());
+}
+
+UniValue tl_createpayload_withdrawal_fromchannel(const JSONRPCRequest& request)
+{
+    if (request.params.size() != 2 || request.fHelp)
+        throw runtime_error(
+            "tl_createpayload_withdrawal_fromchannel \n"
+
+            "\nPayload of withdraw from channel tx.\n"
+
+            "\nArguments:\n"
+            "1. propertyId             (number, required) the propertyId of token commited into the channel\n"
+            "2. amount                 (number, required) amount of tokens traded in the channel\n"
+            "\nResult:\n"
+            "\"hash\"                  (string) the hex-encoded transaction hash\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("tl_createpayload_withdrawal_fromchannel", "\"2\" ,\"5\"")
+            + HelpExampleRpc("tl_createpayload_withdrawal_fromchannel", "\"2\",\"5\"")
+        );
+
+    uint32_t propertyId = ParsePropertyId(request.params[0]);
+    int64_t amount = ParseAmount(request.params[1], isPropertyDivisible(propertyId));
+
+    // create a payload for the transaction
+    std::vector<unsigned char> payload = CreatePayload_Withdrawal_FromChannel(propertyId, amount);
+
+    return HexStr(payload.begin(), payload.end());
+}
+
 static const CRPCCommand commands[] =
   { //  category                         name                                             actor (function)                               okSafeMode
     //  -------------------------------- -----------------------------------------       ----------------------------------------        ----------
@@ -1238,7 +1294,9 @@ static const CRPCCommand commands[] =
     { "trade layer (payload creation)", "tl_createpayload_new_id_registration",           &tl_createpayload_new_id_registration,             {}   },
     { "trade layer (payload creation)", "tl_createpayload_update_id_registration",        &tl_createpayload_update_id_registration,          {}   },
     { "trade layer (payload creation)", "tl_createpayload_attestation",                   &tl_createpayload_attestation,                     {}   },
-    { "trade layer (payload creation)", "tl_createpayload_instant_ltc_trade",             &tl_createpayload_instant_ltc_trade,               {}   }
+    { "trade layer (payload creation)", "tl_createpayload_instant_ltc_trade",             &tl_createpayload_instant_ltc_trade,               {}   },
+    { "trade layer (payload creation)", "tl_createpayload_commit_tochannel",              &tl_createpayload_commit_tochannel,                {}   },
+    { "trade layer (payload creation)", "tl_createpayload_withdrawal_fromchannel",        &tl_createpayload_withdrawal_fromchannel,          {}   }
   };
 
 

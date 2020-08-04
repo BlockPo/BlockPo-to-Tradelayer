@@ -814,7 +814,7 @@ UniValue tl_sendtrade(const JSONRPCRequest& request)
   RequireNotContract(propertyIdDesired);
   RequireNotVesting(propertyIdDesired);
 
-  //checking amount+fee 
+  //checking amount+fee
   RequireAmountForFee(fromAddress, propertyIdForSale, amountForSale);
 
   // create a payload for the transaction
@@ -1783,7 +1783,7 @@ UniValue tl_commit_tochannel(const JSONRPCRequest& request)
     std::string senderAddress = ParseAddress(request.params[0]);
     std::string channelAddress = ParseAddress(request.params[1]);
     uint32_t propertyId = ParsePropertyId(request.params[2]);
-    int64_t amount = ParseAmount(request.params[3], true);
+    int64_t amount = ParseAmount(request.params[3], isPropertyDivisible(propertyId));
 
     RequireFeatureActivated(FEATURE_TRADECHANNELS_TOKENS);
     RequireExistingProperty(propertyId);
