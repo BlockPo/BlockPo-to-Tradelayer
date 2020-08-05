@@ -68,7 +68,7 @@ class KYCBasicsTest (BitcoinTestFramework):
         tradelayer_checkingBalance(accounts, amount, conn, headers)
 
         self.log.info("Creating KYC of Tradelayer ")
-        params = str([addresses[0], "TradeLayer.org","TradeLayer registrars"]).replace("'",'"')
+        params = str([addresses[0], "TradeLayer.org","TradeLayer register"]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_new_id_registration",params)
         # self.log.info(out)
 

@@ -1450,10 +1450,10 @@ UniValue tl_senddexaccept(const JSONRPCRequest& request)
             "2. toaddress            (string, required) the address of the seller\n"
             "3. propertyid           (number, required) the identifier of the token traded\n"
             "4. amount               (string, required) the amount traded\n"
-            "5. override             (boolean, optional) override minimum accept fee and payment window checks (use with caution!)\n"
+            "5. override             (boolean or number, optional) override minimum accept fee and payment window checks , options: true (1), false (0) (use with caution!)\n"
 
             "\nResult:\n"
-            "\"hash\"                  (string) the hex-encoded transaction hash\n"
+            "\"hash\"                (string) the hex-encoded transaction hash\n"
 
             "\nExamples:\n"
             + HelpExampleCli("tl_senddexaccept", "\"35URq1NN3xL6GeRKUP6vzaQVcxoJiiJKd8\" \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\" 1 \"15.0\"")
@@ -1465,7 +1465,12 @@ UniValue tl_senddexaccept(const JSONRPCRequest& request)
     std::string toAddress = ParseAddress(request.params[1]);
     uint32_t propertyId = ParsePropertyId(request.params[2]);
     int64_t amount = ParseAmount(request.params[3], true); // MSC/TMSC is divisible
-    bool override = (request.params.size() > 4) ? request.params[4].get_bool(): false;
+
+    // Accept either a bool (true) or a num (>=1) to indicate override output.
+    bool override = false;
+    if (request.params.size() > 4) {
+        override = request.params[4].isNum() ? (request.params[4].get_int() != 0) : request.params[4].get_bool();
+    }
 
     // perform checks
     RequireFeatureActivated(FEATURE_DEX_SELL);
@@ -1486,12 +1491,6 @@ UniValue tl_senddexaccept(const JSONRPCRequest& request)
         nMinimumAcceptFee = sellOffer->getMinFee();
     }
 
-    // LOCK2(cs_main, pwalletMain->cs_wallet);
-
-    // temporarily update the global transaction fee to pay enough for the accept fee
-    CFeeRate payTxFeeOriginal = payTxFee;
-    payTxFee = CFeeRate(nMinimumAcceptFee, 225); // TODO: refine!
-    // fPayAtLeastCustomFee = true;
 #endif
 
     // create a payload for the transaction
@@ -1500,12 +1499,7 @@ UniValue tl_senddexaccept(const JSONRPCRequest& request)
     // request the wallet build the transaction (and if needed commit it)
     uint256 txid;
     std::string rawHex;
-    int result = WalletTxBuilder(fromAddress, toAddress,0, payload, txid, rawHex, autoCommit);
-
-#ifdef ENABLE_WALLET
-    // set the custom fee back to original
-    payTxFee = payTxFeeOriginal;
-#endif
+    int result = WalletTxBuilder(fromAddress, toAddress, 0, payload, txid, rawHex, autoCommit, nMinimumAcceptFee);
 
     // check error and return the txid (or raw hex depending on autocommit)
     if (result != 0) {
@@ -1932,7 +1926,7 @@ UniValue tl_update_id_registration(const JSONRPCRequest& request)
     std::string newAddr = ParseAddress(request.params[1]);
 
     RequireFeatureActivated(FEATURE_KYC);
-    
+
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_Update_Id_Registration();
 

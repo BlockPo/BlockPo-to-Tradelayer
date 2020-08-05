@@ -335,6 +335,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_getcontract_reserve", 1 ,"arg1" },
     { "tl_getmargin", 1, "arg1" },
     { "tl_senddexaccept", 2, "arg2" },
+    { "tl_senddexaccept", 4, "arg4" },
     { "tl_getmarketprice", 0, "arg0" },
     {"tl_getaverage_entry",1,"arg1" },
     { "tl_getcache", 0, "arg0" }, // NOTE: only to test persistence
