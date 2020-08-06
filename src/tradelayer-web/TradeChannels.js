@@ -23,7 +23,7 @@ var channelManager.multisigChannels = {'multisig': multisig, 'address1':address1
 									   'myMargin':0,'myPNL':0,'counterpartyMargin':0}
 var channelManager.txInventory = {'status':'intended','type':'LTC','mySide':'buy',
 								'propertyid':0,'propertyid2':3,'amount':1,'amountDesired':55,
-								'price':0,'firstSigner':true,'minerFeeSplit':0}
+								'price':0,'firstSigner':true,'minerFeeSplit':0,'senderAddress':'','referenceaddress':''}
 
 //tx status has six stages: intended, proposed, co-signed, signed-unpublished, pending-conf, confirmed
 //tx type has 3 versions: LTC, token, contract
@@ -105,8 +105,6 @@ channelMananger.messageToggleAvailability = function(availableBool, multisigChan
 	//sends a true or false to indicate that the other trade should not expect a live quote, or that this is no longer the case
 	//for instance market makers may run out of inventory temporarily and this helps alleviate expectations for liquidity
 }
-
-channelManager.decode
 
 channelManager.checkTxDesirability = function(txObj, originalTx){
 
@@ -281,7 +279,7 @@ channelManager.decodeSentTransactions = function(txids,detailsArray,iterator){
 	})
 }
 
-channelManager.decodeRawTransaction = function(rawstring, desiredtx){
+channelManager.decodeRawTransaction = function(rawstring, desiredtx, cb){
 	//the idea here is that the desiredtx is fetched from the channelManager.txInventory array
 	// and that contains inline the associated meta-data like inputs
 	/*"OMNI": {
@@ -298,7 +296,15 @@ channelManager.decodeRawTransaction = function(rawstring, desiredtx){
         "type_int": 0,
         "version": 0
     }*/
-	tl.decodeRawTransaction(rawstring)
+	tl.decodeRawTransaction(rawstring,null,0,function(data){
+			if(data.OMNI.amount==desiredtx.amount
+				&&data.OMNI.propertyid==desiredtx.propertyid
+				&&data.OMNI.referenceaddress==desiredtx.referenceaddress
+				&&data.OMNI.type==desiredtx.type    //note: update the formal tx type names to fit the encoding for txInventory
+				&&data.OMNI.amount==desiredtx.amount){
+				return cb(true) //this needs to also look at the LTC values in the inputs/outputs to check LTC trades, TODO
+			}else{return cb(false)}
+	})
 }
 
 channelManager.buildCommit = function(fromAddress,toAddress){
