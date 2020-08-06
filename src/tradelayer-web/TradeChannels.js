@@ -8,19 +8,44 @@ var user = ''
 var noSign = true
 var client = tl.init(user, pass, '', true)
 var serverURI = 'http://192.155.93.12:76/api/'
-//early draft on the OO design of this module
 
-var Channel = {'multisig':'','counterparty':{},'positions':[],'collateralid':1,'myMargin':0,'myPNL':0,'counterpartyMargin':0}
-var counterpartyProfiles = []
-var Profile = {'alias':'','regulatoryStatus':'unregulated','myHistoricalVolume':0,'avgSignBackTime':300,'cancelRate':0.02,'RepRating':70}
-
+//here we have the data schematic for encapsulating everything you'd need to managed your Trade Channels locally 
+//server version would encapsulate channel management in the server, counterparty data you'd populate from the server
+//channels you'd still manage locally, you'd just get the IPs from the server (server is like a VPN protecting home IP from exposure)
+//txInventory would have a local copy but the server is doing the work of decoding so you trust the server in the sanity check function
 var channelManager = {}
-var channelManager.WSchannels ={}
-var channelManager.multisigChannels = {}
+var channelManager.WSchannels ={'ip':'','status':'closed','heartbeat':1000,'channelName':'','counterpartyAlias':''}
+var channelManager.counterparties = {'alias':'','ip':'','avgSignBackTime':0,'cancelRate':0,'regulatoryStatus':'unregulated',
+									 'KYC':[0,1,2],'myHistoricalVolume':0}
+//we can keep stats and do a simple .csv export of these tables, update avgSignBack and fidelity for each trade that lags/is shirked
+var channelManager.multisigChannels = {'multisig': multisig, 'address1':address1, 'address2':address2,'WSChannelName':WSChannel,
+									   'myAddr1':false, 'counterparty':{},'positions':[],'collateralid':1,
+									   'myMargin':0,'myPNL':0,'counterpartyMargin':0}
+var channelManager.txInventory = {'status':'intended','type':'LTC','mySide':'buy',
+								'propertyid':0,'propertyid2':3,'amount':1,'amountDesired':55,
+								'price':0,'firstSigner':true,'minerFeeSplit':0}
+
+//tx status has six stages: intended, proposed, co-signed, signed-unpublished, pending-conf, confirmed
+//tx type has 3 versions: LTC, token, contract
+//my side is buy or sell, for contracts its simple, for LTC trades we consider the LTC spender to always be the buyer for propertyid2 
+//for token we consider the buyer to be exchanging propertyid for propertyid 2 at the price=ratio of amount and amountDesired
+//price will be interpreted if other things are null to define the ratios of LTC to tokens or token to token 
+//for contract price is the direct param
+//firstSigner is basically you're going to sign first, puts the free option risk in the dealer's hands to not abuse
+//minerFeeSplit deals with the fine details of who is paying the fee, 0 implies the other guy, 
+//-0.0004 implies you're getting a BTC or LTC rebate in that amount, 0.0004 implies you'll pay that much
+//if these are RBF (which they should be) then the question of who pays when a replacement is needed... let's leave that for v2
 
 channelManager.setWSChannels = function(dealers){
+	var containsDealer = false
 	for(var i=0; i<dealers.length;i++){
-		if(channelManager.WSchannels.contains(dealers[i].ip)==false){
+		var dealer = dealers[i]
+		for(var w = 0; w<channelManager.WSchannels.length; w++){
+			var channel = channelManager.WSchannels[w]
+			if(channel.ip==dealer.ip){containsDealer==true}
+		}
+		
+		if(containsDealer==false){
 			//subscribes to indicator of interest websocket channel with dealer
 			//generates nonce-like name
 			//triggers setUpWSServer function to create new channel with a nonce-like name
@@ -79,6 +104,12 @@ channelManager.sendChannelErr= function(errMessage, multisigChannelObj, WSchanne
 channelMananger.messageToggleAvailability = function(availableBool, multisigChannelObj, WSchannel){
 	//sends a true or false to indicate that the other trade should not expect a live quote, or that this is no longer the case
 	//for instance market makers may run out of inventory temporarily and this helps alleviate expectations for liquidity
+}
+
+channelManager.decode
+
+channelManager.checkTxDesirability = function(txObj, originalTx){
+
 }
 
 channelManager.queryDealers = function(minAvgLatency, maxRejectionRate, maxRejectionTime, minVolume, cb){
@@ -180,10 +211,11 @@ channelManager.sendRaw= function(txString){
 
 channelManager.scanCommitsWithdrawals = function(multisigChannelObj,cb){
 	//assumes local RPC use
-	var channelFlowData = {firstAddressPendingCommits:[], firstAddressPendingWithdrawals:[],
+	var channelCommitData = {firstAddressPendingCommits:[], firstAddressPendingWithdrawals:[],
 						   secondAddressPendingCommits:[], secondAddressPendingWithdrawals:[],
 						   firstAddressHistoricalCommits:[], firstAddressHistoricalWithdrawals:[],
 						   secondAddressHistoricalCommits:[], secondAddressHistoricalWithdrawals: []
+						   channel: multisigChannelObj
 						   }
 	tl.getChannelInfo(multisigChannelObj.multisig, function(data1){
 			var first = data.firstAddress
@@ -200,30 +232,30 @@ channelManager.scanCommitsWithdrawals = function(multisigChannelObj,cb){
 			    		var tx = txDetail[t]
 			    		if(tx.type =="commit"&&tx.referenceAddress==multisigChannelObj.multisig){
 			    			if(tx.senderAddress==first){
-			    				channelFlowData.firstAddressPendingCommits.push(tx)
+			    				channelCommitData.firstAddressPendingCommits.push(tx)
 			    			}else if(tx.senderAddress==second){
-			    				channelFlowData.secondAddressPendingCommits.push(tx)
+			    				channelCommitData.secondAddressPendingCommits.push(tx)
 			    			}
 			    			//fix the name and object details later when you see the JSON from the decode
 			    		}else if(tx.type =="withdrawal"&&tx.referenceAddress==multisigChannelObj.multisig){
 			    			if(tx.senderAddress==multisigChannelObj.firstAddress){
-			    				channelFlowData.firstAddressPendingWithdrawals.push(tx)
+			    				channelCommitData.firstAddressPendingWithdrawals.push(tx)
 			    			}else if(tx.senderAddress==multisigChannelObj.secondAddress){
-			    				channelFlowData.secondAddressPendingWithdrawals.push(tx)
+			    				channelCommitData.secondAddressPendingWithdrawals.push(tx)
 			    			}
 			    		}
 			    	}
 			}
 
 				tl.getCommits(first,function(data3){
-					channelFlowData.firstAddressHistoricalCommits.push(data3)
+					channelCommitData.firstAddressHistoricalCommits.push(data3)
 					tl.getWithdrawals(first,function(data4){
-						channelFlowData.firstAddressHistoricalWithdrawals.push(data4)
+						channelCommitData.firstAddressHistoricalWithdrawals.push(data4)
 						tl.getCommits(second,function(data5){
-							channelFlowData.secondAddressHistoricalCommits.push(data5)
+							channelCommitData.secondAddressHistoricalCommits.push(data5)
 							tl.getWithdrawals(second,function(data){
-									channelFlowData.secondAddressHistoricalWithdrawals.push(data)
-									return cb(channelFlowData)
+									channelCommitData.secondAddressHistoricalWithdrawals.push(data)
+									return cb(channelCommitData)
 							})
 						})
 					})
@@ -232,11 +264,11 @@ channelManager.scanCommitsWithdrawals = function(multisigChannelObj,cb){
 	})
 }
 
-channelManager.reconcileFlowDataToChannelMap= function(channelFlowData){
+channelManager.reconcileCommitDataToChannelMap= function(channelCommitData){
 	//loops through and updates values about inventory in ones active channels, the channelManager.multisigChannels array of objects
 }
 
-channelManager.decodeTransactions = function(txids,detailsArray,iterator){
+channelManager.decodeSentTransactions = function(txids,detailsArray,iterator){
 	//assumes local RPC use
 	tl.getTransaction(txids[iterator],function(data){
 		detailsArray.push(data)
@@ -244,9 +276,29 @@ channelManager.decodeTransactions = function(txids,detailsArray,iterator){
 		if(iterator=txids.length){
 				return detailsArray
 		}else{
-				return channelMananger.decodeTransactions(txids,detailsArray,iterator)
+				return channelMananger.decodeSentTransactions(txids,detailsArray,iterator)
 		}
 	})
+}
+
+channelManager.decodeRawTransaction = function(rawstring, desiredtx){
+	//the idea here is that the desiredtx is fetched from the channelManager.txInventory array
+	// and that contains inline the associated meta-data like inputs
+	/*"OMNI": {
+        "amount": "9.90000000",
+        "confirmations": 0,
+        "divisible": true,
+        "fee": "0.00003465",
+        "ismine": false,
+        "propertyid": 31,
+        "referenceaddress": "1DUb2YYbQA1jjaNYzVXLZ7ZioEhLXtbUru",
+        "sendingaddress": "1DWQ1gZ8VhL1fUCABqKbXtUZv63roGvXf",
+        "txid": "5451c8e67d7ab3f947064337e8cf87c416f1fb163630913dcf307d4ca5d5ccaa",
+        "type": "Simple Send",
+        "type_int": 0,
+        "version": 0
+    }*/
+	tl.decodeRawTransaction(rawstring)
 }
 
 channelManager.buildCommit = function(fromAddress,toAddress){

@@ -198,8 +198,9 @@ tl.createRawTransaction = function(ins,outs, cb){
     })
 }
 
-tl.decodeRawTransaction = function(rawtx, cb){
-     client.cmd("decoderawtransaction", rawtx,function(err, data, resHeaders){
+tl.decodeRawTransaction = function(rawtxstring, inputs, blockheight, cb){
+     if(blockheight==null){blockheight=0}
+     client.cmd("tl_decoderawtransaction", rawtx, inputs, blockheight, function(err, data, resHeaders){
   if (err) return console.log(err)
  
   return cb(data)
