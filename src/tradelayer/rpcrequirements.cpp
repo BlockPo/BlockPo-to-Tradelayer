@@ -318,7 +318,7 @@ void RequireSaneDExFee(const std::string& address, uint32_t propertyId)
     if (poffer == nullptr) {
         throw JSONRPCError(RPC_DATABASE_ERROR, "Unable to load sell offer from the distributed exchange");
     }
-    PrintToLog("%s(): poffer->getMinFee(): %d\n",__func__,poffer->getMinFee());
+    
     if (poffer->getMinFee() > 1000000) {
         throw JSONRPCError(RPC_TYPE_ERROR, "Minimum accept fee is higher than 0.01 LTC (use override = true to continue)");
     }

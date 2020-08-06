@@ -351,8 +351,7 @@ int DEx_acceptCreate(const std::string& addressTaker, const std::string& address
     }
 
     // ensure the correct LTC fee was paid in this acceptance message
-    // if (msc_debug_dex)
-    PrintToLog("%s() Checking: feePaid: %d, offer.getMinFee(): %d\n",__func__, feePaid, offer.getMinFee());
+    if (msc_debug_dex) PrintToLog("%s() Checking: feePaid: %d, offer.getMinFee(): %d\n",__func__, feePaid, offer.getMinFee());
 
     if (feePaid < offer.getMinFee()) {
         PrintToLog("%s: rejected: transaction fee too small [%d < %d]\n", __func__, feePaid, offer.getMinFee());
