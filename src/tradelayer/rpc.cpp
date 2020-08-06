@@ -2660,8 +2660,7 @@ UniValue tl_getcache(const JSONRPCRequest& request)
             "1. collateral                     (number, required) the contract collateral\n"
             "\nResult:\n"
             "{\n"
-            "  \"balance\" : \"n.nnnnnnnn\",   (string) the available balance of the address\n"
-            "  \"reserved\" : \"n.nnnnnnnn\"   (string) the amount reserved by sell offers and accepts\n"
+            "  \"amount\" : \"n.nnnnnnnn\",   (number) the available balance in the cache for the property\n"
             "}\n"
             "\nExamples:\n"
             + HelpExampleCli("tl_getcache", "\"\" 1")
@@ -2691,8 +2690,7 @@ UniValue tl_getoraclecache(const JSONRPCRequest& request)
             "1. collateral                     (number, required) the contract collateral\n"
             "\nResult:\n"
             "{\n"
-            "  \"balance\" : \"n.nnnnnnnn\",   (string) the available balance of the address\n"
-            "  \"reserved\" : \"n.nnnnnnnn\"   (string) the amount reserved by sell offers and accepts\n"
+            "  \"amount\" : \"n.nnnnnnnn\",   (number) the available balance in the oracle cache for the property\n"
             "}\n"
             "\nExamples:\n"
             + HelpExampleCli("tl_getcache", "\"\" 1")
