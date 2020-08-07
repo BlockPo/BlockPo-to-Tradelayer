@@ -91,16 +91,17 @@ UniValue tl_decodetransaction(const JSONRPCRequest& request)
 
     UniValue txObj(UniValue::VOBJ);
     int populateResult = -3331;
-    
-    {
-        LOCK2(cs_main, cs_tx_cache);
-        // temporarily switch global coins view cache for transaction inputs
-        viewTemp.SetBackend(view);
-        // // then get the results
-        populateResult = populateRPCTransactionObject(tx, uint256(), txObj, "", false, "", blockHeight);
-        // // and restore the original, unpolluted coins view cache
-        viewTemp.SetBackend(viewDummyTemp);
-    }
+
+    // NOTE: this part needs more refinement (confict with swap and CCoinsViewCache copy operator deleted)
+   {
+       LOCK2(cs_main, cs_tx_cache);
+       // temporarily switch global coins view cache for transaction inputs
+       // std::swap(view, viewTemp)
+       // // then get the results
+       populateResult = populateRPCTransactionObject(tx, uint256(), txObj, "", false, "", blockHeight);
+       // // and restore the original, unpolluted coins view cache
+       // std::swap(viewTemp, view)
+   }
 
     if (populateResult != 0) PopulateFailure(populateResult);
 
