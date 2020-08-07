@@ -2853,7 +2853,7 @@ bool VestingTokens(int block)
     }
 
     // Note: this is used to simplify the testing
-    const int64_t xAxis = (RegTest()) ? globalVolumeALL_LTC * 100 : globalVolumeALL_LTC;
+    const int64_t xAxis = (isNonMainNet()) ? globalVolumeALL_LTC * 100 : globalVolumeALL_LTC;
 
     if(msc_debug_vesting) PrintToLog("%s(): globalVolumeALL_LTC: %d \n",__func__,xAxis);
 
@@ -2872,7 +2872,7 @@ bool VestingTokens(int block)
 
     const double amount = (double) xAxis / COIN;
 
-    // accumVesting % = (Log10(Cum_LTC_Volume)-4)/4; 100% vested at 100,000,000  LTCs volume
+    // accumVesting fraction = (Log10(Cum_LTC_Volume)-4)/4; 100% vested at 100,000,000  LTCs volume
     const double accumVesting = (std::log10(amount) - 4) / 4;
 
     CMPSPInfo::Entry sp;
@@ -2880,7 +2880,7 @@ bool VestingTokens(int block)
        return false; // property ID does not exist
     }
 
-    // vesting %
+    // vesting fraction on this block
     const double realVesting = accumVesting - sp.last_vesting;
 
     PrintToLog("%s(): accumVesting: %f, realVesting: %f, last_vesting: %f\n",__func__, accumVesting, realVesting, sp.last_vesting);
