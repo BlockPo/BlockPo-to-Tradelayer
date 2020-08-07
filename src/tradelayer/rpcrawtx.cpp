@@ -91,8 +91,7 @@ UniValue tl_decodetransaction(const JSONRPCRequest& request)
 
     UniValue txObj(UniValue::VOBJ);
     int populateResult = -3331;
-
-       //TODO Figure out what's wrong with swap
+    
     {
         LOCK2(cs_main, cs_tx_cache);
         // temporarily switch global coins view cache for transaction inputs
