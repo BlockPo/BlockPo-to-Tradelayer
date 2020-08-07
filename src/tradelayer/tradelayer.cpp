@@ -3893,7 +3893,7 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
   vestingActivationBlock = params.MSC_VESTING_BLOCK;
 
   /** Creating Vesting Tokens **/
-  if (static_cast<int>(pBlockIndex->nHeight) == params.MSC_VESTING_BLOCK) creatingVestingTokens(pBlockIndex->nHeight);
+  if (static_cast<int>(pBlockIndex->nHeight) == params.MSC_VESTING_CREATION_BLOCK) creatingVestingTokens(pBlockIndex->nHeight);
 
   /** Vesting Tokens to Balance **/
   if(static_cast<int>(pBlockIndex->nHeight) > params.MSC_VESTING_BLOCK) VestingTokens(pBlockIndex->nHeight);
