@@ -512,6 +512,7 @@ void Filling_Twap_Vec(std::map<uint32_t, std::map<uint32_t, std::vector<uint64_t
 		      uint32_t property_traded, uint32_t property_desired, uint64_t effective_price);
 inline int64_t clamp_function(int64_t diff, int64_t nclamp);
 bool TxValidNodeReward(std::string ConsensusHash, std::string Tx);
+double getAccumVesting(const int64_t xAxis);
 
 namespace mastercore
 {

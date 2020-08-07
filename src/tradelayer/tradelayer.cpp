@@ -2842,6 +2842,14 @@ bool CallingExpiration(CBlockIndex const * pBlockIndex)
    return true;
 }
 
+double getAccumVesting(const int64_t xAxis)
+{
+    const double amount = (double) xAxis / COIN;
+    // accumVesting fraction = (Log10(Cum_LTC_Volume)-4)/4; 100% vested at 100,000,000  LTCs volume
+    return((std::log10(amount) - 4) / 4);
+
+}
+
 bool VestingTokens(int block)
 {
     if(msc_debug_vesting) PrintToLog("%s() block : %d\n",__func__, block);
@@ -2852,11 +2860,10 @@ bool VestingTokens(int block)
         return false;
     }
 
-    // Note: this is used to simplify the testing
+    // NOTE : this is used to simplify the testing
     const int64_t xAxis = (isNonMainNet()) ? globalVolumeALL_LTC * 100 : globalVolumeALL_LTC;
 
     if(msc_debug_vesting) PrintToLog("%s(): globalVolumeALL_LTC: %d \n",__func__,xAxis);
-
 
     if (xAxis <= 10000 * COIN)
     {
@@ -2870,20 +2877,18 @@ bool VestingTokens(int block)
         return false;
     }
 
-    const double amount = (double) xAxis / COIN;
-
-    // accumVesting fraction = (Log10(Cum_LTC_Volume)-4)/4; 100% vested at 100,000,000  LTCs volume
-    const double accumVesting = (std::log10(amount) - 4) / 4;
-
     CMPSPInfo::Entry sp;
     if (!_my_sps->getSP(VT, sp)) {
        return false; // property ID does not exist
     }
 
-    // vesting fraction on this block
-    const double realVesting = accumVesting - sp.last_vesting;
+    // accumulated vesting
+    const double accumVesting = getAccumVesting(xAxis);
 
-    PrintToLog("%s(): accumVesting: %f, realVesting: %f, last_vesting: %f\n",__func__, accumVesting, realVesting, sp.last_vesting);
+    // vesting fraction on this block
+    const double realVesting = (accumVesting > sp.last_vesting) ?  accumVesting - sp.last_vesting : 0;
+
+    if(msc_debug_vesting) PrintToLog("%s(): accumVesting: %f, realVesting: %f, last_vesting: %f\n",__func__, accumVesting, realVesting, sp.last_vesting);
 
 
     if (realVesting == 0)
@@ -2894,7 +2899,7 @@ bool VestingTokens(int block)
 
     if(msc_debug_vesting) {
         PrintToLog("%s(): lastVesting = %f, realVesting : %f, accumVesting: %f\n",__func__, sp.last_vesting, realVesting, accumVesting);
-        PrintToLog("%s(): amount vesting on this block = %f, block ; %d, x_Axis: %d, std::log10(amount) : %f\n",__func__, accumVesting, block, xAxis, std::log10(amount));
+        PrintToLog("%s(): amount vesting on this block = %f, block ; %d, x_Axis: %d \n",__func__, accumVesting, block, xAxis);
     }
 
     for (auto &addr : vestingAddresses)
