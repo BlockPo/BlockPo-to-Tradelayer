@@ -21,6 +21,7 @@
 #include <stdexcept>
 #include <string>
 
+
 extern CCriticalSection cs_main;
 
 using mastercore::cs_tx_cache;
@@ -58,13 +59,13 @@ UniValue tl_decodetransaction(const JSONRPCRequest& request)
             "{\n"
             "  \"txid\" : \"hash\",                  (string) the hex-encoded hash of the transaction\n"
             "  \"fee\" : \"n.nnnnnnnn\",             (string) the transaction fee in bitcoins\n"
-            "  \"sendingaddress\" : \"address\",     (string) the Bitcoin address of the sender\n"
-            "  \"referenceaddress\" : \"address\",   (string) a Bitcoin address used as reference (if any)\n"
-            "  \"ismine\" : true|false,            (boolean) whether the transaction involes an address in the wallet\n"
-            "  \"version\" : n,                    (number) the transaction version\n"
-            "  \"type_int\" : n,                   (number) the transaction type as number\n"
+            "  \"sendingaddress\" : \"address\",     (string) the Litecoin address of the sender\n"
+            "  \"referenceaddress\" : \"address\",   (string) a Litecoin address used as reference (if any)\n"
+            "  \"ismine\" : true|false,              (boolean) whether the transaction involes an address in the wallet\n"
+            "  \"version\" : n,                      (number) the transaction version\n"
+            "  \"type_int\" : n,                     (number) the transaction type as number\n"
             "  \"type\" : \"type\",                  (string) the transaction type as string\n"
-            "  [...]                             (mixed) other transaction type specific properties\n"
+            "  [...]                                 (mixed) other transaction type specific properties\n"
             "}\n"
 
             "\nExamples:\n"
@@ -83,25 +84,23 @@ UniValue tl_decodetransaction(const JSONRPCRequest& request)
       InputsToView(prevTxsParsed, viewTemp);
     }
 
-    // int blockHeight = 0;
-    // if (request.params.size() > 2) {
-    //   blockHeight = request.params[2].get_int();
-    // }
+    int blockHeight = 0;
+    if (request.params.size() > 2) {
+      blockHeight = request.params[2].get_int();
+    }
 
     UniValue txObj(UniValue::VOBJ);
     int populateResult = -3331;
-    /**
-       TODO Figure out what's wrong with swap
+    
     {
         LOCK2(cs_main, cs_tx_cache);
         // temporarily switch global coins view cache for transaction inputs
-        std::swap(view, viewTemp);
-        // then get the results
-        populateResult = populateRPCTransactionObject(tx, uint256(), txObj, "", false, "", blockHeigh);
-        // and restore the original, unpolluted coins view cache
-        std::swap(viewTemp, view);
+        viewTemp.SetBackend(view);
+        // // then get the results
+        populateResult = populateRPCTransactionObject(tx, uint256(), txObj, "", false, "", blockHeight);
+        // // and restore the original, unpolluted coins view cache
+        viewTemp.SetBackend(viewDummyTemp);
     }
-**/
 
     if (populateResult != 0) PopulateFailure(populateResult);
 
