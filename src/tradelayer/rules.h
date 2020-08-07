@@ -77,6 +77,7 @@ public:
     //! Block to enable "send all" transactions
     int MSC_SEND_ALL_BLOCK;
 
+    int MSC_VESTING_CREATION_BLOCK;
     int MSC_VESTING_BLOCK;
     int MSC_KYC_BLOCK;
     int MSC_METADEX_BLOCK;
