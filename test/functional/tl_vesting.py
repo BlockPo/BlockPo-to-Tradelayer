@@ -395,6 +395,10 @@ class VestingBasicsTest (BitcoinTestFramework):
         vested.append(vested0)
         unvested.append(unvested0)
 
+        self.log.info("Checking vesting info")
+        out = tradelayer_HTTP(conn, headers, False, "tl_getvesting_info",params)
+        self.log.info(out)
+
 
         # 400 LTC implies release 15.05% of ALLs from unvested to balance
         # Remember: 400 LTCs in regtest are 40000 (x100) LTCs in testnet/mainnet
@@ -496,6 +500,10 @@ class VestingBasicsTest (BitcoinTestFramework):
         vested.append(vested1)
         unvested.append(unvested1)
 
+        self.log.info("Checking vesting info")
+        out = tradelayer_HTTP(conn, headers, False, "tl_getvesting_info",params)
+        self.log.info(out)
+
         # Adding 200 LTCs in each step
         for i in range(0,20):
             self.log.info("Loop number:"+str(i))
@@ -587,7 +595,7 @@ class VestingBasicsTest (BitcoinTestFramework):
             unvested2 = float(out['result']['unvested'])
             assert_equal(unvested2 + vested2, 500)
 
-            time.sleep(0.1)
+            time.sleep(0.2)
 
 
         self.log.info("Checking LTC Volume")

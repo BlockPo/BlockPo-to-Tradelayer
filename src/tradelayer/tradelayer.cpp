@@ -624,21 +624,22 @@ const string mastercore::getVestingAdmin()
 
 void creatingVestingTokens(int block)
 {
-   extern int64_t amountVesting;
    extern int64_t totalVesting;
 
    CMPSPInfo::Entry newSP;
-
    newSP.name = "Vesting Tokens";
    newSP.data = "Divisible Tokens";
    newSP.url  = "www.tradelayer.org";
    newSP.category = "N/A";
    newSP.subcategory = "N/A";
    newSP.prop_type = ALL_PROPERTY_TYPE_DIVISIBLE;
-   newSP.num_tokens = amountVesting;
+   newSP.num_tokens = totalVesting;
    newSP.attribute_type = ALL_PROPERTY_TYPE_VESTING;
    newSP.init_block = block;
+   newSP.issuer = getVestingAdmin();
    newSP.last_vesting = 0;
+   newSP.last_vesting_block = 0;
+
    const uint32_t propertyIdVesting = _my_sps->putSP(newSP);
    assert(propertyIdVesting > 0);
 
@@ -2932,6 +2933,8 @@ bool VestingTokens(int block)
     }
 
     sp.last_vesting = accumVesting;
+    sp.last_vesting_block = block;
+    
     assert(_my_sps->updateSP(VT, sp));
 
     if(msc_debug_handler_tx)
