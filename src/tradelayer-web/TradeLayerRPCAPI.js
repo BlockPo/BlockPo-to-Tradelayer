@@ -144,9 +144,9 @@ tl.getRawTransaction = function(txid, cb){
 
 tl.getBlockhash = function(block, cb){
      client.cmd("getblockhash", block,function(err, data, resHeaders){
-  if (err) return console.log(err);
+      if (err) return console.log(err);
  
-  return cb(data)
+      return cb(data)
          
      })
 }
@@ -154,8 +154,8 @@ tl.getBlockhash = function(block, cb){
 tl.getBlock = function(hash, cb){
       if(hash==null){
       client.cmd('getBestBlockhash',function(data){
-          hash ==data
-      }
+          hash=data
+      })
      client.cmd("getblock", hash,function(err, data, resHeaders){
   if (err) return console.log(err);
  
@@ -1004,7 +1004,7 @@ tl.createpayload_transfer = function(propertyid, amount,cb){
   })
 }
 
-tl.createpayload_newIdRegistrar = function(url, companyName){
+tl.createpayload_newIdRegistrar = function(url, companyName,cb){
   client.cmd('tl_createpayload_new_id_registration', url, companyName, function(err,data,resHeaders){
     if(err == null){
       return cb(data)
@@ -1012,7 +1012,7 @@ tl.createpayload_newIdRegistrar = function(url, companyName){
   })
 }
 
-tl.createpayload_updateIdRegistrar = function(){
+tl.createpayload_updateIdRegistrar = function(cb){
   //this tx needs a reference address, it has no parameters because it just transfers a registrar id to that addr
   client.cmd('tl_createpayload_update_id_registration', function(err,data,resHeaders){
     if(err == null){
@@ -1021,9 +1021,25 @@ tl.createpayload_updateIdRegistrar = function(){
   }) 
 }
 
-tl.createpayload_attestation = function(memo){
+tl.createpayload_attestation = function(memo, cb){
   //parameter is optional, could be used to create legal provability around compliance
-  client.cmd('tl_createpayload_attestation',memo function(err,data,resHeaders){
+  client.cmd('tl_createpayload_attestation',memo, function(err,data,resHeaders){
+    if(err == null){
+      return cb(data)
+    }else{return err}
+  })
+}
+
+tl.createpayload_commit = function(propertyid, amount, cb){
+  client.cmd('tl_createpayload_commit_tochannel', propertyid,amount, function(err,data,resHeaders){
+    if(err == null){
+      return cb(data)
+    }else{return err}
+  })
+}
+
+tl.createpayload_withdraw = function(propertyid, amount, cb){
+  client.cmd('tl_createpayload_withdraw_fromchannel', propertyid,amount, function(err,data,resHeaders){
     if(err == null){
       return cb(data)
     }else{return err}

@@ -42,7 +42,7 @@ channelManager.setWSChannels = function(dealers){
 		var dealer = dealers[i]
 		for(var w = 0; w<channelManager.WSchannels.length; w++){
 			var channel = channelManager.WSchannels[w]
-			if(channel.ip==dealer.ip){containsDealer==true}
+			if(channel.ip==dealer.ip){containsDealer=true}
 		}
 		
 		if(containsDealer==false){
@@ -313,7 +313,9 @@ channelManager.buildCommit = function(fromAddress,toAddress){
 
 channelManager.buildWithdraw = function(originalAddress,channelAddress){}
 
-channelManager.buildWithdrawLocalWallet = function(addressSet){}
+channelManager.buildWithdrawLocalWallet = function(){
+	//loop through my channels, getChannelInfo, build a series of buildWithdraw functions for each, return array of tx to sign
+}
 
 channelManager.buildTokenToTokenTrade = function(channeladdress, id1,amount, id2, amount, secondSigner=true,cb){
 	tl.getBlock(null,function(data){
