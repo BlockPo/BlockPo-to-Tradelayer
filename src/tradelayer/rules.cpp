@@ -195,7 +195,7 @@ CMainConsensusParams::CMainConsensusParams()
      MSC_METADEX_BLOCK = 99999999;
      MSC_TRADECHANNEL_TOKENS_BLOCK = 99999999;
      MSC_TRADECHANNEL_CONTRACTS_BLOCK = 99999999;
-     ONE_YEAR = 210240;
+     ONE_YEAR = 2650;  // just for testing
  }
 
 
