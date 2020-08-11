@@ -450,8 +450,10 @@ int64_t mastercore::getTotalTokens(uint32_t propertyId, int64_t* n_owners_total)
   if (!property.fixed || n_owners_total) {
     for (std::unordered_map<std::string, CMPTally>::const_iterator it = mp_tally_map.begin(); it != mp_tally_map.end(); ++it) {
       const CMPTally& tally = it->second;
-
       totalTokens += tally.getMoney(propertyId, BALANCE);
+      totalTokens += tally.getMoney(propertyId, SELLOFFER_RESERVE);
+      totalTokens += tally.getMoney(propertyId, ACCEPT_RESERVE);
+      totalTokens += tally.getMoney(propertyId, METADEX_RESERVE);
       totalTokens += tally.getMoney(propertyId, CHANNEL_RESERVE); // channel commits
       totalTokens += tally.getMoney(propertyId, CONTRACTDEX_RESERVE); // amount in margin
 
@@ -2934,7 +2936,7 @@ bool VestingTokens(int block)
 
     sp.last_vesting = accumVesting;
     sp.last_vesting_block = block;
-    
+
     assert(_my_sps->updateSP(VT, sp));
 
     if(msc_debug_handler_tx)

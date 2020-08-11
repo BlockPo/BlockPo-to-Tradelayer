@@ -70,6 +70,7 @@ extern std::map<uint32_t, int64_t> cachefees_oracles;
 extern std::map<int, std::map<uint32_t,int64_t>> MapPropVolume;
 extern std::map<uint32_t, std::map<uint32_t, int64_t>> market_priceMap;
 extern volatile int64_t globalVolumeALL_LTC;
+extern std::vector<std::string> vestingAddresses;
 
 using mastercore::StrToInt64;
 using mastercore::DoubleToInt64;
@@ -187,6 +188,13 @@ void VestingToJSON(const CMPSPInfo::Entry& sProperty, UniValue& property_obj)
     property_obj.push_back(Pair("litecoin volume",  FormatDivisibleMP(xglobal)));
     property_obj.push_back(Pair("vested percentage",  FormatDivisibleMP(vestedPer)));
     property_obj.push_back(Pair("last vesting block",  sProperty.last_vesting_block));
+
+    int64_t n_owners_total = 0;
+    int64_t totalVested = getTotalTokens(ALL, &n_owners_total);
+    if (RegTest()) totalVested -= sProperty.num_tokens;
+
+    property_obj.push_back(Pair("total vested",  FormatDivisibleMP(totalVested)));
+    property_obj.push_back(Pair("owners",  n_owners_total));
     property_obj.push_back(Pair("total tokens", FormatDivisibleMP(sProperty.num_tokens)));
 
 }
@@ -3116,6 +3124,8 @@ UniValue tl_getvesting_info(const JSONRPCRequest& request)
             "  \"litecoin volume\" : \"n.nnnnnnnn\",        (string) the accumulated litecoin amount traded\n"
             "  \"vested percentage\" : \"n.nnnnnnnn\",      (string) the accumulated percentage amount vested\n"
             "  \"last vesting block\" : \"block\"           (number) the last block with vesting action\n"
+            "  \"total vested \" : \"n.nnnnnnnn\",          (string) the accumulated amount vested\n"
+            "  \"owners \" : \"owners\",                    (number) the ALL owners number \n"
             "  \"total tokens\" : \"n.nnnnnnnn\"            (string) the total number of tokens in existence\n"
             "}\n"
             "\nExamples:\n"
@@ -3124,12 +3134,39 @@ UniValue tl_getvesting_info(const JSONRPCRequest& request)
         );
 
     CMPSPInfo::Entry sp;
-    assert(_my_sps->getSP(VT, sp));
+    {
+        if (!_my_sps->getSP(VT, sp)) {
+            throw JSONRPCError(RPC_INVALID_PARAMETER, "Property identifier does not exist");
+        }
+    }
 
     UniValue response(UniValue::VOBJ);
     response.push_back(Pair("propertyid", (uint64_t) VT));
     VestingToJSON(sp, response); // name, data, url,
     KYCToJSON(sp, response);
+
+    return response;
+}
+
+UniValue tl_listvesting_addresses(const JSONRPCRequest& request)
+{
+    if (request.fHelp)
+        throw runtime_error(
+            "tl_listvesting_addresses\n"
+            "\nReturns details for about vesting tokens.\n"
+            "\nResult:\n"
+            "[                                      (array of addresses)\n"
+      			"    \"address\",                       (string) vesting token address \n"
+      			"  ...\n"
+      			"]\n"
+            "\nExamples:\n"
+            + HelpExampleCli("tl_listvesting_addresses", "")
+            + HelpExampleRpc("tl_listvesting_addresses", "")
+        );
+
+    UniValue response(UniValue::VARR);
+
+    for_each(vestingAddresses.begin() ,vestingAddresses.end(), [&response] (const std::string& address) { response.push_back(address);});
 
     return response;
 }
@@ -3192,6 +3229,7 @@ static const CRPCCommand commands[] =
   { "trade layer (data retieval)",  "tl_getcontract",               &tl_getcontract,                {} },
   { "trade layer (data retieval)",  "tl_getopen_interest",          &tl_getopen_interest,           {} },
   { "trade layer (data retieval)",  "tl_getvesting_info",           &tl_getvesting_info,            {} },
+  { "trade layer (data retieval)",  "tl_listvesting_addresses",     &tl_listvesting_addresses,      {} },
 };
 
 void RegisterTLDataRetrievalRPCCommands(CRPCTable &tableRPC)
