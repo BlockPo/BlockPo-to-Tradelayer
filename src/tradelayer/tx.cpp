@@ -3985,17 +3985,14 @@ int CMPTransaction::logicMath_DExSell()
 
             switch (subAction) {
                 case NEW:
-                    PrintToLog("%s(): NEW",__func__);
                     rc = DEx_offerCreate(sender, propertyId, nValue, block, amountDesired, minFee, timeLimit, txid, &nNewValue);
                     break;
 
                 case UPDATE:
-                    PrintToLog("%s(): UPDATE",__func__);
                     rc = DEx_offerUpdate(sender, propertyId, nValue, block, amountDesired, minFee, timeLimit, txid, &nNewValue);
                     break;
 
                 case CANCEL:
-                    PrintToLog("%s(): DESTROY",__func__);
                     rc = DEx_offerDestroy(sender, propertyId);
                     break;
 
