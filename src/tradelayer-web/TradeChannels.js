@@ -22,11 +22,13 @@ var channelManager.counterparties = {'alias':'','ip':'','avgSignBackTime':0,'can
 									 'KYC':[0,1,2],'myHistoricalVolume':0}
 //we can keep stats and do a simple .csv export of these tables, update avgSignBack and fidelity for each trade that lags/is shirked
 var channelManager.multisigChannels = {'multisig': multisig, 'address1':address1, 'address2':address2,'WSChannelName':WSChannel,
-									   'myAddr1':false, 'counterparty':{},'positions':[],'collateralid':1,
-									   'myMargin':0,'myPNL':0,'counterpartyMargin':0}
-var channelManager.txInventory = {'status':'intended','type':'LTC','mySide':'buy',
+									   'myAddr1':false, 'counterparty':{},'positions':[],'collateralid':1, '2ndcollateral':2
+									   'myMargin':0,'myPNL':0,'counterpartyMargin':0,'counterpartyWithdrawal':0,'trustDeferral':false}
+
+var channelManager.txInventory = {'rawString':'','status':'intended','type':'LTC','mySide':'buy',
 								'propertyid':0,'propertyid2':3,'amount':1,'amountDesired':55,
-								'price':0,'firstSigner':true,'minerFeeSplit':0,'senderAddress':'','referenceaddress':''}
+								'price':0,'firstSigner':true,'minerFeeSplit':0,'channelAddress':'','referenceaddress':''}
+
 
 //tx status has six stages: intended, proposed, co-signed, signed-unpublished, pending-conf, confirmed
 //tx type has 3 versions: LTC, token, contract
@@ -111,8 +113,85 @@ channelMananger.messageToggleAvailability = function(availableBool, multisigChan
 	//for instance market makers may run out of inventory temporarily and this helps alleviate expectations for liquidity
 }
 
-channelManager.checkTxDesirability = function(txObj, originalTx){
+channelMananger.withdrawlWatchDog= function(){
+	//this guy looks through tx inventory looking for signed-unpublished, 
+	//if the id is a contract then it looks at initial margin and PNL attempts to withdrawl
+	//otherwise it looks at the whole number
+	//note: for LTC trades this is too dangerous and deferring settlement on those doesn't make sense.
+	/*{'rawString':'','status':'intended','type':'LTC','mySide':'buy',
+								'propertyid':0,'propertyid2':3,'amount':1,'amountDesired':55,
+								'price':0,'firstSigner':true,'minerFeeSplit':0,'senderAddress':'','referenceaddress':''}*/
 
+	//you would want to call this function 3rd after completing the scanCommitsWithdrawals and reconcileCommitData functions in
+	//your trading algo's main loop or thread
+	var cpMarginExpected = 0
+	var cpMarginPropertyId = 0
+	var otherCPMarginId= 0
+	var otherCPMarginExpected = 0
+	var channelsToWatch = []
+	var txToPublish = []
+	//first are there any potential problems in the form of withdrawals that may be skirting unpublished tx
+	for(var c = 0; c<channelManager.multisigChannels.length;c++){
+		var channel = channelManager.multisigChannels[c]
+		if(channel.counterpartyWithdrawal>0){
+			channelsToWatch.push(channel)
+		}
+	}
+
+	//now for each one of those let's loop through our tx for signed-unpublished that belong to those channels
+	for(var w = 0; w<channelsToWatch.length;w++){
+			var thisChannel = channelsToWatch[w]
+		for(var t=0;t<txInventory.length;t++){
+			tx = txInventory[t]
+			
+			if(tx.status=='signed-unpublished'&&tx.channelAddress=thisChannel.multisig){
+				if(tx.type=="LTC"){channelManager.sendRaw(tx.rawString)}
+				if(tx.type=="token"){
+					if(tx.mySide=='buy'){
+						if(t==0){
+						cpMarginExpected+=tx.amount
+						cpMarginPropertyId=tx.propertyid2
+						if(t!=0&&tx.propertyid2!=cpMarginPropertyId){
+							otherCPMarginExpected = tx.amount
+							otherCPMarginId = tx.propertyid2
+						}else if(t>0){
+							cpMarginExpected+=tx.amount
+							cpMarginPropertyId=tx.propertyid2
+						}				
+					}else if(tx.mySide=='sell'){
+						if(t==0){
+						cpMarginExpected+=tx.amountDesired
+						cpMarginPropertyId=tx.propertyid
+						}
+						if(t!=0&&tx.propertyid!=cpMarginPropertyId){
+							otherCPMarginExpected = tx.amountDesired
+							otherCPMarginId = tx.propertyid
+						}else if(t>0){
+							cpMarginExpected+=tx.amountDesired
+							cpMarginPropertyId=tx.propertyid
+						}				
+						//trying to juggle two different possible properties in the tabulation here
+						//if you have 3 or more I guess it'd overwrite and break/incorrectly write
+						//it's a prototype :P
+					}
+				}
+				if(tx.type=="contract"){
+						cpMarginExpected+=amount/10
+						//this is lazy and doesn't consider quanto contracts or inverse, just a contract where collateral==notional
+						//also assumes 10x leverage, but it's prototype
+						//TODO: look up contract by propertyid, make above delineations in this logic
+				}
+
+			}
+		//if something is fishy we publish the tx right away
+		if(thisChannel.counterpartyWithdrawal>=thisChannel.counterpartyMargin-cpMarginExpected){
+			channelManager.sendRaw(tx.rawString)
+			txToPublish.push(tx.rawString)		
+		}
+	}
+	if(txToPublish.length>0){
+		return true
+	}else{return false}
 }
 
 channelManager.queryDealers = function(minAvgLatency, maxRejectionRate, maxRejectionTime, minVolume, cb){
@@ -268,7 +347,7 @@ channelManager.scanCommitsWithdrawals = function(multisigChannelObj,cb){
 	})
 }
 
-channelManager.reconcileCommitDataToMultisigChannelMap= function(channelCommitData){
+channelManager.reconcileCommitData= function(channelCommitData){
 	//loops through and updates values about inventory in ones active channels, the channelManager.multisigChannels array of objects
 	for(var i = 0; i<channelManager.multisigChannels.length; i++){
 		var channel = multisigChannels[i]
@@ -276,7 +355,7 @@ channelManager.reconcileCommitDataToMultisigChannelMap= function(channelCommitDa
 			//have a match, update this channel obj
 			/*channelManager.multisigChannels = {'multisig': multisig, 'address1':address1, 'address2':address2,'WSChannelName':WSChannel,
 									   'myAddr1':false, 'counterparty':{},'positions':[],'collateralid':1,
-									   'myMargin':0,'myPNL':0,'counterpartyMargin':0}*/
+									   'myMargin':0,'myPNL':0,'counterpartyMargin':0,'attemptedWithdrawal':0}*/
 			//this is an assumed JSON of what is in the flow data
 			//{sendingAddress:'',channelAddress:'',amount:0,propertyid:1}
 			var netBalance = 0
@@ -335,6 +414,17 @@ channelManager.reconcileCommitDataToMultisigChannelMap= function(channelCommitDa
 					    cpBalance-=channelCommitData.secondAddressHistoricalWithdrawals[g].amount
 				}
 			}
+			//putting this into the global data structure
+			if(netBalance>0){
+				channelManager.multisigChannels[i].myMargin=netBalance
+			}
+			if(cpBalance>0){
+				channelManager.multisigChannels[i].counterpartyMargin=cpBalance
+			}
+			
+			if(cpWithdrawing>0){
+				channelManager.multisigChannels[i].counterpartyWithdrawal=cpWithdrawing
+			}
 			return true	
 		}
 	}
@@ -353,7 +443,7 @@ channelManager.decodeSentTransactions = function(txids,detailsArray,iterator){
 	})
 }
 
-channelManager.decodeRawTransaction = function(rawstring, desiredtx, cb){
+channelManager.sanityCheckRawTransaction = function(rawstring, desiredtx, cb){
 	//the idea here is that the desiredtx is fetched from the channelManager.txInventory array
 	// and that contains inline the associated meta-data like inputs
 	/*"OMNI": {
