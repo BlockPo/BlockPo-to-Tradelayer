@@ -9,6 +9,9 @@ var noSign = true
 var client = tl.init(user, pass, '', true)
 var serverURI = 'http://192.155.93.12:76/api/'
 
+//key preferences
+var accept0ConfFunding = true
+
 //here we have the data schematic for encapsulating everything you'd need to managed your Trade Channels locally 
 //server version would encapsulate channel management in the server, counterparty data you'd populate from the server
 //channels you'd still manage locally, you'd just get the IPs from the server (server is like a VPN protecting home IP from exposure)
@@ -80,23 +83,25 @@ channelMananger.listenFirstChannelProposal = function(address1,WSChannel,cb){
 	
 }
 
-channelManager.listenChannelConfirmation = function(multisig, myAddr, address2,WSchannel){
+channelManager.listenChannelConfirmation = function(multisig, myAddr, address2,WSchannel, cb){
 	if(channelManager.multisigChannels.contains(WSchannel)&&myAddr==null){
 		var myAddr = WSchannel.myAddr
 	}else if(myAddr==null){
 		//send WS message indicating an err, triggers flush of channel
 	}
 	tl.getAddressInfo(multisig,function(data){
+		//loops through and checks that the new channel matches and returns the associated data obj in a callback
 		if(data.pubkeys.contains(address2)==true&&data.pubkeys.contains(myAddr){
 			var obj= {'multisig':multisig,'address1':myAddr,'address2':address2,'WSchannel':WSchannel, 'myAddr1':true}
 			channelMananger.multisigChannels.push(obj)
-			cb(obj)
+			return cb(obj)
 		}
 	}
 }
 
 channelMananger.listenChannelErr = function(errMessage, multisigChannelObj, WSchannel){
 	//flush multisig channel
+
 }
 
 channelManager.sendChannelErr= function(errMessage, multisigChannelObj, WSchannel)
@@ -225,6 +230,7 @@ channelManager.scanCommitsWithdrawals = function(multisigChannelObj,cb){
 				for(var i = 0; i<data2.length; i++){
 					txids.push(data2[i].txid)
 				}
+				//need to debug that this decode function is returning something and not stuck in callback/iterator heck
 			    var txDetails =	decodeTransactions(txids,[],0)
 			    	for(var t = 0; t<txDetails.length; t++){
 			    		var tx = txDetail[t]
@@ -262,8 +268,76 @@ channelManager.scanCommitsWithdrawals = function(multisigChannelObj,cb){
 	})
 }
 
-channelManager.reconcileCommitDataToChannelMap= function(channelCommitData){
+channelManager.reconcileCommitDataToMultisigChannelMap= function(channelCommitData){
 	//loops through and updates values about inventory in ones active channels, the channelManager.multisigChannels array of objects
+	for(var i = 0; i<channelManager.multisigChannels.length; i++){
+		var channel = multisigChannels[i]
+		if(channel.multisig==channelCommitData.channel.multisig&&channel.collateralid==channelCommitData.channel.collateralid){
+			//have a match, update this channel obj
+			/*channelManager.multisigChannels = {'multisig': multisig, 'address1':address1, 'address2':address2,'WSChannelName':WSChannel,
+									   'myAddr1':false, 'counterparty':{},'positions':[],'collateralid':1,
+									   'myMargin':0,'myPNL':0,'counterpartyMargin':0}*/
+			//this is an assumed JSON of what is in the flow data
+			//{sendingAddress:'',channelAddress:'',amount:0,propertyid:1}
+			var netBalance = 0
+			var cpBalance = 0
+			var cpWithdrawing = 0
+			if(channel.myAddr1==false){
+				
+				for(var c = 0; c<channelCommitData.secondAddressHistoricalCommits.length;c++){
+					netBalance+=channelCommitData.secondAddressHistoricalCommits[c].amount
+				}
+				for(var o = 0; o<channelCommitData.secondAddressHistoricalWithdrawals.length;o++){
+					netBalance-=channelCommitData.secondAddressHistoricalWithdrawals[o].amount
+				}
+				
+				if(accept0ConfFunding==true){
+					for(var p = 0; p<channelCommitData.secondAddressPendingCommits.length;p++){
+						netBalance+=channelCommitData.secondAddressPendingCommits[p].amount
+					}
+					for(var v = 0; v<channelCommitData.firstAddressPendingCommits.length;v++){
+						cpBalance+=channelCommitData.firstAddressPendingCommits[p].amount
+					}
+
+				}
+				
+				for(var w = 0; w<channelCommitData.firstAddressPendingWithdrawals.length;w++){
+						cpWithdrawing+=channelCommitData.firstAddressPendingWithdrawals[w].amount
+				}
+
+				for(var y = 0; y<channelCommitData.firstAddressHistoricalWithdrawals.length;y++){
+					    cpBalance-=channelCommitData.firstAddressHistoricalWithdrawals[y].amount
+				}
+			}else if(channel.myAddr1==true){
+				//now we do it all again for the converse situation
+				for(var a = 0; a<channelCommitData.firstAddressHistoricalCommits.length;a++){
+					netBalance+=channelCommitData.firstAddressHistoricalCommits[a].amount
+				}
+				for(var b = 0; b<channelCommitData.firstAddressHistoricalWithdrawals.length;b++){
+					netBalance-=channelCommitData.firstAddressHistoricalWithdrawals[b].amount
+				}
+				
+				if(accept0ConfFunding==true){
+					for(var d = 0; d<channelCommitData.firstAddressPendingCommits.length;d++){
+						netBalance+=channelCommitData.firstAddressPendingCommits[d].amount
+					}
+					for(var e = 0; e<channelCommitData.secondAddressPendingCommits.length;e++){
+						cpBalance+=channelCommitData.secondAddressPendingCommits[e].amount
+					}
+
+				}
+				
+				for(var f = 0; f<channelCommitData.firstAddressPendingWithdrawals.length;f++){
+						cpWithdrawing+=channelCommitData.secondAddressPendingWithdrawals[f].amount
+				}
+
+				for(var g = 0; g<channelCommitData.firstAddressHistoricalWithdrawals.length;g++){
+					    cpBalance-=channelCommitData.secondAddressHistoricalWithdrawals[g].amount
+				}
+			}
+			return true	
+		}
+	}
 }
 
 channelManager.decodeSentTransactions = function(txids,detailsArray,iterator){
@@ -307,11 +381,13 @@ channelManager.decodeRawTransaction = function(rawstring, desiredtx, cb){
 	})
 }
 
-channelManager.buildCommit = function(fromAddress,toAddress){
+channelManager.buildCommit = function(fromAddress,toAddress, propertyid, amount){
 	tl.createpayload_commit()
 }
 
-channelManager.buildWithdraw = function(originalAddress,channelAddress){}
+channelManager.buildWithdraw = function(originalAddress,channelAddress, propertyid, amount){
+	tl.createpayload_withdraw()
+}
 
 channelManager.buildWithdrawLocalWallet = function(){
 	//loop through my channels, getChannelInfo, build a series of buildWithdraw functions for each, return array of tx to sign
