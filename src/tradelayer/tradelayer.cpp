@@ -456,7 +456,6 @@ int64_t mastercore::getTotalTokens(uint32_t propertyId, int64_t* n_owners_total)
       totalTokens += tally.getMoney(propertyId, METADEX_RESERVE);
       totalTokens += tally.getMoney(propertyId, CHANNEL_RESERVE); // channel commits
       totalTokens += tally.getMoney(propertyId, CONTRACTDEX_RESERVE); // amount in margin
-      totalTokens += tally.getMoney(propertyId, UNVESTED); 
       if (prev != totalTokens) {
 	      prev = totalTokens;
 	      owners++;

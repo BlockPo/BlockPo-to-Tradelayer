@@ -508,15 +508,17 @@ int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addre
         }
 
         // buyer market maker?
-        p_accept = DEx_getAccept(addressBuyer, propertyId, addressSeller);
-
-        if (p_accept)
+        if (IsFeatureActivated(FEATURE_DEX_BUY, block))
         {
-            if (msc_debug_dex) PrintToLog("Found buyer market maker!\n");
-            break;
+            p_accept = DEx_getAccept(addressBuyer, propertyId, addressSeller);
+
+            if (p_accept)
+            {
+                if (msc_debug_dex) PrintToLog("Found buyer market maker!\n");
+                break;
+            }
+
         }
-
-
     }
 
     if (!p_accept && msc_debug_dex)

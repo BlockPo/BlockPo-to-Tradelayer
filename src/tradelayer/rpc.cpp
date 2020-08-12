@@ -189,11 +189,12 @@ void VestingToJSON(const CMPSPInfo::Entry& sProperty, UniValue& property_obj)
     property_obj.push_back(Pair("vested percentage",  FormatDivisibleMP(vestedPer)));
     property_obj.push_back(Pair("last vesting block",  sProperty.last_vesting_block));
 
-    int64_t n_owners_total = 0;
-    int64_t totalVested = getTotalTokens(ALL, &n_owners_total);
+    int64_t totalVested = getTotalTokens(ALL);
     if (RegTest()) totalVested -= sProperty.num_tokens;
 
     property_obj.push_back(Pair("total vested",  FormatDivisibleMP(totalVested)));
+
+    size_t n_owners_total = vestingAddresses.size();
     property_obj.push_back(Pair("owners",  n_owners_total));
     property_obj.push_back(Pair("total tokens", FormatDivisibleMP(sProperty.num_tokens)));
 

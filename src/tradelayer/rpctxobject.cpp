@@ -4,8 +4,8 @@
  * Handler for populating RPC transaction objects.
  */
 
+#include "tradelayer/dex.h"
 #include "tradelayer/rpctxobject.h"
-
 #include "tradelayer/errors.h"
 #include "tradelayer/tradelayer.h"
 #include "tradelayer/pending.h"
@@ -519,14 +519,20 @@ void populateRPCTypeContractDex_Cancel_Orders_By_Block(CMPTransaction& tlObj, Un
 
 void populateRPCTypeTradeOffer(CMPTransaction& tlObj, UniValue& txobj)
 {
-  uint32_t propertyId = _my_sps->findSPByTX(tlObj.getHash());
+
+  CMPOffer temp_offer(tlObj);
+
+  uint32_t propertyId = tlObj.getProperty();
+  int64_t amountOffered = tlObj.getAmount();
+  int64_t amountDesired = temp_offer.getLTCDesiredOriginal();
+  uint8_t sellSubAction = temp_offer.getSubaction();
 
   txobj.push_back(Pair("propertyId", (uint64_t) propertyId));
-  txobj.push_back(Pair("amount offered", (uint64_t) tlObj.getAmount()));
-  txobj.push_back(Pair("amount desired", (uint64_t) tlObj.getBlock()));
+  txobj.push_back(Pair("amount offered", FormatDivisibleMP(amountOffered)));
+  txobj.push_back(Pair("amount desired", FormatDivisibleMP(amountDesired)));
   txobj.push_back(Pair("time limit", (uint64_t) tlObj.getTimeLimit()));
-  txobj.push_back(Pair("min fee", (uint64_t) tlObj.getMinFee()));
-  txobj.push_back(Pair("subAction", (uint64_t) tlObj.getSubAction()));
+  txobj.push_back(Pair("min fee", FormatDivisibleMP(tlObj.getMinFee())));
+  txobj.push_back(Pair("subAction", (uint64_t) sellSubAction));
 }
 
 void populateRPCTypeDExBuy(CMPTransaction& tlObj, UniValue& txobj)

@@ -88,12 +88,14 @@ public:
         // if (msc_debug_dex) PrintToLog("%s(%d): %s\n", __func__, amountOffered, txid.GetHex());
     }
 
+
     CMPOffer(const CMPTransaction& tx)
-      : offerBlock(tx.block), offer_amount_original(tx.nValue), property(tx.property),
-        LTC_desired_original(tx.amount_desired), min_fee(tx.min_fee),
-        blocktimelimit(tx.blocktimelimit), subaction(tx.subaction), option_(tx.option)
-    {
-    }
+       : offerBlock(tx.block), offer_amount_original(tx.nValue), property(tx.property),
+         LTC_desired_original(tx.amount_desired), min_fee(tx.min_fee),
+         blocktimelimit(tx.blocktimelimit), subaction(tx.subaction),  option_(0)
+     {
+     }
+
 
     void saveOffer(std::ofstream& file, SHA256_CTX* shaCtx, const std::string& address) const
     {
