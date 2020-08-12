@@ -410,7 +410,7 @@ class VestingBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['vested percentage'], '7.52574900')
         assert_equal(out['result']['last vesting block'], 1037)
         assert_equal(out['result']['total vested'],  '150.51498000')
-        assert_equal(out['result']['owners'], 4)
+        assert_equal(out['result']['owners'], 3)
         assert_equal(out['result']['total tokens'], '1500000.00000000')
         assert_equal(out['result']['kyc_ids allowed'], '[]')
 
@@ -529,7 +529,7 @@ class VestingBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['vested percentage'], '15.05149900')
         assert_equal(out['result']['last vesting block'], 1041)
         assert_equal(out['result']['total vested'],  '301.02996000')
-        assert_equal(out['result']['owners'], 4)
+        assert_equal(out['result']['owners'], 3)
         assert_equal(out['result']['total tokens'], '1500000.00000000')
         assert_equal(out['result']['kyc_ids allowed'], '[]')
 

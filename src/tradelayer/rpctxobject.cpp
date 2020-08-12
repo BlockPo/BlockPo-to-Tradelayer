@@ -134,6 +134,7 @@ int populateRPCTransactionObject(const CTransaction& tx, const uint256& blockHas
  */
 void populateRPCTypeInfo(CMPTransaction& mp_obj, UniValue& txobj, uint32_t txType, bool extendedDetails, std::string extendedDetailsFilter)
 {
+    //NOTE: populateRPCType functions needs more work
     switch (txType) {
         case MSC_TYPE_SIMPLE_SEND:
             populateRPCTypeSimpleSend(mp_obj, txobj);
@@ -498,8 +499,7 @@ void populateRPCTypeSendPeggedCurrency(CMPTransaction& tlObj, UniValue& txobj)
 
 void populateRPCTypeRedemptionPegged(CMPTransaction& tlObj, UniValue& txobj)
 {
-  uint32_t propertyId = _my_sps->findSPByTX(tlObj.getHash());
-
+  uint32_t propertyId = tlObj.getProperty();
   txobj.push_back(Pair("propertyId", (uint64_t) propertyId));
   txobj.push_back(Pair("amount", FormatDivisibleMP(tlObj.getXAmount())));
   txobj.push_back(Pair("contract related", (uint64_t) tlObj.getContractId()));
@@ -549,10 +549,19 @@ void populateRPCTypeDExBuy(CMPTransaction& tlObj, UniValue& txobj)
 
 void populateRPCTypeAcceptOfferBTC(CMPTransaction& tlObj, UniValue& txobj)
 {
-  uint32_t propertyId = _my_sps->findSPByTX(tlObj.getHash());
+  uint32_t propertyId = tlObj.getProperty();
+  int64_t amount = tlObj.getAmount();
+
+  int tmpblock = 0;
+  uint32_t tmptype = 0;
+  uint64_t amountNew = 0;
+
+  LOCK(cs_tally);
+  bool tmpValid = mastercore::getValidMPTX(tlObj.getHash(), &tmpblock, &tmptype, &amountNew);
+  if (tmpValid && amountNew > 0) amount = amountNew;
 
   txobj.push_back(Pair("propertyId", (uint64_t) propertyId));
-  txobj.push_back(Pair("amount", FormatDivisibleMP(tlObj.getXAmount())));
+  txobj.push_back(Pair("amount", FormatDivisibleMP(amount)));
 
 }
 

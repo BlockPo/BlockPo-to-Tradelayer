@@ -175,6 +175,7 @@ public:
         PrintToLog("%s(%d[%d]): %s\n", __func__, acceptAmountRemaining, acceptAmountOriginal, txid.GetHex());
     }
 
+
     void print()
     {
         // TODO: no floating numbers

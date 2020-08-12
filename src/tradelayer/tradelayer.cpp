@@ -2928,6 +2928,11 @@ bool VestingTokens(int block)
                 PrintToLog("%s(): nAmount = %d\n",__func__,nAmount);
             }
 
+            if (nAmount > unvestedALLBal)
+            {
+                if(msc_debug_vesting) PrintToLog("%s(): No enough amount in unvested tally:  amount Requested (%d) > amount in tally (%d)\n",__func__, block, nAmount, unvestedALLBal);
+            }
+
             assert(update_tally_map(addr, ALL, -nAmount, UNVESTED));
             assert(update_tally_map(addr, ALL, nAmount, BALANCE));
         }
