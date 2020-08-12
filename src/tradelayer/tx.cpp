@@ -2513,6 +2513,11 @@ int CMPTransaction::logicMath_SimpleSend()
 int CMPTransaction::logicMath_SendVestingTokens()
 {
 
+  if (sender == receiver) {
+      PrintToLog("%s(): rejected: sender sending vesting tokens to himself\n", __func__, property);
+      return (PKT_ERROR_SEND -26);
+  }
+
   if (!sanityChecks(sender, block)) {
       PrintToLog("%s(): rejected: sanity checks for send vesting tokens failed\n",
               __func__);

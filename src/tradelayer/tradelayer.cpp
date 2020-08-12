@@ -2854,6 +2854,8 @@ double getAccumVesting(const int64_t xAxis)
 
 bool VestingTokens(int block)
 {
+    bool deactivation = false;
+
     if(msc_debug_vesting) PrintToLog("%s() block : %d\n",__func__, block);
 
     if (vestingAddresses.empty())
@@ -2873,10 +2875,10 @@ bool VestingTokens(int block)
         return false;
     }
 
-    if (100000000 * COIN < xAxis)
-    {
+
+    if(100000000 * COIN <= xAxis){
         if(msc_debug_vesting) PrintToLog("%s(): Vesting Tokens completed at 100,000,000 LTC volume: %d\n",__func__, xAxis);
-        return false;
+        deactivation = true;
     }
 
     CMPSPInfo::Entry sp;
@@ -2891,7 +2893,6 @@ bool VestingTokens(int block)
     const double realVesting = (accumVesting > sp.last_vesting) ?  accumVesting - sp.last_vesting : 0;
 
     if(msc_debug_vesting) PrintToLog("%s(): accumVesting: %f, realVesting: %f, last_vesting: %f\n",__func__, accumVesting, realVesting, sp.last_vesting);
-
 
     if (realVesting == 0)
     {
@@ -2908,8 +2909,8 @@ bool VestingTokens(int block)
     {
         if(msc_debug_vesting) PrintToLog("\nAddress = %s\n", addr);
 
-        int64_t vestingBalance = getMPbalance(addr, TL_PROPERTY_VESTING, BALANCE);
-        int64_t unvestedALLBal = getMPbalance(addr, ALL, UNVESTED);
+        const int64_t vestingBalance = getMPbalance(addr, TL_PROPERTY_VESTING, BALANCE);
+        const int64_t unvestedALLBal = getMPbalance(addr, ALL, UNVESTED);
 
         if(msc_debug_vesting) {
             PrintToLog("\nALLs UNVESTED in address = %d\n", unvestedALLBal);
@@ -2917,20 +2918,20 @@ bool VestingTokens(int block)
             PrintToLog("Vesting tokens in address = %d\n", vestingBalance);
         }
 
-        if (vestingBalance != 0 && unvestedALLBal != 0 && xAxis != 0)
+        if (vestingBalance != 0 && unvestedALLBal != 0)
         {
-
-            int64_t iRealVesting = mastercore::DoubleToInt64(realVesting);
-            arith_uint256 iAmount = mastercore::ConvertTo256(iRealVesting) * mastercore::ConvertTo256(vestingBalance) / ConvertTo256(COIN);
+            const int64_t iRealVesting = mastercore::DoubleToInt64(realVesting);
+            const arith_uint256 uVestingBalance = mastercore::ConvertTo256(vestingBalance);
+            const arith_uint256 uCOIN  = mastercore::ConvertTo256(COIN);
+            const arith_uint256 iAmount = mastercore::ConvertTo256(iRealVesting) * DivideAndRoundUp(uVestingBalance, uCOIN);
             int64_t nAmount = mastercore::ConvertTo64(iAmount);
 
             if(msc_debug_vesting) {
                 PrintToLog("%s(): nAmount = %d\n",__func__,nAmount);
             }
 
-            if (nAmount > unvestedALLBal)
-            {
-                if(msc_debug_vesting) PrintToLog("%s(): No enough amount in unvested tally:  amount Requested (%d) > amount in tally (%d)\n",__func__, block, nAmount, unvestedALLBal);
+            if(deactivation){
+                nAmount = unvestedALLBal;
             }
 
             assert(update_tally_map(addr, ALL, -nAmount, UNVESTED));
@@ -2948,6 +2949,9 @@ bool VestingTokens(int block)
         PrintToLog("\nALLs UNVESTED = %d\n", getMPbalance(vestingAddresses[0], TL_PROPERTY_ALL, UNVESTED));
         PrintToLog("ALLs BALANCE = %d\n", getMPbalance(vestingAddresses[0], TL_PROPERTY_ALL, BALANCE));
     }
+
+    // if it reach the LTC volume
+    if (deactivation) DeactivateFeature(FEATURE_VESTING, block);
 
     return true;
 }
