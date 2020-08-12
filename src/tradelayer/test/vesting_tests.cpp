@@ -228,7 +228,7 @@ BOOST_AUTO_TEST_CASE(vesting_process)
 
 
   // checking 100% vesting output
-  BOOST_CHECK_EQUAL(0, VestingTokens(lastVesting, 100000000 * COIN, nAmount, vestingAddresses));
+  BOOST_CHECK_EQUAL(0, VestingTokens(lastVesting, 1000000000 * COIN, nAmount, vestingAddresses));
   // checking ALL balance
   BOOST_CHECK_EQUAL(100000000000, getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPb", ALL, BALANCE));
   // //checking unvested ALL balance

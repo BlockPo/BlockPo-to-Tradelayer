@@ -2848,7 +2848,8 @@ double getAccumVesting(const int64_t xAxis)
 {
     const double amount = (double) xAxis / COIN;
     // accumVesting fraction = (Log10(Cum_LTC_Volume)-4)/4; 100% vested at 100,000,000  LTCs volume
-    return((std::log10(amount) - 4) / 4);
+    const double result = ((std::log10(amount) - 4) / 4);
+    return ((result < 1.0) ? result : 1.0);
 
 }
 
@@ -6890,16 +6891,6 @@ bool mastercore::transferAll(const std::string& sender, const std::string& recei
 
 }
 
-int64_t mastercore::calculateUnvested(int64_t amountSended, int64_t balance, int64_t unvested)
-{
-    arith_uint256 uAmountSended = ConvertTo256(amountSended);
-    arith_uint256 uUnvested = ConvertTo256(unvested);
-    arith_uint256 uBalance = ConvertTo256(balance);
-    // actual calculation; round up
-    arith_uint256 amountPurchased256 = DivideAndRoundUp(uAmountSended * uUnvested, uBalance);
-    // convert back to int64_t
-    return ConvertTo64(amountPurchased256);
- }
 
 /**
  * @return The marker for class D transactions.
