@@ -136,8 +136,13 @@ int DEx_offerCreate(const std::string& addressSeller, uint32_t propertyId, int64
         return (DEX_ERROR_SELLOFFER -101);
     }
     if (amountDesired == 0) {
-        return (DEX_ERROR_SELLOFFER -101);
+        return (DEX_ERROR_SELLOFFER -102);
     }
+
+    if (propertyId == TL_PROPERTY_VESTING) {
+        return (DEX_ERROR_SELLOFFER -103);
+    }
+
     if (DEx_getOffer(addressSeller, propertyId)) {
         return (DEX_ERROR_SELLOFFER -10); // offer already exists
     }
