@@ -592,7 +592,7 @@ void populateRPCTypeCommitChannel(CMPTransaction& tlObj, UniValue& txobj)
 {
 
   txobj.push_back(Pair("propertyId", (uint64_t) tlObj.getPropertyId()));
-  txobj.push_back(Pair("amount_commited", (uint64_t) tlObj.getAmountCommited()));
+  txobj.push_back(Pair("amount_commited", FormatMP(tlObj.getPropertyId(),tlObj.getAmountCommited())));
 }
 
 void populateRPCTypeWithdrawal_FromChannel(CMPTransaction& tlObj, UniValue& txobj)

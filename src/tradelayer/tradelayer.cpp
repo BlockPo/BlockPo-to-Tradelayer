@@ -5757,6 +5757,7 @@ bool CMPTradeList::getAllCommits(const std::string& senderAddress, UniValue& tra
        if(sender != senderAddress)
            continue;
 
+       const std::string& channel = vstr[0];
        const uint32_t& propertyId = boost::lexical_cast<uint32_t>(vstr[2]);
        const int64_t& amount = boost::lexical_cast<int64_t>(vstr[3]);
        const int& blockNum = boost::lexical_cast<int>(vstr[4]);
@@ -5767,6 +5768,7 @@ bool CMPTradeList::getAllCommits(const std::string& senderAddress, UniValue& tra
        if (tradeArray.size() <= 100)
        {
            trade.push_back(Pair("sender", sender));
+           trade.push_back(Pair("channel", channel));
            trade.push_back(Pair("propertyId",FormatByType(propertyId,1)));
            trade.push_back(Pair("amount", FormatByType(amount,2)));
            trade.push_back(Pair("block",blockNum));
