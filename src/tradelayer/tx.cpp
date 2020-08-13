@@ -2453,6 +2453,17 @@ int CMPTransaction::logicMath_SimpleSend()
         return (PKT_ERROR_SEND -24);
     }
 
+    if (isPropertyContract(property)) {
+        PrintToLog("%s(): rejected: property %d should not be a contract\n", __func__, property);
+        return (PKT_ERROR_SEND -25);
+    }
+
+
+     if(property == TL_PROPERTY_VESTING){
+         PrintToLog("%s(): rejected: property should not be vesting tokens (id = 3)\n", __func__);
+         return (PKT_ERROR_SEND -26);
+     }
+
     int kyc_id;
 
     if(!t_tradelistdb->checkAttestationReg(sender,kyc_id)){
@@ -2591,7 +2602,7 @@ int CMPTransaction::logicMath_SendAll()
     while (0 != (propertyId = ptally->next())) {
 
         int64_t moneyAvailable = ptally->getMoney(propertyId, BALANCE);
-        if (moneyAvailable > 0) {
+        if (moneyAvailable > 0 && !isPropertyContract(propertyId) && propertyId != TL_PROPERTY_VESTING) {
             ++numberOfPropertiesSent;
             assert(update_tally_map(sender, propertyId, -moneyAvailable, BALANCE));
             assert(update_tally_map(receiver, propertyId, moneyAvailable, BALANCE));
@@ -2933,6 +2944,17 @@ int CMPTransaction::logicMath_GrantTokens()
     return (PKT_ERROR_TOKENS -24);
   }
 
+  if (isPropertyContract(property)) {
+      PrintToLog("%s(): rejected: property %d should not be a contract\n", __func__, property);
+      return (PKT_ERROR_TOKENS -25);
+  }
+
+
+  if(property == TL_PROPERTY_VESTING){
+       PrintToLog("%s(): rejected: property should not be vesting tokens (id = 3)\n", __func__);
+       return (PKT_ERROR_TOKENS -26);
+  }
+
   int kyc_id;
 
   if(!t_tradelistdb->checkAttestationReg(sender,kyc_id)){
@@ -3038,6 +3060,16 @@ int CMPTransaction::logicMath_RevokeTokens()
     if (!IsPropertyIdValid(property)) {
         PrintToLog("%s(): rejected: property %d does not exist\n", __func__, property);
         return (PKT_ERROR_TOKENS -24);
+    }
+
+    if (isPropertyContract(property)) {
+        PrintToLog("%s(): rejected: property %d should not be a contract\n", __func__, property);
+        return (PKT_ERROR_TOKENS -25);
+    }
+
+    if(property == TL_PROPERTY_VESTING){
+         PrintToLog("%s(): rejected: property should not be vesting tokens (id = 3)\n", __func__);
+         return (PKT_ERROR_TOKENS -26);
     }
 
     CMPSPInfo::Entry sp;
@@ -3272,6 +3304,29 @@ int CMPTransaction::logicMath_MetaDExTrade()
   if (!IsPropertyIdValid(desired_property)) {
       PrintToLog("%s(): rejected: desired property %d does not exist\n", __func__, desired_property);
       return (PKT_ERROR_METADEX -32);
+  }
+
+  if (isPropertyContract(property)) {
+      PrintToLog("%s(): rejected: property %d should not be a contract\n", __func__, property);
+      return (PKT_ERROR_METADEX -25);
+  }
+
+
+  if(property == TL_PROPERTY_VESTING){
+       PrintToLog("%s(): rejected: property should not be vesting tokens (id = 3)\n", __func__);
+       return (PKT_ERROR_METADEX -26);
+  }
+
+
+  if (isPropertyContract(desired_property)) {
+      PrintToLog("%s(): rejected: property %d should not be a contract\n", __func__, desired_property);
+      return (PKT_ERROR_METADEX -25);
+  }
+
+
+  if(desired_property == TL_PROPERTY_VESTING){
+       PrintToLog("%s(): rejected: property should not be vesting tokens (id = 3)\n", __func__);
+       return (PKT_ERROR_METADEX -26);
   }
 
   int kyc_id;
@@ -3925,7 +3980,7 @@ int CMPTransaction::logicMath_DExSell()
       return (PKT_ERROR_TRADEOFFER -22);
     }
 
-    // if(!t_tradelistdb->egister(sender,4))
+    // if(!t_tradelistdb->register(sender,4))
     // {
     //     PrintToLog("%s: tx disable from kyc register!\n",__func__);
     //     return (PKT_ERROR_KYC -10);
