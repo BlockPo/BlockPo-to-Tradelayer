@@ -610,6 +610,8 @@ namespace mastercore
   const string getVestingAdmin();
 
   int64_t calculateUnvested(int64_t amountSended, int64_t balance, int64_t unvested);
+
+  int64_t lastLTCVolume(uint32_t propertyId);
 }
 
 #endif // TRADELAYER_TL_H

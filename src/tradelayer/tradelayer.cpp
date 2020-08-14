@@ -1121,9 +1121,12 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
      {
          if (msc_debug_handle_instant) PrintToLog("%s: Successfully litecoins traded \n", __func__);
 
-         /** Adding LTC into volume */
+         /** Adding LTC into volume **/
          globalVolumeALL_LTC += nvalue;
          const int64_t globalVolumeALL_LTCh = globalVolumeALL_LTC;
+
+         /** adding LTC volume to map **/
+         MapPropVolume[nBlock][property] += nvalue;
 
          if (msc_debug_handle_instant) PrintToLog("%s(): nvalue: %d, globalVolumeALL_LTC: %d \n",__func__, nvalue, globalVolumeALL_LTCh);
 
@@ -6401,7 +6404,7 @@ int64_t mastercore::LtcVolumen(uint32_t propertyId, int& fblock, int& sblock)
 {
     int64_t amount = 0;
 
-    for(auto it = MapPropVolume.begin(); it != MapPropVolume.end();it++)
+    for(auto it = MapPropVolume.begin(); it != MapPropVolume.end(); ++it)
     {
         const int& xblock = it->first;
         if (msc_debug_ltc_volume) PrintToLog("%s(): actual block: %d\n", __func__, xblock);
@@ -6425,7 +6428,7 @@ int64_t mastercore::MdexVolumen(uint32_t fproperty, uint32_t sproperty, int& fbl
 {
     int64_t amount = 0;
 
-    for(auto it = MapMetaVolume.begin(); it != MapMetaVolume.end();it++)
+    for(auto it = MapMetaVolume.begin(); it != MapMetaVolume.end(); ++it)
     {
         const int& xblock = it->first;
 
@@ -6446,12 +6449,42 @@ int64_t mastercore::MdexVolumen(uint32_t fproperty, uint32_t sproperty, int& fbl
     return amount;
 }
 
+/**last 24 hours volume for a given propertyId**/
+int64_t mastercore::lastLTCVolume(uint32_t propertyId)
+{
+    int64_t totalAmount = 0;
+
+    // 24 hours back in time
+    int bBlock = GetHeight() - 576;
+
+    if (bBlock < 0) {
+        PrintToLog("%s(): blockHeight is less than 576 block");
+        return 0;
+    }
+
+    // DEx and Channel volume
+    for(auto it = MapPropVolume.rbegin(); it != MapPropVolume.rend(); ++it)
+    {
+        const int& ablock = it->first;
+        if(ablock < bBlock) break;
+
+        std::map<uint32_t, int64_t>& blockMap = it->second;
+        auto itt = blockMap.find(propertyId);
+        if (itt != blockMap.end()){
+            totalAmount += itt->second;
+        }
+    }
+
+    return totalAmount;
+
+}
+
 int64_t mastercore::getOracleTwap(uint32_t contractId, int nBlocks)
 {
      int count = 0;
      arith_uint256 aSum = 0;
 
-     std::map<uint32_t,std::map<int,oracledata>>::iterator it = oraclePrices.find(contractId);
+     auto it = oraclePrices.find(contractId);
      std::map<int,oracledata>& orMap = it->second;
 
      for(auto itt = orMap.rbegin(); itt != orMap.rend(); ++itt)

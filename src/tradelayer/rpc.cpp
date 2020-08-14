@@ -105,7 +105,6 @@ void PropertyToJSON(const CMPSPInfo::Entry& sProperty, UniValue& property_obj)
     property_obj.push_back(Pair("category", sProperty.category));
     property_obj.push_back(Pair("subcategory", sProperty.subcategory));
 
-
 }
 
 void ContractToJSON(const CMPSPInfo::Entry& sProperty, UniValue& property_obj)
@@ -857,7 +856,6 @@ UniValue tl_getproperty(const JSONRPCRequest& request)
     response.push_back(Pair("fixedissuance", sp.fixed));
     response.push_back(Pair("totaltokens", strTotalTokens));
     response.push_back(Pair("creation block", sp.init_block));
-
     if (sp.isNative())
     {
         response.push_back(Pair("notional size", FormatDivisibleShortMP(sp.notional_size)));
@@ -958,6 +956,9 @@ UniValue tl_listproperties(const JSONRPCRequest& request)
               } else if (sp.isPegged()) {
                   propertyObj.push_back(Pair("contract associated",(uint64_t) sp.contract_associated));
                   propertyObj.push_back(Pair("series", sp.series));
+              } else {
+                  int64_t volume = lastLTCVolume(propertyId);
+                  propertyObj.push_back(Pair("last 24h LTC volume", FormatDivisibleMP(volume)));
               }
           }
 
