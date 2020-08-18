@@ -70,6 +70,7 @@ extern std::map<uint32_t, int64_t> cachefees_oracles;
 extern std::map<int, std::map<uint32_t,int64_t>> MapPropVolume;
 extern std::map<uint32_t, std::map<uint32_t, int64_t>> market_priceMap;
 extern volatile int64_t globalVolumeALL_LTC;
+extern std::vector<std::string> vestingAddresses;
 
 using mastercore::StrToInt64;
 using mastercore::DoubleToInt64;
@@ -169,6 +170,34 @@ void OracleToJSON(const CMPSPInfo::Entry& sProperty, UniValue& property_obj)
     property_obj.push_back(Pair("last high price", FormatDivisibleShortMP(sProperty.oracle_high)));
     property_obj.push_back(Pair("last low price", FormatDivisibleShortMP(sProperty.oracle_low)));
     property_obj.push_back(Pair("last close price",FormatDivisibleShortMP(sProperty.oracle_close)));
+}
+
+void VestingToJSON(const CMPSPInfo::Entry& sProperty, UniValue& property_obj)
+{
+    property_obj.push_back(Pair("name", sProperty.name));
+    property_obj.push_back(Pair("data", sProperty.data));
+    property_obj.push_back(Pair("url", sProperty.url));
+    property_obj.push_back(Pair("divisible", sProperty.isDivisible()));
+    property_obj.push_back(Pair("issuer", sProperty.issuer));
+    property_obj.push_back(Pair("activation block", sProperty.init_block));
+
+    const int64_t xglobal = globalVolumeALL_LTC;
+    const double accum = (isNonMainNet()) ? getAccumVesting(100 * xglobal) : getAccumVesting(xglobal);
+    const int64_t vestedPer = 100 * mastercore::DoubleToInt64(accum);
+
+    property_obj.push_back(Pair("litecoin volume",  FormatDivisibleMP(xglobal)));
+    property_obj.push_back(Pair("vested percentage",  FormatDivisibleMP(vestedPer)));
+    property_obj.push_back(Pair("last vesting block",  sProperty.last_vesting_block));
+
+    int64_t totalVested = getTotalTokens(ALL);
+    if (RegTest()) totalVested -= sProperty.num_tokens;
+
+    property_obj.push_back(Pair("total vested",  FormatDivisibleMP(totalVested)));
+
+    size_t n_owners_total = vestingAddresses.size();
+    property_obj.push_back(Pair("owners",  n_owners_total));
+    property_obj.push_back(Pair("total tokens", FormatDivisibleMP(sProperty.num_tokens)));
+
 }
 
 bool BalanceToJSON(const std::string& address, uint32_t property, UniValue& balance_obj, bool divisible)
@@ -2542,16 +2571,12 @@ UniValue tl_check_commits(const JSONRPCRequest& request)
 			"\nResult:\n"
 			"[                                      (array of JSON objects)\n"
 			"  {\n"
-			"    \"block\" : nnnnnn,                      (number) the index of the block that contains the trade match\n"
-			"    \"unitprice\" : \"n.nnnnnnnnnnn...\" ,     (string) the unit price used to execute this trade (received/sold)\n"
-			"    \"inverseprice\" : \"n.nnnnnnnnnnn...\",   (string) the inverse unit price (sold/received)\n"
-			"    \"sellertxid\" : \"hash\",                 (string) the hash of the transaction of the seller\n"
-			"    \"address\" : \"address\",                 (string) the Bitcoin address of the seller\n"
-			"    \"amountsold\" : \"n.nnnnnnnn\",           (string) the number of tokens sold in this trade\n"
-			"    \"amountreceived\" : \"n.nnnnnnnn\",       (string) the number of tokens traded in exchange\n"
-			"    \"matchingtxid\" : \"hash\",               (string) the hash of the transaction that was matched against\n"
-			"    \"matchingaddress\" : \"address\"          (string) the Bitcoin address of the other party of this trade\n"
-			"  },\n"
+			"    \"sender\" : address,                        (string) the Litecoin address of sender\n"
+      "    \"channel\" : address,                       (string) the Litecoin multisig channel address\n"
+			"    \"propertyId\" : \"id\" ,                    (string) the property id of token commited\n"
+			"    \"amount\" : \"n.nnnnnnnnnnn...\",           (string) the amount commited\n"
+			"    \"block\" : \"block\",                       (number) the block of commit\n"
+			"    \"block_index\" : \"index\",                 (number) the index of the block that contains the trade match\n"
 			"  ...\n"
 			"]\n"
 			"\nExamples:\n"
@@ -2620,21 +2645,13 @@ UniValue tl_check_kyc(const JSONRPCRequest& request)
   if (request.params.size() != 1 || request.fHelp)
     throw runtime_error(
 			"tl_check_kyc senderAddress \n"
-			"\nKYC validation\n"
+			"\nKYC check for given address \n"
 			"\nArguments:\n"
-			"1. address                       (string, required) the address registered\n"
+			"1. address                             (string, required) the address registered\n"
 			"\nResult:\n"
 			"[                                      (array of JSON objects)\n"
 			"  {\n"
-			"    \"block\" : nnnnnn,                      (number) the index of the block that contains the trade match\n"
-			"    \"unitprice\" : \"n.nnnnnnnnnnn...\" ,     (string) the unit price used to execute this trade (received/sold)\n"
-			"    \"inverseprice\" : \"n.nnnnnnnnnnn...\",   (string) the inverse unit price (sold/received)\n"
-			"    \"sellertxid\" : \"hash\",                 (string) the hash of the transaction of the seller\n"
-			"    \"address\" : \"address\",                 (string) the Bitcoin address of the seller\n"
-			"    \"amountsold\" : \"n.nnnnnnnn\",           (string) the number of tokens sold in this trade\n"
-			"    \"amountreceived\" : \"n.nnnnnnnn\",       (string) the number of tokens traded in exchange\n"
-			"    \"matchingtxid\" : \"hash\",               (string) the hash of the transaction that was matched against\n"
-			"    \"matchingaddress\" : \"address\"          (string) the Bitcoin address of the other party of this trade\n"
+			"    \"result\" : nnnnnn,               (string) enabled or disabled as notary address\n"
 			"  },\n"
 			"  ...\n"
 			"]\n"
@@ -2668,8 +2685,7 @@ UniValue tl_getcache(const JSONRPCRequest& request)
             "1. collateral                     (number, required) the contract collateral\n"
             "\nResult:\n"
             "{\n"
-            "  \"balance\" : \"n.nnnnnnnn\",   (string) the available balance of the address\n"
-            "  \"reserved\" : \"n.nnnnnnnn\"   (string) the amount reserved by sell offers and accepts\n"
+            "  \"amount\" : \"n.nnnnnnnn\",   (number) the available balance in the cache for the property\n"
             "}\n"
             "\nExamples:\n"
             + HelpExampleCli("tl_getcache", "\"\" 1")
@@ -2699,8 +2715,7 @@ UniValue tl_getoraclecache(const JSONRPCRequest& request)
             "1. collateral                     (number, required) the contract collateral\n"
             "\nResult:\n"
             "{\n"
-            "  \"balance\" : \"n.nnnnnnnn\",   (string) the available balance of the address\n"
-            "  \"reserved\" : \"n.nnnnnnnn\"   (string) the amount reserved by sell offers and accepts\n"
+            "  \"amount\" : \"n.nnnnnnnn\",   (number) the available balance in the oracle cache for the property\n"
             "}\n"
             "\nExamples:\n"
             + HelpExampleCli("tl_getcache", "\"\" 1")
@@ -2779,36 +2794,6 @@ UniValue tl_getalltxonblock(const JSONRPCRequest& request)
     }
 
     return response;
-}
-
-UniValue tl_getvesting_supply(const JSONRPCRequest& request)
-{
-    if (request.params.size() != 0 || request.fHelp)
-        throw runtime_error(
-            "tl_getvesting_supply \n"
-            "\nReturns the amount of tokens emmited into account address until actual block.\n"
-            "\nResult:\n"
-            "{\n"
-            "  \"supply\" : \"n.nnnnnnnn\",   (number) the available balance of vesting tokens in the admin address\n"
-            "  \"blockheight\" : \"n.\",      (number) last block\n"
-            "}\n"
-            "\nExamples:\n"
-            + HelpExampleCli("tl_getvesting_supply", "\"\"")
-            + HelpExampleRpc("tl_getvesting_supply", "\"\",")
-        );
-
-    // geting data
-    rational_t Factor1over3(1, 3);
-    int64_t Factor1over3_64t = mastercore::RationalToInt64(Factor1over3);
-    arith_uint256 uAmount = ConvertTo256(Factor1over3_64t) * ConvertTo256(globalVolumeALL_LTC);
-    int64_t amount = ConvertTo64(uAmount);
-
-    UniValue balanceObj(UniValue::VOBJ);
-
-    balanceObj.push_back(Pair("supply", FormatDivisibleMP(amount)));
-    balanceObj.push_back(Pair("blockheight", FormatIndivisibleMP(GetHeight())));
-
-    return balanceObj;
 }
 
 UniValue tl_getdexvolume(const JSONRPCRequest& request)
@@ -3117,6 +3102,72 @@ UniValue tl_getcontract(const JSONRPCRequest& request)
     return response;
 }
 
+
+UniValue tl_getvesting_info(const JSONRPCRequest& request)
+{
+    if (request.fHelp)
+        throw runtime_error(
+            "tl_getvesting_info\n"
+            "\nReturns details for about vesting tokens.\n"
+            "\nResult:\n"
+            "{\n"
+            "  \"propertyid\" : n,                          (number) the identifier\n"
+            "  \"name\" : \"name\",                         (string) the name of the tokens\n"
+            "  \"data\" : \"information\",                  (string) additional information or a description\n"
+            "  \"url\" : \"uri\",                           (string) an URI, for example pointing to a website\n"
+            "  \"divisible\" : true|false,                  (boolean) whether the tokens are divisible\n"
+            "  \"issuer\" : \"address\",                    (string) the Litecoin address of the issuer on record\n"
+            "  \"activation block\" : \"block\",            (number) the activation block for vesting\n"
+            "  \"litecoin volume\" : \"n.nnnnnnnn\",        (string) the accumulated litecoin amount traded\n"
+            "  \"vested percentage\" : \"n.nnnnnnnn\",      (string) the accumulated percentage amount vested\n"
+            "  \"last vesting block\" : \"block\"           (number) the last block with vesting action\n"
+            "  \"total vested \" : \"n.nnnnnnnn\",          (string) the accumulated amount vested\n"
+            "  \"owners \" : \"owners\",                    (number) the ALL owners number \n"
+            "  \"total tokens\" : \"n.nnnnnnnn\"            (string) the total number of tokens in existence\n"
+            "}\n"
+            "\nExamples:\n"
+            + HelpExampleCli("tl_getvesting_info", "")
+            + HelpExampleRpc("tl_getvesting_info", "")
+        );
+
+    CMPSPInfo::Entry sp;
+    {
+        if (!_my_sps->getSP(VT, sp)) {
+            throw JSONRPCError(RPC_INVALID_PARAMETER, "Property identifier does not exist");
+        }
+    }
+
+    UniValue response(UniValue::VOBJ);
+    response.push_back(Pair("propertyid", (uint64_t) VT));
+    VestingToJSON(sp, response); // name, data, url,
+    KYCToJSON(sp, response);
+
+    return response;
+}
+
+UniValue tl_listvesting_addresses(const JSONRPCRequest& request)
+{
+    if (request.fHelp)
+        throw runtime_error(
+            "tl_listvesting_addresses\n"
+            "\nReturns details for about vesting tokens.\n"
+            "\nResult:\n"
+            "[                                      (array of addresses)\n"
+      			"    \"address\",                       (string) vesting token address \n"
+      			"  ...\n"
+      			"]\n"
+            "\nExamples:\n"
+            + HelpExampleCli("tl_listvesting_addresses", "")
+            + HelpExampleRpc("tl_listvesting_addresses", "")
+        );
+
+    UniValue response(UniValue::VARR);
+
+    for_each(vestingAddresses.begin() ,vestingAddresses.end(), [&response] (const std::string& address) { response.push_back(address);});
+
+    return response;
+}
+
 static const CRPCCommand commands[] =
 { //  category                             name                            actor (function)               okSafeMode
   //  ------------------------------------ ------------------------------- ------------------------------ ----------
@@ -3164,7 +3215,6 @@ static const CRPCCommand commands[] =
   { "trade layer (data retieval)" , "tl_list_oracles",              &tl_list_oracles,               {} },
   { "trade layer (data retieval)" , "tl_getalltxonblock",           &tl_getalltxonblock,            {} },
   { "trade layer (data retieval)" , "tl_check_withdrawals",         &tl_check_withdrawals,          {} },
-  { "trade layer (data retieval)" , "tl_getvesting_supply",         &tl_getvesting_supply,          {} },
   { "trade layer (data retieval)" , "tl_getdexvolume",              &tl_getdexvolume,               {} },
   { "trade layer (data retieval)" , "tl_getmdexvolume",             &tl_getmdexvolume,              {} },
   { "trade layer (data retieval)" , "tl_getcurrencytotal",          &tl_getcurrencytotal,           {} },
@@ -3174,7 +3224,9 @@ static const CRPCCommand commands[] =
   { "trade layer (data retieval)",  "tl_getunvested",               &tl_getunvested,                {} },
   { "trade layer (data retieval)",  "tl_list_attestation",          &tl_list_attestation,           {} },
   { "trade layer (data retieval)",  "tl_getcontract",               &tl_getcontract,                {} },
-  { "trade layer (data retieval)",  "tl_getopen_interest",          &tl_getopen_interest,           {} }
+  { "trade layer (data retieval)",  "tl_getopen_interest",          &tl_getopen_interest,           {} },
+  { "trade layer (data retieval)",  "tl_getvesting_info",           &tl_getvesting_info,            {} },
+  { "trade layer (data retieval)",  "tl_listvesting_addresses",     &tl_listvesting_addresses,      {} },
 };
 
 void RegisterTLDataRetrievalRPCCommands(CRPCTable &tableRPC)

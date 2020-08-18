@@ -395,9 +395,27 @@ class VestingBasicsTest (BitcoinTestFramework):
         vested.append(vested0)
         unvested.append(unvested0)
 
+        self.log.info("Checking vesting info")
+        out = tradelayer_HTTP(conn, headers, False, "tl_getvesting_info",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['propertyid'], 3)
+        assert_equal(out['result']['name'], 'Vesting Tokens')
+        assert_equal(out['result']['data'], 'Divisible Tokens')
+        assert_equal(out['result']['url'], 'www.tradelayer.org')
+        assert_equal(out['result']['divisible'], True)
+        assert_equal(out['result']['issuer'], 'QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPb')
+        assert_equal(out['result']['activation block'], 100)
+        assert_equal(out['result']['litecoin volume'], '200.00000000')
+        assert_equal(out['result']['vested percentage'], '7.52574900')
+        assert_equal(out['result']['last vesting block'], 1037)
+        assert_equal(out['result']['total vested'],  '150.51498000')
+        assert_equal(out['result']['owners'], 3)
+        assert_equal(out['result']['total tokens'], '1500000.00000000')
+        assert_equal(out['result']['kyc_ids allowed'], '[]')
 
         # 400 LTC implies release 15.05% of ALLs from unvested to balance
-        # Remember: 400 LTCs in regtest are 40000 (x100) LTCs in testnet/mainnet
+        # Remember: 400 LTCs in regtest is 40000 (x100) LTCs in testnet/mainnet
         self.log.info("Sending a DEx sell tokens offer")
         params = str([addresses[2], 4, "1000000", "200000", 250, "0.00001", "2", 1]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_senddexoffer",params)
@@ -496,6 +514,25 @@ class VestingBasicsTest (BitcoinTestFramework):
         vested.append(vested1)
         unvested.append(unvested1)
 
+        self.log.info("Checking vesting info")
+        out = tradelayer_HTTP(conn, headers, False, "tl_getvesting_info",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['propertyid'], 3)
+        assert_equal(out['result']['name'], 'Vesting Tokens')
+        assert_equal(out['result']['data'], 'Divisible Tokens')
+        assert_equal(out['result']['url'], 'www.tradelayer.org')
+        assert_equal(out['result']['divisible'], True)
+        assert_equal(out['result']['issuer'], 'QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPb')
+        assert_equal(out['result']['activation block'], 100)
+        assert_equal(out['result']['litecoin volume'], '400.00000000')
+        assert_equal(out['result']['vested percentage'], '15.05149900')
+        assert_equal(out['result']['last vesting block'], 1041)
+        assert_equal(out['result']['total vested'],  '301.02996000')
+        assert_equal(out['result']['owners'], 3)
+        assert_equal(out['result']['total tokens'], '1500000.00000000')
+        assert_equal(out['result']['kyc_ids allowed'], '[]')
+
         # Adding 200 LTCs in each step
         for i in range(0,20):
             self.log.info("Loop number:"+str(i))
@@ -529,6 +566,7 @@ class VestingBasicsTest (BitcoinTestFramework):
 
             self.nodes[0].generate(1)
 
+            time.sleep(0.3)
 
             self.log.info("Checking token balance in buyer address")
             params = str([addresses[3], 4]).replace("'",'"')
@@ -586,6 +624,8 @@ class VestingBasicsTest (BitcoinTestFramework):
             # self.log.info(out)
             unvested2 = float(out['result']['unvested'])
             assert_equal(unvested2 + vested2, 500)
+
+            time.sleep(0.3)
 
 
         self.log.info("Checking LTC Volume")

@@ -88,6 +88,7 @@ public:
 
         //vesting
         double last_vesting;
+        int last_vesting_block;
 
         uint32_t blocks_until_expiration;
         uint32_t notional_size;
@@ -172,6 +173,7 @@ public:
             READWRITE(inverse_quoted);
             READWRITE(kyc);
             READWRITE(last_vesting);
+            READWRITE(last_vesting_block);
             ////////////////////////////
         }
 

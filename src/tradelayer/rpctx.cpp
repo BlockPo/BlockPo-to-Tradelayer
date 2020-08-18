@@ -316,7 +316,7 @@ UniValue tl_sendissuancefixed(const JSONRPCRequest& request)
             "5. url                  (string, required) an URL for further information about the new tokens (can be \"\")\n"
             "6. data                 (string, required) a description for the new tokens (can be \"\")\n"
             "7. amount               (string, required) the number of tokens to create\n"
-            "8. kyc options          (array, optional) A json with the kyc allowed.\n"
+            "8. kyc options          (array, required) A json with the kyc allowed.\n"
             "    [\n"
             "      2,3,5         (number) kyc id\n"
             "      ,...\n"
@@ -378,7 +378,7 @@ UniValue tl_sendissuancemanaged(const JSONRPCRequest& request)
             "4. name                 (string, required) the name of the new tokens to create\n"
             "5. url                  (string, required) an URL for further information about the new tokens (can be \"\")\n"
             "6. data                 (string, required) a description for the new tokens (can be \"\")\n"
-            "7. kyc options          (array, optional) A json with the kyc allowed.\n"
+            "7. kyc options          (array, required) A json with the kyc allowed.\n"
             "    [\n"
             "      2,3,5         (number) kyc id\n"
             "      ,...\n"
@@ -856,7 +856,7 @@ UniValue tl_createcontract(const JSONRPCRequest& request)
 			"7. collateral currency       (number, required) collateral currency\n"
 			"8. margin requirement        (number, required) margin requirement\n"
       "9. quoting                   (number, required) 0: inverse quoting contract, 1: normal quoting\n"
-      "10. kyc options          (array, optional) A json with the kyc allowed.\n"
+      "10. kyc options              (array, required) A json with the kyc allowed.\n"
       "    [\n"
       "      2,3,5         (number) kyc id\n"
       "      ,...\n"
@@ -921,8 +921,8 @@ UniValue tl_create_oraclecontract(const JSONRPCRequest& request)
 			"5. collateral currency       (number, required) collateral currency\n"
 			"6. margin requirement        (number, required) margin requirement\n"
       "7. backup address            (string, required) backup admin address contract\n"
-      "8. quoting                  (number, required) 0: inverse quoting contract, 1: normal quoting\n"
-      "9. kyc options          (array, optional) A json with the kyc allowed.\n"
+      "8. quoting                   (number, required) 0: inverse quoting contract, 1: normal quoting\n"
+      "9. kyc options               (array, required) A json with the kyc allowed.\n"
       "    [\n"
       "      2,3,5         (number) kyc id\n"
       "      ,...\n"
@@ -1450,10 +1450,10 @@ UniValue tl_senddexaccept(const JSONRPCRequest& request)
             "2. toaddress            (string, required) the address of the seller\n"
             "3. propertyid           (number, required) the identifier of the token traded\n"
             "4. amount               (string, required) the amount traded\n"
-            "5. override             (boolean, optional) override minimum accept fee and payment window checks (use with caution!)\n"
+            "5. override             (boolean or number, optional) override minimum accept fee and payment window checks , options: true (1), false (0) (use with caution!)\n"
 
             "\nResult:\n"
-            "\"hash\"                  (string) the hex-encoded transaction hash\n"
+            "\"hash\"                (string) the hex-encoded transaction hash\n"
 
             "\nExamples:\n"
             + HelpExampleCli("tl_senddexaccept", "\"35URq1NN3xL6GeRKUP6vzaQVcxoJiiJKd8\" \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\" 1 \"15.0\"")
@@ -1465,7 +1465,12 @@ UniValue tl_senddexaccept(const JSONRPCRequest& request)
     std::string toAddress = ParseAddress(request.params[1]);
     uint32_t propertyId = ParsePropertyId(request.params[2]);
     int64_t amount = ParseAmount(request.params[3], true); // MSC/TMSC is divisible
-    bool override = (request.params.size() > 4) ? request.params[4].get_bool(): false;
+
+    // Accept either a bool (true) or a num (>=1) to indicate override output.
+    bool override = false;
+    if (request.params.size() > 4) {
+        override = request.params[4].isNum() ? (request.params[4].get_int() != 0) : request.params[4].get_bool();
+    }
 
     // perform checks
     RequireFeatureActivated(FEATURE_DEX_SELL);
@@ -1486,12 +1491,6 @@ UniValue tl_senddexaccept(const JSONRPCRequest& request)
         nMinimumAcceptFee = sellOffer->getMinFee();
     }
 
-    // LOCK2(cs_main, pwalletMain->cs_wallet);
-
-    // temporarily update the global transaction fee to pay enough for the accept fee
-    CFeeRate payTxFeeOriginal = payTxFee;
-    payTxFee = CFeeRate(nMinimumAcceptFee, 225); // TODO: refine!
-    // fPayAtLeastCustomFee = true;
 #endif
 
     // create a payload for the transaction
@@ -1500,12 +1499,7 @@ UniValue tl_senddexaccept(const JSONRPCRequest& request)
     // request the wallet build the transaction (and if needed commit it)
     uint256 txid;
     std::string rawHex;
-    int result = WalletTxBuilder(fromAddress, toAddress,0, payload, txid, rawHex, autoCommit);
-
-#ifdef ENABLE_WALLET
-    // set the custom fee back to original
-    payTxFee = payTxFeeOriginal;
-#endif
+    int result = WalletTxBuilder(fromAddress, toAddress, 0, payload, txid, rawHex, autoCommit, nMinimumAcceptFee);
 
     // check error and return the txid (or raw hex depending on autocommit)
     if (result != 0) {
@@ -1886,6 +1880,8 @@ UniValue tl_new_id_registration(const JSONRPCRequest& request)
     std::string website = ParseText(request.params[1]);
     std::string name = ParseText(request.params[2]);
 
+    RequireFeatureActivated(FEATURE_KYC);
+
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_New_Id_Registration(website, name);
 
@@ -1928,6 +1924,9 @@ UniValue tl_update_id_registration(const JSONRPCRequest& request)
     // obtain parameters & info
     std::string address = ParseAddress(request.params[0]);
     std::string newAddr = ParseAddress(request.params[1]);
+
+    RequireFeatureActivated(FEATURE_KYC);
+
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_Update_Id_Registration();
 
@@ -2020,6 +2019,8 @@ UniValue tl_attestation(const JSONRPCRequest& request)
     std::string receiverAddress = ParseAddress(request.params[1]);
     std::string hash = (request.params.size() == 3) ? ParseText(request.params[2]) : "";
 
+    RequireFeatureActivated(FEATURE_KYC);
+
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_Attestation(hash);
 
@@ -2062,6 +2063,8 @@ UniValue tl_revoke_attestation(const JSONRPCRequest& request)
     // obtain parameters & info
     std::string fromAddress = ParseAddress(request.params[0]);
     std::string receiverAddress = ParseAddress(request.params[1]);
+
+    RequireFeatureActivated(FEATURE_KYC);
 
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_Revoke_Attestation();

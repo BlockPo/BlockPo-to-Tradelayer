@@ -97,7 +97,7 @@ std::string mastercore::strTransactionType(uint16_t txType)
     case MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK: return "Cancel Orders by Block";
     case MSC_TYPE_DEX_SELL_OFFER: return "DEx Sell Offer";
     case MSC_TYPE_DEX_BUY_OFFER: return "DEx Buy Offer";
-    case MSC_TYPE_ACCEPT_OFFER_BTC: return "DEx Accept Offer BTC";
+    case MSC_TYPE_ACCEPT_OFFER_BTC: return "DEx Accept Offer LTC";
     case MSC_TYPE_CHANGE_ORACLE_REF: return "Oracle Change Reference";
     case MSC_TYPE_SET_ORACLE: return "Oracle Set Address";
     case MSC_TYPE_ORACLE_BACKUP: return "Oracle Backup";
@@ -2453,6 +2453,17 @@ int CMPTransaction::logicMath_SimpleSend()
         return (PKT_ERROR_SEND -24);
     }
 
+    if (isPropertyContract(property)) {
+        PrintToLog("%s(): rejected: property %d should not be a contract\n", __func__, property);
+        return (PKT_ERROR_SEND -25);
+    }
+
+
+     if(property == TL_PROPERTY_VESTING){
+         PrintToLog("%s(): rejected: property should not be vesting tokens (id = 3)\n", __func__);
+         return (PKT_ERROR_SEND -26);
+     }
+
     int kyc_id;
 
     if(!t_tradelistdb->checkAttestationReg(sender,kyc_id)){
@@ -2513,6 +2524,11 @@ int CMPTransaction::logicMath_SimpleSend()
 int CMPTransaction::logicMath_SendVestingTokens()
 {
 
+  if (sender == receiver) {
+      PrintToLog("%s(): rejected: sender sending vesting tokens to himself\n", __func__, property);
+      return (PKT_ERROR_SEND -26);
+  }
+
   if (!sanityChecks(sender, block)) {
       PrintToLog("%s(): rejected: sanity checks for send vesting tokens failed\n",
               __func__);
@@ -2540,15 +2556,10 @@ int CMPTransaction::logicMath_SendVestingTokens()
       return (PKT_ERROR_SEND -25);
   }
 
-  const int64_t uBalance = getMPbalance(sender, ALL, UNVESTED);
-  const int64_t rUnvest = (sender == getVestingAdmin()) ? nValue : calculateUnvested(nValue, nBalance, uBalance);
-
-  PrintToLog("%s(): nValue:  %d, uBalance: %d,  nBalance: %d, rUnvest: %d, sender : %s, receiver : %s\n",__func__, nValue, uBalance, nBalance, rUnvest, sender, receiver);
-
   assert(update_tally_map(sender, TL_PROPERTY_VESTING, -nValue, BALANCE));
   assert(update_tally_map(receiver, TL_PROPERTY_VESTING, nValue, BALANCE));
-  assert(update_tally_map(sender, ALL, -rUnvest, UNVESTED));
-  assert(update_tally_map(receiver, ALL, rUnvest, UNVESTED));
+  assert(update_tally_map(sender, ALL, -nValue, UNVESTED));
+  assert(update_tally_map(receiver, ALL, nValue, UNVESTED));
 
   vestingAddresses.push_back(receiver);
 
@@ -2591,7 +2602,7 @@ int CMPTransaction::logicMath_SendAll()
     while (0 != (propertyId = ptally->next())) {
 
         int64_t moneyAvailable = ptally->getMoney(propertyId, BALANCE);
-        if (moneyAvailable > 0) {
+        if (moneyAvailable > 0 && !isPropertyContract(propertyId) && propertyId != TL_PROPERTY_VESTING) {
             ++numberOfPropertiesSent;
             assert(update_tally_map(sender, propertyId, -moneyAvailable, BALANCE));
             assert(update_tally_map(receiver, propertyId, moneyAvailable, BALANCE));
@@ -2933,6 +2944,17 @@ int CMPTransaction::logicMath_GrantTokens()
     return (PKT_ERROR_TOKENS -24);
   }
 
+  if (isPropertyContract(property)) {
+      PrintToLog("%s(): rejected: property %d should not be a contract\n", __func__, property);
+      return (PKT_ERROR_TOKENS -25);
+  }
+
+
+  if(property == TL_PROPERTY_VESTING){
+       PrintToLog("%s(): rejected: property should not be vesting tokens (id = 3)\n", __func__);
+       return (PKT_ERROR_TOKENS -26);
+  }
+
   int kyc_id;
 
   if(!t_tradelistdb->checkAttestationReg(sender,kyc_id)){
@@ -3038,6 +3060,16 @@ int CMPTransaction::logicMath_RevokeTokens()
     if (!IsPropertyIdValid(property)) {
         PrintToLog("%s(): rejected: property %d does not exist\n", __func__, property);
         return (PKT_ERROR_TOKENS -24);
+    }
+
+    if (isPropertyContract(property)) {
+        PrintToLog("%s(): rejected: property %d should not be a contract\n", __func__, property);
+        return (PKT_ERROR_TOKENS -25);
+    }
+
+    if(property == TL_PROPERTY_VESTING){
+         PrintToLog("%s(): rejected: property should not be vesting tokens (id = 3)\n", __func__);
+         return (PKT_ERROR_TOKENS -26);
     }
 
     CMPSPInfo::Entry sp;
@@ -3274,6 +3306,29 @@ int CMPTransaction::logicMath_MetaDExTrade()
       return (PKT_ERROR_METADEX -32);
   }
 
+  if (isPropertyContract(property)) {
+      PrintToLog("%s(): rejected: property %d should not be a contract\n", __func__, property);
+      return (PKT_ERROR_METADEX -25);
+  }
+
+
+  if(property == TL_PROPERTY_VESTING){
+       PrintToLog("%s(): rejected: property should not be vesting tokens (id = 3)\n", __func__);
+       return (PKT_ERROR_METADEX -26);
+  }
+
+
+  if (isPropertyContract(desired_property)) {
+      PrintToLog("%s(): rejected: property %d should not be a contract\n", __func__, desired_property);
+      return (PKT_ERROR_METADEX -25);
+  }
+
+
+  if(desired_property == TL_PROPERTY_VESTING){
+       PrintToLog("%s(): rejected: property should not be vesting tokens (id = 3)\n", __func__);
+       return (PKT_ERROR_METADEX -26);
+  }
+
   int kyc_id;
 
   if(!t_tradelistdb->checkAttestationReg(sender,kyc_id)){
@@ -3447,7 +3502,7 @@ int CMPTransaction::logicMath_ContractDexTrade()
   /*********************************************/
   /**Logic for Node Reward**/
   const CConsensusParams &params = ConsensusParams();
-  int BlockInit = params.MSC_NODE_REWARD;
+  int BlockInit = params.MSC_NODE_REWARD_BLOCK;
   int nBlockNow = GetHeight();
 
   BlockClass NodeRewardObj(BlockInit, nBlockNow);
@@ -3925,7 +3980,7 @@ int CMPTransaction::logicMath_DExSell()
       return (PKT_ERROR_TRADEOFFER -22);
     }
 
-    // if(!t_tradelistdb->egister(sender,4))
+    // if(!t_tradelistdb->register(sender,4))
     // {
     //     PrintToLog("%s: tx disable from kyc register!\n",__func__);
     //     return (PKT_ERROR_KYC -10);
@@ -3985,17 +4040,14 @@ int CMPTransaction::logicMath_DExSell()
 
             switch (subAction) {
                 case NEW:
-                    PrintToLog("%s(): NEW",__func__);
                     rc = DEx_offerCreate(sender, propertyId, nValue, block, amountDesired, minFee, timeLimit, txid, &nNewValue);
                     break;
 
                 case UPDATE:
-                    PrintToLog("%s(): UPDATE",__func__);
                     rc = DEx_offerUpdate(sender, propertyId, nValue, block, amountDesired, minFee, timeLimit, txid, &nNewValue);
                     break;
 
                 case CANCEL:
-                    PrintToLog("%s(): DESTROY",__func__);
                     rc = DEx_offerDestroy(sender, propertyId);
                     break;
 
@@ -5004,9 +5056,6 @@ int CMPTransaction::logicMath_Attestation()
         }
 
     }
-
-
-    PrintToLog("%s(): kyc_id: %d\n",__func__,kyc_id);
 
     t_tradelistdb->recordNewAttestation(txid, sender, receiver, block, tx_idx, kyc_id);
 

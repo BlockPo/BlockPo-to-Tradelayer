@@ -185,8 +185,9 @@ BOOST_AUTO_TEST_CASE(consensus_activations)
     feat.activationBlock = 145263;
     feat.minClientVersion = 1;
     feat.featureName = "x activation";
+    feat.status = true;
 
-    BOOST_CHECK_EQUAL("8|145263|1|x activation",
+    BOOST_CHECK_EQUAL("8|145263|1|x activation|completed",
            GenerateConsensusString(feat));
 }
 

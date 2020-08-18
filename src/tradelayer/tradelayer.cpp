@@ -450,11 +450,12 @@ int64_t mastercore::getTotalTokens(uint32_t propertyId, int64_t* n_owners_total)
   if (!property.fixed || n_owners_total) {
     for (std::unordered_map<std::string, CMPTally>::const_iterator it = mp_tally_map.begin(); it != mp_tally_map.end(); ++it) {
       const CMPTally& tally = it->second;
-
       totalTokens += tally.getMoney(propertyId, BALANCE);
+      totalTokens += tally.getMoney(propertyId, SELLOFFER_RESERVE);
+      totalTokens += tally.getMoney(propertyId, ACCEPT_RESERVE);
+      totalTokens += tally.getMoney(propertyId, METADEX_RESERVE);
       totalTokens += tally.getMoney(propertyId, CHANNEL_RESERVE); // channel commits
       totalTokens += tally.getMoney(propertyId, CONTRACTDEX_RESERVE); // amount in margin
-
       if (prev != totalTokens) {
 	      prev = totalTokens;
 	      owners++;
@@ -624,21 +625,21 @@ const string mastercore::getVestingAdmin()
 
 void creatingVestingTokens(int block)
 {
-   extern int64_t amountVesting;
    extern int64_t totalVesting;
 
    CMPSPInfo::Entry newSP;
-
    newSP.name = "Vesting Tokens";
    newSP.data = "Divisible Tokens";
    newSP.url  = "www.tradelayer.org";
    newSP.category = "N/A";
    newSP.subcategory = "N/A";
    newSP.prop_type = ALL_PROPERTY_TYPE_DIVISIBLE;
-   newSP.num_tokens = amountVesting;
+   newSP.num_tokens = totalVesting;
    newSP.attribute_type = ALL_PROPERTY_TYPE_VESTING;
    newSP.init_block = block;
+   newSP.issuer = getVestingAdmin();
    newSP.last_vesting = 0;
+   newSP.last_vesting_block = 0;
 
    const uint32_t propertyIdVesting = _my_sps->putSP(newSP);
    assert(propertyIdVesting > 0);
@@ -980,7 +981,7 @@ static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, 
 
     // ### SET MP TX INFO ###
     if (msc_debug_verbose) PrintToLog("single_pkt: %s\n", HexStr(single_pkt, packet_size + single_pkt));
-    mp_tx.Set(strSender, strReference, 0, wtx.GetHash(), nBlock, idx, (unsigned char *)&single_pkt, packet_size, tlClass, (inAll-outAll));
+    mp_tx.Set(strSender, strReference, 0, wtx.GetHash(), nBlock, idx, (unsigned char *)&single_pkt, packet_size, tlClass, txFee);
 
     return 0;
 }
@@ -2066,8 +2067,6 @@ static int write_globals_state(ofstream &file, SHA256_CTX *shaCtx)
   // add the line to the hash
   SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
 
-  PrintToLog("%s(): saving global state lineOut : %s\n",__func__, lineOut);
-
   // write the line
   file << lineOut << std::endl;
 
@@ -2845,8 +2844,19 @@ bool CallingExpiration(CBlockIndex const * pBlockIndex)
    return true;
 }
 
+double getAccumVesting(const int64_t xAxis)
+{
+    const double amount = (double) xAxis / COIN;
+    // accumVesting fraction = (Log10(Cum_LTC_Volume)-4)/4; 100% vested at 100,000,000  LTCs volume
+    const double result = ((std::log10(amount) - 4) / 4);
+    return ((result < 1.0) ? result : 1.0);
+
+}
+
 bool VestingTokens(int block)
 {
+    bool deactivation = false;
+
     if(msc_debug_vesting) PrintToLog("%s() block : %d\n",__func__, block);
 
     if (vestingAddresses.empty())
@@ -2855,11 +2865,10 @@ bool VestingTokens(int block)
         return false;
     }
 
-    // Note: this is used to simplify the testing
-    const int64_t xAxis = (RegTest()) ? globalVolumeALL_LTC * 100 : globalVolumeALL_LTC;
+    // NOTE : this is used to simplify the testing
+    const int64_t xAxis = (isNonMainNet()) ? globalVolumeALL_LTC * 100 : globalVolumeALL_LTC;
 
     if(msc_debug_vesting) PrintToLog("%s(): globalVolumeALL_LTC: %d \n",__func__,xAxis);
-
 
     if (xAxis <= 10000 * COIN)
     {
@@ -2867,27 +2876,24 @@ bool VestingTokens(int block)
         return false;
     }
 
-    if (100000000 * COIN < xAxis)
-    {
+
+    if(100000000 * COIN <= xAxis){
         if(msc_debug_vesting) PrintToLog("%s(): Vesting Tokens completed at 100,000,000 LTC volume: %d\n",__func__, xAxis);
-        return false;
+        deactivation = true;
     }
-
-    const double amount = (double) xAxis / COIN;
-
-    // accumVesting % = (Log10(Cum_LTC_Volume)-4)/4; 100% vested at 100,000,000  LTCs volume
-    const double accumVesting = (std::log10(amount) - 4) / 4;
 
     CMPSPInfo::Entry sp;
     if (!_my_sps->getSP(VT, sp)) {
        return false; // property ID does not exist
     }
 
-    // vesting %
-    const double realVesting = accumVesting - sp.last_vesting;
+    // accumulated vesting
+    const double accumVesting = getAccumVesting(xAxis);
 
-    PrintToLog("%s(): accumVesting: %f, realVesting: %f, last_vesting: %f\n",__func__, accumVesting, realVesting, sp.last_vesting);
+    // vesting fraction on this block
+    const double realVesting = (accumVesting > sp.last_vesting) ?  accumVesting - sp.last_vesting : 0;
 
+    if(msc_debug_vesting) PrintToLog("%s(): accumVesting: %f, realVesting: %f, last_vesting: %f\n",__func__, accumVesting, realVesting, sp.last_vesting);
 
     if (realVesting == 0)
     {
@@ -2897,15 +2903,15 @@ bool VestingTokens(int block)
 
     if(msc_debug_vesting) {
         PrintToLog("%s(): lastVesting = %f, realVesting : %f, accumVesting: %f\n",__func__, sp.last_vesting, realVesting, accumVesting);
-        PrintToLog("%s(): amount vesting on this block = %f, block ; %d, x_Axis: %d, std::log10(amount) : %f\n",__func__, accumVesting, block, xAxis, std::log10(amount));
+        PrintToLog("%s(): amount vesting on this block = %f, block ; %d, x_Axis: %d \n",__func__, accumVesting, block, xAxis);
     }
 
     for (auto &addr : vestingAddresses)
     {
         if(msc_debug_vesting) PrintToLog("\nAddress = %s\n", addr);
 
-        int64_t vestingBalance = getMPbalance(addr, TL_PROPERTY_VESTING, BALANCE);
-        int64_t unvestedALLBal = getMPbalance(addr, ALL, UNVESTED);
+        const int64_t vestingBalance = getMPbalance(addr, TL_PROPERTY_VESTING, BALANCE);
+        const int64_t unvestedALLBal = getMPbalance(addr, ALL, UNVESTED);
 
         if(msc_debug_vesting) {
             PrintToLog("\nALLs UNVESTED in address = %d\n", unvestedALLBal);
@@ -2913,15 +2919,20 @@ bool VestingTokens(int block)
             PrintToLog("Vesting tokens in address = %d\n", vestingBalance);
         }
 
-        if (vestingBalance != 0 && unvestedALLBal != 0 && xAxis != 0)
+        if (vestingBalance != 0 && unvestedALLBal != 0)
         {
-
-            int64_t iRealVesting = mastercore::DoubleToInt64(realVesting);
-            arith_uint256 iAmount = mastercore::ConvertTo256(iRealVesting) * mastercore::ConvertTo256(vestingBalance) / ConvertTo256(COIN);
+            const int64_t iRealVesting = mastercore::DoubleToInt64(realVesting);
+            const arith_uint256 uVestingBalance = mastercore::ConvertTo256(vestingBalance);
+            const arith_uint256 uCOIN  = mastercore::ConvertTo256(COIN);
+            const arith_uint256 iAmount = mastercore::ConvertTo256(iRealVesting) * DivideAndRoundUp(uVestingBalance, uCOIN);
             int64_t nAmount = mastercore::ConvertTo64(iAmount);
 
             if(msc_debug_vesting) {
                 PrintToLog("%s(): nAmount = %d\n",__func__,nAmount);
+            }
+
+            if(deactivation){
+                nAmount = unvestedALLBal;
             }
 
             assert(update_tally_map(addr, ALL, -nAmount, UNVESTED));
@@ -2930,6 +2941,8 @@ bool VestingTokens(int block)
     }
 
     sp.last_vesting = accumVesting;
+    sp.last_vesting_block = block;
+
     assert(_my_sps->updateSP(VT, sp));
 
     if(msc_debug_handler_tx)
@@ -2937,6 +2950,9 @@ bool VestingTokens(int block)
         PrintToLog("\nALLs UNVESTED = %d\n", getMPbalance(vestingAddresses[0], TL_PROPERTY_ALL, UNVESTED));
         PrintToLog("ALLs BALANCE = %d\n", getMPbalance(vestingAddresses[0], TL_PROPERTY_ALL, BALANCE));
     }
+
+    // if it reach the LTC volume
+    if (deactivation) DeactivateFeature(FEATURE_VESTING, block);
 
     return true;
 }
@@ -3514,6 +3530,7 @@ int CMPTxList::getMPTransactionCountTotal()
      for(it->SeekToFirst(); it->Valid(); it->Next())
      {
          skey = it->key();
+         PrintToLog("%s(): skey: %s\n",__func__, skey.ToString());
          if (skey.ToString().length() == 64) { ++count; } //extra entries for cancels and purchases are more than 64 chars long
      }
      delete it;
@@ -3529,6 +3546,7 @@ int CMPTxList::getMPTransactionCountBlock(int block)
      {
          skey = it->key();
          svalue = it->value();
+         PrintToLog("%s(): skey: %s, svalue: %s\n",__func__, skey.ToString(), svalue.ToString());
          if (skey.ToString().length() == 64)
          {
              string strValue = svalue.ToString();
@@ -3894,7 +3912,7 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
   vestingActivationBlock = params.MSC_VESTING_BLOCK;
 
   /** Creating Vesting Tokens **/
-  if (static_cast<int>(pBlockIndex->nHeight) == params.MSC_VESTING_BLOCK) creatingVestingTokens(pBlockIndex->nHeight);
+  if (static_cast<int>(pBlockIndex->nHeight) == params.MSC_VESTING_CREATION_BLOCK) creatingVestingTokens(pBlockIndex->nHeight);
 
   /** Vesting Tokens to Balance **/
   if(static_cast<int>(pBlockIndex->nHeight) > params.MSC_VESTING_BLOCK) VestingTokens(pBlockIndex->nHeight);
@@ -5739,6 +5757,7 @@ bool CMPTradeList::getAllCommits(const std::string& senderAddress, UniValue& tra
        if(sender != senderAddress)
            continue;
 
+       const std::string& channel = vstr[0];
        const uint32_t& propertyId = boost::lexical_cast<uint32_t>(vstr[2]);
        const int64_t& amount = boost::lexical_cast<int64_t>(vstr[3]);
        const int& blockNum = boost::lexical_cast<int>(vstr[4]);
@@ -5749,6 +5768,7 @@ bool CMPTradeList::getAllCommits(const std::string& senderAddress, UniValue& tra
        if (tradeArray.size() <= 100)
        {
            trade.push_back(Pair("sender", sender));
+           trade.push_back(Pair("channel", channel));
            trade.push_back(Pair("propertyId",FormatByType(propertyId,1)));
            trade.push_back(Pair("amount", FormatByType(amount,2)));
            trade.push_back(Pair("block",blockNum));
@@ -6873,16 +6893,6 @@ bool mastercore::transferAll(const std::string& sender, const std::string& recei
 
 }
 
-int64_t mastercore::calculateUnvested(int64_t amountSended, int64_t balance, int64_t unvested)
-{
-    arith_uint256 uAmountSended = ConvertTo256(amountSended);
-    arith_uint256 uUnvested = ConvertTo256(unvested);
-    arith_uint256 uBalance = ConvertTo256(balance);
-    // actual calculation; round up
-    arith_uint256 amountPurchased256 = DivideAndRoundUp(uAmountSended * uUnvested, uBalance);
-    // convert back to int64_t
-    return ConvertTo64(amountPurchased256);
- }
 
 /**
  * @return The marker for class D transactions.

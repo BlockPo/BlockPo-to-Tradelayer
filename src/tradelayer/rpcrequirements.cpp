@@ -318,8 +318,9 @@ void RequireSaneDExFee(const std::string& address, uint32_t propertyId)
     if (poffer == nullptr) {
         throw JSONRPCError(RPC_DATABASE_ERROR, "Unable to load sell offer from the distributed exchange");
     }
+
     if (poffer->getMinFee() > 1000000) {
-        throw JSONRPCError(RPC_TYPE_ERROR, "Minimum accept fee is higher than 0.01 BTC (use override = true to continue)");
+        throw JSONRPCError(RPC_TYPE_ERROR, "Minimum accept fee is higher than 0.01 LTC (use override = true to continue)");
     }
 }
 
@@ -435,5 +436,14 @@ void RequireAmountForFee(const std::string& address, uint32_t propertyId, int64_
     int64_t balanceUnconfirmed = getUserAvailableMPbalance(address, propertyId);
     if (balanceUnconfirmed == 0)
         throw JSONRPCError(RPC_TYPE_ERROR, "Sender has insufficient balance (due to pending transactions)");
+
+}
+
+// input block must be greater or equal to blockheight
+void RequireBlockHeight(const int& block)
+{
+    const int height = GetHeight();
+    if (block < height)
+        throw JSONRPCError(RPC_TYPE_ERROR, "Block height needed not reached");
 
 }

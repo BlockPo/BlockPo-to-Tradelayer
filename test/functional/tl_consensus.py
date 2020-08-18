@@ -70,7 +70,7 @@ class ConsensusTest (BitcoinTestFramework):
         self.log.info("Checking consensus hash")
         out = tradelayer_HTTP(conn, headers, False, "tl_getcurrentconsensushash")
         # self.log.info(out)
-        assert_equal (out['result']['consensushash'],"bdcf8449947235e95d8180dcf6b441d24c85d7c80bbcb79606698c5eadddb10e")
+        assert_equal (out['result']['consensushash'],"0c5c66c06bb8b1e0bf6e62d5a695f69ed39ac8c31fcd714f34a03ffb421e5771")
 
         self.log.info("Creating new tokens (sendissuancefixed)")
         array = [0]
@@ -84,7 +84,7 @@ class ConsensusTest (BitcoinTestFramework):
         self.log.info("Checking consensus hash")
         out = tradelayer_HTTP(conn, headers, False, "tl_getcurrentconsensushash")
         # self.log.info(out)
-        assert_equal (out['result']['consensushash'], "c6ca17819fc520b4171c848fa44b4850f5a04b3cee4ec71fff2635e0bb1e6898")
+        assert_equal (out['result']['consensushash'], "337d8703a8d4c1b8285cbeff6eb460160d7a9e2c5078d4f51e17aab3dcfff23f")
 
 
         self.log.info("Self Attestation for addresses")
@@ -122,7 +122,7 @@ class ConsensusTest (BitcoinTestFramework):
         self.log.info("Checking consensus hash")
         out = tradelayer_HTTP(conn, headers, False, "tl_getcurrentconsensushash")
         # self.log.info(out)
-        assert_equal (out['result']['consensushash'],"23a1eecc39299cb4c962c64267e408c8b410a0788096beabf3d1485f9a7e6adb")
+        assert_equal (out['result']['consensushash'],"f56a3e49e8b371d6050bc128b14ba38135beddfe6752e3b6872c58eb985dd190")
 
 
         self.log.info("Creating new tokens (sendissuancefixed)")
@@ -143,7 +143,7 @@ class ConsensusTest (BitcoinTestFramework):
         self.log.info("Checking consensus hash")
         out = tradelayer_HTTP(conn, headers, False, "tl_getcurrentconsensushash")
         # self.log.info(out)
-        assert_equal (out['result']['consensushash'],"c5eff98cfef956a81adb07fcea5346c2eca98c98ff7447db2ac2070d45067aee")
+        assert_equal (out['result']['consensushash'],"ff54d113c3acf1929fe75265a5f54c419e33b7f205e0701f54fcc10c03200b08")
 
 
         conn.close()

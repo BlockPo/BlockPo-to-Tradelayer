@@ -42,9 +42,12 @@ static void DeletePendingActivation(uint16_t featureId)
  *
  * A signal is fired to notify the UI about the status update.
  */
-static void PendingActivationCompleted(const FeatureActivation& activation)
+static void PendingActivationCompleted(FeatureActivation activation)
 {
      DeletePendingActivation(activation.featureId);
+
+     // status for specific feature: completed
+     activation.status = true;
      vecCompletedActivations.push_back(activation);
      // uiInterface.tlStateChanged();
 }
@@ -63,6 +66,7 @@ void AddPendingActivation(uint16_t featureId, int activationBlock, uint32_t minC
     featureActivation.featureName = featureName;
     featureActivation.activationBlock = activationBlock;
     featureActivation.minClientVersion = minClientVersion;
+    featureActivation.status = false;
 
     vecPendingActivations.push_back(featureActivation);
 

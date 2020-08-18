@@ -140,6 +140,7 @@ CMPSPInfo::CMPSPInfo(const boost::filesystem::path& path, bool fWipe)
   implied_all.name = "ALL";
   implied_all.url = "";
   implied_all.data = "";
+  implied_all.kyc.push_back(0); // kyc 0 as default
   implied_tall.prop_type = ALL_PROPERTY_TYPE_DIVISIBLE;
   implied_tall.num_tokens = 700000;
   implied_tall.category = "N/A";
@@ -147,6 +148,7 @@ CMPSPInfo::CMPSPInfo(const boost::filesystem::path& path, bool fWipe)
   implied_tall.name = "sLTC";
   implied_tall.url = "";
   implied_tall.data = "";
+  implied_tall.kyc.push_back(0); 
 
   init();
 }
