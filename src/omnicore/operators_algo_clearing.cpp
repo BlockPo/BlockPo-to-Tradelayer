@@ -280,7 +280,7 @@ void settlement_algorithm_fifo(MatrixTLS &M_file, int64_t interest, int64_t twap
   PrintToLog("\n\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
   PrintToLog("Second Part: Lives Vectors and Ghost Nodes\n\n");
   
-  // std::vector<std::map<std::string, std::string>> ghost_edges_array;
+  // std::vector<std::map<std::string, std::string>> GhostEdgesArray;
   // double vwap_exit_price = 0;
   // double PNL_total = 0;
   // int counting_paths = 0;
@@ -409,41 +409,27 @@ void settlement_algorithm_fifo(MatrixTLS &M_file, int64_t interest, int64_t twap
   double sum_gamma_q 	    = 0;
   
   for (it_path_main = path_main.begin(); it_path_main != path_main.end(); ++it_path_main)
-    {
-      computing_settlement_exitprice(*it_path_main, sum_oflives, PNL_total, gamma_p, gamma_q, interest, twap_price);
-      // PrintToLog("\ngamma_p : %d, gamma_q : %d, PNL_total : %d\n", gamma_p, gamma_q, PNL_total);
-      sum_gamma_p += gamma_p;
-      sum_gamma_q += gamma_q; 
-    }
+  {
+    computing_settlement_exitprice(*it_path_main, sum_oflives, PNL_total, gamma_p, gamma_q, interest, twap_price);
+    sum_gamma_p += gamma_p;
+    sum_gamma_q += gamma_q; 
+  }
   exit_price_desired = sum_gamma_p/sum_gamma_q;
   PrintToLog("\nexit_price_desired = %d\n", exit_price_desired);
-  
-  // PrintToLog("\n*************************************************");
-  // PrintToLog("\nChecking VWAP Price for Settlement\n");
-  
-  // double vwap_exit_price = 0;
-  
-  // int64_t VWAPContractPrice = mastercore::getVWAPPriceContracts("ALL F18");
-  // PrintToLog("\nVWAPContractPrice = %s\n", FormatDivisibleMP(VWAPContractPrice));
-  // vwap_exit_price = static_cast<long double>(VWAPContractPrice)/COIN;
-  
-  // int64_t VWAPMetaDExPrice = mastercore::getVWAPPriceByPair("ALL", "dUSD");
-  // PrintToLog("\nVWAPMetaDExPrice = %s\n", FormatDivisibleMP(VWAPMetaDExPrice));
-  
   counting_lives_longshorts(LivesLongs, LivesShorts);
   
   PrintToLog("\n*************************************************");
   PrintToLog("\nGhost Edges Vector:\n");
   
-  std::vector<std::map<std::string, std::string>> ghost_edges_array;
-  calculating_ghost_edges(LivesLongs, LivesShorts, exit_price_desired, ghost_edges_array);
+  std::vector<std::map<std::string, std::string>> GhostEdgesArray;
+  GhostEdgesComputing(LivesLongs, LivesShorts, exit_price_desired, GhostEdgesArray);
   
   std::vector<std::map<std::string, std::string>>::iterator it_ghost;
-  for (it_ghost = ghost_edges_array.begin(); it_ghost != ghost_edges_array.end(); ++it_ghost) printing_edges(*it_ghost);
+  for (it_ghost = GhostEdgesArray.begin(); it_ghost != GhostEdgesArray.end(); ++it_ghost) PrintingGhostEdge(*it_ghost);
   
   PrintToLog("\n*************************************************");
   
-  // joining_pathmain_ghostedges(path_main, ghost_edges_array);
+  // joining_pathmain_ghostedges(path_main, GhostEdgesArray);
   // int k = 0;
   // long int nonzero_lives;
   // double PNL_totalit;
@@ -661,10 +647,10 @@ void clearing_operator_fifo(VectorTLS &vdata, MatrixTLS &M_file, int index_init,
 
 void updating_lasttwocols_fromdatabase(std::string addrs, MatrixTLS &M_file, int i, long int live_updated)
 {
-	if ( addrs == M_file[i][0] )
-    	M_file[i][8] = std::to_string(live_updated);
-  	else
-    	M_file[i][9] = std::to_string(live_updated);
+  if ( addrs == M_file[i][0] )
+    M_file[i][8] = std::to_string(live_updated);
+  else
+    M_file[i][9] = std::to_string(live_updated);
 }
 
 void building_edge(std::map<std::string, std::string> &path_first, std::string addrs_src, std::string addrs_trk, std::string status_src, std::string status_trk, double entry_price, double exit_price, long int lives, int index_row, int path_number, long int amount_path, int ghost_edge)
@@ -700,6 +686,18 @@ void building_edge(std::map<std::string, std::string> &path_first, std::string a
   path_first["ghost_edge"]     = std::to_string(ghost_edge);
 }
 
+void BuildingGhostEdges(std::map<std::string, std::string> &path_first, std::string addrs_src, std::string addrs_trk, std::string status_src, std::string status_trk, string entry_price_src, string entry_price_trk, double exit_price, long int amount_path)
+{
+  path_first["addrs_src"]       = addrs_src;
+  path_first["addrs_trk"]       = addrs_trk;
+  path_first["status_src"]      = status_src;
+  path_first["status_trk"]      = status_trk;
+  path_first["entry_price_src"] = entry_price_src;
+  path_first["entry_price_trk"] = entry_price_trk;
+  path_first["exit_price"]      = std::to_string(exit_price);
+  path_first["amount_trd"]      = std::to_string(amount_path);
+}
+
 void building_lives_edges(std::map<std::string, std::string> &path_first, std::string addrs, std::string status, long int lives, double entry_price, struct status_amounts_edge *pt_status_byedge)
 {
   path_first["addrs"] 	    = addrs;
@@ -728,6 +726,11 @@ void printing_edges(std::map<std::string, std::string> &path_first)
 void PrintingEdge(std::map<std::string, std::string> &path_first)
 {
   PrintToLog("{ addrs_src : %s , status_src : %s, lives_src : %d, amount_trd_src : %d, addrs_trk : %s , status_trk : %s, lives_trk : %d, amount_trd_trk : %d, entry_price : %d, exit_price : %d, edge_row : %d, path_number : %d, ghost_edge : %d }\n", path_first["addrs_src"], path_first["status_src"], path_first["lives_src"], path_first["amount_trd_src"], path_first["addrs_trk"], path_first["status_trk"], path_first["lives_trk"], path_first["amount_trd_trk"], path_first["entry_price"], path_first["exit_price"], path_first["edge_row"], path_first["path_number"], path_first["ghost_edge"]);
+}
+
+void PrintingGhostEdge(std::map<std::string, std::string> &path_first)
+{
+  PrintToLog("{ addrs_src : %s , status_src : %s, entry_price_src : %d, addrs_trk : %s , status_trk : %s, entry_price_trk : %d, exit_price_trk : %d, amount_trd : %d}\n", path_first["addrs_src"], path_first["status_src"], path_first["entry_price_src"], path_first["addrs_trk"], path_first["status_trk"], path_first["entry_price_trk"], path_first["exit_price"], path_first["amount_trd"]);
 }
 
 void printing_edges_lives(std::map<std::string, std::string> &path_first)
@@ -1233,7 +1236,7 @@ void getting_gammapq_bypath(std::vector<std::map<std::string, std::string>> &pat
   gamma_q = sum_alpha_j-sum_alpha_i;
 }
 
-void calculating_ghost_edges(std::vector<std::map<std::string, std::string>> lives_longs, std::vector<std::map<std::string, std::string>> lives_shorts, double exit_price_desired, std::vector<std::map<std::string, std::string>> &ghost_edges_array)
+void GhostEdgesComputing(std::vector<std::map<std::string, std::string>> lives_longs, std::vector<std::map<std::string, std::string>> lives_shorts, double exit_price_desired, std::vector<std::map<std::string, std::string>> &GhostEdgesArray)
 {
   long int amount_itlongs  = 0;
   long int amount_itshorts = 0;
@@ -1246,69 +1249,48 @@ void calculating_ghost_edges(std::vector<std::map<std::string, std::string>> liv
   std::map<std::string, std::string> edge_ele;
   
   for (unsigned i = 0; i < lives_longs.size(); i++)
-    {
-      long_ele = lives_longs[i];
-      amount_itlongs = stol(long_ele["lives"]);
+  {
+    long_ele = lives_longs[i];
+    amount_itlongs = stol(long_ele["lives"]);
       
-      for (unsigned j = index_start; j < lives_shorts.size(); j++)
-	{
-	  short_ele = lives_shorts[j];
-	  amount_itshorts = stol(short_ele["lives"]);
-	  
-	  if (amount_itlongs > amount_itshorts)
-	    {
-	      amount_itlongs = amount_itlongs - amount_itshorts;
-	      PrintToLog("\namount_itshorts = %d\t amount_itlongs = %d\n", amount_itshorts, amount_itlongs);
+    for (unsigned j = index_start; j < lives_shorts.size(); j++)
+    {
+      short_ele = lives_shorts[j];
+	    amount_itshorts = stol(short_ele["lives"]);
+      
+      if (amount_itlongs > amount_itshorts)
+      {
+        amount_itlongs = amount_itlongs - amount_itshorts;
+	      // PrintToLog("\namount_itshorts = %d\t amount_itlongs = %d\n", amount_itshorts, amount_itlongs);
 	      
-	      building_edge(edge_ele, short_ele["addrs"], long_ele["addrs"], short_ele["status"], long_ele["status"],
-			    stod(long_ele["entry_price"]), exit_price_desired, amount_itshorts, amount_itshorts,
-			    stol(long_ele["edge_row"]), stol(long_ele["path_number"]), amount_itshorts, 1);
-	      
-	      ghost_edges_array.push_back(edge_ele);
-	      building_edge(edge_ele, long_ele["addrs"], short_ele["addrs"], long_ele["status"], short_ele["status"],
-			    stod(short_ele["entry_price"]), exit_price_desired, amount_itshorts, amount_itshorts,
-			    stol(short_ele["edge_row"]), stol(short_ele["path_number"]), amount_itshorts, 1);
-	      ghost_edges_array.push_back(edge_ele);
-	      
-	      continue;
-	    }
-	  if (amount_itlongs < amount_itshorts)
-	    {
-	      index_start = j;
+        BuildingGhostEdges(edge_ele, long_ele["addrs"], short_ele["addrs"], long_ele["status"], short_ele["status"], long_ele["entry_price"], short_ele["entry_price"], exit_price_desired, amount_itlongs);
+	      GhostEdgesArray.push_back(edge_ele);
+
+        continue;
+      }
+      if (amount_itlongs < amount_itshorts)
+      {
+        index_start = j;
 	      lives_shorts[j]["lives"] = std::to_string(amount_itshorts - amount_itlongs);
-	      PrintToLog("\namount_itshorts = %d\t amount_itlongs = %d\n", amount_itshorts - amount_itlongs, amount_itlongs);
+	      // PrintToLog("\namount_itshorts = %d\t amount_itlongs = %d\n", amount_itshorts - amount_itlongs, amount_itlongs);
+        
+        BuildingGhostEdges(edge_ele, long_ele["addrs"], short_ele["addrs"], long_ele["status"], short_ele["status"], long_ele["entry_price"], short_ele["entry_price"], exit_price_desired, amount_itlongs);
+	      GhostEdgesArray.push_back(edge_ele);	      
+        
+        break;
+      }
+	    if ( amount_itlongs == amount_itshorts )
+      {
+        index_start = j + 1;
+	      // PrintToLog("\namount_itshorts = %d\t amount_itlongs = %d\n", amount_itshorts, amount_itlongs);
 	      
-	      building_edge(edge_ele, short_ele["addrs"], long_ele["addrs"], short_ele["status"], long_ele["status"],
-			    stod(long_ele["entry_price"]), exit_price_desired, amount_itlongs, amount_itlongs,
-			    stol(long_ele["edge_row"]), stol(long_ele["path_number"]), amount_itlongs, 1);
-	      ghost_edges_array.push_back(edge_ele);
-	      
-	      building_edge(edge_ele, long_ele["addrs"], short_ele["addrs"], long_ele["status"], short_ele["status"],
-			    stod(short_ele["entry_price"]), exit_price_desired, amount_itlongs, amount_itlongs,
-			    stol(short_ele["edge_row"]), stol(short_ele["path_number"]), amount_itlongs, 1);
-	      ghost_edges_array.push_back(edge_ele);
-	      
-	      break;
-	    }
-	  if ( amount_itlongs == amount_itshorts )
-	    {
-	      index_start = j+1;
-	      PrintToLog("\namount_itshorts = %d\t amount_itlongs = %d\n", amount_itshorts, amount_itlongs);
-	      
-	      building_edge(edge_ele, short_ele["addrs"], long_ele["addrs"], short_ele["status"], long_ele["status"],
-			    stod(long_ele["entry_price"]), exit_price_desired, amount_itlongs, amount_itlongs,
-			    stol(long_ele["edge_row"]), stol(long_ele["path_number"]), amount_itlongs, 1);
-	      ghost_edges_array.push_back(edge_ele);
-	      
-	      building_edge(edge_ele, long_ele["addrs"], short_ele["addrs"], long_ele["status"], short_ele["status"],
-			    stod(short_ele["entry_price"]), exit_price_desired, amount_itlongs, amount_itlongs,
-			    stol(short_ele["edge_row"]), stol(short_ele["path_number"]), amount_itlongs, 1);
-	      ghost_edges_array.push_back(edge_ele);
-	      
-	      break;
-	    }
-	}
+        BuildingGhostEdges(edge_ele, long_ele["addrs"], short_ele["addrs"], long_ele["status"], short_ele["status"], long_ele["entry_price"], short_ele["entry_price"], exit_price_desired, amount_itlongs);
+	      GhostEdgesArray.push_back(edge_ele);
+          
+        break;
+      }
     }
+  }
 }
 
 void updating_lives_tozero(std::vector<std::vector<std::map<std::string, std::string>>> &path_main)
@@ -1328,7 +1310,7 @@ void updating_lives_tozero(std::vector<std::vector<std::map<std::string, std::st
     }
 }
 
-void joining_pathmain_ghostedges(std::vector<std::vector<std::map<std::string, std::string>>> &path_main, std::vector<std::map<std::string, std::string>> ghost_edges_array)
+void joining_pathmain_ghostedges(std::vector<std::vector<std::map<std::string, std::string>>> &path_main, std::vector<std::map<std::string, std::string>> GhostEdgesArray)
 {
   std::vector<std::vector<std::map<std::string, std::string>>>::iterator it_path_main;
   std::vector<std::map<std::string, std::string>>::iterator it_ghosts;
@@ -1337,7 +1319,7 @@ void joining_pathmain_ghostedges(std::vector<std::vector<std::map<std::string, s
   for (it_path_main = path_main.begin(); it_path_main != path_main.end(); ++it_path_main)
     {
       index_path = stol((*it_path_main).front()["path_number"]);
-      for (it_ghosts = ghost_edges_array.begin(); it_ghosts != ghost_edges_array.end(); ++it_ghosts)
+      for (it_ghosts = GhostEdgesArray.begin(); it_ghosts != GhostEdgesArray.end(); ++it_ghosts)
 	{
 	  if ( stol((*it_ghosts)["path_number"]) == index_path )
 	    {

@@ -103,7 +103,7 @@ double PNL_function(double entry_price, double exit_price, long int amount_trd, 
 
 void getting_gammapq_bypath(std::vector<std::map<std::string, std::string>> &path_main, double PNL_total, double &gamma_p, double &gamma_q, std::unordered_set<std::string> addrs_set);
 
-void calculating_ghost_edges(std::vector<std::map<std::string, std::string>> lives_longs, std::vector<std::map<std::string, std::string>> lives_shorts, double exit_price_desired, std::vector<std::map<std::string, std::string>> &ghost_edges_array);
+void GhostEdgesComputing(std::vector<std::map<std::string, std::string>> lives_longs, std::vector<std::map<std::string, std::string>> lives_shorts, double exit_price_desired, std::vector<std::map<std::string, std::string>> &ghost_edges_array);
 
 void updating_lives_tozero(std::vector<std::vector<std::map<std::string, std::string>>> &path_main);
 
@@ -138,5 +138,9 @@ void LivesNotZeroHelper(std::string AddrsTrk, std::string AddrsI, std::string Li
 void PushBackLives(int IdPosition, std::string AddrsLives, std::string Status, long int NLives, double EntryPrice, long int EdgeRow, long int PathNumber, std::map<std::string, std::string> LivesLongsEle, std::vector<std::map<std::string, std::string>> &LivesLongs, std::map<std::string, std::string> LivesShortsEle, std::vector<std::map<std::string, std::string>> &LivesShorts);
 
 void IncreasedLastPos(std::vector<std::vector<std::map<std::string, std::string>>> path_main, long int LastEdgeRow, std::string AddrsLives, std::map<std::string, std::string> LivesLongsEle, std::vector<std::map<std::string, std::string>> &LivesLongs, std::map<std::string, std::string> LivesShortsEle, std::vector<std::map<std::string, std::string>> &LivesShorts);
+
+void BuildingGhostEdges(std::map<std::string, std::string> &path_first, std::string addrs_src, std::string addrs_trk, std::string status_src, std::string status_trk, string entry_price_src, string entry_price_trk, double exit_price, long int amount_path);
+
+void PrintingGhostEdge(std::map<std::string, std::string> &path_first);
 
 #endif
