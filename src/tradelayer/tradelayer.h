@@ -529,8 +529,6 @@ namespace mastercore
 
   std::string strMPProperty(uint32_t propertyId);
 
-  rational_t notionalChange(uint32_t contractId);
-
   bool isMPinBlockRange(int starting_block, int ending_block, bool bDeleteFound);
 
   std::string FormatContractMP(int64_t n);
@@ -579,10 +577,14 @@ namespace mastercore
   bool ContInst_Fees(const std::string& firstAddr,const std::string& secondAddr,const std::string& channelAddr, int64_t amountToReserve,uint16_t type, uint32_t colateral);
 
   // Map of LTC volume
-  int64_t LtcVolumen(uint32_t propertyId, int& fblock, int& sblock);
+  int64_t LtcVolumen(uint32_t propertyId, const int& fblock, const int& sblock);
 
-  //Map of MetaDEx volume
-  int64_t MdexVolumen(uint32_t fproperty, uint32_t sproperty, int& fblock, int& sblock);
+  //Map of MetaDEx token volume
+  int64_t MdexVolumen(uint32_t property, const int& fblock, const int& sblock);
+
+  //Map of DEx token volume
+  int64_t DexVolumen(uint32_t property, const int& fblock, const int& sblock);
+
 
   void twapForLiquidation(uint32_t contractId, int blocks);
 
@@ -611,7 +613,7 @@ namespace mastercore
 
   int64_t calculateUnvested(int64_t amountSended, int64_t balance, int64_t unvested);
 
-  int64_t lastLTCVolume(uint32_t propertyId);
+  int64_t lastTokenVolume(uint32_t propertyId);
 }
 
 #endif // TRADELAYER_TL_H

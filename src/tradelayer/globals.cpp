@@ -121,10 +121,3 @@ std::map<std::string,channel> channels_Map;
 
 /** LTC  Cumulative volume per property **/
 std::map<int, std::map<uint32_t,int64_t>> MapPropVolume; // block, property, LTC Amount
-
-
-/**  Cumulative volume by pair of properties
- *   Block, property1,property2 -> put the amount of property1 traded.
- *   property1 index < property2 index
- */
-std::map<int, std::map<std::pair<uint32_t, uint32_t>, int64_t>> MapMetaVolume;

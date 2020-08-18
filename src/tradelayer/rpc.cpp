@@ -67,7 +67,7 @@ extern std::map<uint32_t, std::map<std::string, double>> addrs_upnlc;
 extern std::map<std::string, int64_t> sum_upnls;
 extern std::map<uint32_t, int64_t> cachefees;
 extern std::map<uint32_t, int64_t> cachefees_oracles;
-extern std::map<int, std::map<uint32_t,int64_t>> MapPropVolume;
+// extern std::map<int, std::map<uint32_t,int64_t>> MapPropVolume;
 extern std::map<uint32_t, std::map<uint32_t, int64_t>> market_priceMap;
 extern volatile int64_t globalVolumeALL_LTC;
 
@@ -957,8 +957,10 @@ UniValue tl_listproperties(const JSONRPCRequest& request)
                   propertyObj.push_back(Pair("contract associated",(uint64_t) sp.contract_associated));
                   propertyObj.push_back(Pair("series", sp.series));
               } else {
-                  int64_t volume = lastLTCVolume(propertyId);
-                  propertyObj.push_back(Pair("last 24h LTC volume", FormatDivisibleMP(volume)));
+                  // int64_t ltc_volume = lastVolume(0);
+                  int64_t token_volume = lastTokenVolume(propertyId);
+                  // propertyObj.push_back(Pair("last 24h LTC volume", FormatDivisibleMP(ltc_volume)));
+                  propertyObj.push_back(Pair("last 24h Token volume", FormatDivisibleMP(token_volume)));
               }
           }
 
@@ -2855,18 +2857,17 @@ UniValue tl_getdexvolume(const JSONRPCRequest& request)
 
 UniValue tl_getmdexvolume(const JSONRPCRequest& request)
 {
-    if (request.params.size() < 3 || request.fHelp)
+    if (request.params.size() != 3 || request.fHelp)
         throw runtime_error(
             "tl_getmdexvolume \n"
-            "\nReturns the first token volume traded in sort amount of blocks.\n"
+            "\nReturns the token volume traded in sort amount of blocks.\n"
             "\nArguments:\n"
-            "1. propertyA                 (number, required) first property index \n"
-            "2. propertyB                 (number, required) second property index \n"
+            "1. propertyA                 (number, required) the property id \n"
             "2. first block               (number, required) older limit block\n"
-            "4. second block              (number, optional) newer limit block\n"
+            "3. second block              (number, optional) newer limit block\n"
             "\nResult:\n"
             "{\n"
-            "  \"volume\" : \"n.nnnnnnnn\",   (number) the available volume (of property A) traded\n"
+            "  \"volume\" : \"n.nnnnnnnn\",   (number) the available volume (of property) traded\n"
             "  \"blockheight\" : \"n.\",      (number) last block\n"
             "}\n"
             "\nExamples:\n"
@@ -2874,22 +2875,18 @@ UniValue tl_getmdexvolume(const JSONRPCRequest& request)
             + HelpExampleRpc("tl_getdexvolume", "\"\",")
         );
 
-    uint32_t fproperty = ParsePropertyId(request.params[0]);
-    uint32_t sproperty = ParsePropertyId(request.params[1]);
-    int fblock = request.params[2].get_int();
-    int sblock = request.params[3].get_int();
+    uint32_t property = ParsePropertyId(request.params[0]);
+    int fblock = request.params[1].get_int();
+    int sblock = request.params[2].get_int();
 
     if (fblock == 0 || sblock == 0)
         throw JSONRPCError(RPC_INTERNAL_ERROR, "Block must be greater than 0");
-
-    if (sproperty < fproperty )
-        throw JSONRPCError(RPC_INTERNAL_ERROR, "First property index must be the smaller");
 
     if (sblock < fblock)
         throw JSONRPCError(RPC_INTERNAL_ERROR, "Second block must be greater than first");
 
     // geting data from map!
-    int64_t amount = mastercore::MdexVolumen(fproperty, sproperty,fblock, sblock);
+    int64_t amount = mastercore::MdexVolumen(property,fblock, sblock);
 
     UniValue balanceObj(UniValue::VOBJ);
 

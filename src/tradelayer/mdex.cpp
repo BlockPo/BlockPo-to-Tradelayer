@@ -40,6 +40,9 @@ using namespace mastercore;
 //! Global map for price and order data
 md_PropertiesMap mastercore::metadex;
 
+//! Global map for  tokens volume
+std::map<int, std::map<uint32_t,int64_t>> mastercore::metavolume;
+
 chn_PropertiesMap mastercore::chndex;
 
 extern volatile int64_t globalVolumeALL_LTC;
@@ -1652,8 +1655,8 @@ MatchReturnType x_Trade(CMPMetaDEx* const pnew)
 
             /***********************************************************************************************/
             // Adding volume into Map
-            (pnew->getProperty() < pnew->getDesProperty()) ? MapMetaVolume[pnew->getBlock()][std::make_pair(pnew->getProperty(),pnew->getDesProperty())] = buyer_amountGot : MapMetaVolume[pnew->getBlock()][std::make_pair(pnew->getDesProperty(),pnew->getProperty())] = seller_amountGot;
-            PrintToLog("%s(): Adding volume into map: Property: %d, Desproperty : %d, buyeramountgot : %d\n", __func__, pnew->getProperty(), pnew->getDesProperty(), buyer_amountGot);
+            metavolume[pnew->getBlock()][pnew->getProperty()] = seller_amountGot;
+            metavolume[pnew->getBlock()][pnew->getDesProperty()] = buyer_amountGot;
 
           	/***********************************************************************************************/
           	const int64_t& buyer_amountGotAfterFee = buyer_amountGot;

@@ -232,6 +232,12 @@ namespace mastercore
 typedef std::map<std::string, CMPOffer> OfferMap;
 typedef std::map<std::string, CMPAccept> AcceptMap;
 
+/** Map of LTC Volume in DEx**/
+extern std::map<int, std::map<uint32_t,int64_t>> MapLTCVolume;
+/** Map of Token Volume in DEx**/
+extern std::map<int, std::map<uint32_t,int64_t>> MapTokenVolume;
+
+
 extern OfferMap my_offers;
 extern AcceptMap my_accepts;
 
