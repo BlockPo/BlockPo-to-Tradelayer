@@ -1634,8 +1634,8 @@ int input_mp_dexvolume_string(const std::string& s)
     uint32_t propertyId = boost::lexical_cast<uint32_t>(vstr[1]);
     int64_t amount = boost::lexical_cast<int64_t>(vstr[2]);
 
-    auto it = MapLTCVolume.find(block);
-    if (it != MapLTCVolume.end()){
+    auto it = MapTokenVolume.find(block);
+    if (it != MapTokenVolume.end()){
         auto pMap = it->second;
         pMap[propertyId] = amount;
         return 0;
@@ -1673,6 +1673,32 @@ int input_mp_mdexvolume_string(const std::string& s)
     return 0;
 
 }
+
+int input_mp_ltcvolume_string(const std::string& s)
+{
+    std::vector<std::string> vstr;
+    boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
+
+    int block = boost::lexical_cast<int>(vstr[0]);
+    uint32_t property = boost::lexical_cast<uint32_t>(vstr[1]);
+    int64_t amount = boost::lexical_cast<int64_t>(vstr[2]);
+
+    auto it = MapLTCVolume.find(block);
+    if (it != MapLTCVolume.end()){
+        auto pMap = it->second;
+        pMap[property] = amount;
+        return 0;
+    }
+
+    std::map<uint32_t, int64_t> pMapp;
+    pMapp[property] = amount;
+
+    if(!MapLTCVolume.insert(std::make_pair(block, pMapp)).second) return -1;
+
+    return 0;
+
+}
+
 
 int input_vestingaddresses_string(const std::string& s)
 {
@@ -1774,6 +1800,10 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
         vestingAddresses.clear();
         inputLineFunc = input_vestingaddresses_string;
         break;
+    case FILE_TYPE_LTC_VOLUME:
+        MapLTCVolume.clear();
+        inputLineFunc = input_mp_ltcvolume_string;
+        break;
 
     default:
       return -1;
@@ -1862,6 +1892,7 @@ static char const * const statePrefix[NUM_FILETYPES] = {
     "mdexvolume",
     "globalvars",
     "vestingaddresses",
+    "ltcvolume"
 
 };
 
@@ -2254,19 +2285,18 @@ static int write_mp_active_channels(std::ofstream& file, SHA256_CTX* shaCtx)
     return 0;
 }
 
-/** Saving DexMap volume **/
-static int write_mp_dexvolume(std::ofstream& file, SHA256_CTX* shaCtx)
+static void iterWrite(std::ofstream& file, SHA256_CTX* shaCtx, const std::map<int, std::map<uint32_t,int64_t>>& aMap)
 {
-    for(auto it = MapLTCVolume.begin(); it != MapLTCVolume.end();it++)
+    for(const auto &m : aMap)
     {
         // decompose the key for address
-        const uint32_t& block = it->first;
-        std::map<uint32_t,int64_t>& pMap = it->second;
+        const uint32_t& block = m.first;
+        const auto &pMap = m.second;
 
-        for(auto itt = pMap.begin(); itt != pMap.end(); ++itt)
+        for(const auto &p : pMap)
         {
-            const uint32_t& propertyId = itt->first;
-            const int64_t& amount = itt->second;
+            const uint32_t& propertyId = p.first;
+            const int64_t& amount = p.second;
             std::string lineOut = strprintf("%d,%d,%d", block, propertyId, amount);
             // add the line to the hash
             SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
@@ -2275,33 +2305,27 @@ static int write_mp_dexvolume(std::ofstream& file, SHA256_CTX* shaCtx)
         }
     }
 
+}
+
+/** Saving DEx and Channel LTC volume **/
+static int write_mp_ltcvolume(std::ofstream& file, SHA256_CTX* shaCtx)
+{
+    iterWrite(file, shaCtx, MapLTCVolume);
     return 0;
 }
 
-/** Saving MDEx Map volume **/
+/** Saving DEx Map token volume **/
+static int write_mp_dexvolume(std::ofstream& file, SHA256_CTX* shaCtx)
+{
+    iterWrite(file, shaCtx, MapTokenVolume);
+    return 0;
+}
+
+/** Saving MetaDEx Map token volume **/
 static int write_mp_mdexvolume(std::ofstream& file, SHA256_CTX* shaCtx)
 {
-    for(auto it = metavolume.begin(); it != metavolume.end(); ++it)
-    {
-        // decompose the key for address
-        const uint32_t& block = it->first;
-        auto pMap = it->second;
-        for (const auto &p : pMap)
-        {
-            const uint32_t& property = p.first;
-            const int64_t& amount = p.second;
-
-            std::string lineOut = strprintf("%d,%d,%d", block, property, amount);
-            // add the line to the hash
-            SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
-            // write the line
-            file << lineOut << std::endl;
-        }
-
-    }
-
+    iterWrite(file, shaCtx, metavolume);
     return 0;
-
 }
 
 static void savingLine(const std::string& address, std::ofstream& file, SHA256_CTX* shaCtx)
@@ -2394,6 +2418,10 @@ static int write_state_file(CBlockIndex const *pBlockIndex, int what)
 
     case FILE_TYPE_VESTING_ADDRESSES:
         result = write_mp_vesting_addresses(file, &shaCtx);
+        break;
+
+    case FILE_TYPE_LTC_VOLUME:
+        result = write_mp_ltcvolume(file, &shaCtx);
         break;
     }
 
@@ -2498,6 +2526,7 @@ int mastercore_save_state(CBlockIndex const *pBlockIndex)
     write_state_file(pBlockIndex, FILETYPE_MDEX_VOLUME);
     write_state_file(pBlockIndex, FILETYPE_GLOBAL_VARS);
     write_state_file(pBlockIndex, FILE_TYPE_VESTING_ADDRESSES);
+    write_state_file(pBlockIndex, FILE_TYPE_LTC_VOLUME);
 
     // clean-up the directory
     prune_state_files(pBlockIndex);
@@ -2529,6 +2558,7 @@ void clear_all_state()
     channels_Map.clear();
     withdrawal_Map.clear();
     MapLTCVolume.clear();
+    MapTokenVolume.clear();
     metavolume.clear();
     vestingAddresses.clear();
 
@@ -6387,7 +6417,7 @@ void iterVolume(int64_t& amount, uint32_t propertyId, const int& fblock, const i
         const int& blk = m.first;
         if(blk < fblock) continue;
         else if(sblock < blk) break;
-        const std::map<uint32_t, int64_t> &blockMap = m.second;
+        const auto &blockMap = m.second;
         auto itt = blockMap.find(propertyId);
         if (itt != blockMap.end())
             amount += itt->second;
@@ -6396,7 +6426,7 @@ void iterVolume(int64_t& amount, uint32_t propertyId, const int& fblock, const i
 }
 
 
-/**DEx and Instant trade LTC volumes**/
+/** DEx and Instant trade LTC volumes **/
 int64_t mastercore::LtcVolumen(uint32_t propertyId, const int& fblock, const int& sblock)
 {
     int64_t amount = 0;
@@ -6406,7 +6436,7 @@ int64_t mastercore::LtcVolumen(uint32_t propertyId, const int& fblock, const int
     return amount;
 }
 
-/**MetaDEx Tokens volume**/
+/** MetaDEx Tokens volume **/
 int64_t mastercore::MdexVolumen(uint32_t property, const int& fblock, const int& sblock)
 {
     int64_t amount = 0;
@@ -6416,7 +6446,7 @@ int64_t mastercore::MdexVolumen(uint32_t property, const int& fblock, const int&
     return amount;
 }
 
-/**DEx Tokens volume**/
+/** DEx Tokens volume **/
 int64_t mastercore::DexVolumen(uint32_t property, const int& fblock, const int& sblock)
 {
     int64_t amount = 0;
@@ -6426,8 +6456,8 @@ int64_t mastercore::DexVolumen(uint32_t property, const int& fblock, const int& 
     return amount;
 }
 
-/**last 24 hours Token volume for a given propertyId**/
-int64_t mastercore::lastTokenVolume(uint32_t propertyId)
+/** last 24 hours volume (properyId 0 is LTC) for a given propertyId**/
+int64_t mastercore::lastVolume(uint32_t propertyId)
 {
     // 24 hours back in time
     const int bBlock = GetHeight() - 576;
@@ -6439,6 +6469,12 @@ int64_t mastercore::lastTokenVolume(uint32_t propertyId)
     }
 
     int64_t totalAmount = 0;
+
+    // DEx and Instant trade LTC volumes
+    if (propertyId == LTC){
+        iterVolume(totalAmount, propertyId, bBlock, lBlock, MapLTCVolume);
+        return totalAmount;
+    }
 
     // DEx token volume
     iterVolume(totalAmount, propertyId, bBlock, lBlock, MapTokenVolume);

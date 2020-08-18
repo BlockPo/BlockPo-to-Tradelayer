@@ -67,8 +67,8 @@ extern std::map<uint32_t, std::map<std::string, double>> addrs_upnlc;
 extern std::map<std::string, int64_t> sum_upnls;
 extern std::map<uint32_t, int64_t> cachefees;
 extern std::map<uint32_t, int64_t> cachefees_oracles;
-// extern std::map<int, std::map<uint32_t,int64_t>> MapPropVolume;
 extern std::map<uint32_t, std::map<uint32_t, int64_t>> market_priceMap;
+extern std::map<uint32_t, std::vector<int64_t>> mapContractAmountTimesPrice;
 extern volatile int64_t globalVolumeALL_LTC;
 
 using mastercore::StrToInt64;
@@ -119,9 +119,7 @@ void ContractToJSON(const CMPSPInfo::Entry& sProperty, UniValue& property_obj)
     property_obj.push_back(Pair("collateral currency", std::to_string(sProperty.collateral_currency)));
     property_obj.push_back(Pair("margin requirement", FormatDivisibleShortMP(sProperty.margin_requirement)));
     property_obj.push_back(Pair("blocks until expiration", std::to_string(sProperty.blocks_until_expiration)));
-    property_obj.push_back(Pair("open interest", "not_available_yet"));
     property_obj.push_back(Pair("inverse quoted", std::to_string(sProperty.inverse_quoted)));
-
     if (sProperty.isOracle())
     {
         property_obj.push_back(Pair("backup address", sProperty.backup_address));
@@ -856,6 +854,7 @@ UniValue tl_getproperty(const JSONRPCRequest& request)
     response.push_back(Pair("fixedissuance", sp.fixed));
     response.push_back(Pair("totaltokens", strTotalTokens));
     response.push_back(Pair("creation block", sp.init_block));
+
     if (sp.isNative())
     {
         response.push_back(Pair("notional size", FormatDivisibleShortMP(sp.notional_size)));
@@ -863,6 +862,11 @@ UniValue tl_getproperty(const JSONRPCRequest& request)
         response.push_back(Pair("margin requirement", FormatDivisibleShortMP(sp.margin_requirement)));
         response.push_back(Pair("blocks until expiration", std::to_string(sp.blocks_until_expiration)));
         response.push_back(Pair("inverse quoted", std::to_string(sp.inverse_quoted)));
+        const int64_t openInterest = getTotalLives(propertyId);
+        response.push_back(Pair("open interest", FormatDivisibleMP(openInterest)));
+        auto it = cdexlastprice.find(propertyId);
+        const int64_t& lastPrice = it->second;
+        response.push_back(Pair("last traded price", FormatDivisibleMP(lastPrice)));
 
     } else if (sp.isOracle()) {
         response.push_back(Pair("notional size", FormatDivisibleShortMP(sp.notional_size)));
@@ -874,10 +878,21 @@ UniValue tl_getproperty(const JSONRPCRequest& request)
         response.push_back(Pair("low price", FormatDivisibleShortMP(sp.oracle_low)));
         response.push_back(Pair("last close price", FormatDivisibleShortMP(sp.oracle_close)));
         response.push_back(Pair("inverse quoted", std::to_string(sp.inverse_quoted)));
-
+        const int64_t openInterest = getTotalLives(propertyId);
+        response.push_back(Pair("open interest", FormatDivisibleMP(openInterest)));
+        auto it = cdexlastprice.find(propertyId);
+        const int64_t& lastPrice = it->second;
+        response.push_back(Pair("last traded price", FormatDivisibleMP(lastPrice)));
     } else if (sp.isPegged()) {
         response.push_back(Pair("contract associated",(uint64_t) sp.contract_associated));
         response.push_back(Pair("series", sp.series));
+    } else {
+        const int64_t ltc_volume = lastVolume(LTC);
+        const int64_t token_volume = lastVolume(propertyId);
+        const int64_t totalSupply = getTotalTokens(propertyId);
+        response.push_back(Pair("last 24h LTC volume", FormatDivisibleMP(ltc_volume)));
+        response.push_back(Pair("last 24h Token volume", FormatDivisibleMP(token_volume)));
+        response.push_back(Pair("total supply", FormatDivisibleMP(totalSupply)));
     }
 
     return response;
@@ -913,14 +928,14 @@ UniValue tl_listproperties(const JSONRPCRequest& request)
 
   LOCK(cs_tally);
 
-  uint32_t nextSPID = _my_sps->peekNextSPID();
+  const uint32_t nextSPID = _my_sps->peekNextSPID();
   for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
   {
       UniValue propertyObj(UniValue::VOBJ);
       CMPSPInfo::Entry sp;
       if(_my_sps->getSP(propertyId, sp))
       {
-          int64_t nTotalTokens = getTotalTokens(propertyId);
+          const int64_t nTotalTokens = getTotalTokens(propertyId);
           std::string strCreationHash = sp.txid.GetHex();
           std::string strTotalTokens = FormatMP(propertyId, nTotalTokens);
           propertyObj.push_back(Pair("propertyid", (uint64_t) propertyId));
@@ -941,6 +956,13 @@ UniValue tl_listproperties(const JSONRPCRequest& request)
                   propertyObj.push_back(Pair("margin requirement", FormatDivisibleShortMP(sp.margin_requirement)));
                   propertyObj.push_back(Pair("blocks until expiration", std::to_string(sp.blocks_until_expiration)));
                   propertyObj.push_back(Pair("inverse quoted", std::to_string(sp.inverse_quoted)));
+                  const int64_t openInterest = getTotalLives(propertyId);
+                  propertyObj.push_back(Pair("open interest", FormatDivisibleMP(openInterest)));
+                  auto it = cdexlastprice.find(propertyId);
+                  const int64_t& lastPrice = it->second;
+                  propertyObj.push_back(Pair("last traded price", FormatDivisibleMP(lastPrice)));
+                  const int64_t fundBalance = 0; // NOTE: we need to write this after fundbalance logic
+                  propertyObj.push_back(Pair("insurance fund balance", fundBalance));
 
               } else if (sp.isOracle()) {
                   propertyObj.push_back(Pair("notional size", FormatDivisibleShortMP(sp.notional_size)));
@@ -952,15 +974,24 @@ UniValue tl_listproperties(const JSONRPCRequest& request)
                   propertyObj.push_back(Pair("low price", FormatDivisibleShortMP(sp.oracle_low)));
                   propertyObj.push_back(Pair("last close price", FormatDivisibleShortMP(sp.oracle_close)));
                   propertyObj.push_back(Pair("inverse quoted", std::to_string(sp.inverse_quoted)));
+                  const int64_t openInterest = getTotalLives(propertyId);
+                  propertyObj.push_back(Pair("open interest", FormatDivisibleMP(openInterest)));
+                  auto it = cdexlastprice.find(propertyId);
+                  const int64_t& lastPrice = it->second;
+                  propertyObj.push_back(Pair("last traded price", FormatDivisibleMP(lastPrice)));
+                  const int64_t fundBalance = 0; // NOTE: we need to write this after fundbalance logic
+                  propertyObj.push_back(Pair("insurance fund balance", fundBalance));
 
               } else if (sp.isPegged()) {
                   propertyObj.push_back(Pair("contract associated",(uint64_t) sp.contract_associated));
                   propertyObj.push_back(Pair("series", sp.series));
               } else {
-                  // int64_t ltc_volume = lastVolume(0);
-                  int64_t token_volume = lastTokenVolume(propertyId);
-                  // propertyObj.push_back(Pair("last 24h LTC volume", FormatDivisibleMP(ltc_volume)));
+                  const int64_t ltc_volume = lastVolume(LTC);
+                  const int64_t token_volume = lastVolume(propertyId);
+                  const int64_t totalSupply = getTotalTokens(propertyId);
+                  propertyObj.push_back(Pair("last 24h LTC volume", FormatDivisibleMP(ltc_volume)));
                   propertyObj.push_back(Pair("last 24h Token volume", FormatDivisibleMP(token_volume)));
+                  propertyObj.push_back(Pair("total supply", FormatDivisibleMP(totalSupply)));
               }
           }
 
@@ -997,7 +1028,7 @@ UniValue tl_list_natives(const JSONRPCRequest& request)
 
   LOCK(cs_tally);
 
-  uint32_t nextSPID = _my_sps->peekNextSPID();
+  const uint32_t nextSPID = _my_sps->peekNextSPID();
   for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
   {
       CMPSPInfo::Entry sp;
@@ -1010,6 +1041,14 @@ UniValue tl_list_natives(const JSONRPCRequest& request)
           propertyObj.push_back(Pair("propertyid", (uint64_t) propertyId));
           ContractToJSON(sp, propertyObj); // name, data, url,...
           response.push_back(propertyObj);
+          const int64_t openInterest = getTotalLives(propertyId);
+          propertyObj.push_back(Pair("open interest", FormatDivisibleMP(openInterest)));
+          auto it = cdexlastprice.find(propertyId);
+          const int64_t& lastPrice = it->second;
+          propertyObj.push_back(Pair("last traded price", FormatDivisibleMP(lastPrice)));
+          const int64_t fundBalance = 0; // NOTE: we need to write this after fundbalance logic
+          propertyObj.push_back(Pair("insurance fund balance", fundBalance));
+
       }
   }
 
@@ -1041,7 +1080,7 @@ UniValue tl_list_oracles(const JSONRPCRequest& request)
 
   LOCK(cs_tally);
 
-  uint32_t nextSPID = _my_sps->peekNextSPID();
+  const uint32_t nextSPID = _my_sps->peekNextSPID();
   for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
   {
       CMPSPInfo::Entry sp;
@@ -1055,6 +1094,13 @@ UniValue tl_list_oracles(const JSONRPCRequest& request)
           propertyObj.push_back(Pair("propertyid", (uint64_t) propertyId));
           OracleToJSON(sp, propertyObj); // name, data, url,...
           response.push_back(propertyObj);
+          const int64_t openInterest = getTotalLives(propertyId);
+          propertyObj.push_back(Pair("open interest", FormatDivisibleMP(openInterest)));
+          auto it = cdexlastprice.find(propertyId);
+          const int64_t& lastPrice = it->second;
+          propertyObj.push_back(Pair("last traded price", FormatDivisibleMP(lastPrice)));
+          const int64_t fundBalance = 0; // NOTE: we need to write this after fundbalance logic
+          propertyObj.push_back(Pair("insurance fund balance", fundBalance));
       }
   }
 
@@ -2211,7 +2257,7 @@ UniValue tl_getallprice(const JSONRPCRequest& request)
     auto it = market_priceMap.find(static_cast<uint32_t>(ALL));
     if (it != market_priceMap.end())
     {
-        const std::map<uint32_t, int64_t>& auxMap = it->second;
+        const auto &auxMap = it->second;
         auto itt = auxMap.find(static_cast<uint32_t>(dUSD));
         if (itt != auxMap.end())
             allPrice = itt->second;
@@ -3053,7 +3099,7 @@ UniValue tl_getmax_peggedcurrency(const JSONRPCRequest& request)
   auto it = market_priceMap.find(sp.collateral_currency);
   if (it != market_priceMap.end())
   {
-      const std::map<uint32_t, int64_t>& auxMap = it->second;
+      const auto &auxMap = it->second;
       auto itt = auxMap.find(static_cast<uint32_t>(dUSD));
       if (itt != auxMap.end())
           tokenPrice = itt->second;
@@ -3082,7 +3128,7 @@ UniValue tl_getcontract(const JSONRPCRequest& request)
     if (request.params.size() != 1  || request.fHelp)
         throw runtime_error(
             "tl_getcontract contract\n"
-            "\nReturns details for about the tokens or smart property to lookup.\n"
+            "\nReturns details for about the future contract.\n"
             "\nArguments:\n"
             "1. name or id                        (string, required) the name  of the future contract, or the number id\n"
             "\nResult:\n"
@@ -3111,7 +3157,11 @@ UniValue tl_getcontract(const JSONRPCRequest& request)
     response.push_back(Pair("propertyid", (uint64_t) propertyId));
     ContractToJSON(sp, response); // name, data, url,
     KYCToJSON(sp, response);
-
+    auto it = cdexlastprice.find(propertyId);
+    const int64_t& lastPrice = it->second;
+    response.push_back(Pair("last traded price", FormatDivisibleMP(lastPrice)));
+    const int64_t fundBalance = 0; // NOTE: we need to write this after fundbalance logic
+    response.push_back(Pair("insurance fund balance", fundBalance));
     return response;
 }
 

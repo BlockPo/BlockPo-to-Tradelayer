@@ -159,6 +159,7 @@ enum FILETYPES {
   FILETYPE_MDEX_VOLUME,
   FILETYPE_GLOBAL_VARS,
   FILE_TYPE_VESTING_ADDRESSES,
+  FILE_TYPE_LTC_VOLUME,
   NUM_FILETYPES
 };
 
@@ -613,7 +614,7 @@ namespace mastercore
 
   int64_t calculateUnvested(int64_t amountSended, int64_t balance, int64_t unvested);
 
-  int64_t lastTokenVolume(uint32_t propertyId);
+  int64_t lastVolume(uint32_t propertyId);
 }
 
 #endif // TRADELAYER_TL_H

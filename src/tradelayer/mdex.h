@@ -234,6 +234,10 @@ namespace mastercore
    */
   extern std::map<int, std::map<uint32_t,int64_t>> metavolume;
 
+
+  //! Global map for last contract price
+  extern std::map<uint32_t,int64_t> cdexlastprice;
+
   //! Global map for price and order data
   extern md_PropertiesMap metadex;
 

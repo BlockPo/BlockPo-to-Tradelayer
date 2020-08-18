@@ -43,6 +43,10 @@ md_PropertiesMap mastercore::metadex;
 //! Global map for  tokens volume
 std::map<int, std::map<uint32_t,int64_t>> mastercore::metavolume;
 
+//! Global map for last contract price
+std::map<uint32_t,int64_t> mastercore::cdexlastprice;
+
+
 chn_PropertiesMap mastercore::chndex;
 
 extern volatile int64_t globalVolumeALL_LTC;
@@ -1100,11 +1104,9 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
 					amountpnew,
 					amountpold);
           /********************************************************/
-          int index = static_cast<unsigned int>(property_traded);
 
-          marketP[index] = pold->getEffectivePrice();
-          // uint64_t marketPriceNow = marketP[index];
-          if(msc_debug_x_trade_bidirectional) PrintToLog("%s: marketP[index] = %d\n",__func__, marketP[index]);
+          cdexlastprice[property_traded] = pold->getEffectivePrice();
+          if(msc_debug_x_trade_bidirectional) PrintToLog("%s: marketPrice = %d\n",__func__, pold->getEffectivePrice());
           // t_tradelistdb->recordForUPNL(pnew->getHash(),pnew->getAddr(),property_traded,pold->getEffectivePrice());
 
           if(msc_debug_x_trade_bidirectional) PrintToLog("++ erased old: %s\n", offerIt->ToString());
