@@ -362,8 +362,8 @@ class ChannelsBasicsTest (BitcoinTestFramework):
 
 
         # addr0 making instant trade with addr1 (tokens for tokens)
-        self.log.info("Funding the addresses[0] with 2 LTC")
-        params = str([addresses[0], 2]).replace("'",'"')
+        self.log.info("Funding the multisig with 2 LTC")
+        params = str([multisig, 2]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "sendtoaddress", params)
         # self.log.info(out)
         txid = out['result']
@@ -376,26 +376,32 @@ class ChannelsBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, True, "gettransaction", params)
         # self.log.info(out)
         vout = out['result']['details'][0]['vout']
-        # self.log.info(vout)
+        self.log.info('vout:' + str(vout))
 
+        # self.log.info("Creating rawtx transaction")
+        # params = '[[{"txid":"'+txid+'","vout":'+str(vout)+'}], { }, 0, true]'
+        # out = tradelayer_HTTP(conn, headers, False, "createrawtransaction", params)
+        # assert_equal(out['error'], None)
+        # hex = out['result']
+        # # self.log.info(hex)
 
-        self.log.info("Creating rawtx transaction")
-        params = '[[{"txid":"'+txid+'","vout":'+str(vout)+'}], { }, 0, true]'
-        out = tradelayer_HTTP(conn, headers, False, "createrawtransaction", params)
-        assert_equal(out['error'], None)
+        self.log.info("Creating raw input")
+        params = str(['', txid, vout]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_createrawtx_input",params)
+        # self.log.info(out)
         hex = out['result']
-        # self.log.info(hex)
 
-        # Destination here is yourself (we are sending 1 LTC from addresses[1] to addresses[0])
+
+        # Destination here is addresses[0]
         self.log.info("Creating raw reference")
         params = str([hex, addresses[0], 1.5]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_createrawtx_reference",params)
         # self.log.info(out)
-
         hex = out['result']
 
+
         self.log.info("Creating payload for instant trade")
-        params = str([4, '1000',300, 5, '2000']).replace("'",'"')
+        params = str([4, '1000', 5, '2000', 220]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_createpayload_instant_trade", params)
         assert_equal(out['error'], None)
         payload = out['result']
@@ -411,18 +417,17 @@ class ChannelsBasicsTest (BitcoinTestFramework):
         # self.log.info(hex)
 
 
-        # NOTE: see multi.sh test
-        params = '["'+hex+'",[],["'+privatekey0+'"]]'
+        params = '["'+hex+'",[{"txid":"'+txid+'","vout":'+str(vout)+', "scriptPubKey":"'+scriptPubKey+'","redeemScript":"'+redeemScript+'","amount":2}],["'+privatekey0+'"]]'
         self.log.info("Signing raw transaction with address 0")
         # self.log.info(params)
         out = tradelayer_HTTP(conn, headers, False, "signrawtransaction",params)
         # assert_equal(out['error'], None)
         hex = out['result']['hex']
-        # self.log.info(hex)
+        # self.log.info(out)
 
 
         self.log.info("Signing raw transaction with address 1")
-        params = '["'+hex+'",[],["'+privatekey1+'"]]'
+        params = '["'+hex+'",[{"txid":"'+txid+'","vout":'+str(vout)+', "scriptPubKey":"'+scriptPubKey+'","redeemScript":"'+redeemScript+'","amount":2}],["'+privatekey1+'"]]'
         out = tradelayer_HTTP(conn, headers, False, "signrawtransaction",params)
         assert_equal(out['error'], None)
         hex = out['result']['hex']
@@ -436,22 +441,20 @@ class ChannelsBasicsTest (BitcoinTestFramework):
         # self.log.info(out)
         tx = out['result']
 
-        self.nodes[0].generate(2)
-
-
-        self.log.info("Checking transaction")
-        params = str([tx, 1]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, True, "getrawtransaction",params)
+        params = '["'+hex+'"]'
+        out = tradelayer_HTTP(conn, headers, False, "decoderawtransaction",params)
         # self.log.info(out)
+
+        self.nodes[0].generate(1)
 
 
         self.log.info("Checking lihki tokens in channel")
         params = str([multisig, 4]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_get_channelreserve",params)
         # self.log.info(out)
-
         assert_equal(out['error'], None)
         assert_equal(out['result']['channel reserve'],'175.00000000')
+
 
         self.log.info("Checking dan tokens in channel")
         params = str([multisig, 5]).replace("'",'"')
@@ -487,6 +490,7 @@ class ChannelsBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['balance'],'1000.00000000')
         assert_equal(out['result']['reserve'],'0.00000000')
 
+
         self.log.info("Checking dan tokens in address1")
         params = str([addresses[1], 5]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
@@ -494,7 +498,7 @@ class ChannelsBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         assert_equal(out['result']['balance'],'9999998000.00000000')
         assert_equal(out['result']['reserve'],'0.00000000')
-        conn.close()
+
 
         self.log.info("Checking the trade channel")
         params = str([multisig]).replace("'",'"')
@@ -506,7 +510,6 @@ class ChannelsBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['second address'], addresses[1])
         assert_equal(out['result']['expiry block'], 1008)
         assert_equal(out['result']['status'], 'active')
-
 
 
         self.log.info("Testing transfer rpc")

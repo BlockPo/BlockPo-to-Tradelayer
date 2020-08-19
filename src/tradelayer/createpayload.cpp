@@ -778,7 +778,7 @@ std::vector<unsigned char> CreatePayload_Withdrawal_FromChannel(uint32_t propert
     return payload;
 }
 
-std::vector<unsigned char> CreatePayload_Instant_Trade(uint32_t propertyId, uint64_t amount, uint32_t blockheight_expiry, uint32_t propertyDesired, uint64_t amountDesired)
+std::vector<unsigned char> CreatePayload_Instant_Trade(uint32_t propertyId, uint64_t amount, int blockheight_expiry, uint32_t propertyDesired, uint64_t amountDesired)
 {
     std::vector<unsigned char> payload;
 
@@ -870,7 +870,7 @@ std::vector<unsigned char> CreatePayload_Transfer()
     return payload;
 }
 
-std::vector<unsigned char> CreatePayload_Instant_LTC_Trade(uint32_t propertyId, uint64_t amount, uint64_t totalPrice)
+std::vector<unsigned char> CreatePayload_Instant_LTC_Trade(uint32_t propertyId, uint64_t amount, uint64_t totalPrice, int blockheight_expiry)
 {
     std::vector<unsigned char> payload;
 
@@ -882,16 +882,17 @@ std::vector<unsigned char> CreatePayload_Instant_LTC_Trade(uint32_t propertyId, 
     std::vector<uint8_t> vecPropertyId = CompressInteger((uint64_t)propertyId);
     std::vector<uint8_t> vecAmount = CompressInteger(amount);
     std::vector<uint8_t> vecTotalPrice = CompressInteger(totalPrice);
+    std::vector<uint8_t> vecBlockExpiry = CompressInteger((uint64_t)blockheight_expiry);
 
     payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
     payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
     payload.insert(payload.end(), vecPropertyId.begin(), vecPropertyId.end());
     payload.insert(payload.end(), vecAmount.begin(), vecAmount.end());
     payload.insert(payload.end(), vecTotalPrice.begin(), vecTotalPrice.end());
+    payload.insert(payload.end(), vecBlockExpiry.begin(), vecBlockExpiry.end());
 
     return payload;
 }
-
 
 std::vector<unsigned char> CreatePayload_New_Id_Registration(std::string& website, std::string& name)
 {
