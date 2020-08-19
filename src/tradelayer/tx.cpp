@@ -4787,6 +4787,7 @@ int CMPTransaction::logicMath_Transfer()
 /** Tx 113 */
 int CMPTransaction::logicMath_Instant_LTC_Trade()
 {
+
   int rc = 1;
 
   if (!IsTransactionTypeAllowed(block, type, version)) {
@@ -4850,7 +4851,7 @@ int CMPTransaction::logicMath_Instant_LTC_Trade()
 
    // ------------------------------------------
 
-   // NOTE: sender is the buyer, receiver is the seller.
+   /**Sender: buyer of tokens, receiver: seller**/
    PrintToLog("%s(): sender: %s, receiver: %s, amount_forsale: %d, price: %d, property: %d\n",__func__,sender, receiver, amount_forsale, price, property);
 
    return rc;
