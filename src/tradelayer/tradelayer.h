@@ -230,6 +230,7 @@ enum FILETYPES {
 #define TYPE_CREATE_CHANNEL             "create channel"
 #define TYPE_NEW_ID_REGISTER            "new id register"
 #define TYPE_ATTESTATION                "attestation"
+#define TYPE_CLOSE_WITHDRAW             "close_withdrawal"
 
 // channel status
 #define ACTIVE_CHANNEL                  "active"
@@ -423,7 +424,9 @@ class CMPTradeList : public CDBBase
   bool setChannelClosed(const std::string& channelAddr);
   uint64_t addWithAndCommits(const std::string& channelAddr, const std::string& senderAddr, uint32_t propertyId);
   uint64_t addTrades(const std::string& channelAddr, const std::string& senderAddr, uint32_t propertyId);
-
+  uint64_t addClosedWithrawals(const std::string& channelAddr, const std::string& receiver, uint32_t propertyId);
+  void recordCloseWithdrawal(const std::string& channelAddress, const std::string& receiver, uint32_t propertyId, uint64_t amountToWithdrawal, int blockNum);
+  
   //KYC
   bool updateIdRegister(const uint256& txid, const std::string& address, const std::string& newAddr, int blockNum, int blockIndex);
   bool checkKYCRegister(const std::string& address, int& kyc_id);
