@@ -3902,18 +3902,24 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
   }
 
   // handle any features that go live with this block
-  makeWithdrawals(pBlockIndex->nHeight);
   CheckLiveActivations(pBlockIndex->nHeight);
-  closeChannels(pBlockIndex->nHeight);
+
 
   const CConsensusParams &params = ConsensusParams();
   vestingActivationBlock = params.MSC_VESTING_BLOCK;
 
   /** Creating Vesting Tokens **/
-  if (static_cast<int>(pBlockIndex->nHeight) == params.MSC_VESTING_CREATION_BLOCK) creatingVestingTokens(pBlockIndex->nHeight);
+  if (pBlockIndex->nHeight == params.MSC_VESTING_CREATION_BLOCK) creatingVestingTokens(pBlockIndex->nHeight);
 
   /** Vesting Tokens to Balance **/
-  if(static_cast<int>(pBlockIndex->nHeight) > params.MSC_VESTING_BLOCK) VestingTokens(pBlockIndex->nHeight);
+  if (pBlockIndex->nHeight > params.MSC_VESTING_BLOCK) VestingTokens(pBlockIndex->nHeight);
+
+  /** Channels **/
+  if (pBlockIndex->nHeight > params.MSC_TRADECHANNEL_TOKENS_BLOCK)
+  {
+      makeWithdrawals(pBlockIndex->nHeight);
+      closeChannels(pBlockIndex->nHeight);
+  }
 
   // marginMain(pBlockIndex->nHeight);
   // addInterestPegged(nBlockPrev,pBlockIndex);
