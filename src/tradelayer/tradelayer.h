@@ -419,7 +419,6 @@ class CMPTradeList : public CDBBase
   bool getAllWithdrawals(const std::string& senderAddress, UniValue& tradeArray);
   bool getChannelInfo(const std::string& channelAddress, UniValue& tradeArray);
   bool checkChannelAddress(const std::string& channelAddress);
-  channel getChannelAddresses(const std::string& channelAddress);
   bool checkChannelRelation(const std::string& address, std::string& channelAddr);
   bool tryAddSecond(const std::string& candidate, const std::string& channelAddr, uint32_t propertyId, uint64_t amount_commited);
   bool setChannelClosed(const std::string& channelAddr);

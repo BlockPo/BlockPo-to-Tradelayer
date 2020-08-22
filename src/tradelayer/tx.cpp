@@ -4550,6 +4550,7 @@ int CMPTransaction::logicMath_Withdrawal_FromChannel()
     auto it = channels_Map.find(receiver);
     channel &chn = it->second;
 
+
     bool success = updateChannelBal(chn, sender, propertyId, -amount_to_withdraw);
 
     if (!success)
@@ -4763,10 +4764,13 @@ int CMPTransaction::logicMath_Transfer()
       return (PKT_ERROR_TOKENS -22);
   }
 
+   channel chn;
+   auto it = channels_Map.find(sender);
+   if(it != channels_Map.end()){
+       chn = it->second;
+   }
 
-  channel chnAddrs = t_tradelistdb->getChannelAddresses(sender);
-
-  if (chnAddrs.multisig.empty() && chnAddrs.first.empty() && chnAddrs.second.empty()) {
+  if (chn.multisig.empty() && chn.first.empty() && chn.second.empty()) {
       PrintToLog("%s(): rejected: address doesn't belong to multisig channel \n", __func__);
       return (PKT_ERROR_CHANNELS -15);
   }
@@ -4836,8 +4840,11 @@ int CMPTransaction::logicMath_Instant_LTC_Trade()
       return (PKT_ERROR_CHANNELS -16);
   }
 
-
-  channel chn = t_tradelistdb->getChannelAddresses(chnAddr);
+  channel chn;
+  auto it = channels_Map.find(chnAddr);
+  if(it != channels_Map.end()){
+     chn = it->second;
+  }
 
   if (chn.expiry_height < block) {
       PrintToLog("%s(): rejected: out of channel deadline: actual block: %d, deadline: %d\n", __func__, block, chn.expiry_height);
@@ -4890,19 +4897,23 @@ int CMPTransaction::logicMath_Contract_Instant()
         return (PKT_ERROR_CHANNELS -14);
     }
 
-    channel chnAddrs = t_tradelistdb->getChannelAddresses(receiver);
+    channel chn;
+    auto it = channels_Map.find(sender);
+    if(it != channels_Map.end()){
+        chn = it->second;
+    }
 
-    PrintToLog("%s(): channel: %s, sender: %s, receiver: %s\n", __func__,  chnAddrs.first, sender, receiver);
+    PrintToLog("%s(): channel: %s, sender: %s, receiver: %s\n", __func__,  chn.first, sender, receiver);
 
-    if (sender.empty() || chnAddrs.first.empty() || chnAddrs.second.empty())
+    if (sender.empty() || chn.first.empty() || chn.second.empty())
     {
         PrintToLog("%s(): rejected: some address doesn't belong to multisig channel\n", __func__);
         return (PKT_ERROR_CHANNELS -15);
     }
 
-    if (chnAddrs.expiry_height < block)
+    if (chn.expiry_height < block)
     {
-        PrintToLog("%s(): rejected: out of channel deadline: actual block: %d, deadline: %d\n", __func__, block, chnAddrs.expiry_height);
+        PrintToLog("%s(): rejected: out of channel deadline: actual block: %d, deadline: %d\n", __func__, block, chn.expiry_height);
         return (PKT_ERROR_CHANNELS -16);
     }
 
@@ -4941,13 +4952,13 @@ int CMPTransaction::logicMath_Contract_Instant()
 
     if(msc_debug_contract_instant_trade) PrintToLog("%s: AmountToReserve: %d, channel Balance: %d\n", __func__, amountToReserve,nBalance);
 
-    if(msc_debug_contract_instant_trade) PrintToLog("%s: sender: %s, channel Address: %s\n", __func__, sender, chnAddrs.multisig);
+    if(msc_debug_contract_instant_trade) PrintToLog("%s: sender: %s, channel Address: %s\n", __func__, sender, chn.multisig);
 
     if (amountToReserve > 0)
     {
         assert(update_tally_map(sender, sp.collateral_currency, -amountToReserve, CHANNEL_RESERVE));
-        assert(update_tally_map(chnAddrs.first, sp.collateral_currency, ConvertTo64(amountTR), CONTRACTDEX_RESERVE));
-        assert(update_tally_map(chnAddrs.second, sp.collateral_currency, ConvertTo64(amountTR), CONTRACTDEX_RESERVE));
+        assert(update_tally_map(chn.first, sp.collateral_currency, ConvertTo64(amountTR), CONTRACTDEX_RESERVE));
+        assert(update_tally_map(chn.second, sp.collateral_currency, ConvertTo64(amountTR), CONTRACTDEX_RESERVE));
     }
 
 
@@ -4965,7 +4976,7 @@ int CMPTransaction::logicMath_Contract_Instant()
     // updating last exchange block
     assert(mastercore::updateLastExBlock(block, sender));
 
-    mastercore::Instant_x_Trade(txid, itrading_action, chnAddrs.multisig, chnAddrs.first, chnAddrs.second, property, instant_amount, price, sp.collateral_currency, sp.prop_type, block, tx_idx);
+    mastercore::Instant_x_Trade(txid, itrading_action, chn.multisig, chn.first, chn.second, property, instant_amount, price, sp.collateral_currency, sp.prop_type, block, tx_idx);
 
     t_tradelistdb->recordNewInstContTrade(txid, receiver, sender, propertyId, amount_commited, price, block, tx_idx);
 

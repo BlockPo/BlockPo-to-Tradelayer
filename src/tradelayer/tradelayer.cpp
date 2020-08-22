@@ -1586,7 +1586,7 @@ int input_withdrawals_string(const std::string& s)
 int input_activechannels_string(const std::string& s)
 {
     std::vector<std::string> vstr;
-    boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
+    boost::split(vstr, s, boost::is_any_of(" ,=+"), boost::token_compress_on);
 
     channel chn;
 
@@ -1596,6 +1596,23 @@ int input_activechannels_string(const std::string& s)
     chn.second = vstr[3];
     chn.expiry_height = boost::lexical_cast<int>(vstr[4]);
     chn.last_exchange_block = boost::lexical_cast<int>(vstr[5]);
+
+    // split general data + balances
+    std::vector<std::string> vBalance;
+    boost::split(vBalance, vstr[6], boost::is_any_of(";"), boost::token_compress_on);
+
+
+    //address-property:amount;
+    for (const auto &v : vBalance)
+    {
+        //property:amount
+        std::vector<std::string> reg;
+        boost::split(reg, v, boost::is_any_of("-"), boost::token_compress_on);
+        const std::string& address = reg[0];
+        const uint32_t& property = boost::lexical_cast<uint32_t>(reg[1]);
+        const uint32_t& amount = boost::lexical_cast<uint32_t>(reg[2]);
+        chn.balances[address][property] = amount;
+    }
 
     //inserting chn into map
     if(!channels_Map.insert(std::make_pair(chnAddr,chn)).second) return -1;
@@ -2239,6 +2256,23 @@ static int write_mp_withdrawals(std::ofstream& file, SHA256_CTX* shaCtx)
     return 0;
 }
 
+/** adding channel balances**/
+static void addBalances(const std::map<std::string,map<uint32_t, int64_t>>& balances, std::string& lineOut)
+{
+    for(const auto &b : balances)
+    {
+        const std::string& address = b.first;
+        const auto &pMap = b.second;
+
+        for (const auto &p : pMap){
+            const uint32_t& property = p.first;
+            const int64_t&  amount = p.second;
+            lineOut.append(strprintf("%s-%d:%d;",address, property, amount));
+        }
+
+    }
+}
+
 /**Saving map of active channels**/
 static int write_mp_active_channels(std::ofstream& file, SHA256_CTX* shaCtx)
 {
@@ -2249,6 +2283,8 @@ static int write_mp_active_channels(std::ofstream& file, SHA256_CTX* shaCtx)
         const channel& chnObj = it->second;
 
         std::string lineOut = strprintf("%s,%s,%s,%s,%d,%d", chnAddr, chnObj.multisig, chnObj.first, chnObj.second, chnObj.expiry_height, chnObj.last_exchange_block);
+        lineOut.append("+");
+        addBalances(chnObj.balances, lineOut);
         // add the line to the hash
         SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
         // write the line
@@ -6034,51 +6070,6 @@ bool CMPTradeList::getChannelInfo(const std::string& channelAddress, UniValue& t
     tradeArray.push_back(Pair("status",chanStatus));
 
     return status1.ok();
-
-}
-
-  /**
-   * @return both P2PKH address related to the channel Address
-   */
-channel CMPTradeList::getChannelAddresses(const std::string& channelAddress)
-{
-      channel ret;
-      if (!pdb) return ret;
-      std::vector<std::string> vstr;
-      std::string strValue;
-      Status status = pdb->Get(readoptions, channelAddress, &strValue);
-
-      if(!status.ok()){
-          PrintToLog("%s(): db error - channel not found\n", __func__);
-          return ret;
-      }
-
-      // ensure correct amount of tokens in value string
-      boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
-      if (vstr.size() != 6) {
-          PrintToLog("%s(): db error - incorrect size of register: (%s)\n", __func__, strValue);
-          return ret;
-      }
-
-      const std::string& type = vstr[5];
-
-      if (type != TYPE_CREATE_CHANNEL){
-          PrintToLog("db error - it's not a create channel registry (%s)\n", strValue);
-          return ret;
-      }
-
-      const std::string& frAddr = vstr[0];
-      const std::string& secAddr = vstr[1];
-      const int& expiry = boost::lexical_cast<int>(vstr[2]);
-
-      ret.multisig = channelAddress;
-      ret.first = frAddr;
-      ret.second = secAddr;
-      ret.expiry_height = expiry;
-
-      if(msc_debug_get_channel_addr) PrintToLog("%s(): ok!: multisig: %s, fist: %s, second: %s\n",__func__, ret.multisig, ret.first, ret.second);
-
-      return ret;
 
 }
 
