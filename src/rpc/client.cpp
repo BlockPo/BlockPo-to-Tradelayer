@@ -354,7 +354,9 @@ static const CRPCConvertParam vRPCConvertParams[] =
 
     { "tl_gettradehistory", 0, "arg0" },
 
-    {"tl_getupnl", 2, "arg2"}
+    {"tl_getupnl", 2, "arg2"},
+
+    {"tl_get_channelremaining", 2, "arg2"},
 
 
 };

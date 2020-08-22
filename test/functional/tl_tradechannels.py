@@ -447,7 +447,6 @@ class ChannelsBasicsTest (BitcoinTestFramework):
 
         self.nodes[0].generate(1)
 
-
         self.log.info("Checking lihki tokens in channel")
         params = str([multisig, 4]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_get_channelreserve",params)

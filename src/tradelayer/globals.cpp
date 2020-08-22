@@ -116,9 +116,6 @@ std::map<uint32_t,std::map<int,oracledata>> oraclePrices;
 /** Withdrawals on channels **/
 std::map<std::string,vector<withdrawalAccepted>> withdrawal_Map;
 
-/** Active channels **/
-std::map<std::string,channel> channels_Map;
-
 /** LTC  Cumulative volume per property **/
 std::map<int, std::map<uint32_t,int64_t>> MapPropVolume; // block, property, LTC Amount
 

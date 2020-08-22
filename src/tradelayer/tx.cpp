@@ -52,7 +52,6 @@ extern std::map<std::string,uint32_t> peggedIssuers;
 extern std::map<uint32_t,std::map<int,oracledata>> oraclePrices;
 extern std::map<std::string,vector<withdrawalAccepted>> withdrawal_Map;
 extern std::map<uint32_t, std::map<uint32_t, int64_t>> market_priceMap;
-extern std::map<std::string,channel> channels_Map;
 extern double denMargin;
 extern uint64_t marketP[NPTYPES];
 extern volatile int id_contract;
@@ -4471,7 +4470,7 @@ int CMPTransaction::logicMath_CommitChannel()
         return (PKT_ERROR_TOKENS -22);
     }
 
-    if (!channelSanityChecks(sender, receiver, block, tx_idx)){
+    if (!channelSanityChecks(sender, receiver, propertyId, amount_commited, block, tx_idx)){
         PrintToLog("%s(): rejected: invalid address or channel is inactive\n", __func__);
         return (PKT_ERROR_TOKENS -23);
     }
@@ -4529,7 +4528,7 @@ int CMPTransaction::logicMath_Withdrawal_FromChannel()
     }
 
     if (!t_tradelistdb->checkChannelAddress(receiver)) {
-        PrintToLog("%s(): rejected: receiver: %s doesn't belong to multisig channel\n", __func__, receiver);
+        PrintToLog("%s(): rejected: receiver: %s is not multisig channel\n", __func__, receiver);
         return (PKT_ERROR_CHANNELS -10);
     }
 
@@ -4547,34 +4546,33 @@ int CMPTransaction::logicMath_Withdrawal_FromChannel()
         return (PKT_ERROR_TOKENS -25);
     }
 
-    uint64_t amount_remaining = t_tradelistdb->getRemaining(receiver, sender, propertyId);
+    // checking the amount remaining in the channel
+    auto it = channels_Map.find(receiver);
+    channel &chn = it->second;
 
-    if (msc_debug_withdrawal_from_channel) PrintToLog("all the amount remaining for the receiver address : %s\n",amount_remaining);
+    bool success = updateChannelBal(chn, sender, propertyId, -amount_to_withdraw);
 
-    if (amount_to_withdraw > amount_remaining)
+    if (!success)
     {
-        PrintToLog("%s(): amount to withdrawal is bigger than amount remaining in channel for the address %s\n", __func__, sender);
+        PrintToLog("%s(): is not possible withdrawal\n", __func__);
         return (PKT_ERROR_TOKENS -26);
     }
 
     withdrawalAccepted wthd;
-
     wthd.address = sender;
     wthd.deadline_block = block + 7;
     wthd.propertyId = propertyId;
     wthd.amount = amount_to_withdraw;
     wthd.txid = txid;
 
-
     if (msc_debug_withdrawal_from_channel) PrintToLog("checking wthd element : address: %s, deadline: %d, propertyId: %d, amount: %d \n", wthd.address, wthd.deadline_block, wthd.propertyId, wthd.amount);
 
-
-    auto it = withdrawal_Map.find(receiver);
+    auto p = withdrawal_Map.find(receiver);
 
     // channel found !
-    if(it != withdrawal_Map.end())
+    if(p != withdrawal_Map.end())
     {
-        vector<withdrawalAccepted>& whAc = it->second;
+        vector<withdrawalAccepted>& whAc = p->second;
         whAc.push_back(wthd);
 
     } else {
@@ -4582,6 +4580,7 @@ int CMPTransaction::logicMath_Withdrawal_FromChannel()
         whAcc.push_back(wthd);
         withdrawal_Map.insert(std::make_pair(receiver,whAcc));
     }
+
 
     t_tradelistdb->recordNewWithdrawal(txid, receiver, sender, propertyId, amount_to_withdraw, block, tx_idx);
 
@@ -4623,7 +4622,11 @@ int CMPTransaction::logicMath_Instant_Trade()
   }
 
   int kyc_id;
-  channel chn = t_tradelistdb->getChannelAddresses(sender);
+  channel chn;
+  auto it = channels_Map.find(sender);
+  if(it != channels_Map.end()){
+      chn = it->second;
+  }
 
   if (chn.multisig.empty() && chn.first.empty() && chn.second.empty()) {
       PrintToLog("%s(): rejected: some address doesn't belong to multisig channel \n", __func__);
@@ -4706,8 +4709,11 @@ int CMPTransaction::logicMath_Instant_Trade()
 
       t_tradelistdb->recordNewInstantTrade(txid, chn.multisig, chn.first, chn.second, property, amount_forsale, desired_property, desired_value, block, tx_idx);
 
+      // updating channel balance for each address
+      assert(updateChannelBal(chn, chn.first, property, -amount_forsale));
+      assert(updateChannelBal(chn, chn.second, desired_property, -desired_value));
       // updating last exchange block
-      assert(mastercore::updateLastExBlock(block, chn.multisig));
+      assert(updateLastExBlock(block, chn.multisig));
 
   }
 
