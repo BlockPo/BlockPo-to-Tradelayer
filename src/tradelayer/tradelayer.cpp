@@ -1060,7 +1060,7 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
 
     // retrieving channel struct
     auto it = channels_Map.find(channelAddr);
-    const channel& sChn = it->second;
+    channel& sChn = it->second;
 
     int64_t remaining = static_cast<int64_t>(mastercore::getRemaining(sChn, seller, property));
 
@@ -1074,6 +1074,7 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
     {
         assert(update_tally_map(buyer, property, amount_purchased, BALANCE));
         assert(update_tally_map(channelAddr, property, -amount_purchased, CHANNEL_RESERVE));
+        assert(updateChannelBal(sChn, seller, property, -amount_purchased));
 
         t_tradelistdb->recordNewInstantLTCTrade(txid, channelAddr, seller , buyer, property, amount_purchased, price, block, idx);
 
@@ -4631,17 +4632,6 @@ void CMPTradeList::recordNewWithdrawal(const uint256& txid, const std::string& c
   if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
 }
 
-void CMPTradeList::recordCloseWithdrawal(const std::string& channelAddress, const std::string& receiver, uint32_t propertyId, uint64_t amountToWithdrawal, int blockNum)
-{
-  if (!pdb) return;
-  std::string strValue = strprintf("%s:%s:%d:%d:%d:%s", channelAddress, receiver, propertyId, amountToWithdrawal, blockNum, TYPE_CLOSE_WITHDRAW);
-  const string key = to_string(blockNum) + "+" + to_string(propertyId); // order by blockNum + propId
-  Status status = pdb->Put(writeoptions, key, strValue);
-  ++nWritten;
-
-  if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
-}
-
 void CMPTradeList::recordNewTransfer(const uint256& txid, const std::string& sender, const std::string& receiver, int blockNum, int blockIndex)
 {
   if (!pdb) return;
@@ -5698,7 +5688,6 @@ bool mastercore::closeChannels(int Block)
             CMPSPInfo::Entry sp;
             if (_my_sps->getSP(propertyId, sp) && sp.isContract()) continue;
 
-            //NOTE: Check the account for first and second address (include trades here)
             const uint64_t first_rem = getRemaining(chn, chn.first, propertyId);
             const uint64_t second_rem = getRemaining(chn, chn.second, propertyId);
             const uint64_t balance = static_cast<uint64_t>(getMPbalance(chn.multisig, propertyId, CHANNEL_RESERVE));
@@ -5707,25 +5696,27 @@ bool mastercore::closeChannels(int Block)
 
             assert(balance == first_rem + second_rem);
 
-            if (first_rem > 0)
+            bool fState = (first_rem > 0) ? true : false;
+            bool sState = (second_rem > 0) ? true : false;
+
+            if(!fState && !sState){
+                continue;
+            }
+
+            if (fState)
             {
 
                 assert(update_tally_map(chn.multisig, propertyId, -first_rem, CHANNEL_RESERVE));
                 assert(update_tally_map(chn.first, propertyId, first_rem, BALANCE));
                 assert(updateChannelBal(chn, chn.first, propertyId, -first_rem));
-                // saving the withdrawal
-                t_tradelistdb->recordCloseWithdrawal(chn.multisig, chn.first, propertyId, first_rem, Block);
 
             }
 
-            if (second_rem > 0)
+            if (sState)
             {
                 assert(update_tally_map(chn.multisig, propertyId, -second_rem, CHANNEL_RESERVE));
                 assert(update_tally_map(chn.second, propertyId, second_rem, BALANCE));
                 assert(updateChannelBal(chn, chn.second, propertyId, -second_rem));
-                // saving the withdrawal
-                t_tradelistdb->recordCloseWithdrawal(chn.multisig, chn.first, propertyId, second_rem, Block);
-
             }
 
         }
@@ -5736,7 +5727,12 @@ bool mastercore::closeChannels(int Block)
         // deleting element from map
         channels_Map.erase(it++);
 
-    }
+        // deleting withdrawals
+        auto itt = withdrawal_Map.find(chn.multisig);
+        if (itt != withdrawal_Map.end()){
+            withdrawal_Map.erase(itt);
+        }
+    } // end loop
 
     return status;
 
@@ -6089,11 +6085,11 @@ bool CMPTradeList::getAllWithdrawals(const std::string& senderAddress, UniValue&
         const int& txid = boost::lexical_cast<int>(vstr[5]);
         const int& st = boost::lexical_cast<int>(vstr[7]);
 
-        const std::string status = (st == ACTIVE_WITHDRAWAL) ? "pending": "completed";
+        const std::string status = (st == ACTIVE_WITHDRAWAL && checkChannelAddress(cAddress)) ? "pending": "completed";
 
         // populate trade object and add to the trade array, correcting for orientation of trade
         UniValue trade(UniValue::VOBJ);
-        if (tradeArray.size() <= 100)
+        if (tradeArray.size() <= 1000)
         {
             trade.push_back(Pair("channel_address", cAddress));
             trade.push_back(Pair("sender", sender));
@@ -6116,7 +6112,7 @@ bool CMPTradeList::getAllWithdrawals(const std::string& senderAddress, UniValue&
 /**
  * @retrieve if there's some withdrawal pending for a given address
  */
-bool CMPTradeList::checkWithdrawal(const std::string& senderAddress, const std::string& channelAddress)
+bool CMPTradeList::updateWithdrawal(const std::string& senderAddress, const std::string& channelAddress)
 {
    if (!pdb) return false;
    bool found = false;
