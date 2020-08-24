@@ -279,18 +279,6 @@ void settlement_algorithm_fifo(MatrixTLS &M_file, int64_t interest, int64_t twap
   
   PrintToLog("\n\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
   PrintToLog("Second Part: Lives Vectors and Ghost Nodes\n\n");
-  
-  // std::vector<std::map<std::string, std::string>> GhostEdgesArray;
-  // double vwap_exit_price = 0;
-  // double PNL_total = 0;
-  // int counting_paths = 0;
-  // long int sum_oflives = 0;
-  // double exit_price_desired = 0;
-  // double gamma_p = 0;
-  // double gamma_q = 0;
-  // double sum_gamma_p = 0;
-  // double sum_gamma_q = 0;
-
 
   PrintToLog("\n*************************************************");
   PrintToLog("\nAddresses with Lives Non Zero\n\n");
@@ -395,11 +383,10 @@ void settlement_algorithm_fifo(MatrixTLS &M_file, int64_t interest, int64_t twap
 	      else
 		continue;
 	    }
-	}
-    }
+	  }
+  }
   
   PrintToLog("\n*************************************************\n");
-  
   double exit_price_desired = 0;
   long int sum_oflives 	    = 0;
   double PNL_total 	    = 0;
@@ -414,12 +401,13 @@ void settlement_algorithm_fifo(MatrixTLS &M_file, int64_t interest, int64_t twap
     sum_gamma_p += gamma_p;
     sum_gamma_q += gamma_q; 
   }
+
   exit_price_desired = sum_gamma_p/sum_gamma_q;
   PrintToLog("\nexit_price_desired = %d\n", exit_price_desired);
   counting_lives_longshorts(LivesLongs, LivesShorts);
   
   PrintToLog("\n*************************************************");
-  PrintToLog("\nGhost Edges Vector:\n");
+  PrintToLog("\nGhost Edges Vector:\n\n");
   
   std::vector<std::map<std::string, std::string>> GhostEdgesArray;
   GhostEdgesComputing(LivesLongs, LivesShorts, exit_price_desired, GhostEdgesArray);
@@ -429,32 +417,34 @@ void settlement_algorithm_fifo(MatrixTLS &M_file, int64_t interest, int64_t twap
   
   PrintToLog("\n*************************************************");
   
-  // joining_pathmain_ghostedges(path_main, GhostEdgesArray);
-  // int k = 0;
-  // long int nonzero_lives;
-  // double PNL_totalit;
+  std::unordered_set<std::string> addrs_set;
+  std::vector<std::string> addrsv;  
+  int k = 0;
+  long int nonzero_lives;
+  double PNL_totalit;
   
-  // std::unordered_set<std::string> addrs_set;
-  // std::vector<std::string> addrsv;
+  /** Total PNL for Main Path **/
+  for (it_path_main = path_main.begin(); it_path_main != path_main.end(); ++it_path_main)
+  {
+    k += 1;
+    PrintToLog("\nPath #%d: PNL computation for the main path\n", k);
+    printing_path_maini(*it_path_main);
+    nonzero_lives = checkpath_livesnonzero(*it_path_main);
+    listof_addresses_bypath(*it_path_main, addrsv);
+    
+    PrintToLog("\nComputing PNL in this Path\n");
+    calculate_pnltrk_bypath(*it_path_main, PNL_totalit, addrs_set, addrsv, interest, twap_price);
+    PNL_total += PNL_totalit;
+    PrintToLog("\nPNL_total_main sum: %f\n", PNL_total);
+    addrs_set.clear();
+  }
   
-  // for (it_path_main = path_main.begin(); it_path_main != path_main.end(); ++it_path_main)
-  // {
-  // 	k += 1;
-  //     PrintToLog("\nPath #%d: with Ghost Nodes\n", k);
-  //     printing_path_maini(*it_path_main);
-  //     nonzero_lives = checkpath_livesnonzero(*it_path_main);
-  //     checkzeronetted_bypath_ghostedges(*it_path_main, nonzero_lives);
-  //     listof_addresses_bypath(*it_path_main, addrsv);
-  //     PrintToLog("\nComputing PNL in this Path\n");
-  //     calculate_pnltrk_bypath(*it_path_main, PNL_totalit, addrs_set, addrsv, interest, twap_price);
-  //     PNL_total += PNL_totalit;
-  //     PrintToLog("\nPNL_total_main sum: %f\n", PNL_total);
-  //     addrs_set.clear();
-  // }
-  
-  // PrintToLog("\n*************************************************");
-  // PrintToLog("\nChecking PNL global (Total Sum PNL by Path):\n");
-  // PrintToLog("\nPNL_total_main = %f", PNL_total);
+  /** Total PNL for Ghost Nodes **/
+  PrintToLog("\n*************************************************");
+  PrintToLog("\nChecking PNL for Ghost Nodes:\n");
+  calculate_pnl_forghost(GhostEdgesArray, PNL_total);
+
+  PrintToLog("\nPNL_total_main = %f", PNL_total);
   PrintToLog("\n\n");
 }
 
@@ -730,7 +720,7 @@ void PrintingEdge(std::map<std::string, std::string> &path_first)
 
 void PrintingGhostEdge(std::map<std::string, std::string> &path_first)
 {
-  PrintToLog("{ addrs_src : %s , status_src : %s, entry_price_src : %d, addrs_trk : %s , status_trk : %s, entry_price_trk : %d, exit_price_trk : %d, amount_trd : %d}\n", path_first["addrs_src"], path_first["status_src"], path_first["entry_price_src"], path_first["addrs_trk"], path_first["status_trk"], path_first["entry_price_trk"], path_first["exit_price"], path_first["amount_trd"]);
+  PrintToLog("{ addrs_src : %s , status_src : %s, entry_price_src : %d, addrs_trk : %s , status_trk : %s, entry_price_trk : %d, exit_price : %d, amount_trd : %d}\n", path_first["addrs_src"], path_first["status_src"], path_first["entry_price_src"], path_first["addrs_trk"], path_first["status_trk"], path_first["entry_price_trk"], path_first["exit_price"], path_first["amount_trd"]);
 }
 
 void printing_edges_lives(std::map<std::string, std::string> &path_first)
@@ -985,10 +975,8 @@ void computing_settlement_exitprice(std::vector<std::map<std::string, std::strin
       sum_oflivesh += stol(it_ele["lives_src"]) + stol(it_ele["lives_trk"]);
     }
   sum_oflives = sum_oflivesh;
-  if ( sum_oflives == 0 )
-    {
-      //PrintToLog("\nThis path does not have lives contracts!!\n");
-    }
+  
+  if (sum_oflives == 0) PrintToLog("\nThis path does not have lives contracts!!\n");
   else
     {
       listof_addresses_bypath(it_path_main, addrsv);
@@ -1072,6 +1060,24 @@ void calculate_pnltrk_bypath(std::vector<std::map<std::string, std::string>> pat
     }
   PNL_total = sumPNL_trk;
   //PrintToLog("\nPNL_total_thispath = %f\n", PNL_total);
+}
+
+void calculate_pnl_forghost(std::vector<std::map<std::string, std::string>> path_ghost, double &PNL_total)
+{
+  std::vector<std::map<std::string, std::string>>::iterator it_path;
+  double sumPNL_trk = 0;
+  double PNL_src; 
+  double PNL_trk;
+
+  PrintToLog("\nChecking PNL for Ghosts\n");
+  for (it_path = path_ghost.begin(); it_path != path_ghost.end(); ++it_path)
+  {
+    PrintingGhostEdge(*it_path);
+    PrintToLog("\nentry_price_src = %f, exit_price = %f, amount_trd = %ld, status_src = %s\n", stod((*it_path)["entry_price_src"]), stod((*it_path)["exit_price"]), stol((*it_path)["amount_trd"]), (*it_path)["status_src"]);
+    PNL_src = PNL_function(stod((*it_path)["entry_price_src"]), stod((*it_path)["exit_price"]), stol((*it_path)["amount_trd"]), (*it_path)["status_src"]);
+    PNL_trk = PNL_function(stod((*it_path)["entry_price_trk"]), stod((*it_path)["exit_price"]), stol((*it_path)["amount_trd"]), (*it_path)["status_trk"]);
+    sumPNL_trk += PNL_src + PNL_trk;
+  }
 }
 
 void listof_addresses_lives(std::vector<std::map<std::string, std::string>> lives, std::vector<std::string> &addrsv)
@@ -1183,6 +1189,18 @@ double PNL_function(double entry_price, double exit_price, long int amount_trd, 
     PNL = (double)amount_trd*(1/entry_price-1/exit_price);
   else if ( finding_string("Short", pt_jrow_database->status_trk) )
     PNL = (double)amount_trd*(1/exit_price-1/entry_price);
+
+  return PNL;
+}
+
+double PNL_function(double entry_price, double exit_price, long int amount_trd, std::string status)
+{
+  double PNL = 0;
+
+  // if ( finding_string("Long", status) )
+  //   PNL = (double)amount_trd*(1/entry_price-1/exit_price);
+  // else if ( finding_string("Short", status) )
+  //   PNL = (double)amount_trd*(1/exit_price-1/entry_price);
 
   return PNL;
 }
