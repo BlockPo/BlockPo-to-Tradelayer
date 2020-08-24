@@ -1606,15 +1606,18 @@ int input_activechannels_string(const std::string& s)
     for (const auto &v : vBalance)
     {
         //property:amount
+        std::vector<std::string> adReg;
+        boost::split(adReg, v, boost::is_any_of("-"), boost::token_compress_on);
+        const std::string& address = adReg[0];
         std::vector<std::string> reg;
-        boost::split(reg, v, boost::is_any_of("-"), boost::token_compress_on);
-        const std::string& address = reg[0];
-        const uint32_t& property = boost::lexical_cast<uint32_t>(reg[1]);
-        const uint32_t& amount = boost::lexical_cast<uint32_t>(reg[2]);
+        boost::split(reg, adReg[1], boost::is_any_of(":"), boost::token_compress_on);;
+        const uint32_t& property = boost::lexical_cast<uint32_t>(reg[0]);
+        const int64_t& amount = boost::lexical_cast<int64_t>(reg[1]);
         chn.balances[address][property] = amount;
     }
 
-    //inserting chn into map
+
+    // //inserting chn into map
     if(!channels_Map.insert(std::make_pair(chnAddr,chn)).second) return -1;
 
     return 0;
@@ -2257,17 +2260,18 @@ static int write_mp_withdrawals(std::ofstream& file, SHA256_CTX* shaCtx)
 }
 
 /** adding channel balances**/
-static void addBalances(const std::map<std::string,map<uint32_t, int64_t>>& balances, std::string& lineOut)
+void addBalances(const std::map<std::string,map<uint32_t, int64_t>>& balances, std::string& lineOut)
 {
     for(const auto &b : balances)
     {
         const std::string& address = b.first;
         const auto &pMap = b.second;
 
-        for (const auto &p : pMap){
-            const uint32_t& property = p.first;
-            const int64_t&  amount = p.second;
-            lineOut.append(strprintf("%s-%d:%d;",address, property, amount));
+        for (auto p = pMap.begin(); p != pMap.end(); ++p){
+            const uint32_t& property = p->first;
+            const int64_t&  amount = p->second;
+            lineOut.append(strprintf("%s-%d:%d",address, property, amount));
+            if (p != std::prev(pMap.end())) lineOut.append(";");
         }
 
     }
@@ -4620,7 +4624,7 @@ void CMPTradeList::recordNewCommit(const uint256& txid, const std::string& chann
 void CMPTradeList::recordNewWithdrawal(const uint256& txid, const std::string& channelAddress, const std::string& sender, uint32_t propertyId, uint64_t amountToWithdrawal, int blockNum, int blockIndex)
 {
   if (!pdb) return;
-  std::string strValue = strprintf("%s:%s:%d:%d:%d:%d:%s", channelAddress, sender, propertyId, amountToWithdrawal, blockNum, blockIndex,TYPE_WITHDRAWAL);
+  std::string strValue = strprintf("%s:%s:%d:%d:%d:%d:%s:%d", channelAddress, sender, propertyId, amountToWithdrawal, blockNum, blockIndex,TYPE_WITHDRAWAL, ACTIVE_WITHDRAWAL);
   Status status = pdb->Put(writeoptions, txid.ToString(), strValue);
   ++nWritten;
 
@@ -5668,32 +5672,6 @@ bool mastercore::makeWithdrawals(int Block)
 
 }
 
-/**
- * @return true if withdrawal is pending, false if it was done.
- */
-bool mastercore::checkWithdrawal(const std::string& channelAddress, const std::string& sender)
-{
-    for(auto it = withdrawal_Map.begin(); it != withdrawal_Map.end(); ++it)
-    {
-        const std::string& chn = it->first;
-
-        if (channelAddress != chn){
-            continue;
-        }
-
-        vector<withdrawalAccepted> &accepted = it->second;
-
-        auto itt = find_if(accepted.begin() , accepted.end(), [&sender](const withdrawalAccepted& wth){ return (sender == wth.address); });
-
-        if(itt != accepted.end()){
-            return true;
-        }
-    }
-
-    return false;
-
-}
-
 bool mastercore::closeChannels(int Block)
 {
     bool status = false;
@@ -6089,7 +6067,7 @@ bool CMPTradeList::getAllWithdrawals(const std::string& senderAddress, UniValue&
 
         // ensure correct amount of tokens in value string
         boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
-        if (vstr.size() != 7) {
+        if (vstr.size() != 8) {
             //PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
             continue;
         }
@@ -6109,6 +6087,9 @@ bool CMPTradeList::getAllWithdrawals(const std::string& senderAddress, UniValue&
         const int64_t& withdrawalAmount = boost::lexical_cast<int64_t>(vstr[3]);
         const int& blockNum = boost::lexical_cast<int>(vstr[4]);
         const int& txid = boost::lexical_cast<int>(vstr[5]);
+        const int& st = boost::lexical_cast<int>(vstr[7]);
+
+        const std::string status = (st == ACTIVE_WITHDRAWAL) ? "pending": "completed";
 
         // populate trade object and add to the trade array, correcting for orientation of trade
         UniValue trade(UniValue::VOBJ);
@@ -6119,6 +6100,7 @@ bool CMPTradeList::getAllWithdrawals(const std::string& senderAddress, UniValue&
             trade.push_back(Pair("withdrawal_amount", FormatByType(withdrawalAmount,2)));
             trade.push_back(Pair("property_id", FormatByType(propertyId,1)));
             trade.push_back(Pair("request_block", blockNum));
+            trade.push_back(Pair("status:", status));
             trade.push_back(Pair("tx_id", txid));
             tradeArray.push_back(trade);
             ++count;
@@ -6130,6 +6112,71 @@ bool CMPTradeList::getAllWithdrawals(const std::string& senderAddress, UniValue&
 }
 
 
+
+/**
+ * @retrieve if there's some withdrawal pending for a given address
+ */
+bool CMPTradeList::checkWithdrawal(const std::string& senderAddress, const std::string& channelAddress)
+{
+   if (!pdb) return false;
+   bool found = false;
+   std::string newValue;
+   std::vector<std::string> vstr;
+   std::string strKey;
+   leveldb::Iterator* it = NewIterator(); // Allocation proccess
+
+   for(it->SeekToLast(); it->Valid(); it->Prev())
+   {
+       // search key to see if this is a matching trade
+       strKey = it->key().ToString();
+       std::string strValue = it->value().ToString();
+
+       // ensure correct amount of tokens in value string
+       boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
+       if (vstr.size() != 8) {
+           //PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
+           continue;
+       }
+
+       const std::string& type = vstr[6];
+
+       if(type != TYPE_WITHDRAWAL)
+           continue;
+
+       const std::string& sender = vstr[1];
+
+       if(sender != senderAddress)
+           continue;
+
+      const std::string& cAddress = vstr[0];
+
+      if(cAddress != channelAddress)
+          continue;
+
+       const uint32_t& propertyId = boost::lexical_cast<uint32_t>(vstr[2]);
+       const int64_t& withdrawalAmount = boost::lexical_cast<int64_t>(vstr[3]);
+       const int& blockNum = boost::lexical_cast<int>(vstr[4]);
+       const int& txid = boost::lexical_cast<int>(vstr[5]);
+
+       newValue = strprintf("%s:%s:%d:%d:%d:%d:%s:%d", channelAddress, senderAddress, propertyId, withdrawalAmount, blockNum, txid, TYPE_WITHDRAWAL, COMPLETE_WITHDRAWAL);
+
+       found = true;
+       break;
+
+   }
+   // clean up
+   delete it; // Desallocation proccess
+
+   if (found) {
+      Status status = pdb->Put(writeoptions, strKey, newValue);
+      ++nWritten;
+
+      return status.ok();
+   }
+
+   return found;
+
+}
 /**
 * @return next id for kyc
 */
