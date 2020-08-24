@@ -727,10 +727,12 @@ UniValue tl_get_channelremaining(const JSONRPCRequest& request)
     RequireNotContract(propertyId);
 
     // checking the amount remaining in the channel
+    uint64_t remaining = 0;
     auto it = channels_Map.find(chn);
-    const channel& sChn = it->second;
-
-    uint64_t remaining = getRemaining(sChn, address, propertyId);
+    if (it != channels_Map.end()){
+        const channel& sChn = it->second;
+        remaining = getRemaining(sChn, address, propertyId);
+    }
 
     UniValue balanceObj(UniValue::VOBJ);
     balanceObj.push_back(Pair("channel reserve", FormatMP(isPropertyDivisible(propertyId), remaining)));

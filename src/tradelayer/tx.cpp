@@ -4470,16 +4470,16 @@ int CMPTransaction::logicMath_CommitChannel()
         return (PKT_ERROR_TOKENS -22);
     }
 
+    if (!IsPropertyIdValid(propertyId)) {
+        PrintToLog("%s(): rejected: property %d does not exist\n", __func__, property);
+        return (PKT_ERROR_TOKENS -24);
+    }
+    
     if (!channelSanityChecks(sender, receiver, propertyId, amount_commited, block, tx_idx)){
         PrintToLog("%s(): rejected: invalid address or channel is inactive\n", __func__);
         return (PKT_ERROR_TOKENS -23);
     }
 
-
-    if (!IsPropertyIdValid(propertyId)) {
-        PrintToLog("%s(): rejected: property %d does not exist\n", __func__, property);
-        return (PKT_ERROR_TOKENS -24);
-    }
 
 
     // ------------------------------------------
@@ -4666,7 +4666,7 @@ int CMPTransaction::logicMath_Instant_Trade()
     return (PKT_ERROR_KYC -20);
   }
 
-  if(block < block_forexpiry) {
+  if(block_forexpiry < block) {
       PrintToLog("%s(): rejected: tx expired (actual block: %d, expiry: %d\n", __func__,block , block_forexpiry);
       return (PKT_ERROR_CHANNELS -16);
   }

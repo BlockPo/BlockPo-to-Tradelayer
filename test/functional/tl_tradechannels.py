@@ -401,7 +401,7 @@ class ChannelsBasicsTest (BitcoinTestFramework):
 
 
         self.log.info("Creating payload for instant trade")
-        params = str([4, '1000', 5, '2000', 220]).replace("'",'"')
+        params = str([4, '1000', 5, '2000', 225]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_createpayload_instant_trade", params)
         assert_equal(out['error'], None)
         payload = out['result']

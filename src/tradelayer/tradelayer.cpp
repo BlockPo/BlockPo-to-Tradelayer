@@ -5731,10 +5731,10 @@ bool mastercore::closeChannels(int Block)
 
             if (first_rem > 0)
             {
+
                 assert(update_tally_map(chn.multisig, propertyId, -first_rem, CHANNEL_RESERVE));
                 assert(update_tally_map(chn.first, propertyId, first_rem, BALANCE));
                 assert(updateChannelBal(chn, chn.first, propertyId, -first_rem));
-
                 // saving the withdrawal
                 t_tradelistdb->recordCloseWithdrawal(chn.multisig, chn.first, propertyId, first_rem, Block);
 
@@ -5745,7 +5745,6 @@ bool mastercore::closeChannels(int Block)
                 assert(update_tally_map(chn.multisig, propertyId, -second_rem, CHANNEL_RESERVE));
                 assert(update_tally_map(chn.second, propertyId, second_rem, BALANCE));
                 assert(updateChannelBal(chn, chn.second, propertyId, -second_rem));
-
                 // saving the withdrawal
                 t_tradelistdb->recordCloseWithdrawal(chn.multisig, chn.first, propertyId, second_rem, Block);
 
@@ -5758,7 +5757,6 @@ bool mastercore::closeChannels(int Block)
 
         // deleting element from map
         channels_Map.erase(it++);
-
 
     }
 
@@ -5841,12 +5839,12 @@ bool CMPTradeList::getAllCommits(const std::string& senderAddress, UniValue& tra
 uint64_t mastercore::getRemaining(const channel& chn, const std::string& address, uint32_t propertyId)
 {
     uint64_t remaining = 0;
-    auto itt = chn.balances.find(address);
-    if (itt != chn.balances.end())
+    auto it = chn.balances.find(address);
+    if (it != chn.balances.end())
     {
-        const auto &pMap = itt->second;
-        auto ittt = pMap.find(propertyId);
-        remaining = (ittt != pMap.end()) ? ittt->second : 0;
+        const auto &pMap = it->second;
+        auto itt = pMap.find(propertyId);
+        remaining = (itt != pMap.end()) ? itt->second : 0;
     }
 
     return remaining;
@@ -5866,8 +5864,7 @@ bool mastercore::updateChannelBal(channel& chn, const std::string& address, uint
     auto it = chn.balances.find(address);
     if (it != chn.balances.end())
     {
-        PrintToLog("%s() address found: %s\n",__func__, address);
-        auto &pMap = it->second;
+        const auto &pMap = it->second;
         auto itt = pMap.find(propertyId);
         if (itt != pMap.end()){
             amount_remaining = itt->second;
@@ -5887,8 +5884,9 @@ bool mastercore::updateChannelBal(channel& chn, const std::string& address, uint
 
     }
 
-    amount_remaining += amount;
-    chn.balances[address][propertyId] = amount_remaining;
+    chn.balances[address][propertyId] += amount;
+    // const int64_t aux = chn.balances[address][propertyId];
+    // PrintToLog("%s(): amount_remaining, after: %d\n", __func__, aux);
     return true;
 
 }
@@ -6722,6 +6720,12 @@ bool CMPTradeList::setChannelClosed(const std::string& channelAddr)
  */
 bool CMPTradeList::tryAddSecond(const std::string& candidate, const std::string& channelAddr, uint32_t propertyId, uint64_t amount_commited)
 {
+    auto it = channels_Map.find(channelAddr);
+    if (it == channels_Map.end()){
+        PrintToLog("%s(): channel is not active! (not found in map)\n",__func__);
+        return false;
+    }
+
     if (!pdb) return false;
     std::vector<std::string> vstr;
     std::string strValue, newValue;
@@ -6746,12 +6750,8 @@ bool CMPTradeList::tryAddSecond(const std::string& candidate, const std::string&
     // if candidate is one of the channel's addresses: update balance and break.
     if (candidate == frAddr || candidate == secAddr)
     {
-        auto it = channels_Map.find(channelAddr);
-        if(it != channels_Map.end())
-        {
-            channel& chn = it->second;
-            updateChannelBal(chn, candidate, propertyId, amount_commited);
-        }
+        channel& chn = it->second;
+        updateChannelBal(chn, candidate, propertyId, amount_commited);
 
         return true;
     }
@@ -6763,12 +6763,12 @@ bool CMPTradeList::tryAddSecond(const std::string& candidate, const std::string&
     }
 
     const std::string& chnStatus = vstr[4];
-    auto itt = channels_Map.find(channelAddr);
 
-    if(chnStatus == CLOSED_CHANNEL || itt == channels_Map.end()){
+    if(chnStatus == CLOSED_CHANNEL){
         PrintToLog("%s(): channel is closed\n",__func__);
         return false;
     }
+
 
     const int& blockNum = boost::lexical_cast<int>(vstr[2]);
     const int& blockIndex = boost::lexical_cast<int>(vstr[3]);
@@ -6779,12 +6779,9 @@ bool CMPTradeList::tryAddSecond(const std::string& candidate, const std::string&
     ++nWritten;
 
     // updating in memory
-    if(itt != channels_Map.end())
-    {
-        channel& chn = itt->second;
-        chn.second = candidate;
-        updateChannelBal(chn, candidate, propertyId, amount_commited);
-    }
+    channel& chn = it->second;
+    chn.second = candidate;
+    updateChannelBal(chn, candidate, propertyId, amount_commited);
 
     return (status.ok() && status1.ok());
 
@@ -6837,7 +6834,7 @@ bool mastercore::transferAll(const std::string& sender, const std::string& recei
     }
 
 
-    // clearing channel balance Registers
+    // clearing channel balance registers
     auto it = channels_Map.find(sender);
     if (it != channels_Map.end()){
         channel &chn = it->second;
