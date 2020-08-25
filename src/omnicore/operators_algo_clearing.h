@@ -145,6 +145,6 @@ void PrintingGhostEdge(std::map<std::string, std::string> &path_first);
 
 void calculate_pnl_forghost(std::vector<std::map<std::string, std::string>> path_main, double &PNL_total);
 
-double PNL_function(double entry_price, double exit_price, long int amount_trd, std::string status);
+double PNL_ghosts(double entry_price, double exit_price, long int amount_trd, std::string status);
 
 #endif

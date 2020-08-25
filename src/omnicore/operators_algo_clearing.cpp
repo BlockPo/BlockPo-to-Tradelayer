@@ -1072,11 +1072,10 @@ void calculate_pnl_forghost(std::vector<std::map<std::string, std::string>> path
   PrintToLog("\nChecking PNL for Ghosts\n");
   for (it_path = path_ghost.begin(); it_path != path_ghost.end(); ++it_path)
   {
-    PrintingGhostEdge(*it_path);
-    PrintToLog("\nentry_price_src = %f, exit_price = %f, amount_trd = %ld, status_src = %s\n", stod((*it_path)["entry_price_src"]), stod((*it_path)["exit_price"]), stol((*it_path)["amount_trd"]), (*it_path)["status_src"]);
-    PNL_src = PNL_function(stod((*it_path)["entry_price_src"]), stod((*it_path)["exit_price"]), stol((*it_path)["amount_trd"]), (*it_path)["status_src"]);
-    PNL_trk = PNL_function(stod((*it_path)["entry_price_trk"]), stod((*it_path)["exit_price"]), stol((*it_path)["amount_trd"]), (*it_path)["status_trk"]);
+    PNL_src = PNL_ghosts(stod((*it_path)["entry_price_src"]), stod((*it_path)["exit_price"]), stol((*it_path)["amount_trd"]), (*it_path)["status_src"]);
+    PNL_trk = PNL_ghosts(stod((*it_path)["entry_price_trk"]), stod((*it_path)["exit_price"]), stol((*it_path)["amount_trd"]), (*it_path)["status_trk"]);
     sumPNL_trk += PNL_src + PNL_trk;
+    PrintToLog("\nPNL_src = %f\t PNL_trk = %f\t sumPNL_trk = %f\n", PNL_src, PNL_trk, sumPNL_trk);
   }
 }
 
@@ -1193,15 +1192,15 @@ double PNL_function(double entry_price, double exit_price, long int amount_trd, 
   return PNL;
 }
 
-double PNL_function(double entry_price, double exit_price, long int amount_trd, std::string status)
+double PNL_ghosts(double entry_price, double exit_price, long int amount_trd, std::string status)
 {
   double PNL = 0;
-
-  // if ( finding_string("Long", status) )
-  //   PNL = (double)amount_trd*(1/entry_price-1/exit_price);
-  // else if ( finding_string("Short", status) )
-  //   PNL = (double)amount_trd*(1/exit_price-1/entry_price);
-
+  
+  if (finding_string("Long", status))
+    PNL = (double)amount_trd*(1/entry_price-1/exit_price);
+  else if (finding_string("Short", status))
+    PNL = (double)amount_trd*(1/exit_price-1/entry_price);
+    
   return PNL;
 }
 
