@@ -4474,7 +4474,7 @@ int CMPTransaction::logicMath_CommitChannel()
         PrintToLog("%s(): rejected: property %d does not exist\n", __func__, property);
         return (PKT_ERROR_TOKENS -24);
     }
-    
+
     if (!channelSanityChecks(sender, receiver, propertyId, amount_commited, block, tx_idx)){
         PrintToLog("%s(): rejected: invalid address or channel is inactive\n", __func__);
         return (PKT_ERROR_TOKENS -23);
@@ -4548,6 +4548,7 @@ int CMPTransaction::logicMath_Withdrawal_FromChannel()
 
     // checking the amount remaining in the channel
     auto it = channels_Map.find(receiver);
+    assert(it != channels_Map.end());
     channel &chn = it->second;
 
 
@@ -4835,7 +4836,7 @@ int CMPTransaction::logicMath_Instant_LTC_Trade()
         return (PKT_ERROR_CHANNELS -15);
   }
 
-  if(block < block_forexpiry) {
+  if(block_forexpiry < block) {
       PrintToLog("%s(): rejected: tx expired (actual block: %d, expiry: %d\n", __func__,block , block_forexpiry);
       return (PKT_ERROR_CHANNELS -16);
   }

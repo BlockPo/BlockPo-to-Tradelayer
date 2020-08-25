@@ -423,7 +423,7 @@ class CMPTradeList : public CDBBase
   uint64_t addTrades(const std::string& channelAddr, const std::string& senderAddr, uint32_t propertyId);
   uint64_t addClosedWithrawals(const std::string& channelAddr, const std::string& receiver, uint32_t propertyId);
   bool updateWithdrawal(const std::string& senderAddress, const std::string& channelAddress);
-  
+
   //KYC
   bool updateIdRegister(const uint256& txid, const std::string& address, const std::string& newAddr, int blockNum, int blockIndex);
   bool checkKYCRegister(const std::string& address, int& kyc_id);
@@ -614,6 +614,7 @@ namespace mastercore
 
   bool updateChannelBal(channel& chn, const std::string& address, uint32_t propertyId, int64_t amount);
 
+  bool checkWithdrawal(const std::string& txid, const std::string& channelAddress);
 }
 
 #endif // TRADELAYER_TL_H

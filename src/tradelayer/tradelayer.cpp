@@ -5662,6 +5662,23 @@ bool mastercore::makeWithdrawals(int Block)
 
 }
 
+bool mastercore::checkWithdrawal(const std::string& txid, const std::string& channelAddress)
+{
+    bool found = false;
+    auto it =  withdrawal_Map.find(channelAddress);
+    if(it != withdrawal_Map.end())
+    {
+        const auto &wVec = it->second;
+        auto itt = std::find_if (wVec.begin(), wVec.end(), [&txid](const withdrawalAccepted& w){ return (txid == w.txid.ToString());});
+        if (itt != wVec.end()){
+            found = true;
+        }
+    }
+
+    return found;
+
+}
+
 bool mastercore::closeChannels(int Block)
 {
     bool status = false;
@@ -6058,7 +6075,7 @@ bool CMPTradeList::getAllWithdrawals(const std::string& senderAddress, UniValue&
     for(it->SeekToLast(); it->Valid(); it->Prev())
     {
         // search key to see if this is a matching trade
-        std::string strKey = it->key().ToString();
+        std::string txid = it->key().ToString();
         std::string strValue = it->value().ToString();
 
         // ensure correct amount of tokens in value string
@@ -6082,10 +6099,10 @@ bool CMPTradeList::getAllWithdrawals(const std::string& senderAddress, UniValue&
         const uint32_t& propertyId = boost::lexical_cast<uint32_t>(vstr[2]);
         const int64_t& withdrawalAmount = boost::lexical_cast<int64_t>(vstr[3]);
         const int& blockNum = boost::lexical_cast<int>(vstr[4]);
-        const int& txid = boost::lexical_cast<int>(vstr[5]);
+        const int& tx_index = boost::lexical_cast<int>(vstr[5]);
         const int& st = boost::lexical_cast<int>(vstr[7]);
 
-        const std::string status = (st == ACTIVE_WITHDRAWAL && checkChannelAddress(cAddress)) ? "pending": "completed";
+        const std::string status = (st == ACTIVE_WITHDRAWAL && checkWithdrawal(txid, cAddress)) ? "pending": "completed";
 
         // populate trade object and add to the trade array, correcting for orientation of trade
         UniValue trade(UniValue::VOBJ);
@@ -6096,6 +6113,7 @@ bool CMPTradeList::getAllWithdrawals(const std::string& senderAddress, UniValue&
             trade.push_back(Pair("withdrawal_amount", FormatByType(withdrawalAmount,2)));
             trade.push_back(Pair("property_id", FormatByType(propertyId,1)));
             trade.push_back(Pair("request_block", blockNum));
+            trade.push_back(Pair("tx_index", tx_index));
             trade.push_back(Pair("status:", status));
             trade.push_back(Pair("tx_id", txid));
             tradeArray.push_back(trade);
