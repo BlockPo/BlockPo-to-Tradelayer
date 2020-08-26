@@ -700,6 +700,46 @@ UniValue tl_get_channelreserve(const JSONRPCRequest& request)
     return balanceObj;
 }
 
+UniValue tl_get_channelremaining(const JSONRPCRequest& request)
+{
+    if (request.params.size() != 3 || request.fHelp)
+        throw runtime_error(
+            "tl_getchannelremaining \"address\" propertyid\n"
+            "\nReturns the token reserve account for a given single address in channel.\n"
+            "\nArguments:\n"
+            "1. sender               (string, required) the user address\n"
+            "2. channel              (string, required) the channel address\n"
+            "2. propertyid           (number, required) the contract identifier\n"
+            "\nResult:\n"
+            "{\n"
+            "  \"channel reserve\" : \"n.nnnnnnnn\",   (string) the available balance for single address\n"
+            "}\n"
+            "\nExamples:\n"
+            + HelpExampleCli("tl_get_channelreserve", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", \"Qdj12J6FZgaY34ZNx12pVpTeF9NQdmpGzj\" 1")
+            + HelpExampleRpc("tl_get_channelreserve", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", \"Qdj12J6FZgaY34ZNx12pVpTeF9NQdmpGzj\", 1")
+        );
+
+    std::string address = ParseAddress(request.params[0]);
+    std::string chn = ParseAddress(request.params[1]);
+    uint32_t propertyId = ParsePropertyId(request.params[2]);
+
+    RequireExistingProperty(propertyId);
+    RequireNotContract(propertyId);
+
+    // checking the amount remaining in the channel
+    uint64_t remaining = 0;
+    auto it = channels_Map.find(chn);
+    if (it != channels_Map.end()){
+        const channel& sChn = it->second;
+        remaining = getRemaining(sChn, address, propertyId);
+    }
+
+    UniValue balanceObj(UniValue::VOBJ);
+    balanceObj.push_back(Pair("channel reserve", FormatMP(isPropertyDivisible(propertyId), remaining)));
+
+    return balanceObj;
+}
+
 UniValue tl_getchannel_info(const JSONRPCRequest& request)
 {
     if (request.params.size() != 1 || request.fHelp)
@@ -3227,6 +3267,7 @@ static const CRPCCommand commands[] =
   { "trade layer (data retieval)",  "tl_getopen_interest",          &tl_getopen_interest,           {} },
   { "trade layer (data retieval)",  "tl_getvesting_info",           &tl_getvesting_info,            {} },
   { "trade layer (data retieval)",  "tl_listvesting_addresses",     &tl_listvesting_addresses,      {} },
+  { "trade layer (data retieval)",  "tl_get_channelremaining",      &tl_get_channelremaining,       {} },
 };
 
 void RegisterTLDataRetrievalRPCCommands(CRPCTable &tableRPC)

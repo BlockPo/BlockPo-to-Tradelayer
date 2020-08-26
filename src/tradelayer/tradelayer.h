@@ -213,14 +213,6 @@ enum FILETYPES {
 #define CNY       11
 #define dUSD      12
 
-// #define CONTRACT_ALL        3
-// #define CONTRACT_ALL_DUSD   4
-// #define CONTRACT_ALL_LTC    5
-// #define CONTRACT_LTC_DJPY   6
-// #define CONTRACT_LTC_DUSD   7
-// #define CONTRACT_LTC_DEUR   8
-// #define CONTRACT_sLTC_ALL   9
-
 // channels definitions
 #define TYPE_COMMIT                     "commit"
 #define TYPE_WITHDRAWAL                 "withdrawal"
@@ -234,6 +226,10 @@ enum FILETYPES {
 // channel status
 #define ACTIVE_CHANNEL                  "active"
 #define CLOSED_CHANNEL                  "closed"
+
+// withdrawal status
+#define ACTIVE_WITHDRAWAL                1
+#define COMPLETE_WITHDRAWAL              0
 
 // Currency in existance (options for createcontract)
 uint32_t const TL_dUSD  = 1;
@@ -271,6 +267,8 @@ long int FormatShortIntegerMP(int64_t n);
 uint64_t int64ToUint64(int64_t value);
 std::string FormatDivisibleZeroClean(int64_t n);
 
+void addBalances(const std::map<std::string,map<uint32_t, int64_t>>& balances, std::string& lineOut);
+
 /** Returns the marker for transactions. */
 const std::vector<unsigned char> GetTLMarker();
 
@@ -288,6 +286,8 @@ extern CCriticalSection cs_tally;
    std::string second;
    int expiry_height;
    int last_exchange_block;
+   //! Available balances for first  and second addressess properties
+   std::map<std::string,map<uint32_t, int64_t>> balances;
 
    channel() : multisig(""), first(""), second("pending"), expiry_height(0), last_exchange_block(0) {}
  };
@@ -416,13 +416,13 @@ class CMPTradeList : public CDBBase
   bool getAllWithdrawals(const std::string& senderAddress, UniValue& tradeArray);
   bool getChannelInfo(const std::string& channelAddress, UniValue& tradeArray);
   bool checkChannelAddress(const std::string& channelAddress);
-  channel getChannelAddresses(const std::string& channelAddress);
   bool checkChannelRelation(const std::string& address, std::string& channelAddr);
-  uint64_t getRemaining(const std::string& channelAddress, const std::string& senderAddress, uint32_t propertyId);
-  bool tryAddSecond(const std::string& candidate, const std::string& channelAddr);
+  bool tryAddSecond(const std::string& candidate, const std::string& channelAddr, uint32_t propertyId, uint64_t amount_commited);
   bool setChannelClosed(const std::string& channelAddr);
   uint64_t addWithAndCommits(const std::string& channelAddr, const std::string& senderAddr, uint32_t propertyId);
   uint64_t addTrades(const std::string& channelAddr, const std::string& senderAddr, uint32_t propertyId);
+  uint64_t addClosedWithrawals(const std::string& channelAddr, const std::string& receiver, uint32_t propertyId);
+  bool updateWithdrawal(const std::string& senderAddress, const std::string& channelAddress);
 
   //KYC
   bool updateIdRegister(const uint256& txid, const std::string& address, const std::string& newAddr, int blockNum, int blockIndex);
@@ -455,7 +455,6 @@ class CMPTradeList : public CDBBase
   int getMPTradeCountTotal();
   int getNextId();
   void getUpnInfo(const std::string& address, uint32_t contractId, UniValue& response, bool showVerbose);
-  bool checkTranfer(const std::string& address);
   bool kycConsensusHash(SHA256_CTX& shaCtx);
   bool attConsensusHash(SHA256_CTX& shaCtx);
 };
@@ -477,6 +476,10 @@ extern std::map<uint32_t, int64_t> global_balance_money;
 
 //! Vector containing a list of properties relative to the wallet
 extern std::set<uint32_t> global_wallet_property_list;
+
+
+/** Map of active channels**/
+extern std::map<std::string,channel> channels_Map;
 
 int64_t getMPbalance(const std::string& address, uint32_t propertyId, TallyType ttype);
 int64_t getUserAvailableMPbalance(const std::string& address, uint32_t propertyId);
@@ -600,16 +603,18 @@ namespace mastercore
 
   std::string updateStatus(int64_t oldPos, int64_t newPos);
 
-  void createChannel(const std::string& sender, const std::string& receiver, int block, int tx_id);
+  void createChannel(const std::string& sender, const std::string& receiver, uint32_t propertyId, uint64_t amount_commited, int block, int tx_id);
 
-  bool channelSanityChecks(const std::string& sender, const std::string& receiver, int block, int tx_idx);
-
-  bool checkWithdrawal(const std::string& channelAddress, const std::string& sender);
-
+  bool channelSanityChecks(const std::string& sender, const std::string& receiver, uint32_t propertyId, uint64_t amount_commited, int block, int tx_idx);
   bool transferAll(const std::string& sender, const std::string& receiver);
 
   const string getVestingAdmin();
 
+  uint64_t getRemaining(const channel& chn, const std::string& address, uint32_t propertyId);
+
+  bool updateChannelBal(channel& chn, const std::string& address, uint32_t propertyId, int64_t amount);
+
+  bool checkWithdrawal(const std::string& txid, const std::string& channelAddress);
 }
 
 #endif // TRADELAYER_TL_H

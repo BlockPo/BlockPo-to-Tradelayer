@@ -52,7 +52,6 @@ extern std::map<std::string,uint32_t> peggedIssuers;
 extern std::map<uint32_t,std::map<int,oracledata>> oraclePrices;
 extern std::map<std::string,vector<withdrawalAccepted>> withdrawal_Map;
 extern std::map<uint32_t, std::map<uint32_t, int64_t>> market_priceMap;
-extern std::map<std::string,channel> channels_Map;
 extern double denMargin;
 extern uint64_t marketP[NPTYPES];
 extern volatile int id_contract;
@@ -1957,6 +1956,7 @@ bool CMPTransaction::interpret_Instant_LTC_Trade()
   std::vector<uint8_t> vecPropertyId = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecAmountForSale = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecPrice = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecBlock = GetNextVarIntBytes(i);
 
   if (!vecTypeBytes.empty()) {
       type = DecompressInteger(vecTypeBytes);
@@ -1978,6 +1978,10 @@ bool CMPTransaction::interpret_Instant_LTC_Trade()
       price = DecompressInteger(vecPrice);
   } else return false;
 
+  if (!vecPrice.empty()) {
+      block_forexpiry = DecompressInteger(vecBlock);
+  } else return false;
+
   if (true || (!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
   {
       PrintToLog("\t version: %d\n", version);
@@ -1987,6 +1991,7 @@ bool CMPTransaction::interpret_Instant_LTC_Trade()
       PrintToLog("\t price : %d\n", price);
       PrintToLog("\t sender : %s\n", sender);
       PrintToLog("\t receiver : %d\n", receiver);
+      PrintToLog("\t expiry : %d\n", block_forexpiry);
   }
 
   return true;
@@ -4465,16 +4470,16 @@ int CMPTransaction::logicMath_CommitChannel()
         return (PKT_ERROR_TOKENS -22);
     }
 
-    if (!channelSanityChecks(sender, receiver, block, tx_idx)){
-        PrintToLog("%s(): rejected: invalid address or channel is inactive\n", __func__);
-        return (PKT_ERROR_TOKENS -23);
-    }
-
-
     if (!IsPropertyIdValid(propertyId)) {
         PrintToLog("%s(): rejected: property %d does not exist\n", __func__, property);
         return (PKT_ERROR_TOKENS -24);
     }
+
+    if (!channelSanityChecks(sender, receiver, propertyId, amount_commited, block, tx_idx)){
+        PrintToLog("%s(): rejected: invalid address or channel is inactive\n", __func__);
+        return (PKT_ERROR_TOKENS -23);
+    }
+
 
 
     // ------------------------------------------
@@ -4523,7 +4528,7 @@ int CMPTransaction::logicMath_Withdrawal_FromChannel()
     }
 
     if (!t_tradelistdb->checkChannelAddress(receiver)) {
-        PrintToLog("%s(): rejected: receiver: %s doesn't belong to multisig channel\n", __func__, receiver);
+        PrintToLog("%s(): rejected: receiver: %s is not multisig channel\n", __func__, receiver);
         return (PKT_ERROR_CHANNELS -10);
     }
 
@@ -4541,34 +4546,35 @@ int CMPTransaction::logicMath_Withdrawal_FromChannel()
         return (PKT_ERROR_TOKENS -25);
     }
 
-    uint64_t amount_remaining = t_tradelistdb->getRemaining(receiver, sender, propertyId);
+    // checking the amount remaining in the channel
+    auto it = channels_Map.find(receiver);
+    assert(it != channels_Map.end());
+    channel &chn = it->second;
 
-    if (msc_debug_withdrawal_from_channel) PrintToLog("all the amount remaining for the receiver address : %s\n",amount_remaining);
 
-    if (amount_to_withdraw > amount_remaining)
+    bool success = updateChannelBal(chn, sender, propertyId, -amount_to_withdraw);
+
+    if (!success)
     {
-        PrintToLog("%s(): amount to withdrawal is bigger than amount remaining in channel for the address %s\n", __func__, sender);
+        PrintToLog("%s(): is not possible withdrawal\n", __func__);
         return (PKT_ERROR_TOKENS -26);
     }
 
     withdrawalAccepted wthd;
-
     wthd.address = sender;
     wthd.deadline_block = block + 7;
     wthd.propertyId = propertyId;
     wthd.amount = amount_to_withdraw;
     wthd.txid = txid;
 
-
     if (msc_debug_withdrawal_from_channel) PrintToLog("checking wthd element : address: %s, deadline: %d, propertyId: %d, amount: %d \n", wthd.address, wthd.deadline_block, wthd.propertyId, wthd.amount);
 
-
-    auto it = withdrawal_Map.find(receiver);
+    auto p = withdrawal_Map.find(receiver);
 
     // channel found !
-    if(it != withdrawal_Map.end())
+    if(p != withdrawal_Map.end())
     {
-        vector<withdrawalAccepted>& whAc = it->second;
+        vector<withdrawalAccepted>& whAc = p->second;
         whAc.push_back(wthd);
 
     } else {
@@ -4576,6 +4582,7 @@ int CMPTransaction::logicMath_Withdrawal_FromChannel()
         whAcc.push_back(wthd);
         withdrawal_Map.insert(std::make_pair(receiver,whAcc));
     }
+
 
     t_tradelistdb->recordNewWithdrawal(txid, receiver, sender, propertyId, amount_to_withdraw, block, tx_idx);
 
@@ -4617,53 +4624,51 @@ int CMPTransaction::logicMath_Instant_Trade()
   }
 
   int kyc_id;
+  channel chn;
+  auto it = channels_Map.find(sender);
+  if(it != channels_Map.end()){
+      chn = it->second;
+  }
 
-  if(!t_tradelistdb->checkAttestationReg(sender,kyc_id)){
+  if (chn.multisig.empty() && chn.first.empty() && chn.second.empty()) {
+      PrintToLog("%s(): rejected: some address doesn't belong to multisig channel \n", __func__);
+      return (PKT_ERROR_CHANNELS -16);
+  }
+
+  // using first address data
+  if(!t_tradelistdb->checkAttestationReg(chn.first,kyc_id)){
     PrintToLog("%s(): rejected: sender (%s) kyc ckeck failed\n", __func__, sender);
     return (PKT_ERROR_KYC -10);
   }
 
-  // using sender data
   if(!t_tradelistdb->kycPropertyMatch(property, kyc_id)){
-    PrintToLog("%s(): rejected: property %d can't be traded with this kyc for sender (%s)\n", __func__, property, sender);
+    PrintToLog("%s(): rejected: property %d can't be traded with this kyc for first address (%s)\n", __func__, property, chn.first);
     return (PKT_ERROR_KYC -20);
   }
 
-  // using sender data
+  if(!t_tradelistdb->kycPropertyMatch(desired_property, kyc_id)){
+    PrintToLog("%s(): rejected: property %d can't be traded with this kyc for first address (%s)\n", __func__, desired_property, chn.first);
+    return (PKT_ERROR_KYC -20);
+  }
+
+  // using second address data
+  if(!t_tradelistdb->checkAttestationReg(chn.second,kyc_id)){
+    PrintToLog("%s(): rejected: second address (%s) kyc ckeck failed\n", __func__, chn.second);
+    return (PKT_ERROR_KYC -10);
+  }
+
+  if(!t_tradelistdb->kycPropertyMatch(property, kyc_id)){
+    PrintToLog("%s(): rejected: property %d can't be traded with this kyc for second address (%s)\n", __func__, property, chn.second);
+    return (PKT_ERROR_KYC -20);
+  }
+
   if(!t_tradelistdb->kycPropertyMatch(desired_property, kyc_id)){
     PrintToLog("%s(): rejected: property %d can't be traded with this kyc for sender (%s)\n", __func__, desired_property, sender);
     return (PKT_ERROR_KYC -20);
   }
 
-
-  if(!t_tradelistdb->checkAttestationReg(receiver,kyc_id)){
-    PrintToLog("%s(): rejected: receiver (%s) kyc ckeck failed\n", __func__, receiver);
-    return (PKT_ERROR_KYC -10);
-  }
-
-  // using receiver data
-  if(!t_tradelistdb->kycPropertyMatch(property, kyc_id)){
-    PrintToLog("%s(): rejected: property %d can't be traded with this kyc for receiver (%s)\n", __func__, property, receiver);
-    return (PKT_ERROR_KYC -20);
-  }
-
-  // using receiver data
-  if(!t_tradelistdb->kycPropertyMatch(desired_property, kyc_id)){
-    PrintToLog("%s(): rejected: property %d can't be traded with this kyc for receiver (%s)\n", __func__, desired_property, receiver);
-    return (PKT_ERROR_KYC -20);
-  }
-
-
-  std::string chnAddr;
-  if(!t_tradelistdb->checkChannelRelation(sender, chnAddr) && !t_tradelistdb->checkChannelRelation(receiver, chnAddr)){
-        PrintToLog("%s(): addresses (%s, %s) are not related with any channel\n", __func__, sender, receiver);
-        return (PKT_ERROR_CHANNELS -15);
-  }
-
-  channel chn = t_tradelistdb->getChannelAddresses(chnAddr);
-
-  if (chn.multisig.empty() && chn.first.empty() && chn.second.empty()) {
-      PrintToLog("%s(): rejected: some address doesn't belong to multisig channel \n", __func__);
+  if(block_forexpiry < block) {
+      PrintToLog("%s(): rejected: tx expired (actual block: %d, expiry: %d\n", __func__,block , block_forexpiry);
       return (PKT_ERROR_CHANNELS -16);
   }
 
@@ -4672,26 +4677,26 @@ int CMPTransaction::logicMath_Instant_Trade()
       return (PKT_ERROR_CHANNELS -17);
   }
 
-  int64_t nBalance = getMPbalance(chnAddr, property, CHANNEL_RESERVE);
+  int64_t nBalance = getMPbalance(sender, property, CHANNEL_RESERVE);
   if (property > 0 && nBalance < (int64_t) amount_forsale) {
       PrintToLog("%s(): rejected: channel address %s has insufficient balance of property %d [%s < %s]\n",
               __func__,
-              chnAddr,
+              sender,
               property,
               FormatMP(property, nBalance),
               FormatMP(property, amount_forsale));
-      return (PKT_ERROR_CHANNELS -17);
+      return (PKT_ERROR_CHANNELS -18);
   }
 
-  nBalance = getMPbalance(chnAddr, desired_property, CHANNEL_RESERVE);
+  nBalance = getMPbalance(sender, desired_property, CHANNEL_RESERVE);
   if (desired_property > 0 && nBalance < (int64_t) desired_value) {
       PrintToLog("%s(): rejected: channel address %s has insufficient balance of property %d [%s < %s]\n",
               __func__,
-              chnAddr,
+              sender,
               desired_property,
               FormatMP(desired_property, nBalance),
               FormatMP(desired_property, desired_value));
-      return (PKT_ERROR_CHANNELS -17);
+      return (PKT_ERROR_CHANNELS -18);
   }
 
   // ------------------------------------------
@@ -4706,8 +4711,11 @@ int CMPTransaction::logicMath_Instant_Trade()
 
       t_tradelistdb->recordNewInstantTrade(txid, chn.multisig, chn.first, chn.second, property, amount_forsale, desired_property, desired_value, block, tx_idx);
 
+      // updating channel balance for each address
+      assert(updateChannelBal(chn, chn.first, property, -amount_forsale));
+      assert(updateChannelBal(chn, chn.second, desired_property, -desired_value));
       // updating last exchange block
-      assert(mastercore::updateLastExBlock(block, chn.multisig));
+      assert(updateLastExBlock(block, chn.multisig));
 
   }
 
@@ -4757,10 +4765,13 @@ int CMPTransaction::logicMath_Transfer()
       return (PKT_ERROR_TOKENS -22);
   }
 
+   channel chn;
+   auto it = channels_Map.find(sender);
+   if(it != channels_Map.end()){
+       chn = it->second;
+   }
 
-  channel chnAddrs = t_tradelistdb->getChannelAddresses(sender);
-
-  if (chnAddrs.multisig.empty() && chnAddrs.first.empty() && chnAddrs.second.empty()) {
+  if (chn.multisig.empty() && chn.first.empty() && chn.second.empty()) {
       PrintToLog("%s(): rejected: address doesn't belong to multisig channel \n", __func__);
       return (PKT_ERROR_CHANNELS -15);
   }
@@ -4787,6 +4798,7 @@ int CMPTransaction::logicMath_Transfer()
 /** Tx 113 */
 int CMPTransaction::logicMath_Instant_LTC_Trade()
 {
+
   int rc = 1;
 
   if (!IsTransactionTypeAllowed(block, type, version)) {
@@ -4824,12 +4836,20 @@ int CMPTransaction::logicMath_Instant_LTC_Trade()
         return (PKT_ERROR_CHANNELS -15);
   }
 
+  if(block_forexpiry < block) {
+      PrintToLog("%s(): rejected: tx expired (actual block: %d, expiry: %d\n", __func__,block , block_forexpiry);
+      return (PKT_ERROR_CHANNELS -16);
+  }
 
-  channel chn = t_tradelistdb->getChannelAddresses(chnAddr);
+  channel chn;
+  auto it = channels_Map.find(chnAddr);
+  if(it != channels_Map.end()){
+     chn = it->second;
+  }
 
   if (chn.expiry_height < block) {
       PrintToLog("%s(): rejected: out of channel deadline: actual block: %d, deadline: %d\n", __func__, block, chn.expiry_height);
-      return (PKT_ERROR_CHANNELS -16);
+      return (PKT_ERROR_CHANNELS -17);
   }
 
   int64_t nBalance = getMPbalance(chnAddr, property, CHANNEL_RESERVE);
@@ -4840,12 +4860,12 @@ int CMPTransaction::logicMath_Instant_LTC_Trade()
               property,
               FormatMP(property, nBalance),
               FormatMP(property, amount_forsale));
-      return (PKT_ERROR_CHANNELS -17);
+      return (PKT_ERROR_CHANNELS -18);
   }
 
    // ------------------------------------------
 
-   // NOTE: sender is the buyer, receiver is the seller.
+   /**Sender: buyer of tokens, receiver: seller**/
    PrintToLog("%s(): sender: %s, receiver: %s, amount_forsale: %d, price: %d, property: %d\n",__func__,sender, receiver, amount_forsale, price, property);
 
    return rc;
@@ -4878,17 +4898,23 @@ int CMPTransaction::logicMath_Contract_Instant()
         return (PKT_ERROR_CHANNELS -14);
     }
 
-    channel chnAddrs = t_tradelistdb->getChannelAddresses(sender);
+    channel chn;
+    auto it = channels_Map.find(sender);
+    if(it != channels_Map.end()){
+        chn = it->second;
+    }
 
-    if (sender.empty() || chnAddrs.first.empty() || chnAddrs.second.empty())
+    PrintToLog("%s(): channel: %s, sender: %s, receiver: %s\n", __func__,  chn.first, sender, receiver);
+
+    if (sender.empty() || chn.first.empty() || chn.second.empty())
     {
         PrintToLog("%s(): rejected: some address doesn't belong to multisig channel\n", __func__);
         return (PKT_ERROR_CHANNELS -15);
     }
 
-    if (chnAddrs.expiry_height < block)
+    if (chn.expiry_height < block)
     {
-        PrintToLog("%s(): rejected: out of channel deadline: actual block: %d, deadline: %d\n", __func__, block, chnAddrs.expiry_height);
+        PrintToLog("%s(): rejected: out of channel deadline: actual block: %d, deadline: %d\n", __func__, block, chn.expiry_height);
         return (PKT_ERROR_CHANNELS -16);
     }
 
@@ -4927,13 +4953,13 @@ int CMPTransaction::logicMath_Contract_Instant()
 
     if(msc_debug_contract_instant_trade) PrintToLog("%s: AmountToReserve: %d, channel Balance: %d\n", __func__, amountToReserve,nBalance);
 
-    if(msc_debug_contract_instant_trade) PrintToLog("%s: sender: %s, channel Address: %s\n", __func__, sender, chnAddrs.multisig);
+    if(msc_debug_contract_instant_trade) PrintToLog("%s: sender: %s, channel Address: %s\n", __func__, sender, chn.multisig);
 
     if (amountToReserve > 0)
     {
         assert(update_tally_map(sender, sp.collateral_currency, -amountToReserve, CHANNEL_RESERVE));
-        assert(update_tally_map(chnAddrs.first, sp.collateral_currency, ConvertTo64(amountTR), CONTRACTDEX_RESERVE));
-        assert(update_tally_map(chnAddrs.second, sp.collateral_currency, ConvertTo64(amountTR), CONTRACTDEX_RESERVE));
+        assert(update_tally_map(chn.first, sp.collateral_currency, ConvertTo64(amountTR), CONTRACTDEX_RESERVE));
+        assert(update_tally_map(chn.second, sp.collateral_currency, ConvertTo64(amountTR), CONTRACTDEX_RESERVE));
     }
 
 
@@ -4951,7 +4977,7 @@ int CMPTransaction::logicMath_Contract_Instant()
     // updating last exchange block
     assert(mastercore::updateLastExBlock(block, sender));
 
-    mastercore::Instant_x_Trade(txid, itrading_action, chnAddrs.multisig, chnAddrs.first, chnAddrs.second, property, instant_amount, price, sp.collateral_currency, sp.prop_type, block, tx_idx);
+    mastercore::Instant_x_Trade(txid, itrading_action, chn.multisig, chn.first, chn.second, property, instant_amount, price, sp.collateral_currency, sp.prop_type, block, tx_idx);
 
     t_tradelistdb->recordNewInstContTrade(txid, receiver, sender, propertyId, amount_commited, price, block, tx_idx);
 

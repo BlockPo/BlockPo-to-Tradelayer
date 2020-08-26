@@ -22,6 +22,8 @@ enum TallyType {
         TALLY_TYPE_COUNT
 };
 
+bool isOverflow(int64_t a, int64_t b);
+
 /** Balance records of a single entity.
  */
 class CMPTally

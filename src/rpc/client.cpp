@@ -202,7 +202,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_createpayload_sendvesting", 0, "arg0"},
     { "tl_createpayload_instant_trade", 0, "arg0"},
     { "tl_createpayload_instant_trade", 2, "arg2"},
-    { "tl_createpayload_instant_trade", 3, "arg3"},
+    { "tl_createpayload_instant_trade", 4, "arg4"},
 
     { "tl_createpayload_contract_instant_trade", 0, "arg0"},
     { "tl_createpayload_contract_instant_trade", 2, "arg2"},
@@ -217,6 +217,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_createpayload_create_oraclecontract", 7, "arg7"},
 
     { "tl_createpayload_instant_ltc_trade", 0, "arg0"},
+    { "tl_createpayload_instant_ltc_trade", 3, "arg3"},
 
     { "tl_createpayload_pnl_update", 0, "arg0"},
     { "tl_createpayload_pnl_update", 2, "arg2"},
@@ -358,7 +359,9 @@ static const CRPCConvertParam vRPCConvertParams[] =
 
     { "tl_gettradehistory", 0, "arg0" },
 
-    {"tl_getupnl", 2, "arg2"}
+    {"tl_getupnl", 2, "arg2"},
+
+    {"tl_get_channelremaining", 2, "arg2"},
 
 
 };

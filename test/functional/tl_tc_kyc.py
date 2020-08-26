@@ -244,7 +244,7 @@ class TradeChannelsKYCBasicsTest (BitcoinTestFramework):
         hex = out['result']
 
         self.log.info("Creating payload for instant trade")
-        params = str([4, '10',300, 5, '20']).replace("'",'"')
+        params = str([4, '10', 5, '20', 800]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_createpayload_instant_trade", params)
         assert_equal(out['error'], None)
         payload = out['result']
@@ -283,7 +283,7 @@ class TradeChannelsKYCBasicsTest (BitcoinTestFramework):
         params = '["'+hex+'", true]'
         out = tradelayer_HTTP(conn, headers, False, "sendrawtransaction",params)
         assert_equal(out['error'], None)
-        self.log.info(out)
+        # self.log.info(out)
         tx = out['result']
 
         self.nodes[0].generate(1)
@@ -291,7 +291,7 @@ class TradeChannelsKYCBasicsTest (BitcoinTestFramework):
         self.log.info("Checking transaction")
         params = str([tx, 1]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "getrawtransaction",params)
-        self.log.info(out)
+        # self.log.info(out)
 
         # addresses[1] has now 0 tokens
         self.log.info("Checking tokens in receiver address")
