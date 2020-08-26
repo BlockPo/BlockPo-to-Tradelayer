@@ -233,7 +233,7 @@ class RawTransactionBasicsTest (BitcoinTestFramework):
 
         # Tokens for LTC (1000 lihki coins for 1 LTC)
         self.log.info("Creating payload for instant LTC trade")
-        params = str([4, '1000', '1.0', 200]).replace("'",'"')
+        params = str([4, '1000', '1.0', 800]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_createpayload_instant_ltc_trade", params)
         assert_equal(out['error'], None)
         payload = out['result']
