@@ -814,14 +814,14 @@ UniValue tl_getproperty(const JSONRPCRequest& request)
             "\nResult:\n"
             "{\n"
             "  \"propertyid\" : n,                (number) the identifier\n"
-            "  \"name\" : \"name\",                 (string) the name of the tokens\n"
-            "  \"data\" : \"information\",          (string) additional information or a description\n"
-            "  \"url\" : \"uri\",                   (string) an URI, for example pointing to a website\n"
+            "  \"name\" : \"name\",               (string) the name of the tokens\n"
+            "  \"data\" : \"information\",        (string) additional information or a description\n"
+            "  \"url\" : \"uri\",                 (string) an URI, for example pointing to a website\n"
             "  \"divisible\" : true|false,        (boolean) whether the tokens are divisible\n"
-            "  \"issuer\" : \"address\",            (string) the Bitcoin address of the issuer on record\n"
-            "  \"creationtxid\" : \"hash\",         (string) the hex-encoded creation transaction hash\n"
+            "  \"issuer\" : \"address\",          (string) the Bitcoin address of the issuer on record\n"
+            "  \"creationtxid\" : \"hash\",       (string) the hex-encoded creation transaction hash\n"
             "  \"fixedissuance\" : true|false,    (boolean) whether the token supply is fixed\n"
-            "  \"totaltokens\" : \"n.nnnnnnnn\"     (string) the total number of tokens in existence\n"
+            "  \"totaltokens\" : \"n.nnnnnnnn\"   (string) the total number of tokens in existence\n"
             "}\n"
             "\nExamples:\n"
             + HelpExampleCli("tl_getproperty", "3")
@@ -887,12 +887,10 @@ UniValue tl_getproperty(const JSONRPCRequest& request)
         response.push_back(Pair("contract associated",(uint64_t) sp.contract_associated));
         response.push_back(Pair("series", sp.series));
     } else {
-        const int64_t ltc_volume = lastVolume(LTC);
-        const int64_t token_volume = lastVolume(propertyId);
-        const int64_t totalSupply = getTotalTokens(propertyId);
+        const int64_t ltc_volume = lastVolume(propertyId, false);
+        const int64_t token_volume = lastVolume(propertyId, true);
         response.push_back(Pair("last 24h LTC volume", FormatDivisibleMP(ltc_volume)));
         response.push_back(Pair("last 24h Token volume", FormatDivisibleMP(token_volume)));
-        response.push_back(Pair("total supply", FormatDivisibleMP(totalSupply)));
     }
 
     return response;
@@ -909,11 +907,11 @@ UniValue tl_listproperties(const JSONRPCRequest& request)
 			"\nResult:\n"
 			"[                                (array of JSON objects)\n"
 			"  {\n"
-			"    \"propertyid\" : n,                (number) the identifier of the tokens\n"
-			"    \"name\" : \"name\",                 (string) the name of the tokens\n"
-			"    \"data\" : \"information\",          (string) additional information or a description\n"
-			"    \"url\" : \"uri\",                   (string) an URI, for example pointing to a website\n"
-			"    \"divisible\" : true|false         (boolean) whether the tokens are divisible\n"
+			"    \"propertyid\" : n,          (number) the identifier of the tokens\n"
+			"    \"name\" : \"name\",         (string) the name of the tokens\n"
+			"    \"data\" : \"information\",  (string) additional information or a description\n"
+			"    \"url\" : \"uri\",           (string) an URI, for example pointing to a website\n"
+			"    \"divisible\" : true|false   (boolean) whether the tokens are divisible\n"
 			"  },\n"
 			"  ...\n"
 			"]\n"
@@ -948,7 +946,6 @@ UniValue tl_listproperties(const JSONRPCRequest& request)
               propertyObj.push_back(Pair("creationtxid", strCreationHash));
               propertyObj.push_back(Pair("fixedissuance", sp.fixed));
               propertyObj.push_back(Pair("creation block", sp.init_block));
-              propertyObj.push_back(Pair("totaltokens", strTotalTokens));
               if (sp.isNative())
               {
                   propertyObj.push_back(Pair("notional size", FormatDivisibleShortMP(sp.notional_size)));
@@ -979,19 +976,18 @@ UniValue tl_listproperties(const JSONRPCRequest& request)
                   auto it = cdexlastprice.find(propertyId);
                   const int64_t& lastPrice = it->second;
                   propertyObj.push_back(Pair("last traded price", FormatDivisibleMP(lastPrice)));
-                  const int64_t fundBalance = 0; // NOTE: we need to write this after fundbalance logic
-                  propertyObj.push_back(Pair("insurance fund balance", fundBalance));
+                  const int64_t fundBalance = 0; // NOTE: we need to write this after fundbalance logic is done
+                  propertyObj.push_back(Pair("insurance fund balance", FormatDivisibleMP(fundBalance)));
 
               } else if (sp.isPegged()) {
                   propertyObj.push_back(Pair("contract associated",(uint64_t) sp.contract_associated));
                   propertyObj.push_back(Pair("series", sp.series));
               } else {
-                  const int64_t ltc_volume = lastVolume(LTC);
-                  const int64_t token_volume = lastVolume(propertyId);
-                  const int64_t totalSupply = getTotalTokens(propertyId);
+                  const int64_t ltc_volume = lastVolume(propertyId, false);
+                  const int64_t token_volume = lastVolume(propertyId, true);
                   propertyObj.push_back(Pair("last 24h LTC volume", FormatDivisibleMP(ltc_volume)));
                   propertyObj.push_back(Pair("last 24h Token volume", FormatDivisibleMP(token_volume)));
-                  propertyObj.push_back(Pair("total supply", FormatDivisibleMP(totalSupply)));
+                  propertyObj.push_back(Pair("totaltokens", strTotalTokens));
               }
           }
 
@@ -1046,7 +1042,7 @@ UniValue tl_list_natives(const JSONRPCRequest& request)
           auto it = cdexlastprice.find(propertyId);
           const int64_t& lastPrice = it->second;
           propertyObj.push_back(Pair("last traded price", FormatDivisibleMP(lastPrice)));
-          const int64_t fundBalance = 0; // NOTE: we need to write this after fundbalance logic
+          const int64_t fundBalance = 0; // NOTE: we need to write this after fundbalance logic is done
           propertyObj.push_back(Pair("insurance fund balance", fundBalance));
 
       }
@@ -1099,7 +1095,7 @@ UniValue tl_list_oracles(const JSONRPCRequest& request)
           auto it = cdexlastprice.find(propertyId);
           const int64_t& lastPrice = it->second;
           propertyObj.push_back(Pair("last traded price", FormatDivisibleMP(lastPrice)));
-          const int64_t fundBalance = 0; // NOTE: we need to write this after fundbalance logic
+          const int64_t fundBalance = 0; // NOTE: we need to write this after fundbalance logic is done
           propertyObj.push_back(Pair("insurance fund balance", fundBalance));
       }
   }
@@ -2987,7 +2983,7 @@ UniValue tl_listkyc(const JSONRPCRequest& request)
 {
     if (request.fHelp)
       throw runtime_error(
-			  "tl_listproperties\n"
+			  "tl_listkyc\n"
 			  "\nLists all kyc registers.\n"
 			  "\nResult:\n"
 			  "[                                (array of JSON objects)\n"

@@ -614,7 +614,7 @@ namespace mastercore
 
   int64_t calculateUnvested(int64_t amountSended, int64_t balance, int64_t unvested);
 
-  int64_t lastVolume(uint32_t propertyId);
+  int64_t lastVolume(uint32_t propertyId, bool tokens);
 }
 
 #endif // TRADELAYER_TL_H

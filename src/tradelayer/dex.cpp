@@ -552,6 +552,7 @@ int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addre
     // -------------------------------------------------------------------------
 
     // adding LTC volume added by this property
+    PrintToLog("%s(): block: %d, propertyId: %d. amountPaid (LTC): %d\n",__func__, block, propertyId, amountPaid);
     MapLTCVolume[block][propertyId] += amountPaid;
 
     // saving DEx token volume

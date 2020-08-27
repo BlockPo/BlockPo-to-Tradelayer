@@ -6412,16 +6412,21 @@ bool mastercore::Instant_x_Trade(const uint256& txid, uint8_t tradingAction, con
 
 void iterVolume(int64_t& amount, uint32_t propertyId, const int& fblock, const int& sblock, const std::map<int, std::map<uint32_t,int64_t>>& aMap)
 {
-    for (const auto &m : aMap)
+    for(const auto &m : aMap)
     {
         const int& blk = m.first;
-        if(blk < fblock) continue;
-        else if(sblock < blk) break;
+        if(blk < fblock && fblock != 0){
+            continue;
+        } else if(sblock < blk){
+            break;
+        }
         const auto &blockMap = m.second;
         auto itt = blockMap.find(propertyId);
-        if (itt != blockMap.end())
+        if (itt != blockMap.end()){
             amount += itt->second;
-     }
+        }
+
+    }
 
 }
 
@@ -6456,23 +6461,24 @@ int64_t mastercore::DexVolumen(uint32_t property, const int& fblock, const int& 
     return amount;
 }
 
-/** last 24 hours volume (properyId 0 is LTC) for a given propertyId**/
-int64_t mastercore::lastVolume(uint32_t propertyId)
+/** last 24 hours volume (set tokens = true for token volume) for a given propertyId **/
+int64_t mastercore::lastVolume(uint32_t propertyId, bool tokens)
 {
     // 24 hours back in time
-    const int bBlock = GetHeight() - 576;
+    int bBlock = GetHeight() - 576;
     const int lBlock = 999999999;
 
     if (bBlock < 0) {
-        PrintToLog("%s(): blockHeight is less than 576 block");
-        return 0;
+        PrintToLog("%s(): blockHeight is less than 576 block\n",__func__);
+        bBlock = 0;
     }
 
     int64_t totalAmount = 0;
 
     // DEx and Instant trade LTC volumes
-    if (propertyId == LTC){
+    if (!tokens){
         iterVolume(totalAmount, propertyId, bBlock, lBlock, MapLTCVolume);
+        PrintToLog("%s(): LTC volume: %d\n",__func__, totalAmount);
         return totalAmount;
     }
 
@@ -6482,6 +6488,7 @@ int64_t mastercore::lastVolume(uint32_t propertyId)
     // MetaDEx token volume
     iterVolume(totalAmount, propertyId, bBlock, lBlock, metavolume);
 
+    PrintToLog("%s(): token amount: %d, propertyId: %d\n",__func__, totalAmount, propertyId);
     return totalAmount;
 
 }
