@@ -137,6 +137,7 @@ class CMPMetaDEx
 
   std::string GenerateConsensusString() const;
 
+
 };
 
 
@@ -227,6 +228,15 @@ namespace mastercore
   typedef std::map<rational_t, md_Set> md_PricesMap;
   //! Map of properties; there is a map of prices for exchange each property
   typedef std::map<uint32_t, md_PricesMap> md_PropertiesMap;
+
+  /**  Global map for cumulative volume by pair of properties
+   *   Block, property -> put the amount of property traded.
+   */
+  extern std::map<int, std::map<uint32_t,int64_t>> metavolume;
+
+
+  //! Global map for last contract price
+  extern std::map<uint32_t,int64_t> cdexlastprice;
 
   //! Global map for price and order data
   extern md_PropertiesMap metadex;

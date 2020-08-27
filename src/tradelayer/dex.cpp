@@ -35,7 +35,10 @@
 #include <vector>
 
 extern std::map<uint32_t, std::map<uint32_t, int64_t>> market_priceMap;
-extern std::map<int, std::map<uint32_t,int64_t>> MapPropVolume;
+std::map<int, std::map<uint32_t,int64_t>> mastercore::MapLTCVolume;
+std::map<int, std::map<uint32_t,int64_t>> mastercore::MapTokenVolume;
+
+
 
 namespace mastercore
 {
@@ -558,14 +561,19 @@ int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addre
     // -------------------------------------------------------------------------
 
     // adding LTC volume added by this property
-    MapPropVolume[block][propertyId] += amountPaid;
+    PrintToLog("%s(): block: %d, propertyId: %d. amountPaid (LTC): %d\n",__func__, block, propertyId, amountPaid);
+    MapLTCVolume[block][propertyId] += amountPaid;
+
+    // saving DEx token volume
+    MapTokenVolume[block][propertyId] += amountPurchased;
+
 
     // adding Last token/ ltc price
     rational_t market_pricetokens_LTC(amountPurchased, amountPaid);
     int64_t market_p_tokens_LTC = mastercore::RationalToInt64(market_pricetokens_LTC);
     market_priceMap[LTC][propertyId] = market_p_tokens_LTC;
 
-    if(msc_debug_dex) PrintToLog("%s(): amountPaid for propertyId : %d,  inside MapPropVolume: %d, market_p_tokens_LTC : %d\n", __func__, propertyId, amountPaid, market_p_tokens_LTC);
+    if(msc_debug_dex) PrintToLog("%s(): amountPaid for propertyId : %d,  inside MapLTCVolume: %d, market_p_tokens_LTC : %d\n", __func__, propertyId, amountPaid, market_p_tokens_LTC);
 
     // -------------------------------------------------------------------------
     if (msc_debug_dex) PrintToLog("amountPurchased: %d\n",amountPurchased);
