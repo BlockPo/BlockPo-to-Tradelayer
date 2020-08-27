@@ -51,7 +51,7 @@ uint32_t CMPTally::next()
  * @param b  The other number
  * @return True, if a + b overflows
  */
-static bool isOverflow(int64_t a, int64_t b)
+bool isOverflow(int64_t a, int64_t b)
 {
     return (((b > 0) && (a > (std::numeric_limits<int64_t>::max() - b))) ||
             ((b < 0) && (a < (std::numeric_limits<int64_t>::min() - b))));

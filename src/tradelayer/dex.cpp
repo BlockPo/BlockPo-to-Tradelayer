@@ -94,11 +94,11 @@ CMPAccept* DEx_getAccept(const std::string& addressSeller, uint32_t propertyId, 
     AcceptMap::iterator it = my_accepts.find(key);
 
     if (it != my_accepts.end()) {
-      PrintToLog("%s(): ORDER FOUND!, getAcceptBlock : %d\n",__func__, (it->second).getAcceptBlock());
+      if (msc_debug_dex) PrintToLog("%s(): ORDER FOUND!, getAcceptBlock : %d\n",__func__, (it->second).getAcceptBlock());
       return &(it->second);
     }
 
-    PrintToLog("%s(): accept order not found!\n",__func__);
+    if (msc_debug_dex) PrintToLog("%s(): accept order not found!\n",__func__);
 
     return static_cast<CMPAccept*>(nullptr);
 }
@@ -139,8 +139,13 @@ int DEx_offerCreate(const std::string& addressSeller, uint32_t propertyId, int64
         return (DEX_ERROR_SELLOFFER -101);
     }
     if (amountDesired == 0) {
-        return (DEX_ERROR_SELLOFFER -101);
+        return (DEX_ERROR_SELLOFFER -102);
     }
+
+    if (propertyId == TL_PROPERTY_VESTING) {
+        return (DEX_ERROR_SELLOFFER -103);
+    }
+
     if (DEx_getOffer(addressSeller, propertyId)) {
         return (DEX_ERROR_SELLOFFER -10); // offer already exists
     }
@@ -253,7 +258,7 @@ int DEx_BuyOfferCreate(const std::string& addressMaker, uint32_t propertyId, int
     return rc;
 }
 /**
- * Destorys a sell offer.
+ * Destroys a sell offer.
  *
  * The remaining amount reserved for the offer is returned to the available balance.
  *
@@ -276,7 +281,7 @@ int DEx_offerDestroy(const std::string& addressSeller, uint32_t propertyId)
     // delete the offer
     const std::string key = STR_SELLOFFER_ADDR_PROP_COMBO(addressSeller, propertyId);
     OfferMap::iterator it = my_offers.find(key);
-    my_offers.erase(it);
+    if (it != my_offers.end()) my_offers.erase(it);
 
     if (msc_debug_dex) PrintToLog("%s(%s|%s)\n", __func__, addressSeller, key);
 
@@ -338,13 +343,15 @@ int DEx_acceptCreate(const std::string& addressTaker, const std::string& address
     }
 
     // ensure the correct LTC fee was paid in this acceptance message
+    if (msc_debug_dex) PrintToLog("%s() Checking: feePaid: %d, offer.getMinFee(): %d\n",__func__, feePaid, offer.getMinFee());
+
     if (feePaid < offer.getMinFee()) {
         PrintToLog("%s: rejected: transaction fee too small [%d < %d]\n", __func__, feePaid, offer.getMinFee());
         return DEX_ERROR_ACCEPT -105;
     }
 
     if (offer.getOption() == 1)
-    {   // if maket maker is buying tokens
+    {   // if market maker is buying tokens
 
         if (msc_debug_dex)
         {
@@ -509,20 +516,22 @@ int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addre
         }
 
         // buyer market maker?
-        p_accept = DEx_getAccept(addressBuyer, propertyId, addressSeller);
-
-        if (p_accept)
+        if (IsFeatureActivated(FEATURE_DEX_BUY, block))
         {
-            if (msc_debug_dex) PrintToLog("Found buyer market maker!\n");
-            break;
+            p_accept = DEx_getAccept(addressBuyer, propertyId, addressSeller);
+
+            if (p_accept)
+            {
+                if (msc_debug_dex) PrintToLog("Found buyer market maker!\n");
+                break;
+            }
+
         }
-
-
     }
 
     if (!p_accept && msc_debug_dex)
     {
-       // there must be an active accept order for this payment
+       PrintToLog("%s(): ERROR: there must be an active accept order for this payment, seller: %s, buyer: %s\n",__func__, addressSeller, addressBuyer);
        return (DEX_ERROR_PAYMENT -1);
     }
 
@@ -533,9 +542,9 @@ int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addre
     if (msc_debug_dex) PrintToLog("%s(): amountDesired : %d, amountOffered : %d\n",__func__, amountDesired, amountOffered);
 
     // divide by 0 protection
-    if (0 == amountDesired)
+    if (0 == amountDesired && msc_debug_dex)
     {
-        if (msc_debug_dex) PrintToLog("%s(): ERROR: desired amount of accept order is zero", __func__);
+        PrintToLog("%s(): ERROR: desired amount of accept order is zero", __func__);
         return (DEX_ERROR_PAYMENT -2);
     }
 

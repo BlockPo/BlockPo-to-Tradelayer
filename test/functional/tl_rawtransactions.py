@@ -129,29 +129,31 @@ class RawTransactionBasicsTest (BitcoinTestFramework):
         self.log.info("Checking LTC balances for addresses[0]")
         params = str(["jhon"]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "getbalance",params)
-        # assert_equal(out['error'], None)
-        self.log.info(out)
+        assert_equal(out['error'], None)
+        # self.log.info(out)
 
 
         self.log.info("Commiting to trade channel")
         params = str([addresses[0], multisig, 4, '1000']).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_commit_tochannel",params)
-        # assert_equal(out['error'], None)
-        self.log.info(out)
+        assert_equal(out['error'], None)
+        # self.log.info(out)
 
         self.log.info("Checking LTC balances for addresses[0]")
         params = str(["jhon"]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "getbalance",params)
-        # assert_equal(out['error'], None)
-        self.log.info(out)
+        assert_equal(out['error'], None)
+        # self.log.info(out)
 
         self.nodes[0].generate(1)
 
+
         self.log.info("Checking LTC balances for addresses[0]")
         params = str(["jhon"]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "getbalance",params)
         # assert_equal(out['error'], None)
         self.log.info(out)
+
 
         self.log.info("Checking the commit")
         params = str([addresses[0]]).replace("'",'"')
@@ -162,9 +164,13 @@ class RawTransactionBasicsTest (BitcoinTestFramework):
         assert_equal(out['result'][0]['propertyId'], '4')
         assert_equal(out['result'][0]['amount'], '1000.00000000')
 
+
         params = str([addresses[1], 0.1]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "sendtoaddress", params)
-        self.log.info(out)
+        # self.log.info(out)
+
+        self.nodes[0].generate(1)
+
 
         self.log.info("Self Attestation for address0")
         params = str([addresses[1],addresses[1],""]).replace("'",'"')
@@ -175,7 +181,7 @@ class RawTransactionBasicsTest (BitcoinTestFramework):
         self.nodes[0].generate(1)
 
 
-        self.log.info("Funding address1")
+        self.log.info("Funding the seller of tokens (addresses[1])")
         params = str([addresses[1], 1.1]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "sendtoaddress", params)
         # self.log.info(out)
@@ -184,30 +190,50 @@ class RawTransactionBasicsTest (BitcoinTestFramework):
 
         self.nodes[0].generate(1)
 
+        self.log.info("Funding multisig")
+        params = str([multisig, 0.1]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "sendtoaddress", params)
+        # self.log.info(out)
+        txid1 = out['result']
+        self.log.info("txid:"+txid1)
+
+        self.nodes[0].generate(1)
+
         self.log.info("Checking the transaction")
         params = str([txid]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "gettransaction", params)
-        self.log.info(out)
+        # self.log.info(out)
         vout = out['result']['details'][0]['vout']
         self.log.info('vout:'+str(vout))
 
-        self.log.info("Creating raw input")
-        params = str(['', txid, vout]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, False, "tl_createrawtx_input",params)
-        # self.log.info(out)
-        hex = out['result']
 
-        # Destination here is yourself (we are sending 1 LTC from addresses[1] to addresses[0])
+        params = str([txid1]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "gettransaction", params)
+        # self.log.info(out)
+        vout1 = out['result']['details'][0]['vout']
+        self.log.info('vout1:'+str(vout1))
+
+
+        self.log.info("Creating rawtx transaction")
+        params = '[[{"txid":"'+txid+'","vout":'+str(vout)+'},{"txid":"' + txid1 + '","vout":' + str(vout1) + '}],{ }, 0, true]'
+        out = tradelayer_HTTP(conn, headers, False, "createrawtransaction", params)
+        assert_equal(out['error'], None)
+        hex = out['result']
+        # self.log.info(hex)
+
+
+        # Destination here is the seller of tokens (we are sending 1 LTC from addresses[1] to addresses[0])
         self.log.info("Creating raw reference")
-        params = str([hex, addresses[0], 0.5]).replace("'",'"')
+        params = str([hex, addresses[0], 1.0]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_createrawtx_reference",params)
         # self.log.info(out)
 
         hex = out['result']
 
+
         # Tokens for LTC (1000 lihki coins for 1 LTC)
         self.log.info("Creating payload for instant LTC trade")
-        params = str([4, '1000', '1.0']).replace("'",'"')
+        params = str([4, '1000', '1.0', 800]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_createpayload_instant_ltc_trade", params)
         assert_equal(out['error'], None)
         payload = out['result']
@@ -218,34 +244,36 @@ class RawTransactionBasicsTest (BitcoinTestFramework):
         params = str([hex,payload]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_createrawtx_opreturn", params)
         assert_equal(out['error'], None)
-        self.log.info(out)
+        # self.log.info(out)
         hex = out['result']
         # self.log.info(hex)
 
-        params = '["'+hex+'",[],["'+privatekey0+'"]]'
+
+        params = '["'+hex+'",[{"txid":"'+txid1+'","vout":'+str(vout1)+', "scriptPubKey":"'+scriptPubKey+'","redeemScript":"'+redeemScript+'","amount":0.1}],["'+privatekey0+'"]]'
         self.log.info("Signing raw transaction with address 0")
         # self.log.info(params)
         out = tradelayer_HTTP(conn, headers, False, "signrawtransaction",params)
         assert_equal(out['error'], None)
-        self.log.info(out)
+        # self.log.info(out)
         hex = out['result']['hex']
         # self.log.info(hex)
 
 
-        params = '["'+hex+'",[],["'+privatekey1+'"]]'
+        params = '["'+hex+'",[{"txid":"'+txid1+'","vout":'+str(vout1)+', "scriptPubKey":"'+scriptPubKey+'","redeemScript":"'+redeemScript+'","amount":0.1}],["'+privatekey1+'"]]'
         self.log.info("Signing raw transaction with address 1")
         # self.log.info(params)
         out = tradelayer_HTTP(conn, headers, False, "signrawtransaction",params)
         assert_equal(out['error'], None)
-        self.log.info(out)
+        # self.log.info(out)
         hex = out['result']['hex']
         # self.log.info(hex)
+
 
         self.log.info("Sending raw transaction")
         params = '["'+hex+'", true]'
         out = tradelayer_HTTP(conn, headers, False, "sendrawtransaction",params)
         assert_equal(out['error'], None)
-        self.log.info(out)
+        # self.log.info(out)
         tx = out['result']
 
         self.nodes[0].generate(1)
@@ -253,7 +281,7 @@ class RawTransactionBasicsTest (BitcoinTestFramework):
         self.log.info("Checking transaction")
         params = str([tx, 1]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "getrawtransaction",params)
-        self.log.info(out)
+        # self.log.info(out)
 
         # addresses[1] has now 1000 tokens
         self.log.info("Checking tokens in receiver address")
@@ -261,7 +289,7 @@ class RawTransactionBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['balance'],'500.00000000')
+        assert_equal(out['result']['balance'],'1000.00000000')
         assert_equal(out['result']['reserve'],'0.00000000')
 
         self.stop_nodes()

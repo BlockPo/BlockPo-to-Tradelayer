@@ -145,7 +145,8 @@ std::string feeGenerateConsensusString(const uint32_t& propertyId, const int64_t
 // Generates a consensus string for hashing based on features activation register
 std::string GenerateConsensusString(const mastercore::FeatureActivation& feat)
 {
-    return strprintf("%d|%d|%d|%s", feat.featureId, feat.activationBlock, feat.minClientVersion, feat.featureName);
+    const std::string status = (feat.status) ? "completed" : "pending";
+    return strprintf("%d|%d|%d|%s|%s", feat.featureId, feat.activationBlock, feat.minClientVersion, feat.featureName, status);
 }
 
 /**
@@ -211,11 +212,11 @@ std::string GenerateConsensusString(const mastercore::FeatureActivation& feat)
 *
 * ---STAGE 11 - FEE CACHE NATIVES---
 * Format specifiers & placeholders:
-*   "%s|%s|%s|%s|%d|%d" - "multisigaddress|multisigaddress|firstaddress|secondaddress|expiryheight|lastexchangeblock"
+*   "%d|%d" - "propertyId|amountaccumulated"
 *
 * ---STAGE 12 - FEE CACHE ORACLES---
 * Format specifiers & placeholders:
-*   "%s|%s|%s|%s|%d|%d" - "multisigaddress|multisigaddress|firstaddress|secondaddress|expiryheight|lastexchangeblock"
+*   "%d|%d" - "propertyId|amountaccumulated"
 *
 * ---STAGE 12 - VESTING ADDRESSES---
 * Format specifiers & placeholders:
@@ -472,7 +473,7 @@ uint256 GetConsensusHash()
     for(auto itt = sortPendings.begin(); itt != sortPendings.end(); ++itt)
     {
         std::string dataStr = itt->second;
-        if (msc_debug_consensus_hash) PrintToLog("Adding Pensing features activations entry to consensus hash: %s\n", dataStr);
+        if (msc_debug_consensus_hash) PrintToLog("Adding Pending features activations entry to consensus hash: %s\n", dataStr);
         SHA256_Update(&shaCtx, dataStr.c_str(), dataStr.length());
     }
 

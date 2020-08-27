@@ -125,8 +125,8 @@ UniValue tl_createpayload_issuancefixed(const JSONRPCRequest& request)
             "3. name                 (string, required) the name of the new tokens to create\n"
             "4. url                  (string, required) an URL for further information about the new tokens (can be \"\")\n"
             "5. data                 (string, required) a description for the new tokens (can be \"\")\n"
-            "6. amount              (string, required) the number of tokens to create\n"
-            "7. kyc options          (array, optional) A json with the kyc allowed.\n"
+            "6. amount               (string, required) the number of tokens to create\n"
+            "7. kyc options          (array, required) A json with the kyc allowed.\n"
             "    [\n"
             "      2,3,5             (number) kyc id\n"
             "      ,...\n"
@@ -167,7 +167,7 @@ UniValue tl_createpayload_issuancemanaged(const JSONRPCRequest& request)
             "3. name                 (string, required) the name of the new tokens to create\n"
             "4. url                  (string, required) an URL for further information about the new tokens (can be \"\")\n"
             "5. data                 (string, required) a description for the new tokens (can be \"\")\n"
-            "6. kyc options          (array, optional) A json with the kyc allowed.\n"
+            "6. kyc options          (array, required) A json with the kyc allowed.\n"
             "    [\n"
             "      2,3,5             (number) kyc id\n"
             "      ,...\n"
@@ -437,7 +437,7 @@ UniValue tl_createpayload_createcontract(const JSONRPCRequest& request)
 			"6. collateral currency       (number, required) collateral currency\n"
       "7. margin requirement        (number, required) margin requirement\n"
       "8. quoting                   (number, required) 0: inverse quoting contract, 1: normal quoting\n"
-      "9. kyc options          (array, optional) A json with the kyc allowed.\n"
+      "9. kyc options               (array, required) A json with the kyc allowed.\n"
       "    [\n"
       "      2,3,5         (number) kyc id\n"
       "      ,...\n"
@@ -791,7 +791,7 @@ UniValue tl_createpayload_sendvesting(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_instant_trade(const JSONRPCRequest& request)
 {
-  if (request.params.size() < 5 || request.fHelp)
+  if (request.params.size() != 5 || request.fHelp)
     throw runtime_error(
 			"tl_createpayload_instant_trade \"fromaddress\" \"toaddress\" propertyid \"amount\" ( \"referenceamount\" )\n"
 
@@ -800,9 +800,9 @@ UniValue tl_createpayload_instant_trade(const JSONRPCRequest& request)
 			"\nArguments:\n"
 			"1. propertyId            (number, required) the identifier of the property\n"
 			"2. amount                (string, required) the amount of the property traded for the first address of channel\n"
-      "3. blockheight_expiry    (string, required) block of expiry\n"
-      "4. propertyDesired       (number, optional) the identifier of the property traded for the second address of channel\n"
-      "5. amountDesired         (string, optional) the amount desired of tokens\n"
+      "3. propertyDesired       (number, optional) the identifier of the property traded for the second address of channel\n"
+      "4. amountDesired         (string, optional) the amount desired of tokens\n"
+      "5. blockheight_expiry    (number, required) block of expiry\n"
 
 
 			"\nResult:\n"
@@ -815,10 +815,10 @@ UniValue tl_createpayload_instant_trade(const JSONRPCRequest& request)
 
   // obtain parameters & info
   uint32_t propertyId = ParsePropertyId(request.params[0]);
-  int64_t amount = ParseAmount(request.params[1], true);
-  uint32_t blockheight_expiry = request.params[2].get_int();
-  uint32_t propertyDesired = ParsePropertyId(request.params[3]);
-  int64_t amountDesired = ParseAmount(request.params[4],true);
+  int64_t amount = ParseAmount(request.params[1], isPropertyDivisible(propertyId));
+  uint32_t propertyDesired = ParsePropertyId(request.params[2]);
+  int64_t amountDesired = ParseAmount(request.params[3], isPropertyDivisible(propertyDesired));
+  int blockheight_expiry = request.params[4].get_int();
 
   // create a payload for the transaction
   std::vector<unsigned char> payload = CreatePayload_Instant_Trade(propertyId, amount, blockheight_expiry, propertyDesired, amountDesired);
@@ -829,7 +829,7 @@ UniValue tl_createpayload_instant_trade(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_instant_ltc_trade(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 3 || request.fHelp)
+  if (request.params.size() != 4 || request.fHelp)
     throw runtime_error(
 			"tl_createpayload_instant_ltc_trade \"fromaddress\" \"toaddress\" propertyid \"amount\" \n"
 
@@ -839,7 +839,7 @@ UniValue tl_createpayload_instant_ltc_trade(const JSONRPCRequest& request)
 			"1. propertyId            (number, required) the identifier of the property offered\n"
 			"2. amount offered        (string, required) the amount of tokens offered for the address\n"
       "3. price                 (string, required) total price of tokens in LTC\n"
-
+      "4. blockheight_expiry    (number, required) block of expiry\n"
 			"\nResult:\n"
 			"\"hash\"                  (string) the hex-encoded transaction hash\n"
 
@@ -852,9 +852,9 @@ UniValue tl_createpayload_instant_ltc_trade(const JSONRPCRequest& request)
   uint32_t propertyId = ParsePropertyId(request.params[0]);
   int64_t amount = ParseAmount(request.params[1], isPropertyDivisible(propertyId));
   int64_t totalPrice = ParseAmount(request.params[2],true);
-
+  int blockheight_expiry = request.params[3].get_int();
   // create a payload for the transaction
-  std::vector<unsigned char> payload = CreatePayload_Instant_LTC_Trade(propertyId, amount, totalPrice);
+  std::vector<unsigned char> payload = CreatePayload_Instant_LTC_Trade(propertyId, amount, totalPrice, blockheight_expiry);
 
   return HexStr(payload.begin(), payload.end());
 
@@ -1024,7 +1024,7 @@ UniValue tl_createpayload_create_oraclecontract(const JSONRPCRequest& request)
 			"5. margin requirement        (number, required) margin requirement\n"
       "6. backup address            (string, required) backup admin address contract\n"
       "7. quoting                   (number, required) 0: inverse quoting contract, 1: normal quoting\n"
-      "8. kyc options               (array, optional) A json with the kyc allowed.\n"
+      "8. kyc options               (array, required) A json with the kyc allowed.\n"
       "    [\n"
       "      2,3,5                  (number) kyc id\n"
       "      ,...\n"

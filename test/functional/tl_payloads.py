@@ -341,11 +341,19 @@ class PayloadsBasicsTest (BitcoinTestFramework):
 
 
         self.log.info("Testing tl_createpayload_instant_trade")
-        params = str([4, '1000',300, 5, '2000']).replace("'",'"')
+        params = str([4, '1000', 5,'2000', 300]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_createpayload_instant_trade", params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result'], '006e0480d0dbc3f402ac020580a0b787e905')
+        assert_equal(out['result'], '006e0480d0dbc3f402ac0205d00f')
+
+
+        self.log.info("Testing tl_createpayload_instant_ltc_trade")
+        params = str([4, '1000','1.0', 5]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_createpayload_instant_ltc_trade", params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result'], '00710480d0dbc3f40280c2d72f05')
 
 
         self.log.info("Testing tl_createpayload_contract_instant_trade")
