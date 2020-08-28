@@ -51,9 +51,9 @@ UniValue tl_sendrawtx(const JSONRPCRequest& request)
             + HelpExampleRpc("tl_sendrawtx", "\"1MCHESTptvd2LnNp7wmr2sGTpRomteAkq8\", \"000000000000000100000000017d7840\", \"1EqTta1Rt8ixAA32DuC29oukbsSWU62qAV\"")
         );
 
-    std::string fromAddress = ParseAddress(request.params[0]);
+    const std::string fromAddress = ParseAddress(request.params[0]);
     std::vector<unsigned char> data = ParseHexV(request.params[1], "raw transaction");
-    std::string toAddress = (request.params.size() > 2) ? ParseAddressOrEmpty(request.params[2]): "";
+    const std::string toAddress = (request.params.size() > 2) ? ParseAddressOrEmpty(request.params[2]): "";
     int64_t referenceAmount = (request.params.size() > 3) ? ParseAmount(request.params[3], true): 0;
 
     //some sanity checking of the data supplied?
@@ -97,8 +97,8 @@ UniValue tl_send(const JSONRPCRequest& request)
         );
 
     // obtain parameters & info
-    std::string fromAddress = ParseAddress(request.params[0]);
-    std::string toAddress = ParseAddress(request.params[1]);
+    const std::string fromAddress = ParseAddress(request.params[0]);
+    const std::string toAddress = ParseAddress(request.params[1]);
     uint32_t propertyId = ParsePropertyId(request.params[2]);
     int64_t amount = ParseAmount(request.params[3], isPropertyDivisible(propertyId));
     int64_t referenceAmount = (request.params.size() > 4) ? ParseAmount(request.params[4], true): 0;
@@ -155,8 +155,8 @@ UniValue tl_sendvesting(const JSONRPCRequest& request)
 			);
 
   // obtain parameters & info
-  std::string fromAddress = ParseAddress(request.params[0]);
-  std::string toAddress = ParseAddress(request.params[1]);
+  const std::string fromAddress = ParseAddress(request.params[0]);
+  const std::string toAddress = ParseAddress(request.params[1]);
   int64_t amount = ParseAmount(request.params[2], true);
 
 
@@ -205,8 +205,8 @@ UniValue tl_sendall(const JSONRPCRequest& request)
         );
 
     // obtain parameters & info
-    std::string fromAddress = ParseAddress(request.params[0]);
-    std::string toAddress = ParseAddress(request.params[1]);
+    const std::string fromAddress = ParseAddress(request.params[0]);
+    const std::string toAddress = ParseAddress(request.params[1]);
     int64_t referenceAmount = (request.params.size() > 2) ? ParseAmount(request.params[2], true): 0;
 
     // perform checks
@@ -263,7 +263,7 @@ UniValue tl_sendissuancecrowdsale(const JSONRPCRequest& request)
         );
 
     // obtain parameters & info
-    std::string fromAddress = ParseAddress(request.params[0]);
+    const std::string fromAddress = ParseAddress(request.params[0]);
     uint16_t type = ParsePropertyType(request.params[1]);
     uint32_t previousId = ParsePreviousPropertyId(request.params[2]);
     std::string name = ParseText(request.params[3]);
@@ -330,7 +330,7 @@ UniValue tl_sendissuancefixed(const JSONRPCRequest& request)
         );
 
     // obtain parameters & info
-    std::string fromAddress = ParseAddress(request.params[0]);
+    const std::string fromAddress = ParseAddress(request.params[0]);
     uint16_t type = ParsePropertyType(request.params[1]);
     uint32_t previousId = ParsePreviousPropertyId(request.params[2]);
     std::string name = ParseText(request.params[3]);
@@ -393,7 +393,7 @@ UniValue tl_sendissuancemanaged(const JSONRPCRequest& request)
         );
 
     // obtain parameters & info
-    std::string fromAddress = ParseAddress(request.params[0]);
+    const std::string fromAddress = ParseAddress(request.params[0]);
     uint16_t type = ParsePropertyType(request.params[1]);
     uint32_t previousId = ParsePreviousPropertyId(request.params[2]);
 
@@ -450,8 +450,8 @@ UniValue tl_sendgrant(const JSONRPCRequest& request)
 			);
 
   // obtain parameters & info
-  std::string fromAddress = ParseAddress(request.params[0]);
-  std::string toAddress = !ParseText(request.params[1]).empty() ? ParseAddress(request.params[1]): "";
+  const std::string fromAddress = ParseAddress(request.params[0]);
+  const std::string toAddress = !ParseText(request.params[1]).empty() ? ParseAddress(request.params[1]): "";
   uint32_t propertyId = ParsePropertyId(request.params[2]);
   int64_t amount = ParseAmount(request.params[3], isPropertyDivisible(propertyId));
 
@@ -503,7 +503,7 @@ UniValue tl_sendrevoke(const JSONRPCRequest& request)
         );
 
     // obtain parameters & info
-    std::string fromAddress = ParseAddress(request.params[0]);
+    const std::string fromAddress = ParseAddress(request.params[0]);
     uint32_t propertyId = ParsePropertyId(request.params[1]);
     int64_t amount = ParseAmount(request.params[2], isPropertyDivisible(propertyId));
 
@@ -555,7 +555,7 @@ UniValue tl_sendclosecrowdsale(const JSONRPCRequest& request)
         );
 
     // obtain parameters & info
-    std::string fromAddress = ParseAddress(request.params[0]);
+    const std::string fromAddress = ParseAddress(request.params[0]);
     uint32_t propertyId = ParsePropertyId(request.params[1]);
 
     // perform checks
@@ -606,8 +606,8 @@ UniValue tl_sendchangeissuer(const JSONRPCRequest& request)
         );
 
     // obtain parameters & info
-    std::string fromAddress = ParseAddress(request.params[0]);
-    std::string toAddress = ParseAddress(request.params[1]);
+    const std::string fromAddress = ParseAddress(request.params[0]);
+    const std::string toAddress = ParseAddress(request.params[1]);
     uint32_t propertyId = ParsePropertyId(request.params[2]);
 
     // perform checks
@@ -656,7 +656,7 @@ UniValue tl_sendactivation(const JSONRPCRequest& request)
         );
 
     // obtain parameters & info
-    std::string fromAddress = ParseAddress(request.params[0]);
+    const std::string fromAddress = ParseAddress(request.params[0]);
     uint16_t featureId = request.params[1].get_int();
     uint32_t activationBlock = request.params[2].get_int();
     uint32_t minClientVersion = request.params[3].get_int();
@@ -699,7 +699,7 @@ UniValue tl_senddeactivation(const JSONRPCRequest& request)
         );
 
     // obtain parameters & info
-    std::string fromAddress = ParseAddress(request.params[0]);
+    const std::string fromAddress = ParseAddress(request.params[0]);
     uint16_t featureId = request.params[1].get_int64();
 
     // create a payload for the transaction
@@ -742,7 +742,7 @@ UniValue tl_sendalert(const JSONRPCRequest& request)
         );
 
     // obtain parameters & info
-    std::string fromAddress = ParseAddress(request.params[0]);
+    const std::string fromAddress = ParseAddress(request.params[0]);
     int64_t tempAlertType = request.params[1].get_int64();
     if (tempAlertType < 1 || 65535 < tempAlertType) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Alert type is out of range");
@@ -753,7 +753,7 @@ UniValue tl_sendalert(const JSONRPCRequest& request)
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Expiry value is out of range");
     }
     uint32_t expiryValue = static_cast<uint32_t>(tempExpiryValue);
-    std::string alertMessage = ParseText(request.params[3]);
+    const std::string alertMessage = ParseText(request.params[3]);
 
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_TradeLayerAlert(alertType, expiryValue, alertMessage);
@@ -799,7 +799,7 @@ UniValue tl_sendtrade(const JSONRPCRequest& request)
 			);
   }
   // obtain parameters & info
-  std::string fromAddress = ParseAddress(request.params[0]);
+  const std::string fromAddress = ParseAddress(request.params[0]);
   uint32_t propertyIdForSale = ParsePropertyId(request.params[1]);
   int64_t amountForSale = ParseAmount(request.params[2], isPropertyDivisible(propertyIdForSale));
   uint32_t propertyIdDesired = ParsePropertyId(request.params[3]);
@@ -870,7 +870,7 @@ UniValue tl_createcontract(const JSONRPCRequest& request)
 			+ HelpExampleRpc("tl_createcontract", "2, 1, 0, \"Companies\", \"Bitcoin Mining\", \"Quantum Miner\", \"\", \"\", 2, \"100\", 1483228800, 30, 2, 4461, 100, 1, 25")
 			);
 
-   std::string fromAddress = ParseAddress(request.params[0]);
+   const std::string fromAddress = ParseAddress(request.params[0]);
    uint32_t num = ParsePropertyId(request.params[1]);
    uint32_t den = ParsePropertyId(request.params[2]);
    std::string name = ParseText(request.params[3]);
@@ -936,7 +936,7 @@ UniValue tl_create_oraclecontract(const JSONRPCRequest& request)
 			+ HelpExampleRpc("tl_create_oraclecontract", "2, 1, 0, \"Companies\", \"Bitcoin Mining\", \"Quantum Miner\", \"\", \"\", 2, \"100\", 1483228800, 30, 2, 4461, 100, 1, 25")
 			);
 
-  std::string fromAddress = ParseAddress(request.params[0]);
+  const std::string fromAddress = ParseAddress(request.params[0]);
   std::string name = ParseText(request.params[1]);
   uint32_t blocks_until_expiration = request.params[2].get_int();
   uint32_t notional_size = ParseAmount32t(request.params[3]);
@@ -997,7 +997,7 @@ UniValue tl_tradecontract(const JSONRPCRequest& request)
 			+ HelpExampleRpc("tl_tradecontract", "31,\"250.0\",1,\"10.0,\"70.0,\"80.0\"")
 			);
 
-      std::string fromAddress = ParseAddress(request.params[0]);
+      const std::string fromAddress = ParseAddress(request.params[0]);
       std::string name_traded = ParseText(request.params[1]);
       int64_t amountForSale = ParseAmountContract(request.params[2]);
       uint64_t effective_price = ParseEffectivePrice(request.params[3]);
@@ -1222,8 +1222,8 @@ UniValue tl_send_pegged(const JSONRPCRequest& request)
 			);
 
   // obtain parameters & info
-  std::string fromAddress = ParseAddress(request.params[0]);
-  std::string toAddress = ParseAddress(request.params[1]);
+  const std::string fromAddress = ParseAddress(request.params[0]);
+  const std::string toAddress = ParseAddress(request.params[1]);
   std::string name_pegged = ParseText(request.params[2]);
 
   struct FutureContractObject *pfuture = getFutureContractObject(name_pegged);
@@ -1280,8 +1280,7 @@ UniValue tl_redemption_pegged(const JSONRPCRequest& request)
 			);
 
   // obtain parameters & info
-  std::string fromAddress = ParseAddress(request.params[0]);
-
+  const std::string fromAddress = ParseAddress(request.params[0]);
   std::string name_pegged = ParseText(request.params[1]);
   uint32_t contractId = ParseNameOrId(request.params[3]);
   struct FutureContractObject *pfuture_pegged = getFutureContractObject(name_pegged);
@@ -1340,7 +1339,7 @@ UniValue tl_cancelorderbyblock(const JSONRPCRequest& request)
         );
 
     // obtain parameters & info
-    std::string fromAddress = ParseAddress(request.params[0]);
+    const std::string fromAddress = ParseAddress(request.params[0]);
     int block = static_cast<int>(ParseNewValues(request.params[1]));
     int idx = static_cast<int>(ParseNewValues(request.params[2]));
 
@@ -1396,7 +1395,7 @@ UniValue tl_senddexoffer(const JSONRPCRequest& request)
   }
 
   // obtain parameters & info
-  std::string fromAddress = ParseAddress(request.params[0]);
+  const std::string fromAddress = ParseAddress(request.params[0]);
   uint32_t propertyIdForSale = ParsePropertyId(request.params[1]);
   int64_t amountForSale = ParseAmount(request.params[2], isPropertyDivisible(propertyIdForSale));
   int64_t price = ParseAmount(request.params[3], true); // BTC is divisible
@@ -1461,8 +1460,8 @@ UniValue tl_senddexaccept(const JSONRPCRequest& request)
         );
 
     // obtain parameters & info
-    std::string fromAddress = ParseAddress(request.params[0]);
-    std::string toAddress = ParseAddress(request.params[1]);
+    const std::string fromAddress = ParseAddress(request.params[0]);
+    const std::string toAddress = ParseAddress(request.params[1]);
     uint32_t propertyId = ParsePropertyId(request.params[2]);
     int64_t amount = ParseAmount(request.params[3], true); // MSC/TMSC is divisible
 
@@ -1538,7 +1537,7 @@ UniValue tl_setoracle(const JSONRPCRequest& request)
         );
 
     // obtain parameters & info
-    std::string fromAddress = ParseAddress(request.params[0]);
+    const std::string fromAddress = ParseAddress(request.params[0]);
     uint32_t contractId = ParseNameOrId(request.params[1]);
     uint64_t high = ParseEffectivePrice(request.params[2]);
     uint64_t low = ParseEffectivePrice(request.params[3]);
@@ -1598,8 +1597,8 @@ UniValue tl_change_oracleadm(const JSONRPCRequest& request)
         );
 
     // obtain parameters & info
-    std::string fromAddress = ParseAddress(request.params[0]);
-    std::string toAddress = ParseAddress(request.params[1]);
+    const std::string fromAddress = ParseAddress(request.params[0]);
+    const std::string toAddress = ParseAddress(request.params[1]);
     uint32_t contractId = ParseNameOrId(request.params[2]);
 
     CMPSPInfo::Entry sp;
@@ -1657,7 +1656,7 @@ UniValue tl_oraclebackup(const JSONRPCRequest& request)
         );
 
     // obtain parameters & info
-    std::string fromAddress = ParseAddress(request.params[0]);
+    const std::string fromAddress = ParseAddress(request.params[0]);
     uint32_t contractId = ParseNameOrId(request.params[1]);
 
 
@@ -1714,7 +1713,7 @@ UniValue tl_closeoracle(const JSONRPCRequest& request)
         );
 
     // obtain parameters & info
-    std::string backupAddress = ParseAddress(request.params[0]);
+    const std::string backupAddress = ParseAddress(request.params[0]);
     uint32_t contractId = ParseNameOrId(request.params[1]);
 
     CMPSPInfo::Entry sp;
@@ -1774,8 +1773,8 @@ UniValue tl_commit_tochannel(const JSONRPCRequest& request)
         );
 
     // obtain parameters & info
-    std::string senderAddress = ParseAddress(request.params[0]);
-    std::string channelAddress = ParseAddress(request.params[1]);
+    const std::string senderAddress = ParseAddress(request.params[0]);
+    const std::string channelAddress = ParseAddress(request.params[1]);
     uint32_t propertyId = ParsePropertyId(request.params[2]);
     int64_t amount = ParseAmount(request.params[3], isPropertyDivisible(propertyId));
 
@@ -1825,8 +1824,8 @@ UniValue tl_withdrawal_fromchannel(const JSONRPCRequest& request)
         );
 
     // obtain parameters & info
-    std::string senderAddress = ParseAddress(request.params[0]);
-    std::string channelAddress = ParseAddress(request.params[1]);
+    const std::string senderAddress = ParseAddress(request.params[0]);
+    const std::string channelAddress = ParseAddress(request.params[1]);
     uint32_t propertyId = ParsePropertyId(request.params[2]);
     int64_t amount = ParseAmount(request.params[3], true);
 
@@ -1922,8 +1921,8 @@ UniValue tl_update_id_registration(const JSONRPCRequest& request)
         );
 
     // obtain parameters & info
-    std::string address = ParseAddress(request.params[0]);
-    std::string newAddr = ParseAddress(request.params[1]);
+    const std::string address = ParseAddress(request.params[0]);
+    const std::string newAddr = ParseAddress(request.params[1]);
 
     RequireFeatureActivated(FEATURE_KYC);
 
@@ -1968,8 +1967,8 @@ UniValue tl_send_dex_payment(const JSONRPCRequest& request)
         );
 
     // obtain parameters & info
-    std::string fromAddress = ParseAddress(request.params[0]);
-    std::string toAddress = ParseAddress(request.params[1]);
+    const std::string fromAddress = ParseAddress(request.params[0]);
+    const std::string toAddress = ParseAddress(request.params[1]);
     int64_t amount = ParseAmount(request.params[2], true);
 
     RequireFeatureActivated(FEATURE_DEX_SELL);
@@ -2061,8 +2060,8 @@ UniValue tl_revoke_attestation(const JSONRPCRequest& request)
         );
 
     // obtain parameters & info
-    std::string fromAddress = ParseAddress(request.params[0]);
-    std::string receiverAddress = ParseAddress(request.params[1]);
+    const std::string fromAddress = ParseAddress(request.params[0]);
+    const std::string receiverAddress = ParseAddress(request.params[1]);
 
     RequireFeatureActivated(FEATURE_KYC);
 
@@ -2102,7 +2101,7 @@ UniValue tl_sendcancelalltrades(const JSONRPCRequest& request)
         );
 
     // obtain parameters & info
-    std::string fromAddress = ParseAddress(request.params[0]);
+    const std::string fromAddress = ParseAddress(request.params[0]);
 
     RequireFeatureActivated(FEATURE_METADEX);
 
@@ -2143,7 +2142,7 @@ UniValue tl_sendcancel_order(const JSONRPCRequest& request)
         );
 
     // obtain parameters & info
-    std::string fromAddress = ParseAddress(request.params[0]);
+    const std::string fromAddress = ParseAddress(request.params[0]);
     std::string stxS = ParseHash(request.params[1]);
 
     RequireFeatureActivated(FEATURE_METADEX);
@@ -2185,7 +2184,7 @@ UniValue tl_sendcanceltradesbypair(const JSONRPCRequest& request)
         );
 
     // obtain parameters & info
-    std::string fromAddress = ParseAddress(request.params[0]);
+    const std::string fromAddress = ParseAddress(request.params[0]);
     uint32_t propertyIdForSale = ParsePropertyId(request.params[1]);
     uint32_t propertyIdDesired = ParsePropertyId(request.params[2]);
 
@@ -2234,7 +2233,7 @@ UniValue tl_sendcanceltradesbyprice(const JSONRPCRequest& request)
         );
 
     // obtain parameters & info
-    std::string fromAddress = ParseAddress(request.params[0]);
+    const std::string fromAddress = ParseAddress(request.params[0]);
     uint32_t propertyIdForSale = ParsePropertyId(request.params[1]);
     int64_t amountForSale = ParseAmount(request.params[2], isPropertyDivisible(propertyIdForSale));
     uint32_t propertyIdDesired = ParsePropertyId(request.params[3]);
@@ -2284,7 +2283,7 @@ UniValue tl_sendcancel_contract_order(const JSONRPCRequest& request)
         );
 
     // obtain parameters & info
-    std::string fromAddress = ParseAddress(request.params[0]);
+    const std::string fromAddress = ParseAddress(request.params[0]);
     std::string stxS = ParseHash(request.params[1]);
 
     // create a payload for the transaction

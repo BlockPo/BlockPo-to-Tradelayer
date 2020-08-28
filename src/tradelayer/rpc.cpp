@@ -60,8 +60,6 @@ using std::runtime_error;
 using namespace mastercore;
 
 extern int64_t totalVesting;
-extern volatile int64_t globalNumPrice;
-extern volatile int64_t globalDenPrice;
 extern uint64_t marketP[NPTYPES];
 extern std::map<uint32_t, std::map<std::string, double>> addrs_upnlc;
 extern std::map<std::string, int64_t> sum_upnls;
@@ -230,7 +228,7 @@ void ReserveToJSON(const std::string& address, uint32_t property, UniValue& bala
 
 void UnvestedToJSON(const std::string& address, uint32_t property, UniValue& balance_obj, bool divisible)
 {
-    int64_t unvested = getMPbalance(address, property, UNVESTED);
+    const int64_t unvested = getMPbalance(address, property, UNVESTED);
     if (divisible) {
         balance_obj.push_back(Pair("unvested", FormatDivisibleMP(unvested)));
     } else {
@@ -240,7 +238,7 @@ void UnvestedToJSON(const std::string& address, uint32_t property, UniValue& bal
 
 void ChannelToJSON(const std::string& address, uint32_t property, UniValue& balance_obj, bool divisible)
 {
-    int64_t margin = getMPbalance(address, property, CHANNEL_RESERVE);
+    const int64_t margin = getMPbalance(address, property, CHANNEL_RESERVE);
     if (divisible) {
         balance_obj.push_back(Pair("channel reserve", FormatDivisibleMP(margin)));
     } else {
@@ -625,7 +623,7 @@ UniValue tl_getunvested(const JSONRPCRequest& request)
             + HelpExampleRpc("tl_getunvested", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", ")
         );
 
-    std::string address = ParseAddress(request.params[0]);
+    const std::string address = ParseAddress(request.params[0]);
 
     // RequireExistingProperty(propertyId);
     // RequireNotContract(propertyId);
@@ -655,7 +653,7 @@ UniValue tl_getreserve(const JSONRPCRequest& request)
             + HelpExampleRpc("tl_getmargin", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", 1")
         );
 
-    std::string address = ParseAddress(request.params[0]);
+    const std::string address = ParseAddress(request.params[0]);
     uint32_t propertyId = ParsePropertyId(request.params[1]);
 
     RequireExistingProperty(propertyId);
@@ -685,7 +683,7 @@ UniValue tl_get_channelreserve(const JSONRPCRequest& request)
             + HelpExampleRpc("tl_get_channelreserve", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", 1")
         );
 
-    std::string address = ParseAddress(request.params[0]);
+    const std::string address = ParseAddress(request.params[0]);
     uint32_t propertyId = ParsePropertyId(request.params[1]);
 
     RequireExistingProperty(propertyId);
@@ -716,8 +714,8 @@ UniValue tl_get_channelremaining(const JSONRPCRequest& request)
             + HelpExampleRpc("tl_get_channelreserve", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", \"Qdj12J6FZgaY34ZNx12pVpTeF9NQdmpGzj\", 1")
         );
 
-    std::string address = ParseAddress(request.params[0]);
-    std::string chn = ParseAddress(request.params[1]);
+    const std::string address = ParseAddress(request.params[0]);
+    const std::string chn = ParseAddress(request.params[1]);
     uint32_t propertyId = ParsePropertyId(request.params[2]);
 
     RequireExistingProperty(propertyId);
@@ -754,7 +752,7 @@ UniValue tl_getchannel_info(const JSONRPCRequest& request)
             + HelpExampleRpc("tl_getchannel_info", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\"")
         );
 
-    std::string address = ParseAddress(request.params[0]);
+    const std::string address = ParseAddress(request.params[0]);
 
     UniValue response(UniValue::VOBJ);
 
@@ -844,7 +842,7 @@ UniValue tl_getallbalancesforaddress(const JSONRPCRequest& request)
             + HelpExampleRpc("tl_getallbalancesforaddress", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\"")
         );
 
-    std::string address = ParseAddress(request.params[0]);
+    const std::string address = ParseAddress(request.params[0]);
 
     UniValue response(UniValue::VARR);
 
@@ -910,8 +908,8 @@ UniValue tl_getproperty(const JSONRPCRequest& request)
     }
 
     int64_t nTotalTokens = getTotalTokens(propertyId);
-    std::string strCreationHash = sp.txid.GetHex();
-    std::string strTotalTokens = FormatMP(propertyId, nTotalTokens);
+    const std::string strCreationHash = sp.txid.GetHex();
+    const std::string strTotalTokens = FormatMP(propertyId, nTotalTokens);
     std::string denominator = "";
 
     UniValue response(UniValue::VOBJ);
@@ -1927,7 +1925,7 @@ UniValue tl_getfullposition(const JSONRPCRequest& request)
 			);
   }
 
-  std::string address = ParseAddress(request.params[0]);
+  const std::string address = ParseAddress(request.params[0]);
   uint32_t propertyId  = ParseNameOrId(request.params[1]);
 
   RequireContract(propertyId);
@@ -2000,7 +1998,7 @@ UniValue tl_getposition(const JSONRPCRequest& request)
 			+ HelpExampleRpc("tl_getposition", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", 1")
 			);
 
-  std::string address = ParseAddress(request.params[0]);
+  const std::string address = ParseAddress(request.params[0]);
   uint32_t contractId = ParseNameOrId(request.params[1]);
 
   RequireContract(contractId);
@@ -2029,7 +2027,7 @@ UniValue tl_getcontract_reserve(const JSONRPCRequest& request)
             + HelpExampleRpc("tl_getcotract_reserve", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", 1")
         );
 
-    std::string address = ParseAddress(request.params[0]);
+    const std::string address = ParseAddress(request.params[0]);
     uint32_t contractId = ParseNameOrId(request.params[1]);
 
     RequireContract(contractId);
@@ -2360,7 +2358,7 @@ UniValue tl_getupnl(const JSONRPCRequest& request)
 			);
   }
 
-  std::string address = ParseAddress(request.params[0]);
+  const std::string address = ParseAddress(request.params[0]);
   uint32_t contractId = ParseNameOrId(request.params[1]);
   bool showVerbose = (request.params.size() > 2 && ParseBinary(request.params[2]) == 1) ? true : false;
 
@@ -2409,7 +2407,7 @@ UniValue tl_getpnl(const JSONRPCRequest& request)
 			+ HelpExampleRpc("tl_getpnl", "address, 500")
 			);
 
-  std::string address = ParseAddress(request.params[0]);
+  const std::string address = ParseAddress(request.params[0]);
   uint32_t contractId = ParsePropertyId(request.params[1]);
 
   RequireExistingProperty(contractId);
@@ -2632,8 +2630,7 @@ UniValue tl_getsum_upnl(const JSONRPCRequest& request)
 			+ HelpExampleRpc("tl_getsum_upnl", "address2")
 			);
 
-
-  std::string address = ParseAddress(request.params[0]);
+  const std::string address = ParseAddress(request.params[0]);
 
   UniValue balanceObj(UniValue::VOBJ);
 
@@ -2670,7 +2667,7 @@ UniValue tl_check_commits(const JSONRPCRequest& request)
 			);
 
   // obtain property identifiers for pair & check valid parameters
-  std::string address = ParseAddress(request.params[0]);
+  const std::string address = ParseAddress(request.params[0]);
 
   // RequireContract(contractId);
 
@@ -2713,7 +2710,7 @@ UniValue tl_check_withdrawals(const JSONRPCRequest& request)
 			);
 
   // obtain property identifiers for pair & check valid parameters
-  std::string address = ParseAddress(request.params[0]);
+  const std::string address = ParseAddress(request.params[0]);
 
   // request pair trade history from trade db
   UniValue response(UniValue::VARR);
@@ -2747,7 +2744,7 @@ UniValue tl_check_kyc(const JSONRPCRequest& request)
 
   // obtain property identifiers for pair & check valid parameters
   std::string result;
-  std::string address = ParseAddress(request.params[0]);
+  const std::string address = ParseAddress(request.params[0]);
   // int registered = static_cast<int>(ParseNewValues(request.params[1]));
   // RequireContract(contractId);
 

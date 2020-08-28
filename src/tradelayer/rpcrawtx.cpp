@@ -204,7 +204,7 @@ UniValue tl_createrawtx_reference(const JSONRPCRequest& request)
         );
 
     CMutableTransaction tx = ParseMutableTransaction(request.params[0]);
-    std::string destination = ParseAddress(request.params[1]);
+    const std::string destination = ParseAddress(request.params[1]);
     int64_t amount = (request.params.size() > 2) ? AmountFromValue(request.params[2]) : 0;
 
     // extend the transaction
