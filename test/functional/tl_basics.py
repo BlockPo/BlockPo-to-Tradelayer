@@ -108,8 +108,8 @@ class HTTPBasicsTest (BitcoinTestFramework):
 
 
         self.log.info("Testing tl_getmdexvolume")
-        params = str([1,2,1,100])
-        out = tradelayer_HTTP(conn, headers, True, "tl_getmdexvolume",params)
+        params = str([1,1,100])
+        out = tradelayer_HTTP(conn, headers, False, "tl_getmdexvolume",params)
         # self.log.info(out)
         assert_equal(out['result']['volume'],'0.00000000')
         assert_equal(out['result']['blockheigh'],'100')
