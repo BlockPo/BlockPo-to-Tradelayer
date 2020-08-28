@@ -602,7 +602,7 @@ namespace mastercore
   bool feeCacheBuy();
 
   // updating the expiration block for channels
-  bool updateLastExBlock(int& nBlock, const std::string& sender);
+  bool updateLastExBlock(int nBlock, const std::string& sender);
 
   std::string updateStatus(int64_t oldPos, int64_t newPos);
 
