@@ -507,7 +507,7 @@ class ChannelsBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['multisig address'], multisig)
         assert_equal(out['result']['first address'], addresses[0])
         assert_equal(out['result']['second address'], addresses[1])
-        assert_equal(out['result']['expiry block'], 1008)
+        assert_equal(out['result']['expiry block'], 785)
         assert_equal(out['result']['status'], 'active')
 
 

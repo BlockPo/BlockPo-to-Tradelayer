@@ -115,11 +115,10 @@ std::map<uint32_t, int64_t> global_balance_money;
 //! Vector containing a list of properties relative to the wallet
 std::set<uint32_t> global_wallet_property_list;
 
-/**
- * Used to indicate, whether to automatically commit created transactions.
- *
- */
+//! Active channels
+std::map<std::string,Channel> channels_Map;
 
+//!Used to indicate, whether to automatically commit created transactions.
 bool autoCommit = true;
 static boost::filesystem::path MPPersistencePath;
 static int mastercoreInitialized = 0;
@@ -146,7 +145,6 @@ CtlTransactionDB *mastercore::p_TradeTXDB;
 extern MatrixTLS *pt_ndatabase;
 extern int n_cols;
 extern int n_rows;
-//extern std::vector<std::map<std::string, std::string>> path_ele;
 extern std::vector<std::map<std::string, std::string>> path_elef;
 extern std::map<uint32_t, std::map<uint32_t, int64_t>> market_priceMap;
 extern std::map<uint32_t, std::map<uint32_t, int64_t>> numVWAPMap;
@@ -158,8 +156,6 @@ extern std::map<uint32_t, std::map<uint32_t, std::vector<int64_t>>> denVWAPVecto
 extern std::map<uint32_t, std::vector<int64_t>> mapContractAmountTimesPrice;
 extern std::map<uint32_t, std::vector<int64_t>> mapContractVolume;
 extern std::map<uint32_t, int64_t> VWAPMapContracts;
-//extern volatile std::vector<std::map<std::string, std::string>> path_eleg;
-extern std::map<uint32_t,std::map<int,oracledata>> oraclePrices;
 /************************************************/
 /** TWAP containers **/
 
@@ -172,15 +168,11 @@ extern std::map<uint32_t, std::map<uint32_t, std::vector<uint64_t>>> mdextwap_ve
 /************************************************/
 extern std::map<uint32_t, std::map<std::string, double>> addrs_upnlc;
 extern std::map<std::string, int64_t> sum_upnls;
-extern std::map<uint32_t, int64_t> cachefees;
-extern std::map<uint32_t, int64_t> cachefees_oracles;
-extern std::map<uint32_t,std::map<int,oracledata>> oraclePrices;
+std::map<uint32_t, int64_t> cachefees;
+std::map<uint32_t, int64_t> cachefees_oracles;
 
 /** Pending withdrawals **/
 extern std::map<std::string,vector<withdrawalAccepted>> withdrawal_Map;
-
-/** Map of active channels**/
-std::map<std::string,channel> channels_Map;
 
 using mastercore::StrToInt64;
 
@@ -1053,9 +1045,9 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
 
     // retrieving channel struct
     auto it = channels_Map.find(channelAddr);
-    channel& sChn = it->second;
+    Channel& sChn = it->second;
 
-    int64_t remaining = static_cast<int64_t>(mastercore::getRemaining(sChn, seller, property));
+    int64_t remaining = static_cast<int64_t>(sChn.getRemaining(seller, property));
 
     if(msc_debug_instant_payment)
     {
@@ -1067,7 +1059,7 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
     {
         assert(update_tally_map(buyer, property, amount_purchased, BALANCE));
         assert(update_tally_map(channelAddr, property, -amount_purchased, CHANNEL_RESERVE));
-        assert(updateChannelBal(sChn, seller, property, -amount_purchased));
+        assert(sChn.updateChannelBal(seller, property, -amount_purchased));
 
         t_tradelistdb->recordNewInstantLTCTrade(txid, channelAddr, seller , buyer, property, amount_purchased, price, block, idx);
 
@@ -1078,7 +1070,7 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
         MapLTCVolume[block][property] += nvalue;
 
         // updating last exchange block
-        assert(mastercore::updateLastExBlock(block, channelAddr));
+        assert(sChn.updateLastExBlock(block));
 
         return !status;
     }
@@ -1581,19 +1573,14 @@ int input_activechannels_string(const std::string& s)
     std::vector<std::string> vstr;
     boost::split(vstr, s, boost::is_any_of(" ,=+"), boost::token_compress_on);
 
-    channel chn;
-
     const std::string& chnAddr = vstr[0];
-    chn.multisig = vstr[1];
-    chn.first = vstr[2];
-    chn.second = vstr[3];
-    chn.expiry_height = boost::lexical_cast<int>(vstr[4]);
-    chn.last_exchange_block = boost::lexical_cast<int>(vstr[5]);
+    const int expiry_height = boost::lexical_cast<int>(vstr[4]);
+    const int last_exchange_block = boost::lexical_cast<int>(vstr[5]);
 
+    Channel chn(vstr[1], vstr[2], vstr[3], expiry_height, last_exchange_block);
     // split general data + balances
     std::vector<std::string> vBalance;
     boost::split(vBalance, vstr[6], boost::is_any_of(";"), boost::token_compress_on);
-
 
     //address-property:amount;
     for (const auto &v : vBalance)
@@ -1606,9 +1593,8 @@ int input_activechannels_string(const std::string& s)
         boost::split(reg, adReg[1], boost::is_any_of(":"), boost::token_compress_on);;
         const uint32_t property = boost::lexical_cast<uint32_t>(reg[0]);
         const int64_t amount = boost::lexical_cast<int64_t>(reg[1]);
-        chn.balances[address][property] = amount;
+        chn.setBalance(address, property, amount);
     }
-
 
     // //inserting chn into map
     if(!channels_Map.insert(std::make_pair(chnAddr,chn)).second) return -1;
@@ -2302,9 +2288,9 @@ static int write_mp_active_channels(std::ofstream& file, SHA256_CTX* shaCtx)
     {
         // decompose the key for address
         const std::string& chnAddr = chn.first;
-        const channel& chnObj = chn.second;
+        const Channel& chnObj = chn.second;
 
-        std::string lineOut = strprintf("%s,%s,%s,%s,%d,%d", chnAddr, chnObj.multisig, chnObj.first, chnObj.second, chnObj.expiry_height, chnObj.last_exchange_block);
+        std::string lineOut = strprintf("%s,%s,%s,%s,%d,%d", chnAddr, chnObj.getMultisig(), chnObj.getFirst(), chnObj.getSecond(), chnObj.getExpiry(), chnObj.getLastBlock());
         lineOut.append("+");
         addBalances(chnObj.balances, lineOut);
         // add the line to the hash
@@ -5684,8 +5670,8 @@ bool mastercore::closeChannels(int Block)
 
     for(auto it = channels_Map.begin(); it != channels_Map.end();)
     {
-        channel &chn = it->second;
-        const int& expiry = chn.expiry_height;
+        Channel &chn = it->second;
+        const int expiry = chn.getExpiry();
 
         if (Block < expiry)
         {
@@ -5696,7 +5682,7 @@ bool mastercore::closeChannels(int Block)
 
         LOCK(cs_tally);
 
-        const uint32_t& nextSPID = _my_sps->peekNextSPID();
+        const uint32_t nextSPID = _my_sps->peekNextSPID();
 
         // retrieving funds from channel
         for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
@@ -5704,9 +5690,9 @@ bool mastercore::closeChannels(int Block)
             CMPSPInfo::Entry sp;
             if (_my_sps->getSP(propertyId, sp) && sp.isContract()) continue;
 
-            const uint64_t first_rem = getRemaining(chn, chn.first, propertyId);
-            const uint64_t second_rem = getRemaining(chn, chn.second, propertyId);
-            const uint64_t balance = static_cast<uint64_t>(getMPbalance(chn.multisig, propertyId, CHANNEL_RESERVE));
+            const uint64_t first_rem = chn.getRemaining(chn.getFirst(), propertyId);
+            const uint64_t second_rem = chn.getRemaining(chn.getSecond(), propertyId);
+            const uint64_t balance = static_cast<uint64_t>(getMPbalance(chn.getMultisig(), propertyId, CHANNEL_RESERVE));
 
             PrintToLog("%s() first_rem: %d, second_rem: %d, balance: %d, propertyId : %d\n",__func__, first_rem, second_rem, balance, propertyId);
 
@@ -5722,29 +5708,29 @@ bool mastercore::closeChannels(int Block)
             if (fState)
             {
 
-                assert(update_tally_map(chn.multisig, propertyId, -first_rem, CHANNEL_RESERVE));
-                assert(update_tally_map(chn.first, propertyId, first_rem, BALANCE));
-                assert(updateChannelBal(chn, chn.first, propertyId, -first_rem));
+                assert(update_tally_map(chn.getMultisig(), propertyId, -first_rem, CHANNEL_RESERVE));
+                assert(update_tally_map(chn.getFirst(), propertyId, first_rem, BALANCE));
+                assert(chn.updateChannelBal(chn.getFirst(), propertyId, -first_rem));
 
             }
 
             if (sState)
             {
-                assert(update_tally_map(chn.multisig, propertyId, -second_rem, CHANNEL_RESERVE));
-                assert(update_tally_map(chn.second, propertyId, second_rem, BALANCE));
-                assert(updateChannelBal(chn, chn.second, propertyId, -second_rem));
+                assert(update_tally_map(chn.getMultisig(), propertyId, -second_rem, CHANNEL_RESERVE));
+                assert(update_tally_map(chn.getSecond(), propertyId, second_rem, BALANCE));
+                assert(chn.updateChannelBal(chn.getSecond(), propertyId, -second_rem));
             }
 
         }
 
         // adding info in db
-        status = t_tradelistdb->setChannelClosed(chn.multisig);
+        status = t_tradelistdb->setChannelClosed(chn.getMultisig());
 
         // deleting element from map
         channels_Map.erase(it++);
 
         // deleting withdrawals
-        auto itt = withdrawal_Map.find(chn.multisig);
+        auto itt = withdrawal_Map.find(chn.getMultisig());
         if (itt != withdrawal_Map.end()){
             withdrawal_Map.erase(itt);
         }
@@ -5826,11 +5812,11 @@ bool CMPTradeList::getAllCommits(const std::string& senderAddress, UniValue& tra
 /**
  * @retrieve  All commits (minus withdrawal and trades) for a given address into specific channel
  */
-uint64_t mastercore::getRemaining(const channel& chn, const std::string& address, uint32_t propertyId)
+uint64_t Channel::getRemaining(const std::string& address, uint32_t propertyId) const
 {
     uint64_t remaining = 0;
-    auto it = chn.balances.find(address);
-    if (it != chn.balances.end())
+    auto it = balances.find(address);
+    if (it != balances.end())
     {
         const auto &pMap = it->second;
         auto itt = pMap.find(propertyId);
@@ -5843,7 +5829,7 @@ uint64_t mastercore::getRemaining(const channel& chn, const std::string& address
 /**
  * @add or subtract tokens in trade channel, for a given address
  */
-bool mastercore::updateChannelBal(channel& chn, const std::string& address, uint32_t propertyId, int64_t amount)
+bool Channel::updateChannelBal(const std::string& address, uint32_t propertyId, int64_t amount)
 {
     if (amount == 0){
         PrintToLog("%s(): nothing to update!\n", __func__);
@@ -5851,8 +5837,8 @@ bool mastercore::updateChannelBal(channel& chn, const std::string& address, uint
     }
 
     int64_t amount_remaining = 0;
-    auto it = chn.balances.find(address);
-    if (it != chn.balances.end())
+    auto it = balances.find(address);
+    if (it != balances.end())
     {
         const auto &pMap = it->second;
         auto itt = pMap.find(propertyId);
@@ -5874,10 +5860,22 @@ bool mastercore::updateChannelBal(channel& chn, const std::string& address, uint
 
     }
 
-    chn.balances[address][propertyId] += amount;
+    addAmount(address, propertyId, amount);
 
     return true;
 
+}
+
+void Channel::setBalance(const std::string& sender, uint32_t propertyId, uint64_t amount)
+{
+    balances[sender][propertyId] = amount;
+    PrintToLog("%s() amount setted: %d\n",__func__, balances[sender][propertyId]);
+}
+
+void Channel::addAmount(const std::string& sender, uint32_t propertyId, uint64_t amount)
+{
+    balances[sender][propertyId] += amount;
+    PrintToLog("%s() amount updated: %d\n",__func__, balances[sender][propertyId]);
 }
 
 uint64_t CMPTradeList::addClosedWithrawals(const std::string& channelAddr, const std::string& receiver, uint32_t propertyId)
@@ -6019,11 +6017,11 @@ bool CMPTradeList::getChannelInfo(const std::string& channelAddress, UniValue& t
     auto it = channels_Map.find(channelAddress);
     if(it != channels_Map.end())
     {
-        const channel &chn = it->second;
-        tradeArray.push_back(Pair("multisig address", chn.multisig));
-        tradeArray.push_back(Pair("first address", chn.first));
-        tradeArray.push_back(Pair("second address", chn.second));
-        tradeArray.push_back(Pair("expiry block", chn.expiry_height));
+        const Channel &chn = it->second;
+        tradeArray.push_back(Pair("multisig address", chn.getMultisig()));
+        tradeArray.push_back(Pair("first address", chn.getFirst()));
+        tradeArray.push_back(Pair("second address", chn.getSecond()));
+        tradeArray.push_back(Pair("expiry block", chn.getExpiry()));
         tradeArray.push_back(Pair("status","active"));
         return (!status);
     }
@@ -6630,29 +6628,27 @@ bool mastercore::feeCacheBuy()
 /**
  *  Updating last exchange block in channels
  */
-bool mastercore::updateLastExBlock(int nBlock, const std::string& sender)
+bool Channel::updateLastExBlock(int nBlock)
 {
     bool result = false;
-    auto it = channels_Map.find(sender);
+    auto it = channels_Map.find(multisig);
     if (it == channels_Map.end())
     {
-        if(msc_debug_update_last_block) PrintToLog("%s(): trade channel not found!; (channel: %s)\n",__func__, sender);
+        if(msc_debug_update_last_block) PrintToLog("%s(): trade channel not found!; (channel: %s)\n",__func__, multisig);
         return result;
 
     }
 
-    channel& chn = it->second;
-
-    const int difference = nBlock - chn.last_exchange_block;
+    const int difference = nBlock - getLastBlock();
 
     assert(difference >= 0);
 
-    if(msc_debug_update_last_block) PrintToLog("%s: expiry height after update: %d\n",__func__, chn.expiry_height);
+    if(msc_debug_update_last_block) PrintToLog("%s: expiry height after update: %d\n",__func__, getExpiry());
 
     if (difference < dayblocks)
     {
         // updating expiry_height
-        chn.expiry_height += difference;
+        setLastBlock(difference);
     }
 
     return true;
@@ -6756,16 +6752,13 @@ void CMPTradeList::getUpnInfo(const std::string& address, uint32_t contractId, U
 
 void mastercore::createChannel(const std::string& sender, const std::string& receiver,  uint32_t propertyId, uint64_t amount_commited, int block, int tx_id)
 {
-    channel chn;
-    chn.multisig = receiver;
-    chn.first = sender;
-    chn.expiry_height = block + dayblocks;
-    chn.balances[sender][propertyId] = amount_commited;
+    Channel chn(receiver, sender,"pending", block + dayblocks, block);
+    chn.setBalance(sender, propertyId, amount_commited);
     channels_Map[receiver] = chn;
 
-    if(msc_create_channel) PrintToLog("%s(): checking channel elements : channel address: %s, first address: %d, second address: %d, expiry_height: %d \n",__func__, chn.multisig, chn.first, chn.second, chn.expiry_height);
+    if(msc_create_channel) PrintToLog("%s(): checking channel elements : channel address: %s, first address: %d, second address: %d, expiry_height: %d \n",__func__, chn.getMultisig(), chn.getFirst(), chn.getSecond(), chn.getExpiry());
 
-    t_tradelistdb->recordNewChannel(chn.multisig, chn.first, chn.second, chn.expiry_height, tx_id);
+    t_tradelistdb->recordNewChannel(chn.getMultisig(), chn.getFirst(), chn.getSecond(), chn.getExpiry(), tx_id);
 
 }
 
@@ -6841,8 +6834,8 @@ bool CMPTradeList::tryAddSecond(const std::string& candidate, const std::string&
     // if candidate is one of the channel's addresses: update balance and break.
     if (candidate == frAddr || candidate == secAddr)
     {
-        channel& chn = it->second;
-        updateChannelBal(chn, candidate, propertyId, amount_commited);
+        Channel& chn = it->second;
+        chn.updateChannelBal(candidate, propertyId, amount_commited);
 
         return true;
     }
@@ -6870,9 +6863,9 @@ bool CMPTradeList::tryAddSecond(const std::string& candidate, const std::string&
     ++nWritten;
 
     // updating in memory
-    channel& chn = it->second;
-    chn.second = candidate;
-    updateChannelBal(chn, candidate, propertyId, amount_commited);
+    Channel& chn = it->second;
+    chn.setSecond(candidate);
+    chn.updateChannelBal(candidate, propertyId, amount_commited);
 
     return (status.ok() && status1.ok());
 
@@ -6898,7 +6891,7 @@ bool mastercore::transferAll(const std::string& sender, const std::string& recei
 
     LOCK(cs_tally);
 
-    const uint32_t& nextSPID = _my_sps->peekNextSPID();
+    const uint32_t nextSPID = _my_sps->peekNextSPID();
 
     // retrieving funds from channel
     for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
@@ -6928,7 +6921,7 @@ bool mastercore::transferAll(const std::string& sender, const std::string& recei
     // clearing channel balance registers
     auto it = channels_Map.find(sender);
     if (it != channels_Map.end()){
-        channel &chn = it->second;
+        Channel &chn = it->second;
         chn.balances.clear();
     }
 

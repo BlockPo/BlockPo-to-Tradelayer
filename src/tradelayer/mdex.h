@@ -78,7 +78,6 @@ class CMPMetaDEx
   std::string addr;
 
  public:
-
   uint256 getHash() const { return txid; }
   uint32_t getProperty() const { return property; }
   uint32_t getDesProperty() const { return desired_property; }
@@ -137,29 +136,6 @@ class CMPMetaDEx
 
   std::string GenerateConsensusString() const;
 
-
-};
-
-
-/** A trade on the channel exchange.
- */
-class ChnDEx : public CMPMetaDEx
-{
- private:
-   int blockheight_expiry;
-
- public:
- ChnDEx()
-   : blockheight_expiry(0) {}
-
-   ChnDEx(const CMPTransaction &tx)
-     : CMPMetaDEx(tx), blockheight_expiry(tx.block_forexpiry) {}
-
-     ChnDEx(const std::string& addr, int b, uint32_t c, int64_t nValue, uint32_t cd, int64_t ad, const uint256& tx, uint32_t i, uint8_t suba,int blck)
-       : CMPMetaDEx(addr, b, c, nValue, cd, ad, tx, i, suba), blockheight_expiry(blck) {}
-
-     int getBlockExpiry() const { return blockheight_expiry; }
-     friend MatchReturnType x_Trade(ChnDEx* const pnew);
 
 };
 
@@ -247,31 +223,7 @@ namespace mastercore
 
   uint64_t edgeOrderbook(uint32_t contractId, uint8_t tradingAction);
 
-  // ---------------
-
-  struct ChnDEx_compare
-  {
-    bool operator()(const ChnDEx& lhs, const ChnDEx& rhs) const;
-  };
-
-  // ---------------
-  //! Set of objects sorted by block+idx
-  typedef std::set<ChnDEx, ChnDEx_compare> chn_Set;
-
-  typedef std::map<rational_t, chn_Set> chn_PricesMap;
-
-  typedef std::map<uint32_t, chn_PricesMap> chn_PropertiesMap;
-
-  extern chn_PropertiesMap chndex;
-
-  chn_PricesMap* get_chnPrices(uint32_t prop);
-  chn_Set* get_chnIndexes(chn_PricesMap* p, rational_t price);
-
-  int ChnDEx_ADD(const std::string& sender_addr, uint32_t, int64_t, int block, uint32_t property_desired, int64_t amount_desired, const uint256& txid, unsigned int idx, int blockheight_expiry);
-  bool ChnDEx_INSERT(const ChnDEx& objMetaDEx);
-
-  // ---------------
-
+  // --------------
 
   struct ContractDex_compare
   {

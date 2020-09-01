@@ -24,7 +24,6 @@
 #include <openssl/sha.h>
 #include "tradelayer_matrices.h"
 
-extern std::map<std::string,channel> channels_Map;
 extern std::map<uint32_t, int64_t> cachefees;
 extern std::map<uint32_t, int64_t> cachefees_oracles;
 extern std::vector<std::string> vestingAddresses;
@@ -114,11 +113,11 @@ std::string GenerateConsensusString(const uint32_t propertyId, const std::string
 
 
 // Generates a consensus string for hashing based on a channel object
-std::string GenerateConsensusString(const channel& chn)
+std::string GenerateConsensusString(const Channel& chn)
 {
     return strprintf("%s|%s|%s|%d|%d",
-		     chn.multisig, chn.first, chn.second, chn.expiry_height,
-		     chn.last_exchange_block);
+		     chn.getMultisig(), chn.getFirst(), chn.getSecond(), chn.getExpiry(),
+		     chn.getLastBlock());
 }
 
 // Generates a consensus string for hashing based on a kyc register
@@ -402,10 +401,10 @@ uint256 GetConsensusHash()
 
     // Trade Channels
     // Placeholders: "multisigaddress|multisigaddress|firstaddress|secondaddress|expiryheight|lastexchangeblock"
-    for(auto it = channels_Map.begin(); it != channels_Map.end(); ++it)
+    for(const auto cm : channels_Map)
     {
-         const channel& chn = it->second;
-         std::string dataStr = GenerateConsensusString(chn);
+         const Channel& chn = cm.second;
+         const std::string dataStr = GenerateConsensusString(chn);
          if (msc_debug_consensus_hash) PrintToLog("Adding Trade Channels entry to consensus hash: %s\n", dataStr);
          //channels oredered by multisig address (map key)
          SHA256_Update(&shaCtx, dataStr.c_str(), dataStr.length());
