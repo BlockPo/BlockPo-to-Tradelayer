@@ -46,9 +46,6 @@ std::map<int, std::map<uint32_t,int64_t>> mastercore::metavolume;
 //! Global map for last contract price
 std::map<uint32_t,int64_t> mastercore::cdexlastprice;
 
-
-chn_PropertiesMap mastercore::chndex;
-
 extern volatile int64_t globalVolumeALL_LTC;
 extern volatile int idx_q;
 extern uint64_t marketP[NPTYPES];
@@ -84,15 +81,6 @@ md_PricesMap* mastercore::get_Prices(uint32_t prop)
     return static_cast<md_PricesMap*>(nullptr);
 }
 
-chn_PricesMap* mastercore::get_chnPrices(uint32_t prop)
-{
-    chn_PropertiesMap::iterator it = chndex.find(prop);
-
-    if (it != chndex.end()) return &(it->second);
-
-    return static_cast<chn_PricesMap*>(nullptr);
-}
-
 md_Set* mastercore::get_Indexes(md_PricesMap* p, rational_t price)
 {
     md_PricesMap::iterator it = p->find(price);
@@ -101,15 +89,6 @@ md_Set* mastercore::get_Indexes(md_PricesMap* p, rational_t price)
 
     return static_cast<md_Set*>(nullptr);
 
-}
-
-chn_Set* mastercore::get_chnIndexes(chn_PricesMap* p, rational_t price)
-{
-    chn_PricesMap::iterator it = p->find(price);
-
-    if (it != p->end()) return &(it->second);
-
-    return static_cast<chn_Set*>(nullptr);
 }
 
 cd_PropertiesMap mastercore::contractdex;

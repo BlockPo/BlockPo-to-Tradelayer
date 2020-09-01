@@ -60,18 +60,15 @@ using std::runtime_error;
 using namespace mastercore;
 
 extern int64_t totalVesting;
-extern uint64_t marketP[NPTYPES];
 extern std::map<uint32_t, std::map<std::string, double>> addrs_upnlc;
 extern std::map<std::string, int64_t> sum_upnls;
-extern std::map<uint32_t, int64_t> cachefees;
-extern std::map<uint32_t, int64_t> cachefees_oracles;
 extern std::map<uint32_t, std::map<uint32_t, int64_t>> market_priceMap;
 extern std::map<uint32_t, std::vector<int64_t>> mapContractAmountTimesPrice;
 extern volatile int64_t globalVolumeALL_LTC;
-extern std::vector<std::string> vestingAddresses;
-
+extern std::vector<std::string> vestingAddresses; 
 using mastercore::StrToInt64;
 using mastercore::DoubleToInt64;
+
 /**
  * Throws a JSONRPCError, depending on error code.
  */
@@ -725,8 +722,8 @@ UniValue tl_get_channelremaining(const JSONRPCRequest& request)
     uint64_t remaining = 0;
     auto it = channels_Map.find(chn);
     if (it != channels_Map.end()){
-        const channel& sChn = it->second;
-        remaining = getRemaining(sChn, address, propertyId);
+        const Channel& sChn = it->second;
+        remaining = sChn.getRemaining(address, propertyId);
     }
 
     UniValue balanceObj(UniValue::VOBJ);
@@ -2457,8 +2454,9 @@ UniValue tl_getmarketprice(const JSONRPCRequest& request)
   RequireContract(contractId);
 
   UniValue balanceObj(UniValue::VOBJ);
-  int index = static_cast<unsigned int>(contractId);
-  int64_t price = marketP[index];
+  // int index = static_cast<unsigned int>(contractId);
+  // int64_t price = marketP[index];
+  int64_t price = 0;
 
   balanceObj.push_back(Pair("price", FormatByType(price,2)));
 

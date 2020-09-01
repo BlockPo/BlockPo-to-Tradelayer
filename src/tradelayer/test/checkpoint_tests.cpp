@@ -24,7 +24,7 @@ extern std::string GenerateConsensusString(const CMPOffer& offerObj, const std::
 extern std::string GenerateConsensusString(const CMPAccept& acceptObj, const std::string& address);
 extern std::string GenerateConsensusString(const CMPCrowd& crowdObj);
 extern std::string GenerateConsensusString(const uint32_t propertyId, const std::string& address);
-extern std::string GenerateConsensusString(const channel& chn);
+extern std::string GenerateConsensusString(const Channel& chn);
 extern std::string kycGenerateConsensusString(const std::vector<std::string>& vstr);
 extern std::string attGenerateConsensusString(const std::vector<std::string>& vstr);
 extern std::string feeGenerateConsensusString(const uint32_t& propertyId, const int64_t& cache);
@@ -129,13 +129,13 @@ BOOST_AUTO_TEST_CASE(consensus_string_cdex)
 
 BOOST_AUTO_TEST_CASE(consensus_channel_address)
 {
-    channel chn;
-    chn.multisig = "3CwZ7FiQ4MqBenRdCkjjc41M5bnoKQGC2b";
-    chn.first = "1PxejjeWZc9ZHph7A3SYDo2sk2Up4AcysH";
-    chn.second = "16Mk17CGqLaz5qBxv93YxcXwFbzV7N7y6G";
-    chn.expiry_height = 874;
-    chn.last_exchange_block = 200;
+    const std::string multisig = "3CwZ7FiQ4MqBenRdCkjjc41M5bnoKQGC2b";
+    const std::string first = "1PxejjeWZc9ZHph7A3SYDo2sk2Up4AcysH";
+    const std::string second = "16Mk17CGqLaz5qBxv93YxcXwFbzV7N7y6G";
+    const int expiry_height = 874;
+    const int last_exchange_block = 200;
 
+    Channel chn(multisig, first, second, expiry_height, last_exchange_block);
     BOOST_CHECK_EQUAL("3CwZ7FiQ4MqBenRdCkjjc41M5bnoKQGC2b|1PxejjeWZc9ZHph7A3SYDo2sk2Up4AcysH|16Mk17CGqLaz5qBxv93YxcXwFbzV7N7y6G|874|200",
             GenerateConsensusString(chn));
 }

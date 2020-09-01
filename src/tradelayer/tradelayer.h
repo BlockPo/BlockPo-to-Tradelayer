@@ -279,18 +279,37 @@ extern bool autoCommit;
 //! Global lock for state objects
 extern CCriticalSection cs_tally;
 
-
- struct channel
- {
+class Channel
+{
+ private:
    std::string multisig;
    std::string first;
    std::string second;
    int expiry_height;
    int last_exchange_block;
+ public:
    //! Available balances for first  and second addressess properties
    std::map<std::string,map<uint32_t, int64_t>> balances;
 
-   channel() : multisig(""), first(""), second("pending"), expiry_height(0), last_exchange_block(0) {}
+   Channel() : multisig(""), first(""), second(""), expiry_height(0), last_exchange_block(0) {}
+   ~Channel() {}
+   Channel(const std::string& m, const std::string& f, const std::string& s, int exp, int blk) :  multisig(m),
+   first(f), second(s), expiry_height(exp), last_exchange_block(blk) {}
+
+   std::string getMultisig() const { return multisig; }
+   std::string getFirst() const { return first; }
+   std::string getSecond() const { return second; }
+   int getExpiry() const { return expiry_height; }
+   int getLastBlock() const { return last_exchange_block; }
+   uint64_t getRemaining(const std::string& address, uint32_t propertyId) const;
+
+   void setLastBlock(int block) { last_exchange_block += block;}
+   void setBalance(const std::string& sender, uint32_t propertyId, uint64_t amount);
+   void addAmount(const std::string& sender, uint32_t propertyId, uint64_t amount);
+   void setSecond(const std::string& sender) { second = sender ; }
+   bool updateChannelBal(const std::string& address, uint32_t propertyId, int64_t amount);
+   bool updateLastExBlock(int nBlock);
+
  };
 
 /* LevelDB based storage for  Trade Layer transaction data.  This will become the new master database, holding serialized Trade Layer transactions.
@@ -478,9 +497,12 @@ extern std::map<uint32_t, int64_t> global_balance_money;
 //! Vector containing a list of properties relative to the wallet
 extern std::set<uint32_t> global_wallet_property_list;
 
+//! Map of active channels
+extern std::map<std::string,Channel> channels_Map;
 
-/** Map of active channels**/
-extern std::map<std::string,channel> channels_Map;
+//!Cache fees
+extern std::map<uint32_t, int64_t> cachefees;
+extern std::map<uint32_t, int64_t> cachefees_oracles;
 
 int64_t getMPbalance(const std::string& address, uint32_t propertyId, TallyType ttype);
 int64_t getUserAvailableMPbalance(const std::string& address, uint32_t propertyId);
@@ -614,10 +636,6 @@ namespace mastercore
   const string getVestingAdmin();
 
   int64_t lastVolume(uint32_t propertyId, bool tokens);
-
-  uint64_t getRemaining(const channel& chn, const std::string& address, uint32_t propertyId);
-
-  bool updateChannelBal(channel& chn, const std::string& address, uint32_t propertyId, int64_t amount);
 
   bool checkWithdrawal(const std::string& txid, const std::string& channelAddress);
 

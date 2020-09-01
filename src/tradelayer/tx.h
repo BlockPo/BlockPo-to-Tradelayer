@@ -4,7 +4,6 @@
 class CMPMetaDEx;
 class CMPOffer;
 class CTransaction;
-class ChnDEx;
 class CMPContractDex;
 
 #include "tradelayer/tradelayer.h"
@@ -29,7 +28,6 @@ class CMPTransaction
 {
     friend class CMPMetaDEx;
     friend class CMPOffer;
-    friend class ChnDEx;
     friend class CMPContractDex;
 
 private:
@@ -576,6 +574,10 @@ struct oracledata
   int64_t close;
   uint32_t contractId;
 };
+
+//! Prices for each oracle contract
+extern std::map<uint32_t,std::map<int,oracledata>> oraclePrices;
+
 
 struct withdrawalAccepted
 {
