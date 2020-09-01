@@ -500,9 +500,12 @@ extern std::set<uint32_t> global_wallet_property_list;
 //! Map of active channels
 extern std::map<std::string,Channel> channels_Map;
 
-//!Cache fees
+//! Cache fees
 extern std::map<uint32_t, int64_t> cachefees;
 extern std::map<uint32_t, int64_t> cachefees_oracles;
+
+//! Vesting receiver addresses
+extern std::vector<std::string> vestingAddresses;
 
 int64_t getMPbalance(const std::string& address, uint32_t propertyId, TallyType ttype);
 int64_t getUserAvailableMPbalance(const std::string& address, uint32_t propertyId);

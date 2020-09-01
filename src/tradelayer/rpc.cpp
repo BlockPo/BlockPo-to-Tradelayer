@@ -65,7 +65,6 @@ extern std::map<std::string, int64_t> sum_upnls;
 extern std::map<uint32_t, std::map<uint32_t, int64_t>> market_priceMap;
 extern std::map<uint32_t, std::vector<int64_t>> mapContractAmountTimesPrice;
 extern volatile int64_t globalVolumeALL_LTC;
-extern std::vector<std::string> vestingAddresses; 
 using mastercore::StrToInt64;
 using mastercore::DoubleToInt64;
 

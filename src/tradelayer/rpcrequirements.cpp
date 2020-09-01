@@ -391,7 +391,6 @@ void RequireSaneName(std::string& name)
     for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++) {
         CMPSPInfo::Entry sp;
         if (_my_sps->getSP(propertyId, sp)) {
-            PrintToConsole("Property Id: %d\n",propertyId);
             if (sp.name == name){
                 throw JSONRPCError(RPC_INVALID_PARAMETER,"We have another property with the same name\n");
             }
@@ -425,7 +424,7 @@ void RequireFeatureActivated(const uint16_t feature)
 
 void RequireAmountForFee(const std::string& address, uint32_t propertyId, int64_t amount)
 {
-    arith_uint256 am = ConvertTo256(amount) + DivideAndRoundUp(ConvertTo256(amount) * ConvertTo256(5), ConvertTo256(BASISPOINT) * ConvertTo256(BASISPOINT));
+    const arith_uint256 am = ConvertTo256(amount) + DivideAndRoundUp(ConvertTo256(amount) * ConvertTo256(5), ConvertTo256(BASISPOINT) * ConvertTo256(BASISPOINT));
     int64_t amountToReserve = ConvertTo64(am);
 
     int64_t nBalance = getMPbalance(address, propertyId, BALANCE);

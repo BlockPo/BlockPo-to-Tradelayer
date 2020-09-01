@@ -3,7 +3,6 @@ int M = 4;
 int NYears = 10;
 int initYear = 19;
 
-factorE = 100000000;
 priceIndex = 110; // an index price (USDs) to calculate the interest in pegg currencies (10% more)
 denMargin = 100;
 n_cols = 10;

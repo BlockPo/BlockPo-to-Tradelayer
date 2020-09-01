@@ -47,16 +47,19 @@ BOOST_FIXTURE_TEST_SUITE(vesting_tests, BasicTestingSetup)
 /** Proof of concept function **/
 int VestingTokens(double& lastVesting, int64_t globalVolumeALL_LTC, int64_t& nAmount, std::vector<std::string>& vestingAddresses)
 {
-    if (vestingAddresses.empty())
-    {
+    bool deactivation = false;
+
+    if (vestingAddresses.empty()){
         return -1;
     }
 
-    if (globalVolumeALL_LTC <= 10000 * COIN)
-    {
+    if (globalVolumeALL_LTC <= 10000 * COIN){
         return -2;
     }
 
+    if(100000000 * COIN <= globalVolumeALL_LTC){
+        deactivation = true;
+    }
 
     // accumulated vesting
     const double accumVesting = getAccumVesting(globalVolumeALL_LTC);
@@ -64,8 +67,7 @@ int VestingTokens(double& lastVesting, int64_t globalVolumeALL_LTC, int64_t& nAm
     // vesting fraction on this block
     const double realVesting = (accumVesting > lastVesting) ?  accumVesting - lastVesting : 0;
 
-    if (realVesting == 0)
-    {
+    if (realVesting == 0){
         return -4;
     }
 
@@ -84,7 +86,7 @@ int VestingTokens(double& lastVesting, int64_t globalVolumeALL_LTC, int64_t& nAm
             const arith_uint256 iAmount = mastercore::ConvertTo256(iRealVesting) * DivideAndRoundUp(uVestingBalance, uCOIN);
             nAmount = mastercore::ConvertTo64(iAmount);
 
-            if(100000000 * COIN <= globalVolumeALL_LTC){
+            if(deactivation){
                 BOOST_TEST_MESSAGE("Passing ALL left unvested to balance");
                 nAmount = unvestedALLBal;
             }
@@ -139,8 +141,8 @@ BOOST_AUTO_TEST_CASE(out_of_range_volume)
     BOOST_CHECK_EQUAL(0, VestingTokens(lastVesting, 100010000 * COIN, nAmount, vestingAddresses));
     BOOST_CHECK_EQUAL(0, VestingTokens(lastVesting, 100100000 * COIN, nAmount, vestingAddresses));
 
-    //must have the total vested
-    BOOST_CHECK_EQUAL(1000 *  COIN, getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPb", ALL, BALANCE));
+    // must have entire volume
+    BOOST_CHECK_EQUAL(100000000000, getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPb", ALL, BALANCE));
 }
 
 

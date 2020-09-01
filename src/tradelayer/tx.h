@@ -575,9 +575,6 @@ struct oracledata
   uint32_t contractId;
 };
 
-//! Prices for each oracle contract
-extern std::map<uint32_t,std::map<int,oracledata>> oraclePrices;
-
 
 struct withdrawalAccepted
 {
@@ -590,6 +587,11 @@ struct withdrawalAccepted
   withdrawalAccepted() : address(""), deadline_block(0), propertyId(0), amount(0) {}
 };
 
+//! Prices for each oracle contract
+extern std::map<uint32_t,std::map<int,oracledata>> oraclePrices;
+
+//! Pending withdrawals
+extern std::map<std::string,vector<withdrawalAccepted>> withdrawal_Map;
 
 struct FutureContractObject *getFutureContractObject(std::string identifier);
 struct TokenDataByName *getTokenDataByName(std::string identifier);
