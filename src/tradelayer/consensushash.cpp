@@ -422,10 +422,10 @@ uint256 GetConsensusHash()
 
     // Cache fee (natives)
     // Placeholders: "propertyid|cacheamount"
-    for (auto itt = cachefees.begin(); itt != cachefees.end(); ++itt)
+    for (const auto &cf : cachefees)
     {
-        const uint32_t& propertyId = itt->first;
-        const int64_t& cache = itt->second;
+        const uint32_t& propertyId = cf.first;
+        const int64_t& cache = cf.second;
         std::string dataStr = feeGenerateConsensusString(propertyId, cache);
         if (msc_debug_consensus_hash) PrintToLog("Adding Fee cache (natives) entry to consensus hash: %s\n", dataStr);
         // cache fee is a map (ordered by propertyId key)
@@ -434,10 +434,10 @@ uint256 GetConsensusHash()
 
     // Cache fee (oracles)
     // Placeholders: "propertyid|cacheamount"
-    for (auto itt = cachefees_oracles.begin(); itt != cachefees_oracles.end(); ++itt)
+    for (const auto &cf : cachefees_oracles)
     {
-        const uint32_t& propertyId = itt->first;
-        const int64_t& cache = itt->second;
+        const uint32_t& propertyId = cf.first;
+        const int64_t& cache = cf.second;
         std::string dataStr = feeGenerateConsensusString(propertyId, cache);
         if (msc_debug_consensus_hash) PrintToLog("Adding Fee cache (oracles) entry to consensus hash: %s\n", dataStr);
         // map ordered by propertyId key
@@ -447,9 +447,9 @@ uint256 GetConsensusHash()
     // Vesting addresses
     // Placeholders: "addresses"
     std::sort (vestingAddresses.begin(), vestingAddresses.end());
-    for (auto it = vestingAddresses.begin(); it != vestingAddresses.end(); ++it)
+    for (const auto v : vestingAddresses)
     {
-        const std::string& address = *it;
+        const std::string& address = v;
         std::string dataStr = strprintf("%s", address);
         if (msc_debug_consensus_hash) PrintToLog("Adding Vesting addresses entry to consensus hash: %s\n", dataStr);
         SHA256_Update(&shaCtx, dataStr.c_str(), dataStr.length());
@@ -460,18 +460,18 @@ uint256 GetConsensusHash()
     std::vector<mastercore::FeatureActivation> pendings = mastercore::GetPendingActivations();
     std::vector<std::pair<uint16_t, std::string> > sortPendings;
 
-    for(auto it = pendings.begin(); it != pendings.end(); ++it)
+    for(const auto &p : pendings)
     {
-         const mastercore::FeatureActivation& feat = *it;
+         const mastercore::FeatureActivation& feat = p;
          std::string dataStr = GenerateConsensusString(feat);
          sortPendings.push_back(std::make_pair(feat.featureId, dataStr));
     }
 
     // sorting using featureId
     std::sort(sortPendings.begin(), sortPendings.end());
-    for(auto itt = sortPendings.begin(); itt != sortPendings.end(); ++itt)
+    for(const auto &sp : sortPendings)
     {
-        std::string dataStr = itt->second;
+        std::string dataStr = sp.second;
         if (msc_debug_consensus_hash) PrintToLog("Adding Pending features activations entry to consensus hash: %s\n", dataStr);
         SHA256_Update(&shaCtx, dataStr.c_str(), dataStr.length());
     }
@@ -481,18 +481,18 @@ uint256 GetConsensusHash()
     std::vector<mastercore::FeatureActivation> completed = mastercore::GetCompletedActivations();
     std::vector<std::pair<uint16_t, std::string> > sortCompleted;
 
-    for(auto it = completed.begin(); it != completed.end(); ++it)
+    for(const auto &cp : completed)
     {
-         const mastercore::FeatureActivation& feat = *it;
+         const mastercore::FeatureActivation& feat = cp;
          std::string dataStr = GenerateConsensusString(feat);
          sortCompleted.push_back(std::make_pair(feat.featureId, dataStr));
     }
 
     // sorting using featureId
     std::sort(sortCompleted.begin(), sortCompleted.end());
-    for(auto itt = sortCompleted.begin(); itt != sortCompleted.end(); ++itt)
+    for(const auto &cp : sortCompleted)
     {
-        std::string dataStr = itt->second;
+        std::string dataStr = cp.second;
         if (msc_debug_consensus_hash) PrintToLog("Adding Completed features activations entry to consensus hash: %s\n", dataStr);
         SHA256_Update(&shaCtx, dataStr.c_str(), dataStr.length());
     }

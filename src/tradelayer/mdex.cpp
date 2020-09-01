@@ -48,7 +48,6 @@ std::map<uint32_t,int64_t> mastercore::cdexlastprice;
 
 extern volatile int64_t globalVolumeALL_LTC;
 extern volatile int idx_q;
-extern uint64_t marketP[NPTYPES];
 extern int expirationAchieve;
 extern std::map<uint32_t, std::map<uint32_t, int64_t>> market_priceMap;
 extern std::map<uint32_t, std::map<uint32_t, int64_t>> numVWAPMap;
@@ -237,7 +236,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
 
       uint32_t NotionalSize = sp.notional_size;
 
-      arith_uint256 Volume256_t = mastercore::ConvertTo256(NotionalSize)*mastercore::ConvertTo256(nCouldBuy)/COIN;
+      arith_uint256 Volume256_t = mastercore::ConvertTo256(NotionalSize) * mastercore::ConvertTo256(nCouldBuy)/COIN;
       int64_t Volume64_t = mastercore::ConvertTo64(Volume256_t);
 
       if(msc_debug_x_trade_bidirectional) PrintToLog("\nNotionalSize = %s\t nCouldBuy = %s\t Volume64_t = %s\n",
@@ -1239,10 +1238,12 @@ bool mastercore::MetaDEx_Fees(const CMPMetaDEx *pnew,const CMPMetaDEx *pold, int
         return false;
     }
 
-    arith_uint256 uCacheFee = ConvertTo256(buyer_amountGot) / (ConvertTo256(BASISPOINT) * ConvertTo256(BASISPOINT));
-    int64_t cacheFee = ConvertTo64(uCacheFee);
-    int64_t takerFee = 5 * cacheFee;
-    int64_t makerFee = 4 * cacheFee;
+    const arith_uint256 uNumerator = ConvertTo256(buyer_amountGot);
+    const arith_uint256 uDenominator = ConvertTo256(BASISPOINT) * ConvertTo256(BASISPOINT);
+    const arith_uint256 uCacheFee = DivideAndRoundUp(uNumerator, uDenominator);
+    const int64_t cacheFee = ConvertTo64(uCacheFee);
+    const int64_t takerFee = 5 * cacheFee;
+    const int64_t makerFee = 4 * cacheFee;
 
     if(msc_debug_metadex_fees) PrintToLog("%s: buyer_amountGot: %d, cacheFee: %d, takerFee: %d, makerFee: %d\n",__func__, buyer_amountGot, cacheFee, takerFee, makerFee);
     //sum check
@@ -1545,11 +1546,11 @@ MatchReturnType x_Trade(CMPMetaDEx* const pnew)
           	const int64_t& pold_desired = pold->getAmountDesired();
 
           	rational_t market_priceratToken1_Token2(pold_desired, pold_forsale);
-          	const int64_t& market_priceToken1_Token2 = mastercore::RationalToInt64(market_priceratToken1_Token2);
+          	const int64_t market_priceToken1_Token2 = mastercore::RationalToInt64(market_priceratToken1_Token2);
           	market_priceMap[pold->getProperty()][pold->getDesProperty()] = market_priceToken1_Token2;
 
           	rational_t market_priceratToken2_Token1(pnew_desired, pnew_forsale);
-          	const int64_t& market_priceToken2_Token1 = mastercore::RationalToInt64(market_priceratToken2_Token1);
+          	const int64_t market_priceToken2_Token1 = mastercore::RationalToInt64(market_priceratToken2_Token1);
           	market_priceMap[pnew->getProperty()][pnew->getDesProperty()] = market_priceToken2_Token1;
 
             if(msc_debug_metadex2)
@@ -1572,11 +1573,11 @@ MatchReturnType x_Trade(CMPMetaDEx* const pnew)
 
           	arith_uint256 numVWAPMapToken1_Token2_256t =
           	  mastercore::ConvertTo256(market_priceToken1_Token2)*mastercore::ConvertTo256(buyer_amountGot)/COIN;
-          	const int64_t& numVWAPMapToken1_Token2_64t = mastercore::ConvertTo64(numVWAPMapToken1_Token2_256t);
+          	const int64_t numVWAPMapToken1_Token2_64t = mastercore::ConvertTo64(numVWAPMapToken1_Token2_256t);
 
           	arith_uint256 numVWAPMapToken2_Token1_256t =
           	  mastercore::ConvertTo256(market_priceToken2_Token1)*mastercore::ConvertTo256(seller_amountGot)/COIN;
-          	const int64_t& numVWAPMapToken2_Token1_64t = mastercore::ConvertTo64(numVWAPMapToken2_Token1_256t);
+          	const int64_t numVWAPMapToken2_Token1_64t = mastercore::ConvertTo64(numVWAPMapToken2_Token1_256t);
 
           	numVWAPVector[pold->getProperty()][pold->getDesProperty()].push_back(numVWAPMapToken1_Token2_64t);
           	denVWAPVector[pold->getProperty()][pold->getDesProperty()].push_back(buyer_amountGot);
@@ -1617,10 +1618,10 @@ MatchReturnType x_Trade(CMPMetaDEx* const pnew)
           	vwap_num_den(numVWAPpnewv, denVWAPpnewv, numVWAPpnew, denVWAPpnew);
 
           	rational_t vwapPriceToken1_Token2RatV(numVWAPpold, denVWAPpold);
-          	const int64_t& vwapPriceToken1_Token2Int64V = mastercore::RationalToInt64(vwapPriceToken1_Token2RatV);
+          	const int64_t vwapPriceToken1_Token2Int64V = mastercore::RationalToInt64(vwapPriceToken1_Token2RatV);
 
           	rational_t vwapPriceToken2_Token1RatV(numVWAPpnew, denVWAPpnew);
-          	const int64_t& vwapPriceToken2_Token1Int64V = mastercore::RationalToInt64(vwapPriceToken2_Token1RatV);
+          	const int64_t vwapPriceToken2_Token1Int64V = mastercore::RationalToInt64(vwapPriceToken2_Token1RatV);
 
           	VWAPMapSubVector[pold->getProperty()][pold->getDesProperty()]=vwapPriceToken1_Token2Int64V;
           	VWAPMapSubVector[pnew->getProperty()][pnew->getDesProperty()]=vwapPriceToken2_Token1Int64V;
@@ -2557,7 +2558,7 @@ bool mastercore::MetaDEx_Search_ALL(uint64_t& amount, uint32_t propertyOffered)
                 if (msc_debug_search_all) PrintToLog("%s(): amount of ALL: %d, desproperty: %d; amount of desproperty: %d\n", __func__, it->getAmountForSale(), it->getDesProperty(), it->getAmountDesired());
 
                 // amount of All to buy
-                arith_uint256 iCouldBuy = (ConvertTo256(amount) * ConvertTo256(it->getAmountForSale())) / ConvertTo256(it->getAmountDesired());
+                const arith_uint256 iCouldBuy = (ConvertTo256(amount) * ConvertTo256(it->getAmountForSale())) / ConvertTo256(it->getAmountDesired());
 
                 int64_t nCouldBuy = 0;
 
@@ -2569,7 +2570,7 @@ bool mastercore::MetaDEx_Search_ALL(uint64_t& amount, uint32_t propertyOffered)
                 }
 
                 // amount of tokens to pay
-                arith_uint256 iWouldPay = DivideAndRoundUp((ConvertTo256(nCouldBuy) * ConvertTo256(it->getAmountDesired())), ConvertTo256(it->getAmountForSale()));
+                const arith_uint256 iWouldPay = DivideAndRoundUp((ConvertTo256(nCouldBuy) * ConvertTo256(it->getAmountDesired())), ConvertTo256(it->getAmountForSale()));
                 int64_t nWouldPay = ConvertTo64(iWouldPay);
 
                 if (msc_debug_search_all) PrintToLog("%s(): nWouldPay: %d\n", __func__, nWouldPay);

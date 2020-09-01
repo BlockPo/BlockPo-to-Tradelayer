@@ -49,7 +49,7 @@ BOOST_AUTO_TEST_CASE(contract_amount)
 // proof of concept function
 uint32_t pNameOrId(const UniValue& value)
 {
-    int64_t amount = mastercore::StrToInt64(value.get_str(), false);
+    const int64_t amount = mastercore::StrToInt64(value.get_str(), false);
 
     if (amount != 0){
         // here, code validate if propertyId is valid
@@ -57,7 +57,7 @@ uint32_t pNameOrId(const UniValue& value)
     }
 
     // here code search for a valid propertyId given a contract name.
-    uint32_t propertyId = 9;
+    const uint32_t propertyId = 9;
 
     return propertyId;
 }

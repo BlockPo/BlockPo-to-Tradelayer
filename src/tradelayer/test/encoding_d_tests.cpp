@@ -26,11 +26,10 @@ BOOST_AUTO_TEST_CASE(class_d_marker)
     nMaxDatacarrierBytes = 40; // byte
 
     std::vector<unsigned char> vchMarker;
-    vchMarker.push_back(0x70); // "p"
-    vchMarker.push_back(0x71); // "q"
+    vchMarker.push_back(0x77); // "p"
+    vchMarker.push_back(0x77); // "q"
 
-    std::vector<unsigned char> vchPayload = ParseHex(
-        "0000101");
+    std::vector<unsigned char> vchPayload = ParseHex("0000101");
 
     std::vector<std::pair<CScript, int64_t> > vecOutputs;
     BOOST_CHECK(TradeLayer_Encode_ClassD(vchPayload, vecOutputs));

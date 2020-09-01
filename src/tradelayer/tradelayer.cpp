@@ -137,7 +137,7 @@ extern int twapBlockg;
 extern int newTwapBlock;
 extern int vestingActivationBlock;
 extern volatile int64_t globalVolumeALL_LTC;
-extern std::vector<std::string> vestingAddresses;
+std::vector<std::string> vestingAddresses;
 
 CMPTxList *mastercore::p_txlistdb;
 CMPTradeList *mastercore::t_tradelistdb;
@@ -170,9 +170,6 @@ extern std::map<uint32_t, std::map<std::string, double>> addrs_upnlc;
 extern std::map<std::string, int64_t> sum_upnls;
 std::map<uint32_t, int64_t> cachefees;
 std::map<uint32_t, int64_t> cachefees_oracles;
-
-/** Pending withdrawals **/
-extern std::map<std::string,vector<withdrawalAccepted>> withdrawal_Map;
 
 using mastercore::StrToInt64;
 
@@ -1788,7 +1785,7 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
         break;
 
     case FILETYPE_DEX_VOLUME:
-        MapLTCVolume.clear();
+        MapTokenVolume.clear();
         inputLineFunc = input_mp_dexvolume_string;
         break;
 

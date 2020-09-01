@@ -49,8 +49,10 @@ typedef boost::rational<boost::multiprecision::checked_int128_t> rational_t;
 typedef boost::multiprecision::cpp_dec_float_100 dec_float;
 typedef boost::multiprecision::checked_int128_t int128_t;
 extern std::map<std::string,uint32_t> peggedIssuers;
-extern std::map<uint32_t,std::map<int,oracledata>> oraclePrices;
-extern std::map<std::string,vector<withdrawalAccepted>> withdrawal_Map;
+std::map<uint32_t,std::map<int,oracledata>> oraclePrices;
+
+/** Pending withdrawals **/
+std::map<std::string,vector<withdrawalAccepted>> withdrawal_Map;
 extern std::map<uint32_t, std::map<uint32_t, int64_t>> market_priceMap;
 extern double denMargin;
 extern uint64_t marketP[NPTYPES];
@@ -58,7 +60,6 @@ extern volatile int id_contract;
 extern volatile int64_t factorALLtoLTC;
 extern volatile int64_t globalVolumeALL_LTC;
 extern volatile int64_t LTCPriceOffer;
-extern std::vector<std::string> vestingAddresses;
 extern mutex mReward;
 
 using mastercore::StrToInt64;

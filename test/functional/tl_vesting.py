@@ -625,7 +625,7 @@ class VestingBasicsTest (BitcoinTestFramework):
             unvested2 = float(out['result']['unvested'])
             assert_equal(unvested2 + vested2, 500)
 
-            time.sleep(0.1)
+            time.sleep(0.2)
 
 
         self.log.info("Checking LTC Volume")

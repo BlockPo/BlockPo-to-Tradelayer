@@ -228,11 +228,9 @@ int DEx_BuyOfferCreate(const std::string& addressMaker, uint32_t propertyId, int
 
             if (msc_debug_dex) PrintToLog("pair: %d\n", pair);
 
-            if (longs >= 0 && shorts == 0)
-	              sumValues += (ConvertTo256(longs) * ConvertTo256(sp.notional_size)) * ConvertTo256(pair) / ConvertTo256(COIN);
-            else if (longs == 0 && shorts >= 0)
-	              sumValues += (ConvertTo256(shorts) * ConvertTo256(sp.notional_size)) * ConvertTo256(pair) / ConvertTo256(COIN);
-
+            const int64_t side = (longs >= 0 && shorts == 0) ? longs : (longs == 0 && shorts >= 0) ? shorts : 0;
+            arith_uint256 sumNum = (ConvertTo256(side) * ConvertTo256(sp.notional_size)) * ConvertTo256(pair);
+            sumValues += DivideAndRoundUp(sumNum, COIN);
 	          if (sumValues > ConvertTo256(price))
             {
                 // price = price of entire order   .
