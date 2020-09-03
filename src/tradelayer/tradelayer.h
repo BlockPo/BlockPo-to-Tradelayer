@@ -254,8 +254,6 @@ const rational_t factor2 = rational_t(20,100); // normal limits
 // upnl calculations
 const std::vector<std::string> longActions{ "ShortPosNetted", "OpenLongPosition", "OpenLongPosByShortPosNetted", "LongPosIncreased", "ShortPosNettedPartly"};
 
-
-
 // forward declarations
 std::string FormatDivisibleMP(int64_t amount, bool fSign = false);
 std::string FormatDivisibleShortMP(int64_t amount);
@@ -267,7 +265,6 @@ double FormatContractShortMP(int64_t n);
 long int FormatShortIntegerMP(int64_t n);
 uint64_t int64ToUint64(int64_t value);
 std::string FormatDivisibleZeroClean(int64_t n);
-
 void addBalances(const std::map<std::string,map<uint32_t, int64_t>>& balances, std::string& lineOut);
 
 /** Returns the marker for transactions. */
@@ -398,7 +395,6 @@ public:
 
 /** LevelDB based storage for the trade history. Trades are listed with key "txid1+txid2".
  */
-
 class CMPTradeList : public CDBBase
 {
  public:
@@ -507,15 +503,16 @@ extern std::map<uint32_t, int64_t> cachefees_oracles;
 //! Vesting receiver addresses
 extern std::vector<std::string> vestingAddresses;
 
+//!Contract upnls
+extern std::map<std::string, int64_t> sum_upnls;
+
 int64_t getMPbalance(const std::string& address, uint32_t propertyId, TallyType ttype);
 int64_t getUserAvailableMPbalance(const std::string& address, uint32_t propertyId);
 int64_t getUserReserveMPbalance(const std::string& address, uint32_t propertyId);
 
 /** Global handler to total wallet balances. */
 void CheckWalletUpdate(bool forceUpdate = false);
-
 void NotifyTotalTokensChanged(uint32_t propertyId);
-
 void buildingEdge(std::map<std::string, std::string> &edgeEle, std::string addrs_src, std::string addrs_trk, std::string status_src, std::string status_trk, int64_t lives_src, int64_t lives_trk, int64_t amount_path, int64_t matched_price, int idx_q, int ghost_edge);
 void printing_edges_database(std::map<std::string, std::string> &path_ele);
 const string gettingLineOut(std::string address1, std::string s_status1, int64_t lives_maker, std::string address2, std::string s_status2, int64_t lives_taker, int64_t nCouldBuy, uint64_t effective_price);
@@ -615,7 +612,6 @@ namespace mastercore
   //Map of DEx token volume
   int64_t DexVolumen(uint32_t property, const int& fblock, const int& sblock);
 
-
   void twapForLiquidation(uint32_t contractId, int blocks);
 
   int64_t getOracleTwap(uint32_t contractId, int nBlocks);
@@ -636,7 +632,7 @@ namespace mastercore
   bool channelSanityChecks(const std::string& sender, const std::string& receiver, uint32_t propertyId, uint64_t amount_commited, int block, int tx_idx);
   bool transferAll(const std::string& sender, const std::string& receiver);
 
-  const string getVestingAdmin();
+  const std::string getVestingAdmin();
 
   int64_t lastVolume(uint32_t propertyId, bool tokens);
 
