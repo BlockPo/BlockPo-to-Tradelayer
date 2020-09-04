@@ -309,6 +309,7 @@ static int write_mp_contractdex(std::string& lineOut)
 int input_mp_contractdexorder_string(const std::string& s)
 {
     // BOOST_TEST_MESSAGE("s:" << s << "\n");
+
     std::vector<std::string> vstr;
     boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
 
@@ -322,13 +323,27 @@ int input_mp_contractdexorder_string(const std::string& s)
     const uint32_t property = boost::lexical_cast<uint32_t>(vstr[i++]);
     const int64_t amount_desired = boost::lexical_cast<int64_t>(vstr[i++]);
     const uint32_t desired_property = boost::lexical_cast<uint32_t>(vstr[i++]);
-    const uint8_t subaction = boost::lexical_cast<uint8_t>(vstr[i++]); // lexical_cast can't handle char!
+    const uint8_t subaction = boost::lexical_cast<unsigned int>(vstr[i++]); // lexical_cast can't handle char!
     const unsigned int idx = boost::lexical_cast<unsigned int>(vstr[i++]);
     const uint256 txid = uint256S(vstr[i++]);
     const int64_t amount_remaining = boost::lexical_cast<int64_t>(vstr[i++]);
     const uint64_t effective_price = boost::lexical_cast<uint64_t>(vstr[i++]);
-    const uint8_t trading_action = boost::lexical_cast<uint8_t>(vstr[i++]);
+    const uint8_t trading_action = boost::lexical_cast<unsigned int>(vstr[i++]);
     const int64_t amount_reserved = boost::lexical_cast<int64_t>(vstr[i++]);
+    //
+    // BOOST_TEST_MESSAGE("address:" << addr << "\n");
+    // BOOST_TEST_MESSAGE("block:" << block << "\n");
+    // BOOST_TEST_MESSAGE("amount for sale:" << amount_forsale << "\n");
+    // BOOST_TEST_MESSAGE("property:" << property << "\n");
+    // BOOST_TEST_MESSAGE("amount desired:" << amount_desired << "\n");
+    // BOOST_TEST_MESSAGE("desired property:" << desired_property << "\n");
+    // BOOST_TEST_MESSAGE("subaction:" << subaction << "\n");
+    // BOOST_TEST_MESSAGE("idx:" << idx << "\n");
+    // BOOST_TEST_MESSAGE("desired property:" << vstr[8] << "\n");
+    // BOOST_TEST_MESSAGE("amount remaining:" <<  amount_remaining << "\n");
+    // BOOST_TEST_MESSAGE("effective price:" <<  effective_price << "\n");
+    // BOOST_TEST_MESSAGE("trading action:" <<  trading_action << "\n");
+    // BOOST_TEST_MESSAGE("amount reserved:" <<  amount_reserved << "\n");
 
     CMPContractDex mdexObj(addr, block, property, amount_forsale, desired_property,
             amount_desired, txid, idx, subaction, amount_remaining, effective_price, trading_action, amount_reserved);
