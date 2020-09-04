@@ -802,7 +802,7 @@ class PersistenceBasicsTest (BitcoinTestFramework):
 
         self.log.info("Persistence: checking orderbook")
         params = str(["ALL/Lhk", 1]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, True, "tl_getcontract_orderbook",params)
+        out = tradelayer_HTTP(conn, headers, False, "tl_getcontract_orderbook",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
         assert_equal(out['result'][0]['address'], addresses[1])
