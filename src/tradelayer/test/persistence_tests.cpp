@@ -1,3 +1,4 @@
+#include "tradelayer/mdex.h"
 #include "tradelayer/tally.h"
 #include "tradelayer/tradelayer.h"
 #include "tradelayer/tx.h"
@@ -262,6 +263,82 @@ int input_withdrawals_string(const std::string& s)
 
 }
 
+void saveOffer(const CMPContractDex cont, std::string& lineOut)
+{
+
+    lineOut = strprintf("%s,%d,%d,%d,%d,%d,%d,%d,%s,%d,%d,%d,%d",
+    cont.getAddr(),
+    cont.getBlock(),
+    cont.getAmountForSale(),
+    cont.getProperty(),
+    cont.getAmountDesired(),
+    cont.getDesProperty(),
+    cont.getAction(),
+    cont.getIdx(),
+    cont.getHash().ToString(),
+    cont.getAmountRemaining(),
+    cont.getEffectivePrice(),
+    cont.getTradingAction(),
+    cont.getAmountReserved()
+    );
+
+    // BOOST_TEST_MESSAGE("lineOut:" << lineOut << "\n");
+}
+
+static int write_mp_contractdex(std::string& lineOut)
+{
+    for (const auto con : contractdex)
+    {
+        const cd_PricesMap &prices = con.second;
+
+        for (const auto p : prices)
+        {
+            const cd_Set &indexes = p.second;
+
+            for (const auto in : indexes)
+            {
+                const CMPContractDex& contract = in;
+                saveOffer(contract, lineOut);
+            }
+        }
+    }
+
+    return 0;
+}
+
+int input_mp_contractdexorder_string(const std::string& s)
+{
+    // BOOST_TEST_MESSAGE("s:" << s << "\n");
+    std::vector<std::string> vstr;
+    boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
+
+    if (13 != vstr.size()) return -1;
+
+    int i = 0;
+
+    const std::string addr = vstr[i++];
+    const int block = boost::lexical_cast<int>(vstr[i++]);
+    const int64_t amount_forsale = boost::lexical_cast<int64_t>(vstr[i++]);
+    const uint32_t property = boost::lexical_cast<uint32_t>(vstr[i++]);
+    const int64_t amount_desired = boost::lexical_cast<int64_t>(vstr[i++]);
+    const uint32_t desired_property = boost::lexical_cast<uint32_t>(vstr[i++]);
+    const uint8_t subaction = boost::lexical_cast<uint8_t>(vstr[i++]); // lexical_cast can't handle char!
+    const unsigned int idx = boost::lexical_cast<unsigned int>(vstr[i++]);
+    const uint256 txid = uint256S(vstr[i++]);
+    const int64_t amount_remaining = boost::lexical_cast<int64_t>(vstr[i++]);
+    const uint64_t effective_price = boost::lexical_cast<uint64_t>(vstr[i++]);
+    const uint8_t trading_action = boost::lexical_cast<uint8_t>(vstr[i++]);
+    const int64_t amount_reserved = boost::lexical_cast<int64_t>(vstr[i++]);
+
+    CMPContractDex mdexObj(addr, block, property, amount_forsale, desired_property,
+            amount_desired, txid, idx, subaction, amount_remaining, effective_price, trading_action, amount_reserved);
+
+    if (!ContractDex_INSERT(mdexObj)) return -1;
+
+    return 0;
+}
+
+
 BOOST_AUTO_TEST_CASE(channel_persistence)
 {
     // Creating the channel
@@ -431,6 +508,73 @@ BOOST_AUTO_TEST_CASE(withdrawals_persistence)
     BOOST_CHECK_EQUAL(3, w1.propertyId);
     BOOST_CHECK_EQUAL(600000, w1.amount);
     BOOST_CHECK_EQUAL("749eecf591d04339f63b4514130051a1cd552e3ab9671e857839807109899f35", (w1.txid).ToString());
+}
+
+BOOST_AUTO_TEST_CASE(cdex_persistence)
+{
+    const std::string address = "1dexX7zmPen1yBz2H9ZF62AK5TGGqGTZH";
+    CMPContractDex seller(address,
+		    172, // block
+			  1,   // property for sale
+			  500000000,   // amount of contracts for sale
+			  0,   // desired property
+			  0,
+			  uint256S("11"), // txid
+			  1,   // position in block
+			  1,   // subaction
+		  	0,   // amount remaining
+		  	500000000,   // effective_price
+		  	2,  // trading_action
+        100000000);  // amount reserved
+
+        CMPContractDex *s = &seller;
+
+        BOOST_CHECK(update_tally_map(seller.getAddr(),seller.getProperty(), 20, NEGATIVE_BALANCE));
+        BOOST_CHECK(update_tally_map(seller.getAddr(),seller.getProperty(), 100000, CONTRACTDEX_RESERVE));
+
+        BOOST_CHECK_EQUAL(20, getMPbalance(seller.getAddr(), seller.getProperty(), NEGATIVE_BALANCE));
+        BOOST_CHECK_EQUAL(100000, getMPbalance(seller.getAddr(), seller.getProperty(), CONTRACTDEX_RESERVE));
+
+        BOOST_CHECK(ContractDex_INSERT(*s));
+
+        std::string lineOut;
+
+        // writting on persistence
+        write_mp_contractdex(lineOut);
+
+        BOOST_CHECK_EQUAL("1dexX7zmPen1yBz2H9ZF62AK5TGGqGTZH,172,500000000,1,0,0,1,1,0000000000000000000000000000000000000000000000000000000000000011,0,500000000,2,100000000",lineOut);
+
+        // clearing map
+        contractdex.clear();
+
+        // writting on memory
+        input_mp_contractdexorder_string(lineOut);
+
+        CMPContractDex seller1;
+        auto it = contractdex.find(1);
+        if (it != contractdex.end())
+        {
+            const auto &cd_pMap = it->second;
+            auto itt = cd_pMap.find(500000000);
+            if (itt != cd_pMap.end()){
+                const auto &pSet = itt->second;
+                auto pCont = find_if(pSet.begin(), pSet.end(), [&address] (const CMPContractDex& cont) { return (cont.getAddr() == address);});
+                if (pCont != pSet.end()){
+                    seller1 = *pCont;
+                }
+
+            }
+        }
+
+        BOOST_CHECK_EQUAL(address, seller1.getAddr());
+        BOOST_CHECK_EQUAL(1, seller1.getProperty());
+        BOOST_CHECK_EQUAL(172,seller1.getBlock());
+        BOOST_CHECK_EQUAL(500000000, seller1.getAmountForSale());
+        BOOST_CHECK_EQUAL(0, seller1.getAmountDesired());
+        BOOST_CHECK_EQUAL(0, seller1.getDesProperty());
+        BOOST_CHECK_EQUAL(0, seller1.getAmountRemaining());
+        BOOST_CHECK_EQUAL(500000000, seller1.getEffectivePrice());
+        BOOST_CHECK_EQUAL(100000000, seller1.getAmountReserved());
 }
 
 BOOST_AUTO_TEST_SUITE_END()

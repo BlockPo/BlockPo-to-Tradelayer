@@ -1474,7 +1474,7 @@ int input_mp_contractdexorder_string(const std::string& s)
     std::vector<std::string> vstr;
     boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
 
-    if (12 != vstr.size()) return -1;
+    if (13 != vstr.size()) return -1;
 
     int i = 0;
 
@@ -1484,7 +1484,7 @@ int input_mp_contractdexorder_string(const std::string& s)
     const uint32_t property = boost::lexical_cast<uint32_t>(vstr[i++]);
     const int64_t amount_desired = boost::lexical_cast<int64_t>(vstr[i++]);
     const uint32_t desired_property = boost::lexical_cast<uint32_t>(vstr[i++]);
-    const uint8_t subaction = boost::lexical_cast<unsigned int>(vstr[i++]); // lexical_cast can't handle char!
+    const uint8_t subaction = boost::lexical_cast<uint8_t>(vstr[i++]); // lexical_cast can't handle char!
     const unsigned int idx = boost::lexical_cast<unsigned int>(vstr[i++]);
     const uint256 txid = uint256S(vstr[i++]);
     const int64_t amount_remaining = boost::lexical_cast<int64_t>(vstr[i++]);
