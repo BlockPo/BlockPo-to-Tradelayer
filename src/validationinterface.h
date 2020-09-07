@@ -56,6 +56,11 @@ void SyncWithValidationInterfaceQueue();
 class CValidationInterface {
 protected:
     /**
+     * Protected destructor so that instances can only be deleted by derived classes.
+     * If that restriction is no longer desired, this should be made public and virtual.
+     */
+    ~CValidationInterface() = default;
+    /**
      * Notifies listeners when the block chain tip advances.
      *
      * When multiple blocks are connected at once, UpdatedBlockTip will be called on the final tip
