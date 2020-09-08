@@ -242,12 +242,6 @@ int64_t ParseAmountContract(const UniValue& value)
   return amount;
 }
 
-int64_t ParseAmountContract(const UniValue& value, int propertyType)
-{
-  bool fContract = propertyType == 3;
-  return ParseAmountContract(value, fContract);
-}
-
 uint64_t ParseLeverage(const UniValue& value)
 {
     int64_t amount = mastercore::StrToInt64(value.get_str(), true);
