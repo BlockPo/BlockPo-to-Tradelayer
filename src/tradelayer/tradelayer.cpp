@@ -2735,101 +2735,123 @@ int mastercore_shutdown()
  */
 bool CallingSettlement()
 {
-    // extern int BlockS;
-    //
-    // int nBlockNow = GetHeight();
-    //
-    // // uint32_t nextSPID = _my_sps->peekNextSPID(1);
-    //
-    // // for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
-    // // {
-    //
-    //     int32_t propertyId = 5;
-    //
-    //     // if(!mastercore::isPropertyContract(propertyId))
-    //     //     continue;
-    //
-    //     if (nBlockNow%BlockS == 0 && nBlockNow != 0 && path_elef.size() != 0 && lastBlockg != nBlockNow)
-    //     {
-    //
-    //         if(msc_calling_settlement) PrintToLog("\nSettlement every 8 hours here. nBlockNow = %d\n", nBlockNow);
-    //         pt_ndatabase = new MatrixTLS(path_elef.size(), n_cols); MatrixTLS &ndatabase = *pt_ndatabase;
-    //         MatrixTLS M_file(path_elef.size(), n_cols);
-    //         fillingMatrix(M_file, ndatabase, path_elef);
-    //         n_rows = size(M_file, 0);
-    //         if(msc_calling_settlement) PrintToLog("Matrix for Settlement: dim = (%d, %d)\n\n", n_rows, n_cols);
-    //
-    //         /** TWAP vector **/
-    //         if(msc_calling_settlement) PrintToLog("\nTWAP Prices = \n");
-    //
-    //         uint64_t num_cdex = accumulate(cdextwap_vec[propertyId].begin(), cdextwap_vec[propertyId].end(), 0.0);
-    //
-    //         rational_t twap_priceRatCDEx(num_cdex/COIN, cdextwap_vec[propertyId].size());
-    //         int64_t twap_priceCDEx = mastercore::RationalToInt64(twap_priceRatCDEx);
-    //         if(msc_debug_handler_tx) PrintToLog("\nTvwap Price CDEx = %s\n", FormatDivisibleMP(twap_priceCDEx));
-    //
-    //         CMPSPInfo::Entry sp;
-    //         if (!_my_sps->getSP(propertyId, sp))
-    //             return false;
-    //
-    //         uint64_t property_num = sp.numerator;
-    //         uint64_t property_den = sp.denominator;
-    //
-    //         uint64_t num_mdex=accumulate(mdextwap_vec[property_num][property_den].begin(),mdextwap_vec[property_num][property_den].end(),0.0);
-    //
-    //
-    //         if(msc_debug_handler_tx) PrintToLog("\nTWAP Prices = \n");
-    //         // struct FutureContractObject *pfuture = getFutureContractObject("ALL F18");
-    //         // uint32_t property_traded = pfuture->fco_propertyId;
-    //
-    //         rational_t twap_priceRatMDEx(num_mdex/COIN, mdextwap_vec[property_num][property_den].size());
-    //         int64_t twap_priceMDEx = mastercore::RationalToInt64(twap_priceRatMDEx);
-    //         if(msc_calling_settlement) PrintToLog("\nTvwap Price MDEx = %s\n", FormatDivisibleMP(twap_priceMDEx));
-    //
-    //
-    //         /** Interest formula:  **/
-    //
-    //         /** futures don't use this formula **/
-    //         // if (sp.prop_type == ALL_PROPERTY_TYPE_NATIVE_CONTRACT  || sp.prop_type == ALL_PROPERTY_TYPE_ORACLE_CONTRACT)
-    //         //     continue;
-    //
-    //         int64_t twap_price = 0;
-    //
-    //         switch(sp.prop_type){
-    //             case ALL_PROPERTY_TYPE_PERPETUAL_ORACLE:
-    //                 twap_price = getOracleTwap(propertyId, oBlocks);
-    //                 break;
-    //             case ALL_PROPERTY_TYPE_PERPETUAL_CONTRACTS:
-    //                 twap_price = twap_priceMDEx;
-    //                 break;
-    //         }
-    //
-    //         int64_t interest = clamp_function(abs(twap_priceCDEx-twap_price), 0.05);
-    //         if(msc_calling_settlement) PrintToLog("Interes to Pay = %s", FormatDivisibleMP(interest));
-    //
-    //
-    //         if(msc_calling_settlement) PrintToLog("\nCalling the Settlement Algorithm:\n\n");
-    //
-    //         //NOTE: We need num and den for contract as a property of itself in sp.h
-    //         // settlement_algorithm_fifo(M_file, interest, twap_priceCDEx, propertyId, sp.collateral_currency, sp.numerator, sp.denominator, sp.inverse_quoted);
-    //     }
-    // // }
-    //
-    // /**********************************************************************/
-    // /** Unallocating Dynamic Memory **/
-    //
-    // //path_elef.clear();
-    // market_priceMap.clear();
-    // numVWAPMap.clear();
-    // denVWAPMap.clear();
-    // VWAPMap.clear();
-    // VWAPMapSubVector.clear();
-    // numVWAPVector.clear();
-    // denVWAPVector.clear();
-    // mapContractAmountTimesPrice.clear();
-    // mapContractVolume.clear();
-    // VWAPMapContracts.clear();
-    // cdextwap_vec.clear();
+    extern int BlockS;
+
+    int nBlockNow = GetHeight();
+
+    /*uint32_t nextSPID = _my_sps->peekNextSPID(1);
+
+    for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
+    {
+
+        int32_t propertyId = 5;
+
+        // if(!mastercore::isPropertyContract(propertyId))
+        //     continue;
+
+        if (nBlockNow%BlockS == 0 && nBlockNow != 0 && path_elef.size() != 0 && lastBlockg != nBlockNow)
+        {
+
+            if(msc_calling_settlement) PrintToLog("\nSettlement every 8 hours here. nBlockNow = %d\n", nBlockNow);
+            pt_ndatabase = new MatrixTLS(path_elef.size(), n_cols); MatrixTLS &ndatabase = *pt_ndatabase;
+            MatrixTLS M_file(path_elef.size(), n_cols);
+            fillingMatrix(M_file, ndatabase, path_elef);
+            n_rows = size(M_file, 0);
+            if(msc_calling_settlement) PrintToLog("Matrix for Settlement: dim = (%d, %d)\n\n", n_rows, n_cols);
+
+            // TWAP vector
+            if(msc_calling_settlement) PrintToLog("\nTWAP Prices = \n");
+
+            uint64_t num_cdex = accumulate(cdextwap_vec[propertyId].begin(), cdextwap_vec[propertyId].end(), 0.0);
+
+            rational_t twap_priceRatCDEx(num_cdex/COIN, cdextwap_vec[propertyId].size());
+            int64_t twap_priceCDEx = mastercore::RationalToInt64(twap_priceRatCDEx);
+            if(msc_debug_handler_tx) PrintToLog("\nTvwap Price CDEx = %s\n", FormatDivisibleMP(twap_priceCDEx));
+
+            CMPSPInfo::Entry sp;
+            if (!_my_sps->getSP(propertyId, sp))
+                return false;
+
+            uint64_t property_num = sp.numerator;
+            uint64_t property_den = sp.denominator;
+
+            uint64_t num_mdex=accumulate(mdextwap_vec[property_num][property_den].begin(),mdextwap_vec[property_num][property_den].end(),0.0);
+
+
+            if(msc_debug_handler_tx) PrintToLog("\nTWAP Prices = \n");
+            // struct FutureContractObject *pfuture = getFutureContractObject("ALL F18");
+            // uint32_t property_traded = pfuture->fco_propertyId;
+
+            rational_t twap_priceRatMDEx(num_mdex/COIN, mdextwap_vec[property_num][property_den].size());
+            int64_t twap_priceMDEx = mastercore::RationalToInt64(twap_priceRatMDEx);
+            if(msc_calling_settlement) PrintToLog("\nTvwap Price MDEx = %s\n", FormatDivisibleMP(twap_priceMDEx));
+
+
+            // Interest formula:
+
+            // futures don't use this formula
+            // if (sp.prop_type == ALL_PROPERTY_TYPE_NATIVE_CONTRACT  || sp.prop_type == ALL_PROPERTY_TYPE_ORACLE_CONTRACT)
+            //     continue;
+
+            int64_t twap_price = 0;
+
+            switch(sp.prop_type){
+                case ALL_PROPERTY_TYPE_PERPETUAL_ORACLE:
+                    twap_price = getOracleTwap(propertyId, oBlocks);
+                    break;
+                case ALL_PROPERTY_TYPE_PERPETUAL_CONTRACTS:
+                    twap_price = twap_priceMDEx;
+                    break;
+            }
+
+            int64_t interest = clamp_function(abs(twap_priceCDEx-twap_price), 0.05);
+            if(msc_calling_settlement) PrintToLog("Interes to Pay = %s", FormatDivisibleMP(interest));
+
+
+            if(msc_calling_settlement) PrintToLog("\nCalling the Settlement Algorithm:\n\n");
+
+            //NOTE: We need num and den for contract as a property of itself in sp.h
+            // settlement_algorithm_fifo(M_file, interest, twap_priceCDEx, propertyId, sp.collateral_currency, sp.numerator, sp.denominator, sp.inverse_quoted);
+        }
+    }*/
+
+    /***********************************************************************/
+/** Calling The Settlement Algorithm **/
+
+if (nBlockNow%BlockS == 0 && nBlockNow != 0 && path_elef.size() != 0 && lastBlockg != nBlockNow)
+{
+
+     PrintToLog("\nSETTLEMENT : every 8 hours here. nBlockNow = %d\n", nBlockNow);
+     pt_ndatabase = new MatrixTLS(path_elef.size(), n_cols); MatrixTLS &ndatabase = *pt_ndatabase;
+     MatrixTLS M_file(path_elef.size(), n_cols);
+     fillingMatrix(M_file, ndatabase, path_elef);
+     n_rows = size(M_file, 0);
+     PrintToLog("Matrix for Settlement: dim = (%d, %d)\n\n", n_rows, n_cols);
+
+      /*****************************************************************************/
+      cout << "\n\n";
+      PrintToLog("\nCalling the Settlement Algorithm:\n\n");
+      int64_t twap_priceCDEx  = 0;
+      int64_t interest = 0;
+      settlement_algorithm_fifo(M_file, interest, twap_priceCDEx);
+
+      /**********************************************************************/
+      /** Unallocating Dynamic Memory **/
+
+      //path_elef.clear();
+      market_priceMap.clear();
+      numVWAPMap.clear();
+      denVWAPMap.clear();
+      VWAPMap.clear();
+      VWAPMapSubVector.clear();
+      numVWAPVector.clear();
+      denVWAPVector.clear();
+      mapContractAmountTimesPrice.clear();
+      mapContractVolume.clear();
+      VWAPMapContracts.clear();
+      cdextwap_vec.clear();
+
+   }
 
    return true;
 }
