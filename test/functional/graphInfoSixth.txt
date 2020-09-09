@@ -1,0 +1,3 @@
+QPhe9ChEaqz6PyvWx7BKkETvNpbZfuSvcm	 OpenLongPosition	 1e-05	 QUm3LHhyMgYSugTWRVAjh3KHxRND3WFBkV	 OpenShortPosition	 1e-05	 1e-05	 980.5
+QQgU6vaqdgj76LbJGSGdGkuKSuztAHNVEv	 OpenLongPosition	 1e-05	 Qf2FUFtT1cut5f6YrML3uBMqhxDDAVbf3X	 OpenShortPosition	 1e-05	 1e-05	 1961
+QPhe9ChEaqz6PyvWx7BKkETvNpbZfuSvcm	 LongPosIncreased	 1.5e-05	 QQgU6vaqdgj76LbJGSGdGkuKSuztAHNVEv	 LongPosNettedPartly	 5e-06	 5e-06	 200.6
