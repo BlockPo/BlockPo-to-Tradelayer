@@ -4701,6 +4701,8 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   const string key =  sblockNum2 + "+" + txid1.ToString() + "+" + txid2.ToString(); //order with block of taker.
   const string value = strprintf("%s:%s:%lu:%lu:%lu:%d:%d:%s:%s:%d:%d:%d:%s:%s:%d:%d:%d", address1, address2, effective_price, amount_maker, amount_taker, blockNum1, blockNum2, s_maker0, s_taker0, lives_s0, lives_b0, property_traded, txid1.ToString(), txid2.ToString(), nCouldBuy0,amountpold, amountpnew);
 
+  PrintToLog("%s(): value: %s\n",__func__,value);
+
   const string line0 = gettingLineOut(address1, s_maker0, lives_s0, address2, s_taker0, lives_b0, nCouldBuy0, effective_price);
   const string line1 = gettingLineOut(address1, s_maker1, lives_s1, address2, s_taker1, lives_b1, nCouldBuy1, effective_price);
   const string line2 = gettingLineOut(address1, s_maker2, lives_s2, address2, s_taker2, lives_b2, nCouldBuy2, effective_price);
@@ -5104,9 +5106,11 @@ void loopforEntryPrice(std::vector<std::map<std::string, std::string>> path_ele,
 const string gettingLineOut(std::string address1, std::string s_status1, int64_t lives_maker, std::string address2, std::string s_status2, int64_t lives_taker, int64_t nCouldBuy, uint64_t effective_price)
 {
   const string lineOut = strprintf("%s\t %s\t %d\t %s\t %s\t %d\t %d\t %d",
-				   address1, s_status1, FormatContractShortMP(lives_maker),
-				   address2, s_status2, FormatContractShortMP(lives_taker),
-				   FormatContractShortMP(nCouldBuy), FormatContractShortMP(effective_price));
+				   address1, s_status1, FormatContractShortMP(lives_maker * COIN),
+				   address2, s_status2, FormatContractShortMP(lives_taker * COIN),
+				   FormatContractShortMP(nCouldBuy * COIN), FormatContractShortMP(effective_price));
+
+  PrintToLog("%s() lineOut: %s\n",__func__, lineOut);
   return lineOut;
 }
 
@@ -5116,9 +5120,9 @@ void buildingEdge(std::map<std::string, std::string> &edgeEle, std::string addrs
   edgeEle["addrs_trk"]     = addrs_trk;
   edgeEle["status_src"]    = status_src;
   edgeEle["status_trk"]    = status_trk;
-  edgeEle["lives_src"]     = std::to_string(FormatShortIntegerMP(lives_src));
-  edgeEle["lives_trk"]     = std::to_string(FormatShortIntegerMP(lives_trk));
-  edgeEle["amount_trd"]    = std::to_string(FormatShortIntegerMP(amount_path));
+  edgeEle["lives_src"]     = std::to_string(FormatShortIntegerMP(lives_src * COIN));
+  edgeEle["lives_trk"]     = std::to_string(FormatShortIntegerMP(lives_trk * COIN));
+  edgeEle["amount_trd"]    = std::to_string(FormatShortIntegerMP(amount_path * COIN));
   edgeEle["matched_price"] = std::to_string(FormatContractShortMP(matched_price));
   edgeEle["edge_row"]      = std::to_string(idx_q);
   edgeEle["ghost_edge"]    = std::to_string(ghost_edge);
