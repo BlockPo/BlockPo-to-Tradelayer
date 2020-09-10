@@ -114,6 +114,10 @@ bool msc_debug_activate_feature                 = 0;
 bool msc_debug_deactivate_feature               = 0;
 bool msc_debug_is_transaction_type_allowed      = 0;
 bool msc_debug_instant_payment                  = 0;
+bool msc_debug_settlement_algorithm_fifo        = 1;
+bool msc_debug_clearing_operator_fifo           = 0;
+bool msc_debug_counting_lives_longshorts        = 0;
+bool msc_debug_calculate_pnl_forghost           = 1;
 
 /**
  * LogPrintf() has been broken a couple of times now

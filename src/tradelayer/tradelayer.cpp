@@ -2818,8 +2818,6 @@ bool CallingSettlement()
     /***********************************************************************/
 /** Calling The Settlement Algorithm **/
 
-PrintToLog("%s(): BlockS: %d, nBlockNow: %d, lastBlockg : %d\n",__func__,BlockS ,nBlockNow, lastBlockg);
-
 if (nBlockNow%BlockS == 0 && nBlockNow != 0 && path_elef.size() != 0 && lastBlockg != nBlockNow)
 {
 
