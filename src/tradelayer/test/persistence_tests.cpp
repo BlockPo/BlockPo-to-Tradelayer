@@ -353,6 +353,73 @@ int input_mp_contractdexorder_string(const std::string& s)
     return 0;
 }
 
+void saveOffer(const CMPMetaDEx meta, std::string& lineOut)
+{
+
+   lineOut = strprintf("%s,%d,%d,%d,%d,%d,%d,%d,%s,%d",
+      meta.getAddr(),
+      meta.getBlock(),
+      meta.getAmountForSale(),
+      meta.getProperty(),
+      meta.getAmountDesired(),
+      meta.getDesProperty(),
+      meta.getAction(),
+      meta.getIdx(),
+      meta.getHash().ToString(),
+      meta.getAmountRemaining()
+  );
+
+    // BOOST_TEST_MESSAGE("lineOut:" << lineOut << "\n");
+}
+
+static int write_mp_metadex(std::string& lineOut)
+{
+    for (const auto my_it : metadex)
+    {
+        const md_PricesMap & prices = my_it.second;
+
+        for (const auto it : prices)
+        {
+            const md_Set & indexes = it.second;
+
+            for (const auto in : indexes)
+            {
+                const CMPMetaDEx& meta = in;
+                saveOffer(meta, lineOut);
+            }
+        }
+    }
+
+    return 0;
+}
+
+int input_mp_mdexorder_string(const std::string& s)
+{
+    std::vector<std::string> vstr;
+    boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
+
+    if (10 != vstr.size()) return -1;
+
+    int i = 0;
+    const std::string addr = vstr[i++];
+    const int block = boost::lexical_cast<int>(vstr[i++]);
+    const int64_t amount_forsale = boost::lexical_cast<int64_t>(vstr[i++]);
+    const uint32_t property = boost::lexical_cast<uint32_t>(vstr[i++]);
+    const int64_t amount_desired = boost::lexical_cast<int64_t>(vstr[i++]);
+    const uint32_t desired_property = boost::lexical_cast<uint32_t>(vstr[i++]);
+    const uint8_t subaction = boost::lexical_cast<unsigned int>(vstr[i++]); // lexical_cast can't handle char!
+    const unsigned int idx = boost::lexical_cast<unsigned int>(vstr[i++]);
+    const uint256 txid = uint256S(vstr[i++]);
+    const int64_t amount_remaining = boost::lexical_cast<int64_t>(vstr[i++]);
+
+    CMPMetaDEx mdexObj(addr, block, property, amount_forsale, desired_property,
+            amount_desired, txid, idx, subaction, amount_remaining);
+
+    if (!MetaDEx_INSERT(mdexObj)) return -1;
+
+    return 0;
+}
+
 
 BOOST_AUTO_TEST_CASE(channel_persistence)
 {
@@ -590,6 +657,57 @@ BOOST_AUTO_TEST_CASE(cdex_persistence)
         BOOST_CHECK_EQUAL(0, seller1.getAmountRemaining());
         BOOST_CHECK_EQUAL(500000000, seller1.getEffectivePrice());
         BOOST_CHECK_EQUAL(100000000, seller1.getAmountReserved());
+}
+
+BOOST_AUTO_TEST_CASE(mdex_persistence)
+{
+    const std::string address = "1dexX7zmPen1yBz2H9ZF62AK5TGGqGTZH";
+    CMPMetaDEx seller(address, 200, 1, 1000, 2, 2000, uint256S("11"), 1, CMPTransaction::ADD);
+
+
+    CMPMetaDEx *s = &seller;
+
+    BOOST_CHECK(update_tally_map(seller.getAddr(),seller.getProperty(), 100000, METADEX_RESERVE));
+
+    BOOST_CHECK_EQUAL(100000, getMPbalance(seller.getAddr(), seller.getProperty(), METADEX_RESERVE));
+
+    BOOST_CHECK(MetaDEx_INSERT(*s));
+
+    std::string lineOut;
+
+    // writting on persistence
+    write_mp_metadex(lineOut);
+
+    BOOST_CHECK_EQUAL("1dexX7zmPen1yBz2H9ZF62AK5TGGqGTZH,200,1000,1,2000,2,1,1,0000000000000000000000000000000000000000000000000000000000000011,1000",lineOut);
+
+    // clearing map
+    metadex.clear();
+
+    // writting on memory
+    input_mp_mdexorder_string(lineOut);
+
+    CMPMetaDEx seller1;
+    md_PricesMap* prices = get_Prices(1);
+    for (auto my_it = prices->begin(); my_it != prices->end(); ++my_it)
+    {
+        md_Set* indexes = &(my_it->second);
+
+        auto it = find_if(indexes->begin(), indexes->end(), [&address] (CMPMetaDEx mdexObj) { return (address == mdexObj.getAddr());});
+
+        if (it != indexes->end()) {
+           seller1 = *it;
+           break;
+        }
+
+     }
+
+     BOOST_CHECK_EQUAL(address, seller1.getAddr());
+     BOOST_CHECK_EQUAL(1, seller1.getProperty());
+     BOOST_CHECK_EQUAL(200,seller1.getBlock());
+     BOOST_CHECK_EQUAL(1000, seller1.getAmountForSale());
+     BOOST_CHECK_EQUAL(2000, seller1.getAmountDesired());
+     BOOST_CHECK_EQUAL(2, seller1.getDesProperty());
+     BOOST_CHECK_EQUAL(1000, seller1.getAmountRemaining());
 }
 
 BOOST_AUTO_TEST_SUITE_END()
