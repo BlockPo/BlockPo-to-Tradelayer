@@ -6,7 +6,6 @@
 
 #include "tradelayer/dex.h"
 #include "tradelayer/mdex.h"
-
 #include "tradelayer/convert.h"
 #include "tradelayer/errors.h"
 #include "tradelayer/externfns.h"
