@@ -831,7 +831,7 @@ UniValue tl_getproperty(const JSONRPCRequest& request)
 
 UniValue tl_listproperties(const JSONRPCRequest& request)
 {
-  if (false) //TODO: put fHelp boolean
+  if (request.fHelp || request.params.size() != 0)
     throw runtime_error(
 			"tl_listproperties\n"
 			"\nLists all tokens or smart properties.\n"
@@ -871,7 +871,7 @@ UniValue tl_listproperties(const JSONRPCRequest& request)
 
 UniValue tl_list_natives(const JSONRPCRequest& request)
 {
-  if (false) //TODO: put fHelp boolean
+  if (request.fHelp || request.params.size() != 0)
     throw runtime_error(
 			"tl_listnatives\n"
 			"\nLists all native contracts.\n"
@@ -930,7 +930,7 @@ UniValue tl_list_natives(const JSONRPCRequest& request)
 
 UniValue tl_list_oracles(const JSONRPCRequest& request)
 {
-  if (false) //TODO: put fHelp boolean
+  if (request.fHelp || request.params.size() != 0)
     throw runtime_error(
 			"tl_list_oracles\n"
 			"\nLists all oracles contracts.\n"
@@ -2858,7 +2858,7 @@ UniValue tl_getcurrencytotal(const JSONRPCRequest& request)
 
 UniValue tl_listkyc(const JSONRPCRequest& request)
 {
-  if (false) //TODO: put fHelp boolean
+  if (request.fHelp || request.params.size() != 0)
     throw runtime_error(
 			"tl_listproperties\n"
 			"\nLists all kyc registers.\n"
