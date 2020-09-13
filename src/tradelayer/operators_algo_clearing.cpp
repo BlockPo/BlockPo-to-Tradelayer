@@ -268,7 +268,7 @@ void settlement_algorithm_fifo(MatrixTLS &M_file, int64_t interest, int64_t twap
   /**********************************************************************/
   /** Checking VWAP Price for Settlement**/
 
-  int64_t VWAPContractPrice = VWAPMapContracts[contractId];;
+  int64_t VWAPContractPrice = VWAPMapContracts[contractId];
   //PrintToLog("\nVWAPContractPrice = %s\n", FormatDivisibleMP(VWAPContractPrice));
   vwap_exit_price = static_cast<long double>(VWAPContractPrice)/COIN;
 

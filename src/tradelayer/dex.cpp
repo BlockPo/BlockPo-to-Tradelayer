@@ -17,13 +17,12 @@
 #include "tradelayer/uint256_extensions.h"
 
 #include "arith_uint256.h"
+#include <hash.h>
 #include "tinyformat.h"
 #include "uint256.h"
 
 #include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
-
-#include <openssl/sha.h>
 
 #include <stdint.h>
 

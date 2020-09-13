@@ -6,13 +6,12 @@
 #include "tradelayer/persistence.h"
 
 class CBlockIndex;
+class CHash256;
 class uint256;
 
 #include "serialize.h"
 
 #include <boost/filesystem.hpp>
-
-#include <openssl/sha.h>
 
 #include <stdint.h>
 #include <stdio.h>
@@ -261,7 +260,7 @@ public:
 
     std::string toString(const std::string& address) const;
     void print(const std::string& address, FILE* fp = stdout) const;
-    void saveCrowdSale(std::ofstream& file, SHA256_CTX* shaCtx, const std::string& addr) const;
+    void saveCrowdSale(std::ofstream& file, const std::string& addr, CHash256 &hasher) const;
 };
 
 

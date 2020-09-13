@@ -10,16 +10,19 @@
 #include "chain.h"
 #include "tinyformat.h"
 #include "uint256.h"
+#include <hash.h>
+
 #include "tradelayer/tradelayer_matrices.h"
 #include "tradelayer/externfns.h"
 #include "tradelayer/operators_algo_clearing.h"
 #include "validation.h"
 #include "utilsbitcoin.h"
 #include <univalue.h>
+
 #include <boost/lexical_cast.hpp>
 #include <boost/multiprecision/cpp_int.hpp>
 #include <boost/rational.hpp>
-#include <openssl/sha.h>
+
 #include <assert.h>
 #include <stdint.h>
 #include <iostream>
@@ -1865,7 +1868,7 @@ std::string CMPContractDex::ToString() const
         getProperty(), FormatMP(getProperty(), getAmountForSale()));
 }
 
-void CMPMetaDEx::saveOffer(std::ofstream& file, SHA256_CTX* shaCtx) const
+void CMPMetaDEx::saveOffer(std::ofstream& file, CHash256& hasher) const
 {
     std::string lineOut = strprintf("%s,%d,%d,%d,%d,%d,%d,%d,%s,%d",
         addr,
@@ -1881,13 +1884,13 @@ void CMPMetaDEx::saveOffer(std::ofstream& file, SHA256_CTX* shaCtx) const
     );
 
     // add the line to the hash
-    SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
+    hasher.Write((unsigned char*)lineOut.c_str(), lineOut.length());
 
     // write the line
     file << lineOut << std::endl;
 }
 
-void CMPContractDex::saveOffer(std::ofstream& file, SHA256_CTX* shaCtx) const
+void CMPContractDex::saveOffer(std::ofstream& file, CHash256& hasher) const
 {
     std::string lineOut = strprintf("%s,%d,%d,%d,%d,%d,%d,%d,%s,%d,%d,%d",
         getAddr(),
@@ -1905,7 +1908,7 @@ void CMPContractDex::saveOffer(std::ofstream& file, SHA256_CTX* shaCtx) const
     );
 
     // add the line to the hash
-    SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
+    hasher.Write((unsigned char*)lineOut.c_str(), lineOut.length());
 
     // write the line
     file << lineOut << std::endl;
