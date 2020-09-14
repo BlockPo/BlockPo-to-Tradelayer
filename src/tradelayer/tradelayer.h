@@ -28,6 +28,7 @@ class CTransaction;
 #include <stdint.h>
 #include <openssl/sha.h>
 
+#include <hash.h>
 #include <map>
 #include <string>
 #include <vector>
@@ -471,8 +472,8 @@ class CMPTradeList : public CDBBase
   int getMPTradeCountTotal();
   int getNextId();
   void getUpnInfo(const std::string& address, uint32_t contractId, UniValue& response, bool showVerbose);
-  bool kycConsensusHash(SHA256_CTX& shaCtx);
-  bool attConsensusHash(SHA256_CTX& shaCtx);
+  bool kycConsensusHash(CSHA256& hasher);
+  bool attConsensusHash(CSHA256& hasher);
 };
 
 class CMPSettlementMatchList : public CDBBase

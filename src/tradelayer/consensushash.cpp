@@ -16,16 +16,13 @@
 #include "arith_uint256.h"
 #include "uint256.h"
 
-#include <stdint.h>
 #include <algorithm>
+#include <stdint.h>
 #include <string>
 #include <vector>
 
 #include "tradelayer_matrices.h"
 
-extern std::map<uint32_t, int64_t> cachefees;
-extern std::map<uint32_t, int64_t> cachefees_oracles;
-extern std::vector<std::string> vestingAddresses;
 
 namespace mastercore
 {
@@ -233,7 +230,6 @@ std::string GenerateConsensusString(const mastercore::FeatureActivation& feat)
 
 uint256 GetConsensusHash()
 {
-
     CSHA256 hasher;
 
     LOCK(cs_tally);
@@ -412,11 +408,11 @@ uint256 GetConsensusHash()
     // KYC list
     // Placeholders: "address|name|website|block|kycid"
     //NOTE: Possible optimization: different batch for every kind of register in db
-    t_tradelistdb->kycConsensusHash(shaCtx);
+    t_tradelistdb->kycConsensusHash(hasher);
 
     // Attestation list
     // Placeholders: "address|name|website|block|kycid"
-    t_tradelistdb->attConsensusHash(shaCtx);
+    t_tradelistdb->attConsensusHash(hasher);
 
     // Cache fee (natives)
     // Placeholders: "propertyid|cacheamount"
@@ -503,72 +499,72 @@ uint256 GetConsensusHash()
     return consensusHash;
 }
 
-    uint256 GetMetaDExHash(const uint32_t propertyId)
-    {
-        CSHA256 hasher;
+uint256 GetMetaDExHash(const uint32_t propertyId)
+{
+    CSHA256 hasher;
 
-        LOCK(cs_tally);
+    LOCK(cs_tally);
 
-        std::vector<std::pair<arith_uint256, std::string> > vecMetaDExTrades;
-        for (md_PropertiesMap::const_iterator my_it = metadex.begin(); my_it != metadex.end(); ++my_it) {
-            if (propertyId == 0 || propertyId == my_it->first) {
-                const md_PricesMap& prices = my_it->second;
-                for (md_PricesMap::const_iterator it = prices.begin(); it != prices.end(); ++it) {
-                    const md_Set& indexes = it->second;
-                    for (md_Set::const_iterator it = indexes.begin(); it != indexes.end(); ++it) {
-                        const CMPMetaDEx& obj = *it;
-                        std::string dataStr = GenerateConsensusString(obj);
-                        vecMetaDExTrades.push_back(std::make_pair(arith_uint256(obj.getHash().ToString()), dataStr));
-                    }
+    std::vector<std::pair<arith_uint256, std::string> > vecMetaDExTrades;
+    for (md_PropertiesMap::const_iterator my_it = metadex.begin(); my_it != metadex.end(); ++my_it) {
+        if (propertyId == 0 || propertyId == my_it->first) {
+            const md_PricesMap& prices = my_it->second;
+            for (md_PricesMap::const_iterator it = prices.begin(); it != prices.end(); ++it) {
+                const md_Set& indexes = it->second;
+                for (md_Set::const_iterator it = indexes.begin(); it != indexes.end(); ++it) {
+                    const CMPMetaDEx& obj = *it;
+                    const std::string dataStr = obj.GenerateConsensusString();
+                    vecMetaDExTrades.push_back(std::make_pair(arith_uint256(obj.getHash().ToString()), dataStr));
                 }
             }
         }
-        std::sort (vecMetaDExTrades.begin(), vecMetaDExTrades.end());
-        for (std::vector<std::pair<arith_uint256, std::string> >::iterator it = vecMetaDExTrades.begin(); it != vecMetaDExTrades.end(); ++it)
+    }
+    std::sort (vecMetaDExTrades.begin(), vecMetaDExTrades.end());
+    for (std::vector<std::pair<arith_uint256, std::string> >::iterator it = vecMetaDExTrades.begin(); it != vecMetaDExTrades.end(); ++it)
+    {
+        const std::string& dataStr = it->second;
+        hasher.Write((unsigned char*)dataStr.c_str(), dataStr.length());
+    }
+
+    uint256 metadexHash;
+    hasher.Finalize(metadexHash.begin());
+
+    return metadexHash;
+}
+
+/** Obtains a hash of the balances for a specific property. */
+uint256 GetBalancesHash(const uint32_t hashPropertyId)
+{
+    CSHA256 hasher;
+
+    LOCK(cs_tally);
+
+    std::map<std::string, CMPTally> tallyMapSorted;
+    for (std::unordered_map<string, CMPTally>::iterator uoit = mp_tally_map.begin(); uoit != mp_tally_map.end(); ++uoit)
+    {
+        tallyMapSorted.insert(std::make_pair(uoit->first,uoit->second));
+    }
+
+    for (std::map<string, CMPTally>::iterator my_it = tallyMapSorted.begin(); my_it != tallyMapSorted.end(); ++my_it)
+    {
+        const std::string& address = my_it->first;
+        CMPTally& tally = my_it->second;
+        tally.init();
+        uint32_t propertyId = 0;
+        while (0 != (propertyId = (tally.next())))
         {
-            const std::string& dataStr = it->second;
+            if (propertyId != hashPropertyId) continue;
+            std::string dataStr = GenerateConsensusString(tally, address, propertyId);
+            if (dataStr.empty()) continue;
+            if (msc_debug_consensus_hash) PrintToLog("Adding data to balances hash: %s\n", dataStr);
             hasher.Write((unsigned char*)dataStr.c_str(), dataStr.length());
         }
-
-        uint256 metadexHash;
-        hasher.Finalize(metadexHash.begin());
-
-        return metadexHash;
     }
-  
-    /** Obtains a hash of the balances for a specific property. */
-    uint256 GetBalancesHash(const uint32_t hashPropertyId)
-    {
-        CSHA256 hasher;
 
-        LOCK(cs_tally);
+    uint256 balancesHash;
+    hasher.Finalize(balancesHash.begin());
 
-        std::map<std::string, CMPTally> tallyMapSorted;
-        for (std::unordered_map<string, CMPTally>::iterator uoit = mp_tally_map.begin(); uoit != mp_tally_map.end(); ++uoit)
-        {
-            tallyMapSorted.insert(std::make_pair(uoit->first,uoit->second));
-        }
-
-        for (std::map<string, CMPTally>::iterator my_it = tallyMapSorted.begin(); my_it != tallyMapSorted.end(); ++my_it)
-        {
-            const std::string& address = my_it->first;
-            CMPTally& tally = my_it->second;
-            tally.init();
-            uint32_t propertyId = 0;
-            while (0 != (propertyId = (tally.next())))
-            {
-                if (propertyId != hashPropertyId) continue;
-                std::string dataStr = GenerateConsensusString(tally, address, propertyId);
-                if (dataStr.empty()) continue;
-                if (msc_debug_consensus_hash) PrintToLog("Adding data to balances hash: %s\n", dataStr);
-                hasher.Write((unsigned char*)dataStr.c_str(), dataStr.length());
-            }
-        }
-
-        uint256 balancesHash;
-        hasher.Finalize(balancesHash.begin());
-
-        return balancesHash;
-    }
+    return balancesHash;
+}
 
 } // namespace mastercore

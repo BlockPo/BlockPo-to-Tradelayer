@@ -206,7 +206,7 @@ public:
         return bRet;
     }
 
-    void saveAccept(std::ofstream& file, const std::string& address, const std::string& buyer, CHash256& hasher) const
+    void saveAccept(std::ofstream& file, CHash256& hasher, const std::string& address, const std::string& buyer) const
     {
         std::string lineOut = strprintf("%s,%d,%s,%d,%d,%d,%d,%d,%d,%s",
                 address,
