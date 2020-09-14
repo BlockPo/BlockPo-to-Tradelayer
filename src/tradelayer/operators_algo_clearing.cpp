@@ -282,7 +282,7 @@ void settlement_algorithm_fifo(MatrixTLS &M_file, int64_t interest, int64_t twap
   	for (it_path_main = path_main.begin(); it_path_main != path_main.end(); ++it_path_main)
       PrintingGraph(*it_path_main);
   }
-
+  
   if(msc_debug_settlement_algorithm_fifo) {
       PrintToLog("\n\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
       PrintToLog("Second Part: Lives Vectors and Ghost Nodes\n\n");

@@ -67,7 +67,6 @@
  #include <boost/math/special_functions/sign.hpp>
 #include <boost/multiprecision/cpp_int.hpp>
 #include <boost/lexical_cast.hpp>
-#include <openssl/sha.h>
 #include "leveldb/db.h"
 
 #include <assert.h>
@@ -1509,6 +1508,7 @@ int input_cachefees_string(const std::string& s)
    const uint32_t propertyId = boost::lexical_cast<uint32_t>(vstr[0]);
    const int64_t amount = boost::lexical_cast<int64_t>(vstr[1]);;
 
+
    if (!cachefees.insert(std::make_pair(propertyId, amount)).second) return -1;
 
    return 0;
@@ -1521,6 +1521,7 @@ int input_cachefees_oracles_string(const std::string& s)
 
    const uint32_t propertyId = boost::lexical_cast<uint32_t>(vstr[0]);
    const int64_t amount = boost::lexical_cast<int64_t>(vstr[1]);;
+
 
    if (!cachefees_oracles.insert(std::make_pair(propertyId, amount)).second) return -1;
 
@@ -1716,9 +1717,8 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
   int lines = 0;
   int (*inputLineFunc)(const string &) = nullptr;
 
-  SHA256_CTX shaCtx;
-  SHA256_Init(&shaCtx);
 
+  CSHA256 hasher;
   switch (what)
   {
     case FILETYPE_BALANCES:
@@ -1735,10 +1735,10 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
         inputLineFunc = input_mp_crowdsale_string;
         break;
 
-    case FILETYPE_CDEXORDERS:
-        contractdex.clear();
-        inputLineFunc = input_mp_contractdexorder_string;
-        break;
+        case FILETYPE_CROWDSALES:
+            my_crowds.clear();
+            inputLineFunc = input_mp_crowdsale_string;
+            break;
 
     case FILETYPE_OFFERS:
         my_offers.clear();
@@ -1802,75 +1802,78 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
         inputLineFunc = input_mp_ltcvolume_string;
         break;
 
-    default:
-      return -1;
-  }
+        case FILETYPE_GLOBAL_VARS:
+            inputLineFunc = input_global_vars_string;
 
-  if (msc_debug_persistence)
-  {
-    LogPrintf("Loading %s ... \n", filename);
-    PrintToLog("%s(%s), line %d, file: %s\n", __FUNCTION__, filename, __LINE__, __FILE__);
-  }
-
-  std::ifstream file;
-  file.open(filename.c_str());
-  if (!file.is_open())
-  {
-    if (msc_debug_persistence) LogPrintf("%s(%s): file not found, line %d, file: %s\n", __FUNCTION__, filename, __LINE__, __FILE__);
-    return -1;
-  }
-
-  int res = 0;
-
-  std::string fileHash;
-  while (file.good())
-  {
-    std::string line;
-    std::getline(file, line);
-    if (line.empty() || line[0] == '#') continue;
-
-    // remove \r if the file came from Windows
-    line.erase( std::remove( line.begin(), line.end(), '\r' ), line.end() ) ;
-
-    // record and skip hashes in the file
-    if (line[0] == '!') {
-      fileHash = line.substr(1);
-      continue;
+        default:
+            return -1;
     }
 
-    // update hash?
-    if (verifyHash) {
-      SHA256_Update(&shaCtx, line.c_str(), line.length());
+    if (msc_debug_persistence)
+    {
+        LogPrintf("Loading %s ... \n", filename);
+        PrintToLog("%s(%s), line %d, file: %s\n", __FUNCTION__, filename, __LINE__, __FILE__);
     }
 
-    if (inputLineFunc) {
-      if (inputLineFunc(line) < 0) {
-        res = -1;
-        break;
-      }
+    std::ifstream file;
+    file.open(filename.c_str());
+    if (!file.is_open())
+    {
+        if (msc_debug_persistence) LogPrintf("%s(%s): file not found, line %d, file: %s\n", __FUNCTION__, filename, __LINE__, __FILE__);
+        return -1;
     }
 
-    ++lines;
-  }
+    int res = 0;
 
-  file.close();
+    std::string fileHash;
+    while (file.good())
+    {
+        std::string line;
+        std::getline(file, line);
+        if (line.empty() || line[0] == '#') continue;
 
-  if (verifyHash && res == 0) {
-    // generate and wite the double hash of all the contents written
-    uint256 hash1;
-    SHA256_Final((unsigned char*)&hash1, &shaCtx);
-    uint256 hash2;
-    SHA256((unsigned char*)&hash1, sizeof(hash1), (unsigned char*)&hash2);
+        // remove \r if the file came from Windows
+        line.erase( std::remove( line.begin(), line.end(), '\r' ), line.end() ) ;
 
-    if (!boost::iequals(hash2.ToString(), fileHash)) {
-      PrintToLog("File %s loaded, but failed hash validation!\n", filename);
-      res = -1;
+        // record and skip hashes in the file
+        if (line[0] == '!') {
+            fileHash = line.substr(1);
+            continue;
+        }
+
+        // add the line to the hash
+        if (verifyHash) {
+            hasher.Write((unsigned char*)line.c_str(), line.length());
+        }
+
+        if (inputLineFunc) {
+            if (inputLineFunc(line) < 0) {
+                res = -1;
+                break;
+            }
+        }
+
+        ++lines;
     }
-  }
+
+    file.close();
+
+
+    if (verifyHash && res == 0) {
+        // generate and wite the double hash of all the contents written
+        uint256 hash;
+        hasher.Finalize(hash.begin());
+        
+        if (false == boost::iequals(hash.ToString(), fileHash)) {
+            PrintToLog("File %s loaded, but failed hash validation!\n", filename);
+            res = -1;
+        }
+    }
 
   PrintToLog("%s(%s), loaded lines= %d, res= %d\n", __func__, filename, lines, res);
 
-  return res;
+
+    return res;
 }
 
 static char const * const statePrefix[NUM_FILETYPES] = {
@@ -2023,7 +2026,7 @@ static int load_most_relevant_state()
   return res;
 }
 
-static int write_msc_balances(std::ofstream& file, SHA256_CTX* shaCtx)
+static int write_msc_balances(std::ofstream& file, CHash256& hasher)
 {
     std::unordered_map<std::string, CMPTally>::iterator iter;
     for (iter = mp_tally_map.begin(); iter != mp_tally_map.end(); ++iter)
@@ -2073,7 +2076,7 @@ static int write_msc_balances(std::ofstream& file, SHA256_CTX* shaCtx)
 
         if (!emptyWallet) {
             // add the line to the hash
-            SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
+            hasher.Write((unsigned char*)lineOut.c_str(), lineOut.length());
 
             // write the line
             file << lineOut << std::endl;
@@ -2083,35 +2086,36 @@ static int write_msc_balances(std::ofstream& file, SHA256_CTX* shaCtx)
     return 0;
 }
 
-static int write_globals_state(ofstream &file, SHA256_CTX *shaCtx)
+static int write_globals_state(ofstream &file, CHash256& hasher)
 {
     unsigned int nextSPID = _my_sps->peekNextSPID();
     // unsigned int nextTestSPID = _my_sps->peekNextSPID(TL_PROPERTY_TALL);
 
+
     const std::string lineOut = strprintf("%d", nextSPID);
 
     // add the line to the hash
-    SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
+    hasher.Write((unsigned char*)lineOut.c_str(), lineOut.length());
 
     // write the line
-    file << lineOut << std::endl;
+    file << lineOut << endl;
 
     return 0;
 }
 
-static int write_mp_crowdsales(std::ofstream& file, SHA256_CTX* shaCtx)
+static int write_mp_crowdsales(std::ofstream& file, CHash256& hasher)
 {
     for (CrowdMap::const_iterator it = my_crowds.begin(); it != my_crowds.end(); ++it)
     {
         // decompose the key for address
         const CMPCrowd& crowd = it->second;
-        crowd.saveCrowdSale(file, shaCtx, it->first);
+        crowd.saveCrowdSale(file, it->first, hasher);
     }
 
     return 0;
 }
 
-static int write_mp_contractdex(ofstream &file, SHA256_CTX *shaCtx)
+static int write_mp_contractdex(ofstream &file, CHash256& hasher)
 {
     for (const auto con : contractdex)
     {
@@ -2123,8 +2127,9 @@ static int write_mp_contractdex(ofstream &file, SHA256_CTX *shaCtx)
 
             for (const auto in : indexes)
             {
-                const CMPContractDex& contract = in;
-                contract.saveOffer(file, shaCtx);
+
+                CMPContractDex contract = *it;
+                contract.saveOffer(file, hasher);
             }
         }
     }
@@ -2132,20 +2137,42 @@ static int write_mp_contractdex(ofstream &file, SHA256_CTX *shaCtx)
     return 0;
 }
 
-static int write_global_vars(ofstream &file, SHA256_CTX *shaCtx)
+static int write_global_vars(ofstream &file, CHash256& hasher)
 {
-     const int64_t lastVolume = globalVolumeALL_LTC;
-     const std::string lineOut = strprintf("%d", lastVolume);
-     // add the line to the hash
-     SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
-     // write the line
-     file << lineOut << std::endl;
+    const std::string lineOut;
 
-     return 0;
+    const int64_t lastVolume = globalVolumeALL_LTC;
+
+    PrintToLog("%s(): lastVesting: %f, globalVolumeALL_LTC: %d\n",__func__,lastVesting, lastVolume);
+
+    lineOut.append(strprintf("%f", lastVesting));
+    lineOut.append(strprintf("%d", lastVolume));
+    // add the line to the hash
+    hasher.Write((unsigned char*)lineOut.c_str(), lineOut.length());
+
+    // write the line
+    file << lineOut << endl;
+
+    return 0;
+}
+
+static int write_market_pricescd(ofstream &file, CHash256& hasher)
+{
+    std::string lineOut;
+
+    for (int i = 0; i < NPTYPES; i++) lineOut.append(strprintf("%d", marketP[i]));
+
+    // add the line to the hash
+    hasher.Write((unsigned char*)lineOut.c_str(), lineOut.length());
+
+    // write the line
+    file << lineOut << endl;
+
+    return 0;
 }
 
 
-static int write_mp_metadex(ofstream &file, SHA256_CTX *shaCtx)
+static int write_mp_metadex(ofstream &file, CHash256& hasher)
 {
     for (const auto my_it : metadex)
     {
@@ -2157,8 +2184,8 @@ static int write_mp_metadex(ofstream &file, SHA256_CTX *shaCtx)
 
             for (const auto in : indexes)
             {
-                const CMPMetaDEx& meta = in;
-                meta.saveOffer(file, shaCtx);
+                CMPMetaDEx meta = *it;
+                meta.saveOffer(file, hasher);
             }
         }
     }
@@ -2166,15 +2193,15 @@ static int write_mp_metadex(ofstream &file, SHA256_CTX *shaCtx)
     return 0;
 }
 
-static int write_mp_offers(ofstream &file, SHA256_CTX *shaCtx)
+static int write_mp_offers(ofstream &file, CHash256& hasher)
 {
     for (const auto of : my_offers)
     {
         // decompose the key for address
         std::vector<std::string> vstr;
-        boost::split(vstr, of.first, boost::is_any_of("-"), token_compress_on);
-        CMPOffer const &offer = of.second;
-        offer.saveOffer(file, shaCtx, vstr[0]);
+        boost::split(vstr, (*iter).first, boost::is_any_of("-"), token_compress_on);
+        CMPOffer const &offer = (*iter).second;
+        offer.saveOffer(file, vstr[0], hasher);
     }
 
     return 0;
@@ -2194,7 +2221,7 @@ static int write_mp_accepts(std::ofstream& file, SHA256_CTX* shaCtx)
     return 0;
 }
 
-static int write_mp_cachefees(std::ofstream& file, SHA256_CTX* shaCtx)
+static int write_mp_cachefees(std::ofstream& file, CHash256& hasher)
 {
     for (const auto &ca :  cachefees)
     {
@@ -2204,17 +2231,19 @@ static int write_mp_cachefees(std::ofstream& file, SHA256_CTX* shaCtx)
 
         const std::string lineOut = strprintf("%d,%d",propertyId, cache);
         // add the line to the hash
-        SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
+        hasher.Write((unsigned char*)lineOut.c_str(), lineOut.length());
         // write the line
-        file << lineOut << std::endl;
+        file << lineOut << endl;
     }
+
+  
 
 
 
     return 0;
 }
 
-static int write_mp_cachefees_oracles(std::ofstream& file, SHA256_CTX* shaCtx)
+static int write_mp_cachefees_oracles(std::ofstream& file, CHash256& hasher)
 {
     for (const auto &ca : cachefees_oracles)
     {
@@ -2224,13 +2253,14 @@ static int write_mp_cachefees_oracles(std::ofstream& file, SHA256_CTX* shaCtx)
 
         const std::string lineOut = strprintf("%d,%d",propertyId, cache);
         // add the line to the hash
-        SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
+        hasher.Write((unsigned char*)lineOut.c_str(), lineOut.length());
         // write the line
         file << lineOut << std::endl;
     }
 
     return 0;
 }
+
 
 static void savingLine(const withdrawalAccepted&  w, const std::string chnAddr, std::ofstream& file, SHA256_CTX* shaCtx)
 {
@@ -2241,7 +2271,7 @@ static void savingLine(const withdrawalAccepted&  w, const std::string chnAddr, 
 }
 
 /** Saving pending withdrawals **/
-static int write_mp_withdrawals(std::ofstream& file, SHA256_CTX* shaCtx)
+static int write_mp_withdrawals(std::ofstream& file, CHash256& hasher)
 {
     for (const auto w : withdrawal_Map)
     {
@@ -2255,6 +2285,7 @@ static int write_mp_withdrawals(std::ofstream& file, SHA256_CTX* shaCtx)
 
     return 0;
 }
+
 
 /** adding channel balances**/
 void addBalances(const std::map<std::string,map<uint32_t, int64_t>>& balances, std::string& lineOut)
@@ -2275,7 +2306,7 @@ void addBalances(const std::map<std::string,map<uint32_t, int64_t>>& balances, s
 }
 
 /**Saving map of active channels**/
-static int write_mp_active_channels(std::ofstream& file, SHA256_CTX* shaCtx)
+static int write_mp_active_channels(std::ofstream& file, CHash256& hasher)
 {
     for (const auto &chn : channels_Map)
     {
@@ -2297,6 +2328,17 @@ static int write_mp_active_channels(std::ofstream& file, SHA256_CTX* shaCtx)
 }
 
 static void iterWrite(std::ofstream& file, SHA256_CTX* shaCtx, const std::map<int, std::map<uint32_t,int64_t>>& aMap)
+    // add the line to the hash
+    hasher.Write((unsigned char*)lineOut.c_str(), lineOut.length());
+
+    // write the line
+    file << lineOut << endl;
+
+    return 0;
+}
+
+/** Saving DexMap volume **/
+static int write_mp_dexvolume(std::ofstream& file, CHash256& hasher)
 {
     for(const auto &m : aMap)
     {
@@ -2310,13 +2352,14 @@ static void iterWrite(std::ofstream& file, SHA256_CTX* shaCtx, const std::map<in
             const int64_t& amount = p.second;
             const std::string lineOut = strprintf("%d,%d,%d", block, propertyId, amount);
             // add the line to the hash
-            SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
+            hasher.Write((unsigned char*)lineOut.c_str(), lineOut.length());
             // write the line
             file << lineOut << std::endl;
         }
     }
 
 }
+
 
 /** Saving DEx and Channel LTC volume **/
 static int write_mp_ltcvolume(std::ofstream& file, SHA256_CTX* shaCtx)
@@ -2332,8 +2375,8 @@ static int write_mp_dexvolume(std::ofstream& file, SHA256_CTX* shaCtx)
     return 0;
 }
 
-/** Saving MetaDEx Map token volume **/
-static int write_mp_mdexvolume(std::ofstream& file, SHA256_CTX* shaCtx)
+/** Saving MDEx Map volume **/
+static int write_mp_mdexvolume(std::ofstream& file, CHash256& hasher)
 {
     iterWrite(file, shaCtx, metavolume);
     return 0;
@@ -2343,7 +2386,8 @@ static void savingLine(const std::string& address, std::ofstream& file, SHA256_C
 {
     const std::string lineOut = strprintf("%s",address);
     // add the line to the hash
-    SHA256_Update(shaCtx, lineOut.c_str(), lineOut.length());
+    hasher.Write((unsigned char*)lineOut.c_str(), lineOut.length());
+
     // write the line
     file << lineOut << std::endl;
 }
@@ -2364,30 +2408,29 @@ static int write_state_file(CBlockIndex const *pBlockIndex, int what)
     std::ofstream file;
     file.open(strFile.c_str());
 
-    SHA256_CTX shaCtx;
-    SHA256_Init(&shaCtx);
+    CHash256 hasher;
 
     int result = 0;
 
     switch(what) {
     case FILETYPE_BALANCES:
-        result = write_msc_balances(file, &shaCtx);
+        result = write_msc_balances(file, hasher);
         break;
 
     case FILETYPE_GLOBALS:
-        result = write_globals_state(file, &shaCtx);
+        result = write_globals_state(file, hasher);
         break;
 
     case FILETYPE_CROWDSALES:
-        result = write_mp_crowdsales(file, &shaCtx);
+        result = write_mp_crowdsales(file, hasher);
         break;
 
     case FILETYPE_CDEXORDERS:
-        result = write_mp_contractdex(file, &shaCtx);
+        result = write_mp_contractdex(file, hasher);
         break;
 
     case FILETYPE_OFFERS:
-        result = write_mp_offers(file, &shaCtx);
+        result = write_mp_offers(file, hasher);
         break;
 
     case FILETYPE_ACCEPTS:
@@ -2395,35 +2438,35 @@ static int write_state_file(CBlockIndex const *pBlockIndex, int what)
         break;
 
     case FILETYPE_MDEXORDERS:
-        result = write_mp_metadex(file, &shaCtx);
+        result = write_mp_metadex(file, hasher);
         break;
 
     case FILETYPE_CACHEFEES:
-        result = write_mp_cachefees(file, &shaCtx);
+        result = write_mp_cachefees(file, hasher);
         break;
 
     case FILETYPE_CACHEFEES_ORACLES:
-        result = write_mp_cachefees_oracles(file, &shaCtx);
+        result = write_mp_cachefees_oracles(file, hasher);
         break;
 
     case FILETYPE_WITHDRAWALS:
-        result = write_mp_withdrawals(file, &shaCtx);
+        result = write_mp_withdrawals(file, hasher);
         break;
 
     case FILETYPE_ACTIVE_CHANNELS:
-        result = write_mp_active_channels(file, &shaCtx);
+        result = write_mp_active_channels(file, hasher);
         break;
 
     case FILETYPE_DEX_VOLUME:
-        result = write_mp_dexvolume(file, &shaCtx);
+        result = write_mp_dexvolume(file, hasher);
         break;
 
     case FILETYPE_MDEX_VOLUME:
-        result = write_mp_mdexvolume(file, &shaCtx);
+        result = write_mp_mdexvolume(file, hasher);
         break;
 
     case FILETYPE_GLOBAL_VARS:
-        result = write_global_vars(file, &shaCtx);
+        result = write_global_vars(file, hasher);
         break;
 
     case FILE_TYPE_VESTING_ADDRESSES:
@@ -2436,11 +2479,10 @@ static int write_state_file(CBlockIndex const *pBlockIndex, int what)
     }
 
     // generate and wite the double hash of all the contents written
-    uint256 hash1;
-    SHA256_Final((unsigned char*)&hash1, &shaCtx);
-    uint256 hash2;
-    SHA256((unsigned char*)&hash1, sizeof(hash1), (unsigned char*)&hash2);
-    file << "!" << hash2.ToString() << std::endl;
+
+    uint256 hash;
+    hasher.Finalize(hash.begin());
+    file << "!" << hash.ToString() << std::endl;
 
     file.flush();
     file.close();
@@ -3379,7 +3421,7 @@ void CMPTxList::LoadActivations(int blockHeight)
          boost::split(vstr, itData, boost::is_any_of(":"), token_compress_on);
          if (4 != vstr.size()) continue; // unexpected number of tokens
          if (atoi(vstr[2]) != TL_MESSAGE_TYPE_ACTIVATION || atoi(vstr[0]) != 1) continue; // we only care about valid activations
-         uint256 txid = uint256S(it->key().ToString());;
+         uint256 txid = uint256S(it->key().ToString());
          loadOrder.push_back(std::make_pair(atoi(vstr[1]), txid));
      }
 
@@ -3443,7 +3485,7 @@ void CMPTxList::LoadAlerts(int blockHeight)
          boost::split(vstr, itData, boost::is_any_of(":"), token_compress_on);
          if (4 != vstr.size()) continue; // unexpected number of tokens
          if (atoi(vstr[2]) != TL_MESSAGE_TYPE_ALERT || atoi(vstr[0]) != 1) continue; // not a valid alert
-         uint256 txid = uint256S(it->key().ToString());;
+         uint256 txid = uint256S(it->key().ToString());
          loadOrder.push_back(std::make_pair(atoi(vstr[1]), txid));
      }
 

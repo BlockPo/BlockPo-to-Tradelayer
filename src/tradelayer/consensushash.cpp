@@ -21,7 +21,6 @@
 #include <string>
 #include <vector>
 
-#include <openssl/sha.h>
 #include "tradelayer_matrices.h"
 
 extern std::map<uint32_t, int64_t> cachefees;
@@ -234,9 +233,8 @@ std::string GenerateConsensusString(const mastercore::FeatureActivation& feat)
 
 uint256 GetConsensusHash()
 {
-    // allocate and init a SHA256_CTX
-    SHA256_CTX shaCtx;
-    SHA256_Init(&shaCtx);
+
+    CSHA256 hasher;
 
     LOCK(cs_tally);
 
@@ -262,7 +260,7 @@ uint256 GetConsensusHash()
             std::string dataStr = GenerateConsensusString(tally, address, propertyId);
             if (dataStr.empty()) continue; // skip empty balances
             if (msc_debug_consensus_hash) PrintToLog("Adding balance data to consensus hash: %s\n", dataStr);
-            SHA256_Update(&shaCtx, dataStr.c_str(), dataStr.length());
+            hasher.Write((unsigned char*)dataStr.c_str(), dataStr.length());
         }
     }
 
@@ -283,7 +281,7 @@ uint256 GetConsensusHash()
     {
         const std::string& dataStr = it->second;
         if (msc_debug_consensus_hash) PrintToLog("Adding DEx offer data to consensus hash: %s\n", dataStr);
-        SHA256_Update(&shaCtx, dataStr.c_str(), dataStr.length());
+        hasher.Write((unsigned char*)dataStr.c_str(), dataStr.length());
     }
 
     // DEx accepts - loop through the accepts map and add each accept to the consensus hash (ordered by matchedtxid then buyer)
@@ -304,7 +302,7 @@ uint256 GetConsensusHash()
     {
         const std::string& dataStr = it->second;
         if (msc_debug_consensus_hash) PrintToLog("Adding DEx accept to consensus hash: %s\n", dataStr);
-        SHA256_Update(&shaCtx, dataStr.c_str(), dataStr.length());
+         hasher.Write((unsigned char*)dataStr.c_str(), dataStr.length());
     }
 
     // MetaDEx trades - loop through the MetaDEx maps and add each open trade to the consensus hash (ordered by txid)
@@ -330,7 +328,7 @@ uint256 GetConsensusHash()
     {
         const std::string& dataStr = it->second;
         if (msc_debug_consensus_hash) PrintToLog("Adding MetaDEx trade data to consensus hash: %s\n", dataStr);
-        SHA256_Update(&shaCtx, dataStr.c_str(), dataStr.length());
+         hasher.Write((unsigned char*)dataStr.c_str(), dataStr.length());
     }
 
     // ContractDex trades - loop through the ContractDex maps and add each open trade to the consensus hash (ordered by txid)
@@ -356,7 +354,7 @@ uint256 GetConsensusHash()
     {
         const std::string& dataStr = it->second;
         if (msc_debug_consensus_hash) PrintToLog("Adding ContractDex trade data to consensus hash: %s\n", dataStr);
-        SHA256_Update(&shaCtx, dataStr.c_str(), dataStr.length());
+       hasher.Write((unsigned char*)dataStr.c_str(), dataStr.length());
     }
 
     // Crowdsales - loop through open crowdsales and add to the consensus hash (ordered by property ID)
@@ -377,7 +375,7 @@ uint256 GetConsensusHash()
     {
         std::string dataStr = (*it).second;
         if (msc_debug_consensus_hash) PrintToLog("Adding Crowdsale entry to consensus hash: %s\n", dataStr);
-        SHA256_Update(&shaCtx, dataStr.c_str(), dataStr.length());
+        hasher.Write((unsigned char*)dataStr.c_str(), dataStr.length());
     }
 
     // Properties - loop through each property and store the issuer (to capture state changes via change issuer transactions)
@@ -396,7 +394,7 @@ uint256 GetConsensusHash()
 
         std::string dataStr = GenerateConsensusString(propertyId, sp.issuer);
         if (msc_debug_consensus_hash) PrintToLog("Adding property to consensus hash: %s\n", dataStr);
-        SHA256_Update(&shaCtx, dataStr.c_str(), dataStr.length());
+        hasher.Write((unsigned char*)dataStr.c_str(), dataStr.length());
     }
 
     // Trade Channels
@@ -407,7 +405,7 @@ uint256 GetConsensusHash()
          const std::string dataStr = GenerateConsensusString(chn);
          if (msc_debug_consensus_hash) PrintToLog("Adding Trade Channels entry to consensus hash: %s\n", dataStr);
          //channels oredered by multisig address (map key)
-         SHA256_Update(&shaCtx, dataStr.c_str(), dataStr.length());
+         hasher.Write((unsigned char*)dataStr.c_str(), dataStr.length());
 
     }
 
@@ -429,7 +427,7 @@ uint256 GetConsensusHash()
         std::string dataStr = feeGenerateConsensusString(propertyId, cache);
         if (msc_debug_consensus_hash) PrintToLog("Adding Fee cache (natives) entry to consensus hash: %s\n", dataStr);
         // cache fee is a map (ordered by propertyId key)
-        SHA256_Update(&shaCtx, dataStr.c_str(), dataStr.length());
+        hasher.Write((unsigned char*)dataStr.c_str(), dataStr.length());
     }
 
     // Cache fee (oracles)
@@ -441,7 +439,7 @@ uint256 GetConsensusHash()
         std::string dataStr = feeGenerateConsensusString(propertyId, cache);
         if (msc_debug_consensus_hash) PrintToLog("Adding Fee cache (oracles) entry to consensus hash: %s\n", dataStr);
         // map ordered by propertyId key
-        SHA256_Update(&shaCtx, dataStr.c_str(), dataStr.length());
+        hasher.Write((unsigned char*)dataStr.c_str(), dataStr.length());
     }
 
     // Vesting addresses
@@ -452,7 +450,7 @@ uint256 GetConsensusHash()
         const std::string& address = v;
         std::string dataStr = strprintf("%s", address);
         if (msc_debug_consensus_hash) PrintToLog("Adding Vesting addresses entry to consensus hash: %s\n", dataStr);
-        SHA256_Update(&shaCtx, dataStr.c_str(), dataStr.length());
+        hasher.Write((unsigned char*)dataStr.c_str(), dataStr.length());
     }
 
     // Pending Activations
@@ -473,7 +471,7 @@ uint256 GetConsensusHash()
     {
         std::string dataStr = sp.second;
         if (msc_debug_consensus_hash) PrintToLog("Adding Pending features activations entry to consensus hash: %s\n", dataStr);
-        SHA256_Update(&shaCtx, dataStr.c_str(), dataStr.length());
+        hasher.Write((unsigned char*)dataStr.c_str(), dataStr.length());
     }
 
     // Completed Activations
@@ -494,90 +492,83 @@ uint256 GetConsensusHash()
     {
         std::string dataStr = cp.second;
         if (msc_debug_consensus_hash) PrintToLog("Adding Completed features activations entry to consensus hash: %s\n", dataStr);
-        SHA256_Update(&shaCtx, dataStr.c_str(), dataStr.length());
+        hasher.Write((unsigned char*)dataStr.c_str(), dataStr.length());
     }
 
     // extract the final result and return the hash
     uint256 consensusHash;
-    SHA256_Final((unsigned char*)&consensusHash, &shaCtx);
+    hasher.Finalize(consensusHash.begin());
     if (msc_debug_consensus_hash) PrintToLog("Finished generation of consensus hash.  Result: %s\n", consensusHash.GetHex());
 
     return consensusHash;
 }
 
-uint256 GetMetaDExHash(const uint32_t propertyId)
-{
-    SHA256_CTX shaCtx;
-    SHA256_Init(&shaCtx);
-
-    LOCK(cs_tally);
-
-    std::vector<std::pair<arith_uint256, std::string> > vecMetaDExTrades;
-    for (md_PropertiesMap::const_iterator my_it = metadex.begin(); my_it != metadex.end(); ++my_it)
+    uint256 GetMetaDExHash(const uint32_t propertyId)
     {
-        if (propertyId == 0 || propertyId == my_it->first)
-        {
-            const md_PricesMap& prices = my_it->second;
-            for (md_PricesMap::const_iterator it = prices.begin(); it != prices.end(); ++it)
-            {
-                const md_Set& indexes = it->second;
-                for (md_Set::const_iterator it = indexes.begin(); it != indexes.end(); ++it)
-                {
-                    const CMPMetaDEx& obj = *it;
-                    std::string dataStr = obj.GenerateConsensusString();
-                    vecMetaDExTrades.push_back(std::make_pair(arith_uint256(obj.getHash().ToString()), dataStr));
+        CSHA256 hasher;
+
+        LOCK(cs_tally);
+
+        std::vector<std::pair<arith_uint256, std::string> > vecMetaDExTrades;
+        for (md_PropertiesMap::const_iterator my_it = metadex.begin(); my_it != metadex.end(); ++my_it) {
+            if (propertyId == 0 || propertyId == my_it->first) {
+                const md_PricesMap& prices = my_it->second;
+                for (md_PricesMap::const_iterator it = prices.begin(); it != prices.end(); ++it) {
+                    const md_Set& indexes = it->second;
+                    for (md_Set::const_iterator it = indexes.begin(); it != indexes.end(); ++it) {
+                        const CMPMetaDEx& obj = *it;
+                        std::string dataStr = GenerateConsensusString(obj);
+                        vecMetaDExTrades.push_back(std::make_pair(arith_uint256(obj.getHash().ToString()), dataStr));
+                    }
                 }
             }
         }
-    }
-
-    std::sort (vecMetaDExTrades.begin(), vecMetaDExTrades.end());
-    for (std::vector<std::pair<arith_uint256, std::string> >::iterator it = vecMetaDExTrades.begin(); it != vecMetaDExTrades.end(); ++it)
-    {
-        const std::string& dataStr = it->second;
-        SHA256_Update(&shaCtx, dataStr.c_str(), dataStr.length());
-    }
-
-    uint256 metadexHash;
-    SHA256_Final((unsigned char*)&metadexHash, &shaCtx);
-
-    return metadexHash;
-}
-
-/** Obtains a hash of the balances for a specific property. */
-uint256 GetBalancesHash(const uint32_t hashPropertyId)
-{
-    SHA256_CTX shaCtx;
-    SHA256_Init(&shaCtx);
-
-    LOCK(cs_tally);
-
-    std::map<std::string, CMPTally> tallyMapSorted;
-    for (std::unordered_map<string, CMPTally>::iterator uoit = mp_tally_map.begin(); uoit != mp_tally_map.end(); ++uoit)
-    {
-        tallyMapSorted.insert(std::make_pair(uoit->first,uoit->second));
-    }
-
-    for (std::map<string, CMPTally>::iterator my_it = tallyMapSorted.begin(); my_it != tallyMapSorted.end(); ++my_it)
-    {
-        const std::string& address = my_it->first;
-        CMPTally& tally = my_it->second;
-        tally.init();
-        uint32_t propertyId = 0;
-        while (0 != (propertyId = (tally.next())))
+        std::sort (vecMetaDExTrades.begin(), vecMetaDExTrades.end());
+        for (std::vector<std::pair<arith_uint256, std::string> >::iterator it = vecMetaDExTrades.begin(); it != vecMetaDExTrades.end(); ++it)
         {
-            if (propertyId != hashPropertyId) continue;
-            std::string dataStr = GenerateConsensusString(tally, address, propertyId);
-            if (dataStr.empty()) continue;
-            if (msc_debug_consensus_hash) PrintToLog("Adding data to balances hash: %s\n", dataStr);
-            SHA256_Update(&shaCtx, dataStr.c_str(), dataStr.length());
+            const std::string& dataStr = it->second;
+            hasher.Write((unsigned char*)dataStr.c_str(), dataStr.length());
         }
+
+        uint256 metadexHash;
+        hasher.Finalize(metadexHash.begin());
+
+        return metadexHash;
     }
+  
+    /** Obtains a hash of the balances for a specific property. */
+    uint256 GetBalancesHash(const uint32_t hashPropertyId)
+    {
+        CSHA256 hasher;
 
-    uint256 balancesHash;
-    SHA256_Final((unsigned char*)&balancesHash, &shaCtx);
+        LOCK(cs_tally);
 
-    return balancesHash;
-}
+        std::map<std::string, CMPTally> tallyMapSorted;
+        for (std::unordered_map<string, CMPTally>::iterator uoit = mp_tally_map.begin(); uoit != mp_tally_map.end(); ++uoit)
+        {
+            tallyMapSorted.insert(std::make_pair(uoit->first,uoit->second));
+        }
+
+        for (std::map<string, CMPTally>::iterator my_it = tallyMapSorted.begin(); my_it != tallyMapSorted.end(); ++my_it)
+        {
+            const std::string& address = my_it->first;
+            CMPTally& tally = my_it->second;
+            tally.init();
+            uint32_t propertyId = 0;
+            while (0 != (propertyId = (tally.next())))
+            {
+                if (propertyId != hashPropertyId) continue;
+                std::string dataStr = GenerateConsensusString(tally, address, propertyId);
+                if (dataStr.empty()) continue;
+                if (msc_debug_consensus_hash) PrintToLog("Adding data to balances hash: %s\n", dataStr);
+                hasher.Write((unsigned char*)dataStr.c_str(), dataStr.length());
+            }
+        }
+
+        uint256 balancesHash;
+        hasher.Finalize(balancesHash.begin());
+
+        return balancesHash;
+    }
 
 } // namespace mastercore
