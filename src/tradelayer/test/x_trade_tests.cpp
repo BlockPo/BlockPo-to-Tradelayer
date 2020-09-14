@@ -55,7 +55,8 @@ BOOST_AUTO_TEST_CASE(one_trade)
 			1,   // subaction
 			0,   // amount remaining
 			5,   // effective_price
-			2);  // trading_action
+			2,  // trading_action
+ 10000000);  // amount reserved
 
   CMPContractDex buyer("1NNQKWM8mC35pBNPxV1noWFZEw7A5X6zXz", // address
 		       172,  // block
@@ -68,7 +69,8 @@ BOOST_AUTO_TEST_CASE(one_trade)
 		       1,    // subaction
 		       0,    // amount remaining
 		       5,    // effective_price
-		       1);   // trading_action
+		       1,   // trading_action
+    10000000);  // amount reserved
 
   CMPContractDex *s; s = &seller;
   CMPContractDex *b; b = &buyer;

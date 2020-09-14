@@ -85,13 +85,14 @@ public:
         bool fixed;
         bool manual;
 
-
-        /** New things for Contracts */
+        //vesting
+        double last_vesting;
+        int last_vesting_block;
 
         uint32_t blocks_until_expiration;
         uint32_t notional_size;
         uint32_t collateral_currency;
-        uint32_t margin_requirement;
+        uint64_t margin_requirement;
         uint32_t attribute_type;
         int64_t contracts_needed;
         int init_block;
@@ -109,9 +110,6 @@ public:
         bool inverse_quoted;
         bool expirated;
 
-        // int oracle_last_update;
-
-
         // for pegged currency
         uint32_t contract_associated;
 
@@ -122,7 +120,7 @@ public:
         std::map<uint256, std::vector<int64_t> > historicalData;
 
         //kyc
-        std::vector<int64_t> kyc; //kyc vector
+        std::vector<int64_t> kyc;
 
         Entry();
 
@@ -173,12 +171,14 @@ public:
             READWRITE(oracle_close);
             READWRITE(inverse_quoted);
             READWRITE(kyc);
+            READWRITE(last_vesting);
+            READWRITE(last_vesting_block);
             ////////////////////////////
         }
 
         bool isDivisible() const;
         void print() const;
-      	bool isNativeContract() const;
+      	bool isNative() const;
         bool isSwap() const;
         bool isPegged() const;
         bool isOracle() const;
@@ -302,6 +302,7 @@ void eraseMaxedCrowdsale(const std::string& address, int64_t blockTime, int bloc
 unsigned int eraseExpiredCrowdsale(const CBlockIndex* pBlockIndex);
 bool isPropertyContract(uint32_t propertyId);
 
+bool getEntryFromName(const std::string& name, uint32_t& propertyId, CMPSPInfo::Entry& sp);
 }
 
 #endif // TRADELAYER_SP_H

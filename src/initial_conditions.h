@@ -3,7 +3,6 @@ int M = 4;
 int NYears = 10;
 int initYear = 19;
 
-factorE = 100000000;
 priceIndex = 110; // an index price (USDs) to calculate the interest in pegg currencies (10% more)
 denMargin = 100;
 n_cols = 10;
@@ -64,7 +63,7 @@ amountVesting = (1500000/nVestingAddrs)*COIN;
 //volumeToVWAP = 200;
 volumeToVWAP = 10;
 //BlockS = 720; /** testnet **/
-BlockS = 50;
+BlockS = 500; /** regtest **/
 CompoundRate = 1.00002303;
 DecayRate = 0.99998;
 LongTailDecay = 0.99999992;

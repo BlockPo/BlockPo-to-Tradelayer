@@ -36,36 +36,38 @@ namespace mastercore
  */
 bool AddressToPubKey(const std::string& key, CPubKey& pubKey)
 {
-// #ifdef ENABLE_WALLET
-//     // Case 1: Bitcoin address and the key is in the wallet
-//     CBitcoinAddress address(key); // TODO: FIX THIS!
-//     CWalletRef pwalletMain = NULL;
-//     if (vpwallets.size() > 0){
-//         pwalletMain = vpwallets[0];
-//     }
-//
-//     if (pwalletMain && address.IsValid()) {
-//         CKeyID keyID;
-//         if (!address.GetKeyID(keyID)) {
-//             PrintToLog("%s() ERROR: redemption address %s does not refer to a public key\n", __func__, key);
-//             return false;
-//         }
-//         if (!pwalletMain->GetPubKey(keyID, pubKey)) {
-//             PrintToLog("%s() ERROR: no public key in wallet for redemption address %s\n", __func__, key);
-//             return false;
-//         }
-//     }
-//     // Case 2: Hex-encoded public key
-//     else
-// #endif
-//     if (IsHex(key)) {
-//         pubKey = CPubKey(ParseHex(key));
-//     }
-//
-//     if (!pubKey.IsFullyValid()) {
-//         PrintToLog("%s() ERROR: invalid redemption key %s\n", __func__, key);
-//         return false;
-//     }
+#ifdef ENABLE_WALLET
+    // Case 1: Bitcoin address and the key is in the wallet
+    CTxDestination dest = DecodeDestination(key);
+    CWalletRef pwalletMain = nullptr;
+    if (vpwallets.size() > 0){
+        pwalletMain = vpwallets[0];
+    }
+
+    if (pwalletMain && IsValidDestination(dest)) {
+        CKey keyOut;
+        auto keyID = GetKeyForDestination(*pwalletMain, dest);
+        if (keyID.IsNull()) {
+            PrintToLog("%s: ERROR: redemption address %s does not refer to a public key\n", __func__, key);
+            return false;
+        }
+        if (!pwalletMain->GetPubKey(keyID, pubKey)) {
+            PrintToLog("%s() ERROR: no public key in wallet for redemption address %s\n", __func__, key);
+            return false;
+        }
+    // Case 2: Hex-encoded public key
+    } else {
+#endif
+        if (IsHex(key)) {
+            pubKey = CPubKey(ParseHex(key));
+        }
+
+        if (!pubKey.IsFullyValid()) {
+            PrintToLog("%s: ERROR: invalid redemption key %s\n", __func__, key);
+            return false;
+        }
+
+    }
 
     return true;
 }
@@ -116,7 +118,7 @@ static int64_t GetEstimatedFeePerKb()
     int64_t nFee = 50000; // 0.0005 BTC;
 
 #ifdef ENABLE_WALLET
-    CWalletRef pwalletMain = NULL;
+    CWalletRef pwalletMain = nullptr;
     if (vpwallets.size() > 0){
         pwalletMain = vpwallets[0];
     }
@@ -126,8 +128,6 @@ static int64_t GetEstimatedFeePerKb()
        nFee = GetMinimumFee(1000, coin_control, mempool, ::feeEstimator, nullptr);
     }
 #endif
-
-    PrintToLog("%s(): nFee: %d\n",__func__, nFee);
     return nFee;
 }
 
@@ -170,11 +170,11 @@ bool CheckInput(const CTxOut& txOut, int nHeight, CTxDestination& dest)
 /**
  * Retrieves the label, used by the UI, for an address from the wallet.
  */
-std::string GetAddressLabel(const std::string& address)
-{
-    std::string addressLabel;
+// std::string GetAddressLabel(const std::string& address)
+// {
+//     std::string addressLabel;
 // #ifdef ENABLE_WALLET
-//     CWalletRef pwalletMain = NULL;
+//     CWalletRef pwalletMain = nullptr;
 //     if (vpwallets.size() > 0){
 //         pwalletMain = vpwallets[0];
 //     }
@@ -189,8 +189,8 @@ std::string GetAddressLabel(const std::string& address)
 //         }
 //     }
 // #endif
-    return addressLabel;
-}
+    // return addressLabel;
+// }
 
 /**
  * IsMine wrapper to determine whether the address is in the wallet.
@@ -198,7 +198,7 @@ std::string GetAddressLabel(const std::string& address)
 int IsMyAddress(const std::string& address)
 {
 #ifdef ENABLE_WALLET
-    CWalletRef pwalletMain = NULL;
+    CWalletRef pwalletMain = nullptr;
     if (vpwallets.size() > 0){
         pwalletMain = vpwallets[0];
     }
@@ -227,12 +227,12 @@ int64_t SelectCoins(const std::string& fromAddress, CCoinControl& coinControl, i
     unsigned int nNumOutputs = 0;
 
 #ifdef ENABLE_WALLET
-    CWalletRef pwalletMain = NULL;
+    CWalletRef pwalletMain = nullptr;
     if (vpwallets.size() > 0){
         pwalletMain = vpwallets[0];
     }
 
-    if (NULL == pwalletMain) {
+    if (nullptr == pwalletMain) {
         return 0;
     }
 

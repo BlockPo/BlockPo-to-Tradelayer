@@ -431,7 +431,7 @@ def network_thread_running():
     """Return whether the network thread is running."""
     return any([thread.name == "NetworkThread" for thread in threading.enumerate()])
 
-def network_thread_join(timeout=10):
+def network_thread_join(timeout=60):
     """Wait timeout seconds for the network thread to terminate.
 
     Throw if the network thread doesn't terminate in timeout seconds."""

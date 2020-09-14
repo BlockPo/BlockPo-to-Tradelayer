@@ -10,6 +10,7 @@ from test_framework.util import *
 import time
 
 
+
 def hashToHex(hash):
     return format(hash, '064x')
 
@@ -39,6 +40,12 @@ class TestNode(P2PInterface):
 class FeeFilterTest(BitcoinTestFramework):
     def set_test_params(self):
         self.num_nodes = 2
+        # We lower the various required feerates for this test
+        # to catch a corner-case where feefilter used to slightly undercut
+        # mempool and wallet feerate calculation based on GetFee
+        # rounding down 3 places, leading to stranded transactions.
+        # See issue #16499
+        self.extra_args = [["-minrelaytxfee=0.00000100", "-mintxfee=0.00000100"]]*self.num_nodes
 
     def run_test(self):
         node1 = self.nodes[1]

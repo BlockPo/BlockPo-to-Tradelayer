@@ -4,8 +4,8 @@
  * Handler for populating RPC transaction objects.
  */
 
+#include "tradelayer/dex.h"
 #include "tradelayer/rpctxobject.h"
-
 #include "tradelayer/errors.h"
 #include "tradelayer/tradelayer.h"
 #include "tradelayer/pending.h"
@@ -65,7 +65,7 @@ int populateRPCTransactionObject(const CTransaction& tx, const uint256& blockHas
 
   if (!blockHash.IsNull()) {
     CBlockIndex* pBlockIndex = GetBlockIndex(blockHash);
-    if (NULL != pBlockIndex) {
+    if (nullptr != pBlockIndex) {
       confirmations = 1 + blockHeight - pBlockIndex->nHeight;
       blockTime = pBlockIndex->nTime;
       blockHeight = pBlockIndex->nHeight;
@@ -134,6 +134,7 @@ int populateRPCTransactionObject(const CTransaction& tx, const uint256& blockHas
  */
 void populateRPCTypeInfo(CMPTransaction& mp_obj, UniValue& txobj, uint32_t txType, bool extendedDetails, std::string extendedDetailsFilter)
 {
+    //NOTE: populateRPCType functions needs more work
     switch (txType) {
         case MSC_TYPE_SIMPLE_SEND:
             populateRPCTypeSimpleSend(mp_obj, txobj);
@@ -198,7 +199,7 @@ void populateRPCTypeInfo(CMPTransaction& mp_obj, UniValue& txobj, uint32_t txTyp
         case MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK:
             populateRPCTypeContractDex_Cancel_Orders_By_Block(mp_obj, txobj);
             break;
-        case MSC_TYPE_TRADE_OFFER:
+        case MSC_TYPE_DEX_SELL_OFFER:
             populateRPCTypeTradeOffer(mp_obj, txobj);
             break;
         case MSC_TYPE_DEX_BUY_OFFER:
@@ -230,9 +231,6 @@ void populateRPCTypeInfo(CMPTransaction& mp_obj, UniValue& txobj, uint32_t txTyp
             break;
         case MSC_TYPE_TRANSFER:
             populateRPCTypeTransfer(mp_obj, txobj);
-            break;
-        case MSC_TYPE_CREATE_CHANNEL:
-            populateRPCTypeCreate_Channel(mp_obj, txobj);
             break;
         case MSC_TYPE_CONTRACT_INSTANT:
             populateRPCTypeContract_Instant(mp_obj, txobj);
@@ -501,8 +499,7 @@ void populateRPCTypeSendPeggedCurrency(CMPTransaction& tlObj, UniValue& txobj)
 
 void populateRPCTypeRedemptionPegged(CMPTransaction& tlObj, UniValue& txobj)
 {
-  uint32_t propertyId = _my_sps->findSPByTX(tlObj.getHash());
-
+  uint32_t propertyId = tlObj.getProperty();
   txobj.push_back(Pair("propertyId", (uint64_t) propertyId));
   txobj.push_back(Pair("amount", FormatDivisibleMP(tlObj.getXAmount())));
   txobj.push_back(Pair("contract related", (uint64_t) tlObj.getContractId()));
@@ -522,14 +519,20 @@ void populateRPCTypeContractDex_Cancel_Orders_By_Block(CMPTransaction& tlObj, Un
 
 void populateRPCTypeTradeOffer(CMPTransaction& tlObj, UniValue& txobj)
 {
-  uint32_t propertyId = _my_sps->findSPByTX(tlObj.getHash());
+
+  CMPOffer temp_offer(tlObj);
+
+  uint32_t propertyId = tlObj.getProperty();
+  int64_t amountOffered = tlObj.getAmount();
+  int64_t amountDesired = temp_offer.getLTCDesiredOriginal();
+  uint8_t sellSubAction = temp_offer.getSubaction();
 
   txobj.push_back(Pair("propertyId", (uint64_t) propertyId));
-  txobj.push_back(Pair("amount offered", (uint64_t) tlObj.getAmount()));
-  txobj.push_back(Pair("amount desired", (uint64_t) tlObj.getBlock()));
+  txobj.push_back(Pair("amount offered", FormatDivisibleMP(amountOffered)));
+  txobj.push_back(Pair("amount desired", FormatDivisibleMP(amountDesired)));
   txobj.push_back(Pair("time limit", (uint64_t) tlObj.getTimeLimit()));
-  txobj.push_back(Pair("min fee", (uint64_t) tlObj.getMinFee()));
-  txobj.push_back(Pair("subAction", (uint64_t) tlObj.getSubAction()));
+  txobj.push_back(Pair("min fee", FormatDivisibleMP(tlObj.getMinFee())));
+  txobj.push_back(Pair("subAction", (uint64_t) sellSubAction));
 }
 
 void populateRPCTypeDExBuy(CMPTransaction& tlObj, UniValue& txobj)
@@ -546,10 +549,19 @@ void populateRPCTypeDExBuy(CMPTransaction& tlObj, UniValue& txobj)
 
 void populateRPCTypeAcceptOfferBTC(CMPTransaction& tlObj, UniValue& txobj)
 {
-  uint32_t propertyId = _my_sps->findSPByTX(tlObj.getHash());
+  uint32_t propertyId = tlObj.getProperty();
+  int64_t amount = tlObj.getAmount();
+
+  int tmpblock = 0;
+  uint32_t tmptype = 0;
+  uint64_t amountNew = 0;
+
+  LOCK(cs_tally);
+  bool tmpValid = mastercore::getValidMPTX(tlObj.getHash(), &tmpblock, &tmptype, &amountNew);
+  if (tmpValid && amountNew > 0) amount = amountNew;
 
   txobj.push_back(Pair("propertyId", (uint64_t) propertyId));
-  txobj.push_back(Pair("amount", FormatDivisibleMP(tlObj.getXAmount())));
+  txobj.push_back(Pair("amount", FormatDivisibleMP(amount)));
 
 }
 
@@ -580,7 +592,7 @@ void populateRPCTypeCommitChannel(CMPTransaction& tlObj, UniValue& txobj)
 {
 
   txobj.push_back(Pair("propertyId", (uint64_t) tlObj.getPropertyId()));
-  txobj.push_back(Pair("amount_commited", (uint64_t) tlObj.getAmountCommited()));
+  txobj.push_back(Pair("amount_commited", FormatMP(tlObj.getPropertyId(),tlObj.getAmountCommited())));
 }
 
 void populateRPCTypeWithdrawal_FromChannel(CMPTransaction& tlObj, UniValue& txobj)

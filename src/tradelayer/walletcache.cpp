@@ -56,7 +56,7 @@ void WalletTXIDCacheInit()
 {
     if (msc_debug_walletcache) PrintToLog("WALLETTXIDCACHE: WalletTXIDCacheInit requested\n");
 #ifdef ENABLE_WALLET
-    CWalletRef pwalletMain = NULL;
+    CWalletRef pwalletMain = nullptr;
     if (vpwallets.size() > 0){
         pwalletMain = vpwallets[0];
     }
@@ -69,7 +69,7 @@ void WalletTXIDCacheInit()
     // Iterate through the wallet, checking if each transaction is Trade Layer (via levelDB)
     for (CWallet::TxItems::reverse_iterator it = txOrdered.rbegin(); it != txOrdered.rend(); ++it) {
         const CWalletTx* pwtx = it->second.first;
-        if (pwtx != NULL) {
+        if (pwtx != nullptr) {
             // get the hash of the transaction and check leveldb to see if this is an Trade Layer tx, if so add to cache
             const uint256& hash = pwtx->GetHash();
             if (p_txlistdb->exists(hash)) {

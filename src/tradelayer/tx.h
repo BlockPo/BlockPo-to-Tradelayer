@@ -4,11 +4,8 @@
 class CMPMetaDEx;
 class CMPOffer;
 class CTransaction;
-class ChnDEx;
-////////////////////////////
-/** New things for Contracts */
 class CMPContractDex;
-////////////////////////////
+
 #include "tradelayer/tradelayer.h"
 
 #include "uint256.h"
@@ -31,7 +28,6 @@ class CMPTransaction
 {
     friend class CMPMetaDEx;
     friend class CMPOffer;
-    friend class ChnDEx;
     friend class CMPContractDex;
 
 private:
@@ -113,7 +109,7 @@ private:
     uint32_t blocks_until_expiration;
     uint32_t notional_size;
     uint32_t collateral_currency;
-    uint32_t margin_requirement;
+    uint64_t margin_requirement;
     uint32_t attribute_type;
     uint64_t leverage;
 
@@ -193,11 +189,12 @@ private:
     bool interpret_ContractDexClosePosition();
     bool interpret_ContractDex_Cancel_Orders_By_Block();
     bool interpret_MetaDExTrade();
-    bool interpret_TradeOffer();
+    bool interpret_MetaDExCancelAll();
+    bool interpret_DExSell();
     bool interpret_DExBuy();
     bool interpret_SendVestingTokens();
     bool interpret_CreateOracleContract();
-    bool interpret_Change_OracleRef();
+    bool interpret_Change_OracleAdm();
     bool interpret_Set_Oracle();
     bool interpret_OracleBackup();
     bool interpret_CloseOracle();
@@ -212,6 +209,12 @@ private:
     bool interpret_Update_Id_Registration();
     bool interpret_DEx_Payment();
     bool interpret_Attestation();
+    bool interpret_Revoke_Attestation();
+    bool interpret_ContractDExCancel();
+    bool interpret_Instant_LTC_Trade();
+    bool interpret_MetaDExCancel();
+    bool interpret_MetaDExCancel_ByPair();
+    bool interpret_MetaDExCancel_ByPrice();
 
     /**
      * Logic and "effects"
@@ -238,12 +241,13 @@ private:
     int logicMath_ContractDexClosePosition();
     int logicMath_ContractDex_Cancel_Orders_By_Block();
     int logicMath_MetaDExTrade();
-    int logicMath_TradeOffer();
+    int logicMath_MetaDExCancelAll();
     int logicMath_AcceptOfferBTC();
+    int logicMath_DExSell();
     int logicMath_DExBuy();
     int logicMath_SendVestingTokens();
     int logicMath_CreateOracleContract();
-    int logicMath_Change_OracleRef();
+    int logicMath_Change_OracleAdm();
     int logicMath_Set_Oracle();
     int logicMath_OracleBackup();
     int logicMath_CloseOracle();
@@ -258,6 +262,12 @@ private:
     int logicMath_Update_Id_Registration();
     int logicMath_DEx_Payment();
     int logicMath_Attestation();
+    int logicMath_Revoke_Attestation();
+    int logicMath_ContractDExCancel();
+    int logicMath_Instant_LTC_Trade();
+    int logicMath_MetaDExCancel();
+    int logicMath_MetaDExCancel_ByPair();
+    int logicMath_MetaDExCancel_ByPrice();
 
     /**
      * Logic helpers
@@ -338,7 +348,7 @@ public:
 
 
     /** New things for Contracts */
-    uint32_t getMarginRequirement() const { return margin_requirement; }
+    uint64_t getMarginRequirement() const { return margin_requirement; }
     uint32_t getNotionalSize() const { return notional_size; }
     uint32_t getContractId() const { return contractId; }
     uint64_t getContractAmount() const { return amount; }
@@ -420,6 +430,7 @@ public:
         timeLimit = 0;
         denominator = 0;
         numerator = 0;
+        leverage = 0;
 
         //Multisig channels
         amount_commited = 0;
@@ -492,7 +503,7 @@ struct FutureContractObject
   uint32_t fco_blocks_until_expiration;
   uint32_t fco_notional_size;
   uint32_t fco_collateral_currency;
-  uint32_t fco_margin_requirement;
+  uint64_t fco_margin_requirement;
   uint32_t fco_propertyId;
   uint16_t fco_prop_type;
   bool fco_expirated;
@@ -503,6 +514,12 @@ struct FutureContractObject
   std::string fco_subcategory;
   std::string fco_issuer;
   std::string fco_backup_address;
+
+  FutureContractObject():fco_numerator(0), fco_denominator(0),
+  fco_blocks_until_expiration(0), fco_notional_size(0), fco_collateral_currency(0),
+  fco_margin_requirement(0), fco_propertyId(0), fco_prop_type(0), fco_expirated(false),
+  fco_quoted(false), fco_init_block(0), fco_name(""), fco_subcategory(""), fco_issuer(""), fco_backup_address("")  {}
+
 };
 
 struct TokenDataByName
@@ -511,7 +528,7 @@ struct TokenDataByName
   uint32_t data_blocks_until_expiration;
   uint32_t data_notional_size;
   uint32_t data_collateral_currency;
-  uint32_t data_margin_requirement;
+  uint64_t data_margin_requirement;
   uint32_t data_propertyId;
 
   int data_init_block;
@@ -558,16 +575,23 @@ struct oracledata
   uint32_t contractId;
 };
 
+
 struct withdrawalAccepted
 {
   std::string address;
   int deadline_block;
   uint32_t propertyId;
   uint64_t amount;
+  uint256 txid;
 
   withdrawalAccepted() : address(""), deadline_block(0), propertyId(0), amount(0) {}
 };
 
+//! Prices for each oracle contract
+extern std::map<uint32_t,std::map<int,oracledata>> oraclePrices;
+
+//! Pending withdrawals
+extern std::map<std::string,vector<withdrawalAccepted>> withdrawal_Map;
 
 struct FutureContractObject *getFutureContractObject(std::string identifier);
 struct TokenDataByName *getTokenDataByName(std::string identifier);

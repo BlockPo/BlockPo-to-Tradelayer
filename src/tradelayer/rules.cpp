@@ -38,9 +38,9 @@ std::vector<TransactionRestriction> CConsensusParams::GetRestrictions() const
         { TL_MESSAGE_TYPE_ALERT,                          0xFFFF,            true,             MSC_ALERT_BLOCK    },
         { TL_MESSAGE_TYPE_ACTIVATION,                     0xFFFF,            true,             MSC_ALERT_BLOCK    },
         { TL_MESSAGE_TYPE_DEACTIVATION,                   0xFFFF,            true,             MSC_ALERT_BLOCK    },
-        { MSC_TYPE_SIMPLE_SEND,                           MP_TX_PKT_V0,      false,            MSC_SEND_BLOCK     },
-        { MSC_TYPE_CREATE_PROPERTY_FIXED,                 MP_TX_PKT_V0,      false,            MSC_SP_BLOCK       },
-        { MSC_TYPE_CREATE_PROPERTY_VARIABLE,              MP_TX_PKT_V0,      false,            MSC_SP_BLOCK       },
+        { MSC_TYPE_SIMPLE_SEND,                           MP_TX_PKT_V0,      true,             MSC_SEND_BLOCK     },
+        { MSC_TYPE_CREATE_PROPERTY_FIXED,                 MP_TX_PKT_V0,      true,             MSC_SP_BLOCK       },
+        { MSC_TYPE_CREATE_PROPERTY_VARIABLE,              MP_TX_PKT_V0,      true,            MSC_SP_BLOCK       },
         { MSC_TYPE_CREATE_PROPERTY_VARIABLE,              MP_TX_PKT_V1,      false,            MSC_SP_BLOCK       },
         { MSC_TYPE_CLOSE_CROWDSALE,                       MP_TX_PKT_V0,      false,            MSC_SP_BLOCK       },
         { MSC_TYPE_CREATE_PROPERTY_MANUAL,                MP_TX_PKT_V0,      false,            MSC_MANUALSP_BLOCK },
@@ -55,10 +55,11 @@ std::vector<TransactionRestriction> CConsensusParams::GetRestrictions() const
         { MSC_TYPE_SEND_ALL,                              MP_TX_PKT_V0,      true,             MSC_SEND_ALL_BLOCK },
         { MSC_TYPE_CONTRACTDEX_CLOSE_POSITION,            MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK },
         { MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK,    MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
-        { MSC_TYPE_METADEX_TRADE,                         MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
-        { MSC_TYPE_TRADE_OFFER,                           MP_TX_PKT_V1,      true,             MSC_CONTRACTDEX_BLOCK},
-        { MSC_TYPE_ACCEPT_OFFER_BTC,                      MP_TX_PKT_V1,      true,             MSC_CONTRACTDEX_BLOCK},
-        { MSC_TYPE_DEX_BUY_OFFER,                         MP_TX_PKT_V1,      true,             MSC_CONTRACTDEX_BLOCK},
+        { MSC_TYPE_METADEX_TRADE,                         MP_TX_PKT_V0,      true,             MSC_METADEX_BLOCK},
+        { MSC_TYPE_DEX_SELL_OFFER,                        MP_TX_PKT_V1,      true,             MSC_DEXSELL_BLOCK},
+        { MSC_TYPE_DEX_BUY_OFFER,                         MP_TX_PKT_V0,      true,             MSC_DEXBUY_BLOCK},
+        { MSC_TYPE_ACCEPT_OFFER_BTC,                      MP_TX_PKT_V0,      true,             MSC_DEXSELL_BLOCK},
+        { MSC_TYPE_DEX_PAYMENT,                           MP_TX_PKT_V0,      true,             MSC_DEXSELL_BLOCK},
         { MSC_TYPE_CONTRACTDEX_TRADE,                     MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
         { MSC_TYPE_CONTRACTDEX_CANCEL_ECOSYSTEM,          MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
         { MSC_TYPE_CREATE_CONTRACT,                       MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
@@ -67,25 +68,27 @@ std::vector<TransactionRestriction> CConsensusParams::GetRestrictions() const
         { MSC_TYPE_SEND_PEGGED_CURRENCY,                  MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
         { MSC_TYPE_CONTRACTDEX_CLOSE_POSITION,            MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
         { MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK,    MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
-        { MSC_TYPE_TRADE_OFFER,                           MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
-        { MSC_TYPE_DEX_BUY_OFFER,                         MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
-        { MSC_TYPE_ACCEPT_OFFER_BTC,                      MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
         { MSC_TYPE_CHANGE_ORACLE_REF,                     MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
         { MSC_TYPE_SET_ORACLE,                            MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
         { MSC_TYPE_ORACLE_BACKUP,                         MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
         { MSC_TYPE_CLOSE_ORACLE,                          MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
-        { MSC_TYPE_COMMIT_CHANNEL,                        MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
-        { MSC_TYPE_WITHDRAWAL_FROM_CHANNEL,               MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
-        { MSC_TYPE_INSTANT_TRADE,                         MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
-        { MSC_TYPE_TRANSFER,                              MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
-        { MSC_TYPE_CREATE_CHANNEL,                        MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
-        { MSC_TYPE_CONTRACT_INSTANT,                      MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
-        { MSC_TYPE_NEW_ID_REGISTRATION,                   MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
-        { MSC_TYPE_UPDATE_ID_REGISTRATION,                MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
-        { MSC_TYPE_DEX_PAYMENT,                           MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
-        { MSC_TYPE_CREATE_ORACLE_CONTRACT,                MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
+        { MSC_TYPE_COMMIT_CHANNEL,                        MP_TX_PKT_V0,      true,             MSC_TRADECHANNEL_TOKENS_BLOCK},
+        { MSC_TYPE_WITHDRAWAL_FROM_CHANNEL,               MP_TX_PKT_V0,      true,             MSC_TRADECHANNEL_TOKENS_BLOCK},
+        { MSC_TYPE_INSTANT_TRADE,                         MP_TX_PKT_V0,      true,             MSC_TRADECHANNEL_TOKENS_BLOCK},
+        { MSC_TYPE_TRANSFER,                              MP_TX_PKT_V0,      true,             MSC_TRADECHANNEL_TOKENS_BLOCK},
+        { MSC_TYPE_CONTRACT_INSTANT,                      MP_TX_PKT_V0,      true,             MSC_TRADECHANNEL_CONTRACTS_BLOCK},
+        { MSC_TYPE_NEW_ID_REGISTRATION,                   MP_TX_PKT_V0,      true,             MSC_KYC_BLOCK},
+        { MSC_TYPE_UPDATE_ID_REGISTRATION,                MP_TX_PKT_V0,      true,             MSC_KYC_BLOCK},
+        { MSC_TYPE_CREATE_ORACLE_CONTRACT,                MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_ORACLES_BLOCK},
         { MSC_TYPE_SEND_VESTING,                          MP_TX_PKT_V0,      true,             MSC_VESTING_BLOCK},
-        { MSC_TYPE_ATTESTATION,                           MP_TX_PKT_V0,      true,             MSC_TYPE_ATTESTATION_BLOCK}
+        { MSC_TYPE_ATTESTATION,                           MP_TX_PKT_V0,      true,             MSC_KYC_BLOCK},
+        { MSC_TYPE_REVOKE_ATTESTATION,                    MP_TX_PKT_V0,      true,             MSC_KYC_BLOCK},
+        { MSC_TYPE_CONTRACTDEX_CANCEL,                    MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK},
+        { MSC_TYPE_INSTANT_LTC_TRADE,                     MP_TX_PKT_V0,      true,             MSC_TRADECHANNEL_TOKENS_BLOCK},
+        { MSC_TYPE_METADEX_CANCEL,                        MP_TX_PKT_V0,      true,             MSC_METADEX_BLOCK},
+        { MSC_TYPE_METADEX_CANCEL_BY_PAIR,                MP_TX_PKT_V0,      true,             MSC_METADEX_BLOCK},
+        { MSC_TYPE_METADEX_CANCEL_ALL,                    MP_TX_PKT_V0,      true,             MSC_METADEX_BLOCK},
+        { MSC_TYPE_METADEX_CANCEL_BY_PRICE,               MP_TX_PKT_V0,      true,             MSC_METADEX_BLOCK},
 
     };
 
@@ -130,7 +133,7 @@ TODO : New chain checkpoints
  */
 CMainConsensusParams::CMainConsensusParams()
 {
-    GENESIS_BLOCK = 1171000;
+    GENESIS_BLOCK = 99999999;
     // Notice range for feature activations:
     MIN_ACTIVATION_BLOCKS = 2048;  // ~2 weeks
     MAX_ACTIVATION_BLOCKS = 12288; // ~12 weeks
@@ -139,15 +142,23 @@ CMainConsensusParams::CMainConsensusParams()
     SCRIPTHASH_BLOCK = 0;
     NULLDATA_BLOCK = 0;
     // Transaction restrictions:
-    MSC_ALERT_BLOCK = 0;
-    MSC_SEND_BLOCK = 9999999;
-    MSC_SP_BLOCK = 9999999;
-    MSC_MANUALSP_BLOCK = 9999999;
-    MSC_SEND_ALL_BLOCK = 9999999;
-    MSC_CONTRACTDEX_BLOCK = 999999;
-    MSC_VESTING_BLOCK = 0;
-    MSC_NODE_REWARD = 777;
-    MSC_TYPE_ATTESTATION_BLOCK = 0;
+    MSC_ALERT_BLOCK = 99999999;
+    MSC_SEND_BLOCK = 99999999;
+    MSC_SP_BLOCK = 99999999;
+    MSC_MANUALSP_BLOCK = 99999999;
+    MSC_SEND_ALL_BLOCK = 99999999;
+    MSC_CONTRACTDEX_BLOCK = 99999999;
+    MSC_CONTRACTDEX_ORACLES_BLOCK = 99999999;
+    MSC_VESTING_BLOCK = 99999999;
+    MSC_VESTING_CREATION_BLOCK = 99999999;
+    MSC_NODE_REWARD_BLOCK = 99999999;
+    MSC_KYC_BLOCK = 99999999;
+    MSC_DEXSELL_BLOCK = 99999999;
+    MSC_DEXBUY_BLOCK = 99999999;
+    MSC_METADEX_BLOCK = 99999999;
+    MSC_TRADECHANNEL_TOKENS_BLOCK = 99999999;
+    MSC_TRADECHANNEL_CONTRACTS_BLOCK = 99999999;
+    ONE_YEAR = 210240;
 }
 
 /**
@@ -155,24 +166,34 @@ CMainConsensusParams::CMainConsensusParams()
  */
  CTestNetConsensusParams::CTestNetConsensusParams()
  {
-     GENESIS_BLOCK = 0;
+     GENESIS_BLOCK = 1569000;
      // Notice range for feature activations:
      MIN_ACTIVATION_BLOCKS = 0;
-     MAX_ACTIVATION_BLOCKS = 999999;
+     MAX_ACTIVATION_BLOCKS = 99999999;
      // Script related:
      PUBKEYHASH_BLOCK = 0;
      SCRIPTHASH_BLOCK = 0;
      NULLDATA_BLOCK = 0;
+
      // Transaction restrictions:
-     MSC_ALERT_BLOCK = 0;
-     MSC_SEND_BLOCK = 1400765;
-     MSC_SP_BLOCK = 1400765;
-     MSC_MANUALSP_BLOCK = 1400765;
-     MSC_SEND_ALL_BLOCK = 1400765;
-     MSC_CONTRACTDEX_BLOCK = 1400765;
-     MSC_VESTING_BLOCK = 1400765;
-     MSC_NODE_REWARD = 1400765;
-     MSC_TYPE_ATTESTATION_BLOCK = 1400765;
+     MSC_ALERT_BLOCK = 1569000;
+     MSC_SEND_BLOCK = 1569000;
+     // MSC_SP_BLOCK = 1491174;
+     MSC_SP_BLOCK = 99999999;
+     MSC_MANUALSP_BLOCK = 99999999;
+     MSC_SEND_ALL_BLOCK = 99999999;
+     MSC_CONTRACTDEX_BLOCK = 99999999;
+     MSC_CONTRACTDEX_ORACLES_BLOCK = 99999999;
+     MSC_VESTING_CREATION_BLOCK = 1569000;
+     MSC_VESTING_BLOCK = 99999999;
+     MSC_NODE_REWARD_BLOCK = 99999999;
+     MSC_KYC_BLOCK = 99999999;
+     MSC_DEXSELL_BLOCK = 99999999;
+     MSC_DEXBUY_BLOCK = 99999999;
+     MSC_METADEX_BLOCK = 99999999;
+     MSC_TRADECHANNEL_TOKENS_BLOCK = 99999999;
+     MSC_TRADECHANNEL_CONTRACTS_BLOCK = 99999999;
+     ONE_YEAR = 2650;  // just for testing
  }
 
 
@@ -184,7 +205,9 @@ CRegTestConsensusParams::CRegTestConsensusParams()
     GENESIS_BLOCK = 0;
     // Notice range for feature activations:
     MIN_ACTIVATION_BLOCKS = 5;
-    MAX_ACTIVATION_BLOCKS = 10;
+
+    //NOTE: testing
+    MAX_ACTIVATION_BLOCKS = 1000;
     // Script related:
     PUBKEYHASH_BLOCK = 0;
     SCRIPTHASH_BLOCK = 0;
@@ -192,13 +215,26 @@ CRegTestConsensusParams::CRegTestConsensusParams()
     // Transaction restrictions:
     MSC_ALERT_BLOCK = 0;
     MSC_SEND_BLOCK = 0;
-    MSC_SP_BLOCK = 0;
+
+    /** NOTE: this is the value we are changing
+     *  (from 999999 to 400) in test tl_activation.py
+     */
+    MSC_SP_BLOCK = 200;
     MSC_MANUALSP_BLOCK = 0;
     MSC_SEND_ALL_BLOCK = 0;
     MSC_CONTRACTDEX_BLOCK = 0;
+    MSC_CONTRACTDEX_ORACLES_BLOCK = 0;
+    MSC_VESTING_CREATION_BLOCK = 100;
     MSC_VESTING_BLOCK = 100;  // just for regtest
-    MSC_NODE_REWARD = 777;
-    MSC_TYPE_ATTESTATION_BLOCK = 0;
+    MSC_KYC_BLOCK = 0;
+    MSC_DEXSELL_BLOCK = 0;
+    MSC_DEXBUY_BLOCK = 0;
+    MSC_METADEX_BLOCK = 0;
+    MSC_NODE_REWARD_BLOCK = 777;
+    MSC_TRADECHANNEL_TOKENS_BLOCK = 0;
+    MSC_TRADECHANNEL_CONTRACTS_BLOCK = 0;
+    ONE_YEAR = 930;
+
 }
 
 //! Consensus parameters for mainnet
@@ -307,11 +343,17 @@ bool IsAllowedOutputType(int whichType, int nBlock)
  */
 bool ActivateFeature(uint16_t featureId, int activationBlock, uint32_t minClientVersion, int transactionBlock)
 {
-    PrintToLog("Feature activation requested (ID %d to go active as of block: %d)\n", featureId, activationBlock);
+    if(msc_debug_activate_feature) PrintToLog("Feature activation requested (ID %d to go active as of block: %d)\n", featureId, activationBlock);
 
-    const CConsensusParams& params = ConsensusParams();
+    CConsensusParams& params = MutableConsensusParams();
 
     // check activation block is allowed
+
+    if(msc_debug_activate_feature){
+        PrintToLog("%s(): activationBlock %d, transactionBlock + params.MIN_ACTIVATION_BLOCKS : %d\n",__func__,activationBlock,(transactionBlock + params.MIN_ACTIVATION_BLOCKS));
+        PrintToLog("%s(): transactionBlock + params.MAX_ACTIVATION_BLOCKS : %d\n",__func__,(transactionBlock + params.MAX_ACTIVATION_BLOCKS));
+    }
+
     if ((activationBlock < (transactionBlock + params.MIN_ACTIVATION_BLOCKS)) ||
         (activationBlock > (transactionBlock + params.MAX_ACTIVATION_BLOCKS))) {
             PrintToLog("Feature activation of ID %d refused due to notice checks\n", featureId);
@@ -326,12 +368,45 @@ bool ActivateFeature(uint16_t featureId, int activationBlock, uint32_t minClient
 
     // check feature is recognized and activation is successful
     std::string featureName = GetFeatureName(featureId);
+
+    if(msc_debug_activate_feature) PrintToLog("%s(): TL_VERSION : %d, minClientVersion : %d\n",__func__, TL_VERSION, minClientVersion);
+
     bool supported = TL_VERSION >= minClientVersion;
     switch (featureId) {
-        // No currently outstanding features
+      case FEATURE_VESTING:
+              params.MSC_VESTING_BLOCK = activationBlock;
+              break;
+      case FEATURE_KYC:
+              params.MSC_KYC_BLOCK = activationBlock;
+              break;
+      case FEATURE_DEX_SELL:
+              params.MSC_DEXSELL_BLOCK = activationBlock;
+              break;
+      case FEATURE_DEX_BUY:
+              params.MSC_DEXBUY_BLOCK = activationBlock;
+              break;
+      case FEATURE_METADEX:
+              params.MSC_METADEX_BLOCK = activationBlock;
+              break;
+      case FEATURE_TRADECHANNELS_TOKENS:
+              params.MSC_TRADECHANNEL_TOKENS_BLOCK = activationBlock;
+              break;
+      case FEATURE_FIXED:
+              params.MSC_SP_BLOCK = activationBlock;
+              break;
+      case FEATURE_MANAGED:
+              params.MSC_MANUALSP_BLOCK = activationBlock;
+              break;
+      case FEATURE_NODE_REWARD:
+              params.MSC_NODE_REWARD_BLOCK = activationBlock;
+              break;
+      default:
+           supported = false;
+           break;
+
     }
 
-    PrintToLog("Feature activation of ID %d processed. %s will be enabled at block %d.\n", featureId, featureName, activationBlock);
+    if(msc_debug_activate_feature) PrintToLog("Feature activation of ID %d processed. %s will be enabled at block %d.\n", featureId, featureName, activationBlock);
     AddPendingActivation(featureId, activationBlock, minClientVersion, featureName);
 
     if (!supported) {
@@ -355,7 +430,7 @@ bool ActivateFeature(uint16_t featureId, int activationBlock, uint32_t minClient
  */
 bool DeactivateFeature(uint16_t featureId, int transactionBlock)
 {
-    PrintToLog("Immediate feature deactivation requested (ID %d)\n", featureId);
+    if(msc_debug_deactivate_feature) PrintToLog("Immediate feature deactivation requested (ID %d)\n", featureId);
 
     if (!IsFeatureActivated(featureId, transactionBlock)) {
         PrintToLog("Feature deactivation of ID %d refused as the feature is not yet live\n", featureId);
@@ -364,13 +439,39 @@ bool DeactivateFeature(uint16_t featureId, int transactionBlock)
 
     std::string featureName = GetFeatureName(featureId);
     switch (featureId) {
-        // No currently outstanding features
-        default:
+      case FEATURE_VESTING:
+          MutableConsensusParams().MSC_VESTING_BLOCK = 99999999;
+          break;
+      case FEATURE_KYC:
+          MutableConsensusParams().MSC_KYC_BLOCK = 99999999;
+          break;
+      case FEATURE_DEX_SELL:
+          MutableConsensusParams().MSC_DEXSELL_BLOCK = 99999999;
+          break;
+      case FEATURE_DEX_BUY:
+          MutableConsensusParams().MSC_DEXBUY_BLOCK = 99999999;
+          break;
+      case FEATURE_METADEX:
+          MutableConsensusParams().MSC_METADEX_BLOCK = 99999999;
+          break;
+      case FEATURE_TRADECHANNELS_TOKENS:
+          MutableConsensusParams().MSC_TRADECHANNEL_TOKENS_BLOCK = 99999999;
+          break;
+      case FEATURE_FIXED:
+          MutableConsensusParams().MSC_SP_BLOCK = 99999999;
+          break;
+      case FEATURE_MANAGED:
+          MutableConsensusParams().MSC_MANUALSP_BLOCK = 99999999;
+          break;
+      case FEATURE_NODE_REWARD:
+          MutableConsensusParams().MSC_NODE_REWARD_BLOCK = 99999999;
+          break;
+      default:
             return false;
-        break;
+      break;
     }
 
-    PrintToLog("Feature deactivation of ID %d processed. %s has been disabled.\n", featureId, featureName);
+    if(msc_debug_deactivate_feature) PrintToLog("Feature deactivation of ID %d processed. %s has been disabled.\n", featureId, featureName);
 
     std::string alertText = strprintf("An emergency deactivation of feature ID %d (%s) has occurred.", featureId, featureName);
     AddAlert("tradelayer", ALERT_BLOCK_EXPIRY, transactionBlock + 1024, alertText);
@@ -385,7 +486,15 @@ bool DeactivateFeature(uint16_t featureId, int transactionBlock)
 std::string GetFeatureName(uint16_t featureId)
 {
     switch (featureId) {
-        // No currently outstanding features
+        case FEATURE_VESTING: return "Vesting Tokens";
+        case FEATURE_KYC: return "Know Your Customer";
+        case FEATURE_DEX_SELL: return "Sell Offer in DEx Token Exchange";
+        case FEATURE_DEX_BUY: return "Buy Offer in DEx Token Exchange";
+        case FEATURE_METADEX: return "Distributed Meta Token Exchange";
+        case FEATURE_TRADECHANNELS_TOKENS: return "Trade Channels Token Exchange";
+        case FEATURE_FIXED : return "Create Fixed Tokens";
+        case FEATURE_MANAGED : return "Create Managed Tokens";
+        case FEATURE_NODE_REWARD : return "Node Reward activation";
         default: return "Unknown feature";
     }
 }
@@ -395,11 +504,37 @@ std::string GetFeatureName(uint16_t featureId)
  */
 bool IsFeatureActivated(uint16_t featureId, int transactionBlock)
 {
-    // const CConsensusParams& params = ConsensusParams();
+    const CConsensusParams& params = ConsensusParams();
     int activationBlock = std::numeric_limits<int>::max();
 
     switch (featureId) {
-        // No currently outstanding features
+      case FEATURE_VESTING:
+              activationBlock = params.MSC_VESTING_BLOCK;
+              break;
+      case FEATURE_KYC:
+              activationBlock = params.MSC_KYC_BLOCK;
+              break;
+      case FEATURE_DEX_SELL:
+              activationBlock = params.MSC_DEXSELL_BLOCK;
+              break;
+      case FEATURE_DEX_BUY:
+              activationBlock = params.MSC_DEXBUY_BLOCK;
+              break;
+      case FEATURE_METADEX:
+              activationBlock = params.MSC_METADEX_BLOCK;
+              break;
+      case FEATURE_TRADECHANNELS_TOKENS:
+              activationBlock = params.MSC_TRADECHANNEL_TOKENS_BLOCK;
+              break;
+      case FEATURE_FIXED:
+              activationBlock = params.MSC_SP_BLOCK;
+              break;
+      case FEATURE_MANAGED:
+              activationBlock = params.MSC_MANUALSP_BLOCK;
+              break;
+      case FEATURE_NODE_REWARD:
+              activationBlock = params.MSC_NODE_REWARD_BLOCK;
+              break;
         default:
             return false;
     }
@@ -423,20 +558,18 @@ bool IsTransactionTypeAllowed(int txBlock, uint16_t txType, uint16_t version)
     for (std::vector<TransactionRestriction>::const_iterator it = vTxRestrictions.begin(); it != vTxRestrictions.end(); ++it)
     {
         const TransactionRestriction& entry = *it;
-        PrintToLog("%s(): entry.txType: %d; txType: %d\n",__func__,entry.txType, txType);
 
         if (entry.txType != txType || entry.txVersion != version) {
-            PrintToLog("%s(): first continue\n",__func__);
+            if(msc_debug_is_transaction_type_allowed) PrintToLog("%s(): entry.txType: %d, entry.txVersion : %d\n",__func__,entry.txType, entry.txVersion);
             continue;
         }
 
         if (txBlock >= entry.activationBlock) {
-            PrintToLog("%s(): txBlock: %d; entry.activationBlock: %d\n",__func__,txBlock, entry.activationBlock);
+            if(msc_debug_is_transaction_type_allowed) PrintToLog("%s(): TRUE!, txBlock: %d; entry.activationBlock: %d\n",__func__,txBlock, entry.activationBlock);
             return true;
         }
     }
 
-    PrintToLog("%s(): return false\n",__func__);
     return false;
 }
 

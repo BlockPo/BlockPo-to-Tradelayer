@@ -220,8 +220,8 @@ public:
     CCoinsViewCache(CCoinsView *baseIn);
 
     /**
-     * By deleting the copy constructor, we prevent accidentally using it when one intends to create a cache on top of a base cache.
-     */
+      * By deleting the copy constructor, we prevent accidentally using it when one intends to create a cache on top of a base cache.
+      */
     CCoinsViewCache(const CCoinsViewCache &) = delete;
 
     // Standard CCoinsView methods
@@ -301,32 +301,8 @@ public:
     /** For Trade Layer Port */
     const CTxOut &GetOutputFor(const CTxIn& input) const;
 
-    friend class CCoinsModifier;
-
 private:
     CCoinsMap::iterator FetchCoin(const COutPoint &outpoint) const;
-};
-
-/** Adding this class to work with Trade Layer */
-
-/**
- * A reference to a mutable cache entry. Encapsulating it allows us to run
- *  cleanup code after the modification is finished, and keeping track of
- *  concurrent modifications.
- */
-class CCoinsModifier
-{
-private:
-    CCoinsViewCache& cache;
-    CCoinsMap::iterator it;
-    size_t cachedCoinUsage; // Cached memory usage of the CCoins object before modification
-    CCoinsModifier(CCoinsViewCache& cache_, CCoinsMap::iterator it_, size_t usage);
-
-public:
-    Coin* operator->() { return &it->second.coin; }
-    Coin& operator*() { return it->second.coin; }
-    ~CCoinsModifier();
-    friend class CCoinsViewCache;
 };
 
 //! Utility function to add all of a transaction's outputs to a cache.

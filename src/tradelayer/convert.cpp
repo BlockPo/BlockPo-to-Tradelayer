@@ -9,13 +9,13 @@ namespace mastercore
 // TODO: move to seperate file with checks
 static bool isBigEndian()
 {
-  union
-  {
-    uint32_t i;
-    char c[4];
-  } bint = {0x01020304};
+    union
+    {
+        uint32_t i;
+        char c[4];
+    } bint = {0x01020304};
 
-  return 1 == bint.c[0];
+    return 1 == bint.c[0];
 }
 
 uint64_t rounduint64(long double ld)
@@ -25,7 +25,7 @@ uint64_t rounduint64(long double ld)
 
 void swapByteOrder16(uint16_t& us)
 {
-  if (isBigEndian()) return;
+    if (isBigEndian()) return;
 
     us = (us >> 8) |
          (us << 8);
@@ -33,7 +33,7 @@ void swapByteOrder16(uint16_t& us)
 
 void swapByteOrder32(uint32_t& ui)
 {
-  if (isBigEndian()) return;
+    if (isBigEndian()) return;
 
     ui = (ui >> 24) |
          ((ui << 8) & 0x00FF0000) |
@@ -43,7 +43,7 @@ void swapByteOrder32(uint32_t& ui)
 
 void swapByteOrder64(uint64_t& ull)
 {
-  if (isBigEndian()) return;
+    if (isBigEndian()) return;
 
     ull = (ull >> 56) |
           ((ull << 40) & 0x00FF000000000000) |

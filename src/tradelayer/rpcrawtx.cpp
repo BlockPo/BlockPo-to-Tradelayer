@@ -21,6 +21,7 @@
 #include <stdexcept>
 #include <string>
 
+
 extern CCriticalSection cs_main;
 
 using mastercore::cs_tx_cache;
@@ -29,7 +30,7 @@ using mastercore::view;
 
 UniValue tl_decodetransaction(const JSONRPCRequest& request)
 {
-    if (request.params.size() < 1 || request.params.size() > 3)
+    if (request.params.size() < 1 || request.params.size() > 3 || request.fHelp)
         throw std::runtime_error(
             "tl_decodetransaction \"rawtx\" ( \"prevtxs\" height )\n"
 
@@ -58,13 +59,13 @@ UniValue tl_decodetransaction(const JSONRPCRequest& request)
             "{\n"
             "  \"txid\" : \"hash\",                  (string) the hex-encoded hash of the transaction\n"
             "  \"fee\" : \"n.nnnnnnnn\",             (string) the transaction fee in bitcoins\n"
-            "  \"sendingaddress\" : \"address\",     (string) the Bitcoin address of the sender\n"
-            "  \"referenceaddress\" : \"address\",   (string) a Bitcoin address used as reference (if any)\n"
-            "  \"ismine\" : true|false,            (boolean) whether the transaction involes an address in the wallet\n"
-            "  \"version\" : n,                    (number) the transaction version\n"
-            "  \"type_int\" : n,                   (number) the transaction type as number\n"
+            "  \"sendingaddress\" : \"address\",     (string) the Litecoin address of the sender\n"
+            "  \"referenceaddress\" : \"address\",   (string) a Litecoin address used as reference (if any)\n"
+            "  \"ismine\" : true|false,              (boolean) whether the transaction involes an address in the wallet\n"
+            "  \"version\" : n,                      (number) the transaction version\n"
+            "  \"type_int\" : n,                     (number) the transaction type as number\n"
             "  \"type\" : \"type\",                  (string) the transaction type as string\n"
-            "  [...]                             (mixed) other transaction type specific properties\n"
+            "  [...]                                 (mixed) other transaction type specific properties\n"
             "}\n"
 
             "\nExamples:\n"
@@ -83,25 +84,24 @@ UniValue tl_decodetransaction(const JSONRPCRequest& request)
       InputsToView(prevTxsParsed, viewTemp);
     }
 
-    // int blockHeight = 0;
-    // if (request.params.size() > 2) {
-    //   blockHeight = request.params[2].get_int();
-    // }
+    int blockHeight = 0;
+    if (request.params.size() > 2) {
+      blockHeight = request.params[2].get_int();
+    }
 
     UniValue txObj(UniValue::VOBJ);
     int populateResult = -3331;
-    /**
-       TODO Figure out what's wrong with swap
-    {
-        LOCK2(cs_main, cs_tx_cache);
-        // temporarily switch global coins view cache for transaction inputs
-        std::swap(view, viewTemp);
-        // then get the results
-        populateResult = populateRPCTransactionObject(tx, uint256(), txObj, "", false, "", blockHeigh);
-        // and restore the original, unpolluted coins view cache
-        std::swap(viewTemp, view);
-    }
-**/
+
+    // NOTE: this part needs more refinement (confict with swap and CCoinsViewCache copy operator deleted)
+   {
+       LOCK2(cs_main, cs_tx_cache);
+       // temporarily switch global coins view cache for transaction inputs
+       // std::swap(view, viewTemp)
+       // // then get the results
+       populateResult = populateRPCTransactionObject(tx, uint256(), txObj, "", false, "", blockHeight);
+       // // and restore the original, unpolluted coins view cache
+       // std::swap(viewTemp, view)
+   }
 
     if (populateResult != 0) PopulateFailure(populateResult);
 
@@ -110,7 +110,7 @@ UniValue tl_decodetransaction(const JSONRPCRequest& request)
 
 UniValue tl_createrawtx_opreturn(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 2)
+    if (request.params.size() != 2 || request.fHelp)
         throw std::runtime_error(
             "tl_createrawtx_opreturn \"rawtx\" \"payload\"\n"
 
@@ -145,7 +145,7 @@ UniValue tl_createrawtx_opreturn(const JSONRPCRequest& request)
 
 UniValue tl_createrawtx_input(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 3)
+    if (request.params.size() != 3 || request.fHelp)
         throw std::runtime_error(
             "tl_createrawtx_input \"rawtx\" \"txid\" n\n"
 
@@ -175,12 +175,12 @@ UniValue tl_createrawtx_input(const JSONRPCRequest& request)
             .addInput(txid, nOut)
             .build();
 
-    return EncodeHexTx(tx);
+    return EncodeHexTx(CTransaction(tx));
 }
 
 UniValue tl_createrawtx_reference(const JSONRPCRequest& request)
 {
-    if (request.params.size() < 2 || request.params.size() > 3)
+    if (request.params.size() < 2 || request.params.size() > 3 || request.fHelp)
         throw std::runtime_error(
             "tl_createrawtx_reference \"rawtx\" \"destination\" ( amount )\n"
 
@@ -204,7 +204,7 @@ UniValue tl_createrawtx_reference(const JSONRPCRequest& request)
         );
 
     CMutableTransaction tx = ParseMutableTransaction(request.params[0]);
-    std::string destination = ParseAddress(request.params[1]);
+    const std::string destination = ParseAddress(request.params[1]);
     int64_t amount = (request.params.size() > 2) ? AmountFromValue(request.params[2]) : 0;
 
     // extend the transaction
@@ -212,12 +212,12 @@ UniValue tl_createrawtx_reference(const JSONRPCRequest& request)
             .addReference(destination, amount)
             .build();
 
-    return EncodeHexTx(tx);
+    return EncodeHexTx(CTransaction(tx));
 }
 
 UniValue tl_createrawtx_change(const JSONRPCRequest& request)
 {
-    if (request.params.size() < 4 || request.params.size() > 5)
+    if (request.params.size() < 4 || request.params.size() > 5 || request.fHelp)
         throw std::runtime_error(
             "tl_createrawtx_change \"rawtx\" \"prevtxs\" \"destination\" fee ( position )\n"
 
@@ -275,7 +275,7 @@ UniValue tl_createrawtx_change(const JSONRPCRequest& request)
             .addChange(destination, viewTemp, txFee, nOut)
             .build();
 
-    return EncodeHexTx(tx);
+    return EncodeHexTx(CTransaction(tx));
 }
 
 static const CRPCCommand commands[] =

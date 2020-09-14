@@ -2404,8 +2404,11 @@ bool CChainState::ConnectTip(CValidationState& state, const CChainParams& chainp
     unsigned int nNumMetaTxs = 0;
 
     //! Trade Layer: begin block connect notification
-    // LogPrint("handler", "Trade Layer handler: block connect begin [height: %d]\n", GetHeight());
-    mastercore_handler_block_begin(GetHeight(), pindexNew);
+    {
+       LOCK(cs_main);
+       // LogPrint("handler", "Trade Layer handler: block connect begin [height: %d]\n", GetHeight());
+       mastercore_handler_block_begin(GetHeight(), pindexNew);
+    }
 
     // Remove conflicting transactions from the mempool.;
     mempool.removeForBlock(blockConnecting.vtx, pindexNew->nHeight);
@@ -2415,9 +2418,9 @@ bool CChainState::ConnectTip(CValidationState& state, const CChainParams& chainp
     chainActive.SetTip(pindexNew);
     UpdateTip(pindexNew, chainparams);
 
-    for(CTransactionRef tx : blockConnecting.vtx){
+    for(const CTransactionRef& tx : blockConnecting.vtx){
         //! Trade Layer: new confirmed transaction notification
-        if (mastercore_handler_tx(*(tx.get()), pindexNew->nHeight, nTxIdx++, pindexNew)) ++nNumMetaTxs;
+        if (mastercore_handler_tx(*tx, pindexNew->nHeight, nTxIdx++, pindexNew)) ++nNumMetaTxs;
     }
 
     mastercore_handler_block_end(pindexNew->nHeight, pindexNew, nNumMetaTxs);

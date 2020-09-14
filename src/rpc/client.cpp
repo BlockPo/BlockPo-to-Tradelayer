@@ -185,6 +185,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_createpayload_createcontract", 7, "arg7"},
     { "tl_createpayload_createcontract", 8, "arg8"},
 
+
     { "tl_createpayload_tradecontract", 2, "arg2"},
     { "tl_createpayload_tradecontract", 3, "arg3"},
     { "tl_createpayload_cancelallcontractsbyaddress", 0, "arg0"},
@@ -201,7 +202,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_createpayload_sendvesting", 0, "arg0"},
     { "tl_createpayload_instant_trade", 0, "arg0"},
     { "tl_createpayload_instant_trade", 2, "arg2"},
-    { "tl_createpayload_instant_trade", 3, "arg3"},
+    { "tl_createpayload_instant_trade", 4, "arg4"},
 
     { "tl_createpayload_contract_instant_trade", 0, "arg0"},
     { "tl_createpayload_contract_instant_trade", 2, "arg2"},
@@ -215,7 +216,8 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_createpayload_create_oraclecontract", 5, "arg5"},
     { "tl_createpayload_create_oraclecontract", 7, "arg7"},
 
-
+    { "tl_createpayload_instant_ltc_trade", 0, "arg0"},
+    { "tl_createpayload_instant_ltc_trade", 3, "arg3"},
 
     { "tl_createpayload_pnl_update", 0, "arg0"},
     { "tl_createpayload_pnl_update", 2, "arg2"},
@@ -225,6 +227,13 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_createpayload_setoracle", 1, "arg1" },
     { "tl_createpayload_setoracle", 2, "arg2" },
     { "tl_createpayload_setoracle", 3, "arg3" },
+
+    { "tl_createpayload_commit_tochannel", 0, "arg0" },
+
+    { "tl_createpayload_withdrawal_fromchannel", 0, "arg0" },
+
+
+
 
     /* Trade Layer - raw transaction calls */
     { "tl_decodetransaction", 1, "arg1" },
@@ -242,6 +251,10 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_sendissuancemanaged", 1, "arg1" },
     { "tl_sendissuancemanaged", 2, "arg2" },
     { "tl_sendissuancemanaged", 6, "arg6" },
+
+    { "tl_sendissuancefixed", 1, "arg1" },
+    { "tl_sendissuancefixed", 2, "arg2" },
+    { "tl_sendissuancefixed", 7, "arg7" },
 
     { "tl_createcontract", 1, "arg1"},
     { "tl_createcontract", 2, "arg2"},
@@ -268,7 +281,6 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_sendtrade", 1, "arg1" },
     { "tl_sendtrade", 3, "arg3" },
     { "tl_getmax_peggedcurrency", 1, "arg1" },
-    { "tl_getmax_peggedcurrency", 2, "arg2" },
     { "tl_sendissuance_pegged", 1, "arg1" },
     { "tl_sendissuance_pegged", 2, "arg2" },
     { "tl_sendissuance_pegged", 4, "arg3" },
@@ -288,7 +300,18 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_commit_tochannel", 4, "arg4" },
     { "tl_withdrawal_fromchannel", 2, "arg2" },
     { "tl_withdrawal_fromchannel", 4, "arg4" },
-    { "tl_create_channel", 3, "arg3" },
+
+    { "tl_sendactivation", 1, "arg1"},
+    { "tl_sendactivation", 2, "arg2"},
+    { "tl_sendactivation", 3, "arg3"},
+
+    {"tl_senddeactivation", 1, "arg1"},
+
+    {"tl_sendcanceltradesbypair", 1, "arg1"},
+    {"tl_sendcanceltradesbypair", 2, "arg2"},
+
+    {"tl_sendcanceltradesbyprice", 1, "arg1"},
+    {"tl_sendcanceltradesbyprice", 3, "arg3"},
 
     /* Trade Layer - data retrieval calls */
     { "tl_setautocommit", 0, "arg0" },
@@ -316,6 +339,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_getcontract_reserve", 1 ,"arg1" },
     { "tl_getmargin", 1, "arg1" },
     { "tl_senddexaccept", 2, "arg2" },
+    { "tl_senddexaccept", 4, "arg4" },
     { "tl_getmarketprice", 0, "arg0" },
     {"tl_getaverage_entry",1,"arg1" },
     { "tl_getcache", 0, "arg0" }, // NOTE: only to test persistence
@@ -331,7 +355,13 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_getmdexvolume", 1, "arg2" },
     { "tl_getmdexvolume", 2, "arg3" },
     { "tl_getmdexvolume", 3, "arg4" },
-    { "tl_getcurrencytotal", 0, "arg0" }
+    { "tl_getcurrencytotal", 0, "arg0" },
+
+    { "tl_gettradehistory", 0, "arg0" },
+
+    {"tl_getupnl", 2, "arg2"},
+
+    {"tl_get_channelremaining", 2, "arg2"},
 
 
 };

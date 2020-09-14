@@ -26,6 +26,7 @@ class CTransaction;
 #include "leveldb/status.h"
 
 #include <stdint.h>
+#include <openssl/sha.h>
 
 #include <map>
 #include <string>
@@ -40,7 +41,7 @@ typedef boost::rational<boost::multiprecision::checked_int128_t> rational_t;
 
 int const MAX_STATE_HISTORY = 50;
 
-#define TEST_ECO_PROPERTY_1 (0x80000003UL)
+#define MAX_PROPERTY_N (0x80000003UL)
 
 // increment this value to force a refresh of the state (similar to --startclean)
 #define DB_VERSION 1
@@ -95,15 +96,20 @@ enum TransactionType {
   TL_MESSAGE_TYPE_ACTIVATION          = 65534,
   TL_MESSAGE_TYPE_ALERT               = 65535,
 
-  MSC_TYPE_TRADE_OFFER                         = 20,
+  MSC_TYPE_DEX_SELL_OFFER                      = 20,
   MSC_TYPE_DEX_BUY_OFFER                       = 21,
   MSC_TYPE_ACCEPT_OFFER_BTC                    = 22,
   MSC_TYPE_METADEX_TRADE                       = 25,
+  MSC_TYPE_METADEX_CANCEL_ALL                  = 26,
   MSC_TYPE_CONTRACTDEX_TRADE                   = 29,
   MSC_TYPE_CONTRACTDEX_CANCEL_PRICE            = 30,
+  MSC_TYPE_CONTRACTDEX_CANCEL                  = 31,
   MSC_TYPE_CONTRACTDEX_CANCEL_ECOSYSTEM        = 32,
   MSC_TYPE_CONTRACTDEX_CLOSE_POSITION          = 33,
   MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK  = 34,
+  MSC_TYPE_METADEX_CANCEL                      = 35,
+  MSC_TYPE_METADEX_CANCEL_BY_PAIR              = 36,
+  MSC_TYPE_METADEX_CANCEL_BY_PRICE             = 37,
   MSC_TYPE_CREATE_CONTRACT                     = 40,
   MSC_TYPE_PEGGED_CURRENCY                    = 100,
   MSC_TYPE_REDEMPTION_PEGGED                  = 101,
@@ -118,12 +124,13 @@ enum TransactionType {
   MSC_TYPE_INSTANT_TRADE                      = 110,
   MSC_TYPE_PNL_UPDATE                         = 111,
   MSC_TYPE_TRANSFER                           = 112,
-  MSC_TYPE_CREATE_CHANNEL                     = 113,
+  MSC_TYPE_INSTANT_LTC_TRADE                  = 113,
   MSC_TYPE_CONTRACT_INSTANT                   = 114,
   MSC_TYPE_NEW_ID_REGISTRATION                = 115,
   MSC_TYPE_UPDATE_ID_REGISTRATION             = 116,
   MSC_TYPE_DEX_PAYMENT                        = 117,
-  MSC_TYPE_ATTESTATION                        = 118
+  MSC_TYPE_ATTESTATION                        = 118,
+  MSC_TYPE_REVOKE_ATTESTATION                 = 119
 
 };
 
@@ -141,9 +148,9 @@ enum FILETYPES {
   FILETYPE_GLOBALS,
   FILETYPE_CROWDSALES,
   FILETYPE_CDEXORDERS,
-  FILETYPE_MARKETPRICES,
   FILETYPE_MDEXORDERS,
   FILETYPE_OFFERS,
+  FILETYPE_ACCEPTS,
   FILETYPE_CACHEFEES,
   FILETYPE_CACHEFEES_ORACLES,
   FILETYPE_WITHDRAWALS,
@@ -151,6 +158,8 @@ enum FILETYPES {
   FILETYPE_DEX_VOLUME,
   FILETYPE_MDEX_VOLUME,
   FILETYPE_GLOBAL_VARS,
+  FILE_TYPE_VESTING_ADDRESSES,
+  FILE_TYPE_LTC_VOLUME,
   NUM_FILETYPES
 };
 
@@ -194,7 +203,7 @@ enum FILETYPES {
 #define LTC        0
 #define ALL        1
 #define sLTC       2
-#define dUSD       3  // vesting tokens?
+#define VT         3  // vesting tokens?
 #define dEUR       4
 #define dJPY       5
 #define dCNY       6
@@ -203,14 +212,7 @@ enum FILETYPES {
 #define LTC_EUR    9
 #define JPY       10
 #define CNY       11
-
-// #define CONTRACT_ALL        3
-// #define CONTRACT_ALL_DUSD   4
-// #define CONTRACT_ALL_LTC    5
-// #define CONTRACT_LTC_DJPY   6
-// #define CONTRACT_LTC_DUSD   7
-// #define CONTRACT_LTC_DEUR   8
-// #define CONTRACT_sLTC_ALL   9
+#define dUSD      12
 
 // channels definitions
 #define TYPE_COMMIT                     "commit"
@@ -221,6 +223,14 @@ enum FILETYPES {
 #define TYPE_CREATE_CHANNEL             "create channel"
 #define TYPE_NEW_ID_REGISTER            "new id register"
 #define TYPE_ATTESTATION                "attestation"
+
+// channel status
+#define ACTIVE_CHANNEL                  "active"
+#define CLOSED_CHANNEL                  "closed"
+
+// withdrawal status
+#define ACTIVE_WITHDRAWAL                1
+#define COMPLETE_WITHDRAWAL              0
 
 // Currency in existance (options for createcontract)
 uint32_t const TL_dUSD  = 1;
@@ -237,12 +247,12 @@ const int dayblocks = 576;
 const rational_t factor = rational_t(80,100);  // critical limit
 const rational_t factor2 = rational_t(20,100); // normal limits
 
-// define 1 year in blocks:
-#define ONE_YEAR 210240
 
 // define KYC id = 0 for self attestations
 #define KYC_0      0
 
+// upnl calculations
+const std::vector<std::string> longActions{ "ShortPosNetted", "OpenLongPosition", "OpenLongPosByShortPosNetted", "LongPosIncreased", "ShortPosNettedPartly"};
 
 // forward declarations
 std::string FormatDivisibleMP(int64_t amount, bool fSign = false);
@@ -255,6 +265,7 @@ double FormatContractShortMP(int64_t n);
 long int FormatShortIntegerMP(int64_t n);
 uint64_t int64ToUint64(int64_t value);
 std::string FormatDivisibleZeroClean(int64_t n);
+void addBalances(const std::map<std::string,map<uint32_t, int64_t>>& balances, std::string& lineOut);
 
 /** Returns the marker for transactions. */
 const std::vector<unsigned char> GetTLMarker();
@@ -265,21 +276,42 @@ extern bool autoCommit;
 //! Global lock for state objects
 extern CCriticalSection cs_tally;
 
-/** LevelDB based storage for storing Trade Layer transaction data.  This will become the new master database, holding serialized Trade Layer transactions.
- *  Note, intention is to consolidate and clean up data storage
- */
-
- struct channel
- {
+class Channel
+{
+ private:
    std::string multisig;
    std::string first;
    std::string second;
    int expiry_height;
    int last_exchange_block;
+ public:
+   //! Available balances for first  and second addressess properties
+   std::map<std::string,map<uint32_t, int64_t>> balances;
 
-   channel() : multisig(""), first(""), second(""), expiry_height(0), last_exchange_block(0) {}
+   Channel() : multisig(""), first(""), second(""), expiry_height(0), last_exchange_block(0) {}
+   ~Channel() {}
+   Channel(const std::string& m, const std::string& f, const std::string& s, int exp, int blk) :  multisig(m),
+   first(f), second(s), expiry_height(exp), last_exchange_block(blk) {}
+
+   std::string getMultisig() const { return multisig; }
+   std::string getFirst() const { return first; }
+   std::string getSecond() const { return second; }
+   int getExpiry() const { return expiry_height; }
+   int getLastBlock() const { return last_exchange_block; }
+   uint64_t getRemaining(const std::string& address, uint32_t propertyId) const;
+
+   void setLastBlock(int block) { last_exchange_block += block;}
+   void setBalance(const std::string& sender, uint32_t propertyId, uint64_t amount);
+   void addAmount(const std::string& sender, uint32_t propertyId, uint64_t amount);
+   void setSecond(const std::string& sender) { second = sender ; }
+   bool updateChannelBal(const std::string& address, uint32_t propertyId, int64_t amount);
+   bool updateLastExBlock(int nBlock);
+
  };
 
+/* LevelDB based storage for  Trade Layer transaction data.  This will become the new master database, holding serialized Trade Layer transactions.
+ *  Note, intention is to consolidate and clean up data storage
+ */
 class CtlTransactionDB : public CDBBase
 {
 public:
@@ -363,7 +395,6 @@ public:
 
 /** LevelDB based storage for the trade history. Trades are listed with key "txid1+txid2".
  */
-
 class CMPTradeList : public CDBBase
 {
  public:
@@ -390,18 +421,24 @@ class CMPTradeList : public CDBBase
   void recordNewCommit(const uint256& txid, const std::string& channelAddress, const std::string& sender, uint32_t propertyId, uint64_t amountCommited, int blockNum, int blockIndex);
   void recordNewWithdrawal(const uint256& txid, const std::string& channelAddress, const std::string& sender, uint32_t propertyId, uint64_t amountToWithdrawal, int blockNum, int blockIndex);
   void recordNewChannel(const std::string& channelAddress, const std::string& frAddr, const std::string& secAddr, int blockNum, int blockIndex);
-  void recordNewInstantTrade(const uint256& txid, const std::string& sender, const std::string& receiver, uint32_t propertyIdForSale, uint64_t amount_forsale, uint32_t propertyIdDesired, uint64_t amount_desired, int blockNum, int blockIndex);
-  void recordNewTransfer(const uint256& txid, const std::string& sender, const std::string& receiver, uint32_t propertyId, uint64_t amount, int blockNum, int blockIndex);
+  void recordNewInstantTrade(const uint256& txid, const std::string& channelAddr, const std::string& first, const std::string& second, uint32_t propertyIdForSale, uint64_t amount_forsale, uint32_t propertyIdDesired, uint64_t amount_desired,int blockNum, int blockIndex);
+  void recordNewInstantLTCTrade(const uint256& txid, const std::string& channelAddr, const std::string& seller, const std::string& buyer, uint32_t propertyIdForSale, uint64_t amount_purchased, uint64_t price, int blockNum, int blockIndex);
+  void recordNewTransfer(const uint256& txid, const std::string& sender, const std::string& receiver, int blockNum, int blockIndex);
   void recordNewInstContTrade(const uint256& txid, const std::string& firstAddr, const std::string& secondAddr, uint32_t property, uint64_t amount_forsale, uint64_t price ,int blockNum, int blockIndex);
   void recordNewIdRegister(const uint256& txid, const std::string& address, const std::string& name, const std::string& website, int blockNum, int blockIndex);
-  void recordNewAttestation(const uint256& txid, const std::string& address, int blockNum, int blockIndex, int kyc_id);
+  void recordNewAttestation(const uint256& txid, const std::string& sender, const std::string& receiver, int blockNum, int blockIndex, int kyc_id);
+  bool deleteAttestationReg(const std::string& sender,  const std::string& receiver);
   bool getAllCommits(const std::string& senderAddress, UniValue& tradeArray);
   bool getAllWithdrawals(const std::string& senderAddress, UniValue& tradeArray);
   bool getChannelInfo(const std::string& channelAddress, UniValue& tradeArray);
   bool checkChannelAddress(const std::string& channelAddress);
-  channel getChannelAddresses(const std::string& channelAddress);
   bool checkChannelRelation(const std::string& address, std::string& channelAddr);
-  uint64_t getRemaining(const std::string& channelAddress, const std::string& senderAddress, uint32_t propertyId);
+  bool tryAddSecond(const std::string& candidate, const std::string& channelAddr, uint32_t propertyId, uint64_t amount_commited);
+  bool setChannelClosed(const std::string& channelAddr);
+  uint64_t addWithAndCommits(const std::string& channelAddr, const std::string& senderAddr, uint32_t propertyId);
+  uint64_t addTrades(const std::string& channelAddr, const std::string& senderAddr, uint32_t propertyId);
+  uint64_t addClosedWithrawals(const std::string& channelAddr, const std::string& receiver, uint32_t propertyId);
+  bool updateWithdrawal(const std::string& senderAddress, const std::string& channelAddress);
 
   //KYC
   bool updateIdRegister(const uint256& txid, const std::string& address, const std::string& newAddr, int blockNum, int blockIndex);
@@ -409,6 +446,7 @@ class CMPTradeList : public CDBBase
   bool checkAttestationReg(const std::string& address, int& kyc_id);
   bool kycPropertyMatch(uint32_t propertyId, int kyc_id);
   bool kycLoop(UniValue& response);
+  bool attLoop(UniValue& response);
 
   int deleteAboveBlock(int blockNum);
   bool exists(const uint256 &txid);
@@ -432,6 +470,9 @@ class CMPTradeList : public CDBBase
   void getTradesForPair(uint32_t propertyIdSideA, uint32_t propertyIdSideB, UniValue& response, uint64_t count);
   int getMPTradeCountTotal();
   int getNextId();
+  void getUpnInfo(const std::string& address, uint32_t contractId, UniValue& response, bool showVerbose);
+  bool kycConsensusHash(SHA256_CTX& shaCtx);
+  bool attConsensusHash(SHA256_CTX& shaCtx);
 };
 
 class CMPSettlementMatchList : public CDBBase
@@ -452,15 +493,26 @@ extern std::map<uint32_t, int64_t> global_balance_money;
 //! Vector containing a list of properties relative to the wallet
 extern std::set<uint32_t> global_wallet_property_list;
 
+//! Map of active channels
+extern std::map<std::string,Channel> channels_Map;
+
+//! Cache fees
+extern std::map<uint32_t, int64_t> cachefees;
+extern std::map<uint32_t, int64_t> cachefees_oracles;
+
+//! Vesting receiver addresses
+extern std::vector<std::string> vestingAddresses;
+
+//!Contract upnls
+extern std::map<std::string, int64_t> sum_upnls;
+
 int64_t getMPbalance(const std::string& address, uint32_t propertyId, TallyType ttype);
 int64_t getUserAvailableMPbalance(const std::string& address, uint32_t propertyId);
 int64_t getUserReserveMPbalance(const std::string& address, uint32_t propertyId);
 
 /** Global handler to total wallet balances. */
 void CheckWalletUpdate(bool forceUpdate = false);
-
 void NotifyTotalTokensChanged(uint32_t propertyId);
-
 void buildingEdge(std::map<std::string, std::string> &edgeEle, std::string addrs_src, std::string addrs_trk, std::string status_src, std::string status_trk, int64_t lives_src, int64_t lives_trk, int64_t amount_path, int64_t matched_price, int idx_q, int ghost_edge);
 void printing_edges_database(std::map<std::string, std::string> &path_ele);
 const string gettingLineOut(std::string address1, std::string s_status1, int64_t lives_maker, std::string address2, std::string s_status2, int64_t lives_taker, int64_t nCouldBuy, uint64_t effective_price);
@@ -486,6 +538,7 @@ void Filling_Twap_Vec(std::map<uint32_t, std::map<uint32_t, std::vector<uint64_t
 		      uint32_t property_traded, uint32_t property_desired, uint64_t effective_price);
 inline int64_t clamp_function(int64_t diff, int64_t nclamp);
 bool TxValidNodeReward(std::string ConsensusHash, std::string Tx);
+double getAccumVesting(const int64_t xAxis);
 
 namespace mastercore
 {
@@ -503,8 +556,6 @@ namespace mastercore
 
   std::string strMPProperty(uint32_t propertyId);
 
-  rational_t notionalChange(uint32_t contractId);
-
   bool isMPinBlockRange(int starting_block, int ending_block, bool bDeleteFound);
 
   std::string FormatContractMP(int64_t n);
@@ -518,7 +569,7 @@ namespace mastercore
 
   CMPTally* getTally(const std::string& address);
 
-  int64_t getTotalTokens(uint32_t propertyId, int64_t* n_owners_total = NULL);
+  int64_t getTotalTokens(uint32_t propertyId, int64_t* n_owners_total = nullptr);
 
   std::string strTransactionType(uint16_t txType);
 
@@ -528,7 +579,7 @@ namespace mastercore
   /** Determines, whether it is valid to use a Class C transaction for a given payload size. */
   bool UseEncodingClassC(size_t nDataSize);
 
-  bool getValidMPTX(const uint256 &txid, int *block = NULL, unsigned int *type = NULL, uint64_t *nAmended = NULL);
+  bool getValidMPTX(const uint256 &txid, int *block = nullptr, unsigned int *type = nullptr, uint64_t *nAmended = nullptr);
 
   bool update_tally_map(const std::string& who, uint32_t propertyId, int64_t amount, TallyType ttype);
 
@@ -538,37 +589,54 @@ namespace mastercore
 
   void update_sum_upnls(); // update the sum of all upnls for all addresses.
 
-  int64_t sum_check_upnl(std::string address); //  sum of all upnls for a given address.
+  int64_t sum_check_upnl(const std::string& address); //  sum of all upnls for a given address.
 
-  int64_t pos_margin(uint32_t contractId, std::string address, uint32_t margin_requirement); // return mainteinance margin for a given contrand and address
+  int64_t pos_margin(uint32_t contractId, const std::string& address, uint64_t margin_requirement); // return mainteinance margin for a given contrand and address
 
   bool makeWithdrawals(int Block); // make the withdrawals for multisig channels
 
   bool closeChannels(int Block);
 
   // x_Trade function for contracts on instant trade
-  bool Instant_x_Trade(const uint256& txid, uint8_t tradingAction, std::string& channelAddr, std::string& firstAddr, std::string& secondAddr, uint32_t property, int64_t amount_forsale, uint64_t price, uint32_t collateral, uint16_t type, int block, int tx_idx);
+  bool Instant_x_Trade(const uint256& txid, uint8_t tradingAction, const std::string& channelAddr, const std::string& firstAddr, const std::string& secondAddr, uint32_t property, int64_t amount_forsale, uint64_t price, uint32_t collateral, uint16_t type, int& block, int tx_idx);
+
   //Fees for contract instant trades
   bool ContInst_Fees(const std::string& firstAddr,const std::string& secondAddr,const std::string& channelAddr, int64_t amountToReserve,uint16_t type, uint32_t colateral);
 
   // Map of LTC volume
-  int64_t LtcVolumen(uint32_t propertyId, int fblock, int sblock);
+  int64_t LtcVolumen(uint32_t propertyId, const int& fblock, const int& sblock);
 
-  //Map of MetaDEx volume
-  int64_t MdexVolumen(uint32_t fproperty, uint32_t sproperty, int fblock, int sblock);
+  //Map of MetaDEx token volume
+  int64_t MdexVolumen(uint32_t property, const int& fblock, const int& sblock);
+
+  //Map of DEx token volume
+  int64_t DexVolumen(uint32_t property, const int& fblock, const int& sblock);
 
   void twapForLiquidation(uint32_t contractId, int blocks);
 
   int64_t getOracleTwap(uint32_t contractId, int nBlocks);
 
   // check for vesting
-  bool SanityChecks(string receiver, int aBlock);
+  bool sanityChecks(const std::string& sender, int& aBlock);
 
   // fee cache buying Alls in mDEx
   bool feeCacheBuy();
 
   // updating the expiration block for channels
-  bool updateLastExBlock(int nBlock, std::string sender);
+  bool updateLastExBlock(int nBlock, const std::string& sender);
+
+  std::string updateStatus(int64_t oldPos, int64_t newPos);
+
+  void createChannel(const std::string& sender, const std::string& receiver, uint32_t propertyId, uint64_t amount_commited, int block, int tx_id);
+
+  bool channelSanityChecks(const std::string& sender, const std::string& receiver, uint32_t propertyId, uint64_t amount_commited, int block, int tx_idx);
+  bool transferAll(const std::string& sender, const std::string& receiver);
+
+  const std::string getVestingAdmin();
+
+  int64_t lastVolume(uint32_t propertyId, bool tokens);
+
+  bool checkWithdrawal(const std::string& txid, const std::string& channelAddress);
 
 }
 

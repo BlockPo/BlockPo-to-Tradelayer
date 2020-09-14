@@ -62,10 +62,11 @@ void PendingDelete(const uint256& txid)
     LOCK(cs_pending);
 
     PendingMap::iterator it = my_pending.find(txid);
-    if (it != my_pending.end()) {
+    if (it != my_pending.end())
+    {
         const CMPPending& pending = it->second;
         int64_t src_amount = getMPbalance(pending.src, pending.prop, PENDING);
-        if (msc_debug_pending) PrintToLog("%s(%s): amount=%d\n", __FUNCTION__, txid.GetHex(), src_amount);
+        if (msc_debug_pending) PrintToLog("%s(%s): amount=%d\n", __func__, txid.GetHex(), src_amount);
         if (src_amount) update_tally_map(pending.src, pending.prop, pending.amount, PENDING);
         my_pending.erase(it);
 

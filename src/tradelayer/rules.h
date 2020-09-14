@@ -10,16 +10,17 @@
 namespace mastercore
 {
 //! Feature identifier placeholder
-const uint16_t FEATURE_NA = 9999;
-const uint16_t FEATURE_DEXMATH = 5;
-//! Feature identifier to enable the fee cache and strip 0.05% fees from non-Trade Layer pairs
-const uint16_t FEATURE_FEES = 9;
-//! Feature identifier to enable Send All transactions
-const uint16_t FEATURE_CONTRACTDEX = 11;
-/** A structure to represent transaction restrictions*/
+const uint16_t FEATURE_VESTING                  = 1;
+const uint16_t FEATURE_KYC                      = 2;
+const uint16_t FEATURE_DEX_SELL                 = 3;
+const uint16_t FEATURE_DEX_BUY                  = 4;
+const uint16_t FEATURE_METADEX                  = 5;
+const uint16_t FEATURE_TRADECHANNELS_TOKENS     = 6;
+const uint16_t FEATURE_TRADECHANNELS_CONTRACTS  = 7;
+const uint16_t FEATURE_FIXED                    = 8;
+const uint16_t FEATURE_MANAGED                  = 9;
+const uint16_t FEATURE_NODE_REWARD              = 10;
 
-//! When (propertyTotalTokens / TL_FEE_THRESHOLD) is reached fee distribution will occur
-const int64_t TL_FEE_THRESHOLD = 100000; // 0.001%
 
 struct TransactionRestriction
 {
@@ -27,7 +28,7 @@ struct TransactionRestriction
     uint16_t txType;
     //! Transaction version
     uint16_t txVersion;
-    //! Whether the property identifier can be 0 (= BTC)
+    //! Whether the property identifier can be 0 (= LTC)
     bool allowWildcard;
     //! Block after which the feature or transaction is enabled
     int activationBlock;
@@ -44,14 +45,13 @@ struct ConsensusCheckpoint
 
 // TODO: rename allcaps variable names
 // TODO: remove remaining global heights
-// TODO: add Exodus addresses to params
 
 /** Base class for consensus parameters.
  */
 class CConsensusParams
 {
 public:
-    //! Live block of Trade Layer Lite
+    //! Live block of Trade Layer
     int GENESIS_BLOCK;
 
     //! Minimum number of blocks to use for notice rules on activation
@@ -77,13 +77,21 @@ public:
     //! Block to enable "send all" transactions
     int MSC_SEND_ALL_BLOCK;
 
-    /** New things for Contract: ! Block to enable MetaDEx transactions */
-    int MSC_CONTRACTDEX_BLOCK;
+    int MSC_VESTING_CREATION_BLOCK;
     int MSC_VESTING_BLOCK;
-    int MSC_NODE_REWARD;
+    int MSC_KYC_BLOCK;
+    int MSC_METADEX_BLOCK;
+    int MSC_DEXSELL_BLOCK;
+    int MSC_DEXBUY_BLOCK;
+    int MSC_CONTRACTDEX_BLOCK;
+    int MSC_CONTRACTDEX_ORACLES_BLOCK;
+    int MSC_NODE_REWARD_BLOCK;
+    int MSC_TRADECHANNEL_TOKENS_BLOCK;
+    int MSC_TRADECHANNEL_CONTRACTS_BLOCK;
 
-    /** KYC*/
-    int MSC_TYPE_ATTESTATION_BLOCK;
+    /* Vesting Tokens*/
+    int ONE_YEAR;
+
 
     /** Returns a mapping of transaction types, and the blocks at which they are enabled. */
     virtual std::vector<TransactionRestriction> GetRestrictions() const;

@@ -31,26 +31,26 @@ bool msc_debug_verbose2                         = 0;
 bool msc_debug_verbose3                         = 0;
 bool msc_debug_vin                              = 0;
 bool msc_debug_script                           = 0;
-bool msc_debug_send                             = 1;
+bool msc_debug_send                             = 0;
 bool msc_debug_tokens                           = 0;
 bool msc_debug_spec                             = 0;
 bool msc_debug_exo                              = 0;
-bool msc_debug_tally                            = 1;
-bool msc_debug_sp                               = 1;
+bool msc_debug_tally                            = 0;
+bool msc_debug_sp                               = 0;
 bool msc_debug_txdb                             = 0;
 bool msc_debug_persistence                      = 0;
 bool msc_debug_ui                               = 0;
-bool msc_debug_pending                          = 1;
-bool msc_debug_packets                          = 1;
-bool msc_debug_packets_readonly                 = 0;
+bool msc_debug_pending                          = 0;
+bool msc_debug_packets                          = 0;
+bool msc_debug_packets_readonly                 = 1;
 bool msc_debug_walletcache                      = 0;
-bool msc_debug_consensus_hash                   = 0;
+bool msc_debug_consensus_hash                   = 1;
 bool msc_debug_consensus_hash_every_block       = 0;
 bool msc_debug_consensus_hash_every_transaction = 0;
 bool msc_debug_alerts                           = 0;
 bool msc_debug_handle_dex_payment               = 0;
 bool msc_debug_handle_instant                   = 0;
-bool msc_debug_handler_tx                       = 1;
+bool msc_debug_handler_tx                       = 0;
 bool msc_debug_tradedb                          = 0;
 bool msc_debug_margin_main                      = 0;
 bool msc_debug_pos_margin                       = 0;
@@ -71,14 +71,14 @@ bool msc_debug_contract_cancel_inorder          = 0;
 bool msc_debug_add_orderbook_edge               = 0;
 bool msc_debug_close_position                   = 0;
 bool msc_debug_get_pair_market_price            = 0;
-bool msc_debug_dex                              = 0;
+bool msc_debug_dex                              = 1;
 bool msc_debug_contractdex_tx                   = 0;
 bool msc_debug_create_pegged                    = 0;
 bool msc_debug_accept_offerbtc                  = 0;
 bool msc_debug_set_oracle                       = 0;
 bool msc_debug_send_pegged                      = 0;
 bool msc_debug_commit_channel                   = 0;
-bool msc_debug_withdrawal_from_channel          = 0;
+bool msc_debug_withdrawal_from_channel          = 1;
 bool msc_debug_instant_trade                    = 0;
 bool msc_debug_contract_instant_trade           = 0;
 bool msc_create_channel                         = 0;
@@ -91,6 +91,34 @@ bool msc_debug_search_all                       = 0;
 bool msc_debug_add_contract_ltc_vol             = 0;
 bool msc_debug_update_last_block                = 0;
 bool msc_debug_send_reward                      = 0;
+bool msc_debug_contract_cancel                  = 0;
+bool msc_debug_fee_cache_buy                    = 0;
+bool msc_debug_check_attestation_reg            = 0;
+bool msc_debug_sanity_checks                    = 0;
+bool msc_debug_ltc_volume                       = 0;
+bool msc_debug_mdex_volume                      = 0;
+bool msc_debug_update_status                    = 0;
+bool msc_debug_get_channel_addr                 = 0;
+bool msc_debug_get_remaining                    = 1;
+bool msc_debug_make_withdrawal                  = 0;
+bool msc_debug_check_kyc_register               = 0;
+bool msc_debug_update_id_register               = 0;
+bool msc_debug_get_transaction_address          = 0;
+bool msc_debug_is_mpin_block_range              = 0;
+bool msc_debug_record_payment_tx                = 0;
+bool msc_tx_valid_node_reward                   = 0;
+bool msc_debug_delete_att_register              = 0;
+bool msc_debug_get_upn_info                     = 0;
+bool msc_debug_get_total_lives                  = 0;
+bool msc_debug_activate_feature                 = 0;
+bool msc_debug_deactivate_feature               = 0;
+bool msc_debug_is_transaction_type_allowed      = 0;
+bool msc_debug_instant_payment                  = 0;
+bool msc_debug_settlement_algorithm_fifo        = 1;
+bool msc_debug_clearing_operator_fifo           = 0;
+bool msc_debug_counting_lives_longshorts        = 0;
+bool msc_debug_calculate_pnl_forghost           = 1;
+
 /**
  * LogPrintf() has been broken a couple of times now
  * by well-meaning people adding mutexes in the most straightforward way.
@@ -106,8 +134,8 @@ static boost::once_flag debugLogInitFlag = BOOST_ONCE_INIT;
  * We use boost::call_once() to make sure these are initialized
  * in a thread-safe manner the first time called:
  */
-static FILE* fileout = NULL;
-static boost::mutex* mutexDebugLog = NULL;
+static FILE* fileout = nullptr;
+static boost::mutex* mutexDebugLog = nullptr;
 
 /** Flag to indicate, whether the Trade Layer log file should be reopened. */
 extern std::atomic<bool> fReopentradelayerLog;
@@ -138,14 +166,14 @@ static boost::filesystem::path GetLogPath()
  */
 static void DebugLogInit()
 {
-    assert(fileout == NULL);
-    assert(mutexDebugLog == NULL);
+    assert(fileout == nullptr);
+    assert(mutexDebugLog == nullptr);
 
     boost::filesystem::path pathDebug = GetLogPath();
     fileout = fopen(pathDebug.string().c_str(), "a");
 
     if (fileout) {
-        setbuf(fileout, NULL); // Unbuffered
+        setbuf(fileout, nullptr); // Unbuffered
     } else {
         PrintToConsole("Failed to open debug log file: %s\n", pathDebug.string());
     }
@@ -186,7 +214,7 @@ int LogFilePrint(const std::string& str)
         // static bool fStartedNewLine = true;
         boost::call_once(&DebugLogInit, debugLogInitFlag);
 
-        if (fileout == NULL)
+        if (fileout == nullptr)
         {
             return ret;
         }
@@ -199,8 +227,8 @@ int LogFilePrint(const std::string& str)
          {
             fReopentradelayerLog = false;
             boost::filesystem::path pathDebug = GetLogPath();
-            if (freopen(pathDebug.string().c_str(), "a", fileout) != NULL)
-                setbuf(fileout, NULL); // Unbuffered
+            if (freopen(pathDebug.string().c_str(), "a", fileout) != nullptr)
+                setbuf(fileout, nullptr); // Unbuffered
 
          }
 
@@ -331,22 +359,22 @@ void ShrinkDebugLog()
     if (file && boost::filesystem::file_size(pathLog) > LOG_SHRINKSIZE) {
         // Restart the file with some of the end
         char* pch = new char[LOG_BUFFERSIZE];
-        if (NULL != pch) {
+        if (nullptr != pch) {
             fseek(file, -LOG_BUFFERSIZE, SEEK_END);
             int nBytes = fread(pch, 1, LOG_BUFFERSIZE, file);
             fclose(file);
-            file = NULL;
+            file = nullptr;
 
             file = fopen(pathLog.string().c_str(), "w");
             if (file) {
                 fwrite(pch, 1, nBytes, file);
                 fclose(file);
-                file = NULL;
+                file = nullptr;
             }
             delete[] pch;
         }
-    } else if (NULL != file) {
+    } else if (nullptr != file) {
         fclose(file);
-        file = NULL;
+        file = nullptr;
     }
 }
