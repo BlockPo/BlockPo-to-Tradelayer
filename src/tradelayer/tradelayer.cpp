@@ -3990,7 +3990,7 @@ int mastercore_handler_block_end(int nBlockNow, CBlockIndex const * pBlockIndex,
 
        // deleting Expired DEx accepts
        const unsigned int how_many_erased = eraseExpiredAccepts(nBlockNow);
-
+      
        if (how_many_erased) {
           PrintToLog("%s(%d); erased %u accepts this block, line %d, file: %s\n",
             __func__, how_many_erased, nBlockNow, __LINE__, __FILE__);
@@ -4017,6 +4017,9 @@ int mastercore_handler_block_end(int nBlockNow, CBlockIndex const * pBlockIndex,
           //     if (!GetBoolArg("-overrideforcedshutdown", false)) AbortNode(msg, msg);
           // TODO: fix AbortNode to be compatible with litecoin 16.0.3
        }
+      
+     // check that pending transactions are still in the mempool
+     PendingCheck();
 
      }
 

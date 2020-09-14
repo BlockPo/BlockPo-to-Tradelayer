@@ -961,7 +961,7 @@ UniValue tl_getproperty(const JSONRPCRequest& request)
 
 UniValue tl_listproperties(const JSONRPCRequest& request)
 {
-  if (request.params.size() > 1 || request.fHelp)
+  if (request.fHelp)
     throw runtime_error(
 			"tl_listproperties\n"
       "\nArguments:\n"
@@ -1685,7 +1685,7 @@ UniValue tl_listpendingtransactions(const JSONRPCRequest& request)
 
 UniValue tl_getinfo(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 0 || request.fHelp)
+    if (request.fHelp)
         throw runtime_error(
             "tl_getinfo\n"
             "Returns various state information of the client and protocol.\n"
@@ -1764,7 +1764,7 @@ UniValue tl_getinfo(const JSONRPCRequest& request)
 
 UniValue tl_getactivations(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 0 || request.fHelp)
+    if (request.fHelp)
         throw runtime_error(
             "tl_getactivations\n"
             "Returns pending and completed feature activations.\n"
@@ -1828,7 +1828,7 @@ UniValue tl_getactivations(const JSONRPCRequest& request)
 
 UniValue tl_getcurrentconsensushash(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 0 || request.fHelp)
+    if (request.fHelp)
         throw runtime_error(
             "tl_getcurrentconsensushash\n"
             "\nReturns the consensus hash for all balances for the current block.\n"

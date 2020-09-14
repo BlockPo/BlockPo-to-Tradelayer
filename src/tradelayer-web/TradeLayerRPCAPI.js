@@ -58,6 +58,13 @@ tl.listAccounts = function(cb){
     })
 }
 
+tl.fundRawTransaction = function(txstring,optionObj,cb){
+    client.cmd('fundRawTransaction',txstring, optionObj,function(data){
+      return cb(data)
+    })
+}
+
+
 tl.getAccountAddress = function(account, cb){
     if(account == null){
     client.cmd('getaccountaddress',function(err,data,resHeaders){
@@ -70,6 +77,20 @@ tl.getAccountAddress = function(account, cb){
     console.log("Account returned:"+data)
     return cb(data)
     })}
+}
+
+tl.addMultisigAddress = function(signerAmount, pubkeys, cb){
+  cliend.cmd('addmultisigaddress', signerAmount,pubkeys,function(err,data,resHeaders){
+      if (err) return console.log(err)
+  return cb(data)
+  })
+}
+
+tl.getAddressInfo = function(address, cb){
+  cliend.cmd('getaddressinfo', address,function(err,data,resHeaders){
+      if (err) return console.log(err)
+  return cb(data)
+  })
 }
 
 tl.getAddressesByAccount = function(cb){
@@ -123,14 +144,18 @@ tl.getRawTransaction = function(txid, cb){
 
 tl.getBlockhash = function(block, cb){
      client.cmd("getblockhash", block,function(err, data, resHeaders){
-  if (err) return console.log(err);
+      if (err) return console.log(err);
  
-  return cb(data)
+      return cb(data)
          
      })
 }
  
 tl.getBlock = function(hash, cb){
+      if(hash==null){
+      client.cmd('getBestBlockhash',function(data){
+          hash=data
+      })
      client.cmd("getblock", hash,function(err, data, resHeaders){
   if (err) return console.log(err);
  
@@ -145,7 +170,7 @@ tl.sendRawTransaction = function(tx, cb){
  
   })
     }catch(e){
-      return e
+      return cb(e)
     }
     return cb(data)
 }
@@ -173,15 +198,16 @@ tl.createRawTransaction = function(ins,outs, cb){
     })
 }
 
-tl.decodeRawTransaction = function(rawtx, cb){
-     client.cmd("decoderawtransaction", rawtx,function(err, data, resHeaders){
+tl.decodeRawTransaction = function(rawtxstring, inputs, blockheight, cb){
+     if(blockheight==null){blockheight=0}
+     client.cmd("tl_decoderawtransaction", rawtx, inputs, blockheight, function(err, data, resHeaders){
   if (err) return console.log(err)
  
   return cb(data)
   })
 }
 
-// tllayer Specific RPC calls
+// tradelayer Specific RPC calls
 tl.getTlBalance = function(addr, propertyid, cb){
      client.cmd("tl_getbalance", addr, propertyid,function(err, data, resHeaders){
   if (err) return console.log(err);
@@ -284,7 +310,7 @@ tl.getSTO = function(txid, recipients, cb){
     })
 }
 
-tl.getDivisibleProperty = function(propertyid){
+tl.getDivisibleProperty = function(propertyid,cb){
      client.cmd("tl_getproperty",'result','divisible', propertyid,function(err, data, resHeaders){
   if (err) return console.log(err);
  
@@ -315,6 +341,30 @@ tl.getTradeHistoryAddress= function(address, trades, propertyfilter, cb){
         }else{client.cmd("tl_gettradehistoryforaddress", address, trades, propertyfilter, function(err, data, resHeaders){
         return cb(data)
         })}
+}
+
+tl.getCommits = function(senderAddress){
+    client.cmd("tl_check_commits", senderAddress,function(err, data, resHeaders){
+        if (err) return console.log(err);
+ 
+        return cb(data)
+    })
+}
+
+tl.getWithdrawals = function(senderAddress){
+    client.cmd("tl_check_withdrawals", senderAddress,function(err, data, resHeaders){
+        if (err) return console.log(err);
+ 
+        return cb(data)
+    }) 
+}
+
+tl.getChannelInfo = function(channelAddress){
+    client.cmd("tl_getchannel_info", channelAddress,function(err, data, resHeaders){
+        if (err) return console.log(err);
+ 
+        return cb(data)
+    })
 }
 
 tl.listPendingTransactions= function(addressfilter, cb){
@@ -381,7 +431,6 @@ tl.sendAll = function(address1, address2, ecosystem, cb){
 
 tl.sendIssuanceFixed = function(params, cb){
     var address = params.fromaddress
-    var ecosystem = params.ecosystem
     var type = params.type
     var previousid = params.previousid
 
@@ -421,7 +470,6 @@ tl.sendGrant = function(address1, address2, id, amount, note, cb){
 
 tl.sendIssuanceManaged = function(params, cb){
     var address = params.fromaddress
-    var ecosystem = params.ecosystem
     var type = params.type
     var previousid = params.previousid
     var category = params.category
@@ -429,7 +477,8 @@ tl.sendIssuanceManaged = function(params, cb){
     var name = params.name
     var url = params.url
     var data = params.data
-    client.cmd('tl_sendissuancemanaged', address, ecosystem, type, previousid, category, subcategory, name, url, data, function(err, data, resHeaders){
+    var kyc = params.kyc
+    client.cmd('tl_sendissuancemanaged', address, type, previousid, category, subcategory, name, url, data, kyc function(err, data, resHeaders){
         console.log(data)
         return cb(data)
     })
@@ -448,6 +497,8 @@ tl.sendContractTrade = function(params, cb){
     })
 }
 
+
+
 tl.cancelAllContractsByAddress = function(address, contractid, cb){
 	client.cmd('tl_cancelallcontractsbyaddress', address, contractid,function(err,data,resHeaders){
 		console.log(data)
@@ -455,33 +506,62 @@ tl.cancelAllContractsByAddress = function(address, contractid, cb){
 	})
 }
 
-tl.createOracleContract = function( numeratorid, title, durationInBlocks, notional,denominatorCollateralid, marginReq){
+tl.createOracleContract = function( numeratorid, title, durationInBlocks, notional,denominatorCollateralid, marginReq,cb){
   //tl_create_oraclecontract 1 4 "OIL dUSD" 1000 1 4 0.5
   //the back up address is the reference address and the sending address is the admin/revenue address for the new contract
   client.cmd('tl_createoraclecontract', numeratorid, title, durationInBlocks, notional, denominatorCollateralid, marginReq, function(err,data,resHeaders){
     if(err == null){
-      return data
+      return cb(data)
     }else{return err}
   })
 }
 
+tl.changeOracleRef = function(fromaddress, refaddress, contractTitle,cb){
+     client.cmd('tl_change_oracleref',fromaddress,refaddress,contractTitle,function(err,data,resHeaders){
+        return cb(data)
+     })
+}
+
+tl.publishOracleData = function(fromaddress, title, high, low, close, cb){
+      client.cmd('tl_setoracle',fromaddress, title, high, low, close, function(err,data,resHeaders){
+        return cb(data)
+      })
+}
+
+tl.commitToChannel = function(sendingAddress,channelAddress,propertyid,amount, cb){
+      client.cmd('tl_commit_tochannel',sendingAddress,channelAddress,propertyid,amount,function(err, data, resHeaders){
+        return cb(data)
+      })
+}
+
+tl.withdrawalFromChannel = function(originalSender,channelAddress,propertyid,amount,cb){
+      client.cmd('tl_withdrawal_fromchannel',sendingAddress,channelAddress,propertyid,amount,function(err, data, resHeaders){
+        return cb(data)
+      })
+}
+
 var rawPubScripts = []
 
-tl.buildRaw= function(payload, inputs, vOuts, refaddresses){
+tl.buildRaw= function(payload, inputs, vOuts, refaddresses,inputAmount, UTXOAmount, cb){
 	var txstring = ""
   //the vOuts are meant to be which outputs were the selected inputs in their respective tx?
   //e.g. if the first input was the 3rd output, it should have the txid it was in as 0 in inputs and 2 as the 0 position value in vOuts
   //then if the second input was the first output, then vOut[1] would be 0, and so on.
   //refaddresses is plural because we may support Send-to-Many in the future but in this version all tx take a single reference address
-	client.cmd('tl_createrawtx_input', txstring, inputs, vouts, function(err, data, resHeaders){
+	if(inputs = null||inputs=undefined||inputs = ''){
+    return cb(console.log("err no input"))
+  }
+  if(UTXOAmount==null||UXTOAmount==0){UTXOAmount=0.00000546}
+  client.cmd('tl_createrawtx_input', txstring, inputs, vouts, function(err, txstring, resHeaders){
 		if(err==null){
 			txstring = data
 		}else{return err}
-		client.cmd('tl_createrawtx_reference', txstring, refaddresses, function(err, data, resHeaders){
+    if(refaddresses==null){UTXOAmount=0.00000546}
+		client.cmd('tl_createrawtx_reference', txstring, refaddresses, UTXOAmount, function(err, txstring, resHeaders){
 			if(err==null){
 				txstring = data
 			}else{return err}
-			client.cmd('tl_createrawtx_opreturn', txstring, payload, function(err, data, resHeaders){
+			client.cmd('tl_createrawtx_opreturn', txstring, payload, function(err, txstring, resHeaders){
 				if(err==null){
 				txstring = data
 				}else{return err}
@@ -531,15 +611,29 @@ tl.buildRaw= function(payload, inputs, vOuts, refaddresses){
 					var vOut = vOuts[0]
 					rawPubScripts = []
 					rawPubScripts.push(data.out[vOut].script)
-					var fee = 0.00001*(inputs.length*0.11+0.04+0.038*3)
+					var fee = 1000
+          var dust = 555
+          
+          if(inputAmount==null||inputAmount==undefined||inputAmount==0||inputAmount==''){
+                inputAmount=data.out[vOut]
+          }
+
+          inputAmount-=fee
+          inputAmount-=dust
+
 					if(inputs.length>1){
 						rest.get('https://blockchain.info/rawtx/'+inputs[1]).on('complete', function(data){
 						vOut = vOuts[1]
             rawPubScripts.push(data.out[vOut].script)
-						return tl.addChangeAddress(txstring, rawPubScripts, inputs, vOuts, changeAddress, amount,fee)
+
+						  tl.addChangeAddress(txstring, rawPubScripts, inputs, vOuts, changeAddress, inputAmount,fee,function(payload){
+                return cb(payload)
+              })
 						})
 					}else{
-						return tl.addChangeAddress(txstring, rawPubScripts,inputs, vOuts, changeAddress, amount,fee)
+						tl.addChangeAddress(txstring, rawPubScripts,inputs, vOuts, changeAddress, amount,fee,function(payload){
+              return cb(payload)
+            })
 					}
 			  })
       })
@@ -547,16 +641,16 @@ tl.buildRaw= function(payload, inputs, vOuts, refaddresses){
 	})
 }
 
-tl.addChangeAddress = function(txstring, rawPubScripts,inputs, vOuts,changeAddress, amount){
+tl.addChangeAddress = function(txstring, rawPubScripts,inputs, vOuts,changeAddress, amount,fee,cb){
 	var data = "[{\'txid\': \'"+inputs+"\',\'vout\':"+vOuts+",\'scriptPubKey\':\'"+rawPubScripts+",\"value \":"+amount+"}]"
 	client.cmd('tl_createrawtx_change', txstring, data, changeAddress, fee, function(err, payload, resHeaders){
 		if(err == null){
-			return payload
+			return cb(payload)
 		}else{return err}
 	})
 }
 
-tl.getContractInfo =  function(index, oracleContracts, nativeContracts){
+tl.getContractInfo =  function(index, oracleContracts, nativeContracts,cb){
 	if(index==null){
 		index=0
 		nativeContracts = []
@@ -582,36 +676,45 @@ tl.getContractInfo =  function(index, oracleContracts, nativeContracts){
      				tl.getContractInfo(index,oracleContracts,nativeContracts)
      		})   
      	}else{
-     		return {'nativeContracts':nativeContracts,'oracleContracts':oracleContracts}
+     		return cb({'nativeContracts':nativeContracts,'oracleContracts':oracleContracts})
      	}
   	})
 }
 
-tl_createNativeContract= function(thisAddress, numeratorid, title, durationInBlocks, notional,denominatorCollateralid, marginReq){
+tl.createNativeContract= function(thisAddress, numeratorid, title, durationInBlocks, notional,denominatorCollateralId, marginReq,cb){
 	////tl_createcontract ${ADDR} 1 4 "ALL/dUSD" 1000 1 4 0.5 #leverage = 10
 	client.cmd('tl_createcontract', thisAddress, 1, numeratorid, title, durationInBlocks, notional,denominatorCollateralid, marginReq, function(err,data,resHeaders){
 		if(err == null){
-			return data
+			return cb(data)
 		}else{return err}
 	}) 
 }
 
-tl.createOracleContract = function(thisAddress, numeratorid, title, durationInBlocks, notional,denominatorCollateralid, marginReq, backUpAddr){
+tl.createOracleContract = function(thisAddress, numeratorid, title, durationInBlocks, notional,denominatorCollateralId, marginReq, backUpAddr,cb){
 	//tl_create_oraclecontract ${ADDR} 1 4 "OIL dUSD" 1000 1 4 0.5 ${ADDR2}
 	client.cmd('tl_createoraclecontract', thisAddress, 1, numeratorid, title, durationInBlocks, notional,denominatorCollateralid, marginReq, backUpAddr, function(err,data,resHeaders){
 		if(err == null){
-			return data
+			return cb(data)
 		}else{return err}
 	})
 }
 
-tl.signRaw = function(txstring, privkey, redeemkey, input, vout, pubscript){
+tl.simpleSign = function(txstring, cb){
+  //will not work if the local wallet can't find the relevant key(s)
+  client.cmd('signrawtransaction', null, null, function(err, data, resHeaders){
+        if(err == null){
+          return cb(data)
+        }else{return err}
+      })
+}
+
+tl.signRaw = function(txstring, privkey, redeemkey, input, vout, pubscript,cb){
 	var data = "[{'txid':"+input+",'vout':"+vout+",'scriptPubKey':"+pubscript+",'redeemScript':"+redeemkey+"}]"
 	if(redeemkey==null){data = "[{'txid':"+input+",'vout':"+vout+",'scriptPubKey':"+pubscript+"}]"}
 	var sign = '['+privkey+']'
 			client.cmd('signrawtransaction', data,sign,function(err, data, resHeaders){
 				if(err == null){
-					return data
+					return cb(data)
 				}else{return err}
 			})
 }
@@ -635,19 +738,14 @@ tl.signRaw = function(txstring, privkey, redeemkey, input, vout, pubscript){
         
     tl_getexodus //hilariously we included a modular exodus address system as a makeshift way of punting on re-doing the UXTO Dex transactions with OP_Returns, which is a to-do for the backlog
 
-    tl_getsum_upnl
-
-    tl_create_oraclecontract           
-    tl_setoracle
-    tl_change_oracleref
+    tl_getsum_upnl           
     tl_oraclebackup
-    tl_closeoracle
     tl_commit_tochannel
     tl_withdrawal_fromchannel
     tl_create_channel  
 */
 
-tl.createpayload_createContract = function(numeratorid, name, blocks, size, denominatorCollateralid, marginReq){
+tl.createpayload_createContract = function(numeratorid, name, blocks, size, denominatorCollateralid, marginReq,cb){
 	/*
 	ecosystem (string, required) the ecosystem to create the tokens in (1 for main ecosystem, 2 for test ecosystem)
 	2. numerator (number, required) 4: ALL, 5: sLTC, 6: LTC
@@ -664,12 +762,12 @@ tl.createpayload_createContract = function(numeratorid, name, blocks, size, deno
 	*/
 
 	client.cmd('tl_createpayload_createcontract', 1, numeratorid, name, blocks, size, denominatorCollateralid, marginReq, function(err,data, resHeaders){
-		if(err){return err}else{return data}
+		if(err){return err}else{return cb(data)}
 	})
 }
 
 
-tl.createpayload_tradeContract = function(propertyid, amount, price, type, leverage){
+tl.createpayload_tradeContract = function(propertyid, amount, price, type, leverage,cb){
  	/*tl_createpayload_tradecontract
 
 		1. propertyidforsale (number, required) the identifier of the contract to list for trade
@@ -684,23 +782,23 @@ tl.createpayload_tradeContract = function(propertyid, amount, price, type, lever
  	*/
  	if(leverage==null){leverage = 10}
  	client.cmd('tl_createpayload_tradecontract', propertyid, amount, price, type, leverage, function(err,data, resHeaders){
-		if(err){return err}else{return data}
+		if(err){return err}else{return cb(data)}
 	})       
 } 
 
 
-tl.createpayload_cancelAllContractsByAddress = function(address, contractid){
+tl.createpayload_cancelAllContractsByAddress = function(address, contractid,cb){
 /*
 tl_createpayload_cancelallcontractsbyaddress
 ecosystem (number, required) the ecosystem of the offers to cancel (1 for main ecosystem, 2 for test ecosystem) 
 contractId (number, required) the Id of Future Contract 
 */
 	client.cmd('tl_createpayload_cancelallcontractsbyaddress', 1, contractid, function(err,data, resHeaders){
-		if(err){return err}else{return data}
+		if(err){return err}else{return cb(data)}
 	}) 
 }
 
-tl.createpayload_closePosition = function(contractid){
+tl.createpayload_closePosition = function(contractid,cb){
 /*
 tl_createpayload_closeposition
 
@@ -708,11 +806,11 @@ ecosystem (number, required) the ecosystem of the offers to cancel (1 for main e
 2. contractId
 */
 	client.cmd('tl_createpayload_closeposition', 1, contractid, function(err,data, resHeaders){
-		if(err){return err}else{return data}
+		if(err){return err}else{return cb(data)}
 	}) 
 }
 
-tl.createpayload_sendissuance_pegged = function(divisible, previousid, name, collateralid, contractid){
+tl.createpayload_sendissuance_pegged = function(divisible, previousid, name, collateralid, contractid,cb){
 /*
 tl_createpayload_sendissuance_pegged
 
@@ -728,11 +826,11 @@ tl_createpayload_sendissuance_pegged
 7. amount of pegged (number, required) amount of pegged to create
 */
 	client.cmd('tl_createpayload_sendissuance_pegged', 1, contractid, function(err,data, resHeaders){
-		if(err){return err}else{return data}
+		if(err){return err}else{return cb(data)}
 	}) 
 }
 
-tl.createpayload_send_pegged = function(namestring, amount){
+tl.createpayload_send_pegged = function(namestring, amount,cb){
 	/*
 	        tl_createpayload_send_pegged
 			1. property name (string, required) the identifier of the tokens to send"         
@@ -740,11 +838,11 @@ tl.createpayload_send_pegged = function(namestring, amount){
      */
 	if(typeof amount == Number){amount = amount.toString()}
 		client.cmd('tl_createpayload_send_pegged', namestring, amount, function(err,data, resHeaders){
-		if(err){return err}else{return data}
+		if(err){return err}else{return cb(data)}
 	})
 }
 
-tl.createpayload_redemption_regged = function(tokenNameString,amount, contractNameString){
+tl.createpayload_redemption_regged = function(tokenNameString,amount, contractNameString,cb){
 	/*
 	    tl_createpayload_redemption_pegged
 	        "1. name of pegged (string, required) name of the tokens to redeem\n"
@@ -754,11 +852,11 @@ tl.createpayload_redemption_regged = function(tokenNameString,amount, contractNa
 
 
 	client.cmd('tl_createpayload_redemption_pegged', tokenNameString, amount, contractNameString, function(err,data, resHeaders){
-		if(err){return err}else{return data}
+		if(err){return err}else{return cb(data)}
 	})
 }
 
-tl.createpayload_sendVesting = function(propertyid, amount){
+tl.createpayload_sendVesting = function(propertyid, amount,cb){
 /*
         tl_createpayload_sendvesting
         "1. propertyid (number, required) the identifier of the tokens to send\n"
@@ -766,70 +864,105 @@ tl.createpayload_sendVesting = function(propertyid, amount){
 */
 	if(propertyid!=2){propertyid=2}
 		client.cmd('tl_createpayload_sendvesting', propertyid, amount, function(err,data, resHeaders){
-		if(err){return err}else{return data}
+		if(err){return err}else{return cb(data)}
 	})
 }
 
-tl.createpayload_simpleSend = function(propertyid, amount){
+tl.createpayload_simpleSend = function(propertyid, amount,cb){
     client.cmd('tl_createpayload_simplesend', propertyid, amount, function(err,data, resHeaders){
-    if(err){return err}else{return data}
+    if(err){return err}else{return cb(data)}
   })
 }
 
-tl.createpayload_issuanceFixed = function(divisible, previousid, name, url, blurb, amount){
+tl.createpayload_issuanceFixed = function(divisible, previousid, name, url, blurb, amount,cb){
     if(divisible!=0||divisible!=1){divisible=1}
     client.cmd('tl_createpayload_issuancefixed', divisible, previousid, name, url, amount, function(err,data, resHeaders){
-    if(err){return err}else{return data}
+    if(err){return err}else{return cb(data)}
   })
 }
 
-tl.createpayload_issuanceManaged = function(divisible, previousid, name, url, blurb){
+tl.createpayload_issuanceManaged = function(divisible, previousid, name, url, blurb,kyc,cb){
   if(divisible!=0||divisible!=1){divisible=1}
-    client.cmd('tl_createpayload_issuancefixed', divisible, previousid, name, url, function(err,data, resHeaders){
-    if(err){return err}else{return data}
+    client.cmd('tl_createpayload_issuancefixed', divisible, previousid, name, url,kyc, function(err,data, resHeaders){
+    if(err){return err}else{return cb(data)}
   })
 }
 
-tl.createpayload_sendGrant = function(propertyid, amount){
+tl.createpayload_sendGrant = function(propertyid, amount,cb){
   client.cmd('tl_createpayload_sendgrant', propertyid, amount, function(err,data, resHeaders){
-    if(err){return err}else{return data}
+    if(err){return err}else{return cb(data)}
   })
 }
 
-tl.createpayload_sendRevoke = function(propertyid, amount){
+tl.createpayload_sendRevoke = function(propertyid, amount,cb){
   client.cmd('tl_createpayload_sendrevoke', propertyid, amount, function(err,data, resHeaders){
-    if(err){return err}else{return data}
+    if(err){return err}else{return cb(data)}
   })
 }
 
-tl.createpayload_changeIssuer = function(propertyid){
+tl.createpayload_changeIssuer = function(propertyid,cb){
   client.cmd('tl_createpayload_changeissuer', propertyid, function(err,data, resHeaders){
-    if(err){return err}else{return data}
+    if(err){return err}else{return cb(data)}
   })
 }
 
-tl.createpayload_sendDeactivation = function(featureid){
+tl.createpayload_sendDeactivation = function(featureid,cb){
   client.cmd('tl_createpayload_senddeactivation', featureid, function(err,data,resHeaders){
-    if(err){return err}else{return data}
+    if(err){return err}else{return cb(data)}
   })
 }
 
-tl.createpayload_sendActivation = function(featureid, activationblock, minver){
+tl.createpayload_sendActivation = function(featureid, activationblock, minver,cb){
   client.cmd('tl_createpayload_sendactivation', featureid, activationblock, minver, function(err,data,resHeaders){
-    if(err){return err}else{return data}
+    if(err){return err}else{return cb(data)}
   })
 }
 
-tl.createpayload_sendTrade = function(propertyidforsale, amount1, propertyiddesired, amount2){
+tl.createpayload_sendTrade = function(propertyidforsale, amount1, propertyiddesired, amount2,cb){
   client.cmd('tl_createpayload_sendtrade', propertyidforsale, amount1, propertyiddesired, amount2, function(err,data,resHeaders){
-    if(err){return err}else{return data}
+    if(err){return err}else{return cb(data)}
   })
 }
 
-tl.createpayload_createOracleContract = function(numeratorid, title, durationInBlocks, notional, denominatorCollateralid, marginReq){
-  client.cmd('tl_createpayload_createoraclecontract', numeratorid, title, durationInBlocks, notional,denominatorCollateralid, marginReq, function(err,data,resHeaders){
+tl.createpayload_createOracleContract = function(numeratorid, title, durationInBlocks, notional, denominatorCollateralid, marginReq,cb){
+  client.cmd('tl_createpayload_create_oraclecontract', numeratorid, title, durationInBlocks, notional,denominatorCollateralid, marginReq, function(err,data,resHeaders){
     if(err == null){
-      return data
+      return cb(data)
+    }else{return err}
+  })
+}
+
+tl.createpayload_change_oracleAddressToRef = function(contractTitle){
+    client.cmd('tl_createpayload_change_oracleref', contractTitle, function(err,data,resHeaders){
+      if(err == null){
+        return cb(data)
+      }else{return err}
+   })
+}
+
+tl.getpayload_publishOracleData = function(contractTitle, high, low, close){
+    client.cmd('tl_createpayload_change_oracleref', contractTitle, high, low, close, function(err,data,resHeaders){
+      if(err == null){
+        return cb(data)
+      }else{return err}
+   })
+}
+
+
+tl.getpayload_oraclebackup = function(contractTitle){
+  //the reference address is the new backup, including if the backup address, now admin addess, is changed from being adming to some new address
+  //even then the reference address here is still the back-up. The usage of hot vs. cold keys applies here: admin can be hot, back-ups are always cold.
+  client.cmd('tl_createpayload_oraclebackup', contractTitle, function(err,data,resHeaders){
+      if(err == null){
+        return cb(data)
+      }else{return err}
+   })
+}
+
+tl.createpayload_closeOracle =  function(contractTitle){
+  client.cmd('tl_createpayload_closeoracle', contractTitle, function(err,data,resHeaders){
+    if(err == null){
+      return cb(data)
     }else{return err}
   })
 }
@@ -839,43 +972,84 @@ tl.createpayload_createOracleContract = function(numeratorid, title, durationInB
     { "trade layer (payload creation)", "tl_createpayload_dexaccept",                     &tl_createpayload_dexaccept,                       {}   },
 */
 
-tl.createpayload_instant_trade = function(propertyid, amount1,blockheight_expiry,propertyiddesired,amount2){
+tl.createpayload_instant_trade = function(propertyid, amount1,blockheight_expiry,propertyiddesired,amount2,cb){
   client.cmd('tl_createpayload_instant_trade',propertyid, amount1,blockheight_expiry,propertyiddesired,amount2, function(err,data,resHeaders){
     if(err == null){
-      return data
+      return cb(data)
     }else{return err}
   })
 }
 
-tl.createpayload_contract_instant_trade = function(contractid, amount1,blockheight_expiry,side,leverage){
+tl.createpayload_contract_instant_trade = function(contractid, amount1,blockheight_expiry,side,leverage,cb){
   client.cmd('tl_createpayload_contract_instant_trade',contractid, amount1,blockheight_expiry,side,leverage, function(err,data,resHeaders){
     if(err == null){
-      return data
+      return cb(data)
     }else{return err}
   })
 }
 
-tl.tl_createpayload_pnl_update = function(propertyid, amount, blockheight_expiry){
+tl.tl_createpayload_pnl_update = function(propertyid, amount, blockheight_expiry,cb){
   client.cmd('tl_createpayload_pnl_update',propertyid, amount,blockheight_expiry, function(err,data,resHeaders){
     if(err == null){
-      return data
+      return cb(data)
     }else{return err}
   })
 }
 
-tl.createpayload_transfer = function(propertyid, amount){
+tl.createpayload_transfer = function(propertyid, amount,cb){
   client.cmd('tl_createpayload_transfer',propertyid, amount, function(err,data,resHeaders){
     if(err == null){
-      return data
+      return cb(data)
     }else{return err}
   })
 }
 
-tl.getalltxonblock = function(height){
-  client.cmd('tl_getalltxonblock',height, function(err,data,resHeaders){
-    if(err){return err}else{return data}
+tl.createpayload_newIdRegistrar = function(url, companyName,cb){
+  client.cmd('tl_createpayload_new_id_registration', url, companyName, function(err,data,resHeaders){
+    if(err == null){
+      return cb(data)
+    }else{return err}
   })
 }
 
+tl.createpayload_updateIdRegistrar = function(cb){
+  //this tx needs a reference address, it has no parameters because it just transfers a registrar id to that addr
+  client.cmd('tl_createpayload_update_id_registration', function(err,data,resHeaders){
+    if(err == null){
+      return cb(data)
+    }else{return err}
+  }) 
+}
+
+tl.createpayload_attestation = function(memo, cb){
+  //parameter is optional, could be used to create legal provability around compliance
+  client.cmd('tl_createpayload_attestation',memo, function(err,data,resHeaders){
+    if(err == null){
+      return cb(data)
+    }else{return err}
+  })
+}
+
+tl.createpayload_commit = function(propertyid, amount, cb){
+  client.cmd('tl_createpayload_commit_tochannel', propertyid,amount, function(err,data,resHeaders){
+    if(err == null){
+      return cb(data)
+    }else{return err}
+  })
+}
+
+tl.createpayload_withdraw = function(propertyid, amount, cb){
+  client.cmd('tl_createpayload_withdraw_fromchannel', propertyid,amount, function(err,data,resHeaders){
+    if(err == null){
+      return cb(data)
+    }else{return err}
+  })
+}
+
+tl.getAllTxForABlock = function(height,cb){
+  client.cmd('tl_getalltxonblock',height, function(err,data,resHeaders){
+    if(err){return err}else{return cb(data)}
+  })
+}
     
 exports.tl = tl
