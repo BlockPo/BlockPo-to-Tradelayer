@@ -10,8 +10,6 @@
 #include <boost/multiprecision/cpp_int.hpp>
 #include <boost/rational.hpp>
 
-#include <openssl/sha.h>
-
 #include <stdint.h>
 
 #include <fstream>
@@ -19,6 +17,8 @@
 #include <set>
 #include <string>
 #include "tradelayer_matrices.h"
+
+class CHash256;
 
 typedef boost::multiprecision::uint128_t ui128;
 typedef boost::rational<boost::multiprecision::checked_int128_t> rational_t;
@@ -133,7 +133,7 @@ class CMPMetaDEx
   /** Used for display of unit prices with 50 decimal places at RPC layer. */
   std::string displayFullUnitPrice() const;
 
-  void saveOffer(std::ofstream& file, SHA256_CTX* shaCtx) const;
+  void saveOffer(std::ofstream& file, CHash256& hasher) const;
 
 
 };
@@ -193,7 +193,7 @@ class CMPContractDex : public CMPMetaDEx
   std::string displayFullContractPrice() const;
   std::string ToString() const;
 
-  void saveOffer(std::ofstream& file, SHA256_CTX* shaCtx) const;
+  void saveOffer(std::ofstream& file, CHash256& hasher) const;
 
   void setPrice(int64_t price);
 

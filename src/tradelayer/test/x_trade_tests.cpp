@@ -22,8 +22,6 @@
 #include <boost/rational.hpp>
 #include <boost/test/unit_test.hpp>
 
-#include <openssl/sha.h>
-
 #include <assert.h>
 #include <stdint.h>
 
