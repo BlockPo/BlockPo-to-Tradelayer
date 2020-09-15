@@ -2294,12 +2294,12 @@ UniValue tl_getallprice(const JSONRPCRequest& request)
     if (request.fHelp)
         throw runtime_error(
             "tl_getallprice \n"
-            "\nRetrieves the ALL price in metadex (in dUSD) .\n"
+            "\nRetrieves the ALL last price on DEx and Trade Channels (LTC) .\n"
 
             "\nResult:\n"
             "[                                      (array of JSON objects)\n"
             "  {\n"
-            "    \"price\" : nnnnnn,                       (number) the price of 1 ALL in dUSD\n"
+            "    \"price\" : nnnnnn,                (number) the price of 1 ALL in LTC\n"
             "  },\n"
             "  ...\n"
             "]\n"
@@ -2313,16 +2313,12 @@ UniValue tl_getallprice(const JSONRPCRequest& request)
     // get token Price
     int64_t allPrice = 0;
 
-    auto it = market_priceMap.find(static_cast<uint32_t>(ALL));
-    if (it != market_priceMap.end())
-    {
-        const auto &auxMap = it->second;
-        auto itt = auxMap.find(static_cast<uint32_t>(dUSD));
-        if (itt != auxMap.end())
-            allPrice = itt->second;
+    auto it = lastPrice.find(static_cast<uint32_t>(ALL));
+    if(it != lastPrice.end()) {
+        allPrice = it->second;
     }
 
-    balanceObj.push_back(Pair("unitprice", FormatByType(static_cast<uint64_t>(allPrice),2)));
+    balanceObj.push_back(Pair("unitprice", FormatDivisibleMP((uint64_t) allPrice)));
     return balanceObj;
 }
 

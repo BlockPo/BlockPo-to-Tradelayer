@@ -122,6 +122,9 @@ std::map<uint32_t, int64_t> cachefees;
 //! Futures oracle contracts fees
 std::map<uint32_t, int64_t> cachefees_oracles;
 
+//! Last unit price for token/LTC
+std::map<uint32_t, int64_t> lastPrice;
+
 //!Used to indicate, whether to automatically commit created transactions.
 bool autoCommit = true;
 static boost::filesystem::path MPPersistencePath;
@@ -1023,14 +1026,14 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
 
     if(msc_debug_instant_payment) PrintToLog("%s(): buyer : %s, seller : %s, property : %d, amount_forsale : %d, nvalue : %d, price : %d, block: %d, idx : %d\n",__func__, buyer, seller, property, amount_forsale, nvalue, price, block, idx);
 
-    arith_uint256 amount_forsale256 = ConvertTo256(amount_forsale);
-    arith_uint256 amountLTC_Desired256 = ConvertTo256(price);
-    arith_uint256 amountLTC_Paid256 = (nvalue > price) ? amountLTC_Desired256 : ConvertTo256(nvalue);
+    const arith_uint256 amount_forsale256 = ConvertTo256(amount_forsale);
+    const arith_uint256 amountLTC_Desired256 = ConvertTo256(price);
+    const arith_uint256 amountLTC_Paid256 = (nvalue > price) ? amountLTC_Desired256 : ConvertTo256(nvalue);
 
     // actual calculation; round up
-    arith_uint256 amountPurchased256 = DivideAndRoundUp((amountLTC_Paid256 * amount_forsale256), amountLTC_Desired256);
+    const arith_uint256 amountPurchased256 = DivideAndRoundUp((amountLTC_Paid256 * amount_forsale256), amountLTC_Desired256);
     // convert back to int64_t
-    int64_t amount_purchased = ConvertTo64(amountPurchased256);
+    const int64_t amount_purchased = ConvertTo64(amountPurchased256);
 
     std::string channelAddr;
     t_tradelistdb->checkChannelRelation(seller, channelAddr);
@@ -1039,7 +1042,7 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
     auto it = channels_Map.find(channelAddr);
     Channel& sChn = it->second;
 
-    int64_t remaining = static_cast<int64_t>(sChn.getRemaining(seller, property));
+    const int64_t remaining = static_cast<int64_t>(sChn.getRemaining(seller, property));
 
     if(msc_debug_instant_payment)
     {
@@ -1057,6 +1060,9 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
 
         // saving DEx token volume
         MapTokenVolume[block][property] += amount_purchased;
+
+        // adding last price
+        lastPrice[property] = amount_purchased;
 
         // adding LTC volume to map
         MapLTCVolume[block][property] += nvalue;
