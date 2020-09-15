@@ -560,6 +560,9 @@ int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addre
     PrintToLog("%s(): block: %d, propertyId: %d. amountPaid (LTC): %d\n",__func__, block, propertyId, amountPaid);
     MapLTCVolume[block][propertyId] += amountPaid;
 
+    // adding last price
+    lastPrice[propertyId] = amountPaid;
+
     // saving DEx token volume
     MapTokenVolume[block][propertyId] += amountPurchased;
 
