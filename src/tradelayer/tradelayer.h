@@ -161,6 +161,7 @@ enum FILETYPES {
   FILETYPE_GLOBAL_VARS,
   FILE_TYPE_VESTING_ADDRESSES,
   FILE_TYPE_LTC_VOLUME,
+  FILE_TYPE_TOKEN_LTC_PRICE,
   NUM_FILETYPES
 };
 
@@ -506,6 +507,10 @@ extern std::vector<std::string> vestingAddresses;
 
 //!Contract upnls
 extern std::map<std::string, int64_t> sum_upnls;
+
+
+//! Last unit price for token/LTC
+extern std::map<uint32_t, int64_t> lastPrice;
 
 int64_t getMPbalance(const std::string& address, uint32_t propertyId, TallyType ttype);
 int64_t getUserAvailableMPbalance(const std::string& address, uint32_t propertyId);

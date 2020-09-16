@@ -560,6 +560,15 @@ int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addre
     PrintToLog("%s(): block: %d, propertyId: %d. amountPaid (LTC): %d\n",__func__, block, propertyId, amountPaid);
     MapLTCVolume[block][propertyId] += amountPaid;
 
+    const arith_uint256 amountDesired256  = ConvertTo256(amountDesired);
+    const arith_uint256 amountOffered256 = ConvertTo256(amountOffered);
+    const arith_uint256 unitPrice256 = (ConvertTo256(COIN) * amountDesired256) / amountOffered256;
+
+    const int64_t unitPrice = (isPropertyDivisible(propertyId)) ? ConvertTo64(unitPrice256) : ConvertTo64(unitPrice256) / COIN;
+
+    // adding last price
+    lastPrice[propertyId] = unitPrice;
+
     // saving DEx token volume
     MapTokenVolume[block][propertyId] += amountPurchased;
 
