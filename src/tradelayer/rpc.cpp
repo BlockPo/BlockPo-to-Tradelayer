@@ -2312,13 +2312,16 @@ UniValue tl_getallprice(const JSONRPCRequest& request)
 
     // get token Price
     int64_t allPrice = 0;
+    const uint32_t propertyId = static_cast<uint32_t>(ALL);
 
-    auto it = lastPrice.find(static_cast<uint32_t>(ALL));
+    auto it = lastPrice.find(propertyId);
     if(it != lastPrice.end()) {
         allPrice = it->second;
     }
 
-    balanceObj.push_back(Pair("unitprice", FormatDivisibleMP((uint64_t) allPrice)));
+    PrintToLog("%s(): allPrice: %d\n",__func__, allPrice);
+
+    balanceObj.push_back(Pair("unitprice", FormatDivisibleMP((uint64_t)allPrice)));
     return balanceObj;
 }
 
@@ -2522,22 +2525,22 @@ UniValue tl_getactivedexsells(const JSONRPCRequest& request)
         int64_t minFee = offer.getMinFee();
         uint8_t timeLimit = offer.getBlockTimeLimit();
         int64_t sellOfferAmount = offer.getOfferAmountOriginal(); //badly named - "Original" implies off the wire, but is amended amount
-        int64_t sellBitcoinDesired = offer.getLTCDesiredOriginal(); //badly named - "Original" implies off the wire, but is amended amount
+        int64_t sellLitecoinDesired = offer.getLTCDesiredOriginal(); //badly named - "Original" implies off the wire, but is amended amount
         int64_t amountAvailable = getMPbalance(seller, propertyId, SELLOFFER_RESERVE);
         int64_t amountAccepted = getMPbalance(seller, propertyId, ACCEPT_RESERVE);
         uint8_t option = offer.getOption();
 
         // calculate unit price and updated amount of bitcoin desired
         arith_uint256 aUnitPrice = 0;
-        if ((sellOfferAmount > 0) && (sellBitcoinDesired > 0)) {
-            aUnitPrice = (COIN * (ConvertTo256(sellBitcoinDesired)) / ConvertTo256(sellOfferAmount)) ; // divide by zero protection
+        if ((sellOfferAmount > 0) && (sellLitecoinDesired > 0)) {
+            aUnitPrice = (ConvertTo256(COIN) * (ConvertTo256(sellLitecoinDesired)) / ConvertTo256(sellOfferAmount)) ; // divide by zero protection
         }
 
         int64_t unitPrice = (isPropertyDivisible(propertyId)) ? ConvertTo64(aUnitPrice) : ConvertTo64(aUnitPrice) / COIN;
 
-        PrintToLog("%s(): sellBitcoinDesired: %d, sellOfferAmount : %d, unitPrice: %d\n",__func__, sellBitcoinDesired, sellOfferAmount, unitPrice);
+        PrintToLog("%s(): sellLitecoinDesired: %d, sellOfferAmount : %d, unitPrice: %d\n",__func__, sellLitecoinDesired, sellOfferAmount, unitPrice);
 
-        int64_t bitcoinDesired = calculateDesiredLTC(sellOfferAmount, sellBitcoinDesired, amountAvailable);
+        int64_t bitcoinDesired = calculateDesiredLTC(sellOfferAmount, sellLitecoinDesired, amountAvailable);
         int64_t sumAccepted = 0;
         int64_t sumLtcs = 0;
         UniValue acceptsMatched(UniValue::VARR);
@@ -2586,7 +2589,7 @@ UniValue tl_getactivedexsells(const JSONRPCRequest& request)
 
         } else if (option == 1){
             responseObj.push_back(Pair("buyer", seller));
-            responseObj.push_back(Pair("ltcstopay", FormatDivisibleMP(sellBitcoinDesired - sumLtcs)));
+            responseObj.push_back(Pair("ltcstopay", FormatDivisibleMP(sellLitecoinDesired - sumLtcs)));
             responseObj.push_back(Pair("amountdesired", FormatMP(propertyId, sellOfferAmount - sumAccepted)));
             responseObj.push_back(Pair("accepted", FormatMP(propertyId, amountAccepted)));
 

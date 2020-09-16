@@ -121,7 +121,6 @@ std::vector<std::string> vestingAddresses;
 std::map<uint32_t, int64_t> cachefees;
 //! Futures oracle contracts fees
 std::map<uint32_t, int64_t> cachefees_oracles;
-
 //! Last unit price for token/LTC
 std::map<uint32_t, int64_t> lastPrice;
 
@@ -1061,8 +1060,12 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
         // saving DEx token volume
         MapTokenVolume[block][property] += amount_purchased;
 
+        const arith_uint256 unitPrice256 = (ConvertTo256(COIN) * amountLTC_Desired256) / amount_forsale256;
+
+        const int64_t unitPrice = (isPropertyDivisible(property)) ? ConvertTo64(unitPrice256) : ConvertTo64(unitPrice256) / COIN;
+
         // adding last price
-        lastPrice[property] = amount_purchased;
+        lastPrice[property] = unitPrice;
 
         // adding LTC volume to map
         MapLTCVolume[block][property] += nvalue;
@@ -1505,6 +1508,20 @@ int input_mp_contractdexorder_string(const std::string& s)
     return 0;
 }
 
+int input_mp_token_ltc_string(const std::string& s)
+{
+   std::vector<std::string> vstr;
+   boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
+
+   const uint32_t propertyId = boost::lexical_cast<uint32_t>(vstr[0]);
+   const int64_t price = boost::lexical_cast<int64_t>(vstr[1]);;
+
+
+   if (!lastPrice.insert(std::make_pair(propertyId, price)).second) return -1;
+
+   return 0;
+}
+
 
 int input_cachefees_string(const std::string& s)
 {
@@ -1803,6 +1820,10 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
         inputLineFunc = input_mp_ltcvolume_string;
         break;
 
+    case FILE_TYPE_TOKEN_LTC_PRICE:
+        lastPrice.clear();
+        inputLineFunc = input_mp_token_ltc_string;
+
         default:
             return -1;
     }
@@ -1890,7 +1911,8 @@ static char const * const statePrefix[NUM_FILETYPES] = {
     "mdexvolume",
     "globalvars",
     "vestingaddresses",
-    "ltcvolume"
+    "ltcvolume",
+    "tokenltcprice"
 
 };
 
@@ -2196,6 +2218,23 @@ static int write_mp_accepts(std::ofstream& file,  CHash256& hasher)
     return 0;
 }
 
+static int write_mp_token_ltc_prices(std::ofstream& file, CHash256& hasher)
+{
+    for (const auto &p : lastPrice)
+    {
+        const uint32_t& propertyId = p.first;
+        const int64_t& price = p.second;
+
+        const std::string lineOut = strprintf("%d,%d",propertyId, price);
+        // add the line to the hash
+        hasher.Write((unsigned char*)lineOut.c_str(), lineOut.length());
+        // write the line
+        file << lineOut << endl;
+    }
+
+    return 0;
+}
+
 static int write_mp_cachefees(std::ofstream& file, CHash256& hasher)
 {
     for (const auto &ca :  cachefees)
@@ -2436,6 +2475,10 @@ static int write_state_file(CBlockIndex const *pBlockIndex, int what)
     case FILE_TYPE_LTC_VOLUME:
         result = write_mp_ltcvolume(file, hasher);
         break;
+
+    case FILE_TYPE_TOKEN_LTC_PRICE:
+        result = write_mp_token_ltc_prices(file, hasher);
+        break;
     }
 
     // generate and wite the double hash of all the contents written
@@ -2539,6 +2582,7 @@ int mastercore_save_state(CBlockIndex const *pBlockIndex)
     write_state_file(pBlockIndex, FILETYPE_GLOBAL_VARS);
     write_state_file(pBlockIndex, FILE_TYPE_VESTING_ADDRESSES);
     write_state_file(pBlockIndex, FILE_TYPE_LTC_VOLUME);
+    write_state_file(pBlockIndex, FILE_TYPE_TOKEN_LTC_PRICE);
 
     // clean-up the directory
     prune_state_files(pBlockIndex);
