@@ -970,7 +970,8 @@ class NativesBasicsTest (BitcoinTestFramework):
 
         self.log.info("Testing trades after contract deadline")
 
-        self.nodes[0].generate(1000)
+        for i in range(5):
+             self.nodes[0].generate(200)
 
 
         params = str([addresses[0], "ALL/Lhk", "1000", "200.3", 1, "1"]).replace("'",'"')
