@@ -349,7 +349,7 @@ public:
         if (msc_debug_persistence) PrintToLog("CMPTxList closed\n");
       }
 
-    void recordTX(const uint256 &txid, bool fValid, int nBlock, unsigned int type, uint64_t nValue);
+    void recordTX(const uint256 &txid, bool fValid, int nBlock, unsigned int type, uint64_t nValue, int interp_ret);
     /** Records a "send all" sub record. */
     void recordSendAllSubRecord(const uint256& txid, int subRecordNumber, uint32_t propertyId, int64_t nvalue);
 
@@ -578,7 +578,7 @@ namespace mastercore
   /** Determines, whether it is valid to use a Class C transaction for a given payload size. */
   bool UseEncodingClassC(size_t nDataSize);
 
-  bool getValidMPTX(const uint256 &txid, int *block = nullptr, unsigned int *type = nullptr, uint64_t *nAmended = nullptr);
+  bool getValidMPTX(const uint256 &txid, std::string *reason = nullptr, int *block = nullptr, unsigned int *type = nullptr, uint64_t *nAmended = nullptr);
 
   bool update_tally_map(const std::string& who, uint32_t propertyId, int64_t amount, TallyType ttype);
 
