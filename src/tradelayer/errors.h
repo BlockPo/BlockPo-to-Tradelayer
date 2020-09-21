@@ -221,9 +221,9 @@ inline std::string error_str(int ec) {
     case PKT_ERROR_SP -20:
       ec_str = "Block is not in the active chain";
       break;
-    case PKT_ERROR_SP -21:
-      ec_str = "Ecosystem is invalid";
-      break;
+    // case PKT_ERROR_SP -21:
+    //   ec_str = "Ecosystem is invalid";
+    //   break;
     case PKT_ERROR_SP -22:
       ec_str = "Transaction type or version not permitted";
       break;
@@ -351,10 +351,10 @@ inline std::string error_str(int ec) {
       ec_str = "Property desired does not exist";
       break;
     case PKT_ERROR_CHANNELS -15:
-      ec_str = "some address doesn't belong to multisig channel";
+      ec_str = "Address doesn't belong to multisig channel";
       break;
     case PKT_ERROR_CHANNELS -16:
-      ec_str = "out of channel deadline";
+      ec_str = "Out of channel deadline";
       break;
     case PKT_ERROR_CHANNELS -17:
       ec_str = "Sender has insufficient balance";
