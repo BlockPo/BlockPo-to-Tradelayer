@@ -60,8 +60,20 @@ case $host in
      lt_cv_deplibs_check_method="pass_all"
   ;;
 esac
-dnl Require C++11 compiler (no GNU extensions)
-AX_CXX_COMPILE_STDCXX([11], [noext], [mandatory], [nodefault])
+
+AC_ARG_ENABLE([c++17], 
+  [AS_HELP_STRING([--enable-c++17], 
+  [enable compilation in c++17 mode (disabled by default)])], 
+  [use_cxx17=$enableval], 
+  [use_cxx17=no]) 
+
+dnl Require C++11 or C++17 compiler (no GNU extensions)
+if test "x$use_cxx17" = xyes -o "x$enable_fuzz" = xyes ; then
+  AX_CXX_COMPILE_STDCXX([17], [noext], [mandatory])
+else
+  AX_CXX_COMPILE_STDCXX([11], [noext], [mandatory])
+fi
+
 dnl Check if -latomic is required for <std::atomic>
 CHECK_ATOMIC
 
@@ -82,6 +94,7 @@ AC_PATH_TOOL(AR, ar)
 AC_PATH_TOOL(RANLIB, ranlib)
 AC_PATH_TOOL(STRIP, strip)
 AC_PATH_TOOL(GCOV, gcov)
+AC_PATH_TOOL(LLVM_COV, llvm-cov)
 AC_PATH_PROG(LCOV, lcov)
 dnl Python 3.x is supported from 3.4 on (see https://github.com/bitcoin/bitcoin/issues/7893)
 AC_PATH_PROGS([PYTHON], [python3.6 python3.5 python3.4 python3 python2.7 python2 python])
@@ -484,21 +497,41 @@ if test x$use_lcov = xyes; then
   if test x$LCOV = x; then
     AC_MSG_ERROR("lcov testing requested but lcov not found")
   fi
-  if test x$GCOV = x; then
-    AC_MSG_ERROR("lcov testing requested but gcov not found")
-  fi
   if test x$PYTHON = x; then
     AC_MSG_ERROR("lcov testing requested but python not found")
   fi
   if test x$GENHTML = x; then
     AC_MSG_ERROR("lcov testing requested but genhtml not found")
   fi
-  LCOV="$LCOV --gcov-tool=$GCOV"
+
+  AC_MSG_CHECKING([whether compiler is Clang])
+  AC_PREPROC_IFELSE([AC_LANG_SOURCE([[
+      #if defined(__clang__) && defined(__llvm__)
+      // Compiler is Clang
+      #else
+      #  error Compiler is not Clang
+      #endif
+    ]])],[
+      AC_MSG_RESULT([yes])
+      if test x$LLVM_COV = x; then
+        AC_MSG_ERROR([lcov testing requested but llvm-cov not found])
+      fi
+      COV_TOOL="$LLVM_COV gcov"
+    ],[
+      AC_MSG_RESULT([no])
+      if test x$GCOV = x; then
+        AC_MSG_ERROR([lcov testing requested but gcov not found])
+      fi
+      COV_TOOL="$GCOV"
+  ])
+  AC_SUBST(COV_TOOL)
+  AC_SUBST(COV_TOOL_WRAPPER, "cov_tool_wrapper.sh")
+  LCOV="$LCOV --gcov-tool $(pwd)/$COV_TOOL_WRAPPER"
+
   AX_CHECK_LINK_FLAG([[--coverage]], [LDFLAGS="$LDFLAGS --coverage"],
     [AC_MSG_ERROR("lcov testing requested but --coverage linker flag does not work")])
   AX_CHECK_COMPILE_FLAG([--coverage],[CXXFLAGS="$CXXFLAGS --coverage"],
     [AC_MSG_ERROR("lcov testing requested but --coverage flag does not work")])
-  AC_DEFINE(USE_COVERAGE, 1, [Define this symbol if coverage is enabled])
   CXXFLAGS="$CXXFLAGS -Og"
 fi
 
@@ -950,7 +983,7 @@ if test x$use_pkgconfig = xyes; then
       if test x$build_bitcoin_utils$build_bitcoind$bitcoin_enable_qt$use_tests != xnononono; then
         PKG_CHECK_MODULES([EVENT], [libevent],, [AC_MSG_ERROR(libevent not found.)])
         if test x$TARGET_OS != xwindows; then
-          PKG_CHECK_MODULES([EVENT_PTHREADS], [libevent_pthreads],, [AC_MSG_ERROR(libevent_pthreads not found.)])
+          PKG_CHECK_MODULES([EVENT_PTHREADS], [libevent_pthreads >= 2.0.21],, [AC_MSG_ERROR([libevent_pthreads version 2.0.21 or greater not found.])])
         fi
       fi
 
