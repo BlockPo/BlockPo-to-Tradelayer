@@ -3687,11 +3687,11 @@ void CMPTxList::recordTX(const uint256 &txid, bool fValid, int nBlock, unsigned 
     if (p_txlistdb->exists(txid)) PrintToLog("LEVELDB TX OVERWRITE DETECTION - %s\n", txid.ToString());
 
     const string key = txid.ToString();
-    const string value = strprintf("%u:%s:%d:%u:%lu", fValid ? 1:0, fValid ? "-": error_str(interp_ret), nBlock, type, nValue);
+    const string value = strprintf("%u:%d:%d:%u:%lu", fValid ? 1:0, fValid ? 0:interp_ret, nBlock, type, nValue);
     Status status;
 
-      PrintToLog("%s(%s, valid=%s, reason=%s, block= %d, type= %d, value= %lu)\n",
-       __func__, txid.ToString(), fValid ? "YES":"NO", fValid ? "-": error_str(interp_ret), nBlock, type, nValue);
+      PrintToLog("%s(%s, valid=%s, reason=%d, block= %d, type= %d, value= %lu)\n",
+       __func__, txid.ToString(), fValid ? "YES":"NO", fValid ? 0 : interp_ret, nBlock, type, nValue);
 
     if (pdb)
     {
@@ -3917,8 +3917,13 @@ bool mastercore::getValidMPTX(const uint256 &txid, std::string *reason, int *blo
 
     if (reason)
     {
-        if (2 <= vstr.size()) *reason = vstr[1];
-        else *reason = "-";
+        if (2 <= vstr.size())
+        {
+            const int error_code = atoi(vstr[1]);
+            *reason = error_str(error_code);
+        } else {
+            *reason = "-";
+        }
     }
 
     if (block)
