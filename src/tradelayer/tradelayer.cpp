@@ -3118,7 +3118,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
         if (interp_ret != PKT_ERROR - 2)
         {
             bool bValid = (0 <= interp_ret);
-            p_txlistdb->recordTX(tx.GetHash(), bValid, nBlock, mp_obj.getType(), mp_obj.getNewAmount());
+            p_txlistdb->recordTX(tx.GetHash(), bValid, nBlock, mp_obj.getType(), mp_obj.getNewAmount(), interp_ret);
             p_TradeTXDB->RecordTransaction(tx.GetHash(), idx);
 
         }
@@ -3678,7 +3678,7 @@ void CMPTxList::recordSendAllSubRecord(const uint256& txid, int subRecordNumber,
     if (msc_debug_txdb) PrintToLog("%s(): store: %s=%s, status: %s\n", __func__, strKey, strValue, status.ToString());
 }
 
-void CMPTxList::recordTX(const uint256 &txid, bool fValid, int nBlock, unsigned int type, uint64_t nValue)
+void CMPTxList::recordTX(const uint256 &txid, bool fValid, int nBlock, unsigned int type, uint64_t nValue, int interp_ret)
 {
     if (!pdb) return;
 
@@ -3687,11 +3687,11 @@ void CMPTxList::recordTX(const uint256 &txid, bool fValid, int nBlock, unsigned 
     if (p_txlistdb->exists(txid)) PrintToLog("LEVELDB TX OVERWRITE DETECTION - %s\n", txid.ToString());
 
     const string key = txid.ToString();
-    const string value = strprintf("%u:%d:%u:%lu", fValid ? 1:0, nBlock, type, nValue);
+    const string value = strprintf("%u:%s:%d:%u:%lu", fValid ? 1:0, fValid ? "-": error_str(interp_ret), nBlock, type, nValue);
     Status status;
 
-      PrintToLog("%s(%s, valid=%s, block= %d, type= %d, value= %lu)\n",
-       __func__, txid.ToString(), fValid ? "YES":"NO", nBlock, type, nValue);
+      PrintToLog("%s(%s, valid=%s, reason=%s, block= %d, type= %d, value= %lu)\n",
+       __func__, txid.ToString(), fValid ? "YES":"NO", fValid ? "-": error_str(interp_ret), nBlock, type, nValue);
 
     if (pdb)
     {
@@ -3896,7 +3896,7 @@ bool mastercore::isMPinBlockRange(int starting_block, int ending_block, bool bDe
 // uint64_t nNew = 0;
 //
 // if (getValidMPTX(txid, &block, &type, &nNew)) // if true -- the TX is a valid MP TX
-bool mastercore::getValidMPTX(const uint256 &txid, int *block, unsigned int *type, uint64_t *nAmended)
+bool mastercore::getValidMPTX(const uint256 &txid, std::string *reason, int *block, unsigned int *type, uint64_t *nAmended)
 {
     string result;
     int validity = 0;
@@ -3915,21 +3915,27 @@ bool mastercore::getValidMPTX(const uint256 &txid, int *block, unsigned int *typ
 
     if (1 <= vstr.size()) validity = atoi(vstr[0]);
 
+    if (reason)
+    {
+        if (2 <= vstr.size()) *reason = vstr[1];
+        else *reason = "-";
+    }
+
     if (block)
     {
-        if (2 <= vstr.size()) *block = atoi(vstr[1]);
+        if (3 <= vstr.size()) *block = atoi(vstr[2]);
         else *block = 0;
     }
 
     if (type)
     {
-        if (3 <= vstr.size()) *type = atoi(vstr[2]);
+        if (4 <= vstr.size()) *type = atoi(vstr[3]);
         else *type = 0;
     }
 
     if (nAmended)
     {
-        if (4 <= vstr.size()) *nAmended = boost::lexical_cast<boost::uint64_t>(vstr[3]);
+        if (5 <= vstr.size()) *nAmended = boost::lexical_cast<boost::uint64_t>(vstr[4]);
         else nAmended = 0;
     }
 

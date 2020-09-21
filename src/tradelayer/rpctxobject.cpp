@@ -87,12 +87,15 @@ int populateRPCTransactionObject(const CTransaction& tx, const uint256& blockHas
 
   // obtain validity - only confirmed transactions can be valid
   bool valid = false;
+  std::string reason;
   if (confirmations > 0) {
     LOCK(cs_tally);
-    valid = getValidMPTX(txid);
+    valid = getValidMPTX(txid, &reason);
     positionInBlock = p_TradeTXDB->FetchTransactionPosition(txid);
   }
+
   PrintToLog("Checking valid : %s\n", valid ? "true" : "false");
+  PrintToLog("Reason for invalid tx : %s\n", reason);
   PrintToLog("Checking positionInBlock : %d\n", positionInBlock);
 
   // populate some initial info for the transaction
@@ -117,6 +120,7 @@ int populateRPCTransactionObject(const CTransaction& tx, const uint256& blockHas
   // state and chain related information
   if (confirmations != 0 && !blockHash.IsNull()) {
     txobj.push_back(Pair("valid", valid));
+    if (!valid) txobj.push_back(Pair("invalidation reason", reason));
     txobj.push_back(Pair("blockhash", blockHash.GetHex()));
     txobj.push_back(Pair("blocktime", blockTime));
     txobj.push_back(Pair("positioninblock", positionInBlock));
@@ -555,9 +559,10 @@ void populateRPCTypeAcceptOfferBTC(CMPTransaction& tlObj, UniValue& txobj)
   int tmpblock = 0;
   uint32_t tmptype = 0;
   uint64_t amountNew = 0;
+  std::string reason;
 
   LOCK(cs_tally);
-  bool tmpValid = mastercore::getValidMPTX(tlObj.getHash(), &tmpblock, &tmptype, &amountNew);
+  bool tmpValid = mastercore::getValidMPTX(tlObj.getHash(), &reason, &tmpblock, &tmptype, &amountNew);
   if (tmpValid && amountNew > 0) amount = amountNew;
 
   txobj.push_back(Pair("propertyId", (uint64_t) propertyId));
