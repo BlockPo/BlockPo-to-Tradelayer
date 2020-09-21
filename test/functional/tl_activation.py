@@ -102,8 +102,17 @@ class ActivationBasicsTest (BitcoinTestFramework):
         params = str([addresses[0],2,0,"lihki","","","3000",array]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_sendissuancefixed",params)
         # self.log.info(out)
+        txid = out['result']
 
         self.nodes[0].generate(1)
+
+
+        self.log.info("Checking transaction invalidation")
+        params = str([txid]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_gettransaction", params)
+        # self.log.info(out)
+        assert_equal(out['result']['invalidation reason'], 'Transaction type or version not permitted')
+
 
         self.log.info("Checking the property (doesn't exist)")
         params = str([4])
