@@ -233,7 +233,7 @@ class KYCBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['hight price'], '0')
         assert_equal(out['result']['low price'], '0')
         assert_equal(out['result']['last close price'], '0')
-        assert_equal(out['result']['kyc_ids allowed'], '[1]')
+        assert_equal(out['result']['kyc_ids allowed'], '[0,1]')
 
         self.log.info("Creating oracle Contract 3")
         array = [1,2]
@@ -262,7 +262,7 @@ class KYCBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['hight price'], '0')
         assert_equal(out['result']['low price'], '0')
         assert_equal(out['result']['last close price'], '0')
-        assert_equal(out['result']['kyc_ids allowed'], '[1,2]')
+        assert_equal(out['result']['kyc_ids allowed'], '[0,1,2]')
 
         self.log.info("Sending attestation from admin address")
         params = str([addresses[0], addresses[3]]).replace("'",'"')
@@ -309,9 +309,9 @@ class KYCBasicsTest (BitcoinTestFramework):
 
         self.log.info("Trading oracle Contract 3 with no KYC")
 
-        params = str([addresses[2], "Oracle 3", "1000", "980.5", 1, "1"]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, True, "tl_tradecontract",params)
-        # self.log.info(out)
+        params = str([foreignAddr, "Oracle 3", "1000", "980.5", 1, "1"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_tradecontract",params)
+        self.log.info(out)
         assert_equal(out['error'], None)
         hash = str(out['result']).replace("'","")
 
@@ -323,6 +323,7 @@ class KYCBasicsTest (BitcoinTestFramework):
         # self.log.info(out)
         assert_equal(out['result'], [])
         assert_equal(out['error'], None)
+        
 
         self.log.info("Revoking attestation")
         params = str([addresses[0], addresses[3]]).replace("'",'"')
