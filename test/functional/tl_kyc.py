@@ -46,7 +46,7 @@ class KYCBasicsTest (BitcoinTestFramework):
         headers = {"Authorization": "Basic " + str_to_b64str(authpair)}
 
         addresses = []
-        accounts = ["john", "doe", "another", "mark"]
+        accounts = ["john", "doe", "another", "mark", "tango"]
 
         #NOTE: admin address = addresses[0]
 
@@ -292,38 +292,21 @@ class KYCBasicsTest (BitcoinTestFramework):
         foreignAddr = out['result']
         # self.log.info(out)
 
-        self.log.info("Sending 3456 dCoins to new address")
-        params = str([addresses[2], foreignAddr, 4, "3456"]).replace("'",'"')
+        self.log.info("Trying to send 3456 dCoins to new address (must fail)")
+        params = str([addresses[2], addresses[4], 4, "3456"]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_send",params)
         # self.log.info(out)
 
         self.nodes[0].generate(1)
 
         self.log.info("Checking tokens balances in new address ")
-        params = str([foreignAddr, 4]).replace("'",'"')
+        params = str([addresses[4], 4]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
         assert_equal(out['result']['balance'],'0.00000000')
         assert_equal(out['result']['reserve'],'0.00000000')
 
-        self.log.info("Trading oracle Contract 3 with no KYC")
-
-        params = str([foreignAddr, "Oracle 3", "1000", "980.5", 1, "1"]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, False, "tl_tradecontract",params)
-        self.log.info(out)
-        assert_equal(out['error'], None)
-        hash = str(out['result']).replace("'","")
-
-        self.nodes[0].generate(1)
-
-        self.log.info("Checking orderbook")
-        params = str(["Oracle 3", 1]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, True, "tl_getcontract_orderbook",params)
-        # self.log.info(out)
-        assert_equal(out['result'], [])
-        assert_equal(out['error'], None)
-        
 
         self.log.info("Revoking attestation")
         params = str([addresses[0], addresses[3]]).replace("'",'"')
