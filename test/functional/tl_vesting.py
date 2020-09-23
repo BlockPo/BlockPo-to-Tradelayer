@@ -566,7 +566,7 @@ class VestingBasicsTest (BitcoinTestFramework):
 
             self.nodes[0].generate(1)
 
-            time.sleep(0.4)
+            time.sleep(0.2)
 
             self.log.info("Checking token balance in buyer address")
             params = str([addresses[3], 4]).replace("'",'"')
@@ -588,7 +588,7 @@ class VestingBasicsTest (BitcoinTestFramework):
             assert_equal(out['result']['volume'], svolume)
             volume1 = float(out['result']['volume'])
 
-            self.nodes[0].generate(2)
+            self.nodes[0].generate(1)
 
             self.log.info("Checking vesting in in addresses[1]")
             params = str([addresses[1], 1]).replace("'",'"')
@@ -625,7 +625,7 @@ class VestingBasicsTest (BitcoinTestFramework):
             unvested2 = float(out['result']['unvested'])
             assert_equal(unvested2 + vested2, 500)
 
-            time.sleep(0.3)
+            time.sleep(0.2)
 
 
         self.log.info("Checking LTC Volume")
