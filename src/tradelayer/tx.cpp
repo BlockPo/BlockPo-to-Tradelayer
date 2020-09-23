@@ -437,7 +437,7 @@ bool CMPTransaction::interpret_CreatePropertyFixed()
         std::vector<uint8_t> vecKyc = GetNextVarIntBytes(i);
         if (!vecKyc.empty())
         {
-            int64_t num = static_cast<int64_t>(DecompressInteger(vecKyc));
+            const int64_t num = static_cast<int64_t>(DecompressInteger(vecKyc));
             kyc_Ids.push_back(num);
         }
 
@@ -575,7 +575,7 @@ bool CMPTransaction::interpret_CreatePropertyManaged()
         std::vector<uint8_t> vecKyc = GetNextVarIntBytes(i);
         if (!vecKyc.empty())
         {
-            int64_t num = static_cast<int64_t>(DecompressInteger(vecKyc));
+            const int64_t num = static_cast<int64_t>(DecompressInteger(vecKyc));
             kyc_Ids.push_back(num);
         }
 
@@ -1006,7 +1006,7 @@ bool CMPTransaction::interpret_CreateContractDex()
       std::vector<uint8_t> vecKyc = GetNextVarIntBytes(i);
       if (!vecKyc.empty())
       {
-          int64_t num = static_cast<int64_t>(DecompressInteger(vecKyc));
+          const int64_t num = static_cast<int64_t>(DecompressInteger(vecKyc));
           kyc_Ids.push_back(num);
       }
 
@@ -1626,7 +1626,7 @@ bool CMPTransaction::interpret_CreateOracleContract()
       std::vector<uint8_t> vecKyc = GetNextVarIntBytes(i);
       if (!vecKyc.empty())
       {
-          int64_t num = static_cast<int64_t>(DecompressInteger(vecKyc));
+          const int64_t num = static_cast<int64_t>(DecompressInteger(vecKyc));
           kyc_Ids.push_back(num);
       }
 
@@ -2470,27 +2470,31 @@ int CMPTransaction::logicMath_SimpleSend()
          return (PKT_ERROR_SEND -26);
      }
 
-    int kyc_id;
+    if(property != ALL)
+    {
+        int kyc_id;
 
-    if(!t_tradelistdb->checkAttestationReg(sender,kyc_id)){
-      PrintToLog("%s(): rejected: kyc ckeck for sender failed\n", __func__);
-      return (PKT_ERROR_KYC -10);
-    }
+        if(!t_tradelistdb->checkAttestationReg(sender,kyc_id)){
+          PrintToLog("%s(): rejected: kyc ckeck for sender failed\n", __func__);
+          return (PKT_ERROR_KYC -10);
+        }
 
-    if(!t_tradelistdb->kycPropertyMatch(property,kyc_id)){
-      PrintToLog("%s(): rejected: property %d can't be traded with this kyc\n", __func__, property);
-      return (PKT_ERROR_KYC -20);
-    }
+        if(!t_tradelistdb->kycPropertyMatch(property,kyc_id)){
+          PrintToLog("%s(): rejected: property %d can't be traded with this kyc\n", __func__, property);
+          return (PKT_ERROR_KYC -20);
+        }
 
 
-    if(!t_tradelistdb->checkAttestationReg(receiver,kyc_id)){
-      PrintToLog("%s(): rejected: kyc ckeck for receiver failed\n", __func__);
-      return (PKT_ERROR_KYC -10);
-    }
+        if(!t_tradelistdb->checkAttestationReg(receiver,kyc_id)){
+          PrintToLog("%s(): rejected: kyc ckeck for receiver failed\n", __func__);
+          return (PKT_ERROR_KYC -10);
+        }
 
-    if(!t_tradelistdb->kycPropertyMatch(property,kyc_id)){
-      PrintToLog("%s(): rejected: property %d can't be traded with this kyc\n", __func__, property);
-      return (PKT_ERROR_KYC -20);
+        if(!t_tradelistdb->kycPropertyMatch(property,kyc_id)){
+          PrintToLog("%s(): rejected: property %d can't be traded with this kyc\n", __func__, property);
+          return (PKT_ERROR_KYC -20);
+        }
+
     }
 
     int64_t nBalance = getMPbalance(sender, property, BALANCE);
@@ -2610,6 +2614,33 @@ int CMPTransaction::logicMath_SendAll()
         int64_t moneyAvailable = ptally->getMoney(propertyId, BALANCE);
         if (moneyAvailable > 0 && !isPropertyContract(propertyId) && propertyId != TL_PROPERTY_VESTING) {
             ++numberOfPropertiesSent;
+
+            if (propertyId != ALL)
+            {
+                int kyc_id;
+
+                if(!t_tradelistdb->checkAttestationReg(sender,kyc_id)){
+                  PrintToLog("%s(): rejected: kyc ckeck for sender failed\n", __func__);
+                  return (PKT_ERROR_KYC -10);
+                }
+
+                if(!t_tradelistdb->kycPropertyMatch(propertyId,kyc_id)){
+                  PrintToLog("%s(): rejected: property %d can't be traded with this kyc\n", __func__, propertyId);
+                  return (PKT_ERROR_KYC -20);
+                }
+
+                if(!t_tradelistdb->checkAttestationReg(receiver,kyc_id)){
+                  PrintToLog("%s(): rejected: kyc ckeck for receiver failed\n", __func__);
+                  return (PKT_ERROR_KYC -10);
+                }
+
+                if(!t_tradelistdb->kycPropertyMatch(propertyId,kyc_id)){
+                  PrintToLog("%s(): rejected: property %d can't be traded with this kyc\n", __func__, propertyId);
+                  return (PKT_ERROR_KYC -20);
+                }
+
+            }
+
             assert(update_tally_map(sender, propertyId, -moneyAvailable, BALANCE));
             assert(update_tally_map(receiver, propertyId, moneyAvailable, BALANCE));
             p_txlistdb->recordSendAllSubRecord(txid, numberOfPropertiesSent, propertyId, moneyAvailable);
@@ -2682,12 +2713,9 @@ int CMPTransaction::logicMath_CreatePropertyFixed()
     newSP.creation_block = blockHash;
     newSP.update_block = newSP.creation_block;
     newSP.init_block = block;
+    newSP.kyc.push_back(0);
 
-    for(std::vector<int64_t>::iterator it = kyc_Ids.begin(); it != kyc_Ids.end(); ++it)
-    {
-        const int64_t& aux = *it;
-        newSP.kyc.push_back(aux);
-    }
+    for_each(kyc_Ids.begin(), kyc_Ids.end(), [&newSP] (const int64_t& aux) { if (aux != 0) newSP.kyc.push_back(aux);});
 
     const uint32_t propertyId = _my_sps->putSP(newSP);
     assert(propertyId > 0);
@@ -2899,13 +2927,9 @@ int CMPTransaction::logicMath_CreatePropertyManaged()
     newSP.manual = true;
     newSP.creation_block = blockHash;
     newSP.update_block = newSP.creation_block;
+    newSP.kyc.push_back(0);
 
-
-    for(std::vector<int64_t>::iterator it = kyc_Ids.begin(); it != kyc_Ids.end(); ++it)
-    {
-        const int64_t& aux = *it;
-        newSP.kyc.push_back(aux);
-    }
+    for_each(kyc_Ids.begin(), kyc_Ids.end(), [&newSP] (const int64_t& aux) { if (aux != 0) newSP.kyc.push_back(aux);});
 
     uint32_t propertyId = _my_sps->putSP(newSP);
     assert(propertyId > 0);
@@ -3337,17 +3361,20 @@ int CMPTransaction::logicMath_MetaDExTrade()
 
   int kyc_id;
 
-  if(!t_tradelistdb->checkAttestationReg(sender,kyc_id)){
-    PrintToLog("%s(): rejected: kyc ckeck failed\n", __func__);
-    return (PKT_ERROR_KYC -10);
+  if (property != ALL)
+  {
+      if(!t_tradelistdb->checkAttestationReg(sender,kyc_id)){
+        PrintToLog("%s(): rejected: kyc ckeck failed\n", __func__);
+        return (PKT_ERROR_KYC -10);
+      }
+
+      if(!t_tradelistdb->kycPropertyMatch(property,kyc_id)){
+        PrintToLog("%s(): rejected: property %d can't be traded with this kyc\n", __func__, property);
+        return (PKT_ERROR_KYC -20);
+      }
   }
 
-  if(!t_tradelistdb->kycPropertyMatch(property,kyc_id)){
-    PrintToLog("%s(): rejected: property %d can't be traded with this kyc\n", __func__, property);
-    return (PKT_ERROR_KYC -20);
-  }
-
-  if(!t_tradelistdb->kycPropertyMatch(desired_property,kyc_id)){
+  if(propertyId != ALL && !t_tradelistdb->kycPropertyMatch(desired_property,kyc_id)){
     PrintToLog("%s(): rejected: property %d can't be traded with this kyc\n", __func__, desired_property);
     return (PKT_ERROR_METADEX -34);
   }
@@ -3431,9 +3458,9 @@ int CMPTransaction::logicMath_CreateContractDex()
   newSP.attribute_type = attribute_type;
   newSP.expirated = false;
   newSP.inverse_quoted = inverse_quoted;
+  newSP.kyc.push_back(0);
 
-  std::vector<int64_t>& kyc = newSP.kyc;
-  for_each(kyc_Ids.begin(), kyc_Ids.end(), [&kyc] (const int64_t& elem) { kyc.push_back(elem);});
+  for_each(kyc_Ids.begin(), kyc_Ids.end(), [&newSP] (const int64_t& aux) { if (aux != 0) newSP.kyc.push_back(aux);});
 
   const uint32_t propertyId = _my_sps->putSP(newSP);
   assert(propertyId > 0);
@@ -3986,11 +4013,6 @@ int CMPTransaction::logicMath_DExSell()
       return (PKT_ERROR_TRADEOFFER -22);
     }
 
-    // if(!t_tradelistdb->register(sender,4))
-    // {
-    //     PrintToLog("%s: tx disable from kyc register!\n",__func__);
-    //     return (PKT_ERROR_KYC -10);
-    // }
 
     if (MAX_INT_8_BYTES < nValue) {
         PrintToLog("%s(): rejected: value out of range or zero: %d\n", __func__, nValue);
@@ -4251,9 +4273,9 @@ int CMPTransaction::logicMath_CreateOracleContract()
     newSP.oracle_high = 0;
     newSP.oracle_low = 0;
     newSP.oracle_close = 0;
+    newSP.kyc.push_back(0);
 
-    std::vector<int64_t>& kyc = newSP.kyc;
-    for_each(kyc_Ids.begin(), kyc_Ids.end(), [&kyc] (const int64_t& elem) { kyc.push_back(elem);});
+    for_each(kyc_Ids.begin(), kyc_Ids.end(), [&newSP] (const int64_t& aux) { if (aux != 0) newSP.kyc.push_back(aux);});
 
     const uint32_t propertyId = _my_sps->putSP(newSP);
     assert(propertyId > 0);
