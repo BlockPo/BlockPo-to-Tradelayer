@@ -35,9 +35,7 @@ using namespace mastercore;
 typedef boost::multiprecision::uint128_t ui128;
 
 CMPSPInfo::Entry::Entry()
-  : prop_type(0), prev_prop_id(0), num_tokens(0), property_desired(0),
-    deadline(0), early_bird(0), percentage(0),
-    close_early(false), max_tokens(false), missedTokens(0), timeclosed(0),
+  : prop_type(0), prev_prop_id(0), num_tokens(0),
     fixed(false), manual(false) {}
 
 bool CMPSPInfo::Entry::isDivisible() const
@@ -147,7 +145,7 @@ CMPSPInfo::CMPSPInfo(const fs::path& path, bool fWipe)
   implied_tall.name = "sLTC";
   implied_tall.url = "";
   implied_tall.data = "";
-  implied_tall.kyc.push_back(0); 
+  implied_tall.kyc.push_back(0);
 
   init();
 }
@@ -533,6 +531,7 @@ void CMPSPInfo::printAll() const
     delete iter;
 }
 
+<<<<<<< HEAD
 CMPCrowd::CMPCrowd()
   : propertyId(0), nValue(0), property_desired(0), deadline(0),
     early_bird(0), percentage(0), u_created(0), i_created(0)
@@ -608,6 +607,8 @@ CMPCrowd* mastercore::getCrowd(const std::string& address)
     return static_cast<CMPCrowd *>(nullptr);
 }
 
+=======
+>>>>>>> 7d68e16... crowdsales deleted
 bool mastercore::IsPropertyIdValid(uint32_t propertyId)
 {
   // is true, because we can exchange litecoins too
@@ -681,6 +682,7 @@ bool mastercore::getEntryFromName(const std::string& name, uint32_t& propertyId,
     return false;
 }
 
+<<<<<<< HEAD
 bool mastercore::isCrowdsaleActive(uint32_t propertyId)
 {
     for (CrowdMap::const_iterator it = my_crowds.begin(); it != my_crowds.end(); ++it) {
@@ -909,6 +911,8 @@ void mastercore::eraseMaxedCrowdsale(const std::string& address, int64_t blockTi
     }
 }
 
+=======
+>>>>>>> 7d68e16... crowdsales deleted
 
 // int mastercore::addInterestPegged(int nBlockPrev, const CBlockIndex* pBlockIndex)
 // {
@@ -949,58 +953,6 @@ void mastercore::eraseMaxedCrowdsale(const std::string& address, int64_t blockTi
 //
 //     return 1;
 // }
-
-unsigned int mastercore::eraseExpiredCrowdsale(const CBlockIndex* pBlockIndex)
-{
-    if (pBlockIndex == nullptr) return 0;
-
-    const int64_t blockTime = pBlockIndex->GetBlockTime();
-    const int blockHeight = pBlockIndex->nHeight;
-    unsigned int how_many_erased = 0;
-    CrowdMap::iterator my_it = my_crowds.begin();
-
-    while (my_crowds.end() != my_it) {
-        const std::string& address = my_it->first;
-        const CMPCrowd& crowdsale = my_it->second;
-
-        if (blockTime > crowdsale.getDeadline()) {
-            PrintToLog("%s(): ERASING EXPIRED CROWDSALE from address=%s, at block %d (timestamp: %d), SP: %d (%s)\n",
-                __func__, address, blockHeight, blockTime, crowdsale.getPropertyId(), strMPProperty(crowdsale.getPropertyId()));
-
-            if (msc_debug_sp) {
-                PrintToLog("%s(): %s\n", __func__, FormatISO8601DateTime(blockTime));
-                PrintToLog("%s(): %s\n", __func__, crowdsale.toString(address));
-            }
-
-            // get sp from data struct
-            CMPSPInfo::Entry sp;
-            assert(_my_sps->getSP(crowdsale.getPropertyId(), sp));
-
-            // find missing tokens
-            int64_t missedTokens = GetMissedIssuerBonus(sp, crowdsale);
-
-            // get txdata
-            sp.historicalData = crowdsale.getDatabase();
-            sp.missedTokens = missedTokens;
-
-            // update SP with this data
-            sp.update_block = pBlockIndex->GetBlockHash();
-            assert(_my_sps->updateSP(crowdsale.getPropertyId(), sp));
-
-            // update values
-            if (missedTokens > 0) {
-                assert(update_tally_map(sp.issuer, crowdsale.getPropertyId(), missedTokens, BALANCE));
-            }
-
-            my_crowds.erase(my_it++);
-
-            ++how_many_erased;
-
-        } else my_it++;
-    }
-
-    return how_many_erased;
-}
 
 std::string mastercore::strPropertyType(uint16_t propertyType)
 {

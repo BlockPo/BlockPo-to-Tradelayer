@@ -22,7 +22,6 @@ namespace mastercore
 extern std::string GenerateConsensusString(const CMPTally& tallyObj, const std::string& address, const uint32_t propertyId); // done
 extern std::string GenerateConsensusString(const CMPOffer& offerObj, const std::string& address); // half
 extern std::string GenerateConsensusString(const CMPAccept& acceptObj, const std::string& address);
-extern std::string GenerateConsensusString(const CMPCrowd& crowdObj);
 extern std::string GenerateConsensusString(const uint32_t propertyId, const std::string& address);
 extern std::string GenerateConsensusString(const Channel& chn);
 extern std::string kycGenerateConsensusString(const std::vector<std::string>& vstr);
@@ -86,17 +85,6 @@ BOOST_AUTO_TEST_CASE(consensus_string_mdex)
             uint256S("2c9a055899147b03b2c5240a020c1f94d243a834ecc06ab8cfa504ee29d07b7d"), 1, 1, 900000);
     BOOST_CHECK_EQUAL("2c9a055899147b03b2c5240a020c1f94d243a834ecc06ab8cfa504ee29d07b7d|1PxejjeWZc9ZHph7A3SYDo2sk2Up4AcysH|31|1000000|1|2000000|900000",
             tradeB.GenerateConsensusString());
-}
-
-BOOST_AUTO_TEST_CASE(consensus_string_crowdsale)
-{
-    CMPCrowd crowdsaleA;
-    BOOST_CHECK_EQUAL("0|0|0|0|0",
-            GenerateConsensusString(crowdsaleA));
-
-    CMPCrowd crowdsaleB(77, 500000, 3, 1514764800, 10, 255, 10000, 25500);
-    BOOST_CHECK_EQUAL("77|3|1514764800|10000|25500",
-            GenerateConsensusString(crowdsaleB));
 }
 
 BOOST_AUTO_TEST_CASE(consensus_string_property_issuer)
