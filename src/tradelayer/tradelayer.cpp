@@ -148,7 +148,6 @@ CtlTransactionDB *mastercore::p_TradeTXDB;
 OfferMap mastercore::my_offers;
 AcceptMap mastercore::my_accepts;
 CMPSPInfo *mastercore::_my_sps;
-CrowdMap mastercore::my_crowds;
 
 extern MatrixTLS *pt_ndatabase;
 extern int n_cols;
@@ -1430,52 +1429,6 @@ int input_global_vars_string(const string &s)
 
   return 0;
 }
-// addr,propertyId,nValue,property_desired,deadline,early_bird,percentage,txid
-int input_mp_crowdsale_string(const std::string& s)
-{
-    std::vector<std::string> vstr;
-    boost::split(vstr, s, boost::is_any_of(" ,"), boost::token_compress_on);
-
-    if (9 > vstr.size()) return -1;
-
-    unsigned int i = 0;
-
-    const std::string sellerAddr = vstr[i++];
-    const uint32_t propertyId = boost::lexical_cast<uint32_t>(vstr[i++]);
-    const int64_t nValue = boost::lexical_cast<int64_t>(vstr[i++]);
-    const uint32_t property_desired = boost::lexical_cast<uint32_t>(vstr[i++]);
-    const int64_t deadline = boost::lexical_cast<int64_t>(vstr[i++]);
-    const uint8_t early_bird = boost::lexical_cast<unsigned int>(vstr[i++]); // lexical_cast can't handle char!
-    const uint8_t percentage = boost::lexical_cast<unsigned int>(vstr[i++]); // lexical_cast can't handle char!
-    const int64_t u_created = boost::lexical_cast<int64_t>(vstr[i++]);
-    const int64_t i_created = boost::lexical_cast<int64_t>(vstr[i++]);
-
-    CMPCrowd newCrowdsale(propertyId, nValue, property_desired, deadline, early_bird, percentage, u_created, i_created);
-
-    // load the remaining as database pairs
-    while (i < vstr.size()) {
-        std::vector<std::string> entryData;
-        boost::split(entryData, vstr[i++], boost::is_any_of("="), boost::token_compress_on);
-        if (2 != entryData.size()) return -1;
-
-        std::vector<std::string> valueData;
-        boost::split(valueData, entryData[1], boost::is_any_of(";"), boost::token_compress_on);
-
-        std::vector<int64_t> vals;
-        for (std::vector<std::string>::const_iterator it = valueData.begin(); it != valueData.end(); ++it) {
-            vals.push_back(boost::lexical_cast<int64_t>(*it));
-        }
-
-        const uint256 txHash = uint256S(entryData[0]);
-        newCrowdsale.insertDatabase(txHash, vals);
-    }
-
-    if (!my_crowds.insert(std::make_pair(sellerAddr, newCrowdsale)).second) {
-        return -1;
-    }
-
-    return 0;
-}
 
 int input_mp_contractdexorder_string(const std::string& s)
 {
@@ -1753,11 +1706,6 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
         inputLineFunc = input_globals_state_string;
         break;
 
-    case FILETYPE_CROWDSALES:
-        my_crowds.clear();
-        inputLineFunc = input_mp_crowdsale_string;
-        break;
-
     case FILETYPE_OFFERS:
         my_offers.clear();
         inputLineFunc = input_mp_offers_string;
@@ -1898,7 +1846,6 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
 static char const * const statePrefix[NUM_FILETYPES] = {
     "balances",
     "globals",
-    "crowdsales",
     "cdexorders",
     "offers",
     "mdexorders",
@@ -2116,18 +2063,6 @@ static int write_globals_state(ofstream &file, CHash256& hasher)
 
     // write the line
     file << lineOut << endl;
-
-    return 0;
-}
-
-static int write_mp_crowdsales(std::ofstream& file, CHash256& hasher)
-{
-    for (CrowdMap::const_iterator it = my_crowds.begin(); it != my_crowds.end(); ++it)
-    {
-        // decompose the key for address
-        const CMPCrowd& crowd = it->second;
-        crowd.saveCrowdSale(file, it->first, hasher);
-    }
 
     return 0;
 }
@@ -2420,10 +2355,6 @@ static int write_state_file(CBlockIndex const *pBlockIndex, int what)
         result = write_globals_state(file, hasher);
         break;
 
-    case FILETYPE_CROWDSALES:
-        result = write_mp_crowdsales(file, hasher);
-        break;
-
     case FILETYPE_CDEXORDERS:
         result = write_mp_contractdex(file, hasher);
         break;
@@ -2568,7 +2499,6 @@ int mastercore_save_state(CBlockIndex const *pBlockIndex)
     // write the new state as of the given block
     write_state_file(pBlockIndex, FILETYPE_BALANCES);
     write_state_file(pBlockIndex, FILETYPE_GLOBALS);
-    write_state_file(pBlockIndex, FILETYPE_CROWDSALES);
     write_state_file(pBlockIndex, FILETYPE_CDEXORDERS);
     write_state_file(pBlockIndex, FILETYPE_OFFERS);
     write_state_file(pBlockIndex, FILETYPE_MDEXORDERS);
@@ -2601,7 +2531,6 @@ void clear_all_state()
 
     // Memory based storage
     mp_tally_map.clear();
-    my_crowds.clear();
     my_pending.clear();
     my_offers.clear();
     my_accepts.clear();
@@ -4006,7 +3935,6 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
 
     // marginMain(pBlockIndex->nHeight);
     // addInterestPegged(nBlockPrev,pBlockIndex);
-    // eraseExpiredCrowdsale(pBlockIndex);
 
     /****************************************************************************/
     // Calling The Settlement Algorithm

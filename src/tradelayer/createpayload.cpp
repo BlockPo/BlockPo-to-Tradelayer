@@ -126,46 +126,6 @@ std::vector<unsigned char> CreatePayload_IssuanceFixed(uint16_t propertyType, ui
     return payload;
 }
 
-std::vector<unsigned char> CreatePayload_IssuanceVariable(uint16_t propertyType, uint32_t previousPropertyId, std::string& name, std::string& url, std::string& data, uint32_t propertyIdDesired, uint64_t amountPerUnit, uint64_t deadline, uint8_t earlyBonus, uint8_t issuerPercentage)
-{
-    std::vector<unsigned char> payload;
-
-    uint64_t messageType = 51;
-    uint64_t messageVer = 0;
-
-    std::vector<uint8_t> vecMessageType = CompressInteger((uint64_t)messageType);
-    std::vector<uint8_t> vecMessageVer = CompressInteger((uint64_t)messageVer);
-    std::vector<uint8_t> vecPropertyType = CompressInteger((uint64_t)propertyType);
-    std::vector<uint8_t> vecPrevPropertyId = CompressInteger((uint64_t)previousPropertyId);
-    std::vector<uint8_t> vecPropertyIdDesired = CompressInteger((uint64_t)propertyIdDesired);
-    std::vector<uint8_t> vecAmountPerUnit = CompressInteger(amountPerUnit);
-    std::vector<uint8_t> vecDeadline = CompressInteger(deadline);
-
-    if (name.size() > 255) name = name.substr(0,255);
-    if (url.size() > 255) url = url.substr(0,255);
-    if (data.size() > 255) data = data.substr(0,255);
-
-
-    payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
-    payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
-    payload.insert(payload.end(), vecPropertyType.begin(), vecPropertyType.end());
-    payload.insert(payload.end(), vecPrevPropertyId.begin(), vecPrevPropertyId.end());
-    payload.insert(payload.end(), name.begin(), name.end());
-    payload.push_back('\0');
-    payload.insert(payload.end(), url.begin(), url.end());
-    payload.push_back('\0');
-    payload.insert(payload.end(), data.begin(), data.end());
-    payload.push_back('\0');
-    payload.insert(payload.end(), vecPropertyIdDesired.begin(), vecPropertyIdDesired.end());
-    payload.insert(payload.end(), vecAmountPerUnit.begin(), vecAmountPerUnit.end());
-    payload.insert(payload.end(), vecDeadline.begin(), vecDeadline.end());
-    PUSH_BACK_BYTES(payload, earlyBonus);
-    PUSH_BACK_BYTES(payload, issuerPercentage);
-
-    return payload;
-}
-
-
 std::vector<unsigned char> CreatePayload_IssuanceManaged(uint16_t propertyType, uint32_t previousPropertyId, std::string& name, std::string& url, std::string& data, std::vector<int>& kycVec)
 {
     std::vector<unsigned char> payload;
@@ -198,24 +158,6 @@ std::vector<unsigned char> CreatePayload_IssuanceManaged(uint16_t propertyType, 
     payload.push_back('\0');
 
     for_each(auxVec.begin(), auxVec.end(), [&payload] (const std::vector<uint8_t>& value) { payload_insert(value, payload); });
-
-    return payload;
-}
-
-std::vector<unsigned char> CreatePayload_CloseCrowdsale(uint32_t propertyId)
-{
-    std::vector<unsigned char> payload;
-
-    uint64_t messageType = 53;
-    uint64_t messageVer = 0;
-
-    std::vector<uint8_t> vecMessageType = CompressInteger((uint64_t)messageType);
-    std::vector<uint8_t> vecMessageVer = CompressInteger((uint64_t)messageVer);
-    std::vector<uint8_t> vecPropertyId = CompressInteger((uint64_t)propertyId);
-
-    payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
-    payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
-    payload.insert(payload.end(), vecPropertyId.begin(), vecPropertyId.end());
 
     return payload;
 }

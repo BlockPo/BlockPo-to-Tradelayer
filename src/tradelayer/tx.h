@@ -49,19 +49,19 @@ private:
     unsigned short version; // = MP_TX_PKT_V0;
 
     // SimpleSend, SendToOwners, TradeOffer, MetaDEx, AcceptOfferBTC,
-    // CreatePropertyFixed, CreatePropertyVariable, GrantTokens, RevokeTokens
+    // CreatePropertyFixed, GrantTokens, RevokeTokens
     uint64_t nValue;
     uint64_t nNewValue;
 
     // SimpleSend, SendToOwners, TradeOffer, MetaDEx, AcceptOfferBTC,
-    // CreatePropertyFixed, CreatePropertyVariable, CloseCrowdsale,
+    // CreatePropertyFixed,
     // CreatePropertyMananged, GrantTokens, RevokeTokens, ChangeIssuer
     unsigned int property;
 
-    // CreatePropertyFixed, CreatePropertyVariable, CreatePropertyMananged, MetaDEx, SendAll
+    // CreatePropertyFixed,  CreatePropertyMananged, MetaDEx, SendAll
     unsigned int distribution_property;
 
-    // CreatePropertyFixed, CreatePropertyVariable, CreatePropertyMananged
+    // CreatePropertyFixed, CreatePropertyMananged
     unsigned short prop_type;
     unsigned int prev_prop_id;
     char category[SP_STRING_FIELD_LEN];
@@ -167,8 +167,6 @@ private:
     bool interpret_SimpleSend();
     bool interpret_SendAll();
     bool interpret_CreatePropertyFixed();
-    bool interpret_CreatePropertyVariable();
-    bool interpret_CloseCrowdsale();
     bool interpret_CreatePropertyManaged();
     bool interpret_GrantTokens();
     bool interpret_RevokeTokens();
@@ -222,8 +220,6 @@ private:
     int logicMath_SimpleSend();
     int logicMath_SendAll();
     int logicMath_CreatePropertyFixed();
-    int logicMath_CreatePropertyVariable();
-    int logicMath_CloseCrowdsale();
     int logicMath_CreatePropertyManaged();
     int logicMath_GrantTokens();
     int logicMath_RevokeTokens();
@@ -269,10 +265,6 @@ private:
     int logicMath_MetaDExCancel_ByPair();
     int logicMath_MetaDExCancel_ByPrice();
 
-    /**
-     * Logic helpers
-     */
-    int logicHelper_CrowdsaleParticipation();
 
 public:
   //! DEx and MetaDEx action values

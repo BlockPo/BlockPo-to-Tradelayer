@@ -233,73 +233,6 @@ UniValue tl_sendall(const JSONRPCRequest& request)
     }
 }
 
-UniValue tl_sendissuancecrowdsale(const JSONRPCRequest& request)
-{
-    if (request.params.size() != 11 || request.fHelp)
-        throw runtime_error(
-            "tl_sendissuancecrowdsale \"fromaddress\" type previousid \"name\" \"url\" \"data\" propertyiddesired tokensperunit deadline ( earlybonus issuerpercentage )\n"
-
-            "Create new tokens as crowdsale."
-
-            "\nArguments:\n"
-            "1. fromaddress          (string, required) the address to send from\n"
-            "2. type                 (number, required) the type of the tokens to create: (1 for indivisible tokens, 2 for divisible tokens)\n"
-            "3. previousid           (number, required) an identifier of a predecessor token (0 for new crowdsales)\n"
-            "4. name                 (string, required) the name of the new tokens to create\n"
-            "5. url                  (string, required) an URL for further information about the new tokens (can be \"\")\n"
-            "6. data                 (string, required) a description for the new tokens (can be \"\")\n"
-            "7. propertyiddesired   (number, required) the identifier of a token eligible to participate in the crowdsale\n"
-            "8. tokensperunit       (string, required) the amount of tokens granted per unit invested in the crowdsale\n"
-            "9. deadline            (number, required) the deadline of the crowdsale as Unix timestamp\n"
-            "10. earlybonus          (number, required) an early bird bonus for participants in percent per week\n"
-            "11. issuerpercentage    (number, required) a percentage of tokens that will be granted to the issuer\n"
-
-            "\nResult:\n"
-            "\"hash\"                  (string) the hex-encoded transaction hash\n"
-
-            "\nExamples:\n"
-            + HelpExampleCli("tl_sendissuancecrowdsale", "\"3JYd75REX3HXn1vAU83YuGfmiPXW7BpYXo\" 2 1 0 \"Companies\" \"Bitcoin Mining\" \"Quantum Miner\" \"\" \"\" 2 \"100\" 1483228800 30 2")
-            + HelpExampleRpc("tl_sendissuancecrowdsale", "\"3JYd75REX3HXn1vAU83YuGfmiPXW7BpYXo\", 2, 1, 0, \"Companies\", \"Bitcoin Mining\", \"Quantum Miner\", \"\", \"\", 2, \"100\", 1483228800, 30, 2")
-        );
-
-    // obtain parameters & info
-    const std::string fromAddress = ParseAddress(request.params[0]);
-    uint16_t type = ParsePropertyType(request.params[1]);
-    uint32_t previousId = ParsePreviousPropertyId(request.params[2]);
-    std::string name = ParseText(request.params[3]);
-    std::string url = ParseText(request.params[4]);
-    std::string data = ParseText(request.params[5]);
-    uint32_t propertyIdDesired = ParsePropertyId(request.params[6]);
-    int64_t numTokens = ParseAmount(request.params[7], type);
-    int64_t deadline = ParseDeadline(request.params[8]);
-    uint8_t earlyBonus = ParseEarlyBirdBonus(request.params[9]);
-    uint8_t issuerPercentage = ParseIssuerBonus(request.params[10]);
-
-    // perform checks
-    RequirePropertyName(name);
-    RequireExistingProperty(propertyIdDesired);
-    RequireNotContract(propertyIdDesired);
-
-    // create a payload for the transaction
-    std::vector<unsigned char> payload = CreatePayload_IssuanceVariable(type, previousId, name, url, data, propertyIdDesired, numTokens, deadline, earlyBonus, issuerPercentage);
-
-    // request the wallet build the transaction (and if needed commit it)
-    uint256 txid;
-    std::string rawHex;
-    int result = WalletTxBuilder(fromAddress, "", 0, payload, txid, rawHex, autoCommit);
-
-    // check error and return the txid (or raw hex depending on autocommit)
-    if (result != 0) {
-        throw JSONRPCError(result, error_str(result));
-    } else {
-        if (!autoCommit) {
-            return rawHex;
-        } else {
-            return txid.GetHex();
-        }
-    }
-}
-
 UniValue tl_sendissuancefixed(const JSONRPCRequest& request)
 {
     if (request.params.size() != 8 || request.fHelp)
@@ -516,56 +449,6 @@ UniValue tl_sendrevoke(const JSONRPCRequest& request)
 
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_Revoke(propertyId, amount);
-
-    // request the wallet build the transaction (and if needed commit it)
-    uint256 txid;
-    std::string rawHex;
-    int result = WalletTxBuilder(fromAddress, "", 0, payload, txid, rawHex, autoCommit);
-
-    // check error and return the txid (or raw hex depending on autocommit)
-    if (result != 0) {
-        throw JSONRPCError(result, error_str(result));
-    } else {
-        if (!autoCommit) {
-            return rawHex;
-        } else {
-            return txid.GetHex();
-        }
-    }
-}
-
-UniValue tl_sendclosecrowdsale(const JSONRPCRequest& request)
-{
-    if (request.params.size() != 2 || request.fHelp)
-        throw runtime_error(
-            "tl_sendclosecrowdsale \"fromaddress\" propertyid\n"
-
-            "\nManually close a crowdsale.\n"
-
-            "\nArguments:\n"
-            "1. fromaddress          (string, required) the address associated with the crowdsale to close\n"
-            "2. propertyid           (number, required) the identifier of the crowdsale to close\n"
-
-            "\nResult:\n"
-            "\"hash\"                  (string) the hex-encoded transaction hash\n"
-
-            "\nExamples:\n"
-            + HelpExampleCli("tl_sendclosecrowdsale", "\"3JYd75REX3HXn1vAU83YuGfmiPXW7BpYXo\" 70")
-            + HelpExampleRpc("tl_sendclosecrowdsale", "\"3JYd75REX3HXn1vAU83YuGfmiPXW7BpYXo\", 70")
-        );
-
-    // obtain parameters & info
-    const std::string fromAddress = ParseAddress(request.params[0]);
-    uint32_t propertyId = ParsePropertyId(request.params[1]);
-
-    // perform checks
-    RequireExistingProperty(propertyId);
-    RequireCrowdsale(propertyId);
-    RequireActiveCrowdsale(propertyId);
-    RequireTokenIssuer(fromAddress, propertyId);
-
-    // create a payload for the transaction
-    std::vector<unsigned char> payload = CreatePayload_CloseCrowdsale(propertyId);
 
     // request the wallet build the transaction (and if needed commit it)
     uint256 txid;
@@ -2314,12 +2197,10 @@ static const CRPCCommand commands[] =
     { "trade layer (transaction creation)", "tl_sendrawtx",                    &tl_sendrawtx,                       {} },
     { "trade layer (transaction creation)", "tl_send",                         &tl_send,                            {} },
     { "trade layer (transaction creation)", "tl_sendvesting",                  &tl_sendvesting,                     {} },
-    { "trade layer (transaction creation)", "tl_sendissuancecrowdsale",        &tl_sendissuancecrowdsale,           {} },
     { "trade layer (transaction creation)", "tl_sendissuancefixed",            &tl_sendissuancefixed,               {} },
     { "trade layer (transaction creation)", "tl_sendissuancemanaged",          &tl_sendissuancemanaged,             {} },
     { "trade layer (transaction creation)", "tl_sendgrant",                    &tl_sendgrant,                       {} },
     { "trade layer (transaction creation)", "tl_sendrevoke",                   &tl_sendrevoke,                      {} },
-    { "trade layer (transaction creation)", "tl_sendclosecrowdsale",           &tl_sendclosecrowdsale,              {} },
     { "trade layer (transaction creation)", "tl_sendchangeissuer",             &tl_sendchangeissuer,                {} },
     { "trade layer (transaction creation)", "tl_sendall",                      &tl_sendall,                         {} },
     { "hidden",                             "tl_senddeactivation",             &tl_senddeactivation,                {} },

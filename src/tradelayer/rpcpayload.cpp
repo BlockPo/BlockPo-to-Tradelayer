@@ -67,50 +67,6 @@ UniValue tl_createpayload_sendall(const JSONRPCRequest& request)
 
 }
 
-UniValue tl_createpayload_issuancecrowdsale(const JSONRPCRequest& request)
-{
-    if (request.params.size() != 10 || request.fHelp)
-        throw runtime_error(
-            "tl_createpayload_issuancecrowdsale \" type previousid \"name\" \"url\" \"data\" propertyiddesired tokensperunit deadline ( earlybonus issuerpercentage )\n"
-
-            "Payload to create crowdsale."
-
-            "\nArguments:\n"
-            "1. type                 (number, required) the type of the tokens to create: (1 for indivisible tokens, 2 for divisible tokens)\n"
-            "2. previousid           (number, required) an identifier of a predecessor token (0 for new crowdsales)\n"
-            "3. name                 (string, required) the name of the new tokens to create\n"
-            "4. url                  (string, required) an URL for further information about the new tokens (can be \"\")\n"
-            "5. data                 (string, required) a description for the new tokens (can be \"\")\n"
-            "6. propertyiddesired    (number, required) the identifier of a token eligible to participate in the crowdsale\n"
-            "7. tokensperunit        (string, required) the amount of tokens granted per unit invested in the crowdsale\n"
-            "8. deadline             (number, required) the deadline of the crowdsale as Unix timestamp\n"
-            "9. earlybonus           (number, required) an early bird bonus for participants in percent per week\n"
-            "10. issuerpercentage    (number, required) a percentage of tokens that will be granted to the issuer\n"
-
-            "\nResult:\n"
-            "\"payload\"             (string) the hex-encoded payload\n"
-
-            "\nExamples:\n"
-            + HelpExampleCli("tl_createpayload_issuancecrowdsale"," \" 2 1 0 \"Companies\" \"Bitcoin Mining\" \"Quantum Miner\" \"\" \"\" 2 \"100\" 1483228800 30 2")
-            + HelpExampleRpc("tl_createpayload_issuancecrowdsale", " \"2, 1, 0, \"Companies\", \"Bitcoin Mining\", \"Quantum Miner\", \"\", \"\", 2, \"100\", 1483228800, 30, 2")
-        );
-
-    uint16_t type = ParsePropertyType(request.params[0]);
-    uint32_t previousId = ParsePreviousPropertyId(request.params[1]);
-    std::string name = ParseText(request.params[2]);
-    std::string url = ParseText(request.params[3]);
-    std::string data = ParseText(request.params[4]);
-    uint32_t propertyIdDesired = ParsePropertyId(request.params[5]);
-    int64_t numTokens = ParseAmount(request.params[6], type);
-    int64_t deadline = ParseDeadline(request.params[7]);
-    uint8_t earlyBonus = ParseEarlyBirdBonus(request.params[8]);
-    uint8_t issuerPercentage = ParseIssuerBonus(request.params[9]);
-
-    std::vector<unsigned char> payload = CreatePayload_IssuanceVariable(type, previousId, name, url, data, propertyIdDesired, numTokens, deadline, earlyBonus, issuerPercentage);
-
-    return HexStr(payload.begin(), payload.end());
-}
-
 UniValue tl_createpayload_issuancefixed(const JSONRPCRequest& request)
 {
     if (request.params.size() != 7 || request.fHelp)
@@ -245,32 +201,6 @@ UniValue tl_createpayload_sendrevoke(const JSONRPCRequest& request)
     int64_t amount = ParseAmount(request.params[1], isPropertyDivisible(propertyId));
 
     std::vector<unsigned char> payload = CreatePayload_Revoke(propertyId, amount);
-
-    return HexStr(payload.begin(), payload.end());
-}
-
-UniValue tl_createpayload_closecrowdsale(const JSONRPCRequest& request)
-{
-    if (request.params.size() != 1 || request.fHelp)
-        throw runtime_error(
-            "tl_createpayload_closecrowdsale \" propertyid\n"
-
-            "\nPayload to Manually close a crowdsale.\n"
-
-            "\nArguments:\n"
-            "1. propertyid           (number, required) the identifier of the crowdsale to close\n"
-
-            "\nResult:\n"
-            "\"payload\"             (string) the hex-encoded payload\n"
-
-            "\nExamples:\n"
-            + HelpExampleCli("tl_createpayload_closecrowdsale", "\" 70")
-            + HelpExampleRpc("tl_createpayload_closecrowdsale", "\", 70")
-        );
-
-    uint32_t propertyId = ParsePropertyId(request.params[0]);
-
-    std::vector<unsigned char> payload = CreatePayload_CloseCrowdsale(propertyId);
 
     return HexStr(payload.begin(), payload.end());
 }
@@ -1259,12 +1189,10 @@ static const CRPCCommand commands[] =
     //  -------------------------------- -----------------------------------------       ----------------------------------------        ----------
     { "trade layer (payload creation)", "tl_createpayload_simplesend",                    &tl_createpayload_simplesend,                      {}   },
     { "trade layer (payload creation)", "tl_createpayload_sendall",                       &tl_createpayload_sendall,                         {}   },
-    { "trade layer (payload creation)", "tl_createpayload_issuancecrowdsale",             &tl_createpayload_issuancecrowdsale,               {}   },
     { "trade layer (payload creation)", "tl_createpayload_issuancefixed",                 &tl_createpayload_issuancefixed,                   {}   },
     { "trade layer (payload creation)", "tl_createpayload_issuancemanaged",               &tl_createpayload_issuancemanaged,                 {}   },
     { "trade layer (payload creation)", "tl_createpayload_sendgrant",                     &tl_createpayload_sendgrant,                       {}   },
     { "trade layer (payload creation)", "tl_createpayload_sendrevoke",                    &tl_createpayload_sendrevoke,                      {}   },
-    { "trade layer (payload creation)", "tl_createpayload_closecrowdsale",                &tl_createpayload_closecrowdsale,                  {}   },
     { "trade layer (payload creation)", "tl_createpayload_changeissuer",                  &tl_createpayload_changeissuer,                    {}   },
     { "trade layer (payload creation)", "tl_createpayload_sendactivation",                &tl_createpayload_sendactivation,                  {}   },
     { "trade layer (payload creation)", "tl_createpayload_senddeactivation",              &tl_createpayload_senddeactivation,                {}   },
