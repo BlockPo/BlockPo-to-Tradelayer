@@ -4008,10 +4008,16 @@ int mastercore_handler_block_end(int nBlockNow, CBlockIndex const * pBlockIndex,
        checkpointValid = VerifyCheckpoint(nBlockNow, pBlockIndex->GetBlockHash());
        if (!checkpointValid) {
            // failed checkpoint, can't be trusted to provide valid data - shutdown client
-           const std::string msg = strprintf("Shutting down due to failed checkpoint for block %d (hash %s)\n", nBlockNow, pBlockIndex->GetBlockHash().GetHex());
+           const std::string& msg = strprintf(
+                   "Shutting down due to failed checkpoint for block %d (hash %s). "
+                   "Please restart with -startclean flag and if this doesn't work, please reach out to the support.\n",
+                   nBlockNow, pBlockIndex->GetBlockHash().GetHex());
            PrintToLog(msg);
-          //     if (!GetBoolArg("-overrideforcedshutdown", false)) AbortNode(msg, msg);
-          // TODO: fix AbortNode to be compatible with litecoin 16.0.3
+           if (!gArgs.GetBoolArg("-overrideforcedshutdown", false)) {
+               fs::path persistPath = GetDataDir() / "OCL_persist";
+               if (fs::exists(persistPath)) fs::remove_all(persistPath); // prevent the node being restarted without a reparse after forced shutdown
+               DoAbortNode(msg, msg);
+           }
        }
 
      // check that pending transactions are still in the mempool

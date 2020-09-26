@@ -3277,7 +3277,7 @@ int CMPTransaction::logicMath_Alert()
     }
 
     // we have a new alert, fire a notify event if needed
-    // TODO AlertNotify(alert_text);
+    DoWarning(alert_text);
 
     return 0;
 }
