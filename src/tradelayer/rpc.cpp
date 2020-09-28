@@ -308,7 +308,7 @@ void ContractDexObjectsToJSON(std::vector<CMPContractDex>& vContractDexObjs, Uni
 // obtain the payload for a transaction
 UniValue tl_getpayload(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 1 || request.fHelp)
+    if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
             "tl_getpayload \"txid\"\n"
             "\nGet the payload for an Trade Layer transaction.\n"
@@ -355,7 +355,7 @@ UniValue tl_getpayload(const JSONRPCRequest& request)
 // determine whether to automatically commit transactions
 UniValue tl_setautocommit(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 1 || request.fHelp)
+    if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
             "tl_setautocommit flag\n"
             "\nSets the global flag that determines whether transactions are automatically committed and broadcast.\n"
@@ -380,7 +380,7 @@ UniValue mscrpc(const JSONRPCRequest& request)
     int extra = 0;
     int extra2 = 0, extra3 = 0;
 
-    if (request.params.size() > 3 || request.fHelp)
+    if (request.fHelp || request.params.size() > 3)
         throw runtime_error(
             "mscrpc\n"
             "\nReturns the number of blocks in the longest block chain.\n"
@@ -561,7 +561,7 @@ UniValue mscrpc(const JSONRPCRequest& request)
 // display an MP balance via RPC
 UniValue tl_getbalance(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 2 || request.fHelp)
+    if (request.fHelp || request.params.size() != 2)
         throw runtime_error(
             "tl_getbalance \"address\" propertyid\n"
             "\nReturns the token balance for a given address and property.\n"
@@ -593,7 +593,7 @@ UniValue tl_getbalance(const JSONRPCRequest& request)
 // display an unvested balance via RPC
 UniValue tl_getunvested(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 1 || request.fHelp)
+    if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
             "tl_getunvested \"address\" \n"
             "\nReturns the token balance for unvested ALLs (via vesting tokens).\n"
@@ -621,7 +621,7 @@ UniValue tl_getunvested(const JSONRPCRequest& request)
 
 UniValue tl_getreserve(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 2 || request.fHelp)
+    if (request.fHelp || request.params.size() != 2)
         throw runtime_error(
             "tl_getmargin \"address\" propertyid\n"
             "\nReturns the token reserve account using in futures contracts, for a given address and property.\n"
@@ -652,7 +652,7 @@ UniValue tl_getreserve(const JSONRPCRequest& request)
 
 UniValue tl_get_channelreserve(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 2 || request.fHelp)
+    if (request.fHelp || request.params.size() != 2)
         throw runtime_error(
             "tl_getchannelreserve \"address\" propertyid\n"
             "\nReturns the token reserve account for a given channel address.\n"
@@ -682,7 +682,7 @@ UniValue tl_get_channelreserve(const JSONRPCRequest& request)
 
 UniValue tl_get_channelremaining(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 3 || request.fHelp)
+    if (request.fHelp || request.params.size() != 3)
         throw runtime_error(
             "tl_getchannelremaining \"address\" propertyid\n"
             "\nReturns the token reserve account for a given single address in channel.\n"
@@ -722,7 +722,7 @@ UniValue tl_get_channelremaining(const JSONRPCRequest& request)
 
 UniValue tl_getchannel_info(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 1 || request.fHelp)
+    if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
             "tl_getchannel_info \"address\" \n"
             "\nReturns all multisig channel info.\n"
@@ -750,7 +750,7 @@ UniValue tl_getchannel_info(const JSONRPCRequest& request)
 
 UniValue tl_getallbalancesforid(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 1 || request.fHelp)
+    if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
             "tl_getallbalancesforid propertyid\n"
             "\nReturns a list of token balances for a given currency or property identifier.\n"
@@ -807,7 +807,7 @@ UniValue tl_getallbalancesforid(const JSONRPCRequest& request)
 
 UniValue tl_getallbalancesforaddress(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 1 || request.fHelp)
+    if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
             "tl_getallbalancesforaddress \"address\"\n"
             "\nReturns a list of all token balances for a given address.\n"
@@ -857,7 +857,7 @@ UniValue tl_getallbalancesforaddress(const JSONRPCRequest& request)
 
 UniValue tl_getproperty(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 1 || request.fHelp)
+    if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
             "tl_getproperty propertyid\n"
             "\nReturns details for about the tokens or smart property to lookup.\n"
@@ -1157,7 +1157,7 @@ UniValue tl_list_oracles(const JSONRPCRequest& request)
 
 UniValue tl_getgrants(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 1 || request.fHelp)
+    if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
             "tl_getgrants propertyid\n"
             "\nReturns information about granted and revoked units of managed tokens.\n"
@@ -1239,7 +1239,7 @@ UniValue tl_getgrants(const JSONRPCRequest& request)
 
 UniValue tl_listblocktransactions(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 1 || request.fHelp)
+    if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
             "tl_listblocktransactions index\n"
             "\nLists all Trade Layer transactions in a block.\n"
@@ -1290,7 +1290,7 @@ UniValue tl_listblocktransactions(const JSONRPCRequest& request)
 
 UniValue tl_gettransaction(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 1 || request.fHelp)
+  if (request.fHelp || request.params.size() != 1)
     throw runtime_error(
 			"tl_gettransaction \"txid\"\n"
 			"\nGet detailed information about an Trade Layer transaction.\n"
@@ -1327,7 +1327,7 @@ UniValue tl_gettransaction(const JSONRPCRequest& request)
 
 UniValue tl_listtransactions(const JSONRPCRequest& request)
 {
-    if (request.params.size() > 5 || request.fHelp)
+    if (request.fHelp || request.params.size() > 5)
         throw runtime_error(
             "tl_listtransactions ( \"address\" count skip startblock endblock )\n"
             "\nList wallet transactions, optionally filtered by an address and block boundaries.\n"
@@ -1408,7 +1408,7 @@ UniValue tl_listtransactions(const JSONRPCRequest& request)
 
 UniValue tl_listpendingtransactions(const JSONRPCRequest& request)
 {
-    if (request.params.size() > 1 || request.fHelp)
+    if (request.fHelp || request.params.size() > 1)
         throw runtime_error(
             "tl_listpendingtransactions ( \"address\" )\n"
             "\nReturns a list of unconfirmed Trade Layer transactions, pending in the memory pool.\n"
@@ -1670,7 +1670,7 @@ bool FullPositionToJSON(const std::string& address, uint32_t property, UniValue&
 
 UniValue tl_getfullposition(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 2 || request.fHelp) {
+  if (request.fHelp || request.params.size() != 2) {
     throw runtime_error(
 			"tl_getfullposition \"address\" propertyid\n"
 			"\nReturns the full position for the future contract for a given address and property.\n"
@@ -1751,7 +1751,7 @@ UniValue tl_getfullposition(const JSONRPCRequest& request)
 
 UniValue tl_getposition(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 2 || request.fHelp)
+  if (request.fHelp || request.params.size() != 2)
     throw runtime_error(
 			"tl_getbalance \"address\" propertyid\n"
 			"\nReturns the position for the future contract for a given address and property.\n"
@@ -1781,7 +1781,7 @@ UniValue tl_getposition(const JSONRPCRequest& request)
 
 UniValue tl_getcontract_reserve(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 2 || request.fHelp)
+    if (request.fHelp || request.params.size() != 2)
         throw runtime_error(
             "tl_getcotract_reserve \"address\" propertyid\n"
             "\nReturns the reserves contracts for the future contract for a given address and property.\n"
@@ -1811,7 +1811,7 @@ UniValue tl_getcontract_reserve(const JSONRPCRequest& request)
 
 UniValue tl_getorderbook(const JSONRPCRequest& request)
 {
-    if (request.params.size() < 1 || request.params.size() > 2 || request.fHelp)
+    if (request.fHelp || request.params.size() < 1 || request.params.size() > 2)
         throw runtime_error(
             "tl_getorderbook propertyid ( propertyid )\n"
             "\nList active offers on the distributed token exchange.\n"
@@ -1881,7 +1881,7 @@ UniValue tl_getorderbook(const JSONRPCRequest& request)
 
 UniValue tl_getcontract_orderbook(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 2 || request.fHelp)
+  if (request.fHelp || request.params.size() != 2)
     throw runtime_error(
 			"tl_getcontract_orderbook contractid tradingaction\n"
 			"\nList active offers on the distributed futures contracts exchange.\n"
@@ -1937,7 +1937,7 @@ UniValue tl_getcontract_orderbook(const JSONRPCRequest& request)
 
 UniValue tl_gettradehistory(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 1 || request.fHelp)
+  if (request.fHelp || request.params.size() != 1)
     throw runtime_error(
 			"tl_gettradehistory contractid propertyid ( count )\n"
 			"\nRetrieves the history of trades on the distributed contract exchange for the specified market.\n"
@@ -1980,7 +1980,7 @@ UniValue tl_gettradehistory(const JSONRPCRequest& request)
 
 UniValue tl_gettradehistory_unfiltered(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 1 || request.fHelp)
+    if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
             "tl_gettradehistory contractid propertyid ( count )\n"
             "\nRetrieves the history of trades on the distributed contract exchange for the specified market.\n"
@@ -2022,7 +2022,7 @@ UniValue tl_gettradehistory_unfiltered(const JSONRPCRequest& request)
 
 UniValue tl_getpeggedhistory(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 1 || request.fHelp)
+    if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
             "tl_getpeggedhistory propertyid ( count )\n"
             "\nRetrieves the history of amounts created for a given pegged .\n"
@@ -2093,15 +2093,13 @@ UniValue tl_getallprice(const JSONRPCRequest& request)
         allPrice = it->second;
     }
 
-    PrintToLog("%s(): allPrice: %d\n",__func__, allPrice);
-
     balanceObj.push_back(Pair("unitprice", FormatDivisibleMP((uint64_t)allPrice)));
     return balanceObj;
 }
 
 UniValue tl_getupnl(const JSONRPCRequest& request)
 {
-  if (request.params.size() < 2 || request.params.size() > 3 || request.fHelp) {
+  if (request.fHelp || request.params.size() < 2 || request.params.size() > 3) {
     throw runtime_error(
 			"tl_getupnl address name\n"
 			"\nRetrieves the unrealized PNL for trades on the distributed contract exchange for the specified market.\n"
@@ -2149,7 +2147,7 @@ UniValue tl_getupnl(const JSONRPCRequest& request)
 
 UniValue tl_getpnl(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 2 || request.fHelp)
+  if (request.fHelp || request.params.size() != 2)
     throw runtime_error(
 			"tl_getpnl address contractid\n"
 			"\nRetrieves the realized PNL for trades on the distributed contract exchange for the specified market.\n"
@@ -2200,7 +2198,7 @@ UniValue tl_getpnl(const JSONRPCRequest& request)
 
 UniValue tl_getmarketprice(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 1 || request.fHelp)
+  if (request.fHelp || request.params.size() != 1)
     throw runtime_error(
 			"tl_getmarketprice addres contractid\n"
 			"\nRetrieves the last match price on the distributed contract exchange for the specified market.\n"
@@ -2237,7 +2235,7 @@ UniValue tl_getmarketprice(const JSONRPCRequest& request)
 
 UniValue tl_getactivedexsells(const JSONRPCRequest& request)
 {
-    if (request.params.size() > 1 || request.fHelp)
+    if (request.fHelp || request.params.size() > 1)
         throw runtime_error(
             "tl_getactivedexsells ( address )\n"
             "\nReturns currently active offers on the distributed exchange.\n"
@@ -2383,7 +2381,7 @@ UniValue tl_getactivedexsells(const JSONRPCRequest& request)
 
 UniValue tl_getsum_upnl(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 1 || request.fHelp)
+  if (request.fHelp || request.params.size() != 1)
     throw runtime_error(
 			"tl_getsum_upnl addres \n"
 			"\nRetrieve the global upnl for an address.\n"
@@ -2414,7 +2412,7 @@ UniValue tl_getsum_upnl(const JSONRPCRequest& request)
 
 UniValue tl_check_commits(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 1 || request.fHelp)
+  if (request.fHelp || request.params.size() != 1)
     throw runtime_error(
 			"tl_check_commits sender address \n"
 			"\nRetrieves the history of commits in the channel\n"
@@ -2453,7 +2451,7 @@ UniValue tl_check_commits(const JSONRPCRequest& request)
 
 UniValue tl_check_withdrawals(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 1 || request.fHelp)
+  if (request.fHelp || request.params.size() != 1)
     throw runtime_error(
 			"tl_check_withdrawals senderAddress \n"
 			"\nRetrieves the history of withdrawal for a given address in the channel\n"
@@ -2494,7 +2492,7 @@ UniValue tl_check_withdrawals(const JSONRPCRequest& request)
 
 UniValue tl_check_kyc(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 1 || request.fHelp)
+  if (request.fHelp || request.params.size() != 1)
     throw runtime_error(
 			"tl_check_kyc senderAddress \n"
 			"\nKYC check for given address \n"
@@ -2529,7 +2527,7 @@ UniValue tl_check_kyc(const JSONRPCRequest& request)
 
 UniValue tl_getcache(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 1 || request.fHelp)
+    if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
             "tl_getmargin \"address\" propertyid\n"
             "\nReturns the fee cach for a given property.\n"
@@ -2559,7 +2557,7 @@ UniValue tl_getcache(const JSONRPCRequest& request)
 
 UniValue tl_getoraclecache(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 1 || request.fHelp)
+    if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
             "tl_getmargin \"address\" propertyid\n"
             "\nReturns the oracle fee cache for a given property.\n"
@@ -2589,7 +2587,7 @@ UniValue tl_getoraclecache(const JSONRPCRequest& request)
 
 UniValue tl_getalltxonblock(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 1 || request.fHelp)
+    if (request.fHelp || request.params.size() != 1)
       throw runtime_error(
 			"tl_getalltxonblock\"block\"\n"
 			"\nGet detailed information about every Trade Layer transaction in block.\n"
@@ -2650,7 +2648,7 @@ UniValue tl_getalltxonblock(const JSONRPCRequest& request)
 
 UniValue tl_getdexvolume(const JSONRPCRequest& request)
 {
-    if (request.params.size() < 2 || request.fHelp)
+    if (request.fHelp || request.params.size() < 2)
         throw runtime_error(
             "tl_getdexvolume \n"
             "\nReturns the LTC volume in sort amount of blocks.\n"
@@ -2691,7 +2689,7 @@ UniValue tl_getdexvolume(const JSONRPCRequest& request)
 
 UniValue tl_getmdexvolume(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 3 || request.fHelp)
+    if (request.fHelp || request.params.size() != 3)
         throw runtime_error(
             "tl_getmdexvolume \n"
             "\nReturns the token volume traded in sort amount of blocks.\n"
@@ -2732,7 +2730,7 @@ UniValue tl_getmdexvolume(const JSONRPCRequest& request)
 
 UniValue tl_getcurrencytotal(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 1 || request.fHelp)
+    if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
             "tl_getcurrencyvolume \n"
             "\nGet total outstanding supply for token \n"
@@ -2831,7 +2829,7 @@ UniValue tl_list_attestation(const JSONRPCRequest& request)
 
 UniValue tl_getopen_interest(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 1 || request.fHelp)
+    if (request.fHelp || request.params.size() != 1)
       throw runtime_error(
 			  "tl_getopen_interest\n"
 			  "\nAmounts of live contracts.\n"
@@ -2864,7 +2862,7 @@ UniValue tl_getopen_interest(const JSONRPCRequest& request)
 //return: UniValue which is JSON object that is max pegged currency you can create
 UniValue tl_getmax_peggedcurrency(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 2 || request.fHelp)
+    if (request.fHelp || request.params.size() != 2)
       throw runtime_error(
 			  "tl_getmax_peggedcurrency\"fromaddress\""
 			  "\nGet max pegged currency address can create\n"
@@ -2913,7 +2911,7 @@ UniValue tl_getmax_peggedcurrency(const JSONRPCRequest& request)
 
 UniValue tl_getcontract(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 1  || request.fHelp)
+    if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
             "tl_getcontract contract\n"
             "\nReturns details for about the future contract.\n"
