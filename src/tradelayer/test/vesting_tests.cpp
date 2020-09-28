@@ -135,11 +135,14 @@ BOOST_AUTO_TEST_CASE(out_of_range_volume)
     BOOST_CHECK_EQUAL(-2, VestingTokens(lastVesting, 1000 * COIN, nAmount, vestingAddresses));
     BOOST_CHECK_EQUAL(-2, VestingTokens(lastVesting, 10000 * COIN, nAmount, vestingAddresses));
 
+    // last vesting batch
     BOOST_CHECK_EQUAL(0, VestingTokens(lastVesting, 100000010 * COIN, nAmount, vestingAddresses));
-    BOOST_CHECK_EQUAL(0, VestingTokens(lastVesting, 100000100 * COIN, nAmount, vestingAddresses));
-    BOOST_CHECK_EQUAL(0, VestingTokens(lastVesting, 100001000 * COIN, nAmount, vestingAddresses));
-    BOOST_CHECK_EQUAL(0, VestingTokens(lastVesting, 100010000 * COIN, nAmount, vestingAddresses));
-    BOOST_CHECK_EQUAL(0, VestingTokens(lastVesting, 100100000 * COIN, nAmount, vestingAddresses));
+
+    // amount bigger than max volume
+    BOOST_CHECK_EQUAL(-4, VestingTokens(lastVesting, 100000100 * COIN, nAmount, vestingAddresses));
+    BOOST_CHECK_EQUAL(-4, VestingTokens(lastVesting, 100001000 * COIN, nAmount, vestingAddresses));
+    BOOST_CHECK_EQUAL(-4, VestingTokens(lastVesting, 100010000 * COIN, nAmount, vestingAddresses));
+    BOOST_CHECK_EQUAL(-4, VestingTokens(lastVesting, 100100000 * COIN, nAmount, vestingAddresses));
 
     // must have entire volume
     BOOST_CHECK_EQUAL(100000000000, getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPb", ALL, BALANCE));
@@ -153,23 +156,23 @@ BOOST_AUTO_TEST_CASE(vesting_process)
   double lastVesting = 0;
   std::vector<std::string> vestingAddresses;
   // adding first vesting address
-  vestingAddresses.push_back("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPb");
+  vestingAddresses.push_back("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPx");
   // putting 1000 vesting tokens
-  BOOST_CHECK(mastercore::update_tally_map("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPb", TL_PROPERTY_VESTING, 1000 * COIN, BALANCE));
-  BOOST_CHECK(mastercore::update_tally_map("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPb", ALL, 1000 * COIN, UNVESTED));
+  BOOST_CHECK(mastercore::update_tally_map("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPx", TL_PROPERTY_VESTING, 1000 * COIN, BALANCE));
+  BOOST_CHECK(mastercore::update_tally_map("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPx", ALL, 1000 * COIN, UNVESTED));
   //checking ALL balance is zero
-  BOOST_CHECK_EQUAL(0, getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPb", ALL, BALANCE));
+  BOOST_CHECK_EQUAL(0, getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPx", ALL, BALANCE));
   // checking vestingAddresses size
   BOOST_CHECK_EQUAL(1, vestingAddresses.size());
 
   // checking 7.52% vesting output
   BOOST_CHECK_EQUAL(0, VestingTokens(lastVesting, 20000 * COIN, nAmount, vestingAddresses));
   //checking ALL balance
-  BOOST_CHECK_EQUAL(7525749000, getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPb", ALL, BALANCE));
+  BOOST_CHECK_EQUAL(7525749000, getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPx", ALL, BALANCE));
   //checking unvested ALL balance
-  BOOST_CHECK_EQUAL(92474251000, getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPb", ALL, UNVESTED));
+  BOOST_CHECK_EQUAL(92474251000, getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPx", ALL, UNVESTED));
   // all unvested + balance = 1000
-  BOOST_CHECK_EQUAL(1000 * COIN, getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPb", ALL, UNVESTED) + getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPb", ALL, BALANCE));
+  BOOST_CHECK_EQUAL(1000 * COIN, getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPx", ALL, UNVESTED) + getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPx", ALL, BALANCE));
   // lastVesting: 7.52%
   BOOST_CHECK_EQUAL(0.075257498915995313, lastVesting);
   // amount vested in this block (7.52%)
@@ -178,11 +181,11 @@ BOOST_AUTO_TEST_CASE(vesting_process)
   // checking 15.05% vesting output
   BOOST_CHECK_EQUAL(0, VestingTokens(lastVesting, 40000 * COIN, nAmount, vestingAddresses));
   //checking ALL balance
-  BOOST_CHECK_EQUAL(15051498000, getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPb", ALL, BALANCE));
+  BOOST_CHECK_EQUAL(15051498000, getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPx", ALL, BALANCE));
   // //checking unvested ALL balance
-  BOOST_CHECK_EQUAL(84948502000, getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPb", ALL, UNVESTED));
+  BOOST_CHECK_EQUAL(84948502000, getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPx", ALL, UNVESTED));
   // all unvested + balance = 1000
-  BOOST_CHECK_EQUAL(1000 * COIN, getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPb", ALL, UNVESTED) + getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPb", ALL, BALANCE));
+  BOOST_CHECK_EQUAL(1000 * COIN, getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPx", ALL, UNVESTED) + getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPx", ALL, BALANCE));
   // lastVesting: 15.05%
   BOOST_CHECK_EQUAL(0.15051499783199063, lastVesting);
   // amount vested in this block (7.53%)
@@ -191,11 +194,11 @@ BOOST_AUTO_TEST_CASE(vesting_process)
   // checking 25% vesting output
   BOOST_CHECK_EQUAL(0, VestingTokens(lastVesting, 100000 * COIN, nAmount, vestingAddresses));
   //checking ALL balance
-  BOOST_CHECK_EQUAL(24999998000, getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPb", ALL, BALANCE));
+  BOOST_CHECK_EQUAL(24999998000, getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPx", ALL, BALANCE));
   // //checking unvested ALL balance
-  BOOST_CHECK_EQUAL(75000002000, getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPb", ALL, UNVESTED));
+  BOOST_CHECK_EQUAL(75000002000, getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPx", ALL, UNVESTED));
   // all unvested + balance = 1000
-  BOOST_CHECK_EQUAL(1000 * COIN, getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPb", ALL, UNVESTED) + getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPb", ALL, BALANCE));
+  BOOST_CHECK_EQUAL(1000 * COIN, getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPx", ALL, UNVESTED) + getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPx", ALL, BALANCE));
   // lastVesting: 25%
   BOOST_CHECK_EQUAL(0.25000000000000000, lastVesting);
   // amount vested in this block (9.95%)
@@ -204,11 +207,11 @@ BOOST_AUTO_TEST_CASE(vesting_process)
   // checking 50% vesting output
   BOOST_CHECK_EQUAL(0, VestingTokens(lastVesting, 1000000 * COIN, nAmount, vestingAddresses));
   //checking ALL balance
-  BOOST_CHECK_EQUAL(49999998000, getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPb", ALL, BALANCE));
+  BOOST_CHECK_EQUAL(49999998000, getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPx", ALL, BALANCE));
   // //checking unvested ALL balance
-  BOOST_CHECK_EQUAL(50000002000, getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPb", ALL, UNVESTED));
+  BOOST_CHECK_EQUAL(50000002000, getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPx", ALL, UNVESTED));
   // all unvested + balance = 1000
-  BOOST_CHECK_EQUAL(1000 * COIN, getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPb", ALL, UNVESTED) + getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPb", ALL, BALANCE));
+  BOOST_CHECK_EQUAL(1000 * COIN, getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPx", ALL, UNVESTED) + getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPx", ALL, BALANCE));
   // lastVesting: 50%
   BOOST_CHECK_EQUAL(0.50000000000000000, lastVesting);
   // amount vested in this block (25%)
@@ -218,11 +221,11 @@ BOOST_AUTO_TEST_CASE(vesting_process)
   // checking 75% vesting output
   BOOST_CHECK_EQUAL(0, VestingTokens(lastVesting, 10000000 * COIN, nAmount, vestingAddresses));
   //checking ALL balance
-  BOOST_CHECK_EQUAL(74999998000, getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPb", ALL, BALANCE));
+  BOOST_CHECK_EQUAL(74999998000, getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPx", ALL, BALANCE));
   // //checking unvested ALL balance
-  BOOST_CHECK_EQUAL(25000002000, getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPb", ALL, UNVESTED));
+  BOOST_CHECK_EQUAL(25000002000, getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPx", ALL, UNVESTED));
   // all unvested + balance = 1000
-  BOOST_CHECK_EQUAL(1000 * COIN, getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPb", ALL, UNVESTED) + getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPb", ALL, BALANCE));
+  BOOST_CHECK_EQUAL(1000 * COIN, getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPx", ALL, UNVESTED) + getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPx", ALL, BALANCE));
   // lastVesting: 75%
   BOOST_CHECK_EQUAL(0.75000000000000000, lastVesting);
   // amount vested in this block (25%)
@@ -232,11 +235,11 @@ BOOST_AUTO_TEST_CASE(vesting_process)
   // checking 100% vesting output
   BOOST_CHECK_EQUAL(0, VestingTokens(lastVesting, 1000000000 * COIN, nAmount, vestingAddresses));
   // checking ALL balance
-  BOOST_CHECK_EQUAL(100000000000, getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPb", ALL, BALANCE));
+  BOOST_CHECK_EQUAL(100000000000, getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPx", ALL, BALANCE));
   // //checking unvested ALL balance
-  BOOST_CHECK_EQUAL(0, getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPb", ALL, UNVESTED));
+  BOOST_CHECK_EQUAL(0, getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPx", ALL, UNVESTED));
   // all unvested + balance = 1000
-  BOOST_CHECK_EQUAL(1000 * COIN, getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPb", ALL, UNVESTED) + getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPb", ALL, BALANCE));
+  BOOST_CHECK_EQUAL(1000 * COIN, getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPx", ALL, UNVESTED) + getMPbalance("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPx", ALL, BALANCE));
   // lastVesting: 75%
   BOOST_CHECK_EQUAL(1, lastVesting);
   // amount vested in this block (25%)
