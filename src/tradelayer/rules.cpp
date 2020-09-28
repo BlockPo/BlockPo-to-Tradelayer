@@ -414,7 +414,7 @@ bool ActivateFeature(uint16_t featureId, int activationBlock, uint32_t minClient
         std::string alertText = strprintf("Your client must be updated and will shutdown at block %d (unsupported feature %d ('%s') activated)\n",
                                           activationBlock, featureId, featureName);
         AddAlert("tradelayer", ALERT_BLOCK_EXPIRY, activationBlock, alertText);
-        //TODO AlertNotify(alertText);
+        DoWarning(alertText);
     }
 
     return true;
@@ -475,7 +475,7 @@ bool DeactivateFeature(uint16_t featureId, int transactionBlock)
 
     std::string alertText = strprintf("An emergency deactivation of feature ID %d (%s) has occurred.", featureId, featureName);
     AddAlert("tradelayer", ALERT_BLOCK_EXPIRY, transactionBlock + 1024, alertText);
-    // TODO AlertNotify(alertText);
+    DoWarning(alertText);
 
     return true;
 }

@@ -11,6 +11,7 @@
 #include "tradelayer/utilsbitcoin.h"
 #include "tradelayer/version.h"
 
+#include <validation.h>
 #include "ui_interface.h"
 
 #include <set>
@@ -87,8 +88,11 @@ void CheckLiveActivations(int blockHeight)
         if (TL_VERSION < liveActivation.minClientVersion) {
             std::string msgText = strprintf("Shutting down due to unsupported feature activation (%d: %s)", liveActivation.featureId, liveActivation.featureName);
             PrintToLog(msgText);
+            PrintToConsole(msgText);
             if (!gArgs.GetBoolArg("-overrideforcedshutdown", false)) {
-                //AbortNode(msgText, msgText);  TODO FIX AbortNode
+                fs::path persistPath = GetDataDir() / "OCL_persist";
+                if (fs::exists(persistPath)) fs::remove_all(persistPath); // prevent the node being restarted without a reparse after forced shutdown
+                DoAbortNode(msgText, msgText); 
             }
         }
         PendingActivationCompleted(liveActivation);

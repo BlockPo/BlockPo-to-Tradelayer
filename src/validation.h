@@ -298,6 +298,10 @@ void PruneOneBlockFile(const int fileNumber);
  */
 void UnlinkPrunedFiles(const std::set<int>& setFilesToPrune);
 
+/** Abort with a message */
+void DoAbortNode(const std::string& strMessage, const std::string& userMessage);
+/** Sends out an alert */
+void DoWarning(const std::string& strWarning); 
 /** Flush all state, indexes and buffers to disk. */
 void FlushStateToDisk();
 /** Prune block files and flush state to disk. */
