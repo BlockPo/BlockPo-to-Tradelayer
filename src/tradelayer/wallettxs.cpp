@@ -55,18 +55,17 @@ bool AddressToPubKey(const std::string& key, CPubKey& pubKey)
             PrintToLog("%s() ERROR: no public key in wallet for redemption address %s\n", __func__, key);
             return false;
         }
+    }
     // Case 2: Hex-encoded public key
-    } else {
+    else
 #endif
-        if (IsHex(key)) {
-            pubKey = CPubKey(ParseHex(key));
-        }
+    if (IsHex(key)) {
+        pubKey = CPubKey(ParseHex(key));
+    }
 
-        if (!pubKey.IsFullyValid()) {
-            PrintToLog("%s: ERROR: invalid redemption key %s\n", __func__, key);
-            return false;
-        }
-
+    if (!pubKey.IsFullyValid()) {
+        PrintToLog("%s: ERROR: invalid redemption key %s\n", __func__, key);
+        return false;
     }
 
     return true;
