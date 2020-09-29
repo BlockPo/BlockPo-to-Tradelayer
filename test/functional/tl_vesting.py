@@ -566,7 +566,7 @@ class VestingBasicsTest (BitcoinTestFramework):
 
             self.nodes[0].generate(1)
 
-            time.sleep(0.2)
+            time.sleep(0.25)
 
             self.log.info("Checking token balance in buyer address")
             params = str([addresses[3], 4]).replace("'",'"')

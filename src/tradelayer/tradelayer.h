@@ -33,12 +33,12 @@ using std::string;
 
 typedef boost::rational<boost::multiprecision::checked_int128_t> rational_t;
 
-int const MAX_STATE_HISTORY = 50;
+const int MAX_STATE_HISTORY = 50;
 
 #define MAX_PROPERTY_N (0x80000003UL)
 
 // increment this value to force a refresh of the state (similar to --startclean)
-#define DB_VERSION 1
+const int DB_VERSION = 1;
 
 // could probably also use: int64_t maxInt64 = std::numeric_limits<int64_t>::max();
 // maximum numeric values from the spec:
@@ -48,28 +48,25 @@ int const MAX_STATE_HISTORY = 50;
 #define SP_STRING_FIELD_LEN 256
 
 // Trade Layer Transaction Class
-#define NO_MARKER  0
-#define TL_CLASS_A 1
-#define TL_CLASS_B 2
-#define TL_CLASS_C 3 // uncompressed OP_RETURN
-#define TL_CLASS_D 4 // compressed OP_RETURN
+const int NO_MARKER  = 0;
+const int TL_CLASS_D = 4; // compressed OP_RETURN
 
 // Trade Layer Transaction (Packet) Version
-#define MP_TX_PKT_V0  0
-#define MP_TX_PKT_V1  1
+const uint16_t  MP_TX_PKT_V0 = 0;
+const uint16_t  MP_TX_PKT_V1 = 1;
 
 // Alls
-#define ALL_PROPERTY_MSC             3
-#define MIN_PAYLOAD_SIZE             5
-#define MAX_CLASS_D_SEARCH_BYTES   200
+const int ALL_PROPERTY_MSC         = 3;
+const int MIN_PAYLOAD_SIZE         = 5;
+const int MAX_CLASS_D_SEARCH_BYTES = 200;
 
 #define COIN256   10000000000000000
 
 // basis point factor
-#define BASISPOINT 100
+const int BASISPOINT = 100;
 
 // Oracle twaps blocks
-#define oBlocks 9
+const int oBlocks = 9;
 
 // Transaction types, from the spec
 enum TransactionType {
@@ -126,14 +123,17 @@ enum TransactionType {
 
 };
 
-#define ALL_PROPERTY_TYPE_INDIVISIBLE                 1
-#define ALL_PROPERTY_TYPE_DIVISIBLE                   2
-#define ALL_PROPERTY_TYPE_NATIVE_CONTRACT             3
-#define ALL_PROPERTY_TYPE_VESTING                     4
-#define ALL_PROPERTY_TYPE_PEGGEDS                     5
-#define ALL_PROPERTY_TYPE_ORACLE_CONTRACT             6
-#define ALL_PROPERTY_TYPE_PERPETUAL_ORACLE            7
-#define ALL_PROPERTY_TYPE_PERPETUAL_CONTRACTS         8
+
+enum AllProperties  {
+  ALL_PROPERTY_TYPE_INDIVISIBLE = 1,
+  ALL_PROPERTY_TYPE_DIVISIBLE,
+  ALL_PROPERTY_TYPE_NATIVE_CONTRACT,
+  ALL_PROPERTY_TYPE_VESTING,
+  ALL_PROPERTY_TYPE_PEGGEDS,
+  ALL_PROPERTY_TYPE_ORACLE_CONTRACT,
+  ALL_PROPERTY_TYPE_PERPETUAL_ORACLE,
+  ALL_PROPERTY_TYPE_PERPETUAL_CONTRACTS
+};
 
 enum FILETYPES {
   FILETYPE_BALANCES = 0,
@@ -155,82 +155,80 @@ enum FILETYPES {
   NUM_FILETYPES
 };
 
-#define PKT_RETURNED_OBJECT    (1000)
-
-#define PKT_ERROR             ( -9000)
+const int PKT_RETURNED_OBJECT    =  1000;
+const int PKT_ERROR              = -9000;
 // Smart Properties
-#define PKT_ERROR_SP          (-40000)
-#define PKT_ERROR_CROWD       (-45000)
+const int PKT_ERROR_SP           = -40000;
 // Send To Owners
-#define PKT_ERROR_SEND        (-60000)
-#define PKT_ERROR_TOKENS      (-82000)
-#define PKT_ERROR_SEND_ALL    (-83000)
-#define PKT_ERROR_METADEX     (-80000)
-#define METADEX_ERROR         (-81000)
+const int PKT_ERROR_SEND         = -60000;
+const int PKT_ERROR_TOKENS       = -82000;
+const int PKT_ERROR_SEND_ALL     = -83000;
+const int PKT_ERROR_METADEX      = -80000;
+const int METADEX_ERROR          = -81000;
 
-#define PKT_ERROR             ( -9000)
-#define DEX_ERROR_SELLOFFER   (-10000)
-#define DEX_ERROR_ACCEPT      (-20000)
-#define DEX_ERROR_PAYMENT     (-30000)
-#define PKT_ERROR_TRADEOFFER  (-70000)
+const int DEX_ERROR_SELLOFFER    = -10000;
+const int DEX_ERROR_ACCEPT       = -20000;
+const int DEX_ERROR_PAYMENT      = -30000;
+const int PKT_ERROR_TRADEOFFER   = -70000;
 
-#define PKT_ERROR_KYC            (-90000)
-#define PKT_ERROR_CONTRACTDEX    (-100000)
-#define PKT_ERROR_ORACLE         (-110000)
-#define PKT_ERROR_CHANNELS       (-120000)
+const int PKT_ERROR_KYC          = -90000;
+const int PKT_ERROR_CONTRACTDEX  = -100000;
+const int PKT_ERROR_ORACLE       = -110000;
+const int PKT_ERROR_CHANNELS     = -120000;
 
-#define TL_PROPERTY_BTC             0
-#define TL_PROPERTY_ALL             1
-#define TL_PROPERTY_TALL            2
-#define TL_PROPERTY_VESTING         3
-#define TL_PROPERTY_ALL_ISSUANCE    6
-#define TOTAL_AMOUNT_VESTING_TOKENS   1500000*COIN
+const int TL_PROPERTY_BTC                 = 0;
+const int TL_PROPERTY_ALL                 = 1;
+const int TL_PROPERTY_TALL                = 2;
+const int TL_PROPERTY_VESTING             = 3;
+const int TL_PROPERTY_ALL_ISSUANCE        = 6;
+const uint64_t TOTAL_AMOUNT_VESTING_TOKENS =  150000000000000;
 
-#define BUY            1
-#define SELL           2
-#define ACTIONINVALID  3
-
+enum Action : uint8_t {
+  buy = 1,
+  sell = 2,
+  actioninvalid = 3
+};
 
 //Main Cardinal Definitions
-#define LTC        0
-#define ALL        1
-#define sLTC       2
-#define VT         3  // vesting tokens?
-#define dEUR       4
-#define dJPY       5
-#define dCNY       6
-#define ALL_LTC    7
-#define LTC_USD    8
-#define LTC_EUR    9
-#define JPY       10
-#define CNY       11
-#define dUSD      12
+enum Cardinal : uint32_t {
+  LTC  = 0,
+  ALL,
+  sLTC,
+  VT,      // vesting tokens
+  dEUR,
+  dJPY,
+  dCNY,
+  ALL_LTC,
+  LTC_USD,
+  LTC_EUR,
+  JPY,
+  CNY,
+  dUSD,
+  Native_Difficulty_Futures,  //extended
+  Native_Fee_Futures,
+  Native_ALL_LTC_IRS,
+  Native_LTC_USD_IRS,
+  ALL_LTC_Graph_DS,
+  LTC_USD_Graph_DS
+};
 
 // channels definitions
-#define TYPE_COMMIT                     "commit"
-#define TYPE_WITHDRAWAL                 "withdrawal"
-#define TYPE_INSTANT_TRADE              "instant_trade"
-#define TYPE_TRANSFER                   "transfer"
-#define TYPE_CONTRACT_INSTANT_TRADE     "contract_instat_trade"
-#define TYPE_CREATE_CHANNEL             "create channel"
-#define TYPE_NEW_ID_REGISTER            "new id register"
-#define TYPE_ATTESTATION                "attestation"
+const std::string TYPE_COMMIT                   = "commit";
+const std::string TYPE_WITHDRAWAL               = "withdrawal";
+const std::string TYPE_INSTANT_TRADE            = "instant_trade";
+const std::string TYPE_TRANSFER                 = "transfer";
+const std::string TYPE_CONTRACT_INSTANT_TRADE   = "contract_instat_trade";
+const std::string TYPE_CREATE_CHANNEL           = "create channel";
+const std::string TYPE_NEW_ID_REGISTER          = "new id register";
+const std::string TYPE_ATTESTATION              = "attestation";
 
 // channel status
-#define ACTIVE_CHANNEL                  "active"
-#define CLOSED_CHANNEL                  "closed"
+const std::string ACTIVE_CHANNEL                = "active";
+const std::string CLOSED_CHANNEL                = "closed";
 
 // withdrawal status
-#define ACTIVE_WITHDRAWAL                1
-#define COMPLETE_WITHDRAWAL              0
-
-// Currency in existance (options for createcontract)
-uint32_t const TL_dUSD  = 1;
-uint32_t const TL_dEUR  = 2;
-uint32_t const TL_dYEN  = 3;
-uint32_t const TL_ALL   = 4;
-uint32_t const TL_sLTC  = 5;
-uint32_t const TL_LTC   = 6;
+const int ACTIVE_WITHDRAWAL   = 1;
+const int COMPLETE_WITHDRAWAL = 0;
 
 /*24 horus to blocks*/
 const int dayblocks = 576;
@@ -239,9 +237,8 @@ const int dayblocks = 576;
 const rational_t factor = rational_t(80,100);  // critical limit
 const rational_t factor2 = rational_t(20,100); // normal limits
 
-
 // define KYC id = 0 for self attestations
-#define KYC_0      0
+const int KYC_0 = 0;
 
 // upnl calculations
 const std::vector<std::string> longActions{ "ShortPosNetted", "OpenLongPosition", "OpenLongPosByShortPosNetted", "LongPosIncreased", "ShortPosNettedPartly"};
@@ -497,7 +494,6 @@ extern std::vector<std::string> vestingAddresses;
 
 //!Contract upnls
 extern std::map<std::string, int64_t> sum_upnls;
-
 
 //! Last unit price for token/LTC
 extern std::map<uint32_t, int64_t> lastPrice;
