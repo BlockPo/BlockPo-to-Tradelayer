@@ -4,31 +4,31 @@
  * Handler for populating RPC transaction objects.
  */
 
-#include "tradelayer/dex.h"
-#include "tradelayer/rpctxobject.h"
-#include "tradelayer/errors.h"
-#include "tradelayer/tradelayer.h"
-#include "tradelayer/pending.h"
-#include "tradelayer/rpctxobject.h"
-#include "tradelayer/sp.h"
-#include "tradelayer/tx.h"
-#include "tradelayer/utilsbitcoin.h"
-#include "tradelayer/wallettxs.h"
+#include <tradelayer/rpctxobject.h>
 
-#include "chainparams.h"
-#include "validation.h"
-#include "primitives/transaction.h"
-#include "sync.h"
-#include "uint256.h"
+#include <tradelayer/dex.h>
+#include <tradelayer/errors.h>
+#include <tradelayer/pending.h>
+#include <tradelayer/rpctxobject.h>
+#include <tradelayer/sp.h>
+#include <tradelayer/tradelayer.h>
+#include <tradelayer/tx.h>
+#include <tradelayer/utilsbitcoin.h>
+#include <tradelayer/wallettxs.h>
 
-#include <univalue.h>
-
-#include <boost/algorithm/string.hpp>
-#include <boost/lexical_cast.hpp>
+#include <chainparams.h>
+#include <primitives/transaction.h>
+#include <sync.h>
+#include <uint256.h>
+#include <validation.h>
 
 #include <stdint.h>
 #include <string>
+#include <univalue.h>
 #include <vector>
+
+#include <boost/algorithm/string.hpp>
+#include <boost/lexical_cast.hpp>
 
 // Namespaces
 using namespace mastercore;

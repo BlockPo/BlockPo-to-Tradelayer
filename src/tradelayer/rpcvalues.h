@@ -6,12 +6,11 @@ class CTransaction;
 struct CMutableTransaction;
 struct PrevTxsEntry;
 
-#include "rpc/server.h"
-
-#include <univalue.h>
+#include <rpc/server.h>
 
 #include <stdint.h>
 #include <string>
+#include <univalue.h>
 #include <vector>
 
 const uint32_t weekly = 100; //4032;   blocks: 7(days) * 24 (hours) * 60 (minutes) / 2.5 (minutes)

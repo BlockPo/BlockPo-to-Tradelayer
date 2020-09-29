@@ -1,13 +1,11 @@
-#include "tradelayer/createpayload.h"
-
-#include "test/test_bitcoin.h"
-#include "utilstrencodings.h"
+#include <test/test_bitcoin.h>
+#include <tradelayer/createpayload.h>
+#include <utilstrencodings.h>
 
 #include <boost/test/unit_test.hpp>
-
 #include <stdint.h>
-#include <vector>
 #include <string>
+#include <vector>
 
 BOOST_FIXTURE_TEST_SUITE(tradelayer_create_payload_tests, BasicTestingSetup)
 

@@ -6,13 +6,13 @@
  * Note main functions 'ActivateFeature()' and 'DeactivateFeature()' are consensus breaking and reside in rules.cpp
  */
 
-#include "tradelayer/activation.h"
-#include "tradelayer/log.h"
-#include "tradelayer/utilsbitcoin.h"
-#include "tradelayer/version.h"
+#include <tradelayer/activation.h>
+#include <tradelayer/log.h>
+#include <tradelayer/utilsbitcoin.h>
+#include <tradelayer/version.h>
 
 #include <validation.h>
-#include "ui_interface.h"
+#include <ui_interface.h>
 
 #include <set>
 #include <stdint.h>

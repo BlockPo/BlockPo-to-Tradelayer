@@ -4,23 +4,24 @@
  * This file contains RPC calls for creating and sending Trade Layer transactions.
  */
 
-#include "tradelayer/rpctx.h"
-#include "tradelayer/dex.h"
-#include "tradelayer/createpayload.h"
-#include "tradelayer/errors.h"
-#include "tradelayer/tradelayer.h"
-#include "tradelayer/pending.h"
-#include "tradelayer/rpcrequirements.h"
-#include "tradelayer/rpcvalues.h"
-#include "tradelayer/rules.h"
-#include "tradelayer/sp.h"
-#include "tradelayer/tx.h"
+#include <tradelayer/rpctx.h> // XXX
 
-#include "init.h"
-#include "rpc/server.h"
-#include "sync.h"
+#include <tradelayer/createpayload.h>
+#include <tradelayer/dex.h>
+#include <tradelayer/errors.h>
+#include <tradelayer/pending.h>
+#include <tradelayer/rpcrequirements.h>
+#include <tradelayer/rpcvalues.h>
+#include <tradelayer/rules.h>
+#include <tradelayer/sp.h>
+#include <tradelayer/tradelayer.h>
+#include <tradelayer/tx.h>
+
+#include <init.h>
+#include <rpc/server.h>
+#include <sync.h>
 #ifdef ENABLE_WALLET
-#include "wallet/wallet.h"
+#include <wallet/wallet.h>
 #endif
 
 #include <univalue.h>

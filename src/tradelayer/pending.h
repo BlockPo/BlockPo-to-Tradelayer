@@ -4,10 +4,10 @@
 class uint256;
 struct CMPPending;
 
-#include "sync.h"
+#include <sync.h>
 
-#include <stdint.h>
 #include <map>
+#include <stdint.h>
 #include <string>
 
 namespace mastercore

@@ -1,40 +1,36 @@
 #ifndef TRADELAYER_TL_H
 #define TRADELAYER_TL_H
 
-class CBitcoinAddress;
-class CBlockIndex;
-class CCoinsView;
-class CCoinsViewCache;
-class CTransaction;
+#include <tradelayer/log.h>
+#include <tradelayer/persistence.h>
+#include <tradelayer/tally.h>
+#include <tradelayer/tradelayer_matrices.h>
 
-#include "tradelayer/log.h"
-#include "tradelayer/persistence.h"
-#include "tradelayer/tally.h"
+#include <arith_uint256.h>
+#include <chain.h>
+#include <coins.h>
+#include <hash.h>
+#include <primitives/transaction.h>
+#include <sync.h>
+#include <uint256.h>
+#include <util.h>
 
-#include "arith_uint256.h"
-#include "sync.h"
-#include "uint256.h"
-#include "util.h"
+#include <leveldb/status.h>
+#include <openssl/sha.h>
 
+#include <map>
+#include <set>
+#include <stdint.h>
+#include <string>
 #include <univalue.h>
+#include <unordered_map>
+#include <vector>
 
+// XXX
+#include <boost/filesystem/path.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/multiprecision/cpp_int.hpp>
 #include <boost/rational.hpp>
-#include <boost/filesystem/path.hpp>
-
-#include "leveldb/status.h"
-
-#include <stdint.h>
-#include <openssl/sha.h>
-
-#include <hash.h>
-#include <map>
-#include <string>
-#include <vector>
-#include <set>
-#include <unordered_map>
-#include "tradelayer_matrices.h"
 
 using std::string;
 

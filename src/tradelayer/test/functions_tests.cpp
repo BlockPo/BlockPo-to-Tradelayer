@@ -1,41 +1,33 @@
-#include "tradelayer/errors.h"
-#include "tradelayer/log.h"
-#include "tradelayer/tradelayer.h"
-#include "tradelayer/rules.h"
-#include "tradelayer/sp.h"
-#include "tradelayer/tx.h"
-#include "tradelayer/uint256_extensions.h"
-#include "tradelayer/consensushash.h"
-#include "tradelayer/tally.h"
+#include <tradelayer/consensushash.h>
+#include <tradelayer/errors.h>
+#include <tradelayer/log.h>
+#include <tradelayer/rules.h>
+#include <tradelayer/sp.h>
+#include <tradelayer/tally.h>
+#include <tradelayer/tradelayer.h>
+#include <tradelayer/tx.h>
+#include <tradelayer/uint256_extensions.h>
 
-#include "arith_uint256.h"
-#include "chain.h"
-#include "tinyformat.h"
-#include "uint256.h"
-#include "test/test_bitcoin.h"
-
+#include <arith_uint256.h>
+#include <chain.h>
+#include <test/test_bitcoin.h>
+#include <tinyformat.h>
+#include <uint256.h>
 #include <univalue.h>
-
-#include <boost/multiprecision/cpp_int.hpp>
-#include <boost/rational.hpp>
-#include <boost/test/unit_test.hpp>
-
-#include <openssl/sha.h>
+#include <utilstrencodings.h>
 
 #include <assert.h>
-#include <stdint.h>
-
 #include <fstream>
 #include <limits>
 #include <map>
 #include <set>
-#include <string>
-
-#include "utilstrencodings.h"
-
 #include <stdint.h>
-#include <vector>
 #include <string>
+#include <vector>
+
+#include <boost/multiprecision/cpp_int.hpp>
+#include <boost/rational.hpp>
+#include <boost/test/unit_test.hpp>
 
 using namespace mastercore;
 

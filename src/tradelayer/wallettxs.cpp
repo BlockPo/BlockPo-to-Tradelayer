@@ -1,33 +1,32 @@
-#include "tradelayer/wallettxs.h"
+#include <tradelayer/wallettxs.h>
 
-#include "tradelayer/log.h"
-#include "tradelayer/tradelayer.h"
-#include "tradelayer/rules.h"
-#include "tradelayer/script.h"
-#include "tradelayer/utilsbitcoin.h"
-#include "amount.h"
-#include "base58.h"
-#include "wallet/coincontrol.h"
-#include "init.h"
-#include "validation.h"
-#include "policy/policy.h"
-#include "pubkey.h"
-#include "script/standard.h"
-#include "sync.h"
-#include "txmempool.h"
-#include "uint256.h"
-#include "utilstrencodings.h"
+#include <tradelayer/log.h>
+#include <tradelayer/rules.h>
+#include <tradelayer/script.h>
+#include <tradelayer/tradelayer.h>
+#include <tradelayer/utilsbitcoin.h>
+
+#include <amount.h>
+#include <base58.h>
+#include <init.h>
+#include <policy/policy.h>
+#include <pubkey.h>
+#include <script/standard.h>
+#include <sync.h>
+#include <txmempool.h>
+#include <uint256.h>
+#include <utilstrencodings.h>
+#include <validation.h>
+#include <wallet/coincontrol.h>
 #ifdef ENABLE_WALLET
-#include "script/ismine.h"
-#include "wallet/wallet.h"
-#include "wallet/fees.h"
+#include <script/ismine.h>
+#include <wallet/fees.h>
+#include <wallet/wallet.h>
 #endif
 
-#include <stdint.h>
 #include <map>
+#include <stdint.h>
 #include <string>
-
-
 
 namespace mastercore
 {

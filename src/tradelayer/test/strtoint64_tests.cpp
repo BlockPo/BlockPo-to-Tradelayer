@@ -1,8 +1,7 @@
-#include "tradelayer/parse_string.h"
-#include "test/test_bitcoin.h"
+#include <test/test_bitcoin.h>
+#include <tradelayer/parse_string.h>
 
 #include <boost/test/unit_test.hpp>
-
 #include <stdint.h>
 #include <string>
 

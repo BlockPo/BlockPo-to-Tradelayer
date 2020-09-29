@@ -1,17 +1,15 @@
 #ifndef TRADELAYER_SP_H
 #define TRADELAYER_SP_H
 
-#include "tradelayer/log.h"
-#include "tradelayer/tradelayer.h"
-#include "tradelayer/persistence.h"
+#include <tradelayer/log.h>
+#include <tradelayer/persistence.h>
+#include <tradelayer/tradelayer.h>
 
 class CBlockIndex;
 class CHash256;
 class uint256;
 
-#include "serialize.h"
-
-#include <boost/filesystem.hpp>
+#include <serialize.h>
 
 #include <stdint.h>
 #include <stdio.h>
@@ -21,6 +19,9 @@ class uint256;
 #include <string>
 #include <utility>
 #include <vector>
+
+// XXX
+#include <boost/filesystem.hpp>
 
 /** LevelDB based storage for currencies, smart properties and tokens.
  *

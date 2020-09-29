@@ -1,18 +1,18 @@
 #ifndef TRADELAYER_DEX_H
 #define TRADELAYER_DEX_H
 
-#include "tradelayer/log.h"
-#include "tradelayer/tradelayer.h"
-#include "tradelayer/tx.h"
+#include <tradelayer/log.h>
+#include <tradelayer/tradelayer.h>
+#include <tradelayer/tx.h>
 
-#include "amount.h"
+#include <amount.h>
 #include <hash.h>
-#include "tinyformat.h"
-#include "uint256.h"
+#include <tinyformat.h>
+#include <uint256.h>
 
-#include <stdint.h>
 #include <fstream>
 #include <map>
+#include <stdint.h>
 #include <string>
 
 /** Lookup key to find DEx offers. */
@@ -239,8 +239,9 @@ extern std::map<int, std::map<uint32_t,int64_t>> MapLTCVolume;
 /** Map of Token Volume in DEx**/
 extern std::map<int, std::map<uint32_t,int64_t>> MapTokenVolume;
 
-
+//! In-memory collection of DEx offers
 extern OfferMap my_offers;
+//! In-memory collection of DEx accepts
 extern AcceptMap my_accepts;
 
 /** Determines the amount of bitcoins desired, in case it needs to be recalculated. TODO: don't expose! */

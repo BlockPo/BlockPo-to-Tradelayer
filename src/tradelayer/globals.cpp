@@ -1,13 +1,14 @@
+#include <tradelayer/mdex.h>
+#include <tradelayer/tradelayer_matrices.h>
+
+#include <cstdint>
+#include <iostream>
+#include <mutex>
+#include <stdint.h>
 #include <stdio.h>
 #include <string>
-#include <vector>
-#include <cstdint>
-#include <stdint.h>
-#include "tradelayer_matrices.h"
-#include "mdex.h"
-#include <iostream>
 #include <thread>
-#include <mutex>
+#include <vector>
 
 typedef boost::multiprecision::uint128_t ui128;
 using namespace std;

@@ -1,11 +1,11 @@
 #ifndef OPERATORS_ALGO_CLEARING_H
 #define OPERATORS_ALGO_CLEARING_H
 
+#include <tradelayer/tradelayer_matrices.h>
+
 #include <map>
 #include <unordered_set>
 #include <vector>
-
-#include "tradelayer_matrices.h"
 
 /**************************************************************/
 /** Structures for clearing algo */

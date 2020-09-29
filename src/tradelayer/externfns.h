@@ -1,21 +1,22 @@
 #ifndef EXTERNFNS_H
 #define EXTERNFNS_H
 
-#include "tradelayer/tradelayer_matrices.h"
-#include "tradelayer/log.h"
+#include <tradelayer/log.h>
+#include <tradelayer/tradelayer_matrices.h>
 
-#include <vector>
-#include <unordered_set>
+#include <algorithm>
+#include <iostream>
+#include <limits>
 #include <stdint.h>
 #include <string>
+#include <unordered_set>
+#include <vector>
+
 #include <boost/lexical_cast.hpp>
+#include <boost/math/constants/constants.hpp>
 #include <boost/multiprecision/cpp_dec_float.hpp>
 #include <boost/multiprecision/cpp_int.hpp>
 #include <boost/rational.hpp>
-#include <boost/math/constants/constants.hpp>
-#include <iostream>
-#include <limits>
-#include <algorithm>
 
 typedef boost::multiprecision::cpp_dec_float_100 dec_float;
 typedef boost::rational<boost::multiprecision::checked_int128_t> rational_t;

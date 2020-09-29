@@ -1,8 +1,8 @@
-#include "tradelayer/convert.h"
-#include "test/test_bitcoin.h"
+#include <test/test_bitcoin.h>
+#include <tradelayer/convert.h>
 
-#include <stdint.h>
 #include <boost/test/unit_test.hpp>
+#include <stdint.h>
 
 using namespace mastercore;
 
