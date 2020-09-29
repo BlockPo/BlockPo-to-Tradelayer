@@ -170,10 +170,10 @@ BOOST_AUTO_TEST_CASE(edge_orderbook)
     uint32_t contractId = 1;
 
     //checking the Ask
-    BOOST_CHECK_EQUAL(edgeOrderbook(contractId, BUY), 500000000);
+    BOOST_CHECK_EQUAL(edgeOrderbook(contractId, buy), 500000000);
 
     //checking the Bid
-    BOOST_CHECK_EQUAL(edgeOrderbook(contractId, SELL), 400000000);
+    BOOST_CHECK_EQUAL(edgeOrderbook(contractId, sell), 400000000);
 
 
 }
