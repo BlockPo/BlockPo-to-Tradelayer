@@ -2511,13 +2511,13 @@ UniValue tl_check_kyc(const JSONRPCRequest& request)
 			);
 
   // obtain property identifiers for pair & check valid parameters
-  std::string result;
   const std::string address = ParseAddress(request.params[0]);
   // int registered = static_cast<int>(ParseNewValues(request.params[1]));
   // RequireContract(contractId);
 
   int kyc_id;
-  (!t_tradelistdb->checkKYCRegister(address, kyc_id)) ? result = "disabled" : result = "enabled";
+
+  const std::string result = (t_tradelistdb->checkAttestationReg(address, kyc_id)) ? "enabled(kyc_0)" : (!t_tradelistdb->checkKYCRegister(address, kyc_id)) ? "disabled" : "enabled";
 
   UniValue balanceObj(UniValue::VOBJ);
   balanceObj.push_back(Pair("result: ", result));
