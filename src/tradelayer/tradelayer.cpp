@@ -5445,17 +5445,23 @@ bool mastercore::marginMain(int Block)
 
                          const uint256 txid;
                          unsigned int idx = 0;
-                         uint8_t option;
-                         int64_t fcontracts;
+                         int64_t fcontracts = 0;
+                         uint8_t option = 0;
 
-                         int64_t longs = getMPbalance(address,contractId,POSITIVE_BALANCE);
-                         int64_t shorts = getMPbalance(address,contractId,NEGATIVE_BALANCE);
+                         const int64_t longs = getMPbalance(address,contractId,POSITIVE_BALANCE);
+                         const int64_t shorts = getMPbalance(address,contractId,NEGATIVE_BALANCE);
 
                          if(msc_debug_margin_main) PrintToLog("%s: longs: %d,shorts: %d \n", __func__, longs,shorts);
 
-                         (longs > 0 && shorts == 0) ? option = SELL, fcontracts = longs : option = BUY, fcontracts = shorts;
+                         if(longs > 0 && shorts == 0) {
+                              option = buy;
+                             fcontracts = longs;
+                         } else {
+                             option = sell;
+                             fcontracts = shorts;
+                         }
 
-                         if(msc_debug_margin_main) PrintToLog("%s: option: %d, upnl: %d, posMargin: %d\n", __func__, option,upnl,posMargin);
+                         if(msc_debug_margin_main) PrintToLog("%s(): upnl: %d, posMargin: %d\n", __func__, upnl,posMargin);
 
                          arith_uint256 contracts = DivideAndRoundUp(ConvertTo256(posMargin) + ConvertTo256(-upnl), ConvertTo256(sp.margin_requirement));
                          int64_t icontracts = ConvertTo64(contracts);
@@ -6296,7 +6302,7 @@ bool mastercore::Instant_x_Trade(const uint256& txid, uint8_t tradingAction, con
     int64_t secondPoss = getMPbalance(secondAddr, property, POSITIVE_BALANCE);
     int64_t secondNeg = getMPbalance(secondAddr, property, NEGATIVE_BALANCE);
 
-    if(tradingAction == SELL)
+    if(tradingAction == sell)
         amount_forsale = -amount_forsale;
 
     int64_t first_p = firstPoss - firstNeg + amount_forsale;

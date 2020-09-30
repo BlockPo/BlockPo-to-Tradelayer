@@ -422,8 +422,7 @@ void populateRPCTypeContractDexTrade(CMPTransaction& tlObj, UniValue& txobj)
   txobj.push_back(Pair("amount", FormatDivisibleMP(tlObj.getContractAmount())));
   txobj.push_back(Pair("effective price", FormatDivisibleMP(tlObj.getEffectivePrice())));
 
-  std::string action;
-  (tlObj.getTradingAction() == BUY) ? action = "buy" : action = "sell";
+  const std::string action = (tlObj.getTradingAction() == static_cast<uint8_t>(buy)) ? "buy" : "sell";
   txobj.push_back(Pair("trading action", action));
   txobj.push_back(Pair("leverage",FormatDivisibleMP(tlObj.getLeverage())));
 
