@@ -1,9 +1,9 @@
 #ifndef TRADELAYER_CREATEPAYLOAD_H
 #define TRADELAYER_CREATEPAYLOAD_H
 
+#include <stdint.h>
 #include <string>
 #include <vector>
-#include <stdint.h>
 
 std::vector<unsigned char> CreatePayload_SimpleSend(uint32_t propertyId, uint64_t amount);
 std::vector<unsigned char> CreatePayload_SendVestingTokens(uint64_t amount);

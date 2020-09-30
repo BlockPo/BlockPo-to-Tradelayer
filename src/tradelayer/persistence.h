@@ -1,12 +1,13 @@
 #ifndef TRADELAYER_PERSISTENCE_H
 #define TRADELAYER_PERSISTENCE_H
 
-#include "leveldb/db.h"
-
-#include <boost/filesystem/path.hpp>
+#include <leveldb/db.h>
 
 #include <assert.h>
 #include <stddef.h>
+
+// XXX
+#include <boost/filesystem/path.hpp>
 
 /** Base class for LevelDB based storage.
  */

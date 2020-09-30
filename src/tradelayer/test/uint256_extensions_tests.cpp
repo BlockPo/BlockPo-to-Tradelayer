@@ -1,12 +1,12 @@
-#include "tradelayer/uint256_extensions.h"
-#include "tradelayer/tradelayer.h"
-#include "test/test_bitcoin.h"
+#include <test/test_bitcoin.h>
+#include <tradelayer/tradelayer.h>
+#include <tradelayer/uint256_extensions.h>
 
 #include <arith_uint256.h>
-#include <boost/test/unit_test.hpp>
 
-#include <stdint.h>
+#include <boost/test/unit_test.hpp>
 #include <limits>
+#include <stdint.h>
 
 using namespace mastercore;
 

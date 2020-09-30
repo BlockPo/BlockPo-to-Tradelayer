@@ -1,15 +1,15 @@
-#include "tradelayer/script.h"
-#include "tradelayer/log.h"
-#include "amount.h"
-#include "policy/feerate.h"
-#include "policy/policy.h"
-#include "script/script.h"
-#include "script/standard.h"
-#include "serialize.h"
-#include "utilstrencodings.h"
-#include "validation.h"
+#include <tradelayer/script.h>
 
-#include <boost/foreach.hpp>
+#include <tradelayer/log.h>
+
+#include <amount.h>
+#include <policy/feerate.h>
+#include <policy/policy.h>
+#include <script/script.h>
+#include <script/standard.h>
+#include <serialize.h>
+#include <utilstrencodings.h>
+#include <validation.h>
 
 #include <string>
 #include <utility>

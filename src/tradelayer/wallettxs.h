@@ -1,10 +1,9 @@
 #ifndef TRADELAYER_WALLETTXS_H
 #define TRADELAYER_WALLETTXS_H
 
-class CCoinControl;
-class CPubKey;
-
-#include "script/standard.h"
+#include <pubkey.h>
+#include <script/standard.h>
+#include <wallet/coincontrol.h>
 
 #include <stdint.h>
 #include <string>

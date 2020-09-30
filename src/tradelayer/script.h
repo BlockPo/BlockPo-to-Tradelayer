@@ -1,12 +1,10 @@
 #ifndef TRADELAYER_SCRIPT_H
 #define TRADELAYER_SCRIPT_H
 
+#include <script/standard.h>
+
 #include <string>
 #include <vector>
-
-class CScript;
-
-#include "script/standard.h"
 
 /** Determines the minimum output amount to be spent by an output. */
 int64_t GetDustThld(const CScript& scriptPubKey);

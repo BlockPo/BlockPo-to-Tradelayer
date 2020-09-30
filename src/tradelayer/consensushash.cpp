@@ -3,26 +3,26 @@
  *
  * This file contains the function to generate consensus hashes.
  */
-#include "tradelayer/activation.h"
-#include "tradelayer/consensushash.h"
-#include "tradelayer/dex.h"
-#include "tradelayer/mdex.h"
-#include "tradelayer/log.h"
-#include "tradelayer/parse_string.h"
-#include "tradelayer/persistence.h"
-#include "tradelayer/sp.h"
-#include "tradelayer/tradelayer.h"
 
-#include "arith_uint256.h"
-#include "uint256.h"
+#include <tradelayer/consensushash.h>
+
+#include <tradelayer/activation.h>
+#include <tradelayer/dex.h>
+#include <tradelayer/log.h>
+#include <tradelayer/mdex.h>
+#include <tradelayer/parse_string.h>
+#include <tradelayer/persistence.h>
+#include <tradelayer/sp.h>
+#include <tradelayer/tradelayer.h>
+#include <tradelayer/tradelayer_matrices.h>
+
+#include <arith_uint256.h>
+#include <uint256.h>
 
 #include <algorithm>
 #include <stdint.h>
 #include <string>
 #include <vector>
-
-#include "tradelayer_matrices.h"
-
 
 namespace mastercore
 {

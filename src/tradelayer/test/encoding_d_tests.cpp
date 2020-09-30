@@ -1,19 +1,19 @@
-#include "tradelayer/encoding.h"
+#include <tradelayer/encoding.h>
 
-#include "tradelayer/script.h"
+#include <tradelayer/script.h>
 
-#include "script/script.h"
-#include "test/test_bitcoin.h"
-#include "utilstrencodings.h"
-
-#include <boost/test/unit_test.hpp>
+#include <script/script.h>
+#include <test/test_bitcoin.h>
+#include <utilstrencodings.h>
 
 #include <stdint.h>
 #include <string>
 #include <utility>
 #include <vector>
 
-// Is resetted to a norm value in each test
+#include <boost/test/unit_test.hpp>
+
+// is reset to a norm value in each test
 extern unsigned nMaxDatacarrierBytes;
 
 BOOST_FIXTURE_TEST_SUITE(tradelayer_encoding_d_tests, BasicTestingSetup)

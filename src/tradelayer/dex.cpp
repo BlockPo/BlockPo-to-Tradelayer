@@ -4,33 +4,33 @@
  * This file contains DEx logic.
  */
 
-#include "tradelayer/dex.h"
-#include "tradelayer/mdex.h"
-#include "tradelayer/convert.h"
-#include "tradelayer/errors.h"
-#include "tradelayer/externfns.h"
-#include "tradelayer/log.h"
-#include "tradelayer/tradelayer.h"
-#include "tradelayer/rules.h"
-#include "tradelayer/sp.h"
-#include "tradelayer/uint256_extensions.h"
+#include <tradelayer/dex.h>
 
-#include "arith_uint256.h"
+#include <tradelayer/convert.h>
+#include <tradelayer/errors.h>
+#include <tradelayer/externfns.h>
+#include <tradelayer/log.h>
+#include <tradelayer/mdex.h>
+#include <tradelayer/rules.h>
+#include <tradelayer/sp.h>
+#include <tradelayer/tradelayer.h>
+#include <tradelayer/uint256_extensions.h>
+
+#include <arith_uint256.h>
 #include <hash.h>
-#include "tinyformat.h"
-#include "uint256.h"
-
-#include <boost/algorithm/string.hpp>
-#include <boost/format.hpp>
+#include <tinyformat.h>
+#include <uint256.h>
 
 #include <stdint.h>
-
 #include <fstream>
 #include <map>
 #include <set>
 #include <string>
 #include <utility>
 #include <vector>
+
+#include <boost/algorithm/string.hpp>
+#include <boost/format.hpp>
 
 extern std::map<uint32_t, std::map<uint32_t, int64_t>> market_priceMap;
 std::map<int, std::map<uint32_t,int64_t>> mastercore::MapLTCVolume;

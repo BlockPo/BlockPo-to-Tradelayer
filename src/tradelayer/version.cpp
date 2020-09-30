@@ -1,12 +1,12 @@
-#include "tradelayer/version.h"
+#include <tradelayer/version.h>
 
-#include "clientversion.h"
-#include "tinyformat.h"
+#include <clientversion.h>
+#include <tinyformat.h>
 
 #include <string>
 
 // #ifdef HAVE_BUILD_INFO FIXME: build.h doesnt exist
-// #    include "build.h"
+// #    include <build.h>
 // #endif
 
 #ifndef COMMIT_ID

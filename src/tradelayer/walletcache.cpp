@@ -5,25 +5,25 @@
  * Trade Layer state changes affected anything in the wallet.
  */
 
-#include "tradelayer/walletcache.h"
+#include <tradelayer/walletcache.h>
 
-#include "tradelayer/log.h"
-#include "tradelayer/tradelayer.h"
-#include "tradelayer/tally.h"
-#include "tradelayer/wallettxs.h"
+#include <tradelayer/log.h>
+#include <tradelayer/tally.h>
+#include <tradelayer/tradelayer.h>
+#include <tradelayer/wallettxs.h>
 
-#include "init.h"
-#include "sync.h"
-#include "uint256.h"
+#include <init.h>
+#include <sync.h>
+#include <uint256.h>
 #ifdef ENABLE_WALLET
-#include "wallet/wallet.h"
+#include <wallet/wallet.h>
 #endif
 
-#include <stdint.h>
 #include <algorithm>
 #include <list>
 #include <map>
 #include <set>
+#include <stdint.h>
 #include <string>
 #include <utility>
 #include <vector>

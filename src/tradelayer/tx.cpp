@@ -1,45 +1,43 @@
 // Master Protocol transaction code
 
-#include "tradelayer/tx.h"
-#include "tradelayer/activation.h"
-#include "tradelayer/convert.h"
-#include "tradelayer/dex.h"
-#include "tradelayer/log.h"
-#include "tradelayer/notifications.h"
-#include "tradelayer/tradelayer.h"
-#include "tradelayer/rules.h"
-#include "tradelayer/sp.h"
-#include "tradelayer/varint.h"
-#include "tradelayer/mdex.h"
-#include "tradelayer/uint256_extensions.h"
-#include "tradelayer/externfns.h"
-#include "tradelayer/parse_string.h"
-#include "tradelayer/utilsbitcoin.h"
+#include <tradelayer/tx.h>
 
-#include "amount.h"
-#include "validation.h"
-#include "sync.h"
-#include "utiltime.h"
+#include <tradelayer/activation.h>
+#include <tradelayer/convert.h>
+#include <tradelayer/dex.h>
+#include <tradelayer/externfns.h>
+#include <tradelayer/log.h>
+#include <tradelayer/mdex.h>
+#include <tradelayer/notifications.h>
+#include <tradelayer/parse_string.h>
+#include <tradelayer/rules.h>
+#include <tradelayer/sp.h>
+#include <tradelayer/tradelayer.h>
+#include <tradelayer/tradelayer_matrices.h>
+#include <tradelayer/uint256_extensions.h>
+#include <tradelayer/utilsbitcoin.h>
+#include <tradelayer/varint.h>
+
+#include <amount.h>
+#include <sync.h>
+#include <utiltime.h>
+#include <validation.h>
+
+#include <algorithm>
+#include <arpa/inet.h>
+#include <inttypes.h>
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <utility>
+#include <vector>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
-
-#include <stdio.h>
-#include <string.h>
-
-#include <algorithm>
-#include <utility>
-#include <vector>
-#include<arpa/inet.h>
-#include<unistd.h>
-#include<sys/socket.h>
-#include<sys/types.h>
-#include<stdio.h>
-#include<string.h>
-#include<stdlib.h>
-#include<inttypes.h>
-#include<math.h>
-#include "tradelayer_matrices.h"
 
 using boost::algorithm::token_compress_on;
 typedef boost::multiprecision::uint128_t ui128;

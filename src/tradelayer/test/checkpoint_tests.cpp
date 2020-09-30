@@ -1,21 +1,21 @@
-#include "tradelayer/activation.h"
-#include "tradelayer/consensushash.h"
-#include "tradelayer/dex.h"
-#include "tradelayer/mdex.h"
-#include "tradelayer/sp.h"
-#include "tradelayer/tradelayer.h"
-#include "tradelayer/rules.h"
-#include "tradelayer/tally.h"
-#include "test/test_bitcoin.h"
+#include <test/test_bitcoin.h>
+#include <tradelayer/activation.h>
+#include <tradelayer/consensushash.h>
+#include <tradelayer/dex.h>
+#include <tradelayer/mdex.h>
+#include <tradelayer/rules.h>
+#include <tradelayer/sp.h>
+#include <tradelayer/tally.h>
+#include <tradelayer/tradelayer.h>
 
 #include <arith_uint256.h>
 #include <sync.h>
 #include <uint256.h>
 
-#include <boost/test/unit_test.hpp>
-
 #include <stdint.h>
 #include <string>
+
+#include <boost/test/unit_test.hpp>
 
 namespace mastercore
 {
