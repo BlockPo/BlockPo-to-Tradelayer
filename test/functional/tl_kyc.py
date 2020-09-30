@@ -97,9 +97,17 @@ class KYCBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, False, "tl_new_id_registration",params)
         # self.log.info(out)
 
+        self.log.info("Checking the KYC before")
+        params = str([addresses[1]]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_check_kyc",params)
+        # self.log.info(out)
+
+        assert_equal(out['result']['result: '],'disabled')
+
+
         self.nodes[0].generate(1)
 
-        self.log.info("Checking the KYC ")
+        self.log.info("Checking the KYC after")
         params = str([addresses[1]]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_check_kyc",params)
         # self.log.info(out)
