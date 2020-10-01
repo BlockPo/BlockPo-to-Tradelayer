@@ -1,7 +1,7 @@
 #include <rpc/safemode.h>
 
 #include <rpc/protocol.h>
-#include <util.h>
+#include <util/system.h>
 #include <warnings.h>
 
 void ObserveSafeMode()

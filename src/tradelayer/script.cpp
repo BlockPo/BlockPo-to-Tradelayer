@@ -8,7 +8,7 @@
 #include <script/script.h>
 #include <script/standard.h>
 #include <serialize.h>
-#include <utilstrencodings.h>
+#include <util/strencodings.h>
 #include <validation.h>
 
 #include <string>

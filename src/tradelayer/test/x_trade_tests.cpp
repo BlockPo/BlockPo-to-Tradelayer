@@ -15,7 +15,7 @@
 #include <tinyformat.h>
 #include <uint256.h>
 #include <univalue.h>
-#include <utilstrencodings.h>
+#include <util/strencodings.h>
 
 #include <assert.h>
 #include <fstream>

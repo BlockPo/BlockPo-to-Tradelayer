@@ -7,7 +7,7 @@
 #include <config/bitcoin-config.h>
 #endif
 
-#include <utiltime.h>
+#include <util/time.h>
 
 #include <atomic>
 

@@ -15,7 +15,7 @@
 #include <streams.h>
 #include <tinyformat.h>
 #include <uint256.h>
-#include <utiltime.h>
+#include <util/time.h>
 #include <validation.h>
 
 #include <leveldb/db.h>

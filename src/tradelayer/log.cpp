@@ -1,8 +1,8 @@
 #include <tradelayer/log.h>
 
 #include <chainparamsbase.h>
-#include <util.h>
-#include <utiltime.h>
+#include <util/system.h>
+#include <util/time.h>
 
 #include <assert.h>
 #include <atomic>

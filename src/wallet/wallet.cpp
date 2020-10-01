@@ -26,8 +26,8 @@
 #include <scheduler.h>
 #include <timedata.h>
 #include <txmempool.h>
-#include <util.h>
-#include <utilmoneystr.h>
+#include <util/system.h>
+#include <util/moneystr.h>
 #include <wallet/fees.h>
 #include <util/vector.h>
 

@@ -42,7 +42,7 @@
 #include <tinyformat.h>
 #include <txmempool.h>
 #include <uint256.h>
-#include <utilstrencodings.h>
+#include <util/strencodings.h>
 #include <validation.h>
 #ifdef ENABLE_WALLET
 #include <wallet/wallet.h>

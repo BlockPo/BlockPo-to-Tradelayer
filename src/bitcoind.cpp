@@ -14,10 +14,10 @@
 #include <rpc/server.h>
 #include <init.h>
 #include <noui.h>
-#include <util.h>
+#include <util/system.h>
 #include <httpserver.h>
 #include <httprpc.h>
-#include <utilstrencodings.h>
+#include <util/strencodings.h>
 #include "tradelayer/tradelayer_matrices.h"
 #include <boost/thread.hpp>
 

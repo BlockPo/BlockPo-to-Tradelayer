@@ -13,7 +13,7 @@
 #include <primitives/transaction.h>
 #include <sync.h>
 #include <uint256.h>
-#include <util.h>
+#include <util/system.h>
 
 #include <leveldb/status.h>
 #include <openssl/sha.h>

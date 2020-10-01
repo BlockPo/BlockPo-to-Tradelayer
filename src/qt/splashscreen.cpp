@@ -12,7 +12,7 @@
 
 #include <clientversion.h>
 #include <init.h>
-#include <util.h>
+#include <util/system.h>
 #include <ui_interface.h>
 #include <version.h>
 
