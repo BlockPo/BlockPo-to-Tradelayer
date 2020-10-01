@@ -42,6 +42,7 @@
 #include <ui_interface.h>
 #include <util/system.h>
 #include <util/moneystr.h>
+#include <util/threadnames.h>
 #include <validationinterface.h>
 #ifdef ENABLE_WALLET
 #include <wallet/init.h>
@@ -190,7 +191,7 @@ void Shutdown()
     /// for example if the data directory was found to be locked.
     /// Be sure that anything that writes files or flushes caches only does this if the respective
     /// module was initialized.
-    RenameThread("litecoin-shutoff");
+    util::ThreadRename("litecoin-shutoff");
     mempool.AddTransactionsUpdated(1);
 
     StopHTTPRPC();
@@ -644,7 +645,7 @@ void CleanupBlockRevFiles()
 void ThreadImport(std::vector<fs::path> vImportFiles)
 {
     const CChainParams& chainparams = Params();
-    RenameThread("litecoin-loadblk");
+    util::ThreadRename("litecoin-loadblk");
 
     {
     CImportingNow imp;

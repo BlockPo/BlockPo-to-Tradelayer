@@ -18,6 +18,7 @@
 #include <fs.h>
 #include <sync.h>
 #include <tinyformat.h>
+#include <util/threadnames.h>
 #include <util/time.h>
 
 #include <atomic>
@@ -311,15 +312,12 @@ std::string HelpMessageOpt(const std::string& option, const std::string& message
  */
 int GetNumCores();
 
-void RenameThread(const char* name);
-
 /**
  * .. and a wrapper that just calls func once
  */
 template <typename Callable> void TraceThread(const char* name,  Callable func)
 {
-    std::string s = strprintf("bitcoin-%s", name);
-    RenameThread(s.c_str());
+    util::ThreadRename(name);
     try
     {
         LogPrintf("%s thread start\n", name);
