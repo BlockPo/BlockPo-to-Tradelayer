@@ -6903,6 +6903,25 @@ bool mastercore::transferAll(const std::string& sender, const std::string& recei
 }
 
 
+bool mastercore::increaseLTCVolume(uint32_t propertyId, uint32_t propertyDesired, int aBlock)
+{
+    int64_t propertyAmount = 0;
+    int64_t propertyDesiredAmount = 0;
+    iterVolume(propertyAmount, propertyId, aBlock - 1000, aBlock, MapLTCVolume);
+    iterVolume(propertyDesiredAmount, propertyDesired, aBlock - 1000, aBlock, MapLTCVolume);
+
+    if (1000*COIN > propertyAmount || 1000*COIN > propertyDesiredAmount)
+    {
+
+      // look up the 12-block VWAP of the denominator vs. LTC // here we should see the lihki's code
+      // increment cumulative LTC volume by tokens traded * the 12-block VWAP  // writing this function with the params from 3)
+
+    }
+
+    return true;
+
+}
+
 /**
  * @return The marker for class D transactions.
  */

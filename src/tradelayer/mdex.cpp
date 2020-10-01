@@ -1639,11 +1639,14 @@ MatchReturnType x_Trade(CMPMetaDEx* const pnew)
             }
 
             /***********************************************************************************************/
-            // Adding volume into Map
+            // Adding token volume into Map
             metavolume[pnew->getBlock()][pnew->getProperty()] = seller_amountGot;
             metavolume[pnew->getBlock()][pnew->getDesProperty()] = buyer_amountGot;
 
           	/***********************************************************************************************/
+            // Adding volume in termos of LTC
+            increaseLTCVolume(pnew->getProperty(), pnew->getDesProperty(), pnew->getBlock());
+            /***********************************************************************************************/
           	const int64_t& buyer_amountGotAfterFee = buyer_amountGot;
           	int64_t tradingFee = 0;
 
