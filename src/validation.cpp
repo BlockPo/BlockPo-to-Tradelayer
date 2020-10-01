@@ -37,6 +37,7 @@
 #include <util/system.h>
 #include <util/moneystr.h>
 #include <util/strencodings.h>
+#include <util/threadnames.h>
 #include <validationinterface.h>
 #include <warnings.h>
 
@@ -1698,7 +1699,7 @@ static bool WriteTxIndexDataForBlock(const CBlock& block, CValidationState& stat
 static CCheckQueue<CScriptCheck> scriptcheckqueue(128);
 
 void ThreadScriptCheck() {
-    RenameThread("litecoin-scriptch");
+    util::ThreadRename("litecoin-scriptch");
     scriptcheckqueue.Thread();
 }
 

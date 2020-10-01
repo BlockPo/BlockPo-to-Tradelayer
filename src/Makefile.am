@@ -156,7 +156,9 @@ BITCOIN_CORE_H = \
   ui_interface.h \
   undo.h \
   util/moneystr.h \
+  util/string.h \
   util/system.h \
+  util/threadnames.h \
   util/time.h \
   util/vector.h \
   validation.h \
@@ -347,7 +349,6 @@ libbitcoin_common_a_SOURCES = \
 libbitcoin_util_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
 libbitcoin_util_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 libbitcoin_util_a_SOURCES = \
-  support/lockedpool.cpp \
   chainparamsbase.cpp \
   clientversion.cpp \
   compat/glibc_sanity.cpp \
@@ -358,11 +359,14 @@ libbitcoin_util_a_SOURCES = \
   rpc/protocol.cpp \
   rpc/util.cpp \
   support/cleanse.cpp \
+  support/lockedpool.cpp \
   sync.cpp \
   threadinterrupt.cpp \
-  util/system.cpp \
   util/moneystr.cpp \
   util/strencodings.cpp \
+  util/string.cpp \
+  util/system.cpp \
+  util/threadnames.cpp \
   util/time.cpp \
   $(BITCOIN_CORE_H)
 
