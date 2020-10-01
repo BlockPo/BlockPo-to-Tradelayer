@@ -336,9 +336,9 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_check_kyc", 1, "arg1" },
     { "tl_getoraclecache", 0, "arg0" },
 
-    { "tl_getdexvolume", 0, "arg1" },
-    { "tl_getdexvolume", 1, "arg2" },
-    { "tl_getdexvolume", 2, "arg3" },
+    { "tl_get_ltcvolume", 0, "arg1" },
+    { "tl_get_ltcvolume", 1, "arg2" },
+    { "tl_get_ltcvolume", 2, "arg3" },
 
     { "tl_getmdexvolume", 0, "arg1" },
     { "tl_getmdexvolume", 1, "arg2" },
