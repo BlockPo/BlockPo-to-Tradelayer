@@ -29,7 +29,7 @@
 
 
 std::string static EncodeDumpTime(int64_t nTime) {
-    return DateTimeStrFormat("%Y-%m-%dT%H:%M:%SZ", nTime);
+    return FormatISO8601DateTime(nTime);
 }
 
 int64_t static DecodeDumpTime(const std::string &str) {

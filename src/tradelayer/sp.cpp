@@ -554,7 +554,7 @@ void CMPCrowd::insertDatabase(const uint256& txHash, const std::vector<int64_t>&
 std::string CMPCrowd::toString(const std::string& address) const
 {
     return strprintf("%34s : id=%u=%X; prop=%u, value= %li, deadline: %s (%lX)", address, propertyId, propertyId,
-        property_desired, nValue, DateTimeStrFormat("%Y-%m-%d %H:%M:%S", deadline), deadline);
+        property_desired, nValue, FormatISO8601DateTime(deadline), deadline);
 }
 
 void CMPCrowd::print(const std::string& address, FILE* fp) const
@@ -887,7 +887,7 @@ void mastercore::eraseMaxedCrowdsale(const std::string& address, int64_t blockTi
             __func__, address, block, blockTime, crowdsale.getPropertyId(), strMPProperty(crowdsale.getPropertyId()));
 
         if (msc_debug_sp) {
-            PrintToLog("%s(): %s\n", __func__, DateTimeStrFormat("%Y-%m-%d %H:%M:%S", blockTime));
+            PrintToLog("%s(): %s\n", __func__, FormatISO8601DateTime(blockTime));
             PrintToLog("%s(): %s\n", __func__, crowdsale.toString(address));
         }
 
@@ -969,7 +969,7 @@ unsigned int mastercore::eraseExpiredCrowdsale(const CBlockIndex* pBlockIndex)
                 __func__, address, blockHeight, blockTime, crowdsale.getPropertyId(), strMPProperty(crowdsale.getPropertyId()));
 
             if (msc_debug_sp) {
-                PrintToLog("%s(): %s\n", __func__, DateTimeStrFormat("%Y-%m-%d %H:%M:%S", blockTime));
+                PrintToLog("%s(): %s\n", __func__, FormatISO8601DateTime(blockTime));
                 PrintToLog("%s(): %s\n", __func__, crowdsale.toString(address));
             }
 

@@ -45,7 +45,7 @@ void WaitForShutdown()
     // Tell the main threads to shutdown.
     while (!fShutdown)
     {
-        MilliSleep(200);
+        UninterruptibleSleep(std::chrono::milliseconds{200});
         fShutdown = ShutdownRequested();
     }
     Interrupt();

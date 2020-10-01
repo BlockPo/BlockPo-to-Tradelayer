@@ -1528,7 +1528,8 @@ void ThreadMapPort()
                 else
                     LogPrintf("UPnP Port Mapping successful.\n");
 
-                MilliSleep(20*60*1000); // Refresh every 20 minutes
+                // Refresh every 20 minutes
+                UninterruptibleSleep(std::chrono::milliseconds{20*60*1000});
             }
         }
         catch (const boost::thread_interrupted&)
@@ -2776,7 +2777,7 @@ void CNode::AskFor(const CInv& inv)
         nRequestTime = it->second;
     else
         nRequestTime = 0;
-    LogPrint(BCLog::NET, "askfor %s  %d (%s) peer=%d\n", inv.ToString(), nRequestTime, DateTimeStrFormat("%H:%M:%S", nRequestTime/1000000), id);
+    LogPrint(BCLog::NET, "askfor %s  %d (%s) peer=%d\n", inv.ToString(), nRequestTime, FormatISO8601DateTime(nRequestTime/1000000), id);
 
     // Make sure not to reuse time indexes to keep things in the same order
     int64_t nNow = GetTimeMicros() - 1000000;
