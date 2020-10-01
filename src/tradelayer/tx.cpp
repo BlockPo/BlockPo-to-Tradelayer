@@ -20,7 +20,7 @@
 
 #include <amount.h>
 #include <sync.h>
-#include <utiltime.h>
+#include <util/time.h>
 #include <validation.h>
 
 #include <algorithm>

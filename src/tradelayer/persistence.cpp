@@ -8,7 +8,7 @@
 
 #include <tradelayer/log.h>
 
-#include <util.h>
+#include <util/system.h>
 #include <leveldb/db.h>
 #include <leveldb/write_batch.h>
 

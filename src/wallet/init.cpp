@@ -6,8 +6,8 @@
 #include <wallet/init.h>
 
 #include <net.h>
-#include <util.h>
-#include <utilmoneystr.h>
+#include <util/system.h>
+#include <util/moneystr.h>
 #include <validation.h>
 #include <wallet/rpcwallet.h>
 #include <wallet/wallet.h>

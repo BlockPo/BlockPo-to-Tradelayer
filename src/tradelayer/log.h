@@ -2,7 +2,7 @@
 #define TRADELAYER_LOG_H
 
 #include <tinyformat.h>
-#include <util.h>
+#include <util/system.h>
 
 #include <string>
 

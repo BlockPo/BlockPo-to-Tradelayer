@@ -13,7 +13,7 @@
 #include <rpc/server.h>
 #include <sync.h>
 #include <uint256.h>
-#include <utilstrencodings.h>
+#include <util/strencodings.h>
 
 #include <univalue.h>
 

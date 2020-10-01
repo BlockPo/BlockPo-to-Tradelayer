@@ -9,7 +9,7 @@
 
 #include <rpc/server.h>
 #include <rpc/util.h>
-#include <utilstrencodings.h>
+#include <util/strencodings.h>
 
 #include <univalue.h>
 

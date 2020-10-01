@@ -1,6 +1,6 @@
 #include <test/test_bitcoin.h>
 #include <tradelayer/createpayload.h>
-#include <utilstrencodings.h>
+#include <util/strencodings.h>
 
 #include <boost/test/unit_test.hpp>
 #include <stdint.h>

@@ -12,7 +12,7 @@
 
 #include <qt/guiutil.h>
 
-#include <util.h>
+#include <util/system.h>
 
 #include <QFileDialog>
 #include <QSettings>

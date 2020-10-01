@@ -29,7 +29,7 @@
 #include <init.h>
 #include <rpc/server.h>
 #include <ui_interface.h>
-#include <util.h>
+#include <util/system.h>
 #include <warnings.h>
 
 #ifdef ENABLE_WALLET

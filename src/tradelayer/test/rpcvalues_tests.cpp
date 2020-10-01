@@ -8,7 +8,7 @@
 #include <tradelayer/tradelayer.h>
 #include <tradelayer/tx.h>
 #include <tradelayer/uint256_extensions.h>
-#include <utilstrencodings.h>
+#include <util/strencodings.h>
 
 #include <assert.h>
 #include <fstream>

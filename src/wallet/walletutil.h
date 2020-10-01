@@ -6,7 +6,7 @@
 #define BITCOIN_WALLET_UTIL_H
 
 #include <chainparamsbase.h>
-#include <util.h>
+#include <util/system.h>
 
 //! Get the path of the wallet directory.
 fs::path GetWalletDir();
