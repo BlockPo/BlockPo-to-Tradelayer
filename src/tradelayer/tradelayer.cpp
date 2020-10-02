@@ -1065,6 +1065,12 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
         // adding last price
         lastPrice[property] = unitPrice;
 
+        const arith_uint256 inVwap = ConvertTo256(unitPrice) * ConvertTo256(nvalue);
+        const int64_t nvwap = ConvertTo64(inVwap);
+
+        // adding numerator of vwap
+        tokenvwap[property][block].push_back(nvwap);
+
         // adding LTC volume to map
         MapLTCVolume[block][property] += nvalue;
 
@@ -6907,23 +6913,55 @@ bool mastercore::transferAll(const std::string& sender, const std::string& recei
 
 }
 
+int64_t getVWap(uint32_t propertyId, int aBlock, const std::map<uint32_t,std::map<int,std::vector<int64_t>>>& aMap)
+{
+    int64_t volume, nvwap = 0;
+    const int rollback = aBlock - 12;
+    auto it = aMap.find(propertyId);
+    if (it != aMap.end())
+    {
+        auto &vmap = it->second;
+        auto itt = vmap.find(rollback);
+        if (itt != vmap.end())
+        {
+            for ( ; itt != vmap.end(); ++itt)
+            {
+                auto v = itt->second;
+                nvwap += std::accumulate(v.begin(),v.end(), 0);
+            }
+        }
+
+    }
+
+    // calculating the volume
+    iterVolume(volume, propertyId, rollback, aBlock, MapLTCVolume);
+
+    if (volume == 0) PrintToLog("%s():volume here is 0\n",__func__);
+
+    return ((volume > 0) ? (nvwap / volume) : 0);
+
+}
 
 bool mastercore::increaseLTCVolume(uint32_t propertyId, uint32_t propertyDesired, int aBlock)
 {
-    int64_t propertyAmount = 0;
-    int64_t propertyDesiredAmount = 0;
+    int64_t propertyAmount, propertyDesiredAmount = 0;
     iterVolume(propertyAmount, propertyId, aBlock - 1000, aBlock, MapLTCVolume);
     iterVolume(propertyDesiredAmount, propertyDesired, aBlock - 1000, aBlock, MapLTCVolume);
 
     if (1000*COIN > propertyAmount || 1000*COIN > propertyDesiredAmount)
     {
 
-      // look up the 12-block VWAP of the denominator vs. LTC // here we should see the lihki's code
-      // increment cumulative LTC volume by tokens traded * the 12-block VWAP  // writing this function with the params from 3)
 
+        // look up the 12-block VWAP of the denominator vs. LTC
+        const int64_t vwap = getVWap(propertyDesired, aBlock, tokenvwap);
+
+        // increment cumulative LTC volume by tokens traded * the 12-block VWAP
+        MapLTCVolume[aBlock][propertyDesired] += vwap;
+
+        return true;
     }
 
-    return true;
+    return false;
 
 }
 
