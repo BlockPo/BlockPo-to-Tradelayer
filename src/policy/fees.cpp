@@ -4,12 +4,14 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <policy/fees.h>
-#include <policy/policy.h>
 
 #include <clientversion.h>
+#include <policy/policy.h>
 #include <primitives/transaction.h>
 #include <streams.h>
 #include <txmempool.h>
+#include <util/strencodings.h>
+#include <util/string.h>
 #include <util/system.h>
 
 static constexpr double INF_FEERATE = 1e99;

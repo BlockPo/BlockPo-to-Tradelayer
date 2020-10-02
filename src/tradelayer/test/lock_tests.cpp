@@ -22,7 +22,7 @@ static void plusOneThread(int nIterations)
         LOCK(locker::cs_number);
         int n = number::n;
         int nSleep = GetRandInt(10);
-        MilliSleep(nSleep);
+        UninterruptibleSleep(std::chrono::milliseconds{nSleep});
         number::n = n + 1;
     }
 }

@@ -778,7 +778,7 @@ static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, 
 
     if (!bRPConly || msc_debug_parser_readonly) {
         PrintToLog("____________________________________________________________________________________________________________________________________\n");
-        PrintToLog("%s(block=%d, %s idx= %d); txid: %s\n", __FUNCTION__, nBlock, DateTimeStrFormat("%Y-%m-%d %H:%M:%S", nTime), idx, wtx.GetHash().GetHex());
+        PrintToLog("%s(block=%d, %s idx= %d); txid: %s\n", __FUNCTION__, nBlock, FormatISO8601Date(nTime), idx, wtx.GetHash().GetHex());
     }
 
     LOCK(cs_tx_cache);
@@ -2591,7 +2591,7 @@ int mastercore_init()
   }
 
   PrintToLog("\nInitializing Trade Layer\n");
-  PrintToLog("Startup time: %s\n", DateTimeStrFormat("%Y-%m-%d %H:%M:%S", GetTime()));
+  PrintToLog("Startup time: %s\n", FormatISO8601Date(GetTime()));
   // PrintToLog("Build date: %s, based on commit: %s\n", BuildDate(), BuildCommit());
 
   InitDebugLogLevels();
@@ -2718,7 +2718,7 @@ int mastercore_shutdown()
     mastercoreInitialized = 0;
 
     PrintToLog("\nTrade Layer shutdown completed\n");
-    PrintToLog("Shutdown time: %s\n", DateTimeStrFormat("%Y-%m-%d %H:%M:%S", GetTime()));
+    PrintToLog("Shutdown time: %s\n", FormatISO8601Date(GetTime()));
 
     return 0;
 }

@@ -480,7 +480,7 @@ UniValue mscrpc(const JSONRPCRequest& request)
         {
             PrintToLog("Locking cs_tally for %d milliseconds..\n", extra2);
             LOCK(cs_tally);
-            MilliSleep(extra2);
+            UninterruptibleSleep(std::chrono::milliseconds{extra2});
             PrintToLog("Unlocking cs_tally now\n");
             break;
         }
@@ -488,7 +488,7 @@ UniValue mscrpc(const JSONRPCRequest& request)
         {
             PrintToLog("Locking cs_main for %d milliseconds..\n", extra2);
             LOCK(cs_main);
-            MilliSleep(extra2);
+            UninterruptibleSleep(std::chrono::milliseconds{extra2});
             PrintToLog("Unlocking cs_main now\n");
             break;
         }
@@ -501,7 +501,7 @@ UniValue mscrpc(const JSONRPCRequest& request)
                 pwalletMain = vpwallets[0];
             }
             LOCK(pwalletMain->cs_wallet);
-            MilliSleep(extra2);
+            UninterruptibleSleep(std::chrono::milliseconds{extra2});
             PrintToLog("Unlocking pwalletMain->cs_wallet now\n");
             break;
         }
