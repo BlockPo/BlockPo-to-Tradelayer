@@ -356,7 +356,7 @@ class VestingBasicsTest (BitcoinTestFramework):
 
         self.log.info("Checking LTC Volume")
         params = str([4, 1, 3000]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, True, "tl_getdexvolume",params)
+        out = tradelayer_HTTP(conn, headers, True, "tl_get_ltcvolume",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
         assert_equal(out['result']['volume'], '200.00000000')
@@ -477,7 +477,7 @@ class VestingBasicsTest (BitcoinTestFramework):
 
         self.log.info("Checking LTC Volume")
         params = str([4, 1, 99999]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, True, "tl_getdexvolume",params)
+        out = tradelayer_HTTP(conn, headers, True, "tl_get_ltcvolume",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
         assert_equal(out['result']['volume'], '400.00000000')
@@ -580,7 +580,7 @@ class VestingBasicsTest (BitcoinTestFramework):
 
             self.log.info("Checking LTC Volume")
             params = str([4, 1, 99999]).replace("'",'"')
-            out = tradelayer_HTTP(conn, headers, True, "tl_getdexvolume",params)
+            out = tradelayer_HTTP(conn, headers, True, "tl_get_ltcvolume",params)
             # self.log.info(out)
             assert_equal(out['error'], None)
             nvolume = 400 + 200 * (i+1)
@@ -630,7 +630,7 @@ class VestingBasicsTest (BitcoinTestFramework):
 
         self.log.info("Checking LTC Volume")
         params = str([4, 1, 99999]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, True, "tl_getdexvolume",params)
+        out = tradelayer_HTTP(conn, headers, True, "tl_get_ltcvolume",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
         assert_equal(out['result']['volume'], '4400.00000000')

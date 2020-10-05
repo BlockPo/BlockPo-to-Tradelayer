@@ -1066,8 +1066,7 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
         // adding last price
         lastPrice[property] = unitPrice;
 
-        const arith_uint256 inVwap = ConvertTo256(unitPrice) * ConvertTo256(nvalue);
-        const int64_t nvwap = ConvertTo64(inVwap);
+        const arith_uint256 nvwap = (ConvertTo256(unitPrice) * ConvertTo256(nvalue)) /  ConvertTo256(COIN);
 
         // adding numerator of vwap
         tokenvwap[property][block].push_back(nvwap);
@@ -6427,7 +6426,7 @@ bool mastercore::Instant_x_Trade(const uint256& txid, uint8_t tradingAction, con
     return true;
 }
 
-void iterVolume(int64_t& amount, uint32_t propertyId, const int& fblock, const int& sblock, const std::map<int, std::map<uint32_t,int64_t>>& aMap)
+void mastercore::iterVolume(int64_t& amount, uint32_t propertyId, const int& fblock, const int& sblock, const std::map<int, std::map<uint32_t,int64_t>>& aMap)
 {
     for(const auto &m : aMap)
     {
@@ -6441,7 +6440,10 @@ void iterVolume(int64_t& amount, uint32_t propertyId, const int& fblock, const i
         const auto &blockMap = m.second;
         auto itt = blockMap.find(propertyId);
         if (itt != blockMap.end()){
-            amount += itt->second;
+            const int64_t& newAmount = itt->second;
+            // overflows?
+            assert(!isOverflow(amount, newAmount));
+            amount += newAmount;
         }
 
     }
@@ -6908,21 +6910,22 @@ bool mastercore::transferAll(const std::string& sender, const std::string& recei
 
 }
 
-int64_t getVWap(uint32_t propertyId, int aBlock, const std::map<uint32_t,std::map<int,std::vector<int64_t>>>& aMap)
+int64_t mastercore::getVWap(uint32_t propertyId, int aBlock, const std::map<uint32_t,std::map<int,std::vector<arith_uint256>>>& aMap)
 {
-    int64_t volume, nvwap = 0;
+    int64_t volume = 0;
+    arith_uint256 nvwap = 0;
     const int rollback = aBlock - 12;
     auto it = aMap.find(propertyId);
     if (it != aMap.end())
     {
         auto &vmap = it->second;
-        auto itt = vmap.find(rollback);
+        auto itt = (rollback > 0) ? find_if(vmap.begin(), vmap.end(), [&rollback] (const std::pair<int,std::vector<arith_uint256>>& int_arith_pair) { return (int_arith_pair.first >= rollback);}) : vmap.begin();
         if (itt != vmap.end())
         {
             for ( ; itt != vmap.end(); ++itt)
             {
                 auto v = itt->second;
-                nvwap += std::accumulate(v.begin(),v.end(), 0);
+                for_each(v.begin(),v.end(), [&nvwap](const arith_uint256& num){ nvwap += num ;});
             }
         }
 
@@ -6933,30 +6936,32 @@ int64_t getVWap(uint32_t propertyId, int aBlock, const std::map<uint32_t,std::ma
 
     if (volume == 0) PrintToLog("%s():volume here is 0\n",__func__);
 
-    return ((volume > 0) ? (nvwap / volume) : 0);
+    return ((volume > 0) ? (COIN * (ConvertTo64(nvwap) / volume)) : 0);
 
 }
 
-bool mastercore::increaseLTCVolume(uint32_t propertyId, uint32_t propertyDesired, int aBlock)
+int64_t mastercore::increaseLTCVolume(uint32_t propertyId, uint32_t propertyDesired, int aBlock)
 {
-    int64_t propertyAmount, propertyDesiredAmount = 0;
-    iterVolume(propertyAmount, propertyId, aBlock - 1000, aBlock, MapLTCVolume);
-    iterVolume(propertyDesiredAmount, propertyDesired, aBlock - 1000, aBlock, MapLTCVolume);
+    int64_t total = 0, propertyAmount = 0, propertyDesiredAmount = 0;
+    const int rollback = aBlock - 1000;
+    iterVolume(propertyAmount, propertyId, rollback, aBlock, MapLTCVolume);
+    iterVolume(propertyDesiredAmount, propertyDesired, rollback, aBlock, MapLTCVolume);
 
-    if (1000*COIN > propertyAmount || 1000*COIN > propertyDesiredAmount)
+    if (1000 * COIN <=  propertyAmount && 1000 * COIN <=  propertyDesiredAmount)
     {
-
-
         // look up the 12-block VWAP of the denominator vs. LTC
         const int64_t vwap = getVWap(propertyDesired, aBlock, tokenvwap);
+        const arith_uint256 aTotal = (ConvertTo256(propertyDesiredAmount) * ConvertTo256(vwap)) / ConvertTo256(COIN);
+        total = ConvertTo64(aTotal);
+
+        PrintToLog("%s(): total: %d\n",__func__, total);
 
         // increment cumulative LTC volume by tokens traded * the 12-block VWAP
-        MapLTCVolume[aBlock][propertyDesired] += vwap;
+        MapLTCVolume[aBlock][propertyDesired] += total;
 
-        return true;
     }
 
-    return false;
+    return total;
 
 }
 
