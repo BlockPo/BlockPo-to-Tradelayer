@@ -99,9 +99,9 @@ class HTTPBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['unitprice'],'0.00000000')
 
 
-        self.log.info("Testing tl_getdexvolume")
+        self.log.info("Testing tl_get_ltcvolume")
         params = str([1,1,100])
-        out = tradelayer_HTTP(conn, headers, True, "tl_getdexvolume",params)
+        out = tradelayer_HTTP(conn, headers, True, "tl_get_ltcvolume",params)
         # self.log.info(out)
         assert_equal(out['result']['volume'],'0.00000000')
         assert_equal(out['result']['blockheigh'],'100')

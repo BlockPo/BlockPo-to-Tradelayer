@@ -630,7 +630,11 @@ namespace mastercore
 
   bool checkWithdrawal(const std::string& txid, const std::string& channelAddress);
 
-  bool increaseLTCVolume(uint32_t propertyId, uint32_t propertyDesired, int aBlock);
+  int64_t increaseLTCVolume(uint32_t propertyId, uint32_t propertyDesired, int aBlock);
+
+  int64_t getVWap(uint32_t propertyId, int aBlock, const std::map<uint32_t,std::map<int,std::vector<arith_uint256>>>& aMap);
+
+  void iterVolume(int64_t& amount, uint32_t propertyId, const int& fblock, const int& sblock, const std::map<int, std::map<uint32_t,int64_t>>& aMap);
 }
 
 #endif // TRADELAYER_TL_H

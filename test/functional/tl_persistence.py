@@ -814,7 +814,7 @@ class PersistenceBasicsTest (BitcoinTestFramework):
 
         self.log.info("Persistence: checking LTC volume in DEx")
         params = str([4, 1, 300]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, True, "tl_getdexvolume",params)
+        out = tradelayer_HTTP(conn, headers, True, "tl_get_ltcvolume",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
         assert_equal(out['result']['volume'],'1.00000000')
@@ -900,3 +900,4 @@ class PersistenceBasicsTest (BitcoinTestFramework):
 
 if __name__ == '__main__':
     PersistenceBasicsTest ().main ()
+tl_get_ltcvolume

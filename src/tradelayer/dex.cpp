@@ -35,7 +35,7 @@
 extern std::map<uint32_t, std::map<uint32_t, int64_t>> market_priceMap;
 std::map<int, std::map<uint32_t,int64_t>> mastercore::MapLTCVolume;
 std::map<int, std::map<uint32_t,int64_t>> mastercore::MapTokenVolume;
-std::map<uint32_t,std::map<int,std::vector<int64_t>>> mastercore::tokenvwap;
+std::map<uint32_t,std::map<int,std::vector<arith_uint256>>> mastercore::tokenvwap;
 
 
 namespace mastercore
@@ -569,8 +569,7 @@ int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addre
     // adding last price
     lastPrice[propertyId] = unitPrice;
 
-    const arith_uint256 inVwap = ConvertTo256(unitPrice) * ConvertTo256(amountPurchased);
-    const int64_t nvwap = ConvertTo64(inVwap);
+    const arith_uint256 nvwap = (ConvertTo256(unitPrice) * ConvertTo256(amountPurchased))/ ConvertTo256(COIN);
 
     // adding numerator of vwap
     tokenvwap[propertyId][block].push_back(nvwap);
