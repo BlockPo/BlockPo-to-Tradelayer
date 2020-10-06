@@ -6954,10 +6954,10 @@ int64_t mastercore::increaseLTCVolume(uint32_t propertyId, uint32_t propertyDesi
         const arith_uint256 aTotal = (ConvertTo256(propertyDesiredAmount) * ConvertTo256(vwap)) / ConvertTo256(COIN);
         total = ConvertTo64(aTotal);
 
-        PrintToLog("%s(): total: %d\n",__func__, total);
+        PrintToLog("%s(): vwap: %d, total: %d\n",__func__, vwap, total);
 
         // increment cumulative LTC volume by tokens traded * the 12-block VWAP
-        MapLTCVolume[aBlock][propertyDesired] += total;
+        if (total > 0) MapLTCVolume[aBlock][propertyDesired] += total;
 
     }
 
