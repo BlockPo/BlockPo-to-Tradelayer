@@ -1,3 +1,4 @@
+#include "tradelayer/dex.h"
 #include "tradelayer/mdex.h"
 #include "tradelayer/tally.h"
 #include "tradelayer/tradelayer.h"
@@ -421,6 +422,70 @@ int input_mp_mdexorder_string(const std::string& s)
 }
 
 
+int input_tokenvwap_string(const std::string& s)
+{
+  std::vector<std::string> vstr;
+  boost::split(vstr, s, boost::is_any_of("+-"), boost::token_compress_on);
+
+  // BOOST_TEST_MESSAGE("vstr[0]:" << vstr[0] << "\n");
+  // BOOST_TEST_MESSAGE("vstr[1]:" << vstr[1] << "\n");
+  const uint32_t propertyId = boost::lexical_cast<uint32_t>(vstr[0]);
+  const int block = boost::lexical_cast<int64_t>(vstr[1]);
+
+  // BOOST_TEST_MESSAGE("vstr[2]:" << vstr[2] << "\n");
+  std::vector<std::string> vpair;
+  boost::split(vpair, vstr[2], boost::is_any_of(","), boost::token_compress_on);
+
+  for (const auto& np : vpair)
+  {
+      // BOOST_TEST_MESSAGE("np:" << np << "\n");
+      std::vector<std::string> pAmount;
+      boost::split(pAmount, np, boost::is_any_of(":"), boost::token_compress_on);
+      const int64_t unitPrice = boost::lexical_cast<int64_t>(pAmount[0]);
+      const int64_t amount = boost::lexical_cast<int64_t>(pAmount[1]);
+      // BOOST_TEST_MESSAGE("unitPrice:" << unitPrice << "\n");
+      // BOOST_TEST_MESSAGE("amount:" << amount << "\n");
+      tokenvwap[propertyId][block].push_back(std::make_pair(unitPrice, amount));
+  }
+
+  return 0;
+}
+
+static int write_mp_tokenvwap(std::string& lineOut)
+{
+    for (const auto &mp : tokenvwap)
+    {
+        // decompose the key for address
+        const uint32_t& propertyId = mp.first;
+        const auto &blcmap = mp.second;
+
+        // BOOST_TEST_MESSAGE("propertyId:" << propertyId << "\n");
+
+        lineOut.append(strprintf("%d+",propertyId));
+
+        for (const auto &vec : blcmap){
+            // adding block number
+            // BOOST_TEST_MESSAGE("block:" << vec.first);
+            lineOut.append(strprintf("%d-",vec.first));
+
+            // vector of pairs
+            const auto &vpairs = vec.second;
+            for (auto p = vpairs.begin(); p != vpairs.end(); ++p)
+            {
+                const std::pair<int64_t,int64_t>& vwPair = *p;
+                lineOut.append(strprintf("%d:%d", vwPair.first, vwPair.second));
+                if (p != std::prev(vpairs.end())) lineOut.append(",");
+            }
+
+        }
+
+    }
+
+    return 0;
+}
+
+
+
 BOOST_AUTO_TEST_CASE(channel_persistence)
 {
     // Creating the channel
@@ -708,6 +773,48 @@ BOOST_AUTO_TEST_CASE(mdex_persistence)
      BOOST_CHECK_EQUAL(2000, seller1.getAmountDesired());
      BOOST_CHECK_EQUAL(2, seller1.getDesProperty());
      BOOST_CHECK_EQUAL(1000, seller1.getAmountRemaining());
+}
+
+BOOST_AUTO_TEST_CASE(tokenvwap_persistence)
+{
+  const int64_t unitPrice = 1000 * COIN;
+  const int64_t amount = 2600 * COIN;
+  const uint32_t propertyId = 3;
+  const int block = 1006541;
+
+  // adding price and amount in block
+  tokenvwap[propertyId][block].push_back(std::make_pair(unitPrice, amount));
+
+  std::string lineOut;
+  // writting on persistence
+  write_mp_tokenvwap(lineOut);
+
+  BOOST_CHECK_EQUAL("3+1006541-100000000000:260000000000",lineOut);
+
+  // clearing map
+  tokenvwap.clear();
+
+  // writting on memory
+  input_tokenvwap_string(lineOut);
+
+  std::pair<int64_t,int64_t> test;
+  auto it = tokenvwap.find(propertyId);
+  if (it != tokenvwap.end())
+  {
+      // finding block
+      const auto &blkmap = it->second;
+      auto itt = blkmap.find(block);
+      if (itt != blkmap.end()){
+          const auto &vpair = itt->second;
+          const auto& p =  vpair.begin();
+          test = *p;
+      }
+  }
+
+  BOOST_CHECK_EQUAL(1000 * COIN, test.first);
+  BOOST_CHECK_EQUAL(2600 * COIN, test.second);
+
+
 }
 
 BOOST_AUTO_TEST_SUITE_END()
