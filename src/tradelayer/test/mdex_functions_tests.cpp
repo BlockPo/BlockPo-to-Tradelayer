@@ -44,7 +44,7 @@ void literVolume(int64_t& amount, uint32_t propertyId, const int& fblock, const 
 
 }
 
-int64_t lgetVWap(uint32_t propertyId, int aBlock, const std::map<uint32_t,std::map<int,std::vector<arith_uint256>>>& aMap)
+int64_t lgetVWap(uint32_t propertyId, int aBlock, const std::map<uint32_t,std::map<int,std::vector<std::pair<int64_t,int64_t>>>>& aMap)
 {
     int64_t volume = 0;
     arith_uint256 nvwap = 0;
@@ -56,19 +56,17 @@ int64_t lgetVWap(uint32_t propertyId, int aBlock, const std::map<uint32_t,std::m
     if (it != aMap.end())
     {
         auto &vmap = it->second;
-        auto itt = (rollback > 0) ? find_if(vmap.begin(), vmap.end(), [&rollback] (const std::pair<int,std::vector<arith_uint256>>& int_arith_pair) { return (int_arith_pair.first >= rollback);}) : vmap.begin();
+        auto itt = (rollback > 0) ? find_if(vmap.begin(), vmap.end(), [&rollback] (const std::pair<int,std::vector<std::pair<int64_t,int64_t>>>& int_arith_pair) { return (int_arith_pair.first >= rollback);}) : vmap.begin();
         if (itt != vmap.end())
         {
-            for ( ; itt != vmap.end(); itt++)
+            for ( ; itt != vmap.end(); ++itt)
             {
-                BOOST_TEST_MESSAGE("block :" << itt->first);
                 auto v = itt->second;
-                for_each(v.begin(),v.end(), [&nvwap](const arith_uint256& num){ nvwap += num ;});
+                for_each(v.begin(),v.end(), [&nvwap](const std::pair<int64_t,int64_t>& num){ nvwap += ConvertTo256(num.first * (num.second / COIN));});
             }
         }
 
     }
-
     // calculating the volume
     // BOOST_TEST_MESSAGE("rollback:" << rollback);
     // BOOST_TEST_MESSAGE("aBlock:" << aBlock);
@@ -78,7 +76,7 @@ int64_t lgetVWap(uint32_t propertyId, int aBlock, const std::map<uint32_t,std::m
 
     // BOOST_TEST_MESSAGE("nvwap:" << ConvertTo64(nvwap));
     // BOOST_TEST_MESSAGE("volume:" << volume);
-    return ((volume > 0) ? (COIN * (ConvertTo64(nvwap) / volume)) : 0);
+    return ((volume > 0) ? (COIN *(ConvertTo64(nvwap) / volume)) : 0);
 
 }
 
@@ -119,19 +117,13 @@ BOOST_AUTO_TEST_CASE(getvwap_function)
     const uint32_t propertyId = 3;
     // actual block
     const int aBlock = 10250;
-    // amount * prices
-    const arith_uint256 elem1(2000 * 1500 * COIN);
-    const arith_uint256 elem2(2000 * 1600 * COIN);
-    const arith_uint256 elem3(2000 * 1700 * COIN);
-    const arith_uint256 elem4(2000 * 1800 * COIN);
-    const arith_uint256 elem5(2000 * 1900 * COIN);
 
     // adding  amount *  price
-    tokenvwap[propertyId][aBlock - 1].push_back(elem1);
-    tokenvwap[propertyId][aBlock - 2].push_back(elem2);
-    tokenvwap[propertyId][aBlock - 3].push_back(elem3);
-    tokenvwap[propertyId][aBlock - 3].push_back(elem4);
-    tokenvwap[propertyId][aBlock - 4].push_back(elem5);
+    tokenvwap[propertyId][aBlock - 1].push_back(std::make_pair(2000 * COIN, 1500 * COIN));
+    tokenvwap[propertyId][aBlock - 2].push_back(std::make_pair(2000 * COIN, 1600 * COIN));
+    tokenvwap[propertyId][aBlock - 3].push_back(std::make_pair(2000 * COIN, 1700 * COIN));
+    tokenvwap[propertyId][aBlock - 3].push_back(std::make_pair(2000 * COIN, 1800 * COIN));
+    tokenvwap[propertyId][aBlock - 4].push_back(std::make_pair(2000 * COIN, 1900 * COIN));
 
     // adding some volume
     MapLTCVolume[aBlock - 1][propertyId] += 2000 * COIN;
@@ -154,16 +146,12 @@ BOOST_AUTO_TEST_CASE(increase_ltc_volume_function)
     // actual block
     const int aBlock = 10250;
 
-    // amount * prices
-    const arith_uint256 elem1(1000 * 1500 * COIN);
-    const arith_uint256 elem2(3000 * 1500 * COIN);
-
     // adding  amount *  price
-    tokenvwap[propertyId][aBlock - 10].push_back(elem1);
-    tokenvwap[propertyId][aBlock - 10].push_back(elem2);
+    tokenvwap[propertyId][aBlock - 10].push_back(std::make_pair(1000 * COIN, 1500 * COIN));
+    tokenvwap[propertyId][aBlock - 10].push_back(std::make_pair(3000 * COIN, 1500 * COIN));
 
-    tokenvwap[propertyDesired][aBlock - 10].push_back(elem1);
-    tokenvwap[propertyDesired][aBlock - 10].push_back(elem2);
+    tokenvwap[propertyDesired][aBlock - 10].push_back(std::make_pair(1000 * COIN, 1500 * COIN));
+    tokenvwap[propertyDesired][aBlock - 10].push_back(std::make_pair(3000 * COIN, 1500 * COIN));
 
 
     // adding some volume
