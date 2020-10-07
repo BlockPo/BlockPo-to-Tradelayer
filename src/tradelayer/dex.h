@@ -239,6 +239,8 @@ extern std::map<int, std::map<uint32_t,int64_t>> MapLTCVolume;
 /** Map of Token Volume in DEx**/
 extern std::map<int, std::map<uint32_t,int64_t>> MapTokenVolume;
 
+//! Global map for token numerator VWAP (LTC) NOTE: it needs persistence
+extern std::map<uint32_t,std::map<int,std::vector<std::pair<int64_t,int64_t>>>> tokenvwap;
 
 extern OfferMap my_offers;
 extern AcceptMap my_accepts;

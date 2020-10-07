@@ -1066,6 +1066,9 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
         // adding last price
         lastPrice[property] = unitPrice;
 
+        // adding numerator of vwap
+        tokenvwap[property][block].push_back(std::make_pair(unitPrice, nvalue));
+
         // adding LTC volume to map
         MapLTCVolume[block][property] += nvalue;
 
@@ -1467,7 +1470,7 @@ int input_mp_token_ltc_string(const std::string& s)
    boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
 
    const uint32_t propertyId = boost::lexical_cast<uint32_t>(vstr[0]);
-   const int64_t price = boost::lexical_cast<int64_t>(vstr[1]);;
+   const int64_t price = boost::lexical_cast<int64_t>(vstr[1]);
 
 
    if (!lastPrice.insert(std::make_pair(propertyId, price)).second) return -1;
@@ -1482,7 +1485,7 @@ int input_cachefees_string(const std::string& s)
    boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
 
    const uint32_t propertyId = boost::lexical_cast<uint32_t>(vstr[0]);
-   const int64_t amount = boost::lexical_cast<int64_t>(vstr[1]);;
+   const int64_t amount = boost::lexical_cast<int64_t>(vstr[1]);
 
 
    if (!cachefees.insert(std::make_pair(propertyId, amount)).second) return -1;
@@ -1496,7 +1499,7 @@ int input_cachefees_oracles_string(const std::string& s)
    boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
 
    const uint32_t propertyId = boost::lexical_cast<uint32_t>(vstr[0]);
-   const int64_t amount = boost::lexical_cast<int64_t>(vstr[1]);;
+   const int64_t amount = boost::lexical_cast<int64_t>(vstr[1]);
 
 
    if (!cachefees_oracles.insert(std::make_pair(propertyId, amount)).second) return -1;
@@ -1535,6 +1538,28 @@ int input_withdrawals_string(const std::string& s)
 
     return 0;
 
+}
+
+int input_tokenvwap_string(const std::string& s)
+{
+  std::vector<std::string> vstr;
+  boost::split(vstr, s, boost::is_any_of("+-"), boost::token_compress_on);
+  const uint32_t propertyId = boost::lexical_cast<uint32_t>(vstr[0]);
+  const int block = boost::lexical_cast<int64_t>(vstr[1]);
+
+  std::vector<std::string> vpair;
+  boost::split(vpair, vstr[2], boost::is_any_of(","), boost::token_compress_on);
+
+  for (const auto& np : vpair)
+  {
+      std::vector<std::string> pAmount;
+      boost::split(pAmount, np, boost::is_any_of(":"), boost::token_compress_on);
+      const int64_t unitPrice = boost::lexical_cast<int64_t>(pAmount[0]);
+      const int64_t amount = boost::lexical_cast<int64_t>(pAmount[1]);
+      tokenvwap[propertyId][block].push_back(std::make_pair(unitPrice, amount));
+  }
+
+  return 0;
 }
 
 int input_activechannels_string(const std::string& s)
@@ -1771,6 +1796,12 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
     case FILE_TYPE_TOKEN_LTC_PRICE:
         lastPrice.clear();
         inputLineFunc = input_mp_token_ltc_string;
+        break;
+
+    case FILE_TYPE_TOKEN_VWAP:
+        tokenvwap.clear();
+        inputLineFunc = input_tokenvwap_string;
+        break;
 
         default:
             return -1;
@@ -1859,8 +1890,8 @@ static char const * const statePrefix[NUM_FILETYPES] = {
     "globalvars",
     "vestingaddresses",
     "ltcvolume",
-    "tokenltcprice"
-
+    "tokenltcprice",
+    "tokenvwap"
 };
 
 // returns the height of the state loaded
@@ -2250,6 +2281,42 @@ void addBalances(const std::map<std::string,map<uint32_t, int64_t>>& balances, s
     }
 }
 
+static int write_mp_tokenvwap(std::ofstream& file, CHash256& hasher)
+{
+    for (const auto &mp : tokenvwap)
+    {
+
+        // decompose the key for address
+        const uint32_t& propertyId = mp.first;
+        const auto &blcmap = mp.second;
+
+        std::string lineOut = strprintf("%d+",propertyId);
+
+        for (const auto &vec : blcmap){
+            // adding block number
+            lineOut.append(strprintf("%d-",vec.first));
+
+            // vector of pairs
+            const auto &vpairs = vec.second;
+            for (auto p = vpairs.begin(); p != vpairs.end(); ++p)
+            {
+                const std::pair<int64_t,int64_t>& vwPair = *p;
+                lineOut.append(strprintf("%d:%d", vwPair.first, vwPair.second));
+                if (p != std::prev(vpairs.end())) lineOut.append(";");
+            }
+
+        }
+
+        // add the line to the hash
+        hasher.Write((unsigned char*)lineOut.c_str(), lineOut.length());
+        // write the line
+        file << lineOut << std::endl;
+
+    }
+
+    return 0;
+}
+
 /**Saving map of active channels**/
 static int write_mp_active_channels(std::ofstream& file, CHash256& hasher)
 {
@@ -2410,6 +2477,9 @@ static int write_state_file(CBlockIndex const *pBlockIndex, int what)
     case FILE_TYPE_TOKEN_LTC_PRICE:
         result = write_mp_token_ltc_prices(file, hasher);
         break;
+    case FILE_TYPE_TOKEN_VWAP:
+        result = write_mp_tokenvwap(file, hasher);
+        break;
     }
 
     // generate and wite the double hash of all the contents written
@@ -2513,6 +2583,7 @@ int mastercore_save_state(CBlockIndex const *pBlockIndex)
     write_state_file(pBlockIndex, FILE_TYPE_VESTING_ADDRESSES);
     write_state_file(pBlockIndex, FILE_TYPE_LTC_VOLUME);
     write_state_file(pBlockIndex, FILE_TYPE_TOKEN_LTC_PRICE);
+    write_state_file(pBlockIndex, FILE_TYPE_TOKEN_VWAP);
 
     // clean-up the directory
     prune_state_files(pBlockIndex);
@@ -6421,7 +6492,7 @@ bool mastercore::Instant_x_Trade(const uint256& txid, uint8_t tradingAction, con
     return true;
 }
 
-void iterVolume(int64_t& amount, uint32_t propertyId, const int& fblock, const int& sblock, const std::map<int, std::map<uint32_t,int64_t>>& aMap)
+void mastercore::iterVolume(int64_t& amount, uint32_t propertyId, const int& fblock, const int& sblock, const std::map<int, std::map<uint32_t,int64_t>>& aMap)
 {
     for(const auto &m : aMap)
     {
@@ -6435,7 +6506,10 @@ void iterVolume(int64_t& amount, uint32_t propertyId, const int& fblock, const i
         const auto &blockMap = m.second;
         auto itt = blockMap.find(propertyId);
         if (itt != blockMap.end()){
-            amount += itt->second;
+            const int64_t& newAmount = itt->second;
+            // overflows?
+            assert(!isOverflow(amount, newAmount));
+            amount += newAmount;
         }
 
     }
@@ -6902,6 +6976,60 @@ bool mastercore::transferAll(const std::string& sender, const std::string& recei
 
 }
 
+int64_t mastercore::getVWap(uint32_t propertyId, int aBlock, const std::map<uint32_t,std::map<int,std::vector<std::pair<int64_t,int64_t>>>>& aMap)
+{
+    int64_t volume = 0;
+    arith_uint256 nvwap = 0;
+    const int rollback = aBlock - 12;
+    auto it = aMap.find(propertyId);
+    if (it != aMap.end())
+    {
+        auto &vmap = it->second;
+        auto itt = (rollback > 0) ? find_if(vmap.begin(), vmap.end(), [&rollback] (const std::pair<int,std::vector<std::pair<int64_t,int64_t>>>& int_arith_pair) { return (int_arith_pair.first >= rollback);}) : vmap.begin();
+        if (itt != vmap.end())
+        {
+            for ( ; itt != vmap.end(); ++itt)
+            {
+                auto v = itt->second;
+                for_each(v.begin(),v.end(), [&nvwap](const std::pair<int64_t,int64_t>& num){ nvwap += ConvertTo256(num.first * (num.second / COIN));});
+            }
+        }
+
+    }
+
+    // calculating the volume
+    iterVolume(volume, propertyId, rollback, aBlock, MapLTCVolume);
+
+    if (volume == 0) PrintToLog("%s():volume here is 0\n",__func__);
+
+    return ((volume > 0) ? (COIN *(ConvertTo64(nvwap) / volume)) : 0);
+
+}
+
+int64_t mastercore::increaseLTCVolume(uint32_t propertyId, uint32_t propertyDesired, int aBlock)
+{
+    int64_t total = 0, propertyAmount = 0, propertyDesiredAmount = 0;
+    const int rollback = aBlock - 1000;
+    iterVolume(propertyAmount, propertyId, rollback, aBlock, MapLTCVolume);
+    iterVolume(propertyDesiredAmount, propertyDesired, rollback, aBlock, MapLTCVolume);
+
+    if (1000 * COIN <=  propertyAmount && 1000 * COIN <=  propertyDesiredAmount)
+    {
+        // look up the 12-block VWAP of the denominator vs. LTC
+        const int64_t vwap = getVWap(propertyDesired, aBlock, tokenvwap);
+        const arith_uint256 aTotal = (ConvertTo256(propertyDesiredAmount) * ConvertTo256(vwap)) / ConvertTo256(COIN);
+        total = ConvertTo64(aTotal);
+
+        PrintToLog("%s(): vwap: %d, total: %d\n",__func__, vwap, total);
+
+        // increment cumulative LTC volume by tokens traded * the 12-block VWAP
+        if (total > 0) MapLTCVolume[aBlock][propertyDesired] += total;
+
+    }
+
+    return total;
+
+}
 
 /**
  * @return The marker for class D transactions.

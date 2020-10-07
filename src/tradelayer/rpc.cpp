@@ -2646,12 +2646,12 @@ UniValue tl_getalltxonblock(const JSONRPCRequest& request)
     return response;
 }
 
-UniValue tl_getdexvolume(const JSONRPCRequest& request)
+UniValue tl_get_ltcvolume(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() < 2)
         throw runtime_error(
-            "tl_getdexvolume \n"
-            "\nReturns the LTC volume in sort amount of blocks.\n"
+            "tl_get_ltcvolume \n"
+            "\nReturns the LTC volume for DEx and Trade Channels, in sort amount of blocks.\n"
             "\nArguments:\n"
             "1. property                 (number, required) property \n"
             "2. first block              (number, required) older limit block\n"
@@ -2662,8 +2662,8 @@ UniValue tl_getdexvolume(const JSONRPCRequest& request)
             "  \"blockheight\" : \"n.\",      (number) last block\n"
             "}\n"
             "\nExamples:\n"
-            + HelpExampleCli("tl_getdexvolume", "\"\"")
-            + HelpExampleRpc("tl_getdexvolume", "\"\",")
+            + HelpExampleCli("tl_get_ltcvolume", "\"\"")
+            + HelpExampleRpc("tl_get_ltcvolume", "\"\",")
         );
 
     uint32_t propertyId = ParsePropertyId(request.params[0]);
@@ -2692,7 +2692,7 @@ UniValue tl_getmdexvolume(const JSONRPCRequest& request)
     if (request.fHelp || request.params.size() != 3)
         throw runtime_error(
             "tl_getmdexvolume \n"
-            "\nReturns the token volume traded in sort amount of blocks.\n"
+            "\nReturns the Token volume traded in sort amount of blocks.\n"
             "\nArguments:\n"
             "1. propertyA                 (number, required) the property id \n"
             "2. first block               (number, required) older limit block\n"
@@ -2703,8 +2703,8 @@ UniValue tl_getmdexvolume(const JSONRPCRequest& request)
             "  \"blockheight\" : \"n.\",      (number) last block\n"
             "}\n"
             "\nExamples:\n"
-            + HelpExampleCli("tl_getdexvolume", "\"\"")
-            + HelpExampleRpc("tl_getdexvolume", "\"\",")
+            + HelpExampleCli("tl_getmdexvolume", "\"\"")
+            + HelpExampleRpc("tl_getmdexvolume", "\"\",")
         );
 
     uint32_t property = ParsePropertyId(request.params[0]);
@@ -3062,7 +3062,7 @@ static const CRPCCommand commands[] =
   { "trade layer (data retieval)" , "tl_list_oracles",              &tl_list_oracles,               {} },
   { "trade layer (data retieval)" , "tl_getalltxonblock",           &tl_getalltxonblock,            {} },
   { "trade layer (data retieval)" , "tl_check_withdrawals",         &tl_check_withdrawals,          {} },
-  { "trade layer (data retieval)" , "tl_getdexvolume",              &tl_getdexvolume,               {} },
+  { "trade layer (data retieval)" , "tl_get_ltcvolume",             &tl_get_ltcvolume,              {} },
   { "trade layer (data retieval)" , "tl_getmdexvolume",             &tl_getmdexvolume,              {} },
   { "trade layer (data retieval)" , "tl_getcurrencytotal",          &tl_getcurrencytotal,           {} },
   { "trade layer (data retieval)" , "tl_listkyc",                   &tl_listkyc,                    {} },

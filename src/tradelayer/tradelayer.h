@@ -159,6 +159,7 @@ enum FILETYPES {
   FILE_TYPE_VESTING_ADDRESSES,
   FILE_TYPE_LTC_VOLUME,
   FILE_TYPE_TOKEN_LTC_PRICE,
+  FILE_TYPE_TOKEN_VWAP,
   NUM_FILETYPES
 };
 
@@ -637,6 +638,11 @@ namespace mastercore
 
   bool checkWithdrawal(const std::string& txid, const std::string& channelAddress);
 
+  int64_t increaseLTCVolume(uint32_t propertyId, uint32_t propertyDesired, int aBlock);
+
+  int64_t getVWap(uint32_t propertyId, int aBlock, const std::map<uint32_t,std::map<int,std::vector<std::pair<int64_t,int64_t>>>>& aMap);
+
+  void iterVolume(int64_t& amount, uint32_t propertyId, const int& fblock, const int& sblock, const std::map<int, std::map<uint32_t,int64_t>>& aMap);
 }
 
 #endif // TRADELAYER_TL_H
