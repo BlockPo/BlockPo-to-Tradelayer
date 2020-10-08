@@ -1031,7 +1031,10 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
     // actual calculation; round up
     const arith_uint256 amountPurchased256 = DivideAndRoundUp((amountLTC_Paid256 * amount_forsale256), amountLTC_Desired256);
     // convert back to int64_t
-    const int64_t amount_purchased = ConvertTo64(amountPurchased256);
+    int64_t amount_purchased = ConvertTo64(amountPurchased256);
+
+    // taking fees
+    Token_LTC_Fees(amount_purchased, property);
 
     std::string channelAddr;
     t_tradelistdb->checkChannelRelation(seller, channelAddr);
@@ -7028,6 +7031,29 @@ int64_t mastercore::increaseLTCVolume(uint32_t propertyId, uint32_t propertyDesi
     }
 
     return total;
+
+}
+
+bool mastercore::Token_LTC_Fees(int64_t& buyer_amountGot, uint32_t propertyId)
+{
+    const arith_uint256 uNumerator = ConvertTo256(buyer_amountGot);
+    const arith_uint256 uDenominator = arith_uint256(BASISPOINT) * arith_uint256(BASISPOINT) *  arith_uint256(2);
+    const arith_uint256 uCacheFee = DivideAndRoundUp(uNumerator, uDenominator);
+    const int64_t cacheFee = ConvertTo64(uCacheFee);
+
+    // taking fee
+    buyer_amountGot -= cacheFee;
+
+    PrintToLog("%s(): buyer_amountGot: %d, cacheFee: %d\n",__func__, buyer_amountGot, cacheFee);
+
+
+    if(cacheFee > 0)
+    {
+         cachefees[propertyId] += cacheFee;
+         return true;
+    }
+
+    return false;
 
 }
 

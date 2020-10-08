@@ -289,7 +289,7 @@ class RawTransactionBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['balance'],'1000.00000000')
+        assert_equal(out['result']['balance'],'999.95000000')
         assert_equal(out['result']['reserve'],'0.00000000')
 
         self.stop_nodes()
