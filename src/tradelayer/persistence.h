@@ -2,12 +2,10 @@
 #define TRADELAYER_PERSISTENCE_H
 
 #include <leveldb/db.h>
+#include <fs.h>
 
 #include <assert.h>
 #include <stddef.h>
-
-// XXX
-#include <boost/filesystem/path.hpp>
 
 /** Base class for LevelDB based storage.
  */
@@ -80,7 +78,7 @@ protected:
      * @param fWipe  Whether to wipe the database before opening
      * @return A Status object, indicating success or failure
      */
-    leveldb::Status Open(const boost::filesystem::path& path, bool fWipe = false);
+    leveldb::Status Open(const fs::path& path, bool fWipe = false);
 
     /**
      * Deinitializes and closes the database.

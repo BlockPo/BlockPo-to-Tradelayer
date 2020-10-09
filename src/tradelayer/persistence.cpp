@@ -20,7 +20,7 @@
 /**
  * Opens or creates a LevelDB based database.
  */
-leveldb::Status CDBBase::Open(const boost::filesystem::path& path, bool fWipe)
+leveldb::Status CDBBase::Open(const fs::path& path, bool fWipe)
 {
     if (fWipe)
     {

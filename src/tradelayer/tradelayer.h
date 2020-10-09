@@ -26,9 +26,6 @@
 #include <unordered_map>
 #include <vector>
 
-// XXX
-#include <boost/filesystem/path.hpp>
-#include <boost/lexical_cast.hpp>
 #include <boost/multiprecision/cpp_int.hpp>
 #include <boost/rational.hpp>
 
@@ -308,7 +305,7 @@ class Channel
 class CtlTransactionDB : public CDBBase
 {
 public:
-    CtlTransactionDB(const boost::filesystem::path& path, bool fWipe)
+    CtlTransactionDB(const fs::path& path, bool fWipe)
     {
         leveldb::Status status = Open(path, fWipe);
         PrintToConsole("Loading master transactions database: %s\n", status.ToString());
@@ -336,7 +333,7 @@ public:
 class CMPTxList : public CDBBase
 {
 public:
-    CMPTxList(const boost::filesystem::path& path, bool fWipe)
+    CMPTxList(const fs::path& path, bool fWipe)
     {
         leveldb::Status status = Open(path, fWipe);
         PrintToConsole("Loading tx meta-info database: %s\n", status.ToString());
@@ -392,7 +389,7 @@ class CMPTradeList : public CDBBase
 {
  public:
 
-  CMPTradeList(const boost::filesystem::path& path, bool fWipe)
+  CMPTradeList(const fs::path& path, bool fWipe)
     {
       leveldb::Status status = Open(path, fWipe);
       PrintToConsole("Loading trades database: %s\n", status.ToString());
@@ -471,7 +468,7 @@ class CMPTradeList : public CDBBase
 class CMPSettlementMatchList : public CDBBase
 {
  public:
-  CMPSettlementMatchList(const boost::filesystem::path& path, bool fWipe)
+  CMPSettlementMatchList(const fs::path& path, bool fWipe)
     {
       leveldb::Status status = Open(path, fWipe);
       PrintToConsole("Loading settlement match info database: %s\n", status.ToString());
