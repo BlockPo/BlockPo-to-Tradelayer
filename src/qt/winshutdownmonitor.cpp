@@ -6,7 +6,7 @@
 
 #if defined(Q_OS_WIN) && QT_VERSION >= 0x050000
 #include <init.h>
-#include <util.h>
+#include <util/system.h>
 
 #include <windows.h>
 

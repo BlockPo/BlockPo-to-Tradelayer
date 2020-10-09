@@ -7,11 +7,11 @@
 #ifndef TRADELAYER_UINT256_EXTENSIONS_H
 #define TRADELAYER_UINT256_EXTENSIONS_H
 
-#include "arith_uint256.h"
+#include <arith_uint256.h>
 
 #include <assert.h>
-#include <stdint.h>
 #include <limits>
+#include <stdint.h>
 
 namespace mastercore {
 namespace uint256_const {

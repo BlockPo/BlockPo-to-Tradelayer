@@ -1,30 +1,28 @@
-#include "tradelayer/rpcvalues.h"
-#include "tradelayer/tally.h"
-#include "tradelayer/tradelayer.h"
-#include "utilstrencodings.h"
-#include "tradelayer/rules.h"
-#include "tradelayer/sp.h"
-#include "tradelayer/tx.h"
-#include "tradelayer/uint256_extensions.h"
-#include "tradelayer/consensushash.h"
-#include "tradelayer/parse_string.h"
-#include "test/test_bitcoin.h"
-
-#include <univalue.h>
-
-#include <boost/multiprecision/cpp_int.hpp>
-#include <boost/rational.hpp>
-#include <boost/test/unit_test.hpp>
+#include <test/test_bitcoin.h>
+#include <tradelayer/consensushash.h>
+#include <tradelayer/parse_string.h>
+#include <tradelayer/rpcvalues.h>
+#include <tradelayer/rules.h>
+#include <tradelayer/sp.h>
+#include <tradelayer/tally.h>
+#include <tradelayer/tradelayer.h>
+#include <tradelayer/tx.h>
+#include <tradelayer/uint256_extensions.h>
+#include <util/strencodings.h>
 
 #include <assert.h>
-#include <stdint.h>
-
 #include <fstream>
 #include <limits>
 #include <map>
 #include <set>
+#include <stdint.h>
 #include <string>
+#include <univalue.h>
 #include <vector>
+
+#include <boost/multiprecision/cpp_int.hpp>
+#include <boost/rational.hpp>
+#include <boost/test/unit_test.hpp>
 
 using namespace mastercore;
 

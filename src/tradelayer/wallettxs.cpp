@@ -1,33 +1,32 @@
-#include "tradelayer/wallettxs.h"
+#include <tradelayer/wallettxs.h>
 
-#include "tradelayer/log.h"
-#include "tradelayer/tradelayer.h"
-#include "tradelayer/rules.h"
-#include "tradelayer/script.h"
-#include "tradelayer/utilsbitcoin.h"
-#include "amount.h"
-#include "base58.h"
-#include "wallet/coincontrol.h"
-#include "init.h"
-#include "validation.h"
-#include "policy/policy.h"
-#include "pubkey.h"
-#include "script/standard.h"
-#include "sync.h"
-#include "txmempool.h"
-#include "uint256.h"
-#include "utilstrencodings.h"
+#include <tradelayer/log.h>
+#include <tradelayer/rules.h>
+#include <tradelayer/script.h>
+#include <tradelayer/tradelayer.h>
+#include <tradelayer/utilsbitcoin.h>
+
+#include <amount.h>
+#include <base58.h>
+#include <init.h>
+#include <policy/policy.h>
+#include <pubkey.h>
+#include <script/standard.h>
+#include <sync.h>
+#include <txmempool.h>
+#include <uint256.h>
+#include <util/strencodings.h>
+#include <validation.h>
+#include <wallet/coincontrol.h>
 #ifdef ENABLE_WALLET
-#include "script/ismine.h"
-#include "wallet/wallet.h"
-#include "wallet/fees.h"
+#include <script/ismine.h>
+#include <wallet/fees.h>
+#include <wallet/wallet.h>
 #endif
 
-#include <stdint.h>
 #include <map>
+#include <stdint.h>
 #include <string>
-
-
 
 namespace mastercore
 {
@@ -55,18 +54,17 @@ bool AddressToPubKey(const std::string& key, CPubKey& pubKey)
             PrintToLog("%s() ERROR: no public key in wallet for redemption address %s\n", __func__, key);
             return false;
         }
+    }
     // Case 2: Hex-encoded public key
-    } else {
+    else
 #endif
-        if (IsHex(key)) {
-            pubKey = CPubKey(ParseHex(key));
-        }
+    if (IsHex(key)) {
+        pubKey = CPubKey(ParseHex(key));
+    }
 
-        if (!pubKey.IsFullyValid()) {
-            PrintToLog("%s: ERROR: invalid redemption key %s\n", __func__, key);
-            return false;
-        }
-
+    if (!pubKey.IsFullyValid()) {
+        PrintToLog("%s: ERROR: invalid redemption key %s\n", __func__, key);
+        return false;
     }
 
     return true;

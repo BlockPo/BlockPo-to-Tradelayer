@@ -1,11 +1,8 @@
-#include "tradelayer/tally.h"
-
-#include "test/test_bitcoin.h"
-
-#include <stdint.h>
+#include <test/test_bitcoin.h>
+#include <tradelayer/tally.h>
 
 #include <boost/test/unit_test.hpp>
-
+#include <stdint.h>
 
 BOOST_FIXTURE_TEST_SUITE(tradelayer_tally_tests, BasicTestingSetup)
 

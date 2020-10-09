@@ -4,87 +4,87 @@
  * This file contains the core of Trade Layer.
  */
 
-#include "tradelayer/tradelayer.h"
-#include "tradelayer/activation.h"
-#include "tradelayer/consensushash.h"
-#include "tradelayer/convert.h"
-#include "tradelayer/dex.h"
-#include "tradelayer/encoding.h"
-#include "tradelayer/errors.h"
-#include "tradelayer/log.h"
-#include "tradelayer/notifications.h"
-#include "tradelayer/pending.h"
-#include "tradelayer/persistence.h"
-#include "tradelayer/rules.h"
-#include "tradelayer/script.h"
-#include "tradelayer/sp.h"
-#include "tradelayer/tally.h"
-#include "tradelayer/tx.h"
-#include "tradelayer/uint256_extensions.h"
-#include "tradelayer/utilsbitcoin.h"
-#include "tradelayer/version.h"
-#include "tradelayer/walletcache.h"
-#include "tradelayer/wallettxs.h"
-#include "tradelayer/mdex.h"
-#include "tradelayer/operators_algo_clearing.h"
-#include "arith_uint256.h"
-#include "base58.h"
-#include "chainparams.h"
-#include <wallet/coincontrol.h>
-#include "coins.h"
-#include "core_io.h"
-#include "init.h"
-#include "validation.h"
-#include "primitives/block.h"
-#include "primitives/transaction.h"
-#include "script/script.h"
-#include "script/standard.h"
-#include "sync.h"
-#include "tinyformat.h"
-#include "uint256.h"
-#include "ui_interface.h"
-#include "util.h"
-#include "utilstrencodings.h"
-#include "utiltime.h"
-#include "wallet/wallet.h"
-#include "validation.h"
-#include "consensus/validation.h"
-#include "consensus/params.h"
-#include "consensus/tx_verify.h"
+#include <tradelayer/tradelayer.h>
 
-#include "net.h" // for g_connman.get()
+#include <tradelayer/activation.h>
+#include <tradelayer/consensushash.h>
+#include <tradelayer/convert.h>
+#include <tradelayer/dex.h>
+#include <tradelayer/encoding.h>
+#include <tradelayer/errors.h>
+#include <tradelayer/externfns.h>
+#include <tradelayer/log.h>
+#include <tradelayer/mdex.h>
+#include <tradelayer/notifications.h>
+#include <tradelayer/operators_algo_clearing.h>
+#include <tradelayer/parse_string.h>
+#include <tradelayer/pending.h>
+#include <tradelayer/persistence.h>
+#include <tradelayer/rules.h>
+#include <tradelayer/script.h>
+#include <tradelayer/sp.h>
+#include <tradelayer/tally.h>
+#include <tradelayer/tradelayer_matrices.h>
+#include <tradelayer/tx.h>
+#include <tradelayer/uint256_extensions.h>
+#include <tradelayer/utilsbitcoin.h>
+#include <tradelayer/version.h>
+#include <tradelayer/walletcache.h>
+#include <tradelayer/wallettxs.h>
+
+#include <arith_uint256.h>
+#include <base58.h>
+#include <chainparams.h>
+#include <coins.h>
+#include <consensus/params.h>
+#include <consensus/tx_verify.h>
+#include <consensus/validation.h>
+#include <core_io.h>
+#include <init.h>
+#include <net.h> // for g_connman.get()
+#include <primitives/block.h>
+#include <primitives/transaction.h>
+#include <script/script.h>
+#include <script/standard.h>
+#include <serialize.h>
+#include <sync.h>
+#include <tinyformat.h>
+#include <ui_interface.h>
+#include <uint256.h>
+#include <util/system.h>
+#include <util/strencodings.h>
+#include <util/time.h>
+#include <validation.h>
+#include <wallet/coincontrol.h>
+
 #ifdef ENABLE_WALLET
-#include "script/ismine.h"
-#include "wallet/wallet.h"
-#include "serialize.h"
+#include <script/ismine.h>
+#include <wallet/wallet.h>
 #endif
 
+#include <leveldb/db.h>
+
+#include <assert.h>
+#include <cmath>
+#include <fstream>
+#include <iostream>
+#include <map>
+#include <numeric>
+#include <set>
+#include <stdint.h>
+#include <stdio.h>
+#include <string>
 #include <univalue.h>
+#include <unordered_map>
+#include <vector>
+
 #include <boost/algorithm/string.hpp>
 #include <boost/exception/to_string.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
- #include <boost/math/special_functions/sign.hpp>
-#include <boost/multiprecision/cpp_int.hpp>
 #include <boost/lexical_cast.hpp>
-#include "leveldb/db.h"
-
-#include <assert.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <fstream>
-#include <map>
-#include <set>
-#include <string>
-#include <unordered_map>
-#include <vector>
-#include <cmath>
-#include <iostream>
-#include <numeric>
-
-#include "tradelayer_matrices.h"
-#include "externfns.h"
-#include "tradelayer/parse_string.h"
+#include <boost/math/special_functions/sign.hpp>
+#include <boost/multiprecision/cpp_int.hpp>
 
 using boost::algorithm::token_compress_on;
 using boost::to_string;
@@ -779,7 +779,7 @@ static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, 
 
     if (!bRPConly || msc_debug_parser_readonly) {
         PrintToLog("____________________________________________________________________________________________________________________________________\n");
-        PrintToLog("%s(block=%d, %s idx= %d); txid: %s\n", __FUNCTION__, nBlock, DateTimeStrFormat("%Y-%m-%d %H:%M:%S", nTime), idx, wtx.GetHash().GetHex());
+        PrintToLog("%s(block=%d, %s idx= %d); txid: %s\n", __FUNCTION__, nBlock, FormatISO8601Date(nTime), idx, wtx.GetHash().GetHex());
     }
 
     LOCK(cs_tx_cache);
@@ -2644,7 +2644,7 @@ int mastercore_init()
   }
 
   PrintToLog("\nInitializing Trade Layer\n");
-  PrintToLog("Startup time: %s\n", DateTimeStrFormat("%Y-%m-%d %H:%M:%S", GetTime()));
+  PrintToLog("Startup time: %s\n", FormatISO8601Date(GetTime()));
   // PrintToLog("Build date: %s, based on commit: %s\n", BuildDate(), BuildCommit());
 
   InitDebugLogLevels();
@@ -2771,7 +2771,7 @@ int mastercore_shutdown()
     mastercoreInitialized = 0;
 
     PrintToLog("\nTrade Layer shutdown completed\n");
-    PrintToLog("Shutdown time: %s\n", DateTimeStrFormat("%Y-%m-%d %H:%M:%S", GetTime()));
+    PrintToLog("Shutdown time: %s\n", FormatISO8601Date(GetTime()));
 
     return 0;
 }
@@ -4071,10 +4071,16 @@ int mastercore_handler_block_end(int nBlockNow, CBlockIndex const * pBlockIndex,
        checkpointValid = VerifyCheckpoint(nBlockNow, pBlockIndex->GetBlockHash());
        if (!checkpointValid) {
            // failed checkpoint, can't be trusted to provide valid data - shutdown client
-           const std::string msg = strprintf("Shutting down due to failed checkpoint for block %d (hash %s)\n", nBlockNow, pBlockIndex->GetBlockHash().GetHex());
+           const std::string& msg = strprintf(
+                   "Shutting down due to failed checkpoint for block %d (hash %s). "
+                   "Please restart with -startclean flag and if this doesn't work, please reach out to the support.\n",
+                   nBlockNow, pBlockIndex->GetBlockHash().GetHex());
            PrintToLog(msg);
-          //     if (!GetBoolArg("-overrideforcedshutdown", false)) AbortNode(msg, msg);
-          // TODO: fix AbortNode to be compatible with litecoin 16.0.3
+           if (!gArgs.GetBoolArg("-overrideforcedshutdown", false)) {
+               fs::path persistPath = GetDataDir() / "OCL_persist";
+               if (fs::exists(persistPath)) fs::remove_all(persistPath); // prevent the node being restarted without a reparse after forced shutdown
+               DoAbortNode(msg, msg);
+           }
        }
 
      // check that pending transactions are still in the mempool

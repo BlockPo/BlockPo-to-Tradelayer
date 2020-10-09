@@ -3,12 +3,12 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <util.h>
+#include <util/system.h>
 
 #include <chainparamsbase.h>
 #include <random.h>
 #include <serialize.h>
-#include <utilstrencodings.h>
+#include <util/strencodings.h>
 
 #include <stdarg.h>
 
@@ -320,12 +320,12 @@ static std::string LogTimestampStr(const std::string &str, std::atomic_bool *fSt
 
     if (*fStartedNewLine) {
         int64_t nTimeMicros = GetTimeMicros();
-        strStamped = DateTimeStrFormat("%Y-%m-%d %H:%M:%S", nTimeMicros/1000000);
+        strStamped = FormatISO8601DateTime(nTimeMicros/1000000);
         if (fLogTimeMicros)
             strStamped += strprintf(".%06d", nTimeMicros%1000000);
         int64_t mocktime = GetMockTime();
         if (mocktime) {
-            strStamped += " (mocktime: " + DateTimeStrFormat("%Y-%m-%d %H:%M:%S", mocktime) + ")";
+            strStamped += " (mocktime: " + FormatISO8601DateTime(mocktime) + ")";
         }
         strStamped += ' ' + str;
     } else
@@ -892,22 +892,6 @@ void runCommand(const std::string& strCommand)
     int nErr = ::system(strCommand.c_str());
     if (nErr)
         LogPrintf("runCommand error: system(%s) returned %d\n", strCommand, nErr);
-}
-
-void RenameThread(const char* name)
-{
-#if defined(PR_SET_NAME)
-    // Only the first 15 characters are used (16 - NUL terminator)
-    ::prctl(PR_SET_NAME, name, 0, 0, 0);
-#elif (defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__DragonFly__))
-    pthread_set_name_np(pthread_self(), name);
-
-#elif defined(MAC_OSX)
-    pthread_setname_np(name);
-#else
-    // Prevent warnings for unused parameters...
-    (void)name;
-#endif
 }
 
 void SetupEnvironment()

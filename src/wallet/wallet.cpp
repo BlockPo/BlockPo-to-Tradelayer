@@ -26,9 +26,10 @@
 #include <scheduler.h>
 #include <timedata.h>
 #include <txmempool.h>
-#include <util.h>
-#include <utilmoneystr.h>
+#include <util/system.h>
+#include <util/moneystr.h>
 #include <wallet/fees.h>
+#include <util/vector.h>
 
 #include <assert.h>
 #include <future>
@@ -4231,12 +4232,13 @@ CTxDestination GetDestinationForKey(const CPubKey& key, OutputType type)
 std::vector<CTxDestination> GetAllDestinationsForKey(const CPubKey& key)
 {
     CKeyID keyid = key.GetID();
+    CTxDestination p2pkh{keyid};
     if (key.IsCompressed()) {
         CTxDestination segwit = WitnessV0KeyHash(keyid);
         CTxDestination p2sh = CScriptID(GetScriptForDestination(segwit));
-        return std::vector<CTxDestination>{std::move(keyid), std::move(p2sh), std::move(segwit)};
+        return Vector(std::move(p2pkh), std::move(p2sh), std::move(segwit));
     } else {
-        return std::vector<CTxDestination>{std::move(keyid)};
+        return Vector(std::move(p2pkh));
     }
 }
 

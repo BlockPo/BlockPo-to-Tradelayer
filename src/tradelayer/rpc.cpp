@@ -4,57 +4,57 @@
  * This file contains RPC calls for data retrieval.
  */
 
-#include "tradelayer/rpc.h"
-#include "tradelayer/activation.h"
-#include "tradelayer/consensushash.h"
-#include "tradelayer/convert.h"
-#include "tradelayer/dex.h"
-#include "tradelayer/errors.h"
-#include "tradelayer/fetchwallettx.h"
-#include "tradelayer/log.h"
-#include "tradelayer/notifications.h"
-#include "tradelayer/tradelayer.h"
-#include "tradelayer/rpcrequirements.h"
-#include "tradelayer/rpctx.h"
-#include "tradelayer/rpctxobject.h"
-#include "tradelayer/rpcvalues.h"
-#include "tradelayer/rules.h"
-#include "tradelayer/sp.h"
-#include "tradelayer/tally.h"
-#include "tradelayer/tx.h"
-#include "tradelayer/utilsbitcoin.h"
-#include "tradelayer/varint.h"
-#include "tradelayer/version.h"
-#include "tradelayer/wallettxs.h"
-#include "tradelayer/mdex.h"
-#include "tradelayer/uint256_extensions.h"
-#include "tradelayer/parse_string.h"
-#include "tradelayer/externfns.h"
+#include <tradelayer/rpc.h>
 
-#include "arith_uint256.h"
-#include "amount.h"
-#include "chainparams.h"
-#include "init.h"
-#include "validation.h"
-#include "primitives/block.h"
-#include "primitives/transaction.h"
-#include "rpc/server.h"
-#include "tinyformat.h"
-#include "txmempool.h"
-#include "uint256.h"
-#include "utilstrencodings.h"
+#include <tradelayer/activation.h>
+#include <tradelayer/consensushash.h>
+#include <tradelayer/convert.h>
+#include <tradelayer/dex.h>
+#include <tradelayer/errors.h>
+#include <tradelayer/externfns.h>
+#include <tradelayer/fetchwallettx.h>
+#include <tradelayer/log.h>
+#include <tradelayer/mdex.h>
+#include <tradelayer/notifications.h>
+#include <tradelayer/parse_string.h>
+#include <tradelayer/rpcrequirements.h>
+#include <tradelayer/rpctx.h>
+#include <tradelayer/rpctxobject.h>
+#include <tradelayer/rpcvalues.h>
+#include <tradelayer/rules.h>
+#include <tradelayer/sp.h>
+#include <tradelayer/tally.h>
+#include <tradelayer/tradelayer.h>
+#include <tradelayer/tx.h>
+#include <tradelayer/uint256_extensions.h>
+#include <tradelayer/utilsbitcoin.h>
+#include <tradelayer/varint.h>
+#include <tradelayer/version.h>
+#include <tradelayer/wallettxs.h>
+
+#include <amount.h>
+#include <arith_uint256.h>
+#include <chainparams.h>
+#include <init.h>
+#include <primitives/block.h>
+#include <primitives/transaction.h>
+#include <rpc/server.h>
+#include <tinyformat.h>
+#include <txmempool.h>
+#include <uint256.h>
+#include <util/strencodings.h>
+#include <validation.h>
 #ifdef ENABLE_WALLET
-#include "wallet/wallet.h"
+#include <wallet/wallet.h>
 #endif
 
-#include <univalue.h>
-
-#include <stdint.h>
-#include <map>
-#include <stdexcept>
-#include <string>
 #include <iomanip>
 #include <iostream>
+#include <map>
+#include <stdexcept>
+#include <stdint.h>
+#include <string>
+#include <univalue.h>
 
 using std::runtime_error;
 using namespace mastercore;
@@ -469,7 +469,7 @@ UniValue mscrpc(const JSONRPCRequest& request)
         {
             PrintToLog("Locking cs_tally for %d milliseconds..\n", extra2);
             LOCK(cs_tally);
-            MilliSleep(extra2);
+            UninterruptibleSleep(std::chrono::milliseconds{extra2});
             PrintToLog("Unlocking cs_tally now\n");
             break;
         }
@@ -477,7 +477,7 @@ UniValue mscrpc(const JSONRPCRequest& request)
         {
             PrintToLog("Locking cs_main for %d milliseconds..\n", extra2);
             LOCK(cs_main);
-            MilliSleep(extra2);
+            UninterruptibleSleep(std::chrono::milliseconds{extra2});
             PrintToLog("Unlocking cs_main now\n");
             break;
         }
@@ -490,7 +490,7 @@ UniValue mscrpc(const JSONRPCRequest& request)
                 pwalletMain = vpwallets[0];
             }
             LOCK(pwalletMain->cs_wallet);
-            MilliSleep(extra2);
+            UninterruptibleSleep(std::chrono::milliseconds{extra2});
             PrintToLog("Unlocking pwalletMain->cs_wallet now\n");
             break;
         }

@@ -1,7 +1,7 @@
 #include <random.h>
 #include <sync.h>
 #include <test/test_bitcoin.h>
-#include <utiltime.h>
+#include <util/time.h>
 
 #include <boost/test/unit_test.hpp>
 #include <boost/thread.hpp>
@@ -22,7 +22,7 @@ static void plusOneThread(int nIterations)
         LOCK(locker::cs_number);
         int n = number::n;
         int nSleep = GetRandInt(10);
-        MilliSleep(nSleep);
+        UninterruptibleSleep(std::chrono::milliseconds{nSleep});
         number::n = n + 1;
     }
 }

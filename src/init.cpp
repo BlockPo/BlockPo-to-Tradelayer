@@ -40,8 +40,9 @@
 #include <txmempool.h>
 #include <torcontrol.h>
 #include <ui_interface.h>
-#include <util.h>
-#include <utilmoneystr.h>
+#include <util/system.h>
+#include <util/moneystr.h>
+#include <util/threadnames.h>
 #include <validationinterface.h>
 #ifdef ENABLE_WALLET
 #include <wallet/init.h>
@@ -190,7 +191,7 @@ void Shutdown()
     /// for example if the data directory was found to be locked.
     /// Be sure that anything that writes files or flushes caches only does this if the respective
     /// module was initialized.
-    RenameThread("litecoin-shutoff");
+    util::ThreadRename("litecoin-shutoff");
     mempool.AddTransactionsUpdated(1);
 
     StopHTTPRPC();
@@ -644,7 +645,7 @@ void CleanupBlockRevFiles()
 void ThreadImport(std::vector<fs::path> vImportFiles)
 {
     const CChainParams& chainparams = Params();
-    RenameThread("litecoin-loadblk");
+    util::ThreadRename("litecoin-loadblk");
 
     {
     CImportingNow imp;
@@ -1235,7 +1236,7 @@ bool AppInitMain()
     }
 
     if (!fLogTimestamps)
-        LogPrintf("Startup time: %s\n", DateTimeStrFormat("%Y-%m-%d %H:%M:%S", GetTime()));
+        LogPrintf("Startup time: %s\n", FormatISO8601DateTime(GetTime()));
     LogPrintf("Default data directory %s\n", GetDefaultDataDir().string());
     LogPrintf("Using data directory %s\n", GetDataDir().string());
     LogPrintf("Using config file %s\n", GetConfigFile(gArgs.GetArg("-conf", BITCOIN_CONF_FILENAME)).string());

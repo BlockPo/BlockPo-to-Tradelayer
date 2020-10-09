@@ -3,7 +3,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <utilstrencodings.h>
+#include <util/strencodings.h>
 
 #include <tinyformat.h>
 
@@ -731,5 +731,19 @@ bool ParseFixedPoint(const std::string &val, int decimals, int64_t *amount_out)
         *amount_out = mantissa;
 
     return true;
+}
+
+std::string ToLower(const std::string& str)
+{
+    std::string r;
+    for (auto ch : str) r += ToLower((unsigned char)ch);
+    return r;
+}
+
+std::string ToUpper(const std::string& str)
+{
+    std::string r;
+    for (auto ch : str) r += ToUpper((unsigned char)ch);
+    return r;
 }
 

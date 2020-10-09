@@ -8,15 +8,19 @@ TRADELAYER_H = \
   tradelayer/dex.h \
   tradelayer/encoding.h \
   tradelayer/errors.h \
+  tradelayer/externfns.h \
+  tradelayer/fetchwallettx.h \
+  tradelayer/globals.h \
   tradelayer/log.h \
   tradelayer/mdex.h \
   tradelayer/notifications.h \
-  tradelayer/tradelayer.h \
+  tradelayer/operators_algo_clearing.h \
   tradelayer/parse_string.h \
   tradelayer/pending.h \
   tradelayer/persistence.h \
   tradelayer/rpc.h \
   tradelayer/rpcpayload.h \
+  tradelayer/rpcrawtx.h \
   tradelayer/rpcrequirements.h \
   tradelayer/rpctx.h \
   tradelayer/rpctxobject.h \
@@ -25,13 +29,15 @@ TRADELAYER_H = \
   tradelayer/script.h \
   tradelayer/sp.h \
   tradelayer/tally.h \
+  tradelayer/tradelayer.h \
   tradelayer/tx.h \
   tradelayer/uint256_extensions.h \
   tradelayer/utilsbitcoin.h \
+  tradelayer/varint.h \
   tradelayer/version.h \
   tradelayer/walletcache.h \
-  tradelayer/walletutils.h \
-  tradelayer/externfns.h
+  tradelayer/wallettxs.h \
+  tradelayer/walletutils.h
 
 TRADELAYER_CPP = \
   tradelayer/activation.cpp \
@@ -41,6 +47,7 @@ TRADELAYER_CPP = \
   tradelayer/createtx.cpp \
   tradelayer/dex.cpp \
   tradelayer/encoding.cpp \
+  tradelayer/globals.cpp \
   tradelayer/log.cpp \
   tradelayer/mdex.cpp \
   tradelayer/notifications.cpp \
@@ -51,8 +58,9 @@ TRADELAYER_CPP = \
   tradelayer/rpc.cpp \
   tradelayer/rpcpayload.cpp \
   tradelayer/rpcrequirements.cpp \
-  tradelayer/rpctx.cpp \
   tradelayer/rpctxobject.cpp \
+  tradelayer/rpcrawtx.cpp \
+  tradelayer/operators_algo_clearing.cpp \
   tradelayer/rpcvalues.cpp \
   tradelayer/rules.cpp \
   tradelayer/script.cpp \
@@ -62,7 +70,14 @@ TRADELAYER_CPP = \
   tradelayer/utilsbitcoin.cpp \
   tradelayer/version.cpp \
   tradelayer/walletcache.cpp \
-  tradelayer/externfns.cpp
+  tradelayer/externfns.cpp \
+  tradelayer/wallettxs.cpp \
+  tradelayer/fetchwallettx.cpp \
+  tradelayer/varint.cpp
+
+if ENABLE_WALLET
+TRADELAYER_CPP += tradelayer/rpctx.cpp
+endif
 
 libbitcoin_server_a_SOURCES += \
   $(TRADELAYER_CPP) \

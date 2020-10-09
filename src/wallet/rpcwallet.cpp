@@ -21,8 +21,8 @@
 #include <rpc/util.h>
 #include <script/sign.h>
 #include <timedata.h>
-#include <util.h>
-#include <utilmoneystr.h>
+#include <util/system.h>
+#include <util/moneystr.h>
 #include <wallet/coincontrol.h>
 #include <wallet/feebumper.h>
 #include <wallet/wallet.h>
@@ -2363,16 +2363,13 @@ UniValue walletpassphrase(const JSONRPCRequest& request)
         nSleepTime = MAX_SLEEP_TIME;
     }
 
-    if (strWalletPass.length() > 0)
-    {
-        if (!pwallet->Unlock(strWalletPass)) {
-            throw JSONRPCError(RPC_WALLET_PASSPHRASE_INCORRECT, "Error: The wallet passphrase entered was incorrect.");
-        }
+    if (strWalletPass.empty()) {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "passphrase can not be empty");
     }
-    else
-        throw std::runtime_error(
-            "walletpassphrase <passphrase> <timeout>\n"
-            "Stores the wallet decryption key in memory for <timeout> seconds.");
+
+    if (!pwallet->Unlock(strWalletPass)) {
+        throw JSONRPCError(RPC_WALLET_PASSPHRASE_INCORRECT, "Error: The wallet passphrase entered was incorrect.");
+    }
 
     pwallet->TopUpKeyPool();
 

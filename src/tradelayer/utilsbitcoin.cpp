@@ -4,10 +4,12 @@
  * This file contains certain helpers to access information about Bitcoin.
  */
 
-#include "chain.h"
-#include "chainparams.h"
-#include "validation.h"
-#include "sync.h"
+#include <tradelayer/utilsbitcoin.h>
+
+#include <chain.h>
+#include <chainparams.h>
+#include <sync.h>
+#include <validation.h>
 
 #include <stdint.h>
 #include <string>

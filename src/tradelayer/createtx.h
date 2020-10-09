@@ -2,14 +2,14 @@
 #define TRADELAYER_CREATETX_H
 
 class CCoinsViewCache;
-struct CMutableTransaction;
+class CMutableTransaction;
 class COutPoint;
 class CPubKey;
 class CScript;
 class CTxOut;
 class uint256;
 
-#include "script/standard.h"
+#include <script/standard.h>
 
 #include <stdint.h>
 #include <string>

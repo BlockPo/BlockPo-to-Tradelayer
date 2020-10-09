@@ -1,17 +1,15 @@
-#include "tradelayer/notifications.h"
+#include <tradelayer/notifications.h>
 
-#include "tradelayer/log.h"
-#include "tradelayer/tradelayer.h"
-#include "tradelayer/rules.h"
-#include "tradelayer/utilsbitcoin.h"
-#include "tradelayer/version.h"
+#include <tradelayer/log.h>
+#include <tradelayer/rules.h>
+#include <tradelayer/tradelayer.h>
+#include <tradelayer/utilsbitcoin.h>
+#include <tradelayer/version.h>
 
-#include "validation.h"
-#include "util.h"
-#include "ui_interface.h"
+#include <ui_interface.h>
 
-#include <boost/algorithm/string.hpp>
-#include <boost/lexical_cast.hpp>
+#include <util/system.h>
+#include <validation.h>
 
 #include <stdint.h>
 #include <string>

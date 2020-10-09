@@ -1,29 +1,28 @@
-#include "tradelayer/rpcvalues.h"
+#include <tradelayer/rpcvalues.h>
 
-#include "tradelayer/createtx.h"
-#include "tradelayer/parse_string.h"
-#include "tradelayer/wallettxs.h"
-#include "tradelayer/log.h"
-#include "tradelayer/script.h"
-#include "tradelayer/sp.h"
-#include "tradelayer/tx.h"
-#include "base58.h"
-#include "core_io.h"
-#include "primitives/transaction.h"
-#include "pubkey.h"
-#include "rpc/protocol.h"
-#include "rpc/server.h"
-#include "rpc/util.h"
-#include "script/script.h"
-#include "uint256.h"
+#include <tradelayer/createtx.h>
+#include <tradelayer/log.h>
+#include <tradelayer/parse_string.h>
+#include <tradelayer/script.h>
+#include <tradelayer/sp.h>
+#include <tradelayer/tx.h>
+#include <tradelayer/wallettxs.h>
 
+#include <base58.h>
+#include <core_io.h>
+#include <primitives/transaction.h>
+#include <pubkey.h>
+#include <rpc/protocol.h>
+#include <rpc/server.h>
+#include <rpc/util.h>
+#include <script/script.h>
+#include <uint256.h>
+
+#include <string>
 #include <univalue.h>
+#include <vector>
 
 #include <boost/assign/list_of.hpp>
-#include <boost/foreach.hpp>
-#include <boost/algorithm/string.hpp>
-#include <string>
-#include <vector>
 
 using mastercore::StrToInt64;
 

@@ -1,36 +1,37 @@
-#include "tradelayer/mdex.h"
-#include "tradelayer/errors.h"
-#include "tradelayer/log.h"
-#include "tradelayer/tradelayer.h"
-#include "tradelayer/rules.h"
-#include "tradelayer/sp.h"
-#include "tradelayer/tx.h"
-#include "tradelayer/uint256_extensions.h"
-#include "arith_uint256.h"
-#include "chain.h"
-#include "tinyformat.h"
-#include "uint256.h"
-#include <hash.h>
+#include <tradelayer/mdex.h>
 
-#include "tradelayer/tradelayer_matrices.h"
-#include "tradelayer/externfns.h"
-#include "tradelayer/operators_algo_clearing.h"
-#include "validation.h"
-#include "utilsbitcoin.h"
+#include <tradelayer/errors.h>
+#include <tradelayer/externfns.h>
+#include <tradelayer/log.h>
+#include <tradelayer/operators_algo_clearing.h>
+#include <tradelayer/rules.h>
+#include <tradelayer/sp.h>
+#include <tradelayer/tradelayer.h>
+#include <tradelayer/tradelayer_matrices.h>
+#include <tradelayer/tx.h>
+#include <tradelayer/uint256_extensions.h>
+#include <tradelayer/utilsbitcoin.h>
+
+#include <arith_uint256.h>
+#include <chain.h>
+#include <hash.h>
+#include <tinyformat.h>
+#include <uint256.h>
 #include <univalue.h>
+#include <validation.h>
+
+#include <assert.h>
+#include <fstream>
+#include <iostream>
+#include <limits>
+#include <map>
+#include <set>
+#include <stdint.h>
+#include <string>
 
 #include <boost/lexical_cast.hpp>
 #include <boost/multiprecision/cpp_int.hpp>
 #include <boost/rational.hpp>
-
-#include <assert.h>
-#include <stdint.h>
-#include <iostream>
-#include <fstream>
-#include <limits>
-#include <map>
-#include <set>
-#include <string>
 
 typedef boost::multiprecision::cpp_dec_float_100 dec_float;
 typedef boost::multiprecision::checked_int128_t int128_t;

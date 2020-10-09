@@ -11,8 +11,8 @@
 #include <script/script.h>
 #include <script/standard.h>
 #include <sync.h>
-#include <util.h>
-#include <utiltime.h>
+#include <util/system.h>
+#include <util/time.h>
 #include <wallet/wallet.h>
 #include <merkleblock.h>
 #include <core_io.h>
@@ -29,7 +29,7 @@
 
 
 std::string static EncodeDumpTime(int64_t nTime) {
-    return DateTimeStrFormat("%Y-%m-%dT%H:%M:%SZ", nTime);
+    return FormatISO8601DateTime(nTime);
 }
 
 int64_t static DecodeDumpTime(const std::string &str) {

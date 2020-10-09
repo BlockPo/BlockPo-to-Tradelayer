@@ -1,8 +1,9 @@
 #ifndef TRADELAYER_ERRORS_H
 #define TRADELAYER_ERRORS_H
 
+#include <tradelayer/tradelayer.h>
+
 #include <string>
-#include "tradelayer/tradelayer.h"
 
 enum MPRPCErrorCode
 {

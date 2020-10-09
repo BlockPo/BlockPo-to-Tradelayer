@@ -1,36 +1,35 @@
 // Smart Properties & Crowd Sales
 
-#include "tradelayer/sp.h"
+#include <tradelayer/sp.h>
 
-#include "tradelayer/log.h"
-#include "tradelayer/tradelayer.h"
-#include "tradelayer/uint256_extensions.h"
-#include "tradelayer/mdex.h"
+#include <tradelayer/log.h>
+#include <tradelayer/mdex.h>
+#include <tradelayer/tradelayer.h>
+#include <tradelayer/uint256_extensions.h>
 
-#include "arith_uint256.h"
+#include <arith_uint256.h>
+#include <base58.h>
+#include <clientversion.h>
 #include <hash.h>
-#include "base58.h"
-#include "clientversion.h"
-#include "validation.h"
-#include "serialize.h"
-#include "streams.h"
-#include "tinyformat.h"
-#include "uint256.h"
-#include "utiltime.h"
+#include <serialize.h>
+#include <streams.h>
+#include <tinyformat.h>
+#include <uint256.h>
+#include <util/time.h>
+#include <validation.h>
+
+#include <leveldb/db.h>
+#include <leveldb/write_batch.h>
+
+#include <stdint.h>
+#include <map>
+#include <string>
+#include <utility>
+#include <vector>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
-
-#include "leveldb/db.h"
-#include "leveldb/write_batch.h"
-
-#include <stdint.h>
-
-#include <map>
-#include <string>
-#include <vector>
-#include <utility>
 
 using namespace mastercore;
 
@@ -605,7 +604,6 @@ bool mastercore::getEntryFromName(const std::string& name, uint32_t& propertyId,
 
     return false;
 }
-
 
 // int mastercore::addInterestPegged(int nBlockPrev, const CBlockIndex* pBlockIndex)
 // {

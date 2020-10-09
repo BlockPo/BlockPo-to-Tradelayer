@@ -6,8 +6,8 @@
 /**
  * Utilities for converting data from/to strings.
  */
-#ifndef BITCOIN_UTILSTRENCODINGS_H
-#define BITCOIN_UTILSTRENCODINGS_H
+#ifndef BITCOIN_UTIL_STRENCODINGS_H
+#define BITCOIN_UTIL_STRENCODINGS_H
 
 #include <stdint.h>
 #include <string>
@@ -173,4 +173,56 @@ bool ConvertBits(O& out, I it, I end) {
     return true;
 }
 
-#endif // BITCOIN_UTILSTRENCODINGS_H
+/**
+ * Converts the given character to its lowercase equivalent.
+ * This function is locale independent. It only converts uppercase
+ * characters in the standard 7-bit ASCII range.
+ * This is a feature, not a limitation.
+ *
+ * @param[in] c     the character to convert to lowercase.
+ * @return          the lowercase equivalent of c; or the argument
+ *                  if no conversion is possible.
+ */
+constexpr char ToLower(char c)
+{   
+    return (c >= 'A' && c <= 'Z' ? (c - 'A') + 'a' : c);
+}
+
+/**
+ * Returns the lowercase equivalent of the given string.
+ * This function is locale independent. It only converts uppercase
+ * characters in the standard 7-bit ASCII range.
+ * This is a feature, not a limitation.
+ *
+ * @param[in] str   the string to convert to lowercase.
+ * @returns         lowercased equivalent of str
+ */
+std::string ToLower(const std::string& str);
+
+/**
+ * Converts the given character to its uppercase equivalent.
+ * This function is locale independent. It only converts lowercase
+ * characters in the standard 7-bit ASCII range.
+ * This is a feature, not a limitation.
+ *
+ * @param[in] c     the character to convert to uppercase.
+ * @return          the uppercase equivalent of c; or the argument
+ *                  if no conversion is possible.
+ */
+constexpr char ToUpper(char c)
+{
+    return (c >= 'a' && c <= 'z' ? (c - 'a') + 'A' : c);
+}
+
+/**
+ * Returns the uppercase equivalent of the given string.
+ * This function is locale independent. It only converts lowercase
+ * characters in the standard 7-bit ASCII range.
+ * This is a feature, not a limitation.
+ *
+ * @param[in] str   the string to convert to uppercase.
+ * @returns         UPPERCASED EQUIVALENT OF str
+ */
+std::string ToUpper(const std::string& str);
+
+#endif // BITCOIN_UTIL_STRENCODINGS_H

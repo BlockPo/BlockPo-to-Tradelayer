@@ -1,14 +1,13 @@
-#include "tradelayer/dex.h"
-#include "tradelayer/mdex.h"
-#include "tradelayer/tally.h"
-#include "tradelayer/tradelayer.h"
-#include "tradelayer/tx.h"
-#include "test/test_bitcoin.h"
+#include <test/test_bitcoin.h>
+#include <tradelayer/dex.h>
+#include <tradelayer/mdex.h>
+#include <tradelayer/tally.h>
+#include <tradelayer/tradelayer.h>
+#include <tradelayer/tx.h>
 
-#include <stdint.h>
-
-#include <boost/test/unit_test.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/test/unit_test.hpp>
+#include <stdint.h>
 
 using namespace mastercore;
 

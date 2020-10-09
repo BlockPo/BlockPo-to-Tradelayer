@@ -1,22 +1,20 @@
 #ifndef TRADELAYER_MDEX_H
 #define TRADELAYER_MDEX_H
 
-#include "tradelayer/tx.h"
+#include <tradelayer/tx.h>
+#include <tradelayer/tradelayer_matrices.h>
+#include <uint256.h>
 
-#include "uint256.h"
+#include <fstream>
+#include <map>
+#include <set>
+#include <stdint.h>
+#include <string>
 
 #include <boost/lexical_cast.hpp>
 #include <boost/multiprecision/cpp_dec_float.hpp>
 #include <boost/multiprecision/cpp_int.hpp>
 #include <boost/rational.hpp>
-
-#include <stdint.h>
-
-#include <fstream>
-#include <map>
-#include <set>
-#include <string>
-#include "tradelayer_matrices.h"
 
 class CHash256;
 

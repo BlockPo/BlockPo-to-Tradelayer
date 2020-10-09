@@ -6,15 +6,12 @@ class CMPOffer;
 class CTransaction;
 class CMPContractDex;
 
-#include "tradelayer/tradelayer.h"
+#include <tradelayer/tradelayer.h>
 
-#include "uint256.h"
-#include "utilstrencodings.h"
+#include <uint256.h>
+#include <util/strencodings.h>
 
 #include <stdint.h>
-#include <string.h>
-
-#include <string.h>
 #include <string>
 
 using mastercore::strTransactionType;

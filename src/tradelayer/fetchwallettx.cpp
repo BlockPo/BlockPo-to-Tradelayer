@@ -5,28 +5,26 @@
  * position in block and position in wallet including STO receipts.
  */
 
-#include "tradelayer/fetchwallettx.h"
+#include <tradelayer/fetchwallettx.h>
 
-#include "tradelayer/log.h"
-#include "tradelayer/tradelayer.h"
-#include "tradelayer/pending.h"
-#include "tradelayer/utilsbitcoin.h"
+#include <tradelayer/log.h>
+#include <tradelayer/pending.h>
+#include <tradelayer/tradelayer.h>
+#include <tradelayer/utilsbitcoin.h>
 
-#include "init.h"
-#include "validation.h"
-#include "sync.h"
-#include "tinyformat.h"
-#include "txdb.h"
+#include <init.h>
+#include <sync.h>
+#include <tinyformat.h>
+#include <txdb.h>
+#include <validation.h>
 #ifdef ENABLE_WALLET
-#include "wallet/wallet.h"
+#include <wallet/wallet.h>
 #endif
 
-#include <boost/algorithm/string.hpp>
-
-#include <stdint.h>
 #include <list>
 #include <map>
 #include <set>
+#include <stdint.h>
 #include <string>
 #include <utility>
 #include <vector>
