@@ -36,7 +36,7 @@ void RequireBalance(const std::string& address, uint32_t propertyId, int64_t amo
 {
     int64_t balance = getMPbalance(address, propertyId, BALANCE);
     if (balance < amount) {
-        throw JSONRPCError(RPC_TYPE_ERROR, "Sender has insufficient balance for that property");
+        throw JSONRPCError(RPC_TYPE_ERROR, "Sender has insufficient property balance");
     }
     int64_t balanceUnconfirmed = getUserAvailableMPbalance(address, propertyId);
     if (balanceUnconfirmed < amount) {
@@ -124,26 +124,6 @@ void RequireDifferentIds(uint32_t propertyId, uint32_t otherId)
 {
     if (propertyId == otherId) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Property identifiers must not be the same");
-    }
-}
-
-void RequireCrowdsale(uint32_t propertyId)
-{
-    LOCK(cs_tally);
-    CMPSPInfo::Entry sp;
-    if (!_my_sps->getSP(propertyId, sp)) {
-        throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
-    }
-    if (sp.fixed || sp.manual) {
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "Property identifier does not refer to a crowdsale");
-    }
-}
-
-void RequireActiveCrowdsale(uint32_t propertyId)
-{
-    LOCK(cs_tally);
-    if (!isCrowdsaleActive(propertyId)) {
-        throw JSONRPCError(RPC_TYPE_ERROR, "Property identifier does not refer to an active crowdsale");
     }
 }
 

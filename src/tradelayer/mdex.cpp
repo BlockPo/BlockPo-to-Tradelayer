@@ -119,7 +119,7 @@ void mastercore::LoopBiDirectional(cd_PricesMap* const ppriceMap, uint8_t trdAct
   cd_PricesMap::iterator it_fwdPrices;
   cd_PricesMap::reverse_iterator it_bwdPrices;
 
-  if ( trdAction == BUY )
+  if ( trdAction == buy )
     {
       for (it_fwdPrices = ppriceMap->begin(); it_fwdPrices != ppriceMap->end(); ++it_fwdPrices)
 	{
@@ -148,7 +148,7 @@ void mastercore::LoopBiDirectional(cd_PricesMap* const ppriceMap, uint8_t trdAct
 
 void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPrices, typename cd_PricesMap::reverse_iterator &it_bwdPrices, uint8_t trdAction, CMPContractDex* const pnew, const uint64_t sellerPrice, const uint32_t propertyForSale, MatchReturnType &NewReturn)
 {
-  cd_Set* const pofferSet = trdAction == BUY ? &(it_fwdPrices->second) : &(it_bwdPrices->second);
+  cd_Set* const pofferSet = trdAction == buy ? &(it_fwdPrices->second) : &(it_bwdPrices->second);
 
   /** At good (single) price level and property iterate over offers looking at all parameters to find the match */
   cd_Set::iterator offerIt = pofferSet->begin();
@@ -214,15 +214,15 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
           PrintToLog("pnewPositiveBalanceB: %d, pnewNegativeBalanceB: %d\n", pnewPositiveBalanceB, pnewNegativeBalanceB);
       }
 
-      int64_t possitive_sell = (pold->getTradingAction() == SELL) ? poldPositiveBalanceB : pnewPositiveBalanceB;
-      int64_t negative_sell  = (pold->getTradingAction() == SELL) ? poldNegativeBalanceB : pnewNegativeBalanceB;
-      int64_t possitive_buy  = (pold->getTradingAction() == SELL) ? pnewPositiveBalanceB : poldPositiveBalanceB;
-      int64_t negative_buy   = (pold->getTradingAction() == SELL) ? pnewNegativeBalanceB : poldNegativeBalanceB;
+      int64_t possitive_sell = (pold->getTradingAction() == sell) ? poldPositiveBalanceB : pnewPositiveBalanceB;
+      int64_t negative_sell  = (pold->getTradingAction() == sell) ? poldNegativeBalanceB : pnewNegativeBalanceB;
+      int64_t possitive_buy  = (pold->getTradingAction() == sell) ? pnewPositiveBalanceB : poldPositiveBalanceB;
+      int64_t negative_buy   = (pold->getTradingAction() == sell) ? pnewNegativeBalanceB : poldNegativeBalanceB;
 
-      int64_t seller_amount  = (pold->getTradingAction() == SELL) ? pold->getAmountForSale() : pnew->getAmountForSale();
-      int64_t buyer_amount   = (pold->getTradingAction() == SELL) ? pnew->getAmountForSale() : pold->getAmountForSale();
-      std::string seller_address = (pold->getTradingAction() == SELL) ? pold->getAddr() : pnew->getAddr();
-      std::string buyer_address  = (pold->getTradingAction() == SELL) ? pnew->getAddr() : pold->getAddr();
+      int64_t seller_amount  = (pold->getTradingAction() == sell) ? pold->getAmountForSale() : pnew->getAmountForSale();
+      int64_t buyer_amount   = (pold->getTradingAction() == sell) ? pnew->getAmountForSale() : pold->getAmountForSale();
+      std::string seller_address = (pold->getTradingAction() == sell) ? pold->getAddr() : pnew->getAddr();
+      std::string buyer_address  = (pold->getTradingAction() == sell) ? pnew->getAddr() : pold->getAddr();
 
       int64_t nCouldBuy = buyer_amount < seller_amount ? buyer_amount : seller_amount;
 
@@ -326,13 +326,13 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
 
       int64_t remaining = seller_amount >= buyer_amount ? seller_amount - buyer_amount : buyer_amount - seller_amount;
 
-      if ( (seller_amount > buyer_amount && pold->getTradingAction() == SELL) || (seller_amount < buyer_amount && pold->getTradingAction() == BUY))
+      if ( (seller_amount > buyer_amount && pold->getTradingAction() == sell) || (seller_amount < buyer_amount && pold->getTradingAction() == buy))
       	{
       	  contract_replacement.setAmountForsale(remaining, "moreinseller");
       	  pnew->setAmountForsale(0, "no_remaining");
       	  NewReturn = TRADED_MOREINSELLER;
       	}
-      else if ( (seller_amount < buyer_amount && pold->getTradingAction() == SELL) || (seller_amount > buyer_amount && pold->getTradingAction() == BUY))
+      else if ( (seller_amount < buyer_amount && pold->getTradingAction() == sell) || (seller_amount > buyer_amount && pold->getTradingAction() == buy))
       	{
       	  contract_replacement.setAmountForsale(0, "no_remaining");
       	  pnew->setAmountForsale(remaining, "moreinbuyer");
@@ -348,7 +348,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       int64_t countClosedSeller = 0, countClosedBuyer  = 0;
       if ( possitive_sell > 0 && negative_sell == 0 )
       	{
-      	  if ( pold->getTradingAction() == SELL )
+      	  if ( pold->getTradingAction() == sell )
       	    {
       	      Status_s = possitive_sell > creplPositiveBalance && creplPositiveBalance != 0 ? "LongPosNettedPartly" : ( creplPositiveBalance == 0 && creplNegativeBalance == 0 ? "LongPosNetted" : ( creplPositiveBalance == 0 && creplNegativeBalance > 0 ? "OpenShortPosByLongPosNetted" : "LongPosIncreased") );
       	      countClosedSeller = creplPositiveBalance == 0 ? possitive_sell : abs( possitive_sell - creplPositiveBalance );
@@ -361,7 +361,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       	}
       else if ( negative_sell > 0 && possitive_sell == 0 )
       	{
-      	  if ( pold->getTradingAction() == SELL )
+      	  if ( pold->getTradingAction() == sell )
       	    {
       	      Status_s = negative_sell > creplNegativeBalance && creplNegativeBalance != 0 ? "ShortPosNettedPartly" : ( creplNegativeBalance == 0 && creplPositiveBalance == 0 ? "ShortPosNetted" : ( creplNegativeBalance == 0 && creplPositiveBalance > 0 ? "OpenLongPosByShortPosNetted" : "ShortPosIncreased") );
       	      countClosedSeller = creplNegativeBalance == 0 ? negative_sell : abs( negative_sell - creplNegativeBalance );
@@ -374,7 +374,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       	}
       else if ( negative_sell == 0 && possitive_sell == 0 )
       	{
-      	  if ( pold->getTradingAction() == SELL )
+      	  if ( pold->getTradingAction() == sell )
       	    Status_s = creplPositiveBalance > 0 ? "OpenLongPosition" : "OpenShortPosition";
       	  else
       	    Status_s = pnewPositiveBalanceL  > 0 ? "OpenLongPosition" : "OpenShortPosition";
@@ -383,7 +383,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       /********************************************************/
       if ( possitive_buy > 0 && negative_buy == 0 )
       	{
-      	  if ( pold->getTradingAction() == BUY )
+      	  if ( pold->getTradingAction() == buy )
       	    {
       	      Status_b = possitive_buy > creplPositiveBalance && creplPositiveBalance != 0 ? "LongPosNettedPartly" : ( creplPositiveBalance == 0 && creplNegativeBalance == 0 ? "LongPosNetted" : ( creplPositiveBalance == 0 && creplNegativeBalance > 0  ? "OpenShortPosByLongPosNetted" : "LongPosIncreased") );
       	      countClosedBuyer = creplPositiveBalance == 0 ? possitive_buy : abs( possitive_buy - creplPositiveBalance );
@@ -396,7 +396,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       	}
       else if ( negative_buy > 0 && possitive_buy == 0 )
       	{
-      	  if ( pold->getTradingAction() == BUY )
+      	  if ( pold->getTradingAction() == buy )
       	    {
       	      Status_b = negative_buy > creplNegativeBalance && creplNegativeBalance != 0 ? "ShortPosNettedPartly" : ( creplNegativeBalance == 0 && creplPositiveBalance == 0 ? "ShortPosNetted" : ( creplNegativeBalance == 0 && creplPositiveBalance > 0 ? "OpenLongPosByShortPosNetted" : "ShortPosIncreased" ) );
       	      countClosedBuyer = creplNegativeBalance == 0 ? negative_buy : abs( negative_buy - creplNegativeBalance );
@@ -409,7 +409,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       	}
       else if ( negative_buy == 0 && possitive_buy == 0 )
       	{
-      	  if ( pold->getTradingAction() == BUY )
+      	  if ( pold->getTradingAction() == buy )
       	    Status_b = creplPositiveBalance > 0 ? "OpenLongPosition" : "OpenShortPosition";
       	  else
       	    Status_b = pnewPositiveBalanceL > 0 ? "OpenLongPosition" : "OpenShortPosition";
@@ -456,7 +456,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       lives_taker0 = lives_taker;
       nCouldBuy0 = nCouldBuy;
       /********************************************************/
-      if ( pold->getTradingAction() == SELL )
+      if ( pold->getTradingAction() == sell )
 	{
 	  // If maker Sell and Open Short by Long Netted: status_sj -> makers
 	  if ( Status_maker == "OpenShortPosByLongPosNetted" )
@@ -709,7 +709,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
 	  // Checked
 	}
       /********************************************************/
-      if ( pold->getTradingAction() == BUY )
+      if ( pold->getTradingAction() == buy )
 	{
 	  // If taker Sell and Open Short by Long Netted: status_sj -> taker
 	  if ( Status_taker == "OpenShortPosByLongPosNetted" )
@@ -1640,11 +1640,14 @@ MatchReturnType x_Trade(CMPMetaDEx* const pnew)
             }
 
             /***********************************************************************************************/
-            // Adding volume into Map
+            // Adding token volume into Map
             metavolume[pnew->getBlock()][pnew->getProperty()] = seller_amountGot;
             metavolume[pnew->getBlock()][pnew->getDesProperty()] = buyer_amountGot;
 
           	/***********************************************************************************************/
+            // Adding volume in termos of LTC
+            increaseLTCVolume(pnew->getProperty(), pnew->getDesProperty(), pnew->getBlock());
+            /***********************************************************************************************/
           	const int64_t& buyer_amountGotAfterFee = buyer_amountGot;
           	int64_t tradingFee = 0;
 
@@ -2142,7 +2145,7 @@ int mastercore::ContractDex_ADD_MARKET_PRICE(const std::string& sender_addr, uin
 {
     int rc = METADEX_ERROR -1;
 
-    if(trading_action != BUY && trading_action != SELL){
+    if(trading_action != buy && trading_action != sell){
         PrintToLog("%s(): ERROR: invalid trading action: %d\n",__func__, trading_action);
         return -1;
     }
@@ -2419,7 +2422,7 @@ int mastercore::ContractDex_ADD_ORDERBOOK_EDGE(const std::string& sender_addr, u
     int rc = METADEX_ERROR -1;
     uint64_t price;
 
-    price = (trading_action == BUY) ? edgeOrderbook(contractId, SELL) : edgeOrderbook(contractId, BUY);
+    price = (trading_action == buy) ? edgeOrderbook(contractId, sell) : edgeOrderbook(contractId, buy);
     if (msc_debug_add_orderbook_edge) PrintToLog("price of edge: %d\n",price);
 
     if (price != 0)
@@ -2459,7 +2462,7 @@ int mastercore::ContractDex_CLOSE_POSITION(const uint256& txid, unsigned int blo
     // Clearing the position
     unsigned int idx = 0;
     std::pair <int64_t, uint8_t> result;
-    (shortPosition > 0 && longPosition == 0) ? (result.first = shortPosition, result.second = BUY) : (longPosition > 0 && shortPosition == 0) ? (result.first = longPosition, result.second = SELL) : (result.first = 0, result.second = 0);
+    (shortPosition > 0 && longPosition == 0) ? (result.first = shortPosition, result.second = buy) : (longPosition > 0 && shortPosition == 0) ? (result.first = longPosition, result.second = sell) : (result.first = 0, result.second = 0);
 
     if(msc_debug_close_position) PrintToLog("%s(): result.first: %d, result.second: %d\n",__func__, result.first, result.second);
 
@@ -2516,7 +2519,7 @@ int64_t mastercore::getPairMarketPrice(const std::string& num, const std::string
 
 uint64_t mastercore::edgeOrderbook(uint32_t contractId, uint8_t tradingAction)
 {
-    uint64_t candPrice = (tradingAction == BUY) ?  std::numeric_limits<uint64_t>::max() : 0;
+    uint64_t candPrice = (tradingAction == buy) ?  std::numeric_limits<uint64_t>::max() : 0;
 
     cd_PricesMap* const ppriceMap = get_PricesCd(contractId); // checking the ask price of contract A
     for (cd_PricesMap::iterator it = ppriceMap->begin(); it != ppriceMap->end(); ++it)
@@ -2527,7 +2530,7 @@ uint64_t mastercore::edgeOrderbook(uint32_t contractId, uint8_t tradingAction)
             const CMPContractDex& obj = *it;
             if (obj.getTradingAction() == tradingAction || obj.getAmountForSale() == 0) continue;
                 uint64_t price = obj.getEffectivePrice();
-            if ((tradingAction == BUY && price < candPrice) || (tradingAction == SELL && price > candPrice))
+            if ((tradingAction == buy && price < candPrice) || (tradingAction == sell && price > candPrice))
                 candPrice = price;
             if(msc_debug_sp) PrintToLog("%s(): choosen price: %d\n",__func__, price);
         }

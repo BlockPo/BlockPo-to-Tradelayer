@@ -705,6 +705,21 @@ class DExBasicsTest (BitcoinTestFramework):
         assert_equal(out['result'][1]['accepts'][0]['ltcstopay'], '1.00000000')
         assert_equal(out['result'][1]['accepts'][0]['blocksleft'], 250)
 
+
+        self.log.info("Checking ALL tokens in admin address")
+        params = str([adminAddress, 1]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['balance'],'1499900.00000000')
+        assert_equal(out['result']['reserve'],'0.00000000')
+
+
+        out = tradelayer_HTTP(conn, headers, True, "tl_getallprice")
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['unitprice'],'0.01000000')
+        
         conn.close()
         self.stop_nodes()
 

@@ -74,8 +74,6 @@ std::string mastercore::strTransactionType(uint16_t txType)
     case MSC_TYPE_SAVINGS_MARK: return "Savings";
     case MSC_TYPE_SAVINGS_COMPROMISED: return "Savings COMPROMISED";
     case MSC_TYPE_CREATE_PROPERTY_FIXED: return "Create Property - Fixed";
-    case MSC_TYPE_CREATE_PROPERTY_VARIABLE: return "Create Property - Variable";
-    case MSC_TYPE_CLOSE_CROWDSALE: return "Close Crowdsale";
     case MSC_TYPE_CREATE_PROPERTY_MANUAL: return "Create Property - Manual";
     case MSC_TYPE_GRANT_PROPERTY_TOKENS: return "Grant Property Tokens";
     case MSC_TYPE_REVOKE_PROPERTY_TOKENS: return "Revoke Property Tokens";
@@ -178,12 +176,6 @@ bool CMPTransaction::interpret_Transaction()
 
     case MSC_TYPE_CREATE_PROPERTY_FIXED:
       return interpret_CreatePropertyFixed();
-
-    case MSC_TYPE_CREATE_PROPERTY_VARIABLE:
-      return interpret_CreatePropertyVariable();
-
-    case MSC_TYPE_CLOSE_CROWDSALE:
-      return interpret_CloseCrowdsale();
 
     case MSC_TYPE_CREATE_PROPERTY_MANUAL:
       return interpret_CreatePropertyManaged();
@@ -435,7 +427,7 @@ bool CMPTransaction::interpret_CreatePropertyFixed()
         std::vector<uint8_t> vecKyc = GetNextVarIntBytes(i);
         if (!vecKyc.empty())
         {
-            int64_t num = static_cast<int64_t>(DecompressInteger(vecKyc));
+            const int64_t num = static_cast<int64_t>(DecompressInteger(vecKyc));
             kyc_Ids.push_back(num);
         }
 
@@ -462,79 +454,6 @@ bool CMPTransaction::interpret_CreatePropertyFixed()
         PrintToLog("\t             url: %s\n", url);
         PrintToLog("\t            data: %s\n", data);
         PrintToLog("\t           value: %s\n", FormatByType(nValue, prop_type));
-    }
-
-    return true;
-}
-
-/** Tx 51 */
-bool CMPTransaction::interpret_CreatePropertyVariable()
-{
-    int i = 0;
-
-    std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
-    std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
-    std::vector<uint8_t> vecPropTypeBytes = GetNextVarIntBytes(i);
-    std::vector<uint8_t> vecPrevPropIdBytes = GetNextVarIntBytes(i);
-
-    const char* p = i + (char*) &pkt;
-    std::vector<std::string> spstr;
-    for (int j = 0; j < 3; j++) {
-        spstr.push_back(std::string(p));
-        p += spstr.back().size() + 1;
-    }
-
-    if (isOverrun(p)) {
-        PrintToLog("%s(): rejected: malformed string value(s)\n", __func__);
-        return false;
-    }
-
-    int j = 0;
-    memcpy(name, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(name)-1)); j++;
-    memcpy(url, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(url)-1)); j++;
-    memcpy(data, spstr[j].c_str(), std::min(spstr[j].length(), sizeof(data)-1)); j++;
-    i = i + strlen(name) + strlen(url) + strlen(data) + 3; // data sizes + 3 null terminators
-
-    // std::vector<uint8_t> vecPropertyIdDesiredBytes = GetNextVarIntBytes(i);
-    std::vector<uint8_t> vecAmountPerUnitBytes = GetNextVarIntBytes(i);
-
-    if (!vecPropTypeBytes.empty()) {
-        prop_type = DecompressInteger(vecPropTypeBytes);
-    } else return false;
-
-    if (!vecPrevPropIdBytes.empty()) {
-        prev_prop_id = DecompressInteger(vecPrevPropIdBytes);
-    } else return false;
-
-
-    if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly) {
-        PrintToLog("\t   property type: %d (%s)\n", prop_type, strPropertyType(prop_type));
-        PrintToLog("\tprev property id: %d\n", prev_prop_id);
-        PrintToLog("\t            name: %s\n", name);
-        PrintToLog("\t             url: %s\n", url);
-        PrintToLog("\t            data: %s\n", data);
-        PrintToLog("\tproperty desired: %d (%s)\n", property, strMPProperty(property));
-        PrintToLog("\t tokens per unit: %s\n", FormatByType(nValue, prop_type));
-    }
-
-    return true;
-}
-
-/** Tx 53 */
-bool CMPTransaction::interpret_CloseCrowdsale()
-{
-    int i = 0;
-
-    std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
-    std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
-    std::vector<uint8_t> vecPropIdBytes = GetNextVarIntBytes(i);
-
-    if (!vecPropIdBytes.empty()) {
-        property = DecompressInteger(vecPropIdBytes);
-    } else return false;
-
-    if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly) {
-        PrintToLog("\t        property: %d (%s)\n", property, strMPProperty(property));
     }
 
     return true;
@@ -573,7 +492,7 @@ bool CMPTransaction::interpret_CreatePropertyManaged()
         std::vector<uint8_t> vecKyc = GetNextVarIntBytes(i);
         if (!vecKyc.empty())
         {
-            int64_t num = static_cast<int64_t>(DecompressInteger(vecKyc));
+            const int64_t num = static_cast<int64_t>(DecompressInteger(vecKyc));
             kyc_Ids.push_back(num);
         }
 
@@ -1004,7 +923,7 @@ bool CMPTransaction::interpret_CreateContractDex()
       std::vector<uint8_t> vecKyc = GetNextVarIntBytes(i);
       if (!vecKyc.empty())
       {
-          int64_t num = static_cast<int64_t>(DecompressInteger(vecKyc));
+          const int64_t num = static_cast<int64_t>(DecompressInteger(vecKyc));
           kyc_Ids.push_back(num);
       }
 
@@ -1624,7 +1543,7 @@ bool CMPTransaction::interpret_CreateOracleContract()
       std::vector<uint8_t> vecKyc = GetNextVarIntBytes(i);
       if (!vecKyc.empty())
       {
-          int64_t num = static_cast<int64_t>(DecompressInteger(vecKyc));
+          const int64_t num = static_cast<int64_t>(DecompressInteger(vecKyc));
           kyc_Ids.push_back(num);
       }
 
@@ -2224,12 +2143,6 @@ int CMPTransaction::interpretPacket()
         case MSC_TYPE_CREATE_PROPERTY_FIXED:
             return logicMath_CreatePropertyFixed();
 
-        case MSC_TYPE_CREATE_PROPERTY_VARIABLE:
-            return logicMath_CreatePropertyVariable();
-
-        case MSC_TYPE_CLOSE_CROWDSALE:
-            return logicMath_CloseCrowdsale();
-
         case MSC_TYPE_CREATE_PROPERTY_MANUAL:
             return logicMath_CreatePropertyManaged();
 
@@ -2355,85 +2268,6 @@ int CMPTransaction::interpretPacket()
     return (PKT_ERROR -100);
 }
 
-/** Passive effect of crowdsale participation. */
-int CMPTransaction::logicHelper_CrowdsaleParticipation()
-{
-    CMPCrowd* pcrowdsale = getCrowd(receiver);
-
-    // No active crowdsale
-    if (pcrowdsale == nullptr) {
-        return (PKT_ERROR_CROWD -1);
-    }
-    // Active crowdsale, but not for this property
-    if (pcrowdsale->getCurrDes() != property) {
-        return (PKT_ERROR_CROWD -2);
-    }
-
-    CMPSPInfo::Entry sp;
-    assert(_my_sps->getSP(pcrowdsale->getPropertyId(), sp));
-    // PrintToLog("INVESTMENT SEND to Crowdsale Issuer: %s\n", receiver);
-
-    // Holds the tokens to be credited to the sender and issuer
-    std::pair<int64_t, int64_t> tokens;
-
-    // Passed by reference to determine, if max_tokens has been reached
-    bool close_crowdsale = false;
-
-    // Units going into the calculateFundraiser function must match the unit of
-    // the fundraiser's property_type. By default this means satoshis in and
-    // satoshis out. In the condition that the fundraiser is divisible, but
-    // indivisible tokens are accepted, it must account for .0 Div != 1 Indiv,
-    // but actually 1.0 Div == 100000000 Indiv. The unit must be shifted or the
-    // values will be incorrect, which is what is checked below.
-    bool inflateAmount = isPropertyDivisible(property) ? false : true;
-
-    // Calculate the amounts to credit for this fundraiser
-    calculateFundraiser(inflateAmount, nValue, sp.early_bird, sp.deadline, blockTime,
-            sp.num_tokens, sp.percentage, getTotalTokens(pcrowdsale->getPropertyId()),
-            tokens, close_crowdsale);
-
-    if (msc_debug_sp) {
-        PrintToLog("%s(): granting via crowdsale to user: %s %d (%s)\n",
-                __func__, FormatMP(property, tokens.first), property, strMPProperty(property));
-        PrintToLog("%s(): granting via crowdsale to issuer: %s %d (%s)\n",
-                __func__, FormatMP(property, tokens.second), property, strMPProperty(property));
-    }
-
-    // Update the crowdsale object
-    pcrowdsale->incTokensUserCreated(tokens.first);
-    pcrowdsale->incTokensIssuerCreated(tokens.second);
-
-    // Data to pass to txFundraiserData
-    int64_t txdata[] = {(int64_t) nValue, blockTime, tokens.first, tokens.second};
-    std::vector<int64_t> txDataVec(txdata, txdata + sizeof(txdata) / sizeof(txdata[0]));
-
-    // Insert data about crowdsale participation
-    pcrowdsale->insertDatabase(txid, txDataVec);
-
-    // Credit tokens for this fundraiser
-    if (tokens.first > 0) {
-        assert(update_tally_map(sender, pcrowdsale->getPropertyId(), tokens.first, BALANCE));
-    }
-    if (tokens.second > 0) {
-        assert(update_tally_map(receiver, pcrowdsale->getPropertyId(), tokens.second, BALANCE));
-    }
-
-    // Number of tokens has changed, update fee distribution thresholds
-    NotifyTotalTokensChanged(pcrowdsale->getPropertyId());
-
-    // Close crowdsale, if we hit MAX_TOKENS
-    if (close_crowdsale) {
-        eraseMaxedCrowdsale(receiver, blockTime, block);
-    }
-
-    // Indicate, if no tokens were transferred
-    if (!tokens.first && !tokens.second) {
-        return (PKT_ERROR_CROWD -3);
-    }
-
-    return 0;
-}
-
 /** Tx 0 */
 int CMPTransaction::logicMath_SimpleSend()
 {
@@ -2468,27 +2302,31 @@ int CMPTransaction::logicMath_SimpleSend()
          return (PKT_ERROR_SEND -26);
      }
 
-    int kyc_id;
+    if(property != ALL)
+    {
+        int kyc_id;
 
-    if(!t_tradelistdb->checkAttestationReg(sender,kyc_id)){
-      PrintToLog("%s(): rejected: kyc ckeck for sender failed\n", __func__);
-      return (PKT_ERROR_KYC -10);
-    }
+        if(!t_tradelistdb->checkAttestationReg(sender,kyc_id)){
+          PrintToLog("%s(): rejected: kyc ckeck for sender failed\n", __func__);
+          return (PKT_ERROR_KYC -10);
+        }
 
-    if(!t_tradelistdb->kycPropertyMatch(property,kyc_id)){
-      PrintToLog("%s(): rejected: property %d can't be traded with this kyc\n", __func__, property);
-      return (PKT_ERROR_KYC -20);
-    }
+        if(!t_tradelistdb->kycPropertyMatch(property,kyc_id)){
+          PrintToLog("%s(): rejected: property %d can't be traded with this kyc\n", __func__, property);
+          return (PKT_ERROR_KYC -20);
+        }
 
 
-    if(!t_tradelistdb->checkAttestationReg(receiver,kyc_id)){
-      PrintToLog("%s(): rejected: kyc ckeck for receiver failed\n", __func__);
-      return (PKT_ERROR_KYC -10);
-    }
+        if(!t_tradelistdb->checkAttestationReg(receiver,kyc_id)){
+          PrintToLog("%s(): rejected: kyc ckeck for receiver failed\n", __func__);
+          return (PKT_ERROR_KYC -10);
+        }
 
-    if(!t_tradelistdb->kycPropertyMatch(property,kyc_id)){
-      PrintToLog("%s(): rejected: property %d can't be traded with this kyc\n", __func__, property);
-      return (PKT_ERROR_KYC -20);
+        if(!t_tradelistdb->kycPropertyMatch(property,kyc_id)){
+          PrintToLog("%s(): rejected: property %d can't be traded with this kyc\n", __func__, property);
+          return (PKT_ERROR_KYC -20);
+        }
+
     }
 
     int64_t nBalance = getMPbalance(sender, property, BALANCE);
@@ -2518,8 +2356,6 @@ int CMPTransaction::logicMath_SimpleSend()
     assert(update_tally_map(sender, property, -nValue, BALANCE));
     assert(update_tally_map(receiver, property, nValue, BALANCE));
 
-    // Is there an active crowdsale running from this recepient?
-    logicHelper_CrowdsaleParticipation();
 
     return 0;
 }
@@ -2608,6 +2444,33 @@ int CMPTransaction::logicMath_SendAll()
         int64_t moneyAvailable = ptally->getMoney(propertyId, BALANCE);
         if (moneyAvailable > 0 && !isPropertyContract(propertyId) && propertyId != TL_PROPERTY_VESTING) {
             ++numberOfPropertiesSent;
+
+            if (propertyId != ALL)
+            {
+                int kyc_id;
+
+                if(!t_tradelistdb->checkAttestationReg(sender,kyc_id)){
+                  PrintToLog("%s(): rejected: kyc ckeck for sender failed\n", __func__);
+                  return (PKT_ERROR_KYC -10);
+                }
+
+                if(!t_tradelistdb->kycPropertyMatch(propertyId,kyc_id)){
+                  PrintToLog("%s(): rejected: property %d can't be traded with this kyc\n", __func__, propertyId);
+                  return (PKT_ERROR_KYC -20);
+                }
+
+                if(!t_tradelistdb->checkAttestationReg(receiver,kyc_id)){
+                  PrintToLog("%s(): rejected: kyc ckeck for receiver failed\n", __func__);
+                  return (PKT_ERROR_KYC -10);
+                }
+
+                if(!t_tradelistdb->kycPropertyMatch(propertyId,kyc_id)){
+                  PrintToLog("%s(): rejected: property %d can't be traded with this kyc\n", __func__, propertyId);
+                  return (PKT_ERROR_KYC -20);
+                }
+
+            }
+
             assert(update_tally_map(sender, propertyId, -moneyAvailable, BALANCE));
             assert(update_tally_map(receiver, propertyId, moneyAvailable, BALANCE));
             p_txlistdb->recordSendAllSubRecord(txid, numberOfPropertiesSent, propertyId, moneyAvailable);
@@ -2680,169 +2543,15 @@ int CMPTransaction::logicMath_CreatePropertyFixed()
     newSP.creation_block = blockHash;
     newSP.update_block = newSP.creation_block;
     newSP.init_block = block;
+    newSP.kyc.push_back(0);
 
-    for(std::vector<int64_t>::iterator it = kyc_Ids.begin(); it != kyc_Ids.end(); ++it)
-    {
-        const int64_t& aux = *it;
-        newSP.kyc.push_back(aux);
-    }
+    for_each(kyc_Ids.begin(), kyc_Ids.end(), [&newSP] (const int64_t& aux) { if (aux != 0) newSP.kyc.push_back(aux);});
 
     const uint32_t propertyId = _my_sps->putSP(newSP);
     assert(propertyId > 0);
     assert(update_tally_map(sender, propertyId, nValue, BALANCE));
 
     NotifyTotalTokensChanged(propertyId);
-
-    return 0;
-}
-
-/** Tx 51 */
-int CMPTransaction::logicMath_CreatePropertyVariable()
-{
-    uint256 blockHash;
-    {
-        LOCK(cs_main);
-
-        CBlockIndex* pindex = chainActive[block];
-        if (pindex == nullptr) {
-            PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
-            return (PKT_ERROR_SP -20);
-        }
-        blockHash = pindex->GetBlockHash();
-    }
-
-    if (!IsTransactionTypeAllowed(block, type, version)) {
-        PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
-                __func__,
-                type,
-                version,
-                property,
-                block);
-        return (PKT_ERROR_SP -22);
-    }
-
-    if (nValue <= 0 || MAX_INT_8_BYTES < nValue) {
-        PrintToLog("%s(): rejected: value out of range or zero: %d\n", __func__, nValue);
-        return (PKT_ERROR_SP -23);
-    }
-
-    if (!IsPropertyIdValid(property)) {
-        PrintToLog("%s(): rejected: property %d does not exist\n", __func__, property);
-        return (PKT_ERROR_SP -24);
-    }
-
-    if (ALL_PROPERTY_TYPE_INDIVISIBLE != prop_type && ALL_PROPERTY_TYPE_DIVISIBLE != prop_type) {
-        PrintToLog("%s(): rejected: invalid property type: %d\n", __func__, prop_type);
-        return (PKT_ERROR_SP -36);
-    }
-
-    if ('\0' == name[0]) {
-        PrintToLog("%s(): rejected: property name must not be empty\n", __func__);
-        return (PKT_ERROR_SP -37);
-    }
-
-    if (!deadline || (int64_t) deadline < blockTime) {
-        PrintToLog("%s(): rejected: deadline must not be in the past [%d < %d]\n", __func__, deadline, blockTime);
-        return (PKT_ERROR_SP -38);
-    }
-
-    if (nullptr != getCrowd(sender)) {
-        PrintToLog("%s(): rejected: sender %s has an active crowdsale\n", __func__, sender);
-        return (PKT_ERROR_SP -39);
-    }
-
-    // ------------------------------------------
-
-    CMPSPInfo::Entry newSP;
-    newSP.issuer = sender;
-    newSP.txid = txid;
-    newSP.prop_type = prop_type;
-    newSP.num_tokens = nValue;
-    newSP.category.assign(category);
-    newSP.subcategory.assign(subcategory);
-    newSP.name.assign(name);
-    newSP.url.assign(url);
-    newSP.data.assign(data);
-    newSP.fixed = false;
-    newSP.property_desired = property;
-    newSP.deadline = deadline;
-    newSP.early_bird = early_bird;
-    newSP.percentage = percentage;
-    newSP.creation_block = blockHash;
-    newSP.update_block = newSP.creation_block;
-
-    const uint32_t propertyId = _my_sps->putSP(newSP);
-    assert(propertyId > 0);
-    my_crowds.insert(std::make_pair(sender, CMPCrowd(propertyId, nValue, property, deadline, early_bird, percentage, 0, 0)));
-
-    PrintToLog("CREATED CROWDSALE id: %d value: %d property: %d\n", propertyId, nValue, property);
-
-    return 0;
-}
-
-/** Tx 53 */
-int CMPTransaction::logicMath_CloseCrowdsale()
-{
-    uint256 blockHash;
-    {
-        LOCK(cs_main);
-
-        CBlockIndex* pindex = chainActive[block];
-        if (pindex == nullptr) {
-            PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
-            return (PKT_ERROR_SP -20);
-        }
-        blockHash = pindex->GetBlockHash();
-    }
-
-    if (!IsTransactionTypeAllowed(block, type, version)) {
-        PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
-                __func__,
-                type,
-                version,
-                property,
-                block);
-        return (PKT_ERROR_SP -22);
-    }
-
-    if (!IsPropertyIdValid(property)) {
-        PrintToLog("%s(): rejected: property %d does not exist\n", __func__, property);
-        return (PKT_ERROR_SP -24);
-    }
-
-    CrowdMap::iterator it = my_crowds.find(sender);
-    if (it == my_crowds.end()) {
-        PrintToLog("%s(): rejected: sender %s has no active crowdsale\n", __func__, sender);
-        return (PKT_ERROR_SP -40);
-    }
-
-    const CMPCrowd& crowd = it->second;
-    if (property != crowd.getPropertyId()) {
-        PrintToLog("%s(): rejected: property identifier mismatch [%d != %d]\n", __func__, property, crowd.getPropertyId());
-        return (PKT_ERROR_SP -41);
-    }
-
-    // ------------------------------------------
-
-    CMPSPInfo::Entry sp;
-    assert(_my_sps->getSP(property, sp));
-
-    int64_t missedTokens = GetMissedIssuerBonus(sp, crowd);
-
-    sp.historicalData = crowd.getDatabase();
-    sp.update_block = blockHash;
-    sp.close_early = true;
-    sp.timeclosed = blockTime;
-    sp.txid_close = txid;
-    sp.missedTokens = missedTokens;
-
-    assert(_my_sps->updateSP(property, sp));
-    if (missedTokens > 0) {
-        assert(update_tally_map(sp.issuer, property, missedTokens, BALANCE));
-    }
-    my_crowds.erase(it);
-
-    if (msc_debug_sp) PrintToLog("CLOSED CROWDSALE id: %d=%X\n", property, property);
 
     return 0;
 }
@@ -2897,13 +2606,9 @@ int CMPTransaction::logicMath_CreatePropertyManaged()
     newSP.manual = true;
     newSP.creation_block = blockHash;
     newSP.update_block = newSP.creation_block;
+    newSP.kyc.push_back(0);
 
-
-    for(std::vector<int64_t>::iterator it = kyc_Ids.begin(); it != kyc_Ids.end(); ++it)
-    {
-        const int64_t& aux = *it;
-        newSP.kyc.push_back(aux);
-    }
+    for_each(kyc_Ids.begin(), kyc_Ids.end(), [&newSP] (const int64_t& aux) { if (aux != 0) newSP.kyc.push_back(aux);});
 
     uint32_t propertyId = _my_sps->putSP(newSP);
     assert(propertyId > 0);
@@ -3149,19 +2854,9 @@ int CMPTransaction::logicMath_ChangeIssuer()
         return (PKT_ERROR_TOKENS -43);
     }
 
-    if (nullptr != getCrowd(sender)) {
-        PrintToLog("%s(): rejected: sender %s has an active crowdsale\n", __func__, sender);
-        return (PKT_ERROR_TOKENS -39);
-    }
-
     if (receiver.empty()) {
         PrintToLog("%s(): rejected: receiver is empty\n", __func__);
         return (PKT_ERROR_TOKENS -45);
-    }
-
-    if (nullptr != getCrowd(receiver)) {
-        PrintToLog("%s(): rejected: receiver %s has an active crowdsale\n", __func__, receiver);
-        return (PKT_ERROR_TOKENS -46);
     }
 
     // ------------------------------------------
@@ -3335,17 +3030,20 @@ int CMPTransaction::logicMath_MetaDExTrade()
 
   int kyc_id;
 
-  if(!t_tradelistdb->checkAttestationReg(sender,kyc_id)){
-    PrintToLog("%s(): rejected: kyc ckeck failed\n", __func__);
-    return (PKT_ERROR_KYC -10);
+  if (property != ALL)
+  {
+      if(!t_tradelistdb->checkAttestationReg(sender,kyc_id)){
+        PrintToLog("%s(): rejected: kyc ckeck failed\n", __func__);
+        return (PKT_ERROR_KYC -10);
+      }
+
+      if(!t_tradelistdb->kycPropertyMatch(property,kyc_id)){
+        PrintToLog("%s(): rejected: property %d can't be traded with this kyc\n", __func__, property);
+        return (PKT_ERROR_KYC -20);
+      }
   }
 
-  if(!t_tradelistdb->kycPropertyMatch(property,kyc_id)){
-    PrintToLog("%s(): rejected: property %d can't be traded with this kyc\n", __func__, property);
-    return (PKT_ERROR_KYC -20);
-  }
-
-  if(!t_tradelistdb->kycPropertyMatch(desired_property,kyc_id)){
+  if(propertyId != ALL && !t_tradelistdb->kycPropertyMatch(desired_property,kyc_id)){
     PrintToLog("%s(): rejected: property %d can't be traded with this kyc\n", __func__, desired_property);
     return (PKT_ERROR_METADEX -34);
   }
@@ -3429,9 +3127,9 @@ int CMPTransaction::logicMath_CreateContractDex()
   newSP.attribute_type = attribute_type;
   newSP.expirated = false;
   newSP.inverse_quoted = inverse_quoted;
+  newSP.kyc.push_back(0);
 
-  std::vector<int64_t>& kyc = newSP.kyc;
-  for_each(kyc_Ids.begin(), kyc_Ids.end(), [&kyc] (const int64_t& elem) { kyc.push_back(elem);});
+  for_each(kyc_Ids.begin(), kyc_Ids.end(), [&newSP] (const int64_t& aux) { if (aux != 0) newSP.kyc.push_back(aux);});
 
   const uint32_t propertyId = _my_sps->putSP(newSP);
   assert(propertyId > 0);
@@ -3984,11 +3682,6 @@ int CMPTransaction::logicMath_DExSell()
       return (PKT_ERROR_TRADEOFFER -22);
     }
 
-    // if(!t_tradelistdb->register(sender,4))
-    // {
-    //     PrintToLog("%s: tx disable from kyc register!\n",__func__);
-    //     return (PKT_ERROR_KYC -10);
-    // }
 
     if (MAX_INT_8_BYTES < nValue) {
         PrintToLog("%s(): rejected: value out of range or zero: %d\n", __func__, nValue);
@@ -4249,9 +3942,9 @@ int CMPTransaction::logicMath_CreateOracleContract()
     newSP.oracle_high = 0;
     newSP.oracle_low = 0;
     newSP.oracle_close = 0;
+    newSP.kyc.push_back(0);
 
-    std::vector<int64_t>& kyc = newSP.kyc;
-    for_each(kyc_Ids.begin(), kyc_Ids.end(), [&kyc] (const int64_t& elem) { kyc.push_back(elem);});
+    for_each(kyc_Ids.begin(), kyc_Ids.end(), [&newSP] (const int64_t& aux) { if (aux != 0) newSP.kyc.push_back(aux);});
 
     const uint32_t propertyId = _my_sps->putSP(newSP);
     assert(propertyId > 0);

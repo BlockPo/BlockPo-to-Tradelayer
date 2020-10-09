@@ -164,13 +164,6 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_createpayload_issuancemanaged", 1, "arg1" },
     { "tl_createpayload_issuancemanaged", 5, "arg5" },
 
-    { "tl_createpayload_issuancecrowdsale", 0, "arg0" },
-    { "tl_createpayload_issuancecrowdsale", 1, "arg1" },
-    { "tl_createpayload_issuancecrowdsale", 5, "arg5" },
-    { "tl_createpayload_issuancecrowdsale", 7, "arg7" },
-    { "tl_createpayload_issuancecrowdsale", 8, "arg8" },
-    { "tl_createpayload_issuancecrowdsale", 9, "arg9" },
-    { "tl_createpayload_closecrowdsale", 0, "arg0" },
     { "tl_createpayload_sendgrant", 0, "arg0" },
     { "tl_createpayload_sendrevoke", 0, "arg0" },
     { "tl_createpayload_changeissuer", 0, "arg0" },
@@ -315,14 +308,10 @@ static const CRPCConvertParam vRPCConvertParams[] =
 
     /* Trade Layer - data retrieval calls */
     { "tl_setautocommit", 0, "arg0" },
-    { "tl_getcrowdsale", 0, "arg0" },
-    { "tl_getcrowdsale", 1, "arg1" },
     { "tl_getgrants", 0, "arg0"},
     { "tl_getbalance", 1, "arg1" },
     { "tl_getreserve", 1, "arg1" },
     { "tl_getproperty", 0, "arg0" },
-    // { "tl_getposition", 1, "arg1" },
-    //{ "tl_getfullposition", 1, "arg1" },
     { "tl_getupnl", 1, "arg1" },
     { "tl_getpnl", 1, "arg1" },
     { "tl_listtransactions", 1, "arg1" },
@@ -347,9 +336,9 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_check_kyc", 1, "arg1" },
     { "tl_getoraclecache", 0, "arg0" },
 
-    { "tl_getdexvolume", 0, "arg1" },
-    { "tl_getdexvolume", 1, "arg2" },
-    { "tl_getdexvolume", 2, "arg3" },
+    { "tl_get_ltcvolume", 0, "arg1" },
+    { "tl_get_ltcvolume", 1, "arg2" },
+    { "tl_get_ltcvolume", 2, "arg3" },
 
     { "tl_getmdexvolume", 0, "arg1" },
     { "tl_getmdexvolume", 1, "arg2" },

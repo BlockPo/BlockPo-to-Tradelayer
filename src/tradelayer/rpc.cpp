@@ -80,13 +80,10 @@ void PopulateFailure(int error)
             throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Unconfirmed transactions are not supported");
         case MP_BLOCK_NOT_IN_CHAIN:
             throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Transaction not part of the active chain");
-        case MP_CROWDSALE_WITHOUT_PROPERTY:
-            throw JSONRPCError(RPC_INTERNAL_ERROR, "Potential database corruption: \
-                                                  \"Crowdsale Purchase\" without valid property identifier");
         case MP_INVALID_TX_IN_DB_FOUND:
             throw JSONRPCError(RPC_INTERNAL_ERROR, "Potential database corruption: Invalid transaction found");
         case MP_TX_IS_NOT_MASTER_PROTOCOL:
-            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Not a Master Protocol transaction");
+            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Not a Trade Layer Protocol transaction");
     }
     throw JSONRPCError(RPC_INTERNAL_ERROR, "Generic transaction population failure");
 }
@@ -311,7 +308,7 @@ void ContractDexObjectsToJSON(std::vector<CMPContractDex>& vContractDexObjs, Uni
 // obtain the payload for a transaction
 UniValue tl_getpayload(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 1 || request.fHelp)
+    if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
             "tl_getpayload \"txid\"\n"
             "\nGet the payload for an Trade Layer transaction.\n"
@@ -358,7 +355,7 @@ UniValue tl_getpayload(const JSONRPCRequest& request)
 // determine whether to automatically commit transactions
 UniValue tl_setautocommit(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 1 || request.fHelp)
+    if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
             "tl_setautocommit flag\n"
             "\nSets the global flag that determines whether transactions are automatically committed and broadcast.\n"
@@ -383,7 +380,7 @@ UniValue mscrpc(const JSONRPCRequest& request)
     int extra = 0;
     int extra2 = 0, extra3 = 0;
 
-    if (request.params.size() > 3 || request.fHelp)
+    if (request.fHelp || request.params.size() > 3)
         throw runtime_error(
             "mscrpc\n"
             "\nReturns the number of blocks in the longest block chain.\n"
@@ -444,14 +441,6 @@ UniValue mscrpc(const JSONRPCRequest& request)
                     PrintToLog("Id: %u=0x%X ", id, id);
                 }
                 PrintToLog("\n");
-            }
-            break;
-        }
-        case 4:
-        {
-            LOCK(cs_tally);
-            for (CrowdMap::const_iterator it = my_crowds.begin(); it != my_crowds.end(); ++it) {
-                (it->second).print(it->first);
             }
             break;
         }
@@ -572,7 +561,7 @@ UniValue mscrpc(const JSONRPCRequest& request)
 // display an MP balance via RPC
 UniValue tl_getbalance(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 2 || request.fHelp)
+    if (request.fHelp || request.params.size() != 2)
         throw runtime_error(
             "tl_getbalance \"address\" propertyid\n"
             "\nReturns the token balance for a given address and property.\n"
@@ -604,7 +593,7 @@ UniValue tl_getbalance(const JSONRPCRequest& request)
 // display an unvested balance via RPC
 UniValue tl_getunvested(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 1 || request.fHelp)
+    if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
             "tl_getunvested \"address\" \n"
             "\nReturns the token balance for unvested ALLs (via vesting tokens).\n"
@@ -632,7 +621,7 @@ UniValue tl_getunvested(const JSONRPCRequest& request)
 
 UniValue tl_getreserve(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 2 || request.fHelp)
+    if (request.fHelp || request.params.size() != 2)
         throw runtime_error(
             "tl_getmargin \"address\" propertyid\n"
             "\nReturns the token reserve account using in futures contracts, for a given address and property.\n"
@@ -663,7 +652,7 @@ UniValue tl_getreserve(const JSONRPCRequest& request)
 
 UniValue tl_get_channelreserve(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 2 || request.fHelp)
+    if (request.fHelp || request.params.size() != 2)
         throw runtime_error(
             "tl_getchannelreserve \"address\" propertyid\n"
             "\nReturns the token reserve account for a given channel address.\n"
@@ -693,7 +682,7 @@ UniValue tl_get_channelreserve(const JSONRPCRequest& request)
 
 UniValue tl_get_channelremaining(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 3 || request.fHelp)
+    if (request.fHelp || request.params.size() != 3)
         throw runtime_error(
             "tl_getchannelremaining \"address\" propertyid\n"
             "\nReturns the token reserve account for a given single address in channel.\n"
@@ -733,7 +722,7 @@ UniValue tl_get_channelremaining(const JSONRPCRequest& request)
 
 UniValue tl_getchannel_info(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 1 || request.fHelp)
+    if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
             "tl_getchannel_info \"address\" \n"
             "\nReturns all multisig channel info.\n"
@@ -761,7 +750,7 @@ UniValue tl_getchannel_info(const JSONRPCRequest& request)
 
 UniValue tl_getallbalancesforid(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 1 || request.fHelp)
+    if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
             "tl_getallbalancesforid propertyid\n"
             "\nReturns a list of token balances for a given currency or property identifier.\n"
@@ -818,7 +807,7 @@ UniValue tl_getallbalancesforid(const JSONRPCRequest& request)
 
 UniValue tl_getallbalancesforaddress(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 1 || request.fHelp)
+    if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
             "tl_getallbalancesforaddress \"address\"\n"
             "\nReturns a list of all token balances for a given address.\n"
@@ -868,7 +857,7 @@ UniValue tl_getallbalancesforaddress(const JSONRPCRequest& request)
 
 UniValue tl_getproperty(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 1 || request.fHelp)
+    if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
             "tl_getproperty propertyid\n"
             "\nReturns details for about the tokens or smart property to lookup.\n"
@@ -1166,224 +1155,9 @@ UniValue tl_list_oracles(const JSONRPCRequest& request)
   return response;
 }
 
-UniValue tl_getcrowdsale(const JSONRPCRequest& request)
-{
-    if (request.params.size() < 1 || request.params.size() > 2 || request.fHelp)
-        throw runtime_error(
-            "tl_getcrowdsale propertyid ( verbose )\n"
-            "\nReturns information about a crowdsale.\n"
-            "\nArguments:\n"
-            "1. propertyid           (number, required) the identifier of the crowdsale\n"
-            "2. verbose              (boolean, optional) list crowdsale participants (default: false)\n"
-            "\nResult:\n"
-            "{\n"
-            "  \"propertyid\" : n,                     (number) the identifier of the crowdsale\n"
-            "  \"name\" : \"name\",                      (string) the name of the tokens issued via the crowdsale\n"
-            "  \"active\" : true|false,                (boolean) whether the crowdsale is still active\n"
-            "  \"issuer\" : \"address\",                 (string) the Bitcoin address of the issuer on record\n"
-            "  \"propertyiddesired\" : n,              (number) the identifier of the tokens eligible to participate in the crowdsale\n"
-            "  \"tokensperunit\" : \"n.nnnnnnnn\",       (string) the amount of tokens granted per unit invested in the crowdsale\n"
-            "  \"earlybonus\" : n,                     (number) an early bird bonus for participants in percent per week\n"
-            "  \"percenttoissuer\" : n,                (number) a percentage of tokens that will be granted to the issuer\n"
-            "  \"starttime\" : nnnnnnnnnn,             (number) the start time of the of the crowdsale as Unix timestamp\n"
-            "  \"deadline\" : nnnnnnnnnn,              (number) the deadline of the crowdsale as Unix timestamp\n"
-            "  \"amountraised\" : \"n.nnnnnnnn\",        (string) the amount of tokens invested by participants\n"
-            "  \"tokensissued\" : \"n.nnnnnnnn\",        (string) the total number of tokens issued via the crowdsale\n"
-            "  \"addedissuertokens\" : \"n.nnnnnnnn\",   (string) the amount of tokens granted to the issuer as bonus\n"
-            "  \"closedearly\" : true|false,           (boolean) whether the crowdsale ended early (if not active)\n"
-            "  \"maxtokens\" : true|false,             (boolean) whether the crowdsale ended early due to reaching the limit of max. issuable tokens (if not active)\n"
-            "  \"endedtime\" : nnnnnnnnnn,             (number) the time when the crowdsale ended (if closed early)\n"
-            "  \"closetx\" : \"hash\",                   (string) the hex-encoded hash of the transaction that closed the crowdsale (if closed manually)\n"
-            "  \"participanttransactions\": [          (array of JSON objects) a list of crowdsale participations (if verbose=true)\n"
-            "    {\n"
-            "      \"txid\" : \"hash\",                      (string) the hex-encoded hash of participation transaction\n"
-            "      \"amountsent\" : \"n.nnnnnnnn\",          (string) the amount of tokens invested by the participant\n"
-            "      \"participanttokens\" : \"n.nnnnnnnn\",   (string) the tokens granted to the participant\n"
-            "      \"issuertokens\" : \"n.nnnnnnnn\"         (string) the tokens granted to the issuer as bonus\n"
-            "    },\n"
-            "    ...\n"
-            "  ]\n"
-            "}\n"
-            "\nExamples:\n"
-            + HelpExampleCli("tl_getcrowdsale", "3 true")
-            + HelpExampleRpc("tl_getcrowdsale", "3, true")
-        );
-
-    uint32_t propertyId = ParsePropertyId(request.params[0]);
-    bool showVerbose = (request.params.size() > 1) ? request.params[1].get_bool() : false;
-
-    RequireExistingProperty(propertyId);
-    RequireCrowdsale(propertyId);
-
-    CMPSPInfo::Entry sp;
-    {
-        LOCK(cs_tally);
-        if (!_my_sps->getSP(propertyId, sp)) {
-            throw JSONRPCError(RPC_INVALID_PARAMETER, "Property identifier does not exist");
-        }
-    }
-
-    const uint256& creationHash = sp.txid;
-
-    CTransactionRef tx;
-    uint256 hashBlock;
-    if (!GetTransaction(creationHash, tx, Params().GetConsensus(), hashBlock, true)) {
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "No information available about transaction");
-    }
-
-    UniValue response(UniValue::VOBJ);
-    bool active = isCrowdsaleActive(propertyId);
-    std::map<uint256, std::vector<int64_t> > database;
-
-    if (active) {
-        bool crowdFound = false;
-
-        LOCK(cs_tally);
-
-        for (CrowdMap::const_iterator it = my_crowds.begin(); it != my_crowds.end(); ++it) {
-            const CMPCrowd& crowd = it->second;
-            if (propertyId == crowd.getPropertyId()) {
-                crowdFound = true;
-                database = crowd.getDatabase();
-            }
-        }
-        if (!crowdFound) {
-            throw JSONRPCError(RPC_INTERNAL_ERROR, "Crowdsale is flagged active but cannot be retrieved");
-        }
-    } else {
-        database = sp.historicalData;
-    }
-
-    int64_t tokensIssued = getTotalTokens(propertyId);
-    const std::string& txidClosed = sp.txid_close.GetHex();
-
-    int64_t startTime = -1;
-    if (!hashBlock.IsNull() && GetBlockIndex(hashBlock)) {
-      startTime = GetBlockIndex(hashBlock)->nTime;
-    }
-
-    // note the database is already deserialized here and there is minimal performance penalty to iterate recipients to calculate amountRaised
-    int64_t amountRaised = 0;
-    uint16_t propertyIdType = isPropertyDivisible(propertyId) ? ALL_PROPERTY_TYPE_DIVISIBLE : ALL_PROPERTY_TYPE_INDIVISIBLE;
-    uint16_t desiredIdType = isPropertyDivisible(sp.property_desired) ? ALL_PROPERTY_TYPE_DIVISIBLE : ALL_PROPERTY_TYPE_INDIVISIBLE;
-    std::map<std::string, UniValue> sortMap;
-    for (std::map<uint256, std::vector<int64_t> >::const_iterator it = database.begin(); it != database.end(); it++) {
-        UniValue participanttx(UniValue::VOBJ);
-        std::string txid = it->first.GetHex();
-        amountRaised += it->second.at(0);
-        participanttx.push_back(Pair("txid", txid));
-        participanttx.push_back(Pair("amountsent", FormatByType(it->second.at(0), desiredIdType)));
-        participanttx.push_back(Pair("participanttokens", FormatByType(it->second.at(2), propertyIdType)));
-        participanttx.push_back(Pair("issuertokens", FormatByType(it->second.at(3), propertyIdType)));
-        std::string sortKey = strprintf("%d-%s", it->second.at(1), txid);
-        sortMap.insert(std::make_pair(sortKey, participanttx));
-    }
-
-    response.push_back(Pair("propertyid", (uint64_t) propertyId));
-    response.push_back(Pair("name", sp.name));
-    response.push_back(Pair("active", active));
-    response.push_back(Pair("issuer", sp.issuer));
-    response.push_back(Pair("propertyiddesired", (uint64_t) sp.property_desired));
-    response.push_back(Pair("tokensperunit", FormatMP(propertyId, sp.num_tokens)));
-    response.push_back(Pair("earlybonus", sp.early_bird));
-    response.push_back(Pair("percenttoissuer", sp.percentage));
-    response.push_back(Pair("starttime", startTime));
-    response.push_back(Pair("deadline", sp.deadline));
-    response.push_back(Pair("amountraised", FormatMP(sp.property_desired, amountRaised)));
-    response.push_back(Pair("tokensissued", FormatMP(propertyId, tokensIssued)));
-    response.push_back(Pair("addedissuertokens", FormatMP(propertyId, sp.missedTokens)));
-
-    // TODO: return fields every time?
-    if (!active){
-        response.push_back(Pair("closedearly", sp.close_early));
-        response.push_back(Pair("maxtokens", sp.max_tokens));
-    }
-
-    if (sp.close_early) response.push_back(Pair("endedtime", sp.timeclosed));
-    if (sp.close_early && !sp.max_tokens) response.push_back(Pair("closetx", txidClosed));
-
-    if (showVerbose) {
-        UniValue participanttxs(UniValue::VARR);
-        for (std::map<std::string, UniValue>::iterator it = sortMap.begin(); it != sortMap.end(); ++it) {
-            participanttxs.push_back(it->second);
-        }
-        response.push_back(Pair("participanttransactions", participanttxs));
-    }
-
-    return response;
-}
-
-UniValue tl_getactivecrowdsales(const JSONRPCRequest& request)
-{
-    if (request.fHelp)
-        throw runtime_error(
-            "tl_getactivecrowdsales\n"
-            "\nLists currently active crowdsales.\n"
-            "\nResult:\n"
-            "[                                 (array of JSON objects)\n"
-            "  {\n"
-            "    \"propertyid\" : n,                 (number) the identifier of the crowdsale\n"
-            "    \"name\" : \"name\",                  (string) the name of the tokens issued via the crowdsale\n"
-            "    \"issuer\" : \"address\",             (string) the Bitcoin address of the issuer on record\n"
-            "    \"propertyiddesired\" : n,          (number) the identifier of the tokens eligible to participate in the crowdsale\n"
-            "    \"tokensperunit\" : \"n.nnnnnnnn\",   (string) the amount of tokens granted per unit invested in the crowdsale\n"
-            "    \"earlybonus\" : n,                 (number) an early bird bonus for participants in percent per week\n"
-            "    \"percenttoissuer\" : n,            (number) a percentage of tokens that will be granted to the issuer\n"
-            "    \"starttime\" : nnnnnnnnnn,         (number) the start time of the of the crowdsale as Unix timestamp\n"
-            "    \"deadline\" : nnnnnnnnnn           (number) the deadline of the crowdsale as Unix timestamp\n"
-            "  },\n"
-            "  ...\n"
-            "]\n"
-            "\nExamples:\n"
-            + HelpExampleCli("tl_getactivecrowdsales", "")
-            + HelpExampleRpc("tl_getactivecrowdsales", "")
-        );
-
-    UniValue response(UniValue::VARR);
-
-    LOCK2(cs_main, cs_tally);
-
-    for (CrowdMap::const_iterator it = my_crowds.begin(); it != my_crowds.end(); ++it) {
-        const CMPCrowd& crowd = it->second;
-        uint32_t propertyId = crowd.getPropertyId();
-
-        CMPSPInfo::Entry sp;
-        if (!_my_sps->getSP(propertyId, sp)) {
-            continue;
-        }
-
-        const uint256& creationHash = sp.txid;
-
-        CTransactionRef tx;
-        uint256 hashBlock;
-        if (!GetTransaction(creationHash, tx, Params().GetConsensus(), hashBlock, true)) {
-            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "No information available about transaction");
-        }
-
-        int64_t startTime = -1;
-        if (!hashBlock.IsNull() && GetBlockIndex(hashBlock)) {
-            startTime = GetBlockIndex(hashBlock)->nTime;
-        }
-
-        UniValue responseObj(UniValue::VOBJ);
-        responseObj.push_back(Pair("propertyid", (uint64_t) propertyId));
-        responseObj.push_back(Pair("name", sp.name));
-        responseObj.push_back(Pair("issuer", sp.issuer));
-        responseObj.push_back(Pair("propertyiddesired", (uint64_t) sp.property_desired));
-        responseObj.push_back(Pair("tokensperunit", FormatMP(propertyId, sp.num_tokens)));
-        responseObj.push_back(Pair("earlybonus", sp.early_bird));
-        responseObj.push_back(Pair("percenttoissuer", sp.percentage));
-        responseObj.push_back(Pair("starttime", startTime));
-        responseObj.push_back(Pair("deadline", sp.deadline));
-        response.push_back(responseObj);
-    }
-
-    return response;
-}
-
 UniValue tl_getgrants(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 1 || request.fHelp)
+    if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
             "tl_getgrants propertyid\n"
             "\nReturns information about granted and revoked units of managed tokens.\n"
@@ -1465,7 +1239,7 @@ UniValue tl_getgrants(const JSONRPCRequest& request)
 
 UniValue tl_listblocktransactions(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 1 || request.fHelp)
+    if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
             "tl_listblocktransactions index\n"
             "\nLists all Trade Layer transactions in a block.\n"
@@ -1516,7 +1290,7 @@ UniValue tl_listblocktransactions(const JSONRPCRequest& request)
 
 UniValue tl_gettransaction(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 1 || request.fHelp)
+  if (request.fHelp || request.params.size() != 1)
     throw runtime_error(
 			"tl_gettransaction \"txid\"\n"
 			"\nGet detailed information about an Trade Layer transaction.\n"
@@ -1553,7 +1327,7 @@ UniValue tl_gettransaction(const JSONRPCRequest& request)
 
 UniValue tl_listtransactions(const JSONRPCRequest& request)
 {
-    if (request.params.size() > 5 || request.fHelp)
+    if (request.fHelp || request.params.size() > 5)
         throw runtime_error(
             "tl_listtransactions ( \"address\" count skip startblock endblock )\n"
             "\nList wallet transactions, optionally filtered by an address and block boundaries.\n"
@@ -1634,7 +1408,7 @@ UniValue tl_listtransactions(const JSONRPCRequest& request)
 
 UniValue tl_listpendingtransactions(const JSONRPCRequest& request)
 {
-    if (request.params.size() > 1 || request.fHelp)
+    if (request.fHelp || request.params.size() > 1)
         throw runtime_error(
             "tl_listpendingtransactions ( \"address\" )\n"
             "\nReturns a list of unconfirmed Trade Layer transactions, pending in the memory pool.\n"
@@ -1896,7 +1670,7 @@ bool FullPositionToJSON(const std::string& address, uint32_t property, UniValue&
 
 UniValue tl_getfullposition(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 2 || request.fHelp) {
+  if (request.fHelp || request.params.size() != 2) {
     throw runtime_error(
 			"tl_getfullposition \"address\" propertyid\n"
 			"\nReturns the full position for the future contract for a given address and property.\n"
@@ -1977,7 +1751,7 @@ UniValue tl_getfullposition(const JSONRPCRequest& request)
 
 UniValue tl_getposition(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 2 || request.fHelp)
+  if (request.fHelp || request.params.size() != 2)
     throw runtime_error(
 			"tl_getbalance \"address\" propertyid\n"
 			"\nReturns the position for the future contract for a given address and property.\n"
@@ -2007,7 +1781,7 @@ UniValue tl_getposition(const JSONRPCRequest& request)
 
 UniValue tl_getcontract_reserve(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 2 || request.fHelp)
+    if (request.fHelp || request.params.size() != 2)
         throw runtime_error(
             "tl_getcotract_reserve \"address\" propertyid\n"
             "\nReturns the reserves contracts for the future contract for a given address and property.\n"
@@ -2037,7 +1811,7 @@ UniValue tl_getcontract_reserve(const JSONRPCRequest& request)
 
 UniValue tl_getorderbook(const JSONRPCRequest& request)
 {
-    if (request.params.size() < 1 || request.params.size() > 2 || request.fHelp)
+    if (request.fHelp || request.params.size() < 1 || request.params.size() > 2)
         throw runtime_error(
             "tl_getorderbook propertyid ( propertyid )\n"
             "\nList active offers on the distributed token exchange.\n"
@@ -2107,7 +1881,7 @@ UniValue tl_getorderbook(const JSONRPCRequest& request)
 
 UniValue tl_getcontract_orderbook(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 2 || request.fHelp)
+  if (request.fHelp || request.params.size() != 2)
     throw runtime_error(
 			"tl_getcontract_orderbook contractid tradingaction\n"
 			"\nList active offers on the distributed futures contracts exchange.\n"
@@ -2163,7 +1937,7 @@ UniValue tl_getcontract_orderbook(const JSONRPCRequest& request)
 
 UniValue tl_gettradehistory(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 1 || request.fHelp)
+  if (request.fHelp || request.params.size() != 1)
     throw runtime_error(
 			"tl_gettradehistory contractid propertyid ( count )\n"
 			"\nRetrieves the history of trades on the distributed contract exchange for the specified market.\n"
@@ -2206,7 +1980,7 @@ UniValue tl_gettradehistory(const JSONRPCRequest& request)
 
 UniValue tl_gettradehistory_unfiltered(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 1 || request.fHelp)
+    if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
             "tl_gettradehistory contractid propertyid ( count )\n"
             "\nRetrieves the history of trades on the distributed contract exchange for the specified market.\n"
@@ -2248,7 +2022,7 @@ UniValue tl_gettradehistory_unfiltered(const JSONRPCRequest& request)
 
 UniValue tl_getpeggedhistory(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 1 || request.fHelp)
+    if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
             "tl_getpeggedhistory propertyid ( count )\n"
             "\nRetrieves the history of amounts created for a given pegged .\n"
@@ -2294,12 +2068,12 @@ UniValue tl_getallprice(const JSONRPCRequest& request)
     if (request.fHelp)
         throw runtime_error(
             "tl_getallprice \n"
-            "\nRetrieves the ALL price in metadex (in dUSD) .\n"
+            "\nRetrieves the ALL last price on DEx and Trade Channels (LTC) .\n"
 
             "\nResult:\n"
             "[                                      (array of JSON objects)\n"
             "  {\n"
-            "    \"price\" : nnnnnn,                       (number) the price of 1 ALL in dUSD\n"
+            "    \"price\" : nnnnnn,                (number) the price of 1 ALL in LTC\n"
             "  },\n"
             "  ...\n"
             "]\n"
@@ -2312,23 +2086,20 @@ UniValue tl_getallprice(const JSONRPCRequest& request)
 
     // get token Price
     int64_t allPrice = 0;
+    const uint32_t propertyId = static_cast<uint32_t>(ALL);
 
-    auto it = market_priceMap.find(static_cast<uint32_t>(ALL));
-    if (it != market_priceMap.end())
-    {
-        const auto &auxMap = it->second;
-        auto itt = auxMap.find(static_cast<uint32_t>(dUSD));
-        if (itt != auxMap.end())
-            allPrice = itt->second;
+    auto it = lastPrice.find(propertyId);
+    if(it != lastPrice.end()) {
+        allPrice = it->second;
     }
 
-    balanceObj.push_back(Pair("unitprice", FormatByType(static_cast<uint64_t>(allPrice),2)));
+    balanceObj.push_back(Pair("unitprice", FormatDivisibleMP((uint64_t)allPrice)));
     return balanceObj;
 }
 
 UniValue tl_getupnl(const JSONRPCRequest& request)
 {
-  if (request.params.size() < 2 || request.params.size() > 3 || request.fHelp) {
+  if (request.fHelp || request.params.size() < 2 || request.params.size() > 3) {
     throw runtime_error(
 			"tl_getupnl address name\n"
 			"\nRetrieves the unrealized PNL for trades on the distributed contract exchange for the specified market.\n"
@@ -2376,7 +2147,7 @@ UniValue tl_getupnl(const JSONRPCRequest& request)
 
 UniValue tl_getpnl(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 2 || request.fHelp)
+  if (request.fHelp || request.params.size() != 2)
     throw runtime_error(
 			"tl_getpnl address contractid\n"
 			"\nRetrieves the realized PNL for trades on the distributed contract exchange for the specified market.\n"
@@ -2427,7 +2198,7 @@ UniValue tl_getpnl(const JSONRPCRequest& request)
 
 UniValue tl_getmarketprice(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 1 || request.fHelp)
+  if (request.fHelp || request.params.size() != 1)
     throw runtime_error(
 			"tl_getmarketprice addres contractid\n"
 			"\nRetrieves the last match price on the distributed contract exchange for the specified market.\n"
@@ -2464,7 +2235,7 @@ UniValue tl_getmarketprice(const JSONRPCRequest& request)
 
 UniValue tl_getactivedexsells(const JSONRPCRequest& request)
 {
-    if (request.params.size() > 1 || request.fHelp)
+    if (request.fHelp || request.params.size() > 1)
         throw runtime_error(
             "tl_getactivedexsells ( address )\n"
             "\nReturns currently active offers on the distributed exchange.\n"
@@ -2526,22 +2297,22 @@ UniValue tl_getactivedexsells(const JSONRPCRequest& request)
         int64_t minFee = offer.getMinFee();
         uint8_t timeLimit = offer.getBlockTimeLimit();
         int64_t sellOfferAmount = offer.getOfferAmountOriginal(); //badly named - "Original" implies off the wire, but is amended amount
-        int64_t sellBitcoinDesired = offer.getLTCDesiredOriginal(); //badly named - "Original" implies off the wire, but is amended amount
+        int64_t sellLitecoinDesired = offer.getLTCDesiredOriginal(); //badly named - "Original" implies off the wire, but is amended amount
         int64_t amountAvailable = getMPbalance(seller, propertyId, SELLOFFER_RESERVE);
         int64_t amountAccepted = getMPbalance(seller, propertyId, ACCEPT_RESERVE);
         uint8_t option = offer.getOption();
 
         // calculate unit price and updated amount of bitcoin desired
         arith_uint256 aUnitPrice = 0;
-        if ((sellOfferAmount > 0) && (sellBitcoinDesired > 0)) {
-            aUnitPrice = (COIN * (ConvertTo256(sellBitcoinDesired)) / ConvertTo256(sellOfferAmount)) ; // divide by zero protection
+        if ((sellOfferAmount > 0) && (sellLitecoinDesired > 0)) {
+            aUnitPrice = (ConvertTo256(COIN) * (ConvertTo256(sellLitecoinDesired)) / ConvertTo256(sellOfferAmount)) ; // divide by zero protection
         }
 
         int64_t unitPrice = (isPropertyDivisible(propertyId)) ? ConvertTo64(aUnitPrice) : ConvertTo64(aUnitPrice) / COIN;
 
-        PrintToLog("%s(): sellBitcoinDesired: %d, sellOfferAmount : %d, unitPrice: %d\n",__func__, sellBitcoinDesired, sellOfferAmount, unitPrice);
+        PrintToLog("%s(): sellLitecoinDesired: %d, sellOfferAmount : %d, unitPrice: %d\n",__func__, sellLitecoinDesired, sellOfferAmount, unitPrice);
 
-        int64_t bitcoinDesired = calculateDesiredLTC(sellOfferAmount, sellBitcoinDesired, amountAvailable);
+        int64_t bitcoinDesired = calculateDesiredLTC(sellOfferAmount, sellLitecoinDesired, amountAvailable);
         int64_t sumAccepted = 0;
         int64_t sumLtcs = 0;
         UniValue acceptsMatched(UniValue::VARR);
@@ -2590,7 +2361,7 @@ UniValue tl_getactivedexsells(const JSONRPCRequest& request)
 
         } else if (option == 1){
             responseObj.push_back(Pair("buyer", seller));
-            responseObj.push_back(Pair("ltcstopay", FormatDivisibleMP(sellBitcoinDesired - sumLtcs)));
+            responseObj.push_back(Pair("ltcstopay", FormatDivisibleMP(sellLitecoinDesired - sumLtcs)));
             responseObj.push_back(Pair("amountdesired", FormatMP(propertyId, sellOfferAmount - sumAccepted)));
             responseObj.push_back(Pair("accepted", FormatMP(propertyId, amountAccepted)));
 
@@ -2610,7 +2381,7 @@ UniValue tl_getactivedexsells(const JSONRPCRequest& request)
 
 UniValue tl_getsum_upnl(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 1 || request.fHelp)
+  if (request.fHelp || request.params.size() != 1)
     throw runtime_error(
 			"tl_getsum_upnl addres \n"
 			"\nRetrieve the global upnl for an address.\n"
@@ -2641,7 +2412,7 @@ UniValue tl_getsum_upnl(const JSONRPCRequest& request)
 
 UniValue tl_check_commits(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 1 || request.fHelp)
+  if (request.fHelp || request.params.size() != 1)
     throw runtime_error(
 			"tl_check_commits sender address \n"
 			"\nRetrieves the history of commits in the channel\n"
@@ -2680,7 +2451,7 @@ UniValue tl_check_commits(const JSONRPCRequest& request)
 
 UniValue tl_check_withdrawals(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 1 || request.fHelp)
+  if (request.fHelp || request.params.size() != 1)
     throw runtime_error(
 			"tl_check_withdrawals senderAddress \n"
 			"\nRetrieves the history of withdrawal for a given address in the channel\n"
@@ -2721,7 +2492,7 @@ UniValue tl_check_withdrawals(const JSONRPCRequest& request)
 
 UniValue tl_check_kyc(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 1 || request.fHelp)
+  if (request.fHelp || request.params.size() != 1)
     throw runtime_error(
 			"tl_check_kyc senderAddress \n"
 			"\nKYC check for given address \n"
@@ -2740,13 +2511,13 @@ UniValue tl_check_kyc(const JSONRPCRequest& request)
 			);
 
   // obtain property identifiers for pair & check valid parameters
-  std::string result;
   const std::string address = ParseAddress(request.params[0]);
   // int registered = static_cast<int>(ParseNewValues(request.params[1]));
   // RequireContract(contractId);
 
   int kyc_id;
-  (!t_tradelistdb->checkKYCRegister(address, kyc_id)) ? result = "disabled" : result = "enabled";
+
+  const std::string result = (t_tradelistdb->checkAttestationReg(address, kyc_id)) ? "enabled(kyc_0)" : (!t_tradelistdb->checkKYCRegister(address, kyc_id)) ? "disabled" : "enabled";
 
   UniValue balanceObj(UniValue::VOBJ);
   balanceObj.push_back(Pair("result: ", result));
@@ -2756,7 +2527,7 @@ UniValue tl_check_kyc(const JSONRPCRequest& request)
 
 UniValue tl_getcache(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 1 || request.fHelp)
+    if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
             "tl_getmargin \"address\" propertyid\n"
             "\nReturns the fee cach for a given property.\n"
@@ -2786,7 +2557,7 @@ UniValue tl_getcache(const JSONRPCRequest& request)
 
 UniValue tl_getoraclecache(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 1 || request.fHelp)
+    if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
             "tl_getmargin \"address\" propertyid\n"
             "\nReturns the oracle fee cache for a given property.\n"
@@ -2816,7 +2587,7 @@ UniValue tl_getoraclecache(const JSONRPCRequest& request)
 
 UniValue tl_getalltxonblock(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 1 || request.fHelp)
+    if (request.fHelp || request.params.size() != 1)
       throw runtime_error(
 			"tl_getalltxonblock\"block\"\n"
 			"\nGet detailed information about every Trade Layer transaction in block.\n"
@@ -2875,12 +2646,12 @@ UniValue tl_getalltxonblock(const JSONRPCRequest& request)
     return response;
 }
 
-UniValue tl_getdexvolume(const JSONRPCRequest& request)
+UniValue tl_get_ltcvolume(const JSONRPCRequest& request)
 {
-    if (request.params.size() < 2 || request.fHelp)
+    if (request.fHelp || request.params.size() < 2)
         throw runtime_error(
-            "tl_getdexvolume \n"
-            "\nReturns the LTC volume in sort amount of blocks.\n"
+            "tl_get_ltcvolume \n"
+            "\nReturns the LTC volume for DEx and Trade Channels, in sort amount of blocks.\n"
             "\nArguments:\n"
             "1. property                 (number, required) property \n"
             "2. first block              (number, required) older limit block\n"
@@ -2891,8 +2662,8 @@ UniValue tl_getdexvolume(const JSONRPCRequest& request)
             "  \"blockheight\" : \"n.\",      (number) last block\n"
             "}\n"
             "\nExamples:\n"
-            + HelpExampleCli("tl_getdexvolume", "\"\"")
-            + HelpExampleRpc("tl_getdexvolume", "\"\",")
+            + HelpExampleCli("tl_get_ltcvolume", "\"\"")
+            + HelpExampleRpc("tl_get_ltcvolume", "\"\",")
         );
 
     uint32_t propertyId = ParsePropertyId(request.params[0]);
@@ -2918,10 +2689,10 @@ UniValue tl_getdexvolume(const JSONRPCRequest& request)
 
 UniValue tl_getmdexvolume(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 3 || request.fHelp)
+    if (request.fHelp || request.params.size() != 3)
         throw runtime_error(
             "tl_getmdexvolume \n"
-            "\nReturns the token volume traded in sort amount of blocks.\n"
+            "\nReturns the Token volume traded in sort amount of blocks.\n"
             "\nArguments:\n"
             "1. propertyA                 (number, required) the property id \n"
             "2. first block               (number, required) older limit block\n"
@@ -2932,8 +2703,8 @@ UniValue tl_getmdexvolume(const JSONRPCRequest& request)
             "  \"blockheight\" : \"n.\",      (number) last block\n"
             "}\n"
             "\nExamples:\n"
-            + HelpExampleCli("tl_getdexvolume", "\"\"")
-            + HelpExampleRpc("tl_getdexvolume", "\"\",")
+            + HelpExampleCli("tl_getmdexvolume", "\"\"")
+            + HelpExampleRpc("tl_getmdexvolume", "\"\",")
         );
 
     uint32_t property = ParsePropertyId(request.params[0]);
@@ -2959,7 +2730,7 @@ UniValue tl_getmdexvolume(const JSONRPCRequest& request)
 
 UniValue tl_getcurrencytotal(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 1 || request.fHelp)
+    if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
             "tl_getcurrencyvolume \n"
             "\nGet total outstanding supply for token \n"
@@ -3058,7 +2829,7 @@ UniValue tl_list_attestation(const JSONRPCRequest& request)
 
 UniValue tl_getopen_interest(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 1 || request.fHelp)
+    if (request.fHelp || request.params.size() != 1)
       throw runtime_error(
 			  "tl_getopen_interest\n"
 			  "\nAmounts of live contracts.\n"
@@ -3091,7 +2862,7 @@ UniValue tl_getopen_interest(const JSONRPCRequest& request)
 //return: UniValue which is JSON object that is max pegged currency you can create
 UniValue tl_getmax_peggedcurrency(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 2 || request.fHelp)
+    if (request.fHelp || request.params.size() != 2)
       throw runtime_error(
 			  "tl_getmax_peggedcurrency\"fromaddress\""
 			  "\nGet max pegged currency address can create\n"
@@ -3140,7 +2911,7 @@ UniValue tl_getmax_peggedcurrency(const JSONRPCRequest& request)
 
 UniValue tl_getcontract(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 1  || request.fHelp)
+    if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
             "tl_getcontract contract\n"
             "\nReturns details for about the future contract.\n"
@@ -3256,9 +3027,7 @@ static const CRPCCommand commands[] =
   { "trade layer (data retrieval)", "tl_gettransaction",            &tl_gettransaction,             {} },
   { "trade layer (data retrieval)", "tl_getproperty",               &tl_getproperty,                {} },
   { "trade layer (data retrieval)", "tl_listproperties",            &tl_listproperties,             {} },
-  { "trade layer (data retrieval)", "tl_getcrowdsale",              &tl_getcrowdsale,               {} },
   { "trade layer (data retrieval)", "tl_getgrants",                 &tl_getgrants,                  {} },
-  { "trade layer (data retrieval)", "tl_getactivecrowdsales",       &tl_getactivecrowdsales,        {} },
   { "trade layer (data retrieval)", "tl_listblocktransactions",     &tl_listblocktransactions,      {} },
   { "trade layer (data retrieval)", "tl_listpendingtransactions",   &tl_listpendingtransactions,    {} },
   { "trade layer (data retrieval)", "tl_getallbalancesforaddress",  &tl_getallbalancesforaddress,   {} },
@@ -3293,7 +3062,7 @@ static const CRPCCommand commands[] =
   { "trade layer (data retieval)" , "tl_list_oracles",              &tl_list_oracles,               {} },
   { "trade layer (data retieval)" , "tl_getalltxonblock",           &tl_getalltxonblock,            {} },
   { "trade layer (data retieval)" , "tl_check_withdrawals",         &tl_check_withdrawals,          {} },
-  { "trade layer (data retieval)" , "tl_getdexvolume",              &tl_getdexvolume,               {} },
+  { "trade layer (data retieval)" , "tl_get_ltcvolume",             &tl_get_ltcvolume,              {} },
   { "trade layer (data retieval)" , "tl_getmdexvolume",             &tl_getmdexvolume,              {} },
   { "trade layer (data retieval)" , "tl_getcurrencytotal",          &tl_getcurrencytotal,           {} },
   { "trade layer (data retieval)" , "tl_listkyc",                   &tl_listkyc,                    {} },

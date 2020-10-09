@@ -380,8 +380,10 @@ std::vector<int> ParseArray(const UniValue& value)
 
     for (unsigned int idx = 0; idx < kycOptions.size(); idx++)
     {
-            const UniValue& num = kycOptions[idx];
-            numbers.push_back(num.get_int());
+            const UniValue& elem = kycOptions[idx];
+            const int num = elem.isNum() ? elem.get_int() : atoi(elem.get_str());
+            numbers.push_back(num);
+            PrintToLog("%s(): num: %d\n",__func__, num);
     }
 
     return numbers;

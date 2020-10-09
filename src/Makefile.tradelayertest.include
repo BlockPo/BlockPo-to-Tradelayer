@@ -18,6 +18,7 @@ TRADELAYER_TEST_CPP = \
   tradelayer/test/dex_functions_tests.cpp \
   tradelayer/test/vesting_tests.cpp \
   tradelayer/test/persistence_tests.cpp \
+  tradelayer/test/mdex_functions_tests.cpp \
   tradelayer/test/lock_tests.cpp
 
 BITCOIN_TESTS += \

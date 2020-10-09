@@ -121,6 +121,8 @@ std::vector<std::string> vestingAddresses;
 std::map<uint32_t, int64_t> cachefees;
 //! Futures oracle contracts fees
 std::map<uint32_t, int64_t> cachefees_oracles;
+//! Last unit price for token/LTC
+std::map<uint32_t, int64_t> lastPrice;
 
 //!Used to indicate, whether to automatically commit created transactions.
 bool autoCommit = true;
@@ -146,7 +148,6 @@ CtlTransactionDB *mastercore::p_TradeTXDB;
 OfferMap mastercore::my_offers;
 AcceptMap mastercore::my_accepts;
 CMPSPInfo *mastercore::_my_sps;
-CrowdMap mastercore::my_crowds;
 
 extern MatrixTLS *pt_ndatabase;
 extern int n_cols;
@@ -1023,14 +1024,17 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
 
     if(msc_debug_instant_payment) PrintToLog("%s(): buyer : %s, seller : %s, property : %d, amount_forsale : %d, nvalue : %d, price : %d, block: %d, idx : %d\n",__func__, buyer, seller, property, amount_forsale, nvalue, price, block, idx);
 
-    arith_uint256 amount_forsale256 = ConvertTo256(amount_forsale);
-    arith_uint256 amountLTC_Desired256 = ConvertTo256(price);
-    arith_uint256 amountLTC_Paid256 = (nvalue > price) ? amountLTC_Desired256 : ConvertTo256(nvalue);
+    const arith_uint256 amount_forsale256 = ConvertTo256(amount_forsale);
+    const arith_uint256 amountLTC_Desired256 = ConvertTo256(price);
+    const arith_uint256 amountLTC_Paid256 = (nvalue > price) ? amountLTC_Desired256 : ConvertTo256(nvalue);
 
     // actual calculation; round up
-    arith_uint256 amountPurchased256 = DivideAndRoundUp((amountLTC_Paid256 * amount_forsale256), amountLTC_Desired256);
+    const arith_uint256 amountPurchased256 = DivideAndRoundUp((amountLTC_Paid256 * amount_forsale256), amountLTC_Desired256);
     // convert back to int64_t
     int64_t amount_purchased = ConvertTo64(amountPurchased256);
+
+    // taking fees
+    Token_LTC_Fees(amount_purchased, property);
 
     std::string channelAddr;
     t_tradelistdb->checkChannelRelation(seller, channelAddr);
@@ -1039,7 +1043,7 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
     auto it = channels_Map.find(channelAddr);
     Channel& sChn = it->second;
 
-    int64_t remaining = static_cast<int64_t>(sChn.getRemaining(seller, property));
+    const int64_t remaining = static_cast<int64_t>(sChn.getRemaining(seller, property));
 
     if(msc_debug_instant_payment)
     {
@@ -1057,6 +1061,16 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
 
         // saving DEx token volume
         MapTokenVolume[block][property] += amount_purchased;
+
+        const arith_uint256 unitPrice256 = (ConvertTo256(COIN) * amountLTC_Desired256) / amount_forsale256;
+
+        const int64_t unitPrice = (isPropertyDivisible(property)) ? ConvertTo64(unitPrice256) : ConvertTo64(unitPrice256) / COIN;
+
+        // adding last price
+        lastPrice[property] = unitPrice;
+
+        // adding numerator of vwap
+        tokenvwap[property][block].push_back(std::make_pair(unitPrice, nvalue));
 
         // adding LTC volume to map
         MapLTCVolume[block][property] += nvalue;
@@ -1421,52 +1435,6 @@ int input_global_vars_string(const string &s)
 
   return 0;
 }
-// addr,propertyId,nValue,property_desired,deadline,early_bird,percentage,txid
-int input_mp_crowdsale_string(const std::string& s)
-{
-    std::vector<std::string> vstr;
-    boost::split(vstr, s, boost::is_any_of(" ,"), boost::token_compress_on);
-
-    if (9 > vstr.size()) return -1;
-
-    unsigned int i = 0;
-
-    const std::string sellerAddr = vstr[i++];
-    const uint32_t propertyId = boost::lexical_cast<uint32_t>(vstr[i++]);
-    const int64_t nValue = boost::lexical_cast<int64_t>(vstr[i++]);
-    const uint32_t property_desired = boost::lexical_cast<uint32_t>(vstr[i++]);
-    const int64_t deadline = boost::lexical_cast<int64_t>(vstr[i++]);
-    const uint8_t early_bird = boost::lexical_cast<unsigned int>(vstr[i++]); // lexical_cast can't handle char!
-    const uint8_t percentage = boost::lexical_cast<unsigned int>(vstr[i++]); // lexical_cast can't handle char!
-    const int64_t u_created = boost::lexical_cast<int64_t>(vstr[i++]);
-    const int64_t i_created = boost::lexical_cast<int64_t>(vstr[i++]);
-
-    CMPCrowd newCrowdsale(propertyId, nValue, property_desired, deadline, early_bird, percentage, u_created, i_created);
-
-    // load the remaining as database pairs
-    while (i < vstr.size()) {
-        std::vector<std::string> entryData;
-        boost::split(entryData, vstr[i++], boost::is_any_of("="), boost::token_compress_on);
-        if (2 != entryData.size()) return -1;
-
-        std::vector<std::string> valueData;
-        boost::split(valueData, entryData[1], boost::is_any_of(";"), boost::token_compress_on);
-
-        std::vector<int64_t> vals;
-        for (std::vector<std::string>::const_iterator it = valueData.begin(); it != valueData.end(); ++it) {
-            vals.push_back(boost::lexical_cast<int64_t>(*it));
-        }
-
-        const uint256 txHash = uint256S(entryData[0]);
-        newCrowdsale.insertDatabase(txHash, vals);
-    }
-
-    if (!my_crowds.insert(std::make_pair(sellerAddr, newCrowdsale)).second) {
-        return -1;
-    }
-
-    return 0;
-}
 
 int input_mp_contractdexorder_string(const std::string& s)
 {
@@ -1499,6 +1467,20 @@ int input_mp_contractdexorder_string(const std::string& s)
     return 0;
 }
 
+int input_mp_token_ltc_string(const std::string& s)
+{
+   std::vector<std::string> vstr;
+   boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
+
+   const uint32_t propertyId = boost::lexical_cast<uint32_t>(vstr[0]);
+   const int64_t price = boost::lexical_cast<int64_t>(vstr[1]);
+
+
+   if (!lastPrice.insert(std::make_pair(propertyId, price)).second) return -1;
+
+   return 0;
+}
+
 
 int input_cachefees_string(const std::string& s)
 {
@@ -1506,7 +1488,7 @@ int input_cachefees_string(const std::string& s)
    boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
 
    const uint32_t propertyId = boost::lexical_cast<uint32_t>(vstr[0]);
-   const int64_t amount = boost::lexical_cast<int64_t>(vstr[1]);;
+   const int64_t amount = boost::lexical_cast<int64_t>(vstr[1]);
 
 
    if (!cachefees.insert(std::make_pair(propertyId, amount)).second) return -1;
@@ -1520,7 +1502,7 @@ int input_cachefees_oracles_string(const std::string& s)
    boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
 
    const uint32_t propertyId = boost::lexical_cast<uint32_t>(vstr[0]);
-   const int64_t amount = boost::lexical_cast<int64_t>(vstr[1]);;
+   const int64_t amount = boost::lexical_cast<int64_t>(vstr[1]);
 
 
    if (!cachefees_oracles.insert(std::make_pair(propertyId, amount)).second) return -1;
@@ -1559,6 +1541,28 @@ int input_withdrawals_string(const std::string& s)
 
     return 0;
 
+}
+
+int input_tokenvwap_string(const std::string& s)
+{
+  std::vector<std::string> vstr;
+  boost::split(vstr, s, boost::is_any_of("+-"), boost::token_compress_on);
+  const uint32_t propertyId = boost::lexical_cast<uint32_t>(vstr[0]);
+  const int block = boost::lexical_cast<int64_t>(vstr[1]);
+
+  std::vector<std::string> vpair;
+  boost::split(vpair, vstr[2], boost::is_any_of(","), boost::token_compress_on);
+
+  for (const auto& np : vpair)
+  {
+      std::vector<std::string> pAmount;
+      boost::split(pAmount, np, boost::is_any_of(":"), boost::token_compress_on);
+      const int64_t unitPrice = boost::lexical_cast<int64_t>(pAmount[0]);
+      const int64_t amount = boost::lexical_cast<int64_t>(pAmount[1]);
+      tokenvwap[propertyId][block].push_back(std::make_pair(unitPrice, amount));
+  }
+
+  return 0;
 }
 
 int input_activechannels_string(const std::string& s)
@@ -1730,11 +1734,6 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
         inputLineFunc = input_globals_state_string;
         break;
 
-    case FILETYPE_CROWDSALES:
-        my_crowds.clear();
-        inputLineFunc = input_mp_crowdsale_string;
-        break;
-
     case FILETYPE_OFFERS:
         my_offers.clear();
         inputLineFunc = input_mp_offers_string;
@@ -1795,6 +1794,16 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
     case FILE_TYPE_LTC_VOLUME:
         MapLTCVolume.clear();
         inputLineFunc = input_mp_ltcvolume_string;
+        break;
+
+    case FILE_TYPE_TOKEN_LTC_PRICE:
+        lastPrice.clear();
+        inputLineFunc = input_mp_token_ltc_string;
+        break;
+
+    case FILE_TYPE_TOKEN_VWAP:
+        tokenvwap.clear();
+        inputLineFunc = input_tokenvwap_string;
         break;
 
         default:
@@ -1871,7 +1880,6 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
 static char const * const statePrefix[NUM_FILETYPES] = {
     "balances",
     "globals",
-    "crowdsales",
     "cdexorders",
     "offers",
     "mdexorders",
@@ -1884,8 +1892,9 @@ static char const * const statePrefix[NUM_FILETYPES] = {
     "mdexvolume",
     "globalvars",
     "vestingaddresses",
-    "ltcvolume"
-
+    "ltcvolume",
+    "tokenltcprice",
+    "tokenvwap"
 };
 
 // returns the height of the state loaded
@@ -2092,18 +2101,6 @@ static int write_globals_state(ofstream &file, CHash256& hasher)
     return 0;
 }
 
-static int write_mp_crowdsales(std::ofstream& file, CHash256& hasher)
-{
-    for (CrowdMap::const_iterator it = my_crowds.begin(); it != my_crowds.end(); ++it)
-    {
-        // decompose the key for address
-        const CMPCrowd& crowd = it->second;
-        crowd.saveCrowdSale(file, it->first, hasher);
-    }
-
-    return 0;
-}
-
 static int write_mp_contractdex(ofstream &file, CHash256& hasher)
 {
     for (const auto con : contractdex)
@@ -2190,6 +2187,23 @@ static int write_mp_accepts(std::ofstream& file,  CHash256& hasher)
     return 0;
 }
 
+static int write_mp_token_ltc_prices(std::ofstream& file, CHash256& hasher)
+{
+    for (const auto &p : lastPrice)
+    {
+        const uint32_t& propertyId = p.first;
+        const int64_t& price = p.second;
+
+        const std::string lineOut = strprintf("%d,%d",propertyId, price);
+        // add the line to the hash
+        hasher.Write((unsigned char*)lineOut.c_str(), lineOut.length());
+        // write the line
+        file << lineOut << endl;
+    }
+
+    return 0;
+}
+
 static int write_mp_cachefees(std::ofstream& file, CHash256& hasher)
 {
     for (const auto &ca :  cachefees)
@@ -2268,6 +2282,42 @@ void addBalances(const std::map<std::string,map<uint32_t, int64_t>>& balances, s
         }
 
     }
+}
+
+static int write_mp_tokenvwap(std::ofstream& file, CHash256& hasher)
+{
+    for (const auto &mp : tokenvwap)
+    {
+
+        // decompose the key for address
+        const uint32_t& propertyId = mp.first;
+        const auto &blcmap = mp.second;
+
+        std::string lineOut = strprintf("%d+",propertyId);
+
+        for (const auto &vec : blcmap){
+            // adding block number
+            lineOut.append(strprintf("%d-",vec.first));
+
+            // vector of pairs
+            const auto &vpairs = vec.second;
+            for (auto p = vpairs.begin(); p != vpairs.end(); ++p)
+            {
+                const std::pair<int64_t,int64_t>& vwPair = *p;
+                lineOut.append(strprintf("%d:%d", vwPair.first, vwPair.second));
+                if (p != std::prev(vpairs.end())) lineOut.append(";");
+            }
+
+        }
+
+        // add the line to the hash
+        hasher.Write((unsigned char*)lineOut.c_str(), lineOut.length());
+        // write the line
+        file << lineOut << std::endl;
+
+    }
+
+    return 0;
 }
 
 /**Saving map of active channels**/
@@ -2375,10 +2425,6 @@ static int write_state_file(CBlockIndex const *pBlockIndex, int what)
         result = write_globals_state(file, hasher);
         break;
 
-    case FILETYPE_CROWDSALES:
-        result = write_mp_crowdsales(file, hasher);
-        break;
-
     case FILETYPE_CDEXORDERS:
         result = write_mp_contractdex(file, hasher);
         break;
@@ -2429,6 +2475,13 @@ static int write_state_file(CBlockIndex const *pBlockIndex, int what)
 
     case FILE_TYPE_LTC_VOLUME:
         result = write_mp_ltcvolume(file, hasher);
+        break;
+
+    case FILE_TYPE_TOKEN_LTC_PRICE:
+        result = write_mp_token_ltc_prices(file, hasher);
+        break;
+    case FILE_TYPE_TOKEN_VWAP:
+        result = write_mp_tokenvwap(file, hasher);
         break;
     }
 
@@ -2519,7 +2572,6 @@ int mastercore_save_state(CBlockIndex const *pBlockIndex)
     // write the new state as of the given block
     write_state_file(pBlockIndex, FILETYPE_BALANCES);
     write_state_file(pBlockIndex, FILETYPE_GLOBALS);
-    write_state_file(pBlockIndex, FILETYPE_CROWDSALES);
     write_state_file(pBlockIndex, FILETYPE_CDEXORDERS);
     write_state_file(pBlockIndex, FILETYPE_OFFERS);
     write_state_file(pBlockIndex, FILETYPE_MDEXORDERS);
@@ -2533,6 +2585,8 @@ int mastercore_save_state(CBlockIndex const *pBlockIndex)
     write_state_file(pBlockIndex, FILETYPE_GLOBAL_VARS);
     write_state_file(pBlockIndex, FILE_TYPE_VESTING_ADDRESSES);
     write_state_file(pBlockIndex, FILE_TYPE_LTC_VOLUME);
+    write_state_file(pBlockIndex, FILE_TYPE_TOKEN_LTC_PRICE);
+    write_state_file(pBlockIndex, FILE_TYPE_TOKEN_VWAP);
 
     // clean-up the directory
     prune_state_files(pBlockIndex);
@@ -2551,7 +2605,6 @@ void clear_all_state()
 
     // Memory based storage
     mp_tally_map.clear();
-    my_crowds.clear();
     my_pending.clear();
     my_offers.clear();
     my_accepts.clear();
@@ -3068,7 +3121,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
         if (interp_ret != PKT_ERROR - 2)
         {
             bool bValid = (0 <= interp_ret);
-            p_txlistdb->recordTX(tx.GetHash(), bValid, nBlock, mp_obj.getType(), mp_obj.getNewAmount());
+            p_txlistdb->recordTX(tx.GetHash(), bValid, nBlock, mp_obj.getType(), mp_obj.getNewAmount(), interp_ret);
             p_TradeTXDB->RecordTransaction(tx.GetHash(), idx);
 
         }
@@ -3628,7 +3681,7 @@ void CMPTxList::recordSendAllSubRecord(const uint256& txid, int subRecordNumber,
     if (msc_debug_txdb) PrintToLog("%s(): store: %s=%s, status: %s\n", __func__, strKey, strValue, status.ToString());
 }
 
-void CMPTxList::recordTX(const uint256 &txid, bool fValid, int nBlock, unsigned int type, uint64_t nValue)
+void CMPTxList::recordTX(const uint256 &txid, bool fValid, int nBlock, unsigned int type, uint64_t nValue, int interp_ret)
 {
     if (!pdb) return;
 
@@ -3637,11 +3690,11 @@ void CMPTxList::recordTX(const uint256 &txid, bool fValid, int nBlock, unsigned 
     if (p_txlistdb->exists(txid)) PrintToLog("LEVELDB TX OVERWRITE DETECTION - %s\n", txid.ToString());
 
     const string key = txid.ToString();
-    const string value = strprintf("%u:%d:%u:%lu", fValid ? 1:0, nBlock, type, nValue);
+    const string value = strprintf("%u:%d:%d:%u:%lu", fValid ? 1:0, fValid ? 0:interp_ret, nBlock, type, nValue);
     Status status;
 
-      PrintToLog("%s(%s, valid=%s, block= %d, type= %d, value= %lu)\n",
-       __func__, txid.ToString(), fValid ? "YES":"NO", nBlock, type, nValue);
+      PrintToLog("%s(%s, valid=%s, reason=%d, block= %d, type= %d, value= %lu)\n",
+       __func__, txid.ToString(), fValid ? "YES":"NO", fValid ? 0 : interp_ret, nBlock, type, nValue);
 
     if (pdb)
     {
@@ -3846,7 +3899,7 @@ bool mastercore::isMPinBlockRange(int starting_block, int ending_block, bool bDe
 // uint64_t nNew = 0;
 //
 // if (getValidMPTX(txid, &block, &type, &nNew)) // if true -- the TX is a valid MP TX
-bool mastercore::getValidMPTX(const uint256 &txid, int *block, unsigned int *type, uint64_t *nAmended)
+bool mastercore::getValidMPTX(const uint256 &txid, std::string *reason, int *block, unsigned int *type, uint64_t *nAmended)
 {
     string result;
     int validity = 0;
@@ -3865,21 +3918,32 @@ bool mastercore::getValidMPTX(const uint256 &txid, int *block, unsigned int *typ
 
     if (1 <= vstr.size()) validity = atoi(vstr[0]);
 
+    if (reason)
+    {
+        if (2 <= vstr.size())
+        {
+            const int error_code = atoi(vstr[1]);
+            *reason = error_str(error_code);
+        } else {
+            *reason = "-";
+        }
+    }
+
     if (block)
     {
-        if (2 <= vstr.size()) *block = atoi(vstr[1]);
+        if (3 <= vstr.size()) *block = atoi(vstr[2]);
         else *block = 0;
     }
 
     if (type)
     {
-        if (3 <= vstr.size()) *type = atoi(vstr[2]);
+        if (4 <= vstr.size()) *type = atoi(vstr[3]);
         else *type = 0;
     }
 
     if (nAmended)
     {
-        if (4 <= vstr.size()) *nAmended = boost::lexical_cast<boost::uint64_t>(vstr[3]);
+        if (5 <= vstr.size()) *nAmended = boost::lexical_cast<boost::uint64_t>(vstr[4]);
         else nAmended = 0;
     }
 
@@ -3945,7 +4009,6 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
 
     // marginMain(pBlockIndex->nHeight);
     // addInterestPegged(nBlockPrev,pBlockIndex);
-    // eraseExpiredCrowdsale(pBlockIndex);
 
     /****************************************************************************/
     // Calling The Settlement Algorithm
@@ -5462,17 +5525,23 @@ bool mastercore::marginMain(int Block)
 
                          const uint256 txid;
                          unsigned int idx = 0;
-                         uint8_t option;
-                         int64_t fcontracts;
+                         int64_t fcontracts = 0;
+                         uint8_t option = 0;
 
-                         int64_t longs = getMPbalance(address,contractId,POSITIVE_BALANCE);
-                         int64_t shorts = getMPbalance(address,contractId,NEGATIVE_BALANCE);
+                         const int64_t longs = getMPbalance(address,contractId,POSITIVE_BALANCE);
+                         const int64_t shorts = getMPbalance(address,contractId,NEGATIVE_BALANCE);
 
                          if(msc_debug_margin_main) PrintToLog("%s: longs: %d,shorts: %d \n", __func__, longs,shorts);
 
-                         (longs > 0 && shorts == 0) ? option = SELL, fcontracts = longs : option = BUY, fcontracts = shorts;
+                         if(longs > 0 && shorts == 0) {
+                              option = buy;
+                             fcontracts = longs;
+                         } else {
+                             option = sell;
+                             fcontracts = shorts;
+                         }
 
-                         if(msc_debug_margin_main) PrintToLog("%s: option: %d, upnl: %d, posMargin: %d\n", __func__, option,upnl,posMargin);
+                         if(msc_debug_margin_main) PrintToLog("%s(): upnl: %d, posMargin: %d\n", __func__, upnl,posMargin);
 
                          arith_uint256 contracts = DivideAndRoundUp(ConvertTo256(posMargin) + ConvertTo256(-upnl), ConvertTo256(sp.margin_requirement));
                          int64_t icontracts = ConvertTo64(contracts);
@@ -6313,7 +6382,7 @@ bool mastercore::Instant_x_Trade(const uint256& txid, uint8_t tradingAction, con
     int64_t secondPoss = getMPbalance(secondAddr, property, POSITIVE_BALANCE);
     int64_t secondNeg = getMPbalance(secondAddr, property, NEGATIVE_BALANCE);
 
-    if(tradingAction == SELL)
+    if(tradingAction == sell)
         amount_forsale = -amount_forsale;
 
     int64_t first_p = firstPoss - firstNeg + amount_forsale;
@@ -6432,7 +6501,7 @@ bool mastercore::Instant_x_Trade(const uint256& txid, uint8_t tradingAction, con
     return true;
 }
 
-void iterVolume(int64_t& amount, uint32_t propertyId, const int& fblock, const int& sblock, const std::map<int, std::map<uint32_t,int64_t>>& aMap)
+void mastercore::iterVolume(int64_t& amount, uint32_t propertyId, const int& fblock, const int& sblock, const std::map<int, std::map<uint32_t,int64_t>>& aMap)
 {
     for(const auto &m : aMap)
     {
@@ -6446,7 +6515,10 @@ void iterVolume(int64_t& amount, uint32_t propertyId, const int& fblock, const i
         const auto &blockMap = m.second;
         auto itt = blockMap.find(propertyId);
         if (itt != blockMap.end()){
-            amount += itt->second;
+            const int64_t& newAmount = itt->second;
+            // overflows?
+            assert(!isOverflow(amount, newAmount));
+            amount += newAmount;
         }
 
     }
@@ -6913,6 +6985,83 @@ bool mastercore::transferAll(const std::string& sender, const std::string& recei
 
 }
 
+int64_t mastercore::getVWap(uint32_t propertyId, int aBlock, const std::map<uint32_t,std::map<int,std::vector<std::pair<int64_t,int64_t>>>>& aMap)
+{
+    int64_t volume = 0;
+    arith_uint256 nvwap = 0;
+    const int rollback = aBlock - 12;
+    auto it = aMap.find(propertyId);
+    if (it != aMap.end())
+    {
+        auto &vmap = it->second;
+        auto itt = (rollback > 0) ? find_if(vmap.begin(), vmap.end(), [&rollback] (const std::pair<int,std::vector<std::pair<int64_t,int64_t>>>& int_arith_pair) { return (int_arith_pair.first >= rollback);}) : vmap.begin();
+        if (itt != vmap.end())
+        {
+            for ( ; itt != vmap.end(); ++itt)
+            {
+                auto v = itt->second;
+                for_each(v.begin(),v.end(), [&nvwap](const std::pair<int64_t,int64_t>& num){ nvwap += ConvertTo256(num.first * (num.second / COIN));});
+            }
+        }
+
+    }
+
+    // calculating the volume
+    iterVolume(volume, propertyId, rollback, aBlock, MapLTCVolume);
+
+    if (volume == 0) PrintToLog("%s():volume here is 0\n",__func__);
+
+    return ((volume > 0) ? (COIN *(ConvertTo64(nvwap) / volume)) : 0);
+
+}
+
+int64_t mastercore::increaseLTCVolume(uint32_t propertyId, uint32_t propertyDesired, int aBlock)
+{
+    int64_t total = 0, propertyAmount = 0, propertyDesiredAmount = 0;
+    const int rollback = aBlock - 1000;
+    iterVolume(propertyAmount, propertyId, rollback, aBlock, MapLTCVolume);
+    iterVolume(propertyDesiredAmount, propertyDesired, rollback, aBlock, MapLTCVolume);
+
+    if (1000 * COIN <=  propertyAmount && 1000 * COIN <=  propertyDesiredAmount)
+    {
+        // look up the 12-block VWAP of the denominator vs. LTC
+        const int64_t vwap = getVWap(propertyDesired, aBlock, tokenvwap);
+        const arith_uint256 aTotal = (ConvertTo256(propertyDesiredAmount) * ConvertTo256(vwap)) / ConvertTo256(COIN);
+        total = ConvertTo64(aTotal);
+
+        PrintToLog("%s(): vwap: %d, total: %d\n",__func__, vwap, total);
+
+        // increment cumulative LTC volume by tokens traded * the 12-block VWAP
+        if (total > 0) MapLTCVolume[aBlock][propertyDesired] += total;
+
+    }
+
+    return total;
+
+}
+
+bool mastercore::Token_LTC_Fees(int64_t& buyer_amountGot, uint32_t propertyId)
+{
+    const arith_uint256 uNumerator = ConvertTo256(buyer_amountGot);
+    const arith_uint256 uDenominator = arith_uint256(BASISPOINT) * arith_uint256(BASISPOINT) *  arith_uint256(2);
+    const arith_uint256 uCacheFee = DivideAndRoundUp(uNumerator, uDenominator);
+    const int64_t cacheFee = ConvertTo64(uCacheFee);
+
+    // taking fee
+    buyer_amountGot -= cacheFee;
+
+    PrintToLog("%s(): buyer_amountGot: %d, cacheFee: %d\n",__func__, buyer_amountGot, cacheFee);
+
+
+    if(cacheFee > 0)
+    {
+         cachefees[propertyId] += cacheFee;
+         return true;
+    }
+
+    return false;
+
+}
 
 /**
  * @return The marker for class D transactions.

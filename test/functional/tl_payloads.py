@@ -164,14 +164,6 @@ class PayloadsBasicsTest (BitcoinTestFramework):
         assert_equal(out['result'], '0004')
 
 
-        self.log.info("Testing tl_createpayload_issuancecrowdsale")
-        params = str([2, 0,'issuance 1','www.website1.com', 'data', 1, '0.01', 200, 3, 60]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, False, "tl_createpayload_issuancecrowdsale", params)
-        # self.log.info(out)
-        assert_equal(out['error'], None)
-        assert_equal(out['result'], '0033020069737375616e63652031007777772e77656273697465312e636f6d00646174610001c0843dc801033c')
-
-
         self.log.info("Testing tl_createpayload_issuancefixed")
         params = str([2, 0, 'lihki', 'wwww.lihki.com', 'data', '2000000', [0,2,3]]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_createpayload_issuancefixed", params)
@@ -202,14 +194,6 @@ class PayloadsBasicsTest (BitcoinTestFramework):
         # self.log.info(out)
         assert_equal(out['error'], None)
         assert_equal(out['result'], '00380380aef9e5ce942a')
-
-
-        self.log.info("Testing tl_createpayload_closecrowdsale")
-        params = str([3]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, False, "tl_createpayload_closecrowdsale", params)
-        # self.log.info(out)
-        assert_equal(out['error'], None)
-        assert_equal(out['result'], '003503')
 
 
         self.log.info("Testing tl_createpayload_changeissuer")

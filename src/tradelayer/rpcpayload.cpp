@@ -18,7 +18,7 @@ using namespace mastercore;
 
 UniValue tl_createpayload_simplesend(const JSONRPCRequest& request)
 {
-   if (request.params.size() != 2 || request.fHelp)
+   if (request.fHelp || request.params.size() != 2)
         throw runtime_error(
             "tl_createpayload_simplesend propertyid \"amount\"\n"
 
@@ -46,7 +46,7 @@ UniValue tl_createpayload_simplesend(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_sendall(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 0 || request.fHelp)
+    if (request.fHelp || request.params.size() != 0)
         throw runtime_error(
             "tl_createpayload_sendall \" \n"
 
@@ -68,53 +68,9 @@ UniValue tl_createpayload_sendall(const JSONRPCRequest& request)
 
 }
 
-UniValue tl_createpayload_issuancecrowdsale(const JSONRPCRequest& request)
-{
-    if (request.params.size() != 10 || request.fHelp)
-        throw runtime_error(
-            "tl_createpayload_issuancecrowdsale \" type previousid \"name\" \"url\" \"data\" propertyiddesired tokensperunit deadline ( earlybonus issuerpercentage )\n"
-
-            "Payload to create crowdsale."
-
-            "\nArguments:\n"
-            "1. type                 (number, required) the type of the tokens to create: (1 for indivisible tokens, 2 for divisible tokens)\n"
-            "2. previousid           (number, required) an identifier of a predecessor token (0 for new crowdsales)\n"
-            "3. name                 (string, required) the name of the new tokens to create\n"
-            "4. url                  (string, required) an URL for further information about the new tokens (can be \"\")\n"
-            "5. data                 (string, required) a description for the new tokens (can be \"\")\n"
-            "6. propertyiddesired    (number, required) the identifier of a token eligible to participate in the crowdsale\n"
-            "7. tokensperunit        (string, required) the amount of tokens granted per unit invested in the crowdsale\n"
-            "8. deadline             (number, required) the deadline of the crowdsale as Unix timestamp\n"
-            "9. earlybonus           (number, required) an early bird bonus for participants in percent per week\n"
-            "10. issuerpercentage    (number, required) a percentage of tokens that will be granted to the issuer\n"
-
-            "\nResult:\n"
-            "\"payload\"             (string) the hex-encoded payload\n"
-
-            "\nExamples:\n"
-            + HelpExampleCli("tl_createpayload_issuancecrowdsale"," \" 2 1 0 \"Companies\" \"Bitcoin Mining\" \"Quantum Miner\" \"\" \"\" 2 \"100\" 1483228800 30 2")
-            + HelpExampleRpc("tl_createpayload_issuancecrowdsale", " \"2, 1, 0, \"Companies\", \"Bitcoin Mining\", \"Quantum Miner\", \"\", \"\", 2, \"100\", 1483228800, 30, 2")
-        );
-
-    uint16_t type = ParsePropertyType(request.params[0]);
-    uint32_t previousId = ParsePreviousPropertyId(request.params[1]);
-    std::string name = ParseText(request.params[2]);
-    std::string url = ParseText(request.params[3]);
-    std::string data = ParseText(request.params[4]);
-    uint32_t propertyIdDesired = ParsePropertyId(request.params[5]);
-    int64_t numTokens = ParseAmount(request.params[6], type);
-    int64_t deadline = ParseDeadline(request.params[7]);
-    uint8_t earlyBonus = ParseEarlyBirdBonus(request.params[8]);
-    uint8_t issuerPercentage = ParseIssuerBonus(request.params[9]);
-
-    std::vector<unsigned char> payload = CreatePayload_IssuanceVariable(type, previousId, name, url, data, propertyIdDesired, numTokens, deadline, earlyBonus, issuerPercentage);
-
-    return HexStr(payload.begin(), payload.end());
-}
-
 UniValue tl_createpayload_issuancefixed(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 7 || request.fHelp)
+    if (request.fHelp || request.params.size() != 7)
         throw runtime_error(
             "tl_createpayload_issuancefixed \" type previousid \"name\" \"url\" \"data\" \"amount\"\n"
 
@@ -156,7 +112,7 @@ UniValue tl_createpayload_issuancefixed(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_issuancemanaged(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 6 || request.fHelp)
+    if (request.fHelp || request.params.size() != 6)
         throw runtime_error(
             "tl_createpayload_issuancemanaged \" type previousid \"name\" \"url\" \"data\"\n"
 
@@ -195,7 +151,7 @@ UniValue tl_createpayload_issuancemanaged(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_sendgrant(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 2 || request.fHelp)
+  if (request.fHelp || request.params.size() != 2)
     throw runtime_error(
 			"tl_createpayload_sendgrant \" propertyid \"amount\"\n"
 
@@ -224,7 +180,7 @@ UniValue tl_createpayload_sendgrant(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_sendrevoke(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 2 || request.fHelp)
+    if (request.fHelp || request.params.size() != 2)
         throw runtime_error(
             "tl_createpayload_sendrevoke \" propertyid \"amount\" ( \"memo\" )\n"
 
@@ -250,35 +206,9 @@ UniValue tl_createpayload_sendrevoke(const JSONRPCRequest& request)
     return HexStr(payload.begin(), payload.end());
 }
 
-UniValue tl_createpayload_closecrowdsale(const JSONRPCRequest& request)
-{
-    if (request.params.size() != 1 || request.fHelp)
-        throw runtime_error(
-            "tl_createpayload_closecrowdsale \" propertyid\n"
-
-            "\nPayload to Manually close a crowdsale.\n"
-
-            "\nArguments:\n"
-            "1. propertyid           (number, required) the identifier of the crowdsale to close\n"
-
-            "\nResult:\n"
-            "\"payload\"             (string) the hex-encoded payload\n"
-
-            "\nExamples:\n"
-            + HelpExampleCli("tl_createpayload_closecrowdsale", "\" 70")
-            + HelpExampleRpc("tl_createpayload_closecrowdsale", "\", 70")
-        );
-
-    uint32_t propertyId = ParsePropertyId(request.params[0]);
-
-    std::vector<unsigned char> payload = CreatePayload_CloseCrowdsale(propertyId);
-
-    return HexStr(payload.begin(), payload.end());
-}
-
 UniValue tl_createpayload_changeissuer(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 1 || request.fHelp)
+    if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
             "tl_createpayload_changeissuer \" propertyid\n"
 
@@ -304,7 +234,7 @@ UniValue tl_createpayload_changeissuer(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_sendactivation(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 3 || request.fHelp)
+    if (request.fHelp || request.params.size() != 3)
         throw runtime_error(
             "tl_createpayload_sendactivation \" featureid block minclientversion\n"
             "\nPayload to activate a protocol feature.\n"
@@ -331,7 +261,7 @@ UniValue tl_createpayload_sendactivation(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_senddeactivation(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 1 || request.fHelp)
+    if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
             "tl_senddeactivation \"fromaddress\" featureid\n"
             "\nPayload to deactivate a protocol feature.  For Emergency Use Only.\n"
@@ -354,7 +284,7 @@ UniValue tl_createpayload_senddeactivation(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_sendalert(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 3 || request.fHelp)
+    if (request.fHelp || request.params.size() != 3)
         throw runtime_error(
             "tl_createpayload_sendalert \" alerttype expiryvalue typecheck versioncheck \"message\"\n"
             "\nPayload to creates and broadcasts an Trade Layer Core alert.\n"
@@ -389,7 +319,7 @@ UniValue tl_createpayload_sendalert(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_sendtrade(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 4 || request.fHelp) {
+  if (request.fHelp || request.params.size() != 4) {
     throw runtime_error(
 			"tl_createpayload_sendtrade \"fromaddress\" propertyidforsale \"amountforsale\" propertiddesired \"amountdesired\"\n"
 
@@ -422,7 +352,7 @@ UniValue tl_createpayload_sendtrade(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_createcontract(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 9 || request.fHelp)
+  if (request.fHelp || request.params.size() != 9)
 
     throw runtime_error(
 			"tl_createpayload_createcontract \" type previousid \"category\" \"subcategory\" \"name\" \"url\" \"data\" propertyiddesired tokensperunit deadline ( earlybonus issuerpercentage )\n"
@@ -470,7 +400,7 @@ UniValue tl_createpayload_createcontract(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_tradecontract(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 5 || request.fHelp)
+  if (request.fHelp || request.params.size() != 5)
     throw runtime_error(
 			"tl_createpayload_tradecontract \" propertyidforsale \"amountforsale\" propertiddesired \"amountdesired\"\n"
 
@@ -503,7 +433,7 @@ UniValue tl_createpayload_tradecontract(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_cancelallcontractsbyaddress(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 1 || request.fHelp)
+  if (request.fHelp || request.params.size() != 1)
     throw runtime_error(
 			"tl_cancelallcontractsbyaddress \" \n"
 
@@ -528,7 +458,7 @@ UniValue tl_createpayload_cancelallcontractsbyaddress(const JSONRPCRequest& requ
 
 UniValue tl_createpayload_closeposition(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 1 || request.fHelp)
+    if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
             "tl_createpayload_closeposition \" \" contractId\n"
 
@@ -554,7 +484,7 @@ UniValue tl_createpayload_closeposition(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_sendissuance_pegged(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 6 || request.fHelp)
+  if (request.fHelp || request.params.size() != 6)
     throw runtime_error(
 			"tl_createpayload_sendissuance_pegged\"  type previousid \"category\" \"subcategory\" \"name\" \"url\" \"data\"\n"
 
@@ -592,7 +522,7 @@ UniValue tl_createpayload_sendissuance_pegged(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_send_pegged(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 2 || request.fHelp)
+  if (request.fHelp || request.params.size() != 2)
     throw runtime_error(
 			"tl_send \" propertyid \"amount\" ( \"redeemaddress\" \"referenceamount\" )\n"
 
@@ -625,7 +555,7 @@ UniValue tl_createpayload_send_pegged(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_redemption_pegged(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 3 || request.fHelp)
+    if (request.fHelp || request.params.size() != 3)
        throw runtime_error(
 			  "tl_createpayload_redemption_pegged \" propertyid \"amount\" ( \"redeemaddress\" distributionproperty )\n"
 
@@ -660,7 +590,7 @@ UniValue tl_createpayload_redemption_pegged(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_cancelorderbyblock(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 2 || request.fHelp)
+    if (request.fHelp || request.params.size() != 2)
         throw runtime_error(
             "tl_createpayload_cancelorderbyblock \"block\" idx\n"
 
@@ -688,7 +618,7 @@ UniValue tl_createpayload_cancelorderbyblock(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_dexoffer(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 7 || request.fHelp) {
+  if (request.fHelp || request.params.size() != 7) {
     throw runtime_error(
 			"tl_createpayload_dexsell \" propertyidforsale \"amountforsale\" \"amountdesired\" paymentwindow minacceptfee action\n"
 
@@ -734,7 +664,7 @@ UniValue tl_createpayload_dexoffer(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_dexaccept(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 2 || request.fHelp)
+    if (request.fHelp || request.params.size() != 2)
         throw runtime_error(
             "tl_createpayload_dexaccept \" propertyid \"amount\n"
 
@@ -762,7 +692,7 @@ UniValue tl_createpayload_dexaccept(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_sendvesting(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 1 || request.fHelp)
+    if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
 			         "tl_createpayload_sendvesting \"fromaddress\" \"toaddress\" propertyid \"amount\" ( \"referenceamount\" )\n"
 
@@ -792,7 +722,7 @@ UniValue tl_createpayload_sendvesting(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_instant_trade(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 5 || request.fHelp)
+  if (request.fHelp || request.params.size() != 5)
     throw runtime_error(
 			"tl_createpayload_instant_trade \"fromaddress\" \"toaddress\" propertyid \"amount\" ( \"referenceamount\" )\n"
 
@@ -830,7 +760,7 @@ UniValue tl_createpayload_instant_trade(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_instant_ltc_trade(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 4 || request.fHelp)
+  if (request.fHelp || request.params.size() != 4)
     throw runtime_error(
 			"tl_createpayload_instant_ltc_trade \"fromaddress\" \"toaddress\" propertyid \"amount\" \n"
 
@@ -863,7 +793,7 @@ UniValue tl_createpayload_instant_ltc_trade(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_contract_instant_trade(const JSONRPCRequest& request)
 {
-  if (request.params.size() < 6 || request.fHelp)
+  if (request.fHelp || request.params.size() < 6)
     throw runtime_error(
 			"tl_createpayload_instant_trade \"fromaddress\" \"toaddress\" propertyid \"amount\" ( \"referenceamount\" )\n"
 
@@ -902,7 +832,7 @@ UniValue tl_createpayload_contract_instant_trade(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_pnl_update(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 3 || request.fHelp)
+  if (request.fHelp || request.params.size() != 3)
     throw runtime_error(
 			"tl_createpayload_pnl_update \"fromaddress\" \"toaddress\" propertyid \"amount\" ( \"referenceamount\" )\n"
 
@@ -960,7 +890,7 @@ UniValue tl_createpayload_transfer(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_dex_payment(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 0 || request.fHelp)
+  if (request.fHelp)
     throw runtime_error(
 			"tl_createpayload_dex_payment\n"
 
@@ -983,7 +913,7 @@ UniValue tl_createpayload_dex_payment(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_change_oracleadm(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 1 || request.fHelp)
+    if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
             "tl_createpayload_change_oracleadm \" contract name\n"
 
@@ -1011,7 +941,7 @@ UniValue tl_createpayload_change_oracleadm(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_create_oraclecontract(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 8 || request.fHelp)
+  if (request.fHelp || request.params.size() != 8)
     throw runtime_error(
 			"tl_createpayload_create_oraclecontract \"address\" type previousid \"category\" \"subcategory\" \"name\" \"url\" \"data\" propertyiddesired tokensperunit deadline ( earlybonus issuerpercentage )\n"
 
@@ -1056,7 +986,7 @@ UniValue tl_createpayload_create_oraclecontract(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_setoracle(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 4 || request.fHelp)
+    if (request.fHelp || request.params.size() != 4)
         throw runtime_error(
             "tl_createpayload_setoracle  \"contract name\" \"high\" \"low \" \"close\" \n"
 
@@ -1090,7 +1020,7 @@ UniValue tl_createpayload_setoracle(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_closeoracle(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 1 || request.fHelp)
+    if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
             "tl_createpayload_closeoracle \"contract name\n"
 
@@ -1118,7 +1048,7 @@ UniValue tl_createpayload_closeoracle(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_new_id_registration(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 2 || request.fHelp)
+    if (request.fHelp || request.params.size() != 2)
         throw runtime_error(
             "tl_createpayload_new_id_registration  \"website url\" \"company name\" \n"
 
@@ -1147,7 +1077,7 @@ UniValue tl_createpayload_new_id_registration(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_update_id_registration(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 0 || request.fHelp)
+    if (request.fHelp)
         throw runtime_error(
             "tl_createpayload_update_id_registration \n"
 
@@ -1172,7 +1102,7 @@ UniValue tl_createpayload_update_id_registration(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_attestation(const JSONRPCRequest& request)
 {
-    if (request.params.size() > 1 || request.fHelp)
+    if (request.fHelp || request.params.size() > 1)
         throw runtime_error(
             "tl_createpayload_attestation \n"
 
@@ -1201,7 +1131,7 @@ UniValue tl_createpayload_attestation(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_commit_tochannel(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 2 || request.fHelp)
+    if (request.fHelp || request.params.size() != 2)
         throw runtime_error(
             "tl_createpayload_commit_tochannel \n"
 
@@ -1229,7 +1159,7 @@ UniValue tl_createpayload_commit_tochannel(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_withdrawal_fromchannel(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 2 || request.fHelp)
+    if (request.fHelp || request.params.size() != 2)
         throw runtime_error(
             "tl_createpayload_withdrawal_fromchannel \n"
 
@@ -1260,12 +1190,10 @@ static const CRPCCommand commands[] =
     //  -------------------------------- -----------------------------------------       ----------------------------------------        ----------
     { "trade layer (payload creation)", "tl_createpayload_simplesend",                    &tl_createpayload_simplesend,                      {}   },
     { "trade layer (payload creation)", "tl_createpayload_sendall",                       &tl_createpayload_sendall,                         {}   },
-    { "trade layer (payload creation)", "tl_createpayload_issuancecrowdsale",             &tl_createpayload_issuancecrowdsale,               {}   },
     { "trade layer (payload creation)", "tl_createpayload_issuancefixed",                 &tl_createpayload_issuancefixed,                   {}   },
     { "trade layer (payload creation)", "tl_createpayload_issuancemanaged",               &tl_createpayload_issuancemanaged,                 {}   },
     { "trade layer (payload creation)", "tl_createpayload_sendgrant",                     &tl_createpayload_sendgrant,                       {}   },
     { "trade layer (payload creation)", "tl_createpayload_sendrevoke",                    &tl_createpayload_sendrevoke,                      {}   },
-    { "trade layer (payload creation)", "tl_createpayload_closecrowdsale",                &tl_createpayload_closecrowdsale,                  {}   },
     { "trade layer (payload creation)", "tl_createpayload_changeissuer",                  &tl_createpayload_changeissuer,                    {}   },
     { "trade layer (payload creation)", "tl_createpayload_sendactivation",                &tl_createpayload_sendactivation,                  {}   },
     { "trade layer (payload creation)", "tl_createpayload_senddeactivation",              &tl_createpayload_senddeactivation,                {}   },
