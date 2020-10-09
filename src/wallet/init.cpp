@@ -226,7 +226,7 @@ bool VerifyWallets()
     std::set<fs::path> wallet_paths;
 
     for (const std::string& walletFile : gArgs.GetArgs("-wallet")) {
-        if (boost::filesystem::path(walletFile).filename() != walletFile) {
+        if (fs::path(walletFile).filename() != walletFile) {
             return InitError(strprintf(_("Error loading wallet %s. -wallet parameter must only specify a filename (not a path)."), walletFile));
         }
 
