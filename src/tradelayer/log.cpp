@@ -221,7 +221,7 @@ int LogFilePrint(const std::string& str)
          if (false)
          {
             fReopentradelayerLog = false;
-            boost::filesystem::path pathDebug = GetLogPath();
+            fs::path pathDebug = GetLogPath();
             if (freopen(pathDebug.string().c_str(), "a", fileout) != nullptr)
                 setbuf(fileout, nullptr); // Unbuffered
 

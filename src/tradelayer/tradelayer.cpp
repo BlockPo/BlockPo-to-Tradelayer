@@ -80,7 +80,6 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/exception/to_string.hpp>
-#include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/math/special_functions/sign.hpp>
@@ -124,7 +123,7 @@ std::map<uint32_t, int64_t> cachefees_oracles;
 
 //!Used to indicate, whether to automatically commit created transactions.
 bool autoCommit = true;
-static boost::filesystem::path MPPersistencePath;
+static fs::path MPPersistencePath;
 static int mastercoreInitialized = 0;
 static int reorgRecoveryMode = 0;
 static int reorgRecoveryMaxHeight = 0;
@@ -1931,11 +1930,11 @@ static int load_most_relevant_state()
 
       // prepare a set of available files by block hash pruning any that are
       // not in the active chain
-      boost::filesystem::directory_iterator dIter(MPPersistencePath);
-      boost::filesystem::directory_iterator endIter;
+      fs::directory_iterator dIter(MPPersistencePath);
+      fs::directory_iterator endIter;
       for (; dIter != endIter; ++dIter)
       {
-          if (!boost::filesystem::is_regular_file(dIter->status()) || dIter->path().empty()) {
+          if (!fs::is_regular_file(dIter->status()) || dIter->path().empty()) {
               // skip funny business
               continue;
           }
@@ -1978,7 +1977,7 @@ static int load_most_relevant_state()
               int success = -1;
               for (int i = 0; i < NUM_FILETYPES; ++i)
               {
-                  boost::filesystem::path path = MPPersistencePath / strprintf("%s-%s.dat", statePrefix[i], curTip->GetBlockHash().ToString());
+                  fs::path path = MPPersistencePath / strprintf("%s-%s.dat", statePrefix[i], curTip->GetBlockHash().ToString());
                   const std::string strFile = path.string();
                   success = msc_file_load(strFile, i, true);
                   if (success < 0) {
@@ -2356,7 +2355,7 @@ static int write_mp_vesting_addresses(std::ofstream& file,  CHash256& hasher)
 
 static int write_state_file(CBlockIndex const *pBlockIndex, int what)
 {
-    boost::filesystem::path path = MPPersistencePath / strprintf("%s-%s.dat", statePrefix[what], pBlockIndex->GetBlockHash().ToString());
+    fs::path path = MPPersistencePath / strprintf("%s-%s.dat", statePrefix[what], pBlockIndex->GetBlockHash().ToString());
     const std::string strFile = path.string();
 
     std::ofstream file;
@@ -2459,12 +2458,12 @@ static void prune_state_files(CBlockIndex const *topIndex)
 {
     // build a set of blockHashes for which we have any state files
     std::set<uint256> statefulBlockHashes;
-    boost::filesystem::directory_iterator dIter(MPPersistencePath);
-    boost::filesystem::directory_iterator endIter;
+    fs::directory_iterator dIter(MPPersistencePath);
+    fs::directory_iterator endIter;
     for (; dIter != endIter; ++dIter)
     {
         std::string fName = dIter->path().empty() ? "<invalid>" : (*--dIter->path().end()).string();
-        if (!boost::filesystem::is_regular_file(dIter->status()))
+        if (!fs::is_regular_file(dIter->status()))
         {
             // skip funny business
             PrintToLog("Non-regular file found in persistence directory : %s\n", fName);
@@ -2507,8 +2506,8 @@ static void prune_state_files(CBlockIndex const *topIndex)
             std::string strBlockHash = iter->ToString();
             for (int i = 0; i < NUM_FILETYPES; ++i)
             {
-                boost::filesystem::path path = MPPersistencePath / strprintf("%s-%s.dat", statePrefix[i], strBlockHash);
-                boost::filesystem::remove(path);
+                fs::path path = MPPersistencePath / strprintf("%s-%s.dat", statePrefix[i], strBlockHash);
+                fs::remove(path);
             }
         }
     }
@@ -2550,30 +2549,29 @@ void clear_all_state()
     LOCK2(cs_tally, cs_pending);
 
     // Memory based storage
-    mp_tally_map.clear();
-    my_crowds.clear();
-    my_pending.clear();
-    my_offers.clear();
-    my_accepts.clear();
-    metadex.clear();
-    my_pending.clear();
-    contractdex.clear();
-    ResetConsensusParams();
     ClearActivations();
-    channels_Map.clear();
-    withdrawal_Map.clear();
     MapLTCVolume.clear();
     MapTokenVolume.clear();
+    ResetConsensusParams();
+    channels_Map.clear();
+    contractdex.clear();
+    metadex.clear();
     metavolume.clear();
+    mp_tally_map.clear();
+    my_accepts.clear();
+    my_crowds.clear();
+    my_offers.clear();
+    my_pending.clear();
     vestingAddresses.clear();
+    withdrawal_Map.clear();
 
     // LevelDB based storage
-     _my_sps->Clear();
-     t_tradelistdb->Clear();
-     p_txlistdb->Clear();
-     p_TradeTXDB->Clear();
+    _my_sps->Clear();
+    p_TradeTXDB->Clear();
+    p_txlistdb->Clear();
+    t_tradelistdb->Clear();
 
-     assert(p_txlistdb->setDBVersion() == DB_VERSION); // new set of databases, set DB version
+    assert(p_txlistdb->setDBVersion() == DB_VERSION); // new set of databases, set DB version
 }
 
 /**
@@ -2609,17 +2607,17 @@ int mastercore_init()
   if (gArgs.GetBoolArg("-startclean", false)) {
     PrintToLog("Process was started with --startclean option, attempting to clear persistence files..\n");
     try {
-      boost::filesystem::path persistPath = GetDataDir() / "OCL_persist";
-      boost::filesystem::path txlistPath = GetDataDir() / "OCL_txlist";
-      boost::filesystem::path spPath = GetDataDir() / "OCL_spinfo";
-      boost::filesystem::path tlTXDBPath = GetDataDir() / "OCL_TXDB";
-      if (boost::filesystem::exists(persistPath)) boost::filesystem::remove_all(persistPath);
-      if (boost::filesystem::exists(txlistPath)) boost::filesystem::remove_all(txlistPath);
-      if (boost::filesystem::exists(spPath)) boost::filesystem::remove_all(spPath);
-      if (boost::filesystem::exists(tlTXDBPath)) boost::filesystem::remove_all(tlTXDBPath);
+      fs::path persistPath = GetDataDir() / "OCL_persist";
+      fs::path txlistPath = GetDataDir() / "OCL_txlist";
+      fs::path spPath = GetDataDir() / "OCL_spinfo";
+      fs::path tlTXDBPath = GetDataDir() / "OCL_TXDB";
+      if (fs::exists(persistPath)) fs::remove_all(persistPath);
+      if (fs::exists(txlistPath)) fs::remove_all(txlistPath);
+      if (fs::exists(spPath)) fs::remove_all(spPath);
+      if (fs::exists(tlTXDBPath)) fs::remove_all(tlTXDBPath);
       PrintToLog("Success clearing persistence files in datadir %s\n", GetDataDir().string());
       startClean = true;
-    } catch (const boost::filesystem::filesystem_error& e) {
+    } catch (const fs::filesystem_error& e) {
       PrintToLog("Failed to delete persistence folders: %s\n", e.what());
     }
   }

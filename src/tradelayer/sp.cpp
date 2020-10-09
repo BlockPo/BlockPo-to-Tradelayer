@@ -28,7 +28,6 @@
 #include <vector>
 
 #include <boost/algorithm/string.hpp>
-#include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
 
 using namespace mastercore;
@@ -126,7 +125,7 @@ void CMPSPInfo::Entry::print() const
 		 category, subcategory, url, data);
 }
 
-CMPSPInfo::CMPSPInfo(const boost::filesystem::path& path, bool fWipe)
+CMPSPInfo::CMPSPInfo(const fs::path& path, bool fWipe)
 {
   leveldb::Status status = Open(path, fWipe);
   PrintToLog("Loading smart property database: %s\n", status.ToString());

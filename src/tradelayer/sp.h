@@ -20,7 +20,6 @@ class uint256;
 #include <utility>
 #include <vector>
 
-// XXX
 #include <boost/filesystem.hpp>
 
 /** LevelDB based storage for currencies, smart properties and tokens.
@@ -195,7 +194,7 @@ public:
     uint32_t next_test_spid;
 
  public:
-    CMPSPInfo(const boost::filesystem::path& path, bool fWipe);
+    CMPSPInfo(const fs::path& path, bool fWipe);
     virtual ~CMPSPInfo();
 
     /** Extends clearing of CDBBase. */

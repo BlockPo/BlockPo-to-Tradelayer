@@ -184,7 +184,7 @@ bool LockDirectory(const fs::path& directory, const std::string lockfile_name, b
 void ReleaseDirectoryLocks();
 
 bool TryCreateDirectories(const fs::path& p);
-bool TryCreateDirectory(const boost::filesystem::path& p);
+bool TryCreateDirectory(const fs::path& p);
 fs::path GetDefaultDataDir();
 const fs::path &GetDataDir(bool fNetSpecific = true);
 void ClearDatadirCache();

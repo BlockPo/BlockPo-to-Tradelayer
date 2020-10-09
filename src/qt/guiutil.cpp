@@ -62,8 +62,6 @@
 #include <QFontDatabase>
 #endif
 
-static fs::detail::utf8_codecvt_facet utf8;
-
 #if defined(Q_OS_MAC)
 extern double NSAppKitVersionNumber;
 #if !defined(NSAppKitVersionNumber10_8)
@@ -417,18 +415,26 @@ void openDebugLogfile()
 
 bool openBitcoinConf()
 {
-    boost::filesystem::path pathConfig = GetConfigFile(BITCOIN_CONF_FILENAME);
+    fs::path pathConfig = GetConfigFile(gArgs.GetArg("-conf", BITCOIN_CONF_FILENAME));
 
     /* Create the file */
-    boost::filesystem::ofstream configFile(pathConfig, std::ios_base::app);
-    
+    fsbridge::ofstream configFile(pathConfig, std::ios_base::app);
+
     if (!configFile.good())
         return false;
-    
+
     configFile.close();
-    
+
     /* Open bitcoin.conf with the associated application */
-    return QDesktopServices::openUrl(QUrl::fromLocalFile(boostPathToQString(pathConfig)));
+    bool res = QDesktopServices::openUrl(QUrl::fromLocalFile(boostPathToQString(pathConfig)));
+#ifdef Q_OS_MAC
+    // Workaround for macOS-specific behavior; see #15409.
+    if (!res) {
+        res = QProcess::startDetached("/usr/bin/open", QStringList{"-t", boostPathToQString(pathConfig)});
+    }
+#endif
+
+    return res;
 }
 
 void SubstituteFonts(const QString& language)
@@ -870,12 +876,12 @@ void setClipboard(const QString& str)
 
 fs::path qstringToBoostPath(const QString &path)
 {
-    return fs::path(path.toStdString(), utf8);
+    return fs::path(path.toStdString());
 }
 
 QString boostPathToQString(const fs::path &path)
 {
-    return QString::fromStdString(path.string(utf8));
+    return QString::fromStdString(path.string());
 }
 
 QString formatDurationStr(int secs)
