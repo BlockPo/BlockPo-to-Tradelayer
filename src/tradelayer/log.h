@@ -123,34 +123,29 @@ extern bool msc_debug_clearing_operator_fifo;
 extern bool msc_debug_counting_lives_longshorts;
 extern bool msc_debug_calculate_pnl_forghost;
 
-/* When we switch to C++11, this can be switched to variadic templates instead
- * of this macro-based construction (see tinyformat.h).
- */
-#define MAKE_TRADE_LAYER_ERROR_AND_LOG_FUNC(n)                                    \
-    template<TINYFORMAT_ARGTYPES(n)>                                            \
-    static inline int PrintToLog(const char* format, TINYFORMAT_VARARGS(n))     \
-    {                                                                           \
-        return LogFilePrint(tfm::format(format, TINYFORMAT_PASSARGS(n)));       \
-    }                                                                           \
-    template<TINYFORMAT_ARGTYPES(n)>                                            \
-    static inline int PrintToLog(TINYFORMAT_VARARGS(n))                         \
-    {                                                                           \
-        return LogFilePrint(tfm::format("%s", TINYFORMAT_PASSARGS(n)));         \
-    }                                                                           \
-    template<TINYFORMAT_ARGTYPES(n)>                                            \
-    static inline int PrintToConsole(const char* format, TINYFORMAT_VARARGS(n)) \
-    {                                                                           \
-        return ConsolePrint(tfm::format(format, TINYFORMAT_PASSARGS(n)));       \
-    }                                                                           \
-    template<TINYFORMAT_ARGTYPES(n)>                                            \
-    static inline int PrintToConsole(TINYFORMAT_VARARGS(n))                     \
-    {                                                                           \
-        return ConsolePrint(tfm::format("%s", TINYFORMAT_PASSARGS(n)));         \
-    }
 
-TINYFORMAT_FOREACH_ARGNUM(MAKE_TRADE_LAYER_ERROR_AND_LOG_FUNC)
+template<typename Arg>
+static inline int PrintToLog(Arg arg)
+{
+    return LogFilePrint(tfm::format(arg));
+}
 
-#undef MAKE_TRADE_LAYER_ERROR_AND_LOG_FUNC
+template<typename... Args>
+static inline int PrintToLog(const char* format, Args... args)
+{
+    return LogFilePrint(tfm::format(format, args...));
+}
 
+template<typename Arg>
+static inline int PrintToConsole(Arg arg)
+{
+    return ConsolePrint(tfm::format(arg));
+}
+
+template<typename... Args>
+static inline int PrintToConsole(const char* format, Args... args)
+{
+    return ConsolePrint(tfm::format(format, args...));
+}
 
 #endif // TRADELAYER_LOG_H
