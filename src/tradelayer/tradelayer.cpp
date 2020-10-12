@@ -80,7 +80,6 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/exception/to_string.hpp>
-#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/math/special_functions/sign.hpp>
 #include <boost/multiprecision/cpp_int.hpp>
