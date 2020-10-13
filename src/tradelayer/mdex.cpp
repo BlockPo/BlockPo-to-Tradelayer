@@ -2651,8 +2651,6 @@ int mastercore::MetaDEx_CANCEL_EVERYTHING(const uint256& txid, unsigned int bloc
 {
     int rc = METADEX_ERROR -40;
 
-    if (msc_debug_metadex2) PrintToLog("%s()\n", __func__);
-
     for (md_PropertiesMap::iterator my_it = metadex.begin(); my_it != metadex.end(); ++my_it) {
         unsigned int prop = my_it->first;
 
@@ -2687,6 +2685,7 @@ int mastercore::MetaDEx_CANCEL_EVERYTHING(const uint256& txid, unsigned int bloc
         }
     }
 
+    PrintToLog(" #### checkpoint\n");
 
     return rc;
 }

@@ -2104,7 +2104,7 @@ bool CMPTransaction::interpret_MetaDExCancelAll()
     std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
 
     if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly) {
-        PrintToLog("\t       inside interpret: %d\n");
+        PrintToLog("\t  %s(): inside interpret \n",__func__);
     }
 
     return true;

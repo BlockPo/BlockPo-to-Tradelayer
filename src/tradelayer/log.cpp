@@ -56,7 +56,7 @@ bool msc_debug_x_trade_bidirectional            = 0;
 bool msc_debug_contractdex_fees                 = 0;
 bool msc_debug_metadex_fees                     = 0;
 bool msc_debug_metadex1                         = 0;
-bool msc_debug_metadex2                         = 0;
+bool msc_debug_metadex2                         = 1;
 bool msc_debug_metadex3                         = 0;
 bool msc_debug_metadex_add                      = 0;
 bool msc_debug_contractdex_add                  = 0;
@@ -373,4 +373,3 @@ void ShrinkDebugLog()
         file = nullptr;
     }
 }
-
