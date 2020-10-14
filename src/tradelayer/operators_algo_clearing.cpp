@@ -286,7 +286,7 @@ void settlement_algorithm_fifo(MatrixTLS &M_file, int64_t interest, int64_t twap
   	for (it_path_main = path_main.begin(); it_path_main != path_main.end(); ++it_path_main)
       PrintingGraph(*it_path_main);
   }
-  
+
   if(msc_debug_settlement_algorithm_fifo) {
       PrintToLog("\n\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
       PrintToLog("Second Part: Lives Vectors and Ghost Nodes\n\n");
@@ -437,8 +437,8 @@ void settlement_algorithm_fifo(MatrixTLS &M_file, int64_t interest, int64_t twap
   std::unordered_set<std::string> addrs_set;
   std::vector<std::string> addrsv;
   int k = 0;
-  long int nonzero_lives;
-  double PNL_totalit;
+  long int nonzero_lives = 0;
+  double PNL_totalit = 0;
 
   /** Total PNL for Main Path **/
   for (it_path_main = path_main.begin(); it_path_main != path_main.end(); ++it_path_main)
