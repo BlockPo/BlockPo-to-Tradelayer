@@ -352,6 +352,12 @@ static const CRPCConvertParam vRPCConvertParams[] =
 
     {"tl_get_channelremaining", 2, "arg2"},
 
+    { "tl_gettradehistoryforaddress", 1 , "arg1"},
+    { "tl_gettradehistoryforaddress", 2, "arg2" },
+
+    { "tl_gettradehistoryforpair", 0, "arg0" },
+    { "tl_gettradehistoryforpair", 1, "arg1" },
+    { "tl_gettradehistoryforpair", 2, "arg2" },
 
 };
 

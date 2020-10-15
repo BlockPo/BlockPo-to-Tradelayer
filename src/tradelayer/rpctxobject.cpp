@@ -407,10 +407,11 @@ void populateRPCTypeCreateOracle(CMPTransaction& tlObj, UniValue& txobj)
 void populateRPCTypeMetaDExTrade(CMPTransaction& tlObj, UniValue& txobj)
 {
 
-  txobj.push_back(Pair("propertyname", tlObj.getSPName()));
-  txobj.push_back(Pair("propertyId", (uint64_t) tlObj.getPropertyId()));
+  const std::string name = getPropertyName((uint32_t) tlObj.getProperty());
+  txobj.push_back(Pair("propertyname", name));
+  txobj.push_back(Pair("propertyId", (uint64_t) tlObj.getProperty()));
   txobj.push_back(Pair("amount", FormatDivisibleMP(tlObj.getAmountForSale())));
-  txobj.push_back(Pair("desire property", FormatDivisibleMP(tlObj.getDesiredProperty())));
+  txobj.push_back(Pair("desire property", (uint64_t) tlObj.getDesiredProperty()));
   txobj.push_back(Pair("desired value", FormatDivisibleMP(tlObj.getDesiredValue())));
 
 }
