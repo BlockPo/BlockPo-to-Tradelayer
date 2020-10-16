@@ -4210,42 +4210,37 @@ void CMPTradeList::getTradesForPair(uint32_t propertyIdSideA, uint32_t propertyI
         int64_t blockNum = boost::lexical_cast<int64_t>(vecValues[6]);
 
         UniValue trade(UniValue::VOBJ);
-        trade.push_back(Pair("block", blockNum));
-        trade.push_back(Pair("unitprice", unitPriceStr));
-        trade.push_back(Pair("inverseprice", inversePriceStr));
-        trade.push_back(Pair("sellertxid", sellerTxid.GetHex()));
-        trade.push_back(Pair("selleraddress", sellerAddress));
+        trade.pushKV("block", blockNum);
+        trade.pushKV("unitprice", unitPriceStr);
+        trade.pushKV("inverseprice", inversePriceStr);
+        trade.pushKV("sellertxid", sellerTxid.GetHex());
+        trade.pushKV("selleraddress", sellerAddress);
         if (propertyIdSideAIsDivisible) {
-            trade.push_back(Pair("amountsold", FormatDivisibleMP(amountSold)));
+            trade.pushKV("amountsold", FormatDivisibleMP(amountSold));
         } else {
-            trade.push_back(Pair("amountsold", FormatIndivisibleMP(amountSold)));
+            trade.pushKV("amountsold", FormatIndivisibleMP(amountSold));
         }
         if (propertyIdSideBIsDivisible) {
-            trade.push_back(Pair("amountreceived", FormatDivisibleMP(amountReceived)));
+            trade.pushKV("amountreceived", FormatDivisibleMP(amountReceived));
         } else {
-            trade.push_back(Pair("amountreceived", FormatIndivisibleMP(amountReceived)));
+            trade.pushKV("amountreceived", FormatIndivisibleMP(amountReceived));
         }
-        trade.push_back(Pair("matchingtxid", matchingTxid.GetHex()));
-        trade.push_back(Pair("matchingaddress", matchingAddress));
+        trade.pushKV("matchingtxid", matchingTxid.GetHex());
+        trade.pushKV("matchingaddress", matchingAddress);
         vecResponse.push_back(std::make_pair(blockNum, trade));
     }
 
     // sort the response most recent first before adding to the array
     std::sort(vecResponse.begin(), vecResponse.end(), CompareTradePair);
-    uint64_t processed = 0;
-    for (std::vector<std::pair<int64_t, UniValue> >::iterator it = vecResponse.begin(); it != vecResponse.end(); ++it) {
-        responseArray.push_back(it->second);
-        processed++;
-        if (processed >= count) break;
-    }
 
-    //FIXME!
-    // std::vector<UniValue> responseArrayValues = responseArray.getValues();
-    // std::reverse(responseArrayVaresposearraylues.begin(), responseArrayValues.end());
-    // responseArray.clear();
-    // for (std::vector<UniValue>::iterator it = responseArrayValues.begin(); it != responseArrayValues.end(); ++it) {
-    //     responseArray.push_back(*it);
-    // }
+    uint64_t elements = 0;
+    std::vector<std::pair<int64_t, UniValue>> aux;
+    for_each(vecResponse.begin(), vecResponse.end(), [&aux, &elements, &count] (const std::pair<int64_t, UniValue> p) { if(elements < count) aux.push_back(p); elements++; });
+
+    //reversing vector and pushing back
+    for (std::vector<std::pair<int64_t, UniValue>>::reverse_iterator it = aux.rbegin(); it != aux.rend(); it++){
+        responseArray.push_back(it->second);
+    }
 
     delete it;
 }

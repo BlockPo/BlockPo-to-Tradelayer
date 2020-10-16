@@ -265,9 +265,13 @@ class MetaDExBasicsTest (BitcoinTestFramework):
         params = str([4, 5, 10]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_gettradehistoryforpair",params)
         assert_equal(out['error'], None)
-        self.log.info(out)
-        
-        exit()
+        # self.log.info(out)
+        assert_equal(out['result'][0]['block'], 208)
+        assert_equal(out['result'][0]['unitprice'], '2.00000000000000000000000000000000000000000000000000')
+        assert_equal(out['result'][0]['inverseprice'], '0.50000000000000000000000000000000000000000000000000')
+        assert_equal(out['result'][0]['amountsold'], '1000.00000000')
+        assert_equal(out['result'][0]['amountreceived'], '2000.00000000')
+
 
         self.log.info("Sending 20000000000 lihki tokens to fourth address")
         params = str([addresses[0], addresses[3], 4, "20000000000"]).replace("'",'"')
@@ -461,6 +465,12 @@ class MetaDExBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         assert_equal(out['result'], [])
 
+
+        self.log.info("Checking trade for property pair again")
+        params = str([4, 5, 10]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_gettradehistoryforpair",params)
+        assert_equal(out['error'], None)
+        # self.log.info(out)
 
         self.log.info("Checking lihki tokens in fourth address")
         params = str([addresses[3], 4]).replace("'",'"')
