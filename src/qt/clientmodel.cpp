@@ -44,6 +44,9 @@ ClientModel::ClientModel(OptionsModel *_optionsModel, QObject *parent) :
     pollTimer = new QTimer(this);
     connect(pollTimer, SIGNAL(timeout()), this, SLOT(updateTimer()));
     pollTimer->start(MODEL_UPDATE_DELAY);
+    QTimer::singleShot(0, pollTimer, []() {
+        util::ThreadRename("qt-clientmodl");
+    });
 
     subscribeToCoreSignals();
 }
