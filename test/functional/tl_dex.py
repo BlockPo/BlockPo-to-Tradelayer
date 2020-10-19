@@ -284,6 +284,20 @@ class DExBasicsTest (BitcoinTestFramework):
 
         self.nodes[0].generate(1)
 
+
+        self.log.info("Checking trade for address")
+        params = str([addresses[0], 100, 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_getdextradehistoryforaddress",params)
+        assert_equal(out['error'], None)
+        # self.log.info(out)
+        assert_equal(out['result'][0]['block'], 329)
+        assert_equal(out['result'][0]['selleraddress'], addresses[0])
+        assert_equal(out['result'][0]['propertyid'], 4)
+        assert_equal(out['result'][0]['buyeraddress'], addresses[1])
+        assert_equal(out['result'][0]['amountbuyed'], '1000.00000000')
+        assert_equal(out['result'][0]['amountpaid'], '1.00000000')
+
+
         self.log.info("Checking token balance in seller address")
         params = str([addresses[0], 4]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
@@ -719,7 +733,7 @@ class DExBasicsTest (BitcoinTestFramework):
         # self.log.info(out)
         assert_equal(out['error'], None)
         assert_equal(out['result']['unitprice'],'0.01000000')
-        
+
         conn.close()
         self.stop_nodes()
 

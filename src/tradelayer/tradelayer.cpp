@@ -3118,8 +3118,8 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
         // PKT_ERROR - 2 = interpret_Transaction failed, structurally invalid payload
         if (interp_ret != PKT_ERROR - 2)
         {
-            bool bValid = (0 <= interp_ret);
-            p_txlistdb->recordTX(tx.GetHash(), bValid, nBlock, mp_obj.getType(), mp_obj.getNewAmount(), interp_ret);
+            // bool bValid = (0 <= interp_ret);
+            // p_txlistdb->recordTX(tx.GetHash(), bValid, nBlock, mp_obj.getType(), mp_obj.getNewAmount(), interp_ret);
             p_TradeTXDB->RecordTransaction(tx.GetHash(), idx);
 
         }
@@ -3744,7 +3744,7 @@ void CMPTxList::printAll()
     delete it;
 }
 
-void CMPTxList::recordPaymentTX(const uint256 &txid, bool fValid, int nBlock, unsigned int vout, unsigned int propertyId, uint64_t nValue, string buyer, string seller)
+void CMPTxList::recordPaymentTX(const uint256 &txid, bool fValid, int nBlock, unsigned int vout, unsigned int propertyId, uint64_t nValue, uint64_t amountPaid, string buyer, string seller)
 {
     if (!pdb) return;
 
@@ -3796,7 +3796,7 @@ void CMPTxList::recordPaymentTX(const uint256 &txid, bool fValid, int nBlock, un
     // Step 4 - Write sub-record with payment details
     const string txidStr = txid.ToString();
     const string subKey = STR_PAYMENT_SUBKEY_TXID_PAYMENT_COMBO(txidStr, paymentNumber);
-    const string subValue = strprintf("%d:%s:%s:%d:%lu", vout, buyer, seller, propertyId, nValue);
+    const string subValue = strprintf("%d:%d:%s:%s:%d:%lu:%lu", nBlock, vout, buyer, seller, propertyId, nValue, amountPaid);
     Status subStatus;
 
     if(msc_debug_record_payment_tx) PrintToLog("DEXPAYDEBUG : Writing sub-record %s with value %s\n", subKey, subValue);
@@ -4173,11 +4173,9 @@ void CMPTradeList::getTradesForPair(uint32_t propertyIdSideA, uint32_t propertyI
         boost::split(vecKeys, strKey, boost::is_any_of("+"), boost::token_compress_on);
         boost::split(vecValues, strValue, boost::is_any_of(":"), boost::token_compress_on);
         if (vecKeys.size() != 2 || vecValues.size() != 8) {
-            PrintToLog("TRADEDB error - unexpected number of tokens (%s:%s)\n", strKey, strValue);
+            // PrintToLog("TRADEDB error - unexpected number of tokens (%s:%s)\n", strKey, strValue);
             continue;
         }
-
-        // PrintToLog("%s(): passed strValue: %s\n",__func__, strValue);
 
         uint32_t tradePropertyIdSideA = boost::lexical_cast<uint32_t>(vecValues[2]);
         uint32_t tradePropertyIdSideB = boost::lexical_cast<uint32_t>(vecValues[3]);
@@ -4243,6 +4241,61 @@ void CMPTradeList::getTradesForPair(uint32_t propertyIdSideA, uint32_t propertyI
     }
 
     delete it;
+}
+
+// obtains an array of trades in DEx
+void CMPTxList::getDExTrades(const std::string& address, uint32_t propertyId, UniValue& responseArray, uint64_t count)
+{
+  if (!pdb) return;
+  std::vector<std::pair<int64_t, UniValue> > vecResponse;
+  leveldb::Iterator* it = NewIterator();
+  for(it->SeekToFirst(); it->Valid(); it->Next()) {
+      const std::string strKey = it->key().ToString();
+      const std::string strValue = it->value().ToString();
+      std::vector<std::string> vecValues;
+      if (strKey.size() != 66) continue;
+      std::string strtxid = strKey.substr (0,64);
+      const size_t addressMatch = strValue.find(address);
+      if (addressMatch == std::string::npos) continue;
+      boost::split(vecValues, strValue, boost::is_any_of(":"), token_compress_on);
+      if (vecValues.size() != 7) {
+          // PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
+          continue;
+      }
+
+      const uint32_t prop = boost::lexical_cast<uint32_t>(vecValues[4]);
+      if (propertyId != 0 && propertyId != prop) continue;
+      const int blockNum = boost::lexical_cast<int>(vecValues[0]);
+      const std::string& buyer = vecValues[2];
+      const std::string& seller = vecValues[3];
+      uint64_t amount = boost::lexical_cast<uint64_t>(vecValues[5]);
+      uint64_t amountPaid = boost::lexical_cast<uint64_t>(vecValues[6]);
+
+      UniValue trade(UniValue::VOBJ);
+      trade.pushKV("block", blockNum);
+      trade.pushKV("buyertxid", strtxid);
+      trade.pushKV("selleraddress", seller);
+      trade.pushKV("buyeraddress", buyer);
+      trade.pushKV("propertyid", (uint64_t) propertyId);
+      trade.pushKV("amountbuyed", FormatMP(propertyId, amount));
+      trade.pushKV("amountpaid", FormatDivisibleMP(amountPaid));
+
+      vecResponse.push_back(std::make_pair(blockNum, trade));
+  }
+
+  // sort the response most recent first before adding to the array
+  std::sort(vecResponse.begin(), vecResponse.end(), CompareTradePair);
+
+  uint64_t elements = 0;
+  std::vector<std::pair<int64_t, UniValue>> aux;
+  for_each(vecResponse.begin(), vecResponse.end(), [&aux, &elements, &count] (const std::pair<int64_t, UniValue> p) { if(elements < count) aux.push_back(p); elements++; });
+
+  //reversing vector and pushing back
+  for (std::vector<std::pair<int64_t, UniValue>>::reverse_iterator it = aux.rbegin(); it != aux.rend(); it++){
+      responseArray.push_back(it->second);
+  }
+
+  delete it;
 }
 
 void CMPTradeList::recordNewTrade(const uint256& txid, const std::string& address, uint32_t propertyIdForSale, uint32_t propertyIdDesired, int blockNum, int blockIndex)

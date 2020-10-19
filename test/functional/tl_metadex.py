@@ -241,8 +241,8 @@ class MetaDExBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['reserve'],'0.00000000')
 
         self.log.info("Checking trade history of first address")
-        params = str([addresses[0], 100,4]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, True, "tl_gettradehistoryforaddress",params)
+        params = str([addresses[0], 100, 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getmdextradehistoryforaddress",params)
         assert_equal(out['error'], None)
         assert_equal(out['result'][0]['type_int'], 25)
         assert_equal(out['result'][0]['type'], 'Metadex Order')
@@ -263,7 +263,7 @@ class MetaDExBasicsTest (BitcoinTestFramework):
 
         self.log.info("Checking trade for property pair")
         params = str([4, 5, 10]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, True, "tl_gettradehistoryforpair",params)
+        out = tradelayer_HTTP(conn, headers, True, "tl_getmdextradehistoryforpair",params)
         assert_equal(out['error'], None)
         # self.log.info(out)
         assert_equal(out['result'][0]['block'], 208)
@@ -468,7 +468,7 @@ class MetaDExBasicsTest (BitcoinTestFramework):
 
         self.log.info("Checking trade for property pair again")
         params = str([4, 5, 10]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, True, "tl_gettradehistoryforpair",params)
+        out = tradelayer_HTTP(conn, headers, True, "tl_getmdextradehistoryforpair",params)
         assert_equal(out['error'], None)
         # self.log.info(out)
 

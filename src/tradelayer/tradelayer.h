@@ -371,7 +371,7 @@ public:
 
     bool isMPinBlockRange(int, int, bool);
 
-    void recordPaymentTX(const uint256 &txid, bool fValid, int nBlock, unsigned int vout, unsigned int propertyId, uint64_t nValue, string buyer, string seller);
+    void recordPaymentTX(const uint256 &txid, bool fValid, int nBlock, unsigned int vout, unsigned int propertyId, uint64_t nValue, uint64_t amountPaid, string buyer, string seller);
     void recordMetaDExCancelTX(const uint256 &txidMaster, const uint256 &txidSub, bool fValid, int nBlock, unsigned int propertyId, uint64_t nValue);
     void recordContractDexCancelTX(const uint256 &txidMaster, const uint256 &txidSub, bool fValid, int nBlock, unsigned int propertyId, uint64_t nValue);
 
@@ -381,6 +381,8 @@ public:
     int getNumberOfMetaDExCancels(const uint256 txid);
     int getNumberOfContractDexCancels(const uint256 txid);
     void getMPTransactionAddresses(std::vector<std::string> &vaddrs);
+
+      void getDExTrades(const std::string& address, uint32_t propertyId, UniValue& responseArray, uint64_t count);
 };
 
 /** LevelDB based storage for the trade history. Trades are listed with key "txid1+txid2".
@@ -463,6 +465,7 @@ class CMPTradeList : public CDBBase
   void getUpnInfo(const std::string& address, uint32_t contractId, UniValue& response, bool showVerbose);
   bool kycConsensusHash(CSHA256& hasher);
   bool attConsensusHash(CSHA256& hasher);
+
 };
 
 class CMPSettlementMatchList : public CDBBase

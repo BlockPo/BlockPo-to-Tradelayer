@@ -568,7 +568,7 @@ int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addre
 
     // adding last price
     lastPrice[propertyId] = unitPrice;
-    
+
     // adding numerator of vwap
     tokenvwap[propertyId][block].push_back(std::make_pair(unitPrice, amountPurchased));
 
@@ -616,7 +616,7 @@ int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addre
         if(msc_debug_dex) PrintToLog("AmountPurchased : %d\n",amountPurchased);
 
         bool valid = true;
-        p_txlistdb->recordPaymentTX(txid, valid, block, vout, propertyId, amountPurchased, addressBuyer, addressSeller);
+        p_txlistdb->recordPaymentTX(txid, valid, block, vout, propertyId, amountPurchased, amountPaid, addressBuyer, addressSeller);
 
         rc = 0;
         if(msc_debug_dex) PrintToLog("#######################################################\n");
