@@ -594,6 +594,7 @@ class ChannelsBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         assert_equal(out['result']['channel reserve'], '175.00000000')
 
+
         self.log.info("Checking the expiration of trade channel")
         self.nodes[0].generate(800)
 

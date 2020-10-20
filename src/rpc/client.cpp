@@ -362,6 +362,10 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_gettradehistoryforpair", 1, "arg1" },
     { "tl_gettradehistoryforpair", 2, "arg2" },
 
+
+    { "tl_getchannel_historyforaddress", 2 , "arg2"},
+    { "tl_getchannel_historyforaddress", 3, "arg3" },
+
 };
 
 class CRPCConvertTable

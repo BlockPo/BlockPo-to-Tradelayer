@@ -283,6 +283,21 @@ class RawTransactionBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, False, "getrawtransaction",params)
         # self.log.info(out)
 
+
+        self.log.info("Checking trade for address[0]")
+        params = str([addresses[1], multisig , 10, 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_getchannel_historyforaddress",params)
+        assert_equal(out['error'], None)
+        # self.log.info(out)
+        assert_equal(out['result'][0]['block'], 209)
+        assert_equal(out['result'][0]['selleraddress'], addresses[0])
+        assert_equal(out['result'][0]['propertyid'], 4)
+        assert_equal(out['result'][0]['buyeraddress'], addresses[1])
+        assert_equal(out['result'][0]['channeladdress'], multisig)
+        assert_equal(out['result'][0]['amountbuyed'], '999.95000000')
+        assert_equal(out['result'][0]['amountpaid'], '1.00000000')
+
+
         # addresses[1] has now 1000 tokens
         self.log.info("Checking tokens in receiver address")
         params = str([addresses[1], 4]).replace("'",'"')

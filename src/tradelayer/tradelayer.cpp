@@ -1055,7 +1055,7 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
         assert(update_tally_map(channelAddr, property, -amount_purchased, CHANNEL_RESERVE));
         assert(sChn.updateChannelBal(seller, property, -amount_purchased));
 
-        t_tradelistdb->recordNewInstantLTCTrade(txid, channelAddr, seller , buyer, property, amount_purchased, price, block, idx);
+        p_txlistdb->recordNewInstantLTCTrade(txid, channelAddr, seller , buyer, property, amount_purchased, price, block, idx);
 
         // saving DEx token volume
         MapTokenVolume[block][property] += amount_purchased;
@@ -4298,6 +4298,132 @@ void CMPTxList::getDExTrades(const std::string& address, uint32_t propertyId, Un
   delete it;
 }
 
+
+
+void CMPTxList::getChannelTrades(const std::string& address, const std::string& channel, uint32_t propertyId, UniValue& responseArray, uint64_t count)
+{
+  if (!pdb) return;
+  leveldb::Iterator* it = NewIterator();
+  std::vector<std::pair<int64_t, UniValue> > vecResponse;
+  for(it->SeekToFirst(); it->Valid(); it->Next()) {
+      const std::string strKey = it->key().ToString();
+      const std::string strValue = it->value().ToString();
+      std::vector<std::string> vecValues;
+      if (strKey.size() < 64) continue;
+      int pos = strKey.find("+");
+      std::string strtxid = strKey.substr(pos);
+      boost::split(vecValues, strValue, boost::is_any_of(":"), token_compress_on);
+      if (vecValues.size() != 9) {
+          // PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
+          continue;
+      }
+
+      const int type  = boost::lexical_cast<int>(vecValues[8]);
+      if(type != MSC_TYPE_INSTANT_LTC_TRADE) continue;
+
+      const uint32_t prop = boost::lexical_cast<uint32_t>(vecValues[3]);
+      if (propertyId != 0 && propertyId != prop) continue;
+
+      const std::string& channel = vecValues[0];
+      const std::string& seller = vecValues[1];
+      const std::string& buyer = vecValues[2];
+      const uint64_t amount = boost::lexical_cast<uint64_t>(vecValues[4]);
+      const uint64_t amountPaid = boost::lexical_cast<uint64_t>(vecValues[5]);
+      const int blockNum = boost::lexical_cast<int>(vecValues[6]);
+
+      UniValue trade(UniValue::VOBJ);
+      trade.pushKV("block", blockNum);
+      trade.pushKV("buyertxid", strtxid);
+      trade.pushKV("selleraddress", seller);
+      trade.pushKV("buyeraddress", buyer);
+      trade.pushKV("channeladdress", channel);
+      trade.pushKV("propertyid", (uint64_t) propertyId);
+      trade.pushKV("amountbuyed", FormatMP(propertyId, amount));
+      trade.pushKV("amountpaid", FormatDivisibleMP(amountPaid));
+
+      vecResponse.push_back(std::make_pair(blockNum, trade));
+  }
+
+  // sort the response most recent first before adding to the array
+  std::sort(vecResponse.begin(), vecResponse.end(), CompareTradePair);
+
+  uint64_t elements = 0;
+  std::vector<std::pair<int64_t, UniValue>> aux;
+  for_each(vecResponse.begin(), vecResponse.end(), [&aux, &elements, &count] (const std::pair<int64_t, UniValue> p) { if(elements < count) aux.push_back(p); elements++; });
+
+  //reversing vector and pushing back
+  for (std::vector<std::pair<int64_t, UniValue>>::reverse_iterator it = aux.rbegin(); it != aux.rend(); it++){
+      responseArray.push_back(it->second);
+  }
+
+  delete it;
+}
+
+
+void CMPTradeList::getTokenChannelTrades(const std::string& address, const std::string& channel, uint32_t propertyId, UniValue& responseArray, uint64_t count)
+{
+  //  channelAddr, first, second, propertyIdForSale, amount_forsale, propertyIdDesired, amount_desired, blockNum, blockIndex, TYPE_INSTANT_TRADE);
+  if (!pdb) return;
+  leveldb::Iterator* it = NewIterator();
+  std::vector<std::pair<int64_t, UniValue> > vecResponse;
+  for(it->SeekToFirst(); it->Valid(); it->Next()) {
+      const std::string strKey = it->key().ToString();
+      const std::string strValue = it->value().ToString();
+      std::vector<std::string> vecValues;
+      if (strKey.size() < 64) continue;
+      int pos = strKey.find("+");
+      std::string strtxid = strKey.substr(pos);
+      boost::split(vecValues, strValue, boost::is_any_of(":"), token_compress_on);
+      if (vecValues.size() != 10) {
+          // PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
+          continue;
+      }
+
+      const std::string& type  = vecValues[9];
+
+      // NOTE: improve this type string here (better: int)
+      if(type != TYPE_INSTANT_TRADE) continue;
+
+      const uint32_t prop1 = boost::lexical_cast<uint32_t>(vecValues[3]);
+      const uint32_t prop2 = boost::lexical_cast<uint32_t>(vecValues[5]);
+      if (propertyId != 0 && propertyId != prop1 && propertyId != prop2) continue;
+
+      const std::string& channel = vecValues[0];
+      const std::string& buyer = vecValues[1];
+      const std::string& seller = vecValues[2];
+      const uint64_t amountForSale = boost::lexical_cast<uint64_t>(vecValues[4]);
+      const uint64_t amountDesired = boost::lexical_cast<uint64_t>(vecValues[6]);
+      const int blockNum = boost::lexical_cast<int>(vecValues[7]);
+
+      UniValue trade(UniValue::VOBJ);
+      trade.pushKV("block", blockNum);
+      trade.pushKV("buyertxid", strtxid);
+      trade.pushKV("selleraddress", seller);
+      trade.pushKV("buyeraddress", buyer);
+      trade.pushKV("channeladdress", channel);
+      trade.pushKV("propertyid", (uint64_t) propertyId);
+      trade.pushKV("amountforsale", FormatMP(prop1, amountForSale));
+      trade.pushKV("propertydesired", (uint64_t) propertyId);
+      trade.pushKV("amountdesired", FormatMP(prop2, amountDesired));
+
+      vecResponse.push_back(std::make_pair(blockNum, trade));
+  }
+
+  // sort the response most recent first before adding to the array
+  std::sort(vecResponse.begin(), vecResponse.end(), CompareTradePair);
+
+  uint64_t elements = 0;
+  std::vector<std::pair<int64_t, UniValue>> aux;
+  for_each(vecResponse.begin(), vecResponse.end(), [&aux, &elements, &count] (const std::pair<int64_t, UniValue> p) { if(elements < count) aux.push_back(p); elements++; });
+
+  //reversing vector and pushing back
+  for (std::vector<std::pair<int64_t, UniValue>>::reverse_iterator it = aux.rbegin(); it != aux.rend(); it++){
+      responseArray.push_back(it->second);
+  }
+
+  delete it;
+}
+
 void CMPTradeList::recordNewTrade(const uint256& txid, const std::string& address, uint32_t propertyIdForSale, uint32_t propertyIdDesired, int blockNum, int blockIndex)
 {
     if (!pdb) return;
@@ -4337,7 +4463,7 @@ void CMPTradeList::recordNewInstantTrade(const uint256& txid, const std::string&
     if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __func__, status.ToString());
 }
 
-void CMPTradeList::recordNewInstantLTCTrade(const uint256& txid, const std::string& channelAddr, const std::string& seller, const std::string& buyer, uint32_t propertyIdForSale, uint64_t amount_purchased, uint64_t price, int blockNum, int blockIndex)
+void CMPTxList::recordNewInstantLTCTrade(const uint256& txid, const std::string& channelAddr, const std::string& seller, const std::string& buyer, uint32_t propertyIdForSale, uint64_t amount_purchased, uint64_t price, int blockNum, int blockIndex)
 {
     if (!pdb) return;
     const std::string strValue = strprintf("%s:%s:%s:%d:%d:%d:%d:%d:%s", channelAddr, seller, buyer, propertyIdForSale, amount_purchased, price, blockNum, blockIndex, MSC_TYPE_INSTANT_LTC_TRADE);

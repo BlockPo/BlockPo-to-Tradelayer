@@ -3199,6 +3199,127 @@ UniValue tl_getdextradehistoryforaddress(const JSONRPCRequest& request)
     return response;
 }
 
+UniValue tl_getchannel_historyforaddress(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() < 3 || request.params.size() > 4)
+      throw runtime_error(
+          "tl_getchannel_historyforaddress\n"
+          "\nnRetrieves the history for token/LTC exchange on trade channels, for an address.\n"
+          "\nArguments:\n"
+          "1. address                  (string) address for seller o buyer\n"
+          "2. channel                  (string) address of trade channel\n"
+          "3. count                    (number) number of orders to retrieve\n"
+          "4. propertyid               (number) property id\n"
+
+          "\nResult:\n"
+          "[                                      (array of JSON objects)\n"
+          "  {\n"
+          "    \"block\" : nnnnnn,                        (number) the index of the block that contains the trade match\n"
+          "    \"buyertxid\" : \"hash\",                  (string) the hash of the transaction of the token buyer\n"
+          "    \"selleraddress\" : \"address\",           (string) the Litecoin address of the token seller\n"
+          "    \"buyeraddress\" :  \"address\",           (string) the Litecoin address of the token buyer\n"
+          "    \"channeladdress\" :  \"address\",         (string) the Litecoin address of Trade Channel\n"
+          "    \"propertyid\" : \"n.nnnnnnnn\",           (number) the propertyid of exchanged token\n"
+          "    \"amountbuyed\" : \"n.nnnnnnnn\",          (string) the number of tokens sold in this trade\n"
+          "    \"amountpaid\" : \"n.nnnnnnnn\",           (string) the number of Litecoins traded in exchange\n"
+          "  },\n"
+          "  ...\n"
+          "]\n"
+          "\nExamples:\n"
+          + HelpExampleCli("tl_getchannel_historyforaddress", "\"38CYEC81MhsAPYFUD6MNMZAuPeJRddaDqW\", \"2N2sNJSgXmWft2wtdFFGwhh9thog4mGKTT11000\", 4")
+          + HelpExampleRpc("tl_getchannel_historyforaddress", "\"38CYEC81MhsAPYFUD6MNMZAuPeJRddaDqW\" , \"2N2sNJSgXmWft2wtdFFGwhh9thog4mGKTT11000\", 200, 3")
+        );
+
+    std::string address = ParseAddress(request.params[0]);
+    std::string channel = ParseAddress(request.params[1]);
+    uint64_t count = (request.params.size() > 2) ? request.params[2].get_int64() : 10;
+    uint32_t propertyId = 0;
+
+    if (request.params.size() > 3) {
+        propertyId = ParsePropertyId(request.params[3]);
+        RequireExistingProperty(propertyId);
+    }
+
+    RequireExistingProperty(propertyId);
+
+    // request pair trade history from trade db
+    UniValue response(UniValue::VARR);
+    LOCK(cs_tally);
+    p_txlistdb->getChannelTrades(address, channel, propertyId, response, count);
+
+    return response;
+}
+
+UniValue tl_getchannel_tokenhistoryforaddress(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() < 2 || request.params.size() > 3)
+      throw runtime_error(
+          "tl_getchannel_tokenhistoryforaddress\n"
+          "\nRetrieves the trade history in token/token exchange in  a trade channels , for supplied address.\n"
+          "\nArguments:\n"
+          "1. address       (string) address to retrieve history for\n"
+          "2. channel       (string) trade channel address\n"
+          "3. count         (number) number of orders to retrieve\n"
+          "4. propertyid    (number) filter by property identifier transacted\n"
+
+          "\nResult:\n"
+          "[                                              (array of JSON objects)\n"
+          "  {\n"
+          "    \"txid\" : \"hash\",                               (string) the hex-encoded hash of the transaction of the order\n"
+          "    \"sendingaddress\" : \"address\",                  (string) the Bitcoin address of the trader\n"
+          "    \"ismine\" : true|false,                         (boolean) whether the order involes an address in the wallet\n"
+          "    \"confirmations\" : nnnnnnnnnn,                  (number) the number of transaction confirmations\n"
+          "    \"fee\" : \"n.nnnnnnnn\",                          (string) the transaction fee in bitcoins\n"
+          "    \"blocktime\" : nnnnnnnnnn,                      (number) the timestamp of the block that contains the transaction\n"
+          "    \"valid\" : true|false,                          (boolean) whether the transaction is valid\n"
+          "    \"version\" : n,                                 (number) the transaction version\n"
+          "    \"type_int\" : n,                                (number) the transaction type as number\n"
+          "    \"type\" : \"type\",                               (string) the transaction type as string\n"
+          "    \"propertyidforsale\" : n,                       (number) the identifier of the tokens put up for sale\n"
+          "    \"propertyidforsaleisdivisible\" : true|false,   (boolean) whether the tokens for sale are divisible\n"
+          "    \"amountforsale\" : \"n.nnnnnnnn\",                (string) the amount of tokens initially offered\n"
+          "    \"propertyiddesired\" : n,                       (number) the identifier of the tokens desired in exchange\n"
+          "    \"propertyiddesiredisdivisible\" : true|false,   (boolean) whether the desired tokens are divisible\n"
+          "    \"amountdesired\" : \"n.nnnnnnnn\",                (string) the amount of tokens initially desired\n"
+          "    \"unitprice\" : \"n.nnnnnnnnnnn...\"               (string) the unit price (shown in the property desired)\n"
+          "    \"status\" : \"status\"                            (string) the status of the order (\"open\", \"cancelled\", \"filled\", ...)\n"
+          "    \"canceltxid\" : \"hash\",                         (string) the hash of the transaction that cancelled the order (if cancelled)\n"
+          "    \"matches\": [                                     (array of JSON objects) a list of matched orders and executed trades\n"
+          "      {\n"
+          "        \"txid\" : \"hash\",                               (string) the hash of the transaction that was matched against\n"
+          "        \"block\" : nnnnnn,                                (number) the index of the block that contains this transaction\n"
+          "        \"address\" : \"address\",                         (string) the Litecoin address of the other trader\n"
+          "        \"amountsold\" : \"n.nnnnnnnn\",                   (string) the number of tokens sold in this trade\n"
+          "        \"amountreceived\" : \"n.nnnnnnnn\"                (string) the number of tokens traded in exchange\n"
+          "      },\n"
+          "      ...\n"
+          "    ]\n"
+          "  },\n"
+          "  ...\n"
+          "]\n"
+          "\nExamples:\n"
+          + HelpExampleCli("tl_getchannel_tokenhistoryforaddress", "\"38CYEC81MhsAPYFUD6MNMZAuPeJRddaDqW\", \"38CYEC81MhsAPYFUD6MNMZAuPeJRddaDqW\", \"2N2sNJSgXmWft2wtdFFGwhh9thog4mGKTT11000\", 4")
+          + HelpExampleRpc("tl_getchannel_tokenhistoryforaddress", "\"38CYEC81MhsAPYFUD6MNMZAuPeJRddaDqW\", \"38CYEC81MhsAPYFUD6MNMZAuPeJRddaDqW\", \"2N2sNJSgXmWft2wtdFFGwhh9thog4mGKTT11000\", 4")
+        );
+
+    std::string address = ParseAddress(request.params[0]);
+    std::string channel = ParseAddress(request.params[1]);
+    uint64_t count = (request.params.size() > 2) ? request.params[2].get_int64() : 10;
+    uint32_t propertyId = 0;
+
+    if (request.params.size() > 3) {
+        propertyId = ParsePropertyId(request.params[3]);
+        RequireExistingProperty(propertyId);
+    }
+
+    // request pair trade history from trade db
+    UniValue response(UniValue::VARR);
+    LOCK(cs_tally);
+    t_tradelistdb->getTokenChannelTrades(address, channel, propertyId, response, count);
+
+    return response;
+}
+
 static const CRPCCommand commands[] =
 { //  category                             name                            actor (function)               okSafeMode
   //  ------------------------------------ ------------------------------- ------------------------------ ----------
@@ -3220,6 +3341,7 @@ static const CRPCCommand commands[] =
   { "trade layer (configuration)",  "tl_setautocommit",                  &tl_setautocommit,                 {} },
 #endif
   { "hidden",                       "mscrpc",                            &mscrpc,                           {} },
+  { "trade layer (data retieval)",  "tl_getchannel_historyforaddress",   &tl_getchannel_historyforaddress,  {} },
   { "trade layer (data retieval)",  "tl_getdextradehistoryforaddress",   &tl_getdextradehistoryforaddress,  {} },
   { "trade layer (data retieval)",  "tl_getmdextradehistoryforaddress",  &tl_getmdextradehistoryforaddress, {} },
   { "trade layer (data retieval)",  "tl_getmdextradehistoryforpair",     &tl_getmdextradehistoryforpair,    {} },
