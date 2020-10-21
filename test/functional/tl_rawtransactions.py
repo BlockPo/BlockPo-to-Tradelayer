@@ -307,6 +307,21 @@ class RawTransactionBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['balance'],'999.95000000')
         assert_equal(out['result']['reserve'],'0.00000000')
 
+
+        self.log.info("Checking trade history for address")
+        params = str([addresses[0], multisig, 100, 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_getchannel_historyforaddress",params)
+        assert_equal(out['error'], None)
+        # self.log.info(out)
+        assert_equal(out['result'][0]['block'], 209)
+        assert_equal(out['result'][0]['selleraddress'], addresses[0])
+        assert_equal(out['result'][0]['propertyid'], 4)
+        assert_equal(out['result'][0]['buyeraddress'], addresses[1])
+        assert_equal(out['result'][0]['channeladdress'], multisig)
+        assert_equal(out['result'][0]['amountbuyed'], '999.95000000')
+        assert_equal(out['result'][0]['amountpaid'], '1.00000000')
+
+
         self.stop_nodes()
 
 if __name__ == '__main__':

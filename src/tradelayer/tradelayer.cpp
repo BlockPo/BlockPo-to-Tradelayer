@@ -4162,8 +4162,8 @@ void CMPTradeList::getTradesForPair(uint32_t propertyIdSideA, uint32_t propertyI
     bool propertyIdSideAIsDivisible = isPropertyDivisible(propertyIdSideA);
     bool propertyIdSideBIsDivisible = isPropertyDivisible(propertyIdSideB);
     for (it->SeekToFirst(); it->Valid(); it->Next()) {
-        std::string strKey = it->key().ToString();
-        std::string strValue = it->value().ToString();
+        const std::string strKey = it->key().ToString();
+        const std::string strValue = it->value().ToString();
         std::vector<std::string> vecKeys;
         std::vector<std::string> vecValues;
         uint256 sellerTxid, matchingTxid;
@@ -4177,8 +4177,8 @@ void CMPTradeList::getTradesForPair(uint32_t propertyIdSideA, uint32_t propertyI
             continue;
         }
 
-        uint32_t tradePropertyIdSideA = boost::lexical_cast<uint32_t>(vecValues[2]);
-        uint32_t tradePropertyIdSideB = boost::lexical_cast<uint32_t>(vecValues[3]);
+        const uint32_t tradePropertyIdSideA = boost::lexical_cast<uint32_t>(vecValues[2]);
+        const uint32_t tradePropertyIdSideB = boost::lexical_cast<uint32_t>(vecValues[3]);
 
         if (tradePropertyIdSideA == propertyIdSideA && tradePropertyIdSideB == propertyIdSideB) {
             sellerTxid.SetHex(vecKeys[1]);
@@ -4202,10 +4202,10 @@ void CMPTradeList::getTradesForPair(uint32_t propertyIdSideA, uint32_t propertyI
         rational_t inversePrice(amountSold, amountReceived);
         if (!propertyIdSideAIsDivisible) unitPrice = unitPrice / COIN;
         if (!propertyIdSideBIsDivisible) inversePrice = inversePrice / COIN;
-        std::string unitPriceStr = xToString(unitPrice); // TODO: not here!
-        std::string inversePriceStr = xToString(inversePrice);
+        const std::string unitPriceStr = xToString(unitPrice); // TODO: not here!
+        const std::string inversePriceStr = xToString(inversePrice);
 
-        int64_t blockNum = boost::lexical_cast<int64_t>(vecValues[6]);
+        const int64_t blockNum = boost::lexical_cast<int64_t>(vecValues[6]);
 
         UniValue trade(UniValue::VOBJ);
         trade.pushKV("block", blockNum);
@@ -4311,7 +4311,7 @@ void CMPTxList::getChannelTrades(const std::string& address, const std::string& 
       std::vector<std::string> vecValues;
       if (strKey.size() < 64) continue;
       int pos = strKey.find("+");
-      std::string strtxid = strKey.substr(pos);
+      const std::string strtxid = strKey.substr(pos + 1);
       boost::split(vecValues, strValue, boost::is_any_of(":"), token_compress_on);
       if (vecValues.size() != 9) {
           // PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
@@ -4324,9 +4324,15 @@ void CMPTxList::getChannelTrades(const std::string& address, const std::string& 
       const uint32_t prop = boost::lexical_cast<uint32_t>(vecValues[3]);
       if (propertyId != 0 && propertyId != prop) continue;
 
-      const std::string& channel = vecValues[0];
+      const std::string& chn = vecValues[0];
+
+      if (channel != chn) continue;
+
       const std::string& seller = vecValues[1];
       const std::string& buyer = vecValues[2];
+
+      if (address != seller && address != buyer) continue;
+
       const uint64_t amount = boost::lexical_cast<uint64_t>(vecValues[4]);
       const uint64_t amountPaid = boost::lexical_cast<uint64_t>(vecValues[5]);
       const int blockNum = boost::lexical_cast<int>(vecValues[6]);
@@ -4362,7 +4368,6 @@ void CMPTxList::getChannelTrades(const std::string& address, const std::string& 
 
 void CMPTradeList::getTokenChannelTrades(const std::string& address, const std::string& channel, uint32_t propertyId, UniValue& responseArray, uint64_t count)
 {
-  //  channelAddr, first, second, propertyIdForSale, amount_forsale, propertyIdDesired, amount_desired, blockNum, blockIndex, TYPE_INSTANT_TRADE);
   if (!pdb) return;
   leveldb::Iterator* it = NewIterator();
   std::vector<std::pair<int64_t, UniValue> > vecResponse;
@@ -4371,8 +4376,10 @@ void CMPTradeList::getTokenChannelTrades(const std::string& address, const std::
       const std::string strValue = it->value().ToString();
       std::vector<std::string> vecValues;
       if (strKey.size() < 64) continue;
+
       int pos = strKey.find("+");
-      std::string strtxid = strKey.substr(pos);
+      const std::string strtxid = strKey.substr(pos + 1);
+
       boost::split(vecValues, strValue, boost::is_any_of(":"), token_compress_on);
       if (vecValues.size() != 10) {
           // PrintToLog("TRADEDB error - unexpected number of tokens in value (%s)\n", strValue);
@@ -4395,15 +4402,16 @@ void CMPTradeList::getTokenChannelTrades(const std::string& address, const std::
       const uint64_t amountDesired = boost::lexical_cast<uint64_t>(vecValues[6]);
       const int blockNum = boost::lexical_cast<int>(vecValues[7]);
 
+
       UniValue trade(UniValue::VOBJ);
       trade.pushKV("block", blockNum);
       trade.pushKV("buyertxid", strtxid);
       trade.pushKV("selleraddress", seller);
       trade.pushKV("buyeraddress", buyer);
       trade.pushKV("channeladdress", channel);
-      trade.pushKV("propertyid", (uint64_t) propertyId);
+      trade.pushKV("propertyid", (uint64_t) prop1);
       trade.pushKV("amountforsale", FormatMP(prop1, amountForSale));
-      trade.pushKV("propertydesired", (uint64_t) propertyId);
+      trade.pushKV("propertydesired", (uint64_t) prop2);
       trade.pushKV("amountdesired", FormatMP(prop2, amountDesired));
 
       vecResponse.push_back(std::make_pair(blockNum, trade));
