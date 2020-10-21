@@ -468,6 +468,7 @@ class CMPTradeList : public CDBBase
   bool kycConsensusHash(CSHA256& hasher);
   bool attConsensusHash(CSHA256& hasher);
   void getTokenChannelTrades(const std::string& address, const std::string& channel, uint32_t propertyId, UniValue& responseArray, uint64_t count);
+  void getChannelTradesForPair(const std::string& channel, uint32_t propertyIdA, uint32_t propertyIdB, UniValue& responseArray, uint64_t count);
 };
 
 class CMPSettlementMatchList : public CDBBase

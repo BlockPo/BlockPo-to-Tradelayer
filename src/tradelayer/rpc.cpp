@@ -3320,6 +3320,56 @@ UniValue tl_getchannel_tokenhistoryforaddress(const JSONRPCRequest& request)
     return response;
 }
 
+UniValue tl_getchannel_historyforpair(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() < 3 || request.params.size() > 4)
+      throw runtime_error(
+          "tl_getchannel_historyforpair\n"
+          "\nnRetrieves the history of token/token  on a given trade channel for the specified market.\n"
+          "\nArguments:\n"
+          "1. channel                  (string) channel address\n"
+          "2. propertyid               (number) property id\n"
+          "3. propertyidsecond         (number) property desired id\n"
+          "4. count                    (number) number of orders to retrieve\n"
+
+          "\nResult:\n"
+          "[                                      (array of JSON objects)\n"
+          "  {\n"
+          "    \"block\" : nnnnnn,                        (number) the index of the block that contains the trade match\n"
+          "    \"unitprice\" : \"n.nnnnnnnnnnn...\" ,     (string) the unit price used to execute this trade (received/sold)\n"
+          "    \"inverseprice\" : \"n.nnnnnnnnnnn...\",   (string) the inverse unit price (sold/received)\n"
+          "    \"sellertxid\" : \"hash\",                 (string) the hash of the transaction of the seller\n"
+          "    \"address\" : \"address\",                 (string) the Litecoin address of the seller\n"
+          "    \"amountsold\" : \"n.nnnnnnnn\",           (string) the number of tokens sold in this trade\n"
+          "    \"amountreceived\" : \"n.nnnnnnnn\",       (string) the number of tokens traded in exchange\n"
+          "    \"matchingtxid\" : \"hash\",               (string) the hash of the transaction that was matched against\n"
+          "    \"matchingaddress\" : \"address\"          (string) the Litecoin address of the other party of this trade\n"
+          "  },\n"
+          "  ...\n"
+          "]\n"
+          "\nExamples:\n"
+          + HelpExampleCli("tl_getchannel_historyforpair", "\"38CYEC81MhsAPYFUD6MNMZAuPeJRddaDqW\", 1 12 500")
+          + HelpExampleRpc("tl_getchannel_historyforpair", "\"38CYEC81MhsAPYFUD6MNMZAuPeJRddaDqW\", 1, 12, 500")
+        );
+
+     // obtain property identifiers for pair & check valid parameters
+     std::string channel = ParseAddress(request.params[0]);
+     uint32_t propertyIdSideA = ParsePropertyId(request.params[1]);
+     uint32_t propertyIdSideB = ParsePropertyId(request.params[2]);
+     uint64_t count = (request.params.size() > 3) ? request.params[3].get_int64() : 10;
+
+     RequireExistingProperty(propertyIdSideA);
+     RequireExistingProperty(propertyIdSideB);
+     RequireDifferentIds(propertyIdSideA, propertyIdSideB);
+
+     // request pair trade history from trade db
+     UniValue response(UniValue::VARR);
+     LOCK(cs_tally);
+     t_tradelistdb->getChannelTradesForPair(channel, propertyIdSideA, propertyIdSideB, response, count);
+
+    return response;
+}
+
 static const CRPCCommand commands[] =
 { //  category                             name                            actor (function)               okSafeMode
   //  ------------------------------------ ------------------------------- ------------------------------ ----------
@@ -3341,6 +3391,7 @@ static const CRPCCommand commands[] =
   { "trade layer (configuration)",  "tl_setautocommit",                        &tl_setautocommit,                     {} },
 #endif
   { "hidden",                       "mscrpc",                                  &mscrpc,                               {} },
+  { "trade layer (data retieval)",  "tl_getchannel_historyforpair",            &tl_getchannel_historyforpair,         {} },
   { "trade layer (data retieval)",  "tl_getchannel_tokenhistoryforaddress",    &tl_getchannel_tokenhistoryforaddress, {} },
   { "trade layer (data retieval)",  "tl_getchannel_historyforaddress",         &tl_getchannel_historyforaddress,      {} },
   { "trade layer (data retieval)",  "tl_getdextradehistoryforaddress",         &tl_getdextradehistoryforaddress,      {} },

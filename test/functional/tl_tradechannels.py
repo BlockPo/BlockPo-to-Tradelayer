@@ -611,6 +611,23 @@ class ChannelsBasicsTest (BitcoinTestFramework):
         assert_equal(out['result'][0]['amountdesired'], '2000.00000000')
 
 
+        self.log.info("Checking trade history for pair")
+        params = str([multisig, 4, 5, 100]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_getchannel_historyforpair",params)
+        assert_equal(out['error'], None)
+        # self.log.info(out)
+        assert_equal(out['result'][0]['block'], 223)
+        assert_equal(out['result'][0]['buyeraddress'], addresses[0])
+        assert_equal(out['result'][0]['selleraddress'], addresses[1])
+        assert_equal(out['result'][0]['channeladdress'], multisig)
+        assert_equal(out['result'][0]['propertyid'], 4)
+        assert_equal(out['result'][0]['propertydesired'], 5)
+        assert_equal(out['result'][0]['amountforsale'], '1000.00000000')
+        assert_equal(out['result'][0]['amountdesired'], '2000.00000000')
+        assert_equal(out['result'][0]['unitprice'], '2.00000000000000000000000000000000000000000000000000')
+
+        exit()
+
         self.log.info("Checking the expiration of trade channel")
         self.nodes[0].generate(800)
 
