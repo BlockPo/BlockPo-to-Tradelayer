@@ -371,9 +371,10 @@ public:
 
     bool isMPinBlockRange(int, int, bool);
 
-    void recordPaymentTX(const uint256 &txid, bool fValid, int nBlock, unsigned int vout, unsigned int propertyId, uint64_t nValue, string buyer, string seller);
+    void recordPaymentTX(const uint256 &txid, bool fValid, int nBlock, unsigned int vout, unsigned int propertyId, uint64_t nValue, uint64_t amountPaid, string buyer, string seller);
     void recordMetaDExCancelTX(const uint256 &txidMaster, const uint256 &txidSub, bool fValid, int nBlock, unsigned int propertyId, uint64_t nValue);
     void recordContractDexCancelTX(const uint256 &txidMaster, const uint256 &txidSub, bool fValid, int nBlock, unsigned int propertyId, uint64_t nValue);
+    void recordNewInstantLTCTrade(const uint256& txid, const std::string& channelAddr, const std::string& seller, const std::string& buyer, uint32_t propertyIdForSale, uint64_t amount_purchased, uint64_t price, int blockNum, int blockIndex);
 
     uint256 findMetaDExCancel(const uint256 txid);
 
@@ -381,6 +382,10 @@ public:
     int getNumberOfMetaDExCancels(const uint256 txid);
     int getNumberOfContractDexCancels(const uint256 txid);
     void getMPTransactionAddresses(std::vector<std::string> &vaddrs);
+
+    void getDExTrades(const std::string& address, uint32_t propertyId, UniValue& responseArray, uint64_t count);
+    void getChannelTrades(const std::string& address, const std::string& channel, uint32_t propertyId, UniValue& responseArray, uint64_t count);
+
 };
 
 /** LevelDB based storage for the trade history. Trades are listed with key "txid1+txid2".
@@ -412,7 +417,6 @@ class CMPTradeList : public CDBBase
   void recordNewWithdrawal(const uint256& txid, const std::string& channelAddress, const std::string& sender, uint32_t propertyId, uint64_t amountToWithdrawal, int blockNum, int blockIndex);
   void recordNewChannel(const std::string& channelAddress, const std::string& frAddr, const std::string& secAddr, int blockNum, int blockIndex);
   void recordNewInstantTrade(const uint256& txid, const std::string& channelAddr, const std::string& first, const std::string& second, uint32_t propertyIdForSale, uint64_t amount_forsale, uint32_t propertyIdDesired, uint64_t amount_desired,int blockNum, int blockIndex);
-  void recordNewInstantLTCTrade(const uint256& txid, const std::string& channelAddr, const std::string& seller, const std::string& buyer, uint32_t propertyIdForSale, uint64_t amount_purchased, uint64_t price, int blockNum, int blockIndex);
   void recordNewTransfer(const uint256& txid, const std::string& sender, const std::string& receiver, int blockNum, int blockIndex);
   void recordNewInstContTrade(const uint256& txid, const std::string& firstAddr, const std::string& secondAddr, uint32_t property, uint64_t amount_forsale, uint64_t price ,int blockNum, int blockIndex);
   void recordNewIdRegister(const uint256& txid, const std::string& address, const std::string& name, const std::string& website, int blockNum, int blockIndex);
@@ -463,6 +467,8 @@ class CMPTradeList : public CDBBase
   void getUpnInfo(const std::string& address, uint32_t contractId, UniValue& response, bool showVerbose);
   bool kycConsensusHash(CSHA256& hasher);
   bool attConsensusHash(CSHA256& hasher);
+  void getTokenChannelTrades(const std::string& address, const std::string& channel, uint32_t propertyId, UniValue& responseArray, uint64_t count);
+  void getChannelTradesForPair(const std::string& channel, uint32_t propertyIdA, uint32_t propertyIdB, UniValue& responseArray, uint64_t count);
 };
 
 class CMPSettlementMatchList : public CDBBase
