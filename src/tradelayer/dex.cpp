@@ -638,7 +638,7 @@ int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addre
         // delete the Offer object if there is nothing in its Reserves -- everything got puchased and paid for
         if (0 == reserveSell && 0 == reserveAccept)
         {
-            if(msc_debug_dex) PrintToLog(" 0 == reserveSell && 0 == reserveAccept true\n");
+            if(msc_debug_dex) PrintToLog("0 == reserveSell && 0 == reserveAccept true\n");
             DEx_offerDestroy(addressSeller, propertyId);
         }
 

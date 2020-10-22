@@ -622,7 +622,7 @@ void creatingVestingTokens(int block)
    const uint32_t propertyIdVesting = _my_sps->putSP(newSP);
    assert(propertyIdVesting > 0);
 
-   if(msc_debug_vesting) PrintToLog("%s(): admin_addrs : %s, propertyIdVesting: %d \n",__func__,getVestingAdmin(), propertyIdVesting);
+   if(msc_debug_vesting) PrintToLog("%s(): admin_addrs : %s, propertyIdVesting: %d \n",__func__, getVestingAdmin(), propertyIdVesting);
 
 
    assert(update_tally_map(getVestingAdmin(), propertyIdVesting, totalVesting, BALANCE));
@@ -634,7 +634,6 @@ void creatingVestingTokens(int block)
 
 /**
  * Returns the encoding class, used to embed a payload.
- *    Class A (dex payments)
  *    Class D (op-return compressed)
  */
 int mastercore::GetEncodingClass(const CTransaction& tx, int nBlock)
@@ -926,7 +925,7 @@ static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, 
                         op_return_script_data.insert(op_return_script_data.end(), vstrPushes.begin(), vstrPushes.end());
 
                         if (msc_debug_parser_data) {
-                            PrintToLog("Class C transaction detected: %s parsed to %s at vout %d\n", wtx.GetHash().GetHex(), vstrPushes[0], n);
+                            PrintToLog("Class D transaction detected: %s parsed to %s at vout %d\n", wtx.GetHash().GetHex(), vstrPushes[0], n);
                         }
                     }
                 }
@@ -1365,8 +1364,8 @@ int input_mp_offers_string(const std::string& s)
     const int64_t minFee = boost::lexical_cast<int64_t>(vstr[i++]);
     const uint8_t blocktimelimit = boost::lexical_cast<unsigned int>(vstr[i++]); // lexical_cast can't handle char!
     const uint256 txid = uint256S(vstr[i++]);
-    const uint8_t subaction = boost::lexical_cast<uint8_t>(vstr[i++]);
-    const uint8_t option = boost::lexical_cast<uint8_t>(vstr[i++]);
+    const uint8_t subaction = boost::lexical_cast<unsigned int>(vstr[i++]);
+    const uint8_t option = boost::lexical_cast<unsigned int>(vstr[i++]);
     // TODO: should this be here? There are usually no sanity checks..
       // if (TL_PROPERTY_BTC != prop_desired) return -1;
 
@@ -1546,7 +1545,7 @@ int input_tokenvwap_string(const std::string& s)
   std::vector<std::string> vstr;
   boost::split(vstr, s, boost::is_any_of("+-"), boost::token_compress_on);
   const uint32_t propertyId = boost::lexical_cast<uint32_t>(vstr[0]);
-  const int block = boost::lexical_cast<int64_t>(vstr[1]);
+  const int block = boost::lexical_cast<int>(vstr[1]);
 
   std::vector<std::string> vpair;
   boost::split(vpair, vstr[2], boost::is_any_of(","), boost::token_compress_on);
@@ -1585,7 +1584,7 @@ int input_activechannels_string(const std::string& s)
         boost::split(adReg, v, boost::is_any_of("-"), boost::token_compress_on);
         const std::string& address = adReg[0];
         std::vector<std::string> reg;
-        boost::split(reg, adReg[1], boost::is_any_of(":"), boost::token_compress_on);;
+        boost::split(reg, adReg[1], boost::is_any_of(":"), boost::token_compress_on);
         const uint32_t property = boost::lexical_cast<uint32_t>(reg[0]);
         const int64_t amount = boost::lexical_cast<int64_t>(reg[1]);
         chn.setBalance(address, property, amount);
@@ -1789,6 +1788,7 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
         vestingAddresses.clear();
         inputLineFunc = input_vestingaddresses_string;
         break;
+
     case FILE_TYPE_LTC_VOLUME:
         MapLTCVolume.clear();
         inputLineFunc = input_mp_ltcvolume_string;
@@ -2286,8 +2286,6 @@ static int write_mp_tokenvwap(std::ofstream& file, CHash256& hasher)
 {
     for (const auto &mp : tokenvwap)
     {
-
-        // decompose the key for address
         const uint32_t& propertyId = mp.first;
         const auto &blcmap = mp.second;
 
@@ -2974,7 +2972,7 @@ bool VestingTokens(int block)
     // NOTE : this is used to simplify the testing
     const int64_t xAxis = (isNonMainNet()) ? globalVolumeALL_LTC * 100 : globalVolumeALL_LTC;
 
-    if(msc_debug_vesting) PrintToLog("%s(): globalVolumeALL_LTC: %d \n",__func__,xAxis);
+    if(msc_debug_vesting) PrintToLog("%s(): globalVolumeALL_LTC: %d \n",__func__, xAxis);
 
     if (xAxis <= 10000 * COIN)
     {
@@ -3141,7 +3139,7 @@ bool TxValidNodeReward(std::string ConsensusHash, std::string Tx)
   std::string LastTwoCharConsensus = ConsensusHash.substr(ConsensusHash.size() - NLast);
   std::string LastTwoCharTx = Tx.substr(Tx.size() - NLast);
 
-  PrintToLog("\nLastTwoCharConsensus = %s\t LastTwoCharTx = %s\n", LastTwoCharConsensus,LastTwoCharTx);
+  PrintToLog("\nLastTwoCharConsensus = %s\t LastTwoCharTx = %s\n", LastTwoCharConsensus, LastTwoCharTx);
 
   return ((LastTwoCharConsensus == LastTwoCharTx) ? true : false);
 }
@@ -3298,7 +3296,6 @@ int mastercore::WalletTxBuilder(const std::string& senderAddress, const std::str
       CScript scriptPubKey = GetScriptForDestination(DecodeDestination(receiverAddress));
       vecSend.push_back(std::make_pair(scriptPubKey, 0 < referenceAmount ? referenceAmount : GetDustThld(scriptPubKey)));
 
-      // int64_t result = GetDustThld(scriptPubKey);
   }
 
   // Now we have what we need to pass to the wallet to create the transaction, perform some checks first
@@ -3784,12 +3781,12 @@ void CMPTxList::recordPaymentTX(const uint256 &txid, bool fValid, int nBlock, un
     const string value = strprintf("%u:%d:%u:%lu", fValid ? 1:0, nBlock, type, numberOfPayments);
     Status status;
 
-    if(msc_debug_record_payment_tx) PrintToLog("DEXPAYDEBUG : Writing master record %s(%s, valid=%s, block= %d, type= %d, number of payments= %lu)\n", __FUNCTION__, txid.ToString(), fValid ? "YES":"NO", nBlock, type, numberOfPayments);
+    if(msc_debug_record_payment_tx) PrintToLog("DEXPAYDEBUG : Writing master record %s(%s, valid=%s, block= %d, type= %d, number of payments= %lu)\n", __func__, txid.ToString(), fValid ? "YES":"NO", nBlock, type, numberOfPayments);
 
     if (pdb)
     {
         status = pdb->Put(writeoptions, key, value);
-        if(msc_debug_record_payment_tx) PrintToLog("DEXPAYDEBUG : %s(): %s, line %d, file: %s\n", __FUNCTION__, status.ToString(), __LINE__, __FILE__);
+        if(msc_debug_record_payment_tx) PrintToLog("DEXPAYDEBUG : %s(): %s, line %d, file: %s\n", __func__, status.ToString(), __LINE__, __FILE__);
     }
 
     // Step 4 - Write sub-record with payment details
@@ -3803,7 +3800,7 @@ void CMPTxList::recordPaymentTX(const uint256 &txid, bool fValid, int nBlock, un
     if (pdb)
     {
         subStatus = pdb->Put(writeoptions, subKey, subValue);
-        if(msc_debug_record_payment_tx) PrintToLog("DEXPAYDEBUG : %s(): %s, line %d, file: %s\n", __FUNCTION__, subStatus.ToString(), __LINE__, __FILE__);
+        if(msc_debug_record_payment_tx) PrintToLog("DEXPAYDEBUG : %s(): %s, line %d, file: %s\n", __func__, subStatus.ToString(), __LINE__, __FILE__);
      }
 
  }
@@ -3900,8 +3897,6 @@ bool mastercore::getValidMPTX(const uint256 &txid, std::string *reason, int *blo
 {
     string result;
     int validity = 0;
-
-    if (msc_debug_txdb) PrintToLog("%s()\n", __FUNCTION__);
 
     if (!p_txlistdb) return false;
 
@@ -4548,7 +4543,7 @@ void CMPTradeList::recordNewTrade(const uint256& txid, const std::string& addres
 void CMPTradeList::recordNewChannel(const std::string& channelAddress, const std::string& frAddr, const std::string& secAddr, int blockNum, int blockIndex)
 {
     if (!pdb) return;
-    const std::string strValue = strprintf("%s:%s:%d:%d:%s:%s",frAddr, secAddr, blockNum, blockIndex, ACTIVE_CHANNEL, TYPE_CREATE_CHANNEL);
+    const std::string strValue = strprintf("%s:%s:%d:%d:%s:%s", frAddr, secAddr, blockNum, blockIndex, ACTIVE_CHANNEL, TYPE_CREATE_CHANNEL);
     Status status = pdb->Put(writeoptions, channelAddress, strValue);
     ++nWritten;
 
@@ -4705,19 +4700,19 @@ bool CMPTradeList::checkKYCRegister(const std::string& address, int& kyc_id)
 
         const std::string& regAddr = vstr[0];
 
-        if(msc_debug_check_kyc_register) PrintToLog("%s: regAddr: %s, address: %s\n", __func__,regAddr,address);
+        if(msc_debug_check_kyc_register) PrintToLog("%s: regAddr: %s, address: %s\n", __func__, regAddr, address);
 
 
         if(address != regAddr) continue;
 
         status = true;
 
-        if(msc_debug_check_kyc_register) PrintToLog("%s: Address Found! %s\n", __func__,address);
+        if(msc_debug_check_kyc_register) PrintToLog("%s: Address Found! %s\n", __func__, address);
 
         // returning the kyc_id
         kyc_id = boost::lexical_cast<int>(vstr[5]);
 
-        if(msc_debug_check_kyc_register) PrintToLog("%s: kyc_id %s\n", __func__,kyc_id);
+        if(msc_debug_check_kyc_register) PrintToLog("%s: kyc_id %s\n", __func__, kyc_id);
 
         break;
 
@@ -4759,18 +4754,18 @@ bool CMPTradeList::checkAttestationReg(const std::string& address, int& kyc_id)
 
         const std::string& regAddr = vstr[1];
 
-        if(msc_debug_check_attestation_reg) PrintToLog("%s(): regAddr: %s, address: %s\n", __func__,regAddr,address);
+        if(msc_debug_check_attestation_reg) PrintToLog("%s(): regAddr: %s, address: %s\n", __func__, regAddr, address);
 
         if(address != regAddr) continue;
 
         status = true;
 
-        if(msc_debug_check_attestation_reg) PrintToLog("%s(): Address Found! %s\n", __func__,address);
+        if(msc_debug_check_attestation_reg) PrintToLog("%s(): Address Found! %s\n", __func__, address);
 
         // returning the kyc_id
         kyc_id = boost::lexical_cast<int>(vstr[4]);
 
-        if(msc_debug_check_attestation_reg) PrintToLog("%s(): kyc_id %s\n", __func__,kyc_id);
+        if(msc_debug_check_attestation_reg) PrintToLog("%s(): kyc_id %d\n", __func__,kyc_id);
 
         break;
 
@@ -5144,8 +5139,6 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   /********************************************************************/
   const string key =  sblockNum2 + "+" + txid1.ToString() + "+" + txid2.ToString(); //order with block of taker.
   const string value = strprintf("%s:%s:%lu:%lu:%lu:%d:%d:%s:%s:%d:%d:%d:%s:%s:%d:%d:%d", address1, address2, effective_price, amount_maker, amount_taker, blockNum1, blockNum2, s_maker0, s_taker0, lives_s0, lives_b0, property_traded, txid1.ToString(), txid2.ToString(), nCouldBuy0,amountpold, amountpnew);
-
-  PrintToLog("%s(): value: %s\n",__func__,value);
 
   const string line0 = gettingLineOut(address1, s_maker0, lives_s0, address2, s_taker0, lives_b0, nCouldBuy0, effective_price);
   const string line1 = gettingLineOut(address1, s_maker1, lives_s1, address2, s_taker1, lives_b1, nCouldBuy1, effective_price);
@@ -6030,12 +6023,12 @@ int64_t mastercore::pos_margin(uint32_t contractId, const std::string& address, 
         } else if (shorts > 0 && longs == 0){
             maintMargin = (ConvertTo256(shorts) * ConvertTo256(margin_requirement)) / ConvertTo256(COIN);
         } else {
-            if(msc_debug_pos_margin) PrintToLog("%s: there's no position avalaible\n", __func__);
+            if(msc_debug_pos_margin) PrintToLog("%s(): there's no position avalaible\n", __func__);
             return -2;
         }
 
         int64_t maint_margin = ConvertTo64(maintMargin);
-        if(msc_debug_pos_margin) PrintToLog("%s: maint margin: %d\n", __func__, maint_margin);
+        if(msc_debug_pos_margin) PrintToLog("%s(): maint margin: %d\n", __func__, maint_margin);
         return maint_margin;
 }
 
@@ -6060,7 +6053,7 @@ bool mastercore::makeWithdrawals(int Block)
             const uint32_t propertyId = wthd.propertyId;
             const int64_t amount = static_cast<int64_t>(wthd.amount);
 
-            if(msc_debug_make_withdrawal) PrintToLog("%s: withdrawal: actual block: %d, deadline: %d, address: %s, propertyId: %d, amount: %d, txid: %s \n", __func__, Block, deadline, address, propertyId, amount, wthd.txid.ToString());
+            if(msc_debug_make_withdrawal) PrintToLog("%s(): withdrawal: actual block: %d, deadline: %d, address: %s, propertyId: %d, amount: %d, txid: %s \n", __func__, Block, deadline, address, propertyId, amount, wthd.txid.ToString());
 
             // updating tally map
             assert(update_tally_map(address, propertyId, amount, BALANCE));
@@ -6123,8 +6116,6 @@ bool mastercore::closeChannels(int Block)
             const uint64_t first_rem = chn.getRemaining(chn.getFirst(), propertyId);
             const uint64_t second_rem = chn.getRemaining(chn.getSecond(), propertyId);
             const uint64_t balance = static_cast<uint64_t>(getMPbalance(chn.getMultisig(), propertyId, CHANNEL_RESERVE));
-
-            PrintToLog("%s() first_rem: %d, second_rem: %d, balance: %d, propertyId : %d\n",__func__, first_rem, second_rem, balance, propertyId);
 
             assert(balance == first_rem + second_rem);
 
@@ -7009,7 +7000,7 @@ bool mastercore::sanityChecks(const std::string& sender, int& aBlock)
 
     const int timeFrame = aBlock - params.MSC_VESTING_BLOCK;
 
-    if(msc_debug_sanity_checks) PrintToLog("%s(): timeFrame: %d\n", __func__,timeFrame);
+    if(msc_debug_sanity_checks) PrintToLog("%s(): timeFrame: %d\n", __func__, timeFrame);
 
     // is this the first transaction from address in the list?
     auto it = find_if(vestingAddresses.begin(), vestingAddresses.end(), [&sender, &timeFrame, &params] (const std::string address) { return (sender == address && timeFrame > params.ONE_YEAR);});
@@ -7309,11 +7300,10 @@ bool mastercore::channelSanityChecks(const std::string& sender, const std::strin
 {
     if(!t_tradelistdb->checkChannelAddress(receiver))
     {
-        PrintToLog("%s(): creating channel : %s\n", __func__, receiver);
         createChannel(sender, receiver, propertyId, amount_commited, block, tx_idx);
         return true;
     } else {
-        PrintToLog("%s(): going to tryAddSecond\n", __func__);
+
         return (t_tradelistdb->tryAddSecond(sender, receiver, propertyId, amount_commited));
     }
 }
@@ -7340,9 +7330,6 @@ bool mastercore::transferAll(const std::string& sender, const std::string& recei
         if (remaining == 0) {
             continue;
         }
-
-        PrintToLog("%s(): remaining : %d, propertyId : %d\n",__func__, remaining, propertyId);
-
 
         assert(update_tally_map(sender, propertyId, -remaining, CHANNEL_RESERVE));
         assert(update_tally_map(receiver, propertyId, remaining, CHANNEL_RESERVE));
@@ -7406,8 +7393,6 @@ int64_t mastercore::increaseLTCVolume(uint32_t propertyId, uint32_t propertyDesi
         const arith_uint256 aTotal = (ConvertTo256(propertyDesiredAmount) * ConvertTo256(vwap)) / ConvertTo256(COIN);
         total = ConvertTo64(aTotal);
 
-        PrintToLog("%s(): vwap: %d, total: %d\n",__func__, vwap, total);
-
         // increment cumulative LTC volume by tokens traded * the 12-block VWAP
         if (total > 0) MapLTCVolume[aBlock][propertyDesired] += total;
 
@@ -7426,9 +7411,6 @@ bool mastercore::Token_LTC_Fees(int64_t& buyer_amountGot, uint32_t propertyId)
 
     // taking fee
     buyer_amountGot -= cacheFee;
-
-    PrintToLog("%s(): buyer_amountGot: %d, cacheFee: %d\n",__func__, buyer_amountGot, cacheFee);
-
 
     if(cacheFee > 0)
     {

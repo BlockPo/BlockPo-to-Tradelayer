@@ -103,7 +103,6 @@ extern bool msc_debug_ltc_volume;
 extern bool msc_debug_mdex_volume;
 extern bool msc_debug_update_status;
 extern bool msc_debug_get_channel_addr;
-extern bool msc_debug_get_remaining;
 extern bool msc_debug_make_withdrawal;
 extern bool msc_debug_check_kyc_register;
 extern bool msc_debug_update_id_register;

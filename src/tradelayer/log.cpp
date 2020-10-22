@@ -74,7 +74,6 @@ bool msc_debug_accept_offerbtc                  = 0;
 bool msc_debug_set_oracle                       = 0;
 bool msc_debug_send_pegged                      = 0;
 bool msc_debug_commit_channel                   = 0;
-bool msc_debug_withdrawal_from_channel          = 1;
 bool msc_debug_instant_trade                    = 0;
 bool msc_debug_contract_instant_trade           = 0;
 bool msc_create_channel                         = 0;
@@ -95,7 +94,6 @@ bool msc_debug_ltc_volume                       = 0;
 bool msc_debug_mdex_volume                      = 0;
 bool msc_debug_update_status                    = 0;
 bool msc_debug_get_channel_addr                 = 0;
-bool msc_debug_get_remaining                    = 1;
 bool msc_debug_make_withdrawal                  = 0;
 bool msc_debug_check_kyc_register               = 0;
 bool msc_debug_update_id_register               = 0;
@@ -114,6 +112,7 @@ bool msc_debug_settlement_algorithm_fifo        = 1;
 bool msc_debug_clearing_operator_fifo           = 0;
 bool msc_debug_counting_lives_longshorts        = 0;
 bool msc_debug_calculate_pnl_forghost           = 1;
+bool msc_debug_withdrawal_from_channel          = 1;
 
 /**
  * LogPrintf() has been broken a couple of times now
