@@ -1719,7 +1719,7 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
   int (*inputLineFunc)(const string &) = nullptr;
 
 
-  CSHA256 hasher;
+  CHash256 hasher;
   switch (what)
   {
     case FILETYPE_BALANCES:
@@ -1804,8 +1804,8 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
         inputLineFunc = input_tokenvwap_string;
         break;
 
-        default:
-            return -1;
+    default:
+        return -1;
     }
 
     if (msc_debug_persistence)
@@ -1859,7 +1859,7 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
 
 
     if (verifyHash && res == 0) {
-        // generate and wite the double hash of all the contents written
+        // generate and write the double hash of all the contents written
         uint256 hash;
         hasher.Finalize(hash.begin());
 
@@ -2329,7 +2329,7 @@ static int write_mp_active_channels(std::ofstream& file, CHash256& hasher)
         lineOut.append("+");
         addBalances(chnObj.balances, lineOut);
         // add the line to the hash
-      hasher.Write((unsigned char*)lineOut.c_str(), lineOut.length());
+        hasher.Write((unsigned char*)lineOut.c_str(), lineOut.length());
         // write the line
         file << lineOut << std::endl;
 
@@ -2476,12 +2476,13 @@ static int write_state_file(CBlockIndex const *pBlockIndex, int what)
     case FILE_TYPE_TOKEN_LTC_PRICE:
         result = write_mp_token_ltc_prices(file, hasher);
         break;
+
     case FILE_TYPE_TOKEN_VWAP:
         result = write_mp_tokenvwap(file, hasher);
         break;
     }
 
-    // generate and wite the double hash of all the contents written
+    // generate and write the double hash of all the contents written
 
     uint256 hash;
     hasher.Finalize(hash.begin());
@@ -3684,11 +3685,11 @@ void CMPTxList::recordTX(const uint256 &txid, bool fValid, int nBlock, unsigned 
     if (p_txlistdb->exists(txid)) PrintToLog("LEVELDB TX OVERWRITE DETECTION - %s\n", txid.ToString());
 
     const string key = txid.ToString();
-    const string value = strprintf("%u:%d:%d:%u:%lu", fValid ? 1:0, fValid ? 0:interp_ret, nBlock, type, nValue);
+    const string value = strprintf("%d:%d:%d:%u:%d", fValid ? 1:0, fValid ? 0:interp_ret, nBlock, type, nValue);
     Status status;
 
-      PrintToLog("%s(%s, valid=%s, reason=%d, block= %d, type= %d, value= %lu)\n",
-       __func__, txid.ToString(), fValid ? "YES":"NO", fValid ? 0 : interp_ret, nBlock, type, nValue);
+      // PrintToLog("%s(%s, valid=%s, reason=%d, block= %d, type= %d, value= %lu)\n",
+      //  __func__, txid.ToString(), fValid ? "YES":"NO", fValid ? 0 : interp_ret, nBlock, type, nValue);
 
     if (pdb)
     {
