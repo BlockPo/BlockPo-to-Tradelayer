@@ -63,7 +63,7 @@ bool AddressToPubKey(const std::string& key, CPubKey& pubKey)
     }
 
     if (!pubKey.IsFullyValid()) {
-        PrintToLog("%s: ERROR: invalid redemption key %s\n", __func__, key);
+        PrintToLog("%s(): ERROR: invalid redemption key %s\n", __func__, key);
         return false;
     }
 
@@ -140,7 +140,7 @@ static CAmount GetEconomicThreshold(const CTxOut& txOut)
     CFeeRate estimatedFeeRate(GetEstimatedFeePerKb());
     CAmount nThresholdFees = GetDustThreshold(txOut,estimatedFeeRate) / 3;
 
-    if (msc_debug_wallettxs) PrintToLog("%s(): nThresholdDust: %d, nThresholdFees: %d\n",__func__,nThresholdDust,nThresholdFees);
+    if (msc_debug_wallettxs) PrintToLog("%s(): nThresholdDust: %d, nThresholdFees: %d\n",__func__, nThresholdDust, nThresholdFees);
 
     return std::max(nThresholdDust, nThresholdFees);
 }
@@ -273,7 +273,7 @@ int64_t SelectCoins(const std::string& fromAddress, CCoinControl& coinControl, i
 
             if (txOut.nValue < GetEconomicThreshold(txOut)) {
                 if (msc_debug_wallettxs)
-                PrintToLog("%s: output value below economic threshold: %s:%d, value: %d\n",
+                PrintToLog("%s(): output value below economic threshold: %s:%d, value: %d\n",
                       __func__, txid.GetHex(), n, txOut.nValue);
                 continue;
             }
