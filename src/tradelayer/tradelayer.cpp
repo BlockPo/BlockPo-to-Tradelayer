@@ -1100,7 +1100,7 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
                  continue;
              }
 
-             if (msc_debug_handle_instant) PrintToLog("%s(): destination address: %s, dest address: %s \n", __func__, address, receiver);
+             if (msc_debug_handle_instant) PrintToLog("%s(): destination address: %s, dest address: %s\n", __func__, address, receiver);
 
              nvalue += tx.vout[n].nValue;
 
@@ -1196,10 +1196,10 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
          double dProgress = 100.0 * (nCurrent - nFirst) / (nLast - nFirst);
          int64_t nRemainingTime = estimateRemainingTime(dProgress);
          std::string strProgress = strprintf(
-                 "Still scanning.. at block %d of %d. Progress: %.2f %%, about %s remaining..\n",
+                 "Still scanning.. at block %d of %d. Progress: %.2f percent, about %s remaining..\n",
                  nCurrentBlock, nLastBlock, dProgress, remainingTimeAsString(nRemainingTime));
          std::string strProgressUI = strprintf(
-                 "Still scanning.. at block %d of %d.\nProgress: %.2f %% (about %s remaining)",
+                 "Still scanning.. at block %d of %d.\nProgress: %.2f percent, (about %s remaining)",
                  nCurrentBlock, nLastBlock, dProgress, remainingTimeAsString(nRemainingTime));
 
          PrintToLog(strProgress);
@@ -1252,6 +1252,7 @@ static int msc_initial_scan(int nFirstBlock)
 
         CBlockIndex* pblockindex = chainActive[nBlock];
         if (nullptr == pblockindex) break;
+
         std::string strBlockHash = pblockindex->GetBlockHash().GetHex();
 
         if (msc_debug_exo) PrintToLog("%s(%d; max=%d):%s, line %d, file: %s\n",
@@ -1869,7 +1870,7 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
         }
     }
 
-  PrintToLog("%s(%s), loaded lines= %d, res= %d\n", __func__, filename, lines, res);
+    PrintToLog("%s(%s), loaded lines= %d, res= %d\n", __func__, filename, lines, res);
 
 
     return res;
@@ -2641,7 +2642,7 @@ int mastercore_init()
   }
 
   PrintToLog("\nInitializing Trade Layer\n");
-  PrintToLog("Startup time: %s\n", FormatISO8601Date(GetTime()));
+  // PrintToLog("Startup time: %s\n", FormatISO8601Date(GetTime()));
   // PrintToLog("Build date: %s, based on commit: %s\n", BuildDate(), BuildCommit());
 
   InitDebugLogLevels();
@@ -2768,7 +2769,7 @@ int mastercore_shutdown()
     mastercoreInitialized = 0;
 
     PrintToLog("\nTrade Layer shutdown completed\n");
-    PrintToLog("Shutdown time: %s\n", FormatISO8601Date(GetTime()));
+    // PrintToLog("Shutdown time: %s\n", FormatISO8601Date(GetTime()));
 
     return 0;
 }
@@ -3002,7 +3003,7 @@ bool VestingTokens(int block)
 
     if (realVesting == 0)
     {
-        if(msc_debug_vesting) PrintToLog("%s(): 0 percent vesting in this block: %d\n",__func__,block);
+        if(msc_debug_vesting) PrintToLog("%s(): 0 percent vesting in this block: %d\n",__func__, block);
         return false;
     }
 
@@ -3117,7 +3118,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
         else if (interp_ret != PKT_ERROR - 2)
         {
             bool bValid = (0 <= interp_ret);
-            p_txlistdb->recordTX(tx.GetHash(), bValid, nBlock, mp_obj.getType(), mp_obj.getNewAmount(), interp_ret);
+            if (interp_ret != 1 && interp_ret != 2) p_txlistdb->recordTX(tx.GetHash(), bValid, nBlock, mp_obj.getType(), mp_obj.getNewAmount(), interp_ret);
             p_TradeTXDB->RecordTransaction(tx.GetHash(), idx);
 
         }
@@ -3239,10 +3240,10 @@ inline int64_t clamp_function(int64_t diff, int64_t nclamp)
 }
 
 /**
- * Determines, whether it is valid to use a Class C transaction for a given payload size.
+ * Determines, whether it is valid to use a Class D transaction for a given payload size.
  *
  * @param nDataSize The length of the payload
- * @return True, if Class C is enabled and the payload is small enough
+ * @return True, if Class D is enabled and the payload is small enough
  */
 bool mastercore::UseEncodingClassC(size_t nDataSize)
 {
@@ -3444,29 +3445,35 @@ void CMPTxList::LoadActivations(int blockHeight)
              PrintToLog("ERROR: While loading activation transaction %s: failed to retrieve block hash.\n", hash.GetHex());
              continue;
          }
+
          CBlockIndex* pBlockIndex = GetBlockIndex(blockHash);
          if (nullptr == pBlockIndex) {
              PrintToLog("ERROR: While loading activation transaction %s: failed to retrieve block index.\n", hash.GetHex());
              continue;
          }
+
          int blockHeight = pBlockIndex->nHeight;
          if (0 != ParseTransaction(*(wtx), blockHeight, 0, mp_obj)) {
              PrintToLog("ERROR: While loading activation transaction %s: failed ParseTransaction.\n", hash.GetHex());
              continue;
          }
+
          if (!mp_obj.interpret_Transaction()) {
              PrintToLog("ERROR: While loading activation transaction %s: failed interpret_Transaction.\n", hash.GetHex());
              continue;
          }
+
          if (TL_MESSAGE_TYPE_ACTIVATION != mp_obj.getType()) {
              PrintToLog("ERROR: While loading activation transaction %s: levelDB type mismatch, not an activation.\n", hash.GetHex());
              continue;
          }
+
          mp_obj.unlockLogic();
          if (0 != mp_obj.interpretPacket()) {
              PrintToLog("ERROR: While loading activation transaction %s: non-zero return from interpretPacket\n", hash.GetHex());
              continue;
          }
+
      }
      delete it;
      CheckLiveActivations(blockHeight);
@@ -3957,10 +3964,10 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
         // NOTE: The blockNum parameter is inclusive, so deleteAboveBlock(1000) will delete records in block 1000 and above.
         p_txlistdb->isMPinBlockRange(pBlockIndex->nHeight, reorgRecoveryMaxHeight, true);
         reorgRecoveryMaxHeight = 0;
-
         nWaterlineBlock = ConsensusParams().GENESIS_BLOCK - 1;
 
         const int best_state_block = load_most_relevant_state();
+
         if (best_state_block < 0)
         {
             // unable to recover easily, remove stale stale state bits and reparse from the beginning.
@@ -3984,6 +3991,7 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
     // handle any features that go live with this block
     CheckLiveActivations(pBlockIndex->nHeight);
 
+
     const CConsensusParams &params = ConsensusParams();
     vestingActivationBlock = params.MSC_VESTING_BLOCK;
 
@@ -4006,7 +4014,7 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
     /****************************************************************************/
     // Calling The Settlement Algorithm
     // NOTE: now we are checking all contracts
-    CallingSettlement();
+    // CallingSettlement();
 
     /*****************************************************************************/
     // feeCacheBuy:
@@ -4017,6 +4025,7 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
 
     /*****************************************************************************/
     //CallingExpiration(pBlockIndex);
+    
    return 0;
 }
 
@@ -5766,7 +5775,7 @@ bool mastercore::marginMain(int Block)
 
         //  if upnls is < 0, we need to cancel orders or liquidate contracts.
         for(std::map<std::string, double>::iterator it2 = upnls.begin(); it2 != upnls.end(); ++it2)
-	  {
+	      {
             const std::string address = it2->first;
 
             int64_t upnl = static_cast<int64_t>(it2->second * COIN);
@@ -6291,13 +6300,11 @@ bool Channel::updateChannelBal(const std::string& address, uint32_t propertyId, 
 void Channel::setBalance(const std::string& sender, uint32_t propertyId, uint64_t amount)
 {
     balances[sender][propertyId] = amount;
-    PrintToLog("%s() amount setted: %d\n",__func__, balances[sender][propertyId]);
 }
 
 void Channel::addAmount(const std::string& sender, uint32_t propertyId, uint64_t amount)
 {
     balances[sender][propertyId] += amount;
-    PrintToLog("%s() amount updated: %d\n",__func__, balances[sender][propertyId]);
 }
 
 uint64_t CMPTradeList::addClosedWithrawals(const std::string& channelAddr, const std::string& receiver, uint32_t propertyId)
@@ -7277,7 +7284,6 @@ bool CMPTradeList::tryAddSecond(const std::string& candidate, const std::string&
         PrintToLog("%s(): channel is closed\n",__func__);
         return false;
     }
-
 
     const int blockNum = boost::lexical_cast<int>(vstr[2]);
     const int blockIndex = boost::lexical_cast<int>(vstr[3]);

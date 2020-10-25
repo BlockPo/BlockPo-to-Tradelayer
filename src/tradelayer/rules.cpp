@@ -348,8 +348,8 @@ bool ActivateFeature(uint16_t featureId, int activationBlock, uint32_t minClient
     // check activation block is allowed
 
     if(msc_debug_activate_feature){
-        PrintToLog("%s(): activationBlock %d, transactionBlock + params.MIN_ACTIVATION_BLOCKS : %d\n",__func__,activationBlock,(transactionBlock + params.MIN_ACTIVATION_BLOCKS));
-        PrintToLog("%s(): transactionBlock + params.MAX_ACTIVATION_BLOCKS : %d\n",__func__,(transactionBlock + params.MAX_ACTIVATION_BLOCKS));
+        PrintToLog("%s(): activationBlock %d, transactionBlock + params.MIN_ACTIVATION_BLOCKS : %d\n",__func__, activationBlock, (transactionBlock + params.MIN_ACTIVATION_BLOCKS));
+        PrintToLog("%s(): transactionBlock + params.MAX_ACTIVATION_BLOCKS : %d\n",__func__, (transactionBlock + params.MAX_ACTIVATION_BLOCKS));
     }
 
     if ((activationBlock < (transactionBlock + params.MIN_ACTIVATION_BLOCKS)) ||
@@ -558,12 +558,12 @@ bool IsTransactionTypeAllowed(int txBlock, uint16_t txType, uint16_t version)
         const TransactionRestriction& entry = *it;
 
         if (entry.txType != txType || entry.txVersion != version) {
-            if(msc_debug_is_transaction_type_allowed) PrintToLog("%s(): entry.txType: %d, entry.txVersion : %d\n",__func__,entry.txType, entry.txVersion);
+            if(msc_debug_is_transaction_type_allowed) PrintToLog("%s(): entry.txType: %d, entry.txVersion : %d\n",__func__, entry.txType, entry.txVersion);
             continue;
         }
 
         if (txBlock >= entry.activationBlock) {
-            if(msc_debug_is_transaction_type_allowed) PrintToLog("%s(): TRUE!, txBlock: %d; entry.activationBlock: %d\n",__func__,txBlock, entry.activationBlock);
+            if(msc_debug_is_transaction_type_allowed) PrintToLog("%s(): TRUE!, txBlock: %d; entry.activationBlock: %d\n",__func__, txBlock, entry.activationBlock);
             return true;
         }
     }
