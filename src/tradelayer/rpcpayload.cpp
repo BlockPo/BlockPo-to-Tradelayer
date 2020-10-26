@@ -694,7 +694,7 @@ UniValue tl_createpayload_sendvesting(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
-			         "tl_createpayload_sendvesting \"fromaddress\" \"toaddress\" propertyid \"amount\" ( \"referenceamount\" )\n"
+			         "tl_createpayload_sendvesting \"amount\" \n"
 
 			          "\nCreate and broadcast a send vesting transaction.\n"
 
@@ -705,8 +705,8 @@ UniValue tl_createpayload_sendvesting(const JSONRPCRequest& request)
 			          "\"hash\"                  (string) the hex-encoded transaction hash\n"
 
 			          "\nExamples:\n"
-			          + HelpExampleCli("tl_createpayload_sendvesting", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\" \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\" 1 \"100.0\"")
-			          + HelpExampleRpc("tl_createpayload_sendvesting", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\", \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\", 1, \"100.0\"")
+			          + HelpExampleCli("tl_createpayload_sendvesting", "\"100.0\"")
+			          + HelpExampleRpc("tl_createpayload_sendvesting", "\"100.0\"")
 			  );
 
     // obtain parameters & info
