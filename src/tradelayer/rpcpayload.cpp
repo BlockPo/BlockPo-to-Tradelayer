@@ -858,8 +858,8 @@ UniValue tl_createpayload_pnl_update(const JSONRPCRequest& request)
 			"\"hash\"                  (string) the hex-encoded transaction hash\n"
 
 			"\nExamples:\n"
-			+ HelpExampleCli("tl_createpayload_pnl_update", "\" 1 \"15.0\" \"564218\"")
-			+ HelpExampleRpc("tl_createpayload_pnl_update", "\", 1 \"15.0\" \"512522\"")
+			+ HelpExampleCli("tl_createpayload_pnl_update", "\"1\" \"15.0\" \"564218\"")
+			+ HelpExampleRpc("tl_createpayload_pnl_update", "\"1\", \"15.0\", \"512522\"")
 			);
 
   // obtain parameters & info
@@ -924,7 +924,7 @@ UniValue tl_createpayload_change_oracleadm(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
-            "tl_createpayload_change_oracleadm \"contractname\" \n"
+            "tl_createpayload_change_oracleadm \"contractname (or id)\" \n"
 
             "\n Payload to change the admin on record of the Oracle Future Contract.\n"
 
@@ -952,7 +952,7 @@ UniValue tl_createpayload_create_oraclecontract(const JSONRPCRequest& request)
 {
   if (request.fHelp || request.params.size() != 8)
     throw runtime_error(
-			"tl_createpayload_create_oraclecontract \"address\" type previousid \"category\" \"subcategory\" \"name\" \"url\" \"data\" propertyiddesired tokensperunit deadline ( earlybonus issuerpercentage )\n"
+			"tl_createpayload_create_oraclecontract \"name\" \"blocksuntilexpiration\" \"notionalsize\" \"collateralcurrency\" \"marginrequirement\" \"backupaddress\" \"quoting\" \"kyc\" \n"
 
 			"Payload for create new Oracle Future Contract."
 
@@ -974,8 +974,8 @@ UniValue tl_createpayload_create_oraclecontract(const JSONRPCRequest& request)
 			"\"hash\"                  (string) the hex-encoded transaction hash\n"
 
 			"\nExamples:\n"
-			+ HelpExampleCli("tl_createpayload_create_oraclecontract", "2 1 0 \"Companies\" \"Bitcoin Mining\" \"Quantum Miner\" \"\" \"\" 2 \"100\" 1483228800 30 2 4461 100 1 25")
-			+ HelpExampleRpc("tl_createpayload_create_oraclecontract", "2, 1, 0, \"Companies\", \"Bitcoin Mining\", \"Quantum Miner\", \"\", \"\", 2, \"100\", 1483228800, 30, 2, 4461, 100, 1, 25")
+			+ HelpExampleCli("tl_createpayload_create_oraclecontract", "\"Contract1\" \"200\" \"1\" \"3\" \"0.1\" \"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\" \"0\" \"[1,5,4]\"")
+			+ HelpExampleRpc("tl_createpayload_create_oraclecontract" ,"\"Contract1\", \"200\", \"1\", \"3\", \"0.1\", \"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\", \"0\", \"[1,5,4]\"")
 			);
 
       std::string name = ParseText(request.params[0]);
@@ -1011,8 +1011,8 @@ UniValue tl_createpayload_setoracle(const JSONRPCRequest& request)
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
 
             "\nExamples:\n"
-            + HelpExampleCli("tl_createpayload_setoracle", "\"Contract 1\"")
-            + HelpExampleRpc("tl_createpayload_setoracle", "\"Contract 1\"")
+            + HelpExampleCli("tl_createpayload_setoracle", "\"Contract 1\"\"956.3\" \"452.1\" \"754.6\" ")
+            + HelpExampleRpc("tl_createpayload_setoracle", "\"Contract 1\", \"956.3\", \"452.1 \", \"754.6\" ")
         );
 
     // obtain parameters & info
@@ -1088,7 +1088,7 @@ UniValue tl_createpayload_update_id_registration(const JSONRPCRequest& request)
 {
     if (request.fHelp)
         throw runtime_error(
-            "tl_createpayload_update_id_registration \n"
+            "tl_createpayload_update_id_registration \"hash\" \n"
 
             "\nPayload to update the address on id registration.\n"
 
@@ -1113,7 +1113,7 @@ UniValue tl_createpayload_attestation(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() > 1)
         throw runtime_error(
-            "tl_createpayload_attestation \n"
+            "tl_createpayload_attestation \"hash\" \n"
 
             "\nPayload of attestation tx.\n"
 
@@ -1124,8 +1124,8 @@ UniValue tl_createpayload_attestation(const JSONRPCRequest& request)
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
 
             "\nExamples:\n"
-            + HelpExampleCli("tl_createpayload_attestation", "\"2507f85b9992c0d518f56c8e1a7cd43e1282c898\" , \"\"")
-            + HelpExampleRpc("tl_createpayload_attestation", "\"2507f85b9992c0d518f56c8e1a7cd43e1282c898\",  \"\"")
+            + HelpExampleCli("tl_createpayload_attestation", "\"2507f85b9992c0d518f56c8e1a7cd43e1282c898\"")
+            + HelpExampleRpc("tl_createpayload_attestation", "\"2507f85b9992c0d518f56c8e1a7cd43e1282c898\"")
         );
 
 
@@ -1142,12 +1142,12 @@ UniValue tl_createpayload_commit_tochannel(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 2)
         throw runtime_error(
-            "tl_createpayload_commit_tochannel \n"
+            "tl_createpayload_commit_tochannel \"propertyid\" \"amount\"\n"
 
             "\nPayload of commit to channel tx.\n"
 
             "\nArguments:\n"
-            "1. propertyId             (number, required) the propertyId of token commited into the channel\n"
+            "1. propertyid             (number, required) the propertyid of token commited into the channel\n"
             "2. amount                 (number, required) amount of tokens traded in the channel\n"
             "\nResult:\n"
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
@@ -1170,7 +1170,7 @@ UniValue tl_createpayload_withdrawal_fromchannel(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 2)
         throw runtime_error(
-            "tl_createpayload_withdrawal_fromchannel \n"
+            "tl_createpayload_withdrawal_fromchannel \"propertyId\" \"amount\" \n"
 
             "\nPayload of withdraw from channel tx.\n"
 

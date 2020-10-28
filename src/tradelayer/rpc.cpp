@@ -357,7 +357,7 @@ UniValue tl_setautocommit(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
-            "tl_setautocommit flag\n"
+            "tl_setautocommit \"flag\" \n"
             "\nSets the global flag that determines whether transactions are automatically committed and broadcast.\n"
             "\nArguments:\n"
             "1. flag                 (boolean, required) the flag\n"
@@ -563,7 +563,7 @@ UniValue tl_getbalance(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 2)
         throw runtime_error(
-            "tl_getbalance \"address\" propertyid\n"
+            "tl_getbalance \"address\" \"propertyid\" \n"
             "\nReturns the token balance for a given address and property.\n"
             "\nArguments:\n"
             "1. address              (string, required) the address\n"
@@ -574,8 +574,8 @@ UniValue tl_getbalance(const JSONRPCRequest& request)
             "  \"reserved\" : \"n.nnnnnnnn\"   (string) the amount reserved by sell offers and accepts\n"
             "}\n"
             "\nExamples:\n"
-            + HelpExampleCli("tl_getbalance", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" 1")
-            + HelpExampleRpc("tl_getbalance", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", 1")
+            + HelpExampleCli("tl_getbalance", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" \"1\"")
+            + HelpExampleRpc("tl_getbalance", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", \"1\"")
         );
 
     std::string address = ParseAddress(request.params[0]);
@@ -604,8 +604,8 @@ UniValue tl_getunvested(const JSONRPCRequest& request)
             "  \"unvested\" : \"n.nnnnnnnn\",   (string) the unvested balance of ALLs in the address\n"
             "}\n"
             "\nExamples:\n"
-            + HelpExampleCli("tl_getunvested", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" ")
-            + HelpExampleRpc("tl_getunvested", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", ")
+            + HelpExampleCli("tl_getunvested", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\"")
+            + HelpExampleRpc("tl_getunvested", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\"")
         );
 
     const std::string address = ParseAddress(request.params[0]);
@@ -623,7 +623,7 @@ UniValue tl_getreserve(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 2)
         throw runtime_error(
-            "tl_getmargin \"address\" propertyid\n"
+            "tl_getmargin \"address\" \"propertyid\" \n"
             "\nReturns the token reserve account using in futures contracts, for a given address and property.\n"
             "\nArguments:\n"
             "1. address              (string, required) the address\n"
@@ -634,8 +634,8 @@ UniValue tl_getreserve(const JSONRPCRequest& request)
             "  \"reserved\" : \"n.nnnnnnnn\"   (string) the amount reserved by sell offers and accepts\n"
             "}\n"
             "\nExamples:\n"
-            + HelpExampleCli("tl_getmargin", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" 1")
-            + HelpExampleRpc("tl_getmargin", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", 1")
+            + HelpExampleCli("tl_getmargin", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" \"1\"")
+            + HelpExampleRpc("tl_getmargin", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", \"1\"")
         );
 
     const std::string address = ParseAddress(request.params[0]);
@@ -664,8 +664,8 @@ UniValue tl_get_channelreserve(const JSONRPCRequest& request)
             "  \"channel reserve\" : \"n.nnnnnnnn\",   (string) the available balance of the address\n"
             "}\n"
             "\nExamples:\n"
-            + HelpExampleCli("tl_get_channelreserve", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" 1")
-            + HelpExampleRpc("tl_get_channelreserve", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", 1")
+            + HelpExampleCli("tl_get_channelreserve", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" \"1\"")
+            + HelpExampleRpc("tl_get_channelreserve", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", \"1\"")
         );
 
     const std::string address = ParseAddress(request.params[0]);
@@ -695,8 +695,8 @@ UniValue tl_get_channelremaining(const JSONRPCRequest& request)
             "  \"channel reserve\" : \"n.nnnnnnnn\",   (string) the available balance for single address\n"
             "}\n"
             "\nExamples:\n"
-            + HelpExampleCli("tl_get_channelreserve", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", \"Qdj12J6FZgaY34ZNx12pVpTeF9NQdmpGzj\" 1")
-            + HelpExampleRpc("tl_get_channelreserve", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", \"Qdj12J6FZgaY34ZNx12pVpTeF9NQdmpGzj\", 1")
+            + HelpExampleCli("tl_get_channelreserve", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", \"Qdj12J6FZgaY34ZNx12pVpTeF9NQdmpGzj\" \"1\"")
+            + HelpExampleRpc("tl_get_channelreserve", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", \"Qdj12J6FZgaY34ZNx12pVpTeF9NQdmpGzj\", \"1\"")
         );
 
     const std::string address = ParseAddress(request.params[0]);
@@ -752,7 +752,7 @@ UniValue tl_getallbalancesforid(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
-            "tl_getallbalancesforid propertyid\n"
+            "tl_getallbalancesforid \"propertyid\" \n"
             "\nReturns a list of token balances for a given currency or property identifier.\n"
             "\nArguments:\n"
             "1. propertyid           (number, required) the property identifier\n"
@@ -766,8 +766,8 @@ UniValue tl_getallbalancesforid(const JSONRPCRequest& request)
             "  ...\n"
             "]\n"
             "\nExamples:\n"
-            + HelpExampleCli("tl_getallbalancesforid", "1")
-            + HelpExampleRpc("tl_getallbalancesforid", "1")
+            + HelpExampleCli("tl_getallbalancesforid", "\"1\"")
+            + HelpExampleRpc("tl_getallbalancesforid", "\"1\"")
         );
 
     uint32_t propertyId = ParsePropertyId(request.params[0]);
@@ -809,7 +809,7 @@ UniValue tl_getallbalancesforaddress(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
-            "tl_getallbalancesforaddress \"address\"\n"
+            "tl_getallbalancesforaddress \"address\" \n"
             "\nReturns a list of all token balances for a given address.\n"
             "\nArguments:\n"
             "1. address              (string, required) the address\n"
@@ -859,7 +859,7 @@ UniValue tl_getproperty(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
-            "tl_getproperty propertyid\n"
+            "tl_getproperty \"propertyid\" \n"
             "\nReturns details for about the tokens or smart property to lookup.\n"
             "\nArguments:\n"
             "1. propertyid           (number, required) the identifier of the tokens or property\n"
@@ -876,8 +876,8 @@ UniValue tl_getproperty(const JSONRPCRequest& request)
             "  \"totaltokens\" : \"n.nnnnnnnn\"   (string) the total number of tokens in existence\n"
             "}\n"
             "\nExamples:\n"
-            + HelpExampleCli("tl_getproperty", "3")
-            + HelpExampleRpc("tl_getproperty", "3")
+            + HelpExampleCli("tl_getproperty", "\"3\"")
+            + HelpExampleRpc("tl_getproperty", "\"3\"")
         );
 
     uint32_t propertyId = ParsePropertyId(request.params[0]);
@@ -952,7 +952,7 @@ UniValue tl_listproperties(const JSONRPCRequest& request)
 {
   if (request.fHelp)
     throw runtime_error(
-			"tl_listproperties\n"
+			"tl_listproperties \"verbose\"\n"
       "\nArguments:\n"
       "1. verbose                      (number, optional) 1 if more info is needed\n"
 			"\nLists all tokens or smart properties.\n"
@@ -968,8 +968,8 @@ UniValue tl_listproperties(const JSONRPCRequest& request)
 			"  ...\n"
 			"]\n"
 			"\nExamples:\n"
-			+ HelpExampleCli("tl_listproperties", "1")
-			+ HelpExampleRpc("tl_listproperties", "1")
+			+ HelpExampleCli("tl_listproperties", "\"1\"")
+			+ HelpExampleRpc("tl_listproperties", "\"1\"")
 			);
 
   uint8_t showVerbose = (request.params.size() == 1) ? ParseBinary(request.params[0]) : 0;
@@ -1159,7 +1159,7 @@ UniValue tl_getgrants(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
-            "tl_getgrants propertyid\n"
+            "tl_getgrants \"propertyid\" \n"
             "\nReturns information about granted and revoked units of managed tokens.\n"
             "\nArguments:\n"
             "1. propertyid           (number, required) the identifier of the managed tokens to lookup\n"
@@ -1183,8 +1183,8 @@ UniValue tl_getgrants(const JSONRPCRequest& request)
             "  ]\n"
             "}\n"
             "\nExamples:\n"
-            + HelpExampleCli("tl_getgrants", "31")
-            + HelpExampleRpc("tl_getgrants", "31")
+            + HelpExampleCli("tl_getgrants", "\"31\"")
+            + HelpExampleRpc("tl_getgrants", "\"31\"")
         );
 
     uint32_t propertyId = ParsePropertyId(request.params[0]);
@@ -1241,7 +1241,7 @@ UniValue tl_listblocktransactions(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
-            "tl_listblocktransactions index\n"
+            "tl_listblocktransactions \"index\" \n"
             "\nLists all Trade Layer transactions in a block.\n"
             "\nArguments:\n"
             "1. index                (number, required) the block height or block index\n"
@@ -1252,8 +1252,8 @@ UniValue tl_listblocktransactions(const JSONRPCRequest& request)
             "]\n"
 
             "\nExamples:\n"
-            + HelpExampleCli("tl_listblocktransactions", "279007")
-            + HelpExampleRpc("tl_listblocktransactions", "279007")
+            + HelpExampleCli("tl_listblocktransactions", "\"279007\"")
+            + HelpExampleRpc("tl_listblocktransactions", "\"279007\"")
         );
 
     int blockHeight = request.params[0].get_int();
@@ -1292,7 +1292,7 @@ UniValue tl_gettransaction(const JSONRPCRequest& request)
 {
   if (request.fHelp || request.params.size() != 1)
     throw runtime_error(
-			"tl_gettransaction \"txid\"\n"
+			"tl_gettransaction \"txid\" \n"
 			"\nGet detailed information about an Trade Layer transaction.\n"
 			"\nArguments:\n"
 			"1. txid                 (string, required) the hash of the transaction to lookup\n"
@@ -1329,7 +1329,7 @@ UniValue tl_listtransactions(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() > 5)
         throw runtime_error(
-            "tl_listtransactions ( \"address\" count skip startblock endblock )\n"
+            "tl_listtransactions (\"address\" \"count\" \"skip\" \"startblock\" \"endblock\") \n"
             "\nList wallet transactions, optionally filtered by an address and block boundaries.\n"
             "\nArguments:\n"
             "1. address              (string, optional) address filter (default: \"*\")\n"
@@ -1672,7 +1672,7 @@ UniValue tl_getfullposition(const JSONRPCRequest& request)
 {
   if (request.fHelp || request.params.size() != 2) {
     throw runtime_error(
-			"tl_getfullposition \"address\" propertyid\n"
+			"tl_getfullposition \"address\" \"propertyid\" \n"
 			"\nReturns the full position for the future contract for a given address and property.\n"
 			"\nArguments:\n"
 			"1. address              (string, required) the address\n"
@@ -1690,8 +1690,8 @@ UniValue tl_getfullposition(const JSONRPCRequest& request)
 			"  \"negativepnl\" : \"n.nnnnnnnn\"  (string) long position of the address\n"
 			"}\n"
 			"\nExamples:\n"
-			+ HelpExampleCli("tl_getfullposition", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" 1")
-			+ HelpExampleRpc("tl_getfullposition", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", 1")
+			+ HelpExampleCli("tl_getfullposition", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" \"1\"")
+			+ HelpExampleRpc("tl_getfullposition", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", \"1\"")
 			);
   }
 
@@ -1753,7 +1753,7 @@ UniValue tl_getposition(const JSONRPCRequest& request)
 {
   if (request.fHelp || request.params.size() != 2)
     throw runtime_error(
-			"tl_getbalance \"address\" propertyid\n"
+			"tl_getbalance \"address\" \"propertyid\" \n"
 			"\nReturns the position for the future contract for a given address and property.\n"
 			"\nArguments:\n"
 			"1. address              (string, required) the address\n"
@@ -1764,8 +1764,8 @@ UniValue tl_getposition(const JSONRPCRequest& request)
 			"  \"longPosition\" : \"n.nnnnnnnn\"  (string) long position of the address\n"
 			"}\n"
 			"\nExamples:\n"
-			+ HelpExampleCli("tl_getposition", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" 1")
-			+ HelpExampleRpc("tl_getposition", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", 1")
+			+ HelpExampleCli("tl_getposition", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" \"1\"")
+			+ HelpExampleRpc("tl_getposition", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", \"1\"")
 			);
 
   const std::string address = ParseAddress(request.params[0]);
@@ -1783,7 +1783,7 @@ UniValue tl_getcontract_reserve(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 2)
         throw runtime_error(
-            "tl_getcotract_reserve \"address\" propertyid\n"
+            "tl_getcotract_reserve \"address\" \"propertyid\" \n"
             "\nReturns the reserves contracts for the future contract for a given address and property.\n"
             "\nArguments:\n"
             "1. address              (string, required) the address\n"
@@ -1793,8 +1793,8 @@ UniValue tl_getcontract_reserve(const JSONRPCRequest& request)
             "  \"reserve\" : \"n.nnnnnnnn\",   (string) amount of contracts in reserve for the address \n"
             "}\n"
             "\nExamples:\n"
-            + HelpExampleCli("tl_getcotract_reserve", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" 1")
-            + HelpExampleRpc("tl_getcotract_reserve", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", 1")
+            + HelpExampleCli("tl_getcotract_reserve", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" \"1\"")
+            + HelpExampleRpc("tl_getcotract_reserve", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", \"1\"")
         );
 
     const std::string address = ParseAddress(request.params[0]);
@@ -1813,11 +1813,11 @@ UniValue tl_getorderbook(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() < 1 || request.params.size() > 2)
         throw runtime_error(
-            "tl_getorderbook propertyid ( propertyid )\n"
+            "tl_getorderbook propertyidA ( propertyidB )\n"
             "\nList active offers on the distributed token exchange.\n"
             "\nArguments:\n"
-            "1. propertyid           (number, required) filter orders by property identifier for sale\n"
-            "2. propertyid           (number, optional) filter orders by property identifier desired\n"
+            "1. propertyidA           (number, required) filter orders by property identifier for sale\n"
+            "2. propertyidB           (number, optional) filter orders by property identifier desired\n"
             "\nResult:\n"
             "[                                              (array of JSON objects)\n"
             "  {\n"
@@ -1838,8 +1838,8 @@ UniValue tl_getorderbook(const JSONRPCRequest& request)
             "  ...\n"
             "]\n"
             "\nExamples:\n"
-            + HelpExampleCli("tl_getorderbook", "2")
-            + HelpExampleRpc("tl_getorderbook", "2")
+            + HelpExampleCli("tl_getorderbook", "\"2\"")
+            + HelpExampleRpc("tl_getorderbook", "\"2\"")
 			    );
 
 
@@ -1883,7 +1883,7 @@ UniValue tl_getcontract_orderbook(const JSONRPCRequest& request)
 {
   if (request.fHelp || request.params.size() != 2)
     throw runtime_error(
-			"tl_getcontract_orderbook contractid tradingaction\n"
+			"tl_getcontract_orderbook \"contractid\" \"tradingaction\" \n"
 			"\nList active offers on the distributed futures contracts exchange.\n"
 			"\nArguments:\n"
 			"1. name or id           (string, required) filter orders by contract name or identifier for sale\n"
@@ -1908,8 +1908,8 @@ UniValue tl_getcontract_orderbook(const JSONRPCRequest& request)
 			"  ...\n"
 			"]\n"
 			"\nExamples:\n"
-			+ HelpExampleCli("tl_getcontract_orderbook", "2" "1")
-			+ HelpExampleRpc("tl_getcontract_orderbook", "2" "1")
+			+ HelpExampleCli("tl_getcontract_orderbook", "\"2\"" "\"1\"")
+			+ HelpExampleRpc("tl_getcontract_orderbook", "\"2\"" "\"1\"")
 			);
       uint32_t contractId = ParseNameOrId(request.params[0]);
       uint8_t tradingaction = ParseContractDexAction(request.params[1]);
@@ -1939,7 +1939,7 @@ UniValue tl_gettradehistory(const JSONRPCRequest& request)
 {
   if (request.fHelp || request.params.size() != 1)
     throw runtime_error(
-			"tl_gettradehistory contractid propertyid ( count )\n"
+			"tl_gettradehistory \"contractid\" \n"
 			"\nRetrieves the history of trades on the distributed contract exchange for the specified market.\n"
 			"\nArguments:\n"
 			"1. name or id                                (string, required) the name of future contract\n"
@@ -1959,8 +1959,8 @@ UniValue tl_gettradehistory(const JSONRPCRequest& request)
 			"  ...\n"
 			"]\n"
 			"\nExamples:\n"
-			+ HelpExampleCli("tl_gettradehistory", "1")
-			+ HelpExampleRpc("tl_gettradehistory", "1")
+			+ HelpExampleCli("tl_gettradehistory", "\"1\"")
+			+ HelpExampleRpc("tl_gettradehistory", "\"1\"")
 			);
 
   // obtain property identifiers for pair & check valid parameters
@@ -1982,7 +1982,7 @@ UniValue tl_gettradehistory_unfiltered(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
-            "tl_gettradehistory contractid propertyid ( count )\n"
+            "tl_gettradehistory \"contractid\" \n"
             "\nRetrieves the history of trades on the distributed contract exchange for the specified market.\n"
             "\nArguments:\n"
             "1. name or id                          (string, required) the name (or id) of future contract\n"
@@ -2002,8 +2002,8 @@ UniValue tl_gettradehistory_unfiltered(const JSONRPCRequest& request)
             "  ...\n"
             "]\n"
             "\nExamples:\n"
-            + HelpExampleCli("tl_gettradehistoryforpair", "1 12 500")
-            + HelpExampleRpc("tl_gettradehistoryforpair", "1, 12, 500")
+            + HelpExampleCli("tl_gettradehistoryforpair", "\"1\"")
+            + HelpExampleRpc("tl_gettradehistoryforpair", "\"1\"")
 			    );
 
     // obtain property identifiers for pair & check valid parameters
@@ -2024,7 +2024,7 @@ UniValue tl_getpeggedhistory(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
-            "tl_getpeggedhistory propertyid ( count )\n"
+            "tl_getpeggedhistory \"propertyid\" \n"
             "\nRetrieves the history of amounts created for a given pegged .\n"
             "\nArguments:\n"
             "1. propertyid           (number, required) the id of pegged currency\n"
@@ -2044,8 +2044,8 @@ UniValue tl_getpeggedhistory(const JSONRPCRequest& request)
             "  ...\n"
             "]\n"
             "\nExamples:\n"
-            + HelpExampleCli("tl_getpeggedhistory", "1")
-            + HelpExampleRpc("tl_getpeggedhistory", "1")
+            + HelpExampleCli("tl_getpeggedhistory", "\"1\"")
+            + HelpExampleRpc("tl_getpeggedhistory", "\"1\"")
         );
 
     // obtain property identifiers for pair & check valid parameters
@@ -2101,7 +2101,7 @@ UniValue tl_getupnl(const JSONRPCRequest& request)
 {
   if (request.fHelp || request.params.size() < 2 || request.params.size() > 3) {
     throw runtime_error(
-			"tl_getupnl address name\n"
+			"tl_getupnl \"address\" \"name(or id)\" \"verbose\" \n"
 			"\nRetrieves the unrealized PNL for trades on the distributed contract exchange for the specified market.\n"
 			"\nArguments:\n"
 			"1. address           (string, required) address of owner\n"
@@ -2120,8 +2120,8 @@ UniValue tl_getupnl(const JSONRPCRequest& request)
       "   }\n"
 			"]\n"
 			"\nExamples:\n"
-			+ HelpExampleCli("tl_getupnl", "address1 , Contract 1, 1")
-			+ HelpExampleRpc("tl_getupnl", "address2 , Contract 1, 1")
+			+ HelpExampleCli("tl_getupnl", "\"13framr31ziZmV8HLjE5Gs8KRVw894P2eT\" , \"Contract 1\", \"1\"")
+			+ HelpExampleRpc("tl_getupnl", "\"13framr31ziZmV8HLjE5Gs8KRVw894P2eT\" , \"Contract 1\", \"1\"")
 			);
   }
 
@@ -2149,7 +2149,7 @@ UniValue tl_getpnl(const JSONRPCRequest& request)
 {
   if (request.fHelp || request.params.size() != 2)
     throw runtime_error(
-			"tl_getpnl address contractid\n"
+			"tl_getpnl \"address\" \"contractid\" \n"
 			"\nRetrieves the realized PNL for trades on the distributed contract exchange for the specified market.\n"
 			"\nArguments:\n"
 			"1. address           (string, required) address of owner\n"
@@ -2170,8 +2170,8 @@ UniValue tl_getpnl(const JSONRPCRequest& request)
 			"  ...\n"
 			"]\n"
 			"\nExamples:\n"
-			+ HelpExampleCli("tl_getpnl", "address 12 ")
-			+ HelpExampleRpc("tl_getpnl", "address, 500")
+			+ HelpExampleCli("tl_getpnl", "\"13framr31ziZmV8HLjE5Gs8KRVw894P2eT\" \"12\" ")
+			+ HelpExampleRpc("tl_getpnl", "\"13framr31ziZmV8HLjE5Gs8KRVw894P2eT\", \"500\"")
 			);
 
   const std::string address = ParseAddress(request.params[0]);
@@ -2213,8 +2213,8 @@ UniValue tl_getmarketprice(const JSONRPCRequest& request)
 			"  ...\n"
 			"]\n"
 			"\nExamples:\n"
-			+ HelpExampleCli("tl_getmarketprice", "12" )
-			+ HelpExampleRpc("tl_getmarketprice", "500")
+			+ HelpExampleCli("tl_getmarketprice", "\"12\"" )
+			+ HelpExampleRpc("tl_getmarketprice", "\"500\"")
 			);
 
 
@@ -2237,7 +2237,7 @@ UniValue tl_getactivedexsells(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() > 1)
         throw runtime_error(
-            "tl_getactivedexsells ( address )\n"
+            "tl_getactivedexsells \"address\" \n"
             "\nReturns currently active offers on the distributed exchange.\n"
             "\nArguments:\n"
             "1. address              (string, optional) address filter (default: include any)\n"
@@ -2267,8 +2267,8 @@ UniValue tl_getactivedexsells(const JSONRPCRequest& request)
             "  ...\n"
             "]\n"
             "\nExamples:\n"
-            + HelpExampleCli("tl_getactivedexsells", "")
-            + HelpExampleRpc("tl_getactivedexsells", "")
+            + HelpExampleCli("tl_getactivedexsells", "\"13framr31ziZmV8HLjE5Gs8KRVw894P2eT\"")
+            + HelpExampleRpc("tl_getactivedexsells", "\"13framr31ziZmV8HLjE5Gs8KRVw894P2eT\"")
         );
 
     std::string addressFilter;  //TODO: Fix amountavalable when the maker are selling  (we need invert this) "amountavailable": "10.00000000",
@@ -2383,7 +2383,7 @@ UniValue tl_getsum_upnl(const JSONRPCRequest& request)
 {
   if (request.fHelp || request.params.size() != 1)
     throw runtime_error(
-			"tl_getsum_upnl addres \n"
+			"tl_getsum_upnl \"address\" \n"
 			"\nRetrieve the global upnl for an address.\n"
 			"\nArguments:\n"
 			"1. contractid           (number, required) the id of future contract\n"
@@ -2394,9 +2394,9 @@ UniValue tl_getsum_upnl(const JSONRPCRequest& request)
 			"  ...\n"
 			"]\n"
 			"\nExamples:\n"
-			+ HelpExampleCli("tl_getsum_upnl", "address1" )
-			+ HelpExampleRpc("tl_getsum_upnl", "address2")
-			);
+			+ HelpExampleCli("tl_getsum_upnl", "\"1\"" )
+			+ HelpExampleRpc("tl_getsum_upnl", "\"2\"")
+    );
 
   const std::string address = ParseAddress(request.params[0]);
 
@@ -2414,7 +2414,7 @@ UniValue tl_check_commits(const JSONRPCRequest& request)
 {
   if (request.fHelp || request.params.size() != 1)
     throw runtime_error(
-			"tl_check_commits sender address \n"
+			"tl_check_commits \"sender\" \"address\" \n"
 			"\nRetrieves the history of commits in the channel\n"
 			"\nArguments:\n"
 			"1. sender address                      (string, required) the multisig address of channel\n"
@@ -2430,8 +2430,8 @@ UniValue tl_check_commits(const JSONRPCRequest& request)
 			"  ...\n"
 			"]\n"
 			"\nExamples:\n"
-			+ HelpExampleCli("tl_check_commits", "address")
-			+ HelpExampleRpc("tl_check_commits", "address")
+			+ HelpExampleCli("tl_check_commits", "\"13framr31ziZmV8HLjE5Gs8KRVw894P2eT\"")
+			+ HelpExampleRpc("tl_check_commits", "\"13framr31ziZmV8HLjE5Gs8KRVw894P2eT\"")
 			);
 
   // obtain property identifiers for pair & check valid parameters
@@ -2453,7 +2453,7 @@ UniValue tl_check_withdrawals(const JSONRPCRequest& request)
 {
   if (request.fHelp || request.params.size() != 1)
     throw runtime_error(
-			"tl_check_withdrawals senderAddress \n"
+			"tl_check_withdrawals \"senderAddress\" \n"
 			"\nRetrieves the history of withdrawal for a given address in the channel\n"
 			"\nArguments:\n"
 			"1. sender address                      (string, required) the address related to withdrawals on the channel\n"
@@ -2473,8 +2473,8 @@ UniValue tl_check_withdrawals(const JSONRPCRequest& request)
 			"  ...\n"
 			"]\n"
 			"\nExamples:\n"
-			+ HelpExampleCli("tl_check_withdrawals", "address1")
-			+ HelpExampleRpc("tl_check_withdrawals", "address1")
+			+ HelpExampleCli("tl_check_withdrawals", "\"13framr31ziZmV8HLjE5Gs8KRVw894P2eT\"")
+			+ HelpExampleRpc("tl_check_withdrawals", "\"13framr31ziZmV8HLjE5Gs8KRVw894P2eT\"")
 			);
 
   // obtain property identifiers for pair & check valid parameters
@@ -2494,7 +2494,7 @@ UniValue tl_check_kyc(const JSONRPCRequest& request)
 {
   if (request.fHelp || request.params.size() != 1)
     throw runtime_error(
-			"tl_check_kyc senderAddress \n"
+			"tl_check_kyc \"senderaddress\" \n"
 			"\nKYC check for given address \n"
 			"\nArguments:\n"
 			"1. address                             (string, required) the address registered\n"
@@ -2506,8 +2506,8 @@ UniValue tl_check_kyc(const JSONRPCRequest& request)
 			"  ...\n"
 			"]\n"
 			"\nExamples:\n"
-			+ HelpExampleCli("tl_check_kyc", "address1")
-			+ HelpExampleRpc("tl_check_kyc", "address1")
+			+ HelpExampleCli("tl_check_kyc", "\"13framr31ziZmV8HLjE5Gs8KRVw894P2eT\"")
+			+ HelpExampleRpc("tl_check_kyc", "\"13framr31ziZmV8HLjE5Gs8KRVw894P2eT\"")
 			);
 
   // obtain property identifiers for pair & check valid parameters
@@ -2529,17 +2529,17 @@ UniValue tl_getcache(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
-            "tl_getmargin \"address\" propertyid\n"
+            "tl_getmargin \"address\" \"propertyid\" \n"
             "\nReturns the fee cach for a given property.\n"
             "\nArguments:\n"
-            "1. collateral                     (number, required) the contract collateral\n"
+            "1. collateral                   (number, required) the contract collateral\n"
             "\nResult:\n"
             "{\n"
-            "  \"amount\" : \"n.nnnnnnnn\",   (number) the available balance in the cache for the property\n"
+            "  \"amount\" : \"n.nnnnnnnn\",  (number) the available balance in the cache for the property\n"
             "}\n"
             "\nExamples:\n"
-            + HelpExampleCli("tl_getcache", "\"\" 1")
-            + HelpExampleRpc("tl_getcache", "\"\", 1")
+            + HelpExampleCli("tl_getcache", "\"2\"")
+            + HelpExampleRpc("tl_getcache", "\"2\"")
         );
 
     uint32_t propertyId = ParsePropertyId(request.params[0]);
@@ -2559,17 +2559,17 @@ UniValue tl_getoraclecache(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
-            "tl_getmargin \"address\" propertyid\n"
+            "tl_getmargin \"address\" \"propertyid\" \n"
             "\nReturns the oracle fee cache for a given property.\n"
             "\nArguments:\n"
-            "1. collateral                     (number, required) the contract collateral\n"
+            "1. collateral                   (number, required) the contract collateral\n"
             "\nResult:\n"
             "{\n"
-            "  \"amount\" : \"n.nnnnnnnn\",   (number) the available balance in the oracle cache for the property\n"
+            "  \"amount\" : \"n.nnnnnnnn\",  (number) the available balance in the oracle cache for the property\n"
             "}\n"
             "\nExamples:\n"
-            + HelpExampleCli("tl_getcache", "\"\" 1")
-            + HelpExampleRpc("tl_getcache", "\"\", 1")
+            + HelpExampleCli("tl_getcache", "\"1\"")
+            + HelpExampleRpc("tl_getcache", "\"1\"")
         );
 
     uint32_t propertyId = ParsePropertyId(request.params[0]);
@@ -2589,10 +2589,10 @@ UniValue tl_getalltxonblock(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 1)
       throw runtime_error(
-			"tl_getalltxonblock\"block\"\n"
+			"tl_getalltxonblock \"block\" \n"
 			"\nGet detailed information about every Trade Layer transaction in block.\n"
 	    "\nArguments:\n"
-	    "1. txid                 (number, required) the block height \n"
+	    "1. block                 (number, required) the block height \n"
 	    "\nResult:\n"
 	    "{\n"
 	    "  \"txid\" : \"hash\",                  (string) the hex-encoded hash of the transaction\n"
@@ -2650,7 +2650,7 @@ UniValue tl_get_ltcvolume(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() < 2)
         throw runtime_error(
-            "tl_get_ltcvolume \n"
+            "tl_get_ltcvolume \"propertyid\" \"blockA\" \"blockB\" \n"
             "\nReturns the LTC volume for DEx and Trade Channels, in sort amount of blocks.\n"
             "\nArguments:\n"
             "1. property                 (number, required) property \n"
@@ -2662,8 +2662,8 @@ UniValue tl_get_ltcvolume(const JSONRPCRequest& request)
             "  \"blockheight\" : \"n.\",      (number) last block\n"
             "}\n"
             "\nExamples:\n"
-            + HelpExampleCli("tl_get_ltcvolume", "\"\"")
-            + HelpExampleRpc("tl_get_ltcvolume", "\"\",")
+            + HelpExampleCli("tl_get_ltcvolume", "\"1\" \"200\" \"300\"")
+            + HelpExampleRpc("tl_get_ltcvolume", "\"1\", \"200\", \"300\"")
         );
 
     uint32_t propertyId = ParsePropertyId(request.params[0]);
@@ -2691,10 +2691,10 @@ UniValue tl_getmdexvolume(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 3)
         throw runtime_error(
-            "tl_getmdexvolume \n"
+            "tl_getmdexvolume \"property\" \"blockA\" \"blockB\" \n"
             "\nReturns the Token volume traded in sort amount of blocks.\n"
             "\nArguments:\n"
-            "1. propertyA                 (number, required) the property id \n"
+            "1. propertyid                (number, required) the property id \n"
             "2. first block               (number, required) older limit block\n"
             "3. second block              (number, optional) newer limit block\n"
             "\nResult:\n"
@@ -2703,8 +2703,8 @@ UniValue tl_getmdexvolume(const JSONRPCRequest& request)
             "  \"blockheight\" : \"n.\",      (number) last block\n"
             "}\n"
             "\nExamples:\n"
-            + HelpExampleCli("tl_getmdexvolume", "\"\"")
-            + HelpExampleRpc("tl_getmdexvolume", "\"\",")
+            + HelpExampleCli("tl_getmdexvolume", "\"1\" \"200\" \"300\"")
+            + HelpExampleRpc("tl_getmdexvolume", "\"1\",\"200\", \"300\"")
         );
 
     uint32_t property = ParsePropertyId(request.params[0]);
@@ -2732,7 +2732,7 @@ UniValue tl_getcurrencytotal(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
-            "tl_getcurrencyvolume \n"
+            "tl_getcurrencyvolume \"propertyid\" \n"
             "\nGet total outstanding supply for token \n"
             "\nArguments:\n"
             "1. propertyId                 (number, required) propertyId of token \n"
@@ -2742,8 +2742,8 @@ UniValue tl_getcurrencytotal(const JSONRPCRequest& request)
             "  \"blockheight\" : \"n.\",      (number) last block\n"
             "}\n"
             "\nExamples:\n"
-            + HelpExampleCli("tl_getcurrencytotal", "\"\"")
-            + HelpExampleRpc("tl_getcurrencytotal", "\"\",")
+            + HelpExampleCli("tl_getcurrencytotal", "\"1\"")
+            + HelpExampleRpc("tl_getcurrencytotal", "\"1\"")
         );
 
     uint32_t propertyId = ParsePropertyId(request.params[0]);
@@ -2831,7 +2831,7 @@ UniValue tl_getopen_interest(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 1)
       throw runtime_error(
-			  "tl_getopen_interest\n"
+			  "tl_getopen_interest \"name(or id)\" \n"
 			  "\nAmounts of live contracts.\n"
         "\nArguments:\n"
         "1. name or id                    (string, required) name (or id number) of the future contract \n"
@@ -2843,8 +2843,8 @@ UniValue tl_getopen_interest(const JSONRPCRequest& request)
 			  "  ...\n"
 			  "]\n"
 			  "\nExamples:\n"
-			  + HelpExampleCli("tl_getopen_interest", "Contract 1, 1")
-			  + HelpExampleRpc("tl_getopen_interest", "Contract 1, 1")
+			  + HelpExampleCli("tl_getopen_interest", "\"Contract 1\"")
+			  + HelpExampleRpc("tl_getopen_interest", "\"Contract 1\"")
 		  );
 
     uint32_t contractId = ParseNameOrId(request.params[0]);
@@ -2864,7 +2864,7 @@ UniValue tl_getmax_peggedcurrency(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 2)
       throw runtime_error(
-			  "tl_getmax_peggedcurrency\"fromaddress\""
+			  "tl_getmax_peggedcurrency \"fromaddress\" \"name (or id)\""
 			  "\nGet max pegged currency address can create\n"
 			  "\n arguments: \n"
 			  "\n 1) fromaddress (string, required) the address to send from\n"
@@ -2913,7 +2913,7 @@ UniValue tl_getcontract(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
-            "tl_getcontract contract\n"
+            "tl_getcontract contract \"name (or id)\" \n"
             "\nReturns details for about the future contract.\n"
             "\nArguments:\n"
             "1. name or id                        (string, required) the name  of the future contract, or the number id\n"
@@ -2930,8 +2930,8 @@ UniValue tl_getcontract(const JSONRPCRequest& request)
             "  \"totaltokens\" : \"n.nnnnnnnn\"     (string) the total number of tokens in existence\n"
             "}\n"
             "\nExamples:\n"
-            + HelpExampleCli("tl_getcontract", "Contract1")
-            + HelpExampleRpc("tl_getcontract", "Contract1")
+            + HelpExampleCli("tl_getcontract", "\"Contract1\"")
+            + HelpExampleRpc("tl_getcontract", "\"Contract1\"")
         );
 
     uint32_t propertyId = ParseNameOrId(request.params[0]);
@@ -3021,7 +3021,7 @@ UniValue tl_getmdextradehistoryforaddress(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() < 2 || request.params.size() > 3)
       throw runtime_error(
-          "tl_getmdextradehistoryforaddress\n"
+          "tl_getmdextradehistoryforaddress \"address\" \"count\" \"property\"\n"
           "\nRetrieves the history of orders on the meta distributed exchange for the supplied address.\n"
           "\nArguments:\n"
           "1. address       (string) address to retrieve history for\n"
@@ -3064,8 +3064,8 @@ UniValue tl_getmdextradehistoryforaddress(const JSONRPCRequest& request)
           "  ...\n"
           "]\n"
           "\nExamples:\n"
-          + HelpExampleCli("tl_gettradehistoryforaddress", "\"38CYEC81MhsAPYFUD6MNMZAuPeJRddaDqW\", 300 , 4")
-          + HelpExampleRpc("tl_gettradehistoryforaddress", "\"38CYEC81MhsAPYFUD6MNMZAuPeJRddaDqW\" 32 , 3")
+          + HelpExampleCli("tl_gettradehistoryforaddress", "\"38CYEC81MhsAPYFUD6MNMZAuPeJRddaDqW\", \"300\" , \"4\"")
+          + HelpExampleRpc("tl_gettradehistoryforaddress", "\"38CYEC81MhsAPYFUD6MNMZAuPeJRddaDqW\" \"32\" , \"3\"")
         );
 
     std::string address = ParseAddress(request.params[0]);
@@ -3104,7 +3104,7 @@ UniValue tl_getmdextradehistoryforpair(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() < 2 || request.params.size() > 3)
       throw runtime_error(
-          "tl_getmdextradehistoryforpair\n"
+          "tl_getmdextradehistoryforpair \"propertyA\" \"propertyB\" \"count\"\n"
           "\nnRetrieves the history of trades on the distributed token exchange for the specified market.\n"
           "\nArguments:\n"
           "1. propertyid               (number) property id\n"
@@ -3127,8 +3127,8 @@ UniValue tl_getmdextradehistoryforpair(const JSONRPCRequest& request)
           "  ...\n"
           "]\n"
           "\nExamples:\n"
-          + HelpExampleCli("tl_getmdextradehistoryforpair", "1 12 500")
-          + HelpExampleRpc("tl_getmdextradehistoryforpair", "1, 12, 500")
+          + HelpExampleCli("tl_getmdextradehistoryforpair", "\"1\" \"12\" \"500\"")
+          + HelpExampleRpc("tl_getmdextradehistoryforpair", "\"1\", \"12\", \"500\"")
         );
 
       // obtain property identifiers for pair & check valid parameters
@@ -3152,7 +3152,7 @@ UniValue tl_getdextradehistoryforaddress(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() < 2 || request.params.size() > 3)
       throw runtime_error(
-          "tl_getdextradehistoryforaddress\n"
+          "tl_getdextradehistoryforaddress \"address\" \"count\" \"propertyid\" \n"
           "\nnRetrieves the history of trades on the distributed token/LTC exchange, for an address.\n"
           "\nArguments:\n"
           "1. address                  (string) address for seller o buyer\n"
@@ -3173,8 +3173,8 @@ UniValue tl_getdextradehistoryforaddress(const JSONRPCRequest& request)
           "  ...\n"
           "]\n"
           "\nExamples:\n"
-          + HelpExampleCli("tl_getdextradehistoryforaddress", "\"38CYEC81MhsAPYFUD6MNMZAuPeJRddaDqW\", 1000, 4")
-          + HelpExampleRpc("tl_getdextradehistoryforaddress", "\"38CYEC81MhsAPYFUD6MNMZAuPeJRddaDqW\" 200, 3")
+          + HelpExampleCli("tl_getdextradehistoryforaddress", "\"38CYEC81MhsAPYFUD6MNMZAuPeJRddaDqW\", \"1000\", \"4\"")
+          + HelpExampleRpc("tl_getdextradehistoryforaddress", "\"38CYEC81MhsAPYFUD6MNMZAuPeJRddaDqW\" \"200\", \"3\"")
         );
 
     // obtain property identifiers for pair & check valid parameters
@@ -3203,7 +3203,7 @@ UniValue tl_getchannel_historyforaddress(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() < 3 || request.params.size() > 4)
       throw runtime_error(
-          "tl_getchannel_historyforaddress\n"
+          "tl_getchannel_historyforaddress \"address\" \"channel\" \"count\" \"property\" \n"
           "\nnRetrieves the history for token/LTC exchange on trade channels, for an address.\n"
           "\nArguments:\n"
           "1. address                  (string) address for seller o buyer\n"
@@ -3226,8 +3226,8 @@ UniValue tl_getchannel_historyforaddress(const JSONRPCRequest& request)
           "  ...\n"
           "]\n"
           "\nExamples:\n"
-          + HelpExampleCli("tl_getchannel_historyforaddress", "\"38CYEC81MhsAPYFUD6MNMZAuPeJRddaDqW\", \"2N2sNJSgXmWft2wtdFFGwhh9thog4mGKTT11000\", 4")
-          + HelpExampleRpc("tl_getchannel_historyforaddress", "\"38CYEC81MhsAPYFUD6MNMZAuPeJRddaDqW\" , \"2N2sNJSgXmWft2wtdFFGwhh9thog4mGKTT11000\", 200, 3")
+          + HelpExampleCli("tl_getchannel_historyforaddress", "\"38CYEC81MhsAPYFUD6MNMZAuPeJRddaDqW\", \"2N2sNJSgXmWft2wtdFFGwhh9thog4mGKTT11000\", \"4\" \"3\"")
+          + HelpExampleRpc("tl_getchannel_historyforaddress", "\"38CYEC81MhsAPYFUD6MNMZAuPeJRddaDqW\" , \"2N2sNJSgXmWft2wtdFFGwhh9thog4mGKTT11000\", \"200\", \"3\"")
         );
 
     std::string address = ParseAddress(request.params[0]);
@@ -3254,7 +3254,7 @@ UniValue tl_getchannel_tokenhistoryforaddress(const JSONRPCRequest& request)
 {
   if (request.fHelp || request.params.size() < 2 || request.params.size() > 4)
       throw runtime_error(
-          "tl_getchannel_tokenhistoryforaddress\n"
+          "tl_getchannel_tokenhistoryforaddress \"address\" \"channel\"  \"count\" \"property\"\n"
           "\nRetrieves the trade history in token/token exchange in  a trade channels , for supplied address.\n"
           "\nArguments:\n"
           "1. address       (string) address to retrieve history for\n"
@@ -3266,7 +3266,7 @@ UniValue tl_getchannel_tokenhistoryforaddress(const JSONRPCRequest& request)
           "[                                              (array of JSON objects)\n"
           "  {\n"
           "    \"txid\" : \"hash\",                               (string) the hex-encoded hash of the transaction of the order\n"
-          "    \"sendingaddress\" : \"address\",                  (string) the Bitcoin address of the trader\n"
+          "    \"sendingaddress\" : \"address\",                  (string) the Litecoin address of the trader\n"
           "    \"ismine\" : true|false,                         (boolean) whether the order involes an address in the wallet\n"
           "    \"confirmations\" : nnnnnnnnnn,                  (number) the number of transaction confirmations\n"
           "    \"fee\" : \"n.nnnnnnnn\",                          (string) the transaction fee in bitcoins\n"
@@ -3298,8 +3298,8 @@ UniValue tl_getchannel_tokenhistoryforaddress(const JSONRPCRequest& request)
           "  ...\n"
           "]\n"
           "\nExamples:\n"
-          + HelpExampleCli("tl_getchannel_tokenhistoryforaddress", "\"38CYEC81MhsAPYFUD6MNMZAuPeJRddaDqW\", \"38CYEC81MhsAPYFUD6MNMZAuPeJRddaDqW\", \"2N2sNJSgXmWft2wtdFFGwhh9thog4mGKTT11000\", 4")
-          + HelpExampleRpc("tl_getchannel_tokenhistoryforaddress", "\"38CYEC81MhsAPYFUD6MNMZAuPeJRddaDqW\", \"38CYEC81MhsAPYFUD6MNMZAuPeJRddaDqW\", \"2N2sNJSgXmWft2wtdFFGwhh9thog4mGKTT11000\", 4")
+          + HelpExampleCli("tl_getchannel_tokenhistoryforaddress", "\"38CYEC81MhsAPYFUD6MNMZAuPeJRddaDqW\", \"38CYEC81MhsAPYFUD6MNMZAuPeJRddaDqW\", \"2\", \"4\"")
+          + HelpExampleRpc("tl_getchannel_tokenhistoryforaddress", "\"38CYEC81MhsAPYFUD6MNMZAuPeJRddaDqW\", \"38CYEC81MhsAPYFUD6MNMZAuPeJRddaDqW\", \"2\", \"4\"")
         );
 
     std::string address = ParseAddress(request.params[0]);
@@ -3324,7 +3324,7 @@ UniValue tl_getchannel_historyforpair(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() < 3 || request.params.size() > 4)
       throw runtime_error(
-          "tl_getchannel_historyforpair\n"
+          "tl_getchannel_historyforpair \"channel\" \"propertyA\" \"propertyB\" \"count\"\n"
           "\nnRetrieves the history of token/token  on a given trade channel for the specified market.\n"
           "\nArguments:\n"
           "1. channel                  (string) channel address\n"
@@ -3348,8 +3348,8 @@ UniValue tl_getchannel_historyforpair(const JSONRPCRequest& request)
           "  ...\n"
           "]\n"
           "\nExamples:\n"
-          + HelpExampleCli("tl_getchannel_historyforpair", "\"38CYEC81MhsAPYFUD6MNMZAuPeJRddaDqW\", 1 12 500")
-          + HelpExampleRpc("tl_getchannel_historyforpair", "\"38CYEC81MhsAPYFUD6MNMZAuPeJRddaDqW\", 1, 12, 500")
+          + HelpExampleCli("tl_getchannel_historyforpair", "\"38CYEC81MhsAPYFUD6MNMZAuPeJRddaDqW\", \"1\" \"12\" \"500\"")
+          + HelpExampleRpc("tl_getchannel_historyforpair", "\"38CYEC81MhsAPYFUD6MNMZAuPeJRddaDqW\", \"1\", \"12\", \"500\"")
         );
 
      // obtain property identifiers for pair & check valid parameters
