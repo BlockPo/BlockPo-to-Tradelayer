@@ -30,9 +30,9 @@ using mastercore::view;
 
 UniValue tl_decodetransaction(const JSONRPCRequest& request)
 {
-    if (request.fHelp || request.params.size() < 1 || request.params.size() > 3)
+    if (request.fHelp || request.params.size() != 1)
         throw std::runtime_error(
-            "tl_decodetransaction \"rawtx\" ( \"prevtxs\" height )\n"
+            "tl_decodetransaction \"rawtx\" \n"
 
             "\nDecodes an Trade Layer transaction.\n"
 
@@ -43,17 +43,6 @@ UniValue tl_decodetransaction(const JSONRPCRequest& request)
 
             "\nArguments:\n"
             "1. rawtx                (string, required) the raw transaction to decode\n"
-            "2. prevtxs              (string, optional) a JSON array of transaction inputs (default: none)\n"
-            "     [\n"
-            "       {\n"
-            "         \"txid\":\"hash\",          (string, required) the transaction hash\n"
-            "         \"vout\":n,               (number, required) the output number\n"
-            "         \"scriptPubKey\":\"hex\",   (string, required) the output script\n"
-            "         \"value\":n.nnnnnnnn      (number, required) the output value\n"
-            "       }\n"
-            "       ,...\n"
-            "     ]\n"
-            "3. height               (number, optional) the parsing block height (default: 0 for chain height)\n"
 
             "\nResult:\n"
             "{\n"
@@ -69,8 +58,8 @@ UniValue tl_decodetransaction(const JSONRPCRequest& request)
             "}\n"
 
             "\nExamples:\n"
-            + HelpExampleCli("tl_decodetransaction", "\"010000000163af14ce6d477e1c793507e32a5b7696288fa89705c0d02a3f66beb3c5b8afee0100000000ffffffff02ac020000000000004751210261ea979f6a06f9dafe00fb1263ea0aca959875a7073556a088cdfadcd494b3752102a3fd0a8a067e06941e066f78d930bfc47746f097fcd3f7ab27db8ddf37168b6b52ae22020000000000001976a914946cb2e08075bcbaf157e47bcb67eb2b2339d24288ac00000000\" \"[{\\\"txid\\\":\\\"eeafb8c5b3be663f2ad0c00597a88f2896765b2ae30735791c7e476dce14af63\\\",\\\"vout\\\":1,\\\"scriptPubKey\\\":\\\"76a9149084c0bd89289bc025d0264f7f23148fb683d56c88ac\\\",\\\"value\\\":0.0001123}]\"")
-            + HelpExampleRpc("tl_decodetransaction", "\"010000000163af14ce6d477e1c793507e32a5b7696288fa89705c0d02a3f66beb3c5b8afee0100000000ffffffff02ac020000000000004751210261ea979f6a06f9dafe00fb1263ea0aca959875a7073556a088cdfadcd494b3752102a3fd0a8a067e06941e066f78d930bfc47746f097fcd3f7ab27db8ddf37168b6b52ae22020000000000001976a914946cb2e08075bcbaf157e47bcb67eb2b2339d24288ac00000000\", [{\"txid\":\"eeafb8c5b3be663f2ad0c00597a88f2896765b2ae30735791c7e476dce14af63\",\"vout\":1,\"scriptPubKey\":\"76a9149084c0bd89289bc025d0264f7f23148fb683d56c88ac\",\"value\":0.0001123}]")
+            + HelpExampleCli("tl_decodetransaction", "\"010000000163af14ce6d477e1c793507e32a5b7696288fa89705c0d02a3f66beb3c5b8afee0100000000ffffffff02ac020000000000004751210261ea979f6a06f9dafe00fb1263ea0aca959875a7073556a088cdfadcd494b3752102a3fd0a8a067e06941e066f78d930bfc47746f097fcd3f7ab27db8ddf37168b6b52ae22020000000000001976a914946cb2e08075bcbaf157e47bcb67eb2b2339d24288ac00000000\"")
+            + HelpExampleRpc("tl_decodetransaction", "\"010000000163af14ce6d477e1c793507e32a5b7696288fa89705c0d02a3f66beb3c5b8afee0100000000ffffffff02ac020000000000004751210261ea979f6a06f9dafe00fb1263ea0aca959875a7073556a088cdfadcd494b3752102a3fd0a8a067e06941e066f78d930bfc47746f097fcd3f7ab27db8ddf37168b6b52ae22020000000000001976a914946cb2e08075bcbaf157e47bcb67eb2b2339d24288ac00000000\"")
         );
 
     CMutableTransaction tx = ParseMutableTransaction(request.params[0]);
