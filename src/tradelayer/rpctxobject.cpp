@@ -555,18 +555,16 @@ void populateRPCTypeWithdrawal_FromChannel(CMPTransaction& tlObj, UniValue& txob
 
 void populateRPCTypeInstant_Trade(CMPTransaction& tlObj, UniValue& txobj)
 {
-  txobj.push_back(Pair("propertyId", (uint64_t) tlObj.getPropertyId()));
-  txobj.push_back(Pair("amount for sale", (uint64_t) tlObj.getAmountForSale()));
+  txobj.push_back(Pair("propertyId", (uint64_t) tlObj.getProperty()));
+  txobj.push_back(Pair("amount for sale", FormatMP(tlObj.getProperty(), tlObj.getAmountForSale())));
   txobj.push_back(Pair("block for expiry", (uint64_t) tlObj.getBlockForExpiry()));
   txobj.push_back(Pair("desired property", (uint64_t) tlObj.getDesiredProperty()));
-  txobj.push_back(Pair("desired value", (uint64_t) tlObj.getDesiredValue()));
+  txobj.push_back(Pair("desired value", FormatMP(tlObj.getDesiredProperty(), tlObj.getDesiredValue())));
 }
 
 
 void populateRPCTypeTransfer(CMPTransaction& tlObj, UniValue& txobj)
 {
-  txobj.push_back(Pair("propertyId", (uint64_t) tlObj.getProperty()));
-  txobj.push_back(Pair("amount", (uint64_t) tlObj.getXAmount()));
 }
 
 void populateRPCTypeCreate_Channel(CMPTransaction& tlObj, UniValue& txobj)

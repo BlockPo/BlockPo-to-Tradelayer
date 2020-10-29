@@ -259,6 +259,17 @@ class RawTransactionBasicsTest (BitcoinTestFramework):
         # self.log.info(hex)
 
 
+        self.log.info("decoding trade layer raw transaction")
+        params = str([hex]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_decodetransaction", params)
+        assert_equal(out['error'], None)
+        # self.log.info(out)
+        assert_equal(out['result']['fee'], '0.20000000')
+        assert_equal(out['result']['sendingaddress'], addresses[1])
+        assert_equal(out['result']['referenceaddress'], addresses[0])
+        assert_equal(out['result']['type_int'], 113)
+        assert_equal(out['result']['type'], 'Instant LTC for Tokens trade')
+
         params = '["'+hex+'",[{"txid":"'+txid1+'","vout":'+str(vout1)+', "scriptPubKey":"'+scriptPubKey+'","redeemScript":"'+redeemScript+'","amount":0.1}],["'+privatekey1+'"]]'
         self.log.info("Signing raw transaction with address 1")
         # self.log.info(params)
