@@ -4,7 +4,7 @@
  * This file contains RPC calls for creating and sending Trade Layer transactions.
  */
 
-#include <tradelayer/rpctx.h> // XXX
+#include <tradelayer/rpctx.h>
 
 #include <tradelayer/createpayload.h>
 #include <tradelayer/dex.h>
@@ -40,13 +40,19 @@ UniValue tl_sendrawtx(const JSONRPCRequest& request)
     if (request.fHelp || request.params.size() < 2 || request.params.size() > 5)
         throw runtime_error(
             "tl_sendrawtx \"fromaddress\" \"rawtransaction\" ( \"referenceaddress\" \"referenceamount\" )\n"
+
             "\nBroadcasts a raw trade layer transaction.\n"
+
             "\nArguments:\n"
+
+            "1. fromaddress       (string, required) the sender address\n"
             "2. rawtransaction       (string, required) the hex-encoded raw transaction\n"
             "3. referenceaddress     (string, optional) a reference address (none by default)\n"
             "4. referenceamount      (string, optional) a bitcoin amount that is sent to the receiver (minimal by default)\n"
+
             "\nResult:\n"
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
+            
             "\nExamples:\n"
             + HelpExampleCli("tl_sendrawtx", "\"1MCHESTptvd2LnNp7wmr2sGTpRomteAkq8\" \"000000000000000100000000017d7840\" \"1EqTta1Rt8ixAA32DuC29oukbsSWU62qAV\"")
             + HelpExampleRpc("tl_sendrawtx", "\"1MCHESTptvd2LnNp7wmr2sGTpRomteAkq8\", \"000000000000000100000000017d7840\", \"1EqTta1Rt8ixAA32DuC29oukbsSWU62qAV\"")
@@ -78,7 +84,7 @@ UniValue tl_send(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() < 4 || request.params.size() > 6)
         throw runtime_error(
-            "tl_send \"fromaddress\" \"toaddress\" propertyid \"amount\" ( \"referenceamount\" )\n"
+            "tl_send \"fromaddress\" \"toaddress\" \"propertyid\" \"amount\" ( \"referenceamount\" )\n"
 
             "\nCreate and broadcast a simple send transaction.\n"
 
@@ -138,7 +144,7 @@ UniValue tl_sendvesting(const JSONRPCRequest& request)
 {
   if (request.fHelp || request.params.size() != 3)
     throw runtime_error(
-			"tl_send \"fromaddress\" \"toaddress\" propertyid \"amount\" ( \"referenceamount\" )\n"
+			"tl_send \"fromaddress\" \"toaddress\" \"amount\" \n"
 
 			"\nCreate and broadcast a simple send transaction.\n"
 
@@ -151,8 +157,8 @@ UniValue tl_sendvesting(const JSONRPCRequest& request)
 			"\"hash\"                  (string) the hex-encoded transaction hash\n"
 
 			"\nExamples:\n"
-			+ HelpExampleCli("tl_send", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\" \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\" 1 \"100.0\"")
-			+ HelpExampleRpc("tl_send", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\", \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\", 1, \"100.0\"")
+			+ HelpExampleCli("tl_send", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\" \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\" \"100.0\"")
+			+ HelpExampleRpc("tl_send", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\", \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\", \"100.0\"")
 			);
 
   // obtain parameters & info
@@ -238,7 +244,7 @@ UniValue tl_sendissuancefixed(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 8)
         throw runtime_error(
-            "tl_sendissuancefixed \"fromaddress\" type previousid \"name\" \"url\" \"data\" \"amount\"\n"
+            "tl_sendissuancefixed \"fromaddress\" \"type\" \"previousid\" \"name\" \"url\" \"data\" \"amount\" \"kyc\"\n"
 
             "\nCreate new tokens with fixed supply.\n"
 
@@ -255,12 +261,13 @@ UniValue tl_sendissuancefixed(const JSONRPCRequest& request)
             "      2,3,5         (number) kyc id\n"
             "      ,...\n"
             "    ]\n"
+
             "\nResult:\n"
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
 
             "\nExamples:\n"
-            + HelpExampleCli("tl_sendissuancefixed", "\"3Ck2kEGLJtZw9ENj2tameMCtS3HB7uRar3\" 2 1 0 \"Quantum Miner\" \"\" \"\" \"1000000\"")
-            + HelpExampleRpc("tl_sendissuancefixed", "\"3Ck2kEGLJtZw9ENj2tameMCtS3HB7uRar3\", 2, 1, 0, \"Quantum Miner\", \"\", \"\", \"1000000\"")
+            + HelpExampleCli("tl_sendissuancefixed", "\"3Ck2kEGLJtZw9ENj2tameMCtS3HB7uRar3\" 2 1 \"Quantum Miner\" \"ww.qm.com\" \"dataexample\" \"1000000\"")
+            + HelpExampleRpc("tl_sendissuancefixed", "\"3Ck2kEGLJtZw9ENj2tameMCtS3HB7uRar3\", 2, 1, \"Quantum Miner\", \"www.qm.com\", \"dataexample\", \"1000000\"")
         );
 
     // obtain parameters & info
@@ -301,7 +308,7 @@ UniValue tl_sendissuancemanaged(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 7)
         throw runtime_error(
-            "tl_sendissuancemanaged \"fromaddress\" type previousid \"name\" \"url\" \"data\"\n"
+            "tl_sendissuancemanaged \"fromaddress\" \"type\" \"previousid\" \"name\" \"url\" \"data\"  \"kyc\" \n"
 
             "\nCreate new tokens with manageable supply.\n"
 
@@ -322,8 +329,8 @@ UniValue tl_sendissuancemanaged(const JSONRPCRequest& request)
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
 
             "\nExamples:\n"
-            + HelpExampleCli("tl_sendissuancemanaged", "\"3HsJvhr9qzgRe3ss97b1QHs38rmaLExLcH\" 2 1 0 \"Companies\" \"Bitcoin Mining\" \"Quantum Miner\" \"\" \"\"")
-            + HelpExampleRpc("tl_sendissuancemanaged", "\"3HsJvhr9qzgRe3ss97b1QHs38rmaLExLcH\", 2, 1, 0, \"Companies\", \"Bitcoin Mining\", \"Quantum Miner\", \"\", \"\"")
+            + HelpExampleCli("tl_sendissuancemanaged", "\"3HsJvhr9qzgRe3ss97b1QHs38rmaLExLcH\" 2 1 \"Companies\" \"www.companies.com\" \"dataexample\" \"[1,4,7]\"")
+            + HelpExampleRpc("tl_sendissuancemanaged", "\"3HsJvhr9qzgRe3ss97b1QHs38rmaLExLcH\", 2, 1, \"Companies\", \"www.companies.com\", \"dataexample\", \"[1,4,7]\"")
         );
 
     // obtain parameters & info
@@ -365,7 +372,7 @@ UniValue tl_sendgrant(const JSONRPCRequest& request)
 {
   if (request.fHelp || request.params.size() < 4 || request.params.size() > 5)
     throw runtime_error(
-			"tl_sendgrant \"fromaddress\" \"toaddress\" propertyid \"amount\"\n"
+			"tl_sendgrant \"fromaddress\" \"toaddress\" \"propertyid\" \"amount\"\n"
 
 			"\nIssue or grant new units of managed tokens.\n"
 
@@ -379,8 +386,8 @@ UniValue tl_sendgrant(const JSONRPCRequest& request)
 			"\"hash\"                  (string) the hex-encoded transaction hash\n"
 
 			"\nExamples:\n"
-			+ HelpExampleCli("tl_sendgrant", "\"3HsJvhr9qzgRe3ss97b1QHs38rmaLExLcH\" \"\" 51 \"7000\"")
-			+ HelpExampleRpc("tl_sendgrant", "\"3HsJvhr9qzgRe3ss97b1QHs38rmaLExLcH\", \"\", 51, \"7000\"")
+			+ HelpExampleCli("tl_sendgrant", "\"3HsJvhr9qzgRe3ss97b1QHs38rmaLExLcH\" \"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\" \"51\" \"7000.3\"")
+			+ HelpExampleRpc("tl_sendgrant", "\"3HsJvhr9qzgRe3ss97b1QHs38rmaLExLcH\", \"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\", \"51\", \"7000.3\"")
 			);
 
   // obtain parameters & info
@@ -417,9 +424,9 @@ UniValue tl_sendgrant(const JSONRPCRequest& request)
 
 UniValue tl_sendrevoke(const JSONRPCRequest& request)
 {
-    if (request.fHelp || request.params.size() < 3 || request.params.size() > 4)
+    if (request.fHelp || request.params.size() != 3)
         throw runtime_error(
-            "tl_sendrevoke \"fromaddress\" propertyid \"amount\" ( \"memo\" )\n"
+            "tl_sendrevoke \"fromaddress\" \"propertyid\" \"amount\" \n"
 
             "\nRevoke units of managed tokens.\n"
 
@@ -432,8 +439,8 @@ UniValue tl_sendrevoke(const JSONRPCRequest& request)
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
 
             "\nExamples:\n"
-            + HelpExampleCli("tl_sendrevoke", "\"3HsJvhr9qzgRe3ss97b1QHs38rmaLExLcH\" \"\" 51 \"100\"")
-            + HelpExampleRpc("tl_sendrevoke", "\"3HsJvhr9qzgRe3ss97b1QHs38rmaLExLcH\", \"\", 51, \"100\"")
+            + HelpExampleCli("tl_sendrevoke", "\"3HsJvhr9qzgRe3ss97b1QHs38rmaLExLcH\" \"51\" \"100\"")
+            + HelpExampleRpc("tl_sendrevoke", "\"3HsJvhr9qzgRe3ss97b1QHs38rmaLExLcH\", 51, \"100\"")
         );
 
     // obtain parameters & info
@@ -524,16 +531,20 @@ UniValue tl_sendactivation(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 4)
         throw runtime_error(
-            "tl_sendactivation \"fromaddress\" featureid block minclientversion\n"
+            "tl_sendactivation \"fromaddress\" \"featureid\" \"block\" \"minclientversion\" \n"
+
             "\nActivate a protocol feature.\n"
             "\nNote: Trade Layer Core ignores activations from unauthorized sources.\n"
+
             "\nArguments:\n"
             "1. fromaddress          (string, required) the address to send from\n"
             "2. featureid            (number, required) the identifier of the feature to activate\n"
             "3. block                (number, required) the activation block\n"
             "4. minclientversion     (number, required) the minimum supported client version\n"
+
             "\nResult:\n"
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
+
             "\nExamples:\n"
             + HelpExampleCli("tl_sendactivation", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" 1 370000 999")
             + HelpExampleRpc("tl_sendactivation", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", 1, 370000, 999")
@@ -569,14 +580,18 @@ UniValue tl_senddeactivation(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 2)
         throw runtime_error(
-            "tl_senddeactivation \"fromaddress\" featureid\n"
+            "tl_senddeactivation \"fromaddress\" \"featureid\" \n"
+
             "\nDeactivate a protocol feature.  For Emergency Use Only.\n"
             "\nNote: Trade Layer Core ignores deactivations from unauthorized sources.\n"
+
             "\nArguments:\n"
             "1. fromaddress          (string, required) the address to send from\n"
             "2. featureid            (number, required) the identifier of the feature to activate\n"
+
             "\nResult:\n"
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
+
             "\nExamples:\n"
             + HelpExampleCli("tl_senddeactivation", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" 1")
             + HelpExampleRpc("tl_senddeactivation", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", 1")
@@ -610,19 +625,22 @@ UniValue tl_sendalert(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 4)
         throw runtime_error(
-            "tl_sendalert \"fromaddress\" alerttype expiryvalue typecheck versioncheck \"message\"\n"
+            "tl_sendalert \"fromaddress\" \"alerttype\" \"expiryvalue\" \"message\"\n"
+
             "\nCreates and broadcasts an Trade Layer Core alert.\n"
             "\nNote: Trade Layer Core ignores alerts from unauthorized sources.\n"
+
             "\nArguments:\n"
             "1. fromaddress          (string, required) the address to send from\n"
             "2. alerttype            (number, required) the alert type\n"
             "3. expiryvalue          (number, required) the value when the alert expires (depends on alert type)\n"
             "4. message              (string, required) the user-faced alert message\n"
+
             "\nResult:\n"
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
             "\nExamples:\n"
-            + HelpExampleCli("tl_sendalert", "")
-            + HelpExampleRpc("tl_sendalert", "")
+            + HelpExampleCli("tl_sendalert", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" \"1\" \"2\" \"alert\"")
+            + HelpExampleRpc("tl_sendalert", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", \"1\", \"2\" \"alert\"")
         );
 
     // obtain parameters & info
@@ -663,7 +681,7 @@ UniValue tl_sendtrade(const JSONRPCRequest& request)
 {
   if (request.fHelp || request.params.size() != 5) {
     throw runtime_error(
-			"tl_sendtrade \"fromaddress\" propertyidforsale \"amountforsale\" propertiddesired \"amountdesired\"\n"
+			"tl_sendtrade \"fromaddress\" \"propertyidforsale\" \"amountforsale\" \"propertiddesired\" \"amountdesired\"\n"
 
 			"\nPlace a trade offer on the distributed token exchange.\n"
 
@@ -726,7 +744,7 @@ UniValue tl_createcontract(const JSONRPCRequest& request)
 {
   if (request.fHelp || request.params.size() != 10)
     throw runtime_error(
-			"tl_createcontract \"fromaddress\" type previousid \"category\" \"subcategory\" \"name\" \"url\" \"data\" propertyiddesired tokensperunit deadline ( earlybonus issuerpercentage )\n"
+			"tl_createcontract \"fromaddress\" \"numerator\" \"denominator\" \"name\" \"blocksuntilexpiration\" \"notionalsize\" \"collateralcurrency\" \"marginrequirement\" \"quoting\" \"kyc\" \n"
 
 			"Create new Future Contract."
 
@@ -750,8 +768,8 @@ UniValue tl_createcontract(const JSONRPCRequest& request)
 			"\"hash\"                  (string) the hex-encoded transaction hash\n"
 
 			"\nExamples:\n"
-			+ HelpExampleCli("tl_createcontract", "2 1 0 \"Companies\" \"Bitcoin Mining\" \"Quantum Miner\" \"\" \"\" 2 \"100\" 1483228800 30 2 4461 100 1 25")
-			+ HelpExampleRpc("tl_createcontract", "2, 1, 0, \"Companies\", \"Bitcoin Mining\", \"Quantum Miner\", \"\", \"\", 2, \"100\", 1483228800, 30, 2, 4461, 100, 1, 25")
+			+ HelpExampleCli("tl_createcontract", "\"3BydPiSLPP3DR5cf726hDQ89fpqWLxPKLR\" 2 1 \"Contract1\" \"2560\" \"1\" \"3\" \"0.1\" 0 \"[1,2,4]\"")
+			+ HelpExampleRpc("tl_createcontract", "\"3BydPiSLPP3DR5cf726hDQ89fpqWLxPKLR\", 2, 1, \"Contract1\", \"2560\", \"1\", \"3\", \"0.1\", 0, \"[1,2,4]\"")
 			);
 
    const std::string fromAddress = ParseAddress(request.params[0]);
@@ -793,7 +811,7 @@ UniValue tl_create_oraclecontract(const JSONRPCRequest& request)
 {
   if (request.fHelp || request.params.size() != 9)
     throw runtime_error(
-			"tl_create_oraclecontract \"address\" type previousid \"category\" \"subcategory\" \"name\" \"url\" \"data\" propertyiddesired tokensperunit deadline ( earlybonus issuerpercentage )\n"
+			"tl_create_oraclecontract \"address\" \"name\" \"blocksuntilexpiration\" \"notionalsize\" \"collateralcurrency\" \"marginrequirement\" \"backupaddress\" \"quoting\" \"kyc\" \n"
 
 			"Create new Oracle Future Contract."
 
@@ -816,8 +834,8 @@ UniValue tl_create_oraclecontract(const JSONRPCRequest& request)
 			"\"hash\"                  (string) the hex-encoded transaction hash\n"
 
 			"\nExamples:\n"
-			+ HelpExampleCli("tl_create_oraclecontract", "2 1 0 \"Companies\" \"Bitcoin Mining\" \"Quantum Miner\" \"\" \"\" 2 \"100\" 1483228800 30 2 4461 100 1 25")
-			+ HelpExampleRpc("tl_create_oraclecontract", "2, 1, 0, \"Companies\", \"Bitcoin Mining\", \"Quantum Miner\", \"\", \"\", 2, \"100\", 1483228800, 30, 2, 4461, 100, 1, 25")
+			+ HelpExampleCli("tl_create_oraclecontract", "\"3BydPiSLPP3DR5cf726hDQ89fpqWLxPKLR\" \"Contract1\" \"2560\" \"1\" \"3\" \"1\" \"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" 0 \"[1,2,4]\"")
+			+ HelpExampleRpc("tl_create_oraclecontract", "\"3BydPiSLPP3DR5cf726hDQ89fpqWLxPKLR\", \"Contract1\", \"2560\", \"1\", \"3\", \"1\",\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", 0, \"[1,2,4]\"")
 			);
 
   const std::string fromAddress = ParseAddress(request.params[0]);
@@ -862,7 +880,7 @@ UniValue tl_tradecontract(const JSONRPCRequest& request)
 {
   if (request.fHelp || request.params.size() != 6)
     throw runtime_error(
-			"tl_tradecontract \"fromaddress\" propertyidforsale \"amountforsale\" propertiddesired \"amountdesired\"\n"
+			"tl_tradecontract \"fromaddress\" \"name (or id)\" \"amountforsale\" \"effectiveprice\" \"tradingaction\" \"leverage\" \n"
 
 			"\nPlace a trade offer on the distributed Futures Contracts exchange.\n"
 
@@ -873,12 +891,13 @@ UniValue tl_tradecontract(const JSONRPCRequest& request)
 			"4. effective price      (number, required) limit price desired in exchange\n"
 			"5. trading action       (number, required) 1 to BUY contracts, 2 to SELL contracts \n"
 			"6. leverage             (number, required) leverage (2x, 3x, ... 10x)\n"
+
 			"\nResult:\n"
 			"\"payload\"             (string) the hex-encoded payload\n"
 
 			"\nExamples:\n"
-			+ HelpExampleCli("tl_tradecontract", "31\"250.0\"1\"10.0\"70.0\"80.0\"")
-			+ HelpExampleRpc("tl_tradecontract", "31,\"250.0\",1,\"10.0,\"70.0,\"80.0\"")
+			+ HelpExampleCli("tl_tradecontract", "\"3BydPiSLPP3DR5cf726hDQ89fpqWLxPKLR\" \"31\" \"250.0\" \"10.0\" \"70.0\" \"80.0\"")
+			+ HelpExampleRpc("tl_tradecontract", "\"3BydPiSLPP3DR5cf726hDQ89fpqWLxPKLR\", 31,\"250.0\",1,\"10.0\"")
 			);
 
       const std::string fromAddress = ParseAddress(request.params[0]);
@@ -916,7 +935,7 @@ UniValue tl_cancelallcontractsbyaddress(const JSONRPCRequest& request)
 {
   if (request.fHelp || request.params.size() != 2)
     throw runtime_error(
-			"tl_cancelallcontractsbyaddress \"fromaddress\" \n"
+			"tl_cancelallcontractsbyaddress \"fromaddress\" \"name (or id)\" \n"
 
 			"\nCancel all offers on a given Futures Contract .\n"
 
@@ -927,8 +946,8 @@ UniValue tl_cancelallcontractsbyaddress(const JSONRPCRequest& request)
 			"\"hash\"                  (string) the hex-encoded transaction hash\n"
 
 			"\nExamples:\n"
-			+ HelpExampleCli("tl_cancelallcontractsbyaddress", "\"3BydPiSLPP3DR5cf726hDQ89fpqWLxPKLR\" 1, 3")
-			+ HelpExampleRpc("tl_cancelallcontractsbyaddress", "\"3BydPiSLPP3DR5cf726hDQ89fpqWLxPKLR\", 1, 3")
+			+ HelpExampleCli("tl_cancelallcontractsbyaddress", "\"3BydPiSLPP3DR5cf726hDQ89fpqWLxPKLR\" \"1\"")
+			+ HelpExampleRpc("tl_cancelallcontractsbyaddress", "\"3BydPiSLPP3DR5cf726hDQ89fpqWLxPKLR\", \"1\"")
 			);
 
   // obtain parameters & info
@@ -965,19 +984,20 @@ UniValue tl_closeposition(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 2)
         throw runtime_error(
-            "tl_closeposition \"fromaddress\" \n"
+            "tl_closeposition \"fromaddress\" \"contractid\" \n"
 
             "\nClose the position on a given Futures Contract .\n"
 
             "\nArguments:\n"
             "1. fromaddress          (string, required) the address to trade with\n"
-            "2. contractId           (number, required) the Id of Future Contract \n"
+            "2. contractid           (number, required) the Id of Future Contract \n"
+
             "\nResult:\n"
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
 
             "\nExamples:\n"
-            + HelpExampleCli("tl_closeposition", "\"3BydPiSLPP3DR5cf726hDQ89fpqWLxPKLR\" 1, 3")
-            + HelpExampleRpc("tl_closeposition", "\"3BydPiSLPP3DR5cf726hDQ89fpqWLxPKLR\", 1, 3")
+            + HelpExampleCli("tl_closeposition", "\"3BydPiSLPP3DR5cf726hDQ89fpqWLxPKLR\" \"1\"")
+            + HelpExampleRpc("tl_closeposition", "\"3BydPiSLPP3DR5cf726hDQ89fpqWLxPKLR\", \"1\"")
         );
 
     // obtain parameters & info
@@ -1015,7 +1035,7 @@ UniValue tl_sendissuance_pegged(const JSONRPCRequest& request)
 {
   if (request.fHelp || request.params.size() != 7)
     throw runtime_error(
-			"tl_sendissuance_pegged\"fromaddress\"  type previousid \"category\" \"subcategory\" \"name\" \"url\" \"data\"\n"
+			"tl_sendissuance_pegged \"fromaddress\"  \"type\" \"previousid\" \"name\" \"collateralcurrency\" \"contractname (or id)\" \"amountofpegged\" \n"
 
 			"\nCreate new pegged currency with manageable supply.\n"
 
@@ -1027,12 +1047,13 @@ UniValue tl_sendissuance_pegged(const JSONRPCRequest& request)
 			"6. collateralcurrency    (number, required) the collateral currency for the new pegged \n"
 			"7. contract name or id   (string, required) the future contract name (or id) for the new pegged \n"
 			"8. amount of pegged      (number, required) amount of pegged to create \n"
+
 			"\nResult:\n"
 			"\"hash\"                 (string) the hex-encoded transaction hash\n"
 
 			"\nExamples:\n"
-			+ HelpExampleCli("tl_sendissuance_pegged", "\"3HsJvhr9qzgRe3ss97b1QHs38rmaLExLcH\" 2 1 0 \"Companies\" \"Bitcoin Mining\" \"Quantum Miner\" \"\" \"\"")
-			+ HelpExampleRpc("tl_sendissuance_pegged", "\"3HsJvhr9qzgRe3ss97b1QHs38rmaLExLcH\", 2, 1, 0, \"Companies\", \"Bitcoin Mining\", \"Quantum Miner\", \"\", \"\"")
+			+ HelpExampleCli("tl_sendissuance_pegged", "\"3HsJvhr9qzgRe3ss97b1QHs38rmaLExLcH\" 2 1  \"Companies\" \"4\" \"Quantum Miner Contract\" \"1000.0\"")
+			+ HelpExampleRpc("tl_sendissuance_pegged", "\"3HsJvhr9qzgRe3ss97b1QHs38rmaLExLcH\", 2, 1, \"Companies\", \"4\", \"Quantum Miner Contract\", \"1000.0\"")
 			);
 
   // obtain parameters & info
@@ -1086,7 +1107,7 @@ UniValue tl_send_pegged(const JSONRPCRequest& request)
 {
   if (request.fHelp || request.params.size() != 4)
     throw runtime_error(
-			"tl_send \"fromaddress\" \"toaddress\" propertyid \"amount\" ( \"redeemaddress\" \"referenceamount\" )\n"
+			"tl_send \"fromaddress\" \"toaddress\" \"propertyname\" \"amount\" \n"
 
 			"\nSend the pegged currency to other addresses.\n"
 
@@ -1096,13 +1117,12 @@ UniValue tl_send_pegged(const JSONRPCRequest& request)
 			"3. property name        (string, required) the identifier of the tokens to send\n"
 			"4. amount               (string, required) the amount to send\n"
 
-
 			"\nResult:\n"
 			"\"hash\"                  (string) the hex-encoded transaction hash\n"
 
 			"\nExamples:\n"
-			+ HelpExampleCli("tl_send_pegged", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\" \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\" 1 \"100.0\"")
-			+ HelpExampleRpc("tl_send_pegged", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\", \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\", 1, \"100.0\"")
+			+ HelpExampleCli("tl_send_pegged", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\" \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\"  \"Contract1\" \"100.0\"")
+			+ HelpExampleRpc("tl_send_pegged", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\", \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\", \"Contract1\", \"100.0\"")
 			);
 
   // obtain parameters & info
@@ -1146,7 +1166,7 @@ UniValue tl_redemption_pegged(const JSONRPCRequest& request)
 {
   if (request.fHelp || request.params.size() != 4)
     throw runtime_error(
-			"tl_redemption_pegged \"fromaddress\" propertyid \"amount\" ( \"redeemaddress\" distributionproperty )\n"
+			"tl_redemption_pegged \"fromaddress\" \"name (or id)\" \"amount\" \"nameofcontract\"\n"
 
 			"\n Redemption of the pegged currency .\n"
 
@@ -1155,12 +1175,13 @@ UniValue tl_redemption_pegged(const JSONRPCRequest& request)
 			"2. name of pegged       (string, required) name of the tokens to redeem\n"
 			"3. amount               (number, required) the amount of pegged currency for redemption"
 			"4. name of contract     (string, required) the identifier of the future contract involved\n"
+
 			"\nResult:\n"
 			"\"hash\"                  (string) the hex-encoded transaction hash\n"
 
 			"\nExamples:\n"
-			+ HelpExampleCli("tl_redemption_pegged", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\" , 1")
-			+ HelpExampleRpc("tl_redemption_pegged", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\", 1")
+			+ HelpExampleCli("tl_redemption_pegged", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\" \"Pegged1\" \"100.0\"  \"Contract1\"")
+			+ HelpExampleRpc("tl_redemption_pegged", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\", \"Pegged1\", \"100.0\", \"Contract1\"")
 			);
 
   // obtain parameters & info
@@ -1205,7 +1226,7 @@ UniValue tl_cancelorderbyblock(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 3)
         throw runtime_error(
-            "tl_cancelorderbyblock \"fromaddress\"\n"
+            "tl_cancelorderbyblock \"fromaddress\" \"block\" \"idx\" \n"
 
             "\nCancel an specific offer on the MetaDEx.\n"
 
@@ -1218,8 +1239,8 @@ UniValue tl_cancelorderbyblock(const JSONRPCRequest& request)
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
 
             "\nExamples:\n"
-            + HelpExampleCli("tl_cancelorderbyblock", "\"3BydPiSLPP3DR5cf726hDQ89fpqWLxPKLR\" 1, 2")
-            + HelpExampleRpc("tl_cancelorderbyblock", "\"3BydPiSLPP3DR5cf726hDQ89fpqWLxPKLR\", 1, 2")
+            + HelpExampleCli("tl_cancelorderbyblock", "\"3BydPiSLPP3DR5cf726hDQ89fpqWLxPKLR\" \"1\" \"2\"")
+            + HelpExampleRpc("tl_cancelorderbyblock", "\"3BydPiSLPP3DR5cf726hDQ89fpqWLxPKLR\", \"1\", \"2\"")
         );
 
     // obtain parameters & info
@@ -1254,7 +1275,7 @@ UniValue tl_senddexoffer(const JSONRPCRequest& request)
 {
   if (request.fHelp || request.params.size() != 8) {
     throw runtime_error(
-			"tl_senddexoffer \"fromaddress\" propertyidforsale \"amountforsale\" \"amountdesired\" paymentwindow minacceptfee action\n"
+			"tl_senddexoffer \"fromaddress\" \"propertyidforsale\" \"amountforsale\" \"amountdesired\" \"paymentwindow\" \"minacceptfee\" \"option\" \"action\" \n"
 
 			"\nPlace, update or cancel a sell offer on the traditional distributed Trade Layer/LTC exchange.\n"
 
@@ -1273,8 +1294,8 @@ UniValue tl_senddexoffer(const JSONRPCRequest& request)
 			"\"hash\"                  (string) the hex-encoded transaction hash\n"
 
 			"\nExamples:\n"
-			+ HelpExampleCli("tl_senddexoffer", "\"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\" 1 \"1.5\" \"0.75\" 25 \"0.0005\" 1")
-			+ HelpExampleRpc("tl_senddexoffer", "\"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\", 1, \"1.5\", \"0.75\", 25, \"0.0005\", 1")
+			+ HelpExampleCli("tl_senddexoffer", "\"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\" \"1\" \"1.5\" \"0.75\" 25 \"0.0005\" \"1\" \"2\"")
+			+ HelpExampleRpc("tl_senddexoffer", "\"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\", \"1\", \"1.5\", \"0.75\", 25, \"0.0005\", \"1\", \"2\"")
 			);
   }
 
@@ -1324,7 +1345,7 @@ UniValue tl_senddexaccept(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() < 4 || request.params.size() > 5)
         throw runtime_error(
-            "tl_senddexaccept \"fromaddress\" \"toaddress\" propertyid \"amount\" ( override )\n"
+            "tl_senddexaccept \"fromaddress\" \"toaddress\" \"propertyid\" \"amount\" ( override )\n"
 
             "\nCreate and broadcast an accept offer for the specified token and amount.\n"
 
@@ -1401,7 +1422,7 @@ UniValue tl_setoracle(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 5)
         throw runtime_error(
-            "tl_setoracle \"fromaddress\" \"contract name\" \"high\" \"low \" \"close\" \n"
+            "tl_setoracle \"fromaddress\" \"contractname\" \"high\" \"low \" \"close\" \n"
 
             "\nSet the price for an oracle address.\n"
 
@@ -1416,8 +1437,8 @@ UniValue tl_setoracle(const JSONRPCRequest& request)
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
 
             "\nExamples:\n"
-            + HelpExampleCli("tl_setoracle", "\"1ARjWDkZ7kT9fwjPrjcQyvbXDkEySzKHwu\" ,\"3HTHRxu3aSDV4de+akjC7VmsiUp7c6dfbvs\" ,\"Contract 1\"")
-            + HelpExampleRpc("tl_setoracle", "\"1ARjWDkZ7kT9fwjPrjcQyvbXDkEySzKHwu\", \"3HTHRxu3aSDV4deakjC7VmsiUp7c6dfbvs\", \"Contract 1\"")
+            + HelpExampleCli("tl_setoracle", "\"1ARjWDkZ7kT9fwjPrjcQyvbXDkEySzKHwu\" ,\"3HTHRxu3aSDV4de+akjC7VmsiUp7c6dfbvs\" ,\"Contract 1\" \"900.2\" \"400.0\" \"600.5\"")
+            + HelpExampleRpc("tl_setoracle", "\"1ARjWDkZ7kT9fwjPrjcQyvbXDkEySzKHwu\", \"3HTHRxu3aSDV4deakjC7VmsiUp7c6dfbvs\", \"Contract 1\", \"900.2\",\"400.0\",\"600.5\"")
         );
 
     // obtain parameters & info
@@ -1463,7 +1484,7 @@ UniValue tl_change_oracleadm(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 3)
         throw runtime_error(
-            "tl_change_oracleadm \"fromaddress\" \"toaddress\" contract name\n"
+            "tl_change_oracleadm \"fromaddress\" \"toaddress\" \"contractname\" \n"
 
             "\nChange the admin on record of the Oracle Future Contract.\n"
 
@@ -1523,7 +1544,7 @@ UniValue tl_oraclebackup(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 2)
         throw runtime_error(
-            "tl_oraclebackup \"oracle address\" \"contract name\n"
+            "tl_oraclebackup \"oracleaddress\" \"contractname\" \n"
 
             "\n Activation of backup address (backup is now the new oracle address).\n"
 
@@ -1580,7 +1601,7 @@ UniValue tl_closeoracle(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 2)
         throw runtime_error(
-            "tl_closeoracle \"backupaddress\" \"contract name\n"
+            "tl_closeoracle \"backupaddress\" \"contractname\" \n"
 
             "\nClose an Oracle Future Contract.\n"
 
@@ -1638,7 +1659,7 @@ UniValue tl_commit_tochannel(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 4)
         throw runtime_error(
-            "tl_commit_tochannel \"sender\" \"channel address\" \"propertyId\" \"amount\"vout\n"
+            "tl_commit_tochannel \"sender\" \"channeladdress\" \"propertyId\" \"amount\" \n"
 
             "\nCommit fundings into the channel.\n"
 
@@ -1647,13 +1668,14 @@ UniValue tl_commit_tochannel(const JSONRPCRequest& request)
             "2. channel address        (string, required) multisig address of channel\n"
             "3. propertyId             (number, required) the propertyId of token commited into the channel\n"
             "4. amount                 (number, required) amount of tokens traded in the channel\n"
+
             "\nResult:\n"
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
 
             "\nExamples:\n"
 
-            + HelpExampleCli("tl_commit_tochannel", "\"1M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\" \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\" 3 100 \"1\"")
-            + HelpExampleRpc("tl_commit_tochannel", "\"1M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\", \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\",3, 100, \"1\"")
+            + HelpExampleCli("tl_commit_tochannel", "\"1M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\" \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\" \"100\" \"1\"")
+            + HelpExampleRpc("tl_commit_tochannel", "\"1M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\", \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\", \"100\", \"1\"")
         );
 
     // obtain parameters & info
@@ -1690,7 +1712,7 @@ UniValue tl_withdrawal_fromchannel(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 4)
         throw runtime_error(
-            "tl_withdrawal_fromchannel \"sender\" \"channel address\" \"propertyId\" \"amount\"vout\n"
+            "tl_withdrawal_fromchannel \"sender\" \"channel address\" \"propertyId\" \"amount\" \n"
 
             "\nwithdrawal from the channel.\n"
 
@@ -1699,12 +1721,13 @@ UniValue tl_withdrawal_fromchannel(const JSONRPCRequest& request)
             "2. channel address        (string, required) multisig address of channel\n"
             "3. propertyId             (number, required) the propertyId of token commited into the channel\n"
             "4. amount                 (number, required) amount to withdrawal from channel\n"
+
             "\nResult:\n"
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
 
             "\nExamples:\n"
-            + HelpExampleCli("tl_withdrawal_fromchannel", "\"1M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\" \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\" 3 100 \"1\"")
-            + HelpExampleRpc("tl_withdrawal_fromchannel", "\"1M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\", \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\",3, 100, \"1\"")
+            + HelpExampleCli("tl_withdrawal_fromchannel", "\"1M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\" \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\" \"100\" \"1\"")
+            + HelpExampleRpc("tl_withdrawal_fromchannel", "\"1M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\", \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\", \"100\", \"1\"")
         );
 
     // obtain parameters & info
@@ -1741,7 +1764,7 @@ UniValue tl_new_id_registration(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 3)
         throw runtime_error(
-            "tl_new_id_registration \"sender\" \"address\" \"website url\" \"company name\" \n"
+            "tl_new_id_registration \"sender\" \"websiteurl\" \"companyname\" \n"
 
             "\n KYC: setting identity registrar Id number for address.\n"
 
@@ -1754,8 +1777,8 @@ UniValue tl_new_id_registration(const JSONRPCRequest& request)
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
 
             "\nExamples:\n"
-            + HelpExampleCli("tl_new_id_registration", "\"1M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\" \"www.companyone.com\" company one , 1,0,0,0 \"")
-            + HelpExampleRpc("tl_new_id_registration", "\"1M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\", \"www.companyone.com\",company one, 1,1,0,0 \"")
+            + HelpExampleCli("tl_new_id_registration", "\"1M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\" \"www.companyone.com\" \"company one\"")
+            + HelpExampleRpc("tl_new_id_registration", "\"1M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\", \"www.companyone.com\", \"company one\"")
         );
 
     // obtain parameters & info
@@ -1788,7 +1811,7 @@ UniValue tl_update_id_registration(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 2)
         throw runtime_error(
-            "tl_update_id_registration \"address\" \"new address\" \n"
+            "tl_update_id_registration \"address\" \"newaddress\" \n"
 
             "\nupdate the address on id registration.\n"
 
@@ -1833,7 +1856,7 @@ UniValue tl_send_dex_payment(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 3)
         throw runtime_error(
-            "tl_send_dex_payment \"fromaddress\" \"toaddress\"amount\" \n"
+            "tl_send_dex_payment \"fromaddress\" \"toaddress\" \"amount\" \n"
 
             "\nCreate and broadcast a dex payment.\n"
 
@@ -1881,7 +1904,7 @@ UniValue tl_attestation(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() < 1 || request.params.size() > 3)
         throw runtime_error(
-            "tl_attestation \"fromaddress\" \"toaddress\"amount\" \n"
+            "tl_attestation \"fromaddress\" \"toaddress\" \"amount\" \n"
 
             "\nCreate and broadcast a kyc attestation.\n"
 
@@ -1893,8 +1916,8 @@ UniValue tl_attestation(const JSONRPCRequest& request)
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
 
             "\nExamples:\n"
-            + HelpExampleCli("tl_attestation", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\"")
-            + HelpExampleRpc("tl_attestation", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\"")
+            + HelpExampleCli("tl_attestation", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\" \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\" \"hash\"")
+            + HelpExampleRpc("tl_attestation", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\", \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\", \"hash\"")
         );
 
     // obtain parameters & info
@@ -1935,6 +1958,7 @@ UniValue tl_revoke_attestation(const JSONRPCRequest& request)
             "\nArguments:\n"
             "1. sender address       (string, required) authority address\n"
             "2. receiver address     (string, required) receiver address\n"
+
             "\nResult:\n"
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
 
@@ -1973,9 +1997,10 @@ UniValue tl_sendcancelalltrades(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
-            "tl_sendcancelalltrades \"\"\" \n"
+            "tl_sendcancelalltrades \n"
 
             "\nCancel all metaDEx orders.\n"
+
             "\nArguments:\n"
             "1. address       (string, required) authority address\n"
 
@@ -2013,16 +2038,17 @@ UniValue tl_sendcancel_order(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 2)
         throw runtime_error(
-           "tl_sendcancel_order \"address \"hash\" \n"
+           "tl_sendcancel_order \"address\" \"hash\" \n"
 
            "\nCancel specific metaDEx order .\n"
+
            "\nArguments:\n"
            "1. address       (string, required) sender address\n"
            "2. txid          (string, required) transaction hash\n"
 
            "\nExamples:\n"
-           + HelpExampleCli("tl_sendcancel_order", "\"\"")
-           + HelpExampleRpc("tl_sendcancel_order", "\"\"")
+         + HelpExampleCli("tl_sendcancel_order", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\" \"e8a97a4ab61389d6a4174beb8c0dbd52d094132d64d2a0bc813ab4942050f036\"")
+         + HelpExampleRpc("tl_sendcancel_order", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\", \"e8a97a4ab61389d6a4174beb8c0dbd52d094132d64d2a0bc813ab4942050f036\"")
         );
 
     // obtain parameters & info
@@ -2055,16 +2081,18 @@ UniValue tl_sendcanceltradesbypair(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 3)
         throw runtime_error(
-          "tl_sendcanceltradesbypair \"address \"propertyidforsale\" \"propertyiddesired\"\n"
+          "tl_sendcanceltradesbypair \"address\" \"propertyidforsale\" \"propertyiddesired\" \n"
 
           "\nCancel specific contract order .\n"
+
           "\nArguments:\n"
           "1. fromaddress               (string, required) sender address\n"
           "2. propertyidforsale         (string, required) the identifier of the tokens listed for sale\n"
           "3. propertyiddesired         (string, required) the identifier of the tokens desired in exchange\n"
+
           "\nExamples:\n"
-          + HelpExampleCli("\"tl_sendcanceltradesbypair\"",  "\"3BydPiSLPP3DR5cf726hDQ89fpqWLxPKLR\" 1 31")
-          + HelpExampleRpc("tl_sendcanceltradesbypair", "\"3BydPiSLPP3DR5cf726hDQ89fpqWLxPKLR\", 1, 31")
+          + HelpExampleCli("\"tl_sendcanceltradesbypair\"",  "\"3BydPiSLPP3DR5cf726hDQ89fpqWLxPKLR\" \"1\" \"31\"")
+          + HelpExampleRpc("tl_sendcanceltradesbypair", "\"3BydPiSLPP3DR5cf726hDQ89fpqWLxPKLR\", \"1\", \"31\"")
         );
 
     // obtain parameters & info
@@ -2102,18 +2130,20 @@ UniValue tl_sendcanceltradesbyprice(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 5)
         throw runtime_error(
-          "tl_sendcanceltradesbyprice \"address \"propertyidforsale\" \"propertyiddesired\"\n"
+          "tl_sendcanceltradesbyprice \"address\" \"propertyidforsale\" \"propertyiddesired\"\n"
 
           "\nCancel specific contract order .\n"
+
           "\nArguments:\n"
           "1. fromaddress          (string, required) the address to trade with\n"
     			"2. propertyidforsale    (number, required) the identifier of the tokens to list for sale\n"
     			"3. amountforsale        (string, required) the amount of tokens to list for sale\n"
     			"4. propertiddesired     (number, required) the identifier of the tokens desired in exchange\n"
     			"5. amountdesired        (string, required) the amount of tokens desired in exchange\n"
+
           "\nExamples:\n"
-          + HelpExampleCli("\"tl_sendcanceltradesbyprice\"",  "\"3BydPiSLPP3DR5cf726hDQ89fpqWLxPKLR\" 1 31,6,71")
-          + HelpExampleRpc("tl_sendcanceltradesbyprice", "\"3BydPiSLPP3DR5cf726hDQ89fpqWLxPKLR\", 1, 31,2,56")
+          + HelpExampleCli("\"tl_sendcanceltradesbyprice\"", "\"3BydPiSLPP3DR5cf726hDQ89fpqWLxPKLR\" \"1\" \"31\" \"6\" \"71\"")
+          + HelpExampleRpc("tl_sendcanceltradesbyprice", "\"3BydPiSLPP3DR5cf726hDQ89fpqWLxPKLR\", \"1\", \"31\", \"2\", \"56\"")
         );
 
     // obtain parameters & info
@@ -2154,16 +2184,17 @@ UniValue tl_sendcancel_contract_order(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 2)
         throw runtime_error(
-           "tl_sendcancel_contract_order \"address \"hash\" \n"
+           "tl_sendcancel_contract_order \"address\" \"txid\" \n"
 
            "\nCancel specific contract order .\n"
+
            "\nArguments:\n"
            "1. address       (string, required) sender address\n"
            "2. txid          (string, required) transaction hash\n"
 
            "\nExamples:\n"
-           + HelpExampleCli("tl_sendcancel_contract_order", "\"\"")
-           + HelpExampleRpc("tl_sendcancel_contract_order", "\"\"")
+           + HelpExampleCli("tl_sendcancel_contract_order", "\"3BydPiSLPP3DR5cf726hDQ89fpqWLxPKLR\" \"e8a97a4ab61389d6a4174beb8c0dbd52d094132d64d2a0bc813ab4942050f036\"")
+           + HelpExampleRpc("tl_sendcancel_contract_order", "\"3BydPiSLPP3DR5cf726hDQ89fpqWLxPKLR\", \"e8a97a4ab61389d6a4174beb8c0dbd52d094132d64d2a0bc813ab4942050f036\"")
         );
 
     // obtain parameters & info

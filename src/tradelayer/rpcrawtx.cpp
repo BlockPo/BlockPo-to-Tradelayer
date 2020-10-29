@@ -1,4 +1,4 @@
-#include <tradelayer/rpcrawtx.h> // XXX
+#include <tradelayer/rpcrawtx.h>
 
 #include <tradelayer/createtx.h>
 #include <tradelayer/rpc.h>
@@ -185,9 +185,7 @@ UniValue tl_createrawtx_reference(const JSONRPCRequest& request)
             "tl_createrawtx_reference \"rawtx\" \"destination\" ( amount )\n"
 
             "\nAdds a reference output to the transaction.\n"
-
             "\nIf no raw transaction is provided, a new transaction is created.\n"
-
             "\nThe output value is set to at least the dust threshold.\n"
 
             "\nArguments:\n"
