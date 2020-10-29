@@ -88,6 +88,7 @@ UniValue tl_createpayload_issuancefixed(const JSONRPCRequest& request)
             "      2,3,5             (number) kyc id\n"
             "      ,...\n"
             "    ]\n"
+
             "\nResult:\n"
             "\"payload\"             (string) the hex-encoded payload\n"
 
@@ -129,6 +130,7 @@ UniValue tl_createpayload_issuancemanaged(const JSONRPCRequest& request)
             "      2,3,5             (number) kyc id\n"
             "      ,...\n"
             "    ]\n"
+
             "\nResult:\n"
             "\"payload\"             (string) the hex-encoded payload\n"
 
@@ -241,6 +243,7 @@ UniValue tl_createpayload_sendactivation(const JSONRPCRequest& request)
             "\nPayload to activate a protocol feature.\n"
 
             "\nNote: Trade Layer ignores activations from unauthorized sources.\n"
+
             "\nArguments:\n"
             "1. featureid            (number, required) the identifier of the feature to activate\n"
             "2. block                (number, required) the activation block\n"
@@ -248,6 +251,7 @@ UniValue tl_createpayload_sendactivation(const JSONRPCRequest& request)
 
             "\nResult:\n"
             "\"payload\"             (string) the hex-encoded payload\n"
+
             "\nExamples:\n"
             + HelpExampleCli("tl_createpayload_sendactivation", "\" 1 370000 999")
             + HelpExampleRpc("tl_createpayload_sendactivation", "\", 1, 370000, 999")
@@ -277,6 +281,7 @@ UniValue tl_createpayload_senddeactivation(const JSONRPCRequest& request)
 
             "\nResult:\n"
             "\"payload\"             (string) the hex-encoded payload\n"
+
             "\nExamples:\n"
             + HelpExampleCli("tl_createpayload_senddeactivation", "\"1")
             + HelpExampleRpc("tl_createpayload_senddeactivation", "\"1")
@@ -305,6 +310,7 @@ UniValue tl_createpayload_sendalert(const JSONRPCRequest& request)
 
             "\nResult:\n"
             "\"payload\"             (string) the hex-encoded payload\n"
+
             "\nExamples:\n"
             + HelpExampleCli("tl_createpayload_sendalert", "\"3\" \"7\" \"message here\"")
             + HelpExampleRpc("tl_createpayload_sendalert", "\"3\", \"7\" ,\"message here\"")
@@ -422,6 +428,7 @@ UniValue tl_createpayload_tradecontract(const JSONRPCRequest& request)
 			"3. effective price      (number, required) limit price desired in exchange\n"
 			"4. trading action       (number, required) 1 to BUY contracts, 2 to SELL contracts \n"
 			"5. leverage             (number, required) leverage (2x, 3x, ... 10x)\n"
+
 			"\nResult:\n"
 			"\"payload\"             (string) the hex-encoded payload\n"
 
@@ -477,6 +484,7 @@ UniValue tl_createpayload_closeposition(const JSONRPCRequest& request)
 
             "\nArguments:\n"
             "1. contractId           (number, required) the Id of Future Contract \n"
+
             "\nResult:\n"
             "\"payload\"             (string) the hex-encoded payload\n"
 
@@ -508,6 +516,7 @@ UniValue tl_createpayload_sendissuance_pegged(const JSONRPCRequest& request)
 			"4. collateralcurrency    (number, required) the collateral currency for the new pegged \n"
 			"5. future contract name  (number, required) the future contract name for the new pegged \n"
 			"6. amount of pegged      (number, required) amount of pegged to create \n"
+
 			"\nResult:\n"
 			"\"payload\"              (string) the hex-encoded payload\n"
 
@@ -543,7 +552,6 @@ UniValue tl_createpayload_send_pegged(const JSONRPCRequest& request)
 			"1. property name        (string, required) the identifier of the tokens to send\n"
 			"2. amount               (string, required) the amount to send\n"
 
-
 			"\nResult:\n"
 			"\"payload\"             (string) the hex-encoded payload\n"
 
@@ -576,6 +584,7 @@ UniValue tl_createpayload_redemption_pegged(const JSONRPCRequest& request)
 			  "1. name of pegged       (string, required) name of the tokens to redeem\n"
 			  "2. amount               (number, required) the amount of pegged currency for redemption"
 			  "3. name of contract     (string, required) the identifier of the future contract involved\n"
+
 			  "\nResult:\n"
 			  "\"payload\"             (string) the hex-encoded payload\n"
 
@@ -746,7 +755,6 @@ UniValue tl_createpayload_instant_trade(const JSONRPCRequest& request)
       "4. amountdesired         (string, optional) the amount desired of tokens\n"
       "5. blockheight expiry    (number, required) block of expiry\n"
 
-
 			"\nResult:\n"
 			"\"hash\"                  (string) the hex-encoded transaction hash\n"
 
@@ -782,6 +790,7 @@ UniValue tl_createpayload_instant_ltc_trade(const JSONRPCRequest& request)
 			"2. amount offered        (string, required) the amount of tokens offered for the address\n"
       "3. price                 (string, required) total price of tokens in LTC\n"
       "4. blockheight_expiry    (number, required) block of expiry\n"
+
 			"\nResult:\n"
 			"\"hash\"                  (string) the hex-encoded transaction hash\n"
 
@@ -1177,6 +1186,7 @@ UniValue tl_createpayload_withdrawal_fromchannel(const JSONRPCRequest& request)
             "\nArguments:\n"
             "1. propertyId             (number, required) the propertyId of token commited into the channel\n"
             "2. amount                 (number, required) amount of tokens traded in the channel\n"
+
             "\nResult:\n"
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
 

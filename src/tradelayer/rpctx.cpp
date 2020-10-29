@@ -40,15 +40,19 @@ UniValue tl_sendrawtx(const JSONRPCRequest& request)
     if (request.fHelp || request.params.size() < 2 || request.params.size() > 5)
         throw runtime_error(
             "tl_sendrawtx \"fromaddress\" \"rawtransaction\" ( \"referenceaddress\" \"referenceamount\" )\n"
+
             "\nBroadcasts a raw trade layer transaction.\n"
+
             "\nArguments:\n"
 
             "1. fromaddress       (string, required) the sender address\n"
             "2. rawtransaction       (string, required) the hex-encoded raw transaction\n"
             "3. referenceaddress     (string, optional) a reference address (none by default)\n"
             "4. referenceamount      (string, optional) a bitcoin amount that is sent to the receiver (minimal by default)\n"
+
             "\nResult:\n"
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
+            
             "\nExamples:\n"
             + HelpExampleCli("tl_sendrawtx", "\"1MCHESTptvd2LnNp7wmr2sGTpRomteAkq8\" \"000000000000000100000000017d7840\" \"1EqTta1Rt8ixAA32DuC29oukbsSWU62qAV\"")
             + HelpExampleRpc("tl_sendrawtx", "\"1MCHESTptvd2LnNp7wmr2sGTpRomteAkq8\", \"000000000000000100000000017d7840\", \"1EqTta1Rt8ixAA32DuC29oukbsSWU62qAV\"")
@@ -257,6 +261,7 @@ UniValue tl_sendissuancefixed(const JSONRPCRequest& request)
             "      2,3,5         (number) kyc id\n"
             "      ,...\n"
             "    ]\n"
+
             "\nResult:\n"
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
 
@@ -527,15 +532,19 @@ UniValue tl_sendactivation(const JSONRPCRequest& request)
     if (request.fHelp || request.params.size() != 4)
         throw runtime_error(
             "tl_sendactivation \"fromaddress\" \"featureid\" \"block\" \"minclientversion\" \n"
+
             "\nActivate a protocol feature.\n"
             "\nNote: Trade Layer Core ignores activations from unauthorized sources.\n"
+
             "\nArguments:\n"
             "1. fromaddress          (string, required) the address to send from\n"
             "2. featureid            (number, required) the identifier of the feature to activate\n"
             "3. block                (number, required) the activation block\n"
             "4. minclientversion     (number, required) the minimum supported client version\n"
+
             "\nResult:\n"
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
+
             "\nExamples:\n"
             + HelpExampleCli("tl_sendactivation", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" 1 370000 999")
             + HelpExampleRpc("tl_sendactivation", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", 1, 370000, 999")
@@ -572,6 +581,7 @@ UniValue tl_senddeactivation(const JSONRPCRequest& request)
     if (request.fHelp || request.params.size() != 2)
         throw runtime_error(
             "tl_senddeactivation \"fromaddress\" \"featureid\" \n"
+
             "\nDeactivate a protocol feature.  For Emergency Use Only.\n"
             "\nNote: Trade Layer Core ignores deactivations from unauthorized sources.\n"
 
@@ -581,6 +591,7 @@ UniValue tl_senddeactivation(const JSONRPCRequest& request)
 
             "\nResult:\n"
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
+
             "\nExamples:\n"
             + HelpExampleCli("tl_senddeactivation", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" 1")
             + HelpExampleRpc("tl_senddeactivation", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", 1")
@@ -615,6 +626,7 @@ UniValue tl_sendalert(const JSONRPCRequest& request)
     if (request.fHelp || request.params.size() != 4)
         throw runtime_error(
             "tl_sendalert \"fromaddress\" \"alerttype\" \"expiryvalue\" \"message\"\n"
+
             "\nCreates and broadcasts an Trade Layer Core alert.\n"
             "\nNote: Trade Layer Core ignores alerts from unauthorized sources.\n"
 
@@ -879,6 +891,7 @@ UniValue tl_tradecontract(const JSONRPCRequest& request)
 			"4. effective price      (number, required) limit price desired in exchange\n"
 			"5. trading action       (number, required) 1 to BUY contracts, 2 to SELL contracts \n"
 			"6. leverage             (number, required) leverage (2x, 3x, ... 10x)\n"
+
 			"\nResult:\n"
 			"\"payload\"             (string) the hex-encoded payload\n"
 
@@ -1104,7 +1117,6 @@ UniValue tl_send_pegged(const JSONRPCRequest& request)
 			"3. property name        (string, required) the identifier of the tokens to send\n"
 			"4. amount               (string, required) the amount to send\n"
 
-
 			"\nResult:\n"
 			"\"hash\"                  (string) the hex-encoded transaction hash\n"
 
@@ -1163,6 +1175,7 @@ UniValue tl_redemption_pegged(const JSONRPCRequest& request)
 			"2. name of pegged       (string, required) name of the tokens to redeem\n"
 			"3. amount               (number, required) the amount of pegged currency for redemption"
 			"4. name of contract     (string, required) the identifier of the future contract involved\n"
+
 			"\nResult:\n"
 			"\"hash\"                  (string) the hex-encoded transaction hash\n"
 
@@ -1987,6 +2000,7 @@ UniValue tl_sendcancelalltrades(const JSONRPCRequest& request)
             "tl_sendcancelalltrades \n"
 
             "\nCancel all metaDEx orders.\n"
+
             "\nArguments:\n"
             "1. address       (string, required) authority address\n"
 
@@ -2027,6 +2041,7 @@ UniValue tl_sendcancel_order(const JSONRPCRequest& request)
            "tl_sendcancel_order \"address\" \"hash\" \n"
 
            "\nCancel specific metaDEx order .\n"
+
            "\nArguments:\n"
            "1. address       (string, required) sender address\n"
            "2. txid          (string, required) transaction hash\n"
@@ -2069,6 +2084,7 @@ UniValue tl_sendcanceltradesbypair(const JSONRPCRequest& request)
           "tl_sendcanceltradesbypair \"address\" \"propertyidforsale\" \"propertyiddesired\" \n"
 
           "\nCancel specific contract order .\n"
+
           "\nArguments:\n"
           "1. fromaddress               (string, required) sender address\n"
           "2. propertyidforsale         (string, required) the identifier of the tokens listed for sale\n"
@@ -2117,6 +2133,7 @@ UniValue tl_sendcanceltradesbyprice(const JSONRPCRequest& request)
           "tl_sendcanceltradesbyprice \"address\" \"propertyidforsale\" \"propertyiddesired\"\n"
 
           "\nCancel specific contract order .\n"
+
           "\nArguments:\n"
           "1. fromaddress          (string, required) the address to trade with\n"
     			"2. propertyidforsale    (number, required) the identifier of the tokens to list for sale\n"
@@ -2170,6 +2187,7 @@ UniValue tl_sendcancel_contract_order(const JSONRPCRequest& request)
            "tl_sendcancel_contract_order \"address\" \"txid\" \n"
 
            "\nCancel specific contract order .\n"
+
            "\nArguments:\n"
            "1. address       (string, required) sender address\n"
            "2. txid          (string, required) transaction hash\n"
