@@ -17,7 +17,7 @@ var accept0ConfFunding = true
 //channels you'd still manage locally, you'd just get the IPs from the server (server is like a VPN protecting home IP from exposure)
 //txInventory would have a local copy but the server is doing the work of decoding so you trust the server in the sanity check function
 var channelManager = {}
-var channelManager.WSchannels ={'ip':'','status':'closed','heartbeat':1000,'channelName':'','counterpartyAlias':''}
+var channelManager.WSchannels ={'ip':'','status':'closed','heartbeat':1000,'channelName':'','counterpartyAlias':'',WSObject:{}}
 var channelManager.counterparties = {'alias':'','ip':'','avgSignBackTime':0,'cancelRate':0,'regulatoryStatus':'unregulated',
 									 'KYC':[0,1,2],'myHistoricalVolume':0}
 //we can keep stats and do a simple .csv export of these tables, update avgSignBack and fidelity for each trade that lags/is shirked
