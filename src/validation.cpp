@@ -171,7 +171,7 @@ public:
     // Block (dis)connection on a given view:
     DisconnectResult DisconnectBlock(const CBlock& block, const CBlockIndex* pindex, CCoinsViewCache& view);
     bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pindex,
-                    CCoinsViewCache& view, const CChainParams& chainparams, bool fJustCheck = false);
+                    CCoinsViewCache& view, const CChainParams& chainparams, bool fJustCheck = false, std::shared_ptr<std::map<COutPoint, Coin>> removedCoins = nullptr);
 
     // Block disconnection on our pcoinsTip:
     bool DisconnectTip(CValidationState& state, const CChainParams& chainparams, DisconnectedBlockTransactions *disconnectpool);
@@ -1309,12 +1309,14 @@ void CChainState::InvalidBlockFound(CBlockIndex *pindex, const CValidationState 
     }
 }
 
-void UpdateCoins(const CTransaction& tx, CCoinsViewCache& inputs, CTxUndo &txundo, int nHeight)
+void UpdateCoins(const CTransaction& tx, CCoinsViewCache& inputs, CTxUndo &txundo, int nHeight, std::shared_ptr<std::map<COutPoint, Coin>> removedCoins)
 {
     // mark inputs spent
     if (!tx.IsCoinBase()) {
         txundo.vprevout.reserve(tx.vin.size());
         for (const CTxIn &txin : tx.vin) {
+            if (removedCoins)
+                removedCoins->emplace(txin.prevout, inputs.AccessCoin(txin.prevout));
             txundo.vprevout.emplace_back();
             bool is_spent = inputs.SpendCoin(txin.prevout, &txundo.vprevout.back());
             assert(is_spent);
@@ -1327,7 +1329,7 @@ void UpdateCoins(const CTransaction& tx, CCoinsViewCache& inputs, CTxUndo &txund
 void UpdateCoins(const CTransaction& tx, CCoinsViewCache& inputs, int nHeight)
 {
     CTxUndo txundo;
-    UpdateCoins(tx, inputs, txundo, nHeight);
+    UpdateCoins(tx, inputs, txundo, nHeight, nullptr);
 }
 
 bool CScriptCheck::operator()() {
@@ -1796,7 +1798,7 @@ static int64_t nBlocksTotal = 0;
  *  Validity checks that depend on the UTXO set are also done; ConnectBlock()
  *  can fail if those validity checks fail (among other reasons). */
 bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pindex,
-                  CCoinsViewCache& view, const CChainParams& chainparams, bool fJustCheck)
+                  CCoinsViewCache& view, const CChainParams& chainparams, bool fJustCheck, std::shared_ptr<std::map<COutPoint, Coin>> removedCoins)
 {
     AssertLockHeld(cs_main);
     assert(pindex);
@@ -1982,7 +1984,7 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
         if (i > 0) {
             blockundo.vtxundo.push_back(CTxUndo());
         }
-        UpdateCoins(tx, view, i == 0 ? undoDummy : blockundo.vtxundo.back(), pindex->nHeight);
+        UpdateCoins(tx, view, i == 0 ? undoDummy : blockundo.vtxundo.back(), pindex->nHeight, removedCoins);
     }
     int64_t nTime3 = GetTimeMicros(); nTimeConnect += nTime3 - nTime2;
     LogPrint(BCLog::BENCH, "      - Connect %u transactions: %.2fms (%.3fms/tx, %.3fms/txin) [%.2fs (%.2fms/blk)]\n", (unsigned)block.vtx.size(), MILLI * (nTime3 - nTime2), MILLI * (nTime3 - nTime2) / block.vtx.size(), nInputs <= 1 ? 0 : MILLI * (nTime3 - nTime2) / (nInputs-1), nTimeConnect * MICRO, nTimeConnect * MILLI / nBlocksTotal);
@@ -2377,13 +2379,17 @@ bool CChainState::ConnectTip(CValidationState& state, const CChainParams& chainp
         pthisBlock = pblock;
     }
     const CBlock& blockConnecting = *pthisBlock;
+
+    // Map used by Trade Layer to track removals from the UTXO DB for this block.
+    std::shared_ptr<std::map<COutPoint, Coin>> removedCoins = std::make_shared<std::map<COutPoint, Coin>>();
+
     // Apply the block atomically to the chain state.
     int64_t nTime2 = GetTimeMicros(); nTimeReadFromDisk += nTime2 - nTime1;
     int64_t nTime3;
     LogPrint(BCLog::BENCH, "  - Load block from disk: %.2fms [%.2fs]\n", (nTime2 - nTime1) * MILLI, nTimeReadFromDisk * MICRO);
     {
         CCoinsViewCache view(pcoinsTip.get());
-        bool rv = ConnectBlock(blockConnecting, state, pindexNew, view, chainparams);
+        bool rv = ConnectBlock(blockConnecting, state, pindexNew, view, chainparams, false, removedCoins);
         GetMainSignals().BlockChecked(blockConnecting, state);
         if (!rv) {
             if (state.IsInvalid())
@@ -2425,7 +2431,7 @@ bool CChainState::ConnectTip(CValidationState& state, const CChainParams& chainp
 
     for(const CTransactionRef& tx : blockConnecting.vtx){
         //! Trade Layer: new confirmed transaction notification
-        if (mastercore_handler_tx(*tx, pindexNew->nHeight, nTxIdx++, pindexNew)) ++nNumMetaTxs;
+        if (mastercore_handler_tx(*tx, pindexNew->nHeight, nTxIdx++, pindexNew, removedCoins)) ++nNumMetaTxs;
     }
 
     mastercore_handler_block_end(pindexNew->nHeight, pindexNew, nNumMetaTxs);

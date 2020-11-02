@@ -716,7 +716,7 @@ static unsigned int nCacheMiss = 0;
  * @param tx[in]  The transaction to fetch inputs for
  * @return True, if all inputs were successfully added to the cache
  */
-static bool FillTxInputCache(const CTransaction& tx)
+static bool FillTxInputCache(const CTransaction& tx, const std::shared_ptr<std::map<COutPoint, Coin>> removedCoins)
 {
     static unsigned int nCacheSize = gArgs.GetArg("-tltxcache", 500000);
 
@@ -737,20 +737,21 @@ static bool FillTxInputCache(const CTransaction& tx)
         }
 
         CTransactionRef txPrev;
-        uint256 hashBlock = uint256();
-
-        if (!GetTransaction(txIn.prevout.hash, txPrev, Params().GetConsensus(), hashBlock, true)) {
-           return false;
-        }
-
-        if (txPrev.get()->vout.size() <= nOut){
+        uint256 hashBlock;
+        Coin newcoin;
+        if (removedCoins && removedCoins->find(txIn.prevout) != removedCoins->end()) {
+            newcoin = removedCoins->find(txIn.prevout)->second;
+        } else if (GetTransaction(txIn.prevout.hash, txPrev, Params().GetConsensus(), hashBlock)) {
+            newcoin.out.scriptPubKey = txPrev->vout[nOut].scriptPubKey;
+            newcoin.out.nValue = txPrev->vout[nOut].nValue;
+            BlockMap::iterator bit = mapBlockIndex.find(hashBlock);
+            newcoin.nHeight = bit != mapBlockIndex.end() ? bit->second->nHeight : 1;
+        } else {
             return false;
         }
 
-        Coin newCoin(txPrev.get()->vout[nOut], 0, tx.IsCoinBase());
-        view.AddCoin(txIn.prevout, std::move(newCoin), false);
+        view.AddCoin(txIn.prevout, std::move(newcoin), false);
     }
-
 
     return true;
 }
@@ -762,7 +763,7 @@ static bool FillTxInputCache(const CTransaction& tx)
 // RETURNS: < 0 if a non-MP-TX or invalid
 // RETURNS: >0 if 1 or more payments have been made
 
-static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, unsigned int idx, CMPTransaction& mp_tx, unsigned int nTime)
+static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, unsigned int idx, CMPTransaction& mp_tx, unsigned int nTime, const std::shared_ptr<std::map<COutPoint, Coin>> removedCoins = nullptr)
 {
     assert(bRPConly == mp_tx.isRpcOnly());
     mp_tx.Set(wtx.GetHash(), nBlock, idx, nTime);
@@ -779,18 +780,20 @@ static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, 
         PrintToLog("%s(block=%d, %s idx= %d); txid: %s\n", __FUNCTION__, nBlock, FormatISO8601Date(nTime), idx, wtx.GetHash().GetHex());
     }
 
-    LOCK(cs_tx_cache);
+    // ### SENDER IDENTIFICATION ###
+    std::string strSender;
+    int64_t inAll = 0;
+
+    { // needed to ensure the cache isn't cleared in the meantime when doing parallel queries
+    LOCK2(cs_main, cs_tx_cache); // cs_main should be locked first to avoid deadlocks with cs_tx_cache at FillTxInputCache(...)->GetTransaction(...)->LOCK(cs_main)
 
     // Add previous transaction inputs to the cache
-    if (!FillTxInputCache(wtx)) {
+    if (!FillTxInputCache(wtx, removedCoins)) {
         PrintToLog("%s() ERROR: failed to get inputs for %s\n", __func__, wtx.GetHash().GetHex());
         return -101;
     }
 
     assert(view.HaveInputs(wtx));
-
-    // ### SENDER IDENTIFICATION ###
-    std::string strSender;
 
     // determine the sender, but invalidate transaction, if the input is not accepted
     unsigned int vin_n = 0; // the first input
@@ -804,16 +807,21 @@ static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, 
     if (!GetOutputType(txOut.scriptPubKey, whichType)) {
         return -108;
     }
+
     if (!IsAllowedInputType(whichType, nBlock)) {
        return -109;
     }
+
     CTxDestination source;
     if (ExtractDestination(txOut.scriptPubKey, source)) {
         strSender = EncodeDestination(source);
         PrintToLog("%s(): strSender: %s \n",__func__, strSender);
     } else return -110;
 
-    int64_t inAll = view.GetValueIn(wtx);
+    inAll = view.GetValueIn(wtx);
+
+    } // end of LOCK(cs_tx_cache)
+
     int64_t outAll = wtx.GetValueOut();
     int64_t txFee = inAll - outAll; // miner fee
 
@@ -1270,7 +1278,7 @@ static int msc_initial_scan(int nFirstBlock)
         CBlock block;
         if (!ReadBlockFromDisk(block, pblockindex, Params().GetConsensus())) break;
           for(const CTransactionRef& tx : block.vtx) {
-             if (mastercore_handler_tx(*tx, nBlock, nTxNum, pblockindex)) ++nTxsFoundInBlock;
+             if (mastercore_handler_tx(*tx, nBlock, nTxNum, pblockindex, nullptr)) ++nTxsFoundInBlock;
              ++nTxNum;
           }
 
@@ -3069,7 +3077,7 @@ bool VestingTokens(int block)
  *
  * @return True, if the transaction was a valid Trade Layer transaction
  */
-bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx, const CBlockIndex* pBlockIndex)
+bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx, const CBlockIndex* pBlockIndex, const std::shared_ptr<std::map<COutPoint, Coin>> removedCoins)
 {
 
     LOCK(cs_tally);
@@ -3093,7 +3101,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
     mp_obj.unlockLogic();
 
     bool fFoundTx = false;
-    int pop_ret = parseTransaction(false, tx, nBlock, idx, mp_obj, nBlockTime);
+    int pop_ret = parseTransaction(false, tx, nBlock, idx, mp_obj, nBlockTime, removedCoins);
 
     if (0 == pop_ret)
     {
@@ -4025,7 +4033,7 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
 
     /*****************************************************************************/
     //CallingExpiration(pBlockIndex);
-    
+
    return 0;
 }
 
