@@ -88,7 +88,7 @@ bool msc_debug_update_last_block                = 0;
 bool msc_debug_send_reward                      = 0;
 bool msc_debug_contract_cancel                  = 0;
 bool msc_debug_fee_cache_buy                    = 0;
-bool msc_debug_check_attestation_reg            = 1;
+bool msc_debug_check_attestation_reg            = 0;
 bool msc_debug_sanity_checks                    = 0;
 bool msc_debug_ltc_volume                       = 0;
 bool msc_debug_mdex_volume                      = 0;
@@ -113,6 +113,7 @@ bool msc_debug_clearing_operator_fifo           = 0;
 bool msc_debug_counting_lives_longshorts        = 0;
 bool msc_debug_calculate_pnl_forghost           = 1;
 bool msc_debug_withdrawal_from_channel          = 1;
+bool msc_debug_populate_rpc_transaction_obj     = 0;
 
 /**
  * LogPrintf() has been broken a couple of times now
@@ -199,27 +200,25 @@ static void DebugLogInit()
 int LogFilePrint(const std::string& str)
 {
     int ret = 0; // Number of characters written
-    // if (fPrintToConsole) {
-    //     // Print to console
-    //     ret = ConsolePrint(str);
-    // }
-    if (true)
-    {
-        // else if (fPrintToDebugLog && AreBaseParamsConfigured()) {
-        // static bool fStartedNewLine = true;
+    if (fPrintToConsole) {
+        // Print to console
+        ret = ConsolePrint(str);
+        
+    } else {
+        static bool fStartedNewLine = true;
         std::call_once(debugLogInitFlag, &DebugLogInit);
 
         if (fileout == nullptr)
         {
             return ret;
         }
+
         std::lock_guard<std::mutex> lock(*mutexDebugLog);
 
         // Reopen the log file, if requested
-        //if (fReopentradelayerLiteLog) {
-         if (false)
-         {
-            fReopentradelayerLog = false;
+        if (fReopenTradeLayerLog)
+        {
+            fReopenTradeLayerLog = false;
             fs::path pathDebug = GetLogPath();
             if (freopen(pathDebug.string().c_str(), "a", fileout) != nullptr)
                 setbuf(fileout, nullptr); // Unbuffered
@@ -227,15 +226,12 @@ int LogFilePrint(const std::string& str)
          }
 
          // Printing log timestamps can be useful for profiling
-         // if (fLogTimestamps && fStartedNewLine) {
-         //   ret += fprintf(fileout, "%s ", GetTimestamp().c_str());
-         // }
-
-         if (!str.empty() && str[str.size()-1] == '\n') {
-            //fStartedNewLine = true;
-         } else {
-            // fStartedNewLine = false;
+         if (fLogTimestamps && fStartedNewLine) {
+           ret += fprintf(fileout, "%s ", GetTimestamp().c_str());
          }
+
+         fStartedNewLine = (!str.empty() && str[str.size()-1] == '\n') ? true : false;
+
          ret += fwrite(str.data(), 1, str.size(), fileout);
     }
 
@@ -256,19 +252,17 @@ int LogFilePrint(const std::string& str)
 int ConsolePrint(const std::string& str)
 {
     int ret = 0; // Number of characters written
-    /*static bool fStartedNewLine = true;
+    static bool fStartedNewLine = true;
 
     if (fLogTimestamps && fStartedNewLine) {
         ret = fprintf(stdout, "%s %s", GetTimestamp().c_str(), str.c_str());
     } else {
         ret = fwrite(str.data(), 1, str.size(), stdout);
     }
-    if (!str.empty() && str[str.size()-1] == '\n') {
-        fStartedNewLine = true;
-    } else {
-        fStartedNewLine = false;
-    }
-    fflush(stdout); */
+
+    fStartedNewLine = (!str.empty() && str[str.size()-1] == '\n') ? true : false;
+
+    fflush(stdout);
 
     return ret;
 }
