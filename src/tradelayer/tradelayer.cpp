@@ -2641,7 +2641,6 @@ int mastercore_init()
     return 0;
   }
 
-  PrintToConsole("\nInitializing Trade Layer\n");
   PrintToLog("\nInitializing Trade Layer\n");
   PrintToLog("Startup time: %s\n", FormatISO8601Date(GetTime()));
   // PrintToLog("Build date: %s, based on commit: %s\n", BuildDate(), BuildCommit());
