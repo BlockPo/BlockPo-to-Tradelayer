@@ -278,10 +278,10 @@ int64_t SelectCoins(const std::string& fromAddress, CCoinControl& coinControl, i
                 continue;
             }
 
-            CTxDestination cfromAddress = DecodeDestination(fromAddress); // new change
+            const std::string sAddress = EncodeDestination(dest);
 
             // only use funds from the sender's address
-            if (cfromAddress == dest) {
+            if (fromAddress == sAddress) {
                 COutPoint outpoint(txid, n);
                 coinControl.Select(outpoint);
 
