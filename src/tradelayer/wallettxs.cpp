@@ -221,9 +221,6 @@ int64_t SelectCoins(const std::string& fromAddress, CCoinControl& coinControl, i
     // total output funds collected
     int64_t nTotal = 0;
 
-    // total number of outputs selected
-    unsigned int nNumOutputs = 0;
-
 #ifdef ENABLE_WALLET
     CWalletRef pwalletMain = nullptr;
     if (vpwallets.size() > 0){
@@ -273,8 +270,8 @@ int64_t SelectCoins(const std::string& fromAddress, CCoinControl& coinControl, i
 
             if (txOut.nValue < GetEconomicThreshold(txOut)) {
                 if (msc_debug_wallettxs)
-                PrintToLog("%s(): output value below economic threshold: %s:%d, value: %d\n",
-                      __func__, txid.GetHex(), n, txOut.nValue);
+                    PrintToLog("%s(): output value below economic threshold: %s:%d, value: %d\n",
+                        __func__, txid.GetHex(), n, txOut.nValue);
                 continue;
             }
 
@@ -286,13 +283,12 @@ int64_t SelectCoins(const std::string& fromAddress, CCoinControl& coinControl, i
                 coinControl.Select(outpoint);
 
                 nTotal += txOut.nValue;
-                ++nNumOutputs;
 
-                if (nMax <= nTotal && nNumOutputs >= minOutputs) break;
+                if (nMax <= nTotal) break;
             }
         }
 
-        if (nMax <= nTotal && nNumOutputs >= minOutputs) break;
+        if (nMax <= nTotal) break;
     }
 #endif
     return nTotal;

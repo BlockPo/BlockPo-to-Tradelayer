@@ -573,7 +573,7 @@ class VestingBasicsTest (BitcoinTestFramework):
             out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
             # self.log.info(out)
             assert_equal(out['error'], None)
-            nresult = 2000 + 1000 * (i+1)
+            nresult = 2000 + 1000 * (i + 1)
             sresult = str(nresult)+'.00000000'
             assert_equal(out['result']['balance'], sresult)
             assert_equal(out['result']['reserve'],'0.00000000')
@@ -583,7 +583,7 @@ class VestingBasicsTest (BitcoinTestFramework):
             out = tradelayer_HTTP(conn, headers, True, "tl_get_ltcvolume",params)
             # self.log.info(out)
             assert_equal(out['error'], None)
-            nvolume = 400 + 200 * (i+1)
+            nvolume = 400 + 200 * (i + 1)
             svolume = str(nvolume)+'.00000000'
             assert_equal(out['result']['volume'], svolume)
             volume1 = float(out['result']['volume'])
