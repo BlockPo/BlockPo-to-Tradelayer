@@ -17,7 +17,7 @@ const uint16_t FEATURE_DEX_BUY                  = 4;
 const uint16_t FEATURE_METADEX                  = 5;
 const uint16_t FEATURE_TRADECHANNELS_TOKENS     = 6;
 const uint16_t FEATURE_TRADECHANNELS_CONTRACTS  = 7; //It's important to note that this enables any contract to trade in a channel, but if said contracts aren't activated, still invalid
-const uint16_t FEATURE_FIXED                    = 8;
+const uint16_t FEATURE_FIXED                    = 8; //This should include simple sends, send all
 const uint16_t FEATURE_MANAGED                  = 9;
 const uint16_t FEATURE_NODE_REWARD              = 10;
 const uint16_t FEATURE_CONTRACTDEX              = 11; //Enables native perps/futures for ALL/LTC and LTC/USD, EUR, JPY, CNY, liquidity reward built-in
@@ -33,7 +33,9 @@ const uint16_t FEATURE_INTEROP_SIDECHAINS       = 20; //Generic and specialized 
 const uint16_t FEATURE_GRAPHDEFAULTSWAPS        = 21; //activates GDS perpetual swaps underpinning ALL/LTC and LTC/USD, plus a new kind of meta-contract on any derivative     
 const uint16_t FEATURE_INTERESTRATESWAPS        = 22; //activates term native IR Swaps for ALL/LTC and LTC/USD perpetuals, plus a new kind of oracle contract referring to oracle perp. swaps
 const uint16_t FEATURE_MINERFEECONTRACTS        = 23; //activates term native futures for on-chain miner fee averages
-const uint16_t FEATURE_HEDGEDCURRENCY           = 24; //Enables 1x short positions against ALL to mint sLTC, and 1x shorts against sLTC or rLTC (if activated) to mint USDL, EURL, JPYL, CNYL
+const uint16_t FEATURE_MASSPAYMENT              = 24; //unencumbered version of sent-to-owners, can pay n units of property A to all holders of propery B (which can also be A)
+const uint16_t FEATURE_MULTISEND                = 25; //enables multiple reference outputs to send different amounts of a property to multiple addresses, useful for fee rebate
+const uint16_t FEATURE_HEDGEDCURRENCY           = 26; //Enables 1x short positions against ALL to mint sLTC, and 1x shorts against sLTC or rLTC (if activated) to mint USDL, EURL, JPYL, CNYL
     
 //This is the entire roadmap. If we missed anything, well, clearly we tried not to.
     
@@ -114,6 +116,8 @@ public:
     int MSC_GRAPHDEFAULTSWAPS_BLOCK;
     int MSC_INTERESTRATESWAPS_BLOCK;
     int MSC_MINERFEECONTRACTS_BLOCK;
+    int MSC_MASSPAYMENT_BLOCK;
+    int MSC_MULTISEND_BLOCK;
     int MSC_HEDGEDCURRENCY_BLOCK;
     
 
