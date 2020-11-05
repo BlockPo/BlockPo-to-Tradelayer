@@ -16,12 +16,27 @@ const uint16_t FEATURE_DEX_SELL                 = 3;
 const uint16_t FEATURE_DEX_BUY                  = 4;
 const uint16_t FEATURE_METADEX                  = 5;
 const uint16_t FEATURE_TRADECHANNELS_TOKENS     = 6;
-const uint16_t FEATURE_TRADECHANNELS_CONTRACTS  = 7;
+const uint16_t FEATURE_TRADECHANNELS_CONTRACTS  = 7; //It's important to note that this enables any contract to trade in a channel, but if said contracts aren't activated, still invalid
 const uint16_t FEATURE_FIXED                    = 8;
 const uint16_t FEATURE_MANAGED                  = 9;
 const uint16_t FEATURE_NODE_REWARD              = 10;
-
-
+const uint16_t FEATURE_CONTRACTDEX              = 11; //Enables native perps/futures for ALL/LTC and LTC/USD, EUR, JPY, CNY, liquidity reward built-in
+const uint16_t FEATURE_CONTRACTDEX_ORACLES      = 12; //Enables just oracle contracts with native property id's pre-defined, can be done first
+const uint16_t FEATURE_TRADECHANNELS_OPTIONS    = 13;  //we're Trade Channels only for options because, the memory bloat having a crappy orderbook system, bleh
+const uint16_t FEATURE_DISPENSERVAULTS          = 14; //One can deposit e.g. sLTC to a time-locked cold address and have the yield remit to a warm address
+const uint16_t FEATURE_PAYMENTBATCHING          = 15; //will research composability and scaling of pre-and-post Schnorr use of Taproot or other aggregation methods
+const uint16_t FEATURE_MARGINLENDING            = 16; //post tokens as collateral to pay to borrow a lesser value of some other token (e.g. for shorting/spot lvg. long)
+const uint16_t FEATURE_INTEROP_CTV              = 17; //propose R&D partnership with CTV author, possible lending mechanism of BTC for token collateral
+const uint16_t FEATURE_INTEROP_LIGHTNING        = 18; //OmniBolt style coloring of outputs to cheque in an LN model but carrying TradeLayer tokens
+const uint16_t FEATURE_INTEROP_REPO             = 19; //Our dream OP_Code to curry favor for activation by proving this economic model for the greater Bitcoinity
+const uint16_t FEATURE_INTEROP_SIDECHAINS       = 20; //Generic and specialized sidechain models can use TradeLayer tokens as bonding collateral and for HFT or payments
+const uint16_t FEATURE_GRAPHDEFAULTSWAPS        = 21; //activates GDS perpetual swaps underpinning ALL/LTC and LTC/USD, plus a new kind of meta-contract on any derivative     
+const uint16_t FEATURE_INTERESTRATESWAPS        = 22; //activates term native IR Swaps for ALL/LTC and LTC/USD perpetuals, plus a new kind of oracle contract referring to oracle perp. swaps
+const uint16_t FEATURE_MINERFEECONTRACTS        = 23; //activates term native futures for on-chain miner fee averages
+const uint16_t FEATURE_HEDGEDCURRENCY           = 24; //Enables 1x short positions against ALL to mint sLTC, and 1x shorts against sLTC or rLTC (if activated) to mint USDL, EURL, JPYL, CNYL
+    
+//This is the entire roadmap. If we missed anything, well, clearly we tried not to.
+    
 struct TransactionRestriction
 {
     //! Transaction type
@@ -88,6 +103,19 @@ public:
     int MSC_NODE_REWARD_BLOCK;
     int MSC_TRADECHANNEL_TOKENS_BLOCK;
     int MSC_TRADECHANNEL_CONTRACTS_BLOCK;
+    int MSC_TRADECHANNEL_OPTIONS_BLOCK;
+    int MSC_DISPENSERVAULTS_BLOCK;
+    int MSC_PAYMENTBATCHING_BLOCK;
+    int MSC_MARGINLENDING_BLOCK;
+    int MSC_INTEROP_CTV_BLOCK; 
+    int MSC_INTEROP_LIGHTNING_BLOCK;
+    int MSC_INTEROP_REPO_BLOCK;
+    int MSC_INTEROP_SIDECHAINS_BLOCK;
+    int MSC_GRAPHDEFAULTSWAPS_BLOCK;
+    int MSC_INTERESTRATESWAPS_BLOCK;
+    int MSC_MINERFEECONTRACTS_BLOCK;
+    int MSC_HEDGEDCURRENCY_BLOCK;
+    
 
     /* Vesting Tokens*/
     int ONE_YEAR;
