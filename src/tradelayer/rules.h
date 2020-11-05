@@ -30,12 +30,13 @@ const uint16_t FEATURE_INTEROP_CTV              = 17; //propose R&D partnership 
 const uint16_t FEATURE_INTEROP_LIGHTNING        = 18; //OmniBolt style coloring of outputs to cheque in an LN model but carrying TradeLayer tokens
 const uint16_t FEATURE_INTEROP_REPO             = 19; //Our dream OP_Code to curry favor for activation by proving this economic model for the greater Bitcoinity
 const uint16_t FEATURE_INTEROP_SIDECHAINS       = 20; //Generic and specialized sidechain models can use TradeLayer tokens as bonding collateral and for HFT or payments
-const uint16_t FEATURE_GRAPHDEFAULTSWAPS        = 21; //activates GDS perpetual swaps underpinning ALL/LTC and LTC/USD, plus a new kind of meta-contract on any derivative     
-const uint16_t FEATURE_INTERESTRATESWAPS        = 22; //activates term native IR Swaps for ALL/LTC and LTC/USD perpetuals, plus a new kind of oracle contract referring to oracle perp. swaps
-const uint16_t FEATURE_MINERFEECONTRACTS        = 23; //activates term native futures for on-chain miner fee averages
-const uint16_t FEATURE_MASSPAYMENT              = 24; //unencumbered version of sent-to-owners, can pay n units of property A to all holders of propery B (which can also be A)
-const uint16_t FEATURE_MULTISEND                = 25; //enables multiple reference outputs to send different amounts of a property to multiple addresses, useful for fee rebate
-const uint16_t FEATURE_HEDGEDCURRENCY           = 26; //Enables 1x short positions against ALL to mint sLTC, and 1x shorts against sLTC or rLTC (if activated) to mint USDL, EURL, JPYL, CNYL
+const uint16_t FEATURE_INTEROP_CROSSCHAINATOMICSWAPS = 21; //HTLC token-for-token trading, ought to be implicitly composable with BTC/LTC atomic swaps
+const uint16_t FEATURE_GRAPHDEFAULTSWAPS        = 22; //activates GDS perpetual swaps underpinning ALL/LTC and LTC/USD, plus a new kind of meta-contract on any derivative     
+const uint16_t FEATURE_INTERESTRATESWAPS        = 23; //activates term native IR Swaps for ALL/LTC and LTC/USD perpetuals, plus a new kind of oracle contract referring to oracle perp. swaps
+const uint16_t FEATURE_MINERFEECONTRACTS        = 24; //activates term native futures for on-chain miner fee averages
+const uint16_t FEATURE_MASSPAYMENT              = 25; //unencumbered version of sent-to-owners, can pay n units of property A to all holders of propery B (which can also be A)
+const uint16_t FEATURE_MULTISEND                = 26; //enables multiple reference outputs to send different amounts of a property to multiple addresses, useful for fee rebate
+const uint16_t FEATURE_HEDGEDCURRENCY           = 27; //Enables 1x short positions against ALL to mint sLTC, and 1x shorts against sLTC or rLTC (if activated) to mint USDL, EURL, JPYL, CNYL
     
 //This is the entire roadmap. If we missed anything, well, clearly we tried not to.
     
@@ -113,14 +114,14 @@ public:
     int MSC_INTEROP_LIGHTNING_BLOCK;
     int MSC_INTEROP_REPO_BLOCK;
     int MSC_INTEROP_SIDECHAINS_BLOCK;
+    int MSC_INTEROP_CROSSCHAINATOMICSWAPS_BLOCK;
     int MSC_GRAPHDEFAULTSWAPS_BLOCK;
     int MSC_INTERESTRATESWAPS_BLOCK;
     int MSC_MINERFEECONTRACTS_BLOCK;
     int MSC_MASSPAYMENT_BLOCK;
     int MSC_MULTISEND_BLOCK;
     int MSC_HEDGEDCURRENCY_BLOCK;
-    
-
+   
     /* Vesting Tokens*/
     int ONE_YEAR;
 
