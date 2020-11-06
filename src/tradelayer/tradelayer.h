@@ -246,7 +246,7 @@ enum Cardinal : uint32_t {
   Native_ALL_LTC_IRS_FirstPeriod,
   Native_ALL_LTC_IRS_SecondPeriod,
   Native_LTC_USD_IRS_FirstPeriod,
-  Native_LTC_USD_IRS_SecondPeriod,	
+  Native_LTC_USD_IRS_SecondPeriod,
   ALL_LTC_PERP_GDS,
   LTC_USD_PERP_GDS
 };
@@ -345,8 +345,8 @@ class CtlTransactionDB : public CDBBase
 public:
     CtlTransactionDB(const fs::path& path, bool fWipe)
     {
-        leveldb::Status status = Open(path, fWipe);
-        PrintToConsole("Loading master transactions database: %s\n", status.ToString());
+        if (msc_debug_persistence) leveldb::Status status = Open(path, fWipe);
+        PrintToLog("Loading master transactions database: %s\n", status.ToString());
     }
 
     virtual ~CtlTransactionDB()
@@ -374,7 +374,7 @@ public:
     CMPTxList(const fs::path& path, bool fWipe)
     {
         leveldb::Status status = Open(path, fWipe);
-        PrintToConsole("Loading tx meta-info database: %s\n", status.ToString());
+        if (msc_debug_persistence) PrintToLog("Loading tx meta-info database: %s\n", status.ToString());
     }
 
     virtual ~CMPTxList()
@@ -435,7 +435,7 @@ class CMPTradeList : public CDBBase
   CMPTradeList(const fs::path& path, bool fWipe)
     {
       leveldb::Status status = Open(path, fWipe);
-      PrintToConsole("Loading trades database: %s\n", status.ToString());
+      if (msc_debug_persistence) PrintToLog("Loading trades database: %s\n", status.ToString());
     }
 
   virtual ~CMPTradeList()
@@ -515,7 +515,7 @@ class CMPSettlementMatchList : public CDBBase
   CMPSettlementMatchList(const fs::path& path, bool fWipe)
     {
       leveldb::Status status = Open(path, fWipe);
-      PrintToConsole("Loading settlement match info database: %s\n", status.ToString());
+      if (msc_debug_persistence) PrintToLog("Loading settlement match info database: %s\n", status.ToString());
     }
 
   virtual ~CMPSettlementMatchList() { }

@@ -10,7 +10,6 @@ from test_framework.util import *
 import os
 import json
 import math
-import pylab as pl
 import http.client
 import urllib.parse
 
