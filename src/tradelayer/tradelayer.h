@@ -345,8 +345,8 @@ class CtlTransactionDB : public CDBBase
 public:
     CtlTransactionDB(const fs::path& path, bool fWipe)
     {
-        if (msc_debug_persistence) leveldb::Status status = Open(path, fWipe);
-        PrintToLog("Loading master transactions database: %s\n", status.ToString());
+        leveldb::Status status = Open(path, fWipe);
+        if (msc_debug_persistence) PrintToLog("Loading master transactions database: %s\n", status.ToString());
     }
 
     virtual ~CtlTransactionDB()
