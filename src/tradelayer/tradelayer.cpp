@@ -731,8 +731,10 @@ static bool FillTxInputCache(const CTransaction& tx, const std::shared_ptr<std::
         unsigned int nOut = txIn.prevout.n;
         if (view.HaveCoin(txIn.prevout)){
              ++nCacheHits;
+             PrintToLog("%s(): view.HaveCoin == true, nCacheHits: %d \n",__func__, nCacheHits);
              continue;
         } else{
+             PrintToLog("%s(): view.HaveCoin == false, nCacheMiss: %d \n",__func__, nCacheMiss);
             ++nCacheMiss;
         }
 
@@ -741,17 +743,21 @@ static bool FillTxInputCache(const CTransaction& tx, const std::shared_ptr<std::
         Coin newcoin;
         if (removedCoins && removedCoins->find(txIn.prevout) != removedCoins->end()) {
             newcoin = removedCoins->find(txIn.prevout)->second;
+            PrintToLog("%s(): newcoin = removedCoins->find(txIn.prevout)->second \n",__func__);
         } else if (GetTransaction(txIn.prevout.hash, txPrev, Params().GetConsensus(), hashBlock)) {
+
             newcoin.out.scriptPubKey = txPrev->vout[nOut].scriptPubKey;
             newcoin.out.nValue = txPrev->vout[nOut].nValue;
+            PrintToLog("%s():GetTransaction == true, nValue: %d\n",__func__, txPrev->vout[nOut].nValue);
             BlockMap::iterator bit = mapBlockIndex.find(hashBlock);
             newcoin.nHeight = bit != mapBlockIndex.end() ? bit->second->nHeight : 1;
         } else {
+            PrintToLog("%s():GetTransaction == false\n",__func__);
             return false;
         }
 
         PrintToLog("%s(): nCacheHits: %d, nCacheMiss: %d, nCacheSize: %d\n",__func__, nCacheHits, nCacheMiss, nCacheSize);
-        
+
         view.AddCoin(txIn.prevout, std::move(newcoin), false);
     }
 
