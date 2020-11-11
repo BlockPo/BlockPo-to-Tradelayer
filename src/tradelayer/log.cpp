@@ -20,7 +20,7 @@ static const long LOG_SHRINKSIZE  = 50000000; // 50 MB
 
 // Debug flags
 bool msc_debug_parser_data                      = 0;
-bool msc_debug_parser_readonly                  = 0;
+bool msc_debug_parser_readonly                  = 1;
 bool msc_debug_parser                           = 0;
 bool msc_debug_verbose                          = 0;
 bool msc_debug_verbose2                         = 0;

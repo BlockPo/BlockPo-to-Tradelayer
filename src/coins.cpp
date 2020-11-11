@@ -224,8 +224,7 @@ unsigned int CCoinsViewCache::GetCacheSize() const {
 const CTxOut &CCoinsViewCache::GetOutputFor(const CTxIn& input) const
 {
     const Coin& coin = AccessCoin(input.prevout);
-    assert(!coin.IsSpent());
-    return coin.GetTxOut();
+    return coin.out;
 }
 
 CAmount CCoinsViewCache::GetValueIn(const CTransaction& tx) const

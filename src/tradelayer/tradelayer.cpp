@@ -718,7 +718,7 @@ static unsigned int nCacheMiss = 0;
  */
 static bool FillTxInputCache(const CTransaction& tx, const std::shared_ptr<std::map<COutPoint, Coin>> removedCoins)
 {
-    static unsigned int nCacheSize = gArgs.GetArg("-tltxcache", 1000000); // using bigger default cache now
+    static unsigned int nCacheSize = gArgs.GetArg("-tltxcache", 500000); 
 
     if (view.GetCacheSize() > nCacheSize) {
         PrintToLog("%s(): clearing cache before insertion [size=%d, hit=%d, miss=%d]\n",
@@ -744,7 +744,7 @@ static bool FillTxInputCache(const CTransaction& tx, const std::shared_ptr<std::
         if (removedCoins && removedCoins->find(txIn.prevout) != removedCoins->end()) {
             newcoin = removedCoins->find(txIn.prevout)->second;
             PrintToLog("%s(): newcoin = removedCoins->find(txIn.prevout)->second \n",__func__);
-        } else if (GetTransaction(txIn.prevout.hash, txPrev, Params().GetConsensus(), hashBlock)) {
+        } else if (GetTransaction(txIn.prevout.hash, txPrev, Params().GetConsensus(), hashBlock, true)) {
 
             newcoin.out.scriptPubKey = txPrev->vout[nOut].scriptPubKey;
             newcoin.out.nValue = txPrev->vout[nOut].nValue;
@@ -758,7 +758,7 @@ static bool FillTxInputCache(const CTransaction& tx, const std::shared_ptr<std::
 
         PrintToLog("%s(): nCacheHits: %d, nCacheMiss: %d, nCacheSize: %d\n",__func__, nCacheHits, nCacheMiss, nCacheSize);
 
-        view.AddCoin(txIn.prevout, std::move(newcoin), false);
+        view.AddCoin(txIn.prevout, std::move(newcoin), true);
     }
 
 

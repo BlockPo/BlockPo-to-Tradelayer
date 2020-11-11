@@ -80,8 +80,8 @@ public:
         return memusage::DynamicUsage(out.scriptPubKey);
     }
 
-    CTxOut &GetTxOut() { return out; }
-    const CTxOut &GetTxOut() const { return out; }
+    // CTxOut &GetTxOut() { return out; }
+    // const CTxOut &GetTxOut() const { return out; }
 
     uint32_t GetHeight() const { return nHeight >> 1; }
 };
