@@ -729,12 +729,14 @@ static bool FillTxInputCache(const CTransaction& tx, const std::shared_ptr<std::
     for (std::vector<CTxIn>::const_iterator it = tx.vin.begin(); it != tx.vin.end(); ++it) {
         const CTxIn& txIn = *it;
         unsigned int nOut = txIn.prevout.n;
-        if (view.HaveCoin(txIn.prevout)){
-             ++nCacheHits;
-             PrintToLog("%s(): view.HaveCoin == true, nCacheHits: %d \n",__func__, nCacheHits);
-             continue;
-        } else{
-             PrintToLog("%s(): view.HaveCoin == false, nCacheMiss: %d \n",__func__, nCacheMiss);
+        const Coin& coin = view.AccessCoin(txIn.prevout);
+
+        if (!coin.IsSpent()) {
+            PrintToLog("%s(): coin.IsSpent() == false, nCacheHits: %d \n",__func__, nCacheHits);
+            ++nCacheHits;
+            continue;
+        } else {
+            PrintToLog("%s(): coin.IsSpent() == true, nCacheHits: %d \n",__func__, nCacheHits);
             ++nCacheMiss;
         }
 
