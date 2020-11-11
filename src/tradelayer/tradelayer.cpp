@@ -812,7 +812,9 @@ static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, 
     if (msc_debug_parser_data) PrintToLog("vin=%d:%s\n", vin_n, ScriptToAsmStr(wtx.vin[vin_n].scriptSig));
 
     const CTxIn& txIn = wtx.vin[vin_n];
-    const CTxOut& txOut = view.GetOutputFor(txIn);
+    const Coin& coin = view.AccessCoin(txIn.prevout);
+    const CTxOut& txOut = coin.out;
+    
     assert(!txOut.IsNull());
 
     txnouttype whichType;
