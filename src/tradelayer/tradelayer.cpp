@@ -718,7 +718,7 @@ static unsigned int nCacheMiss = 0;
  */
 static bool FillTxInputCache(const CTransaction& tx, const std::shared_ptr<std::map<COutPoint, Coin>> removedCoins)
 {
-    static unsigned int nCacheSize = gArgs.GetArg("-tltxcache", 500000); 
+    static unsigned int nCacheSize = gArgs.GetArg("-tltxcache", 500000);
 
     if (view.GetCacheSize() > nCacheSize) {
         PrintToLog("%s(): clearing cache before insertion [size=%d, hit=%d, miss=%d]\n",
@@ -999,6 +999,9 @@ int ParseTransaction(const CTransaction& tx, int nBlock, unsigned int idx, CMPTr
  {
      int64_t nvalue = 0;
      int count = 0;
+
+     PrintToLog("%s(): inside the function\n",__func__);
+     PrintToLog("%s(): vout size: %d\n",__func__, tx.vout.size());
 
      for (unsigned int n = 0; n < tx.vout.size(); ++n)
      {
