@@ -10,7 +10,6 @@ from test_framework.util import *
 import os
 import json
 import math
-import pylab as pl
 import http.client
 import urllib.parse
 
@@ -566,7 +565,7 @@ class VestingBasicsTest (BitcoinTestFramework):
 
             self.nodes[0].generate(1)
 
-            time.sleep(0.25)
+            time.sleep(0.35)
 
             self.log.info("Checking token balance in buyer address")
             params = str([addresses[3], 4]).replace("'",'"')
