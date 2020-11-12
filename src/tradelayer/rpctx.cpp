@@ -52,7 +52,7 @@ UniValue tl_sendrawtx(const JSONRPCRequest& request)
 
             "\nResult:\n"
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
-            
+
             "\nExamples:\n"
             + HelpExampleCli("tl_sendrawtx", "\"1MCHESTptvd2LnNp7wmr2sGTpRomteAkq8\" \"000000000000000100000000017d7840\" \"1EqTta1Rt8ixAA32DuC29oukbsSWU62qAV\"")
             + HelpExampleRpc("tl_sendrawtx", "\"1MCHESTptvd2LnNp7wmr2sGTpRomteAkq8\", \"000000000000000100000000017d7840\", \"1EqTta1Rt8ixAA32DuC29oukbsSWU62qAV\"")
@@ -127,6 +127,8 @@ UniValue tl_send(const JSONRPCRequest& request)
     std::string rawHex;
     int result = WalletTxBuilder(fromAddress, toAddress, referenceAmount, payload, txid, rawHex, autoCommit);
 
+    PrintToLog("%s(): CHECKING ERROR: %s\n",__func__, error_str(result));
+    
     // check error and return the txid (or raw hex depending on autocommit)
     if (result != 0) {
         throw JSONRPCError(result, error_str(result));

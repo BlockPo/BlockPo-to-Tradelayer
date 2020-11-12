@@ -4738,7 +4738,7 @@ int CMPTransaction::logicMath_DEx_Payment()
       return (PKT_ERROR_METADEX -22);
   }
 
-
+  PrintToLog("%s(): returning rc: %d\n",__func__,rc);
   return rc;
 }
 
