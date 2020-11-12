@@ -194,23 +194,61 @@ enum Action : uint8_t {
 enum Cardinal : uint32_t {
   LTC  = 0,
   ALL,
-  sLTC,
+  sLTC,    //ALL + 1x short ALL_LTC_PERP
   VT,      // vesting tokens
   dEUR,
   dJPY,
   dCNY,
-  ALL_LTC,
-  LTC_USD,
-  LTC_EUR,
-  JPY,
-  CNY,
   dUSD,
-  Native_Difficulty_Futures,  //extended
-  Native_Fee_Futures,
-  Native_ALL_LTC_IRS,
-  Native_LTC_USD_IRS,
-  ALL_LTC_Graph_DS,
-  LTC_USD_Graph_DS
+  rLTC, //future activation goal: new bitcoin OPcode, native LTC paid in as one output, can redeem for any sized output = # of rLTC tokens redeemed.
+  //rLTC (and rBTC on the Bitcoin version) is intended to be the 'final form' of the protocol in terms of native collateral choices.
+  ALL_LTC_PERP,
+  LTC_USD_PERP,
+  LTC_EUR_PERP,
+  LTC_JPY_PERP,
+  LTC_CNY_PERP,
+  ALL_LTC_Futures_FirstPeriod,
+  ALL_LTC_Futures_SecondPeriod,
+  ALL_LTC_Futures_ThirdPeriod,
+  ALL_LTC_Futures_FourthPeriod,
+  LTC_USD_Futures_FirstPeriod,
+  LTC_USD_Futures_SecondPeriod,
+  LTC_USD_Futures_ThirdPeriod,
+  LTC_USD_Futures_FourthPeriod,
+  LTC_USD_Futures_FifthPeriod,
+  LTC_USD_Futures_SixthPeriod,
+  LTC_EUR_Futures_FirstPeriod,
+  LTC_EUR_Futures_SecondPeriod,
+  LTC_EUR_Futures_ThirdPeriod,
+  LTC_EUR_Futures_FourthPeriod,
+  LTC_EUR_Futures_FifthPeriod,
+  LTC_EUR_Futures_SixthPeriod,
+  LTC_JPY_Futures_FirstPeriod,
+  LTC_JPY_Futures_SecondPeriod,
+  LTC_JPY_Futures_ThirdPeriod,
+  LTC_JPY_Futures_FourthPeriod,
+  LTC_JPY_Futures_FifthPeriod,
+  LTC_JPY_Futures_SixthPeriod,
+  LTC_CNY_Futures_FirstPeriod,
+  LTC_CNY_Futures_SecondPeriod,
+  LTC_CNY_Futures_ThirdPeriod,
+  LTC_CNY_Futures_FourthPeriod,
+  LTC_CNY_Futures_FifthPeriod,
+  LTC_CNY_Futures_SixthPeriod,
+  Native_Difficulty_Futures_FirstPeriod,
+  Native_Difficulty_Futures_SecondPeriod,
+  Native_Difficulty_Futures_ThirdPeriod,
+  Native_Difficulty_Futures_FourthPeriod,  //extended
+  Native_Fee_Futures_FirstPeriod,
+  Native_Fee_Futures_SecondPeriod,
+  Native_Fee_Futures_ThirdPeriod,
+  Native_Fee_Futures_FourthPeriod,
+  Native_ALL_LTC_IRS_FirstPeriod,
+  Native_ALL_LTC_IRS_SecondPeriod,
+  Native_LTC_USD_IRS_FirstPeriod,
+  Native_LTC_USD_IRS_SecondPeriod,
+  ALL_LTC_PERP_GDS,
+  LTC_USD_PERP_GDS
 };
 
 // channels definitions
@@ -308,7 +346,7 @@ public:
     CtlTransactionDB(const fs::path& path, bool fWipe)
     {
         leveldb::Status status = Open(path, fWipe);
-        PrintToConsole("Loading master transactions database: %s\n", status.ToString());
+        if (msc_debug_persistence) PrintToLog("Loading master transactions database: %s\n", status.ToString());
     }
 
     virtual ~CtlTransactionDB()
@@ -336,7 +374,7 @@ public:
     CMPTxList(const fs::path& path, bool fWipe)
     {
         leveldb::Status status = Open(path, fWipe);
-        PrintToConsole("Loading tx meta-info database: %s\n", status.ToString());
+        if (msc_debug_persistence) PrintToLog("Loading tx meta-info database: %s\n", status.ToString());
     }
 
     virtual ~CMPTxList()
@@ -397,7 +435,7 @@ class CMPTradeList : public CDBBase
   CMPTradeList(const fs::path& path, bool fWipe)
     {
       leveldb::Status status = Open(path, fWipe);
-      PrintToConsole("Loading trades database: %s\n", status.ToString());
+      if (msc_debug_persistence) PrintToLog("Loading trades database: %s\n", status.ToString());
     }
 
   virtual ~CMPTradeList()
@@ -477,7 +515,7 @@ class CMPSettlementMatchList : public CDBBase
   CMPSettlementMatchList(const fs::path& path, bool fWipe)
     {
       leveldb::Status status = Open(path, fWipe);
-      PrintToConsole("Loading settlement match info database: %s\n", status.ToString());
+      if (msc_debug_persistence) PrintToLog("Loading settlement match info database: %s\n", status.ToString());
     }
 
   virtual ~CMPSettlementMatchList() { }
