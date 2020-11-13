@@ -32,8 +32,6 @@ typedef boost::rational<boost::multiprecision::checked_int128_t> rational_t;
 /** Converts price to string. */
 std::string xToString(const rational_t& value);
 
-///////////////////////////////
-/*New things for Contracts*/
 std::string xToString(const uint64_t &value);
 std::string xToString(const int64_t  &price);
 std::string xToString(const uint32_t &value);
@@ -45,7 +43,6 @@ void buyerSettingBalance(int64_t possitive_buy, int64_t negative_buy, std::strin
 //! Number of digits of unit price
 #define DISPLAY_PRECISION_LEN  50
 #define NPTYPES  500
-///////////////////////////////
 
 enum MatchReturnType
   {
@@ -87,10 +84,7 @@ class CMPMetaDEx
 
   void setAmountRemaining(int64_t ar, const std::string &label = "");
 
-  ////////////////////////////////////////
-  /** New things for Contracts */
   void setAmountForsale(int64_t ar, const std::string &label = "");
-  ////////////////////////////////////////
 
   uint8_t getAction() const { return subaction; }
 
