@@ -1462,6 +1462,7 @@ MatchReturnType x_Trade(CMPMetaDEx* const pnew)
           	    xToString(sellersPrice), pold->getAmountForSale(), pold->getAmountDesired(), pold->getAmountRemaining(), pnew->getAmountRemaining());
           	if (msc_debug_metadex1) PrintToLog("$$ old: %s\n", pold->ToString());
           	if (msc_debug_metadex1) PrintToLog("$$ new: %s\n", pnew->ToString());
+            
           	///////////////////////////
           	// preconditions
           	assert(0 < pold->getAmountRemaining());

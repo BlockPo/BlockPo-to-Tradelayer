@@ -81,6 +81,7 @@ volatile int64_t LastLog;
 int volumeToVWAP;
 int BlockS;
 std::string setExoduss;
+
 /*****************************************/
 /** TWAP containers **/
 

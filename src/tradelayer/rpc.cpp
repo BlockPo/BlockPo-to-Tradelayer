@@ -311,7 +311,7 @@ UniValue tl_getpayload(const JSONRPCRequest& request)
     if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
             "tl_getpayload \"txid\"\n"
-            
+
             "\nGet the payload for an Trade Layer transaction.\n"
 
             "\nArguments:\n"
@@ -2070,7 +2070,7 @@ UniValue tl_gettradehistory(const JSONRPCRequest& request)
 			);
 
   // obtain property identifiers for pair & check valid parameters
-  uint32_t contractId  = ParseNameOrId(request.params[0]);
+  uint32_t contractId = ParseNameOrId(request.params[0]);
 
   RequireContract(contractId);
 

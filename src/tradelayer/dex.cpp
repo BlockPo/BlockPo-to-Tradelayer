@@ -253,6 +253,7 @@ int DEx_BuyOfferCreate(const std::string& addressMaker, uint32_t propertyId, int
 
     return rc;
 }
+
 /**
  * Destroys a sell offer.
  *
