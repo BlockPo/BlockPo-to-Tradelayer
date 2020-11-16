@@ -1,4 +1,4 @@
-#include <tradelayer/rpcrawtx.h> // XXX
+#include <tradelayer/rpcrawtx.h>
 
 #include <tradelayer/createtx.h>
 #include <tradelayer/rpc.h>
@@ -30,9 +30,9 @@ using mastercore::view;
 
 UniValue tl_decodetransaction(const JSONRPCRequest& request)
 {
-    if (request.fHelp || request.params.size() < 1 || request.params.size() > 3)
+    if (request.fHelp || request.params.size() != 1)
         throw std::runtime_error(
-            "tl_decodetransaction \"rawtx\" ( \"prevtxs\" height )\n"
+            "tl_decodetransaction \"rawtx\" \n"
 
             "\nDecodes an Trade Layer transaction.\n"
 
@@ -43,17 +43,6 @@ UniValue tl_decodetransaction(const JSONRPCRequest& request)
 
             "\nArguments:\n"
             "1. rawtx                (string, required) the raw transaction to decode\n"
-            "2. prevtxs              (string, optional) a JSON array of transaction inputs (default: none)\n"
-            "     [\n"
-            "       {\n"
-            "         \"txid\":\"hash\",          (string, required) the transaction hash\n"
-            "         \"vout\":n,               (number, required) the output number\n"
-            "         \"scriptPubKey\":\"hex\",   (string, required) the output script\n"
-            "         \"value\":n.nnnnnnnn      (number, required) the output value\n"
-            "       }\n"
-            "       ,...\n"
-            "     ]\n"
-            "3. height               (number, optional) the parsing block height (default: 0 for chain height)\n"
 
             "\nResult:\n"
             "{\n"
@@ -69,38 +58,19 @@ UniValue tl_decodetransaction(const JSONRPCRequest& request)
             "}\n"
 
             "\nExamples:\n"
-            + HelpExampleCli("tl_decodetransaction", "\"010000000163af14ce6d477e1c793507e32a5b7696288fa89705c0d02a3f66beb3c5b8afee0100000000ffffffff02ac020000000000004751210261ea979f6a06f9dafe00fb1263ea0aca959875a7073556a088cdfadcd494b3752102a3fd0a8a067e06941e066f78d930bfc47746f097fcd3f7ab27db8ddf37168b6b52ae22020000000000001976a914946cb2e08075bcbaf157e47bcb67eb2b2339d24288ac00000000\" \"[{\\\"txid\\\":\\\"eeafb8c5b3be663f2ad0c00597a88f2896765b2ae30735791c7e476dce14af63\\\",\\\"vout\\\":1,\\\"scriptPubKey\\\":\\\"76a9149084c0bd89289bc025d0264f7f23148fb683d56c88ac\\\",\\\"value\\\":0.0001123}]\"")
-            + HelpExampleRpc("tl_decodetransaction", "\"010000000163af14ce6d477e1c793507e32a5b7696288fa89705c0d02a3f66beb3c5b8afee0100000000ffffffff02ac020000000000004751210261ea979f6a06f9dafe00fb1263ea0aca959875a7073556a088cdfadcd494b3752102a3fd0a8a067e06941e066f78d930bfc47746f097fcd3f7ab27db8ddf37168b6b52ae22020000000000001976a914946cb2e08075bcbaf157e47bcb67eb2b2339d24288ac00000000\", [{\"txid\":\"eeafb8c5b3be663f2ad0c00597a88f2896765b2ae30735791c7e476dce14af63\",\"vout\":1,\"scriptPubKey\":\"76a9149084c0bd89289bc025d0264f7f23148fb683d56c88ac\",\"value\":0.0001123}]")
+            + HelpExampleCli("tl_decodetransaction", "\"010000000163af14ce6d477e1c793507e32a5b7696288fa89705c0d02a3f66beb3c5b8afee0100000000ffffffff02ac020000000000004751210261ea979f6a06f9dafe00fb1263ea0aca959875a7073556a088cdfadcd494b3752102a3fd0a8a067e06941e066f78d930bfc47746f097fcd3f7ab27db8ddf37168b6b52ae22020000000000001976a914946cb2e08075bcbaf157e47bcb67eb2b2339d24288ac00000000\"")
+            + HelpExampleRpc("tl_decodetransaction", "\"010000000163af14ce6d477e1c793507e32a5b7696288fa89705c0d02a3f66beb3c5b8afee0100000000ffffffff02ac020000000000004751210261ea979f6a06f9dafe00fb1263ea0aca959875a7073556a088cdfadcd494b3752102a3fd0a8a067e06941e066f78d930bfc47746f097fcd3f7ab27db8ddf37168b6b52ae22020000000000001976a914946cb2e08075bcbaf157e47bcb67eb2b2339d24288ac00000000\"")
         );
 
-    CTransaction tx = ParseTransaction(request.params[0]);
-
-    // use a dummy coins view to store the user provided transaction inputs
-    CCoinsView viewDummyTemp;
-    CCoinsViewCache viewTemp(&viewDummyTemp);
-
-    if (request.params.size() > 1) {
-      std::vector<PrevTxsEntry> prevTxsParsed = ParsePrevTxs(request.params[1]);
-      InputsToView(prevTxsParsed, viewTemp);
-    }
-
-    int blockHeight = 0;
-    if (request.params.size() > 2) {
-      blockHeight = request.params[2].get_int();
-    }
+    CMutableTransaction tx = ParseMutableTransaction(request.params[0]);
 
     UniValue txObj(UniValue::VOBJ);
     int populateResult = -3331;
 
-    // NOTE: this part needs more refinement (confict with swap and CCoinsViewCache copy operator deleted)
+    // using a different approach
    {
        LOCK2(cs_main, cs_tx_cache);
-       // temporarily switch global coins view cache for transaction inputs
-       // std::swap(view, viewTemp)
-       // // then get the results
-       populateResult = populateRPCTransactionObject(tx, uint256(), txObj, "", false, "", blockHeight);
-       // // and restore the original, unpolluted coins view cache
-       // std::swap(viewTemp, view)
+       populateResult = populateRPCTransactionObject(CTransaction(std::move(tx)), uint256(), txObj, "", false, "", 0);
    }
 
     if (populateResult != 0) PopulateFailure(populateResult);
@@ -185,9 +155,7 @@ UniValue tl_createrawtx_reference(const JSONRPCRequest& request)
             "tl_createrawtx_reference \"rawtx\" \"destination\" ( amount )\n"
 
             "\nAdds a reference output to the transaction.\n"
-
             "\nIf no raw transaction is provided, a new transaction is created.\n"
-
             "\nThe output value is set to at least the dust threshold.\n"
 
             "\nArguments:\n"

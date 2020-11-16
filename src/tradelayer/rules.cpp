@@ -156,6 +156,23 @@ CMainConsensusParams::CMainConsensusParams()
     MSC_METADEX_BLOCK = 99999999;
     MSC_TRADECHANNEL_TOKENS_BLOCK = 99999999;
     MSC_TRADECHANNEL_CONTRACTS_BLOCK = 99999999;
+
+    MSC_TRADECHANNEL_OPTIONS_BLOCK = 99999999;
+    MSC_DISPENSERVAULTS_BLOCK = 99999999;
+    MSC_PAYMENTBATCHING_BLOCK = 99999999;
+    MSC_MARGINLENDING_BLOCK = 99999999;
+    MSC_INTEROP_CTV_BLOCK = 99999999;
+    MSC_INTEROP_LIGHTNING_BLOCK = 99999999;
+    MSC_INTEROP_REPO_BLOCK = 99999999;
+    MSC_INTEROP_SIDECHAINS_BLOCK = 99999999;
+    MSC_INTEROP_CROSSCHAINATOMICSWAPS_BLOCK = 99999999;
+    MSC_GRAPHDEFAULTSWAPS_BLOCK = 99999999;
+    MSC_INTERESTRATESWAPS_BLOCK = 99999999;
+    MSC_MINERFEECONTRACTS_BLOCK = 99999999;
+    MSC_MASSPAYMENT_BLOCK = 99999999;
+    MSC_MULTISEND_BLOCK = 99999999;
+    MSC_HEDGEDCURRENCY_BLOCK = 99999999;
+
     ONE_YEAR = 210240;
 }
 
@@ -191,6 +208,23 @@ CMainConsensusParams::CMainConsensusParams()
      MSC_METADEX_BLOCK = 99999999;
      MSC_TRADECHANNEL_TOKENS_BLOCK = 99999999;
      MSC_TRADECHANNEL_CONTRACTS_BLOCK = 99999999;
+
+     MSC_TRADECHANNEL_OPTIONS_BLOCK = 99999999;
+     MSC_DISPENSERVAULTS_BLOCK = 99999999;
+     MSC_PAYMENTBATCHING_BLOCK = 99999999;
+     MSC_MARGINLENDING_BLOCK = 99999999;
+     MSC_INTEROP_CTV_BLOCK = 99999999;
+     MSC_INTEROP_LIGHTNING_BLOCK = 99999999;
+     MSC_INTEROP_REPO_BLOCK = 99999999;
+     MSC_INTEROP_SIDECHAINS_BLOCK = 99999999;
+     MSC_INTEROP_CROSSCHAINATOMICSWAPS_BLOCK = 99999999;
+     MSC_GRAPHDEFAULTSWAPS_BLOCK = 99999999;
+     MSC_INTERESTRATESWAPS_BLOCK = 99999999;
+     MSC_MINERFEECONTRACTS_BLOCK = 99999999;
+     MSC_MASSPAYMENT_BLOCK = 99999999;
+     MSC_MULTISEND_BLOCK = 99999999;
+     MSC_HEDGEDCURRENCY_BLOCK = 99999999;
+
      ONE_YEAR = 2650;  // just for testing
  }
 
@@ -231,6 +265,23 @@ CRegTestConsensusParams::CRegTestConsensusParams()
     MSC_NODE_REWARD_BLOCK = 777;
     MSC_TRADECHANNEL_TOKENS_BLOCK = 0;
     MSC_TRADECHANNEL_CONTRACTS_BLOCK = 0;
+
+    MSC_TRADECHANNEL_OPTIONS_BLOCK = 99999999;
+    MSC_DISPENSERVAULTS_BLOCK = 99999999;
+    MSC_PAYMENTBATCHING_BLOCK = 99999999;
+    MSC_MARGINLENDING_BLOCK = 99999999;
+    MSC_INTEROP_CTV_BLOCK = 99999999;
+    MSC_INTEROP_LIGHTNING_BLOCK = 99999999;
+    MSC_INTEROP_REPO_BLOCK = 99999999;
+    MSC_INTEROP_SIDECHAINS_BLOCK = 99999999;
+    MSC_INTEROP_CROSSCHAINATOMICSWAPS_BLOCK = 99999999;
+    MSC_GRAPHDEFAULTSWAPS_BLOCK = 99999999;
+    MSC_INTERESTRATESWAPS_BLOCK = 99999999;
+    MSC_MINERFEECONTRACTS_BLOCK = 99999999;
+    MSC_MASSPAYMENT_BLOCK = 99999999;
+    MSC_MULTISEND_BLOCK = 99999999;
+    MSC_HEDGEDCURRENCY_BLOCK = 99999999;
+    
     ONE_YEAR = 930;
 
 }
@@ -348,8 +399,8 @@ bool ActivateFeature(uint16_t featureId, int activationBlock, uint32_t minClient
     // check activation block is allowed
 
     if(msc_debug_activate_feature){
-        PrintToLog("%s(): activationBlock %d, transactionBlock + params.MIN_ACTIVATION_BLOCKS : %d\n",__func__,activationBlock,(transactionBlock + params.MIN_ACTIVATION_BLOCKS));
-        PrintToLog("%s(): transactionBlock + params.MAX_ACTIVATION_BLOCKS : %d\n",__func__,(transactionBlock + params.MAX_ACTIVATION_BLOCKS));
+        PrintToLog("%s(): activationBlock %d, transactionBlock + params.MIN_ACTIVATION_BLOCKS : %d\n",__func__, activationBlock, (transactionBlock + params.MIN_ACTIVATION_BLOCKS));
+        PrintToLog("%s(): transactionBlock + params.MAX_ACTIVATION_BLOCKS : %d\n",__func__, (transactionBlock + params.MAX_ACTIVATION_BLOCKS));
     }
 
     if ((activationBlock < (transactionBlock + params.MIN_ACTIVATION_BLOCKS)) ||
@@ -558,12 +609,12 @@ bool IsTransactionTypeAllowed(int txBlock, uint16_t txType, uint16_t version)
         const TransactionRestriction& entry = *it;
 
         if (entry.txType != txType || entry.txVersion != version) {
-            if(msc_debug_is_transaction_type_allowed) PrintToLog("%s(): entry.txType: %d, entry.txVersion : %d\n",__func__,entry.txType, entry.txVersion);
+            if(msc_debug_is_transaction_type_allowed) PrintToLog("%s(): entry.txType: %d, entry.txVersion : %d\n",__func__, entry.txType, entry.txVersion);
             continue;
         }
 
         if (txBlock >= entry.activationBlock) {
-            if(msc_debug_is_transaction_type_allowed) PrintToLog("%s(): TRUE!, txBlock: %d; entry.activationBlock: %d\n",__func__,txBlock, entry.activationBlock);
+            if(msc_debug_is_transaction_type_allowed) PrintToLog("%s(): TRUE!, txBlock: %d; entry.activationBlock: %d\n",__func__, txBlock, entry.activationBlock);
             return true;
         }
     }

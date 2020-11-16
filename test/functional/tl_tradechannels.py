@@ -426,6 +426,23 @@ class ChannelsBasicsTest (BitcoinTestFramework):
         # self.log.info(out)
 
 
+        self.log.info("decoding trade layer raw transaction")
+        params = str([hex]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_decodetransaction", params)
+        assert_equal(out['error'], None)
+        # self.log.info(out)
+
+        assert_equal(out['result']['fee'], '0.50000000')
+        assert_equal(out['result']['sendingaddress'], multisig)
+        assert_equal(out['result']['referenceaddress'], addresses[0])
+        assert_equal(out['result']['type_int'], 110)
+        assert_equal(out['result']['type'], 'Channel Instant Trade')
+        assert_equal(out['result']['propertyId'], 4)
+        assert_equal(out['result']['amount for sale'], '1000.00000000')
+        assert_equal(out['result']['desired property'], 5)
+        assert_equal(out['result']['desired value'], '2000.00000000')
+
+
         self.log.info("Signing raw transaction with address 1")
         params = '["'+hex+'",[{"txid":"'+txid+'","vout":'+str(vout)+', "scriptPubKey":"'+scriptPubKey+'","redeemScript":"'+redeemScript+'","amount":2}],["'+privatekey1+'"]]'
         out = tradelayer_HTTP(conn, headers, False, "signrawtransaction",params)
@@ -563,6 +580,19 @@ class ChannelsBasicsTest (BitcoinTestFramework):
         hex = out['result']['hex']
         # self.log.info(hex)
 
+
+        self.log.info("decoding trade layer raw transaction")
+        params = str([hex]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_decodetransaction", params)
+        assert_equal(out['error'], None)
+        # self.log.info(out)
+        assert_equal(out['result']['fee'], '0.01000000')
+        assert_equal(out['result']['sendingaddress'], multisig)
+        assert_equal(out['result']['referenceaddress'],multisig1)
+        assert_equal(out['result']['type_int'], 112)
+        assert_equal(out['result']['type'], 'Channel Transfer')
+
+
         self.log.info("Signing raw transaction with address 1")
         params = '["'+hex+'",[{"txid":"'+txid1+'","vout":'+str(vout1)+', "scriptPubKey":"'+scriptPubKey+'","redeemScript":"'+redeemScript+'","amount":1}],["'+privatekey1+'"]]'
         out = tradelayer_HTTP(conn, headers, False, "signrawtransaction",params)
@@ -593,6 +623,39 @@ class ChannelsBasicsTest (BitcoinTestFramework):
         # self.log.info(out)
         assert_equal(out['error'], None)
         assert_equal(out['result']['channel reserve'], '175.00000000')
+
+        self.log.info("Checking trade history for address")
+        params = str([addresses[0], multisig, 100, 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_getchannel_tokenhistoryforaddress",params)
+        assert_equal(out['error'], None)
+        # self.log.info(out)
+
+        assert_equal(out['error'], None)
+        assert_equal(out['result'][0]['block'], 223)
+        assert_equal(out['result'][0]['buyeraddress'], addresses[0])
+        assert_equal(out['result'][0]['selleraddress'], addresses[1])
+        assert_equal(out['result'][0]['channeladdress'], multisig)
+        assert_equal(out['result'][0]['propertyid'], 4)
+        assert_equal(out['result'][0]['propertydesired'], 5)
+        assert_equal(out['result'][0]['amountforsale'], '1000.00000000')
+        assert_equal(out['result'][0]['amountdesired'], '2000.00000000')
+
+
+        self.log.info("Checking trade history for pair")
+        params = str([multisig, 4, 5, 100]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_getchannel_historyforpair",params)
+        assert_equal(out['error'], None)
+        # self.log.info(out)
+        assert_equal(out['result'][0]['block'], 223)
+        assert_equal(out['result'][0]['buyeraddress'], addresses[0])
+        assert_equal(out['result'][0]['selleraddress'], addresses[1])
+        assert_equal(out['result'][0]['channeladdress'], multisig)
+        assert_equal(out['result'][0]['propertyid'], 4)
+        assert_equal(out['result'][0]['propertydesired'], 5)
+        assert_equal(out['result'][0]['amountforsale'], '1000.00000000')
+        assert_equal(out['result'][0]['amountdesired'], '2000.00000000')
+        assert_equal(out['result'][0]['unitprice'], '2.00000000000000000000000000000000000000000000000000')
+
 
         self.log.info("Checking the expiration of trade channel")
         self.nodes[0].generate(800)

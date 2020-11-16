@@ -194,23 +194,61 @@ enum Action : uint8_t {
 enum Cardinal : uint32_t {
   LTC  = 0,
   ALL,
-  sLTC,
+  sLTC,    //ALL + 1x short ALL_LTC_PERP
   VT,      // vesting tokens
   dEUR,
   dJPY,
   dCNY,
-  ALL_LTC,
-  LTC_USD,
-  LTC_EUR,
-  JPY,
-  CNY,
   dUSD,
-  Native_Difficulty_Futures,  //extended
-  Native_Fee_Futures,
-  Native_ALL_LTC_IRS,
-  Native_LTC_USD_IRS,
-  ALL_LTC_Graph_DS,
-  LTC_USD_Graph_DS
+  rLTC, //future activation goal: new bitcoin OPcode, native LTC paid in as one output, can redeem for any sized output = # of rLTC tokens redeemed.
+  //rLTC (and rBTC on the Bitcoin version) is intended to be the 'final form' of the protocol in terms of native collateral choices.
+  ALL_LTC_PERP,
+  LTC_USD_PERP,
+  LTC_EUR_PERP,
+  LTC_JPY_PERP,
+  LTC_CNY_PERP,
+  ALL_LTC_Futures_FirstPeriod,
+  ALL_LTC_Futures_SecondPeriod,
+  ALL_LTC_Futures_ThirdPeriod,
+  ALL_LTC_Futures_FourthPeriod,
+  LTC_USD_Futures_FirstPeriod,
+  LTC_USD_Futures_SecondPeriod,
+  LTC_USD_Futures_ThirdPeriod,
+  LTC_USD_Futures_FourthPeriod,
+  LTC_USD_Futures_FifthPeriod,
+  LTC_USD_Futures_SixthPeriod,
+  LTC_EUR_Futures_FirstPeriod,
+  LTC_EUR_Futures_SecondPeriod,
+  LTC_EUR_Futures_ThirdPeriod,
+  LTC_EUR_Futures_FourthPeriod,
+  LTC_EUR_Futures_FifthPeriod,
+  LTC_EUR_Futures_SixthPeriod,
+  LTC_JPY_Futures_FirstPeriod,
+  LTC_JPY_Futures_SecondPeriod,
+  LTC_JPY_Futures_ThirdPeriod,
+  LTC_JPY_Futures_FourthPeriod,
+  LTC_JPY_Futures_FifthPeriod,
+  LTC_JPY_Futures_SixthPeriod,
+  LTC_CNY_Futures_FirstPeriod,
+  LTC_CNY_Futures_SecondPeriod,
+  LTC_CNY_Futures_ThirdPeriod,
+  LTC_CNY_Futures_FourthPeriod,
+  LTC_CNY_Futures_FifthPeriod,
+  LTC_CNY_Futures_SixthPeriod,
+  Native_Difficulty_Futures_FirstPeriod,
+  Native_Difficulty_Futures_SecondPeriod,
+  Native_Difficulty_Futures_ThirdPeriod,
+  Native_Difficulty_Futures_FourthPeriod,  //extended
+  Native_Fee_Futures_FirstPeriod,
+  Native_Fee_Futures_SecondPeriod,
+  Native_Fee_Futures_ThirdPeriod,
+  Native_Fee_Futures_FourthPeriod,
+  Native_ALL_LTC_IRS_FirstPeriod,
+  Native_ALL_LTC_IRS_SecondPeriod,
+  Native_LTC_USD_IRS_FirstPeriod,
+  Native_LTC_USD_IRS_SecondPeriod,
+  ALL_LTC_PERP_GDS,
+  LTC_USD_PERP_GDS
 };
 
 // channels definitions
@@ -308,7 +346,7 @@ public:
     CtlTransactionDB(const fs::path& path, bool fWipe)
     {
         leveldb::Status status = Open(path, fWipe);
-        PrintToConsole("Loading master transactions database: %s\n", status.ToString());
+        if (msc_debug_persistence) PrintToLog("Loading master transactions database: %s\n", status.ToString());
     }
 
     virtual ~CtlTransactionDB()
@@ -336,7 +374,7 @@ public:
     CMPTxList(const fs::path& path, bool fWipe)
     {
         leveldb::Status status = Open(path, fWipe);
-        PrintToConsole("Loading tx meta-info database: %s\n", status.ToString());
+        if (msc_debug_persistence) PrintToLog("Loading tx meta-info database: %s\n", status.ToString());
     }
 
     virtual ~CMPTxList()
@@ -371,9 +409,10 @@ public:
 
     bool isMPinBlockRange(int, int, bool);
 
-    void recordPaymentTX(const uint256 &txid, bool fValid, int nBlock, unsigned int vout, unsigned int propertyId, uint64_t nValue, string buyer, string seller);
+    void recordPaymentTX(const uint256 &txid, bool fValid, int nBlock, unsigned int vout, unsigned int propertyId, uint64_t nValue, uint64_t amountPaid, string buyer, string seller);
     void recordMetaDExCancelTX(const uint256 &txidMaster, const uint256 &txidSub, bool fValid, int nBlock, unsigned int propertyId, uint64_t nValue);
     void recordContractDexCancelTX(const uint256 &txidMaster, const uint256 &txidSub, bool fValid, int nBlock, unsigned int propertyId, uint64_t nValue);
+    void recordNewInstantLTCTrade(const uint256& txid, const std::string& channelAddr, const std::string& seller, const std::string& buyer, uint32_t propertyIdForSale, uint64_t amount_purchased, uint64_t price, int blockNum, int blockIndex);
 
     uint256 findMetaDExCancel(const uint256 txid);
 
@@ -381,6 +420,10 @@ public:
     int getNumberOfMetaDExCancels(const uint256 txid);
     int getNumberOfContractDexCancels(const uint256 txid);
     void getMPTransactionAddresses(std::vector<std::string> &vaddrs);
+
+    void getDExTrades(const std::string& address, uint32_t propertyId, UniValue& responseArray, uint64_t count);
+    void getChannelTrades(const std::string& address, const std::string& channel, uint32_t propertyId, UniValue& responseArray, uint64_t count);
+
 };
 
 /** LevelDB based storage for the trade history. Trades are listed with key "txid1+txid2".
@@ -392,7 +435,7 @@ class CMPTradeList : public CDBBase
   CMPTradeList(const fs::path& path, bool fWipe)
     {
       leveldb::Status status = Open(path, fWipe);
-      PrintToConsole("Loading trades database: %s\n", status.ToString());
+      if (msc_debug_persistence) PrintToLog("Loading trades database: %s\n", status.ToString());
     }
 
   virtual ~CMPTradeList()
@@ -412,7 +455,6 @@ class CMPTradeList : public CDBBase
   void recordNewWithdrawal(const uint256& txid, const std::string& channelAddress, const std::string& sender, uint32_t propertyId, uint64_t amountToWithdrawal, int blockNum, int blockIndex);
   void recordNewChannel(const std::string& channelAddress, const std::string& frAddr, const std::string& secAddr, int blockNum, int blockIndex);
   void recordNewInstantTrade(const uint256& txid, const std::string& channelAddr, const std::string& first, const std::string& second, uint32_t propertyIdForSale, uint64_t amount_forsale, uint32_t propertyIdDesired, uint64_t amount_desired,int blockNum, int blockIndex);
-  void recordNewInstantLTCTrade(const uint256& txid, const std::string& channelAddr, const std::string& seller, const std::string& buyer, uint32_t propertyIdForSale, uint64_t amount_purchased, uint64_t price, int blockNum, int blockIndex);
   void recordNewTransfer(const uint256& txid, const std::string& sender, const std::string& receiver, int blockNum, int blockIndex);
   void recordNewInstContTrade(const uint256& txid, const std::string& firstAddr, const std::string& secondAddr, uint32_t property, uint64_t amount_forsale, uint64_t price ,int blockNum, int blockIndex);
   void recordNewIdRegister(const uint256& txid, const std::string& address, const std::string& name, const std::string& website, int blockNum, int blockIndex);
@@ -463,6 +505,8 @@ class CMPTradeList : public CDBBase
   void getUpnInfo(const std::string& address, uint32_t contractId, UniValue& response, bool showVerbose);
   bool kycConsensusHash(CSHA256& hasher);
   bool attConsensusHash(CSHA256& hasher);
+  void getTokenChannelTrades(const std::string& address, const std::string& channel, uint32_t propertyId, UniValue& responseArray, uint64_t count);
+  void getChannelTradesForPair(const std::string& channel, uint32_t propertyIdA, uint32_t propertyIdB, UniValue& responseArray, uint64_t count);
 };
 
 class CMPSettlementMatchList : public CDBBase
@@ -471,7 +515,7 @@ class CMPSettlementMatchList : public CDBBase
   CMPSettlementMatchList(const fs::path& path, bool fWipe)
     {
       leveldb::Status status = Open(path, fWipe);
-      PrintToConsole("Loading settlement match info database: %s\n", status.ToString());
+      if (msc_debug_persistence) PrintToLog("Loading settlement match info database: %s\n", status.ToString());
     }
 
   virtual ~CMPSettlementMatchList() { }
@@ -518,7 +562,7 @@ int mastercore_handler_disc_begin(int nBlockNow, CBlockIndex const *pBlockIndex)
 int mastercore_handler_disc_end(int nBlockNow, CBlockIndex const *pBlockIndex);
 int mastercore_handler_block_begin(int nBlockNow, CBlockIndex const *pBlockIndex);
 int mastercore_handler_block_end(int nBlockNow, CBlockIndex const *pBlockIndex, unsigned int);
-bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx, const CBlockIndex *pBlockIndex);
+bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx, const CBlockIndex *pBlockIndex, std::shared_ptr<std::map<COutPoint, Coin>> removedCoin);
 int mastercore_save_state( CBlockIndex const *pBlockIndex );
 void creatingVestingTokens(int block);
 void lookingin_globalvector_pastlivesperpetuals(std::vector<std::map<std::string, std::string>> &lives_g, MatrixTLS M_file, std::vector<std::string> addrs_vg, std::vector<std::map<std::string, std::string>> &lives_h);

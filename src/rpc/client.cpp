@@ -226,11 +226,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_createpayload_withdrawal_fromchannel", 0, "arg0" },
 
 
-
-
     /* Trade Layer - raw transaction calls */
-    { "tl_decodetransaction", 1, "arg1" },
-    { "tl_decodetransaction", 2, "arg2" },
     { "tl_createrawtx_reference", 2, "arg2" },
     { "tl_createrawtx_input", 2, "arg2" },
     { "tl_createrawtx_change", 1, "arg1" },
@@ -352,6 +348,26 @@ static const CRPCConvertParam vRPCConvertParams[] =
 
     {"tl_get_channelremaining", 2, "arg2"},
 
+    { "tl_getmdextradehistoryforaddress", 1 , "arg1"},
+    { "tl_getmdextradehistoryforaddress", 2, "arg2" },
+
+    { "tl_getdextradehistoryforaddress", 1 , "arg1"},
+    { "tl_getdextradehistoryforaddress", 2, "arg2" },
+
+    { "tl_gettradehistoryforpair", 0, "arg0" },
+    { "tl_gettradehistoryforpair", 1, "arg1" },
+    { "tl_gettradehistoryforpair", 2, "arg2" },
+
+    { "tl_getchannel_historyforpair", 1, "arg1" },
+    { "tl_getchannel_historyforpair", 2, "arg2" },
+    { "tl_getchannel_historyforpair", 3, "arg3" },
+
+    { "tl_getchannel_historyforaddress", 2 , "arg2"},
+    { "tl_getchannel_historyforaddress", 3, "arg3" },
+
+
+    { "tl_getchannel_tokenhistoryforaddress", 2 , "arg2"},
+    { "tl_getchannel_tokenhistoryforaddress", 3, "arg3" },
 
 };
 

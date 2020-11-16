@@ -10,7 +10,6 @@ from test_framework.util import *
 import os
 import json
 import math
-import pylab as pl
 import http.client
 import urllib.parse
 
@@ -566,14 +565,14 @@ class VestingBasicsTest (BitcoinTestFramework):
 
             self.nodes[0].generate(1)
 
-            time.sleep(0.25)
+            time.sleep(0.35)
 
             self.log.info("Checking token balance in buyer address")
             params = str([addresses[3], 4]).replace("'",'"')
             out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
             # self.log.info(out)
             assert_equal(out['error'], None)
-            nresult = 2000 + 1000 * (i+1)
+            nresult = 2000 + 1000 * (i + 1)
             sresult = str(nresult)+'.00000000'
             assert_equal(out['result']['balance'], sresult)
             assert_equal(out['result']['reserve'],'0.00000000')
@@ -583,7 +582,7 @@ class VestingBasicsTest (BitcoinTestFramework):
             out = tradelayer_HTTP(conn, headers, True, "tl_get_ltcvolume",params)
             # self.log.info(out)
             assert_equal(out['error'], None)
-            nvolume = 400 + 200 * (i+1)
+            nvolume = 400 + 200 * (i + 1)
             svolume = str(nvolume)+'.00000000'
             assert_equal(out['result']['volume'], svolume)
             volume1 = float(out['result']['volume'])

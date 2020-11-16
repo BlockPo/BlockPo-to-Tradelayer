@@ -447,7 +447,6 @@ bool CMPTransaction::interpret_CreatePropertyFixed()
     } else return false;
 
     if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly) {
-        // PrintToLog("\t       ecosystem: %d\n", ecosystem);
         PrintToLog("\t   property type: %d (%s)\n", prop_type, strPropertyType(prop_type));
         PrintToLog("\tprev property id: %d\n", prev_prop_id);
         PrintToLog("\t            name: %s\n", name);
@@ -1093,7 +1092,7 @@ bool CMPTransaction::interpret_ContractDExCancel()
     {
         PrintToLog("\t version: %d\n", version);
         PrintToLog("\t messageType: %d\n",type);
-        PrintToLog("\t hash: %d\n", hash);
+        PrintToLog("\t hash: %s\n", hash);
     }
 
     return true;
@@ -1237,7 +1236,7 @@ bool CMPTransaction::interpret_MetaDExCancel()
     {
         PrintToLog("\t version: %d\n", version);
         PrintToLog("\t messageType: %d\n",type);
-        PrintToLog("\t hash: %d\n", hash);
+        PrintToLog("\t hash: %s\n", hash);
     }
 
     return true;
@@ -1390,8 +1389,7 @@ bool CMPTransaction::interpret_CreatePeggedCurrency()
         PrintToLog("\t contractId: %d\n", contractId);
         PrintToLog("\t propertyId: %d\n", propertyId);
         PrintToLog("\t amount of pegged currency : %d\n", amount);
-        PrintToLog("\t name : %d\n", name);
-        PrintToLog("\t subcategory: %d\n", subcategory);
+        PrintToLog("\t name : %s\n", name);
     }
 
     return true;
@@ -1780,7 +1778,7 @@ bool CMPTransaction::interpret_Instant_Trade()
     desired_value = DecompressInteger(vecAmountDesiredBytes);
   } else return false;
 
-  if (true || (!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+  if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
   {
       PrintToLog("\t version: %d\n", version);
       PrintToLog("\t messageType: %d\n",type);
@@ -1789,8 +1787,8 @@ bool CMPTransaction::interpret_Instant_Trade()
       PrintToLog("\t blockheight_expiry : %d\n", block_forexpiry);
       PrintToLog("\t property desired : %d\n", desired_property);
       PrintToLog("\t amount desired : %d\n", desired_value);
-      PrintToLog("\t sender : %d\n", sender);
-      PrintToLog("\t receiver : %d\n", receiver);
+      PrintToLog("\t sender : %s\n", sender);
+      PrintToLog("\t receiver : %s\n", receiver);
   }
 
   return true;
@@ -1900,7 +1898,7 @@ bool CMPTransaction::interpret_Instant_LTC_Trade()
       block_forexpiry = DecompressInteger(vecBlock);
   } else return false;
 
-  if (true || (!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+  if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
   {
       PrintToLog("\t version: %d\n", version);
       PrintToLog("\t messageType: %d\n",type);
@@ -1908,7 +1906,7 @@ bool CMPTransaction::interpret_Instant_LTC_Trade()
       PrintToLog("\t amount : %d\n", amount_forsale);
       PrintToLog("\t price : %d\n", price);
       PrintToLog("\t sender : %s\n", sender);
-      PrintToLog("\t receiver : %d\n", receiver);
+      PrintToLog("\t receiver : %s\n", receiver);
       PrintToLog("\t expiry : %d\n", block_forexpiry);
   }
 
@@ -2037,7 +2035,6 @@ bool CMPTransaction::interpret_DEx_Payment()
 
   if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
   {
-      PrintToLog("%s(): inside the function\n",__func__);
       PrintToLog("\t sender: %s\n", sender);
       PrintToLog("\t receiver: %s\n", receiver);
   }
@@ -2365,13 +2362,12 @@ int CMPTransaction::logicMath_SendVestingTokens()
 {
 
   if (sender == receiver) {
-      PrintToLog("%s(): rejected: sender sending vesting tokens to himself\n", __func__, property);
+      PrintToLog("%s(): rejected: sender sending vesting tokens to himself\n", __func__);
       return (PKT_ERROR_SEND -26);
   }
 
   if (!sanityChecks(sender, block)) {
-      PrintToLog("%s(): rejected: sanity checks for send vesting tokens failed\n",
-              __func__);
+      PrintToLog("%s(): rejected: sanity checks for send vesting tokens failed\n",__func__);
       return (PKT_ERROR_SEND -21);
   }
 
@@ -2421,7 +2417,7 @@ int CMPTransaction::logicMath_SendAll()
 
     // ------------------------------------------
     if (sender == receiver) {
-        PrintToLog("%s(): rejected: sender sending tokens to himself\n", __func__, property);
+        PrintToLog("%s(): rejected: sender sending tokens to himself\n", __func__);
         return (PKT_ERROR_SEND -26);
     }
 
@@ -2675,7 +2671,6 @@ int CMPTransaction::logicMath_GrantTokens()
     PrintToLog("%s(): rejected: property %d can't be traded with this kyc\n", __func__, property);
     return (PKT_ERROR_KYC -20);
   }
-
 
   if(!t_tradelistdb->checkAttestationReg(receiver,kyc_id)){
     PrintToLog("%s(): rejected: kyc ckeck for receiver failed\n", __func__);
@@ -4134,7 +4129,7 @@ int CMPTransaction::logicMath_CloseOracle()
     assert(_my_sps->getSP(contractId, sp));
 
     if (sender != sp.backup_address) {
-        PrintToLog("%s(): rejected: sender %s is not the backup address of the Oracle Future Contract\n", __func__,sender);
+        PrintToLog("%s(): rejected: sender (%s) is not the backup address of the Oracle Future Contract\n", __func__,sender);
         return (PKT_ERROR_ORACLE -14);
     }
 
@@ -4144,7 +4139,7 @@ int CMPTransaction::logicMath_CloseOracle()
 
     assert(_my_sps->updateSP(contractId, sp));
 
-    PrintToLog("%s(): Oracle Contract (id:%d) Closed\n", __func__,contractId);
+    PrintToLog("%s(): Oracle Contract (id:%d) Closed\n", __func__, contractId);
 
     return 0;
 }
@@ -4360,7 +4355,7 @@ int CMPTransaction::logicMath_Instant_Trade()
   }
 
   if(block_forexpiry < block) {
-      PrintToLog("%s(): rejected: tx expired (actual block: %d, expiry: %d\n", __func__,block , block_forexpiry);
+      PrintToLog("%s(): rejected: tx expired (actual block: %d, expiry: %d\n", __func__, block , block_forexpiry);
       return (PKT_ERROR_CHANNELS -16);
   }
 
@@ -4529,7 +4524,7 @@ int CMPTransaction::logicMath_Instant_LTC_Trade()
   }
 
   if(block_forexpiry < block) {
-      PrintToLog("%s(): rejected: tx expired (actual block: %d, expiry: %d\n", __func__,block , block_forexpiry);
+      PrintToLog("%s(): rejected: tx expired (actual block: %d, expiry: %d\n", __func__, block , block_forexpiry);
       return (PKT_ERROR_CHANNELS -16);
   }
 
@@ -4743,7 +4738,7 @@ int CMPTransaction::logicMath_DEx_Payment()
       return (PKT_ERROR_METADEX -22);
   }
 
-
+  PrintToLog("%s(): returning rc: %d\n",__func__,rc);
   return rc;
 }
 

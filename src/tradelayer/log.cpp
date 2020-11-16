@@ -20,7 +20,7 @@ static const long LOG_SHRINKSIZE  = 50000000; // 50 MB
 
 // Debug flags
 bool msc_debug_parser_data                      = 0;
-bool msc_debug_parser_readonly                  = 0;
+bool msc_debug_parser_readonly                  = 1;
 bool msc_debug_parser                           = 0;
 bool msc_debug_verbose                          = 0;
 bool msc_debug_verbose2                         = 0;
@@ -40,11 +40,11 @@ bool msc_debug_pending                          = 0;
 bool msc_debug_packets                          = 0;
 bool msc_debug_packets_readonly                 = 1;
 bool msc_debug_walletcache                      = 0;
-bool msc_debug_consensus_hash                   = 1;
+bool msc_debug_consensus_hash                   = 0;
 bool msc_debug_consensus_hash_every_block       = 0;
 bool msc_debug_consensus_hash_every_transaction = 0;
 bool msc_debug_alerts                           = 0;
-bool msc_debug_handle_dex_payment               = 0;
+bool msc_debug_handle_dex_payment               = 1;
 bool msc_debug_handle_instant                   = 0;
 bool msc_debug_handler_tx                       = 0;
 bool msc_debug_tradedb                          = 0;
@@ -56,7 +56,7 @@ bool msc_debug_x_trade_bidirectional            = 0;
 bool msc_debug_contractdex_fees                 = 0;
 bool msc_debug_metadex_fees                     = 0;
 bool msc_debug_metadex1                         = 0;
-bool msc_debug_metadex2                         = 1;
+bool msc_debug_metadex2                         = 0;
 bool msc_debug_metadex3                         = 0;
 bool msc_debug_metadex_add                      = 0;
 bool msc_debug_contractdex_add                  = 0;
@@ -74,7 +74,6 @@ bool msc_debug_accept_offerbtc                  = 0;
 bool msc_debug_set_oracle                       = 0;
 bool msc_debug_send_pegged                      = 0;
 bool msc_debug_commit_channel                   = 0;
-bool msc_debug_withdrawal_from_channel          = 1;
 bool msc_debug_instant_trade                    = 0;
 bool msc_debug_contract_instant_trade           = 0;
 bool msc_create_channel                         = 0;
@@ -89,13 +88,12 @@ bool msc_debug_update_last_block                = 0;
 bool msc_debug_send_reward                      = 0;
 bool msc_debug_contract_cancel                  = 0;
 bool msc_debug_fee_cache_buy                    = 0;
-bool msc_debug_check_attestation_reg            = 1;
+bool msc_debug_check_attestation_reg            = 0;
 bool msc_debug_sanity_checks                    = 0;
 bool msc_debug_ltc_volume                       = 0;
 bool msc_debug_mdex_volume                      = 0;
 bool msc_debug_update_status                    = 0;
 bool msc_debug_get_channel_addr                 = 0;
-bool msc_debug_get_remaining                    = 1;
 bool msc_debug_make_withdrawal                  = 0;
 bool msc_debug_check_kyc_register               = 0;
 bool msc_debug_update_id_register               = 0;
@@ -110,10 +108,12 @@ bool msc_debug_activate_feature                 = 0;
 bool msc_debug_deactivate_feature               = 0;
 bool msc_debug_is_transaction_type_allowed      = 0;
 bool msc_debug_instant_payment                  = 0;
-bool msc_debug_settlement_algorithm_fifo        = 1;
+bool msc_debug_settlement_algorithm_fifo        = 0;
 bool msc_debug_clearing_operator_fifo           = 0;
 bool msc_debug_counting_lives_longshorts        = 0;
 bool msc_debug_calculate_pnl_forghost           = 1;
+bool msc_debug_withdrawal_from_channel          = 1;
+bool msc_debug_populate_rpc_transaction_obj     = 0;
 
 /**
  * LogPrintf() has been broken a couple of times now
@@ -180,10 +180,10 @@ static void DebugLogInit()
 /**
  * @return The current timestamp in the format: 2009-01-03 18:15:05
  */
-// static std::string GetTimestamp()
-// {
-//   return DateTimeStrFormat("%Y-%m-%d %H:%M:%S", GetTime());
-// }
+ static std::string GetTimestamp()
+ {
+     return FormatISO8601DateTime(GetTime());
+ }
 
 /**
  * Prints to log file.
@@ -200,27 +200,25 @@ static void DebugLogInit()
 int LogFilePrint(const std::string& str)
 {
     int ret = 0; // Number of characters written
-    // if (fPrintToConsole) {
-    //     // Print to console
-    //     ret = ConsolePrint(str);
-    // }
-    if (true)
-    {
-        // else if (fPrintToDebugLog && AreBaseParamsConfigured()) {
-        // static bool fStartedNewLine = true;
+    if (fPrintToConsole) {
+        // Print to console
+        ret = ConsolePrint(str);
+        
+    } else {
+        static bool fStartedNewLine = true;
         std::call_once(debugLogInitFlag, &DebugLogInit);
 
         if (fileout == nullptr)
         {
             return ret;
         }
+
         std::lock_guard<std::mutex> lock(*mutexDebugLog);
 
         // Reopen the log file, if requested
-        //if (fReopentradelayerLiteLog) {
-         if (false)
-         {
-            fReopentradelayerLog = false;
+        if (fReopenTradeLayerLog)
+        {
+            fReopenTradeLayerLog = false;
             fs::path pathDebug = GetLogPath();
             if (freopen(pathDebug.string().c_str(), "a", fileout) != nullptr)
                 setbuf(fileout, nullptr); // Unbuffered
@@ -228,20 +226,18 @@ int LogFilePrint(const std::string& str)
          }
 
          // Printing log timestamps can be useful for profiling
-         // if (fLogTimestamps && fStartedNewLine) {
-         //   ret += fprintf(fileout, "%s ", GetTimestamp().c_str());
-         // }
-
-         if (!str.empty() && str[str.size()-1] == '\n') {
-            //fStartedNewLine = true;
-         } else {
-            // fStartedNewLine = false;
+         if (fLogTimestamps && fStartedNewLine) {
+           ret += fprintf(fileout, "%s ", GetTimestamp().c_str());
          }
+
+         fStartedNewLine = (!str.empty() && str[str.size()-1] == '\n') ? true : false;
+
          ret += fwrite(str.data(), 1, str.size(), fileout);
     }
 
     return ret;
 }
+
 
 /**
  * Prints to the standard output, usually the console.
@@ -256,19 +252,17 @@ int LogFilePrint(const std::string& str)
 int ConsolePrint(const std::string& str)
 {
     int ret = 0; // Number of characters written
-    /*static bool fStartedNewLine = true;
+    static bool fStartedNewLine = true;
 
     if (fLogTimestamps && fStartedNewLine) {
         ret = fprintf(stdout, "%s %s", GetTimestamp().c_str(), str.c_str());
     } else {
         ret = fwrite(str.data(), 1, str.size(), stdout);
     }
-    if (!str.empty() && str[str.size()-1] == '\n') {
-        fStartedNewLine = true;
-    } else {
-        fStartedNewLine = false;
-    }
-    fflush(stdout); */
+
+    fStartedNewLine = (!str.empty() && str[str.size()-1] == '\n') ? true : false;
+
+    fflush(stdout);
 
     return ret;
 }

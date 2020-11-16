@@ -92,7 +92,7 @@ void CheckLiveActivations(int blockHeight)
             if (!gArgs.GetBoolArg("-overrideforcedshutdown", false)) {
                 fs::path persistPath = GetDataDir() / "OCL_persist";
                 if (fs::exists(persistPath)) fs::remove_all(persistPath); // prevent the node being restarted without a reparse after forced shutdown
-                DoAbortNode(msgText, msgText); 
+                DoAbortNode(msgText, msgText);
             }
         }
         PendingActivationCompleted(liveActivation);
@@ -141,8 +141,8 @@ bool CheckActivationAuthorization(const std::string& sender)
 {
     std::set<std::string> whitelisted;
 
-    // TODO: Mainnet - 2 out of 3 signatures required from developers & board members
-    // whitelisted.insert("???");
+    // Mainnet - 2 out of 3 signatures required from developers & board members
+    whitelisted.insert("MQ4r3yi4jHEHhLSLhzabSBHs1x1g6HdxL3");
 
     // Testnet - 2 out of 3 signatures required from developers & board members
     whitelisted.insert("QWE8RTYmnciyB8efsMJxnPbKrC7tfGhpNr");
@@ -156,7 +156,6 @@ bool CheckActivationAuthorization(const std::string& sender)
 
         for (std::vector<std::string>::const_iterator it = sources.begin(); it != sources.end(); ++it) {
             whitelisted.insert(*it);
-            PrintToLog("%s(): address allowed: %s\n",__func__, *it);
         }
     }
 
@@ -166,7 +165,6 @@ bool CheckActivationAuthorization(const std::string& sender)
 
         for (std::vector<std::string>::const_iterator it = sources.begin(); it != sources.end(); ++it) {
             whitelisted.erase(*it);
-            PrintToLog("%s(): address deleted: %s\n",__func__, *it);
         }
     }
 
@@ -182,8 +180,8 @@ bool CheckDeactivationAuthorization(const std::string& sender)
 {
     std::set<std::string> whitelisted;
 
-    // TODO: Mainnet - 2 out of 3 signatures required from developers & board members
-    // whitelisted.insert("???");
+    // Mainnet - 2 out of 3 signatures required from developers & board members
+    whitelisted.insert("MQ4r3yi4jHEHhLSLhzabSBHs1x1g6HdxL3");
 
     // Testnet - 2 out of 3 signatures required from developers & board members
     whitelisted.insert("QWE8RTYmnciyB8efsMJxnPbKrC7tfGhpNr");
