@@ -589,7 +589,7 @@ const std::string mastercore::getVestingAdmin()
 
     } else if (TestNet()) {
         // testnet address
-        const std::string testAddress = "n4meoEMb4x544JPe1EkVPTrMqBQMYxqGV8";
+        const std::string testAddress = "QQGwLt5cFRTxMuY9ij6DzTY8H1hJwn6aV4";
         return testAddress;
 
     }
@@ -814,7 +814,7 @@ static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, 
     const CTxIn& txIn = wtx.vin[vin_n];
     const Coin& coin = view.AccessCoin(txIn.prevout);
     const CTxOut& txOut = coin.out;
-    
+
     assert(!txOut.IsNull());
 
     txnouttype whichType;
@@ -3272,7 +3272,7 @@ inline int64_t clamp_function(int64_t diff, int64_t nclamp)
  */
 bool mastercore::UseEncodingClassC(size_t nDataSize)
 {
-    size_t nTotalSize = nDataSize + GetTLMarker().size(); // Marker "ol"
+    size_t nTotalSize = nDataSize + GetTLMarker().size(); // Marker "tl"
     bool fDataEnabled = gArgs.GetBoolArg("-datacarrier", true);
     int nBlockNow = GetHeight();
     if (!IsAllowedOutputType(TX_NULL_DATA, nBlockNow)) {
@@ -7457,9 +7457,12 @@ bool mastercore::Token_LTC_Fees(int64_t& buyer_amountGot, uint32_t propertyId)
 /**
  * @return The marker for class D transactions.
  */
-const std::vector<unsigned char> GetTLMarker()
-{
-     static unsigned char pch[] = {0x77, 0x77}; // Hex-encoded: "PT"
+ /**
+  * @return The marker for class D transactions.
+  */
+ const std::vector<unsigned char> GetTLMarker()
+ {
+      static unsigned char pch[] = {0x74, 0x6c}; // Hex-encoded: "tl"
 
-    return std::vector<unsigned char>(pch, pch + sizeof(pch) / sizeof(pch[0]));
-}
+     return std::vector<unsigned char>(pch, pch + sizeof(pch) / sizeof(pch[0]));
+ }
