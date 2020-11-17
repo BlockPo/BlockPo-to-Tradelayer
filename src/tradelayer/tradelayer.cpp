@@ -589,7 +589,7 @@ const std::string mastercore::getVestingAdmin()
 
     } else if (TestNet()) {
         // testnet address
-        const std::string testAddress = "n4meoEMb4x544JPe1EkVPTrMqBQMYxqGV8";
+        const std::string testAddress = "QQGwLt5cFRTxMuY9ij6DzTY8H1hJwn6aV4";
         return testAddress;
 
     }
