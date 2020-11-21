@@ -37,7 +37,7 @@ FILE *freopen(const fs::path& p, const char *mode, FILE *stream)
     return ::freopen(p.string().c_str(), mode, stream);
 #else
     std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>,wchar_t> utf8_cvt;
-    return ::_wfreopen(p.wstring().c_str(), utf8_cvt.from_bytes(mode), stream);
+    return ::_wfreopen(p.wstring().c_str(), utf8_cvt.from_bytes(mode).c_str(), stream);
 #endif
 }
 

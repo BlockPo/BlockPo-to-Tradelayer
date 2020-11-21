@@ -90,38 +90,38 @@ void PopulateFailure(int error)
 
 void PropertyToJSON(const CMPSPInfo::Entry& sProperty, UniValue& property_obj)
 {
-    property_obj.push_back(Pair("name", sProperty.name));
-    property_obj.push_back(Pair("data", sProperty.data));
-    property_obj.push_back(Pair("url", sProperty.url));
-    property_obj.push_back(Pair("divisible", sProperty.isDivisible()));
-    property_obj.push_back(Pair("category", sProperty.category));
-    property_obj.push_back(Pair("subcategory", sProperty.subcategory));
+    property_obj.pushKV("name", sProperty.name);
+    property_obj.pushKV("data", sProperty.data);
+    property_obj.pushKV("url", sProperty.url);
+    property_obj.pushKV("divisible", sProperty.isDivisible());
+    property_obj.pushKV("category", sProperty.category);
+    property_obj.pushKV("subcategory", sProperty.subcategory);
 
 }
 
 void ContractToJSON(const CMPSPInfo::Entry& sProperty, UniValue& property_obj)
 {
-    property_obj.push_back(Pair("name", sProperty.name));
-    property_obj.push_back(Pair("data", sProperty.data));
-    property_obj.push_back(Pair("url", sProperty.url));
-    property_obj.push_back(Pair("admin", sProperty.issuer));
-    property_obj.push_back(Pair("creationtxid", sProperty.txid.GetHex()));
-    property_obj.push_back(Pair("creation block", sProperty.init_block));
-    property_obj.push_back(Pair("notional size", FormatDivisibleShortMP(sProperty.notional_size)));
-    property_obj.push_back(Pair("collateral currency", std::to_string(sProperty.collateral_currency)));
-    property_obj.push_back(Pair("margin requirement", FormatDivisibleShortMP(sProperty.margin_requirement)));
-    property_obj.push_back(Pair("blocks until expiration", std::to_string(sProperty.blocks_until_expiration)));
-    property_obj.push_back(Pair("inverse quoted", std::to_string(sProperty.inverse_quoted)));
+    property_obj.pushKV("name", sProperty.name);
+    property_obj.pushKV("data", sProperty.data);
+    property_obj.pushKV("url", sProperty.url);
+    property_obj.pushKV("admin", sProperty.issuer);
+    property_obj.pushKV("creationtxid", sProperty.txid.GetHex());
+    property_obj.pushKV("creation block", sProperty.init_block);
+    property_obj.pushKV("notional size", FormatDivisibleShortMP(sProperty.notional_size));
+    property_obj.pushKV("collateral currency", std::to_string(sProperty.collateral_currency));
+    property_obj.pushKV("margin requirement", FormatDivisibleShortMP(sProperty.margin_requirement));
+    property_obj.pushKV("blocks until expiration", std::to_string(sProperty.blocks_until_expiration));
+    property_obj.pushKV("inverse quoted", std::to_string(sProperty.inverse_quoted));
     if (sProperty.isOracle())
     {
-        property_obj.push_back(Pair("backup address", sProperty.backup_address));
-        property_obj.push_back(Pair("hight price", FormatDivisibleShortMP(sProperty.oracle_high)));
-        property_obj.push_back(Pair("low price", FormatDivisibleShortMP(sProperty.oracle_low)));
-        property_obj.push_back(Pair("last close price", FormatDivisibleShortMP(sProperty.oracle_close)));
-        property_obj.push_back(Pair("type", "oracle"));
+        property_obj.pushKV("backup address", sProperty.backup_address);
+        property_obj.pushKV("hight price", FormatDivisibleShortMP(sProperty.oracle_high));
+        property_obj.pushKV("low price", FormatDivisibleShortMP(sProperty.oracle_low));
+        property_obj.pushKV("last close price", FormatDivisibleShortMP(sProperty.oracle_close));
+        property_obj.pushKV("type", "oracle");
 
     } else if (sProperty.isNative()){
-        property_obj.push_back(Pair("type", "native"));
+        property_obj.pushKV("type", "native");
 
     }
 
@@ -138,53 +138,53 @@ void KYCToJSON(const CMPSPInfo::Entry& sProperty, UniValue& property_obj)
         if (it != std::prev(iKyc.end())) sKyc += ",";
     }
 
-    property_obj.push_back(Pair("kyc_ids allowed","["+sKyc+"]"));
+    property_obj.pushKV("kyc_ids allowed","["+sKyc+"]");
 
 }
 
 
 void OracleToJSON(const CMPSPInfo::Entry& sProperty, UniValue& property_obj)
 {
-    property_obj.push_back(Pair("name", sProperty.name));
-    property_obj.push_back(Pair("data", sProperty.data));
-    property_obj.push_back(Pair("url", sProperty.url));
-    property_obj.push_back(Pair("issuer", sProperty.issuer));
-    property_obj.push_back(Pair("creationtxid", sProperty.txid.GetHex()));
-    property_obj.push_back(Pair("creation block", sProperty.init_block));
-    property_obj.push_back(Pair("notional size", FormatDivisibleShortMP(sProperty.notional_size)));
-    property_obj.push_back(Pair("collateral currency", std::to_string(sProperty.collateral_currency)));
-    property_obj.push_back(Pair("margin requirement", FormatDivisibleShortMP(sProperty.margin_requirement)));
-    property_obj.push_back(Pair("blocks until expiration", std::to_string(sProperty.blocks_until_expiration)));
-    property_obj.push_back(Pair("last high price", FormatDivisibleShortMP(sProperty.oracle_high)));
-    property_obj.push_back(Pair("last low price", FormatDivisibleShortMP(sProperty.oracle_low)));
-    property_obj.push_back(Pair("last close price",FormatDivisibleShortMP(sProperty.oracle_close)));
+    property_obj.pushKV("name", sProperty.name);
+    property_obj.pushKV("data", sProperty.data);
+    property_obj.pushKV("url", sProperty.url);
+    property_obj.pushKV("issuer", sProperty.issuer);
+    property_obj.pushKV("creationtxid", sProperty.txid.GetHex());
+    property_obj.pushKV("creation block", sProperty.init_block);
+    property_obj.pushKV("notional size", FormatDivisibleShortMP(sProperty.notional_size));
+    property_obj.pushKV("collateral currency", std::to_string(sProperty.collateral_currency));
+    property_obj.pushKV("margin requirement", FormatDivisibleShortMP(sProperty.margin_requirement));
+    property_obj.pushKV("blocks until expiration", std::to_string(sProperty.blocks_until_expiration));
+    property_obj.pushKV("last high price", FormatDivisibleShortMP(sProperty.oracle_high));
+    property_obj.pushKV("last low price", FormatDivisibleShortMP(sProperty.oracle_low));
+    property_obj.pushKV("last close price",FormatDivisibleShortMP(sProperty.oracle_close));
 }
 
 void VestingToJSON(const CMPSPInfo::Entry& sProperty, UniValue& property_obj)
 {
-    property_obj.push_back(Pair("name", sProperty.name));
-    property_obj.push_back(Pair("data", sProperty.data));
-    property_obj.push_back(Pair("url", sProperty.url));
-    property_obj.push_back(Pair("divisible", sProperty.isDivisible()));
-    property_obj.push_back(Pair("issuer", sProperty.issuer));
-    property_obj.push_back(Pair("activation block", sProperty.init_block));
+    property_obj.pushKV("name", sProperty.name);
+    property_obj.pushKV("data", sProperty.data);
+    property_obj.pushKV("url", sProperty.url);
+    property_obj.pushKV("divisible", sProperty.isDivisible());
+    property_obj.pushKV("issuer", sProperty.issuer);
+    property_obj.pushKV("activation block", sProperty.init_block);
 
     const int64_t xglobal = globalVolumeALL_LTC;
     const double accum = (isNonMainNet()) ? getAccumVesting(100 * xglobal) : getAccumVesting(xglobal);
     const int64_t vestedPer = 100 * mastercore::DoubleToInt64(accum);
 
-    property_obj.push_back(Pair("litecoin volume",  FormatDivisibleMP(xglobal)));
-    property_obj.push_back(Pair("vested percentage",  FormatDivisibleMP(vestedPer)));
-    property_obj.push_back(Pair("last vesting block",  sProperty.last_vesting_block));
+    property_obj.pushKV("litecoin volume",  FormatDivisibleMP(xglobal));
+    property_obj.pushKV("vested percentage",  FormatDivisibleMP(vestedPer));
+    property_obj.pushKV("last vesting block",  sProperty.last_vesting_block);
 
     int64_t totalVested = getTotalTokens(ALL);
     if (RegTest()) totalVested -= sProperty.num_tokens;
 
-    property_obj.push_back(Pair("total vested",  FormatDivisibleMP(totalVested)));
+    property_obj.pushKV("total vested",  FormatDivisibleMP(totalVested));
 
     size_t n_owners_total = vestingAddresses.size();
-    property_obj.push_back(Pair("owners",  n_owners_total));
-    property_obj.push_back(Pair("total tokens", FormatDivisibleMP(sProperty.num_tokens)));
+    property_obj.pushKV("owners",  (int64_t) n_owners_total);
+    property_obj.pushKV("total tokens", FormatDivisibleMP(sProperty.num_tokens));
 
 }
 
@@ -195,11 +195,11 @@ bool BalanceToJSON(const std::string& address, uint32_t property, UniValue& bala
     int64_t nReserve = getUserReserveMPbalance(address, property);
 
     if (divisible) {
-        balance_obj.push_back(Pair("balance", FormatDivisibleMP(nAvailable)));
-        balance_obj.push_back(Pair("reserve", FormatDivisibleMP(nReserve)));
+        balance_obj.pushKV("balance", FormatDivisibleMP(nAvailable));
+        balance_obj.pushKV("reserve", FormatDivisibleMP(nReserve));
     } else {
-        balance_obj.push_back(Pair("balance", FormatIndivisibleMP(nAvailable)));
-        balance_obj.push_back(Pair("reserve", FormatIndivisibleMP(nReserve)));
+        balance_obj.pushKV("balance", FormatIndivisibleMP(nAvailable));
+        balance_obj.pushKV("reserve", FormatIndivisibleMP(nReserve));
     }
 
     if (nAvailable == 0) {
@@ -213,9 +213,9 @@ void ReserveToJSON(const std::string& address, uint32_t property, UniValue& bala
 {
     int64_t margin = getMPbalance(address, property, CONTRACTDEX_RESERVE);
     if (divisible) {
-        balance_obj.push_back(Pair("reserve", FormatDivisibleMP(margin)));
+        balance_obj.pushKV("reserve", FormatDivisibleMP(margin));
     } else {
-        balance_obj.push_back(Pair("reserve", FormatIndivisibleMP(margin)));
+        balance_obj.pushKV("reserve", FormatIndivisibleMP(margin));
     }
 }
 
@@ -223,9 +223,9 @@ void UnvestedToJSON(const std::string& address, uint32_t property, UniValue& bal
 {
     const int64_t unvested = getMPbalance(address, property, UNVESTED);
     if (divisible) {
-        balance_obj.push_back(Pair("unvested", FormatDivisibleMP(unvested)));
+        balance_obj.pushKV("unvested", FormatDivisibleMP(unvested));
     } else {
-        balance_obj.push_back(Pair("unvested", FormatIndivisibleMP(unvested)));
+        balance_obj.pushKV("unvested", FormatIndivisibleMP(unvested));
     }
 }
 
@@ -233,9 +233,9 @@ void ChannelToJSON(const std::string& address, uint32_t property, UniValue& bala
 {
     const int64_t margin = getMPbalance(address, property, CHANNEL_RESERVE);
     if (divisible) {
-        balance_obj.push_back(Pair("channel reserve", FormatDivisibleMP(margin)));
+        balance_obj.pushKV("channel reserve", FormatDivisibleMP(margin));
     } else {
-        balance_obj.push_back(Pair("channel reserve", FormatIndivisibleMP(margin)));
+        balance_obj.pushKV("channel reserve", FormatIndivisibleMP(margin));
     }
 }
 
@@ -245,34 +245,34 @@ void MetaDexObjectToJSON(const CMPMetaDEx& obj, UniValue& metadex_obj)
     bool propertyIdDesiredIsDivisible = isPropertyDivisible(obj.getDesProperty());
 
     // add data to JSON object
-    metadex_obj.push_back(Pair("address", obj.getAddr()));
-    metadex_obj.push_back(Pair("txid", obj.getHash().GetHex()));
-    metadex_obj.push_back(Pair("propertyidforsale", (uint64_t) obj.getProperty()));
-    metadex_obj.push_back(Pair("propertyidforsaleisdivisible", propertyIdForSaleIsDivisible));
-    metadex_obj.push_back(Pair("amountforsale", FormatMP(obj.getProperty(), obj.getAmountForSale())));
-    metadex_obj.push_back(Pair("amountremaining", FormatMP(obj.getProperty(), obj.getAmountRemaining())));
-    metadex_obj.push_back(Pair("propertyiddesired", (uint64_t) obj.getDesProperty()));
-    metadex_obj.push_back(Pair("propertyiddesiredisdivisible", propertyIdDesiredIsDivisible));
-    metadex_obj.push_back(Pair("amountdesired", FormatMP(obj.getDesProperty(), obj.getAmountDesired())));
-    metadex_obj.push_back(Pair("amounttofill", FormatMP(obj.getDesProperty(), obj.getAmountToFill())));
-    metadex_obj.push_back(Pair("action", (int) obj.getAction()));
-    metadex_obj.push_back(Pair("block", obj.getBlock()));
-    metadex_obj.push_back(Pair("blocktime", obj.getBlockTime()));
+    metadex_obj.pushKV("address", obj.getAddr());
+    metadex_obj.pushKV("txid", obj.getHash().GetHex());
+    metadex_obj.pushKV("propertyidforsale", (uint64_t) obj.getProperty());
+    metadex_obj.pushKV("propertyidforsaleisdivisible", propertyIdForSaleIsDivisible);
+    metadex_obj.pushKV("amountforsale", FormatMP(obj.getProperty(), obj.getAmountForSale()));
+    metadex_obj.pushKV("amountremaining", FormatMP(obj.getProperty(), obj.getAmountRemaining()));
+    metadex_obj.pushKV("propertyiddesired", (uint64_t) obj.getDesProperty());
+    metadex_obj.pushKV("propertyiddesiredisdivisible", propertyIdDesiredIsDivisible);
+    metadex_obj.pushKV("amountdesired", FormatMP(obj.getDesProperty(), obj.getAmountDesired()));
+    metadex_obj.pushKV("amounttofill", FormatMP(obj.getDesProperty(), obj.getAmountToFill()));
+    metadex_obj.pushKV("action", (int) obj.getAction());
+    metadex_obj.pushKV("block", obj.getBlock());
+    metadex_obj.pushKV("blocktime", obj.getBlockTime());
 }
 
 void ContractDexObjectToJSON(const CMPContractDex& obj, UniValue& contractdex_obj)
 {
 
     // add data to JSON object
-    contractdex_obj.push_back(Pair("address", obj.getAddr()));
-    contractdex_obj.push_back(Pair("txid", obj.getHash().GetHex()));
-    contractdex_obj.push_back(Pair("contractid", (uint64_t) obj.getProperty()));
-    contractdex_obj.push_back(Pair("amountforsale", obj.getAmountForSale()));
-    contractdex_obj.push_back(Pair("tradingaction", obj.getTradingAction()));
-    contractdex_obj.push_back(Pair("effectiveprice",  FormatMP(1,obj.getEffectivePrice())));
-    contractdex_obj.push_back(Pair("block", obj.getBlock()));
-    contractdex_obj.push_back(Pair("idx", static_cast<uint64_t>(obj.getIdx())));
-    contractdex_obj.push_back(Pair("blocktime", obj.getBlockTime()));
+    contractdex_obj.pushKV("address", obj.getAddr());
+    contractdex_obj.pushKV("txid", obj.getHash().GetHex());
+    contractdex_obj.pushKV("contractid", (uint64_t) obj.getProperty());
+    contractdex_obj.pushKV("amountforsale", obj.getAmountForSale());
+    contractdex_obj.pushKV("tradingaction", obj.getTradingAction());
+    contractdex_obj.pushKV("effectiveprice",  FormatMP(1,obj.getEffectivePrice()));
+    contractdex_obj.pushKV("block", obj.getBlock());
+    contractdex_obj.pushKV("idx", static_cast<uint64_t>(obj.getIdx()));
+    contractdex_obj.pushKV("blocktime", obj.getBlockTime());
 }
 
 void MetaDexObjectsToJSON(std::vector<CMPMetaDEx>& vMetaDexObjs, UniValue& response)
@@ -351,8 +351,8 @@ UniValue tl_getpayload(const JSONRPCRequest& request)
     if (parseRC < 0) PopulateFailure(MP_TX_IS_NOT_MASTER_PROTOCOL);
 
     UniValue payloadObj(UniValue::VOBJ);
-    payloadObj.push_back(Pair("payload", mp_obj.getPayload()));
-    payloadObj.push_back(Pair("payloadsize", mp_obj.getPayloadSize()));
+    payloadObj.pushKV("payload", mp_obj.getPayload());
+    payloadObj.pushKV("payloadsize", mp_obj.getPayloadSize());
     return payloadObj;
 }
 
@@ -743,7 +743,7 @@ UniValue tl_get_channelremaining(const JSONRPCRequest& request)
     }
 
     UniValue balanceObj(UniValue::VOBJ);
-    balanceObj.push_back(Pair("channel reserve", FormatMP(isPropertyDivisible(propertyId), remaining)));
+    balanceObj.pushKV("channel reserve", FormatMP(isPropertyDivisible(propertyId), remaining));
 
     return balanceObj;
 }
@@ -830,7 +830,7 @@ UniValue tl_getallbalancesforid(const JSONRPCRequest& request)
             continue; // ignore this address, has never transacted in this propertyId
         }
         UniValue balanceObj(UniValue::VOBJ);
-        balanceObj.push_back(Pair("address", address));
+        balanceObj.pushKV("address", address);
         bool nonEmptyBalance = BalanceToJSON(address, propertyId, balanceObj, isDivisible);
 
         if (nonEmptyBalance) {
@@ -884,7 +884,7 @@ UniValue tl_getallbalancesforaddress(const JSONRPCRequest& request)
     uint32_t propertyId = 0;
     while (0 != (propertyId = addressTally->next())) {
         UniValue balanceObj(UniValue::VOBJ);
-        balanceObj.push_back(Pair("propertyid", (uint64_t) propertyId));
+        balanceObj.pushKV("propertyid", (uint64_t) propertyId);
         bool nonEmptyBalance = BalanceToJSON(address, propertyId, balanceObj, isPropertyDivisible(propertyId));
 
         if (nonEmptyBalance) {
@@ -942,51 +942,51 @@ UniValue tl_getproperty(const JSONRPCRequest& request)
     std::string denominator = "";
 
     UniValue response(UniValue::VOBJ);
-    response.push_back(Pair("propertyid", (uint64_t) propertyId));
+    response.pushKV("propertyid", (uint64_t) propertyId);
     PropertyToJSON(sp, response); // name, data, url, divisible
     KYCToJSON(sp, response);
-    response.push_back(Pair("issuer", sp.issuer));
-    response.push_back(Pair("creationtxid", strCreationHash));
-    response.push_back(Pair("fixedissuance", sp.fixed));
-    response.push_back(Pair("totaltokens", strTotalTokens));
-    response.push_back(Pair("creation block", sp.init_block));
+    response.pushKV("issuer", sp.issuer);
+    response.pushKV("creationtxid", strCreationHash);
+    response.pushKV("fixedissuance", sp.fixed);
+    response.pushKV("totaltokens", strTotalTokens);
+    response.pushKV("creation block", sp.init_block);
 
     if (sp.isNative())
     {
-        response.push_back(Pair("notional size", FormatDivisibleShortMP(sp.notional_size)));
-        response.push_back(Pair("collateral currency", std::to_string(sp.collateral_currency)));
-        response.push_back(Pair("margin requirement", FormatDivisibleShortMP(sp.margin_requirement)));
-        response.push_back(Pair("blocks until expiration", std::to_string(sp.blocks_until_expiration)));
-        response.push_back(Pair("inverse quoted", std::to_string(sp.inverse_quoted)));
+        response.pushKV("notional size", FormatDivisibleShortMP(sp.notional_size));
+        response.pushKV("collateral currency", std::to_string(sp.collateral_currency));
+        response.pushKV("margin requirement", FormatDivisibleShortMP(sp.margin_requirement));
+        response.pushKV("blocks until expiration", std::to_string(sp.blocks_until_expiration));
+        response.pushKV("inverse quoted", std::to_string(sp.inverse_quoted));
         const int64_t openInterest = getTotalLives(propertyId);
-        response.push_back(Pair("open interest", FormatDivisibleMP(openInterest)));
+        response.pushKV("open interest", FormatDivisibleMP(openInterest));
         auto it = cdexlastprice.find(propertyId);
         const int64_t& lastPrice = it->second;
-        response.push_back(Pair("last traded price", FormatDivisibleMP(lastPrice)));
+        response.pushKV("last traded price", FormatDivisibleMP(lastPrice));
 
     } else if (sp.isOracle()) {
-        response.push_back(Pair("notional size", FormatDivisibleShortMP(sp.notional_size)));
-        response.push_back(Pair("collateral currency", std::to_string(sp.collateral_currency)));
-        response.push_back(Pair("margin requirement", FormatDivisibleShortMP(sp.margin_requirement)));
-        response.push_back(Pair("blocks until expiration", std::to_string(sp.blocks_until_expiration)));
-        response.push_back(Pair("backup address", sp.backup_address));
-        response.push_back(Pair("hight price", FormatDivisibleShortMP(sp.oracle_high)));
-        response.push_back(Pair("low price", FormatDivisibleShortMP(sp.oracle_low)));
-        response.push_back(Pair("last close price", FormatDivisibleShortMP(sp.oracle_close)));
-        response.push_back(Pair("inverse quoted", std::to_string(sp.inverse_quoted)));
+        response.pushKV("notional size", FormatDivisibleShortMP(sp.notional_size));
+        response.pushKV("collateral currency", std::to_string(sp.collateral_currency));
+        response.pushKV("margin requirement", FormatDivisibleShortMP(sp.margin_requirement));
+        response.pushKV("blocks until expiration", std::to_string(sp.blocks_until_expiration));
+        response.pushKV("backup address", sp.backup_address);
+        response.pushKV("hight price", FormatDivisibleShortMP(sp.oracle_high));
+        response.pushKV("low price", FormatDivisibleShortMP(sp.oracle_low));
+        response.pushKV("last close price", FormatDivisibleShortMP(sp.oracle_close));
+        response.pushKV("inverse quoted", std::to_string(sp.inverse_quoted));
         const int64_t openInterest = getTotalLives(propertyId);
-        response.push_back(Pair("open interest", FormatDivisibleMP(openInterest)));
+        response.pushKV("open interest", FormatDivisibleMP(openInterest));
         auto it = cdexlastprice.find(propertyId);
         const int64_t& lastPrice = it->second;
-        response.push_back(Pair("last traded price", FormatDivisibleMP(lastPrice)));
+        response.pushKV("last traded price", FormatDivisibleMP(lastPrice));
     } else if (sp.isPegged()) {
-        response.push_back(Pair("contract associated",(uint64_t) sp.contract_associated));
-        response.push_back(Pair("series", sp.series));
+        response.pushKV("contract associated",(uint64_t) sp.contract_associated);
+        response.pushKV("series", sp.series);
     } else {
         const int64_t ltc_volume = lastVolume(propertyId, false);
         const int64_t token_volume = lastVolume(propertyId, true);
-        response.push_back(Pair("last 24h LTC volume", FormatDivisibleMP(ltc_volume)));
-        response.push_back(Pair("last 24h Token volume", FormatDivisibleMP(token_volume)));
+        response.pushKV("last 24h LTC volume", FormatDivisibleMP(ltc_volume));
+        response.pushKV("last 24h Token volume", FormatDivisibleMP(token_volume));
     }
 
     return response;
@@ -1036,58 +1036,58 @@ UniValue tl_listproperties(const JSONRPCRequest& request)
           const int64_t nTotalTokens = getTotalTokens(propertyId);
           std::string strCreationHash = sp.txid.GetHex();
           std::string strTotalTokens = FormatMP(propertyId, nTotalTokens);
-          propertyObj.push_back(Pair("propertyid", (uint64_t) propertyId));
+          propertyObj.pushKV("propertyid", (uint64_t) propertyId);
           PropertyToJSON(sp, propertyObj); // name, data, url, divisible
           KYCToJSON(sp, propertyObj);
 
           if(showVerbose)
           {
-              propertyObj.push_back(Pair("issuer", sp.issuer));
-              propertyObj.push_back(Pair("creationtxid", strCreationHash));
-              propertyObj.push_back(Pair("fixedissuance", sp.fixed));
-              propertyObj.push_back(Pair("creation block", sp.init_block));
+              propertyObj.pushKV("issuer", sp.issuer);
+              propertyObj.pushKV("creationtxid", strCreationHash);
+              propertyObj.pushKV("fixedissuance", sp.fixed);
+              propertyObj.pushKV("creation block", sp.init_block);
               if (sp.isNative())
               {
-                  propertyObj.push_back(Pair("notional size", FormatDivisibleShortMP(sp.notional_size)));
-                  propertyObj.push_back(Pair("collateral currency", std::to_string(sp.collateral_currency)));
-                  propertyObj.push_back(Pair("margin requirement", FormatDivisibleShortMP(sp.margin_requirement)));
-                  propertyObj.push_back(Pair("blocks until expiration", std::to_string(sp.blocks_until_expiration)));
-                  propertyObj.push_back(Pair("inverse quoted", std::to_string(sp.inverse_quoted)));
+                  propertyObj.pushKV("notional size", FormatDivisibleShortMP(sp.notional_size));
+                  propertyObj.pushKV("collateral currency", std::to_string(sp.collateral_currency));
+                  propertyObj.pushKV("margin requirement", FormatDivisibleShortMP(sp.margin_requirement));
+                  propertyObj.pushKV("blocks until expiration", std::to_string(sp.blocks_until_expiration));
+                  propertyObj.pushKV("inverse quoted", std::to_string(sp.inverse_quoted));
                   const int64_t openInterest = getTotalLives(propertyId);
-                  propertyObj.push_back(Pair("open interest", FormatDivisibleMP(openInterest)));
+                  propertyObj.pushKV("open interest", FormatDivisibleMP(openInterest));
                   auto it = cdexlastprice.find(propertyId);
                   const int64_t& lastPrice = it->second;
-                  propertyObj.push_back(Pair("last traded price", FormatDivisibleMP(lastPrice)));
+                  propertyObj.pushKV("last traded price", FormatDivisibleMP(lastPrice));
                   const int64_t fundBalance = 0; // NOTE: we need to write this after fundbalance logic
-                  propertyObj.push_back(Pair("insurance fund balance", fundBalance));
+                  propertyObj.pushKV("insurance fund balance", fundBalance);
 
               } else if (sp.isOracle()) {
-                  propertyObj.push_back(Pair("notional size", FormatDivisibleShortMP(sp.notional_size)));
-                  propertyObj.push_back(Pair("collateral currency", std::to_string(sp.collateral_currency)));
-                  propertyObj.push_back(Pair("margin requirement", FormatDivisibleShortMP(sp.margin_requirement)));
-                  propertyObj.push_back(Pair("blocks until expiration", std::to_string(sp.blocks_until_expiration)));
-                  propertyObj.push_back(Pair("backup address", sp.backup_address));
-                  propertyObj.push_back(Pair("hight price", FormatDivisibleShortMP(sp.oracle_high)));
-                  propertyObj.push_back(Pair("low price", FormatDivisibleShortMP(sp.oracle_low)));
-                  propertyObj.push_back(Pair("last close price", FormatDivisibleShortMP(sp.oracle_close)));
-                  propertyObj.push_back(Pair("inverse quoted", std::to_string(sp.inverse_quoted)));
+                  propertyObj.pushKV("notional size", FormatDivisibleShortMP(sp.notional_size));
+                  propertyObj.pushKV("collateral currency", std::to_string(sp.collateral_currency));
+                  propertyObj.pushKV("margin requirement", FormatDivisibleShortMP(sp.margin_requirement));
+                  propertyObj.pushKV("blocks until expiration", std::to_string(sp.blocks_until_expiration));
+                  propertyObj.pushKV("backup address", sp.backup_address);
+                  propertyObj.pushKV("hight price", FormatDivisibleShortMP(sp.oracle_high));
+                  propertyObj.pushKV("low price", FormatDivisibleShortMP(sp.oracle_low));
+                  propertyObj.pushKV("last close price", FormatDivisibleShortMP(sp.oracle_close));
+                  propertyObj.pushKV("inverse quoted", std::to_string(sp.inverse_quoted));
                   const int64_t openInterest = getTotalLives(propertyId);
-                  propertyObj.push_back(Pair("open interest", FormatDivisibleMP(openInterest)));
+                  propertyObj.pushKV("open interest", FormatDivisibleMP(openInterest));
                   auto it = cdexlastprice.find(propertyId);
                   const int64_t& lastPrice = it->second;
-                  propertyObj.push_back(Pair("last traded price", FormatDivisibleMP(lastPrice)));
+                  propertyObj.pushKV("last traded price", FormatDivisibleMP(lastPrice));
                   const int64_t fundBalance = 0; // NOTE: we need to write this after fundbalance logic is done
-                  propertyObj.push_back(Pair("insurance fund balance", FormatDivisibleMP(fundBalance)));
+                  propertyObj.pushKV("insurance fund balance", FormatDivisibleMP(fundBalance));
 
               } else if (sp.isPegged()) {
-                  propertyObj.push_back(Pair("contract associated",(uint64_t) sp.contract_associated));
-                  propertyObj.push_back(Pair("series", sp.series));
+                  propertyObj.pushKV("contract associated",(uint64_t) sp.contract_associated);
+                  propertyObj.pushKV("series", sp.series);
               } else {
                   const int64_t ltc_volume = lastVolume(propertyId, false);
                   const int64_t token_volume = lastVolume(propertyId, true);
-                  propertyObj.push_back(Pair("last 24h LTC volume", FormatDivisibleMP(ltc_volume)));
-                  propertyObj.push_back(Pair("last 24h Token volume", FormatDivisibleMP(token_volume)));
-                  propertyObj.push_back(Pair("totaltokens", strTotalTokens));
+                  propertyObj.pushKV("last 24h LTC volume", FormatDivisibleMP(ltc_volume));
+                  propertyObj.pushKV("last 24h Token volume", FormatDivisibleMP(token_volume));
+                  propertyObj.pushKV("totaltokens", strTotalTokens);
               }
           }
 
@@ -1138,16 +1138,16 @@ UniValue tl_list_natives(const JSONRPCRequest& request)
               continue;
 
           UniValue propertyObj(UniValue::VOBJ);
-          propertyObj.push_back(Pair("propertyid", (uint64_t) propertyId));
+          propertyObj.pushKV("propertyid", (uint64_t) propertyId);
           ContractToJSON(sp, propertyObj); // name, data, url,...
           response.push_back(propertyObj);
           const int64_t openInterest = getTotalLives(propertyId);
-          propertyObj.push_back(Pair("open interest", FormatDivisibleMP(openInterest)));
+          propertyObj.pushKV("open interest", FormatDivisibleMP(openInterest));
           auto it = cdexlastprice.find(propertyId);
           const int64_t& lastPrice = it->second;
-          propertyObj.push_back(Pair("last traded price", FormatDivisibleMP(lastPrice)));
+          propertyObj.pushKV("last traded price", FormatDivisibleMP(lastPrice));
           const int64_t fundBalance = 0; // NOTE: we need to write this after fundbalance logic is done
-          propertyObj.push_back(Pair("insurance fund balance", fundBalance));
+          propertyObj.pushKV("insurance fund balance", fundBalance);
 
       }
   }
@@ -1194,16 +1194,16 @@ UniValue tl_list_oracles(const JSONRPCRequest& request)
               continue;
 
           UniValue propertyObj(UniValue::VOBJ);
-          propertyObj.push_back(Pair("propertyid", (uint64_t) propertyId));
+          propertyObj.pushKV("propertyid", (uint64_t) propertyId);
           OracleToJSON(sp, propertyObj); // name, data, url,...
           response.push_back(propertyObj);
           const int64_t openInterest = getTotalLives(propertyId);
-          propertyObj.push_back(Pair("open interest", FormatDivisibleMP(openInterest)));
+          propertyObj.pushKV("open interest", FormatDivisibleMP(openInterest));
           auto it = cdexlastprice.find(propertyId);
           const int64_t& lastPrice = it->second;
-          propertyObj.push_back(Pair("last traded price", FormatDivisibleMP(lastPrice)));
+          propertyObj.pushKV("last traded price", FormatDivisibleMP(lastPrice));
           const int64_t fundBalance = 0; // NOTE: we need to write this after fundbalance logic is done
-          propertyObj.push_back(Pair("insurance fund balance", fundBalance));
+          propertyObj.pushKV("insurance fund balance", fundBalance);
       }
   }
 
@@ -1273,25 +1273,25 @@ UniValue tl_getgrants(const JSONRPCRequest& request)
 
         if (grantedTokens > 0) {
             UniValue granttx(UniValue::VOBJ);
-            granttx.push_back(Pair("txid", txid));
-            granttx.push_back(Pair("grant", FormatMP(propertyId, grantedTokens)));
+            granttx.pushKV("txid", txid);
+            granttx.pushKV("grant", FormatMP(propertyId, grantedTokens));
             issuancetxs.push_back(granttx);
         }
 
         if (revokedTokens > 0) {
             UniValue revoketx(UniValue::VOBJ);
-            revoketx.push_back(Pair("txid", txid));
-            revoketx.push_back(Pair("revoke", FormatMP(propertyId, revokedTokens)));
+            revoketx.pushKV("txid", txid);
+            revoketx.pushKV("revoke", FormatMP(propertyId, revokedTokens));
             issuancetxs.push_back(revoketx);
         }
     }
 
-    response.push_back(Pair("propertyid", (uint64_t) propertyId));
-    response.push_back(Pair("name", sp.name));
-    response.push_back(Pair("issuer", sp.issuer));
-    response.push_back(Pair("creationtxid", creationHash.GetHex()));
-    response.push_back(Pair("totaltokens", FormatMP(propertyId, totalTokens)));
-    response.push_back(Pair("issuances", issuancetxs));
+    response.pushKV("propertyid", (uint64_t) propertyId);
+    response.pushKV("name", sp.name);
+    response.pushKV("issuer", sp.issuer);
+    response.pushKV("creationtxid", creationHash.GetHex());
+    response.pushKV("totaltokens", FormatMP(propertyId, totalTokens));
+    response.pushKV("issuances", issuancetxs);
 
     return response;
 }
@@ -1568,10 +1568,10 @@ UniValue tl_getinfo(const JSONRPCRequest& request)
     UniValue infoResponse(UniValue::VOBJ);
 
     // provide the mastercore and bitcoin version and if available commit id
-    infoResponse.push_back(Pair("tradelayer_version_int", TL_VERSION));
-    infoResponse.push_back(Pair("tradelayer_coreversion", TradeLayerVersion()));
-    infoResponse.push_back(Pair("litecoinversion", BitcoinCoreVersion()));
-    infoResponse.push_back(Pair("commitinfo", BuildCommit()));
+    infoResponse.pushKV("tradelayer_version_int", TL_VERSION);
+    infoResponse.pushKV("tradelayer_coreversion", TradeLayerVersion());
+    infoResponse.pushKV("litecoinversion", BitcoinCoreVersion());
+    infoResponse.pushKV("commitinfo", BuildCommit());
 
     // provide the current block details
     int block = GetHeight();
@@ -1581,10 +1581,10 @@ UniValue tl_getinfo(const JSONRPCRequest& request)
 
     int blockMPTransactions = p_txlistdb->getMPTransactionCountBlock(block);
     int totalMPTransactions = p_txlistdb->getMPTransactionCountTotal();
-    infoResponse.push_back(Pair("block", block));
-    infoResponse.push_back(Pair("blocktime", blockTime));
-    infoResponse.push_back(Pair("blocktransactions", blockMPTransactions));
-    infoResponse.push_back(Pair("totaltransactions", totalMPTransactions));
+    infoResponse.pushKV("block", block);
+    infoResponse.pushKV("blocktime", blockTime);
+    infoResponse.pushKV("blocktransactions", blockMPTransactions);
+    infoResponse.pushKV("totaltransactions", totalMPTransactions);
 
     // handle alerts
     UniValue alerts(UniValue::VARR);
@@ -1602,13 +1602,13 @@ UniValue tl_getinfo(const JSONRPCRequest& request)
             break;
             default: alertTypeStr = "error";
         }
-        alertResponse.push_back(Pair("alerttypeint", alert.alert_type));
-        alertResponse.push_back(Pair("alerttype", alertTypeStr));
-        alertResponse.push_back(Pair("alertexpiry", FormatIndivisibleMP(alert.alert_expiry)));
-        alertResponse.push_back(Pair("alertmessage", alert.alert_message));
+        alertResponse.pushKV("alerttypeint", alert.alert_type);
+        alertResponse.pushKV("alerttype", alertTypeStr);
+        alertResponse.pushKV("alertexpiry", FormatIndivisibleMP(alert.alert_expiry));
+        alertResponse.pushKV("alertmessage", alert.alert_message);
         alerts.push_back(alertResponse);
     }
-    infoResponse.push_back(Pair("alerts", alerts));
+    infoResponse.pushKV("alerts", alerts);
 
     return infoResponse;
 }
@@ -1655,10 +1655,10 @@ UniValue tl_getactivations(const JSONRPCRequest& request)
     for (std::vector<FeatureActivation>::iterator it = vecPendingActivations.begin(); it != vecPendingActivations.end(); ++it) {
         UniValue actObj(UniValue::VOBJ);
         FeatureActivation pendingAct = *it;
-        actObj.push_back(Pair("featureid", pendingAct.featureId));
-        actObj.push_back(Pair("featurename", pendingAct.featureName));
-        actObj.push_back(Pair("activationblock", pendingAct.activationBlock));
-        actObj.push_back(Pair("minimumversion", (uint64_t)pendingAct.minClientVersion));
+        actObj.pushKV("featureid", pendingAct.featureId);
+        actObj.pushKV("featurename", pendingAct.featureName);
+        actObj.pushKV("activationblock", pendingAct.activationBlock);
+        actObj.pushKV("minimumversion", (uint64_t)pendingAct.minClientVersion);
         arrayPendingActivations.push_back(actObj);
     }
 
@@ -1667,15 +1667,15 @@ UniValue tl_getactivations(const JSONRPCRequest& request)
     for (std::vector<FeatureActivation>::iterator it = vecCompletedActivations.begin(); it != vecCompletedActivations.end(); ++it) {
         UniValue actObj(UniValue::VOBJ);
         FeatureActivation completedAct = *it;
-        actObj.push_back(Pair("featureid", completedAct.featureId));
-        actObj.push_back(Pair("featurename", completedAct.featureName));
-        actObj.push_back(Pair("activationblock", completedAct.activationBlock));
-        actObj.push_back(Pair("minimumversion", (uint64_t)completedAct.minClientVersion));
+        actObj.pushKV("featureid", completedAct.featureId);
+        actObj.pushKV("featurename", completedAct.featureName);
+        actObj.pushKV("activationblock", completedAct.activationBlock);
+        actObj.pushKV("minimumversion", (uint64_t)completedAct.minClientVersion);
         arrayCompletedActivations.push_back(actObj);
     }
 
-    response.push_back(Pair("pendingactivations", arrayPendingActivations));
-    response.push_back(Pair("completedactivations", arrayCompletedActivations));
+    response.pushKV("pendingactivations", arrayPendingActivations);
+    response.pushKV("completedactivations", arrayCompletedActivations);
 
     return response;
 }
@@ -1712,9 +1712,9 @@ UniValue tl_getcurrentconsensushash(const JSONRPCRequest& request)
 
         uint256 consensusHash = GetConsensusHash();
 
-        response.push_back(Pair("block", block));
-        response.push_back(Pair("blockhash", blockHash.GetHex()));
-        response.push_back(Pair("consensushash", consensusHash.GetHex()));
+        response.pushKV("block", block);
+        response.pushKV("blockhash", blockHash.GetHex());
+        response.pushKV("consensushash", consensusHash.GetHex());
     }
 
     return response;
@@ -1724,9 +1724,9 @@ bool PositionToJSON(const std::string& address, uint32_t property, UniValue& bal
 {
     int64_t longPosition  = getMPbalance(address, property, POSITIVE_BALANCE);
     int64_t shortPosition = getMPbalance(address, property, NEGATIVE_BALANCE);
-    balance_obj.push_back(Pair("longPosition", longPosition));
-    balance_obj.push_back(Pair("shortPosition", shortPosition));
-    // balance_obj.push_back(Pair("liquidationPrice", FormatByType(liqPrice,2)));
+    balance_obj.pushKV("longPosition", longPosition);
+    balance_obj.pushKV("shortPosition", shortPosition);
+    // balance_obj.pushKV("liquidationPrice", FormatByType(liqPrice,2)));
 
     return true;
 }
@@ -1740,11 +1740,11 @@ bool FullPositionToJSON(const std::string& address, uint32_t property, UniValue&
   int64_t valueLong = longPosition * (uint64_t) sProperty.notional_size;
   int64_t valueShort = shortPosition * (uint64_t) sProperty.notional_size;
 
-  position_obj.push_back(Pair("longPosition", FormatByType(longPosition, 1)));
-  position_obj.push_back(Pair("shortPosition", FormatByType(shortPosition, 1)));
-  // position_obj.push_back(Pair("liquidationPrice", FormatByType(liqPrice,2)));
-  position_obj.push_back(Pair("valueLong", FormatByType(valueLong, 1)));
-  position_obj.push_back(Pair("valueShort", FormatByType(valueShort, 1)));
+  position_obj.pushKV("longPosition", FormatByType(longPosition, 1));
+  position_obj.pushKV("shortPosition", FormatByType(shortPosition, 1));
+  // position_obj.pushKV("liquidationPrice", FormatByType(liqPrice,2));
+  position_obj.pushKV("valueLong", FormatByType(valueLong, 1));
+  position_obj.pushKV("valueShort", FormatByType(valueShort, 1));
 
   return true;
 
@@ -1796,8 +1796,8 @@ UniValue tl_getfullposition(const JSONRPCRequest& request)
     }
   }
 
-  positionObj.push_back(Pair("symbol", sp.name));
-  positionObj.push_back(Pair("notional_size", (uint64_t) sp.notional_size)); // value of position = short or long position (balance) * notional_size
+  positionObj.pushKV("symbol", sp.name);
+  positionObj.pushKV("notional_size", (uint64_t) sp.notional_size); // value of position = short or long position (balance) * notional_size
   // PTJ -> short/longPosition /liquidation price
   // bool flag = false;
 
@@ -1808,11 +1808,11 @@ UniValue tl_getfullposition(const JSONRPCRequest& request)
   double upnl = addrs_upnlc[propertyId][address];
 
   if (upnl >= 0) {
-    positionObj.push_back(Pair("positiveupnl", upnl));
-    positionObj.push_back(Pair("negativeupnl", FormatByType(0,2)));
+    positionObj.pushKV("positiveupnl", upnl);
+    positionObj.pushKV("negativeupnl", FormatByType(0,2));
   } else {
-    positionObj.push_back(Pair("positiveupnl", FormatByType(0,2)));
-    positionObj.push_back(Pair("negativeupnl", upnl));
+    positionObj.pushKV("positiveupnl", FormatByType(0,2));
+    positionObj.pushKV("negativeupnl", upnl);
   }
 
   // pnl
@@ -1821,14 +1821,14 @@ UniValue tl_getfullposition(const JSONRPCRequest& request)
   uint64_t realizedLosses  = static_cast<uint64_t>(COIN * getMPbalance(address, collateralCurrency, REALIZED_LOSSES));
 
   if (realizedProfits > 0 && realizedLosses == 0) {
-    positionObj.push_back(Pair("positivepnl", FormatByType(realizedProfits,2)));
-    positionObj.push_back(Pair("negativepnl", FormatByType(0,2)));
+    positionObj.pushKV("positivepnl", FormatByType(realizedProfits,2));
+    positionObj.pushKV("negativepnl", FormatByType(0,2));
   } else if (realizedLosses > 0 && realizedProfits == 0) {
-    positionObj.push_back(Pair("positivepnl", FormatByType(0,2)));
-    positionObj.push_back(Pair("negativepnl", FormatByType(realizedProfits,2)));
+    positionObj.pushKV("positivepnl", FormatByType(0,2));
+    positionObj.pushKV("negativepnl", FormatByType(realizedProfits,2));
   } else if (realizedLosses == 0 && realizedProfits == 0) {
-    positionObj.push_back(Pair("positivepnl", FormatByType(0,2)));
-    positionObj.push_back(Pair("negativepnl", FormatByType(0,2)));
+    positionObj.pushKV("positivepnl", FormatByType(0,2));
+    positionObj.pushKV("negativepnl", FormatByType(0,2));
   }
 
   return positionObj;
@@ -1898,7 +1898,7 @@ UniValue tl_getcontract_reserve(const JSONRPCRequest& request)
 
     UniValue balanceObj(UniValue::VOBJ);
     int64_t reserve = getMPbalance(address, contractId, CONTRACTDEX_RESERVE);
-    balanceObj.push_back(Pair("contract reserve", FormatByType(reserve,2)));
+    balanceObj.pushKV("contract reserve", FormatByType(reserve,2));
     return balanceObj;
 }
 
@@ -2209,7 +2209,7 @@ UniValue tl_getallprice(const JSONRPCRequest& request)
         allPrice = it->second;
     }
 
-    balanceObj.push_back(Pair("unitprice", FormatDivisibleMP((uint64_t)allPrice)));
+    balanceObj.pushKV("unitprice", FormatDivisibleMP((uint64_t)allPrice));
     return balanceObj;
 }
 
@@ -2308,14 +2308,14 @@ UniValue tl_getpnl(const JSONRPCRequest& request)
   int64_t nupnl  = getMPbalance(address, contractId, REALIZED_LOSSES);
 
   if (upnl > 0 && nupnl == 0) {
-    balanceObj.push_back(Pair("positivepnl", FormatByType(static_cast<uint64_t>(upnl),2)));
-    balanceObj.push_back(Pair("negativepnl", FormatByType(0,2)));
+    balanceObj.pushKV("positivepnl", FormatByType(static_cast<uint64_t>(upnl),2));
+    balanceObj.pushKV("negativepnl", FormatByType(0,2));
   } else if (nupnl > 0 && upnl == 0) {
-    balanceObj.push_back(Pair("positivepnl", FormatByType(0,2)));
-    balanceObj.push_back(Pair("negativepnl", FormatByType(static_cast<uint64_t>(nupnl),2)));
+    balanceObj.pushKV("positivepnl", FormatByType(0,2));
+    balanceObj.pushKV("negativepnl", FormatByType(static_cast<uint64_t>(nupnl),2));
   } else{
-    balanceObj.push_back(Pair("positivepnl", FormatByType(0,2)));
-    balanceObj.push_back(Pair("negativepnl", FormatByType(0,2)));
+    balanceObj.pushKV("positivepnl", FormatByType(0,2));
+    balanceObj.pushKV("negativepnl", FormatByType(0,2));
   }
   return balanceObj;
 }
@@ -2356,7 +2356,7 @@ UniValue tl_getmarketprice(const JSONRPCRequest& request)
   // int64_t price = marketP[index];
   int64_t price = 0;
 
-  balanceObj.push_back(Pair("price", FormatByType(price,2)));
+  balanceObj.pushKV("price", FormatByType(price,2));
 
   return balanceObj;
 }
@@ -2465,41 +2465,41 @@ UniValue tl_getactivedexsells(const JSONRPCRequest& request)
                     sumAccepted += amountAccepted;
                     uint64_t ltcsreceived = rounduint64(unitPrice * amountAccepted / COIN);
                     sumLtcs += ltcsreceived;
-                    matchedAccept.push_back(Pair("seller", buyer));
-                    matchedAccept.push_back(Pair("amount", FormatMP(propertyId, amountAccepted)));
-                    matchedAccept.push_back(Pair("ltcstoreceive", FormatDivisibleMP(ltcsreceived)));
+                    matchedAccept.pushKV("seller", buyer);
+                    matchedAccept.pushKV("amount", FormatMP(propertyId, amountAccepted));
+                    matchedAccept.pushKV("ltcstoreceive", FormatDivisibleMP(ltcsreceived));
                 } else if (option == 2) {
-                    matchedAccept.push_back(Pair("buyer", buyer));
-                    matchedAccept.push_back(Pair("amountdesired", FormatMP(propertyId, amountAccepted)));
-                    matchedAccept.push_back(Pair("ltcstopay", FormatDivisibleMP(amountToPayInLTC)));
+                    matchedAccept.pushKV("buyer", buyer);
+                    matchedAccept.pushKV("amountdesired", FormatMP(propertyId, amountAccepted));
+                    matchedAccept.pushKV("ltcstopay", FormatDivisibleMP(amountToPayInLTC));
                 }
 
-                matchedAccept.push_back(Pair("block", blockOfAccept));
-                matchedAccept.push_back(Pair("blocksleft", blocksLeftToPay));
+                matchedAccept.pushKV("block", blockOfAccept);
+                matchedAccept.pushKV("blocksleft", blocksLeftToPay);
                 acceptsMatched.push_back(matchedAccept);
             }
         }
 
         UniValue responseObj(UniValue::VOBJ);
-        responseObj.push_back(Pair("txid", txid));
-        responseObj.push_back(Pair("propertyid", (uint64_t) propertyId));
-        responseObj.push_back(Pair("action", (uint64_t) offer.getOption()));
+        responseObj.pushKV("txid", txid);
+        responseObj.pushKV("propertyid", (uint64_t) propertyId);
+        responseObj.pushKV("action", (uint64_t) offer.getOption());
         if (option == 2) {
-            responseObj.push_back(Pair("seller", seller));
-            responseObj.push_back(Pair("ltcsdesired", FormatDivisibleMP(bitcoinDesired)));
-            responseObj.push_back(Pair("amountavailable", FormatMP(propertyId, amountAvailable)));
+            responseObj.pushKV("seller", seller);
+            responseObj.pushKV("ltcsdesired", FormatDivisibleMP(bitcoinDesired));
+            responseObj.pushKV("amountavailable", FormatMP(propertyId, amountAvailable));
 
         } else if (option == 1){
-            responseObj.push_back(Pair("buyer", seller));
-            responseObj.push_back(Pair("ltcstopay", FormatDivisibleMP(sellLitecoinDesired - sumLtcs)));
-            responseObj.push_back(Pair("amountdesired", FormatMP(propertyId, sellOfferAmount - sumAccepted)));
-            responseObj.push_back(Pair("accepted", FormatMP(propertyId, amountAccepted)));
+            responseObj.pushKV("buyer", seller);
+            responseObj.pushKV("ltcstopay", FormatDivisibleMP(sellLitecoinDesired - sumLtcs));
+            responseObj.pushKV("amountdesired", FormatMP(propertyId, sellOfferAmount - sumAccepted));
+            responseObj.pushKV("accepted", FormatMP(propertyId, amountAccepted));
 
         }
-        responseObj.push_back(Pair("unitprice", FormatDivisibleMP(unitPrice)));
-        responseObj.push_back(Pair("timelimit", timeLimit));
-        responseObj.push_back(Pair("minimumfee", FormatDivisibleMP(minFee)));
-        responseObj.push_back(Pair("accepts", acceptsMatched));
+        responseObj.pushKV("unitprice", FormatDivisibleMP(unitPrice));
+        responseObj.pushKV("timelimit", timeLimit);
+        responseObj.pushKV("minimumfee", FormatDivisibleMP(minFee));
+        responseObj.pushKV("accepts", acceptsMatched);
 
         // add sell object into response array
         response.push_back(responseObj);
@@ -2539,7 +2539,7 @@ UniValue tl_getsum_upnl(const JSONRPCRequest& request)
   auto it = sum_upnls.find(address);
   int64_t upnl = (it != sum_upnls.end()) ? it->second : 0;
 
-  balanceObj.push_back(Pair("upnl", FormatByType(upnl,2)));
+  balanceObj.pushKV("upnl", FormatByType(upnl,2));
 
   return balanceObj;
 }
@@ -2666,7 +2666,7 @@ UniValue tl_check_kyc(const JSONRPCRequest& request)
   const std::string result = (t_tradelistdb->checkAttestationReg(address, kyc_id)) ? "enabled(kyc_0)" : (!t_tradelistdb->checkKYCRegister(address, kyc_id)) ? "disabled" : "enabled";
 
   UniValue balanceObj(UniValue::VOBJ);
-  balanceObj.push_back(Pair("result: ", result));
+  balanceObj.pushKV("result: ", result);
   return balanceObj;
 
 }
@@ -2700,7 +2700,7 @@ UniValue tl_getcache(const JSONRPCRequest& request)
 
     UniValue balanceObj(UniValue::VOBJ);
 
-    balanceObj.push_back(Pair("amount", FormatByType(amount, 2)));
+    balanceObj.pushKV("amount", FormatByType(amount, 2));
 
     return balanceObj;
 }
@@ -2734,7 +2734,7 @@ UniValue tl_getoraclecache(const JSONRPCRequest& request)
 
     UniValue balanceObj(UniValue::VOBJ);
 
-    balanceObj.push_back(Pair("amount", FormatByType(amount,2)));
+    balanceObj.pushKV("amount", FormatByType(amount,2));
 
     return balanceObj;
 }
@@ -2843,8 +2843,8 @@ UniValue tl_get_ltcvolume(const JSONRPCRequest& request)
 
     UniValue balanceObj(UniValue::VOBJ);
 
-    balanceObj.push_back(Pair("volume", FormatDivisibleMP(amount)));
-    balanceObj.push_back(Pair("blockheigh", FormatIndivisibleMP(GetHeight())));
+    balanceObj.pushKV("volume", FormatDivisibleMP(amount));
+    balanceObj.pushKV("blockheigh", FormatIndivisibleMP(GetHeight()));
 
     return balanceObj;
 }
@@ -2888,8 +2888,8 @@ UniValue tl_getmdexvolume(const JSONRPCRequest& request)
 
     UniValue balanceObj(UniValue::VOBJ);
 
-    balanceObj.push_back(Pair("volume", FormatDivisibleMP(amount)));
-    balanceObj.push_back(Pair("blockheigh", FormatIndivisibleMP(GetHeight())));
+    balanceObj.pushKV("volume", FormatDivisibleMP(amount));
+    balanceObj.pushKV("blockheigh", FormatIndivisibleMP(GetHeight()));
 
     return balanceObj;
 }
@@ -2933,8 +2933,8 @@ UniValue tl_getcurrencytotal(const JSONRPCRequest& request)
 
     UniValue balanceObj(UniValue::VOBJ);
 
-    balanceObj.push_back(Pair("total", FormatDivisibleMP(amount)));
-    balanceObj.push_back(Pair("blockheigh", FormatIndivisibleMP(GetHeight())));
+    balanceObj.pushKV("total", FormatDivisibleMP(amount));
+    balanceObj.pushKV("blockheigh", FormatIndivisibleMP(GetHeight()));
 
     return balanceObj;
 }
@@ -3033,7 +3033,7 @@ UniValue tl_getopen_interest(const JSONRPCRequest& request)
     UniValue amountObj(UniValue::VOBJ);
     int64_t totalContracts = mastercore::getTotalLives(contractId);
 
-    amountObj.push_back(Pair("totalLives", totalContracts));
+    amountObj.pushKV("totalLives", totalContracts);
 
     return amountObj;
 }
@@ -3086,7 +3086,7 @@ UniValue tl_getmax_peggedcurrency(const JSONRPCRequest& request)
   //create UniValue object to return
   UniValue max_pegged(UniValue::VOBJ);
   //add value maxpegged to maxPegged json object
-  max_pegged.push_back(Pair("maxPegged (dUSD)", FormatDivisibleMP(maxpegged)));
+  max_pegged.pushKV("maxPegged (dUSD)", FormatDivisibleMP(maxpegged));
   //return UniValue JSON object
   return max_pegged;
 
@@ -3127,14 +3127,14 @@ UniValue tl_getcontract(const JSONRPCRequest& request)
     assert(_my_sps->getSP(propertyId, sp));
 
     UniValue response(UniValue::VOBJ);
-    response.push_back(Pair("propertyid", (uint64_t) propertyId));
+    response.pushKV("propertyid", (uint64_t) propertyId);
     ContractToJSON(sp, response); // name, data, url,
     KYCToJSON(sp, response);
     auto it = cdexlastprice.find(propertyId);
     const int64_t& lastPrice = it->second;
-    response.push_back(Pair("last traded price", FormatDivisibleMP(lastPrice)));
+    response.pushKV("last traded price", FormatDivisibleMP(lastPrice));
     const int64_t fundBalance = 0; // NOTE: we need to write this after fundbalance logic
-    response.push_back(Pair("insurance fund balance", fundBalance));
+    response.pushKV("insurance fund balance", fundBalance);
     return response;
 }
 
@@ -3177,7 +3177,7 @@ UniValue tl_getvesting_info(const JSONRPCRequest& request)
     }
 
     UniValue response(UniValue::VOBJ);
-    response.push_back(Pair("propertyid", (uint64_t) VT));
+    response.pushKV("propertyid", (uint64_t) VT);
     VestingToJSON(sp, response); // name, data, url,
     KYCToJSON(sp, response);
 
