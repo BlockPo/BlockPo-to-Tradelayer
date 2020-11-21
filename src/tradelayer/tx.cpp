@@ -24,13 +24,13 @@
 #include <validation.h>
 
 #include <algorithm>
-#include <arpa/inet.h>
+// #include <arpa/inet.h>
 #include <inttypes.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/socket.h>
+// #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <utility>
