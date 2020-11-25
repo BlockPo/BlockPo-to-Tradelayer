@@ -128,7 +128,11 @@ static fs::path MPPersistencePath;
 static int mastercoreInitialized = 0;
 static int reorgRecoveryMode = 0;
 static int reorgRecoveryMaxHeight = 0;
+extern int64_t globalNumPrice;
+extern int64_t globalDenPrice;
+extern int64_t factorE;
 extern double denMargin;
+extern uint64_t marketP[NPTYPES];
 extern std::vector<std::map<std::string, std::string>> path_ele;
 extern int idx_expiration;
 extern int expirationAchieve;
@@ -139,6 +143,7 @@ extern int twapBlockg;
 extern int newTwapBlock;
 extern int vestingActivationBlock;
 extern volatile int64_t globalVolumeALL_LTC;
+extern std::vector<std::string> vestingAddresses;
 
 CMPTxList *mastercore::p_txlistdb;
 CMPTradeList *mastercore::t_tradelistdb;
@@ -150,6 +155,7 @@ CMPSPInfo *mastercore::_my_sps;
 extern MatrixTLS *pt_ndatabase;
 extern int n_cols;
 extern int n_rows;
+//extern std::vector<std::map<std::string, std::string>> path_ele;
 extern std::vector<std::map<std::string, std::string>> path_elef;
 extern std::map<uint32_t, std::map<uint32_t, int64_t>> market_priceMap;
 extern std::map<uint32_t, std::map<uint32_t, int64_t>> numVWAPMap;
@@ -161,6 +167,8 @@ extern std::map<uint32_t, std::map<uint32_t, std::vector<int64_t>>> denVWAPVecto
 extern std::map<uint32_t, std::vector<int64_t>> mapContractAmountTimesPrice;
 extern std::map<uint32_t, std::vector<int64_t>> mapContractVolume;
 extern std::map<uint32_t, int64_t> VWAPMapContracts;
+//extern volatile std::vector<std::map<std::string, std::string>> path_eleg;
+extern std::string setExoduss;
 /************************************************/
 /** TWAP containers **/
 
@@ -172,6 +180,7 @@ extern std::map<uint32_t, std::map<uint32_t, std::vector<uint64_t>>> mdextwap_el
 extern std::map<uint32_t, std::map<uint32_t, std::vector<uint64_t>>> mdextwap_vec;
 /************************************************/
 extern std::map<uint32_t, std::map<std::string, double>> addrs_upnlc;
+extern std::map<std::string, int64_t> sum_upnls;
 
 using mastercore::StrToInt64;
 
@@ -2799,136 +2808,6 @@ int mastercore_shutdown()
     return 0;
 }
 
-
-/**
- * Calling for Settement (if any)
- *
- * @return True, if everything is ok
- */
-bool CallingSettlement()
-{
-    extern int BlockS;
-
-    int nBlockNow = GetHeight();
-
-    /*uint32_t nextSPID = _my_sps->peekNextSPID(1);
-
-    for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
-    {
-
-        int32_t propertyId = 5;
-
-        // if(!mastercore::isPropertyContract(propertyId))
-        //     continue;
-
-        if (nBlockNow%BlockS == 0 && nBlockNow != 0 && path_elef.size() != 0 && lastBlockg != nBlockNow)
-        {
-
-            if(msc_calling_settlement) PrintToLog("\nSettlement every 8 hours here. nBlockNow = %d\n", nBlockNow);
-            pt_ndatabase = new MatrixTLS(path_elef.size(), n_cols); MatrixTLS &ndatabase = *pt_ndatabase;
-            MatrixTLS M_file(path_elef.size(), n_cols);
-            fillingMatrix(M_file, ndatabase, path_elef);
-            n_rows = size(M_file, 0);
-            if(msc_calling_settlement) PrintToLog("Matrix for Settlement: dim = (%d, %d)\n\n", n_rows, n_cols);
-
-            // TWAP vector
-            if(msc_calling_settlement) PrintToLog("\nTWAP Prices = \n");
-
-            uint64_t num_cdex = accumulate(cdextwap_vec[propertyId].begin(), cdextwap_vec[propertyId].end(), 0.0);
-
-            rational_t twap_priceRatCDEx(num_cdex/COIN, cdextwap_vec[propertyId].size());
-            int64_t twap_priceCDEx = mastercore::RationalToInt64(twap_priceRatCDEx);
-            if(msc_debug_handler_tx) PrintToLog("\nTvwap Price CDEx = %s\n", FormatDivisibleMP(twap_priceCDEx));
-
-            CMPSPInfo::Entry sp;
-            if (!_my_sps->getSP(propertyId, sp))
-                return false;
-
-            uint64_t property_num = sp.numerator;
-            uint64_t property_den = sp.denominator;
-
-            uint64_t num_mdex=accumulate(mdextwap_vec[property_num][property_den].begin(),mdextwap_vec[property_num][property_den].end(),0.0);
-
-
-            if(msc_debug_handler_tx) PrintToLog("\nTWAP Prices = \n");
-            // struct FutureContractObject *pfuture = getFutureContractObject("ALL F18");
-            // uint32_t property_traded = pfuture->fco_propertyId;
-
-            rational_t twap_priceRatMDEx(num_mdex/COIN, mdextwap_vec[property_num][property_den].size());
-            int64_t twap_priceMDEx = mastercore::RationalToInt64(twap_priceRatMDEx);
-            if(msc_calling_settlement) PrintToLog("\nTvwap Price MDEx = %s\n", FormatDivisibleMP(twap_priceMDEx));
-
-
-            // Interest formula:
-
-            // futures don't use this formula
-            // if (sp.prop_type == ALL_PROPERTY_TYPE_NATIVE_CONTRACT  || sp.prop_type == ALL_PROPERTY_TYPE_ORACLE_CONTRACT)
-            //     continue;
-
-            int64_t twap_price = 0;
-
-            switch(sp.prop_type){
-                case ALL_PROPERTY_TYPE_PERPETUAL_ORACLE:
-                    twap_price = getOracleTwap(propertyId, oBlocks);
-                    break;
-                case ALL_PROPERTY_TYPE_PERPETUAL_CONTRACTS:
-                    twap_price = twap_priceMDEx;
-                    break;
-            }
-
-            int64_t interest = clamp_function(abs(twap_priceCDEx-twap_price), 0.05);
-            if(msc_calling_settlement) PrintToLog("Interes to Pay = %s", FormatDivisibleMP(interest));
-
-
-            if(msc_calling_settlement) PrintToLog("\nCalling the Settlement Algorithm:\n\n");
-
-            //NOTE: We need num and den for contract as a property of itself in sp.h
-            // settlement_algorithm_fifo(M_file, interest, twap_priceCDEx, propertyId, sp.collateral_currency, sp.numerator, sp.denominator, sp.inverse_quoted);
-        }
-    }*/
-
-    /***********************************************************************/
-/** Calling The Settlement Algorithm **/
-
-if (nBlockNow%BlockS == 0 && nBlockNow != 0 && path_elef.size() != 0 && lastBlockg != nBlockNow)
-{
-
-     PrintToLog("\nSETTLEMENT : every 8 hours here. nBlockNow = %d\n", nBlockNow);
-     pt_ndatabase = new MatrixTLS(path_elef.size(), n_cols); MatrixTLS &ndatabase = *pt_ndatabase;
-     MatrixTLS M_file(path_elef.size(), n_cols);
-     fillingMatrix(M_file, ndatabase, path_elef);
-     n_rows = size(M_file, 0);
-     PrintToLog("Matrix for Settlement: dim = (%d, %d)\n\n", n_rows, n_cols);
-
-      /*****************************************************************************/
-      cout << "\n\n";
-      PrintToLog("\nCalling the Settlement Algorithm:\n\n");
-      int64_t twap_priceCDEx  = 0;
-      int64_t interest = 0;
-      settlement_algorithm_fifo(M_file, interest, twap_priceCDEx);
-
-      /**********************************************************************/
-      /** Unallocating Dynamic Memory **/
-
-      //path_elef.clear();
-      market_priceMap.clear();
-      numVWAPMap.clear();
-      denVWAPMap.clear();
-      VWAPMap.clear();
-      VWAPMapSubVector.clear();
-      numVWAPVector.clear();
-      denVWAPVector.clear();
-      mapContractAmountTimesPrice.clear();
-      mapContractVolume.clear();
-      VWAPMapContracts.clear();
-      cdextwap_vec.clear();
-
-   }
-
-   return true;
-}
-
-
 /**
  * Calling for Expiration (if any)
  *
@@ -3088,7 +2967,6 @@ bool VestingTokens(int block)
     return true;
 }
 
-
 /**
  * This handler is called for every new transaction that comes in (actually in block parsing loop).
  *
@@ -3096,67 +2974,110 @@ bool VestingTokens(int block)
  */
 bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx, const CBlockIndex* pBlockIndex, const std::shared_ptr<std::map<COutPoint, Coin>> removedCoins)
 {
+  extern std::vector<std::map<std::string, std::string>> lives_longs_vg;
+  extern std::vector<std::map<std::string, std::string>> lives_shorts_vg;
+  extern int BlockS;
+  ui128 numLog128;
+  ui128 numQuad128;
 
-    LOCK(cs_tally);
+  LOCK(cs_tally);
+  
+  if (!mastercoreInitialized) {
+    mastercore_init();
+  }
+  
+  PendingDelete(tx.GetHash());
+  
+  if (nBlock < nWaterlineBlock) return false;
+  int64_t nBlockTime = pBlockIndex->GetBlockTime();
+  int nBlockNow = GetHeight();
 
-    if (!mastercoreInitialized) {
-       mastercore_init();
-    }
+  /***********************************************************************/
+  /** Calling The Settlement Algorithm **/  
 
-    // clear pending, if any
-    // NOTE1: Every incoming TX is checked, not just MP-ones because:
-    // if for some reason the incoming TX doesn't pass our parser validation steps successfuly, I'd still want to clear pending amounts for that TX.
-    // NOTE2: Plus I wanna clear the amount before that TX is parsed by our protocol, in case we ever consider pending amounts in internal calculations.
-    PendingDelete(tx.GetHash());
+  if (nBlockNow%BlockS == 0 && nBlockNow != 0 && path_elef.size() != 0 && lastBlockg != nBlockNow) {
 
-    // we do not care about parsing blocks prior to our waterline (empty blockchain defense)
-    if (nBlock < nWaterlineBlock) return false;
-    int64_t nBlockTime = pBlockIndex->GetBlockTime();
+    PrintToLog("\nSETTLEMENT : every 8 hours here. nBlockNow = %d\n", nBlockNow);
+    pt_ndatabase = new MatrixTLS(path_elef.size(), n_cols); MatrixTLS &ndatabase = *pt_ndatabase;
+    MatrixTLS M_file(path_elef.size(), n_cols);
+    fillingMatrix(M_file, ndatabase, path_elef);
+    n_rows = size(M_file, 0);
+    PrintToLog("Matrix for Settlement: dim = (%d, %d)\n\n", n_rows, n_cols);
+    //printing_matrix(M_file);
+    
+    cout << "\n\n";
+    PrintToLog("\nCalling the Settlement Algorithm:\n\n");
+    int64_t twap_priceCDEx  = 0;
+    int64_t interest = 0;
+    settlement_algorithm_fifo(M_file, interest, twap_priceCDEx);
 
+    std::clock_t c_start = std::clock();
+    settlement_algorithm_fifo(M_file, interest, twap_priceCDEx);
+    std::clock_t c_end = std::clock();
 
-    CMPTransaction mp_obj;
-    mp_obj.unlockLogic();
+    long double time_elapsed_ms = 1000.0*(c_end-c_start)/CLOCKS_PER_SEC;
+    std::cout << "CPU time used: " << time_elapsed_ms/1000.0 << "s\n";
 
-    bool fFoundTx = false;
-    int pop_ret = parseTransaction(false, tx, nBlock, idx, mp_obj, nBlockTime, removedCoins);
+    /**********************************************************************/
+    /** Unallocating Dynamic Memory **/
 
-    if (0 == pop_ret)
+    //path_elef.clear();
+    market_priceMap.clear();
+    numVWAPMap.clear();
+    denVWAPMap.clear();
+    VWAPMap.clear();
+    VWAPMapSubVector.clear();
+    numVWAPVector.clear();
+    denVWAPVector.clear();
+    mapContractAmountTimesPrice.clear();
+    mapContractVolume.clear();
+    VWAPMapContracts.clear();
+    cdextwap_vec.clear();
+  }
+  
+  CMPTransaction mp_obj;
+  mp_obj.unlockLogic();
+  
+  bool fFoundTx = false;
+  int pop_ret = parseTransaction(false, tx, nBlock, idx, mp_obj, nBlockTime, removedCoins);
+    
+  if (0 == pop_ret)
     {
-        assert(mp_obj.getEncodingClass() != NO_MARKER);
-        assert(mp_obj.getSender().empty() == false);
-
-        int interp_ret = mp_obj.interpretPacket();
-
-        if(msc_debug_handler_tx) PrintToLog("%s(): interp_ret: %d\n",__func__, interp_ret);
-
-        // if interpretPacket returns 1, that means we have an instant trade between LTCs and tokens.
-        if (interp_ret == 1)
+      assert(mp_obj.getEncodingClass() != NO_MARKER);
+      assert(mp_obj.getSender().empty() == false);
+      
+      int interp_ret = mp_obj.interpretPacket();
+      
+      if(msc_debug_handler_tx) PrintToLog("%s(): interp_ret: %d\n",__func__, interp_ret);
+      
+      // if interpretPacket returns 1, that means we have an instant trade between LTCs and tokens.
+      if (interp_ret == 1)
         {
-            HandleLtcInstantTrade(tx, nBlock, mp_obj.getIndexInBlock(), mp_obj.getSender(), mp_obj.getReceiver(), mp_obj.getProperty(), mp_obj.getAmountForSale(), mp_obj.getPrice());
-
+	  HandleLtcInstantTrade(tx, nBlock, mp_obj.getIndexInBlock(), mp_obj.getSender(), mp_obj.getReceiver(), mp_obj.getProperty(), mp_obj.getAmountForSale(), mp_obj.getPrice());
+	  
         } else if (interp_ret == 2) {
-            HandleDExPayments(tx, nBlock, mp_obj.getSender());
-
-        }
-        // Only structurally valid transactions get recorded in levelDB
-        // PKT_ERROR - 2 = interpret_Transaction failed, structurally invalid payload
-        else if (interp_ret != PKT_ERROR - 2)
+	HandleDExPayments(tx, nBlock, mp_obj.getSender());
+	
+      }
+      // Only structurally valid transactions get recorded in levelDB
+      // PKT_ERROR - 2 = interpret_Transaction failed, structurally invalid payload
+      else if (interp_ret != PKT_ERROR - 2)
         {
-            bool bValid = (0 <= interp_ret);
-            if (interp_ret != 1 && interp_ret != 2) p_txlistdb->recordTX(tx.GetHash(), bValid, nBlock, mp_obj.getType(), mp_obj.getNewAmount(), interp_ret);
-            p_TradeTXDB->RecordTransaction(tx.GetHash(), idx);
-
+	  bool bValid = (0 <= interp_ret);
+	  if (interp_ret != 1 && interp_ret != 2) p_txlistdb->recordTX(tx.GetHash(), bValid, nBlock, mp_obj.getType(), mp_obj.getNewAmount(), interp_ret);
+	  p_TradeTXDB->RecordTransaction(tx.GetHash(), idx);
+	  
         }
-
-        fFoundTx |= (interp_ret == 0);
+      
+      fFoundTx |= (interp_ret == 0);
     }
-
-    if (fFoundTx && msc_debug_consensus_hash_every_transaction) {
-        const uint256 consensusHash = GetConsensusHash();
-        if(msc_debug_handler_tx) PrintToLog("Consensus hash for transaction %s: %s\n", tx.GetHash().GetHex(), consensusHash.GetHex());
-    }
-
-    return fFoundTx;
+  
+  if (fFoundTx && msc_debug_consensus_hash_every_transaction) {
+    const uint256 consensusHash = GetConsensusHash();
+    if(msc_debug_handler_tx) PrintToLog("Consensus hash for transaction %s: %s\n", tx.GetHash().GetHex(), consensusHash.GetHex());
+  }
+  
+  return fFoundTx;
 }
 
 bool TxValidNodeReward(std::string ConsensusHash, std::string Tx)
@@ -4035,12 +3956,7 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
 
     // marginMain(pBlockIndex->nHeight);
     // addInterestPegged(nBlockPrev,pBlockIndex);
-
-    /****************************************************************************/
-    // Calling The Settlement Algorithm
-    // NOTE: now we are checking all contracts
-    // CallingSettlement();
-
+    
     /*****************************************************************************/
     // feeCacheBuy:
     //   1) search caché in order to see the properties ids and the amounts.
@@ -5321,12 +5237,6 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   globalVolumeALL_LTC += volumeLTC64_t;
   // PrintToLog("\nGlobal LTC Volume Updated: CMPContractDEx = %d \n", FormatDivisibleMP(globalVolumeALL_LTC));
 
-  int64_t volumeToCompare = 0;
-  bool perpetualBool = callingPerpetualSettlement(globalPNLALL_DUSD, globalVolumeALL_DUSD, volumeToCompare);
-  if (perpetualBool) PrintToLog("Perpetual Settlement Online");
-
-  // PrintToLog("\nglobalPNLALL_DUSD = %d, globalVolumeALL_DUSD = %d, contractId = %d\n", globalPNLALL_DUSD, globalVolumeALL_DUSD, contractId);
-
   std::fstream fileglobalPNLALL_DUSD;
   fileglobalPNLALL_DUSD.open ("globalPNLALL_DUSD.txt", std::fstream::in | std::fstream::out | std::fstream::app);
   if ( contractId == 5 ) // just fot testing
@@ -5401,21 +5311,6 @@ void Filling_Twap_Vec(std::map<uint32_t, std::map<uint32_t, std::vector<uint64_t
       twap_ele[property_traded][property_desired].push_back(effective_price);
     }
   twapBlockg = nBlockNow;
-}
-
-bool callingPerpetualSettlement(double globalPNLALL_DUSD, int64_t globalVolumeALL_DUSD, int64_t volumeToCompare)
-{
-    bool perpetualBool = false;
-
-    if ( globalPNLALL_DUSD == 0 )
-    {
-      // PrintToLog("\nLiquidate Forward Positions\n");
-      perpetualBool = true;
-    } else if ( globalVolumeALL_DUSD > volumeToCompare ){
-      // PrintToLog("\nTake decisions for globalVolumeALL_DUSD > volumeToCompare\n");
-    }
-
-    return perpetualBool;
 }
 
 void fillingMatrix(MatrixTLS &M_file, MatrixTLS &ndatabase, std::vector<std::map<std::string, std::string>> &path_ele)
