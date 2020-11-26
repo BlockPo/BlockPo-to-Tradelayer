@@ -20,6 +20,7 @@ const uint16_t FEATURE_TRADECHANNELS_CONTRACTS  = 7; //It's important to note th
 const uint16_t FEATURE_FIXED                    = 8; //This should include simple sends, send all
 const uint16_t FEATURE_MANAGED                  = 9;
 const uint16_t FEATURE_NODE_REWARD              = 10;
+
 const uint16_t FEATURE_CONTRACTDEX              = 11; //Enables native perps/futures for ALL/LTC and LTC/USD, EUR, JPY, CNY, liquidity reward built-in
 const uint16_t FEATURE_CONTRACTDEX_ORACLES      = 12; //Enables just oracle contracts with native property id's pre-defined, can be done first
 const uint16_t FEATURE_TRADECHANNELS_OPTIONS    = 13;  //we're Trade Channels only for options because, the memory bloat having a crappy orderbook system, bleh
@@ -31,15 +32,15 @@ const uint16_t FEATURE_INTEROP_LIGHTNING        = 18; //OmniBolt style coloring 
 const uint16_t FEATURE_INTEROP_REPO             = 19; //Our dream OP_Code to curry favor for activation by proving this economic model for the greater Bitcoinity
 const uint16_t FEATURE_INTEROP_SIDECHAINS       = 20; //Generic and specialized sidechain models can use TradeLayer tokens as bonding collateral and for HFT or payments
 const uint16_t FEATURE_INTEROP_CROSSCHAINATOMICSWAPS = 21; //HTLC token-for-token trading, ought to be implicitly composable with BTC/LTC atomic swaps
-const uint16_t FEATURE_GRAPHDEFAULTSWAPS        = 22; //activates GDS perpetual swaps underpinning ALL/LTC and LTC/USD, plus a new kind of meta-contract on any derivative     
+const uint16_t FEATURE_GRAPHDEFAULTSWAPS        = 22; //activates GDS perpetual swaps underpinning ALL/LTC and LTC/USD, plus a new kind of meta-contract on any derivative
 const uint16_t FEATURE_INTERESTRATESWAPS        = 23; //activates term native IR Swaps for ALL/LTC and LTC/USD perpetuals, plus a new kind of oracle contract referring to oracle perp. swaps
 const uint16_t FEATURE_MINERFEECONTRACTS        = 24; //activates term native futures for on-chain miner fee averages
 const uint16_t FEATURE_MASSPAYMENT              = 25; //unencumbered version of sent-to-owners, can pay n units of property A to all holders of propery B (which can also be A)
 const uint16_t FEATURE_MULTISEND                = 26; //enables multiple reference outputs to send different amounts of a property to multiple addresses, useful for fee rebate
 const uint16_t FEATURE_HEDGEDCURRENCY           = 27; //Enables 1x short positions against ALL to mint sLTC, and 1x shorts against sLTC or rLTC (if activated) to mint USDL, EURL, JPYL, CNYL
-    
+
 //This is the entire roadmap. If we missed anything, well, clearly we tried not to.
-    
+
 struct TransactionRestriction
 {
     //! Transaction type
@@ -110,7 +111,7 @@ public:
     int MSC_DISPENSERVAULTS_BLOCK;
     int MSC_PAYMENTBATCHING_BLOCK;
     int MSC_MARGINLENDING_BLOCK;
-    int MSC_INTEROP_CTV_BLOCK; 
+    int MSC_INTEROP_CTV_BLOCK;
     int MSC_INTEROP_LIGHTNING_BLOCK;
     int MSC_INTEROP_REPO_BLOCK;
     int MSC_INTEROP_SIDECHAINS_BLOCK;
@@ -121,7 +122,7 @@ public:
     int MSC_MASSPAYMENT_BLOCK;
     int MSC_MULTISEND_BLOCK;
     int MSC_HEDGEDCURRENCY_BLOCK;
-   
+
     /* Vesting Tokens*/
     int ONE_YEAR;
 

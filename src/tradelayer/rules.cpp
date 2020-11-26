@@ -281,7 +281,7 @@ CRegTestConsensusParams::CRegTestConsensusParams()
     MSC_MASSPAYMENT_BLOCK = 99999999;
     MSC_MULTISEND_BLOCK = 99999999;
     MSC_HEDGEDCURRENCY_BLOCK = 99999999;
-    
+
     ONE_YEAR = 930;
 
 }
@@ -423,32 +423,113 @@ bool ActivateFeature(uint16_t featureId, int activationBlock, uint32_t minClient
     bool supported = TL_VERSION >= minClientVersion;
     switch (featureId) {
       case FEATURE_VESTING:
-              params.MSC_VESTING_BLOCK = activationBlock;
-              break;
+          params.MSC_VESTING_BLOCK = activationBlock;
+          break;
+
       case FEATURE_KYC:
-              params.MSC_KYC_BLOCK = activationBlock;
-              break;
+          params.MSC_KYC_BLOCK = activationBlock;
+          break;
+
       case FEATURE_DEX_SELL:
-              params.MSC_DEXSELL_BLOCK = activationBlock;
-              break;
+          params.MSC_DEXSELL_BLOCK = activationBlock;
+          break;
+
       case FEATURE_DEX_BUY:
-              params.MSC_DEXBUY_BLOCK = activationBlock;
-              break;
+          params.MSC_DEXBUY_BLOCK = activationBlock;
+          break;
+
       case FEATURE_METADEX:
-              params.MSC_METADEX_BLOCK = activationBlock;
-              break;
+          params.MSC_METADEX_BLOCK = activationBlock;
+          break;
+
       case FEATURE_TRADECHANNELS_TOKENS:
-              params.MSC_TRADECHANNEL_TOKENS_BLOCK = activationBlock;
-              break;
+          params.MSC_TRADECHANNEL_TOKENS_BLOCK = activationBlock;
+          break;
+
+      case FEATURE_TRADECHANNELS_CONTRACTS:
+          params.MSC_TRADECHANNEL_CONTRACTS_BLOCK = activationBlock;
+          break;
+
       case FEATURE_FIXED:
-              params.MSC_SP_BLOCK = activationBlock;
-              break;
+          params.MSC_SP_BLOCK = activationBlock;
+          break;
+
       case FEATURE_MANAGED:
-              params.MSC_MANUALSP_BLOCK = activationBlock;
-              break;
+          params.MSC_MANUALSP_BLOCK = activationBlock;
+          break;
+
       case FEATURE_NODE_REWARD:
-              params.MSC_NODE_REWARD_BLOCK = activationBlock;
-              break;
+          params.MSC_NODE_REWARD_BLOCK = activationBlock;
+          break;
+
+      case FEATURE_CONTRACTDEX:
+          params.MSC_CONTRACTDEX_BLOCK = activationBlock;
+          break;
+
+      case FEATURE_CONTRACTDEX_ORACLES:
+          params.MSC_CONTRACTDEX_ORACLES_BLOCK = activationBlock;
+          break;
+
+      case FEATURE_TRADECHANNELS_OPTIONS:
+          params.MSC_TRADECHANNEL_OPTIONS_BLOCK = activationBlock;
+          break;
+
+      case FEATURE_DISPENSERVAULTS:
+          params.MSC_DISPENSERVAULTS_BLOCK = activationBlock;
+          break;
+
+      case FEATURE_PAYMENTBATCHING:
+          params.MSC_PAYMENTBATCHING_BLOCK = activationBlock;
+          break;
+
+      case FEATURE_MARGINLENDING:
+          params.MSC_MARGINLENDING_BLOCK = activationBlock;
+          break;
+
+      case FEATURE_INTEROP_CTV:
+          params.MSC_INTEROP_CTV_BLOCK = activationBlock;
+          break;
+
+      case FEATURE_INTEROP_LIGHTNING:
+          params.MSC_INTEROP_LIGHTNING_BLOCK = activationBlock;
+          break;
+
+      case FEATURE_INTEROP_REPO:
+          params.MSC_INTEROP_REPO_BLOCK= activationBlock;
+          break;
+
+      case FEATURE_INTEROP_SIDECHAINS:
+          params.MSC_INTEROP_SIDECHAINS_BLOCK = activationBlock;
+          break;
+
+      case FEATURE_INTEROP_CROSSCHAINATOMICSWAPS:
+          params.MSC_INTEROP_CROSSCHAINATOMICSWAPS_BLOCK = activationBlock;
+          break;
+
+      case FEATURE_GRAPHDEFAULTSWAPS:
+          params.MSC_GRAPHDEFAULTSWAPS_BLOCK = activationBlock;
+          break;
+
+      case FEATURE_INTERESTRATESWAPS:
+          params.MSC_INTERESTRATESWAPS_BLOCK = activationBlock;
+          break;
+
+      case FEATURE_MINERFEECONTRACTS:
+          params.MSC_MINERFEECONTRACTS_BLOCK = activationBlock;
+          break;
+
+      case FEATURE_MASSPAYMENT:
+          params.MSC_MASSPAYMENT_BLOCK = activationBlock;
+          break;
+
+      case FEATURE_MULTISEND:
+          params.MSC_MULTISEND_BLOCK = activationBlock;
+          break;
+
+      case FEATURE_HEDGEDCURRENCY:
+          params.MSC_HEDGEDCURRENCY_BLOCK = activationBlock;
+          break;
+
       default:
            supported = false;
            break;
@@ -491,30 +572,111 @@ bool DeactivateFeature(uint16_t featureId, int transactionBlock)
       case FEATURE_VESTING:
           MutableConsensusParams().MSC_VESTING_BLOCK = 99999999;
           break;
+
       case FEATURE_KYC:
           MutableConsensusParams().MSC_KYC_BLOCK = 99999999;
           break;
+
       case FEATURE_DEX_SELL:
           MutableConsensusParams().MSC_DEXSELL_BLOCK = 99999999;
           break;
+
       case FEATURE_DEX_BUY:
           MutableConsensusParams().MSC_DEXBUY_BLOCK = 99999999;
           break;
+
       case FEATURE_METADEX:
           MutableConsensusParams().MSC_METADEX_BLOCK = 99999999;
           break;
+
       case FEATURE_TRADECHANNELS_TOKENS:
           MutableConsensusParams().MSC_TRADECHANNEL_TOKENS_BLOCK = 99999999;
           break;
+
       case FEATURE_FIXED:
           MutableConsensusParams().MSC_SP_BLOCK = 99999999;
           break;
+
       case FEATURE_MANAGED:
           MutableConsensusParams().MSC_MANUALSP_BLOCK = 99999999;
           break;
+
       case FEATURE_NODE_REWARD:
           MutableConsensusParams().MSC_NODE_REWARD_BLOCK = 99999999;
           break;
+
+      case FEATURE_CONTRACTDEX:
+          MutableConsensusParams().MSC_CONTRACTDEX_BLOCK = 99999999;
+          break;
+
+      case FEATURE_CONTRACTDEX_ORACLES:
+          MutableConsensusParams().MSC_CONTRACTDEX_ORACLES_BLOCK = 99999999;
+          break;
+
+      case FEATURE_TRADECHANNELS_OPTIONS:
+          MutableConsensusParams().MSC_TRADECHANNEL_OPTIONS_BLOCK = 99999999;
+          break;
+
+      case FEATURE_TRADECHANNELS_CONTRACTS:
+          MutableConsensusParams().MSC_TRADECHANNEL_CONTRACTS_BLOCK = 99999999;
+          break;
+
+      case FEATURE_DISPENSERVAULTS:
+          MutableConsensusParams().MSC_DISPENSERVAULTS_BLOCK = 99999999;
+          break;
+
+      case FEATURE_PAYMENTBATCHING:
+          MutableConsensusParams().MSC_PAYMENTBATCHING_BLOCK = 99999999;
+          break;
+
+      case FEATURE_MARGINLENDING:
+          MutableConsensusParams().MSC_MARGINLENDING_BLOCK= 99999999;
+          break;
+
+      case FEATURE_INTEROP_CTV:
+          MutableConsensusParams().MSC_INTEROP_CTV_BLOCK = 99999999;
+          break;
+
+      case FEATURE_INTEROP_LIGHTNING:
+          MutableConsensusParams().MSC_INTEROP_LIGHTNING_BLOCK = 99999999;
+          break;
+
+      case FEATURE_INTEROP_REPO:
+          MutableConsensusParams().MSC_INTEROP_REPO_BLOCK = 99999999;
+          break;
+
+      case FEATURE_INTEROP_SIDECHAINS:
+          MutableConsensusParams().MSC_INTEROP_SIDECHAINS_BLOCK = 99999999;
+          break;
+
+      case FEATURE_INTEROP_CROSSCHAINATOMICSWAPS:
+          MutableConsensusParams().MSC_INTEROP_CROSSCHAINATOMICSWAPS_BLOCK = 99999999;
+          break;
+
+      case FEATURE_GRAPHDEFAULTSWAPS:
+          MutableConsensusParams().MSC_GRAPHDEFAULTSWAPS_BLOCK = 99999999;
+          break;
+
+      case FEATURE_INTERESTRATESWAPS:
+          MutableConsensusParams().MSC_INTERESTRATESWAPS_BLOCK = 99999999;
+          break;
+
+      case FEATURE_MINERFEECONTRACTS:
+          MutableConsensusParams().MSC_MINERFEECONTRACTS_BLOCK = 99999999;
+          break;
+
+      case FEATURE_MASSPAYMENT:
+          MutableConsensusParams().MSC_MASSPAYMENT_BLOCK = 99999999;
+          break;
+
+      case FEATURE_MULTISEND:
+          MutableConsensusParams().MSC_MULTISEND_BLOCK = 99999999;
+          break;
+
+      case FEATURE_HEDGEDCURRENCY:
+          MutableConsensusParams().MSC_HEDGEDCURRENCY_BLOCK = 99999999;
+          break;
+
       default:
             return false;
       break;
@@ -544,6 +706,24 @@ std::string GetFeatureName(uint16_t featureId)
         case FEATURE_FIXED : return "Create Fixed Tokens";
         case FEATURE_MANAGED : return "Create Managed Tokens";
         case FEATURE_NODE_REWARD : return "Node Reward activation";
+        case FEATURE_CONTRACTDEX: return "Native Contracts Exchange";
+        case FEATURE_CONTRACTDEX_ORACLES: return "Oracle Contracts Exchange";
+        case FEATURE_TRADECHANNELS_OPTIONS: return "Trade Channels Option Exchange";
+        case FEATURE_TRADECHANNELS_CONTRACTS: return "Trade Channels Contracts Exchange";
+        case FEATURE_DISPENSERVAULTS: return "DispersenVaults";
+        case FEATURE_PAYMENTBATCHING: return "Payment Batching";
+        case FEATURE_MARGINLENDING: return "Margin Lending";
+        case FEATURE_INTEROP_CTV: return "Interoperability CTV";
+        case FEATURE_INTEROP_LIGHTNING: return "Interoperability Lightning";
+        case FEATURE_INTEROP_REPO: return "Interoperability Repo";
+        case FEATURE_INTEROP_SIDECHAINS: return "Interoperability Side Chains";
+        case FEATURE_INTEROP_CROSSCHAINATOMICSWAPS: return "Interoperability Cross Chain Atomic Swapss";
+        case FEATURE_GRAPHDEFAULTSWAPS: return "Interoperability Graph Default Swaps";
+        case FEATURE_INTERESTRATESWAPS: return "Interoperability Swaps";
+        case FEATURE_MINERFEECONTRACTS: return "Interoperability Miner Fee Contracts";
+        case FEATURE_MASSPAYMENT: return "Mass Payment";
+        case FEATURE_MULTISEND: return "Multisend";
+        case FEATURE_HEDGEDCURRENCY: return "Hedge Currency";
         default: return "Unknown feature";
     }
 }
@@ -558,32 +738,113 @@ bool IsFeatureActivated(uint16_t featureId, int transactionBlock)
 
     switch (featureId) {
       case FEATURE_VESTING:
-              activationBlock = params.MSC_VESTING_BLOCK;
-              break;
+          activationBlock = params.MSC_VESTING_BLOCK;
+          break;
+
       case FEATURE_KYC:
-              activationBlock = params.MSC_KYC_BLOCK;
-              break;
+          activationBlock = params.MSC_KYC_BLOCK;
+          break;
+
       case FEATURE_DEX_SELL:
-              activationBlock = params.MSC_DEXSELL_BLOCK;
-              break;
+          activationBlock = params.MSC_DEXSELL_BLOCK;
+          break;
+
       case FEATURE_DEX_BUY:
-              activationBlock = params.MSC_DEXBUY_BLOCK;
-              break;
+          activationBlock = params.MSC_DEXBUY_BLOCK;
+          break;
+
       case FEATURE_METADEX:
-              activationBlock = params.MSC_METADEX_BLOCK;
-              break;
+          activationBlock = params.MSC_METADEX_BLOCK;
+          break;
+
       case FEATURE_TRADECHANNELS_TOKENS:
-              activationBlock = params.MSC_TRADECHANNEL_TOKENS_BLOCK;
-              break;
+          activationBlock = params.MSC_TRADECHANNEL_TOKENS_BLOCK;
+          break;
+
       case FEATURE_FIXED:
-              activationBlock = params.MSC_SP_BLOCK;
-              break;
+          activationBlock = params.MSC_SP_BLOCK;
+          break;
+
       case FEATURE_MANAGED:
-              activationBlock = params.MSC_MANUALSP_BLOCK;
-              break;
+          activationBlock = params.MSC_MANUALSP_BLOCK;
+          break;
+
       case FEATURE_NODE_REWARD:
-              activationBlock = params.MSC_NODE_REWARD_BLOCK;
-              break;
+          activationBlock = params.MSC_NODE_REWARD_BLOCK;
+          break;
+
+      case FEATURE_CONTRACTDEX:
+          activationBlock = params.MSC_NODE_REWARD_BLOCK;
+          break;
+
+      case FEATURE_CONTRACTDEX_ORACLES:
+          activationBlock = params.MSC_CONTRACTDEX_ORACLES_BLOCK;
+          break;
+
+      case FEATURE_TRADECHANNELS_OPTIONS:
+          activationBlock = params.MSC_TRADECHANNEL_OPTIONS_BLOCK;
+          break;
+
+      case FEATURE_TRADECHANNELS_CONTRACTS:
+          activationBlock = params.MSC_TRADECHANNEL_CONTRACTS_BLOCK;
+          break;
+
+      case FEATURE_DISPENSERVAULTS:
+          activationBlock = params.MSC_DISPENSERVAULTS_BLOCK;
+          break;
+
+      case FEATURE_PAYMENTBATCHING:
+          activationBlock = params.MSC_PAYMENTBATCHING_BLOCK;
+          break;
+
+      case FEATURE_MARGINLENDING:
+          activationBlock = params.MSC_MARGINLENDING_BLOCK;
+          break;
+
+      case FEATURE_INTEROP_CTV:
+          activationBlock = params.MSC_INTEROP_CTV_BLOCK;
+          break;
+
+      case FEATURE_INTEROP_LIGHTNING:
+          activationBlock = params.MSC_INTEROP_LIGHTNING_BLOCK;
+          break;
+
+      case FEATURE_INTEROP_REPO:
+          activationBlock = params.MSC_INTEROP_REPO_BLOCK;
+          break;
+
+      case FEATURE_INTEROP_SIDECHAINS:
+          activationBlock = params.MSC_INTEROP_SIDECHAINS_BLOCK;
+          break;
+
+      case FEATURE_INTEROP_CROSSCHAINATOMICSWAPS:
+          activationBlock = params.MSC_INTEROP_CROSSCHAINATOMICSWAPS_BLOCK;
+          break;
+
+      case FEATURE_GRAPHDEFAULTSWAPS:
+          activationBlock = params.MSC_GRAPHDEFAULTSWAPS_BLOCK;
+          break;
+
+      case FEATURE_INTERESTRATESWAPS:
+          activationBlock = params.MSC_INTERESTRATESWAPS_BLOCK;
+          break;
+
+      case FEATURE_MINERFEECONTRACTS:
+          activationBlock = params.MSC_MINERFEECONTRACTS_BLOCK;
+          break;
+
+      case FEATURE_MASSPAYMENT:
+          activationBlock = params.MSC_MASSPAYMENT_BLOCK;
+          break;
+
+      case FEATURE_MULTISEND:
+          activationBlock = params.MSC_MULTISEND_BLOCK;
+          break;
+
+      case FEATURE_HEDGEDCURRENCY:
+          activationBlock = params.MSC_HEDGEDCURRENCY_BLOCK;
+          break;
+
         default:
             return false;
     }
