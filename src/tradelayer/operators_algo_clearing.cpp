@@ -1111,7 +1111,7 @@ void calculate_pnltrk_bypath(std::vector<std::map<std::string, std::string>> pat
   extern int n_cols;
   extern MatrixTLS *pt_ndatabase; MatrixTLS &ndatabase = *pt_ndatabase;
   VectorTLS jrow_database(n_cols);
-
+  
   //PrintToLog("\nChecking PNL in this Path:\n");
   for (it_path = path_main.begin(); it_path != path_main.end(); ++it_path)
     {
@@ -1131,15 +1131,15 @@ void calculate_pnl_forghost(std::vector<std::map<std::string, std::string>> path
   double sumPNL_trk = 0;
   double PNL_src;
   double PNL_trk;
-
-  if(msc_debug_calculate_pnl_forghost) PrintToLog("\nChecking PNL for Ghosts\n");
+  
+  //if(msc_debug_calculate_pnl_forghost) PrintToLog("\nChecking PNL for Ghosts\n");
   for (it_path = path_ghost.begin(); it_path != path_ghost.end(); ++it_path)
-  {
-    PNL_src = PNL_ghosts(stod((*it_path)["entry_price_src"]), stod((*it_path)["exit_price"]), stol((*it_path)["amount_trd"]), (*it_path)["status_src"]);
-    PNL_trk = PNL_ghosts(stod((*it_path)["entry_price_trk"]), stod((*it_path)["exit_price"]), stol((*it_path)["amount_trd"]), (*it_path)["status_trk"]);
-    sumPNL_trk += PNL_src + PNL_trk;
-    if(msc_debug_calculate_pnl_forghost) PrintToLog("\nPNL_src = %f\t PNL_trk = %f\t sumPNL_trk = %f\n", PNL_src, PNL_trk, sumPNL_trk);
-  }
+    {
+      PNL_src = PNL_ghosts(stod((*it_path)["entry_price_src"]), stod((*it_path)["exit_price"]), stol((*it_path)["amount_trd"]), (*it_path)["status_src"]);
+      PNL_trk = PNL_ghosts(stod((*it_path)["entry_price_trk"]), stod((*it_path)["exit_price"]), stol((*it_path)["amount_trd"]), (*it_path)["status_trk"]);
+      sumPNL_trk += PNL_src + PNL_trk;
+      //if(msc_debug_calculate_pnl_forghost) PrintToLog("\nPNL_src = %f\t PNL_trk = %f\t sumPNL_trk = %f\n", PNL_src, PNL_trk, sumPNL_trk);
+    }
 }
 
 void listof_addresses_lives(std::vector<std::map<std::string, std::string>> lives, std::vector<std::string> &addrsv)

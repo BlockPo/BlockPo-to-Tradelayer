@@ -2977,9 +2977,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   extern std::vector<std::map<std::string, std::string>> lives_longs_vg;
   extern std::vector<std::map<std::string, std::string>> lives_shorts_vg;
   extern int BlockS;
-  ui128 numLog128;
-  ui128 numQuad128;
-
+  
   LOCK(cs_tally);
   
   if (!mastercoreInitialized) {
@@ -2991,12 +2989,11 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   if (nBlock < nWaterlineBlock) return false;
   int64_t nBlockTime = pBlockIndex->GetBlockTime();
   int nBlockNow = GetHeight();
-
+  
   /***********************************************************************/
   /** Calling The Settlement Algorithm **/  
-
   if (nBlockNow%BlockS == 0 && nBlockNow != 0 && path_elef.size() != 0 && lastBlockg != nBlockNow) {
-
+    
     PrintToLog("\nSETTLEMENT : every 8 hours here. nBlockNow = %d\n", nBlockNow);
     pt_ndatabase = new MatrixTLS(path_elef.size(), n_cols); MatrixTLS &ndatabase = *pt_ndatabase;
     MatrixTLS M_file(path_elef.size(), n_cols);
@@ -3589,66 +3586,69 @@ int CMPTxList::getMPTransactionCountBlock(int block)
 
 string CMPTxList::getKeyValue(string key)
 {
-     if (!pdb) return "";
-     string strValue;
-     Status status = pdb->Get(readoptions, key, &strValue);
-     if (status.ok()) { return strValue; } else { return ""; }
+  if (!pdb) return "";
+  string strValue;
+  Status status = pdb->Get(readoptions, key, &strValue);
+  if (status.ok()) { return strValue; } else { return ""; }
 }
 
 /**
  * Retrieves details about a "send all" record.
-*/
+ */
+
 bool CMPTxList::getSendAllDetails(const uint256& txid, int subSend, uint32_t& propertyId, int64_t& amount)
 {
-     std::string strKey = strprintf("%s-%d", txid.ToString(), subSend);
-     std::string strValue;
-     leveldb::Status status = pdb->Get(readoptions, strKey, &strValue);
-     if (status.ok()) {
-         std::vector<std::string> vstr;
-         boost::split(vstr, strValue, boost::is_any_of(":"), boost::token_compress_on);
-         if (2 == vstr.size()) {
-             propertyId = boost::lexical_cast<uint32_t>(vstr[0]);
-             amount = boost::lexical_cast<int64_t>(vstr[1]);
-             return true;
-         }
-     }
-
-     return false;
+  std::string strKey = strprintf("%s-%d", txid.ToString(), subSend);
+  std::string strValue;
+  leveldb::Status status = pdb->Get(readoptions, strKey, &strValue);
+  if (status.ok())
+    {
+      std::vector<std::string> vstr;
+      boost::split(vstr, strValue, boost::is_any_of(":"), boost::token_compress_on);
+      if (2 == vstr.size())
+	{
+	  propertyId = boost::lexical_cast<uint32_t>(vstr[0]);
+	  amount = boost::lexical_cast<int64_t>(vstr[1]);
+	  return true;
+	}
+    } 
+  return false;
 }
 
 /**
  * Records a "send all" sub record.
  */
+
 void CMPTxList::recordSendAllSubRecord(const uint256& txid, int subRecordNumber, uint32_t propertyId, int64_t nValue)
 {
-     const std::string strKey = strprintf("%s-%d", txid.ToString(), subRecordNumber);
-     const std::string strValue = strprintf("%d:%d", propertyId, nValue);
-
-     leveldb::Status status = pdb->Put(writeoptions, strKey, strValue);
-     ++nWritten;
-    if (msc_debug_txdb) PrintToLog("%s(): store: %s=%s, status: %s\n", __func__, strKey, strValue, status.ToString());
+  const std::string strKey = strprintf("%s-%d", txid.ToString(), subRecordNumber);
+  const std::string strValue = strprintf("%d:%d", propertyId, nValue);
+  
+  leveldb::Status status = pdb->Put(writeoptions, strKey, strValue);
+  ++nWritten;
+  if (msc_debug_txdb) PrintToLog("%s(): store: %s=%s, status: %s\n", __func__, strKey, strValue, status.ToString());
 }
 
 void CMPTxList::recordTX(const uint256 &txid, bool fValid, int nBlock, unsigned int type, uint64_t nValue, int interp_ret)
 {
-    if (!pdb) return;
-
-    // overwrite detection, we should never be overwriting a tx, as that means we have redone something a second time
-    // reorgs delete all txs from levelDB above reorg_chain_height
-    if (p_txlistdb->exists(txid)) PrintToLog("LEVELDB TX OVERWRITE DETECTION - %s\n", txid.ToString());
-
-    const string key = txid.ToString();
-    const string value = strprintf("%d:%d:%d:%u:%d", fValid ? 1:0, fValid ? 0:interp_ret, nBlock, type, nValue);
-    Status status;
-
-      // PrintToLog("%s(%s, valid=%s, reason=%d, block= %d, type= %d, value= %lu)\n",
-      //  __func__, txid.ToString(), fValid ? "YES":"NO", fValid ? 0 : interp_ret, nBlock, type, nValue);
-
-    if (pdb)
+  if (!pdb) return;
+  
+  // overwrite detection, we should never be overwriting a tx, as that means we have redone something a second time
+  // reorgs delete all txs from levelDB above reorg_chain_height
+  if (p_txlistdb->exists(txid)) PrintToLog("LEVELDB TX OVERWRITE DETECTION - %s\n", txid.ToString());
+  
+  const string key = txid.ToString();
+  const string value = strprintf("%d:%d:%d:%u:%d", fValid ? 1:0, fValid ? 0:interp_ret, nBlock, type, nValue);
+  Status status;
+  
+  // PrintToLog("%s(%s, valid=%s, reason=%d, block= %d, type= %d, value= %lu)\n",
+  //  __func__, txid.ToString(), fValid ? "YES":"NO", fValid ? 0 : interp_ret, nBlock, type, nValue);
+  
+  if (pdb)
     {
-        status = pdb->Put(writeoptions, key, value);
-        ++nWritten;
-         if (msc_debug_txdb) PrintToLog("%s(): %s, line %d, file: %s\n", __FUNCTION__, status.ToString(), __LINE__, __FILE__);
+      status = pdb->Put(writeoptions, key, value);
+      ++nWritten;
+      if (msc_debug_txdb) PrintToLog("%s(): %s, line %d, file: %s\n", __FUNCTION__, status.ToString(), __LINE__, __FILE__);
     }
 }
 
@@ -5056,10 +5056,6 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
       PrintToLog("\nMDExtwap_ele.size() = %d\t property_all = %d\t property_usd = %d\t market_priceMap = %s\n",
 	        mdextwap_ele[property_all][property_usd].size(), property_all, property_usd,
 	        FormatDivisibleMP(market_priceMap[property_all][property_usd]));
-      // PrintToLog("\nVector MDExtwap_ele =\n");
-      // for (unsigned int i = 0; i < mdextwap_ele[property_all][property_usd].size(); i++)
-      //   PrintToLog("%s\n", FormatDivisibleMP(mdextwap_ele[property_all][property_usd][i]));
-
       /****************************************************/
 
       Status status;
@@ -5076,29 +5072,63 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   if (!pdb) return;
 
   extern volatile int idx_q;
-  //extern volatile unsigned int path_length;
   std::map<std::string, std::string> edgeEle;
   std::map<std::string, double>::iterator it_addrs_upnlm;
   std::map<uint32_t, std::map<std::string, double>>::iterator it_addrs_upnlc;
   std::vector<std::map<std::string, std::string>>::iterator it_path_ele;
   std::vector<std::map<std::string, std::string>>::reverse_iterator reit_path_ele;
-  //std::vector<std::map<std::string, std::string>> path_eleh;
   bool savedata_bool = false;
   extern volatile int64_t factorALLtoLTC;
   std::string sblockNum2 = std::to_string(blockNum2);
   double UPNL1 = 0, UPNL2 = 0;
+  
   /********************************************************************/
+  PrintToLog("\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
   const string key =  sblockNum2 + "+" + txid1.ToString() + "+" + txid2.ToString(); //order with block of taker.
-  const string value = strprintf("%s:%s:%lu:%lu:%lu:%d:%d:%s:%s:%d:%d:%d:%s:%s:%d:%d:%d", address1, address2, effective_price, amount_maker, amount_taker, blockNum1, blockNum2, s_maker0, s_taker0, lives_s0, lives_b0, property_traded, txid1.ToString(), txid2.ToString(), nCouldBuy0,amountpold, amountpnew);
-
+  const string value = strprintf("%s:%s:%lu:%lu:%lu:%d:%d:%s:%s:%d:%d:%d:%s:%s:%d:%d:%d", address1, address2, effective_price,
+				 amount_maker, amount_taker, blockNum1, blockNum2, s_maker0, s_taker0, lives_s0, lives_b0,
+				 property_traded, txid1.ToString(), txid2.ToString(), nCouldBuy0, amountpold, amountpnew);
+  PrintToLog("¡¡Check recordMatchedTrade!!\n");
+  PrintToLog("key: %s\n", key);
+  PrintToLog("value: %s\n", value);
+  PrintToLog("\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+  
+  /********************************************************************/
+  /** Values to store into LevelDB **/
+  const string value0 = strprintf("%s:%s:%lu:%d:%d:%s:%s:%d:%d:%d:%s:%s:%d", address1, address2, effective_price,
+				  blockNum1, blockNum2, s_maker0, s_taker0, lives_s0, lives_b0, property_traded,
+				  txid1.ToString(), txid2.ToString(), nCouldBuy0);
+  const string value1 = strprintf("%s:%s:%lu:%d:%d:%s:%s:%d:%d:%d:%s:%s:%d", address1, address2, effective_price,
+				  blockNum1, blockNum2, s_maker1, s_taker1, lives_s1, lives_b1, property_traded,
+				  txid1.ToString(), txid2.ToString(), nCouldBuy1);
+  const string value2 = strprintf("%s:%s:%lu:%d:%d:%s:%s:%d:%d:%d:%s:%s:%d", address1, address2, effective_price,
+				  blockNum1, blockNum2, s_maker2, s_taker2, lives_s2, lives_b2, property_traded,
+				  txid1.ToString(), txid2.ToString(), nCouldBuy2);
+  const string value3 = strprintf("%s:%s:%lu:%d:%d:%s:%s:%d:%d:%d:%s:%s:%d", address1, address2, effective_price,
+				  blockNum1, blockNum2, s_maker3, s_taker3, lives_s3, lives_b3, property_traded,
+				  txid1.ToString(), txid2.ToString(), nCouldBuy3);
+  PrintToLog("value0: %s\n", value0);
+  PrintToLog("value1: %s\n", value1);
+  PrintToLog("value2: %s\n", value2);
+  PrintToLog("value3: %s\n", value3);
+  
+  /********************************************************************/
+  PrintToLog("\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
   const string line0 = gettingLineOut(address1, s_maker0, lives_s0, address2, s_taker0, lives_b0, nCouldBuy0, effective_price);
   const string line1 = gettingLineOut(address1, s_maker1, lives_s1, address2, s_taker1, lives_b1, nCouldBuy1, effective_price);
   const string line2 = gettingLineOut(address1, s_maker2, lives_s2, address2, s_taker2, lives_b2, nCouldBuy2, effective_price);
   const string line3 = gettingLineOut(address1, s_maker3, lives_s3, address2, s_taker3, lives_b3, nCouldBuy3, effective_price);
-
+  
+  PrintToLog("\nline0: %s\n", line0);
+  PrintToLog("line1: %s\n", line1);
+  PrintToLog("line2: %s\n", line2);
+  PrintToLog("line3: %s\n", line3);
+  
   bool status_bool1 = s_maker0 == "OpenShortPosByLongPosNetted" || s_maker0 == "OpenLongPosByShortPosNetted";
   bool status_bool2 = s_taker0 == "OpenShortPosByLongPosNetted" || s_taker0 == "OpenLongPosByShortPosNetted";
-
+  
+  /********************************************************************/
+  /** To store into .txt Files**/
   std::fstream fileSixth;
   fileSixth.open ("graphInfoSixth.txt", std::fstream::in | std::fstream::out | std::fstream::app);
   if ( status_bool1 || status_bool2 )
@@ -5110,153 +5140,95 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   fileSixth.close();
 
   /********************************************************************/
-  int number_lines = 0;
-  if ( status_bool1 || status_bool2 )
+  /** Storing into LevelDB and std Cointainer path_elef**/
+  Status status;
+  if (pdb)
     {
-      buildingEdge(edgeEle, address1, address2, s_maker1, s_taker1, lives_s1, lives_b1, nCouldBuy1, effective_price, idx_q, 0);
-      //path_ele.push_back(edgeEle);
-      //path_eleh.push_back(edgeEle);
-
-      path_elef.push_back(edgeEle);
-      buildingEdge(edgeEle, address1, address2, s_maker2, s_taker2, lives_s2, lives_b2, nCouldBuy2, effective_price, idx_q, 0);
-      //path_ele.push_back(edgeEle);
-      //path_eleh.push_back(edgeEle);
-
-      path_elef.push_back(edgeEle);
-      // PrintToLog("Line 1: %s\n", line1);
-      // PrintToLog("Line 2: %s\n", line2);
-      number_lines += 2;
-      if ( s_maker3 != "EmptyStr" && s_taker3 != "EmptyStr" )
+      if (status_bool1 || status_bool2)
 	{
-	  buildingEdge(edgeEle, address1, address2, s_maker3, s_taker3, lives_s3, lives_b3,nCouldBuy3,effective_price,idx_q,0);
-	  //path_ele.push_back(edgeEle);
-	  //path_eleh.push_back(edgeEle);
-
+	  buildingEdge(edgeEle, address1, address2, s_maker1, s_taker1, lives_s1, lives_b1, nCouldBuy1, effective_price,
+		       idx_q, 0);
 	  path_elef.push_back(edgeEle);
-	  // PrintToLog("Line 3: %s\n", line3);
-	  number_lines += 1;
+	  /********************************************************************/
+	  /** Storing into LevelDB**/
+	  status = pdb->Put(writeoptions, key, value1);
+	  ++nWritten;
+	  /********************************************************************/
+	  buildingEdge(edgeEle, address1, address2, s_maker2, s_taker2, lives_s2, lives_b2, nCouldBuy2, effective_price,
+		       idx_q, 0);
+	  path_elef.push_back(edgeEle);
+	  /********************************************************************/
+	  /** Storing into LevelDB**/
+	  status = pdb->Put(writeoptions, key, value2);
+	  ++nWritten;
+	  /********************************************************************/
+	  if (s_maker3 != "EmptyStr" && s_taker3 != "EmptyStr")
+	    {
+	      buildingEdge(edgeEle, address1, address2, s_maker3, s_taker3, lives_s3, lives_b3, nCouldBuy3, effective_price,
+			   idx_q,0);
+	      path_elef.push_back(edgeEle);
+	      /********************************************************************/
+	      /** Storing into LevelDB**/
+	      status = pdb->Put(writeoptions, key, value3);
+	      ++nWritten;
+	      /********************************************************************/
+	    }
+	}
+      else
+	{
+	  buildingEdge(edgeEle, address1, address2, s_maker0, s_taker0, lives_s0, lives_b0, nCouldBuy0, effective_price,
+		       idx_q, 0);
+	  path_elef.push_back(edgeEle);
+	  /********************************************************************/
+	  /** Storing into LevelDB**/
+	  status = pdb->Put(writeoptions, key, value0); 
+	  ++nWritten;
+	  /********************************************************************/
 	}
     }
-  else
-    {
-      buildingEdge(edgeEle, address1, address2, s_maker0, s_taker0, lives_s0, lives_b0, nCouldBuy0, effective_price, idx_q, 0);
-      //path_ele.push_back(edgeEle);
-      //path_eleh.push_back(edgeEle);
-
-      path_elef.push_back(edgeEle);
-      // PrintToLog("Line 0: %s\n", line0);
-      number_lines += 1;
-    }
-
-  // PrintToLog("\nPath Ele inside recordMatchedTrade. Length last match = %d\n", number_lines);
-  // for (it_path_ele = path_ele.begin(); it_path_ele != path_ele.end(); ++it_path_ele) printing_edges_database(*it_path_ele);
-
-  /********************************************/
+  PrintToLog("\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+  /********************************************************************/
   /** Building TWAP vector CDEx **/
-
   Filling_Twap_Vec(cdextwap_ele, cdextwap_vec, property_traded, 0, effective_price);
   PrintToLog("\ncdextwap_ele.size() = %d\n", cdextwap_ele[property_traded].size());
-  // PrintToLog("\nVector CDExtwap_ele =\n");
-  // for (unsigned int i = 0; i < cdextwap_ele[property_traded].size(); i++)
-  //   PrintToLog("%s\n", FormatDivisibleMP(cdextwap_ele[property_traded][i]));
-
-  /********************************************/
-
-  // loopForUPNL(path_ele, path_eleh, path_length, address1, address2, s_maker0, s_taker0, UPNL1, UPNL2, effective_price, nCouldBuy0);
-  // unsigned int limSup = path_ele.size()-path_length;
-  // path_length = path_ele.size();
-
-  // // PrintToLog("UPNL1 = %d, UPNL2 = %d\n", UPNL1, UPNL2);
-  // addrs_upnlc[property_traded][address1] = UPNL1;
-  // addrs_upnlc[property_traded][address2] = UPNL2;
-
-  // for (it_addrs_upnlc = addrs_upnlc.begin(); it_addrs_upnlc != addrs_upnlc.end(); ++it_addrs_upnlc)
-  //   {
-  //     for (it_addrs_upnlm = it_addrs_upnlc->second.begin(); it_addrs_upnlm != it_addrs_upnlc->second.end(); ++it_addrs_upnlm)
-  //     	{
-  // 	  if (it_addrs_upnlm->first != address1 && it_addrs_upnlm->first != address2)
-  // 	    {
-  // 	      double entry_price_first = 0;
-  // 	      int idx_price_first = 0;
-  // 	      uint64_t entry_pricefirst_num = 0;
-  // 	      double exit_priceh = (double)effective_price/COIN;
-  // 	      uint64_t amount = 0;
-  // 	      std::string status = "";
-  // 	      std::string last_match_status = "";
-
-  // 	      for (reit_path_ele = path_ele.rbegin(); reit_path_ele != path_ele.rend(); ++reit_path_ele)
-  // 		{
-  // 		  if(finding_string(it_addrs_upnlm->first, (*reit_path_ele)["addrs_src"]))
-  // 		    {
-  // 		      last_match_status = (*reit_path_ele)["status_src"];
-  // 		      break;
-  // 		    }
-  // 		  else if(finding_string(it_addrs_upnlm->first, (*reit_path_ele)["addrs_trk"]))
-  // 		    {
-  // 		      last_match_status = (*reit_path_ele)["status_trk"];
-  // 		      break;
-  // 		    }
-  // 		}
-  // 	      loopforEntryPrice(path_ele, path_eleh, it_addrs_upnlm->first, last_match_status, entry_price_first, idx_price_first, entry_pricefirst_num, limSup, exit_priceh, amount, status);
-  // 	      // PrintToLog("\namount for UPNL_show: %d\n", amount);
-  // 	      double UPNL_show = PNL_function(entry_price_first, exit_priceh, amount, status);
-  // 	      // PrintToLog("\nUPNL_show = %d\n", UPNL_show);
-  // 	      addrs_upnlc[it_addrs_upnlc->first][it_addrs_upnlm->first] = UPNL_show;
-  // 	    }
-  // 	}
-  //   }
-
-  // for (it_addrs_upnlc = addrs_upnlc.begin(); it_addrs_upnlc != addrs_upnlc.end(); ++it_addrs_upnlc)
-  //   {
-  //     // PrintToLog("\nMap with addrs:upnl for propertyId = %d\n", it_addrs_upnlc->first);
-  //     for (it_addrs_upnlm = it_addrs_upnlc->second.begin(); it_addrs_upnlm != it_addrs_upnlc->second.end(); ++it_addrs_upnlm)
-  //     	{
-  // 	  // PrintToLog("ADDRS = %s, UPNL = %d\n", it_addrs_upnlm->first, it_addrs_upnlm->second);
-  // 	}
-
+  
   unsigned int contractId = static_cast<unsigned int>(property_traded);
   CMPSPInfo::Entry sp;
   assert(_my_sps->getSP(property_traded, sp));
   uint32_t NotionalSize = sp.notional_size;
-
+  
   globalPNLALL_DUSD += UPNL1 + UPNL2;
   globalVolumeALL_DUSD += nCouldBuy0;
-
+  
   arith_uint256 volumeALL256_t = mastercore::ConvertTo256(NotionalSize)*mastercore::ConvertTo256(nCouldBuy0)/COIN;
   // PrintToLog("ALLs involved in the traded 256 Bits ~ %s ALL\n", volumeALL256_t.ToString());
-
+  
   int64_t volumeALL64_t = mastercore::ConvertTo64(volumeALL256_t);
   // PrintToLog("ALLs involved in the traded 64 Bits ~ %s ALL\n", FormatDivisibleMP(volumeALL64_t));
 
   arith_uint256 volumeLTC256_t = mastercore::ConvertTo256(factorALLtoLTC)*mastercore::ConvertTo256(volumeALL64_t)/COIN;
   // PrintToLog("LTCs involved in the traded 256 Bits ~ %s LTC\n", volumeLTC256_t.ToString());
-
+  
   int64_t volumeLTC64_t = mastercore::ConvertTo64(volumeLTC256_t);
   // PrintToLog("LTCs involved in the traded 64 Bits ~ %d LTC\n", FormatDivisibleMP(volumeLTC64_t));
 
   globalVolumeALL_LTC += volumeLTC64_t;
   // PrintToLog("\nGlobal LTC Volume Updated: CMPContractDEx = %d \n", FormatDivisibleMP(globalVolumeALL_LTC));
-
+  
+  /********************************************************************/
+  /** fileglobalPNLALL_DUSD.txt, fileglobalVolumeALL_DUSD files built**/
   std::fstream fileglobalPNLALL_DUSD;
   fileglobalPNLALL_DUSD.open ("globalPNLALL_DUSD.txt", std::fstream::in | std::fstream::out | std::fstream::app);
-  if ( contractId == 5 ) // just fot testing
-    saveDataGraphs(fileglobalPNLALL_DUSD, std::to_string(globalPNLALL_DUSD));
+  if (contractId == 5) saveDataGraphs(fileglobalPNLALL_DUSD, std::to_string(globalPNLALL_DUSD));
   fileglobalPNLALL_DUSD.close();
-
+  
   std::fstream fileglobalVolumeALL_DUSD;
   fileglobalVolumeALL_DUSD.open ("globalVolumeALL_DUSD.txt", std::fstream::in | std::fstream::out | std::fstream::app);
-  if ( contractId == 5 )
-    saveDataGraphs(fileglobalVolumeALL_DUSD, std::to_string(FormatShortIntegerMP(globalVolumeALL_DUSD)));
+  if (contractId == 5) saveDataGraphs(fileglobalVolumeALL_DUSD, std::to_string(FormatShortIntegerMP(globalVolumeALL_DUSD)));
   fileglobalVolumeALL_DUSD.close();
-
-  Status status;
-  if (pdb)
-    {
-      status = pdb->Put(writeoptions, key, value);
-      ++nWritten;
-    }
-
-  // PrintToLog("\n\nEnd of recordMatchedTrade <------------------------------\n");
+  
+  /********************************************************************/
+  PrintToLog("\n\nEnd of recordMatchedTrade <------------------------------\n");
 }
 
 void Filling_Twap_Vec(std::map<uint32_t, std::vector<uint64_t>> &twap_ele, std::map<uint32_t, std::vector<uint64_t>> &twap_vec,
@@ -5476,8 +5448,6 @@ const string gettingLineOut(std::string address1, std::string s_status1, int64_t
 				   address1, s_status1, FormatContractShortMP(lives_maker * COIN),
 				   address2, s_status2, FormatContractShortMP(lives_taker * COIN),
 				   FormatContractShortMP(nCouldBuy * COIN), FormatContractShortMP(effective_price));
-
-  PrintToLog("%s() lineOut: %s\n",__func__, lineOut);
   return lineOut;
 }
 
