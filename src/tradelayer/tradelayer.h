@@ -509,16 +509,20 @@ class CMPTradeList : public CDBBase
   void getChannelTradesForPair(const std::string& channel, uint32_t propertyIdA, uint32_t propertyIdB, UniValue& responseArray, uint64_t count);
 };
 
-class CMPSettlementMatchList : public CDBBase
+class CMPSettlementList : public CDBBase
 {
  public:
-  CMPSettlementMatchList(const fs::path& path, bool fWipe)
+
+  CMPSettlementList(const fs::path& path, bool fWipe)
     {
       leveldb::Status status = Open(path, fWipe);
-      if (msc_debug_persistence) PrintToLog("Loading settlement match info database: %s\n", status.ToString());
+      if (msc_debug_persistence) PrintToLog("Loading settlement database info: %s\n", status.ToString());
     }
-
-  virtual ~CMPSettlementMatchList() { }
+  
+  virtual ~CMPSettlementList() {}
+  
+  void recordSettlementList(const uint256 txid1, const uint256 txid2, string address1, string address2, uint64_t effective_price, uint64_t amount_maker, uint64_t amount_taker, int blockNum1, int blockNum2, uint32_t property_traded, string tradeStatus, int64_t lives_s0, int64_t lives_s1, int64_t lives_s2, int64_t lives_s3, int64_t lives_b0, int64_t lives_b1, int64_t lives_b2, int64_t lives_b3, string s_maker0, string s_taker0, string s_maker1, string s_taker1, string s_maker2, string s_taker2, string s_maker3, string s_taker3, int64_t nCouldBuy0, int64_t nCouldBuy1, int64_t nCouldBuy2, int64_t nCouldBuy3,uint64_t amountpnew, uint64_t amountpold);
+  
 };
 
 //! Available balances of wallet properties
@@ -583,7 +587,8 @@ namespace mastercore
   extern CMPTxList *p_txlistdb;
   extern CtlTransactionDB *p_TradeTXDB;
   extern CMPTradeList *t_tradelistdb;
-
+  extern CMPSettlementList *pt_settlementlistdb;
+  
   // TODO: move, rename
   extern CCoinsView viewDummy;
   extern CCoinsViewCache view;

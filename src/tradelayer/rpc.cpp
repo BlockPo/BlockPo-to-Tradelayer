@@ -1982,7 +1982,7 @@ UniValue tl_getcontract_orderbook(const JSONRPCRequest& request)
   if (request.fHelp || request.params.size() != 2)
     throw runtime_error(
 			"tl_getcontract_orderbook \"contractid\" \"tradingaction\" \n"
-
+			
 			"\nList active offers on the distributed futures contracts exchange.\n"
 
 			"\nArguments:\n"
@@ -2042,7 +2042,7 @@ UniValue tl_gettradehistory(const JSONRPCRequest& request)
   if (request.fHelp || request.params.size() != 1)
     throw runtime_error(
 			"tl_gettradehistory \"contractid\" \n"
-
+			
 			"\nRetrieves the history of trades on the distributed contract exchange for the specified market.\n"
 
 			"\nArguments:\n"
@@ -2071,16 +2071,14 @@ UniValue tl_gettradehistory(const JSONRPCRequest& request)
 
   // obtain property identifiers for pair & check valid parameters
   uint32_t contractId = ParseNameOrId(request.params[0]);
-
   RequireContract(contractId);
-
+  
   // request pair trade history from trade db
   UniValue response(UniValue::VARR);
-
+  
   LOCK(cs_tally);
-
   t_tradelistdb->getMatchingTrades(contractId, response);
-
+  
   return response;
 }
 
