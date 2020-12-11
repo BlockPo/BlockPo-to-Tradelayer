@@ -28,7 +28,9 @@ client.getNewAddress(null,function(address){
 	})
 })
 
-ws.onopen = function(){
+ws.onopen = function(){ //this should define listen blocks for the 3 levels of input: 
+						//new address received -> create multisig
+						//proposed partially-signed tx -> pass to function to decode, verify the commit is there, co-sign, return message
 	
 	var msg1 = myChannelPubkey
 	ws.send(JSON.stringify(msg1))
