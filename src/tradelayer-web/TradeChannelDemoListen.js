@@ -116,3 +116,9 @@ function shouldCoSign(rawstring,cb){
 //create multisig
 //create token commit tx
 //create and co-sign trades
+
+//For LTC instant trades, the one who is selling tokens always signs second. This is because fundrawtransaction adds inputs,
+//nullifying any previous signatures, and even if that were not true, it'd be very risk for the LTC seller to sign first
+//because the TradeLayer expiration logic doesn't apply to movement of LTC.
+//The first version for LTC_InstantTrade will be one way flow, the Listener is always buying tokens with LTC.
+//We'll make it distinguish and go 2-ways in the next iteration.
