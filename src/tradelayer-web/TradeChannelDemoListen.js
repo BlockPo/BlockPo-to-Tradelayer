@@ -60,6 +60,7 @@ ws.onmessage = function (e) {
     	//presumably the Deribit JSON, other receiver submissions are in string form
     	BTCUSD = e.result.index_price
     }
+
     if(e.length>=36){//probably a pubkey, we'll use it to make a multisig
     	client.addMultiSigAddress(2,[e,channelSingleSigAddress],function(data){
     		myChannelMultisig = data
@@ -85,12 +86,20 @@ var denomAmount = 10
 var desiredAmount = 10
 var desiredPropertyId =
 
-function generateIoI(){
+function generateTokenIoI(){
 	//proposes prices to trade that are $5 away from the market
 	var bid = BTCUSD-5
 	var ask = BTCUSD+5
 	var newBuyIoI = {'buy':bid,'sell':ask,'bidSize':10,'offerSize':10}
 	//submits this to the feeds of WS subscribers
+}
+
+function proposeUnsignedLTCTrade(){
+	//this is the most efficient way to move things forward with LTC trades
+	//the receiver can simply sign the proposed tx like it is responding to an IoI
+	buildLTCTokenTrade(channeladdress, channelInput, tokenSellerAddress, propertyid, amountOfTokens, LTCPrice, blockheight_expiry, secondSigner=true,function(data){
+		//send data as a WS message
+	})
 }
 
 function shouldCoSign(rawstring,cb){
@@ -110,6 +119,7 @@ function shouldCoSign(rawstring,cb){
 			*/
 			//to keep it simple, the Receiver is always signing a tx in advance, the Listener always submits the signed tx
 			//and the Receiver always decides to instantly send it and publish it. 
+			//To support LTC trades, simply look for the type of trade indicated, if it's an LTC trade then if it checks out, co-sign
 	})
 }
 
@@ -122,3 +132,17 @@ function shouldCoSign(rawstring,cb){
 //because the TradeLayer expiration logic doesn't apply to movement of LTC.
 //The first version for LTC_InstantTrade will be one way flow, the Listener is always buying tokens with LTC.
 //We'll make it distinguish and go 2-ways in the next iteration.
+
+buildLTCTokenTrade(channeladdress, channelInput, tokenSellerAddress, propertyid, amountOfTokens, LTCPrice, blockheight_expiry, secondSigner=true,cb){
+	tl.getBlock(null,function(data){
+		var height = data.height+3
+		tl.createpayload_instant_LTC_trade(propertyid, amount, blockheight_expiry, LTCPrice, function(payload){
+			tl.buildRaw(payload,channelInput,[0],tokenSellerAddress,UXTOAmount, function(txString){
+				tl.fundRawTransaction(txstring,{'replaceable':true},function(data){
+					return cb(data)
+				})
+			})
+		})
+	}
+} 
+
