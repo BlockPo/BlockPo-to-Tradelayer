@@ -1,0 +1,5 @@
+const tl = require('./TradeLayerRPCTest.js')
+
+tl.getnewaddress(function(address){
+	console.log(address)
+})
