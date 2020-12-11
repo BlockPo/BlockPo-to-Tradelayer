@@ -1,25 +1,26 @@
-#include "tradelayer/rpcrawtx.h"
+#include <tradelayer/rpcrawtx.h>
 
-#include "tradelayer/createtx.h"
-#include "tradelayer/tradelayer.h"
-#include "tradelayer/rpc.h"
-#include "tradelayer/rpctxobject.h"
-#include "tradelayer/rpcvalues.h"
+#include <tradelayer/createtx.h>
+#include <tradelayer/rpc.h>
+#include <tradelayer/rpctxobject.h>
+#include <tradelayer/rpcvalues.h>
+#include <tradelayer/tradelayer.h>
 
-#include "coins.h"
-#include "core_io.h"
-#include "primitives/transaction.h"
-#include "pubkey.h"
-#include "rpc/server.h"
-#include "sync.h"
-#include "uint256.h"
-#include "utilstrencodings.h"
+#include <coins.h>
+#include <core_io.h>
+#include <primitives/transaction.h>
+#include <pubkey.h>
+#include <rpc/server.h>
+#include <sync.h>
+#include <uint256.h>
+#include <util/strencodings.h>
 
 #include <univalue.h>
 
-#include <stdint.h>
 #include <stdexcept>
+#include <stdint.h>
 #include <string>
+
 
 extern CCriticalSection cs_main;
 
@@ -29,9 +30,9 @@ using mastercore::view;
 
 UniValue tl_decodetransaction(const JSONRPCRequest& request)
 {
-    if (request.params.size() < 1 || request.params.size() > 3)
+    if (request.fHelp || request.params.size() != 1)
         throw std::runtime_error(
-            "tl_decodetransaction \"rawtx\" ( \"prevtxs\" height )\n"
+            "tl_decodetransaction \"rawtx\" \n"
 
             "\nDecodes an Trade Layer transaction.\n"
 
@@ -42,66 +43,35 @@ UniValue tl_decodetransaction(const JSONRPCRequest& request)
 
             "\nArguments:\n"
             "1. rawtx                (string, required) the raw transaction to decode\n"
-            "2. prevtxs              (string, optional) a JSON array of transaction inputs (default: none)\n"
-            "     [\n"
-            "       {\n"
-            "         \"txid\":\"hash\",          (string, required) the transaction hash\n"
-            "         \"vout\":n,               (number, required) the output number\n"
-            "         \"scriptPubKey\":\"hex\",   (string, required) the output script\n"
-            "         \"value\":n.nnnnnnnn      (number, required) the output value\n"
-            "       }\n"
-            "       ,...\n"
-            "     ]\n"
-            "3. height               (number, optional) the parsing block height (default: 0 for chain height)\n"
 
             "\nResult:\n"
             "{\n"
             "  \"txid\" : \"hash\",                  (string) the hex-encoded hash of the transaction\n"
             "  \"fee\" : \"n.nnnnnnnn\",             (string) the transaction fee in bitcoins\n"
-            "  \"sendingaddress\" : \"address\",     (string) the Bitcoin address of the sender\n"
-            "  \"referenceaddress\" : \"address\",   (string) a Bitcoin address used as reference (if any)\n"
-            "  \"ismine\" : true|false,            (boolean) whether the transaction involes an address in the wallet\n"
-            "  \"version\" : n,                    (number) the transaction version\n"
-            "  \"type_int\" : n,                   (number) the transaction type as number\n"
+            "  \"sendingaddress\" : \"address\",     (string) the Litecoin address of the sender\n"
+            "  \"referenceaddress\" : \"address\",   (string) a Litecoin address used as reference (if any)\n"
+            "  \"ismine\" : true|false,              (boolean) whether the transaction involes an address in the wallet\n"
+            "  \"version\" : n,                      (number) the transaction version\n"
+            "  \"type_int\" : n,                     (number) the transaction type as number\n"
             "  \"type\" : \"type\",                  (string) the transaction type as string\n"
-            "  [...]                             (mixed) other transaction type specific properties\n"
+            "  [...]                                 (mixed) other transaction type specific properties\n"
             "}\n"
 
             "\nExamples:\n"
-            + HelpExampleCli("tl_decodetransaction", "\"010000000163af14ce6d477e1c793507e32a5b7696288fa89705c0d02a3f66beb3c5b8afee0100000000ffffffff02ac020000000000004751210261ea979f6a06f9dafe00fb1263ea0aca959875a7073556a088cdfadcd494b3752102a3fd0a8a067e06941e066f78d930bfc47746f097fcd3f7ab27db8ddf37168b6b52ae22020000000000001976a914946cb2e08075bcbaf157e47bcb67eb2b2339d24288ac00000000\" \"[{\\\"txid\\\":\\\"eeafb8c5b3be663f2ad0c00597a88f2896765b2ae30735791c7e476dce14af63\\\",\\\"vout\\\":1,\\\"scriptPubKey\\\":\\\"76a9149084c0bd89289bc025d0264f7f23148fb683d56c88ac\\\",\\\"value\\\":0.0001123}]\"")
-            + HelpExampleRpc("tl_decodetransaction", "\"010000000163af14ce6d477e1c793507e32a5b7696288fa89705c0d02a3f66beb3c5b8afee0100000000ffffffff02ac020000000000004751210261ea979f6a06f9dafe00fb1263ea0aca959875a7073556a088cdfadcd494b3752102a3fd0a8a067e06941e066f78d930bfc47746f097fcd3f7ab27db8ddf37168b6b52ae22020000000000001976a914946cb2e08075bcbaf157e47bcb67eb2b2339d24288ac00000000\", [{\"txid\":\"eeafb8c5b3be663f2ad0c00597a88f2896765b2ae30735791c7e476dce14af63\",\"vout\":1,\"scriptPubKey\":\"76a9149084c0bd89289bc025d0264f7f23148fb683d56c88ac\",\"value\":0.0001123}]")
+            + HelpExampleCli("tl_decodetransaction", "\"010000000163af14ce6d477e1c793507e32a5b7696288fa89705c0d02a3f66beb3c5b8afee0100000000ffffffff02ac020000000000004751210261ea979f6a06f9dafe00fb1263ea0aca959875a7073556a088cdfadcd494b3752102a3fd0a8a067e06941e066f78d930bfc47746f097fcd3f7ab27db8ddf37168b6b52ae22020000000000001976a914946cb2e08075bcbaf157e47bcb67eb2b2339d24288ac00000000\"")
+            + HelpExampleRpc("tl_decodetransaction", "\"010000000163af14ce6d477e1c793507e32a5b7696288fa89705c0d02a3f66beb3c5b8afee0100000000ffffffff02ac020000000000004751210261ea979f6a06f9dafe00fb1263ea0aca959875a7073556a088cdfadcd494b3752102a3fd0a8a067e06941e066f78d930bfc47746f097fcd3f7ab27db8ddf37168b6b52ae22020000000000001976a914946cb2e08075bcbaf157e47bcb67eb2b2339d24288ac00000000\"")
         );
 
-    CTransaction tx = ParseTransaction(request.params[0]);
-
-    // use a dummy coins view to store the user provided transaction inputs
-    CCoinsView viewDummyTemp;
-    CCoinsViewCache viewTemp(&viewDummyTemp);
-
-    if (request.params.size() > 1) {
-      std::vector<PrevTxsEntry> prevTxsParsed = ParsePrevTxs(request.params[1]);
-      InputsToView(prevTxsParsed, viewTemp);
-    }
-
-    // int blockHeight = 0;
-    // if (request.params.size() > 2) {
-    //   blockHeight = request.params[2].get_int();
-    // }
+    CMutableTransaction tx = ParseMutableTransaction(request.params[0]);
 
     UniValue txObj(UniValue::VOBJ);
     int populateResult = -3331;
-    /**
-       TODO Figure out what's wrong with swap
-    {
-        LOCK2(cs_main, cs_tx_cache);
-        // temporarily switch global coins view cache for transaction inputs
-        std::swap(view, viewTemp);
-        // then get the results
-        populateResult = populateRPCTransactionObject(tx, uint256(), txObj, "", false, "", blockHeigh);
-        // and restore the original, unpolluted coins view cache
-        std::swap(viewTemp, view);
-    }
-**/
+
+    // using a different approach
+   {
+       LOCK2(cs_main, cs_tx_cache);
+       populateResult = populateRPCTransactionObject(CTransaction(std::move(tx)), uint256(), txObj, "", false, "", 0);
+   }
 
     if (populateResult != 0) PopulateFailure(populateResult);
 
@@ -110,7 +80,7 @@ UniValue tl_decodetransaction(const JSONRPCRequest& request)
 
 UniValue tl_createrawtx_opreturn(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 2)
+    if (request.fHelp || request.params.size() != 2)
         throw std::runtime_error(
             "tl_createrawtx_opreturn \"rawtx\" \"payload\"\n"
 
@@ -145,7 +115,7 @@ UniValue tl_createrawtx_opreturn(const JSONRPCRequest& request)
 
 UniValue tl_createrawtx_input(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 3)
+    if (request.fHelp || request.params.size() != 3)
         throw std::runtime_error(
             "tl_createrawtx_input \"rawtx\" \"txid\" n\n"
 
@@ -175,19 +145,17 @@ UniValue tl_createrawtx_input(const JSONRPCRequest& request)
             .addInput(txid, nOut)
             .build();
 
-    return EncodeHexTx(tx);
+    return EncodeHexTx(CTransaction(tx));
 }
 
 UniValue tl_createrawtx_reference(const JSONRPCRequest& request)
 {
-    if (request.params.size() < 2 || request.params.size() > 3)
+    if (request.fHelp || request.params.size() < 2 || request.params.size() > 3)
         throw std::runtime_error(
             "tl_createrawtx_reference \"rawtx\" \"destination\" ( amount )\n"
 
             "\nAdds a reference output to the transaction.\n"
-
             "\nIf no raw transaction is provided, a new transaction is created.\n"
-
             "\nThe output value is set to at least the dust threshold.\n"
 
             "\nArguments:\n"
@@ -204,7 +172,7 @@ UniValue tl_createrawtx_reference(const JSONRPCRequest& request)
         );
 
     CMutableTransaction tx = ParseMutableTransaction(request.params[0]);
-    std::string destination = ParseAddress(request.params[1]);
+    const std::string destination = ParseAddress(request.params[1]);
     int64_t amount = (request.params.size() > 2) ? AmountFromValue(request.params[2]) : 0;
 
     // extend the transaction
@@ -212,12 +180,12 @@ UniValue tl_createrawtx_reference(const JSONRPCRequest& request)
             .addReference(destination, amount)
             .build();
 
-    return EncodeHexTx(tx);
+    return EncodeHexTx(CTransaction(tx));
 }
 
 UniValue tl_createrawtx_change(const JSONRPCRequest& request)
 {
-    if (request.params.size() < 4 || request.params.size() > 5)
+    if (request.fHelp || request.params.size() < 4 || request.params.size() > 5)
         throw std::runtime_error(
             "tl_createrawtx_change \"rawtx\" \"prevtxs\" \"destination\" fee ( position )\n"
 
@@ -275,7 +243,7 @@ UniValue tl_createrawtx_change(const JSONRPCRequest& request)
             .addChange(destination, viewTemp, txFee, nOut)
             .build();
 
-    return EncodeHexTx(tx);
+    return EncodeHexTx(CTransaction(tx));
 }
 
 static const CRPCCommand commands[] =

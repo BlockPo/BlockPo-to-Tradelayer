@@ -16,7 +16,8 @@
 #include <netbase.h>
 #include <rpc/server.h>
 #include <rpc/client.h>
-#include <util.h>
+#include <util/system.h>
+#include <util/threadnames.h>
 
 #include <openssl/crypto.h>
 
@@ -933,6 +934,9 @@ void RPCConsole::startExecutor()
     // Default implementation of QThread::run() simply spins up an event loop in the thread,
     // which is what we want.
     thread.start();
+    QTimer::singleShot(0, executor, []() {
+        util::ThreadRename("qt-rpcconsole");
+    });
 }
 
 void RPCConsole::on_tabWidget_currentChanged(int index)

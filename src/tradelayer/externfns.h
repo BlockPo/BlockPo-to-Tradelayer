@@ -1,21 +1,22 @@
 #ifndef EXTERNFNS_H
 #define EXTERNFNS_H
 
-#include "tradelayer/tradelayer_matrices.h"
-#include "tradelayer/log.h"
+#include <tradelayer/log.h>
+#include <tradelayer/tradelayer_matrices.h>
 
-#include <vector>
-#include <unordered_set>
+#include <algorithm>
+#include <iostream>
+#include <limits>
 #include <stdint.h>
 #include <string>
+#include <unordered_set>
+#include <vector>
+
 #include <boost/lexical_cast.hpp>
+#include <boost/math/constants/constants.hpp>
 #include <boost/multiprecision/cpp_dec_float.hpp>
 #include <boost/multiprecision/cpp_int.hpp>
 #include <boost/rational.hpp>
-#include <boost/math/constants/constants.hpp>
-#include <iostream>
-#include <limits>
-#include <algorithm>
 
 typedef boost::multiprecision::cpp_dec_float_100 dec_float;
 typedef boost::rational<boost::multiprecision::checked_int128_t> rational_t;
@@ -40,28 +41,28 @@ void vwap_num_den(std::vector<int64_t> vn, std::vector<int64_t> vd, int64_t &n, 
 
 namespace mastercore
 {
-  int64_t DoubleToInt64(double d);
-  int64_t RationalToInt64(rational_t r);
+    int64_t DoubleToInt64(double d);
+    int64_t RationalToInt64(rational_t r);
 }
 
 template<typename T> void print_stdvector(T const &vec)
 {
-  typename T::const_iterator pos;
-  typename T::const_iterator end(vec.end());
+    typename T::const_iterator pos;
+    typename T::const_iterator end(vec.end());
 
-  PrintToLog("\n\nPrinting std::vector: [\t ");
-  for (pos=vec.begin(); pos!=end; ++pos) {
-    PrintToLog("%s\t", FormatDivisibleMP(*pos));
-  }
-  PrintToLog("]\n\n");
+    PrintToLog("\n\nPrinting std::vector: [\t ");
+    for (pos=vec.begin(); pos!=end; ++pos) {
+        PrintToLog("%s\t", FormatDivisibleMP(*pos));
+    }
+    PrintToLog("]\n\n");
 }
 
 template<typename T> std::vector<T> min_max(std::vector<T> &vec)
 {
-  auto result = std::minmax_element(vec.begin(),vec.end());
-  vec[0]=*result.first;
-  vec[1]=*result.second;
-  return vec;
+    auto result = std::minmax_element(vec.begin(),vec.end());
+    vec[0]=*result.first;
+    vec[1]=*result.second;
+    return vec;
 }
 
 #endif

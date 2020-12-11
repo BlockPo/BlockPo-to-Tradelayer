@@ -39,7 +39,9 @@ static inline void RegisterAllCoreRPCCommands(CRPCTable &t)
 
     /* Trade Layer RPCs: */
     RegisterTLDataRetrievalRPCCommands(t);
+#ifdef ENABLE_WALLET
     RegisterTLTransactionCreationRPCCommands(t);
+#endif
     RegisterTLPayloadCreationRPCCommands(t);
     RegisterTLRawTransactionRPCCommands(t);
 }

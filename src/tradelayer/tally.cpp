@@ -1,7 +1,7 @@
-#include "tradelayer/tally.h"
+#include <tradelayer/tally.h>
 
-#include "tradelayer/log.h"
-#include "tradelayer/tradelayer.h"
+#include <tradelayer/log.h>
+#include <tradelayer/tradelayer.h>
 
 #include <stdint.h>
 #include <map>
@@ -51,7 +51,7 @@ uint32_t CMPTally::next()
  * @param b  The other number
  * @return True, if a + b overflows
  */
-static bool isOverflow(int64_t a, int64_t b)
+bool isOverflow(int64_t a, int64_t b)
 {
     return (((b > 0) && (a > (std::numeric_limits<int64_t>::max() - b))) ||
             ((b < 0) && (a < (std::numeric_limits<int64_t>::min() - b))));
@@ -210,10 +210,10 @@ int64_t CMPTally::print(uint32_t propertyId, bool bDivisible) const
     }
 
     if (bDivisible) {
-        PrintToConsole("BALANCE %22s PENDING %22s\n",
+        PrintToLog("BALANCE %22s PENDING %22s\n",
                 FormatDivisibleMP(balance, true), FormatDivisibleMP(pending, true));
     } else {
-        PrintToConsole("BALANCE %14d PENDING %14d\n",
+        PrintToLog("BALANCE %14d PENDING %14d\n",
                 balance, pending);
     }
 

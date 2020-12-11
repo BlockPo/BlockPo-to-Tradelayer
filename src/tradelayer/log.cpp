@@ -1,17 +1,13 @@
-#include "tradelayer/log.h"
+#include <tradelayer/log.h>
 
-#include "chainparamsbase.h"
-#include "util.h"
-#include "utiltime.h"
-
-#include <boost/filesystem/operations.hpp>
-#include <boost/filesystem/path.hpp>
-#include <boost/thread/mutex.hpp>
-#include <boost/thread/once.hpp>
+#include <chainparamsbase.h>
+#include <util/system.h>
+#include <util/time.h>
 
 #include <assert.h>
-#include <stdio.h>
 #include <atomic>
+#include <mutex>
+#include <stdio.h>
 #include <string>
 #include <vector>
 
@@ -24,33 +20,33 @@ static const long LOG_SHRINKSIZE  = 50000000; // 50 MB
 
 // Debug flags
 bool msc_debug_parser_data                      = 0;
-bool msc_debug_parser_readonly                  = 0;
+bool msc_debug_parser_readonly                  = 1;
 bool msc_debug_parser                           = 0;
 bool msc_debug_verbose                          = 0;
 bool msc_debug_verbose2                         = 0;
 bool msc_debug_verbose3                         = 0;
 bool msc_debug_vin                              = 0;
 bool msc_debug_script                           = 0;
-bool msc_debug_send                             = 1;
+bool msc_debug_send                             = 0;
 bool msc_debug_tokens                           = 0;
 bool msc_debug_spec                             = 0;
 bool msc_debug_exo                              = 0;
-bool msc_debug_tally                            = 1;
-bool msc_debug_sp                               = 1;
+bool msc_debug_tally                            = 0;
+bool msc_debug_sp                               = 0;
 bool msc_debug_txdb                             = 0;
 bool msc_debug_persistence                      = 0;
 bool msc_debug_ui                               = 0;
-bool msc_debug_pending                          = 1;
-bool msc_debug_packets                          = 1;
-bool msc_debug_packets_readonly                 = 0;
+bool msc_debug_pending                          = 0;
+bool msc_debug_packets                          = 0;
+bool msc_debug_packets_readonly                 = 1;
 bool msc_debug_walletcache                      = 0;
 bool msc_debug_consensus_hash                   = 0;
 bool msc_debug_consensus_hash_every_block       = 0;
 bool msc_debug_consensus_hash_every_transaction = 0;
 bool msc_debug_alerts                           = 0;
-bool msc_debug_handle_dex_payment               = 0;
+bool msc_debug_handle_dex_payment               = 1;
 bool msc_debug_handle_instant                   = 0;
-bool msc_debug_handler_tx                       = 1;
+bool msc_debug_handler_tx                       = 0;
 bool msc_debug_tradedb                          = 0;
 bool msc_debug_margin_main                      = 0;
 bool msc_debug_pos_margin                       = 0;
@@ -71,14 +67,13 @@ bool msc_debug_contract_cancel_inorder          = 0;
 bool msc_debug_add_orderbook_edge               = 0;
 bool msc_debug_close_position                   = 0;
 bool msc_debug_get_pair_market_price            = 0;
-bool msc_debug_dex                              = 0;
+bool msc_debug_dex                              = 1;
 bool msc_debug_contractdex_tx                   = 0;
 bool msc_debug_create_pegged                    = 0;
 bool msc_debug_accept_offerbtc                  = 0;
 bool msc_debug_set_oracle                       = 0;
 bool msc_debug_send_pegged                      = 0;
 bool msc_debug_commit_channel                   = 0;
-bool msc_debug_withdrawal_from_channel          = 0;
 bool msc_debug_instant_trade                    = 0;
 bool msc_debug_contract_instant_trade           = 0;
 bool msc_create_channel                         = 0;
@@ -91,6 +86,35 @@ bool msc_debug_search_all                       = 0;
 bool msc_debug_add_contract_ltc_vol             = 0;
 bool msc_debug_update_last_block                = 0;
 bool msc_debug_send_reward                      = 0;
+bool msc_debug_contract_cancel                  = 0;
+bool msc_debug_fee_cache_buy                    = 0;
+bool msc_debug_check_attestation_reg            = 0;
+bool msc_debug_sanity_checks                    = 0;
+bool msc_debug_ltc_volume                       = 0;
+bool msc_debug_mdex_volume                      = 0;
+bool msc_debug_update_status                    = 0;
+bool msc_debug_get_channel_addr                 = 0;
+bool msc_debug_make_withdrawal                  = 0;
+bool msc_debug_check_kyc_register               = 0;
+bool msc_debug_update_id_register               = 0;
+bool msc_debug_get_transaction_address          = 0;
+bool msc_debug_is_mpin_block_range              = 0;
+bool msc_debug_record_payment_tx                = 0;
+bool msc_tx_valid_node_reward                   = 0;
+bool msc_debug_delete_att_register              = 0;
+bool msc_debug_get_upn_info                     = 0;
+bool msc_debug_get_total_lives                  = 0;
+bool msc_debug_activate_feature                 = 0;
+bool msc_debug_deactivate_feature               = 0;
+bool msc_debug_is_transaction_type_allowed      = 0;
+bool msc_debug_instant_payment                  = 0;
+bool msc_debug_settlement_algorithm_fifo        = 0;
+bool msc_debug_clearing_operator_fifo           = 0;
+bool msc_debug_counting_lives_longshorts        = 0;
+bool msc_debug_calculate_pnl_forghost           = 1;
+bool msc_debug_withdrawal_from_channel          = 1;
+bool msc_debug_populate_rpc_transaction_obj     = 0;
+
 /**
  * LogPrintf() has been broken a couple of times now
  * by well-meaning people adding mutexes in the most straightforward way.
@@ -101,13 +125,13 @@ bool msc_debug_send_reward                      = 0;
  * maybe indirectly, and you get a core dump at shutdown trying to lock
  * the mutex).
  */
-static boost::once_flag debugLogInitFlag = BOOST_ONCE_INIT;
+static std::once_flag debugLogInitFlag;
 /**
- * We use boost::call_once() to make sure these are initialized
+ * We use std::call_once() to make sure these are initialized
  * in a thread-safe manner the first time called:
  */
-static FILE* fileout = NULL;
-static boost::mutex* mutexDebugLog = NULL;
+static FILE* fileout = nullptr;
+static std::mutex* mutexDebugLog = nullptr;
 
 /** Flag to indicate, whether the Trade Layer log file should be reopened. */
 extern std::atomic<bool> fReopentradelayerLog;
@@ -118,13 +142,13 @@ extern std::atomic<bool> fReopentradelayerLog;
  * The log file can be specified via startup option "--tllogfile=/path/to/tradelayer.log",
  * and if none is provided, then the client's datadir is used as default location.
  */
-static boost::filesystem::path GetLogPath()
+static fs::path GetLogPath()
 {
-    boost::filesystem::path pathLogFile;
+    fs::path pathLogFile;
     std::string strLogPath = gArgs.GetArg("-tllogfile", "");
 
     if (!strLogPath.empty()) {
-        pathLogFile = boost::filesystem::path(strLogPath);
+        pathLogFile = fs::path(strLogPath);
         TryCreateDirectory(pathLogFile.parent_path());
     } else {
         pathLogFile = GetDataDir() / LOG_FILENAME;
@@ -138,28 +162,28 @@ static boost::filesystem::path GetLogPath()
  */
 static void DebugLogInit()
 {
-    assert(fileout == NULL);
-    assert(mutexDebugLog == NULL);
+    assert(fileout == nullptr);
+    assert(mutexDebugLog == nullptr);
 
-    boost::filesystem::path pathDebug = GetLogPath();
+    fs::path pathDebug = GetLogPath();
     fileout = fopen(pathDebug.string().c_str(), "a");
 
     if (fileout) {
-        setbuf(fileout, NULL); // Unbuffered
+        setbuf(fileout, nullptr); // Unbuffered
     } else {
         PrintToConsole("Failed to open debug log file: %s\n", pathDebug.string());
     }
 
-    mutexDebugLog = new boost::mutex();
+    mutexDebugLog = new std::mutex();
 }
 
 /**
  * @return The current timestamp in the format: 2009-01-03 18:15:05
  */
-// static std::string GetTimestamp()
-// {
-//   return DateTimeStrFormat("%Y-%m-%d %H:%M:%S", GetTime());
-// }
+ static std::string GetTimestamp()
+ {
+     return FormatISO8601DateTime(GetTime());
+ }
 
 /**
  * Prints to log file.
@@ -176,49 +200,44 @@ static void DebugLogInit()
 int LogFilePrint(const std::string& str)
 {
     int ret = 0; // Number of characters written
-    // if (fPrintToConsole) {
-    //     // Print to console
-    //     ret = ConsolePrint(str);
-    // }
-    if (true)
-    {
-        // else if (fPrintToDebugLog && AreBaseParamsConfigured()) {
-        // static bool fStartedNewLine = true;
-        boost::call_once(&DebugLogInit, debugLogInitFlag);
+    if (fPrintToConsole) {
+        // Print to console
+        ret = ConsolePrint(str);
+        
+    } else {
+        static bool fStartedNewLine = true;
+        std::call_once(debugLogInitFlag, &DebugLogInit);
 
-        if (fileout == NULL)
+        if (fileout == nullptr)
         {
             return ret;
         }
 
-        boost::mutex::scoped_lock scoped_lock(*mutexDebugLog);
+        std::lock_guard<std::mutex> lock(*mutexDebugLog);
 
         // Reopen the log file, if requested
-        //if (fReopentradelayerLiteLog) {
-         if (false)
-         {
-            fReopentradelayerLog = false;
-            boost::filesystem::path pathDebug = GetLogPath();
-            if (freopen(pathDebug.string().c_str(), "a", fileout) != NULL)
-                setbuf(fileout, NULL); // Unbuffered
+        if (fReopenTradeLayerLog)
+        {
+            fReopenTradeLayerLog = false;
+            fs::path pathDebug = GetLogPath();
+            if (freopen(pathDebug.string().c_str(), "a", fileout) != nullptr)
+                setbuf(fileout, nullptr); // Unbuffered
 
          }
 
          // Printing log timestamps can be useful for profiling
-         // if (fLogTimestamps && fStartedNewLine) {
-         //   ret += fprintf(fileout, "%s ", GetTimestamp().c_str());
-         // }
-
-         if (!str.empty() && str[str.size()-1] == '\n') {
-            //fStartedNewLine = true;
-         } else {
-            // fStartedNewLine = false;
+         if (fLogTimestamps && fStartedNewLine) {
+           ret += fprintf(fileout, "%s ", GetTimestamp().c_str());
          }
+
+         fStartedNewLine = (!str.empty() && str[str.size()-1] == '\n') ? true : false;
+
          ret += fwrite(str.data(), 1, str.size(), fileout);
     }
 
     return ret;
 }
+
 
 /**
  * Prints to the standard output, usually the console.
@@ -233,19 +252,17 @@ int LogFilePrint(const std::string& str)
 int ConsolePrint(const std::string& str)
 {
     int ret = 0; // Number of characters written
-    /*static bool fStartedNewLine = true;
+    static bool fStartedNewLine = true;
 
     if (fLogTimestamps && fStartedNewLine) {
         ret = fprintf(stdout, "%s %s", GetTimestamp().c_str(), str.c_str());
     } else {
         ret = fwrite(str.data(), 1, str.size(), stdout);
     }
-    if (!str.empty() && str[str.size()-1] == '\n') {
-        fStartedNewLine = true;
-    } else {
-        fStartedNewLine = false;
-    }
-    fflush(stdout); */
+
+    fStartedNewLine = (!str.empty() && str[str.size()-1] == '\n') ? true : false;
+
+    fflush(stdout);
 
     return ret;
 }
@@ -325,28 +342,28 @@ void InitDebugLogLevels()
  */
 void ShrinkDebugLog()
 {
-    boost::filesystem::path pathLog = GetLogPath();
+    fs::path pathLog = GetLogPath();
     FILE* file = fopen(pathLog.string().c_str(), "r");
 
-    if (file && boost::filesystem::file_size(pathLog) > LOG_SHRINKSIZE) {
+    if (file && fs::file_size(pathLog) > LOG_SHRINKSIZE) {
         // Restart the file with some of the end
         char* pch = new char[LOG_BUFFERSIZE];
-        if (NULL != pch) {
+        if (nullptr != pch) {
             fseek(file, -LOG_BUFFERSIZE, SEEK_END);
             int nBytes = fread(pch, 1, LOG_BUFFERSIZE, file);
             fclose(file);
-            file = NULL;
+            file = nullptr;
 
             file = fopen(pathLog.string().c_str(), "w");
             if (file) {
                 fwrite(pch, 1, nBytes, file);
                 fclose(file);
-                file = NULL;
+                file = nullptr;
             }
             delete[] pch;
         }
-    } else if (NULL != file) {
+    } else if (nullptr != file) {
         fclose(file);
-        file = NULL;
+        file = nullptr;
     }
 }

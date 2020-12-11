@@ -1,10 +1,9 @@
 #ifndef TRADELAYER_WALLETTXS_H
 #define TRADELAYER_WALLETTXS_H
 
-class CCoinControl;
-class CPubKey;
-
-#include "script/standard.h"
+#include <pubkey.h>
+#include <script/standard.h>
+#include <wallet/coincontrol.h>
 
 #include <stdint.h>
 #include <string>
@@ -21,13 +20,14 @@ bool CheckFee(const std::string& fromAddress, size_t nDataSize);
 bool CheckInput(const CTxOut& txOut, int nHeight, CTxDestination& dest);
 
 /** Retrieves the label, used by the UI, for an address from the wallet. */
-std::string GetAddressLabel(const std::string& address);
+// std::string GetAddressLabel(const std::string& address);
 
 /** IsMine wrapper to determine whether the address is in the wallet. */
 int IsMyAddress(const std::string& address);
 
 /** Selects spendable outputs to create a transaction. */
 int64_t SelectCoins(const std::string& fromAddress, CCoinControl& coinControl, int64_t additional = 0, unsigned int minOutputs = 0);
-}
+
+} //namespace
 
 #endif // TRADELAYER_WALLETTXS_H

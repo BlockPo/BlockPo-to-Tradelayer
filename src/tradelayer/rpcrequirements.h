@@ -5,13 +5,12 @@
 #include <string>
 
 void RequireBalance(const std::string& address, uint32_t propertyId, int64_t amount);
+void RequirePosition(const std::string& address, uint32_t contractId);
 void RequirePrimaryToken(uint32_t propertyId);
 void RequirePropertyName(const std::string& name);
 void RequirePeggedSaneName(std::string& name);
 void RequireExistingProperty(uint32_t propertyId);
 void RequireDifferentIds(uint32_t propertyId, uint32_t otherId);
-void RequireCrowdsale(uint32_t propertyId);
-void RequireActiveCrowdsale(uint32_t propertyId);
 void RequireManagedProperty(uint32_t propertyId);
 void RequireTokenIssuer(const std::string& address, uint32_t propertyId);
 void RequireSaneReferenceAmount(int64_t amount);
@@ -37,6 +36,9 @@ void RequireSaneDExFee(const std::string& address, uint32_t propertyId);
 void RequireSaneName(std::string& name);
 void RequireDifferentAddrs(const std::string& oracleAddress, const std::string& backupAddress);
 void RequireShort(std::string& fromAddress, uint32_t contractId, uint64_t amount);
+void RequireFeatureActivated(const uint16_t feature);
+void RequireAmountForFee(const std::string& address, uint32_t propertyId, int64_t amount);
+void RequireBlockHeight(const int& block);
 ////////////////////////////////////////////////////////////////////////////////
 
 

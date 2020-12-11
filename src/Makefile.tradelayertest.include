@@ -6,7 +6,20 @@ TRADELAYER_TEST_CPP = \
   tradelayer/test/tally_tests.cpp \
   tradelayer/test/create_payload_tests.cpp \
   tradelayer/test/x_trade_tests.cpp \
-  tradelayer/test/requirements_tests.cpp
+  tradelayer/test/requirements_tests.cpp \
+  tradelayer/test/dex_purchase_tests.cpp \
+  tradelayer/test/functions_tests.cpp \
+  tradelayer/test/strtoint64_tests.cpp \
+  tradelayer/test/uint256_extensions_tests.cpp \
+  tradelayer/test/rounduint64_tests.cpp \
+  tradelayer/test/checkpoint_tests.cpp \
+  tradelayer/test/contractdex_tests.cpp \
+  tradelayer/test/rpcvalues_tests.cpp \
+  tradelayer/test/dex_functions_tests.cpp \
+  tradelayer/test/vesting_tests.cpp \
+  tradelayer/test/persistence_tests.cpp \
+  tradelayer/test/mdex_functions_tests.cpp \
+  tradelayer/test/lock_tests.cpp
 
 BITCOIN_TESTS += \
   $(TRADELAYER_TEST_CPP) \

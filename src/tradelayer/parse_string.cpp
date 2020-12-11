@@ -1,11 +1,10 @@
-#include "tradelayer/parse_string.h"
-
-#include <boost/lexical_cast.hpp>
-
-#include <stdint.h>
+#include <tradelayer/parse_string.h>
 
 #include <algorithm>
+#include <stdint.h>
 #include <string>
+
+#include <boost/lexical_cast.hpp>
 
 namespace mastercore
 {

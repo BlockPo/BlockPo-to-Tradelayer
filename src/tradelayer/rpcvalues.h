@@ -6,10 +6,11 @@ class CTransaction;
 struct CMutableTransaction;
 struct PrevTxsEntry;
 
-#include <univalue.h>
+#include <rpc/server.h>
 
 #include <stdint.h>
 #include <string>
+#include <univalue.h>
 #include <vector>
 
 const uint32_t weekly = 100; //4032;   blocks: 7(days) * 24 (hours) * 60 (minutes) / 2.5 (minutes)
@@ -24,6 +25,7 @@ uint32_t ParsePropertyId(const UniValue& value);
 int64_t ParseAmount(const UniValue& value, bool isDivisible);
 int64_t ParseAmount(const UniValue& value, int propertyType);
 uint32_t ParseAmount32t(const UniValue& value);
+uint64_t ParseAmount64t(const UniValue& value);
 uint64_t ParseLeverage(const UniValue& value);
 uint8_t ParseEcosystem(const UniValue& value);
 uint8_t ParsePermission(const UniValue& value);
@@ -37,10 +39,8 @@ CTransaction ParseTransaction(const UniValue& value);
 CMutableTransaction ParseMutableTransaction(const UniValue& value);
 CPubKey ParsePubKeyOrAddress(const UniValue& value);
 uint32_t ParseOutputIndex(const UniValue& value);
-
 /** Parses previous transaction outputs. */
 std::vector<PrevTxsEntry> ParsePrevTxs(const UniValue& value);
-int64_t ParseAmountContract(const UniValue& value, int propertyType);
 int64_t ParseAmountContract(const UniValue& value);
 uint32_t ParseNewValues(const UniValue& value);
 uint32_t ParseContractType(const UniValue& value);
@@ -54,5 +54,7 @@ uint8_t ParseDExAction(const UniValue& value);
 uint64_t ParsePercent(const UniValue& value, bool isDivisible);
 uint8_t ParseBinary(const UniValue& value);
 std::vector<int> ParseArray(const UniValue& value);
+std::string ParseHash(const UniValue& value);
+uint32_t ParseNameOrId(const UniValue& value);
 
 #endif // TRADELAYER_RPCVALUES_H

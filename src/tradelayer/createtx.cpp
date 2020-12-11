@@ -1,15 +1,15 @@
-#include "tradelayer/createtx.h"
+#include <tradelayer/createtx.h>
 
-#include "tradelayer/encoding.h"
-#include "tradelayer/script.h"
+#include <tradelayer/encoding.h>
+#include <tradelayer/script.h>
 
-#include "base58.h"
-#include "coins.h"
-#include "primitives/transaction.h"
-#include "pubkey.h"
-#include "script/script.h"
-#include "script/standard.h"
-#include "uint256.h"
+#include <base58.h>
+#include <coins.h>
+#include <primitives/transaction.h>
+#include <pubkey.h>
+#include <script/script.h>
+#include <script/standard.h>
+#include <uint256.h>
 
 #include <stdint.h>
 #include <string>
@@ -62,8 +62,7 @@ TxBuilder& TxBuilder::addOutput(const CScript& scriptPubKey, int64_t value)
 /** Adds a collection of outputs to the transaction. */
 TxBuilder& TxBuilder::addOutputs(const std::vector<std::pair<CScript, int64_t> >& txOutputs)
 {
-    for (std::vector<std::pair<CScript, int64_t> >::const_iterator it = txOutputs.begin();
-            it != txOutputs.end(); ++it) {
+    for (std::vector<std::pair<CScript, int64_t> >::const_iterator it = txOutputs.begin(); it != txOutputs.end(); ++it) {
         addOutput(it->first, it->second);
     }
 
@@ -120,8 +119,7 @@ TLTxBuilder::TLTxBuilder(const CMutableTransaction& transactionIn)
 /** Adds a collection of previous outputs as inputs to the transaction. */
 TLTxBuilder& TLTxBuilder::addInputs(const std::vector<PrevTxsEntry>& prevTxs)
 {
-    for (std::vector<PrevTxsEntry>::const_iterator it = prevTxs.begin();
-            it != prevTxs.end(); ++it) {
+    for (std::vector<PrevTxsEntry>::const_iterator it = prevTxs.begin(); it != prevTxs.end(); ++it) {
         addInput(it->outPoint);
     }
 
@@ -157,7 +155,6 @@ TLTxBuilder& TLTxBuilder::addOpReturn(const std::vector<unsigned char>& data)
 TLTxBuilder& TLTxBuilder::addChange(const std::string& destination, const CCoinsViewCache& view, int64_t txFee, uint32_t position)
 {
     CTxDestination addr = DecodeDestination(destination);
-
     return (TLTxBuilder&) TxBuilder::addChange(addr, view, txFee, position);
 }
 

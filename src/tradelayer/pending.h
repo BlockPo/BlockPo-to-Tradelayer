@@ -4,10 +4,10 @@
 class uint256;
 struct CMPPending;
 
-#include "sync.h"
+#include <sync.h>
 
-#include <stdint.h>
 #include <map>
+#include <stdint.h>
 #include <string>
 
 namespace mastercore
@@ -24,6 +24,10 @@ void PendingAdd(const uint256& txid, const std::string& sendingAddress, uint16_t
 
 /** Deletes a transaction from the pending map and credits the amount back to the pending tally for the address. */
 void PendingDelete(const uint256& txid);
+
+/** Performs a check to ensure all pending transactions are still in the mempool. */
+void PendingCheck();
+
 }
 
 /** Structure to hold information about pending transactions.

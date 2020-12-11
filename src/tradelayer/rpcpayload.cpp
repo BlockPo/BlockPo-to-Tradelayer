@@ -1,14 +1,15 @@
-#include "tradelayer/rpcpayload.h"
+#include <tradelayer/rpcpayload.h>
 
-#include "tradelayer/createpayload.h"
-#include "tradelayer/rpcvalues.h"
-#include "tradelayer/rpcrequirements.h"
-#include "tradelayer/tradelayer.h"
-#include "tradelayer/sp.h"
-#include "tradelayer/tx.h"
+#include <tradelayer/createpayload.h>
+#include <tradelayer/rpcrequirements.h>
+#include <tradelayer/rpcvalues.h>
+#include <tradelayer/sp.h>
+#include <tradelayer/tradelayer.h>
+#include <tradelayer/tx.h>
 
-#include "rpc/server.h"
-#include "utilstrencodings.h"
+#include <rpc/server.h>
+#include <rpc/util.h>
+#include <util/strencodings.h>
 
 #include <univalue.h>
 
@@ -17,9 +18,9 @@ using namespace mastercore;
 
 UniValue tl_createpayload_simplesend(const JSONRPCRequest& request)
 {
-   if (request.params.size() != 2)
+   if (request.fHelp || request.params.size() != 2)
         throw runtime_error(
-            "tl_createpayload_simplesend propertyid \"amount\"\n"
+            "tl_createpayload_simplesend \"propertyid\" \"amount\"\n"
 
             "\nPayload to simple send transaction.\n"
 
@@ -45,20 +46,20 @@ UniValue tl_createpayload_simplesend(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_sendall(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 0)
+    if (request.fHelp || request.params.size() != 0)
         throw runtime_error(
             "tl_createpayload_sendall \" \n"
 
             "\nPayload to transfers all available tokens  to the recipient.\n"
 
             "\nArguments:\n"
-            "\nno arguments                                                                      \n"
+            "\nno arguments\n"
             "\nResult:\n"
             "\"payload\"             (string) the hex-encoded payload\n"
 
             "\nExamples:\n"
-            + HelpExampleCli("tl_createpayload_sendall", "\"2")
-            + HelpExampleRpc("tl_createpayload_sendall", "\"2")
+            + HelpExampleCli("tl_createpayload_sendall", "\"")
+            + HelpExampleRpc("tl_createpayload_sendall", "\"")
         );
 
     std::vector<unsigned char> payload = CreatePayload_SendAll();
@@ -67,55 +68,11 @@ UniValue tl_createpayload_sendall(const JSONRPCRequest& request)
 
 }
 
-UniValue tl_createpayload_issuancecrowdsale(const JSONRPCRequest& request)
-{
-    if (request.params.size() != 10)
-        throw runtime_error(
-            "tl_createpayload_issuancecrowdsale \" type previousid \"name\" \"url\" \"data\" propertyiddesired tokensperunit deadline ( earlybonus issuerpercentage )\n"
-
-            "Payload to create crowdsale."
-
-            "\nArguments:\n"
-            "1. type                 (number, required) the type of the tokens to create: (1 for indivisible tokens, 2 for divisible tokens)\n"
-            "2. previousid           (number, required) an identifier of a predecessor token (0 for new crowdsales)\n"
-            "3. name                 (string, required) the name of the new tokens to create\n"
-            "4. url                  (string, required) an URL for further information about the new tokens (can be \"\")\n"
-            "5. data                 (string, required) a description for the new tokens (can be \"\")\n"
-            "6. propertyiddesired    (number, required) the identifier of a token eligible to participate in the crowdsale\n"
-            "7. tokensperunit        (string, required) the amount of tokens granted per unit invested in the crowdsale\n"
-            "8. deadline             (number, required) the deadline of the crowdsale as Unix timestamp\n"
-            "9. earlybonus           (number, required) an early bird bonus for participants in percent per week\n"
-            "10. issuerpercentage    (number, required) a percentage of tokens that will be granted to the issuer\n"
-
-            "\nResult:\n"
-            "\"payload\"             (string) the hex-encoded payload\n"
-
-            "\nExamples:\n"
-            + HelpExampleCli("tl_createpayload_issuancecrowdsale"," \" 2 1 0 \"Companies\" \"Bitcoin Mining\" \"Quantum Miner\" \"\" \"\" 2 \"100\" 1483228800 30 2")
-            + HelpExampleRpc("tl_createpayload_issuancecrowdsale", " \"2, 1, 0, \"Companies\", \"Bitcoin Mining\", \"Quantum Miner\", \"\", \"\", 2, \"100\", 1483228800, 30, 2")
-        );
-
-    uint16_t type = ParsePropertyType(request.params[0]);
-    uint32_t previousId = ParsePreviousPropertyId(request.params[1]);
-    std::string name = ParseText(request.params[2]);
-    std::string url = ParseText(request.params[3]);
-    std::string data = ParseText(request.params[4]);
-    uint32_t propertyIdDesired = ParsePropertyId(request.params[5]);
-    int64_t numTokens = ParseAmount(request.params[6], type);
-    int64_t deadline = ParseDeadline(request.params[7]);
-    uint8_t earlyBonus = ParseEarlyBirdBonus(request.params[8]);
-    uint8_t issuerPercentage = ParseIssuerBonus(request.params[9]);
-
-    std::vector<unsigned char> payload = CreatePayload_IssuanceVariable(type, previousId, name, url, data, propertyIdDesired, numTokens, deadline, earlyBonus, issuerPercentage);
-
-    return HexStr(payload.begin(), payload.end());
-}
-
 UniValue tl_createpayload_issuancefixed(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 6)
+    if (request.fHelp || request.params.size() != 7)
         throw runtime_error(
-            "tl_createpayload_issuancefixed \" type previousid \"name\" \"url\" \"data\" \"amount\"\n"
+            "tl_createpayload_issuancefixed \"type\" \"previousid\" \"name\" \"url\" \"data\" \"amount\"  \"kyc\"\n"
 
             "\nPayload to create new tokens with fixed supply.\n"
 
@@ -125,14 +82,19 @@ UniValue tl_createpayload_issuancefixed(const JSONRPCRequest& request)
             "3. name                 (string, required) the name of the new tokens to create\n"
             "4. url                  (string, required) an URL for further information about the new tokens (can be \"\")\n"
             "5. data                 (string, required) a description for the new tokens (can be \"\")\n"
-            "6. amount              (string, required) the number of tokens to create\n"
+            "6. amount               (string, required) the number of tokens to create\n"
+            "7. kyc options          (array, required) A json with the kyc allowed.\n"
+            "    [\n"
+            "      2,3,5             (number) kyc id\n"
+            "      ,...\n"
+            "    ]\n"
 
             "\nResult:\n"
             "\"payload\"             (string) the hex-encoded payload\n"
 
             "\nExamples:\n"
-            + HelpExampleCli("tl_createpayload_issuancefixed", "\" 2 1 0 \"Quantum Miner\" \"\" \"\" \"1000000\"")
-            + HelpExampleRpc("tl_createpayload_issuancefixed", "\", 2, 1, 0, \"Quantum Miner\", \"\", \"\", \"1000000\"")
+            + HelpExampleCli("tl_createpayload_issuancefixed", "\" 2 1 0 \"Quantum Miner\" \"\" \"\" \"1000000\" \"[1,3,5]\"")
+            + HelpExampleRpc("tl_createpayload_issuancefixed", "\", 2, 1, 0, \"Quantum Miner\", \"\", \"\", \"1000000\"\"[1,3]\"")
         );
 
     uint16_t type = ParsePropertyType(request.params[0]);
@@ -141,8 +103,9 @@ UniValue tl_createpayload_issuancefixed(const JSONRPCRequest& request)
     std::string url = ParseText(request.params[3]);
     std::string data = ParseText(request.params[4]);
     int64_t amount = ParseAmount(request.params[5], type);
+    std::vector<int> numbers = ParseArray(request.params[6]);
 
-    std::vector<unsigned char> payload = CreatePayload_IssuanceFixed(type, previousId, name, url, data, amount);
+    std::vector<unsigned char> payload = CreatePayload_IssuanceFixed(type, previousId, name, url, data, amount, numbers);
 
     return HexStr(payload.begin(), payload.end());
 }
@@ -150,9 +113,9 @@ UniValue tl_createpayload_issuancefixed(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_issuancemanaged(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 6)
+    if (request.fHelp || request.params.size() != 6)
         throw runtime_error(
-            "tl_createpayload_issuancemanaged \" type previousid \"name\" \"url\" \"data\"\n"
+            "tl_createpayload_issuancemanaged  \"type\" \"previousid\" \"name\" \"url\" \"data\"  \"kyc\"\n"
 
             "\nPayload to create new tokens with manageable supply.\n"
 
@@ -162,17 +125,18 @@ UniValue tl_createpayload_issuancemanaged(const JSONRPCRequest& request)
             "3. name                 (string, required) the name of the new tokens to create\n"
             "4. url                  (string, required) an URL for further information about the new tokens (can be \"\")\n"
             "5. data                 (string, required) a description for the new tokens (can be \"\")\n"
-            "6. kyc options          (array, optional) A json with the kyc allowed.\n"
+            "6. kyc options          (array, required) A json with the kyc allowed.\n"
             "    [\n"
             "      2,3,5             (number) kyc id\n"
             "      ,...\n"
             "    ]\n"
+
             "\nResult:\n"
             "\"payload\"             (string) the hex-encoded payload\n"
 
             "\nExamples:\n"
-            + HelpExampleCli("tl_createpayload_issuancemanaged", "\" 2 1 0 \"Companies\" \"Bitcoin Mining\" \"Quantum Miner\" \"\" \"\"")
-            + HelpExampleRpc("tl_createpayload_issuancemanaged", "\", 2, 1, 0, \"Companies\", \"Bitcoin Mining\", \"Quantum Miner\", \"\", \"\"")
+            + HelpExampleCli("tl_createpayload_issuancemanaged", "\" 2 0 \"Companies\" \"Bitcoin Mining\" \"Quantum Miner\" \"[1,4,6]\"")
+            + HelpExampleRpc("tl_createpayload_issuancemanaged", "\", 2, 0, \"Companies\", \"Bitcoin Mining\", \"Quantum Miner\",\"[1,4,6]\"")
         );
 
     uint16_t type = ParsePropertyType(request.params[0]);
@@ -189,7 +153,7 @@ UniValue tl_createpayload_issuancemanaged(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_sendgrant(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 2)
+  if (request.fHelp || request.params.size() != 2)
     throw runtime_error(
 			"tl_createpayload_sendgrant \" propertyid \"amount\"\n"
 
@@ -203,8 +167,8 @@ UniValue tl_createpayload_sendgrant(const JSONRPCRequest& request)
 			"\"payload\"             (string) the hex-encoded payload\n"
 
 			"\nExamples:\n"
-			+ HelpExampleCli("tl_createpayload_sendgrant", "\"3HsJvhr9qzgRe3ss97b1QHs38rmaLExLcH\" \"\" 51 \"7000\"")
-			+ HelpExampleRpc("tl_createpayload_sendgrant", "\"3HsJvhr9qzgRe3ss97b1QHs38rmaLExLcH\", \"\", 51, \"7000\"")
+			+ HelpExampleCli("tl_createpayload_sendgrant", "\"51 \"7000\"")
+			+ HelpExampleRpc("tl_createpayload_sendgrant", "\"51\", \"7000\"")
 			);
 
 
@@ -218,9 +182,9 @@ UniValue tl_createpayload_sendgrant(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_sendrevoke(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 2)
+    if (request.fHelp || request.params.size() != 2)
         throw runtime_error(
-            "tl_createpayload_sendrevoke \" propertyid \"amount\" ( \"memo\" )\n"
+            "tl_createpayload_sendrevoke \" propertyid \"amount\" \n"
 
             "\nPayload to revoke units of managed tokens.\n"
 
@@ -232,8 +196,8 @@ UniValue tl_createpayload_sendrevoke(const JSONRPCRequest& request)
             "\"payload\"             (string) the hex-encoded payload\n"
 
             "\nExamples:\n"
-            + HelpExampleCli("tl_createpayload_sendrevoke", "\" \"\" 51 \"100\"")
-            + HelpExampleRpc("tl_createpayload_sendrevoke", "\", \"\", 51, \"100\"")
+            + HelpExampleCli("tl_createpayload_sendrevoke", " \"51 \"100\"")
+            + HelpExampleRpc("tl_createpayload_sendrevoke", "\", 51, \"100\"")
         );
 
     uint32_t propertyId = ParsePropertyId(request.params[0]);
@@ -244,35 +208,9 @@ UniValue tl_createpayload_sendrevoke(const JSONRPCRequest& request)
     return HexStr(payload.begin(), payload.end());
 }
 
-UniValue tl_createpayload_closecrowdsale(const JSONRPCRequest& request)
-{
-    if (request.params.size() != 1)
-        throw runtime_error(
-            "tl_createpayload_closecrowdsale \" propertyid\n"
-
-            "\nPayload to Manually close a crowdsale.\n"
-
-            "\nArguments:\n"
-            "1. propertyid           (number, required) the identifier of the crowdsale to close\n"
-
-            "\nResult:\n"
-            "\"payload\"             (string) the hex-encoded payload\n"
-
-            "\nExamples:\n"
-            + HelpExampleCli("tl_createpayload_closecrowdsale", "\" 70")
-            + HelpExampleRpc("tl_createpayload_closecrowdsale", "\", 70")
-        );
-
-    uint32_t propertyId = ParsePropertyId(request.params[0]);
-
-    std::vector<unsigned char> payload = CreatePayload_CloseCrowdsale(propertyId);
-
-    return HexStr(payload.begin(), payload.end());
-}
-
 UniValue tl_createpayload_changeissuer(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 1)
+    if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
             "tl_createpayload_changeissuer \" propertyid\n"
 
@@ -285,8 +223,8 @@ UniValue tl_createpayload_changeissuer(const JSONRPCRequest& request)
             "\"payload\"             (string) the hex-encoded payload\n"
 
             "\nExamples:\n"
-            + HelpExampleCli("tl_createpayload_changeissuer", "\" 3")
-            + HelpExampleRpc("tl_createpayload_changeissuer","\"  3")
+            + HelpExampleCli("tl_createpayload_changeissuer", "\"3")
+            + HelpExampleRpc("tl_createpayload_changeissuer","\"3")
         );
 
     uint32_t propertyId = ParsePropertyId(request.params[0]);
@@ -298,17 +236,22 @@ UniValue tl_createpayload_changeissuer(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_sendactivation(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 3)
+    if (request.fHelp || request.params.size() != 3)
         throw runtime_error(
-            "tl_createpayload_sendactivation \" featureid block minclientversion\n"
+            "tl_createpayload_sendactivation \"featureid\" \"block\" \"minclientversion\" \n"
+
             "\nPayload to activate a protocol feature.\n"
-            "\nNote: Trade Layer Core ignores activations from unauthorized sources.\n"
+
+            "\nNote: Trade Layer ignores activations from unauthorized sources.\n"
+
             "\nArguments:\n"
             "1. featureid            (number, required) the identifier of the feature to activate\n"
             "2. block                (number, required) the activation block\n"
             "3. minclientversion     (number, required) the minimum supported client version\n"
+
             "\nResult:\n"
             "\"payload\"             (string) the hex-encoded payload\n"
+
             "\nExamples:\n"
             + HelpExampleCli("tl_createpayload_sendactivation", "\" 1 370000 999")
             + HelpExampleRpc("tl_createpayload_sendactivation", "\", 1, 370000, 999")
@@ -325,18 +268,23 @@ UniValue tl_createpayload_sendactivation(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_senddeactivation(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 1)
+    if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
-            "tl_senddeactivation \"fromaddress\" featureid\n"
+            "tl_senddeactivation \"fromaddress\" \"featureid\" \n"
+
             "\nPayload to deactivate a protocol feature.  For Emergency Use Only.\n"
+
             "\nNote: Trade Layer Core ignores deactivations from unauthorized sources.\n"
+
             "\nArguments:\n"
             "1. featureid             (number, required) the identifier of the feature to activate\n"
+
             "\nResult:\n"
             "\"payload\"             (string) the hex-encoded payload\n"
+
             "\nExamples:\n"
-            + HelpExampleCli("tl_createpayload_senddeactivation", "\" 1")
-            + HelpExampleRpc("tl_createpayload_senddeactivation", "\" 1")
+            + HelpExampleCli("tl_createpayload_senddeactivation", "\"1")
+            + HelpExampleRpc("tl_createpayload_senddeactivation", "\"1")
         );
 
     uint16_t featureId = request.params[0].get_int64();
@@ -348,20 +296,24 @@ UniValue tl_createpayload_senddeactivation(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_sendalert(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 3)
+    if (request.fHelp || request.params.size() != 3)
         throw runtime_error(
-            "tl_createpayload_sendalert \" alerttype expiryvalue typecheck versioncheck \"message\"\n"
+            "tl_createpayload_sendalert \"alerttype \" \"expiryvalue\" \"typecheck\" \"versioncheck\" \"message\" \n"
+
             "\nPayload to creates and broadcasts an Trade Layer Core alert.\n"
             "\nNote: Trade Layer Core ignores alerts from unauthorized sources.\n"
+
             "\nArguments:\n"
             "1. alerttype            (number, required) the alert type\n"
             "2. expiryvalue          (number, required) the value when the alert expires (depends on alert type)\n"
             "3. message              (string, required) the user-faced alert message\n"
+
             "\nResult:\n"
             "\"payload\"             (string) the hex-encoded payload\n"
+
             "\nExamples:\n"
-            + HelpExampleCli("tl_createpayload_sendalert", "")
-            + HelpExampleRpc("tl_createpayload_sendalert", "")
+            + HelpExampleCli("tl_createpayload_sendalert", "\"3\" \"7\" \"message here\"")
+            + HelpExampleRpc("tl_createpayload_sendalert", "\"3\", \"7\" ,\"message here\"")
         );
 
     int64_t tempAlertType = request.params[0].get_int64();
@@ -383,9 +335,9 @@ UniValue tl_createpayload_sendalert(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_sendtrade(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 4) {
+  if (request.fHelp || request.params.size() != 4) {
     throw runtime_error(
-			"tl_createpayload_sendtrade \"fromaddress\" propertyidforsale \"amountforsale\" propertiddesired \"amountdesired\"\n"
+			"tl_createpayload_sendtrade \"fromaddress\" \"propertyidforsale\" \"amountforsale\" \"propertiddesired\" \"amountdesired\"\n"
 
 			"\nPayload to place a trade offer on the distributed token exchange.\n"
 
@@ -416,10 +368,10 @@ UniValue tl_createpayload_sendtrade(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_createcontract(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 9)
+  if (request.fHelp || request.params.size() != 9)
 
     throw runtime_error(
-			"tl_createpayload_createcontract \" type previousid \"category\" \"subcategory\" \"name\" \"url\" \"data\" propertyiddesired tokensperunit deadline ( earlybonus issuerpercentage )\n"
+			"tl_createpayload_createcontract \"numerator\" \"denominator\" \"name\" \"blocksuntilexpiration\" \"notionalsize\" \"collateralcurrency\" \"marginrequirement\" \"quoting\" \"kyc\" \n"
 
 			"Payload to create new Future Contract."
 
@@ -432,7 +384,7 @@ UniValue tl_createpayload_createcontract(const JSONRPCRequest& request)
 			"6. collateral currency       (number, required) collateral currency\n"
       "7. margin requirement        (number, required) margin requirement\n"
       "8. quoting                   (number, required) 0: inverse quoting contract, 1: normal quoting\n"
-      "9. kyc options          (array, optional) A json with the kyc allowed.\n"
+      "9. kyc options               (array, required) A json with the kyc allowed.\n"
       "    [\n"
       "      2,3,5         (number) kyc id\n"
       "      ,...\n"
@@ -442,17 +394,17 @@ UniValue tl_createpayload_createcontract(const JSONRPCRequest& request)
 			"\"payload\"             (string) the hex-encoded payload\n"
 
 			"\nExamples:\n"
-			+ HelpExampleCli("tl_createpayload_createcontract", "2 1 0 \"Companies\" \"Bitcoin Mining\" \"Quantum Miner\" \"\" \"\" 2 \"100\" 1483228800 30 2 4461 100 1 25")
-			+ HelpExampleRpc("tl_createpayload_createcontract", "2, 1, 0, \"Companies\", \"Bitcoin Mining\", \"Quantum Miner\", \"\", \"\", 2, \"100\", 1483228800, 30, 2, 4461, 100, 1, 25")
+			+ HelpExampleCli("tl_createpayload_createcontract", "2 1 \"Contract1\" \"2560\" \"1\" \"3\" \"0.1\" 0 \"[1,2,4]\"")
+			+ HelpExampleRpc("tl_createpayload_createcontract", "2, 1, \"Contract1\", \"2560\", \"1\", \"3\", \"0.1\", 0, \"[1,2,4]\"")
 			);
 
   uint32_t num = ParsePropertyId(request.params[0]);
   uint32_t den = ParsePropertyId(request.params[1]);
   std::string name = ParseText(request.params[2]);
-  uint32_t blocks_until_expiration = ParseNewValues(request.params[3]);
-  uint32_t notional_size = ParseNewValues(request.params[4]);
-  uint32_t collateral_currency = ParseNewValues(request.params[5]);
-  uint32_t margin_requirement = ParseAmount(request.params[6], true);
+  uint32_t blocks_until_expiration = request.params[3].get_int();
+  uint32_t notional_size = ParseAmount32t(request.params[4]);
+  uint32_t collateral_currency = request.params[5].get_int();
+  uint64_t margin_requirement = ParseAmount64t(request.params[6]);
   uint8_t inverse = ParseBinary(request.params[7]);
   std::vector<int> numbers = ParseArray(request.params[8]);
 
@@ -464,24 +416,25 @@ UniValue tl_createpayload_createcontract(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_tradecontract(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 5)
+  if (request.fHelp || request.params.size() != 5)
     throw runtime_error(
-			"tl_createpayload_tradecontract \" propertyidforsale \"amountforsale\" propertiddesired \"amountdesired\"\n"
+			"tl_createpayload_tradecontract \"name\" \"amountforsale\" \"effectiveprice\" \"tradingaction\" \"leverage\" \n"
 
 			"\nPayload to place a trade offer on the distributed Futures Contracts exchange.\n"
 
 			"\nArguments:\n"
-		  "1. propertyidforsale    (number, required) the identifier of the contract to list for trade\n"
+		  "1. name                 (number, required) the name of the contract to list for trade\n"
 			"2. amountforsale        (number, required) the amount of contracts to trade\n"
 			"3. effective price      (number, required) limit price desired in exchange\n"
 			"4. trading action       (number, required) 1 to BUY contracts, 2 to SELL contracts \n"
 			"5. leverage             (number, required) leverage (2x, 3x, ... 10x)\n"
+
 			"\nResult:\n"
 			"\"payload\"             (string) the hex-encoded payload\n"
 
 			"\nExamples:\n"
-			+ HelpExampleCli("tl_tradecontract", "\"250.0\"1\"10.0\"70.0\"80.0\"")
-			+ HelpExampleRpc("tl_tradecontract", ",\"250.0\",1,\"10.0,\"70.0,\"80.0\"")
+			+ HelpExampleCli("tl_tradecontract", "\"Contract1\" \"250.0\" \"1000.0\" \"2\" \"10\"")
+			+ HelpExampleRpc("tl_tradecontract", ",\"Contract1\", \"250.0\",\"1000.0\",\"2\",\"10\"")
 			);
 
   std::string name_traded = ParseText(request.params[0]);
@@ -497,26 +450,24 @@ UniValue tl_createpayload_tradecontract(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_cancelallcontractsbyaddress(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 1)
+  if (request.fHelp || request.params.size() != 1)
     throw runtime_error(
-			"tl_cancelallcontractsbyaddress \" \n"
+			"tl_cancelallcontractsbyaddress \" \"name (or id)\"\n"
 
 			"\nPayload to cancel all offers on a given Futures Contract .\n"
 
 			"\nArguments:\n"
-			"1. contractId           (number, required) the Id of Future Contract \n"
+			"1. name or id           (string, required) the Name (or id) of Future Contract \n"
+
 			"\nResult:\n"
 			"\"payload\"             (string) the hex-encoded payload\n"
 
 			"\nExamples:\n"
-			+ HelpExampleCli("tl_createpayload_cancelallcontractsbyaddress", "\" 3")
-			+ HelpExampleRpc("tl_createpayload_cancelallcontractsbyaddress", "\" 3")
+			+ HelpExampleCli("tl_createpayload_cancelallcontractsbyaddress", "\"3")
+			+ HelpExampleRpc("tl_createpayload_cancelallcontractsbyaddress", "\"3")
 			);
 
-  std::string name_traded = ParseText(request.params[0]);
-
-  struct FutureContractObject *pfuture = getFutureContractObject(name_traded);
-  uint32_t contractId = pfuture->fco_propertyId;
+  uint32_t contractId = ParseNameOrId(request.params[0]);
 
   std::vector<unsigned char> payload = CreatePayload_ContractDexCancelAll(contractId);
 
@@ -525,20 +476,21 @@ UniValue tl_createpayload_cancelallcontractsbyaddress(const JSONRPCRequest& requ
 
 UniValue tl_createpayload_closeposition(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 1)
+    if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
-            "tl_createpayload_closeposition \" \" contractId\n"
+            "tl_createpayload_closeposition \" \"contractId\" \n"
 
             "\nPayload to close the position on a given Futures Contract .\n"
 
             "\nArguments:\n"
             "1. contractId           (number, required) the Id of Future Contract \n"
+
             "\nResult:\n"
             "\"payload\"             (string) the hex-encoded payload\n"
 
             "\nExamples:\n"
-            + HelpExampleCli("tl_createpayload_closeposition", "\" 1, 3")
-            + HelpExampleRpc("tl_createpayload_closeposition", "\", 1, 3")
+            + HelpExampleCli("tl_createpayload_closeposition", "\" 1")
+            + HelpExampleRpc("tl_createpayload_closeposition", "\", 1")
         );
 
     uint32_t contractId = ParsePropertyId(request.params[0]);
@@ -551,9 +503,9 @@ UniValue tl_createpayload_closeposition(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_sendissuance_pegged(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 6)
+  if (request.fHelp || request.params.size() != 6)
     throw runtime_error(
-			"tl_createpayload_sendissuance_pegged\"  type previousid \"category\" \"subcategory\" \"name\" \"url\" \"data\"\n"
+			"tl_createpayload_sendissuance_pegged\"  \"type\" \"previousid\" \"name\" \"collateralcurrency\" \"futurecontractname\" \"amount\" \n"
 
 			"\nPayload to create new pegged currency with manageable supply.\n"
 
@@ -564,12 +516,13 @@ UniValue tl_createpayload_sendissuance_pegged(const JSONRPCRequest& request)
 			"4. collateralcurrency    (number, required) the collateral currency for the new pegged \n"
 			"5. future contract name  (number, required) the future contract name for the new pegged \n"
 			"6. amount of pegged      (number, required) amount of pegged to create \n"
+
 			"\nResult:\n"
 			"\"payload\"              (string) the hex-encoded payload\n"
 
 			"\nExamples:\n"
-			+ HelpExampleCli("tl_createpayload_sendissuance_pegged", "\" 2 1 0 \"Companies\" \"Bitcoin Mining\" \"Quantum Miner\" \"\" \"\"")
-			+ HelpExampleRpc("tl_createpayload_sendissuance_pegged", "\", 2, 1, 0, \"Companies\", \"Bitcoin Mining\", \"Quantum Miner\", \"\", \"\"")
+			+ HelpExampleCli("tl_createpayload_sendissuance_pegged", "\" 2 0 \"Pegged1\" \"4\" \"Quantum Future Contract\" \"500.2\"")
+			+ HelpExampleRpc("tl_createpayload_sendissuance_pegged", "\", 2, 0, \"Pegged1\", \"4\", \"Quantum Miner Future Contract\", \"500.2\"")
 			);
 
   uint16_t type = ParsePropertyType(request.params[0]);
@@ -580,7 +533,7 @@ UniValue tl_createpayload_sendissuance_pegged(const JSONRPCRequest& request)
   uint64_t amount = ParseAmount(request.params[5], isPropertyDivisible(propertyId));
 
   struct FutureContractObject *pfuture = getFutureContractObject(name_traded);
-  uint32_t contractId = pfuture->fco_propertyId;
+  uint32_t contractId = (pfuture) ? pfuture->fco_propertyId : 0;
 
   std::vector<unsigned char> payload = CreatePayload_IssuancePegged(type, previousId, name, propertyId, contractId, amount);
 
@@ -589,9 +542,9 @@ UniValue tl_createpayload_sendissuance_pegged(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_send_pegged(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 2)
+  if (request.fHelp || request.params.size() != 2)
     throw runtime_error(
-			"tl_send \" propertyid \"amount\" ( \"redeemaddress\" \"referenceamount\" )\n"
+			"tl_send \"propertyname\" \"amount\" \n"
 
 			"\nPayload to send the pegged currency to other addresses.\n"
 
@@ -599,19 +552,18 @@ UniValue tl_createpayload_send_pegged(const JSONRPCRequest& request)
 			"1. property name        (string, required) the identifier of the tokens to send\n"
 			"2. amount               (string, required) the amount to send\n"
 
-
 			"\nResult:\n"
 			"\"payload\"             (string) the hex-encoded payload\n"
 
 			"\nExamples:\n"
-			+ HelpExampleCli("tl_createpayload_send_pegged", "\" 1 \"100.0\"")
-			+ HelpExampleRpc("tl_createpayload_send_pegged", "\", 1, \"100.0\"")
+			+ HelpExampleCli("tl_createpayload_send_pegged", "\" NCoin \"100.0\"")
+			+ HelpExampleRpc("tl_createpayload_send_pegged", "\", NCoin, \"100.0\"")
 			);
 
   std::string name_pegged = ParseText(request.params[0]);
 
   struct FutureContractObject *pfuture = getFutureContractObject(name_pegged);
-  uint32_t propertyId = pfuture->fco_propertyId;
+  uint32_t propertyId = (pfuture) ? pfuture->fco_propertyId : 0;
 
   int64_t amount = ParseAmount(request.params[1], true);
 
@@ -622,9 +574,9 @@ UniValue tl_createpayload_send_pegged(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_redemption_pegged(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 3)
+    if (request.fHelp || request.params.size() != 3)
        throw runtime_error(
-			  "tl_createpayload_redemption_pegged \" propertyid \"amount\" ( \"redeemaddress\" distributionproperty )\n"
+			  "tl_createpayload_redemption_pegged \"nameofpegged\" \"amount\" \"nameofcontract\"\n"
 
 			  "\n Payload to redeem pegged currency .\n"
 
@@ -632,23 +584,24 @@ UniValue tl_createpayload_redemption_pegged(const JSONRPCRequest& request)
 			  "1. name of pegged       (string, required) name of the tokens to redeem\n"
 			  "2. amount               (number, required) the amount of pegged currency for redemption"
 			  "3. name of contract     (string, required) the identifier of the future contract involved\n"
+
 			  "\nResult:\n"
 			  "\"payload\"             (string) the hex-encoded payload\n"
 
 		  	"\nExamples:\n"
-		  	+ HelpExampleCli("tl_createpayload_redemption_pegged", "\" , 1")
-		  	+ HelpExampleRpc("tl_createpayload_redemption_pegged", "\", 1")
+		  	+ HelpExampleCli("tl_createpayload_redemption_pegged", "\"Pegged1\" \"100.0\" \"Contract1\"")
+		  	+ HelpExampleRpc("tl_createpayload_redemption_pegged", "\"Pegged1\", \"100.0\", \"Contract1\"")
 			  );
 
     std::string name_pegged = ParseText(request.params[0]);
     std::string name_contract = ParseText(request.params[2]);
     struct FutureContractObject *pfuture_pegged = getFutureContractObject(name_pegged);
-    uint32_t propertyId = pfuture_pegged->fco_propertyId;
+    uint32_t propertyId = (pfuture_pegged) ?pfuture_pegged->fco_propertyId : 0;
 
     uint64_t amount = ParseAmount(request.params[1], true);
 
     struct FutureContractObject *pfuture_contract = getFutureContractObject(name_contract);
-    uint32_t contractId = pfuture_contract->fco_propertyId;
+    uint32_t contractId = (pfuture_contract) ? pfuture_contract->fco_propertyId : 0;
 
     std::vector<unsigned char> payload = CreatePayload_RedemptionPegged(propertyId, contractId, amount);
 
@@ -657,9 +610,9 @@ UniValue tl_createpayload_redemption_pegged(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_cancelorderbyblock(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 2)
+    if (request.fHelp || request.params.size() != 2)
         throw runtime_error(
-            "tl_createpayload_cancelorderbyblock \"block\" idx\n"
+            "tl_createpayload_cancelorderbyblock \"block\" \"idx\" \n"
 
             "\nPayload to cancel an specific offer on the distributed token exchange.\n"
 
@@ -671,8 +624,8 @@ UniValue tl_createpayload_cancelorderbyblock(const JSONRPCRequest& request)
             "\"payload\"             (string) the hex-encoded payload\n"
 
             "\nExamples:\n"
-            + HelpExampleCli("tl_createpayload_cancelorderbyblock", "\" 1, 2")
-            + HelpExampleRpc("tl_createpayload_cancelorderbyblock", "\", 1, 2")
+            + HelpExampleCli("tl_createpayload_cancelorderbyblock", "\"1\" \"2\"")
+            + HelpExampleRpc("tl_createpayload_cancelorderbyblock", "\"1\", \"2\"")
         );
 
     int block = static_cast<int>(ParseNewValues(request.params[0]));
@@ -685,14 +638,14 @@ UniValue tl_createpayload_cancelorderbyblock(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_dexoffer(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 7) {
+  if (request.fHelp || request.params.size() != 7) {
     throw runtime_error(
-			"tl_createpayload_dexsell \" propertyidforsale \"amountforsale\" \"amountdesired\" paymentwindow minacceptfee action\n"
+			"tl_createpayload_dexsell \"propertyidoffer\" \"amountoffered\" \"price\" \"paymentwindow\" \"minacceptfee\" \"option\" \"action\" \n"
 
 			"\nPayload to place, update or cancel a sell offer on the traditional distributed Trade Layer/LTC exchange.\n"
 
 			"\nArguments:\n"
-			"1. propertyidoffer     (number, required) the identifier of the tokens to list for sale \n"
+			"1. propertyidoffered   (number, required) the identifier of the tokens to list for sale \n"
 			"2. amountoffering      (string, required) the amount of tokens to list for sale\n"
 			"3. price               (string, required) the price in litecoin of the offer \n"
 			"4. paymentwindow       (number, required) a time limit in blocks a buyer has to pay following a successful accepting order\n"
@@ -704,8 +657,8 @@ UniValue tl_createpayload_dexoffer(const JSONRPCRequest& request)
 			"\"payload\"             (string) the hex-encoded payload\n"
 
 			"\nExamples:\n"
-			+ HelpExampleCli("tl_createpayload_dexsell", "\" 1 \"1.5\" \"0.75\" 25 \"0.0005\" 1")
-			+ HelpExampleRpc("tl_createpayload_dexsell", "\", 1, \"1.5\", \"0.75\", 25, \"0.0005\", 1")
+			+ HelpExampleCli("tl_createpayload_dexsell", "\"1\" \"1.5\" \"0.75\" 250 \"0.0005\" \"1\" \"2\"")
+			+ HelpExampleRpc("tl_createpayload_dexsell", "\"1\", \"1.5\", \"0.75\", 250, \"0.0005\", 1 , \"2\"")
 			);
   }
 
@@ -731,9 +684,9 @@ UniValue tl_createpayload_dexoffer(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_dexaccept(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 2)
+    if (request.fHelp || request.params.size() != 2)
         throw runtime_error(
-            "tl_createpayload_dexaccept \" propertyid \"amount\n"
+            "tl_createpayload_dexaccept \"propertyid\" \"amount\" \n"
 
             "\nPayload to create and broadcast an accept offer for the specified token and amount.\n"
 
@@ -745,8 +698,8 @@ UniValue tl_createpayload_dexaccept(const JSONRPCRequest& request)
             "\"payload\"             (string) the hex-encoded payload\n"
 
             "\nExamples:\n"
-            + HelpExampleCli("tl_createpayload_dexaccept", "\" 1 \"15.0\"")
-            + HelpExampleRpc("tl_createpayload_dexaccept", "\1, \"15.0\"")
+            + HelpExampleCli("tl_createpayload_dexaccept", "\"1\" \"15.0\"")
+            + HelpExampleRpc("tl_createpayload_dexaccept", "\"1\", \"15.0\"")
         );
 
     uint32_t propertyId = ParsePropertyId(request.params[0]);
@@ -759,26 +712,25 @@ UniValue tl_createpayload_dexaccept(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_sendvesting(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 1)
-    throw runtime_error(
-			"tl_createpayload_sendvesting \"fromaddress\" \"toaddress\" propertyid \"amount\" ( \"referenceamount\" )\n"
+    if (request.fHelp || request.params.size() != 1)
+        throw runtime_error(
+			         "tl_createpayload_sendvesting \"amount\" \n"
 
-			"\nCreate and broadcast a simple send transaction.\n"
+			          "\nCreate and broadcast a send vesting transaction.\n"
 
-			"\nArguments:\n"
-			"1. amount               (string, required) the amount of vesting tokens to send\n"
+			          "\nArguments:\n"
+			          "1. amount               (string, required) the amount of vesting tokens to send\n"
 
-			"\nResult:\n"
-			"\"hash\"                  (string) the hex-encoded transaction hash\n"
+			          "\nResult:\n"
+			          "\"hash\"                  (string) the hex-encoded transaction hash\n"
 
-			"\nExamples:\n"
-			+ HelpExampleCli("tl_createpayload_sendvesting", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\" \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\" 1 \"100.0\"")
-			+ HelpExampleRpc("tl_createpayload_sendvesting", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\", \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\", 1, \"100.0\"")
-			);
+			          "\nExamples:\n"
+			          + HelpExampleCli("tl_createpayload_sendvesting", "\"100.0\"")
+			          + HelpExampleRpc("tl_createpayload_sendvesting", "\"100.0\"")
+			  );
 
-  // obtain parameters & info
-  int64_t amount = ParseAmount(request.params[0], true);
-  PrintToLog("amount = %d\n", amount);
+    // obtain parameters & info
+    int64_t amount = ParseAmount(request.params[0], true);
 
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_SendVestingTokens(amount);
@@ -790,41 +742,33 @@ UniValue tl_createpayload_sendvesting(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_instant_trade(const JSONRPCRequest& request)
 {
-  if (request.params.size() < 5)
+  if (request.fHelp || request.params.size() != 5)
     throw runtime_error(
-			"tl_createpayload_instant_trade \"fromaddress\" \"toaddress\" propertyid \"amount\" ( \"referenceamount\" )\n"
+			"tl_createpayload_instant_trade \"propertyid\" \"amount\" \"propertydesired\" \"amountdesired\" \"blockheightexpiry\" \n"
 
-			"\nCreate an instant trade payload.\n"
+			"\nCreate a token for token instant trade payload.\n"
 
 			"\nArguments:\n"
 			"1. propertyId            (number, required) the identifier of the property\n"
 			"2. amount                (string, required) the amount of the property traded for the first address of channel\n"
-      "3. blockheight_expiry    (string, required) block of expiry\n"
-      "4. propertyDesired       (number, optional) the identifier of the property traded for the second address of channel\n"
-      "5. amountDesired         (string, optional) the amount desired of tokens\n"
-
+      "3. propertydesired       (number, optional) the identifier of the property traded for the second address of channel\n"
+      "4. amountdesired         (string, optional) the amount desired of tokens\n"
+      "5. blockheight expiry    (number, required) block of expiry\n"
 
 			"\nResult:\n"
 			"\"hash\"                  (string) the hex-encoded transaction hash\n"
 
 			"\nExamples:\n"
-			+ HelpExampleCli("tl_createpayload_instant_trade", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\" \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\" 1 \"100.0\"")
-			+ HelpExampleRpc("tl_createpayload_instant_trade", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\", \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\", 1, \"100.0\"")
+			+ HelpExampleCli("tl_createpayload_instant_trade", "\"1\" \"100.0\" \"5\" \"500.2\" \"252\"")
+			+ HelpExampleRpc("tl_createpayload_instant_trade", "\"1\" , \"100.0\", \"5\", \"500.2\", \"252\"")
 			);
 
   // obtain parameters & info
   uint32_t propertyId = ParsePropertyId(request.params[0]);
-  int64_t amount = ParseAmount(request.params[1], true);
-  uint32_t blockheight_expiry = request.params[2].get_int();
-  uint32_t propertyDesired = ParsePropertyId(request.params[3]);
-  int64_t amountDesired = ParseAmount(request.params[4],true);
-
-
-  PrintToLog("propertyid = %d\n", propertyId);
-  PrintToLog("amount = %d\n", amount);
-  PrintToLog("blockheight_expiry = %d\n", blockheight_expiry);
-  PrintToLog("propertyDesired = %d\n", propertyDesired);
-  PrintToLog("amountDesired = %d\n", amountDesired);
+  int64_t amount = ParseAmount(request.params[1], isPropertyDivisible(propertyId));
+  uint32_t propertyDesired = ParsePropertyId(request.params[2]);
+  int64_t amountDesired = ParseAmount(request.params[3], isPropertyDivisible(propertyDesired));
+  int blockheight_expiry = request.params[4].get_int();
 
   // create a payload for the transaction
   std::vector<unsigned char> payload = CreatePayload_Instant_Trade(propertyId, amount, blockheight_expiry, propertyDesired, amountDesired);
@@ -833,11 +777,45 @@ UniValue tl_createpayload_instant_trade(const JSONRPCRequest& request)
 
 }
 
+UniValue tl_createpayload_instant_ltc_trade(const JSONRPCRequest& request)
+{
+  if (request.fHelp || request.params.size() != 4)
+    throw runtime_error(
+			"tl_createpayload_instant_ltc_trade \"propertyid\"  \"amountoffered\"  \"price\" \"blockheightexpiry\" \n"
+
+			"\nCreate an ltc for tokens instant trade payload.\n"
+
+			"\nArguments:\n"
+			"1. propertyId            (number, required) the identifier of the property offered\n"
+			"2. amount offered        (string, required) the amount of tokens offered for the address\n"
+      "3. price                 (string, required) total price of tokens in LTC\n"
+      "4. blockheight_expiry    (number, required) block of expiry\n"
+
+			"\nResult:\n"
+			"\"hash\"                  (string) the hex-encoded transaction hash\n"
+
+			"\nExamples:\n"
+			+ HelpExampleCli("tl_createpayload_instant_ltc_trade", "1 \"100.0\" \"2.0\" \"250\"")
+			+ HelpExampleRpc("tl_createpayload_instant_ltc_trade", " 1, \"100.0\", \"2.0\", \"250\"")
+			);
+
+  // obtain parameters & info
+  uint32_t propertyId = ParsePropertyId(request.params[0]);
+  int64_t amount = ParseAmount(request.params[1], isPropertyDivisible(propertyId));
+  int64_t totalPrice = ParseAmount(request.params[2],true);
+  int blockheight_expiry = request.params[3].get_int();
+  // create a payload for the transaction
+  std::vector<unsigned char> payload = CreatePayload_Instant_LTC_Trade(propertyId, amount, totalPrice, blockheight_expiry);
+
+  return HexStr(payload.begin(), payload.end());
+
+}
+
 UniValue tl_createpayload_contract_instant_trade(const JSONRPCRequest& request)
 {
-  if (request.params.size() < 6)
+  if (request.fHelp || request.params.size() < 6)
     throw runtime_error(
-			"tl_createpayload_instant_trade \"fromaddress\" \"toaddress\" propertyid \"amount\" ( \"referenceamount\" )\n"
+			"tl_createpayload_instant_trade \"contractid\" \"amount\" \"blockheightexpiry\" \"effectiveprice\" \"trading\" \"leverage\" \n"
 
 			"\nCreate an contract instant trade payload.\n"
 
@@ -853,8 +831,8 @@ UniValue tl_createpayload_contract_instant_trade(const JSONRPCRequest& request)
 			"\"hash\"                  (string) the hex-encoded transaction hash\n"
 
 			"\nExamples:\n"
-			+ HelpExampleCli("tl_createpayload_contract_instant_trade", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\" \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\" 1 \"100.0\"")
-			+ HelpExampleRpc("tl_createpayload_contract_instant_trade", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\", \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\", 1, \"100.0\"")
+			+ HelpExampleCli("tl_createpayload_contract_instant_trade", "\"1\" \"100.0\" \"255\" \"3500.6\" \"1\" \"10\"")
+			+ HelpExampleRpc("tl_createpayload_contract_instant_trade", "\"1\", \"100.0\", \"255\", \"3500.6\" ,\"1\", \"10\"")
 			);
 
   // obtain parameters & info
@@ -865,12 +843,6 @@ UniValue tl_createpayload_contract_instant_trade(const JSONRPCRequest& request)
   uint8_t trading_action = ParseContractDexAction(request.params[4]);
   uint64_t leverage = ParseLeverage(request.params[5]);
 
-
-  PrintToLog("propertyid = %d\n", contractId);
-  PrintToLog("amount = %d\n", amount);
-  PrintToLog("blockheight_expiry = %d\n", blockheight_expiry);
-  PrintToLog("price= %d\n", price);
-
   // create a payload for the transaction
   std::vector<unsigned char> payload = CreatePayload_Contract_Instant_Trade(contractId, amount, blockheight_expiry, price, trading_action, leverage);
 
@@ -880,9 +852,9 @@ UniValue tl_createpayload_contract_instant_trade(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_pnl_update(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 3)
+  if (request.fHelp || request.params.size() != 3)
     throw runtime_error(
-			"tl_createpayload_pnl_update \"fromaddress\" \"toaddress\" propertyid \"amount\" ( \"referenceamount\" )\n"
+			"tl_createpayload_pnl_update \"propertyid\" \"amount\" \"blockheightexpiry\" \n"
 
 			"\nCreate an pnl update payload.\n"
 
@@ -895,18 +867,14 @@ UniValue tl_createpayload_pnl_update(const JSONRPCRequest& request)
 			"\"hash\"                  (string) the hex-encoded transaction hash\n"
 
 			"\nExamples:\n"
-			+ HelpExampleCli("tl_createpayload_pnl_update", "\" 1 \"15.0\"")
-			+ HelpExampleRpc("tl_createpayload_pnl_update", "\", 1 \"15.0\"")
+			+ HelpExampleCli("tl_createpayload_pnl_update", "\"1\" \"15.0\" \"564218\"")
+			+ HelpExampleRpc("tl_createpayload_pnl_update", "\"1\", \"15.0\", \"512522\"")
 			);
 
   // obtain parameters & info
   uint32_t propertyId = ParsePropertyId(request.params[0]);
   int64_t amount = ParseAmount(request.params[1], true);
   uint32_t blockheight_expiry = request.params[2].get_int();
-
-  PrintToLog("propertyid = %d\n", propertyId);
-  PrintToLog("amount = %d\n", amount);
-  PrintToLog("blockheight_expiry = %d\n", blockheight_expiry);
 
   // create a payload for the transaction
   std::vector<unsigned char> payload = CreatePayload_PNL_Update(propertyId, amount, blockheight_expiry);
@@ -915,38 +883,24 @@ UniValue tl_createpayload_pnl_update(const JSONRPCRequest& request)
 
 }
 
-//Params: propertyid, amount, reference vOut for destination address
-
 UniValue tl_createpayload_transfer(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 2)
+  if (request.fHelp)
     throw runtime_error(
-			"tl_createpayload_transfer \"fromaddress\" \"toaddress\" propertyid \"amount\" ( \"referenceamount\" )\n"
+			"tl_createpayload_transfer \"hash\" \n"
 
 			"\nCreate an transfer payload.\n"
-
-			"\nArguments:\n"
-			"1. propertyId            (number, required) the identifier of the property\n"
-			"2. amount                (string, required) the amount of the property traded\n"
 
 			"\nResult:\n"
 			"\"hash\"                  (string) the hex-encoded transaction hash\n"
 
 			"\nExamples:\n"
-			+ HelpExampleCli("tl_createpayload_transfer", "\" 1 \"15.0\"")
-			+ HelpExampleRpc("tl_createpayload_transfer", "\", 1 \"15.0\"")
+			+ HelpExampleCli("tl_createpayload_transfer", "hash")
+			+ HelpExampleRpc("tl_createpayload_transfer", "hash")
 			);
 
-  // obtain parameters & info
-  uint32_t propertyId = ParsePropertyId(request.params[0]);
-  int64_t amount = ParseAmount(request.params[1], true);
-
-
-  PrintToLog("propertyid = %d\n", propertyId);
-  PrintToLog("amount = %d\n", amount);
-
   // create a payload for the transaction
-  std::vector<unsigned char> payload = CreatePayload_Transfer(propertyId, amount);
+  std::vector<unsigned char> payload = CreatePayload_Transfer();
 
   return HexStr(payload.begin(), payload.end());
 
@@ -954,7 +908,7 @@ UniValue tl_createpayload_transfer(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_dex_payment(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 0)
+  if (request.fHelp)
     throw runtime_error(
 			"tl_createpayload_dex_payment\n"
 
@@ -975,32 +929,29 @@ UniValue tl_createpayload_dex_payment(const JSONRPCRequest& request)
 
 }
 
-UniValue tl_createpayload_change_oracleref(const JSONRPCRequest& request)
+UniValue tl_createpayload_change_oracleadm(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 1)
+    if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
-            "tl_createpayload_change_oracleref \"fromaddress\" \"toaddress\" contract name\n"
+            "tl_createpayload_change_oracleadm \"contractname (or id)\" \n"
 
-            "\n Payload to change the issuer on record of the Oracle Future Contract.\n"
+            "\n Payload to change the admin on record of the Oracle Future Contract.\n"
 
             "\nArguments:\n"
-            "1. contract name        (string, required) the name of the Future Contract\n"
+            "1. name or id             (string, required) the name (or id) of the Future Contract\n"
 
             "\nResult:\n"
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
 
             "\nExamples:\n"
-            + HelpExampleCli("tl_createpayload_change_oracleref", "\"Contract 1\"")
-            + HelpExampleRpc("tl_createpayload_change_oracleref", "\"Contract 1\"")
+            + HelpExampleCli("tl_createpayload_change_oracleadm", "\"Contract 1\"")
+            + HelpExampleRpc("tl_createpayload_change_oracleadm", "\"Contract 1\"")
         );
 
     // obtain parameters & info
-    std::string name_contract = ParseText(request.params[0]);
-    struct FutureContractObject *pfuture_contract = getFutureContractObject(name_contract);
-    uint32_t contractId = pfuture_contract->fco_propertyId;
-
+    uint32_t contractId = ParseNameOrId(request.params[0]);
     // create a payload for the transaction
-    std::vector<unsigned char> payload = CreatePayload_Change_OracleRef(contractId);
+    std::vector<unsigned char> payload = CreatePayload_Change_OracleAdm(contractId);
 
     return HexStr(payload.begin(), payload.end());
 
@@ -1008,9 +959,9 @@ UniValue tl_createpayload_change_oracleref(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_create_oraclecontract(const JSONRPCRequest& request)
 {
-  if (request.params.size() != 8)
+  if (request.fHelp || request.params.size() != 8)
     throw runtime_error(
-			"tl_createpayload_create_oraclecontract \"address\" type previousid \"category\" \"subcategory\" \"name\" \"url\" \"data\" propertyiddesired tokensperunit deadline ( earlybonus issuerpercentage )\n"
+			"tl_createpayload_create_oraclecontract \"name\" \"blocksuntilexpiration\" \"notionalsize\" \"collateralcurrency\" \"marginrequirement\" \"backupaddress\" \"quoting\" \"kyc\" \n"
 
 			"Payload for create new Oracle Future Contract."
 
@@ -1022,7 +973,7 @@ UniValue tl_createpayload_create_oraclecontract(const JSONRPCRequest& request)
 			"5. margin requirement        (number, required) margin requirement\n"
       "6. backup address            (string, required) backup admin address contract\n"
       "7. quoting                   (number, required) 0: inverse quoting contract, 1: normal quoting\n"
-      "8. kyc options               (array, optional) A json with the kyc allowed.\n"
+      "8. kyc options               (array, required) A json with the kyc allowed.\n"
       "    [\n"
       "      2,3,5                  (number) kyc id\n"
       "      ,...\n"
@@ -1032,15 +983,15 @@ UniValue tl_createpayload_create_oraclecontract(const JSONRPCRequest& request)
 			"\"hash\"                  (string) the hex-encoded transaction hash\n"
 
 			"\nExamples:\n"
-			+ HelpExampleCli("tl_createpayload_create_oraclecontract", "2 1 0 \"Companies\" \"Bitcoin Mining\" \"Quantum Miner\" \"\" \"\" 2 \"100\" 1483228800 30 2 4461 100 1 25")
-			+ HelpExampleRpc("tl_createpayload_create_oraclecontract", "2, 1, 0, \"Companies\", \"Bitcoin Mining\", \"Quantum Miner\", \"\", \"\", 2, \"100\", 1483228800, 30, 2, 4461, 100, 1, 25")
+			+ HelpExampleCli("tl_createpayload_create_oraclecontract", "\"Contract1\" \"200\" \"1\" \"3\" \"0.1\" \"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\" \"0\" \"[1,5,4]\"")
+			+ HelpExampleRpc("tl_createpayload_create_oraclecontract" ,"\"Contract1\", \"200\", \"1\", \"3\", \"0.1\", \"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\", \"0\", \"[1,5,4]\"")
 			);
 
       std::string name = ParseText(request.params[0]);
       uint32_t blocks_until_expiration = request.params[1].get_int();
       uint32_t notional_size = ParseAmount32t(request.params[2]);
       uint32_t collateral_currency = request.params[3].get_int();
-      uint32_t margin_requirement = ParseAmount32t(request.params[4]);
+      uint64_t margin_requirement = ParseAmount64t(request.params[4]);
       std::string oracleAddress = ParseAddress(request.params[5]);
       uint8_t inverse = ParseBinary(request.params[6]);
       std::vector<int> numbers = ParseArray(request.params[7]);
@@ -1053,14 +1004,14 @@ UniValue tl_createpayload_create_oraclecontract(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_setoracle(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 4)
+    if (request.fHelp || request.params.size() != 4)
         throw runtime_error(
             "tl_createpayload_setoracle  \"contract name\" \"high\" \"low \" \"close\" \n"
 
             "\nPayload to set the price for an oracle address.\n"
 
             "\nArguments:\n"
-            "1. contract name        (string, required) the name of the Future Contract\n"
+            "1. name or id           (string, required) the name (or id) of the Future Contract\n"
             "2. high price           (number, required) the highest price of the asset\n"
             "3. low price            (number, required) the lowest price of the asset\n"
             "4. close price          (number, required) the close price of the asset\n"
@@ -1069,17 +1020,15 @@ UniValue tl_createpayload_setoracle(const JSONRPCRequest& request)
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
 
             "\nExamples:\n"
-            + HelpExampleCli("tl_createpayload_setoracle", "\"Contract 1\"")
-            + HelpExampleRpc("tl_createpayload_setoracle", "\"Contract 1\"")
+            + HelpExampleCli("tl_createpayload_setoracle", "\"Contract 1\"\"956.3\" \"452.1\" \"754.6\" ")
+            + HelpExampleRpc("tl_createpayload_setoracle", "\"Contract 1\", \"956.3\", \"452.1 \", \"754.6\" ")
         );
 
     // obtain parameters & info
-    std::string name_contract = ParseText(request.params[0]);
+    uint32_t contractId = ParseNameOrId(request.params[0]);
     uint64_t high = ParseEffectivePrice(request.params[1]);
     uint64_t low = ParseEffectivePrice(request.params[2]);
     uint64_t close = ParseEffectivePrice(request.params[3]);
-    struct FutureContractObject *pfuture_contract = getFutureContractObject(name_contract);
-    uint32_t contractId = pfuture_contract->fco_propertyId;
 
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_Set_Oracle(contractId, high, low, close);
@@ -1089,14 +1038,14 @@ UniValue tl_createpayload_setoracle(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_closeoracle(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 1)
+    if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
             "tl_createpayload_closeoracle \"contract name\n"
 
             "\nPayload to close an Oracle Future Contract.\n"
 
             "\nArguments:\n"
-            "1. contract name          (string, required) the name of the Oracle Future Contract\n"
+            "1. name or id            (string, required) the name (or id) of the Oracle Future Contract\n"
 
             "\nResult:\n"
             "\"hash\"                  (string) the hex-encoded transaction hash\n"
@@ -1107,9 +1056,7 @@ UniValue tl_createpayload_closeoracle(const JSONRPCRequest& request)
         );
 
     // obtain parameters & info
-    std::string name_contract = ParseText(request.params[0]);
-    struct FutureContractObject *pfuture_contract = getFutureContractObject(name_contract);
-    uint32_t contractId = pfuture_contract->fco_propertyId;
+    uint32_t contractId = ParseNameOrId(request.params[0]);
 
     // create a payload for the transaction
     std::vector<unsigned char> payload = CreatePayload_Close_Oracle(contractId);
@@ -1119,7 +1066,7 @@ UniValue tl_createpayload_closeoracle(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_new_id_registration(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 2)
+    if (request.fHelp || request.params.size() != 2)
         throw runtime_error(
             "tl_createpayload_new_id_registration  \"website url\" \"company name\" \n"
 
@@ -1148,9 +1095,9 @@ UniValue tl_createpayload_new_id_registration(const JSONRPCRequest& request)
 
 UniValue tl_createpayload_update_id_registration(const JSONRPCRequest& request)
 {
-    if (request.params.size() != 0)
+    if (request.fHelp)
         throw runtime_error(
-            "tl_createpayload_update_id_registration \n"
+            "tl_createpayload_update_id_registration \"hash\" \n"
 
             "\nPayload to update the address on id registration.\n"
 
@@ -1171,17 +1118,101 @@ UniValue tl_createpayload_update_id_registration(const JSONRPCRequest& request)
     return HexStr(payload.begin(), payload.end());
 }
 
+UniValue tl_createpayload_attestation(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() > 1)
+        throw runtime_error(
+            "tl_createpayload_attestation \"hash\" \n"
+
+            "\nPayload of attestation tx.\n"
+
+            "\nArguments:\n"
+            "1. string hash            (string, optional) the hash\n"
+
+            "\nResult:\n"
+            "\"hash\"                  (string) the hex-encoded transaction hash\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("tl_createpayload_attestation", "\"2507f85b9992c0d518f56c8e1a7cd43e1282c898\"")
+            + HelpExampleRpc("tl_createpayload_attestation", "\"2507f85b9992c0d518f56c8e1a7cd43e1282c898\"")
+        );
+
+
+    std::string hash;
+    (request.params.size() == 1) ? hash = ParseText(request.params[0]) : "";
+
+    // create a payload for the transaction
+    std::vector<unsigned char> payload = CreatePayload_Attestation(hash);
+
+    return HexStr(payload.begin(), payload.end());
+}
+
+UniValue tl_createpayload_commit_tochannel(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 2)
+        throw runtime_error(
+            "tl_createpayload_commit_tochannel \"propertyid\" \"amount\"\n"
+
+            "\nPayload of commit to channel tx.\n"
+
+            "\nArguments:\n"
+            "1. propertyid             (number, required) the propertyid of token commited into the channel\n"
+            "2. amount                 (number, required) amount of tokens traded in the channel\n"
+            "\nResult:\n"
+            "\"hash\"                  (string) the hex-encoded transaction hash\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("tl_createpayload_commit_tochannel", "\"2\" ,\"5\"")
+            + HelpExampleRpc("tl_createpayload_commit_tochannel", "\"2\",\"5\"")
+        );
+
+    uint32_t propertyId = ParsePropertyId(request.params[0]);
+    int64_t amount = ParseAmount(request.params[1], isPropertyDivisible(propertyId));
+
+    // create a payload for the transaction
+    std::vector<unsigned char> payload = CreatePayload_Commit_Channel(propertyId, amount);
+
+    return HexStr(payload.begin(), payload.end());
+}
+
+UniValue tl_createpayload_withdrawal_fromchannel(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 2)
+        throw runtime_error(
+            "tl_createpayload_withdrawal_fromchannel \"propertyId\" \"amount\" \n"
+
+            "\nPayload of withdraw from channel tx.\n"
+
+            "\nArguments:\n"
+            "1. propertyId             (number, required) the propertyId of token commited into the channel\n"
+            "2. amount                 (number, required) amount of tokens traded in the channel\n"
+
+            "\nResult:\n"
+            "\"hash\"                  (string) the hex-encoded transaction hash\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("tl_createpayload_withdrawal_fromchannel", "\"2\" ,\"5\"")
+            + HelpExampleRpc("tl_createpayload_withdrawal_fromchannel", "\"2\",\"5\"")
+        );
+
+    uint32_t propertyId = ParsePropertyId(request.params[0]);
+    int64_t amount = ParseAmount(request.params[1], isPropertyDivisible(propertyId));
+
+    // create a payload for the transaction
+    std::vector<unsigned char> payload = CreatePayload_Withdrawal_FromChannel(propertyId, amount);
+
+    return HexStr(payload.begin(), payload.end());
+}
+
 static const CRPCCommand commands[] =
   { //  category                         name                                             actor (function)                               okSafeMode
     //  -------------------------------- -----------------------------------------       ----------------------------------------        ----------
     { "trade layer (payload creation)", "tl_createpayload_simplesend",                    &tl_createpayload_simplesend,                      {}   },
     { "trade layer (payload creation)", "tl_createpayload_sendall",                       &tl_createpayload_sendall,                         {}   },
-    { "trade layer (payload creation)", "tl_createpayload_issuancecrowdsale",             &tl_createpayload_issuancecrowdsale,               {}   },
     { "trade layer (payload creation)", "tl_createpayload_issuancefixed",                 &tl_createpayload_issuancefixed,                   {}   },
     { "trade layer (payload creation)", "tl_createpayload_issuancemanaged",               &tl_createpayload_issuancemanaged,                 {}   },
     { "trade layer (payload creation)", "tl_createpayload_sendgrant",                     &tl_createpayload_sendgrant,                       {}   },
     { "trade layer (payload creation)", "tl_createpayload_sendrevoke",                    &tl_createpayload_sendrevoke,                      {}   },
-    { "trade layer (payload creation)", "tl_createpayload_closecrowdsale",                &tl_createpayload_closecrowdsale,                  {}   },
     { "trade layer (payload creation)", "tl_createpayload_changeissuer",                  &tl_createpayload_changeissuer,                    {}   },
     { "trade layer (payload creation)", "tl_createpayload_sendactivation",                &tl_createpayload_sendactivation,                  {}   },
     { "trade layer (payload creation)", "tl_createpayload_senddeactivation",              &tl_createpayload_senddeactivation,                {}   },
@@ -1204,13 +1235,16 @@ static const CRPCCommand commands[] =
     { "trade layer (payload creation)", "tl_createpayload_transfer",                      &tl_createpayload_transfer,                        {}   },
     { "trade layer (payload creation)", "tl_createpayload_dex_payment",                   &tl_createpayload_dex_payment,                     {}   },
     { "trade layer (payload creation)", "tl_createpayload_contract_instant_trade",        &tl_createpayload_contract_instant_trade,          {}   },
-    { "trade layer (payload creation)", "tl_createpayload_change_oracleref",              &tl_createpayload_change_oracleref,                {}   },
+    { "trade layer (payload creation)", "tl_createpayload_change_oracleadm",              &tl_createpayload_change_oracleadm,                {}   },
     { "trade layer (payload creation)", "tl_createpayload_create_oraclecontract",         &tl_createpayload_create_oraclecontract,           {}   },
     { "trade layer (payload creation)", "tl_createpayload_setoracle",                     &tl_createpayload_setoracle,                       {}   },
     { "trade layer (payload creation)", "tl_createpayload_closeoracle",                   &tl_createpayload_closeoracle,                     {}   },
     { "trade layer (payload creation)", "tl_createpayload_new_id_registration",           &tl_createpayload_new_id_registration,             {}   },
     { "trade layer (payload creation)", "tl_createpayload_update_id_registration",        &tl_createpayload_update_id_registration,          {}   },
-
+    { "trade layer (payload creation)", "tl_createpayload_attestation",                   &tl_createpayload_attestation,                     {}   },
+    { "trade layer (payload creation)", "tl_createpayload_instant_ltc_trade",             &tl_createpayload_instant_ltc_trade,               {}   },
+    { "trade layer (payload creation)", "tl_createpayload_commit_tochannel",              &tl_createpayload_commit_tochannel,                {}   },
+    { "trade layer (payload creation)", "tl_createpayload_withdrawal_fromchannel",        &tl_createpayload_withdrawal_fromchannel,          {}   }
   };
 
 

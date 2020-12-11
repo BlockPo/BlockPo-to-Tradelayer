@@ -1,17 +1,15 @@
-#include "tradelayer/notifications.h"
+#include <tradelayer/notifications.h>
 
-#include "tradelayer/log.h"
-#include "tradelayer/tradelayer.h"
-#include "tradelayer/rules.h"
-#include "tradelayer/utilsbitcoin.h"
-#include "tradelayer/version.h"
+#include <tradelayer/log.h>
+#include <tradelayer/rules.h>
+#include <tradelayer/tradelayer.h>
+#include <tradelayer/utilsbitcoin.h>
+#include <tradelayer/version.h>
 
-#include "validation.h"
-#include "util.h"
-#include "ui_interface.h"
+#include <ui_interface.h>
 
-#include <boost/algorithm/string.hpp>
-#include <boost/lexical_cast.hpp>
+#include <util/system.h>
+#include <validation.h>
 
 #include <stdint.h>
 #include <string>
@@ -30,7 +28,8 @@ std::vector<AlertData> currentTlAlerts;
  */
 void DeleteAlerts(const std::string& sender)
 {
-    for (std::vector<AlertData>::iterator it = currentTlAlerts.begin(); it != currentTlAlerts.end(); ) {
+    for (std::vector<AlertData>::iterator it = currentTlAlerts.begin(); it != currentTlAlerts.end(); )
+    {
         AlertData alert = *it;
         if (sender == alert.alert_sender) {
             PrintToLog("Removing deleted alert (from:%s type:%d expiry:%d message:%s)\n", alert.alert_sender,
@@ -90,30 +89,23 @@ bool CheckAlertAuthorization(const std::string& sender)
     std::set<std::string> whitelisted;
 
     // TODO : NEW ALERT USERS
-
     // Add manually whitelisted sources
-    /*if (mapArgs.count("-tlalertallowsender")) {
-        const std::vector<std::string>& sources = mapMultiArgs["-tlalertallowsender"];
-
+    if (gArgs.IsArgSet("-tlalertallowsender")) {
+        const std::vector<std::string>& sources = gArgs.GetArgs("-tlalertallowsender");
         for (std::vector<std::string>::const_iterator it = sources.begin(); it != sources.end(); ++it) {
             whitelisted.insert(*it);
         }
     }
 
     // Remove manually ignored sources
-    if (mapArgs.count("-tlalertignoresender")) {
-        const std::vector<std::string>& sources = mapMultiArgs["-tlalertignoresender"];
-
+    if (gArgs.IsArgSet("-tlalertignoresender")) {
+        const std::vector<std::string>& sources = gArgs.GetArgs("-tlalertignoresender");
         for (std::vector<std::string>::const_iterator it = sources.begin(); it != sources.end(); ++it) {
             whitelisted.erase(*it);
         }
-    }*/
+    }
 
-    //bool fAuthorized = (whitelisted.count(sender) ||
-    //                    whitelisted.count("any"));
-
-    bool fAuthorized = false;
-    return fAuthorized;
+    return (whitelisted.count(sender) || whitelisted.count("any"));
 }
 
 /**
@@ -133,6 +125,7 @@ std::vector<std::string> GetTradeLayerAlertMessages()
     for (std::vector<AlertData>::iterator it = currentTlAlerts.begin(); it != currentTlAlerts.end(); it++) {
         vstr.push_back((*it).alert_message);
     }
+    
     return vstr;
 }
 

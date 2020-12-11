@@ -8,8 +8,8 @@
 #include <addrman.h>
 #include <hash.h>
 #include <protocol.h>
-#include <util.h>
-#include <utilstrencodings.h>
+#include <util/system.h>
+#include <util/strencodings.h>
 #include <wallet/walletutil.h>
 
 #include <stdint.h>
@@ -593,7 +593,7 @@ bool CDB::Rewrite(CWalletDBWrapper& dbw, const char* pszSkip)
                 return fSuccess;
             }
         }
-        MilliSleep(100);
+        UninterruptibleSleep(std::chrono::milliseconds{100});
     }
 }
 
@@ -723,7 +723,7 @@ bool CWalletDBWrapper::Backup(const std::string& strDest)
                 }
             }
         }
-        MilliSleep(100);
+        UninterruptibleSleep(std::chrono::milliseconds{100});
     }
 }
 

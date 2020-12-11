@@ -2,7 +2,7 @@
 #define TRADELAYER_VERSION_H
 
 /* #if defined(HAVE_CONFIG_H) */
-/* #include "config/bitcoin-config.h" */
+/* #include <config/bitcoin-config.h> */
 /* #else */
 
 //
@@ -15,10 +15,10 @@
 #define TL_VERSION_MAJOR       0
 
 // Increase with every non-consensus affecting feature
-#define TL_VERSION_MINOR       0
+#define TL_VERSION_MINOR       2
 
 // Increase with every patch, which is not a feature or consensus affecting
-#define TL_VERSION_PATCH       4
+#define TL_VERSION_PATCH       0
 
 // Non-public build number/revision (usually zero)
 #define TL_VERSION_BUILD       0

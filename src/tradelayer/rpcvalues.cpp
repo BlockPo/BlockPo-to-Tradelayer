@@ -1,38 +1,40 @@
-#include "tradelayer/rpcvalues.h"
+#include <tradelayer/rpcvalues.h>
 
-#include "tradelayer/createtx.h"
-#include "tradelayer/parse_string.h"
-#include "tradelayer/wallettxs.h"
-#include "tradelayer/log.h"
-#include "tradelayer/sp.h"
-#include "base58.h"
-#include "core_io.h"
-#include "primitives/transaction.h"
-#include "pubkey.h"
-#include "rpc/protocol.h"
-#include "rpc/server.h"
-#include "script/script.h"
-#include "uint256.h"
+#include <tradelayer/createtx.h>
+#include <tradelayer/log.h>
+#include <tradelayer/parse_string.h>
+#include <tradelayer/script.h>
+#include <tradelayer/sp.h>
+#include <tradelayer/tx.h>
+#include <tradelayer/wallettxs.h>
 
-#include <univalue.h>
-
-#include <boost/assign/list_of.hpp>
-#include <boost/foreach.hpp>
-#include <boost/algorithm/string.hpp>
+#include <base58.h>
+#include <core_io.h>
+#include <primitives/transaction.h>
+#include <pubkey.h>
+#include <rpc/protocol.h>
+#include <rpc/server.h>
+#include <rpc/util.h>
+#include <script/script.h>
+#include <uint256.h>
 
 #include <string>
+#include <univalue.h>
 #include <vector>
+
+#include <boost/assign/list_of.hpp>
 
 using mastercore::StrToInt64;
 
 std::string ParseAddress(const UniValue& value)
 {
-    CTxDestination dest = DecodeDestination(value.get_str());
+    std::string address = value.get_str();
+    CTxDestination dest = DecodeDestination(address);
     if (!IsValidDestination(dest)) {
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid address");
     }
 
-    return EncodeDestination(dest);
+    return address;
 }
 
 std::string ParseAddressOrEmpty(const UniValue& value)
@@ -64,7 +66,7 @@ int64_t ParseAmount(const UniValue& value, bool isDivisible)
 {
     int64_t amount = mastercore::StrToInt64(value.get_str(), isDivisible);
     if (amount < 1) {
-        throw JSONRPCError(RPC_TYPE_ERROR, "Invalid amount ???");
+        throw JSONRPCError(RPC_TYPE_ERROR, "Invalid amount");
     }
     return amount;
 }
@@ -87,7 +89,6 @@ uint8_t ParseEcosystem(const UniValue& value)
 uint8_t ParsePermission(const UniValue& value)
 {
     int64_t number = value.get_int64();
-    PrintToLog("%s: number: %d\n",__func__,number);
     if (number != 0 && number != 1) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid number (0 = false, 1 = true)");
     }
@@ -160,25 +161,22 @@ uint8_t ParseIssuerBonus(const UniValue& value)
 
 CTransaction ParseTransaction(const UniValue& value)
 {
-    const CTransaction tx;
+    CMutableTransaction tx;
     if (value.isNull() || value.get_str().empty()) {
-        return tx;
+        return CTransaction(tx);
     }
 
-    // if (!DecodeHexTx(mutableTx, value.get_str())) {
-    //     throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "Transaction deserialization failed");
-    // }
+    if (!DecodeHexTx(tx, value.get_str())) {
+        throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "Transaction deserialization failed");
+    }
 
-    return tx;
+    return CTransaction(tx);
 }
 
 CMutableTransaction ParseMutableTransaction(const UniValue& value)
 {
-    CMutableTransaction mutableTx;
-    if (!DecodeHexTx(mutableTx, value.get_str())) {
-        throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "Transaction deserialization failed");
-    }
-    return mutableTx;
+    CTransaction tx = ParseTransaction(value);
+    return CMutableTransaction(tx);
 }
 
 CPubKey ParsePubKeyOrAddress(const UniValue& value)
@@ -235,23 +233,17 @@ std::vector<PrevTxsEntry> ParsePrevTxs(const UniValue& value)
 /** New things for Future Contracts */
 int64_t ParseAmountContract(const UniValue& value)
 {
-  int64_t amount = mastercore::StrToInt64(value.get_str(), true);
+  int64_t amount = mastercore::StrToInt64(value.get_str(), false);
   if (amount < 1) {
     throw JSONRPCError(RPC_TYPE_ERROR, "Invalid amount");
   }
   return amount;
 }
 
-int64_t ParseAmountContract(const UniValue& value, int propertyType)
-{
-  bool fContract = propertyType == 3;
-  return ParseAmountContract(value, fContract);
-}
-
 uint64_t ParseLeverage(const UniValue& value)
 {
-    int64_t amount = mastercore::StrToInt64(value.get_str(), true);
-    if (amount < 100000000 || 1000000000 < amount) {
+    int64_t amount = mastercore::StrToInt64(value.get_str(), false);
+    if (amount < 1 || 10 < amount) {
         throw JSONRPCError(RPC_TYPE_ERROR, "Leverage out of range");
     }
     return static_cast<uint64_t>(amount);
@@ -269,16 +261,25 @@ uint32_t ParseNewValues(const UniValue& value)
 uint32_t ParseAmount32t(const UniValue& value)
 {
   int64_t amount = StrToInt64(value.getValStr(), true);
-  if (amount < 0) {
-    throw JSONRPCError(RPC_TYPE_ERROR, "Price should be positive");
+  if (amount <= 0) {
+    throw JSONRPCError(RPC_TYPE_ERROR, "Amount should be positive");
   }
   return static_cast<uint32_t>(amount);
+}
+
+uint64_t ParseAmount64t(const UniValue& value)
+{
+  int64_t amount = StrToInt64(value.getValStr(), true);
+  if (amount <= 0) {
+    throw JSONRPCError(RPC_TYPE_ERROR, "Amount should be positive");
+  }
+  return static_cast<uint64_t>(amount);
 }
 
 uint64_t ParseEffectivePrice(const UniValue& value)
 {
   int64_t effPrice = StrToInt64(value.getValStr(), true);
-  if (effPrice < 0) {
+  if (effPrice <= 0) {
     throw JSONRPCError(RPC_TYPE_ERROR, "Price should be positive");
   }
   return effPrice;
@@ -288,7 +289,7 @@ uint64_t ParseEffectivePrice(const UniValue& value)
 uint64_t ParseEffectivePrice(const UniValue& value, uint32_t contractId)
 {
   int64_t effPrice = StrToInt64(value.getValStr(), true);
-  if (effPrice < 0) {
+  if (effPrice <= 0) {
     throw JSONRPCError(RPC_TYPE_ERROR, "Price should be positive");
   }
 
@@ -313,7 +314,7 @@ uint8_t ParseContractDexAction(const UniValue& value)
 int64_t ParseDExFee(const UniValue& value)
 {
     int64_t fee = StrToInt64(value.get_str(), true);  // BTC is divisible
-    if (fee < 0) {
+    if (fee <= 0) {
         throw JSONRPCError(RPC_TYPE_ERROR, "Mininmum accept fee must be positive");
     }
     return fee;
@@ -331,9 +332,9 @@ uint8_t ParseDExAction(const UniValue& value)
 uint8_t ParseDExPaymentWindow(const UniValue& value)
 {
   int64_t blocks = value.get_int64();
-  // if (blocks < 1 || 255 < blocks) {
-  //     throw JSONRPCError(RPC_TYPE_ERROR, "Payment window must be within 1-255 blocks");
-  // }
+  if (blocks < 1 || 255 < blocks) {
+      throw JSONRPCError(RPC_TYPE_ERROR, "Payment window must be within 1-255 blocks");
+  }
   return static_cast<uint8_t>(blocks);
 }
 
@@ -351,7 +352,6 @@ uint32_t ParseContractType(const UniValue& value)
 uint32_t ParseContractDen(const UniValue& value)
 {
     int64_t Nvalue = value.get_int64();
-    PrintToConsole(" Nvalue: %d\n",Nvalue);
     if (Nvalue != 1 && Nvalue != 2 && Nvalue != 3 && Nvalue != 4 && Nvalue != 5 && Nvalue != 6) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "denomination no valid");
     }
@@ -380,10 +380,42 @@ std::vector<int> ParseArray(const UniValue& value)
 
     for (unsigned int idx = 0; idx < kycOptions.size(); idx++)
     {
-            const UniValue& num = kycOptions[idx];
-            numbers.push_back(num.get_int());
-            PrintToLog("%s(): num : %d \n",__func__, num.get_int());
+            const UniValue& elem = kycOptions[idx];
+            const int num = elem.isNum() ? elem.get_int() : atoi(elem.get_str());
+            numbers.push_back(num);
+            PrintToLog("%s(): num: %d\n",__func__, num);
     }
 
     return numbers;
+}
+
+std::string ParseHash(const UniValue& value)
+{
+     uint256 result = ParseHashV(value, "txid");
+     return result.ToString();
+}
+
+uint32_t ParseNameOrId(const UniValue& value)
+{
+    int64_t amount = mastercore::StrToInt64(value.get_str(), false);
+
+    if (amount != 0)
+    {
+        uint32_t am = static_cast<uint32_t>(amount);
+        CMPSPInfo::Entry sp;
+        if (!mastercore::_my_sps->getSP(am, sp) || !sp.isContract()) {
+            throw JSONRPCError(RPC_DATABASE_ERROR, "Contract Id not found");
+        }
+
+        return am;
+    }
+
+    struct FutureContractObject *pfuture = getFutureContractObject(value.get_str());
+    uint32_t propertyId = pfuture->fco_propertyId;
+
+    if (propertyId == 0) {
+        throw JSONRPCError(RPC_TYPE_ERROR, "Contract not found!");
+    }
+
+    return propertyId;
 }

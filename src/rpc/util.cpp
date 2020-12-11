@@ -8,7 +8,9 @@
 #include <rpc/protocol.h>
 #include <rpc/util.h>
 #include <tinyformat.h>
-#include <utilstrencodings.h>
+#include <util/strencodings.h>
+#include <wallet/wallet.h>
+#include <validation.h>
 
 // Converts a hex string to a public key if possible
 CPubKey HexToPubKey(const std::string& hex_in)

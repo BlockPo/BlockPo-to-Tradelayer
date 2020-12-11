@@ -1,14 +1,14 @@
-#include "tradelayer/encoding.h"
+#include <tradelayer/encoding.h>
 
-#include "tradelayer/tradelayer.h"
-#include "tradelayer/script.h"
+#include <tradelayer/tradelayer.h>
+#include <tradelayer/script.h>
 
-#include "base58.h"
-#include "pubkey.h"
-#include "random.h"
-#include "script/script.h"
-#include "script/standard.h"
-#include "utilstrencodings.h"
+#include <base58.h>
+#include <pubkey.h>
+#include <random.h>
+#include <script/script.h>
+#include <script/standard.h>
+#include <util/strencodings.h>
 
 #include <stdint.h>
 #include <string>
@@ -30,8 +30,8 @@ bool TradeLayer_Encode_ClassD(const std::vector<unsigned char>& vchPayload,
     vchData.insert(vchData.end(), vchPayload.begin(), vchPayload.end());
     if (vchData.size() > nMaxDatacarrierBytes) { return false; }
 
-    CScript script = CScript() << OP_RETURN << vchData;
+    CScript script;
+    script << OP_RETURN << vchData;
     vecOutputs.push_back(std::make_pair(script, 0));
-
     return true;
 }

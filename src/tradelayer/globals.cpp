@@ -1,13 +1,14 @@
+#include <tradelayer/mdex.h>
+#include <tradelayer/tradelayer_matrices.h>
+
+#include <cstdint>
+#include <iostream>
+#include <mutex>
+#include <stdint.h>
 #include <stdio.h>
 #include <string>
-#include <vector>
-#include <cstdint>
-#include <stdint.h>
-#include "tradelayer_matrices.h"
-#include "mdex.h"
-#include <iostream>
 #include <thread>
-#include <mutex>
+#include <vector>
 
 typedef boost::multiprecision::uint128_t ui128;
 using namespace std;
@@ -17,9 +18,7 @@ int64_t globalNumPrice;
 int64_t globalDenPrice;
 int64_t priceIndex;
 double percentLiqPrice;
-int64_t factorE;
 double denMargin;
-uint64_t marketP[NPTYPES];
 volatile int id_contract;
 volatile int idx_q;
 volatile unsigned int path_length;
@@ -61,11 +60,7 @@ mutex map_vector_mtx;
 std::map<uint32_t, std::vector<int64_t>> mapContractAmountTimesPrice;
 std::map<uint32_t, std::vector<int64_t>> mapContractVolume;
 std::map<uint32_t, int64_t> VWAPMapContracts;
-
-std::map<uint32_t, int64_t> cachefees;
-std::map<uint32_t, int64_t> cachefees_oracles;
 VectorTLS *pt_expiration_dates;
-std::vector<std::string> vestingAddresses;
 int nVestingAddrs;
 int64_t amountVesting;
 int64_t totalVesting;
@@ -86,6 +81,7 @@ volatile int64_t LastLog;
 int volumeToVWAP;
 int BlockS;
 std::string setExoduss;
+
 /*****************************************/
 /** TWAP containers **/
 
@@ -107,24 +103,3 @@ mutex mReward;
 double RewardSecndI;
 double RewardFirstI;
 int64_t SatoshiH;
-
-/*****************************************/
-/** Oracles **/
-std::map<uint32_t,std::map<int,oracledata>> oraclePrices;
-
-/*****************************************/
-/** Withdrawals on channels **/
-std::map<std::string,vector<withdrawalAccepted>> withdrawal_Map;
-
-/** Active channels **/
-std::map<std::string,channel> channels_Map;
-
-/** LTC  Cumulative volume per property **/
-std::map<int, std::map<uint32_t,int64_t>> MapPropVolume; // block, property, LTC Amount
-
-
-/**  Cumulative volume by pair of properties
- *   Block, property1,property2 -> put the amount of property1 traded.
- *   property1 index < property2 index
- */
-std::map<int, std::map<std::pair<uint32_t, uint32_t>, int64_t>> MapMetaVolume;

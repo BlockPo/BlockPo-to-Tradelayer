@@ -1,43 +1,32 @@
-#include "tradelayer/mdex.h"
+#include <tradelayer/consensushash.h>
+#include <tradelayer/errors.h>
+#include <tradelayer/log.h>
+#include <tradelayer/mdex.h>
+#include <tradelayer/rules.h>
+#include <tradelayer/sp.h>
+#include <tradelayer/tally.h>
+#include <tradelayer/tradelayer.h>
+#include <tradelayer/tx.h>
+#include <tradelayer/uint256_extensions.h>
 
-#include "tradelayer/errors.h"
-#include "tradelayer/log.h"
-#include "tradelayer/tradelayer.h"
-#include "tradelayer/rules.h"
-#include "tradelayer/sp.h"
-#include "tradelayer/tx.h"
-#include "tradelayer/uint256_extensions.h"
-#include "tradelayer/consensushash.h"
-#include "tradelayer/tally.h"
-
-#include "arith_uint256.h"
-#include "chain.h"
-#include "tinyformat.h"
-#include "uint256.h"
-#include "test/test_bitcoin.h"
-
+#include <arith_uint256.h>
+#include <chain.h>
+#include <test/test_bitcoin.h>
+#include <tinyformat.h>
+#include <uint256.h>
 #include <univalue.h>
-
-#include <boost/multiprecision/cpp_int.hpp>
-#include <boost/rational.hpp>
-#include <boost/test/unit_test.hpp>
-
-#include <openssl/sha.h>
+#include <util/strencodings.h>
 
 #include <assert.h>
-#include <stdint.h>
-
 #include <fstream>
 #include <limits>
 #include <map>
 #include <set>
-#include <string>
-
-#include "utilstrencodings.h"
-
 #include <stdint.h>
-#include <vector>
 #include <string>
+#include <vector>
+
+#include <boost/test/unit_test.hpp>
 
 using namespace mastercore;
 
@@ -57,7 +46,8 @@ BOOST_AUTO_TEST_CASE(one_trade)
 			1,   // subaction
 			0,   // amount remaining
 			5,   // effective_price
-			2);  // trading_action
+			2,  // trading_action
+ 10000000);  // amount reserved
 
   CMPContractDex buyer("1NNQKWM8mC35pBNPxV1noWFZEw7A5X6zXz", // address
 		       172,  // block
@@ -70,7 +60,8 @@ BOOST_AUTO_TEST_CASE(one_trade)
 		       1,    // subaction
 		       0,    // amount remaining
 		       5,    // effective_price
-		       1);   // trading_action
+		       1,   // trading_action
+    10000000);  // amount reserved
 
   CMPContractDex *s; s = &seller;
   CMPContractDex *b; b = &buyer;

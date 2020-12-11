@@ -1,8 +1,9 @@
 #ifndef TRADELAYER_ERRORS_H
 #define TRADELAYER_ERRORS_H
 
+#include <tradelayer/tradelayer.h>
+
 #include <string>
-#include "tradelayer/tradelayer.h"
 
 enum MPRPCErrorCode
 {
@@ -28,8 +29,7 @@ enum MPRPCErrorCode
     //gettransaction_MP, listtransactions_MP
     MP_TX_NOT_FOUND =               -3331,  // No information available about transaction. (GetTransaction failed)
     MP_TX_UNCONFIRMED =             -3332,  // Unconfirmed transactions are not supported. (blockHash is 0)
-    MP_BLOCK_NOT_IN_CHAIN =         -3333,  // Transaction not part of the active chain.   (pBlockIndex is NULL)
-    MP_CROWDSALE_WITHOUT_PROPERTY = -3334,  // Potential database corruption: "Crowdsale Purchase" without valid property identifier.
+    MP_BLOCK_NOT_IN_CHAIN =         -3333,  // Transaction not part of the active chain.   (pBlockIndex is nullptr)
     MP_INVALID_TX_IN_DB_FOUND     = -3335,  // Potential database corruption: Invalid transaction found.
     MP_TX_IS_NOT_MASTER_PROTOCOL  = -3336,  // Not a Master Protocol transaction.
 
@@ -124,6 +124,9 @@ inline std::string error_str(int ec) {
     case PKT_ERROR_SEND -25:
       ec_str = "Sender has insufficient balance";
       break;
+    case PKT_ERROR_SEND -26:
+      ec_str = "Sender sending tokens to himself";
+      break;
     case PKT_ERROR_SEND_ALL -22:
       ec_str = "Transaction type or version not permitted";
       break;
@@ -217,9 +220,9 @@ inline std::string error_str(int ec) {
     case PKT_ERROR_SP -20:
       ec_str = "Block is not in the active chain";
       break;
-    case PKT_ERROR_SP -21:
-      ec_str = "Ecosystem is invalid";
-      break;
+    // case PKT_ERROR_SP -21:
+    //   ec_str = "Ecosystem is invalid";
+    //   break;
     case PKT_ERROR_SP -22:
       ec_str = "Transaction type or version not permitted";
       break;
@@ -237,12 +240,6 @@ inline std::string error_str(int ec) {
       break;
     case PKT_ERROR_SP -38:
       ec_str = "Deadline is in the past";
-      break;
-    case PKT_ERROR_SP -39:
-      ec_str = "Sender has an active crowdsale";
-      break;
-    case PKT_ERROR_SP -40:
-      ec_str = "Sender has no active crowdsale";
       break;
     case PKT_ERROR_SP -41:
       ec_str = "Property identifier mismatch";
@@ -271,17 +268,11 @@ inline std::string error_str(int ec) {
     case PKT_ERROR_TOKENS -25:
       ec_str = "Sender has insufficient balance";
       break;
-    case PKT_ERROR_TOKENS -39:
-      ec_str = "Sender has an active crowdsale";
-      break;
     case PKT_ERROR_TOKENS -43:
       ec_str = "Sender is not the issuer of the property";
       break;
     case PKT_ERROR_TOKENS -45:
       ec_str = "Receiver is empty";
-      break;
-    case PKT_ERROR_TOKENS -46:
-      ec_str = "Receiver has an active crowdsale";
       break;
     case PKT_ERROR_TOKENS -47:
       ec_str = "Freezing is not enabled for the property";
@@ -347,10 +338,10 @@ inline std::string error_str(int ec) {
       ec_str = "Property desired does not exist";
       break;
     case PKT_ERROR_CHANNELS -15:
-      ec_str = "some address doesn't belong to multisig channel";
+      ec_str = "Address doesn't belong to multisig channel";
       break;
     case PKT_ERROR_CHANNELS -16:
-      ec_str = "out of channel deadline";
+      ec_str = "Out of channel deadline";
       break;
     case PKT_ERROR_CHANNELS -17:
       ec_str = "Sender has insufficient balance";

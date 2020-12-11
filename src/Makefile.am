@@ -79,8 +79,8 @@ BITCOIN_CORE_H = \
   addrman.h \
   base58.h \
   bech32.h \
-  bloom.h \
   blockencodings.h \
+  bloom.h \
   chain.h \
   chainparams.h \
   chainparamsbase.h \
@@ -99,6 +99,7 @@ BITCOIN_CORE_H = \
   core_io.h \
   core_memusage.h \
   cuckoocache.h \
+  dbwrapper.h \
   fs.h \
   httprpc.h \
   httpserver.h \
@@ -106,7 +107,6 @@ BITCOIN_CORE_H = \
   init.h \
   key.h \
   keystore.h \
-  dbwrapper.h \
   limitedmap.h \
   memusage.h \
   merkleblock.h \
@@ -130,15 +130,16 @@ BITCOIN_CORE_H = \
   rpc/client.h \
   rpc/mining.h \
   rpc/protocol.h \
+  rpc/register.h \
   rpc/safemode.h \
   rpc/server.h \
-  rpc/register.h \
   rpc/util.h \
   scheduler.h \
+  script/ismine.h \
   script/sigcache.h \
   script/sign.h \
   script/standard.h \
-  script/ismine.h \
+  span.h \
   streams.h \
   support/allocators/secure.h \
   support/allocators/zeroafterfree.h \
@@ -146,17 +147,20 @@ BITCOIN_CORE_H = \
   support/events.h \
   support/lockedpool.h \
   sync.h \
-  threadsafety.h \
   threadinterrupt.h \
+  threadsafety.h \
   timedata.h \
   torcontrol.h \
   txdb.h \
   txmempool.h \
   ui_interface.h \
   undo.h \
-  util.h \
-  utilmoneystr.h \
-  utiltime.h \
+  util/moneystr.h \
+  util/string.h \
+  util/system.h \
+  util/threadnames.h \
+  util/time.h \
+  util/vector.h \
   validation.h \
   validationinterface.h \
   versionbits.h \
@@ -174,45 +178,7 @@ BITCOIN_CORE_H = \
   zmq/zmqabstractnotifier.h \
   zmq/zmqconfig.h\
   zmq/zmqnotificationinterface.h \
-  zmq/zmqpublishnotifier.h \
-	tradelayer/log.h \
-  tradelayer/tradelayer.h \
-  tradelayer/persistence.h \
-  tradelayer/tally.h \
-  tradelayer/activation.h \
-  tradelayer/consensushash.h \
-  tradelayer/convert.h \
-  tradelayer/encoding.h \
-  tradelayer/errors.h \
-  tradelayer/notifications.h \
-  tradelayer/pending.h \
-  tradelayer/rules.h \
-  tradelayer/script.h \
-  tradelayer/sp.h \
-  tradelayer/tx.h \
-  tradelayer/utilsbitcoin.h \
-  tradelayer/version.h \
-  tradelayer/walletcache.h \
-  tradelayer/wallettxs.h \
-  tradelayer/uint256_extensions.h \
-  tradelayer/rpcrawtx.h \
-  tradelayer/createtx.h \
-  tradelayer/rpc.h \
-  tradelayer/rpctxobject.h \
-  tradelayer/rpcvalues.h \
-	tradelayer/rpcrawtx.h \
-  tradelayer/fetchwallettx.h \
-  tradelayer/rpcrequirements.h \
-  tradelayer/rpctx.h \
-  tradelayer/parse_string.h \
-  tradelayer/createpayload.h \
-  tradelayer/rpcpayload.h \
-  tradelayer/varint.h \
-  tradelayer/dex.h \
-  tradelayer/mdex.h \
-  tradelayer/externfns.h \
-  tradelayer/operators_algo_clearing.h
-
+  zmq/zmqpublishnotifier.h
 obj/build.h: FORCE
 	@$(MKDIR_P) $(builddir)/obj
 	@$(top_srcdir)/share/genbuild.sh "$(abs_top_builddir)/src/obj/build.h" \
@@ -261,42 +227,7 @@ libbitcoin_server_a_SOURCES = \
   validation.cpp \
   validationinterface.cpp \
   versionbits.cpp \
-	tradelayer/log.cpp \
-  tradelayer/tradelayer.cpp \
-  tradelayer/persistence.cpp \
-  tradelayer/tally.cpp \
-  tradelayer/activation.cpp \
-  tradelayer/consensushash.cpp \
-  tradelayer/convert.cpp \
-	tradelayer/createtx.cpp \
-  tradelayer/encoding.cpp \
-  tradelayer/notifications.cpp \
-  tradelayer/pending.cpp \
-  tradelayer/rules.cpp \
-  tradelayer/script.cpp \
-  tradelayer/sp.cpp \
-  tradelayer/tx.cpp \
-  tradelayer/utilsbitcoin.cpp \
-  tradelayer/version.cpp \
-  tradelayer/walletcache.cpp \
-  tradelayer/wallettxs.cpp \
-  tradelayer/rpc.cpp \
-  tradelayer/rpctxobject.cpp \
-  tradelayer/rpcvalues.cpp \
-	tradelayer/rpcrawtx.cpp \
-  tradelayer/fetchwallettx.cpp \
-  tradelayer/rpcrequirements.cpp \
-  tradelayer/rpctx.cpp \
-  tradelayer/parse_string.cpp \
-  tradelayer/createpayload.cpp \
-  tradelayer/rpcpayload.cpp \
-  tradelayer/varint.cpp \
-  tradelayer/mdex.cpp \
-  tradelayer/dex.cpp \
-  tradelayer/globals.cpp\
-  tradelayer/externfns.cpp\
-  tradelayer/operators_algo_clearing.cpp\
-$(BITCOIN_CORE_H)
+  $(BITCOIN_CORE_H)
 
 if ENABLE_ZMQ
 libbitcoin_zmq_a_CPPFLAGS = $(BITCOIN_INCLUDES) $(ZMQ_CFLAGS)
@@ -385,8 +316,8 @@ libbitcoin_consensus_a_SOURCES = \
   tinyformat.h \
   uint256.cpp \
   uint256.h \
-  utilstrencodings.cpp \
-  utilstrencodings.h \
+  util/strencodings.cpp \
+  util/strencodings.h \
   version.h
 
 # common: shared between bitcoind, and bitcoin-qt and non-server tools
@@ -418,7 +349,6 @@ libbitcoin_common_a_SOURCES = \
 libbitcoin_util_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
 libbitcoin_util_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 libbitcoin_util_a_SOURCES = \
-  support/lockedpool.cpp \
   chainparamsbase.cpp \
   clientversion.cpp \
   compat/glibc_sanity.cpp \
@@ -429,12 +359,15 @@ libbitcoin_util_a_SOURCES = \
   rpc/protocol.cpp \
   rpc/util.cpp \
   support/cleanse.cpp \
+  support/lockedpool.cpp \
   sync.cpp \
   threadinterrupt.cpp \
-  util.cpp \
-  utilmoneystr.cpp \
-  utilstrencodings.cpp \
-  utiltime.cpp \
+  util/moneystr.cpp \
+  util/strencodings.cpp \
+  util/string.cpp \
+  util/system.cpp \
+  util/threadnames.cpp \
+  util/time.cpp \
   $(BITCOIN_CORE_H)
 
 if GLIBC_BACK_COMPAT

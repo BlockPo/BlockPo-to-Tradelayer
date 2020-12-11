@@ -220,13 +220,6 @@ unsigned int CCoinsViewCache::GetCacheSize() const {
     return cacheCoins.size();
 }
 
-/** For Trade Layer Port*/
-const CTxOut &CCoinsViewCache::GetOutputFor(const CTxIn& input) const
-{
-    const Coin& coin = AccessCoin(input.prevout);
-    assert(!coin.IsSpent());
-    return coin.GetTxOut();
-}
 
 CAmount CCoinsViewCache::GetValueIn(const CTransaction& tx) const
 {

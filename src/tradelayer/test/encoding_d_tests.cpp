@@ -1,19 +1,19 @@
-#include "tradelayer/encoding.h"
+#include <tradelayer/encoding.h>
 
-#include "tradelayer/script.h"
+#include <tradelayer/script.h>
 
-#include "script/script.h"
-#include "test/test_bitcoin.h"
-#include "utilstrencodings.h"
-
-#include <boost/test/unit_test.hpp>
+#include <script/script.h>
+#include <test/test_bitcoin.h>
+#include <util/strencodings.h>
 
 #include <stdint.h>
 #include <string>
 #include <utility>
 #include <vector>
 
-// Is resetted to a norm value in each test
+#include <boost/test/unit_test.hpp>
+
+// is reset to a norm value in each test
 extern unsigned nMaxDatacarrierBytes;
 
 BOOST_FIXTURE_TEST_SUITE(tradelayer_encoding_d_tests, BasicTestingSetup)
@@ -26,11 +26,10 @@ BOOST_AUTO_TEST_CASE(class_d_marker)
     nMaxDatacarrierBytes = 40; // byte
 
     std::vector<unsigned char> vchMarker;
-    vchMarker.push_back(0x70); // "p"
-    vchMarker.push_back(0x71); // "q"
+    vchMarker.push_back(0x77); // "p"
+    vchMarker.push_back(0x77); // "q"
 
-    std::vector<unsigned char> vchPayload = ParseHex(
-        "0000101");
+    std::vector<unsigned char> vchPayload = ParseHex("0000101");
 
     std::vector<std::pair<CScript, int64_t> > vecOutputs;
     BOOST_CHECK(TradeLayer_Encode_ClassD(vchPayload, vecOutputs));

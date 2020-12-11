@@ -1,27 +1,35 @@
-#include "tradelayer/persistence.h"
+/**
+ * @file persistence.cpp
+ *
+ * This file contains file based persistence related functions.
+ */
 
-#include "tradelayer/log.h"
+#include <tradelayer/persistence.h>
 
-#include "util.h"
+#include <tradelayer/log.h>
 
-#include "leveldb/db.h"
-#include "leveldb/write_batch.h"
-
-#include <boost/filesystem/path.hpp>
+#include <util/system.h>
+#include <leveldb/db.h>
+#include <leveldb/write_batch.h>
 
 #include <stdint.h>
+
+// XXX
+#include <boost/filesystem/path.hpp>
 
 /**
  * Opens or creates a LevelDB based database.
  */
-leveldb::Status CDBBase::Open(const boost::filesystem::path& path, bool fWipe)
+leveldb::Status CDBBase::Open(const fs::path& path, bool fWipe)
 {
-      if (fWipe) {
-         if (msc_debug_persistence) PrintToLog("Wiping LevelDB in %s\n", path.string());
-         leveldb::DestroyDB(path.string(), options);
-     }
-     TryCreateDirectory(path);
-     if (msc_debug_persistence) PrintToLog("Opening LevelDB in %s\n", path.string());
+    if (fWipe)
+    {
+        if (msc_debug_persistence) PrintToLog("Wiping LevelDB in %s\n", path.string());
+        leveldb::DestroyDB(path.string(), options);
+    }
+
+    TryCreateDirectory(path);
+    if (msc_debug_persistence) PrintToLog("Opening LevelDB in %s\n", path.string());
 
     return leveldb::DB::Open(options, path.string(), &pdb);
 }
@@ -60,7 +68,7 @@ void CDBBase::Close()
 {
     if (pdb) {
         delete pdb;
-        pdb = NULL;
+        pdb = nullptr;
     }
 }
 

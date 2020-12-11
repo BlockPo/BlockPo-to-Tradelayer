@@ -14,10 +14,10 @@
 #include <rpc/server.h>
 #include <init.h>
 #include <noui.h>
-#include <util.h>
+#include <util/system.h>
 #include <httpserver.h>
 #include <httprpc.h>
-#include <utilstrencodings.h>
+#include <util/strencodings.h>
 #include "tradelayer/tradelayer_matrices.h"
 #include <boost/thread.hpp>
 
@@ -45,7 +45,7 @@ void WaitForShutdown()
     // Tell the main threads to shutdown.
     while (!fShutdown)
     {
-        MilliSleep(200);
+        UninterruptibleSleep(std::chrono::milliseconds{200});
         fShutdown = ShutdownRequested();
     }
     Interrupt();
@@ -178,7 +178,6 @@ bool AppInit(int argc, char* argv[])
 
 int main(int argc, char* argv[])
 {
-  extern int64_t factorE;
   extern int64_t priceIndex;
   extern double denMargin;
   extern int n_cols;

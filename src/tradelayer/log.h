@@ -1,8 +1,8 @@
 #ifndef TRADELAYER_LOG_H
 #define TRADELAYER_LOG_H
 
-#include "util.h"
-#include "tinyformat.h"
+#include <tinyformat.h>
+#include <util/system.h>
 
 #include <string>
 
@@ -95,35 +95,57 @@ extern bool msc_debug_search_all;
 extern bool msc_debug_add_contract_ltc_vol;
 extern bool msc_debug_update_last_block;
 extern bool msc_debug_send_reward;
+extern bool msc_debug_contract_cancel;
+extern bool msc_debug_fee_cache_buy;
+extern bool msc_debug_check_attestation_reg;
+extern bool msc_debug_sanity_checks;
+extern bool msc_debug_ltc_volume;
+extern bool msc_debug_mdex_volume;
+extern bool msc_debug_update_status;
+extern bool msc_debug_get_channel_addr;
+extern bool msc_debug_make_withdrawal;
+extern bool msc_debug_check_kyc_register;
+extern bool msc_debug_update_id_register;
+extern bool msc_debug_get_transaction_address;
+extern bool msc_debug_is_mpin_block_range;
+extern bool msc_debug_record_payment_tx;
+extern bool msc_tx_valid_node_reward;
+extern bool msc_debug_delete_att_register;
+extern bool msc_debug_get_upn_info;
+extern bool msc_debug_get_total_lives;
+extern bool msc_debug_activate_feature;
+extern bool msc_debug_deactivate_feature;
+extern bool msc_debug_is_transaction_type_allowed;
+extern bool msc_debug_instant_payment;
+extern bool msc_debug_settlement_algorithm_fifo;
+extern bool msc_debug_clearing_operator_fifo;
+extern bool msc_debug_counting_lives_longshorts;
+extern bool msc_debug_calculate_pnl_forghost;
+extern bool msc_debug_populate_rpc_transaction_obj;
 
-/* When we switch to C++11, this can be switched to variadic templates instead
- * of this macro-based construction (see tinyformat.h).
- */
-#define MAKE_TRADE_LAYER_ERROR_AND_LOG_FUNC(n)                                    \
-    template<TINYFORMAT_ARGTYPES(n)>                                            \
-    static inline int PrintToLog(const char* format, TINYFORMAT_VARARGS(n))     \
-    {                                                                           \
-        return LogFilePrint(tfm::format(format, TINYFORMAT_PASSARGS(n)));       \
-    }                                                                           \
-    template<TINYFORMAT_ARGTYPES(n)>                                            \
-    static inline int PrintToLog(TINYFORMAT_VARARGS(n))                         \
-    {                                                                           \
-        return LogFilePrint(tfm::format("%s", TINYFORMAT_PASSARGS(n)));         \
-    }                                                                           \
-    template<TINYFORMAT_ARGTYPES(n)>                                            \
-    static inline int PrintToConsole(const char* format, TINYFORMAT_VARARGS(n)) \
-    {                                                                           \
-        return ConsolePrint(tfm::format(format, TINYFORMAT_PASSARGS(n)));       \
-    }                                                                           \
-    template<TINYFORMAT_ARGTYPES(n)>                                            \
-    static inline int PrintToConsole(TINYFORMAT_VARARGS(n))                     \
-    {                                                                           \
-        return ConsolePrint(tfm::format("%s", TINYFORMAT_PASSARGS(n)));         \
-    }
 
-TINYFORMAT_FOREACH_ARGNUM(MAKE_TRADE_LAYER_ERROR_AND_LOG_FUNC)
+template<typename Arg>
+static inline int PrintToLog(Arg arg)
+{
+    return LogFilePrint(tfm::format(arg));
+}
 
-#undef MAKE_TRADE_LAYER_ERROR_AND_LOG_FUNC
+template<typename... Args>
+static inline int PrintToLog(const char* format, Args... args)
+{
+    return LogFilePrint(tfm::format(format, args...));
+}
 
+template<typename Arg>
+static inline int PrintToConsole(Arg arg)
+{
+    return ConsolePrint(tfm::format(arg));
+}
+
+template<typename... Args>
+static inline int PrintToConsole(const char* format, Args... args)
+{
+    return ConsolePrint(tfm::format(format, args...));
+}
 
 #endif // TRADELAYER_LOG_H

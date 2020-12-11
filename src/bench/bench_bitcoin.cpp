@@ -7,7 +7,7 @@
 #include <crypto/sha256.h>
 #include <key.h>
 #include <validation.h>
-#include <util.h>
+#include <util/system.h>
 #include <random.h>
 
 #include <boost/lexical_cast.hpp>

@@ -14,7 +14,7 @@
 #include <validation.h>
 #include <script/script.h>
 #include <timedata.h>
-#include <util.h>
+#include <util/system.h>
 #include <wallet/db.h>
 #include <wallet/wallet.h>
 

@@ -1,13 +1,11 @@
 #ifndef TRADELAYER_MATRICES_H
 #define TRADELAYER_MATRICES_H
 
-#include<cassert>
-#include<iostream>
+#include <cassert>
+#include <iostream>
 #include <iterator>
 #include <vector>
-#include <boost/any.hpp>
 
-using boost::any_cast;
 using namespace std;
 
 template<class T>

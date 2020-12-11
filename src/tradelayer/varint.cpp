@@ -4,7 +4,7 @@
  * This file contains code to handle variable length integers.
  */
 
-#include "tradelayer/varint.h"
+#include <tradelayer/varint.h>
 
 // Returns true if a byte has the MSB set
 bool IsMSBSet(unsigned char* byte) {

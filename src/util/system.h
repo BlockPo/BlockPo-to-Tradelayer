@@ -7,8 +7,8 @@
  * Server/client environment: argument handling, config file parsing,
  * logging, thread wrappers, startup time
  */
-#ifndef BITCOIN_UTIL_H
-#define BITCOIN_UTIL_H
+#ifndef BITCOIN_UTIL_SYSTEM_H
+#define BITCOIN_UTIL_SYSTEM_H
 
 #if defined(HAVE_CONFIG_H)
 #include <config/bitcoin-config.h>
@@ -18,7 +18,8 @@
 #include <fs.h>
 #include <sync.h>
 #include <tinyformat.h>
-#include <utiltime.h>
+#include <util/threadnames.h>
+#include <util/time.h>
 
 #include <atomic>
 #include <exception>
@@ -183,7 +184,7 @@ bool LockDirectory(const fs::path& directory, const std::string lockfile_name, b
 void ReleaseDirectoryLocks();
 
 bool TryCreateDirectories(const fs::path& p);
-bool TryCreateDirectory(const boost::filesystem::path& p);
+bool TryCreateDirectory(const fs::path& p);
 fs::path GetDefaultDataDir();
 const fs::path &GetDataDir(bool fNetSpecific = true);
 void ClearDatadirCache();
@@ -311,15 +312,12 @@ std::string HelpMessageOpt(const std::string& option, const std::string& message
  */
 int GetNumCores();
 
-void RenameThread(const char* name);
-
 /**
  * .. and a wrapper that just calls func once
  */
 template <typename Callable> void TraceThread(const char* name,  Callable func)
 {
-    std::string s = strprintf("bitcoin-%s", name);
-    RenameThread(s.c_str());
+    util::ThreadRename(name);
     try
     {
         LogPrintf("%s thread start\n", name);
@@ -350,4 +348,4 @@ std::unique_ptr<T> MakeUnique(Args&&... args)
     return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
 }
 
-#endif // BITCOIN_UTIL_H
+#endif // BITCOIN_UTIL_SYSTEM_H

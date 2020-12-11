@@ -29,7 +29,8 @@
 #include <init.h>
 #include <rpc/server.h>
 #include <ui_interface.h>
-#include <util.h>
+#include <util/system.h>
+#include <util/threadnames.h>
 #include <warnings.h>
 
 #ifdef ENABLE_WALLET
@@ -297,6 +298,7 @@ void BitcoinCore::initialize()
 {
     try
     {
+        util::ThreadRename("qt-init");
         qDebug() << __func__ << ": Running initialization in thread";
         bool rv = AppInitMain();
         Q_EMIT initializeResult(rv);
