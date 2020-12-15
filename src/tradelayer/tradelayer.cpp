@@ -2656,6 +2656,7 @@ void clear_all_state()
     // LevelDB based storage
      _my_sps->Clear();
      t_tradelistdb->Clear();
+     pt_settlementlistdb->Clear();
      p_txlistdb->Clear();
      p_TradeTXDB->Clear();
 
@@ -2714,9 +2715,10 @@ int mastercore_init()
   _my_sps = new CMPSPInfo(GetDataDir() / "OCL_spinfo", fReindex);
   p_TradeTXDB = new CtlTransactionDB(GetDataDir() / "OCL_TXDB", fReindex);
   t_tradelistdb = new CMPTradeList(GetDataDir()/"OCL_tradelist", fReindex);
+  pt_settlementlistdb = new CMPSettlementList(GetDataDir()/"OCL_settlementlist", fReindex);
   MPPersistencePath = GetDataDir() / "OCL_persist";
   TryCreateDirectory(MPPersistencePath);
-
+  
   bool wrongDBVersion = (p_txlistdb->getDBVersion() != DB_VERSION);
 
   ++mastercoreInitialized;
@@ -2791,6 +2793,11 @@ int mastercore_shutdown()
         t_tradelistdb = nullptr;
     }
 
+    if (pt_settlementlistdb) {
+      delete pt_settlementlistdb;
+      pt_settlementlistdb = nullptr;
+    }
+    
     if (_my_sps) {
         delete _my_sps;
         _my_sps = nullptr;
@@ -5194,35 +5201,35 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
 void CMPSettlementList::recordSettlementList(const uint256 txid1, const uint256 txid2, string address1, string address2, uint64_t effective_price, uint64_t amount_maker, uint64_t amount_taker, int blockNum1, int blockNum2, uint32_t property_traded, string tradeStatus, int64_t lives_s0, int64_t lives_s1, int64_t lives_s2, int64_t lives_s3, int64_t lives_b0, int64_t lives_b1, int64_t lives_b2, int64_t lives_b3, string s_maker0, string s_taker0, string s_maker1, string s_taker1, string s_maker2, string s_taker2, string s_maker3, string s_taker3, int64_t nCouldBuy0, int64_t nCouldBuy1, int64_t nCouldBuy2, int64_t nCouldBuy3,uint64_t amountpnew, uint64_t amountpold)
 {
   if (!pdb) return;
-  
   bool savedata_bool = false;
   std::string sblockNum2 = std::to_string(blockNum2);
   
   PrintToLog("\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+  PrintToLog("Start: recordSettlementList Function!! <------------------------------\n");
   const string key =  sblockNum2 + "+" + txid1.ToString() + "+" + txid2.ToString(); //order with block of taker.
   
   const string value0 = strprintf("%s:%s:%lu:%d:%d:%s:%s:%d:%d:%d:%s:%s:%d", address1, address2, effective_price,
-				  blockNum1, blockNum2, s_maker0, s_taker0, lives_s0, lives_b0, property_traded,
-				  txid1.ToString(), txid2.ToString(), nCouldBuy0);
+  				  blockNum1, blockNum2, s_maker0, s_taker0, lives_s0, lives_b0, property_traded,
+  				  txid1.ToString(), txid2.ToString(), nCouldBuy0);
   const string value1 = strprintf("%s:%s:%lu:%d:%d:%s:%s:%d:%d:%d:%s:%s:%d", address1, address2, effective_price,
-				  blockNum1, blockNum2, s_maker1, s_taker1, lives_s1, lives_b1, property_traded,
-				  txid1.ToString(), txid2.ToString(), nCouldBuy1);
+  				  blockNum1, blockNum2, s_maker1, s_taker1, lives_s1, lives_b1, property_traded,
+  				  txid1.ToString(), txid2.ToString(), nCouldBuy1);
   const string value2 = strprintf("%s:%s:%lu:%d:%d:%s:%s:%d:%d:%d:%s:%s:%d", address1, address2, effective_price,
-				  blockNum1, blockNum2, s_maker2, s_taker2, lives_s2, lives_b2, property_traded,
-				  txid1.ToString(), txid2.ToString(), nCouldBuy2);
+  				  blockNum1, blockNum2, s_maker2, s_taker2, lives_s2, lives_b2, property_traded,
+  				  txid1.ToString(), txid2.ToString(), nCouldBuy2);
   const string value3 = strprintf("%s:%s:%lu:%d:%d:%s:%s:%d:%d:%d:%s:%s:%d", address1, address2, effective_price,
-				  blockNum1, blockNum2, s_maker3, s_taker3, lives_s3, lives_b3, property_traded,
-				  txid1.ToString(), txid2.ToString(), nCouldBuy3);
+  				  blockNum1, blockNum2, s_maker3, s_taker3, lives_s3, lives_b3, property_traded,
+  				  txid1.ToString(), txid2.ToString(), nCouldBuy3);
   PrintToLog("value0: %s\n", value0);
   PrintToLog("value1: %s\n", value1);
   PrintToLog("value2: %s\n", value2);
   PrintToLog("value3: %s\n", value3);  
   
+  /********************************************************************/
+  /** To store into .txt Files**/
   bool status_bool1 = s_maker0 == "OpenShortPosByLongPosNetted" || s_maker0 == "OpenLongPosByShortPosNetted";
   bool status_bool2 = s_taker0 == "OpenShortPosByLongPosNetted" || s_taker0 == "OpenLongPosByShortPosNetted";
   
-  /********************************************************************/
-  /** To store into .txt Files**/
   std::fstream SettlementRows;
   SettlementRows.open("SettlementRows.txt", std::fstream::in | std::fstream::out | std::fstream::app);
   if (status_bool1 || status_bool2)
@@ -5232,30 +5239,34 @@ void CMPSettlementList::recordSettlementList(const uint256 txid1, const uint256 
     }
   else saveDataGraphs(SettlementRows, value0);
   SettlementRows.close();
+  
   /********************************************************************/
-  /** Storing into LevelDB **/
   Status status;
   if (pdb)
     {
       if (status_bool1 || status_bool2)
-	{
-	  status = pdb->Put(writeoptions, key, value1);
-	  ++nWritten;
+  	{
+  	  status = pdb->Put(writeoptions, key, value1);
+  	  ++nWritten;
+
 	  status = pdb->Put(writeoptions, key, value2);
-	  ++nWritten;	  
+  	  ++nWritten;	  
+
 	  if (s_maker3 != "EmptyStr" && s_taker3 != "EmptyStr")
-	    {
-	      status = pdb->Put(writeoptions, key, value3);
-	      ++nWritten;
-	    }
-	}
+  	    {
+  	      status = pdb->Put(writeoptions, key, value3);
+  	      ++nWritten;
+  	    }
+  	}
       else
-	{
-	  status = pdb->Put(writeoptions, key, value0); 
-	  ++nWritten;
-	}
+  	{
+  	  status = pdb->Put(writeoptions, key, value0); 
+  	  ++nWritten;
+  	}
     }
-  PrintToLog("\n\nEnd of recordSettlementTrade <------------------------------\n");
+  /********************************************************************/
+  PrintToLog("End: recordSettlementList Function!! <------------------------------\n");
+  PrintToLog("\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
 }
 
 void Filling_Twap_Vec(std::map<uint32_t, std::vector<uint64_t>> &twap_ele, std::map<uint32_t, std::vector<uint64_t>> &twap_vec,
