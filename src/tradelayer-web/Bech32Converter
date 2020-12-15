@@ -1,0 +1,3 @@
+const bitcoin = require('bitcoinjs-lib')
+address = bitcoin.address.fromBech32('tb1qmsu7ck0tun9qe2wgthu35xcu6asa5aq5tejh02')
+base58 = bitcoin.address.toBase58Check(address.data, bitcoin.networks.testnet.pubKeyHash)

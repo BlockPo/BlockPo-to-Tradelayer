@@ -1,5 +1,5 @@
-var user = ''
-var pass = ''
+var user = 'pepejandro'
+var pass = 'pepecash'
 
 /*
 binary /home/blockpo/BlockPo-to-Tradelayer/src/

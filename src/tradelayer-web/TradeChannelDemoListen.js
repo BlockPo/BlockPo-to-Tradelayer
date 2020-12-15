@@ -133,7 +133,7 @@ function shouldCoSign(rawstring,cb){
 //The first version for LTC_InstantTrade will be one way flow, the Listener is always buying tokens with LTC.
 //We'll make it distinguish and go 2-ways in the next iteration.
 
-buildLTCTokenTrade(channeladdress, channelInput, tokenSellerAddress, propertyid, amountOfTokens, LTCPrice, blockheight_expiry, secondSigner=true,cb){
+function buildLTCTokenTrade(channeladdress, channelInput, tokenSellerAddress, propertyid, amountOfTokens, LTCPrice, blockheight_expiry, secondSigner=true,cb){
 	tl.getBlock(null,function(data){
 		var height = data.height+3
 		tl.createpayload_instant_LTC_trade(propertyid, amount, blockheight_expiry, LTCPrice, function(payload){
