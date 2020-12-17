@@ -47,6 +47,13 @@ io.on('multisig', (multisig)=>{
                 myChannelMultisig=multisig
                 tl.commitToChannel(tokenAddress, e,id,amount, function(data){
                     return console.log(data)
+                    setTimeout(function(){
+                    	//we're assuming 1000 seconds is long enough to get a commit confirmed from both sides to move this along
+                    	buildTokenToTokenTrade(myChannelMultisig,propertyid,amount,propertyid2,amount2,true,function(data){
+                    		io.emit('partialtx',data)
+                  			return(console.log(data))
+                    	})
+                    },1000000)
                  })
             }else(return console.log('The client tried to scam with a bad multisig'))
         }
@@ -62,6 +69,13 @@ function legitMultisig(e, cb){
     })
 }
 
-function scanForCommits(myChannelMultisig){
-	tl.
+function buildTokenToTokenTrade = function(channeladdress, id1,amount, id2, amount, secondSigner=true,cb){
+	tl.getBlock(null,function(data){
+		var height = data.height+3
+		tl.createpayload_instant_trade(id1, amount, height, id2, amount2, function(payload){
+			tl.buildRaw(payload,multisigInput,[0],tokenSellerAddress,0.00000546, function(txString){
+					return cb(data)
+			})
+		})
+	}
 }
