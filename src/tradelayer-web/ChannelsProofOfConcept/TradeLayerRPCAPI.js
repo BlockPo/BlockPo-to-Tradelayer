@@ -1,21 +1,21 @@
 var litecoin = require('litecoin');
 
-
-
+const user = "" //enter the RPC username indicated in the litecoin.conf file of your node used to run this script
+const pass = "" //same as above, but the password
 
 var tl = {}
 
-tl.init = () => {
+tl.init = (user,pass) => {
     return new litecoin.Client({
         host: 'localhost',
         port: 9332,
-        user: 'user',
-        pass: 'passwrod',
+        user: user,
+        pass: pass,
         ssl: false/* true, */
       });
 }
 
-const client = tl.init()
+const client = tl.init(user,pass)
 
 tl.getnewaddress = function(account, cb){
     if(account == null|| account == undefined){
