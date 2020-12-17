@@ -15,9 +15,10 @@ var proposedMultisig = "" //we'll use these to ensure for this specific 1:1 chan
 var counterPartyPubkey = ""
 var desiredtx={'propertyid':0,'amount':0,'propertyid'}
 var propertyid = 7
-var propertyid = 8
+var propertyid2 = 8
 var amount =10
 var amountDesired = 1
+var tokenAddress = "" //insert address with tokens
 
 io.on('connect', ()=>{
 	var dataSub = 'channelProposal'

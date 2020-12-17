@@ -11,9 +11,10 @@ var proposedMultisig = "" //we'll use these to ensure for this specific 1:1 chan
 var counterPartyPubkey = ""
 var desiredtx={'propertyid':0,'amount':0,'propertyid'}
 var propertyid = 7
-var propertyid = 8
+var propertyid2 = 8
 var amount =10
 var amountDesired = 1
+var tokenAddress = '' //insert address whith tokens
 
 listener.on('connection', (io) => {
     console.log(`New Connection! ID: ${io.id}`)
@@ -56,10 +57,10 @@ listener.on('connection', (io) => {
     })
 
     io.on('multisig', (data) => {
+ 
         legitMultisig(data,function(data.multisig){
-            if(legit==true){
-                myChannelMultisig=e
-                tl.commitToChannel(tokenAddress, e,id,amount, function(data){
+            if(legit==true){                
+                tl.commitToChannel(tokenAddress, myChannelMultisig,propertyid,amount, function(data){
                     return console.log(data)
                  })
             }else(return console.log('The client tried to scam with a bad multisig'))
@@ -81,6 +82,7 @@ function legitMultisig(e, cb){
     var legit = false
     tl.addmultisigaddress(2,[channelComponent,counterPartyPubkey],function(data){
         if(data==e){
+            myChannelMultisig=data
             legit=true
             return cb(legit)
         }else{return cb(legit)}
