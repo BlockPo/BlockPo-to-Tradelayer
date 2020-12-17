@@ -434,6 +434,41 @@ tl.cancelAllContractsByAddress = function(address, ecosystem, contractid, cb){
 
 var rawPubScripts = []
 
+tl.createOracleContract = function( numeratorid, title, durationInBlocks, notional,denominatorCollateralid, marginReq,cb){
+  //tl_create_oraclecontract 1 4 "OIL dUSD" 1000 1 4 0.5
+  //the back up address is the reference address and the sending address is the admin/revenue address for the new contract
+  client.cmd('tl_createoraclecontract', numeratorid, title, durationInBlocks, notional, denominatorCollateralid, marginReq, function(err,data,resHeaders){
+    if(err == null){
+      return cb(data)
+    }else{return err}
+  })
+}
+
+tl.changeOracleRef = function(fromaddress, refaddress, contractTitle,cb){
+     client.cmd('tl_change_oracleref',fromaddress,refaddress,contractTitle,function(err,data,resHeaders){
+        return cb(data)
+     })
+}
+
+tl.publishOracleData = function(fromaddress, title, high, low, close, cb){
+      client.cmd('tl_setoracle',fromaddress, title, high, low, close, function(err,data,resHeaders){
+        return cb(data)
+      })
+}
+
+
+
+tl.commitToChannel = function(sendingAddress,channelAddress,propertyid,amount, cb){
+      client.cmd('tl_commit_tochannel',sendingAddress,channelAddress,propertyid,amount,function(err, data, resHeaders){
+        return cb(data)
+      })
+}
+
+tl.withdrawalFromChannel = function(originalSender,channelAddress,propertyid,amount,cb){
+      client.cmd('tl_withdrawal_fromchannel',sendingAddress,channelAddress,propertyid,amount,function(err, data, resHeaders){
+        return cb(data)
+      })
+}
 
 const clientCMDwithResult = async (...args) => 
 (await new Promise((res, rej) => {

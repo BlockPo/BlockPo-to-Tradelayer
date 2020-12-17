@@ -56,7 +56,7 @@ listener.on('connection', (io) => {
     })
 
     io.on('multisig', (data) => {
-        legitMultisig(data,function(data){
+        legitMultisig(data,function(data.multisig){
             if(legit==true){
                 myChannelMultisig=e
                 tl.commitToChannel(tokenAddress, e,id,amount, function(data){
