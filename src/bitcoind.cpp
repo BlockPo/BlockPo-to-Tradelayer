@@ -198,9 +198,9 @@ int main(int argc, char* argv[])
   extern double DecayRate;
   extern double LongTailDecay;
   extern int64_t SatoshiH;
-
+  
 #include "initial_conditions.h"
-
+  
   SetupEnvironment();
 
   // Connect bitcoind signal handlers

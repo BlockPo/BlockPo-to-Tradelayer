@@ -5,7 +5,6 @@
  */
 
 #include <tradelayer/tradelayer.h>
-
 #include <tradelayer/activation.h>
 #include <tradelayer/consensushash.h>
 #include <tradelayer/convert.h>
@@ -31,7 +30,6 @@
 #include <tradelayer/version.h>
 #include <tradelayer/walletcache.h>
 #include <tradelayer/wallettxs.h>
-
 #include <arith_uint256.h>
 #include <base58.h>
 #include <chainparams.h>
@@ -63,7 +61,6 @@
 #endif
 
 #include <leveldb/db.h>
-
 #include <assert.h>
 #include <cmath>
 #include <fstream>
@@ -292,11 +289,11 @@ std::string FormatByType(int64_t amount, uint16_t propertyType)
 
 std::string FormatByDivisibility(int64_t amount, bool divisible)
 {
-    if (!divisible) {
-        return FormatIndivisibleMP(amount);
-    } else {
-        return FormatDivisibleMP(amount);
-    }
+  if (!divisible) {
+    return FormatIndivisibleMP(amount);
+  } else {
+    return FormatDivisibleMP(amount);
+  }
 }
 
 /*New property type No 3 Contract*/
@@ -2700,10 +2697,12 @@ int mastercore_init()
       fs::path txlistPath = GetDataDir() / "OCL_txlist";
       fs::path spPath = GetDataDir() / "OCL_spinfo";
       fs::path tlTXDBPath = GetDataDir() / "OCL_TXDB";
+      fs::path settlistPath = GetDataDir() / "OCL_settlementlist";
       if (fs::exists(persistPath)) fs::remove_all(persistPath);
       if (fs::exists(txlistPath)) fs::remove_all(txlistPath);
       if (fs::exists(spPath)) fs::remove_all(spPath);
       if (fs::exists(tlTXDBPath)) fs::remove_all(tlTXDBPath);
+      if (fs::exists(settlistPath)) fs::remove_all(settlistPath);
       PrintToLog("Success clearing persistence files in datadir %s\n", GetDataDir().string());
       startClean = true;
     } catch (const fs::filesystem_error& e) {
@@ -3910,72 +3909,75 @@ bool mastercore::getValidMPTX(const uint256 &txid, std::string *reason, int *blo
 
 int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockIndex)
 {
-    LOCK(cs_tally);
-
-    if (reorgRecoveryMode > 0) {
-        reorgRecoveryMode = 0; // clear reorgRecovery here as this is likely re-entrant
-
-        // NOTE: The blockNum parameter is inclusive, so deleteAboveBlock(1000) will delete records in block 1000 and above.
-        p_txlistdb->isMPinBlockRange(pBlockIndex->nHeight, reorgRecoveryMaxHeight, true);
-        reorgRecoveryMaxHeight = 0;
-        nWaterlineBlock = ConsensusParams().GENESIS_BLOCK - 1;
-
-        const int best_state_block = load_most_relevant_state();
-
-        if (best_state_block < 0)
-        {
-            // unable to recover easily, remove stale stale state bits and reparse from the beginning.
-            clear_all_state();
-        } else {
-            nWaterlineBlock = best_state_block;
-        }
-
-        // clear the global wallet property list, perform a forced wallet update and tell the UI that state is no longer valid, and UI views need to be reinit
-        global_wallet_property_list.clear();
-        CheckWalletUpdate(true);
-        //uiInterface.TLStateInvalidated();
-
-        if (nWaterlineBlock < nBlockPrev)
-        {
-            // scan from the block after the best active block to catch up to the active chain
-            msc_initial_scan(nWaterlineBlock + 1);
-        }
-    }
-
-    // handle any features that go live with this block
-    CheckLiveActivations(pBlockIndex->nHeight);
-
-
-    const CConsensusParams &params = ConsensusParams();
-    vestingActivationBlock = params.MSC_VESTING_BLOCK;
-
-    /** Creating Vesting Tokens **/
-    if (pBlockIndex->nHeight == params.MSC_VESTING_CREATION_BLOCK) creatingVestingTokens(pBlockIndex->nHeight);
-
-    /** Vesting Tokens to Balance **/
-    if (pBlockIndex->nHeight > params.MSC_VESTING_BLOCK) VestingTokens(pBlockIndex->nHeight);
-
-    /** Channels **/
-    if (pBlockIndex->nHeight > params.MSC_TRADECHANNEL_TOKENS_BLOCK)
+  LOCK(cs_tally);
+  
+  if (!pt_settlementlistdb) return false;
+  extern int BlockS;
+  
+  if (reorgRecoveryMode > 0)
     {
-        makeWithdrawals(pBlockIndex->nHeight);
-        closeChannels(pBlockIndex->nHeight);
+      reorgRecoveryMode = 0; // clear reorgRecovery here as this is likely re-entrant
+      
+      // NOTE: The blockNum parameter is inclusive, so deleteAboveBlock(1000) will delete records in block 1000 and above.
+      p_txlistdb->isMPinBlockRange(pBlockIndex->nHeight, reorgRecoveryMaxHeight, true);
+      reorgRecoveryMaxHeight = 0;
+      nWaterlineBlock = ConsensusParams().GENESIS_BLOCK - 1;
+      
+      const int best_state_block = load_most_relevant_state();
+      
+      if (best_state_block < 0)
+        {
+	  // unable to recover easily, remove stale stale state bits and reparse from the beginning.
+	  clear_all_state();
+        }
+      else
+	{
+	  nWaterlineBlock = best_state_block;
+	}
+      
+      // clear the global wallet property list, perform a forced wallet update and tell the UI that state is no longer valid, and UI views need to be reinit
+      global_wallet_property_list.clear();
+      CheckWalletUpdate(true);
+      //uiInterface.TLStateInvalidated();
+      
+      if (nWaterlineBlock < nBlockPrev)
+        {
+	  // scan from the block after the best active block to catch up to the active chain
+	  msc_initial_scan(nWaterlineBlock + 1);
+        }
     }
-
-    // marginMain(pBlockIndex->nHeight);
-    // addInterestPegged(nBlockPrev,pBlockIndex);
-    
-    /*****************************************************************************/
-    // feeCacheBuy:
-    //   1) search caché in order to see the properties ids and the amounts.
-    //   2) search for each prop id, exchange for ALLs with available orders in orderbook
-    //   3) check the ALLs in cache.
-    //mastercore::feeCacheBuy();
-
-    /*****************************************************************************/
-    //CallingExpiration(pBlockIndex);
-
-   return 0;
+  
+  // handle any features that go live with this block
+  CheckLiveActivations(pBlockIndex->nHeight);
+  
+  
+  const CConsensusParams &params = ConsensusParams();
+  vestingActivationBlock = params.MSC_VESTING_BLOCK;
+  
+    /** Creating Vesting Tokens **/
+  if (pBlockIndex->nHeight == params.MSC_VESTING_CREATION_BLOCK) creatingVestingTokens(pBlockIndex->nHeight);
+  
+  /** Vesting Tokens to Balance **/
+  if (pBlockIndex->nHeight > params.MSC_VESTING_BLOCK) VestingTokens(pBlockIndex->nHeight);
+  
+  /** Channels **/
+  if (pBlockIndex->nHeight > params.MSC_TRADECHANNEL_TOKENS_BLOCK)
+    {
+      makeWithdrawals(pBlockIndex->nHeight);
+      closeChannels(pBlockIndex->nHeight);
+    }
+  
+  /*****************************************************************************/
+  /** Settlement Algorithm **/
+  int BlockH = pBlockIndex->nHeight;
+  if (BlockH%BlockS == 0 && BlockH != 0)
+    {
+      PrintToLog("\nCalling Settlement from LevelDB!!");
+      pt_settlementlistdb->SettlementAlgorithm(BlockH);
+    }  
+  /*****************************************************************************/  
+  
+  return 0;
 }
 
 // called once per block, after the block has been processed
@@ -5227,6 +5229,7 @@ void CMPSettlementList::recordSettlementList(const uint256 txid1, const uint256 
   
   /********************************************************************/
   /** To store into .txt Files**/
+  
   bool status_bool1 = s_maker0 == "OpenShortPosByLongPosNetted" || s_maker0 == "OpenLongPosByShortPosNetted";
   bool status_bool2 = s_taker0 == "OpenShortPosByLongPosNetted" || s_taker0 == "OpenLongPosByShortPosNetted";
   
@@ -5246,21 +5249,23 @@ void CMPSettlementList::recordSettlementList(const uint256 txid1, const uint256 
     {
       if (status_bool1 || status_bool2)
   	{
+	  PrintToLog("\nStoring value1 into LevelDB\n");
   	  status = pdb->Put(writeoptions, key, value1);
   	  ++nWritten;
-
+	  PrintToLog("\nStoring value2 into LevelDB\n");
 	  status = pdb->Put(writeoptions, key, value2);
   	  ++nWritten;	  
-
 	  if (s_maker3 != "EmptyStr" && s_taker3 != "EmptyStr")
   	    {
+	      PrintToLog("\nStoring value3 into LevelDB\n");
   	      status = pdb->Put(writeoptions, key, value3);
   	      ++nWritten;
   	    }
   	}
       else
   	{
-  	  status = pdb->Put(writeoptions, key, value0); 
+	  PrintToLog("\nStoring value0 into LevelDB\n");
+	  status = pdb->Put(writeoptions, key, value0); 
   	  ++nWritten;
   	}
     }
@@ -5269,8 +5274,23 @@ void CMPSettlementList::recordSettlementList(const uint256 txid1, const uint256 
   PrintToLog("\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
 }
 
-void Filling_Twap_Vec(std::map<uint32_t, std::vector<uint64_t>> &twap_ele, std::map<uint32_t, std::vector<uint64_t>> &twap_vec,
-		      uint32_t property_traded, uint32_t property_desired, uint64_t effective_price)
+void CMPSettlementList::SettlementAlgorithm(int BlockNum)
+{
+  PrintToLog("\nSettlementAlgorithm Activated at Block#: %d\n", BlockNum);
+  if (!pdb) return;
+  leveldb::Iterator* it = NewIterator();
+  
+  // int idx_q = 0;
+  // for (it->SeekToFirst(); it->Valid(); it->Next())
+  //   {
+  //     const std::string strKey = it->key().ToString();
+  //     const std::string strValue = it->value().ToString();
+  //     ++idx_q;
+  //     PrintToLog("\nRow#: %d\nstrKey = %s\nstrValue = %s\n", idx_q, strKey, strValue);
+  //   }
+}
+
+void Filling_Twap_Vec(std::map<uint32_t, std::vector<uint64_t>> &twap_ele, std::map<uint32_t, std::vector<uint64_t>> &twap_vec, uint32_t property_traded, uint32_t property_desired, uint64_t effective_price)
 {
   int nBlockNow = GetHeight();
   std::vector<uint64_t> twap_minmax;
@@ -6846,11 +6866,11 @@ int64_t mastercore::LtcVolumen(uint32_t propertyId, const int& fblock, const int
 /** MetaDEx Tokens volume **/
 int64_t mastercore::MdexVolumen(uint32_t property, const int& fblock, const int& sblock)
 {
-    int64_t amount = 0;
-
-    iterVolume(amount, property, fblock, sblock, metavolume);
-
-    return amount;
+  int64_t amount = 0;
+  
+  iterVolume(amount, property, fblock, sblock, metavolume);
+  
+  return amount;
 }
 
 /** DEx Tokens volume **/
@@ -7342,22 +7362,21 @@ int64_t mastercore::increaseLTCVolume(uint32_t propertyId, uint32_t propertyDesi
 
 bool mastercore::Token_LTC_Fees(int64_t& buyer_amountGot, uint32_t propertyId)
 {
-    const arith_uint256 uNumerator = ConvertTo256(buyer_amountGot);
-    const arith_uint256 uDenominator = arith_uint256(BASISPOINT) * arith_uint256(BASISPOINT) *  arith_uint256(2);
-    const arith_uint256 uCacheFee = DivideAndRoundUp(uNumerator, uDenominator);
-    const int64_t cacheFee = ConvertTo64(uCacheFee);
+  const arith_uint256 uNumerator = ConvertTo256(buyer_amountGot);
+  const arith_uint256 uDenominator = arith_uint256(BASISPOINT) * arith_uint256(BASISPOINT) *  arith_uint256(2);
+  const arith_uint256 uCacheFee = DivideAndRoundUp(uNumerator, uDenominator);
+  const int64_t cacheFee = ConvertTo64(uCacheFee);
+  
+  // taking fee
+  buyer_amountGot -= cacheFee;
 
-    // taking fee
-    buyer_amountGot -= cacheFee;
-
-    if(cacheFee > 0)
+  if(cacheFee > 0)
     {
-         cachefees[propertyId] += cacheFee;
-         return true;
+      cachefees[propertyId] += cacheFee;
+      return true;
     }
-
-    return false;
-
+  
+  return false;
 }
 
 /**
