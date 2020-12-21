@@ -4167,13 +4167,23 @@ int CMPTransaction::logicMath_CommitChannel()
         return (PKT_ERROR_TOKENS -23);
     }
 
-
+    int64_t nBalance = getMPbalance(sender, propertyId, BALANCE);
+    if (nBalance < (int64_t) amount_commited) {
+        PrintToLog("%s(): rejected: sender %s has insufficient balance of property %d [%s < %s]\n",
+                __func__,
+                sender,
+                propertyId,
+                FormatMP(propertyId, nBalance),
+                FormatMP(propertyId, amount_commited));
+        return (PKT_ERROR_TOKENS -25);
+    }
 
     // ------------------------------------------
 
 
 
     if(msc_debug_commit_channel) PrintToLog("%s():sender: %s, channelAddress: %s, amount_commited: %d, propertyId: %d\n",__func__, sender, receiver, amount_commited, propertyId);
+
 
     //putting money into channel reserve
     assert(update_tally_map(sender, propertyId, -amount_commited, BALANCE));
