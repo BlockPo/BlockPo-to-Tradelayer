@@ -69,7 +69,7 @@ function legitMultisig(e, cb){
     })
 }
 
-function buildTokenToTokenTrade = function(channeladdress, id1,amount, id2, amount, secondSigner=true,cb){
+function buildTokenToTokenTrade(channeladdress, id1,amount, id2, amount, secondSigner=true,cb){
 	tl.getBlock(null,function(data){
 		var height = data.height+3
 		tl.createpayload_instant_trade(id1, amount, height, id2, amount2, function(payload){
