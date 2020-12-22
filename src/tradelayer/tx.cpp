@@ -4197,18 +4197,6 @@ int CMPTransaction::logicMath_CommitChannel()
 /** Tx 109 */
 int CMPTransaction::logicMath_Withdrawal_FromChannel()
 {
-    uint256 blockHash;
-    {
-        LOCK(cs_main);
-
-        CBlockIndex* pindex = chainActive[block];
-        if (pindex == nullptr) {
-            PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
-            return (PKT_ERROR_TOKENS -20);
-        }
-        blockHash = pindex->GetBlockHash();
-    }
-
     if (!IsTransactionTypeAllowed(block, type, version)) {
         PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
                 __func__,
@@ -4495,7 +4483,6 @@ int CMPTransaction::logicMath_Transfer()
 /** Tx 113 */
 int CMPTransaction::logicMath_Instant_LTC_Trade()
 {
-
   int rc = 1;
 
   if (!IsTransactionTypeAllowed(block, type, version)) {
@@ -4748,7 +4735,6 @@ int CMPTransaction::logicMath_DEx_Payment()
       return (PKT_ERROR_METADEX -22);
   }
 
-  PrintToLog("%s(): returning rc: %d\n",__func__,rc);
   return rc;
 }
 
