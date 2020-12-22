@@ -222,19 +222,19 @@ std::string mastercore::strMPProperty(uint32_t propertyId)
 
 std::string FormatDivisibleShortMP(int64_t n)
 {
-    int64_t n_abs = (n > 0 ? n : -n);
-    int64_t quotient = n_abs / COIN;
-    int64_t remainder = n_abs % COIN;
-    std::string str = strprintf("%d.%08d", quotient, remainder);
-    // clean up trailing zeros - good for RPC not so much for UI
-    str.erase(str.find_last_not_of('0') + 1, std::string::npos);
-    if (str.length() > 0) {
-        std::string::iterator it = str.end() - 1;
-        if (*it == '.') {
-            str.erase(it);
-        }
-    } //get rid of trailing dot if non decimal
-    return str;
+  int64_t n_abs = (n > 0 ? n : -n);
+  int64_t quotient = n_abs / COIN;
+  int64_t remainder = n_abs % COIN;
+  std::string str = strprintf("%d.%08d", quotient, remainder);
+  // clean up trailing zeros - good for RPC not so much for UI
+  str.erase(str.find_last_not_of('0') + 1, std::string::npos);
+  if (str.length() > 0) {
+    std::string::iterator it = str.end() - 1;
+    if (*it == '.') {
+      str.erase(it);
+    }
+  } //get rid of trailing dot if non decimal
+  return str;
 }
 
 std::string FormatDivisibleMP(int64_t n, bool fSign)
@@ -2709,7 +2709,7 @@ int mastercore_init()
       PrintToLog("Failed to delete persistence folders: %s\n", e.what());
     }
   }
-
+  
   p_txlistdb = new CMPTxList(GetDataDir() / "OCL_txlist", fReindex);
   _my_sps = new CMPSPInfo(GetDataDir() / "OCL_spinfo", fReindex);
   p_TradeTXDB = new CtlTransactionDB(GetDataDir() / "OCL_TXDB", fReindex);
@@ -3769,7 +3769,7 @@ void CMPTxList::recordPaymentTX(const uint256 &txid, bool fValid, int nBlock, un
 // figure out if there was at least 1 Master Protocol transaction within the block range, or a block if starting equals ending
 // block numbers are inclusive
 // pass in bDeleteFound = true to erase each entry found within the block range
- bool CMPTxList::isMPinBlockRange(int starting_block, int ending_block, bool bDeleteFound)
+bool CMPTxList::isMPinBlockRange(int starting_block, int ending_block, bool bDeleteFound)
 {
     int block;
     unsigned int n_found = 0;
@@ -3808,7 +3808,47 @@ void CMPTxList::recordPaymentTX(const uint256 &txid, bool fValid, int nBlock, un
     delete it;
 
     return (n_found);
- }
+}
+
+bool CMPSettlementList::SettlementAlgorithm(int starting_block, int ending_block, bool bDeleteFound)
+{
+  int block;
+  unsigned int n_found = 0;
+  unsigned int count = 0;
+  leveldb::Slice skey, svalue;
+  std::vector<std::string> vstr;
+  
+  leveldb::Iterator* it = NewIterator();
+  
+  for(it->SeekToFirst(); it->Valid(); it->Next())
+    {
+      skey = it->key();
+      svalue = it->value();
+      ++count;
+      
+      string strvalue = it->value().ToString();
+      boost::split(vstr, strvalue, boost::is_any_of(":"), token_compress_on);
+      
+      // only care about the block number/height here
+      if (2 <= vstr.size())
+        {
+	  block = atoi(vstr[1]);
+	  
+	  if ((starting_block <= block) && (block <= ending_block))
+            {
+	      ++n_found;
+	      if(msc_debug_is_mpin_block_range) PrintToLog("%s() DELETING: %s=%s\n", __FUNCTION__,
+							   skey.ToString(), svalue.ToString());
+	      if (bDeleteFound) pdb->Delete(writeoptions, skey);
+            }
+        }
+    }
+  
+  if(msc_debug_is_mpin_block_range) PrintToLog("%s(%d, %d); n_found= %d\n", __FUNCTION__, starting_block,
+					       ending_block, n_found);
+  delete it;
+  return (n_found);
+}
 
 void CMPTxList::getMPTransactionAddresses(std::vector<std::string> &vaddrs)
 {
@@ -3841,11 +3881,20 @@ void CMPTxList::getMPTransactionAddresses(std::vector<std::string> &vaddrs)
 // global wrapper, block numbers are inclusive, if ending_block is 0 top of the chain will be used
 bool mastercore::isMPinBlockRange(int starting_block, int ending_block, bool bDeleteFound)
 {
-    if (!p_txlistdb) return false;
+  if (!p_txlistdb) return false;
+  
+  if (0 == ending_block) ending_block = GetHeight(); // will scan 'til the end
+  
+  return p_txlistdb->isMPinBlockRange(starting_block, ending_block, bDeleteFound);
+}
 
-    if (0 == ending_block) ending_block = GetHeight(); // will scan 'til the end
-
-    return p_txlistdb->isMPinBlockRange(starting_block, ending_block, bDeleteFound);
+bool mastercore::SettlementAlgorithm(int starting_block, int ending_block, bool bDeleteFound)
+{
+  if (!pt_settlementlistdb) return false;
+  
+  if (0 == ending_block) ending_block = GetHeight(); 
+  
+  return pt_settlementlistdb->SettlementAlgorithm(starting_block, ending_block, bDeleteFound);
 }
 
 // call it like so (variable # of parameters):
@@ -3909,9 +3958,7 @@ bool mastercore::getValidMPTX(const uint256 &txid, std::string *reason, int *blo
 
 int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockIndex)
 {
-  LOCK(cs_tally);
-  
-  if (!pt_settlementlistdb) return false;
+  LOCK(cs_tally);  
   extern int BlockS;
   
   if (reorgRecoveryMode > 0)
@@ -3973,8 +4020,8 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
   if (BlockH%BlockS == 0 && BlockH != 0)
     {
       PrintToLog("\nCalling Settlement from LevelDB!!");
-      pt_settlementlistdb->SettlementAlgorithm(BlockH);
-    }  
+      pt_settlementlistdb->SettlementAlgorithm(BlockH, reorgRecoveryMaxHeight, true);
+    } 
   /*****************************************************************************/  
   
   return 0;
@@ -5272,22 +5319,6 @@ void CMPSettlementList::recordSettlementList(const uint256 txid1, const uint256 
   /********************************************************************/
   PrintToLog("End: recordSettlementList Function!! <------------------------------\n");
   PrintToLog("\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
-}
-
-void CMPSettlementList::SettlementAlgorithm(int BlockNum)
-{
-  PrintToLog("\nSettlementAlgorithm Activated at Block#: %d\n", BlockNum);
-  if (!pdb) return;
-  leveldb::Iterator* it = NewIterator();
-  
-  // int idx_q = 0;
-  // for (it->SeekToFirst(); it->Valid(); it->Next())
-  //   {
-  //     const std::string strKey = it->key().ToString();
-  //     const std::string strValue = it->value().ToString();
-  //     ++idx_q;
-  //     PrintToLog("\nRow#: %d\nstrKey = %s\nstrValue = %s\n", idx_q, strKey, strValue);
-  //   }
 }
 
 void Filling_Twap_Vec(std::map<uint32_t, std::vector<uint64_t>> &twap_ele, std::map<uint32_t, std::vector<uint64_t>> &twap_vec, uint32_t property_traded, uint32_t property_desired, uint64_t effective_price)

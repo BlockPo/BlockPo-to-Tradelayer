@@ -406,7 +406,7 @@ public:
 
     void printStats();
     void printAll();
-
+    
     bool isMPinBlockRange(int, int, bool);
 
     void recordPaymentTX(const uint256 &txid, bool fValid, int nBlock, unsigned int vout, unsigned int propertyId, uint64_t nValue, uint64_t amountPaid, string buyer, string seller);
@@ -517,10 +517,13 @@ class CMPSettlementList : public CDBBase
       leveldb::Status status = Open(path, fWipe);
       if (msc_debug_persistence) PrintToLog("Loading settlement database info: %s\n", status.ToString());
     }
-  virtual ~CMPSettlementList() {}
+  virtual ~CMPSettlementList()
+    {
+      if (msc_debug_persistence) PrintToLog("CMPSettlementList closed\n");
+    }
   
   void recordSettlementList(const uint256 txid1, const uint256 txid2, string address1, string address2, uint64_t effective_price, uint64_t amount_maker, uint64_t amount_taker, int blockNum1, int blockNum2, uint32_t property_traded, string tradeStatus, int64_t lives_s0, int64_t lives_s1, int64_t lives_s2, int64_t lives_s3, int64_t lives_b0, int64_t lives_b1, int64_t lives_b2, int64_t lives_b3, string s_maker0, string s_taker0, string s_maker1, string s_taker1, string s_maker2, string s_taker2, string s_maker3, string s_taker3, int64_t nCouldBuy0, int64_t nCouldBuy1, int64_t nCouldBuy2, int64_t nCouldBuy3,uint64_t amountpnew, uint64_t amountpold);
-  void SettlementAlgorithm(int BlockNum);
+  bool SettlementAlgorithm(int starting_block, int ending_block, bool bDeleteFound);
 };
 
 //! Available balances of wallet properties
@@ -590,32 +593,34 @@ namespace mastercore
   // TODO: move, rename
   extern CCoinsView viewDummy;
   extern CCoinsViewCache view;
-
+  
   //! Guards coins view cache
   extern CCriticalSection cs_tx_cache;
-
+  
   std::string strMPProperty(uint32_t propertyId);
-
+  
   bool isMPinBlockRange(int starting_block, int ending_block, bool bDeleteFound);
-
+  
+  bool SettlementAlgorithm(int starting_block, int ending_block, bool bDeleteFound);
+  
   std::string FormatContractMP(int64_t n);
-
+  
   std::string FormatIndivisibleMP(int64_t n);
 
   int WalletTxBuilder(const std::string& senderAddress, const std::string& receiverAddress, int64_t referenceAmount,
 		      const std::vector<unsigned char>& data, uint256& txid, std::string& rawHex, bool commit, unsigned int minInputs = 1);
-
+  
   uint32_t GetNextPropertyId(); // maybe move into sp
-
+  
   CMPTally* getTally(const std::string& address);
-
+  
   int64_t getTotalTokens(uint32_t propertyId, int64_t* n_owners_total = nullptr);
-
+  
   std::string strTransactionType(uint16_t txType);
-
+  
   /** Returns the encoding class, used to embed a payload. */
   int GetEncodingClass(const CTransaction& tx, int nBlock);
-
+  
   /** Determines, whether it is valid to use a Class C transaction for a given payload size. */
   bool UseEncodingClassC(size_t nDataSize);
 
