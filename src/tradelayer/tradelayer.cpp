@@ -6067,6 +6067,7 @@ int64_t mastercore::pos_margin(uint32_t contractId, const std::string& address, 
         return maint_margin;
 }
 
+
 bool mastercore::makeWithdrawals(int Block)
 {
     for(auto it = withdrawal_Map.begin(); it != withdrawal_Map.end(); ++it)
@@ -6122,6 +6123,14 @@ bool mastercore::checkWithdrawal(const std::string& txid, const std::string& cha
 
 }
 
+/* True if channel contain some pending withdrawal*/
+bool isChannelWithdraw(const std::string& address)
+{
+    auto it = std::find_if(withdrawal_Map.begin(), withdrawal_Map.end(),[&address] (const std::pair<std::string,vector<withdrawalAccepted>> p) { return (p.first == address);});
+    return ((it != withdrawal_Map.end()) ? true : false);
+}
+
+
 bool mastercore::closeChannels(int Block)
 {
     bool status = false;
@@ -6136,6 +6145,12 @@ bool mastercore::closeChannels(int Block)
             ++it;
             continue;
 
+        }
+
+        // no pending withdrawals
+        if(isChannelWithdraw(chn.getMultisig())) {
+            ++it;
+            continue;
         }
 
         LOCK(cs_tally);
