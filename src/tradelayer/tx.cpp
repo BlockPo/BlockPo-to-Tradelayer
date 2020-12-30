@@ -3048,7 +3048,7 @@ int CMPTransaction::logicMath_MetaDExTrade()
       return (PKT_ERROR_METADEX -34);
   }
 
-  if (desired_value <= 0 || MAX_INT_8_BYTES < desired_value) {
+  if ((uint64_t) desired_value <= 0 || MAX_INT_8_BYTES < (uint64_t) desired_value) {
       PrintToLog("%s(): rejected: desired amount out of range or zero: %d\n", __func__, desired_value);
       return (PKT_ERROR_METADEX -35);
   }
@@ -4236,12 +4236,12 @@ int CMPTransaction::logicMath_Withdrawal_FromChannel()
     assert(it != channels_Map.end());
     Channel &chn = it->second;
 
+    //checking amount in channel for sender
+    const uint64_t remaining = chn.getRemaining(sender, propertyId);
 
-    bool success = chn.updateChannelBal(sender, propertyId, -amount_to_withdraw);
-
-    if (!success)
+    if (amount_to_withdraw > remaining)
     {
-        PrintToLog("%s(): is not possible withdrawal\n", __func__);
+        PrintToLog("%s(): withdrawal request is not possible (amount to withdraw > remaining for given address))\n", __func__);
         return (PKT_ERROR_TOKENS -26);
     }
 
@@ -4309,11 +4309,14 @@ int CMPTransaction::logicMath_Instant_Trade()
   }
 
   int kyc_id;
-  Channel chn;
   auto it = channels_Map.find(sender);
-  if(it != channels_Map.end()){
-      chn = it->second;
+
+  if (it == channels_Map.end()){
+      PrintToLog("%s(): rejected: channel not found\n", __func__);
+      return (PKT_ERROR_CHANNELS -21);
   }
+
+  Channel &chn = it->second;
 
   if (chn.getMultisig().empty() && chn.getFirst().empty() && chn.getSecond().empty()) {
       PrintToLog("%s(): rejected: some address doesn't belong to multisig channel \n", __func__);
@@ -4386,8 +4389,7 @@ int CMPTransaction::logicMath_Instant_Trade()
 
   // ------------------------------------------
 
-  PrintToLog("%s(): channel: %d, first: %d, second: %d\n",__func__, chn.getMultisig(), chn.getFirst(), chn.getSecond());
-  if (property > LTC && desired_property > 0)
+  if (property > LTC && desired_property > LTC)
   {
       assert(update_tally_map(chn.getSecond(), property, amount_forsale, BALANCE));
       assert(update_tally_map(chn.getMultisig(), property, -amount_forsale, CHANNEL_RESERVE));
@@ -4399,6 +4401,7 @@ int CMPTransaction::logicMath_Instant_Trade()
       // updating channel balance for each address
       assert(chn.updateChannelBal(chn.getFirst(), property, -amount_forsale));
       assert(chn.updateChannelBal(chn.getSecond(), desired_property, -desired_value));
+
       // updating last exchange block
       assert(chn.updateLastExBlock(block));
 

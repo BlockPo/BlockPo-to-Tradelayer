@@ -1065,7 +1065,7 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
     auto it = channels_Map.find(channelAddr);
     Channel& sChn = it->second;
 
-    const int64_t remaining = static_cast<int64_t>(sChn.getRemaining(seller, property));
+    const int64_t remaining = sChn.getRemaining(seller, property);
 
     if(msc_debug_instant_payment)
     {
@@ -6089,6 +6089,17 @@ bool mastercore::makeWithdrawals(int Block)
             const uint32_t propertyId = wthd.propertyId;
             const int64_t amount = static_cast<int64_t>(wthd.amount);
 
+            //checking channel
+            auto it = channels_Map.find(channelAddress);
+            assert(it != channels_Map.end());
+            Channel &chn = it->second;
+
+            if(!chn.updateChannelBal(address, propertyId, -amount)){
+                PrintToLog("%s(): withdrawal is not possible\n",__func__);
+                ++itt;
+                continue;
+            }
+
             if(msc_debug_make_withdrawal) PrintToLog("%s(): withdrawal: actual block: %d, deadline: %d, address: %s, propertyId: %d, amount: %d, txid: %s \n", __func__, Block, deadline, address, propertyId, amount, wthd.txid.ToString());
 
             // updating tally map
@@ -6097,6 +6108,7 @@ bool mastercore::makeWithdrawals(int Block)
 
             // deleting element from vector
             itt = accepted.erase(itt++);
+
 
         }
 
@@ -6126,8 +6138,14 @@ bool mastercore::checkWithdrawal(const std::string& txid, const std::string& cha
 /* True if channel contain some pending withdrawal*/
 bool isChannelWithdraw(const std::string& address)
 {
-    auto it = std::find_if(withdrawal_Map.begin(), withdrawal_Map.end(),[&address] (const std::pair<std::string,vector<withdrawalAccepted>> p) { return (p.first == address);});
-    return ((it != withdrawal_Map.end()) ? true : false);
+    auto it =  withdrawal_Map.find(address);
+    if(it == withdrawal_Map.end())
+        return false;
+
+    vector<withdrawalAccepted> &accepted = it->second;
+
+    return ((accepted.empty()) ? false : true);
+
 }
 
 
@@ -6149,12 +6167,12 @@ bool mastercore::closeChannels(int Block)
 
         // no pending withdrawals
         if(isChannelWithdraw(chn.getMultisig())) {
+            PrintToLog("%s(): Pending withdrawal in Channel %s\n",__func__, chn.getMultisig());
             ++it;
             continue;
         }
 
         LOCK(cs_tally);
-
         const uint32_t nextSPID = _my_sps->peekNextSPID();
 
         // retrieving funds from channel
@@ -6163,9 +6181,9 @@ bool mastercore::closeChannels(int Block)
             CMPSPInfo::Entry sp;
             if (_my_sps->getSP(propertyId, sp) && sp.isContract()) continue;
 
-            const uint64_t first_rem = chn.getRemaining(chn.getFirst(), propertyId);
-            const uint64_t second_rem = chn.getRemaining(chn.getSecond(), propertyId);
-            const uint64_t balance = static_cast<uint64_t>(getMPbalance(chn.getMultisig(), propertyId, CHANNEL_RESERVE));
+            const int64_t first_rem = chn.getRemaining(chn.getFirst(), propertyId);
+            const int64_t second_rem = chn.getRemaining(chn.getSecond(), propertyId);
+            const int64_t balance = getMPbalance(chn.getMultisig(), propertyId, CHANNEL_RESERVE);
 
             assert(balance == first_rem + second_rem);
 
@@ -6181,7 +6199,6 @@ bool mastercore::closeChannels(int Block)
 
                 assert(update_tally_map(chn.getMultisig(), propertyId, -first_rem, CHANNEL_RESERVE));
                 assert(update_tally_map(chn.getFirst(), propertyId, first_rem, BALANCE));
-                assert(chn.updateChannelBal(chn.getFirst(), propertyId, -first_rem));
 
             }
 
@@ -6189,7 +6206,6 @@ bool mastercore::closeChannels(int Block)
             {
                 assert(update_tally_map(chn.getMultisig(), propertyId, -second_rem, CHANNEL_RESERVE));
                 assert(update_tally_map(chn.getSecond(), propertyId, second_rem, BALANCE));
-                assert(chn.updateChannelBal(chn.getSecond(), propertyId, -second_rem));
             }
 
         }
@@ -6200,7 +6216,7 @@ bool mastercore::closeChannels(int Block)
         // deleting element from map
         channels_Map.erase(it++);
 
-        // deleting withdrawals
+        // deleting channel from withdrawals
         auto itt = withdrawal_Map.find(chn.getMultisig());
         if (itt != withdrawal_Map.end()){
             withdrawal_Map.erase(itt);
@@ -6283,9 +6299,9 @@ bool CMPTradeList::getAllCommits(const std::string& senderAddress, UniValue& tra
 /**
  * @retrieve  All commits (minus withdrawal and trades) for a given address into specific channel
  */
-uint64_t Channel::getRemaining(const std::string& address, uint32_t propertyId) const
+int64_t Channel::getRemaining(const std::string& address, uint32_t propertyId) const
 {
-    uint64_t remaining = 0;
+    int64_t remaining = 0;
     auto it = balances.find(address);
     if (it != balances.end())
     {
@@ -6331,7 +6347,9 @@ bool Channel::updateChannelBal(const std::string& address, uint32_t propertyId, 
 
     }
 
-    addAmount(address, propertyId, amount);
+    amount_remaining += amount;
+
+    setBalance(address,propertyId,amount_remaining);
 
     return true;
 
@@ -6340,11 +6358,6 @@ bool Channel::updateChannelBal(const std::string& address, uint32_t propertyId, 
 void Channel::setBalance(const std::string& sender, uint32_t propertyId, uint64_t amount)
 {
     balances[sender][propertyId] = amount;
-}
-
-void Channel::addAmount(const std::string& sender, uint32_t propertyId, uint64_t amount)
-{
-    balances[sender][propertyId] += amount;
 }
 
 uint64_t CMPTradeList::addClosedWithrawals(const std::string& channelAddr, const std::string& receiver, uint32_t propertyId)
@@ -6976,7 +6989,7 @@ int64_t mastercore::DexVolumen(uint32_t property, const int& fblock, const int& 
 int64_t mastercore::lastVolume(uint32_t propertyId, bool tokens)
 {
     // 24 hours back in time
-    int bBlock = GetHeight() - 576;
+    int bBlock = GetHeight() - dayblocks;
     const int lBlock = 999999999;
 
     if (bBlock < 0) {
@@ -7372,7 +7385,7 @@ bool mastercore::transferAll(const std::string& sender, const std::string& recei
           continue;
         }
 
-        const uint64_t remaining = getMPbalance(sender, propertyId, CHANNEL_RESERVE);
+        const int64_t remaining = getMPbalance(sender, propertyId, CHANNEL_RESERVE);
 
         if (remaining == 0) {
             continue;
