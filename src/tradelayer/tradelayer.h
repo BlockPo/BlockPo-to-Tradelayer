@@ -313,7 +313,7 @@ class Channel
    int expiry_height;
    int last_exchange_block;
  public:
-   //! Available balances for first  and second addressess properties
+   //! Available balances for first  and second addresses properties
    std::map<std::string,map<uint32_t, int64_t>> balances;
 
    Channel() : multisig(""), first(""), second(""), expiry_height(0), last_exchange_block(0) {}
@@ -326,11 +326,10 @@ class Channel
    std::string getSecond() const { return second; }
    int getExpiry() const { return expiry_height; }
    int getLastBlock() const { return last_exchange_block; }
-   uint64_t getRemaining(const std::string& address, uint32_t propertyId) const;
+   int64_t getRemaining(const std::string& address, uint32_t propertyId) const;
 
    void setLastBlock(int block) { last_exchange_block += block;}
    void setBalance(const std::string& sender, uint32_t propertyId, uint64_t amount);
-   void addAmount(const std::string& sender, uint32_t propertyId, uint64_t amount);
    void setSecond(const std::string& sender) { second = sender ; }
    bool updateChannelBal(const std::string& address, uint32_t propertyId, int64_t amount);
    bool updateLastExBlock(int nBlock);

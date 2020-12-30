@@ -708,7 +708,7 @@ UniValue tl_get_channelremaining(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 3)
         throw runtime_error(
-            "tl_getchannelremaining \"address\" propertyid\n"
+            "tl_getchannelremaining \"address\" \"channel\" propertyid\n"
 
             "\nReturns the token reserve account for a given single address in channel.\n"
 
@@ -743,7 +743,7 @@ UniValue tl_get_channelremaining(const JSONRPCRequest& request)
     }
 
     UniValue balanceObj(UniValue::VOBJ);
-    balanceObj.pushKV("channel reserve", FormatMP(isPropertyDivisible(propertyId), remaining));
+    balanceObj.pushKV("channel remaining", FormatMP(isPropertyDivisible(propertyId), remaining));
 
     return balanceObj;
 }

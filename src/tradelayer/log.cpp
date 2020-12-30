@@ -38,7 +38,7 @@ bool msc_debug_persistence                      = 0;
 bool msc_debug_ui                               = 0;
 bool msc_debug_pending                          = 0;
 bool msc_debug_packets                          = 0;
-bool msc_debug_packets_readonly                 = 1;
+bool msc_debug_packets_readonly                 = 0;
 bool msc_debug_walletcache                      = 0;
 bool msc_debug_consensus_hash                   = 0;
 bool msc_debug_consensus_hash_every_block       = 0;
@@ -203,7 +203,7 @@ int LogFilePrint(const std::string& str)
     if (fPrintToConsole) {
         // Print to console
         ret = ConsolePrint(str);
-        
+
     } else {
         static bool fStartedNewLine = true;
         std::call_once(debugLogInitFlag, &DebugLogInit);
