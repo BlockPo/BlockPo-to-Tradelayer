@@ -3013,12 +3013,10 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
     PrintToLog("\nCalling the Settlement Algorithm:\n\n");
     int64_t twap_priceCDEx  = 0;
     int64_t interest = 0;
-    settlement_algorithm_fifo(M_file, interest, twap_priceCDEx);
-
     std::clock_t c_start = std::clock();
     settlement_algorithm_fifo(M_file, interest, twap_priceCDEx);
     std::clock_t c_end = std::clock();
-
+    
     long double time_elapsed_ms = 1000.0*(c_end-c_start)/CLOCKS_PER_SEC;
     std::cout << "CPU time used: " << time_elapsed_ms/1000.0 << "s\n";
 
@@ -3812,42 +3810,39 @@ bool CMPTxList::isMPinBlockRange(int starting_block, int ending_block, bool bDel
 
 bool CMPSettlementList::SettlementAlgorithm(int starting_block, int ending_block, bool bDeleteFound)
 {
-  int block;
-  unsigned int n_found = 0;
-  unsigned int count = 0;
+  unsigned int n_row = 0, n_found = 0;
   leveldb::Slice skey, svalue;
-  std::vector<std::string> vstr;
-  
+  std::vector<std::string> vstr_key, vstr_val;
   leveldb::Iterator* it = NewIterator();
   
+  PrintToLog("\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+  PrintToLog("\nStart: Loopthrough SettlementDB\n");
+  
+  VectorTLS settrow(8); 
   for(it->SeekToFirst(); it->Valid(); it->Next())
     {
-      skey = it->key();
-      svalue = it->value();
-      ++count;
+      ++n_row;
+      string strkey = it->key().ToString();
+      string strval = it->value().ToString();
+      boost::split(vstr_key, strkey, boost::is_any_of("+"), token_compress_on);
+      boost::split(vstr_val, strval, boost::is_any_of(":"), token_compress_on);
       
-      string strvalue = it->value().ToString();
-      boost::split(vstr, strvalue, boost::is_any_of(":"), token_compress_on);
-      
-      // only care about the block number/height here
-      if (2 <= vstr.size())
-        {
-	  block = atoi(vstr[1]);
+      if (1 <= vstr_key.size() && vstr_key.size() <= 3)
+      	{
+      	  ++n_found;
+      	  PrintToLog("\nn_found = %d\nstrkey = %s\nstrvalue = %s\n", n_found, strkey, strval);
+	  for (unsigned int j = 0; j < vstr_val.size(); ++j) settrow[j] = vstr_val[j];
 	  
-	  if ((starting_block <= block) && (block <= ending_block))
-            {
-	      ++n_found;
-	      if(msc_debug_is_mpin_block_range) PrintToLog("%s() DELETING: %s=%s\n", __FUNCTION__,
-							   skey.ToString(), svalue.ToString());
-	      if (bDeleteFound) pdb->Delete(writeoptions, skey);
-            }
-        }
+	  struct status_amounts *pt_vdata_long   = db_status_open_incr(settrow, 0);
+	  struct status_amounts *pt_vdata_short  = db_status_open_incr(settrow, 1);
+	}
     }
   
-  if(msc_debug_is_mpin_block_range) PrintToLog("%s(%d, %d); n_found= %d\n", __FUNCTION__, starting_block,
-					       ending_block, n_found);
+  PrintToLog("\nEnd: Loopthrough SettlementDB\n");
+  PrintToLog("\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+  
   delete it;
-  return (n_found);
+  return n_found;
 }
 
 void CMPTxList::getMPTransactionAddresses(std::vector<std::string> &vaddrs)
@@ -4015,13 +4010,13 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
     }
   
   /*****************************************************************************/
-  /** Settlement Algorithm **/
+  /** Settlement Algorithm from LevelDB **/
   int BlockH = pBlockIndex->nHeight;
   if (BlockH%BlockS == 0 && BlockH != 0)
     {
       PrintToLog("\nCalling Settlement from LevelDB!!");
       pt_settlementlistdb->SettlementAlgorithm(BlockH, reorgRecoveryMaxHeight, true);
-    } 
+    }
   /*****************************************************************************/  
   
   return 0;
@@ -5048,20 +5043,20 @@ void CMPTradeList::recordNewCommit(const uint256& txid, const std::string& chann
 
 void CMPTradeList::recordNewWithdrawal(const uint256& txid, const std::string& channelAddress, const std::string& sender, uint32_t propertyId, uint64_t amountToWithdrawal, int blockNum, int blockIndex)
 {
-    if (!pdb) return;
-    const std::string strValue = strprintf("%s:%s:%d:%d:%d:%d:%s:%d", channelAddress, sender, propertyId, amountToWithdrawal, blockNum, blockIndex,TYPE_WITHDRAWAL, ACTIVE_WITHDRAWAL);
-    Status status = pdb->Put(writeoptions, txid.ToString(), strValue);
-    ++nWritten;
-    if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
+  if (!pdb) return;
+  const std::string strValue = strprintf("%s:%s:%d:%d:%d:%d:%s:%d", channelAddress, sender, propertyId, amountToWithdrawal, blockNum, blockIndex,TYPE_WITHDRAWAL, ACTIVE_WITHDRAWAL);
+  Status status = pdb->Put(writeoptions, txid.ToString(), strValue);
+  ++nWritten;
+  if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
 }
 
 void CMPTradeList::recordNewTransfer(const uint256& txid, const std::string& sender, const std::string& receiver, int blockNum, int blockIndex)
 {
-    if (!pdb) return;
-    const std::string strValue = strprintf("%s:%s:%d:%d:%s", sender, receiver, blockNum, blockIndex, TYPE_TRANSFER);
-    Status status = pdb->Put(writeoptions, txid.ToString(), strValue);
-    ++nWritten;
-    if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
+  if (!pdb) return;
+  const std::string strValue = strprintf("%s:%s:%d:%d:%s", sender, receiver, blockNum, blockIndex, TYPE_TRANSFER);
+  Status status = pdb->Put(writeoptions, txid.ToString(), strValue);
+  ++nWritten;
+  if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
 }
 
 void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, string address1, string address2, unsigned int prop1, unsigned int prop2, uint64_t amount1, uint64_t amount2, int blockNum, int64_t fee)
@@ -5251,35 +5246,28 @@ void CMPSettlementList::recordSettlementList(const uint256 txid1, const uint256 
 {
   if (!pdb) return;
   bool savedata_bool = false;
-  std::string sblockNum2 = std::to_string(blockNum2);
   
   PrintToLog("\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
   PrintToLog("Start: recordSettlementList Function!! <------------------------------\n");
-  const string key =  sblockNum2 + "+" + txid1.ToString() + "+" + txid2.ToString(); //order with block of taker.
+  std::string sBlock2 = std::to_string(blockNum2);
+  const string key =  sBlock2 + "+" + txid1.ToString() + "+" + txid2.ToString();
+  PrintToLog("key: %s\n", key);  
   
-  const string value0 = strprintf("%s:%s:%lu:%d:%d:%s:%s:%d:%d:%d:%s:%s:%d", address1, address2, effective_price,
-  				  blockNum1, blockNum2, s_maker0, s_taker0, lives_s0, lives_b0, property_traded,
-  				  txid1.ToString(), txid2.ToString(), nCouldBuy0);
-  const string value1 = strprintf("%s:%s:%lu:%d:%d:%s:%s:%d:%d:%d:%s:%s:%d", address1, address2, effective_price,
-  				  blockNum1, blockNum2, s_maker1, s_taker1, lives_s1, lives_b1, property_traded,
-  				  txid1.ToString(), txid2.ToString(), nCouldBuy1);
-  const string value2 = strprintf("%s:%s:%lu:%d:%d:%s:%s:%d:%d:%d:%s:%s:%d", address1, address2, effective_price,
-  				  blockNum1, blockNum2, s_maker2, s_taker2, lives_s2, lives_b2, property_traded,
-  				  txid1.ToString(), txid2.ToString(), nCouldBuy2);
-  const string value3 = strprintf("%s:%s:%lu:%d:%d:%s:%s:%d:%d:%d:%s:%s:%d", address1, address2, effective_price,
-  				  blockNum1, blockNum2, s_maker3, s_taker3, lives_s3, lives_b3, property_traded,
-  				  txid1.ToString(), txid2.ToString(), nCouldBuy3);
+  const string value0 = SettlementDBLine(address1, s_maker0, lives_s0, address2, s_taker0, lives_b0, nCouldBuy0, effective_price);
+  const string value1 = SettlementDBLine(address1, s_maker1, lives_s1, address2, s_taker1, lives_b1, nCouldBuy1, effective_price);
+  const string value2 = SettlementDBLine(address1, s_maker2, lives_s2, address2, s_taker2, lives_b2, nCouldBuy2, effective_price);
+  const string value3 = SettlementDBLine(address1, s_maker3, lives_s3, address2, s_taker3, lives_b3, nCouldBuy3, effective_price);
+  
   PrintToLog("value0: %s\n", value0);
   PrintToLog("value1: %s\n", value1);
   PrintToLog("value2: %s\n", value2);
-  PrintToLog("value3: %s\n", value3);  
+  PrintToLog("value3: %s\n", value3);
   
-  /********************************************************************/
-  /** To store into .txt Files**/
+  PrintToLog("\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+  PrintToLog("Start: Storing into TXT file!! <------------------------------\n");
   
   bool status_bool1 = s_maker0 == "OpenShortPosByLongPosNetted" || s_maker0 == "OpenLongPosByShortPosNetted";
   bool status_bool2 = s_taker0 == "OpenShortPosByLongPosNetted" || s_taker0 == "OpenLongPosByShortPosNetted";
-  
   std::fstream SettlementRows;
   SettlementRows.open("SettlementRows.txt", std::fstream::in | std::fstream::out | std::fstream::app);
   if (status_bool1 || status_bool2)
@@ -5290,7 +5278,12 @@ void CMPSettlementList::recordSettlementList(const uint256 txid1, const uint256 
   else saveDataGraphs(SettlementRows, value0);
   SettlementRows.close();
   
-  /********************************************************************/
+  PrintToLog("\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+  PrintToLog("End: Storing into TXT file!! <------------------------------\n");
+  
+  PrintToLog("\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+  PrintToLog("Start: Storing into LevelDB class!! <------------------------------\n");
+
   Status status;
   if (pdb)
     {
@@ -5316,7 +5309,10 @@ void CMPSettlementList::recordSettlementList(const uint256 txid1, const uint256 
   	  ++nWritten;
   	}
     }
-  /********************************************************************/
+  PrintToLog("\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+  PrintToLog("End: Storing into LevelDB class!! <------------------------------\n");
+
+  PrintToLog("\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
   PrintToLog("End: recordSettlementList Function!! <------------------------------\n");
   PrintToLog("\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
 }
@@ -5538,6 +5534,14 @@ const string gettingLineOut(std::string address1, std::string s_status1, int64_t
 				   address2, s_status2, FormatContractShortMP(lives_taker * COIN),
 				   FormatContractShortMP(nCouldBuy * COIN), FormatContractShortMP(effective_price));
   return lineOut;
+}
+
+const string SettlementDBLine(std::string address1, std::string s_status1, int64_t lives_maker, std::string address2, std::string s_status2, int64_t lives_taker, int64_t nCouldBuy, uint64_t effective_price)
+{
+  const string line = strprintf("%s:%s:%d:%s:%s:%d:%d:%d", address1, s_status1, FormatContractShortMP(lives_maker * COIN),
+				address2, s_status2, FormatContractShortMP(lives_taker * COIN),
+				FormatContractShortMP(nCouldBuy * COIN), FormatContractShortMP(effective_price));
+  return line;
 }
 
 void buildingEdge(std::map<std::string, std::string> &edgeEle, std::string addrs_src, std::string addrs_trk, std::string status_src, std::string status_trk, int64_t lives_src, int64_t lives_trk, int64_t amount_path, int64_t matched_price, int idx_q, int ghost_edge)

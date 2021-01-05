@@ -39,6 +39,8 @@ struct status_lives_edge
 
 /**************************************************************/
 /** Functions for clearing algo */
+struct status_amounts *db_status_open_incr(VectorTLS &v, int q);
+
 struct status_amounts *get_status_amounts_open_incr(VectorTLS &v, int q);
 
 struct status_amounts *get_status_amounts_byaddrs(VectorTLS &v, std::string addrs);

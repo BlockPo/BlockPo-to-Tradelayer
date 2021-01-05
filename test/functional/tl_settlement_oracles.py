@@ -326,10 +326,10 @@ class OracleSettlementTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         assert_equal(out['result']['longPosition'], 0)
         assert_equal(out['result']['shortPosition'], 1000)
-
+        
         self.log.info("Mining towards settlement")
         self.nodes[0].generate(300)
-        assert(0)
+        # assert(0)
         conn.close()
         self.stop_nodes()
 
