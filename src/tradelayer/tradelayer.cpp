@@ -2981,9 +2981,7 @@ bool VestingTokens(int block)
  */
 bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx, const CBlockIndex* pBlockIndex, const std::shared_ptr<std::map<COutPoint, Coin>> removedCoins)
 {
-  extern std::vector<std::map<std::string, std::string>> lives_longs_vg;
-  extern std::vector<std::map<std::string, std::string>> lives_shorts_vg;
-  extern int BlockS;
+  // extern int BlockS;
   
   LOCK(cs_tally);
   
@@ -2995,47 +2993,47 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
   
   if (nBlock < nWaterlineBlock) return false;
   int64_t nBlockTime = pBlockIndex->GetBlockTime();
-  int nBlockNow = GetHeight();
+  // int nBlockNow = GetHeight();
   
-  /***********************************************************************/
-  /** Calling The Settlement Algorithm **/  
-  if (nBlockNow%BlockS == 0 && nBlockNow != 0 && path_elef.size() != 0 && lastBlockg != nBlockNow) {
+  // /***********************************************************************/
+  // /** Calling The Settlement Algorithm **/  
+  // if (nBlockNow%BlockS == 0 && nBlockNow != 0 && path_elef.size() != 0 && lastBlockg != nBlockNow) {
     
-    PrintToLog("\nSETTLEMENT : every 8 hours here. nBlockNow = %d\n", nBlockNow);
-    pt_ndatabase = new MatrixTLS(path_elef.size(), n_cols); MatrixTLS &ndatabase = *pt_ndatabase;
-    MatrixTLS M_file(path_elef.size(), n_cols);
-    fillingMatrix(M_file, ndatabase, path_elef);
-    n_rows = size(M_file, 0);
-    PrintToLog("Matrix for Settlement: dim = (%d, %d)\n\n", n_rows, n_cols);
-    //printing_matrix(M_file);
+  //   PrintToLog("\nSETTLEMENT : every 8 hours here. nBlockNow = %d\n", nBlockNow);
+  //   pt_ndatabase = new MatrixTLS(path_elef.size(), n_cols); MatrixTLS &ndatabase = *pt_ndatabase;
+  //   MatrixTLS M_file(path_elef.size(), n_cols);
+  //   fillingMatrix(M_file, ndatabase, path_elef);
+  //   n_rows = size(M_file, 0);
+  //   PrintToLog("Matrix for Settlement: dim = (%d, %d)\n\n", n_rows, n_cols);
+  //   //printing_matrix(M_file);
     
-    cout << "\n\n";
-    PrintToLog("\nCalling the Settlement Algorithm:\n\n");
-    int64_t twap_priceCDEx  = 0;
-    int64_t interest = 0;
-    std::clock_t c_start = std::clock();
-    settlement_algorithm_fifo(M_file, interest, twap_priceCDEx);
-    std::clock_t c_end = std::clock();
+  //   cout << "\n\n";
+  //   PrintToLog("\nCalling the Settlement Algorithm:\n\n");
+  //   int64_t twap_priceCDEx  = 0;
+  //   int64_t interest = 0;
+  //   std::clock_t c_start = std::clock();
+  //   settlement_algorithm_fifo(M_file, interest, twap_priceCDEx);
+  //   std::clock_t c_end = std::clock();
     
-    long double time_elapsed_ms = 1000.0*(c_end-c_start)/CLOCKS_PER_SEC;
-    std::cout << "CPU time used: " << time_elapsed_ms/1000.0 << "s\n";
+  //   long double time_elapsed_ms = 1000.0*(c_end-c_start)/CLOCKS_PER_SEC;
+  //   std::cout << "CPU time used: " << time_elapsed_ms/1000.0 << "s\n";
 
-    // /**********************************************************************/
-    // /** Unallocating Dynamic Memory **/
-    //path_elef.clear();
-    market_priceMap.clear();
-    numVWAPMap.clear();
-    denVWAPMap.clear();
-    VWAPMap.clear();
-    VWAPMapSubVector.clear();
-    numVWAPVector.clear();
-    denVWAPVector.clear();
-    mapContractAmountTimesPrice.clear();
-    mapContractVolume.clear();
-    VWAPMapContracts.clear();
-    cdextwap_vec.clear();
-    /**********************************************************************/
-  }
+  //   // /**********************************************************************/
+  //   // /** Unallocating Dynamic Memory **/
+  //   //path_elef.clear();
+  //   market_priceMap.clear();
+  //   numVWAPMap.clear();
+  //   denVWAPMap.clear();
+  //   VWAPMap.clear();
+  //   VWAPMapSubVector.clear();
+  //   numVWAPVector.clear();
+  //   denVWAPVector.clear();
+  //   mapContractAmountTimesPrice.clear();
+  //   mapContractVolume.clear();
+  //   VWAPMapContracts.clear();
+  //   cdextwap_vec.clear();
+  //   /**********************************************************************/
+  // }
   
   CMPTransaction mp_obj;
   mp_obj.unlockLogic();
@@ -3810,38 +3808,75 @@ bool CMPTxList::isMPinBlockRange(int starting_block, int ending_block, bool bDel
 
 bool CMPSettlementList::SettlementAlgorithm(int starting_block, int ending_block, bool bDeleteFound)
 {
-  unsigned int n_row = 0, n_found = 0;
+  unsigned int rows_number = 0, n_found = 0;
   leveldb::Slice skey, svalue;
   std::vector<std::string> vstr_key, vstr_val;
   leveldb::Iterator* it = NewIterator();
   
   PrintToLog("\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
-  PrintToLog("\nStart: Loopthrough SettlementDB\n");
+  PrintToLog("\nStart: Loopthrough SettlementDB\n");  
+  for(it->SeekToFirst(); it->Valid(); it->Next()) ++rows_number;
+  PrintToLog("\nrows_number = %d\n", rows_number);
   
-  VectorTLS settrow(8); 
+  n_cols = 10;
+  pt_ndatabase = new MatrixTLS(rows_number, n_cols); MatrixTLS &ndatabase = *pt_ndatabase;
+  MatrixTLS *pt_M_file = new MatrixTLS(rows_number, n_cols); MatrixTLS &M_file = *pt_M_file;
+  
   for(it->SeekToFirst(); it->Valid(); it->Next())
     {
-      ++n_row;
       string strkey = it->key().ToString();
       string strval = it->value().ToString();
       boost::split(vstr_key, strkey, boost::is_any_of("+"), token_compress_on);
       boost::split(vstr_val, strval, boost::is_any_of(":"), token_compress_on);
-      
-      if (1 <= vstr_key.size() && vstr_key.size() <= 3)
-      	{
-      	  ++n_found;
-      	  PrintToLog("\nn_found = %d\nstrkey = %s\nstrvalue = %s\n", n_found, strkey, strval);
-	  for (unsigned int j = 0; j < vstr_val.size(); ++j) settrow[j] = vstr_val[j];
-	  
-	  struct status_amounts *pt_vdata_long   = db_status_open_incr(settrow, 0);
-	  struct status_amounts *pt_vdata_short  = db_status_open_incr(settrow, 1);
-	}
+      // PrintToLog("\nn_found = %d\nstrkey = %s\nstrvalue = %s\n", n_found, strkey, strval);
+      M_file[n_found][0] = ndatabase[n_found][0] = vstr_val[0];
+      M_file[n_found][1] = ndatabase[n_found][1] = vstr_val[1];
+      M_file[n_found][2] = ndatabase[n_found][2] = vstr_val[2];
+      M_file[n_found][3] = ndatabase[n_found][3] = vstr_val[3];
+      M_file[n_found][4] = ndatabase[n_found][4] = vstr_val[4];
+      M_file[n_found][5] = ndatabase[n_found][5] = vstr_val[5];
+      M_file[n_found][6] = ndatabase[n_found][6] = vstr_val[6];
+      M_file[n_found][7] = ndatabase[n_found][7] = vstr_val[7];
+      M_file[n_found][8] = ndatabase[n_found][8] = vstr_val[6];
+      M_file[n_found][9] = ndatabase[n_found][9] = vstr_val[6];
+      ++n_found;
     }
-  
   PrintToLog("\nEnd: Loopthrough SettlementDB\n");
   PrintToLog("\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
   
+  n_rows = size(M_file, 0);
+  PrintToLog("Matrix for Settlement: dim = (%d, %d)\n\n", n_rows, n_cols);
+  printing_matrix(M_file);
+  
+  cout << "\n\n";
+  PrintToLog("\nCalling the Settlement Algorithm:\n\n");
+  int64_t twap_priceCDEx  = 0;
+  int64_t interest = 0;
+  std::clock_t c_start = std::clock();
+  settlement_algorithm_fifo(M_file, interest, twap_priceCDEx);
+  std::clock_t c_end = std::clock();
+  
+  long double time_elapsed_ms = 1000.0*(c_end-c_start)/CLOCKS_PER_SEC;
+  std::cout << "CPU time used: " << time_elapsed_ms/1000.0 << "s\n";
+  
+  /**********************************************************************/
+  /** Unallocating Dynamic Memory **/
+  market_priceMap.clear();
+  numVWAPMap.clear();
+  denVWAPMap.clear();
+  VWAPMap.clear();
+  VWAPMapSubVector.clear();
+  numVWAPVector.clear();
+  denVWAPVector.clear();
+  mapContractAmountTimesPrice.clear();
+  mapContractVolume.clear();
+  VWAPMapContracts.clear();
+  cdextwap_vec.clear();
+  /**********************************************************************/
+  
   delete it;
+  delete pt_M_file;
+  delete pt_ndatabase;
   return n_found;
 }
 
