@@ -721,8 +721,7 @@ static bool FillTxInputCache(const CTransaction& tx, const std::shared_ptr<std::
     static unsigned int nCacheSize = gArgs.GetArg("-tltxcache", 500000);
 
     if (view.GetCacheSize() > nCacheSize) {
-        PrintToLog("%s(): clearing cache before insertion [size=%d, hit=%d, miss=%d]\n",
-                __func__, view.GetCacheSize(), nCacheHits, nCacheMiss);
+        if(msc_debug_fill_tx_input_cache) PrintToLog("%s(): clearing cache before insertion [size=%d, hit=%d, miss=%d]\n", __func__, view.GetCacheSize(), nCacheHits, nCacheMiss);
         view.Flush();
     }
 
@@ -732,11 +731,11 @@ static bool FillTxInputCache(const CTransaction& tx, const std::shared_ptr<std::
         const Coin& coin = view.AccessCoin(txIn.prevout);
 
         if (!coin.IsSpent()) {
-            PrintToLog("%s(): coin.IsSpent() == false, nCacheHits: %d \n",__func__, nCacheHits);
+            if(msc_debug_fill_tx_input_cache) PrintToLog("%s(): coin.IsSpent() == false, nCacheHits: %d \n",__func__, nCacheHits);
             ++nCacheHits;
             continue;
         } else {
-            PrintToLog("%s(): coin.IsSpent() == true, nCacheHits: %d \n",__func__, nCacheHits);
+            if(msc_debug_fill_tx_input_cache) PrintToLog("%s(): coin.IsSpent() == true, nCacheHits: %d \n",__func__, nCacheHits);
             ++nCacheMiss;
         }
 
@@ -745,20 +744,20 @@ static bool FillTxInputCache(const CTransaction& tx, const std::shared_ptr<std::
         Coin newcoin;
         if (removedCoins && removedCoins->find(txIn.prevout) != removedCoins->end()) {
             newcoin = removedCoins->find(txIn.prevout)->second;
-            PrintToLog("%s(): newcoin = removedCoins->find(txIn.prevout)->second \n",__func__);
+            if(msc_debug_fill_tx_input_cache) PrintToLog("%s(): newcoin = removedCoins->find(txIn.prevout)->second \n",__func__);
         } else if (GetTransaction(txIn.prevout.hash, txPrev, Params().GetConsensus(), hashBlock, true)) {
 
             newcoin.out.scriptPubKey = txPrev->vout[nOut].scriptPubKey;
             newcoin.out.nValue = txPrev->vout[nOut].nValue;
-            PrintToLog("%s():GetTransaction == true, nValue: %d\n",__func__, txPrev->vout[nOut].nValue);
+            if(msc_debug_fill_tx_input_cache) PrintToLog("%s():GetTransaction == true, nValue: %d\n",__func__, txPrev->vout[nOut].nValue);
             BlockMap::iterator bit = mapBlockIndex.find(hashBlock);
             newcoin.nHeight = bit != mapBlockIndex.end() ? bit->second->nHeight : 1;
         } else {
-            PrintToLog("%s():GetTransaction == false\n",__func__);
+            if(msc_debug_fill_tx_input_cache) PrintToLog("%s():GetTransaction == false\n",__func__);
             return false;
         }
 
-        PrintToLog("%s(): nCacheHits: %d, nCacheMiss: %d, nCacheSize: %d\n",__func__, nCacheHits, nCacheMiss, nCacheSize);
+        if(msc_debug_fill_tx_input_cache) PrintToLog("%s(): nCacheHits: %d, nCacheMiss: %d, nCacheSize: %d\n",__func__, nCacheHits, nCacheMiss, nCacheSize);
 
         view.AddCoin(txIn.prevout, std::move(newcoin), true);
     }
@@ -6181,8 +6180,8 @@ bool mastercore::closeChannels(int Block)
             CMPSPInfo::Entry sp;
             if (_my_sps->getSP(propertyId, sp) && sp.isContract()) continue;
 
-            const int64_t first_rem = chn.getRemaining(chn.getFirst(), propertyId);
-            const int64_t second_rem = chn.getRemaining(chn.getSecond(), propertyId);
+            const int64_t first_rem = chn.getRemaining(false, propertyId);
+            const int64_t second_rem = chn.getRemaining(true, propertyId);
             const int64_t balance = getMPbalance(chn.getMultisig(), propertyId, CHANNEL_RESERVE);
 
             assert(balance == first_rem + second_rem);
@@ -6302,6 +6301,21 @@ bool CMPTradeList::getAllCommits(const std::string& senderAddress, UniValue& tra
 int64_t Channel::getRemaining(const std::string& address, uint32_t propertyId) const
 {
     int64_t remaining = 0;
+    auto it = balances.find(address);
+    if (it != balances.end())
+    {
+        const auto &pMap = it->second;
+        auto itt = pMap.find(propertyId);
+        remaining = (itt != pMap.end()) ? itt->second : 0;
+    }
+
+    return remaining;
+}
+
+int64_t Channel::getRemaining(bool flag, uint32_t propertyId) const
+{
+    int64_t remaining = 0;
+    const std::string address = (flag) ? second : first;
     auto it = balances.find(address);
     if (it != balances.end())
     {

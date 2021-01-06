@@ -2,7 +2,7 @@
 # Copyright (c) 2015-2017 The Bitcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
-"""Test Registers in Trade Channels."""
+"""Test Remaining amount in Trade Channels."""
 
 from test_framework.test_framework import BitcoinTestFramework
 from test_framework.util import *
@@ -12,7 +12,7 @@ import json
 import http.client
 import urllib.parse
 
-class RegistersTest (BitcoinTestFramework):
+class RemainingTest (BitcoinTestFramework):
     def set_test_params(self):
         self.num_nodes = 1
         self.setup_clean_chain = True
@@ -209,6 +209,13 @@ class RegistersTest (BitcoinTestFramework):
 
         self.nodes[0].generate(1)
 
+        self.log.info("Sending 500 lihki cons to address1 (tl_send)")
+        params = str([addresses[0], addresses[1], 4, "500"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_send",params)
+        # self.log.info(out)
+
+        self.nodes[0].generate(1)
+
         self.log.info("Checking tokens in receiver address")
         params = str([addresses[3], 4]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
@@ -245,7 +252,7 @@ class RegistersTest (BitcoinTestFramework):
         assert_equal(out['result']['multisig address'], multisig)
         assert_equal(out['result']['first address'], addresses[0])
         assert_equal(out['result']['second address'], 'pending')
-        assert_equal(out['result']['expiry block'], 785)
+        assert_equal(out['result']['expiry block'], 786)
         assert_equal(out['result']['status'], 'active')
 
 
@@ -274,155 +281,181 @@ class RegistersTest (BitcoinTestFramework):
 
         self.nodes[0].generate(1)
 
-        self.log.info("Checking the commit")
-        params = str([addresses[0]]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, False, "tl_check_commits",params)
-        # self.log.info(out)
-        assert_equal(out['error'], None)
-
-        if out['result'][0]['block'] == 210:
-            i = 0
-        else:
-            i = 1
-
-        assert_equal(out['result'][i]['sender'], addresses[0])
-        assert_equal(out['result'][i]['propertyId'], '4')
-        assert_equal(out['result'][i]['amount'], '875.00000000')
-        assert_equal(out['result'][1-i]['sender'], addresses[0])
-        assert_equal(out['result'][1-i]['propertyId'], '4')
-        assert_equal(out['result'][1-i]['amount'], '1000.00000000')
-        assert_equal(out['result'][1-i]['block'],209)
-
-
-        self.log.info("Commiting to trade channel (it must be rejected)")
-        params = str([addresses[3], multisig, 4, '1000']).replace("'",'"')
+        params = str([addresses[1], multisig, 4, '500']).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_commit_tochannel",params)
         assert_equal(out['error'], None)
         # self.log.info(out)
 
         self.nodes[0].generate(1)
 
-        self.log.info("Checking commits again")
-        params = str([addresses[0]]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, False, "tl_check_commits",params)
-        # self.log.info(out)
-        assert_equal(out['error'], None)
-
-        if out['result'][0]['block'] == 210:
-            i = 0
-        else:
-            i = 1
-
-        assert_equal(out['result'][i]['sender'], addresses[0])
-        assert_equal(out['result'][i]['propertyId'], '4')
-        assert_equal(out['result'][i]['amount'], '875.00000000')
-        assert_equal(out['result'][1-i]['sender'], addresses[0])
-        assert_equal(out['result'][1-i]['propertyId'], '4')
-        assert_equal(out['result'][1-i]['amount'], '1000.00000000')
-        assert_equal(out['result'][1-i]['block'],209)
-
-
         self.log.info("Checking reserve in channel")
         params = str([multisig, 4]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_get_channelreserve",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['channel reserve'], '1875.00000000')
+        assert_equal(out['result']['channel reserve'], '2375.00000000')
+
+        # addr0 making instant trade with addr1 (tokens for tokens)
+        self.log.info("Funding the multisig with 2 LTC")
+        params = str([multisig, 2]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "sendtoaddress", params)
+        # self.log.info(out)
+        txid = out['result']
 
         self.nodes[0].generate(1)
 
 
-        self.log.info("Withdrawal from channel ")
-        params = str([addresses[0], multisig, 4, '700']).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, False, "tl_withdrawal_fromchannel",params)
+        self.log.info("Checking the transaction")
+        params = str([txid]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "gettransaction", params)
+        # self.log.info(out)
+        vout = out['result']['details'][0]['vout']
+        self.log.info('vout:' + str(vout))
+
+        self.log.info("Creating raw input")
+        params = str(['', txid, vout]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_createrawtx_input",params)
+        # self.log.info(out)
+        hex = out['result']
+
+
+        # Destination here is addresses[0]
+        self.log.info("Creating raw reference")
+        params = str([hex, addresses[0], 1.5]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_createrawtx_reference",params)
+        # self.log.info(out)
+        hex = out['result']
+
+
+        self.log.info("Creating payload for instant trade")
+        params = str([4, '2000', 5, '2000', 225]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_createpayload_instant_trade", params)
         assert_equal(out['error'], None)
+        payload = out['result']
+        # self.log.info(payload)
+
+
+        self.log.info("Adding the op return to transaction")
+        params = str([hex,payload]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_createrawtx_opreturn", params)
+        assert_equal(out['error'], None)
+        # self.log.info(out)
+        hex = out['result']
+        # self.log.info(hex)
+
+
+        params = '["'+hex+'",[{"txid":"'+txid+'","vout":'+str(vout)+', "scriptPubKey":"'+scriptPubKey+'","redeemScript":"'+redeemScript+'","amount":2}],["'+privatekey0+'"]]'
+        self.log.info("Signing raw transaction with address 0")
+        # self.log.info(params)
+        out = tradelayer_HTTP(conn, headers, False, "signrawtransaction",params)
+        # assert_equal(out['error'], None)
+        hex = out['result']['hex']
+        # self.log.info(out)
+
+
+        self.log.info("decoding trade layer raw transaction")
+        params = str([hex]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_decodetransaction", params)
+        assert_equal(out['error'], None)
+        # self.log.info(out)
+
+        assert_equal(out['result']['fee'], '0.50000000')
+        assert_equal(out['result']['sendingaddress'], multisig)
+        assert_equal(out['result']['referenceaddress'], addresses[0])
+        assert_equal(out['result']['type_int'], 110)
+        assert_equal(out['result']['type'], 'Channel Instant Trade')
+        assert_equal(out['result']['propertyId'], 4)
+        assert_equal(out['result']['amount for sale'], '2000.00000000')
+        assert_equal(out['result']['desired property'], 5)
+        assert_equal(out['result']['desired value'], '2000.00000000')
+
+
+        self.log.info("Signing raw transaction with address 1")
+        params = '["'+hex+'",[{"txid":"'+txid+'","vout":'+str(vout)+', "scriptPubKey":"'+scriptPubKey+'","redeemScript":"'+redeemScript+'","amount":2}],["'+privatekey1+'"]]'
+        out = tradelayer_HTTP(conn, headers, False, "signrawtransaction",params)
+        assert_equal(out['error'], None)
+        hex = out['result']['hex']
+        # self.log.info(hex)
+
+
+        self.log.info("Sending raw transaction (must be rejected, no enough lihki tokens in channel for address0)")
+        params = '["'+hex+'", true]'
+        out = tradelayer_HTTP(conn, headers, False, "sendrawtransaction",params)
+        # assert_equal(out['error'], None)
+        # self.log.info(out)
+        tx = out['result']
+
+        params = '["'+hex+'"]'
+        out = tradelayer_HTTP(conn, headers, False, "decoderawtransaction",params)
         # self.log.info(out)
 
         self.nodes[0].generate(1)
 
-
-        self.log.info("Checking reserve in channel")
+        self.log.info("Checking lihki tokens in channel")
         params = str([multisig, 4]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, False, "tl_get_channelreserve",params)
+        out = tradelayer_HTTP(conn, headers, True, "tl_get_channelreserve",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['channel reserve'], '1875.00000000')
+        assert_equal(out['result']['channel reserve'],'2375.00000000')
 
 
-        self.log.info("mining 7 blocks")
-        self.nodes[0].generate(7)
-
-
-        self.log.info("Checking reserve in channel")
-        params = str([multisig, 4]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, False, "tl_get_channelreserve",params)
+        self.log.info("Checking dan tokens in channel")
+        params = str([multisig, 5]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_get_channelreserve",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['channel reserve'], '1175.00000000')
+        assert_equal(out['result']['channel reserve'],'2000.00000000')
 
 
-        # self.log.info("Checking channel info")
-        # params = str([multisig]).replace("'",'"')
-        # out = tradelayer_HTTP(conn, headers, False, "tl_getchannel_info", params)
+        self.log.info("Checking lihki tokens in address0")
+        params = str([addresses[0], 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
         # self.log.info(out)
-        #
-        # self.log.info("Checking tl info")
-        # out = tradelayer_HTTP(conn, headers, False, "tl_getinfo")
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['balance'],'19999995625.00000000')
+        assert_equal(out['result']['reserve'],'0.00000000')
+
+
+        self.log.info("Checking dan tokens in address0")
+        params = str([addresses[0], 5]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
         # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['balance'],'0.00000000')
+        assert_equal(out['result']['reserve'],'0.00000000')
 
 
-        self.log.info("Checking the expiration of trade channel")
-        self.nodes[0].generate(600)
+        self.log.info("Checking lihki tokens in address1")
+        params = str([addresses[1], 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['balance'],'0.00000000')
+        assert_equal(out['result']['reserve'],'0.00000000')
 
+
+        self.log.info("Checking dan tokens in address1")
+        params = str([addresses[1], 5]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['balance'],'9999998000.00000000')
+        assert_equal(out['result']['reserve'],'0.00000000')
+
+
+        self.log.info("Checking the trade channel")
         params = str([multisig]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_getchannel_info",params)
         # self.log.info(out)
-        assert_equal(out['result']['status'], 'closed')
-
-
-        self.log.info("Checking reserve in channel")
-        params = str([multisig, 4]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, False, "tl_get_channelreserve",params)
-        # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['channel reserve'], '0.00000000')
-
-
-        self.log.info("Commiting to trade channel")
-        params = str([addresses[0], multisig, 4, '200']).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, False, "tl_commit_tochannel",params)
-        assert_equal(out['error'], None)
-        # self.log.info(out)
-
-        self.nodes[0].generate(1)
-
-
-        self.log.info("Checking reserve in channel")
-        params = str([multisig, 4]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, False, "tl_get_channelreserve",params)
-        # self.log.info(out)
-        assert_equal(out['error'], None)
-        assert_equal(out['result']['channel reserve'], '200.00000000')
-
-
-        self.log.info("Withdrawal from channel ")
-        params = str([addresses[0], multisig, 4, '200']).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, False, "tl_withdrawal_fromchannel",params)
-        assert_equal(out['error'], None)
-        # self.log.info(out)
-
-        self.nodes[0].generate(8)
-
-        self.log.info("Checking reserve in channel")
-        params = str([multisig, 4]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, False, "tl_get_channelreserve",params)
-        # self.log.info(out)
-        assert_equal(out['error'], None)
-        assert_equal(out['result']['channel reserve'], '0.00000000')
-
+        assert_equal(out['result']['multisig address'], multisig)
+        assert_equal(out['result']['first address'], addresses[0])
+        assert_equal(out['result']['second address'], addresses[1])
+        assert_equal(out['result']['expiry block'], 786)
+        assert_equal(out['result']['status'], 'active')
 
 
         self.stop_nodes()
 
 if __name__ == '__main__':
-    RegistersTest ().main ()
+    RemainingTest ().main ()

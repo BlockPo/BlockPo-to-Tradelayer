@@ -327,6 +327,8 @@ class Channel
    int getExpiry() const { return expiry_height; }
    int getLastBlock() const { return last_exchange_block; }
    int64_t getRemaining(const std::string& address, uint32_t propertyId) const;
+   int64_t getRemaining(bool flag, uint32_t propertyId) const;
+
 
    void setLastBlock(int block) { last_exchange_block += block;}
    void setBalance(const std::string& sender, uint32_t propertyId, uint64_t amount);
