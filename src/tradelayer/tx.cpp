@@ -4387,6 +4387,33 @@ int CMPTransaction::logicMath_Instant_Trade()
       return (PKT_ERROR_CHANNELS -18);
   }
 
+  // checking if the address contains in the channel enough tokens to trade!
+  const int64_t fRemaining = chn.getRemaining(false, property);
+  if (property > 0 && fRemaining < (int64_t) amount_forsale) {
+      PrintToLog("%s(): rejected: address %s has insufficient balance of property %d [%s < %s] in channel %s\n",
+              __func__,
+              chn.getFirst(),
+              property,
+              FormatMP(property, fRemaining),
+              FormatMP(property, amount_forsale),
+              chn.getMultisig());
+
+      return (PKT_ERROR_CHANNELS -19);
+  }
+
+  const int64_t sRemaining = chn.getRemaining(true, desired_property);
+  if (desired_property > 0 && sRemaining < (int64_t) desired_value) {
+      PrintToLog("%s(): rejected: address %s has insufficient balance of property %d [%s < %s] in channel %s\n",
+              __func__,
+              chn.getFirst(),
+              desired_property,
+              FormatMP(property, sRemaining),
+              FormatMP(property, desired_value),
+              chn.getMultisig());
+
+      return (PKT_ERROR_CHANNELS -19);
+  }
+
   // ------------------------------------------
 
   if (property > LTC && desired_property > LTC)

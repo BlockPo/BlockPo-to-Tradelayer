@@ -114,6 +114,7 @@ bool msc_debug_counting_lives_longshorts        = 0;
 bool msc_debug_calculate_pnl_forghost           = 1;
 bool msc_debug_withdrawal_from_channel          = 1;
 bool msc_debug_populate_rpc_transaction_obj     = 0;
+bool msc_debug_fill_tx_input_cache              = 0;
 
 /**
  * LogPrintf() has been broken a couple of times now
