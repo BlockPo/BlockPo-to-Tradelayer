@@ -3828,7 +3828,6 @@ bool CMPSettlementList::SettlementAlgorithm(int starting_block, int ending_block
       string strval = it->value().ToString();
       boost::split(vstr_key, strkey, boost::is_any_of("+"), token_compress_on);
       boost::split(vstr_val, strval, boost::is_any_of(":"), token_compress_on);
-      // PrintToLog("\nn_found = %d\nstrkey = %s\nstrvalue = %s\n", n_found, strkey, strval);
       M_file[n_found][0] = ndatabase[n_found][0] = vstr_val[0];
       M_file[n_found][1] = ndatabase[n_found][1] = vstr_val[1];
       M_file[n_found][2] = ndatabase[n_found][2] = vstr_val[2];
@@ -3872,8 +3871,7 @@ bool CMPSettlementList::SettlementAlgorithm(int starting_block, int ending_block
   mapContractVolume.clear();
   VWAPMapContracts.clear();
   cdextwap_vec.clear();
-  /**********************************************************************/
-  
+  /**********************************************************************/  
   delete it;
   delete pt_M_file;
   delete pt_ndatabase;
