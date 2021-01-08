@@ -232,7 +232,6 @@ UniValue tl_createrawtx_change(const JSONRPCRequest& request)
     std::string destination = ParseAddress(request.params[2]);
     int64_t txFee = AmountFromValue(request.params[3]);
     uint32_t nOut = request.params.size() > 4 ? request.params[4].get_int64() : 0;
-
     // use a dummy coins view to store the user provided transaction inputs
     CCoinsView viewDummy;
     CCoinsViewCache viewTemp(&viewDummy);
