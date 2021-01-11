@@ -4237,7 +4237,7 @@ int CMPTransaction::logicMath_Withdrawal_FromChannel()
     Channel &chn = it->second;
 
     //checking amount in channel for sender
-    const uint64_t remaining = chn.getRemaining(sender, propertyId);
+    const uint64_t remaining = static_cast<uint64_t>(chn.getRemaining(sender, propertyId));
 
     if (amount_to_withdraw > remaining)
     {
@@ -4376,13 +4376,13 @@ int CMPTransaction::logicMath_Instant_Trade()
       return (PKT_ERROR_CHANNELS -18);
   }
 
-  nBalance = getMPbalance(sender, desired_property, CHANNEL_RESERVE);
-  if (desired_property > 0 && nBalance < (int64_t) desired_value) {
+  int64_t Balance = getMPbalance(sender, desired_property, CHANNEL_RESERVE);
+  if (desired_property > 0 && Balance < (int64_t) desired_value) {
       PrintToLog("%s(): rejected: channel address %s has insufficient balance of property %d [%s < %s]\n",
               __func__,
               sender,
               desired_property,
-              FormatMP(desired_property, nBalance),
+              FormatMP(desired_property, Balance),
               FormatMP(desired_property, desired_value));
       return (PKT_ERROR_CHANNELS -18);
   }
@@ -4577,11 +4577,6 @@ int CMPTransaction::logicMath_Instant_LTC_Trade()
       return (PKT_ERROR_CHANNELS -18);
   }
 
-   // ------------------------------------------
-
-   /**Sender: buyer of tokens, receiver: seller**/
-   PrintToLog("%s(): sender: %s, receiver: %s, amount_forsale: %d, price: %d, property: %d\n",__func__,sender, receiver, amount_forsale, price, property);
-
    return rc;
 }
 
@@ -4617,8 +4612,6 @@ int CMPTransaction::logicMath_Contract_Instant()
     if(it != channels_Map.end()){
         chn = it->second;
     }
-
-    PrintToLog("%s(): channel: %s, sender: %s, receiver: %s\n", __func__,  chn.getFirst(), sender, receiver);
 
     if (sender.empty() || chn.getFirst().empty() || chn.getSecond().empty())
     {

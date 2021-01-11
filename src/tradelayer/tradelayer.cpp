@@ -1003,9 +1003,6 @@ int ParseTransaction(const CTransaction& tx, int nBlock, unsigned int idx, CMPTr
      int64_t nvalue = 0;
      int count = 0;
 
-     PrintToLog("%s(): inside the function\n",__func__);
-     PrintToLog("%s(): vout size: %d\n",__func__, tx.vout.size());
-
      for (unsigned int n = 0; n < tx.vout.size(); ++n)
      {
          CTxDestination dest;
@@ -1391,8 +1388,6 @@ int input_mp_offers_string(const std::string& s)
     const uint256 txid = uint256S(vstr[i++]);
     const uint8_t subaction = boost::lexical_cast<unsigned int>(vstr[i++]);
     const uint8_t option = boost::lexical_cast<unsigned int>(vstr[i++]);
-    // TODO: should this be here? There are usually no sanity checks..
-      // if (TL_PROPERTY_BTC != prop_desired) return -1;
 
     const std::string combo = STR_SELLOFFER_ADDR_PROP_COMBO(sellerAddr, prop);
     CMPOffer newOffer(offerBlock, amountOriginal, prop, btcDesired, minFee, blocktimelimit, txid, subaction, option);
@@ -1894,7 +1889,7 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
         }
     }
 
-    PrintToLog("%s(%s), loaded lines= %d, res= %d\n", __func__, filename, lines, res);
+    if (msc_debug_persistence) PrintToLog("%s(%s), loaded lines= %d, res= %d\n", __func__, filename, lines, res);
 
 
     return res;
@@ -2793,7 +2788,7 @@ int mastercore_shutdown()
     mastercoreInitialized = 0;
 
     PrintToLog("\nTrade Layer shutdown completed\n");
-    // PrintToLog("Shutdown time: %s\n", FormatISO8601Date(GetTime()));
+    PrintToLog("Shutdown time: %s\n", FormatISO8601Date(GetTime()));
 
     return 0;
 }
@@ -3137,6 +3132,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
             HandleDExPayments(tx, nBlock, mp_obj.getSender());
 
         }
+
         // Only structurally valid transactions get recorded in levelDB
         // PKT_ERROR - 2 = interpret_Transaction failed, structurally invalid payload
         else if (interp_ret != PKT_ERROR - 2)
@@ -3277,6 +3273,7 @@ bool mastercore::UseEncodingClassC(size_t nDataSize)
     if (!IsAllowedOutputType(TX_NULL_DATA, nBlockNow)) {
         fDataEnabled = false;
     }
+
     return (nTotalSize <= nMaxDatacarrierBytes && fDataEnabled);
 }
 
@@ -3339,6 +3336,7 @@ int mastercore::WalletTxBuilder(const std::string& senderAddress, const std::str
   CAmount nFeeRet = 0;
   int nChangePosInOut = -1;
   std::string strFailReason;
+
   // Ask the wallet to create the transaction (note mining fee determined by Litecoin Core params)
   if (!pwalletMain->CreateTransaction(vecRecipients, wtxNew, reserveKey, nFeeRet, nChangePosInOut, strFailReason, coinControl, true))
   {
@@ -7305,7 +7303,7 @@ bool CMPTradeList::tryAddSecond(const std::string& candidate, const std::string&
 {
     auto it = channels_Map.find(channelAddr);
     if (it == channels_Map.end()){
-        PrintToLog("%s(): channel is not active! (not found in map)\n",__func__);
+        if(msc_debug_try_add_second) PrintToLog("%s(): channel is not active! (not found in map)\n",__func__);
         return false;
     }
 
@@ -7315,7 +7313,7 @@ bool CMPTradeList::tryAddSecond(const std::string& candidate, const std::string&
     Status status = pdb->Get(readoptions, channelAddr, &strValue);
 
     if(!status.ok()){
-        PrintToLog("%s(): db error - channel not found\n", __func__);
+        if(msc_debug_try_add_second) PrintToLog("%s(): db error - channel not found\n", __func__);
         return false;
     }
 
@@ -7323,7 +7321,7 @@ bool CMPTradeList::tryAddSecond(const std::string& candidate, const std::string&
     boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
 
     if (vstr.size() != 6) {
-        PrintToLog("%s(): db error - incorrect size of register: (%s)\n", __func__, strValue);
+        if(msc_debug_try_add_second) PrintToLog("%s(): db error - incorrect size of register: (%s)\n", __func__, strValue);
         return false;
     }
 
@@ -7341,7 +7339,7 @@ bool CMPTradeList::tryAddSecond(const std::string& candidate, const std::string&
 
     // address is not part of channel!
     if (secAddr != "pending"){
-        PrintToLog("%s(): secAddr != pending, break\n",__func__);
+        if(msc_debug_try_add_second) PrintToLog("%s(): secAddr != pending, break\n",__func__);
         return false;
     }
 
