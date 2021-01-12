@@ -123,6 +123,7 @@ extern bool msc_debug_counting_lives_longshorts;
 extern bool msc_debug_calculate_pnl_forghost;
 extern bool msc_debug_populate_rpc_transaction_obj;
 extern bool msc_debug_fill_tx_input_cache;
+extern bool msc_debug_try_add_second;
 
 
 template<typename Arg>
