@@ -33,7 +33,7 @@ def generate_word(length):
             word += random.choice(VOWELS)
     return word
 
-class OracleSettlementTest (BitcoinTestFramework):
+class OracleSettlementTest(BitcoinTestFramework):
     
     def set_test_params(self):
         self.num_nodes = 1
@@ -50,11 +50,11 @@ class OracleSettlementTest (BitcoinTestFramework):
             f.write(rpcauth+"\n")
 
     def run_test(self):
-
+            
         self.log.info("Preparing the workspace...")
-
         # Mining 1000 blocks
         self.nodes[0].generate(1000)
+        time.sleep(1)
         
         ################################################################################
         # Checking RPC tl_sendtrade (in the first 200 blocks of the chain) #
@@ -62,19 +62,19 @@ class OracleSettlementTest (BitcoinTestFramework):
         
         url = urllib.parse.urlparse(self.nodes[0].url)
         
-        #Old authpair
+        # Old authpair
         authpair = url.username + ':' + url.password
         headers = {"Authorization": "Basic " + str_to_b64str(authpair)}
         addresses = []
         accounts = []
         
         self.log.info("Creating accounts to used")
-        n_accounts = 500 # Number of accounts created
+        n_accounts = 300 # Number of accounts created
         id_names = 0
         while (id_names < n_accounts):
             id_names = id_names + 1;
             accounts.append(generate_word(5));
-
+        
         conn = http.client.HTTPConnection(url.hostname, url.port)
         conn.connect()
         
@@ -195,27 +195,32 @@ class OracleSettlementTest (BitcoinTestFramework):
         time.sleep(1)
 
         #########################################################################
+        trades_id = 0
+        trades_ns = 4
+        while (trades_id < trades_ns):
+            trades_id += 1
+            self.log.info("Bid-Ask: Match Trades")
+            id_bid = 0
+            half_amount = int(n_accounts/2)
+            while (id_bid < half_amount):
+                id_bid += 1
+                price_h  = str(round(round(random.uniform(30000, 40000), 10000), 8))
 
-        self.log.info("Bid-Ask: Match Trades")
-        id_bid = 0
-        half_amount = int(n_accounts/2)
-        while (id_bid < half_amount):
-            id_bid += 1
-            price_h  = str(round(round(random.uniform(30000, 40000), 10000), 8))
-
-            amount_h = str(round(random.randrange(10, 100), 90))
-            params = str([addresses[id_bid], "Oracle 1", amount_h, price_h, 1, "1"]).replace("'",'"')
-            out = tradelayer_HTTP(conn, headers, False, "tl_tradecontract", params)
-            # self.log.info(out)
-            assert_equal(out['error'], None)
-            self.nodes[0].generate(1)
-
-            amount_h = str(round(random.randrange(10, 100), 90))
-            params = str([addresses[half_amount - id_bid + 1], "Oracle 1", amount_h, price_h, 2, "1"]).replace("'",'"')
-            out = tradelayer_HTTP(conn, headers, True, "tl_tradecontract", params) # Trade giving problems
-            # self.log.info(out)
-            assert_equal(out['error'], None)
-            self.nodes[0].generate(1)
+                amount_h = str(round(random.randrange(10, 100), 90))
+                pos_id = random.randrange(1, 3)
+                params = str([addresses[id_bid], "Oracle 1", amount_h, price_h, pos_id, "1"]).replace("'",'"')
+                out = tradelayer_HTTP(conn, headers, False, "tl_tradecontract", params)
+                # self.log.info(out)
+                assert_equal(out['error'], None)
+                self.nodes[0].generate(1)
+                
+                amount_h = str(round(random.randrange(10, 100), 90))
+                pos_id = random.randrange(1, 3)
+                params = str([addresses[half_amount - id_bid + 1], "Oracle 1", amount_h, price_h, pos_id, "1"]).replace("'",'"')
+                out = tradelayer_HTTP(conn, headers, True, "tl_tradecontract", params) # Trade giving problems
+                # self.log.info(out)
+                assert_equal(out['error'], None)
+                self.nodes[0].generate(1)
 
         #########################################################################
             
