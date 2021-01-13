@@ -1844,6 +1844,9 @@ bool CMPTransaction::interpret_Transfer()
 
   std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecOptionBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecPropertyIdBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecAmountBytes = GetNextVarIntBytes(i);
 
   if (!vecTypeBytes.empty()) {
       type = DecompressInteger(vecTypeBytes);
@@ -1853,10 +1856,25 @@ bool CMPTransaction::interpret_Transfer()
       version = DecompressInteger(vecVersionBytes);
   } else return false;
 
+  if (!vecOptionBytes.empty()) {
+      address_option = (DecompressInteger(vecOptionBytes) == 0) ? false : true;
+  } else return false;
+
+  if (!vecPropertyIdBytes.empty()) {
+      propertyId = DecompressInteger(vecPropertyIdBytes);
+  } else return false;
+
+  if (!vecAmountBytes.empty()) {
+      amount_transfered = DecompressInteger(vecAmountBytes);
+  } else return false;
+
   if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
   {
       PrintToLog("\t version: %d\n", version);
       PrintToLog("\t messageType: %d\n",type);
+      PrintToLog("\t address option: %d\n", address_option);
+      PrintToLog("\t propertyId: %d\n",propertyId);
+      PrintToLog("\t amount transfered: %d\n",amount_transfered);
   }
 
   return true;
@@ -4470,40 +4488,46 @@ int CMPTransaction::logicMath_Update_PNL()
 /** Tx 112 */
 int CMPTransaction::logicMath_Transfer()
 {
-  if (!IsTransactionTypeAllowed(block, type, version)) {
-      PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+    if (!IsTransactionTypeAllowed(block, type, version)) {
+        PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
               __func__,
               type,
               version,
-              property,
+              propertyId,
               block);
-      return (PKT_ERROR_TOKENS -22);
-  }
+        return (PKT_ERROR_TOKENS -22);
+    }
 
-   Channel chn;
-   auto it = channels_Map.find(sender);
-   if(it != channels_Map.end()){
+    Channel chn;
+    auto it = channels_Map.find(sender);
+    if(it != channels_Map.end()){
        chn = it->second;
-   }
+    }
 
-  if (chn.getMultisig().empty() && chn.getFirst().empty() && chn.getSecond().empty()) {
-      PrintToLog("%s(): rejected: address doesn't belong to multisig channel \n", __func__);
-      return (PKT_ERROR_CHANNELS -15);
-  }
+    if (chn.getMultisig().empty() && chn.getFirst().empty() && chn.getSecond().empty()) {
+        PrintToLog("%s(): rejected: address doesn't belong to multisig channel \n", __func__);
+        return (PKT_ERROR_CHANNELS -15);
+    }
 
-  // if receiver channel doesn't exist, create it
-  // if (!t_tradelistdb->checkChannelAddress(receiver)) {
-  //     createChannel(sender, receiver, block,tx_idx);
-  // }
+    // if receiver channel doesn't exist, create it
+    // if (!t_tradelistdb->checkChannelAddress(receiver)) {
+    //     createChannel(sender, receiver, block,tx_idx);
+    // }
 
+    // TRANSFER logic here
+    if(!chn.updateChannelBal(address_option, propertyId, -amount_transfered)){
+        PrintToLog("%s(): withdrawal is not possible\n",__func__);
+        return (PKT_ERROR_CHANNELS -16);
+    }
 
-  // ------------------------------------------
+    const std::string& address = (address_option) ? chn.getSecond(): chn.getFirst();
 
-  // TRANSFER logic here
-  if(transferAll(sender, receiver)){
+    // updating tally map
+    assert(update_tally_map(address, propertyId, amount_transfered, BALANCE));
+    assert(update_tally_map(receiver, propertyId, -amount_transfered, CHANNEL_RESERVE));
+
     // recordNewTransfer
-    t_tradelistdb->recordNewTransfer(txid, sender,receiver,block, tx_idx);
-  }
+    t_tradelistdb->recordNewTransfer(txid, sender, receiver, block, tx_idx);
 
 
   return 0;

@@ -334,6 +334,7 @@ class Channel
    void setBalance(const std::string& sender, uint32_t propertyId, uint64_t amount);
    void setSecond(const std::string& sender) { second = sender ; }
    bool updateChannelBal(const std::string& address, uint32_t propertyId, int64_t amount);
+   bool updateChannelBal(bool flag, uint32_t propertyId, int64_t amount);
    bool updateLastExBlock(int nBlock);
 
  };
@@ -668,7 +669,6 @@ namespace mastercore
   void createChannel(const std::string& sender, const std::string& receiver, uint32_t propertyId, uint64_t amount_commited, int block, int tx_id);
 
   bool channelSanityChecks(const std::string& sender, const std::string& receiver, uint32_t propertyId, uint64_t amount_commited, int block, int tx_idx);
-  bool transferAll(const std::string& sender, const std::string& receiver);
 
   const std::string getVestingAdmin();
 

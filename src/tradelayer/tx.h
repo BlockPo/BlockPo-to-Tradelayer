@@ -136,6 +136,9 @@ private:
     uint64_t ileverage;
     uint64_t itrading_action;
     uint64_t instant_amount;
+    bool address_option;  // false: first address, true: second address
+    uint64_t amount_transfered;
+
 
     //KYC
     char company_name[SP_STRING_FIELD_LEN];

@@ -6313,7 +6313,7 @@ int64_t Channel::getRemaining(const std::string& address, uint32_t propertyId) c
 int64_t Channel::getRemaining(bool flag, uint32_t propertyId) const
 {
     int64_t remaining = 0;
-    const std::string address = (flag) ? second : first;
+    const std::string& address = (flag) ? second : first;
     auto it = balances.find(address);
     if (it != balances.end())
     {
@@ -6345,6 +6345,42 @@ bool Channel::updateChannelBal(const std::string& address, uint32_t propertyId, 
             amount_remaining = itt->second;
         }
 
+    }
+
+    if (isOverflow(amount_remaining, amount)) {
+        PrintToLog("%s(): ERROR: arithmetic overflow [%d + %d]\n", __func__, amount_remaining, amount);
+        return false;
+    }
+
+    if ((amount_remaining + amount) < 0)
+    {
+        PrintToLog("%s(): insufficient funds! (amount_remaining: %d, amount: %d)\n", __func__, amount_remaining, amount);
+        return false;
+
+    }
+
+    amount_remaining += amount;
+
+    setBalance(address,propertyId,amount_remaining);
+
+    return true;
+
+}
+
+bool Channel::updateChannelBal(bool flag, uint32_t propertyId, int64_t amount)
+{
+    if (amount == 0){
+        PrintToLog("%s(): nothing to update!\n", __func__);
+        return false;
+    }
+
+    int64_t amount_remaining = 0;
+    const std::string& address = (flag) ? second : first;
+    const auto &pMap = balances[address];
+
+    auto itt = pMap.find(propertyId);
+    if (itt != pMap.end()){
+        amount_remaining = itt->second;
     }
 
     if (isOverflow(amount_remaining, amount)) {
@@ -7378,47 +7414,6 @@ bool mastercore::channelSanityChecks(const std::string& sender, const std::strin
 
         return (t_tradelistdb->tryAddSecond(sender, receiver, propertyId, amount_commited));
     }
-}
-
-bool mastercore::transferAll(const std::string& sender, const std::string& receiver)
-{
-    bool status = false;
-
-    LOCK(cs_tally);
-
-    const uint32_t nextSPID = _my_sps->peekNextSPID();
-
-    // retrieving funds from channel
-    for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
-    {
-        CMPSPInfo::Entry sp;
-        if (_my_sps->getSP(propertyId, sp) && sp.isContract())
-        {
-          continue;
-        }
-
-        const int64_t remaining = getMPbalance(sender, propertyId, CHANNEL_RESERVE);
-
-        if (remaining == 0) {
-            continue;
-        }
-
-        assert(update_tally_map(sender, propertyId, -remaining, CHANNEL_RESERVE));
-        assert(update_tally_map(receiver, propertyId, remaining, CHANNEL_RESERVE));
-
-        status = true;
-    }
-
-
-    // clearing channel balance registers
-    auto it = channels_Map.find(sender);
-    if (it != channels_Map.end()){
-        Channel &chn = it->second;
-        chn.balances.clear();
-    }
-
-    return status;
-
 }
 
 int64_t mastercore::getVWap(uint32_t propertyId, int aBlock, const std::map<uint32_t,std::map<int,std::vector<std::pair<int64_t,int64_t>>>>& aMap)
