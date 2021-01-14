@@ -6182,6 +6182,8 @@ bool mastercore::closeChannels(int Block)
             const int64_t second_rem = chn.getRemaining(true, propertyId);
             const int64_t balance = getMPbalance(chn.getMultisig(), propertyId, CHANNEL_RESERVE);
 
+            PrintToLog("%s(): first remaining: %d, second remaining: %d, channel balance: %d, propertyId: %d\n",__func__, first_rem, second_rem, balance, propertyId);
+
             assert(balance == first_rem + second_rem);
 
             bool fState = (first_rem > 0) ? true : false;
@@ -6358,45 +6360,8 @@ bool Channel::updateChannelBal(const std::string& address, uint32_t propertyId, 
         return false;
 
     }
-
+    
     amount_remaining += amount;
-
-    setBalance(address,propertyId,amount_remaining);
-
-    return true;
-
-}
-
-bool Channel::updateChannelBal(bool flag, uint32_t propertyId, int64_t amount)
-{
-    if (amount == 0){
-        PrintToLog("%s(): nothing to update!\n", __func__);
-        return false;
-    }
-
-    int64_t amount_remaining = 0;
-    const std::string& address = (flag) ? second : first;
-    const auto &pMap = balances[address];
-
-    auto itt = pMap.find(propertyId);
-    if (itt != pMap.end()){
-        amount_remaining = itt->second;
-    }
-
-    if (isOverflow(amount_remaining, amount)) {
-        PrintToLog("%s(): ERROR: arithmetic overflow [%d + %d]\n", __func__, amount_remaining, amount);
-        return false;
-    }
-
-    if ((amount_remaining + amount) < 0)
-    {
-        PrintToLog("%s(): insufficient funds! (amount_remaining: %d, amount: %d)\n", __func__, amount_remaining, amount);
-        return false;
-
-    }
-
-    amount_remaining += amount;
-
     setBalance(address,propertyId,amount_remaining);
 
     return true;
@@ -7288,7 +7253,6 @@ void mastercore::createChannel(const std::string& sender, const std::string& rec
     Channel chn(receiver, sender,"pending", block + dayblocks, block);
     chn.setBalance(sender, propertyId, amount_commited);
     channels_Map[receiver] = chn;
-
     if(msc_create_channel) PrintToLog("%s(): checking channel elements : channel address: %s, first address: %d, second address: %d, expiry_height: %d \n",__func__, chn.getMultisig(), chn.getFirst(), chn.getSecond(), chn.getExpiry());
 
     t_tradelistdb->recordNewChannel(chn.getMultisig(), chn.getFirst(), chn.getSecond(), chn.getExpiry(), tx_id);

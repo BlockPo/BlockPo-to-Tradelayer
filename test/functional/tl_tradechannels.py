@@ -555,8 +555,9 @@ class ChannelsBasicsTest (BitcoinTestFramework):
         # self.log.info(hex)
 
 
-        self.log.info("Creating payload for transfer")
-        out = tradelayer_HTTP(conn, headers, False, "tl_createpayload_transfer")
+        self.log.info("Creating payload for transfer for address0")
+        params = str([0, 4, '100']).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_createpayload_transfer", params)
         assert_equal(out['error'], None)
         payload = out['result']
         self.log.info(payload)
@@ -605,7 +606,7 @@ class ChannelsBasicsTest (BitcoinTestFramework):
         params = '["'+hex+'", true]'
         out = tradelayer_HTTP(conn, headers, False, "sendrawtransaction",params)
         # assert_equal(out['error'], None)
-        # self.log.info(out)
+        self.log.info(out)
         tx = out['result']
 
         self.nodes[0].generate(1)
@@ -616,13 +617,32 @@ class ChannelsBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, True, "getrawtransaction",params)
         # self.log.info(out)
 
+        self.log.info("Checking tokens left in sender channel")
+        params = str([multisig, 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_get_channelreserve",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['channel reserve'], '75.00000000')
+
 
         self.log.info("Checking tokens in receiver channel")
         params = str([multisig1, 4]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_get_channelreserve",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['channel reserve'], '175.00000000')
+        assert_equal(out['result']['channel reserve'], '100.00000000')
+
+        self.log.info("Checking remainng in the sender channel for the address0")
+        params = str([addresses[0], multisig, 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_get_channelremaining",params)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['channel remaining'], '75.00000000')
+
+        self.log.info("Checking remainng in the receiving channel for the address0")
+        params = str([addresses[0], multisig1, 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_get_channelremaining",params)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['channel remaining'], '100.00000000')
 
         self.log.info("Checking trade history for address")
         params = str([addresses[0], multisig, 100, 4]).replace("'",'"')

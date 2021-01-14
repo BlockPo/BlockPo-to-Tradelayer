@@ -4495,36 +4495,46 @@ int CMPTransaction::logicMath_Transfer()
               version,
               propertyId,
               block);
-        return (PKT_ERROR_TOKENS -22);
+        return (PKT_ERROR_CHANNELS -14);
     }
 
-    Channel chn;
     auto it = channels_Map.find(sender);
-    if(it != channels_Map.end()){
-       chn = it->second;
-    }
 
-    if (chn.getMultisig().empty() && chn.getFirst().empty() && chn.getSecond().empty()) {
+    if (it == channels_Map.end()) {
         PrintToLog("%s(): rejected: address doesn't belong to multisig channel \n", __func__);
         return (PKT_ERROR_CHANNELS -15);
     }
 
-    // if receiver channel doesn't exist, create it
-    // if (!t_tradelistdb->checkChannelAddress(receiver)) {
-    //     createChannel(sender, receiver, block,tx_idx);
-    // }
-
-    // TRANSFER logic here
-    if(!chn.updateChannelBal(address_option, propertyId, -amount_transfered)){
-        PrintToLog("%s(): withdrawal is not possible\n",__func__);
-        return (PKT_ERROR_CHANNELS -16);
-    }
+    Channel& chn = it->second;
 
     const std::string& address = (address_option) ? chn.getSecond(): chn.getFirst();
 
+    // if receiver channel doesn't exist, create it
+    if (!t_tradelistdb->checkChannelAddress(receiver)) {
+        createChannel(address, receiver, propertyId, 0, block, tx_idx);
+    }
+
+    auto itt = channels_Map.find(receiver);
+    if (itt == channels_Map.end()) {
+        PrintToLog("%s(): rejected: address doesn't belong to multisig channel \n", __func__);
+        return (PKT_ERROR_CHANNELS -16);
+    }
+
+    Channel& nwChn =  itt->second;
+
+    if(!chn.updateChannelBal(address, propertyId, -amount_transfered)){
+        PrintToLog("%s(): withdrawal is not possible\n",__func__);
+        return (PKT_ERROR_CHANNELS -17);
+    }
+
+    if(!nwChn.updateChannelBal(address, propertyId, amount_transfered)){
+        PrintToLog("%s(): withdrawal is not possible\n",__func__);
+        return (PKT_ERROR_CHANNELS -18);
+    }
+
     // updating tally map
-    assert(update_tally_map(address, propertyId, amount_transfered, BALANCE));
-    assert(update_tally_map(receiver, propertyId, -amount_transfered, CHANNEL_RESERVE));
+    assert(update_tally_map(sender, propertyId, -amount_transfered, CHANNEL_RESERVE));
+    assert(update_tally_map(receiver, propertyId, amount_transfered, CHANNEL_RESERVE));
 
     // recordNewTransfer
     t_tradelistdb->recordNewTransfer(txid, sender, receiver, block, tx_idx);

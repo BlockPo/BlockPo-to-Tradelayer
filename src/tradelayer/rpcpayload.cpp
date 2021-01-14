@@ -891,9 +891,9 @@ UniValue tl_createpayload_transfer(const JSONRPCRequest& request)
 
 			"\nCreate an transfer payload.\n"
       "\nArguments:\n"
-			"1. address option        (number, required) 0 to use first address, 1 to use second address in channel\n"
+			"1. address option      (number, required) 0 to use first address, 1 to use second address in channel\n"
       "2. propertyId          (number, required) the identifier of the property\n"
-			"3. amount                (string, required) the amount of tokens to transfer\n"
+			"3. amount               (string, required) the amount of tokens to transfer\n"
 
 			"\nResult:\n"
 			"\"hash\"                  (string) the hex-encoded transaction hash\n"
