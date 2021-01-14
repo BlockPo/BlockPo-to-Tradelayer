@@ -6182,6 +6182,8 @@ bool mastercore::closeChannels(int Block)
             const int64_t second_rem = chn.getRemaining(true, propertyId);
             const int64_t balance = getMPbalance(chn.getMultisig(), propertyId, CHANNEL_RESERVE);
 
+            PrintToLog("%s(): first remaining: %d, second remaining: %d, channel balance: %d, propertyId: %d\n",__func__, first_rem, second_rem, balance, propertyId);
+
             assert(balance == first_rem + second_rem);
 
             bool fState = (first_rem > 0) ? true : false;
@@ -6313,7 +6315,7 @@ int64_t Channel::getRemaining(const std::string& address, uint32_t propertyId) c
 int64_t Channel::getRemaining(bool flag, uint32_t propertyId) const
 {
     int64_t remaining = 0;
-    const std::string address = (flag) ? second : first;
+    const std::string& address = (flag) ? second : first;
     auto it = balances.find(address);
     if (it != balances.end())
     {
@@ -6358,9 +6360,8 @@ bool Channel::updateChannelBal(const std::string& address, uint32_t propertyId, 
         return false;
 
     }
-
+    
     amount_remaining += amount;
-
     setBalance(address,propertyId,amount_remaining);
 
     return true;
@@ -7252,7 +7253,6 @@ void mastercore::createChannel(const std::string& sender, const std::string& rec
     Channel chn(receiver, sender,"pending", block + dayblocks, block);
     chn.setBalance(sender, propertyId, amount_commited);
     channels_Map[receiver] = chn;
-
     if(msc_create_channel) PrintToLog("%s(): checking channel elements : channel address: %s, first address: %d, second address: %d, expiry_height: %d \n",__func__, chn.getMultisig(), chn.getFirst(), chn.getSecond(), chn.getExpiry());
 
     t_tradelistdb->recordNewChannel(chn.getMultisig(), chn.getFirst(), chn.getSecond(), chn.getExpiry(), tx_id);
@@ -7378,47 +7378,6 @@ bool mastercore::channelSanityChecks(const std::string& sender, const std::strin
 
         return (t_tradelistdb->tryAddSecond(sender, receiver, propertyId, amount_commited));
     }
-}
-
-bool mastercore::transferAll(const std::string& sender, const std::string& receiver)
-{
-    bool status = false;
-
-    LOCK(cs_tally);
-
-    const uint32_t nextSPID = _my_sps->peekNextSPID();
-
-    // retrieving funds from channel
-    for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
-    {
-        CMPSPInfo::Entry sp;
-        if (_my_sps->getSP(propertyId, sp) && sp.isContract())
-        {
-          continue;
-        }
-
-        const int64_t remaining = getMPbalance(sender, propertyId, CHANNEL_RESERVE);
-
-        if (remaining == 0) {
-            continue;
-        }
-
-        assert(update_tally_map(sender, propertyId, -remaining, CHANNEL_RESERVE));
-        assert(update_tally_map(receiver, propertyId, remaining, CHANNEL_RESERVE));
-
-        status = true;
-    }
-
-
-    // clearing channel balance registers
-    auto it = channels_Map.find(sender);
-    if (it != channels_Map.end()){
-        Channel &chn = it->second;
-        chn.balances.clear();
-    }
-
-    return status;
-
 }
 
 int64_t mastercore::getVWap(uint32_t propertyId, int aBlock, const std::map<uint32_t,std::map<int,std::vector<std::pair<int64_t,int64_t>>>>& aMap)

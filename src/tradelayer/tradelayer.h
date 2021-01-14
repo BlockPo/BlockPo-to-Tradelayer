@@ -668,7 +668,6 @@ namespace mastercore
   void createChannel(const std::string& sender, const std::string& receiver, uint32_t propertyId, uint64_t amount_commited, int block, int tx_id);
 
   bool channelSanityChecks(const std::string& sender, const std::string& receiver, uint32_t propertyId, uint64_t amount_commited, int block, int tx_idx);
-  bool transferAll(const std::string& sender, const std::string& receiver);
 
   const std::string getVestingAdmin();
 

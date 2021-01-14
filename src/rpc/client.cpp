@@ -226,6 +226,10 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_createpayload_withdrawal_fromchannel", 0, "arg0" },
 
 
+    { "tl_createpayload_transfer", 0, "arg0"},
+    { "tl_createpayload_transfer", 1, "arg1"},
+
+
     /* Trade Layer - raw transaction calls */
     { "tl_createrawtx_reference", 2, "arg2" },
     { "tl_createrawtx_input", 2, "arg2" },

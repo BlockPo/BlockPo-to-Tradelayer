@@ -887,20 +887,28 @@ UniValue tl_createpayload_transfer(const JSONRPCRequest& request)
 {
   if (request.fHelp)
     throw runtime_error(
-			"tl_createpayload_transfer \"hash\" \n"
+			"tl_createpayload_transfer \"address option\"  \"propertyId\" \"amount\"\n"
 
 			"\nCreate an transfer payload.\n"
+      "\nArguments:\n"
+			"1. address option      (number, required) 0 to use first address, 1 to use second address in channel\n"
+      "2. propertyId          (number, required) the identifier of the property\n"
+			"3. amount               (string, required) the amount of tokens to transfer\n"
 
 			"\nResult:\n"
 			"\"hash\"                  (string) the hex-encoded transaction hash\n"
 
 			"\nExamples:\n"
-			+ HelpExampleCli("tl_createpayload_transfer", "hash")
-			+ HelpExampleRpc("tl_createpayload_transfer", "hash")
+			+ HelpExampleCli("tl_createpayload_transfer", "\"1\" \"3\" \"564\"")
+			+ HelpExampleRpc("tl_createpayload_transfer", "\"0\", \"3\" ,\"564218\"")
 			);
 
+  uint8_t option = ParseBinary(request.params[0]);
+  uint32_t propertyId = ParsePropertyId(request.params[1]);
+  uint64_t amount = ParseAmount(request.params[2], isPropertyDivisible(propertyId));
+
   // create a payload for the transaction
-  std::vector<unsigned char> payload = CreatePayload_Transfer();
+  std::vector<unsigned char> payload = CreatePayload_Transfer(option, propertyId, amount);
 
   return HexStr(payload.begin(), payload.end());
 
