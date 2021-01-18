@@ -1051,9 +1051,6 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
     // convert back to int64_t
     int64_t amount_purchased = ConvertTo64(amountPurchased256);
 
-    // taking fees
-    Token_LTC_Fees(amount_purchased, property);
-
     std::string channelAddr;
     t_tradelistdb->checkChannelRelation(seller, channelAddr);
 
@@ -1071,8 +1068,10 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
 
     if (remaining >= amount_purchased)
     {
+        // taking fees
+        Token_LTC_Fees(amount_purchased, property);
+
         assert(update_tally_map(buyer, property, amount_purchased, BALANCE));
-        assert(update_tally_map(channelAddr, property, -amount_purchased, CHANNEL_RESERVE));
         assert(sChn.updateChannelBal(seller, property, -amount_purchased));
 
         p_txlistdb->recordNewInstantLTCTrade(txid, channelAddr, seller , buyer, property, amount_purchased, price, block, idx);
@@ -6101,7 +6100,6 @@ bool mastercore::makeWithdrawals(int Block)
 
             // updating tally map
             assert(update_tally_map(address, propertyId, amount, BALANCE));
-            assert(update_tally_map(channelAddress, propertyId, -amount, CHANNEL_RESERVE));
 
             // deleting element from vector
             itt = accepted.erase(itt++);
@@ -6169,7 +6167,6 @@ bool mastercore::closeChannels(int Block)
             continue;
         }
 
-        LOCK(cs_tally);
         const uint32_t nextSPID = _my_sps->peekNextSPID();
 
         // retrieving funds from channel
@@ -6180,11 +6177,8 @@ bool mastercore::closeChannels(int Block)
 
             const int64_t first_rem = chn.getRemaining(false, propertyId);
             const int64_t second_rem = chn.getRemaining(true, propertyId);
-            const int64_t balance = getMPbalance(chn.getMultisig(), propertyId, CHANNEL_RESERVE);
 
-            PrintToLog("%s(): first remaining: %d, second remaining: %d, channel balance: %d, propertyId: %d\n",__func__, first_rem, second_rem, balance, propertyId);
-
-            assert(balance == first_rem + second_rem);
+            PrintToLog("%s(): first remaining: %d, second remaining: %d, channel, propertyId: %d\n",__func__, first_rem, second_rem, propertyId);
 
             bool fState = (first_rem > 0) ? true : false;
             bool sState = (second_rem > 0) ? true : false;
@@ -6195,15 +6189,13 @@ bool mastercore::closeChannels(int Block)
 
             if (fState)
             {
-
-                assert(update_tally_map(chn.getMultisig(), propertyId, -first_rem, CHANNEL_RESERVE));
+                assert(chn.updateChannelBal(chn.getFirst(), propertyId, -first_rem));
                 assert(update_tally_map(chn.getFirst(), propertyId, first_rem, BALANCE));
-
             }
 
             if (sState)
             {
-                assert(update_tally_map(chn.getMultisig(), propertyId, -second_rem, CHANNEL_RESERVE));
+                assert(chn.updateChannelBal(chn.getSecond(), propertyId, -second_rem));
                 assert(update_tally_map(chn.getSecond(), propertyId, second_rem, BALANCE));
             }
 
@@ -6212,14 +6204,15 @@ bool mastercore::closeChannels(int Block)
         // adding info in db
         status = t_tradelistdb->setChannelClosed(chn.getMultisig());
 
-        // deleting element from map
-        channels_Map.erase(it++);
-
         // deleting channel from withdrawals
         auto itt = withdrawal_Map.find(chn.getMultisig());
         if (itt != withdrawal_Map.end()){
             withdrawal_Map.erase(itt);
         }
+
+        // deleting element from map
+        channels_Map.erase(it++);
+
     } // end loop
 
     return status;
@@ -6360,7 +6353,7 @@ bool Channel::updateChannelBal(const std::string& address, uint32_t propertyId, 
         return false;
 
     }
-    
+
     amount_remaining += amount;
     setBalance(address,propertyId,amount_remaining);
 
@@ -7374,10 +7367,10 @@ bool mastercore::channelSanityChecks(const std::string& sender, const std::strin
     {
         createChannel(sender, receiver, propertyId, amount_commited, block, tx_idx);
         return true;
-    } else {
-
-        return (t_tradelistdb->tryAddSecond(sender, receiver, propertyId, amount_commited));
     }
+
+    return (t_tradelistdb->tryAddSecond(sender, receiver, propertyId, amount_commited));
+
 }
 
 int64_t mastercore::getVWap(uint32_t propertyId, int aBlock, const std::map<uint32_t,std::map<int,std::vector<std::pair<int64_t,int64_t>>>>& aMap)

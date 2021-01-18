@@ -4180,11 +4180,6 @@ int CMPTransaction::logicMath_CommitChannel()
         return (PKT_ERROR_TOKENS -24);
     }
 
-    if (!channelSanityChecks(sender, receiver, propertyId, amount_commited, block, tx_idx)){
-        PrintToLog("%s(): rejected: invalid address or channel is inactive\n", __func__);
-        return (PKT_ERROR_TOKENS -23);
-    }
-
     int64_t nBalance = getMPbalance(sender, propertyId, BALANCE);
     if (nBalance < (int64_t) amount_commited) {
         PrintToLog("%s(): rejected: sender %s has insufficient balance of property %d [%s < %s]\n",
@@ -4196,16 +4191,14 @@ int CMPTransaction::logicMath_CommitChannel()
         return (PKT_ERROR_TOKENS -25);
     }
 
-    // ------------------------------------------
-
-
+    if (!channelSanityChecks(sender, receiver, propertyId, amount_commited, block, tx_idx)){
+        PrintToLog("%s(): rejected: invalid address or channel is inactive\n", __func__);
+        return (PKT_ERROR_TOKENS -23);
+    }
 
     if(msc_debug_commit_channel) PrintToLog("%s():sender: %s, channelAddress: %s, amount_commited: %d, propertyId: %d\n",__func__, sender, receiver, amount_commited, propertyId);
 
-
-    //putting money into channel reserve
     assert(update_tally_map(sender, propertyId, -amount_commited, BALANCE));
-    assert(update_tally_map(receiver, propertyId, amount_commited, CHANNEL_RESERVE));
 
     t_tradelistdb->recordNewCommit(txid, receiver, sender, propertyId, amount_commited, block, tx_idx);
 
@@ -4233,20 +4226,6 @@ int CMPTransaction::logicMath_Withdrawal_FromChannel()
     if (!t_tradelistdb->checkChannelAddress(receiver)) {
         PrintToLog("%s(): rejected: receiver: %s is not multisig channel\n", __func__, receiver);
         return (PKT_ERROR_CHANNELS -10);
-    }
-
-
-    // ------------------------------------------
-
-    //checking balance of channelAddress
-    uint64_t totalAmount = static_cast<uint64_t>(getMPbalance(receiver, propertyId, CHANNEL_RESERVE));
-
-    if (msc_debug_withdrawal_from_channel) PrintToLog("%s(): amount_to_withdraw : %d, totalAmount in channel: %d\n", __func__, amount_to_withdraw, totalAmount);
-
-    if (amount_to_withdraw > totalAmount)
-    {
-        PrintToLog("%s(): amount to withdrawal is bigger than totalAmount on channel\n", __func__);
-        return (PKT_ERROR_TOKENS -25);
     }
 
     // checking the amount remaining in the channel
@@ -4383,28 +4362,6 @@ int CMPTransaction::logicMath_Instant_Trade()
       return (PKT_ERROR_CHANNELS -17);
   }
 
-  int64_t nBalance = getMPbalance(sender, property, CHANNEL_RESERVE);
-  if (property > 0 && nBalance < (int64_t) amount_forsale) {
-      PrintToLog("%s(): rejected: channel address %s has insufficient balance of property %d [%s < %s]\n",
-              __func__,
-              sender,
-              property,
-              FormatMP(property, nBalance),
-              FormatMP(property, amount_forsale));
-      return (PKT_ERROR_CHANNELS -18);
-  }
-
-  int64_t Balance = getMPbalance(sender, desired_property, CHANNEL_RESERVE);
-  if (desired_property > 0 && Balance < (int64_t) desired_value) {
-      PrintToLog("%s(): rejected: channel address %s has insufficient balance of property %d [%s < %s]\n",
-              __func__,
-              sender,
-              desired_property,
-              FormatMP(desired_property, Balance),
-              FormatMP(desired_property, desired_value));
-      return (PKT_ERROR_CHANNELS -18);
-  }
-
   // checking if the address contains in the channel enough tokens to trade!
   const int64_t fRemaining = chn.getRemaining(false, property);
   if (property > 0 && fRemaining < (int64_t) amount_forsale) {
@@ -4436,16 +4393,23 @@ int CMPTransaction::logicMath_Instant_Trade()
 
   if (property > LTC && desired_property > LTC)
   {
-      assert(update_tally_map(chn.getSecond(), property, amount_forsale, BALANCE));
-      assert(update_tally_map(chn.getMultisig(), property, -amount_forsale, CHANNEL_RESERVE));
-      assert(update_tally_map(chn.getFirst(), desired_property, desired_value, BALANCE));
-      assert(update_tally_map(chn.getMultisig(), desired_property, -desired_value, CHANNEL_RESERVE));
+
+      PrintToLog("%s(): channel: %s, first : %s, second : %s, amount_forsale : %d, property : %d, desired_value : %d, desired_property : %d\n",__func__,chn.getMultisig(), chn.getFirst(),chn.getSecond(), amount_forsale, property, desired_value, desired_property);
 
       t_tradelistdb->recordNewInstantTrade(txid, chn.getMultisig(), chn.getFirst(), chn.getSecond(), property, amount_forsale, desired_property, desired_value, block, tx_idx);
+
+      PrintToLog("%s(): remaining of first (before): %d\n",__func__, chn.getRemaining(false, property));
+      PrintToLog("%s(): remaining of second (before): %d\n",__func__, chn.getRemaining(true, desired_property));
 
       // updating channel balance for each address
       assert(chn.updateChannelBal(chn.getFirst(), property, -amount_forsale));
       assert(chn.updateChannelBal(chn.getSecond(), desired_property, -desired_value));
+
+      assert(chn.updateChannelBal(chn.getFirst(), desired_property, desired_value));
+      assert(chn.updateChannelBal(chn.getSecond(), property, amount_forsale));
+
+      PrintToLog("%s(): remaining of first (after): %d\n",__func__, chn.getRemaining(false, property));
+      PrintToLog("%s(): remaining of second (after): %d\n",__func__, chn.getRemaining(true, desired_property));
 
       // updating last exchange block
       assert(chn.updateLastExBlock(block));
@@ -4531,11 +4495,7 @@ int CMPTransaction::logicMath_Transfer()
         PrintToLog("%s(): withdrawal is not possible\n",__func__);
         return (PKT_ERROR_CHANNELS -18);
     }
-
-    // updating tally map
-    assert(update_tally_map(sender, propertyId, -amount_transfered, CHANNEL_RESERVE));
-    assert(update_tally_map(receiver, propertyId, amount_transfered, CHANNEL_RESERVE));
-
+    
     // recordNewTransfer
     t_tradelistdb->recordNewTransfer(txid, sender, receiver, block, tx_idx);
 
@@ -4598,17 +4558,6 @@ int CMPTransaction::logicMath_Instant_LTC_Trade()
   if (chn.getExpiry() < block) {
       PrintToLog("%s(): rejected: out of channel deadline: actual block: %d, deadline: %d\n", __func__, block, chn.getExpiry());
       return (PKT_ERROR_CHANNELS -17);
-  }
-
-  int64_t nBalance = getMPbalance(chnAddr, property, CHANNEL_RESERVE);
-  if (property > 0 && nBalance < (int64_t) amount_forsale) {
-      PrintToLog("%s(): rejected: channel address %s has insufficient balance of property %d [%s < %s]\n",
-              __func__,
-              chnAddr,
-              property,
-              FormatMP(property, nBalance),
-              FormatMP(property, amount_forsale));
-      return (PKT_ERROR_CHANNELS -18);
   }
 
    return rc;
