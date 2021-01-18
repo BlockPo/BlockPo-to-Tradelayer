@@ -474,7 +474,7 @@ class ChangeAddressTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, True, "tl_get_channelreserve",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['channel reserve'],'175.00000000')
+        assert_equal(out['result']['channel reserve'],'1175.00000000')
 
 
         self.log.info("Checking dan tokens in channel")
@@ -482,7 +482,35 @@ class ChangeAddressTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, True, "tl_get_channelreserve",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['channel reserve'],'0.00000000')
+        assert_equal(out['result']['channel reserve'],'2000.00000000')
+
+
+        self.log.info("Checking lihki tokens remainng in the channel for the address0")
+        params = str([addresses[0], multisig, 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_get_channelremaining",params)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['channel remaining'], '175.00000000')
+
+
+        self.log.info("Checking dan tokens remainng in the channel for the address0")
+        params = str([addresses[0], multisig, 5]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_get_channelremaining",params)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['channel remaining'], '2000.00000000')
+
+
+        self.log.info("Checking lihki tokens remainng in the channel for the address1")
+        params = str([addresses[1], multisig, 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_get_channelremaining",params)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['channel remaining'], '1000.00000000')
+
+
+        self.log.info("Checking dan tokens remainng in the channel for the address1")
+        params = str([addresses[1], multisig, 5]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_get_channelremaining",params)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['channel remaining'], '0.00000000')
 
 
         self.log.info("Checking lihki tokens in address0")
@@ -493,34 +521,7 @@ class ChangeAddressTest (BitcoinTestFramework):
         assert_equal(out['result']['balance'],'19999996825.00000000')
         assert_equal(out['result']['reserve'],'0.00000000')
 
-
-        self.log.info("Checking dan tokens in address0")
-        params = str([addresses[0], 5]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
-        # self.log.info(out)
-        assert_equal(out['error'], None)
-        assert_equal(out['result']['balance'],'2000.00000000')
-        assert_equal(out['result']['reserve'],'0.00000000')
-
-
-        self.log.info("Checking lihki tokens in address1")
-        params = str([addresses[1], 4]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
-        # self.log.info(out)
-        assert_equal(out['error'], None)
-        assert_equal(out['result']['balance'],'1000.00000000')
-        assert_equal(out['result']['reserve'],'0.00000000')
-
-
-        self.log.info("Checking dan tokens in address1")
-        params = str([addresses[1], 5]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
-        # self.log.info(out)
-        assert_equal(out['error'], None)
-        assert_equal(out['result']['balance'],'9999998000.00000000')
-        assert_equal(out['result']['reserve'],'0.00000000')
-
-
+        
         self.log.info("Checking the trade channel")
         params = str([multisig]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_getchannel_info",params)

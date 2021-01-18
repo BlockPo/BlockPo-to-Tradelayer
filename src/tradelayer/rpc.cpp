@@ -231,11 +231,18 @@ void UnvestedToJSON(const std::string& address, uint32_t property, UniValue& bal
 
 void ChannelToJSON(const std::string& address, uint32_t property, UniValue& balance_obj, bool divisible)
 {
-    const int64_t margin = getMPbalance(address, property, CHANNEL_RESERVE);
+    int64_t remaining = 0;
+    auto it = channels_Map.find(address);
+    if (it != channels_Map.end()){
+        const Channel& sChn = it->second;
+        remaining = sChn.getRemaining(false, property);
+        remaining += sChn.getRemaining(true, property);
+    }
+
     if (divisible) {
-        balance_obj.pushKV("channel reserve", FormatDivisibleMP(margin));
+        balance_obj.pushKV("channel reserve", FormatDivisibleMP(remaining));
     } else {
-        balance_obj.pushKV("channel reserve", FormatIndivisibleMP(margin));
+        balance_obj.pushKV("channel reserve", FormatIndivisibleMP(remaining));
     }
 }
 
@@ -719,12 +726,12 @@ UniValue tl_get_channelremaining(const JSONRPCRequest& request)
 
             "\nResult:\n"
             "{\n"
-            "  \"channel reserve\" : \"n.nnnnnnnn\",   (string) the available balance for single address\n"
+            "  \"channel remaining\" : \"n.nnnnnnnn\",   (string) the available balance for single address\n"
             "}\n"
 
             "\nExamples:\n"
-            + HelpExampleCli("tl_get_channelreserve", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", \"Qdj12J6FZgaY34ZNx12pVpTeF9NQdmpGzj\" \"1\"")
-            + HelpExampleRpc("tl_get_channelreserve", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", \"Qdj12J6FZgaY34ZNx12pVpTeF9NQdmpGzj\", \"1\"")
+            + HelpExampleCli("tl_get_channelremaining", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", \"Qdj12J6FZgaY34ZNx12pVpTeF9NQdmpGzj\" \"1\"")
+            + HelpExampleRpc("tl_get_channelremaining", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", \"Qdj12J6FZgaY34ZNx12pVpTeF9NQdmpGzj\", \"1\"")
         );
 
     const std::string address = ParseAddress(request.params[0]);
