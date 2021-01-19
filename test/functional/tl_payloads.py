@@ -357,11 +357,11 @@ class PayloadsBasicsTest (BitcoinTestFramework):
 
 
         self.log.info("Testing tl_createpayload_transfer")
-        params = str([4, '21358']).replace("'",'"')
+        params = str([0, 4, '100']).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_createpayload_transfer", params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result'], '0070')
+        assert_equal(out['result'], '0070000480c8afa025')
 
 
         self.log.info("Testing tl_createpayload_dex_payment")
