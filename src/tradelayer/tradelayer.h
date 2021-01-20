@@ -265,6 +265,9 @@ const std::string TYPE_ATTESTATION              = "attestation";
 const std::string ACTIVE_CHANNEL                = "active";
 const std::string CLOSED_CHANNEL                = "closed";
 
+//channel second address PENDING
+const std::string CHANNEL_PENDING                       = "pending";
+
 // withdrawal status
 const int ACTIVE_WITHDRAWAL   = 1;
 const int COMPLETE_WITHDRAWAL = 0;
@@ -328,7 +331,7 @@ class Channel
    int getLastBlock() const { return last_exchange_block; }
    int64_t getRemaining(const std::string& address, uint32_t propertyId) const;
    int64_t getRemaining(bool flag, uint32_t propertyId) const;
-
+   bool isPartOfChannel(const std::string& address) const;
 
    void setLastBlock(int block) { last_exchange_block += block;}
    void setBalance(const std::string& sender, uint32_t propertyId, uint64_t amount);

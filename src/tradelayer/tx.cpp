@@ -4315,14 +4315,14 @@ int CMPTransaction::logicMath_Instant_Trade()
 
   Channel &chn = it->second;
 
-  if (chn.getMultisig().empty() && chn.getFirst().empty() && chn.getSecond().empty()) {
-      PrintToLog("%s(): rejected: some address doesn't belong to multisig channel \n", __func__);
-      return (PKT_ERROR_CHANNELS -16);
+  if (chn.getSecond() == CHANNEL_PENDING) {
+      PrintToLog("%s(): rejected: second address for channel (%s) is not setted \n", __func__, chn.getMultisig());
+      return (PKT_ERROR_CHANNELS -21);
   }
 
   // using first address data
   if(!t_tradelistdb->checkAttestationReg(chn.getFirst(),kyc_id)){
-    PrintToLog("%s(): rejected: sender (%s) kyc ckeck failed\n", __func__, sender);
+    PrintToLog("%s(): rejected: first address (%s) kyc ckeck failed\n", __func__, sender);
     return (PKT_ERROR_KYC -10);
   }
 
@@ -4337,18 +4337,19 @@ int CMPTransaction::logicMath_Instant_Trade()
   }
 
   // using second address data
-  if(!t_tradelistdb->checkAttestationReg(chn.getSecond(),kyc_id)){
+  int kyc_id2;
+  if(!t_tradelistdb->checkAttestationReg(chn.getSecond(),kyc_id2)){
     PrintToLog("%s(): rejected: second address (%s) kyc ckeck failed\n", __func__, chn.getSecond());
     return (PKT_ERROR_KYC -10);
   }
 
-  if(!t_tradelistdb->kycPropertyMatch(property, kyc_id)){
+  if(!t_tradelistdb->kycPropertyMatch(property, kyc_id2)){
     PrintToLog("%s(): rejected: property %d can't be traded with this kyc for second address (%s)\n", __func__, property, chn.getSecond());
     return (PKT_ERROR_KYC -20);
   }
 
-  if(!t_tradelistdb->kycPropertyMatch(desired_property, kyc_id)){
-    PrintToLog("%s(): rejected: property %d can't be traded with this kyc for sender (%s)\n", __func__, desired_property, sender);
+  if(!t_tradelistdb->kycPropertyMatch(desired_property, kyc_id2)){
+    PrintToLog("%s(): rejected: property %d can't be traded with this kyc for second address (%s)\n", __func__, desired_property, sender);
     return (PKT_ERROR_KYC -20);
   }
 
@@ -4393,13 +4394,7 @@ int CMPTransaction::logicMath_Instant_Trade()
 
   if (property > LTC && desired_property > LTC)
   {
-
-      PrintToLog("%s(): channel: %s, first : %s, second : %s, amount_forsale : %d, property : %d, desired_value : %d, desired_property : %d\n",__func__,chn.getMultisig(), chn.getFirst(),chn.getSecond(), amount_forsale, property, desired_value, desired_property);
-
       t_tradelistdb->recordNewInstantTrade(txid, chn.getMultisig(), chn.getFirst(), chn.getSecond(), property, amount_forsale, desired_property, desired_value, block, tx_idx);
-
-      PrintToLog("%s(): remaining of first (before): %d\n",__func__, chn.getRemaining(false, property));
-      PrintToLog("%s(): remaining of second (before): %d\n",__func__, chn.getRemaining(true, desired_property));
 
       // updating channel balance for each address
       assert(chn.updateChannelBal(chn.getFirst(), property, -amount_forsale));
@@ -4407,9 +4402,6 @@ int CMPTransaction::logicMath_Instant_Trade()
 
       assert(chn.updateChannelBal(chn.getFirst(), desired_property, desired_value));
       assert(chn.updateChannelBal(chn.getSecond(), property, amount_forsale));
-
-      PrintToLog("%s(): remaining of first (after): %d\n",__func__, chn.getRemaining(false, property));
-      PrintToLog("%s(): remaining of second (after): %d\n",__func__, chn.getRemaining(true, desired_property));
 
       // updating last exchange block
       assert(chn.updateLastExBlock(block));
@@ -4495,7 +4487,7 @@ int CMPTransaction::logicMath_Transfer()
         PrintToLog("%s(): withdrawal is not possible\n",__func__);
         return (PKT_ERROR_CHANNELS -18);
     }
-    
+
     // recordNewTransfer
     t_tradelistdb->recordNewTransfer(txid, sender, receiver, block, tx_idx);
 
@@ -4519,12 +4511,10 @@ int CMPTransaction::logicMath_Instant_LTC_Trade()
       return (PKT_ERROR_METADEX -22);
   }
 
-
   if (!IsPropertyIdValid(property)) {
       PrintToLog("%s(): rejected: property for sale %d does not exist\n", __func__, property);
       return (PKT_ERROR_CHANNELS -13);
   }
-
 
   int kyc_id;
   if(!t_tradelistdb->checkAttestationReg(sender,kyc_id)){
@@ -4758,7 +4748,6 @@ int CMPTransaction::logicMath_Attestation()
     }
 
     int kyc_id;
-
     if(!t_tradelistdb->checkKYCRegister(sender,kyc_id))
     {
         kyc_id = KYC_0;

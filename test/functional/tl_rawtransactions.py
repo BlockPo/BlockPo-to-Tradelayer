@@ -299,7 +299,7 @@ class RawTransactionBasicsTest (BitcoinTestFramework):
         params = str([addresses[1], multisig , 10, 4]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_getchannel_historyforaddress",params)
         assert_equal(out['error'], None)
-        # self.log.info(out)
+        self.log.info(out)
         assert_equal(out['result'][0]['block'], 209)
         assert_equal(out['result'][0]['selleraddress'], addresses[0])
         assert_equal(out['result'][0]['propertyid'], 4)
