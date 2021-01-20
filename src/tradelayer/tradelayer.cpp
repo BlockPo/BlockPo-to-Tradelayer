@@ -1058,6 +1058,11 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
     auto it = channels_Map.find(channelAddr);
     Channel& sChn = it->second;
 
+    // adding buyer to channel if it wasn't added before
+    if(!sChn.isPartOfChannel(buyer)){
+        sChn.setSecond(buyer);
+    }
+
     const int64_t remaining = sChn.getRemaining(seller, property);
 
     if(msc_debug_instant_payment)
@@ -4770,6 +4775,9 @@ bool CMPTradeList::checkAttestationReg(const std::string& address, int& kyc_id)
         const std::string& strKey = it->key().ToString();
         const std::string& strValue = it->value().ToString();
 
+        if(msc_debug_check_attestation_reg) PrintToLog("%s(): strValue: %s\n", __func__, strValue);
+
+
         // ensure correct amount of tokens in value string
         boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
 
@@ -4976,15 +4984,15 @@ bool CMPTradeList::attLoop(UniValue& response)
 
         const std::string& sender = vstr[0];
         const std::string& receiver = vstr[1];
-        int blockNum = boost::lexical_cast<int>(vstr[2]);
-        int kyc_id = boost::lexical_cast<int>(vstr[4]);
+        uint64_t blockNum = boost::lexical_cast<uint64_t>(vstr[2]);
+        uint64_t kyc_id = boost::lexical_cast<uint64_t>(vstr[4]);
 
         UniValue propertyObj(UniValue::VOBJ);
 
         propertyObj.push_back(Pair("att sender", sender));
         propertyObj.push_back(Pair("att receiver", receiver));
-        propertyObj.push_back(Pair("kyc_id", (uint64_t) kyc_id));
-        propertyObj.push_back(Pair("block", (uint64_t) blockNum));
+        propertyObj.push_back(Pair("kyc_id", kyc_id));
+        propertyObj.push_back(Pair("block", blockNum));
 
         response.push_back(propertyObj);
 
@@ -6320,6 +6328,10 @@ int64_t Channel::getRemaining(bool flag, uint32_t propertyId) const
     return remaining;
 }
 
+  bool Channel::isPartOfChannel(const std::string& address) const
+  {
+       return (first == address || second == address);
+  }
 /**
  * @add or subtract tokens in trade channel, for a given address
  */
@@ -7300,60 +7312,46 @@ bool CMPTradeList::tryAddSecond(const std::string& candidate, const std::string&
         return false;
     }
 
-    if (!pdb) return false;
-    std::vector<std::string> vstr;
-    std::string strValue, newValue;
-    Status status = pdb->Get(readoptions, channelAddr, &strValue);
+    Channel& chn = it->second;
+    Status status, status1;
 
-    if(!status.ok()){
-        if(msc_debug_try_add_second) PrintToLog("%s(): db error - channel not found\n", __func__);
-        return false;
-    }
-
-    // ensure correct amount of tokens in value string
-    boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
-
-    if (vstr.size() != 6) {
-        if(msc_debug_try_add_second) PrintToLog("%s(): db error - incorrect size of register: (%s)\n", __func__, strValue);
-        return false;
-    }
-
-    const std::string& frAddr = vstr[0];
-    const std::string& secAddr = vstr[1];
-
-    // if candidate is one of the channel's addresses: update balance and break.
-    if (candidate == frAddr || candidate == secAddr)
+    // updating db if address is a new one
+    if(chn.getSecond() == CHANNEL_PENDING && chn.getFirst() != candidate)
     {
-        Channel& chn = it->second;
-        chn.updateChannelBal(candidate, propertyId, amount_commited);
+        chn.setSecond(candidate);
 
-        return true;
+        // updating db register
+        if (!pdb) return false;
+        std::vector<std::string> vstr;
+        std::string strValue, newValue;
+        status = pdb->Get(readoptions, channelAddr, &strValue);
+
+        if(!status.ok()){
+            if(msc_debug_try_add_second) PrintToLog("%s(): db error - channel not found\n", __func__);
+            return false;
+        }
+
+        // ensure correct amount of tokens in value string
+        boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
+
+        if (vstr.size() != 6) {
+            if(msc_debug_try_add_second) PrintToLog("%s(): db error - incorrect size of register: (%s)\n", __func__, strValue);
+            return false;
+        }
+
+        const std::string& frAddr = vstr[0];
+
+        const int blockNum = boost::lexical_cast<int>(vstr[2]);
+        const int blockIndex = boost::lexical_cast<int>(vstr[3]);
+
+        newValue = strprintf("%s:%s:%d:%d:%s:%s",frAddr, candidate, blockNum, blockIndex, ACTIVE_CHANNEL, TYPE_CREATE_CHANNEL);
+
+        status1 = pdb->Put(writeoptions, channelAddr, newValue);
+        ++nWritten;
+
     }
-
-    // address is not part of channel!
-    if (secAddr != "pending"){
-        if(msc_debug_try_add_second) PrintToLog("%s(): secAddr != pending, break\n",__func__);
-        return false;
-    }
-
-    const std::string& chnStatus = vstr[4];
-
-    if(chnStatus == CLOSED_CHANNEL){
-        PrintToLog("%s(): channel is closed\n",__func__);
-        return false;
-    }
-
-    const int blockNum = boost::lexical_cast<int>(vstr[2]);
-    const int blockIndex = boost::lexical_cast<int>(vstr[3]);
-
-    newValue = strprintf("%s:%s:%d:%d:%s:%s",frAddr, candidate, blockNum, blockIndex, ACTIVE_CHANNEL, TYPE_CREATE_CHANNEL);
-
-    Status status1 = pdb->Put(writeoptions, channelAddr, newValue);
-    ++nWritten;
 
     // updating in memory
-    Channel& chn = it->second;
-    chn.setSecond(candidate);
     chn.updateChannelBal(candidate, propertyId, amount_commited);
 
     return (status.ok() && status1.ok());
@@ -7446,9 +7444,6 @@ bool mastercore::Token_LTC_Fees(int64_t& buyer_amountGot, uint32_t propertyId)
 
 }
 
-/**
- * @return The marker for class D transactions.
- */
  /**
   * @return The marker for class D transactions.
   */
