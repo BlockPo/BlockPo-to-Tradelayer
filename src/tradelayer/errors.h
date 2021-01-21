@@ -349,6 +349,12 @@ inline std::string error_str(int ec) {
     case PKT_ERROR_CHANNELS -18:
       ec_str = "Insufficient funds for fees";
       break;
+    case PKT_ERROR_CHANNELS -19:
+      ec_str = "Channel not found";
+      break;
+    case PKT_ERROR_CHANNELS -20:
+      ec_str = "Second address for channel is not setted";
+      break;
 
     default:
       ec_str = "Unknown error";
