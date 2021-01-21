@@ -4223,7 +4223,7 @@ int CMPTransaction::logicMath_Withdrawal_FromChannel()
         return (PKT_ERROR_TOKENS -24);
     }
 
-    if (!t_tradelistdb->checkChannelAddress(receiver)) {
+    if (!checkChannelAddress(receiver)) {
         PrintToLog("%s(): rejected: receiver: %s is not multisig channel\n", __func__, receiver);
         return (PKT_ERROR_CHANNELS -10);
     }
@@ -4310,14 +4310,16 @@ int CMPTransaction::logicMath_Instant_Trade()
 
   if (it == channels_Map.end()){
       PrintToLog("%s(): rejected: channel not found\n", __func__);
-      return (PKT_ERROR_CHANNELS -21);
+      return (PKT_ERROR_CHANNELS -19);
   }
 
   Channel &chn = it->second;
 
+  PrintToLog("%s(): channel: %s, first: %s, second: %s, block: %d\n",__func__, chn.getMultisig(), chn.getFirst(), chn.getSecond(), block);
+
   if (chn.getSecond() == CHANNEL_PENDING) {
       PrintToLog("%s(): rejected: second address for channel (%s) is not setted \n", __func__, chn.getMultisig());
-      return (PKT_ERROR_CHANNELS -21);
+      return (PKT_ERROR_CHANNELS -20);
   }
 
   // using first address data
@@ -4466,7 +4468,7 @@ int CMPTransaction::logicMath_Transfer()
     const std::string& address = (address_option) ? chn.getSecond(): chn.getFirst();
 
     // if receiver channel doesn't exist, create it
-    if (!t_tradelistdb->checkChannelAddress(receiver)) {
+    if (!checkChannelAddress(receiver)) {
         createChannel(address, receiver, propertyId, 0, block, tx_idx);
     }
 

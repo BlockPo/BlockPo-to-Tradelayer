@@ -644,7 +644,7 @@ int mastercore::GetEncodingClass(const CTransaction& tx, int nBlock)
      * Perform a string comparison on hex for each scriptPubKey & look directly for Trade Layer marker bytes
      * This allows to drop non- Trade Layer transactions with less work
      */
-    std::string strClassD = "7474"; /*the tt marker*/
+    std::string strClassD = "7070"; /*the pp marker*/
     bool examineClosely = false;
     for (unsigned int n = 0; n < tx.vout.size(); ++n) {
         const CTxOut& output = tx.vout[n];
@@ -6428,36 +6428,10 @@ uint64_t CMPTradeList::addClosedWithrawals(const std::string& channelAddr, const
 /**
  *  Does the channel address exist and it is active?
  */
-bool CMPTradeList::checkChannelAddress(const std::string& channelAddress)
+bool mastercore::checkChannelAddress(const std::string& channelAddress)
 {
-    if (!pdb) return false;
-    std::vector<std::string> vstr;
-    std::string strValue;
-    Status status1 = pdb->Get(readoptions, channelAddress, &strValue);
-
-    if(!status1.ok()){
-        PrintToLog("%s(): db error - channel not found\n", __func__);
-        return false;
-    }
-
-    // ensure correct amount of tokens in value string
-    boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
-    if (vstr.size() != 6) {
-        PrintToLog("%s(): db error - incorrect size of register: (%s)\n", __func__, strValue);
-        return false;
-    }
-
-    const std::string& type = vstr[5];
-
-    if (type != TYPE_CREATE_CHANNEL){
-        PrintToLog("%s(): db error - it's not a create channel registry: %s\n", __func__, type);
-        return false;
-    }
-
-    const std::string& chnStatus = vstr[4];
-
-    return ((chnStatus == ACTIVE_CHANNEL) ? true : false);
-
+    auto it = channels_Map.find(channelAddress);
+    return ((it == channels_Map.end()) ? false : true);
 }
 
   /**
@@ -7255,7 +7229,7 @@ void CMPTradeList::getUpnInfo(const std::string& address, uint32_t contractId, U
 
 void mastercore::createChannel(const std::string& sender, const std::string& receiver,  uint32_t propertyId, uint64_t amount_commited, int block, int tx_id)
 {
-    Channel chn(receiver, sender,"pending", block + dayblocks, block);
+    Channel chn(receiver, sender, CHANNEL_PENDING, block + dayblocks, block);
     chn.setBalance(sender, propertyId, amount_commited);
     channels_Map[receiver] = chn;
     if(msc_create_channel) PrintToLog("%s(): checking channel elements : channel address: %s, first address: %d, second address: %d, expiry_height: %d \n",__func__, chn.getMultisig(), chn.getFirst(), chn.getSecond(), chn.getExpiry());
@@ -7307,17 +7281,15 @@ bool CMPTradeList::setChannelClosed(const std::string& channelAddr)
 bool CMPTradeList::tryAddSecond(const std::string& candidate, const std::string& channelAddr, uint32_t propertyId, uint64_t amount_commited)
 {
     auto it = channels_Map.find(channelAddr);
-    if (it == channels_Map.end()){
-        if(msc_debug_try_add_second) PrintToLog("%s(): channel is not active! (not found in map)\n",__func__);
-        return false;
-    }
-
     Channel& chn = it->second;
     Status status, status1;
+
+    PrintToLog("%s(): Second before change: (%s) , first: %s, channel: %s\n",__func__, chn.getSecond(), chn.getFirst(), chn.getMultisig());
 
     // updating db if address is a new one
     if(chn.getSecond() == CHANNEL_PENDING && chn.getFirst() != candidate)
     {
+        PrintToLog("%s(): Adding second (%s) to channel %s\n",__func__, candidate, chn.getMultisig());
         chn.setSecond(candidate);
 
         // updating db register
@@ -7340,6 +7312,11 @@ bool CMPTradeList::tryAddSecond(const std::string& candidate, const std::string&
         }
 
         const std::string& frAddr = vstr[0];
+        const std::string& scAddr = vstr[1];
+
+        PrintToLog("%s(): frAddr:%s, chn.getFirst():%s, scAddr:%s, chn.getSecond():%s\n",__func__, frAddr, chn.getFirst(), scAddr, chn.getSecond());
+
+        assert(frAddr == chn.getFirst());
 
         const int blockNum = boost::lexical_cast<int>(vstr[2]);
         const int blockIndex = boost::lexical_cast<int>(vstr[3]);
@@ -7351,6 +7328,9 @@ bool CMPTradeList::tryAddSecond(const std::string& candidate, const std::string&
 
     }
 
+    PrintToLog("%s(): Second after change: (%s) , first: %s, channel: %s\n",__func__, chn.getSecond(), chn.getFirst(), chn.getMultisig());
+
+
     // updating in memory
     chn.updateChannelBal(candidate, propertyId, amount_commited);
 
@@ -7361,7 +7341,7 @@ bool CMPTradeList::tryAddSecond(const std::string& candidate, const std::string&
 
 bool mastercore::channelSanityChecks(const std::string& sender, const std::string& receiver, uint32_t propertyId, uint64_t amount_commited, int block, int tx_idx)
 {
-    if(!t_tradelistdb->checkChannelAddress(receiver))
+    if(!checkChannelAddress(receiver))
     {
         createChannel(sender, receiver, propertyId, amount_commited, block, tx_idx);
         return true;
@@ -7449,7 +7429,7 @@ bool mastercore::Token_LTC_Fees(int64_t& buyer_amountGot, uint32_t propertyId)
   */
  const std::vector<unsigned char> GetTLMarker()
  {
-      static unsigned char pch[] = {0x74, 0x74}; // Hex-encoded: "tt"
+      static unsigned char pch[] = {0x70, 0x70}; // Hex-encoded: "pp"
 
      return std::vector<unsigned char>(pch, pch + sizeof(pch) / sizeof(pch[0]));
  }

@@ -467,7 +467,6 @@ class CMPTradeList : public CDBBase
   bool getAllCommits(const std::string& senderAddress, UniValue& tradeArray);
   bool getAllWithdrawals(const std::string& senderAddress, UniValue& tradeArray);
   bool getChannelInfo(const std::string& channelAddress, UniValue& tradeArray);
-  bool checkChannelAddress(const std::string& channelAddress);
   bool checkChannelRelation(const std::string& address, std::string& channelAddr);
   bool tryAddSecond(const std::string& candidate, const std::string& channelAddr, uint32_t propertyId, uint64_t amount_commited);
   bool setChannelClosed(const std::string& channelAddr);
@@ -685,6 +684,8 @@ namespace mastercore
   void iterVolume(int64_t& amount, uint32_t propertyId, const int& fblock, const int& sblock, const std::map<int, std::map<uint32_t,int64_t>>& aMap);
 
   bool Token_LTC_Fees(int64_t& buyer_amountGot, uint32_t propertyId);
+
+  bool checkChannelAddress(const std::string& channelAddress);
 }
 
 #endif // TRADELAYER_TL_H
