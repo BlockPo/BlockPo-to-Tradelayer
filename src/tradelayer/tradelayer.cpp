@@ -245,6 +245,7 @@ std::string FormatDivisibleMP(int64_t n, bool fSign)
     str.insert((unsigned int) 0, 1, '-');
   else
     str.insert((unsigned int) 0, 1, '+');
+
   return str;
 }
 
@@ -327,6 +328,7 @@ double FormatContractShortMP(int64_t n)
         }
     } //get rid of trailing dot if non decimal
     double q = atof(str.c_str());
+
     return q;
 }
 
@@ -336,6 +338,7 @@ long int FormatShortIntegerMP(int64_t n)
     int64_t quotient = n_abs / COIN;
     int64_t remainder = n_abs % COIN;
     std::string str = strprintf("%d.%08d", quotient, remainder);
+
     // clean up trailing zeros - good for RPC not so much for UI
     str.erase(str.find_last_not_of('0') + 1, std::string::npos);
     if (str.length() > 0) {
@@ -344,6 +347,7 @@ long int FormatShortIntegerMP(int64_t n)
 	        str.erase(it);
       }
     } //get rid of trailing dot if non decimal
+
     long int q = atol(str.c_str());
     return q;
 }
@@ -399,14 +403,11 @@ std::string mastercore::getTokenLabel(uint32_t propertyId)
 {
   std::string tokenStr;
   if (propertyId < 3) {
-    if (propertyId == 1) {
-      tokenStr = " ALL";
-    } else {
-      tokenStr = " TALL";
-    }
+      tokenStr = (propertyId == 1) ? " ALL" : " TALL";
   } else {
-    tokenStr = strprintf(" SPT#%d", propertyId);
+      tokenStr = strprintf(" SPT#%d", propertyId);
   }
+
   return tokenStr;
 }
 
@@ -535,6 +536,7 @@ void CheckWalletUpdate(bool forceUpdate)
       return;
     }
   }
+
 #ifdef ENABLE_WALLET
     LOCK(cs_tally);
 
@@ -598,8 +600,6 @@ const std::string mastercore::getVestingAdmin()
     return mainAddress;
 
 }
-
-
 
 void creatingVestingTokens(int block)
 {
@@ -680,6 +680,7 @@ int mastercore::GetEncodingClass(const CTransaction& tx, int nBlock)
             if (!GetScriptPushes(output.scriptPubKey, scriptPushes)) {
                 continue;
             }
+
             if (!scriptPushes.empty()) {
                 std::vector<unsigned char> vchMarker = GetTLMarker();
                 std::vector<unsigned char> vchPushed = ParseHex(scriptPushes[0]);
@@ -725,12 +726,14 @@ static bool FillTxInputCache(const CTransaction& tx, const std::shared_ptr<std::
         view.Flush();
     }
 
-    for (std::vector<CTxIn>::const_iterator it = tx.vin.begin(); it != tx.vin.end(); ++it) {
+    for (std::vector<CTxIn>::const_iterator it = tx.vin.begin(); it != tx.vin.end(); ++it)
+    {
         const CTxIn& txIn = *it;
         unsigned int nOut = txIn.prevout.n;
         const Coin& coin = view.AccessCoin(txIn.prevout);
 
-        if (!coin.IsSpent()) {
+        if (!coin.IsSpent())
+        {
             if(msc_debug_fill_tx_input_cache) PrintToLog("%s(): coin.IsSpent() == false, nCacheHits: %d \n",__func__, nCacheHits);
             ++nCacheHits;
             continue;
@@ -742,7 +745,8 @@ static bool FillTxInputCache(const CTransaction& tx, const std::shared_ptr<std::
         CTransactionRef txPrev;
         uint256 hashBlock;
         Coin newcoin;
-        if (removedCoins && removedCoins->find(txIn.prevout) != removedCoins->end()) {
+        if (removedCoins && removedCoins->find(txIn.prevout) != removedCoins->end())
+        {
             newcoin = removedCoins->find(txIn.prevout)->second;
             if(msc_debug_fill_tx_input_cache) PrintToLog("%s(): newcoin = removedCoins->find(txIn.prevout)->second \n",__func__);
         } else if (GetTransaction(txIn.prevout.hash, txPrev, Params().GetConsensus(), hashBlock, true)) {
@@ -761,8 +765,6 @@ static bool FillTxInputCache(const CTransaction& tx, const std::shared_ptr<std::
 
         view.AddCoin(txIn.prevout, std::move(newcoin), true);
     }
-
-
 
     return true;
 }
@@ -796,42 +798,42 @@ static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, 
     int64_t inAll = 0;
 
     { // needed to ensure the cache isn't cleared in the meantime when doing parallel queries
-    LOCK2(cs_main, cs_tx_cache); // cs_main should be locked first to avoid deadlocks with cs_tx_cache at FillTxInputCache(...)->GetTransaction(...)->LOCK(cs_main)
+        LOCK2(cs_main, cs_tx_cache); // cs_main should be locked first to avoid deadlocks with cs_tx_cache at FillTxInputCache(...)->GetTransaction(...)->LOCK(cs_main)
 
-    // Add previous transaction inputs to the cache
-    if (!FillTxInputCache(wtx, removedCoins)) {
-        PrintToLog("%s() ERROR: failed to get inputs for %s\n", __func__, wtx.GetHash().GetHex());
-        return -101;
-    }
+        // Add previous transaction inputs to the cache
+        if (!FillTxInputCache(wtx, removedCoins)) {
+            PrintToLog("%s() ERROR: failed to get inputs for %s\n", __func__, wtx.GetHash().GetHex());
+            return -101;
+        }
 
-    assert(view.HaveInputs(wtx));
+        assert(view.HaveInputs(wtx));
 
-    // determine the sender, but invalidate transaction, if the input is not accepted
-    unsigned int vin_n = 0; // the first input
-    if (msc_debug_parser_data) PrintToLog("vin=%d:%s\n", vin_n, ScriptToAsmStr(wtx.vin[vin_n].scriptSig));
+        // determine the sender, but invalidate transaction, if the input is not accepted
+        unsigned int vin_n = 0; // the first input
+        if (msc_debug_parser_data) PrintToLog("vin=%d:%s\n", vin_n, ScriptToAsmStr(wtx.vin[vin_n].scriptSig));
 
-    const CTxIn& txIn = wtx.vin[vin_n];
-    const Coin& coin = view.AccessCoin(txIn.prevout);
-    const CTxOut& txOut = coin.out;
+        const CTxIn& txIn = wtx.vin[vin_n];
+        const Coin& coin = view.AccessCoin(txIn.prevout);
+        const CTxOut& txOut = coin.out;
 
-    assert(!txOut.IsNull());
+        assert(!txOut.IsNull());
 
-    txnouttype whichType;
-    if (!GetOutputType(txOut.scriptPubKey, whichType)) {
-        return -108;
-    }
+        txnouttype whichType;
+        if (!GetOutputType(txOut.scriptPubKey, whichType)) {
+            return -108;
+        }
 
-    if (!IsAllowedInputType(whichType, nBlock)) {
-       return -109;
-    }
+        if (!IsAllowedInputType(whichType, nBlock)) {
+           return -109;
+        }
 
-    CTxDestination source;
-    if (ExtractDestination(txOut.scriptPubKey, source)) {
-        strSender = EncodeDestination(source);
-        PrintToLog("%s(): strSender: %s \n",__func__, strSender);
-    } else return -110;
+        CTxDestination source;
+        if (ExtractDestination(txOut.scriptPubKey, source)) {
+            strSender = EncodeDestination(source);
+            PrintToLog("%s(): strSender: %s \n",__func__, strSender);
+        } else return -110;
 
-    inAll = view.GetValueIn(wtx);
+        inAll = view.GetValueIn(wtx);
 
     } // end of LOCK(cs_tx_cache)
 
@@ -853,7 +855,8 @@ static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, 
     std::vector<std::string> address_data;
     std::vector<int64_t> value_data;
 
-    for (unsigned int n = 0; n < wtx.vout.size(); ++n) {
+    for (unsigned int n = 0; n < wtx.vout.size(); ++n)
+    {
         txnouttype whichType;
         if (!GetOutputType(wtx.vout[n].scriptPubKey, whichType)) {
             continue;
@@ -864,7 +867,8 @@ static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, 
         }
 
         CTxDestination dest;
-        if (ExtractDestination(wtx.vout[n].scriptPubKey, dest)) {
+        if (ExtractDestination(wtx.vout[n].scriptPubKey, dest))
+        {
             std::string address = EncodeDestination(dest);
             // saving for Class A processing or reference
             GetScriptPushes(wtx.vout[n].scriptPubKey, script_data);
@@ -873,6 +877,7 @@ static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, 
             if (msc_debug_parser_data) PrintToLog("saving address_data #%d: %s:%s\n", n, address, ScriptToAsmStr(wtx.vout[n].scriptPubKey));
         }
     }
+
     if (msc_debug_parser_data) PrintToLog(" address_data.size=%lu\n script_data.size=%lu\n value_data.size=%lu\n", address_data.size(), script_data.size(), value_data.size());
 
     // ### CLASS C / CLASS D PARSING ###
@@ -880,6 +885,7 @@ static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, 
     bool referenceFound = false; // bool to hold whether we've found the reference yet
     bool changeRemoved = false; // bool to hold whether we've ignored the first output to sender as change
     unsigned int potentialReferenceOutputs = 0; // int to hold number of potential reference outputs
+
     for (unsigned k = 0; k < address_data.size(); ++k) { // how many potential reference outputs do we have, if just one select it right here
         const std::string& addr = address_data[k];
         if (msc_debug_parser_data) PrintToLog("ref? data[%d]:%s: %s (%s)\n", k, script_data[k], addr, FormatIndivisibleMP(value_data[k]));
@@ -894,6 +900,7 @@ static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, 
             if (msc_debug_parser_data) PrintToLog("More than one potential reference candidate, blanking strReference, need to go fishing\n");
         }
     }
+
     if (!referenceFound) { // do we have a reference now? or do we need to dig deeper
         if (msc_debug_parser_data) PrintToLog("Reference has not been found yet, going fishing\n");
         for (unsigned k = 0; k < address_data.size(); ++k) {
@@ -907,6 +914,7 @@ static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, 
             }
         }
     }
+
     if (msc_debug_parser_data) PrintToLog("Ending reference identification\nFinal decision on reference identification is: %s\n", strReference);
 
     // ### CLASS D SPECIFIC PARSING ###
@@ -914,7 +922,8 @@ static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, 
         std::vector<std::string> op_return_script_data;
 
         // ### POPULATE OP RETURN SCRIPT DATA ###
-        for (unsigned int n = 0; n < wtx.vout.size(); ++n) {
+        for (unsigned int n = 0; n < wtx.vout.size(); ++n)
+        {
             txnouttype whichType;
             if (!GetOutputType(wtx.vout[n].scriptPubKey, whichType)) {
                 continue;
@@ -924,7 +933,8 @@ static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, 
                 continue;
             }
 
-            if (whichType == TX_NULL_DATA) {
+            if (whichType == TX_NULL_DATA)
+            {
                 // only consider outputs, which are explicitly tagged
                 std::vector<std::string> vstrPushes;
                 if (!GetScriptPushes(wtx.vout[n].scriptPubKey, vstrPushes)) {
@@ -953,7 +963,8 @@ static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, 
             }
         }
         // ### EXTRACT PAYLOAD FOR CLASS D ###
-        for (unsigned int n = 0; n < op_return_script_data.size(); ++n) {
+        for (unsigned int n = 0; n < op_return_script_data.size(); ++n)
+        {
             if (!op_return_script_data[n].empty()) {
                 assert(IsHex(op_return_script_data[n])); // via GetScriptPushes()
                 std::vector<unsigned char> vch = ParseHex(op_return_script_data[n]);
@@ -1012,8 +1023,9 @@ int ParseTransaction(const CTransaction& tx, int nBlock, unsigned int idx, CMPTr
 
              if (msc_debug_handle_dex_payment) PrintToLog("%s: destination address: %s, sender's address: %s \n", __func__, address, strSender);
 
-             if (address == strSender)
-                 continue;
+             if (address == strSender) {
+                  continue;
+             }
 
              if (msc_debug_handle_dex_payment) PrintToLog("payment #%d %s %s\n", count, address, FormatIndivisibleMP(tx.vout[n].nValue));
 
@@ -1206,8 +1218,7 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
   public:
      ProgressReporter(const CBlockIndex* pblockFirst, const CBlockIndex* pblockLast)
      : m_pblockFirst(pblockFirst), m_pblockLast(pblockLast), m_timeStart(GetTimeMillis())
-     {
-     }
+     {}
 
      /** Prints the current progress to the console and notifies the UI. */
      void update(const CBlockIndex* pblockNow) const
@@ -2248,7 +2259,6 @@ static int write_mp_cachefees_oracles(std::ofstream& file, CHash256& hasher)
 {
     for (const auto &ca : cachefees_oracles)
     {
-        // decompose the key
         const uint32_t& propertyId = ca.first;
         const int64_t& cache = ca.second;
 
@@ -2276,7 +2286,6 @@ static int write_mp_withdrawals(std::ofstream& file, CHash256& hasher)
 {
     for (const auto w : withdrawal_Map)
     {
-        // decompose the key
         const std::string& chnAddr = w.first;
         const vector<withdrawalAccepted>& whd = w.second;
 
@@ -2351,7 +2360,7 @@ static int write_mp_active_channels(std::ofstream& file, CHash256& hasher)
 
         std::string lineOut = strprintf("%s,%s,%s,%s,%d,%d", chnAddr, chnObj.getMultisig(), chnObj.getFirst(), chnObj.getSecond(), chnObj.getExpiry(), chnObj.getLastBlock());
         lineOut.append("+");
-        addBalances(chnObj.balances, lineOut);
+        addBalances(chnObj.getBalanceMap(), lineOut);
         // add the line to the hash
         hasher.Write((unsigned char*)lineOut.c_str(), lineOut.length());
         // write the line
@@ -3269,7 +3278,7 @@ inline int64_t clamp_function(int64_t diff, int64_t nclamp)
  * @param nDataSize The length of the payload
  * @return True, if Class D is enabled and the payload is small enough
  */
-bool mastercore::UseEncodingClassC(size_t nDataSize)
+bool mastercore::UseEncodingClassD(size_t nDataSize)
 {
     size_t nTotalSize = nDataSize + GetTLMarker().size(); // Marker "tl"
     bool fDataEnabled = gArgs.GetBoolArg("-datacarrier", true);
@@ -6142,8 +6151,9 @@ bool mastercore::checkWithdrawal(const std::string& txid, const std::string& cha
 bool isChannelWithdraw(const std::string& address)
 {
     auto it =  withdrawal_Map.find(address);
-    if(it == withdrawal_Map.end())
+    if(it == withdrawal_Map.end()) {
         return false;
+    }
 
     vector<withdrawalAccepted> &accepted = it->second;
 
@@ -7284,12 +7294,9 @@ bool CMPTradeList::tryAddSecond(const std::string& candidate, const std::string&
     Channel& chn = it->second;
     Status status, status1;
 
-    PrintToLog("%s(): Second before change: (%s) , first: %s, channel: %s\n",__func__, chn.getSecond(), chn.getFirst(), chn.getMultisig());
-
     // updating db if address is a new one
     if(chn.getSecond() == CHANNEL_PENDING && chn.getFirst() != candidate)
     {
-        PrintToLog("%s(): Adding second (%s) to channel %s\n",__func__, candidate, chn.getMultisig());
         chn.setSecond(candidate);
 
         // updating db register
@@ -7312,9 +7319,7 @@ bool CMPTradeList::tryAddSecond(const std::string& candidate, const std::string&
         }
 
         const std::string& frAddr = vstr[0];
-        const std::string& scAddr = vstr[1];
-
-        PrintToLog("%s(): frAddr:%s, chn.getFirst():%s, scAddr:%s, chn.getSecond():%s\n",__func__, frAddr, chn.getFirst(), scAddr, chn.getSecond());
+        // const std::string& scAddr = vstr[1];
 
         assert(frAddr == chn.getFirst());
 
@@ -7327,9 +7332,6 @@ bool CMPTradeList::tryAddSecond(const std::string& candidate, const std::string&
         ++nWritten;
 
     }
-
-    PrintToLog("%s(): Second after change: (%s) , first: %s, channel: %s\n",__func__, chn.getSecond(), chn.getFirst(), chn.getMultisig());
-
 
     // updating in memory
     chn.updateChannelBal(candidate, propertyId, amount_commited);

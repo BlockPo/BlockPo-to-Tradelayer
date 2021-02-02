@@ -79,7 +79,7 @@ bool CheckFee(const std::string& fromAddress, size_t nDataSize)
     int64_t feePerKB = 0;
     int64_t inputTotal = 0;
 #ifdef ENABLE_WALLET
-    bool fUseClassC = UseEncodingClassC(nDataSize);
+    bool fUseClassD = UseEncodingClassD(nDataSize);
 
     CCoinControl coinControl;
     inputTotal = SelectCoins(fromAddress, coinControl, 0);
@@ -96,15 +96,15 @@ bool CheckFee(const std::string& fromAddress, size_t nDataSize)
     }
 
     // we do not know the size of the transaction at this point.  Warning calculation employs some guesswork
-    if (!fUseClassC) {
+    if (!fUseClassD) {
         // Calculation based on a 3KB transaction due to:
         //   - the average size across all Class B transactions ever sent to date is 909 bytes.
         //   - under 2% of Class B transactions are over 2KB, under 0.6% of transactions are over 3KB.
         // Thus if created transaction will be over 3KB (rare as per above) warning may not be sufficient.
         minFee = feePerKB * 3;
     } else {
-        // Averages for Class C transactions are not yet available, Calculation based on a 2KB transaction due to:
-        //   - Class B values but considering Class C removes outputs for both data and Exodus (reduces size).
+        // Averages for Class D transactions are not yet available, Calculation based on a 2KB transaction due to:
+        //   - Class B values but considering Class D removes outputs for both data and Exodus (reduces size).
         minFee = feePerKB * 2;
     }
 #endif
@@ -164,31 +164,6 @@ bool CheckInput(const CTxOut& txOut, int nHeight, CTxDestination& dest)
 
     return true;
 }
-
-/**
- * Retrieves the label, used by the UI, for an address from the wallet.
- */
-// std::string GetAddressLabel(const std::string& address)
-// {
-//     std::string addressLabel;
-// #ifdef ENABLE_WALLET
-//     CWalletRef pwalletMain = nullptr;
-//     if (vpwallets.size() > 0){
-//         pwalletMain = vpwallets[0];
-//     }
-//
-//     if (pwalletMain) {
-//         LOCK(pwalletMain->cs_wallet);
-//
-//         CBitcoinAddress addressParsed(address);
-//         std::map<CTxDestination, CAddressBookData>::const_iterator mi = pwalletMain->mapAddressBook.find(addressParsed.Get());
-//         if (mi != pwalletMain->mapAddressBook.end()) {
-//             addressLabel = mi->second.name;
-//         }
-//     }
-// #endif
-    // return addressLabel;
-// }
 
 /**
  * IsMine wrapper to determine whether the address is in the wallet.
@@ -269,8 +244,7 @@ int64_t SelectCoins(const std::string& fromAddress, CCoinControl& coinControl, i
             }
 
             if (txOut.nValue < GetEconomicThreshold(txOut)) {
-                if (msc_debug_wallettxs)
-                    PrintToLog("%s(): output value below economic threshold: %s:%d, value: %d\n",
+                if (msc_debug_wallettxs) PrintToLog("%s(): output value below economic threshold: %s:%d, value: %d\n",
                         __func__, txid.GetHex(), n, txOut.nValue);
                 continue;
             }
@@ -278,7 +252,8 @@ int64_t SelectCoins(const std::string& fromAddress, CCoinControl& coinControl, i
             const std::string sAddress = EncodeDestination(dest);
 
             // only use funds from the sender's address
-            if (fromAddress == sAddress) {
+            if (fromAddress == sAddress)
+            {
                 COutPoint outpoint(txid, n);
                 coinControl.Select(outpoint);
 

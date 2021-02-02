@@ -26,7 +26,7 @@ static void write_mp_active_channels(std::string& lineOut)
 
         lineOut = strprintf("%s,%s,%s,%s,%d,%d", chnAddr, chnObj.getMultisig(), chnObj.getFirst(), chnObj.getSecond(), chnObj.getExpiry(), chnObj.getLastBlock());
         lineOut.append("+");
-        addBalances(chnObj.balances, lineOut);
+        addBalances(chnObj.getBalanceMap(), lineOut);
     }
 
 }
@@ -534,7 +534,7 @@ BOOST_AUTO_TEST_CASE(channel_persistence)
     {
         // BOOST_TEST_MESSAGE( "channel FOUND!\n");
         chn1 = it->second;
-        const auto &pMap = chn1.balances;
+        const auto &pMap = chn1.getBalanceMap();
         auto itt = pMap.find(chn.getFirst());
         if (itt != pMap.end()){
             // BOOST_TEST_MESSAGE( "address in channel FOUND!\n");
