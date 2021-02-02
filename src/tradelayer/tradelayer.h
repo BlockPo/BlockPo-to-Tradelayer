@@ -315,18 +315,19 @@ class Channel
    std::string second;
    int expiry_height;
    int last_exchange_block;
- public:
    //! Available balances for first  and second addresses properties
    std::map<std::string,map<uint32_t, int64_t>> balances;
 
+ public:
    Channel() : multisig(""), first(""), second(""), expiry_height(0), last_exchange_block(0) {}
    ~Channel() {}
    Channel(const std::string& m, const std::string& f, const std::string& s, int exp, int blk) :  multisig(m),
    first(f), second(s), expiry_height(exp), last_exchange_block(blk) {}
 
-   std::string getMultisig() const { return multisig; }
-   std::string getFirst() const { return first; }
-   std::string getSecond() const { return second; }
+   const std::string& getMultisig() const { return multisig; }
+   const std::string& getFirst() const { return first; }
+   const std::string& getSecond() const { return second; }
+   const std::map<std::string,map<uint32_t, int64_t>>& getBalanceMap() const { return balances; }
    int getExpiry() const { return expiry_height; }
    int getLastBlock() const { return last_exchange_block; }
    int64_t getRemaining(const std::string& address, uint32_t propertyId) const;
@@ -435,7 +436,6 @@ public:
 class CMPTradeList : public CDBBase
 {
  public:
-
   CMPTradeList(const fs::path& path, bool fWipe)
     {
       leveldb::Status status = Open(path, fWipe);
@@ -617,7 +617,7 @@ namespace mastercore
   int GetEncodingClass(const CTransaction& tx, int nBlock);
 
   /** Determines, whether it is valid to use a Class C transaction for a given payload size. */
-  bool UseEncodingClassC(size_t nDataSize);
+  bool UseEncodingClassD(size_t nDataSize);
 
   bool getValidMPTX(const uint256 &txid, std::string *reason = nullptr, int *block = nullptr, unsigned int *type = nullptr, uint64_t *nAmended = nullptr);
 
