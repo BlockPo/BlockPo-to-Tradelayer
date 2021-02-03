@@ -115,6 +115,7 @@ std::string mastercore::strTransactionType(uint16_t txType)
     case MSC_TYPE_METADEX_CANCEL: return "Cancel specific MetaDEx order";
     case MSC_TYPE_METADEX_CANCEL_BY_PRICE: return "MetaDEx cancel-price";
     case MSC_TYPE_METADEX_CANCEL_BY_PAIR: return "MetaDEx cancel-by-pair";
+    case MSC_TYPE_CLOSE_CHANNEL : return "Close Channel";
     default: return "* unknown type *";
     }
 }
@@ -296,6 +297,9 @@ bool CMPTransaction::interpret_Transaction()
 
     case MSC_TYPE_METADEX_CANCEL_BY_PRICE:
         return interpret_MetaDExCancel_ByPrice();
+
+    case MSC_TYPE_CLOSE_CHANNEL:
+        return interpret_Close_Channel();
 
     }
 
@@ -2125,6 +2129,24 @@ bool CMPTransaction::interpret_MetaDExCancelAll()
     return true;
 }
 
+/** Tx 120 */
+bool CMPTransaction::interpret_Close_Channel()
+{
+  int i = 0;
+
+  PrintToLog("\t  %s(): inside interpret_Close_Channel \n",__func__);
+
+  std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+
+  if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly) {
+      PrintToLog("\t  %s(): inside interpret \n",__func__);
+  }
+
+  return true;
+}
+
+
 // ---------------------- CORE LOGIC -------------------------
 
 /**
@@ -2278,6 +2300,9 @@ int CMPTransaction::interpretPacket()
         case MSC_TYPE_METADEX_CANCEL_BY_PRICE:
             return logicMath_MetaDExCancel_ByPrice();
 
+        case MSC_TYPE_CLOSE_CHANNEL:
+            return logicMath_Close_Channel();
+
     }
 
     return (PKT_ERROR -100);
@@ -2293,7 +2318,7 @@ int CMPTransaction::logicMath_SimpleSend()
                 version,
                 property,
                 block);
-        return (PKT_ERROR_SEND -22);
+        return (PKT_ERROR_SP -22);
     }
 
     if (nValue <= 0 || MAX_INT_8_BYTES < nValue) {
@@ -2396,7 +2421,7 @@ int CMPTransaction::logicMath_SendVestingTokens()
               version,
               TL_PROPERTY_VESTING,
               block);
-      return (PKT_ERROR_SEND -22);
+      return (PKT_ERROR_SP -22);
   }
 
   const int64_t nBalance = getMPbalance(sender, TL_PROPERTY_VESTING, BALANCE);
@@ -2430,7 +2455,7 @@ int CMPTransaction::logicMath_SendAll()
                 version,
                 property,
                 block);
-        return (PKT_ERROR_SEND_ALL -22);
+        return (PKT_ERROR_SP -22);
     }
 
     // ------------------------------------------
@@ -2654,7 +2679,7 @@ int CMPTransaction::logicMath_GrantTokens()
   	       version,
   	       property,
            block);
-    return (PKT_ERROR_TOKENS -22);
+    return (PKT_ERROR_SP -22);
   }
 
   if (nValue <= 0 || MAX_INT_8_BYTES < nValue) {
@@ -2771,7 +2796,7 @@ int CMPTransaction::logicMath_RevokeTokens()
                 version,
                 property,
                 block);
-        return (PKT_ERROR_TOKENS -22);
+        return (PKT_ERROR_SP -22);
     }
 
     if (nValue <= 0 || MAX_INT_8_BYTES < nValue) {
@@ -2851,7 +2876,7 @@ int CMPTransaction::logicMath_ChangeIssuer()
                 version,
                 property,
                 block);
-        return (PKT_ERROR_TOKENS -22);
+        return (PKT_ERROR_SP -22);
     }
 
     if (!IsPropertyIdValid(property)) {
@@ -2892,7 +2917,7 @@ int CMPTransaction::logicMath_Deactivation()
                 version,
                 property,
                 block);
-        return (PKT_ERROR -22);
+        return (PKT_ERROR_SP -22);
     }
 
     // is sender authorized
@@ -2927,7 +2952,7 @@ int CMPTransaction::logicMath_Activation()
                 version,
                 property,
                 block);
-        return (PKT_ERROR -22);
+        return (PKT_ERROR_SP -22);
     }
 
     // is sender authorized - temporarily use alert auths but ## TO BE MOVED TO FOUNDATION P2SH KEY ##
@@ -2962,7 +2987,7 @@ int CMPTransaction::logicMath_Alert()
                 version,
                 property,
                 block);
-        return (PKT_ERROR -22);
+        return (PKT_ERROR_SP -22);
     }
 
     // is sender authorized?
@@ -2997,7 +3022,7 @@ int CMPTransaction::logicMath_MetaDExTrade()
               version,
               property,
               block);
-      return (PKT_ERROR_METADEX -22);
+      return (PKT_ERROR_SP -22);
   }
 
   if (property == desired_property) {
@@ -3237,7 +3262,7 @@ int CMPTransaction::logicMath_ContractDExCancel()
 	       type,
 	       version,
 	       block);
-    return (PKT_ERROR_CONTRACTDEX -20);
+    return (PKT_ERROR_SP -22);
   }
 
   return (ContractDex_CANCEL(sender,hash));
@@ -3252,7 +3277,7 @@ int CMPTransaction::logicMath_ContractDexCancelEcosystem()
 	       type,
          version,
 	       block);
-    return (PKT_ERROR_CONTRACTDEX -20);
+    return (PKT_ERROR_SP -22);
   }
 
   return (ContractDex_CANCEL_EVERYTHING(txid, block, sender, contractId));
@@ -3268,7 +3293,7 @@ int CMPTransaction::logicMath_ContractDexClosePosition()
             version,
             property,
             block);
-        return (PKT_ERROR_CONTRACTDEX -20);
+        return (PKT_ERROR_SP -22);
     }
 
     CMPSPInfo::Entry sp;
@@ -3294,7 +3319,7 @@ int CMPTransaction::logicMath_ContractDex_Cancel_Orders_By_Block()
               version,
               propertyId,
               block);
-     return (PKT_ERROR_METADEX -22);
+     return (PKT_ERROR_SP -22);
 
     }
 
@@ -3310,7 +3335,7 @@ int CMPTransaction::logicMath_MetaDExCancel()
 	        type,
 	        version,
 	        block);
-     return (PKT_ERROR_METADEX -20);
+     return (PKT_ERROR_SP -22);
     }
 
     return (MetaDEx_CANCEL(txid, sender, block, hash));
@@ -3326,7 +3351,7 @@ int CMPTransaction::logicMath_MetaDExCancel_ByPair()
                  type,
                  version,
                  block);
-         return (PKT_ERROR_METADEX -22);
+         return (PKT_ERROR_SP -22);
      }
 
      if (property == desired_property) {
@@ -3363,7 +3388,7 @@ int CMPTransaction::logicMath_MetaDExCancel_ByPrice()
                  type,
                  version,
                  block);
-         return (PKT_ERROR_METADEX -22);
+         return (PKT_ERROR_SP -22);
      }
 
      if (property == desired_property) {
@@ -3558,7 +3583,7 @@ int CMPTransaction::logicMath_SendPeggedCurrency()
             version,
             property,
             block);
-        return (PKT_ERROR_SEND -22);
+        return (PKT_ERROR_SP -22);
     }
 
     if (!IsPropertyIdValid(propertyId)) {
@@ -3610,7 +3635,7 @@ int CMPTransaction::logicMath_RedemptionPegged()
                 version,
                 propertyId,
                 block);
-        return (PKT_ERROR_SEND -22);
+        return (PKT_ERROR_SP -22);
     }
 
     if (!IsPropertyIdValid(propertyId)) {
@@ -3692,7 +3717,7 @@ int CMPTransaction::logicMath_DExSell()
             type,
             version,
             block);
-      return (PKT_ERROR_TRADEOFFER -22);
+      return (PKT_ERROR_SP -22);
     }
 
 
@@ -3786,7 +3811,7 @@ int CMPTransaction::logicMath_DExBuy()
              version,
              propertyId,
              block);
-      return (PKT_ERROR_TRADEOFFER -22);
+      return (PKT_ERROR_SP -22);
     }
 
     // if(!t_tradelistdb->checkKYCRegister(sender,4))
@@ -3988,7 +4013,7 @@ int CMPTransaction::logicMath_Change_OracleAdm()
                 version,
                 property,
                 block);
-        return (PKT_ERROR_TOKENS -22);
+        return (PKT_ERROR_SP -22);
     }
 
     if (!IsPropertyIdValid(contractId)) {
@@ -4029,7 +4054,7 @@ int CMPTransaction::logicMath_Set_Oracle()
                 version,
                 property,
                 block);
-        return (PKT_ERROR_TOKENS -22);
+        return (PKT_ERROR_SP -22);
     }
 
     if (!IsPropertyIdValid(contractId)) {
@@ -4099,7 +4124,7 @@ int CMPTransaction::logicMath_OracleBackup()
                 version,
                 property,
                 block);
-        return (PKT_ERROR_TOKENS -22);
+        return (PKT_ERROR_SP -22);
     }
 
     if (!IsPropertyIdValid(contractId)) {
@@ -4135,7 +4160,7 @@ int CMPTransaction::logicMath_CloseOracle()
                 version,
                 property,
                 block);
-        return (PKT_ERROR_TOKENS -22);
+        return (PKT_ERROR_SP -22);
     }
 
     if (!IsPropertyIdValid(contractId)) {
@@ -4172,7 +4197,7 @@ int CMPTransaction::logicMath_CommitChannel()
                 version,
                 property,
                 block);
-        return (PKT_ERROR_TOKENS -22);
+        return (PKT_ERROR_SP -22);
     }
 
     if (!IsPropertyIdValid(propertyId)) {
@@ -4215,7 +4240,7 @@ int CMPTransaction::logicMath_Withdrawal_FromChannel()
                 version,
                 property,
                 block);
-        return (PKT_ERROR_TOKENS -22);
+        return (PKT_ERROR_SP -22);
     }
 
     if (!IsPropertyIdValid(propertyId)) {
@@ -4284,7 +4309,7 @@ int CMPTransaction::logicMath_Instant_Trade()
               version,
               property,
               block);
-      return (PKT_ERROR_METADEX -22);
+      return (PKT_ERROR_SP -22);
   }
 
   if (property == desired_property) {
@@ -4360,10 +4385,10 @@ int CMPTransaction::logicMath_Instant_Trade()
       return (PKT_ERROR_CHANNELS -16);
   }
 
-  if (chn.getExpiry() < block) {
-      PrintToLog("%s(): rejected: out of channel deadline: actual block: %d, deadline: %d\n", __func__, block, chn.getExpiry());
-      return (PKT_ERROR_CHANNELS -17);
-  }
+  // if (chn.getExpiry() < block) {
+  //     PrintToLog("%s(): rejected: out of channel deadline: actual block: %d, deadline: %d\n", __func__, block, chn.getExpiry());
+  //     return (PKT_ERROR_CHANNELS -17);
+  // }
 
   // checking if the address contains in the channel enough tokens to trade!
   const int64_t fRemaining = chn.getRemaining(false, property);
@@ -4406,7 +4431,7 @@ int CMPTransaction::logicMath_Instant_Trade()
       assert(chn.updateChannelBal(chn.getSecond(), property, amount_forsale));
 
       // updating last exchange block
-      assert(chn.updateLastExBlock(block));
+      // assert(chn.updateLastExBlock(block));
 
   }
 
@@ -4423,7 +4448,7 @@ int CMPTransaction::logicMath_Update_PNL()
               version,
               property,
               block);
-      return (PKT_ERROR_TOKENS -22);
+      return (PKT_ERROR_SP -22);
   }
 
   if (!IsPropertyIdValid(propertyId)) {
@@ -4453,7 +4478,7 @@ int CMPTransaction::logicMath_Transfer()
               version,
               propertyId,
               block);
-        return (PKT_ERROR_CHANNELS -14);
+        return (PKT_ERROR_SP -22);
     }
 
     auto it = channels_Map.find(sender);
@@ -4510,7 +4535,7 @@ int CMPTransaction::logicMath_Instant_LTC_Trade()
               version,
               property,
               block);
-      return (PKT_ERROR_METADEX -22);
+      return (PKT_ERROR_SP -22);
   }
 
   if (!IsPropertyIdValid(property)) {
@@ -4546,11 +4571,11 @@ int CMPTransaction::logicMath_Instant_LTC_Trade()
   if(it != channels_Map.end()){
      chn = it->second;
   }
-
-  if (chn.getExpiry() < block) {
-      PrintToLog("%s(): rejected: out of channel deadline: actual block: %d, deadline: %d\n", __func__, block, chn.getExpiry());
-      return (PKT_ERROR_CHANNELS -17);
-  }
+  //
+  // if (chn.getExpiry() < block) {
+  //     PrintToLog("%s(): rejected: out of channel deadline: actual block: %d, deadline: %d\n", __func__, block, chn.getExpiry());
+  //     return (PKT_ERROR_CHANNELS -17);
+  // }
 
    return rc;
 }
@@ -4567,7 +4592,7 @@ int CMPTransaction::logicMath_Contract_Instant()
             version,
             property,
             block);
-        return (PKT_ERROR_METADEX -22);
+        return (PKT_ERROR_SP -22);
     }
 
     if (!IsPropertyIdValid(property))
@@ -4594,11 +4619,11 @@ int CMPTransaction::logicMath_Contract_Instant()
         return (PKT_ERROR_CHANNELS -15);
     }
 
-    if (chn.getExpiry() < block)
-    {
-        PrintToLog("%s(): rejected: out of channel deadline: actual block: %d, deadline: %d\n", __func__, block, chn.getExpiry());
-        return (PKT_ERROR_CHANNELS -16);
-    }
+    // if (chn.getExpiry() < block)
+    // {
+    //     PrintToLog("%s(): rejected: out of channel deadline: actual block: %d, deadline: %d\n", __func__, block, chn.getExpiry());
+    //     return (PKT_ERROR_CHANNELS -16);
+    // }
 
     CMPSPInfo::Entry sp;
     if (!_my_sps->getSP(property, sp))
@@ -4657,7 +4682,7 @@ int CMPTransaction::logicMath_Contract_Instant()
 
     /********************************************************/
     // updating last exchange block
-    assert(chn.updateLastExBlock(block));
+    // assert(chn.updateLastExBlock(block));
 
     mastercore::Instant_x_Trade(txid, itrading_action, chn.getMultisig(), chn.getFirst(), chn.getSecond(), property, instant_amount, price, sp.collateral_currency, sp.prop_type, block, tx_idx);
 
@@ -4679,7 +4704,7 @@ int CMPTransaction::logicMath_New_Id_Registration()
             version,
             property,
             block);
-        return (PKT_ERROR_TOKENS -22);
+        return (PKT_ERROR_SP -22);
   }
 
   int kyc_id;
@@ -4708,7 +4733,7 @@ int CMPTransaction::logicMath_Update_Id_Registration()
             version,
             property,
             block);
-        return (PKT_ERROR_TOKENS -22);
+        return (PKT_ERROR_SP -22);
   }
 
   // ---------------------------------------
@@ -4730,7 +4755,7 @@ int CMPTransaction::logicMath_DEx_Payment()
               version,
               property,
               block);
-      return (PKT_ERROR_METADEX -22);
+      return (PKT_ERROR_SP -22);
   }
 
   return rc;
@@ -4746,7 +4771,7 @@ int CMPTransaction::logicMath_Attestation()
             version,
             property,
             block);
-        return (PKT_ERROR_METADEX -22);
+        return (PKT_ERROR_SP -22);
     }
 
     int kyc_id;
@@ -4777,7 +4802,7 @@ int CMPTransaction::logicMath_Revoke_Attestation()
             type,
             version,
             block);
-        return (PKT_ERROR_METADEX -22);
+        return (PKT_ERROR_SP -22);
     }
 
     assert(t_tradelistdb->deleteAttestationReg(sender, receiver));
@@ -4794,10 +4819,33 @@ int CMPTransaction::logicMath_MetaDExCancelAll()
 	       type,
 	       version,
 	       block);
-    return (PKT_ERROR_METADEX -20);
+    return (PKT_ERROR_SP -22);
   }
 
   return (MetaDEx_CANCEL_EVERYTHING(txid, block, sender));
+}
+
+/** Tx 120 */
+int CMPTransaction::logicMath_Close_Channel()
+{
+   PrintToLog("%s(): inside logicMath_Close_Channel \n",__func__);
+
+   // if (!IsTransactionTypeAllowed(block, type, version))
+   // {
+   //     PrintToLog("%s(): rejected: type %d or version %d not permitted at block %d\n",
+	 //         __func__,
+	 //         type,
+	 //         version,
+	 //         block);
+   //     return (PKT_ERROR_SP -22);
+   //  }
+   //
+   //  if(!closeChannel(sender)){
+   //      PrintToLog("%s(): unable to close the channel (%s)\n",__func__, sender);
+   //      return (PKT_ERROR_CHANNELS -21);
+   //  }
+
+    return 0;
 }
 
 struct FutureContractObject *getFutureContractObject(std::string identifier)

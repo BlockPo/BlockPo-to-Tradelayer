@@ -24,7 +24,7 @@ static void write_mp_active_channels(std::string& lineOut)
         const std::string& chnAddr = cm.first;
         const Channel& chnObj = cm.second;
 
-        lineOut = strprintf("%s,%s,%s,%s,%d,%d", chnAddr, chnObj.getMultisig(), chnObj.getFirst(), chnObj.getSecond(), chnObj.getExpiry(), chnObj.getLastBlock());
+        lineOut = strprintf("%s,%s,%s,%s,%d", chnAddr, chnObj.getMultisig(), chnObj.getFirst(), chnObj.getSecond(), chnObj.getLastBlock());
         lineOut.append("+");
         addBalances(chnObj.getBalanceMap(), lineOut);
     }
@@ -37,13 +37,12 @@ int input_activechannels_string(const std::string& s)
     boost::split(vstr, s, boost::is_any_of(" ,=+"), boost::token_compress_on);
 
     std::string chnAddr = vstr[0];
-    const int expiry_height = boost::lexical_cast<int>(vstr[4]);
-    const int last_exchange_block = boost::lexical_cast<int>(vstr[5]);
-    Channel chn(vstr[1], vstr[2], vstr[3], expiry_height, last_exchange_block);
+    const int last_exchange_block = boost::lexical_cast<int>(vstr[4]);
+    Channel chn(vstr[1], vstr[2], vstr[3], last_exchange_block);
 
     // split general data + balances
     std::vector<std::string> vBalance;
-    boost::split(vBalance, vstr[6], boost::is_any_of(";"), boost::token_compress_on);
+    boost::split(vBalance, vstr[5], boost::is_any_of(";"), boost::token_compress_on);
 
     //address-property:amount;
     for (const auto &v : vBalance)
@@ -491,10 +490,9 @@ BOOST_AUTO_TEST_CASE(channel_persistence)
     const std::string multisig = "Qdj12J6FZgaY34ZNx12pVpTeF9NQdmpGzj";
     const std::string first = "mxAsoWQqUupprkj9L3firQ3CmUwyVCAwwY";
     const std::string second = "muY24px8kWVHUDc8NmBRjL6UWGbjz8wW5r";
-    const int expiry_height = 1458;
     const int last_exchange_block = 200;
 
-    Channel chn(multisig, first, second, expiry_height, last_exchange_block);
+    Channel chn(multisig, first, second, last_exchange_block);
 
     // Adding 2563 tokens of property 7 to first address
     const uint32_t propertyId1 = 7;
@@ -549,7 +547,6 @@ BOOST_AUTO_TEST_CASE(channel_persistence)
     BOOST_CHECK_EQUAL("Qdj12J6FZgaY34ZNx12pVpTeF9NQdmpGzj",chn1.getMultisig());
     BOOST_CHECK_EQUAL("mxAsoWQqUupprkj9L3firQ3CmUwyVCAwwY",chn1.getFirst());
     BOOST_CHECK_EQUAL("muY24px8kWVHUDc8NmBRjL6UWGbjz8wW5r",chn1.getSecond());
-    BOOST_CHECK_EQUAL(1458, chn1.getExpiry());
     BOOST_CHECK_EQUAL(200, chn1.getLastBlock());
     BOOST_CHECK_EQUAL(1000, newAmount);
 

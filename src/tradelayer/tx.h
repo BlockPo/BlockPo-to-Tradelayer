@@ -213,6 +213,7 @@ private:
     bool interpret_MetaDExCancel();
     bool interpret_MetaDExCancel_ByPair();
     bool interpret_MetaDExCancel_ByPrice();
+    bool interpret_Close_Channel();
 
     /**
      * Logic and "effects"
@@ -264,6 +265,7 @@ private:
     int logicMath_MetaDExCancel();
     int logicMath_MetaDExCancel_ByPair();
     int logicMath_MetaDExCancel_ByPrice();
+    int logicMath_Close_Channel();
 
 
 public:

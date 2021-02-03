@@ -2,7 +2,7 @@
 # Copyright (c) 2015-2017 The Bitcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
-"""Test Trade Channels Expiration."""
+"""Test Trade Channels Close."""
 
 from test_framework.test_framework import BitcoinTestFramework
 from test_framework.util import *
@@ -12,7 +12,7 @@ import json
 import http.client
 import urllib.parse
 
-class ChannelsExpirationBasicsTest (BitcoinTestFramework):
+class ChannelsCloseTest (BitcoinTestFramework):
     def set_test_params(self):
         self.num_nodes = 1
         self.setup_clean_chain = True
@@ -243,7 +243,6 @@ class ChannelsExpirationBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['multisig address'], multisig)
         assert_equal(out['result']['first address'], addresses[0])
         assert_equal(out['result']['second address'], 'pending')
-        assert_equal(out['result']['expiry block'], 785)
         assert_equal(out['result']['status'], 'active')
 
 
@@ -468,7 +467,6 @@ class ChannelsExpirationBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['multisig address'], multisig)
         assert_equal(out['result']['first address'], addresses[0])
         assert_equal(out['result']['second address'], addresses[1])
-        assert_equal(out['result']['expiry block'], 785)
         assert_equal(out['result']['status'], 'active')
 
         self.log.info("Checking remainng in the channel for the address0")
@@ -483,24 +481,99 @@ class ChannelsExpirationBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         assert_equal(out['result']['channel remaining'], '1000.00000000')
 
+        self.log.info("Closing trade channel!")
 
-        # self.log.info("Checking tokens height")
-        # out = tradelayer_HTTP(conn, headers, False, "tl_getinfo")
+
+        # addr0 making instant trade with addr1 (tokens for tokens)
+        self.log.info("Funding the multisig with 1 LTC")
+        params = str([multisig, 1]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "sendtoaddress", params)
+        # self.log.info(out)
+        txid = out['result']
+
+        self.nodes[0].generate(1)
+
+
+        self.log.info("Checking the transaction")
+        params = str([txid]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "gettransaction", params)
+        # self.log.info(out)
+        vout = out['result']['details'][0]['vout']
+        self.log.info('vout:' + str(vout))
+
+        self.log.info("Creating raw input")
+        params = str(['', txid, vout]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_createrawtx_input",params)
+        # self.log.info(out)
+        hex = out['result']
+
+
+        # Destination here is multisig
+        self.log.info("Creating raw reference")
+        params = str([hex, multisig, 0.9]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_createrawtx_reference",params)
+        # self.log.info(out)
+        hex = out['result']
+
+
+        self.log.info("Creating payload for close channel")
+        out = tradelayer_HTTP(conn, headers, False, "tl_createpayload_closechannel")
+        assert_equal(out['error'], None)
+        payload = out['result']
+        # self.log.info(payload)
+
+
+        self.log.info("Adding the op return to transaction")
+        params = str([hex,payload]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_createrawtx_opreturn", params)
+        assert_equal(out['error'], None)
+        # self.log.info(out)
+        hex = out['result']
+        # self.log.info(hex)
+
+
+        params = '["'+hex+'",[{"txid":"'+txid+'","vout":'+str(vout)+', "scriptPubKey":"'+scriptPubKey+'","redeemScript":"'+redeemScript+'","amount":2}],["'+privatekey0+'"]]'
+        self.log.info("Signing raw transaction with address 0")
+        # self.log.info(params)
+        out = tradelayer_HTTP(conn, headers, False, "signrawtransaction",params)
+        # assert_equal(out['error'], None)
+        hex = out['result']['hex']
         # self.log.info(out)
 
-        self.log.info("Checking the expiration of trade channel")
-        self.nodes[0].generate(200)
-        self.nodes[0].generate(200)
-        self.nodes[0].generate(160)
 
-
-        self.log.info("Withdrawal from channel ")
-        params = str([addresses[1], multisig, 5, '500']).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, False, "tl_withdrawal_fromchannel",params)
+        self.log.info("decoding trade layer raw transaction")
+        params = str([hex]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_decodetransaction", params)
         assert_equal(out['error'], None)
         # self.log.info(out)
 
-        self.nodes[0].generate(5)
+        assert_equal(out['result']['fee'], '0.10000000')
+        assert_equal(out['result']['sendingaddress'], multisig)
+        assert_equal(out['result']['referenceaddress'], multisig)
+        assert_equal(out['result']['type_int'], 120)
+        assert_equal(out['result']['type'], 'Close Channel')
+
+
+        self.log.info("Signing raw transaction with address 1")
+        params = '["'+hex+'",[{"txid":"'+txid+'","vout":'+str(vout)+', "scriptPubKey":"'+scriptPubKey+'","redeemScript":"'+redeemScript+'","amount":2}],["'+privatekey1+'"]]'
+        out = tradelayer_HTTP(conn, headers, False, "signrawtransaction",params)
+        assert_equal(out['error'], None)
+        hex = out['result']['hex']
+        # self.log.info(hex)
+
+
+        self.log.info("Sending raw transaction")
+        params = '["'+hex+'", true]'
+        out = tradelayer_HTTP(conn, headers, False, "sendrawtransaction",params)
+        # assert_equal(out['error'], None)
+        # self.log.info(out)
+        tx = out['result']
+
+        params = '["'+hex+'"]'
+        out = tradelayer_HTTP(conn, headers, False, "decoderawtransaction",params)
+        # self.log.info(out)
+
+        self.nodes[0].generate(1)
 
         params = str([multisig]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_getchannel_info",params)
@@ -508,11 +581,11 @@ class ChannelsExpirationBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['status'], 'active')
 
 
-        self.log.info("Checking remainng in the channel for the address1")
+        self.log.info("Checking remaining in the channel for the address1")
         params = str([addresses[1], multisig, 5]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_get_channelremaining",params)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['channel remaining'], '1000.00000000')
+        assert_equal(out['result']['channel remaining'], '0.00000000')
 
         self.log.info("Checking dan tokens in address1")
         params = str([addresses[1], 5]).replace("'",'"')
@@ -521,9 +594,6 @@ class ChannelsExpirationBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         assert_equal(out['result']['balance'],'9999997000.00000000')
         assert_equal(out['result']['reserve'],'0.00000000')
-
-
-        self.nodes[0].generate(4)
 
         self.log.info("Checking dan tokens in address1")
         params = str([addresses[1], 5]).replace("'",'"')
@@ -542,4 +612,4 @@ class ChannelsExpirationBasicsTest (BitcoinTestFramework):
         self.stop_nodes()
 
 if __name__ == '__main__':
-    ChannelsExpirationBasicsTest().main ()
+    ChannelsCloseTest().main ()

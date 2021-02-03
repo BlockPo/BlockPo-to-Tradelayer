@@ -1212,6 +1212,28 @@ UniValue tl_createpayload_withdrawal_fromchannel(const JSONRPCRequest& request)
     return HexStr(payload.begin(), payload.end());
 }
 
+UniValue tl_createpayload_closechannel(const JSONRPCRequest& request)
+{
+    if (request.fHelp)
+        throw runtime_error(
+            "tl_createpayload_closechannel \n"
+
+            "\nClose channel tx.\n"
+
+            "\nResult:\n"
+            "\"hash\"                  (string) the hex-encoded transaction hash\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("tl_createpayload_closechannel", "")
+            + HelpExampleRpc("tl_createpayload_closechannel", "")
+        );
+
+    // create a payload for the transaction
+    std::vector<unsigned char> payload = CreatePayload_Close_Channel();
+
+    return HexStr(payload.begin(), payload.end());
+}
+
 static const CRPCCommand commands[] =
   { //  category                         name                                             actor (function)                               okSafeMode
     //  -------------------------------- -----------------------------------------       ----------------------------------------        ----------
@@ -1252,7 +1274,8 @@ static const CRPCCommand commands[] =
     { "trade layer (payload creation)", "tl_createpayload_attestation",                   &tl_createpayload_attestation,                     {}   },
     { "trade layer (payload creation)", "tl_createpayload_instant_ltc_trade",             &tl_createpayload_instant_ltc_trade,               {}   },
     { "trade layer (payload creation)", "tl_createpayload_commit_tochannel",              &tl_createpayload_commit_tochannel,                {}   },
-    { "trade layer (payload creation)", "tl_createpayload_withdrawal_fromchannel",        &tl_createpayload_withdrawal_fromchannel,          {}   }
+    { "trade layer (payload creation)", "tl_createpayload_withdrawal_fromchannel",        &tl_createpayload_withdrawal_fromchannel,          {}   },
+    { "trade layer (payload creation)", "tl_createpayload_closechannel",                  &tl_createpayload_closechannel,        {}   }
   };
 
 

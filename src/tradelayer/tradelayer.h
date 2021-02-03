@@ -119,7 +119,8 @@ enum TransactionType {
   MSC_TYPE_UPDATE_ID_REGISTRATION             = 116,
   MSC_TYPE_DEX_PAYMENT                        = 117,
   MSC_TYPE_ATTESTATION                        = 118,
-  MSC_TYPE_REVOKE_ATTESTATION                 = 119
+  MSC_TYPE_REVOKE_ATTESTATION                 = 119,
+  MSC_TYPE_CLOSE_CHANNEL                      = 120
 
 };
 
@@ -313,22 +314,20 @@ class Channel
    std::string multisig;
    std::string first;
    std::string second;
-   int expiry_height;
    int last_exchange_block;
    //! Available balances for first  and second addresses properties
    std::map<std::string,map<uint32_t, int64_t>> balances;
 
  public:
-   Channel() : multisig(""), first(""), second(""), expiry_height(0), last_exchange_block(0) {}
+   Channel() : multisig(""), first(""), second(""), last_exchange_block(0) {}
    ~Channel() {}
-   Channel(const std::string& m, const std::string& f, const std::string& s, int exp, int blk) :  multisig(m),
-   first(f), second(s), expiry_height(exp), last_exchange_block(blk) {}
+   Channel(const std::string& m, const std::string& f, const std::string& s, int blk) :  multisig(m),
+   first(f), second(s), last_exchange_block(blk) {}
 
    const std::string& getMultisig() const { return multisig; }
    const std::string& getFirst() const { return first; }
    const std::string& getSecond() const { return second; }
    const std::map<std::string,map<uint32_t, int64_t>>& getBalanceMap() const { return balances; }
-   int getExpiry() const { return expiry_height; }
    int getLastBlock() const { return last_exchange_block; }
    int64_t getRemaining(const std::string& address, uint32_t propertyId) const;
    int64_t getRemaining(bool flag, uint32_t propertyId) const;
@@ -457,7 +456,7 @@ class CMPTradeList : public CDBBase
   //Multisig channels
   void recordNewCommit(const uint256& txid, const std::string& channelAddress, const std::string& sender, uint32_t propertyId, uint64_t amountCommited, int blockNum, int blockIndex);
   void recordNewWithdrawal(const uint256& txid, const std::string& channelAddress, const std::string& sender, uint32_t propertyId, uint64_t amountToWithdrawal, int blockNum, int blockIndex);
-  void recordNewChannel(const std::string& channelAddress, const std::string& frAddr, const std::string& secAddr, int blockNum, int blockIndex);
+  void recordNewChannel(const std::string& channelAddress, const std::string& frAddr, const std::string& secAddr, int blockIndex);
   void recordNewInstantTrade(const uint256& txid, const std::string& channelAddr, const std::string& first, const std::string& second, uint32_t propertyIdForSale, uint64_t amount_forsale, uint32_t propertyIdDesired, uint64_t amount_desired,int blockNum, int blockIndex);
   void recordNewTransfer(const uint256& txid, const std::string& sender, const std::string& receiver, int blockNum, int blockIndex);
   void recordNewInstContTrade(const uint256& txid, const std::string& firstAddr, const std::string& secondAddr, uint32_t property, uint64_t amount_forsale, uint64_t price ,int blockNum, int blockIndex);
@@ -635,7 +634,7 @@ namespace mastercore
 
   bool makeWithdrawals(int Block); // make the withdrawals for multisig channels
 
-  bool closeChannels(int Block);
+  bool closeChannel(const std::string& channelAddr);
 
   // x_Trade function for contracts on instant trade
   bool Instant_x_Trade(const uint256& txid, uint8_t tradingAction, const std::string& channelAddr, const std::string& firstAddr, const std::string& secondAddr, uint32_t property, int64_t amount_forsale, uint64_t price, uint32_t collateral, uint16_t type, int& block, int tx_idx);
