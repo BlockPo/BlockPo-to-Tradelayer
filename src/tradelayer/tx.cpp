@@ -115,6 +115,7 @@ std::string mastercore::strTransactionType(uint16_t txType)
     case MSC_TYPE_METADEX_CANCEL: return "Cancel specific MetaDEx order";
     case MSC_TYPE_METADEX_CANCEL_BY_PRICE: return "MetaDEx cancel-price";
     case MSC_TYPE_METADEX_CANCEL_BY_PAIR: return "MetaDEx cancel-by-pair";
+    case MSC_TYPE_CLOSE_CHANNEL : return "Close Channel";
     default: return "* unknown type *";
     }
 }
@@ -164,139 +165,144 @@ bool CMPTransaction::interpret_Transaction()
   }
 
   switch (type)
-    {
-    case MSC_TYPE_SIMPLE_SEND:
-      return interpret_SimpleSend();
+  {
+      case MSC_TYPE_SIMPLE_SEND:
+          return interpret_SimpleSend();
 
-    case MSC_TYPE_SEND_ALL:
-      return interpret_SendAll();
+      case MSC_TYPE_SEND_ALL:
+          return interpret_SendAll();
 
-    case MSC_TYPE_SEND_VESTING:
-      return interpret_SendVestingTokens();
+      case MSC_TYPE_SEND_VESTING:
+          return interpret_SendVestingTokens();
 
-    case MSC_TYPE_CREATE_PROPERTY_FIXED:
-      return interpret_CreatePropertyFixed();
+      case MSC_TYPE_CREATE_PROPERTY_FIXED:
+          return interpret_CreatePropertyFixed();
 
-    case MSC_TYPE_CREATE_PROPERTY_MANUAL:
-      return interpret_CreatePropertyManaged();
+      case MSC_TYPE_CREATE_PROPERTY_MANUAL:
+          return interpret_CreatePropertyManaged();
 
-    case MSC_TYPE_GRANT_PROPERTY_TOKENS:
-      return interpret_GrantTokens();
+      case MSC_TYPE_GRANT_PROPERTY_TOKENS:
+         return interpret_GrantTokens();
 
-    case MSC_TYPE_REVOKE_PROPERTY_TOKENS:
-      return interpret_RevokeTokens();
+      case MSC_TYPE_REVOKE_PROPERTY_TOKENS:
+          return interpret_RevokeTokens();
 
-    case MSC_TYPE_CHANGE_ISSUER_ADDRESS:
-      return interpret_ChangeIssuer();
+      case MSC_TYPE_CHANGE_ISSUER_ADDRESS:
+          return interpret_ChangeIssuer();
 
-    case TL_MESSAGE_TYPE_DEACTIVATION:
-      return interpret_Deactivation();
+      case TL_MESSAGE_TYPE_DEACTIVATION:
+          return interpret_Deactivation();
 
-    case TL_MESSAGE_TYPE_ACTIVATION:
-      return interpret_Activation();
+      case TL_MESSAGE_TYPE_ACTIVATION:
+          return interpret_Activation();
 
-    case TL_MESSAGE_TYPE_ALERT:
-      return interpret_Alert();
+      case TL_MESSAGE_TYPE_ALERT:
+          return interpret_Alert();
 
-    case MSC_TYPE_METADEX_TRADE:
-      return interpret_MetaDExTrade();
+      case MSC_TYPE_METADEX_TRADE:
+          return interpret_MetaDExTrade();
 
-    case MSC_TYPE_METADEX_CANCEL_ALL:
-        return interpret_MetaDExCancelAll();
+      case MSC_TYPE_METADEX_CANCEL_ALL:
+          return interpret_MetaDExCancelAll();
 
-    case MSC_TYPE_CREATE_CONTRACT:
-      return interpret_CreateContractDex();
+      case MSC_TYPE_CREATE_CONTRACT:
+          return interpret_CreateContractDex();
 
-    case MSC_TYPE_CREATE_ORACLE_CONTRACT:
-      return interpret_CreateOracleContract();
+      case MSC_TYPE_CREATE_ORACLE_CONTRACT:
+          return interpret_CreateOracleContract();
 
-    case MSC_TYPE_CONTRACTDEX_TRADE:
-      return interpret_ContractDexTrade();
+      case MSC_TYPE_CONTRACTDEX_TRADE:
+          return interpret_ContractDexTrade();
 
-    case MSC_TYPE_CONTRACTDEX_CANCEL_ECOSYSTEM:
-      return interpret_ContractDexCancelEcosystem();
+      case MSC_TYPE_CONTRACTDEX_CANCEL_ECOSYSTEM:
+          return interpret_ContractDexCancelEcosystem();
 
-    case MSC_TYPE_CONTRACTDEX_CANCEL:
-      return interpret_ContractDExCancel();
+      case MSC_TYPE_CONTRACTDEX_CANCEL:
+          return interpret_ContractDExCancel();
 
-    case MSC_TYPE_PEGGED_CURRENCY:
-      return interpret_CreatePeggedCurrency();
+      case MSC_TYPE_PEGGED_CURRENCY:
+          return interpret_CreatePeggedCurrency();
 
-    case MSC_TYPE_SEND_PEGGED_CURRENCY:
-      return interpret_SendPeggedCurrency();
+      case MSC_TYPE_SEND_PEGGED_CURRENCY:
+          return interpret_SendPeggedCurrency();
 
-    case MSC_TYPE_REDEMPTION_PEGGED:
-      return interpret_RedemptionPegged();
+      case MSC_TYPE_REDEMPTION_PEGGED:
+          return interpret_RedemptionPegged();
 
-    case MSC_TYPE_CONTRACTDEX_CLOSE_POSITION:
-      return interpret_ContractDexClosePosition();
+      case MSC_TYPE_CONTRACTDEX_CLOSE_POSITION:
+          return interpret_ContractDexClosePosition();
 
-    case MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK:
-      return interpret_ContractDex_Cancel_Orders_By_Block();
+      case MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK:
+          return interpret_ContractDex_Cancel_Orders_By_Block();
 
-    case MSC_TYPE_DEX_SELL_OFFER:
-      return interpret_DExSell();
+      case MSC_TYPE_DEX_SELL_OFFER:
+          return interpret_DExSell();
 
-    case MSC_TYPE_DEX_BUY_OFFER:
-      return interpret_DExBuy();
+      case MSC_TYPE_DEX_BUY_OFFER:
+          return interpret_DExBuy();
 
-    case MSC_TYPE_ACCEPT_OFFER_BTC:
-      return interpret_AcceptOfferBTC();
+      case MSC_TYPE_ACCEPT_OFFER_BTC:
+          return interpret_AcceptOfferBTC();
 
-    case MSC_TYPE_CHANGE_ORACLE_REF:
-      return interpret_Change_OracleAdm();
+      case MSC_TYPE_CHANGE_ORACLE_REF:
+          return interpret_Change_OracleAdm();
 
-    case MSC_TYPE_SET_ORACLE:
-      return interpret_Set_Oracle();
+      case MSC_TYPE_SET_ORACLE:
+          return interpret_Set_Oracle();
 
-    case MSC_TYPE_ORACLE_BACKUP:
-      return interpret_OracleBackup();
+      case MSC_TYPE_ORACLE_BACKUP:
+          return interpret_OracleBackup();
 
-    case MSC_TYPE_CLOSE_ORACLE:
-      return interpret_CloseOracle();
+      case MSC_TYPE_CLOSE_ORACLE:
+          return interpret_CloseOracle();
 
-    case MSC_TYPE_COMMIT_CHANNEL:
-        return interpret_CommitChannel();
+      case MSC_TYPE_COMMIT_CHANNEL:
+          return interpret_CommitChannel();
 
-    case MSC_TYPE_WITHDRAWAL_FROM_CHANNEL:
-        return interpret_Withdrawal_FromChannel();
+      case MSC_TYPE_WITHDRAWAL_FROM_CHANNEL:
+          return interpret_Withdrawal_FromChannel();
 
-    case MSC_TYPE_INSTANT_TRADE:
-        return interpret_Instant_Trade();
+      case MSC_TYPE_INSTANT_TRADE:
+          return interpret_Instant_Trade();
 
-    case MSC_TYPE_TRANSFER:
-        return interpret_Transfer();
+      case MSC_TYPE_TRANSFER:
+          return interpret_Transfer();
 
-    case MSC_TYPE_CONTRACT_INSTANT:
-        return interpret_Contract_Instant();
+      case MSC_TYPE_CONTRACT_INSTANT:
+          return interpret_Contract_Instant();
 
-    case MSC_TYPE_NEW_ID_REGISTRATION:
-        return interpret_New_Id_Registration();
+      case MSC_TYPE_NEW_ID_REGISTRATION:
+          return interpret_New_Id_Registration();
 
-    case MSC_TYPE_UPDATE_ID_REGISTRATION:
-        return interpret_Update_Id_Registration();
+      case MSC_TYPE_UPDATE_ID_REGISTRATION:
+          return interpret_Update_Id_Registration();
 
-    case MSC_TYPE_DEX_PAYMENT:
-        return interpret_DEx_Payment();
+      case MSC_TYPE_DEX_PAYMENT:
+          return interpret_DEx_Payment();
 
-    case MSC_TYPE_ATTESTATION:
-        return interpret_Attestation();
+      case MSC_TYPE_ATTESTATION:
+          return interpret_Attestation();
 
-    case MSC_TYPE_REVOKE_ATTESTATION:
-        return interpret_Revoke_Attestation();
+      case MSC_TYPE_REVOKE_ATTESTATION:
+          return interpret_Revoke_Attestation();
 
-    case MSC_TYPE_INSTANT_LTC_TRADE:
-        return interpret_Instant_LTC_Trade();
+      case MSC_TYPE_INSTANT_LTC_TRADE:
+          return interpret_Instant_LTC_Trade();
 
-    case MSC_TYPE_METADEX_CANCEL:
-        return interpret_MetaDExCancel();
+      case MSC_TYPE_METADEX_CANCEL:
+          return interpret_MetaDExCancel();
 
-    case MSC_TYPE_METADEX_CANCEL_BY_PAIR:
-        return interpret_MetaDExCancel_ByPair();
+      case MSC_TYPE_METADEX_CANCEL_BY_PAIR:
+          return interpret_MetaDExCancel_ByPair();
 
-    case MSC_TYPE_METADEX_CANCEL_BY_PRICE:
-        return interpret_MetaDExCancel_ByPrice();
+      case MSC_TYPE_METADEX_CANCEL_BY_PRICE:
+          return interpret_MetaDExCancel_ByPrice();
 
+      case MSC_TYPE_CLOSE_CHANNEL:
+          return interpret_SimpleSend();
+
+      default:
+          return false;
     }
 
   return false;
@@ -2125,6 +2131,24 @@ bool CMPTransaction::interpret_MetaDExCancelAll()
     return true;
 }
 
+/** Tx 120 */
+bool CMPTransaction::interpret_Close_Channel()
+{
+  int i = 0;
+
+  PrintToLog("%s(): inside interpret_Close_Channel \n",__func__);
+
+  std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+  std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+
+  if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly) {
+      PrintToLog("\t  %s(): inside interpret \n",__func__);
+  }
+
+  return true;
+}
+
+
 // ---------------------- CORE LOGIC -------------------------
 
 /**
@@ -2142,10 +2166,14 @@ int CMPTransaction::interpretPacket()
 
     if (!interpret_Transaction()) {
         return (PKT_ERROR -2);
+    } else {
+        PrintToLog("%s(): Back from interpret_Transaction\n", __func__);
     }
 
     LOCK(cs_tally);
-    switch (type) {
+
+    switch (type)
+    {
         case MSC_TYPE_SIMPLE_SEND:
             return logicMath_SimpleSend();
 
@@ -2275,9 +2303,14 @@ int CMPTransaction::interpretPacket()
         case MSC_TYPE_METADEX_CANCEL_BY_PAIR:
             return logicMath_MetaDExCancel_ByPair();
 
+        case MSC_TYPE_CLOSE_CHANNEL:
+            return logicMath_Close_Channel();
+
         case MSC_TYPE_METADEX_CANCEL_BY_PRICE:
             return logicMath_MetaDExCancel_ByPrice();
 
+        default:
+            return -1;
     }
 
     return (PKT_ERROR -100);
@@ -2293,7 +2326,7 @@ int CMPTransaction::logicMath_SimpleSend()
                 version,
                 property,
                 block);
-        return (PKT_ERROR_SEND -22);
+        return (PKT_ERROR_SP -22);
     }
 
     if (nValue <= 0 || MAX_INT_8_BYTES < nValue) {
@@ -2396,7 +2429,7 @@ int CMPTransaction::logicMath_SendVestingTokens()
               version,
               TL_PROPERTY_VESTING,
               block);
-      return (PKT_ERROR_SEND -22);
+      return (PKT_ERROR_SP -22);
   }
 
   const int64_t nBalance = getMPbalance(sender, TL_PROPERTY_VESTING, BALANCE);
@@ -2430,7 +2463,7 @@ int CMPTransaction::logicMath_SendAll()
                 version,
                 property,
                 block);
-        return (PKT_ERROR_SEND_ALL -22);
+        return (PKT_ERROR_SP -22);
     }
 
     // ------------------------------------------
@@ -2654,7 +2687,7 @@ int CMPTransaction::logicMath_GrantTokens()
   	       version,
   	       property,
            block);
-    return (PKT_ERROR_TOKENS -22);
+    return (PKT_ERROR_SP -22);
   }
 
   if (nValue <= 0 || MAX_INT_8_BYTES < nValue) {
@@ -2771,7 +2804,7 @@ int CMPTransaction::logicMath_RevokeTokens()
                 version,
                 property,
                 block);
-        return (PKT_ERROR_TOKENS -22);
+        return (PKT_ERROR_SP -22);
     }
 
     if (nValue <= 0 || MAX_INT_8_BYTES < nValue) {
@@ -2851,7 +2884,7 @@ int CMPTransaction::logicMath_ChangeIssuer()
                 version,
                 property,
                 block);
-        return (PKT_ERROR_TOKENS -22);
+        return (PKT_ERROR_SP -22);
     }
 
     if (!IsPropertyIdValid(property)) {
@@ -2892,7 +2925,7 @@ int CMPTransaction::logicMath_Deactivation()
                 version,
                 property,
                 block);
-        return (PKT_ERROR -22);
+        return (PKT_ERROR_SP -22);
     }
 
     // is sender authorized
@@ -2927,7 +2960,7 @@ int CMPTransaction::logicMath_Activation()
                 version,
                 property,
                 block);
-        return (PKT_ERROR -22);
+        return (PKT_ERROR_SP -22);
     }
 
     // is sender authorized - temporarily use alert auths but ## TO BE MOVED TO FOUNDATION P2SH KEY ##
@@ -2962,7 +2995,7 @@ int CMPTransaction::logicMath_Alert()
                 version,
                 property,
                 block);
-        return (PKT_ERROR -22);
+        return (PKT_ERROR_SP -22);
     }
 
     // is sender authorized?
@@ -2997,7 +3030,7 @@ int CMPTransaction::logicMath_MetaDExTrade()
               version,
               property,
               block);
-      return (PKT_ERROR_METADEX -22);
+      return (PKT_ERROR_SP -22);
   }
 
   if (property == desired_property) {
@@ -3237,7 +3270,7 @@ int CMPTransaction::logicMath_ContractDExCancel()
 	       type,
 	       version,
 	       block);
-    return (PKT_ERROR_CONTRACTDEX -20);
+    return (PKT_ERROR_SP -22);
   }
 
   return (ContractDex_CANCEL(sender,hash));
@@ -3252,7 +3285,7 @@ int CMPTransaction::logicMath_ContractDexCancelEcosystem()
 	       type,
          version,
 	       block);
-    return (PKT_ERROR_CONTRACTDEX -20);
+    return (PKT_ERROR_SP -22);
   }
 
   return (ContractDex_CANCEL_EVERYTHING(txid, block, sender, contractId));
@@ -3268,7 +3301,7 @@ int CMPTransaction::logicMath_ContractDexClosePosition()
             version,
             property,
             block);
-        return (PKT_ERROR_CONTRACTDEX -20);
+        return (PKT_ERROR_SP -22);
     }
 
     CMPSPInfo::Entry sp;
@@ -3294,7 +3327,7 @@ int CMPTransaction::logicMath_ContractDex_Cancel_Orders_By_Block()
               version,
               propertyId,
               block);
-     return (PKT_ERROR_METADEX -22);
+     return (PKT_ERROR_SP -22);
 
     }
 
@@ -3310,7 +3343,7 @@ int CMPTransaction::logicMath_MetaDExCancel()
 	        type,
 	        version,
 	        block);
-     return (PKT_ERROR_METADEX -20);
+     return (PKT_ERROR_SP -22);
     }
 
     return (MetaDEx_CANCEL(txid, sender, block, hash));
@@ -3326,7 +3359,7 @@ int CMPTransaction::logicMath_MetaDExCancel_ByPair()
                  type,
                  version,
                  block);
-         return (PKT_ERROR_METADEX -22);
+         return (PKT_ERROR_SP -22);
      }
 
      if (property == desired_property) {
@@ -3363,7 +3396,7 @@ int CMPTransaction::logicMath_MetaDExCancel_ByPrice()
                  type,
                  version,
                  block);
-         return (PKT_ERROR_METADEX -22);
+         return (PKT_ERROR_SP -22);
      }
 
      if (property == desired_property) {
@@ -3558,7 +3591,7 @@ int CMPTransaction::logicMath_SendPeggedCurrency()
             version,
             property,
             block);
-        return (PKT_ERROR_SEND -22);
+        return (PKT_ERROR_SP -22);
     }
 
     if (!IsPropertyIdValid(propertyId)) {
@@ -3610,7 +3643,7 @@ int CMPTransaction::logicMath_RedemptionPegged()
                 version,
                 propertyId,
                 block);
-        return (PKT_ERROR_SEND -22);
+        return (PKT_ERROR_SP -22);
     }
 
     if (!IsPropertyIdValid(propertyId)) {
@@ -3692,7 +3725,7 @@ int CMPTransaction::logicMath_DExSell()
             type,
             version,
             block);
-      return (PKT_ERROR_TRADEOFFER -22);
+      return (PKT_ERROR_SP -22);
     }
 
 
@@ -3786,7 +3819,7 @@ int CMPTransaction::logicMath_DExBuy()
              version,
              propertyId,
              block);
-      return (PKT_ERROR_TRADEOFFER -22);
+      return (PKT_ERROR_SP -22);
     }
 
     // if(!t_tradelistdb->checkKYCRegister(sender,4))
@@ -3988,7 +4021,7 @@ int CMPTransaction::logicMath_Change_OracleAdm()
                 version,
                 property,
                 block);
-        return (PKT_ERROR_TOKENS -22);
+        return (PKT_ERROR_SP -22);
     }
 
     if (!IsPropertyIdValid(contractId)) {
@@ -4029,7 +4062,7 @@ int CMPTransaction::logicMath_Set_Oracle()
                 version,
                 property,
                 block);
-        return (PKT_ERROR_TOKENS -22);
+        return (PKT_ERROR_SP -22);
     }
 
     if (!IsPropertyIdValid(contractId)) {
@@ -4099,7 +4132,7 @@ int CMPTransaction::logicMath_OracleBackup()
                 version,
                 property,
                 block);
-        return (PKT_ERROR_TOKENS -22);
+        return (PKT_ERROR_SP -22);
     }
 
     if (!IsPropertyIdValid(contractId)) {
@@ -4135,7 +4168,7 @@ int CMPTransaction::logicMath_CloseOracle()
                 version,
                 property,
                 block);
-        return (PKT_ERROR_TOKENS -22);
+        return (PKT_ERROR_SP -22);
     }
 
     if (!IsPropertyIdValid(contractId)) {
@@ -4172,7 +4205,7 @@ int CMPTransaction::logicMath_CommitChannel()
                 version,
                 property,
                 block);
-        return (PKT_ERROR_TOKENS -22);
+        return (PKT_ERROR_SP -22);
     }
 
     if (!IsPropertyIdValid(propertyId)) {
@@ -4215,7 +4248,7 @@ int CMPTransaction::logicMath_Withdrawal_FromChannel()
                 version,
                 property,
                 block);
-        return (PKT_ERROR_TOKENS -22);
+        return (PKT_ERROR_SP -22);
     }
 
     if (!IsPropertyIdValid(propertyId)) {
@@ -4284,7 +4317,7 @@ int CMPTransaction::logicMath_Instant_Trade()
               version,
               property,
               block);
-      return (PKT_ERROR_METADEX -22);
+      return (PKT_ERROR_SP -22);
   }
 
   if (property == desired_property) {
@@ -4360,10 +4393,10 @@ int CMPTransaction::logicMath_Instant_Trade()
       return (PKT_ERROR_CHANNELS -16);
   }
 
-  if (chn.getExpiry() < block) {
-      PrintToLog("%s(): rejected: out of channel deadline: actual block: %d, deadline: %d\n", __func__, block, chn.getExpiry());
-      return (PKT_ERROR_CHANNELS -17);
-  }
+  // if (chn.getExpiry() < block) {
+  //     PrintToLog("%s(): rejected: out of channel deadline: actual block: %d, deadline: %d\n", __func__, block, chn.getExpiry());
+  //     return (PKT_ERROR_CHANNELS -17);
+  // }
 
   // checking if the address contains in the channel enough tokens to trade!
   const int64_t fRemaining = chn.getRemaining(false, property);
@@ -4406,7 +4439,7 @@ int CMPTransaction::logicMath_Instant_Trade()
       assert(chn.updateChannelBal(chn.getSecond(), property, amount_forsale));
 
       // updating last exchange block
-      assert(chn.updateLastExBlock(block));
+      // assert(chn.updateLastExBlock(block));
 
   }
 
@@ -4423,7 +4456,7 @@ int CMPTransaction::logicMath_Update_PNL()
               version,
               property,
               block);
-      return (PKT_ERROR_TOKENS -22);
+      return (PKT_ERROR_SP -22);
   }
 
   if (!IsPropertyIdValid(propertyId)) {
@@ -4453,7 +4486,7 @@ int CMPTransaction::logicMath_Transfer()
               version,
               propertyId,
               block);
-        return (PKT_ERROR_CHANNELS -14);
+        return (PKT_ERROR_SP -22);
     }
 
     auto it = channels_Map.find(sender);
@@ -4510,7 +4543,7 @@ int CMPTransaction::logicMath_Instant_LTC_Trade()
               version,
               property,
               block);
-      return (PKT_ERROR_METADEX -22);
+      return (PKT_ERROR_SP -22);
   }
 
   if (!IsPropertyIdValid(property)) {
@@ -4546,11 +4579,11 @@ int CMPTransaction::logicMath_Instant_LTC_Trade()
   if(it != channels_Map.end()){
      chn = it->second;
   }
-
-  if (chn.getExpiry() < block) {
-      PrintToLog("%s(): rejected: out of channel deadline: actual block: %d, deadline: %d\n", __func__, block, chn.getExpiry());
-      return (PKT_ERROR_CHANNELS -17);
-  }
+  //
+  // if (chn.getExpiry() < block) {
+  //     PrintToLog("%s(): rejected: out of channel deadline: actual block: %d, deadline: %d\n", __func__, block, chn.getExpiry());
+  //     return (PKT_ERROR_CHANNELS -17);
+  // }
 
    return rc;
 }
@@ -4567,7 +4600,7 @@ int CMPTransaction::logicMath_Contract_Instant()
             version,
             property,
             block);
-        return (PKT_ERROR_METADEX -22);
+        return (PKT_ERROR_SP -22);
     }
 
     if (!IsPropertyIdValid(property))
@@ -4594,11 +4627,11 @@ int CMPTransaction::logicMath_Contract_Instant()
         return (PKT_ERROR_CHANNELS -15);
     }
 
-    if (chn.getExpiry() < block)
-    {
-        PrintToLog("%s(): rejected: out of channel deadline: actual block: %d, deadline: %d\n", __func__, block, chn.getExpiry());
-        return (PKT_ERROR_CHANNELS -16);
-    }
+    // if (chn.getExpiry() < block)
+    // {
+    //     PrintToLog("%s(): rejected: out of channel deadline: actual block: %d, deadline: %d\n", __func__, block, chn.getExpiry());
+    //     return (PKT_ERROR_CHANNELS -16);
+    // }
 
     CMPSPInfo::Entry sp;
     if (!_my_sps->getSP(property, sp))
@@ -4657,7 +4690,7 @@ int CMPTransaction::logicMath_Contract_Instant()
 
     /********************************************************/
     // updating last exchange block
-    assert(chn.updateLastExBlock(block));
+    // assert(chn.updateLastExBlock(block));
 
     mastercore::Instant_x_Trade(txid, itrading_action, chn.getMultisig(), chn.getFirst(), chn.getSecond(), property, instant_amount, price, sp.collateral_currency, sp.prop_type, block, tx_idx);
 
@@ -4679,7 +4712,7 @@ int CMPTransaction::logicMath_New_Id_Registration()
             version,
             property,
             block);
-        return (PKT_ERROR_TOKENS -22);
+        return (PKT_ERROR_SP -22);
   }
 
   int kyc_id;
@@ -4708,7 +4741,7 @@ int CMPTransaction::logicMath_Update_Id_Registration()
             version,
             property,
             block);
-        return (PKT_ERROR_TOKENS -22);
+        return (PKT_ERROR_SP -22);
   }
 
   // ---------------------------------------
@@ -4730,7 +4763,7 @@ int CMPTransaction::logicMath_DEx_Payment()
               version,
               property,
               block);
-      return (PKT_ERROR_METADEX -22);
+      return (PKT_ERROR_SP -22);
   }
 
   return rc;
@@ -4746,7 +4779,7 @@ int CMPTransaction::logicMath_Attestation()
             version,
             property,
             block);
-        return (PKT_ERROR_METADEX -22);
+        return (PKT_ERROR_SP -22);
     }
 
     int kyc_id;
@@ -4777,7 +4810,7 @@ int CMPTransaction::logicMath_Revoke_Attestation()
             type,
             version,
             block);
-        return (PKT_ERROR_METADEX -22);
+        return (PKT_ERROR_SP -22);
     }
 
     assert(t_tradelistdb->deleteAttestationReg(sender, receiver));
@@ -4794,10 +4827,31 @@ int CMPTransaction::logicMath_MetaDExCancelAll()
 	       type,
 	       version,
 	       block);
-    return (PKT_ERROR_METADEX -20);
+    return (PKT_ERROR_SP -22);
   }
 
   return (MetaDEx_CANCEL_EVERYTHING(txid, block, sender));
+}
+
+/** Tx 120 */
+int CMPTransaction::logicMath_Close_Channel()
+{
+   if (!IsTransactionTypeAllowed(block, type, version))
+   {
+       PrintToLog("%s(): rejected: type %d or version %d not permitted at block %d\n",
+	         __func__,
+	         type,
+	         version,
+	         block);
+       return (PKT_ERROR_SP -22);
+    }
+
+    if(!closeChannel(sender)){
+        PrintToLog("%s(): unable to close the channel (%s)\n",__func__, sender);
+        return (PKT_ERROR_CHANNELS -21);
+    }
+
+    return 0;
 }
 
 struct FutureContractObject *getFutureContractObject(std::string identifier)

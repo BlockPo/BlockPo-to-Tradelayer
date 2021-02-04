@@ -695,6 +695,8 @@ int mastercore::GetEncodingClass(const CTransaction& tx, int nBlock)
     }
 
     if (hasOpReturn) {
+
+        PrintToLog("%s(): HAS OP RETURN!\n",__func__);
         return TL_CLASS_D;
     }
 
@@ -880,7 +882,7 @@ static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, 
 
     if (msc_debug_parser_data) PrintToLog(" address_data.size=%lu\n script_data.size=%lu\n value_data.size=%lu\n", address_data.size(), script_data.size(), value_data.size());
 
-    // ### CLASS C / CLASS D PARSING ###
+    // ### CLASS D PARSING ###
     if (msc_debug_parser_data) PrintToLog("Beginning reference identification\n");
     bool referenceFound = false; // bool to hold whether we've found the reference yet
     bool changeRemoved = false; // bool to hold whether we've ignored the first output to sender as change
@@ -989,6 +991,8 @@ static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, 
     // ### SET MP TX INFO ###
     if (msc_debug_verbose) PrintToLog("single_pkt: %s\n", HexStr(single_pkt, packet_size + single_pkt));
     mp_tx.Set(strSender, strReference, 0, wtx.GetHash(), nBlock, idx, (unsigned char *)&single_pkt, packet_size, tlClass, txFee);
+
+    PrintToLog("%s(): mp_tx object: strSender: %s, strReference: %s, single_pkt: %s, tlClass: %d \n",__func__, strSender, strReference, HexStr(single_pkt, packet_size + single_pkt), tlClass);
 
     return 0;
 }
@@ -1110,7 +1114,7 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
         MapLTCVolume[block][property] += nvalue;
 
         // updating last exchange block
-        assert(sChn.updateLastExBlock(block));
+        // assert(sChn.updateLastExBlock(block));
 
         return !status;
     }
@@ -1603,13 +1607,13 @@ int input_activechannels_string(const std::string& s)
     boost::split(vstr, s, boost::is_any_of(" ,=+"), boost::token_compress_on);
 
     const std::string& chnAddr = vstr[0];
-    const int expiry_height = boost::lexical_cast<int>(vstr[4]);
-    const int last_exchange_block = boost::lexical_cast<int>(vstr[5]);
 
-    Channel chn(vstr[1], vstr[2], vstr[3], expiry_height, last_exchange_block);
+    const int last_exchange_block = boost::lexical_cast<int>(vstr[4]);
+
+    Channel chn(vstr[1], vstr[2], vstr[3], last_exchange_block);
     // split general data + balances
     std::vector<std::string> vBalance;
-    boost::split(vBalance, vstr[6], boost::is_any_of(";"), boost::token_compress_on);
+    boost::split(vBalance, vstr[5], boost::is_any_of(";"), boost::token_compress_on);
 
     //address-property:amount;
     for (const auto &v : vBalance)
@@ -2358,7 +2362,7 @@ static int write_mp_active_channels(std::ofstream& file, CHash256& hasher)
         const std::string& chnAddr = chn.first;
         const Channel& chnObj = chn.second;
 
-        std::string lineOut = strprintf("%s,%s,%s,%s,%d,%d", chnAddr, chnObj.getMultisig(), chnObj.getFirst(), chnObj.getSecond(), chnObj.getExpiry(), chnObj.getLastBlock());
+        std::string lineOut = strprintf("%s,%s,%s,%s,%d", chnAddr, chnObj.getMultisig(), chnObj.getFirst(), chnObj.getSecond(), chnObj.getLastBlock());
         lineOut.append("+");
         addBalances(chnObj.getBalanceMap(), lineOut);
         // add the line to the hash
@@ -4026,7 +4030,6 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
     // handle any features that go live with this block
     CheckLiveActivations(pBlockIndex->nHeight);
 
-
     const CConsensusParams &params = ConsensusParams();
     vestingActivationBlock = params.MSC_VESTING_BLOCK;
 
@@ -4040,7 +4043,6 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
     if (pBlockIndex->nHeight > params.MSC_TRADECHANNEL_TOKENS_BLOCK)
     {
         makeWithdrawals(pBlockIndex->nHeight);
-        closeChannels(pBlockIndex->nHeight);
     }
 
     // marginMain(pBlockIndex->nHeight);
@@ -4585,10 +4587,10 @@ void CMPTradeList::recordNewTrade(const uint256& txid, const std::string& addres
     if (msc_debug_tradedb) PrintToLog("%s(): %s\n", __FUNCTION__, status.ToString());
 }
 
-void CMPTradeList::recordNewChannel(const std::string& channelAddress, const std::string& frAddr, const std::string& secAddr, int blockNum, int blockIndex)
+void CMPTradeList::recordNewChannel(const std::string& channelAddress, const std::string& frAddr, const std::string& secAddr, int blockIndex)
 {
     if (!pdb) return;
-    const std::string strValue = strprintf("%s:%s:%d:%d:%s:%s", frAddr, secAddr, blockNum, blockIndex, ACTIVE_CHANNEL, TYPE_CREATE_CHANNEL);
+    const std::string strValue = strprintf("%s:%s:%s:%s", frAddr, secAddr, ACTIVE_CHANNEL, TYPE_CREATE_CHANNEL);
     Status status = pdb->Put(writeoptions, channelAddress, strValue);
     ++nWritten;
 
@@ -4786,7 +4788,6 @@ bool CMPTradeList::checkAttestationReg(const std::string& address, int& kyc_id)
 
         if(msc_debug_check_attestation_reg) PrintToLog("%s(): strValue: %s\n", __func__, strValue);
 
-
         // ensure correct amount of tokens in value string
         boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
 
@@ -4908,7 +4909,6 @@ bool CMPTradeList::kycLoop(UniValue& response)
         const std::string& name = vstr[1];
         const std::string& website = vstr[2];
         int blockNum = boost::lexical_cast<int>(vstr[3]);
-        // int nextId = boost::lexical_cast<int>(vstr[4]);
 
         // returning the kyc_id
         int kyc_id = boost::lexical_cast<int>(vstr[5]);
@@ -6161,28 +6161,20 @@ bool isChannelWithdraw(const std::string& address)
 
 }
 
-
-bool mastercore::closeChannels(int Block)
+bool mastercore::closeChannel(const std::string& channelAddr)
 {
-    bool status = false;
-
-    for(auto it = channels_Map.begin(); it != channels_Map.end();)
+    bool fClosed = false;
+    auto it = channels_Map.find(channelAddr);
+    if (it != channels_Map.end())
     {
+        PrintToLog("%s(): channel Found! (%s)\n",__func__,channelAddr);
+
         Channel &chn = it->second;
-        const int expiry = chn.getExpiry();
-
-        if (Block < expiry)
-        {
-            ++it;
-            continue;
-
-        }
 
         // no pending withdrawals
-        if(isChannelWithdraw(chn.getMultisig())) {
-            PrintToLog("%s(): Pending withdrawal in Channel %s\n",__func__, chn.getMultisig());
-            ++it;
-            continue;
+        if(isChannelWithdraw(channelAddr)) {
+            PrintToLog("%s(): Pending withdrawal in Channel %s\n",__func__, channelAddr);
+            return fClosed;
         }
 
         const uint32_t nextSPID = _my_sps->peekNextSPID();
@@ -6196,22 +6188,13 @@ bool mastercore::closeChannels(int Block)
             const int64_t first_rem = chn.getRemaining(false, propertyId);
             const int64_t second_rem = chn.getRemaining(true, propertyId);
 
-            PrintToLog("%s(): first remaining: %d, second remaining: %d, channel, propertyId: %d\n",__func__, first_rem, second_rem, propertyId);
-
-            bool fState = (first_rem > 0) ? true : false;
-            bool sState = (second_rem > 0) ? true : false;
-
-            if(!fState && !sState){
-                continue;
-            }
-
-            if (fState)
+            if (first_rem > 0)
             {
                 assert(chn.updateChannelBal(chn.getFirst(), propertyId, -first_rem));
                 assert(update_tally_map(chn.getFirst(), propertyId, first_rem, BALANCE));
             }
 
-            if (sState)
+            if (second_rem > 0)
             {
                 assert(chn.updateChannelBal(chn.getSecond(), propertyId, -second_rem));
                 assert(update_tally_map(chn.getSecond(), propertyId, second_rem, BALANCE));
@@ -6220,21 +6203,22 @@ bool mastercore::closeChannels(int Block)
         }
 
         // adding info in db
-        status = t_tradelistdb->setChannelClosed(chn.getMultisig());
+        t_tradelistdb->setChannelClosed(channelAddr);
 
         // deleting channel from withdrawals
-        auto itt = withdrawal_Map.find(chn.getMultisig());
+        auto itt = withdrawal_Map.find(channelAddr);
         if (itt != withdrawal_Map.end()){
             withdrawal_Map.erase(itt);
         }
 
-        // deleting element from map
-        channels_Map.erase(it++);
+        // deleting channel from Map
+        channels_Map.erase(it);
 
-    } // end loop
 
-    return status;
+        return (!fClosed);
+    }
 
+    return fClosed;
 }
 
 uint64_t int64ToUint64(int64_t value)
@@ -6463,7 +6447,7 @@ bool mastercore::checkChannelAddress(const std::string& channelAddress)
          // ensure correct amount of tokens in value strin
          boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
 
-         if (vstr.size() != 6) {
+         if (vstr.size() != 4) {
              // PrintToLog("%s(): db error - incorrect size of register: (%s)\n", __func__, strValue);
              continue;
          }
@@ -6505,7 +6489,6 @@ bool CMPTradeList::getChannelInfo(const std::string& channelAddress, UniValue& t
         tradeArray.push_back(Pair("multisig address", chn.getMultisig()));
         tradeArray.push_back(Pair("first address", chn.getFirst()));
         tradeArray.push_back(Pair("second address", chn.getSecond()));
-        tradeArray.push_back(Pair("expiry block", chn.getExpiry()));
         tradeArray.push_back(Pair("status","active"));
         return (!status);
     }
@@ -6523,20 +6506,18 @@ bool CMPTradeList::getChannelInfo(const std::string& channelAddress, UniValue& t
 
     // ensure correct amount of tokens in value string
     boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
-    if (vstr.size() != 6) {
+    if (vstr.size() != 4) {
         PrintToLog("%s(): db error - incorrect size of register: (%s)\n", __func__, strValue);
     }
 
     const std::string& frAddr = vstr[0];
     const std::string& secAddr = vstr[1];
-    const int expiry = boost::lexical_cast<int>(vstr[2]);
-    const std::string& chanStatus = vstr[4];
+    const std::string& chanStatus = vstr[2];
 
     tradeArray.push_back(Pair("multisig address", channelAddress));
     tradeArray.push_back(Pair("first address", frAddr));
     tradeArray.push_back(Pair("second address", secAddr));
-    tradeArray.push_back(Pair("expiry block", expiry));
-    tradeArray.push_back(Pair("status",chanStatus));
+    tradeArray.push_back(Pair("status", chanStatus));
 
     return status1.ok();
 
@@ -7115,31 +7096,31 @@ bool mastercore::feeCacheBuy()
 /**
  *  Updating last exchange block in channels
  */
-bool Channel::updateLastExBlock(int nBlock)
-{
-    bool result = false;
-    auto it = channels_Map.find(multisig);
-    if (it == channels_Map.end())
-    {
-        if(msc_debug_update_last_block) PrintToLog("%s(): trade channel not found!; (channel: %s)\n",__func__, multisig);
-        return result;
-
-    }
-
-    const int difference = nBlock - getLastBlock();
-
-    assert(difference >= 0);
-
-    if(msc_debug_update_last_block) PrintToLog("%s: expiry height after update: %d\n",__func__, getExpiry());
-
-    if (difference < dayblocks)
-    {
-        // updating expiry_height
-        setLastBlock(difference);
-    }
-
-    return true;
-}
+// bool Channel::updateLastExBlock(int nBlock)
+// {
+//     bool result = false;
+//     auto it = channels_Map.find(multisig);
+//     if (it == channels_Map.end())
+//     {
+//         if(msc_debug_update_last_block) PrintToLog("%s(): trade channel not found!; (channel: %s)\n",__func__, multisig);
+//         return result;
+//
+//     }
+//
+//     const int difference = nBlock - getLastBlock();
+//
+//     assert(difference >= 0);
+//
+//     if(msc_debug_update_last_block) PrintToLog("%s: expiry height after update: %d\n",__func__, getExpiry());
+//
+//     if (difference < dayblocks)
+//     {
+//         // updating expiry_height
+//         setLastBlock(difference);
+//     }
+//
+//     return true;
+// }
 
 // long: true, short: false
 bool getPosition(const std::string& status)
@@ -7239,12 +7220,12 @@ void CMPTradeList::getUpnInfo(const std::string& address, uint32_t contractId, U
 
 void mastercore::createChannel(const std::string& sender, const std::string& receiver,  uint32_t propertyId, uint64_t amount_commited, int block, int tx_id)
 {
-    Channel chn(receiver, sender, CHANNEL_PENDING, block + dayblocks, block);
+    Channel chn(receiver, sender, CHANNEL_PENDING, block);
     chn.setBalance(sender, propertyId, amount_commited);
     channels_Map[receiver] = chn;
-    if(msc_create_channel) PrintToLog("%s(): checking channel elements : channel address: %s, first address: %d, second address: %d, expiry_height: %d \n",__func__, chn.getMultisig(), chn.getFirst(), chn.getSecond(), chn.getExpiry());
+    if(msc_create_channel) PrintToLog("%s(): checking channel elements : channel address: %s, first address: %d, second address: %d\n",__func__, chn.getMultisig(), chn.getFirst(), chn.getSecond());
 
-    t_tradelistdb->recordNewChannel(chn.getMultisig(), chn.getFirst(), chn.getSecond(), chn.getExpiry(), tx_id);
+    t_tradelistdb->recordNewChannel(chn.getMultisig(), chn.getFirst(), chn.getSecond(), tx_id);
 
 }
 
@@ -7258,25 +7239,31 @@ bool CMPTradeList::setChannelClosed(const std::string& channelAddr)
     std::string newValue, strValue;
     Status status = pdb->Get(readoptions, channelAddr, &strValue);
 
+    PrintToLog("%s(): CHECKPOINT 1\n", __func__);
+
     if(!status.ok()){
         PrintToLog("%s(): db error - channel not found\n", __func__);
         return false;
     }
 
+    PrintToLog("%s(): CHECKPOINT 2\n", __func__);
+
     // ensure correct amount of tokens in value string
     boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
 
-    if (vstr.size() != 6) {
+    if (vstr.size() != 4) {
         PrintToLog("%s(): db error - incorrect size of register: (%s)\n", __func__, strValue);
         return false;
     }
 
     const std::string& frAddr = vstr[0];
     const std::string& secAddr = vstr[1];
-    const int blockNum = boost::lexical_cast<int>(vstr[2]);
-    const int blockIndex = boost::lexical_cast<int>(vstr[3]);
 
-    newValue = strprintf("%s:%s:%d:%d:%s:%s",frAddr, secAddr, blockNum, blockIndex, CLOSED_CHANNEL, TYPE_CREATE_CHANNEL);
+    newValue = strprintf("%s:%s:%s:%s",frAddr, secAddr, CLOSED_CHANNEL, TYPE_CREATE_CHANNEL);
+
+    PrintToLog("%s(): strValue: %s\n", __func__, strValue);
+    PrintToLog("%s(): newValue: %s\n", __func__, newValue);
+
 
     Status status1 = pdb->Put(writeoptions, channelAddr, newValue);
     ++nWritten;
@@ -7313,7 +7300,7 @@ bool CMPTradeList::tryAddSecond(const std::string& candidate, const std::string&
         // ensure correct amount of tokens in value string
         boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
 
-        if (vstr.size() != 6) {
+        if (vstr.size() != 4) {
             if(msc_debug_try_add_second) PrintToLog("%s(): db error - incorrect size of register: (%s)\n", __func__, strValue);
             return false;
         }
@@ -7323,10 +7310,7 @@ bool CMPTradeList::tryAddSecond(const std::string& candidate, const std::string&
 
         assert(frAddr == chn.getFirst());
 
-        const int blockNum = boost::lexical_cast<int>(vstr[2]);
-        const int blockIndex = boost::lexical_cast<int>(vstr[3]);
-
-        newValue = strprintf("%s:%s:%d:%d:%s:%s",frAddr, candidate, blockNum, blockIndex, ACTIVE_CHANNEL, TYPE_CREATE_CHANNEL);
+        newValue = strprintf("%s:%s:%s:%s",frAddr, candidate, ACTIVE_CHANNEL, TYPE_CREATE_CHANNEL);
 
         status1 = pdb->Put(writeoptions, channelAddr, newValue);
         ++nWritten;

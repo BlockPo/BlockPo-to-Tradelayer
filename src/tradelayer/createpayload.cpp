@@ -1035,5 +1035,21 @@ std::vector<unsigned char>CreatePayload_MetaDExCancelPrice(uint32_t propertyIdFo
   return payload;
 }
 
+std::vector<unsigned char>CreatePayload_Close_Channel()
+{
+  std::vector<unsigned char> payload;
+
+  uint64_t messageType = 120;
+  uint64_t messageVer = 0;
+
+  std::vector<uint8_t> vecMessageType = CompressInteger(messageType);
+  std::vector<uint8_t> vecMessageVer = CompressInteger(messageVer);
+
+  payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
+  payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
+
+  return payload;
+}
+
 #undef PUSH_BACK_BYTES
 #undef PUSH_BACK_BYTES_PTR

@@ -28,7 +28,6 @@ class CMPTransaction
     friend class CMPContractDex;
 
 private:
-
     uint256 txid;
     int block;
     int64_t blockTime;  // internally nTime is still an "unsigned int"
@@ -213,6 +212,7 @@ private:
     bool interpret_MetaDExCancel();
     bool interpret_MetaDExCancel_ByPair();
     bool interpret_MetaDExCancel_ByPrice();
+    bool interpret_Close_Channel();
 
     /**
      * Logic and "effects"
@@ -264,6 +264,7 @@ private:
     int logicMath_MetaDExCancel();
     int logicMath_MetaDExCancel_ByPair();
     int logicMath_MetaDExCancel_ByPrice();
+    int logicMath_Close_Channel();
 
 
 public:
@@ -478,7 +479,7 @@ public:
     void unlockLogic() { rpcOnly = false; };
 
     /** Compares transaction objects based on block height and position within the block. */
-    bool operator<(const CMPTransaction& other) const
+    bool operator < (const CMPTransaction& other) const
     {
         if (block != other.block) return block > other.block;
         return tx_idx > other.tx_idx;

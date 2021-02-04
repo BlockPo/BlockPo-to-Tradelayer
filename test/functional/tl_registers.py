@@ -245,7 +245,6 @@ class RegistersTest (BitcoinTestFramework):
         assert_equal(out['result']['multisig address'], multisig)
         assert_equal(out['result']['first address'], addresses[0])
         assert_equal(out['result']['second address'], 'pending')
-        assert_equal(out['result']['expiry block'], 785)
         assert_equal(out['result']['status'], 'active')
 
 
@@ -371,21 +370,13 @@ class RegistersTest (BitcoinTestFramework):
         # self.log.info(out)
 
 
-        self.log.info("Checking the expiration of trade channel")
-        self.nodes[0].generate(600)
-
-        params = str([multisig]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, True, "tl_getchannel_info",params)
-        # self.log.info(out)
-        assert_equal(out['result']['status'], 'closed')
-
 
         self.log.info("Checking reserve in channel")
         params = str([multisig, 4]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_get_channelreserve",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['channel reserve'], '0.00000000')
+        assert_equal(out['result']['channel reserve'], '1175.00000000')
 
 
         self.log.info("Commiting to trade channel")
@@ -402,7 +393,7 @@ class RegistersTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, False, "tl_get_channelreserve",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['channel reserve'], '200.00000000')
+        assert_equal(out['result']['channel reserve'], '1375.00000000')
 
 
         self.log.info("Withdrawal from channel ")
@@ -418,7 +409,7 @@ class RegistersTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, False, "tl_get_channelreserve",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['channel reserve'], '0.00000000')
+        assert_equal(out['result']['channel reserve'], '1175.00000000')
 
 
 

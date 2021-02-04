@@ -102,8 +102,8 @@ std::string GenerateConsensusString(const uint32_t propertyId, const std::string
 // Generates a consensus string for hashing based on a channel object
 std::string GenerateConsensusString(const Channel& chn)
 {
-    return strprintf("%s|%s|%s|%d|%d",
-		     chn.getMultisig(), chn.getFirst(), chn.getSecond(), chn.getExpiry(),
+    return strprintf("%s|%s|%s|%d",
+		     chn.getMultisig(), chn.getFirst(), chn.getSecond(),
 		     chn.getLastBlock());
 }
 
@@ -358,7 +358,7 @@ uint256 GetConsensusHash()
     }
 
     // Trade Channels
-    // Placeholders: "multisigaddress|multisigaddress|firstaddress|secondaddress|expiryheight|lastexchangeblock"
+    // Placeholders: "multisigaddress|multisigaddress|firstaddress|secondaddress|lastexchangeblock"
     for(const auto cm : channels_Map)
     {
          const Channel& chn = cm.second;

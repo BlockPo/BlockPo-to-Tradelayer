@@ -355,6 +355,9 @@ inline std::string error_str(int ec) {
     case PKT_ERROR_CHANNELS -20:
       ec_str = "Second address for channel is not setted";
       break;
+    case PKT_ERROR_CHANNELS -21:
+      ec_str = "Unable to close channel";
+      break;
 
     default:
       ec_str = "Unknown error";
