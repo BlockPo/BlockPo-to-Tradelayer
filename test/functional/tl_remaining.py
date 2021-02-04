@@ -252,7 +252,6 @@ class RemainingTest (BitcoinTestFramework):
         assert_equal(out['result']['multisig address'], multisig)
         assert_equal(out['result']['first address'], addresses[0])
         assert_equal(out['result']['second address'], 'pending')
-        assert_equal(out['result']['expiry block'], 786)
         assert_equal(out['result']['status'], 'active')
 
 
@@ -451,7 +450,6 @@ class RemainingTest (BitcoinTestFramework):
         assert_equal(out['result']['multisig address'], multisig)
         assert_equal(out['result']['first address'], addresses[0])
         assert_equal(out['result']['second address'], addresses[1])
-        assert_equal(out['result']['expiry block'], 786)
         assert_equal(out['result']['status'], 'active')
 
 

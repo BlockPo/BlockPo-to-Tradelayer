@@ -120,7 +120,7 @@ enum TransactionType {
   MSC_TYPE_DEX_PAYMENT                        = 117,
   MSC_TYPE_ATTESTATION                        = 118,
   MSC_TYPE_REVOKE_ATTESTATION                 = 119,
-  MSC_TYPE_CLOSE_CHANNEL                      = 120
+  MSC_TYPE_CLOSE_CHANNEL                      = 120,
 
 };
 

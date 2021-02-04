@@ -695,6 +695,8 @@ int mastercore::GetEncodingClass(const CTransaction& tx, int nBlock)
     }
 
     if (hasOpReturn) {
+
+        PrintToLog("%s(): HAS OP RETURN!\n",__func__);
         return TL_CLASS_D;
     }
 
@@ -880,7 +882,7 @@ static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, 
 
     if (msc_debug_parser_data) PrintToLog(" address_data.size=%lu\n script_data.size=%lu\n value_data.size=%lu\n", address_data.size(), script_data.size(), value_data.size());
 
-    // ### CLASS C / CLASS D PARSING ###
+    // ### CLASS D PARSING ###
     if (msc_debug_parser_data) PrintToLog("Beginning reference identification\n");
     bool referenceFound = false; // bool to hold whether we've found the reference yet
     bool changeRemoved = false; // bool to hold whether we've ignored the first output to sender as change
@@ -989,6 +991,8 @@ static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, 
     // ### SET MP TX INFO ###
     if (msc_debug_verbose) PrintToLog("single_pkt: %s\n", HexStr(single_pkt, packet_size + single_pkt));
     mp_tx.Set(strSender, strReference, 0, wtx.GetHash(), nBlock, idx, (unsigned char *)&single_pkt, packet_size, tlClass, txFee);
+
+    PrintToLog("%s(): mp_tx object: strSender: %s, strReference: %s, single_pkt: %s, tlClass: %d \n",__func__, strSender, strReference, HexStr(single_pkt, packet_size + single_pkt), tlClass);
 
     return 0;
 }
@@ -6163,9 +6167,9 @@ bool mastercore::closeChannel(const std::string& channelAddr)
     auto it = channels_Map.find(channelAddr);
     if (it != channels_Map.end())
     {
-        Channel &chn = it->second;
+        PrintToLog("%s(): channel Found! (%s)\n",__func__,channelAddr);
 
-        PrintToLog("%s(): Channel found!\n",__func__, channelAddr);
+        Channel &chn = it->second;
 
         // no pending withdrawals
         if(isChannelWithdraw(channelAddr)) {
@@ -6184,22 +6188,13 @@ bool mastercore::closeChannel(const std::string& channelAddr)
             const int64_t first_rem = chn.getRemaining(false, propertyId);
             const int64_t second_rem = chn.getRemaining(true, propertyId);
 
-            PrintToLog("%s(): first_rem: %d, second_rem: %d, propertyId: %d\n",__func__, first_rem, second_rem, propertyId);
-
-            bool fState = (first_rem > 0) ? true : false;
-            bool sState = (second_rem > 0) ? true : false;
-
-            if(!fState && !sState){
-                continue;
-            }
-
-            if (fState)
+            if (first_rem > 0)
             {
                 assert(chn.updateChannelBal(chn.getFirst(), propertyId, -first_rem));
                 assert(update_tally_map(chn.getFirst(), propertyId, first_rem, BALANCE));
             }
 
-            if (sState)
+            if (second_rem > 0)
             {
                 assert(chn.updateChannelBal(chn.getSecond(), propertyId, -second_rem));
                 assert(update_tally_map(chn.getSecond(), propertyId, second_rem, BALANCE));
@@ -6215,8 +6210,12 @@ bool mastercore::closeChannel(const std::string& channelAddr)
         if (itt != withdrawal_Map.end()){
             withdrawal_Map.erase(itt);
         }
-    } else {
-        PrintToLog("%s(): Channel NOT found!\n",__func__, channelAddr);
+
+        // deleting channel from Map
+        channels_Map.erase(it);
+
+
+        return (!fClosed);
     }
 
     return fClosed;
@@ -7240,10 +7239,14 @@ bool CMPTradeList::setChannelClosed(const std::string& channelAddr)
     std::string newValue, strValue;
     Status status = pdb->Get(readoptions, channelAddr, &strValue);
 
+    PrintToLog("%s(): CHECKPOINT 1\n", __func__);
+
     if(!status.ok()){
         PrintToLog("%s(): db error - channel not found\n", __func__);
         return false;
     }
+
+    PrintToLog("%s(): CHECKPOINT 2\n", __func__);
 
     // ensure correct amount of tokens in value string
     boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
@@ -7257,6 +7260,10 @@ bool CMPTradeList::setChannelClosed(const std::string& channelAddr)
     const std::string& secAddr = vstr[1];
 
     newValue = strprintf("%s:%s:%s:%s",frAddr, secAddr, CLOSED_CHANNEL, TYPE_CREATE_CHANNEL);
+
+    PrintToLog("%s(): strValue: %s\n", __func__, strValue);
+    PrintToLog("%s(): newValue: %s\n", __func__, newValue);
+
 
     Status status1 = pdb->Put(writeoptions, channelAddr, newValue);
     ++nWritten;

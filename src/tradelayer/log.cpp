@@ -19,10 +19,10 @@ static const long LOG_BUFFERSIZE  =  8000000; //  8 MB
 static const long LOG_SHRINKSIZE  = 50000000; // 50 MB
 
 // Debug flags
-bool msc_debug_parser_data                      = 0;
+bool msc_debug_parser_data                      = 1;
 bool msc_debug_parser_readonly                  = 1;
 bool msc_debug_parser                           = 0;
-bool msc_debug_verbose                          = 0;
+bool msc_debug_verbose                          = 1;
 bool msc_debug_verbose2                         = 0;
 bool msc_debug_verbose3                         = 0;
 bool msc_debug_vin                              = 0;
@@ -44,9 +44,9 @@ bool msc_debug_consensus_hash                   = 0;
 bool msc_debug_consensus_hash_every_block       = 0;
 bool msc_debug_consensus_hash_every_transaction = 0;
 bool msc_debug_alerts                           = 0;
-bool msc_debug_handle_dex_payment               = 1;
+bool msc_debug_handle_dex_payment               = 0;
 bool msc_debug_handle_instant                   = 0;
-bool msc_debug_handler_tx                       = 0;
+bool msc_debug_handler_tx                       = 1;
 bool msc_debug_tradedb                          = 0;
 bool msc_debug_margin_main                      = 0;
 bool msc_debug_pos_margin                       = 0;

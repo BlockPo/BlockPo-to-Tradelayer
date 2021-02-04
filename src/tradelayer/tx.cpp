@@ -165,142 +165,144 @@ bool CMPTransaction::interpret_Transaction()
   }
 
   switch (type)
-    {
-    case MSC_TYPE_SIMPLE_SEND:
-      return interpret_SimpleSend();
+  {
+      case MSC_TYPE_SIMPLE_SEND:
+          return interpret_SimpleSend();
 
-    case MSC_TYPE_SEND_ALL:
-      return interpret_SendAll();
+      case MSC_TYPE_SEND_ALL:
+          return interpret_SendAll();
 
-    case MSC_TYPE_SEND_VESTING:
-      return interpret_SendVestingTokens();
+      case MSC_TYPE_SEND_VESTING:
+          return interpret_SendVestingTokens();
 
-    case MSC_TYPE_CREATE_PROPERTY_FIXED:
-      return interpret_CreatePropertyFixed();
+      case MSC_TYPE_CREATE_PROPERTY_FIXED:
+          return interpret_CreatePropertyFixed();
 
-    case MSC_TYPE_CREATE_PROPERTY_MANUAL:
-      return interpret_CreatePropertyManaged();
+      case MSC_TYPE_CREATE_PROPERTY_MANUAL:
+          return interpret_CreatePropertyManaged();
 
-    case MSC_TYPE_GRANT_PROPERTY_TOKENS:
-      return interpret_GrantTokens();
+      case MSC_TYPE_GRANT_PROPERTY_TOKENS:
+         return interpret_GrantTokens();
 
-    case MSC_TYPE_REVOKE_PROPERTY_TOKENS:
-      return interpret_RevokeTokens();
+      case MSC_TYPE_REVOKE_PROPERTY_TOKENS:
+          return interpret_RevokeTokens();
 
-    case MSC_TYPE_CHANGE_ISSUER_ADDRESS:
-      return interpret_ChangeIssuer();
+      case MSC_TYPE_CHANGE_ISSUER_ADDRESS:
+          return interpret_ChangeIssuer();
 
-    case TL_MESSAGE_TYPE_DEACTIVATION:
-      return interpret_Deactivation();
+      case TL_MESSAGE_TYPE_DEACTIVATION:
+          return interpret_Deactivation();
 
-    case TL_MESSAGE_TYPE_ACTIVATION:
-      return interpret_Activation();
+      case TL_MESSAGE_TYPE_ACTIVATION:
+          return interpret_Activation();
 
-    case TL_MESSAGE_TYPE_ALERT:
-      return interpret_Alert();
+      case TL_MESSAGE_TYPE_ALERT:
+          return interpret_Alert();
 
-    case MSC_TYPE_METADEX_TRADE:
-      return interpret_MetaDExTrade();
+      case MSC_TYPE_METADEX_TRADE:
+          return interpret_MetaDExTrade();
 
-    case MSC_TYPE_METADEX_CANCEL_ALL:
-        return interpret_MetaDExCancelAll();
+      case MSC_TYPE_METADEX_CANCEL_ALL:
+          return interpret_MetaDExCancelAll();
 
-    case MSC_TYPE_CREATE_CONTRACT:
-      return interpret_CreateContractDex();
+      case MSC_TYPE_CREATE_CONTRACT:
+          return interpret_CreateContractDex();
 
-    case MSC_TYPE_CREATE_ORACLE_CONTRACT:
-      return interpret_CreateOracleContract();
+      case MSC_TYPE_CREATE_ORACLE_CONTRACT:
+          return interpret_CreateOracleContract();
 
-    case MSC_TYPE_CONTRACTDEX_TRADE:
-      return interpret_ContractDexTrade();
+      case MSC_TYPE_CONTRACTDEX_TRADE:
+          return interpret_ContractDexTrade();
 
-    case MSC_TYPE_CONTRACTDEX_CANCEL_ECOSYSTEM:
-      return interpret_ContractDexCancelEcosystem();
+      case MSC_TYPE_CONTRACTDEX_CANCEL_ECOSYSTEM:
+          return interpret_ContractDexCancelEcosystem();
 
-    case MSC_TYPE_CONTRACTDEX_CANCEL:
-      return interpret_ContractDExCancel();
+      case MSC_TYPE_CONTRACTDEX_CANCEL:
+          return interpret_ContractDExCancel();
 
-    case MSC_TYPE_PEGGED_CURRENCY:
-      return interpret_CreatePeggedCurrency();
+      case MSC_TYPE_PEGGED_CURRENCY:
+          return interpret_CreatePeggedCurrency();
 
-    case MSC_TYPE_SEND_PEGGED_CURRENCY:
-      return interpret_SendPeggedCurrency();
+      case MSC_TYPE_SEND_PEGGED_CURRENCY:
+          return interpret_SendPeggedCurrency();
 
-    case MSC_TYPE_REDEMPTION_PEGGED:
-      return interpret_RedemptionPegged();
+      case MSC_TYPE_REDEMPTION_PEGGED:
+          return interpret_RedemptionPegged();
 
-    case MSC_TYPE_CONTRACTDEX_CLOSE_POSITION:
-      return interpret_ContractDexClosePosition();
+      case MSC_TYPE_CONTRACTDEX_CLOSE_POSITION:
+          return interpret_ContractDexClosePosition();
 
-    case MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK:
-      return interpret_ContractDex_Cancel_Orders_By_Block();
+      case MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK:
+          return interpret_ContractDex_Cancel_Orders_By_Block();
 
-    case MSC_TYPE_DEX_SELL_OFFER:
-      return interpret_DExSell();
+      case MSC_TYPE_DEX_SELL_OFFER:
+          return interpret_DExSell();
 
-    case MSC_TYPE_DEX_BUY_OFFER:
-      return interpret_DExBuy();
+      case MSC_TYPE_DEX_BUY_OFFER:
+          return interpret_DExBuy();
 
-    case MSC_TYPE_ACCEPT_OFFER_BTC:
-      return interpret_AcceptOfferBTC();
+      case MSC_TYPE_ACCEPT_OFFER_BTC:
+          return interpret_AcceptOfferBTC();
 
-    case MSC_TYPE_CHANGE_ORACLE_REF:
-      return interpret_Change_OracleAdm();
+      case MSC_TYPE_CHANGE_ORACLE_REF:
+          return interpret_Change_OracleAdm();
 
-    case MSC_TYPE_SET_ORACLE:
-      return interpret_Set_Oracle();
+      case MSC_TYPE_SET_ORACLE:
+          return interpret_Set_Oracle();
 
-    case MSC_TYPE_ORACLE_BACKUP:
-      return interpret_OracleBackup();
+      case MSC_TYPE_ORACLE_BACKUP:
+          return interpret_OracleBackup();
 
-    case MSC_TYPE_CLOSE_ORACLE:
-      return interpret_CloseOracle();
+      case MSC_TYPE_CLOSE_ORACLE:
+          return interpret_CloseOracle();
 
-    case MSC_TYPE_COMMIT_CHANNEL:
-        return interpret_CommitChannel();
+      case MSC_TYPE_COMMIT_CHANNEL:
+          return interpret_CommitChannel();
 
-    case MSC_TYPE_WITHDRAWAL_FROM_CHANNEL:
-        return interpret_Withdrawal_FromChannel();
+      case MSC_TYPE_WITHDRAWAL_FROM_CHANNEL:
+          return interpret_Withdrawal_FromChannel();
 
-    case MSC_TYPE_INSTANT_TRADE:
-        return interpret_Instant_Trade();
+      case MSC_TYPE_INSTANT_TRADE:
+          return interpret_Instant_Trade();
 
-    case MSC_TYPE_TRANSFER:
-        return interpret_Transfer();
+      case MSC_TYPE_TRANSFER:
+          return interpret_Transfer();
 
-    case MSC_TYPE_CONTRACT_INSTANT:
-        return interpret_Contract_Instant();
+      case MSC_TYPE_CONTRACT_INSTANT:
+          return interpret_Contract_Instant();
 
-    case MSC_TYPE_NEW_ID_REGISTRATION:
-        return interpret_New_Id_Registration();
+      case MSC_TYPE_NEW_ID_REGISTRATION:
+          return interpret_New_Id_Registration();
 
-    case MSC_TYPE_UPDATE_ID_REGISTRATION:
-        return interpret_Update_Id_Registration();
+      case MSC_TYPE_UPDATE_ID_REGISTRATION:
+          return interpret_Update_Id_Registration();
 
-    case MSC_TYPE_DEX_PAYMENT:
-        return interpret_DEx_Payment();
+      case MSC_TYPE_DEX_PAYMENT:
+          return interpret_DEx_Payment();
 
-    case MSC_TYPE_ATTESTATION:
-        return interpret_Attestation();
+      case MSC_TYPE_ATTESTATION:
+          return interpret_Attestation();
 
-    case MSC_TYPE_REVOKE_ATTESTATION:
-        return interpret_Revoke_Attestation();
+      case MSC_TYPE_REVOKE_ATTESTATION:
+          return interpret_Revoke_Attestation();
 
-    case MSC_TYPE_INSTANT_LTC_TRADE:
-        return interpret_Instant_LTC_Trade();
+      case MSC_TYPE_INSTANT_LTC_TRADE:
+          return interpret_Instant_LTC_Trade();
 
-    case MSC_TYPE_METADEX_CANCEL:
-        return interpret_MetaDExCancel();
+      case MSC_TYPE_METADEX_CANCEL:
+          return interpret_MetaDExCancel();
 
-    case MSC_TYPE_METADEX_CANCEL_BY_PAIR:
-        return interpret_MetaDExCancel_ByPair();
+      case MSC_TYPE_METADEX_CANCEL_BY_PAIR:
+          return interpret_MetaDExCancel_ByPair();
 
-    case MSC_TYPE_METADEX_CANCEL_BY_PRICE:
-        return interpret_MetaDExCancel_ByPrice();
+      case MSC_TYPE_METADEX_CANCEL_BY_PRICE:
+          return interpret_MetaDExCancel_ByPrice();
 
-    case MSC_TYPE_CLOSE_CHANNEL:
-        return interpret_Close_Channel();
+      case MSC_TYPE_CLOSE_CHANNEL:
+          return interpret_SimpleSend();
 
+      default:
+          return false;
     }
 
   return false;
@@ -2134,7 +2136,7 @@ bool CMPTransaction::interpret_Close_Channel()
 {
   int i = 0;
 
-  PrintToLog("\t  %s(): inside interpret_Close_Channel \n",__func__);
+  PrintToLog("%s(): inside interpret_Close_Channel \n",__func__);
 
   std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
@@ -2164,10 +2166,14 @@ int CMPTransaction::interpretPacket()
 
     if (!interpret_Transaction()) {
         return (PKT_ERROR -2);
+    } else {
+        PrintToLog("%s(): Back from interpret_Transaction\n", __func__);
     }
 
     LOCK(cs_tally);
-    switch (type) {
+
+    switch (type)
+    {
         case MSC_TYPE_SIMPLE_SEND:
             return logicMath_SimpleSend();
 
@@ -2297,12 +2303,14 @@ int CMPTransaction::interpretPacket()
         case MSC_TYPE_METADEX_CANCEL_BY_PAIR:
             return logicMath_MetaDExCancel_ByPair();
 
-        case MSC_TYPE_METADEX_CANCEL_BY_PRICE:
-            return logicMath_MetaDExCancel_ByPrice();
-
         case MSC_TYPE_CLOSE_CHANNEL:
             return logicMath_Close_Channel();
 
+        case MSC_TYPE_METADEX_CANCEL_BY_PRICE:
+            return logicMath_MetaDExCancel_ByPrice();
+
+        default:
+            return -1;
     }
 
     return (PKT_ERROR -100);
@@ -4828,22 +4836,20 @@ int CMPTransaction::logicMath_MetaDExCancelAll()
 /** Tx 120 */
 int CMPTransaction::logicMath_Close_Channel()
 {
-   PrintToLog("%s(): inside logicMath_Close_Channel \n",__func__);
+   if (!IsTransactionTypeAllowed(block, type, version))
+   {
+       PrintToLog("%s(): rejected: type %d or version %d not permitted at block %d\n",
+	         __func__,
+	         type,
+	         version,
+	         block);
+       return (PKT_ERROR_SP -22);
+    }
 
-   // if (!IsTransactionTypeAllowed(block, type, version))
-   // {
-   //     PrintToLog("%s(): rejected: type %d or version %d not permitted at block %d\n",
-	 //         __func__,
-	 //         type,
-	 //         version,
-	 //         block);
-   //     return (PKT_ERROR_SP -22);
-   //  }
-   //
-   //  if(!closeChannel(sender)){
-   //      PrintToLog("%s(): unable to close the channel (%s)\n",__func__, sender);
-   //      return (PKT_ERROR_CHANNELS -21);
-   //  }
+    if(!closeChannel(sender)){
+        PrintToLog("%s(): unable to close the channel (%s)\n",__func__, sender);
+        return (PKT_ERROR_CHANNELS -21);
+    }
 
     return 0;
 }

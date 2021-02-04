@@ -28,7 +28,6 @@ class CMPTransaction
     friend class CMPContractDex;
 
 private:
-
     uint256 txid;
     int block;
     int64_t blockTime;  // internally nTime is still an "unsigned int"
@@ -480,7 +479,7 @@ public:
     void unlockLogic() { rpcOnly = false; };
 
     /** Compares transaction objects based on block height and position within the block. */
-    bool operator<(const CMPTransaction& other) const
+    bool operator < (const CMPTransaction& other) const
     {
         if (block != other.block) return block > other.block;
         return tx_idx > other.tx_idx;

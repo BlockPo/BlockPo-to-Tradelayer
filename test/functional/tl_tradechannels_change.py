@@ -246,7 +246,6 @@ class ChangeAddressTest (BitcoinTestFramework):
         assert_equal(out['result']['multisig address'], multisig)
         assert_equal(out['result']['first address'], addresses[0])
         assert_equal(out['result']['second address'], 'pending')
-        assert_equal(out['result']['expiry block'], 785)
         assert_equal(out['result']['status'], 'active')
 
 
@@ -521,7 +520,7 @@ class ChangeAddressTest (BitcoinTestFramework):
         assert_equal(out['result']['balance'],'19999996825.00000000')
         assert_equal(out['result']['reserve'],'0.00000000')
 
-        
+
         self.log.info("Checking the trade channel")
         params = str([multisig]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_getchannel_info",params)
@@ -530,7 +529,6 @@ class ChangeAddressTest (BitcoinTestFramework):
         assert_equal(out['result']['multisig address'], multisig)
         assert_equal(out['result']['first address'], addresses[0])
         assert_equal(out['result']['second address'], addresses[1])
-        assert_equal(out['result']['expiry block'], 785)
         assert_equal(out['result']['status'], 'active')
 
         self.stop_nodes()
