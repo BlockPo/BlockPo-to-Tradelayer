@@ -128,7 +128,7 @@ UniValue tl_send(const JSONRPCRequest& request)
     int result = WalletTxBuilder(fromAddress, toAddress, referenceAmount, payload, txid, rawHex, autoCommit);
 
     PrintToLog("%s(): CHECKING ERROR: %s\n",__func__, error_str(result));
-    
+
     // check error and return the txid (or raw hex depending on autocommit)
     if (result != 0) {
         throw JSONRPCError(result, error_str(result));
@@ -2224,6 +2224,48 @@ UniValue tl_sendcancel_contract_order(const JSONRPCRequest& request)
 }
 
 
+UniValue tl_send_closechannel(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 2)
+        throw runtime_error(
+           "tl_send_closechannel \"address\" \"channel\" \n"
+
+           "\nClose Trade Channel .\n"
+
+           "\nArguments:\n"
+           "1. address       (string, required) sender address\n"
+           "2. channel       (string, required) the channel address\n"
+
+           "\nExamples:\n"
+           + HelpExampleCli("tl_send_closechannel", "\"3BydPiSLPP3DR5cf726hDQ89fpqWLxPKLR\" \"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\"")
+           + HelpExampleRpc("tl_send_closechannel", "\"3BydPiSLPP3DR5cf726hDQ89fpqWLxPKLR\", \"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\"")
+        );
+
+    // obtain parameters & info
+    const std::string fromAddress = ParseAddress(request.params[0]);
+    const std::string channelAddr = ParseAddress(request.params[1]);
+
+    // create a payload for the transaction
+    std::vector<unsigned char> payload = CreatePayload_Close_Channel();
+
+    // request the wallet build the transaction (and if needed commit it)
+    uint256 txid;
+    std::string rawHex;
+    int result = WalletTxBuilder(fromAddress, channelAddr, 0, payload, txid, rawHex, autoCommit);
+
+    // check error and return the txid (or raw hex depending on autocommit)
+    if (result != 0) {
+        throw JSONRPCError(result, error_str(result));
+    } else {
+        if (!autoCommit) {
+            return rawHex;
+          } else {
+              return txid.GetHex();
+          }
+    }
+}
+
+
 static const CRPCCommand commands[] =
 { //  category                             name                            actor (function)               okSafeMode
   //  ------------------------------------ ------------------------------- ------------------------------ ----------
@@ -2267,7 +2309,8 @@ static const CRPCCommand commands[] =
     { "trade layer (transaction creation)", "tl_revoke_attestation",           &tl_revoke_attestation,              {} },
     { "trade layer (transaction creation)", "tl_sendcancel_order",             &tl_sendcancel_order,                {} },
     { "trade layer (transaction creation)", "tl_sendcanceltradesbypair",       &tl_sendcanceltradesbypair,          {} },
-    { "trade layer (transaction creation)", "tl_sendcanceltradesbyprice",      &tl_sendcanceltradesbyprice,         {} }
+    { "trade layer (transaction creation)", "tl_sendcanceltradesbyprice",      &tl_sendcanceltradesbyprice,         {} },
+    { "trade layer (transaction creation)", "tl_send_closechannel",            &tl_send_closechannel,               {} }
 #endif
 };
 
