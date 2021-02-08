@@ -4846,8 +4846,8 @@ int CMPTransaction::logicMath_Close_Channel()
        return (PKT_ERROR_SP -22);
     }
 
-    if(!closeChannel(sender)){
-        PrintToLog("%s(): unable to close the channel (%s)\n",__func__, sender);
+    if(!closeChannel(sender, receiver)){
+        PrintToLog("%s(): unable to close the channel (%s)\n",__func__, receiver);
         return (PKT_ERROR_CHANNELS -21);
     }
 

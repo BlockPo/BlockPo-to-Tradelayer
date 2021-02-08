@@ -336,102 +336,33 @@ class ChannelsCloseTest (BitcoinTestFramework):
 
         self.log.info("Closing trade channel!")
 
-        # addr0 making instant trade with addr1 (tokens for tokens)
-        self.log.info("Funding the multisig with 2 LTC")
-        params = str([multisig, 2]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, False, "sendtoaddress", params)
+        params = str([addresses[0], multisig]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_send_closechannel", params)
         # self.log.info(out)
-        txid = out['result']
-
+        tx = out['result']
         self.nodes[0].generate(1)
 
 
-        self.log.info("Checking the transaction")
-        params = str([txid]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, True, "gettransaction", params)
-        # self.log.info(out)
-        vout = out['result']['details'][0]['vout']
-        self.log.info('vout:' + str(vout))
-
-        self.log.info("Creating raw input")
-        params = str(['', txid, vout]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, False, "tl_createrawtx_input",params)
-        # self.log.info(out)
-        hex = out['result']
-
-
-        # Destination here is multisig
-        self.log.info("Creating raw reference")
-        params = str([hex, multisig, 1.5]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, False, "tl_createrawtx_reference",params)
-        # self.log.info(out)
-        hex = out['result']
-
-
-        self.log.info("Creating payload for close channel")
-        out = tradelayer_HTTP(conn, headers, False, "tl_createpayload_closechannel")
-        assert_equal(out['error'], None)
-        payload = out['result']
-        # self.log.info(payload)
-
-
-        self.log.info("Adding the op return to transaction")
-        params = str([hex,payload]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, False, "tl_createrawtx_opreturn", params)
-        assert_equal(out['error'], None)
-        # self.log.info(out)
-        hex = out['result']
-        # self.log.info(hex)
-
-
-        params = '["'+hex+'",[{"txid":"'+txid+'","vout":'+str(vout)+', "scriptPubKey":"'+scriptPubKey+'","redeemScript":"'+redeemScript+'","amount":2}],["'+privatekey0+'"]]'
-        self.log.info("Signing raw transaction with address 0")
-        # self.log.info(params)
-        out = tradelayer_HTTP(conn, headers, False, "signrawtransaction",params)
-        # assert_equal(out['error'], None)
-        hex = out['result']['hex']
-        # self.log.info(out)
-
-
         self.log.info("decoding trade layer raw transaction")
-        params = str([hex]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, False, "tl_decodetransaction", params)
+        params = str([tx]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_gettransaction", params)
         assert_equal(out['error'], None)
         # self.log.info(out)
 
-        assert_equal(out['result']['fee'], '0.50000000')
-        assert_equal(out['result']['sendingaddress'], multisig)
+        assert_equal(out['result']['fee'], '0.00362000')
+        assert_equal(out['result']['sendingaddress'], addresses[0])
         assert_equal(out['result']['referenceaddress'], multisig)
         assert_equal(out['result']['type_int'], 120)
         assert_equal(out['result']['type'], 'Close Channel')
-
-
-        self.log.info("Signing raw transaction with address 1")
-        params = '["'+hex+'",[{"txid":"'+txid+'","vout":'+str(vout)+', "scriptPubKey":"'+scriptPubKey+'","redeemScript":"'+redeemScript+'","amount":2}],["'+privatekey1+'"]]'
-        out = tradelayer_HTTP(conn, headers, False, "signrawtransaction",params)
-        assert_equal(out['error'], None)
-        hex = out['result']['hex']
-        # self.log.info(hex)
-
-
-        self.log.info("Sending raw transaction")
-        params = '["'+hex+'", true]'
-        out = tradelayer_HTTP(conn, headers, False, "sendrawtransaction",params)
-        # assert_equal(out['error'], None)
-        # self.log.info(out)
-        tx = out['result']
-
-        params = '["'+hex+'"]'
-        out = tradelayer_HTTP(conn, headers, False, "decoderawtransaction",params)
-        # self.log.info(out)
+        assert_equal(out['result']['valid'], True)
+        assert_equal(out['result']['block'], 221)
 
         params = str([multisig]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_getchannel_info",params)
         # self.log.info(out)
-        assert_equal(out['result']['status'], 'active')
+        assert_equal(out['result']['status'], 'closed')
 
         self.nodes[0].generate(1)
-
 
 
         self.log.info("Checking remaining in the channel for the address1")

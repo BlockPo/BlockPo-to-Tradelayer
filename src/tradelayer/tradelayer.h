@@ -634,7 +634,7 @@ namespace mastercore
 
   bool makeWithdrawals(int Block); // make the withdrawals for multisig channels
 
-  bool closeChannel(const std::string& channelAddr);
+  bool closeChannel(const std::string& sender, const std::string& channelAddr);
 
   // x_Trade function for contracts on instant trade
   bool Instant_x_Trade(const uint256& txid, uint8_t tradingAction, const std::string& channelAddr, const std::string& firstAddr, const std::string& secondAddr, uint32_t property, int64_t amount_forsale, uint64_t price, uint32_t collateral, uint16_t type, int& block, int tx_idx);

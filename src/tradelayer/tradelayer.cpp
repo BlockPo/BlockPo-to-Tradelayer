@@ -6161,15 +6161,20 @@ bool isChannelWithdraw(const std::string& address)
 
 }
 
-bool mastercore::closeChannel(const std::string& channelAddr)
+bool mastercore::closeChannel(const std::string& sender, const std::string& channelAddr)
 {
     bool fClosed = false;
+
     auto it = channels_Map.find(channelAddr);
     if (it != channels_Map.end())
     {
         PrintToLog("%s(): channel Found! (%s)\n",__func__,channelAddr);
 
         Channel &chn = it->second;
+
+        if(!chn.isPartOfChannel(sender)) {
+            return fClosed;
+        }
 
         // no pending withdrawals
         if(isChannelWithdraw(channelAddr)) {
