@@ -7415,12 +7415,12 @@ bool mastercore::Token_LTC_Fees(int64_t& buyer_amountGot, uint32_t propertyId)
 
 }
 
- /**
-  * @return The marker for class D transactions.
-  */
- const std::vector<unsigned char> GetTLMarker()
- {
-      static unsigned char pch[] = {0x70, 0x70}; // Hex-encoded: "pp"
+/**
+ * @return The marker for class D transactions.
+ */
+const std::vector<uint8_t> GetTLMarker()
+{
+    std::vector<uint8_t> marker{0x70, 0x70};  /* 'pp' hex-encoded */
+    return marker;
+}
 
-     return std::vector<unsigned char>(pch, pch + sizeof(pch) / sizeof(pch[0]));
- }
