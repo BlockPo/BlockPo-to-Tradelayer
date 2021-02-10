@@ -4551,18 +4551,6 @@ int CMPTransaction::logicMath_Instant_LTC_Trade()
       return (PKT_ERROR_CHANNELS -13);
   }
 
-  int kyc_id;
-  if(!t_tradelistdb->checkAttestationReg(sender,kyc_id)){
-    PrintToLog("%s(): rejected: kyc ckeck failed\n", __func__);
-    return (PKT_ERROR_KYC -10);
-  }
-
-  if(!t_tradelistdb->kycPropertyMatch(property, kyc_id)){
-    PrintToLog("%s(): rejected: property %d can't be traded with this kyc\n", __func__, property);
-    return (PKT_ERROR_KYC -20);
-  }
-
-
   std::string chnAddr;
   if(!t_tradelistdb->checkChannelRelation(sender, chnAddr) && !t_tradelistdb->checkChannelRelation(receiver, chnAddr)){
         PrintToLog("%s(): addresses (%s, %s) are not related with any channel\n", __func__, sender, receiver);
@@ -4574,16 +4562,11 @@ int CMPTransaction::logicMath_Instant_LTC_Trade()
       return (PKT_ERROR_CHANNELS -16);
   }
 
-  Channel chn;
   auto it = channels_Map.find(chnAddr);
-  if(it != channels_Map.end()){
-     chn = it->second;
+  if (it == channels_Map.end()){
+      PrintToLog("%s(): rejected: channel not found\n", __func__);
+      return (PKT_ERROR_CHANNELS -19);
   }
-  //
-  // if (chn.getExpiry() < block) {
-  //     PrintToLog("%s(): rejected: out of channel deadline: actual block: %d, deadline: %d\n", __func__, block, chn.getExpiry());
-  //     return (PKT_ERROR_CHANNELS -17);
-  // }
 
    return rc;
 }
