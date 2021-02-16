@@ -14,6 +14,7 @@
 #include <ui_interface.h>
 #include <util/threadnames.h>
 
+#include <deque>
 #include <memory>
 #include <stdio.h>
 #include <stdlib.h>
