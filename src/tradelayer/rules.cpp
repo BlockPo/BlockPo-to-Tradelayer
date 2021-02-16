@@ -28,72 +28,75 @@
 
 namespace mastercore
 {
+
 /**
- * Returns a mapping of transaction types, and the blocks at which they are enabled.
+ * Return transaction activation block, & restrictions.
  */
 std::vector<TransactionRestriction> CConsensusParams::GetRestrictions() const
 {
-    const TransactionRestriction vTxRestrictions[] =
-    { //  transaction type                                 version          allow 0          activation block
-      //  ----------------------------------            -------------       -------          ------------------
-        { TL_MESSAGE_TYPE_ALERT,                          0xFFFF,            true,             MSC_ALERT_BLOCK    },
-        { TL_MESSAGE_TYPE_ACTIVATION,                     0xFFFF,            true,             MSC_ALERT_BLOCK    },
-        { TL_MESSAGE_TYPE_DEACTIVATION,                   0xFFFF,            true,             MSC_ALERT_BLOCK    },
-        { MSC_TYPE_SIMPLE_SEND,                           MP_TX_PKT_V0,      true,             MSC_SEND_BLOCK     },
-        { MSC_TYPE_CREATE_PROPERTY_FIXED,                 MP_TX_PKT_V0,      true,             MSC_SP_BLOCK       },
-        { MSC_TYPE_CREATE_PROPERTY_MANUAL,                MP_TX_PKT_V0,      false,            MSC_MANUALSP_BLOCK },
-        { MSC_TYPE_GRANT_PROPERTY_TOKENS,                 MP_TX_PKT_V0,      false,            MSC_MANUALSP_BLOCK },
-        { MSC_TYPE_REVOKE_PROPERTY_TOKENS,                MP_TX_PKT_V0,      false,            MSC_MANUALSP_BLOCK },
-        { MSC_TYPE_CHANGE_ISSUER_ADDRESS,                 MP_TX_PKT_V0,      false,            MSC_MANUALSP_BLOCK },
-        { MSC_TYPE_CREATE_CONTRACT,                       MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK },
-        { MSC_TYPE_CONTRACTDEX_TRADE,                     MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK },
-        { MSC_TYPE_CONTRACTDEX_CANCEL_ECOSYSTEM,          MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK },
-        { MSC_TYPE_PEGGED_CURRENCY,                       MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK },
-        { MSC_TYPE_SEND_PEGGED_CURRENCY,                  MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK },
-        { MSC_TYPE_SEND_ALL,                              MP_TX_PKT_V0,      true,             MSC_SEND_ALL_BLOCK },
-        { MSC_TYPE_CONTRACTDEX_CLOSE_POSITION,            MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK },
-        { MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK,    MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK },
-        { MSC_TYPE_METADEX_TRADE,                         MP_TX_PKT_V0,      true,             MSC_METADEX_BLOCK },
-        { MSC_TYPE_DEX_SELL_OFFER,                        MP_TX_PKT_V1,      true,             MSC_DEXSELL_BLOCK },
-        { MSC_TYPE_DEX_BUY_OFFER,                         MP_TX_PKT_V0,      true,             MSC_DEXBUY_BLOCK },
-        { MSC_TYPE_ACCEPT_OFFER_BTC,                      MP_TX_PKT_V0,      true,             MSC_DEXSELL_BLOCK },
-        { MSC_TYPE_DEX_PAYMENT,                           MP_TX_PKT_V0,      true,             MSC_DEXSELL_BLOCK },
-        { MSC_TYPE_CONTRACTDEX_TRADE,                     MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK },
-        { MSC_TYPE_CONTRACTDEX_CANCEL_ECOSYSTEM,          MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK },
-        { MSC_TYPE_CREATE_CONTRACT,                       MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK },
-        { MSC_TYPE_PEGGED_CURRENCY,                       MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK },
-        { MSC_TYPE_REDEMPTION_PEGGED,                     MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK },
-        { MSC_TYPE_SEND_PEGGED_CURRENCY,                  MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK },
-        { MSC_TYPE_CONTRACTDEX_CLOSE_POSITION,            MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK },
-        { MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK,    MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK },
-        { MSC_TYPE_CHANGE_ORACLE_REF,                     MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK },
-        { MSC_TYPE_SET_ORACLE,                            MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK },
-        { MSC_TYPE_ORACLE_BACKUP,                         MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK },
-        { MSC_TYPE_CLOSE_ORACLE,                          MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK },
-        { MSC_TYPE_COMMIT_CHANNEL,                        MP_TX_PKT_V0,      true,             MSC_TRADECHANNEL_TOKENS_BLOCK },
-        { MSC_TYPE_WITHDRAWAL_FROM_CHANNEL,               MP_TX_PKT_V0,      true,             MSC_TRADECHANNEL_TOKENS_BLOCK },
-        { MSC_TYPE_INSTANT_TRADE,                         MP_TX_PKT_V0,      true,             MSC_TRADECHANNEL_TOKENS_BLOCK },
-        { MSC_TYPE_TRANSFER,                              MP_TX_PKT_V0,      true,             MSC_TRADECHANNEL_TOKENS_BLOCK },
-        { MSC_TYPE_CONTRACT_INSTANT,                      MP_TX_PKT_V0,      true,             MSC_TRADECHANNEL_CONTRACTS_BLOCK },
-        { MSC_TYPE_NEW_ID_REGISTRATION,                   MP_TX_PKT_V0,      true,             MSC_KYC_BLOCK },
-        { MSC_TYPE_UPDATE_ID_REGISTRATION,                MP_TX_PKT_V0,      true,             MSC_KYC_BLOCK },
-        { MSC_TYPE_CREATE_ORACLE_CONTRACT,                MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_ORACLES_BLOCK },
-        { MSC_TYPE_SEND_VESTING,                          MP_TX_PKT_V0,      true,             MSC_VESTING_BLOCK },
-        { MSC_TYPE_ATTESTATION,                           MP_TX_PKT_V0,      true,             MSC_KYC_BLOCK },
-        { MSC_TYPE_REVOKE_ATTESTATION,                    MP_TX_PKT_V0,      true,             MSC_KYC_BLOCK },
-        { MSC_TYPE_CONTRACTDEX_CANCEL,                    MP_TX_PKT_V0,      true,             MSC_CONTRACTDEX_BLOCK },
-        { MSC_TYPE_INSTANT_LTC_TRADE,                     MP_TX_PKT_V0,      true,             MSC_TRADECHANNEL_TOKENS_BLOCK },
-        { MSC_TYPE_METADEX_CANCEL,                        MP_TX_PKT_V0,      true,             MSC_METADEX_BLOCK },
-        { MSC_TYPE_METADEX_CANCEL_BY_PAIR,                MP_TX_PKT_V0,      true,             MSC_METADEX_BLOCK },
-        { MSC_TYPE_METADEX_CANCEL_ALL,                    MP_TX_PKT_V0,      true,             MSC_METADEX_BLOCK },
-        { MSC_TYPE_METADEX_CANCEL_BY_PRICE,               MP_TX_PKT_V0,      true,             MSC_METADEX_BLOCK },
-        { MSC_TYPE_CLOSE_CHANNEL,                         MP_TX_PKT_V0,      true,             MSC_TRADECHANNEL_TOKENS_BLOCK },
+    std::vector<TransactionRestriction> v;
 
-    };
+    // Parameters for the restriction.
+    //
+    // 1. Transaction type.
+    // 2. Version.
+    // 3. Allow 0.
+    // 4. Activation block.
+    //----------------------------------------------------------------//
 
-    const size_t nSize = sizeof(vTxRestrictions) / sizeof(vTxRestrictions[0]);
-
-    return std::vector<TransactionRestriction>(vTxRestrictions, vTxRestrictions + nSize);
+    v.push_back( { TL_MESSAGE_TYPE_ALERT,                          0xFFFF,            true, MSC_ALERT_BLOCK } );
+    v.push_back( { TL_MESSAGE_TYPE_ACTIVATION,                     0xFFFF,            true, MSC_ALERT_BLOCK } );
+    v.push_back( { TL_MESSAGE_TYPE_DEACTIVATION,                   0xFFFF,            true, MSC_ALERT_BLOCK } );
+    v.push_back( { MSC_TYPE_SIMPLE_SEND,                           MP_TX_PKT_V0,      true, MSC_SEND_BLOCK } );
+    v.push_back( { MSC_TYPE_CREATE_PROPERTY_FIXED,                 MP_TX_PKT_V0,      true, MSC_SP_BLOCK } );
+    v.push_back( { MSC_TYPE_CREATE_PROPERTY_MANUAL,                MP_TX_PKT_V0,      false, MSC_MANUALSP_BLOCK } );
+    v.push_back( { MSC_TYPE_GRANT_PROPERTY_TOKENS,                 MP_TX_PKT_V0,      false, MSC_MANUALSP_BLOCK } );
+    v.push_back( { MSC_TYPE_REVOKE_PROPERTY_TOKENS,                MP_TX_PKT_V0,      false, MSC_MANUALSP_BLOCK });
+    v.push_back( { MSC_TYPE_CHANGE_ISSUER_ADDRESS,                 MP_TX_PKT_V0,      false, MSC_MANUALSP_BLOCK });
+    v.push_back( { MSC_TYPE_CREATE_CONTRACT,                       MP_TX_PKT_V0,      true, MSC_CONTRACTDEX_BLOCK } );
+    v.push_back( { MSC_TYPE_CONTRACTDEX_TRADE,                     MP_TX_PKT_V0,      true, MSC_CONTRACTDEX_BLOCK } );
+    v.push_back( { MSC_TYPE_CONTRACTDEX_CANCEL_ECOSYSTEM,          MP_TX_PKT_V0,      true, MSC_CONTRACTDEX_BLOCK } );
+    v.push_back( { MSC_TYPE_PEGGED_CURRENCY,                       MP_TX_PKT_V0,      true, MSC_CONTRACTDEX_BLOCK } );
+    v.push_back( { MSC_TYPE_SEND_PEGGED_CURRENCY,                  MP_TX_PKT_V0,      true, MSC_CONTRACTDEX_BLOCK } );
+    v.push_back( { MSC_TYPE_SEND_ALL,                              MP_TX_PKT_V0,      true, MSC_SEND_ALL_BLOCK } );
+    v.push_back( { MSC_TYPE_CONTRACTDEX_CLOSE_POSITION,            MP_TX_PKT_V0,      true, MSC_CONTRACTDEX_BLOCK } );
+    v.push_back( { MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK,    MP_TX_PKT_V0,      true, MSC_CONTRACTDEX_BLOCK } );
+    v.push_back( { MSC_TYPE_METADEX_TRADE,                         MP_TX_PKT_V0,      true, MSC_METADEX_BLOCK } );
+    v.push_back( { MSC_TYPE_DEX_SELL_OFFER,                        MP_TX_PKT_V1,      true, MSC_DEXSELL_BLOCK } );
+    v.push_back( { MSC_TYPE_DEX_BUY_OFFER,                         MP_TX_PKT_V0,      true, MSC_DEXBUY_BLOCK } );
+    v.push_back( { MSC_TYPE_ACCEPT_OFFER_BTC,                      MP_TX_PKT_V0,      true, MSC_DEXSELL_BLOCK } );
+    v.push_back( { MSC_TYPE_DEX_PAYMENT,                           MP_TX_PKT_V0,      true, MSC_DEXSELL_BLOCK } );
+    v.push_back( { MSC_TYPE_CONTRACTDEX_TRADE,                     MP_TX_PKT_V0,      true, MSC_CONTRACTDEX_BLOCK } );
+    v.push_back( { MSC_TYPE_CONTRACTDEX_CANCEL_ECOSYSTEM,          MP_TX_PKT_V0,      true, MSC_CONTRACTDEX_BLOCK } );
+    v.push_back( { MSC_TYPE_CREATE_CONTRACT,                       MP_TX_PKT_V0,      true, MSC_CONTRACTDEX_BLOCK } );
+    v.push_back( { MSC_TYPE_PEGGED_CURRENCY,                       MP_TX_PKT_V0,      true, MSC_CONTRACTDEX_BLOCK } );
+    v.push_back( { MSC_TYPE_REDEMPTION_PEGGED,                     MP_TX_PKT_V0,      true, MSC_CONTRACTDEX_BLOCK } );
+    v.push_back( { MSC_TYPE_SEND_PEGGED_CURRENCY,                  MP_TX_PKT_V0,      true, MSC_CONTRACTDEX_BLOCK } );
+    v.push_back( { MSC_TYPE_CONTRACTDEX_CLOSE_POSITION,            MP_TX_PKT_V0,      true, MSC_CONTRACTDEX_BLOCK } );
+    v.push_back( { MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK,    MP_TX_PKT_V0,      true, MSC_CONTRACTDEX_BLOCK } );
+    v.push_back( { MSC_TYPE_CHANGE_ORACLE_REF,                     MP_TX_PKT_V0,      true, MSC_CONTRACTDEX_BLOCK } );
+    v.push_back( { MSC_TYPE_SET_ORACLE,                            MP_TX_PKT_V0,      true, MSC_CONTRACTDEX_BLOCK } );
+    v.push_back( { MSC_TYPE_CLOSE_ORACLE,                          MP_TX_PKT_V0,      true, MSC_CONTRACTDEX_BLOCK } );
+    v.push_back( { MSC_TYPE_COMMIT_CHANNEL,                        MP_TX_PKT_V0,      true, MSC_TRADECHANNEL_TOKENS_BLOCK } );
+    v.push_back( { MSC_TYPE_WITHDRAWAL_FROM_CHANNEL,               MP_TX_PKT_V0,      true, MSC_TRADECHANNEL_TOKENS_BLOCK } );
+    v.push_back( { MSC_TYPE_INSTANT_TRADE,                         MP_TX_PKT_V0,      true, MSC_TRADECHANNEL_TOKENS_BLOCK } );
+    v.push_back( { MSC_TYPE_TRANSFER,                              MP_TX_PKT_V0,      true, MSC_TRADECHANNEL_TOKENS_BLOCK } );
+    v.push_back( { MSC_TYPE_CONTRACT_INSTANT,                      MP_TX_PKT_V0,      true, MSC_TRADECHANNEL_CONTRACTS_BLOCK } );
+    v.push_back( { MSC_TYPE_NEW_ID_REGISTRATION,                   MP_TX_PKT_V0,      true, MSC_KYC_BLOCK } );
+    v.push_back( { MSC_TYPE_UPDATE_ID_REGISTRATION,                MP_TX_PKT_V0,      true, MSC_KYC_BLOCK } );
+    v.push_back( { MSC_TYPE_CREATE_ORACLE_CONTRACT,                MP_TX_PKT_V0,      true, MSC_CONTRACTDEX_ORACLES_BLOCK } );
+    v.push_back( { MSC_TYPE_SEND_VESTING,                          MP_TX_PKT_V0,      true, MSC_VESTING_BLOCK } );
+    v.push_back( { MSC_TYPE_ATTESTATION,                           MP_TX_PKT_V0,      true, MSC_KYC_BLOCK } );
+    v.push_back( { MSC_TYPE_REVOKE_ATTESTATION,                    MP_TX_PKT_V0,      true, MSC_KYC_BLOCK } );
+    v.push_back( { MSC_TYPE_CONTRACTDEX_CANCEL,                    MP_TX_PKT_V0,      true, MSC_CONTRACTDEX_BLOCK } );
+    v.push_back( { MSC_TYPE_INSTANT_LTC_TRADE,                     MP_TX_PKT_V0,      true, MSC_TRADECHANNEL_TOKENS_BLOCK } );
+    v.push_back( { MSC_TYPE_METADEX_CANCEL,                        MP_TX_PKT_V0,      true, MSC_METADEX_BLOCK } );
+    v.push_back( { MSC_TYPE_METADEX_CANCEL_BY_PAIR,                MP_TX_PKT_V0,      true, MSC_METADEX_BLOCK } );
+    v.push_back( { MSC_TYPE_METADEX_CANCEL_ALL,                    MP_TX_PKT_V0,      true, MSC_METADEX_BLOCK } );
+    v.push_back( { MSC_TYPE_METADEX_CANCEL_BY_PRICE,               MP_TX_PKT_V0,      true, MSC_METADEX_BLOCK } );
+    v.push_back( { MSC_TYPE_CLOSE_CHANNEL,                         MP_TX_PKT_V0,      true, MSC_TRADECHANNEL_TOKENS_BLOCK } );
+    //---
+    return v;
 }
 
 /**
