@@ -29,6 +29,13 @@ typedef boost::rational<boost::multiprecision::checked_int128_t> rational_t;
 #define TRADE_CANCELLED               4
 #define TRADE_CANCELLED_PART_FILLED   5
 
+//Twap constant
+const int volumeToVWAP = 10;
+
+const int64_t globalNumPrice = 1;
+const int64_t globalDenPrice = 1;
+
+
 /** Converts price to string. */
 std::string xToString(const rational_t& value);
 

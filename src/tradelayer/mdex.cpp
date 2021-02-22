@@ -40,40 +40,15 @@ using namespace mastercore;
 
 //! Number of digits of unit price
 #define DISPLAY_PRECISION_LEN  50
-
 //! Global map for price and order data
 md_PropertiesMap mastercore::metadex;
-
 //! Global map for  tokens volume
 std::map<int, std::map<uint32_t,int64_t>> mastercore::metavolume;
-
 //! Global map for last contract price
 std::map<uint32_t,int64_t> mastercore::cdexlastprice;
 
-extern volatile int64_t globalVolumeALL_LTC;
-extern volatile int idx_q;
-extern int expirationAchieve;
-extern std::map<uint32_t, std::map<uint32_t, int64_t>> market_priceMap;
-extern std::map<uint32_t, std::map<uint32_t, int64_t>> numVWAPMap;
-extern std::map<uint32_t, std::map<uint32_t, int64_t>> denVWAPMap;
-extern std::map<uint32_t, std::map<uint32_t, int64_t>> VWAPMap;
-extern std::map<uint32_t, std::map<uint32_t, std::vector<int64_t>>> numVWAPVector;
-extern std::map<uint32_t, std::map<uint32_t, std::vector<int64_t>>> denVWAPVector;
-extern std::map<uint32_t, std::map<uint32_t, int64_t>> VWAPMapSubVector;
-extern std::map<uint32_t, std::vector<int64_t>> mapContractAmountTimesPrice;
-extern std::map<uint32_t, std::vector<int64_t>> mapContractVolume;
-extern std::map<int, std::map<std::pair<uint32_t, uint32_t>, int64_t>> MapMetaVolume;
-extern std::map<uint32_t, int64_t> VWAPMapContracts;
-extern std::map<uint32_t, int64_t> cachefees;
-extern std::map<uint32_t, int64_t> cachefees_oracles;
-extern int n_cols;
-extern int n_rows;
 extern MatrixTLS *pt_ndatabase;
-extern int64_t globalNumPrice;
-extern int64_t globalDenPrice;
-extern int lastBlockg;
-extern int volumeToVWAP;
-extern int BlockS;
+
 
 md_PricesMap* mastercore::get_Prices(uint32_t prop)
 {
@@ -1408,7 +1383,6 @@ MatchReturnType x_Trade(CMPMetaDEx* const pnew)
     const uint32_t propertyDesired = pnew->getDesProperty();
     MatchReturnType NewReturn = NOTHING;
     bool bBuyerSatisfied = false;
-    extern int volumeToVWAP;
 
     if (msc_debug_metadex1) PrintToLog("%s(%s: prop=%d, desprop=%d, desprice= %s);newo: %s\n",
         __FUNCTION__, pnew->getAddr(), propertyForSale, propertyDesired, xToString(pnew->inversePrice()), pnew->ToString());
@@ -1462,7 +1436,7 @@ MatchReturnType x_Trade(CMPMetaDEx* const pnew)
           	    xToString(sellersPrice), pold->getAmountForSale(), pold->getAmountDesired(), pold->getAmountRemaining(), pnew->getAmountRemaining());
           	if (msc_debug_metadex1) PrintToLog("$$ old: %s\n", pold->ToString());
           	if (msc_debug_metadex1) PrintToLog("$$ new: %s\n", pnew->ToString());
-            
+
           	///////////////////////////
           	// preconditions
           	assert(0 < pold->getAmountRemaining());
@@ -1474,8 +1448,8 @@ MatchReturnType x_Trade(CMPMetaDEx* const pnew)
           	assert(pnew->unitPrice() <= pold->inversePrice());
           	//globalNumPrice = pold->getAmountDesired();
           	//globalDenPrice = pold->getAmountForSale();
-          	globalNumPrice = 1;
-          	globalDenPrice = 1;
+          	// globalNumPrice = 1;
+          	// globalDenPrice = 1;
           	/*Lets gonna take the pnew->unitPrice() as the ALL unit price*/
           	/*unitPrice = 1 ALL on dUSD*/
           	///////////////////////////

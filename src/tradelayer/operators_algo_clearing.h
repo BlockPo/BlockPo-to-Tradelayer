@@ -2,10 +2,20 @@
 #define OPERATORS_ALGO_CLEARING_H
 
 #include <tradelayer/tradelayer_matrices.h>
-
 #include <map>
 #include <unordered_set>
 #include <vector>
+
+extern int n_cols;
+
+extern VectorTLS *pt_open_incr_long;
+extern VectorTLS *pt_open_incr_short;
+extern VectorTLS *pt_netted_npartly_long;
+extern VectorTLS *pt_netted_npartly_short;
+extern VectorTLS *pt_open_incr_anypos;
+extern VectorTLS *pt_netted_npartly_anypos;
+extern VectorTLS *pt_changepos_status;
+extern MatrixTLS *pt_ndatabase;
 
 /**************************************************************/
 /** Structures for clearing algo */

@@ -46,20 +46,12 @@ using namespace mastercore;
 typedef boost::rational<boost::multiprecision::checked_int128_t> rational_t;
 typedef boost::multiprecision::cpp_dec_float_100 dec_float;
 typedef boost::multiprecision::checked_int128_t int128_t;
-extern std::map<std::string,uint32_t> peggedIssuers;
+std::map<std::string,uint32_t> peggedIssuers;
 std::map<uint32_t,std::map<int,oracledata>> oraclePrices;
 
 /** Pending withdrawals **/
 std::map<std::string,vector<withdrawalAccepted>> withdrawal_Map;
-extern std::map<uint32_t, std::map<uint32_t, int64_t>> market_priceMap;
-extern double denMargin;
-extern uint64_t marketP[NPTYPES];
-extern volatile int id_contract;
-extern volatile int64_t factorALLtoLTC;
-extern volatile int64_t globalVolumeALL_LTC;
-extern volatile int64_t LTCPriceOffer;
-extern mutex mReward;
-
+mutex mReward;
 using mastercore::StrToInt64;
 
 /** Returns a label for the given transaction type. */
@@ -4940,14 +4932,6 @@ struct TokenDataByName *getTokenDataById(uint32_t propertyId)
 void BlockClass::SendNodeReward(std::string sender)
 {
     if(msc_debug_send_reward) PrintToLog("\nm_BlockInit = %d\t m_BockNow = %s\t sender = %s\n", m_BlockInit, m_BlockNow, sender);
-
-    extern double CompoundRate;
-    extern double DecayRate;
-    extern double LongTailDecay;
-
-    extern double RewardSecndI;
-    extern double RewardFirstI;
-
     int64_t Reward = 0;
 
     if (m_BlockNow > m_BlockInit && m_BlockNow <= 100000)
@@ -4986,7 +4970,6 @@ void BlockClass::SendNodeReward(std::string sender)
 
 int64_t LosingSatoshiLongTail(int BlockNow, int64_t Reward)
 {
-    extern int64_t SatoshiH;
     int64_t RewardH = Reward;
 
     bool RBool1 = (BlockNow > 220000   && BlockNow <= 720000)   && BlockNow%2 == 0;

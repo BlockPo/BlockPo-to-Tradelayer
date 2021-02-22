@@ -32,7 +32,6 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
 
-extern std::map<uint32_t, std::map<uint32_t, int64_t>> market_priceMap;
 std::map<int, std::map<uint32_t,int64_t>> mastercore::MapLTCVolume;
 std::map<int, std::map<uint32_t,int64_t>> mastercore::MapTokenVolume;
 std::map<uint32_t,std::map<int,std::vector<std::pair<int64_t,int64_t>>>> mastercore::tokenvwap;

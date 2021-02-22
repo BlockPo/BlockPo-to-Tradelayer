@@ -15,14 +15,41 @@
 
 #include <boost/multiprecision/cpp_dec_float.hpp>
 
+int n_cols = 10;
+int N = 2;
+int M = 4;
+
 typedef boost::multiprecision::cpp_dec_float_100 dec_float;
+MatrixTLS *pt_ndatabase;
 
-extern VectorTLS *pt_netted_npartly_anypos;
-extern VectorTLS *pt_open_incr_anypos;
-extern VectorTLS *pt_open_incr_long;
-extern MatrixTLS *pt_ndatabase; MatrixTLS &ndatabase = *pt_ndatabase;
+// initialization using new class constructors
+VectorTLS *pt_open_incr_long  = new VectorTLS(N, "OpenLongPosition", "LongPosIncreased");
+VectorTLS *pt_open_incr_short  = new VectorTLS(N, "OpenShortPosition", "ShortPosIncreased");
+VectorTLS *pt_netted_npartly_long  = new VectorTLS(N,"LongPosNetted", "LongPosNettedPartly");
+VectorTLS *pt_netted_npartly_short  = new VectorTLS(N, "ShortPosNetted", "ShortPosNettedPartly");
+VectorTLS *pt_open_incr_anypos = new VectorTLS(M,"OpenLongPosition", "LongPosIncreased", "OpenShortPosition", "ShortPosIncreased");
+VectorTLS *pt_netted_npartly_anypos = new VectorTLS(M, "LongPosNetted", "LongPosNettedPartly", "ShortPosNetted", "ShortPosNettedPartly");
+VectorTLS *pt_changepos_status = new VectorTLS(2, "OpenLongPosByShortPosNetted", "OpenShortPosByLongPosNetted");
 
-/**************************************************************/
+// NOTE: better approach: use the template class to initialize!
+// VectorTLS *pt_expiration_dates = new VectorTLS(12*NYears);
+// VectorTLS &expiration_dates = *pt_expiration_dates;
+// for ( int i = 0; i < NYears; i++ )
+//   {
+//     expiration_dates[i+11*i]    = "ALL F" + std::to_string(i+initYear);
+//     expiration_dates[i+1+11*i]  = "ALL G" + std::to_string(i+initYear);
+//     expiration_dates[i+2+11*i]  = "ALL H" + std::to_string(i+initYear);
+//     expiration_dates[i+3+11*i]  = "ALL J" + std::to_string(i+initYear);
+//     expiration_dates[i+4+11*i]  = "ALL K" + std::to_string(i+initYear);
+//     expiration_dates[i+5+11*i]  = "ALL M" + std::to_string(i+initYear);
+//     expiration_dates[i+6+11*i]  = "ALL N" + std::to_string(i+initYear);
+//     expiration_dates[i+7+11*i]  = "ALL Q" + std::to_string(i+initYear);
+//     expiration_dates[i+8+11*i]  = "ALL U" + std::to_string(i+initYear);
+//     expiration_dates[i+9+11*i]  = "ALL V" + std::to_string(i+initYear);
+//     expiration_dates[i+10+11*i] = "ALL X" + std::to_string(i+initYear);
+//     expiration_dates[i+11+11*i] = "ALL Z" + std::to_string(i+initYear);
+//   }
+/**********************************************************/
 /** Functions for Settlement Algorithm */
 struct status_amounts *get_status_amounts_open_incr(VectorTLS &v, int q)
 {
@@ -146,8 +173,8 @@ struct status_lives_edge *get_status_bylivesedge(std::map<std::string, std::stri
 
 VectorTLS status_open_incr(VectorTLS &status_q, int q)
 {
-  extern VectorTLS *pt_open_incr_long; VectorTLS &open_incr_long = *pt_open_incr_long;
-  extern VectorTLS *pt_open_incr_short; VectorTLS &open_incr_short = *pt_open_incr_short;
+  VectorTLS &open_incr_long = *pt_open_incr_long;
+  VectorTLS &open_incr_short = *pt_open_incr_short;
 
   if (q == 0)
   {
@@ -163,8 +190,8 @@ VectorTLS status_open_incr(VectorTLS &status_q, int q)
 
 VectorTLS status_netted_npartly(VectorTLS &status_q, int q)
 {
-    extern VectorTLS *pt_netted_npartly_long;  VectorTLS &netted_npartly_long  = *pt_netted_npartly_long;
-    extern VectorTLS *pt_netted_npartly_short; VectorTLS &netted_npartly_short = *pt_netted_npartly_short;
+    VectorTLS &netted_npartly_long  = *pt_netted_npartly_long;
+    VectorTLS &netted_npartly_short = *pt_netted_npartly_short;
 
     if (q == 0)
     {
@@ -191,13 +218,8 @@ void adding_newtwocols_trdamount(MatrixTLS &M_file, MatrixTLS &database)
 
 void settlement_algorithm_fifo(MatrixTLS &M_file, int64_t interest, int64_t twap_price)
 {
-  extern int n_cols;
-  extern int n_rows;
-
-  extern VectorTLS *pt_open_incr_long;  VectorTLS &open_incr_long  = *pt_open_incr_long;
-  extern VectorTLS *pt_open_incr_short; VectorTLS &open_incr_short = *pt_open_incr_short;
-  extern std::vector<std::map<std::string, std::string>> lives_longs_vg;
-  extern std::vector<std::map<std::string, std::string>> lives_shorts_vg;
+  VectorTLS &open_incr_long  = *pt_open_incr_long;
+  VectorTLS &open_incr_short = *pt_open_incr_short;
 
   std::vector<std::vector<std::map<std::string, std::string>>> path_main;
   std::vector<std::vector<std::map<std::string, std::string>>>::iterator it_path_main;
@@ -555,9 +577,6 @@ void IncreasedLastPos(std::vector<std::vector<std::map<std::string, std::string>
 
 void clearing_operator_fifo(VectorTLS &vdata, MatrixTLS &M_file, int index_init, struct status_amounts *pt_pos, int idx_long_short, int &counting_netted, long int amount_trd_sum, std::vector<std::map<std::string, std::string>> &path_main, int path_number, long int opened_contracts, int idx_b)
 {
-  extern int n_rows;
-  extern int n_cols;
-
   VectorTLS status_z(2);
   std::string addrs_opening = pt_pos->addrs_trk;
   long int d_amounts = 0;
@@ -860,7 +879,7 @@ void checking_zeronetted_bypath(std::vector<std::map<std::string, std::string>> 
   long int contracts_closed = 0;
   long int contracts_opened = 0;
 
-  extern VectorTLS *pt_open_incr_anypos; VectorTLS &open_incr_anypos = *pt_open_incr_anypos;
+  VectorTLS &open_incr_anypos = *pt_open_incr_anypos;
 
   if (finding(path_maini[0]["status_src"], open_incr_anypos) && finding(path_maini[0]["status_trk"], open_incr_anypos))
     contracts_opened = 2*std::stol(path_maini[0]["amount_trd"]);
@@ -1041,8 +1060,7 @@ void calculate_pnltrk_bypath(std::vector<std::map<std::string, std::string>> &pa
   std::string addrsit;
   double PNL_trk;
   double sumPNL_trk = 0;
-  extern int n_cols;
-  extern MatrixTLS *pt_ndatabase; MatrixTLS &ndatabase = *pt_ndatabase;
+  MatrixTLS &ndatabase = *pt_ndatabase;
   VectorTLS jrow_database(n_cols);
 
   for (std::vector<std::string>::iterator it_addrs = addrsv.begin(); it_addrs != addrsv.end(); ++it_addrs)
@@ -1094,8 +1112,7 @@ void calculate_pnltrk_bypath(std::vector<std::map<std::string, std::string>> pat
   std::vector<std::map<std::string, std::string>>::iterator it_path;
   double sumPNL_trk = 0;
   double PNL_trk;
-  extern int n_cols;
-  extern MatrixTLS *pt_ndatabase; MatrixTLS &ndatabase = *pt_ndatabase;
+  MatrixTLS &ndatabase = *pt_ndatabase;
   VectorTLS jrow_database(n_cols);
 
   //PrintToLog("\nChecking PNL in this Path:\n");
@@ -1255,8 +1272,7 @@ double PNL_ghosts(double entry_price, double exit_price, long int amount_trd, st
 
 void getting_gammapq_bypath(std::vector<std::map<std::string, std::string>> &path_main, double PNL_total, double &gamma_p, double &gamma_q, std::unordered_set<std::string> addrs_set)
 {
-  extern int n_cols;
-  extern MatrixTLS *pt_ndatabase; MatrixTLS &ndatabase = *pt_ndatabase;
+  MatrixTLS &ndatabase = *pt_ndatabase;
   VectorTLS jrow_database(n_cols);
   long int sum_alpha_beta_i = 0;
   long int sum_alpha_i = 0;

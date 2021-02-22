@@ -68,6 +68,30 @@ const int BASISPOINT = 100;
 // Oracle twaps blocks
 const int oBlocks = 9;
 
+// settlement variables
+const int BlockS = 500; /** regtest **/
+
+//node reward
+const double CompoundRate = 1.00002303;
+const double DecayRate = 0.99998;
+const double LongTailDecay = 0.99999992;
+const int64_t SatoshiH = 0.00000001;
+const int NYears = 10;
+const int initYear = 19;
+
+//factor ALLs
+const int64_t factorALLtoLTC = 1;
+
+//Vesting variables
+// const int nVestingAddrs = 5;
+extern int lastBlockg;
+const int64_t totalVesting = 1500000 * COIN;
+
+extern int64_t globalVolumeALL_LTC;
+extern int n_rows;
+extern int idx_q;
+
+
 // Transaction types, from the spec
 enum TransactionType {
   MSC_TYPE_SIMPLE_SEND                =  0,
@@ -542,8 +566,22 @@ extern std::vector<std::string> vestingAddresses;
 //!Contract upnls
 extern std::map<std::string, int64_t> sum_upnls;
 
-//! Last unit price for token/LTC
+//! Last unit price for token/BTC
 extern std::map<uint32_t, int64_t> lastPrice;
+
+extern std::map<uint32_t, std::map<uint32_t, int64_t>> market_priceMap;
+extern std::map<uint32_t, std::map<std::string, double>> addrs_upnlc;
+extern std::map<uint32_t, int64_t> VWAPMapContracts;
+extern std::map<uint32_t, std::vector<int64_t>> mapContractVolume;
+extern std::map<uint32_t, std::vector<int64_t>> mapContractAmountTimesPrice;
+
+extern std::map<uint32_t, std::map<uint32_t, int64_t>> VWAPMap;
+extern std::map<uint32_t, std::map<uint32_t, int64_t>> VWAPMapSubVector;
+extern std::map<uint32_t, std::map<uint32_t, std::vector<int64_t>>> numVWAPVector;
+extern std::map<uint32_t, std::map<uint32_t, std::vector<int64_t>>> denVWAPVector;
+
+extern std::vector<std::map<std::string, std::string>> path_ele;
+extern std::vector<std::map<std::string, std::string>> path_elef;
 
 int64_t getMPbalance(const std::string& address, uint32_t propertyId, TallyType ttype);
 int64_t getUserAvailableMPbalance(const std::string& address, uint32_t propertyId);

@@ -10,7 +10,6 @@ TRADELAYER_H = \
   tradelayer/errors.h \
   tradelayer/externfns.h \
   tradelayer/fetchwallettx.h \
-  tradelayer/globals.h \
   tradelayer/log.h \
   tradelayer/mdex.h \
   tradelayer/notifications.h \
@@ -47,7 +46,6 @@ TRADELAYER_CPP = \
   tradelayer/createtx.cpp \
   tradelayer/dex.cpp \
   tradelayer/encoding.cpp \
-  tradelayer/globals.cpp \
   tradelayer/log.cpp \
   tradelayer/mdex.cpp \
   tradelayer/notifications.cpp \

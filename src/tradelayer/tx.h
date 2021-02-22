@@ -537,9 +537,11 @@ class BlockClass
 {
  private:
 
-  int m_BlockInit;
-  int m_BlockNow;
-
+   int m_BlockInit;
+   int m_BlockNow;
+   double RewardSecndI;
+   double RewardFirstI;
+   
  public:
 
  BlockClass(int BlockInit, int BlockNow) : m_BlockInit(BlockInit), m_BlockNow(BlockNow) {}
