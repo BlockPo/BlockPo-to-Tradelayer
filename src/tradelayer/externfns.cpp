@@ -2,6 +2,7 @@
 #include <tradelayer/log.h>
 #include <tradelayer/mdex.h>
 #include <tradelayer/parse_string.h>
+#include <tradelayer/tradelayer.h>
 #include <tradelayer/tradelayer_matrices.h>
 
 #include <algorithm>
@@ -15,10 +16,7 @@
 #include <boost/math/constants/constants.hpp>
 #include <boost/multiprecision/cpp_dec_float.hpp>
 
-extern std::map<uint32_t, std::vector<int64_t>> mapContractVolume;
-extern std::map<uint32_t, std::vector<int64_t>> mapContractAmountTimesPrice;
-extern std::map<uint32_t, int64_t> VWAPMapContracts;
-extern mutex map_vector_mtx;
+mutex map_vector_mtx;
 using mastercore::StrToInt64;
 typedef boost::multiprecision::cpp_dec_float_100 dec_float;
 

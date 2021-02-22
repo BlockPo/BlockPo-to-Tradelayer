@@ -119,26 +119,31 @@ std::vector<std::string> vestingAddresses;
 std::map<uint32_t, int64_t> cachefees;
 //! Futures oracle contracts fees
 std::map<uint32_t, int64_t> cachefees_oracles;
-//! Last unit price for token/LTC
+//! Last unit price for token/BTC
 std::map<uint32_t, int64_t> lastPrice;
+
+std::map<std::string, int64_t> sum_upnls;
+
+std::map<uint32_t, std::map<uint32_t, int64_t>> market_priceMap;
 
 //!Used to indicate, whether to automatically commit created transactions.
 bool autoCommit = true;
+
 static fs::path MPPersistencePath;
 static int mastercoreInitialized = 0;
 static int reorgRecoveryMode = 0;
 static int reorgRecoveryMaxHeight = 0;
-extern double denMargin;
-extern std::vector<std::map<std::string, std::string>> path_ele;
-extern int idx_expiration;
-extern int expirationAchieve;
-extern double globalPNLALL_DUSD;
-extern int64_t globalVolumeALL_DUSD;
-extern int lastBlockg;
-extern int twapBlockg;
-extern int newTwapBlock;
-extern int vestingActivationBlock;
-extern volatile int64_t globalVolumeALL_LTC;
+
+int idx_expiration;
+int expirationAchieve;
+double globalPNLALL_DUSD;
+int64_t globalVolumeALL_DUSD;
+int lastBlockg;
+int twapBlockg;
+int64_t globalVolumeALL_LTC = 0;
+int n_rows = 0;
+int idx_q;
+unsigned int path_length;
 
 CMPTxList *mastercore::p_txlistdb;
 CMPTradeList *mastercore::t_tradelistdb;
@@ -147,31 +152,22 @@ OfferMap mastercore::my_offers;
 AcceptMap mastercore::my_accepts;
 CMPSPInfo *mastercore::_my_sps;
 
-extern MatrixTLS *pt_ndatabase;
-extern int n_cols;
-extern int n_rows;
-extern std::vector<std::map<std::string, std::string>> path_elef;
-extern std::map<uint32_t, std::map<uint32_t, int64_t>> market_priceMap;
-extern std::map<uint32_t, std::map<uint32_t, int64_t>> numVWAPMap;
-extern std::map<uint32_t, std::map<uint32_t, int64_t>> denVWAPMap;
-extern std::map<uint32_t, std::map<uint32_t, int64_t>> VWAPMap;
-extern std::map<uint32_t, std::map<uint32_t, int64_t>> VWAPMapSubVector;
-extern std::map<uint32_t, std::map<uint32_t, std::vector<int64_t>>> numVWAPVector;
-extern std::map<uint32_t, std::map<uint32_t, std::vector<int64_t>>> denVWAPVector;
-extern std::map<uint32_t, std::vector<int64_t>> mapContractAmountTimesPrice;
-extern std::map<uint32_t, std::vector<int64_t>> mapContractVolume;
-extern std::map<uint32_t, int64_t> VWAPMapContracts;
-/************************************************/
-/** TWAP containers **/
+std::map<uint32_t, std::map<uint32_t, int64_t>> VWAPMap;
+std::map<uint32_t, std::map<uint32_t, int64_t>> VWAPMapSubVector;
+std::map<uint32_t, std::map<uint32_t, std::vector<int64_t>>> numVWAPVector;
+std::map<uint32_t, std::map<uint32_t, std::vector<int64_t>>> denVWAPVector;
+std::map<uint32_t, std::vector<int64_t>> mapContractAmountTimesPrice;
+std::map<uint32_t, std::vector<int64_t>> mapContractVolume;
+std::map<uint32_t, int64_t> VWAPMapContracts;
+std::vector<std::map<std::string, std::string>> path_ele;
+std::vector<std::map<std::string, std::string>> path_elef;
 
-// for liquidation price
-extern std::map<uint32_t, int64_t> cdex_twap_liq;
-extern std::map<uint32_t, std::vector<uint64_t>> cdextwap_ele;
-extern std::map<uint32_t, std::vector<uint64_t>> cdextwap_vec;
-extern std::map<uint32_t, std::map<uint32_t, std::vector<uint64_t>>> mdextwap_ele;
-extern std::map<uint32_t, std::map<uint32_t, std::vector<uint64_t>>> mdextwap_vec;
-/************************************************/
-extern std::map<uint32_t, std::map<std::string, double>> addrs_upnlc;
+std::map<uint32_t, std::vector<uint64_t>> cdextwap_ele;
+std::map<uint32_t, std::vector<uint64_t>> cdextwap_vec;
+std::map<uint32_t, std::map<uint32_t, std::vector<uint64_t>>> mdextwap_ele;
+std::map<uint32_t, std::map<uint32_t, std::vector<uint64_t>>> mdextwap_vec;
+
+std::map<uint32_t, std::map<std::string, double>> addrs_upnlc;
 
 using mastercore::StrToInt64;
 
@@ -603,8 +599,6 @@ const std::string mastercore::getVestingAdmin()
 
 void creatingVestingTokens(int block)
 {
-   extern int64_t totalVesting;
-
    CMPSPInfo::Entry newSP;
    newSP.name = "Vesting Tokens";
    newSP.data = "Divisible Tokens";
@@ -2818,8 +2812,6 @@ int mastercore_shutdown()
  */
 bool CallingSettlement()
 {
-    extern int BlockS;
-
     int nBlockNow = GetHeight();
 
     /*uint32_t nextSPID = _my_sps->peekNextSPID(1);
@@ -2923,8 +2915,6 @@ if (nBlockNow%BlockS == 0 && nBlockNow != 0 && path_elef.size() != 0 && lastBloc
 
       //path_elef.clear();
       market_priceMap.clear();
-      numVWAPMap.clear();
-      denVWAPMap.clear();
       VWAPMap.clear();
       VWAPMapSubVector.clear();
       numVWAPVector.clear();
@@ -4031,8 +4021,6 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
     CheckLiveActivations(pBlockIndex->nHeight);
 
     const CConsensusParams &params = ConsensusParams();
-    vestingActivationBlock = params.MSC_VESTING_BLOCK;
-
     /** Creating Vesting Tokens **/
     if (pBlockIndex->nHeight == params.MSC_VESTING_CREATION_BLOCK) creatingVestingTokens(pBlockIndex->nHeight);
 
@@ -5111,8 +5099,6 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
     const string value = strprintf("%s:%s:%u:%u:%lu:%lu:%d:%d", address1, address2, prop1, prop2, amount1, amount2, blockNum, fee);
 
     int64_t volumeALL64_t = 0;
-    extern volatile int64_t factorALLtoLTC;
-
     /********************************************************************/
     if (prop1 == TL_PROPERTY_ALL)
     {
@@ -5171,9 +5157,6 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
 void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, string address1, string address2, uint64_t effective_price, uint64_t amount_maker, uint64_t amount_taker, int blockNum1, int blockNum2, uint32_t property_traded, string tradeStatus, int64_t lives_s0, int64_t lives_s1, int64_t lives_s2, int64_t lives_s3, int64_t lives_b0, int64_t lives_b1, int64_t lives_b2, int64_t lives_b3, string s_maker0, string s_taker0, string s_maker1, string s_taker1, string s_maker2, string s_taker2, string s_maker3, string s_taker3, int64_t nCouldBuy0, int64_t nCouldBuy1, int64_t nCouldBuy2, int64_t nCouldBuy3,uint64_t amountpnew, uint64_t amountpold)
 {
   if (!pdb) return;
-
-  extern volatile int idx_q;
-  //extern volatile unsigned int path_length;
   std::map<std::string, std::string> edgeEle;
   std::map<std::string, double>::iterator it_addrs_upnlm;
   std::map<uint32_t, std::map<std::string, double>>::iterator it_addrs_upnlc;
@@ -5181,7 +5164,6 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   std::vector<std::map<std::string, std::string>>::reverse_iterator reit_path_ele;
   //std::vector<std::map<std::string, std::string>> path_eleh;
   bool savedata_bool = false;
-  extern volatile int64_t factorALLtoLTC;
   std::string sblockNum2 = std::to_string(blockNum2);
   double UPNL1 = 0, UPNL2 = 0;
   /********************************************************************/
@@ -7043,9 +7025,7 @@ bool mastercore::sanityChecks(const std::string& sender, int& aBlock)
     }
 
     const CConsensusParams &params = ConsensusParams();
-    vestingActivationBlock = params.MSC_VESTING_BLOCK;
-
-    if(msc_debug_sanity_checks) PrintToLog("%s(): vestingActivationBlock: %d\n", __func__, vestingActivationBlock);
+    if(msc_debug_sanity_checks) PrintToLog("%s(): vestingActivationBlock: %d\n", __func__, params.MSC_VESTING_BLOCK);
 
     const int timeFrame = aBlock - params.MSC_VESTING_BLOCK;
 
@@ -7423,4 +7403,3 @@ const std::vector<uint8_t> GetTLMarker()
     std::vector<uint8_t> marker{0x70, 0x70};  /* 'pp' hex-encoded */
     return marker;
 }
-

@@ -27,10 +27,6 @@ using namespace mastercore;
 
 using boost::algorithm::token_compress_on;
 typedef boost::rational<boost::multiprecision::checked_int128_t> rational_t;
-extern uint64_t marketP[NPTYPES];
-extern int lastBlockg;
-extern int vestingActivationBlock;
-extern std::map<uint32_t, std::map<uint32_t, int64_t>> market_priceMap;
 
 void RequireBalance(const std::string& address, uint32_t propertyId, int64_t amount)
 {
@@ -185,7 +181,8 @@ void RequireNotVesting(uint32_t propertyId)
     throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
   }
 
-  if (sp.attribute_type == ALL_PROPERTY_TYPE_VESTING && lastBlockg < vestingActivationBlock + 210240) {
+  const CConsensusParams &params = ConsensusParams();
+  if (sp.attribute_type == ALL_PROPERTY_TYPE_VESTING && lastBlockg < params.MSC_VESTING_BLOCK + 210240) {
     throw JSONRPCError(RPC_INVALID_PARAMETER, "Vesting Tokens can not be traded at DEx before one year\n");
   }
 }

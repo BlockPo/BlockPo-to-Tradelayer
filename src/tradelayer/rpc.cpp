@@ -59,12 +59,6 @@
 using std::runtime_error;
 using namespace mastercore;
 
-extern int64_t totalVesting;
-extern std::map<uint32_t, std::map<std::string, double>> addrs_upnlc;
-extern std::map<std::string, int64_t> sum_upnls;
-extern std::map<uint32_t, std::map<uint32_t, int64_t>> market_priceMap;
-extern std::map<uint32_t, std::vector<int64_t>> mapContractAmountTimesPrice;
-extern volatile int64_t globalVolumeALL_LTC;
 using mastercore::StrToInt64;
 using mastercore::DoubleToInt64;
 

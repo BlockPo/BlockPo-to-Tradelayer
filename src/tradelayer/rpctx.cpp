@@ -33,8 +33,6 @@
 using std::runtime_error;
 using namespace mastercore;
 
-extern volatile int64_t LTCPriceOffer;
-
 UniValue tl_sendrawtx(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() < 2 || request.params.size() > 5)

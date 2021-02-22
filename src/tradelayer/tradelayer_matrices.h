@@ -24,6 +24,8 @@ template<class T> class VectorTL
 	public:
 		VectorTL(int);
 		VectorTL(int, T*);
+    VectorTL(int, T,T);
+    VectorTL(int, T,T,T,T);
 		VectorTL(const VectorTL<T>&);
 		~VectorTL();
 
@@ -41,6 +43,12 @@ template<class T> VectorTL<T>::VectorTL(int n, T* abd) : ets(new T[lenth = n])
 
 template<class T> VectorTL<T>::VectorTL(const VectorTL<T> & v) : lenth(v.lenth), ets(new T[v.lenth])
 { for (int i = 0; i < lenth; ++i) ets[i] = v[i]; }
+
+template<class T> VectorTL<T>::VectorTL(int n, T a, T b) : ets(new T[lenth = n])
+{ ets[0] = a; ets[1] = b; }
+
+template<class T> VectorTL<T>::VectorTL(int n, T a, T b, T c, T d) : ets(new T[lenth = n])
+{ ets[0] = a; ets[1] = b; ets[2] = c; ets[3] = d;}
 
 template<class T> VectorTL<T>::~VectorTL()
 { delete [] ets; }
@@ -62,7 +70,7 @@ template<class T> inline int length(const VectorTL<T> &v)
 { return v.lenth; }
 
 //////////////////////////////////////////////////////////////////////////////////
-template<class T> class MatrixTL 
+template<class T> class MatrixTL
 {
 	private:
 		int nrows;
@@ -99,7 +107,7 @@ template<class T> MatrixTL<T>::~MatrixTL()
   delete [] ets;
 }
 
-template<class T> T* MatrixTL<T>::operator[](int i) const 
+template<class T> T* MatrixTL<T>::operator[](int i) const
 { return ets[i]; }
 
 template<class T> MatrixTL<T> &MatrixTL<T>::operator=(const MatrixTL<T>& mat)
@@ -143,7 +151,7 @@ auto end(revert_wrapper<T>& r) -> decltype(make_reverse_iterator(begin(r.o)))
 
 template<class T>
 auto begin(revert_wrapper<T> const& r) -> decltype(make_reverse_iterator(end(r.o)))
-{ 
+{
     using std::end;
     return make_reverse_iterator(end(r.o));
 }
