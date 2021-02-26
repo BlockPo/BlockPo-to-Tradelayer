@@ -12,7 +12,7 @@ class CTransaction;
 int populateRPCTransactionObject(const uint256& txid, UniValue& txobj, std::string filterAddress = "", bool extendedDetails = false, std::string extendedDetailsFilter = "");
 int populateRPCTransactionObject(const CTransaction& tx, const uint256& blockHash, UniValue& txobj, std::string filterAddress = "", bool extendedDetails = false, std::string extendedDetailsFilter = "", int blockHeight = 0);
 
-void populateRPCTypeInfo(CMPTransaction& mp_obj, UniValue& txobj, uint32_t txType, bool extendedDetails, std::string extendedDetailsFilter);
+bool populateRPCTypeInfo(CMPTransaction& mp_obj, UniValue& txobj, uint32_t txType, bool extendedDetails, std::string extendedDetailsFilter);
 
 void populateRPCTypeSimpleSend(CMPTransaction& tlObj, UniValue& txobj);
 void populateRPCTypeSendAll(CMPTransaction& tlObj, UniValue& txobj);
@@ -51,7 +51,8 @@ void populateRPCTypeContract_Instant(CMPTransaction& tlObj, UniValue& txobj);
 void populateRPCTypeNew_Id_Registration(CMPTransaction& tlObj, UniValue& txobj);
 void populateRPCTypeUpdate_Id_Registration(CMPTransaction& tlObj, UniValue& txobj);
 void populateRPCTypeDEx_Payment(CMPTransaction& tlObj, UniValue& txobj);
-
+void populateRPCTypeInstant_LTC_Trade(CMPTransaction& tlObj, UniValue& txobj);
+void populateRPCTypeClose_Channel(CMPTransaction& tlObj, UniValue& txobj);
 
 int populateRPCSendAllSubSends(const uint256& txid, UniValue& subSends);
 

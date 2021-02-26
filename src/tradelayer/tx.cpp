@@ -4118,11 +4118,10 @@ int CMPTransaction::logicMath_OracleBackup()
     }
 
     if (!IsTransactionTypeAllowed(block, type, version)) {
-        PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+        PrintToLog("%s(): rejected: type %d or version %d not permitted at block %d\n",
                 __func__,
                 type,
                 version,
-                property,
                 block);
         return (PKT_ERROR_SP -22);
     }
@@ -4154,11 +4153,10 @@ int CMPTransaction::logicMath_OracleBackup()
 int CMPTransaction::logicMath_CloseOracle()
 {
     if (!IsTransactionTypeAllowed(block, type, version)) {
-        PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+        PrintToLog("%s(): rejected: type %d or version %d not permitted at block %d\n",
                 __func__,
                 type,
                 version,
-                property,
                 block);
         return (PKT_ERROR_SP -22);
     }
