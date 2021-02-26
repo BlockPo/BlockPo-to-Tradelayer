@@ -127,7 +127,7 @@ int populateRPCTransactionObject(const CTransaction& tx, const uint256& blockHas
     // extended details are not available for unconfirmed transactions
     if (confirmations <= 0) extendedDetails = false;
 
-    populateRPCTypeInfo(mp_obj, txobj, mp_obj.getType(), extendedDetails, extendedDetailsFilter);
+    if(!populateRPCTypeInfo(mp_obj, txobj, mp_obj.getType(), extendedDetails, extendedDetailsFilter)) return MP_TX_NOT_FOUND;
 
     // state and chain related information
     if (confirmations != 0 && !blockHash.IsNull())
@@ -151,146 +151,156 @@ int populateRPCTransactionObject(const CTransaction& tx, const uint256& blockHas
 
 /* Function to call respective populators based on message type
  */
-void populateRPCTypeInfo(CMPTransaction& mp_obj, UniValue& txobj, uint32_t txType, bool extendedDetails, std::string extendedDetailsFilter)
+bool populateRPCTypeInfo(CMPTransaction& mp_obj, UniValue& txobj, uint32_t txType, bool extendedDetails, std::string extendedDetailsFilter)
 {
     //NOTE: populateRPCType functions needs more work
     switch (txType) {
         case MSC_TYPE_SIMPLE_SEND:
             populateRPCTypeSimpleSend(mp_obj, txobj);
-            break;
+            return true;
 
         case MSC_TYPE_SEND_ALL:
             populateRPCTypeSendAll(mp_obj, txobj);
-            break;
+            return true;
 
         case MSC_TYPE_CREATE_PROPERTY_FIXED:
             populateRPCTypeCreatePropertyFixed(mp_obj, txobj);
-            break;
+            return true;
 
         case MSC_TYPE_CREATE_PROPERTY_MANUAL:
             populateRPCTypeCreatePropertyManual(mp_obj, txobj);
-            break;
+            return true;
 
         case MSC_TYPE_GRANT_PROPERTY_TOKENS:
             populateRPCTypeGrant(mp_obj, txobj);
-            break;
+            return true;
 
         case MSC_TYPE_REVOKE_PROPERTY_TOKENS:
             populateRPCTypeRevoke(mp_obj, txobj);
-            break;
+            return true;
 
         case MSC_TYPE_CHANGE_ISSUER_ADDRESS:
             populateRPCTypeChangeIssuer(mp_obj, txobj);
-            break;
+            return true;
 
         case TL_MESSAGE_TYPE_ACTIVATION:
             populateRPCTypeActivation(mp_obj, txobj);
-            break;
+            return true;
 
         case MSC_TYPE_CREATE_CONTRACT:
             populateRPCTypeCreateContract(mp_obj, txobj);
-            break;
+            return true;
 
         case MSC_TYPE_SEND_VESTING:
             populateRPCTypeVestingTokens(mp_obj, txobj);
-            break;
+            return true;
 
         case MSC_TYPE_CREATE_ORACLE_CONTRACT:
             populateRPCTypeCreateOracle(mp_obj, txobj);
-            break;
+            return true;
 
         case MSC_TYPE_METADEX_TRADE:
             populateRPCTypeMetaDExTrade(mp_obj, txobj);
-            break;
+            return true;
 
         case MSC_TYPE_CONTRACTDEX_TRADE:
             populateRPCTypeContractDexTrade(mp_obj, txobj);
-            break;
+            return true;
 
         case MSC_TYPE_CONTRACTDEX_CANCEL_ECOSYSTEM:
             populateRPCTypeContractDexCancelEcosystem(mp_obj, txobj);
-            break;
+            return true;
 
         case MSC_TYPE_PEGGED_CURRENCY:
             populateRPCTypeCreatePeggedCurrency(mp_obj, txobj);
-            break;
+            return true;
 
         case MSC_TYPE_SEND_PEGGED_CURRENCY:
             populateRPCTypeSendPeggedCurrency(mp_obj, txobj);
-            break;
+            return true;
 
         case MSC_TYPE_REDEMPTION_PEGGED:
             populateRPCTypeRedemptionPegged(mp_obj, txobj);
-            break;
+            return true;
 
         case MSC_TYPE_CONTRACTDEX_CLOSE_POSITION:
             populateRPCTypeContractDexClosePosition(mp_obj, txobj);
-            break;
+            return true;
 
         case MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK:
             populateRPCTypeContractDex_Cancel_Orders_By_Block(mp_obj, txobj);
-            break;
+            return true;
 
         case MSC_TYPE_DEX_SELL_OFFER:
             populateRPCTypeTradeOffer(mp_obj, txobj);
-            break;
+            return true;
 
         case MSC_TYPE_DEX_BUY_OFFER:
             populateRPCTypeDExBuy(mp_obj, txobj);
-            break;
+            return true;
 
         case MSC_TYPE_ACCEPT_OFFER_BTC:
             populateRPCTypeAcceptOfferBTC(mp_obj, txobj);
-            break;
+            return true;
 
         case MSC_TYPE_CHANGE_ORACLE_REF:
             populateRPCTypeChange_OracleRef(mp_obj, txobj);
-            break;
+            return true;
 
         case MSC_TYPE_SET_ORACLE:
             populateRPCTypeSet_Oracle(mp_obj, txobj);
-            break;
+            return true;
 
         case MSC_TYPE_ORACLE_BACKUP:
             populateRPCTypeOracleBackup(mp_obj, txobj);
-            break;
+            return true;
 
         case MSC_TYPE_CLOSE_ORACLE:
             populateRPCTypeCloseOracle(mp_obj, txobj);
-            break;
+            return true;
 
         case MSC_TYPE_COMMIT_CHANNEL:
             populateRPCTypeCommitChannel(mp_obj, txobj);
-            break;
+            return true;
 
         case MSC_TYPE_WITHDRAWAL_FROM_CHANNEL:
             populateRPCTypeWithdrawal_FromChannel(mp_obj, txobj);
-            break;
+            return true;
 
         case MSC_TYPE_INSTANT_TRADE:
             populateRPCTypeInstant_Trade(mp_obj, txobj);
-            break;
+            return true;
+
+        case MSC_TYPE_INSTANT_LTC_TRADE:
+            populateRPCTypeInstant_LTC_Trade(mp_obj, txobj);
+            return true;
 
         case MSC_TYPE_TRANSFER:
             populateRPCTypeTransfer(mp_obj, txobj);
-            break;
+            return true;
 
         case MSC_TYPE_CONTRACT_INSTANT:
             populateRPCTypeContract_Instant(mp_obj, txobj);
-            break;
+            return true;
 
         case MSC_TYPE_NEW_ID_REGISTRATION:
             populateRPCTypeNew_Id_Registration(mp_obj, txobj);
-            break;
+            return true;
 
         case MSC_TYPE_UPDATE_ID_REGISTRATION:
             populateRPCTypeUpdate_Id_Registration(mp_obj, txobj);
-            break;
+            return true;
 
         case MSC_TYPE_DEX_PAYMENT:
             populateRPCTypeDEx_Payment(mp_obj, txobj);
-            break;
+            return true;
 
+        case MSC_TYPE_CLOSE_CHANNEL:
+            populateRPCTypeClose_Channel(mp_obj, txobj);
+            return true;
+
+        default:
+            return false;
     }
 }
 
@@ -601,6 +611,18 @@ void populateRPCTypeInstant_Trade(CMPTransaction& tlObj, UniValue& txobj)
     txobj.push_back(Pair("block for expiry", (uint64_t) tlObj.getBlockForExpiry()));
     txobj.push_back(Pair("desired property", (uint64_t) tlObj.getDesiredProperty()));
     txobj.push_back(Pair("desired value", FormatMP(tlObj.getDesiredProperty(), tlObj.getDesiredValue())));
+}
+
+void populateRPCTypeInstant_LTC_Trade(CMPTransaction& tlObj, UniValue& txobj)
+{
+    txobj.push_back(Pair("propertyId", (uint64_t) tlObj.getProperty()));
+    txobj.push_back(Pair("amount for sale", FormatMP(tlObj.getProperty(), tlObj.getAmountForSale())));
+    txobj.push_back(Pair("ltc price", FormatDivisibleMP(tlObj.getPrice())));
+    txobj.push_back(Pair("desired value", FormatMP(tlObj.getDesiredProperty(), tlObj.getDesiredValue())));
+}
+
+void populateRPCTypeClose_Channel(CMPTransaction& tlObj, UniValue& txobj)
+{
 }
 
 void populateRPCTypeTransfer(CMPTransaction& tlObj, UniValue& txobj)

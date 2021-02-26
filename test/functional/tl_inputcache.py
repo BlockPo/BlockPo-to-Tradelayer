@@ -138,7 +138,7 @@ class InputCacheTest (BitcoinTestFramework):
         assert_equal(out['result']['divisible'],True)
         assert_equal(out['result']['totaltokens'],'90000000.00000000')
 
-        for i in range (0, 600):
+        for i in range (0, 100):
             self.log.info("sending tokens from  second to first address")
             params = str([addresses[2], addresses[0], 4, "1"]).replace("'",'"')
             out = tradelayer_HTTP(conn, headers, False, "tl_send",params)

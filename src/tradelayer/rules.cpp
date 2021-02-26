@@ -74,9 +74,10 @@ std::vector<TransactionRestriction> CConsensusParams::GetRestrictions() const
     v.push_back( { MSC_TYPE_SEND_PEGGED_CURRENCY,                  MP_TX_PKT_V0,      true, MSC_CONTRACTDEX_BLOCK } );
     v.push_back( { MSC_TYPE_CONTRACTDEX_CLOSE_POSITION,            MP_TX_PKT_V0,      true, MSC_CONTRACTDEX_BLOCK } );
     v.push_back( { MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK,    MP_TX_PKT_V0,      true, MSC_CONTRACTDEX_BLOCK } );
-    v.push_back( { MSC_TYPE_CHANGE_ORACLE_REF,                     MP_TX_PKT_V0,      true, MSC_CONTRACTDEX_BLOCK } );
-    v.push_back( { MSC_TYPE_SET_ORACLE,                            MP_TX_PKT_V0,      true, MSC_CONTRACTDEX_BLOCK } );
-    v.push_back( { MSC_TYPE_CLOSE_ORACLE,                          MP_TX_PKT_V0,      true, MSC_CONTRACTDEX_BLOCK } );
+    v.push_back( { MSC_TYPE_CHANGE_ORACLE_REF,                     MP_TX_PKT_V0,      true, MSC_CONTRACTDEX_ORACLES_BLOCK } );
+    v.push_back( { MSC_TYPE_SET_ORACLE,                            MP_TX_PKT_V0,      true, MSC_CONTRACTDEX_ORACLES_BLOCK } );
+    v.push_back( { MSC_TYPE_CLOSE_ORACLE,                          MP_TX_PKT_V0,      true, MSC_CONTRACTDEX_ORACLES_BLOCK } );
+    v.push_back( { MSC_TYPE_ORACLE_BACKUP,                         MP_TX_PKT_V0,      true, MSC_CONTRACTDEX_ORACLES_BLOCK } );
     v.push_back( { MSC_TYPE_COMMIT_CHANNEL,                        MP_TX_PKT_V0,      true, MSC_TRADECHANNEL_TOKENS_BLOCK } );
     v.push_back( { MSC_TYPE_WITHDRAWAL_FROM_CHANNEL,               MP_TX_PKT_V0,      true, MSC_TRADECHANNEL_TOKENS_BLOCK } );
     v.push_back( { MSC_TYPE_INSTANT_TRADE,                         MP_TX_PKT_V0,      true, MSC_TRADECHANNEL_TOKENS_BLOCK } );
