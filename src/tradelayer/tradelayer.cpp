@@ -1069,7 +1069,7 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
     Channel& sChn = it->second;
 
     // adding buyer to channel if it wasn't added before
-    if(!sChn.isPartOfChannel(buyer)){
+    if(!sChn.isPartOfChannel(buyer) && sChn.getSecond() == CHANNEL_PENDING){
         sChn.setSecond(buyer);
     }
 
@@ -6089,9 +6089,10 @@ bool mastercore::makeWithdrawals(int Block)
             assert(it != channels_Map.end());
             Channel &chn = it->second;
 
-            if(!chn.updateChannelBal(address, propertyId, -amount)){
-                PrintToLog("%s(): withdrawal is not possible\n",__func__);
-                ++itt;
+            if(!chn.updateChannelBal(address, propertyId, -amount))
+            {
+                if(msc_debug_make_withdrawal) PrintToLog("%s(): withdrawal is not possible\n",__func__);
+                itt = accepted.erase(itt++);
                 continue;
             }
 

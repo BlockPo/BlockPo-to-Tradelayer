@@ -24,10 +24,10 @@ MatrixTLS *pt_ndatabase;
 
 // initialization using new class constructors
 VectorTLS *pt_open_incr_long  = new VectorTLS(N, "OpenLongPosition", "LongPosIncreased");
-VectorTLS *pt_open_incr_short  = new VectorTLS(N, "OpenShortPosition", "ShortPosIncreased");
+VectorTLS *pt_open_incr_short  =  new VectorTLS(N, "OpenShortPosition", "ShortPosIncreased");
 VectorTLS *pt_netted_npartly_long  = new VectorTLS(N,"LongPosNetted", "LongPosNettedPartly");
-VectorTLS *pt_netted_npartly_short  = new VectorTLS(N, "ShortPosNetted", "ShortPosNettedPartly");
-VectorTLS *pt_open_incr_anypos = new VectorTLS(M,"OpenLongPosition", "LongPosIncreased", "OpenShortPosition", "ShortPosIncreased");
+VectorTLS *pt_netted_npartly_short  =  new VectorTLS(N, "ShortPosNetted", "ShortPosNettedPartly");
+VectorTLS *pt_open_incr_anypos =  new VectorTLS(M,"OpenLongPosition", "LongPosIncreased", "OpenShortPosition", "ShortPosIncreased");
 VectorTLS *pt_netted_npartly_anypos = new VectorTLS(M, "LongPosNetted", "LongPosNettedPartly", "ShortPosNetted", "ShortPosNettedPartly");
 VectorTLS *pt_changepos_status = new VectorTLS(2, "OpenLongPosByShortPosNetted", "OpenShortPosByLongPosNetted");
 

@@ -4007,7 +4007,7 @@ int CMPTransaction::logicMath_Change_OracleAdm()
     }
 
     if (!IsTransactionTypeAllowed(block, type, version)) {
-        PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+        PrintToLog("%s(): rejected: type %d or version %d not permitted for contract %d at block %d\n",
                 __func__,
                 type,
                 version,
