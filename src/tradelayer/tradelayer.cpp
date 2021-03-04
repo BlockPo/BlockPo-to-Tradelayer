@@ -1063,14 +1063,11 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
 
     std::string channelAddr;
 
-    PrintToLog("%s(): checkpoint 1, sender: %s, receiver: %s\n",__func__, buyer, seller);
     assert(t_tradelistdb->checkChannelRelation(seller, channelAddr));
 
     // retrieving channel struct
     auto it = channels_Map.find(channelAddr);
     Channel& sChn = it->second;
-
-    PrintToLog("%s(): checkpoint 1, channelAddr: %s\n",__func__, channelAddr);
 
     // adding buyer to channel if it wasn't added before
     if(!sChn.isPartOfChannel(buyer) && sChn.getSecond() == CHANNEL_PENDING){
@@ -1090,7 +1087,6 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
         // taking fees
         Token_LTC_Fees(amount_purchased, property);
 
-        PrintToLog("%s(): checkpoint 3, buyer: %s, property: %d, amount_purchased : %d\n",__func__, buyer, property, amount_purchased);
         assert(update_tally_map(buyer, property, amount_purchased, BALANCE));
         assert(sChn.updateChannelBal(seller, property, -amount_purchased));
 
@@ -7231,14 +7227,10 @@ bool CMPTradeList::setChannelClosed(const std::string& channelAddr)
     std::string newValue, strValue;
     Status status = pdb->Get(readoptions, channelAddr, &strValue);
 
-    PrintToLog("%s(): CHECKPOINT 1\n", __func__);
-
     if(!status.ok()){
         PrintToLog("%s(): db error - channel not found\n", __func__);
         return false;
     }
-
-    PrintToLog("%s(): CHECKPOINT 2\n", __func__);
 
     // ensure correct amount of tokens in value string
     boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
@@ -7252,10 +7244,6 @@ bool CMPTradeList::setChannelClosed(const std::string& channelAddr)
     const std::string& secAddr = vstr[1];
 
     newValue = strprintf("%s:%s:%s:%s",frAddr, secAddr, CLOSED_CHANNEL, TYPE_CREATE_CHANNEL);
-
-    PrintToLog("%s(): strValue: %s\n", __func__, strValue);
-    PrintToLog("%s(): newValue: %s\n", __func__, newValue);
-
 
     Status status1 = pdb->Put(writeoptions, channelAddr, newValue);
     ++nWritten;
