@@ -1062,11 +1062,15 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
     int64_t amount_purchased = ConvertTo64(amountPurchased256);
 
     std::string channelAddr;
-    t_tradelistdb->checkChannelRelation(seller, channelAddr);
+
+    PrintToLog("%s(): checkpoint 1, sender: %s, receiver: %s\n",__func__, buyer, seller);
+    assert(t_tradelistdb->checkChannelRelation(seller, channelAddr));
 
     // retrieving channel struct
     auto it = channels_Map.find(channelAddr);
     Channel& sChn = it->second;
+
+    PrintToLog("%s(): checkpoint 1, channelAddr: %s\n",__func__, channelAddr);
 
     // adding buyer to channel if it wasn't added before
     if(!sChn.isPartOfChannel(buyer) && sChn.getSecond() == CHANNEL_PENDING){
@@ -1086,6 +1090,7 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
         // taking fees
         Token_LTC_Fees(amount_purchased, property);
 
+        PrintToLog("%s(): checkpoint 3, buyer: %s, property: %d, amount_purchased : %d\n",__func__, buyer, property, amount_purchased);
         assert(update_tally_map(buyer, property, amount_purchased, BALANCE));
         assert(sChn.updateChannelBal(seller, property, -amount_purchased));
 
@@ -1168,6 +1173,7 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
 
      return count;
  }
+
 /**
  * Reports the progress of the initial transaction scanning.
  *
@@ -3145,7 +3151,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
         else if (interp_ret != PKT_ERROR - 2)
         {
             bool bValid = (0 <= interp_ret);
-            if (interp_ret != 1 && interp_ret != 2) p_txlistdb->recordTX(tx.GetHash(), bValid, nBlock, mp_obj.getType(), mp_obj.getNewAmount(), interp_ret);
+            p_txlistdb->recordTX(tx.GetHash(), bValid, nBlock, mp_obj.getType(), mp_obj.getNewAmount(), interp_ret);
             p_TradeTXDB->RecordTransaction(tx.GetHash(), idx);
 
         }

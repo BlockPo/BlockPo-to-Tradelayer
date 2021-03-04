@@ -4542,8 +4542,8 @@ int CMPTransaction::logicMath_Instant_LTC_Trade()
   }
 
   std::string chnAddr;
-  if(!t_tradelistdb->checkChannelRelation(sender, chnAddr) && !t_tradelistdb->checkChannelRelation(receiver, chnAddr)){
-        PrintToLog("%s(): addresses (%s, %s) are not related with any channel\n", __func__, sender, receiver);
+  if(!t_tradelistdb->checkChannelRelation(receiver, chnAddr)){
+        PrintToLog("%s(): seller addresses (%s) are not related with any channel\n", __func__, receiver);
         return (PKT_ERROR_CHANNELS -15);
   }
 
@@ -4558,7 +4558,8 @@ int CMPTransaction::logicMath_Instant_LTC_Trade()
       return (PKT_ERROR_CHANNELS -19);
   }
 
-   return rc;
+  PrintToLog("%s(): checkpoint 1, returning rc = 1\n",__func__);
+  return rc;
 }
 
 /** Tx 114 */
