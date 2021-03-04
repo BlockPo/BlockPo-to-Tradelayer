@@ -1387,7 +1387,7 @@ UniValue tl_gettransaction(const JSONRPCRequest& request)
 
   UniValue txobj(UniValue::VOBJ);
   int populateResult = populateRPCTransactionObject(hash, txobj);
-  if (populateResult != 0) PopulateFailure(populateResult);
+  if (populateResult < 0) PopulateFailure(populateResult);
 
   return txobj;
 }
@@ -2976,7 +2976,7 @@ UniValue tl_list_attestation(const JSONRPCRequest& request)
 {
   if (request.fHelp)
     throw runtime_error(
-			"tl_listattestation\n"
+			"tl_list_attestation\n"
 
 			"\nLists all kyc attestations.\n"
 
@@ -3646,6 +3646,7 @@ static const CRPCCommand commands[] =
   { "trade layer (data retieval)",  "tl_getvesting_info",                      &tl_getvesting_info,                   {} },
   { "trade layer (data retieval)",  "tl_listvesting_addresses",                &tl_listvesting_addresses,             {} },
   { "trade layer (data retieval)",  "tl_get_channelremaining",                 &tl_get_channelremaining,              {} },
+  { "trade layer (data retieval)",  "tl_list_attestation",                     &tl_list_attestation,                  {} },
 };
 
 void RegisterTLDataRetrievalRPCCommands(CRPCTable &tableRPC)

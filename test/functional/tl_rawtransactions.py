@@ -100,7 +100,7 @@ class RawTransactionBasicsTest (BitcoinTestFramework):
 
 
         self.log.info("Funding addresses with LTC")
-        amount = 2.0
+        amount = 2.1
         params = str([addresses[0], amount]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "sendtoaddress",params)
         # self.log.info(out)
@@ -221,13 +221,19 @@ class RawTransactionBasicsTest (BitcoinTestFramework):
         hex = out['result']
         # self.log.info(hex)
 
+        # Change address (address[1] receiving rest of LTCs back)
+        self.log.info("Creating raw reference")
+        params = str([hex, addresses[1], 0.1]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_createrawtx_reference",params)
+        # self.log.info(out)
+        hex = out['result']
+
 
         # Destination here is the seller of tokens (we are sending 1 LTC from addresses[1] to addresses[0])
-        self.log.info("Creating raw reference")
+        self.log.info("Creating paying output")
         params = str([hex, addresses[0], 1.0]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_createrawtx_reference",params)
         # self.log.info(out)
-
         hex = out['result']
 
 
@@ -264,7 +270,7 @@ class RawTransactionBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, False, "tl_decodetransaction", params)
         assert_equal(out['error'], None)
         # self.log.info(out)
-        assert_equal(out['result']['fee'], '0.20000000')
+        assert_equal(out['result']['fee'], '0.10000000')
         assert_equal(out['result']['sendingaddress'], addresses[1])
         assert_equal(out['result']['referenceaddress'], addresses[0])
         assert_equal(out['result']['type_int'], 113)
@@ -286,6 +292,10 @@ class RawTransactionBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         # self.log.info(out)
         tx = out['result']
+
+        params = '["'+hex+'"]'
+        out = tradelayer_HTTP(conn, headers, False, "decoderawtransaction",params)
+        # self.log.info(out)
 
         self.nodes[0].generate(1)
 
