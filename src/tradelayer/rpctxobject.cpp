@@ -618,7 +618,6 @@ void populateRPCTypeInstant_LTC_Trade(CMPTransaction& tlObj, UniValue& txobj)
     txobj.push_back(Pair("propertyId", (uint64_t) tlObj.getProperty()));
     txobj.push_back(Pair("amount for sale", FormatMP(tlObj.getProperty(), tlObj.getAmountForSale())));
     txobj.push_back(Pair("ltc price", FormatDivisibleMP(tlObj.getPrice())));
-    txobj.push_back(Pair("desired value", FormatMP(tlObj.getDesiredProperty(), tlObj.getDesiredValue())));
 }
 
 void populateRPCTypeClose_Channel(CMPTransaction& tlObj, UniValue& txobj)

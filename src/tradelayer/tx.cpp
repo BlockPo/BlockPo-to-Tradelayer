@@ -4558,7 +4558,6 @@ int CMPTransaction::logicMath_Instant_LTC_Trade()
       return (PKT_ERROR_CHANNELS -19);
   }
 
-  PrintToLog("%s(): checkpoint 1, returning rc = 1\n",__func__);
   return rc;
 }
 

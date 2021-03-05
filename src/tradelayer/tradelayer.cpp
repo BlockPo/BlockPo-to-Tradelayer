@@ -3144,7 +3144,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
 
         // Only structurally valid transactions get recorded in levelDB
         // PKT_ERROR - 2 = interpret_Transaction failed, structurally invalid payload
-        else if (interp_ret != PKT_ERROR - 2)
+        if (interp_ret != PKT_ERROR - 2)
         {
             bool bValid = (0 <= interp_ret);
             p_txlistdb->recordTX(tx.GetHash(), bValid, nBlock, mp_obj.getType(), mp_obj.getNewAmount(), interp_ret);
@@ -3726,8 +3726,8 @@ void CMPTxList::recordTX(const uint256 &txid, bool fValid, int nBlock, unsigned 
     const string value = strprintf("%d:%d:%d:%u:%d", fValid ? 1:0, fValid ? 0:interp_ret, nBlock, type, nValue);
     Status status;
 
-      // PrintToLog("%s(%s, valid=%s, reason=%d, block= %d, type= %d, value= %lu)\n",
-      //  __func__, txid.ToString(), fValid ? "YES":"NO", fValid ? 0 : interp_ret, nBlock, type, nValue);
+    PrintToLog("%s(%s, valid=%s, reason=%d, block= %d, type= %d, value= %lu)\n",
+       __func__, txid.ToString(), fValid ? "YES":"NO", fValid ? 0 : interp_ret, nBlock, type, nValue);
 
     if (pdb)
     {
@@ -3939,7 +3939,10 @@ bool mastercore::getValidMPTX(const uint256 &txid, std::string *reason, int *blo
 
     if (!p_txlistdb) return false;
 
-    if (!p_txlistdb->getTX(txid, result)) return false;
+    if (!p_txlistdb->getTX(txid, result))
+    {
+        return false;
+    }
 
     // parse the string returned, find the validity flag/bit & other parameters
     std::vector<std::string> vstr;
@@ -3980,7 +3983,7 @@ bool mastercore::getValidMPTX(const uint256 &txid, std::string *reason, int *blo
 
     if (msc_debug_txdb) p_txlistdb->printStats();
 
-    if ((int)0 == validity) return false;
+    if (0 == validity) return false;
 
     return true;
 }
