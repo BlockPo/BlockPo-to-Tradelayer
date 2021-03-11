@@ -389,7 +389,7 @@ class ChannelsBasicsTest (BitcoinTestFramework):
         # out = tradelayer_HTTP(conn, headers, False, "createrawtransaction", params)
         # assert_equal(out['error'], None)
         # hex = out['result']
-        # # self.log.info(hex)
+        # self.log.info(hex)
 
         self.log.info("Creating raw input")
         params = str(['', txid, vout]).replace("'",'"')

@@ -958,6 +958,7 @@ static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, 
                 }
             }
         }
+        
         // ### EXTRACT PAYLOAD FOR CLASS D ###
         for (unsigned int n = 0; n < op_return_script_data.size(); ++n)
         {
@@ -1061,9 +1062,13 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
     // convert back to int64_t
     int64_t amount_purchased = ConvertTo64(amountPurchased256);
 
+    if(msc_debug_instant_payment) PrintToLog("%s(): amount_purchased: %d\n",__func__, amount_purchased);
+
     std::string channelAddr;
 
     assert(t_tradelistdb->checkChannelRelation(seller, channelAddr));
+
+    if(msc_debug_instant_payment) PrintToLog("%s(): channelAddr: %s\n",__func__, channelAddr);
 
     // retrieving channel struct
     auto it = channels_Map.find(channelAddr);
@@ -1122,10 +1127,11 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
  {
      bool count = false;
      uint64_t nvalue = 0;
+     const unsigned int vSize = tx.vout.size() - 1;
 
-     if (msc_debug_handle_instant) PrintToLog("%s(): nBlock : %d, sender : %s, receiver : %s, property : %d, amount_forsale : %d, price : %d\n",__func__, nBlock, sender, receiver, property, amount_forsale, price);
+     if (msc_debug_handle_instant) PrintToLog("%s(): nBlock : %d, sender : %s, receiver : %s, property : %d, amount_forsale : %d, price : %d, tx.vout.size(): %d\n",__func__, nBlock, sender, receiver, property, amount_forsale, price, tx.vout.size());
 
-     for (unsigned int n = 0; n < tx.vout.size(); ++n)
+     for (unsigned int n = 0; n < vSize ; ++n)
      {
          CTxDestination dest;
          if (ExtractDestination(tx.vout[n].scriptPubKey, dest))
@@ -6421,51 +6427,23 @@ bool mastercore::checkChannelAddress(const std::string& channelAddress)
     return ((it == channels_Map.end()) ? false : true);
 }
 
-  /**
-   *  Does the address is related to some active channel?
-   */
- bool CMPTradeList::checkChannelRelation(const std::string& address, std::string& channelAddr)
- {
-     bool status = false;
-     if (!pdb) return status;
-     std::vector<std::string> vstr;
-     leveldb::Iterator* it = NewIterator(); // Allocation proccess
+/**
+ *  Does the address is related to some active channel?
+ */
+bool CMPTradeList::checkChannelRelation(const std::string& address, std::string& channelAddr)
+{
+    auto it = find_if(channels_Map.begin(), channels_Map.end(), [&address] (const std::pair<std::string,Channel>& sChn) { return (sChn.second.getFirst() == address || sChn.second.getSecond() == address);});
 
-     for(it->SeekToLast(); it->Valid(); it->Prev())
-     {
-         // search key to see if this is a matching trade
-         const std::string& strKey = it->key().ToString();
-         const std::string& strValue = it->value().ToString();
+    if (it == channels_Map.end())
+    {
+        PrintToLog("%s(): Channel not Found here!\n",__func__);
+        return false;
+    }
 
-         // ensure correct amount of tokens in value strin
-         boost::split(vstr, strValue, boost::is_any_of(":"), token_compress_on);
+    const Channel& cfound = it->second;
+    channelAddr = cfound.getMultisig();
 
-         if (vstr.size() != 4) {
-             // PrintToLog("%s(): db error - incorrect size of register: (%s)\n", __func__, strValue);
-             continue;
-         }
-
-         const std::string& frAddr = vstr[0];
-         const std::string& secAddr = vstr[1];
-
-         if (address != frAddr && address != secAddr)
-             continue;
-
-         // checking now on channels_Map (active channels)
-         auto it = channels_Map.find(strKey);
-         if(it == channels_Map.end()){
-             continue;
-         }
-
-         channelAddr = strKey;
-         status = true;
-         break;
-     }
-
-     // clean up
-     delete it; // Desallocation proccess
-     return status;
-
+    return true;
 }
 
 /**
