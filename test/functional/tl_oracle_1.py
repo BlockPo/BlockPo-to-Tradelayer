@@ -46,7 +46,7 @@ class OraclesBasicsTest (BitcoinTestFramework):
         headers = {"Authorization": "Basic " + str_to_b64str(authpair)}
 
         addresses = []
-        accounts = ["john", "doe", "another"]
+        accounts = ["john", "doe", "dan", "marks"]
 
         conn = http.client.HTTPConnection(url.hostname, url.port)
         conn.connect()
@@ -87,7 +87,7 @@ class OraclesBasicsTest (BitcoinTestFramework):
                 if i['att sender'] == addr and i['att receiver'] == addr and i['kyc_id'] == 0:
                      result.append(True)
 
-        assert_equal(result, [True, True, True])
+        assert_equal(result, [True, True, True, True])
 
         self.log.info("Checking the property: lihki")
         params = str([4])
@@ -112,7 +112,7 @@ class OraclesBasicsTest (BitcoinTestFramework):
 
 
         self.log.info("Sending 50000 tokens to second address")
-        params = str([addresses[0], addresses[1], 4, "50000"]).replace("'",'"')
+        params = str([addresses[0], addresses[1], 4, "10000"]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_send",params)
         assert_equal(out['error'], None)
         # self.log.info(out)
@@ -120,12 +120,44 @@ class OraclesBasicsTest (BitcoinTestFramework):
         self.nodes[0].generate(1)
 
 
-        self.log.info("Checking tokens in receiver address")
+        self.log.info("Sending 50000 tokens to third address")
+        params = str([addresses[0], addresses[2], 4, "10000"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_send",params)
+        assert_equal(out['error'], None)
+        # self.log.info(out)
+
+        self.nodes[0].generate(1)
+
+        self.log.info("Sending 50000 tokens to fourth address")
+        params = str([addresses[0], addresses[3], 4, "10000"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_send",params)
+        assert_equal(out['error'], None)
+        # self.log.info(out)
+
+        self.nodes[0].generate(1)
+
+        self.log.info("Checking tokens in receiver addresses")
         params = str([addresses[1], 4]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['balance'],'50000.00000000')
+        assert_equal(out['result']['balance'],'10000.00000000')
+        assert_equal(out['result']['reserve'],'0.00000000')
+
+        self.log.info("Checking tokens in receiver address")
+        params = str([addresses[2], 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['balance'],'10000.00000000')
+        assert_equal(out['result']['reserve'],'0.00000000')
+
+        self.log.info("Checking tokens in receiver address")
+        params = str([addresses[3], 4]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['balance'],'10000.00000000')
         assert_equal(out['result']['reserve'],'0.00000000')
 
 
@@ -175,100 +207,7 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['low price'], '450.6')
         assert_equal(out['result']['last close price'], '500.1')
 
-        self.log.info("Changing oracle admin")
-        params = str([addresses[0], addresses[1], "Oracle 1"]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, True, "tl_change_oracleadm",params)
-        # self.log.info(out)
-        assert_equal(out['error'], None)
-
-        self.nodes[0].generate(1)
-
-        self.log.info("Checking the admin address in oracle")
-        params = str([5])
-        out = tradelayer_HTTP(conn, headers, True, "tl_getproperty",params)
-        assert_equal(out['error'], None)
-        # self.log.info(out)
-        assert_equal(out['result']['issuer'], addresses[1])
-
-
-        self.log.info("Activating backup address")
-        params = str([addresses[2], "Oracle 1"]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, True, "tl_oraclebackup",params)
-        # self.log.info(out)
-        assert_equal(out['error'], None)
-
-        self.nodes[0].generate(1)
-
-        self.log.info("Checking now the admin address in oracle")
-        params = str([5])
-        out = tradelayer_HTTP(conn, headers, True, "tl_getproperty",params)
-        assert_equal(out['error'], None)
-        # self.log.info(out)
-        assert_equal(out['result']['issuer'], addresses[2])
-
-
-        #NOTE: we need to test this for all leverages
         self.log.info("Buying contracts")
-        params = str([addresses[1], "Oracle 1", "1000", "780.5", 1, "1"]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, True, "tl_tradecontract",params)
-        # self.log.info(out)
-        assert_equal(out['error'], None)
-        hash = str(out['result']).replace("'","")
-        # self.log.info(hash)
-
-        self.nodes[0].generate(1)
-
-
-        self.log.info("Checking colateral balance now in sender address")
-        params = str([addresses[1], 4]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
-        # self.log.info(out)
-        assert_equal(out['error'], None)
-        assert_equal(out['result']['balance'],'49899.97500000')
-        assert_equal(out['result']['reserve'],'100.02500000')
-
-
-        self.log.info("Checking orderbook")
-        params = str(["Oracle 1", 1]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, True, "tl_getcontract_orderbook",params)
-        # self.log.info(out)
-        assert_equal(out['error'], None)
-        assert_equal(out['result'][0]['address'], addresses[1])
-        assert_equal(out['result'][0]['contractid'], 5)
-        assert_equal(out['result'][0]['amountforsale'], 1000)
-        assert_equal(out['result'][0]['tradingaction'], 1)
-        assert_equal(out['result'][0]['effectiveprice'], '780.50000000')
-        assert_equal(out['result'][0]['block'], 209)
-
-
-        self.log.info("Canceling Contract order")
-        address = '"'+addresses[1]+'"'
-        params = str([addresses[1], hash]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, True, "tl_sendcancel_contract_order",params)
-        # self.log.info(out)
-        assert_equal(out['error'], None)
-
-        self.nodes[0].generate(1)
-
-
-        self.log.info("Checking orderbook")
-        params = str(["Oracle 1", 1]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, True, "tl_getcontract_orderbook",params)
-        # self.log.info(out)
-        assert_equal(out['error'], None)
-        assert_equal(out['result'], [])
-
-        #NOTE: we need to test this for all leverages
-        self.log.info("Checking restored colateral in sender address")
-        params = str([addresses[1], 4]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
-        # self.log.info(out)
-        assert_equal(out['error'], None)
-        assert_equal(out['result']['balance'],'50000.00000000')
-        assert_equal(out['result']['reserve'],'0.00000000')
-
-
-        self.log.info("Buying contracts again")
         params = str([addresses[1], "Oracle 1", "1000", "980.5", 1, "1"]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_tradecontract",params)
         # self.log.info(out)
@@ -325,18 +264,41 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         assert_equal(out['result']['position'], -1000)
 
-        # self.log.info("Checking upnl for address0")
-        # params = str([addresses[0], "Oracle 1"]).replace("'",'"')
-        # out = tradelayer_HTTP(conn, headers, False, "tl_getupnl",params)
-        # # self.log.info(out)
-        # assert_equal(out['error'], None)
 
-        self.log.info("Checking the open interest")
-        params = str(["Oracle 1"]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, True, "tl_getopen_interest",params)
+        # second trade..........................
+
+        self.log.info("Creating other trade")
+        params = str([addresses[0], "Oracle 1", "1500", "700.5", 1, "1"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_tradecontract",params)
+
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['totalLives'], 1000)
+
+        self.nodes[0].generate(1)
+
+
+        params = str([addresses[2], "Oracle 1", "1500", "700.5", 2, "1"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_tradecontract",params)
+
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+
+        self.nodes[0].generate(1)
+
+        self.log.info("Checking positions")
+        params = str([addresses[0], "Oracle 1"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getposition",params)
+
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['position'], 500)
+
+        params = str([addresses[2], "Oracle 1"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getposition",params)
+
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['position'], -1500)
 
         conn.close()
 

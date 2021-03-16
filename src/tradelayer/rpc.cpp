@@ -1723,10 +1723,10 @@ UniValue tl_getcurrentconsensushash(const JSONRPCRequest& request)
 
 bool PositionToJSON(const std::string& address, uint32_t property, UniValue& balance_obj, bool divisible)
 {
-    int64_t longPosition  = getMPbalance(address, property, POSITIVE_BALANCE);
-    int64_t shortPosition = getMPbalance(address, property, NEGATIVE_BALANCE);
-    balance_obj.pushKV("longPosition", longPosition);
-    balance_obj.pushKV("shortPosition", shortPosition);
+    int64_t position  = getMPbalance(address, property, CONTRACT_BALANCE);
+    PrintToLog("%s(): position: %d\n",__func__, position);
+    balance_obj.pushKV("position", position);
+    // balance_obj.pushKV("shortPosition", shortPosition);
     // balance_obj.pushKV("liquidationPrice", FormatByType(liqPrice,2)));
 
     return true;

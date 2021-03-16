@@ -4458,7 +4458,7 @@ int CMPTransaction::logicMath_Update_PNL()
   // ------------------------------------------
 
   //logic for PNLS
-  assert(update_tally_map(sender, propertyId, -pnl_amount, CHANNEL_RESERVE));
+  // assert(update_tally_map(sender, propertyId, -pnl_amount, CHANNEL_RESERVE));
   assert(update_tally_map(receiver, propertyId, pnl_amount, BALANCE));
 
 
@@ -4633,9 +4633,8 @@ int CMPTransaction::logicMath_Contract_Instant()
        return (PKT_ERROR_KYC -20);
     }
 
-    int64_t marginRe = static_cast<int64_t>(sp.margin_requirement);
-    int64_t nBalance = getMPbalance(sender, sp.collateral_currency, CHANNEL_RESERVE);
-
+    const int64_t marginRe = static_cast<int64_t>(sp.margin_requirement);
+    const int nBalance = chn.getRemaining(sender, sp.collateral_currency);
     arith_uint256 amountTR = (ConvertTo256(instant_amount)*ConvertTo256(marginRe))/ConvertTo256(ileverage);
     int64_t amountToReserve = ConvertTo64(amountTR);
 
@@ -4645,7 +4644,7 @@ int CMPTransaction::logicMath_Contract_Instant()
 
     if (amountToReserve > 0)
     {
-        assert(update_tally_map(sender, sp.collateral_currency, -amountToReserve, CHANNEL_RESERVE));
+        assert(chn.updateChannelBal(sender, sp.collateral_currency, -amountToReserve));
         assert(update_tally_map(chn.getFirst(), sp.collateral_currency, ConvertTo64(amountTR), CONTRACTDEX_RESERVE));
         assert(update_tally_map(chn.getSecond(), sp.collateral_currency, ConvertTo64(amountTR), CONTRACTDEX_RESERVE));
     }

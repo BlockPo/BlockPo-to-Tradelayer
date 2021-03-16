@@ -264,8 +264,7 @@ class NativesBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, True, "tl_getposition",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['longPosition'], 1000)
-        assert_equal(out['result']['shortPosition'], 0)
+        assert_equal(out['result']['position'], 1000)
 
 
         self.log.info("Checking position in second address")
@@ -273,8 +272,7 @@ class NativesBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, True, "tl_getposition",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['longPosition'], 0)
-        assert_equal(out['result']['shortPosition'], 1000)
+        assert_equal(out['result']['position'], -1000)
 
 
         self.log.info("Checking the open interest")
@@ -459,8 +457,7 @@ class NativesBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, True, "tl_getposition",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['longPosition'], 0)
-        assert_equal(out['result']['shortPosition'], 500)
+        assert_equal(out['result']['position'], -500)
 
         # we need to se here the margin for addresses[0]
         params = str([addresses[0], 4]).replace("'",'"')
@@ -473,8 +470,7 @@ class NativesBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, True, "tl_getposition",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['longPosition'], 500)
-        assert_equal(out['result']['shortPosition'], 0)
+        assert_equal(out['result']['position'], 500)
 
 
         self.log.info("Checking the open interest")
@@ -577,8 +573,7 @@ class NativesBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, True, "tl_getposition",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['longPosition'], 0)
-        assert_equal(out['result']['shortPosition'], 500)
+        assert_equal(out['result']['position'], -500)
 
         # we need to se here the margin for addresses[0]
         params = str([addresses[0], 4]).replace("'",'"')
@@ -600,8 +595,7 @@ class NativesBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, True, "tl_getposition",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['longPosition'], 0)
-        assert_equal(out['result']['shortPosition'], 0)
+        assert_equal(out['result']['position'], 0)
 
         # we need to se here the margin for addresses[0]
         params = str([addresses[0], 4]).replace("'",'"')
@@ -630,8 +624,7 @@ class NativesBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, True, "tl_getposition",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['longPosition'], 500)
-        assert_equal(out['result']['shortPosition'], 0)
+        assert_equal(out['result']['position'], 500)
 
         # we need to se here the margin for addresses[0]
         params = str([addresses[0], 4]).replace("'",'"')
@@ -644,15 +637,13 @@ class NativesBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, True, "tl_getposition",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['longPosition'], 0)
-        assert_equal(out['result']['shortPosition'], 500)
+        assert_equal(out['result']['position'], -500)
 
         params = str([addresses[2], "ALL/Lhk"]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_getposition",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['longPosition'], 0)
-        assert_equal(out['result']['shortPosition'], 0)
+        assert_equal(out['result']['position'], 0)
 
 
         self.log.info("Checking the open interest")
@@ -690,8 +681,7 @@ class NativesBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, True, "tl_getposition",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['longPosition'], 0)
-        assert_equal(out['result']['shortPosition'], 500)
+        assert_equal(out['result']['position'], -500)
 
         # we need to se here the margin for addresses[0]
         params = str([addresses[0], 4]).replace("'",'"')
@@ -705,8 +695,7 @@ class NativesBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, True, "tl_getposition",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['longPosition'], 1000)
-        assert_equal(out['result']['shortPosition'], 0)
+        assert_equal(out['result']['position'], 1000)
 
 
         self.log.info("Checking the open interest")
@@ -991,24 +980,21 @@ class NativesBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, True, "tl_getposition",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['longPosition'], 1500)
-        assert_equal(out['result']['shortPosition'], 0)
+        assert_equal(out['result']['position'], 1500)
 
 
         params = str([addresses[1], "ALL/Lhk"]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_getposition",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['longPosition'], 0)
-        assert_equal(out['result']['shortPosition'], 2500)
+        assert_equal(out['result']['position'], -2500)
 
 
         params = str([addresses[2], "ALL/Lhk"]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_getposition",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['longPosition'], 1000)
-        assert_equal(out['result']['shortPosition'], 0)
+        assert_equal(out['result']['position'], 1000)
 
         self.log.info("Checking the open interest")
         params = str(["ALL/Lhk"]).replace("'",'"')

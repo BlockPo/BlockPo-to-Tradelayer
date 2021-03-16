@@ -80,7 +80,7 @@ bool CMPTally::updateMoney(uint32_t propertyId, int64_t amount, TallyType ttype)
         return false;
     }
 
-    if (PENDING != ttype && (now64 + amount) < 0) {
+    if (PENDING != ttype && CONTRACT_BALANCE != ttype &&(now64 + amount) < 0) { 
         // NOTE:
         // Negative balances are only permitted for pending balances
     } else {

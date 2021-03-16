@@ -18,7 +18,7 @@ enum TallyType {
         REALIZED_LOSSES = 9,
         REMAINING = 10,
 	      UNVESTED = 11,
-        CHANNEL_RESERVE = 12,
+        CONTRACT_BALANCE = 12,
         TALLY_TYPE_COUNT
 };
 
