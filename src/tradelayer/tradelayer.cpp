@@ -1355,7 +1355,7 @@ int input_msc_balances_string(const std::string& s)
 
         std::vector<std::string> curBalance;
         boost::split(curBalance, curProperty[1], boost::is_any_of(","), boost::token_compress_on);
-        if (curBalance.size() != 12) return -1;
+        if (curBalance.size() != 10) return -1;
 
         const uint32_t propertyId = boost::lexical_cast<uint32_t>(curProperty[0]);
         const int64_t balance = boost::lexical_cast<int64_t>(curBalance[0]);
@@ -1364,12 +1364,11 @@ int input_msc_balances_string(const std::string& s)
         const int64_t pending = boost::lexical_cast<int64_t>(curBalance[3]);
         const int64_t metadexReserved = boost::lexical_cast<int64_t>(curBalance[4]);
         const int64_t contractdexReserved = boost::lexical_cast<int64_t>(curBalance[5]);
-        const int64_t positiveBalance = boost::lexical_cast<int64_t>(curBalance[6]);
-        const int64_t negativeBalance = boost::lexical_cast<int64_t>(curBalance[7]);
-        const int64_t realizeProfit = boost::lexical_cast<int64_t>(curBalance[8]);
-        const int64_t realizeLosses = boost::lexical_cast<int64_t>(curBalance[9]);
-        const int64_t remaining = boost::lexical_cast<int64_t>(curBalance[10]);
-        const int64_t unvested = boost::lexical_cast<int64_t>(curBalance[11]);
+        const int64_t position = boost::lexical_cast<int64_t>(curBalance[6]);
+        const int64_t realizeProfit = boost::lexical_cast<int64_t>(curBalance[7]);
+        const int64_t realizeLosses = boost::lexical_cast<int64_t>(curBalance[8]);
+        const int64_t remaining = boost::lexical_cast<int64_t>(curBalance[9]);
+        const int64_t unvested = boost::lexical_cast<int64_t>(curBalance[10]);
 
         if (balance) update_tally_map(strAddress, propertyId, balance, BALANCE);
         if (sellReserved) update_tally_map(strAddress, propertyId, sellReserved, SELLOFFER_RESERVE);
@@ -1378,8 +1377,7 @@ int input_msc_balances_string(const std::string& s)
         if (metadexReserved) update_tally_map(strAddress, propertyId, metadexReserved, METADEX_RESERVE);
 
         if (contractdexReserved) update_tally_map(strAddress, propertyId, contractdexReserved, CONTRACTDEX_RESERVE);
-        if (positiveBalance) update_tally_map(strAddress, propertyId, positiveBalance, POSITIVE_BALANCE);
-        if (negativeBalance) update_tally_map(strAddress, propertyId, negativeBalance, NEGATIVE_BALANCE);
+        if (position) update_tally_map(strAddress, propertyId, position, CONTRACT_BALANCE);
         if (realizeProfit) update_tally_map(strAddress, propertyId, realizeProfit, REALIZED_PROFIT);
         if (realizeLosses) update_tally_map(strAddress, propertyId, realizeLosses, REALIZED_LOSSES);
         if (remaining) update_tally_map(strAddress, propertyId, remaining, REMAINING);
@@ -2083,21 +2081,20 @@ static int write_msc_balances(std::ofstream& file, CHash256& hasher)
             const int64_t pending = (*iter).second.getMoney(propertyId, PENDING);
             const int64_t metadexReserved = (*iter).second.getMoney(propertyId, METADEX_RESERVE);
             const int64_t contractdexReserved = (*iter).second.getMoney(propertyId, CONTRACTDEX_RESERVE);
-            const int64_t positiveBalance = (*iter).second.getMoney(propertyId, POSITIVE_BALANCE);
-            const int64_t negativeBalance = (*iter).second.getMoney(propertyId, NEGATIVE_BALANCE);
+            const int64_t position = (*iter).second.getMoney(propertyId, CONTRACT_BALANCE);
             const int64_t realizedProfit = (*iter).second.getMoney(propertyId, REALIZED_PROFIT);
             const int64_t realizedLosses = (*iter).second.getMoney(propertyId, REALIZED_LOSSES);
             const int64_t remaining = (*iter).second.getMoney(propertyId, REMAINING);
             const int64_t unvested = (*iter).second.getMoney(propertyId, UNVESTED);
             // we don't allow 0 balances to read in, so if we don't write them
             // it makes things match up better between persisted state and processed state
-            if (0 == balance && 0 == sellReserved && 0 == acceptReserved && 0 == pending && 0 == metadexReserved && contractdexReserved == 0 && positiveBalance == 0 && negativeBalance == 0 && realizedProfit == 0 && realizedLosses == 0 && remaining == 0 && unvested == 0) {
+            if (0 == balance && 0 == sellReserved && 0 == acceptReserved && 0 == pending && 0 == metadexReserved && contractdexReserved == 0 && position == 0 && realizedProfit == 0 && realizedLosses == 0 && remaining == 0 && unvested == 0) {
                 continue;
             }
 
             emptyWallet = false;
 
-            lineOut.append(strprintf("%d:%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d;",
+            lineOut.append(strprintf("%d:%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d;",
                     propertyId,
                     balance,
                     sellReserved,
@@ -2105,8 +2102,7 @@ static int write_msc_balances(std::ofstream& file, CHash256& hasher)
                     pending,
                     metadexReserved,
                     contractdexReserved,
-                    positiveBalance,
-                    negativeBalance,
+                    position,
                     realizedProfit,
                     realizedLosses,
                     remaining,
@@ -5938,8 +5934,8 @@ bool mastercore::marginMain(int Block)
                          int64_t fcontracts = 0;
                          uint8_t option = 0;
 
-                         const int64_t longs = getMPbalance(address,contractId,POSITIVE_BALANCE);
-                         const int64_t shorts = getMPbalance(address,contractId,NEGATIVE_BALANCE);
+                         const int64_t longs = getMPbalance(address,contractId, CONTRACT_BALANCE);
+                         const int64_t shorts = getMPbalance(address,contractId, CONTRACT_BALANCE);
 
                          if(msc_debug_margin_main) PrintToLog("%s: longs: %d,shorts: %d \n", __func__, longs,shorts);
 
@@ -6048,8 +6044,8 @@ int64_t mastercore::pos_margin(uint32_t contractId, const std::string& address, 
             }
         }
 
-        int64_t longs = getMPbalance(address,contractId,POSITIVE_BALANCE);
-        int64_t shorts = getMPbalance(address,contractId,NEGATIVE_BALANCE);
+        int64_t longs = getMPbalance(address,contractId, CONTRACT_BALANCE);
+        int64_t shorts = getMPbalance(address,contractId, CONTRACT_BALANCE);
 
         if(msc_debug_pos_margin)
         {
@@ -6759,10 +6755,10 @@ bool mastercore::ContInst_Fees(const std::string& firstAddr, const std::string& 
 bool mastercore::Instant_x_Trade(const uint256& txid, uint8_t tradingAction, const std::string& channelAddr, const std::string& firstAddr, const std::string& secondAddr, uint32_t property, int64_t amount_forsale, uint64_t price, uint32_t collateral, uint16_t type, int& block, int tx_idx)
 {
 
-    int64_t firstPoss = getMPbalance(firstAddr, property, POSITIVE_BALANCE);
-    int64_t firstNeg = getMPbalance(firstAddr, property, NEGATIVE_BALANCE);
-    int64_t secondPoss = getMPbalance(secondAddr, property, POSITIVE_BALANCE);
-    int64_t secondNeg = getMPbalance(secondAddr, property, NEGATIVE_BALANCE);
+    int64_t firstPoss = getMPbalance(firstAddr, property, CONTRACT_BALANCE);
+    int64_t firstNeg = getMPbalance(firstAddr, property, CONTRACT_BALANCE);
+    int64_t secondPoss = getMPbalance(secondAddr, property, CONTRACT_BALANCE);
+    int64_t secondNeg = getMPbalance(secondAddr, property, CONTRACT_BALANCE);
 
     if(tradingAction == sell)
         amount_forsale = -amount_forsale;
@@ -6772,40 +6768,40 @@ bool mastercore::Instant_x_Trade(const uint256& txid, uint8_t tradingAction, con
 
     if(first_p > 0)
     {
-        assert(update_tally_map(firstAddr, property, first_p - firstPoss, POSITIVE_BALANCE));
+        assert(update_tally_map(firstAddr, property, first_p - firstPoss, CONTRACT_BALANCE));
         if(firstNeg != 0)
-            assert(update_tally_map(firstAddr, property, -firstNeg, NEGATIVE_BALANCE));
+            assert(update_tally_map(firstAddr, property, -firstNeg, CONTRACT_BALANCE));
 
     } else if (first_p < 0){
-        assert(update_tally_map(firstAddr, property, -first_p - firstNeg, NEGATIVE_BALANCE));
+        assert(update_tally_map(firstAddr, property, -first_p - firstNeg, CONTRACT_BALANCE));
         if(firstPoss != 0)
-            assert(update_tally_map(firstAddr, property, -firstPoss, POSITIVE_BALANCE));
+            assert(update_tally_map(firstAddr, property, -firstPoss, CONTRACT_BALANCE));
 
     } else {  //cleaning the tally
 
         if(firstPoss != 0)
-            assert(update_tally_map(firstAddr, property, -firstPoss, POSITIVE_BALANCE));
+            assert(update_tally_map(firstAddr, property, -firstPoss, CONTRACT_BALANCE));
         else if (firstNeg != 0)
-            assert(update_tally_map(firstAddr, property, -firstNeg, NEGATIVE_BALANCE));
+            assert(update_tally_map(firstAddr, property, -firstNeg, CONTRACT_BALANCE));
 
     }
 
     if(second_p > 0){
-        assert(update_tally_map(secondAddr, property, second_p - secondPoss, POSITIVE_BALANCE));
+        assert(update_tally_map(secondAddr, property, second_p - secondPoss, CONTRACT_BALANCE));
         if (secondNeg != 0)
-            assert(update_tally_map(secondAddr, property, -secondNeg, NEGATIVE_BALANCE));
+            assert(update_tally_map(secondAddr, property, -secondNeg, CONTRACT_BALANCE));
 
     } else if (second_p < 0){
-        assert(update_tally_map(secondAddr, property, -second_p - secondNeg, NEGATIVE_BALANCE));
+        assert(update_tally_map(secondAddr, property, -second_p - secondNeg, CONTRACT_BALANCE));
         if (secondPoss != 0)
-            assert(update_tally_map(secondAddr, property, -secondPoss, POSITIVE_BALANCE));
+            assert(update_tally_map(secondAddr, property, -secondPoss, CONTRACT_BALANCE));
 
     } else {
 
         if (secondPoss != 0)
-            assert(update_tally_map(secondAddr, property, -secondPoss, POSITIVE_BALANCE));
+            assert(update_tally_map(secondAddr, property, -secondPoss, CONTRACT_BALANCE));
         else if (secondNeg != 0)
-            assert(update_tally_map(secondAddr, property, -secondNeg, NEGATIVE_BALANCE));
+            assert(update_tally_map(secondAddr, property, -secondNeg, CONTRACT_BALANCE));
     }
 
     // old positions

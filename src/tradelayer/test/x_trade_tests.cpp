@@ -66,8 +66,8 @@ BOOST_AUTO_TEST_CASE(one_trade)  // 5 short, 5 long, initial position: +20 for b
   CMPContractDex *s; s = &seller;
   CMPContractDex *b; b = &buyer;
 
-  BOOST_CHECK(mastercore::update_tally_map(seller.getAddr(),seller.getProperty(), 20, POSITIVE_BALANCE));
-  BOOST_CHECK(mastercore::update_tally_map(buyer.getAddr(),buyer.getProperty(), 20, POSITIVE_BALANCE));
+  BOOST_CHECK(mastercore::update_tally_map(seller.getAddr(),seller.getProperty(), 20, CONTRACT_BALANCE));
+  BOOST_CHECK(mastercore::update_tally_map(buyer.getAddr(),buyer.getProperty(), 20, CONTRACT_BALANCE));
 
   BOOST_CHECK(mastercore::update_tally_map(seller.getAddr(),seller.getProperty(), 100000, CONTRACTDEX_RESERVE));
   BOOST_CHECK(mastercore::update_tally_map(buyer.getAddr(),buyer.getProperty(), 100000, CONTRACTDEX_RESERVE));
@@ -78,11 +78,8 @@ BOOST_AUTO_TEST_CASE(one_trade)  // 5 short, 5 long, initial position: +20 for b
   BOOST_CHECK_EQUAL(NOTHING, x_Trade(b));
   BOOST_CHECK_EQUAL(NOTHING, x_Trade(s));
 
-  BOOST_CHECK_EQUAL(0, getMPbalance(seller.getAddr(), seller.getProperty(), NEGATIVE_BALANCE));
-  BOOST_CHECK_EQUAL(15, getMPbalance(seller.getAddr(), seller.getProperty(), POSITIVE_BALANCE));
-
-  BOOST_CHECK_EQUAL(0, getMPbalance(buyer.getAddr(), buyer.getProperty(), NEGATIVE_BALANCE));
-  BOOST_CHECK_EQUAL(25, getMPbalance(buyer.getAddr(), buyer.getProperty(), POSITIVE_BALANCE));
+  BOOST_CHECK_EQUAL(15, getMPbalance(seller.getAddr(), seller.getProperty(), CONTRACT_BALANCE));
+  BOOST_CHECK_EQUAL(25, getMPbalance(buyer.getAddr(), buyer.getProperty(), CONTRACT_BALANCE));
 }
 
 
@@ -121,8 +118,8 @@ BOOST_AUTO_TEST_CASE(two_trade) // 10 short, 5 long, initial position : +20 for 
   CMPContractDex *s = &seller;
   CMPContractDex *b = &buyer;
 
-  BOOST_CHECK(mastercore::update_tally_map(seller.getAddr(),seller.getProperty(), 20, POSITIVE_BALANCE));
-  BOOST_CHECK(mastercore::update_tally_map(buyer.getAddr(),buyer.getProperty(), 20, POSITIVE_BALANCE));
+  BOOST_CHECK(mastercore::update_tally_map(seller.getAddr(),seller.getProperty(), 20, CONTRACT_BALANCE));
+  BOOST_CHECK(mastercore::update_tally_map(buyer.getAddr(),buyer.getProperty(), 20, CONTRACT_BALANCE));
 
   BOOST_CHECK(mastercore::update_tally_map(seller.getAddr(),seller.getProperty(), 100000, CONTRACTDEX_RESERVE));
   BOOST_CHECK(mastercore::update_tally_map(buyer.getAddr(),buyer.getProperty(), 100000, CONTRACTDEX_RESERVE));
@@ -133,11 +130,9 @@ BOOST_AUTO_TEST_CASE(two_trade) // 10 short, 5 long, initial position : +20 for 
   BOOST_CHECK_EQUAL(NOTHING, x_Trade(b));
   BOOST_CHECK_EQUAL(NOTHING, x_Trade(s));
 
-  BOOST_CHECK_EQUAL(0, getMPbalance(seller.getAddr(), seller.getProperty(), NEGATIVE_BALANCE));
-  BOOST_CHECK_EQUAL(15, getMPbalance(seller.getAddr(), seller.getProperty(), POSITIVE_BALANCE));
+  BOOST_CHECK_EQUAL(15, getMPbalance(seller.getAddr(), seller.getProperty(), CONTRACT_BALANCE));
 
-  BOOST_CHECK_EQUAL(0, getMPbalance(buyer.getAddr(), buyer.getProperty(), NEGATIVE_BALANCE));
-  BOOST_CHECK_EQUAL(25, getMPbalance(buyer.getAddr(), buyer.getProperty(), POSITIVE_BALANCE));
+  BOOST_CHECK_EQUAL(25, getMPbalance(buyer.getAddr(), buyer.getProperty(), CONTRACT_BALANCE));
 
 }
 

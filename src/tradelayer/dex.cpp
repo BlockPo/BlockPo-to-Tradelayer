@@ -215,8 +215,12 @@ int DEx_BuyOfferCreate(const std::string& addressMaker, uint32_t propertyId, int
             if (!sp.isContract())
 	              continue;
 
-            int64_t longs = getMPbalance(addressMaker, propertyId, POSITIVE_BALANCE);
-            int64_t shorts = getMPbalance(addressMaker, propertyId, NEGATIVE_BALANCE);
+            int64_t longs = 0;
+            int64_t shorts = 0;
+
+            const int64_t balance = getMPbalance(addressMaker, propertyId, CONTRACT_BALANCE);
+
+            (balance > 0) ? longs = balance : shorts = balance;
 
             if (msc_debug_dex) PrintToLog("%s(): longs: %d, shorts: %d, notional: %d\n",__func__, longs, shorts, sp.notional_size);
 

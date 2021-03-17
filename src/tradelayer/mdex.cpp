@@ -2442,8 +2442,13 @@ int mastercore::ContractDex_ADD_ORDERBOOK_EDGE(const std::string& sender_addr, u
 int mastercore::ContractDex_CLOSE_POSITION(const uint256& txid, unsigned int block, const std::string& sender_addr, uint32_t contractId, uint32_t collateralCurrency)
 {
     int rc = -1;
-    int64_t shortPosition = getMPbalance(sender_addr,contractId, NEGATIVE_BALANCE);
-    int64_t longPosition = getMPbalance(sender_addr,contractId, POSITIVE_BALANCE);
+
+    int64_t shortPosition = 0;
+    int64_t longPosition = 0;
+
+    const int64_t contractBalance = getMPbalance(sender_addr,contractId, CONTRACT_BALANCE);
+
+    (contractBalance > 0) ? longPosition = contractBalance :  shortPosition = contractBalance;
 
     if(msc_debug_close_position) PrintToLog("%s(): shortPosition before: %d, longPosition before: %d\n",__func__, shortPosition, longPosition);
 
@@ -2461,12 +2466,10 @@ int mastercore::ContractDex_CLOSE_POSITION(const uint256& txid, unsigned int blo
 
     rc = ContractDex_ADD_MARKET_PRICE(sender_addr, contractId, result.first, block, txid, idx, result.second, 0);
 
-    int64_t shortPositionAf = getMPbalance(sender_addr, contractId, NEGATIVE_BALANCE);
-    int64_t longPositionAf= getMPbalance(sender_addr, contractId, POSITIVE_BALANCE);
+    const int64_t positionAf = getMPbalance(sender_addr, contractId, CONTRACT_BALANCE);
+    if(msc_debug_close_position) PrintToLog("%s(): position after: %d, rc: %d\n",__func__, positionAf, rc);
 
-    if(msc_debug_close_position) PrintToLog("%s(): shortPosition after: %d, longPosition after: %d, rc: %d\n",__func__, shortPositionAf, longPositionAf, rc);
-
-    if (shortPositionAf == 0 && longPositionAf == 0)
+    if (positionAf == 0)
     {
         if(msc_debug_close_position) PrintToLog("%s(): POSITION CLOSED!!!\n",__func__);
         // releasing the reserve

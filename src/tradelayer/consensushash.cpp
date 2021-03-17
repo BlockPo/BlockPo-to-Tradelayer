@@ -59,20 +59,19 @@ std::string GenerateConsensusString(const CMPTally& tallyObj, const std::string&
     const int64_t acceptReserve = tallyObj.getMoney(propertyId, ACCEPT_RESERVE);
     const int64_t metaDExReserve = tallyObj.getMoney(propertyId, METADEX_RESERVE);
     const int64_t contractdexReserved = tallyObj.getMoney(propertyId, CONTRACTDEX_RESERVE);
-    const int64_t positiveBalance = tallyObj.getMoney(propertyId, POSITIVE_BALANCE);
-    const int64_t negativeBalance = tallyObj.getMoney(propertyId, NEGATIVE_BALANCE);
+    const int64_t contractBalance = tallyObj.getMoney(propertyId, CONTRACT_BALANCE);
     const int64_t realizedProfit = tallyObj.getMoney(propertyId, REALIZED_PROFIT);
     const int64_t realizedLosses = tallyObj.getMoney(propertyId, REALIZED_LOSSES);
     const int64_t remaining = tallyObj.getMoney(propertyId, REMAINING);
     const int64_t unvested = tallyObj.getMoney(propertyId, UNVESTED);
 
     // return a blank string if all balances are empty
-    if (!balance && !sellOfferReserve && !acceptReserve && !metaDExReserve && !contractdexReserved && !positiveBalance && !negativeBalance && !realizedProfit && !realizedLosses && !remaining && !unvested) {
+    if (!balance && !sellOfferReserve && !acceptReserve && !metaDExReserve && !contractdexReserved && !realizedProfit && !realizedLosses && !remaining && !unvested && !contractBalance) {
       return "";
     }
 
-    return strprintf("%s|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d",  address, propertyId, balance, sellOfferReserve, acceptReserve,
-		     metaDExReserve,contractdexReserved, positiveBalance, negativeBalance, realizedProfit, realizedLosses,
+    return strprintf("%s|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d",  address, propertyId, balance, sellOfferReserve, acceptReserve,
+		     metaDExReserve, contractdexReserved, contractBalance, realizedProfit, realizedLosses,
 		     remaining, unvested);
 }
 

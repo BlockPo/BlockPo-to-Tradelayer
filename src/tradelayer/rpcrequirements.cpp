@@ -69,10 +69,8 @@ void RequireCollateral(const std::string& address, std::string name_traded, int6
 
 void RequirePosition(const std::string& address, uint32_t contractId)
 {
-    const int64_t longs = getMPbalance(address, contractId, POSITIVE_BALANCE);
-    const int64_t shorts = getMPbalance(address, contractId, NEGATIVE_BALANCE);
-
-    if (longs == 0 && shorts == 0) {
+    const int64_t position = getMPbalance(address, contractId, CONTRACT_BALANCE);
+    if (position == 0 ) {
         throw JSONRPCError(RPC_TYPE_ERROR, "Sender has not position in this contract");
     }
 }
@@ -256,7 +254,7 @@ void RequirePeggedCurrency(uint32_t propertyId)
 void RequireForPegged(const std::string& address, uint32_t propertyId, uint32_t contractId, uint64_t amount)
 {
     uint64_t balance = static_cast<uint64_t>(getMPbalance(address, propertyId, BALANCE));
-    int64_t position = getMPbalance(address, contractId, NEGATIVE_BALANCE);
+    int64_t position = getMPbalance(address, contractId, CONTRACT_BALANCE);
     if (balance < amount) {
         throw JSONRPCError(RPC_TYPE_ERROR, "Sender has not enough amount of collateral currency");
     }
@@ -326,7 +324,7 @@ void RequireShort(std::string& fromAddress, uint32_t contractId, uint64_t amount
 
     if (sp.isContract()) {
         int64_t notionalSize = static_cast<int64_t>(sp.notional_size);
-        int64_t position = getMPbalance(fromAddress, contractId, NEGATIVE_BALANCE);
+        int64_t position = getMPbalance(fromAddress, contractId, CONTRACT_BALANCE);
         // rational_t conv = notionalChange(contractId);
         rational_t conv = rational_t(1,1);
         int64_t num = conv.numerator().convert_to<int64_t>();
