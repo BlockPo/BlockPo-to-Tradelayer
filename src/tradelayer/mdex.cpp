@@ -2443,24 +2443,20 @@ int mastercore::ContractDex_CLOSE_POSITION(const uint256& txid, unsigned int blo
 {
     int rc = -1;
 
-    int64_t shortPosition = 0;
-    int64_t longPosition = 0;
-
     const int64_t contractBalance = getMPbalance(sender_addr,contractId, CONTRACT_BALANCE);
 
-    (contractBalance > 0) ? longPosition = contractBalance :  shortPosition = contractBalance;
+    if(msc_debug_close_position) PrintToLog("%s(): position before: %d\n",__func__, contractBalance);
 
-    if(msc_debug_close_position) PrintToLog("%s(): shortPosition before: %d, longPosition before: %d\n",__func__, shortPosition, longPosition);
-
-    if (shortPosition == 0 && longPosition == 0)
+    if (contractBalance == 0) {
         return rc;
+    }
 
     LOCK(cs_tally);
 
     // Clearing the position
     unsigned int idx = 0;
     std::pair <int64_t, uint8_t> result;
-    (shortPosition > 0 && longPosition == 0) ? (result.first = shortPosition, result.second = buy) : (longPosition > 0 && shortPosition == 0) ? (result.first = longPosition, result.second = sell) : (result.first = 0, result.second = 0);
+    (contractBalance > 0) ? (result.first = contractBalance, result.second = buy) : (result.first = -contractBalance, result.second = sell);
 
     if(msc_debug_close_position) PrintToLog("%s(): result.first: %d, result.second: %d\n",__func__, result.first, result.second);
 

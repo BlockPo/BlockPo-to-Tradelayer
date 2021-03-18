@@ -143,7 +143,7 @@ class HTTPBasicsTest (BitcoinTestFramework):
         self.log.info("Checking consensus hash")
         out = tradelayer_HTTP(conn, headers, False, "tl_getcurrentconsensushash")
         # self.log.info(out)
-        assert_equal (out['result']['consensushash'],"0c5c66c06bb8b1e0bf6e62d5a695f69ed39ac8c31fcd714f34a03ffb421e5771")
+        assert_equal (out['result']['consensushash'],"54340048a21033228f13d7a38cac2cf9da9317d8536fd3bf4b55e365ff2fe870")
 
         conn.close()
 

@@ -277,8 +277,7 @@ class UpnlBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, True, "tl_getposition",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['longPosition'], 0)
-        assert_equal(out['result']['shortPosition'], 2500)
+        assert_equal(out['result']['position'], -2500)
 
 
         self.log.info("Checking upnl for address0")
