@@ -7143,6 +7143,8 @@ void CMPTradeList::getUpnInfo(const std::string& address, uint32_t contractId, U
         const std::string& status1  = vecValues[7];
         const std::string& status2  = vecValues[8];
 
+        PrintToLog("%s(): status1: %s, status2: %s\n",__func__, status1, status2);
+
         // taking the matched address and the status of that trade (short or long)
         std::pair <std::string, bool> args;
         (first) ? (args.first = address1, args.second = getPosition(status2)) : (args.first = address2, args.second = getPosition(status1));
@@ -7150,6 +7152,7 @@ void CMPTradeList::getUpnInfo(const std::string& address, uint32_t contractId, U
 
         if (msc_debug_get_upn_info)
         {
+            PrintToLog("%s(): first: %d\n",__func__, (first) ? 1 : 0);
             PrintToLog("%s(): strValue: %s\n",__func__, strValue);
             PrintToLog("%s(): position bool: %d\n",__func__, args.second);
             PrintToLog("%s(): address matched: %d\n",__func__, args.first);

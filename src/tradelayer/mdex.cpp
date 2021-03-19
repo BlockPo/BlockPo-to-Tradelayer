@@ -190,13 +190,13 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       if (poldBalance > 0) {
           poldPositiveBalanceB = poldBalance;
       } else if (poldBalance < 0) {
-          poldNegativeBalanceB = poldBalance;
+          poldNegativeBalanceB = -poldBalance;
       }
 
       if (pnewBalance > 0) {
           pnewPositiveBalanceB = pnewBalance;
       } else if (pnewBalance < 0) {
-          pnewNegativeBalanceB = pnewBalance;
+          pnewNegativeBalanceB = -pnewBalance;
       }
 
       if(msc_debug_x_trade_bidirectional)
@@ -284,13 +284,13 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       if (poldNBalance > 0) {
           poldPositiveBalanceL = poldNBalance;
       } else if (poldNBalance < 0) {
-          poldNegativeBalanceL = poldNBalance;
+          poldNegativeBalanceL = -poldNBalance;
       }
 
       if (pnewNBalance > 0) {
           pnewPositiveBalanceL = pnewNBalance;
       } else if (pnewNBalance < 0) {
-          pnewNegativeBalanceL = pnewNBalance;
+          pnewNegativeBalanceL = -pnewNBalance;
       }
 
       std::string Status_s = "Empty";
@@ -307,7 +307,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       if (creplBalance > 0) {
           creplPositiveBalance = creplBalance;
       } else if (poldNBalance < 0) {
-          creplNegativeBalance = creplBalance;
+          creplNegativeBalance = -creplBalance;
       }
 
       if(msc_debug_x_trade_bidirectional)
@@ -317,7 +317,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
           PrintToLog("creplPositiveBalance: %d, creplNegativeBalance: %d\n", creplPositiveBalance, creplNegativeBalance);
       }
 
-      int64_t remaining = seller_amount >= buyer_amount ? seller_amount - buyer_amount : buyer_amount - seller_amount;
+      int64_t remaining = (seller_amount >= buyer_amount) ? seller_amount - buyer_amount : buyer_amount - seller_amount;
 
       if ( (seller_amount > buyer_amount && pold->getTradingAction() == sell) || (seller_amount < buyer_amount && pold->getTradingAction() == buy))
       	{
@@ -450,13 +450,13 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       nCouldBuy0 = nCouldBuy;
       /********************************************************/
       if ( pold->getTradingAction() == sell )
-	{
-	  // If maker Sell and Open Short by Long Netted: status_sj -> makers
-	  if ( Status_maker == "OpenShortPosByLongPosNetted" )
+	    {
+	    // If maker Sell and Open Short by Long Netted: status_sj -> makers
+	    if ( Status_maker == "OpenShortPosByLongPosNetted" )
 	    {
 	      if ( Status_taker == "OpenLongPosByShortPosNetted" )
-		{
-		  if ( possitive_sell > negative_buy )
+		   {
+		   if ( possitive_sell > negative_buy )
 		    {
 		      Status_s1  = "LongPosNettedPartly";
 		      lives_maker1   = possitive_sell - negative_buy;
@@ -2451,12 +2451,10 @@ int mastercore::ContractDex_CLOSE_POSITION(const uint256& txid, unsigned int blo
         return rc;
     }
 
-    LOCK(cs_tally);
-
     // Clearing the position
     unsigned int idx = 0;
     std::pair <int64_t, uint8_t> result;
-    (contractBalance > 0) ? (result.first = contractBalance, result.second = buy) : (result.first = -contractBalance, result.second = sell);
+    (contractBalance > 0) ? (result.first = contractBalance, result.second = sell) : (result.first = -contractBalance, result.second = buy);
 
     if(msc_debug_close_position) PrintToLog("%s(): result.first: %d, result.second: %d\n",__func__, result.first, result.second);
 
@@ -2469,12 +2467,13 @@ int mastercore::ContractDex_CLOSE_POSITION(const uint256& txid, unsigned int blo
     {
         if(msc_debug_close_position) PrintToLog("%s(): POSITION CLOSED!!!\n",__func__);
         // releasing the reserve
-        int64_t reserve = getMPbalance(sender_addr, collateralCurrency, CONTRACTDEX_RESERVE);
+        const int64_t reserve = getMPbalance(sender_addr, collateralCurrency, CONTRACTDEX_RESERVE);
         assert(update_tally_map(sender_addr, collateralCurrency, reserve, BALANCE));
         assert(update_tally_map(sender_addr, collateralCurrency, -reserve, CONTRACTDEX_RESERVE));
 
-    } else
-        PrintToLog("%s(): Position partialy Closed\n", __func__);
+    } else{
+      if(msc_debug_close_position) PrintToLog("%s(): Position partialy Closed\n", __func__);
+    }
 
 
     return rc;

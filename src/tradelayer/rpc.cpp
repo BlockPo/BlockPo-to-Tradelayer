@@ -1724,11 +1724,8 @@ UniValue tl_getcurrentconsensushash(const JSONRPCRequest& request)
 bool PositionToJSON(const std::string& address, uint32_t property, UniValue& balance_obj, bool divisible)
 {
     int64_t position  = getMPbalance(address, property, CONTRACT_BALANCE);
-    PrintToLog("%s(): position: %d\n",__func__, position);
     balance_obj.pushKV("position", position);
-    // balance_obj.pushKV("shortPosition", shortPosition);
-    // balance_obj.pushKV("liquidationPrice", FormatByType(liqPrice,2)));
-
+    
     return true;
 }
 
