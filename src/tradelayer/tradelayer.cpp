@@ -141,6 +141,7 @@ extern int newTwapBlock;
 extern int vestingActivationBlock;
 extern volatile int64_t globalVolumeALL_LTC;
 extern std::vector<std::string> vestingAddresses;
+extern int BlockS;
 
 CMPTxList *mastercore::p_txlistdb;
 CMPTradeList *mastercore::t_tradelistdb;
@@ -3817,6 +3818,7 @@ bool CMPSettlementList::SettlementAlgorithm(int starting_block, int ending_block
   PrintToLog("\nStart: Loopthrough SettlementDB\n");
 
 
+  // counting rows for M_file struct
   for(it->SeekToFirst(); it->Valid(); it->Next())
   {
       string strval = it->value().ToString();
@@ -3997,15 +3999,23 @@ bool mastercore::getValidMPTX(const uint256 &txid, std::string *reason, int *blo
 
 void checkContractSettlement(int block)
 {
+    // settlement each 300 blocks
+    if (block%BlockS != 0 || block == 0)
+    {
+        return;
+    }
+
     const uint32_t nextSPID = _my_sps->peekNextSPID();
-    
+
     // looping through contracts
     for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
     {
         CMPSPInfo::Entry sp;
-        if (!_my_sps->getSP(propertyId, sp) || !sp.isContract())
+
+        // only actives contracts ids
+        if (!_my_sps->getSP(propertyId, sp) || !sp.isContract() || sp.isExpired())
         {
-          continue;
+            continue;
         }
 
         // calling settlement for each contract
@@ -4013,7 +4023,7 @@ void checkContractSettlement(int block)
 
   }
 
-  /** Unallocating Dynamic Memory **/
+  // unallocating Dynamic Memory
   market_priceMap.clear();
   numVWAPMap.clear();
   denVWAPMap.clear();
@@ -4031,7 +4041,6 @@ void checkContractSettlement(int block)
 int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockIndex)
 {
   LOCK(cs_tally);
-  extern int BlockS;
 
   if (reorgRecoveryMode > 0)
     {

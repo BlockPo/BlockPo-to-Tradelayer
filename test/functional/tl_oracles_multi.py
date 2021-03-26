@@ -343,11 +343,48 @@ class OraclesMultiBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['totalLives'], 1000)
 
 
+
+        params = str([addresses[0], "Oracle 2", "500", "480.5", 2, "1"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_tradecontract",params)
+
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+
+        self.nodes[0].generate(1)
+
+
+        params = str([addresses[1], "Oracle 2", "500", "480.5", 1, "1"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_tradecontract",params)
+
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+
+        self.nodes[0].generate(1)
+
         params = str(["Oracle 2"]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_getopen_interest",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['totalLives'], 2000)
+        assert_equal(out['result']['totalLives'], 2500)
+
+        self.log.info("Checking position in first address")
+        params = str([addresses[1], "Oracle 2"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getposition",params)
+
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['longPosition'], 2500)
+        assert_equal(out['result']['shortPosition'], 0)
+
+
+        self.log.info("Checking position in second address")
+        params = str([addresses[0], "Oracle 2"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getposition",params)
+
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['longPosition'], 0)
+        assert_equal(out['result']['shortPosition'], 2500)
 
 
         out = tradelayer_HTTP(conn, headers, True, "tl_getinfo")

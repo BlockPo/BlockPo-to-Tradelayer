@@ -161,6 +161,7 @@ public:
         bool isPegged() const;
         bool isOracle() const;
         bool isContract() const;
+        bool isExpired() const;
     };
 
  private:
