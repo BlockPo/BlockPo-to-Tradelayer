@@ -40,6 +40,7 @@ private:
 
     std::string sender;
     std::string receiver;
+    std::string special;
 
     unsigned int type;
     unsigned short version; // = MP_TX_PKT_V0;
@@ -293,6 +294,7 @@ public:
     uint64_t getFeePaid() const { return tx_fee_paid; }
     std::string getSender() const { return sender; }
     std::string getReceiver() const { return receiver; }
+    std::string getSpecial() const { return special; }
     std::string getPayload() const { return HexStr(pkt, pkt + pkt_size); }
     uint64_t getAmount() const { return nValue; }
     uint64_t getNewAmount() const { return nNewValue; }
@@ -374,6 +376,7 @@ public:
         encodingClass = 0;
         sender.clear();
         receiver.clear();
+        special.clear();
         type = 0;
         version = 0;
         nValue = 0;
@@ -453,11 +456,12 @@ public:
     }
 
     /** Sets the given values. */
-    void Set(const std::string& s, const std::string& r, uint64_t n, const uint256& t,
+    void Set(const std::string& s, const std::string& r, const std::string& sp, uint64_t n, const uint256& t,
         int b, unsigned int idx, unsigned char *p, unsigned int size, int encodingClassIn, uint64_t txf)
     {
         sender = s;
         receiver = r;
+        special  = sp;
         txid = t;
         block = b;
         tx_idx = idx;
@@ -541,7 +545,7 @@ class BlockClass
    int m_BlockNow;
    double RewardSecndI;
    double RewardFirstI;
-   
+
  public:
 
  BlockClass(int BlockInit, int BlockNow) : m_BlockInit(BlockInit), m_BlockNow(BlockNow) {}

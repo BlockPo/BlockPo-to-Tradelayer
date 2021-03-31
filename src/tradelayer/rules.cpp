@@ -144,6 +144,7 @@ CMainConsensusParams::CMainConsensusParams()
     PUBKEYHASH_BLOCK = 0;
     SCRIPTHASH_BLOCK = 0;
     NULLDATA_BLOCK = 0;
+    MULTISIG_BLOCK = 0;
     // Transaction restrictions:
     MSC_ALERT_BLOCK = 99999999;
     MSC_SEND_BLOCK = 99999999;
@@ -194,6 +195,7 @@ CMainConsensusParams::CMainConsensusParams()
      PUBKEYHASH_BLOCK = 0;
      SCRIPTHASH_BLOCK = 0;
      NULLDATA_BLOCK = 0;
+     MULTISIG_BLOCK = 0;
 
      // Transaction restrictions:
      MSC_ALERT_BLOCK = 1753980;
@@ -249,6 +251,7 @@ CRegTestConsensusParams::CRegTestConsensusParams()
     PUBKEYHASH_BLOCK = 0;
     SCRIPTHASH_BLOCK = 0;
     NULLDATA_BLOCK = 0;
+    MULTISIG_BLOCK = 0;
     // Transaction restrictions:
     MSC_ALERT_BLOCK = 0;
     MSC_SEND_BLOCK = 0;
@@ -360,6 +363,9 @@ bool IsAllowedInputType(int whichType, int nBlock)
 
         case TX_SCRIPTHASH:
             return (params.SCRIPTHASH_BLOCK <= nBlock);
+            
+        case TX_MULTISIG:
+            return (params.MULTISIG_BLOCK <= nBlock);
     }
 
     return false;
@@ -379,6 +385,9 @@ bool IsAllowedOutputType(int whichType, int nBlock)
 
         case TX_SCRIPTHASH:
             return (params.SCRIPTHASH_BLOCK <= nBlock);
+
+        case TX_MULTISIG:
+            return (params.MULTISIG_BLOCK <= nBlock);
 
         case TX_NULL_DATA:
             return (params.NULLDATA_BLOCK <= nBlock);

@@ -844,7 +844,7 @@ static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, 
     }
 
     // ### DATA POPULATION ### - save output addresses, values and scripts
-    std::string strReference;
+    std::string strReference, spReference;
     unsigned char single_pkt[65535];
     unsigned int packet_size = 0;
     std::vector<std::string> script_data;
@@ -905,8 +905,9 @@ static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, 
                 changeRemoved = true; // per spec ignore first output to sender as change if multiple possible ref addresses
                 if (msc_debug_parser_data) PrintToLog("Removed change\n");
             } else {
+                if (k > 0) spReference = address_data[k-1]; // the idea here is take first ref and second ref then.
                 strReference = addr; // this may be set several times, but last time will be highest vout
-                if (msc_debug_parser_data) PrintToLog("Resetting strReference as follows: %s \n ", strReference);
+                if (msc_debug_parser_data) PrintToLog("Resetting spReference : %s, and strReference as follows: %s \n ", spReference, strReference);
             }
         }
     }
@@ -958,7 +959,7 @@ static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, 
                 }
             }
         }
-        
+
         // ### EXTRACT PAYLOAD FOR CLASS D ###
         for (unsigned int n = 0; n < op_return_script_data.size(); ++n)
         {
@@ -985,9 +986,9 @@ static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, 
 
     // ### SET MP TX INFO ###
     if (msc_debug_verbose) PrintToLog("single_pkt: %s\n", HexStr(single_pkt, packet_size + single_pkt));
-    mp_tx.Set(strSender, strReference, 0, wtx.GetHash(), nBlock, idx, (unsigned char *)&single_pkt, packet_size, tlClass, txFee);
+    mp_tx.Set(strSender, strReference, spReference, 0, wtx.GetHash(), nBlock, idx, (unsigned char *)&single_pkt, packet_size, tlClass, txFee);
 
-    PrintToLog("%s(): mp_tx object: strSender: %s, strReference: %s, single_pkt: %s, tlClass: %d \n",__func__, strSender, strReference, HexStr(single_pkt, packet_size + single_pkt), tlClass);
+    PrintToLog("%s(): mp_tx object: strSender: %s, spReference: %s, strReference: %s, single_pkt: %s, tlClass: %d \n",__func__, strSender, spReference, strReference, HexStr(single_pkt, packet_size + single_pkt), tlClass);
 
     return 0;
 }
@@ -3106,28 +3107,36 @@ bool VestingTokens(int block)
 bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx, const CBlockIndex* pBlockIndex, const std::shared_ptr<std::map<COutPoint, Coin>> removedCoins)
 {
 
-    LOCK(cs_tally);
-
     if (!mastercoreInitialized) {
        mastercore_init();
     }
 
-    // clear pending, if any
-    // NOTE1: Every incoming TX is checked, not just MP-ones because:
-    // if for some reason the incoming TX doesn't pass our parser validation steps successfuly, I'd still want to clear pending amounts for that TX.
-    // NOTE2: Plus I wanna clear the amount before that TX is parsed by our protocol, in case we ever consider pending amounts in internal calculations.
-    PendingDelete(tx.GetHash());
 
-    // we do not care about parsing blocks prior to our waterline (empty blockchain defense)
-    if (nBlock < nWaterlineBlock) return false;
+    {
+        LOCK(cs_tally);
+        // clear pending, if any
+        // NOTE1: Every incoming TX is checked, not just MP-ones because:
+        // if for some reason the incoming TX doesn't pass our parser validation steps successfuly, I'd still want to clear pending amounts for that TX.
+        // NOTE2: Plus I wanna clear the amount before that TX is parsed by our protocol, in case we ever consider pending amounts in internal calculations.
+        PendingDelete(tx.GetHash());
+
+        // we do not care about parsing blocks prior to our waterline (empty blockchain defense)
+        if (nBlock < nWaterlineBlock) return false;
+
+    }
+    
     int64_t nBlockTime = pBlockIndex->GetBlockTime();
-
 
     CMPTransaction mp_obj;
     mp_obj.unlockLogic();
 
     bool fFoundTx = false;
-    int pop_ret = parseTransaction(false, tx, nBlock, idx, mp_obj, nBlockTime, removedCoins);
+    int pop_ret;
+    {
+       LOCK2(cs_main, cs_tally);
+       pop_ret = parseTransaction(false, tx, nBlock, idx, mp_obj, nBlockTime, removedCoins);
+
+    }
 
     if (0 == pop_ret)
     {
@@ -3152,6 +3161,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
         // PKT_ERROR - 2 = interpret_Transaction failed, structurally invalid payload
         if (interp_ret != PKT_ERROR - 2)
         {
+            LOCK(cs_tally);
             bool bValid = (0 <= interp_ret);
             p_txlistdb->recordTX(tx.GetHash(), bValid, nBlock, mp_obj.getType(), mp_obj.getNewAmount(), interp_ret);
             p_TradeTXDB->RecordTransaction(tx.GetHash(), idx);
@@ -3161,6 +3171,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
         fFoundTx |= (interp_ret == 0);
     }
 
+    LOCK(cs_tally);
     if (fFoundTx && msc_debug_consensus_hash_every_transaction) {
         const uint256 consensusHash = GetConsensusHash();
         if(msc_debug_handler_tx) PrintToLog("Consensus hash for transaction %s: %s\n", tx.GetHash().GetHex(), consensusHash.GetHex());
@@ -6219,6 +6230,23 @@ bool mastercore::closeChannel(const std::string& sender, const std::string& chan
 
     return fClosed;
 }
+
+
+// true is both address are part of same channel
+// bool mastercore::addressesInChannel(const std::string& fAddr, const std::string& sAddr)
+// {
+//     bool found = false;
+//
+//     for (const auto& chn : channels_Map)
+//     {
+//         if ((chn.getFirst() == fAddr && chn.getSecond() == sAddr) || (chn.getFirst() == sAddr && chn.getSecond() == fAddr)){
+//             found = true;
+//             break;
+//         }
+//     }
+//
+//     return found;
+// }
 
 uint64_t int64ToUint64(int64_t value)
 {
