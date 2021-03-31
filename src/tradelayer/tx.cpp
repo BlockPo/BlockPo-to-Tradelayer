@@ -4330,13 +4330,12 @@ int CMPTransaction::logicMath_Instant_Trade()
   PrintToLog("%s(): SENDER (multisig address): %s, SPECIAL REF (first address): %s,  RECEIVER (second address): %s\n",__func__, sender, special, receiver);
 
   auto it = channels_Map.find(sender);
-  if (it == channels_Map.end())
-  {
-      PrintToLog("%s(): channel not found\n", __func__);
-      Channel chn(sender, special, receiver, block);
-      channels_Map[receiver] = chn;
-      t_tradelistdb->recordNewChannel(chn.getMultisig(), chn.getFirst(), chn.getSecond(), tx_idx);
+  if (it == channels_Map.end()){
+      PrintToLog("%s(): rejected: channel not found\n", __func__);
+      return (PKT_ERROR_CHANNELS -19);
   }
+
+  Channel &chn = it->second;
 
 
   // using first address data
@@ -4379,46 +4378,46 @@ int CMPTransaction::logicMath_Instant_Trade()
   }
 
   // checking if the address contains in the channel enough tokens to trade!
-  // const int64_t fRemaining = chn.getRemaining(false, property);
-  // if (property > 0 && fRemaining < (int64_t) amount_forsale) {
-  //     PrintToLog("%s(): rejected: address %s has insufficient balance of property %d [%s < %s] in channel %s\n",
-  //             __func__,
-  //             chn.getFirst(),
-  //             property,
-  //             FormatMP(property, fRemaining),
-  //             FormatMP(property, amount_forsale),
-  //             chn.getMultisig());
-  //
-  //     return (PKT_ERROR_CHANNELS -19);
-  // }
-  //
-  // const int64_t sRemaining = chn.getRemaining(true, desired_property);
-  // if (desired_property > 0 && sRemaining < (int64_t) desired_value) {
-  //     PrintToLog("%s(): rejected: address %s has insufficient balance of property %d [%s < %s] in channel %s\n",
-  //             __func__,
-  //             chn.getFirst(),
-  //             desired_property,
-  //             FormatMP(property, sRemaining),
-  //             FormatMP(property, desired_value),
-  //             chn.getMultisig());
-  //
-  //     return (PKT_ERROR_CHANNELS -19);
-  // }
-  //
-  // // ------------------------------------------
-  //
-  // if (property > LTC && desired_property > LTC)
-  // {
-  //     t_tradelistdb->recordNewInstantTrade(txid, chn.getMultisig(), chn.getFirst(), chn.getSecond(), property, amount_forsale, desired_property, desired_value, block, tx_idx);
-  //
-  //     // updating channel balance for each address
-  //     assert(chn.updateChannelBal(chn.getFirst(), property, -amount_forsale));
-  //     assert(chn.updateChannelBal(chn.getSecond(), desired_property, -desired_value));
-  //
-  //     assert(chn.updateChannelBal(chn.getFirst(), desired_property, desired_value));
-  //     assert(chn.updateChannelBal(chn.getSecond(), property, amount_forsale));
-  //
-  // }
+  const int64_t fRemaining = chn.getRemaining(special, property);
+  if (property > 0 && fRemaining < (int64_t) amount_forsale) {
+      PrintToLog("%s(): rejected: address %s has insufficient balance of property %d [%s < %s] in channel %s\n",
+              __func__,
+              chn.getFirst(),
+              property,
+              FormatMP(property, fRemaining),
+              FormatMP(property, amount_forsale),
+              chn.getMultisig());
+
+      return (PKT_ERROR_CHANNELS -19);
+  }
+
+  const int64_t sRemaining = chn.getRemaining(receiver, desired_property);
+  if (desired_property > 0 && sRemaining < (int64_t) desired_value) {
+      PrintToLog("%s(): rejected: address %s has insufficient balance of property %d [%s < %s] in channel %s\n",
+              __func__,
+              chn.getFirst(),
+              desired_property,
+              FormatMP(property, sRemaining),
+              FormatMP(property, desired_value),
+              chn.getMultisig());
+
+      return (PKT_ERROR_CHANNELS -19);
+  }
+
+  // ------------------------------------------
+
+  if (property > LTC && desired_property > LTC)
+  {
+      t_tradelistdb->recordNewInstantTrade(txid, chn.getMultisig(), chn.getFirst(), chn.getSecond(), property, amount_forsale, desired_property, desired_value, block, tx_idx);
+
+      // updating channel balance for each address
+      assert(chn.updateChannelBal(special, property, -amount_forsale));
+      assert(chn.updateChannelBal(receiver, desired_property, -desired_value));
+
+      assert(update_tally_map(receiver, desired_property, desired_value, BALANCE));
+      assert(update_tally_map(special, property, amount_forsale, BALANCE));
+
+  }
 
   return rc;
 }

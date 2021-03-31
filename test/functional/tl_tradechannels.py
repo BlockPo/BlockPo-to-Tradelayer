@@ -473,14 +473,13 @@ class ChannelsBasicsTest (BitcoinTestFramework):
 
         self.nodes[0].generate(1)
 
-        exit()
 
         self.log.info("Checking lihki tokens in channel")
         params = str([multisig, 4]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_get_channelreserve",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['channel reserve'],'1175.00000000')
+        assert_equal(out['result']['channel reserve'],'175.00000000')
 
 
         self.log.info("Checking dan tokens in channel")
@@ -488,7 +487,7 @@ class ChannelsBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, True, "tl_get_channelreserve",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['channel reserve'],'2000.00000000')
+        assert_equal(out['result']['channel reserve'],'0.00000000')
 
         self.log.info("Checking lihki tokens for address0 in channel")
         params = str([addresses[0], multisig, 4]).replace("'",'"')
@@ -501,14 +500,14 @@ class ChannelsBasicsTest (BitcoinTestFramework):
         params = str([addresses[0], multisig, 5]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_get_channelremaining",params)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['channel remaining'], '2000.00000000')
+        assert_equal(out['result']['channel remaining'], '0.00000000')
 
 
         self.log.info("Checking lihki tokens for address1 in channel")
         params = str([addresses[1], multisig, 4]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_get_channelremaining",params)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['channel remaining'], '1000.00000000')
+        assert_equal(out['result']['channel remaining'], '0.00000000')
 
         self.log.info("Checking dan tokens for address1 in channel")
         params = str([addresses[1], multisig, 5]).replace("'",'"')
@@ -530,7 +529,7 @@ class ChannelsBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['balance'],'9999998000.00000000')
+        assert_equal(out['result']['balance'],'10000000000.00000000')
         assert_equal(out['result']['reserve'],'0.00000000')
 
 
@@ -623,7 +622,7 @@ class ChannelsBasicsTest (BitcoinTestFramework):
         params = '["'+hex+'", true]'
         out = tradelayer_HTTP(conn, headers, False, "sendrawtransaction",params)
         # assert_equal(out['error'], None)
-        self.log.info(out)
+        # self.log.info(out)
         tx = out['result']
 
         self.nodes[0].generate(1)
@@ -639,7 +638,7 @@ class ChannelsBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, False, "tl_get_channelreserve",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['channel reserve'], '1075.00000000')
+        assert_equal(out['result']['channel reserve'], '75.00000000')
 
 
         self.log.info("Checking tokens in receiver channel")
