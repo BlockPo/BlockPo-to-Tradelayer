@@ -31,6 +31,8 @@ class ChangeAddressTest (BitcoinTestFramework):
 
     def run_test(self):
 
+        # side note: we don't have change address now for instant trades.
+        
         self.log.info("Preparing the workspace...")
 
         # mining 200 blocks
@@ -488,7 +490,7 @@ class ChangeAddressTest (BitcoinTestFramework):
         params = str([addresses[0], multisig, 4]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_get_channelremaining",params)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['channel remaining'], '175.00000000')
+        assert_equal(out['result']['channel remaining'], '1175.00000000')
 
 
         self.log.info("Checking dan tokens remainng in the channel for the address0")

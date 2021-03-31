@@ -606,6 +606,8 @@ void populateRPCTypeWithdrawal_FromChannel(CMPTransaction& tlObj, UniValue& txob
 
 void populateRPCTypeInstant_Trade(CMPTransaction& tlObj, UniValue& txobj)
 {
+    txobj.push_back(Pair("first address",  tlObj.getSpecial()));
+    txobj.push_back(Pair("second address",  tlObj.getReceiver()));
     txobj.push_back(Pair("propertyId", (uint64_t) tlObj.getProperty()));
     txobj.push_back(Pair("amount for sale", FormatMP(tlObj.getProperty(), tlObj.getAmountForSale())));
     txobj.push_back(Pair("block for expiry", (uint64_t) tlObj.getBlockForExpiry()));

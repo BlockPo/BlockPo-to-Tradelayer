@@ -723,6 +723,8 @@ namespace mastercore
   bool Token_LTC_Fees(int64_t& buyer_amountGot, uint32_t propertyId);
 
   bool checkChannelAddress(const std::string& channelAddress);
+
+  // bool addressesInChannel(const std::string& fAddr, const std::string& sAddr);
 }
 
 #endif // TRADELAYER_TL_H

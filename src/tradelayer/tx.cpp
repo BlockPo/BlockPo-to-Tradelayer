@@ -293,8 +293,6 @@ bool CMPTransaction::interpret_Transaction()
       case MSC_TYPE_CLOSE_CHANNEL:
           return interpret_SimpleSend();
 
-      default:
-          return false;
     }
 
   return false;
@@ -1773,10 +1771,10 @@ bool CMPTransaction::interpret_Instant_Trade()
   } else return false;
 
   if (!vecAmountDesiredBytes.empty()) {
-    desired_value = DecompressInteger(vecAmountDesiredBytes);
+      desired_value = DecompressInteger(vecAmountDesiredBytes);
   } else return false;
 
-  if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+  if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly || true)
   {
       PrintToLog("\t version: %d\n", version);
       PrintToLog("\t messageType: %d\n",type);
@@ -1931,6 +1929,7 @@ bool CMPTransaction::interpret_Instant_LTC_Trade()
 /** Tx 114 */
 bool CMPTransaction::interpret_Contract_Instant()
 {
+  PrintToLog("s%(): inside interpret function!!!!!\n",__func__);
   int i = 0;
 
   std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
@@ -1975,7 +1974,8 @@ bool CMPTransaction::interpret_Contract_Instant()
       ileverage = DecompressInteger(vecLeverage);
   } else return false;
 
-  if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
+  PrintToLog("s%(): function returning !!!!!\n",__func__);
+  if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly || true)
   {
       PrintToLog("\t version: %d\n", version);
       PrintToLog("\t messageType: %d\n",type);
@@ -2156,10 +2156,9 @@ int CMPTransaction::interpretPacket()
         return (PKT_ERROR -1);
     }
 
-    if (!interpret_Transaction()) {
+    if (!interpret_Transaction())
+    {
         return (PKT_ERROR -2);
-    } else {
-        PrintToLog("%s(): Back from interpret_Transaction\n", __func__);
     }
 
     LOCK(cs_tally);
@@ -4328,9 +4327,9 @@ int CMPTransaction::logicMath_Instant_Trade()
       return (PKT_ERROR_CHANNELS -14);
   }
 
-  int kyc_id;
-  auto it = channels_Map.find(sender);
+  PrintToLog("%s(): SENDER (multisig address): %s, SPECIAL REF (first address): %s,  RECEIVER (second address): %s\n",__func__, sender, special, receiver);
 
+  auto it = channels_Map.find(sender);
   if (it == channels_Map.end()){
       PrintToLog("%s(): rejected: channel not found\n", __func__);
       return (PKT_ERROR_CHANNELS -19);
@@ -4338,43 +4337,38 @@ int CMPTransaction::logicMath_Instant_Trade()
 
   Channel &chn = it->second;
 
-  PrintToLog("%s(): channel: %s, first: %s, second: %s, block: %d\n",__func__, chn.getMultisig(), chn.getFirst(), chn.getSecond(), block);
-
-  if (chn.getSecond() == CHANNEL_PENDING) {
-      PrintToLog("%s(): rejected: second address for channel (%s) is not setted \n", __func__, chn.getMultisig());
-      return (PKT_ERROR_CHANNELS -20);
-  }
 
   // using first address data
-  if(!t_tradelistdb->checkAttestationReg(chn.getFirst(),kyc_id)){
+  int kyc_id;
+  if(!t_tradelistdb->checkAttestationReg(special,kyc_id)){
     PrintToLog("%s(): rejected: first address (%s) kyc ckeck failed\n", __func__, sender);
     return (PKT_ERROR_KYC -10);
   }
 
   if(!t_tradelistdb->kycPropertyMatch(property, kyc_id)){
-    PrintToLog("%s(): rejected: property %d can't be traded with this kyc for first address (%s)\n", __func__, property, chn.getFirst());
+    PrintToLog("%s(): rejected: property %d can't be traded with this kyc for first address (%s)\n", __func__, property, special);
     return (PKT_ERROR_KYC -20);
   }
 
   if(!t_tradelistdb->kycPropertyMatch(desired_property, kyc_id)){
-    PrintToLog("%s(): rejected: property %d can't be traded with this kyc for first address (%s)\n", __func__, desired_property, chn.getFirst());
+    PrintToLog("%s(): rejected: property %d can't be traded with this kyc for first address (%s)\n", __func__, desired_property, special);
     return (PKT_ERROR_KYC -20);
   }
 
   // using second address data
   int kyc_id2;
-  if(!t_tradelistdb->checkAttestationReg(chn.getSecond(),kyc_id2)){
-    PrintToLog("%s(): rejected: second address (%s) kyc ckeck failed\n", __func__, chn.getSecond());
+  if(!t_tradelistdb->checkAttestationReg(receiver,kyc_id2)){
+    PrintToLog("%s(): rejected: second address (%s) kyc ckeck failed\n", __func__, receiver);
     return (PKT_ERROR_KYC -10);
   }
 
   if(!t_tradelistdb->kycPropertyMatch(property, kyc_id2)){
-    PrintToLog("%s(): rejected: property %d can't be traded with this kyc for second address (%s)\n", __func__, property, chn.getSecond());
+    PrintToLog("%s(): rejected: property %d can't be traded with this kyc for second address (%s)\n", __func__, property, receiver);
     return (PKT_ERROR_KYC -20);
   }
 
   if(!t_tradelistdb->kycPropertyMatch(desired_property, kyc_id2)){
-    PrintToLog("%s(): rejected: property %d can't be traded with this kyc for second address (%s)\n", __func__, desired_property, sender);
+    PrintToLog("%s(): rejected: property %d can't be traded with this kyc for second address (%s)\n", __func__, desired_property, receiver);
     return (PKT_ERROR_KYC -20);
   }
 
@@ -4383,13 +4377,8 @@ int CMPTransaction::logicMath_Instant_Trade()
       return (PKT_ERROR_CHANNELS -16);
   }
 
-  // if (chn.getExpiry() < block) {
-  //     PrintToLog("%s(): rejected: out of channel deadline: actual block: %d, deadline: %d\n", __func__, block, chn.getExpiry());
-  //     return (PKT_ERROR_CHANNELS -17);
-  // }
-
   // checking if the address contains in the channel enough tokens to trade!
-  const int64_t fRemaining = chn.getRemaining(false, property);
+  const int64_t fRemaining = chn.getRemaining(special, property);
   if (property > 0 && fRemaining < (int64_t) amount_forsale) {
       PrintToLog("%s(): rejected: address %s has insufficient balance of property %d [%s < %s] in channel %s\n",
               __func__,
@@ -4402,7 +4391,7 @@ int CMPTransaction::logicMath_Instant_Trade()
       return (PKT_ERROR_CHANNELS -19);
   }
 
-  const int64_t sRemaining = chn.getRemaining(true, desired_property);
+  const int64_t sRemaining = chn.getRemaining(receiver, desired_property);
   if (desired_property > 0 && sRemaining < (int64_t) desired_value) {
       PrintToLog("%s(): rejected: address %s has insufficient balance of property %d [%s < %s] in channel %s\n",
               __func__,
@@ -4422,14 +4411,11 @@ int CMPTransaction::logicMath_Instant_Trade()
       t_tradelistdb->recordNewInstantTrade(txid, chn.getMultisig(), chn.getFirst(), chn.getSecond(), property, amount_forsale, desired_property, desired_value, block, tx_idx);
 
       // updating channel balance for each address
-      assert(chn.updateChannelBal(chn.getFirst(), property, -amount_forsale));
-      assert(chn.updateChannelBal(chn.getSecond(), desired_property, -desired_value));
+      assert(chn.updateChannelBal(special, property, -amount_forsale));
+      assert(chn.updateChannelBal(receiver, desired_property, -desired_value));
 
-      assert(chn.updateChannelBal(chn.getFirst(), desired_property, desired_value));
-      assert(chn.updateChannelBal(chn.getSecond(), property, amount_forsale));
-
-      // updating last exchange block
-      // assert(chn.updateLastExBlock(block));
+      assert(update_tally_map(receiver, desired_property, desired_value, BALANCE));
+      assert(update_tally_map(special, property, amount_forsale, BALANCE));
 
   }
 

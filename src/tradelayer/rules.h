@@ -73,6 +73,8 @@ public:
     //! Live block of Trade Layer
     int GENESIS_BLOCK;
 
+    int MULTISIG_BLOCK;
+
     //! Minimum number of blocks to use for notice rules on activation
     int MIN_ACTIVATION_BLOCKS;
     //! Maximum number of blocks to use for notice rules on activation
