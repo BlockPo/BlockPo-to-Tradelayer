@@ -304,32 +304,28 @@ class OracleSettlementTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, False, "tl_getposition",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['longPosition'], 0)
-        assert_equal(out['result']['shortPosition'], 1000)
+        assert_equal(out['result']['position'], -1000)
 
 
         params = str([addresses[1], "Oracle 1"]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_getposition",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['longPosition'], 1500)
-        assert_equal(out['result']['shortPosition'], 0)
+        assert_equal(out['result']['position'], 1500)
 
 
         params = str([addresses[2], "5"]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_getposition",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['longPosition'], 500)
-        assert_equal(out['result']['shortPosition'], 0)
+        assert_equal(out['result']['position'], 500)
 
 
         params = str([addresses[3], "5"]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_getposition",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['longPosition'], 0)
-        assert_equal(out['result']['shortPosition'], 1000)
+        assert_equal(out['result']['position'], -1000)
 
         self.log.info("Mining towards settlement")
 

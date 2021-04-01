@@ -314,8 +314,7 @@ class OraclesBasicsTest (BitcoinTestFramework):
 
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['longPosition'], 1000)
-        assert_equal(out['result']['shortPosition'], 0)
+        assert_equal(out['result']['position'], 1000)
 
 
         self.log.info("Checking position in second address")
@@ -324,14 +323,13 @@ class OraclesBasicsTest (BitcoinTestFramework):
 
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['longPosition'], 0)
-        assert_equal(out['result']['shortPosition'], 1000)
+        assert_equal(out['result']['position'], -1000)
 
-        self.log.info("Checking upnl for address0")
-        params = str([addresses[0], "Oracle 1"]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, False, "tl_getupnl",params)
-        # self.log.info(out)
-        assert_equal(out['error'], None)
+        # self.log.info("Checking upnl for address0")
+        # params = str([addresses[0], "Oracle 1"]).replace("'",'"')
+        # out = tradelayer_HTTP(conn, headers, False, "tl_getupnl",params)
+        # # self.log.info(out)
+        # assert_equal(out['error'], None)
 
         self.log.info("Checking the open interest")
         params = str(["Oracle 1"]).replace("'",'"')

@@ -3493,7 +3493,7 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
         den = sp.denominator;
     }
 
-    int64_t position = getMPbalance(sender, contractId, NEGATIVE_BALANCE);
+    const int64_t position = getMPbalance(sender, contractId, CONTRACT_BALANCE);
     arith_uint256 rAmount = ConvertTo256(amount); // Alls needed
     arith_uint256 Contracts = DivideAndRoundUp(rAmount * ConvertTo256(notSize), ConvertTo256(COIN));
     amountNeeded = ConvertTo64(rAmount);
@@ -3565,7 +3565,7 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
 
 
     //putting into reserve contracts and collateral currency
-    assert(update_tally_map(sender, contractId, -contracts, NEGATIVE_BALANCE));
+    assert(update_tally_map(sender, contractId, -contracts, CONTRACT_BALANCE));
     assert(update_tally_map(sender, contractId, contracts, CONTRACTDEX_RESERVE));
     assert(update_tally_map(sender, propertyId, -amountNeeded, BALANCE));
     assert(update_tally_map(sender, propertyId, amountNeeded, CONTRACTDEX_RESERVE));
@@ -3642,10 +3642,12 @@ int CMPTransaction::logicMath_RedemptionPegged()
         return (PKT_ERROR_SEND -24);
     }
 
-    int64_t nBalance = getMPbalance(sender, propertyId, BALANCE);
-    // int64_t nContracts = getMPbalance(sender, contractId, CONTRACTDEX_RESERVE);
-    int64_t negContracts = getMPbalance(sender, contractId, NEGATIVE_BALANCE);
-    int64_t posContracts = getMPbalance(sender, contractId, POSITIVE_BALANCE);
+    int64_t negContracts = 0;
+    int64_t posContracts = 0;
+    const int64_t nBalance = getMPbalance(sender, propertyId, BALANCE);
+    const int64_t position = getMPbalance(sender, contractId, CONTRACT_BALANCE);
+
+    (position > 0) ? posContracts = position : negContracts = position;
 
     if (nBalance < (int64_t) amount) {
         PrintToLog("%s(): rejected: sender %s has insufficient balance of pegged currency %d [%s < %s]\n",
@@ -3678,7 +3680,8 @@ int CMPTransaction::logicMath_RedemptionPegged()
     arith_uint256 conNeeded = ConvertTo256(amount) / ConvertTo256(notSize);
     int64_t contractsNeeded = ConvertTo64(conNeeded);
 
-    if ((contractsNeeded > 0) && (amount > 0)) {
+    if (contractsNeeded > 0 && amount > 0)
+    {
        // Delete the tokens
        assert(update_tally_map(sender, propertyId, -amount, BALANCE));
        // delete contracts in reserve
@@ -3686,20 +3689,7 @@ int CMPTransaction::logicMath_RedemptionPegged()
         // get back the collateral
        assert(update_tally_map(sender, collateralId, -amount, CONTRACTDEX_RESERVE));
        assert(update_tally_map(sender, collateralId, amount, BALANCE));
-       if (posContracts > 0 && negContracts == 0)
-       {
-           int64_t dif = posContracts - contractsNeeded;
-           if (dif >= 0)
-           {
-               assert(update_tally_map(sender, contractId, -contractsNeeded, POSITIVE_BALANCE));
-           } else {
-               assert(update_tally_map(sender, contractId, -posContracts, POSITIVE_BALANCE));
-               assert(update_tally_map(sender, contractId, -dif, NEGATIVE_BALANCE));
-           }
-
-       } else if (posContracts == 0 && negContracts >= 0) {
-          assert(update_tally_map(sender, contractId, contractsNeeded, NEGATIVE_BALANCE));
-       }
+       assert(update_tally_map(sender, contractId, -contractsNeeded, CONTRACT_BALANCE));
 
     } else {
         PrintToLog("amount redeemed must be equal at least to value of 1 future contract \n");
@@ -4444,7 +4434,7 @@ int CMPTransaction::logicMath_Update_PNL()
   // ------------------------------------------
 
   //logic for PNLS
-  assert(update_tally_map(sender, propertyId, -pnl_amount, CHANNEL_RESERVE));
+  // assert(update_tally_map(sender, propertyId, -pnl_amount, CHANNEL_RESERVE));
   assert(update_tally_map(receiver, propertyId, pnl_amount, BALANCE));
 
 
@@ -4619,9 +4609,8 @@ int CMPTransaction::logicMath_Contract_Instant()
        return (PKT_ERROR_KYC -20);
     }
 
-    int64_t marginRe = static_cast<int64_t>(sp.margin_requirement);
-    int64_t nBalance = getMPbalance(sender, sp.collateral_currency, CHANNEL_RESERVE);
-
+    const int64_t marginRe = static_cast<int64_t>(sp.margin_requirement);
+    const int nBalance = chn.getRemaining(sender, sp.collateral_currency);
     arith_uint256 amountTR = (ConvertTo256(instant_amount)*ConvertTo256(marginRe))/ConvertTo256(ileverage);
     int64_t amountToReserve = ConvertTo64(amountTR);
 
@@ -4631,7 +4620,7 @@ int CMPTransaction::logicMath_Contract_Instant()
 
     if (amountToReserve > 0)
     {
-        assert(update_tally_map(sender, sp.collateral_currency, -amountToReserve, CHANNEL_RESERVE));
+        assert(chn.updateChannelBal(sender, sp.collateral_currency, -amountToReserve));
         assert(update_tally_map(chn.getFirst(), sp.collateral_currency, ConvertTo64(amountTR), CONTRACTDEX_RESERVE));
         assert(update_tally_map(chn.getSecond(), sp.collateral_currency, ConvertTo64(amountTR), CONTRACTDEX_RESERVE));
     }

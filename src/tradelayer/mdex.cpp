@@ -178,10 +178,26 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       uint64_t amountpnew = pnew->getAmountForSale();
       uint64_t amountpold = pold->getAmountForSale();
 
-      int64_t poldPositiveBalanceB = getMPbalance(pold->getAddr(), property_traded, POSITIVE_BALANCE);
-      int64_t pnewPositiveBalanceB = getMPbalance(pnew->getAddr(), property_traded, POSITIVE_BALANCE);
-      int64_t poldNegativeBalanceB = getMPbalance(pold->getAddr(), property_traded, NEGATIVE_BALANCE);
-      int64_t pnewNegativeBalanceB = getMPbalance(pnew->getAddr(), property_traded, NEGATIVE_BALANCE);
+      // bringing back positive or negative position
+      const int64_t poldBalance = getMPbalance(pold->getAddr(), property_traded, CONTRACT_BALANCE);
+      const int64_t pnewBalance = getMPbalance(pnew->getAddr(), property_traded, CONTRACT_BALANCE);
+
+      int64_t poldPositiveBalanceB = 0;
+      int64_t pnewPositiveBalanceB = 0;
+      int64_t poldNegativeBalanceB = 0;
+      int64_t pnewNegativeBalanceB = 0;
+
+      if (poldBalance > 0) {
+          poldPositiveBalanceB = poldBalance;
+      } else if (poldBalance < 0) {
+          poldNegativeBalanceB = -poldBalance;
+      }
+
+      if (pnewBalance > 0) {
+          pnewPositiveBalanceB = pnewBalance;
+      } else if (pnewBalance < 0) {
+          pnewNegativeBalanceB = -pnewBalance;
+      }
 
       if(msc_debug_x_trade_bidirectional)
       {
@@ -189,23 +205,25 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
           PrintToLog("pnewPositiveBalanceB: %d, pnewNegativeBalanceB: %d\n", pnewPositiveBalanceB, pnewNegativeBalanceB);
       }
 
-      int64_t possitive_sell = (pold->getTradingAction() == sell) ? poldPositiveBalanceB : pnewPositiveBalanceB;
-      int64_t negative_sell  = (pold->getTradingAction() == sell) ? poldNegativeBalanceB : pnewNegativeBalanceB;
-      int64_t possitive_buy  = (pold->getTradingAction() == sell) ? pnewPositiveBalanceB : poldPositiveBalanceB;
-      int64_t negative_buy   = (pold->getTradingAction() == sell) ? pnewNegativeBalanceB : poldNegativeBalanceB;
+      const int64_t &possitive_sell = (pold->getTradingAction() == sell) ? poldPositiveBalanceB : pnewPositiveBalanceB;
+      const int64_t &negative_sell  = (pold->getTradingAction() == sell) ? poldNegativeBalanceB : pnewNegativeBalanceB;
+      const int64_t &possitive_buy  = (pold->getTradingAction() == sell) ? pnewPositiveBalanceB : poldPositiveBalanceB;
+      const int64_t &negative_buy   = (pold->getTradingAction() == sell) ? pnewNegativeBalanceB : poldNegativeBalanceB;
 
-      int64_t seller_amount  = (pold->getTradingAction() == sell) ? pold->getAmountForSale() : pnew->getAmountForSale();
-      int64_t buyer_amount   = (pold->getTradingAction() == sell) ? pnew->getAmountForSale() : pold->getAmountForSale();
-      std::string seller_address = (pold->getTradingAction() == sell) ? pold->getAddr() : pnew->getAddr();
-      std::string buyer_address  = (pold->getTradingAction() == sell) ? pnew->getAddr() : pold->getAddr();
+      const int64_t &seller_amount  = (pold->getTradingAction() == sell) ? pold->getAmountForSale() : pnew->getAmountForSale();
+      const int64_t &buyer_amount   = (pold->getTradingAction() == sell) ? pnew->getAmountForSale() : pold->getAmountForSale();
 
-      int64_t nCouldBuy = buyer_amount < seller_amount ? buyer_amount : seller_amount;
+      const std::string &seller_address = (pold->getTradingAction() == sell) ? pold->getAddr() : pnew->getAddr();
+      const std::string &buyer_address  = (pold->getTradingAction() == sell) ? pnew->getAddr() : pold->getAddr();
+
+
+      int64_t nCouldBuy = (buyer_amount < seller_amount) ? buyer_amount : seller_amount;
 
       if (nCouldBuy == 0)
-      	{
+      {
       	  ++offerIt;
       	  continue;
-      	}
+      }
 
       /*************************************************************************************************/
       /** Computing VWAP Price**/
@@ -237,60 +255,60 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
 
       int vwaplength = denVWAPpriceContract.size();
       for (int i = 0; i < vwaplength; i++)
-	{
-	  numVWAPriceh += numVWAPpriceContract[i];
-	  denVWAPriceh += denVWAPpriceContract[i];
-	}
+	    {
+	        numVWAPriceh += numVWAPpriceContract[i];
+	        denVWAPriceh += denVWAPpriceContract[i];
+	    }
 
       rational_t vwapPricehRat(numVWAPriceh, denVWAPriceh);
       int64_t vwapPriceh64_t = mastercore::RationalToInt64(vwapPricehRat);
       threading(property_traded, vwapPriceh64_t, "cdex_vwap");
 
       /********************************************************/
-      int64_t difference_s = 0, difference_b = 0;
       if (boolAddresses)
-	{
-	  if ( possitive_sell != 0 )
 	    {
-	      difference_s = possitive_sell - nCouldBuy;
-	      if (difference_s >= 0)
-		assert(update_tally_map(seller_address, property_traded, -nCouldBuy, POSITIVE_BALANCE));
-	      else
-		{
-		  assert(update_tally_map(seller_address, property_traded, -possitive_sell, POSITIVE_BALANCE));
-		  assert(update_tally_map(seller_address, property_traded, -difference_s, NEGATIVE_BALANCE));
-		}
-	    }
-	  else if ( negative_sell != 0 || negative_sell == 0 || possitive_sell == 0 )
-	    assert(update_tally_map(seller_address, property_traded, nCouldBuy, NEGATIVE_BALANCE));
-
-	  if ( negative_buy != 0 )
-	    {
-	      difference_b = negative_buy - nCouldBuy;
-	      if (difference_b >= 0)
-		assert(update_tally_map(buyer_address, property_traded, -nCouldBuy, NEGATIVE_BALANCE));
-	      else
-		{
-		  assert(update_tally_map(buyer_address, property_traded, -negative_buy, NEGATIVE_BALANCE));
-		  assert(update_tally_map(buyer_address, property_traded, -difference_b, POSITIVE_BALANCE));
-		}
-	    }
-	  else if ( possitive_buy != 0 || possitive_buy == 0 || negative_buy == 0 )
-	    assert(update_tally_map(buyer_address, property_traded, nCouldBuy, POSITIVE_BALANCE));
-	}
+          assert(update_tally_map(seller_address, property_traded, -nCouldBuy, CONTRACT_BALANCE));
+          assert(update_tally_map(buyer_address, property_traded, nCouldBuy, CONTRACT_BALANCE));
+      }
       /********************************************************/
-      int64_t poldPositiveBalanceL = getMPbalance(pold->getAddr(), property_traded, POSITIVE_BALANCE);
-      int64_t pnewPositiveBalanceL = getMPbalance(pnew->getAddr(), property_traded, POSITIVE_BALANCE);
-      int64_t poldNegativeBalanceL = getMPbalance(pold->getAddr(), property_traded, NEGATIVE_BALANCE);
-      int64_t pnewNegativeBalanceL = getMPbalance(pnew->getAddr(), property_traded, NEGATIVE_BALANCE);
+
+      // bringing back new positions
+      const int64_t poldNBalance = getMPbalance(pold->getAddr(), property_traded, CONTRACT_BALANCE);
+      const int64_t pnewNBalance = getMPbalance(pnew->getAddr(), property_traded, CONTRACT_BALANCE);
+
+      int64_t poldPositiveBalanceL = 0;
+      int64_t pnewPositiveBalanceL = 0;
+      int64_t poldNegativeBalanceL = 0;
+      int64_t pnewNegativeBalanceL = 0;
+
+      if (poldNBalance > 0) {
+          poldPositiveBalanceL = poldNBalance;
+      } else if (poldNBalance < 0) {
+          poldNegativeBalanceL = -poldNBalance;
+      }
+
+      if (pnewNBalance > 0) {
+          pnewPositiveBalanceL = pnewNBalance;
+      } else if (pnewNBalance < 0) {
+          pnewNegativeBalanceL = -pnewNBalance;
+      }
 
       std::string Status_s = "Empty";
       std::string Status_b = "Empty";
 
       NewReturn = TRADED;
       CMPContractDex contract_replacement = *pold;
-      int64_t creplNegativeBalance = getMPbalance(contract_replacement.getAddr(), property_traded, NEGATIVE_BALANCE);
-      int64_t creplPositiveBalance = getMPbalance(contract_replacement.getAddr(), property_traded, POSITIVE_BALANCE);
+
+      int64_t creplNegativeBalance = 0;
+      int64_t creplPositiveBalance = 0;
+
+      const int64_t creplBalance = getMPbalance(contract_replacement.getAddr(), property_traded, CONTRACT_BALANCE);
+
+      if (creplBalance > 0) {
+          creplPositiveBalance = creplBalance;
+      } else if (poldNBalance < 0) {
+          creplNegativeBalance = -creplBalance;
+      }
 
       if(msc_debug_x_trade_bidirectional)
       {
@@ -299,7 +317,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
           PrintToLog("creplPositiveBalance: %d, creplNegativeBalance: %d\n", creplPositiveBalance, creplNegativeBalance);
       }
 
-      int64_t remaining = seller_amount >= buyer_amount ? seller_amount - buyer_amount : buyer_amount - seller_amount;
+      int64_t remaining = (seller_amount >= buyer_amount) ? seller_amount - buyer_amount : buyer_amount - seller_amount;
 
       if ( (seller_amount > buyer_amount && pold->getTradingAction() == sell) || (seller_amount < buyer_amount && pold->getTradingAction() == buy))
       	{
@@ -432,13 +450,13 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       nCouldBuy0 = nCouldBuy;
       /********************************************************/
       if ( pold->getTradingAction() == sell )
-	{
-	  // If maker Sell and Open Short by Long Netted: status_sj -> makers
-	  if ( Status_maker == "OpenShortPosByLongPosNetted" )
+	    {
+	    // If maker Sell and Open Short by Long Netted: status_sj -> makers
+	    if ( Status_maker == "OpenShortPosByLongPosNetted" )
 	    {
 	      if ( Status_taker == "OpenLongPosByShortPosNetted" )
-		{
-		  if ( possitive_sell > negative_buy )
+		   {
+		   if ( possitive_sell > negative_buy )
 		    {
 		      Status_s1  = "LongPosNettedPartly";
 		      lives_maker1   = possitive_sell - negative_buy;
@@ -1063,10 +1081,10 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
           /********************************************************/
 
           cdexlastprice[property_traded] = pold->getEffectivePrice();
-          if(msc_debug_x_trade_bidirectional) PrintToLog("%s: marketPrice = %d\n",__func__, pold->getEffectivePrice());
+          // if(msc_debug_x_trade_bidirectional) PrintToLog("%s: marketPrice = %d\n",__func__, pold->getEffectivePrice());
           // t_tradelistdb->recordForUPNL(pnew->getHash(),pnew->getAddr(),property_traded,pold->getEffectivePrice());
 
-          if(msc_debug_x_trade_bidirectional) PrintToLog("++ erased old: %s\n", offerIt->ToString());
+          // if(msc_debug_x_trade_bidirectional) PrintToLog("++ erased old: %s\n", offerIt->ToString());
           pofferSet->erase(offerIt++);
 
           if (0 < remaining)
@@ -2424,40 +2442,38 @@ int mastercore::ContractDex_ADD_ORDERBOOK_EDGE(const std::string& sender_addr, u
 int mastercore::ContractDex_CLOSE_POSITION(const uint256& txid, unsigned int block, const std::string& sender_addr, uint32_t contractId, uint32_t collateralCurrency)
 {
     int rc = -1;
-    int64_t shortPosition = getMPbalance(sender_addr,contractId, NEGATIVE_BALANCE);
-    int64_t longPosition = getMPbalance(sender_addr,contractId, POSITIVE_BALANCE);
 
-    if(msc_debug_close_position) PrintToLog("%s(): shortPosition before: %d, longPosition before: %d\n",__func__, shortPosition, longPosition);
+    const int64_t contractBalance = getMPbalance(sender_addr,contractId, CONTRACT_BALANCE);
 
-    if (shortPosition == 0 && longPosition == 0)
+    if(msc_debug_close_position) PrintToLog("%s(): position before: %d\n",__func__, contractBalance);
+
+    if (contractBalance == 0) {
         return rc;
-
-    LOCK(cs_tally);
+    }
 
     // Clearing the position
     unsigned int idx = 0;
     std::pair <int64_t, uint8_t> result;
-    (shortPosition > 0 && longPosition == 0) ? (result.first = shortPosition, result.second = buy) : (longPosition > 0 && shortPosition == 0) ? (result.first = longPosition, result.second = sell) : (result.first = 0, result.second = 0);
+    (contractBalance > 0) ? (result.first = contractBalance, result.second = sell) : (result.first = -contractBalance, result.second = buy);
 
     if(msc_debug_close_position) PrintToLog("%s(): result.first: %d, result.second: %d\n",__func__, result.first, result.second);
 
     rc = ContractDex_ADD_MARKET_PRICE(sender_addr, contractId, result.first, block, txid, idx, result.second, 0);
 
-    int64_t shortPositionAf = getMPbalance(sender_addr, contractId, NEGATIVE_BALANCE);
-    int64_t longPositionAf= getMPbalance(sender_addr, contractId, POSITIVE_BALANCE);
+    const int64_t positionAf = getMPbalance(sender_addr, contractId, CONTRACT_BALANCE);
+    if(msc_debug_close_position) PrintToLog("%s(): position after: %d, rc: %d\n",__func__, positionAf, rc);
 
-    if(msc_debug_close_position) PrintToLog("%s(): shortPosition after: %d, longPosition after: %d, rc: %d\n",__func__, shortPositionAf, longPositionAf, rc);
-
-    if (shortPositionAf == 0 && longPositionAf == 0)
+    if (positionAf == 0)
     {
         if(msc_debug_close_position) PrintToLog("%s(): POSITION CLOSED!!!\n",__func__);
         // releasing the reserve
-        int64_t reserve = getMPbalance(sender_addr, collateralCurrency, CONTRACTDEX_RESERVE);
+        const int64_t reserve = getMPbalance(sender_addr, collateralCurrency, CONTRACTDEX_RESERVE);
         assert(update_tally_map(sender_addr, collateralCurrency, reserve, BALANCE));
         assert(update_tally_map(sender_addr, collateralCurrency, -reserve, CONTRACTDEX_RESERVE));
 
-    } else
-        PrintToLog("%s(): Position partialy Closed\n", __func__);
+    } else{
+      if(msc_debug_close_position) PrintToLog("%s(): Position partialy Closed\n", __func__);
+    }
 
 
     return rc;
@@ -2873,8 +2889,9 @@ bool mastercore::checkReserve(const std::string& address, int64_t amount, uint32
 
 // auxiliar function
 void addLives(int64_t& totalLongs, int64_t& totalShorts, int32_t contractId, const CMPTally& tally){
-    totalLongs += tally.getMoney(contractId, POSITIVE_BALANCE);
-    totalShorts += tally.getMoney(contractId, NEGATIVE_BALANCE);
+    int64_t position = tally.getMoney(contractId, CONTRACT_BALANCE);
+    (position > 0) ? totalLongs += position : totalShorts += position;
+
 }
 
  // counts the number of all contracts in every position
@@ -2893,9 +2910,9 @@ int64_t mastercore::getTotalLives(uint32_t contractId)
     // for each tally account, we sum just contracts (all shorts, or all longs)
     for_each(mp_tally_map.begin(), mp_tally_map.end(), [&totalLongs, &totalShorts, contractId](const std::pair<std::string, CMPTally>& elem){ addLives(totalLongs, totalShorts, contractId, elem.second); });
 
-    if(msc_debug_get_total_lives ) PrintToLog("%s(): totalLongs : %d, totalShorts : %d\n",__func__, totalLongs, totalShorts);
+    if(msc_debug_get_total_lives) PrintToLog("%s(): totalLongs : %d, totalShorts : %d\n",__func__, totalLongs, totalShorts);
 
-    assert(totalLongs == totalShorts);
+    assert(totalLongs == -totalShorts);
 
     return totalLongs;
  }

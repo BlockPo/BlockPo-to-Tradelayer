@@ -1723,12 +1723,9 @@ UniValue tl_getcurrentconsensushash(const JSONRPCRequest& request)
 
 bool PositionToJSON(const std::string& address, uint32_t property, UniValue& balance_obj, bool divisible)
 {
-    int64_t longPosition  = getMPbalance(address, property, POSITIVE_BALANCE);
-    int64_t shortPosition = getMPbalance(address, property, NEGATIVE_BALANCE);
-    balance_obj.pushKV("longPosition", longPosition);
-    balance_obj.pushKV("shortPosition", shortPosition);
-    // balance_obj.pushKV("liquidationPrice", FormatByType(liqPrice,2)));
-
+    int64_t position  = getMPbalance(address, property, CONTRACT_BALANCE);
+    balance_obj.pushKV("position", position);
+    
     return true;
 }
 
@@ -1736,16 +1733,14 @@ bool PositionToJSON(const std::string& address, uint32_t property, UniValue& bal
 bool FullPositionToJSON(const std::string& address, uint32_t property, UniValue& position_obj, bool divisible, CMPSPInfo::Entry sProperty)
 {
   // const int64_t factor = 100000000;
-  int64_t longPosition = getMPbalance(address, property, POSITIVE_BALANCE);
-  int64_t shortPosition = getMPbalance(address, property, NEGATIVE_BALANCE);
-  int64_t valueLong = longPosition * (uint64_t) sProperty.notional_size;
-  int64_t valueShort = shortPosition * (uint64_t) sProperty.notional_size;
+  const int64_t position = getMPbalance(address, property, CONTRACT_BALANCE);
+  int64_t valuePos = position * (uint64_t) sProperty.notional_size;
 
-  position_obj.pushKV("longPosition", FormatByType(longPosition, 1));
-  position_obj.pushKV("shortPosition", FormatByType(shortPosition, 1));
+  if (valuePos < 0)  valuePos = -valuePos;
+
+  position_obj.pushKV("position", FormatByType(position, 1));
   // position_obj.pushKV("liquidationPrice", FormatByType(liqPrice,2));
-  position_obj.pushKV("valueLong", FormatByType(valueLong, 1));
-  position_obj.pushKV("valueShort", FormatByType(valueShort, 1));
+  position_obj.pushKV("valuePos", FormatByType(valuePos, 1));
 
   return true;
 
@@ -3081,9 +3076,9 @@ UniValue tl_getmax_peggedcurrency(const JSONRPCRequest& request)
 
   //compare to short Position
   //get # short contract
-  int64_t shortPosition = getMPbalance(fromAddress, contractId, NEGATIVE_BALANCE);
+  int64_t position = getMPbalance(fromAddress, contractId, CONTRACT_BALANCE);
   //determine which is less and use that one as max you can peg
-  int64_t maxpegged = (max_dUSD > shortPosition) ? shortPosition : max_dUSD;
+  int64_t maxpegged = (max_dUSD > position) ? position : max_dUSD;
   //create UniValue object to return
   UniValue max_pegged(UniValue::VOBJ);
   //add value maxpegged to maxPegged json object

@@ -84,33 +84,27 @@ static int write_msc_balances(std::string& lineOut)
             const int64_t acceptReserved = (*iter).second.getMoney(propertyId, ACCEPT_RESERVE);
             const int64_t metadexReserved = (*iter).second.getMoney(propertyId, METADEX_RESERVE);
             const int64_t contractdexReserved = (*iter).second.getMoney(propertyId, CONTRACTDEX_RESERVE);
-            const int64_t positiveBalance = (*iter).second.getMoney(propertyId, POSITIVE_BALANCE);
-            const int64_t negativeBalance = (*iter).second.getMoney(propertyId, NEGATIVE_BALANCE);
             const int64_t realizedProfit = (*iter).second.getMoney(propertyId, REALIZED_PROFIT);
             const int64_t realizedLosses = (*iter).second.getMoney(propertyId, REALIZED_LOSSES);
             const int64_t remaining = (*iter).second.getMoney(propertyId, REMAINING);
             const int64_t unvested = (*iter).second.getMoney(propertyId, UNVESTED);
-            const int64_t channelReserve = (*iter).second.getMoney(propertyId, CHANNEL_RESERVE);
             // we don't allow 0 balances to read in, so if we don't write them
             // it makes things match up better between persisted state and processed state
-            if (0 == balance && 0 == sellReserved && 0 == acceptReserved && 0 == metadexReserved && contractdexReserved == 0 && positiveBalance == 0 && negativeBalance == 0 && realizedProfit == 0 && realizedLosses == 0 && remaining == 0 && unvested == 0 && channelReserve == 0) {
+            if (0 == balance && 0 == sellReserved && 0 == acceptReserved && 0 == metadexReserved && contractdexReserved == 0 && realizedProfit == 0 && realizedLosses == 0 && remaining == 0 && unvested == 0) {
                 continue;
             }
 
-            lineOut.append(strprintf("%d:%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d;",
+            lineOut.append(strprintf("%d:%d,%d,%d,%d,%d,%d,%d,%d,%d;",
                     propertyId,
                     balance,
                     sellReserved,
                     acceptReserved,
                     metadexReserved,
                     contractdexReserved,
-                    positiveBalance,
-                    negativeBalance,
                     realizedProfit,
                     realizedLosses,
                     remaining,
-                    unvested,
-                    channelReserve));
+                    unvested));
         }
 
     }
@@ -144,7 +138,7 @@ int input_msc_balances_string(const std::string& s)
 
         std::vector<std::string> curBalance;
         boost::split(curBalance, curProperty[1], boost::is_any_of(","), boost::token_compress_on);
-        if (curBalance.size() != 12) return -1;
+        if (curBalance.size() != 10) return -1;
 
         const uint32_t propertyId = boost::lexical_cast<uint32_t>(curProperty[0]);
         const int64_t balance = boost::lexical_cast<int64_t>(curBalance[0]);
@@ -152,13 +146,10 @@ int input_msc_balances_string(const std::string& s)
         const int64_t acceptReserved = boost::lexical_cast<int64_t>(curBalance[2]);
         const int64_t metadexReserved = boost::lexical_cast<int64_t>(curBalance[3]);
         const int64_t contractdexReserved = boost::lexical_cast<int64_t>(curBalance[4]);
-        const int64_t positiveBalance = boost::lexical_cast<int64_t>(curBalance[5]);
-        const int64_t negativeBalance = boost::lexical_cast<int64_t>(curBalance[6]);
-        const int64_t realizeProfit = boost::lexical_cast<int64_t>(curBalance[7]);
-        const int64_t realizeLosses = boost::lexical_cast<int64_t>(curBalance[8]);
-        const int64_t remaining = boost::lexical_cast<int64_t>(curBalance[9]);
-        const int64_t unvested = boost::lexical_cast<int64_t>(curBalance[10]);
-        const int64_t channelReserve = boost::lexical_cast<int64_t>(curBalance[11]);
+        const int64_t realizeProfit = boost::lexical_cast<int64_t>(curBalance[5]);
+        const int64_t realizeLosses = boost::lexical_cast<int64_t>(curBalance[6]);
+        const int64_t remaining = boost::lexical_cast<int64_t>(curBalance[7]);
+        const int64_t unvested = boost::lexical_cast<int64_t>(curBalance[8]);
 
         if (balance) update_tally_map(strAddress, propertyId, balance, BALANCE);
         if (sellReserved) update_tally_map(strAddress, propertyId, sellReserved, SELLOFFER_RESERVE);
@@ -166,13 +157,10 @@ int input_msc_balances_string(const std::string& s)
         if (metadexReserved) update_tally_map(strAddress, propertyId, metadexReserved, METADEX_RESERVE);
 
         if (contractdexReserved) update_tally_map(strAddress, propertyId, contractdexReserved, CONTRACTDEX_RESERVE);
-        if (positiveBalance) update_tally_map(strAddress, propertyId, positiveBalance, POSITIVE_BALANCE);
-        if (negativeBalance) update_tally_map(strAddress, propertyId, negativeBalance, NEGATIVE_BALANCE);
         if (realizeProfit) update_tally_map(strAddress, propertyId, realizeProfit, REALIZED_PROFIT);
         if (realizeLosses) update_tally_map(strAddress, propertyId, realizeLosses, REALIZED_LOSSES);
         if (remaining) update_tally_map(strAddress, propertyId, remaining, REMAINING);
         if (unvested) update_tally_map(strAddress, propertyId, unvested, UNVESTED);
-        if (channelReserve) update_tally_map(strAddress, propertyId, channelReserve, CHANNEL_RESERVE);
     }
 
     return 0;
@@ -672,10 +660,8 @@ BOOST_AUTO_TEST_CASE(cdex_persistence)
 
         CMPContractDex *s = &seller;
 
-        BOOST_CHECK(update_tally_map(seller.getAddr(),seller.getProperty(), 20, NEGATIVE_BALANCE));
         BOOST_CHECK(update_tally_map(seller.getAddr(),seller.getProperty(), 100000, CONTRACTDEX_RESERVE));
 
-        BOOST_CHECK_EQUAL(20, getMPbalance(seller.getAddr(), seller.getProperty(), NEGATIVE_BALANCE));
         BOOST_CHECK_EQUAL(100000, getMPbalance(seller.getAddr(), seller.getProperty(), CONTRACTDEX_RESERVE));
 
         BOOST_CHECK(ContractDex_INSERT(*s));
