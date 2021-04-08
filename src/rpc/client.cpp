@@ -314,6 +314,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_getproperty", 0, "arg0" },
     { "tl_getupnl", 1, "arg1" },
     { "tl_getpnl", 1, "arg1" },
+    { "tl_listproperties", 0, "verbose" },
     { "tl_listtransactions", 1, "arg1" },
     { "tl_listtransactions", 2, "arg2" },
     { "tl_listtransactions", 3, "arg3" },
