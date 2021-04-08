@@ -3119,7 +3119,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
         if (nBlock < nWaterlineBlock) return false;
 
     }
-    
+
     int64_t nBlockTime = pBlockIndex->GetBlockTime();
 
     CMPTransaction mp_obj;
@@ -6383,7 +6383,7 @@ bool Channel::updateChannelBal(const std::string& address, uint32_t propertyId, 
     }
 
     amount_remaining += amount;
-    setBalance(address,propertyId,amount_remaining);
+    setBalance(address, propertyId, amount_remaining);
 
     return true;
 

@@ -4319,6 +4319,9 @@ int CMPTransaction::logicMath_Instant_Trade()
 
   PrintToLog("%s(): SENDER (multisig address): %s, SPECIAL REF (first address): %s,  RECEIVER (second address): %s\n",__func__, sender, special, receiver);
 
+
+  // NOTE: no way to see if commit txs arrived before this tx.
+
   auto it = channels_Map.find(sender);
   if (it == channels_Map.end()){
       PrintToLog("%s(): rejected: channel not found\n", __func__);
@@ -4331,7 +4334,7 @@ int CMPTransaction::logicMath_Instant_Trade()
   // using first address data
   int kyc_id;
   if(!t_tradelistdb->checkAttestationReg(special,kyc_id)){
-    PrintToLog("%s(): rejected: first address (%s) kyc ckeck failed\n", __func__, sender);
+    PrintToLog("%s(): rejected: first address (%s) kyc ckeck failed\n", __func__, special);
     return (PKT_ERROR_KYC -10);
   }
 
@@ -4367,7 +4370,8 @@ int CMPTransaction::logicMath_Instant_Trade()
       return (PKT_ERROR_CHANNELS -16);
   }
 
-  // checking if the address contains in the channel enough tokens to trade!
+  // NOTE: this should be checked before somehow
+
   const int64_t fRemaining = chn.getRemaining(special, property);
   if (property > 0 && fRemaining < (int64_t) amount_forsale) {
       PrintToLog("%s(): rejected: address %s has insufficient balance of property %d [%s < %s] in channel %s\n",
@@ -4400,12 +4404,14 @@ int CMPTransaction::logicMath_Instant_Trade()
   {
       t_tradelistdb->recordNewInstantTrade(txid, chn.getMultisig(), chn.getFirst(), chn.getSecond(), property, amount_forsale, desired_property, desired_value, block, tx_idx);
 
+      PrintToLog("%s(): sender: %s, receiver: %s, special: %s, multisig: %s, first: %s, second: %s,  property: %d, amount_forsale: %d, desired_property: %d, desired_value: %d, block: %d\n",__func__, sender, receiver, special, chn.getMultisig(), chn.getFirst(), chn.getSecond(), property, amount_forsale, desired_property, desired_value, block);
+
       // updating channel balance for each address
       assert(chn.updateChannelBal(special, property, -amount_forsale));
       assert(chn.updateChannelBal(receiver, desired_property, -desired_value));
 
-      assert(update_tally_map(receiver, desired_property, desired_value, BALANCE));
-      assert(update_tally_map(special, property, amount_forsale, BALANCE));
+      assert(update_tally_map(special, desired_property, desired_value, BALANCE));
+      assert(update_tally_map(receiver, property, amount_forsale, BALANCE));
 
   }
 
