@@ -181,7 +181,7 @@ class RawTransactionBasicsTest (BitcoinTestFramework):
         self.nodes[0].generate(1)
 
 
-        self.log.info("Funding the seller of tokens (addresses[1])")
+        self.log.info("Funding the buyer of tokens (addresses[1])")
         params = str([addresses[1], 1.1]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "sendtoaddress", params)
         # self.log.info(out)
@@ -215,7 +215,7 @@ class RawTransactionBasicsTest (BitcoinTestFramework):
 
 
         self.log.info("Creating rawtx transaction")
-        params = '[[{"txid":"'+txid+'","vout":'+str(vout)+'},{"txid":"' + txid1 + '","vout":' + str(vout1) + '}],{ }, 0, true]'
+        params = '[[{"txid":"'+txid1+'","vout":'+str(vout1)+'},{"txid":"' + txid + '","vout":' + str(vout) + '}],{ }, 0, true]'
         out = tradelayer_HTTP(conn, headers, False, "createrawtransaction", params)
         assert_equal(out['error'], None)
         hex = out['result']
@@ -271,7 +271,7 @@ class RawTransactionBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         # self.log.info(out)
         assert_equal(out['result']['fee'], '0.10000000')
-        assert_equal(out['result']['sendingaddress'], addresses[1])
+        assert_equal(out['result']['sendingaddress'], multisig)
         assert_equal(out['result']['referenceaddress'], addresses[0])
         assert_equal(out['result']['type_int'], 113)
         assert_equal(out['result']['type'], 'Instant LTC for Tokens trade')

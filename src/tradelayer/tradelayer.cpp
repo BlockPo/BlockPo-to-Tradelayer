@@ -1047,11 +1047,11 @@ int ParseTransaction(const CTransaction& tx, int nBlock, unsigned int idx, CMPTr
      return (count > 0);
  }
 
-static bool Instant_payment(const uint256& txid, const std::string& buyer, const std::string& seller, uint32_t property, uint64_t amount_forsale, uint64_t nvalue, uint64_t price, int block, int idx)
+static bool Instant_payment(const uint256& txid, const std::string& buyer, const std::string& seller, const std::string sender, uint32_t property, uint64_t amount_forsale, uint64_t nvalue, uint64_t price, int block, int idx)
 {
     bool status = false;
 
-    if(msc_debug_instant_payment) PrintToLog("%s(): buyer : %s, seller : %s, property : %d, amount_forsale : %d, nvalue : %d, price : %d, block: %d, idx : %d\n",__func__, buyer, seller, property, amount_forsale, nvalue, price, block, idx);
+    if(msc_debug_instant_payment) PrintToLog("%s(): buyer : %s, seller : %s, sender : %s, property : %d, amount_forsale : %d, nvalue : %d, price : %d, block: %d, idx : %d\n",__func__, buyer, seller, sender, property, amount_forsale, nvalue, price, block, idx);
 
     const arith_uint256 amount_forsale256 = ConvertTo256(amount_forsale);
     const arith_uint256 amountLTC_Desired256 = ConvertTo256(price);
@@ -1064,14 +1064,16 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
 
     if(msc_debug_instant_payment) PrintToLog("%s(): amount_purchased: %d\n",__func__, amount_purchased);
 
-    std::string channelAddr;
 
-    assert(t_tradelistdb->checkChannelRelation(seller, channelAddr));
-
-    if(msc_debug_instant_payment) PrintToLog("%s(): channelAddr: %s\n",__func__, channelAddr);
+    if(msc_debug_instant_payment) PrintToLog("%s(): channelAddr: %s\n",__func__, sender);
 
     // retrieving channel struct
-    auto it = channels_Map.find(channelAddr);
+    auto it = channels_Map.find(sender);
+    if (it == channels_Map.end()){
+        PrintToLog("%s(): channel not found!\n",__func__);
+        return false;
+    }
+
     Channel& sChn = it->second;
 
     // adding buyer to channel if it wasn't added before
@@ -1083,53 +1085,55 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
 
     if(msc_debug_instant_payment)
     {
-        PrintToLog("%s(): seller : %s, buyer: %s, channelAddr : %s, amount_purchased: %d\n",__func__, seller, buyer, channelAddr, amount_purchased);
+        PrintToLog("%s(): seller : %s, buyer: %s, channelAddr : %s, amount_purchased: %d\n",__func__, seller, buyer, sender, amount_purchased);
         PrintToLog("%s(): remaining amount for seller (%s) : %d\n",__func__, seller, remaining);
     }
 
-    if (remaining >= amount_purchased)
+    if (remaining < amount_purchased)
     {
-        // taking fees
-        Token_LTC_Fees(amount_purchased, property);
-
-        assert(update_tally_map(buyer, property, amount_purchased, BALANCE));
-        assert(sChn.updateChannelBal(seller, property, -amount_purchased));
-
-        p_txlistdb->recordNewInstantLTCTrade(txid, channelAddr, seller , buyer, property, amount_purchased, price, block, idx);
-
-        // saving DEx token volume
-        MapTokenVolume[block][property] += amount_purchased;
-
-        const arith_uint256 unitPrice256 = (ConvertTo256(COIN) * amountLTC_Desired256) / amount_forsale256;
-
-        const int64_t unitPrice = (isPropertyDivisible(property)) ? ConvertTo64(unitPrice256) : ConvertTo64(unitPrice256) / COIN;
-
-        // adding last price
-        lastPrice[property] = unitPrice;
-
-        // adding numerator of vwap
-        tokenvwap[property][block].push_back(std::make_pair(unitPrice, nvalue));
-
-        // adding LTC volume to map
-        MapLTCVolume[block][property] += nvalue;
-
-        // updating last exchange block
-        // assert(sChn.updateLastExBlock(block));
-
-        return !status;
+          PrintToLog("%s(): not enough tokens in trade channel, seller remaining( %s) : %d\n",__func__, seller, remaining);
+          return status;
     }
 
-    return status;
+    // taking fees
+    Token_LTC_Fees(amount_purchased, property);
+
+    assert(update_tally_map(buyer, property, amount_purchased, BALANCE));
+    assert(sChn.updateChannelBal(seller, property, -amount_purchased));
+
+    p_txlistdb->recordNewInstantLTCTrade(txid, sender, seller , buyer, property, amount_purchased, price, block, idx);
+
+    // saving DEx token volume
+    MapTokenVolume[block][property] += amount_purchased;
+
+    const arith_uint256 unitPrice256 = (ConvertTo256(COIN) * amountLTC_Desired256) / amount_forsale256;
+
+    const int64_t unitPrice = (isPropertyDivisible(property)) ? ConvertTo64(unitPrice256) : ConvertTo64(unitPrice256) / COIN;
+
+    // adding last price
+    lastPrice[property] = unitPrice;
+
+    // adding numerator of vwap
+    tokenvwap[property][block].push_back(std::make_pair(unitPrice, nvalue));
+
+    // adding LTC volume to map
+    MapLTCVolume[block][property] += nvalue;
+
+    // updating last exchange block
+    // assert(sChn.updateLastExBlock(block));
+
+    return !status;
 
  }
 
- static bool HandleLtcInstantTrade(const CTransaction& tx, int nBlock, int idx, const std::string& sender, const std::string& receiver, uint32_t property, uint64_t amount_forsale, uint64_t price)
+ // special address is the change address.
+ static bool HandleLtcInstantTrade(const CTransaction& tx, int nBlock, int idx, const std::string& sender, const std::string& special, const std::string& receiver, uint32_t property, uint64_t amount_forsale, uint64_t price)
  {
      bool count = false;
      uint64_t nvalue = 0;
-     const unsigned int vSize = tx.vout.size() - 1;
+     const unsigned int vSize = tx.vout.size();
 
-     if (msc_debug_handle_instant) PrintToLog("%s(): nBlock : %d, sender : %s, receiver : %s, property : %d, amount_forsale : %d, price : %d, tx.vout.size(): %d\n",__func__, nBlock, sender, receiver, property, amount_forsale, price, tx.vout.size());
+     if (msc_debug_handle_instant) PrintToLog("%s(): nBlock : %d, sender : %s, special: %s, receiver : %s, property : %d, amount_forsale : %d, price : %d, tx.vout.size(): %d\n",__func__, nBlock, sender, special, receiver, property, amount_forsale, price, tx.vout.size());
 
      for (unsigned int n = 0; n < vSize ; ++n)
      {
@@ -1156,7 +1160,7 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
          if (msc_debug_handle_instant) PrintToLog("%s: litecoins found..., receiver address: %s, litecoin amount: %d\n", __func__, receiver, nvalue);
          // function to update tally in order to paid litecoins
 
-         if (Instant_payment(tx.GetHash(), sender, receiver, property, amount_forsale, nvalue, price, nBlock, idx)) count = true;
+         if (Instant_payment(tx.GetHash(), special, receiver, sender, property, amount_forsale, nvalue, price, nBlock, idx)) count = true;
      }
 
      if (count)
@@ -3145,7 +3149,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
         // if interpretPacket returns 1, that means we have an instant trade between LTCs and tokens.
         if (interp_ret == 1)
         {
-            HandleLtcInstantTrade(tx, nBlock, mp_obj.getIndexInBlock(), mp_obj.getSender(), mp_obj.getReceiver(), mp_obj.getProperty(), mp_obj.getAmountForSale(), mp_obj.getPrice());
+            HandleLtcInstantTrade(tx, nBlock, mp_obj.getIndexInBlock(), mp_obj.getSender(), mp_obj.getSpecial(), mp_obj.getReceiver(), mp_obj.getProperty(), mp_obj.getAmountForSale(), mp_obj.getPrice());
 
         } else if (interp_ret == 2) {
             HandleDExPayments(tx, nBlock, mp_obj.getSender());
