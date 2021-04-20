@@ -2994,47 +2994,6 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
 
   if (nBlock < nWaterlineBlock) return false;
   int64_t nBlockTime = pBlockIndex->GetBlockTime();
-  // int nBlockNow = GetHeight();
-
-  // /***********************************************************************/
-  // /** Calling The Settlement Algorithm **/
-  // if (nBlockNow%BlockS == 0 && nBlockNow != 0 && path_elef.size() != 0 && lastBlockg != nBlockNow) {
-
-  //   PrintToLog("\nSETTLEMENT : every 8 hours here. nBlockNow = %d\n", nBlockNow);
-  //   pt_ndatabase = new MatrixTLS(path_elef.size(), n_cols); MatrixTLS &ndatabase = *pt_ndatabase;
-  //   MatrixTLS M_file(path_elef.size(), n_cols);
-  //   fillingMatrix(M_file, ndatabase, path_elef);
-  //   n_rows = size(M_file, 0);
-  //   PrintToLog("Matrix for Settlement: dim = (%d, %d)\n\n", n_rows, n_cols);
-  //   //printing_matrix(M_file);
-
-  //   cout << "\n\n";
-  //   PrintToLog("\nCalling the Settlement Algorithm:\n\n");
-  //   int64_t twap_priceCDEx  = 0;
-  //   int64_t interest = 0;
-  //   std::clock_t c_start = std::clock();
-  //   settlement_algorithm_fifo(M_file, interest, twap_priceCDEx);
-  //   std::clock_t c_end = std::clock();
-
-  //   long double time_elapsed_ms = 1000.0*(c_end-c_start)/CLOCKS_PER_SEC;
-  //   std::cout << "CPU time used: " << time_elapsed_ms/1000.0 << "s\n";
-
-  //   // /**********************************************************************/
-  //   // /** Unallocating Dynamic Memory **/
-  //   //path_elef.clear();
-  //   market_priceMap.clear();
-  //   numVWAPMap.clear();
-  //   denVWAPMap.clear();
-  //   VWAPMap.clear();
-  //   VWAPMapSubVector.clear();
-  //   numVWAPVector.clear();
-  //   denVWAPVector.clear();
-  //   mapContractAmountTimesPrice.clear();
-  //   mapContractVolume.clear();
-  //   VWAPMapContracts.clear();
-  //   cdextwap_vec.clear();
-  //   /**********************************************************************/
-  // }
 
   CMPTransaction mp_obj;
   mp_obj.unlockLogic();
@@ -3053,11 +3012,11 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
 
       // if interpretPacket returns 1, that means we have an instant trade between LTCs and tokens.
       if (interp_ret == 1)
-        {
-	  HandleLtcInstantTrade(tx, nBlock, mp_obj.getIndexInBlock(), mp_obj.getSender(), mp_obj.getReceiver(), mp_obj.getProperty(), mp_obj.getAmountForSale(), mp_obj.getPrice());
+      {
+	        HandleLtcInstantTrade(tx, nBlock, mp_obj.getIndexInBlock(), mp_obj.getSender(), mp_obj.getReceiver(), mp_obj.getProperty(), mp_obj.getAmountForSale(), mp_obj.getPrice());
 
-        } else if (interp_ret == 2) {
-	HandleDExPayments(tx, nBlock, mp_obj.getSender());
+      } else if (interp_ret == 2) {
+	        HandleDExPayments(tx, nBlock, mp_obj.getSender());
 
       }
       // Only structurally valid transactions get recorded in levelDB
@@ -3818,7 +3777,7 @@ bool CMPSettlementList::SettlementAlgorithm(int starting_block, int ending_block
   PrintToLog("\nStart: Loopthrough SettlementDB\n");
 
 
-  // counting rows for M_file struct
+  // counting rows for creation of  M_file struct (absolutely inefficient)
   for(it->SeekToFirst(); it->Valid(); it->Next())
   {
       string strval = it->value().ToString();
@@ -3875,8 +3834,12 @@ bool CMPSettlementList::SettlementAlgorithm(int starting_block, int ending_block
 
   cout << "\n\n";
   PrintToLog("\nCalling the Settlement Algorithm:\n\n");
+
+  // this data should be retrieved from propertyId loop
   int64_t twap_priceCDEx  = 0;
   int64_t interest = 0;
+  //////////////////////////////////////////////////////
+  
   std::clock_t c_start = std::clock();
   settlement_algorithm_fifo(M_file, interest, twap_priceCDEx);
   std::clock_t c_end = std::clock();
@@ -4054,14 +4017,14 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
       const int best_state_block = load_most_relevant_state();
 
       if (best_state_block < 0)
-        {
-	  // unable to recover easily, remove stale stale state bits and reparse from the beginning.
-	  clear_all_state();
-        }
+      {
+	         // unable to recover easily, remove stale stale state bits and reparse from the beginning.
+	         clear_all_state();
+      }
       else
-	{
-	  nWaterlineBlock = best_state_block;
-	}
+	    {
+	         nWaterlineBlock = best_state_block;
+	    }
 
       // clear the global wallet property list, perform a forced wallet update and tell the UI that state is no longer valid, and UI views need to be reinit
       global_wallet_property_list.clear();

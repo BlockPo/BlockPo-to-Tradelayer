@@ -11,13 +11,27 @@
 /** Structures for clearing algo */
 struct status_amounts
 {
+  /* addrs_src: litecoind address of source
+     status_src: "OpenShortPosByLongPosNetted", "LongPosIncreased", ShortPosNettedPartly",  "ShortPosNetted", OpenLongPosByShortPosNetted", "ShortPosIncreased",... etc.
+     addrs_trk: litecoin address of trk (the other address involved in the trade)
+     lives_src: number of contracts in trk position
+     lives_src: number of contracts in src position
+     amount_trd: amount traded
+     nlives_src: contracts counted in a short/long change in src position
+     nlives_trk : contracts counted in a short/long change in trk position
+     matched_price :  price of the trade
+  */
   std::string addrs_src, status_src, addrs_trk, status_trk;
   long int lives_src, lives_trk, amount_trd, nlives_src, nlives_trk;
   double matched_price;
 };
 
+
 struct status_amounts_edge
 {
+  /*  entry_price: matched price when the position is created
+      exit_price: matched price when the position is reduced (or closed)
+  */
   std::string addrs_src, status_src, addrs_trk, status_trk;
   long int lives_src, lives_trk, amount_trd, edge_row, path_number, ghost_edge;
   double entry_price, exit_price;
@@ -30,6 +44,7 @@ struct EdgeInfo
   double entry_price, exit_price;
 };
 
+// lives refers to all contracts in alive positions 
 struct status_lives_edge
 {
   std::string addrs, status;
