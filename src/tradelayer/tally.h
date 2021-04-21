@@ -17,6 +17,7 @@ enum TallyType {
         REALIZED_LOSSES = 8,
         REMAINING = 9,
 	      UNVESTED = 10,
+        LIQUIDATION_PRICE = 11,  // for testing
         TALLY_TYPE_COUNT
 };
 

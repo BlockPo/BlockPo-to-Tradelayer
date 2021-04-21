@@ -724,7 +724,7 @@ namespace mastercore
 
   bool checkChannelAddress(const std::string& channelAddress);
 
-  // bool addressesInChannel(const std::string& fAddr, const std::string& sAddr);
+  bool LiquidationEngine(int Block);
 }
 
 #endif // TRADELAYER_TL_H

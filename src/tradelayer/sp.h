@@ -161,6 +161,7 @@ public:
         bool isPegged() const;
         bool isOracle() const;
         bool isContract() const;
+        uint32_t getCollateral() const { return collateral_currency; }
     };
 
  private:

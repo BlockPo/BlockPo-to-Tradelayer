@@ -5992,6 +5992,68 @@ bool mastercore::marginMain(int Block)
 
 }
 
+//check position for a given address of this contractId
+bool checkContractPositions(int Block, const std::string &address, const uint32_t contractId, const uint32_t collateral, const CMPTally &tally)
+{
+    const int64_t min_margin = 0; // we need a function to retrieve this data (50% of initial margin)
+    const int64_t reserve = tally.getMoney(contractId, CONTRACTDEX_RESERVE);
+
+    if(reserve < min_margin)
+    {
+        int64_t position = getMPbalance(address, contractId, CONTRACT_BALANCE);
+
+        // we need an active position
+        if (0 == position) return false;
+
+        // absolute value needed
+        if (position < 0) position = -position;
+
+        // selling or buying the position?
+        const uint8_t option = (position > 0) ? sell : buy;
+
+        // even or odd
+        int64_t icontracts = ((position % 2) == 0) ?  (position / 2) : (position - 1) / 2;
+
+        // if position has just 1 contract, we just close it.
+        if (0 == icontracts) icontracts++;
+
+        // NOTE: to avoid this, we need to update the ContractDex constructor
+        const uint256 txid;
+        unsigned int idx = 0;
+
+        // trying to liquidate 50% of position
+        ContractDex_ADD_MARKET_PRICE(address, contractId, icontracts, Block, txid, idx, option, 0);
+
+        // TODO: add here a position checking in order to see if we are above the margin limits.
+    }
+
+    return true;
+
+}
+
+
+bool mastercore::LiquidationEngine(int Block)
+{
+    uint32_t nextSPID = _my_sps->peekNextSPID();
+    for (uint32_t contractId = 1; contractId < nextSPID; contractId++)
+    {
+         CMPSPInfo::Entry sp;
+         if (!sp.isContract())
+         {
+             continue;
+         }
+
+         const uint32_t collateral = sp.getCollateral();
+
+         // we check each position for this contract Id
+         for_each(mp_tally_map.begin(),mp_tally_map.end(), [contractId, Block, collateral](const std::pair<std::string, CMPTally>& unmap){ checkContractPositions(Block, unmap.first, contractId, collateral, unmap.second);});
+
+   }
+
+   return true;
+
+}
+
 
 int64_t mastercore::sum_check_upnl(const std::string& address)
 {
