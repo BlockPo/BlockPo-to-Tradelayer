@@ -160,12 +160,14 @@ You should see all *.txt outputs (that are created by functions located in trade
 Txt outputs names:
 
 ```bash
--graphInfoSixth.txt (all graph)
--globalPNLALL_DUSD.txt (the final profit and loss for the entire system, it should be zero most of the time)
--globalVolumeALL_DUSD.txt (all volume traded)
--SettlementRows.txt (rows of M_file)
+-graphInfoSixth.txt #all graph
+-globalPNLALL_DUSD.txt #the final profit and loss for the entire system, it should be zero most of the time
+-globalVolumeALL_DUSD.txt #all volume traded
+-SettlementRows.txt #rows of M_file
 ```
 Important log files in /tmp/_somerandom_name_here  ( specific ./litecoin folder for each test innstance) :
 
--tradelayer.log (any PrintToLog function you can add is gonna print here)
--debug.log (litecoin level logs)
+```bash
+-tradelayer.log #any PrintToLog function you can add is gonna print here
+-debug.log #litecoin level logs
+```bash
