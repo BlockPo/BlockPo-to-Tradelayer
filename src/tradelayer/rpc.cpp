@@ -38,6 +38,7 @@
 #include <init.h>
 #include <primitives/block.h>
 #include <primitives/transaction.h>
+#include <rpc/safemode.h>
 #include <rpc/server.h>
 #include <tinyformat.h>
 #include <txmempool.h>
@@ -61,6 +62,10 @@ using namespace mastercore;
 
 using mastercore::StrToInt64;
 using mastercore::DoubleToInt64;
+
+// imports for tl_getwalletbalance.
+extern UniValue listreceivedbyaddress(const JSONRPCRequest& request);
+extern UniValue tl_getallbalancesforaddress(const JSONRPCRequest& request);
 
 /**
  * Throws a JSONRPCError, depending on error code.
@@ -603,6 +608,84 @@ UniValue tl_getbalance(const JSONRPCRequest& request)
     return balanceObj;
 }
 
+UniValue tl_getwalletbalance(const JSONRPCRequest& request)
+{
+    CWallet * const pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    if (request.fHelp || request.params.size() != 0)
+        throw runtime_error(
+            "tl_getwalletbalance \n"
+
+            "\nReturn the native and ALL balances of the wallet.\n"
+
+            "\nArguments:\n"
+            "\nResult:\n"
+            "{\n"
+            "  \"LTC_balance\" : \"n.nnnnnnnn\",   (string) the available native balance of the wallet\n"
+            "  \"ALL_balance\" : \"n.nnnnnnnn\",   (string) the available ALL balance of the wallet\n"
+            "}\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("tl_getwalletbalance", "")
+            + HelpExampleRpc("tl_getwalletbalance", "")
+        );
+
+    bool fVerbose = false;
+    if (!request.params[0].isNull())
+        fVerbose = request.params[0].get_bool();
+
+    UniValue addressesObj(UniValue::VARR);
+    UniValue balanceObj(UniValue::VOBJ);
+    int64_t LTC_balance = 0;
+    int64_t ALL_balance = 0;
+
+    // 1. listreceivedbyaddress.
+    {
+        JSONRPCRequest listrequest;
+        addressesObj = listreceivedbyaddress(listrequest);
+    }
+    // 2. loop over the addresses and accumulate balance.
+    {
+        for (auto entry: addressesObj.getValues())
+        {
+            // entry[address]
+            // entry[amount]
+
+            LTC_balance += ParseAmount(entry["amount"].getValStr(), true);
+
+            // 2b. loop over the properties of the address and accumulate balance.
+
+            UniValue tl_entries(UniValue::VARR);
+            JSONRPCRequest balancesrequest;
+            balancesrequest.params.push_back(entry["address"].get_str());
+
+            try {
+                tl_entries = tl_getallbalancesforaddress(balancesrequest);
+                for (auto tl_entry: tl_entries.getValues())
+                {
+                    // tl_entry[propertyid]
+                    // tl_entry[balance]
+                    // tl_entry[reserved]
+
+                    ALL_balance += ParseAmount(tl_entry["balance"].getValStr(), true);
+                }
+            } catch(...)
+            {
+	    	throw runtime_error("tl_getwalletbalance(): could not get ALL balances.");
+            }
+
+        }
+    }
+
+    balanceObj.pushKV("LTC_balance", LTC_balance);
+    balanceObj.pushKV("ALL_balance", ALL_balance);
+
+    return balanceObj;
+}
+
 // display an unvested balance via RPC
 UniValue tl_getunvested(const JSONRPCRequest& request)
 {
@@ -995,109 +1078,111 @@ UniValue tl_getproperty(const JSONRPCRequest& request)
 
 UniValue tl_listproperties(const JSONRPCRequest& request)
 {
-  if (request.fHelp)
-    throw runtime_error(
-			"tl_listproperties \"verbose\"\n"
+    if (request.fHelp)
+        throw runtime_error(
+                "tl_listproperties \"verbose\"\n"
 
-  		"\nLists all tokens or smart properties.\n"
+                "\nLists all tokens or smart properties.\n"
 
-      "\nArguments:\n"
-      "1. verbose                      (number, optional) 1 if more info is needed\n"
+                "\nArguments:\n"
+                "1. verbose                      (number, optional) 1 if more info is needed\n"
 
-			"\nResult:\n"
-			"[                                (array of JSON objects)\n"
-			"  {\n"
-			"    \"propertyid\" : n,          (number) the identifier of the tokens\n"
-			"    \"name\" : \"name\",         (string) the name of the tokens\n"
-			"    \"data\" : \"information\",  (string) additional information or a description\n"
-			"    \"url\" : \"uri\",           (string) an URI, for example pointing to a website\n"
-			"    \"divisible\" : true|false   (boolean) whether the tokens are divisible\n"
-			"  },\n"
-			"  ...\n"
-			"]\n"
+                "\nResult:\n"
+                "[                                (array of JSON objects)\n"
+                "  {\n"
+                "    \"propertyid\" : n,          (number) the identifier of the tokens\n"
+                "    \"name\" : \"name\",         (string) the name of the tokens\n"
+                "    \"data\" : \"information\",  (string) additional information or a description\n"
+                "    \"url\" : \"uri\",           (string) an URI, for example pointing to a website\n"
+                "    \"divisible\" : true|false   (boolean) whether the tokens are divisible\n"
+                "  },\n"
+                "  ...\n"
+                "]\n"
 
-			"\nExamples:\n"
-			+ HelpExampleCli("tl_listproperties", "\"1\"")
-			+ HelpExampleRpc("tl_listproperties", "\"1\"")
-			);
+                "\nExamples:\n"
+                + HelpExampleCli("tl_listproperties", "\"1\"")
+                + HelpExampleRpc("tl_listproperties", "\"1\"")
+                );
 
-  uint8_t showVerbose = (request.params.size() == 1) ? ParseBinary(request.params[0]) : 0;
+    bool fVerbose = false;
+    if (!request.params[0].isNull())
+        fVerbose = request.params[0].get_bool();
 
-  UniValue response(UniValue::VARR);
+    UniValue response(UniValue::VARR);
 
-  LOCK(cs_tally);
+    LOCK(cs_tally);
 
-  const uint32_t nextSPID = _my_sps->peekNextSPID();
-  for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
-  {
-      UniValue propertyObj(UniValue::VOBJ);
-      CMPSPInfo::Entry sp;
-      if(_my_sps->getSP(propertyId, sp))
-      {
-          const int64_t nTotalTokens = getTotalTokens(propertyId);
-          std::string strCreationHash = sp.txid.GetHex();
-          std::string strTotalTokens = FormatMP(propertyId, nTotalTokens);
-          propertyObj.pushKV("propertyid", (uint64_t) propertyId);
-          PropertyToJSON(sp, propertyObj); // name, data, url, divisible
-          KYCToJSON(sp, propertyObj);
+    const uint32_t nextSPID = _my_sps->peekNextSPID();
+    for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
+    {
+        UniValue propertyObj(UniValue::VOBJ);
+        CMPSPInfo::Entry sp;
+        if(_my_sps->getSP(propertyId, sp))
+        {
+            const int64_t nTotalTokens = getTotalTokens(propertyId);
+            std::string strCreationHash = sp.txid.GetHex();
+            std::string strTotalTokens = FormatMP(propertyId, nTotalTokens);
+            propertyObj.pushKV("propertyid", (uint64_t) propertyId);
+            PropertyToJSON(sp, propertyObj); // name, data, url, divisible
+            KYCToJSON(sp, propertyObj);
 
-          if(showVerbose)
-          {
-              propertyObj.pushKV("issuer", sp.issuer);
-              propertyObj.pushKV("creationtxid", strCreationHash);
-              propertyObj.pushKV("fixedissuance", sp.fixed);
-              propertyObj.pushKV("creation block", sp.init_block);
-              if (sp.isNative())
-              {
-                  propertyObj.pushKV("notional size", FormatDivisibleShortMP(sp.notional_size));
-                  propertyObj.pushKV("collateral currency", std::to_string(sp.collateral_currency));
-                  propertyObj.pushKV("margin requirement", FormatDivisibleShortMP(sp.margin_requirement));
-                  propertyObj.pushKV("blocks until expiration", std::to_string(sp.blocks_until_expiration));
-                  propertyObj.pushKV("inverse quoted", std::to_string(sp.inverse_quoted));
-                  const int64_t openInterest = getTotalLives(propertyId);
-                  propertyObj.pushKV("open interest", FormatDivisibleMP(openInterest));
-                  auto it = cdexlastprice.find(propertyId);
-                  const int64_t& lastPrice = it->second;
-                  propertyObj.pushKV("last traded price", FormatDivisibleMP(lastPrice));
-                  const int64_t fundBalance = 0; // NOTE: we need to write this after fundbalance logic
-                  propertyObj.pushKV("insurance fund balance", fundBalance);
+            if(fVerbose)
+            {
+                propertyObj.pushKV("issuer", sp.issuer);
+                propertyObj.pushKV("creationtxid", strCreationHash);
+                propertyObj.pushKV("fixedissuance", sp.fixed);
+                propertyObj.pushKV("creation block", sp.init_block);
+                if (sp.isNative())
+                {
+                    propertyObj.pushKV("notional size", FormatDivisibleShortMP(sp.notional_size));
+                    propertyObj.pushKV("collateral currency", std::to_string(sp.collateral_currency));
+                    propertyObj.pushKV("margin requirement", FormatDivisibleShortMP(sp.margin_requirement));
+                    propertyObj.pushKV("blocks until expiration", std::to_string(sp.blocks_until_expiration));
+                    propertyObj.pushKV("inverse quoted", std::to_string(sp.inverse_quoted));
+                    const int64_t openInterest = getTotalLives(propertyId);
+                    propertyObj.pushKV("open interest", FormatDivisibleMP(openInterest));
+                    auto it = cdexlastprice.find(propertyId);
+                    const int64_t& lastPrice = it->second;
+                    propertyObj.pushKV("last traded price", FormatDivisibleMP(lastPrice));
+                    const int64_t fundBalance = 0; // NOTE: we need to write this after fundbalance logic
+                    propertyObj.pushKV("insurance fund balance", fundBalance);
 
-              } else if (sp.isOracle()) {
-                  propertyObj.pushKV("notional size", FormatDivisibleShortMP(sp.notional_size));
-                  propertyObj.pushKV("collateral currency", std::to_string(sp.collateral_currency));
-                  propertyObj.pushKV("margin requirement", FormatDivisibleShortMP(sp.margin_requirement));
-                  propertyObj.pushKV("blocks until expiration", std::to_string(sp.blocks_until_expiration));
-                  propertyObj.pushKV("backup address", sp.backup_address);
-                  propertyObj.pushKV("hight price", FormatDivisibleShortMP(sp.oracle_high));
-                  propertyObj.pushKV("low price", FormatDivisibleShortMP(sp.oracle_low));
-                  propertyObj.pushKV("last close price", FormatDivisibleShortMP(sp.oracle_close));
-                  propertyObj.pushKV("inverse quoted", std::to_string(sp.inverse_quoted));
-                  const int64_t openInterest = getTotalLives(propertyId);
-                  propertyObj.pushKV("open interest", FormatDivisibleMP(openInterest));
-                  auto it = cdexlastprice.find(propertyId);
-                  const int64_t& lastPrice = it->second;
-                  propertyObj.pushKV("last traded price", FormatDivisibleMP(lastPrice));
-                  const int64_t fundBalance = 0; // NOTE: we need to write this after fundbalance logic is done
-                  propertyObj.pushKV("insurance fund balance", FormatDivisibleMP(fundBalance));
+                } else if (sp.isOracle()) {
+                    propertyObj.pushKV("notional size", FormatDivisibleShortMP(sp.notional_size));
+                    propertyObj.pushKV("collateral currency", std::to_string(sp.collateral_currency));
+                    propertyObj.pushKV("margin requirement", FormatDivisibleShortMP(sp.margin_requirement));
+                    propertyObj.pushKV("blocks until expiration", std::to_string(sp.blocks_until_expiration));
+                    propertyObj.pushKV("backup address", sp.backup_address);
+                    propertyObj.pushKV("hight price", FormatDivisibleShortMP(sp.oracle_high));
+                    propertyObj.pushKV("low price", FormatDivisibleShortMP(sp.oracle_low));
+                    propertyObj.pushKV("last close price", FormatDivisibleShortMP(sp.oracle_close));
+                    propertyObj.pushKV("inverse quoted", std::to_string(sp.inverse_quoted));
+                    const int64_t openInterest = getTotalLives(propertyId);
+                    propertyObj.pushKV("open interest", FormatDivisibleMP(openInterest));
+                    auto it = cdexlastprice.find(propertyId);
+                    const int64_t& lastPrice = it->second;
+                    propertyObj.pushKV("last traded price", FormatDivisibleMP(lastPrice));
+                    const int64_t fundBalance = 0; // NOTE: we need to write this after fundbalance logic is done
+                    propertyObj.pushKV("insurance fund balance", FormatDivisibleMP(fundBalance));
 
-              } else if (sp.isPegged()) {
-                  propertyObj.pushKV("contract associated",(uint64_t) sp.contract_associated);
-                  propertyObj.pushKV("series", sp.series);
-              } else {
-                  const int64_t ltc_volume = lastVolume(propertyId, false);
-                  const int64_t token_volume = lastVolume(propertyId, true);
-                  propertyObj.pushKV("last 24h LTC volume", FormatDivisibleMP(ltc_volume));
-                  propertyObj.pushKV("last 24h Token volume", FormatDivisibleMP(token_volume));
-                  propertyObj.pushKV("totaltokens", strTotalTokens);
-              }
-          }
+                } else if (sp.isPegged()) {
+                    propertyObj.pushKV("contract associated",(uint64_t) sp.contract_associated);
+                    propertyObj.pushKV("series", sp.series);
+                } else {
+                    const int64_t ltc_volume = lastVolume(propertyId, false);
+                    const int64_t token_volume = lastVolume(propertyId, true);
+                    propertyObj.pushKV("last 24h LTC volume", FormatDivisibleMP(ltc_volume));
+                    propertyObj.pushKV("last 24h Token volume", FormatDivisibleMP(token_volume));
+                    propertyObj.pushKV("totaltokens", strTotalTokens);
+                }
+            }
 
-      }
+        }
 
-      response.push_back(propertyObj);
-  }
+        response.push_back(propertyObj);
+    }
 
-  return response;
+    return response;
 }
 
 UniValue tl_list_natives(const JSONRPCRequest& request)
@@ -3642,6 +3727,7 @@ static const CRPCCommand commands[] =
   { "trade layer (data retieval)",  "tl_listvesting_addresses",                &tl_listvesting_addresses,             {} },
   { "trade layer (data retieval)",  "tl_get_channelremaining",                 &tl_get_channelremaining,              {} },
   { "trade layer (data retieval)",  "tl_list_attestation",                     &tl_list_attestation,                  {} },
+  { "trade layer (data retieval)",  "tl_getwalletbalance",                     &tl_getwalletbalance,                  {} },
 };
 
 void RegisterTLDataRetrievalRPCCommands(CRPCTable &tableRPC)
