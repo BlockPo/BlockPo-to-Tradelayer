@@ -5784,224 +5784,252 @@ bool CMPTradeList::getCreatedPegged(uint32_t propertyId, UniValue& tradeArray)
 }
 
 
-bool mastercore::marginMain(int Block)
+// bool mastercore::marginMain(int Block)
+// {
+//   //checking in map for address and the UPNL.
+//     if(msc_debug_margin_main) PrintToLog("%s: Block in marginMain: %d\n", __func__, Block);
+//     LOCK(cs_tally);
+//     uint32_t nextSPID = _my_sps->peekNextSPID();
+//     for (uint32_t contractId = 1; contractId < nextSPID; contractId++)
+//     {
+//         CMPSPInfo::Entry sp;
+//         if (_my_sps->getSP(contractId, sp))
+//         {
+//             if(msc_debug_margin_main) PrintToLog("%s: Property Id: %d\n", __func__, contractId);
+//             if (!sp.isContract())
+//             {
+//                 if(msc_debug_margin_main) PrintToLog("%s: Property is not future contract\n",__func__);
+//                 continue;
+//             }
+//         }
+//
+//         uint32_t collateralCurrency = sp.collateral_currency;
+//         //int64_t notionalSize = static_cast<int64_t>(sp.notional_size);
+//
+//         // checking the upnl map
+//         std::map<uint32_t, std::map<std::string, double>>::iterator it = addrs_upnlc.find(contractId);
+//         std::map<std::string, double> upnls = it->second;
+//
+//         //  if upnls is < 0, we need to cancel orders or liquidate contracts.
+//         for(std::map<std::string, double>::iterator it2 = upnls.begin(); it2 != upnls.end(); ++it2)
+// 	      {
+//             const std::string address = it2->first;
+//
+//             int64_t upnl = static_cast<int64_t>(it2->second * COIN);
+//             if(msc_debug_margin_main) PrintToLog("%s: upnl: %d", __func__, upnl);
+//             // if upnl is positive, keep searching
+//             if (upnl >= 0)
+//                 continue;
+//
+//             if(msc_debug_margin_main)
+//             {
+//                 PrintToLog("%s: upnl: %d", __func__, upnl);
+//                 PrintToLog("%s: sum_check_upnl: %d",__func__, sum_check_upnl(address));
+//             }
+//             // if sum of upnl is bigger than this upnl, skip address.
+//             if (sum_check_upnl(address) > upnl)
+//                 continue;
+//
+//             // checking position margin
+//             int64_t posMargin = pos_margin(contractId, address, sp.margin_requirement);
+//
+//             // if there's no position, something is wrong!
+//             if (posMargin < 0)
+//                 continue;
+//
+//             // checking the initMargin (init_margin = position_margin + active_orders_margin)
+//             std::string channelAddr;
+//             int64_t initMargin;
+//
+//             initMargin = getMPbalance(address,collateralCurrency,CONTRACTDEX_RESERVE);
+//
+//             rational_t percent = rational_t(-upnl,initMargin);
+//
+//             int64_t ordersMargin = initMargin - posMargin;
+//
+//             if(msc_debug_margin_main)
+//             {
+//                 PrintToLog("\n--------------------------------------------------\n");
+//                 PrintToLog("\n%s: initMargin= %d\n", __func__, initMargin);
+//                 PrintToLog("\n%s: positionMargin= %d\n", __func__, posMargin);
+//                 PrintToLog("\n%s: ordersMargin= %d\n", __func__, ordersMargin);
+//                 PrintToLog("%s: upnl= %d\n", __func__, upnl);
+//                 PrintToLog("%s: factor= %d\n", __func__, factor);
+//                 // PrintToLog("%s: proportion upnl/initMargin= %d\n", __func__, xToString(percent));
+//                 PrintToLog("\n--------------------------------------------------\n");
+//             }
+//             // if the upnl loss is more than 80% of the initial Margin
+//             if (factor <= percent)
+//             {
+//                 const uint256 txid;
+//                 if(msc_debug_margin_main)
+//                 {
+//                     // PrintToLog("%s: factor <= percent : %d <= %d\n",__func__, xToString(factor), xToString(percent));
+//                     PrintToLog("%s: margin call!\n", __func__);
+//                 }
+//
+//                 ContractDex_CLOSE_POSITION(txid, Block, address, contractId, collateralCurrency);
+//                 continue;
+//
+//             // if the upnl loss is more than 20% and minus 80% of the Margin
+//             } else if (factor2 <= percent) {
+//                 if(msc_debug_margin_main)
+//                 {
+//                     PrintToLog("%s: CALLING CANCEL IN ORDER\n", __func__);
+//                     // PrintToLog("%s: factor2 <= percent : %s <= %s\n", __func__, xToString(factor2),xToString(percent));
+//                 }
+//
+//                 int64_t fbalance, diff;
+//                 int64_t margin = getMPbalance(address,collateralCurrency,CONTRACTDEX_RESERVE);
+//                 int64_t ibalance = getMPbalance(address,collateralCurrency, BALANCE);
+//                 int64_t left = - 0.2 * margin - upnl;
+//
+//                 bool orders = false;
+//
+//                 do
+//                 {
+//                       if(msc_debug_margin_main) PrintToLog("%s: margin before cancel: %s\n", __func__, margin);
+//                       if(ContractDex_CANCEL_IN_ORDER(address, contractId) == 1)
+//                           orders = true;
+//                       fbalance = getMPbalance(address,collateralCurrency, BALANCE);
+//                       diff = fbalance - ibalance;
+//
+//                       if(msc_debug_margin_main)
+//                       {
+//                           PrintToLog("%s: ibalance: %s\n", __func__, ibalance);
+//                           PrintToLog("%s: fbalance: %s\n", __func__, fbalance);
+//                           PrintToLog("%s: diff: %d\n", __func__, diff);
+//                           PrintToLog("%s: left: %d\n", __func__, left);
+//                       }
+//
+//                       if ( left <= diff && msc_debug_margin_main) {
+//                           PrintToLog("%s: left <= diff !\n", __func__);
+//                       }
+//
+//                       if (orders) {
+//                           PrintToLog("%s: orders=true !\n", __func__);
+//                       } else
+//                          PrintToLog("%s: orders=false\n", __func__);
+//
+//                 } while(diff < left && !orders);
+//
+//                 // if left is negative, the margin is above the first limit (more than 80% maintMargin)
+//                 if (0 < left)
+//                 {
+//                     if(msc_debug_margin_main)
+//                     {
+//                         PrintToLog("%s: orders can't cover, we have to check the balance to refill margin\n", __func__);
+//                         PrintToLog("%s: left: %d\n", __func__, left);
+//                     }
+//                     //we have to see if we can cover this with the balance
+//                     int64_t balance = getMPbalance(address,collateralCurrency,BALANCE);
+//
+//                     if(balance >= left) // recover to 80% of maintMargin
+//                     {
+//                         if(msc_debug_margin_main) PrintToLog("\n%s: balance >= left\n", __func__);
+//                         update_tally_map(address, collateralCurrency, -left, BALANCE);
+//                         update_tally_map(address, collateralCurrency, left, CONTRACTDEX_RESERVE);
+//                         continue;
+//
+//                     } else { // not enough money in balance to recover margin, so we use position
+//
+//                          if(msc_debug_margin_main) PrintToLog("%s: not enough money in balance to recover margin, so we use position\n", __func__);
+//                          if (balance > 0)
+//                          {
+//                              update_tally_map(address, collateralCurrency, -balance, BALANCE);
+//                              update_tally_map(address, collateralCurrency, balance, CONTRACTDEX_RESERVE);
+//                          }
+//
+//                          const uint256 txid;
+//                          unsigned int idx = 0;
+//                          int64_t fcontracts = 0;
+//                          uint8_t option = 0;
+//
+//                          const int64_t longs = getMPbalance(address,contractId, CONTRACT_BALANCE);
+//                          const int64_t shorts = getMPbalance(address,contractId, CONTRACT_BALANCE);
+//
+//                          if(msc_debug_margin_main) PrintToLog("%s: longs: %d,shorts: %d \n", __func__, longs,shorts);
+//
+//                          if(longs > 0 && shorts == 0) {
+//                               option = buy;
+//                              fcontracts = longs;
+//                          } else {
+//                              option = sell;
+//                              fcontracts = shorts;
+//                          }
+//
+//                          if(msc_debug_margin_main) PrintToLog("%s(): upnl: %d, posMargin: %d\n", __func__, upnl,posMargin);
+//
+//                          arith_uint256 contracts = DivideAndRoundUp(ConvertTo256(posMargin) + ConvertTo256(-upnl), ConvertTo256(sp.margin_requirement));
+//                          int64_t icontracts = ConvertTo64(contracts);
+//
+//                          if(msc_debug_margin_main)
+//                          {
+//                              PrintToLog("%s: icontracts: %d\n", __func__, icontracts);
+//                              PrintToLog("%s: fcontracts before: %d\n", __func__, fcontracts);
+//                          }
+//
+//                          if (icontracts > fcontracts)
+//                              icontracts = fcontracts;
+//
+//                          if(msc_debug_margin_main) PrintToLog("%s: fcontracts after: %d\n", __func__, fcontracts);
+//
+//                          ContractDex_ADD_MARKET_PRICE(address, contractId, icontracts, Block, txid, idx, option, 0);
+//
+//
+//                     }
+//
+//                 }
+//
+//             } else {
+//                 if(msc_debug_margin_main) PrintToLog("%s: the upnl loss is LESS than 20% of the margin, nothing happen\n", __func__);
+//
+//             }
+//         }
+//     }
+//
+//     return true;
+//
+// }
+
+int64_t getMinMargin(const uint32_t contractId, const int64_t& position, CMPSPInfo::Entry& sp)
 {
-  //checking in map for address and the UPNL.
-    if(msc_debug_margin_main) PrintToLog("%s: Block in marginMain: %d\n", __func__, Block);
-    LOCK(cs_tally);
-    uint32_t nextSPID = _my_sps->peekNextSPID();
-    for (uint32_t contractId = 1; contractId < nextSPID; contractId++)
-    {
-        CMPSPInfo::Entry sp;
-        if (_my_sps->getSP(contractId, sp))
-        {
-            if(msc_debug_margin_main) PrintToLog("%s: Property Id: %d\n", __func__, contractId);
-            if (!sp.isContract())
-            {
-                if(msc_debug_margin_main) PrintToLog("%s: Property is not future contract\n",__func__);
-                continue;
-            }
-        }
+      int64_t margin = (position *  sp.margin_requirement) / 2;
 
-        uint32_t collateralCurrency = sp.collateral_currency;
-        //int64_t notionalSize = static_cast<int64_t>(sp.notional_size);
+      PrintToLog("%s(): position: %d, margin requirement: %d, total margin required: %d");
 
-        // checking the upnl map
-        std::map<uint32_t, std::map<std::string, double>>::iterator it = addrs_upnlc.find(contractId);
-        std::map<std::string, double> upnls = it->second;
-
-        //  if upnls is < 0, we need to cancel orders or liquidate contracts.
-        for(std::map<std::string, double>::iterator it2 = upnls.begin(); it2 != upnls.end(); ++it2)
-	      {
-            const std::string address = it2->first;
-
-            int64_t upnl = static_cast<int64_t>(it2->second * COIN);
-            if(msc_debug_margin_main) PrintToLog("%s: upnl: %d", __func__, upnl);
-            // if upnl is positive, keep searching
-            if (upnl >= 0)
-                continue;
-
-            if(msc_debug_margin_main)
-            {
-                PrintToLog("%s: upnl: %d", __func__, upnl);
-                PrintToLog("%s: sum_check_upnl: %d",__func__, sum_check_upnl(address));
-            }
-            // if sum of upnl is bigger than this upnl, skip address.
-            if (sum_check_upnl(address) > upnl)
-                continue;
-
-            // checking position margin
-            int64_t posMargin = pos_margin(contractId, address, sp.margin_requirement);
-
-            // if there's no position, something is wrong!
-            if (posMargin < 0)
-                continue;
-
-            // checking the initMargin (init_margin = position_margin + active_orders_margin)
-            std::string channelAddr;
-            int64_t initMargin;
-
-            initMargin = getMPbalance(address,collateralCurrency,CONTRACTDEX_RESERVE);
-
-            rational_t percent = rational_t(-upnl,initMargin);
-
-            int64_t ordersMargin = initMargin - posMargin;
-
-            if(msc_debug_margin_main)
-            {
-                PrintToLog("\n--------------------------------------------------\n");
-                PrintToLog("\n%s: initMargin= %d\n", __func__, initMargin);
-                PrintToLog("\n%s: positionMargin= %d\n", __func__, posMargin);
-                PrintToLog("\n%s: ordersMargin= %d\n", __func__, ordersMargin);
-                PrintToLog("%s: upnl= %d\n", __func__, upnl);
-                PrintToLog("%s: factor= %d\n", __func__, factor);
-                // PrintToLog("%s: proportion upnl/initMargin= %d\n", __func__, xToString(percent));
-                PrintToLog("\n--------------------------------------------------\n");
-            }
-            // if the upnl loss is more than 80% of the initial Margin
-            if (factor <= percent)
-            {
-                const uint256 txid;
-                if(msc_debug_margin_main)
-                {
-                    // PrintToLog("%s: factor <= percent : %d <= %d\n",__func__, xToString(factor), xToString(percent));
-                    PrintToLog("%s: margin call!\n", __func__);
-                }
-
-                ContractDex_CLOSE_POSITION(txid, Block, address, contractId, collateralCurrency);
-                continue;
-
-            // if the upnl loss is more than 20% and minus 80% of the Margin
-            } else if (factor2 <= percent) {
-                if(msc_debug_margin_main)
-                {
-                    PrintToLog("%s: CALLING CANCEL IN ORDER\n", __func__);
-                    // PrintToLog("%s: factor2 <= percent : %s <= %s\n", __func__, xToString(factor2),xToString(percent));
-                }
-
-                int64_t fbalance, diff;
-                int64_t margin = getMPbalance(address,collateralCurrency,CONTRACTDEX_RESERVE);
-                int64_t ibalance = getMPbalance(address,collateralCurrency, BALANCE);
-                int64_t left = - 0.2 * margin - upnl;
-
-                bool orders = false;
-
-                do
-                {
-                      if(msc_debug_margin_main) PrintToLog("%s: margin before cancel: %s\n", __func__, margin);
-                      if(ContractDex_CANCEL_IN_ORDER(address, contractId) == 1)
-                          orders = true;
-                      fbalance = getMPbalance(address,collateralCurrency, BALANCE);
-                      diff = fbalance - ibalance;
-
-                      if(msc_debug_margin_main)
-                      {
-                          PrintToLog("%s: ibalance: %s\n", __func__, ibalance);
-                          PrintToLog("%s: fbalance: %s\n", __func__, fbalance);
-                          PrintToLog("%s: diff: %d\n", __func__, diff);
-                          PrintToLog("%s: left: %d\n", __func__, left);
-                      }
-
-                      if ( left <= diff && msc_debug_margin_main) {
-                          PrintToLog("%s: left <= diff !\n", __func__);
-                      }
-
-                      if (orders) {
-                          PrintToLog("%s: orders=true !\n", __func__);
-                      } else
-                         PrintToLog("%s: orders=false\n", __func__);
-
-                } while(diff < left && !orders);
-
-                // if left is negative, the margin is above the first limit (more than 80% maintMargin)
-                if (0 < left)
-                {
-                    if(msc_debug_margin_main)
-                    {
-                        PrintToLog("%s: orders can't cover, we have to check the balance to refill margin\n", __func__);
-                        PrintToLog("%s: left: %d\n", __func__, left);
-                    }
-                    //we have to see if we can cover this with the balance
-                    int64_t balance = getMPbalance(address,collateralCurrency,BALANCE);
-
-                    if(balance >= left) // recover to 80% of maintMargin
-                    {
-                        if(msc_debug_margin_main) PrintToLog("\n%s: balance >= left\n", __func__);
-                        update_tally_map(address, collateralCurrency, -left, BALANCE);
-                        update_tally_map(address, collateralCurrency, left, CONTRACTDEX_RESERVE);
-                        continue;
-
-                    } else { // not enough money in balance to recover margin, so we use position
-
-                         if(msc_debug_margin_main) PrintToLog("%s: not enough money in balance to recover margin, so we use position\n", __func__);
-                         if (balance > 0)
-                         {
-                             update_tally_map(address, collateralCurrency, -balance, BALANCE);
-                             update_tally_map(address, collateralCurrency, balance, CONTRACTDEX_RESERVE);
-                         }
-
-                         const uint256 txid;
-                         unsigned int idx = 0;
-                         int64_t fcontracts = 0;
-                         uint8_t option = 0;
-
-                         const int64_t longs = getMPbalance(address,contractId, CONTRACT_BALANCE);
-                         const int64_t shorts = getMPbalance(address,contractId, CONTRACT_BALANCE);
-
-                         if(msc_debug_margin_main) PrintToLog("%s: longs: %d,shorts: %d \n", __func__, longs,shorts);
-
-                         if(longs > 0 && shorts == 0) {
-                              option = buy;
-                             fcontracts = longs;
-                         } else {
-                             option = sell;
-                             fcontracts = shorts;
-                         }
-
-                         if(msc_debug_margin_main) PrintToLog("%s(): upnl: %d, posMargin: %d\n", __func__, upnl,posMargin);
-
-                         arith_uint256 contracts = DivideAndRoundUp(ConvertTo256(posMargin) + ConvertTo256(-upnl), ConvertTo256(sp.margin_requirement));
-                         int64_t icontracts = ConvertTo64(contracts);
-
-                         if(msc_debug_margin_main)
-                         {
-                             PrintToLog("%s: icontracts: %d\n", __func__, icontracts);
-                             PrintToLog("%s: fcontracts before: %d\n", __func__, fcontracts);
-                         }
-
-                         if (icontracts > fcontracts)
-                             icontracts = fcontracts;
-
-                         if(msc_debug_margin_main) PrintToLog("%s: fcontracts after: %d\n", __func__, fcontracts);
-
-                         ContractDex_ADD_MARKET_PRICE(address, contractId, icontracts, Block, txid, idx, option, 0);
+      return margin;
+}
 
 
-                    }
+int64_t getUPNL(const int64_t& position, const int64_t entryPrice, const int64_t exitPrice, CMPSPInfo::Entry& sp)
+{
+   if (entryPrice == 0 || exitPrice == 0) return 0;
 
-                }
+   int64_t UPNL = position * sp.notional_size * ( 1/entryPrice - 1/exitPrice);
 
-            } else {
-                if(msc_debug_margin_main) PrintToLog("%s: the upnl loss is LESS than 20% of the margin, nothing happen\n", __func__);
-
-            }
-        }
-    }
-
-    return true;
-
+   return UPNL;
 }
 
 //check position for a given address of this contractId
-bool checkContractPositions(int Block, const std::string &address, const uint32_t contractId, const uint32_t collateral, const CMPTally &tally)
+bool checkContractPositions(int Block, const std::string &address, const uint32_t contractId, CMPSPInfo::Entry& sp, const CMPTally& tally)
 {
-    const int64_t min_margin = 0; // we need a function to retrieve this data (50% of initial margin)
+    // retrieving sp
+    assert(_my_sps->getSP(contractId, sp));
+
     const int64_t reserve = tally.getMoney(contractId, CONTRACTDEX_RESERVE);
+    int64_t position = getMPbalance(address, contractId, CONTRACT_BALANCE);
 
-    if(reserve < min_margin)
+    const int64_t min_margin = getMinMargin(contractId, position, sp); //(min margin: 50% requirements for position)
+    const int64_t entryPrice = 5000; // function needed here  getEntry(address, contractId)
+    const int64_t exitPrice = 4000; // function needed here. getExit(address, contractId)
+
+    const int64_t upnl = getUPNL(position, entryPrice, exitPrice, sp);
+
+    const int64_t sum = reserve + upnl;
+
+    if(sum < min_margin)
     {
-        int64_t position = getMPbalance(address, contractId, CONTRACT_BALANCE);
-
         // we need an active position
         if (0 == position) return false;
 
@@ -6043,10 +6071,10 @@ bool mastercore::LiquidationEngine(int Block)
              continue;
          }
 
-         const uint32_t collateral = sp.getCollateral();
+         // const uint32_t collateral = sp.getCollateral();
 
          // we check each position for this contract Id
-         for_each(mp_tally_map.begin(),mp_tally_map.end(), [contractId, Block, collateral](const std::pair<std::string, CMPTally>& unmap){ checkContractPositions(Block, unmap.first, contractId, collateral, unmap.second);});
+         for_each(mp_tally_map.begin(),mp_tally_map.end(), [contractId, Block, &sp](const std::pair<std::string, CMPTally>& unmap){ checkContractPositions(Block, unmap.first, contractId, sp, unmap.second);});
 
    }
 

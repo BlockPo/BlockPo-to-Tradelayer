@@ -2881,6 +2881,8 @@ bool mastercore::checkReserve(const std::string& address, int64_t amount, uint32
      arith_uint256 amountTR = (ConvertTo256(factor.first) * ConvertTo256(COIN) * ConvertTo256(amount) * ConvertTo256(sp.margin_requirement)) / (ConvertTo256(leverage) * ConvertTo256(uPrice) * ConvertTo256(factor.second));
      amountToReserve = ConvertTo64(amountTR);
 
+     PrintToLog("%s(): amountToReserve: %d\n",__func__, amountToReserve);
+
      nBalance = getMPbalance(address, sp.collateral_currency, BALANCE);
 
      return (nBalance < amountToReserve || nBalance == 0) ? false : true;
