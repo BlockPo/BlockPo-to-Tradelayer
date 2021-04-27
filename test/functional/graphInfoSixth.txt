@@ -1,8 +1,0 @@
-QiAKhGPSKNXKBs3xnMrrcU7MSSyzqjVy8p	 OpenLongPosition	 1000	 QcHqGXUKUSHsg1W7fAMgH1ecRWaWoNNgdy	 OpenShortPosition	 1000	 1000	 980.5
-QcHqGXUKUSHsg1W7fAMgH1ecRWaWoNNgdy	 ShortPosNetted	 0	 Qa7sePQgVNY7boA4K4Z23fkCPgaHDwKYkG	 OpenShortPosition	 1000	 1000	 700.5
-QcHqGXUKUSHsg1W7fAMgH1ecRWaWoNNgdy	 OpenLongPosition	 500	 Qa7sePQgVNY7boA4K4Z23fkCPgaHDwKYkG	 ShortPosIncreased	 1500	 500	 700.5
-QcHqGXUKUSHsg1W7fAMgH1ecRWaWoNNgdy	 LongPosIncreased	 1500	 Qa7sePQgVNY7boA4K4Z23fkCPgaHDwKYkG	 ShortPosIncreased	 2500	 1000	 700.5
-Qfy9tkwgt2wKJS5begmD4vYhnFctXSSANv	 OpenLongPosition	 1000	 QP4wUKAMPd5RYamxj1DdikRV4XbxGWXTqq	 OpenShortPosition	 1000	 1000	 980.5
-QP4wUKAMPd5RYamxj1DdikRV4XbxGWXTqq	 ShortPosNetted	 0	 QZ8ZrqPRA7XgmNJQKLpXJrAhzZqQxsFhp7	 OpenShortPosition	 1000	 1000	 700.5
-QP4wUKAMPd5RYamxj1DdikRV4XbxGWXTqq	 OpenLongPosition	 500	 QZ8ZrqPRA7XgmNJQKLpXJrAhzZqQxsFhp7	 ShortPosIncreased	 1500	 500	 700.5
-QP4wUKAMPd5RYamxj1DdikRV4XbxGWXTqq	 LongPosIncreased	 1500	 QZ8ZrqPRA7XgmNJQKLpXJrAhzZqQxsFhp7	 ShortPosIncreased	 2500	 1000	 700.5

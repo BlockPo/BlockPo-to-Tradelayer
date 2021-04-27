@@ -4050,6 +4050,8 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
         makeWithdrawals(pBlockIndex->nHeight);
     }
 
+    LiquidationEngine(pBlockIndex->nHeight);
+
     // marginMain(pBlockIndex->nHeight);
     // addInterestPegged(nBlockPrev,pBlockIndex);
 
@@ -5992,7 +5994,7 @@ bool CMPTradeList::getCreatedPegged(uint32_t propertyId, UniValue& tradeArray)
 //
 // }
 
-int64_t getMinMargin(const uint32_t contractId, const int64_t& position, CMPSPInfo::Entry& sp)
+int64_t getMinMargin(const uint32_t contractId, const int64_t& position, const CMPSPInfo::Entry& sp)
 {
       int64_t margin = (position *  sp.margin_requirement) / 2;
 
@@ -6002,7 +6004,7 @@ int64_t getMinMargin(const uint32_t contractId, const int64_t& position, CMPSPIn
 }
 
 
-int64_t getUPNL(const int64_t& position, const int64_t entryPrice, const int64_t exitPrice, CMPSPInfo::Entry& sp)
+int64_t getUPNL(const int64_t& position, const int64_t entryPrice, const int64_t exitPrice, const CMPSPInfo::Entry& sp)
 {
    if (entryPrice == 0 || exitPrice == 0) return 0;
 
@@ -6011,9 +6013,27 @@ int64_t getUPNL(const int64_t& position, const int64_t entryPrice, const int64_t
    return UPNL;
 }
 
+int64_t getExit(const uint32_t contractId,  const CMPSPInfo::Entry& sp)
+{
+    if(sp.isOracle()) {
+        // refine this! (calculate the oracle mark price in that block)
+        return sp.oracle_close;
+    }
+
+    // refine this: native contracts mark price
+    return 0;
+}
+
+int64_t getEntry(const std::string& address, const uint32_t contractId)
+{
+    int64_t entryPrice = getMPbalance(address, contractId, ENTRY_PRICE);
+    return entryPrice;
+}
+
 //check position for a given address of this contractId
 bool checkContractPositions(int Block, const std::string &address, const uint32_t contractId, CMPSPInfo::Entry& sp, const CMPTally& tally)
 {
+    PrintToLog("%s(): inside checkContractPositions \n",__func__);
     // retrieving sp
     assert(_my_sps->getSP(contractId, sp));
 
@@ -6021,15 +6041,18 @@ bool checkContractPositions(int Block, const std::string &address, const uint32_
     int64_t position = getMPbalance(address, contractId, CONTRACT_BALANCE);
 
     const int64_t min_margin = getMinMargin(contractId, position, sp); //(min margin: 50% requirements for position)
-    const int64_t entryPrice = 5000; // function needed here  getEntry(address, contractId)
-    const int64_t exitPrice = 4000; // function needed here. getExit(address, contractId)
+    const int64_t entryPrice = getEntry(address, contractId);
+    const int64_t exitPrice = getExit(contractId, sp);
 
     const int64_t upnl = getUPNL(position, entryPrice, exitPrice, sp);
 
     const int64_t sum = reserve + upnl;
 
+    PrintToLog("%s(): min_margin: %d, entryPrice: %d, exitPrice: %d, upnl: %d, sum: %d, reserve: %d\n",__func__, min_margin, entryPrice, exitPrice, upnl, sum, reserve);
+
     if(sum < min_margin)
     {
+        PrintToLog("%s(): sum < min_margin\n",__func__);
         // we need an active position
         if (0 == position) return false;
 
@@ -6053,7 +6076,10 @@ bool checkContractPositions(int Block, const std::string &address, const uint32_
         ContractDex_ADD_MARKET_PRICE(address, contractId, icontracts, Block, txid, idx, option, 0);
 
         // TODO: add here a position checking in order to see if we are above the margin limits.
+    } else  {
+        PrintToLog("%s(): sum >= min_margin, we are Ok\n",__func__);
     }
+
 
     return true;
 
@@ -6062,17 +6088,20 @@ bool checkContractPositions(int Block, const std::string &address, const uint32_
 
 bool mastercore::LiquidationEngine(int Block)
 {
-    uint32_t nextSPID = _my_sps->peekNextSPID();
+
+    const uint32_t nextSPID = _my_sps->peekNextSPID();
+
+    PrintToLog("%s(): inside LiquidationEngine, nextSPID: %d\n",__func__, nextSPID);
+
     for (uint32_t contractId = 1; contractId < nextSPID; contractId++)
     {
          CMPSPInfo::Entry sp;
-         if (!sp.isContract())
+         if (!_my_sps->getSP(contractId, sp) || !sp.isContract())
          {
              continue;
          }
 
-         // const uint32_t collateral = sp.getCollateral();
-
+         PrintToLog("%s(): contractId: %d\n",__func__, contractId);
          // we check each position for this contract Id
          for_each(mp_tally_map.begin(),mp_tally_map.end(), [contractId, Block, &sp](const std::pair<std::string, CMPTally>& unmap){ checkContractPositions(Block, unmap.first, contractId, sp, unmap.second);});
 

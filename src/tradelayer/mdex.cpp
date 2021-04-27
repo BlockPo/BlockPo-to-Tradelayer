@@ -178,15 +178,29 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       uint64_t amountpnew = pnew->getAmountForSale();
       uint64_t amountpold = pold->getAmountForSale();
 
-      // bringing back positive or negative position
+
       const int64_t poldBalance = getMPbalance(pold->getAddr(), property_traded, CONTRACT_BALANCE);
       const int64_t pnewBalance = getMPbalance(pnew->getAddr(), property_traded, CONTRACT_BALANCE);
+
+      // setting entry price (we need here something better: amount, price saved on memory for the address.)
+      if(poldBalance == 0)
+      {
+          PrintToLog("%s(): Entry price for address (%s) : %d\n",__func__, pold->getAddr(), pold->getEffectivePrice());
+          update_tally_map(pold->getAddr(), property_traded, pold->getEffectivePrice(), ENTRY_PRICE);
+      }
+
+      if(pnewBalance == 0)
+      {
+          PrintToLog("%s(): Entry price for address (%s) : %d\n",__func__, pnew->getAddr(), pold->getEffectivePrice());
+          update_tally_map(pnew->getAddr(), property_traded, pold->getEffectivePrice(), ENTRY_PRICE);
+      }
 
       int64_t poldPositiveBalanceB = 0;
       int64_t pnewPositiveBalanceB = 0;
       int64_t poldNegativeBalanceB = 0;
       int64_t pnewNegativeBalanceB = 0;
 
+      // bringing back positive or negative position
       if (poldBalance > 0) {
           poldPositiveBalanceB = poldBalance;
       } else if (poldBalance < 0) {
