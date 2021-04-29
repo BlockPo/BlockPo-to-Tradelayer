@@ -6008,9 +6008,21 @@ int64_t getUPNL(const int64_t& position, const int64_t entryPrice, const int64_t
 {
    if (entryPrice == 0 || exitPrice == 0) return 0;
 
-   int64_t UPNL = ((position * sp.notional_size) * (exitPrice - entryPrice)) / (entryPrice * exitPrice);
+   PrintToLog("%s(): inside getUPNL, position: %d. entryPrice: %d, exitPrice: %d\n",__func__, position, entryPrice, exitPrice);
 
-   PrintToLog("%s(): position: %d, notional size: %d, entryPrice: %d, exitPrice : %d, UPNL: %d\n",__func__, position, sp.notional_size, entryPrice, exitPrice, UPNL);
+   const double dEntryPrice = static_cast<double>(entryPrice / COIN);
+   const double dExitPrice = static_cast<double>(exitPrice /  COIN);
+   const double factor = static_cast<double>((dEntryPrice - dExitPrice) / (dEntryPrice * dExitPrice));
+
+   PrintToLog("%s(): entryPrice(double): %d, exitPrice(double): %d, factor: %d, notionalsize: %d\n",__func__, dEntryPrice, dExitPrice, factor, sp.notional_size);
+
+   const double UPNL = (position * sp.notional_size * factor) /  COIN;
+
+   PrintToLog("%s():UPNL(double): %d\n",__func__, UPNL);
+
+   const int64_t iUPNL = mastercore::DoubleToInt64(UPNL);
+
+   PrintToLog("%s():UPNL(int): %d\n",__func__, iUPNL);
 
    return UPNL;
 }
@@ -6042,9 +6054,6 @@ bool checkContractPositions(int Block, const std::string &address, const uint32_
     // we need an active position
     if (0 == position) return false;
 
-    // absolute value needed
-    if (position < 0) position = -position;
-
     // selling or buying the position?
     const uint8_t option = (position > 0) ? sell : buy;
 
@@ -6052,11 +6061,15 @@ bool checkContractPositions(int Block, const std::string &address, const uint32_
 
     PrintToLog("%s(): contractdex reserve for address (%s): %d\n",__func__, address, reserve);
 
-    const int64_t min_margin = getMinMargin(contractId, position, sp); //(min margin: 50% requirements for position)
     const int64_t entryPrice = getEntry(contractId, tally);
     const int64_t exitPrice = getExit(contractId, sp);
 
     const int64_t upnl = getUPNL(position, entryPrice, exitPrice, sp);
+
+    // absolute value needed
+    if (position < 0) position = -position;
+
+    const int64_t min_margin = getMinMargin(contractId, position, sp); //(min margin: 50% requirements for position)
 
     const int64_t sum = reserve + upnl;
 
@@ -6111,6 +6124,7 @@ bool mastercore::LiquidationEngine(int Block)
          // we check each position for this contract Id
          LOCK(cs_tally);
 
+         // NOTE: something is wrong with notionl size! 
          for_each(mp_tally_map.begin(),mp_tally_map.end(), [contractId, Block, &sp](const std::unordered_map<std::string, CMPTally>::value_type& unmap){ checkContractPositions(Block, unmap.first, contractId, sp, unmap.second);});
 
    }

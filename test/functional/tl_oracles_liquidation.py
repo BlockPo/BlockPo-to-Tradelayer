@@ -246,7 +246,7 @@ class OraclesBasicsTest (BitcoinTestFramework):
         # self.log.info(out)
         assert_equal(out['error'], None)
 
-        self.nodes[0].generate(10)
+        self.nodes[0].generate(2)
 
 
         self.log.info("Changing oracle prices")
@@ -255,7 +255,7 @@ class OraclesBasicsTest (BitcoinTestFramework):
         # self.log.info(out)
         assert_equal(out['error'], None)
 
-        self.nodes[0].generate(10)
+        self.nodes[0].generate(2)
 
 
         conn.close()
