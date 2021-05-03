@@ -5996,9 +5996,9 @@ bool CMPTradeList::getCreatedPegged(uint32_t propertyId, UniValue& tradeArray)
 
 int64_t getMinMargin(const uint32_t contractId, const int64_t& position, const CMPSPInfo::Entry& sp)
 {
-      int64_t margin = (position *  sp.margin_requirement) / (2 * COIN);
+      int64_t margin = position *  sp.margin_requirement / 2;
 
-      PrintToLog("%s(): position: %d, margin requirement: %d, total margin required: %d\n",__func__, position, sp.margin_requirement, margin);
+      if(msc_debug_liquidation_enginee) PrintToLog("%s(): position: %d, margin requirement: %d, total margin required: %d\n",__func__, position, sp.margin_requirement, margin);
 
       return margin;
 }
@@ -6008,31 +6008,35 @@ int64_t getUPNL(const int64_t& position, const int64_t entryPrice, const int64_t
 {
    if (entryPrice == 0 || exitPrice == 0) return 0;
 
-   PrintToLog("%s(): inside getUPNL, position: %d. entryPrice: %d, exitPrice: %d\n",__func__, position, entryPrice, exitPrice);
+   if(msc_debug_liquidation_enginee)
+   {
+       PrintToLog("%s(): inside getUPNL, position: %d. entryPrice: %d, exitPrice: %d\n",__func__, position, entryPrice, exitPrice);
+   }
 
-   const double dEntryPrice = static_cast<double>(entryPrice / COIN);
-   const double dExitPrice = static_cast<double>(exitPrice /  COIN);
-   const double factor = static_cast<double>((dEntryPrice - dExitPrice) / (dEntryPrice * dExitPrice));
+   const double dEntryPrice = (double) entryPrice / COIN;
+   const double dExitPrice = (double) exitPrice /  COIN;
 
-   PrintToLog("%s(): entryPrice(double): %d, exitPrice(double): %d, factor: %d, notionalsize: %d\n",__func__, dEntryPrice, dExitPrice, factor, sp.notional_size);
+   const double factor = (double) (dExitPrice - dEntryPrice) / (dEntryPrice * dExitPrice);
 
-   const double UPNL = (position * sp.notional_size * factor) /  COIN;
+   const double UPNL = position * sp.notional_size * factor;
 
-   PrintToLog("%s():UPNL(double): %d\n",__func__, UPNL);
+   const int64_t iUPNL = (int64_t) UPNL;
 
-   const int64_t iUPNL = mastercore::DoubleToInt64(UPNL);
+   if(msc_debug_liquidation_enginee)
+   {
+       PrintToLog("%s(): entryPrice(double): %d, exitPrice(double): %d, factor: %d, notionalsize: %d\n",__func__, dEntryPrice, dExitPrice, factor, sp.notional_size);
+       PrintToLog("%s():UPNL(nomalized): %d\n",__func__, UPNL / COIN);
+       PrintToLog("%s():UPNL(int): %d\n",__func__, iUPNL);
+   }
 
-   PrintToLog("%s():UPNL(int): %d\n",__func__, iUPNL);
-
-   return UPNL;
+   return iUPNL;
 }
 
 int64_t getExit(const uint32_t contractId,  const CMPSPInfo::Entry& sp)
 {
-    if(sp.isOracle()) {
-        // refine this! (calculate the oracle mark price in that block)
-        PrintToLog("%s(): oracle_close: %d \n",__func__, sp.oracle_close);
-        return sp.oracle_close;
+    if(sp.isOracle())
+    {
+        return getOracleTwap(contractId, OL_BLOCKS);
     }
 
     // refine this: native contracts mark price
@@ -6041,14 +6045,17 @@ int64_t getExit(const uint32_t contractId,  const CMPSPInfo::Entry& sp)
 
 int64_t getEntry(const uint32_t contractId,  const CMPTally& tally)
 {
-    int64_t entryPrice = tally.getMoney(contractId, ENTRY_PRICE);
-    return entryPrice;
+    return tally.getMoney(contractId, ENTRY_PRICE);
 }
 
 //check position for a given address of this contractId
 bool checkContractPositions(int Block, const std::string &address, const uint32_t contractId, const CMPSPInfo::Entry& sp, const CMPTally& tally)
 {
-    PrintToLog("%s(): inside checkContractPositions \n",__func__);
+    if(msc_debug_liquidation_enginee)
+    {
+        PrintToLog("%s(): inside checkContractPositions \n",__func__);
+    }
+
     int64_t position =  tally.getMoney(contractId, CONTRACT_BALANCE);
 
     // we need an active position
@@ -6059,7 +6066,10 @@ bool checkContractPositions(int Block, const std::string &address, const uint32_
 
     const int64_t reserve = tally.getMoney(sp.collateral_currency, CONTRACTDEX_RESERVE);
 
-    PrintToLog("%s(): contractdex reserve for address (%s): %d\n",__func__, address, reserve);
+    if(msc_debug_liquidation_enginee)
+    {
+        PrintToLog("%s(): contractdex reserve for address (%s): %d\n",__func__, address, reserve);
+    }
 
     const int64_t entryPrice = getEntry(contractId, tally);
     const int64_t exitPrice = getExit(contractId, sp);
@@ -6073,11 +6083,14 @@ bool checkContractPositions(int Block, const std::string &address, const uint32_
 
     const int64_t sum = reserve + upnl;
 
-    PrintToLog("%s(): min_margin: %d, entryPrice: %d, exitPrice: %d, upnl: %d, sum: %d, reserve: %d\n",__func__, min_margin, entryPrice, exitPrice, upnl, sum, reserve);
+    if(msc_debug_liquidation_enginee)
+    {
+        PrintToLog("%s(): min_margin: %d, entryPrice: %d, exitPrice: %d, upnl: %d, sum: %d, reserve: %d\n",__func__, min_margin, entryPrice, exitPrice, upnl, sum, reserve);
+    }
 
     if(sum < min_margin)
     {
-        PrintToLog("%s(): sum < min_margin\n",__func__);
+        if(msc_debug_liquidation_enginee) PrintToLog("%s(): sum < min_margin\n",__func__);
 
         // even or odd
         int64_t icontracts = ((position % 2) == 0) ?  (position / 2) : (position - 1) / 2;
@@ -6090,13 +6103,13 @@ bool checkContractPositions(int Block, const std::string &address, const uint32_
         unsigned int idx = 0;
 
         // trying to liquidate 50% of position
-        PrintToLog("%s(): here trying to liquidate 50 percent of position\n",__func__);
+        if(msc_debug_liquidation_enginee) PrintToLog("%s(): here trying to liquidate 50 percent of position, contractId: %d, icontracts : %d, Block: %d\n",__func__,  contractId, icontracts, Block);
 
-        // ContractDex_ADD_MARKET_PRICE(address, contractId, icontracts, Block, txid, idx, option, 0);
+        ContractDex_ADD_MARKET_PRICE(address, contractId, icontracts, Block, txid, idx, option, 0);
 
         // TODO: add here a position checking in order to see if we are above the margin limits.
     } else  {
-        PrintToLog("%s(): sum >= min_margin, we are Ok\n",__func__);
+        if(msc_debug_liquidation_enginee) PrintToLog("%s(): sum >= min_margin, we are Ok\n",__func__);
     }
 
 
@@ -6110,7 +6123,7 @@ bool mastercore::LiquidationEngine(int Block)
 
     const uint32_t nextSPID = _my_sps->peekNextSPID();
 
-    PrintToLog("%s(): inside LiquidationEngine, nextSPID: %d\n",__func__, nextSPID);
+    if(msc_debug_liquidation_enginee) PrintToLog("%s(): inside LiquidationEngine, nextSPID: %d\n",__func__, nextSPID);
 
     for (uint32_t contractId = 1; contractId < nextSPID; contractId++)
     {
@@ -6120,11 +6133,11 @@ bool mastercore::LiquidationEngine(int Block)
              continue;
          }
 
-         PrintToLog("%s(): contractId: %d\n",__func__, contractId);
+         if(msc_debug_liquidation_enginee) PrintToLog("%s(): contractId: %d\n",__func__, contractId);
+
          // we check each position for this contract Id
          LOCK(cs_tally);
 
-         // NOTE: something is wrong with notionl size! 
          for_each(mp_tally_map.begin(),mp_tally_map.end(), [contractId, Block, &sp](const std::unordered_map<std::string, CMPTally>::value_type& unmap){ checkContractPositions(Block, unmap.first, contractId, sp, unmap.second);});
 
    }
@@ -7138,19 +7151,20 @@ int64_t mastercore::getOracleTwap(uint32_t contractId, int nBlocks)
 {
      int64_t sum = 0;
      auto it = oraclePrices.find(contractId);
+
      if (it != oraclePrices.end())
      {
          int count = 0;
          arith_uint256 aSum = 0;
-         auto &orMap = it->second;
+         const auto &orMap = it->second;
 
-         for(const auto& om : orMap)
+         for(auto rit = orMap.rbegin(); rit != orMap.rend(); ++rit)
          {
-             if(msc_debug_oracle_twap) PrintToLog("%s(): actual block: %d\n", __func__, om.first);
+             if(msc_debug_oracle_twap) PrintToLog("%s(): actual block: %d\n", __func__, rit->first);
 
              if (count >= nBlocks) break;
 
-             const oracledata& ord = om.second;
+             const oracledata& ord = rit->second;
              aSum += (ConvertTo256(ord.high) + ConvertTo256(ord.low) + ConvertTo256(ord.close)) / ConvertTo256(3) ;
              count++;
 
@@ -7277,7 +7291,7 @@ void CMPTradeList::getUpnInfo(const std::string& address, uint32_t contractId, U
     assert(_my_sps->getSP(contractId, sp));
 
     //twap of last 3 blocks
-    const uint64_t exitPrice = getOracleTwap(contractId, oBlocks);
+    const uint64_t exitPrice = getOracleTwap(contractId, OBLOCKS);
 
     int count = 0;
     std::vector<double> sumUpnl;

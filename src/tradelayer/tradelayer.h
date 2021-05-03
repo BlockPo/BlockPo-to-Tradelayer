@@ -66,7 +66,8 @@ const int MAX_CLASS_D_SEARCH_BYTES = 200;
 const int BASISPOINT = 100;
 
 // Oracle twaps blocks
-const int oBlocks = 9;
+const int OBLOCKS = 9;
+const int OL_BLOCKS = 3;
 
 // settlement variables
 const int BlockS = 500; /** regtest **/
