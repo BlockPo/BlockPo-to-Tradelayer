@@ -24,7 +24,8 @@ class Register
 private:
     typedef struct {
         int64_t balance[REGISTER_TYPE_COUNT];
-        std::vector<int64_t,int64_t> entries; // in order to recalculate entry price
+        typedef std::queue<std::pair<int64_t,int64_t>> Entries; // in order to recalculate entry price (FIFO)
+        Entries entries;
     } PositionRecord;
 
     //! Map of position records
@@ -32,7 +33,7 @@ private:
     //! Position records for different contracts
     PositionMap mp_position;
     //! Internal iterator pointing to a position record
-    TokenMap::iterator my_it;
+    PositionMap::iterator my_it;
 
 public:
     /** Creates an empty tally. */
@@ -50,16 +51,22 @@ public:
 
     int64_t getPosition() const;
 
+    int64_t getEntyPrice() const;
+
+    int64_t getMargin() const;
+
+    int64_t getLiquidationPrice() const;
+
     void updateEntryPrice();
-    //
-    // /** Compares the tally with another tally and returns true, if they are equal. */
-    // bool operator==(const CMPTally& rhs) const;
-    //
-    // /** Compares the tally with another tally and returns true, if they are not equal. */
-    // bool operator!=(const CMPTally& rhs) const;
-    //
-    // /** Prints a balance record to the console. */
-    // int64_t print(uint32_t propertyId = 1, bool bDivisible = true) const;
+
+    /** Compares the tally with another tally and returns true, if they are equal. */
+    bool operator==(const Register& rhs) const;
+
+    /** Compares the tally with another tally and returns true, if they are not equal. */
+    bool operator!=(const Register& rhs) const;
+
+    // /** Prints a full register to the console. */
+    int64_t print(uint32_t contractId) const;
 };
 
 

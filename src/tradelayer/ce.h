@@ -35,7 +35,7 @@ class uint256;
  *      char 's'
  *      uint32_t contractId
  *  Value:
- *      CMPSPInfo::Entry info
+ *      CDInfo::Entry info
  *
  *  Key:
  *      char 't'
@@ -48,7 +48,7 @@ class uint256;
  *      uint256 hashBlock
  *      uint32_t contractId
  *  Value:
- *      CMPSPInfo::Entry info
+ *      CDInfo::Entry info
  */
 class CDInfo : public CDBBase
 {
@@ -71,13 +71,12 @@ public:
         uint32_t collateral_currency;
         uint64_t margin_requirement;
         uint32_t attribute_type;
-        int64_t contracts_needed;
         int init_block;
 
         uint32_t numerator;
         uint32_t denominator;
 
-        /* int64_t ticksize; */
+        int64_t ticksize;
         std::string series;
         std::string backup_address;
         uint64_t oracle_high;
@@ -104,7 +103,6 @@ public:
             READWRITE(txid);
             READWRITE(creation_block);
             READWRITE(update_block);
-            READWRITE(contracts_needed);
 
             READWRITE(blocks_until_expiration);
             READWRITE(notional_size);
@@ -112,7 +110,6 @@ public:
             READWRITE(margin_requirement);
 	          READWRITE(attribute_type);
             READWRITE(init_block);
-            READWRITE(contract_associated);
             READWRITE(numerator);
             READWRITE(denominator);
             READWRITE(series);
@@ -143,11 +140,11 @@ public:
     /** Extends clearing of CDBBase. */
     void Clear();
 
-    void init(uint32_t nextSPID = 0x1UL);
+    void init(uint32_t nextCDID = 0x1UL);
 
     uint32_t peekNextContractID() const;
     bool updateCD(uint32_t contractId, const Entry& info);
-    uint32_t putCP(const Entry& info);
+    uint32_t putCD(const Entry& info);
     bool getCD(uint32_t contractId, Entry& info) const;
     bool hasCD(uint32_t contractId) const;
     uint32_t findCDByTX(const uint256& txid) const;
@@ -173,7 +170,7 @@ bool isNativeContract(uint32_t contractId);
 std::string getContractName(uint32_t contractId);
 bool IsContractIdValid(uint32_t contractId);
 
-bool getEntryFromName(const std::string& name, uint32_t& contractId, CDInfo::Entry& cd);
+bool getContractFromName(const std::string& name, uint32_t& contractId, CDInfo::Entry& cd);
 }
 
 #endif // TRADELAYER_CE_H

@@ -1,5 +1,6 @@
 TRADELAYER_H = \
   tradelayer/activation.h \
+  tradelayer/ce.h \
   tradelayer/consensushash.h \
   tradelayer/convert.h \
   tradelayer/createpayload.h \
@@ -17,6 +18,7 @@ TRADELAYER_H = \
   tradelayer/parse_string.h \
   tradelayer/pending.h \
   tradelayer/persistence.h \
+  tradelayer/register.h \
   tradelayer/rpc.h \
   tradelayer/rpcpayload.h \
   tradelayer/rpcrawtx.h \
@@ -40,6 +42,7 @@ TRADELAYER_H = \
 
 TRADELAYER_CPP = \
   tradelayer/activation.cpp \
+  tradelayer/ce.cpp \
   tradelayer/consensushash.cpp \
   tradelayer/convert.cpp \
   tradelayer/createpayload.cpp \
