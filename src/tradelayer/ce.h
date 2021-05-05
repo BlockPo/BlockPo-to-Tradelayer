@@ -1,5 +1,5 @@
-#ifndef TRADELAYER_SP_H
-#define TRADELAYER_SP_H
+#ifndef TRADELAYER_CE_H
+#define TRADELAYER_CE_H
 
 #include <tradelayer/log.h>
 #include <tradelayer/persistence.h>
@@ -22,7 +22,7 @@ class uint256;
 
 #include <boost/filesystem.hpp>
 
-/** LevelDB based storage for currencies, smart properties and tokens.
+/** LevelDB based storage for contracts
  *
  * DB Schema:
  *
@@ -33,7 +33,7 @@ class uint256;
  *
  *  Key:
  *      char 's'
- *      uint32_t propertyId
+ *      uint32_t contractId
  *  Value:
  *      CMPSPInfo::Entry info
  *
@@ -41,40 +41,30 @@ class uint256;
  *      char 't'
  *      uint256 hashTxid
  *  Value:
- *      uint32_t propertyId
+ *      uint32_t contractId
  *
  *  Key:
  *      char 'b'
  *      uint256 hashBlock
- *      uint32_t propertyId
+ *      uint32_t contractId
  *  Value:
  *      CMPSPInfo::Entry info
  */
-class CMPSPInfo : public CDBBase
+class CDInfo : public CDBBase
 {
 public:
     struct Entry {
-        // common SP data
+        // basic data
         std::string issuer;
         uint16_t prop_type;
-        uint32_t prev_prop_id;
-        std::string category;
-        std::string subcategory;
         std::string name;
         std::string url;
         std::string data;
-        int64_t num_tokens;
 
         // other information
         uint256 txid;
         uint256 creation_block;
         uint256 update_block;
-        bool fixed;
-        bool manual;
-
-        //vesting
-        double last_vesting;
-        int last_vesting_block;
 
         uint32_t blocks_until_expiration;
         uint32_t notional_size;
@@ -83,7 +73,7 @@ public:
         uint32_t attribute_type;
         int64_t contracts_needed;
         int init_block;
-        // uint32_t ecosystemSP;
+
         uint32_t numerator;
         uint32_t denominator;
 
@@ -97,15 +87,6 @@ public:
         bool inverse_quoted;
         bool expirated;
 
-        // for pegged currency
-        uint32_t contract_associated;
-
-        // For crowdsale properties:
-        //   txid -> amount invested, crowdsale deadline, user issued tokens, issuer issued tokens
-        // For managed properties:
-        //   txid -> granted amount, revoked amount
-        std::map<uint256, std::vector<int64_t> > historicalData;
-
         //kyc
         std::vector<int64_t> kyc;
 
@@ -117,22 +98,14 @@ public:
         inline void SerializationOp(Stream& s, Operation ser_action) {
             READWRITE(issuer);
             READWRITE(prop_type);
-            READWRITE(prev_prop_id);
-            READWRITE(category);
-            READWRITE(subcategory);
             READWRITE(name);
             READWRITE(url);
             READWRITE(data);
-            READWRITE(num_tokens);
             READWRITE(txid);
             READWRITE(creation_block);
             READWRITE(update_block);
-            READWRITE(fixed);
-            READWRITE(manual);
-            READWRITE(historicalData);
             READWRITE(contracts_needed);
 
-            /** New things for Contracts */
             READWRITE(blocks_until_expiration);
             READWRITE(notional_size);
             READWRITE(collateral_currency);
@@ -149,42 +122,35 @@ public:
             READWRITE(oracle_close);
             READWRITE(inverse_quoted);
             READWRITE(kyc);
-            READWRITE(last_vesting);
-            READWRITE(last_vesting_block);
             ////////////////////////////
         }
 
-        bool isDivisible() const;
         void print() const;
       	bool isNative() const;
         bool isSwap() const;
-        bool isPegged() const;
         bool isOracle() const;
         bool isContract() const;
         uint32_t getCollateral() const { return collateral_currency; }
     };
 
  private:
-    /** implied version of ALL and TALL so they don't hit the leveldb */
-    Entry implied_all;
-    Entry implied_tall;
-    uint32_t next_spid;
+    uint32_t next_contract_id;
 
  public:
-    CMPSPInfo(const fs::path& path, bool fWipe);
-    virtual ~CMPSPInfo();
+    CDInfo(const fs::path& path, bool fWipe);
+    virtual ~CDInfo();
 
     /** Extends clearing of CDBBase. */
     void Clear();
 
-    void init(uint32_t nextSPID = 0x3UL);
+    void init(uint32_t nextSPID = 0x1UL);
 
-    uint32_t peekNextSPID() const;
-    bool updateSP(uint32_t propertyId, const Entry& info);
-    uint32_t putSP(const Entry& info);
-    bool getSP(uint32_t propertyId, Entry& info) const;
-    bool hasSP(uint32_t propertyId) const;
-    uint32_t findSPByTX(const uint256& txid) const;
+    uint32_t peekNextContractID() const;
+    bool updateCD(uint32_t contractId, const Entry& info);
+    uint32_t putCP(const Entry& info);
+    bool getCD(uint32_t contractId, Entry& info) const;
+    bool hasCD(uint32_t contractId) const;
+    uint32_t findCDByTX(const uint256& txid) const;
 
     int64_t popBlock(const uint256& block_hash);
 
@@ -199,22 +165,15 @@ public:
 namespace mastercore
 {
 
-extern CMPSPInfo* _my_sps;
+extern CDInfo* _my_cds;
 
-std::string strPropertyType(uint16_t propertyType);
+bool isContractSwap(uint32_t contractId);
+bool isNativeContract(uint32_t contractId);
 
-bool isPropertyContract(uint32_t propertyId);
-bool isPropertyPegged(uint32_t propertyId);
-bool isPropertySwap(uint32_t propertyId);
-bool isPropertyNativeContract(uint32_t propertyId);
+std::string getContractName(uint32_t contractId);
+bool IsContractIdValid(uint32_t contractId);
 
-std::string getPropertyName(uint32_t propertyId);
-bool isPropertyDivisible(uint32_t propertyId);
-bool IsPropertyIdValid(uint32_t propertyId);
-
-bool isPropertyContract(uint32_t propertyId);
-
-bool getEntryFromName(const std::string& name, uint32_t& propertyId, CMPSPInfo::Entry& sp);
+bool getEntryFromName(const std::string& name, uint32_t& contractId, CDInfo::Entry& cd);
 }
 
-#endif // TRADELAYER_SP_H
+#endif // TRADELAYER_CE_H

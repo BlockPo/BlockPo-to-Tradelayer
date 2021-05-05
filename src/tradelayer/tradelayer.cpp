@@ -6077,7 +6077,7 @@ bool checkContractPositions(int Block, const std::string &address, const uint32_
     const int64_t upnl = getUPNL(position, entryPrice, exitPrice, sp);
 
     // absolute value needed
-    if (position < 0) position = -position;
+    position = abs(position);
 
     const int64_t min_margin = getMinMargin(contractId, position, sp); //(min margin: 50% requirements for position)
 

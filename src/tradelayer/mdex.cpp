@@ -195,6 +195,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
           update_tally_map(pnew->getAddr(), property_traded, pold->getEffectivePrice(), ENTRY_PRICE);
       }
 
+
       int64_t poldPositiveBalanceB = 0;
       int64_t pnewPositiveBalanceB = 0;
       int64_t poldNegativeBalanceB = 0;
@@ -245,7 +246,8 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       CMPSPInfo::Entry sp;
       assert(_my_sps->getSP(property_traded, sp));
 
-      uint32_t NotionalSize = sp.notional_size;
+      const uint32_t& NotionalSize = sp.notional_size;
+      const uint32_t& colateral = sp.collateral_currency;
 
       arith_uint256 Volume256_t = mastercore::ConvertTo256(NotionalSize) * mastercore::ConvertTo256(nCouldBuy)/COIN;
       int64_t Volume64_t = mastercore::ConvertTo64(Volume256_t);
@@ -290,6 +292,30 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       const int64_t poldNBalance = getMPbalance(pold->getAddr(), property_traded, CONTRACT_BALANCE);
       const int64_t pnewNBalance = getMPbalance(pnew->getAddr(), property_traded, CONTRACT_BALANCE);
 
+      //------------------------------------------------------------------------
+      // checking here if positions increase or decrease (we need this to take more margin if it's required)
+      if(abs(poldBalance) < abs(poldNBalance))
+      {
+          // take more margin...
+          const uint64_t allreserved = pold->getAmountReserved();
+          const uint64_t proportional = (uint64_t) (nCouldBuy * allreserved) / pold->getAmountForSale();
+          assert(update_tally_map(pold->getAddr(), colateral, -proportional, BALANCE));
+          assert(update_tally_map(pold->getAddr(), colateral,  proportional, CONTRACTDEX_RESERVE));
+
+      }
+
+      if(abs(pnewBalance) < abs(pnewNBalance))
+      {
+        const uint64_t allreserved = pnew->getAmountReserved();
+        const uint64_t proportional = (uint64_t) (nCouldBuy * allreserved) / pnew->getAmountForSale();
+        assert(update_tally_map(pnew->getAddr(), colateral, -proportional, BALANCE));
+        assert(update_tally_map(pnew->getAddr(), colateral,  proportional, CONTRACTDEX_RESERVE));
+
+      }
+      //------------------------------------------------------------------------
+      // NOTE: we need to re-calculate entry price here.
+      //
+      //------------------------------------------------------------------------
       int64_t poldPositiveBalanceL = 0;
       int64_t pnewPositiveBalanceL = 0;
       int64_t poldNegativeBalanceL = 0;

@@ -3200,7 +3200,7 @@ int CMPTransaction::logicMath_ContractDexTrade()
       return PKT_ERROR_SP -38;
   }
 
-  uint32_t colateralh = pfuture->fco_collateral_currency;
+  // uint32_t colateralh = pfuture->fco_collateral_currency;
   // int64_t marginRe = static_cast<int64_t>(pfuture->fco_margin_requirement);
   //
   // bool inverse_quoted = pfuture->fco_quoted;
@@ -3231,11 +3231,11 @@ int CMPTransaction::logicMath_ContractDexTrade()
   }else {
       if (amountToReserve > 0)
 	    {
-	        assert(update_tally_map(sender, colateralh, -amountToReserve, BALANCE));
-	        assert(update_tally_map(sender, colateralh,  amountToReserve, CONTRACTDEX_RESERVE));
+           //NOTE: we need to take this amount WHEN the trade is done, and if the position is increased
+	        // assert(update_tally_map(sender, colateralh, -amountToReserve, BALANCE));
+	        // assert(update_tally_map(sender, colateralh,  amountToReserve, CONTRACTDEX_RESERVE));
 	    }
-      // int64_t reserva = getMPbalance(sender, colateralh, CONTRACTDEX_MARGIN);
-      // std::string reserved = FormatDivisibleMP(reserva,false);
+
   }
 
   /*********************************************/
