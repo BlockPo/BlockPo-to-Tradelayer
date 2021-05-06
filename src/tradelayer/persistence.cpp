@@ -14,9 +14,6 @@
 
 #include <stdint.h>
 
-// XXX
-#include <boost/filesystem/path.hpp>
-
 /**
  * Opens or creates a LevelDB based database.
  */
