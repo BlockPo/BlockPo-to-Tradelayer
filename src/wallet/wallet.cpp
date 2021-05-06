@@ -35,6 +35,7 @@
 #include <future>
 
 #include <boost/algorithm/string/replace.hpp>
+#include <boost/range/algorithm/random_shuffle.hpp>
 #include <boost/thread.hpp>
 
 std::vector<CWalletRef> vpwallets;
@@ -2393,7 +2394,7 @@ bool CWallet::SelectCoinsMinConf(const CAmount& nTargetValue, const int nConfMin
     std::vector<CInputCoin> vValue;
     CAmount nTotalLower = 0;
 
-    random_shuffle(vCoins.begin(), vCoins.end(), GetRandInt);
+    boost::range::detail::random_shuffle(vCoins.begin(), vCoins.end(), GetRandInt);
 
     for (const COutput &output : vCoins)
     {
