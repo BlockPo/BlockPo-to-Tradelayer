@@ -195,7 +195,6 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
           update_tally_map(pnew->getAddr(), property_traded, pold->getEffectivePrice(), ENTRY_PRICE);
       }
 
-
       int64_t poldPositiveBalanceB = 0;
       int64_t pnewPositiveBalanceB = 0;
       int64_t poldNegativeBalanceB = 0;
@@ -314,7 +313,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       }
       //------------------------------------------------------------------------
       // NOTE: we need to re-calculate entry price here.
-      //
+      // Register::updateEntry function 
       //------------------------------------------------------------------------
       int64_t poldPositiveBalanceL = 0;
       int64_t pnewPositiveBalanceL = 0;

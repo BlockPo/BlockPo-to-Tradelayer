@@ -3,19 +3,22 @@
 
 #include <stdint.h>
 #include <map>
+#include <vector>
 
 //! User records for contracts
 enum RecordType {
-  ENTRY_PRICE = 0,
-  POSITION = 1,
-  ENTRY_PRICE = 2,
-  LIQUIDATION_PRICE = 3,
-  UPNL = 4,
-  MARGIN = 5,
-  REGISTER_TYPE_COUNT
+  ENTRY_CPRICE = 0,
+  CONTRACT_POSITION = 1,
+  LIQUIDATION_PRICE = 2,
+  UPNL = 3,
+  MARGIN = 4,
+  RECORD_TYPE_COUNT
 };
 
-bool isOverflow(int64_t a, int64_t b);
+extern bool isOverflow(int64_t a, int64_t b);
+
+// in order to recalculate entry price (FIFO)
+typedef std::vector<std::pair<int64_t,int64_t>> Entries;
 
 /** Register of a single user in a given contract.
  */
@@ -23,20 +26,19 @@ class Register
 {
 private:
     typedef struct {
-        int64_t balance[REGISTER_TYPE_COUNT];
-        typedef std::queue<std::pair<int64_t,int64_t>> Entries; // in order to recalculate entry price (FIFO)
+        int64_t balance[RECORD_TYPE_COUNT];
         Entries entries;
     } PositionRecord;
 
     //! Map of position records
-    typedef std::map<uint32_t, PositionRecord> PositionMap;
+    typedef std::map<uint32_t, PositionRecord> RecordMap;
     //! Position records for different contracts
-    PositionMap mp_position;
+    RecordMap mp_record;
     //! Internal iterator pointing to a position record
-    PositionMap::iterator my_it;
+    RecordMap::iterator my_it;
 
 public:
-    /** Creates an empty tally. */
+    /** Creates an empty register. */
     Register();
 
     /** Resets the internal iterator. */
@@ -45,28 +47,17 @@ public:
     /** Advances the internal iterator. */
     uint32_t next();
 
-    //NOTE: here add functions!
+    bool updateRegister(uint32_t contractId, int64_t amount, RecordType ttype);
 
-    bool updateRegister();
+    void insertEntry(uint32_t contractId, int64_t amount, int64_t price);
 
-    int64_t getPosition() const;
+    bool updateEntryPrice(uint32_t contractId, int64_t amount);
 
-    int64_t getEntyPrice() const;
-
-    int64_t getMargin() const;
-
-    int64_t getLiquidationPrice() const;
-
-    void updateEntryPrice();
+    int64_t getRecord(uint32_t contractId, RecordType ttype) const;
 
     /** Compares the tally with another tally and returns true, if they are equal. */
     bool operator==(const Register& rhs) const;
 
-    /** Compares the tally with another tally and returns true, if they are not equal. */
-    bool operator!=(const Register& rhs) const;
-
-    // /** Prints a full register to the console. */
-    int64_t print(uint32_t contractId) const;
 };
 
 
