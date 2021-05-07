@@ -99,30 +99,48 @@ bool Register::updateEntryPrice(uint32_t contractId, int64_t amount)
 {
     RecordMap::iterator it = mp_record.find(contractId);
 
-    if (it != mp_record.end()) {
+    if (it != mp_record.end())
+    {
         PositionRecord& record = it->second;
         Entries& entries = record.entries;
-        int64_t completed = 0; // contracts counted
+
+        int64_t remaining = 0; // contracts remaining in count
         int64_t total = 0;  // contracts * price counted
+
+        // setting remaining
+        remaining = amount;
         auto it = entries.begin();
-        while (completed < amount) {
-         // process to calculate it
-         const int64_t& ramount = it->first;
-         const int64_t& rprice = it->second;
-        
-         completed += ramount;
-         total += ramount * rprice;
-         it++;
+
+        while(remaining > 0) {
+          // process to calculate it
+          const int64_t& ramount = it->first;
+          const int64_t& rprice = it->second;
+
+          if (0 == ramount || 0 == rprice ) {
+              ++it;
+          }
+
+          int64_t part = (remaining - ramount >= 0) ? ramount : remaining;
+
+          total += part * rprice;
+          PrintToLog("%s(): part: %d, total: %d\n",__func__, part, total);
+          remaining -= part;
+          PrintToLog("%s(): remaining after loop: %d\n",__func__, remaining);
+          PrintToLog("-------------------------------------\n\n");
+          ++it;
         }
 
         const int64_t newPrice = total / amount;
 
+        PrintToLog("%s(): total sum: %d, amount: %d, newPrice: %d\n",__func__, total, amount, newPrice);
+
         updateRegister(contractId, newPrice, ENTRY_CPRICE);
 
+        return true;
     }
 
 
-    return true;
+    return false;
 }
 
 /**
