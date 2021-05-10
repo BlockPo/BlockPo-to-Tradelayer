@@ -1,5 +1,5 @@
 #include <tradelayer/rpcvalues.h>
-
+#include <tradelayer/ce.h>
 #include <tradelayer/createtx.h>
 #include <tradelayer/log.h>
 #include <tradelayer/parse_string.h>
@@ -402,8 +402,8 @@ uint32_t ParseNameOrId(const UniValue& value)
     if (amount != 0)
     {
         uint32_t am = static_cast<uint32_t>(amount);
-        CMPSPInfo::Entry sp;
-        if (!mastercore::_my_sps->getSP(am, sp) || !sp.isContract()) {
+        CDInfo::Entry cd;
+        if (!mastercore::_my_cds->getCD(am, cd)) {
             throw JSONRPCError(RPC_DATABASE_ERROR, "Contract Id not found");
         }
 
@@ -411,11 +411,11 @@ uint32_t ParseNameOrId(const UniValue& value)
     }
 
     struct FutureContractObject *pfuture = getFutureContractObject(value.get_str());
-    uint32_t propertyId = pfuture->fco_propertyId;
+    uint32_t contractId = pfuture->fco_propertyId;
 
-    if (propertyId == 0) {
+    if (contractId == 0) {
         throw JSONRPCError(RPC_TYPE_ERROR, "Contract not found!");
     }
 
-    return propertyId;
+    return contractId;
 }

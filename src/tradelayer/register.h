@@ -2,8 +2,13 @@
 #define TRADELAYER_REGISTER_H
 
 #include <stdint.h>
+#include <sync.h>
 #include <map>
-#include <vector>
+#include <queue>
+#include <unordered_map>
+
+//! Global lock for state objects
+extern CCriticalSection cs_register;
 
 //! User records for contracts
 enum RecordType {
@@ -18,7 +23,7 @@ enum RecordType {
 extern bool isOverflow(int64_t a, int64_t b);
 
 // in order to recalculate entry price (FIFO)
-typedef std::vector<std::pair<int64_t,int64_t>> Entries;
+typedef std::queue<std::pair<int64_t,int64_t>> Entries;
 
 /** Register of a single user in a given contract.
  */
@@ -51,7 +56,7 @@ public:
 
     void insertEntry(uint32_t contractId, int64_t amount, int64_t price);
 
-    bool updateEntryPrice(uint32_t contractId, int64_t amount);
+    int64_t updateEntryPrice(uint32_t contractId, int64_t amount);
 
     int64_t getRecord(uint32_t contractId, RecordType ttype) const;
 
@@ -60,5 +65,14 @@ public:
 
 };
 
+
+namespace mastercore
+{
+  extern std::unordered_map<std::string, Register> mp_register_map;
+
+  int64_t getContractRecord(const std::string& address, uint32_t contractId, RecordType ttype);
+
+  bool update_register_map(const std::string& who, uint32_t contractId, int64_t amount, RecordType ttype);
+}
 
 #endif // TRADELAYER_REGISTER_H

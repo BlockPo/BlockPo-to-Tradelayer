@@ -7,6 +7,7 @@
 #include <tradelayer/tradelayer.h>
 
 #include <tradelayer/activation.h>
+#include <tradelayer/ce.h>
 #include <tradelayer/consensushash.h>
 #include <tradelayer/convert.h>
 #include <tradelayer/dex.h>
@@ -151,6 +152,7 @@ CtlTransactionDB *mastercore::p_TradeTXDB;
 OfferMap mastercore::my_offers;
 AcceptMap mastercore::my_accepts;
 CMPSPInfo *mastercore::_my_sps;
+CDInfo *mastercore::_my_cds;
 
 std::map<uint32_t, std::map<uint32_t, int64_t>> VWAPMap;
 std::map<uint32_t, std::map<uint32_t, int64_t>> VWAPMapSubVector;
@@ -2943,20 +2945,20 @@ bool CallingExpiration(CBlockIndex const * pBlockIndex)
 {
   int expirationBlock = 0, tradeBlock = 0, checkExpiration = 0;
 
-  uint32_t nextSPID = _my_sps->peekNextSPID();
+  uint32_t nextCDID = _my_cds->peekNextContractID();
 
   // checking expiration block for each contract
-  for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
+  for (uint32_t contractId = 1; contractId < nextCDID; contractId++)
   {
-      CMPSPInfo::Entry sp;
-      if (_my_sps->getSP(propertyId, sp) && sp.isContract() && !sp.expirated)
+      CDInfo::Entry cd;
+      if (_my_cds->getCD(contractId, cd) && ! cd.expirated)
       {
-	        expirationBlock = static_cast<int>(sp.blocks_until_expiration);
+	        expirationBlock = static_cast<int>(cd.blocks_until_expiration);
 	        tradeBlock = static_cast<int>(pBlockIndex->nHeight);
           lastBlockg = static_cast<int>(pBlockIndex->nHeight);
 
 
-          int deadline = sp.init_block + expirationBlock;
+          int deadline = cd.init_block + expirationBlock;
 
           // if(msc_debug_handler_tx) PrintToLog("%s(): deadline: %d, lastBlockg : %d\n",__func__,deadline,lastBlockg);
 
@@ -2964,7 +2966,7 @@ bool CallingExpiration(CBlockIndex const * pBlockIndex)
 
           if (checkExpiration)
           {
-              sp.expirated = true; // into entry register
+              cd.expirated = true; // into entry register
               // if(msc_debug_handler_tx) PrintToLog("%s(): EXPIRATED!!!!!!!!!!!!!!!!!!!!!!!!!!!\n",__func__);
 
               idx_expiration += 1;
@@ -5313,9 +5315,9 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   // 	}
 
   unsigned int contractId = static_cast<unsigned int>(property_traded);
-  CMPSPInfo::Entry sp;
-  assert(_my_sps->getSP(property_traded, sp));
-  uint32_t NotionalSize = sp.notional_size;
+  CDInfo::Entry cd;
+  assert(_my_cds->getCD(property_traded, cd));
+  uint32_t NotionalSize = cd.notional_size;
 
   globalPNLALL_DUSD += UPNL1 + UPNL2;
   globalVolumeALL_DUSD += nCouldBuy0;
@@ -5994,7 +5996,7 @@ bool CMPTradeList::getCreatedPegged(uint32_t propertyId, UniValue& tradeArray)
 //
 // }
 
-int64_t getMinMargin(const uint32_t contractId, const int64_t& position, const CMPSPInfo::Entry& sp)
+int64_t getMinMargin(const uint32_t contractId, const int64_t& position, const CDInfo::Entry& sp)
 {
       int64_t margin = position *  sp.margin_requirement / 2;
 
@@ -6004,7 +6006,7 @@ int64_t getMinMargin(const uint32_t contractId, const int64_t& position, const C
 }
 
 
-int64_t getUPNL(const int64_t& position, const int64_t entryPrice, const int64_t exitPrice, const CMPSPInfo::Entry& sp)
+int64_t getUPNL(const int64_t& position, const int64_t entryPrice, const int64_t exitPrice, const CDInfo::Entry& sp)
 {
    if (entryPrice == 0 || exitPrice == 0) return 0;
 
@@ -6032,7 +6034,7 @@ int64_t getUPNL(const int64_t& position, const int64_t entryPrice, const int64_t
    return iUPNL;
 }
 
-int64_t getExit(const uint32_t contractId,  const CMPSPInfo::Entry& sp)
+int64_t getExit(const uint32_t contractId,  const CDInfo::Entry& sp)
 {
     if(sp.isOracle())
     {
@@ -6049,7 +6051,7 @@ int64_t getEntry(const uint32_t contractId,  const CMPTally& tally)
 }
 
 //check position for a given address of this contractId
-bool checkContractPositions(int Block, const std::string &address, const uint32_t contractId, const CMPSPInfo::Entry& sp, const CMPTally& tally)
+bool checkContractPositions(int Block, const std::string &address, const uint32_t contractId, const CDInfo::Entry& sp, const CMPTally& tally)
 {
     if(msc_debug_liquidation_enginee)
     {
@@ -6121,14 +6123,14 @@ bool checkContractPositions(int Block, const std::string &address, const uint32_
 bool mastercore::LiquidationEngine(int Block)
 {
 
-    const uint32_t nextSPID = _my_sps->peekNextSPID();
+    const uint32_t nextCDID = _my_cds->peekNextContractID();
 
-    if(msc_debug_liquidation_enginee) PrintToLog("%s(): inside LiquidationEngine, nextSPID: %d\n",__func__, nextSPID);
+    if(msc_debug_liquidation_enginee) PrintToLog("%s(): inside LiquidationEngine, nextCDID: %d\n",__func__, nextCDID);
 
     for (uint32_t contractId = 1; contractId < nextSPID; contractId++)
     {
          CMPSPInfo::Entry sp;
-         if (!_my_sps->getSP(contractId, sp) || !sp.isContract())
+         if (!_my_cds->getCD(contractId, sp))
          {
              continue;
          }

@@ -76,26 +76,9 @@ public:
         double last_vesting;
         int last_vesting_block;
 
-        uint32_t blocks_until_expiration;
-        uint32_t notional_size;
-        uint32_t collateral_currency;
-        uint64_t margin_requirement;
         uint32_t attribute_type;
         int64_t contracts_needed;
         int init_block;
-        // uint32_t ecosystemSP;
-        uint32_t numerator;
-        uint32_t denominator;
-
-        /* int64_t ticksize; */
-        std::string series;
-        std::string backup_address;
-        uint64_t oracle_high;
-        uint64_t oracle_low;
-        uint64_t oracle_close;
-
-        bool inverse_quoted;
-        bool expirated;
 
         // for pegged currency
         uint32_t contract_associated;
@@ -131,37 +114,18 @@ public:
             READWRITE(manual);
             READWRITE(historicalData);
             READWRITE(contracts_needed);
-
-            /** New things for Contracts */
-            READWRITE(blocks_until_expiration);
-            READWRITE(notional_size);
-            READWRITE(collateral_currency);
-            READWRITE(margin_requirement);
 	          READWRITE(attribute_type);
             READWRITE(init_block);
             READWRITE(contract_associated);
-            READWRITE(numerator);
-            READWRITE(denominator);
-            READWRITE(series);
-            READWRITE(backup_address);
-            READWRITE(oracle_high);
-            READWRITE(oracle_low);
-            READWRITE(oracle_close);
-            READWRITE(inverse_quoted);
             READWRITE(kyc);
             READWRITE(last_vesting);
             READWRITE(last_vesting_block);
-            ////////////////////////////
         }
 
         bool isDivisible() const;
         void print() const;
-      	bool isNative() const;
-        bool isSwap() const;
         bool isPegged() const;
-        bool isOracle() const;
-        bool isContract() const;
-        uint32_t getCollateral() const { return collateral_currency; }
+
     };
 
  private:
@@ -203,7 +167,7 @@ extern CMPSPInfo* _my_sps;
 
 std::string strPropertyType(uint16_t propertyType);
 
-bool isPropertyContract(uint32_t propertyId);
+// bool isPropertyContract(uint32_t propertyId);
 bool isPropertyPegged(uint32_t propertyId);
 bool isPropertySwap(uint32_t propertyId);
 bool isPropertyNativeContract(uint32_t propertyId);

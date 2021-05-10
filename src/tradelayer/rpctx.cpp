@@ -5,7 +5,7 @@
  */
 
 #include <tradelayer/rpctx.h>
-
+#include <tradelayer/ce.h>
 #include <tradelayer/createpayload.h>
 #include <tradelayer/dex.h>
 #include <tradelayer/errors.h>
@@ -113,7 +113,7 @@ UniValue tl_send(const JSONRPCRequest& request)
         throw JSONRPCError(RPC_INVALID_PARAMETER, "sending tokens to same address");
 
     RequireExistingProperty(propertyId);
-    RequireNotContract(propertyId);
+    // RequireNotContract(propertyId);
     RequireBalance(fromAddress, propertyId, amount);
     RequireSaneReferenceAmount(referenceAmount);
 
@@ -399,7 +399,7 @@ UniValue tl_sendgrant(const JSONRPCRequest& request)
   // perform checks
   RequireExistingProperty(propertyId);
   RequireManagedProperty(propertyId);
-  RequireNotContract(propertyId);
+  // RequireNotContract(propertyId);
   RequireTokenIssuer(fromAddress, propertyId);
 
   // create a payload for the transaction
@@ -451,7 +451,7 @@ UniValue tl_sendrevoke(const JSONRPCRequest& request)
     // perform checks
     RequireExistingProperty(propertyId);
     RequireManagedProperty(propertyId);
-    RequireNotContract(propertyId);
+    // RequireNotContract(propertyId);
     RequireTokenIssuer(fromAddress, propertyId);
     RequireBalance(fromAddress, propertyId, amount);
 
@@ -504,7 +504,7 @@ UniValue tl_sendchangeissuer(const JSONRPCRequest& request)
     // perform checks
     RequireExistingProperty(propertyId);
     RequireManagedProperty(propertyId);
-    RequireNotContract(propertyId);
+    // RequireNotContract(propertyId);
     RequireTokenIssuer(fromAddress, propertyId);
 
     // create a payload for the transaction
@@ -710,10 +710,10 @@ UniValue tl_sendtrade(const JSONRPCRequest& request)
   // perform checks
   RequireFeatureActivated(FEATURE_METADEX);
   RequireExistingProperty(propertyIdForSale);
-  RequireNotContract(propertyIdForSale);
+  // RequireNotContract(propertyIdForSale);
   RequireNotVesting(propertyIdForSale);
   RequireExistingProperty(propertyIdDesired);
-  RequireNotContract(propertyIdDesired);
+  // RequireNotContract(propertyIdDesired);
   RequireNotVesting(propertyIdDesired);
 
   //checking amount+fee
@@ -907,7 +907,7 @@ UniValue tl_tradecontract(const JSONRPCRequest& request)
       uint8_t trading_action = ParseContractDexAction(request.params[4]);
       uint64_t leverage = ParseLeverage(request.params[5]);
 
-      RequireContract(name_traded);
+      // RequireContract(name_traded);
 
       RequireCollateral(fromAddress, name_traded, amountForSale, leverage);
 
@@ -955,7 +955,7 @@ UniValue tl_cancelallcontractsbyaddress(const JSONRPCRequest& request)
   uint32_t contractId = ParseNameOrId(request.params[1]);
 
   // perform checks
-  RequireContract(contractId);
+  // RequireContract(contractId);
   // check, if there are matching offers to cancel
   RequireContractOrder(fromAddress, contractId);
 
@@ -1005,7 +1005,7 @@ UniValue tl_closeposition(const JSONRPCRequest& request)
     uint32_t contractId = ParsePropertyId(request.params[1]);
 
     // perform checks
-    RequireContract(contractId);
+    // RequireContract(contractId);
     RequireNoOrders(fromAddress, contractId);
 
     // create a payload for the transaction
@@ -1072,10 +1072,10 @@ UniValue tl_sendissuance_pegged(const JSONRPCRequest& request)
   RequireExistingProperty(propertyId);
 
   // Property must not be a future contract
-  RequireNotContract(propertyId);
+  // RequireNotContract(propertyId);
 
   // Checking for future contract
-  RequireContract(contractId);
+  // RequireContract(contractId);
 
   // Checking for short position in given future contract
   RequireShort(fromAddress, contractId, amount);
@@ -1196,7 +1196,7 @@ UniValue tl_redemption_pegged(const JSONRPCRequest& request)
   // perform checks
   RequireExistingProperty(propertyId);
   RequirePeggedCurrency(propertyId);
-  RequireContract(contractId);
+  // RequireContract(contractId);
   RequireBalance(fromAddress, propertyId, amount);
 
   // is given contract origin of pegged?
@@ -1448,10 +1448,10 @@ UniValue tl_setoracle(const JSONRPCRequest& request)
     uint64_t low = ParseEffectivePrice(request.params[3]);
     uint64_t close = ParseEffectivePrice(request.params[4]);
 
-    CMPSPInfo::Entry sp;
-    assert(_my_sps->getSP(contractId, sp));
+    CDInfo::Entry cd;
+    assert(_my_cds->getCD(contractId, cd));
 
-    const std::string& oracleAddress = sp.issuer;
+    const std::string& oracleAddress = cd.issuer;
 
     // checks
     if (oracleAddress != fromAddress)
@@ -1506,10 +1506,10 @@ UniValue tl_change_oracleadm(const JSONRPCRequest& request)
     const std::string toAddress = ParseAddress(request.params[1]);
     uint32_t contractId = ParseNameOrId(request.params[2]);
 
-    CMPSPInfo::Entry sp;
-    assert(_my_sps->getSP(contractId, sp));
+    CDInfo::Entry cd;
+    assert(_my_cds->getCD(contractId, cd));
 
-    const std::string& oracleAddress = sp.issuer;
+    const std::string& oracleAddress = cd.issuer;
 
     // checks
     if (oracleAddress != fromAddress)
@@ -1565,10 +1565,10 @@ UniValue tl_oraclebackup(const JSONRPCRequest& request)
     uint32_t contractId = ParseNameOrId(request.params[1]);
 
 
-    CMPSPInfo::Entry sp;
-    assert(_my_sps->getSP(contractId, sp));
+    CDInfo::Entry cd;
+    assert(_my_cds->getCD(contractId, cd));
 
-    const std::string& backupAddress = sp.backup_address;
+    const std::string& backupAddress = cd.backup_address;
 
     // checks
     if (backupAddress != fromAddress)
@@ -1621,10 +1621,10 @@ UniValue tl_closeoracle(const JSONRPCRequest& request)
     const std::string backupAddress = ParseAddress(request.params[0]);
     uint32_t contractId = ParseNameOrId(request.params[1]);
 
-    CMPSPInfo::Entry sp;
-    assert(_my_sps->getSP(contractId, sp));
+    CDInfo::Entry cd;
+    assert(_my_cds->getCD(contractId, cd));
 
-    const std::string& bckup_address  = sp.backup_address;
+    const std::string& bckup_address  = cd.backup_address;
 
     // checks
     if (bckup_address != backupAddress)

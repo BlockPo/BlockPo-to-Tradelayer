@@ -6,6 +6,11 @@
 #include <stdint.h>
 #include <map>
 
+CCriticalSection cs_register;
+
+// list of all amounts for all addresses for all contracts, map is unsorted
+std::unordered_map<std::string, Register> mastercore::mp_register_map;
+
 /**
  * Creates an empty register.
  */
@@ -89,13 +94,13 @@ void Register::insertEntry(uint32_t contractId, int64_t amount, int64_t price)
         std::pair<int64_t,int64_t> p (amount, price);
         PositionRecord& record = it->second;
         Entries& entries = record.entries;
-        entries.push_back(p);
+        entries.push(p);
     }
 
 }
 
 
-bool Register::updateEntryPrice(uint32_t contractId, int64_t amount)
+int64_t Register::updateEntryPrice(uint32_t contractId, int64_t amount)
 {
     RecordMap::iterator it = mp_record.find(contractId);
 
@@ -109,34 +114,42 @@ bool Register::updateEntryPrice(uint32_t contractId, int64_t amount)
 
         // setting remaining
         remaining = amount;
-        auto it = entries.begin();
 
         while(remaining > 0) {
           // process to calculate it
-          const int64_t& ramount = it->first;
-          const int64_t& rprice = it->second;
+          std::pair<int64_t,int64_t>& p = entries.front();
+
+          int64_t& ramount = p.first;
+          const int64_t& rprice = p.second;
 
           if (0 == ramount || 0 == rprice ) {
-              ++it;
+              entries.pop();
           }
 
-          int64_t part = (remaining - ramount >= 0) ? ramount : remaining;
+          int64_t part = 0;
+
+          if(remaining - ramount >= 0) {
+              part = ramount;
+              entries.pop();
+          } else {
+              part = remaining;
+              ramount -= remaining; // updating the front of queue
+          }
 
           total += part * rprice;
           PrintToLog("%s(): part: %d, total: %d\n",__func__, part, total);
           remaining -= part;
           PrintToLog("%s(): remaining after loop: %d\n",__func__, remaining);
           PrintToLog("-------------------------------------\n\n");
-          ++it;
         }
 
         const int64_t newPrice = total / amount;
 
         PrintToLog("%s(): total sum: %d, amount: %d, newPrice: %d\n",__func__, total, amount, newPrice);
 
-        updateRegister(contractId, newPrice, ENTRY_CPRICE);
+        // updateRegister(contractId, newPrice, ENTRY_CPRICE);
 
-        return true;
+        return newPrice;
     }
 
 
@@ -198,4 +211,60 @@ bool Register::operator==(const Register& rhs) const
     assert(pc2 == rhs.mp_record.end());
 
     return true;
+}
+
+
+// look at Record for an address, for a given contractId
+int64_t mastercore::getContractRecord(const std::string& address, uint32_t contractId, RecordType ttype)
+{
+    int64_t balance = 0;
+    if (RECORD_TYPE_COUNT <= ttype) {
+        return 0;
+    }
+
+    LOCK(cs_register);
+    const std::unordered_map<std::string, Register>::iterator my_it = mp_register_map.find(address);
+    if (my_it != mp_register_map.end()) {
+        balance = (my_it->second).getRecord(contractId, ttype);
+    }
+
+    return balance;
+}
+
+// return true if everything is ok
+bool mastercore::update_register_map(const std::string& who, uint32_t contractId, int64_t amount, RecordType ttype)
+{
+    if (0 == amount) {
+        PrintToLog("%s(%s, %u=0x%X, %+d, ttype=%d) ERROR: amount of contracts is zero\n", __func__, who, contractId, contractId, amount, ttype);
+        return false;
+    }
+    if (ttype >= RECORD_TYPE_COUNT) {
+        PrintToLog("%s(%s, %u=0x%X, %+d, ttype=%d) ERROR: invalid record type\n", __func__, who, contractId, contractId, amount, ttype);
+        return false;
+    }
+
+    bool bRet = false;
+    int64_t before = 0;
+    int64_t after = 0;
+
+    LOCK(cs_register);
+
+    before = mastercore::getContractRecord(who, contractId, ttype);
+
+    std::unordered_map<std::string, Register>::iterator my_it = mp_register_map.find(who);
+    if (my_it == mp_register_map.end()) {
+        // insert an empty element
+        my_it = (mp_register_map.insert(std::make_pair(who, Register()))).first;
+    }
+
+    Register& reg = my_it->second;
+    bRet = reg.updateRegister(contractId, amount, ttype);
+
+    after = getContractRecord(who, contractId, ttype);
+    if (!bRet) {
+        assert(before == after);
+        PrintToLog("%s(%s, %u=0x%X, %+d, ttype=%d) ERROR: insufficient balance (=%d)\n", __func__, who, contractId, contractId, amount, ttype, before);
+    }
+
+    return bRet;
 }

@@ -3,6 +3,7 @@
 #include <tradelayer/tx.h>
 
 #include <tradelayer/activation.h>
+#include <tradelayer/ce.h>
 #include <tradelayer/convert.h>
 #include <tradelayer/dex.h>
 #include <tradelayer/externfns.h>
@@ -3144,32 +3145,29 @@ int CMPTransaction::logicMath_CreateContractDex()
 
   // -----------------------------------------------
 
-  CMPSPInfo::Entry newSP;
-  newSP.txid = txid;
-  newSP.issuer = sender;
-  newSP.prop_type = prop_type;
-  newSP.subcategory.assign(subcategory);
-  newSP.name.assign(name);
-  newSP.fixed = false;
-  newSP.manual = true;
-  newSP.creation_block = blockHash;
-  newSP.update_block = blockHash;
-  newSP.blocks_until_expiration = blocks_until_expiration;
-  newSP.notional_size = notional_size;
-  newSP.collateral_currency = collateral_currency;
-  newSP.margin_requirement = margin_requirement;
-  newSP.init_block = block;
-  newSP.numerator = numerator;
-  newSP.denominator = denominator;
-  newSP.attribute_type = attribute_type;
-  newSP.expirated = false;
-  newSP.inverse_quoted = inverse_quoted;
-  newSP.kyc.push_back(0);
+  CDInfo::Entry newCD;
+  newCD.txid = txid;
+  newCD.issuer = sender;
+  newCD.prop_type = prop_type;
+  newCD.name.assign(name);
+  newCD.creation_block = blockHash;
+  newCD.update_block = blockHash;
+  newCD.blocks_until_expiration = blocks_until_expiration;
+  newCD.notional_size = notional_size;
+  newCD.collateral_currency = collateral_currency;
+  newCD.margin_requirement = margin_requirement;
+  newCD.init_block = block;
+  newCD.numerator = numerator;
+  newCD.denominator = denominator;
+  newCD.attribute_type = attribute_type;
+  newCD.expirated = false;
+  newCD.inverse_quoted = inverse_quoted;
+  newCD.kyc.push_back(0);
 
-  for_each(kyc_Ids.begin(), kyc_Ids.end(), [&newSP] (const int64_t& aux) { if (aux != 0) newSP.kyc.push_back(aux);});
+  for_each(kyc_Ids.begin(), kyc_Ids.end(), [&newCD] (const int64_t& aux) { if (aux != 0) newCD.kyc.push_back(aux);});
 
-  const uint32_t propertyId = _my_sps->putSP(newSP);
-  assert(propertyId > 0);
+  const uint32_t contractId = _my_cds->putCD(newCD);
+  assert(contractId > 0);
 
   return 0;
 }
@@ -3295,10 +3293,10 @@ int CMPTransaction::logicMath_ContractDexClosePosition()
         return (PKT_ERROR_SP -22);
     }
 
-    CMPSPInfo::Entry sp;
+    CDInfo::Entry sp;
     {
         LOCK(cs_tally);
-        if (!_my_sps->getSP(contractId, sp)) {
+        if (!_my_cds->getCD(contractId, sp)) {
             PrintToLog(" %s() : Property identifier %d does not exist\n",
                 __func__,
                 contractId);
@@ -3465,21 +3463,21 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
         return (PKT_ERROR_SEND -25);
     }
 
-    CMPSPInfo::Entry sp;
+    CDInfo::Entry sp;
     {
-        LOCK(cs_tally);
+        LOCK(cs_register);
 
-        if (!_my_sps->getSP(contractId, sp)) {
+        if (!_my_cds->getCD(contractId, sp)) {
             PrintToLog(" %s() : Property identifier %d does not exist\n",
                 __func__,
                 contractId);
             return (PKT_ERROR_SEND -24);
 
-        if(!sp.isContract()) {
-            PrintToLog(" %s() : Property related is not a contract\n",
-                __func__);
-            return (PKT_ERROR_CONTRACTDEX -21);
-        }
+        // if(!sp.isContract()) {
+        //     PrintToLog(" %s() : Property related is not a contract\n",
+        //         __func__);
+        //     return (PKT_ERROR_CONTRACTDEX -21);
+        // }
 
         } else if (sp.collateral_currency != propertyId) {
             PrintToLog(" %s() : Future contract has not this collateral currency %d\n",
