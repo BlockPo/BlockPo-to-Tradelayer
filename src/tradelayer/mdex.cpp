@@ -1833,7 +1833,7 @@ std::string CMPContractDex::displayFullContractPrice() const
     uint64_t amountForsale = getAmountForSale();
 
     int128_t fullprice;
-    if (isPropertyContract(getProperty())) multiply(fullprice, priceForsale, amountForsale);
+    multiply(fullprice, priceForsale, amountForsale);
 
     std::string priceForsaleStr = xToString(fullprice);
     return priceForsaleStr;

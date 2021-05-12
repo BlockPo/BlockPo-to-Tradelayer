@@ -1679,7 +1679,7 @@ UniValue tl_getcurrentconsensushash(const JSONRPCRequest& request)
     return response;
 }
 
-bool PositionToJSON(const std::string& address, uint32_t property, UniValue& balance_obj, bool divisible)
+bool PositionToJSON(const std::string& address, uint32_t property, UniValue& balance_obj)
 {
     int64_t position  = getMPbalance(address, property, CONTRACT_BALANCE);
     balance_obj.pushKV("position", position);
@@ -1818,7 +1818,7 @@ UniValue tl_getposition(const JSONRPCRequest& request)
   // RequireContract(contractId);
 
   UniValue balanceObj(UniValue::VOBJ);
-  PositionToJSON(address, contractId, balanceObj, isPropertyContract(contractId));
+  PositionToJSON(address, contractId, balanceObj);
 
   return balanceObj;
 }
@@ -3078,8 +3078,10 @@ UniValue tl_getcontract(const JSONRPCRequest& request)
     uint32_t contractId = ParseNameOrId(request.params[0]);
 
     CDInfo::Entry cd;
-    assert(_my_cds->getCD(contractId, cd));
-
+    if(!_my_cds->getCD(contractId, cd)){
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "Contract identifier does not exist");
+    }
+    
     UniValue response(UniValue::VOBJ);
     response.pushKV("propertyid", (uint64_t) contractId);
     ContractToJSON(cd, response); // name, data, url,

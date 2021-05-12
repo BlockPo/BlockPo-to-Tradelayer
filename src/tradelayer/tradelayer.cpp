@@ -21,6 +21,7 @@
 #include <tradelayer/parse_string.h>
 #include <tradelayer/pending.h>
 #include <tradelayer/persistence.h>
+#include <tradelayer/register.h>
 #include <tradelayer/rules.h>
 #include <tradelayer/script.h>
 #include <tradelayer/sp.h>
@@ -2656,6 +2657,7 @@ void clear_all_state()
 
     // LevelDB based storage
      _my_sps->Clear();
+     _my_cds->Clear();
      t_tradelistdb->Clear();
      p_txlistdb->Clear();
      p_TradeTXDB->Clear();
@@ -2699,10 +2701,12 @@ int mastercore_init()
       fs::path persistPath = GetDataDir() / "OCL_persist";
       fs::path txlistPath = GetDataDir() / "OCL_txlist";
       fs::path spPath = GetDataDir() / "OCL_spinfo";
+      fs::path cdPath = GetDataDir() / "OCL_cdinfo";
       fs::path tlTXDBPath = GetDataDir() / "OCL_TXDB";
       if (fs::exists(persistPath)) fs::remove_all(persistPath);
       if (fs::exists(txlistPath)) fs::remove_all(txlistPath);
       if (fs::exists(spPath)) fs::remove_all(spPath);
+      if (fs::exists(cdPath)) fs::remove_all(cdPath);
       if (fs::exists(tlTXDBPath)) fs::remove_all(tlTXDBPath);
       PrintToLog("Success clearing persistence files in datadir %s\n", GetDataDir().string());
       startClean = true;
@@ -2713,6 +2717,7 @@ int mastercore_init()
 
   p_txlistdb = new CMPTxList(GetDataDir() / "OCL_txlist", fReindex);
   _my_sps = new CMPSPInfo(GetDataDir() / "OCL_spinfo", fReindex);
+  _my_cds = new CDInfo(GetDataDir() / "OCL_cdinfo", fReindex);
   p_TradeTXDB = new CtlTransactionDB(GetDataDir() / "OCL_TXDB", fReindex);
   t_tradelistdb = new CMPTradeList(GetDataDir()/"OCL_tradelist", fReindex);
   MPPersistencePath = GetDataDir() / "OCL_persist";
@@ -2795,6 +2800,11 @@ int mastercore_shutdown()
     if (_my_sps) {
         delete _my_sps;
         _my_sps = nullptr;
+    }
+
+    if (_my_cds) {
+        delete _my_cds;
+        _my_cds = nullptr;
     }
 
     if (p_TradeTXDB) {
@@ -4052,7 +4062,11 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
         makeWithdrawals(pBlockIndex->nHeight);
     }
 
-    LiquidationEngine(pBlockIndex->nHeight);
+    /** Contracts **/
+    // if (pBlockIndex->nHeight > params.)
+    // {
+    //     LiquidationEngine(pBlockIndex->nHeight);
+    // }
 
     // marginMain(pBlockIndex->nHeight);
     // addInterestPegged(nBlockPrev,pBlockIndex);
@@ -6127,9 +6141,9 @@ bool mastercore::LiquidationEngine(int Block)
 
     if(msc_debug_liquidation_enginee) PrintToLog("%s(): inside LiquidationEngine, nextCDID: %d\n",__func__, nextCDID);
 
-    for (uint32_t contractId = 1; contractId < nextSPID; contractId++)
+    for (uint32_t contractId = 1; contractId < nextCDID; contractId++)
     {
-         CMPSPInfo::Entry sp;
+         CDInfo::Entry sp;
          if (!_my_cds->getCD(contractId, sp))
          {
              continue;
@@ -6148,67 +6162,18 @@ bool mastercore::LiquidationEngine(int Block)
 
 }
 
-
-int64_t mastercore::sum_check_upnl(const std::string& address)
-{
-    int64_t upnl = 0;
-    std::map<std::string, int64_t>::iterator it = sum_upnls.find(address);
-    if (it != sum_upnls.end())
-        upnl = it->second;
-
-    return upnl;
-}
-
-
-void mastercore::update_sum_upnls()
-{
-    //cleaning the sum_upnls map
-    if(!sum_upnls.empty())
-        sum_upnls.clear();
-
-    LOCK(cs_tally);
-    uint32_t nextSPID = _my_sps->peekNextSPID();
-
-    for (uint32_t contractId = 1; contractId < nextSPID; contractId++)
-    {
-        CMPSPInfo::Entry sp;
-        if (_my_sps->getSP(contractId, sp))
-        {
-            if (!sp.isContract())
-                continue;
-
-            std::map<uint32_t, std::map<std::string, double>>::iterator it = addrs_upnlc.find(contractId);
-            std::map<std::string, double> upnls = it->second;
-
-            for(std::map<std::string, double>::iterator it1 = upnls.begin(); it1 != upnls.end(); ++it1)
-            {
-                const std::string address = it1->first;
-                int64_t upnl = static_cast<int64_t>(it1->second * COIN);
-
-                //add this in the sumupnl vector
-                sum_upnls[address] += upnl;
-            }
-
-        }
-    }
-}
-
 /* margin needed for a given position */
 int64_t mastercore::pos_margin(uint32_t contractId, const std::string& address, uint64_t margin_requirement)
 {
         arith_uint256 maintMargin;
 
-        LOCK(cs_tally);
-        CMPSPInfo::Entry sp;
+        LOCK(cs_register);
+        CDInfo::Entry sp;
 
-        if(_my_sps->getSP(contractId, sp))
+        if(!_my_cds->getCD(contractId, sp))
         {
-
-            if (!sp.isContract())
-            {
-                if(msc_debug_pos_margin) PrintToLog("%s: this is not a future contract\n", __func__);
-                return -1;
-            }
+            if(msc_debug_pos_margin) PrintToLog("%s(): future contract not found\n", __func__);
+            return -1;
         }
 
         int64_t longs = getMPbalance(address,contractId, CONTRACT_BALANCE);
@@ -6344,7 +6309,7 @@ bool mastercore::closeChannel(const std::string& sender, const std::string& chan
         for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
         {
             CMPSPInfo::Entry sp;
-            if (_my_sps->getSP(propertyId, sp) && sp.isContract()) continue;
+            if (!_my_sps->getSP(propertyId, sp)) continue;
 
             const int64_t first_rem = chn.getRemaining(false, propertyId);
             const int64_t second_rem = chn.getRemaining(true, propertyId);
@@ -7289,8 +7254,8 @@ void calculateUPNL(std::vector<double>& sum_upnl, uint64_t entry_price, uint64_t
 void CMPTradeList::getUpnInfo(const std::string& address, uint32_t contractId, UniValue& response, bool showVerbose)
 {
     if (!pdb) return;
-    CMPSPInfo::Entry sp;
-    assert(_my_sps->getSP(contractId, sp));
+    CDInfo::Entry sp;
+    assert(_my_cds->getCD(contractId, sp));
 
     //twap of last 3 blocks
     const uint64_t exitPrice = getOracleTwap(contractId, OBLOCKS);

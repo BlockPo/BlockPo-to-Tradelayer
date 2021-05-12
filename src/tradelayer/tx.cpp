@@ -11,6 +11,7 @@
 #include <tradelayer/mdex.h>
 #include <tradelayer/notifications.h>
 #include <tradelayer/parse_string.h>
+#include <tradelayer/register.h>
 #include <tradelayer/rules.h>
 #include <tradelayer/sp.h>
 #include <tradelayer/tradelayer.h>
@@ -2331,10 +2332,10 @@ int CMPTransaction::logicMath_SimpleSend()
         return (PKT_ERROR_SEND -24);
     }
 
-    if (isPropertyContract(property)) {
-        PrintToLog("%s(): rejected: property %d should not be a contract\n", __func__, property);
-        return (PKT_ERROR_SEND -25);
-    }
+    // if (isPropertyContract(property)) {
+    //     PrintToLog("%s(): rejected: property %d should not be a contract\n", __func__, property);
+    //     return (PKT_ERROR_SEND -25);
+    // }
 
 
      if(property == TL_PROPERTY_VESTING){
@@ -2481,7 +2482,7 @@ int CMPTransaction::logicMath_SendAll()
     while (0 != (propertyId = ptally->next())) {
 
         int64_t moneyAvailable = ptally->getMoney(propertyId, BALANCE);
-        if (moneyAvailable > 0 && !isPropertyContract(propertyId) && propertyId != TL_PROPERTY_VESTING) {
+        if (moneyAvailable > 0 && propertyId != TL_PROPERTY_VESTING) {
             ++numberOfPropertiesSent;
 
             if (propertyId != ALL)
@@ -2692,10 +2693,10 @@ int CMPTransaction::logicMath_GrantTokens()
     return (PKT_ERROR_TOKENS -24);
   }
 
-  if (isPropertyContract(property)) {
-      PrintToLog("%s(): rejected: property %d should not be a contract\n", __func__, property);
-      return (PKT_ERROR_TOKENS -25);
-  }
+  // if (isPropertyContract(property)) {
+  //     PrintToLog("%s(): rejected: property %d should not be a contract\n", __func__, property);
+  //     return (PKT_ERROR_TOKENS -25);
+  // }
 
 
   if(property == TL_PROPERTY_VESTING){
@@ -2809,10 +2810,10 @@ int CMPTransaction::logicMath_RevokeTokens()
         return (PKT_ERROR_TOKENS -24);
     }
 
-    if (isPropertyContract(property)) {
-        PrintToLog("%s(): rejected: property %d should not be a contract\n", __func__, property);
-        return (PKT_ERROR_TOKENS -25);
-    }
+    // if (isPropertyContract(property)) {
+    //     PrintToLog("%s(): rejected: property %d should not be a contract\n", __func__, property);
+    //     return (PKT_ERROR_TOKENS -25);
+    // }
 
     if(property == TL_PROPERTY_VESTING){
          PrintToLog("%s(): rejected: property should not be vesting tokens (id = 3)\n", __func__);
@@ -3043,10 +3044,10 @@ int CMPTransaction::logicMath_MetaDExTrade()
       return (PKT_ERROR_METADEX -32);
   }
 
-  if (isPropertyContract(property)) {
-      PrintToLog("%s(): rejected: property %d should not be a contract\n", __func__, property);
-      return (PKT_ERROR_METADEX -25);
-  }
+  // if (isPropertyContract(property)) {
+  //     PrintToLog("%s(): rejected: property %d should not be a contract\n", __func__, property);
+  //     return (PKT_ERROR_METADEX -25);
+  // }
 
 
   if(property == TL_PROPERTY_VESTING){
@@ -3055,10 +3056,10 @@ int CMPTransaction::logicMath_MetaDExTrade()
   }
 
 
-  if (isPropertyContract(desired_property)) {
-      PrintToLog("%s(): rejected: property %d should not be a contract\n", __func__, desired_property);
-      return (PKT_ERROR_METADEX -25);
-  }
+  // if (isPropertyContract(desired_property)) {
+  //     PrintToLog("%s(): rejected: property %d should not be a contract\n", __func__, desired_property);
+  //     return (PKT_ERROR_METADEX -25);
+  // }
 
 
   if(desired_property == TL_PROPERTY_VESTING){
@@ -3415,7 +3416,7 @@ int CMPTransaction::logicMath_MetaDExCancel_ByPrice()
 int CMPTransaction::logicMath_CreatePeggedCurrency()
 {
     uint256 blockHash;
-    uint32_t den;
+    // uint32_t den;
     uint32_t notSize = 0;
     uint32_t npropertyId = 0;
     int64_t amountNeeded;
@@ -3488,7 +3489,7 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
         }
 
         notSize = static_cast<int64_t>(sp.notional_size);
-        den = sp.denominator;
+        // den = sp.denominator;
     }
 
     const int64_t position = getMPbalance(sender, contractId, CONTRACT_BALANCE);
@@ -3508,7 +3509,7 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
         for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++) {
             CMPSPInfo::Entry sp;
             if (_my_sps->getSP(propertyId, sp)) {
-                if (sp.prop_type == ALL_PROPERTY_TYPE_PEGGEDS && sp.denominator == den){
+                if (sp.prop_type == ALL_PROPERTY_TYPE_PEGGEDS){
                     npropertyId = propertyId;
                     break;
                 }
@@ -3532,17 +3533,17 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
         newSP.num_tokens = amountNeeded;
         newSP.contracts_needed = contracts;
         newSP.contract_associated = contractId;
-        newSP.denominator = den;
-        newSP.series = strprintf("Nº 1 - %d",(amountNeeded / COIN));
+        // newSP.denominator = den;
+        // newSP.series = strprintf("Nº 1 - %d",(amountNeeded / COIN));
         npropertyId = _my_sps->putSP(newSP);
 
     } else {
         CMPSPInfo::Entry newSP;
         _my_sps->getSP(npropertyId, newSP);
-        int64_t inf = (newSP.num_tokens) / COIN + 1 ;
+        // int64_t inf = (newSP.num_tokens) / COIN + 1 ;
         newSP.num_tokens += ConvertTo64(rAmount);
-        int64_t sup = (newSP.num_tokens) / COIN ;
-        newSP.series = strprintf("Nº %d - %d",inf,sup);
+        // int64_t sup = (newSP.num_tokens) / COIN ;
+        // newSP.series = strprintf("Nº %d - %d",inf,sup);
         _my_sps->updateSP(npropertyId, newSP);
     }
 
@@ -3550,7 +3551,7 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
     CMPSPInfo::Entry SP;
     _my_sps->getSP(npropertyId, SP);
     assert(update_tally_map(sender, npropertyId, amount, BALANCE));
-    t_tradelistdb->NotifyPeggedCurrency(txid, sender, npropertyId, amount,SP.series); //TODO: Watch this function!
+    // t_tradelistdb->NotifyPeggedCurrency(txid, sender, npropertyId, amount,SP.series); //TODO: Watch this function!
 
     // Adding the element to map of pegged currency owners
     peggedIssuers.insert (std::pair<std::string,uint32_t>(sender,npropertyId));
@@ -3660,10 +3661,10 @@ int CMPTransaction::logicMath_RedemptionPegged()
     uint32_t collateralId = 0;
     int64_t notSize = 0;
 
-    CMPSPInfo::Entry sp;
+    CDInfo::Entry sp;
     {
-        LOCK(cs_tally);
-        if (!_my_sps->getSP(contractId, sp)) {
+        LOCK(cs_register);
+        if (!_my_cds->getCD(contractId, sp)) {
             PrintToLog(" %s() : Property identifier %d does not exist\n",
             __func__,
             contractId);
@@ -3672,7 +3673,7 @@ int CMPTransaction::logicMath_RedemptionPegged()
 
         collateralId = sp.collateral_currency;
         notSize = static_cast<int64_t>(sp.notional_size);
-        sp.num_tokens -= amount;
+        // sp.num_tokens -= amount;
     }
 
     arith_uint256 conNeeded = ConvertTo256(amount) / ConvertTo256(notSize);
@@ -3945,14 +3946,11 @@ int CMPTransaction::logicMath_CreateOracleContract()
 
     // -----------------------------------------------
 
-    CMPSPInfo::Entry newSP;
+    CDInfo::Entry newSP;
     newSP.txid = txid;
     newSP.issuer = sender;
     newSP.prop_type = prop_type;
-    newSP.subcategory.assign(subcategory);
     newSP.name.assign(name);
-    newSP.fixed = false;
-    newSP.manual = true;
     newSP.creation_block = blockHash;
     newSP.update_block = blockHash;
     newSP.blocks_until_expiration = blocks_until_expiration;
@@ -3971,8 +3969,8 @@ int CMPTransaction::logicMath_CreateOracleContract()
 
     for_each(kyc_Ids.begin(), kyc_Ids.end(), [&newSP] (const int64_t& aux) { if (aux != 0) newSP.kyc.push_back(aux);});
 
-    const uint32_t propertyId = _my_sps->putSP(newSP);
-    assert(propertyId > 0);
+    const uint32_t contractId = _my_cds->putCD(newSP);
+    assert(contractId > 0);
 
     return 0;
 }
@@ -4049,8 +4047,8 @@ int CMPTransaction::logicMath_Set_Oracle()
         return (PKT_ERROR_ORACLE -11);
     }
 
-    CMPSPInfo::Entry sp;
-    assert(_my_sps->getSP(contractId, sp));
+    CDInfo::Entry sp;
+    assert(_my_cds->getCD(contractId, sp));
 
     if (sender != sp.issuer) {
         PrintToLog("%s(): rejected: sender %s is not the oracle address of the future contract %d [oracle address=%s]\n", __func__, sender, contractId, sp.issuer);
@@ -4080,7 +4078,7 @@ int CMPTransaction::logicMath_Set_Oracle()
    }
 
 
-    assert(_my_sps->updateSP(contractId, sp));
+    assert(_my_cds->updateCD(contractId, sp));
 
     // if (msc_debug_set_oracle) PrintToLog("oracle data for contract: block: %d,high:%d, low:%d, close:%d\n",block, oracle_high, oracle_low, oracle_close);
 
@@ -4118,8 +4116,8 @@ int CMPTransaction::logicMath_OracleBackup()
         return (PKT_ERROR_ORACLE -11);
     }
 
-    CMPSPInfo::Entry sp;
-    assert(_my_sps->getSP(contractId, sp));
+    CDInfo::Entry sp;
+    assert(_my_cds->getCD(contractId, sp));
 
     if (sender != sp.backup_address) {
         PrintToLog("%s(): rejected: sender %s is not the backup address of the Oracle Future Contract\n", __func__,sender);
@@ -4131,7 +4129,7 @@ int CMPTransaction::logicMath_OracleBackup()
     sp.issuer = sender;
     sp.update_block = blockHash;
 
-    assert(_my_sps->updateSP(contractId, sp));
+    assert(_my_cds->updateCD(contractId, sp));
 
     return 0;
 }
@@ -4153,8 +4151,8 @@ int CMPTransaction::logicMath_CloseOracle()
         return (PKT_ERROR_ORACLE -11);
     }
 
-    CMPSPInfo::Entry sp;
-    assert(_my_sps->getSP(contractId, sp));
+    CDInfo::Entry sp;
+    assert(_my_cds->getCD(contractId, sp));
 
     if (sender != sp.backup_address) {
         PrintToLog("%s(): rejected: sender (%s) is not the backup address of the Oracle Future Contract\n", __func__,sender);
@@ -4165,7 +4163,7 @@ int CMPTransaction::logicMath_CloseOracle()
 
     sp.blocks_until_expiration = 0;
 
-    assert(_my_sps->updateSP(contractId, sp));
+    assert(_my_cds->updateCD(contractId, sp));
 
     PrintToLog("%s(): Oracle Contract (id:%d) Closed\n", __func__, contractId);
 
@@ -4586,8 +4584,8 @@ int CMPTransaction::logicMath_Contract_Instant()
     //     return (PKT_ERROR_CHANNELS -16);
     // }
 
-    CMPSPInfo::Entry sp;
-    if (!_my_sps->getSP(property, sp))
+    CDInfo::Entry sp;
+    if (!_my_cds->getCD(property, sp))
         return (PKT_ERROR_CHANNELS -13);
 
 
@@ -4810,14 +4808,14 @@ struct FutureContractObject *getFutureContractObject(std::string identifier)
 {
   struct FutureContractObject *pt_fco = new FutureContractObject;
 
-  LOCK(cs_tally);
-  uint32_t nextSPID = _my_sps->peekNextSPID();
-  for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
+  LOCK(cs_register);
+  const uint32_t nextCDID = _my_cds->peekNextContractID();
+  for (uint32_t contractId = 1; contractId < nextCDID; contractId++)
   {
-      CMPSPInfo::Entry sp;
-      if (_my_sps->getSP(propertyId, sp))
+      CDInfo::Entry sp;
+      if (_my_cds->getCD(contractId, sp))
 	    {
-	        if ( sp.isContract() && sp.name == identifier )
+	        if (sp.name == identifier )
 	        {
               pt_fco->fco_denominator = sp.numerator;
 	            pt_fco->fco_denominator = sp.denominator;
@@ -4826,26 +4824,26 @@ struct FutureContractObject *getFutureContractObject(std::string identifier)
 	            pt_fco->fco_collateral_currency = sp.collateral_currency;
 	            pt_fco->fco_margin_requirement = sp.margin_requirement;
 	            pt_fco->fco_name = sp.name;
-	            pt_fco->fco_subcategory = sp.subcategory;
 	            pt_fco->fco_issuer = sp.issuer;
 	            pt_fco->fco_init_block = sp.init_block;
               pt_fco->fco_backup_address = sp.backup_address;
-	            pt_fco->fco_propertyId = propertyId;
+	            pt_fco->fco_propertyId = contractId;
               pt_fco->fco_prop_type = sp.prop_type;
               pt_fco->fco_expirated = sp.expirated;
               pt_fco->fco_quoted = sp.inverse_quoted;
-	        } else if ( sp.isPegged() && sp.name == identifier ){
-	            pt_fco->fco_denominator = sp.denominator;
-	            pt_fco->fco_blocks_until_expiration = sp.blocks_until_expiration;
-	            pt_fco->fco_notional_size = sp.notional_size;
-	            pt_fco->fco_collateral_currency = sp.collateral_currency;
-	            pt_fco->fco_margin_requirement = sp.margin_requirement;
-	            pt_fco->fco_name = sp.name;
-	            pt_fco->fco_subcategory = sp.subcategory;
-	            pt_fco->fco_issuer = sp.issuer;
-	            pt_fco->fco_init_block = sp.init_block;
-	            pt_fco->fco_propertyId = propertyId;
-	        }
+          }
+	        // } else if ( sp.isPegged() && sp.name == identifier ){
+	        //     pt_fco->fco_denominator = sp.denominator;
+	        //     pt_fco->fco_blocks_until_expiration = sp.blocks_until_expiration;
+	        //     pt_fco->fco_notional_size = sp.notional_size;
+	        //     pt_fco->fco_collateral_currency = sp.collateral_currency;
+	        //     pt_fco->fco_margin_requirement = sp.margin_requirement;
+	        //     pt_fco->fco_name = sp.name;
+	        //     pt_fco->fco_subcategory = sp.subcategory;
+	        //     pt_fco->fco_issuer = sp.issuer;
+	        //     pt_fco->fco_init_block = sp.init_block;
+	        //     pt_fco->fco_propertyId = propertyId;
+	        // }
 	    }
   }
 
@@ -4864,11 +4862,11 @@ struct TokenDataByName *getTokenDataByName(std::string identifier)
       CMPSPInfo::Entry sp;
       if (_my_sps->getSP(propertyId, sp) && sp.name == identifier)
 	{
-	  pt_data->data_denominator = sp.denominator;
-	  pt_data->data_blocks_until_expiration = sp.blocks_until_expiration;
-	  pt_data->data_notional_size = sp.notional_size;
-	  pt_data->data_collateral_currency = sp.collateral_currency;
-	  pt_data->data_margin_requirement = sp.margin_requirement;
+	  // pt_data->data_denominator = sp.denominator;
+	  // pt_data->data_blocks_until_expiration = sp.blocks_until_expiration;
+	  // pt_data->data_notional_size = sp.notional_size;
+	  // pt_data->data_collateral_currency = sp.collateral_currency;
+	  // pt_data->data_margin_requirement = sp.margin_requirement;
 	  pt_data->data_name = sp.name;
 	  pt_data->data_subcategory = sp.subcategory;
 	  pt_data->data_issuer = sp.issuer;
@@ -4888,11 +4886,11 @@ struct TokenDataByName *getTokenDataById(uint32_t propertyId)
   CMPSPInfo::Entry sp;
   if (_my_sps->getSP(propertyId, sp))
 	{
-	  pt_data->data_denominator = sp.denominator;
-	  pt_data->data_blocks_until_expiration = sp.blocks_until_expiration;
-	  pt_data->data_notional_size = sp.notional_size;
-	  pt_data->data_collateral_currency = sp.collateral_currency;
-	  pt_data->data_margin_requirement = sp.margin_requirement;
+	  // pt_data->data_denominator = sp.denominator;
+	  // pt_data->data_blocks_until_expiration = sp.blocks_until_expiration;
+	  // pt_data->data_notional_size = sp.notional_size;
+	  // pt_data->data_collateral_currency = sp.collateral_currency;
+	  // pt_data->data_margin_requirement = sp.margin_requirement;
 	  pt_data->data_name = sp.name;
 	  pt_data->data_subcategory = sp.subcategory;
 	  pt_data->data_issuer = sp.issuer;

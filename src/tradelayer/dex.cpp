@@ -201,46 +201,46 @@ int DEx_BuyOfferCreate(const std::string& addressMaker, uint32_t propertyId, int
 
     // ------------------------------------------------------------------------
     // On this part we need to put in reserve synth Litecoins.
-    LOCK(cs_register);
-
-    arith_uint256 sumValues;
-    uint32_t nextCDID = _my_cds->peekNextContractID();
-
-    for (uint32_t contractId = 1; contractId < nextCDID; contractId++)
-    {
-        CDInfo::Entry cd;
-        if (_my_cds->getCD(contractId, cd))
-        {
-            if (msc_debug_dex) PrintToLog("Property Id: %d\n", contractId);
-            if (!cd.isContract())
-	              continue;
-
-            int64_t longs = 0;
-            int64_t shorts = 0;
-
-            const int64_t balance = getMPbalance(addressMaker, contractId, CONTRACT_BALANCE);
-
-            (balance > 0) ? longs = balance : shorts = balance;
-
-            if (msc_debug_dex) PrintToLog("%s(): longs: %d, shorts: %d, notional: %d\n",__func__, longs, shorts, cd.notional_size);
-
-            // price of one sLTC in ALLs
-            int64_t pair = getPairMarketPrice("sLTC", "ALL");
-
-            if (msc_debug_dex) PrintToLog("pair: %d\n", pair);
-
-            const int64_t side = (longs >= 0 && shorts == 0) ? longs : (longs == 0 && shorts >= 0) ? shorts : 0;
-            arith_uint256 sumNum = (ConvertTo256(side) * ConvertTo256(cd.notional_size)) * ConvertTo256(pair);
-            sumValues += DivideAndRoundUp(sumNum, COIN);
-	          if (sumValues > ConvertTo256(price))
-            {
-                // price = price of entire order   .
-	              if (msc_debug_dex) PrintToLog("You can buy tokens now\n");
-	              // ready = true;
-	              break;
-            }
-        }
-    }
+    // LOCK(cs_register);
+    //
+    // arith_uint256 sumValues;
+    // uint32_t nextCDID = _my_cds->peekNextContractID();
+    //
+    // for (uint32_t contractId = 1; contractId < nextCDID; contractId++)
+    // {
+    //     CDInfo::Entry cd;
+    //     if (_my_cds->getCD(contractId, cd))
+    //     {
+    //         if (msc_debug_dex) PrintToLog("Property Id: %d\n", contractId);
+    //
+    //         int64_t longs = 0;
+    //         int64_t shorts = 0;
+    //
+    //         const int64_t balance = getMPbalance(addressMaker, contractId, CONTRACT_BALANCE);
+    //
+    //         (balance > 0) ? longs = balance : shorts = balance;
+    //
+    //         if (msc_debug_dex) PrintToLog("%s(): longs: %d, shorts: %d, notional: %d\n",__func__, longs, shorts, cd.notional_size);
+    //
+    //         // price of one sLTC in ALLs
+    //         // NOTE: it needs MORE WORK!
+    //         // int64_t pair = getPairMarketPrice("sLTC", "ALL");
+    //         int64_t pair = 1;
+    //
+    //         if (msc_debug_dex) PrintToLog("pair: %d\n", pair);
+    //
+    //         const int64_t side = (longs >= 0 && shorts == 0) ? longs : (longs == 0 && shorts >= 0) ? shorts : 0;
+    //         arith_uint256 sumNum = (ConvertTo256(side) * ConvertTo256(cd.notional_size)) * ConvertTo256(pair);
+    //         sumValues += DivideAndRoundUp(sumNum, COIN);
+	  //         if (sumValues > ConvertTo256(price))
+    //         {
+    //             // price = price of entire order   .
+	  //             if (msc_debug_dex) PrintToLog("You can buy tokens now\n");
+	  //             // ready = true;
+	  //             break;
+    //         }
+    //     }
+    // }
 
     // NOTE: check conditions to buy tokens using litecoin
     // if (ready)
