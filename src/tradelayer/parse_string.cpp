@@ -1,5 +1,5 @@
 #include <tradelayer/parse_string.h>
-
+#include <tradelayer/log.h>
 #include <algorithm>
 #include <stdint.h>
 #include <string>
@@ -13,7 +13,6 @@ int64_t StrToInt64(const std::string& str, bool divisible)
     // copy original, so it remains unchanged
     std::string strAmount (str);
     int64_t nAmount = 0;
-
     // check for a negative (minus sign) and invalidate if present
     size_t negSignPos = strAmount.find("-");
     if (negSignPos != std::string::npos) return 0;

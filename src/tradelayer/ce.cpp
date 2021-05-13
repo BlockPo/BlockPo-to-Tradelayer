@@ -334,7 +334,7 @@ int64_t CDInfo::popBlock(const uint256& block_hash)
                     commitBatch.Delete(slSpPrevKey);
                     ++remainingSPs;
                 } else {
-                    // failed to find a previous SP entry, trigger reparse
+                    // failed to find a previous CD entry, trigger reparse
                     PrintToLog("%s(): ERROR: failed to retrieve previous CD entry\n", __func__);
                     return -3;
                 }

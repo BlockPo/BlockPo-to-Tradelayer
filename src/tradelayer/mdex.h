@@ -1,6 +1,7 @@
 #ifndef TRADELAYER_MDEX_H
 #define TRADELAYER_MDEX_H
 
+#include <tradelayer/ce.h>
 #include <tradelayer/tx.h>
 #include <tradelayer/tradelayer_matrices.h>
 #include <uint256.h>
@@ -292,6 +293,7 @@ namespace mastercore
   bool checkReserve(const std::string& address, int64_t amount, uint32_t propertyId, int64_t& nBalance);
   bool checkContractReserve(const std::string& address, int64_t amount, uint32_t contractId, uint64_t leverage, int64_t& nBalance, int64_t& amountToReserve);
   int64_t getTotalLives(uint32_t contractId);
+  int64_t ContractBasisPoints(const CDInfo::Entry& cd, int64_t amount);
 }
 
 #endif // TRADELAYER_MDEX_H

@@ -294,28 +294,37 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
 
       //------------------------------------------------------------------------
       // checking here if positions increase or decrease (we need this to take more margin if it's required)
+      PrintToLog("%s(): abs(poldBalance): %d, abs(poldNBalance): %d\n",__func__, abs(poldBalance), abs(poldNBalance));
+
+
       if(abs(poldBalance) < abs(poldNBalance))
       {
           // take more margin...
-          const uint64_t allreserved = pold->getAmountReserved();
-          const uint64_t proportional = (uint64_t) (nCouldBuy * allreserved) / pold->getAmountForSale();
+          const int64_t difference = (int64_t) abs(poldNBalance) - abs(poldBalance);
+          const int64_t proportional = ContractBasisPoints(cd, difference);
+          const uint64_t& allreserved = pold->getAmountReserved();
           assert(update_tally_map(pold->getAddr(), colateral, -proportional, BALANCE));
           assert(update_tally_map(pold->getAddr(), colateral,  proportional, CONTRACTDEX_RESERVE));
 
+          PrintToLog("%s(): taking more margin: allreserved: %d, proportional: %d, difference: %d, colateral: %d\n",__func__, allreserved, proportional, difference, colateral);
+
       }
+
+      PrintToLog("%s(): abs(pnewBalance): %d, abs(pnewNBalance): %d\n",__func__, abs(pnewBalance), abs(pnewNBalance));
 
       if(abs(pnewBalance) < abs(pnewNBalance))
       {
-        const uint64_t allreserved = pnew->getAmountReserved();
-        const uint64_t proportional = (uint64_t) (nCouldBuy * allreserved) / pnew->getAmountForSale();
-        assert(update_tally_map(pnew->getAddr(), colateral, -proportional, BALANCE));
-        assert(update_tally_map(pnew->getAddr(), colateral,  proportional, CONTRACTDEX_RESERVE));
+          // take more margin...
+          const int64_t difference = (int64_t) abs(pnewNBalance) - abs(pnewBalance);
+          const int64_t proportional = ContractBasisPoints(cd, difference);
+          const uint64_t& allreserved = pnew->getAmountReserved();
+          assert(update_tally_map(pnew->getAddr(), colateral, -proportional, BALANCE));
+          assert(update_tally_map(pnew->getAddr(), colateral,  proportional, CONTRACTDEX_RESERVE));
+
+          PrintToLog("%s(): taking more margin: allreserved: %d, proportional: %d, difference: %d, colateral: %d\n",__func__, allreserved, proportional, difference, colateral);
 
       }
-      //------------------------------------------------------------------------
-      // NOTE: we need to re-calculate entry price here.
-      // Register::updateEntry function
-      //------------------------------------------------------------------------
+
       int64_t poldPositiveBalanceL = 0;
       int64_t pnewPositiveBalanceL = 0;
       int64_t poldNegativeBalanceL = 0;
@@ -2849,25 +2858,36 @@ bool mastercore::checkReserve(const std::string& address, int64_t amount, uint32
     return (nBalance < amountToReserve || nBalance == 0) ? false : true;
 }
 
- bool mastercore::checkContractReserve(const std::string& address, int64_t amount, uint32_t contractId, uint64_t leverage, int64_t& nBalance, int64_t& amountToReserve)
- {
-      //NOTE: add changes to inverse quoted
-      int64_t uPrice = COIN;
-      CDInfo::Entry cd;
-      assert(_my_cds->getCD(contractId, cd));
-      std::pair<int64_t, int64_t> factor;
+int64_t mastercore::ContractBasisPoints(const CDInfo::Entry& cd, int64_t amount)
+{
+    //NOTE: add changes to inverse quoted
+    const int64_t uPrice = COIN;
+    const int64_t leverage = 1;
+    int64_t amountToReserve = 0;
 
-     // max = 2.5 basis point in oracles, max = 1.0 basis point in natives
-     (cd.isOracle()) ? (factor.first = 100025, factor.second = 100000) : (cd.isNative()) ? (factor.first = 10001, factor.second = 10000) : (factor.first = 1, factor.second = 1);
+    std::pair<int64_t, int64_t> factor;
+    // max = 2.5 basis point in oracles, max = 1.0 basis point in natives
+    (cd.isOracle()) ? (factor.first = 100025, factor.second = 100000) : (cd.isNative()) ? (factor.first = 10001, factor.second = 10000) : (factor.first = 1, factor.second = 1);
 
-     arith_uint256 amountTR = (ConvertTo256(factor.first) * ConvertTo256(COIN) * ConvertTo256(amount) * ConvertTo256(cd.margin_requirement)) / (ConvertTo256(leverage) * ConvertTo256(uPrice) * ConvertTo256(factor.second));
-     amountToReserve = ConvertTo64(amountTR);
+    const arith_uint256 amountTR = (ConvertTo256(factor.first) * ConvertTo256(COIN) * ConvertTo256(amount) * ConvertTo256(cd.margin_requirement)) / (ConvertTo256(leverage) * ConvertTo256(factor.second) * ConvertTo256(uPrice));
+    amountToReserve = ConvertTo64(amountTR);
 
-     PrintToLog("%s(): amountToReserve: %d\n",__func__, amountToReserve);
+    return amountToReserve;
+}
 
-     nBalance = getMPbalance(address, cd.collateral_currency, BALANCE);
+bool mastercore::checkContractReserve(const std::string& address, int64_t amount, uint32_t contractId, uint64_t leverage, int64_t& nBalance, int64_t& amountToReserve)
+{
 
-     return (nBalance < amountToReserve || nBalance == 0) ? false : true;
+    CDInfo::Entry cd;
+    assert(_my_cds->getCD(contractId, cd));
+
+    amountToReserve = ContractBasisPoints(cd, amount);
+
+    PrintToLog("%s(): amountToReserve: %d\n",__func__, amountToReserve);
+
+    nBalance = getMPbalance(address, cd.collateral_currency, BALANCE);
+
+    return (nBalance < amountToReserve || nBalance == 0) ? false : true;
 
  }
 

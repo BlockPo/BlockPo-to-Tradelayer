@@ -3168,6 +3168,7 @@ int CMPTransaction::logicMath_CreateContractDex()
   for_each(kyc_Ids.begin(), kyc_Ids.end(), [&newCD] (const int64_t& aux) { if (aux != 0) newCD.kyc.push_back(aux);});
 
   const uint32_t contractId = _my_cds->putCD(newCD);
+  PrintToLog("%s(): contractId: %d\n",__func__, contractId);
   assert(contractId > 0);
 
   return 0;
@@ -3188,7 +3189,7 @@ int CMPTransaction::logicMath_ContractDexTrade()
     return (PKT_ERROR_KYC -10);
   }
 
-  if(!t_tradelistdb->kycPropertyMatch(contractId,kyc_id)){
+  if(!t_tradelistdb->kycContractMatch(contractId,kyc_id)){
     PrintToLog("%s(): rejected: contract %d can't be traded with this kyc\n", __func__, contractId);
     return (PKT_ERROR_KYC -20);
   }
@@ -4578,12 +4579,6 @@ int CMPTransaction::logicMath_Contract_Instant()
         return (PKT_ERROR_CHANNELS -15);
     }
 
-    // if (chn.getExpiry() < block)
-    // {
-    //     PrintToLog("%s(): rejected: out of channel deadline: actual block: %d, deadline: %d\n", __func__, block, chn.getExpiry());
-    //     return (PKT_ERROR_CHANNELS -16);
-    // }
-
     CDInfo::Entry sp;
     if (!_my_cds->getCD(property, sp))
         return (PKT_ERROR_CHANNELS -13);
@@ -4605,7 +4600,7 @@ int CMPTransaction::logicMath_Contract_Instant()
         return (PKT_ERROR_KYC -10);
     }
 
-    if(!t_tradelistdb->kycPropertyMatch(property,kyc_id))
+    if(!t_tradelistdb->kycContractMatch(property,kyc_id))
     {
        PrintToLog("%s(): rejected: contract %d can't be traded with this kyc\n", __func__, property);
        return (PKT_ERROR_KYC -20);

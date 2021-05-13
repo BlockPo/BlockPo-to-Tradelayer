@@ -1941,13 +1941,18 @@ static char const * const statePrefix[NUM_FILETYPES] = {
 static int load_most_relevant_state()
 {
   int res = -1;
-  // check the SP database and roll it back to its latest valid state
+  // check the SP and CD databases and roll it back to its latest valid state
   // according to the active chain
   uint256 spWatermark;
   {
         LOCK(cs_tally);
         if (!_my_sps->getWatermark(spWatermark)) {
             //trigger a full reparse, if the SP database has no watermark
+            return -1;
+        }
+
+        if (!_my_cds->getWatermark(spWatermark)) {
+            //trigger a full reparse, if the CD database has no watermark
             return -1;
         }
   }
@@ -1975,6 +1980,7 @@ static int load_most_relevant_state()
           spBlockIndex = spBlockIndex->pprev;
           if (spBlockIndex != nullptr) {
               _my_sps->setWatermark(spBlockIndex->GetBlockHash());
+              _my_cds->setWatermark(spBlockIndex->GetBlockHash());
           }
       }
 
@@ -2045,7 +2051,7 @@ static int load_most_relevant_state()
           }
 
           // go to the previous block
-          if (0 > _my_sps->popBlock(curTip->GetBlockHash())) {
+          if (0 > _my_sps->popBlock(curTip->GetBlockHash()) || 0 > _my_cds->popBlock(curTip->GetBlockHash())) {
               // trigger a full reparse, if the levelDB cannot roll back
               return -1;
           }
@@ -2053,6 +2059,7 @@ static int load_most_relevant_state()
           curTip = curTip->pprev;
           if (curTip != nullptr) {
              _my_sps->setWatermark(curTip->GetBlockHash());
+             _my_cds->setWatermark(curTip->GetBlockHash());
           }
       }
 
@@ -2627,6 +2634,7 @@ int mastercore_save_state(CBlockIndex const *pBlockIndex)
     prune_state_files(pBlockIndex);
 
     _my_sps->setWatermark(pBlockIndex->GetBlockHash());
+    _my_cds->setWatermark(pBlockIndex->GetBlockHash());
 
     return 0;
 }
@@ -5090,6 +5098,26 @@ bool CMPTradeList::kycPropertyMatch(uint32_t propertyId, int kyc_id)
 
     return (it != vecKyc.end());
 }
+
+bool CMPTradeList::kycContractMatch(uint32_t contractId, int kyc_id)
+{
+    CDInfo::Entry sp;
+    if (!_my_cds->getCD(contractId, sp)) {
+       return false; // contract ID does not exist
+    }
+
+    // looking for the kyc id in sp register
+    const std::vector<int64_t>& vecKyc = sp.kyc;
+
+    if (vecKyc.empty()){
+        PrintToLog("%s(): empty vector\n",__func__);
+    }
+
+    auto it = find_if(vecKyc.begin(), vecKyc.end(), [&kyc_id] (const int64_t& k) {return (kyc_id == k);});
+
+    return (it != vecKyc.end());
+}
+
 
 void CMPTradeList::recordNewInstContTrade(const uint256& txid, const std::string& firstAddr, const std::string& secondAddr, uint32_t property, uint64_t amount_forsale, uint64_t price ,int blockNum, int blockIndex)
 {

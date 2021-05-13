@@ -504,6 +504,7 @@ class CMPTradeList : public CDBBase
   bool checkKYCRegister(const std::string& address, int& kyc_id);
   bool checkAttestationReg(const std::string& address, int& kyc_id);
   bool kycPropertyMatch(uint32_t propertyId, int kyc_id);
+  bool kycContractMatch(uint32_t contractId, int kyc_id);
   bool kycLoop(UniValue& response);
   bool attLoop(UniValue& response);
 

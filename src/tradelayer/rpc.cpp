@@ -96,6 +96,8 @@ void PropertyToJSON(const CMPSPInfo::Entry& sProperty, UniValue& property_obj)
 
 void ContractToJSON(const CDInfo::Entry& sProperty, UniValue& property_obj)
 {
+    PrintToLog("%s(): inside ContractToJSON\n",__func__);
+
     property_obj.pushKV("name", sProperty.name);
     property_obj.pushKV("data", sProperty.data);
     property_obj.pushKV("url", sProperty.url);
@@ -1845,6 +1847,7 @@ UniValue tl_getcontract_reserve(const JSONRPCRequest& request)
             + HelpExampleRpc("tl_getcotract_reserve", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", \"1\"")
         );
 
+
     const std::string address = ParseAddress(request.params[0]);
     uint32_t contractId = ParseNameOrId(request.params[1]);
 
@@ -3078,12 +3081,10 @@ UniValue tl_getcontract(const JSONRPCRequest& request)
     uint32_t contractId = ParseNameOrId(request.params[0]);
 
     CDInfo::Entry cd;
-    if(!_my_cds->getCD(contractId, cd)){
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "Contract identifier does not exist");
-    }
-    
+    assert(_my_cds->getCD(contractId, cd));
+
     UniValue response(UniValue::VOBJ);
-    response.pushKV("propertyid", (uint64_t) contractId);
+    response.pushKV("contractid", (uint64_t) contractId);
     ContractToJSON(cd, response); // name, data, url,
     KYCToJSON(cd, response);
     auto it = cdexlastprice.find(contractId);
