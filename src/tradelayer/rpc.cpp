@@ -222,14 +222,10 @@ bool BalanceToJSON(const std::string& address, uint32_t property, UniValue& bala
     return true;
 }
 
-void ReserveToJSON(const std::string& address, uint32_t property, UniValue& balance_obj, bool divisible)
+void ReserveToJSON(const std::string& address, uint32_t contractId, UniValue& balance_obj)
 {
-    int64_t margin = getMPbalance(address, property, CONTRACTDEX_RESERVE);
-    if (divisible) {
-        balance_obj.pushKV("reserve", FormatDivisibleMP(margin));
-    } else {
-        balance_obj.pushKV("reserve", FormatIndivisibleMP(margin));
-    }
+    int64_t margin = getContractRecord(address, contractId, MARGIN);
+    balance_obj.pushKV("reserve", FormatDivisibleMP(margin));
 }
 
 void UnvestedToJSON(const std::string& address, uint32_t property, UniValue& balance_obj, bool divisible)
@@ -659,13 +655,13 @@ UniValue tl_getreserve(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 2)
         throw runtime_error(
-            "tl_getmargin \"address\" \"propertyid\" \n"
+            "tl_getreserve \"address\" \"propertyid\" \n"
 
-            "\nReturns the token reserve account using in futures contracts, for a given address and property.\n"
+            "\nReturns the token reserve (margin) account using in futures contracts, for a given address and property.\n"
 
             "\nArguments:\n"
             "1. address              (string, required) the address\n"
-            "2. propertyid           (number, required) the contract identifier\n"
+            "2. contractid           (number, required) the contract identifier\n"
 
             "\nResult:\n"
             "{\n"
@@ -674,18 +670,18 @@ UniValue tl_getreserve(const JSONRPCRequest& request)
             "}\n"
 
             "\nExamples:\n"
-            + HelpExampleCli("tl_getmargin", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" \"1\"")
-            + HelpExampleRpc("tl_getmargin", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", \"1\"")
+            + HelpExampleCli("tl_getreserve", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" \"1\"")
+            + HelpExampleRpc("tl_getreserve", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", \"1\"")
         );
 
     const std::string address = ParseAddress(request.params[0]);
-    uint32_t propertyId = ParsePropertyId(request.params[1]);
+    uint32_t contractId = ParsePropertyId(request.params[1]);
 
-    RequireExistingProperty(propertyId);
+    // RequireExistingProperty(propertyId);
     // RequireNotContract(propertyId);
 
     UniValue balanceObj(UniValue::VOBJ);
-    ReserveToJSON(address, propertyId, balanceObj, isPropertyDivisible(propertyId));
+    ReserveToJSON(address, contractId, balanceObj);
 
     return balanceObj;
 }
@@ -1681,9 +1677,9 @@ UniValue tl_getcurrentconsensushash(const JSONRPCRequest& request)
     return response;
 }
 
-bool PositionToJSON(const std::string& address, uint32_t property, UniValue& balance_obj)
+bool PositionToJSON(const std::string& address, uint32_t contractId, UniValue& balance_obj)
 {
-    int64_t position  = getMPbalance(address, property, CONTRACT_BALANCE);
+    int64_t position  = getContractRecord(address, contractId, CONTRACT_POSITION);
     balance_obj.pushKV("position", position);
 
     return true;
@@ -2986,6 +2982,8 @@ UniValue tl_getopen_interest(const JSONRPCRequest& request)
 		  );
 
     uint32_t contractId = ParseNameOrId(request.params[0]);
+
+    PrintToLog("%s(): contractId: %d \n",__func__, contractId);
 
     UniValue amountObj(UniValue::VOBJ);
     int64_t totalContracts = mastercore::getTotalLives(contractId);

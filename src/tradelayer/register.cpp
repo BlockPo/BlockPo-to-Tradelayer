@@ -51,7 +51,7 @@ uint32_t Register::next()
 }
 
 /**
- * Updates amount for the given tally type.
+ * Updates amount for the given record type.
  *
  * Negative balances are only permitted for contracts amount.
  *
@@ -86,21 +86,30 @@ bool Register::updateRegister(uint32_t contractId, int64_t amount, RecordType tt
     return fUpdated;
 }
 
-void Register::insertEntry(uint32_t contractId, int64_t amount, int64_t price)
+/**
+ *  Inserting price and amount
+ *
+ */
+bool Register::insertEntry(uint32_t contractId, int64_t amount, int64_t price)
 {
+    bool bRet = false;
+
     RecordMap::iterator it = mp_record.find(contractId);
 
     if (it != mp_record.end()) {
         std::pair<int64_t,int64_t> p (amount, price);
         PositionRecord& record = it->second;
         Entries& entries = record.entries;
-        entries.push(p);
+        entries.push_back(p);
+        bRet = true;
     }
+
+    return bRet;
 
 }
 
-
-int64_t Register::updateEntryPrice(uint32_t contractId, int64_t amount)
+// Entry price for liquidations
+int64_t Register::getEntryPrice(uint32_t contractId, int64_t amount)
 {
     RecordMap::iterator it = mp_record.find(contractId);
 
@@ -109,31 +118,32 @@ int64_t Register::updateEntryPrice(uint32_t contractId, int64_t amount)
         PositionRecord& record = it->second;
         Entries& entries = record.entries;
 
-        int64_t remaining = 0; // contracts remaining in count
-        int64_t total = 0;  // contracts * price counted
+        int64_t total = 0;
 
         // setting remaining
-        remaining = amount;
+        int64_t& remaining = amount;
+
+        auto it = entries.begin();
 
         while(remaining > 0) {
           // process to calculate it
-          std::pair<int64_t,int64_t>& p = entries.front();
+          std::pair<int64_t,int64_t>& p = *it;
 
-          int64_t& ramount = p.first;
+          const int64_t& ramount = p.first;
           const int64_t& rprice = p.second;
 
           if (0 == ramount || 0 == rprice ) {
-              entries.pop();
+              ++it;
           }
 
           int64_t part = 0;
 
           if(remaining - ramount >= 0) {
               part = ramount;
-              entries.pop();
+              // entries.erase(it);
           } else {
               part = remaining;
-              ramount -= remaining; // updating the front of queue
+              // ramount -= remaining;
           }
 
           total += part * rprice;
@@ -147,13 +157,94 @@ int64_t Register::updateEntryPrice(uint32_t contractId, int64_t amount)
 
         PrintToLog("%s(): total sum: %d, amount: %d, newPrice: %d\n",__func__, total, amount, newPrice);
 
-        // updateRegister(contractId, newPrice, ENTRY_CPRICE);
-
         return newPrice;
     }
 
 
     return false;
+}
+
+
+// Decrease Position Record
+bool Register::decreasePosRecord(uint32_t contractId, int64_t amount)
+{
+    bool bRet = false;
+    RecordMap::iterator it = mp_record.find(contractId);
+
+    if (it != mp_record.end())
+    {
+        PositionRecord& record = it->second;
+        Entries& entries = record.entries;
+
+        // setting remaining
+        int64_t& remaining = amount;
+
+        auto it = entries.begin();
+
+        while(amount > 0)
+        {
+            // process to calculate it
+            std::pair<int64_t,int64_t>& p = *it;
+
+            int64_t& ramount = p.first;
+            const int64_t& rprice = p.second;
+
+            if (0 == ramount || 0 == rprice ) {
+                ++it;
+            }
+
+            if(remaining - ramount >= 0)
+            {
+                entries.erase(it);
+                // smaller remaining
+                remaining -= ramount;
+            } else {
+                // there's nothing left
+                ramount -= remaining;
+                remaining = 0;
+            }
+
+        }
+
+        bRet = true;
+
+    }
+
+
+    return bRet;
+}
+
+// Entry price for full position
+int64_t Register::getPosEntryPrice(uint32_t contractId)
+{
+    int64_t price = 0;
+    RecordMap::iterator it = mp_record.find(contractId);
+
+    if (it != mp_record.end())
+    {
+        PositionRecord& record = it->second;
+        Entries& entries = record.entries;
+        int64_t total = 0;  // contracts * price
+        int64_t amount = 0; // sum of contracts
+
+        for(const auto& i : entries)
+        {
+            const int64_t& ramount = i.first;
+            const int64_t& rprice = i.second;
+
+            PrintToLog("%s(): ramount: %d, rprice: %d\n",__func__, ramount, rprice);
+
+            // maybe we need to use arith_uint256 here
+            total += ramount * rprice;
+            amount += ramount;
+        }
+
+        price = total / amount;
+
+    }
+
+
+    return price;
 }
 
 /**
@@ -265,6 +356,59 @@ bool mastercore::update_register_map(const std::string& who, uint32_t contractId
         assert(before == after);
         PrintToLog("%s(%s, %u=0x%X, %+d, ttype=%d) ERROR: insufficient balance (=%d)\n", __func__, who, contractId, contractId, amount, ttype, before);
     }
+
+    return bRet;
+}
+
+bool mastercore::insert_entry(const std::string& who, uint32_t contractId, int64_t amount, int64_t price)
+{
+    bool bRet = false;
+    if (0 == amount) {
+        PrintToLog("%s(%s, %u=0x%X, %+d) ERROR: amount of contracts is zero\n", __func__, who, contractId, contractId, amount);
+        return bRet;
+    }
+
+    LOCK(cs_register);
+
+    std::unordered_map<std::string, Register>::iterator my_it = mp_register_map.find(who);
+    if (my_it == mp_register_map.end()) {
+        // insert an empty element
+        my_it = (mp_register_map.insert(std::make_pair(who, Register()))).first;
+    }
+
+    Register& reg = my_it->second;
+
+    bRet = reg.insertEntry(contractId, price, amount);
+
+    // entry price of full position
+    const int64_t entryPrice = reg.getPosEntryPrice(contractId);
+
+    PrintToLog("%s(): entryPrice(full position): %d\n",__func__, entryPrice);
+
+    return bRet;
+}
+
+
+
+bool mastercore::decrease_entry(const std::string& who, uint32_t contractId, int64_t amount, int64_t price)
+{
+    bool bRet = false;
+    if (0 == amount) {
+        PrintToLog("%s(%s, %u=0x%X, %+d) ERROR: amount of contracts is zero\n", __func__, who, contractId, contractId, amount);
+        return bRet;
+    }
+
+    LOCK(cs_register);
+
+    std::unordered_map<std::string, Register>::iterator my_it = mp_register_map.find(who);
+    if (my_it == mp_register_map.end()) {
+        // insert an empty element
+        my_it = (mp_register_map.insert(std::make_pair(who, Register()))).first;
+    }
+
+    Register& reg = my_it->second;
+
+    bRet = reg.decreasePosRecord(contractId, amount);
 
     return bRet;
 }

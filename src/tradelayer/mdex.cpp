@@ -180,21 +180,8 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       uint64_t amountpold = pold->getAmountForSale();
 
 
-      const int64_t poldBalance = getMPbalance(pold->getAddr(), property_traded, CONTRACT_BALANCE);
-      const int64_t pnewBalance = getMPbalance(pnew->getAddr(), property_traded, CONTRACT_BALANCE);
-
-      // setting entry price (we need here something better: amount, price saved on memory for the address.)
-      if(poldBalance == 0)
-      {
-          PrintToLog("%s(): Entry price for address (%s) : %d\n",__func__, pold->getAddr(), pold->getEffectivePrice());
-          update_tally_map(pold->getAddr(), property_traded, pold->getEffectivePrice(), ENTRY_PRICE);
-      }
-
-      if(pnewBalance == 0)
-      {
-          PrintToLog("%s(): Entry price for address (%s) : %d\n",__func__, pnew->getAddr(), pold->getEffectivePrice());
-          update_tally_map(pnew->getAddr(), property_traded, pold->getEffectivePrice(), ENTRY_PRICE);
-      }
+      const int64_t poldBalance = getContractRecord(pold->getAddr(), property_traded, CONTRACT_POSITION);
+      const int64_t pnewBalance = getContractRecord(pnew->getAddr(), property_traded, CONTRACT_POSITION);
 
       int64_t poldPositiveBalanceB = 0;
       int64_t pnewPositiveBalanceB = 0;
@@ -280,22 +267,21 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       int64_t vwapPriceh64_t = mastercore::RationalToInt64(vwapPricehRat);
       threading(property_traded, vwapPriceh64_t, "cdex_vwap");
 
-      /********************************************************/
       if (boolAddresses)
 	    {
-          assert(update_tally_map(seller_address, property_traded, -nCouldBuy, CONTRACT_BALANCE));
-          assert(update_tally_map(buyer_address, property_traded, nCouldBuy, CONTRACT_BALANCE));
+          assert(update_register_map(seller_address, property_traded, -nCouldBuy, CONTRACT_POSITION));
+          assert(update_register_map(buyer_address, property_traded, nCouldBuy, CONTRACT_POSITION));
       }
-      /********************************************************/
 
       // bringing back new positions
-      const int64_t poldNBalance = getMPbalance(pold->getAddr(), property_traded, CONTRACT_BALANCE);
-      const int64_t pnewNBalance = getMPbalance(pnew->getAddr(), property_traded, CONTRACT_BALANCE);
+      const int64_t poldNBalance = getContractRecord(pold->getAddr(), property_traded, CONTRACT_POSITION);
+      const int64_t pnewNBalance = getContractRecord(pnew->getAddr(), property_traded, CONTRACT_POSITION);
 
       //------------------------------------------------------------------------
       // checking here if positions increase or decrease (we need this to take more margin if it's required)
       PrintToLog("%s(): abs(poldBalance): %d, abs(poldNBalance): %d\n",__func__, abs(poldBalance), abs(poldNBalance));
 
+      CMPContractDex contract_replacement = *pold;
 
       if(abs(poldBalance) < abs(poldNBalance))
       {
@@ -303,10 +289,22 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
           const int64_t difference = (int64_t) abs(poldNBalance) - abs(poldBalance);
           const int64_t proportional = ContractBasisPoints(cd, difference);
           const uint64_t& allreserved = pold->getAmountReserved();
-          assert(update_tally_map(pold->getAddr(), colateral, -proportional, BALANCE));
-          assert(update_tally_map(pold->getAddr(), colateral,  proportional, CONTRACTDEX_RESERVE));
+          assert(update_tally_map(pold->getAddr(), colateral, -proportional, CONTRACTDEX_RESERVE));
+
+          // updating amount reserved for the order
+          contract_replacement.updateAmountReserved(-proportional);
+
+          // passing colateral to margin position
+          assert(update_register_map(pold->getAddr(), property_traded,  proportional, MARGIN));
+
+          // updating entries (amount of contracts , price)
+          assert(insert_entry(pold->getAddr(), property_traded, nCouldBuy, pold->getEffectivePrice()));
 
           PrintToLog("%s(): taking more margin: allreserved: %d, proportional: %d, difference: %d, colateral: %d\n",__func__, allreserved, proportional, difference, colateral);
+
+      } else  {
+           // TODO: decreasing position (we need to substract the amount of contract in registers)
+           assert(decrease_entry(pold->getAddr(), property_traded, nCouldBuy, pold->getEffectivePrice()));
 
       }
 
@@ -319,10 +317,21 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
           const int64_t proportional = ContractBasisPoints(cd, difference);
           const uint64_t& allreserved = pnew->getAmountReserved();
           assert(update_tally_map(pnew->getAddr(), colateral, -proportional, BALANCE));
-          assert(update_tally_map(pnew->getAddr(), colateral,  proportional, CONTRACTDEX_RESERVE));
+
+          // updating amount reserved for the order
+          pnew->updateAmountReserved(-proportional);
+
+          // passing colateral to margin position
+          assert(update_register_map(pnew->getAddr(), property_traded,  proportional, MARGIN));
+
+          // updating entries (amount of contracts , price)
+          assert(insert_entry(pnew->getAddr(), property_traded, nCouldBuy, pold->getEffectivePrice()));
 
           PrintToLog("%s(): taking more margin: allreserved: %d, proportional: %d, difference: %d, colateral: %d\n",__func__, allreserved, proportional, difference, colateral);
 
+      } else  {
+           //decreasing position (we need to substract the amount of contract in registers)
+           assert(decrease_entry(pnew->getAddr(), property_traded, nCouldBuy, pold->getEffectivePrice()));
       }
 
       int64_t poldPositiveBalanceL = 0;
@@ -346,12 +355,11 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       std::string Status_b = "Empty";
 
       NewReturn = TRADED;
-      CMPContractDex contract_replacement = *pold;
 
       int64_t creplNegativeBalance = 0;
       int64_t creplPositiveBalance = 0;
 
-      const int64_t creplBalance = getMPbalance(contract_replacement.getAddr(), property_traded, CONTRACT_BALANCE);
+      const int64_t creplBalance = getContractRecord(contract_replacement.getAddr(), property_traded, CONTRACT_POSITION);
 
       if (creplBalance > 0) {
           creplPositiveBalance = creplBalance;
@@ -1896,6 +1904,19 @@ void CMPContractDex::setPrice(int64_t price)
     // PrintToLog("update price still up for sale (%ld):%s\n", price, ToString());
 }
 
+bool CMPContractDex::updateAmountReserved(int64_t amount)
+{
+    if (isOverflow(amount_reserved, amount))
+    {
+        PrintToLog("%s(): ERROR: arithmetic overflow [%d + %d]\n", __func__, amount_reserved, amount);
+        return false;
+    }
+
+    amount_reserved += amount;
+
+    return true;
+}
+
 
 std::string CMPMetaDEx::ToString() const
 {
@@ -2194,9 +2215,9 @@ int mastercore::ContractDex_CANCEL_EVERYTHING(const uint256& txid, unsigned int 
 
     for (cd_PropertiesMap::iterator my_it = contractdex.begin(); my_it != contractdex.end(); ++my_it)
     {
-        unsigned int prop = my_it->first;
+        uint32_t prop = my_it->first;
 
-        if (msc_debug_contract_cancel_every) PrintToLog(" ## property: %u\n", prop);
+        if (msc_debug_contract_cancel_every) PrintToLog(" ## property: %d\n", prop);
         cd_PricesMap &prices = my_it->second;
 
         for (cd_PricesMap::iterator it = prices.begin(); it != prices.end(); ++it)
@@ -2217,7 +2238,7 @@ int mastercore::ContractDex_CANCEL_EVERYTHING(const uint256& txid, unsigned int 
 	              }
 
 	              rc = 0;
-	              if (msc_debug_contract_cancel_every) PrintToLog("%s(): REMOVING %s\n", __FUNCTION__, it->ToString());
+	              if (msc_debug_contract_cancel_every) PrintToLog("%s(): REMOVING %s\n", __func__, it->ToString());
 
 	              CDInfo::Entry cd;
 	              assert(_my_cds->getCD(it->getProperty(), cd));
@@ -2227,21 +2248,27 @@ int mastercore::ContractDex_CANCEL_EVERYTHING(const uint256& txid, unsigned int 
 	              string addr = it->getAddr();
                 int64_t redeemed = it->getAmountReserved();
 	              int64_t amountForSale = it->getAmountForSale();
-                int64_t balance = getMPbalance(addr,collateralCurrency,BALANCE);
+                int64_t amountRemaining = it->getAmountRemaining();
+                // int64_t balance = getMPbalance(addr,collateralCurrency,BALANCE);
 
                 if (msc_debug_contract_cancel_every)
                 {
     	              PrintToLog("collateral currency id of contract : %d\n",collateralCurrency);
     	              PrintToLog("amountForSale: %d\n",amountForSale);
-    	              PrintToLog("Address: %d\n",addr);
+                    PrintToLog("amountRemaining: %d\n",amountRemaining);
+    	              PrintToLog("Address: %s\n",addr);
     	              PrintToLog("--------------------------------------------\n");
                 }
 
+
+                const int64_t orderReserve = getMPbalance(addr, collateralCurrency, CONTRACTDEX_RESERVE);
+                const int64_t newRedeemed = (redeemed <= orderReserve) ? redeemed : orderReserve;
+
 	              // move from reserve to balance the collateral
-	              if (balance > redeemed && balance > 0 && redeemed > 0)
+	              if (0 < newRedeemed)
 			          {
-	                  assert(update_tally_map(addr, collateralCurrency, redeemed, BALANCE));
-	                  assert(update_tally_map(addr, collateralCurrency, -redeemed, CONTRACTDEX_RESERVE));
+	                  assert(update_tally_map(addr, collateralCurrency, newRedeemed, BALANCE));
+	                  assert(update_tally_map(addr, collateralCurrency, -newRedeemed, CONTRACTDEX_RESERVE));
 			          }
 
 	              bValid = true;
@@ -2284,7 +2311,7 @@ int mastercore::ContractDex_CANCEL_FOR_BLOCK(const uint256& txid,  int block,uns
 	              assert(_my_cds->getCD(contractId, cd));
 
 	              uint32_t collateralCurrency = cd.collateral_currency;
-	              int64_t balance = getMPbalance(addr,collateralCurrency,BALANCE);
+	              // int64_t balance = getMPbalance(addr,collateralCurrency,BALANCE);
 	              int64_t amountForSale = it->getAmountForSale();
                 if(msc_debug_contract_cancel_forblock)
                 {
@@ -2292,18 +2319,22 @@ int mastercore::ContractDex_CANCEL_FOR_BLOCK(const uint256& txid,  int block,uns
     	              PrintToLog("collateral currency id of contract : %d\n", collateralCurrency);
     	              PrintToLog("amountForSale: %d\n", amountForSale);
     	              PrintToLog("Address: %d\n", addr);
-                    PrintToLog("balance in collateral: %d\n", balance);
+                    // PrintToLog("balance in collateral: %d\n", balance);
                 }
+
+
+                const int64_t orderReserve = getMPbalance(addr, collateralCurrency, CONTRACTDEX_RESERVE);
+                const int64_t newRedeemed = (redeemed <= orderReserve) ? redeemed : orderReserve;
 
 	              // std::string sgetback = FormatDivisibleMP(redeemed, false);
 
 	              if(msc_debug_contract_cancel_forblock) PrintToLog("amount returned to balance: %d\n", redeemed);
 
 	              // move from reserve to balance the collateral
-	              if (balance > redeemed && balance > 0 && redeemed > 0)
+	              if (0 < newRedeemed)
 			          {
-			              assert(update_tally_map(addr, collateralCurrency, redeemed, BALANCE));
-	                  assert(update_tally_map(addr, collateralCurrency,  -redeemed, CONTRACTDEX_RESERVE));
+			              assert(update_tally_map(addr, collateralCurrency, newRedeemed, BALANCE));
+	                  assert(update_tally_map(addr, collateralCurrency,  -newRedeemed, CONTRACTDEX_RESERVE));
 	              }
 
 	              // record the cancellation
@@ -2392,7 +2423,7 @@ int mastercore::ContractDex_CANCEL_IN_ORDER(const std::string& sender_addr, uint
                 string addr = it->getAddr();
                 int64_t redeemed = it->getAmountReserved();
                 int64_t amountForSale = it->getAmountForSale();
-                int64_t balance = getMPbalance(addr,collateralCurrency,BALANCE);
+                // int64_t balance = getMPbalance(addr,collateralCurrency,BALANCE);
 
                 if(msc_debug_contract_cancel_inorder)
                 {
@@ -2403,10 +2434,14 @@ int mastercore::ContractDex_CANCEL_IN_ORDER(const std::string& sender_addr, uint
 
                 if(msc_debug_contract_cancel_inorder) PrintToLog("redeemed: %d\n",redeemed);
 
+
+                const int64_t orderReserve = getMPbalance(addr, collateralCurrency, CONTRACTDEX_RESERVE);
+                const int64_t newRedeemed = (redeemed <= orderReserve) ? redeemed : orderReserve;
+
                 // move from reserve to balance the collateral
-                if (balance > redeemed && balance > 0 && redeemed > 0) {
-                    assert(update_tally_map(addr, collateralCurrency, redeemed, BALANCE));
-                    assert(update_tally_map(addr, collateralCurrency, -redeemed, CONTRACTDEX_RESERVE));
+                if (0 < newRedeemed) {
+                    assert(update_tally_map(addr, collateralCurrency, newRedeemed, BALANCE));
+                    assert(update_tally_map(addr, collateralCurrency, -newRedeemed, CONTRACTDEX_RESERVE));
                 // // record the cancellation
                 }
 
@@ -2463,7 +2498,7 @@ int mastercore::ContractDex_CLOSE_POSITION(const uint256& txid, unsigned int blo
 {
     int rc = -1;
 
-    const int64_t contractBalance = getMPbalance(sender_addr,contractId, CONTRACT_BALANCE);
+    const int64_t contractBalance = getContractRecord(sender_addr,contractId, CONTRACT_POSITION);
 
     if(msc_debug_close_position) PrintToLog("%s(): position before: %d\n",__func__, contractBalance);
 
@@ -2480,16 +2515,16 @@ int mastercore::ContractDex_CLOSE_POSITION(const uint256& txid, unsigned int blo
 
     rc = ContractDex_ADD_MARKET_PRICE(sender_addr, contractId, result.first, block, txid, idx, result.second, 0);
 
-    const int64_t positionAf = getMPbalance(sender_addr, contractId, CONTRACT_BALANCE);
+    const int64_t positionAf = getContractRecord(sender_addr, contractId, CONTRACT_POSITION);
     if(msc_debug_close_position) PrintToLog("%s(): position after: %d, rc: %d\n",__func__, positionAf, rc);
 
     if (positionAf == 0)
     {
         if(msc_debug_close_position) PrintToLog("%s(): POSITION CLOSED!!!\n",__func__);
         // releasing the reserve
-        const int64_t reserve = getMPbalance(sender_addr, collateralCurrency, CONTRACTDEX_RESERVE);
-        assert(update_tally_map(sender_addr, collateralCurrency, reserve, BALANCE));
-        assert(update_tally_map(sender_addr, collateralCurrency, -reserve, CONTRACTDEX_RESERVE));
+        // const int64_t reserve = getMPbalance(sender_addr, collateralCurrency, CONTRACTDEX_RESERVE);
+        // assert(update_tally_map(sender_addr, collateralCurrency, reserve, BALANCE));
+        // assert(update_tally_map(sender_addr, collateralCurrency, -reserve, CONTRACTDEX_RESERVE));
 
     } else{
       if(msc_debug_close_position) PrintToLog("%s(): Position partialy Closed\n", __func__);
@@ -2803,6 +2838,7 @@ int mastercore::MetaDEx_CANCEL_ALL_FOR_PAIR(const uint256& txid, unsigned int bl
                  string addr = it->getAddr();
                  int64_t redeemed = it->getAmountReserved();
                  int64_t amountForSale = it->getAmountForSale();
+                 int64_t amountRemaining = it->getAmountRemaining();
                  uint32_t contractId = it->getProperty();
 
                  CDInfo::Entry cd;
@@ -2816,16 +2852,19 @@ int mastercore::MetaDEx_CANCEL_ALL_FOR_PAIR(const uint256& txid, unsigned int bl
 
                      PrintToLog("collateral currency id of contract : %d\n", collateralCurrency);
                      PrintToLog("amountForSale: %d\n",amountForSale);
+                     PrintToLog("amountRemaining: %d\n",amountRemaining);
                      PrintToLog("Address: %s\n",addr);
                  }
 
                  if(msc_debug_contract_cancel) PrintToLog("redeemed: %d\n",redeemed);
 
+                 const int64_t orderReserve = getMPbalance(addr, collateralCurrency, CONTRACTDEX_RESERVE);
+                 const int64_t newRedeemed = (redeemed <= orderReserve) ? redeemed : orderReserve;
+
                  // move from reserve to balance the collateral
-                 if (redeemed > 0) {
-                     assert(update_tally_map(addr, collateralCurrency, redeemed, BALANCE));
-                     assert(update_tally_map(addr, collateralCurrency, -redeemed, CONTRACTDEX_RESERVE));
-                 // // record the cancellation
+                 if (0 < newRedeemed) {
+                     assert(update_tally_map(addr, collateralCurrency, newRedeemed, BALANCE));
+                     assert(update_tally_map(addr, collateralCurrency, -newRedeemed, CONTRACTDEX_RESERVE));
                  }
 
                  bValid = true;
@@ -2892,8 +2931,8 @@ bool mastercore::checkContractReserve(const std::string& address, int64_t amount
  }
 
 // auxiliar function
-void addLives(int64_t& totalLongs, int64_t& totalShorts, int32_t contractId, const CMPTally& tally){
-    int64_t position = tally.getMoney(contractId, CONTRACT_BALANCE);
+void addLives(int64_t& totalLongs, int64_t& totalShorts, int32_t contractId, const Register& reg){
+    int64_t position = reg.getRecord(contractId, CONTRACT_POSITION);
     (position > 0) ? totalLongs += position : totalShorts += position;
 
 }
@@ -2912,7 +2951,7 @@ int64_t mastercore::getTotalLives(uint32_t contractId)
     }
 
     // for each tally account, we sum just contracts (all shorts, or all longs)
-    for_each(mp_tally_map.begin(), mp_tally_map.end(), [&totalLongs, &totalShorts, contractId](const std::pair<std::string, CMPTally>& elem){ addLives(totalLongs, totalShorts, contractId, elem.second); });
+    for_each(mp_register_map.begin(), mp_register_map.end(), [&totalLongs, &totalShorts, contractId](const std::pair<std::string, Register>& elem){ addLives(totalLongs, totalShorts, contractId, elem.second); });
 
     if(msc_debug_get_total_lives) PrintToLog("%s(): totalLongs : %d, totalShorts : %d\n",__func__, totalLongs, totalShorts);
 

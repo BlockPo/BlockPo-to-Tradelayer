@@ -178,6 +178,8 @@ class CMPContractDex : public CMPMetaDEx
 
   void setPrice(int64_t price);
 
+  bool updateAmountReserved(int64_t amount);
+
   bool Fees(std::string addressTaker,std::string addressMaker, int64_t nCouldBuy,uint32_t contractId);
 
   ///////////////////////////////

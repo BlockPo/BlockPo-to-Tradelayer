@@ -1,5 +1,4 @@
 #include <tradelayer/parse_string.h>
-#include <tradelayer/log.h>
 #include <algorithm>
 #include <stdint.h>
 #include <string>
