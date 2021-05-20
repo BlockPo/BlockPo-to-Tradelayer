@@ -122,6 +122,63 @@ void mastercore::LoopBiDirectional(cd_PricesMap* const ppriceMap, uint8_t trdAct
     }
 }
 
+void mastercore::takeMargin(int64_t oldPosition, int64_t newPosition, uint32_t contract_traded, const CDInfo::Entry& cd, CMPContractDex *elem)
+{
+    if(abs(oldPosition) < abs(newPosition))
+    {
+        // taking more margin
+        const int64_t difference = (int64_t) abs(newPosition) - abs(oldPosition);
+        const int64_t proportional = getMoneyToMargin(cd, difference);
+        const uint64_t& allreserved = elem->getAmountReserved();
+        const uint32_t& colateral = cd.collateral_currency;
+
+        // updating amount reserved for the order
+        assert(update_tally_map(elem->getAddr(), colateral, -proportional, CONTRACTDEX_RESERVE));
+        elem->updateAmountReserved(-proportional);
+
+        // passing colateral to margin position
+        assert(update_register_map(elem->getAddr(), contract_traded,  proportional, MARGIN));
+
+        PrintToLog("%s(): taking more margin: allreserved: %d, proportional: %d, difference: %d, colateral: %d\n",__func__, allreserved, proportional, difference, colateral);
+
+  } else {
+      PrintToLog("%s(): No taking margin abs(poldBalance) >= abs(poldNBalance)\n",__func__);
+
+  }
+
+}
+
+// update entries (amount,price)
+void mastercore::updateAllEntry(int64_t oldPosition, int64_t newPosition, int64_t nCouldBuy, uint32_t contract_traded, CMPContractDex* elem)
+{
+    const int signOld = boost::math::sign(oldPosition);
+    const int signNew = boost::math::sign(newPosition);
+
+    // open position
+    if (signOld == 0 && signNew != 0)
+    {
+        // updating entries (amount of contracts , price)
+        assert(insert_entry(elem->getAddr(), contract_traded, nCouldBuy, elem->getEffectivePrice()));
+
+    // same position
+    } else if (signOld == signNew) {
+
+        // if position increasing -> we add a new entry
+        if(abs(newPosition) > abs(oldPosition))
+        {
+            // updating entries (amount of contracts , price)
+            assert(insert_entry(elem->getAddr(), contract_traded, nCouldBuy, elem->getEffectivePrice()));
+
+        // decreasing -> delete some contracts in entry
+        } else {
+            assert(decrease_entry(elem->getAddr(), contract_traded, nCouldBuy));
+        }
+     // closing position and opening another from different side
+     } else if (signOld != signNew) {
+         assert(decrease_entry(elem->getAddr(), contract_traded, nCouldBuy, elem->getEffectivePrice()));
+     }
+ }
+
 void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPrices, typename cd_PricesMap::reverse_iterator &it_bwdPrices, uint8_t trdAction, CMPContractDex* const pnew, const uint64_t sellerPrice, const uint32_t propertyForSale, MatchReturnType &NewReturn)
 {
   cd_Set* const pofferSet = trdAction == buy ? &(it_fwdPrices->second) : &(it_bwdPrices->second);
@@ -234,7 +291,6 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       assert(_my_cds->getCD(property_traded, cd));
 
       const uint32_t& NotionalSize = cd.notional_size;
-      const uint32_t& colateral = cd.collateral_currency;
 
       arith_uint256 Volume256_t = mastercore::ConvertTo256(NotionalSize) * mastercore::ConvertTo256(nCouldBuy)/COIN;
       int64_t Volume64_t = mastercore::ConvertTo64(Volume256_t);
@@ -278,61 +334,19 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       const int64_t pnewNBalance = getContractRecord(pnew->getAddr(), property_traded, CONTRACT_POSITION);
 
       //------------------------------------------------------------------------
+      CMPContractDex contract_replacement = *pold;
+      CMPContractDex *aux = &contract_replacement;
+
+      // entries (amount, price)
+      updateAllEntry(pnewBalance, pnewNBalance, nCouldBuy, property_traded, pnew);
+      updateAllEntry(poldBalance, poldNBalance, nCouldBuy, property_traded, aux);
+
       // checking here if positions increase or decrease (we need this to take more margin if it's required)
       PrintToLog("%s(): abs(poldBalance): %d, abs(poldNBalance): %d\n",__func__, abs(poldBalance), abs(poldNBalance));
 
-      CMPContractDex contract_replacement = *pold;
-
-      if(abs(poldBalance) < abs(poldNBalance))
-      {
-          // take more margin...
-          const int64_t difference = (int64_t) abs(poldNBalance) - abs(poldBalance);
-          const int64_t proportional = ContractBasisPoints(cd, difference);
-          const uint64_t& allreserved = pold->getAmountReserved();
-          assert(update_tally_map(pold->getAddr(), colateral, -proportional, CONTRACTDEX_RESERVE));
-
-          // updating amount reserved for the order
-          contract_replacement.updateAmountReserved(-proportional);
-
-          // passing colateral to margin position
-          assert(update_register_map(pold->getAddr(), property_traded,  proportional, MARGIN));
-
-          // updating entries (amount of contracts , price)
-          assert(insert_entry(pold->getAddr(), property_traded, nCouldBuy, pold->getEffectivePrice()));
-
-          PrintToLog("%s(): taking more margin: allreserved: %d, proportional: %d, difference: %d, colateral: %d\n",__func__, allreserved, proportional, difference, colateral);
-
-      } else  {
-           // TODO: decreasing position (we need to substract the amount of contract in registers)
-           assert(decrease_entry(pold->getAddr(), property_traded, nCouldBuy, pold->getEffectivePrice()));
-
-      }
-
-      PrintToLog("%s(): abs(pnewBalance): %d, abs(pnewNBalance): %d\n",__func__, abs(pnewBalance), abs(pnewNBalance));
-
-      if(abs(pnewBalance) < abs(pnewNBalance))
-      {
-          // take more margin...
-          const int64_t difference = (int64_t) abs(pnewNBalance) - abs(pnewBalance);
-          const int64_t proportional = ContractBasisPoints(cd, difference);
-          const uint64_t& allreserved = pnew->getAmountReserved();
-          assert(update_tally_map(pnew->getAddr(), colateral, -proportional, BALANCE));
-
-          // updating amount reserved for the order
-          pnew->updateAmountReserved(-proportional);
-
-          // passing colateral to margin position
-          assert(update_register_map(pnew->getAddr(), property_traded,  proportional, MARGIN));
-
-          // updating entries (amount of contracts , price)
-          assert(insert_entry(pnew->getAddr(), property_traded, nCouldBuy, pold->getEffectivePrice()));
-
-          PrintToLog("%s(): taking more margin: allreserved: %d, proportional: %d, difference: %d, colateral: %d\n",__func__, allreserved, proportional, difference, colateral);
-
-      } else  {
-           //decreasing position (we need to substract the amount of contract in registers)
-           assert(decrease_entry(pnew->getAddr(), property_traded, nCouldBuy, pold->getEffectivePrice()));
-      }
+      // taking margin
+      takeMargin(pnewBalance, pnewNBalance, property_traded, cd, pnew);
+      takeMargin(poldBalance, poldNBalance, property_traded, cd, aux);
 
       int64_t poldPositiveBalanceL = 0;
       int64_t pnewPositiveBalanceL = 0;
@@ -1230,11 +1244,15 @@ bool mastercore::ContractDex_Fees(const CMPContractDex* maker, const CMPContract
           // 0.5 basis point to feecache
           cachefees[cd.collateral_currency] += cacheFee;
 
-          if (msc_debug_contractdex_fees) PrintToLog("%s: natives takerFee: %d, natives makerFee: %d, cacheFee: %d\n",__func__, takerFee, makerFee, cacheFee);
+          const int64_t reserveMaker =  getMPbalance(maker->getAddr(), cd.collateral_currency, CONTRACTDEX_RESERVE);
+          const int64_t reserveTaker =  getMPbalance(taker->getAddr(), cd.collateral_currency, CONTRACTDEX_RESERVE);
+
+
+          if (msc_debug_contractdex_fees) PrintToLog("%s: natives takerFee: %d, natives makerFee: %d, cacheFee: %d, reserveMaker: %d, reserveTaker: %d\n",__func__, takerFee, makerFee, cacheFee, reserveMaker, reserveTaker);
 
     }
 
-    // - to taker, + to maker
+    // - to taker, + to maker ( do we need to take fee when positions are decreasing?)
     assert(update_tally_map(taker->getAddr(), cd.collateral_currency, -takerFee, CONTRACTDEX_RESERVE));
     assert(update_tally_map(maker->getAddr(), cd.collateral_currency, makerFee, BALANCE));
 
@@ -2895,6 +2913,16 @@ bool mastercore::checkReserve(const std::string& address, int64_t amount, uint32
     nBalance = getMPbalance(address, propertyId, BALANCE);
 
     return (nBalance < amountToReserve || nBalance == 0) ? false : true;
+}
+
+int64_t mastercore::getMoneyToMargin(const CDInfo::Entry& cd, int64_t amount)
+{
+    //NOTE: add changes to inverse quoted
+    const int64_t leverage = 1;
+    const arith_uint256 amountTR = (ConvertTo256(amount) * ConvertTo256(cd.margin_requirement)) / ConvertTo256(leverage);
+    int64_t amountToReserve = ConvertTo64(amountTR);
+
+    return amountToReserve;
 }
 
 int64_t mastercore::ContractBasisPoints(const CDInfo::Entry& cd, int64_t amount)

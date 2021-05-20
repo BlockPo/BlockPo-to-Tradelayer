@@ -56,7 +56,7 @@ public:
 
     bool insertEntry(uint32_t contractId, int64_t amount, int64_t price);
 
-    bool decreasePosRecord(uint32_t contractId, int64_t amount);
+    bool decreasePosRecord(uint32_t contractId, int64_t amount, int64_t price = 0);
 
     int64_t getEntryPrice(uint32_t contractId, int64_t amount);
 
@@ -80,7 +80,7 @@ namespace mastercore
 
   bool insert_entry(const std::string& who, uint32_t contractId, int64_t amount, int64_t price);
 
-  bool decrease_entry(const std::string& who, uint32_t contractId, int64_t amount, int64_t price);
+  bool decrease_entry(const std::string& who, uint32_t contractId, int64_t amount, int64_t price = 0);
 }
 
 #endif // TRADELAYER_REGISTER_H

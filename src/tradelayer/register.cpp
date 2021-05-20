@@ -166,7 +166,7 @@ int64_t Register::getEntryPrice(uint32_t contractId, int64_t amount)
 
 
 // Decrease Position Record
-bool Register::decreasePosRecord(uint32_t contractId, int64_t amount)
+bool Register::decreasePosRecord(uint32_t contractId, int64_t amount, int64_t price)
 {
     bool bRet = false;
     RecordMap::iterator it = mp_record.find(contractId);
@@ -181,7 +181,7 @@ bool Register::decreasePosRecord(uint32_t contractId, int64_t amount)
 
         auto it = entries.begin();
 
-        while(amount > 0)
+        while(remaining > 0)
         {
             // process to calculate it
             std::pair<int64_t,int64_t>& p = *it;
@@ -204,6 +204,14 @@ bool Register::decreasePosRecord(uint32_t contractId, int64_t amount)
                 remaining = 0;
             }
 
+
+        }
+
+        // closing position and then open a new one on the other side
+        if (remaining > 0) {
+            entries.clear();
+            std::pair<int64_t,int64_t> p (remaining, price);
+            entries.push_back(p);
         }
 
         bRet = true;
@@ -408,7 +416,7 @@ bool mastercore::decrease_entry(const std::string& who, uint32_t contractId, int
 
     Register& reg = my_it->second;
 
-    bRet = reg.decreasePosRecord(contractId, amount);
+    bRet = reg.decreasePosRecord(contractId, amount, price);
 
     return bRet;
 }
