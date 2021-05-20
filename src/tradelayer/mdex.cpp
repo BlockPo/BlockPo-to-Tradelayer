@@ -1103,7 +1103,8 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
    * Fees calculations for maker and taker.
    *
    */
-  mastercore::ContractDex_Fees(pold, pnew, nCouldBuy);
+   //NOTE: it needs refinement!
+  // mastercore::ContractDex_Fees(pold, pnew, nCouldBuy);
 
 
     if(msc_debug_x_trade_bidirectional)

@@ -3,9 +3,8 @@
  *
  * This file contains the core of Trade Layer.
  */
-
+ 
 #include <tradelayer/tradelayer.h>
-
 #include <tradelayer/activation.h>
 #include <tradelayer/ce.h>
 #include <tradelayer/consensushash.h>

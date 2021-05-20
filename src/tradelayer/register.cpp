@@ -98,6 +98,7 @@ bool Register::insertEntry(uint32_t contractId, int64_t amount, int64_t price)
 
     if (it != mp_record.end()) {
         std::pair<int64_t,int64_t> p (amount, price);
+        PrintToLog("%s(): new entry: amount: %d, price: %d\n",__func__, amount, price);
         PositionRecord& record = it->second;
         Entries& entries = record.entries;
         entries.push_back(p);
@@ -123,18 +124,14 @@ int64_t Register::getEntryPrice(uint32_t contractId, int64_t amount)
         // setting remaining
         int64_t& remaining = amount;
 
-        auto it = entries.begin();
+        auto itt = entries.begin();
 
-        while(remaining > 0) {
+        while(remaining > 0 && itt != entries.end()) {
           // process to calculate it
-          std::pair<int64_t,int64_t>& p = *it;
+          std::pair<int64_t,int64_t>& p = *itt;
 
           const int64_t& ramount = p.first;
           const int64_t& rprice = p.second;
-
-          if (0 == ramount || 0 == rprice ) {
-              ++it;
-          }
 
           int64_t part = 0;
 
@@ -151,6 +148,7 @@ int64_t Register::getEntryPrice(uint32_t contractId, int64_t amount)
           remaining -= part;
           PrintToLog("%s(): remaining after loop: %d\n",__func__, remaining);
           PrintToLog("-------------------------------------\n\n");
+          ++itt;
         }
 
         const int64_t newPrice = total / amount;
@@ -179,37 +177,36 @@ bool Register::decreasePosRecord(uint32_t contractId, int64_t amount, int64_t pr
         // setting remaining
         int64_t& remaining = amount;
 
-        auto it = entries.begin();
+        auto itt = entries.begin();
 
-        while(remaining > 0)
+        while(remaining > 0 && itt != entries.end())
         {
             // process to calculate it
-            std::pair<int64_t,int64_t>& p = *it;
+            std::pair<int64_t,int64_t>& p = *itt;
 
             int64_t& ramount = p.first;
             const int64_t& rprice = p.second;
 
-            if (0 == ramount || 0 == rprice ) {
-                ++it;
-            }
-
             if(remaining - ramount >= 0)
             {
-                entries.erase(it);
                 // smaller remaining
                 remaining -= ramount;
+                PrintToLog("%s():deleting full entry: amount: %d, price: %d\n",__func__, ramount, rprice);
+                entries.erase(itt);
             } else {
                 // there's nothing left
                 ramount -= remaining;
                 remaining = 0;
+                PrintToLog("%s() there's nothing else (remaining == 0), ramount left: %d, at price: %d\n",__func__, ramount, rprice);
             }
-
 
         }
 
         // closing position and then open a new one on the other side
-        if (remaining > 0) {
+        if (remaining > 0)
+        {
             entries.clear();
+            PrintToLog("%s(): closing position and then open a new one on the other side, remaining: %d, price: %d\n",__func__, remaining, price);
             std::pair<int64_t,int64_t> p (remaining, price);
             entries.push_back(p);
         }
@@ -250,7 +247,6 @@ int64_t Register::getPosEntryPrice(uint32_t contractId)
         price = total / amount;
 
     }
-
 
     return price;
 }
@@ -386,12 +382,12 @@ bool mastercore::insert_entry(const std::string& who, uint32_t contractId, int64
 
     Register& reg = my_it->second;
 
-    bRet = reg.insertEntry(contractId, price, amount);
+    bRet = reg.insertEntry(contractId, amount, price);
 
     // entry price of full position
     const int64_t entryPrice = reg.getPosEntryPrice(contractId);
 
-    PrintToLog("%s(): entryPrice(full position): %d\n",__func__, entryPrice);
+    PrintToLog("%s(): entryPrice(full position): %d, contractId: %d, address: %s\n",__func__, entryPrice, contractId, who);
 
     return bRet;
 }
@@ -415,6 +411,11 @@ bool mastercore::decrease_entry(const std::string& who, uint32_t contractId, int
     }
 
     Register& reg = my_it->second;
+
+    // entry price of full position
+    int64_t entryPrice = reg.getPosEntryPrice(contractId);
+
+    PrintToLog("%s(): entryPrice before decreasing position: %d, contractId: %d, address: %s\n",__func__, entryPrice, contractId, who);
 
     bRet = reg.decreasePosRecord(contractId, amount, price);
 
