@@ -14,6 +14,7 @@ TRADELAYER_TEST_CPP = \
   tradelayer/test/rounduint64_tests.cpp \
   tradelayer/test/checkpoint_tests.cpp \
   tradelayer/test/contractdex_tests.cpp \
+  tradelayer/test/register_tests.cpp \
   tradelayer/test/rpcvalues_tests.cpp \
   tradelayer/test/dex_functions_tests.cpp \
   tradelayer/test/vesting_tests.cpp \

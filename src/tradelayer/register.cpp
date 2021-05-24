@@ -2,9 +2,12 @@
 
 #include <tradelayer/log.h>
 #include <tradelayer/tradelayer.h>
+#include <tradelayer/uint256_extensions.h>
 
 #include <stdint.h>
 #include <map>
+
+using namespace mastercore;
 
 CCriticalSection cs_register;
 
@@ -55,9 +58,8 @@ uint32_t Register::next()
  *
  * Negative balances are only permitted for contracts amount.
  *
- *
  */
-bool Register::updateRegister(uint32_t contractId, int64_t amount, RecordType ttype)
+bool Register::updateRecord(uint32_t contractId, int64_t amount, RecordType ttype)
 {
     if (RECORD_TYPE_COUNT <= ttype || amount == 0) {
         return false;
@@ -71,9 +73,9 @@ bool Register::updateRegister(uint32_t contractId, int64_t amount, RecordType tt
         return false;
     }
 
-    if (CONTRACT_POSITION != ttype &&(now64 + amount) < 0) {
+    if (CONTRACT_POSITION != ttype && UPNL != ttype && (now64 + amount) < 0) {
         // NOTE:
-        PrintToLog("%s(): ERROR: Negative balances are only permitted for contracts amount\n",__func__);
+        PrintToLog("%s(): ERROR: Negative balances are only permitted for contracts amount, or UPNL\n",__func__);
         return false;
     } else {
 
@@ -94,16 +96,27 @@ bool Register::insertEntry(uint32_t contractId, int64_t amount, int64_t price)
 {
     bool bRet = false;
 
+    // extra protection
+    if(amount == 0 || price == 0) {
+        return bRet;
+    }
+
     RecordMap::iterator it = mp_record.find(contractId);
+    std::pair<int64_t,int64_t> p (amount, price);
 
     if (it != mp_record.end()) {
-        std::pair<int64_t,int64_t> p (amount, price);
-        PrintToLog("%s(): new entry: amount: %d, price: %d\n",__func__, amount, price);
         PositionRecord& record = it->second;
         Entries& entries = record.entries;
         entries.push_back(p);
         bRet = true;
+    } else {
+         PositionRecord posRec;
+         Entries& entries = posRec.entries;
+         entries.push_back(p);
+         mp_record.insert(std::make_pair(contractId, posRec));
+         bRet = true;
     }
+
 
     return bRet;
 
@@ -119,10 +132,10 @@ int64_t Register::getEntryPrice(uint32_t contractId, int64_t amount)
         PositionRecord& record = it->second;
         Entries& entries = record.entries;
 
-        int64_t total = 0;
+        arith_uint256 total = 0;
 
         // setting remaining
-        int64_t& remaining = amount;
+        int64_t remaining = amount;
 
         auto itt = entries.begin();
 
@@ -143,17 +156,20 @@ int64_t Register::getEntryPrice(uint32_t contractId, int64_t amount)
               // ramount -= remaining;
           }
 
-          total += part * rprice;
-          PrintToLog("%s(): part: %d, total: %d\n",__func__, part, total);
+          total += ConvertTo256(part * rprice);
+          PrintToLog("%s(): part: %d, total: %d\n",__func__, part, ConvertTo64(total));
           remaining -= part;
           PrintToLog("%s(): remaining after loop: %d\n",__func__, remaining);
           PrintToLog("-------------------------------------\n\n");
           ++itt;
         }
 
-        const int64_t newPrice = total / amount;
+        // using 256bits for big calculations
+        const arith_uint256 aAmount = ConvertTo256(amount);
+        const arith_uint256 aNewPrice = DivideAndRoundUp(total, aAmount);
+        const int64_t newPrice = ConvertTo64(aNewPrice);
 
-        PrintToLog("%s(): total sum: %d, amount: %d, newPrice: %d\n",__func__, total, amount, newPrice);
+        PrintToLog("%s(): total sum: %d, amount: %d, newPrice: %d\n",__func__, ConvertTo64(total), amount, newPrice);
 
         return newPrice;
     }
@@ -229,7 +245,7 @@ int64_t Register::getPosEntryPrice(uint32_t contractId)
     {
         PositionRecord& record = it->second;
         Entries& entries = record.entries;
-        int64_t total = 0;  // contracts * price
+        arith_uint256 total = 0;  // contracts * price
         int64_t amount = 0; // sum of contracts
 
         for(const auto& i : entries)
@@ -239,12 +255,13 @@ int64_t Register::getPosEntryPrice(uint32_t contractId)
 
             PrintToLog("%s(): ramount: %d, rprice: %d\n",__func__, ramount, rprice);
 
-            // maybe we need to use arith_uint256 here
-            total += ramount * rprice;
+            total += ConvertTo256(ramount * rprice);
             amount += ramount;
         }
 
-        price = total / amount;
+        const arith_uint256 aAmount = ConvertTo64(amount);
+        const arith_uint256 aPrice = DivideAndRoundUp(total, aAmount);
+        price = ConvertTo64(aPrice);
 
     }
 
@@ -353,7 +370,7 @@ bool mastercore::update_register_map(const std::string& who, uint32_t contractId
     }
 
     Register& reg = my_it->second;
-    bRet = reg.updateRegister(contractId, amount, ttype);
+    bRet = reg.updateRecord(contractId, amount, ttype);
 
     after = getContractRecord(who, contractId, ttype);
     if (!bRet) {
@@ -369,6 +386,11 @@ bool mastercore::insert_entry(const std::string& who, uint32_t contractId, int64
     bool bRet = false;
     if (0 == amount) {
         PrintToLog("%s(%s, %u=0x%X, %+d) ERROR: amount of contracts is zero\n", __func__, who, contractId, contractId, amount);
+        return bRet;
+    }
+
+    if (0 == price) {
+        PrintToLog("%s(%s, %u=0x%X, %+d) ERROR: price of contracts is zero\n", __func__, who, contractId, contractId, amount);
         return bRet;
     }
 

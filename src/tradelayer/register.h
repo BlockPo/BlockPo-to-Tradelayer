@@ -52,7 +52,7 @@ public:
     /** Advances the internal iterator. */
     uint32_t next();
 
-    bool updateRegister(uint32_t contractId, int64_t amount, RecordType ttype);
+    bool updateRecord(uint32_t contractId, int64_t amount, RecordType ttype);
 
     bool insertEntry(uint32_t contractId, int64_t amount, int64_t price);
 
