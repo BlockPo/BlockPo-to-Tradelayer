@@ -55,6 +55,36 @@ std::vector<unsigned char> CreatePayload_SimpleSend(uint32_t propertyId, uint64_
     return payload;
 }
 
+std::vector<unsigned char> CreatePayload_ManySend(uint32_t propertyId, std::vector<uint64_t> amounts)
+{
+	std::vector<unsigned char> payload;
+
+	uint64_t messageType = 0; /// XXX
+	uint64_t messageVer = 0;
+
+	std::vector<uint8_t> vecMessageType = CompressInteger(messageType);
+	std::vector<uint8_t> vecMessageVer = CompressInteger(messageVer);
+	std::vector<uint8_t> vecPropertyId = CompressInteger((uint64_t)propertyId);
+
+	/*
+	 * We can now check if there is sufficient room for the amounts..
+	 */
+	if (amounts.size() > 4) {
+		throw ;
+	}
+
+	payload.insert(payload.end(), vecMessageVer.begin(), vecMessageVer.end());
+	payload.insert(payload.end(), vecMessageType.begin(), vecMessageType.end());
+	payload.insert(payload.end(), vecPropertyId.begin(), vecPropertyId.end());
+
+	for (auto amount: amounts) {
+		std::vector<uint8_t> vecAmount = CompressInteger(amount);
+		payload.insert(payload.end(), vecAmount.begin(), vecAmount.end());
+	}
+
+	return payload;
+}
+
 std::vector<unsigned char> CreatePayload_SendVestingTokens(uint64_t amount)
 {
     std::vector<unsigned char> payload;
