@@ -1,5 +1,5 @@
 #include <tradelayer/register.h>
-
+#include <tradelayer/ce.h>
 #include <tradelayer/log.h>
 #include <tradelayer/tradelayer.h>
 #include <tradelayer/uint256_extensions.h>
@@ -51,6 +51,51 @@ uint32_t Register::next()
         ++my_it;
     }
     return ret;
+}
+
+int64_t Register::getPosExitPrice(const uint32_t contractId, bool isOracle) const
+{
+    if(isOracle)
+    {
+        return getOracleTwap(contractId, OL_BLOCKS);
+    }
+
+    // refine this: native contracts mark price
+    return 0;
+}
+
+
+int64_t Register::getUPNL(const uint32_t contractId, const uint32_t notionalSize, bool isOracle) const
+{
+    const int64_t position = getRecord(contractId, CONTRACT_POSITION);
+    const int64_t entryPrice = getPosEntryPrice(contractId);
+    const int64_t exitPrice  = getPosExitPrice(contractId, isOracle);
+
+    if (entryPrice == 0 || exitPrice == 0) return 0;
+
+    if(msc_debug_liquidation_enginee)
+    {
+         PrintToLog("%s(): inside getUPNL, position: %d. entryPrice: %d, exitPrice: %d\n",__func__, position, entryPrice, exitPrice);
+    }
+
+    const double dEntryPrice = (double) entryPrice / COIN;
+    const double dExitPrice = (double) exitPrice /  COIN;
+
+    // TODO: convert this into arith_uint256
+    const double factor = (double) (dExitPrice - dEntryPrice) / (dEntryPrice * dExitPrice);
+
+    const double UPNL = position * notionalSize * factor;
+    const int64_t iUPNL = (int64_t) UPNL;
+
+    if(msc_debug_liquidation_enginee)
+    {
+       PrintToLog("%s(): entryPrice(double): %d, exitPrice(double): %d, factor: %d, notionalsize: %d\n",__func__, dEntryPrice, dExitPrice, factor, notionalSize);
+       PrintToLog("%s():UPNL(nomalized): %d\n",__func__, UPNL / COIN);
+       PrintToLog("%s():UPNL(int): %d\n",__func__, iUPNL);
+    }
+
+
+    return iUPNL;
 }
 
 /**
@@ -123,14 +168,14 @@ bool Register::insertEntry(uint32_t contractId, int64_t amount, int64_t price)
 }
 
 // Entry price for liquidations
-int64_t Register::getEntryPrice(uint32_t contractId, int64_t amount)
+int64_t Register::getEntryPrice(uint32_t contractId, int64_t amount) const
 {
-    RecordMap::iterator it = mp_record.find(contractId);
+    RecordMap::const_iterator it = mp_record.find(contractId);
 
     if (it != mp_record.end())
     {
-        PositionRecord& record = it->second;
-        Entries& entries = record.entries;
+        const PositionRecord& record = it->second;
+        const Entries& entries = record.entries;
 
         arith_uint256 total = 0;
 
@@ -141,7 +186,7 @@ int64_t Register::getEntryPrice(uint32_t contractId, int64_t amount)
 
         while(remaining > 0 && itt != entries.end()) {
           // process to calculate it
-          std::pair<int64_t,int64_t>& p = *itt;
+          const std::pair<int64_t,int64_t>& p = *itt;
 
           const int64_t& ramount = p.first;
           const int64_t& rprice = p.second;
@@ -150,10 +195,8 @@ int64_t Register::getEntryPrice(uint32_t contractId, int64_t amount)
 
           if(remaining - ramount >= 0) {
               part = ramount;
-              // entries.erase(it);
           } else {
               part = remaining;
-              // ramount -= remaining;
           }
 
           total += ConvertTo256(part * rprice);
@@ -236,15 +279,15 @@ bool Register::decreasePosRecord(uint32_t contractId, int64_t amount, int64_t pr
 }
 
 // Entry price for full position
-int64_t Register::getPosEntryPrice(uint32_t contractId)
+int64_t Register::getPosEntryPrice(uint32_t contractId) const
 {
     int64_t price = 0;
-    RecordMap::iterator it = mp_record.find(contractId);
+    RecordMap::const_iterator it = mp_record.find(contractId);
 
     if (it != mp_record.end())
     {
-        PositionRecord& record = it->second;
-        Entries& entries = record.entries;
+        const PositionRecord& record = it->second;
+        const Entries& entries = record.entries;
         arith_uint256 total = 0;  // contracts * price
         int64_t amount = 0; // sum of contracts
 
@@ -341,6 +384,34 @@ int64_t mastercore::getContractRecord(const std::string& address, uint32_t contr
     }
 
     return balance;
+}
+
+bool mastercore::getFullContractRecord(const std::string& address, uint32_t contractId, UniValue& position_obj)
+{
+    LOCK(cs_register);
+    const std::unordered_map<std::string, Register>::const_iterator my_it = mp_register_map.find(address);
+    if (my_it != mp_register_map.end()) {
+        const Register& reg = my_it->second;
+        //entry price
+        const int64_t entryPrice = reg.getPosEntryPrice(contractId);
+        position_obj.pushKV("entry_price", FormatDivisibleMP(entryPrice));
+        // position
+        const int64_t position = reg.getRecord(contractId, CONTRACT_POSITION);
+        position_obj.pushKV("position", FormatDivisibleMP(position));
+        // liquidation price
+        const int64_t liqPrice = reg.getRecord(contractId, LIQUIDATION_PRICE);
+        position_obj.pushKV("liquidation_price", FormatDivisibleMP(liqPrice));
+        // position margin
+        const int64_t posMargin = reg.getRecord(contractId, MARGIN);
+        position_obj.pushKV("position_margin", FormatDivisibleMP(posMargin));
+        // upnl
+        const int64_t upnl = reg.getRecord(contractId, UPNL);
+        position_obj.pushKV("upnl", FormatDivisibleMP(upnl));
+
+        return true;
+    }
+
+    return false;
 }
 
 // return true if everything is ok

@@ -3,7 +3,7 @@
  *
  * This file contains the core of Trade Layer.
  */
- 
+
 #include <tradelayer/tradelayer.h>
 #include <tradelayer/activation.h>
 #include <tradelayer/ce.h>
@@ -6037,69 +6037,24 @@ bool CMPTradeList::getCreatedPegged(uint32_t propertyId, UniValue& tradeArray)
 //
 // }
 
-int64_t getMinMargin(const uint32_t contractId, const int64_t& position, const CDInfo::Entry& sp)
+int64_t getMinMargin(const uint32_t contractId, const int64_t& position, uint64_t marginRequirement)
 {
-      int64_t margin = position *  sp.margin_requirement / 2;
+      const int64_t margin = (int64_t) (position *  marginRequirement) / 2;
 
-      if(msc_debug_liquidation_enginee) PrintToLog("%s(): position: %d, margin requirement: %d, total margin required: %d\n",__func__, position, sp.margin_requirement, margin);
+      if(msc_debug_liquidation_enginee) PrintToLog("%s(): position: %d, margin requirement: %d, total margin required: %d\n",__func__, position, marginRequirement, margin);
 
       return margin;
 }
 
-
-int64_t getUPNL(const int64_t& position, const int64_t entryPrice, const int64_t exitPrice, const CDInfo::Entry& sp)
-{
-   if (entryPrice == 0 || exitPrice == 0) return 0;
-
-   if(msc_debug_liquidation_enginee)
-   {
-       PrintToLog("%s(): inside getUPNL, position: %d. entryPrice: %d, exitPrice: %d\n",__func__, position, entryPrice, exitPrice);
-   }
-
-   const double dEntryPrice = (double) entryPrice / COIN;
-   const double dExitPrice = (double) exitPrice /  COIN;
-
-   const double factor = (double) (dExitPrice - dEntryPrice) / (dEntryPrice * dExitPrice);
-
-   const double UPNL = position * sp.notional_size * factor;
-
-   const int64_t iUPNL = (int64_t) UPNL;
-
-   if(msc_debug_liquidation_enginee)
-   {
-       PrintToLog("%s(): entryPrice(double): %d, exitPrice(double): %d, factor: %d, notionalsize: %d\n",__func__, dEntryPrice, dExitPrice, factor, sp.notional_size);
-       PrintToLog("%s():UPNL(nomalized): %d\n",__func__, UPNL / COIN);
-       PrintToLog("%s():UPNL(int): %d\n",__func__, iUPNL);
-   }
-
-   return iUPNL;
-}
-
-int64_t getExit(const uint32_t contractId,  const CDInfo::Entry& sp)
-{
-    if(sp.isOracle())
-    {
-        return getOracleTwap(contractId, OL_BLOCKS);
-    }
-
-    // refine this: native contracts mark price
-    return 0;
-}
-
-int64_t getEntry(const uint32_t contractId,  const CMPTally& tally)
-{
-    return tally.getMoney(contractId, ENTRY_PRICE);
-}
-
 //check position for a given address of this contractId
-bool checkContractPositions(int Block, const std::string &address, const uint32_t contractId, const CDInfo::Entry& sp, const CMPTally& tally)
+bool checkContractPositions(int Block, const std::string &address, const uint32_t contractId, const CDInfo::Entry& sp, const Register& reg)
 {
     if(msc_debug_liquidation_enginee)
     {
         PrintToLog("%s(): inside checkContractPositions \n",__func__);
     }
 
-    int64_t position =  tally.getMoney(contractId, CONTRACT_BALANCE);
+    int64_t position =  reg.getRecord(contractId, CONTRACT_POSITION);
 
     // we need an active position
     if (0 == position) return false;
@@ -6107,28 +6062,25 @@ bool checkContractPositions(int Block, const std::string &address, const uint32_
     // selling or buying the position?
     const uint8_t option = (position > 0) ? sell : buy;
 
-    const int64_t reserve = tally.getMoney(sp.collateral_currency, CONTRACTDEX_RESERVE);
+    const int64_t reserve = getMPbalance(address, sp.collateral_currency, CONTRACTDEX_RESERVE);
 
     if(msc_debug_liquidation_enginee)
     {
         PrintToLog("%s(): contractdex reserve for address (%s): %d\n",__func__, address, reserve);
     }
 
-    const int64_t entryPrice = getEntry(contractId, tally);
-    const int64_t exitPrice = getExit(contractId, sp);
-
-    const int64_t upnl = getUPNL(position, entryPrice, exitPrice, sp);
+    const int64_t upnl = reg.getUPNL(contractId, sp.notional_size, sp.isOracle());
 
     // absolute value needed
     position = abs(position);
 
-    const int64_t min_margin = getMinMargin(contractId, position, sp); //(min margin: 50% requirements for position)
+    const int64_t min_margin = getMinMargin(contractId, position, sp.margin_requirement); //(min margin: 50% requirements for position)
 
     const int64_t sum = reserve + upnl;
 
     if(msc_debug_liquidation_enginee)
     {
-        PrintToLog("%s(): min_margin: %d, entryPrice: %d, exitPrice: %d, upnl: %d, sum: %d, reserve: %d\n",__func__, min_margin, entryPrice, exitPrice, upnl, sum, reserve);
+        PrintToLog("%s(): min_margin: %d, upnl: %d, sum: %d, reserve: %d\n",__func__, min_margin, upnl, sum, reserve);
     }
 
     if(sum < min_margin)
@@ -6179,9 +6131,9 @@ bool mastercore::LiquidationEngine(int Block)
          if(msc_debug_liquidation_enginee) PrintToLog("%s(): contractId: %d\n",__func__, contractId);
 
          // we check each position for this contract Id
-         LOCK(cs_tally);
+         LOCK(cs_register);
 
-         for_each(mp_tally_map.begin(),mp_tally_map.end(), [contractId, Block, &sp](const std::unordered_map<std::string, CMPTally>::value_type& unmap){ checkContractPositions(Block, unmap.first, contractId, sp, unmap.second);});
+         for_each(mp_register_map.begin(),mp_register_map.end(), [contractId, Block, &sp](const std::unordered_map<std::string, Register>::value_type& unmap){ checkContractPositions(Block, unmap.first, contractId, sp, unmap.second);});
 
    }
 

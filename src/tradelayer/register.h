@@ -6,6 +6,7 @@
 #include <map>
 #include <queue>
 #include <unordered_map>
+#include <univalue.h>
 
 //! Global lock for state objects
 extern CCriticalSection cs_register;
@@ -58,11 +59,15 @@ public:
 
     bool decreasePosRecord(uint32_t contractId, int64_t amount, int64_t price = 0);
 
-    int64_t getEntryPrice(uint32_t contractId, int64_t amount);
+    int64_t getEntryPrice(uint32_t contractId, int64_t amount) const;
 
-    int64_t getPosEntryPrice(uint32_t contractId);
+    int64_t getPosEntryPrice(uint32_t contractId) const;
 
     int64_t getRecord(uint32_t contractId, RecordType ttype) const;
+
+    int64_t getPosExitPrice(const uint32_t contractId, bool isOracle) const;
+
+    int64_t getUPNL(const uint32_t contractId, const uint32_t notionalSize, bool isOracle = false) const;
 
     /** Compares the tally with another tally and returns true, if they are equal. */
     bool operator==(const Register& rhs) const;
@@ -81,6 +86,8 @@ namespace mastercore
   bool insert_entry(const std::string& who, uint32_t contractId, int64_t amount, int64_t price);
 
   bool decrease_entry(const std::string& who, uint32_t contractId, int64_t amount, int64_t price = 0);
+
+  bool getFullContractRecord(const std::string& address, uint32_t contractId, UniValue& position_obj);
 }
 
 #endif // TRADELAYER_REGISTER_H

@@ -1706,7 +1706,7 @@ UniValue tl_getfullposition(const JSONRPCRequest& request)
 {
   if (request.fHelp || request.params.size() != 2) {
     throw runtime_error(
-			"tl_getfullposition \"address\" \"propertyid\" \n"
+			"tl_getfullposition \"address\" \"contractid\" \n"
 
 			"\nReturns the full position for the future contract for a given address and property.\n"
 
@@ -1748,40 +1748,7 @@ UniValue tl_getfullposition(const JSONRPCRequest& request)
     }
   }
 
-  positionObj.pushKV("symbol", cd.name);
-  positionObj.pushKV("notional_size", (uint64_t) cd.notional_size); // value of position = short or long position (balance) * notional_size
-  // PTJ -> short/longPosition /liquidation price
-  // bool flag = false;
-
-  FullPositionToJSON(address, contractId, positionObj, cd);
-
-  LOCK(cs_register);
-
-  double upnl = addrs_upnlc[contractId][address];
-
-  if (upnl >= 0) {
-    positionObj.pushKV("positiveupnl", upnl);
-    positionObj.pushKV("negativeupnl", FormatByType(0,2));
-  } else {
-    positionObj.pushKV("positiveupnl", FormatByType(0,2));
-    positionObj.pushKV("negativeupnl", upnl);
-  }
-
-  // pnl
-  uint32_t& collateralCurrency = cd.collateral_currency;
-  uint64_t realizedProfits  = static_cast<uint64_t>(COIN * getMPbalance(address, collateralCurrency, REALIZED_PROFIT));
-  uint64_t realizedLosses  = static_cast<uint64_t>(COIN * getMPbalance(address, collateralCurrency, REALIZED_LOSSES));
-
-  if (realizedProfits > 0 && realizedLosses == 0) {
-    positionObj.pushKV("positivepnl", FormatByType(realizedProfits,2));
-    positionObj.pushKV("negativepnl", FormatByType(0,2));
-  } else if (realizedLosses > 0 && realizedProfits == 0) {
-    positionObj.pushKV("positivepnl", FormatByType(0,2));
-    positionObj.pushKV("negativepnl", FormatByType(realizedProfits,2));
-  } else if (realizedLosses == 0 && realizedProfits == 0) {
-    positionObj.pushKV("positivepnl", FormatByType(0,2));
-    positionObj.pushKV("negativepnl", FormatByType(0,2));
-  }
+  getFullContractRecord(address, contractId, positionObj);
 
   return positionObj;
 }
