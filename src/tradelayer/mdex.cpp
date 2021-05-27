@@ -104,9 +104,9 @@ void mastercore::LoopBiDirectional(cd_PricesMap* const ppriceMap, uint8_t trdAct
 	    {
 	      continue;
 	    }
-	  x_TradeBidirectional(it_fwdPrices, it_bwdPrices, trdAction, pnew, sellerPrice, propertyForSale, NewReturn);
-	}
-    }
+	     x_TradeBidirectional(it_fwdPrices, it_bwdPrices, trdAction, pnew, sellerPrice, propertyForSale, NewReturn);
+	   }
+  }
   else
     {
       for (it_bwdPrices = ppriceMap->rbegin(); it_bwdPrices != ppriceMap->rend(); ++it_bwdPrices)
@@ -117,7 +117,7 @@ void mastercore::LoopBiDirectional(cd_PricesMap* const ppriceMap, uint8_t trdAct
 	    {
 	      continue;
 	    }
-	  x_TradeBidirectional(it_fwdPrices, it_bwdPrices, trdAction, pnew, sellerPrice, propertyForSale, NewReturn);
+	 x_TradeBidirectional(it_fwdPrices, it_bwdPrices, trdAction, pnew, sellerPrice, propertyForSale, NewReturn);
 	}
     }
 }
@@ -176,6 +176,8 @@ void mastercore::updateAllEntry(int64_t oldPosition, int64_t newPosition, int64_
      // closing position and opening another from different side
      } else if (signOld != signNew) {
          assert(decrease_entry(elem->getAddr(), contract_traded, nCouldBuy, elem->getEffectivePrice()));
+         // resetting the LEVERAGE
+         assert(reset_leverage_register(elem->getAddr(), contract_traded));
      }
  }
 
@@ -2926,11 +2928,10 @@ int64_t mastercore::getMoneyToMargin(const CDInfo::Entry& cd, int64_t amount)
     return amountToReserve;
 }
 
-int64_t mastercore::ContractBasisPoints(const CDInfo::Entry& cd, int64_t amount)
+int64_t mastercore::ContractBasisPoints(const CDInfo::Entry& cd, int64_t amount, int64_t leverage)
 {
     //NOTE: add changes to inverse quoted
     const int64_t uPrice = COIN;
-    const int64_t leverage = 1;
     int64_t amountToReserve = 0;
 
     std::pair<int64_t, int64_t> factor;
@@ -2943,13 +2944,13 @@ int64_t mastercore::ContractBasisPoints(const CDInfo::Entry& cd, int64_t amount)
     return amountToReserve;
 }
 
-bool mastercore::checkContractReserve(const std::string& address, int64_t amount, uint32_t contractId, uint64_t leverage, int64_t& nBalance, int64_t& amountToReserve)
+bool mastercore::checkContractReserve(const std::string& address, int64_t amount, uint32_t contractId, int64_t leverage, int64_t& nBalance, int64_t& amountToReserve)
 {
 
     CDInfo::Entry cd;
     assert(_my_cds->getCD(contractId, cd));
 
-    amountToReserve = ContractBasisPoints(cd, amount);
+    amountToReserve = ContractBasisPoints(cd, amount, leverage);
 
     PrintToLog("%s(): amountToReserve: %d\n",__func__, amountToReserve);
 

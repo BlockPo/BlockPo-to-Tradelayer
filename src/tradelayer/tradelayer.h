@@ -192,6 +192,7 @@ const int PKT_ERROR_TOKENS       = -82000;
 const int PKT_ERROR_SEND_ALL     = -83000;
 const int PKT_ERROR_METADEX      = -80000;
 const int METADEX_ERROR          = -81000;
+const int CONTRACTDEX_ERROR      = -82000;
 
 const int DEX_ERROR_SELLOFFER    = -10000;
 const int DEX_ERROR_ACCEPT       = -20000;

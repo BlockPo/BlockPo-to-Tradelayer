@@ -142,4 +142,5 @@ BOOST_AUTO_TEST_CASE(decrease_changing_position)
 
 }
 
+
 BOOST_AUTO_TEST_SUITE_END()

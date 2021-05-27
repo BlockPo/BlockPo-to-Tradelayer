@@ -108,7 +108,7 @@ private:
     uint32_t collateral_currency;
     uint64_t margin_requirement;
     uint32_t attribute_type;
-    uint64_t leverage;
+    int64_t leverage;
 
     // Alert
     uint16_t alert_type;

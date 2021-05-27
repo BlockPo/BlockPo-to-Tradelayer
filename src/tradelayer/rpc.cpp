@@ -1748,7 +1748,7 @@ UniValue tl_getfullposition(const JSONRPCRequest& request)
     }
   }
 
-  getFullContractRecord(address, contractId, positionObj);
+  getFullContractRecord(address, contractId, positionObj, cd);
 
   return positionObj;
 }

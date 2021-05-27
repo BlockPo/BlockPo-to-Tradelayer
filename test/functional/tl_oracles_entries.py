@@ -224,6 +224,17 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         assert_equal(out['result']['position'], 1000)
 
+        self.log.info("Checking full position for first address")
+        params = str([addresses[0], "Oracle 1"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getfullposition",params)
+        self.log.info(out)
+
+        self.log.info("Checking full position for second address")
+        params = str([addresses[1], "Oracle 1"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getfullposition",params)
+        self.log.info(out)
+
+        exit()
 
         self.log.info("Checking position in second address")
         params = str([addresses[0], "Oracle 1"]).replace("'",'"')

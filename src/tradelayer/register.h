@@ -1,6 +1,8 @@
 #ifndef TRADELAYER_REGISTER_H
 #define TRADELAYER_REGISTER_H
 
+#include <tradelayer/ce.h>
+
 #include <stdint.h>
 #include <sync.h>
 #include <map>
@@ -18,6 +20,7 @@ enum RecordType {
   LIQUIDATION_PRICE = 2,
   UPNL = 3,
   MARGIN = 4,
+  LEVERAGE = 5,
   RECORD_TYPE_COUNT
 };
 
@@ -69,6 +72,8 @@ public:
 
     int64_t getUPNL(const uint32_t contractId, const uint32_t notionalSize, bool isOracle = false) const;
 
+    int64_t getLiquidationPrice(const uint32_t contractId, const uint32_t notionalSize, const uint64_t marginRequirement) const;
+
     /** Compares the tally with another tally and returns true, if they are equal. */
     bool operator==(const Register& rhs) const;
 
@@ -87,7 +92,10 @@ namespace mastercore
 
   bool decrease_entry(const std::string& who, uint32_t contractId, int64_t amount, int64_t price = 0);
 
-  bool getFullContractRecord(const std::string& address, uint32_t contractId, UniValue& position_obj);
+  bool getFullContractRecord(const std::string& address, uint32_t contractId, UniValue& position_obj, const CDInfo::Entry& cd);
+
+  bool reset_leverage_register(const std::string& who, uint32_t contractId);
+
 }
 
 #endif // TRADELAYER_REGISTER_H

@@ -1035,7 +1035,7 @@ bool CMPTransaction::interpret_ContractDexTrade()
     } else return false;
 
     if (!vecLeverage.empty()) {
-      leverage = DecompressInteger(vecLeverage);
+      leverage = (int64_t) DecompressInteger(vecLeverage);
     } else return false;
 
     if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly)
@@ -3200,21 +3200,21 @@ int CMPTransaction::logicMath_ContractDexTrade()
       return PKT_ERROR_SP -38;
   }
 
-  // uint32_t colateralh = pfuture->fco_collateral_currency;
-  // int64_t marginRe = static_cast<int64_t>(pfuture->fco_margin_requirement);
-  //
-  // bool inverse_quoted = pfuture->fco_quoted;
-  //
-  // if(msc_debug_contractdex_tx) PrintToLog("%s():colateralh: %d, marginRe: %d\n",__func__, colateralh, marginRe);
-  //
-  // int64_t uPrice = 0;
-  //
-  // if(inverse_quoted  && market_priceMap[numerator][denominator] > 0)
-  // {
-  //     uPrice = market_priceMap[numerator][denominator];
-  //
-  // } else if (!inverse_quoted)
-  //     uPrice = COIN;
+  const int64_t rleverage = getContractRecord(sender, contractId, LEVERAGE);
+
+  PrintToLog("%s(): Leverage in register: %d \n", __func__, rleverage);
+
+  if (0 == rleverage)
+  {
+      // setting the LEVERAGE
+      assert(update_register_map(sender, contractId, leverage, LEVERAGE));
+      
+  } else if(rleverage != leverage &&  0 < rleverage) {
+      PrintToLog("%s(): ERROR: Bad leverage \n", __func__);
+      return CONTRACTDEX_ERROR - 1;
+  }
+
+
 
   int64_t nBalance = 0;
   int64_t amountToReserve = 0;

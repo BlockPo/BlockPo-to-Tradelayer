@@ -3,6 +3,7 @@
 #include <tradelayer/log.h>
 #include <tradelayer/tradelayer.h>
 #include <tradelayer/uint256_extensions.h>
+#include <tradelayer/externfns.h>
 
 #include <stdint.h>
 #include <map>
@@ -64,6 +65,34 @@ int64_t Register::getPosExitPrice(const uint32_t contractId, bool isOracle) cons
     return 0;
 }
 
+int64_t Register::getLiquidationPrice(const uint32_t contractId, const uint32_t notionalSize, const uint64_t marginRequirement) const
+{
+    int64_t liqPrice  = 0;
+
+    const int64_t position = getRecord(contractId, CONTRACT_POSITION);
+    const int64_t entryPrice = getPosEntryPrice(contractId);
+
+    const int64_t marginNeeded = (int64_t) position *  marginRequirement;
+    const double firstFactor = (double) marginNeeded / (position * notionalSize);
+
+    const double secondFactor = (double) COIN / entryPrice;
+
+    const double dliqPrice = 1 / ( firstFactor + secondFactor );
+
+    if (0 < dliqPrice)
+    {
+        PrintToLog("%s(): liqPrice is less than zero: %f, no liquidation price!\n",__func__, dliqPrice);
+    } else {
+        liqPrice = DoubleToInt64(dliqPrice);
+    }
+
+
+    PrintToLog("%s(): liqPrice (double) : %d, liqPrice (int) : %d\n",__func__, dliqPrice, liqPrice);
+
+    return liqPrice;
+
+}
+
 
 int64_t Register::getUPNL(const uint32_t contractId, const uint32_t notionalSize, bool isOracle) const
 {
@@ -97,6 +126,7 @@ int64_t Register::getUPNL(const uint32_t contractId, const uint32_t notionalSize
 
     return iUPNL;
 }
+
 
 /**
  * Updates amount for the given record type.
@@ -386,7 +416,7 @@ int64_t mastercore::getContractRecord(const std::string& address, uint32_t contr
     return balance;
 }
 
-bool mastercore::getFullContractRecord(const std::string& address, uint32_t contractId, UniValue& position_obj)
+bool mastercore::getFullContractRecord(const std::string& address, uint32_t contractId, UniValue& position_obj, const CDInfo::Entry& cd)
 {
     LOCK(cs_register);
     const std::unordered_map<std::string, Register>::const_iterator my_it = mp_register_map.find(address);
@@ -397,16 +427,16 @@ bool mastercore::getFullContractRecord(const std::string& address, uint32_t cont
         position_obj.pushKV("entry_price", FormatDivisibleMP(entryPrice));
         // position
         const int64_t position = reg.getRecord(contractId, CONTRACT_POSITION);
-        position_obj.pushKV("position", FormatDivisibleMP(position));
+        position_obj.pushKV("position", FormatIndivisibleMP(position));
         // liquidation price
-        const int64_t liqPrice = reg.getRecord(contractId, LIQUIDATION_PRICE);
+        const int64_t liqPrice = reg.getLiquidationPrice(contractId, cd.notional_size, cd.margin_requirement);
         position_obj.pushKV("liquidation_price", FormatDivisibleMP(liqPrice));
         // position margin
         const int64_t posMargin = reg.getRecord(contractId, MARGIN);
         position_obj.pushKV("position_margin", FormatDivisibleMP(posMargin));
         // upnl
-        const int64_t upnl = reg.getRecord(contractId, UPNL);
-        position_obj.pushKV("upnl", FormatDivisibleMP(upnl));
+        const int64_t upnl = reg.getUPNL(contractId, cd.notional_size, cd.isOracle());
+        position_obj.pushKV("upnl", FormatDivisibleMP(upnl, true));
 
         return true;
     }
@@ -448,6 +478,28 @@ bool mastercore::update_register_map(const std::string& who, uint32_t contractId
         assert(before == after);
         PrintToLog("%s(%s, %u=0x%X, %+d, ttype=%d) ERROR: insufficient balance (=%d)\n", __func__, who, contractId, contractId, amount, ttype, before);
     }
+
+    return bRet;
+}
+
+
+
+// return true if everything is ok
+bool mastercore::reset_leverage_register(const std::string& who, uint32_t contractId)
+{
+    bool bRet = false;
+    LOCK(cs_register);
+
+    const int64_t rleverage = mastercore::getContractRecord(who, contractId, LEVERAGE);
+
+    std::unordered_map<std::string, Register>::iterator my_it = mp_register_map.find(who);
+    if (my_it == mp_register_map.end()) {
+        PrintToLog("%s(): address (%s) not found for this contract(%d)\n",__func__, who, contractId);
+        return bRet;
+    }
+
+    Register& reg = my_it->second;
+    bRet = reg.updateRecord(contractId, -rleverage, LEVERAGE);
 
     return bRet;
 }
