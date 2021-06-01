@@ -3208,13 +3208,11 @@ int CMPTransaction::logicMath_ContractDexTrade()
   {
       // setting the LEVERAGE
       assert(update_register_map(sender, contractId, leverage, LEVERAGE));
-      
+
   } else if(rleverage != leverage &&  0 < rleverage) {
       PrintToLog("%s(): ERROR: Bad leverage \n", __func__);
       return CONTRACTDEX_ERROR - 1;
   }
-
-
 
   int64_t nBalance = 0;
   int64_t amountToReserve = 0;

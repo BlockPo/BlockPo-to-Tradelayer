@@ -77,13 +77,15 @@ int64_t Register::getLiquidationPrice(const uint32_t contractId, const uint32_t 
 
     const double secondFactor = (double) COIN / entryPrice;
 
-    const double dliqPrice = 1 / ( firstFactor + secondFactor );
+    const double denominator =  firstFactor + secondFactor ;
+
+    const double dliqPrice = (denominator != 0) ? 1 / denominator : 0;
 
     if (0 < dliqPrice)
     {
-        PrintToLog("%s(): liqPrice is less than zero: %f, no liquidation price!\n",__func__, dliqPrice);
+        PrintToLog("%s(): liqPrice is less than zero: %lf, no liquidation price!\n",__func__, dliqPrice);
     } else {
-        liqPrice = DoubleToInt64(dliqPrice);
+        liqPrice = (int64_t) dliqPrice * COIN;
     }
 
 
@@ -110,8 +112,10 @@ int64_t Register::getUPNL(const uint32_t contractId, const uint32_t notionalSize
     const double dEntryPrice = (double) entryPrice / COIN;
     const double dExitPrice = (double) exitPrice /  COIN;
 
+    const double denominator = (dEntryPrice * dExitPrice);
+
     // TODO: convert this into arith_uint256
-    const double factor = (double) (dExitPrice - dEntryPrice) / (dEntryPrice * dExitPrice);
+    const double factor = (denominator != 0) ? (double) (dExitPrice - dEntryPrice) / denominator  : 0;
 
     const double UPNL = position * notionalSize * factor;
     const int64_t iUPNL = (int64_t) UPNL;
@@ -239,7 +243,7 @@ int64_t Register::getEntryPrice(uint32_t contractId, int64_t amount) const
 
         // using 256bits for big calculations
         const arith_uint256 aAmount = ConvertTo256(amount);
-        const arith_uint256 aNewPrice = DivideAndRoundUp(total, aAmount);
+        const arith_uint256 aNewPrice = (amount != 0) ? DivideAndRoundUp(total, aAmount) : arith_uint256(0);
         const int64_t newPrice = ConvertTo64(aNewPrice);
 
         PrintToLog("%s(): total sum: %d, amount: %d, newPrice: %d\n",__func__, ConvertTo64(total), amount, newPrice);
@@ -333,7 +337,7 @@ int64_t Register::getPosEntryPrice(uint32_t contractId) const
         }
 
         const arith_uint256 aAmount = ConvertTo64(amount);
-        const arith_uint256 aPrice = DivideAndRoundUp(total, aAmount);
+        const arith_uint256 aPrice = (amount != 0) ? DivideAndRoundUp(total, aAmount) : arith_uint256(0);
         price = ConvertTo64(aPrice);
 
     }
@@ -487,7 +491,9 @@ bool mastercore::update_register_map(const std::string& who, uint32_t contractId
 // return true if everything is ok
 bool mastercore::reset_leverage_register(const std::string& who, uint32_t contractId)
 {
-    bool bRet = false;
+    bool bRet1 = false;
+    bool bRet2 = false;
+
     LOCK(cs_register);
 
     const int64_t rleverage = mastercore::getContractRecord(who, contractId, LEVERAGE);
@@ -495,13 +501,18 @@ bool mastercore::reset_leverage_register(const std::string& who, uint32_t contra
     std::unordered_map<std::string, Register>::iterator my_it = mp_register_map.find(who);
     if (my_it == mp_register_map.end()) {
         PrintToLog("%s(): address (%s) not found for this contract(%d)\n",__func__, who, contractId);
-        return bRet;
+        return bRet1;
     }
 
     Register& reg = my_it->second;
-    bRet = reg.updateRecord(contractId, -rleverage, LEVERAGE);
 
-    return bRet;
+    // cleaning
+    bRet1 = reg.updateRecord(contractId, -rleverage, LEVERAGE);
+
+    // default leverage : 1
+    bRet2 = reg.updateRecord(contractId, 1, LEVERAGE);
+
+    return (bRet1 && bRet2);
 }
 
 bool mastercore::insert_entry(const std::string& who, uint32_t contractId, int64_t amount, int64_t price)
