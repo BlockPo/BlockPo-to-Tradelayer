@@ -447,8 +447,7 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['entry_price'], '30.00000000')
         assert_equal(out['result']['position'], '-1000')
         assert_equal(out['result']['liquidation_price'], '0.00000000')
-        # TODO: check this margin! (this should be 100)
-        # assert_equal(out['result']['position_margin'], '0.00000000')
+        assert_equal(out['result']['position_margin'], '100.00000000')
         assert_equal(out['result']['upnl'], '+24.43303380')
 
 
@@ -461,13 +460,12 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['entry_price'], '30.00000000')
         assert_equal(out['result']['position'], '1000')
         assert_equal(out['result']['liquidation_price'], '0.00000000')
-        # TODO: check this margin! (this should be 100)
-        # assert_equal(out['result']['position_margin'], '0.00000000')
+        assert_equal(out['result']['position_margin'], '100.00000000')
         assert_equal(out['result']['upnl'], '-24.43303380')
 
         #Positions to zero:
         self.log.info("Trading contracts (Positions to zero)")
-        params = str([addresses[1], "Oracle 1", "1000", "2800", 1, "1"]).replace("'",'"')
+        params = str([addresses[1], "Oracle 1", "1000", "28", 1, "1"]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_tradecontract",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
@@ -485,12 +483,12 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['result'][0]['contractid'], 1)
         assert_equal(out['result'][0]['amountforsale'], 1000)
         assert_equal(out['result'][0]['tradingaction'], 1)
-        assert_equal(out['result'][0]['effectiveprice'], '2800.00000000')
+        assert_equal(out['result'][0]['effectiveprice'], '28.00000000')
         # assert_equal(out['result'][0]['block'], 206)
 
 
         self.log.info("Another address selling contracts")
-        params = str([addresses[0], "Oracle 1", "1000", "2800", 2, "1"]).replace("'",'"')
+        params = str([addresses[0], "Oracle 1", "1000", "28", 2, "1"]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_tradecontract",params)
 
         # self.log.info(out)
@@ -513,12 +511,12 @@ class OraclesBasicsTest (BitcoinTestFramework):
         # self.log.info(out)
 
         assert_equal(out['error'], None)
-        assert_equal(out['result']['entry_price'], '0.00000000')
+        assert_equal(out['result']['entry_price'], '30.00000000')
         assert_equal(out['result']['position'], '0')
         assert_equal(out['result']['liquidation_price'], '0.00000000')
-        # TODO: check this margin! (this should be 0)
-        assert_equal(out['result']['position_margin'], '300.00000000')
+        assert_equal(out['result']['position_margin'], '0.00000000')
         assert_equal(out['result']['upnl'], '+0.00000000')
+
 
 
         self.log.info("Checking position in second address")
@@ -527,11 +525,10 @@ class OraclesBasicsTest (BitcoinTestFramework):
         # self.log.info(out)
 
         assert_equal(out['error'], None)
-        assert_equal(out['result']['entry_price'], '0.00000000')
+        assert_equal(out['result']['entry_price'], '30.00000000')
         assert_equal(out['result']['position'], '0')
         assert_equal(out['result']['liquidation_price'], '0.00000000')
-        # TODO: check this margin! (this should be 0)
-        assert_equal(out['result']['position_margin'], '300.00000000')
+        assert_equal(out['result']['position_margin'], '0.00000000')
         assert_equal(out['result']['upnl'], '+0.00000000')
 
 

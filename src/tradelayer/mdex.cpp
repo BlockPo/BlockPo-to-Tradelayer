@@ -136,6 +136,8 @@ void mastercore::takeMargin(int64_t amount, uint32_t contract_traded, const CDIn
         const arith_uint256 nAmountOfMoney = DivideAndRoundUp(aAmount * aMarginRequirement, aLeverage);
         const int64_t amountOfMoney = ConvertTo64(nAmountOfMoney);
 
+
+        // if we need more margin, we add the difference.
         // updating amount reserved for the order
         assert(update_tally_map(elem->getAddr(), colateral, -amountOfMoney, CONTRACTDEX_RESERVE));
         elem->updateAmountReserved(-amountOfMoney);
@@ -156,9 +158,9 @@ void mastercore::updateAllEntry(int64_t oldPosition, int64_t newPosition, int64_
     // open position
     if (signOld == 0 && signNew != 0)
     {
+        PrintToLog("%s() open position\n",__func__);
         // updating entries (amount of contracts , price)
         assert(insert_entry(elem->getAddr(), contract_traded, nCouldBuy, elem->getEffectivePrice()));
-
         //taking margin
         takeMargin(nCouldBuy, contract_traded, cd, elem);
 
@@ -168,36 +170,46 @@ void mastercore::updateAllEntry(int64_t oldPosition, int64_t newPosition, int64_
         // if position increasing -> we add a new entry
         if(abs(newPosition) > abs(oldPosition))
         {
+            PrintToLog("%s() increasing position\n",__func__);
             // updating entries (amount of contracts , price)
             assert(insert_entry(elem->getAddr(), contract_traded, nCouldBuy, elem->getEffectivePrice()));
-
             //taking margin
             takeMargin(nCouldBuy, contract_traded, cd, elem);
 
         // decreasing -> delete some contracts in entry
         } else {
+            PrintToLog("%s() decreasing position\n",__func__);
             assert(decrease_entry(elem->getAddr(), contract_traded, nCouldBuy));
         }
-     // closing position and opening another from different side
-     } else if (signOld != signNew) {
 
+    // closing position
+   } else if (signOld != 0 && signNew == 0) {
+       //releasing margin
+       PrintToLog("%s() closing position\n",__func__);
+       const int64_t remainingMargin = getContractRecord(elem->getAddr(), contract_traded, MARGIN);
+
+       // passing  from margin to balance
+       assert(update_register_map(elem->getAddr(), contract_traded, -remainingMargin, MARGIN));
+       assert(update_tally_map(elem->getAddr(), cd.collateral_currency, remainingMargin, BALANCE));
+
+     // closing position and opening another from different side
+   } else if (signOld != signNew && (signOld != 0 && signNew != 0)) {
+
+         PrintToLog("%s() closing position and opening another from different side\n",__func__);
          assert(decrease_entry(elem->getAddr(), contract_traded, nCouldBuy, elem->getEffectivePrice()));
          // resetting the LEVERAGE
          assert(reset_leverage_register(elem->getAddr(), contract_traded));
-
-         // TODO: here we need to adapt the margin to the new position
-
-
-      // closing position
-     } else if (signOld != 0 && signNew == 0) {
-         //releasing margin
          const int64_t remainingMargin = getContractRecord(elem->getAddr(), contract_traded, MARGIN);
 
          // passing  from margin to balance
          assert(update_register_map(elem->getAddr(), contract_traded, -remainingMargin, MARGIN));
          assert(update_tally_map(elem->getAddr(), cd.collateral_currency, remainingMargin, BALANCE));
 
-     }
+         //here we adapt the margin to the new position
+         const int64_t newAmount = abs(newPosition);
+         takeMargin(newAmount, contract_traded, cd, elem);
+   }
+
  }
 
 void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPrices, typename cd_PricesMap::reverse_iterator &it_bwdPrices, uint8_t trdAction, CMPContractDex* const pnew, const uint64_t sellerPrice, const uint32_t propertyForSale, MatchReturnType &NewReturn)

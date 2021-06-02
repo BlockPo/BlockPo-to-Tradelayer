@@ -569,9 +569,9 @@ bool mastercore::decrease_entry(const std::string& who, uint32_t contractId, int
     Register& reg = my_it->second;
 
     // entry price of full position
-    int64_t entryPrice = reg.getPosEntryPrice(contractId);
-
-    PrintToLog("%s(): entryPrice before decreasing position: %d, contractId: %d, address: %s\n",__func__, entryPrice, contractId, who);
+    // int64_t entryPrice = reg.getPosEntryPrice(contractId);
+    //
+    // PrintToLog("%s(): entryPrice before decreasing position: %d, contractId: %d, address: %s\n",__func__, entryPrice, contractId, who);
 
     bRet = reg.decreasePosRecord(contractId, amount, price);
 
