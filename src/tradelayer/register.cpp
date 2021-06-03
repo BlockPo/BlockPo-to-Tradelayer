@@ -491,8 +491,7 @@ bool mastercore::update_register_map(const std::string& who, uint32_t contractId
 // return true if everything is ok
 bool mastercore::reset_leverage_register(const std::string& who, uint32_t contractId)
 {
-    bool bRet1 = false;
-    bool bRet2 = false;
+    bool bRet = false;
 
     LOCK(cs_register);
 
@@ -501,18 +500,18 @@ bool mastercore::reset_leverage_register(const std::string& who, uint32_t contra
     std::unordered_map<std::string, Register>::iterator my_it = mp_register_map.find(who);
     if (my_it == mp_register_map.end()) {
         PrintToLog("%s(): address (%s) not found for this contract(%d)\n",__func__, who, contractId);
-        return bRet1;
+        return bRet;
     }
 
     Register& reg = my_it->second;
 
     // cleaning
-    bRet1 = reg.updateRecord(contractId, -rleverage, LEVERAGE);
+    bRet = reg.updateRecord(contractId, -rleverage, LEVERAGE);
 
-    // default leverage : 1
-    bRet2 = reg.updateRecord(contractId, 1, LEVERAGE);
+    // // default leverage : 1
+    // bRet2 = reg.updateRecord(contractId, 1, LEVERAGE);
 
-    return (bRet1 && bRet2);
+    return bRet;
 }
 
 bool mastercore::insert_entry(const std::string& who, uint32_t contractId, int64_t amount, int64_t price)

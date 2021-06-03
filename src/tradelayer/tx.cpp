@@ -3201,15 +3201,16 @@ int CMPTransaction::logicMath_ContractDexTrade()
   }
 
   const int64_t rleverage = getContractRecord(sender, contractId, LEVERAGE);
+  const int64_t position = getContractRecord(sender, contractId, CONTRACT_POSITION);
 
-  PrintToLog("%s(): Leverage in register: %d \n", __func__, rleverage);
+  PrintToLog("%s(): Leverage in register: %d, position: %d \n", __func__, rleverage, position);
 
-  if (0 == rleverage)
-  {
-      // setting the LEVERAGE
+  if (position == 0 && rleverage == 0) {
+      //setting leverage
+      PrintToLog("%s(): setting leverage: %d \n", __func__, leverage);
       assert(update_register_map(sender, contractId, leverage, LEVERAGE));
 
-  } else if(rleverage != leverage &&  0 < rleverage) {
+  } else if(rleverage != leverage &&  0 < position) {
       PrintToLog("%s(): ERROR: Bad leverage \n", __func__);
       return CONTRACTDEX_ERROR - 1;
   }

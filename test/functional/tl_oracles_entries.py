@@ -511,7 +511,7 @@ class OraclesBasicsTest (BitcoinTestFramework):
         # self.log.info(out)
 
         assert_equal(out['error'], None)
-        assert_equal(out['result']['entry_price'], '30.00000000')
+        assert_equal(out['result']['entry_price'], '0.00000000')
         assert_equal(out['result']['position'], '0')
         assert_equal(out['result']['liquidation_price'], '0.00000000')
         assert_equal(out['result']['position_margin'], '0.00000000')
@@ -525,7 +525,7 @@ class OraclesBasicsTest (BitcoinTestFramework):
         # self.log.info(out)
 
         assert_equal(out['error'], None)
-        assert_equal(out['result']['entry_price'], '30.00000000')
+        assert_equal(out['result']['entry_price'], '0.00000000')
         assert_equal(out['result']['position'], '0')
         assert_equal(out['result']['liquidation_price'], '0.00000000')
         assert_equal(out['result']['position_margin'], '0.00000000')
@@ -533,6 +533,365 @@ class OraclesBasicsTest (BitcoinTestFramework):
 
 
         ###############################################################
+        # Testing leverage 10x
+
+        self.log.info("Buying contracts")
+        params = str([addresses[1], "Oracle 1", "1000", "80.5", 1, "10"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_tradecontract",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        hash = str(out['result']).replace("'","")
+
+        self.nodes[0].generate(1)
+
+        self.log.info("Checking orderbook")
+        params = str(["Oracle 1", 1]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_getcontract_orderbook",params)
+        # self.log.info(out)
+
+        assert_equal(out['error'], None)
+        assert_equal(out['result'][0]['address'], addresses[1])
+        assert_equal(out['result'][0]['contractid'], 1)
+        assert_equal(out['result'][0]['amountforsale'], 1000)
+        assert_equal(out['result'][0]['tradingaction'], 1)
+        assert_equal(out['result'][0]['effectiveprice'], '80.50000000')
+        # assert_equal(out['result'][0]['block'], 206)
+
+
+        self.log.info("Another address selling contracts")
+        params = str([addresses[0], "Oracle 1", "1000", "80.5", 2, "10"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_tradecontract",params)
+
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+
+        self.nodes[0].generate(1)
+
+
+        self.log.info("Checking orderbook")
+        params = str(["Oracle 1", 1]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getcontract_orderbook",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result'],[])
+
+
+        self.log.info("Checking position in first address")
+        params = str([addresses[1], "Oracle 1"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getposition",params)
+
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['position'], 1000)
+
+        self.log.info("Checking full position for first address")
+        params = str([addresses[0], "Oracle 1"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getfullposition",params)
+        # self.log.info(out)
+
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['entry_price'], '80.50000000')
+        assert_equal(out['result']['position'], '-1000')
+        assert_equal(out['result']['liquidation_price'], '0.00000000')
+        assert_equal(out['result']['position_margin'], '10.00000000')
+        assert_equal(out['result']['upnl'], '+45.34400689')
+
+        self.log.info("Checking full position for second address")
+        params = str([addresses[1], "Oracle 1"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getfullposition",params)
+        # self.log.info(out)
+
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['entry_price'], '80.50000000')
+        assert_equal(out['result']['position'], '1000')
+        assert_equal(out['result']['liquidation_price'], '0.00000000')
+        assert_equal(out['result']['position_margin'], '10.00000000')
+        assert_equal(out['result']['upnl'], '-45.34400689')
+
+
+
+        self.log.info("Checking position in second address")
+        params = str([addresses[0], "Oracle 1"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getposition",params)
+
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['position'], -1000)
+
+        self.log.info("Checking the open interest")
+        params = str(["Oracle 1"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getopen_interest",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['totalLives'], 1000)
+
+
+        self.log.info("Buying contracts")
+        params = str([addresses[1], "Oracle 1", "2000", "50.1", 1, "10"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_tradecontract",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        hash = str(out['result']).replace("'","")
+
+        self.nodes[0].generate(1)
+
+        self.log.info("Checking orderbook")
+        params = str(["Oracle 1", 1]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getcontract_orderbook",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result'][0]['address'], addresses[1])
+        assert_equal(out['result'][0]['contractid'], 1)
+        assert_equal(out['result'][0]['amountforsale'], 2000)
+        assert_equal(out['result'][0]['tradingaction'], 1)
+        assert_equal(out['result'][0]['effectiveprice'], '50.10000000')
+        # assert_equal(out['result'][0]['block'], 206)
+
+
+        self.log.info("Another address selling contracts")
+        params = str([addresses[0], "Oracle 1", "2000", "50.1", 2, "10"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_tradecontract",params)
+
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+
+        self.nodes[0].generate(1)
+
+
+        self.log.info("Checking orderbook")
+        params = str(["Oracle 1", 1]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getcontract_orderbook",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result'],[])
+
+
+        self.log.info("Checking full position in first address")
+        params = str([addresses[1], "Oracle 1"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getfullposition",params)
+        # self.log.info(out)
+
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['entry_price'], '60.23333334')
+        assert_equal(out['result']['position'], '3000')
+        assert_equal(out['result']['liquidation_price'], '0.00000000')
+        assert_equal(out['result']['position_margin'], '30.00000000')
+        assert_equal(out['result']['upnl'], '-123.49279262')
+
+
+        self.log.info("Checking position in second address")
+        params = str([addresses[0], "Oracle 1"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getposition",params)
+
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['position'], -3000)
+
+
+        #Decreasing 300 contracts each side:
+        self.log.info("Trading contracts (Decreasing 300 contracts)")
+        params = str([addresses[1], "Oracle 1", "300", "40.0", 2, "10"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_tradecontract",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        hash = str(out['result']).replace("'","")
+
+        self.nodes[0].generate(1)
+
+        self.log.info("Checking orderbook")
+        params = str(["Oracle 1", 2]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getcontract_orderbook",params)
+        # self.log.info(out)
+
+        assert_equal(out['error'], None)
+        assert_equal(out['result'][0]['address'], addresses[1])
+        assert_equal(out['result'][0]['contractid'], 1)
+        assert_equal(out['result'][0]['amountforsale'], 300)
+        assert_equal(out['result'][0]['tradingaction'], 2)
+        assert_equal(out['result'][0]['effectiveprice'], '40.00000000')
+        # assert_equal(out['result'][0]['block'], 206)
+
+
+        self.log.info("Another address selling contracts")
+        params = str([addresses[0], "Oracle 1", "300", "40.0", 1, "10"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_tradecontract",params)
+
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+
+        self.nodes[0].generate(1)
+
+
+        self.log.info("Checking orderbook")
+        params = str(["Oracle 1", 1]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getcontract_orderbook",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result'],[])
+
+
+        self.log.info("Checking full position in first address")
+        params = str([addresses[1], "Oracle 1"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getfullposition",params)
+        # self.log.info(out)
+
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['entry_price'], '57.98148149')
+        assert_equal(out['result']['position'], '2700')
+        assert_equal(out['result']['liquidation_price'], '0.00000000')
+        assert_equal(out['result']['position_margin'], '30.00000000')
+        assert_equal(out['result']['upnl'], '-109.40259914')
+
+
+        self.log.info("Checking position in second address")
+        params = str([addresses[0], "Oracle 1"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getfullposition",params)
+        # self.log.info(out)
+
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['entry_price'], '57.98148149')
+        assert_equal(out['result']['position'], '-2700')
+        assert_equal(out['result']['liquidation_price'], '0.00000000')
+        assert_equal(out['result']['position_margin'], '30.00000000')
+        assert_equal(out['result']['upnl'], '+109.40259914')
+
+
+        #Crossing to the other side 1000 contracts:
+        self.log.info("Trading contracts (Crossing)")
+        params = str([addresses[1], "Oracle 1", "3700", "30.0", 2, "10"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_tradecontract",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        hash = str(out['result']).replace("'","")
+
+        self.nodes[0].generate(1)
+
+        self.log.info("Checking orderbook")
+        params = str(["Oracle 1", 2]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getcontract_orderbook",params)
+        # self.log.info(out)
+
+        assert_equal(out['error'], None)
+        assert_equal(out['result'][0]['address'], addresses[1])
+        assert_equal(out['result'][0]['contractid'], 1)
+        assert_equal(out['result'][0]['amountforsale'], 3700)
+        assert_equal(out['result'][0]['tradingaction'], 2)
+        assert_equal(out['result'][0]['effectiveprice'], '30.00000000')
+        # assert_equal(out['result'][0]['block'], 206)
+
+
+        self.log.info("Another address selling contracts")
+        params = str([addresses[0], "Oracle 1", "3700", "30.0", 1, "10"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_tradecontract",params)
+
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+
+        self.nodes[0].generate(1)
+
+
+        self.log.info("Checking orderbook")
+        params = str(["Oracle 1", 1]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getcontract_orderbook",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result'],[])
+
+
+        self.log.info("Checking position in first address")
+        params = str([addresses[1], "Oracle 1"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getfullposition",params)
+        # self.log.info(out)
+
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['entry_price'], '30.00000000')
+        assert_equal(out['result']['position'], '-1000')
+        assert_equal(out['result']['liquidation_price'], '0.00000000')
+        assert_equal(out['result']['position_margin'], '10.00000000')
+        assert_equal(out['result']['upnl'], '+24.43303380')
+
+
+        self.log.info("Checking position in second address")
+        params = str([addresses[0], "Oracle 1"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getfullposition",params)
+        # self.log.info(out)
+
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['entry_price'], '30.00000000')
+        assert_equal(out['result']['position'], '1000')
+        assert_equal(out['result']['liquidation_price'], '0.00000000')
+        assert_equal(out['result']['position_margin'], '10.00000000')
+        assert_equal(out['result']['upnl'], '-24.43303380')
+
+        #Positions to zero:
+        self.log.info("Trading contracts (Positions to zero)")
+        params = str([addresses[1], "Oracle 1", "1000", "28", 1, "10"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_tradecontract",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        hash = str(out['result']).replace("'","")
+
+        self.nodes[0].generate(1)
+
+        self.log.info("Checking orderbook")
+        params = str(["Oracle 1", 1]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getcontract_orderbook",params)
+        # self.log.info(out)
+
+        assert_equal(out['error'], None)
+        assert_equal(out['result'][0]['address'], addresses[1])
+        assert_equal(out['result'][0]['contractid'], 1)
+        assert_equal(out['result'][0]['amountforsale'], 1000)
+        assert_equal(out['result'][0]['tradingaction'], 1)
+        assert_equal(out['result'][0]['effectiveprice'], '28.00000000')
+        # assert_equal(out['result'][0]['block'], 206)
+
+
+        self.log.info("Another address selling contracts")
+        params = str([addresses[0], "Oracle 1", "1000", "28", 2, "10"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_tradecontract",params)
+
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+
+        self.nodes[0].generate(1)
+
+
+        self.log.info("Checking orderbook")
+        params = str(["Oracle 1", 1]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getcontract_orderbook",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result'],[])
+
+
+        self.log.info("Checking position in first address")
+        params = str([addresses[1], "Oracle 1"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getfullposition",params)
+        # self.log.info(out)
+
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['entry_price'], '0.00000000')
+        assert_equal(out['result']['position'], '0')
+        assert_equal(out['result']['liquidation_price'], '0.00000000')
+        assert_equal(out['result']['position_margin'], '0.00000000')
+        assert_equal(out['result']['upnl'], '+0.00000000')
+
+
+
+        self.log.info("Checking position in second address")
+        params = str([addresses[0], "Oracle 1"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getfullposition",params)
+        # self.log.info(out)
+
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['entry_price'], '0.00000000')
+        assert_equal(out['result']['position'], '0')
+        assert_equal(out['result']['liquidation_price'], '0.00000000')
+        assert_equal(out['result']['position_margin'], '0.00000000')
+        assert_equal(out['result']['upnl'], '+0.00000000')
+
+
 
         conn.close()
 

@@ -129,6 +129,7 @@ void mastercore::takeMargin(int64_t amount, uint32_t contract_traded, const CDIn
         const uint64_t& allreserved = elem->getAmountReserved();
         const uint32_t& colateral = cd.collateral_currency;
         const int64_t leverage = getContractRecord(elem->getAddr(), contract_traded, LEVERAGE);
+        PrintToLog("%s(): leverage: %d\n",__func__, leverage);
         const arith_uint256 aMarginRequirement = ConvertTo256(cd.margin_requirement);
         const arith_uint256 aAmount = ConvertTo256(amount);
         const arith_uint256 aLeverage = ConvertTo256(leverage);
@@ -136,6 +137,7 @@ void mastercore::takeMargin(int64_t amount, uint32_t contract_traded, const CDIn
         const arith_uint256 nAmountOfMoney = DivideAndRoundUp(aAmount * aMarginRequirement, aLeverage);
         const int64_t amountOfMoney = ConvertTo64(nAmountOfMoney);
 
+        PrintToLog("%s(): amountOfMoney: %d\n",__func__, amountOfMoney);
 
         // if we need more margin, we add the difference.
         // updating amount reserved for the order
@@ -188,17 +190,21 @@ void mastercore::updateAllEntry(int64_t oldPosition, int64_t newPosition, int64_
        PrintToLog("%s() closing position\n",__func__);
        const int64_t remainingMargin = getContractRecord(elem->getAddr(), contract_traded, MARGIN);
 
+       // resetting the LEVERAGE
+       assert(reset_leverage_register(elem->getAddr(), contract_traded));
+       
        // passing  from margin to balance
        assert(update_register_map(elem->getAddr(), contract_traded, -remainingMargin, MARGIN));
        assert(update_tally_map(elem->getAddr(), cd.collateral_currency, remainingMargin, BALANCE));
+
+      assert(decrease_entry(elem->getAddr(), contract_traded, nCouldBuy));
 
      // closing position and opening another from different side
    } else if (signOld != signNew && (signOld != 0 && signNew != 0)) {
 
          PrintToLog("%s() closing position and opening another from different side\n",__func__);
          assert(decrease_entry(elem->getAddr(), contract_traded, nCouldBuy, elem->getEffectivePrice()));
-         // resetting the LEVERAGE
-         assert(reset_leverage_register(elem->getAddr(), contract_traded));
+
          const int64_t remainingMargin = getContractRecord(elem->getAddr(), contract_traded, MARGIN);
 
          // passing  from margin to balance
