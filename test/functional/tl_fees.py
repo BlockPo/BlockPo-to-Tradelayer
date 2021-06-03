@@ -193,7 +193,7 @@ class FeesBasicsTest (BitcoinTestFramework):
         params = '["1"]'
         out = tradelayer_HTTP(conn, headers, False, "tl_getcontract",params)
         assert_equal(out['error'], None)
-        self.log.info(out)
+        # self.log.info(out)
         assert_equal(out['result']['contractid'], 1)
         assert_equal(out['result']['name'],'ALL/Lhk')
         assert_equal(out['result']['admin'], addresses[0])
@@ -226,8 +226,8 @@ class FeesBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         balance = float(out['result']['balance'])
         reserve = float(out['result']['reserve'])
-        assert_equal(out['result']['balance'],'19999998000.00000000')
-        assert_equal(out['result']['reserve'],'0.00000000')
+        assert_equal(out['result']['balance'],'19999997799.99000000')
+        assert_equal(out['result']['reserve'],'200.01000000')
         assert_equal(oldbalance, balance + reserve)
 
 
@@ -248,7 +248,7 @@ class FeesBasicsTest (BitcoinTestFramework):
         reserve = float(out['result']['reserve'])
 
         #19999997899.99000000 + 0.005 (rebate) to balance
-        assert_equal(out['result']['balance'],'19999997899.99500000')
+        assert_equal(out['result']['balance'],'19999997799.99500000')
         assert_equal(out['result']['reserve'],'100.01000000')
 
 
@@ -258,12 +258,13 @@ class FeesBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         balance1 = float(out['result']['balance'])
         reserve1 = float(out['result']['reserve'])
-        assert_equal(out['result']['balance'],'1899.99000000')
+        assert_equal(out['result']['balance'],'1799.99000000')
         assert_equal(out['result']['reserve'],'100.00000000')
 
         # 1 basis point
         fee = 0.0001 * reserve1
-        assert_equal(oldbalance1 , balance1 + fee + reserve1)
+        # 100 to the margin structure in register.cpp
+        assert_equal(oldbalance1 - 100 , balance1 + fee + reserve1)
         oldbalance1 = balance1
 
 
@@ -354,8 +355,8 @@ class FeesBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         balance = float(out['result']['balance'])
         reserve = float(out['result']['reserve'])
-        assert_equal(out['result']['balance'],'19999997899.99500000')
-        assert_equal(out['result']['reserve'],'100.01000000')
+        assert_equal(out['result']['balance'],'19999997599.97000000')
+        assert_equal(out['result']['reserve'],'300.03500000')
 
 
         self.log.info("Trading contract")
@@ -373,7 +374,7 @@ class FeesBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         balance = float(out['result']['balance'])
         reserve = float(out['result']['reserve'])
-        assert_equal(out['result']['balance'],'19999997799.98000000')
+        assert_equal(out['result']['balance'],'19999997599.98000000')
         assert_equal(out['result']['reserve'],'200.03500000')
 
 
@@ -396,7 +397,7 @@ class FeesBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         balance1 = float(out['result']['balance'])
         reserve1 = float(out['result']['reserve'])
-        assert_equal(out['result']['balance'],'1799.96500000')
+        assert_equal(out['result']['balance'],'1599.96500000')
 
         # -2.5 bsp from reserve
         assert_equal(out['result']['reserve'],'200.00000000')
@@ -457,7 +458,7 @@ class FeesBasicsTest (BitcoinTestFramework):
         balance1 = float(out['result']['balance'])
         reserve1 = float(out['result']['reserve'])
 
-        assert_equal(out['result']['balance'],'19999997799.98000000')
+        assert_equal(out['result']['balance'],'19999997599.98000000')
         assert_equal(out['result']['reserve'],'200.03500000')
 
 
@@ -467,7 +468,7 @@ class FeesBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         balance1 = float(out['result']['balance'])
         reserve1 = float(out['result']['reserve'])
-        assert_equal(out['result']['balance'],'1299.96500000')
+        assert_equal(out['result']['balance'],'1099.96500000')
         assert_equal(out['result']['reserve'],'200.00000000')
 
 
@@ -487,7 +488,7 @@ class FeesBasicsTest (BitcoinTestFramework):
         balance1 = float(out['result']['balance'])
         reserve1 = float(out['result']['reserve'])
         # maker rebate = 4bsp = 0.2 to balance
-        assert_equal(out['result']['balance'],'1300.16500000')
+        assert_equal(out['result']['balance'],'1100.16500000')
         assert_equal(out['result']['reserve'],'200.00000000')
 
 
@@ -497,7 +498,7 @@ class FeesBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
 
         # maker fee = 5bsp = 0.25 from balance
-        assert_equal(out['result']['balance'],'19999998299.73000000')
+        assert_equal(out['result']['balance'],'19999998099.73000000')
         assert_equal(out['result']['reserve'],'200.03500000')
 
 

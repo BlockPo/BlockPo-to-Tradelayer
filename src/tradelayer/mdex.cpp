@@ -192,7 +192,7 @@ void mastercore::updateAllEntry(int64_t oldPosition, int64_t newPosition, int64_
 
        // resetting the LEVERAGE
        assert(reset_leverage_register(elem->getAddr(), contract_traded));
-       
+
        // passing  from margin to balance
        assert(update_register_map(elem->getAddr(), contract_traded, -remainingMargin, MARGIN));
        assert(update_tally_map(elem->getAddr(), cd.collateral_currency, remainingMargin, BALANCE));
@@ -382,10 +382,6 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
 
       // checking here if positions increase or decrease (we need this to take more margin if it's required)
       PrintToLog("%s(): abs(poldBalance): %d, abs(poldNBalance): %d\n",__func__, abs(poldBalance), abs(poldNBalance));
-
-      // taking margin
-      // takeMargin(pnewBalance, pnewNBalance, property_traded, cd, pnew);
-      // takeMargin(poldBalance, poldNBalance, property_traded, cd, aux);
 
       int64_t poldPositiveBalanceL = 0;
       int64_t pnewPositiveBalanceL = 0;
@@ -1143,7 +1139,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
    *
    */
    //NOTE: it needs refinement!
-  // mastercore::ContractDex_Fees(pold, pnew, nCouldBuy);
+  mastercore::ContractDex_Fees(pold, pnew, nCouldBuy);
 
 
     if(msc_debug_x_trade_bidirectional)
@@ -2959,15 +2955,20 @@ bool mastercore::checkReserve(const std::string& address, int64_t amount, uint32
 int64_t mastercore::ContractBasisPoints(const CDInfo::Entry& cd, int64_t amount, int64_t leverage)
 {
     //NOTE: add changes to inverse quoted
-    const int64_t uPrice = COIN;
-    int64_t amountToReserve = 0;
-
+    // const int64_t uPrice = COIN;
     std::pair<int64_t, int64_t> factor;
+
+    const arith_uint256 aLeverage = ConvertTo256(leverage);
+    const arith_uint256 aPositionRequirement = ConvertTo256(amount) * ConvertTo256(cd.margin_requirement);
+
     // max = 2.5 basis point in oracles, max = 1.0 basis point in natives
     (cd.isOracle()) ? (factor.first = 100025, factor.second = 100000) : (cd.isNative()) ? (factor.first = 10001, factor.second = 10000) : (factor.first = 1, factor.second = 1);
 
-    const arith_uint256 amountTR = (ConvertTo256(factor.first) * ConvertTo256(COIN) * ConvertTo256(amount) * ConvertTo256(cd.margin_requirement)) / (ConvertTo256(leverage) * ConvertTo256(factor.second) * ConvertTo256(uPrice));
-    amountToReserve = ConvertTo64(amountTR);
+    const arith_uint256 aFee = ConvertTo256(factor.first) * (aPositionRequirement /  ConvertTo256(factor.second));
+    const arith_uint256 aRealRequirement = DivideAndRoundUp(aPositionRequirement, aLeverage);
+
+    const int64_t amountToReserve = ConvertTo64(aFee) + ConvertTo64(aRealRequirement);
+
 
     return amountToReserve;
 }
