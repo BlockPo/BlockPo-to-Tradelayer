@@ -137,7 +137,7 @@ public:
             READWRITE(notional_size);
             READWRITE(collateral_currency);
             READWRITE(margin_requirement);
-	          READWRITE(attribute_type);
+	    READWRITE(attribute_type);
             READWRITE(init_block);
             READWRITE(contract_associated);
             READWRITE(numerator);
