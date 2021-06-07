@@ -1754,6 +1754,46 @@ int input_vestingaddresses_string(const std::string& s)
    return ((vestingAddresses.size() > elements) ? 0 : -1);
 }
 
+// contract register persistence here
+int input_register_string(const std::string& s)
+{
+  // "address=contract_register"
+  std::vector<std::string> addrData;
+  boost::split(addrData, s, boost::is_any_of("="), boost::token_compress_on);
+  if (addrData.size() != 2) return -1;
+
+  std::string strAddress = addrData[0];
+
+  // split the tuples of contracts
+  std::vector<std::string> vContracts;
+  boost::split(vContracts, addrData[1], boost::is_any_of(";"), boost::token_compress_on);
+
+  for (auto iter : vContracts)
+  {
+      if (iter.empty()) {
+          continue;
+      }
+
+      // "contractid:balancedata"
+      // std::vector<std::string> Record;
+      // boost::split(Record, iter, boost::is_any_of(":"), boost::token_compress_on);
+      // if (Record.size() != 2) return -1;
+
+      // std::vector<std::string> curBalance;
+      // boost::split(curBalance, Record[1], boost::is_any_of(","), boost::token_compress_on);
+      // if (curBalance.size() != 10) return -1;
+
+      // const uint32_t contractId = boost::lexical_cast<uint32_t>(curProperty[0]);
+      // const int64_t margin = boost::lexical_cast<int64_t>(curBalance[0]);
+      // add all data here..
+
+      // if (margin) update_register_map(strAddress, contractId, margin, MARGIN);
+
+  }
+
+  return 0;
+}
+
 static int msc_file_load(const string &filename, int what, bool verifyHash = false)
 {
   int lines = 0;
@@ -1844,6 +1884,10 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
         tokenvwap.clear();
         inputLineFunc = input_tokenvwap_string;
         break;
+
+    case FILE_TYPE_REGISTER:
+        mp_register_map.clear();
+        inputLineFunc = input_register_string;
 
     default:
         return -1;
@@ -2444,6 +2488,14 @@ static int write_mp_vesting_addresses(std::ofstream& file,  CHash256& hasher)
     return 0;
 }
 
+/** Saving contract position data **/
+static int write_mp_register(std::ofstream& file,  CHash256& hasher)
+{
+    // here we need to iterate over all registers
+    // then convert into hashes
+    return 0;
+}
+
 static int write_state_file(CBlockIndex const *pBlockIndex, int what)
 {
     fs::path path = MPPersistencePath / strprintf("%s-%s.dat", statePrefix[what], pBlockIndex->GetBlockHash().ToString());
@@ -2524,6 +2576,9 @@ static int write_state_file(CBlockIndex const *pBlockIndex, int what)
     case FILE_TYPE_TOKEN_VWAP:
         result = write_mp_tokenvwap(file, hasher);
         break;
+
+    case FILE_TYPE_REGISTER:
+        result = write_mp_register(file, hasher);
     }
 
     // generate and write the double hash of all the contents written
@@ -4070,10 +4125,10 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
     }
 
     /** Contracts **/
-    // if (pBlockIndex->nHeight > params.)
-    // {
-    //     LiquidationEngine(pBlockIndex->nHeight);
-    // }
+    if (pBlockIndex->nHeight > params.MSC_CONTRACTDEX_BLOCK)
+    {
+        LiquidationEngine(pBlockIndex->nHeight);
+    }
 
     // marginMain(pBlockIndex->nHeight);
     // addInterestPegged(nBlockPrev,pBlockIndex);
@@ -6039,7 +6094,7 @@ bool CMPTradeList::getCreatedPegged(uint32_t propertyId, UniValue& tradeArray)
 
 int64_t getMinMargin(const uint32_t contractId, const int64_t& position, uint64_t marginRequirement)
 {
-      const int64_t margin = (int64_t) (position *  marginRequirement) / 2;
+      const int64_t margin = (int64_t) (position *  marginRequirement) / 2; // 50%
 
       if(msc_debug_liquidation_enginee) PrintToLog("%s(): position: %d, margin requirement: %d, total margin required: %d\n",__func__, position, marginRequirement, margin);
 
