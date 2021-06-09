@@ -74,6 +74,8 @@ public:
 
     int64_t getLiquidationPrice(const uint32_t contractId, const uint32_t notionalSize, const uint64_t marginRequirement) const;
 
+    const Entries* getEntries(const uint32_t contractId) const; 
+
     /** Compares the tally with another tally and returns true, if they are equal. */
     bool operator==(const Register& rhs) const;
 

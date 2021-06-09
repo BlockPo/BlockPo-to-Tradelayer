@@ -1332,7 +1332,7 @@ static int msc_initial_scan(int nFirstBlock)
     return 0;
 }
 
-int input_msc_balances_string(const std::string& s)
+static int input_msc_balances_string(const std::string& s)
 {
     // "address=propertybalancedata"
     std::vector<std::string> addrData;
@@ -1390,7 +1390,7 @@ int input_msc_balances_string(const std::string& s)
     return 0;
 }
 
-int input_mp_offers_string(const std::string& s)
+static int input_mp_offers_string(const std::string& s)
 {
     std::vector<std::string> vstr;
     boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
@@ -1448,7 +1448,7 @@ static int input_mp_accepts_string(const std::string& s)
     }
 }
 
-int input_globals_state_string(const string &s)
+static int input_globals_state_string(const string &s)
 {
   std::vector<std::string> vstr;
   boost::split(vstr, s, boost::is_any_of(" ,="), token_compress_on);
@@ -1460,7 +1460,7 @@ int input_globals_state_string(const string &s)
   return 0;
 }
 
-int input_global_vars_string(const string &s)
+static int input_global_vars_string(const string &s)
 {
   std::vector<std::string> vstr;
   boost::split(vstr, s, boost::is_any_of(" ,="), token_compress_on);
@@ -1474,7 +1474,7 @@ int input_global_vars_string(const string &s)
   return 0;
 }
 
-int input_mp_contractdexorder_string(const std::string& s)
+static int input_mp_contractdexorder_string(const std::string& s)
 {
     std::vector<std::string> vstr;
     boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
@@ -1505,7 +1505,7 @@ int input_mp_contractdexorder_string(const std::string& s)
     return 0;
 }
 
-int input_mp_token_ltc_string(const std::string& s)
+static int input_mp_token_ltc_string(const std::string& s)
 {
    std::vector<std::string> vstr;
    boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
@@ -1520,7 +1520,7 @@ int input_mp_token_ltc_string(const std::string& s)
 }
 
 
-int input_cachefees_string(const std::string& s)
+static int input_cachefees_string(const std::string& s)
 {
    std::vector<std::string> vstr;
    boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
@@ -1534,7 +1534,7 @@ int input_cachefees_string(const std::string& s)
    return 0;
 }
 
-int input_cachefees_oracles_string(const std::string& s)
+static int input_cachefees_oracles_string(const std::string& s)
 {
    std::vector<std::string> vstr;
    boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
@@ -1548,7 +1548,7 @@ int input_cachefees_oracles_string(const std::string& s)
    return 0;
 }
 
-int input_withdrawals_string(const std::string& s)
+static int input_withdrawals_string(const std::string& s)
 {
     std::vector<std::string> vstr;
     boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
@@ -1581,7 +1581,7 @@ int input_withdrawals_string(const std::string& s)
 
 }
 
-int input_tokenvwap_string(const std::string& s)
+static int input_tokenvwap_string(const std::string& s)
 {
   std::vector<std::string> vstr;
   boost::split(vstr, s, boost::is_any_of("+-"), boost::token_compress_on);
@@ -1603,7 +1603,7 @@ int input_tokenvwap_string(const std::string& s)
   return 0;
 }
 
-int input_activechannels_string(const std::string& s)
+static int input_activechannels_string(const std::string& s)
 {
     std::vector<std::string> vstr;
     boost::split(vstr, s, boost::is_any_of(" ,=+"), boost::token_compress_on);
@@ -1638,7 +1638,7 @@ int input_activechannels_string(const std::string& s)
 
 }
 
-int input_mp_mdexorder_string(const std::string& s)
+static int input_mp_mdexorder_string(const std::string& s)
 {
     std::vector<std::string> vstr;
     boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
@@ -1665,7 +1665,7 @@ int input_mp_mdexorder_string(const std::string& s)
     return 0;
 }
 
-int input_mp_dexvolume_string(const std::string& s)
+static int input_mp_dexvolume_string(const std::string& s)
 {
     std::vector<std::string> vstr;
     boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
@@ -1689,7 +1689,7 @@ int input_mp_dexvolume_string(const std::string& s)
 
 }
 
-int input_mp_mdexvolume_string(const std::string& s)
+static int input_mp_mdexvolume_string(const std::string& s)
 {
     std::vector<std::string> vstr;
     boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
@@ -1714,7 +1714,7 @@ int input_mp_mdexvolume_string(const std::string& s)
 
 }
 
-int input_mp_ltcvolume_string(const std::string& s)
+static int input_mp_ltcvolume_string(const std::string& s)
 {
     std::vector<std::string> vstr;
     boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
@@ -1740,7 +1740,7 @@ int input_mp_ltcvolume_string(const std::string& s)
 }
 
 
-int input_vestingaddresses_string(const std::string& s)
+static int input_vestingaddresses_string(const std::string& s)
 {
    std::vector<std::string> vstr;
    size_t elements = vestingAddresses.size();
@@ -1755,7 +1755,7 @@ int input_vestingaddresses_string(const std::string& s)
 }
 
 // contract register persistence here
-int input_register_string(const std::string& s)
+static int input_register_string(const std::string& s)
 {
   // "address=contract_register"
   std::vector<std::string> addrData;
@@ -1829,6 +1829,11 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
         // ...
         metadex.clear();
         inputLineFunc = input_mp_mdexorder_string;
+        break;
+
+    case FILETYPE_CDEXORDERS:
+        contractdex.clear();
+        inputLineFunc = input_mp_contractdexorder_string;
         break;
 
     case FILETYPE_CACHEFEES:
@@ -1977,7 +1982,8 @@ static char const * const statePrefix[NUM_FILETYPES] = {
     "vestingaddresses",
     "ltcvolume",
     "tokenltcprice",
-    "tokenvwap"
+    "tokenvwap",
+    "register"
 };
 
 // returns the height of the state loaded
@@ -2491,8 +2497,65 @@ static int write_mp_vesting_addresses(std::ofstream& file,  CHash256& hasher)
 /** Saving contract position data **/
 static int write_mp_register(std::ofstream& file,  CHash256& hasher)
 {
-    // here we need to iterate over all registers
-    // then convert into hashes
+  for (auto &iter : mp_register_map)
+  {
+      bool emptyWallet = true;
+      std::string lineOut = iter.first;
+      lineOut.append("=");
+      Register& reg = iter.second;
+      reg.init();
+      uint32_t contractId = 0;
+      while (0 != (contractId = reg.next())) {
+          const int64_t entryPrice = reg.getRecord(contractId, ENTRY_CPRICE);
+          const int64_t position = reg.getRecord(contractId, CONTRACT_POSITION);
+          const int64_t liquidationPrice = reg.getRecord(contractId, LIQUIDATION_PRICE);
+          const int64_t upnl = reg.getRecord(contractId, UPNL);
+          const int64_t margin = reg.getRecord(contractId, MARGIN);
+          const int64_t leverage = reg.getRecord(contractId, LEVERAGE);
+
+          // we don't allow 0 balances to read in, so if we don't write them
+          // it makes things match up better between persisted state and processed state
+          if (0 == entryPrice && 0 == position && 0 == liquidationPrice && 0 == upnl && 0 == margin && leverage == 0) {
+              continue;
+          }
+
+          emptyWallet = false;
+
+          // saving each record
+          lineOut.append(strprintf("%d:%d,%d,%d,%d,%d,%d;",
+                  contractId,
+                  entryPrice,
+                  position,
+                  liquidationPrice,
+                  upnl,
+                  margin,
+                  leverage));
+
+       // saving now the entries (contracts, price)
+       const Entries* entry = reg.getEntries(contractId);
+
+       if(entry != nullptr)
+       {
+           for (Entries::const_iterator it = entry->begin(); it != entry->end(); ++it)
+           {
+               const int64_t& amount = it->first;
+               const int64_t& price = it->second;
+               lineOut.append(strprintf("%d:%d;", amount, price));
+           }
+       }
+
+      }
+
+      if (!emptyWallet) {
+          // add the line to the hash
+          hasher.Write((unsigned char*)lineOut.c_str(), lineOut.length());
+
+          // write the line
+          file << lineOut << std::endl;
+      }
+
+    }
+
     return 0;
 }
 
@@ -2683,6 +2746,7 @@ int mastercore_save_state(CBlockIndex const *pBlockIndex)
     write_state_file(pBlockIndex, FILE_TYPE_LTC_VOLUME);
     write_state_file(pBlockIndex, FILE_TYPE_TOKEN_LTC_PRICE);
     write_state_file(pBlockIndex, FILE_TYPE_TOKEN_VWAP);
+    write_state_file(pBlockIndex, FILE_TYPE_REGISTER);
 
     // clean-up the directory
     prune_state_files(pBlockIndex);

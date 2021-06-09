@@ -366,6 +366,20 @@ int64_t Register::getRecord(uint32_t contractId, RecordType ttype) const
     return amount;
 }
 
+
+const Entries* Register::getEntries(const uint32_t contractId) const
+{
+    const auto it = mp_record.find(contractId);
+
+    if (it != mp_record.end()) {
+        const PositionRecord& record = it->second;
+        return &(record.entries);
+    }
+
+    return static_cast<Entries*>(nullptr);
+}
+
+
 /**
  * Compares the Register with another Register and returns true, if they are equal.
  *
