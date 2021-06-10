@@ -1,6 +1,7 @@
 #include <test/test_bitcoin.h>
 #include <tradelayer/dex.h>
 #include <tradelayer/mdex.h>
+#include <tradelayer/register.h>
 #include <tradelayer/tally.h>
 #include <tradelayer/tradelayer.h>
 #include <tradelayer/tx.h>
@@ -471,6 +472,109 @@ static int write_mp_tokenvwap(std::string& lineOut)
 }
 
 
+static int write_mp_register(std::string& lineOut)
+{
+  for (auto &iter : mp_register_map)
+  {
+      lineOut = iter.first;
+      lineOut.append("=");
+      Register& reg = iter.second;
+      reg.init();
+      uint32_t contractId = 0;
+      while (0 != (contractId = reg.next()))
+      {
+          const int64_t entryPrice = reg.getRecord(contractId, ENTRY_CPRICE);
+          const int64_t position = reg.getRecord(contractId, CONTRACT_POSITION);
+          const int64_t liquidationPrice = reg.getRecord(contractId, LIQUIDATION_PRICE);
+          const int64_t upnl = reg.getRecord(contractId, UPNL);
+          const int64_t margin = reg.getRecord(contractId, MARGIN);
+          const int64_t leverage = reg.getRecord(contractId, LEVERAGE);
+
+          // we don't allow 0 balances to read in, so if we don't write them
+          // it makes things match up better between persisted state and processed state
+          if (0 == entryPrice && 0 == position && 0 == liquidationPrice && 0 == upnl && 0 == margin && leverage == 0) {
+              continue;
+          }
+
+          // saving each record
+          lineOut.append(strprintf("%d:%d,%d,%d,%d,%d,%d",
+                  contractId,
+                  entryPrice,
+                  position,
+                  liquidationPrice,
+                  upnl,
+                  margin,
+                  leverage));
+
+          // saving now the entries (contracts, price)
+          const Entries* entry = reg.getEntries(contractId);
+
+          if(entry != nullptr)
+          {
+              for (Entries::const_iterator it = entry->begin(); it != entry->end(); ++it)
+              {
+                  const std::pair<int64_t,int64_t>& pair = *it;
+                  const int64_t& amount = pair.first;
+                  const int64_t& price = pair.second;
+                  lineOut.append(strprintf("-%d,%d", amount, price));
+                  // BOOST_TEST_MESSAGE("amount:" <<  amount);
+                  // BOOST_TEST_MESSAGE("price:" <<  price);
+              }
+          }
+
+          lineOut.append(";");
+
+       }
+
+    }
+
+    return 0;
+}
+
+static int input_register_string(std::string& s)
+{
+  // "address=contract_register"
+  std::vector<std::string> addrData;
+  boost::split(addrData, s, boost::is_any_of("="), boost::token_compress_on);
+  if (addrData.size() != 2) return -1;
+
+  std::string strAddress = addrData[0];
+
+  // split the tuples of contracts
+  std::vector<std::string> vContracts;
+  boost::split(vContracts, addrData[1], boost::is_any_of(";"), boost::token_compress_on);
+
+  BOOST_TEST_MESSAGE("s:" << s);
+  BOOST_TEST_MESSAGE("addrData[0]:" << addrData[0]);
+  BOOST_TEST_MESSAGE("addrData[1]:" << addrData[1]);
+
+  // for (auto iter : vContracts)
+  // {
+  //     if (iter.empty()) {
+  //         continue;
+  //     }
+
+      // "contractid:balancedata"
+      // std::vector<std::string> Record;
+      // boost::split(Record, iter, boost::is_any_of(":"), boost::token_compress_on);
+      // if (Record.size() != 2) return -1;
+
+      // std::vector<std::string> curBalance;
+      // boost::split(curBalance, Record[1], boost::is_any_of(","), boost::token_compress_on);
+      // if (curBalance.size() != 10) return -1;
+
+      // const uint32_t contractId = boost::lexical_cast<uint32_t>(curProperty[0]);
+      // const int64_t margin = boost::lexical_cast<int64_t>(curBalance[0]);
+      // add all data here..
+
+      // if (margin) update_register_map(strAddress, contractId, margin, MARGIN);
+
+  // }
+
+  return 0;
+}
+
+
 
 BOOST_AUTO_TEST_CASE(channel_persistence)
 {
@@ -795,6 +899,43 @@ BOOST_AUTO_TEST_CASE(tokenvwap_persistence)
 
   BOOST_CHECK_EQUAL(1000 * COIN, test.first);
   BOOST_CHECK_EQUAL(2600 * COIN, test.second);
+
+
+}
+
+
+BOOST_AUTO_TEST_CASE(contract_register)
+{
+  const std::string address = "muY24px8kWVHUDc8NmBRjL6UWGbjz8wW5r";
+
+  BOOST_CHECK(update_register_map(address, 1, 10000, ENTRY_CPRICE));
+  BOOST_CHECK(update_register_map(address, 2, 20000, CONTRACT_POSITION));
+
+  std::string lineOut;
+
+  // Testing write function
+  write_mp_register(lineOut);
+
+  // %d:%d,%d,%d,%d,%d,%d;
+  BOOST_CHECK_EQUAL("muY24px8kWVHUDc8NmBRjL6UWGbjz8wW5r=1:10000,0,0,0,0,0;2:0,20000,0,0,0,0;",lineOut);
+
+
+  // inserting entry:
+  Register reg;
+  BOOST_CHECK(insert_entry(address, 1, 8000, 2560));
+  BOOST_CHECK(insert_entry(address, 2, 4000, 9875));
+
+
+  // Testing write function
+  write_mp_register(lineOut);
+
+  BOOST_CHECK_EQUAL("muY24px8kWVHUDc8NmBRjL6UWGbjz8wW5r=1:10000,0,0,0,0,0-8000,2560;2:0,20000,0,0,0,0-4000,9875;",lineOut);
+
+
+  // input_register_string(lineOut);
+
+  // BOOST_CHECK_EQUAL(10000, getRecord(address, 1, ENTRY_CPRICE));
+  // BOOST_CHECK_EQUAL(20000, getRecord(address, 2, CONTRACT_BALANCE));
 
 
 }

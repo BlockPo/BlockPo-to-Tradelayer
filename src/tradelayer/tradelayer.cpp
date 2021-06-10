@@ -1775,9 +1775,9 @@ static int input_register_string(const std::string& s)
       }
 
       // "contractid:balancedata"
-      // std::vector<std::string> Record;
-      // boost::split(Record, iter, boost::is_any_of(":"), boost::token_compress_on);
-      // if (Record.size() != 2) return -1;
+      std::vector<std::string> Record;
+      boost::split(Record, iter, boost::is_any_of(":"), boost::token_compress_on);
+      if (Record.size() != 2) return -1;
 
       // std::vector<std::string> curBalance;
       // boost::split(curBalance, Record[1], boost::is_any_of(","), boost::token_compress_on);
@@ -2522,7 +2522,7 @@ static int write_mp_register(std::ofstream& file,  CHash256& hasher)
           emptyWallet = false;
 
           // saving each record
-          lineOut.append(strprintf("%d:%d,%d,%d,%d,%d,%d;",
+          lineOut.append(strprintf("%d:%d,%d,%d,%d,%d,%d",
                   contractId,
                   entryPrice,
                   position,
@@ -2538,11 +2538,14 @@ static int write_mp_register(std::ofstream& file,  CHash256& hasher)
        {
            for (Entries::const_iterator it = entry->begin(); it != entry->end(); ++it)
            {
-               const int64_t& amount = it->first;
-               const int64_t& price = it->second;
-               lineOut.append(strprintf("%d:%d;", amount, price));
+               const std::pair<int64_t,int64_t>& pair = *it;
+               const int64_t& amount = pair.first;
+               const int64_t& price = pair.second;
+               lineOut.append(strprintf("-%d:%d;", amount, price));
            }
        }
+
+       lineOut.append(";");
 
       }
 
