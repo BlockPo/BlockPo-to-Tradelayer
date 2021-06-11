@@ -1764,34 +1764,62 @@ static int input_register_string(const std::string& s)
 
   std::string strAddress = addrData[0];
 
-  // split the tuples of contracts
-  std::vector<std::string> vContracts;
-  boost::split(vContracts, addrData[1], boost::is_any_of(";"), boost::token_compress_on);
+  // split the tuples of contract registers
+  std::vector<std::string> vRegisters;
+  boost::split(vRegisters, addrData[1], boost::is_any_of(";"), boost::token_compress_on);
 
-  for (auto iter : vContracts)
+  for (auto iter : vRegisters)
   {
       if (iter.empty()) {
           continue;
       }
 
-      // "contractid:balancedata"
-      std::vector<std::string> Record;
-      boost::split(Record, iter, boost::is_any_of(":"), boost::token_compress_on);
-      if (Record.size() != 2) return -1;
+     // full register (records + entries)
+     std::vector<std::string> fRegister;
+     boost::split(fRegister, iter, boost::is_any_of("-"), boost::token_compress_on);
 
-      // std::vector<std::string> curBalance;
-      // boost::split(curBalance, Record[1], boost::is_any_of(","), boost::token_compress_on);
-      // if (curBalance.size() != 10) return -1;
+     // contract id + records
+     std::vector<std::string> idRecord;
+     boost::split(idRecord, fRegister[0], boost::is_any_of(":"), boost::token_compress_on);
 
-      // const uint32_t contractId = boost::lexical_cast<uint32_t>(curProperty[0]);
-      // const int64_t margin = boost::lexical_cast<int64_t>(curBalance[0]);
-      // add all data here..
+     // just records
+     std::vector<std::string> vRecord;
+     boost::split(vRecord, idRecord[1], boost::is_any_of(","), boost::token_compress_on);
 
-      // if (margin) update_register_map(strAddress, contractId, margin, MARGIN);
+     const uint32_t contractId = boost::lexical_cast<uint32_t>(idRecord[0]);
+     const int64_t entryPrice = boost::lexical_cast<int64_t>(vRecord[0]);
+     const int64_t position = boost::lexical_cast<int64_t>(vRecord[1]);
+     const int64_t liquidationPrice = boost::lexical_cast<int64_t>(vRecord[2]);
+     const int64_t upnl = boost::lexical_cast<int64_t>(vRecord[3]);
+     const int64_t margin = boost::lexical_cast<int64_t>(vRecord[4]);
+     const int64_t leverage = boost::lexical_cast<int64_t>(vRecord[5]);
 
-  }
+     if (entryPrice) update_register_map(strAddress, contractId, entryPrice, ENTRY_CPRICE);
+     if (position) update_register_map(strAddress, contractId, position, CONTRACT_POSITION);
+     if (liquidationPrice) update_register_map(strAddress, contractId, liquidationPrice, LIQUIDATION_PRICE);
+     if (upnl) update_register_map(strAddress, contractId, upnl, UPNL);
+     if (margin) update_register_map(strAddress, contractId, margin, MARGIN);
+     if (leverage) update_register_map(strAddress, contractId, entryPrice, LEVERAGE);
 
-  return 0;
+     // if there's no entries, skip
+     if (fRegister.size() == 1) {
+         continue;
+     }
+
+     // just entries
+     std::vector<std::string> entries;
+     boost::split(entries, fRegister[1], boost::is_any_of(","), boost::token_compress_on);
+
+     for (auto it : entries)
+     {
+         PrintToLog("%s(): entry: %s\n",__func__, it);
+         // assert(insert_entry(strAddress, contractId, amount, price));
+
+     }
+
+   }
+   
+   return 0;
 }
 
 static int msc_file_load(const string &filename, int what, bool verifyHash = false)
@@ -2538,6 +2566,7 @@ static int write_mp_register(std::ofstream& file,  CHash256& hasher)
        {
            for (Entries::const_iterator it = entry->begin(); it != entry->end(); ++it)
            {
+               if (it == entry->begin()) lineOut.append("-");
                const std::pair<int64_t,int64_t>& pair = *it;
                const int64_t& amount = pair.first;
                const int64_t& price = pair.second;

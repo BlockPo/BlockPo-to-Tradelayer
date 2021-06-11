@@ -511,12 +511,15 @@ static int write_mp_register(std::string& lineOut)
 
           if(entry != nullptr)
           {
+
               for (Entries::const_iterator it = entry->begin(); it != entry->end(); ++it)
               {
+                  if (it == entry->begin()) lineOut.append("-");
+
                   const std::pair<int64_t,int64_t>& pair = *it;
                   const int64_t& amount = pair.first;
                   const int64_t& price = pair.second;
-                  lineOut.append(strprintf("-%d,%d", amount, price));
+                  lineOut.append(strprintf("%d,%d", amount, price));
                   // BOOST_TEST_MESSAGE("amount:" <<  amount);
                   // BOOST_TEST_MESSAGE("price:" <<  price);
               }
@@ -540,19 +543,74 @@ static int input_register_string(std::string& s)
 
   std::string strAddress = addrData[0];
 
-  // split the tuples of contracts
-  std::vector<std::string> vContracts;
-  boost::split(vContracts, addrData[1], boost::is_any_of(";"), boost::token_compress_on);
+  // split the tuples of contract registers
+  std::vector<std::string> vRegisters;
+  boost::split(vRegisters, addrData[1], boost::is_any_of(";"), boost::token_compress_on);
 
   BOOST_TEST_MESSAGE("s:" << s);
   BOOST_TEST_MESSAGE("addrData[0]:" << addrData[0]);
   BOOST_TEST_MESSAGE("addrData[1]:" << addrData[1]);
 
-  // for (auto iter : vContracts)
-  // {
-  //     if (iter.empty()) {
-  //         continue;
-  //     }
+  for (auto iter : vRegisters)
+  {
+      if (iter.empty()) {
+          continue;
+      }
+
+     BOOST_TEST_MESSAGE("Register:" << iter);
+
+     // full register (records + entries)
+     std::vector<std::string> fRegister;
+     boost::split(fRegister, iter, boost::is_any_of("-"), boost::token_compress_on);
+
+     // contract id + records
+     std::vector<std::string> idRecord;
+     boost::split(idRecord, fRegister[0], boost::is_any_of(":"), boost::token_compress_on);
+
+     // just records
+     std::vector<std::string> vRecord;
+     boost::split(vRecord, idRecord[1], boost::is_any_of(","), boost::token_compress_on);
+
+     BOOST_TEST_MESSAGE("ContractId:" << idRecord[0]);
+     const uint32_t contractId = boost::lexical_cast<uint32_t>(idRecord[0]);
+     const int64_t entryPrice = boost::lexical_cast<int64_t>(vRecord[0]);
+     const int64_t position = boost::lexical_cast<int64_t>(vRecord[1]);
+     const int64_t liquidationPrice = boost::lexical_cast<int64_t>(vRecord[2]);
+     const int64_t upnl = boost::lexical_cast<int64_t>(vRecord[3]);
+     const int64_t margin = boost::lexical_cast<int64_t>(vRecord[4]);
+     const int64_t leverage = boost::lexical_cast<int64_t>(vRecord[5]);
+
+     if (entryPrice) update_register_map(strAddress, contractId, entryPrice, ENTRY_CPRICE);
+     if (position) update_register_map(strAddress, contractId, position, CONTRACT_POSITION);
+     if (liquidationPrice) update_register_map(strAddress, contractId, liquidationPrice, LIQUIDATION_PRICE);
+     if (upnl) update_register_map(strAddress, contractId, upnl, UPNL);
+     if (margin) update_register_map(strAddress, contractId, margin, MARGIN);
+     if (leverage) update_register_map(strAddress, contractId, entryPrice, LEVERAGE);
+
+     BOOST_TEST_MESSAGE("Record[2]:" << vRecord[2]);
+     BOOST_TEST_MESSAGE("Record[3]:" << vRecord[3]);
+     BOOST_TEST_MESSAGE("Record[4]:" << vRecord[4]);
+     BOOST_TEST_MESSAGE("Record[5]:" << vRecord[5]);
+
+     // if there's no entries, skip
+     if (fRegister.size() == 1) {
+         continue;
+     }
+
+     // just entries
+     std::vector<std::string> entries;
+     boost::split(entries, fRegister[1], boost::is_any_of(","), boost::token_compress_on);
+
+     for (auto it : entries)
+     {
+         BOOST_TEST_MESSAGE("entry:" << it);
+         // assert(insert_entry(strAddress, contractId, amount, price));
+
+     }
+
+
+     }
+
 
       // "contractid:balancedata"
       // std::vector<std::string> Record;
@@ -920,11 +978,11 @@ BOOST_AUTO_TEST_CASE(contract_register)
   BOOST_CHECK_EQUAL("muY24px8kWVHUDc8NmBRjL6UWGbjz8wW5r=1:10000,0,0,0,0,0;2:0,20000,0,0,0,0;",lineOut);
 
 
+  input_register_string(lineOut);
+
   // inserting entry:
-  Register reg;
   BOOST_CHECK(insert_entry(address, 1, 8000, 2560));
   BOOST_CHECK(insert_entry(address, 2, 4000, 9875));
-
 
   // Testing write function
   write_mp_register(lineOut);
@@ -933,6 +991,12 @@ BOOST_AUTO_TEST_CASE(contract_register)
 
 
   // input_register_string(lineOut);
+
+  // inserting entry:
+  // BOOST_CHECK(insert_entry(address, 1, 7000, 3560));
+  // BOOST_CHECK(insert_entry(address, 1, 9000, 7485));
+  //
+  // write_mp_register(lineOut);
 
   // BOOST_CHECK_EQUAL(10000, getRecord(address, 1, ENTRY_CPRICE));
   // BOOST_CHECK_EQUAL(20000, getRecord(address, 2, CONTRACT_BALANCE));
