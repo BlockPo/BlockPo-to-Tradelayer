@@ -519,8 +519,9 @@ class ChannelsBasicsTest (BitcoinTestFramework):
         params = str([addresses[1], 4]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
         # self.log.info(out)
+
         assert_equal(out['error'], None)
-        assert_equal(out['result']['balance'],'0.00000000')
+        assert_equal(out['result']['balance'],'1000.00000000')
         assert_equal(out['result']['reserve'],'0.00000000')
 
 
@@ -529,7 +530,7 @@ class ChannelsBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['balance'],'10000000000.00000000')
+        assert_equal(out['result']['balance'],'9999998000.00000000')
         assert_equal(out['result']['reserve'],'0.00000000')
 
 

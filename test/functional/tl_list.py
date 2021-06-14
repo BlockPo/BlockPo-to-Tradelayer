@@ -266,8 +266,9 @@ class HTTPBasicsTest (BitcoinTestFramework):
 
         self.log.info("Testing tl_listproperties (with verbose 1)")
         params = str([1]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, True, "tl_listproperties", params)
+        out = tradelayer_HTTP(conn, headers, False, "tl_listproperties", params)
         # self.log.info(out)
+        
         assert_equal(out['error'], None)
         assert_equal(out['result'][0]['propertyid'], 1)
         assert_equal(out['result'][0]['name'], 'ALL')

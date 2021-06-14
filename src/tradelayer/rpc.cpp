@@ -632,9 +632,7 @@ UniValue tl_getwalletbalance(const JSONRPCRequest& request)
             + HelpExampleRpc("tl_getwalletbalance", "")
         );
 
-    bool fVerbose = false;
-    if (!request.params[0].isNull())
-        fVerbose = request.params[0].get_bool();
+    bool fVerbose = (!request.params[0].isNull() && 1 == ParseBinary(request.params[0])) ? true : false;
 
     UniValue addressesObj(UniValue::VARR);
     UniValue balanceObj(UniValue::VOBJ);
@@ -1077,7 +1075,7 @@ UniValue tl_getproperty(const JSONRPCRequest& request)
 
 UniValue tl_listproperties(const JSONRPCRequest& request)
 {
-    if (request.fHelp)
+    if (request.fHelp || request.params.size() > 1)
         throw runtime_error(
                 "tl_listproperties \"verbose\"\n"
 
@@ -1103,9 +1101,7 @@ UniValue tl_listproperties(const JSONRPCRequest& request)
                 + HelpExampleRpc("tl_listproperties", "\"1\"")
                 );
 
-    bool fVerbose = false;
-    if (!request.params[0].isNull())
-        fVerbose = request.params[0].get_bool();
+    bool fVerbose = (!request.params[0].isNull() && 1 == ParseBinary(request.params[0])) ? true : false;
 
     UniValue response(UniValue::VARR);
 
@@ -1175,7 +1171,6 @@ UniValue tl_listproperties(const JSONRPCRequest& request)
                     propertyObj.pushKV("totaltokens", strTotalTokens);
                 }
             }
-
         }
 
         response.push_back(propertyObj);
@@ -1809,7 +1804,7 @@ bool PositionToJSON(const std::string& address, uint32_t property, UniValue& bal
 {
     int64_t position  = getMPbalance(address, property, CONTRACT_BALANCE);
     balance_obj.pushKV("position", position);
-    
+
     return true;
 }
 
