@@ -1,8 +1,8 @@
 #!/bin/sh
-# Using linux cross compilation, please run it as superuser
+# Using linux cross compilation
 
 echo "Installing general dependencies ..."
-apt install build-essential libtool autotools-dev automake pkg-config bsdmainutils curl git
+sudo apt install build-essential libtool autotools-dev automake pkg-config bsdmainutils curl git
 
 #The first step is to install the mingw-w64 cross-compilation tool chain.
 ubuntuBionic='~18.04'
@@ -11,9 +11,9 @@ os=$(uname -v)
 echo "Installing mingw-w64 ..."
 if[[ "$os" == *"$ubuntuBionic"* ]]; then
   echo "for Ubuntu Bionic..."
-  update-alternatives --config i686-w64-mingw32-g++
+  sudo update-alternatives --config i686-w64-mingw32-g++
 else
-  apt install g++-mingw-w64-x86-64
+  sudo apt install g++-mingw-w64-x86-64
 fi
 
 echo "Building Berkeley DB 4.8 ..."
