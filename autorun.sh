@@ -2,8 +2,8 @@
 # If flag true, it will use linux cross compilation
 
 echo "Installing general dependencies ..."
-sudo apt install build-essential libtool autotools-dev automake pkg-config bsdmainutils curl git
-sudo apt-get install libboost-all-dev
+sudo apt install build-essential libtool autotools-dev automake pkg-config libssl-dev libevent-dev
+sudo apt-get install libboost-all-dev bsdmainutils curl git python3
 
 echo "Installing mingw-w64 ..."
 if [[ $1 == "true" ]]
