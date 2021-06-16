@@ -1,21 +1,24 @@
 #!/usr/bin/env bash
-# Using linux cross compilation
+# If flag true, it will use linux cross compilation
 
 echo "Installing general dependencies ..."
 sudo apt install build-essential libtool autotools-dev automake pkg-config bsdmainutils curl git
-
-#Installing the mingw-w64 cross-compilation tool chain.
-ubuntuBionic='~18.04'
-os=$(uname -v)
+sudo apt-get install libboost-all-dev
 
 echo "Installing mingw-w64 ..."
-if [[ $os == *"$ubuntuBionic"* ]]
+if [[ $1 == "true" ]]
+  #Installing the mingw-w64 cross-compilation tool chain.
+  ubuntuBionic='~18.04'
+  os=$(uname -v)
   then
-    echo "for Ubuntu Bionic..."
-    sudo update-alternatives --config i686-w64-mingw32-g++
-  else
-    echo "other distros..."
-    sudo apt install g++-mingw-w64-x86-64
+    if [[ $os == *"$ubuntuBionic"* ]]
+      then
+        echo "for Ubuntu Bionic..."
+        sudo update-alternatives --config i686-w64-mingw32-g++
+      else
+        echo "other distros..."
+        sudo apt install g++-mingw-w64-x86-64
+    fi
 fi
 
 echo "Building Berkeley DB 4.8 ..."
@@ -23,10 +26,24 @@ echo "Building Berkeley DB 4.8 ..."
 
 echo "Building depencies ..."
 ./autogen.sh
-cd depends
-make HOST=x86_64-linux-gnu
-cd ..
-./configure --prefix=`pwd`/depends/x86_64-linux-gnu --without-gui
+
+if [[ $1 == "true" ]]
+  then
+    cd depends
+    make HOST=x86_64-linux-gnu
+    cd ..
+fi
+
+export BDB_PREFIX=`pwd`/db4
+
+if [[ $1 == "true" ]]
+  then
+    echo "Configure --prefix=`pwd`/depends/x86_64-linux-gnu ..."
+    ./configure BDB_LIBS="-L${BDB_PREFIX}/lib -ldb_cxx-4.8" BDB_CFLAGS="-I${BDB_PREFIX}/include" --prefix=`pwd`/depends/x86_64-linux-gnu --without-gui
+  else
+    echo "Configure with just Berkeley conf ..."
+    ./configure BDB_LIBS="-L${BDB_PREFIX}/lib -ldb_cxx-4.8" BDB_CFLAGS="-I${BDB_PREFIX}/include" --without-gui
+fi
 
 echo "Building tradelayer core ..."
 make -j 3
