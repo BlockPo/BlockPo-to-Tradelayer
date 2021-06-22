@@ -520,6 +520,12 @@ static int write_mp_register(std::string& lineOut)
                   const int64_t& amount = pair.first;
                   const int64_t& price = pair.second;
                   lineOut.append(strprintf("%d,%d", amount, price));
+
+                  if (it != std::prev(entry->end())) {
+                      // BOOST_TEST_MESSAGE("appending |");
+                      lineOut.append("|");
+                  }
+                  //
                   // BOOST_TEST_MESSAGE("amount:" <<  amount);
                   // BOOST_TEST_MESSAGE("price:" <<  price);
               }
@@ -547,9 +553,9 @@ static int input_register_string(std::string& s)
   std::vector<std::string> vRegisters;
   boost::split(vRegisters, addrData[1], boost::is_any_of(";"), boost::token_compress_on);
 
-  BOOST_TEST_MESSAGE("s:" << s);
-  BOOST_TEST_MESSAGE("addrData[0]:" << addrData[0]);
-  BOOST_TEST_MESSAGE("addrData[1]:" << addrData[1]);
+  // BOOST_TEST_MESSAGE("s:" << s);
+  // BOOST_TEST_MESSAGE("addrData[0]:" << addrData[0]);
+  // BOOST_TEST_MESSAGE("addrData[1]:" << addrData[1]);
 
   for (auto iter : vRegisters)
   {
@@ -557,7 +563,7 @@ static int input_register_string(std::string& s)
           continue;
       }
 
-     BOOST_TEST_MESSAGE("Register:" << iter);
+     // BOOST_TEST_MESSAGE("Register:" << iter);
 
      // full register (records + entries)
      std::vector<std::string> fRegister;
@@ -571,7 +577,7 @@ static int input_register_string(std::string& s)
      std::vector<std::string> vRecord;
      boost::split(vRecord, idRecord[1], boost::is_any_of(","), boost::token_compress_on);
 
-     BOOST_TEST_MESSAGE("ContractId:" << idRecord[0]);
+     // BOOST_TEST_MESSAGE("ContractId:" << idRecord[0]);
      const uint32_t contractId = boost::lexical_cast<uint32_t>(idRecord[0]);
      const int64_t entryPrice = boost::lexical_cast<int64_t>(vRecord[0]);
      const int64_t position = boost::lexical_cast<int64_t>(vRecord[1]);
@@ -587,10 +593,10 @@ static int input_register_string(std::string& s)
      if (margin) update_register_map(strAddress, contractId, margin, MARGIN);
      if (leverage) update_register_map(strAddress, contractId, entryPrice, LEVERAGE);
 
-     BOOST_TEST_MESSAGE("Record[2]:" << vRecord[2]);
-     BOOST_TEST_MESSAGE("Record[3]:" << vRecord[3]);
-     BOOST_TEST_MESSAGE("Record[4]:" << vRecord[4]);
-     BOOST_TEST_MESSAGE("Record[5]:" << vRecord[5]);
+     // BOOST_TEST_MESSAGE("Record[2]:" << vRecord[2]);
+     // BOOST_TEST_MESSAGE("Record[3]:" << vRecord[3]);
+     // BOOST_TEST_MESSAGE("Record[4]:" << vRecord[4]);
+     // BOOST_TEST_MESSAGE("Record[5]:" << vRecord[5]);
 
      // if there's no entries, skip
      if (fRegister.size() == 1) {
@@ -599,35 +605,23 @@ static int input_register_string(std::string& s)
 
      // just entries
      std::vector<std::string> entries;
-     boost::split(entries, fRegister[1], boost::is_any_of(","), boost::token_compress_on);
+     boost::split(entries, fRegister[1], boost::is_any_of("|"), boost::token_compress_on);
 
      for (auto it : entries)
      {
-         BOOST_TEST_MESSAGE("entry:" << it);
-         // assert(insert_entry(strAddress, contractId, amount, price));
+
+         std::vector<std::string> entry;
+         boost::split(entry, it, boost::is_any_of(","), boost::token_compress_on);
+         // BOOST_TEST_MESSAGE("entry[0]:" << entry[0]);
+         // BOOST_TEST_MESSAGE("entry[1]:" << entry[1]);
+         const int64_t amount = boost::lexical_cast<int64_t>(entry[0]);
+         const int64_t price = boost::lexical_cast<int64_t>(entry[1]);
+         assert(insert_entry(strAddress, contractId, amount, price));
 
      }
 
 
-     }
-
-
-      // "contractid:balancedata"
-      // std::vector<std::string> Record;
-      // boost::split(Record, iter, boost::is_any_of(":"), boost::token_compress_on);
-      // if (Record.size() != 2) return -1;
-
-      // std::vector<std::string> curBalance;
-      // boost::split(curBalance, Record[1], boost::is_any_of(","), boost::token_compress_on);
-      // if (curBalance.size() != 10) return -1;
-
-      // const uint32_t contractId = boost::lexical_cast<uint32_t>(curProperty[0]);
-      // const int64_t margin = boost::lexical_cast<int64_t>(curBalance[0]);
-      // add all data here..
-
-      // if (margin) update_register_map(strAddress, contractId, margin, MARGIN);
-
-  // }
+   }
 
   return 0;
 }
@@ -977,29 +971,46 @@ BOOST_AUTO_TEST_CASE(contract_register)
   // %d:%d,%d,%d,%d,%d,%d;
   BOOST_CHECK_EQUAL("muY24px8kWVHUDc8NmBRjL6UWGbjz8wW5r=1:10000,0,0,0,0,0;2:0,20000,0,0,0,0;",lineOut);
 
-
-  input_register_string(lineOut);
-
   // inserting entry:
   BOOST_CHECK(insert_entry(address, 1, 8000, 2560));
   BOOST_CHECK(insert_entry(address, 2, 4000, 9875));
+  BOOST_CHECK(insert_entry(address, 2, 5000, 10000));
 
   // Testing write function
   write_mp_register(lineOut);
 
-  BOOST_CHECK_EQUAL("muY24px8kWVHUDc8NmBRjL6UWGbjz8wW5r=1:10000,0,0,0,0,0-8000,2560;2:0,20000,0,0,0,0-4000,9875;",lineOut);
+  BOOST_CHECK_EQUAL("muY24px8kWVHUDc8NmBRjL6UWGbjz8wW5r=1:10000,0,0,0,0,0-8000,2560;2:0,20000,0,0,0,0-4000,9875|5000,10000;",lineOut);
 
+  // clearing map
+  mp_register_map.clear();
 
-  // input_register_string(lineOut);
+  //saving to memory
+  input_register_string(lineOut);
 
-  // inserting entry:
-  // BOOST_CHECK(insert_entry(address, 1, 7000, 3560));
-  // BOOST_CHECK(insert_entry(address, 1, 9000, 7485));
-  //
-  // write_mp_register(lineOut);
+  //Checking register in map:
+  std::unordered_map<std::string, Register>::iterator my_it = mp_register_map.find(address);
+  Register& reg = my_it->second;
 
-  // BOOST_CHECK_EQUAL(10000, getRecord(address, 1, ENTRY_CPRICE));
-  // BOOST_CHECK_EQUAL(20000, getRecord(address, 2, CONTRACT_BALANCE));
+  const Entries* pEnt = reg.getEntries(2);
+
+  std::vector<std::pair<int64_t,int64_t>> entryResult;
+
+  for (Entries::const_iterator it = pEnt->begin(); it != pEnt->end(); ++it)
+  {
+      const std::pair<int64_t,int64_t>& pair = *it;
+      entryResult.push_back(pair);
+  }
+
+  BOOST_CHECK(entryResult.size() == 2);
+
+  std::pair<int64_t,int64_t>& pair1  = entryResult[0];
+  std::pair<int64_t,int64_t>& pair2  = entryResult[1];
+
+  BOOST_CHECK_EQUAL(pair1.first, 4000);
+  BOOST_CHECK_EQUAL(pair1.second, 9875);
+
+  BOOST_CHECK_EQUAL(pair2.first, 5000);
+  BOOST_CHECK_EQUAL(pair2.second, 10000);
 
 
 }
