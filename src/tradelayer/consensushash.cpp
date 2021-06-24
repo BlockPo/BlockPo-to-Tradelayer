@@ -12,6 +12,7 @@
 #include <tradelayer/mdex.h>
 #include <tradelayer/parse_string.h>
 #include <tradelayer/persistence.h>
+#include <tradelayer/register.h>
 #include <tradelayer/sp.h>
 #include <tradelayer/tradelayer.h>
 #include <tradelayer/tradelayer_matrices.h>
@@ -49,6 +50,24 @@ bool ShouldConsensusHashBlock(int block)
     }
 
     return false;
+}
+
+// Generates a consensus string for hashing based on a contract register
+std::string GenerateConsensusString(const Register& reg, const std::string& address, const uint32_t contractId)
+{
+    const int64_t entryPrice = reg.getRecord(contractId, ENTRY_CPRICE);
+    const int64_t position = reg.getRecord(contractId, CONTRACT_POSITION);
+    const int64_t liquidationPrice = reg.getRecord(contractId, LIQUIDATION_PRICE);
+    const int64_t upnl = reg.getRecord(contractId, UPNL);
+    const int64_t margin = reg.getRecord(contractId, MARGIN);
+    const int64_t leverage = reg.getRecord(contractId, LEVERAGE);
+
+    // return a blank string if all balances are empty
+    if (0 == entryPrice && 0 == position && 0 == liquidationPrice && 0 == upnl && 0 == margin && leverage == 0) {
+        return "";
+    }
+
+    return strprintf("%d:%d,%d,%d,%d,%d,%d", contractId, entryPrice, position, liquidationPrice, upnl, margin, leverage);
 }
 
 // Generates a consensus string for hashing based on a tally object
@@ -240,6 +259,28 @@ uint256 GetConsensusHash()
             std::string dataStr = GenerateConsensusString(tally, address, propertyId);
             if (dataStr.empty()) continue; // skip empty balances
             if (msc_debug_consensus_hash) PrintToLog("Adding balance data to consensus hash: %s\n", dataStr);
+            hasher.Write((unsigned char*)dataStr.c_str(), dataStr.length());
+        }
+    }
+
+
+    std::map<std::string, Register> registerMapSorted;
+    for (std::unordered_map<string, Register>::iterator uit = mp_register_map.begin(); uit != mp_register_map.end(); ++uit)
+    {
+        registerMapSorted.insert(std::make_pair(uit->first,uit->second));
+    }
+
+    for (std::map<string, Register>::iterator my_it = registerMapSorted.begin(); my_it != registerMapSorted.end(); ++my_it)
+    {
+        const std::string& address = my_it->first;
+        Register& reg = my_it->second;
+        reg.init();
+        uint32_t contractId = 0;
+        while (0 != (contractId = (reg.next())))
+        {
+            std::string dataStr = GenerateConsensusString(reg, address, contractId);
+            if (dataStr.empty()) continue; // skip empty balances
+            if (msc_debug_consensus_hash) PrintToLog("Adding contract register data to consensus hash: %s\n", dataStr);
             hasher.Write((unsigned char*)dataStr.c_str(), dataStr.length());
         }
     }
