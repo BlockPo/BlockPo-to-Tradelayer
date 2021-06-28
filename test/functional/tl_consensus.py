@@ -146,6 +146,9 @@ class ConsensusTest (BitcoinTestFramework):
         assert_equal (out['result']['consensushash'],"6503930701971334546a6396f13055a49120d24493a41c6b590d5ad01f337e87")
 
 
+
+
+
         conn.close()
         self.stop_nodes()
 

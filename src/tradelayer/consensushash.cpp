@@ -110,12 +110,11 @@ std::string GenerateConsensusString(const CMPAccept& acceptObj, const std::strin
              acceptObj.getAcceptBlock());
 }
 
-// Generates a consensus string for hashing based on a property issuer
+// Generates a consensus string for hashing based on a property/ contract issuer
 std::string GenerateConsensusString(const uint32_t propertyId, const std::string& address)
 {
     return strprintf("%d|%s", propertyId, address);
 }
-
 
 // Generates a consensus string for hashing based on a channel object
 std::string GenerateConsensusString(const Channel& chn)
@@ -165,6 +164,10 @@ std::string GenerateConsensusString(const mastercore::FeatureActivation& feat)
 * Format specifiers & placeholders:
 *   "%s|%d|%d|%d|%d|%d" - "address|propertyid|balance|selloffer_reserve|accept_reserve|metadex_reserve"
 *
+* ---STAGE 2 - CONTRACT REGISTERS---
+* Format specifiers & placeholders:
+*   "%s|%d|%d|%d|%d|%d|%d" - "address|contractid|entry_price|position|liquidation_price|upnl|margin|leverage"
+*
 * Note: empty balance records and the pending tally are ignored. Addresses are sorted based
 * on lexicographical order, and balance records are sorted by the property identifiers.
 *
@@ -196,31 +199,35 @@ std::string GenerateConsensusString(const mastercore::FeatureActivation& feat)
 * Format specifiers & placeholders:
 *   "%d|%s" - "propertyid|issueraddress"
 *
-* ---STAGE 7 - TRADE CHANNELS---
+* ---STAGE 7 - CONTRACTS---
+* Format specifiers & placeholders:
+*   "%d|%s" - "contractid|adminaddress"
+*
+* ---STAGE 8 - TRADE CHANNELS---
 * Format specifiers & placeholders:
 *   "%s|%s|%s|%s|%d|%d" - "multisigaddress|multisigaddress|firstaddress|secondaddress|expiryheight|lastexchangeblock"
 *
-* ---STAGE 8 - KYC LIST---
+* ---STAGE 9 - KYC LIST---
 * Format specifiers & placeholders:
 *   "%s|%s|%s|%d|%d" - "address|name|website|block|kycid"
 *
-* ---STAGE 9 - ATTESTATION LIST---
+* ---STAGE 10 - ATTESTATION LIST---
 * Format specifiers & placeholders:
 *   "%s|%s|%s|%s|%d|%d" - "multisigaddress|multisigaddress|firstaddress|secondaddress|expiryheight|lastexchangeblock"
 *
-* ---STAGE 10 - FEE CACHE NATIVES---
+* ---STAGE 11 - FEE CACHE NATIVES---
 * Format specifiers & placeholders:
 *   "%d|%d" - "propertyId|amountaccumulated"
 *
-* ---STAGE 11 - FEE CACHE ORACLES---
+* ---STAGE 12 - FEE CACHE ORACLES---
 * Format specifiers & placeholders:
 *   "%d|%d" - "propertyId|amountaccumulated"
 *
-* ---STAGE 12 - VESTING ADDRESSES---
+* ---STAGE 13 - VESTING ADDRESSES---
 * Format specifiers & placeholders:
 *   "%s" - "address"
 *
-* ---STAGE 13 - FEATURES ACTIVATIONS---
+* ---STAGE 14 - FEATURES ACTIVATIONS---
 * Format specifiers & placeholders:
 *   "%d|%d|%d|%s" - "featureid|activationblock|minclientversion|featurename"
 *
@@ -393,6 +400,23 @@ uint256 GetConsensusHash()
         }
 
         std::string dataStr = GenerateConsensusString(propertyId, sp.issuer);
+        if (msc_debug_consensus_hash) PrintToLog("Adding property to consensus hash: %s\n", dataStr);
+        hasher.Write((unsigned char*)dataStr.c_str(), dataStr.length());
+    }
+
+    // Contracts
+    // Placeholders: "contractid|issueraddress"
+    uint32_t startContractId = 1;
+    for (uint32_t contractId = startContractId; contractId < _my_cds->peekNextContractID(); contractId++)
+    {
+        CDInfo::Entry cd;
+        if (!_my_cds->getCD(contractId, cd))
+        {
+	          PrintToLog("Error loading contract ID %d for consensus hashing, hash should not be trusted!\n");
+	          continue;
+        }
+
+        std::string dataStr = GenerateConsensusString(contractId, cd.issuer);
         if (msc_debug_consensus_hash) PrintToLog("Adding property to consensus hash: %s\n", dataStr);
         hasher.Write((unsigned char*)dataStr.c_str(), dataStr.length());
     }

@@ -1460,6 +1460,18 @@ static int input_globals_state_string(const string &s)
   return 0;
 }
 
+static int input_contract_globals_state_string(const string &s)
+{
+  std::vector<std::string> vstr;
+  boost::split(vstr, s, boost::is_any_of(" ,="), token_compress_on);
+  if (1 != vstr.size()) return -1;
+
+  int i = 0;
+  const unsigned int nextCDID = boost::lexical_cast<unsigned int>(vstr[i++]);
+  _my_sps->init(nextCDID);
+  return 0;
+}
+
 static int input_global_vars_string(const string &s)
 {
   std::vector<std::string> vstr;
@@ -1845,6 +1857,10 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
         inputLineFunc = input_globals_state_string;
         break;
 
+    case FILETYPE_CONTRACT_GLOBALS:
+        inputLineFunc = input_contract_globals_state_string;
+        break;
+
     case FILETYPE_OFFERS:
         my_offers.clear();
         inputLineFunc = input_mp_offers_string;
@@ -2016,7 +2032,8 @@ static char const * const statePrefix[NUM_FILETYPES] = {
     "ltcvolume",
     "tokenltcprice",
     "tokenvwap",
-    "register"
+    "register",
+    "contractglobals"
 };
 
 // returns the height of the state loaded
@@ -2223,6 +2240,20 @@ static int write_globals_state(ofstream &file, CHash256& hasher)
     hasher.Write((unsigned char*)lineOut.c_str(), lineOut.length());
 
     // write the line
+    file << lineOut << endl;
+
+    return 0;
+}
+
+
+static int write_contract_globals_state(ofstream &file, CHash256& hasher)
+{
+    unsigned int nextCDID = _my_cds->peekNextContractID();
+    const std::string lineOut = strprintf("%d", nextCDID);
+
+    // add the line to the hash
+    hasher.Write((unsigned char*)lineOut.c_str(), lineOut.length());
+
     file << lineOut << endl;
 
     return 0;
@@ -2621,6 +2652,10 @@ static int write_state_file(CBlockIndex const *pBlockIndex, int what)
         result = write_globals_state(file, hasher);
         break;
 
+    case FILETYPE_CONTRACT_GLOBALS:
+        result = write_contract_globals_state(file, hasher);
+        break;
+
     case FILETYPE_CDEXORDERS:
         result = write_mp_contractdex(file, hasher);
         break;
@@ -2788,6 +2823,7 @@ int mastercore_save_state(CBlockIndex const *pBlockIndex)
     write_state_file(pBlockIndex, FILE_TYPE_TOKEN_LTC_PRICE);
     write_state_file(pBlockIndex, FILE_TYPE_TOKEN_VWAP);
     write_state_file(pBlockIndex, FILE_TYPE_REGISTER);
+    write_state_file(pBlockIndex, FILETYPE_CONTRACT_GLOBALS);
 
     // clean-up the directory
     prune_state_files(pBlockIndex);
