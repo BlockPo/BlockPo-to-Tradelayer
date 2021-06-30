@@ -167,11 +167,12 @@ class NativesBasicsTest (BitcoinTestFramework):
 
         self.log.info("Checking colateral balance now in sender address")
         params = str([addresses[1], 4]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
+        out = tradelayer_HTTP(conn, headers, False, "tl_getbalance",params)
         # self.log.info(out)
+
         assert_equal(out['error'], None)
-        assert_equal(out['result']['balance'],'49899.99000000')
-        assert_equal(out['result']['reserve'],'100.01000000')
+        assert_equal(out['result']['balance'],'49799.99000000')
+        assert_equal(out['result']['reserve'],'200.01000000')
 
 
         self.log.info("Checking orderbook")

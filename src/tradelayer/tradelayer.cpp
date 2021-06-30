@@ -3127,6 +3127,8 @@ if (nBlockNow%BlockS == 0 && nBlockNow != 0 && path_elef.size() != 0 && lastBloc
       PrintToLog("\nCalling the Settlement Algorithm:\n\n");
       int64_t twap_priceCDEx  = 0;
       int64_t interest = 0;
+
+      //TODO: we need to add here insurance logic
       settlement_algorithm_fifo(M_file, interest, twap_priceCDEx);
 
       /**********************************************************************/
@@ -6265,7 +6267,7 @@ bool checkContractPositions(int Block, const std::string &address, const uint32_
         PrintToLog("%s(): contractdex reserve for address (%s): %d\n",__func__, address, reserve);
     }
 
-    const int64_t upnl = reg.getUPNL(contractId, sp.notional_size, sp.isOracle());
+    const int64_t upnl = reg.getUPNL(contractId, sp.notional_size, sp.isOracle(), sp.isInverseQuoted());
 
     // absolute value needed
     position = abs(position);
@@ -6279,6 +6281,7 @@ bool checkContractPositions(int Block, const std::string &address, const uint32_
         PrintToLog("%s(): min_margin: %d, upnl: %d, sum: %d, reserve: %d\n",__func__, min_margin, upnl, sum, reserve);
     }
 
+    // if sum is less than min margin, liquidate the half position
     if(sum < min_margin)
     {
         if(msc_debug_liquidation_enginee) PrintToLog("%s(): sum < min_margin\n",__func__);
@@ -7488,7 +7491,7 @@ void CMPTradeList::getUpnInfo(const std::string& address, uint32_t contractId, U
         const uint64_t blockNum = boost::lexical_cast<uint64_t>(vecValues[6]);
 
         // partial upnl
-        calculateUPNL(sumUpnl, price, amount, exitPrice, args.second, sp.inverse_quoted);
+        calculateUPNL(sumUpnl, price, amount, exitPrice, args.second, sp.isInverseQuoted());
 
         if(showVerbose)
         {

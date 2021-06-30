@@ -127,6 +127,7 @@ public:
         bool isSwap() const;
         bool isOracle() const;
         bool isContract() const;
+        bool isInverseQuoted() const { return inverse_quoted; };
         uint32_t getCollateral() const { return collateral_currency; }
     };
 

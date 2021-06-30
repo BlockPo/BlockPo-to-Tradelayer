@@ -74,6 +74,7 @@ bool CDInfo::Entry::isOracle() const
   return false;
 }
 
+
 void CDInfo::Entry::print() const
 {
   // NOTE: include all contract info

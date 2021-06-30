@@ -757,7 +757,7 @@ UniValue tl_createcontract(const JSONRPCRequest& request)
 			"6. notional size             (number, required) notional size\n"
 			"7. collateral currency       (number, required) collateral currency\n"
 			"8. margin requirement        (number, required) margin requirement\n"
-      "9. quoting                   (number, required) 0: inverse quoting contract, 1: normal quoting\n"
+      "9. quoting                   (number, required) 1: inverse quoting contract, 0: normal quoting\n"
       "10. kyc options              (array, required) A json with the kyc allowed.\n"
       "    [\n"
       "      2,3,5         (number) kyc id\n"

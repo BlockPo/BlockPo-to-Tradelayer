@@ -2967,15 +2967,13 @@ int64_t mastercore::ContractBasisPoints(const CDInfo::Entry& cd, int64_t amount,
     const arith_uint256 aFee = ConvertTo256(factor.first) * (aPositionRequirement /  ConvertTo256(factor.second));
     const arith_uint256 aRealRequirement = DivideAndRoundUp(aPositionRequirement, aLeverage);
 
-    const int64_t amountToReserve = ConvertTo64(aFee) + ConvertTo64(aRealRequirement);
+    // total amount required
+    return (ConvertTo64(aFee) + ConvertTo64(aRealRequirement));
 
-
-    return amountToReserve;
 }
 
 bool mastercore::checkContractReserve(const std::string& address, int64_t amount, uint32_t contractId, int64_t leverage, int64_t& nBalance, int64_t& amountToReserve)
 {
-
     CDInfo::Entry cd;
     assert(_my_cds->getCD(contractId, cd));
 

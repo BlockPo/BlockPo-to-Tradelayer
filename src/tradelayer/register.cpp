@@ -95,9 +95,9 @@ int64_t Register::getLiquidationPrice(const uint32_t contractId, const uint32_t 
 
 }
 
-
-int64_t Register::getUPNL(const uint32_t contractId, const uint32_t notionalSize, bool isOracle) const
+int64_t Register::getUPNL(const uint32_t contractId, const uint32_t notionalSize, bool isOracle, bool quoted) const
 {
+
     const int64_t position = getRecord(contractId, CONTRACT_POSITION);
     const int64_t entryPrice = getPosEntryPrice(contractId);
     const int64_t exitPrice  = getPosExitPrice(contractId, isOracle);
@@ -112,19 +112,28 @@ int64_t Register::getUPNL(const uint32_t contractId, const uint32_t notionalSize
     const double dEntryPrice = (double) entryPrice / COIN;
     const double dExitPrice = (double) exitPrice /  COIN;
 
-    const double denominator = (dEntryPrice * dExitPrice);
+    double factor = 0;
 
-    // TODO: convert this into arith_uint256
-    const double factor = (denominator != 0) ? (double) (dExitPrice - dEntryPrice) / denominator  : 0;
+    if(quoted)
+    {
+        const double denominator = (dEntryPrice * dExitPrice);
+        // TODO: convert this into arith_uint256
+        factor = (denominator != 0) ? (double) (dExitPrice - dEntryPrice) / denominator  : 0;
+
+    } else {
+        factor = (dExitPrice - dEntryPrice);
+    }
 
     const double UPNL = position * notionalSize * factor;
+
+    // re-converting to int64_t
     const int64_t iUPNL = (int64_t) UPNL;
 
     if(msc_debug_liquidation_enginee)
     {
        PrintToLog("%s(): entryPrice(double): %d, exitPrice(double): %d, factor: %d, notionalsize: %d\n",__func__, dEntryPrice, dExitPrice, factor, notionalSize);
        PrintToLog("%s():UPNL(nomalized): %d\n",__func__, UPNL / COIN);
-       PrintToLog("%s():UPNL(int): %d\n",__func__, iUPNL);
+       PrintToLog("%s():UPNL(int): %d, quoted?: %d\n",__func__, iUPNL, quoted);
     }
 
 
