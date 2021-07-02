@@ -462,7 +462,7 @@ bool mastercore::getFullContractRecord(const std::string& address, uint32_t cont
         const int64_t posMargin = reg.getRecord(contractId, MARGIN);
         position_obj.pushKV("position_margin", FormatDivisibleMP(posMargin));
         // upnl
-        const int64_t upnl = reg.getUPNL(contractId, cd.notional_size, cd.isOracle());
+        const int64_t upnl = reg.getUPNL(contractId, cd.notional_size, cd.isOracle(), cd.isInverseQuoted());
         position_obj.pushKV("upnl", FormatDivisibleMP(upnl, true));
 
         return true;

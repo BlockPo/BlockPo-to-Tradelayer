@@ -1506,6 +1506,8 @@ UniValue tl_change_oracleadm(const JSONRPCRequest& request)
     const std::string toAddress = ParseAddress(request.params[1]);
     uint32_t contractId = ParseNameOrId(request.params[2]);
 
+    PrintToLog("%s(): contractId: %d\n",__func__, contractId);
+
     CDInfo::Entry cd;
     assert(_my_cds->getCD(contractId, cd));
 

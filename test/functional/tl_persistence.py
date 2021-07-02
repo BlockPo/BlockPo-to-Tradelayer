@@ -738,13 +738,13 @@ class PersistenceBasicsTest (BitcoinTestFramework):
 
 
         self.log.info("Checking the native contract")
-        params = str([6])
-        out = tradelayer_HTTP(conn, headers, True, "tl_getproperty",params)
+        params = '["1"]'
+        out = tradelayer_HTTP(conn, headers, True, "tl_getcontract",params)
         assert_equal(out['error'], None)
         # self.log.info(out)
-        assert_equal(out['result']['propertyid'],6)
+        assert_equal(out['result']['contractid'], 1)
         assert_equal(out['result']['name'],'ALL/Lhk')
-        assert_equal(out['result']['issuer'], addresses[0])
+        assert_equal(out['result']['admin'], addresses[0])
         assert_equal(out['result']['notional size'], '1')
         assert_equal(out['result']['collateral currency'], '4')
         assert_equal(out['result']['margin requirement'], '0.1')
@@ -768,7 +768,7 @@ class PersistenceBasicsTest (BitcoinTestFramework):
         # self.log.info(out)
         assert_equal(out['error'], None)
         assert_equal(out['result'][0]['address'], addresses[1])
-        assert_equal(out['result'][0]['contractid'], 6)
+        assert_equal(out['result'][0]['contractid'],  1)
         assert_equal(out['result'][0]['amountforsale'], 10)
         assert_equal(out['result'][0]['tradingaction'], 1)
         assert_equal(out['result'][0]['effectiveprice'], '780.50000000')
@@ -786,13 +786,13 @@ class PersistenceBasicsTest (BitcoinTestFramework):
         conn.connect()
 
         self.log.info("Persistence: checking the native contract")
-        params = str([6])
-        out = tradelayer_HTTP(conn, headers, True, "tl_getproperty",params)
+        params = '["1"]'
+        out = tradelayer_HTTP(conn, headers, True, "tl_getcontract",params)
         assert_equal(out['error'], None)
         # self.log.info(out)
-        assert_equal(out['result']['propertyid'],6)
+        assert_equal(out['result']['contractid'], 1)
         assert_equal(out['result']['name'],'ALL/Lhk')
-        assert_equal(out['result']['issuer'], addresses[0])
+        assert_equal(out['result']['admin'], addresses[0])
         assert_equal(out['result']['notional size'], '1')
         assert_equal(out['result']['collateral currency'], '4')
         assert_equal(out['result']['margin requirement'], '0.1')
@@ -806,7 +806,7 @@ class PersistenceBasicsTest (BitcoinTestFramework):
         # self.log.info(out)
         assert_equal(out['error'], None)
         assert_equal(out['result'][0]['address'], addresses[1])
-        assert_equal(out['result'][0]['contractid'], 6)
+        assert_equal(out['result'][0]['contractid'], 1)
         assert_equal(out['result'][0]['amountforsale'], 10.00000000)
         assert_equal(out['result'][0]['tradingaction'], 1)
         assert_equal(out['result'][0]['effectiveprice'], '780.50000000')
@@ -830,14 +830,14 @@ class PersistenceBasicsTest (BitcoinTestFramework):
 
 
         self.log.info("Checking the oracle contract")
-        params = str([7])
-        out = tradelayer_HTTP(conn, headers, True, "tl_getproperty",params)
+        params = '["2"]'
+        out = tradelayer_HTTP(conn, headers, True, "tl_getcontract",params)
         assert_equal(out['error'], None)
         # self.log.info(out)
 
-        assert_equal(out['result']['propertyid'],7)
+        assert_equal(out['result']['contractid'], 2)
         assert_equal(out['result']['name'],'Oracle 1')
-        assert_equal(out['result']['issuer'], addresses[0])
+        assert_equal(out['result']['admin'], addresses[0])
         assert_equal(out['result']['notional size'], '1')
         assert_equal(out['result']['collateral currency'], '4')
         assert_equal(out['result']['margin requirement'], '0.1')
@@ -857,8 +857,8 @@ class PersistenceBasicsTest (BitcoinTestFramework):
         self.nodes[0].generate(1)
 
         self.log.info("Checking the prices in oracle")
-        params = str([7])
-        out = tradelayer_HTTP(conn, headers, True, "tl_getproperty",params)
+        params = '["2"]'
+        out = tradelayer_HTTP(conn, headers, True, "tl_getcontract",params)
         assert_equal(out['error'], None)
         # self.log.info(out)
         assert_equal(out['result']['hight price'], '602.1')
@@ -877,14 +877,14 @@ class PersistenceBasicsTest (BitcoinTestFramework):
         conn.connect()
 
         self.log.info("Checking the oracle contract")
-        params = str([7])
-        out = tradelayer_HTTP(conn, headers, True, "tl_getproperty",params)
+        params = '["2"]'
+        out = tradelayer_HTTP(conn, headers, True, "tl_getcontract",params)
         assert_equal(out['error'], None)
         # self.log.info(out)
 
-        assert_equal(out['result']['propertyid'],7)
+        assert_equal(out['result']['contractid'], 2)
         assert_equal(out['result']['name'],'Oracle 1')
-        assert_equal(out['result']['issuer'], addresses[0])
+        assert_equal(out['result']['admin'], addresses[0])
         assert_equal(out['result']['notional size'], '1')
         assert_equal(out['result']['collateral currency'], '4')
         assert_equal(out['result']['margin requirement'], '0.1')

@@ -140,14 +140,14 @@ class OraclesBasicsTest (BitcoinTestFramework):
 
 
         self.log.info("Checking the oracle contract")
-        params = str([5])
-        out = tradelayer_HTTP(conn, headers, True, "tl_getproperty",params)
+        params = '["1"]'
+        out = tradelayer_HTTP(conn, headers, True, "tl_getcontract",params)
         assert_equal(out['error'], None)
         # self.log.info(out)
 
-        assert_equal(out['result']['propertyid'],5)
+        assert_equal(out['result']['contractid'], 1)
         assert_equal(out['result']['name'],'Oracle 1')
-        assert_equal(out['result']['issuer'], addresses[0])
+        assert_equal(out['result']['admin'], addresses[0])
         assert_equal(out['result']['notional size'], '1')
         assert_equal(out['result']['collateral currency'], '4')
         assert_equal(out['result']['margin requirement'], '0.1')
@@ -167,8 +167,8 @@ class OraclesBasicsTest (BitcoinTestFramework):
         self.nodes[0].generate(1)
 
         self.log.info("Checking the prices in oracle")
-        params = str([5])
-        out = tradelayer_HTTP(conn, headers, True, "tl_getproperty",params)
+        params = '["1"]'
+        out = tradelayer_HTTP(conn, headers, True, "tl_getcontract",params)
         assert_equal(out['error'], None)
         # self.log.info(out)
         assert_equal(out['result']['hight price'], '602.1')
@@ -184,11 +184,11 @@ class OraclesBasicsTest (BitcoinTestFramework):
         self.nodes[0].generate(1)
 
         self.log.info("Checking the admin address in oracle")
-        params = str([5])
-        out = tradelayer_HTTP(conn, headers, True, "tl_getproperty",params)
+        params = '["1"]'
+        out = tradelayer_HTTP(conn, headers, True, "tl_getcontract",params)
         assert_equal(out['error'], None)
         # self.log.info(out)
-        assert_equal(out['result']['issuer'], addresses[1])
+        assert_equal(out['result']['admin'], addresses[1])
 
 
         self.log.info("Activating backup address")
@@ -200,11 +200,11 @@ class OraclesBasicsTest (BitcoinTestFramework):
         self.nodes[0].generate(1)
 
         self.log.info("Checking now the admin address in oracle")
-        params = str([5])
-        out = tradelayer_HTTP(conn, headers, True, "tl_getproperty",params)
+        params = '["1"]'
+        out = tradelayer_HTTP(conn, headers, True, "tl_getcontract",params)
         assert_equal(out['error'], None)
         # self.log.info(out)
-        assert_equal(out['result']['issuer'], addresses[2])
+        assert_equal(out['result']['admin'], addresses[2])
 
 
         #NOTE: we need to test this for all leverages
@@ -224,8 +224,8 @@ class OraclesBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['balance'],'49899.97500000')
-        assert_equal(out['result']['reserve'],'100.02500000')
+        assert_equal(out['result']['balance'],'49799.97500000')
+        assert_equal(out['result']['reserve'],'200.02500000')
 
 
         self.log.info("Checking orderbook")
@@ -234,7 +234,7 @@ class OraclesBasicsTest (BitcoinTestFramework):
         # self.log.info(out)
         assert_equal(out['error'], None)
         assert_equal(out['result'][0]['address'], addresses[1])
-        assert_equal(out['result'][0]['contractid'], 5)
+        assert_equal(out['result'][0]['contractid'], 1)
         assert_equal(out['result'][0]['amountforsale'], 1000)
         assert_equal(out['result'][0]['tradingaction'], 1)
         assert_equal(out['result'][0]['effectiveprice'], '780.50000000')
@@ -283,7 +283,7 @@ class OraclesBasicsTest (BitcoinTestFramework):
         # self.log.info(out)
         assert_equal(out['error'], None)
         assert_equal(out['result'][0]['address'], addresses[1])
-        assert_equal(out['result'][0]['contractid'], 5)
+        assert_equal(out['result'][0]['contractid'], 1)
         assert_equal(out['result'][0]['amountforsale'], 1000)
         assert_equal(out['result'][0]['tradingaction'], 1)
         assert_equal(out['result'][0]['effectiveprice'], '980.50000000')

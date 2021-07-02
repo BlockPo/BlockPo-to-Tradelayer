@@ -96,8 +96,7 @@ void PropertyToJSON(const CMPSPInfo::Entry& sProperty, UniValue& property_obj)
 
 void ContractToJSON(const CDInfo::Entry& sProperty, UniValue& property_obj)
 {
-    PrintToLog("%s(): inside ContractToJSON\n",__func__);
-
+  
     property_obj.pushKV("name", sProperty.name);
     property_obj.pushKV("data", sProperty.data);
     property_obj.pushKV("url", sProperty.url);

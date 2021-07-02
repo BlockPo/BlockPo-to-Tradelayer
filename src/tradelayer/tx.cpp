@@ -4006,11 +4006,11 @@ int CMPTransaction::logicMath_Change_OracleAdm()
         return (PKT_ERROR_ORACLE -11);
     }
 
-    CMPSPInfo::Entry sp;
-    assert(_my_sps->getSP(contractId, sp));
+    CDInfo::Entry cd;
+    assert(_my_cds->getCD(contractId, cd));
 
-    if (sender != sp.issuer) {
-        PrintToLog("%s(): rejected: sender %s is not issuer of contract %d [issuer=%s]\n", __func__, sender, property, sp.issuer);
+    if (sender != cd.issuer) {
+        PrintToLog("%s(): rejected: sender %s is not issuer of contract %d [issuer=%s]\n", __func__, sender, property, cd.issuer);
         return (PKT_ERROR_ORACLE -12);
     }
 
@@ -4021,10 +4021,10 @@ int CMPTransaction::logicMath_Change_OracleAdm()
 
     // ------------------------------------------
 
-    sp.issuer = receiver;
-    sp.update_block = blockHash;
+    cd.issuer = receiver;
+    cd.update_block = blockHash;
 
-    assert(_my_sps->updateSP(contractId, sp));
+    assert(_my_cds->updateCD(contractId, cd));
 
     return 0;
 }

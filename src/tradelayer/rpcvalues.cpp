@@ -399,6 +399,8 @@ uint32_t ParseNameOrId(const UniValue& value)
 {
     int64_t amount = mastercore::StrToInt64(value.get_str(), false);
 
+    PrintToLog("%s(): amount: %d\n",__func__, amount);
+    
     if (amount != 0)
     {
         uint32_t am = static_cast<uint32_t>(amount);
