@@ -141,14 +141,14 @@ class UpnlBasicsTest (BitcoinTestFramework):
 
 
         self.log.info("Checking the oracle contract")
-        params = str([5])
-        out = tradelayer_HTTP(conn, headers, True, "tl_getproperty",params)
+        params = '["1"]'
+        out = tradelayer_HTTP(conn, headers, True, "tl_getcontract",params)
         assert_equal(out['error'], None)
         # self.log.info(out)
 
-        assert_equal(out['result']['propertyid'],5)
+        assert_equal(out['result']['contractid'], 1)
         assert_equal(out['result']['name'],'Oracle 1')
-        assert_equal(out['result']['issuer'], addresses[0])
+        assert_equal(out['result']['admin'], addresses[0])
         assert_equal(out['result']['notional size'], '1')
         assert_equal(out['result']['collateral currency'], '4')
         assert_equal(out['result']['margin requirement'], '0.1')
@@ -168,8 +168,8 @@ class UpnlBasicsTest (BitcoinTestFramework):
         self.nodes[0].generate(1)
 
         self.log.info("Checking the prices in oracle")
-        params = str([5])
-        out = tradelayer_HTTP(conn, headers, True, "tl_getproperty",params)
+        params = '["1"]'
+        out = tradelayer_HTTP(conn, headers, True, "tl_getcontract",params)
         assert_equal(out['error'], None)
         # self.log.info(out)
         assert_equal(out['result']['hight price'], '602.1')
@@ -207,8 +207,8 @@ class UpnlBasicsTest (BitcoinTestFramework):
         self.nodes[0].generate(1)
 
         self.log.info("Checking the prices in oracle")
-        params = str([5])
-        out = tradelayer_HTTP(conn, headers, True, "tl_getproperty",params)
+        params = '["1"]'
+        out = tradelayer_HTTP(conn, headers, True, "tl_getcontract",params)
         assert_equal(out['error'], None)
         # self.log.info(out)
         assert_equal(out['result']['hight price'], '702.1')
@@ -244,8 +244,8 @@ class UpnlBasicsTest (BitcoinTestFramework):
         self.nodes[0].generate(1)
 
         self.log.info("Checking the prices in oracle")
-        params = str([5])
-        out = tradelayer_HTTP(conn, headers, True, "tl_getproperty",params)
+        params = '["1"]'
+        out = tradelayer_HTTP(conn, headers, True, "tl_getcontract",params)
         assert_equal(out['error'], None)
         # self.log.info(out)
         assert_equal(out['result']['hight price'], '802.1')
@@ -344,3 +344,4 @@ class UpnlBasicsTest (BitcoinTestFramework):
 
 if __name__ == '__main__':
     UpnlBasicsTest ().main ()
+    

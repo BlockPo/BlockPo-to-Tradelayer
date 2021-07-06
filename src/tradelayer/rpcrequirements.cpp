@@ -70,7 +70,7 @@ void RequireCollateral(const std::string& address, std::string name_traded, int6
 
 void RequirePosition(const std::string& address, uint32_t contractId)
 {
-    const int64_t position = getMPbalance(address, contractId, CONTRACT_BALANCE);
+    const int64_t position = getContractRecord(address, contractId, CONTRACT_POSITION);
     if (position == 0 ) {
         throw JSONRPCError(RPC_TYPE_ERROR, "Sender has not position in this contract");
     }
@@ -186,46 +186,6 @@ void RequireNotVesting(uint32_t propertyId)
   }
 }
 
-// void RequireNotContract(uint32_t propertyId)
-// {
-//     LOCK(cs_tally);
-//     CMPSPInfo::Entry sp;
-//     if (!_my_sps->getSP(propertyId, sp)) {
-//         throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
-//     }
-//     if (sp.isContract()) {
-//         throw JSONRPCError(RPC_INVALID_PARAMETER, "Property must not be future contract\n");
-//     }
-// }
-
-// void RequireContract(uint32_t propertyId)
-// {
-//     LOCK(cs_tally);
-//     CMPSPInfo::Entry sp;
-//     if (!_my_sps->getSP(propertyId, sp)) {
-//         throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
-//     }
-//     if (!sp.isContract()) {
-//         throw JSONRPCError(RPC_INVALID_PARAMETER, "contractId must be future contract\n");
-//     }
-// }
-
-// NOTE: improve this function
-// void RequireContract(std::string name_contract)
-// {
-//     struct FutureContractObject *pfuture = getFutureContractObject(name_contract);
-//     uint32_t propertyId = (pfuture) ? pfuture->fco_propertyId : 0;
-//
-//     LOCK(cs_tally);
-//     CMPSPInfo::Entry sp;
-//     if (!_my_sps->getSP(propertyId, sp)) {
-//         throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
-//     }
-//     if (!sp.isContract()) {
-//         throw JSONRPCError(RPC_INVALID_PARAMETER, "contractId must be future contract\n");
-//     }
-// }
-
 void RequireOracleContract(uint32_t contractId)
 {
     LOCK(cs_register);
@@ -324,8 +284,12 @@ void RequireShort(std::string& fromAddress, uint32_t contractId, uint64_t amount
     }
 
     int64_t notionalSize = static_cast<int64_t>(cd.notional_size);
-    int64_t position = getMPbalance(fromAddress, contractId, CONTRACT_BALANCE);
-    // rational_t conv = notionalChange(contractId);
+    int64_t position = getContractRecord(fromAddress, contractId, CONTRACT_POSITION);
+    
+    if (position >= 0) {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "Must have short position\n");
+    }
+
     rational_t conv = rational_t(1,1);
     int64_t num = conv.numerator().convert_to<int64_t>();
     int64_t denom = conv.denominator().convert_to<int64_t>();

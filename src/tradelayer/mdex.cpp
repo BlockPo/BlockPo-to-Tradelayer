@@ -2231,7 +2231,9 @@ int mastercore::ContractDex_ADD(const std::string& sender_addr, uint32_t prop, i
 
 int mastercore::ContractDex_ADD_MARKET_PRICE(const std::string& sender_addr, uint32_t contractId, int64_t amount, int block, const uint256& txid, unsigned int idx, uint8_t trading_action, int64_t amount_to_reserve)
 {
+
     int rc = METADEX_ERROR -1;
+    const int MAX = 10; // max number of orders to match at market price in the other side (depth)
 
     if(trading_action != buy && trading_action != sell){
         PrintToLog("%s(): ERROR: invalid trading action: %d\n",__func__, trading_action);
@@ -2243,9 +2245,12 @@ int mastercore::ContractDex_ADD_MARKET_PRICE(const std::string& sender_addr, uin
     if(msc_debug_contract_add_market) PrintToLog("%s(): effective price of new_cdex : %d, edge price : %d, trading_action: %d\n",__func__, new_cdex.getEffectivePrice(), edge, trading_action);
     if (0 >= new_cdex.getEffectivePrice()) return METADEX_ERROR -66;
 
-    while(true)
+    int count = 0;
+    while(count <= MAX)
     {
         x_Trade(&new_cdex);
+        count++;
+
         if (new_cdex.getAmountForSale() == 0)
         {
             rc = 0;

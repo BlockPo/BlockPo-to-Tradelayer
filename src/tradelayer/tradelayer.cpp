@@ -6299,6 +6299,8 @@ bool checkContractPositions(int Block, const std::string &address, const uint32_
         // trying to liquidate 50% of position
         if(msc_debug_liquidation_enginee) PrintToLog("%s(): here trying to liquidate 50 percent of position, contractId: %d, icontracts : %d, Block: %d\n",__func__,  contractId, icontracts, Block);
 
+        // if whe don't have pending liquidation orders here! then we add the order
+        // contractdex class needs type attribute
         ContractDex_ADD_MARKET_PRICE(address, contractId, icontracts, Block, txid, idx, option, 0);
 
         // TODO: add here a position checking in order to see if we are above the margin limits.
