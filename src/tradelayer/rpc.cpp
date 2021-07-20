@@ -720,7 +720,7 @@ UniValue tl_getreserve(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 2)
         throw runtime_error(
-            "tl_getmargin \"address\" \"propertyid\" \n"
+            "tl_getreserve \"address\" \"propertyid\" \n"
 
             "\nReturns the token reserve account using in futures contracts, for a given address and property.\n"
 
@@ -735,8 +735,8 @@ UniValue tl_getreserve(const JSONRPCRequest& request)
             "}\n"
 
             "\nExamples:\n"
-            + HelpExampleCli("tl_getmargin", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" \"1\"")
-            + HelpExampleRpc("tl_getmargin", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", \"1\"")
+            + HelpExampleCli("tl_getreserve", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\" \"1\"")
+            + HelpExampleRpc("tl_getreserve", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\", \"1\"")
         );
 
     const std::string address = ParseAddress(request.params[0]);
@@ -2163,7 +2163,7 @@ UniValue tl_gettradehistory_unfiltered(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
-            "tl_gettradehistory \"contractid\" \n"
+            "tl_gettradehistory_unfiltered \"contractid\" \n"
 
             "\nRetrieves the history of trades on the distributed contract exchange for the specified market.\n"
 
@@ -2187,7 +2187,7 @@ UniValue tl_gettradehistory_unfiltered(const JSONRPCRequest& request)
             "]\n"
 
             "\nExamples:\n"
-            + HelpExampleCli("tl_gettradehistoryforpair", "\"1\"")
+            + HelpExampleCli("tl_gettradehistory_unfiltered", "\"1\"")
             + HelpExampleRpc("tl_gettradehistoryforpair", "\"1\"")
 			    );
 
@@ -2407,13 +2407,12 @@ UniValue tl_getmarketprice(const JSONRPCRequest& request)
 			"1. contractid           (number, required) the id of future contract\n"
 
 			"\nResult:\n"
-			"[                                      (array of JSON objects)\n"
 			"  {\n"
 			"    \"block\" : nnnnnn,                      (number) the index of the block that contains the trade match\n"
 			"    \"unitprice\" : \"n.nnnnnnnnnnn...\" ,   (string) the unit price used to execute this trade (received/sold)\n"
 			"    \"price\" : \"n.nnnnnnnnnnn...\",        (string) the inverse unit price (sold/received)\n"
 			"  ...\n"
-			"]\n"
+			" }\n"
 
 			"\nExamples:\n"
 			+ HelpExampleCli("tl_getmarketprice", "\"12\"" )
@@ -2784,7 +2783,7 @@ UniValue tl_getoraclecache(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
-            "tl_getmargin \"address\" \"propertyid\" \n"
+            "tl_getoraclecache \"address\" \"propertyid\" \n"
 
             "\nReturns the oracle fee cache for a given property.\n"
 
