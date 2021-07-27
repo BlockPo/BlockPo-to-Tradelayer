@@ -5,8 +5,8 @@
  */
 
 #include <tradelayer/tradelayer.h>
-
 #include <tradelayer/activation.h>
+#include <tradelayer/ce.h>
 #include <tradelayer/consensushash.h>
 #include <tradelayer/convert.h>
 #include <tradelayer/dex.h>
@@ -20,6 +20,7 @@
 #include <tradelayer/parse_string.h>
 #include <tradelayer/pending.h>
 #include <tradelayer/persistence.h>
+#include <tradelayer/register.h>
 #include <tradelayer/rules.h>
 #include <tradelayer/script.h>
 #include <tradelayer/sp.h>
@@ -151,6 +152,7 @@ CtlTransactionDB *mastercore::p_TradeTXDB;
 OfferMap mastercore::my_offers;
 AcceptMap mastercore::my_accepts;
 CMPSPInfo *mastercore::_my_sps;
+CDInfo *mastercore::_my_cds;
 
 std::map<uint32_t, std::map<uint32_t, int64_t>> VWAPMap;
 std::map<uint32_t, std::map<uint32_t, int64_t>> VWAPMapSubVector;
@@ -1334,7 +1336,7 @@ static int msc_initial_scan(int nFirstBlock)
     return 0;
 }
 
-int input_msc_balances_string(const std::string& s)
+static int input_msc_balances_string(const std::string& s)
 {
     // "address=propertybalancedata"
     std::vector<std::string> addrData;
@@ -1392,7 +1394,7 @@ int input_msc_balances_string(const std::string& s)
     return 0;
 }
 
-int input_mp_offers_string(const std::string& s)
+static int input_mp_offers_string(const std::string& s)
 {
     std::vector<std::string> vstr;
     boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
@@ -1450,7 +1452,7 @@ static int input_mp_accepts_string(const std::string& s)
     }
 }
 
-int input_globals_state_string(const string &s)
+static int input_globals_state_string(const string &s)
 {
   std::vector<std::string> vstr;
   boost::split(vstr, s, boost::is_any_of(" ,="), token_compress_on);
@@ -1462,7 +1464,19 @@ int input_globals_state_string(const string &s)
   return 0;
 }
 
-int input_global_vars_string(const string &s)
+static int input_contract_globals_state_string(const string &s)
+{
+  std::vector<std::string> vstr;
+  boost::split(vstr, s, boost::is_any_of(" ,="), token_compress_on);
+  if (1 != vstr.size()) return -1;
+
+  int i = 0;
+  const unsigned int nextCDID = boost::lexical_cast<unsigned int>(vstr[i++]);
+  _my_sps->init(nextCDID);
+  return 0;
+}
+
+static int input_global_vars_string(const string &s)
 {
   std::vector<std::string> vstr;
   boost::split(vstr, s, boost::is_any_of(" ,="), token_compress_on);
@@ -1476,7 +1490,7 @@ int input_global_vars_string(const string &s)
   return 0;
 }
 
-int input_mp_contractdexorder_string(const std::string& s)
+static int input_mp_contractdexorder_string(const std::string& s)
 {
     std::vector<std::string> vstr;
     boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
@@ -1507,7 +1521,7 @@ int input_mp_contractdexorder_string(const std::string& s)
     return 0;
 }
 
-int input_mp_token_ltc_string(const std::string& s)
+static int input_mp_token_ltc_string(const std::string& s)
 {
    std::vector<std::string> vstr;
    boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
@@ -1522,7 +1536,7 @@ int input_mp_token_ltc_string(const std::string& s)
 }
 
 
-int input_cachefees_string(const std::string& s)
+static int input_cachefees_string(const std::string& s)
 {
    std::vector<std::string> vstr;
    boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
@@ -1536,7 +1550,7 @@ int input_cachefees_string(const std::string& s)
    return 0;
 }
 
-int input_cachefees_oracles_string(const std::string& s)
+static int input_cachefees_oracles_string(const std::string& s)
 {
    std::vector<std::string> vstr;
    boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
@@ -1550,7 +1564,7 @@ int input_cachefees_oracles_string(const std::string& s)
    return 0;
 }
 
-int input_withdrawals_string(const std::string& s)
+static int input_withdrawals_string(const std::string& s)
 {
     std::vector<std::string> vstr;
     boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
@@ -1583,7 +1597,7 @@ int input_withdrawals_string(const std::string& s)
 
 }
 
-int input_tokenvwap_string(const std::string& s)
+static int input_tokenvwap_string(const std::string& s)
 {
   std::vector<std::string> vstr;
   boost::split(vstr, s, boost::is_any_of("+-"), boost::token_compress_on);
@@ -1605,7 +1619,7 @@ int input_tokenvwap_string(const std::string& s)
   return 0;
 }
 
-int input_activechannels_string(const std::string& s)
+static int input_activechannels_string(const std::string& s)
 {
     std::vector<std::string> vstr;
     boost::split(vstr, s, boost::is_any_of(" ,=+"), boost::token_compress_on);
@@ -1640,7 +1654,7 @@ int input_activechannels_string(const std::string& s)
 
 }
 
-int input_mp_mdexorder_string(const std::string& s)
+static int input_mp_mdexorder_string(const std::string& s)
 {
     std::vector<std::string> vstr;
     boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
@@ -1667,7 +1681,7 @@ int input_mp_mdexorder_string(const std::string& s)
     return 0;
 }
 
-int input_mp_dexvolume_string(const std::string& s)
+static int input_mp_dexvolume_string(const std::string& s)
 {
     std::vector<std::string> vstr;
     boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
@@ -1691,7 +1705,7 @@ int input_mp_dexvolume_string(const std::string& s)
 
 }
 
-int input_mp_mdexvolume_string(const std::string& s)
+static int input_mp_mdexvolume_string(const std::string& s)
 {
     std::vector<std::string> vstr;
     boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
@@ -1716,7 +1730,7 @@ int input_mp_mdexvolume_string(const std::string& s)
 
 }
 
-int input_mp_ltcvolume_string(const std::string& s)
+static int input_mp_ltcvolume_string(const std::string& s)
 {
     std::vector<std::string> vstr;
     boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
@@ -1742,7 +1756,7 @@ int input_mp_ltcvolume_string(const std::string& s)
 }
 
 
-int input_vestingaddresses_string(const std::string& s)
+static int input_vestingaddresses_string(const std::string& s)
 {
    std::vector<std::string> vstr;
    size_t elements = vestingAddresses.size();
@@ -1754,6 +1768,79 @@ int input_vestingaddresses_string(const std::string& s)
    vestingAddresses.push_back(address);
 
    return ((vestingAddresses.size() > elements) ? 0 : -1);
+}
+
+// contract register persistence here
+static int input_register_string(const std::string& s)
+{
+    // "address=contract_register"
+    std::vector<std::string> addrData;
+    boost::split(addrData, s, boost::is_any_of("="), boost::token_compress_on);
+    if (addrData.size() != 2) return -1;
+
+    std::string strAddress = addrData[0];
+
+    // split the tuples of contract registers
+    std::vector<std::string> vRegisters;
+    boost::split(vRegisters, addrData[1], boost::is_any_of(";"), boost::token_compress_on);
+
+    for (auto iter : vRegisters)
+    {
+        if (iter.empty()) {
+            continue;
+        }
+
+       // full register (records + entries)
+       std::vector<std::string> fRegister;
+       boost::split(fRegister, iter, boost::is_any_of("-"), boost::token_compress_on);
+
+       // contract id + records
+       std::vector<std::string> idRecord;
+       boost::split(idRecord, fRegister[0], boost::is_any_of(":"), boost::token_compress_on);
+
+       // just records
+       std::vector<std::string> vRecord;
+       boost::split(vRecord, idRecord[1], boost::is_any_of(","), boost::token_compress_on);
+
+       const uint32_t contractId = boost::lexical_cast<uint32_t>(idRecord[0]);
+       const int64_t entryPrice = boost::lexical_cast<int64_t>(vRecord[0]);
+       const int64_t position = boost::lexical_cast<int64_t>(vRecord[1]);
+       const int64_t liquidationPrice = boost::lexical_cast<int64_t>(vRecord[2]);
+       const int64_t upnl = boost::lexical_cast<int64_t>(vRecord[3]);
+       const int64_t margin = boost::lexical_cast<int64_t>(vRecord[4]);
+       const int64_t leverage = boost::lexical_cast<int64_t>(vRecord[5]);
+
+       if (entryPrice) update_register_map(strAddress, contractId, entryPrice, ENTRY_CPRICE);
+       if (position) update_register_map(strAddress, contractId, position, CONTRACT_POSITION);
+       if (liquidationPrice) update_register_map(strAddress, contractId, liquidationPrice, LIQUIDATION_PRICE);
+       if (upnl) update_register_map(strAddress, contractId, upnl, UPNL);
+       if (margin) update_register_map(strAddress, contractId, margin, MARGIN);
+       if (leverage) update_register_map(strAddress, contractId, entryPrice, LEVERAGE);
+
+       // if there's no entries, skip
+       if (fRegister.size() == 1) {
+           continue;
+       }
+
+       // just entries
+       std::vector<std::string> entries;
+       boost::split(entries, fRegister[1], boost::is_any_of("|"), boost::token_compress_on);
+
+       for (auto it : entries)
+       {
+
+           std::vector<std::string> entry;
+           boost::split(entry, it, boost::is_any_of(","), boost::token_compress_on);
+           const int64_t amount = boost::lexical_cast<int64_t>(entry[0]);
+           const int64_t price = boost::lexical_cast<int64_t>(entry[1]);
+           assert(insert_entry(strAddress, contractId, amount, price));
+
+       }
+
+
+    }
+
+    return 0;
 }
 
 static int msc_file_load(const string &filename, int what, bool verifyHash = false)
@@ -1774,6 +1861,10 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
         inputLineFunc = input_globals_state_string;
         break;
 
+    case FILETYPE_CONTRACT_GLOBALS:
+        inputLineFunc = input_contract_globals_state_string;
+        break;
+
     case FILETYPE_OFFERS:
         my_offers.clear();
         inputLineFunc = input_mp_offers_string;
@@ -1791,6 +1882,11 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
         // ...
         metadex.clear();
         inputLineFunc = input_mp_mdexorder_string;
+        break;
+
+    case FILETYPE_CDEXORDERS:
+        contractdex.clear();
+        inputLineFunc = input_mp_contractdexorder_string;
         break;
 
     case FILETYPE_CACHEFEES:
@@ -1846,6 +1942,10 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
         tokenvwap.clear();
         inputLineFunc = input_tokenvwap_string;
         break;
+
+    case FILE_TYPE_REGISTER:
+        mp_register_map.clear();
+        inputLineFunc = input_register_string;
 
     default:
         return -1;
@@ -1935,20 +2035,27 @@ static char const * const statePrefix[NUM_FILETYPES] = {
     "vestingaddresses",
     "ltcvolume",
     "tokenltcprice",
-    "tokenvwap"
+    "tokenvwap",
+    "register",
+    "contractglobals"
 };
 
 // returns the height of the state loaded
 static int load_most_relevant_state()
 {
   int res = -1;
-  // check the SP database and roll it back to its latest valid state
+  // check the SP and CD databases and roll it back to its latest valid state
   // according to the active chain
   uint256 spWatermark;
   {
         LOCK(cs_tally);
         if (!_my_sps->getWatermark(spWatermark)) {
             //trigger a full reparse, if the SP database has no watermark
+            return -1;
+        }
+
+        if (!_my_cds->getWatermark(spWatermark)) {
+            //trigger a full reparse, if the CD database has no watermark
             return -1;
         }
   }
@@ -1976,6 +2083,7 @@ static int load_most_relevant_state()
           spBlockIndex = spBlockIndex->pprev;
           if (spBlockIndex != nullptr) {
               _my_sps->setWatermark(spBlockIndex->GetBlockHash());
+              _my_cds->setWatermark(spBlockIndex->GetBlockHash());
           }
       }
 
@@ -2046,7 +2154,7 @@ static int load_most_relevant_state()
           }
 
           // go to the previous block
-          if (0 > _my_sps->popBlock(curTip->GetBlockHash())) {
+          if (0 > _my_sps->popBlock(curTip->GetBlockHash()) || 0 > _my_cds->popBlock(curTip->GetBlockHash())) {
               // trigger a full reparse, if the levelDB cannot roll back
               return -1;
           }
@@ -2054,6 +2162,7 @@ static int load_most_relevant_state()
           curTip = curTip->pprev;
           if (curTip != nullptr) {
              _my_sps->setWatermark(curTip->GetBlockHash());
+             _my_cds->setWatermark(curTip->GetBlockHash());
           }
       }
 
@@ -2135,6 +2244,20 @@ static int write_globals_state(ofstream &file, CHash256& hasher)
     hasher.Write((unsigned char*)lineOut.c_str(), lineOut.length());
 
     // write the line
+    file << lineOut << endl;
+
+    return 0;
+}
+
+
+static int write_contract_globals_state(ofstream &file, CHash256& hasher)
+{
+    unsigned int nextCDID = _my_cds->peekNextContractID();
+    const std::string lineOut = strprintf("%d", nextCDID);
+
+    // add the line to the hash
+    hasher.Write((unsigned char*)lineOut.c_str(), lineOut.length());
+
     file << lineOut << endl;
 
     return 0;
@@ -2439,6 +2562,79 @@ static int write_mp_vesting_addresses(std::ofstream& file,  CHash256& hasher)
     return 0;
 }
 
+/** Saving contract position data **/
+static int write_mp_register(std::ofstream& file,  CHash256& hasher)
+{
+  for (auto &iter : mp_register_map)
+  {
+      bool emptyWallet = true;
+      std::string lineOut = iter.first;
+      lineOut.append("=");
+      Register& reg = iter.second;
+      reg.init();
+      uint32_t contractId = 0;
+      while (0 != (contractId = reg.next())) {
+          const int64_t entryPrice = reg.getRecord(contractId, ENTRY_CPRICE);
+          const int64_t position = reg.getRecord(contractId, CONTRACT_POSITION);
+          const int64_t liquidationPrice = reg.getRecord(contractId, LIQUIDATION_PRICE);
+          const int64_t upnl = reg.getRecord(contractId, UPNL);
+          const int64_t margin = reg.getRecord(contractId, MARGIN);
+          const int64_t leverage = reg.getRecord(contractId, LEVERAGE);
+
+          // we don't allow 0 balances to read in, so if we don't write them
+          // it makes things match up better between persisted state and processed state
+          if (0 == entryPrice && 0 == position && 0 == liquidationPrice && 0 == upnl && 0 == margin && leverage == 0) {
+              continue;
+          }
+
+          emptyWallet = false;
+
+          // saving each record
+          lineOut.append(strprintf("%d:%d,%d,%d,%d,%d,%d",
+                  contractId,
+                  entryPrice,
+                  position,
+                  liquidationPrice,
+                  upnl,
+                  margin,
+                  leverage));
+
+       // saving now the entries (contracts, price)
+       const Entries* entry = reg.getEntries(contractId);
+
+       if(entry != nullptr)
+       {
+           for (Entries::const_iterator it = entry->begin(); it != entry->end(); ++it)
+           {
+               if (it == entry->begin()) lineOut.append("-");
+               const std::pair<int64_t,int64_t>& pair = *it;
+               const int64_t& amount = pair.first;
+               const int64_t& price = pair.second;
+               lineOut.append(strprintf("%d:%d;", amount, price));
+
+               if (it != std::prev(entry->end())) {
+                   lineOut.append("|");
+               }
+           }
+       }
+
+       lineOut.append(";");
+
+      }
+
+      if (!emptyWallet) {
+          // add the line to the hash
+          hasher.Write((unsigned char*)lineOut.c_str(), lineOut.length());
+
+          // write the line
+          file << lineOut << std::endl;
+      }
+
+    }
+
+    return 0;
+}
+
 static int write_state_file(CBlockIndex const *pBlockIndex, int what)
 {
     fs::path path = MPPersistencePath / strprintf("%s-%s.dat", statePrefix[what], pBlockIndex->GetBlockHash().ToString());
@@ -2458,6 +2654,10 @@ static int write_state_file(CBlockIndex const *pBlockIndex, int what)
 
     case FILETYPE_GLOBALS:
         result = write_globals_state(file, hasher);
+        break;
+
+    case FILETYPE_CONTRACT_GLOBALS:
+        result = write_contract_globals_state(file, hasher);
         break;
 
     case FILETYPE_CDEXORDERS:
@@ -2519,6 +2719,9 @@ static int write_state_file(CBlockIndex const *pBlockIndex, int what)
     case FILE_TYPE_TOKEN_VWAP:
         result = write_mp_tokenvwap(file, hasher);
         break;
+
+    case FILE_TYPE_REGISTER:
+        result = write_mp_register(file, hasher);
     }
 
     // generate and write the double hash of all the contents written
@@ -2623,11 +2826,14 @@ int mastercore_save_state(CBlockIndex const *pBlockIndex)
     write_state_file(pBlockIndex, FILE_TYPE_LTC_VOLUME);
     write_state_file(pBlockIndex, FILE_TYPE_TOKEN_LTC_PRICE);
     write_state_file(pBlockIndex, FILE_TYPE_TOKEN_VWAP);
+    write_state_file(pBlockIndex, FILE_TYPE_REGISTER);
+    write_state_file(pBlockIndex, FILETYPE_CONTRACT_GLOBALS);
 
     // clean-up the directory
     prune_state_files(pBlockIndex);
 
     _my_sps->setWatermark(pBlockIndex->GetBlockHash());
+    _my_cds->setWatermark(pBlockIndex->GetBlockHash());
 
     return 0;
 }
@@ -2658,6 +2864,7 @@ void clear_all_state()
 
     // LevelDB based storage
      _my_sps->Clear();
+     _my_cds->Clear();
      t_tradelistdb->Clear();
      p_txlistdb->Clear();
      p_TradeTXDB->Clear();
@@ -2701,10 +2908,12 @@ int mastercore_init()
       fs::path persistPath = GetDataDir() / "OCL_persist";
       fs::path txlistPath = GetDataDir() / "OCL_txlist";
       fs::path spPath = GetDataDir() / "OCL_spinfo";
+      fs::path cdPath = GetDataDir() / "OCL_cdinfo";
       fs::path tlTXDBPath = GetDataDir() / "OCL_TXDB";
       if (fs::exists(persistPath)) fs::remove_all(persistPath);
       if (fs::exists(txlistPath)) fs::remove_all(txlistPath);
       if (fs::exists(spPath)) fs::remove_all(spPath);
+      if (fs::exists(cdPath)) fs::remove_all(cdPath);
       if (fs::exists(tlTXDBPath)) fs::remove_all(tlTXDBPath);
       PrintToLog("Success clearing persistence files in datadir %s\n", GetDataDir().string());
       startClean = true;
@@ -2715,6 +2924,7 @@ int mastercore_init()
 
   p_txlistdb = new CMPTxList(GetDataDir() / "OCL_txlist", fReindex);
   _my_sps = new CMPSPInfo(GetDataDir() / "OCL_spinfo", fReindex);
+  _my_cds = new CDInfo(GetDataDir() / "OCL_cdinfo", fReindex);
   p_TradeTXDB = new CtlTransactionDB(GetDataDir() / "OCL_TXDB", fReindex);
   t_tradelistdb = new CMPTradeList(GetDataDir()/"OCL_tradelist", fReindex);
   MPPersistencePath = GetDataDir() / "OCL_persist";
@@ -2797,6 +3007,11 @@ int mastercore_shutdown()
     if (_my_sps) {
         delete _my_sps;
         _my_sps = nullptr;
+    }
+
+    if (_my_cds) {
+        delete _my_cds;
+        _my_cds = nullptr;
     }
 
     if (p_TradeTXDB) {
@@ -2916,6 +3131,8 @@ if (nBlockNow%BlockS == 0 && nBlockNow != 0 && path_elef.size() != 0 && lastBloc
       PrintToLog("\nCalling the Settlement Algorithm:\n\n");
       int64_t twap_priceCDEx  = 0;
       int64_t interest = 0;
+
+      //TODO: we need to add here insurance logic
       settlement_algorithm_fifo(M_file, interest, twap_priceCDEx);
 
       /**********************************************************************/
@@ -2947,20 +3164,20 @@ bool CallingExpiration(CBlockIndex const * pBlockIndex)
 {
   int expirationBlock = 0, tradeBlock = 0, checkExpiration = 0;
 
-  uint32_t nextSPID = _my_sps->peekNextSPID();
+  uint32_t nextCDID = _my_cds->peekNextContractID();
 
   // checking expiration block for each contract
-  for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
+  for (uint32_t contractId = 1; contractId < nextCDID; contractId++)
   {
-      CMPSPInfo::Entry sp;
-      if (_my_sps->getSP(propertyId, sp) && sp.isContract() && !sp.expirated)
+      CDInfo::Entry cd;
+      if (_my_cds->getCD(contractId, cd) && ! cd.expirated)
       {
-	        expirationBlock = static_cast<int>(sp.blocks_until_expiration);
+	        expirationBlock = static_cast<int>(cd.blocks_until_expiration);
 	        tradeBlock = static_cast<int>(pBlockIndex->nHeight);
           lastBlockg = static_cast<int>(pBlockIndex->nHeight);
 
 
-          int deadline = sp.init_block + expirationBlock;
+          int deadline = cd.init_block + expirationBlock;
 
           // if(msc_debug_handler_tx) PrintToLog("%s(): deadline: %d, lastBlockg : %d\n",__func__,deadline,lastBlockg);
 
@@ -2968,7 +3185,7 @@ bool CallingExpiration(CBlockIndex const * pBlockIndex)
 
           if (checkExpiration)
           {
-              sp.expirated = true; // into entry register
+              cd.expirated = true; // into entry register
               // if(msc_debug_handler_tx) PrintToLog("%s(): EXPIRATED!!!!!!!!!!!!!!!!!!!!!!!!!!!\n",__func__);
 
               idx_expiration += 1;
@@ -4054,6 +4271,12 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
         makeWithdrawals(pBlockIndex->nHeight);
     }
 
+    /** Contracts **/
+    if (pBlockIndex->nHeight > params.MSC_CONTRACTDEX_BLOCK)
+    {
+        LiquidationEngine(pBlockIndex->nHeight);
+    }
+
     // marginMain(pBlockIndex->nHeight);
     // addInterestPegged(nBlockPrev,pBlockIndex);
 
@@ -5077,6 +5300,26 @@ bool CMPTradeList::kycPropertyMatch(uint32_t propertyId, int kyc_id)
     return (it != vecKyc.end());
 }
 
+bool CMPTradeList::kycContractMatch(uint32_t contractId, int kyc_id)
+{
+    CDInfo::Entry sp;
+    if (!_my_cds->getCD(contractId, sp)) {
+       return false; // contract ID does not exist
+    }
+
+    // looking for the kyc id in sp register
+    const std::vector<int64_t>& vecKyc = sp.kyc;
+
+    if (vecKyc.empty()){
+        PrintToLog("%s(): empty vector\n",__func__);
+    }
+
+    auto it = find_if(vecKyc.begin(), vecKyc.end(), [&kyc_id] (const int64_t& k) {return (kyc_id == k);});
+
+    return (it != vecKyc.end());
+}
+
+
 void CMPTradeList::recordNewInstContTrade(const uint256& txid, const std::string& firstAddr, const std::string& secondAddr, uint32_t property, uint64_t amount_forsale, uint64_t price ,int blockNum, int blockIndex)
 {
     if (!pdb) return;
@@ -5315,9 +5558,9 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   // 	}
 
   unsigned int contractId = static_cast<unsigned int>(property_traded);
-  CMPSPInfo::Entry sp;
-  assert(_my_sps->getSP(property_traded, sp));
-  uint32_t NotionalSize = sp.notional_size;
+  CDInfo::Entry cd;
+  assert(_my_cds->getCD(property_traded, cd));
+  uint32_t NotionalSize = cd.notional_size;
 
   globalPNLALL_DUSD += UPNL1 + UPNL2;
   globalVolumeALL_DUSD += nCouldBuy0;
@@ -5788,257 +6031,319 @@ bool CMPTradeList::getCreatedPegged(uint32_t propertyId, UniValue& tradeArray)
 }
 
 
-bool mastercore::marginMain(int Block)
+// bool mastercore::marginMain(int Block)
+// {
+//   //checking in map for address and the UPNL.
+//     if(msc_debug_margin_main) PrintToLog("%s: Block in marginMain: %d\n", __func__, Block);
+//     LOCK(cs_tally);
+//     uint32_t nextSPID = _my_sps->peekNextSPID();
+//     for (uint32_t contractId = 1; contractId < nextSPID; contractId++)
+//     {
+//         CMPSPInfo::Entry sp;
+//         if (_my_sps->getSP(contractId, sp))
+//         {
+//             if(msc_debug_margin_main) PrintToLog("%s: Property Id: %d\n", __func__, contractId);
+//             if (!sp.isContract())
+//             {
+//                 if(msc_debug_margin_main) PrintToLog("%s: Property is not future contract\n",__func__);
+//                 continue;
+//             }
+//         }
+//
+//         uint32_t collateralCurrency = sp.collateral_currency;
+//         //int64_t notionalSize = static_cast<int64_t>(sp.notional_size);
+//
+//         // checking the upnl map
+//         std::map<uint32_t, std::map<std::string, double>>::iterator it = addrs_upnlc.find(contractId);
+//         std::map<std::string, double> upnls = it->second;
+//
+//         //  if upnls is < 0, we need to cancel orders or liquidate contracts.
+//         for(std::map<std::string, double>::iterator it2 = upnls.begin(); it2 != upnls.end(); ++it2)
+// 	      {
+//             const std::string address = it2->first;
+//
+//             int64_t upnl = static_cast<int64_t>(it2->second * COIN);
+//             if(msc_debug_margin_main) PrintToLog("%s: upnl: %d", __func__, upnl);
+//             // if upnl is positive, keep searching
+//             if (upnl >= 0)
+//                 continue;
+//
+//             if(msc_debug_margin_main)
+//             {
+//                 PrintToLog("%s: upnl: %d", __func__, upnl);
+//                 PrintToLog("%s: sum_check_upnl: %d",__func__, sum_check_upnl(address));
+//             }
+//             // if sum of upnl is bigger than this upnl, skip address.
+//             if (sum_check_upnl(address) > upnl)
+//                 continue;
+//
+//             // checking position margin
+//             int64_t posMargin = pos_margin(contractId, address, sp.margin_requirement);
+//
+//             // if there's no position, something is wrong!
+//             if (posMargin < 0)
+//                 continue;
+//
+//             // checking the initMargin (init_margin = position_margin + active_orders_margin)
+//             std::string channelAddr;
+//             int64_t initMargin;
+//
+//             initMargin = getMPbalance(address,collateralCurrency,CONTRACTDEX_RESERVE);
+//
+//             rational_t percent = rational_t(-upnl,initMargin);
+//
+//             int64_t ordersMargin = initMargin - posMargin;
+//
+//             if(msc_debug_margin_main)
+//             {
+//                 PrintToLog("\n--------------------------------------------------\n");
+//                 PrintToLog("\n%s: initMargin= %d\n", __func__, initMargin);
+//                 PrintToLog("\n%s: positionMargin= %d\n", __func__, posMargin);
+//                 PrintToLog("\n%s: ordersMargin= %d\n", __func__, ordersMargin);
+//                 PrintToLog("%s: upnl= %d\n", __func__, upnl);
+//                 PrintToLog("%s: factor= %d\n", __func__, factor);
+//                 // PrintToLog("%s: proportion upnl/initMargin= %d\n", __func__, xToString(percent));
+//                 PrintToLog("\n--------------------------------------------------\n");
+//             }
+//             // if the upnl loss is more than 80% of the initial Margin
+//             if (factor <= percent)
+//             {
+//                 const uint256 txid;
+//                 if(msc_debug_margin_main)
+//                 {
+//                     // PrintToLog("%s: factor <= percent : %d <= %d\n",__func__, xToString(factor), xToString(percent));
+//                     PrintToLog("%s: margin call!\n", __func__);
+//                 }
+//
+//                 ContractDex_CLOSE_POSITION(txid, Block, address, contractId, collateralCurrency);
+//                 continue;
+//
+//             // if the upnl loss is more than 20% and minus 80% of the Margin
+//             } else if (factor2 <= percent) {
+//                 if(msc_debug_margin_main)
+//                 {
+//                     PrintToLog("%s: CALLING CANCEL IN ORDER\n", __func__);
+//                     // PrintToLog("%s: factor2 <= percent : %s <= %s\n", __func__, xToString(factor2),xToString(percent));
+//                 }
+//
+//                 int64_t fbalance, diff;
+//                 int64_t margin = getMPbalance(address,collateralCurrency,CONTRACTDEX_RESERVE);
+//                 int64_t ibalance = getMPbalance(address,collateralCurrency, BALANCE);
+//                 int64_t left = - 0.2 * margin - upnl;
+//
+//                 bool orders = false;
+//
+//                 do
+//                 {
+//                       if(msc_debug_margin_main) PrintToLog("%s: margin before cancel: %s\n", __func__, margin);
+//                       if(ContractDex_CANCEL_IN_ORDER(address, contractId) == 1)
+//                           orders = true;
+//                       fbalance = getMPbalance(address,collateralCurrency, BALANCE);
+//                       diff = fbalance - ibalance;
+//
+//                       if(msc_debug_margin_main)
+//                       {
+//                           PrintToLog("%s: ibalance: %s\n", __func__, ibalance);
+//                           PrintToLog("%s: fbalance: %s\n", __func__, fbalance);
+//                           PrintToLog("%s: diff: %d\n", __func__, diff);
+//                           PrintToLog("%s: left: %d\n", __func__, left);
+//                       }
+//
+//                       if ( left <= diff && msc_debug_margin_main) {
+//                           PrintToLog("%s: left <= diff !\n", __func__);
+//                       }
+//
+//                       if (orders) {
+//                           PrintToLog("%s: orders=true !\n", __func__);
+//                       } else
+//                          PrintToLog("%s: orders=false\n", __func__);
+//
+//                 } while(diff < left && !orders);
+//
+//                 // if left is negative, the margin is above the first limit (more than 80% maintMargin)
+//                 if (0 < left)
+//                 {
+//                     if(msc_debug_margin_main)
+//                     {
+//                         PrintToLog("%s: orders can't cover, we have to check the balance to refill margin\n", __func__);
+//                         PrintToLog("%s: left: %d\n", __func__, left);
+//                     }
+//                     //we have to see if we can cover this with the balance
+//                     int64_t balance = getMPbalance(address,collateralCurrency,BALANCE);
+//
+//                     if(balance >= left) // recover to 80% of maintMargin
+//                     {
+//                         if(msc_debug_margin_main) PrintToLog("\n%s: balance >= left\n", __func__);
+//                         update_tally_map(address, collateralCurrency, -left, BALANCE);
+//                         update_tally_map(address, collateralCurrency, left, CONTRACTDEX_RESERVE);
+//                         continue;
+//
+//                     } else { // not enough money in balance to recover margin, so we use position
+//
+//                          if(msc_debug_margin_main) PrintToLog("%s: not enough money in balance to recover margin, so we use position\n", __func__);
+//                          if (balance > 0)
+//                          {
+//                              update_tally_map(address, collateralCurrency, -balance, BALANCE);
+//                              update_tally_map(address, collateralCurrency, balance, CONTRACTDEX_RESERVE);
+//                          }
+//
+//                          const uint256 txid;
+//                          unsigned int idx = 0;
+//                          int64_t fcontracts = 0;
+//                          uint8_t option = 0;
+//
+//                          const int64_t longs = getMPbalance(address,contractId, CONTRACT_BALANCE);
+//                          const int64_t shorts = getMPbalance(address,contractId, CONTRACT_BALANCE);
+//
+//                          if(msc_debug_margin_main) PrintToLog("%s: longs: %d,shorts: %d \n", __func__, longs,shorts);
+//
+//                          if(longs > 0 && shorts == 0) {
+//                               option = buy;
+//                              fcontracts = longs;
+//                          } else {
+//                              option = sell;
+//                              fcontracts = shorts;
+//                          }
+//
+//                          if(msc_debug_margin_main) PrintToLog("%s(): upnl: %d, posMargin: %d\n", __func__, upnl,posMargin);
+//
+//                          arith_uint256 contracts = DivideAndRoundUp(ConvertTo256(posMargin) + ConvertTo256(-upnl), ConvertTo256(sp.margin_requirement));
+//                          int64_t icontracts = ConvertTo64(contracts);
+//
+//                          if(msc_debug_margin_main)
+//                          {
+//                              PrintToLog("%s: icontracts: %d\n", __func__, icontracts);
+//                              PrintToLog("%s: fcontracts before: %d\n", __func__, fcontracts);
+//                          }
+//
+//                          if (icontracts > fcontracts)
+//                              icontracts = fcontracts;
+//
+//                          if(msc_debug_margin_main) PrintToLog("%s: fcontracts after: %d\n", __func__, fcontracts);
+//
+//                          ContractDex_ADD_MARKET_PRICE(address, contractId, icontracts, Block, txid, idx, option, 0);
+//
+//
+//                     }
+//
+//                 }
+//
+//             } else {
+//                 if(msc_debug_margin_main) PrintToLog("%s: the upnl loss is LESS than 20% of the margin, nothing happen\n", __func__);
+//
+//             }
+//         }
+//     }
+//
+//     return true;
+//
+// }
+
+int64_t getMinMargin(const uint32_t contractId, const int64_t& position, uint64_t marginRequirement)
 {
-  //checking in map for address and the UPNL.
-    if(msc_debug_margin_main) PrintToLog("%s: Block in marginMain: %d\n", __func__, Block);
-    LOCK(cs_tally);
-    uint32_t nextSPID = _my_sps->peekNextSPID();
-    for (uint32_t contractId = 1; contractId < nextSPID; contractId++)
+      const int64_t margin = (int64_t) (position *  marginRequirement) / 2; // 50%
+
+      if(msc_debug_liquidation_enginee) PrintToLog("%s(): position: %d, margin requirement: %d, total margin required: %d\n",__func__, position, marginRequirement, margin);
+
+      return margin;
+}
+
+//check position for a given address of this contractId
+bool checkContractPositions(int Block, const std::string &address, const uint32_t contractId, const CDInfo::Entry& sp, const Register& reg)
+{
+    if(msc_debug_liquidation_enginee)
     {
-        CMPSPInfo::Entry sp;
-        if (_my_sps->getSP(contractId, sp))
-        {
-            if(msc_debug_margin_main) PrintToLog("%s: Property Id: %d\n", __func__, contractId);
-            if (!sp.isContract())
-            {
-                if(msc_debug_margin_main) PrintToLog("%s: Property is not future contract\n",__func__);
-                continue;
-            }
-        }
-
-        uint32_t collateralCurrency = sp.collateral_currency;
-        //int64_t notionalSize = static_cast<int64_t>(sp.notional_size);
-
-        // checking the upnl map
-        std::map<uint32_t, std::map<std::string, double>>::iterator it = addrs_upnlc.find(contractId);
-        std::map<std::string, double> upnls = it->second;
-
-        //  if upnls is < 0, we need to cancel orders or liquidate contracts.
-        for(std::map<std::string, double>::iterator it2 = upnls.begin(); it2 != upnls.end(); ++it2)
-	      {
-            const std::string address = it2->first;
-
-            int64_t upnl = static_cast<int64_t>(it2->second * COIN);
-            if(msc_debug_margin_main) PrintToLog("%s: upnl: %d", __func__, upnl);
-            // if upnl is positive, keep searching
-            if (upnl >= 0)
-                continue;
-
-            if(msc_debug_margin_main)
-            {
-                PrintToLog("%s: upnl: %d", __func__, upnl);
-                PrintToLog("%s: sum_check_upnl: %d",__func__, sum_check_upnl(address));
-            }
-            // if sum of upnl is bigger than this upnl, skip address.
-            if (sum_check_upnl(address) > upnl)
-                continue;
-
-            // checking position margin
-            int64_t posMargin = pos_margin(contractId, address, sp.margin_requirement);
-
-            // if there's no position, something is wrong!
-            if (posMargin < 0)
-                continue;
-
-            // checking the initMargin (init_margin = position_margin + active_orders_margin)
-            std::string channelAddr;
-            int64_t initMargin;
-
-            initMargin = getMPbalance(address,collateralCurrency,CONTRACTDEX_RESERVE);
-
-            rational_t percent = rational_t(-upnl,initMargin);
-
-            int64_t ordersMargin = initMargin - posMargin;
-
-            if(msc_debug_margin_main)
-            {
-                PrintToLog("\n--------------------------------------------------\n");
-                PrintToLog("\n%s: initMargin= %d\n", __func__, initMargin);
-                PrintToLog("\n%s: positionMargin= %d\n", __func__, posMargin);
-                PrintToLog("\n%s: ordersMargin= %d\n", __func__, ordersMargin);
-                PrintToLog("%s: upnl= %d\n", __func__, upnl);
-                PrintToLog("%s: factor= %d\n", __func__, factor);
-                // PrintToLog("%s: proportion upnl/initMargin= %d\n", __func__, xToString(percent));
-                PrintToLog("\n--------------------------------------------------\n");
-            }
-            // if the upnl loss is more than 80% of the initial Margin
-            if (factor <= percent)
-            {
-                const uint256 txid;
-                if(msc_debug_margin_main)
-                {
-                    // PrintToLog("%s: factor <= percent : %d <= %d\n",__func__, xToString(factor), xToString(percent));
-                    PrintToLog("%s: margin call!\n", __func__);
-                }
-
-                ContractDex_CLOSE_POSITION(txid, Block, address, contractId, collateralCurrency);
-                continue;
-
-            // if the upnl loss is more than 20% and minus 80% of the Margin
-            } else if (factor2 <= percent) {
-                if(msc_debug_margin_main)
-                {
-                    PrintToLog("%s: CALLING CANCEL IN ORDER\n", __func__);
-                    // PrintToLog("%s: factor2 <= percent : %s <= %s\n", __func__, xToString(factor2),xToString(percent));
-                }
-
-                int64_t fbalance, diff;
-                int64_t margin = getMPbalance(address,collateralCurrency,CONTRACTDEX_RESERVE);
-                int64_t ibalance = getMPbalance(address,collateralCurrency, BALANCE);
-                int64_t left = - 0.2 * margin - upnl;
-
-                bool orders = false;
-
-                do
-                {
-                      if(msc_debug_margin_main) PrintToLog("%s: margin before cancel: %s\n", __func__, margin);
-                      if(ContractDex_CANCEL_IN_ORDER(address, contractId) == 1)
-                          orders = true;
-                      fbalance = getMPbalance(address,collateralCurrency, BALANCE);
-                      diff = fbalance - ibalance;
-
-                      if(msc_debug_margin_main)
-                      {
-                          PrintToLog("%s: ibalance: %s\n", __func__, ibalance);
-                          PrintToLog("%s: fbalance: %s\n", __func__, fbalance);
-                          PrintToLog("%s: diff: %d\n", __func__, diff);
-                          PrintToLog("%s: left: %d\n", __func__, left);
-                      }
-
-                      if ( left <= diff && msc_debug_margin_main) {
-                          PrintToLog("%s: left <= diff !\n", __func__);
-                      }
-
-                      if (orders) {
-                          PrintToLog("%s: orders=true !\n", __func__);
-                      } else
-                         PrintToLog("%s: orders=false\n", __func__);
-
-                } while(diff < left && !orders);
-
-                // if left is negative, the margin is above the first limit (more than 80% maintMargin)
-                if (0 < left)
-                {
-                    if(msc_debug_margin_main)
-                    {
-                        PrintToLog("%s: orders can't cover, we have to check the balance to refill margin\n", __func__);
-                        PrintToLog("%s: left: %d\n", __func__, left);
-                    }
-                    //we have to see if we can cover this with the balance
-                    int64_t balance = getMPbalance(address,collateralCurrency,BALANCE);
-
-                    if(balance >= left) // recover to 80% of maintMargin
-                    {
-                        if(msc_debug_margin_main) PrintToLog("\n%s: balance >= left\n", __func__);
-                        update_tally_map(address, collateralCurrency, -left, BALANCE);
-                        update_tally_map(address, collateralCurrency, left, CONTRACTDEX_RESERVE);
-                        continue;
-
-                    } else { // not enough money in balance to recover margin, so we use position
-
-                         if(msc_debug_margin_main) PrintToLog("%s: not enough money in balance to recover margin, so we use position\n", __func__);
-                         if (balance > 0)
-                         {
-                             update_tally_map(address, collateralCurrency, -balance, BALANCE);
-                             update_tally_map(address, collateralCurrency, balance, CONTRACTDEX_RESERVE);
-                         }
-
-                         const uint256 txid;
-                         unsigned int idx = 0;
-                         int64_t fcontracts = 0;
-                         uint8_t option = 0;
-
-                         const int64_t longs = getMPbalance(address,contractId, CONTRACT_BALANCE);
-                         const int64_t shorts = getMPbalance(address,contractId, CONTRACT_BALANCE);
-
-                         if(msc_debug_margin_main) PrintToLog("%s: longs: %d,shorts: %d \n", __func__, longs,shorts);
-
-                         if(longs > 0 && shorts == 0) {
-                              option = buy;
-                             fcontracts = longs;
-                         } else {
-                             option = sell;
-                             fcontracts = shorts;
-                         }
-
-                         if(msc_debug_margin_main) PrintToLog("%s(): upnl: %d, posMargin: %d\n", __func__, upnl,posMargin);
-
-                         arith_uint256 contracts = DivideAndRoundUp(ConvertTo256(posMargin) + ConvertTo256(-upnl), ConvertTo256(sp.margin_requirement));
-                         int64_t icontracts = ConvertTo64(contracts);
-
-                         if(msc_debug_margin_main)
-                         {
-                             PrintToLog("%s: icontracts: %d\n", __func__, icontracts);
-                             PrintToLog("%s: fcontracts before: %d\n", __func__, fcontracts);
-                         }
-
-                         if (icontracts > fcontracts)
-                             icontracts = fcontracts;
-
-                         if(msc_debug_margin_main) PrintToLog("%s: fcontracts after: %d\n", __func__, fcontracts);
-
-                         ContractDex_ADD_MARKET_PRICE(address, contractId, icontracts, Block, txid, idx, option, 0);
-
-
-                    }
-
-                }
-
-            } else {
-                if(msc_debug_margin_main) PrintToLog("%s: the upnl loss is LESS than 20% of the margin, nothing happen\n", __func__);
-
-            }
-        }
+        PrintToLog("%s(): inside checkContractPositions \n",__func__);
     }
+
+    int64_t position =  reg.getRecord(contractId, CONTRACT_POSITION);
+
+    // we need an active position
+    if (0 == position) return false;
+
+    // selling or buying the position?
+    const uint8_t option = (position > 0) ? sell : buy;
+
+    const int64_t reserve = getMPbalance(address, sp.collateral_currency, CONTRACTDEX_RESERVE);
+
+    if(msc_debug_liquidation_enginee)
+    {
+        PrintToLog("%s(): contractdex reserve for address (%s): %d\n",__func__, address, reserve);
+    }
+
+    const int64_t upnl = reg.getUPNL(contractId, sp.notional_size, sp.isOracle(), sp.isInverseQuoted());
+
+    // absolute value needed
+    position = abs(position);
+
+    const int64_t min_margin = getMinMargin(contractId, position, sp.margin_requirement); //(min margin: 50% requirements for position)
+
+    const int64_t sum = reserve + upnl;
+
+    if(msc_debug_liquidation_enginee)
+    {
+        PrintToLog("%s(): min_margin: %d, upnl: %d, sum: %d, reserve: %d\n",__func__, min_margin, upnl, sum, reserve);
+    }
+
+    // if sum is less than min margin, liquidate the half position
+    if(sum < min_margin)
+    {
+        if(msc_debug_liquidation_enginee) PrintToLog("%s(): sum < min_margin\n",__func__);
+
+        // even or odd
+        int64_t icontracts = ((position % 2) == 0) ?  (position / 2) : (position - 1) / 2;
+
+        // if position has just 1 contract, we just close it.
+        if (0 == icontracts) icontracts++;
+
+        // NOTE: to avoid this, we need to update the ContractDex constructor
+        const uint256 txid;
+        unsigned int idx = 0;
+
+        // trying to liquidate 50% of position
+        if(msc_debug_liquidation_enginee) PrintToLog("%s(): here trying to liquidate 50 percent of position, contractId: %d, icontracts : %d, Block: %d\n",__func__,  contractId, icontracts, Block);
+
+        // if whe don't have pending liquidation orders here! then we add the order
+        // contractdex class needs type attribute
+        ContractDex_ADD_MARKET_PRICE(address, contractId, icontracts, Block, txid, idx, option, 0);
+
+        // TODO: add here a position checking in order to see if we are above the margin limits.
+    } else  {
+        if(msc_debug_liquidation_enginee) PrintToLog("%s(): sum >= min_margin, we are Ok\n",__func__);
+    }
+
 
     return true;
 
 }
 
 
-int64_t mastercore::sum_check_upnl(const std::string& address)
+bool mastercore::LiquidationEngine(int Block)
 {
-    int64_t upnl = 0;
-    std::map<std::string, int64_t>::iterator it = sum_upnls.find(address);
-    if (it != sum_upnls.end())
-        upnl = it->second;
 
-    return upnl;
-}
+    const uint32_t nextCDID = _my_cds->peekNextContractID();
 
+    if(msc_debug_liquidation_enginee) PrintToLog("%s(): inside LiquidationEngine, nextCDID: %d\n",__func__, nextCDID);
 
-void mastercore::update_sum_upnls()
-{
-    //cleaning the sum_upnls map
-    if(!sum_upnls.empty())
-        sum_upnls.clear();
-
-    LOCK(cs_tally);
-    uint32_t nextSPID = _my_sps->peekNextSPID();
-
-    for (uint32_t contractId = 1; contractId < nextSPID; contractId++)
+    for (uint32_t contractId = 1; contractId < nextCDID; contractId++)
     {
-        CMPSPInfo::Entry sp;
-        if (_my_sps->getSP(contractId, sp))
-        {
-            if (!sp.isContract())
-                continue;
+         CDInfo::Entry sp;
+         if (!_my_cds->getCD(contractId, sp))
+         {
+             continue;
+         }
 
-            std::map<uint32_t, std::map<std::string, double>>::iterator it = addrs_upnlc.find(contractId);
-            std::map<std::string, double> upnls = it->second;
+         if(msc_debug_liquidation_enginee) PrintToLog("%s(): contractId: %d\n",__func__, contractId);
 
-            for(std::map<std::string, double>::iterator it1 = upnls.begin(); it1 != upnls.end(); ++it1)
-            {
-                const std::string address = it1->first;
-                int64_t upnl = static_cast<int64_t>(it1->second * COIN);
+         // we check each position for this contract Id
+         LOCK(cs_register);
 
-                //add this in the sumupnl vector
-                sum_upnls[address] += upnl;
-            }
+         for_each(mp_register_map.begin(),mp_register_map.end(), [contractId, Block, &sp](const std::unordered_map<std::string, Register>::value_type& unmap){ checkContractPositions(Block, unmap.first, contractId, sp, unmap.second);});
 
-        }
-    }
+   }
+
+   return true;
+
 }
 
 /* margin needed for a given position */
@@ -6046,17 +6351,13 @@ int64_t mastercore::pos_margin(uint32_t contractId, const std::string& address, 
 {
         arith_uint256 maintMargin;
 
-        LOCK(cs_tally);
-        CMPSPInfo::Entry sp;
+        LOCK(cs_register);
+        CDInfo::Entry sp;
 
-        if(_my_sps->getSP(contractId, sp))
+        if(!_my_cds->getCD(contractId, sp))
         {
-
-            if (!sp.isContract())
-            {
-                if(msc_debug_pos_margin) PrintToLog("%s: this is not a future contract\n", __func__);
-                return -1;
-            }
+            if(msc_debug_pos_margin) PrintToLog("%s(): future contract not found\n", __func__);
+            return -1;
         }
 
         int64_t longs = getMPbalance(address,contractId, CONTRACT_BALANCE);
@@ -6192,7 +6493,7 @@ bool mastercore::closeChannel(const std::string& sender, const std::string& chan
         for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
         {
             CMPSPInfo::Entry sp;
-            if (_my_sps->getSP(propertyId, sp) && sp.isContract()) continue;
+            if (!_my_sps->getSP(propertyId, sp)) continue;
 
             const int64_t first_rem = chn.getRemaining(false, propertyId);
             const int64_t second_rem = chn.getRemaining(true, propertyId);
@@ -7001,19 +7302,20 @@ int64_t mastercore::getOracleTwap(uint32_t contractId, int nBlocks)
 {
      int64_t sum = 0;
      auto it = oraclePrices.find(contractId);
+
      if (it != oraclePrices.end())
      {
          int count = 0;
          arith_uint256 aSum = 0;
-         auto &orMap = it->second;
+         const auto &orMap = it->second;
 
-         for(const auto& om : orMap)
+         for(auto rit = orMap.rbegin(); rit != orMap.rend(); ++rit)
          {
-             if(msc_debug_oracle_twap) PrintToLog("%s(): actual block: %d\n", __func__, om.first);
+             if(msc_debug_oracle_twap) PrintToLog("%s(): actual block: %d\n", __func__, rit->first);
 
              if (count >= nBlocks) break;
 
-             const oracledata& ord = om.second;
+             const oracledata& ord = rit->second;
              aSum += (ConvertTo256(ord.high) + ConvertTo256(ord.low) + ConvertTo256(ord.close)) / ConvertTo256(3) ;
              count++;
 
@@ -7136,11 +7438,11 @@ void calculateUPNL(std::vector<double>& sum_upnl, uint64_t entry_price, uint64_t
 void CMPTradeList::getUpnInfo(const std::string& address, uint32_t contractId, UniValue& response, bool showVerbose)
 {
     if (!pdb) return;
-    CMPSPInfo::Entry sp;
-    assert(_my_sps->getSP(contractId, sp));
+    CDInfo::Entry sp;
+    assert(_my_cds->getCD(contractId, sp));
 
     //twap of last 3 blocks
-    const uint64_t exitPrice = getOracleTwap(contractId, oBlocks);
+    const uint64_t exitPrice = getOracleTwap(contractId, OBLOCKS);
 
     int count = 0;
     std::vector<double> sumUpnl;
@@ -7195,7 +7497,7 @@ void CMPTradeList::getUpnInfo(const std::string& address, uint32_t contractId, U
         const uint64_t blockNum = boost::lexical_cast<uint64_t>(vecValues[6]);
 
         // partial upnl
-        calculateUPNL(sumUpnl, price, amount, exitPrice, args.second, sp.inverse_quoted);
+        calculateUPNL(sumUpnl, price, amount, exitPrice, args.second, sp.isInverseQuoted());
 
         if(showVerbose)
         {

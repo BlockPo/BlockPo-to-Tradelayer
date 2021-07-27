@@ -172,14 +172,14 @@ class OraclesBasicsTest (BitcoinTestFramework):
 
 
         self.log.info("Checking the oracle contract")
-        params = str([5])
-        out = tradelayer_HTTP(conn, headers, True, "tl_getproperty",params)
-        assert_equal(out['error'], None)
+        params = '["1"]'
+        out = tradelayer_HTTP(conn, headers, False, "tl_getcontract",params)
         # self.log.info(out)
+        assert_equal(out['error'], None)
 
-        assert_equal(out['result']['propertyid'],5)
+        assert_equal(out['result']['contractid'], 1)
         assert_equal(out['result']['name'],'Oracle 1')
-        assert_equal(out['result']['issuer'], addresses[0])
+        assert_equal(out['result']['admin'], addresses[0])
         assert_equal(out['result']['notional size'], '1')
         assert_equal(out['result']['collateral currency'], '4')
         assert_equal(out['result']['margin requirement'], '0.1')
@@ -189,7 +189,7 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['low price'], '0')
         assert_equal(out['result']['last close price'], '0')
 
-
+        exit()
         self.log.info("Setting oracle prices")
         params = str([addresses[0], "Oracle 1", "602.1", "450.6", "500.1"]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_setoracle",params)
@@ -299,6 +299,42 @@ class OraclesBasicsTest (BitcoinTestFramework):
         # self.log.info(out)
         assert_equal(out['error'], None)
         assert_equal(out['result']['position'], -1500)
+
+
+        # third trade..........................
+
+        self.log.info("Creating other trade")
+        params = str([addresses[0], "Oracle 1", "1000", "700.5", 1, "1"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_tradecontract",params)
+
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+
+        self.nodes[0].generate(1)
+
+
+        params = str([addresses[2], "Oracle 1", "1000", "700.5", 2, "1"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_tradecontract",params)
+
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+
+        self.nodes[0].generate(1)
+
+        self.log.info("Checking positions")
+        params = str([addresses[0], "Oracle 1"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getposition",params)
+
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['position'], 1500)
+
+        params = str([addresses[2], "Oracle 1"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getposition",params)
+
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['position'], -2500)
 
         conn.close()
 

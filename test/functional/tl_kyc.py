@@ -195,14 +195,14 @@ class KYCBasicsTest (BitcoinTestFramework):
 
 
         self.log.info("Checking the oracle contract")
-        params = str([6])
-        out = tradelayer_HTTP(conn, headers, True, "tl_getproperty",params)
+        params = '["1"]'
+        out = tradelayer_HTTP(conn, headers, True, "tl_getcontract",params)
         assert_equal(out['error'], None)
         # self.log.info(out)
 
-        assert_equal(out['result']['propertyid'],6)
+        assert_equal(out['result']['contractid'],1)
         assert_equal(out['result']['name'],'Oracle 1')
-        assert_equal(out['result']['issuer'], addresses[2])
+        assert_equal(out['result']['admin'], addresses[2])
         assert_equal(out['result']['notional size'], '1')
         assert_equal(out['result']['collateral currency'], '4')
         assert_equal(out['result']['margin requirement'], '0.1')
@@ -225,14 +225,14 @@ class KYCBasicsTest (BitcoinTestFramework):
 
 
         self.log.info("Checking the oracle contract")
-        params = str([7])
-        out = tradelayer_HTTP(conn, headers, True, "tl_getproperty",params)
+        params = '["2"]'
+        out = tradelayer_HTTP(conn, headers, True, "tl_getcontract",params)
         assert_equal(out['error'], None)
         # self.log.info(out)
 
-        assert_equal(out['result']['propertyid'],7)
+        assert_equal(out['result']['contractid'],2)
         assert_equal(out['result']['name'],'Oracle 2')
-        assert_equal(out['result']['issuer'], addresses[2])
+        assert_equal(out['result']['admin'], addresses[2])
         assert_equal(out['result']['notional size'], '1')
         assert_equal(out['result']['collateral currency'], '4')
         assert_equal(out['result']['margin requirement'], '0.1')
@@ -254,14 +254,14 @@ class KYCBasicsTest (BitcoinTestFramework):
 
 
         self.log.info("Checking the oracle contract")
-        params = str([8])
-        out = tradelayer_HTTP(conn, headers, True, "tl_getproperty",params)
+        params = '["3"]'
+        out = tradelayer_HTTP(conn, headers, True, "tl_getcontract",params)
         assert_equal(out['error'], None)
         # self.log.info(out)
 
-        assert_equal(out['result']['propertyid'],8)
+        assert_equal(out['result']['contractid'], 3)
         assert_equal(out['result']['name'],'Oracle 3')
-        assert_equal(out['result']['issuer'], addresses[2])
+        assert_equal(out['result']['admin'], addresses[2])
         assert_equal(out['result']['notional size'], '1')
         assert_equal(out['result']['collateral currency'], '4')
         assert_equal(out['result']['margin requirement'], '0.1')

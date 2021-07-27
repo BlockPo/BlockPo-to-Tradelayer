@@ -1,6 +1,7 @@
 #ifndef TRADELAYER_MDEX_H
 #define TRADELAYER_MDEX_H
 
+#include <tradelayer/ce.h>
 #include <tradelayer/tx.h>
 #include <tradelayer/tradelayer_matrices.h>
 #include <uint256.h>
@@ -177,6 +178,8 @@ class CMPContractDex : public CMPMetaDEx
 
   void setPrice(int64_t price);
 
+  bool updateAmountReserved(int64_t amount);
+
   bool Fees(std::string addressTaker,std::string addressMaker, int64_t nCouldBuy,uint32_t contractId);
 
   ///////////////////////////////
@@ -290,8 +293,12 @@ namespace mastercore
   const CMPContractDex* ContractDex_RetrieveTrade(const uint256&);
   int ContractDex_CANCEL(const std::string& sender_addr, const std::string& hash);
   bool checkReserve(const std::string& address, int64_t amount, uint32_t propertyId, int64_t& nBalance);
-  bool checkContractReserve(const std::string& address, int64_t amount, uint32_t contractId, uint64_t leverage, int64_t& nBalance, int64_t& amountToReserve);
+  bool checkContractReserve(const std::string& address, int64_t amount, uint32_t contractId, int64_t leverage, int64_t& nBalance, int64_t& amountToReserve);
   int64_t getTotalLives(uint32_t contractId);
+  int64_t ContractBasisPoints(const CDInfo::Entry& cd, int64_t amount, int64_t leverage);
+
+  void updateAllEntry(int64_t oldPosition, int64_t newPosition, int64_t nCouldBuy, uint32_t contract_traded, CMPContractDex* elem, const CDInfo::Entry& cd);
+  void takeMargin(int64_t amount, uint32_t contract_traded, const CDInfo::Entry& cd, CMPContractDex *elem);
 }
 
 #endif // TRADELAYER_MDEX_H

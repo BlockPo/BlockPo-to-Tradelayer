@@ -1,6 +1,7 @@
 #include <test/test_bitcoin.h>
 #include <tradelayer/dex.h>
 #include <tradelayer/mdex.h>
+#include <tradelayer/register.h>
 #include <tradelayer/tally.h>
 #include <tradelayer/tradelayer.h>
 #include <tradelayer/tx.h>
@@ -471,6 +472,161 @@ static int write_mp_tokenvwap(std::string& lineOut)
 }
 
 
+static int write_mp_register(std::string& lineOut)
+{
+  for (auto &iter : mp_register_map)
+  {
+      lineOut = iter.first;
+      lineOut.append("=");
+      Register& reg = iter.second;
+      reg.init();
+      uint32_t contractId = 0;
+      while (0 != (contractId = reg.next()))
+      {
+          const int64_t entryPrice = reg.getRecord(contractId, ENTRY_CPRICE);
+          const int64_t position = reg.getRecord(contractId, CONTRACT_POSITION);
+          const int64_t liquidationPrice = reg.getRecord(contractId, LIQUIDATION_PRICE);
+          const int64_t upnl = reg.getRecord(contractId, UPNL);
+          const int64_t margin = reg.getRecord(contractId, MARGIN);
+          const int64_t leverage = reg.getRecord(contractId, LEVERAGE);
+
+          // we don't allow 0 balances to read in, so if we don't write them
+          // it makes things match up better between persisted state and processed state
+          if (0 == entryPrice && 0 == position && 0 == liquidationPrice && 0 == upnl && 0 == margin && leverage == 0) {
+              continue;
+          }
+
+          // saving each record
+          lineOut.append(strprintf("%d:%d,%d,%d,%d,%d,%d",
+                  contractId,
+                  entryPrice,
+                  position,
+                  liquidationPrice,
+                  upnl,
+                  margin,
+                  leverage));
+
+          // saving now the entries (contracts, price)
+          const Entries* entry = reg.getEntries(contractId);
+
+          if(entry != nullptr)
+          {
+
+              for (Entries::const_iterator it = entry->begin(); it != entry->end(); ++it)
+              {
+                  if (it == entry->begin()) lineOut.append("-");
+
+                  const std::pair<int64_t,int64_t>& pair = *it;
+                  const int64_t& amount = pair.first;
+                  const int64_t& price = pair.second;
+                  lineOut.append(strprintf("%d,%d", amount, price));
+
+                  if (it != std::prev(entry->end())) {
+                      // BOOST_TEST_MESSAGE("appending |");
+                      lineOut.append("|");
+                  }
+                  //
+                  // BOOST_TEST_MESSAGE("amount:" <<  amount);
+                  // BOOST_TEST_MESSAGE("price:" <<  price);
+              }
+          }
+
+          lineOut.append(";");
+
+       }
+
+    }
+
+    return 0;
+}
+
+static int input_register_string(std::string& s)
+{
+  // "address=contract_register"
+  std::vector<std::string> addrData;
+  boost::split(addrData, s, boost::is_any_of("="), boost::token_compress_on);
+  if (addrData.size() != 2) return -1;
+
+  std::string strAddress = addrData[0];
+
+  // split the tuples of contract registers
+  std::vector<std::string> vRegisters;
+  boost::split(vRegisters, addrData[1], boost::is_any_of(";"), boost::token_compress_on);
+
+  // BOOST_TEST_MESSAGE("s:" << s);
+  // BOOST_TEST_MESSAGE("addrData[0]:" << addrData[0]);
+  // BOOST_TEST_MESSAGE("addrData[1]:" << addrData[1]);
+
+  for (auto iter : vRegisters)
+  {
+      if (iter.empty()) {
+          continue;
+      }
+
+     // BOOST_TEST_MESSAGE("Register:" << iter);
+
+     // full register (records + entries)
+     std::vector<std::string> fRegister;
+     boost::split(fRegister, iter, boost::is_any_of("-"), boost::token_compress_on);
+
+     // contract id + records
+     std::vector<std::string> idRecord;
+     boost::split(idRecord, fRegister[0], boost::is_any_of(":"), boost::token_compress_on);
+
+     // just records
+     std::vector<std::string> vRecord;
+     boost::split(vRecord, idRecord[1], boost::is_any_of(","), boost::token_compress_on);
+
+     // BOOST_TEST_MESSAGE("ContractId:" << idRecord[0]);
+     const uint32_t contractId = boost::lexical_cast<uint32_t>(idRecord[0]);
+     const int64_t entryPrice = boost::lexical_cast<int64_t>(vRecord[0]);
+     const int64_t position = boost::lexical_cast<int64_t>(vRecord[1]);
+     const int64_t liquidationPrice = boost::lexical_cast<int64_t>(vRecord[2]);
+     const int64_t upnl = boost::lexical_cast<int64_t>(vRecord[3]);
+     const int64_t margin = boost::lexical_cast<int64_t>(vRecord[4]);
+     const int64_t leverage = boost::lexical_cast<int64_t>(vRecord[5]);
+
+     if (entryPrice) update_register_map(strAddress, contractId, entryPrice, ENTRY_CPRICE);
+     if (position) update_register_map(strAddress, contractId, position, CONTRACT_POSITION);
+     if (liquidationPrice) update_register_map(strAddress, contractId, liquidationPrice, LIQUIDATION_PRICE);
+     if (upnl) update_register_map(strAddress, contractId, upnl, UPNL);
+     if (margin) update_register_map(strAddress, contractId, margin, MARGIN);
+     if (leverage) update_register_map(strAddress, contractId, entryPrice, LEVERAGE);
+
+     // BOOST_TEST_MESSAGE("Record[2]:" << vRecord[2]);
+     // BOOST_TEST_MESSAGE("Record[3]:" << vRecord[3]);
+     // BOOST_TEST_MESSAGE("Record[4]:" << vRecord[4]);
+     // BOOST_TEST_MESSAGE("Record[5]:" << vRecord[5]);
+
+     // if there's no entries, skip
+     if (fRegister.size() == 1) {
+         continue;
+     }
+
+     // just entries
+     std::vector<std::string> entries;
+     boost::split(entries, fRegister[1], boost::is_any_of("|"), boost::token_compress_on);
+
+     for (auto it : entries)
+     {
+
+         std::vector<std::string> entry;
+         boost::split(entry, it, boost::is_any_of(","), boost::token_compress_on);
+         // BOOST_TEST_MESSAGE("entry[0]:" << entry[0]);
+         // BOOST_TEST_MESSAGE("entry[1]:" << entry[1]);
+         const int64_t amount = boost::lexical_cast<int64_t>(entry[0]);
+         const int64_t price = boost::lexical_cast<int64_t>(entry[1]);
+         assert(insert_entry(strAddress, contractId, amount, price));
+
+     }
+
+
+   }
+
+  return 0;
+}
+
+
 
 BOOST_AUTO_TEST_CASE(channel_persistence)
 {
@@ -795,6 +951,66 @@ BOOST_AUTO_TEST_CASE(tokenvwap_persistence)
 
   BOOST_CHECK_EQUAL(1000 * COIN, test.first);
   BOOST_CHECK_EQUAL(2600 * COIN, test.second);
+
+
+}
+
+
+BOOST_AUTO_TEST_CASE(contract_register)
+{
+  const std::string address = "muY24px8kWVHUDc8NmBRjL6UWGbjz8wW5r";
+
+  BOOST_CHECK(update_register_map(address, 1, 10000, ENTRY_CPRICE));
+  BOOST_CHECK(update_register_map(address, 2, 20000, CONTRACT_POSITION));
+
+  std::string lineOut;
+
+  // Testing write function
+  write_mp_register(lineOut);
+
+  // %d:%d,%d,%d,%d,%d,%d;
+  BOOST_CHECK_EQUAL("muY24px8kWVHUDc8NmBRjL6UWGbjz8wW5r=1:10000,0,0,0,0,0;2:0,20000,0,0,0,0;",lineOut);
+
+  // inserting entry:
+  BOOST_CHECK(insert_entry(address, 1, 8000, 2560));
+  BOOST_CHECK(insert_entry(address, 2, 4000, 9875));
+  BOOST_CHECK(insert_entry(address, 2, 5000, 10000));
+
+  // Testing write function
+  write_mp_register(lineOut);
+
+  BOOST_CHECK_EQUAL("muY24px8kWVHUDc8NmBRjL6UWGbjz8wW5r=1:10000,0,0,0,0,0-8000,2560;2:0,20000,0,0,0,0-4000,9875|5000,10000;",lineOut);
+
+  // clearing map
+  mp_register_map.clear();
+
+  //saving to memory
+  input_register_string(lineOut);
+
+  //Checking register in map:
+  std::unordered_map<std::string, Register>::iterator my_it = mp_register_map.find(address);
+  Register& reg = my_it->second;
+
+  const Entries* pEnt = reg.getEntries(2);
+
+  std::vector<std::pair<int64_t,int64_t>> entryResult;
+
+  for (Entries::const_iterator it = pEnt->begin(); it != pEnt->end(); ++it)
+  {
+      const std::pair<int64_t,int64_t>& pair = *it;
+      entryResult.push_back(pair);
+  }
+
+  BOOST_CHECK(entryResult.size() == 2);
+
+  std::pair<int64_t,int64_t>& pair1  = entryResult[0];
+  std::pair<int64_t,int64_t>& pair2  = entryResult[1];
+
+  BOOST_CHECK_EQUAL(pair1.first, 4000);
+  BOOST_CHECK_EQUAL(pair1.second, 9875);
+
+  BOOST_CHECK_EQUAL(pair2.first, 5000);
+  BOOST_CHECK_EQUAL(pair2.second, 10000);
 
 
 }

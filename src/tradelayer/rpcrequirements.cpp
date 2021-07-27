@@ -1,7 +1,8 @@
 #include <tradelayer/rpcrequirements.h>
-
+#include <tradelayer/ce.h>
 #include <tradelayer/dex.h>
 #include <tradelayer/mdex.h>
+#include <tradelayer/register.h>
 #include <tradelayer/rules.h>
 #include <tradelayer/sp.h>
 #include <tradelayer/tradelayer.h>
@@ -44,24 +45,24 @@ void RequireCollateral(const std::string& address, std::string name_traded, int6
 {
     //NOTE: add changes to inverse quoted
     int64_t uPrice = COIN;
-    uint32_t propertyId = 0;
-    CMPSPInfo::Entry sp;
+    uint32_t contractId = 0;
+    CDInfo::Entry cd;
     std::pair<int64_t, int64_t> factor;
 
-    getEntryFromName(name_traded, propertyId, sp);
+    getContractFromName(name_traded, contractId, cd);
 
     // max = 2.5 basis point in oracles, max = 1.0 basis point in natives
-    (sp.isOracle()) ? (factor.first = 100025, factor.second = 100000) : (sp.isNative()) ? (factor.first = 10001, factor.second = 10000) : (factor.first = 1, factor.second = 1);
+    (cd.isOracle()) ? (factor.first = 100025, factor.second = 100000) : (cd.isNative()) ? (factor.first = 10001, factor.second = 10000) : (factor.first = 1, factor.second = 1);
 
-    arith_uint256 amountTR = (ConvertTo256(factor.first) * ConvertTo256(COIN) * ConvertTo256(amount) * ConvertTo256(sp.margin_requirement)) / (ConvertTo256(leverage) * ConvertTo256(uPrice) * ConvertTo256(factor.second));
+    arith_uint256 amountTR = (ConvertTo256(factor.first) * ConvertTo256(COIN) * ConvertTo256(amount) * ConvertTo256(cd.margin_requirement)) / (ConvertTo256(leverage) * ConvertTo256(uPrice) * ConvertTo256(factor.second));
     int64_t amountToReserve = ConvertTo64(amountTR);
 
-    int64_t nBalance = getMPbalance(address, sp.collateral_currency, BALANCE);
+    int64_t nBalance = getMPbalance(address, cd.collateral_currency, BALANCE);
 
     if (nBalance < amountToReserve || nBalance == 0)
         throw JSONRPCError(RPC_TYPE_ERROR, "Sender has insufficient balance for collateral");
 
-    int64_t balanceUnconfirmed = getUserAvailableMPbalance(address, sp.collateral_currency);
+    int64_t balanceUnconfirmed = getUserAvailableMPbalance(address, cd.collateral_currency);
     if (balanceUnconfirmed == 0)
         throw JSONRPCError(RPC_TYPE_ERROR, "Sender has insufficient balance (due to pending transactions)");
 
@@ -69,7 +70,7 @@ void RequireCollateral(const std::string& address, std::string name_traded, int6
 
 void RequirePosition(const std::string& address, uint32_t contractId)
 {
-    const int64_t position = getMPbalance(address, contractId, CONTRACT_BALANCE);
+    const int64_t position = getContractRecord(address, contractId, CONTRACT_POSITION);
     if (position == 0 ) {
         throw JSONRPCError(RPC_TYPE_ERROR, "Sender has not position in this contract");
     }
@@ -185,55 +186,15 @@ void RequireNotVesting(uint32_t propertyId)
   }
 }
 
-void RequireNotContract(uint32_t propertyId)
+void RequireOracleContract(uint32_t contractId)
 {
-    LOCK(cs_tally);
-    CMPSPInfo::Entry sp;
-    if (!_my_sps->getSP(propertyId, sp)) {
-        throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
-    }
-    if (sp.isContract()) {
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "Property must not be future contract\n");
-    }
-}
-
-void RequireContract(uint32_t propertyId)
-{
-    LOCK(cs_tally);
-    CMPSPInfo::Entry sp;
-    if (!_my_sps->getSP(propertyId, sp)) {
-        throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
-    }
-    if (!sp.isContract()) {
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "contractId must be future contract\n");
-    }
-}
-
-// NOTE: improve this function
-void RequireContract(std::string name_contract)
-{
-    struct FutureContractObject *pfuture = getFutureContractObject(name_contract);
-    uint32_t propertyId = (pfuture) ? pfuture->fco_propertyId : 0;
-
-    LOCK(cs_tally);
-    CMPSPInfo::Entry sp;
-    if (!_my_sps->getSP(propertyId, sp)) {
-        throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
-    }
-    if (!sp.isContract()) {
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "contractId must be future contract\n");
-    }
-}
-
-void RequireOracleContract(uint32_t propertyId)
-{
-    LOCK(cs_tally);
-    CMPSPInfo::Entry sp;
-    if (!_my_sps->getSP(propertyId, sp)) {
-        throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
+    LOCK(cs_register);
+    CDInfo::Entry cd;
+    if (!_my_cds->getCD(contractId, cd)) {
+        throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve contract");
     }
 
-    if (!sp.isOracle()) {
+    if (!cd.isOracle()) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "contractId must be oracle future contract\n");
     }
 }
@@ -317,28 +278,28 @@ void RequireShort(std::string& fromAddress, uint32_t contractId, uint64_t amount
     int64_t contractsNeeded = 0;
     // int index = static_cast<int>(contractId);
 
-    CMPSPInfo::Entry sp;
-    if (!_my_sps->getSP(contractId, sp)) {
+    CDInfo::Entry cd;
+    if (!_my_cds->getCD(contractId, cd)) {
         throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
     }
 
-    if (sp.isContract()) {
-        int64_t notionalSize = static_cast<int64_t>(sp.notional_size);
-        int64_t position = getMPbalance(fromAddress, contractId, CONTRACT_BALANCE);
-        // rational_t conv = notionalChange(contractId);
-        rational_t conv = rational_t(1,1);
-        int64_t num = conv.numerator().convert_to<int64_t>();
-        int64_t denom = conv.denominator().convert_to<int64_t>();
-        arith_uint256 Amount = ConvertTo256(num) * ConvertTo256(amount) / ConvertTo256(denom); // Alls needed
-        arith_uint256 contracts = DivideAndRoundUp(Amount * ConvertTo256(notionalSize), ConvertTo256(1)) ;
-        contractsNeeded = ConvertTo64(contracts);
-        if (contractsNeeded > position) {
-            throw JSONRPCError(RPC_INVALID_PARAMETER, "Not enough short position\n");
-        }
-
-    } else  {
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "contractId must be future contract\n");
+    int64_t notionalSize = static_cast<int64_t>(cd.notional_size);
+    int64_t position = getContractRecord(fromAddress, contractId, CONTRACT_POSITION);
+    
+    if (position >= 0) {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "Must have short position\n");
     }
+
+    rational_t conv = rational_t(1,1);
+    int64_t num = conv.numerator().convert_to<int64_t>();
+    int64_t denom = conv.denominator().convert_to<int64_t>();
+    arith_uint256 Amount = ConvertTo256(num) * ConvertTo256(amount) / ConvertTo256(denom); // Alls needed
+    arith_uint256 contracts = DivideAndRoundUp(Amount * ConvertTo256(notionalSize), ConvertTo256(1)) ;
+    contractsNeeded = ConvertTo64(contracts);
+    if (contractsNeeded > position) {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "Not enough short position\n");
+    }
+
 }
 
 void RequireContractTxId(std::string& txid)

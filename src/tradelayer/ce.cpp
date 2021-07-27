@@ -1,6 +1,6 @@
-// Smart Properties & Crowd Sales
+// Contracts Db Entries
 
-#include <tradelayer/sp.h>
+#include <tradelayer/ce.h>
 
 #include <tradelayer/log.h>
 #include <tradelayer/mdex.h>
@@ -34,157 +34,96 @@ using namespace mastercore;
 
 typedef boost::multiprecision::uint128_t ui128;
 
-CMPSPInfo::Entry::Entry()
-  : prop_type(0), prev_prop_id(0), num_tokens(0),
-    fixed(false), manual(false) {}
+CDInfo::Entry::Entry()
+  : prop_type(0), blocks_until_expiration(0), notional_size(0), collateral_currency(0),
+    margin_requirement(0), attribute_type(0), init_block(0), numerator(0), denominator(1),
+    ticksize(1), inverse_quoted(false), expirated(false)   {}
 
-bool CMPSPInfo::Entry::isDivisible() const
+
+bool CDInfo::Entry::isNative() const
 {
   switch (prop_type)
     {
-    case ALL_PROPERTY_TYPE_DIVISIBLE:
-    case ALL_PROPERTY_TYPE_PEGGEDS:
+    case ALL_PROPERTY_TYPE_NATIVE_CONTRACT:
       return true;
     }
   return false;
 }
 
-// bool CMPSPInfo::Entry::isNative() const
-// {
-//   switch (prop_type)
-//     {
-//     case ALL_PROPERTY_TYPE_NATIVE_CONTRACT:
-//       return true;
-//     }
-//   return false;
-// }
-
-// bool CMPSPInfo::Entry::isSwap() const
-// {
-//   switch (prop_type)
-//     {
-//       case ALL_PROPERTY_TYPE_PERPETUAL_ORACLE:
-//       return true;
-//       case ALL_PROPERTY_TYPE_PERPETUAL_CONTRACTS:
-//       return true;
-//     }
-//   return false;
-// }
-
-// bool CMPSPInfo::Entry::isOracle() const
-// {
-//   switch (prop_type)
-//     {
-//     case ALL_PROPERTY_TYPE_ORACLE_CONTRACT:
-//       return true;
-//     case ALL_PROPERTY_TYPE_PERPETUAL_ORACLE:
-//       return true;
-//     }
-//   return false;
-// }
-
-bool CMPSPInfo::Entry::isPegged() const
+bool CDInfo::Entry::isSwap() const
 {
   switch (prop_type)
     {
-    case ALL_PROPERTY_TYPE_PEGGEDS:
+      case ALL_PROPERTY_TYPE_PERPETUAL_ORACLE:
+      return true;
+      case ALL_PROPERTY_TYPE_PERPETUAL_CONTRACTS:
       return true;
     }
   return false;
 }
 
-// bool CMPSPInfo::Entry::isContract() const
-// {
-//     switch (prop_type)
-//         {
-//             case ALL_PROPERTY_TYPE_NATIVE_CONTRACT:
-//                 return true;
-//
-//             case ALL_PROPERTY_TYPE_ORACLE_CONTRACT:
-//                 return true;
-//
-//             case ALL_PROPERTY_TYPE_PERPETUAL_ORACLE:
-//                 return true;
-//
-//             case ALL_PROPERTY_TYPE_PERPETUAL_CONTRACTS:
-//                 return true;
-//     }
-//   return false;
-// }
-
-void CMPSPInfo::Entry::print() const
+bool CDInfo::Entry::isOracle() const
 {
-  PrintToLog("%s:%s(Fixed=%s,Divisible=%s):%d:%s/%s, %s %s\n",
-		 issuer,
-		 name,
-		 fixed ? "Yes" : "No",
-		 isDivisible() ? "Yes" : "No",
-		 num_tokens,
-		 category, subcategory, url, data);
+  switch (prop_type)
+    {
+    case ALL_PROPERTY_TYPE_ORACLE_CONTRACT:
+      return true;
+    case ALL_PROPERTY_TYPE_PERPETUAL_ORACLE:
+      return true;
+    }
+  return false;
 }
 
-CMPSPInfo::CMPSPInfo(const fs::path& path, bool fWipe)
+
+void CDInfo::Entry::print() const
+{
+  // NOTE: include all contract info
+  // PrintToLog("%s:%s(Fixed=%s,Divisible=%s):%d:%s/%s, %s %s\n",
+	// 	 issuer,
+	// 	 name,
+	// 	 fixed ? "Yes" : "No",
+	// 	 isDivisible() ? "Yes" : "No",
+	// 	 num_tokens,
+	// 	 category, subcategory, url, data);
+}
+
+CDInfo::CDInfo(const fs::path& path, bool fWipe)
 {
   leveldb::Status status = Open(path, fWipe);
   PrintToLog("Loading smart property database: %s\n", status.ToString());
-
-  // special cases for constant SPs ALL and TALL
-  // implied_all.issuer = ExodusAddress().ToString();
-  implied_all.prop_type = ALL_PROPERTY_TYPE_DIVISIBLE;
-  implied_all.num_tokens = 700000;
-  implied_all.category = "N/A";
-  implied_all.subcategory = "N/A";
-  implied_all.name = "ALL";
-  implied_all.url = "";
-  implied_all.data = "";
-  implied_all.kyc.push_back(0); // kyc 0 as default
-  implied_tall.prop_type = ALL_PROPERTY_TYPE_DIVISIBLE;
-  implied_tall.num_tokens = 700000;
-  implied_tall.category = "N/A";
-  implied_tall.subcategory = "N/A";
-  implied_tall.name = "sLTC";
-  implied_tall.url = "";
-  implied_tall.data = "";
-  implied_tall.kyc.push_back(0);
-
   init();
 }
 
-CMPSPInfo::~CMPSPInfo()
+CDInfo::~CDInfo()
 {
-  if (msc_debug_persistence) PrintToLog("CMPSPInfo closed\n");
+  if (msc_debug_persistence) PrintToLog("CDInfo closed\n");
 }
 
-void CMPSPInfo::Clear()
+void CDInfo::Clear()
 {
   // wipe database via parent class
   CDBBase::Clear();
-  // reset "next property identifiers"
   init();
 }
 
-void CMPSPInfo::init(uint32_t nextSPID)
+void CDInfo::init(uint32_t nextCDID)
 {
-  next_spid = nextSPID;
+  next_contract_id = nextCDID;
 }
 
-uint32_t CMPSPInfo::peekNextSPID() const
+uint32_t CDInfo::peekNextContractID() const
 {
-    uint32_t nextId = next_spid;
+    uint32_t nextId = next_contract_id;
 
     return nextId;
 }
 
-bool CMPSPInfo::updateSP(uint32_t propertyId, const Entry& info)
+bool CDInfo::updateCD(uint32_t contractId, const Entry& info)
 {
-  // cannot update implied SP
-  if (ALL == propertyId || sLTC == propertyId) {
-    return false;
-  }
 
   // DB key for property entry
   CDataStream ssSpKey(SER_DISK, CLIENT_VERSION);
-  ssSpKey << std::make_pair('s', propertyId);
+  ssSpKey << std::make_pair('s', contractId);
   leveldb::Slice slSpKey(&ssSpKey[0], ssSpKey.size());
 
   // DB value for property entry
@@ -197,7 +136,7 @@ bool CMPSPInfo::updateSP(uint32_t propertyId, const Entry& info)
   CDataStream ssSpPrevKey(SER_DISK, CLIENT_VERSION);
   ssSpPrevKey << 'b';
   ssSpPrevKey << info.update_block;
-  ssSpPrevKey << propertyId;
+  ssSpPrevKey << contractId;
   leveldb::Slice slSpPrevKey(&ssSpPrevKey[0], ssSpPrevKey.size());
 
   leveldb::WriteBatch batch;
@@ -211,21 +150,21 @@ bool CMPSPInfo::updateSP(uint32_t propertyId, const Entry& info)
   leveldb::Status status = pdb->Write(syncoptions, &batch);
 
   if (!status.ok()) {
-    PrintToLog("%s(): ERROR for SP %d: %s\n", __func__, propertyId, status.ToString());
+    PrintToLog("%s(): ERROR for CD %d: %s\n", __func__, contractId, status.ToString());
     return false;
   }
 
-  PrintToLog("%s(): updated entry for SP %d successfully\n", __func__, propertyId);
+  PrintToLog("%s(): updated entry for CD %d successfully\n", __func__, contractId);
   return true;
 }
 
-uint32_t CMPSPInfo::putSP(const Entry& info)
+uint32_t CDInfo::putCD(const Entry& info)
 {
-    uint32_t propertyId = next_spid++;
+    uint32_t contractId = next_contract_id++;
 
     // DB key for property entry
     CDataStream ssSpKey(SER_DISK, CLIENT_VERSION);
-    ssSpKey << std::make_pair('s', propertyId);
+    ssSpKey << std::make_pair('s', contractId);
     leveldb::Slice slSpKey(&ssSpKey[0], ssSpKey.size());
 
     // DB value for property entry
@@ -241,17 +180,17 @@ uint32_t CMPSPInfo::putSP(const Entry& info)
 
     // DB value for identifier
     CDataStream ssTxValue(SER_DISK, CLIENT_VERSION);
-    ssTxValue.reserve(GetSerializeSize(propertyId, ssSpValue.GetType(), ssSpValue.GetVersion()));
-    ssTxValue << propertyId;
+    ssTxValue.reserve(GetSerializeSize(contractId, ssSpValue.GetType(), ssSpValue.GetVersion()));
+    ssTxValue << contractId;
     leveldb::Slice slTxValue(&ssTxValue[0], ssTxValue.size());
 
     // sanity checking
     std::string existingEntry;
     if (!pdb->Get(readoptions, slSpKey, &existingEntry).IsNotFound() && slSpValue.compare(existingEntry) != 0) {
-        std::string strError = strprintf("writing SP %d to DB, when a different SP already exists for that identifier", propertyId);
+        std::string strError = strprintf("writing CD %d to DB, when a different CD already exists for that identifier", contractId);
         PrintToLog("%s() ERROR: %s\n", __func__, strError);
     } else if (!pdb->Get(readoptions, slTxIndexKey, &existingEntry).IsNotFound() && slTxValue.compare(existingEntry) != 0) {
-        std::string strError = strprintf("writing index txid %s : SP %d is overwriting a different value", info.txid.ToString(), propertyId);
+        std::string strError = strprintf("writing index txid %s : CD %d is overwriting a different value", info.txid.ToString(), contractId);
         PrintToLog("%s() ERROR: %s\n", __func__, strError);
     }
 
@@ -263,26 +202,17 @@ uint32_t CMPSPInfo::putSP(const Entry& info)
     leveldb::Status status = pdb->Write(syncoptions, &batch);
 
     if (!status.ok()) {
-        PrintToLog("%s(): ERROR for SP %d: %s\n", __func__, propertyId, status.ToString());
+        PrintToLog("%s(): ERROR for CD %d: %s\n", __func__, contractId, status.ToString());
     }
 
-    return propertyId;
+    return contractId;
 }
 
-bool CMPSPInfo::getSP(uint32_t propertyId, Entry& info) const
+bool CDInfo::getCD(uint32_t contractId, Entry& info) const
 {
-    // special cases for ALL and sLTC
-    if (ALL == propertyId) {
-        info = implied_all;
-        return true;
-    } else if (sLTC == propertyId){
-        info = implied_tall;
-        return true;
-    }
-
     // DB key for property entry
     CDataStream ssSpKey(SER_DISK, CLIENT_VERSION);
-    ssSpKey << std::make_pair('s', propertyId);
+    ssSpKey << std::make_pair('s', contractId);
     leveldb::Slice slSpKey(&ssSpKey[0], ssSpKey.size());
 
     // DB value for property entry
@@ -290,7 +220,7 @@ bool CMPSPInfo::getSP(uint32_t propertyId, Entry& info) const
     leveldb::Status status = pdb->Get(readoptions, slSpKey, &strSpValue);
     if (!status.ok()) {
         if (!status.IsNotFound()) {
-            PrintToLog("%s(): ERROR for SP %d: %s\n", __func__, propertyId, status.ToString());
+            PrintToLog("%s(): ERROR for CD %d: %s\n", __func__, contractId, status.ToString());
         }
         return false;
     }
@@ -299,23 +229,18 @@ bool CMPSPInfo::getSP(uint32_t propertyId, Entry& info) const
         CDataStream ssSpValue(strSpValue.data(), strSpValue.data() + strSpValue.size(), SER_DISK, CLIENT_VERSION);
         ssSpValue >> info;
     } catch (const std::exception& e) {
-        PrintToLog("%s(): ERROR for SP %d: %s\n", __func__, propertyId, e.what());
+        PrintToLog("%s(): ERROR for CD %d: %s\n", __func__, contractId, e.what());
         return false;
     }
 
     return true;
 }
 
-bool CMPSPInfo::hasSP(uint32_t propertyId) const
+bool CDInfo::hasCD(uint32_t contractId) const
 {
-    // Special cases for ALL and sLTC
-    if (ALL == propertyId || sLTC == propertyId) {
-        return true;
-    }
-
     // DB key for property entry
     CDataStream ssSpKey(SER_DISK, CLIENT_VERSION);
-    ssSpKey << std::make_pair('s', propertyId);
+    ssSpKey << std::make_pair('s', contractId);
     leveldb::Slice slSpKey(&ssSpKey[0], ssSpKey.size());
 
     // DB value for property entry
@@ -326,9 +251,9 @@ bool CMPSPInfo::hasSP(uint32_t propertyId) const
     return true;
 }
 
-uint32_t CMPSPInfo::findSPByTX(const uint256& txid) const
+uint32_t CDInfo::findCDByTX(const uint256& txid) const
 {
-    uint32_t propertyId = 0;
+    uint32_t contractId = 0;
 
     // DB key for identifier lookup entry
     CDataStream ssTxIndexKey(SER_DISK, CLIENT_VERSION);
@@ -338,23 +263,23 @@ uint32_t CMPSPInfo::findSPByTX(const uint256& txid) const
     // DB value for identifier
     std::string strTxIndexValue;
     if (!pdb->Get(readoptions, slTxIndexKey, &strTxIndexValue).ok()) {
-        std::string strError = strprintf("failed to find property created with %s", txid.GetHex());
+        std::string strError = strprintf("failed to find contract created with %s", txid.GetHex());
         PrintToLog("%s(): ERROR: %s", __func__, strError);
         return 0;
     }
 
     try {
         CDataStream ssValue(strTxIndexValue.data(), strTxIndexValue.data() + strTxIndexValue.size(), SER_DISK, CLIENT_VERSION);
-        ssValue >> propertyId;
+        ssValue >> contractId;
     } catch (const std::exception& e) {
         PrintToLog("%s(): ERROR: %s\n", __func__, e.what());
         return 0;
     }
 
-    return propertyId;
+    return contractId;
 }
 
-int64_t CMPSPInfo::popBlock(const uint256& block_hash)
+int64_t CDInfo::popBlock(const uint256& block_hash)
 {
     int64_t remainingSPs = 0;
     leveldb::WriteBatch commitBatch;
@@ -388,10 +313,10 @@ int64_t CMPSPInfo::popBlock(const uint256& block_hash)
                 commitBatch.Delete(slSpKey);
                 commitBatch.Delete(slTxIndexKey);
             } else {
-                uint32_t propertyId = 0;
+                uint32_t contractId = 0;
                 try {
                     CDataStream ssValue(1+slSpKey.data(), 1+slSpKey.data()+slSpKey.size(), SER_DISK, CLIENT_VERSION);
-                    ssValue >> propertyId;
+                    ssValue >> contractId;
                 } catch (const std::exception& e) {
                     PrintToLog("%s(): ERROR: %s\n", __func__, e.what());
                     return -2;
@@ -400,7 +325,7 @@ int64_t CMPSPInfo::popBlock(const uint256& block_hash)
                 CDataStream ssSpPrevKey(SER_DISK, CLIENT_VERSION);
                 ssSpPrevKey << 'b';
                 ssSpPrevKey << info.update_block;
-                ssSpPrevKey << propertyId;
+                ssSpPrevKey << contractId;
                 leveldb::Slice slSpPrevKey(&ssSpPrevKey[0], ssSpPrevKey.size());
 
                 std::string strSpPrevValue;
@@ -410,8 +335,8 @@ int64_t CMPSPInfo::popBlock(const uint256& block_hash)
                     commitBatch.Delete(slSpPrevKey);
                     ++remainingSPs;
                 } else {
-                    // failed to find a previous SP entry, trigger reparse
-                    PrintToLog("%s(): ERROR: failed to retrieve previous SP entry\n", __func__);
+                    // failed to find a previous CD entry, trigger reparse
+                    PrintToLog("%s(): ERROR: failed to retrieve previous CD entry\n", __func__);
                     return -3;
                 }
             }
@@ -433,7 +358,7 @@ int64_t CMPSPInfo::popBlock(const uint256& block_hash)
     return remainingSPs;
 }
 
-void CMPSPInfo::setWatermark(const uint256& watermark)
+void CDInfo::setWatermark(const uint256& watermark)
 {
     leveldb::WriteBatch batch;
 
@@ -451,11 +376,11 @@ void CMPSPInfo::setWatermark(const uint256& watermark)
 
     leveldb::Status status = pdb->Write(syncoptions, &batch);
     if (!status.ok()) {
-        PrintToLog("%s(): ERROR: failed to write watermark: %s\n", __func__, status.ToString());
+        PrintToLog("%s(): ERROR: failed to write CD watermark: %s\n", __func__, status.ToString());
     }
 }
 
-bool CMPSPInfo::getWatermark(uint256& watermark) const
+bool CDInfo::getWatermark(uint256& watermark) const
 {
     CDataStream ssKey(SER_DISK, CLIENT_VERSION);
     ssKey << 'B';
@@ -465,7 +390,7 @@ bool CMPSPInfo::getWatermark(uint256& watermark) const
     leveldb::Status status = pdb->Get(readoptions, slKey, &strValue);
     if (!status.ok()) {
         if (!status.IsNotFound()) {
-            PrintToLog("%s(): ERROR: failed to retrieve watermark: %s\n", __func__, status.ToString());
+            PrintToLog("%s(): ERROR: failed to retrieve CD watermark: %s\n", __func__, status.ToString());
         }
         return false;
     }
@@ -481,16 +406,16 @@ bool CMPSPInfo::getWatermark(uint256& watermark) const
     return true;
 }
 
-void CMPSPInfo::printAll() const
+void CDInfo::printAll() const
 {
     // print off the hard coded ALL and TALL entries
-    for (uint32_t idx = TL_PROPERTY_ALL; idx <= TL_PROPERTY_TALL; idx++) {
+    for (uint32_t idx = 1; idx <= next_contract_id; idx++) {
         Entry info;
         PrintToLog("%10d => ", idx);
-        if (getSP(idx, info)) {
+        if (getCD(idx, info)) {
             info.print();
         } else {
-            PrintToLog("<Internal Error on implicit SP>\n");
+            PrintToLog("<Internal Error on implicit CD>\n");
         }
     }
 
@@ -502,16 +427,16 @@ void CMPSPInfo::printAll() const
 
     for (iter->Seek(slSpKeyPrefix); iter->Valid() && iter->key().starts_with(slSpKeyPrefix); iter->Next()) {
         leveldb::Slice slSpKey = iter->key();
-        uint32_t propertyId = 0;
+        uint32_t contractId = 0;
         try {
             CDataStream ssValue(1+slSpKey.data(), 1+slSpKey.data()+slSpKey.size(), SER_DISK, CLIENT_VERSION);
-            ssValue >> propertyId;
+            ssValue >> contractId;
         } catch (const std::exception& e) {
             PrintToLog("%s(): ERROR: %s\n", __func__, e.what());
             PrintToLog("<Malformed key in DB>\n");
             continue;
         }
-        PrintToLog("%10s => ", propertyId);
+        PrintToLog("%10s => ", contractId);
 
         // deserialize the persisted data
         leveldb::Slice slSpValue = iter->value();
@@ -531,118 +456,32 @@ void CMPSPInfo::printAll() const
     delete iter;
 }
 
-bool mastercore::IsPropertyIdValid(uint32_t propertyId)
-{
-  // is true, because we can exchange litecoins too
-  if (propertyId == LTC) return true;
-
-  uint32_t nextId = 0;
-
-  if (propertyId < MAX_PROPERTY_N) {
-    nextId = _my_sps->peekNextSPID();
-  }
-
-  if (propertyId < nextId) {
-    return true;
-  }
-
-  return false;
-}
-
-bool mastercore::isPropertyDivisible(uint32_t propertyId)
-{
-  // TODO: is a lock here needed
-  CMPSPInfo::Entry sp;
-
-  if (_my_sps->getSP(propertyId, sp)) return sp.isDivisible();
-
-  return true;
-}
 
 
-// bool mastercore::isPropertySwap(uint32_t propertyId)
+// bool mastercore::isPropertySwap(uint32_t contractId)
 // {
-//   CMPSPInfo::Entry sp;
+//   CDInfo::Entry sp;
 //
-//   if (_my_sps->getSP(propertyId, sp)) return sp.isSwap();
+//   if (_my_cds->getCD(contractId, sp)) return sp.isSwap();
 //
 //   return true;
 // }
 
-bool mastercore::isPropertyPegged(uint32_t propertyId)
+
+std::string mastercore::getContractName(uint32_t contractId)
 {
-  CMPSPInfo::Entry sp;
-
-  if (_my_sps->getSP(propertyId, sp)) return sp.isPegged();
-
-  return true;
+    CDInfo::Entry sp;
+    if (_my_cds->getCD(contractId, sp)) return sp.name;
+    return "Contract Name Not Found";
 }
 
-std::string mastercore::getPropertyName(uint32_t propertyId)
+bool mastercore::getContractFromName(const std::string& name, uint32_t& contractId, CDInfo::Entry& sp)
 {
-    CMPSPInfo::Entry sp;
-    if (_my_sps->getSP(propertyId, sp)) return sp.name;
-    return "Property Name Not Found";
-}
-
-bool mastercore::getEntryFromName(const std::string& name, uint32_t& propertyId, CMPSPInfo::Entry& sp)
-{
-    uint32_t nextSPID = _my_sps->peekNextSPID();
-    for (propertyId = 1; propertyId < nextSPID; propertyId++)
+    uint32_t nextCDID = _my_cds->peekNextContractID();
+    for (contractId = 1; contractId < nextCDID; contractId++)
     {
-        if (_my_sps->getSP(propertyId, sp) && name == sp.name) return true;
+        if (_my_cds->getCD(contractId, sp) && name == sp.name) return true;
     }
 
     return false;
-}
-
-// int mastercore::addInterestPegged(int nBlockPrev, const CBlockIndex* pBlockIndex)
-// {
-//     allPrice = 888;
-//     for (std::unordered_map<std::string, CMPTally>::iterator it = mp_tally_map.begin(); it != mp_tally_map.end(); ++it) {
-//             uint32_t id = 0;
-//             std::string address = it->first;
-//             (it->second).init();
-//
-//             // searching for pegged currency
-//             while (0 != (id = (it->second).next())) {
-//                 CMPSPInfo::Entry newSp;
-//                 if (!_my_sps->getSP(id, newSp) || newSp.prop_type != ALL_PROPERTY_TYPE_PEGGEDS) {
-//                     continue;
-//                 }
-//
-//                 // checking for deadline block
-//                 CMPSPInfo::Entry spp;
-//                 _my_sps->getSP(newSp.contract_associated, spp);
-//                 int actualBlock = static_cast<int>(pBlockIndex->nHeight);
-//                 int deadline = static_cast<int>(spp.blocks_until_expiration) + spp.init_block;
-//                 if (deadline != actualBlock) { continue; }
-//
-//                 int64_t diff = priceIndex - nMarketPrice;
-//                 // int64_t tokens = static_cast<int64_t>(newSp.num_tokens);
-//                 // arith_uint256 num_tokens = ConvertTo256(tokens) / ConvertTo256(factorE);
-//                 arith_uint256 interest = ConvertTo256(diff) / ConvertTo256(nMarketPrice);
-//
-//                 //adding interest to pegged
-//                 int64_t nPegged = getMPbalance(address, id, BALANCE);
-//                 arith_uint256 all = ConvertTo256(nPegged) * interest / ConvertTo256(allPrice);
-//                 int64_t intAll = ConvertTo64(all);
-//                 assert(update_tally_map(address, id, intAll, BALANCE));
-//
-//             }
-//
-//         }
-//
-//     return 1;
-// }
-
-std::string mastercore::strPropertyType(uint16_t propertyType)
-{
-  switch (propertyType)
-    {
-    case ALL_PROPERTY_TYPE_DIVISIBLE: return "divisible";
-    case ALL_PROPERTY_TYPE_INDIVISIBLE: return "indivisible";
-    }
-
-  return "unknown";
 }

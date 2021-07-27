@@ -66,7 +66,8 @@ const int MAX_CLASS_D_SEARCH_BYTES = 200;
 const int BASISPOINT = 100;
 
 // Oracle twaps blocks
-const int oBlocks = 9;
+const int OBLOCKS = 9;
+const int OL_BLOCKS = 3;
 
 // settlement variables
 const int BlockS = 500; /** regtest **/
@@ -178,6 +179,8 @@ enum FILETYPES {
   FILE_TYPE_LTC_VOLUME,
   FILE_TYPE_TOKEN_LTC_PRICE,
   FILE_TYPE_TOKEN_VWAP,
+  FILE_TYPE_REGISTER,
+  FILETYPE_CONTRACT_GLOBALS,
   NUM_FILETYPES
 };
 
@@ -191,6 +194,7 @@ const int PKT_ERROR_TOKENS       = -82000;
 const int PKT_ERROR_SEND_ALL     = -83000;
 const int PKT_ERROR_METADEX      = -80000;
 const int METADEX_ERROR          = -81000;
+const int CONTRACTDEX_ERROR      = -82000;
 
 const int DEX_ERROR_SELLOFFER    = -10000;
 const int DEX_ERROR_ACCEPT       = -20000;
@@ -503,6 +507,7 @@ class CMPTradeList : public CDBBase
   bool checkKYCRegister(const std::string& address, int& kyc_id);
   bool checkAttestationReg(const std::string& address, int& kyc_id);
   bool kycPropertyMatch(uint32_t propertyId, int kyc_id);
+  bool kycContractMatch(uint32_t contractId, int kyc_id);
   bool kycLoop(UniValue& response);
   bool attLoop(UniValue& response);
 
@@ -724,7 +729,7 @@ namespace mastercore
 
   bool checkChannelAddress(const std::string& channelAddress);
 
-  // bool addressesInChannel(const std::string& fAddr, const std::string& sAddr);
+  bool LiquidationEngine(int Block);
 }
 
 #endif // TRADELAYER_TL_H

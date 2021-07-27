@@ -5,12 +5,13 @@
  */
 
 #include <tradelayer/dex.h>
-
+#include <tradelayer/ce.h>
 #include <tradelayer/convert.h>
 #include <tradelayer/errors.h>
 #include <tradelayer/externfns.h>
 #include <tradelayer/log.h>
 #include <tradelayer/mdex.h>
+#include <tradelayer/register.h>
 #include <tradelayer/rules.h>
 #include <tradelayer/sp.h>
 #include <tradelayer/tradelayer.h>
@@ -40,7 +41,6 @@ std::map<uint32_t,std::map<int,std::vector<std::pair<int64_t,int64_t>>>> masterc
 namespace mastercore
 {
 
-extern CMPSPInfo *_my_sps;
 /**
  * Checks, if such a sell offer exists.
  */
@@ -201,46 +201,46 @@ int DEx_BuyOfferCreate(const std::string& addressMaker, uint32_t propertyId, int
 
     // ------------------------------------------------------------------------
     // On this part we need to put in reserve synth Litecoins.
-    LOCK(cs_tally);
-
-    arith_uint256 sumValues;
-    uint32_t nextSPID = _my_sps->peekNextSPID();
-
-    for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
-    {
-        CMPSPInfo::Entry sp;
-        if (_my_sps->getSP(propertyId, sp))
-        {
-            if (msc_debug_dex) PrintToLog("Property Id: %d\n",propertyId);
-            if (!sp.isContract())
-	              continue;
-
-            int64_t longs = 0;
-            int64_t shorts = 0;
-
-            const int64_t balance = getMPbalance(addressMaker, propertyId, CONTRACT_BALANCE);
-
-            (balance > 0) ? longs = balance : shorts = balance;
-
-            if (msc_debug_dex) PrintToLog("%s(): longs: %d, shorts: %d, notional: %d\n",__func__, longs, shorts, sp.notional_size);
-
-            // price of one sLTC in ALLs
-            int64_t pair = getPairMarketPrice("sLTC", "ALL");
-
-            if (msc_debug_dex) PrintToLog("pair: %d\n", pair);
-
-            const int64_t side = (longs >= 0 && shorts == 0) ? longs : (longs == 0 && shorts >= 0) ? shorts : 0;
-            arith_uint256 sumNum = (ConvertTo256(side) * ConvertTo256(sp.notional_size)) * ConvertTo256(pair);
-            sumValues += DivideAndRoundUp(sumNum, COIN);
-	          if (sumValues > ConvertTo256(price))
-            {
-                // price = price of entire order   .
-	              if (msc_debug_dex) PrintToLog("You can buy tokens now\n");
-	              // ready = true;
-	              break;
-            }
-        }
-    }
+    // LOCK(cs_register);
+    //
+    // arith_uint256 sumValues;
+    // uint32_t nextCDID = _my_cds->peekNextContractID();
+    //
+    // for (uint32_t contractId = 1; contractId < nextCDID; contractId++)
+    // {
+    //     CDInfo::Entry cd;
+    //     if (_my_cds->getCD(contractId, cd))
+    //     {
+    //         if (msc_debug_dex) PrintToLog("Property Id: %d\n", contractId);
+    //
+    //         int64_t longs = 0;
+    //         int64_t shorts = 0;
+    //
+    //         const int64_t balance = getMPbalance(addressMaker, contractId, CONTRACT_BALANCE);
+    //
+    //         (balance > 0) ? longs = balance : shorts = balance;
+    //
+    //         if (msc_debug_dex) PrintToLog("%s(): longs: %d, shorts: %d, notional: %d\n",__func__, longs, shorts, cd.notional_size);
+    //
+    //         // price of one sLTC in ALLs
+    //         // NOTE: it needs MORE WORK!
+    //         // int64_t pair = getPairMarketPrice("sLTC", "ALL");
+    //         int64_t pair = 1;
+    //
+    //         if (msc_debug_dex) PrintToLog("pair: %d\n", pair);
+    //
+    //         const int64_t side = (longs >= 0 && shorts == 0) ? longs : (longs == 0 && shorts >= 0) ? shorts : 0;
+    //         arith_uint256 sumNum = (ConvertTo256(side) * ConvertTo256(cd.notional_size)) * ConvertTo256(pair);
+    //         sumValues += DivideAndRoundUp(sumNum, COIN);
+	  //         if (sumValues > ConvertTo256(price))
+    //         {
+    //             // price = price of entire order   .
+	  //             if (msc_debug_dex) PrintToLog("You can buy tokens now\n");
+	  //             // ready = true;
+	  //             break;
+    //         }
+    //     }
+    // }
 
     // NOTE: check conditions to buy tokens using litecoin
     // if (ready)
@@ -491,166 +491,167 @@ int64_t calculateDExPurchase(const int64_t amountOffered, const int64_t amountDe
 /**
  * Handles incoming LTC payment for the offer in tradelayer.cpp
  */
-int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addressSeller, const std::string& addressBuyer, int64_t amountPaid, int block, uint64_t* nAmended)
-{
-    if (msc_debug_dex) PrintToLog("%s(%s, %s)\n", __func__, addressSeller, addressBuyer);
-    int rc = DEX_ERROR_PAYMENT;
-    uint32_t propertyId;
+ int DEx_payment(const uint256& txid, unsigned int vout, const std::string& addressSeller, const std::string& addressBuyer, int64_t amountPaid, int block, uint64_t* nAmended)
+ {
+     if (msc_debug_dex) PrintToLog("%s(%s, %s)\n", __func__, addressSeller, addressBuyer);
+     int rc = DEX_ERROR_PAYMENT;
+     uint32_t propertyId;
 
-    CMPAccept* p_accept = nullptr;
+     CMPAccept* p_accept = nullptr;
 
-    // logic here: we look only into main properties if there's some match
-    for (propertyId = 1; propertyId < _my_sps->peekNextSPID(); propertyId++)
-    {
-        CMPSPInfo::Entry sp;
-        if (msc_debug_dex) PrintToLog("propertyId: %d\n",propertyId);
-        if (!_my_sps->getSP(propertyId, sp)) continue;
+     // logic here: we look only into main properties if there's some match
+     for (propertyId = 1; propertyId < _my_sps->peekNextSPID(); propertyId++)
+     {
+         CMPSPInfo::Entry sp;
+         if (msc_debug_dex) PrintToLog("propertyId: %d\n",propertyId);
+         if (!_my_sps->getSP(propertyId, sp)) continue;
 
-        // seller market maker?
-        p_accept = DEx_getAccept(addressSeller, propertyId, addressBuyer);
+         // seller market maker?
+         p_accept = DEx_getAccept(addressSeller, propertyId, addressBuyer);
 
-        if (p_accept)
-        {
-            if (msc_debug_dex) PrintToLog("Found seller market maker!\n");
-            break;
-        }
+         if (p_accept)
+         {
+             if (msc_debug_dex) PrintToLog("Found seller market maker!\n");
+             break;
+         }
 
-        // buyer market maker?
-        if (IsFeatureActivated(FEATURE_DEX_BUY, block))
-        {
-            p_accept = DEx_getAccept(addressBuyer, propertyId, addressSeller);
+         // buyer market maker?
+         if (IsFeatureActivated(FEATURE_DEX_BUY, block))
+         {
+             p_accept = DEx_getAccept(addressBuyer, propertyId, addressSeller);
 
-            if (p_accept)
-            {
-                if (msc_debug_dex) PrintToLog("Found buyer market maker!\n");
-                break;
-            }
+             if (p_accept)
+             {
+                 if (msc_debug_dex) PrintToLog("Found buyer market maker!\n");
+                 break;
+             }
 
-        }
-    }
+         }
+     }
 
-    if (!p_accept && msc_debug_dex)
-    {
-       PrintToLog("%s(): ERROR: there must be an active accept order for this payment, seller: %s, buyer: %s\n",__func__, addressSeller, addressBuyer);
-       return (DEX_ERROR_PAYMENT -1);
-    }
+     if (!p_accept && msc_debug_dex)
+     {
+        PrintToLog("%s(): ERROR: there must be an active accept order for this payment, seller: %s, buyer: %s\n",__func__, addressSeller, addressBuyer);
+        return (DEX_ERROR_PAYMENT -1);
+     }
 
-    // -------------------------------------------------------------------------
-    const int64_t amountDesired = p_accept->getLTCDesiredOriginal();
-    const int64_t amountOffered = p_accept->getOfferAmountOriginal();
+     // -------------------------------------------------------------------------
+     const int64_t amountDesired = p_accept->getLTCDesiredOriginal();
+     const int64_t amountOffered = p_accept->getOfferAmountOriginal();
 
-    if (msc_debug_dex) PrintToLog("%s(): amountDesired : %d, amountOffered : %d\n",__func__, amountDesired, amountOffered);
+     if (msc_debug_dex) PrintToLog("%s(): amountDesired : %d, amountOffered : %d\n",__func__, amountDesired, amountOffered);
 
-    // divide by 0 protection
-    if (0 == amountDesired && msc_debug_dex)
-    {
-        PrintToLog("%s(): ERROR: desired amount of accept order is zero", __func__);
-        return (DEX_ERROR_PAYMENT -2);
-    }
+     // divide by 0 protection
+     if (0 == amountDesired && msc_debug_dex)
+     {
+         PrintToLog("%s(): ERROR: desired amount of accept order is zero", __func__);
+         return (DEX_ERROR_PAYMENT -2);
+     }
 
-   /**
-    * Plain integer math is used to determine
-    * the purchased amount. The purchased amount is rounded up, which may be
-    * in favor of the buyer, to avoid small leftovers of 1 willet.
-    *
-    * This is not exploitable due to transaction fees.
-    */
-     int64_t amountPurchased = mastercore::calculateDExPurchase(amountOffered, amountDesired, amountPaid);
-
-
-    // -------------------------------------------------------------------------
-
-    // adding LTC volume added by this property
-    PrintToLog("%s(): block: %d, propertyId: %d. amountPaid (LTC): %d\n",__func__, block, propertyId, amountPaid);
-    MapLTCVolume[block][propertyId] += amountPaid;
-
-    const arith_uint256 amountDesired256  = ConvertTo256(amountDesired);
-    const arith_uint256 amountOffered256 = ConvertTo256(amountOffered);
-    const arith_uint256 unitPrice256 = (ConvertTo256(COIN) * amountDesired256) / amountOffered256;
-
-    const int64_t unitPrice = (isPropertyDivisible(propertyId)) ? ConvertTo64(unitPrice256) : ConvertTo64(unitPrice256) / COIN;
-
-    // adding last price
-    lastPrice[propertyId] = unitPrice;
-
-    // adding numerator of vwap
-    tokenvwap[propertyId][block].push_back(std::make_pair(unitPrice, amountPurchased));
-
-    // saving DEx token volume
-    MapTokenVolume[block][propertyId] += amountPurchased;
+    /**
+     * Plain integer math is used to determine
+     * the purchased amount. The purchased amount is rounded up, which may be
+     * in favor of the buyer, to avoid small leftovers of 1 willet.
+     *
+     * This is not exploitable due to transaction fees.
+     */
+      int64_t amountPurchased = mastercore::calculateDExPurchase(amountOffered, amountDesired, amountPaid);
 
 
-    // adding Last token/ ltc price
-    rational_t market_pricetokens_LTC(amountPurchased, amountPaid);
-    int64_t market_p_tokens_LTC = mastercore::RationalToInt64(market_pricetokens_LTC);
-    market_priceMap[LTC][propertyId] = market_p_tokens_LTC;
+     // -------------------------------------------------------------------------
 
-    if(msc_debug_dex) PrintToLog("%s(): amountPaid for propertyId : %d,  inside MapLTCVolume: %d, market_p_tokens_LTC : %d\n", __func__, propertyId, amountPaid, market_p_tokens_LTC);
+     // adding LTC volume added by this property
+     PrintToLog("%s(): block: %d, propertyId: %d. amountPaid (LTC): %d\n",__func__, block, propertyId, amountPaid);
+     MapLTCVolume[block][propertyId] += amountPaid;
 
-    // -------------------------------------------------------------------------
-    if (msc_debug_dex) PrintToLog("amountPurchased: %d\n",amountPurchased);
-    const int64_t amountRemaining = p_accept->getAcceptAmountRemaining(); // actual amount desired, in the Accept
+     const arith_uint256 amountDesired256  = ConvertTo256(amountDesired);
+     const arith_uint256 amountOffered256 = ConvertTo256(amountOffered);
+     const arith_uint256 unitPrice256 = (ConvertTo256(COIN) * amountDesired256) / amountOffered256;
 
-    if (msc_debug_dex) PrintToLog(
-    "%s(): LTC desired: %s, offered amount: %s, amount to purchase: %s, amount remaining: %s\n", __func__,
-    FormatDivisibleMP(amountDesired), FormatDivisibleMP(amountOffered),
-    FormatDivisibleMP(amountPurchased), FormatDivisibleMP(amountRemaining));
+     const int64_t unitPrice = (isPropertyDivisible(propertyId)) ? ConvertTo64(unitPrice256) : ConvertTo64(unitPrice256) / COIN;
 
+     // adding last price
+     lastPrice[propertyId] = unitPrice;
 
-    // if units_purchased is greater than what's in the Accept, the buyer gets only what's in the Accept
-    if (amountRemaining < amountPurchased)
-    {
-        amountPurchased = amountRemaining;
-        if (nAmended) *nAmended = amountPurchased;
-    }
+     // adding numerator of vwap
+     tokenvwap[propertyId][block].push_back(std::make_pair(unitPrice, amountPurchased));
 
-    if (msc_debug_dex) PrintToLog("amountPurchased: %d",amountPurchased);
-
-    if (amountPurchased > 0)
-    {
-        if(msc_debug_dex) PrintToLog("%s(): seller %s offered %s %s for %s LTC\n", __func__,
-	      addressSeller, FormatDivisibleMP(amountOffered), strMPProperty(propertyId), FormatDivisibleMP(amountDesired));
-
-        if(msc_debug_dex) PrintToLog("%s: buyer %s pays %s LTC to purchase %s %s\n", __func__,
-	      addressBuyer, FormatDivisibleMP(amountPaid), FormatDivisibleMP(amountPurchased), strMPProperty(propertyId));
-
-        assert(update_tally_map(addressSeller, propertyId, -amountPurchased, ACCEPT_RESERVE));
-        assert(update_tally_map(addressBuyer, propertyId, amountPurchased, BALANCE));
-
-        if(msc_debug_dex) PrintToLog("AmountPurchased : %d\n",amountPurchased);
-
-        bool valid = true;
-        p_txlistdb->recordPaymentTX(txid, valid, block, vout, propertyId, amountPurchased, amountPaid, addressBuyer, addressSeller);
-
-        rc = 0;
-        if(msc_debug_dex) PrintToLog("#######################################################\n");
-    }
-
-    // reduce the amount of units still desired by the buyer and if 0 destroy the Accept order
-    if (p_accept->reduceAcceptAmountRemaining_andIsZero(amountPurchased))
-    {
-        if(msc_debug_dex) PrintToLog("p_accept->reduceAcceptAmountRemaining_andIsZero true\n");
-
-        const int64_t reserveSell = getMPbalance(addressSeller, propertyId, SELLOFFER_RESERVE);
-        const int64_t reserveAccept = getMPbalance(addressSeller, propertyId, ACCEPT_RESERVE);
-
-        if(msc_debug_dex) PrintToLog("reserveSell: %d, reserveAccept: %d\n",reserveSell, reserveAccept);
+     // saving DEx token volume
+     MapTokenVolume[block][propertyId] += amountPurchased;
 
 
-        DEx_acceptDestroy(addressBuyer, addressSeller, propertyId, true);
+     // adding Last token/ ltc price
+     rational_t market_pricetokens_LTC(amountPurchased, amountPaid);
+     int64_t market_p_tokens_LTC = mastercore::RationalToInt64(market_pricetokens_LTC);
+     market_priceMap[LTC][propertyId] = market_p_tokens_LTC;
 
-        // delete the Offer object if there is nothing in its Reserves -- everything got puchased and paid for
-        if (0 == reserveSell && 0 == reserveAccept)
-        {
-            if(msc_debug_dex) PrintToLog("0 == reserveSell && 0 == reserveAccept true\n");
-            DEx_offerDestroy(addressSeller, propertyId);
-        }
+     if(msc_debug_dex) PrintToLog("%s(): amountPaid for propertyId : %d,  inside MapLTCVolume: %d, market_p_tokens_LTC : %d\n", __func__, propertyId, amountPaid, market_p_tokens_LTC);
 
-        rc = 0;
-    }
+     // -------------------------------------------------------------------------
+     if (msc_debug_dex) PrintToLog("amountPurchased: %d\n",amountPurchased);
+     const int64_t amountRemaining = p_accept->getAcceptAmountRemaining(); // actual amount desired, in the Accept
 
-    return rc;
-}
+     if (msc_debug_dex) PrintToLog(
+     "%s(): LTC desired: %s, offered amount: %s, amount to purchase: %s, amount remaining: %s\n", __func__,
+     FormatDivisibleMP(amountDesired), FormatDivisibleMP(amountOffered),
+     FormatDivisibleMP(amountPurchased), FormatDivisibleMP(amountRemaining));
+
+
+     // if units_purchased is greater than what's in the Accept, the buyer gets only what's in the Accept
+     if (amountRemaining < amountPurchased)
+     {
+         amountPurchased = amountRemaining;
+         if (nAmended) *nAmended = amountPurchased;
+     }
+
+     if (msc_debug_dex) PrintToLog("amountPurchased: %d",amountPurchased);
+
+     if (amountPurchased > 0)
+     {
+         if(msc_debug_dex) PrintToLog("%s(): seller %s offered %s %s for %s LTC\n", __func__,
+ 	      addressSeller, FormatDivisibleMP(amountOffered), strMPProperty(propertyId), FormatDivisibleMP(amountDesired));
+
+         if(msc_debug_dex) PrintToLog("%s: buyer %s pays %s LTC to purchase %s %s\n", __func__,
+ 	      addressBuyer, FormatDivisibleMP(amountPaid), FormatDivisibleMP(amountPurchased), strMPProperty(propertyId));
+
+         assert(update_tally_map(addressSeller, propertyId, -amountPurchased, ACCEPT_RESERVE));
+         assert(update_tally_map(addressBuyer, propertyId, amountPurchased, BALANCE));
+
+         if(msc_debug_dex) PrintToLog("AmountPurchased : %d\n",amountPurchased);
+
+         bool valid = true;
+         p_txlistdb->recordPaymentTX(txid, valid, block, vout, propertyId, amountPurchased, amountPaid, addressBuyer, addressSeller);
+
+         rc = 0;
+         if(msc_debug_dex) PrintToLog("#######################################################\n");
+     }
+
+     // reduce the amount of units still desired by the buyer and if 0 destroy the Accept order
+     if (p_accept->reduceAcceptAmountRemaining_andIsZero(amountPurchased))
+     {
+         if(msc_debug_dex) PrintToLog("p_accept->reduceAcceptAmountRemaining_andIsZero true\n");
+
+         const int64_t reserveSell = getMPbalance(addressSeller, propertyId, SELLOFFER_RESERVE);
+         const int64_t reserveAccept = getMPbalance(addressSeller, propertyId, ACCEPT_RESERVE);
+
+         if(msc_debug_dex) PrintToLog("reserveSell: %d, reserveAccept: %d\n",reserveSell, reserveAccept);
+
+
+         DEx_acceptDestroy(addressBuyer, addressSeller, propertyId, true);
+
+         // delete the Offer object if there is nothing in its Reserves -- everything got puchased and paid for
+         if (0 == reserveSell && 0 == reserveAccept)
+         {
+             if(msc_debug_dex) PrintToLog("0 == reserveSell && 0 == reserveAccept true\n");
+             DEx_offerDestroy(addressSeller, propertyId);
+         }
+
+         rc = 0;
+     }
+
+     return rc;
+ }
+
 
 unsigned int eraseExpiredAccepts(int blockNow)
 {

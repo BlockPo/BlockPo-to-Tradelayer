@@ -359,6 +359,10 @@ inline std::string error_str(int ec) {
       ec_str = "Unable to close channel";
       break;
 
+    case CONTRACTDEX_ERROR -1:
+      ec_str = "Bad leverage for the order";
+      break;
+
     default:
       ec_str = "Unknown error";
     }

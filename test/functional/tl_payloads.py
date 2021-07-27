@@ -257,7 +257,7 @@ class PayloadsBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, False, "tl_createpayload_cancelallcontractsbyaddress", params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result'], '002005')
+        assert_equal(out['result'], '002001')
 
 
         self.log.info("Testing tl_createpayload_closeposition")
@@ -273,7 +273,7 @@ class PayloadsBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, False, "tl_createpayload_sendissuance_pegged", params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result'], '00640200506567676564000505ed13')
+        assert_equal(out['result'], '00640200506567676564000501809aa9ccb207')
 
 
         self.log.info("Testing tl_createpayload_send_pegged")
@@ -289,7 +289,7 @@ class PayloadsBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, False, "tl_createpayload_redemption_pegged", params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result'], '0065000580e497d012')
+        assert_equal(out['result'], '0065000180e497d012')
 
 
         self.log.info("Testing tl_createpayload_cancelorderbyblock")
@@ -329,7 +329,7 @@ class PayloadsBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, False, "tl_createpayload_instant_trade", params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result'], '006e0480d0dbc3f402ac0205d00f')
+        assert_equal(out['result'], '006e0480d0dbc3f402ac020580a0b787e905')
 
 
         self.log.info("Testing tl_createpayload_instant_ltc_trade")
@@ -376,7 +376,7 @@ class PayloadsBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, False, "tl_createpayload_change_oracleadm", params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result'], '006805')
+        assert_equal(out['result'], '006801')
 
 
         self.log.info("Testing tl_createpayload_create_oraclecontract")
@@ -392,7 +392,7 @@ class PayloadsBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, False, "tl_createpayload_setoracle", params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result'], '00690680a7e58f950180b2b885e70180cf84c8da01')
+        assert_equal(out['result'], '00690280a7e58f950180b2b885e70180cf84c8da01')
 
 
         self.log.info("Testing tl_createpayload_closeoracle")
@@ -400,7 +400,7 @@ class PayloadsBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, False, "tl_createpayload_closeoracle", params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result'], '006b06')
+        assert_equal(out['result'], '006b02')
 
 
         self.log.info("Testing tl_createpayload_new_id_registration")

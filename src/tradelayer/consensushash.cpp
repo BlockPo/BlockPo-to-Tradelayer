@@ -12,6 +12,7 @@
 #include <tradelayer/mdex.h>
 #include <tradelayer/parse_string.h>
 #include <tradelayer/persistence.h>
+#include <tradelayer/register.h>
 #include <tradelayer/sp.h>
 #include <tradelayer/tradelayer.h>
 #include <tradelayer/tradelayer_matrices.h>
@@ -49,6 +50,24 @@ bool ShouldConsensusHashBlock(int block)
     }
 
     return false;
+}
+
+// Generates a consensus string for hashing based on a contract register
+std::string GenerateConsensusString(const Register& reg, const std::string& address, const uint32_t contractId)
+{
+    const int64_t entryPrice = reg.getRecord(contractId, ENTRY_CPRICE);
+    const int64_t position = reg.getRecord(contractId, CONTRACT_POSITION);
+    const int64_t liquidationPrice = reg.getRecord(contractId, LIQUIDATION_PRICE);
+    const int64_t upnl = reg.getRecord(contractId, UPNL);
+    const int64_t margin = reg.getRecord(contractId, MARGIN);
+    const int64_t leverage = reg.getRecord(contractId, LEVERAGE);
+
+    // return a blank string if all balances are empty
+    if (0 == entryPrice && 0 == position && 0 == liquidationPrice && 0 == upnl && 0 == margin && leverage == 0) {
+        return "";
+    }
+
+    return strprintf("%d:%d,%d,%d,%d,%d,%d", contractId, entryPrice, position, liquidationPrice, upnl, margin, leverage);
 }
 
 // Generates a consensus string for hashing based on a tally object
@@ -91,12 +110,11 @@ std::string GenerateConsensusString(const CMPAccept& acceptObj, const std::strin
              acceptObj.getAcceptBlock());
 }
 
-// Generates a consensus string for hashing based on a property issuer
+// Generates a consensus string for hashing based on a property/ contract issuer
 std::string GenerateConsensusString(const uint32_t propertyId, const std::string& address)
 {
     return strprintf("%d|%s", propertyId, address);
 }
-
 
 // Generates a consensus string for hashing based on a channel object
 std::string GenerateConsensusString(const Channel& chn)
@@ -146,6 +164,10 @@ std::string GenerateConsensusString(const mastercore::FeatureActivation& feat)
 * Format specifiers & placeholders:
 *   "%s|%d|%d|%d|%d|%d" - "address|propertyid|balance|selloffer_reserve|accept_reserve|metadex_reserve"
 *
+* ---STAGE 2 - CONTRACT REGISTERS---
+* Format specifiers & placeholders:
+*   "%s|%d|%d|%d|%d|%d|%d" - "address|contractid|entry_price|position|liquidation_price|upnl|margin|leverage"
+*
 * Note: empty balance records and the pending tally are ignored. Addresses are sorted based
 * on lexicographical order, and balance records are sorted by the property identifiers.
 *
@@ -177,31 +199,35 @@ std::string GenerateConsensusString(const mastercore::FeatureActivation& feat)
 * Format specifiers & placeholders:
 *   "%d|%s" - "propertyid|issueraddress"
 *
-* ---STAGE 7 - TRADE CHANNELS---
+* ---STAGE 7 - CONTRACTS---
+* Format specifiers & placeholders:
+*   "%d|%s" - "contractid|adminaddress"
+*
+* ---STAGE 8 - TRADE CHANNELS---
 * Format specifiers & placeholders:
 *   "%s|%s|%s|%s|%d|%d" - "multisigaddress|multisigaddress|firstaddress|secondaddress|expiryheight|lastexchangeblock"
 *
-* ---STAGE 8 - KYC LIST---
+* ---STAGE 9 - KYC LIST---
 * Format specifiers & placeholders:
 *   "%s|%s|%s|%d|%d" - "address|name|website|block|kycid"
 *
-* ---STAGE 9 - ATTESTATION LIST---
+* ---STAGE 10 - ATTESTATION LIST---
 * Format specifiers & placeholders:
 *   "%s|%s|%s|%s|%d|%d" - "multisigaddress|multisigaddress|firstaddress|secondaddress|expiryheight|lastexchangeblock"
 *
-* ---STAGE 10 - FEE CACHE NATIVES---
+* ---STAGE 11 - FEE CACHE NATIVES---
 * Format specifiers & placeholders:
 *   "%d|%d" - "propertyId|amountaccumulated"
 *
-* ---STAGE 11 - FEE CACHE ORACLES---
+* ---STAGE 12 - FEE CACHE ORACLES---
 * Format specifiers & placeholders:
 *   "%d|%d" - "propertyId|amountaccumulated"
 *
-* ---STAGE 12 - VESTING ADDRESSES---
+* ---STAGE 13 - VESTING ADDRESSES---
 * Format specifiers & placeholders:
 *   "%s" - "address"
 *
-* ---STAGE 13 - FEATURES ACTIVATIONS---
+* ---STAGE 14 - FEATURES ACTIVATIONS---
 * Format specifiers & placeholders:
 *   "%d|%d|%d|%s" - "featureid|activationblock|minclientversion|featurename"
 *
@@ -240,6 +266,28 @@ uint256 GetConsensusHash()
             std::string dataStr = GenerateConsensusString(tally, address, propertyId);
             if (dataStr.empty()) continue; // skip empty balances
             if (msc_debug_consensus_hash) PrintToLog("Adding balance data to consensus hash: %s\n", dataStr);
+            hasher.Write((unsigned char*)dataStr.c_str(), dataStr.length());
+        }
+    }
+
+
+    std::map<std::string, Register> registerMapSorted;
+    for (std::unordered_map<string, Register>::iterator uit = mp_register_map.begin(); uit != mp_register_map.end(); ++uit)
+    {
+        registerMapSorted.insert(std::make_pair(uit->first,uit->second));
+    }
+
+    for (std::map<string, Register>::iterator my_it = registerMapSorted.begin(); my_it != registerMapSorted.end(); ++my_it)
+    {
+        const std::string& address = my_it->first;
+        Register& reg = my_it->second;
+        reg.init();
+        uint32_t contractId = 0;
+        while (0 != (contractId = (reg.next())))
+        {
+            std::string dataStr = GenerateConsensusString(reg, address, contractId);
+            if (dataStr.empty()) continue; // skip empty balances
+            if (msc_debug_consensus_hash) PrintToLog("Adding contract register data to consensus hash: %s\n", dataStr);
             hasher.Write((unsigned char*)dataStr.c_str(), dataStr.length());
         }
     }
@@ -352,6 +400,23 @@ uint256 GetConsensusHash()
         }
 
         std::string dataStr = GenerateConsensusString(propertyId, sp.issuer);
+        if (msc_debug_consensus_hash) PrintToLog("Adding property to consensus hash: %s\n", dataStr);
+        hasher.Write((unsigned char*)dataStr.c_str(), dataStr.length());
+    }
+
+    // Contracts
+    // Placeholders: "contractid|issueraddress"
+    uint32_t startContractId = 1;
+    for (uint32_t contractId = startContractId; contractId < _my_cds->peekNextContractID(); contractId++)
+    {
+        CDInfo::Entry cd;
+        if (!_my_cds->getCD(contractId, cd))
+        {
+	          PrintToLog("Error loading contract ID %d for consensus hashing, hash should not be trusted!\n");
+	          continue;
+        }
+
+        std::string dataStr = GenerateConsensusString(contractId, cd.issuer);
         if (msc_debug_consensus_hash) PrintToLog("Adding property to consensus hash: %s\n", dataStr);
         hasher.Write((unsigned char*)dataStr.c_str(), dataStr.length());
     }
