@@ -1107,7 +1107,7 @@ UniValue tl_listproperties(const JSONRPCRequest& request)
             PropertyToJSON(sp, propertyObj); // name, data, url, divisible
             KYCToJSON(sp, propertyObj);
 
-            if(showVerbose)
+            if(fVerbose)
             {
                 propertyObj.pushKV("issuer", sp.issuer);
                 propertyObj.pushKV("creationtxid", strCreationHash);
@@ -1123,10 +1123,11 @@ UniValue tl_listproperties(const JSONRPCRequest& request)
                     propertyObj.pushKV("last 24h Token volume", FormatDivisibleMP(token_volume));
                     propertyObj.pushKV("totaltokens", strTotalTokens);
                 }
+            }
+
+            response.push_back(propertyObj);
         }
 
-
-        response.push_back(propertyObj);
     }
 
     return response;
