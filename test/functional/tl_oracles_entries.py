@@ -234,7 +234,7 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['position'], '-1000')
         assert_equal(out['result']['liquidation_price'], '0.00000000')
         assert_equal(out['result']['position_margin'], '100.00000000')
-        assert_equal(out['result']['upnl'], '+45.34400689')
+        assert_equal(out['result']['upnl'], '+44.60392156')
 
         self.log.info("Checking full position for second address")
         params = str([addresses[1], "Oracle 1"]).replace("'",'"')
@@ -246,7 +246,7 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['position'], '1000')
         assert_equal(out['result']['liquidation_price'], '0.00000000')
         assert_equal(out['result']['position_margin'], '100.00000000')
-        assert_equal(out['result']['upnl'], '-45.34400689')
+        assert_equal(out['result']['upnl'], '-44.60392156')
 
 
 
@@ -316,7 +316,7 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['position'], '3000')
         assert_equal(out['result']['liquidation_price'], '0.00000000')
         assert_equal(out['result']['position_margin'], '300.00000000')
-        assert_equal(out['result']['upnl'], '-123.49279262')
+        assert_equal(out['result']['upnl'], '-126.24183008')
 
 
         self.log.info("Checking position in second address")
@@ -380,7 +380,7 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['position'], '2700')
         assert_equal(out['result']['liquidation_price'], '0.00000000')
         assert_equal(out['result']['position_margin'], '300.00000000')
-        assert_equal(out['result']['upnl'], '-109.40259914')
+        assert_equal(out['result']['upnl'], '-112.44161222')
 
 
         self.log.info("Checking position in second address")
@@ -393,7 +393,7 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['position'], '-2700')
         assert_equal(out['result']['liquidation_price'], '0.00000000')
         assert_equal(out['result']['position_margin'], '300.00000000')
-        assert_equal(out['result']['upnl'], '+109.40259914')
+        assert_equal(out['result']['upnl'], '+112.44161222')
 
 
         #Crossing to the other side 1000 contracts:
@@ -448,7 +448,7 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['position'], '-1000')
         assert_equal(out['result']['liquidation_price'], '0.00000000')
         assert_equal(out['result']['position_margin'], '100.00000000')
-        assert_equal(out['result']['upnl'], '+24.43303380')
+        assert_equal(out['result']['upnl'], '+24.63137255')
 
 
         self.log.info("Checking position in second address")
@@ -461,7 +461,7 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['position'], '1000')
         assert_equal(out['result']['liquidation_price'], '0.00000000')
         assert_equal(out['result']['position_margin'], '100.00000000')
-        assert_equal(out['result']['upnl'], '-24.43303380')
+        assert_equal(out['result']['upnl'], '-24.63137255')
 
         #Positions to zero:
         self.log.info("Trading contracts (Positions to zero)")
@@ -594,7 +594,7 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['position'], '-1000')
         assert_equal(out['result']['liquidation_price'], '0.00000000')
         assert_equal(out['result']['position_margin'], '10.00000000')
-        assert_equal(out['result']['upnl'], '+45.34400689')
+        assert_equal(out['result']['upnl'], '+44.60392156')
 
         self.log.info("Checking full position for second address")
         params = str([addresses[1], "Oracle 1"]).replace("'",'"')
@@ -606,7 +606,7 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['position'], '1000')
         assert_equal(out['result']['liquidation_price'], '0.00000000')
         assert_equal(out['result']['position_margin'], '10.00000000')
-        assert_equal(out['result']['upnl'], '-45.34400689')
+        assert_equal(out['result']['upnl'], '-44.60392156')
 
 
 
@@ -676,7 +676,7 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['position'], '3000')
         assert_equal(out['result']['liquidation_price'], '0.00000000')
         assert_equal(out['result']['position_margin'], '30.00000000')
-        assert_equal(out['result']['upnl'], '-123.49279262')
+        assert_equal(out['result']['upnl'], '-126.24183008')
 
 
         self.log.info("Checking position in second address")
@@ -740,7 +740,7 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['position'], '2700')
         assert_equal(out['result']['liquidation_price'], '0.00000000')
         assert_equal(out['result']['position_margin'], '30.00000000')
-        assert_equal(out['result']['upnl'], '-109.40259914')
+        assert_equal(out['result']['upnl'], '-112.44161222')
 
 
         self.log.info("Checking position in second address")
@@ -753,7 +753,7 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['position'], '-2700')
         assert_equal(out['result']['liquidation_price'], '0.00000000')
         assert_equal(out['result']['position_margin'], '30.00000000')
-        assert_equal(out['result']['upnl'], '+109.40259914')
+        assert_equal(out['result']['upnl'], '+112.44161222')
 
 
         #Crossing to the other side 1000 contracts:
@@ -808,7 +808,7 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['position'], '-1000')
         assert_equal(out['result']['liquidation_price'], '0.00000000')
         assert_equal(out['result']['position_margin'], '10.00000000')
-        assert_equal(out['result']['upnl'], '+24.43303380')
+        assert_equal(out['result']['upnl'], '+24.63137255')
 
 
         self.log.info("Checking position in second address")
@@ -821,7 +821,7 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['position'], '1000')
         assert_equal(out['result']['liquidation_price'], '0.00000000')
         assert_equal(out['result']['position_margin'], '10.00000000')
-        assert_equal(out['result']['upnl'], '-24.43303380')
+        assert_equal(out['result']['upnl'], '-24.63137255')
 
         #Positions to zero:
         self.log.info("Trading contracts (Positions to zero)")
@@ -955,7 +955,7 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['position'], '-1000')
         assert_equal(out['result']['liquidation_price'], '0.00000000')
         assert_equal(out['result']['position_margin'], '20.00000000')
-        assert_equal(out['result']['upnl'], '+45.34400689')
+        assert_equal(out['result']['upnl'], '+44.60392156')
 
         self.log.info("Checking full position for second address")
         params = str([addresses[1], "Oracle 1"]).replace("'",'"')
@@ -967,7 +967,7 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['position'], '1000')
         assert_equal(out['result']['liquidation_price'], '0.00000000')
         assert_equal(out['result']['position_margin'], '20.00000000')
-        assert_equal(out['result']['upnl'], '-45.34400689')
+        assert_equal(out['result']['upnl'], '-44.60392156')
 
 
 
@@ -1037,7 +1037,7 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['position'], '3000')
         assert_equal(out['result']['liquidation_price'], '0.00000000')
         assert_equal(out['result']['position_margin'], '60.00000000')
-        assert_equal(out['result']['upnl'], '-123.49279262')
+        assert_equal(out['result']['upnl'], '-126.24183008')
 
 
         self.log.info("Checking position in second address")
@@ -1101,7 +1101,7 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['position'], '2700')
         assert_equal(out['result']['liquidation_price'], '0.00000000')
         assert_equal(out['result']['position_margin'], '60.00000000')
-        assert_equal(out['result']['upnl'], '-109.40259914')
+        assert_equal(out['result']['upnl'], '-112.44161222')
 
 
         self.log.info("Checking position in second address")
@@ -1114,7 +1114,7 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['position'], '-2700')
         assert_equal(out['result']['liquidation_price'], '0.00000000')
         assert_equal(out['result']['position_margin'], '60.00000000')
-        assert_equal(out['result']['upnl'], '+109.40259914')
+        assert_equal(out['result']['upnl'], '+112.44161222')
 
 
         #Crossing to the other side 1000 contracts:
@@ -1169,7 +1169,7 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['position'], '-1000')
         assert_equal(out['result']['liquidation_price'], '0.00000000')
         assert_equal(out['result']['position_margin'], '20.00000000')
-        assert_equal(out['result']['upnl'], '+24.43303380')
+        assert_equal(out['result']['upnl'], '+24.63137255')
 
 
         self.log.info("Checking position in second address")
@@ -1182,7 +1182,7 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['position'], '1000')
         assert_equal(out['result']['liquidation_price'], '0.00000000')
         assert_equal(out['result']['position_margin'], '20.00000000')
-        assert_equal(out['result']['upnl'], '-24.43303380')
+        assert_equal(out['result']['upnl'], '-24.63137255')
 
         #Positions to zero:
         self.log.info("Trading contracts (Positions to zero)")

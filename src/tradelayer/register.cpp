@@ -109,30 +109,38 @@ int64_t Register::getUPNL(const uint32_t contractId, const uint32_t notionalSize
          PrintToLog("%s(): inside getUPNL, position: %d. entryPrice: %d, exitPrice: %d\n",__func__, position, entryPrice, exitPrice);
     }
 
-    const double dEntryPrice = (double) entryPrice / COIN;
-    const double dExitPrice = (double) exitPrice /  COIN;
+    const arith_uint256 factor = ConvertTo256((abs(position) * notionalSize) / COIN);
+    const arith_uint256 dEntryPrice = ConvertTo256(entryPrice / COIN);
+    const arith_uint256 dExitPrice = ConvertTo256(exitPrice / COIN);
+    const int64_t diff = exitPrice - entryPrice;
+    const arith_uint256 dDiff = ConvertTo256(abs(diff));
 
-    double factor = 0;
+    PrintToLog("%s(): dEntryPrice: %d, dExitPrice: %d, factor: %d, diff: %d\n",__func__, ConvertTo64(dEntryPrice), ConvertTo64(dExitPrice), ConvertTo64(factor), diff);
+
+    arith_uint256 UPNL = 0;
 
     if(quoted)
     {
-        const double denominator = (dEntryPrice * dExitPrice);
-        // TODO: convert this into arith_uint256
-        factor = (denominator != 0) ? (double) (dExitPrice - dEntryPrice) / denominator  : 0;
+
+        UPNL = (entryPrice != 0 && exitPrice != 0) ?  (dDiff * (factor / dEntryPrice)) / dExitPrice : 0;
 
     } else {
-        factor = (dExitPrice - dEntryPrice);
+        UPNL  = factor * dDiff ;
     }
 
-    const double UPNL = position * notionalSize * factor;
-
     // re-converting to int64_t
-    const int64_t iUPNL = (int64_t) UPNL;
+    const uint64_t uiUPNL = ConvertTo64(UPNL);
+    int64_t iUPNL = 0;
+
+    if ((diff > 0 && position < 0) || (diff < 0 && position > 0)) {
+        iUPNL = (int64_t) -uiUPNL;
+    } else {
+        iUPNL = (int64_t) uiUPNL;
+    }
 
     if(msc_debug_liquidation_enginee)
     {
-       PrintToLog("%s(): entryPrice(double): %d, exitPrice(double): %d, factor: %d, notionalsize: %d\n",__func__, dEntryPrice, dExitPrice, factor, notionalSize);
-       PrintToLog("%s():UPNL(nomalized): %d\n",__func__, UPNL / COIN);
+       PrintToLog("%s(): entryPrice(int64_t): %d, exitPrice(int64_t): %d, notionalsize: %d\n",__func__, entryPrice, exitPrice, notionalSize);
        PrintToLog("%s():UPNL(int): %d, quoted?: %d\n",__func__, iUPNL, quoted);
     }
 
@@ -589,11 +597,6 @@ bool mastercore::decrease_entry(const std::string& who, uint32_t contractId, int
     }
 
     Register& reg = my_it->second;
-
-    // entry price of full position
-    // int64_t entryPrice = reg.getPosEntryPrice(contractId);
-    //
-    // PrintToLog("%s(): entryPrice before decreasing position: %d, contractId: %d, address: %s\n",__func__, entryPrice, contractId, who);
 
     bRet = reg.decreasePosRecord(contractId, amount, price);
 
