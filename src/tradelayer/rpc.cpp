@@ -628,7 +628,7 @@ UniValue tl_getwalletbalance(const JSONRPCRequest& request)
         return NullUniValue;
     }
 
-    if (request.fHelp || request.params.size() != 0)
+    if (request.fHelp)
         throw runtime_error(
             "tl_getwalletbalance \n"
 
@@ -646,7 +646,7 @@ UniValue tl_getwalletbalance(const JSONRPCRequest& request)
             + HelpExampleRpc("tl_getwalletbalance", "")
         );
 
-    bool fVerbose = (!request.params[0].isNull() && 1 == ParseBinary(request.params[0])) ? true : false;
+    // bool fVerbose = (!request.params[0].isNull() && 1 == ParseBinary(request.params[0])) ? true : false;
 
     UniValue addressesObj(UniValue::VARR);
     UniValue balanceObj(UniValue::VOBJ);
