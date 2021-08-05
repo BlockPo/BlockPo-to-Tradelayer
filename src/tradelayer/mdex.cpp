@@ -238,10 +238,26 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       bool boolTrdAction = pold->getTradingAction() == pnew->getTradingAction();
       bool boolAddresses = pold->getAddr() != pnew->getAddr();
 
-      if (!boolAddresses) PrintToLog("%s(): trading with yourself is not allowed\n",__func__);
+      if (!boolAddresses && !boolProperty) {
+          PrintToLog("%s(): trading with yourself is not allowed\n",__func__);
+
+          CDInfo::Entry cd;
+          assert(_my_cds->getCD(propertyForSale, cd));
+          const uint32_t collateral = cd.collateral_currency;
+
+          const int64_t amountReserved = getMPbalance(pnew->getAddr(), collateral, CONTRACTDEX_RESERVE);
+
+          assert(update_tally_map(pnew->getAddr(), collateral, amountReserved, BALANCE));
+          assert(update_tally_map(pnew->getAddr(), collateral,  -amountReserved, CONTRACTDEX_RESERVE));
+
+          pnew->setAmountForsale(0, "no_remaining");
+          return;
+      }
+
 
       if ( findTrueValue(boolProperty, boolTrdAction, !boolAddresses) )
     	{
+          PrintToLog("%s(): findTrueValue == true\n",__func__);
 	        ++offerIt;
 	        continue;
 	    }
@@ -252,7 +268,6 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       /********************************************************/
       /** Preconditions */
       assert(pold->getProperty() == pnew->getProperty());
-
 
       if(msc_debug_x_trade_bidirectional)
       {
@@ -271,10 +286,14 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       }
 
       /********************************************************/
-      uint32_t property_traded = pold->getProperty();
-      uint64_t amountpnew = pnew->getAmountForSale();
-      uint64_t amountpold = pold->getAmountForSale();
+      const uint32_t& property_traded = pold->getProperty();
+      int64_t amountpnew = abs(pnew->getAmountForSale());
+      int64_t amountpold = abs(pold->getAmountForSale());
 
+      if(msc_debug_x_trade_bidirectional)
+      {
+          PrintToLog("amountpnew %d, amountpold: %d\n", amountpnew, amountpold);
+      }
 
       const int64_t poldBalance = getContractRecord(pold->getAddr(), property_traded, CONTRACT_POSITION);
       const int64_t pnewBalance = getContractRecord(pnew->getAddr(), property_traded, CONTRACT_POSITION);
@@ -308,14 +327,20 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       const int64_t &possitive_buy  = (pold->getTradingAction() == sell) ? pnewPositiveBalanceB : poldPositiveBalanceB;
       const int64_t &negative_buy   = (pold->getTradingAction() == sell) ? pnewNegativeBalanceB : poldNegativeBalanceB;
 
-      const int64_t &seller_amount  = (pold->getTradingAction() == sell) ? pold->getAmountForSale() : pnew->getAmountForSale();
-      const int64_t &buyer_amount   = (pold->getTradingAction() == sell) ? pnew->getAmountForSale() : pold->getAmountForSale();
+      int64_t seller_amount  = (pold->getTradingAction() == sell) ? abs(pold->getAmountForSale()) : abs(pnew->getAmountForSale());
+      int64_t buyer_amount   = (pold->getTradingAction() == sell) ? abs(pnew->getAmountForSale()) : abs(pold->getAmountForSale());
 
       const std::string &seller_address = (pold->getTradingAction() == sell) ? pold->getAddr() : pnew->getAddr();
       const std::string &buyer_address  = (pold->getTradingAction() == sell) ? pnew->getAddr() : pold->getAddr();
 
-
       int64_t nCouldBuy = (buyer_amount < seller_amount) ? buyer_amount : seller_amount;
+
+
+
+      if(msc_debug_x_trade_bidirectional)
+      {
+          PrintToLog("seller_amount %d, buyer_amount: %d, nCouldBuy: %d\n", seller_amount, buyer_amount, nCouldBuy);
+      }
 
       if (nCouldBuy == 0)
       {
@@ -424,6 +449,12 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       }
 
       int64_t remaining = (seller_amount >= buyer_amount) ? seller_amount - buyer_amount : buyer_amount - seller_amount;
+
+
+      if(msc_debug_x_trade_bidirectional)
+      {
+          PrintToLog("remaining: %d\n", remaining);
+      }
 
       if ( (seller_amount > buyer_amount && pold->getTradingAction() == sell) || (seller_amount < buyer_amount && pold->getTradingAction() == buy))
       	{
@@ -1194,8 +1225,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
           // if(msc_debug_x_trade_bidirectional) PrintToLog("++ erased old: %s\n", offerIt->ToString());
           pofferSet->erase(offerIt++);
 
-          if (0 < remaining)
-	            pofferSet->insert(contract_replacement);
+          if (0 < remaining) pofferSet->insert(contract_replacement);
       }
 }
 
