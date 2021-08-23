@@ -178,7 +178,8 @@ using mastercore::StrToInt64;
 static bool writePersistence(int block_now)
 {
   // if too far away from the top -- do not write
-  if (GetHeight() > (block_now + MAX_STATE_HISTORY)) {
+  if (GetHeight() > (block_now + MAX_STATE_HISTORY)
+          && (block_now % STORE_EVERY_N_BLOCK != 0)) {
       return false;
   }
 
@@ -2122,11 +2123,10 @@ static int load_most_relevant_state()
       // using the SP's watermark after its fixed-up as the tip
       // walk backwards until we find a valid and full set of persisted state files
       // for each block we discard, roll back the SP database
-      // Note: to avoid rolling back all the way to the genesis block (which appears as if client is hung) abort after MAX_STATE_HISTORY attempts
       CBlockIndex const *curTip = spBlockIndex;
       int abortRollBackBlock;
       if (curTip != nullptr) {
-          abortRollBackBlock = curTip->nHeight - (MAX_STATE_HISTORY+1);
+            abortRollBackBlock = ConsensusParams().GENESIS_BLOCK - 1;
       }
 
       while (nullptr != curTip && persistedBlocks.size() > 0 && curTip->nHeight > abortRollBackBlock)
@@ -2140,6 +2140,9 @@ static int load_most_relevant_state()
                   const std::string strFile = path.string();
                   success = msc_file_load(strFile, i, true);
                   if (success < 0) {
+                    PrintToLog("Found a state inconsistency at block height %d. "
+                            "Reverting up to %d blocks.. this may take a few minutes.\n",
+                            curTip->nHeight, (curTip->nHeight - abortRollBackBlock - 1));
                      break;
                   }
               }
@@ -2170,6 +2173,7 @@ static int load_most_relevant_state()
 
   if (persistedBlocks.size() == 0) {
       // trigger a reparse if we exhausted the persistence files without success
+      PrintToLog("Failed to load historical state: no valid state found after exhausting persistence files\n");
       return -1;
   }
 

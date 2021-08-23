@@ -33,7 +33,9 @@ using std::string;
 
 typedef boost::rational<boost::multiprecision::checked_int128_t> rational_t;
 
-const int MAX_STATE_HISTORY = 50;
+int const MAX_STATE_HISTORY = 50;
+
+int const STORE_EVERY_N_BLOCK = 5000;
 
 #define MAX_PROPERTY_N (0x80000003UL)
 
