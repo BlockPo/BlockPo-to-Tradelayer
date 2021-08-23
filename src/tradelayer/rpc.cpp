@@ -628,7 +628,7 @@ UniValue tl_getwalletbalance(const JSONRPCRequest& request)
         return NullUniValue;
     }
 
-    if (request.fHelp || request.params.size() != 0)
+    if (request.fHelp)
         throw runtime_error(
             "tl_getwalletbalance \n"
 
