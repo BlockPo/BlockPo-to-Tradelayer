@@ -247,10 +247,12 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
 
           const int64_t amountReserved = getMPbalance(pnew->getAddr(), collateral, CONTRACTDEX_RESERVE);
 
+          PrintToLog("%s(): amountReserved: %d, collateral: %d\n",__func__, amountReserved, collateral);
 
-          assert(update_tally_map(pnew->getAddr(), collateral, amountReserved, BALANCE));
-          assert(update_tally_map(pnew->getAddr(), collateral,  -amountReserved, CONTRACTDEX_RESERVE));
-
+          if (0 < amountReserved) {
+            assert(update_tally_map(pnew->getAddr(), collateral, amountReserved, BALANCE));
+            assert(update_tally_map(pnew->getAddr(), collateral,  -amountReserved, CONTRACTDEX_RESERVE));
+          }
 
           pnew->setAmountForsale(0, "no_remaining");
           return;
