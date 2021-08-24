@@ -238,7 +238,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       bool boolTrdAction = pold->getTradingAction() == pnew->getTradingAction();
       bool boolAddresses = pold->getAddr() != pnew->getAddr();
 
-      if (!boolAddresses && !boolProperty && boolTrdAction) {
+      if (!boolAddresses && !boolProperty && !boolTrdAction) {
           PrintToLog("%s(): trading with yourself is not allowed\n",__func__);
 
           CDInfo::Entry cd;
