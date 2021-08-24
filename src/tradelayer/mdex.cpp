@@ -238,7 +238,7 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
       bool boolTrdAction = pold->getTradingAction() == pnew->getTradingAction();
       bool boolAddresses = pold->getAddr() != pnew->getAddr();
 
-      if (!boolAddresses && !boolProperty) {
+      if (!boolAddresses && !boolProperty && boolTrdAction) {
           PrintToLog("%s(): trading with yourself is not allowed\n",__func__);
 
           CDInfo::Entry cd;
@@ -247,10 +247,10 @@ void mastercore::x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPri
 
           const int64_t amountReserved = getMPbalance(pnew->getAddr(), collateral, CONTRACTDEX_RESERVE);
 
-          if (0 < amountReserved) {
-              assert(update_tally_map(pnew->getAddr(), collateral, amountReserved, BALANCE));
-              assert(update_tally_map(pnew->getAddr(), collateral,  -amountReserved, CONTRACTDEX_RESERVE));
-          }
+
+          assert(update_tally_map(pnew->getAddr(), collateral, amountReserved, BALANCE));
+          assert(update_tally_map(pnew->getAddr(), collateral,  -amountReserved, CONTRACTDEX_RESERVE));
+
 
           pnew->setAmountForsale(0, "no_remaining");
           return;
