@@ -2823,7 +2823,8 @@ static void prune_state_files(CBlockIndex const *topIndex)
         CBlockIndex const *curIndex = GetBlockIndex(*iter);
 
         // if we have nothing int the index, or this block is too old..
-        if (nullptr == curIndex || (topIndex->nHeight - curIndex->nHeight) > MAX_STATE_HISTORY )
+        if (nullptr == curIndex || (((topIndex->nHeight - curIndex->nHeight) > MAX_STATE_HISTORY)
+                && (curIndex->nHeight % STORE_EVERY_N_BLOCK != 0)))
         {
             if (msc_debug_persistence)
             {
@@ -2873,7 +2874,6 @@ int mastercore_save_state(CBlockIndex const *pBlockIndex)
     prune_state_files(pBlockIndex);
 
     _my_sps->setWatermark(pBlockIndex->GetBlockHash());
-    // _my_cds->setWatermark(pBlockIndex->GetBlockHash());
 
     return 0;
 }
