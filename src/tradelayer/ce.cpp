@@ -90,7 +90,7 @@ void CDInfo::Entry::print() const
 CDInfo::CDInfo(const fs::path& path, bool fWipe)
 {
   leveldb::Status status = Open(path, fWipe);
-  PrintToLog("Loading smart property database: %s\n", status.ToString());
+  PrintToLog("Loading contracts database: %s\n", status.ToString());
   init();
 }
 

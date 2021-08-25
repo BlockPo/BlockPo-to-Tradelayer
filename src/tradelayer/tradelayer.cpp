@@ -2045,7 +2045,7 @@ static char const * const statePrefix[NUM_FILETYPES] = {
 static int load_most_relevant_state()
 {
   int res = -1;
-  // check the SP and CD databases and roll it back to its latest valid state
+  // check the SP  databases and roll it back to its latest valid state
   // according to the active chain
   uint256 spWatermark;
   {
@@ -2054,17 +2054,55 @@ static int load_most_relevant_state()
             //trigger a full reparse, if the SP database has no watermark
             return -1;
         }
-
-        if (!_my_cds->getWatermark(spWatermark)) {
-            //trigger a full reparse, if the CD database has no watermark
-            return -1;
-        }
   }
 
   CBlockIndex const *spBlockIndex = GetBlockIndex(spWatermark);
-  if (nullptr == spBlockIndex) {
-      //trigger a full reparse, if the watermark isn't a real block
-      return -1;
+
+
+  // Watermark block not found.
+  if (nullptr == spBlockIndex)
+  {
+
+      PrintToLog("spWatermark not found: %s\n", spWatermark.ToString());
+      // Try and load an historical state
+      fs::directory_iterator dIter(MPPersistencePath);
+      fs::directory_iterator endIter;
+      std::map<int, const CBlockIndex*> foundBlocks;
+
+      for (; dIter != endIter; ++dIter)
+      {
+          if (false == fs::is_regular_file(dIter->status()) || dIter->path().empty())
+          {
+              // skip funny business
+              continue;
+          }
+
+          std::string fName = (*--dIter->path().end()).string();
+          std::vector<std::string> vstr;
+          boost::split(vstr, fName, boost::is_any_of("-."), boost::token_compress_on);
+          if (vstr.size() == 3 && boost::equals(vstr[2], "dat")) {
+              uint256 blockHash;
+              blockHash.SetHex(vstr[1]);
+              CBlockIndex *pBlockIndex = GetBlockIndex(blockHash);
+              if (pBlockIndex == nullptr) {
+                  continue;
+              }
+
+              // Add to found blocks
+              foundBlocks.emplace(pBlockIndex->nHeight, pBlockIndex);
+          }
+      }
+
+      // Was unable to find valid previous state, full reparse required.
+      if (foundBlocks.empty()) {
+          PrintToLog("Failed to load historical state: watermark isn't a real block\n");
+          return -1;
+      }
+
+      spBlockIndex = foundBlocks.rbegin()->second;
+      _my_sps->setWatermark(spBlockIndex->GetBlockHash());
+
+      PrintToLog("Watermark not found. New one set from state files: %s\n", spBlockIndex->GetBlockHash().ToString());
   }
 
 
@@ -2078,13 +2116,11 @@ static int load_most_relevant_state()
           if (remainingSPs < 0) {
               // trigger a full reparse, if the levelDB cannot roll back
               return -1;
-          } /*else if (remainingSPs == 0) {
-            // potential optimization here?
-           }*/
+          }
+
           spBlockIndex = spBlockIndex->pprev;
           if (spBlockIndex != nullptr) {
               _my_sps->setWatermark(spBlockIndex->GetBlockHash());
-              _my_cds->setWatermark(spBlockIndex->GetBlockHash());
           }
       }
 
@@ -2101,7 +2137,7 @@ static int load_most_relevant_state()
 
           std::string fName = (*--dIter->path().end()).string();
           std::vector<std::string> vstr;
-          boost::split(vstr, fName, boost::is_any_of("-."), token_compress_on);
+          boost::split(vstr, fName, boost::is_any_of("-."),  boost::token_compress_on);
           if (vstr.size() == 3 && boost::equals(vstr[2], "dat"))
           {
               uint256 blockHash;
@@ -2113,12 +2149,12 @@ static int load_most_relevant_state()
 
               // this is a valid block in the active chain, store it
               persistedBlocks.insert(blockHash);
-          }
+           }
       }
 
-  }
+    }
 
-  {
+    {
       LOCK(cs_tally);
       // using the SP's watermark after its fixed-up as the tip
       // walk backwards until we find a valid and full set of persisted state files
@@ -2157,15 +2193,15 @@ static int load_most_relevant_state()
           }
 
           // go to the previous block
-          if (0 > _my_sps->popBlock(curTip->GetBlockHash()) || 0 > _my_cds->popBlock(curTip->GetBlockHash())) {
+          if (0 > _my_sps->popBlock(curTip->GetBlockHash())) {
               // trigger a full reparse, if the levelDB cannot roll back
+              PrintToLog("Failed to load historical state: no valid state found after rolling back SP database (2)\n");
               return -1;
           }
 
           curTip = curTip->pprev;
           if (curTip != nullptr) {
              _my_sps->setWatermark(curTip->GetBlockHash());
-             _my_cds->setWatermark(curTip->GetBlockHash());
           }
       }
 
@@ -2837,7 +2873,7 @@ int mastercore_save_state(CBlockIndex const *pBlockIndex)
     prune_state_files(pBlockIndex);
 
     _my_sps->setWatermark(pBlockIndex->GetBlockHash());
-    _my_cds->setWatermark(pBlockIndex->GetBlockHash());
+    // _my_cds->setWatermark(pBlockIndex->GetBlockHash());
 
     return 0;
 }
