@@ -2160,7 +2160,7 @@ static int load_most_relevant_state()
       // walk backwards until we find a valid and full set of persisted state files
       // for each block we discard, roll back the SP database
       CBlockIndex const *curTip = spBlockIndex;
-      int abortRollBackBlock;
+      int abortRollBackBlock = 9999999;
       if (curTip != nullptr) {
             abortRollBackBlock = ConsensusParams().GENESIS_BLOCK - 1;
       }
@@ -4265,9 +4265,18 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
 {
     LOCK(cs_tally);
 
-    if (reorgRecoveryMode > 0) {
-        reorgRecoveryMode = 0; // clear reorgRecovery here as this is likely re-entrant
 
+        bool bRecoveryMode{false};
+        {
+            LOCK(cs_tally);
+
+            if (reorgRecoveryMode > 0) {
+                reorgRecoveryMode = 0; // clear reorgRecovery here as this is likely re-entrant
+                bRecoveryMode = true;
+            }
+        }
+
+       if (bRecoveryMode) {
         // NOTE: The blockNum parameter is inclusive, so deleteAboveBlock(1000) will delete records in block 1000 and above.
         p_txlistdb->isMPinBlockRange(pBlockIndex->nHeight, reorgRecoveryMaxHeight, true);
         reorgRecoveryMaxHeight = 0;
