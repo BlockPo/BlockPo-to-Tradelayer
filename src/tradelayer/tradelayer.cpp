@@ -1473,7 +1473,7 @@ static int input_contract_globals_state_string(const string &s)
 
   int i = 0;
   const unsigned int nextCDID = boost::lexical_cast<unsigned int>(vstr[i++]);
-  _my_sps->init(nextCDID);
+  _my_cds->init(nextCDID);
   return 0;
 }
 
