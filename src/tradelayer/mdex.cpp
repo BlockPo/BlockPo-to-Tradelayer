@@ -2795,8 +2795,6 @@ int mastercore::MetaDEx_CANCEL_EVERYTHING(const uint256& txid, unsigned int bloc
         }
     }
 
-    PrintToLog(" #### checkpoint\n");
-
     return rc;
 }
 

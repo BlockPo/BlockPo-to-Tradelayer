@@ -116,7 +116,7 @@ const struct tradelayer_descs {
 std::string mastercore::strTransactionType(uint16_t txType)
 {
 
-	for (int i = 0; i < sizeof (tradelayer_descs); ++i) {
+	for (uint i = 0; i < sizeof (tradelayer_descs); ++i) {
 		if (txType == tradelayer_descs[i].transaction_type)
 			return tradelayer_descs[i].description;
 	}

@@ -152,9 +152,6 @@ public:
 
     int64_t popBlock(const uint256& block_hash);
 
-    void setWatermark(const uint256& watermark);
-    bool getWatermark(uint256& watermark) const;
-
     void printAll() const;
 
 };

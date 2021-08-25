@@ -1342,7 +1342,9 @@ static int input_msc_balances_string(const std::string& s)
     // "address=propertybalancedata"
     std::vector<std::string> addrData;
     boost::split(addrData, s, boost::is_any_of("="), boost::token_compress_on);
-    if (addrData.size() != 2) return -1;
+    if (addrData.size() != 2) {
+        return -1;
+    }
 
     std::string strAddress = addrData[0];
 
@@ -1363,7 +1365,8 @@ static int input_msc_balances_string(const std::string& s)
 
         std::vector<std::string> curBalance;
         boost::split(curBalance, curProperty[1], boost::is_any_of(","), boost::token_compress_on);
-        if (curBalance.size() != 10) return -1;
+
+        if (curBalance.size() != 7) return -1;
 
         const uint32_t propertyId = boost::lexical_cast<uint32_t>(curProperty[0]);
         const int64_t balance = boost::lexical_cast<int64_t>(curBalance[0]);
@@ -1372,11 +1375,7 @@ static int input_msc_balances_string(const std::string& s)
         const int64_t pending = boost::lexical_cast<int64_t>(curBalance[3]);
         const int64_t metadexReserved = boost::lexical_cast<int64_t>(curBalance[4]);
         const int64_t contractdexReserved = boost::lexical_cast<int64_t>(curBalance[5]);
-        const int64_t position = boost::lexical_cast<int64_t>(curBalance[6]);
-        const int64_t realizeProfit = boost::lexical_cast<int64_t>(curBalance[7]);
-        const int64_t realizeLosses = boost::lexical_cast<int64_t>(curBalance[8]);
-        const int64_t remaining = boost::lexical_cast<int64_t>(curBalance[9]);
-        const int64_t unvested = boost::lexical_cast<int64_t>(curBalance[10]);
+        const int64_t unvested = boost::lexical_cast<int64_t>(curBalance[6]);
 
         if (balance) update_tally_map(strAddress, propertyId, balance, BALANCE);
         if (sellReserved) update_tally_map(strAddress, propertyId, sellReserved, SELLOFFER_RESERVE);
@@ -1385,10 +1384,7 @@ static int input_msc_balances_string(const std::string& s)
         if (metadexReserved) update_tally_map(strAddress, propertyId, metadexReserved, METADEX_RESERVE);
 
         if (contractdexReserved) update_tally_map(strAddress, propertyId, contractdexReserved, CONTRACTDEX_RESERVE);
-        if (position) update_tally_map(strAddress, propertyId, position, CONTRACT_BALANCE);
-        if (realizeProfit) update_tally_map(strAddress, propertyId, realizeProfit, REALIZED_PROFIT);
-        if (realizeLosses) update_tally_map(strAddress, propertyId, realizeLosses, REALIZED_LOSSES);
-        if (remaining) update_tally_map(strAddress, propertyId, remaining, REMAINING);
+
         if (unvested) update_tally_map(strAddress, propertyId, unvested, UNVESTED);
     }
 
@@ -1400,7 +1396,7 @@ static int input_mp_offers_string(const std::string& s)
     std::vector<std::string> vstr;
     boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
 
-    if (9 != vstr.size()) return -1;
+    if (10 != vstr.size()) return -1;
 
     int i = 0;
 
@@ -1849,7 +1845,6 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
   int lines = 0;
   int (*inputLineFunc)(const string &) = nullptr;
 
-
   CHash256 hasher;
   switch (what)
   {
@@ -1947,6 +1942,7 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
     case FILE_TYPE_REGISTER:
         mp_register_map.clear();
         inputLineFunc = input_register_string;
+        break;
 
     default:
         return -1;
@@ -1991,6 +1987,7 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
 
         if (inputLineFunc) {
             if (inputLineFunc(line) < 0) {
+                PrintToLog("%s(): inputLineFunc(line) = %d\n",__func__, inputLineFunc(line));
                 res = -1;
                 break;
             }
@@ -2000,7 +1997,6 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
     }
 
     file.close();
-
 
     if (verifyHash && res == 0) {
         // generate and write the double hash of all the contents written
@@ -2020,25 +2016,25 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
 }
 
 static char const * const statePrefix[NUM_FILETYPES] = {
-    "balances",
-    "globals",
-    "cdexorders",
-    "offers",
-    "mdexorders",
-    "accepts",
-    "cachefees",
-    "cachefeesoracles",
-    "withdrawals",
-    "activechannels",
-    "dexvolume",
-    "mdexvolume",
-    "globalvars",
-    "vestingaddresses",
-    "ltcvolume",
-    "tokenltcprice",
-    "tokenvwap",
-    "register",
-    "contractglobals"
+  "balances",
+  "globals",
+  "cdexorders",
+  "mdexorders",
+  "offers",
+  "accepts",
+  "cachefees",
+  "cachefeesoracles",
+  "withdrawals",
+  "activechannels",
+  "dexvolume",
+  "mdexvolume",
+  "globalvars",
+  "vestingaddresses",
+  "ltcvolume",
+  "tokenltcprice",
+  "tokenvwap",
+  "register",
+  "contractglobals"
 };
 
 // returns the height of the state loaded
@@ -2159,10 +2155,11 @@ static int load_most_relevant_state()
       // using the SP's watermark after its fixed-up as the tip
       // walk backwards until we find a valid and full set of persisted state files
       // for each block we discard, roll back the SP database
+      // Note: to avoid rolling back all the way to the genesis block (which appears as if client is hung) abort after MAX_STATE_HISTORY attempts
       CBlockIndex const *curTip = spBlockIndex;
-      int abortRollBackBlock = 9999999;
+      int abortRollBackBlock;
       if (curTip != nullptr) {
-            abortRollBackBlock = ConsensusParams().GENESIS_BLOCK - 1;
+            abortRollBackBlock = curTip->nHeight - (MAX_STATE_HISTORY+1);
       }
 
       while (nullptr != curTip && persistedBlocks.size() > 0 && curTip->nHeight > abortRollBackBlock)
@@ -2235,20 +2232,17 @@ static int write_msc_balances(std::ofstream& file, CHash256& hasher)
             const int64_t pending = (*iter).second.getMoney(propertyId, PENDING);
             const int64_t metadexReserved = (*iter).second.getMoney(propertyId, METADEX_RESERVE);
             const int64_t contractdexReserved = (*iter).second.getMoney(propertyId, CONTRACTDEX_RESERVE);
-            const int64_t position = (*iter).second.getMoney(propertyId, CONTRACT_BALANCE);
-            const int64_t realizedProfit = (*iter).second.getMoney(propertyId, REALIZED_PROFIT);
-            const int64_t realizedLosses = (*iter).second.getMoney(propertyId, REALIZED_LOSSES);
-            const int64_t remaining = (*iter).second.getMoney(propertyId, REMAINING);
             const int64_t unvested = (*iter).second.getMoney(propertyId, UNVESTED);
+
             // we don't allow 0 balances to read in, so if we don't write them
             // it makes things match up better between persisted state and processed state
-            if (0 == balance && 0 == sellReserved && 0 == acceptReserved && 0 == pending && 0 == metadexReserved && contractdexReserved == 0 && position == 0 && realizedProfit == 0 && realizedLosses == 0 && remaining == 0 && unvested == 0) {
+            if (0 == balance && 0 == sellReserved && 0 == acceptReserved && 0 == pending && 0 == metadexReserved && contractdexReserved == 0 && unvested == 0) {
                 continue;
             }
 
             emptyWallet = false;
 
-            lineOut.append(strprintf("%d:%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d;",
+            lineOut.append(strprintf("%d:%d,%d,%d,%d,%d,%d,%d;",
                     propertyId,
                     balance,
                     sellReserved,
@@ -2256,10 +2250,6 @@ static int write_msc_balances(std::ofstream& file, CHash256& hasher)
                     pending,
                     metadexReserved,
                     contractdexReserved,
-                    position,
-                    realizedProfit,
-                    realizedLosses,
-                    remaining,
                     unvested));
         }
 
@@ -2354,6 +2344,7 @@ static int write_mp_metadex(ofstream &file, CHash256& hasher)
             {
                 const CMPMetaDEx& meta = in;
                 meta.saveOffer(file, hasher);
+                PrintToLog("%s(): mdex element: %s\n",__func__, meta.ToString());
             }
         }
     }
@@ -2762,6 +2753,7 @@ static int write_state_file(CBlockIndex const *pBlockIndex, int what)
 
     case FILE_TYPE_REGISTER:
         result = write_mp_register(file, hasher);
+        break;
     }
 
     // generate and write the double hash of all the contents written
@@ -2853,8 +2845,8 @@ int mastercore_save_state(CBlockIndex const *pBlockIndex)
     write_state_file(pBlockIndex, FILETYPE_BALANCES);
     write_state_file(pBlockIndex, FILETYPE_GLOBALS);
     write_state_file(pBlockIndex, FILETYPE_CDEXORDERS);
-    write_state_file(pBlockIndex, FILETYPE_OFFERS);
     write_state_file(pBlockIndex, FILETYPE_MDEXORDERS);
+    write_state_file(pBlockIndex, FILETYPE_OFFERS);
     write_state_file(pBlockIndex, FILETYPE_ACCEPTS);
     write_state_file(pBlockIndex, FILETYPE_CACHEFEES);
     write_state_file(pBlockIndex, FILETYPE_CACHEFEES_ORACLES);
@@ -2873,6 +2865,7 @@ int mastercore_save_state(CBlockIndex const *pBlockIndex)
     // clean-up the directory
     prune_state_files(pBlockIndex);
 
+    // PrintToLog("%s(): saving watermark at block: %d\n",__func__,pBlockIndex->nHeight);
     _my_sps->setWatermark(pBlockIndex->GetBlockHash());
 
     return 0;
@@ -2975,6 +2968,7 @@ int mastercore_init()
   ++mastercoreInitialized;
 
   nWaterlineBlock = load_most_relevant_state();
+
   bool noPreviousState = (nWaterlineBlock <= 0);
 
   if (startClean) {

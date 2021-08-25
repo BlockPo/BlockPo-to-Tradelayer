@@ -358,54 +358,6 @@ int64_t CDInfo::popBlock(const uint256& block_hash)
     return remainingSPs;
 }
 
-void CDInfo::setWatermark(const uint256& watermark)
-{
-    leveldb::WriteBatch batch;
-
-    CDataStream ssKey(SER_DISK, CLIENT_VERSION);
-    ssKey << 'B';
-    leveldb::Slice slKey(&ssKey[0], ssKey.size());
-
-    CDataStream ssValue(SER_DISK, CLIENT_VERSION);
-    ssValue.reserve(GetSerializeSize(watermark, ssValue.GetType(), ssValue.GetVersion()));
-    ssValue << watermark;
-    leveldb::Slice slValue(&ssValue[0], ssValue.size());
-
-    batch.Delete(slKey);
-    batch.Put(slKey, slValue);
-
-    leveldb::Status status = pdb->Write(syncoptions, &batch);
-    if (!status.ok()) {
-        PrintToLog("%s(): ERROR: failed to write CD watermark: %s\n", __func__, status.ToString());
-    }
-}
-
-bool CDInfo::getWatermark(uint256& watermark) const
-{
-    CDataStream ssKey(SER_DISK, CLIENT_VERSION);
-    ssKey << 'B';
-    leveldb::Slice slKey(&ssKey[0], ssKey.size());
-
-    std::string strValue;
-    leveldb::Status status = pdb->Get(readoptions, slKey, &strValue);
-    if (!status.ok()) {
-        if (!status.IsNotFound()) {
-            PrintToLog("%s(): ERROR: failed to retrieve CD watermark: %s\n", __func__, status.ToString());
-        }
-        return false;
-    }
-
-    try {
-        CDataStream ssValue(strValue.data(), strValue.data() + strValue.size(), SER_DISK, CLIENT_VERSION);
-        ssValue >> watermark;
-    } catch (const std::exception& e) {
-        PrintToLog("%s(): ERROR: failed to deserialize watermark: %s\n", __func__, e.what());
-        return false;
-    }
-
-    return true;
-}
-
 void CDInfo::printAll() const
 {
     // print off the hard coded ALL and TALL entries

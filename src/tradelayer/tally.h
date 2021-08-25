@@ -13,12 +13,7 @@ enum TallyType {
         METADEX_RESERVE = 4,
         CONTRACTDEX_RESERVE = 5, // margin acount
         CONTRACT_BALANCE = 6,
-        REALIZED_PROFIT = 7,
-        REALIZED_LOSSES = 8,
-        REMAINING = 9,
-	      UNVESTED = 10,
-        INITIAL_MARGIN = 11,  // for testing
-        ENTRY_PRICE = 12,  // for testing
+	      UNVESTED = 7,
         TALLY_TYPE_COUNT
 };
 

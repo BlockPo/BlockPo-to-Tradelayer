@@ -2303,8 +2303,10 @@ UniValue tl_getpnl(const JSONRPCRequest& request)
   RequireExistingProperty(contractId);
 
   UniValue balanceObj(UniValue::VOBJ);
-  int64_t upnl  = getMPbalance(address, contractId, REALIZED_PROFIT);
-  int64_t nupnl  = getMPbalance(address, contractId, REALIZED_LOSSES);
+
+  // note: we need to retrieve last realized pnl
+  int64_t upnl  = 0;
+  int64_t nupnl  = 0;
 
   if (upnl > 0 && nupnl == 0) {
     balanceObj.pushKV("positivepnl", FormatByType(static_cast<uint64_t>(upnl),2));

@@ -220,7 +220,6 @@ class PersistenceBasicsTest (BitcoinTestFramework):
         conn = http.client.HTTPConnection(url.hostname, url.port)
         conn.connect()
 
-
         self.log.info("Persistence: checking the property lihki")
         params = str([4])
         out = tradelayer_HTTP(conn, headers, False, "tl_getproperty",params)

@@ -78,20 +78,15 @@ std::string GenerateConsensusString(const CMPTally& tallyObj, const std::string&
     const int64_t acceptReserve = tallyObj.getMoney(propertyId, ACCEPT_RESERVE);
     const int64_t metaDExReserve = tallyObj.getMoney(propertyId, METADEX_RESERVE);
     const int64_t contractdexReserved = tallyObj.getMoney(propertyId, CONTRACTDEX_RESERVE);
-    const int64_t contractBalance = tallyObj.getMoney(propertyId, CONTRACT_BALANCE);
-    const int64_t realizedProfit = tallyObj.getMoney(propertyId, REALIZED_PROFIT);
-    const int64_t realizedLosses = tallyObj.getMoney(propertyId, REALIZED_LOSSES);
-    const int64_t remaining = tallyObj.getMoney(propertyId, REMAINING);
     const int64_t unvested = tallyObj.getMoney(propertyId, UNVESTED);
+    const int64_t pending = tallyObj.getMoney(propertyId, PENDING);
 
     // return a blank string if all balances are empty
-    if (!balance && !sellOfferReserve && !acceptReserve && !metaDExReserve && !contractdexReserved && !realizedProfit && !realizedLosses && !remaining && !unvested && !contractBalance) {
+    if (!balance && !sellOfferReserve && !acceptReserve && !metaDExReserve && !contractdexReserved && !unvested && !pending) {
       return "";
     }
 
-    return strprintf("%s|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d",  address, propertyId, balance, sellOfferReserve, acceptReserve,
-		     metaDExReserve, contractdexReserved, contractBalance, realizedProfit, realizedLosses,
-		     remaining, unvested);
+    return strprintf("%s|%d|%d|%d|%d|%d|%d|%d|%d",  address, propertyId, balance, sellOfferReserve, acceptReserve, pending, metaDExReserve, contractdexReserved, unvested);
 }
 
 // Generates a consensus string for hashing based on a DEx sell offer object
