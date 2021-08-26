@@ -1424,6 +1424,7 @@ static int input_mp_offers_string(const std::string& s)
 static int input_mp_accepts_string(const std::string& s)
 {
     std::vector<std::string> vstr;
+    PrintToLog("%s(): s: %s\n",__func__, s);
     boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
     int i = 0;
 
@@ -1451,6 +1452,7 @@ static int input_mp_accepts_string(const std::string& s)
 
 static int input_globals_state_string(const string &s)
 {
+  PrintToLog("%s(): s: %s\n",__func__, s);
   std::vector<std::string> vstr;
   boost::split(vstr, s, boost::is_any_of(" ,="), token_compress_on);
   if (1 != vstr.size()) return -1;
@@ -1463,6 +1465,7 @@ static int input_globals_state_string(const string &s)
 
 static int input_contract_globals_state_string(const string &s)
 {
+  PrintToLog("%s(): s: %s\n",__func__, s);
   std::vector<std::string> vstr;
   boost::split(vstr, s, boost::is_any_of(" ,="), token_compress_on);
   if (1 != vstr.size()) return -1;
@@ -1475,6 +1478,7 @@ static int input_contract_globals_state_string(const string &s)
 
 static int input_global_vars_string(const string &s)
 {
+  PrintToLog("%s(): s: %s\n",__func__, s);
   std::vector<std::string> vstr;
   boost::split(vstr, s, boost::is_any_of(" ,="), token_compress_on);
   if (1 != vstr.size()) return -1;
@@ -1489,6 +1493,7 @@ static int input_global_vars_string(const string &s)
 
 static int input_mp_contractdexorder_string(const std::string& s)
 {
+    PrintToLog("%s(): s: %s\n",__func__, s);
     std::vector<std::string> vstr;
     boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
 
@@ -1520,6 +1525,7 @@ static int input_mp_contractdexorder_string(const std::string& s)
 
 static int input_mp_token_ltc_string(const std::string& s)
 {
+   PrintToLog("%s(): s: %s\n",__func__, s);
    std::vector<std::string> vstr;
    boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
 
@@ -1535,6 +1541,7 @@ static int input_mp_token_ltc_string(const std::string& s)
 
 static int input_cachefees_string(const std::string& s)
 {
+   PrintToLog("%s(): s: %s\n",__func__, s);
    std::vector<std::string> vstr;
    boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
 
@@ -1549,6 +1556,7 @@ static int input_cachefees_string(const std::string& s)
 
 static int input_cachefees_oracles_string(const std::string& s)
 {
+   PrintToLog("%s(): s: %s\n",__func__, s);
    std::vector<std::string> vstr;
    boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
 
@@ -1563,6 +1571,7 @@ static int input_cachefees_oracles_string(const std::string& s)
 
 static int input_withdrawals_string(const std::string& s)
 {
+    PrintToLog("%s(): s: %s\n",__func__, s);
     std::vector<std::string> vstr;
     boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
 
@@ -1596,6 +1605,7 @@ static int input_withdrawals_string(const std::string& s)
 
 static int input_tokenvwap_string(const std::string& s)
 {
+  PrintToLog("%s(): s: %s\n",__func__, s);
   std::vector<std::string> vstr;
   boost::split(vstr, s, boost::is_any_of("+-"), boost::token_compress_on);
   const uint32_t propertyId = boost::lexical_cast<uint32_t>(vstr[0]);
@@ -1618,6 +1628,7 @@ static int input_tokenvwap_string(const std::string& s)
 
 static int input_activechannels_string(const std::string& s)
 {
+    PrintToLog("%s(): s: %s\n",__func__, s);
     std::vector<std::string> vstr;
     boost::split(vstr, s, boost::is_any_of(" ,=+"), boost::token_compress_on);
 
@@ -1653,6 +1664,7 @@ static int input_activechannels_string(const std::string& s)
 
 static int input_mp_mdexorder_string(const std::string& s)
 {
+    PrintToLog("%s(): s: %s\n",__func__, s);
     std::vector<std::string> vstr;
     boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
 
@@ -1680,6 +1692,7 @@ static int input_mp_mdexorder_string(const std::string& s)
 
 static int input_mp_dexvolume_string(const std::string& s)
 {
+    PrintToLog("%s(): s: %s\n",__func__, s);
     std::vector<std::string> vstr;
     boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
 
@@ -1704,6 +1717,7 @@ static int input_mp_dexvolume_string(const std::string& s)
 
 static int input_mp_mdexvolume_string(const std::string& s)
 {
+    PrintToLog("%s(): s: %s\n",__func__, s);
     std::vector<std::string> vstr;
     boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
 
@@ -1729,6 +1743,7 @@ static int input_mp_mdexvolume_string(const std::string& s)
 
 static int input_mp_ltcvolume_string(const std::string& s)
 {
+    PrintToLog("%s(): s: %s\n",__func__, s);
     std::vector<std::string> vstr;
     boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
 
@@ -1755,6 +1770,7 @@ static int input_mp_ltcvolume_string(const std::string& s)
 
 static int input_vestingaddresses_string(const std::string& s)
 {
+   PrintToLog("%s(): s: %s\n",__func__, s);
    std::vector<std::string> vstr;
    size_t elements = vestingAddresses.size();
 
@@ -1771,6 +1787,7 @@ static int input_vestingaddresses_string(const std::string& s)
 static int input_register_string(const std::string& s)
 {
     // "address=contract_register"
+    PrintToLog("%s(): s: %s\n",__func__, s);
     std::vector<std::string> addrData;
     boost::split(addrData, s, boost::is_any_of("="), boost::token_compress_on);
     if (addrData.size() != 2) return -1;
@@ -1987,7 +2004,6 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
 
         if (inputLineFunc) {
             if (inputLineFunc(line) < 0) {
-                PrintToLog("%s(): inputLineFunc(line) = %d\n",__func__, inputLineFunc(line));
                 res = -1;
                 break;
             }
@@ -2344,7 +2360,6 @@ static int write_mp_metadex(ofstream &file, CHash256& hasher)
             {
                 const CMPMetaDEx& meta = in;
                 meta.saveOffer(file, hasher);
-                PrintToLog("%s(): mdex element: %s\n",__func__, meta.ToString());
             }
         }
     }
@@ -2865,7 +2880,6 @@ int mastercore_save_state(CBlockIndex const *pBlockIndex)
     // clean-up the directory
     prune_state_files(pBlockIndex);
 
-    // PrintToLog("%s(): saving watermark at block: %d\n",__func__,pBlockIndex->nHeight);
     _my_sps->setWatermark(pBlockIndex->GetBlockHash());
 
     return 0;
@@ -4260,17 +4274,17 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
     LOCK(cs_tally);
 
 
-        bool bRecoveryMode{false};
-        {
-            LOCK(cs_tally);
+    bool bRecoveryMode{false};
+    {
+        LOCK(cs_tally);
 
-            if (reorgRecoveryMode > 0) {
-                reorgRecoveryMode = 0; // clear reorgRecovery here as this is likely re-entrant
-                bRecoveryMode = true;
-            }
+        if (reorgRecoveryMode > 0) {
+            reorgRecoveryMode = 0; // clear reorgRecovery here as this is likely re-entrant
+            bRecoveryMode = true;
         }
+    }
 
-       if (bRecoveryMode) {
+    if (bRecoveryMode) {
         // NOTE: The blockNum parameter is inclusive, so deleteAboveBlock(1000) will delete records in block 1000 and above.
         p_txlistdb->isMPinBlockRange(pBlockIndex->nHeight, reorgRecoveryMaxHeight, true);
         reorgRecoveryMaxHeight = 0;
