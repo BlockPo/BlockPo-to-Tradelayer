@@ -2483,7 +2483,7 @@ void addBalances(const std::map<std::string,map<uint32_t, int64_t>>& balances, s
         const std::string& address = b.first;
         const auto &pMap = b.second;
 
-        for (auto p = pMap.begin(); p != pMap.end(); ++p){
+        for (auto p = pMap.begin(); p != pMap.end(); p++){
             const uint32_t& property = p->first;
             const int64_t&  amount = p->second;
             lineOut.append(strprintf("%s-%d:%d",address, property, amount));
