@@ -1648,8 +1648,11 @@ static int input_activechannels_string(const std::string& s)
         std::vector<std::string> adReg;
         boost::split(adReg, v, boost::is_any_of("-"), boost::token_compress_on);
         const std::string& address = adReg[0];
+        PrintToLog("%s(): adReg[0]: %s\n",__func__, adReg[0]);
         std::vector<std::string> reg;
         boost::split(reg, adReg[1], boost::is_any_of(":"), boost::token_compress_on);
+        PrintToLog("%s(): reg[0]: %s\n",__func__, reg[0]);
+        PrintToLog("%s(): reg[1]: %s\n",__func__, reg[1]);
         const uint32_t property = boost::lexical_cast<uint32_t>(reg[0]);
         const int64_t amount = boost::lexical_cast<int64_t>(reg[1]);
         chn.setBalance(address, property, amount);
