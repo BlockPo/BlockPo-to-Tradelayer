@@ -1424,7 +1424,6 @@ static int input_mp_offers_string(const std::string& s)
 static int input_mp_accepts_string(const std::string& s)
 {
     std::vector<std::string> vstr;
-    PrintToLog("%s(): s: %s\n",__func__, s);
     boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
     int i = 0;
 
@@ -1452,7 +1451,6 @@ static int input_mp_accepts_string(const std::string& s)
 
 static int input_globals_state_string(const string &s)
 {
-  PrintToLog("%s(): s: %s\n",__func__, s);
   std::vector<std::string> vstr;
   boost::split(vstr, s, boost::is_any_of(" ,="), token_compress_on);
   if (1 != vstr.size()) return -1;
@@ -1465,7 +1463,6 @@ static int input_globals_state_string(const string &s)
 
 static int input_contract_globals_state_string(const string &s)
 {
-  PrintToLog("%s(): s: %s\n",__func__, s);
   std::vector<std::string> vstr;
   boost::split(vstr, s, boost::is_any_of(" ,="), token_compress_on);
   if (1 != vstr.size()) return -1;
@@ -1478,7 +1475,6 @@ static int input_contract_globals_state_string(const string &s)
 
 static int input_global_vars_string(const string &s)
 {
-  PrintToLog("%s(): s: %s\n",__func__, s);
   std::vector<std::string> vstr;
   boost::split(vstr, s, boost::is_any_of(" ,="), token_compress_on);
   if (1 != vstr.size()) return -1;
@@ -1493,7 +1489,6 @@ static int input_global_vars_string(const string &s)
 
 static int input_mp_contractdexorder_string(const std::string& s)
 {
-    PrintToLog("%s(): s: %s\n",__func__, s);
     std::vector<std::string> vstr;
     boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
 
@@ -1525,7 +1520,6 @@ static int input_mp_contractdexorder_string(const std::string& s)
 
 static int input_mp_token_ltc_string(const std::string& s)
 {
-   PrintToLog("%s(): s: %s\n",__func__, s);
    std::vector<std::string> vstr;
    boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
 
@@ -1541,7 +1535,6 @@ static int input_mp_token_ltc_string(const std::string& s)
 
 static int input_cachefees_string(const std::string& s)
 {
-   PrintToLog("%s(): s: %s\n",__func__, s);
    std::vector<std::string> vstr;
    boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
 
@@ -1556,7 +1549,6 @@ static int input_cachefees_string(const std::string& s)
 
 static int input_cachefees_oracles_string(const std::string& s)
 {
-   PrintToLog("%s(): s: %s\n",__func__, s);
    std::vector<std::string> vstr;
    boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
 
@@ -1571,7 +1563,6 @@ static int input_cachefees_oracles_string(const std::string& s)
 
 static int input_withdrawals_string(const std::string& s)
 {
-    PrintToLog("%s(): s: %s\n",__func__, s);
     std::vector<std::string> vstr;
     boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
 
@@ -1605,7 +1596,6 @@ static int input_withdrawals_string(const std::string& s)
 
 static int input_tokenvwap_string(const std::string& s)
 {
-  PrintToLog("%s(): s: %s\n",__func__, s);
   std::vector<std::string> vstr;
   boost::split(vstr, s, boost::is_any_of("+-"), boost::token_compress_on);
   const uint32_t propertyId = boost::lexical_cast<uint32_t>(vstr[0]);
@@ -1628,7 +1618,6 @@ static int input_tokenvwap_string(const std::string& s)
 
 static int input_activechannels_string(const std::string& s)
 {
-    PrintToLog("%s(): s: %s\n",__func__, s);
     std::vector<std::string> vstr;
     boost::split(vstr, s, boost::is_any_of(" ,=+"), boost::token_compress_on);
 
@@ -1648,11 +1637,8 @@ static int input_activechannels_string(const std::string& s)
         std::vector<std::string> adReg;
         boost::split(adReg, v, boost::is_any_of("-"), boost::token_compress_on);
         const std::string& address = adReg[0];
-        PrintToLog("%s(): adReg[0]: %s\n",__func__, adReg[0]);
         std::vector<std::string> reg;
         boost::split(reg, adReg[1], boost::is_any_of(":"), boost::token_compress_on);
-        PrintToLog("%s(): reg[0]: %s\n",__func__, reg[0]);
-        PrintToLog("%s(): reg[1]: %s\n",__func__, reg[1]);
         const uint32_t property = boost::lexical_cast<uint32_t>(reg[0]);
         const int64_t amount = boost::lexical_cast<int64_t>(reg[1]);
         chn.setBalance(address, property, amount);
@@ -1667,7 +1653,6 @@ static int input_activechannels_string(const std::string& s)
 
 static int input_mp_mdexorder_string(const std::string& s)
 {
-    PrintToLog("%s(): s: %s\n",__func__, s);
     std::vector<std::string> vstr;
     boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
 
@@ -1695,7 +1680,6 @@ static int input_mp_mdexorder_string(const std::string& s)
 
 static int input_mp_dexvolume_string(const std::string& s)
 {
-    PrintToLog("%s(): s: %s\n",__func__, s);
     std::vector<std::string> vstr;
     boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
 
@@ -1720,7 +1704,6 @@ static int input_mp_dexvolume_string(const std::string& s)
 
 static int input_mp_mdexvolume_string(const std::string& s)
 {
-    PrintToLog("%s(): s: %s\n",__func__, s);
     std::vector<std::string> vstr;
     boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
 
@@ -1746,7 +1729,6 @@ static int input_mp_mdexvolume_string(const std::string& s)
 
 static int input_mp_ltcvolume_string(const std::string& s)
 {
-    PrintToLog("%s(): s: %s\n",__func__, s);
     std::vector<std::string> vstr;
     boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
 
@@ -1773,7 +1755,6 @@ static int input_mp_ltcvolume_string(const std::string& s)
 
 static int input_vestingaddresses_string(const std::string& s)
 {
-   PrintToLog("%s(): s: %s\n",__func__, s);
    std::vector<std::string> vstr;
    size_t elements = vestingAddresses.size();
 
@@ -1790,7 +1771,6 @@ static int input_vestingaddresses_string(const std::string& s)
 static int input_register_string(const std::string& s)
 {
     // "address=contract_register"
-    PrintToLog("%s(): s: %s\n",__func__, s);
     std::vector<std::string> addrData;
     boost::split(addrData, s, boost::is_any_of("="), boost::token_compress_on);
     if (addrData.size() != 2) return -1;
@@ -2478,23 +2458,32 @@ static int write_mp_withdrawals(std::ofstream& file, CHash256& hasher)
 /** adding channel balances**/
 void addBalances(const std::map<std::string,map<uint32_t, int64_t>>& balances, std::string& lineOut)
 {
-    for(const auto &b : balances)
+    for(auto b = balances.begin(); b != balances.end(); ++b)
     {
-        const std::string& address = b.first;
-        const auto &pMap = b.second;
+
+        if (b != balances.begin()) {
+            lineOut.append(strprintf(";"));
+        }
+
+        const std::string& address = b->first;
+        const auto &pMap = b->second;
 
         for (auto p = pMap.begin(); p != pMap.end(); ++p){
+
+            if (p != pMap.begin()) {
+                lineOut.append(strprintf(";"));
+            }
+
             const uint32_t& property = p->first;
             const int64_t&  amount = p->second;
             lineOut.append(strprintf("%s-%d:%d",address, property, amount));
-            if (p != std::prev(pMap.end())) lineOut.append(";");
 
-            PrintToLog("%s(): lineOut: %s\n",__func__, lineOut);
         }
 
     }
 
-    PrintToLog("%s(): final lineOut: %s\n",__func__, lineOut);
+    PrintToLog("%s(): Final lineOut: %s\n",__func__, lineOut);
+
 }
 
 static int write_mp_tokenvwap(std::ofstream& file, CHash256& hasher)
