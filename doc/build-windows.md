@@ -1,9 +1,9 @@
 WINDOWS BUILD NOTES
 ====================
 
-Below are some notes on how to build Litecoin Core for Windows.
+Below are some notes on how to build TradeLayer Core for Windows.
 
-The options known to work for building Litecoin Core on Windows are:
+The options known to work for building TradeLayer Core on Windows are:
 
 * On Linux using the [Mingw-w64](https://mingw-w64.org/doku.php) cross compiler tool chain. Ubuntu Bionic 18.04 is required
 and is the platform used to build the Litecoin Core Windows release binaries.
@@ -85,8 +85,8 @@ This means you cannot use a directory that located directly on the host Windows 
 The next three steps are an example of how to acquire the source in an appropriate way.
 
     cd /usr/src
-    sudo git clone https://github.com/litecoin-project/litecoin.git
-    sudo chmod -R a+rw litecoin
+    sudo git clone https://github.com/BlockPo/BlockPo-to-Tradelayer.git
+    sudo chmod -R a+rw BlockPo-to-Tradelayer
 
 Once the source code is ready the build steps are below.
 
@@ -115,8 +115,8 @@ This means you cannot use a directory that located directly on the host Windows 
 The next three steps are an example of how to acquire the source in an appropriate way.
 
     cd /usr/src
-    sudo git clone https://github.com/litecoin-project/litecoin.git
-    sudo chmod -R a+rw litecoin
+    sudo git clone https://github.com/BlockPo/BlockPo-to-Tradelayer.git
+    sudo chmod -R a+rw BlockPo-to-Tradelayer
 
 Then build using:
 
