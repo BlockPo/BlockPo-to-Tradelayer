@@ -1368,14 +1368,27 @@ static int input_msc_balances_string(const std::string& s)
 
         if (curBalance.size() != 7) return -1;
 
-        const uint32_t propertyId = boost::lexical_cast<uint32_t>(curProperty[0]);
-        const int64_t balance = boost::lexical_cast<int64_t>(curBalance[0]);
-        const int64_t sellReserved = boost::lexical_cast<int64_t>(curBalance[1]);
-        const int64_t acceptReserved = boost::lexical_cast<int64_t>(curBalance[2]);
-        const int64_t pending = boost::lexical_cast<int64_t>(curBalance[3]);
-        const int64_t metadexReserved = boost::lexical_cast<int64_t>(curBalance[4]);
-        const int64_t contractdexReserved = boost::lexical_cast<int64_t>(curBalance[5]);
-        const int64_t unvested = boost::lexical_cast<int64_t>(curBalance[6]);
+        uint32_t propertyId = 0;
+        int64_t balance = 0;
+        int64_t sellReserved = 0;
+        int64_t acceptReserved = 0;
+        int64_t pending = 0;
+        int64_t metadexReserved = 0;
+        int64_t contractdexReserved = 0;
+        int64_t unvested = 0;
+
+        try {
+            propertyId = boost::lexical_cast<uint32_t>(curProperty[0]);
+            balance = boost::lexical_cast<int64_t>(curBalance[0]);
+            sellReserved = boost::lexical_cast<int64_t>(curBalance[1]);
+            acceptReserved = boost::lexical_cast<int64_t>(curBalance[2]);
+            pending = boost::lexical_cast<int64_t>(curBalance[3]);
+            metadexReserved = boost::lexical_cast<int64_t>(curBalance[4]);
+            contractdexReserved = boost::lexical_cast<int64_t>(curBalance[5]);
+            unvested = boost::lexical_cast<int64_t>(curBalance[6]);
+        } catch (...) {
+            PrintToLog("%s(): lexical_cast issue \n",__func__);
+        }
 
         if (balance) update_tally_map(strAddress, propertyId, balance, BALANCE);
         if (sellReserved) update_tally_map(strAddress, propertyId, sellReserved, SELLOFFER_RESERVE);
@@ -1399,17 +1412,32 @@ static int input_mp_offers_string(const std::string& s)
     if (10 != vstr.size()) return -1;
 
     int i = 0;
+    int offerBlock = 0;
+    int64_t amountOriginal = 0;
+    uint32_t prop = 0;
+    int64_t btcDesired = 0;
+    int64_t minFee = 0;
+    uint8_t blocktimelimit = 0;
+    uint256 txid;
+    uint8_t subaction = 0;
+    uint8_t option = 0;
 
-    std::string sellerAddr = vstr[i++];
-    int offerBlock = boost::lexical_cast<int>(vstr[i++]);
-    const int64_t amountOriginal = boost::lexical_cast<int64_t>(vstr[i++]);
-    const uint32_t prop = boost::lexical_cast<uint32_t>(vstr[i++]);
-    const int64_t btcDesired = boost::lexical_cast<int64_t>(vstr[i++]);
-    const int64_t minFee = boost::lexical_cast<int64_t>(vstr[i++]);
-    const uint8_t blocktimelimit = boost::lexical_cast<unsigned int>(vstr[i++]); // lexical_cast can't handle char!
-    const uint256 txid = uint256S(vstr[i++]);
-    const uint8_t subaction = boost::lexical_cast<unsigned int>(vstr[i++]);
-    const uint8_t option = boost::lexical_cast<unsigned int>(vstr[i++]);
+    const std::string &sellerAddr = vstr[i++];
+
+    try {
+
+        int offerBlock = boost::lexical_cast<int>(vstr[i++]);
+        const int64_t amountOriginal = boost::lexical_cast<int64_t>(vstr[i++]);
+        const uint32_t prop = boost::lexical_cast<uint32_t>(vstr[i++]);
+        const int64_t btcDesired = boost::lexical_cast<int64_t>(vstr[i++]);
+        const int64_t minFee = boost::lexical_cast<int64_t>(vstr[i++]);
+        const uint8_t blocktimelimit = boost::lexical_cast<unsigned int>(vstr[i++]); // lexical_cast can't handle char!
+        const uint256 txid = uint256S(vstr[i++]);
+        const uint8_t subaction = boost::lexical_cast<unsigned int>(vstr[i++]);
+        const uint8_t option = boost::lexical_cast<unsigned int>(vstr[i++]);
+    } catch (...) {
+        PrintToLog("%s(): lexical_cast issue \n",__func__);
+    }
 
     const std::string combo = STR_SELLOFFER_ADDR_PROP_COMBO(sellerAddr, prop);
     CMPOffer newOffer(offerBlock, amountOriginal, prop, btcDesired, minFee, blocktimelimit, txid, subaction, option);
@@ -1429,16 +1457,32 @@ static int input_mp_accepts_string(const std::string& s)
 
     if (10 != vstr.size()) return -1;
 
-    const std::string sellerAddr = vstr[i++];
-    const unsigned int prop = boost::lexical_cast<unsigned int>(vstr[i++]);
-    const std::string buyerAddr = vstr[i++];
-    const int nBlock = atoi(vstr[i++]);
-    const int64_t amountRemaining = boost::lexical_cast<int64_t>(vstr[i++]);
-    const int64_t amountOriginal = boost::lexical_cast<uint64_t>(vstr[i++]);
-    const unsigned char blocktimelimit = atoi(vstr[i++]);
-    const int64_t offerOriginal = boost::lexical_cast<int64_t>(vstr[i++]);
-    const int64_t btcDesired = boost::lexical_cast<int64_t>(vstr[i++]);
-    const std::string txidStr = vstr[i++];
+    unsigned int prop = 0;
+    std::string buyerAddr;
+    int nBlock = 0;
+    int64_t amountRemaining = 0;
+    int64_t amountOriginal = 0;
+    unsigned char blocktimelimit = 0;
+    int64_t offerOriginal = 0;
+    int64_t btcDesired = 0;
+    std::string txidStr;
+
+
+    const std::string &sellerAddr = vstr[i++];
+
+    try {
+        prop = boost::lexical_cast<unsigned int>(vstr[i++]);
+        buyerAddr = vstr[i++];
+        nBlock = atoi(vstr[i++]);
+        amountRemaining = boost::lexical_cast<int64_t>(vstr[i++]);
+        amountOriginal = boost::lexical_cast<uint64_t>(vstr[i++]);
+        blocktimelimit = atoi(vstr[i++]);
+        offerOriginal = boost::lexical_cast<int64_t>(vstr[i++]);
+        btcDesired = boost::lexical_cast<int64_t>(vstr[i++]);
+        txidStr = vstr[i++];
+    } catch (...) {
+        PrintToLog("%s(): lexical_cast issue \n",__func__);
+    }
 
     const std::string combo = STR_ACCEPT_ADDR_PROP_ADDR_COMBO(sellerAddr, buyerAddr, prop);
     CMPAccept newAccept(amountOriginal, amountRemaining, nBlock, blocktimelimit, prop, offerOriginal, btcDesired, uint256S(txidStr));
@@ -1456,8 +1500,17 @@ static int input_globals_state_string(const string &s)
   if (1 != vstr.size()) return -1;
 
   int i = 0;
-  const unsigned int nextSPID = boost::lexical_cast<unsigned int>(vstr[i++]);
+  unsigned int nextSPID = 0;
+
+  try
+  {
+      nextSPID = boost::lexical_cast<unsigned int>(vstr[i++]);
+  } catch (...) {
+        PrintToLog("%s(): lexical_cast issue!\n",__func__);
+  }
+
   _my_sps->init(nextSPID);
+
   return 0;
 }
 
@@ -1465,10 +1518,20 @@ static int input_contract_globals_state_string(const string &s)
 {
   std::vector<std::string> vstr;
   boost::split(vstr, s, boost::is_any_of(" ,="), token_compress_on);
-  if (1 != vstr.size()) return -1;
+
+  if (1 != vstr.size()) {
+    return -1;
+  }
 
   int i = 0;
-  const unsigned int nextCDID = boost::lexical_cast<unsigned int>(vstr[i++]);
+  unsigned int nextCDID = 0;
+
+  try {
+      nextCDID = boost::lexical_cast<unsigned int>(vstr[i++]);
+  } catch (...) {
+        PrintToLog("%s(): lexical_cast issue!\n",__func__);
+  }
+
   _my_cds->init(nextCDID);
   return 0;
 }
@@ -1480,7 +1543,13 @@ static int input_global_vars_string(const string &s)
   if (1 != vstr.size()) return -1;
 
   int i = 0;
-  const int64_t lastVolume = boost::lexical_cast<int64_t>(vstr[i++]);
+  int64_t lastVolume = 0;
+
+  try {
+      lastVolume = boost::lexical_cast<int64_t>(vstr[i++]);
+  } catch (...) {
+      PrintToLog("%s(): lexical_cast issue!\n",__func__);
+  }
 
   globalVolumeALL_LTC = lastVolume;
 
@@ -1496,19 +1565,37 @@ static int input_mp_contractdexorder_string(const std::string& s)
 
     int i = 0;
 
+    int block = 0;
+    int64_t amount_forsale = 0;
+    uint32_t property = 0;
+    int64_t amount_desired = 0;
+    uint32_t desired_property = 0;
+    uint8_t subaction = 0;
+    unsigned int idx = 0;
+    uint256 txid;
+    int64_t amount_remaining = 0;
+    uint64_t effective_price = 0;
+    uint8_t trading_action = 0;
+    int64_t amount_reserved = 0;
+
     const std::string addr = vstr[i++];
-    const int block = boost::lexical_cast<int>(vstr[i++]);
-    const int64_t amount_forsale = boost::lexical_cast<int64_t>(vstr[i++]);
-    const uint32_t property = boost::lexical_cast<uint32_t>(vstr[i++]);
-    const int64_t amount_desired = boost::lexical_cast<int64_t>(vstr[i++]);
-    const uint32_t desired_property = boost::lexical_cast<uint32_t>(vstr[i++]);
-    const uint8_t subaction = boost::lexical_cast<unsigned int>(vstr[i++]); // lexical_cast can't handle char!
-    const unsigned int idx = boost::lexical_cast<unsigned int>(vstr[i++]);
-    const uint256 txid = uint256S(vstr[i++]);
-    const int64_t amount_remaining = boost::lexical_cast<int64_t>(vstr[i++]);
-    const uint64_t effective_price = boost::lexical_cast<uint64_t>(vstr[i++]);
-    const uint8_t trading_action = boost::lexical_cast<unsigned int>(vstr[i++]);
-    const int64_t amount_reserved = boost::lexical_cast<int64_t>(vstr[i++]);
+    try {
+        block = boost::lexical_cast<int>(vstr[i++]);
+        amount_forsale = boost::lexical_cast<int64_t>(vstr[i++]);
+        property = boost::lexical_cast<uint32_t>(vstr[i++]);
+        amount_desired = boost::lexical_cast<int64_t>(vstr[i++]);
+        desired_property = boost::lexical_cast<uint32_t>(vstr[i++]);
+        subaction = boost::lexical_cast<unsigned int>(vstr[i++]); // lexical_cast can't handle char!
+        idx = boost::lexical_cast<unsigned int>(vstr[i++]);
+        txid = uint256S(vstr[i++]);
+        amount_remaining = boost::lexical_cast<int64_t>(vstr[i++]);
+        effective_price = boost::lexical_cast<uint64_t>(vstr[i++]);
+        trading_action = boost::lexical_cast<unsigned int>(vstr[i++]);
+        amount_reserved = boost::lexical_cast<int64_t>(vstr[i++]);
+
+    } catch (...) {
+        PrintToLog("%s(): lexical_cast issue \n",__func__);
+    }
 
     CMPContractDex mdexObj(addr, block, property, amount_forsale, desired_property,
             amount_desired, txid, idx, subaction, amount_remaining, effective_price, trading_action, amount_reserved);
@@ -1523,8 +1610,16 @@ static int input_mp_token_ltc_string(const std::string& s)
    std::vector<std::string> vstr;
    boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
 
-   const uint32_t propertyId = boost::lexical_cast<uint32_t>(vstr[0]);
-   const int64_t price = boost::lexical_cast<int64_t>(vstr[1]);
+   uint32_t propertyId = 0;
+   int64_t price = 0;
+
+   try {
+     propertyId = boost::lexical_cast<uint32_t>(vstr[0]);
+     price = boost::lexical_cast<int64_t>(vstr[1]);
+   } catch (...) {
+       PrintToLog("%s(): lexical_cast issue \n",__func__);
+   }
+
 
 
    if (!lastPrice.insert(std::make_pair(propertyId, price)).second) return -1;
@@ -1538,9 +1633,15 @@ static int input_cachefees_string(const std::string& s)
    std::vector<std::string> vstr;
    boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
 
-   const uint32_t propertyId = boost::lexical_cast<uint32_t>(vstr[0]);
-   const int64_t amount = boost::lexical_cast<int64_t>(vstr[1]);
+   uint32_t propertyId = 0;
+   int64_t amount = 0;
 
+   try {
+       propertyId = boost::lexical_cast<uint32_t>(vstr[0]);
+       amount = boost::lexical_cast<int64_t>(vstr[1]);
+   } catch (...) {
+       PrintToLog("%s(): lexical_cast issue \n",__func__);
+   }
 
    if (!cachefees.insert(std::make_pair(propertyId, amount)).second) return -1;
 
@@ -1551,9 +1652,15 @@ static int input_cachefees_oracles_string(const std::string& s)
 {
    std::vector<std::string> vstr;
    boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
+   uint32_t propertyId = 0;
+   int64_t amount = 0;
 
-   const uint32_t propertyId = boost::lexical_cast<uint32_t>(vstr[0]);
-   const int64_t amount = boost::lexical_cast<int64_t>(vstr[1]);
+   try {
+       propertyId = boost::lexical_cast<uint32_t>(vstr[0]);
+       amount = boost::lexical_cast<int64_t>(vstr[1]);
+   } catch (...) {
+       PrintToLog("%s(): lexical_cast issue \n",__func__);
+   }
 
 
    if (!cachefees_oracles.insert(std::make_pair(propertyId, amount)).second) return -1;
@@ -1570,10 +1677,15 @@ static int input_withdrawals_string(const std::string& s)
 
     const std::string& chnAddr = vstr[0];
     w.address = vstr[1];
-    w.deadline_block = boost::lexical_cast<int>(vstr[2]);
-    w.propertyId = boost::lexical_cast<uint32_t>(vstr[3]);
-    w.amount = boost::lexical_cast<int64_t>(vstr[4]);
-    w.txid = uint256S(vstr[5]);
+
+    try {
+         w.deadline_block = boost::lexical_cast<int>(vstr[2]);
+         w.propertyId = boost::lexical_cast<uint32_t>(vstr[3]);
+         w.amount = boost::lexical_cast<int64_t>(vstr[4]);
+         w.txid = uint256S(vstr[5]);
+    } catch (...) {
+        PrintToLog("%s(): lexical_cast issue \n",__func__);
+    }
 
     auto it = withdrawal_Map.find(chnAddr);
 
@@ -1598,8 +1710,18 @@ static int input_tokenvwap_string(const std::string& s)
 {
   std::vector<std::string> vstr;
   boost::split(vstr, s, boost::is_any_of("+-"), boost::token_compress_on);
-  const uint32_t propertyId = boost::lexical_cast<uint32_t>(vstr[0]);
-  const int block = boost::lexical_cast<int>(vstr[1]);
+
+  uint32_t propertyId = 0;
+  int block = 0;
+
+  try {
+       propertyId = boost::lexical_cast<uint32_t>(vstr[0]);
+       block = boost::lexical_cast<int>(vstr[1]);
+  } catch(...) {
+       PrintToLog("%s(): lexical_cast issue (1)\n",__func__);
+  }
+
+
 
   std::vector<std::string> vpair;
   boost::split(vpair, vstr[2], boost::is_any_of(","), boost::token_compress_on);
@@ -1608,9 +1730,15 @@ static int input_tokenvwap_string(const std::string& s)
   {
       std::vector<std::string> pAmount;
       boost::split(pAmount, np, boost::is_any_of(":"), boost::token_compress_on);
-      const int64_t unitPrice = boost::lexical_cast<int64_t>(pAmount[0]);
-      const int64_t amount = boost::lexical_cast<int64_t>(pAmount[1]);
-      tokenvwap[propertyId][block].push_back(std::make_pair(unitPrice, amount));
+
+      try {
+          const int64_t unitPrice = boost::lexical_cast<int64_t>(pAmount[0]);
+          const int64_t amount = boost::lexical_cast<int64_t>(pAmount[1]);
+          tokenvwap[propertyId][block].push_back(std::make_pair(unitPrice, amount));
+      } catch(...) {
+         PrintToLog("%s(): lexical_cast issue (2)\n",__func__);
+      }
+
   }
 
   return 0;
@@ -1621,9 +1749,14 @@ static int input_activechannels_string(const std::string& s)
     std::vector<std::string> vstr;
     boost::split(vstr, s, boost::is_any_of(" ,=+"), boost::token_compress_on);
 
+    int last_exchange_block = 0;
     const std::string& chnAddr = vstr[0];
 
-    const int last_exchange_block = boost::lexical_cast<int>(vstr[4]);
+    try {
+        last_exchange_block = boost::lexical_cast<int>(vstr[4]);
+    } catch (...) {
+       PrintToLog("%s(): lexical_cast issue (1)\n",__func__);
+    }
 
     Channel chn(vstr[1], vstr[2], vstr[3], last_exchange_block);
     // split general data + balances
@@ -1639,9 +1772,14 @@ static int input_activechannels_string(const std::string& s)
         const std::string& address = adReg[0];
         std::vector<std::string> reg;
         boost::split(reg, adReg[1], boost::is_any_of(":"), boost::token_compress_on);
-        const uint32_t property = boost::lexical_cast<uint32_t>(reg[0]);
-        const int64_t amount = boost::lexical_cast<int64_t>(reg[1]);
-        chn.setBalance(address, property, amount);
+        try {
+            const uint32_t property = boost::lexical_cast<uint32_t>(reg[0]);
+            const int64_t amount = boost::lexical_cast<int64_t>(reg[1]);
+            chn.setBalance(address, property, amount);
+        } catch (...) {
+             PrintToLog("%s(): lexical_cast issue (2)\n",__func__);
+        }
+
     }
 
     // //inserting chn into map
@@ -1659,16 +1797,31 @@ static int input_mp_mdexorder_string(const std::string& s)
     if (10 != vstr.size()) return -1;
 
     int i = 0;
-    const std::string addr = vstr[i++];
-    const int block = boost::lexical_cast<int>(vstr[i++]);
-    const int64_t amount_forsale = boost::lexical_cast<int64_t>(vstr[i++]);
-    const uint32_t property = boost::lexical_cast<uint32_t>(vstr[i++]);
-    const int64_t amount_desired = boost::lexical_cast<int64_t>(vstr[i++]);
-    const uint32_t desired_property = boost::lexical_cast<uint32_t>(vstr[i++]);
-    const uint8_t subaction = boost::lexical_cast<unsigned int>(vstr[i++]); // lexical_cast can't handle char!
-    const unsigned int idx = boost::lexical_cast<unsigned int>(vstr[i++]);
-    const uint256 txid = uint256S(vstr[i++]);
-    const int64_t amount_remaining = boost::lexical_cast<int64_t>(vstr[i++]);
+    int block = 0;
+    int64_t amount_forsale = 0;
+    uint32_t property = 0;
+    int64_t amount_desired = 0;
+    uint32_t desired_property = 0;
+    uint8_t subaction = 0;
+    unsigned int idx = 0;
+    uint256 txid;
+    int64_t amount_remaining = 0;
+
+    const std::string &addr = vstr[i++];
+
+    try {
+        block = boost::lexical_cast<int>(vstr[i++]);
+        amount_forsale = boost::lexical_cast<int64_t>(vstr[i++]);
+        property = boost::lexical_cast<uint32_t>(vstr[i++]);
+        amount_desired = boost::lexical_cast<int64_t>(vstr[i++]);
+        desired_property = boost::lexical_cast<uint32_t>(vstr[i++]);
+        subaction = boost::lexical_cast<unsigned int>(vstr[i++]); // lexical_cast can't handle char!
+        idx = boost::lexical_cast<unsigned int>(vstr[i++]);
+        txid = uint256S(vstr[i++]);
+        amount_remaining = boost::lexical_cast<int64_t>(vstr[i++]);
+    } catch (...) {
+        PrintToLog("%s(): lexical_cast issue \n",__func__);
+    }
 
     CMPMetaDEx mdexObj(addr, block, property, amount_forsale, desired_property,
             amount_desired, txid, idx, subaction, amount_remaining);
@@ -1683,9 +1836,18 @@ static int input_mp_dexvolume_string(const std::string& s)
     std::vector<std::string> vstr;
     boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
 
-    const int block = boost::lexical_cast<int>(vstr[0]);
-    const uint32_t propertyId = boost::lexical_cast<uint32_t>(vstr[1]);
-    const int64_t amount = boost::lexical_cast<int64_t>(vstr[2]);
+    int block = 0;
+    uint32_t propertyId = 0;
+    int64_t amount = 0;
+
+    try {
+        const int block = boost::lexical_cast<int>(vstr[0]);
+        const uint32_t propertyId = boost::lexical_cast<uint32_t>(vstr[1]);
+        const int64_t amount = boost::lexical_cast<int64_t>(vstr[2]);
+    } catch(...) {
+        PrintToLog("%s(): lexical_cast issue \n",__func__);
+    }
+
 
     auto it = MapTokenVolume.find(block);
     if (it != MapTokenVolume.end()){
@@ -1707,9 +1869,18 @@ static int input_mp_mdexvolume_string(const std::string& s)
     std::vector<std::string> vstr;
     boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
 
-    const int block = boost::lexical_cast<int>(vstr[0]);
-    const uint32_t property = boost::lexical_cast<uint32_t>(vstr[1]);
-    const int64_t amount = boost::lexical_cast<int64_t>(vstr[2]);
+    int block = 0;
+    uint32_t property = 0;
+    int64_t amount = 0;
+
+    try {
+        const int block = boost::lexical_cast<int>(vstr[0]);
+        const uint32_t property = boost::lexical_cast<uint32_t>(vstr[1]);
+        const int64_t amount = boost::lexical_cast<int64_t>(vstr[2]);
+
+    } catch (...) {
+        PrintToLog("%s(): lexical_cast issue \n",__func__);
+    }
 
     auto it = metavolume.find(block);
     if (it != metavolume.end()){
@@ -1732,9 +1903,18 @@ static int input_mp_ltcvolume_string(const std::string& s)
     std::vector<std::string> vstr;
     boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
 
-    const int block = boost::lexical_cast<int>(vstr[0]);
-    const uint32_t property = boost::lexical_cast<uint32_t>(vstr[1]);
-    const int64_t amount = boost::lexical_cast<int64_t>(vstr[2]);
+    int block = 0;
+    uint32_t property = 0;
+    int64_t amount = 0;
+
+    try {
+      block = boost::lexical_cast<int>(vstr[0]);
+      property = boost::lexical_cast<uint32_t>(vstr[1]);
+      amount = boost::lexical_cast<int64_t>(vstr[2]);
+
+    } catch (...) {
+        PrintToLog("%s(): lexical_cast issue \n",__func__);
+    }
 
     auto it = MapLTCVolume.find(block);
     if (it != MapLTCVolume.end()){
@@ -1760,9 +1940,15 @@ static int input_vestingaddresses_string(const std::string& s)
 
    boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
 
-   const std::string& address = vstr[0];
+   try {
+       const std::string& address = vstr[0];
+       vestingAddresses.push_back(address);
 
-   vestingAddresses.push_back(address);
+   } catch (...) {
+       PrintToLog("%s(): lexical_cast issue \n",__func__);
+   }
+
+
 
    return ((vestingAddresses.size() > elements) ? 0 : -1);
 }
@@ -1773,8 +1959,9 @@ static int input_register_string(const std::string& s)
     // "address=contract_register"
     std::vector<std::string> addrData;
     boost::split(addrData, s, boost::is_any_of("="), boost::token_compress_on);
-    if (addrData.size() != 2) return -1;
-
+    if (addrData.size() != 2) {
+        return -1;
+    }
     std::string strAddress = addrData[0];
 
     // split the tuples of contract registers
@@ -1799,13 +1986,27 @@ static int input_register_string(const std::string& s)
        std::vector<std::string> vRecord;
        boost::split(vRecord, idRecord[1], boost::is_any_of(","), boost::token_compress_on);
 
-       const uint32_t contractId = boost::lexical_cast<uint32_t>(idRecord[0]);
-       const int64_t entryPrice = boost::lexical_cast<int64_t>(vRecord[0]);
-       const int64_t position = boost::lexical_cast<int64_t>(vRecord[1]);
-       const int64_t liquidationPrice = boost::lexical_cast<int64_t>(vRecord[2]);
-       const int64_t upnl = boost::lexical_cast<int64_t>(vRecord[3]);
-       const int64_t margin = boost::lexical_cast<int64_t>(vRecord[4]);
-       const int64_t leverage = boost::lexical_cast<int64_t>(vRecord[5]);
+       uint32_t contractId = 0;
+       int64_t entryPrice = 0;
+       int64_t position = 0;
+       int64_t liquidationPrice = 0;
+       int64_t upnl = 0;
+       int64_t margin = 0;
+       int64_t leverage = 0;
+
+       try {
+           contractId = boost::lexical_cast<uint32_t>(idRecord[0]);
+           entryPrice = boost::lexical_cast<int64_t>(vRecord[0]);
+           position = boost::lexical_cast<int64_t>(vRecord[1]);
+           liquidationPrice = boost::lexical_cast<int64_t>(vRecord[2]);
+           upnl = boost::lexical_cast<int64_t>(vRecord[3]);
+           margin = boost::lexical_cast<int64_t>(vRecord[4]);
+           leverage = boost::lexical_cast<int64_t>(vRecord[5]);
+
+       } catch (...) {
+           PrintToLog("%s(): lexical_cast issue \n",__func__);
+       }
+
 
        if (entryPrice) update_register_map(strAddress, contractId, entryPrice, ENTRY_CPRICE);
        if (position) update_register_map(strAddress, contractId, position, CONTRACT_POSITION);
@@ -1828,8 +2029,17 @@ static int input_register_string(const std::string& s)
 
            std::vector<std::string> entry;
            boost::split(entry, it, boost::is_any_of(","), boost::token_compress_on);
-           const int64_t amount = boost::lexical_cast<int64_t>(entry[0]);
-           const int64_t price = boost::lexical_cast<int64_t>(entry[1]);
+           int64_t amount = 0;
+           int64_t price = 0;
+
+           try {
+                amount = boost::lexical_cast<int64_t>(entry[0]);
+                price = boost::lexical_cast<int64_t>(entry[1]);
+           } catch (...) {
+                PrintToLog("%s(): lexical_cast issue (2)\n",__func__);
+           }
+
+
            assert(insert_entry(strAddress, contractId, amount, price));
 
        }
@@ -1987,6 +2197,7 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
 
         if (inputLineFunc) {
             if (inputLineFunc(line) < 0) {
+                PrintToLog("%s(): inputLineFunc(line) < 0, filename: %s \n",__func__, filename);
                 res = -1;
                 break;
             }
@@ -2039,6 +2250,8 @@ static char const * const statePrefix[NUM_FILETYPES] = {
 // returns the height of the state loaded
 static int load_most_relevant_state()
 {
+  PrintToLog("%s(): inside function\n",__func__);
+
   int res = -1;
   // check the SP  databases and roll it back to its latest valid state
   // according to the active chain
@@ -2047,11 +2260,13 @@ static int load_most_relevant_state()
         LOCK(cs_tally);
         if (!_my_sps->getWatermark(spWatermark)) {
             //trigger a full reparse, if the SP database has no watermark
+              PrintToLog("%s(): trigger a full reparse, if the SP database has no watermark\n",__func__);
             return -1;
         }
   }
 
   CBlockIndex const *spBlockIndex = GetBlockIndex(spWatermark);
+
 
 
   // Watermark block not found.
@@ -2100,23 +2315,30 @@ static int load_most_relevant_state()
       PrintToLog("Watermark not found. New one set from state files: %s\n", spBlockIndex->GetBlockHash().ToString());
   }
 
+  PrintToLog("spWatermark found!: %s\n", spWatermark.ToString());
 
   std::set<uint256> persistedBlocks;
   {
       LOCK2(cs_main, cs_tally);
 
-      while (nullptr != spBlockIndex && !chainActive.Contains(spBlockIndex))
+      while (nullptr != spBlockIndex && false == chainActive.Contains(spBlockIndex))
       {
           int remainingSPs = _my_sps->popBlock(spBlockIndex->GetBlockHash());
+          PrintToLog("%s(): first while loop, remainingSPs: %d\n",__func__, remainingSPs);
+
           if (remainingSPs < 0) {
               // trigger a full reparse, if the levelDB cannot roll back
+              PrintToLog("%s(): trigger a full reparse, if the levelDB cannot roll back\n",__func__);
               return -1;
           }
 
           spBlockIndex = spBlockIndex->pprev;
           if (spBlockIndex != nullptr) {
+              PrintToLog("%s(): spBlockIndex != nullptr\n",__func__);
               _my_sps->setWatermark(spBlockIndex->GetBlockHash());
           }
+
+          PrintToLog("spBlockIndex->GetBlockHash: %s\n", spBlockIndex->GetBlockHash().ToString());
       }
 
       // prepare a set of available files by block hash pruning any that are
@@ -2125,6 +2347,7 @@ static int load_most_relevant_state()
       fs::directory_iterator endIter;
       for (; dIter != endIter; ++dIter)
       {
+          PrintToLog("%s(): for loop\n",__func__);
           if (!fs::is_regular_file(dIter->status()) || dIter->path().empty()) {
               // skip funny business
               continue;
@@ -2163,6 +2386,7 @@ static int load_most_relevant_state()
 
       while (nullptr != curTip && persistedBlocks.size() > 0 && curTip->nHeight > abortRollBackBlock)
       {
+          PrintToLog("%s(): second while loop\n",__func__);
           if (persistedBlocks.find(spBlockIndex->GetBlockHash()) != persistedBlocks.end())
           {
               int success = -1;
@@ -2181,6 +2405,7 @@ static int load_most_relevant_state()
 
               if (success >= 0) {
                   res = curTip->nHeight;
+                  PrintToLog("%s(): success >= 0\n",__func__);
                   break;
               }
 
@@ -2194,6 +2419,7 @@ static int load_most_relevant_state()
               PrintToLog("Failed to load historical state: no valid state found after rolling back SP database (2)\n");
               return -1;
           }
+
 
           curTip = curTip->pprev;
           if (curTip != nullptr) {
@@ -2482,7 +2708,6 @@ void addBalances(const std::map<std::string,map<uint32_t, int64_t>>& balances, s
 
     }
 
-    PrintToLog("%s(): Final lineOut: %s\n",__func__, lineOut);
 
 }
 
@@ -2953,11 +3178,13 @@ int mastercore_init()
       fs::path spPath = GetDataDir() / "OCL_spinfo";
       fs::path cdPath = GetDataDir() / "OCL_cdinfo";
       fs::path tlTXDBPath = GetDataDir() / "OCL_TXDB";
+      fs::path tradeList = GetDataDir() / "OCL_tradelist";
       if (fs::exists(persistPath)) fs::remove_all(persistPath);
       if (fs::exists(txlistPath)) fs::remove_all(txlistPath);
       if (fs::exists(spPath)) fs::remove_all(spPath);
       if (fs::exists(cdPath)) fs::remove_all(cdPath);
       if (fs::exists(tlTXDBPath)) fs::remove_all(tlTXDBPath);
+      if (fs::exists(tradeList)) fs::remove_all(tradeList);
       PrintToLog("Success clearing persistence files in datadir %s\n", GetDataDir().string());
       startClean = true;
     } catch (const fs::filesystem_error& e) {
@@ -2976,6 +3203,8 @@ int mastercore_init()
   bool wrongDBVersion = (p_txlistdb->getDBVersion() != DB_VERSION);
 
   ++mastercoreInitialized;
+
+  PrintToLog("%s(): mastercoreInitialized: %d\n",__func__, mastercoreInitialized);
 
   nWaterlineBlock = load_most_relevant_state();
 
@@ -5894,7 +6123,6 @@ const string gettingLineOut(std::string address1, std::string s_status1, int64_t
 				   address2, s_status2, FormatContractShortMP(lives_taker * COIN),
 				   FormatContractShortMP(nCouldBuy * COIN), FormatContractShortMP(effective_price));
 
-  PrintToLog("%s() lineOut: %s\n",__func__, lineOut);
   return lineOut;
 }
 
