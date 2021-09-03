@@ -56,6 +56,9 @@ public:
     /** Advances the internal iterator. */
     uint32_t next();
 
+    /** Check if it's the first element of record. */
+    bool isBegin();
+
     bool updateRecord(uint32_t contractId, int64_t amount, RecordType ttype);
 
     bool insertEntry(uint32_t contractId, int64_t amount, int64_t price);

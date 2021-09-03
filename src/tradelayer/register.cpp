@@ -54,6 +54,15 @@ uint32_t Register::next()
     return ret;
 }
 
+bool Register::isBegin()
+{
+    if (my_it == mp_record.begin()) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
 int64_t Register::getPosExitPrice(const uint32_t contractId, bool isOracle) const
 {
     if(isOracle)

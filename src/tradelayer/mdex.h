@@ -162,10 +162,7 @@ class CMPContractDex : public CMPMetaDEx
  CMPContractDex(const CMPTransaction &tx)
    : CMPMetaDEx(tx), effective_price(tx.effective_price), trading_action(tx.trading_action) {}
 
-  virtual ~CMPContractDex()
-    {
-      if (msc_debug_persistence) PrintToLog("CMPTransaction closed\n");
-    }
+  virtual ~CMPContractDex(){}
 
   uint64_t getEffectivePrice() const { return effective_price; }
   uint8_t getTradingAction() const { return trading_action; }
