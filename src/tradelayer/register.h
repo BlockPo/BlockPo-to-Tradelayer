@@ -46,6 +46,7 @@ private:
     //! Internal iterator pointing to a position record
     RecordMap::iterator my_it;
 
+
 public:
     /** Creates an empty register. */
     Register();
