@@ -363,7 +363,7 @@ bool IsAllowedInputType(int whichType, int nBlock)
 
         case TX_SCRIPTHASH:
             return (params.SCRIPTHASH_BLOCK <= nBlock);
-            
+
         case TX_MULTISIG:
             return (params.MULTISIG_BLOCK <= nBlock);
     }

@@ -274,9 +274,9 @@ std::string FormatMP(uint32_t property, int64_t n, bool fSign)
 std::string FormatByType(int64_t amount, uint16_t propertyType)
 {
   if (propertyType & ALL_PROPERTY_TYPE_INDIVISIBLE) {
-    return FormatIndivisibleMP(amount);
+      return FormatIndivisibleMP(amount);
   } else {
-    return FormatDivisibleMP(amount);
+      return FormatDivisibleMP(amount);
   }
 }
 
@@ -309,6 +309,7 @@ std::string FormatDivisibleZeroClean(int64_t n)
     if (*it == '.')
       str.erase(it);
   }
+
   return str;
 }
 
@@ -2245,8 +2246,6 @@ static char const * const statePrefix[NUM_FILETYPES] = {
 // returns the height of the state loaded
 static int load_most_relevant_state()
 {
-  PrintToLog("%s(): inside function\n",__func__);
-
   int res = -1;
   // check the SP  databases and roll it back to its latest valid state
   // according to the active chain
@@ -2261,7 +2260,6 @@ static int load_most_relevant_state()
   }
 
   CBlockIndex const *spBlockIndex = GetBlockIndex(spWatermark);
-
 
 
   // Watermark block not found.
@@ -2329,7 +2327,6 @@ static int load_most_relevant_state()
 
           spBlockIndex = spBlockIndex->pprev;
           if (spBlockIndex != nullptr) {
-              PrintToLog("%s(): spBlockIndex != nullptr\n",__func__);
               _my_sps->setWatermark(spBlockIndex->GetBlockHash());
           }
 
@@ -2342,7 +2339,6 @@ static int load_most_relevant_state()
       fs::directory_iterator endIter;
       for (; dIter != endIter; ++dIter)
       {
-          PrintToLog("%s(): for loop\n",__func__);
           if (!fs::is_regular_file(dIter->status()) || dIter->path().empty()) {
               // skip funny business
               continue;
@@ -2376,12 +2372,11 @@ static int load_most_relevant_state()
       CBlockIndex const *curTip = spBlockIndex;
       int abortRollBackBlock;
       if (curTip != nullptr) {
-            abortRollBackBlock = curTip->nHeight - (MAX_STATE_HISTORY+1);
+            abortRollBackBlock = curTip->nHeight - (MAX_STATE_HISTORY + 1);
       }
 
       while (nullptr != curTip && persistedBlocks.size() > 0 && curTip->nHeight > abortRollBackBlock)
       {
-          PrintToLog("%s(): second while loop\n",__func__);
           if (persistedBlocks.find(spBlockIndex->GetBlockHash()) != persistedBlocks.end())
           {
               int success = -1;
@@ -2400,7 +2395,6 @@ static int load_most_relevant_state()
 
               if (success >= 0) {
                   res = curTip->nHeight;
-                  PrintToLog("%s(): success >= 0\n",__func__);
                   break;
               }
 
@@ -3844,11 +3838,11 @@ int mastercore::WalletTxBuilder(const std::string& senderAddress, const std::str
 
   std::vector<CRecipient> vecRecipients;
   for (size_t i = 0; i < vecSend.size(); ++i)
-    {
-      const std::pair<CScript, int64_t>& vec = vecSend[i];
-      CRecipient recipient = {vec.first, CAmount(vec.second), false};
-      vecRecipients.push_back(recipient);
-    }
+  {
+     const std::pair<CScript, int64_t>& vec = vecSend[i];
+     CRecipient recipient = {vec.first, CAmount(vec.second), false};
+     vecRecipients.push_back(recipient);
+  }
 
   CAmount nFeeRet = 0;
   int nChangePosInOut = -1;
@@ -4014,6 +4008,7 @@ void CMPTxList::LoadActivations(int blockHeight)
          }
 
      }
+
      delete it;
      CheckLiveActivations(blockHeight);
 
@@ -5727,14 +5722,14 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   bool status_bool2 = s_taker0 == "OpenShortPosByLongPosNetted" || s_taker0 == "OpenLongPosByShortPosNetted";
 
   std::fstream fileSixth;
-  fileSixth.open ("graphInfoSixth.txt", std::fstream::in | std::fstream::out | std::fstream::app);
-  if ( status_bool1 || status_bool2 )
-    {
-      if ( s_maker3 == "EmptyStr" && s_taker3 == "EmptyStr" ) savedata_bool = true;
-      saveDataGraphs(fileSixth, line1, line2, line3, savedata_bool);
-    }
-  else saveDataGraphs(fileSixth, line0);
-  fileSixth.close();
+  // fileSixth.open ("graphInfoSixth.txt", std::fstream::in | std::fstream::out | std::fstream::app);
+  // if ( status_bool1 || status_bool2 )
+  //   {
+  //     if ( s_maker3 == "EmptyStr" && s_taker3 == "EmptyStr" ) savedata_bool = true;
+  //     saveDataGraphs(fileSixth, line1, line2, line3, savedata_bool);
+  //   }
+  // else saveDataGraphs(fileSixth, line0);
+  // fileSixth.close();
 
   /********************************************************************/
   int number_lines = 0;
@@ -5870,17 +5865,17 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
 
   // PrintToLog("\nglobalPNLALL_DUSD = %d, globalVolumeALL_DUSD = %d, contractId = %d\n", globalPNLALL_DUSD, globalVolumeALL_DUSD, contractId);
 
-  std::fstream fileglobalPNLALL_DUSD;
-  fileglobalPNLALL_DUSD.open ("globalPNLALL_DUSD.txt", std::fstream::in | std::fstream::out | std::fstream::app);
-  if ( contractId == 5 ) // just fot testing
-    saveDataGraphs(fileglobalPNLALL_DUSD, std::to_string(globalPNLALL_DUSD));
-  fileglobalPNLALL_DUSD.close();
+  // std::fstream fileglobalPNLALL_DUSD;
+  // fileglobalPNLALL_DUSD.open ("globalPNLALL_DUSD.txt", std::fstream::in | std::fstream::out | std::fstream::app);
+  // if ( contractId == 5 ) // just fot testing
+  //   saveDataGraphs(fileglobalPNLALL_DUSD, std::to_string(globalPNLALL_DUSD));
+  // fileglobalPNLALL_DUSD.close();
 
-  std::fstream fileglobalVolumeALL_DUSD;
-  fileglobalVolumeALL_DUSD.open ("globalVolumeALL_DUSD.txt", std::fstream::in | std::fstream::out | std::fstream::app);
-  if ( contractId == 5 )
-    saveDataGraphs(fileglobalVolumeALL_DUSD, std::to_string(FormatShortIntegerMP(globalVolumeALL_DUSD)));
-  fileglobalVolumeALL_DUSD.close();
+  // std::fstream fileglobalVolumeALL_DUSD;
+  // fileglobalVolumeALL_DUSD.open ("globalVolumeALL_DUSD.txt", std::fstream::in | std::fstream::out | std::fstream::app);
+  // if ( contractId == 5 )
+  //   saveDataGraphs(fileglobalVolumeALL_DUSD, std::to_string(FormatShortIntegerMP(globalVolumeALL_DUSD)));
+  // fileglobalVolumeALL_DUSD.close();
 
   Status status;
   if (pdb)
