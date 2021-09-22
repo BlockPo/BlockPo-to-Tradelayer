@@ -1389,6 +1389,7 @@ static int input_msc_balances_string(const std::string& s)
             unvested = boost::lexical_cast<int64_t>(curBalance[6]);
         } catch (...) {
             PrintToLog("%s(): lexical_cast issue \n",__func__);
+            return -1;
         }
 
         if (balance) update_tally_map(strAddress, propertyId, balance, BALANCE);
@@ -1437,6 +1438,7 @@ static int input_mp_offers_string(const std::string& s)
         option = boost::lexical_cast<unsigned int>(vstr[i++]);
     } catch (...) {
         PrintToLog("%s(): lexical_cast issue \n",__func__);
+        return -1;
     }
 
     const std::string combo = STR_SELLOFFER_ADDR_PROP_COMBO(sellerAddr, prop);
@@ -1482,6 +1484,7 @@ static int input_mp_accepts_string(const std::string& s)
         txidStr = vstr[i++];
     } catch (...) {
         PrintToLog("%s(): lexical_cast issue \n",__func__);
+        return -1;
     }
 
     const std::string combo = STR_ACCEPT_ADDR_PROP_ADDR_COMBO(sellerAddr, buyerAddr, prop);
@@ -1530,6 +1533,7 @@ static int input_contract_globals_state_string(const string &s)
       nextCDID = boost::lexical_cast<unsigned int>(vstr[i++]);
   } catch (...) {
         PrintToLog("%s(): lexical_cast issue!\n",__func__);
+        return -1;
   }
 
   _my_cds->init(nextCDID);
@@ -1549,6 +1553,7 @@ static int input_global_vars_string(const string &s)
       lastVolume = boost::lexical_cast<int64_t>(vstr[i++]);
   } catch (...) {
       PrintToLog("%s(): lexical_cast issue!\n",__func__);
+      return -1;
   }
 
   globalVolumeALL_LTC = lastVolume;
@@ -1595,6 +1600,7 @@ static int input_mp_contractdexorder_string(const std::string& s)
 
     } catch (...) {
         PrintToLog("%s(): lexical_cast issue \n",__func__);
+        return -1;
     }
 
     CMPContractDex mdexObj(addr, block, property, amount_forsale, desired_property,
@@ -1618,6 +1624,7 @@ static int input_mp_token_ltc_string(const std::string& s)
      price = boost::lexical_cast<int64_t>(vstr[1]);
    } catch (...) {
        PrintToLog("%s(): lexical_cast issue \n",__func__);
+       return -1;
    }
 
 
@@ -1641,6 +1648,7 @@ static int input_cachefees_string(const std::string& s)
        amount = boost::lexical_cast<int64_t>(vstr[1]);
    } catch (...) {
        PrintToLog("%s(): lexical_cast issue \n",__func__);
+       return -1;
    }
 
    if (!cachefees.insert(std::make_pair(propertyId, amount)).second) return -1;
@@ -1660,6 +1668,7 @@ static int input_cachefees_oracles_string(const std::string& s)
        amount = boost::lexical_cast<int64_t>(vstr[1]);
    } catch (...) {
        PrintToLog("%s(): lexical_cast issue \n",__func__);
+       return -1;
    }
 
 
@@ -1685,6 +1694,7 @@ static int input_withdrawals_string(const std::string& s)
          w.txid = uint256S(vstr[5]);
     } catch (...) {
         PrintToLog("%s(): lexical_cast issue \n",__func__);
+        return -1;
     }
 
     auto it = withdrawal_Map.find(chnAddr);
@@ -1719,6 +1729,7 @@ static int input_tokenvwap_string(const std::string& s)
        block = boost::lexical_cast<int>(vstr[1]);
   } catch(...) {
        PrintToLog("%s(): lexical_cast issue (1)\n",__func__);
+       return -1;
   }
 
 
@@ -1737,6 +1748,7 @@ static int input_tokenvwap_string(const std::string& s)
           tokenvwap[propertyId][block].push_back(std::make_pair(unitPrice, amount));
       } catch(...) {
          PrintToLog("%s(): lexical_cast issue (2)\n",__func__);
+         return -1;
       }
 
   }
@@ -1756,6 +1768,7 @@ static int input_activechannels_string(const std::string& s)
         last_exchange_block = boost::lexical_cast<int>(vstr[4]);
     } catch (...) {
        PrintToLog("%s(): lexical_cast issue (1)\n",__func__);
+       return -1;
     }
 
     Channel chn(vstr[1], vstr[2], vstr[3], last_exchange_block);
@@ -1778,6 +1791,7 @@ static int input_activechannels_string(const std::string& s)
             chn.setBalance(address, property, amount);
         } catch (...) {
              PrintToLog("%s(): lexical_cast issue (2)\n",__func__);
+             return -1;
         }
 
     }
@@ -1821,6 +1835,7 @@ static int input_mp_mdexorder_string(const std::string& s)
         amount_remaining = boost::lexical_cast<int64_t>(vstr[i++]);
     } catch (...) {
         PrintToLog("%s(): lexical_cast issue \n",__func__);
+        return -1;
     }
 
     CMPMetaDEx mdexObj(addr, block, property, amount_forsale, desired_property,
@@ -1848,6 +1863,7 @@ static int input_mp_dexvolume_string(const std::string& s)
         amount = boost::lexical_cast<int64_t>(vstr[2]);
     } catch(...) {
         PrintToLog("%s(): lexical_cast issue \n",__func__);
+        return -1;
     }
 
     auto it = MapTokenVolume.find(block);
@@ -1881,6 +1897,7 @@ static int input_mp_mdexvolume_string(const std::string& s)
 
     } catch (...) {
         PrintToLog("%s(): lexical_cast issue \n",__func__);
+        return -1;
     }
 
     auto it = metavolume.find(block);
@@ -1915,6 +1932,7 @@ static int input_mp_ltcvolume_string(const std::string& s)
 
     } catch (...) {
         PrintToLog("%s(): lexical_cast issue \n",__func__);
+        return -1;
     }
 
     auto it = MapLTCVolume.find(block);
@@ -1947,6 +1965,7 @@ static int input_vestingaddresses_string(const std::string& s)
 
    } catch (...) {
        PrintToLog("%s(): lexical_cast issue \n",__func__);
+       return -1;
    }
 
    return ((vestingAddresses.size() > elements) ? 0 : -1);
@@ -1998,6 +2017,7 @@ static int input_register_string(const std::string& s)
 
         } catch (...) {
             PrintToLog("%s(): lexical_cast issue (1)\n",__func__);
+            return -1;
         }
 
         // PrintToLog("%s(): contractId: %d, entryPrice: %d, position: %d, liqPrice: %d, upnl: %d, margin: %d, leverage: %d\n",__func__, contractId, entryPrice, position, liquidationPrice, upnl, margin, leverage);
@@ -2035,6 +2055,7 @@ static int input_register_string(const std::string& s)
 
             } catch (...) {
                 PrintToLog("%s(): lexical_cast issue (2)\n",__func__);
+                return -1;
             }
 
             assert(insert_entry(strAddress, contractId, amount, price));

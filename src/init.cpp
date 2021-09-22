@@ -1616,40 +1616,21 @@ bool AppInitMain()
 
     // ********************************************************* Step 7.5: load trade layer
 
-    // if (!fTxIndex) {
-    //     // ask the user if they would like us to modify their config file for them
-    //     std::string msg = _("Disabled transaction index detected.\n\n"
-    //                         "Trade Layer requires an enabled transaction index. To enable "
-    //                         "transaction indexing, please use the \"-txindex\" option as "
-    //                         "command line argument or add \"txindex=1\" to your client "
-    //                         "configuration file within your data directory.\n\n"
-    //                         "Configuration file"); // allow translation of main text body while still allowing differing config file string
-    //     msg += ": " + GetConfigFile().string() + "\n\n";
-    //     msg += _("Would you like Trade Layer to attempt to update your configuration file accordingly?");
-    //     bool fRet = uiInterface.ThreadSafeMessageBox(msg, "", CClientUIInterface::MSG_INFORMATION | CClientUIInterface::BTN_OK | CClientUIInterface::MODAL | CClientUIInterface::BTN_ABORT);
-    //     if (fRet) {
-    //         // add txindex=1 to config file in GetConfigFile()
-    //         boost::filesystem::path configPathInfo = GetConfigFile();
-    //         FILE *fp = fopen(configPathInfo.string().c_str(), "at");
-    //         if (!fp) {
-    //             std::string failMsg = _("Unable to update configuration file at");
-    //             failMsg += ":\n" + GetConfigFile().string() + "\n\n";
-    //             failMsg += _("The file may be write protected or you may not have the required permissions to edit it.\n");
-    //             failMsg += _("Please add txindex=1 to your configuration file manually.\n\nTrade Layer will now shutdown.");
-    //             return InitError(failMsg);
-    //         }
-    //         fprintf(fp, "\ntxindex=1\n");
-    //         fflush(fp);
-    //         fclose(fp);
-    //         std::string strUpdated = _(
-    //                 "Your configuration file has been updated.\n\n"
-    //                 "Trade Layer will now shutdown - please restart the client for your new configuration to take effect.");
-    //         uiInterface.ThreadSafeMessageBox(strUpdated, "", CClientUIInterface::MSG_INFORMATION | CClientUIInterface::BTN_OK | CClientUIInterface::MODAL);
-    //         return false;
-    //     } else {
-    //         return InitError(_("Please add txindex=1 to your configuration file manually.\n\nTrade Layer will now shutdown."));
-    //     }
-    // }
+    if (!fTxIndex) {
+        // ask the user if they would like us to modify their config file for them
+        std::string msg = _("Disabled transaction index detected.\n\n"
+                            "Trade Layer requires an enabled transaction index. To enable "
+                            "transaction indexing, please use the \"-txindex\" option \n"
+                            "as command line argument or add \"txindex=1\" to your client "
+                            "configuration file within your data directory, and restart the node.\n\n"
+                            "Configuration file"); // allow translation of main text body while still allowing differing config file string
+        msg += ": " + GetConfigFile(gArgs.GetArg("-conf", BITCOIN_CONF_FILENAME)).string() + "\n\n";
+
+        uiInterface.ThreadSafeMessageBox(msg,"", CClientUIInterface::MSG_ERROR | CClientUIInterface::BTN_ABORT);
+
+        return false;
+
+    }
 
     uiInterface.InitMessage(_("Parsing Trade Layer transactions..."));
 
