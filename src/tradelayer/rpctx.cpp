@@ -144,7 +144,7 @@ UniValue tl_sendvesting(const JSONRPCRequest& request)
 {
   if (request.fHelp || request.params.size() != 3)
     throw runtime_error(
-			"tl_send \"fromaddress\" \"toaddress\" \"amount\" \n"
+			"tl_sendvesting \"fromaddress\" \"toaddress\" \"amount\" \n"
 
 			"\nCreate and broadcast a simple send transaction.\n"
 
@@ -157,8 +157,8 @@ UniValue tl_sendvesting(const JSONRPCRequest& request)
 			"\"hash\"                  (string) the hex-encoded transaction hash\n"
 
 			"\nExamples:\n"
-			+ HelpExampleCli("tl_send", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\" \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\" \"100.0\"")
-			+ HelpExampleRpc("tl_send", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\", \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\", \"100.0\"")
+			+ HelpExampleCli("tl_sendvesting", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\" \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\" \"100.0\"")
+			+ HelpExampleRpc("tl_sendvesting", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\", \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\", \"100.0\"")
 			);
 
   // obtain parameters & info

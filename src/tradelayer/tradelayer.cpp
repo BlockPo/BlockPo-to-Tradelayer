@@ -3974,10 +3974,11 @@ void CMPTxList::LoadActivations(int blockHeight)
 
      for (it->SeekToFirst(); it->Valid(); it->Next()) {
          std::string itData = it->value().ToString();
+         PrintToLog("%s: itData: %s\n",__func__, itData);
          std::vector<std::string> vstr;
          boost::split(vstr, itData, boost::is_any_of(":"), token_compress_on);
-         if (4 != vstr.size()) continue; // unexpected number of tokens
-         if (atoi(vstr[2]) != TL_MESSAGE_TYPE_ACTIVATION || atoi(vstr[0]) != 1) continue; // we only care about valid activations
+         if (5 != vstr.size()) continue; // unexpected number of tokens
+         if (atoi(vstr[3]) != TL_MESSAGE_TYPE_ACTIVATION || atoi(vstr[0]) != 1) continue; // we only care about valid activations
          uint256 txid = uint256S(it->key().ToString());
          loadOrder.push_back(std::make_pair(atoi(vstr[1]), txid));
      }
@@ -5727,7 +5728,7 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   std::vector<std::map<std::string, std::string>>::iterator it_path_ele;
   std::vector<std::map<std::string, std::string>>::reverse_iterator reit_path_ele;
   //std::vector<std::map<std::string, std::string>> path_eleh;
-  bool savedata_bool = false;
+  // bool savedata_bool = false;
   std::string sblockNum2 = std::to_string(blockNum2);
   double UPNL1 = 0, UPNL2 = 0;
   /********************************************************************/
@@ -5857,7 +5858,7 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   // 	  // PrintToLog("ADDRS = %s, UPNL = %d\n", it_addrs_upnlm->first, it_addrs_upnlm->second);
   // 	}
 
-  unsigned int contractId = static_cast<unsigned int>(property_traded);
+  // unsigned int contractId = static_cast<unsigned int>(property_traded);
   CDInfo::Entry cd;
   assert(_my_cds->getCD(property_traded, cd));
   uint32_t NotionalSize = cd.notional_size;

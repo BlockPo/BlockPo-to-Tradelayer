@@ -78,7 +78,7 @@ const int BlockS = 500; /** regtest **/
 const double CompoundRate = 1.00002303;
 const double DecayRate = 0.99998;
 const double LongTailDecay = 0.99999992;
-const int64_t SatoshiH = 0.00000001;
+const double SatoshiH = 0.00000001;
 const int NYears = 10;
 const int initYear = 19;
 
