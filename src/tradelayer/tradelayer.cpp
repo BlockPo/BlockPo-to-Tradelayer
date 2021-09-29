@@ -3582,8 +3582,11 @@ bool VestingTokens(int block)
                 nAmount = unvestedALLBal;
             }
 
-            assert(update_tally_map(addr, ALL, -nAmount, UNVESTED));
-            assert(update_tally_map(addr, ALL, nAmount, BALANCE));
+            if (unvestedALLBal >= nAmount && 0 < nAmount) {
+                assert(update_tally_map(addr, ALL, -nAmount, UNVESTED));
+                assert(update_tally_map(addr, ALL, nAmount, BALANCE));
+            }
+
         }
     }
 
