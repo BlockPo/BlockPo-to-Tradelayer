@@ -444,7 +444,6 @@ void populateRPCTypeVestingTokens(CMPTransaction& tlObj, UniValue& txobj)
 {
     txobj.push_back(Pair("propertyname", tlObj.getSPName()));
     txobj.push_back(Pair("propertyId", (uint64_t) tlObj.getProperty()));
-    txobj.push_back(Pair("collateral currency", FormatDivisibleMP(tlObj.getAmount())));
 
 }
 

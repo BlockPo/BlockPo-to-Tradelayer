@@ -3513,7 +3513,7 @@ bool VestingTokens(int block)
     }
 
     // NOTE : this is used to simplify the testing
-    const int64_t xAxis = (isNonMainNet()) ? globalVolumeALL_LTC * 100 : globalVolumeALL_LTC;
+    const int64_t xAxis = (RegTest()) ? globalVolumeALL_LTC * 100 : globalVolumeALL_LTC;
 
     if(msc_debug_vesting) PrintToLog("%s(): globalVolumeALL_LTC: %d \n",__func__, xAxis);
 
@@ -3974,7 +3974,6 @@ void CMPTxList::LoadActivations(int blockHeight)
 
      for (it->SeekToFirst(); it->Valid(); it->Next()) {
          std::string itData = it->value().ToString();
-         PrintToLog("%s: itData: %s\n",__func__, itData);
          std::vector<std::string> vstr;
          boost::split(vstr, itData, boost::is_any_of(":"), token_compress_on);
          if (5 != vstr.size()) continue; // unexpected number of tokens
