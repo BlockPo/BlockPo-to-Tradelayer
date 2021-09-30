@@ -115,7 +115,7 @@ std::set<uint32_t> global_wallet_property_list;
 //! Active channels
 std::map<std::string,Channel> channels_Map;
 //! Vesting receivers
-std::vector<std::string> vestingAddresses;
+std::set<std::string> vestingAddresses;
 //! Futures contracts fees
 std::map<uint32_t, int64_t> cachefees;
 //! Futures oracle contracts fees
@@ -1961,7 +1961,7 @@ static int input_vestingaddresses_string(const std::string& s)
 
    try {
        const std::string& address = vstr[0];
-       vestingAddresses.push_back(address);
+       vestingAddresses.insert(address);
 
    } catch (...) {
        PrintToLog("%s(): lexical_cast issue \n",__func__);
@@ -3597,8 +3597,9 @@ bool VestingTokens(int block)
 
     if(msc_debug_handler_tx)
     {
-        PrintToLog("\nALLs UNVESTED = %d\n", getMPbalance(vestingAddresses[0], TL_PROPERTY_ALL, UNVESTED));
-        PrintToLog("ALLs BALANCE = %d\n", getMPbalance(vestingAddresses[0], TL_PROPERTY_ALL, BALANCE));
+        auto it = vestingAddresses.begin();
+        PrintToLog("\nALLs UNVESTED = %d\n", getMPbalance(*it, TL_PROPERTY_ALL, UNVESTED));
+        PrintToLog("ALLs BALANCE = %d\n", getMPbalance(*it, TL_PROPERTY_ALL, BALANCE));
     }
 
     // if it reach the LTC volume

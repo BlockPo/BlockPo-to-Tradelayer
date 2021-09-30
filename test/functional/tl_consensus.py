@@ -70,7 +70,7 @@ class ConsensusTest (BitcoinTestFramework):
         self.log.info("Checking consensus hash")
         out = tradelayer_HTTP(conn, headers, False, "tl_getcurrentconsensushash")
         # self.log.info(out)
-        assert_equal (out['result']['consensushash'],"54340048a21033228f13d7a38cac2cf9da9317d8536fd3bf4b55e365ff2fe870")
+        assert_equal (out['result']['consensushash'],"3746ff2e2cbbbeaf593fd79109cf7076ce78934cc69cf5d285b299c50baad053")
 
         self.log.info("Creating new tokens (sendissuancefixed)")
         array = [0]
@@ -84,7 +84,7 @@ class ConsensusTest (BitcoinTestFramework):
         self.log.info("Checking consensus hash")
         out = tradelayer_HTTP(conn, headers, False, "tl_getcurrentconsensushash")
         # self.log.info(out)
-        assert_equal (out['result']['consensushash'], "227ee42b556c107863bb1cb424ee50ba80e5634b8d251a177e924e67f5d26760")
+        assert_equal (out['result']['consensushash'], "ea2ab2227852b38f726a57157c093d939ec75ca50db7b29fa6fea8002ba5c09c")
 
 
         self.log.info("Self Attestation for addresses")
@@ -122,7 +122,7 @@ class ConsensusTest (BitcoinTestFramework):
         self.log.info("Checking consensus hash")
         out = tradelayer_HTTP(conn, headers, False, "tl_getcurrentconsensushash")
         # self.log.info(out)
-        assert_equal (out['result']['consensushash'],"c244d2bd110131bd3fbd808941683b4055f39e0e68d957263b2fcc2f3929eefa")
+        assert_equal (out['result']['consensushash'],"1df8801c4473825c803a1f26be16fdabd12d522fd07b7004a0d95fbb3501daa3")
 
 
         self.log.info("Creating new tokens (sendissuancefixed)")
@@ -143,12 +143,8 @@ class ConsensusTest (BitcoinTestFramework):
         self.log.info("Checking consensus hash")
         out = tradelayer_HTTP(conn, headers, False, "tl_getcurrentconsensushash")
         # self.log.info(out)
-        assert_equal (out['result']['consensushash'],"6503930701971334546a6396f13055a49120d24493a41c6b590d5ad01f337e87")
-
-
-
-
-
+        assert_equal (out['result']['consensushash'],"4e0ef1396e76d1aab2f7eeb6f6bfd4aab29d7cb796f155dfe805faa2351a8d9d")
+        
         conn.close()
         self.stop_nodes()
 

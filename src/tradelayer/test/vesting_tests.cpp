@@ -240,4 +240,23 @@ BOOST_AUTO_TEST_CASE(vesting_process)
 
 }
 
+BOOST_AUTO_TEST_CASE(simple_calculation)
+{
+    double lastVesting = 0;
+    const int64_t LTC_Amount = 2807759143600;
+    int64_t nAmount = 0;
+    std::vector<std::string> vestingAddresses;
+    // adding first vesting address
+    vestingAddresses.push_back("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPx");
+
+    // putting 1276 vesting tokens
+    BOOST_CHECK(mastercore::update_tally_map("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPx", TL_PROPERTY_VESTING, 127600000000, BALANCE));
+    BOOST_CHECK(mastercore::update_tally_map("QgKxFUBgR8y4xFy3s9ybpbDvYNKr4HTKPx", ALL, 127600000000, UNVESTED));
+
+
+    BOOST_CHECK_EQUAL(0, VestingTokens(lastVesting, LTC_Amount, nAmount, vestingAddresses));
+
+    BOOST_CHECK_EQUAL(0, nAmount);
+
+}
 BOOST_AUTO_TEST_SUITE_END()

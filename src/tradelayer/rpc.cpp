@@ -183,17 +183,22 @@ void VestingToJSON(const CMPSPInfo::Entry& sProperty, UniValue& property_obj)
     property_obj.pushKV("activation block", sProperty.init_block);
 
     const int64_t xglobal = globalVolumeALL_LTC;
-    const double accum = (isNonMainNet()) ? getAccumVesting(100 * xglobal) : getAccumVesting(xglobal);
+    const double accum = (RegTest()) ? getAccumVesting(100 * xglobal) : getAccumVesting(xglobal);
     const int64_t vestedPer = 100 * mastercore::DoubleToInt64(accum);
 
     property_obj.pushKV("litecoin volume",  FormatDivisibleMP(xglobal));
     property_obj.pushKV("vested percentage",  FormatDivisibleMP(vestedPer));
     property_obj.pushKV("last vesting block",  sProperty.last_vesting_block);
 
-    int64_t totalVested = getTotalTokens(ALL);
-    if (RegTest()) totalVested -= sProperty.num_tokens;
+    int64_t totalMinted = getTotalTokens(ALL);
+    if (RegTest()) totalMinted -= sProperty.num_tokens;
 
-    property_obj.pushKV("total vested",  FormatDivisibleMP(totalVested));
+    property_obj.pushKV("total ALL minted",  FormatDivisibleMP(totalMinted));
+
+    const int64_t remaining = getMPbalance(getVestingAdmin(), TL_PROPERTY_VESTING, BALANCE);
+    const int64_t vested =  totalVesting - remaining;
+
+    property_obj.pushKV("total vested",  FormatDivisibleMP(vested));
 
     size_t n_owners_total = vestingAddresses.size();
     property_obj.pushKV("owners",  (int64_t) n_owners_total);

@@ -49,8 +49,8 @@ class HTTPBasicsTest (BitcoinTestFramework):
 
         self.log.info("Testing tl_getinfo")
         out = tradelayer_HTTP(conn, headers, False, "tl_getinfo")
-        assert_equal(out['result']['tradelayer_version_int'], 20000000)
-        assert_equal(out['result']['tradelayer_coreversion'], "0.2.0")
+        assert_equal(out['result']['tradelayer_version_int'], 20002000)
+        assert_equal(out['result']['tradelayer_coreversion'], "0.2.2")
         assert_equal(out['result']['litecoinversion'], "0.16.3")
         assert_equal(out['result']['blocktransactions'], 0)
         assert_equal(out['result']['block'], 100)
@@ -58,7 +58,7 @@ class HTTPBasicsTest (BitcoinTestFramework):
 
         self.log.info("Testing tl_listproperties")
         out = tradelayer_HTTP(conn, headers, True, "tl_listproperties")
-        # self.log.info(out)
+        # self.log.info(out)4
 
         # Checking the first property in the list
         assert_equal(out['result'][0]['propertyid'], 1)
@@ -143,7 +143,7 @@ class HTTPBasicsTest (BitcoinTestFramework):
         self.log.info("Checking consensus hash")
         out = tradelayer_HTTP(conn, headers, False, "tl_getcurrentconsensushash")
         # self.log.info(out)
-        assert_equal (out['result']['consensushash'],"54340048a21033228f13d7a38cac2cf9da9317d8536fd3bf4b55e365ff2fe870")
+        assert_equal (out['result']['consensushash'],"3746ff2e2cbbbeaf593fd79109cf7076ce78934cc69cf5d285b299c50baad053")
 
         conn.close()
 

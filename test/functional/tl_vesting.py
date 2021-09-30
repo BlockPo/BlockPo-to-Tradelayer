@@ -408,7 +408,7 @@ class VestingBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['litecoin volume'], '200.00000000')
         assert_equal(out['result']['vested percentage'], '7.52574900')
         assert_equal(out['result']['last vesting block'], 1037)
-        assert_equal(out['result']['total vested'],  '150.51498000')
+        assert_equal(out['result']['total vested'],  '2000.00000000')
         assert_equal(out['result']['owners'], 3)
         assert_equal(out['result']['total tokens'], '1500000.00000000')
         assert_equal(out['result']['kyc_ids allowed'], '[]')

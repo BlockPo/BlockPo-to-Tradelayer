@@ -2450,7 +2450,7 @@ int CMPTransaction::logicMath_SendVestingTokens()
   assert(update_tally_map(sender, ALL, -nValue, UNVESTED));
   assert(update_tally_map(receiver, ALL, nValue, UNVESTED));
 
-  vestingAddresses.push_back(receiver);
+  vestingAddresses.insert(receiver);
 
   return 0;
 }
