@@ -204,6 +204,18 @@ void VestingToJSON(const CMPSPInfo::Entry& sProperty, UniValue& property_obj)
     property_obj.pushKV("owners",  (int64_t) n_owners_total);
     property_obj.pushKV("total tokens", FormatDivisibleMP(sProperty.num_tokens));
 
+    int block = GetHeight();
+
+    const CConsensusParams &params = ConsensusParams();
+
+    int period = sProperty.init_block + params.ONE_YEAR;
+
+    bool year_ended  = (block > period) ? true : false;
+
+    property_obj.pushKV("first yeard ended", year_ended ? "true" : "false");
+
+
+
 }
 
 bool BalanceToJSON(const std::string& address, uint32_t property, UniValue& balance_obj, bool divisible)
@@ -3182,6 +3194,7 @@ UniValue tl_getvesting_info(const JSONRPCRequest& request)
             throw JSONRPCError(RPC_INVALID_PARAMETER, "Property identifier does not exist");
         }
     }
+
 
     UniValue response(UniValue::VOBJ);
     response.pushKV("propertyid", (uint64_t) VT);

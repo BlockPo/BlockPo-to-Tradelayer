@@ -490,7 +490,7 @@ class VestingBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, False, "tl_getbalance",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['balance'],'150.51498000')  # 15.05% of vesting (NOTE: check the round up)
+        assert_equal(out['result']['balance'],'150.51499000')  # 15.05% of vesting (NOTE: check the round up)
         assert_equal(out['result']['reserve'],'0.00000000')
         vested1 = float(out['result']['balance'])
 
@@ -507,7 +507,7 @@ class VestingBasicsTest (BitcoinTestFramework):
         params = str([addresses[1]]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_getunvested",params)
         # self.log.info(out)
-        assert_equal(out['result']['unvested'],'849.48502000')
+        assert_equal(out['result']['unvested'],'849.48501000')
         unvested1 = float(out['result']['unvested'])
         volume_ltc.append(volume1)
         vested.append(vested1)
@@ -527,7 +527,7 @@ class VestingBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['litecoin volume'], '400.00000000')
         assert_equal(out['result']['vested percentage'], '15.05149900')
         assert_equal(out['result']['last vesting block'], 1041)
-        assert_equal(out['result']['total vested'],  '301.02996000')
+        assert_equal(out['result']['total vested'],  '2000.00000000')
         assert_equal(out['result']['owners'], 3)
         assert_equal(out['result']['total tokens'], '1500000.00000000')
         assert_equal(out['result']['kyc_ids allowed'], '[]')
@@ -565,7 +565,7 @@ class VestingBasicsTest (BitcoinTestFramework):
 
             self.nodes[0].generate(1)
 
-            time.sleep(0.35)
+            time.sleep(0.25)
 
             self.log.info("Checking token balance in buyer address")
             params = str([addresses[3], 4]).replace("'",'"')
@@ -640,14 +640,14 @@ class VestingBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, False, "tl_getbalance",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['balance'],'410.86307000')
+        assert_equal(out['result']['balance'],'410.86316000')
 
         self.log.info("Checking final unvested ALLs in addresses[1]")
         params = str([addresses[1]]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_getunvested",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['unvested'], '589.13693000')
+        assert_equal(out['result']['unvested'], '589.13684000')
 
 
         self.log.info("Checking final vesting in addresses[4]")
@@ -655,15 +655,14 @@ class VestingBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, False, "tl_getbalance",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['balance'],'205.43153500')
+        assert_equal(out['result']['balance'],'205.43158000')
 
         self.log.info("Checking final unvested ALLs in addresses[4]")
         params = str([addresses[4]]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_getunvested",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['unvested'], '294.56846500')
-
+        assert_equal(out['result']['unvested'], '294.56842000')
 
         # pl.plot(volume_ltc, vested,'-b', label='vested amount for addresses[1]')
         # pl.plot(volume_ltc, bvested,'-r', label='vested amount for addresses[3]')

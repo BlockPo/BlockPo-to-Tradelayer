@@ -313,6 +313,10 @@ const rational_t factor2 = rational_t(20,100); // normal limits
 // define KYC id = 0 for self attestations
 const int KYC_0 = 0;
 
+// vesting LTC volume limits
+const int64_t INF_VOL_LIMIT = 10000 * COIN;
+const int64_t SUP_VOL_LIMIT = 100000000 * COIN;
+
 // upnl calculations
 const std::vector<std::string> longActions{ "ShortPosNetted", "OpenLongPosition", "OpenLongPosByShortPosNetted", "LongPosIncreased", "ShortPosNettedPartly"};
 

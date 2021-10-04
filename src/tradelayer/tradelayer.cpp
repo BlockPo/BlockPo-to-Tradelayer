@@ -1042,9 +1042,7 @@ int ParseTransaction(const CTransaction& tx, int nBlock, unsigned int idx, CMPTr
      if (count > 0)
      {
          globalVolumeALL_LTC += nvalue;
-         const int64_t globalVolumeALL_LTCh = globalVolumeALL_LTC;
-
-         if (msc_debug_handle_dex_payment) PrintToLog("%s(): nvalue: %d, globalVolumeALL_LTC: %d \n",__func__, nvalue, globalVolumeALL_LTCh);
+         if (msc_debug_handle_dex_payment) PrintToLog("%s(): nvalue: %d, globalVolumeALL_LTC: %d \n",__func__, nvalue, globalVolumeALL_LTC);
 
      }
 
@@ -1122,6 +1120,9 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
 
     // adding LTC volume to map
     MapLTCVolume[block][property] += nvalue;
+
+    // adding LTC to global
+    globalVolumeALL_LTC += nvalue;
 
     // updating last exchange block
     // assert(sChn.updateLastExBlock(block));
@@ -3491,9 +3492,9 @@ bool CallingExpiration(CBlockIndex const * pBlockIndex)
    return true;
 }
 
-double getAccumVesting(const int64_t xAxis)
+double getAccumVesting(const int64_t LTC_Volume)
 {
-    const double amount = (double) xAxis / COIN;
+    const double amount = (double) LTC_Volume / COIN;
     // accumVesting fraction = (Log10(Cum_LTC_Volume)-4)/4; 100% vested at 100,000,000  LTCs volume
     const double result = ((std::log10(amount) - 4) / 4);
     return ((result < 1.0) ? result : 1.0);
@@ -3502,7 +3503,7 @@ double getAccumVesting(const int64_t xAxis)
 
 bool VestingTokens(int block)
 {
-    bool deactivation = false;
+    bool deactivation{false};
 
     if(msc_debug_vesting) PrintToLog("%s() block : %d\n",__func__, block);
 
@@ -3512,20 +3513,20 @@ bool VestingTokens(int block)
         return false;
     }
 
-    // NOTE : this is used to simplify the testing
-    const int64_t xAxis = (RegTest()) ? globalVolumeALL_LTC * 100 : globalVolumeALL_LTC;
+    // NOTE : this is used to simplify the testing on regtest
+    const int64_t LTC_Volume = (RegTest()) ? globalVolumeALL_LTC * 100 : globalVolumeALL_LTC;
 
-    if(msc_debug_vesting) PrintToLog("%s(): globalVolumeALL_LTC: %d \n",__func__, xAxis);
+    if(msc_debug_vesting) PrintToLog("%s(): globalVolumeALL_LTC: %d \n",__func__, LTC_Volume);
 
-    if (xAxis <= 10000 * COIN)
+    if (LTC_Volume <= INF_VOL_LIMIT)
     {
-        if(msc_debug_vesting) PrintToLog("%s(): 0 percent of vesting (LTC) less than 10,000 LTC volume: %d\n",__func__, xAxis);
+        if(msc_debug_vesting) PrintToLog("%s(): 0 percent of vesting (LTC) less than 10,000 LTC volume: %d\n",__func__, LTC_Volume);
         return false;
     }
 
 
-    if(100000000 * COIN <= xAxis){
-        if(msc_debug_vesting) PrintToLog("%s(): Vesting Tokens completed at 100,000,000 LTC volume: %d\n",__func__, xAxis);
+    if(SUP_VOL_LIMIT <= LTC_Volume){
+        if(msc_debug_vesting) PrintToLog("%s(): Vesting Tokens completed at 100,000,000 LTC volume: %d\n",__func__, LTC_Volume);
         deactivation = true;
     }
 
@@ -3534,75 +3535,86 @@ bool VestingTokens(int block)
        return false; // property ID does not exist
     }
 
-    // accumulated vesting
-    const double accumVesting = getAccumVesting(xAxis);
+    // accumulated vesting fraction
+    const double accumVesting = getAccumVesting(LTC_Volume);
 
-    // vesting fraction on this block
-    const double realVesting = (accumVesting > sp.last_vesting) ?  accumVesting - sp.last_vesting : 0;
+    if(msc_debug_vesting) PrintToLog("%s(): accumVesting: %d, last_vesting: %d\n",__func__, accumVesting, sp.last_vesting);
 
-    if(msc_debug_vesting) PrintToLog("%s(): accumVesting: %f, realVesting: %f, last_vesting: %f\n",__func__, accumVesting, realVesting, sp.last_vesting);
-
-    if (realVesting == 0)
+    if (accumVesting == sp.last_vesting)
     {
         if(msc_debug_vesting) PrintToLog("%s(): 0 percent vesting in this block: %d\n",__func__, block);
         return false;
     }
 
     if(msc_debug_vesting) {
-        PrintToLog("%s(): lastVesting = %f, realVesting : %f, accumVesting: %f\n",__func__, sp.last_vesting, realVesting, accumVesting);
-        PrintToLog("%s(): amount vesting on this block = %f, block ; %d, x_Axis: %d \n",__func__, accumVesting, block, xAxis);
+        PrintToLog("%s(): lastVesting = %f, accumVesting: %f\n",__func__, sp.last_vesting, accumVesting);
+        PrintToLog("%s(): accum vesting on this block = %f, block ; %d, x_Axis: %d \n",__func__, accumVesting, block, LTC_Volume);
     }
 
     for (auto &addr : vestingAddresses)
     {
-        if(msc_debug_vesting) PrintToLog("\nAddress = %s\n", addr);
+        if(msc_debug_vesting) PrintToLog("Address = %s\n", addr);
 
         const int64_t vestingBalance = getMPbalance(addr, TL_PROPERTY_VESTING, BALANCE);
-        const int64_t unvestedALLBal = getMPbalance(addr, ALL, UNVESTED);
+        const int64_t unVestedALLBal = getMPbalance(addr, ALL, UNVESTED);
+        const int64_t vestedALLBal = getMPbalance(addr, ALL, BALANCE);
 
         if(msc_debug_vesting) {
-            PrintToLog("\nALLs UNVESTED in address = %d\n", unvestedALLBal);
-            PrintToLog("ALLs BALANCE in address = %d\n", getMPbalance(addr, ALL, BALANCE));
+            PrintToLog("ALLs UNVESTED in address = %d\n", unVestedALLBal);
+            PrintToLog("ALLs BALANCE in address = %d\n", vestedALLBal);
             PrintToLog("Vesting tokens in address = %d\n", vestingBalance);
         }
 
-        if (vestingBalance != 0 && unvestedALLBal != 0)
+        if (0 < vestingBalance && 0 < unVestedALLBal)
         {
-            const int64_t iRealVesting = mastercore::DoubleToInt64(realVesting);
+            const int64_t iAccumVesting = mastercore::DoubleToInt64(accumVesting);
+            const arith_uint256 uAccumVesting  = mastercore::ConvertTo256(iAccumVesting);
+
             const arith_uint256 uVestingBalance = mastercore::ConvertTo256(vestingBalance);
-            const arith_uint256 uCOIN  = mastercore::ConvertTo256(COIN);
-            const arith_uint256 iAmount = mastercore::ConvertTo256(iRealVesting) * DivideAndRoundUp(uVestingBalance, uCOIN);
+
+            // accum % of vesting from vesting to ALLs
+            const arith_uint256 iAmount = DivideAndRoundUp(uAccumVesting * uVestingBalance , COIN);
             int64_t nAmount = mastercore::ConvertTo64(iAmount);
 
+            if(deactivation) nAmount = unVestedALLBal;
+
+            // adding the difference to tally
+            const int64_t difference = nAmount - vestedALLBal;
+
+
             if(msc_debug_vesting) {
-                PrintToLog("%s(): nAmount = %d\n",__func__,nAmount);
+                PrintToLog("%s(): nAmount = (iAccumVesting * vestingBalance) / COIN \n",__func__);
+                PrintToLog("%s(): iAccumVesting = %d\n",__func__, iAccumVesting);
+                PrintToLog("%s(): vestingBalance = %d\n",__func__, vestingBalance);
+                PrintToLog("%s(): nAmount = %d, difference = %d\n",__func__, nAmount, difference);
             }
 
-            if(deactivation){
-                nAmount = unvestedALLBal;
-            }
+            if (difference > 0 && unVestedALLBal >= difference)
+            {
+                assert(update_tally_map(addr, ALL, -difference, UNVESTED));
+                assert(update_tally_map(addr, ALL, difference, BALANCE));
 
-            if (unvestedALLBal >= nAmount && 0 < nAmount) {
-                assert(update_tally_map(addr, ALL, -nAmount, UNVESTED));
-                assert(update_tally_map(addr, ALL, nAmount, BALANCE));
             }
 
         }
     }
 
+    // updating vesting info
     sp.last_vesting = accumVesting;
     sp.last_vesting_block = block;
 
     assert(_my_sps->updateSP(VT, sp));
 
+
     if(msc_debug_handler_tx)
     {
         auto it = vestingAddresses.begin();
-        PrintToLog("\nALLs UNVESTED = %d\n", getMPbalance(*it, TL_PROPERTY_ALL, UNVESTED));
+        PrintToLog("ALLs UNVESTED = %d\n", getMPbalance(*it, TL_PROPERTY_ALL, UNVESTED));
         PrintToLog("ALLs BALANCE = %d\n", getMPbalance(*it, TL_PROPERTY_ALL, BALANCE));
     }
 
-    // if it reach the LTC volume
+
+    // if it reachs the LTC volume
     if (deactivation) DeactivateFeature(FEATURE_VESTING, block);
 
     return true;
@@ -4519,7 +4531,6 @@ bool mastercore::getValidMPTX(const uint256 &txid, std::string *reason, int *blo
 int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockIndex)
 {
     LOCK(cs_tally);
-
 
     bool bRecoveryMode{false};
     {
