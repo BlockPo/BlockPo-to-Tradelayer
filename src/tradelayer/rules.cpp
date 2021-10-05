@@ -187,7 +187,7 @@ CMainConsensusParams::CMainConsensusParams()
  */
  CTestNetConsensusParams::CTestNetConsensusParams()
  {
-     GENESIS_BLOCK = 1753980;
+     GENESIS_BLOCK = 2046650;
      // Notice range for feature activations:
      MIN_ACTIVATION_BLOCKS = 0;
      MAX_ACTIVATION_BLOCKS = 99999999;
@@ -198,15 +198,15 @@ CMainConsensusParams::CMainConsensusParams()
      MULTISIG_BLOCK = 0;
 
      // Transaction restrictions:
-     MSC_ALERT_BLOCK = 1753980;
-     MSC_SEND_BLOCK = 1753980;
+     MSC_ALERT_BLOCK = 2046650;
+     MSC_SEND_BLOCK = 2046650;
      // MSC_SP_BLOCK = 1491174;
      MSC_SP_BLOCK = 99999999;
      MSC_MANUALSP_BLOCK = 99999999;
      MSC_SEND_ALL_BLOCK = 99999999;
      MSC_CONTRACTDEX_BLOCK = 99999999;
      MSC_CONTRACTDEX_ORACLES_BLOCK = 99999999;
-     MSC_VESTING_CREATION_BLOCK = 1753980;
+     MSC_VESTING_CREATION_BLOCK = 2046650;
      MSC_VESTING_BLOCK = 99999999;
      MSC_NODE_REWARD_BLOCK = 99999999;
      MSC_KYC_BLOCK = 99999999;
