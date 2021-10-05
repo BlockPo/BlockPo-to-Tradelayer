@@ -1100,6 +1100,12 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
     // taking fees
     Token_LTC_Fees(amount_purchased, property);
 
+    if(0 == amount_purchased)
+    {
+        PrintToLog("%s(): amount purchased is zero\n",__func__);
+        return status;
+    }
+
     assert(update_tally_map(buyer, property, amount_purchased, BALANCE));
     assert(sChn.updateChannelBal(seller, property, -amount_purchased));
 
