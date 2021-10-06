@@ -536,10 +536,16 @@ class VestingBasicsTest (BitcoinTestFramework):
         for i in range(0,20):
             self.log.info("Loop number:"+str(i))
 
-            # self.log.info("Checking the offer in DEx")
-            # params = str([addresses[2]]).replace("'",'"')
-            # out = tradelayer_HTTP(conn, headers, True, "tl_getactivedexsells",params)
-            # self.log.info(out)
+            if i == 18:
+                self.log.info("Restartingthe node")
+                self.restart_node(0) #stop and start
+
+                url = urllib.parse.urlparse(self.nodes[0].url)
+                #New authpair
+                authpair = url.username + ':' + url.password
+                headers = {"Authorization": "Basic " + str_to_b64str(authpair)}
+                conn = http.client.HTTPConnection(url.hostname, url.port)
+                conn.connect()
 
             self.log.info("Accepting the part of the offer")
             params = str([addresses[3], addresses[2], 4, "1000"]).replace("'",'"')

@@ -1106,17 +1106,26 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
         return status;
     }
 
+    PrintToLog("%s(): checkpoint 1, amount_purchased = %d\n",__func__, amount_purchased);
+
     assert(update_tally_map(buyer, property, amount_purchased, BALANCE));
     assert(sChn.updateChannelBal(seller, property, -amount_purchased));
 
     p_txlistdb->recordNewInstantLTCTrade(txid, sender, seller , buyer, property, amount_purchased, price, block, idx);
 
+    PrintToLog("%s(): checkpoint 2, amount_purchased = %d\n",__func__, amount_purchased);
+
     // saving DEx token volume
     MapTokenVolume[block][property] += amount_purchased;
 
-    const arith_uint256 unitPrice256 = (ConvertTo256(COIN) * amountLTC_Desired256) / amount_forsale256;
+    PrintToLog("%s(): checkpoint 3, price = %d, amount_forsale = %d\n",__func__, price, amount_forsale);
+    const arith_uint256 unitPrice256 = (isPropertyDivisible(property)) ? (ConvertTo256(COIN) * amountLTC_Desired256) / amount_forsale256 : amountLTC_Desired256 / amount_forsale256;
 
-    const int64_t unitPrice = (isPropertyDivisible(property)) ? ConvertTo64(unitPrice256) : ConvertTo64(unitPrice256) / COIN;
+    PrintToLog("%s(): checkpoint 4, unitPrice: %d\n",__func__, ConvertTo64(unitPrice256));
+
+    const int64_t unitPrice = ConvertTo64(unitPrice256);
+
+    PrintToLog("%s(): checkpoint 5, unitPrice: %d\n",__func__, unitPrice);
 
     // adding last price
     lastPrice[property] = unitPrice;
@@ -1132,6 +1141,7 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
 
     // updating last exchange block
     // assert(sChn.updateLastExBlock(block));
+    PrintToLog("%s(): checkpoint 6\n",__func__);
 
     return !status;
 
@@ -8005,12 +8015,22 @@ int64_t mastercore::increaseLTCVolume(uint32_t propertyId, uint32_t propertyDesi
 
 bool mastercore::Token_LTC_Fees(int64_t& buyer_amountGot, uint32_t propertyId)
 {
+
+    if (!isPropertyDivisible(propertyId)){
+        PrintToLog("%s(): indivisible token, no fees here\n",__func__);
+        return false;
+    }
+
     const arith_uint256 uNumerator = ConvertTo256(buyer_amountGot);
     const arith_uint256 uDenominator = arith_uint256(BASISPOINT) * arith_uint256(BASISPOINT) *  arith_uint256(2);
     const arith_uint256 uCacheFee = DivideAndRoundUp(uNumerator, uDenominator);
-    const int64_t cacheFee = ConvertTo64(uCacheFee);
+    int64_t cacheFee = ConvertTo64(uCacheFee);
 
     // taking fee
+    if(cacheFee > buyer_amountGot) {
+        cacheFee = buyer_amountGot;
+    }
+
     buyer_amountGot -= cacheFee;
 
     if(cacheFee > 0)
