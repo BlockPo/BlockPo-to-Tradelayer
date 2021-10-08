@@ -595,7 +595,8 @@ const std::string mastercore::getVestingAdmin()
 
     }
 
-    const std::string mainAddress = "MANxfoWpwqEbSBe5ujKnCSTkfgjAwKre49";
+    // const std::string mainAddress = "MANxfoWpwqEbSBe5ujKnCSTkfgjAwKre49";
+    const std::string mainAddress = "LTNSkUvcuk9qSbCZMZg1LjqfXU1VacGnwU";
     return mainAddress;
 
 }
@@ -2749,7 +2750,7 @@ static int write_mp_tokenvwap(std::ofstream& file, CHash256& hasher)
         for (const auto &vec : blcmap){
             // vector of pairs
             const auto &vpairs = vec.second;
-            
+
             for (auto p = vpairs.begin(); p != vpairs.end(); ++p)
             {
                 std::string lineOut = strprintf("%d:",propertyId);
