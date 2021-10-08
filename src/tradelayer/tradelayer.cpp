@@ -1097,6 +1097,9 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
           return status;
     }
 
+    // copy of amount purchased without fees.
+    const int64_t selleramount = amount_purchased;
+
     // taking fees
     Token_LTC_Fees(amount_purchased, property);
 
@@ -1106,26 +1109,17 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
         return status;
     }
 
-    PrintToLog("%s(): checkpoint 1, amount_purchased = %d\n",__func__, amount_purchased);
-
     assert(update_tally_map(buyer, property, amount_purchased, BALANCE));
-    assert(sChn.updateChannelBal(seller, property, -amount_purchased));
+    assert(sChn.updateChannelBal(seller, property, -selleramount));
 
     p_txlistdb->recordNewInstantLTCTrade(txid, sender, seller , buyer, property, amount_purchased, price, block, idx);
-
-    PrintToLog("%s(): checkpoint 2, amount_purchased = %d\n",__func__, amount_purchased);
 
     // saving DEx token volume
     MapTokenVolume[block][property] += amount_purchased;
 
-    PrintToLog("%s(): checkpoint 3, price = %d, amount_forsale = %d\n",__func__, price, amount_forsale);
     const arith_uint256 unitPrice256 = (isPropertyDivisible(property)) ? (ConvertTo256(COIN) * amountLTC_Desired256) / amount_forsale256 : amountLTC_Desired256 / amount_forsale256;
 
-    PrintToLog("%s(): checkpoint 4, unitPrice: %d\n",__func__, ConvertTo64(unitPrice256));
-
     const int64_t unitPrice = ConvertTo64(unitPrice256);
-
-    PrintToLog("%s(): checkpoint 5, unitPrice: %d\n",__func__, unitPrice);
 
     // adding last price
     lastPrice[property] = unitPrice;
@@ -1141,7 +1135,6 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
 
     // updating last exchange block
     // assert(sChn.updateLastExBlock(block));
-    PrintToLog("%s(): checkpoint 6\n",__func__);
 
     return !status;
 
@@ -1735,40 +1728,48 @@ static int input_withdrawals_string(const std::string& s)
 
 static int input_tokenvwap_string(const std::string& s)
 {
-  std::vector<std::string> vstr;
-  boost::split(vstr, s, boost::is_any_of("+-"), boost::token_compress_on);
 
-  uint32_t propertyId = 0;
-  int block = 0;
+  PrintToLog("%s(): s: %s\n",__func__,s);
+
+  std::vector<std::string> vstr;
+  boost::split(vstr, s, boost::is_any_of(":"), boost::token_compress_on);
+
+ if (4 != vstr.size()) return -1;
+
+// 4:2046870:100000000000:100000000000
+
 
   try {
-       propertyId = boost::lexical_cast<uint32_t>(vstr[0]);
-       block = boost::lexical_cast<int>(vstr[1]);
+       const uint32_t propertyId = boost::lexical_cast<uint32_t>(vstr[0]);
+       const int block = boost::lexical_cast<int>(vstr[1]);
+       const int64_t unitPrice = boost::lexical_cast<int64_t>(vstr[2]);
+       const int64_t amount = boost::lexical_cast<int64_t>(vstr[3]);
+       tokenvwap[propertyId][block].push_back(std::make_pair(unitPrice, amount));
+       PrintToLog("%s(): propertyId = %d, block = %d\n",__func__, propertyId, block);
   } catch(...) {
-       PrintToLog("%s(): lexical_cast issue (1)\n",__func__);
+       PrintToLog("%s(): lexical_cast issue \n",__func__);
        return -1;
   }
 
 
-
-  std::vector<std::string> vpair;
-  boost::split(vpair, vstr[2], boost::is_any_of(","), boost::token_compress_on);
-
-  for (const auto& np : vpair)
-  {
-      std::vector<std::string> pAmount;
-      boost::split(pAmount, np, boost::is_any_of(":"), boost::token_compress_on);
-
-      try {
-          const int64_t unitPrice = boost::lexical_cast<int64_t>(pAmount[0]);
-          const int64_t amount = boost::lexical_cast<int64_t>(pAmount[1]);
-          tokenvwap[propertyId][block].push_back(std::make_pair(unitPrice, amount));
-      } catch(...) {
-         PrintToLog("%s(): lexical_cast issue (2)\n",__func__);
-         return -1;
-      }
-
-  }
+  // std::vector<std::string> vpair;
+  // boost::split(vpair, vstr[2], boost::is_any_of(","), boost::token_compress_on);
+  //
+  // for (const auto& np : vpair)
+  // {
+  //     PrintToLog("%s(): np: %s\n",__func__, np);
+  //
+  //     std::vector<std::string> pAmount;
+  //     boost::split(pAmount, np, boost::is_any_of(":"), boost::token_compress_on);
+  //
+  //     try {
+  //
+  //     } catch(...) {
+  //        PrintToLog("%s(): lexical_cast issue (2)\n",__func__);
+  //        return -1;
+  //     }
+  //
+  // }
 
   return 0;
 }
@@ -2745,27 +2746,29 @@ static int write_mp_tokenvwap(std::ofstream& file, CHash256& hasher)
         const uint32_t& propertyId = mp.first;
         const auto &blcmap = mp.second;
 
-        std::string lineOut = strprintf("%d+",propertyId);
-
         for (const auto &vec : blcmap){
-            // adding block number
-            lineOut.append(strprintf("%d-",vec.first));
-
             // vector of pairs
             const auto &vpairs = vec.second;
+            
             for (auto p = vpairs.begin(); p != vpairs.end(); ++p)
             {
+                std::string lineOut = strprintf("%d:",propertyId);
+                // adding block number
+                lineOut.append(strprintf("%d:",vec.first));
+
                 const std::pair<int64_t,int64_t>& vwPair = *p;
                 lineOut.append(strprintf("%d:%d", vwPair.first, vwPair.second));
-                if (p != std::prev(vpairs.end())) lineOut.append(";");
+
+                // add the line to the hash
+                hasher.Write((unsigned char*)lineOut.c_str(), lineOut.length());
+                // write the line
+                file << lineOut << std::endl;
+
             }
 
         }
 
-        // add the line to the hash
-        hasher.Write((unsigned char*)lineOut.c_str(), lineOut.length());
-        // write the line
-        file << lineOut << std::endl;
+
 
     }
 
@@ -3147,6 +3150,8 @@ void clear_all_state()
     LOCK2(cs_tally, cs_pending);
 
     // Memory based storage
+    cachefees.clear();
+    cachefees_oracles.clear();
     mp_tally_map.clear();
     my_pending.clear();
     my_offers.clear();
@@ -3154,23 +3159,27 @@ void clear_all_state()
     metadex.clear();
     my_pending.clear();
     contractdex.clear();
-    ResetConsensusParams();
-    ClearActivations();
     channels_Map.clear();
     withdrawal_Map.clear();
     MapLTCVolume.clear();
     MapTokenVolume.clear();
     metavolume.clear();
     vestingAddresses.clear();
+    lastPrice.clear();
+    tokenvwap.clear();
+    mp_register_map.clear();
+
+    ResetConsensusParams();
+    ClearActivations();
 
     // LevelDB based storage
-     _my_sps->Clear();
-     _my_cds->Clear();
-     t_tradelistdb->Clear();
-     p_txlistdb->Clear();
-     p_TradeTXDB->Clear();
+    _my_sps->Clear();
+    _my_cds->Clear();
+    t_tradelistdb->Clear();
+    p_txlistdb->Clear();
+    p_TradeTXDB->Clear();
 
-     assert(p_txlistdb->setDBVersion() == DB_VERSION); // new set of databases, set DB version
+    assert(p_txlistdb->setDBVersion() == DB_VERSION); // new set of databases, set DB version
 }
 
 /**
@@ -8021,6 +8030,7 @@ bool mastercore::Token_LTC_Fees(int64_t& buyer_amountGot, uint32_t propertyId)
         return false;
     }
 
+    // 0.005 %
     const arith_uint256 uNumerator = ConvertTo256(buyer_amountGot);
     const arith_uint256 uDenominator = arith_uint256(BASISPOINT) * arith_uint256(BASISPOINT) *  arith_uint256(2);
     const arith_uint256 uCacheFee = DivideAndRoundUp(uNumerator, uDenominator);
@@ -8031,7 +8041,11 @@ bool mastercore::Token_LTC_Fees(int64_t& buyer_amountGot, uint32_t propertyId)
         cacheFee = buyer_amountGot;
     }
 
+    PrintToLog("%s(): cacheFee = %d, buyer_amountGot (before) = %d\n",__func__, cacheFee, buyer_amountGot);
+
     buyer_amountGot -= cacheFee;
+
+    PrintToLog("%s(): cacheFee = %d, buyer_amountGot (after) = %d\n",__func__, cacheFee, buyer_amountGot);
 
     if(cacheFee > 0)
     {

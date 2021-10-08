@@ -2233,7 +2233,7 @@ UniValue tl_send_closechannel(const JSONRPCRequest& request)
            "\nClose Trade Channel .\n"
 
            "\nArguments:\n"
-           "1. address       (string, required) sender address\n"
+           "1. address       (string, required) sender address, must be part of the multisig\n"
            "2. channel       (string, required) the channel address\n"
 
            "\nExamples:\n"

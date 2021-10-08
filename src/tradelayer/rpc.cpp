@@ -872,9 +872,12 @@ UniValue tl_getchannel_info(const JSONRPCRequest& request)
             "1. channel address      (string, required) the address\n"
 
             "\nResult:\n"
-            "{\n"
-            "  \"channel address\" : \"n.nnnnnnnn\",   (string) the available balance of the address\n"
-            "}\n"
+            "{ \n"
+            "  \"multisig address\" : \"n.nnnnnnnn\",   (string) channel address\n"
+            "  \"first address\" : \"n.nnnnnnnn\",   (string) first member of multisig\n"
+            "  \"second address\" : \"n.nnnnnnnn\",   (string) second member of multisig\n"
+            "  \"status\" : \"n.nnnnnnnn\",   (string) active or not\n"
+            "} \n"
 
             "\nExamples:\n"
             + HelpExampleCli("tl_getchannel_info", "\"1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P\"")
@@ -2694,7 +2697,7 @@ UniValue tl_getcache(const JSONRPCRequest& request)
         throw runtime_error(
             "tl_getmargin \"address\" \"propertyid\" \n"
 
-            "\nReturns the fee cach for a given property.\n"
+            "\nReturns the fee cache for a given property.\n"
 
             "\nArguments:\n"
             "1. collateral                   (number, required) the contract collateral\n"
@@ -3210,7 +3213,7 @@ UniValue tl_listvesting_addresses(const JSONRPCRequest& request)
         throw runtime_error(
             "tl_listvesting_addresses\n"
 
-            "\nReturns details for about vesting tokens.\n"
+            "\nReturns all receiver addresses vesting tokens.\n"
 
             "\nResult:\n"
             "[                                      (array of addresses)\n"
@@ -3226,6 +3229,36 @@ UniValue tl_listvesting_addresses(const JSONRPCRequest& request)
     UniValue response(UniValue::VARR);
 
     for_each(vestingAddresses.begin() ,vestingAddresses.end(), [&response] (const std::string& address) { response.push_back(address);});
+
+    return response;
+}
+
+
+UniValue tl_listchannel_addresses(const JSONRPCRequest& request)
+{
+    if (request.fHelp)
+        throw runtime_error(
+            "tl_listchannel_addresses\n"
+
+            "\nReturns details for about vesting tokens.\n"
+
+            "\nResult:\n"
+            "[                                      (array of addresses)\n"
+      			"    \"address\",                       (string) channel address 1 \n"
+            "    \"address\",                       (string) channel address 2 \n"
+            "        ...                                                       \n"
+            "    \"address\",                       (string) channel address n \n"
+      			"  ...\n"
+      			"]\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("tl_listchannel_addresses", "")
+            + HelpExampleRpc("tl_listchannel_addresses", "")
+        );
+
+    UniValue response(UniValue::VARR);
+
+    for_each(channels_Map.begin() ,channels_Map.end(), [&response] (const std::pair<std::string,Channel>& sChn) { response.push_back(sChn.first);});
 
     return response;
 }
@@ -3667,6 +3700,7 @@ static const CRPCCommand commands[] =
   { "trade layer (data retieval)",  "tl_get_channelremaining",                 &tl_get_channelremaining,              {} },
   { "trade layer (data retieval)",  "tl_list_attestation",                     &tl_list_attestation,                  {} },
   { "trade layer (data retieval)",  "tl_getwalletbalance",                     &tl_getwalletbalance,                  {} },
+  { "trade layer (data retieval)",  "tl_listchannel_addresses",                &tl_listchannel_addresses,             {} },
 };
 
 void RegisterTLDataRetrievalRPCCommands(CRPCTable &tableRPC)
