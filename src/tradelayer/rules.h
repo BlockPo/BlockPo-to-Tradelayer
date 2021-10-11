@@ -11,11 +11,11 @@ namespace mastercore
 {
 //! Feature identifier placeholder
 const uint16_t FEATURE_VESTING                  = 1;
-const uint16_t FEATURE_KYC                      = 2;
+const uint16_t FEATURE_KYC                      = 2; 
 const uint16_t FEATURE_DEX_SELL                 = 3;
 const uint16_t FEATURE_DEX_BUY                  = 4;
 const uint16_t FEATURE_METADEX                  = 5;
-const uint16_t FEATURE_TRADECHANNELS_TOKENS     = 6;
+const uint16_t FEATURE_TRADECHANNELS_TOKENS     = 6; //
 const uint16_t FEATURE_TRADECHANNELS_CONTRACTS  = 7; //It's important to note that this enables any contract to trade in a channel, but if said contracts aren't activated, still invalid
 const uint16_t FEATURE_FIXED                    = 8; //This should include simple sends, send all
 const uint16_t FEATURE_MANAGED                  = 9;

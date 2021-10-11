@@ -49,10 +49,10 @@ std::vector<TransactionRestriction> CConsensusParams::GetRestrictions() const
     v.push_back( { TL_MESSAGE_TYPE_DEACTIVATION,                   0xFFFF,            true, MSC_ALERT_BLOCK } );
     v.push_back( { MSC_TYPE_SIMPLE_SEND,                           MP_TX_PKT_V0,      true, MSC_SEND_BLOCK } );
     v.push_back( { MSC_TYPE_CREATE_PROPERTY_FIXED,                 MP_TX_PKT_V0,      true, MSC_SP_BLOCK } );
-    v.push_back( { MSC_TYPE_CREATE_PROPERTY_MANUAL,                MP_TX_PKT_V0,      false, MSC_MANUALSP_BLOCK } );
-    v.push_back( { MSC_TYPE_GRANT_PROPERTY_TOKENS,                 MP_TX_PKT_V0,      false, MSC_MANUALSP_BLOCK } );
-    v.push_back( { MSC_TYPE_REVOKE_PROPERTY_TOKENS,                MP_TX_PKT_V0,      false, MSC_MANUALSP_BLOCK });
-    v.push_back( { MSC_TYPE_CHANGE_ISSUER_ADDRESS,                 MP_TX_PKT_V0,      false, MSC_MANUALSP_BLOCK });
+    v.push_back( { MSC_TYPE_CREATE_PROPERTY_MANUAL,                MP_TX_PKT_V0,      true, MSC_MANUALSP_BLOCK } );
+    v.push_back( { MSC_TYPE_GRANT_PROPERTY_TOKENS,                 MP_TX_PKT_V0,      true, MSC_MANUALSP_BLOCK } );
+    v.push_back( { MSC_TYPE_REVOKE_PROPERTY_TOKENS,                MP_TX_PKT_V0,      true, MSC_MANUALSP_BLOCK });
+    v.push_back( { MSC_TYPE_CHANGE_ISSUER_ADDRESS,                 MP_TX_PKT_V0,      true, MSC_MANUALSP_BLOCK });
     v.push_back( { MSC_TYPE_CREATE_CONTRACT,                       MP_TX_PKT_V0,      true, MSC_CONTRACTDEX_BLOCK } );
     v.push_back( { MSC_TYPE_CONTRACTDEX_TRADE,                     MP_TX_PKT_V0,      true, MSC_CONTRACTDEX_BLOCK } );
     v.push_back( { MSC_TYPE_CONTRACTDEX_CANCEL_ECOSYSTEM,          MP_TX_PKT_V0,      true, MSC_CONTRACTDEX_BLOCK } );
@@ -148,7 +148,7 @@ CMainConsensusParams::CMainConsensusParams()
     // Transaction restrictions:
     MSC_ALERT_BLOCK = 2136526;
     MSC_SEND_BLOCK = 2136526;
-    MSC_SP_BLOCK = 2136526;
+    MSC_SP_BLOCK = 99999999;
     MSC_MANUALSP_BLOCK = 99999999;
     MSC_SEND_ALL_BLOCK = 99999999;
     MSC_CONTRACTDEX_BLOCK = 99999999;
