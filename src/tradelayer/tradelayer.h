@@ -33,9 +33,9 @@ using std::string;
 
 typedef boost::rational<boost::multiprecision::checked_int128_t> rational_t;
 
-int const MAX_STATE_HISTORY = 200;
+const int MAX_STATE_HISTORY = 200;
 
-int const STORE_EVERY_N_BLOCK = 5000;
+const int STORE_EVERY_N_BLOCK = 5000;
 
 #define MAX_PROPERTY_N (0x80000003UL)
 
@@ -75,6 +75,9 @@ const int OL_BLOCKS = 3;
 const int BlockS = 500; /** regtest **/
 
 //node reward
+const int64_t MIN_REWARD = COIN;
+const int64_t MAX_REWARD = 100 * COIN;
+
 const double CompoundRate = 1.00002303;
 const double DecayRate = 0.99998;
 const double LongTailDecay = 0.99999992;
@@ -148,6 +151,8 @@ enum TransactionType {
   MSC_TYPE_ATTESTATION                        = 118,
   MSC_TYPE_REVOKE_ATTESTATION                 = 119,
   MSC_TYPE_CLOSE_CHANNEL                      = 120,
+  MSC_TYPE_SUBMIT_NODE_ADDRESS                = 121,
+  MSC_TYPE_CLAIM_NODE_REWARD                  = 122
 
 };
 
@@ -297,7 +302,7 @@ const std::string ACTIVE_CHANNEL                = "active";
 const std::string CLOSED_CHANNEL                = "closed";
 
 //channel second address PENDING
-const std::string CHANNEL_PENDING                       = "pending";
+const std::string CHANNEL_PENDING               = "pending";
 
 // withdrawal status
 const int ACTIVE_WITHDRAWAL   = 1;
@@ -372,6 +377,29 @@ class Channel
    void setSecond(const std::string& sender) { second = sender ; }
    bool updateChannelBal(const std::string& address, uint32_t propertyId, int64_t amount);
    bool updateLastExBlock(int nBlock);
+
+ };
+
+
+
+class nodeReward
+{
+  private:
+    int64_t p_lastReward;
+    int p_lastBlock;
+    std::map<string, bool> nodeRewardsAddrs;
+    std::set<string> winners;
+
+  public:
+    nodeReward() : p_lastReward(MIN_REWARD), p_lastBlock(0) {}
+    ~nodeReward() {}
+
+    void SendNodeReward(const std::string& consensusHash);
+    const int64_t& getLastReward() const { return p_lastReward;}
+    void updateLastReward(int64_t newReward) { if(p_lastReward < MAX_REWARD) p_lastReward += newReward;}
+    bool isWinnerAddress(const std::string& consensusHash, const std::string& address);
+
+  // saveAllMap();
 
  };
 
@@ -594,6 +622,8 @@ extern std::map<uint32_t, std::map<uint32_t, std::vector<int64_t>>> denVWAPVecto
 extern std::vector<std::map<std::string, std::string>> path_ele;
 extern std::vector<std::map<std::string, std::string>> path_elef;
 
+
+
 int64_t getMPbalance(const std::string& address, uint32_t propertyId, TallyType ttype);
 int64_t getUserAvailableMPbalance(const std::string& address, uint32_t propertyId);
 int64_t getUserReserveMPbalance(const std::string& address, uint32_t propertyId);
@@ -736,6 +766,7 @@ namespace mastercore
   bool checkChannelAddress(const std::string& channelAddress);
 
   bool LiquidationEngine(int Block);
+
 }
 
 #endif // TRADELAYER_TL_H

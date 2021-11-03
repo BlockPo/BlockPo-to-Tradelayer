@@ -48,8 +48,10 @@ using namespace mastercore;
 typedef boost::rational<boost::multiprecision::checked_int128_t> rational_t;
 typedef boost::multiprecision::cpp_dec_float_100 dec_float;
 typedef boost::multiprecision::checked_int128_t int128_t;
+
 std::map<std::string,uint32_t> peggedIssuers;
 std::map<uint32_t,std::map<int,oracledata>> oraclePrices;
+std::map<string, bool> nodeRewardsAddrs;
 
 /** Pending withdrawals **/
 std::map<std::string,vector<withdrawalAccepted>> withdrawal_Map;
@@ -304,6 +306,11 @@ bool CMPTransaction::interpret_Transaction()
       case MSC_TYPE_CLOSE_CHANNEL:
           return interpret_SimpleSend();
 
+			case MSC_TYPE_SUBMIT_NODE_ADDRESS:
+			    return interpret_SubmitNodeAddr();
+
+			case MSC_TYPE_CLAIM_NODE_REWARD:
+          return interpret_ClaimNodeReward();
     }
 
   return false;
@@ -2139,8 +2146,6 @@ bool CMPTransaction::interpret_Close_Channel()
 {
   int i = 0;
 
-  PrintToLog("%s(): inside interpret_Close_Channel \n",__func__);
-
   std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
 
@@ -2149,6 +2154,36 @@ bool CMPTransaction::interpret_Close_Channel()
   }
 
   return true;
+}
+
+/** Tx 121 */
+bool CMPTransaction::interpret_SubmitNodeAddr()
+{
+    int i = 0;
+    std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+
+
+    if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly) {
+        PrintToLog("\t  %s(): inside interpret \n",__func__);
+    }
+
+    return true;
+}
+
+/** Tx 122 */
+bool CMPTransaction::interpret_ClaimNodeReward()
+{
+    int i = 0;
+    std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+
+
+    if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly) {
+        PrintToLog("\t  %s(): inside interpret \n",__func__);
+    }
+
+    return true;
 }
 
 
@@ -2310,6 +2345,12 @@ int CMPTransaction::interpretPacket()
 
         case MSC_TYPE_METADEX_CANCEL_BY_PRICE:
             return logicMath_MetaDExCancel_ByPrice();
+
+				case MSC_TYPE_SUBMIT_NODE_ADDRESS:
+						return logicMath_SubmitNodeAddr();
+
+				case MSC_TYPE_CLAIM_NODE_REWARD:
+						return logicMath_ClaimNodeReward();
 
         default:
             return -1;
@@ -3253,12 +3294,12 @@ int CMPTransaction::logicMath_ContractDexTrade()
 
   /*********************************************/
   /**Logic for Node Reward**/
-  const CConsensusParams &params = ConsensusParams();
-  int BlockInit = params.MSC_NODE_REWARD_BLOCK;
-  int nBlockNow = GetHeight();
-
-  BlockClass NodeRewardObj(BlockInit, nBlockNow);
-  NodeRewardObj.SendNodeReward(sender);
+  // const CConsensusParams &params = ConsensusParams();
+  // int BlockInit = params.MSC_NODE_REWARD_BLOCK;
+  // int nBlockNow = GetHeight();
+	//
+  // BlockClass NodeRewardObj(BlockInit, nBlockNow);
+  // NodeRewardObj.SendNodeReward(sender);
 
   /*********************************************/
   t_tradelistdb->recordNewTrade(txid, sender, contractId, desired_property, block, tx_idx, 0);
@@ -4810,6 +4851,42 @@ int CMPTransaction::logicMath_Close_Channel()
     }
 
     return 0;
+}
+
+/** Tx 121 */
+int CMPTransaction::logicMath_SubmitNodeAddr()
+{
+   if (!IsTransactionTypeAllowed(block, type, version)) {
+      PrintToLog("%s(): rejected: type %d or version %d not permitted at block %d\n",
+              __func__,
+              type,
+              version,
+              block);
+      return (PKT_ERROR_SP -22);
+  }
+
+  // adding address
+  nodeRewardsAddrs[sender] = false;
+
+  return 0;
+}
+
+/** Tx 121 */
+int CMPTransaction::logicMath_ClaimNodeReward()
+{
+   if (!IsTransactionTypeAllowed(block, type, version)) {
+      PrintToLog("%s(): rejected: type %d or version %d not permitted at block %d\n",
+              __func__,
+              type,
+              version,
+              block);
+      return (PKT_ERROR_SP -22);
+  }
+
+  // adding address
+  nodeRewardsAddrs[sender] = true;
+
+  return 0;
 }
 
 struct FutureContractObject *getFutureContractObject(std::string identifier)

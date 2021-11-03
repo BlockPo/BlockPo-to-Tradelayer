@@ -154,6 +154,9 @@ AcceptMap mastercore::my_accepts;
 CMPSPInfo *mastercore::_my_sps;
 CDInfo *mastercore::_my_cds;
 
+//node reward object
+nodeReward nR;
+
 std::map<uint32_t, std::map<uint32_t, int64_t>> VWAPMap;
 std::map<uint32_t, std::map<uint32_t, int64_t>> VWAPMapSubVector;
 std::map<uint32_t, std::map<uint32_t, std::vector<int64_t>>> numVWAPVector;
@@ -3728,16 +3731,53 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
     return fFoundTx;
 }
 
-bool TxValidNodeReward(std::string ConsensusHash, std::string Tx)
+void nodeReward::SendNodeReward(const std::string& consensusHash)
 {
-  int NLast = 2;
+    for(const auto& addr : nodeRewardsAddrs)
+    {
+        // if this address is a winner and it's claiming reward
+        if(isWinnerAddress(consensusHash, addr.first) && addr.second) {
+            // we need to save the winners here!
+             winners.insert(addr.first);
 
-  std::string LastTwoCharConsensus = ConsensusHash.substr(ConsensusHash.size() - NLast);
-  std::string LastTwoCharTx = Tx.substr(Tx.size() - NLast);
+        }
+    }
 
-  PrintToLog("\nLastTwoCharConsensus = %s\t LastTwoCharTx = %s\n", LastTwoCharConsensus, LastTwoCharTx);
 
-  return ((LastTwoCharConsensus == LastTwoCharTx) ? true : false);
+    int64_t rewardSize = 0;
+    int64_t amountAdded = p_lastReward;
+
+    // after that we share the reward with all winners
+    if(!winners.empty())
+    {
+        const uint32_t propertyId = 1; //testing
+        rewardSize = p_lastReward / winners.size();
+        if(rewardSize > 0)
+        {
+            for_each(winners.begin(), winners.end(), [&rewardSize] (const std::string addr) { update_tally_map(addr, propertyId, rewardSize, BALANCE); });
+            amountAdded = -p_lastReward;
+        }
+
+    }
+
+    // TODO: check overflows/underflows
+    updateLastReward(amountAdded);
+
+
+}
+
+bool nodeReward::isWinnerAddress(const std::string& consensusHash, const std::string& address)
+{
+    std::vector<unsigned char> vch;
+
+    DecodeBase58(address, vch);
+
+    const std::string vchStr = HexStr(vch);
+    const std::string LastTwoCharAddr = vchStr.substr(vchStr.size() - 4);
+    const std::string lastFourCharConsensus = consensusHash.substr(consensusHash.size() - 4);
+
+    return (LastTwoCharAddr == lastFourCharConsensus) ? true : false;
+
 }
 
 void lookingin_globalvector_pastlivesperpetuals(std::vector<std::map<std::string, std::string>> &lives_g, MatrixTLS M_file, std::vector<std::string> addrs_vg, std::vector<std::map<std::string, std::string>> &lives_h)
@@ -4617,6 +4657,15 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
     {
         LiquidationEngine(pBlockIndex->nHeight);
     }
+
+    /** Node rewards **/
+    if (pBlockIndex->nHeight > params.MSC_NODE_REWARD_BLOCK)
+    {
+        const std::string& blockhash = pBlockIndex->GetBlockHash().GetHex();
+        PrintToLog("%s(): blockhash: %s\n",__func__, blockhash);
+        nR.SendNodeReward(blockhash);
+    }
+
 
     // marginMain(pBlockIndex->nHeight);
     // addInterestPegged(nBlockPrev,pBlockIndex);
