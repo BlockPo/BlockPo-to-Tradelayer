@@ -200,7 +200,7 @@ UniValue tl_sendmany(const JSONRPCRequest& request)
     // request the wallet build the transaction (and if needed commit it)
     uint256 txid;
     std::string rawHex;
-    int result = WalletTxBuilderEx(fromAddress, keys, referenceAmount, payload, txid, rawHex, autoCommit);
+    int result = WalletTxBuilderEx(fromAddress, recipients, referenceAmount, payload, txid, rawHex, autoCommit);
 
     PrintToLog("%s(): CHECKING ERROR: %s\n",__func__, error_str(result));
 
