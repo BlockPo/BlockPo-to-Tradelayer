@@ -345,7 +345,6 @@ void populateRPCTypeSendMany(CMPTransaction& tlObj, UniValue& txobj)
     txobj.push_back(Pair("propertyid", (uint64_t)propertyId));
     txobj.push_back(Pair("divisible", isPropertyDivisible(propertyId)));
     txobj.push_back(Pair("total", FormatMP(propertyId, tlObj.getAmountTotal())));
-
 }
 
 void populateRPCTypeSendAll(CMPTransaction& tlObj, UniValue& txobj)

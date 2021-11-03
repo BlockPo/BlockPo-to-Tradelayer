@@ -63,6 +63,7 @@ const struct tradelayer_descs {
 	const char	*description;
 } tradelayer_descs[] = {
 	{ MSC_TYPE_SIMPLE_SEND, "Simple Send" },
+    { MSC_TYPE_SEND_MANY, "Send Many" },
 	{ MSC_TYPE_RESTRICTED_SEND, "Restricted Send" },
 	{ MSC_TYPE_SEND_ALL, "Send All" },
 	{ MSC_TYPE_SEND_VESTING, "Send Vesting Tokens" },
@@ -116,7 +117,7 @@ const struct tradelayer_descs {
 std::string mastercore::strTransactionType(uint16_t txType)
 {
 
-	for (int i = 0; i < sizeof (tradelayer_descs); ++i) {
+	for (size_t i = 0; i < sizeof (tradelayer_descs); ++i) {
 		if (txType == tradelayer_descs[i].transaction_type)
 			return tradelayer_descs[i].description;
 	}
@@ -171,6 +172,9 @@ bool CMPTransaction::interpret_Transaction()
   {
       case MSC_TYPE_SIMPLE_SEND:
           return interpret_SimpleSend();
+
+    case MSC_TYPE_SEND_MANY:
+          return interpret_SendMany();
 
       case MSC_TYPE_SEND_ALL:
           return interpret_SendAll();
@@ -357,6 +361,32 @@ bool CMPTransaction::interpret_SimpleSend()
     if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly) {
         PrintToLog("\t        property: %d (%s)\n", property, strMPProperty(property));
         PrintToLog("\t           value: %s\n", FormatMP(property, nValue));
+    }
+
+    return true;
+}
+
+// /** Tx 1 */
+bool CMPTransaction::interpret_SendMany()
+{
+    int i = 0;
+    
+    auto vecVersionBytes = GetNextVarIntBytes(i);
+    auto vecTypeBytes = GetNextVarIntBytes(i);
+    auto vecPropIdBytes = GetNextVarIntBytes(i);
+
+    if (type != 1 || vecPropIdBytes.empty()) return false;
+    property = DecompressInteger(vecPropIdBytes);
+    
+    for (int j=0; j<4; ++j) {
+        auto n = DecompressInteger(GetNextVarIntBytes(i));
+        if (n == 0) break;
+        values.push_back(n);
+    }
+
+    if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly) {
+        PrintToLog("\t        property: %d (%s)\n", property, strMPProperty(property));
+        PrintToLog("\t           total: %s\n", FormatMP(property, getAmountTotal()));
     }
 
     return true;
@@ -2178,6 +2208,9 @@ int CMPTransaction::interpretPacket()
     {
         case MSC_TYPE_SIMPLE_SEND:
             return logicMath_SimpleSend();
+        
+        case MSC_TYPE_SEND_MANY:
+            return logicMath_SendMany();
 
         case MSC_TYPE_SEND_ALL:
             return logicMath_SendAll();
@@ -2410,10 +2443,112 @@ int CMPTransaction::logicMath_SimpleSend()
     return 0;
 }
 
+/** Tx 1 */
+int CMPTransaction::logicMath_SendMany()
+{
+    if (!IsTransactionTypeAllowed(block, type, version)) {
+        PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+                __func__,
+                type,
+                version,
+                property,
+                block);
+        return (PKT_ERROR_SP -22);
+    }
+
+    auto amount = getAmountTotal();
+    if (amount <= 0 || MAX_INT_8_BYTES < amount) {
+        PrintToLog("%s(): rejected: value out of range or zero: %d", __func__, amount);
+        return (PKT_ERROR_SEND -23);
+    }
+
+    if (!IsPropertyIdValid(property)) {
+        PrintToLog("%s(): rejected: property %d does not exist\n", __func__, property);
+        return (PKT_ERROR_SEND -24);
+    }
+
+    // if (isPropertyContract(property)) {
+    //     PrintToLog("%s(): rejected: property %d should not be a contract\n", __func__, property);
+    //     return (PKT_ERROR_SEND -25);
+    // }
+
+     if(property == TL_PROPERTY_VESTING){
+         PrintToLog("%s(): rejected: property should not be vesting tokens (id = 3)\n", __func__);
+         return (PKT_ERROR_SEND -26);
+     }
+
+    if(property != ALL)
+    {
+        int kyc_id;
+
+        if(!t_tradelistdb->checkAttestationReg(sender,kyc_id)){
+          PrintToLog("%s(): rejected: kyc ckeck for sender failed\n", __func__);
+          return (PKT_ERROR_KYC -10);
+        }
+
+        if(!t_tradelistdb->kycPropertyMatch(property,kyc_id)){
+          PrintToLog("%s(): rejected: property %d can't be traded with this kyc\n", __func__, property);
+          return (PKT_ERROR_KYC -20);
+        }
+
+        // TODO: recipients ?!
+        // if(!t_tradelistdb->checkAttestationReg(receiver,kyc_id)){
+        //   PrintToLog("%s(): rejected: kyc ckeck for receiver failed\n", __func__);
+        //   return (PKT_ERROR_KYC -10);
+        // }
+
+        if(!t_tradelistdb->kycPropertyMatch(property,kyc_id)){
+          PrintToLog("%s(): rejected: property %d can't be traded with this kyc\n", __func__, property);
+          return (PKT_ERROR_KYC -20);
+        }
+    }
+
+    int64_t nBalance = getMPbalance(sender, property, BALANCE);
+    if (nBalance < (int64_t)amount) {
+        PrintToLog("%s(): rejected: sender %s has insufficient balance of property %d [%s < %s]\n",
+                __func__,
+                sender,
+                property,
+                FormatMP(property, nBalance),
+                FormatMP(property, nValue));
+        return (PKT_ERROR_SEND -25);
+    }
+
+    // ------------------------------------------
+    const auto& from = sender;
+    auto pred = [&from](const std::string& a){ return a == from; };
+    if (std::find_if(recipients.begin(), recipients.end(), pred) != recipients.end()) {
+        PrintToLog("%s(): rejected: sender sending tokens to himself\n", __func__);
+        return (PKT_ERROR_SEND -26);
+    }
+
+    // // Special case: if can't find the receiver -- assume send to self!
+    // if (receiver.empty()) {
+    //     receiver = sender;
+    // }
+
+    if (recipients.size() != values.size()) {
+        PrintToLog("%s(): rejected: recipients/amounts mismatch: addresses=%d values=%d\n", 
+                recipients.size(),
+                values.size(),
+                __func__, 
+                property);
+        return (PKT_ERROR_SEND -27);
+    }
+
+    // Move the tokens
+    for (size_t i=0; i<recipients.size(); ++i) {
+        auto v = values[i];
+        assert(update_tally_map(sender, property, -v, BALANCE));
+        assert(update_tally_map(recipients[i], property, v, BALANCE));
+    }
+
+    return 0;
+}
+
 /** Tx 5 */
 int CMPTransaction::logicMath_SendVestingTokens()
 {
-
   if (sender == receiver) {
       PrintToLog("%s(): rejected: sender sending vesting tokens to himself\n", __func__);
       return (PKT_ERROR_SEND -26);

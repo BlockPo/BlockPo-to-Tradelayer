@@ -44,6 +44,41 @@ UniValue tl_createpayload_simplesend(const JSONRPCRequest& request)
     return HexStr(payload.begin(), payload.end());
 }
 
+UniValue tl_createpayload_sendmany(const JSONRPCRequest& request)
+{
+   if (request.fHelp || request.params.size() < 2 || request.params.size() > 5)
+        throw runtime_error(
+            "tl_createpayload_sendmany \"propertyid\" \"amount\"\n"
+
+            "\nPayload to simple send transaction.\n"
+
+            "\nArguments:\n"
+            "1. propertyid            (number, required) the identifier of the tokens to send\n"
+            "2. amount1               (string, required) the amount to send\n"
+            "3. amount2               (string, optional) the amount to send\n"
+            "4. amount3               (string, optional) the amount to send\n"
+            "5. amount4               (string, optional) the amount to send\n"
+
+            "\nResult:\n"
+            "\"payload\"             (string) the hex-encoded payload\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("tl_createpayload_sendmany", "1 \"100.0\", \"200.0\", \"300.0\", \"400.0\"")
+            + HelpExampleCli("tl_createpayload_sendmany", "1 \"110.0\", \"220.0\", \"330.0\", \"440.0\"")
+        );
+
+    uint32_t propertyId = ParsePropertyId(request.params[0]);
+    std::vector<uint64_t> amounts;  
+    for (size_t i=1; i<std::min(request.params.size(), 5LU); ++i) {
+      auto n = ParseAmount(request.params[i], isPropertyDivisible(propertyId));
+      amounts.push_back(n);
+    }
+
+    auto payload = CreatePayload_SendMany(propertyId, amounts);
+
+    return HexStr(payload);
+}
+
 UniValue tl_createpayload_sendall(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 0)
@@ -1238,6 +1273,7 @@ static const CRPCCommand commands[] =
   { //  category                         name                                             actor (function)                               okSafeMode
     //  -------------------------------- -----------------------------------------       ----------------------------------------        ----------
     { "trade layer (payload creation)", "tl_createpayload_simplesend",                    &tl_createpayload_simplesend,                      {}   },
+    { "trade layer (payload creation)", "tl_createpayload_sendmany",                      &tl_createpayload_sendmany,                      {}   },
     { "trade layer (payload creation)", "tl_createpayload_sendall",                       &tl_createpayload_sendall,                         {}   },
     { "trade layer (payload creation)", "tl_createpayload_issuancefixed",                 &tl_createpayload_issuancefixed,                   {}   },
     { "trade layer (payload creation)", "tl_createpayload_issuancemanaged",               &tl_createpayload_issuancemanaged,                 {}   },

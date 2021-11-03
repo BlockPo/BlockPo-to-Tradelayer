@@ -6,6 +6,7 @@
 #include <vector>
 
 std::vector<unsigned char> CreatePayload_SimpleSend(uint32_t propertyId, uint64_t amount);
+std::vector<unsigned char> CreatePayload_SendMany(uint32_t propertyId, const std::vector<uint64_t>& amounts);
 std::vector<unsigned char> CreatePayload_SendVestingTokens(uint64_t amount);
 std::vector<unsigned char> CreatePayload_SendAll();
 std::vector<unsigned char> CreatePayload_DExSell(uint32_t propertyId, uint64_t amountForSale, uint64_t amountDesired, uint8_t timeLimit, uint64_t minFee, uint8_t subAction);

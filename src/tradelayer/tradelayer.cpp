@@ -991,7 +991,11 @@ static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, 
     // ### SET MP TX INFO ###
     if (msc_debug_verbose) PrintToLog("single_pkt: %s\n", HexStr(single_pkt, packet_size + single_pkt));
     mp_tx.Set(strSender, strReference, spReference, 0, wtx.GetHash(), nBlock, idx, (unsigned char *)&single_pkt, packet_size, tlClass, txFee);
-
+    if (address_data.size() > 1) {
+        auto v = std::vector<std::string>(address_data.cbegin()+1, address_data.cend());
+        mp_tx.SetAddresses(v);
+    }
+    
     PrintToLog("%s(): mp_tx object: strSender: %s, spReference: %s, strReference: %s, single_pkt: %s, tlClass: %d \n",__func__, strSender, spReference, strReference, HexStr(single_pkt, packet_size + single_pkt), tlClass);
 
     return 0;
@@ -3856,6 +3860,14 @@ int mastercore::WalletTxBuilder(const std::string& senderAddress, const std::str
 				const std::vector<unsigned char>& data, uint256& txid, std::string& rawHex, bool commit,
 				unsigned int minInputs)
 {
+    return WalletTxBuilderEx(senderAddress, {receiverAddress}, referenceAmount, data, txid, rawHex, commit, minInputs);
+}
+
+// This function requests the wallet create an Trade Layer transaction using the supplied parameters and payload
+int mastercore::WalletTxBuilderEx(const std::string& senderAddress, const std::vector<std::string>& receiverAddress, int64_t referenceAmount,
+				const std::vector<unsigned char>& data, uint256& txid, std::string& rawHex, bool commit,
+				unsigned int minInputs)
+{
 #ifdef ENABLE_WALLET
 
   CWalletRef pwalletMain = nullptr;
@@ -3888,11 +3900,11 @@ int mastercore::WalletTxBuilder(const std::string& senderAddress, const std::str
 
 
   // Then add a paytopubkeyhash output for the recipient (if needed) - note we do this last as we want this to be the highest vout
-  if (!receiverAddress.empty())
+  for (auto& addr : receiverAddress)
   {
-      CScript scriptPubKey = GetScriptForDestination(DecodeDestination(receiverAddress));
-      vecSend.push_back(std::make_pair(scriptPubKey, 0 < referenceAmount ? referenceAmount : GetDustThld(scriptPubKey)));
-
+    CScript scriptPubKey = GetScriptForDestination(DecodeDestination(addr));
+    CAmount ramount = 0 < referenceAmount ? referenceAmount : GetDustThld(scriptPubKey);
+    vecSend.push_back(std::make_pair(scriptPubKey, ramount));
   }
 
   // Now we have what we need to pass to the wallet to create the transaction, perform some checks first
