@@ -159,6 +159,10 @@ bool populateRPCTypeInfo(CMPTransaction& mp_obj, UniValue& txobj, uint32_t txTyp
             populateRPCTypeSimpleSend(mp_obj, txobj);
             return true;
 
+        case MSC_TYPE_SEND_MANY:
+            populateRPCTypeSendMany(mp_obj, txobj);
+            return true;
+
         case MSC_TYPE_SEND_ALL:
             populateRPCTypeSendAll(mp_obj, txobj);
             return true;
@@ -310,6 +314,7 @@ bool showRefForTx(uint32_t txType)
 {
     switch (txType) {
         case MSC_TYPE_SIMPLE_SEND: return true;
+        case MSC_TYPE_SEND_MANY: return true;
         case MSC_TYPE_CREATE_PROPERTY_FIXED: return false;
         case MSC_TYPE_CREATE_PROPERTY_MANUAL: return false;
         case MSC_TYPE_GRANT_PROPERTY_TOKENS: return true;
@@ -329,6 +334,17 @@ void populateRPCTypeSimpleSend(CMPTransaction& tlObj, UniValue& txobj)
     txobj.push_back(Pair("propertyid", (uint64_t)propertyId));
     txobj.push_back(Pair("divisible", isPropertyDivisible(propertyId)));
     txobj.push_back(Pair("amount", FormatMP(propertyId, tlObj.getAmount())));
+
+}
+
+void populateRPCTypeSendMany(CMPTransaction& tlObj, UniValue& txobj)
+{
+    uint32_t propertyId = tlObj.getProperty();
+    LOCK(cs_tally);
+    txobj.push_back(Pair("type", "Send Many"));
+    txobj.push_back(Pair("propertyid", (uint64_t)propertyId));
+    txobj.push_back(Pair("divisible", isPropertyDivisible(propertyId)));
+    txobj.push_back(Pair("total", FormatMP(propertyId, tlObj.getAmountTotal())));
 
 }
 
