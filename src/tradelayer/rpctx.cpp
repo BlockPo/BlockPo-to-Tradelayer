@@ -142,15 +142,15 @@ UniValue tl_send(const JSONRPCRequest& request)
 
 UniValue tl_sendmany(const JSONRPCRequest& request)
 {
-    if (request.fHelp || request.params.size() < 3)
+    if (request.fHelp || request.params.size() < 3 || !request.params[1].isObject() || request.params[1].size() < 1 || request.params[1].size() > 4)
         throw runtime_error(
-            "tl_sendmany \"fromaddress\" \"{\"toaddress\":\"amount\"}\" \"propertyid\" ( \"referenceamount\" )\n"
+            "tl_sendmany \"fromaddress\" \"{\"toaddress\":\"amount\", ...}\" \"propertyid\" ( \"referenceamount\" )\n"
 
             "\nCreate and broadcast a send to many transaction.\n"
 
             "\nArguments:\n"
             "1. fromaddress          (string, required) the address to send from\n"
-            "2. \"amounts\"          (string, required) A json object with addresses and amounts\n"
+            "2. \"amounts\"          (string, required) A json object with addresses and amounts (upto 4 pairs)\n"
             "    {\n"
             "      \"address\":\"amount\" (string) The litecoin address is the key, the numeric amount (can be string) in " + CURRENCY_UNIT + " is the value\n"
             "      ,...\n"
@@ -166,19 +166,17 @@ UniValue tl_sendmany(const JSONRPCRequest& request)
         );
 
     // obtain parameters & info
+    auto& keys = request.params[1].getKeys();
+    auto& vals = request.params[1].getValues();
     const std::string fromAddress = ParseAddress(request.params[0]);
     uint32_t propertyId = ParsePropertyId(request.params[2]);
     int64_t referenceAmount = (request.params.size() > 3) ? ParseAmount(request.params[3], true) : 0;
     
-    auto& data = request.params[1].get_obj();
-    auto& keys = data.getKeys();
-    auto& vals = data.getValues();
-
     uint64_t totalAmount = 0;
     std::vector<uint64_t> amounts;
     std::vector<std::string> recipients;
-    for (size_t i=0; i<std::min(vals.size(), 4LU); ++i) {
-        auto v = ParseAmount(vals[i].get_str(), true);
+    for (size_t i=0; i<keys.size(); ++i) {
+        auto v = ParseAmount(vals[i].getValStr(), isPropertyDivisible(propertyId));
         if (!v) continue; 
         totalAmount += v;
         amounts.push_back(v);
@@ -191,8 +189,9 @@ UniValue tl_sendmany(const JSONRPCRequest& request)
     RequireSaneReferenceAmount(referenceAmount);
 
     // perform checks
-    if (std::find_if(keys.begin(), keys.end(), [&fromAddress](const std::string& a){ return a == fromAddress; }) != keys.end())
+    if (std::find_if(keys.begin(), keys.end(), [&fromAddress](const std::string& a){ return a == fromAddress; }) != keys.end()) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "sending tokens to same address");
+    }
 
     // create a payload for the transaction
     auto payload = CreatePayload_SendMany(propertyId, amounts);
