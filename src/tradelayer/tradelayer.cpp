@@ -3731,18 +3731,48 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
     return fFoundTx;
 }
 
+// basi logic here: we are adding last reward no claimed to next one
+bool nodeReward::nextReward(int64_t newReward)
+{
+   bool result{false};
+
+   if (isOverflow(p_lastBlock, newReward)) {
+       PrintToLog("%s(): ERROR: arithmetic overflow [%d + %d]\n", __func__, p_lastBlock, newReward);
+       return false;
+   }
+
+   if((p_lastReward + newReward) < MIN_REWARD) {
+      PrintToLog("%s(): no amount available, adding the minimal ammount\n", __func__);
+      p_lastReward = MIN_REWARD;
+      return result;
+   }
+
+   if((p_lastReward + newReward) > MAX_REWARD){
+      PrintToLog("%s(): more than MAX_REWARD, no change in p_lastReward, p_lastReward: %d,  newReward: %d\n",__func__, p_lastReward, newReward);
+      return result;
+   }
+
+   p_lastReward += newReward;
+
+   return !result;
+}
+
 void nodeReward::SendNodeReward(const std::string& consensusHash)
 {
-    for(const auto& addr : nodeRewardsAddrs)
+    for(auto& addr : nodeRewardsAddrs)
     {
         // if this address is a winner and it's claiming reward
-        if(isWinnerAddress(consensusHash, addr.first) && addr.second) {
+        if(isWinnerAddress(consensusHash, addr.first, RegTest()) && addr.second) {
             // we need to save the winners here!
-             winners.insert(addr.first);
+            PrintToLog("%s(): winner: %s\n",__func__, addr.first);
+            winners.insert(addr.first);
+
+            // cleaning claiming status for this block
+            // addr.second = false;
 
         }
-    }
 
+    }
 
     int64_t rewardSize = 0;
     int64_t amountAdded = p_lastReward;
@@ -3752,32 +3782,47 @@ void nodeReward::SendNodeReward(const std::string& consensusHash)
     {
         const uint32_t propertyId = 1; //testing
         rewardSize = p_lastReward / winners.size();
+        PrintToLog("%s(): rewardSize: %s\n",__func__, rewardSize);
         if(rewardSize > 0)
         {
-            for_each(winners.begin(), winners.end(), [&rewardSize] (const std::string addr) { update_tally_map(addr, propertyId, rewardSize, BALANCE); });
+            for_each(winners.begin(), winners.end(), [&rewardSize] (const std::string& addr) { update_tally_map(addr, propertyId, rewardSize, BALANCE); });
             amountAdded = -p_lastReward;
         }
 
     }
 
-    // TODO: check overflows/underflows
-    updateLastReward(amountAdded);
+    winners.clear();
+
+    if (amountAdded < 0) PrintToLog("%s(): reward decreasing to: %d\n",__func__, p_lastReward + amountAdded);
+
+    PrintToLog("%s(): reward increasing to: %d\n",__func__, p_lastReward + amountAdded);
+
+    nextReward(amountAdded);
 
 
 }
 
-bool nodeReward::isWinnerAddress(const std::string& consensusHash, const std::string& address)
+bool nodeReward::isWinnerAddress(const std::string& consensusHash, const std::string& address, bool fTest)
 {
+    const int lastNterms = (fTest) ? 2 : 4;
+
     std::vector<unsigned char> vch;
 
     DecodeBase58(address, vch);
 
     const std::string vchStr = HexStr(vch);
-    const std::string LastTwoCharAddr = vchStr.substr(vchStr.size() - 4);
-    const std::string lastFourCharConsensus = consensusHash.substr(consensusHash.size() - 4);
+    const std::string LastTwoCharAddr = vchStr.substr(vchStr.size() - lastNterms);
+    const std::string lastFourCharConsensus = consensusHash.substr(consensusHash.size() - lastNterms);
+
+    PrintToLog("%s(): lastFourCharConsensus: %s, LastTwoCharAddr (decoded): %s\n",__func__, lastFourCharConsensus, LastTwoCharAddr);
 
     return (LastTwoCharAddr == lastFourCharConsensus) ? true : false;
 
+}
+
+void nodeReward::updateAddressStatus(const std::string& address, bool newStatus)
+{
+    nodeRewardsAddrs[address] = newStatus;
 }
 
 void lookingin_globalvector_pastlivesperpetuals(std::vector<std::map<std::string, std::string>> &lives_g, MatrixTLS M_file, std::vector<std::string> addrs_vg, std::vector<std::map<std::string, std::string>> &lives_h)

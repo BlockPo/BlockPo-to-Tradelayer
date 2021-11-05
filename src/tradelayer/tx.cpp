@@ -51,7 +51,6 @@ typedef boost::multiprecision::checked_int128_t int128_t;
 
 std::map<std::string,uint32_t> peggedIssuers;
 std::map<uint32_t,std::map<int,oracledata>> oraclePrices;
-std::map<string, bool> nodeRewardsAddrs;
 
 /** Pending withdrawals **/
 std::map<std::string,vector<withdrawalAccepted>> withdrawal_Map;
@@ -112,17 +111,22 @@ const struct tradelayer_descs {
 	{ MSC_TYPE_METADEX_CANCEL_BY_PRICE, "MetaDEx cancel-price" },
 	{ MSC_TYPE_METADEX_CANCEL_BY_PAIR, "MetaDEx cancel-by-pair" },
 	{ MSC_TYPE_CLOSE_CHANNEL , "Close Channel" },
+	{ MSC_TYPE_SUBMIT_NODE_ADDRESS , "Submit Node Reward Address" },
+	{ MSC_TYPE_CLAIM_NODE_REWARD , "Claim Node Reward" },
 };
 
 /* Mapping of a transaction type to a textual description. */
 std::string mastercore::strTransactionType(uint16_t txType)
 {
+    for (int i = 0; i < sizeof (tradelayer_descs); ++i)
+	  {
+	      if (txType == tradelayer_descs[i].transaction_type){
+		        return tradelayer_descs[i].description;
+		    }
 
-	for (int i = 0; i < sizeof (tradelayer_descs); ++i) {
-		if (txType == tradelayer_descs[i].transaction_type)
-			return tradelayer_descs[i].description;
-	}
-	return "* unknown type *";
+	  }
+
+	  return "* unknown type *";
 }
 
 /** Helper to convert class number to string. */
@@ -2159,12 +2163,13 @@ bool CMPTransaction::interpret_Close_Channel()
 /** Tx 121 */
 bool CMPTransaction::interpret_SubmitNodeAddr()
 {
+	  PrintToLog("%s(): starting interpret_SubmitNodeAddr \n",__func__);
     int i = 0;
     std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
     std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
 
 
-    if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly) {
+    if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly || true) {
         PrintToLog("\t  %s(): inside interpret \n",__func__);
     }
 
@@ -4866,7 +4871,7 @@ int CMPTransaction::logicMath_SubmitNodeAddr()
   }
 
   // adding address
-  nodeRewardsAddrs[sender] = false;
+	nR.updateAddressStatus(sender, false);
 
   return 0;
 }
@@ -4884,7 +4889,7 @@ int CMPTransaction::logicMath_ClaimNodeReward()
   }
 
   // adding address
-  nodeRewardsAddrs[sender] = true;
+	nR.updateAddressStatus(sender, true);
 
   return 0;
 }

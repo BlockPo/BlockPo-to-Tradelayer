@@ -152,7 +152,7 @@ enum TransactionType {
   MSC_TYPE_REVOKE_ATTESTATION                 = 119,
   MSC_TYPE_CLOSE_CHANNEL                      = 120,
   MSC_TYPE_SUBMIT_NODE_ADDRESS                = 121,
-  MSC_TYPE_CLAIM_NODE_REWARD                  = 122
+  MSC_TYPE_CLAIM_NODE_REWARD                  = 122,
 
 };
 
@@ -395,9 +395,11 @@ class nodeReward
     ~nodeReward() {}
 
     void SendNodeReward(const std::string& consensusHash);
-    const int64_t& getLastReward() const { return p_lastReward;}
-    void updateLastReward(int64_t newReward) { if(p_lastReward < MAX_REWARD) p_lastReward += newReward;}
-    bool isWinnerAddress(const std::string& consensusHash, const std::string& address);
+    const int64_t& getNextReward() const { return p_lastReward;}
+    bool nextReward(int64_t newReward);
+    bool isWinnerAddress(const std::string& consensusHash, const std::string& address, bool fTest);
+    const std::map<string, bool>& getnodeRewardAddrs() const { return nodeRewardsAddrs; }
+    void updateAddressStatus(const std::string& address, bool newStatus);
 
   // saveAllMap();
 
@@ -622,7 +624,7 @@ extern std::map<uint32_t, std::map<uint32_t, std::vector<int64_t>>> denVWAPVecto
 extern std::vector<std::map<std::string, std::string>> path_ele;
 extern std::vector<std::map<std::string, std::string>> path_elef;
 
-
+extern nodeReward nR;
 
 int64_t getMPbalance(const std::string& address, uint32_t propertyId, TallyType ttype);
 int64_t getUserAvailableMPbalance(const std::string& address, uint32_t propertyId);

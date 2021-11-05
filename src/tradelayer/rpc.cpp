@@ -3261,6 +3261,70 @@ UniValue tl_listchannel_addresses(const JSONRPCRequest& request)
     for_each(channels_Map.begin() ,channels_Map.end(), [&response] (const std::pair<std::string,Channel>& sChn) { response.push_back(sChn.first);});
 
     return response;
+
+}
+
+UniValue tl_listnodereward_address(const JSONRPCRequest& request)
+{
+    if (request.fHelp)
+        throw runtime_error(
+            "tl_listnodereward_address\n"
+
+            "\nReturns all node reward addresses.\n"
+
+            "\nResult:\n"
+            "[                                      (array of addresses)\n"
+      			"    \"address\",                       (string) node address 1 \n"
+            "    \"address\",                       (string) node address 2 \n"
+            "        ...                                                       \n"
+            "    \"address\",                       (string) node address n \n"
+      			"  ...\n"
+      			"]\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("tl_listnodereward_address", "")
+            + HelpExampleRpc("tl_listnodereward_address", "")
+        );
+
+    UniValue response(UniValue::VARR);
+
+    const std::map<string, bool>& addressMap = nR.getnodeRewardAddrs();
+
+    for_each(addressMap.begin() , addressMap.end(), [&response] (const std::pair<std::string, bool>& nr)
+    {
+       UniValue details(UniValue::VOBJ);
+       details.pushKV("address:", nr.first);
+       details.pushKV("claiming reward:", nr.second ? "true": "false");
+       response.push_back(details);
+    });
+
+    return response;
+}
+
+UniValue tl_getnextreward(const JSONRPCRequest& request)
+{
+    if (request.fHelp)
+        throw runtime_error(
+            "tl_getnextreward\n"
+
+            "\nReturns reward amount to share.\n"
+
+            "\nResult:\n"
+            "[                                     (amount of ALL token)\n"
+      			"    \"amount\",                       (string) amount  \n"
+      			"]\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("tl_getnextreward", "")
+            + HelpExampleRpc("tl_getnextreward", "")
+        );
+
+    UniValue response(UniValue::VOBJ);
+
+    const int64_t reward = nR.getNextReward();
+    response.pushKV("amount", FormatDivisibleMP(reward));
+
+    return response;
 }
 
 UniValue tl_getmdextradehistoryforaddress(const JSONRPCRequest& request)
@@ -3668,39 +3732,41 @@ static const CRPCCommand commands[] =
   { "trade layer (data retrieval)", "tl_gettradehistory_unfiltered",           &tl_gettradehistory_unfiltered,        {} },
   { "trade layer (data retrieval)", "tl_getupnl",                              &tl_getupnl,                           {} },
   { "trade layer (data retrieval)", "tl_getpnl",                               &tl_getpnl,                            {} },
-  { "trade layer (data retieval)",  "tl_getactivedexsells",                    &tl_getactivedexsells ,                {} },
-  { "trade layer (data retieval)" , "tl_getorderbook",                         &tl_getorderbook,                      {} },
-  { "trade layer (data retieval)" , "tl_getpeggedhistory",                     &tl_getpeggedhistory,                  {} },
-  { "trade layer (data retieval)" , "tl_getcontract_reserve",                  &tl_getcontract_reserve,               {} },
-  { "trade layer (data retieval)" , "tl_getreserve",                           &tl_getreserve,                        {} },
-  { "trade layer (data retieval)" , "tl_getallprice",                          &tl_getallprice,                       {} },
-  { "trade layer (data retieval)" , "tl_getmarketprice",                       &tl_getmarketprice,                    {} },
-  { "trade layer (data retieval)" , "tl_getsum_upnl",                          &tl_getsum_upnl,                       {} },
-  { "trade layer (data retieval)" , "tl_check_commits",                        &tl_check_commits,                     {} },
-  { "trade layer (data retieval)" , "tl_get_channelreserve",                   &tl_get_channelreserve,                {} },
-  { "trade layer (data retieval)" , "tl_getchannel_info",                      &tl_getchannel_info,                   {} },
-  { "trade layer (data retieval)" , "tl_getcache",                             &tl_getcache,                          {} },
-  { "trade layer (data retieval)" , "tl_check_kyc",                            &tl_check_kyc,                         {} },
-  { "trade layer (data retieval)" , "tl_list_natives",                         &tl_list_natives,                      {} },
-  { "trade layer (data retieval)" , "tl_list_oracles",                         &tl_list_oracles,                      {} },
-  { "trade layer (data retieval)" , "tl_getalltxonblock",                      &tl_getalltxonblock,                   {} },
-  { "trade layer (data retieval)" , "tl_check_withdrawals",                    &tl_check_withdrawals,                 {} },
-  { "trade layer (data retieval)" , "tl_get_ltcvolume",                        &tl_get_ltcvolume,                     {} },
-  { "trade layer (data retieval)" , "tl_getmdexvolume",                        &tl_getmdexvolume,                     {} },
-  { "trade layer (data retieval)" , "tl_getcurrencytotal",                     &tl_getcurrencytotal,                  {} },
-  { "trade layer (data retieval)" , "tl_listkyc",                              &tl_listkyc,                           {} },
-  { "trade layer (data retieval)" , "tl_getoraclecache",                       &tl_getoraclecache,                    {} },
-  { "trade layer (data retieval)",  "tl_getmax_peggedcurrency",                &tl_getmax_peggedcurrency,             {} },
-  { "trade layer (data retieval)",  "tl_getunvested",                          &tl_getunvested,                       {} },
-  { "trade layer (data retieval)",  "tl_list_attestation",                     &tl_list_attestation,                  {} },
-  { "trade layer (data retieval)",  "tl_getcontract",                          &tl_getcontract,                       {} },
-  { "trade layer (data retieval)",  "tl_getopen_interest",                     &tl_getopen_interest,                  {} },
-  { "trade layer (data retieval)",  "tl_getvesting_info",                      &tl_getvesting_info,                   {} },
-  { "trade layer (data retieval)",  "tl_listvesting_addresses",                &tl_listvesting_addresses,             {} },
-  { "trade layer (data retieval)",  "tl_get_channelremaining",                 &tl_get_channelremaining,              {} },
-  { "trade layer (data retieval)",  "tl_list_attestation",                     &tl_list_attestation,                  {} },
-  { "trade layer (data retieval)",  "tl_getwalletbalance",                     &tl_getwalletbalance,                  {} },
-  { "trade layer (data retieval)",  "tl_listchannel_addresses",                &tl_listchannel_addresses,             {} },
+  { "trade layer (data retrieval)",  "tl_getactivedexsells",                    &tl_getactivedexsells ,                {} },
+  { "trade layer (data retrieval)" , "tl_getorderbook",                         &tl_getorderbook,                      {} },
+  { "trade layer (data retrieval)" , "tl_getpeggedhistory",                     &tl_getpeggedhistory,                  {} },
+  { "trade layer (data retrieval)" , "tl_getcontract_reserve",                  &tl_getcontract_reserve,               {} },
+  { "trade layer (data retrieval)" , "tl_getreserve",                           &tl_getreserve,                        {} },
+  { "trade layer (data retrieval)" , "tl_getallprice",                          &tl_getallprice,                       {} },
+  { "trade layer (data retrieval)" , "tl_getmarketprice",                       &tl_getmarketprice,                    {} },
+  { "trade layer (data retrieval)" , "tl_getsum_upnl",                          &tl_getsum_upnl,                       {} },
+  { "trade layer (data retrieval)" , "tl_check_commits",                        &tl_check_commits,                     {} },
+  { "trade layer (data retrieval)" , "tl_get_channelreserve",                   &tl_get_channelreserve,                {} },
+  { "trade layer (data retrieval)" , "tl_getchannel_info",                      &tl_getchannel_info,                   {} },
+  { "trade layer (data retrieval)" , "tl_getcache",                             &tl_getcache,                          {} },
+  { "trade layer (data retrieval)" , "tl_check_kyc",                            &tl_check_kyc,                         {} },
+  { "trade layer (data retrieval)" , "tl_list_natives",                         &tl_list_natives,                      {} },
+  { "trade layer (data retrieval)" , "tl_list_oracles",                         &tl_list_oracles,                      {} },
+  { "trade layer (data retrieval)" , "tl_getalltxonblock",                      &tl_getalltxonblock,                   {} },
+  { "trade layer (data retrieval)" , "tl_check_withdrawals",                    &tl_check_withdrawals,                 {} },
+  { "trade layer (data retrieval)" , "tl_get_ltcvolume",                        &tl_get_ltcvolume,                     {} },
+  { "trade layer (data retrieval)" , "tl_getmdexvolume",                        &tl_getmdexvolume,                     {} },
+  { "trade layer (data retrieval)" , "tl_getcurrencytotal",                     &tl_getcurrencytotal,                  {} },
+  { "trade layer (data retrieval)" , "tl_listkyc",                              &tl_listkyc,                           {} },
+  { "trade layer (data retrieval)" , "tl_getoraclecache",                       &tl_getoraclecache,                    {} },
+  { "trade layer (data retrieval)",  "tl_getmax_peggedcurrency",                &tl_getmax_peggedcurrency,             {} },
+  { "trade layer (data retrieval)",  "tl_getunvested",                          &tl_getunvested,                       {} },
+  { "trade layer (data retrieval)",  "tl_list_attestation",                     &tl_list_attestation,                  {} },
+  { "trade layer (data retrieval)",  "tl_getcontract",                          &tl_getcontract,                       {} },
+  { "trade layer (data retrieval)",  "tl_getopen_interest",                     &tl_getopen_interest,                  {} },
+  { "trade layer (data retrieval)",  "tl_getvesting_info",                      &tl_getvesting_info,                   {} },
+  { "trade layer (data retrieval)",  "tl_listvesting_addresses",                &tl_listvesting_addresses,             {} },
+  { "trade layer (data retrieval)",  "tl_get_channelremaining",                 &tl_get_channelremaining,              {} },
+  { "trade layer (data retrieval)",  "tl_list_attestation",                     &tl_list_attestation,                  {} },
+  { "trade layer (data retrieval)",  "tl_getwalletbalance",                     &tl_getwalletbalance,                  {} },
+  { "trade layer (data retrieval)",  "tl_listchannel_addresses",                &tl_listchannel_addresses,             {} },
+  {"trade layer (data retrieval)", "tl_listnodereward_address",                 &tl_listnodereward_address,            {} },
+  {"trade layer (data retrieval)", "tl_getnextreward",                          &tl_getnextreward,                     {} }
 };
 
 void RegisterTLDataRetrievalRPCCommands(CRPCTable &tableRPC)

@@ -2400,7 +2400,8 @@ static const CRPCCommand commands[] =
     { "trade layer (transaction creation)", "tl_sendcanceltradesbypair",       &tl_sendcanceltradesbypair,          {} },
     { "trade layer (transaction creation)", "tl_sendcanceltradesbyprice",      &tl_sendcanceltradesbyprice,         {} },
     { "trade layer (transaction creation)", "tl_send_closechannel",            &tl_send_closechannel,               {} },
-    { "trade layer (transaction creation)", "tl_submit_nodeaddress",           &tl_submit_nodeaddress,              {} }
+    { "trade layer (transaction creation)", "tl_submit_nodeaddress",           &tl_submit_nodeaddress,              {} },
+    { "trade layer (transaction creation)", "tl_claim_nodereward",             &tl_claim_nodereward,                {} }
 #endif
 };
 
