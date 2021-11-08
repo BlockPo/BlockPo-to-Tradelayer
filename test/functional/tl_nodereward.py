@@ -60,7 +60,7 @@ class NodeRewardTest (BitcoinTestFramework):
         addresses = tradelayer_createAddresses(accounts, conn, headers)
 
         self.log.info("Funding addresses with LTC")
-        amount = 0.1
+        amount = 0.8
         tradelayer_fundingAddresses(addresses, amount, conn, headers)
 
         self.log.info("Checking the LTC balance in every account")
@@ -106,31 +106,30 @@ class NodeRewardTest (BitcoinTestFramework):
         self.log.info("Sending node reward address")
         params = str([addresses[0]]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_submit_nodeaddress",params)
-        self.log.info(out)
-
+        # self.log.info(out)
         self.nodes[0].generate(1)
 
 
         self.log.info("Listing all node reward address")
         out = tradelayer_HTTP(conn, headers, True, "tl_listnodereward_address")
-        self.log.info(out)
+        # self.log.info(out)
 
         self.log.info("Sending node reward address")
         params = str([addresses[0]]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_claim_nodereward",params)
-        self.log.info(out)
+        # self.log.info(out)
 
         self.nodes[0].generate(1)
 
         self.log.info("Listing all node reward address")
         out = tradelayer_HTTP(conn, headers, True, "tl_listnodereward_address")
-        self.log.info(out)
+        # self.log.info(out)
 
         self.nodes[0].generate(1)
 
         self.log.info("Listing all node reward address")
         out = tradelayer_HTTP(conn, headers, True, "tl_listnodereward_address")
-        self.log.info(out)
+        # self.log.info(out)
 
         self.nodes[0].generate(1)
 
@@ -143,16 +142,96 @@ class NodeRewardTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, False, "tl_getbalance",params)
         self.log.info(out)
 
-        for i in range(0, 300):
+        while True:
+            params = str([addresses[0]]).replace("'",'"')
+            out = tradelayer_HTTP(conn, headers, False, "tl_claim_nodereward",params)
+
             self.nodes[0].generate(1)
             self.log.info("checking next reward")
             out = tradelayer_HTTP(conn, headers, True, "tl_getnextreward")
-            self.log.info(out)
+            # self.log.info(out)
+
+            self.log.info("checking if address is winner")
+            params = str([addresses[0]]).replace("'",'"')
+            out = tradelayer_HTTP(conn, headers, True, "tl_isaddresswinner", params)
+            # self.log.info(out)
+
+            if out['result']['result'] == "true":
+                break
+
+
+        self.nodes[0].generate(1)
 
         self.log.info("get ALL balance in address0 again")
         params = str([addresses[0], 1]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_getbalance",params)
         self.log.info(out)
+
+        assert(out['result']['balance'] != '0.00000000')
+
+        params = str([addresses[1]]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_submit_nodeaddress",params)
+
+        params = str([addresses[2]]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_submit_nodeaddress",params)
+
+        self.nodes[0].generate(1)
+
+
+        self.log.info("Sending node reward address")
+        params = str([addresses[1]]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_claim_nodereward",params)
+        # self.log.info(out)
+
+        params = str([addresses[2]]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_claim_nodereward",params)
+        # self.log.info(out)
+
+        self.nodes[0].generate(1)
+
+        self.log.info("Using 3 addresses")
+
+
+        while True:
+            params = str([addresses[1]]).replace("'",'"')
+            out = tradelayer_HTTP(conn, headers, False, "tl_claim_nodereward",params)
+
+            params = str([addresses[2]]).replace("'",'"')
+            out = tradelayer_HTTP(conn, headers, False, "tl_claim_nodereward",params)
+
+            self.nodes[0].generate(1)
+
+            self.log.info("checking next reward (second loop)")
+            out = tradelayer_HTTP(conn, headers, True, "tl_getnextreward")
+            # self.log.info(out)
+
+            self.log.info("checking if one of addressess won")
+            params = str([addresses[0]]).replace("'",'"')
+            out1 = tradelayer_HTTP(conn, headers, True, "tl_isaddresswinner", params)
+            # self.log.info(out)
+            params = str([addresses[1]]).replace("'",'"')
+            out2 = tradelayer_HTTP(conn, headers, True, "tl_isaddresswinner", params)
+            # self.log.info(out)
+            params = str([addresses[2]]).replace("'",'"')
+            out3 = tradelayer_HTTP(conn, headers, True, "tl_isaddresswinner", params)
+            # self.log.info(out)
+
+            if out2['result']['result'] == "true" or out3['result']['result'] == "true":
+                break
+
+
+        self.nodes[0].generate(1)
+
+        self.log.info("get ALL balance in address1 and address2")
+        params = str([addresses[1], 1]).replace("'",'"')
+        out2 = tradelayer_HTTP(conn, headers, False, "tl_getbalance",params)
+        self.log.info(out2)
+
+        params = str([addresses[2], 1]).replace("'",'"')
+        out3 = tradelayer_HTTP(conn, headers, False, "tl_getbalance",params)
+        self.log.info(out3)
+
+        assert(out2['result']['balance'] != '0.00000000' or out3['result']['balance'] != '0.00000000')
 
         conn.close()
         self.stop_nodes()

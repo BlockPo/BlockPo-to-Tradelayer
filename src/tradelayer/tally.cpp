@@ -57,6 +57,7 @@ bool isOverflow(int64_t a, int64_t b)
             ((b < 0) && (a < (std::numeric_limits<int64_t>::min() - b))));
 }
 
+
 /**
  * Updates the number of tokens for the given tally type.
  *

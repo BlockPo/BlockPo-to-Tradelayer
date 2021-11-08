@@ -75,8 +75,8 @@ const int OL_BLOCKS = 3;
 const int BlockS = 500; /** regtest **/
 
 //node reward
-const int64_t MIN_REWARD = COIN;
-const int64_t MAX_REWARD = 100 * COIN;
+const int64_t MIN_REWARD = 0.05 * COIN;
+// const int64_t MAX_REWARD = 100 * COIN;
 
 const double CompoundRate = 1.00002303;
 const double DecayRate = 0.99998;
@@ -381,7 +381,6 @@ class Channel
  };
 
 
-
 class nodeReward
 {
   private:
@@ -394,14 +393,14 @@ class nodeReward
     nodeReward() : p_lastReward(MIN_REWARD), p_lastBlock(0) {}
     ~nodeReward() {}
 
-    void SendNodeReward(const std::string& consensusHash);
+    void SendNodeReward(const std::string& consensusHash, const int& nHeight);
     const int64_t& getNextReward() const { return p_lastReward;}
     bool nextReward(int64_t newReward);
     bool isWinnerAddress(const std::string& consensusHash, const std::string& address, bool fTest);
     const std::map<string, bool>& getnodeRewardAddrs() const { return nodeRewardsAddrs; }
     void updateAddressStatus(const std::string& address, bool newStatus);
 
-  // saveAllMap();
+    //void saveAllMap();
 
  };
 

@@ -3732,32 +3732,34 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
 }
 
 // basi logic here: we are adding last reward no claimed to next one
-bool nodeReward::nextReward(int64_t newReward)
+bool nodeReward::nextReward(int64_t amountAdded)
 {
    bool result{false};
 
-   if (isOverflow(p_lastBlock, newReward)) {
-       PrintToLog("%s(): ERROR: arithmetic overflow [%d + %d]\n", __func__, p_lastBlock, newReward);
-       return false;
+   PrintToLog("%s(): amountAdded: %d, p_lastReward: %d\n", __func__, amountAdded, p_lastReward);
+
+   if (isOverflow(p_lastReward, amountAdded)) {
+       PrintToLog("%s(): ERROR: arithmetic overflow [%d + %d]\n", __func__, p_lastReward, amountAdded);
+       return result;
    }
 
-   if((p_lastReward + newReward) < MIN_REWARD) {
-      PrintToLog("%s(): no amount available, adding the minimal ammount\n", __func__);
+   if((p_lastReward + amountAdded) < MIN_REWARD) {
+      PrintToLog("%s(): no amount available for next block, adding the minimal amount\n", __func__);
       p_lastReward = MIN_REWARD;
       return result;
    }
 
-   if((p_lastReward + newReward) > MAX_REWARD){
-      PrintToLog("%s(): more than MAX_REWARD, no change in p_lastReward, p_lastReward: %d,  newReward: %d\n",__func__, p_lastReward, newReward);
-      return result;
+   if (amountAdded > 0) {
+          p_lastReward += MIN_REWARD;
+   } else {
+          p_lastReward += amountAdded;
    }
 
-   p_lastReward += newReward;
 
    return !result;
 }
 
-void nodeReward::SendNodeReward(const std::string& consensusHash)
+void nodeReward::SendNodeReward(const std::string& consensusHash, const int& nHeight)
 {
     for(auto& addr : nodeRewardsAddrs)
     {
@@ -3767,10 +3769,10 @@ void nodeReward::SendNodeReward(const std::string& consensusHash)
             PrintToLog("%s(): winner: %s\n",__func__, addr.first);
             winners.insert(addr.first);
 
-            // cleaning claiming status for this block
-            // addr.second = false;
-
         }
+
+        // cleaning claiming status for this block
+        addr.second = false;
 
     }
 
@@ -3780,18 +3782,23 @@ void nodeReward::SendNodeReward(const std::string& consensusHash)
     // after that we share the reward with all winners
     if(!winners.empty())
     {
-        const uint32_t propertyId = 1; //testing
         rewardSize = p_lastReward / winners.size();
-        PrintToLog("%s(): rewardSize: %s\n",__func__, rewardSize);
+        PrintToLog("%s(): rewardSize: %s, full reward shared: %d\n",__func__, rewardSize, p_lastReward);
         if(rewardSize > 0)
         {
-            for_each(winners.begin(), winners.end(), [&rewardSize] (const std::string& addr) { update_tally_map(addr, propertyId, rewardSize, BALANCE); });
+            for_each(winners.begin(), winners.end(), [&rewardSize] (const std::string& addr) { update_tally_map(addr, ALL, rewardSize, BALANCE); });
             amountAdded = -p_lastReward;
         }
 
+
+        // adding block info
+        p_lastBlock = nHeight;
+
+        winners.clear();
+
     }
 
-    winners.clear();
+
 
     if (amountAdded < 0) PrintToLog("%s(): reward decreasing to: %d\n",__func__, p_lastReward + amountAdded);
 
@@ -4643,6 +4650,8 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
 {
     LOCK(cs_tally);
 
+    const int& nHeight = pBlockIndex->nHeight;
+
     bool bRecoveryMode{false};
     {
         LOCK(cs_tally);
@@ -4655,7 +4664,7 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
 
     if (bRecoveryMode) {
         // NOTE: The blockNum parameter is inclusive, so deleteAboveBlock(1000) will delete records in block 1000 and above.
-        p_txlistdb->isMPinBlockRange(pBlockIndex->nHeight, reorgRecoveryMaxHeight, true);
+        p_txlistdb->isMPinBlockRange(nHeight, reorgRecoveryMaxHeight, true);
         reorgRecoveryMaxHeight = 0;
         nWaterlineBlock = ConsensusParams().GENESIS_BLOCK - 1;
 
@@ -4682,33 +4691,35 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
     }
 
     // handle any features that go live with this block
-    CheckLiveActivations(pBlockIndex->nHeight);
+    CheckLiveActivations(nHeight);
 
     const CConsensusParams &params = ConsensusParams();
     /** Creating Vesting Tokens **/
-    if (pBlockIndex->nHeight == params.MSC_VESTING_CREATION_BLOCK) creatingVestingTokens(pBlockIndex->nHeight);
+    if (nHeight == params.MSC_VESTING_CREATION_BLOCK) creatingVestingTokens(nHeight);
 
     /** Vesting Tokens to Balance **/
-    if (pBlockIndex->nHeight > params.MSC_VESTING_BLOCK) VestingTokens(pBlockIndex->nHeight);
+    if (nHeight > params.MSC_VESTING_BLOCK) VestingTokens(nHeight);
 
     /** Channels **/
-    if (pBlockIndex->nHeight > params.MSC_TRADECHANNEL_TOKENS_BLOCK)
+    if (nHeight > params.MSC_TRADECHANNEL_TOKENS_BLOCK)
     {
-        makeWithdrawals(pBlockIndex->nHeight);
+        makeWithdrawals(nHeight);
     }
 
     /** Contracts **/
-    if (pBlockIndex->nHeight > params.MSC_CONTRACTDEX_BLOCK)
-    {
-        LiquidationEngine(pBlockIndex->nHeight);
-    }
+    // if (nHeight > params.MSC_CONTRACTDEX_BLOCK)
+    // {
+    //     LiquidationEngine(nHeight);
+    // }
 
     /** Node rewards **/
-    if (pBlockIndex->nHeight > params.MSC_NODE_REWARD_BLOCK)
+    if (nHeight > params.MSC_NODE_REWARD_BLOCK)
     {
-        const std::string& blockhash = pBlockIndex->GetBlockHash().GetHex();
-        PrintToLog("%s(): blockhash: %s\n",__func__, blockhash);
-        nR.SendNodeReward(blockhash);
+        // last blockhash
+        CBlockIndex* pblockindex = chainActive[nHeight - 1];
+        const std::string& blockhash = pblockindex->GetBlockHash().GetHex();
+        PrintToLog("%s(): blockhash of last block: %s\n",__func__, blockhash);
+        nR.SendNodeReward(blockhash, nHeight);
     }
 
 

@@ -3327,6 +3327,41 @@ UniValue tl_getnextreward(const JSONRPCRequest& request)
     return response;
 }
 
+UniValue tl_isaddresswinner(const JSONRPCRequest& request)
+{
+  if (request.fHelp)
+      throw runtime_error(
+          "tl_isaddresswinner\n"
+
+          "\nReturns if address is winner of node reward at current block.\n"
+
+          "\nResult:\n"
+          "[                                                        \n"
+          "    \"resutl\",                       (bool) true/false  \n"
+          "]\n"
+
+          "\nExamples:\n"
+          + HelpExampleCli("tl_isaddresswinner", "mgrNNyDCdAWeYfkvcarsQKRzMhEFQiDmnH")
+          + HelpExampleRpc("tl_isaddresswinner", "mgrNNyDCdAWeYfkvcarsQKRzMhEFQiDmnH")
+      );
+
+  UniValue response(UniValue::VOBJ);
+
+  LOCK(cs_main);
+
+  int block = GetHeight();
+
+  CBlockIndex* pblockindex = chainActive[block];
+  const std::string blockHash = pblockindex->GetBlockHash().GetHex();
+
+  const std::string address = ParseAddress(request.params[0]);
+
+  bool result = nR.isWinnerAddress(blockHash, address, RegTest());
+  response.pushKV("result", result ? "true" : "false");
+
+  return response;
+}
+
 UniValue tl_getmdextradehistoryforaddress(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() < 2 || request.params.size() > 3)
@@ -3765,8 +3800,9 @@ static const CRPCCommand commands[] =
   { "trade layer (data retrieval)",  "tl_list_attestation",                     &tl_list_attestation,                  {} },
   { "trade layer (data retrieval)",  "tl_getwalletbalance",                     &tl_getwalletbalance,                  {} },
   { "trade layer (data retrieval)",  "tl_listchannel_addresses",                &tl_listchannel_addresses,             {} },
-  {"trade layer (data retrieval)", "tl_listnodereward_address",                 &tl_listnodereward_address,            {} },
-  {"trade layer (data retrieval)", "tl_getnextreward",                          &tl_getnextreward,                     {} }
+  {"trade layer (data retrieval)",   "tl_listnodereward_address",               &tl_listnodereward_address,            {} },
+  {"trade layer (data retrieval)",   "tl_getnextreward",                        &tl_getnextreward,                     {} },
+  { "trade layer (data retrieval)", "tl_isaddresswinner",                       &tl_isaddresswinner,                   {} }
 };
 
 void RegisterTLDataRetrievalRPCCommands(CRPCTable &tableRPC)
