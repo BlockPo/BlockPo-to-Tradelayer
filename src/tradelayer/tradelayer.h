@@ -188,6 +188,7 @@ enum FILETYPES {
   FILE_TYPE_TOKEN_VWAP,
   FILE_TYPE_REGISTER,
   FILETYPE_CONTRACT_GLOBALS,
+  FILE_TYPE_NODE_ADDRESSES,
   NUM_FILETYPES
 };
 
@@ -393,14 +394,18 @@ class nodeReward
     nodeReward() : p_lastReward(MIN_REWARD), p_lastBlock(0) {}
     ~nodeReward() {}
 
-    void SendNodeReward(const std::string& consensusHash, const int& nHeight);
+    void sendNodeReward(const std::string& consensusHash, const int& nHeight);
     const int64_t& getNextReward() const { return p_lastReward;}
+    const int& getLastBlock() const { return p_lastBlock;}
     bool nextReward(int64_t newReward);
     bool isWinnerAddress(const std::string& consensusHash, const std::string& address, bool fTest);
     const std::map<string, bool>& getnodeRewardAddrs() const { return nodeRewardsAddrs; }
     void updateAddressStatus(const std::string& address, bool newStatus);
 
-    //void saveAllMap();
+    void saveNodeReward(ofstream &file, CHash256& hasher);
+    void clearNodeRewardMap() { nodeRewardsAddrs.clear(); }
+    void setLastBlock(int lastBlock) { p_lastBlock = lastBlock; }
+    void setLastReward(int64_t reward) { p_lastReward = reward; }
 
  };
 

@@ -2089,6 +2089,52 @@ static int input_register_string(const std::string& s)
     return 0;
 }
 
+static int input_node_reward(const std::string& s)
+{
+    std::vector<std::string> addrData;
+    boost::split(addrData, s, boost::is_any_of("+"), boost::token_compress_on);
+    if (addrData.size() != 2)
+    {
+        // address:status
+        std::vector<std::string> addrMap;
+        boost::split(addrMap, s, boost::is_any_of(":"), boost::token_compress_on);
+        if (addrMap.size() != 2) {
+            return -1;
+        }
+
+        std::string address, status;
+
+        try {
+            address = addrMap[0];
+            status = addrMap[1];
+
+        } catch (...) {
+            PrintToLog("%s(): lexical_cast issue (1)\n",__func__);
+            return -1;
+        }
+
+    } else {
+
+        int64_t reward = 0;
+        int block = 0;
+
+        try
+        {
+            reward = boost::lexical_cast<int64_t>(addrData[0]);
+            block = boost::lexical_cast<int>(addrData[1]);
+        } catch (...) {
+            PrintToLog("%s(): lexical_cast issue (2)\n",__func__);
+            return -1;
+        }
+
+        nR.setLastReward(reward);
+        nR.setLastBlock(block);
+    }
+
+    return 0;
+
+}
+
 static int msc_file_load(const string &filename, int what, bool verifyHash = false)
 {
   int lines = 0;
@@ -2193,6 +2239,11 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
         inputLineFunc = input_register_string;
         break;
 
+    case FILE_TYPE_NODE_ADDRESSES:
+        nR.clearNodeRewardMap();
+        inputLineFunc = input_node_reward;
+        break;
+
     default:
         return -1;
     }
@@ -2283,7 +2334,8 @@ static char const * const statePrefix[NUM_FILETYPES] = {
   "tokenltcprice",
   "tokenvwap",
   "register",
-  "contractglobals"
+  "contractglobals",
+  "nodeaddresses"
 };
 
 // returns the height of the state loaded
@@ -2801,6 +2853,13 @@ static int write_mp_active_channels(std::ofstream& file, CHash256& hasher)
     return 0;
 }
 
+static int write_mp_nodeaddresses(ofstream &file, CHash256& hasher)
+{
+    nR.saveNodeReward(file, hasher);
+
+    return 0;
+}
+
 static void iterWrite(std::ofstream& file, CHash256& hasher, const std::map<int, std::map<uint32_t,int64_t>>& aMap)
 {
     for(const auto &m : aMap)
@@ -3030,6 +3089,10 @@ static int write_state_file(CBlockIndex const *pBlockIndex, int what)
     case FILE_TYPE_REGISTER:
         result = write_mp_register(file, hasher);
         break;
+
+    case FILE_TYPE_NODE_ADDRESSES:
+        result = write_mp_nodeaddresses(file, hasher);
+        break;
     }
 
     // generate and write the double hash of all the contents written
@@ -3137,6 +3200,7 @@ int mastercore_save_state(CBlockIndex const *pBlockIndex)
     write_state_file(pBlockIndex, FILE_TYPE_TOKEN_VWAP);
     write_state_file(pBlockIndex, FILE_TYPE_REGISTER);
     write_state_file(pBlockIndex, FILETYPE_CONTRACT_GLOBALS);
+    write_state_file(pBlockIndex, FILE_TYPE_NODE_ADDRESSES);
 
     // clean-up the directory
     prune_state_files(pBlockIndex);
@@ -3731,7 +3795,31 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
     return fFoundTx;
 }
 
-// basi logic here: we are adding last reward no claimed to next one
+void nodeReward::saveNodeReward(ofstream &file, CHash256& hasher)
+{
+
+    const std::string lineOut = strprintf("%d+%d", p_lastReward, p_lastBlock);
+    hasher.Write((unsigned char*)lineOut.c_str(), lineOut.length());
+    file << lineOut << endl;
+
+    for(const auto& addr : nodeRewardsAddrs)
+    {
+        const std::string& address = addr.first;
+        bool status = addr.second;
+        const std::string lineOut = strprintf("%s:%s", address, status ? "true":"false");
+
+        // add the line to the hash
+        hasher.Write((unsigned char*)lineOut.c_str(), lineOut.length());
+
+        // write the line
+        file << lineOut << endl;
+
+  }
+
+}
+
+
+// basic logic here: we are adding last reward no claimed + 0.05 for next one
 bool nodeReward::nextReward(int64_t amountAdded)
 {
    bool result{false};
@@ -3759,7 +3847,7 @@ bool nodeReward::nextReward(int64_t amountAdded)
    return !result;
 }
 
-void nodeReward::SendNodeReward(const std::string& consensusHash, const int& nHeight)
+void nodeReward::sendNodeReward(const std::string& consensusHash, const int& nHeight)
 {
     for(auto& addr : nodeRewardsAddrs)
     {
@@ -3776,13 +3864,12 @@ void nodeReward::SendNodeReward(const std::string& consensusHash, const int& nHe
 
     }
 
-    int64_t rewardSize = 0;
     int64_t amountAdded = p_lastReward;
 
     // after that we share the reward with all winners
     if(!winners.empty())
     {
-        rewardSize = p_lastReward / winners.size();
+        const int64_t rewardSize = p_lastReward / winners.size();
         PrintToLog("%s(): rewardSize: %s, full reward shared: %d\n",__func__, rewardSize, p_lastReward);
         if(rewardSize > 0)
         {
@@ -3797,8 +3884,6 @@ void nodeReward::SendNodeReward(const std::string& consensusHash, const int& nHe
         winners.clear();
 
     }
-
-
 
     if (amountAdded < 0) PrintToLog("%s(): reward decreasing to: %d\n",__func__, p_lastReward + amountAdded);
 
@@ -4712,16 +4797,6 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
     //     LiquidationEngine(nHeight);
     // }
 
-    /** Node rewards **/
-    if (nHeight > params.MSC_NODE_REWARD_BLOCK)
-    {
-        // last blockhash
-        CBlockIndex* pblockindex = chainActive[nHeight - 1];
-        const std::string& blockhash = pblockindex->GetBlockHash().GetHex();
-        PrintToLog("%s(): blockhash of last block: %s\n",__func__, blockhash);
-        nR.SendNodeReward(blockhash, nHeight);
-    }
-
 
     // marginMain(pBlockIndex->nHeight);
     // addInterestPegged(nBlockPrev,pBlockIndex);
@@ -4750,6 +4825,8 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
 int mastercore_handler_block_end(int nBlockNow, CBlockIndex const * pBlockIndex,
         unsigned int countMP)
 {
+    const CConsensusParams &params = ConsensusParams();
+
     int nMastercoreInit;
     {
         LOCK(cs_tally);
@@ -4760,9 +4837,20 @@ int mastercore_handler_block_end(int nBlockNow, CBlockIndex const * pBlockIndex,
         mastercore_init();
     }
 
+
     bool checkpointValid;
     {
        LOCK(cs_tally);
+
+       /** Node rewards **/
+       if (nBlockNow > params.MSC_NODE_REWARD_BLOCK)
+       {
+           // last blockhash
+           const CBlockIndex* pblockindex = chainActive[nBlockNow - 1];
+           const std::string& blockhash = pblockindex->GetBlockHash().GetHex();
+           PrintToLog("%s(): blockhash of last block: %s\n",__func__, blockhash);
+           nR.sendNodeReward(blockhash, nBlockNow);
+       }
 
        // deleting Expired DEx accepts
        const unsigned int how_many_erased = eraseExpiredAccepts(nBlockNow);
@@ -4808,7 +4896,7 @@ int mastercore_handler_block_end(int nBlockNow, CBlockIndex const * pBlockIndex,
      LOCK2(cs_main, cs_tally);
      if (checkpointValid){
          // save out the state after this block
-         if (writePersistence(nBlockNow) && nBlockNow >= ConsensusParams().GENESIS_BLOCK) {
+         if (writePersistence(nBlockNow) && nBlockNow >= params.GENESIS_BLOCK) {
               mastercore_save_state(pBlockIndex);
           }
       }

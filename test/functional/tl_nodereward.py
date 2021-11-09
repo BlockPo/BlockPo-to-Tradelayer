@@ -26,15 +26,12 @@ class NodeRewardTest (BitcoinTestFramework):
         rpcpassword = "rpcpassword=rpcpassword🔑"
         with open(os.path.join(self.options.tmpdir+"/node0", "litecoin.conf"), 'a', encoding='utf8') as f:
             f.write(rpcauth+"\n")
+            f.write(rpcuser+"\n")
+            f.write(rpcpassword+"\n")
 
     def run_test(self):
 
         self.log.info("Preparing the workspace...")
-
-
-        ################################################################################
-        # Checking RPC tl_sendissuancemanaged and tl_sendgrant (in the first 200 blocks of the chain) #
-        ################################################################################
 
         url = urllib.parse.urlparse(self.nodes[0].url)
 
@@ -143,20 +140,19 @@ class NodeRewardTest (BitcoinTestFramework):
         self.log.info(out)
 
         while True:
-            params = str([addresses[0]]).replace("'",'"')
-            out = tradelayer_HTTP(conn, headers, False, "tl_claim_nodereward",params)
-
             self.nodes[0].generate(1)
             self.log.info("checking next reward")
             out = tradelayer_HTTP(conn, headers, True, "tl_getnextreward")
-            # self.log.info(out)
+            self.log.info(out)
 
             self.log.info("checking if address is winner")
             params = str([addresses[0]]).replace("'",'"')
             out = tradelayer_HTTP(conn, headers, True, "tl_isaddresswinner", params)
-            # self.log.info(out)
 
             if out['result']['result'] == "true":
+                self.log.info(out)
+                params = str([addresses[0]]).replace("'",'"')
+                out = tradelayer_HTTP(conn, headers, False, "tl_claim_nodereward",params)
                 break
 
 
@@ -169,69 +165,61 @@ class NodeRewardTest (BitcoinTestFramework):
 
         assert(out['result']['balance'] != '0.00000000')
 
-        params = str([addresses[1]]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, False, "tl_submit_nodeaddress",params)
-
-        params = str([addresses[2]]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, False, "tl_submit_nodeaddress",params)
-
         self.nodes[0].generate(1)
 
 
-        self.log.info("Sending node reward address")
-        params = str([addresses[1]]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, False, "tl_claim_nodereward",params)
-        # self.log.info(out)
+        self.log.info("Using more addresses, creating 100 more")
 
-        params = str([addresses[2]]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, False, "tl_claim_nodereward",params)
-        # self.log.info(out)
+        winners = []
+        while len(winners) == 0:
+            addresses1 = []
+            self.log.info("Generating 100 more blocks")
+            self.nodes[0].generate(100)
 
-        self.nodes[0].generate(1)
+            while len(addresses1) < 500:
+                params = str(['doe']).replace("'",'"')
+                out = tradelayer_HTTP(conn, headers, True, "getnewaddress", params)
+                # address = out['result']
+                addresses1.append(out['result'])
+                self.log.info(out['result'])
 
-        self.log.info("Using 3 addresses")
+            self.log.info("Funding addresses")
+            amount = 0.1
+            tradelayer_fundingAddresses(addresses1, amount, conn, headers)
 
+            self.log.info("Submiting node addresses")
+            for addr in addresses1:
+                params = str([addr]).replace("'",'"')
+                out = tradelayer_HTTP(conn, headers, False, "tl_submit_nodeaddress",params)
+            self.nodes[0].generate(1)
 
-        while True:
-            params = str([addresses[1]]).replace("'",'"')
-            out = tradelayer_HTTP(conn, headers, False, "tl_claim_nodereward",params)
+            for addr in addresses1:
+                self.log.info("checking if address is winner")
+                self.log.info(addr)
+                params = str([addr]).replace("'",'"')
+                out = tradelayer_HTTP(conn, headers, True, "tl_isaddresswinner", params)
 
-            params = str([addresses[2]]).replace("'",'"')
-            out = tradelayer_HTTP(conn, headers, False, "tl_claim_nodereward",params)
+                if out['result']['result'] == "true":
+                    self.log.info(out)
+                    params = str([addr]).replace("'",'"')
+                    out = tradelayer_HTTP(conn, headers, False, "tl_claim_nodereward",params)
+                    winners.append(addr)
+
+            self.log.info("winners:" + str(len(winners)))
+
 
             self.nodes[0].generate(1)
 
-            self.log.info("checking next reward (second loop)")
-            out = tradelayer_HTTP(conn, headers, True, "tl_getnextreward")
-            # self.log.info(out)
-
-            self.log.info("checking if one of addressess won")
-            params = str([addresses[0]]).replace("'",'"')
-            out1 = tradelayer_HTTP(conn, headers, True, "tl_isaddresswinner", params)
-            # self.log.info(out)
-            params = str([addresses[1]]).replace("'",'"')
-            out2 = tradelayer_HTTP(conn, headers, True, "tl_isaddresswinner", params)
-            # self.log.info(out)
-            params = str([addresses[2]]).replace("'",'"')
-            out3 = tradelayer_HTTP(conn, headers, True, "tl_isaddresswinner", params)
-            # self.log.info(out)
-
-            if out2['result']['result'] == "true" or out3['result']['result'] == "true":
-                break
 
 
-        self.nodes[0].generate(1)
+        self.log.info("get ALL balance in all addresses")
+        for addr in winners:
+            self.log.info(addr)
+            params = str([addr, 1]).replace("'",'"')
+            out = tradelayer_HTTP(conn, headers, False, "tl_getbalance",params)
+            self.log.info(out)
 
-        self.log.info("get ALL balance in address1 and address2")
-        params = str([addresses[1], 1]).replace("'",'"')
-        out2 = tradelayer_HTTP(conn, headers, False, "tl_getbalance",params)
-        self.log.info(out2)
-
-        params = str([addresses[2], 1]).replace("'",'"')
-        out3 = tradelayer_HTTP(conn, headers, False, "tl_getbalance",params)
-        self.log.info(out3)
-
-        assert(out2['result']['balance'] != '0.00000000' or out3['result']['balance'] != '0.00000000')
+            assert(out['result']['balance'] != '0.00000000')
 
         conn.close()
         self.stop_nodes()
