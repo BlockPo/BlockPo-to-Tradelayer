@@ -3873,7 +3873,7 @@ void nodeReward::sendNodeReward(const std::string& consensusHash, const int& nHe
         PrintToLog("%s(): rewardSize: %s, full reward shared: %d\n",__func__, rewardSize, p_lastReward);
         if(rewardSize > 0)
         {
-            for_each(winners.begin(), winners.end(), [&rewardSize] (const std::string& addr) { update_tally_map(addr, ALL, rewardSize, BALANCE); });
+            for_each(winners.begin(), winners.end(), [&rewardSize] (const std::string& addr) { update_tally_map(addr, ALL, rewardSize, BALANCE); PrintToLog("%s(): address: %s\n",__func__, addr); });
             amountAdded = -p_lastReward;
         }
 
@@ -3914,6 +3914,7 @@ bool nodeReward::isWinnerAddress(const std::string& consensusHash, const std::st
 
 void nodeReward::updateAddressStatus(const std::string& address, bool newStatus)
 {
+    PrintToLog("%s(): address: %s\n",__func__, address);
     nodeRewardsAddrs[address] = newStatus;
 }
 

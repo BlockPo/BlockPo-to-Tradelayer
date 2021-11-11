@@ -101,7 +101,7 @@ class NodeRewardTest (BitcoinTestFramework):
 
 
         self.log.info("Sending node reward address")
-        params = str([addresses[0]]).replace("'",'"')
+        params = str([addresses[0], addresses[0]]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_submit_nodeaddress",params)
         # self.log.info(out)
         self.nodes[0].generate(1)
@@ -189,7 +189,7 @@ class NodeRewardTest (BitcoinTestFramework):
 
             self.log.info("Submiting node addresses")
             for addr in addresses1:
-                params = str([addr]).replace("'",'"')
+                params = str([addr, addr]).replace("'",'"')
                 out = tradelayer_HTTP(conn, headers, False, "tl_submit_nodeaddress",params)
             self.nodes[0].generate(1)
 
@@ -212,6 +212,8 @@ class NodeRewardTest (BitcoinTestFramework):
 
 
 
+        self.nodes[0].generate(1)
+        
         self.log.info("get ALL balance in all addresses")
         for addr in winners:
             self.log.info(addr)

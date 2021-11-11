@@ -4871,7 +4871,7 @@ int CMPTransaction::logicMath_SubmitNodeAddr()
   }
 
   // adding address
-	nR.updateAddressStatus(sender, false);
+	nR.updateAddressStatus(receiver, false);
 
   return 0;
 }
