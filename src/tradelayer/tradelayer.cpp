@@ -2091,6 +2091,8 @@ static int input_register_string(const std::string& s)
 
 static int input_node_reward(const std::string& s)
 {
+    PrintToLog("%s(): s: %s\n",__func__,s);
+
     std::vector<std::string> addrData;
     boost::split(addrData, s, boost::is_any_of("+"), boost::token_compress_on);
     if (addrData.size() != 2)
@@ -2102,11 +2104,14 @@ static int input_node_reward(const std::string& s)
             return -1;
         }
 
-        std::string address, status;
+        std::string address;
+        bool status{false};
 
         try {
             address = addrMap[0];
-            status = addrMap[1];
+            if (addrMap[1] == "true") status = true;
+            PrintToLog("%s(): address: %s, status: %s\n",__func__, address, status);
+            nR.updateAddressStatus(address, status);
 
         } catch (...) {
             PrintToLog("%s(): lexical_cast issue (1)\n",__func__);
@@ -2122,6 +2127,9 @@ static int input_node_reward(const std::string& s)
         {
             reward = boost::lexical_cast<int64_t>(addrData[0]);
             block = boost::lexical_cast<int>(addrData[1]);
+
+        PrintToLog("%s(): reward: %d, block: %d\n",__func__, reward, block);
+
         } catch (...) {
             PrintToLog("%s(): lexical_cast issue (2)\n",__func__);
             return -1;
@@ -3795,10 +3803,18 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
     return fFoundTx;
 }
 
+bool nodeReward::isAddressIncluded(const std::string& address)
+{
+    auto it = nodeRewardsAddrs.find(address);
+    return (it != nodeRewardsAddrs.end()) ? true : false;
+}
+
+
 void nodeReward::saveNodeReward(ofstream &file, CHash256& hasher)
 {
 
     const std::string lineOut = strprintf("%d+%d", p_lastReward, p_lastBlock);
+    PrintToLog("%s(): lineOut: %s\n",__func__, lineOut);
     hasher.Write((unsigned char*)lineOut.c_str(), lineOut.length());
     file << lineOut << endl;
 
@@ -3807,6 +3823,8 @@ void nodeReward::saveNodeReward(ofstream &file, CHash256& hasher)
         const std::string& address = addr.first;
         bool status = addr.second;
         const std::string lineOut = strprintf("%s:%s", address, status ? "true":"false");
+
+        PrintToLog("%s(): lineOut: %s\n",__func__, lineOut);
 
         // add the line to the hash
         hasher.Write((unsigned char*)lineOut.c_str(), lineOut.length());
@@ -3837,11 +3855,7 @@ bool nodeReward::nextReward(int64_t amountAdded)
       return result;
    }
 
-   if (amountAdded > 0) {
-          p_lastReward += MIN_REWARD;
-   } else {
-          p_lastReward += amountAdded;
-   }
+   p_lastReward += (amountAdded > 0) ? MIN_REWARD : amountAdded;
 
 
    return !result;
@@ -3849,6 +3863,8 @@ bool nodeReward::nextReward(int64_t amountAdded)
 
 void nodeReward::sendNodeReward(const std::string& consensusHash, const int& nHeight)
 {
+    std::set<string> winners;
+
     for(auto& addr : nodeRewardsAddrs)
     {
         // if this address is a winner and it's claiming reward
@@ -3857,10 +3873,10 @@ void nodeReward::sendNodeReward(const std::string& consensusHash, const int& nHe
             PrintToLog("%s(): winner: %s\n",__func__, addr.first);
             winners.insert(addr.first);
 
-        }
+            // cleaning claiming status for this block
+            addr.second = false;
 
-        // cleaning claiming status for this block
-        addr.second = false;
+        }
 
     }
 

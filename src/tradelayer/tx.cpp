@@ -4889,6 +4889,11 @@ int CMPTransaction::logicMath_ClaimNodeReward()
   }
 
   // adding address
+	if(!nR.isAddressIncluded(sender)) {
+	    PrintToLog("%s(): rejected: address not found\n",__func__);
+		  return (NODE_REWARD_ERROR -1);
+	}
+
 	nR.updateAddressStatus(sender, true);
 
   return 0;

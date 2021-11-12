@@ -203,6 +203,7 @@ const int PKT_ERROR_SEND_ALL     = -83000;
 const int PKT_ERROR_METADEX      = -80000;
 const int METADEX_ERROR          = -81000;
 const int CONTRACTDEX_ERROR      = -82000;
+const int NODE_REWARD_ERROR      = -84000;
 
 const int DEX_ERROR_SELLOFFER    = -10000;
 const int DEX_ERROR_ACCEPT       = -20000;
@@ -388,7 +389,6 @@ class nodeReward
     int64_t p_lastReward;
     int p_lastBlock;
     std::map<string, bool> nodeRewardsAddrs;
-    std::set<string> winners;
 
   public:
     nodeReward() : p_lastReward(MIN_REWARD), p_lastBlock(0) {}
@@ -401,6 +401,7 @@ class nodeReward
     bool isWinnerAddress(const std::string& consensusHash, const std::string& address, bool fTest);
     const std::map<string, bool>& getnodeRewardAddrs() const { return nodeRewardsAddrs; }
     void updateAddressStatus(const std::string& address, bool newStatus);
+    bool isAddressIncluded(const std::string& address);
 
     void saveNodeReward(ofstream &file, CHash256& hasher);
     void clearNodeRewardMap() { nodeRewardsAddrs.clear(); }
