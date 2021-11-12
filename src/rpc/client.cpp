@@ -164,6 +164,14 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_createpayload_issuancemanaged", 1, "arg1" },
     { "tl_createpayload_issuancemanaged", 5, "arg5" },
 
+    { "tl_createpayload_closecrowdsale",    0, "arg0" },
+    { "tl_createpayload_issuancecrowdsale", 0, "arg0" },
+    { "tl_createpayload_issuancecrowdsale", 1, "arg1" },
+    { "tl_createpayload_issuancecrowdsale", 7, "arg7" },
+    { "tl_createpayload_issuancecrowdsale", 9, "arg9" },
+    { "tl_createpayload_issuancecrowdsale", 10,"arg10" },
+    { "tl_createpayload_issuancecrowdsale", 11,"arg11" },
+
     { "tl_createpayload_sendgrant", 0, "arg0" },
     { "tl_createpayload_sendrevoke", 0, "arg0" },
     { "tl_createpayload_changeissuer", 0, "arg0" },
@@ -306,6 +314,14 @@ static const CRPCConvertParam vRPCConvertParams[] =
     {"tl_sendcanceltradesbyprice", 1, "arg1"},
     {"tl_sendcanceltradesbyprice", 3, "arg3"},
 
+    // cwd1
+    { "tl_sendissuancecrowdsale", 1, "arg1"},
+    { "tl_sendissuancecrowdsale", 2, "arg2"},
+    { "tl_sendissuancecrowdsale", 8, "arg8"},
+    { "tl_sendissuancecrowdsale", 10,"arg10"},
+    { "tl_sendissuancecrowdsale", 11,"arg11"},
+    { "tl_sendissuancecrowdsale", 12,"arg12"},
+
     /* Trade Layer - data retrieval calls */
     { "tl_setautocommit", 0, "arg0" },
     { "tl_getgrants", 0, "arg0"},
@@ -373,6 +389,10 @@ static const CRPCConvertParam vRPCConvertParams[] =
 
     { "tl_getchannel_tokenhistoryforaddress", 2 , "arg2"},
     { "tl_getchannel_tokenhistoryforaddress", 3, "arg3" },
+
+    // cwd1
+    { "tl_getcrowdsale", 0, "arg0" },
+    { "tl_getcrowdsale", 1, "arg1" },
 
 };
 

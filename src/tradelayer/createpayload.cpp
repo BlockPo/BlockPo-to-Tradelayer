@@ -2,6 +2,7 @@
 
 #include <tradelayer/convert.h>
 #include <tradelayer/createpayload.h>
+#include <tradelayer/tradelayer.h>
 #include <tradelayer/varint.h>
 
 #include <tinyformat.h>
@@ -39,6 +40,23 @@ static std::vector<uint8_t>& operator<<(std::vector<uint8_t>& payload, uint64_t 
 {
     auto v = CompressInteger(value);
     payload.insert(payload.end(), v.begin(), v.end());
+    return payload;
+}
+
+static std::vector<uint8_t>& operator<<(std::vector<uint8_t>& payload, std::string value)
+{
+    payload.insert(payload.end(), value.begin(), value.end());
+    payload.push_back('\0');
+    return payload;
+}
+
+std::vector<unsigned char> CreatePayload_LitecoinPayment(const uint256& linkedtxid)
+{
+    static const uint64_t messageType = 80;
+	static const uint64_t messageVer = 0;
+
+    std::vector<uint8_t> payload;
+    payload << messageVer << messageType << linkedtxid.GetHex();
     return payload;
 }
 
@@ -145,6 +163,27 @@ std::vector<unsigned char> CreatePayload_IssuanceFixed(uint16_t propertyType, ui
     return payload;
 }
 
+std::vector<unsigned char> CreatePayload_IssuanceVariable(uint16_t propertyType, uint32_t previousPropertyId, std::string category,
+                                                          std::string subcategory, std::string name, std::string url, std::string data, uint32_t propertyIdDesired,
+                                                          uint64_t amountPerUnit, uint64_t deadline, uint8_t earlyBonus, uint8_t issuerPercentage)
+{
+    static const uint64_t messageType = 51;
+    static const uint64_t messageVer = (propertyIdDesired == LTC) ? 2 : 0;
+    
+    if (category.size() > 255) category = category.substr(0,255);
+    if (subcategory.size() > 255) subcategory = subcategory.substr(0,255);
+    if (name.size() > 255) name = name.substr(0,255);
+    if (url.size() > 255) url = url.substr(0,255);
+    if (data.size() > 255) data = data.substr(0,255);
+
+    std::vector<unsigned char> payload;
+    payload << messageVer << messageType << propertyType << previousPropertyId
+            << category << subcategory << name << url << data
+            << propertyIdDesired << amountPerUnit << deadline << earlyBonus << issuerPercentage;
+
+    return payload;
+}
+
 std::vector<unsigned char> CreatePayload_IssuanceManaged(uint16_t propertyType, uint32_t previousPropertyId, std::string& name, std::string& url, std::string& data, std::vector<int>& kycVec)
 {
     std::vector<unsigned char> payload;
@@ -179,6 +218,16 @@ std::vector<unsigned char> CreatePayload_IssuanceManaged(uint16_t propertyType, 
     for_each(auxVec.begin(), auxVec.end(), [&payload] (const std::vector<uint8_t>& value) { payload_insert(value, payload); });
 
     return payload;
+}
+
+std::vector<unsigned char> CreatePayload_CloseCrowdsale(uint32_t propertyId)
+{
+    std::vector<uint8_t> payload;
+
+    static const uint64_t messageType = 53;
+    static const uint64_t messageVer = 0;
+
+    return payload << messageVer << messageType << propertyId;
 }
 
 std::vector<unsigned char> CreatePayload_Grant(uint32_t propertyId, uint64_t amount)

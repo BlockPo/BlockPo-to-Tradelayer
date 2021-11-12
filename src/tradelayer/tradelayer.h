@@ -56,9 +56,8 @@ const int TL_CLASS_D = 4; // compressed OP_RETURN
 // Trade Layer Transaction (Packet) Version
 const uint16_t  MP_TX_PKT_V0 = 0;
 const uint16_t  MP_TX_PKT_V1 = 1;
+const uint16_t  MP_TX_PKT_V2 = 2;
 
-// Alls
-const int ALL_PROPERTY_MSC         = 3;
 const int MIN_PAYLOAD_SIZE         = 5;
 const int MAX_CLASS_D_SEARCH_BYTES = 200;
 
@@ -105,10 +104,14 @@ enum TransactionType {
   MSC_TYPE_SAVINGS_MARK               = 10,
   MSC_TYPE_SAVINGS_COMPROMISED        = 11,
   MSC_TYPE_CREATE_PROPERTY_FIXED      = 50,
+  MSC_TYPE_CREATE_PROPERTY_VARIABLE   = 51,
+  //MSC_TYPE_PROMOTE_PROPERTY           = 52,
+  MSC_TYPE_CLOSE_CROWDSALE            = 53,
   MSC_TYPE_CREATE_PROPERTY_MANUAL     = 54,
   MSC_TYPE_GRANT_PROPERTY_TOKENS      = 55,
   MSC_TYPE_REVOKE_PROPERTY_TOKENS     = 56,
   MSC_TYPE_CHANGE_ISSUER_ADDRESS      = 70,
+  MSC_TYPE_LITECOIN_PAYMENT           = 80,
   TL_MESSAGE_TYPE_DEACTIVATION        = 65533,
   TL_MESSAGE_TYPE_ACTIVATION          = 65534,
   TL_MESSAGE_TYPE_ALERT               = 65535,
@@ -184,6 +187,7 @@ enum FILETYPES {
   FILE_TYPE_TOKEN_VWAP,
   FILE_TYPE_REGISTER,
   FILETYPE_CONTRACT_GLOBALS,
+  FILETYPE_CROWDSALES,
   NUM_FILETYPES
 };
 
@@ -208,8 +212,9 @@ const int PKT_ERROR_KYC          = -90000;
 const int PKT_ERROR_CONTRACTDEX  = -100000;
 const int PKT_ERROR_ORACLE       = -110000;
 const int PKT_ERROR_CHANNELS     = -120000;
+const int PKT_ERROR_CROWD        = -130000;
 
-const int TL_PROPERTY_BTC                 = 0;
+const int TL_PROPERTY_LTC                 = 0;
 const int TL_PROPERTY_ALL                 = 1;
 const int TL_PROPERTY_TALL                = 2;
 const int TL_PROPERTY_VESTING             = 3;
@@ -333,6 +338,12 @@ long int FormatShortIntegerMP(int64_t n);
 uint64_t int64ToUint64(int64_t value);
 std::string FormatDivisibleZeroClean(int64_t n);
 void addBalances(const std::map<std::string,map<uint32_t, int64_t>>& balances, std::string& lineOut);
+
+/** Returns the Exodus address. */
+const std::string& ExodusAddress();
+
+/** Returns the Exodus crowdsale address. */
+const std::string& ExodusCrowdsaleAddress(int nBlock = 0);
 
 /** Returns the marker for transactions. */
 const std::vector<unsigned char> GetTLMarker();
@@ -628,6 +639,8 @@ void Filling_Twap_Vec(std::map<uint32_t, std::map<uint32_t, std::vector<uint64_t
 inline int64_t clamp_function(int64_t diff, int64_t nclamp);
 bool TxValidNodeReward(std::string ConsensusHash, std::string Tx);
 double getAccumVesting(const int64_t xAxis);
+
+int64_t GetLitecoinPaymentAmount(const uint256& txid, const std::string& recipient);
 
 namespace mastercore
 {

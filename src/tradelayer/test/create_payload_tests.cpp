@@ -19,6 +19,16 @@ BOOST_AUTO_TEST_CASE(payload_simple_send)
     BOOST_CHECK_EQUAL(HexStr(vch), "00000180c2d72f");
 }
 
+BOOST_AUTO_TEST_CASE(payload_many_send)
+{
+    // Simple send [type 0, version 0]
+    std::vector<unsigned char> vch = CreatePayload_SendMany(
+        static_cast<uint32_t>(1),          // property: MSC
+        {1000,2000,3000,4000});            // amounts to transfer
+
+    BOOST_CHECK_EQUAL(HexStr(vch), "000001e807d00fb817a01f");
+}
+
 BOOST_AUTO_TEST_CASE(payload_send_all)
 {
     // Send to owners [type 4, version 0]

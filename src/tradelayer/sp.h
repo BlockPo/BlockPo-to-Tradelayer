@@ -65,6 +65,19 @@ public:
         std::string data;
         int64_t num_tokens;
 
+        // crowdsale generated SP
+        uint32_t property_desired;
+        int64_t deadline;
+        uint8_t early_bird;
+        uint8_t percentage;
+
+        // closedearly states, if the SP was a crowdsale and closed due to MAXTOKENS or CLOSE command
+        bool close_early;
+        bool max_tokens;
+        int64_t missedTokens;
+        int64_t timeclosed;
+        uint256 txid_close;
+
         // other information
         uint256 txid;
         uint256 creation_block;
@@ -107,6 +120,15 @@ public:
             READWRITE(url);
             READWRITE(data);
             READWRITE(num_tokens);
+            READWRITE(property_desired);
+            READWRITE(deadline);
+            READWRITE(early_bird);
+            READWRITE(percentage);
+            READWRITE(close_early);
+            READWRITE(max_tokens);
+            READWRITE(missedTokens);
+            READWRITE(timeclosed);
+            READWRITE(txid_close);
             READWRITE(txid);
             READWRITE(creation_block);
             READWRITE(update_block);
@@ -114,7 +136,7 @@ public:
             READWRITE(manual);
             READWRITE(historicalData);
             READWRITE(contracts_needed);
-	          READWRITE(attribute_type);
+	        READWRITE(attribute_type);
             READWRITE(init_block);
             READWRITE(contract_associated);
             READWRITE(kyc);
@@ -159,26 +181,87 @@ public:
 
 };
 
+/** A live crowdsale.
+ */
+class CMPCrowd
+{
+private:
+    uint32_t propertyId;
+    int64_t nValue;
+
+    uint32_t property_desired;
+    int64_t deadline;
+    uint8_t early_bird;
+    uint8_t percentage;
+
+    int64_t u_created;
+    int64_t i_created;
+
+    uint256 txid; // NOTE: not persisted as it doesnt seem used
+
+    // Schema:
+    //   txid -> amount invested, crowdsale deadline, user issued tokens, issuer issued tokens
+    std::map<uint256, std::vector<int64_t> > txFundraiserData;
+
+public:
+    CMPCrowd();
+    CMPCrowd(uint32_t pid, int64_t nv, uint32_t cd, int64_t dl, uint8_t eb, uint8_t per, int64_t uct, int64_t ict);
+
+    uint32_t getPropertyId() const { return propertyId; }
+
+    int64_t getDeadline() const { return deadline; }
+    uint32_t getCurrDes() const { return property_desired; }
+
+    void incTokensUserCreated(int64_t amount) { u_created += amount; }
+    void incTokensIssuerCreated(int64_t amount) { i_created += amount; }
+
+    int64_t getUserCreated() const { return u_created; }
+    int64_t getIssuerCreated() const { return i_created; }
+
+    void insertDatabase(const uint256& txHash, const std::vector<int64_t>& txData);
+    std::map<uint256, std::vector<int64_t> > getDatabase() const { return txFundraiserData; }
+
+    std::string toString(const std::string& address) const;
+    void print(const std::string& address, FILE* fp = stdout) const;
+    void saveCrowdSale(std::ofstream& file, CHash256& hasher, const std::string& addr) const;
+};
 
 namespace mastercore
 {
+typedef std::map<std::string, CMPCrowd> CrowdMap;
 
 extern CMPSPInfo* _my_sps;
+extern CrowdMap my_crowds;
 
 std::string strPropertyType(uint16_t propertyType);
 
 // bool isPropertyContract(uint32_t propertyId);
-bool isPropertyPegged(uint32_t propertyId);
-bool isPropertySwap(uint32_t propertyId);
-bool isPropertyNativeContract(uint32_t propertyId);
+// bool isPropertyNativeContract(uint32_t propertyId);
+// bool isPropertySwap(uint32_t propertyId);
 
-std::string getPropertyName(uint32_t propertyId);
 bool isPropertyDivisible(uint32_t propertyId);
 bool IsPropertyIdValid(uint32_t propertyId);
+bool isPropertyPegged(uint32_t propertyId);
 
-bool isPropertyContract(uint32_t propertyId);
-
+std::string getPropertyName(uint32_t propertyId);
 bool getEntryFromName(const std::string& name, uint32_t& propertyId, CMPSPInfo::Entry& sp);
+
+CMPCrowd* getCrowd(const std::string& address);
+
+bool isCrowdsaleActive(uint32_t propertyId);
+bool isCrowdsalePurchase(const uint256& txid, const std::string& address, int64_t* propertyId, int64_t* userTokens, int64_t* issuerTokens);
+
+/** Calculates missing bonus tokens, which are credited to the crowdsale issuer. */
+int64_t GetMissedIssuerBonus(const CMPSPInfo::Entry& sp, const CMPCrowd& crowdsale);
+
+/** Calculates amounts credited for a crowdsale purchase. */
+void calculateFundraiser(bool inflateAmount, int64_t amtTransfer, uint8_t bonusPerc,
+        int64_t fundraiserSecs, int64_t currentSecs, int64_t numProps, uint8_t issuerPerc, int64_t totalTokens,
+        std::pair<int64_t, int64_t>& tokens, bool& close_crowdsale);
+
+void eraseMaxedCrowdsale(const std::string& address, int64_t blockTime, int block);
+
+unsigned int eraseExpiredCrowdsale(const CBlockIndex* pBlockIndex);
 }
 
 #endif // TRADELAYER_SP_H

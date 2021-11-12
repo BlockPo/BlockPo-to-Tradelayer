@@ -171,6 +171,10 @@ bool populateRPCTypeInfo(CMPTransaction& mp_obj, UniValue& txobj, uint32_t txTyp
             populateRPCTypeCreatePropertyFixed(mp_obj, txobj);
             return true;
 
+        case MSC_TYPE_CREATE_PROPERTY_VARIABLE:
+            populateRPCTypeCreatePropertyVariable(mp_obj, txobj);
+            return true;
+
         case MSC_TYPE_CREATE_PROPERTY_MANUAL:
             populateRPCTypeCreatePropertyManual(mp_obj, txobj);
             return true;
@@ -302,6 +306,10 @@ bool populateRPCTypeInfo(CMPTransaction& mp_obj, UniValue& txobj, uint32_t txTyp
         case MSC_TYPE_CLOSE_CHANNEL:
             populateRPCTypeClose_Channel(mp_obj, txobj);
             return true;
+        
+        case MSC_TYPE_LITECOIN_PAYMENT:
+            populateRPCTypeLitecoinPayment(mp_obj, txobj);
+            return true;
 
         default:
             return false;
@@ -321,6 +329,7 @@ bool showRefForTx(uint32_t txType)
         case MSC_TYPE_REVOKE_PROPERTY_TOKENS: return false;
         case MSC_TYPE_CHANGE_ISSUER_ADDRESS: return true;
         case MSC_TYPE_SEND_ALL: return true;
+        case MSC_TYPE_LITECOIN_PAYMENT: return false;
         case TL_MESSAGE_TYPE_ACTIVATION: return false;
     }
     return true; // default to true, shouldn't be needed but just in case
@@ -366,6 +375,29 @@ void populateRPCTypeCreatePropertyFixed(CMPTransaction& tlObj, UniValue& txobj)
     txobj.push_back(Pair("url", tlObj.getSPUrl()));
     const std::string strAmount = FormatByType(tlObj.getAmount(), tlObj.getPropertyType());
     txobj.push_back(Pair("amount", strAmount));
+}
+
+void populateRPCTypeCreatePropertyVariable(CMPTransaction& tlObj, UniValue& txobj)
+{
+    LOCK(cs_tally);
+    uint32_t propertyId = _my_sps->findSPByTX(tlObj.getHash());
+    if (propertyId > 0) txobj.push_back(Pair("propertyid", (uint64_t) propertyId));
+    if (propertyId > 0) txobj.push_back(Pair("divisible", isPropertyDivisible(propertyId)));
+
+    txobj.push_back(Pair("propertytype", strPropertyType(tlObj.getPropertyType())));
+    txobj.push_back(Pair("category", tlObj.getSPCategory()));
+    txobj.push_back(Pair("subcategory", tlObj.getSPSubCategory()));
+    txobj.push_back(Pair("propertyname", tlObj.getSPName()));
+    txobj.push_back(Pair("data", tlObj.getSPData()));
+    txobj.push_back(Pair("url", tlObj.getSPUrl()));
+    txobj.push_back(Pair("propertyiddesired", (uint64_t) tlObj.getProperty()));
+    std::string strPerUnit = FormatMP(tlObj.getProperty(), tlObj.getAmount());
+    txobj.push_back(Pair("tokensperunit", strPerUnit));
+    txobj.push_back(Pair("deadline", tlObj.getDeadline()));
+    txobj.push_back(Pair("earlybonus", tlObj.getEarlyBirdBonus()));
+    txobj.push_back(Pair("percenttoissuer", tlObj.getIssuerBonus()));
+    std::string strAmount = FormatByType(0, tlObj.getPropertyType());
+    txobj.push_back(Pair("amount", strAmount)); // crowdsale token creations don't issue tokens with the create tx
 }
 
 void populateRPCTypeCreatePropertyManual(CMPTransaction& tlObj, UniValue& txobj)
@@ -674,4 +706,35 @@ void populateRPCTypeUpdate_Id_Registration(CMPTransaction& tlObj, UniValue& txob
 void populateRPCTypeDEx_Payment(CMPTransaction& tlObj, UniValue& txobj)
 {
 /** If it needs more info*/
+}
+
+void populateRPCTypeLitecoinPayment(CMPTransaction& tlObj, UniValue& txobj)
+{
+    uint256 linked_txid = tlObj.getLinkedTXID();
+    txobj.push_back(Pair("linkedtxid", linked_txid.GetHex()));
+
+    CTransactionRef tx;
+    uint256 linked_blockHash;
+    int linked_blockHeight = 0;
+    int linked_blockTime = 0;
+    if (!GetTransaction(linked_txid, tx, Params().GetConsensus(), linked_blockHash, true)) {
+        if (linked_blockHash.size() != 0) {
+            CBlockIndex* pBlockIndex = GetBlockIndex(linked_blockHash);
+            if (NULL != pBlockIndex) {
+                linked_blockHeight = pBlockIndex->nHeight;
+                linked_blockTime = pBlockIndex->nTime;
+            }
+            CMPTransaction mp_obj;
+            int parseRC = ParseTransaction(*tx, linked_blockHeight, 0, mp_obj, linked_blockTime);
+            if (parseRC >= 0) {
+                if (mp_obj.interpret_Transaction()) {
+                    txobj.push_back(Pair("linkedtxtype", mp_obj.getTypeString()));
+                    txobj.push_back(Pair("paymentrecipient", mp_obj.getSender()));
+                    txobj.push_back(Pair("paymentamount", FormatDivisibleMP(GetLitecoinPaymentAmount(tlObj.getHash(), mp_obj.getSender()))));
+                }
+            }
+        }
+    }
+
+    // TODO: what about details about what this payment did (eg crowdsale purchase, paid accept etc)?
 }
