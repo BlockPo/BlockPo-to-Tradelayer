@@ -1,9 +1,16 @@
-# Visualización de Datos con R y Python Sección 1
-
-```{image} figures/logo_uninorte.png
-:width: 300px
-:align: center
-```
-# Departamento de Matemáticas y Estadística
 # Maestría en Estadística Aplicada
-# Profesor: Lihki Rubio
+
+This is a small sample book to give you a feel for how book content is
+structured.
+
+:::{note}
+Here is a note!
+:::
+
+And here is a code block:
+
+```
+e = mc^2
+```
+
+Check out the content pages bundled with this sample book to see more.
