@@ -63,7 +63,7 @@ const struct tradelayer_descs {
 	const char	*description;
 } tradelayer_descs[] = {
 	{ MSC_TYPE_SIMPLE_SEND, "Simple Send" },
-    { MSC_TYPE_SEND_MANY, "Send Many" },
+  { MSC_TYPE_SEND_MANY, "Send Many" },
 	{ MSC_TYPE_RESTRICTED_SEND, "Restricted Send" },
 	{ MSC_TYPE_SEND_ALL, "Send All" },
 	{ MSC_TYPE_SEND_VESTING, "Send Vesting Tokens" },
@@ -370,19 +370,26 @@ bool CMPTransaction::interpret_SimpleSend()
 bool CMPTransaction::interpret_SendMany()
 {
     int i = 0;
-    
+
     auto vecVersionBytes = GetNextVarIntBytes(i);
     auto vecTypeBytes = GetNextVarIntBytes(i);
     auto vecPropIdBytes = GetNextVarIntBytes(i);
 
     if (type != 1 || vecPropIdBytes.empty()) return false;
     property = DecompressInteger(vecPropIdBytes);
-    
-    for (int j=0; j<4; ++j) {
-        auto n = DecompressInteger(GetNextVarIntBytes(i));
-        if (n == 0) break;
-        values.push_back(n);
-    }
+
+		do
+    {
+        auto vecKyc = GetNextVarIntBytes(i);
+        if (!vecKyc.empty())
+        {
+            auto n = DecompressInteger(vecKyc);
+						if (n == 0) break;
+            values.push_back(n);
+						PrintToLog("\t value: %d\n", n);
+        }
+
+    } while(i < pkt_size);
 
     if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly) {
         PrintToLog("\t        property: %d (%s)\n", property, strMPProperty(property));
@@ -2208,7 +2215,7 @@ int CMPTransaction::interpretPacket()
     {
         case MSC_TYPE_SIMPLE_SEND:
             return logicMath_SimpleSend();
-        
+
         case MSC_TYPE_SEND_MANY:
             return logicMath_SendMany();
 
@@ -2515,6 +2522,10 @@ int CMPTransaction::logicMath_SendMany()
     }
 
     // ------------------------------------------
+		for (const auto& addr : recipients) {
+        PrintToLog("%s(): address: %s, sender: %s\n",__func__, addr, sender);
+		}
+
     const auto& from = sender;
     auto pred = [&from](const std::string& a){ return a == from; };
     if (std::find_if(recipients.begin(), recipients.end(), pred) != recipients.end()) {
@@ -2528,19 +2539,21 @@ int CMPTransaction::logicMath_SendMany()
     // }
 
     if (recipients.size() != values.size()) {
-        PrintToLog("%s(): rejected: recipients/amounts mismatch: addresses=%d values=%d\n", 
-                recipients.size(),
-                values.size(),
-                __func__, 
-                property);
+        PrintToLog("%s(): rejected: recipients/amounts mismatch: addresses=%d values=%d\n",
+                __func__,
+								recipients.size(),
+								values.size());
         return (PKT_ERROR_SEND -27);
     }
 
     // Move the tokens
-    for (size_t i=0; i<recipients.size(); ++i) {
+    for (size_t i=0; i <recipients.size(); ++i) {
         auto v = values[i];
-        assert(update_tally_map(sender, property, -v, BALANCE));
-        assert(update_tally_map(recipients[i], property, v, BALANCE));
+				if (v > 0) {
+				    assert(update_tally_map(sender, property, -v, BALANCE));
+					  assert(update_tally_map(recipients[i], property, v, BALANCE));
+				}
+
     }
 
     return 0;
