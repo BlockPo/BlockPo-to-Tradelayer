@@ -15,6 +15,7 @@ int populateRPCTransactionObject(const CTransaction& tx, const uint256& blockHas
 bool populateRPCTypeInfo(CMPTransaction& mp_obj, UniValue& txobj, uint32_t txType, bool extendedDetails, std::string extendedDetailsFilter);
 
 void populateRPCTypeSimpleSend(CMPTransaction& tlObj, UniValue& txobj);
+void populateRPCTypeSendMany(CMPTransaction& tlObj, UniValue& txobj);
 void populateRPCTypeSendAll(CMPTransaction& tlObj, UniValue& txobj);
 void populateRPCTypeCreatePropertyFixed(CMPTransaction& tlObj, UniValue& txobj);
 void populateRPCTypeCreatePropertyVariable(CMPTransaction& tlObj, UniValue& txobj);

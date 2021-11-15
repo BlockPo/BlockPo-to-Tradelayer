@@ -48,6 +48,7 @@ std::vector<TransactionRestriction> CConsensusParams::GetRestrictions() const
     v.push_back( { TL_MESSAGE_TYPE_ACTIVATION,                     0xFFFF,            true, MSC_ALERT_BLOCK } );
     v.push_back( { TL_MESSAGE_TYPE_DEACTIVATION,                   0xFFFF,            true, MSC_ALERT_BLOCK } );
     v.push_back( { MSC_TYPE_SIMPLE_SEND,                           MP_TX_PKT_V0,      true, MSC_SEND_BLOCK } );
+    v.push_back( { MSC_TYPE_SEND_MANY,                             MP_TX_PKT_V0,      true, MSC_SEND_MANY_BLOCK } );
     v.push_back( { MSC_TYPE_CREATE_PROPERTY_FIXED,                 MP_TX_PKT_V0,      true, MSC_SP_BLOCK } );
     v.push_back( { MSC_TYPE_CREATE_PROPERTY_MANUAL,                MP_TX_PKT_V0,      true, MSC_MANUALSP_BLOCK } );
     v.push_back( { MSC_TYPE_GRANT_PROPERTY_TOKENS,                 MP_TX_PKT_V0,      true, MSC_MANUALSP_BLOCK } );
@@ -148,6 +149,7 @@ CMainConsensusParams::CMainConsensusParams()
     // Transaction restrictions:
     MSC_ALERT_BLOCK = 2136526;
     MSC_SEND_BLOCK = 2136526;
+    MSC_SEND_MANY_BLOCK = 2136526;
     MSC_SP_BLOCK = 99999999;
     MSC_MANUALSP_BLOCK = 99999999;
     MSC_SEND_ALL_BLOCK = 99999999;
@@ -200,6 +202,7 @@ CMainConsensusParams::CMainConsensusParams()
      // Transaction restrictions:
      MSC_ALERT_BLOCK = 2046650;
      MSC_SEND_BLOCK = 2046650;
+     MSC_SEND_MANY_BLOCK = 2046650;
      // MSC_SP_BLOCK = 1491174;
      MSC_SP_BLOCK = 2046650;
      MSC_MANUALSP_BLOCK = 99999999;
@@ -255,6 +258,7 @@ CRegTestConsensusParams::CRegTestConsensusParams()
     // Transaction restrictions:
     MSC_ALERT_BLOCK = 0;
     MSC_SEND_BLOCK = 0;
+    MSC_SEND_MANY_BLOCK = 0;
 
     /** NOTE: this is the value we are changing
      *  (from 999999 to 400) in test tl_activation.py

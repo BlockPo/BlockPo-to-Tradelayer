@@ -91,6 +91,8 @@ public:
     int MSC_ALERT_BLOCK;
     //! Block to enable simple send transactions
     int MSC_SEND_BLOCK;
+    //! Block to enable send to many transactions
+    int MSC_SEND_MANY_BLOCK;
     //! Block to enable smart property transactions
     int MSC_SP_BLOCK;
     //! Block to enable managed properties

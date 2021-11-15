@@ -140,6 +140,82 @@ UniValue tl_send(const JSONRPCRequest& request)
     }
 }
 
+UniValue tl_sendmany(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() < 3 || !request.params[1].isObject() || request.params[1].size() < 1 || request.params[1].size() > 4)
+        throw runtime_error(
+            "tl_sendmany \"fromaddress\" \"{\"toaddress\":\"amount\", ...}\" \"propertyid\" ( \"referenceamount\" )\n"
+
+            "\nCreate and broadcast a send to many transaction.\n"
+
+            "\nArguments:\n"
+            "1. fromaddress          (string, required) the address to send from\n"
+            "2. \"amounts\"          (string, required) A json object with addresses and amounts (upto 4 pairs)\n"
+            "    {\n"
+            "      \"address\":\"amount\" (string) The litecoin address is the key, the numeric amount (can be string) in " + CURRENCY_UNIT + " is the value\n"
+            "      ,...\n"
+            "    }\n"
+            "3. propertyid           (number, required) the identifier of the tokens to send\n"
+            "4. referenceamount      (string, optional) a bitcoin amount that is sent to the receiver (minimal by default)\n"
+            "\nResult:\n"
+            "\"hash\"                (string) the hex-encoded transaction hash\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("tl_sendmany", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\", \"{\"LEr4hNAefWYhBMgxCFP2Po1NPrUeiK8kM2\":\"10\",\"LbhhnrHHVFP1eUjP1tdNIYeEVsNHfN9FCw\":\"20\"}\" 1")
+            + HelpExampleCli("tl_sendmany", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\", \"{\"LEr4hNAefWYhBMgxCFP2Po1NPrUeiK8kM2\":\"30\",\"LbhhnrHHVFP1eUjP1tdNIYeEVsNHfN9FCw\":\"40\"}\" 1")
+        );
+
+    // obtain parameters & info
+    auto& keys = request.params[1].getKeys();
+    auto& vals = request.params[1].getValues();
+    const std::string fromAddress = ParseAddress(request.params[0]);
+    uint32_t propertyId = ParsePropertyId(request.params[2]);
+    int64_t referenceAmount = (request.params.size() > 3) ? ParseAmount(request.params[3], true) : 0;
+    
+    uint64_t totalAmount = 0;
+    std::vector<uint64_t> amounts;
+    std::vector<std::string> recipients;
+    for (size_t i=0; i<keys.size(); ++i) {
+        auto v = ParseAmount(vals[i].getValStr(), isPropertyDivisible(propertyId));
+        if (!v) continue; 
+        totalAmount += v;
+        amounts.push_back(v);
+        recipients.push_back(keys[i]);
+    }
+    
+    RequireExistingProperty(propertyId);
+    // RequireNotContract(propertyId);
+    RequireBalance(fromAddress, propertyId, totalAmount);
+    RequireSaneReferenceAmount(referenceAmount);
+
+    // perform checks
+    if (std::find_if(keys.begin(), keys.end(), [&fromAddress](const std::string& a){ return a == fromAddress; }) != keys.end()) {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "sending tokens to same address");
+    }
+
+    // create a payload for the transaction
+    auto payload = CreatePayload_SendMany(propertyId, amounts);
+
+    // request the wallet build the transaction (and if needed commit it)
+    uint256 txid;
+    std::string rawHex;
+    int result = WalletTxBuilderEx(fromAddress, recipients, referenceAmount, payload, txid, rawHex, autoCommit);
+
+    PrintToLog("%s(): CHECKING ERROR: %s\n",__func__, error_str(result));
+
+    // check error and return the txid (or raw hex depending on autocommit)
+    if (result != 0) {
+        throw JSONRPCError(result, error_str(result));
+    } else {
+        if (!autoCommit) {
+            return rawHex;
+        } else {
+            PendingAdd(txid, fromAddress, MSC_TYPE_SEND_MANY, propertyId, totalAmount);
+            return txid.GetHex();
+        }
+    }
+}
+
 UniValue tl_sendvesting(const JSONRPCRequest& request)
 {
   if (request.fHelp || request.params.size() != 3)
@@ -2279,6 +2355,7 @@ static const CRPCCommand commands[] =
     { "trade layer (transaction creation)", "tl_sendrevoke",                   &tl_sendrevoke,                      {} },
     { "trade layer (transaction creation)", "tl_sendchangeissuer",             &tl_sendchangeissuer,                {} },
     { "trade layer (transaction creation)", "tl_sendall",                      &tl_sendall,                         {} },
+    { "trade layer (transaction creation)", "tl_sendmany",                     &tl_sendmany,                        {} },
     { "hidden",                             "tl_senddeactivation",             &tl_senddeactivation,                {} },
     { "hidden",                             "tl_sendactivation",               &tl_sendactivation,                  {} },
     { "hidden",                             "tl_sendalert",                    &tl_sendalert,                       {} },

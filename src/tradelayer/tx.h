@@ -13,6 +13,7 @@ class CMPContractDex;
 
 #include <stdint.h>
 #include <string>
+#include <numeric>
 
 using mastercore::strTransactionType;
 
@@ -49,6 +50,10 @@ private:
     // CreatePropertyFixed, GrantTokens, RevokeTokens
     uint64_t nValue;
     uint64_t nNewValue;
+
+    // SendMany
+    std::vector<std::string> recipients;
+    std::vector<uint64_t> values;
 
     // SimpleSend, SendToOwners, TradeOffer, MetaDEx, AcceptOfferBTC,
     // CreatePropertyFixed,
@@ -165,6 +170,7 @@ private:
      */
     bool interpret_TransactionType();
     bool interpret_SimpleSend();
+    bool interpret_SendMany();
     bool interpret_SendAll();
     bool interpret_CreatePropertyFixed();
     bool interpret_CreatePropertyManaged();
@@ -219,6 +225,7 @@ private:
      * Logic and "effects"
      */
     int logicMath_SimpleSend();
+    int logicMath_SendMany();
     int logicMath_SendAll();
     int logicMath_CreatePropertyFixed();
     int logicMath_CreatePropertyManaged();
@@ -297,6 +304,7 @@ public:
     std::string getSpecial() const { return special; }
     std::string getPayload() const { return HexStr(pkt, pkt + pkt_size); }
     uint64_t getAmount() const { return nValue; }
+    uint64_t getAmountTotal() const { return std::accumulate(values.cbegin(), values.cend(), 0); }
     uint64_t getNewAmount() const { return nNewValue; }
     uint64_t getXAmount() const { return amount; }
     uint32_t getPreviousId() const { return prev_prop_id; }
@@ -377,6 +385,7 @@ public:
         sender.clear();
         receiver.clear();
         special.clear();
+        values.clear();
         type = 0;
         version = 0;
         nValue = 0;
@@ -471,6 +480,11 @@ public:
         encodingClass = encodingClassIn;
         tx_fee_paid = txf;
         memcpy(&pkt, p, pkt_size);
+    }
+
+    void SetAddresses(const std::vector<std::string>& addresses)
+    {
+      this->recipients = addresses;
     }
 
     /** Parses the packet or payload. */
