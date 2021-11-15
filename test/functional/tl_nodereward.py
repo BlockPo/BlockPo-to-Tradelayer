@@ -108,7 +108,7 @@ class NodeRewardTest (BitcoinTestFramework):
 
 
         self.log.info("Listing all node reward address")
-        out = tradelayer_HTTP(conn, headers, True, "tl_listnodereward_address")
+        out = tradelayer_HTTP(conn, headers, True, "tl_listnodereward_addresses")
         # self.log.info(out)
 
         self.log.info("Sending node reward address")
@@ -119,13 +119,13 @@ class NodeRewardTest (BitcoinTestFramework):
         self.nodes[0].generate(1)
 
         self.log.info("Listing all node reward address")
-        out = tradelayer_HTTP(conn, headers, True, "tl_listnodereward_address")
+        out = tradelayer_HTTP(conn, headers, True, "tl_listnodereward_addresses")
         # self.log.info(out)
 
         self.nodes[0].generate(1)
 
         self.log.info("Listing all node reward address")
-        out = tradelayer_HTTP(conn, headers, True, "tl_listnodereward_address")
+        out = tradelayer_HTTP(conn, headers, True, "tl_listnodereward_addresses")
         # self.log.info(out)
 
         self.nodes[0].generate(1)
@@ -164,6 +164,10 @@ class NodeRewardTest (BitcoinTestFramework):
         self.log.info(out)
 
         assert(out['result']['balance'] != '0.00000000')
+
+        self.log.info("getting all last winners")
+        out = tradelayer_HTTP(conn, headers, False, "tl_getlast_winners",params)
+        self.log.info(out)
 
         self.nodes[0].generate(1)
 
@@ -213,7 +217,7 @@ class NodeRewardTest (BitcoinTestFramework):
 
 
         self.nodes[0].generate(1)
-        
+
         self.log.info("get ALL balance in all addresses")
         for addr in winners:
             self.log.info(addr)

@@ -3264,11 +3264,11 @@ UniValue tl_listchannel_addresses(const JSONRPCRequest& request)
 
 }
 
-UniValue tl_listnodereward_address(const JSONRPCRequest& request)
+UniValue tl_listnodereward_addresses(const JSONRPCRequest& request)
 {
     if (request.fHelp)
         throw runtime_error(
-            "tl_listnodereward_address\n"
+            "tl_listnodereward_addresses\n"
 
             "\nReturns all node reward addresses.\n"
 
@@ -3282,8 +3282,8 @@ UniValue tl_listnodereward_address(const JSONRPCRequest& request)
       			"]\n"
 
             "\nExamples:\n"
-            + HelpExampleCli("tl_listnodereward_address", "")
-            + HelpExampleRpc("tl_listnodereward_address", "")
+            + HelpExampleCli("tl_listnodereward_addresses", "")
+            + HelpExampleRpc("tl_listnodereward_addresses", "")
         );
 
     UniValue response(UniValue::VARR);
@@ -3294,8 +3294,50 @@ UniValue tl_listnodereward_address(const JSONRPCRequest& request)
     {
        UniValue details(UniValue::VOBJ);
        details.pushKV("address:", nr.first);
-       details.pushKV("claiming reward:", nr.second ? "true": "false");
+       // details.pushKV("claiming reward:", nr.second ? "true": "false");
        response.push_back(details);
+    });
+
+    return response;
+}
+
+UniValue tl_getlast_winners(const JSONRPCRequest& request)
+{
+    if (request.fHelp)
+        throw runtime_error(
+            "tl_getlast_winners\n"
+
+            "\nReturns all last node reward winner addresses.\n"
+
+            "\nResult:\n"
+            "[                                      (array of addresses)\n"
+      			"    \"address\",                       (string) node address 1 \n"
+            "    \"address\",                       (string) node address 2 \n"
+            "        ...                                                       \n"
+            "    \"address\",                       (string) node address n \n"
+      			"  ...\n"
+      			"]\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("tl_getlast_winners", "")
+            + HelpExampleRpc("tl_getlast_winners", "")
+        );
+
+    UniValue response(UniValue::VARR);
+
+    const std::set<string>& addrSt = nR.getWinners();
+
+    const int& lastBlock = nR.getLastBlock();
+
+    UniValue details(UniValue::VOBJ);
+
+    details.pushKV("block:", lastBlock);
+
+    response.push_back(details);
+
+    for_each(addrSt.begin() , addrSt.end(), [&response, &details2] (const std::string& nr)
+    {
+       response.push_back(rn);
     });
 
     return response;
@@ -3800,9 +3842,10 @@ static const CRPCCommand commands[] =
   { "trade layer (data retrieval)",  "tl_list_attestation",                     &tl_list_attestation,                  {} },
   { "trade layer (data retrieval)",  "tl_getwalletbalance",                     &tl_getwalletbalance,                  {} },
   { "trade layer (data retrieval)",  "tl_listchannel_addresses",                &tl_listchannel_addresses,             {} },
-  {"trade layer (data retrieval)",   "tl_listnodereward_address",               &tl_listnodereward_address,            {} },
+  {"trade layer (data retrieval)",   "tl_listnodereward_addresses",             &tl_listnodereward_addresses,          {} },
   {"trade layer (data retrieval)",   "tl_getnextreward",                        &tl_getnextreward,                     {} },
-  { "trade layer (data retrieval)", "tl_isaddresswinner",                       &tl_isaddresswinner,                   {} }
+  { "trade layer (data retrieval)", "tl_isaddresswinner",                       &tl_isaddresswinner,                   {} },
+  { "trade layer (data retrieval)" , "tl_getlast_winners",                      &tl_getlast_winners,                   {} }
 };
 
 void RegisterTLDataRetrievalRPCCommands(CRPCTable &tableRPC)

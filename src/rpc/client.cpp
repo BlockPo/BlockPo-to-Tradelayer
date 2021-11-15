@@ -371,8 +371,8 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_getchannel_historyforaddress", 3, "arg3" },
 
 
-    { "tl_getchannel_tokenhistoryforaddress", 2 , "arg2"},
-    { "tl_getchannel_tokenhistoryforaddress", 3, "arg3" },
+    { "tl_getchannel_tokenhistoryforaddresses", 2 , "arg2"},
+    { "tl_getchannel_tokenhistoryforaddresses", 3, "arg3" },
 
 };
 
