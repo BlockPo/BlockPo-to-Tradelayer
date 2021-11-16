@@ -395,7 +395,7 @@ class nodeReward
     nodeReward() : p_lastReward(MIN_REWARD), p_lastBlock(0) {}
     ~nodeReward() {}
 
-    void sendNodeReward(const std::string& consensusHash, const int& nHeight);
+    void sendNodeReward(const std::string& consensusHash, const int& nHeight, bool fTest);
     const int64_t& getNextReward() const { return p_lastReward;}
     const int& getLastBlock() const { return p_lastBlock;}
     bool nextReward(int64_t newReward);

@@ -125,20 +125,20 @@ bool isWinnerAddress(const std::string& consensusHash, const std::string& addres
 {
     const std::string lastFourCharConsensus = consensusHash.substr(consensusHash.size() - 4);
 
-    // BOOST_TEST_MESSAGE("LastFourCharConsensus:" << lastFourCharConsensus);
+    BOOST_TEST_MESSAGE("LastFourCharConsensus:" << lastFourCharConsensus);
     // BOOST_TEST_MESSAGE("lastTwoCharAddr:" << lastTwoCharAddr);
 
     std::vector<unsigned char> vch;
 
     DecodeBase58(address, vch);
 
-    // BOOST_TEST_MESSAGE("vch:" << HexStr(vch));
+    BOOST_TEST_MESSAGE("vch:" << HexStr(vch));
 
     const std::string vchStr = HexStr(vch);
 
     const std::string LastTwoCharAddr = vchStr.substr(vchStr.size() - 4);
 
-    // BOOST_TEST_MESSAGE("LastTwoCharAddr:" << LastTwoCharAddr);
+    BOOST_TEST_MESSAGE("LastTwoCharAddr:" << LastTwoCharAddr);
 
 
     return (LastTwoCharAddr == lastFourCharConsensus) ? true : false;
@@ -165,6 +165,38 @@ BOOST_AUTO_TEST_CASE(is_valid_address)
   BOOST_CHECK(!isWinnerAddress(consensusHash1, address4));
   BOOST_CHECK(!isWinnerAddress(consensusHash1, address5));
   BOOST_CHECK(!isWinnerAddress(consensusHash1, address6));
+
+}
+
+// Node Reward Object
+BOOST_AUTO_TEST_CASE(node_reward_object)
+{
+    nodeReward nR;
+    const string consensusHash = "cfc1a5fe9c43f36a468d9267a499171fb14710be4d4284a700b99dec276a";
+    const string address1 = "n1Rovq61fKJosCVAnS31QtvGTR5qXcgSpy";
+    const string address2 = "QMt8L9dYuqTpFPRV7ESwvJGCw9XoiBAvu7";
+
+    const string address3 = "mitLEfdzC9RMhTccFvhmYiyRp6VzpakM75";
+
+    BOOST_CHECK_EQUAL(nR.getNextReward(), 5000000);
+    BOOST_CHECK(nR.isWinnerAddress(consensusHash, address1, true));
+    BOOST_CHECK(nR.isWinnerAddress(consensusHash, address2, true));
+    BOOST_CHECK(!nR.isWinnerAddress(consensusHash, address3, true));
+
+    nR.setLastBlock(25689);
+    BOOST_CHECK_EQUAL(nR.getLastBlock(), 25689);
+
+    //adding addresses
+    nR.updateAddressStatus(address1, true);
+    nR.updateAddressStatus(address2, true);
+
+    //sending node reward
+    nR.sendNodeReward(consensusHash, 25690, true);
+
+    //checking balances:
+    BOOST_CHECK_EQUAL(getMPbalance(address1, ALL, BALANCE), 2500000);
+    BOOST_CHECK_EQUAL(getMPbalance(address2, ALL, BALANCE), 2500000);
+
 
 }
 

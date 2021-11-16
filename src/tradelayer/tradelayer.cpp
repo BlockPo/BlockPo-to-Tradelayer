@@ -3859,6 +3859,7 @@ bool nodeReward::nextReward(int64_t amountAdded)
        return result;
    }
 
+   // min reward: 0.05
    if((p_lastReward + amountAdded) < MIN_REWARD) {
       PrintToLog("%s(): no amount available for next block, adding the minimal amount\n", __func__);
       p_lastReward = MIN_REWARD;
@@ -3871,14 +3872,12 @@ bool nodeReward::nextReward(int64_t amountAdded)
    return !result;
 }
 
-void nodeReward::sendNodeReward(const std::string& consensusHash, const int& nHeight)
+void nodeReward::sendNodeReward(const std::string& consensusHash, const int& nHeight, bool fTest)
 {
-    bool test = RegTest();
-
     for(auto& addr : nodeRewardsAddrs)
     {
         // if this address is a winner and it's claiming reward
-        if(isWinnerAddress(consensusHash, addr.first, test) && addr.second) {
+        if(isWinnerAddress(consensusHash, addr.first, fTest) && addr.second) {
             // we need to save the winners here!
             PrintToLog("%s(): winner: %s\n",__func__, addr.first);
             winners.insert(addr.first);
@@ -3886,7 +3885,7 @@ void nodeReward::sendNodeReward(const std::string& consensusHash, const int& nHe
         }
 
         // cleaning claiming status for this block
-        if (!test) addr.second = false;
+        if (!fTest) addr.second = false;
 
     }
 
@@ -4881,7 +4880,7 @@ int mastercore_handler_block_end(int nBlockNow, CBlockIndex const * pBlockIndex,
            const CBlockIndex* pblockindex = chainActive[nBlockNow - 1];
            const std::string& blockhash = pblockindex->GetBlockHash().GetHex();
            PrintToLog("%s(): blockhash of last block: %s\n",__func__, blockhash);
-           nR.sendNodeReward(blockhash, nBlockNow);
+           nR.sendNodeReward(blockhash, nBlockNow, RegTest());
        }
 
        // deleting Expired DEx accepts

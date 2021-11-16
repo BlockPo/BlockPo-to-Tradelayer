@@ -3335,9 +3335,9 @@ UniValue tl_getlast_winners(const JSONRPCRequest& request)
 
     response.push_back(details);
 
-    for_each(addrSt.begin() , addrSt.end(), [&response, &details2] (const std::string& nr)
+    for_each(addrSt.begin() , addrSt.end(), [&response] (const std::string& nr)
     {
-       response.push_back(rn);
+       response.push_back(nr);
     });
 
     return response;
@@ -3371,9 +3371,13 @@ UniValue tl_getnextreward(const JSONRPCRequest& request)
 
 UniValue tl_isaddresswinner(const JSONRPCRequest& request)
 {
-  if (request.fHelp)
+  if (request.fHelp || request.params.size() < 1 || request.params.size() > 2)
       throw runtime_error(
           "tl_isaddresswinner\n"
+
+          "\nArguments:\n"
+          "1. address                      (string, required) node reward address\n"
+          "2. consensushash                (string, optional) block hash, if it's not given we assume block hash of actual block\n"
 
           "\nReturns if address is winner of node reward at current block.\n"
 
@@ -3391,10 +3395,16 @@ UniValue tl_isaddresswinner(const JSONRPCRequest& request)
 
   LOCK(cs_main);
 
-  int block = GetHeight();
+  std::string blockHash;
 
-  CBlockIndex* pblockindex = chainActive[block];
-  const std::string blockHash = pblockindex->GetBlockHash().GetHex();
+  if (request.params.size() == 1) {
+      int block = GetHeight();
+      CBlockIndex* pblockindex = chainActive[block];
+      blockHash = pblockindex->GetBlockHash().GetHex();
+
+  } else {
+      blockHash = request.params[1].get_str();
+  }
 
   const std::string address = ParseAddress(request.params[0]);
 
