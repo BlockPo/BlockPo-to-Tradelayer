@@ -2,7 +2,7 @@
 # Copyright (c) 2015-2017 The Bitcoin Core developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
-"""Test basic for Node Reward ."""
+"""Script to find addresses that match with consensus hash ."""
 
 from test_framework.test_framework import BitcoinTestFramework
 from test_framework.util import *
@@ -12,7 +12,7 @@ import json
 import http.client
 import urllib.parse
 
-class NodeRewardTest (BitcoinTestFramework):
+class FinderTest (BitcoinTestFramework):
     def set_test_params(self):
         self.num_nodes = 1
         self.setup_clean_chain = True
@@ -74,4 +74,4 @@ class NodeRewardTest (BitcoinTestFramework):
         self.stop_nodes()
 
 if __name__ == '__main__':
-    NodeRewardTest().main ()
+    FinderTest().main ()
