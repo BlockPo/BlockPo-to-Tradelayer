@@ -108,7 +108,7 @@ typedef boost::multiprecision::uint128_t ui128;
 
 static int nWaterlineBlock = 0;
 
-// cwd1
+//! Exodus crowdsale address
 static std::string exodus_address = "1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P";
 
 static const std::string exodus_mainnet = "1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P";
@@ -709,20 +709,6 @@ int mastercore::GetEncodingClass(const CTransaction& tx, int nBlock)
             continue;
         }
 
-        // TODO:cwd1
-        // if (outType == TX_PUBKEYHASH) {
-        //     CTxDestination dest;
-        //     if (ExtractDestination(output.scriptPubKey, dest)) {
-        //         auto address = EncodeDestination(dest);
-        //         if (address == ExodusAddress()) {
-        //             //hasExodus = true;
-        //         }
-        //         if (address == ExodusCrowdsaleAddress(nBlock)) {
-        //             //hasMoney = true;
-        //         }
-        //     }
-        // }
-
         if (outType == TX_NULL_DATA) {
             // Ensure there is a payload, and the first pushed element equals,
             // or starts with the "tl" marker
@@ -931,6 +917,7 @@ static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, 
     }
 
     if (msc_debug_parser_data) PrintToLog(" address_data.size=%lu\n script_data.size=%lu\n value_data.size=%lu\n", address_data.size(), script_data.size(), value_data.size());
+
 
     // ### CLASS D PARSING ###
     if (msc_debug_parser_data) PrintToLog("Beginning reference identification\n");
@@ -1291,7 +1278,9 @@ static bool HandleExodusPurchase(const CTransaction& tx, int nBlock, const std::
     for (unsigned int n = 0; n < tx.vout.size(); ++n) {
         CTxDestination dest;
         if (ExtractDestination(tx.vout[n].scriptPubKey, dest)) {
-            if (EncodeDestination(dest) == ExodusCrowdsaleAddress(nBlock)) {
+            auto a1 = EncodeDestination(dest);
+            auto a2 = ExodusCrowdsaleAddress(nBlock);
+            if (a1 == a2) {
                 amountInvested = tx.vout[n].nValue;
                 break; // TODO: maybe sum all values
             }
@@ -1674,9 +1663,8 @@ static int input_mp_crowdsale_string(const std::string& s)
             vals.push_back(boost::lexical_cast<int64_t>(*it));
         }
 
-        // cwd1 uint256 txHash(entryData[0]);
-        uint256 txHash;
-        newCrowdsale.insertDatabase(txHash, vals);
+        uint256 data(std::vector<unsigned char>(entryData[0].begin(), entryData[0].end()));
+        newCrowdsale.insertDatabase(data, vals);
     }
 
     if (!my_crowds.insert(std::make_pair(sellerAddr, newCrowdsale)).second) {
@@ -3872,12 +3860,12 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
 
     }
 
-    if (pop_ret >= 0) {
-        assert(mp_obj.getEncodingClass() != NO_MARKER);
-        assert(mp_obj.getSender().empty() == false);
+    // if (pop_ret >= 0) {
+    //     assert(mp_obj.getEncodingClass() != NO_MARKER);
+    //     assert(mp_obj.getSender().empty() == false);
 
-        fFoundTx |= HandleExodusPurchase(tx, nBlock, mp_obj.getSender(), nBlockTime);
-    }
+    //     fFoundTx |= HandleExodusPurchase(tx, nBlock, mp_obj.getSender(), nBlockTime);
+    // }
 
     if (0 == pop_ret)
     {
@@ -3889,7 +3877,10 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
         if(msc_debug_handler_tx) PrintToLog("%s(): interp_ret: %d\n",__func__, interp_ret);
 
         // if interpretPacket returns 1, that means we have an instant trade between LTCs and tokens.
-        if (interp_ret == 1)
+        if (interp_ret == 0) {
+            HandleExodusPurchase(tx, nBlock, mp_obj.getSender(), nBlockTime);
+
+        } else if (interp_ret == 1)
         {
             HandleLtcInstantTrade(tx, nBlock, mp_obj.getIndexInBlock(), mp_obj.getSender(), mp_obj.getSpecial(), mp_obj.getReceiver(), mp_obj.getProperty(), mp_obj.getAmountForSale(), mp_obj.getPrice());
 

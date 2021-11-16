@@ -338,12 +338,32 @@ bool showRefForTx(uint32_t txType)
 void populateRPCTypeSimpleSend(CMPTransaction& tlObj, UniValue& txobj)
 {
     uint32_t propertyId = tlObj.getProperty();
+    int64_t crowdPropertyId = 0, crowdTokens = 0, issuerTokens = 0;
+    
     LOCK(cs_tally);
-    txobj.push_back(Pair("type", "Simple Send"));
-    txobj.push_back(Pair("propertyid", (uint64_t)propertyId));
-    txobj.push_back(Pair("divisible", isPropertyDivisible(propertyId)));
-    txobj.push_back(Pair("amount", FormatMP(propertyId, tlObj.getAmount())));
+    
+    if (isCrowdsalePurchase(tlObj.getHash(), tlObj.getReceiver(), &crowdPropertyId, &crowdTokens, &issuerTokens)) {
+        CMPSPInfo::Entry sp;
+        if (false == _my_sps->getSP(crowdPropertyId, sp)) {
+            PrintToLog("SP Error: Crowdsale purchase for non-existent property %d in transaction %s", crowdPropertyId, tlObj.getHash().GetHex());
+            return;
+        }
 
+        txobj.push_back(Pair("type", "Crowdsale Purchase"));
+        txobj.push_back(Pair("propertyid", (uint64_t)propertyId));
+        txobj.push_back(Pair("divisible", isPropertyDivisible(propertyId)));
+        txobj.push_back(Pair("amount", FormatMP(propertyId, tlObj.getAmount())));
+        txobj.push_back(Pair("purchasedpropertyid", crowdPropertyId));
+        txobj.push_back(Pair("purchasedpropertyname", sp.name));
+        txobj.push_back(Pair("purchasedpropertydivisible", sp.isDivisible()));
+        txobj.push_back(Pair("purchasedtokens", FormatMP(crowdPropertyId, crowdTokens)));
+        txobj.push_back(Pair("issuertokens", FormatMP(crowdPropertyId, issuerTokens)));
+    } else {
+        txobj.push_back(Pair("type", "Simple Send"));
+        txobj.push_back(Pair("propertyid", (uint64_t)propertyId));
+        txobj.push_back(Pair("divisible", isPropertyDivisible(propertyId)));
+        txobj.push_back(Pair("amount", FormatMP(propertyId, tlObj.getAmount())));
+    }
 }
 
 void populateRPCTypeSendMany(CMPTransaction& tlObj, UniValue& txobj)
@@ -717,7 +737,7 @@ void populateRPCTypeLitecoinPayment(CMPTransaction& tlObj, UniValue& txobj)
     uint256 linked_blockHash;
     int linked_blockHeight = 0;
     int linked_blockTime = 0;
-    if (!GetTransaction(linked_txid, tx, Params().GetConsensus(), linked_blockHash, true)) {
+    if (GetTransaction(linked_txid, tx, Params().GetConsensus(), linked_blockHash, true)) {
         if (linked_blockHash.size() != 0) {
             CBlockIndex* pBlockIndex = GetBlockIndex(linked_blockHash);
             if (NULL != pBlockIndex) {

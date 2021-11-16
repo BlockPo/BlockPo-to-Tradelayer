@@ -314,7 +314,6 @@ static const CRPCConvertParam vRPCConvertParams[] =
     {"tl_sendcanceltradesbyprice", 1, "arg1"},
     {"tl_sendcanceltradesbyprice", 3, "arg3"},
 
-    // cwd1
     { "tl_sendissuancecrowdsale", 1, "arg1"},
     { "tl_sendissuancecrowdsale", 2, "arg2"},
     { "tl_sendissuancecrowdsale", 8, "arg8"},
@@ -390,7 +389,6 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_getchannel_tokenhistoryforaddress", 2 , "arg2"},
     { "tl_getchannel_tokenhistoryforaddress", 3, "arg3" },
 
-    // cwd1
     { "tl_getcrowdsale", 0, "arg0" },
     { "tl_getcrowdsale", 1, "arg1" },
 

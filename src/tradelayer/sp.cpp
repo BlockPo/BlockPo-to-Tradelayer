@@ -35,7 +35,9 @@ using namespace mastercore;
 typedef boost::multiprecision::uint128_t ui128;
 
 CMPSPInfo::Entry::Entry()
-  : prop_type(0), prev_prop_id(0), num_tokens(0),
+  : prop_type(0), prev_prop_id(0), num_tokens(0), property_desired(0),
+    deadline(0), early_bird(0), percentage(0),
+    close_early(false), max_tokens(false), missedTokens(0), timeclosed(0),
     fixed(false), manual(false) {}
 
 bool CMPSPInfo::Entry::isDivisible() const
@@ -767,7 +769,7 @@ bool mastercore::isCrowdsalePurchase(const uint256& txid, const std::string& add
     CMPCrowd* pcrowdsale = getCrowd(address);
     if (pcrowdsale) {
         std::map<uint256, std::vector<int64_t> >::const_iterator it;
-        const std::map<uint256, std::vector<int64_t> >& database = pcrowdsale->getDatabase();
+        const auto& database = pcrowdsale->getDatabase();
         for (it = database.begin(); it != database.end(); it++) {
             const uint256& tmpTxid = it->first;
             if (tmpTxid == txid) {
@@ -779,32 +781,13 @@ bool mastercore::isCrowdsalePurchase(const uint256& txid, const std::string& add
         }
     }
 
-    // if we still haven't found txid, check non active crowdsales to this address
-    // for (uint8_t ecosystem = 1; ecosystem <= 2; ecosystem++) {
-    //     uint32_t startPropertyId = (ecosystem == 1) ? 1 : TEST_ECO_PROPERTY_1; // TODO:cwd1
-    //     for (uint32_t loopPropertyId = startPropertyId; loopPropertyId < _my_sps->peekNextSPID(/*ecosystem*/); loopPropertyId++) {
-    //         CMPSPInfo::Entry sp;
-    //         if (!_my_sps->getSP(loopPropertyId, sp)) continue;
-    //         if (sp.issuer != address) continue;
-    //         for (std::map<uint256, std::vector<int64_t> >::const_iterator it = sp.historicalData.begin(); it != sp.historicalData.end(); it++) {
-    //             if (it->first == txid) {
-    //                 *propertyId = loopPropertyId;
-    //                 *userTokens = it->second.at(2);
-    //                 *issuerTokens = it->second.at(3);
-    //                 return true;
-    //             }
-    //         }
-    //     }
-    // }
-
-    // TODO:cwd1
-    for (uint32_t loopPropertyId = 1; loopPropertyId < _my_sps->peekNextSPID(); loopPropertyId++) {
+    // TODO:cwd1 double-ckeck the logic below
+    for (uint32_t pid = 1; pid < _my_sps->peekNextSPID(); pid++) {
         CMPSPInfo::Entry sp;
-        if (!_my_sps->getSP(loopPropertyId, sp)) continue;
-        if (sp.issuer != address) continue;
-        for (std::map<uint256, std::vector<int64_t> >::const_iterator it = sp.historicalData.begin(); it != sp.historicalData.end(); it++) {
+        if (!_my_sps->getSP(pid, sp) || sp.issuer != address) continue;
+        for (auto it = sp.historicalData.cbegin(); it != sp.historicalData.cend(); it++) {
             if (it->first == txid) {
-                *propertyId = loopPropertyId;
+                *propertyId = pid;
                 *userTokens = it->second.at(2);
                 *issuerTokens = it->second.at(3);
                 return true;
@@ -881,7 +864,7 @@ unsigned int mastercore::eraseExpiredCrowdsale(const CBlockIndex* pBlockIndex)
 
             // get txdata
             sp.historicalData = crowdsale.getDatabase();
-            //sp.missedTokens = missedTokens;
+            sp.missedTokens = missedTokens;
 
             // update SP with this data
             sp.update_block = pBlockIndex->GetBlockHash();

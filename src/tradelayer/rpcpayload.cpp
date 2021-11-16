@@ -1299,8 +1299,6 @@ UniValue tl_createpayload_issuancecrowdsale(const JSONRPCRequest& request)
             + HelpExampleRpc("tl_createpayload_issuancecrowdsale", "1, 0, \"Companies\", \"Bitcoin Mining\", \"Quantum Miner\", \"\", \"\", 2, \"100\", 1483228800, 30, 2")
         );
 
-    // cwd1 
-    // "1. ecosystem            (string, required) the ecosystem to create the tokens in (1 for main ecosystem, 2 for test ecosystem)\n"
     uint16_t type = ParsePropertyType(request.params[0]);
     uint32_t previousId = ParsePreviousPropertyId(request.params[1]);
     std::string category = ParseText(request.params[2]);
@@ -1318,7 +1316,6 @@ UniValue tl_createpayload_issuancecrowdsale(const JSONRPCRequest& request)
 
     if (propertyIdDesired != LTC) {
         RequireExistingProperty(propertyIdDesired);
-        //RequireSameEcosystem(ecosystem, propertyIdDesired);
     }
 
     std::vector<unsigned char> payload = CreatePayload_IssuanceVariable(type, previousId, category, subcategory, name, url, data, propertyIdDesired, numTokens, deadline, earlyBonus, issuerPercentage);

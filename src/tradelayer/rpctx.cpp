@@ -366,7 +366,7 @@ UniValue tl_sendltcpayment(const JSONRPCRequest& request)
     }
 }
 
-// tl_sendissuancecrowdsale - Issue new property with crowdsale
+// Issue new property with crowdsale
 UniValue tl_sendissuancecrowdsale(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 13)
@@ -400,8 +400,6 @@ UniValue tl_sendissuancecrowdsale(const JSONRPCRequest& request)
 
     // obtain parameters & info
     const std::string fromAddress = ParseAddress(request.params[0]);
-    // "2. ecosystem            (string, required) the ecosystem to create the tokens in (1 for main ecosystem, 2 for test ecosystem)\n"
-    //uint8_t ecosystem = ParseEcosystem(request.params[1]);
     uint16_t type = ParsePropertyType(request.params[1]);
     uint32_t previousId = ParsePreviousPropertyId(request.params[2]);
     std::string category = ParseText(request.params[3]);
@@ -415,11 +413,9 @@ UniValue tl_sendissuancecrowdsale(const JSONRPCRequest& request)
     uint8_t earlyBonus = ParseEarlyBirdBonus(request.params[11]);
     uint8_t issuerPercentage = ParseIssuerBonus(request.params[12]);
 
-    // perform checks TODO:cwd1
     RequirePropertyName(name);
     if (propertyIdDesired != LTC) {
         RequireExistingProperty(propertyIdDesired);
-        //RequireSameEcosystem(ecosystem, propertyIdDesired);
     }
 
     // create a payload for the transaction
@@ -442,7 +438,7 @@ UniValue tl_sendissuancecrowdsale(const JSONRPCRequest& request)
     }
 }
 
-// tl_sendclosecrowdsale - Close an active crowdsale
+// Close an active crowdsale
 UniValue tl_sendclosecrowdsale(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 2)

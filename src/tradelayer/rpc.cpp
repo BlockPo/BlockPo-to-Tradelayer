@@ -1328,14 +1328,12 @@ UniValue tl_getcrowdsale(const JSONRPCRequest& request)
 
     const uint256& creationHash = sp.txid;
 
-    // cwd1
     CTransactionRef tx;
     uint256 hashBlock;
     if (!GetTransaction(creationHash, tx, Params().GetConsensus(), hashBlock, true)) {
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "No information available about transaction");
     }
 
-    UniValue response;
     bool active = isCrowdsaleActive(propertyId);
     std::map<uint256, std::vector<int64_t> > database;
 
@@ -1372,49 +1370,49 @@ UniValue tl_getcrowdsale(const JSONRPCRequest& request)
     uint16_t desiredIdType = isPropertyDivisible(sp.property_desired) ? ALL_PROPERTY_TYPE_DIVISIBLE : ALL_PROPERTY_TYPE_INDIVISIBLE;
     std::map<std::string, UniValue> sortMap;
     for (std::map<uint256, std::vector<int64_t> >::const_iterator it = database.begin(); it != database.end(); it++) {
-        UniValue participanttx;
+        UniValue participanttx(UniValue::VOBJ);
         std::string txid = it->first.GetHex();
         amountRaised += it->second.at(0);
-        participanttx.push_back(Pair("txid", txid));
-        participanttx.push_back(Pair("amountsent", FormatByType(it->second.at(0), desiredIdType)));
-        participanttx.push_back(Pair("participanttokens", FormatByType(it->second.at(2), propertyIdType)));
-        participanttx.push_back(Pair("issuertokens", FormatByType(it->second.at(3), propertyIdType)));
+        participanttx.pushKV("txid", txid);
+        participanttx.pushKV("amountsent", FormatByType(it->second.at(0), desiredIdType));
+        participanttx.pushKV("participanttokens", FormatByType(it->second.at(2), propertyIdType));
+        participanttx.pushKV("issuertokens", FormatByType(it->second.at(3), propertyIdType));
         std::string sortKey = strprintf("%d-%s", it->second.at(1), txid);
         sortMap.insert(std::make_pair(sortKey, participanttx));
     }
+    
+    UniValue response(UniValue::VOBJ);
+    response.pushKV("propertyid", (uint64_t) propertyId);
+    response.pushKV("name", sp.name);
+    response.pushKV("active", active);
+    response.pushKV("issuer", sp.issuer);
+    response.pushKV("propertyiddesired", (uint64_t) sp.property_desired);
+    response.pushKV("tokensperunit", FormatMP(propertyId, sp.num_tokens));
+    response.pushKV("earlybonus", sp.early_bird);
+    response.pushKV("percenttoissuer", sp.percentage);
+    response.pushKV("starttime", startTime);
+    response.pushKV("deadline", sp.deadline);
+    response.pushKV("amountraised", FormatMP(sp.property_desired, amountRaised));
+    response.pushKV("tokensissued", FormatMP(propertyId, tokensIssued));
+    response.pushKV("addedissuertokens", FormatMP(propertyId, sp.missedTokens));
 
-    response.push_back(Pair("propertyid", (uint64_t) propertyId));
-    response.push_back(Pair("name", sp.name));
-    response.push_back(Pair("active", active));
-    response.push_back(Pair("issuer", sp.issuer));
-    response.push_back(Pair("propertyiddesired", (uint64_t) sp.property_desired));
-    response.push_back(Pair("tokensperunit", FormatMP(propertyId, sp.num_tokens)));
-    response.push_back(Pair("earlybonus", sp.early_bird));
-    response.push_back(Pair("percenttoissuer", sp.percentage));
-    response.push_back(Pair("starttime", startTime));
-    response.push_back(Pair("deadline", sp.deadline));
-    response.push_back(Pair("amountraised", FormatMP(sp.property_desired, amountRaised)));
-    response.push_back(Pair("tokensissued", FormatMP(propertyId, tokensIssued)));
-    response.push_back(Pair("addedissuertokens", FormatMP(propertyId, sp.missedTokens)));
-
-    // TODO: cwd1 return fields every time?
-    if (!active) response.push_back(Pair("closedearly", sp.close_early));
-    if (!active) response.push_back(Pair("maxtokens", sp.max_tokens));
-    if (sp.close_early) response.push_back(Pair("endedtime", sp.timeclosed));
-    if (sp.close_early && !sp.max_tokens) response.push_back(Pair("closetx", txidClosed));
+    // TODO: return fields every time?
+    if (!active) response.pushKV("closedearly", sp.close_early);
+    if (!active) response.pushKV("maxtokens", sp.max_tokens);
+    if (sp.close_early) response.pushKV("endedtime", sp.timeclosed);
+    if (sp.close_early && !sp.max_tokens) response.pushKV("closetx", txidClosed);
 
     if (showVerbose) {
-        UniValue participanttxs;
+        UniValue participanttxs(UniValue::VARR);
         for (auto it = sortMap.begin(); it != sortMap.end(); ++it) {
             participanttxs.push_back(it->second);
         }
-        response.push_back(Pair("participanttransactions", participanttxs));
+        response.pushKV("participanttransactions", participanttxs);
     }
 
     return response;
 }
 
-// cwd1
 UniValue tl_getactivecrowdsales(const JSONRPCRequest& request)
 {
     if (request.fHelp)
@@ -1441,11 +1439,11 @@ UniValue tl_getactivecrowdsales(const JSONRPCRequest& request)
             + HelpExampleRpc("tl_getactivecrowdsales", "")
         );
 
-    UniValue response;
+    UniValue response(UniValue::VARR);
     
     LOCK2(cs_main, cs_tally);
 
-    for (CrowdMap::const_iterator it = my_crowds.begin(); it != my_crowds.end(); ++it) {
+    for (auto it = my_crowds.cbegin(); it != my_crowds.cend(); ++it) {
         const CMPCrowd& crowd = it->second;
         uint32_t propertyId = crowd.getPropertyId();
 
@@ -1467,16 +1465,16 @@ UniValue tl_getactivecrowdsales(const JSONRPCRequest& request)
             startTime = GetBlockIndex(hashBlock)->nTime;
         }
 
-        UniValue res;
-        res.push_back(Pair("propertyid", (uint64_t) propertyId));
-        res.push_back(Pair("name", sp.name));
-        res.push_back(Pair("issuer", sp.issuer));
-        response.push_back(Pair("propertyiddesired", (uint64_t) sp.property_desired));
-        response.push_back(Pair("tokensperunit", FormatMP(propertyId, sp.num_tokens)));
-        response.push_back(Pair("earlybonus", sp.early_bird));
-        response.push_back(Pair("percenttoissuer", sp.percentage));
-        response.push_back(Pair("starttime", startTime));
-        response.push_back(Pair("deadline", sp.deadline));
+        UniValue res(UniValue::VOBJ);
+        res.pushKV("propertyid", (uint64_t) propertyId);
+        res.pushKV("name", sp.name);
+        res.pushKV("issuer", sp.issuer);
+        res.pushKV("propertyiddesired", (uint64_t) sp.property_desired);
+        res.pushKV("tokensperunit", FormatMP(propertyId, sp.num_tokens));
+        res.pushKV("earlybonus", sp.early_bird);
+        res.pushKV("percenttoissuer", sp.percentage);
+        res.pushKV("starttime", startTime);
+        res.pushKV("deadline", sp.deadline);
         response.push_back(res);
     }
 

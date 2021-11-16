@@ -589,7 +589,6 @@ bool CMPTransaction::interpret_CreatePropertyVariable()
     } else return false;
 
     if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly) {
-        // cwd1 PrintToLog("\t       ecosystem: %d\n", ecosystem);
         PrintToLog("\t   property type: %d (%s)\n", prop_type, strPropertyType(prop_type));
         PrintToLog("\tprev property id: %d\n", prev_prop_id);
         PrintToLog("\t        category: %s\n", category);
@@ -2750,22 +2749,9 @@ int CMPTransaction::logicMath_CreatePropertyVariable()
         blockHash = pindex->GetBlockHash();
     }
 
-    // TODO:cwd1
-    // if (OMNI_PROPERTY_MSC != ecosystem && OMNI_PROPERTY_TMSC != ecosystem) {
-    //     PrintToLog("%s(): rejected: invalid ecosystem: %d\n", __func__, (uint32_t) ecosystem);
-    //     return (PKT_ERROR_SP -21);
-    // }
-
-    // TODO:cwd1
+    // TODO: double check this functionality
     if (IsFeatureActivated(FEATURE_SPCROWDCROSSOVER, block)) {
-        /**
-         * Ecosystem crossovers shall not be allowed after the feature was enabled.
-         */
-        // if (isTestEcosystemProperty(ecosystem) != isTestEcosystemProperty(property)) {
-        PrintToLog("%s(): rejected: ecosystem %d of tokens to issue and desired property %d not in same ecosystem\n",
-                    __func__,
-                    1,
-                    property);
+        PrintToLog("%s(): rejected: crossovers is not allowed\n");
         return (PKT_ERROR_SP -50);
     }
 
@@ -2839,7 +2825,6 @@ int CMPTransaction::logicMath_CreatePropertyVariable()
 }
 
 /** Tx 53 */
-// cwd1
 int CMPTransaction::logicMath_CloseCrowdsale()
 {
     uint256 blockHash;
@@ -2854,7 +2839,6 @@ int CMPTransaction::logicMath_CloseCrowdsale()
         blockHash = pindex->GetBlockHash();
     }
 
-    // cwd1
     if (!IsTransactionTypeAllowed(block, type, version)) {
         PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
                 __func__,
@@ -2907,13 +2891,14 @@ int CMPTransaction::logicMath_CloseCrowdsale()
     return 0;
 }
 
-/** Passive effect of crowdsale participation. cwd1 */
+/** Passive effect of crowdsale participation. */
 int CMPTransaction::logicHelper_CrowdsaleParticipation()
 {
     CMPCrowd* pcrowdsale = getCrowd(receiver);
 
     // No active crowdsale
     if (pcrowdsale == NULL) {
+        PrintToLog("%s(): rejected: no active crowdsale found for: <%s>\n", __func__, receiver);
         return (PKT_ERROR_CROWD -1);
     }
     // Active crowdsale, but not for this property
@@ -2978,9 +2963,9 @@ int CMPTransaction::logicHelper_CrowdsaleParticipation()
 
     // Indicate, if no tokens were transferred
     if (!tokens.first && !tokens.second) {
+        PrintToLog("%s(): no tokens (%d) were transferred", pcrowdsale->getPropertyId());
         return (PKT_ERROR_CROWD -3);
     }
-
     return 0;
 }
 
@@ -3403,7 +3388,6 @@ int CMPTransaction::logicMath_RevokeTokens()
 }
 
 /** Tx 70 */
-// cwd1
 int CMPTransaction::logicMath_ChangeIssuer()
 {
     uint256 blockHash;
@@ -5409,14 +5393,14 @@ int CMPTransaction::logicMath_LitecoinPayment()
     CMPTransaction mp_obj;
     int parseRC = ParseTransaction(*tx, linked_blockHeight, 0, mp_obj, linked_blockTime);
     if (parseRC < 0) {
-        PrintToLog("%s(): rejected: linked transaction %s is not an Omni layer transaction\n",
+        PrintToLog("%s(): rejected: linked transaction %s is not a TL layer transaction\n",
                 __func__,
                 linked_txid.GetHex());
         return MP_TX_IS_NOT_MASTER_PROTOCOL;
     }
 
     if (!mp_obj.interpret_Transaction()) {
-        PrintToLog("%s(): rejected: linked transaction %s is not an Omni layer transaction\n",
+        PrintToLog("%s(): rejected: linked transaction %s is not a TL layer transaction\n",
                 __func__,
                 linked_txid.GetHex());
         return MP_TX_IS_NOT_MASTER_PROTOCOL;
@@ -5446,7 +5430,7 @@ int CMPTransaction::logicMath_LitecoinPayment()
     std::string linked_sender = mp_obj.getSender();
     nValue = GetLitecoinPaymentAmount(txid, linked_sender);
     PrintToLog("\tlinked tx sender: %s\n", linked_sender);
-    PrintToLog("\t  psyment amount: %s\n", FormatDivisibleMP(nValue));
+    PrintToLog("\t  payment amount: %s\n", FormatDivisibleMP(nValue));
 
     if (nValue == 0) {
         PrintToLog("%s(): rejected: no payment to sender of linked transaction\n",

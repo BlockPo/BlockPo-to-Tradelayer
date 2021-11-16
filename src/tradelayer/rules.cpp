@@ -102,7 +102,7 @@ std::vector<TransactionRestriction> CConsensusParams::GetRestrictions() const
     v.push_back( { MSC_TYPE_CREATE_PROPERTY_VARIABLE,              MP_TX_PKT_V2,      true, MSC_LTC_CROWDSALE_BLOCK } );
     v.push_back( { MSC_TYPE_CLOSE_CROWDSALE,                       MP_TX_PKT_V0,      false, MSC_SP_BLOCK } ),
     v.push_back( { MSC_TYPE_LITECOIN_PAYMENT,                      MP_TX_PKT_V0,      true, MSC_LTC_CROWDSALE_BLOCK } );
-    // TODO:cwd1 check allowed
+
     //---
     return v;
 }
