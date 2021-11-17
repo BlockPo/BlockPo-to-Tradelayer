@@ -115,3 +115,7 @@ share/BitcoindComparisonTool.jar
 
 libbitcoinconsensus.pc
 contrib/devtools/split-debug.sh
+.vscode/c_cpp_properties.json
+.vscode/launch.json
+.vscode/settings.json
+.vscode/tasks.json
