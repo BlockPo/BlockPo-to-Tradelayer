@@ -60,7 +60,7 @@ using mastercore::StrToInt64;
 /* Mapping of a transaction type to a textual description. */
 const struct tradelayer_descs {
 	uint16_t	transaction_type;
-	const char	*description;
+	std::string description;
 } tradelayer_descs[] = {
 	{ MSC_TYPE_SIMPLE_SEND, "Simple Send" },
   { MSC_TYPE_SEND_MANY, "Send Many" },
@@ -110,16 +110,17 @@ const struct tradelayer_descs {
 	{ MSC_TYPE_METADEX_CANCEL, "Cancel specific MetaDEx order" },
 	{ MSC_TYPE_METADEX_CANCEL_BY_PRICE, "MetaDEx cancel-price" },
 	{ MSC_TYPE_METADEX_CANCEL_BY_PAIR, "MetaDEx cancel-by-pair" },
-	{ MSC_TYPE_CLOSE_CHANNEL , "Close Channel" },
+	{ MSC_TYPE_CLOSE_CHANNEL , "Close Channel" }
 };
 
 /* Mapping of a transaction type to a textual description. */
 std::string mastercore::strTransactionType(uint16_t txType)
 {
 
-	for (size_t i = 0; i < sizeof (tradelayer_descs); ++i) {
-		if (txType == tradelayer_descs[i].transaction_type)
-			return tradelayer_descs[i].description;
+	for (const auto& t : tradelayer_descs) {
+	    if (txType == t.transaction_type) {
+			    return t.description;
+	    }
 	}
 	return "* unknown type *";
 }
@@ -327,12 +328,13 @@ bool CMPTransaction::interpret_TransactionType()
 
     if (!vecTypeBytes.empty()) {
         type = DecompressInteger(vecTypeBytes);
+				PrintToLog("%s(): type: %d\n",__func__, type);
     } else return false;
 
     if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly) {
         PrintToLog("\t------------------------------\n");
         PrintToLog("\t         version: %d, class %s\n", version, intToClass(encodingClass));
-        PrintToLog("\t            type: %d (%s)\n", type, strTransactionType(type));
+        PrintToLog("\t            type: %d (%s)\n", type, strTransactionType((uint16_t) type));
 
     }
 
@@ -3108,12 +3110,13 @@ int CMPTransaction::logicMath_Deactivation()
 /** Tx 65534 */
 int CMPTransaction::logicMath_Activation()
 {
+	  PrintToLog("%s(): inside function\n",__func__);
+
     if (!IsTransactionTypeAllowed(block, type, version)) {
-        PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+        PrintToLog("%s(): rejected: type %d or version %d not permitted at block %d\n",
                 __func__,
                 type,
                 version,
-                property,
                 block);
         return (PKT_ERROR_SP -22);
     }
