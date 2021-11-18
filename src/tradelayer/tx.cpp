@@ -2501,15 +2501,22 @@ int CMPTransaction::logicMath_SendMany()
         }
 
         // TODO: recipients ?!
-        // if(!t_tradelistdb->checkAttestationReg(receiver,kyc_id)){
-        //   PrintToLog("%s(): rejected: kyc ckeck for receiver failed\n", __func__);
-        //   return (PKT_ERROR_KYC -10);
-        // }
+				for (const auto& addr : recipients)
+				{
+				    int kyc_id;
+					  if(!t_tradelistdb->checkAttestationReg(addr,kyc_id)){
+					      PrintToLog("%s(): rejected: kyc ckeck for receiver failed\n", __func__);
+					      return (PKT_ERROR_KYC -10);
+				  	}
 
-        if(!t_tradelistdb->kycPropertyMatch(property,kyc_id)){
-          PrintToLog("%s(): rejected: property %d can't be traded with this kyc\n", __func__, property);
-          return (PKT_ERROR_KYC -20);
-        }
+					  if(!t_tradelistdb->kycPropertyMatch(property,kyc_id)){
+						    PrintToLog("%s(): rejected: property %d can't be traded with this kyc\n", __func__, property);
+						    return (PKT_ERROR_KYC -20);
+					  }
+				}
+
+
+
     }
 
     int64_t nBalance = getMPbalance(sender, property, BALANCE);
