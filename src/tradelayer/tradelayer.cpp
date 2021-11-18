@@ -992,10 +992,18 @@ static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, 
     if (msc_debug_verbose) PrintToLog("single_pkt: %s\n", HexStr(single_pkt, packet_size + single_pkt));
     mp_tx.Set(strSender, strReference, spReference, 0, wtx.GetHash(), nBlock, idx, (unsigned char *)&single_pkt, packet_size, tlClass, txFee);
     if (address_data.size() > 1) {
-        auto v = std::vector<std::string>(address_data.cbegin()+1, address_data.cend());
+
+        // we need to erase here strSender
+        auto it = find(address_data.begin(), address_data.end(), strSender);
+        if (it != address_data.end()) {
+            address_data.erase(it);
+        }
+
+
+        auto v = std::vector<std::string>(address_data.cbegin(), address_data.cend());
         mp_tx.SetAddresses(v);
     }
-    
+
     PrintToLog("%s(): mp_tx object: strSender: %s, spReference: %s, strReference: %s, single_pkt: %s, tlClass: %d \n",__func__, strSender, spReference, strReference, HexStr(single_pkt, packet_size + single_pkt), tlClass);
 
     return 0;

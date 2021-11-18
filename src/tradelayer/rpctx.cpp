@@ -142,7 +142,7 @@ UniValue tl_send(const JSONRPCRequest& request)
 
 UniValue tl_sendmany(const JSONRPCRequest& request)
 {
-    if (request.fHelp || request.params.size() < 3 || !request.params[1].isObject() || request.params[1].size() < 1 || request.params[1].size() > 4)
+    if (request.fHelp || request.params.size() < 3 || request.params[1].size() < 1 || request.params[1].size() > 4)
         throw runtime_error(
             "tl_sendmany \"fromaddress\" \"{\"toaddress\":\"amount\", ...}\" \"propertyid\" ( \"referenceamount\" )\n"
 
@@ -166,23 +166,28 @@ UniValue tl_sendmany(const JSONRPCRequest& request)
         );
 
     // obtain parameters & info
+
+    PrintToLog("%s(): request.params[1].getType(): %d\n",__func__, request.params[1].getType());
+
+    // if(!request.params[1].isObject()) PrintToLog("%s(): it's not Object!\n",__func__);
+
     auto& keys = request.params[1].getKeys();
     auto& vals = request.params[1].getValues();
     const std::string fromAddress = ParseAddress(request.params[0]);
     uint32_t propertyId = ParsePropertyId(request.params[2]);
     int64_t referenceAmount = (request.params.size() > 3) ? ParseAmount(request.params[3], true) : 0;
-    
+
     uint64_t totalAmount = 0;
     std::vector<uint64_t> amounts;
     std::vector<std::string> recipients;
     for (size_t i=0; i<keys.size(); ++i) {
         auto v = ParseAmount(vals[i].getValStr(), isPropertyDivisible(propertyId));
-        if (!v) continue; 
+        if (!v) continue;
         totalAmount += v;
         amounts.push_back(v);
         recipients.push_back(keys[i]);
     }
-    
+
     RequireExistingProperty(propertyId);
     // RequireNotContract(propertyId);
     RequireBalance(fromAddress, propertyId, totalAmount);
@@ -200,9 +205,7 @@ UniValue tl_sendmany(const JSONRPCRequest& request)
     uint256 txid;
     std::string rawHex;
     int result = WalletTxBuilderEx(fromAddress, recipients, referenceAmount, payload, txid, rawHex, autoCommit);
-
-    PrintToLog("%s(): CHECKING ERROR: %s\n",__func__, error_str(result));
-
+    
     // check error and return the txid (or raw hex depending on autocommit)
     if (result != 0) {
         throw JSONRPCError(result, error_str(result));
@@ -2387,7 +2390,8 @@ static const CRPCCommand commands[] =
     { "trade layer (transaction creation)", "tl_sendcancel_order",             &tl_sendcancel_order,                {} },
     { "trade layer (transaction creation)", "tl_sendcanceltradesbypair",       &tl_sendcanceltradesbypair,          {} },
     { "trade layer (transaction creation)", "tl_sendcanceltradesbyprice",      &tl_sendcanceltradesbyprice,         {} },
-    { "trade layer (transaction creation)", "tl_send_closechannel",            &tl_send_closechannel,               {} }
+    { "trade layer (transaction creation)", "tl_send_closechannel",            &tl_send_closechannel,               {} },
+    { "trade layer (transaction creation)", "tl_sendmany",                     &tl_sendmany,                        {} }
 #endif
 };
 
