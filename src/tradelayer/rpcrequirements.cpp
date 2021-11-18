@@ -122,6 +122,26 @@ void RequireDifferentIds(uint32_t propertyId, uint32_t otherId)
     }
 }
 
+void RequireCrowdsale(uint32_t propertyId)
+{
+    LOCK(cs_tally);
+    CMPSPInfo::Entry sp;
+    if (!mastercore::_my_sps->getSP(propertyId, sp)) {
+        throw JSONRPCError(RPC_DATABASE_ERROR, "Failed to retrieve property");
+    }
+    if (sp.fixed || sp.manual) {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "Property identifier does not refer to a crowdsale");
+    }
+}
+
+void RequireActiveCrowdsale(uint32_t propertyId)
+{
+    LOCK(cs_tally);
+    if (!mastercore::isCrowdsaleActive(propertyId)) {
+        throw JSONRPCError(RPC_TYPE_ERROR, "Property identifier does not refer to an active crowdsale");
+    }
+}
+
 void RequireManagedProperty(uint32_t propertyId)
 {
     LOCK(cs_tally);

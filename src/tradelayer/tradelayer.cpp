@@ -108,6 +108,13 @@ typedef boost::multiprecision::uint128_t ui128;
 
 static int nWaterlineBlock = 0;
 
+//! Exodus crowdsale address
+static std::string exodus_address = "1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P";
+
+static const std::string exodus_mainnet = "1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P";
+static const std::string exodus_testnet = "mpexoDuSkGGqvqrkrjiFng38QPkJQVFyqv";
+static const std::string getmoney_testnet = "moneyqMan7uh8FqdCA2BV5yZ8qVrc9ikLP";
+
 //! Available balances of wallet properties
 std::map<uint32_t, int64_t> global_balance_money;
 //! Vector containing a list of properties relative to the wallet
@@ -153,6 +160,7 @@ OfferMap mastercore::my_offers;
 AcceptMap mastercore::my_accepts;
 CMPSPInfo *mastercore::_my_sps;
 CDInfo *mastercore::_my_cds;
+CrowdMap mastercore::my_crowds;
 
 std::map<uint32_t, std::map<uint32_t, int64_t>> VWAPMap;
 std::map<uint32_t, std::map<uint32_t, int64_t>> VWAPMapSubVector;
@@ -199,7 +207,7 @@ std::string mastercore::strMPProperty(uint32_t propertyId)
     {
       switch (propertyId)
 	{
-	case TL_PROPERTY_BTC: str = "BTC";
+	case TL_PROPERTY_LTC: str = "LTC";
 	  break;
 	case TL_PROPERTY_ALL: str = "ALL";
 	  break;
@@ -484,7 +492,7 @@ bool mastercore::update_tally_map(const std::string& who, uint32_t propertyId, i
         assert(before == after);
         PrintToLog("%s(%s, %u=0x%X, %+d, ttype=%d) ERROR: insufficient balance (=%d)\n", __func__, who, propertyId, propertyId, amount, ttype, before);
     }
-    if (msc_debug_tally) {
+    if (msc_debug_tally && (exodus_address != who || msc_debug_exo)) {
         PrintToLog("%s(%s, %u=0x%X, %+d, ttype=%d): before=%d, after=%d\n", __func__, who, propertyId, propertyId, amount, ttype, before, after);
     }
 
@@ -628,6 +636,36 @@ void creatingVestingTokens(int block)
 
    // only for testing
    if (RegTest()) assert(update_tally_map(getVestingAdmin(), ALL, totalVesting, BALANCE));
+}
+
+
+/**
+ * Executes Exodus crowdsale purchases.
+ *
+ * @return True, if it was a valid purchase
+ */
+static bool TXExodusFundraiser(const CTransaction& tx, const std::string& sender, int64_t amountInvested, int nBlock, unsigned int nTime)
+{
+    const int secondsPerWeek = 60 * 60 * 24 * 7;
+    const CConsensusParams& params = ConsensusParams();
+
+    if (nBlock >= params.GENESIS_BLOCK && nBlock <= params.LAST_EXODUS_BLOCK) {
+        int deadlineTimeleft = params.exodusDeadline - nTime;
+        double bonusPercentage = params.exodusBonusPerWeek * deadlineTimeleft / secondsPerWeek;
+        double bonus = 1.0 + std::max(bonusPercentage, 0.0);
+
+        int64_t amountGenerated = round(params.exodusReward * amountInvested * bonus);
+        if (amountGenerated > 0) {
+            PrintToLog("Exodus Fundraiser tx detected, tx %s generated %s\n", tx.GetHash().ToString(), FormatDivisibleMP(amountGenerated));
+
+            assert(update_tally_map(sender, TL_PROPERTY_ALL, amountGenerated, BALANCE));
+            assert(update_tally_map(sender, TL_PROPERTY_TALL, amountGenerated, BALANCE));
+
+            return true;
+        }
+    }
+
+    return false;
 }
 
 /**
@@ -880,6 +918,7 @@ static int parseTransaction(bool bRPConly, const CTransaction& wtx, int nBlock, 
 
     if (msc_debug_parser_data) PrintToLog(" address_data.size=%lu\n script_data.size=%lu\n value_data.size=%lu\n", address_data.size(), script_data.size(), value_data.size());
 
+
     // ### CLASS D PARSING ###
     if (msc_debug_parser_data) PrintToLog("Beginning reference identification\n");
     bool referenceFound = false; // bool to hold whether we've found the reference yet
@@ -1010,6 +1049,29 @@ int ParseTransaction(const CTransaction& tx, int nBlock, unsigned int idx, CMPTr
 }
 
 /**
+ * Helper to provide the amount of LTC sent to a particular address in a transaction
+ */
+int64_t GetLitecoinPaymentAmount(const uint256& txid, const std::string& recipient)
+{
+    CTransactionRef tx;
+    uint256 blockHash;
+    if (!GetTransaction(txid, tx, Params().GetConsensus(), blockHash, true)) return 0;
+
+    int64_t total = 0;
+
+    for (unsigned int n = 0; n < tx->vout.size(); ++n) {
+        CTxDestination dest;
+        if (ExtractDestination(tx->vout[n].scriptPubKey, dest)) {
+            std::string strAddress = EncodeDestination(dest);
+            if (strAddress != recipient) continue;
+            total += tx->vout[n].nValue;
+        }
+    }
+
+    return total;
+}
+
+/**
  * Handles potential DEx payments.
  *
  * Note: must *not* be called outside of the transaction handler, and it does not
@@ -1028,7 +1090,9 @@ int ParseTransaction(const CTransaction& tx, int nBlock, unsigned int idx, CMPTr
          if (ExtractDestination(tx.vout[n].scriptPubKey, dest))
          {
              const std::string address = EncodeDestination(dest);
-
+             if (address == ExodusAddress()) {
+                continue;
+             }
              if (msc_debug_handle_dex_payment) PrintToLog("%s: destination address: %s, sender's address: %s \n", __func__, address, strSender);
 
              if (address == strSender) {
@@ -1198,6 +1262,37 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
 
      return count;
  }
+
+/**
+ * Handles potential Exodus crowdsale purchases.
+ *
+ * Note: must *not* be called outside of the transaction handler, and it does not
+ * check, if a transaction marker exists.
+ *
+ * @return True, if it was a valid purchase
+ */
+static bool HandleExodusPurchase(const CTransaction& tx, int nBlock, const std::string& strSender, unsigned int nTime)
+{
+    int64_t amountInvested = 0;
+
+    for (unsigned int n = 0; n < tx.vout.size(); ++n) {
+        CTxDestination dest;
+        if (ExtractDestination(tx.vout[n].scriptPubKey, dest)) {
+            auto a1 = EncodeDestination(dest);
+            auto a2 = ExodusCrowdsaleAddress(nBlock);
+            if (a1 == a2) {
+                amountInvested = tx.vout[n].nValue;
+                break; // TODO: maybe sum all values
+            }
+        }
+    }
+
+    if (0 < amountInvested) {
+        return TXExodusFundraiser(tx, strSender, amountInvested, nBlock, nTime);
+    }
+
+    return false;
+}
 
 /**
  * Reports the progress of the initial transaction scanning.
@@ -1530,6 +1625,53 @@ static int input_globals_state_string(const string &s)
   _my_sps->init(nextSPID);
 
   return 0;
+}
+
+// addr,propertyId,nValue,property_desired,deadline,early_bird,percentage,txid
+static int input_mp_crowdsale_string(const std::string& s)
+{
+    std::vector<std::string> vstr;
+    boost::split(vstr, s, boost::is_any_of(" ,"), boost::token_compress_on);
+
+    if (9 > vstr.size()) return -1;
+
+    unsigned int i = 0;
+
+    std::string sellerAddr = vstr[i++];
+    uint32_t propertyId = boost::lexical_cast<uint32_t>(vstr[i++]);
+    int64_t nValue = boost::lexical_cast<int64_t>(vstr[i++]);
+    uint32_t property_desired = boost::lexical_cast<uint32_t>(vstr[i++]);
+    int64_t deadline = boost::lexical_cast<int64_t>(vstr[i++]);
+    uint8_t early_bird = boost::lexical_cast<unsigned int>(vstr[i++]); // lexical_cast can't handle char!
+    uint8_t percentage = boost::lexical_cast<unsigned int>(vstr[i++]); // lexical_cast can't handle char!
+    int64_t u_created = boost::lexical_cast<int64_t>(vstr[i++]);
+    int64_t i_created = boost::lexical_cast<int64_t>(vstr[i++]);
+
+    CMPCrowd newCrowdsale(propertyId, nValue, property_desired, deadline, early_bird, percentage, u_created, i_created);
+
+    // load the remaining as database pairs
+    while (i < vstr.size()) {
+        std::vector<std::string> entryData;
+        boost::split(entryData, vstr[i++], boost::is_any_of("="), boost::token_compress_on);
+        if (2 != entryData.size()) return -1;
+
+        std::vector<std::string> valueData;
+        boost::split(valueData, entryData[1], boost::is_any_of(";"), boost::token_compress_on);
+
+        std::vector<int64_t> vals;
+        for (std::vector<std::string>::const_iterator it = valueData.begin(); it != valueData.end(); ++it) {
+            vals.push_back(boost::lexical_cast<int64_t>(*it));
+        }
+
+        uint256 data(std::vector<unsigned char>(entryData[0].begin(), entryData[0].end()));
+        newCrowdsale.insertDatabase(data, vals);
+    }
+
+    if (!my_crowds.insert(std::make_pair(sellerAddr, newCrowdsale)).second) {
+        return -1;
+    }
+
+    return 0;
 }
 
 static int input_contract_globals_state_string(const string &s)
@@ -2120,6 +2262,11 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
         my_accepts.clear();
         inputLineFunc = input_mp_accepts_string;
         break;
+
+    case FILETYPE_CROWDSALES:
+      my_crowds.clear();
+      inputLineFunc = input_mp_crowdsale_string;
+      break;
 
     case FILETYPE_MDEXORDERS:
         // FIXME
@@ -2943,6 +3090,17 @@ static int write_mp_register(std::ofstream& file,  CHash256& hasher)
     return 0;
 }
 
+static int write_mp_crowdsales(std::ofstream& file, CHash256& hasher)
+{
+    for (CrowdMap::const_iterator it = my_crowds.begin(); it != my_crowds.end(); ++it) {
+        // decompose the key for address
+        const CMPCrowd& crowd = it->second;
+        crowd.saveCrowdSale(file, hasher, it->first);
+    }
+
+    return 0;
+}
+
 static int write_state_file(CBlockIndex const *pBlockIndex, int what)
 {
     fs::path path = MPPersistencePath / strprintf("%s-%s.dat", statePrefix[what], pBlockIndex->GetBlockHash().ToString());
@@ -3031,6 +3189,10 @@ static int write_state_file(CBlockIndex const *pBlockIndex, int what)
     case FILE_TYPE_REGISTER:
         result = write_mp_register(file, hasher);
         break;
+
+    case FILETYPE_CROWDSALES:
+        result = write_mp_crowdsales(file, hasher);
+      break;
     }
 
     // generate and write the double hash of all the contents written
@@ -3138,6 +3300,7 @@ int mastercore_save_state(CBlockIndex const *pBlockIndex)
     write_state_file(pBlockIndex, FILE_TYPE_TOKEN_VWAP);
     write_state_file(pBlockIndex, FILE_TYPE_REGISTER);
     write_state_file(pBlockIndex, FILETYPE_CONTRACT_GLOBALS);
+    write_state_file(pBlockIndex, FILETYPE_CROWDSALES);
 
     // clean-up the directory
     prune_state_files(pBlockIndex);
@@ -3287,6 +3450,13 @@ int mastercore_init()
 
   // advance the waterline so that we start on the next unaccounted for block
   nWaterlineBlock += 1;
+
+  // collect the real Exodus balances available at the snapshot time
+  // redundant? do we need to show it both pre-parse and post-parse?  if so let's label the printfs accordingly
+  if (msc_debug_exo) {
+    int64_t exodus_balance = getMPbalance(exodus_address, TL_PROPERTY_ALL, BALANCE);
+    PrintToLog("Exodus balance at start: %s\n", FormatDivisibleMP(exodus_balance));
+  }
 
   // load feature activation messages from txlistdb and process them accordingly
   p_txlistdb->LoadActivations(nWaterlineBlock);
@@ -3690,6 +3860,13 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
 
     }
 
+    // if (pop_ret >= 0) {
+    //     assert(mp_obj.getEncodingClass() != NO_MARKER);
+    //     assert(mp_obj.getSender().empty() == false);
+
+    //     fFoundTx |= HandleExodusPurchase(tx, nBlock, mp_obj.getSender(), nBlockTime);
+    // }
+
     if (0 == pop_ret)
     {
         assert(mp_obj.getEncodingClass() != NO_MARKER);
@@ -3700,7 +3877,10 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
         if(msc_debug_handler_tx) PrintToLog("%s(): interp_ret: %d\n",__func__, interp_ret);
 
         // if interpretPacket returns 1, that means we have an instant trade between LTCs and tokens.
-        if (interp_ret == 1)
+        if (interp_ret == 0) {
+            HandleExodusPurchase(tx, nBlock, mp_obj.getSender(), nBlockTime);
+
+        } else if (interp_ret == 1)
         {
             HandleLtcInstantTrade(tx, nBlock, mp_obj.getIndexInBlock(), mp_obj.getSender(), mp_obj.getSpecial(), mp_obj.getReceiver(), mp_obj.getProperty(), mp_obj.getAmountForSale(), mp_obj.getPrice());
 
@@ -4677,6 +4857,11 @@ int mastercore_handler_block_end(int nBlockNow, CBlockIndex const * pBlockIndex,
        if (how_many_erased) {
           PrintToLog("%s(%d); erased %u accepts this block, line %d, file: %s\n",
             __func__, how_many_erased, nBlockNow, __LINE__, __FILE__);
+       }
+
+       if (msc_debug_exo) {
+          int64_t balance = getMPbalance(exodus_address, TL_PROPERTY_ALL, BALANCE);
+          PrintToLog("Block: %d, Exodus balance: %d\n", nBlockNow, FormatDivisibleMP(balance));
        }
 
        // check the alert status, do we need to do anything else here?
@@ -8077,4 +8262,60 @@ const std::vector<uint8_t> GetTLMarker()
 {
     std::vector<uint8_t> marker{0x70, 0x70};  /* 'pp' hex-encoded */
     return marker;
+}
+
+/**
+ * Returns the Exodus address.
+ *
+ * Main network:
+ *   1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P
+ *
+ * Test network:
+ *   mpexoDuSkGGqvqrkrjiFng38QPkJQVFyqv
+ *
+ * @return The Exodus address
+ */
+const std::string& ExodusAddress()
+{
+    if (isNonMainNet()) {
+        //static const CTxDestination test = DecodeDestination(exodus_testnet);
+        return exodus_testnet;
+    } else {
+        //static const CTxDestination main = DecodeDestination(exodus_testnet);
+        return exodus_mainnet;
+    }
+}
+
+const CTxDestination& ExodusDestination()
+{
+    if (isNonMainNet()) {
+        static const CTxDestination test = DecodeDestination(exodus_testnet);
+        return test;
+    } else {
+        static const CTxDestination main = DecodeDestination(exodus_testnet);
+        return main;
+    }
+}
+
+/**
+ * Returns the Exodus crowdsale address.
+ *
+ * Main network:
+ *   1EXoDusjGwvnjZUyKkxZ4UHEf77z6A5S4P
+ *
+ * Test network:
+ *   mpexoDuSkGGqvqrkrjiFng38QPkJQVFyqv (for blocks <  270775)
+ *   moneyqMan7uh8FqdCA2BV5yZ8qVrc9ikLP (for blocks >= 270775)
+ *
+ * @return The Exodus fundraiser address
+ */
+const std::string& ExodusCrowdsaleAddress(int nBlock)
+{
+    if (MONEYMAN_TESTNET_BLOCK <= nBlock && isNonMainNet()) {
+        return getmoney_testnet;
+    }
+    else if (MONEYMAN_REGTEST_BLOCK <= nBlock && RegTest()) {
+        return getmoney_testnet;
+    }
+    return ExodusAddress();
 }

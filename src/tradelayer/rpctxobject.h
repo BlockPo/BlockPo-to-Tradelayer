@@ -54,6 +54,7 @@ void populateRPCTypeUpdate_Id_Registration(CMPTransaction& tlObj, UniValue& txob
 void populateRPCTypeDEx_Payment(CMPTransaction& tlObj, UniValue& txobj);
 void populateRPCTypeInstant_LTC_Trade(CMPTransaction& tlObj, UniValue& txobj);
 void populateRPCTypeClose_Channel(CMPTransaction& tlObj, UniValue& txobj);
+void populateRPCTypeLitecoinPayment(CMPTransaction& tlObj, UniValue& txobj);
 
 int populateRPCSendAllSubSends(const uint256& txid, UniValue& subSends);
 

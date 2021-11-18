@@ -97,6 +97,12 @@ std::vector<TransactionRestriction> CConsensusParams::GetRestrictions() const
     v.push_back( { MSC_TYPE_METADEX_CANCEL_ALL,                    MP_TX_PKT_V0,      true, MSC_METADEX_BLOCK } );
     v.push_back( { MSC_TYPE_METADEX_CANCEL_BY_PRICE,               MP_TX_PKT_V0,      true, MSC_METADEX_BLOCK } );
     v.push_back( { MSC_TYPE_CLOSE_CHANNEL,                         MP_TX_PKT_V0,      true, MSC_TRADECHANNEL_TOKENS_BLOCK } );
+    v.push_back( { MSC_TYPE_CREATE_PROPERTY_VARIABLE,              MP_TX_PKT_V0,      false, MSC_LTC_CROWDSALE_BLOCK } );
+    v.push_back( { MSC_TYPE_CREATE_PROPERTY_VARIABLE,              MP_TX_PKT_V1,      false, MSC_LTC_CROWDSALE_BLOCK } );
+    v.push_back( { MSC_TYPE_CREATE_PROPERTY_VARIABLE,              MP_TX_PKT_V2,      true, MSC_LTC_CROWDSALE_BLOCK } );
+    v.push_back( { MSC_TYPE_CLOSE_CROWDSALE,                       MP_TX_PKT_V0,      false, MSC_SP_BLOCK } ),
+    v.push_back( { MSC_TYPE_LITECOIN_PAYMENT,                      MP_TX_PKT_V0,      true, MSC_LTC_CROWDSALE_BLOCK } );
+
     //---
     return v;
 }
@@ -137,6 +143,10 @@ TODO : New chain checkpoints
  */
 CMainConsensusParams::CMainConsensusParams()
 {
+    // Exodus related:
+    exodusBonusPerWeek = 0.10;
+    exodusDeadline = 1667190670;
+    exodusReward = 100;
     GENESIS_BLOCK = 2136526;
     // Notice range for feature activations:
     MIN_ACTIVATION_BLOCKS = 0;  // ~2 weeks
@@ -180,6 +190,10 @@ CMainConsensusParams::CMainConsensusParams()
     MSC_MASSPAYMENT_BLOCK = 99999999;
     MSC_MULTISEND_BLOCK = 99999999;
     MSC_HEDGEDCURRENCY_BLOCK = 99999999;
+    MSC_LTC_CROWDSALE_BLOCK = 999999;
+    // Other feature activations:
+    GRANTEFFECTS_FEATURE_BLOCK = 999999;
+    SPCROWDCROSSOVER_FEATURE_BLOCK = 999999;
 
     ONE_YEAR = 210240;
 }
@@ -189,6 +203,10 @@ CMainConsensusParams::CMainConsensusParams()
  */
  CTestNetConsensusParams::CTestNetConsensusParams()
  {
+     // Exodus related:
+     exodusBonusPerWeek = 0.10;
+     exodusDeadline = 1667190670;
+     exodusReward = 100;
      GENESIS_BLOCK = 2046650;
      // Notice range for feature activations:
      MIN_ACTIVATION_BLOCKS = 0;
@@ -234,6 +252,10 @@ CMainConsensusParams::CMainConsensusParams()
      MSC_MASSPAYMENT_BLOCK = 99999999;
      MSC_MULTISEND_BLOCK = 99999999;
      MSC_HEDGEDCURRENCY_BLOCK = 99999999;
+     MSC_LTC_CROWDSALE_BLOCK = 0;
+     // Other feature activations:
+    GRANTEFFECTS_FEATURE_BLOCK = 999999;
+    SPCROWDCROSSOVER_FEATURE_BLOCK = 999999;
 
      ONE_YEAR = 2650;  // just for testing
  }
@@ -244,6 +266,10 @@ CMainConsensusParams::CMainConsensusParams()
  */
 CRegTestConsensusParams::CRegTestConsensusParams()
 {
+    // Exodus related:
+    exodusBonusPerWeek = 0.00;
+    exodusDeadline = 1667190670;
+    exodusReward = 100;     
     GENESIS_BLOCK = 0;
     // Notice range for feature activations:
     MIN_ACTIVATION_BLOCKS = 5;
@@ -293,6 +319,10 @@ CRegTestConsensusParams::CRegTestConsensusParams()
     MSC_MASSPAYMENT_BLOCK = 99999999;
     MSC_MULTISEND_BLOCK = 99999999;
     MSC_HEDGEDCURRENCY_BLOCK = 99999999;
+    MSC_LTC_CROWDSALE_BLOCK = 99999999;
+    // Other feature activations:
+    GRANTEFFECTS_FEATURE_BLOCK = 999999;
+    SPCROWDCROSSOVER_FEATURE_BLOCK = 999999;
 
     ONE_YEAR = 930;
 
@@ -548,6 +578,18 @@ bool ActivateFeature(uint16_t featureId, int activationBlock, uint32_t minClient
           params.MSC_HEDGEDCURRENCY_BLOCK = activationBlock;
           break;
 
+      case FEATURE_GRANTEFFECTS:
+          params.GRANTEFFECTS_FEATURE_BLOCK = activationBlock;
+          break;
+
+      case FEATURE_SPCROWDCROSSOVER:
+          params.SPCROWDCROSSOVER_FEATURE_BLOCK = activationBlock;
+          break;
+
+      case FEATURE_LTC_CROWDSALES:
+          params.MSC_LTC_CROWDSALE_BLOCK = activationBlock;
+          break;
+          
       default:
            supported = false;
            break;
@@ -863,6 +905,14 @@ bool IsFeatureActivated(uint16_t featureId, int transactionBlock)
           activationBlock = params.MSC_HEDGEDCURRENCY_BLOCK;
           break;
 
+      case FEATURE_SPCROWDCROSSOVER:
+          activationBlock = params.SPCROWDCROSSOVER_FEATURE_BLOCK;
+          break;
+    
+      case FEATURE_LTC_CROWDSALES:
+          activationBlock = params.MSC_LTC_CROWDSALE_BLOCK;
+          break;
+
         default:
             return false;
     }
@@ -899,6 +949,20 @@ bool IsTransactionTypeAllowed(int txBlock, uint16_t txType, uint16_t version)
     }
 
     return false;
+}
+
+/**
+ * Whether Litecoin payments are supported for a transaction type/version.
+ */
+bool IsLitecoinPaymentAllowed(uint16_t type, uint16_t version)
+{
+    bool allowed = false;
+
+    if (type == MSC_TYPE_CREATE_PROPERTY_VARIABLE && version == MP_TX_PKT_V2) {
+        allowed = true;
+    }
+
+    return allowed;
 }
 
 /**

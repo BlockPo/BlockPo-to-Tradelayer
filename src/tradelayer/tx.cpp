@@ -19,7 +19,10 @@
 #include <tradelayer/uint256_extensions.h>
 #include <tradelayer/utilsbitcoin.h>
 #include <tradelayer/varint.h>
+#include <tradelayer/errors.h>
+#include <rpc/server.h>
 
+#include <chainparams.h>
 #include <amount.h>
 #include <sync.h>
 #include <util/time.h>
@@ -67,9 +70,11 @@ const struct tradelayer_descs {
 	{ MSC_TYPE_RESTRICTED_SEND, "Restricted Send" },
 	{ MSC_TYPE_SEND_ALL, "Send All" },
 	{ MSC_TYPE_SEND_VESTING, "Send Vesting Tokens" },
+    { MSC_TYPE_CLOSE_CROWDSALE, "Close Crowdsale" },
 	{ MSC_TYPE_SAVINGS_MARK, "Savings" },
 	{ MSC_TYPE_SAVINGS_COMPROMISED, "Savings COMPROMISED" },
 	{ MSC_TYPE_CREATE_PROPERTY_FIXED, "Create Property - Fixed" },
+	{ MSC_TYPE_CREATE_PROPERTY_VARIABLE, "Create Property - Variable" },
 	{ MSC_TYPE_CREATE_PROPERTY_MANUAL, "Create Property - Manual" },
 	{ MSC_TYPE_GRANT_PROPERTY_TOKENS, "Grant Property Tokens" },
 	{ MSC_TYPE_REVOKE_PROPERTY_TOKENS, "Revoke Property Tokens" },
@@ -111,6 +116,7 @@ const struct tradelayer_descs {
 	{ MSC_TYPE_METADEX_CANCEL_BY_PRICE, "MetaDEx cancel-price" },
 	{ MSC_TYPE_METADEX_CANCEL_BY_PAIR, "MetaDEx cancel-by-pair" },
 	{ MSC_TYPE_CLOSE_CHANNEL , "Close Channel" },
+    { MSC_TYPE_LITECOIN_PAYMENT, "Litecoin Payment" }
 };
 
 /* Mapping of a transaction type to a textual description. */
@@ -182,8 +188,14 @@ bool CMPTransaction::interpret_Transaction()
       case MSC_TYPE_SEND_VESTING:
           return interpret_SendVestingTokens();
 
+      case MSC_TYPE_CLOSE_CROWDSALE:
+          return interpret_CloseCrowdsale();
+
       case MSC_TYPE_CREATE_PROPERTY_FIXED:
           return interpret_CreatePropertyFixed();
+
+      case MSC_TYPE_CREATE_PROPERTY_VARIABLE:
+          return interpret_CreatePropertyVariable();
 
       case MSC_TYPE_CREATE_PROPERTY_MANUAL:
           return interpret_CreatePropertyManaged();
@@ -307,6 +319,9 @@ bool CMPTransaction::interpret_Transaction()
 
       case MSC_TYPE_CLOSE_CHANNEL:
           return interpret_SimpleSend();
+      
+      case MSC_TYPE_LITECOIN_PAYMENT:
+          return interpret_LitecoinPayment();
 
     }
 
@@ -414,6 +429,26 @@ bool CMPTransaction::interpret_SendVestingTokens()
   return true;
 }
 
+/** Tx 53 */
+bool CMPTransaction::interpret_CloseCrowdsale()
+{
+    int i = 0;
+
+    std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecPropIdBytes = GetNextVarIntBytes(i);
+
+    if (!vecPropIdBytes.empty()) {
+        property = DecompressInteger(vecPropIdBytes);
+    } else return false;
+
+    if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly) {
+        PrintToLog("\t        property: %d (%s)\n", property, strMPProperty(property));
+    }
+
+    return true;
+}
+
 /** Tx 4 */
 bool CMPTransaction::interpret_SendAll()
 {
@@ -490,6 +525,82 @@ bool CMPTransaction::interpret_CreatePropertyFixed()
         PrintToLog("\t             url: %s\n", url);
         PrintToLog("\t            data: %s\n", data);
         PrintToLog("\t           value: %s\n", FormatByType(nValue, prop_type));
+    }
+
+    return true;
+}
+
+/** Tx 51 */
+bool CMPTransaction::interpret_CreatePropertyVariable()
+{
+    int i = 0;
+    
+    auto vecVersionBytes = GetNextVarIntBytes(i);
+    auto vecTypeBytes = GetNextVarIntBytes(i);
+    auto vecPropTypeBytes = GetNextVarIntBytes(i);
+    auto vecPrevPropIdBytes = GetNextVarIntBytes(i);
+
+    const char* p = i + (char*) &pkt;
+    for (auto s : {category, subcategory, name, url, data}) {
+        std::string s1(p);
+        memcpy(s, s1.c_str(), std::min(s1.length(), size_t(SP_STRING_FIELD_LEN-1)));
+        p += s1.size() + 1;
+        i += s1.size() + 1;
+    }
+
+    if (isOverrun(p)) {
+        PrintToLog("%s(): rejected: malformed string value(s)\n", __func__);
+        return false;
+    }
+
+    auto vecPropIdDesiredBytes = GetNextVarIntBytes(i);
+    auto vecAmountPerUnitBytes = GetNextVarIntBytes(i);
+    auto vecDeadlineBytes = GetNextVarIntBytes(i);
+    auto vecEarlyBonusBytes = GetNextVarIntBytes(i);
+    auto vecIssuerPercentageBytes = GetNextVarIntBytes(i);
+
+    if (!vecPropTypeBytes.empty()) {
+        prop_type = DecompressInteger(vecPropTypeBytes);
+    } else return false;
+
+    if (!vecPrevPropIdBytes.empty()) {
+        prev_prop_id = DecompressInteger(vecPrevPropIdBytes);
+    } else return false;
+
+    if (!vecPropIdDesiredBytes.empty()) {
+        property = DecompressInteger(vecPropIdDesiredBytes);
+    } else return false;
+
+    if (!vecAmountPerUnitBytes.empty()) {
+        nValue = DecompressInteger(vecAmountPerUnitBytes);
+        nNewValue = nValue;
+    } else return false;
+
+    if (!vecDeadlineBytes.empty()) {
+        deadline = DecompressInteger(vecDeadlineBytes);
+    } else return false;
+
+    if (!vecEarlyBonusBytes.empty()) {
+        early_bird = DecompressInteger(vecEarlyBonusBytes);
+    } else return false;
+
+    if (!vecIssuerPercentageBytes.empty()) {
+        percentage = DecompressInteger(vecIssuerPercentageBytes);
+    } else return false;
+
+    if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly) {
+        PrintToLog("\t   property type: %d (%s)\n", prop_type, strPropertyType(prop_type));
+        PrintToLog("\tprev property id: %d\n", prev_prop_id);
+        PrintToLog("\t        category: %s\n", category);
+        PrintToLog("\t     subcategory: %s\n", subcategory);
+        PrintToLog("\t            name: %s\n", name);
+        PrintToLog("\t             url: %s\n", url);
+        PrintToLog("\t            data: %s\n", data);
+        PrintToLog("\tproperty desired: %d (%s)\n", property, strMPProperty(property));
+        PrintToLog("\t tokens per unit: %s\n", FormatByType(nValue, prop_type));
+        PrintToLog("\t        deadline: %s (%x)\n", FormatISO8601DateTime(deadline), deadline);
+        PrintToLog("\tearly bird bonus: %d\n", early_bird);
+        PrintToLog("\t    issuer bonus: %d\n", percentage);
     }
 
     return true;
@@ -2181,6 +2292,23 @@ bool CMPTransaction::interpret_Close_Channel()
   return true;
 }
 
+/** Tx 80 */
+bool CMPTransaction::interpret_LitecoinPayment()
+{
+    int i = 0;
+
+    std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+
+    const char* p = i + (char*) &pkt;
+    linked_txid = ParseHashV(p, "txid");
+
+    if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly) {
+        PrintToLog("\t     linked txid: %s\n", linked_txid.GetHex());
+    }
+
+    return true;
+}
 
 // ---------------------- CORE LOGIC -------------------------
 
@@ -2218,8 +2346,14 @@ int CMPTransaction::interpretPacket()
         case MSC_TYPE_SEND_VESTING:
             return logicMath_SendVestingTokens();
 
+        case MSC_TYPE_CLOSE_CROWDSALE:
+            return logicMath_CloseCrowdsale();
+
         case MSC_TYPE_CREATE_PROPERTY_FIXED:
             return logicMath_CreatePropertyFixed();
+
+        case MSC_TYPE_CREATE_PROPERTY_VARIABLE:
+            return logicMath_CreatePropertyVariable();
 
         case MSC_TYPE_CREATE_PROPERTY_MANUAL:
             return logicMath_CreatePropertyManaged();
@@ -2344,6 +2478,9 @@ int CMPTransaction::interpretPacket()
         case MSC_TYPE_METADEX_CANCEL_BY_PRICE:
             return logicMath_MetaDExCancel_ByPrice();
 
+        case MSC_TYPE_LITECOIN_PAYMENT:
+            return logicMath_LitecoinPayment();
+
         default:
             return -1;
     }
@@ -2439,6 +2576,8 @@ int CMPTransaction::logicMath_SimpleSend()
     assert(update_tally_map(sender, property, -nValue, BALANCE));
     assert(update_tally_map(receiver, property, nValue, BALANCE));
 
+    // Is there an active crowdsale running from this recepient?
+    logicHelper_CrowdsaleParticipation();
 
     return 0;
 }
@@ -2593,6 +2732,241 @@ int CMPTransaction::logicMath_SendVestingTokens()
   vestingAddresses.insert(receiver);
 
   return 0;
+}
+
+/** Tx 51 */
+int CMPTransaction::logicMath_CreatePropertyVariable()
+{
+    uint256 blockHash;
+    {
+        LOCK(cs_main);
+
+        CBlockIndex* pindex = chainActive[block];
+        if (pindex == NULL) {
+            PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
+            return (PKT_ERROR_SP -20);
+        }
+        blockHash = pindex->GetBlockHash();
+    }
+
+    // TODO: double check this functionality
+    if (IsFeatureActivated(FEATURE_SPCROWDCROSSOVER, block)) {
+        PrintToLog("%s(): rejected: crossovers is not allowed\n");
+        return (PKT_ERROR_SP -50);
+    }
+
+    if (!IsTransactionTypeAllowed(block, type, version)) {
+        PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+                __func__,
+                type,
+                version,
+                property,
+                block);
+        return (PKT_ERROR_SP -22);
+    }
+
+    if (nValue <= 0 || MAX_INT_8_BYTES < nValue) {
+        PrintToLog("%s(): rejected: value out of range or zero: %d\n", __func__, nValue);
+        return (PKT_ERROR_SP -23);
+    }
+
+    if (version < MP_TX_PKT_V2 && !_my_sps->hasSP(property)) {
+        PrintToLog("%s(): rejected: property %d does not exist\n", __func__, property);
+        return (PKT_ERROR_SP -24);
+    }
+
+    if (ALL_PROPERTY_TYPE_INDIVISIBLE != prop_type && ALL_PROPERTY_TYPE_DIVISIBLE != prop_type) {
+        PrintToLog("%s(): rejected: invalid property type: %d\n", __func__, prop_type);
+        return (PKT_ERROR_SP -36);
+    }
+
+    if ('\0' == name[0]) {
+        PrintToLog("%s(): rejected: property name must not be empty\n", __func__);
+        return (PKT_ERROR_SP -37);
+    }
+
+    if (!deadline || (int64_t) deadline < blockTime) {
+        PrintToLog("%s(): rejected: deadline must not be in the past [%d < %d]\n", __func__, deadline, blockTime);
+        return (PKT_ERROR_SP -38);
+    }
+
+    if (NULL != getCrowd(sender)) {
+        PrintToLog("%s(): rejected: sender %s has an active crowdsale\n", __func__, sender);
+        return (PKT_ERROR_SP -39);
+    }
+
+    // ------------------------------------------
+
+    CMPSPInfo::Entry newSP;
+    newSP.issuer = sender;
+    newSP.txid = txid;
+    newSP.prop_type = prop_type;
+    newSP.num_tokens = nValue;
+    newSP.category.assign(category);
+    newSP.subcategory.assign(subcategory);
+    newSP.name.assign(name);
+    newSP.url.assign(url);
+    newSP.data.assign(data);
+    newSP.fixed = false;
+    newSP.property_desired = property;
+    newSP.deadline = deadline;
+    newSP.early_bird = early_bird;
+    newSP.percentage = percentage;
+    newSP.creation_block = blockHash;
+    newSP.update_block = newSP.creation_block;
+
+    const uint32_t propertyId = _my_sps->putSP(newSP);
+    assert(propertyId > 0);
+    my_crowds.insert(std::make_pair(sender, CMPCrowd(propertyId, nValue, property, deadline, early_bird, percentage, 0, 0)));
+
+    PrintToLog("CREATED CROWDSALE id: %d value: %d property: %d\n", propertyId, nValue, property);
+
+    return 0;
+}
+
+/** Tx 53 */
+int CMPTransaction::logicMath_CloseCrowdsale()
+{
+    uint256 blockHash;
+    {
+        LOCK(cs_main);
+
+        CBlockIndex* pindex = chainActive[block];
+        if (pindex == NULL) {
+            PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
+            return (PKT_ERROR_SP -20);
+        }
+        blockHash = pindex->GetBlockHash();
+    }
+
+    if (!IsTransactionTypeAllowed(block, type, version)) {
+        PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+                __func__,
+                type,
+                version,
+                property,
+                block);
+        return (PKT_ERROR_SP -22);
+    }
+
+    if (!_my_sps->hasSP(property)) {
+        PrintToLog("%s(): rejected: property %d does not exist\n", __func__, property);
+        return (PKT_ERROR_SP -24);
+    }
+
+    CrowdMap::iterator it = my_crowds.find(sender);
+    if (it == my_crowds.end()) {
+        PrintToLog("%s(): rejected: sender %s has no active crowdsale\n", __func__, sender);
+        return (PKT_ERROR_SP -40);
+    }
+
+    const CMPCrowd& crowd = it->second;
+    if (property != crowd.getPropertyId()) {
+        PrintToLog("%s(): rejected: property identifier mismatch [%d != %d]\n", __func__, property, crowd.getPropertyId());
+        return (PKT_ERROR_SP -41);
+    }
+
+    // ------------------------------------------
+
+    CMPSPInfo::Entry sp;
+    assert(_my_sps->getSP(property, sp));
+
+    int64_t missedTokens = GetMissedIssuerBonus(sp, crowd);
+
+    sp.historicalData = crowd.getDatabase();
+    sp.update_block = blockHash;
+    sp.close_early = true;
+    sp.timeclosed = blockTime;
+    sp.txid_close = txid;
+    sp.missedTokens = missedTokens;
+
+    assert(_my_sps->updateSP(property, sp));
+    if (missedTokens > 0) {
+        assert(update_tally_map(sp.issuer, property, missedTokens, BALANCE));
+    }
+    my_crowds.erase(it);
+
+    if (msc_debug_sp) PrintToLog("CLOSED CROWDSALE id: %d=%X\n", property, property);
+
+    return 0;
+}
+
+/** Passive effect of crowdsale participation. */
+int CMPTransaction::logicHelper_CrowdsaleParticipation()
+{
+    CMPCrowd* pcrowdsale = getCrowd(receiver);
+
+    // No active crowdsale
+    if (pcrowdsale == NULL) {
+        PrintToLog("%s(): rejected: no active crowdsale found for: <%s>\n", __func__, receiver);
+        return (PKT_ERROR_CROWD -1);
+    }
+    // Active crowdsale, but not for this property
+    // Note property is 0 by default, ideally need a way to explicitly specify BTC
+    if (pcrowdsale->getCurrDes() != property) {
+        return (PKT_ERROR_CROWD -2);
+    }
+
+    CMPSPInfo::Entry sp;
+    assert(_my_sps->getSP(pcrowdsale->getPropertyId(), sp));
+    PrintToLog("INVESTMENT SEND to Crowdsale Issuer: %s\n", receiver);
+
+    // Holds the tokens to be credited to the sender and issuer
+    std::pair<int64_t, int64_t> tokens;
+
+    // Passed by reference to determine, if max_tokens has been reached
+    bool close_crowdsale = false;
+
+    // Units going into the calculateFundraiser function must match the unit of
+    // the fundraiser's property_type. By default this means satoshis in and
+    // satoshis out. In the condition that the fundraiser is divisible, but
+    // indivisible tokens are accepted, it must account for .0 Div != 1 Indiv,
+    // but actually 1.0 Div == 100000000 Indiv. The unit must be shifted or the
+    // values will be incorrect, which is what is checked below.
+    bool inflateAmount = isPropertyDivisible(property) ? false : true;
+
+    // Calculate the amounts to credit for this fundraiser
+    calculateFundraiser(inflateAmount, nValue, sp.early_bird, sp.deadline, blockTime, sp.num_tokens, 
+                        sp.percentage, getTotalTokens(pcrowdsale->getPropertyId()), tokens, close_crowdsale);
+
+    if (msc_debug_sp) {
+        uint32_t crowdPropertyId = pcrowdsale->getPropertyId();
+        PrintToLog("%s(): granting via crowdsale to user: %s %d (%s)\n",
+                __func__, FormatMP(crowdPropertyId, tokens.first), crowdPropertyId, strMPProperty(crowdPropertyId));
+        PrintToLog("%s(): granting via crowdsale to issuer: %s %d (%s)\n",
+                __func__, FormatMP(crowdPropertyId, tokens.second), crowdPropertyId, strMPProperty(crowdPropertyId));
+    }
+
+    // Update the crowdsale object
+    pcrowdsale->incTokensUserCreated(tokens.first);
+    pcrowdsale->incTokensIssuerCreated(tokens.second);
+
+    // Data to pass to txFundraiserData
+    int64_t txdata[] = {(int64_t) nValue, blockTime, tokens.first, tokens.second};
+    std::vector<int64_t> txDataVec(txdata, txdata + sizeof(txdata) / sizeof(txdata[0]));
+
+    // Insert data about crowdsale participation
+    pcrowdsale->insertDatabase(txid, txDataVec);
+
+    // Credit tokens for this fundraiser
+    if (tokens.first > 0) {
+        assert(update_tally_map(sender, pcrowdsale->getPropertyId(), tokens.first, BALANCE));
+    }
+    if (tokens.second > 0) {
+        assert(update_tally_map(receiver, pcrowdsale->getPropertyId(), tokens.second, BALANCE));
+    }
+
+    // Close crowdsale, if we hit MAX_TOKENS
+    if (close_crowdsale) {
+        eraseMaxedCrowdsale(receiver, blockTime, block);
+    }
+
+    // Indicate, if no tokens were transferred
+    if (!tokens.first && !tokens.second) {
+        PrintToLog("%s(): no tokens (%d) were transferred", pcrowdsale->getPropertyId());
+        return (PKT_ERROR_CROWD -3);
+    }
+    return 0;
 }
 
 /** Tx 4 */
@@ -2919,6 +3293,15 @@ int CMPTransaction::logicMath_GrantTokens()
   // Move the tokens
   assert(update_tally_map(receiver, property, nValue, BALANCE));
 
+  /**
+     * As long as the feature to disable the side effects of "granting tokens"
+     * is not activated, "granting tokens" can trigger crowdsale participations.
+     */
+  if (!IsFeatureActivated(FEATURE_GRANTEFFECTS, block)) {
+    // Is there an active crowdsale running from this recepient?
+    logicHelper_CrowdsaleParticipation();
+  }
+
   NotifyTotalTokensChanged(property);
 
   return 0;
@@ -3042,9 +3425,19 @@ int CMPTransaction::logicMath_ChangeIssuer()
         return (PKT_ERROR_TOKENS -43);
     }
 
+    if (NULL != getCrowd(sender)) {
+        PrintToLog("%s(): rejected: sender %s has an active crowdsale\n", __func__, sender);
+        return (PKT_ERROR_TOKENS -39);
+    }
+
     if (receiver.empty()) {
         PrintToLog("%s(): rejected: receiver is empty\n", __func__);
         return (PKT_ERROR_TOKENS -45);
+    }
+
+    if (NULL != getCrowd(receiver)) {
+        PrintToLog("%s(): rejected: receiver %s has an active crowdsale\n", __func__, receiver);
+        return (PKT_ERROR_TOKENS -46);
     }
 
     // ------------------------------------------
@@ -4942,6 +5335,130 @@ int CMPTransaction::logicMath_Close_Channel()
     if(!closeChannel(sender, receiver)){
         PrintToLog("%s(): unable to close the channel (%s)\n",__func__, receiver);
         return (PKT_ERROR_CHANNELS -21);
+    }
+
+    return 0;
+}
+
+/** Tx 80 */
+int CMPTransaction::logicMath_LitecoinPayment()
+{
+    uint256 blockHash;
+    {
+        LOCK(cs_main);
+
+        CBlockIndex* pindex = chainActive[block];
+        if (pindex == NULL) {
+            PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
+            return (PKT_ERROR_TOKENS -20);
+        }
+        blockHash = pindex->GetBlockHash();
+    }
+
+    if (!IsTransactionTypeAllowed(block, type, version)) {
+        PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+                __func__,
+                type,
+                version,
+                property,
+                block);
+        return (PKT_ERROR_TOKENS -22);
+    }
+
+    CTransactionRef tx;
+    uint256 linked_blockHash;
+    int linked_blockHeight = 0;
+    int linked_blockTime = 0;
+
+    if (!GetTransaction(linked_txid, tx, Params().GetConsensus(), linked_blockHash, true)) {
+        PrintToLog("%s(): rejected: linked transaction %s does not exist\n",
+                __func__,
+                linked_txid.GetHex());
+        return MP_TX_NOT_FOUND;
+    }
+
+    if (linked_blockHash.size() == 0) { // linked transaction is unconfirmed (and thus not yet added to state), cannot process payment
+        PrintToLog("%s(): rejected: linked transaction %s does not exist (unconfirmed)\n",
+                __func__,
+                linked_txid.GetHex());
+        return MP_TX_NOT_FOUND;
+    }
+
+    CBlockIndex* pBlockIndex = GetBlockIndex(linked_blockHash);
+    if (NULL != pBlockIndex) {
+        linked_blockHeight = pBlockIndex->nHeight;
+        linked_blockTime = pBlockIndex->nTime;
+    }
+
+    CMPTransaction mp_obj;
+    int parseRC = ParseTransaction(*tx, linked_blockHeight, 0, mp_obj, linked_blockTime);
+    if (parseRC < 0) {
+        PrintToLog("%s(): rejected: linked transaction %s is not a TL layer transaction\n",
+                __func__,
+                linked_txid.GetHex());
+        return MP_TX_IS_NOT_MASTER_PROTOCOL;
+    }
+
+    if (!mp_obj.interpret_Transaction()) {
+        PrintToLog("%s(): rejected: linked transaction %s is not a TL layer transaction\n",
+                __func__,
+                linked_txid.GetHex());
+        return MP_TX_IS_NOT_MASTER_PROTOCOL;
+    }
+
+    bool linked_valid = false;
+    {
+        LOCK(cs_tally);
+        linked_valid = getValidMPTX(linked_txid);
+    }
+    if (!linked_valid) {
+        PrintToLog("%s(): rejected: linked transaction %s is an invalid transaction\n",
+                __func__,
+                linked_txid.GetHex());
+        return MP_TX_IS_NOT_MASTER_PROTOCOL -101;
+    }
+
+    uint16_t linked_type = mp_obj.getType();
+    uint16_t linked_version = mp_obj.getVersion();
+    if (!IsLitecoinPaymentAllowed(linked_type, linked_version)) {
+        PrintToLog("%s(): rejected: linked transaction %s doesn't support bitcoin payments\n",
+                __func__,
+                linked_txid.GetHex());
+        return (PKT_ERROR_TOKENS -61);
+    }
+
+    std::string linked_sender = mp_obj.getSender();
+    nValue = GetLitecoinPaymentAmount(txid, linked_sender);
+    PrintToLog("\tlinked tx sender: %s\n", linked_sender);
+    PrintToLog("\t  payment amount: %s\n", FormatDivisibleMP(nValue));
+
+    if (nValue == 0) {
+        PrintToLog("%s(): rejected: no payment to sender of linked transaction\n",
+                __func__,
+                linked_sender,
+                linked_txid.GetHex());
+        return (PKT_ERROR_TOKENS -62);
+    }
+
+    // empty receiver & receiver == linked_sender checks are skipped, since we don't care if the payment was last vout
+
+    if (linked_type == MSC_TYPE_CREATE_PROPERTY_VARIABLE) {
+        CMPCrowd* pcrowdsale = getCrowd(receiver);
+        if (pcrowdsale == NULL) {
+            PrintToLog("%s(): rejected: receiver %s does not have an active crowdsale\n", __func__, receiver);
+            return (PKT_ERROR_TOKENS -47);
+        }
+
+        // confirm the crowdsale that the receiver has open now is the same as the transaction referenced in the payment
+        // CMPCrowd class doesn't contain txid, work around by comparing propid for current crowdsale & propid for linked crowdsale
+        uint32_t crowdPropertyId = pcrowdsale->getPropertyId();
+        uint32_t linkPropertyId = _my_sps->findSPByTX(linked_txid); // TODO: Is this safe to lookup the crowdsale this way??
+        if (linkPropertyId != crowdPropertyId) {
+            PrintToLog("%s(): rejected: active crowdsale for receiver %s did not originate from linked txid\n", __func__, receiver);
+            return (PKT_ERROR_TOKENS -48);
+        }
+
+        logicHelper_CrowdsaleParticipation();
     }
 
     return 0;

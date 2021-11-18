@@ -1269,6 +1269,88 @@ UniValue tl_createpayload_closechannel(const JSONRPCRequest& request)
     return HexStr(payload.begin(), payload.end());
 }
 
+UniValue tl_createpayload_issuancecrowdsale(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 12)
+        throw runtime_error(
+            "tl_createpayload_issuancecrowdsale type previousid \"category\" \"subcategory\" \"name\" \"url\" \"data\" propertyiddesired tokensperunit deadline earlybonus issuerpercentage\n"
+
+            "\nCreates the payload for a new tokens issuance with crowdsale.\n"
+
+            "\nArguments:\n"
+            "1. type                 (number, required) the type of the tokens to create: (1 for indivisible tokens, 2 for divisible tokens)\n"
+            "2. previousid           (number, required) an identifier of a predecessor token (0 for new crowdsales)\n"
+            "3. category             (string, required) a category for the new tokens (can be \"\")\n"
+            "4. subcategory          (string, required) a subcategory for the new tokens  (can be \"\")\n"
+            "5. name                 (string, required) the name of the new tokens to create\n"
+            "6. url                  (string, required) an URL for further information about the new tokens (can be \"\")\n"
+            "7. data                 (string, required) a description for the new tokens (can be \"\")\n"
+            "8. propertyiddesired    (number, required) the identifier of a token eligible to participate in the crowdsale\n"
+            "9. tokensperunit        (string, required) the amount of tokens granted per unit invested in the crowdsale\n"
+            "10. deadline            (number, required) the deadline of the crowdsale as Unix timestamp\n"
+            "11. earlybonus          (number, required) an early bird bonus for participants in percent per week\n"
+            "12. issuerpercentage    (number, required) a percentage of tokens that will be granted to the issuer\n"
+
+            "\nResult:\n"
+            "\"payload\"             (string) the hex-encoded payload\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("tl_createpayload_issuancecrowdsale", "1, 0, \"Companies\" \"Bitcoin Mining\" \"Quantum Miner\" \"\" \"\" 2 \"100\" 1483228800, 30, 2")
+            + HelpExampleRpc("tl_createpayload_issuancecrowdsale", "1, 0, \"Companies\", \"Bitcoin Mining\", \"Quantum Miner\", \"\", \"\", 2, \"100\", 1483228800, 30, 2")
+        );
+
+    uint16_t type = ParsePropertyType(request.params[0]);
+    uint32_t previousId = ParsePreviousPropertyId(request.params[1]);
+    std::string category = ParseText(request.params[2]);
+    std::string subcategory = ParseText(request.params[3]);
+    std::string name = ParseText(request.params[4]);
+    std::string url = ParseText(request.params[5]);
+    std::string data = ParseText(request.params[6]);
+    uint32_t propertyIdDesired = ParsePropertyId(request.params[7]);
+    int64_t numTokens = ParseAmount(request.params[8], type);
+    int64_t deadline = ParseDeadline(request.params[9]);
+    uint8_t earlyBonus = ParseEarlyBirdBonus(request.params[10]);
+    uint8_t issuerPercentage = ParseIssuerBonus(request.params[11]);
+
+    RequirePropertyName(name);
+
+    if (propertyIdDesired != LTC) {
+        RequireExistingProperty(propertyIdDesired);
+    }
+
+    std::vector<unsigned char> payload = CreatePayload_IssuanceVariable(type, previousId, category, subcategory, name, url, data, propertyIdDesired, numTokens, deadline, earlyBonus, issuerPercentage);
+
+    return HexStr(payload.begin(), payload.end());
+}
+
+UniValue tl_createpayload_closecrowdsale(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 1)
+        throw runtime_error(
+            "tl_createpayload_closecrowdsale propertyid\n"
+
+            "\nCreates the payload to manually close a crowdsale.\n"
+
+            "\nArguments:\n"
+            "1. propertyid             (number, required) the identifier of the crowdsale to close\n"
+
+            "\nResult:\n"
+            "\"payload\"             (string) the hex-encoded payload\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("tl_createpayload_closecrowdsale", "70")
+            + HelpExampleRpc("tl_createpayload_closecrowdsale", "70")
+        );
+
+    uint32_t propertyId = ParsePropertyId(request.params[0]);
+
+    // checks bypassed because someone may wish to prepare the payload to close a crowdsale creation not yet broadcast
+
+    std::vector<unsigned char> payload = CreatePayload_CloseCrowdsale(propertyId);
+
+    return HexStr(payload.begin(), payload.end());
+}
+
 static const CRPCCommand commands[] =
   { //  category                         name                                             actor (function)                               okSafeMode
     //  -------------------------------- -----------------------------------------       ----------------------------------------        ----------
@@ -1311,10 +1393,12 @@ static const CRPCCommand commands[] =
     { "trade layer (payload creation)", "tl_createpayload_instant_ltc_trade",             &tl_createpayload_instant_ltc_trade,               {}   },
     { "trade layer (payload creation)", "tl_createpayload_commit_tochannel",              &tl_createpayload_commit_tochannel,                {}   },
     { "trade layer (payload creation)", "tl_createpayload_withdrawal_fromchannel",        &tl_createpayload_withdrawal_fromchannel,          {}   },
-    { "trade layer (payload creation)", "tl_createpayload_closechannel",                  &tl_createpayload_closechannel,        {}   }
+    { "trade layer (payload creation)", "tl_createpayload_closechannel",                  &tl_createpayload_closechannel,                    {}   },
+
+    { "trade layer (payload creation)", "tl_createpayload_issuancecrowdsale",             &tl_createpayload_issuancecrowdsale,               {}   },
+    { "trade layer (payload creation)", "tl_createpayload_closecrowdsale",                &tl_createpayload_closecrowdsale,                  {}   }
+    
   };
-
-
 
 void RegisterTLPayloadCreationRPCCommands(CRPCTable &tableRPC)
 {

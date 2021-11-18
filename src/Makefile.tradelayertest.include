@@ -5,6 +5,7 @@ TRADELAYER_TEST_CPP = \
   tradelayer/test/encoding_d_tests.cpp \
   tradelayer/test/tally_tests.cpp \
   tradelayer/test/create_payload_tests.cpp \
+  tradelayer/test/crowdsale_participation_tests.cpp \
   tradelayer/test/x_trade_tests.cpp \
   tradelayer/test/requirements_tests.cpp \
   tradelayer/test/dex_purchase_tests.cpp \

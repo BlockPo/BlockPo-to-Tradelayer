@@ -19,6 +19,16 @@ BOOST_AUTO_TEST_CASE(payload_simple_send)
     BOOST_CHECK_EQUAL(HexStr(vch), "00000180c2d72f");
 }
 
+BOOST_AUTO_TEST_CASE(payload_send_many)
+{
+    // Simple send [type 0, version 0]
+    std::vector<unsigned char> vch = CreatePayload_SendMany(
+        static_cast<uint32_t>(1),          // property: MSC
+        {1000,2000,3000,4000});            // amounts to transfer
+
+    BOOST_CHECK_EQUAL(HexStr(vch), "000101e807d00fb817a01f");
+}
+
 BOOST_AUTO_TEST_CASE(payload_send_all)
 {
     // Send to owners [type 4, version 0]
@@ -376,6 +386,77 @@ BOOST_AUTO_TEST_CASE(payload_send_dex_accept)
 
     BOOST_CHECK_EQUAL(HexStr(vch),"001601d804");
     BOOST_CHECK_EQUAL(vch.size(), 5);
+}
+
+BOOST_AUTO_TEST_CASE(payload_create_crowdsale)
+{
+    // Create crowdsale [type 51, version 0]
+    std::vector<unsigned char> vch = CreatePayload_IssuanceVariable(
+        static_cast<uint16_t>(1),            // property type: indivisible tokens
+        static_cast<uint32_t>(0),            // previous property: none
+        std::string("Companies"),            // category
+        std::string("Bitcoin Mining"),       // subcategory
+        std::string("Quantum Miner"),        // label
+        std::string("builder.bitwatch.co"),  // website
+        std::string(""),                     // additional information
+        static_cast<uint32_t>(1),            // property desired: MSC
+        static_cast<int64_t>(100),           // tokens per unit vested
+        static_cast<uint64_t>(7731414000L),  // deadline: 31 Dec 2214 23:00:00 UTC
+        static_cast<uint8_t>(10),            // early bird bonus: 10 % per week
+        static_cast<uint8_t>(12));           // issuer bonus: 12 %
+
+    BOOST_CHECK_EQUAL(HexStr(vch),
+        "00330100436f6d70616e69657300426974636f696e204d696e696e67005175616e74756d2"
+        "04d696e6572006275696c6465722e62697477617463682e636f00000164f087d0e61c0a0c");
+}
+
+BOOST_AUTO_TEST_CASE(payload_create_crowdsale_empty)
+{
+    // Create crowdsale [type 51, version 0]
+    std::vector<unsigned char> vch = CreatePayload_IssuanceVariable(
+        static_cast<uint16_t>(1),           // property type: indivisible tokens
+        static_cast<uint32_t>(0),           // previous property: none
+        std::string(""),                    // category
+        std::string(""),                    // subcategory
+        std::string(""),                    // label
+        std::string(""),                    // website
+        std::string(""),                    // additional information
+        static_cast<uint32_t>(1),           // property desired: MSC
+        static_cast<int64_t>(100),          // tokens per unit vested
+        static_cast<uint64_t>(7731414000L), // deadline: 31 Dec 2214 23:00:00 UTC
+        static_cast<uint8_t>(10),           // early bird bonus: 10 % per week
+        static_cast<uint8_t>(12));          // issuer bonus: 12 %
+
+    BOOST_CHECK_EQUAL(vch.size(), 18);
+}
+
+BOOST_AUTO_TEST_CASE(payload_create_crowdsale_full)
+{
+    // Create crowdsale [type 51, version 0]
+    std::vector<unsigned char> vch = CreatePayload_IssuanceVariable(
+        static_cast<uint16_t>(1),           // property type: indivisible tokens
+        static_cast<uint32_t>(0),           // previous property: none
+        std::string(700, 'x'),              // category
+        std::string(700, 'x'),              // subcategory
+        std::string(700, 'x'),              // label
+        std::string(700, 'x'),              // website
+        std::string(700, 'x'),              // additional information
+        static_cast<uint32_t>(1),           // property desired: MSC
+        static_cast<int64_t>(100),          // tokens per unit vested
+        static_cast<uint64_t>(7731414000L), // deadline: 31 Dec 2214 23:00:00 UTC
+        static_cast<uint8_t>(10),           // early bird bonus: 10 % per week
+        static_cast<uint8_t>(12));          // issuer bonus: 12 %
+
+    BOOST_CHECK_EQUAL(vch.size(), 1293);
+}
+
+BOOST_AUTO_TEST_CASE(payload_close_crowdsale)
+{
+    // Close crowdsale [type 53, version 0]
+    std::vector<unsigned char> vch = CreatePayload_CloseCrowdsale(
+        static_cast<uint32_t>(9));  // property: SP #9
+
+    BOOST_CHECK_EQUAL(HexStr(vch), "003509");
 }
 
 BOOST_AUTO_TEST_SUITE_END()
