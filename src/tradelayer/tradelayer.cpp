@@ -3814,7 +3814,7 @@ bool nodeReward::isAddressIncluded(const std::string& address)
 void nodeReward::saveNodeReward(ofstream &file, CHash256& hasher)
 {
 
-    const std::string lineOut = strprintf("%d+%d", p_lastReward, p_lastBlock);
+    const std::string lineOut = strprintf("%d+%d", p_Reward, p_lastBlock);
     hasher.Write((unsigned char*)lineOut.c_str(), lineOut.length());
     file << lineOut << endl;
 
@@ -3846,27 +3846,22 @@ void nodeReward::saveNodeReward(ofstream &file, CHash256& hasher)
 
 }
 
-
-// basic logic here: we are adding last reward no claimed + 0.05 for next one
-bool nodeReward::nextReward(int64_t amountAdded)
+bool nodeReward::nextReward(const int& nHeight)
 {
    bool result{false};
 
-   PrintToLog("%s(): amountAdded: %d, p_lastReward: %d\n", __func__, amountAdded, p_lastReward);
+   PrintToLog("%s(): p_Reward before: %d\n", __func__, p_Reward);
 
-   if (isOverflow(p_lastReward, amountAdded)) {
-       PrintToLog("%s(): ERROR: arithmetic overflow [%d + %d]\n", __func__, p_lastReward, amountAdded);
-       return result;
-   }
+   const CConsensusParams &params = ConsensusParams();
 
-   // min reward: 0.05
-   if((p_lastReward + amountAdded) < MIN_REWARD) {
-      PrintToLog("%s(): no amount available for next block, adding the minimal amount\n", __func__);
-      p_lastReward = MIN_REWARD;
-      return result;
-   }
+   // logic in function of blockheight
+   const double factor = (nHeight - params.MSC_NODE_REWARD_BLOCK <= INFLEXION_BLOCK) ? FBASE  : SBASE;
 
-   p_lastReward += (amountAdded > 0) ? MIN_REWARD : amountAdded;
+   double f_nextReward = MIN_REWARD * pow(factor, nHeight - params.MSC_NODE_REWARD_BLOCK);
+
+   p_Reward = (int64_t) f_nextReward;
+
+   PrintToLog("%s():p_Reward after: %d, f_nextReward: %d\n", __func__, p_Reward, f_nextReward);
 
 
    return !result;
@@ -3889,17 +3884,17 @@ void nodeReward::sendNodeReward(const std::string& consensusHash, const int& nHe
 
     }
 
-    int64_t amountAdded = p_lastReward;
+    // int64_t amountAdded = p_Reward;
 
     // after that we share the reward with all winners
     if(!winners.empty())
     {
-        const int64_t rewardSize = p_lastReward / winners.size();
-        PrintToLog("%s(): rewardSize: %s, full reward shared: %d\n",__func__, rewardSize, p_lastReward);
+        const int64_t rewardSize = p_Reward / winners.size();
+        PrintToLog("%s(): rewardSize: %s, full reward shared: %d\n",__func__, rewardSize, p_Reward);
         if(rewardSize > 0)
         {
             for_each(winners.begin(), winners.end(), [&rewardSize] (const std::string& addr) { update_tally_map(addr, ALL, rewardSize, BALANCE); PrintToLog("%s(): address: %s, rewardSize: %d\n",__func__, addr, rewardSize); });
-            amountAdded = -p_lastReward;
+            // amountAdded = -p_Reward;
         }
 
         // adding block info
@@ -3909,11 +3904,11 @@ void nodeReward::sendNodeReward(const std::string& consensusHash, const int& nHe
 
     }
 
-    if (amountAdded < 0) PrintToLog("%s(): reward decreasing to: %d\n",__func__, p_lastReward + amountAdded);
+    if (amountAdded < 0) PrintToLog("%s(): reward decreasing to: %d\n",__func__, p_Reward + amountAdded);
 
-    PrintToLog("%s(): reward increasing to: %d\n",__func__, p_lastReward + amountAdded);
+    // PrintToLog("%s(): reward increasing to: %d\n",__func__, p_Reward + amountAdded);
 
-    nextReward(amountAdded);
+    nextReward(nHeight);
 
 
 }

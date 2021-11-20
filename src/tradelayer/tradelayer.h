@@ -76,7 +76,10 @@ const int BlockS = 500; /** regtest **/
 
 //node reward
 const int64_t MIN_REWARD = 0.05 * COIN;
-// const int64_t MAX_REWARD = 100 * COIN;
+// const int INFLEXION_BLOCK  = 200000;
+const int INFLEXION_BLOCK  = 1000;
+const double FBASE = 1.000014979;
+const double SBASE = 0.999991;
 
 const double CompoundRate = 1.00002303;
 const double DecayRate = 0.99998;
@@ -386,19 +389,19 @@ class Channel
 class nodeReward
 {
   private:
-    int64_t p_lastReward;
+    int64_t p_Reward;
     int p_lastBlock;
     std::set<string> winners;
     std::map<string, bool> nodeRewardsAddrs;
 
   public:
-    nodeReward() : p_lastReward(MIN_REWARD), p_lastBlock(0) {}
+    nodeReward() : p_Reward(0), p_lastBlock(0) {}
     ~nodeReward() {}
 
     void sendNodeReward(const std::string& consensusHash, const int& nHeight, bool fTest);
-    const int64_t& getNextReward() const { return p_lastReward;}
+    const int64_t& getNextReward() const { return p_Reward;}
     const int& getLastBlock() const { return p_lastBlock;}
-    bool nextReward(int64_t newReward);
+    bool nextReward(const int& nHeight,  int64_t amountAdded);
     bool isWinnerAddress(const std::string& consensusHash, const std::string& address, bool fTest);
     const std::map<string, bool>& getnodeRewardAddrs() const { return nodeRewardsAddrs; }
     void updateAddressStatus(const std::string& address, bool newStatus);
@@ -410,7 +413,7 @@ class nodeReward
     void addWinner(const std::string& address) { winners.insert(address);}
     void clearWinners() { winners.clear(); }
     void setLastBlock(int lastBlock) { p_lastBlock = lastBlock; }
-    void setLastReward(int64_t reward) { p_lastReward = reward; }
+    void setLastReward(int64_t reward) { p_Reward = reward; }
 
  };
 

@@ -155,8 +155,18 @@ class NodeRewardTest (BitcoinTestFramework):
                 out = tradelayer_HTTP(conn, headers, False, "tl_claim_nodereward",params)
                 break
 
+        out = tradelayer_HTTP(conn, headers, True, "tl_getinfo", params)
+        block = out['result']['block']
 
-        self.nodes[0].generate(1)
+        while block < 1300:
+            if block > 1200 :
+                self.log.info("Long tail decay now...")
+            self.nodes[0].generate(1)
+            self.log.info("checking next reward, block:"+ str(block))
+            out = tradelayer_HTTP(conn, headers, True, "tl_getnextreward")
+            self.log.info(out)
+            out = tradelayer_HTTP(conn, headers, True, "tl_getinfo", params)
+            block = out['result']['block']
 
         self.log.info("get ALL balance in address0 again")
         params = str([addresses[0], 1]).replace("'",'"')
