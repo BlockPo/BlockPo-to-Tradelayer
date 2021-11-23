@@ -234,21 +234,21 @@ std::string FormatDivisibleShortMP(int64_t n)
 
 std::string FormatDivisibleMP(int64_t n, bool fSign)
 {
-  // Note: not using straight sprintf here because we do NOT want
-  // localized number formatting.
-  int64_t n_abs = (n > 0 ? n : -n);
-  int64_t quotient = n_abs / COIN;
-  int64_t remainder = n_abs % COIN;
-  std::string str = strprintf("%d.%08d", quotient, remainder);
+    // Note: not using straight sprintf here because we do NOT want
+    // localized number formatting.
+    int64_t n_abs = (n > 0 ? n : -n);
+    int64_t quotient = n_abs / COIN;
+    int64_t remainder = n_abs % COIN;
+    std::string str = strprintf("%d.%08d", quotient, remainder);
 
-  if (!fSign) return str;
+    if (!fSign) return str;
 
-  if (n < 0)
-    str.insert((unsigned int) 0, 1, '-');
-  else
-    str.insert((unsigned int) 0, 1, '+');
+    if (n < 0)
+      str.insert((unsigned int) 0, 1, '-');
+    else
+      str.insert((unsigned int) 0, 1, '+');
 
-  return str;
+    return str;
 }
 
 std::string mastercore::FormatIndivisibleMP(int64_t n)
@@ -3855,7 +3855,7 @@ bool nodeReward::nextReward(const int& nHeight)
    const CConsensusParams &params = ConsensusParams();
 
    // logic in function of blockheight
-   const double factor = (nHeight - params.MSC_NODE_REWARD_BLOCK <= INFLEXION_BLOCK) ? FBASE  : SBASE;
+   const double factor = (nHeight - params.MSC_NODE_REWARD_BLOCK <= params.INFLEXION_BLOCK) ? FBASE  : SBASE;
 
    double f_nextReward = MIN_REWARD * pow(factor, nHeight - params.MSC_NODE_REWARD_BLOCK);
 
@@ -3904,10 +3904,6 @@ void nodeReward::sendNodeReward(const std::string& consensusHash, const int& nHe
 
     }
 
-    if (amountAdded < 0) PrintToLog("%s(): reward decreasing to: %d\n",__func__, p_Reward + amountAdded);
-
-    // PrintToLog("%s(): reward increasing to: %d\n",__func__, p_Reward + amountAdded);
-
     nextReward(nHeight);
 
 
@@ -3939,8 +3935,8 @@ void nodeReward::updateAddressStatus(const std::string& address, bool newStatus)
 
 void lookingin_globalvector_pastlivesperpetuals(std::vector<std::map<std::string, std::string>> &lives_g, MatrixTLS M_file, std::vector<std::string> addrs_vg, std::vector<std::map<std::string, std::string>> &lives_h)
 {
-  for (std::vector<std::string>::iterator it = addrs_vg.begin(); it != addrs_vg.end(); ++it)
-    lookingaddrs_inside_M_file(*it, M_file, lives_g, lives_h);
+    for (std::vector<std::string>::iterator it = addrs_vg.begin(); it != addrs_vg.end(); ++it)
+       lookingaddrs_inside_M_file(*it, M_file, lives_g, lives_h);
 }
 
 void lookingaddrs_inside_M_file(std::string addrs, MatrixTLS M_file, std::vector<std::map<std::string, std::string>> &lives_g, std::vector<std::map<std::string, std::string>> &lives_h)
@@ -4014,14 +4010,15 @@ void lookingaddrs_inside_M_file(std::string addrs, MatrixTLS M_file, std::vector
 
 int finding_idxforaddress(std::string addrs, std::vector<std::map<std::string, std::string>> lives)
 {
-  int idx_q = 0;
-  for (std::vector<std::map<std::string, std::string>>::iterator it = lives.begin(); it != lives.end(); ++it)
+    int idx_q = 0;
+    for (std::vector<std::map<std::string, std::string>>::iterator it = lives.begin(); it != lives.end(); ++it)
     {
-      idx_q += 1;
-      struct status_lives_edge *pt_status_bylivesedge = get_status_bylivesedge(*it);
-      if (addrs == pt_status_bylivesedge->addrs) break;
+        idx_q += 1;
+        struct status_lives_edge *pt_status_bylivesedge = get_status_bylivesedge(*it);
+        if (addrs == pt_status_bylivesedge->addrs) break;
     }
-  return idx_q-1;
+
+    return idx_q-1;
 }
 
 inline int64_t clamp_function(int64_t diff, int64_t nclamp)

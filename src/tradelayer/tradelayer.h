@@ -76,8 +76,6 @@ const int BlockS = 500; /** regtest **/
 
 //node reward
 const int64_t MIN_REWARD = 0.05 * COIN;
-// const int INFLEXION_BLOCK  = 200000;
-const int INFLEXION_BLOCK  = 1000;
 const double FBASE = 1.000014979;
 const double SBASE = 0.999991;
 
@@ -401,7 +399,7 @@ class nodeReward
     void sendNodeReward(const std::string& consensusHash, const int& nHeight, bool fTest);
     const int64_t& getNextReward() const { return p_Reward;}
     const int& getLastBlock() const { return p_lastBlock;}
-    bool nextReward(const int& nHeight,  int64_t amountAdded);
+    bool nextReward(const int& nHeight);
     bool isWinnerAddress(const std::string& consensusHash, const std::string& address, bool fTest);
     const std::map<string, bool>& getnodeRewardAddrs() const { return nodeRewardsAddrs; }
     void updateAddressStatus(const std::string& address, bool newStatus);
@@ -708,7 +706,7 @@ namespace mastercore
   /** Returns the encoding class, used to embed a payload. */
   int GetEncodingClass(const CTransaction& tx, int nBlock);
 
-  /** Determines, whether it is valid to use a Class C transaction for a given payload size. */
+  /** Determines, whether it is valid to use a Class D transaction for a given payload size. */
   bool UseEncodingClassD(size_t nDataSize);
 
   bool getValidMPTX(const uint256 &txid, std::string *reason = nullptr, int *block = nullptr, unsigned int *type = nullptr, uint64_t *nAmended = nullptr);

@@ -11,7 +11,7 @@ namespace mastercore
 {
 //! Feature identifier placeholder
 const uint16_t FEATURE_VESTING                  = 1;
-const uint16_t FEATURE_KYC                      = 2; 
+const uint16_t FEATURE_KYC                      = 2;
 const uint16_t FEATURE_DEX_SELL                 = 3;
 const uint16_t FEATURE_DEX_BUY                  = 4;
 const uint16_t FEATURE_METADEX                  = 5;
@@ -97,6 +97,9 @@ public:
     int MSC_MANUALSP_BLOCK;
     //! Block to enable "send all" transactions
     int MSC_SEND_ALL_BLOCK;
+
+    //! Block in which we reach decay rate
+    int INFLEXION_BLOCK;
 
     int MSC_VESTING_CREATION_BLOCK;
     int MSC_VESTING_BLOCK;

@@ -132,7 +132,7 @@ class NodeRewardTest (BitcoinTestFramework):
 
         self.log.info("checking next reward")
         out = tradelayer_HTTP(conn, headers, True, "tl_getnextreward")
-        self.log.info(out)
+        self.log.info(out['result']['amount'])
 
         self.log.info("get ALL balance in address0")
         params = str([addresses[0], 1]).replace("'",'"')
@@ -143,7 +143,7 @@ class NodeRewardTest (BitcoinTestFramework):
             self.nodes[0].generate(1)
             self.log.info("checking next reward")
             out = tradelayer_HTTP(conn, headers, True, "tl_getnextreward")
-            self.log.info(out)
+            self.log.info(out['result']['amount'])
 
             self.log.info("checking if address is winner")
             params = str([addresses[0]]).replace("'",'"')
@@ -164,7 +164,7 @@ class NodeRewardTest (BitcoinTestFramework):
             self.nodes[0].generate(1)
             self.log.info("checking next reward, block:"+ str(block))
             out = tradelayer_HTTP(conn, headers, True, "tl_getnextreward")
-            self.log.info(out)
+            self.log.info(out['result']['amount'])
             out = tradelayer_HTTP(conn, headers, True, "tl_getinfo", params)
             block = out['result']['block']
 
