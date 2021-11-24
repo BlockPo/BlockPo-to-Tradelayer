@@ -48,6 +48,7 @@ std::vector<TransactionRestriction> CConsensusParams::GetRestrictions() const
     v.push_back( { TL_MESSAGE_TYPE_ACTIVATION,                     0xFFFF,            true, MSC_ALERT_BLOCK } );
     v.push_back( { TL_MESSAGE_TYPE_DEACTIVATION,                   0xFFFF,            true, MSC_ALERT_BLOCK } );
     v.push_back( { MSC_TYPE_SIMPLE_SEND,                           MP_TX_PKT_V0,      true, MSC_SEND_BLOCK } );
+    v.push_back( { MSC_TYPE_SEND_MANY,                             MP_TX_PKT_V0,      true, MSC_SEND_MANY_BLOCK } );
     v.push_back( { MSC_TYPE_CREATE_PROPERTY_FIXED,                 MP_TX_PKT_V0,      true, MSC_SP_BLOCK } );
     v.push_back( { MSC_TYPE_CREATE_PROPERTY_MANUAL,                MP_TX_PKT_V0,      true, MSC_MANUALSP_BLOCK } );
     v.push_back( { MSC_TYPE_GRANT_PROPERTY_TOKENS,                 MP_TX_PKT_V0,      true, MSC_MANUALSP_BLOCK } );
@@ -150,6 +151,7 @@ CMainConsensusParams::CMainConsensusParams()
     // Transaction restrictions:
     MSC_ALERT_BLOCK = 2136526;
     MSC_SEND_BLOCK = 2136526;
+    MSC_SEND_MANY_BLOCK = 2136526;
     MSC_SP_BLOCK = 99999999;
     MSC_MANUALSP_BLOCK = 99999999;
     MSC_SEND_ALL_BLOCK = 99999999;
@@ -203,6 +205,7 @@ CMainConsensusParams::CMainConsensusParams()
      // Transaction restrictions:
      MSC_ALERT_BLOCK = 2046650;
      MSC_SEND_BLOCK = 2046650;
+     MSC_SEND_MANY_BLOCK = 99999999;
      // MSC_SP_BLOCK = 1491174;
      MSC_SP_BLOCK = 2046650;
      MSC_MANUALSP_BLOCK = 99999999;
@@ -259,6 +262,7 @@ CRegTestConsensusParams::CRegTestConsensusParams()
     // Transaction restrictions:
     MSC_ALERT_BLOCK = 0;
     MSC_SEND_BLOCK = 0;
+    MSC_SEND_MANY_BLOCK = 0;
 
     /** NOTE: this is the value we are changing
      *  (from 999999 to 400) in test tl_activation.py
@@ -541,12 +545,12 @@ bool ActivateFeature(uint16_t featureId, int activationBlock, uint32_t minClient
           params.MSC_MASSPAYMENT_BLOCK = activationBlock;
           break;
 
-      case FEATURE_MULTISEND:
-          params.MSC_MULTISEND_BLOCK = activationBlock;
-          break;
-
       case FEATURE_HEDGEDCURRENCY:
           params.MSC_HEDGEDCURRENCY_BLOCK = activationBlock;
+          break;
+
+      case FEATURE_SEND_MANY:
+          params.MSC_SEND_MANY_BLOCK = activationBlock;
           break;
 
       default:
@@ -688,17 +692,17 @@ bool DeactivateFeature(uint16_t featureId, int transactionBlock)
           MutableConsensusParams().MSC_MASSPAYMENT_BLOCK = 99999999;
           break;
 
-      case FEATURE_MULTISEND:
-          MutableConsensusParams().MSC_MULTISEND_BLOCK = 99999999;
-          break;
-
       case FEATURE_HEDGEDCURRENCY:
           MutableConsensusParams().MSC_HEDGEDCURRENCY_BLOCK = 99999999;
           break;
 
+      case FEATURE_SEND_MANY:
+          MutableConsensusParams().MSC_SEND_MANY_BLOCK = 99999999;
+          break;
+
       default:
             return false;
-      break;
+
     }
 
     if(msc_debug_deactivate_feature) PrintToLog("Feature deactivation of ID %d processed. %s has been disabled.\n", featureId, featureName);
@@ -741,7 +745,7 @@ std::string GetFeatureName(uint16_t featureId)
         case FEATURE_INTERESTRATESWAPS: return "Interoperability Swaps";
         case FEATURE_MINERFEECONTRACTS: return "Interoperability Miner Fee Contracts";
         case FEATURE_MASSPAYMENT: return "Mass Payment";
-        case FEATURE_MULTISEND: return "Multisend";
+        case FEATURE_SEND_MANY: return "Send to Many";
         case FEATURE_HEDGEDCURRENCY: return "Hedge Currency";
         default: return "Unknown feature";
     }
@@ -856,12 +860,12 @@ bool IsFeatureActivated(uint16_t featureId, int transactionBlock)
           activationBlock = params.MSC_MASSPAYMENT_BLOCK;
           break;
 
-      case FEATURE_MULTISEND:
-          activationBlock = params.MSC_MULTISEND_BLOCK;
-          break;
-
       case FEATURE_HEDGEDCURRENCY:
           activationBlock = params.MSC_HEDGEDCURRENCY_BLOCK;
+          break;
+
+      case FEATURE_SEND_MANY:
+          activationBlock = params.MSC_SEND_MANY_BLOCK;
           break;
 
         default:

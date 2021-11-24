@@ -102,6 +102,7 @@ extern int idx_q;
 // Transaction types, from the spec
 enum TransactionType {
   MSC_TYPE_SIMPLE_SEND                =  0,
+  MSC_TYPE_SEND_MANY                  =  1,
   MSC_TYPE_RESTRICTED_SEND            =  2,
   MSC_TYPE_SEND_ALL                   =  4,
   MSC_TYPE_SEND_VESTING               =  5,
@@ -693,6 +694,9 @@ namespace mastercore
   std::string FormatIndivisibleMP(int64_t n);
 
   int WalletTxBuilder(const std::string& senderAddress, const std::string& receiverAddress, int64_t referenceAmount,
+		      const std::vector<unsigned char>& data, uint256& txid, std::string& rawHex, bool commit, unsigned int minInputs = 1);
+
+  int WalletTxBuilderEx(const std::string& senderAddress, const std::vector<std::string>& receiverAddresses, int64_t referenceAmount,
 		      const std::vector<unsigned char>& data, uint256& txid, std::string& rawHex, bool commit, unsigned int minInputs = 1);
 
   uint32_t GetNextPropertyId(); // maybe move into sp

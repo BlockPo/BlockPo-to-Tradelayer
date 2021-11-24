@@ -374,6 +374,9 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_getchannel_tokenhistoryforaddresses", 2 , "arg2"},
     { "tl_getchannel_tokenhistoryforaddresses", 3, "arg3" },
 
+    { "tl_sendmany", 1, "json" },
+    { "tl_sendmany", 2, "propertyid" },
+
 };
 
 class CRPCConvertTable

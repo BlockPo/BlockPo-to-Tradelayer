@@ -61,9 +61,10 @@ using mastercore::StrToInt64;
 /* Mapping of a transaction type to a textual description. */
 const struct tradelayer_descs {
 	uint16_t	transaction_type;
-	const char	*description;
+	std::string description;
 } tradelayer_descs[] = {
 	{ MSC_TYPE_SIMPLE_SEND, "Simple Send" },
+  { MSC_TYPE_SEND_MANY, "Send Many" },
 	{ MSC_TYPE_RESTRICTED_SEND, "Restricted Send" },
 	{ MSC_TYPE_SEND_ALL, "Send All" },
 	{ MSC_TYPE_SEND_VESTING, "Send Vesting Tokens" },
@@ -113,20 +114,19 @@ const struct tradelayer_descs {
 	{ MSC_TYPE_CLOSE_CHANNEL , "Close Channel" },
 	{ MSC_TYPE_SUBMIT_NODE_ADDRESS , "Submit Node Reward Address" },
 	{ MSC_TYPE_CLAIM_NODE_REWARD , "Claim Node Reward" },
+	{ MSC_TYPE_CLOSE_CHANNEL , "Close Channel" }
 };
 
 /* Mapping of a transaction type to a textual description. */
 std::string mastercore::strTransactionType(uint16_t txType)
 {
-    for (int i = 0; i < sizeof (tradelayer_descs); ++i)
-	  {
-	      if (txType == tradelayer_descs[i].transaction_type){
-		        return tradelayer_descs[i].description;
-		    }
+	for (const auto& t : tradelayer_descs) {
+	    if (txType == t.transaction_type) {
+			    return t.description;
+	    }
+	}
+	return "* unknown type *";
 
-	  }
-
-	  return "* unknown type *";
 }
 
 /** Helper to convert class number to string. */
@@ -177,6 +177,9 @@ bool CMPTransaction::interpret_Transaction()
   {
       case MSC_TYPE_SIMPLE_SEND:
           return interpret_SimpleSend();
+
+    case MSC_TYPE_SEND_MANY:
+          return interpret_SendMany();
 
       case MSC_TYPE_SEND_ALL:
           return interpret_SendAll();
@@ -334,12 +337,13 @@ bool CMPTransaction::interpret_TransactionType()
 
     if (!vecTypeBytes.empty()) {
         type = DecompressInteger(vecTypeBytes);
+				PrintToLog("%s(): type: %d\n",__func__, type);
     } else return false;
 
     if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly) {
         PrintToLog("\t------------------------------\n");
         PrintToLog("\t         version: %d, class %s\n", version, intToClass(encodingClass));
-        PrintToLog("\t            type: %d (%s)\n", type, strTransactionType(type));
+        PrintToLog("\t            type: %d (%s)\n", type, strTransactionType((uint16_t) type));
 
     }
 
@@ -368,6 +372,39 @@ bool CMPTransaction::interpret_SimpleSend()
     if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly) {
         PrintToLog("\t        property: %d (%s)\n", property, strMPProperty(property));
         PrintToLog("\t           value: %s\n", FormatMP(property, nValue));
+    }
+
+    return true;
+}
+
+// /** Tx 1 */
+bool CMPTransaction::interpret_SendMany()
+{
+    int i = 0;
+
+    auto vecVersionBytes = GetNextVarIntBytes(i);
+    auto vecTypeBytes = GetNextVarIntBytes(i);
+    auto vecPropIdBytes = GetNextVarIntBytes(i);
+
+    if (type != 1 || vecPropIdBytes.empty()) return false;
+    property = DecompressInteger(vecPropIdBytes);
+
+		do
+    {
+        auto vecKyc = GetNextVarIntBytes(i);
+        if (!vecKyc.empty())
+        {
+            auto n = DecompressInteger(vecKyc);
+						if (n == 0) break;
+            values.push_back(n);
+						PrintToLog("\t value: %d\n", n);
+        }
+
+    } while(i < pkt_size);
+
+    if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly) {
+        PrintToLog("\t        property: %d (%s)\n", property, strMPProperty(property));
+        PrintToLog("\t           total: %s\n", FormatMP(property, getAmountTotal()));
     }
 
     return true;
@@ -2219,6 +2256,9 @@ int CMPTransaction::interpretPacket()
         case MSC_TYPE_SIMPLE_SEND:
             return logicMath_SimpleSend();
 
+        case MSC_TYPE_SEND_MANY:
+            return logicMath_SendMany();
+
         case MSC_TYPE_SEND_ALL:
             return logicMath_SendAll();
 
@@ -2456,10 +2496,125 @@ int CMPTransaction::logicMath_SimpleSend()
     return 0;
 }
 
+/** Tx 1 */
+int CMPTransaction::logicMath_SendMany()
+{
+    if (!IsTransactionTypeAllowed(block, type, version)) {
+        PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+                __func__,
+                type,
+                version,
+                property,
+                block);
+        return (PKT_ERROR_SP -22);
+    }
+
+    auto amount = getAmountTotal();
+    if (amount <= 0 || MAX_INT_8_BYTES < amount) {
+        PrintToLog("%s(): rejected: value out of range or zero: %d", __func__, amount);
+        return (PKT_ERROR_SEND -23);
+    }
+
+    if (!IsPropertyIdValid(property)) {
+        PrintToLog("%s(): rejected: property %d does not exist\n", __func__, property);
+        return (PKT_ERROR_SEND -24);
+    }
+
+    // if (isPropertyContract(property)) {
+    //     PrintToLog("%s(): rejected: property %d should not be a contract\n", __func__, property);
+    //     return (PKT_ERROR_SEND -25);
+    // }
+
+     if(property == TL_PROPERTY_VESTING){
+         PrintToLog("%s(): rejected: property should not be vesting tokens (id = 3)\n", __func__);
+         return (PKT_ERROR_SEND -26);
+     }
+
+    if(property != ALL)
+    {
+        int kyc_id;
+
+        if(!t_tradelistdb->checkAttestationReg(sender,kyc_id)){
+          PrintToLog("%s(): rejected: kyc ckeck for sender failed\n", __func__);
+          return (PKT_ERROR_KYC -10);
+        }
+
+        if(!t_tradelistdb->kycPropertyMatch(property,kyc_id)){
+          PrintToLog("%s(): rejected: property %d can't be traded with this kyc\n", __func__, property);
+          return (PKT_ERROR_KYC -20);
+        }
+
+        // TODO: recipients ?!
+				for (const auto& addr : recipients)
+				{
+				    int kyc_id;
+					  if(!t_tradelistdb->checkAttestationReg(addr,kyc_id)){
+					      PrintToLog("%s(): rejected: kyc ckeck for receiver failed\n", __func__);
+					      return (PKT_ERROR_KYC -10);
+				  	}
+
+					  if(!t_tradelistdb->kycPropertyMatch(property,kyc_id)){
+						    PrintToLog("%s(): rejected: property %d can't be traded with this kyc\n", __func__, property);
+						    return (PKT_ERROR_KYC -20);
+					  }
+				}
+
+
+
+    }
+
+    int64_t nBalance = getMPbalance(sender, property, BALANCE);
+    if (nBalance < (int64_t)amount) {
+        PrintToLog("%s(): rejected: sender %s has insufficient balance of property %d [%s < %s]\n",
+                __func__,
+                sender,
+                property,
+                FormatMP(property, nBalance),
+                FormatMP(property, nValue));
+        return (PKT_ERROR_SEND -25);
+    }
+
+    // ------------------------------------------
+		for (const auto& addr : recipients) {
+        PrintToLog("%s(): address: %s, sender: %s\n",__func__, addr, sender);
+		}
+
+    const auto& from = sender;
+    auto pred = [&from](const std::string& a){ return a == from; };
+    if (std::find_if(recipients.begin(), recipients.end(), pred) != recipients.end()) {
+        PrintToLog("%s(): rejected: sender sending tokens to himself\n", __func__);
+        return (PKT_ERROR_SEND -26);
+    }
+
+    // // Special case: if can't find the receiver -- assume send to self!
+    // if (receiver.empty()) {
+    //     receiver = sender;
+    // }
+
+    if (recipients.size() != values.size()) {
+        PrintToLog("%s(): rejected: recipients/amounts mismatch: addresses=%d values=%d\n",
+                __func__,
+								recipients.size(),
+								values.size());
+        return (PKT_ERROR_SEND -27);
+    }
+
+    // Move the tokens
+    for (size_t i=0; i <recipients.size(); ++i) {
+        auto v = values[i];
+				if (v > 0) {
+				    assert(update_tally_map(sender, property, -v, BALANCE));
+					  assert(update_tally_map(recipients[i], property, v, BALANCE));
+				}
+
+    }
+
+    return 0;
+}
+
 /** Tx 5 */
 int CMPTransaction::logicMath_SendVestingTokens()
 {
-
   if (sender == receiver) {
       PrintToLog("%s(): rejected: sender sending vesting tokens to himself\n", __func__);
       return (PKT_ERROR_SEND -26);
@@ -3006,12 +3161,13 @@ int CMPTransaction::logicMath_Deactivation()
 /** Tx 65534 */
 int CMPTransaction::logicMath_Activation()
 {
+	  PrintToLog("%s(): inside function\n",__func__);
+
     if (!IsTransactionTypeAllowed(block, type, version)) {
-        PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+        PrintToLog("%s(): rejected: type %d or version %d not permitted at block %d\n",
                 __func__,
                 type,
                 version,
-                property,
                 block);
         return (PKT_ERROR_SP -22);
     }
