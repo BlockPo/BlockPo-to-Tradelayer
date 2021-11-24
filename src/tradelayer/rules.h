@@ -100,6 +100,9 @@ public:
     //! Block to enable "send all" transactions
     int MSC_SEND_ALL_BLOCK;
 
+    //! Block in which we reach decay rate
+    int INFLEXION_BLOCK;
+
     int MSC_VESTING_CREATION_BLOCK;
     int MSC_VESTING_BLOCK;
     int MSC_KYC_BLOCK;

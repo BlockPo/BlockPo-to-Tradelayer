@@ -97,6 +97,8 @@ std::vector<TransactionRestriction> CConsensusParams::GetRestrictions() const
     v.push_back( { MSC_TYPE_METADEX_CANCEL_ALL,                    MP_TX_PKT_V0,      true, MSC_METADEX_BLOCK } );
     v.push_back( { MSC_TYPE_METADEX_CANCEL_BY_PRICE,               MP_TX_PKT_V0,      true, MSC_METADEX_BLOCK } );
     v.push_back( { MSC_TYPE_CLOSE_CHANNEL,                         MP_TX_PKT_V0,      true, MSC_TRADECHANNEL_TOKENS_BLOCK } );
+    v.push_back( { MSC_TYPE_SUBMIT_NODE_ADDRESS,                   MP_TX_PKT_V0,      true, MSC_NODE_REWARD_BLOCK } );
+    v.push_back( { MSC_TYPE_CLAIM_NODE_REWARD,                     MP_TX_PKT_V0,      true, MSC_NODE_REWARD_BLOCK } );
     //---
     return v;
 }
@@ -180,6 +182,7 @@ CMainConsensusParams::CMainConsensusParams()
     MSC_MASSPAYMENT_BLOCK = 99999999;
     MSC_MULTISEND_BLOCK = 99999999;
     MSC_HEDGEDCURRENCY_BLOCK = 99999999;
+    INFLEXION_BLOCK = 200000;
 
     ONE_YEAR = 210240;
 }
@@ -234,6 +237,7 @@ CMainConsensusParams::CMainConsensusParams()
      MSC_MASSPAYMENT_BLOCK = 99999999;
      MSC_MULTISEND_BLOCK = 99999999;
      MSC_HEDGEDCURRENCY_BLOCK = 99999999;
+     INFLEXION_BLOCK = 200000;
 
      ONE_YEAR = 2650;  // just for testing
  }
@@ -274,7 +278,7 @@ CRegTestConsensusParams::CRegTestConsensusParams()
     MSC_DEXSELL_BLOCK = 0;
     MSC_DEXBUY_BLOCK = 0;
     MSC_METADEX_BLOCK = 0;
-    MSC_NODE_REWARD_BLOCK = 777;
+    MSC_NODE_REWARD_BLOCK = 200;
     MSC_TRADECHANNEL_TOKENS_BLOCK = 0;
     MSC_TRADECHANNEL_CONTRACTS_BLOCK = 0;
 
@@ -293,6 +297,7 @@ CRegTestConsensusParams::CRegTestConsensusParams()
     MSC_MASSPAYMENT_BLOCK = 99999999;
     MSC_MULTISEND_BLOCK = 99999999;
     MSC_HEDGEDCURRENCY_BLOCK = 99999999;
+    INFLEXION_BLOCK = 1000;
 
     ONE_YEAR = 930;
 

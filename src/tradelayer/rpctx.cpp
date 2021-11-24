@@ -78,6 +78,96 @@ UniValue tl_sendrawtx(const JSONRPCRequest& request)
     }
 }
 
+UniValue tl_submit_nodeaddress(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 2)
+        throw runtime_error(
+            "tl_submit_nodeaddress \"address\" \n"
+
+            "\nSubmiting node reward address.\n"
+
+            "\nArguments:\n"
+            "1. fromaddress          (string, required) sender address \n"
+            "2. receiver             (string, required) the node address participating\n"
+            "\nResult:\n"
+            "\"hash\"                  (string) the hex-encoded transaction hash\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("tl_submit_nodeaddress", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\" \"LEr4hNAefWYhBMgxCFP2Po1NPrUeiK8kM2\"")
+            + HelpExampleRpc("tl_submit_nodeaddress", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\", \"LEr4hNAefWYhBMgxCFP2Po1NPrUeiK8kM2\"")
+        );
+
+    // obtain parameters & info
+    const std::string sender = ParseAddress(request.params[0]);
+    const std::string nodeRewardsAddr = ParseAddress(request.params[1]);
+
+    RequireFeatureActivated(FEATURE_NODE_REWARD);
+
+    // create a payload for the transaction
+    std::vector<unsigned char> payload = CreatePayload_SubmitNodeAddress();
+
+    // request the wallet build the transaction (and if needed commit it)
+    uint256 txid;
+    std::string rawHex;
+    int result = WalletTxBuilder(sender, nodeRewardsAddr, 0, payload, txid, rawHex, autoCommit);
+
+    // check error and return the txid (or raw hex depending on autocommit)
+    if (result != 0) {
+        throw JSONRPCError(result, error_str(result));
+    } else {
+        if (!autoCommit) {
+            return rawHex;
+        } else {
+            return txid.GetHex();
+        }
+    }
+}
+
+
+UniValue tl_claim_nodereward(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 1)
+        throw runtime_error(
+            "tl_claim_nodereward \"address\" \n"
+
+            "\nClaim node reward.\n"
+
+            "\nArguments:\n"
+            "1. fromaddress          (string, required) the node address participating\n"
+
+            "\nResult:\n"
+            "\"hash\"                  (string) the hex-encoded transaction hash\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("tl_claim_nodereward", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\"")
+            + HelpExampleRpc("tl_claim_nodereward", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\"")
+        );
+
+    // obtain parameters & info
+    const std::string nodeRewardsAddr = ParseAddress(request.params[0]);
+
+    RequireFeatureActivated(FEATURE_NODE_REWARD);
+
+    // create a payload for the transaction
+    std::vector<unsigned char> payload = CreatePayload_ClaimNodeReward();
+
+    // request the wallet build the transaction (and if needed commit it)
+    uint256 txid;
+    std::string rawHex;
+    int result = WalletTxBuilder(nodeRewardsAddr, "", 0, payload, txid, rawHex, autoCommit);
+
+    // check error and return the txid (or raw hex depending on autocommit)
+    if (result != 0) {
+        throw JSONRPCError(result, error_str(result));
+    } else {
+        if (!autoCommit) {
+            return rawHex;
+        } else {
+            return txid.GetHex();
+        }
+    }
+}
+
 UniValue tl_send(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() < 4 || request.params.size() > 6)
@@ -2391,6 +2481,8 @@ static const CRPCCommand commands[] =
     { "trade layer (transaction creation)", "tl_sendcanceltradesbypair",       &tl_sendcanceltradesbypair,          {} },
     { "trade layer (transaction creation)", "tl_sendcanceltradesbyprice",      &tl_sendcanceltradesbyprice,         {} },
     { "trade layer (transaction creation)", "tl_send_closechannel",            &tl_send_closechannel,               {} },
+    { "trade layer (transaction creation)", "tl_submit_nodeaddress",           &tl_submit_nodeaddress,              {} },
+    { "trade layer (transaction creation)", "tl_claim_nodereward",             &tl_claim_nodereward,                {} },
     { "trade layer (transaction creation)", "tl_sendmany",                     &tl_sendmany,                        {} }
 #endif
 };

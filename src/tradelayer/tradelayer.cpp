@@ -154,6 +154,9 @@ AcceptMap mastercore::my_accepts;
 CMPSPInfo *mastercore::_my_sps;
 CDInfo *mastercore::_my_cds;
 
+//node reward object
+nodeReward nR;
+
 std::map<uint32_t, std::map<uint32_t, int64_t>> VWAPMap;
 std::map<uint32_t, std::map<uint32_t, int64_t>> VWAPMapSubVector;
 std::map<uint32_t, std::map<uint32_t, std::vector<int64_t>>> numVWAPVector;
@@ -231,21 +234,21 @@ std::string FormatDivisibleShortMP(int64_t n)
 
 std::string FormatDivisibleMP(int64_t n, bool fSign)
 {
-  // Note: not using straight sprintf here because we do NOT want
-  // localized number formatting.
-  int64_t n_abs = (n > 0 ? n : -n);
-  int64_t quotient = n_abs / COIN;
-  int64_t remainder = n_abs % COIN;
-  std::string str = strprintf("%d.%08d", quotient, remainder);
+    // Note: not using straight sprintf here because we do NOT want
+    // localized number formatting.
+    int64_t n_abs = (n > 0 ? n : -n);
+    int64_t quotient = n_abs / COIN;
+    int64_t remainder = n_abs % COIN;
+    std::string str = strprintf("%d.%08d", quotient, remainder);
 
-  if (!fSign) return str;
+    if (!fSign) return str;
 
-  if (n < 0)
-    str.insert((unsigned int) 0, 1, '-');
-  else
-    str.insert((unsigned int) 0, 1, '+');
+    if (n < 0)
+      str.insert((unsigned int) 0, 1, '-');
+    else
+      str.insert((unsigned int) 0, 1, '+');
 
-  return str;
+    return str;
 }
 
 std::string mastercore::FormatIndivisibleMP(int64_t n)
@@ -2098,6 +2101,60 @@ static int input_register_string(const std::string& s)
     return 0;
 }
 
+static int input_node_reward(const std::string& s)
+{
+    PrintToLog("%s(): s: %s\n",__func__,s);
+
+    std::vector<std::string> addrData;
+    boost::split(addrData, s, boost::is_any_of("+"), boost::token_compress_on);
+
+    if (addrData.size() != 2)
+    {
+        // address:status
+        std::vector<std::string> addrMap;
+        boost::split(addrMap, s, boost::is_any_of(":"), boost::token_compress_on);
+
+        if (addrMap.size() == 1) {
+            // just an winner address
+            const std::string& address = addrMap[0];
+            nR.addWinner(address);
+            return 0;
+
+        } else if (addrMap.size() != 2) {
+            return -1;
+        }
+
+        bool status{false};
+        const std::string& address = addrMap[0];
+        if (addrMap[1] == "true") status = true;
+        PrintToLog("%s(): address: %s, status: %s\n",__func__, address, status);
+        nR.updateAddressStatus(address, status);
+
+    } else {
+
+        int64_t reward = 0;
+        int block = 0;
+
+        try
+        {
+            reward = boost::lexical_cast<int64_t>(addrData[0]);
+            block = boost::lexical_cast<int>(addrData[1]);
+
+            PrintToLog("%s(): reward: %d, block: %d\n",__func__, reward, block);
+
+        } catch (...) {
+            PrintToLog("%s(): lexical_cast issue (1)\n",__func__);
+            return -1;
+        }
+
+        nR.setLastReward(reward);
+        nR.setLastBlock(block);
+    }
+
+    return 0;
+
+}
+
 static int msc_file_load(const string &filename, int what, bool verifyHash = false)
 {
   int lines = 0;
@@ -2202,6 +2259,12 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
         inputLineFunc = input_register_string;
         break;
 
+    case FILE_TYPE_NODE_ADDRESSES:
+        nR.clearNodeRewardMap();
+        nR.clearWinners();
+        inputLineFunc = input_node_reward;
+        break;
+
     default:
         return -1;
     }
@@ -2292,7 +2355,8 @@ static char const * const statePrefix[NUM_FILETYPES] = {
   "tokenltcprice",
   "tokenvwap",
   "register",
-  "contractglobals"
+  "contractglobals",
+  "nodeaddresses"
 };
 
 // returns the height of the state loaded
@@ -2810,6 +2874,13 @@ static int write_mp_active_channels(std::ofstream& file, CHash256& hasher)
     return 0;
 }
 
+static int write_mp_nodeaddresses(ofstream &file, CHash256& hasher)
+{
+    nR.saveNodeReward(file, hasher);
+
+    return 0;
+}
+
 static void iterWrite(std::ofstream& file, CHash256& hasher, const std::map<int, std::map<uint32_t,int64_t>>& aMap)
 {
     for(const auto &m : aMap)
@@ -3039,6 +3110,10 @@ static int write_state_file(CBlockIndex const *pBlockIndex, int what)
     case FILE_TYPE_REGISTER:
         result = write_mp_register(file, hasher);
         break;
+
+    case FILE_TYPE_NODE_ADDRESSES:
+        result = write_mp_nodeaddresses(file, hasher);
+        break;
     }
 
     // generate and write the double hash of all the contents written
@@ -3146,6 +3221,7 @@ int mastercore_save_state(CBlockIndex const *pBlockIndex)
     write_state_file(pBlockIndex, FILE_TYPE_TOKEN_VWAP);
     write_state_file(pBlockIndex, FILE_TYPE_REGISTER);
     write_state_file(pBlockIndex, FILETYPE_CONTRACT_GLOBALS);
+    write_state_file(pBlockIndex, FILE_TYPE_NODE_ADDRESSES);
 
     // clean-up the directory
     prune_state_files(pBlockIndex);
@@ -3740,22 +3816,139 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
     return fFoundTx;
 }
 
-bool TxValidNodeReward(std::string ConsensusHash, std::string Tx)
+bool nodeReward::isAddressIncluded(const std::string& address)
 {
-  int NLast = 2;
+    auto it = nodeRewardsAddrs.find(address);
+    return (it != nodeRewardsAddrs.end()) ? true : false;
+}
 
-  std::string LastTwoCharConsensus = ConsensusHash.substr(ConsensusHash.size() - NLast);
-  std::string LastTwoCharTx = Tx.substr(Tx.size() - NLast);
 
-  PrintToLog("\nLastTwoCharConsensus = %s\t LastTwoCharTx = %s\n", LastTwoCharConsensus, LastTwoCharTx);
+void nodeReward::saveNodeReward(ofstream &file, CHash256& hasher)
+{
 
-  return ((LastTwoCharConsensus == LastTwoCharTx) ? true : false);
+    const std::string lineOut = strprintf("%d+%d", p_Reward, p_lastBlock);
+    hasher.Write((unsigned char*)lineOut.c_str(), lineOut.length());
+    file << lineOut << endl;
+
+    for(const auto& addr : nodeRewardsAddrs)
+    {
+        const std::string& address = addr.first;
+        bool status = addr.second;
+        const std::string lineOut = strprintf("%s:%s", address, status ? "true":"false");
+
+        // add the line to the hash
+        hasher.Write((unsigned char*)lineOut.c_str(), lineOut.length());
+
+        // write the line
+        file << lineOut << endl;
+
+    }
+
+    // saving last winners
+    for(const auto& addr : winners)
+    {
+        const std::string lineOut = strprintf("%s", addr);
+
+        // add the line to the hash
+        hasher.Write((unsigned char*)lineOut.c_str(), lineOut.length());
+
+        // write the line
+        file << lineOut << endl;
+    }
+
+}
+
+bool nodeReward::nextReward(const int& nHeight)
+{
+   bool result{false};
+
+   PrintToLog("%s(): p_Reward before: %d\n", __func__, p_Reward);
+
+   const CConsensusParams &params = ConsensusParams();
+
+   // logic in function of blockheight
+   const double factor = (nHeight - params.MSC_NODE_REWARD_BLOCK <= params.INFLEXION_BLOCK) ? FBASE  : SBASE;
+
+   double f_nextReward = MIN_REWARD * pow(factor, nHeight - params.MSC_NODE_REWARD_BLOCK);
+
+   p_Reward = (int64_t) f_nextReward;
+
+   PrintToLog("%s():p_Reward after: %d, f_nextReward: %d\n", __func__, p_Reward, f_nextReward);
+
+
+   return !result;
+}
+
+void nodeReward::sendNodeReward(const std::string& consensusHash, const int& nHeight, bool fTest)
+{
+    for(auto& addr : nodeRewardsAddrs)
+    {
+        // if this address is a winner and it's claiming reward
+        if(isWinnerAddress(consensusHash, addr.first, fTest) && addr.second) {
+            // we need to save the winners here!
+            PrintToLog("%s(): winner: %s\n",__func__, addr.first);
+            winners.insert(addr.first);
+
+        }
+
+        // cleaning claiming status for this block
+        if (!fTest) addr.second = false;
+
+    }
+
+    // int64_t amountAdded = p_Reward;
+
+    // after that we share the reward with all winners
+    if(!winners.empty())
+    {
+        const int64_t rewardSize = p_Reward / winners.size();
+        PrintToLog("%s(): rewardSize: %s, full reward shared: %d\n",__func__, rewardSize, p_Reward);
+        if(rewardSize > 0)
+        {
+            for_each(winners.begin(), winners.end(), [&rewardSize] (const std::string& addr) { update_tally_map(addr, ALL, rewardSize, BALANCE); PrintToLog("%s(): address: %s, rewardSize: %d\n",__func__, addr, rewardSize); });
+            // amountAdded = -p_Reward;
+        }
+
+        // adding block info
+        p_lastBlock = nHeight;
+
+        // winners.clear();
+
+    }
+
+    nextReward(nHeight);
+
+
+}
+
+bool nodeReward::isWinnerAddress(const std::string& consensusHash, const std::string& address, bool fTest)
+{
+    const int lastNterms = (fTest) ? 2 : 4;
+
+    std::vector<unsigned char> vch;
+
+    DecodeBase58(address, vch);
+
+    const std::string vchStr = HexStr(vch);
+    const std::string LastTwoCharAddr = vchStr.substr(vchStr.size() - lastNterms);
+    const std::string lastFourCharConsensus = consensusHash.substr(consensusHash.size() - lastNterms);
+
+    PrintToLog("%s(): lastFourCharConsensus: %s, LastTwoCharAddr (decoded): %s\n",__func__, lastFourCharConsensus, LastTwoCharAddr);
+
+    return (LastTwoCharAddr == lastFourCharConsensus) ? true : false;
+
+}
+
+void nodeReward::updateAddressStatus(const std::string& address, bool newStatus)
+{
+    PrintToLog("%s(): address: %s\n",__func__, address);
+    nodeRewardsAddrs[address] = newStatus;
 }
 
 void lookingin_globalvector_pastlivesperpetuals(std::vector<std::map<std::string, std::string>> &lives_g, MatrixTLS M_file, std::vector<std::string> addrs_vg, std::vector<std::map<std::string, std::string>> &lives_h)
 {
-  for (std::vector<std::string>::iterator it = addrs_vg.begin(); it != addrs_vg.end(); ++it)
-    lookingaddrs_inside_M_file(*it, M_file, lives_g, lives_h);
+    for (std::vector<std::string>::iterator it = addrs_vg.begin(); it != addrs_vg.end(); ++it)
+       lookingaddrs_inside_M_file(*it, M_file, lives_g, lives_h);
 }
 
 void lookingaddrs_inside_M_file(std::string addrs, MatrixTLS M_file, std::vector<std::map<std::string, std::string>> &lives_g, std::vector<std::map<std::string, std::string>> &lives_h)
@@ -3829,14 +4022,15 @@ void lookingaddrs_inside_M_file(std::string addrs, MatrixTLS M_file, std::vector
 
 int finding_idxforaddress(std::string addrs, std::vector<std::map<std::string, std::string>> lives)
 {
-  int idx_q = 0;
-  for (std::vector<std::map<std::string, std::string>>::iterator it = lives.begin(); it != lives.end(); ++it)
+    int idx_q = 0;
+    for (std::vector<std::map<std::string, std::string>>::iterator it = lives.begin(); it != lives.end(); ++it)
     {
-      idx_q += 1;
-      struct status_lives_edge *pt_status_bylivesedge = get_status_bylivesedge(*it);
-      if (addrs == pt_status_bylivesedge->addrs) break;
+        idx_q += 1;
+        struct status_lives_edge *pt_status_bylivesedge = get_status_bylivesedge(*it);
+        if (addrs == pt_status_bylivesedge->addrs) break;
     }
-  return idx_q-1;
+
+    return idx_q-1;
 }
 
 inline int64_t clamp_function(int64_t diff, int64_t nclamp)
@@ -4578,6 +4772,8 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
 {
     LOCK(cs_tally);
 
+    const int& nHeight = pBlockIndex->nHeight;
+
     bool bRecoveryMode{false};
     {
         LOCK(cs_tally);
@@ -4590,7 +4786,7 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
 
     if (bRecoveryMode) {
         // NOTE: The blockNum parameter is inclusive, so deleteAboveBlock(1000) will delete records in block 1000 and above.
-        p_txlistdb->isMPinBlockRange(pBlockIndex->nHeight, reorgRecoveryMaxHeight, true);
+        p_txlistdb->isMPinBlockRange(nHeight, reorgRecoveryMaxHeight, true);
         reorgRecoveryMaxHeight = 0;
         nWaterlineBlock = ConsensusParams().GENESIS_BLOCK - 1;
 
@@ -4617,26 +4813,33 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
     }
 
     // handle any features that go live with this block
-    CheckLiveActivations(pBlockIndex->nHeight);
+    CheckLiveActivations(nHeight);
 
     const CConsensusParams &params = ConsensusParams();
     /** Creating Vesting Tokens **/
-    if (pBlockIndex->nHeight == params.MSC_VESTING_CREATION_BLOCK) creatingVestingTokens(pBlockIndex->nHeight);
+    if (nHeight == params.MSC_VESTING_CREATION_BLOCK) creatingVestingTokens(nHeight);
 
     /** Vesting Tokens to Balance **/
-    if (pBlockIndex->nHeight > params.MSC_VESTING_BLOCK) VestingTokens(pBlockIndex->nHeight);
+    if (nHeight > params.MSC_VESTING_BLOCK) VestingTokens(nHeight);
 
     /** Channels **/
-    if (pBlockIndex->nHeight > params.MSC_TRADECHANNEL_TOKENS_BLOCK)
+    if (nHeight > params.MSC_TRADECHANNEL_TOKENS_BLOCK)
     {
-        makeWithdrawals(pBlockIndex->nHeight);
+        makeWithdrawals(nHeight);
+    }
+
+    /** Node rewards **/
+    if (nHeight > params.MSC_NODE_REWARD_BLOCK)
+    {
+        nR.clearWinners();
     }
 
     /** Contracts **/
-    if (pBlockIndex->nHeight > params.MSC_CONTRACTDEX_BLOCK)
-    {
-        LiquidationEngine(pBlockIndex->nHeight);
-    }
+    // if (nHeight > params.MSC_CONTRACTDEX_BLOCK)
+    // {
+    //     LiquidationEngine(nHeight);
+    // }
+
 
     // marginMain(pBlockIndex->nHeight);
     // addInterestPegged(nBlockPrev,pBlockIndex);
@@ -4665,6 +4868,8 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
 int mastercore_handler_block_end(int nBlockNow, CBlockIndex const * pBlockIndex,
         unsigned int countMP)
 {
+    const CConsensusParams &params = ConsensusParams();
+
     int nMastercoreInit;
     {
         LOCK(cs_tally);
@@ -4675,9 +4880,20 @@ int mastercore_handler_block_end(int nBlockNow, CBlockIndex const * pBlockIndex,
         mastercore_init();
     }
 
+
     bool checkpointValid;
     {
        LOCK(cs_tally);
+
+       /** Node rewards **/
+       if (nBlockNow > params.MSC_NODE_REWARD_BLOCK)
+       {
+           // last blockhash
+           const CBlockIndex* pblockindex = chainActive[nBlockNow - 1];
+           const std::string& blockhash = pblockindex->GetBlockHash().GetHex();
+           PrintToLog("%s(): blockhash of last block: %s\n",__func__, blockhash);
+           nR.sendNodeReward(blockhash, nBlockNow, RegTest());
+       }
 
        // deleting Expired DEx accepts
        const unsigned int how_many_erased = eraseExpiredAccepts(nBlockNow);
@@ -4723,7 +4939,7 @@ int mastercore_handler_block_end(int nBlockNow, CBlockIndex const * pBlockIndex,
      LOCK2(cs_main, cs_tally);
      if (checkpointValid){
          // save out the state after this block
-         if (writePersistence(nBlockNow) && nBlockNow >= ConsensusParams().GENESIS_BLOCK) {
+         if (writePersistence(nBlockNow) && nBlockNow >= params.GENESIS_BLOCK) {
               mastercore_save_state(pBlockIndex);
           }
       }

@@ -57,6 +57,7 @@ bool isOverflow(int64_t a, int64_t b)
             ((b < 0) && (a < (std::numeric_limits<int64_t>::min() - b))));
 }
 
+
 /**
  * Updates the number of tokens for the given tally type.
  *
@@ -80,7 +81,7 @@ bool CMPTally::updateMoney(uint32_t propertyId, int64_t amount, TallyType ttype)
         return false;
     }
 
-    if (PENDING != ttype && CONTRACT_BALANCE != ttype &&(now64 + amount) < 0) { 
+    if (PENDING != ttype && CONTRACT_BALANCE != ttype && (now64 + amount) < 0) {
         // NOTE:
         // Negative balances are only permitted for pending balances
     } else {
