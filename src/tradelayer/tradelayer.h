@@ -100,7 +100,7 @@ extern int idx_q;
 
 
 // Transaction types, from the spec
-enum TransactionType {
+enum TransactionType : unsigned int {
   MSC_TYPE_SIMPLE_SEND                =  0,
   MSC_TYPE_SEND_MANY                  =  1,
   MSC_TYPE_RESTRICTED_SEND            =  2,
@@ -705,7 +705,7 @@ namespace mastercore
 
   int64_t getTotalTokens(uint32_t propertyId, int64_t* n_owners_total = nullptr);
 
-  std::string strTransactionType(uint16_t txType);
+  std::string strTransactionType(unsigned int txType);
 
   /** Returns the encoding class, used to embed a payload. */
   int GetEncodingClass(const CTransaction& tx, int nBlock);
