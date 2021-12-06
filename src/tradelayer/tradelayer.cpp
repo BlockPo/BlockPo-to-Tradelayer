@@ -7921,7 +7921,7 @@ bool mastercore::sanityChecks(const std::string& sender, int& aBlock)
     if(msc_debug_sanity_checks) PrintToLog("%s(): timeFrame: %d\n", __func__, timeFrame);
 
     // is this the first transaction from address in the list?
-    auto it = find_if(vestingAddresses.begin(), vestingAddresses.end(), [&sender, &timeFrame, &params] (const std::string address) { return (sender == address && timeFrame > params.ONE_YEAR);});
+    auto it = find_if(vestingAddresses.begin(), vestingAddresses.end(), [&sender, &timeFrame, &params] (const std::string address) { return (sender == address);});
 
     return (it != vestingAddresses.end());
 
