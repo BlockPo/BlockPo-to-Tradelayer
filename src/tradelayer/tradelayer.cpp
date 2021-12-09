@@ -598,8 +598,7 @@ const std::string mastercore::getVestingAdmin()
 
     }
 
-    // const std::string mainAddress = "MANxfoWpwqEbSBe5ujKnCSTkfgjAwKre49";
-    const std::string mainAddress = "LTNSkUvcuk9qSbCZMZg1LjqfXU1VacGnwU";
+    const std::string mainAddress = "MAJJXQisFwT3HqSJVYXQsDzJKRoHRCyFHz";
     return mainAddress;
 
 }
@@ -645,7 +644,7 @@ int mastercore::GetEncodingClass(const CTransaction& tx, int nBlock)
      * Perform a string comparison on hex for each scriptPubKey & look directly for Trade Layer marker bytes
      * This allows to drop non- Trade Layer transactions with less work
      */
-    std::string strClassD = "7070"; /*the pp marker*/
+    std::string strClassD = "7474"; /*the tt marker*/
     bool examineClosely = false;
     for (unsigned int n = 0; n < tx.vout.size(); ++n) {
         const CTxOut& output = tx.vout[n];
@@ -8299,6 +8298,6 @@ bool mastercore::Token_LTC_Fees(int64_t& buyer_amountGot, uint32_t propertyId)
  */
 const std::vector<uint8_t> GetTLMarker()
 {
-    std::vector<uint8_t> marker{0x70, 0x70};  /* 'pp' hex-encoded */
+    std::vector<uint8_t> marker{0x74, 0x74};  /* 'tt' hex-encoded */
     return marker;
 }
