@@ -13,6 +13,7 @@ enum MPRPCErrorCode
     MP_INPUT_NOT_IN_RANGE =         -11,    // input value larger than supported
 
     //ClassAgnosticWalletTXBuilder(
+    MP_RPC_DECODE_INPUTS_MISSING  = -101,
     MP_INPUTS_INVALID =             -212,
     MP_ENCODING_ERROR =             -250,
     MP_REDEMP_ILLEGAL =             -233,
@@ -84,6 +85,9 @@ inline std::string error_str(int ec) {
       break;
     case MP_ERR_PAYLOAD_TOO_BIG:
       ec_str = "Payload too large";
+      break;
+    case MP_RPC_DECODE_INPUTS_MISSING:
+      ec_str = "Missing Inputs";
       break;
     case PKT_ERROR -1:
       ec_str = "Attempt to execute logic in RPC mode";

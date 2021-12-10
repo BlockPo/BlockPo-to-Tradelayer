@@ -3922,19 +3922,19 @@ void nodeReward::sendNodeReward(const std::string& consensusHash, const int& nHe
 
 bool nodeReward::isWinnerAddress(const std::string& consensusHash, const std::string& address, bool fTest)
 {
-    const int lastNterms = (fTest) ? 2 : 4;
+    const int lastNterms = (fTest) ? 2 : 3;
 
     std::vector<unsigned char> vch;
 
     DecodeBase58(address, vch);
 
     const std::string vchStr = HexStr(vch);
-    const std::string LastTwoCharAddr = vchStr.substr(vchStr.size() - lastNterms);
-    const std::string lastFourCharConsensus = consensusHash.substr(consensusHash.size() - lastNterms);
+    const std::string LastThreeCharAddr = vchStr.substr(vchStr.size() - lastNterms);
+    const std::string lastThreeCharConsensus = consensusHash.substr(consensusHash.size() - lastNterms);
 
-    PrintToLog("%s(): lastFourCharConsensus: %s, LastTwoCharAddr (decoded): %s\n",__func__, lastFourCharConsensus, LastTwoCharAddr);
+    PrintToLog("%s(): lastThreeCharConsensus: %s, LastThreeCharAddr (decoded): %s\n",__func__, lastThreeCharConsensus, LastThreeCharAddr);
 
-    return (LastTwoCharAddr == lastFourCharConsensus) ? true : false;
+    return (LastThreeCharAddr == lastThreeCharConsensus) ? true : false;
 
 }
 

@@ -1,10 +1,9 @@
 #include <tradelayer/rpcrawtx.h>
-
+#include <tradelayer/tradelayer.h>
 #include <tradelayer/createtx.h>
 #include <tradelayer/rpc.h>
 #include <tradelayer/rpctxobject.h>
 #include <tradelayer/rpcvalues.h>
-#include <tradelayer/tradelayer.h>
 
 #include <coins.h>
 #include <core_io.h>
@@ -14,6 +13,7 @@
 #include <sync.h>
 #include <uint256.h>
 #include <util/strencodings.h>
+#include <utility>
 
 #include <univalue.h>
 
@@ -21,8 +21,8 @@
 #include <stdint.h>
 #include <string>
 
-
 extern CCriticalSection cs_main;
+
 
 using mastercore::cs_tx_cache;
 using mastercore::view;
@@ -62,15 +62,21 @@ UniValue tl_decodetransaction(const JSONRPCRequest& request)
             + HelpExampleRpc("tl_decodetransaction", "\"010000000163af14ce6d477e1c793507e32a5b7696288fa89705c0d02a3f66beb3c5b8afee0100000000ffffffff02ac020000000000004751210261ea979f6a06f9dafe00fb1263ea0aca959875a7073556a088cdfadcd494b3752102a3fd0a8a067e06941e066f78d930bfc47746f097fcd3f7ab27db8ddf37168b6b52ae22020000000000001976a914946cb2e08075bcbaf157e47bcb67eb2b2339d24288ac00000000\"")
         );
 
+
     CMutableTransaction tx = ParseMutableTransaction(request.params[0]);
 
     UniValue txObj(UniValue::VOBJ);
     int populateResult = -3331;
 
-    // using a different approach
    {
        LOCK2(cs_main, cs_tx_cache);
+
+       if (!DecodeHexTx(tx, request.params[0].get_str(), false, true)) {
+           throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "TX decode failed");
+       }
+
        populateResult = populateRPCTransactionObject(CTransaction(std::move(tx)), uint256(), txObj, "", false, "", 0);
+
    }
 
     if (populateResult != 0) PopulateFailure(populateResult);
