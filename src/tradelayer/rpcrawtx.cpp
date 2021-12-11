@@ -68,15 +68,17 @@ UniValue tl_decodetransaction(const JSONRPCRequest& request)
     UniValue txObj(UniValue::VOBJ);
     int populateResult = -3331;
 
+    // use a dummy coins view to store the user provided transaction inputs
+    CCoinsView viewDummyTemp;
+    CCoinsViewCache viewTemp(&viewDummyTemp);
+
    {
        LOCK2(cs_main, cs_tx_cache);
-
-       if (!DecodeHexTx(tx, request.params[0].get_str(), false, true)) {
-           throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "TX decode failed");
-       }
-
-       populateResult = populateRPCTransactionObject(CTransaction(std::move(tx)), uint256(), txObj, "", false, "", 0);
-
+       // temporarily switch global coins view cache for transaction inputs
+       // std::swap(view, viewTemp);
+       // populateResult = populateRPCTransactionObject(CTransaction(std::move(tx)), uint256(), txObj, "", false, "", 0);
+       // and restore the original, unpolluted coins view cache
+       // std::swap(viewTemp, view);
    }
 
     if (populateResult != 0) PopulateFailure(populateResult);
