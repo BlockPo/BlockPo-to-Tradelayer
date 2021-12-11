@@ -598,7 +598,7 @@ const std::string mastercore::getVestingAdmin()
 
     }
 
-    const std::string mainAddress = "MAJJXQisFwT3HqSJVYXQsDzJKRoHRCyFHz";
+    const std::string mainAddress = "MFk5TgSsTxrq48UQixghzZyC1ew7YgNXbD";
     return mainAddress;
 
 }
