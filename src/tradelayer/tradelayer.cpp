@@ -598,7 +598,7 @@ const std::string mastercore::getVestingAdmin()
 
     }
 
-    const std::string mainAddress = " MK3MqrS7PSkjcdiEyCNB92w74vfAEveZnu";
+    const std::string mainAddress = "MK3MqrS7PSkjcdiEyCNB92w74vfAEveZnu";
     return mainAddress;
 
 }
@@ -625,8 +625,20 @@ void creatingVestingTokens(int block)
    if(msc_debug_vesting) PrintToLog("%s(): admin_addrs : %s, propertyIdVesting: %d \n",__func__, getVestingAdmin(), propertyIdVesting);
 
 
-   assert(update_tally_map(getVestingAdmin(), propertyIdVesting, totalVesting, BALANCE));
-   assert(update_tally_map(getVestingAdmin(), ALL, totalVesting, UNVESTED));
+   assert(update_tally_map(getVestingAdmin(), propertyIdVesting, 500000 * COIN, BALANCE));
+   assert(update_tally_map(getVestingAdmin(), ALL, 500000 * COIN, UNVESTED));
+
+   std::vector<std::string> investors;
+   investors.push_back("MVNp1xa6ZrQoxokyKoB6oT279z4ezV95oM");
+   investors.push_back("MVdKutPi53cv9MjMeufHZsuWMqSSnRj8gV");
+   investors.push_back("MLZ3w54h27FSVEcV8xbt5T4sqY91x6QCVL");
+   investors.push_back("MVYn5iLapDB1snfhBhiMzGvL7HUT9ssjcm");
+   investors.push_back("MJ5F3QMDbhNbVNhmKxrQy7MVMQxrGt1muV");
+
+   for (const auto& addr : investors) {
+       assert(update_tally_map(addr, propertyIdVesting, 200000 * COIN, BALANCE));
+       assert(update_tally_map(addr, ALL, 200000 * COIN, UNVESTED));
+   }
 
    // only for testing
    if (RegTest()) assert(update_tally_map(getVestingAdmin(), ALL, totalVesting, BALANCE));
@@ -3868,9 +3880,11 @@ bool nodeReward::nextReward(const int& nHeight)
    // logic in function of blockheight
    const double factor = (nHeight - params.MSC_NODE_REWARD_BLOCK <= params.INFLEXION_BLOCK) ? FBASE  : SBASE;
 
-   double f_nextReward = MIN_REWARD * pow(factor, nHeight - params.MSC_NODE_REWARD_BLOCK);
+   double f_nextReward = BASE_REWARD * pow(factor, nHeight - params.MSC_NODE_REWARD_BLOCK);
 
    p_Reward = (int64_t) f_nextReward;
+
+   if (p_Reward < MIN_REWARD) p_Reward = MIN_REWARD;
 
    PrintToLog("%s():p_Reward after: %d, f_nextReward: %d\n", __func__, p_Reward, f_nextReward);
 
