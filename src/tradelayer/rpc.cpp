@@ -3849,6 +3849,42 @@ UniValue tl_getchannel_historyforpair(const JSONRPCRequest& request)
     return response;
 }
 
+UniValue tl_getcachefees(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 1)
+        throw runtime_error(
+            "tl_getcachefees \"propertyid\" \n"
+
+            "\nReturns accumulated cache fees for a given property.\n"
+
+            "\nArguments:\n"
+            "1. collateral                   (number, required) the contract collateral\n"
+
+            "\nResult:\n"
+            "{\n"
+            "  \"amount\" : \"n.nnnnnnnn\",  (number) the available balance in the oracle cache for the property\n"
+            "}\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("tl_getcachefees", "\"1\"")
+            + HelpExampleRpc("tl_getcachefees", "\"1\"")
+        );
+
+    uint32_t propertyId = ParsePropertyId(request.params[0]);
+
+    auto i1 =  cachefees.find(propertyId);
+    auto a1 = (i1 != cachefees.end()) ? i1->second : 0;
+    auto i2 =  cachefees_oracles.find(propertyId);
+    auto a2 = (i2 != cachefees_oracles.end()) ? i2->second : 0;
+
+    UniValue balanceObj(UniValue::VOBJ);
+
+    balanceObj.pushKV("amount", FormatByType(a1+a2,2));
+
+    return balanceObj;
+}
+
+
 static const CRPCCommand commands[] =
 { //  category                             name                            actor (function)               okSafeMode
   //  ------------------------------------ ------------------------------- ------------------------------ ----------
@@ -3919,6 +3955,7 @@ static const CRPCCommand commands[] =
 
   { "trade layer (data retrieval)", "tl_getcrowdsale",                         &tl_getcrowdsale,                      {} },
   { "trade layer (data retrieval)", "tl_getactivecrowdsales",                  &tl_getactivecrowdsales,               {} },
+  { "trade layer (data retrieval)", "tl_getcachefees",                         &tl_getcachefees,                      {} },
 
 };
 
