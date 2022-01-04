@@ -57,7 +57,7 @@ std::string GenerateConsensusString(const Register& reg, const std::string& addr
 {
     const int64_t entryPrice = reg.getRecord(contractId, ENTRY_CPRICE);
     const int64_t position = reg.getRecord(contractId, CONTRACT_POSITION);
-    const int64_t liquidationPrice = reg.getRecord(contractId, LIQUIDATION_PRICE);
+    const int64_t liquidationPrice = reg.getRecord(contractId, BANKRUPTCY_PRICE);
     const int64_t upnl = reg.getRecord(contractId, UPNL);
     const int64_t margin = reg.getRecord(contractId, MARGIN);
     const int64_t leverage = reg.getRecord(contractId, LEVERAGE);
@@ -161,7 +161,7 @@ std::string GenerateConsensusString(const mastercore::FeatureActivation& feat)
 *
 * ---STAGE 2 - CONTRACT REGISTERS---
 * Format specifiers & placeholders:
-*   "%s|%d|%d|%d|%d|%d|%d" - "address|contractid|entry_price|position|liquidation_price|upnl|margin|leverage"
+*   "%s|%d|%d|%d|%d|%d|%d" - "address|contractid|entry_price|position|BANKRUPTCY_PRICE|upnl|margin|leverage"
 *
 * Note: empty balance records and the pending tally are ignored. Addresses are sorted based
 * on lexicographical order, and balance records are sorted by the property identifiers.

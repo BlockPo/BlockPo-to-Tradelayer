@@ -257,7 +257,7 @@ class OraclesBasicsTest (BitcoinTestFramework):
 
         self.nodes[0].generate(10)
 
-
+        exit()
         # putting a buy order here, to match with the liquidation order
         self.log.info("Another address selling contracts")
         params = str([addresses[0], "Oracle 1", "500", "90.1", 1, "1"]).replace("'",'"')
