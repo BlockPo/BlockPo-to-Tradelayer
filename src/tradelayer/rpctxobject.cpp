@@ -49,8 +49,7 @@ int populateRPCTransactionObject(const uint256& txid, UniValue& txobj, std::stri
     if (!GetTransaction(txid, tx, Params().GetConsensus(), blockHash, true)) {
         return MP_TX_NOT_FOUND;
     }
-    const CTransaction txp = *(tx) ;
-    return populateRPCTransactionObject(txp, blockHash, txobj, filterAddress, extendedDetails, extendedDetailsFilter);
+    return populateRPCTransactionObject(*tx, blockHash, txobj, filterAddress, extendedDetails, extendedDetailsFilter);
 }
 
 int populateRPCTransactionObject(const CTransaction& tx, const uint256& blockHash, UniValue& txobj, std::string filterAddress, bool extendedDetails, std::string extendedDetailsFilter, int blockHeight)
@@ -77,6 +76,10 @@ int populateRPCTransactionObject(const CTransaction& tx, const uint256& blockHas
     // attempt to parse the transaction
     CMPTransaction mp_obj;
     int parseRC = ParseTransaction(tx, blockHeight, 0, mp_obj, blockTime);
+    if (parseRC == -101) {
+        return MP_RPC_DECODE_INPUTS_MISSING;
+    }
+    
     if (parseRC < 0) return MP_TX_IS_NOT_MASTER_PROTOCOL;
 
     const uint256& txid = tx.GetHash();
@@ -310,6 +313,14 @@ bool populateRPCTypeInfo(CMPTransaction& mp_obj, UniValue& txobj, uint32_t txTyp
         case MSC_TYPE_LITECOIN_PAYMENT:
             populateRPCTypeLitecoinPayment(mp_obj, txobj);
             return true;
+
+        case MSC_TYPE_SUBMIT_NODE_ADDRESS:
+      			 populateRPCTypeSubmit_Node_Address(mp_obj, txobj);
+             return true;
+
+      	case MSC_TYPE_CLAIM_NODE_REWARD:
+             populateRPCTypeClaim_Node_Reward(mp_obj, txobj);
+             return true;
 
         default:
             return false;
@@ -711,6 +722,16 @@ void populateRPCTypeContract_Instant(CMPTransaction& tlObj, UniValue& txobj)
     txobj.push_back(Pair("price", (uint64_t) tlObj.getPrice()));
     txobj.push_back(Pair("trading action", (uint64_t) tlObj.getItradingAction()));
     txobj.push_back(Pair("leverage", (uint64_t) tlObj.getIleverage()));
+}
+
+void populateRPCTypeSubmit_Node_Address(CMPTransaction& tlObj, UniValue& txobj)
+{
+   txobj.push_back(Pair("address submitted", tlObj.getReceiver()));
+}
+
+void populateRPCTypeClaim_Node_Reward(CMPTransaction& tlObj, UniValue& txobj)
+{
+  txobj.push_back(Pair("address claiming", tlObj.getSender()));
 }
 
 void populateRPCTypeNew_Id_Registration(CMPTransaction& tlObj, UniValue& txobj)

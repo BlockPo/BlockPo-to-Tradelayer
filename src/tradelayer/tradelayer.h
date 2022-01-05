@@ -33,9 +33,9 @@ using std::string;
 
 typedef boost::rational<boost::multiprecision::checked_int128_t> rational_t;
 
-int const MAX_STATE_HISTORY = 200;
+const int MAX_STATE_HISTORY = 200;
 
-int const STORE_EVERY_N_BLOCK = 5000;
+const int STORE_EVERY_N_BLOCK = 5000;
 
 #define MAX_PROPERTY_N (0x80000003UL)
 
@@ -74,6 +74,11 @@ const int OL_BLOCKS = 3;
 const int BlockS = 500; /** regtest **/
 
 //node reward
+const int64_t BASE_REWARD = 0.05 * COIN;
+const int64_t MIN_REWARD = 0.01 * COIN;
+const double FBASE = 1.000014979;
+const double SBASE = 0.999937;
+
 const double CompoundRate = 1.00002303;
 const double DecayRate = 0.99998;
 const double LongTailDecay = 0.99999992;
@@ -95,7 +100,7 @@ extern int idx_q;
 
 
 // Transaction types, from the spec
-enum TransactionType {
+enum TransactionType : unsigned int {
   MSC_TYPE_SIMPLE_SEND                =  0,
   MSC_TYPE_SEND_MANY                  =  1,
   MSC_TYPE_RESTRICTED_SEND            =  2,
@@ -152,6 +157,8 @@ enum TransactionType {
   MSC_TYPE_ATTESTATION                        = 118,
   MSC_TYPE_REVOKE_ATTESTATION                 = 119,
   MSC_TYPE_CLOSE_CHANNEL                      = 120,
+  MSC_TYPE_SUBMIT_NODE_ADDRESS                = 121,
+  MSC_TYPE_CLAIM_NODE_REWARD                  = 122,
 
 };
 
@@ -188,6 +195,7 @@ enum FILETYPES {
   FILE_TYPE_REGISTER,
   FILETYPE_CONTRACT_GLOBALS,
   FILETYPE_CROWDSALES,
+  FILE_TYPE_NODE_ADDRESSES,
   NUM_FILETYPES
 };
 
@@ -202,6 +210,7 @@ const int PKT_ERROR_SEND_ALL     = -83000;
 const int PKT_ERROR_METADEX      = -80000;
 const int METADEX_ERROR          = -81000;
 const int CONTRACTDEX_ERROR      = -82000;
+const int NODE_REWARD_ERROR      = -84000;
 
 const int DEX_ERROR_SELLOFFER    = -10000;
 const int DEX_ERROR_ACCEPT       = -20000;
@@ -303,7 +312,7 @@ const std::string ACTIVE_CHANNEL                = "active";
 const std::string CLOSED_CHANNEL                = "closed";
 
 //channel second address PENDING
-const std::string CHANNEL_PENDING                       = "pending";
+const std::string CHANNEL_PENDING               = "pending";
 
 // withdrawal status
 const int ACTIVE_WITHDRAWAL   = 1;
@@ -384,6 +393,38 @@ class Channel
    void setSecond(const std::string& sender) { second = sender ; }
    bool updateChannelBal(const std::string& address, uint32_t propertyId, int64_t amount);
    bool updateLastExBlock(int nBlock);
+
+ };
+
+
+class nodeReward
+{
+  private:
+    int64_t p_Reward;
+    int p_lastBlock;
+    std::set<string> winners;
+    std::map<string, bool> nodeRewardsAddrs;
+
+  public:
+    nodeReward() : p_Reward(0), p_lastBlock(0) {}
+    ~nodeReward() {}
+
+    void sendNodeReward(const std::string& consensusHash, const int& nHeight, bool fTest);
+    const int64_t& getNextReward() const { return p_Reward;}
+    const int& getLastBlock() const { return p_lastBlock;}
+    bool nextReward(const int& nHeight);
+    bool isWinnerAddress(const std::string& consensusHash, const std::string& address, bool fTest);
+    const std::map<string, bool>& getnodeRewardAddrs() const { return nodeRewardsAddrs; }
+    void updateAddressStatus(const std::string& address, bool newStatus);
+    bool isAddressIncluded(const std::string& address);
+
+    void saveNodeReward(ofstream &file, CHash256& hasher);
+    void clearNodeRewardMap() { nodeRewardsAddrs.clear(); }
+    const std::set<string>& getWinners() const { return winners; }
+    void addWinner(const std::string& address) { winners.insert(address);}
+    void clearWinners() { winners.clear(); }
+    void setLastBlock(int lastBlock) { p_lastBlock = lastBlock; }
+    void setLastReward(int64_t reward) { p_Reward = reward; }
 
  };
 
@@ -606,6 +647,8 @@ extern std::map<uint32_t, std::map<uint32_t, std::vector<int64_t>>> denVWAPVecto
 extern std::vector<std::map<std::string, std::string>> path_ele;
 extern std::vector<std::map<std::string, std::string>> path_elef;
 
+extern nodeReward nR;
+
 int64_t getMPbalance(const std::string& address, uint32_t propertyId, TallyType ttype);
 int64_t getUserAvailableMPbalance(const std::string& address, uint32_t propertyId);
 int64_t getUserReserveMPbalance(const std::string& address, uint32_t propertyId);
@@ -676,12 +719,12 @@ namespace mastercore
 
   int64_t getTotalTokens(uint32_t propertyId, int64_t* n_owners_total = nullptr);
 
-  std::string strTransactionType(uint16_t txType);
+  std::string strTransactionType(unsigned int txType);
 
   /** Returns the encoding class, used to embed a payload. */
   int GetEncodingClass(const CTransaction& tx, int nBlock);
 
-  /** Determines, whether it is valid to use a Class C transaction for a given payload size. */
+  /** Determines, whether it is valid to use a Class D transaction for a given payload size. */
   bool UseEncodingClassD(size_t nDataSize);
 
   bool getValidMPTX(const uint256 &txid, std::string *reason = nullptr, int *block = nullptr, unsigned int *type = nullptr, uint64_t *nAmended = nullptr);
@@ -753,6 +796,7 @@ namespace mastercore
   bool checkChannelAddress(const std::string& channelAddress);
 
   bool LiquidationEngine(int Block);
+
 }
 
 #endif // TRADELAYER_TL_H

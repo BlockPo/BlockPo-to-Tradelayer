@@ -51,6 +51,7 @@ using namespace mastercore;
 typedef boost::rational<boost::multiprecision::checked_int128_t> rational_t;
 typedef boost::multiprecision::cpp_dec_float_100 dec_float;
 typedef boost::multiprecision::checked_int128_t int128_t;
+
 std::map<std::string,uint32_t> peggedIssuers;
 std::map<uint32_t,std::map<int,oracledata>> oraclePrices;
 
@@ -61,75 +62,65 @@ using mastercore::StrToInt64;
 
 
 /* Mapping of a transaction type to a textual description. */
-const struct tradelayer_descs {
-	uint16_t	transaction_type;
-	const char	*description;
-} tradelayer_descs[] = {
-	{ MSC_TYPE_SIMPLE_SEND, "Simple Send" },
-    { MSC_TYPE_SEND_MANY, "Send Many" },
-	{ MSC_TYPE_RESTRICTED_SEND, "Restricted Send" },
-	{ MSC_TYPE_SEND_ALL, "Send All" },
-	{ MSC_TYPE_SEND_VESTING, "Send Vesting Tokens" },
-    { MSC_TYPE_CLOSE_CROWDSALE, "Close Crowdsale" },
-	{ MSC_TYPE_SAVINGS_MARK, "Savings" },
-	{ MSC_TYPE_SAVINGS_COMPROMISED, "Savings COMPROMISED" },
-	{ MSC_TYPE_CREATE_PROPERTY_FIXED, "Create Property - Fixed" },
-	{ MSC_TYPE_CREATE_PROPERTY_VARIABLE, "Create Property - Variable" },
-	{ MSC_TYPE_CREATE_PROPERTY_MANUAL, "Create Property - Manual" },
-	{ MSC_TYPE_GRANT_PROPERTY_TOKENS, "Grant Property Tokens" },
-	{ MSC_TYPE_REVOKE_PROPERTY_TOKENS, "Revoke Property Tokens" },
-	{ MSC_TYPE_CHANGE_ISSUER_ADDRESS, "Change Issuer Address" },
-	{ TL_MESSAGE_TYPE_ALERT, "ALERT" },
-	{ TL_MESSAGE_TYPE_DEACTIVATION, "Feature Deactivation" },
-	{ TL_MESSAGE_TYPE_ACTIVATION, "Feature Activation" },
-	{ MSC_TYPE_METADEX_TRADE, "Metadex Order" },
-	{ MSC_TYPE_CONTRACTDEX_TRADE, "Future Contract" },
-	{ MSC_TYPE_CONTRACTDEX_CANCEL_ECOSYSTEM, "ContractDex cancel-ecosystem" },
-	{ MSC_TYPE_CREATE_CONTRACT, "Create Native Contract" },
-	{ MSC_TYPE_PEGGED_CURRENCY, "Pegged Currency" },
-	{ MSC_TYPE_REDEMPTION_PEGGED, "Redemption Pegged Currency" },
-	{ MSC_TYPE_SEND_PEGGED_CURRENCY, "Send Pegged Currency" },
-	{ MSC_TYPE_CONTRACTDEX_CLOSE_POSITION, "Close Position" },
-	{ MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK, "Cancel Orders by Block" },
-	{ MSC_TYPE_DEX_SELL_OFFER, "DEx Sell Offer" },
-	{ MSC_TYPE_DEX_BUY_OFFER, "DEx Buy Offer" },
-	{ MSC_TYPE_ACCEPT_OFFER_BTC, "DEx Accept Offer LTC" },
-	{ MSC_TYPE_CHANGE_ORACLE_REF, "Oracle Change Reference" },
-	{ MSC_TYPE_SET_ORACLE, "Oracle Set Address" },
-	{ MSC_TYPE_ORACLE_BACKUP, "Oracle Backup" },
-	{ MSC_TYPE_CLOSE_ORACLE, "Oracle Close" },
-	{ MSC_TYPE_COMMIT_CHANNEL, "Channel Commit" },
-	{ MSC_TYPE_WITHDRAWAL_FROM_CHANNEL, "Channel Withdrawal" },
-	{ MSC_TYPE_INSTANT_TRADE, "Channel Instant Trade" },
-	{ MSC_TYPE_TRANSFER, "Channel Transfer" },
-	{ MSC_TYPE_CONTRACT_INSTANT, "Channel Contract Instant Trade" },
-	{ MSC_TYPE_NEW_ID_REGISTRATION, "New Id Registration" },
-	{ MSC_TYPE_UPDATE_ID_REGISTRATION, "Update Id Registration" },
-	{ MSC_TYPE_DEX_PAYMENT, "DEx payment" },
-	{ MSC_TYPE_ATTESTATION, "KYC Attestation" },
-	{ MSC_TYPE_REVOKE_ATTESTATION, "KYC Revoke Attestation" },
-	{ MSC_TYPE_CREATE_ORACLE_CONTRACT , "Create Oracle Contract" },
-	{ MSC_TYPE_METADEX_CANCEL_ALL , "Cancel all MetaDEx orders" },
-	{ MSC_TYPE_CONTRACTDEX_CANCEL , "Cancel specific contract order" },
-	{ MSC_TYPE_INSTANT_LTC_TRADE , "Instant LTC for Tokens trade" },
-	{ MSC_TYPE_METADEX_CANCEL, "Cancel specific MetaDEx order" },
-	{ MSC_TYPE_METADEX_CANCEL_BY_PRICE, "MetaDEx cancel-price" },
-	{ MSC_TYPE_METADEX_CANCEL_BY_PAIR, "MetaDEx cancel-by-pair" },
-	{ MSC_TYPE_CLOSE_CHANNEL , "Close Channel" },
-    { MSC_TYPE_LITECOIN_PAYMENT, "Litecoin Payment" }
-};
-
-/* Mapping of a transaction type to a textual description. */
-std::string mastercore::strTransactionType(uint16_t txType)
+std::string mastercore::strTransactionType(unsigned int txType)
 {
+     switch (txType) {
+        case MSC_TYPE_SIMPLE_SEND: return "Simple Send";
+				case MSC_TYPE_SEND_MANY: return "Send Many";
+				case MSC_TYPE_RESTRICTED_SEND: return "Restricted Send";
+				case MSC_TYPE_SEND_ALL: return "Send All";
+				case MSC_TYPE_SEND_VESTING: return "Send Vesting Tokens";
+				case MSC_TYPE_SAVINGS_MARK: return"Savings";
+				case MSC_TYPE_SAVINGS_COMPROMISED: return "Savings COMPROMISED";
+				case MSC_TYPE_CREATE_PROPERTY_FIXED: return "Create Property - Fixed";
+				case MSC_TYPE_CREATE_PROPERTY_MANUAL: return "Create Property - Manual";
+				case MSC_TYPE_GRANT_PROPERTY_TOKENS: return "Grant Property Tokens";
+				case MSC_TYPE_REVOKE_PROPERTY_TOKENS: return"Revoke Property Tokens";
+				case MSC_TYPE_CHANGE_ISSUER_ADDRESS: return "Change Issuer Address";
+				case TL_MESSAGE_TYPE_ALERT: return "ALERT";
+				case TL_MESSAGE_TYPE_DEACTIVATION: return "Feature Deactivation";
+				case TL_MESSAGE_TYPE_ACTIVATION: return "Feature Activation";
+				case MSC_TYPE_METADEX_TRADE: return "Metadex Order";
+				case MSC_TYPE_CONTRACTDEX_TRADE: return "Future Contract";
+				case MSC_TYPE_CONTRACTDEX_CANCEL_ECOSYSTEM: return "ContractDex cancel-ecosystem";
+				case MSC_TYPE_CREATE_CONTRACT: return "Create Native Contract";
+				case MSC_TYPE_PEGGED_CURRENCY: return "Pegged Currency";
+				case MSC_TYPE_REDEMPTION_PEGGED: return "Redemption Pegged Currency";
+				case MSC_TYPE_SEND_PEGGED_CURRENCY: return "Send Pegged Currency";
+				case MSC_TYPE_CONTRACTDEX_CLOSE_POSITION: return "Close Position";
+				case MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK: return "Cancel Orders by Block";
+				case MSC_TYPE_DEX_SELL_OFFER: return "DEx Sell Offer";
+				case MSC_TYPE_DEX_BUY_OFFER: return "DEx Buy Offer";
+				case MSC_TYPE_ACCEPT_OFFER_BTC: return "DEx Accept Offer LTC";
+				case MSC_TYPE_CHANGE_ORACLE_REF: return "Oracle Change Reference";
+				case MSC_TYPE_SET_ORACLE: return "Oracle Set Address";
+				case MSC_TYPE_ORACLE_BACKUP: return "Oracle Backup";
+				case MSC_TYPE_CLOSE_ORACLE: return "Oracle Close";
+				case MSC_TYPE_COMMIT_CHANNEL: return "Channel Commit";
+				case MSC_TYPE_WITHDRAWAL_FROM_CHANNEL: return "Channel Withdrawal";
+				case MSC_TYPE_TRANSFER: return "Channel Transfer";
+				case MSC_TYPE_INSTANT_TRADE: return "Channel Instant Trade";
+				case MSC_TYPE_CONTRACT_INSTANT: return "Channel Contract Instant Trade";
+				case MSC_TYPE_NEW_ID_REGISTRATION: return "New Id Registration";
+				case MSC_TYPE_UPDATE_ID_REGISTRATION: return "Update Id Registration";
+				case MSC_TYPE_DEX_PAYMENT: return "DEx payment";
+				case MSC_TYPE_ATTESTATION: return "KYC Attestation";
+				case MSC_TYPE_REVOKE_ATTESTATION: return "KYC Revoke Attestation";
+				case MSC_TYPE_CREATE_ORACLE_CONTRACT: return "Create Oracle Contract";
+				case MSC_TYPE_METADEX_CANCEL_ALL: return "Cancel all MetaDEx orders";
+				case MSC_TYPE_CONTRACTDEX_CANCEL: return "Cancel specific contract order";
+				case MSC_TYPE_INSTANT_LTC_TRADE: return "Instant LTC for Tokens trade";
+				case MSC_TYPE_METADEX_CANCEL: return "Cancel specific MetaDEx order";
+				case MSC_TYPE_METADEX_CANCEL_BY_PRICE: return "MetaDEx cancel-price";
+				case MSC_TYPE_METADEX_CANCEL_BY_PAIR: return "MetaDEx cancel-by-pair";
+				case MSC_TYPE_SUBMIT_NODE_ADDRESS: return "Submit Node Reward Address";
+				case MSC_TYPE_CLAIM_NODE_REWARD: return "Claim Node Reward";
+                case MSC_TYPE_LITECOIN_PAYMENT: return "Litecoin Payment";
+				case MSC_TYPE_CLOSE_CHANNEL: return "Close Channel";
+     }
 
-	for (size_t i = 0; i < sizeof (tradelayer_descs); ++i) {
-		if (txType == tradelayer_descs[i].transaction_type)
-			return tradelayer_descs[i].description;
-	}
-	return "* unknown type *";
+		 return "* unknown type *";
 }
-
 /** Helper to convert class number to string. */
 static std::string intToClass(int encodingClass)
 {
@@ -323,6 +314,11 @@ bool CMPTransaction::interpret_Transaction()
       case MSC_TYPE_LITECOIN_PAYMENT:
           return interpret_LitecoinPayment();
 
+			case MSC_TYPE_SUBMIT_NODE_ADDRESS:
+			    return interpret_SubmitNodeAddr();
+
+			case MSC_TYPE_CLAIM_NODE_REWARD:
+          return interpret_ClaimNodeReward();
     }
 
   return false;
@@ -341,7 +337,8 @@ bool CMPTransaction::interpret_TransactionType()
     } else return false;
 
     if (!vecTypeBytes.empty()) {
-        type = DecompressInteger(vecTypeBytes);
+        type = (unsigned int) DecompressInteger(vecTypeBytes);
+				PrintToLog("%s(): type: %d\n",__func__, type);
     } else return false;
 
     if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly) {
@@ -385,19 +382,26 @@ bool CMPTransaction::interpret_SimpleSend()
 bool CMPTransaction::interpret_SendMany()
 {
     int i = 0;
-    
+
     auto vecVersionBytes = GetNextVarIntBytes(i);
     auto vecTypeBytes = GetNextVarIntBytes(i);
     auto vecPropIdBytes = GetNextVarIntBytes(i);
 
     if (type != 1 || vecPropIdBytes.empty()) return false;
     property = DecompressInteger(vecPropIdBytes);
-    
-    for (int j=0; j<4; ++j) {
-        auto n = DecompressInteger(GetNextVarIntBytes(i));
-        if (n == 0) break;
-        values.push_back(n);
-    }
+
+		do
+    {
+        auto vecKyc = GetNextVarIntBytes(i);
+        if (!vecKyc.empty())
+        {
+            auto n = DecompressInteger(vecKyc);
+						if (n == 0) break;
+            values.push_back(n);
+						PrintToLog("\t value: %d\n", n);
+        }
+
+    } while(i < pkt_size);
 
     if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly) {
         PrintToLog("\t        property: %d (%s)\n", property, strMPProperty(property));
@@ -2280,8 +2284,6 @@ bool CMPTransaction::interpret_Close_Channel()
 {
   int i = 0;
 
-  PrintToLog("%s(): inside interpret_Close_Channel \n",__func__);
-
   std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
   std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
 
@@ -2309,6 +2311,37 @@ bool CMPTransaction::interpret_LitecoinPayment()
 
     return true;
 }
+        
+/** Tx 121 */
+bool CMPTransaction::interpret_SubmitNodeAddr()
+{
+    int i = 0;
+    std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+
+
+    if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly) {
+        PrintToLog("\t  %s(): inside interpret \n",__func__);
+    }
+
+    return true;
+}
+
+/** Tx 122 */
+bool CMPTransaction::interpret_ClaimNodeReward()
+{
+    int i = 0;
+    std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+
+
+    if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly) {
+        PrintToLog("\t  %s(): inside interpret \n",__func__);
+    }
+
+    return true;
+}
+
 
 // ---------------------- CORE LOGIC -------------------------
 
@@ -2336,7 +2369,7 @@ int CMPTransaction::interpretPacket()
     {
         case MSC_TYPE_SIMPLE_SEND:
             return logicMath_SimpleSend();
-        
+
         case MSC_TYPE_SEND_MANY:
             return logicMath_SendMany();
 
@@ -2480,6 +2513,11 @@ int CMPTransaction::interpretPacket()
 
         case MSC_TYPE_LITECOIN_PAYMENT:
             return logicMath_LitecoinPayment();
+				case MSC_TYPE_SUBMIT_NODE_ADDRESS:
+						return logicMath_SubmitNodeAddr();
+
+				case MSC_TYPE_CLAIM_NODE_REWARD:
+						return logicMath_ClaimNodeReward();
 
         default:
             return -1;
@@ -2631,15 +2669,22 @@ int CMPTransaction::logicMath_SendMany()
         }
 
         // TODO: recipients ?!
-        // if(!t_tradelistdb->checkAttestationReg(receiver,kyc_id)){
-        //   PrintToLog("%s(): rejected: kyc ckeck for receiver failed\n", __func__);
-        //   return (PKT_ERROR_KYC -10);
-        // }
+				for (const auto& addr : recipients)
+				{
+				    int kyc_id;
+					  if(!t_tradelistdb->checkAttestationReg(addr,kyc_id)){
+					      PrintToLog("%s(): rejected: kyc ckeck for receiver failed\n", __func__);
+					      return (PKT_ERROR_KYC -10);
+				  	}
 
-        if(!t_tradelistdb->kycPropertyMatch(property,kyc_id)){
-          PrintToLog("%s(): rejected: property %d can't be traded with this kyc\n", __func__, property);
-          return (PKT_ERROR_KYC -20);
-        }
+					  if(!t_tradelistdb->kycPropertyMatch(property,kyc_id)){
+						    PrintToLog("%s(): rejected: property %d can't be traded with this kyc\n", __func__, property);
+						    return (PKT_ERROR_KYC -20);
+					  }
+				}
+
+
+
     }
 
     int64_t nBalance = getMPbalance(sender, property, BALANCE);
@@ -2654,6 +2699,10 @@ int CMPTransaction::logicMath_SendMany()
     }
 
     // ------------------------------------------
+		for (const auto& addr : recipients) {
+        PrintToLog("%s(): address: %s, sender: %s\n",__func__, addr, sender);
+		}
+
     const auto& from = sender;
     auto pred = [&from](const std::string& a){ return a == from; };
     if (std::find_if(recipients.begin(), recipients.end(), pred) != recipients.end()) {
@@ -2667,19 +2716,21 @@ int CMPTransaction::logicMath_SendMany()
     // }
 
     if (recipients.size() != values.size()) {
-        PrintToLog("%s(): rejected: recipients/amounts mismatch: addresses=%d values=%d\n", 
-                recipients.size(),
-                values.size(),
-                __func__, 
-                property);
+        PrintToLog("%s(): rejected: recipients/amounts mismatch: addresses=%d values=%d\n",
+                __func__,
+								recipients.size(),
+								values.size());
         return (PKT_ERROR_SEND -27);
     }
 
     // Move the tokens
-    for (size_t i=0; i<recipients.size(); ++i) {
+    for (size_t i=0; i <recipients.size(); ++i) {
         auto v = values[i];
-        assert(update_tally_map(sender, property, -v, BALANCE));
-        assert(update_tally_map(recipients[i], property, v, BALANCE));
+				if (v > 0) {
+				    assert(update_tally_map(sender, property, -v, BALANCE));
+					  assert(update_tally_map(recipients[i], property, v, BALANCE));
+				}
+
     }
 
     return 0;
@@ -3488,12 +3539,13 @@ int CMPTransaction::logicMath_Deactivation()
 /** Tx 65534 */
 int CMPTransaction::logicMath_Activation()
 {
+	  PrintToLog("%s(): inside function\n",__func__);
+
     if (!IsTransactionTypeAllowed(block, type, version)) {
-        PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+        PrintToLog("%s(): rejected: type %d or version %d not permitted at block %d\n",
                 __func__,
                 type,
                 version,
-                property,
                 block);
         return (PKT_ERROR_SP -22);
     }
@@ -3781,12 +3833,12 @@ int CMPTransaction::logicMath_ContractDexTrade()
 
   /*********************************************/
   /**Logic for Node Reward**/
-  const CConsensusParams &params = ConsensusParams();
-  int BlockInit = params.MSC_NODE_REWARD_BLOCK;
-  int nBlockNow = GetHeight();
-
-  BlockClass NodeRewardObj(BlockInit, nBlockNow);
-  NodeRewardObj.SendNodeReward(sender);
+  // const CConsensusParams &params = ConsensusParams();
+  // int BlockInit = params.MSC_NODE_REWARD_BLOCK;
+  // int nBlockNow = GetHeight();
+	//
+  // BlockClass NodeRewardObj(BlockInit, nBlockNow);
+  // NodeRewardObj.SendNodeReward(sender);
 
   /*********************************************/
   t_tradelistdb->recordNewTrade(txid, sender, contractId, desired_property, block, tx_idx, 0);
@@ -5462,6 +5514,47 @@ int CMPTransaction::logicMath_LitecoinPayment()
     }
 
     return 0;
+}
+
+/** Tx 121 */
+int CMPTransaction::logicMath_SubmitNodeAddr()
+{
+   if (!IsTransactionTypeAllowed(block, type, version)) {
+      PrintToLog("%s(): rejected: type %d or version %d not permitted at block %d\n",
+              __func__,
+              type,
+              version,
+              block);
+      return (PKT_ERROR_SP -22);
+  }
+
+  // adding address
+	nR.updateAddressStatus(receiver, false);
+
+  return 0;
+}
+
+/** Tx 121 */
+int CMPTransaction::logicMath_ClaimNodeReward()
+{
+   if (!IsTransactionTypeAllowed(block, type, version)) {
+      PrintToLog("%s(): rejected: type %d or version %d not permitted at block %d\n",
+              __func__,
+              type,
+              version,
+              block);
+      return (PKT_ERROR_SP -22);
+  }
+
+  // adding address
+	if(!nR.isAddressIncluded(sender)) {
+	    PrintToLog("%s(): rejected: address not found\n",__func__);
+		  return (NODE_REWARD_ERROR -1);
+	}
+
+	nR.updateAddressStatus(sender, true);
+
+  return 0;
 }
 
 struct FutureContractObject *getFutureContractObject(std::string identifier)

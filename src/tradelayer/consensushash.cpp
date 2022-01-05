@@ -333,7 +333,7 @@ uint256 GetConsensusHash()
     {
         const std::string& dataStr = it->second;
         if (msc_debug_consensus_hash) PrintToLog("Adding DEx accept to consensus hash: %s\n", dataStr);
-         hasher.Write((unsigned char*)dataStr.c_str(), dataStr.length());
+        hasher.Write((unsigned char*)dataStr.c_str(), dataStr.length());
     }
 
     // MetaDEx trades - loop through the MetaDEx maps and add each open trade to the consensus hash (ordered by txid)
@@ -426,7 +426,7 @@ uint256 GetConsensusHash()
 
     // Trade Channels
     // Placeholders: "multisigaddress|multisigaddress|firstaddress|secondaddress|lastexchangeblock"
-    for(const auto cm : channels_Map)
+    for(const auto& cm : channels_Map)
     {
          const Channel& chn = cm.second;
          const std::string dataStr = GenerateConsensusString(chn);
@@ -447,7 +447,7 @@ uint256 GetConsensusHash()
 
     // Cache fee (natives)
     // Placeholders: "propertyid|cacheamount"
-    for (const auto &cf : cachefees)
+    for (const auto& cf : cachefees)
     {
         const uint32_t& propertyId = cf.first;
         const int64_t& cache = cf.second;
@@ -459,7 +459,7 @@ uint256 GetConsensusHash()
 
     // Cache fee (oracles)
     // Placeholders: "propertyid|cacheamount"
-    for (const auto &cf : cachefees_oracles)
+    for (const auto& cf : cachefees_oracles)
     {
         const uint32_t& propertyId = cf.first;
         const int64_t& cache = cf.second;
@@ -472,7 +472,7 @@ uint256 GetConsensusHash()
     // Vesting addresses
     // Placeholders: "addresses"
     // std::sort (vestingAddresses.begin(), vestingAddresses.end());
-    for (const auto v : vestingAddresses)
+    for (const auto& v : vestingAddresses)
     {
         const std::string& address = v;
         std::string dataStr = strprintf("%s", address);
@@ -485,7 +485,7 @@ uint256 GetConsensusHash()
     std::vector<mastercore::FeatureActivation> pendings = mastercore::GetPendingActivations();
     std::vector<std::pair<uint16_t, std::string> > sortPendings;
 
-    for(const auto &p : pendings)
+    for(const auto& p : pendings)
     {
          const mastercore::FeatureActivation& feat = p;
          std::string dataStr = GenerateConsensusString(feat);
@@ -494,9 +494,9 @@ uint256 GetConsensusHash()
 
     // sorting using featureId
     std::sort(sortPendings.begin(), sortPendings.end());
-    for(const auto &sp : sortPendings)
+    for(const auto& sp : sortPendings)
     {
-        std::string dataStr = sp.second;
+        const std::string& dataStr = sp.second;
         if (msc_debug_consensus_hash) PrintToLog("Adding Pending features activations entry to consensus hash: %s\n", dataStr);
         hasher.Write((unsigned char*)dataStr.c_str(), dataStr.length());
     }
@@ -506,7 +506,7 @@ uint256 GetConsensusHash()
     std::vector<mastercore::FeatureActivation> completed = mastercore::GetCompletedActivations();
     std::vector<std::pair<uint16_t, std::string> > sortCompleted;
 
-    for(const auto &cp : completed)
+    for(const auto& cp : completed)
     {
          const mastercore::FeatureActivation& feat = cp;
          std::string dataStr = GenerateConsensusString(feat);
@@ -515,7 +515,7 @@ uint256 GetConsensusHash()
 
     // sorting using featureId
     std::sort(sortCompleted.begin(), sortCompleted.end());
-    for(const auto &cp : sortCompleted)
+    for(const auto& cp : sortCompleted)
     {
         std::string dataStr = cp.second;
         if (msc_debug_consensus_hash) PrintToLog("Adding Completed features activations entry to consensus hash: %s\n", dataStr);

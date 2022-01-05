@@ -68,8 +68,9 @@ UniValue tl_createpayload_sendmany(const JSONRPCRequest& request)
         );
 
     uint32_t propertyId = ParsePropertyId(request.params[0]);
-    std::vector<uint64_t> amounts;  
-    for (size_t i=1; i<std::min(request.params.size(), 5LU); ++i) {
+    std::vector<uint64_t> amounts;
+    const int allAmounts = request.params.size();
+    for (int i = 1; i < allAmounts ; ++i) {
       auto n = ParseAmount(request.params[i], isPropertyDivisible(propertyId));
       amounts.push_back(n);
     }

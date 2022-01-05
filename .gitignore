@@ -112,6 +112,7 @@ share/BitcoindComparisonTool.jar
 !src/leveldb*/Makefile
 
 /doc/doxygen/
+/db4/
 
 libbitcoinconsensus.pc
 contrib/devtools/split-debug.sh

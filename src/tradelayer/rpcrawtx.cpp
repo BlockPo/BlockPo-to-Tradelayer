@@ -1,10 +1,9 @@
 #include <tradelayer/rpcrawtx.h>
-
+#include <tradelayer/tradelayer.h>
 #include <tradelayer/createtx.h>
 #include <tradelayer/rpc.h>
 #include <tradelayer/rpctxobject.h>
 #include <tradelayer/rpcvalues.h>
-#include <tradelayer/tradelayer.h>
 
 #include <coins.h>
 #include <core_io.h>
@@ -14,6 +13,7 @@
 #include <sync.h>
 #include <uint256.h>
 #include <util/strencodings.h>
+#include <utility>
 
 #include <univalue.h>
 
@@ -21,8 +21,8 @@
 #include <stdint.h>
 #include <string>
 
-
 extern CCriticalSection cs_main;
+
 
 using mastercore::cs_tx_cache;
 using mastercore::view;
@@ -62,15 +62,23 @@ UniValue tl_decodetransaction(const JSONRPCRequest& request)
             + HelpExampleRpc("tl_decodetransaction", "\"010000000163af14ce6d477e1c793507e32a5b7696288fa89705c0d02a3f66beb3c5b8afee0100000000ffffffff02ac020000000000004751210261ea979f6a06f9dafe00fb1263ea0aca959875a7073556a088cdfadcd494b3752102a3fd0a8a067e06941e066f78d930bfc47746f097fcd3f7ab27db8ddf37168b6b52ae22020000000000001976a914946cb2e08075bcbaf157e47bcb67eb2b2339d24288ac00000000\"")
         );
 
+
     CMutableTransaction tx = ParseMutableTransaction(request.params[0]);
 
     UniValue txObj(UniValue::VOBJ);
     int populateResult = -3331;
 
-    // using a different approach
+    // use a dummy coins view to store the user provided transaction inputs
+    CCoinsView viewDummyTemp;
+    CCoinsViewCache viewTemp(&viewDummyTemp);
+
    {
        LOCK2(cs_main, cs_tx_cache);
-       populateResult = populateRPCTransactionObject(CTransaction(std::move(tx)), uint256(), txObj, "", false, "", 0);
+       // temporarily switch global coins view cache for transaction inputs
+       // std::swap(view, viewTemp);
+       // populateResult = populateRPCTransactionObject(CTransaction(std::move(tx)), uint256(), txObj, "", false, "", 0);
+       // and restore the original, unpolluted coins view cache
+       // std::swap(viewTemp, view);
    }
 
     if (populateResult != 0) PopulateFailure(populateResult);

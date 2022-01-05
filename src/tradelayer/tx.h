@@ -187,6 +187,8 @@ private:
     bool interpret_AcceptOfferBTC();
     bool interpret_CloseCrowdsale();
     bool interpret_LitecoinPayment();
+    bool interpret_SubmitNodeAddr();
+    bool interpret_ClaimNodeReward();
 
     /** New things for Contract */
     bool interpret_ContractDexTrade();
@@ -288,6 +290,8 @@ private:
      */
     int logicHelper_CrowdsaleParticipation();
 
+    int logicMath_SubmitNodeAddr();
+    int logicMath_ClaimNodeReward();
 
 public:
   //! DEx and MetaDEx action values
@@ -318,7 +322,7 @@ public:
     std::string getSpecial() const { return special; }
     std::string getPayload() const { return HexStr(pkt, pkt + pkt_size); }
     uint64_t getAmount() const { return nValue; }
-    uint64_t getAmountTotal() const { return std::accumulate(values.cbegin(), values.cend(), 0); }
+    uint64_t getAmountTotal() const { return std::accumulate(values.cbegin(), values.cend(), static_cast<uint64_t>(0)); }
     uint64_t getNewAmount() const { return nNewValue; }
     uint64_t getXAmount() const { return amount; }
     uint32_t getPreviousId() const { return prev_prop_id; }

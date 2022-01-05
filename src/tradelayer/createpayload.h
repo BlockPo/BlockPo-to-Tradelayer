@@ -64,5 +64,7 @@ std::vector<unsigned char> CreatePayload_DExCancel(std::string& hash);
 std::vector<unsigned char> CreatePayload_MetaDExCancelPair(uint32_t propertyIdForSale, uint32_t propertyIdDesired);
 std::vector<unsigned char>CreatePayload_MetaDExCancelPrice(uint32_t propertyIdForSale, int64_t amountForSale, uint32_t propertyIdDesired, int64_t amountDesired);
 std::vector<unsigned char>CreatePayload_Close_Channel();
+std::vector<unsigned char>CreatePayload_SubmitNodeAddress();
+std::vector<unsigned char>CreatePayload_ClaimNodeReward();
 
 #endif // TRADELAYER_CREATEPAYLOAD_H
