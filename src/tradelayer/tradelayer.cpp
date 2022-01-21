@@ -56,11 +56,12 @@
 #include <util/strencodings.h>
 #include <util/time.h>
 #include <validation.h>
-#include <wallet/coincontrol.h>
+#include <script/ismine.h>
 
 #ifdef ENABLE_WALLET
-#include <script/ismine.h>
 #include <wallet/wallet.h>
+#include <wallet/fees.h>
+#include <wallet/coincontrol.h>
 #endif
 
 #include <leveldb/db.h>
@@ -4106,25 +4107,22 @@ int mastercore::WalletTxBuilderEx(const std::string& senderAddress, const std::v
   // Next, we set the change address to the sender
   coinControl.destChange = DecodeDestination(senderAddress);
 
-  // Select the inputs
-  if (0 > SelectCoins(senderAddress, coinControl, referenceAmount, minInputs)) { return MP_INPUTS_INVALID; }
+  CAmount nFeeRequired{GetMinimumFee(1000, coinControl, mempool, ::feeEstimator, nullptr)};
+
+  // Amount required for outputs
+  CAmount outputAmount{0};
 
   // Encode the data outputs
-
   if(!TradeLayer_Encode_ClassD(data,vecSend)) { return MP_ENCODING_ERROR; }
 
-
   // Then add a paytopubkeyhash output for the recipient (if needed) - note we do this last as we want this to be the highest vout
-  for (auto& addr : receiverAddress)
+  for (const auto& addr : receiverAddress)
   {
     CScript scriptPubKey = GetScriptForDestination(DecodeDestination(addr));
     CAmount ramount = 0 < referenceAmount ? referenceAmount : GetDustThld(scriptPubKey);
+    outputAmount += ramount;
     vecSend.push_back(std::make_pair(scriptPubKey, ramount));
   }
-
-  // Now we have what we need to pass to the wallet to create the transaction, perform some checks first
-
-  if (!coinControl.HasSelected()) return MP_ERR_INPUTSELECT_FAIL;
 
   std::vector<CRecipient> vecRecipients;
   for (size_t i = 0; i < vecSend.size(); ++i)
@@ -4134,9 +4132,15 @@ int mastercore::WalletTxBuilderEx(const std::string& senderAddress, const std::v
      vecRecipients.push_back(recipient);
   }
 
-  CAmount nFeeRet = 0;
+  CAmount nFeeRet{0};
   int nChangePosInOut = -1;
   std::string strFailReason;
+
+  // Select the inputs
+  if (0 > SelectCoins(senderAddress, coinControl, outputAmount + nFeeRequired, minInputs)) { return MP_INPUTS_INVALID; }
+
+  // Now we have what we need to pass to the wallet to create the transaction, perform some checks first
+  if (!coinControl.HasSelected()) return MP_ERR_INPUTSELECT_FAIL;
 
   // Ask the wallet to create the transaction (note mining fee determined by Litecoin Core params)
   if (!pwalletMain->CreateTransaction(vecRecipients, wtxNew, reserveKey, nFeeRet, nChangePosInOut, strFailReason, coinControl, true))
