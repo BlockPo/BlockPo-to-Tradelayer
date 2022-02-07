@@ -79,6 +79,7 @@ const int64_t BASE_REWARD = 0.05 * COIN;
 const int64_t MIN_REWARD = 0.01 * COIN;
 const double FBASE = 1.000014979;
 const double SBASE = 0.999937;
+const int BLOCK_LIMIT = 10;
 
 const double CompoundRate = 1.00002303;
 const double DecayRate = 0.99998;

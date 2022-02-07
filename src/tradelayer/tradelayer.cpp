@@ -3895,6 +3895,8 @@ bool nodeReward::nextReward(const int& nHeight)
 
 void nodeReward::sendNodeReward(const std::string& consensusHash, const int& nHeight, bool fTest)
 {
+    int result{0};
+
     for(auto& addr : nodeRewardsAddrs)
     {
         // if this address is a winner and it's claiming reward
@@ -3905,15 +3907,17 @@ void nodeReward::sendNodeReward(const std::string& consensusHash, const int& nHe
 
         }
 
+        // using 10 blocks as block limit
+        result = nHeight % BLOCK_LIMIT;
         // cleaning claiming status for this block
-        if (!fTest) addr.second = false;
+        if (!fTest && 0 == result) addr.second = false;
 
     }
 
     // int64_t amountAdded = p_Reward;
 
     // after that we share the reward with all winners
-    if(!winners.empty())
+    if(!winners.empty() && 0 == result)
     {
         const int64_t rewardSize = p_Reward / winners.size();
         PrintToLog("%s(): rewardSize: %s, full reward shared: %d\n",__func__, rewardSize, p_Reward);
@@ -3926,7 +3930,7 @@ void nodeReward::sendNodeReward(const std::string& consensusHash, const int& nHe
         // adding block info
         p_lastBlock = nHeight;
 
-        // winners.clear();
+        clearWinners();
 
     }
 
