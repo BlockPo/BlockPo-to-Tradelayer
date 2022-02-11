@@ -392,7 +392,7 @@ class nodeReward
   private:
     int64_t p_Reward;
     int p_lastBlock;
-    std::set<string> winners;
+    std::map<string, int64_t> winners;
     std::map<string, bool> nodeRewardsAddrs;
 
   public:
@@ -410,8 +410,8 @@ class nodeReward
 
     void saveNodeReward(ofstream &file, CHash256& hasher);
     void clearNodeRewardMap() { nodeRewardsAddrs.clear(); }
-    const std::set<string>& getWinners() const { return winners; }
-    void addWinner(const std::string& address) { winners.insert(address);}
+    const std::map<string, int64_t>& getWinners() const { return winners; }
+    // void addWinner(const std::string& address) { winners.insert(address);}
     void clearWinners() { winners.clear(); }
     void setLastBlock(int lastBlock) { p_lastBlock = lastBlock; }
     void setLastReward(int64_t reward) { p_Reward = reward; }

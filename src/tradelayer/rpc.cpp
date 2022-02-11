@@ -3325,7 +3325,7 @@ UniValue tl_getlast_winners(const JSONRPCRequest& request)
 
     UniValue response(UniValue::VARR);
 
-    const std::set<string>& addrSt = nR.getWinners();
+    const std::map<string, int64_t>& addrSt = nR.getWinners();
 
     const int& lastBlock = nR.getLastBlock();
 
@@ -3335,9 +3335,9 @@ UniValue tl_getlast_winners(const JSONRPCRequest& request)
 
     response.push_back(details);
 
-    for_each(addrSt.begin() , addrSt.end(), [&response] (const std::string& nr)
+    for_each(addrSt.begin() , addrSt.end(), [&response] (const std::pair<string, int64_t>& nr)
     {
-       response.push_back(nr);
+       response.push_back(nr.first);
     });
 
     return response;
