@@ -3895,6 +3895,7 @@ bool nodeReward::nextReward(const int& nHeight)
 void nodeReward::sendNodeReward(const std::string& consensusHash, const int& nHeight, bool fTest)
 {
     int count = 0;
+
     for(auto& addr : nodeRewardsAddrs)
     {
         // if this address is a winner and it's claiming reward
@@ -3902,25 +3903,23 @@ void nodeReward::sendNodeReward(const std::string& consensusHash, const int& nHe
             // counting winners on this block
             count++;
             const int64_t rewardSize = p_Reward / count;
-            PrintToLog("%s(): winner: %s, reward: %d\n",__func__, addr.first, rewardSize);
+            PrintToLog("%s(): winner: %s, reward: %d, count: %d\n",__func__, addr.first, rewardSize, count);
             // we need to save the winners and the prize here!
             winners[addr.first] = rewardSize;
 
         }
 
-        // cleaning claiming status for this block
-        // if (!fTest && 0 == result) addr.second = false;
 
     }
 
-    int64_t amountAdded = p_Reward;
-
     // using 10 blocks as block limit
     const int result = nHeight % BLOCK_LIMIT;
+    PrintToLog("%s(): result: %d\n",__func__, result);
 
     // after that we share the reward with all winners
-    if(!winners.empty() && 0 == result)
+    if(0 == result)
     {
+        PrintToLog("%s(): SENDING REWARD NOW!!!, result: %d\n",__func__, result);
         for(const auto& w : winners)
         {
             auto it = nodeRewardsAddrs.find(w.first);
@@ -3928,6 +3927,8 @@ void nodeReward::sendNodeReward(const std::string& consensusHash, const int& nHe
             if (it != nodeRewardsAddrs.end() && it->second){
                 update_tally_map(w.first, ALL, w.second, BALANCE);
                 PrintToLog("%s(): address: %s, reward: %d\n",__func__, w.first, w.second);
+                // cleaning claiming status for this block
+                if (!fTest) it->second = false;
             }
 
         }
