@@ -411,7 +411,7 @@ class nodeReward
     void saveNodeReward(ofstream &file, CHash256& hasher);
     void clearNodeRewardMap() { nodeRewardsAddrs.clear(); }
     const std::map<string, int64_t>& getWinners() const { return winners; }
-    // void addWinner(const std::string& address) { winners.insert(address);}
+    void addWinner(const std::string& address, int64_t amount);
     void clearWinners() { winners.clear(); }
     void setLastBlock(int lastBlock) { p_lastBlock = lastBlock; }
     void setLastReward(int64_t reward) { p_Reward = reward; }

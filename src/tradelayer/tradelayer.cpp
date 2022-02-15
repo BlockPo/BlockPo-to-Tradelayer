@@ -2115,55 +2115,63 @@ static int input_register_string(const std::string& s)
 
 static int input_node_reward(const std::string& s)
 {
-    // PrintToLog("%s(): s: %s\n",__func__,s);
-    //
-    // std::vector<std::string> addrData;
-    // boost::split(addrData, s, boost::is_any_of("+"), boost::token_compress_on);
-    //
-    // if (addrData.size() != 2)
-    // {
-    //     // address:status
-    //     std::vector<std::string> addrMap;
-    //     boost::split(addrMap, s, boost::is_any_of(":"), boost::token_compress_on);
-    //
-    //     if (addrMap.size() == 1) {
-    //         // just an winner address
-    //         const std::string& address = addrMap[0];
-    //         nR.addWinner(address, amount);
-    //         return 0;
-    //
-    //     } else if (addrMap.size() != 2) {
-    //         return -1;
-    //     }
-    //
-    //     bool status{false};
-    //     const std::string& address = addrMap[0];
-    //     if (addrMap[1] == "true") status = true;
-    //     PrintToLog("%s(): address: %s, status: %s\n",__func__, address, status);
-    //     nR.updateAddressStatus(address, status);
-    //
-    // } else {
-    //
-    //     int64_t reward = 0;
-    //     int block = 0;
-    //
-    //     try
-    //     {
-    //         reward = boost::lexical_cast<int64_t>(addrData[0]);
-    //         block = boost::lexical_cast<int>(addrData[1]);
-    //
-    //         PrintToLog("%s(): reward: %d, block: %d\n",__func__, reward, block);
-    //
-    //     } catch (...) {
-    //         PrintToLog("%s(): lexical_cast issue (1)\n",__func__);
-    //         return -1;
-    //     }
-    //
-    //     nR.setLastReward(reward);
-    //     nR.setLastBlock(block);
-    // }
-    //
-    // return 0;
+  PrintToLog("%s(): s: %s\n",__func__,s);
+
+  std::vector<std::string> addrData;
+  boost::split(addrData, s, boost::is_any_of("+"), boost::token_compress_on);
+
+  if (addrData.size() != 2)
+  {
+      // address:status
+      std::vector<std::string> addrMap;
+      boost::split(addrMap, s, boost::is_any_of(":"), boost::token_compress_on);
+
+
+      if (addrMap.size() != 2) {
+          return -1;
+      }
+
+      const std::string& address = addrMap[0];
+      if (addrMap[1] == "true") {
+          PrintToLog("%s(): address: %s\n",__func__, address);
+          nR.updateAddressStatus(address, true);
+
+         // we need a number here
+      }  else if (addrMap[1] != "false"){
+
+          try
+          {
+              const int64_t amount = boost::lexical_cast<int64_t>(addrMap[1]);
+              nR.addWinner(address, amount);
+
+          } catch (...) {
+              PrintToLog("%s(): lexical_cast issue (1)\n",__func__);
+              return -1;
+          }
+      }
+
+  } else {
+
+      int64_t reward = 0;
+      int block = 0;
+
+      try
+      {
+          reward = boost::lexical_cast<int64_t>(addrData[0]);
+          block = boost::lexical_cast<int>(addrData[1]);
+
+          PrintToLog("%s(): reward: %d, block: %d\n",__func__, reward, block);
+
+      } catch (...) {
+          PrintToLog("%s(): lexical_cast issue (1)\n",__func__);
+          return -1;
+      }
+
+      nR.setLastReward(reward);
+      nR.setLastBlock(block);
+  }
+
+  return 0;
 
 }
 
@@ -3834,38 +3842,45 @@ bool nodeReward::isAddressIncluded(const std::string& address)
     return (it != nodeRewardsAddrs.end()) ? true : false;
 }
 
+void nodeReward::addWinner(const std::string& address, int64_t amount)
+{
+    winners[address] = amount;
+}
+
 
 void nodeReward::saveNodeReward(ofstream &file, CHash256& hasher)
 {
-    // const std::string lineOut = strprintf("%d+%d", p_Reward, p_lastBlock);
-    // hasher.Write((unsigned char*)lineOut.c_str(), lineOut.length());
-    // file << lineOut << endl;
-    //
-    // for(const auto& addr : nodeRewardsAddrs)
-    // {
-    //     const std::string& address = addr.first;
-    //     bool status = addr.second;
-    //     const std::string lineOut = strprintf("%s:%s", address, status ? "true":"false");
-    //
-    //     // add the line to the hash
-    //     hasher.Write((unsigned char*)lineOut.c_str(), lineOut.length());
-    //
-    //     // write the line
-    //     file << lineOut << endl;
-    //
-    // }
-    //
-    // // saving last winners
-    // for(const auto& addr : winners)
-    // {
-    //     const std::string lineOut = strprintf("%s", addr);
-    //
-    //     // add the line to the hash
-    //     hasher.Write((unsigned char*)lineOut.c_str(), lineOut.length());
-    //
-    //     // write the line
-    //     file << lineOut << endl;
-    // }
+    const std::string lineOut = strprintf("%d+%d", p_Reward, p_lastBlock);
+    hasher.Write((unsigned char*)lineOut.c_str(), lineOut.length());
+    file << lineOut << endl;
+
+    for(const auto& addr : nodeRewardsAddrs)
+    {
+        const std::string& address = addr.first;
+        bool status = addr.second;
+        const std::string lineOut = strprintf("%s:%s", address, status ? "true":"false");
+
+        // add the line to the hash
+        hasher.Write((unsigned char*)lineOut.c_str(), lineOut.length());
+
+        // write the line
+        file << lineOut << endl;
+
+    }
+
+    // saving last winners
+    for(const auto& addr : winners)
+    {
+        std::string lineOut;
+
+        lineOut = strprintf("%s:%d", addr.first, addr.second);
+
+        // add the line to the hash
+        hasher.Write((unsigned char*)lineOut.c_str(), lineOut.length());
+
+        // write the line
+        file << lineOut << endl;
+    }
 
 }
 
