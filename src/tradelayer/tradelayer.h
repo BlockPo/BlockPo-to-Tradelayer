@@ -79,6 +79,7 @@ const int64_t BASE_REWARD = 0.05 * COIN;
 const int64_t MIN_REWARD = 0.01 * COIN;
 const double FBASE = 1.000014979;
 const double SBASE = 0.999937;
+const int BLOCK_LIMIT = 10;
 
 const double CompoundRate = 1.00002303;
 const double DecayRate = 0.99998;
@@ -391,7 +392,7 @@ class nodeReward
   private:
     int64_t p_Reward;
     int p_lastBlock;
-    std::set<string> winners;
+    std::map<string, int64_t> winners;
     std::map<string, bool> nodeRewardsAddrs;
 
   public:
@@ -409,8 +410,8 @@ class nodeReward
 
     void saveNodeReward(ofstream &file, CHash256& hasher);
     void clearNodeRewardMap() { nodeRewardsAddrs.clear(); }
-    const std::set<string>& getWinners() const { return winners; }
-    void addWinner(const std::string& address) { winners.insert(address);}
+    const std::map<string, int64_t>& getWinners() const { return winners; }
+    void addWinner(const std::string& address, int64_t amount);
     void clearWinners() { winners.clear(); }
     void setLastBlock(int lastBlock) { p_lastBlock = lastBlock; }
     void setLastReward(int64_t reward) { p_Reward = reward; }

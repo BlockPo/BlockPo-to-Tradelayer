@@ -2115,55 +2115,63 @@ static int input_register_string(const std::string& s)
 
 static int input_node_reward(const std::string& s)
 {
-    PrintToLog("%s(): s: %s\n",__func__,s);
+  PrintToLog("%s(): s: %s\n",__func__,s);
 
-    std::vector<std::string> addrData;
-    boost::split(addrData, s, boost::is_any_of("+"), boost::token_compress_on);
+  std::vector<std::string> addrData;
+  boost::split(addrData, s, boost::is_any_of("+"), boost::token_compress_on);
 
-    if (addrData.size() != 2)
-    {
-        // address:status
-        std::vector<std::string> addrMap;
-        boost::split(addrMap, s, boost::is_any_of(":"), boost::token_compress_on);
+  if (addrData.size() != 2)
+  {
+      // address:status
+      std::vector<std::string> addrMap;
+      boost::split(addrMap, s, boost::is_any_of(":"), boost::token_compress_on);
 
-        if (addrMap.size() == 1) {
-            // just an winner address
-            const std::string& address = addrMap[0];
-            nR.addWinner(address);
-            return 0;
 
-        } else if (addrMap.size() != 2) {
-            return -1;
-        }
+      if (addrMap.size() != 2) {
+          return -1;
+      }
 
-        bool status{false};
-        const std::string& address = addrMap[0];
-        if (addrMap[1] == "true") status = true;
-        PrintToLog("%s(): address: %s, status: %s\n",__func__, address, status);
-        nR.updateAddressStatus(address, status);
+      const std::string& address = addrMap[0];
+      if (addrMap[1] == "true") {
+          PrintToLog("%s(): address: %s\n",__func__, address);
+          nR.updateAddressStatus(address, true);
 
-    } else {
+         // we need a number here
+      }  else if (addrMap[1] != "false"){
 
-        int64_t reward = 0;
-        int block = 0;
+          try
+          {
+              const int64_t amount = boost::lexical_cast<int64_t>(addrMap[1]);
+              nR.addWinner(address, amount);
 
-        try
-        {
-            reward = boost::lexical_cast<int64_t>(addrData[0]);
-            block = boost::lexical_cast<int>(addrData[1]);
+          } catch (...) {
+              PrintToLog("%s(): lexical_cast issue (1)\n",__func__);
+              return -1;
+          }
+      }
 
-            PrintToLog("%s(): reward: %d, block: %d\n",__func__, reward, block);
+  } else {
 
-        } catch (...) {
-            PrintToLog("%s(): lexical_cast issue (1)\n",__func__);
-            return -1;
-        }
+      int64_t reward = 0;
+      int block = 0;
 
-        nR.setLastReward(reward);
-        nR.setLastBlock(block);
-    }
+      try
+      {
+          reward = boost::lexical_cast<int64_t>(addrData[0]);
+          block = boost::lexical_cast<int>(addrData[1]);
 
-    return 0;
+          PrintToLog("%s(): reward: %d, block: %d\n",__func__, reward, block);
+
+      } catch (...) {
+          PrintToLog("%s(): lexical_cast issue (1)\n",__func__);
+          return -1;
+      }
+
+      nR.setLastReward(reward);
+      nR.setLastBlock(block);
+  }
+
+  return 0;
 
 }
 
@@ -3834,10 +3842,14 @@ bool nodeReward::isAddressIncluded(const std::string& address)
     return (it != nodeRewardsAddrs.end()) ? true : false;
 }
 
+void nodeReward::addWinner(const std::string& address, int64_t amount)
+{
+    winners[address] = amount;
+}
+
 
 void nodeReward::saveNodeReward(ofstream &file, CHash256& hasher)
 {
-
     const std::string lineOut = strprintf("%d+%d", p_Reward, p_lastBlock);
     hasher.Write((unsigned char*)lineOut.c_str(), lineOut.length());
     file << lineOut << endl;
@@ -3859,7 +3871,9 @@ void nodeReward::saveNodeReward(ofstream &file, CHash256& hasher)
     // saving last winners
     for(const auto& addr : winners)
     {
-        const std::string lineOut = strprintf("%s", addr);
+        std::string lineOut;
+
+        lineOut = strprintf("%s:%d", addr.first, addr.second);
 
         // add the line to the hash
         hasher.Write((unsigned char*)lineOut.c_str(), lineOut.length());
@@ -3895,38 +3909,49 @@ bool nodeReward::nextReward(const int& nHeight)
 
 void nodeReward::sendNodeReward(const std::string& consensusHash, const int& nHeight, bool fTest)
 {
+    int count = 0;
+
     for(auto& addr : nodeRewardsAddrs)
     {
         // if this address is a winner and it's claiming reward
         if(isWinnerAddress(consensusHash, addr.first, fTest) && addr.second) {
-            // we need to save the winners here!
-            PrintToLog("%s(): winner: %s\n",__func__, addr.first);
-            winners.insert(addr.first);
+            // counting winners on this block
+            count++;
+            const int64_t rewardSize = p_Reward / count;
+            PrintToLog("%s(): winner: %s, reward: %d, count: %d\n",__func__, addr.first, rewardSize, count);
+            // we need to save the winners and the prize here!
+            winners[addr.first] = rewardSize;
 
         }
 
-        // cleaning claiming status for this block
-        if (!fTest) addr.second = false;
 
     }
 
-    // int64_t amountAdded = p_Reward;
+    // using 10 blocks as block limit
+    const int result = nHeight % BLOCK_LIMIT;
+    PrintToLog("%s(): result: %d\n",__func__, result);
 
     // after that we share the reward with all winners
-    if(!winners.empty())
+    if(0 == result)
     {
-        const int64_t rewardSize = p_Reward / winners.size();
-        PrintToLog("%s(): rewardSize: %s, full reward shared: %d\n",__func__, rewardSize, p_Reward);
-        if(rewardSize > 0)
+        PrintToLog("%s(): SENDING REWARD NOW!!!, result: %d\n",__func__, result);
+        for(const auto& w : winners)
         {
-            for_each(winners.begin(), winners.end(), [&rewardSize] (const std::string& addr) { update_tally_map(addr, ALL, rewardSize, BALANCE); PrintToLog("%s(): address: %s, rewardSize: %d\n",__func__, addr, rewardSize); });
-            // amountAdded = -p_Reward;
+            auto it = nodeRewardsAddrs.find(w.first);
+            // if address is claiming reward, we update tally
+            if (it != nodeRewardsAddrs.end() && it->second){
+                update_tally_map(w.first, ALL, w.second, BALANCE);
+                PrintToLog("%s(): address: %s, reward: %d\n",__func__, w.first, w.second);
+                // cleaning claiming status for this block
+                if (!fTest) it->second = false;
+            }
+
         }
 
         // adding block info
         p_lastBlock = nHeight;
 
-        // winners.clear();
+        clearWinners();
 
     }
 
