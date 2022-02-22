@@ -97,12 +97,6 @@ std::vector<TransactionRestriction> CConsensusParams::GetRestrictions() const
     v.push_back( { MSC_TYPE_METADEX_CANCEL_ALL,                    MP_TX_PKT_V0,      true, MSC_METADEX_BLOCK } );
     v.push_back( { MSC_TYPE_METADEX_CANCEL_BY_PRICE,               MP_TX_PKT_V0,      true, MSC_METADEX_BLOCK } );
     v.push_back( { MSC_TYPE_CLOSE_CHANNEL,                         MP_TX_PKT_V0,      true, MSC_TRADECHANNEL_TOKENS_BLOCK } );
-    v.push_back( { MSC_TYPE_CREATE_PROPERTY_VARIABLE,              MP_TX_PKT_V0,      false, MSC_LTC_CROWDSALE_BLOCK } );
-    v.push_back( { MSC_TYPE_CREATE_PROPERTY_VARIABLE,              MP_TX_PKT_V1,      false, MSC_LTC_CROWDSALE_BLOCK } );
-    v.push_back( { MSC_TYPE_CREATE_PROPERTY_VARIABLE,              MP_TX_PKT_V2,      true, MSC_LTC_CROWDSALE_BLOCK } );
-    v.push_back( { MSC_TYPE_CLOSE_CROWDSALE,                       MP_TX_PKT_V0,      false, MSC_SP_BLOCK } ),
-    v.push_back( { MSC_TYPE_LITECOIN_PAYMENT,                      MP_TX_PKT_V0,      true, MSC_LTC_CROWDSALE_BLOCK } );
-
     v.push_back( { MSC_TYPE_SUBMIT_NODE_ADDRESS,                   MP_TX_PKT_V0,      true, MSC_NODE_REWARD_BLOCK } );
     v.push_back( { MSC_TYPE_CLAIM_NODE_REWARD,                     MP_TX_PKT_V0,      true, MSC_NODE_REWARD_BLOCK } );
     //---
@@ -145,11 +139,6 @@ TODO : New chain checkpoints
  */
 CMainConsensusParams::CMainConsensusParams()
 {
-    // Exodus related:
-    exodusBonusPerWeek = 0.10;
-    exodusDeadline = 1667190670;
-    exodusReward = 100;
-    GENESIS_BLOCK = 2136526;
     GENESIS_BLOCK = 2172315;
     // Notice range for feature activations:
     MIN_ACTIVATION_BLOCKS = 0;  // ~2 weeks
@@ -193,10 +182,6 @@ CMainConsensusParams::CMainConsensusParams()
     MSC_MASSPAYMENT_BLOCK = 99999999;
     MSC_MULTISEND_BLOCK = 99999999;
     MSC_HEDGEDCURRENCY_BLOCK = 99999999;
-    MSC_LTC_CROWDSALE_BLOCK = 999999;
-    // Other feature activations:
-    GRANTEFFECTS_FEATURE_BLOCK = 999999;
-    SPCROWDCROSSOVER_FEATURE_BLOCK = 999999;
     INFLEXION_BLOCK = 25000;
 
     ONE_YEAR = 210240;
@@ -207,11 +192,6 @@ CMainConsensusParams::CMainConsensusParams()
  */
  CTestNetConsensusParams::CTestNetConsensusParams()
  {
-     // Exodus related:
-     exodusBonusPerWeek = 0.10;
-     exodusDeadline = 1667190670;
-     exodusReward = 100;
-     GENESIS_BLOCK = 2046650;
      GENESIS_BLOCK = 2121695;
      // Notice range for feature activations:
      MIN_ACTIVATION_BLOCKS = 0;
@@ -257,10 +237,6 @@ CMainConsensusParams::CMainConsensusParams()
      MSC_MASSPAYMENT_BLOCK = 99999999;
      MSC_MULTISEND_BLOCK = 99999999;
      MSC_HEDGEDCURRENCY_BLOCK = 99999999;
-     MSC_LTC_CROWDSALE_BLOCK = 0;
-     // Other feature activations:
-    GRANTEFFECTS_FEATURE_BLOCK = 999999;
-    SPCROWDCROSSOVER_FEATURE_BLOCK = 999999;
      INFLEXION_BLOCK = 25000;
 
      ONE_YEAR = 2650;  // just for testing
@@ -325,10 +301,6 @@ CRegTestConsensusParams::CRegTestConsensusParams()
     MSC_MASSPAYMENT_BLOCK = 99999999;
     MSC_MULTISEND_BLOCK = 99999999;
     MSC_HEDGEDCURRENCY_BLOCK = 99999999;
-    MSC_LTC_CROWDSALE_BLOCK = 99999999;
-    // Other feature activations:
-    GRANTEFFECTS_FEATURE_BLOCK = 999999;
-    SPCROWDCROSSOVER_FEATURE_BLOCK = 999999;
     INFLEXION_BLOCK = 1000;
 
     ONE_YEAR = 930;
@@ -581,18 +553,6 @@ bool ActivateFeature(uint16_t featureId, int activationBlock, uint32_t minClient
           params.MSC_HEDGEDCURRENCY_BLOCK = activationBlock;
           break;
 
-      case FEATURE_GRANTEFFECTS:
-          params.GRANTEFFECTS_FEATURE_BLOCK = activationBlock;
-          break;
-
-      case FEATURE_SPCROWDCROSSOVER:
-          params.SPCROWDCROSSOVER_FEATURE_BLOCK = activationBlock;
-          break;
-
-      case FEATURE_LTC_CROWDSALES:
-          params.MSC_LTC_CROWDSALE_BLOCK = activationBlock;
-          break;
-          
       case FEATURE_SEND_MANY:
           params.MSC_SEND_MANY_BLOCK = activationBlock;
           break;
@@ -908,12 +868,6 @@ bool IsFeatureActivated(uint16_t featureId, int transactionBlock)
           activationBlock = params.MSC_HEDGEDCURRENCY_BLOCK;
           break;
 
-      case FEATURE_SPCROWDCROSSOVER:
-          activationBlock = params.SPCROWDCROSSOVER_FEATURE_BLOCK;
-          break;
-    
-      case FEATURE_LTC_CROWDSALES:
-          activationBlock = params.MSC_LTC_CROWDSALE_BLOCK;
       case FEATURE_SEND_MANY:
           activationBlock = params.MSC_SEND_MANY_BLOCK;
           break;

@@ -185,8 +185,6 @@ private:
     bool interpret_Deactivation();
     bool interpret_Alert();
     bool interpret_AcceptOfferBTC();
-    bool interpret_CloseCrowdsale();
-    bool interpret_LitecoinPayment();
     bool interpret_SubmitNodeAddr();
     bool interpret_ClaimNodeReward();
 
@@ -282,14 +280,6 @@ private:
     int logicMath_MetaDExCancel_ByPair();
     int logicMath_MetaDExCancel_ByPrice();
     int logicMath_Close_Channel();
-    int logicMath_CloseCrowdsale();
-    int logicMath_LitecoinPayment();
-
-    /**
-     * Logic helpers
-     */
-    int logicHelper_CrowdsaleParticipation();
-
     int logicMath_SubmitNodeAddr();
     int logicMath_ClaimNodeReward();
 

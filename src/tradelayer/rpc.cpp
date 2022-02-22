@@ -3540,7 +3540,7 @@ UniValue tl_getlast_winners(const JSONRPCRequest& request)
 
     UniValue response(UniValue::VARR);
 
-    const std::set<string>& addrSt = nR.getWinners();
+    const std::map<string, int64_t>& addrSt = nR.getWinners();
 
     const int& lastBlock = nR.getLastBlock();
 
@@ -3550,9 +3550,9 @@ UniValue tl_getlast_winners(const JSONRPCRequest& request)
 
     response.push_back(details);
 
-    for_each(addrSt.begin() , addrSt.end(), [&response] (const std::string& nr)
+    for_each(addrSt.begin() , addrSt.end(), [&response] (const std::pair<string, int64_t>& nr)
     {
-       response.push_back(nr);
+       response.push_back(nr.first);
     });
 
     return response;
@@ -4106,11 +4106,7 @@ static const CRPCCommand commands[] =
   {"trade layer (data retrieval)",   "tl_listnodereward_addresses",             &tl_listnodereward_addresses,          {} },
   {"trade layer (data retrieval)",   "tl_getnextreward",                        &tl_getnextreward,                     {} },
   { "trade layer (data retrieval)", "tl_isaddresswinner",                       &tl_isaddresswinner,                   {} },
-  { "trade layer (data retrieval)" , "tl_getlast_winners",                      &tl_getlast_winners,                   {} },
-
-  { "trade layer (data retrieval)", "tl_getcrowdsale",                         &tl_getcrowdsale,                      {} },
-  { "trade layer (data retrieval)", "tl_getactivecrowdsales",                  &tl_getactivecrowdsales,               {} },
-  { "trade layer (data retrieval)", "tl_getcachefees",                         &tl_getcachefees,                      {} },
+  { "trade layer (data retrieval)" , "tl_getlast_winners",                      &tl_getlast_winners,                   {} }
 };
 
 void RegisterTLDataRetrievalRPCCommands(CRPCTable &tableRPC)

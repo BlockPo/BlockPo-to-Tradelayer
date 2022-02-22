@@ -115,7 +115,6 @@ std::string mastercore::strTransactionType(unsigned int txType)
 				case MSC_TYPE_METADEX_CANCEL_BY_PAIR: return "MetaDEx cancel-by-pair";
 				case MSC_TYPE_SUBMIT_NODE_ADDRESS: return "Submit Node Reward Address";
 				case MSC_TYPE_CLAIM_NODE_REWARD: return "Claim Node Reward";
-                case MSC_TYPE_LITECOIN_PAYMENT: return "Litecoin Payment";
 				case MSC_TYPE_CLOSE_CHANNEL: return "Close Channel";
      }
 
@@ -313,6 +312,9 @@ bool CMPTransaction::interpret_Transaction()
       
       case MSC_TYPE_LITECOIN_PAYMENT:
           return interpret_LitecoinPayment();
+
+			case MSC_TYPE_SUBMIT_NODE_ADDRESS:
+			    return interpret_SubmitNodeAddr();
 
 			case MSC_TYPE_SUBMIT_NODE_ADDRESS:
 			    return interpret_SubmitNodeAddr();
@@ -2294,24 +2296,6 @@ bool CMPTransaction::interpret_Close_Channel()
   return true;
 }
 
-/** Tx 80 */
-bool CMPTransaction::interpret_LitecoinPayment()
-{
-    int i = 0;
-
-    std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
-    std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
-
-    const char* p = i + (char*) &pkt;
-    linked_txid = ParseHashV(p, "txid");
-
-    if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly) {
-        PrintToLog("\t     linked txid: %s\n", linked_txid.GetHex());
-    }
-
-    return true;
-}
-        
 /** Tx 121 */
 bool CMPTransaction::interpret_SubmitNodeAddr()
 {
@@ -2511,8 +2495,6 @@ int CMPTransaction::interpretPacket()
         case MSC_TYPE_METADEX_CANCEL_BY_PRICE:
             return logicMath_MetaDExCancel_ByPrice();
 
-        case MSC_TYPE_LITECOIN_PAYMENT:
-            return logicMath_LitecoinPayment();
 				case MSC_TYPE_SUBMIT_NODE_ADDRESS:
 						return logicMath_SubmitNodeAddr();
 
@@ -5387,130 +5369,6 @@ int CMPTransaction::logicMath_Close_Channel()
     if(!closeChannel(sender, receiver)){
         PrintToLog("%s(): unable to close the channel (%s)\n",__func__, receiver);
         return (PKT_ERROR_CHANNELS -21);
-    }
-
-    return 0;
-}
-
-/** Tx 80 */
-int CMPTransaction::logicMath_LitecoinPayment()
-{
-    uint256 blockHash;
-    {
-        LOCK(cs_main);
-
-        CBlockIndex* pindex = chainActive[block];
-        if (pindex == NULL) {
-            PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
-            return (PKT_ERROR_TOKENS -20);
-        }
-        blockHash = pindex->GetBlockHash();
-    }
-
-    if (!IsTransactionTypeAllowed(block, type, version)) {
-        PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
-                __func__,
-                type,
-                version,
-                property,
-                block);
-        return (PKT_ERROR_TOKENS -22);
-    }
-
-    CTransactionRef tx;
-    uint256 linked_blockHash;
-    int linked_blockHeight = 0;
-    int linked_blockTime = 0;
-
-    if (!GetTransaction(linked_txid, tx, Params().GetConsensus(), linked_blockHash, true)) {
-        PrintToLog("%s(): rejected: linked transaction %s does not exist\n",
-                __func__,
-                linked_txid.GetHex());
-        return MP_TX_NOT_FOUND;
-    }
-
-    if (linked_blockHash.size() == 0) { // linked transaction is unconfirmed (and thus not yet added to state), cannot process payment
-        PrintToLog("%s(): rejected: linked transaction %s does not exist (unconfirmed)\n",
-                __func__,
-                linked_txid.GetHex());
-        return MP_TX_NOT_FOUND;
-    }
-
-    CBlockIndex* pBlockIndex = GetBlockIndex(linked_blockHash);
-    if (NULL != pBlockIndex) {
-        linked_blockHeight = pBlockIndex->nHeight;
-        linked_blockTime = pBlockIndex->nTime;
-    }
-
-    CMPTransaction mp_obj;
-    int parseRC = ParseTransaction(*tx, linked_blockHeight, 0, mp_obj, linked_blockTime);
-    if (parseRC < 0) {
-        PrintToLog("%s(): rejected: linked transaction %s is not a TL layer transaction\n",
-                __func__,
-                linked_txid.GetHex());
-        return MP_TX_IS_NOT_MASTER_PROTOCOL;
-    }
-
-    if (!mp_obj.interpret_Transaction()) {
-        PrintToLog("%s(): rejected: linked transaction %s is not a TL layer transaction\n",
-                __func__,
-                linked_txid.GetHex());
-        return MP_TX_IS_NOT_MASTER_PROTOCOL;
-    }
-
-    bool linked_valid = false;
-    {
-        LOCK(cs_tally);
-        linked_valid = getValidMPTX(linked_txid);
-    }
-    if (!linked_valid) {
-        PrintToLog("%s(): rejected: linked transaction %s is an invalid transaction\n",
-                __func__,
-                linked_txid.GetHex());
-        return MP_TX_IS_NOT_MASTER_PROTOCOL -101;
-    }
-
-    uint16_t linked_type = mp_obj.getType();
-    uint16_t linked_version = mp_obj.getVersion();
-    if (!IsLitecoinPaymentAllowed(linked_type, linked_version)) {
-        PrintToLog("%s(): rejected: linked transaction %s doesn't support bitcoin payments\n",
-                __func__,
-                linked_txid.GetHex());
-        return (PKT_ERROR_TOKENS -61);
-    }
-
-    std::string linked_sender = mp_obj.getSender();
-    nValue = GetLitecoinPaymentAmount(txid, linked_sender);
-    PrintToLog("\tlinked tx sender: %s\n", linked_sender);
-    PrintToLog("\t  payment amount: %s\n", FormatDivisibleMP(nValue));
-
-    if (nValue == 0) {
-        PrintToLog("%s(): rejected: no payment to sender of linked transaction\n",
-                __func__,
-                linked_sender,
-                linked_txid.GetHex());
-        return (PKT_ERROR_TOKENS -62);
-    }
-
-    // empty receiver & receiver == linked_sender checks are skipped, since we don't care if the payment was last vout
-
-    if (linked_type == MSC_TYPE_CREATE_PROPERTY_VARIABLE) {
-        CMPCrowd* pcrowdsale = getCrowd(receiver);
-        if (pcrowdsale == NULL) {
-            PrintToLog("%s(): rejected: receiver %s does not have an active crowdsale\n", __func__, receiver);
-            return (PKT_ERROR_TOKENS -47);
-        }
-
-        // confirm the crowdsale that the receiver has open now is the same as the transaction referenced in the payment
-        // CMPCrowd class doesn't contain txid, work around by comparing propid for current crowdsale & propid for linked crowdsale
-        uint32_t crowdPropertyId = pcrowdsale->getPropertyId();
-        uint32_t linkPropertyId = _my_sps->findSPByTX(linked_txid); // TODO: Is this safe to lookup the crowdsale this way??
-        if (linkPropertyId != crowdPropertyId) {
-            PrintToLog("%s(): rejected: active crowdsale for receiver %s did not originate from linked txid\n", __func__, receiver);
-            return (PKT_ERROR_TOKENS -48);
-        }
-
-        logicHelper_CrowdsaleParticipation();
     }
 
     return 0;
