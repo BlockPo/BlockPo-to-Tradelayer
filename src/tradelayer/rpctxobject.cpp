@@ -310,21 +310,13 @@ bool populateRPCTypeInfo(CMPTransaction& mp_obj, UniValue& txobj, uint32_t txTyp
             populateRPCTypeClose_Channel(mp_obj, txobj);
             return true;
         
-        case MSC_TYPE_LITECOIN_PAYMENT:
-            populateRPCTypeLitecoinPayment(mp_obj, txobj);
+        //case MSC_TYPE_LITECOIN_PAYMENT:
+        //    populateRPCTypeLitecoinPayment(mp_obj, txobj);
+        //    return true;
+
+        case MSC_TYPE_SUBMIT_NODE_ADDRESS:
+            populateRPCTypeSubmit_Node_Address(mp_obj, txobj);
             return true;
-
-        case MSC_TYPE_SUBMIT_NODE_ADDRESS:
-      			 populateRPCTypeSubmit_Node_Address(mp_obj, txobj);
-             return true;
-
-      	case MSC_TYPE_CLAIM_NODE_REWARD:
-             populateRPCTypeClaim_Node_Reward(mp_obj, txobj);
-             return true;
-
-        case MSC_TYPE_SUBMIT_NODE_ADDRESS:
-      			 populateRPCTypeSubmit_Node_Address(mp_obj, txobj);
-             return true;
 
       	case MSC_TYPE_CLAIM_NODE_REWARD:
              populateRPCTypeClaim_Node_Reward(mp_obj, txobj);
