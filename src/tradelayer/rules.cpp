@@ -248,10 +248,6 @@ CMainConsensusParams::CMainConsensusParams()
  */
 CRegTestConsensusParams::CRegTestConsensusParams()
 {
-    // Exodus related:
-    exodusBonusPerWeek = 0.00;
-    exodusDeadline = 1667190670;
-    exodusReward = 100;     
     GENESIS_BLOCK = 0;
     // Notice range for feature activations:
     MIN_ACTIVATION_BLOCKS = 5;
@@ -908,20 +904,6 @@ bool IsTransactionTypeAllowed(int txBlock, uint16_t txType, uint16_t version)
     }
 
     return false;
-}
-
-/**
- * Whether Litecoin payments are supported for a transaction type/version.
- */
-bool IsLitecoinPaymentAllowed(uint16_t type, uint16_t version)
-{
-    bool allowed = false;
-
-    if (type == MSC_TYPE_CREATE_PROPERTY_VARIABLE && version == MP_TX_PKT_V2) {
-        allowed = true;
-    }
-
-    return allowed;
 }
 
 /**

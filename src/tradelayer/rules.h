@@ -9,11 +9,6 @@
 
 namespace mastercore
 {
-//! Block to enable the Exodus fundraiser address in regtest mode
-const int MONEYMAN_REGTEST_BLOCK = 101;
-//! Block to enable the Exodus fundraiser address on testnet
-const int MONEYMAN_TESTNET_BLOCK = 270775;
-
 //! Feature identifier placeholder
 const uint16_t FEATURE_VESTING                  = 1;
 const uint16_t FEATURE_KYC                      = 2;
@@ -43,13 +38,6 @@ const uint16_t FEATURE_INTERESTRATESWAPS        = 24; //activates term native IR
 const uint16_t FEATURE_MINERFEECONTRACTS        = 25; //activates term native futures for on-chain miner fee averages
 const uint16_t FEATURE_MASSPAYMENT              = 26; //unencumbered version of sent-to-owners, can pay n units of property A to all holders of propery B (which can also be A)
 const uint16_t FEATURE_HEDGEDCURRENCY           = 27; //Enables 1x short positions against ALL to mint sLTC, and 1x shorts against sLTC or rLTC (if activated) to mint USDL, EURL, JPYL, CNYL
-
-//! Feature identifier to disable crowdsale participations when "granting tokens"
-const uint16_t FEATURE_GRANTEFFECTS             = 30;
-//! Feature identifier disable ecosystem crossovers in crowdsale logic
-const uint16_t FEATURE_SPCROWDCROSSOVER         = 31;
-//! Feature identifier to enable LTC in crowdsales
-const uint16_t FEATURE_LTC_CROWDSALES           = 32;
 
 //This is the entire roadmap. If we missed anything, well, clearly we tried not to.
 
@@ -82,17 +70,6 @@ struct ConsensusCheckpoint
 class CConsensusParams
 {
 public:
-    //! Earily bird bonus per week of Exodus crowdsale
-    double exodusBonusPerWeek;
-    //! Deadline of Exodus crowdsale as Unix timestamp
-    unsigned int exodusDeadline;
-    //! Number of MSC/TMSC generated per unit invested
-    int64_t exodusReward;
-    //! First block of the Exodus crowdsale
-    
-    //! Last block of the Exodus crowdsale
-    int LAST_EXODUS_BLOCK;
-
     //! Live block of Trade Layer
     int GENESIS_BLOCK;
 
@@ -152,14 +129,6 @@ public:
     int MSC_MASSPAYMENT_BLOCK;
     int MSC_MULTISEND_BLOCK;
     int MSC_HEDGEDCURRENCY_BLOCK;
-    
-    //! Block to enable LTC in crowdsales
-    int MSC_LTC_CROWDSALE_BLOCK;
-
-    //! Block to deactivate crowdsale participations when "granting tokens"
-    int GRANTEFFECTS_FEATURE_BLOCK;
-    //! Block to disable ecosystem crossovers in crowdsale logic
-    int SPCROWDCROSSOVER_FEATURE_BLOCK;
 
     /* Vesting Tokens*/
     int ONE_YEAR;
@@ -239,8 +208,6 @@ bool IsAllowedInputType(int whichType, int nBlock);
 bool IsAllowedOutputType(int whichType, int nBlock);
 /** Checks, if the transaction type and version is supported and enabled. */
 bool IsTransactionTypeAllowed(int txBlock, uint16_t txType, uint16_t version);
-/** Checks, if the transaction type and version permit Bitcoin payments */
-bool IsLitecoinPaymentAllowed(uint16_t type, uint16_t version);
 
 /** Compares a supplied block, block hash and consensus hash against a hardcoded list of checkpoints. */
 bool VerifyCheckpoint(int block, const uint256& blockHash);

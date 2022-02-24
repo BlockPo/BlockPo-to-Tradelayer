@@ -11,8 +11,6 @@ void RequirePropertyName(const std::string& name);
 void RequirePeggedSaneName(std::string& name);
 void RequireExistingProperty(uint32_t propertyId);
 void RequireDifferentIds(uint32_t propertyId, uint32_t otherId);
-void RequireCrowdsale(uint32_t propertyId);
-void RequireActiveCrowdsale(uint32_t propertyId);
 void RequireManagedProperty(uint32_t propertyId);
 void RequireTokenIssuer(const std::string& address, uint32_t propertyId);
 void RequireSaneReferenceAmount(int64_t amount);

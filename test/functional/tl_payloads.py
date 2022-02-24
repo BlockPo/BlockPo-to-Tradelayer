@@ -156,12 +156,6 @@ class PayloadsBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         assert_equal(out['result'], '00000180a0b787e905')
 
-        self.log.info("Testing tl_createpayload_sendmany")
-        params = str([1, '0.11', '0.22', '0.33']).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, False, "tl_createpayload_sendmany", params)
-        # self.log.info(out)
-        assert_equal(out['error'], None)
-        assert_equal(out['result'], '010001c0b19f0580e3be0ac094de0f')
 
         self.log.info("Testing tl_createpayload_sendall")
         out = tradelayer_HTTP(conn, headers, False, "tl_createpayload_sendall")

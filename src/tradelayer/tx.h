@@ -56,7 +56,7 @@ private:
     std::vector<uint64_t> values;
 
     // SimpleSend, SendToOwners, TradeOffer, MetaDEx, AcceptOfferBTC,
-    // CreatePropertyFixed, CloseCrowdsale,
+    // CreatePropertyFixed,
     // CreatePropertyMananged, GrantTokens, RevokeTokens, ChangeIssuer
     unsigned int property;
 
@@ -76,7 +76,6 @@ private:
     char url[SP_STRING_FIELD_LEN];
     char data[SP_STRING_FIELD_LEN];
 
-    // Crowdsale
     uint64_t deadline;
     unsigned char early_bird;
     unsigned char percentage;
@@ -154,8 +153,6 @@ private:
     uint8_t tokens, ltc, natives, oracles;
     std::vector<int64_t> kyc_Ids; //kyc vector
 
-    // Litecoin Payment
-    uint256 linked_txid;
 
     // Indicates whether the transaction can be used to execute logic
     bool rpcOnly;
@@ -176,7 +173,6 @@ private:
     bool interpret_SendMany();
     bool interpret_SendAll();
     bool interpret_CreatePropertyFixed();
-    bool interpret_CreatePropertyVariable();
     bool interpret_CreatePropertyManaged();
     bool interpret_GrantTokens();
     bool interpret_RevokeTokens();
@@ -226,7 +222,7 @@ private:
     bool interpret_MetaDExCancel_ByPair();
     bool interpret_MetaDExCancel_ByPrice();
     bool interpret_Close_Channel();
-    
+
     /**
      * Logic and "effects"
      */
@@ -234,7 +230,6 @@ private:
     int logicMath_SendMany();
     int logicMath_SendAll();
     int logicMath_CreatePropertyFixed();
-    int logicMath_CreatePropertyVariable();
     int logicMath_CreatePropertyManaged();
     int logicMath_GrantTokens();
     int logicMath_RevokeTokens();
@@ -370,7 +365,7 @@ public:
     uint8_t getTradingAction() { return trading_action; }
     uint64_t getLeverage() { return leverage; }
     uint64_t getEffectivePrice() { return effective_price; }
-    uint256 getLinkedTXID() const { return linked_txid; }
+
 
 
     /** Creates a new CMPTransaction object. */
@@ -393,7 +388,6 @@ public:
         sender.clear();
         receiver.clear();
         special.clear();
-        recipients.clear();
         values.clear();
         type = 0;
         version = 0;
