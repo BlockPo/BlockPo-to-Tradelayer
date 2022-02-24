@@ -60,5 +60,5 @@ std::vector<unsigned char>CreatePayload_MetaDExCancelPrice(uint32_t propertyIdFo
 std::vector<unsigned char>CreatePayload_Close_Channel();
 std::vector<unsigned char>CreatePayload_SubmitNodeAddress();
 std::vector<unsigned char>CreatePayload_ClaimNodeReward();
-
+std::vector<unsigned char> CreatePayload_SendDonation(uint32_t propertyId, uint64_t amount);
 #endif // TRADELAYER_CREATEPAYLOAD_H

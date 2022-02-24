@@ -99,6 +99,7 @@ std::vector<TransactionRestriction> CConsensusParams::GetRestrictions() const
     v.push_back( { MSC_TYPE_CLOSE_CHANNEL,                         MP_TX_PKT_V0,      true, MSC_TRADECHANNEL_TOKENS_BLOCK } );
     v.push_back( { MSC_TYPE_SUBMIT_NODE_ADDRESS,                   MP_TX_PKT_V0,      true, MSC_NODE_REWARD_BLOCK } );
     v.push_back( { MSC_TYPE_CLAIM_NODE_REWARD,                     MP_TX_PKT_V0,      true, MSC_NODE_REWARD_BLOCK } );
+    v.push_back( { MSC_TYPE_SEND_DONATION,                         MP_TX_PKT_V0,      true, MSC_SEND_DONATION_BLOCK} );
     //---
     return v;
 }
@@ -182,6 +183,7 @@ CMainConsensusParams::CMainConsensusParams()
     MSC_MASSPAYMENT_BLOCK = 99999999;
     MSC_MULTISEND_BLOCK = 99999999;
     MSC_HEDGEDCURRENCY_BLOCK = 99999999;
+    MSC_SEND_DONATION_BLOCK = 99999999;
     INFLEXION_BLOCK = 25000;
 
     ONE_YEAR = 210240;
@@ -237,6 +239,7 @@ CMainConsensusParams::CMainConsensusParams()
      MSC_MASSPAYMENT_BLOCK = 99999999;
      MSC_MULTISEND_BLOCK = 99999999;
      MSC_HEDGEDCURRENCY_BLOCK = 99999999;
+     MSC_SEND_DONATION_BLOCK = 99999999;
      INFLEXION_BLOCK = 25000;
 
      ONE_YEAR = 2650;  // just for testing
@@ -297,6 +300,7 @@ CRegTestConsensusParams::CRegTestConsensusParams()
     MSC_MASSPAYMENT_BLOCK = 99999999;
     MSC_MULTISEND_BLOCK = 99999999;
     MSC_HEDGEDCURRENCY_BLOCK = 99999999;
+    MSC_SEND_DONATION_BLOCK = 99999999;
     INFLEXION_BLOCK = 1000;
 
     ONE_YEAR = 930;

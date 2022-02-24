@@ -129,6 +129,7 @@ public:
     int MSC_MASSPAYMENT_BLOCK;
     int MSC_MULTISEND_BLOCK;
     int MSC_HEDGEDCURRENCY_BLOCK;
+    int MSC_SEND_DONATION_BLOCK;
 
     /* Vesting Tokens*/
     int ONE_YEAR;

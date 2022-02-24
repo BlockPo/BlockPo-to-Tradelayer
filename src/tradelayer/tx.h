@@ -222,6 +222,7 @@ private:
     bool interpret_MetaDExCancel_ByPair();
     bool interpret_MetaDExCancel_ByPrice();
     bool interpret_Close_Channel();
+    bool interpret_SendDonation();
 
     /**
      * Logic and "effects"
@@ -277,6 +278,7 @@ private:
     int logicMath_Close_Channel();
     int logicMath_SubmitNodeAddr();
     int logicMath_ClaimNodeReward();
+    int logicMath_SendDonation();
 
 public:
   //! DEx and MetaDEx action values

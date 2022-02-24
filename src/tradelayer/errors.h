@@ -131,6 +131,9 @@ inline std::string error_str(int ec) {
     case PKT_ERROR_SEND -26:
       ec_str = "Sender sending tokens to himself";
       break;
+    case PKT_ERROR_SEND_DONATION - 21:
+      ec_str = "Sender with insufficient balance of property";
+      break;
     case PKT_ERROR_SEND_ALL -22:
       ec_str = "Transaction type or version not permitted";
       break;
