@@ -166,6 +166,9 @@ CrowdMap mastercore::my_crowds;
 //node reward object
 nodeReward nR;
 
+//node reward object
+nodeReward nR;
+
 std::map<uint32_t, std::map<uint32_t, int64_t>> VWAPMap;
 std::map<uint32_t, std::map<uint32_t, int64_t>> VWAPMapSubVector;
 std::map<uint32_t, std::map<uint32_t, std::vector<int64_t>>> numVWAPVector;
@@ -1651,7 +1654,6 @@ static int input_globals_state_string(const string &s)
 }
 
 // addr,propertyId,nValue,property_desired,deadline,early_bird,percentage,txid
-/*
 static int input_mp_crowdsale_string(const std::string& s)
 {
     std::vector<std::string> vstr;
@@ -1697,7 +1699,6 @@ static int input_mp_crowdsale_string(const std::string& s)
 
     return 0;
 }
-*/
 
 static int input_contract_globals_state_string(const string &s)
 {
@@ -2350,10 +2351,10 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
         inputLineFunc = input_mp_accepts_string;
         break;
 
-    // case FILETYPE_CROWDSALES:
-    //   my_crowds.clear();
-    //   inputLineFunc = input_mp_crowdsale_string;
-    //   break;
+    case FILETYPE_CROWDSALES:
+      my_crowds.clear();
+      inputLineFunc = input_mp_crowdsale_string;
+      break;
 
     case FILETYPE_MDEXORDERS:
         // FIXME
@@ -3191,7 +3192,6 @@ static int write_mp_register(std::ofstream& file,  CHash256& hasher)
     return 0;
 }
 
-/*
 static int write_mp_crowdsales(std::ofstream& file, CHash256& hasher)
 {
     for (CrowdMap::const_iterator it = my_crowds.begin(); it != my_crowds.end(); ++it) {
@@ -3202,7 +3202,6 @@ static int write_mp_crowdsales(std::ofstream& file, CHash256& hasher)
 
     return 0;
 }
-*/
 
 static int write_state_file(CBlockIndex const *pBlockIndex, int what)
 {

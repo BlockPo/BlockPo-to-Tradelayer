@@ -178,8 +178,8 @@ bool CMPTransaction::interpret_Transaction()
       case MSC_TYPE_SEND_VESTING:
           return interpret_SendVestingTokens();
 
-      //case MSC_TYPE_CLOSE_CROWDSALE:
-      //    return interpret_CloseCrowdsale();
+      case MSC_TYPE_CLOSE_CROWDSALE:
+          return interpret_CloseCrowdsale();
 
       case MSC_TYPE_CREATE_PROPERTY_FIXED:
           return interpret_CreatePropertyFixed();
@@ -310,13 +310,16 @@ bool CMPTransaction::interpret_Transaction()
       case MSC_TYPE_CLOSE_CHANNEL:
           return interpret_SimpleSend();
       
-      //case MSC_TYPE_LITECOIN_PAYMENT:
-      //    return interpret_LitecoinPayment();
+      case MSC_TYPE_LITECOIN_PAYMENT:
+          return interpret_LitecoinPayment();
 
-      case MSC_TYPE_SUBMIT_NODE_ADDRESS:
-	      return interpret_SubmitNodeAddr();
-			
-      case MSC_TYPE_CLAIM_NODE_REWARD:
+			case MSC_TYPE_SUBMIT_NODE_ADDRESS:
+			    return interpret_SubmitNodeAddr();
+
+			case MSC_TYPE_SUBMIT_NODE_ADDRESS:
+			    return interpret_SubmitNodeAddr();
+
+			case MSC_TYPE_CLAIM_NODE_REWARD:
           return interpret_ClaimNodeReward();
     }
 
@@ -433,7 +436,6 @@ bool CMPTransaction::interpret_SendVestingTokens()
 }
 
 /** Tx 53 */
-/*
 bool CMPTransaction::interpret_CloseCrowdsale()
 {
     int i = 0;
@@ -452,7 +454,6 @@ bool CMPTransaction::interpret_CloseCrowdsale()
 
     return true;
 }
-*/
 
 /** Tx 4 */
 bool CMPTransaction::interpret_SendAll()
@@ -2362,8 +2363,8 @@ int CMPTransaction::interpretPacket()
         case MSC_TYPE_SEND_VESTING:
             return logicMath_SendVestingTokens();
 
-        //case MSC_TYPE_CLOSE_CROWDSALE:
-        //    return logicMath_CloseCrowdsale();
+        case MSC_TYPE_CLOSE_CROWDSALE:
+            return logicMath_CloseCrowdsale();
 
         case MSC_TYPE_CREATE_PROPERTY_FIXED:
             return logicMath_CreatePropertyFixed();
@@ -2596,7 +2597,7 @@ int CMPTransaction::logicMath_SimpleSend()
     assert(update_tally_map(receiver, property, nValue, BALANCE));
 
     // Is there an active crowdsale running from this recepient?
-    //logicHelper_CrowdsaleParticipation();
+    logicHelper_CrowdsaleParticipation();
 
     return 0;
 }
@@ -2857,7 +2858,6 @@ int CMPTransaction::logicMath_CreatePropertyVariable()
 }
 
 /** Tx 53 */
-/*
 int CMPTransaction::logicMath_CloseCrowdsale()
 {
     uint256 blockHash;
@@ -2923,10 +2923,8 @@ int CMPTransaction::logicMath_CloseCrowdsale()
 
     return 0;
 }
-*/
 
 /** Passive effect of crowdsale participation. */
-/*
 int CMPTransaction::logicHelper_CrowdsaleParticipation()
 {
     CMPCrowd* pcrowdsale = getCrowd(receiver);
@@ -3003,7 +3001,6 @@ int CMPTransaction::logicHelper_CrowdsaleParticipation()
     }
     return 0;
 }
-*/
 
 /** Tx 4 */
 int CMPTransaction::logicMath_SendAll()
@@ -3335,7 +3332,7 @@ int CMPTransaction::logicMath_GrantTokens()
      */
   if (!IsFeatureActivated(FEATURE_GRANTEFFECTS, block)) {
     // Is there an active crowdsale running from this recepient?
-    //logicHelper_CrowdsaleParticipation();
+    logicHelper_CrowdsaleParticipation();
   }
 
   NotifyTotalTokensChanged(property);
