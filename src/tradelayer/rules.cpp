@@ -99,6 +99,7 @@ std::vector<TransactionRestriction> CConsensusParams::GetRestrictions() const
     v.push_back( { MSC_TYPE_CLOSE_CHANNEL,                         MP_TX_PKT_V0,      true, MSC_TRADECHANNEL_TOKENS_BLOCK } );
     v.push_back( { MSC_TYPE_SUBMIT_NODE_ADDRESS,                   MP_TX_PKT_V0,      true, MSC_NODE_REWARD_BLOCK } );
     v.push_back( { MSC_TYPE_CLAIM_NODE_REWARD,                     MP_TX_PKT_V0,      true, MSC_NODE_REWARD_BLOCK } );
+    v.push_back( { MSC_TYPE_SEND_DONATION,                         MP_TX_PKT_V0,      true, MSC_SEND_DONATION_BLOCK} );
     //---
     return v;
 }
@@ -139,7 +140,7 @@ TODO : New chain checkpoints
  */
 CMainConsensusParams::CMainConsensusParams()
 {
-    GENESIS_BLOCK = 2136526;
+    GENESIS_BLOCK = 2172315;
     // Notice range for feature activations:
     MIN_ACTIVATION_BLOCKS = 0;  // ~2 weeks
     MAX_ACTIVATION_BLOCKS = 99999999; // ~12 weeks
@@ -149,16 +150,16 @@ CMainConsensusParams::CMainConsensusParams()
     NULLDATA_BLOCK = 0;
     MULTISIG_BLOCK = 0;
     // Transaction restrictions:
-    MSC_ALERT_BLOCK = 2136526;
-    MSC_SEND_BLOCK = 2136526;
-    MSC_SEND_MANY_BLOCK = 2136526;
+    MSC_ALERT_BLOCK = 2172315;
+    MSC_SEND_BLOCK = 2172315;
+    MSC_SEND_MANY_BLOCK = 2172315;
     MSC_SP_BLOCK = 99999999;
     MSC_MANUALSP_BLOCK = 99999999;
     MSC_SEND_ALL_BLOCK = 99999999;
     MSC_CONTRACTDEX_BLOCK = 99999999;
     MSC_CONTRACTDEX_ORACLES_BLOCK = 99999999;
     MSC_VESTING_BLOCK = 99999999;
-    MSC_VESTING_CREATION_BLOCK = 2136526;
+    MSC_VESTING_CREATION_BLOCK = 2172315;
     MSC_NODE_REWARD_BLOCK = 99999999;
     MSC_KYC_BLOCK = 99999999;
     MSC_DEXSELL_BLOCK = 99999999;
@@ -182,7 +183,8 @@ CMainConsensusParams::CMainConsensusParams()
     MSC_MASSPAYMENT_BLOCK = 99999999;
     MSC_MULTISEND_BLOCK = 99999999;
     MSC_HEDGEDCURRENCY_BLOCK = 99999999;
-    INFLEXION_BLOCK = 200000;
+    MSC_SEND_DONATION_BLOCK = 99999999;
+    INFLEXION_BLOCK = 25000;
 
     ONE_YEAR = 210240;
 }
@@ -192,7 +194,7 @@ CMainConsensusParams::CMainConsensusParams()
  */
  CTestNetConsensusParams::CTestNetConsensusParams()
  {
-     GENESIS_BLOCK = 2046650;
+     GENESIS_BLOCK = 2121695;
      // Notice range for feature activations:
      MIN_ACTIVATION_BLOCKS = 0;
      MAX_ACTIVATION_BLOCKS = 99999999;
@@ -203,16 +205,16 @@ CMainConsensusParams::CMainConsensusParams()
      MULTISIG_BLOCK = 0;
 
      // Transaction restrictions:
-     MSC_ALERT_BLOCK = 2046650;
-     MSC_SEND_BLOCK = 2046650;
+     MSC_ALERT_BLOCK = 2121695;
+     MSC_SEND_BLOCK = 2121695;
      MSC_SEND_MANY_BLOCK = 99999999;
      // MSC_SP_BLOCK = 1491174;
-     MSC_SP_BLOCK = 2046650;
+     MSC_SP_BLOCK = 2121695;
      MSC_MANUALSP_BLOCK = 99999999;
      MSC_SEND_ALL_BLOCK = 99999999;
      MSC_CONTRACTDEX_BLOCK = 99999999;
      MSC_CONTRACTDEX_ORACLES_BLOCK = 99999999;
-     MSC_VESTING_CREATION_BLOCK = 2046650;
+     MSC_VESTING_CREATION_BLOCK = 2121695;
      MSC_VESTING_BLOCK = 99999999;
      MSC_NODE_REWARD_BLOCK = 99999999;
      MSC_KYC_BLOCK = 99999999;
@@ -237,7 +239,8 @@ CMainConsensusParams::CMainConsensusParams()
      MSC_MASSPAYMENT_BLOCK = 99999999;
      MSC_MULTISEND_BLOCK = 99999999;
      MSC_HEDGEDCURRENCY_BLOCK = 99999999;
-     INFLEXION_BLOCK = 200000;
+     MSC_SEND_DONATION_BLOCK = 99999999;
+     INFLEXION_BLOCK = 25000;
 
      ONE_YEAR = 2650;  // just for testing
  }
@@ -297,6 +300,7 @@ CRegTestConsensusParams::CRegTestConsensusParams()
     MSC_MASSPAYMENT_BLOCK = 99999999;
     MSC_MULTISEND_BLOCK = 99999999;
     MSC_HEDGEDCURRENCY_BLOCK = 99999999;
+    MSC_SEND_DONATION_BLOCK = 99999999;
     INFLEXION_BLOCK = 1000;
 
     ONE_YEAR = 930;

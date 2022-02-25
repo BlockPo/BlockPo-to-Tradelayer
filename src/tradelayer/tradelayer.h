@@ -75,9 +75,11 @@ const int OL_BLOCKS = 3;
 const int BlockS = 500; /** regtest **/
 
 //node reward
-const int64_t MIN_REWARD = 0.05 * COIN;
+const int64_t BASE_REWARD = 0.05 * COIN;
+const int64_t MIN_REWARD = 0.01 * COIN;
 const double FBASE = 1.000014979;
-const double SBASE = 0.999991;
+const double SBASE = 0.999937;
+const int BLOCK_LIMIT = 10;
 
 const double CompoundRate = 1.00002303;
 const double DecayRate = 0.99998;
@@ -154,6 +156,7 @@ enum TransactionType : unsigned int {
   MSC_TYPE_CLOSE_CHANNEL                      = 120,
   MSC_TYPE_SUBMIT_NODE_ADDRESS                = 121,
   MSC_TYPE_CLAIM_NODE_REWARD                  = 122,
+  MSC_TYPE_SEND_DONATION                      = 123,
 
 };
 
@@ -198,13 +201,14 @@ const int PKT_ERROR              = -9000;
 // Smart Properties
 const int PKT_ERROR_SP           = -40000;
 // Send To Owners
-const int PKT_ERROR_SEND         = -60000;
-const int PKT_ERROR_TOKENS       = -82000;
-const int PKT_ERROR_SEND_ALL     = -83000;
-const int PKT_ERROR_METADEX      = -80000;
-const int METADEX_ERROR          = -81000;
-const int CONTRACTDEX_ERROR      = -82000;
-const int NODE_REWARD_ERROR      = -84000;
+const int PKT_ERROR_SEND          = -60000;
+const int PKT_ERROR_TOKENS        = -82000;
+const int PKT_ERROR_SEND_ALL      = -83000;
+const int PKT_ERROR_METADEX       = -80000;
+const int METADEX_ERROR           = -81000;
+const int CONTRACTDEX_ERROR       = -82000;
+const int NODE_REWARD_ERROR       = -84000;
+const int PKT_ERROR_SEND_DONATION = -85000;
 
 const int DEX_ERROR_SELLOFFER    = -10000;
 const int DEX_ERROR_ACCEPT       = -20000;
@@ -389,7 +393,7 @@ class nodeReward
   private:
     int64_t p_Reward;
     int p_lastBlock;
-    std::set<string> winners;
+    std::map<string, int64_t> winners;
     std::map<string, bool> nodeRewardsAddrs;
 
   public:
@@ -407,8 +411,8 @@ class nodeReward
 
     void saveNodeReward(ofstream &file, CHash256& hasher);
     void clearNodeRewardMap() { nodeRewardsAddrs.clear(); }
-    const std::set<string>& getWinners() const { return winners; }
-    void addWinner(const std::string& address) { winners.insert(address);}
+    const std::map<string, int64_t>& getWinners() const { return winners; }
+    void addWinner(const std::string& address, int64_t amount);
     void clearWinners() { winners.clear(); }
     void setLastBlock(int lastBlock) { p_lastBlock = lastBlock; }
     void setLastReward(int64_t reward) { p_Reward = reward; }

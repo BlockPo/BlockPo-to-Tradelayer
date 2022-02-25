@@ -54,7 +54,8 @@ void populateRPCTypeUpdate_Id_Registration(CMPTransaction& tlObj, UniValue& txob
 void populateRPCTypeDEx_Payment(CMPTransaction& tlObj, UniValue& txobj);
 void populateRPCTypeInstant_LTC_Trade(CMPTransaction& tlObj, UniValue& txobj);
 void populateRPCTypeClose_Channel(CMPTransaction& tlObj, UniValue& txobj);
-
+void populateRPCTypeSubmit_Node_Address(CMPTransaction& tlObj, UniValue& txobj);
+void populateRPCTypeClaim_Node_Reward(CMPTransaction& tlObj, UniValue& txobj);
 int populateRPCSendAllSubSends(const uint256& txid, UniValue& subSends);
 
 bool showRefForTx(uint32_t txType);

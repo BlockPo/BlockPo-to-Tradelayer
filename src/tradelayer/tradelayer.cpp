@@ -56,11 +56,12 @@
 #include <util/strencodings.h>
 #include <util/time.h>
 #include <validation.h>
-#include <wallet/coincontrol.h>
+#include <script/ismine.h>
 
 #ifdef ENABLE_WALLET
-#include <script/ismine.h>
 #include <wallet/wallet.h>
+#include <wallet/fees.h>
+#include <wallet/coincontrol.h>
 #endif
 
 #include <leveldb/db.h>
@@ -600,8 +601,7 @@ const std::string mastercore::getVestingAdmin()
 
     }
 
-    // const std::string mainAddress = "MANxfoWpwqEbSBe5ujKnCSTkfgjAwKre49";
-    const std::string mainAddress = "LTNSkUvcuk9qSbCZMZg1LjqfXU1VacGnwU";
+    const std::string mainAddress = "MK3MqrS7PSkjcdiEyCNB92w74vfAEveZnu";
     return mainAddress;
 
 }
@@ -628,8 +628,20 @@ void creatingVestingTokens(int block)
    if(msc_debug_vesting) PrintToLog("%s(): admin_addrs : %s, propertyIdVesting: %d \n",__func__, getVestingAdmin(), propertyIdVesting);
 
 
-   assert(update_tally_map(getVestingAdmin(), propertyIdVesting, totalVesting, BALANCE));
-   assert(update_tally_map(getVestingAdmin(), ALL, totalVesting, UNVESTED));
+   assert(update_tally_map(getVestingAdmin(), propertyIdVesting, 500000 * COIN, BALANCE));
+   assert(update_tally_map(getVestingAdmin(), ALL, 500000 * COIN, UNVESTED));
+
+   std::vector<std::string> investors;
+   investors.push_back("MVNp1xa6ZrQoxokyKoB6oT279z4ezV95oM");
+   investors.push_back("MVdKutPi53cv9MjMeufHZsuWMqSSnRj8gV");
+   investors.push_back("MLZ3w54h27FSVEcV8xbt5T4sqY91x6QCVL");
+   investors.push_back("MVYn5iLapDB1snfhBhiMzGvL7HUT9ssjcm");
+   investors.push_back("MJ5F3QMDbhNbVNhmKxrQy7MVMQxrGt1muV");
+
+   for (const auto& addr : investors) {
+       assert(update_tally_map(addr, propertyIdVesting, 200000 * COIN, BALANCE));
+       assert(update_tally_map(addr, ALL, 200000 * COIN, UNVESTED));
+   }
 
    // only for testing
    if (RegTest()) assert(update_tally_map(getVestingAdmin(), ALL, totalVesting, BALANCE));
@@ -647,7 +659,7 @@ int mastercore::GetEncodingClass(const CTransaction& tx, int nBlock)
      * Perform a string comparison on hex for each scriptPubKey & look directly for Trade Layer marker bytes
      * This allows to drop non- Trade Layer transactions with less work
      */
-    std::string strClassD = "7070"; /*the pp marker*/
+    std::string strClassD = "7474"; /*the tt marker*/
     bool examineClosely = false;
     for (unsigned int n = 0; n < tx.vout.size(); ++n) {
         const CTxOut& output = tx.vout[n];
@@ -2105,55 +2117,63 @@ static int input_register_string(const std::string& s)
 
 static int input_node_reward(const std::string& s)
 {
-    PrintToLog("%s(): s: %s\n",__func__,s);
+  PrintToLog("%s(): s: %s\n",__func__,s);
 
-    std::vector<std::string> addrData;
-    boost::split(addrData, s, boost::is_any_of("+"), boost::token_compress_on);
+  std::vector<std::string> addrData;
+  boost::split(addrData, s, boost::is_any_of("+"), boost::token_compress_on);
 
-    if (addrData.size() != 2)
-    {
-        // address:status
-        std::vector<std::string> addrMap;
-        boost::split(addrMap, s, boost::is_any_of(":"), boost::token_compress_on);
+  if (addrData.size() != 2)
+  {
+      // address:status
+      std::vector<std::string> addrMap;
+      boost::split(addrMap, s, boost::is_any_of(":"), boost::token_compress_on);
 
-        if (addrMap.size() == 1) {
-            // just an winner address
-            const std::string& address = addrMap[0];
-            nR.addWinner(address);
-            return 0;
 
-        } else if (addrMap.size() != 2) {
-            return -1;
-        }
+      if (addrMap.size() != 2) {
+          return -1;
+      }
 
-        bool status{false};
-        const std::string& address = addrMap[0];
-        if (addrMap[1] == "true") status = true;
-        PrintToLog("%s(): address: %s, status: %s\n",__func__, address, status);
-        nR.updateAddressStatus(address, status);
+      const std::string& address = addrMap[0];
+      if (addrMap[1] == "true") {
+          PrintToLog("%s(): address: %s\n",__func__, address);
+          nR.updateAddressStatus(address, true);
 
-    } else {
+         // we need a number here
+      }  else if (addrMap[1] != "false"){
 
-        int64_t reward = 0;
-        int block = 0;
+          try
+          {
+              const int64_t amount = boost::lexical_cast<int64_t>(addrMap[1]);
+              nR.addWinner(address, amount);
 
-        try
-        {
-            reward = boost::lexical_cast<int64_t>(addrData[0]);
-            block = boost::lexical_cast<int>(addrData[1]);
+          } catch (...) {
+              PrintToLog("%s(): lexical_cast issue (1)\n",__func__);
+              return -1;
+          }
+      }
 
-            PrintToLog("%s(): reward: %d, block: %d\n",__func__, reward, block);
+  } else {
 
-        } catch (...) {
-            PrintToLog("%s(): lexical_cast issue (1)\n",__func__);
-            return -1;
-        }
+      int64_t reward = 0;
+      int block = 0;
 
-        nR.setLastReward(reward);
-        nR.setLastBlock(block);
-    }
+      try
+      {
+          reward = boost::lexical_cast<int64_t>(addrData[0]);
+          block = boost::lexical_cast<int>(addrData[1]);
 
-    return 0;
+          PrintToLog("%s(): reward: %d, block: %d\n",__func__, reward, block);
+
+      } catch (...) {
+          PrintToLog("%s(): lexical_cast issue (1)\n",__func__);
+          return -1;
+      }
+
+      nR.setLastReward(reward);
+      nR.setLastBlock(block);
+  }
+
+  return 0;
 
 }
 
@@ -3824,10 +3844,14 @@ bool nodeReward::isAddressIncluded(const std::string& address)
     return (it != nodeRewardsAddrs.end()) ? true : false;
 }
 
+void nodeReward::addWinner(const std::string& address, int64_t amount)
+{
+    winners[address] = amount;
+}
+
 
 void nodeReward::saveNodeReward(ofstream &file, CHash256& hasher)
 {
-
     const std::string lineOut = strprintf("%d+%d", p_Reward, p_lastBlock);
     hasher.Write((unsigned char*)lineOut.c_str(), lineOut.length());
     file << lineOut << endl;
@@ -3849,7 +3873,9 @@ void nodeReward::saveNodeReward(ofstream &file, CHash256& hasher)
     // saving last winners
     for(const auto& addr : winners)
     {
-        const std::string lineOut = strprintf("%s", addr);
+        std::string lineOut;
+
+        lineOut = strprintf("%s:%d", addr.first, addr.second);
 
         // add the line to the hash
         hasher.Write((unsigned char*)lineOut.c_str(), lineOut.length());
@@ -3869,48 +3895,62 @@ bool nodeReward::nextReward(const int& nHeight)
    // logic in function of blockheight
    const double factor = (nHeight - params.MSC_NODE_REWARD_BLOCK <= params.INFLEXION_BLOCK) ? FBASE  : SBASE;
 
-   double f_nextReward = MIN_REWARD * pow(factor, nHeight - params.MSC_NODE_REWARD_BLOCK);
+   double f_nextReward = BASE_REWARD * pow(factor, nHeight - params.MSC_NODE_REWARD_BLOCK);
 
    p_Reward = (int64_t) f_nextReward;
 
+   if (p_Reward < MIN_REWARD) p_Reward = MIN_REWARD;
+
+   PrintToLog("%s():p_Reward after: %d, f_nextReward: %d\n", __func__, p_Reward, f_nextReward);
 
    return !result;
 }
 
 void nodeReward::sendNodeReward(const std::string& consensusHash, const int& nHeight, bool fTest)
 {
+    int count = 0;
+
     for(auto& addr : nodeRewardsAddrs)
     {
         // if this address is a winner and it's claiming reward
         if(isWinnerAddress(consensusHash, addr.first, fTest) && addr.second) {
-            // we need to save the winners here!
-            PrintToLog("%s(): winner: %s\n",__func__, addr.first);
-            winners.insert(addr.first);
+            // counting winners on this block
+            count++;
+            const int64_t rewardSize = p_Reward / count;
+            PrintToLog("%s(): winner: %s, reward: %d, count: %d\n",__func__, addr.first, rewardSize, count);
+            // we need to save the winners and the prize here!
+            winners[addr.first] = rewardSize;
 
         }
 
-        // cleaning claiming status for this block
-        if (!fTest) addr.second = false;
 
     }
 
-    // int64_t amountAdded = p_Reward;
+    // using 10 blocks as block limit
+    const int result = nHeight % BLOCK_LIMIT;
+    PrintToLog("%s(): result: %d\n",__func__, result);
 
     // after that we share the reward with all winners
-    if(!winners.empty())
+    if(0 == result)
     {
-        const int64_t rewardSize = p_Reward / winners.size();
-        PrintToLog("%s(): rewardSize: %s, full reward shared: %d\n",__func__, rewardSize, p_Reward);
-        if(rewardSize > 0)
+        PrintToLog("%s(): SENDING REWARD NOW!!!, result: %d\n",__func__, result);
+        for(const auto& w : winners)
         {
-            for_each(winners.begin(), winners.end(), [&rewardSize] (const std::string& addr) { update_tally_map(addr, ALL, rewardSize, BALANCE); PrintToLog("%s(): address: %s, rewardSize: %d\n",__func__, addr, rewardSize); });
-            // amountAdded = -p_Reward;
+            auto it = nodeRewardsAddrs.find(w.first);
+            // if address is claiming reward, we update tally
+            if (it != nodeRewardsAddrs.end() && it->second){
+                update_tally_map(w.first, ALL, w.second, BALANCE);
+                PrintToLog("%s(): address: %s, reward: %d\n",__func__, w.first, w.second);
+                // cleaning claiming status for this block
+                if (!fTest) it->second = false;
+            }
+
         }
 
         // adding block info
         p_lastBlock = nHeight;
 
-        // winners.clear();
+        clearWinners();
 
     }
 
@@ -3921,19 +3961,19 @@ void nodeReward::sendNodeReward(const std::string& consensusHash, const int& nHe
 
 bool nodeReward::isWinnerAddress(const std::string& consensusHash, const std::string& address, bool fTest)
 {
-    const int lastNterms = (fTest) ? 2 : 4;
+    const int lastNterms = (fTest) ? 2 : 3;
 
     std::vector<unsigned char> vch;
 
     DecodeBase58(address, vch);
 
     const std::string vchStr = HexStr(vch);
-    const std::string LastTwoCharAddr = vchStr.substr(vchStr.size() - lastNterms);
-    const std::string lastFourCharConsensus = consensusHash.substr(consensusHash.size() - lastNterms);
+    const std::string LastThreeCharAddr = vchStr.substr(vchStr.size() - lastNterms);
+    const std::string lastThreeCharConsensus = consensusHash.substr(consensusHash.size() - lastNterms);
 
-    PrintToLog("%s(): lastFourCharConsensus: %s, LastTwoCharAddr (decoded): %s\n",__func__, lastFourCharConsensus, LastTwoCharAddr);
+    PrintToLog("%s(): lastThreeCharConsensus: %s, LastThreeCharAddr (decoded): %s\n",__func__, lastThreeCharConsensus, LastThreeCharAddr);
 
-    return (LastTwoCharAddr == lastFourCharConsensus) ? true : false;
+    return (LastThreeCharAddr == lastThreeCharConsensus) ? true : false;
 
 }
 
@@ -4091,25 +4131,22 @@ int mastercore::WalletTxBuilderEx(const std::string& senderAddress, const std::v
   // Next, we set the change address to the sender
   coinControl.destChange = DecodeDestination(senderAddress);
 
-  // Select the inputs
-  if (0 > SelectCoins(senderAddress, coinControl, referenceAmount, minInputs)) { return MP_INPUTS_INVALID; }
+  CAmount nFeeRequired{GetMinimumFee(1000, coinControl, mempool, ::feeEstimator, nullptr)};
+
+  // Amount required for outputs
+  CAmount outputAmount{0};
 
   // Encode the data outputs
-
   if(!TradeLayer_Encode_ClassD(data,vecSend)) { return MP_ENCODING_ERROR; }
 
-
   // Then add a paytopubkeyhash output for the recipient (if needed) - note we do this last as we want this to be the highest vout
-  for (auto& addr : receiverAddress)
+  for (const auto& addr : receiverAddress)
   {
     CScript scriptPubKey = GetScriptForDestination(DecodeDestination(addr));
     CAmount ramount = 0 < referenceAmount ? referenceAmount : GetDustThld(scriptPubKey);
+    outputAmount += ramount;
     vecSend.push_back(std::make_pair(scriptPubKey, ramount));
   }
-
-  // Now we have what we need to pass to the wallet to create the transaction, perform some checks first
-
-  if (!coinControl.HasSelected()) return MP_ERR_INPUTSELECT_FAIL;
 
   std::vector<CRecipient> vecRecipients;
   for (size_t i = 0; i < vecSend.size(); ++i)
@@ -4119,9 +4156,15 @@ int mastercore::WalletTxBuilderEx(const std::string& senderAddress, const std::v
      vecRecipients.push_back(recipient);
   }
 
-  CAmount nFeeRet = 0;
+  CAmount nFeeRet{0};
   int nChangePosInOut = -1;
   std::string strFailReason;
+
+  // Select the inputs
+  if (0 > SelectCoins(senderAddress, coinControl, outputAmount + nFeeRequired, minInputs)) { return MP_INPUTS_INVALID; }
+
+  // Now we have what we need to pass to the wallet to create the transaction, perform some checks first
+  if (!coinControl.HasSelected()) return MP_ERR_INPUTSELECT_FAIL;
 
   // Ask the wallet to create the transaction (note mining fee determined by Litecoin Core params)
   if (!pwalletMain->CreateTransaction(vecRecipients, wtxNew, reserveKey, nFeeRet, nChangePosInOut, strFailReason, coinControl, true))
@@ -7914,7 +7957,7 @@ bool mastercore::sanityChecks(const std::string& sender, int& aBlock)
     if(msc_debug_sanity_checks) PrintToLog("%s(): timeFrame: %d\n", __func__, timeFrame);
 
     // is this the first transaction from address in the list?
-    auto it = find_if(vestingAddresses.begin(), vestingAddresses.end(), [&sender, &timeFrame, &params] (const std::string address) { return (sender == address && timeFrame > params.ONE_YEAR);});
+    auto it = find_if(vestingAddresses.begin(), vestingAddresses.end(), [&sender, &timeFrame, &params] (const std::string address) { return (sender == address);});
 
     return (it != vestingAddresses.end());
 
@@ -8423,6 +8466,6 @@ void blocksettlement::lossSocialization(const uint32_t& contractId, int64_t full
  */
 const std::vector<uint8_t> GetTLMarker()
 {
-    std::vector<uint8_t> marker{0x70, 0x70};  /* 'pp' hex-encoded */
+    std::vector<uint8_t> marker{0x74, 0x74};  /* 'tt' hex-encoded */
     return marker;
 }

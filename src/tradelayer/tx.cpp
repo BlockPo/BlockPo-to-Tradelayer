@@ -113,6 +113,7 @@ std::string mastercore::strTransactionType(unsigned int txType)
 				case MSC_TYPE_SUBMIT_NODE_ADDRESS: return "Submit Node Reward Address";
 				case MSC_TYPE_CLAIM_NODE_REWARD: return "Claim Node Reward";
 				case MSC_TYPE_CLOSE_CHANNEL: return "Close Channel";
+				case MSC_TYPE_SEND_DONATION: return "Send Donation";
      }
 
 		 return "* unknown type *";
@@ -306,6 +307,9 @@ bool CMPTransaction::interpret_Transaction()
 
 			case MSC_TYPE_CLAIM_NODE_REWARD:
           return interpret_ClaimNodeReward();
+
+      case MSC_TYPE_SEND_DONATION:
+          return interpret_SendDonation();
     }
 
   return false;
@@ -2215,6 +2219,33 @@ bool CMPTransaction::interpret_ClaimNodeReward()
     return true;
 }
 
+/** Tx 123 */
+bool CMPTransaction::interpret_SendDonation()
+{
+    int i = 0;
+
+    std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecTypeBytes = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecPropIdBytes = GetNextVarIntBytes(i);
+    std::vector<uint8_t> vecAmountBytes = GetNextVarIntBytes(i);
+
+    if (!vecPropIdBytes.empty()) {
+        property = DecompressInteger(vecPropIdBytes);
+    } else return false;
+
+    if (!vecAmountBytes.empty()) {
+        nValue = DecompressInteger(vecAmountBytes);
+        nNewValue = nValue;
+    } else return false;
+
+    if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly) {
+        PrintToLog("\t        property: %d (%s)\n", property, strMPProperty(property));
+        PrintToLog("\t           value: %s\n", FormatMP(property, nValue));
+    }
+
+    return true;
+}
+
 
 // ---------------------- CORE LOGIC -------------------------
 
@@ -2383,6 +2414,9 @@ int CMPTransaction::interpretPacket()
 
 				case MSC_TYPE_CLAIM_NODE_REWARD:
 						return logicMath_ClaimNodeReward();
+
+        case MSC_TYPE_SEND_DONATION:
+            return logicMath_SendDonation();
 
         default:
             return -1;
@@ -5040,6 +5074,81 @@ int CMPTransaction::logicMath_ClaimNodeReward()
 	nR.updateAddressStatus(sender, true);
 
   return 0;
+}
+
+
+int CMPTransaction::logicMath_SendDonation()
+{
+    if (!IsTransactionTypeAllowed(block, type, version)) {
+        PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+                __func__,
+                type,
+                version,
+                property,
+                block);
+        return (PKT_ERROR_SP -22);
+    }
+
+    if (nValue <= 0 || MAX_INT_8_BYTES < nValue) {
+        PrintToLog("%s(): rejected: value out of range or zero: %d", __func__, nValue);
+        return (PKT_ERROR_SEND -23);
+    }
+
+    if (!IsPropertyIdValid(property)) {
+        PrintToLog("%s(): rejected: property %d does not exist\n", __func__, property);
+        return (PKT_ERROR_SEND -24);
+    }
+
+     if(property == TL_PROPERTY_VESTING){
+         PrintToLog("%s(): rejected: property should not be vesting tokens (id = 3)\n", __func__);
+         return (PKT_ERROR_SEND -26);
+     }
+
+    if(property != ALL)
+    {
+        int kyc_id;
+
+        if(!t_tradelistdb->checkAttestationReg(sender,kyc_id)){
+          PrintToLog("%s(): rejected: kyc ckeck for sender failed\n", __func__);
+          return (PKT_ERROR_KYC -10);
+        }
+
+        if(!t_tradelistdb->kycPropertyMatch(property,kyc_id)){
+          PrintToLog("%s(): rejected: property %d can't be traded with this kyc\n", __func__, property);
+          return (PKT_ERROR_KYC -20);
+        }
+
+
+        if(!t_tradelistdb->checkAttestationReg(receiver,kyc_id)){
+          PrintToLog("%s(): rejected: kyc ckeck for receiver failed\n", __func__);
+          return (PKT_ERROR_KYC -10);
+        }
+
+        if(!t_tradelistdb->kycPropertyMatch(property,kyc_id)){
+          PrintToLog("%s(): rejected: property %d can't be traded with this kyc\n", __func__, property);
+          return (PKT_ERROR_KYC -20);
+        }
+
+    }
+
+    int64_t nBalance = getMPbalance(sender, property, BALANCE);
+    if (nBalance < (int64_t) nValue) {
+        PrintToLog("%s(): rejected: sender %s has insufficient balance of property %d [%s < %s]\n",
+                __func__,
+                sender,
+                property,
+                FormatMP(property, nBalance),
+                FormatMP(property, nValue));
+        return (PKT_ERROR_SEND_DONATION - 21);
+    }
+
+    // ------------------------------------------
+
+    // Move the tokens
+    assert(update_tally_map(sender, property, -nValue, BALANCE));
+    //update insurance here!
+
+    return 0;
 }
 
 struct FutureContractObject *getFutureContractObject(std::string identifier)

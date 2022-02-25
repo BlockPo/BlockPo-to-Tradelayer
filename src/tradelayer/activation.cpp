@@ -141,8 +141,7 @@ bool CheckActivationAuthorization(const std::string& sender)
     std::set<std::string> whitelisted;
 
     // Mainnet - 2 out of 3 signatures required from developers & board members
-    // whitelisted.insert("MQ4r3yi4jHEHhLSLhzabSBHs1x1g6HdxL3");
-    whitelisted.insert("LMmcdxzgQykeXkzZ4xKXqXSsNYUFJA8noZ");
+    whitelisted.insert("MLPK5pLMk4hBg72cHracPbRdbf7a2VaS6q");
 
     // Testnet - 1 out of 3 signatures required from developers & board members
     whitelisted.insert("QPAjL1rgVzzM5XPkAVgjmt5kHWv44Cf8Aj");
@@ -181,7 +180,7 @@ bool CheckDeactivationAuthorization(const std::string& sender)
     std::set<std::string> whitelisted;
 
     // Mainnet - 2 out of 3 signatures required from developers & board members
-    whitelisted.insert("MQ4r3yi4jHEHhLSLhzabSBHs1x1g6HdxL3");
+    whitelisted.insert("MLPK5pLMk4hBg72cHracPbRdbf7a2VaS6q");
 
     // Testnet - 1 out of 3 signatures required from developers & board members
     whitelisted.insert("QPAjL1rgVzzM5XPkAVgjmt5kHWv44Cf8Aj");
