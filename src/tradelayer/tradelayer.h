@@ -449,6 +449,8 @@ class nodeReward
 
   };
 
+extern blocksettlement bS;
+
 /* LevelDB based storage for  Trade Layer transaction data.  This will become the new master database, holding serialized Trade Layer transactions.
  *  Note, intention is to consolidate and clean up data storage
  */
