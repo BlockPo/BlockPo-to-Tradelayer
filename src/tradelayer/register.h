@@ -17,7 +17,7 @@ extern CCriticalSection cs_register;
 enum RecordType {
   ENTRY_CPRICE = 0,
   CONTRACT_POSITION = 1,
-  LIQUIDATION_PRICE = 2,
+  BANKRUPTCY_PRICE = 2,
   UPNL = 3,
   MARGIN = 4,
   LEVERAGE = 5,
@@ -76,6 +76,8 @@ public:
 
     int64_t getUPNL(const uint32_t contractId, const uint32_t notionalSize, bool isOracle = false, bool quoted = false) const;
 
+    bool setBankruptcyPrice(const uint32_t contractId, const uint32_t notionalSize, int64_t initMargin, bool isOracle = false, bool quoted = false);
+
     int64_t getLiquidationPrice(const uint32_t contractId, const uint32_t notionalSize, const uint64_t marginRequirement) const;
 
     const Entries* getEntries(const uint32_t contractId) const;
@@ -102,6 +104,9 @@ namespace mastercore
 
   bool reset_leverage_register(const std::string& who, uint32_t contractId);
 
+  bool realize_pnl(uint32_t contractId, uint32_t notional_size, bool isOracle, bool isInverseQuoted);
+
+  bool set_bankruptcy_price_onmap(const std::string& who, const uint32_t& contractId, const uint32_t& notionalSize, const int64_t& initMargin);
 }
 
 #endif // TRADELAYER_REGISTER_H

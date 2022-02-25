@@ -12,7 +12,7 @@ BOOST_AUTO_TEST_CASE(empty_register)
     // As general record
     BOOST_CHECK_EQUAL(0, reg.getRecord(0, ENTRY_CPRICE));
     BOOST_CHECK_EQUAL(0, reg.getRecord(0, CONTRACT_POSITION));
-    BOOST_CHECK_EQUAL(0, reg.getRecord(0, LIQUIDATION_PRICE));
+    BOOST_CHECK_EQUAL(0, reg.getRecord(0, BANKRUPTCY_PRICE));
     BOOST_CHECK_EQUAL(0, reg.getRecord(0, UPNL));
     BOOST_CHECK_EQUAL(0, reg.getRecord(0, MARGIN));
 
@@ -30,26 +30,26 @@ BOOST_AUTO_TEST_CASE(filled_register)
     Register reg;
     BOOST_CHECK(!reg.updateRecord(0, 0, ENTRY_CPRICE));
     BOOST_CHECK(!reg.updateRecord(0, 0, CONTRACT_POSITION));
-    BOOST_CHECK(!reg.updateRecord(0, 0, LIQUIDATION_PRICE));
+    BOOST_CHECK(!reg.updateRecord(0, 0, BANKRUPTCY_PRICE));
     BOOST_CHECK(!reg.updateRecord(0, 0, UPNL));
     BOOST_CHECK(!reg.updateRecord(0, 0, MARGIN));
 
     BOOST_CHECK_EQUAL(0, reg.getRecord(0, ENTRY_CPRICE));
     BOOST_CHECK_EQUAL(0, reg.getRecord(0, CONTRACT_POSITION));
-    BOOST_CHECK_EQUAL(0, reg.getRecord(0, LIQUIDATION_PRICE));
+    BOOST_CHECK_EQUAL(0, reg.getRecord(0, BANKRUPTCY_PRICE));
     BOOST_CHECK_EQUAL(0, reg.getRecord(0, UPNL));
     BOOST_CHECK_EQUAL(0, reg.getRecord(0, MARGIN));
 
     BOOST_CHECK(reg.updateRecord(0, 1, ENTRY_CPRICE));
     BOOST_CHECK(reg.updateRecord(0, -1000, CONTRACT_POSITION));
-    BOOST_CHECK(reg.updateRecord(1, int64_t(9223372036854775807LL), LIQUIDATION_PRICE));
+    BOOST_CHECK(reg.updateRecord(1, int64_t(9223372036854775807LL), BANKRUPTCY_PRICE));
     BOOST_CHECK(reg.updateRecord(2, -233000, UPNL));
     BOOST_CHECK(reg.updateRecord(5, int64_t(4294967296L), MARGIN));
 
 
     BOOST_CHECK_EQUAL(reg.getRecord(0, ENTRY_CPRICE), 1);
     BOOST_CHECK_EQUAL(reg.getRecord(0, CONTRACT_POSITION), -1000);
-    BOOST_CHECK_EQUAL(reg.getRecord(1, LIQUIDATION_PRICE), int64_t(9223372036854775807LL));
+    BOOST_CHECK_EQUAL(reg.getRecord(1, BANKRUPTCY_PRICE), int64_t(9223372036854775807LL));
     BOOST_CHECK_EQUAL(reg.getRecord(2, UPNL), -233000);
     BOOST_CHECK_EQUAL(reg.getRecord(5, MARGIN), int64_t(4294967296L));
 

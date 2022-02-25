@@ -6,10 +6,10 @@
 
 #include <tradelayer/tradelayer.h>
 #include <tradelayer/activation.h>
-#include <tradelayer/ce.h>
 #include <tradelayer/consensushash.h>
 #include <tradelayer/convert.h>
 #include <tradelayer/dex.h>
+#include <tradelayer/ce.h>
 #include <tradelayer/encoding.h>
 #include <tradelayer/errors.h>
 #include <tradelayer/externfns.h>
@@ -157,6 +157,8 @@ CDInfo *mastercore::_my_cds;
 
 //node reward object
 nodeReward nR;
+//settlement object
+blocksettlement bS;
 
 std::map<uint32_t, std::map<uint32_t, int64_t>> VWAPMap;
 std::map<uint32_t, std::map<uint32_t, int64_t>> VWAPMapSubVector;
@@ -2070,7 +2072,7 @@ static int input_register_string(const std::string& s)
 
         if (entryPrice > 0) update_register_map(strAddress, contractId, entryPrice, ENTRY_CPRICE);
         if (position != 0) update_register_map(strAddress, contractId, position, CONTRACT_POSITION);
-        if (liquidationPrice > 0) update_register_map(strAddress, contractId, liquidationPrice, LIQUIDATION_PRICE);
+        if (liquidationPrice > 0) update_register_map(strAddress, contractId, liquidationPrice, BANKRUPTCY_PRICE);
         if (upnl != 0) update_register_map(strAddress, contractId, upnl, UPNL);
         if (margin > 0) update_register_map(strAddress, contractId, margin, MARGIN);
         if (leverage >= 1) update_register_map(strAddress, contractId, leverage, LEVERAGE);
@@ -2982,7 +2984,7 @@ static int write_mp_register(std::ofstream& file,  CHash256& hasher)
 
           const int64_t entryPrice = reg.getRecord(contractId, ENTRY_CPRICE);
           const int64_t position = reg.getRecord(contractId, CONTRACT_POSITION);
-          const int64_t liquidationPrice = reg.getRecord(contractId, LIQUIDATION_PRICE);
+          const int64_t liquidationPrice = reg.getRecord(contractId, BANKRUPTCY_PRICE);
           const int64_t upnl = reg.getRecord(contractId, UPNL);
           const int64_t margin = reg.getRecord(contractId, MARGIN);
           const int64_t leverage = reg.getRecord(contractId, LEVERAGE);
@@ -3888,8 +3890,6 @@ bool nodeReward::nextReward(const int& nHeight)
 {
    bool result{false};
 
-   PrintToLog("%s(): p_Reward before: %d\n", __func__, p_Reward);
-
    const CConsensusParams &params = ConsensusParams();
 
    // logic in function of blockheight
@@ -3902,7 +3902,6 @@ bool nodeReward::nextReward(const int& nHeight)
    if (p_Reward < MIN_REWARD) p_Reward = MIN_REWARD;
 
    PrintToLog("%s():p_Reward after: %d, f_nextReward: %d\n", __func__, p_Reward, f_nextReward);
-
 
    return !result;
 }
@@ -4876,13 +4875,6 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
         nR.clearWinners();
     }
 
-    /** Contracts **/
-    // if (nHeight > params.MSC_CONTRACTDEX_BLOCK)
-    // {
-    //     LiquidationEngine(nHeight);
-    // }
-
-
     // marginMain(pBlockIndex->nHeight);
     // addInterestPegged(nBlockPrev,pBlockIndex);
 
@@ -4933,8 +4925,14 @@ int mastercore_handler_block_end(int nBlockNow, CBlockIndex const * pBlockIndex,
            // last blockhash
            const CBlockIndex* pblockindex = chainActive[nBlockNow - 1];
            const std::string& blockhash = pblockindex->GetBlockHash().GetHex();
-           PrintToLog("%s(): blockhash of last block: %s\n",__func__, blockhash);
            nR.sendNodeReward(blockhash, nBlockNow, RegTest());
+       }
+
+       /** Contracts **/
+       if (nBlockNow > params.MSC_CONTRACTDEX_BLOCK)
+       {
+           LiquidationEngine(nBlockNow);
+           bS.makeSettlement();
        }
 
        // deleting Expired DEx accepts
@@ -6879,9 +6877,6 @@ bool checkContractPositions(int Block, const std::string &address, const uint32_
     // we need an active position
     if (0 == position) return false;
 
-    // selling or buying the position?
-    const uint8_t option = (position > 0) ? sell : buy;
-
     const int64_t reserve = getMPbalance(address, sp.collateral_currency, CONTRACTDEX_RESERVE);
 
     if(msc_debug_liquidation_enginee)
@@ -6915,15 +6910,14 @@ bool checkContractPositions(int Block, const std::string &address, const uint32_
         if (0 == icontracts) icontracts++;
 
         // NOTE: to avoid this, we need to update the ContractDex constructor
-        const uint256 txid;
+        uint256 txid;
         unsigned int idx = 0;
 
         // trying to liquidate 50% of position
         if(msc_debug_liquidation_enginee) PrintToLog("%s(): here trying to liquidate 50 percent of position, contractId: %d, icontracts : %d, Block: %d\n",__func__,  contractId, icontracts, Block);
 
         // if whe don't have pending liquidation orders here! then we add the order
-        // contractdex class needs type attribute
-        ContractDex_ADD_MARKET_PRICE(address, contractId, icontracts, Block, txid, idx, option, 0);
+        ContractDex_ADD_MARKET_PRICE(address, contractId, icontracts, Block, txid, idx, (position > 0) ? sell : buy, 0, true);
 
         // TODO: add here a position checking in order to see if we are above the margin limits.
     } else  {
@@ -8333,6 +8327,137 @@ bool mastercore::Token_LTC_Fees(int64_t& buyer_amountGot, uint32_t propertyId)
     }
 
     return false;
+
+}
+
+void blocksettlement::makeSettlement()
+{
+    const uint32_t nextCDID = _my_cds->peekNextContractID();
+
+    // checking expiration block for each contract
+    for (uint32_t contractId = 1; contractId < nextCDID; contractId++)
+    {
+         CDInfo::Entry cd;
+         if (!_my_cds->getCD(contractId, cd)) {
+             continue; // contract does not exist
+         }
+
+         const int64_t loss = getTotalLoss(contractId, cd.notional_size);
+         PrintToLog("%s(): total loss: %d\n",__func__, loss);
+
+         // if there's no liquidation orders
+         if(0 == loss) {
+             realize_pnl(contractId, cd.notional_size, cd.isOracle(), cd.isInverseQuoted());
+         } else if (loss > 0) {
+              const int64_t difference = getInsurance(cd.collateral_currency) - loss;
+
+              if (0 > difference) {
+                  // we need socialization of loss
+                  lossSocialization(contractId, -difference);
+              }
+
+              update_Insurance(cd.collateral_currency, loss);
+
+          }
+     }
+}
+
+int64_t blocksettlement::getTotalLoss(const uint32_t& contractId, const uint32_t& notionalSize)
+{
+    bool sign = false;
+    int64_t vwap = 0;
+    int64_t volume = 0;
+    int64_t systemicLoss = 0;
+    int64_t bankruptcyVWAP = 0;
+
+    if (!mastercore::ContractDex_LIQUIDATION_VOLUME(contractId, volume, vwap, bankruptcyVWAP, sign)) {
+        return 0;
+    }
+
+    const int64_t oracleTwap = getOracleTwap(contractId, OBLOCKS);
+
+    //! Systemic Loss in a Block = the volume-weighted avg. price of bankruptcy (for each position we need the bankruptcy price, and the volume of liquidation) for unfilled liquidations
+    // * the sign of the liquidated contracts * their notional value (this depends of contract denomination) * the # of contracts (number of contract in liquidation) * (Liq. VWAP - Mark Price)
+    // Mark Price: (oracle: TWAP of oracle, native: spot price)
+    systemicLoss = ((bankruptcyVWAP * notionalSize) / COIN) * ((volume * vwap * oracleTwap) / COIN);
+
+    // return totalLoss;
+    return systemicLoss;
+
+}
+
+int64_t blocksettlement::getInsurance(const uint32_t& propertyId) const
+{
+     int64_t money = 0;
+     auto it = insurance_fund.find(propertyId);
+     if (it != insurance_fund.end()) {
+         money = it->second;
+     }
+
+     return money;
+}
+
+bool blocksettlement::update_Insurance(const uint32_t& propertyId, int64_t amount)
+{
+    auto it = insurance_fund.find(propertyId);
+    if (it == insurance_fund.end()){
+        PrintToLog("%s(): ERROR: propertyId not found!\n", __func__);
+        return false;
+    }
+
+    const int64_t& amount_remaining = it->second;
+
+    if (isOverflow(amount_remaining, amount)) {
+        PrintToLog("%s(): ERROR: arithmetic overflow [%d + %d]\n", __func__, amount_remaining, amount);
+        return false;
+    }
+
+    if ((amount_remaining + amount) < 0)
+    {
+          PrintToLog("%s(): insufficient funds! (amount_remaining: %d, amount: %d)\n", __func__, amount_remaining, amount);
+          return false;
+
+    }
+
+    it->second += amount;
+
+    return true;
+}
+
+void blocksettlement::lossSocialization(const uint32_t& contractId, int64_t fullAmount)
+{
+    int count = 0;
+    LOCK(cs_register);
+    std::vector<std::string> zeroposition;
+
+    for(const auto& p : mp_register_map)
+    {
+        const Register& reg = p.second;
+        const int64_t position = reg.getRecord(contractId, CONTRACT_POSITION);
+
+        // not counting these addresses
+        if (0 == position) {
+            zeroposition.push_back(p.first);
+        } else {
+            count++;
+        }
+    }
+
+    if (count == 0) {
+        return;
+    }
+
+    const int64_t fraction = fullAmount / count;
+
+    for(auto& q : mp_register_map)
+    {
+        auto it = find (zeroposition.begin(), zeroposition.end(), q.first);
+        if (it == zeroposition.end()) {
+            Register& reg = q.second;
+            reg.updateRecord(contractId, -fraction, MARGIN);
+        }
+
+    }
 
 }
 

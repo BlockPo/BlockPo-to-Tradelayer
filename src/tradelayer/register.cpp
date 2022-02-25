@@ -83,16 +83,14 @@ int64_t Register::getLiquidationPrice(const uint32_t contractId, const uint32_t 
 
     const int64_t marginNeeded = (int64_t) position *  marginRequirement;
     const double firstFactor = (double) marginNeeded / (position * notionalSize);
-
     const double secondFactor = (double) COIN / entryPrice;
-
-    const double denominator =  firstFactor + secondFactor ;
+    const double denominator =  firstFactor + secondFactor;
 
     const double dliqPrice = (denominator != 0) ? 1 / denominator : 0;
 
     if (0 < dliqPrice)
     {
-        PrintToLog("%s(): liqPrice is less than zero: %lf, no liquidation price!\n",__func__, dliqPrice);
+        PrintToLog("%s(): liqPrice is less than zero: %lf, liquidation price = 0 !\n",__func__, dliqPrice);
     } else {
         liqPrice = (int64_t) dliqPrice * COIN;
     }
@@ -155,6 +153,19 @@ int64_t Register::getUPNL(const uint32_t contractId, const uint32_t notionalSize
 
 
     return iUPNL;
+}
+
+bool Register::setBankruptcyPrice(const uint32_t contractId, const uint32_t notionalSize, int64_t initMargin, bool isOracle, bool quoted)
+{
+    const int64_t position = getRecord(contractId, CONTRACT_POSITION);
+    const int64_t entryPrice = getPosEntryPrice(contractId);
+    const double dBankruptcyPrice  =  (double) 1 / (initMargin / (position * notionalSize) + (1/entryPrice));
+
+    PrintToLog("%s(): bankruptcyPrice: %d\n",__func__, dBankruptcyPrice);
+
+    const int bankruptcyPrice = DoubleToInt64(dBankruptcyPrice);
+
+    return updateRecord(contractId, bankruptcyPrice, BANKRUPTCY_PRICE);
 }
 
 
@@ -474,7 +485,7 @@ bool mastercore::getFullContractRecord(const std::string& address, uint32_t cont
         position_obj.pushKV("position", FormatIndivisibleMP(position));
         // liquidation price
         const int64_t liqPrice = reg.getLiquidationPrice(contractId, cd.notional_size, cd.margin_requirement);
-        position_obj.pushKV("liquidation_price", FormatDivisibleMP(liqPrice));
+        position_obj.pushKV("BANKRUPTCY_PRICE", FormatDivisibleMP(liqPrice));
         // position margin
         const int64_t posMargin = reg.getRecord(contractId, MARGIN);
         position_obj.pushKV("position_margin", FormatDivisibleMP(posMargin));
@@ -526,7 +537,45 @@ bool mastercore::update_register_map(const std::string& who, uint32_t contractId
     return bRet;
 }
 
+// return true if everything is ok
+bool mastercore::set_bankruptcy_price_onmap(const std::string& who, const uint32_t& contractId, const uint32_t& notionalSize, const int64_t& initMargin)
+{
 
+    LOCK(cs_register);
+    std::unordered_map<std::string, Register>::iterator my_it = mp_register_map.find(who);
+    if (my_it == mp_register_map.end()) {
+        // insert an empty element
+        my_it = (mp_register_map.insert(std::make_pair(who, Register()))).first;
+    }
+
+    Register& reg = my_it->second;
+    return reg.setBankruptcyPrice(contractId, notionalSize, initMargin);
+
+}
+
+bool mastercore::realize_pnl(uint32_t contractId, uint32_t notional_size, bool isOracle, bool isInverseQuoted)
+{
+    bool bRet = false;
+
+    LOCK(cs_register);
+
+    for(auto my_it = mp_register_map.begin(); my_it != mp_register_map.end(); ++my_it)
+    {
+        const std::string& who = my_it->first;
+        Register& reg = my_it->second;
+        const int64_t upnl = reg.getUPNL(contractId, notional_size, isOracle, isInverseQuoted);
+
+        PrintToLog("%s(): upnl: %d\n",__func__, upnl);
+
+        if (0 != upnl)
+        {
+            assert(update_register_map(who, contractId, upnl, MARGIN));
+            bRet = true;
+        }
+    }
+
+    return bRet;
+}
 
 // return true if everything is ok
 bool mastercore::reset_leverage_register(const std::string& who, uint32_t contractId)

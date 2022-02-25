@@ -146,27 +146,29 @@ class CMPContractDex : public CMPMetaDEx
   uint64_t effective_price;
   uint8_t trading_action;
   int64_t amount_reserved;
+  bool liquidation_order;
 
 
  public:
  CMPContractDex()
-   : effective_price(0), trading_action(0), amount_reserved(0) {}
+   : effective_price(0), trading_action(0), amount_reserved(0), liquidation_order(false) {}
 
- CMPContractDex(const std::string& addr, int b, uint32_t c, int64_t nValue, uint32_t cd, int64_t ad, const uint256& tx, uint32_t i, uint8_t suba, uint64_t effp, uint8_t act, uint64_t amr)
-   : CMPMetaDEx(addr, b, c, nValue, cd, ad, tx, i, suba), effective_price(effp), trading_action(act), amount_reserved(amr) {}
+ CMPContractDex(const std::string& addr, int b, uint32_t c, int64_t nValue, uint32_t cd, int64_t ad, const uint256& tx, uint32_t i, uint8_t suba, uint64_t effp, uint8_t act, uint64_t amr, bool liquidation)
+   : CMPMetaDEx(addr, b, c, nValue, cd, ad, tx, i, suba), effective_price(effp), trading_action(act), amount_reserved(amr),  liquidation_order(liquidation)  {}
 
   /*Remember: Needed for tradelayer.cpp "ar"*/
  CMPContractDex(const std::string& addr, int b, uint32_t c, int64_t nValue, uint32_t cd, int64_t ad, const uint256& tx, uint32_t i, uint8_t suba, int64_t ar, uint64_t effp, uint8_t act, uint64_t amr)
-   : CMPMetaDEx(addr, b, c, nValue, cd, ad, tx, i, suba, ar), effective_price(effp), trading_action(act), amount_reserved(amr) {}
+   : CMPMetaDEx(addr, b, c, nValue, cd, ad, tx, i, suba, ar), effective_price(effp), trading_action(act), amount_reserved(amr), liquidation_order(false) {}
 
  CMPContractDex(const CMPTransaction &tx)
-   : CMPMetaDEx(tx), effective_price(tx.effective_price), trading_action(tx.trading_action) {}
+   : CMPMetaDEx(tx), effective_price(tx.effective_price), trading_action(tx.trading_action), liquidation_order(false) {}
 
   virtual ~CMPContractDex(){}
 
   uint64_t getEffectivePrice() const { return effective_price; }
   uint8_t getTradingAction() const { return trading_action; }
   uint64_t getAmountReserved() const { return amount_reserved; }
+  bool isLiquidationOrder() const { return liquidation_order; }
 
   std::string displayFullContractPrice() const;
   std::string ToString() const;
@@ -208,7 +210,6 @@ namespace mastercore
    *   Block, property -> put the amount of property traded.
    */
   extern std::map<int, std::map<uint32_t,int64_t>> metavolume;
-
 
   //! Global map for last contract price
   extern std::map<uint32_t,int64_t> cdexlastprice;
@@ -254,14 +255,15 @@ namespace mastercore
   ///////////////////////////////////
   /** New things for Contracts */
   int ContractDex_CANCEL_EVERYTHING(const uint256& txid, unsigned int block, const std::string& sender_addr, uint32_t contractId);
-  int ContractDex_CLOSE_POSITION(const uint256& txid, unsigned int block, const std::string& sender_addr, uint32_t contractId, uint32_t collateralCurrency);
+  int ContractDex_CLOSE_POSITION(const uint256& txid, unsigned int block, const std::string& sender_addr, uint32_t contractId, uint32_t collateralCurrency, bool liquidation);
   int ContractDex_CANCEL_IN_ORDER(const std::string& sender_addr, uint32_t contractId);
   int ContractDex_CANCEL_AT_PRICE(const uint256& txid, unsigned int block, const std::string& sender_addr, uint32_t prop, int64_t amount, uint32_t property_desired, int64_t amount_desired, uint64_t effective_price, uint8_t trading_action);
-  int ContractDex_ADD_ORDERBOOK_EDGE(const std::string& sender_addr, uint32_t contractId, int64_t amount, int block, const uint256& txid, unsigned int idx, uint8_t trading_action, int64_t amount_to_reserve);
-  int ContractDex_ADD_MARKET_PRICE(const std::string& sender_addr, uint32_t contractId, int64_t amount, int block, const uint256& txid, unsigned int idx, uint8_t trading_action, int64_t amount_to_reserve);
+  int ContractDex_ADD_ORDERBOOK_EDGE(const std::string& sender_addr, uint32_t contractId, int64_t amount, int block, const uint256& txid, unsigned int idx, uint8_t trading_action, int64_t amount_to_reserve, bool liquidation);
+  int ContractDex_ADD_MARKET_PRICE(const std::string& sender_addr, uint32_t contractId, int64_t amount, int block, const uint256& txid, unsigned int idx, uint8_t trading_action, int64_t amount_to_reserve, bool liquidation);
   int ContractDex_CANCEL_FOR_BLOCK(const uint256& txid, int block,unsigned int idx, const std::string& sender_addr);
   bool ContractDex_Fees(const CMPContractDex* maker, const CMPContractDex* taker, int64_t nCouldBuy);
   bool ContractDex_CHECK_ORDERS(const std::string& sender_addr, uint32_t contractId);
+  bool ContractDex_LIQUIDATION_VOLUME(uint32_t contractId, int64_t& volume, int64_t& vwap, int64_t& bankruptcyVWAP, bool& sign);
   ///////////////////////////////////
 
   int MetaDEx_ADD(const std::string& sender_addr, uint32_t, int64_t, int block, uint32_t property_desired, int64_t amount_desired, const uint256& txid, unsigned int idx);

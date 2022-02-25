@@ -3542,7 +3542,7 @@ int CMPTransaction::logicMath_ContractDexClosePosition()
         }
     }
 
-    return (ContractDex_CLOSE_POSITION(txid, block, sender, contractId, sp.collateral_currency));
+    return (ContractDex_CLOSE_POSITION(txid, block, sender, contractId, sp.collateral_currency, false));
 }
 
 int CMPTransaction::logicMath_ContractDex_Cancel_Orders_By_Block()

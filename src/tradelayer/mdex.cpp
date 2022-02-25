@@ -166,6 +166,10 @@ void mastercore::updateAllEntry(int64_t oldPosition, int64_t newPosition, int64_
         //taking margin
         takeMargin(nCouldBuy, contract_traded, cd, elem);
 
+        // here we need to save the bankruptcy price
+        const int64_t initMargin = getMPbalance(elem->getAddr(), cd.collateral_currency, CONTRACTDEX_RESERVE);
+        set_bankruptcy_price_onmap(elem->getAddr(), contract_traded, cd.notional_size, initMargin);
+
     // same position
     } else if (signOld == signNew) {
 
@@ -214,6 +218,10 @@ void mastercore::updateAllEntry(int64_t oldPosition, int64_t newPosition, int64_
          //here we adapt the margin to the new position
          const int64_t newAmount = abs(newPosition);
          takeMargin(newAmount, contract_traded, cd, elem);
+
+         // here we need to include the bankruptcy price
+         const int64_t initMargin = getMPbalance(elem->getAddr(), cd.collateral_currency, CONTRACTDEX_RESERVE);
+         set_bankruptcy_price_onmap(elem->getAddr(), contract_traded, cd.notional_size, initMargin);
    }
 
  }
@@ -2235,7 +2243,7 @@ int mastercore::ContractDex_ADD(const std::string& sender_addr, uint32_t prop, i
     int rc = 0;
 
     /*Remember: Here CMPTransaction::ADD is the subaction coming from CMPMetaDEx*/
-    CMPContractDex new_cdex(sender_addr, block, prop, amount, 0, 0, txid, idx, CMPTransaction::ADD, effective_price, trading_action, amountToReserve);
+    CMPContractDex new_cdex(sender_addr, block, prop, amount, 0, 0, txid, idx, CMPTransaction::ADD, effective_price, trading_action, amountToReserve, false);
 
     if (msc_debug_contractdex_add) PrintToLog("%s(); buyer obj: %s\n", __FUNCTION__, new_cdex.ToString());
     //  Ensure this is not a badly priced trade (for example due to zero amounts)
@@ -2263,11 +2271,11 @@ int mastercore::ContractDex_ADD(const std::string& sender_addr, uint32_t prop, i
      return rc;
 }
 
-int mastercore::ContractDex_ADD_MARKET_PRICE(const std::string& sender_addr, uint32_t contractId, int64_t amount, int block, const uint256& txid, unsigned int idx, uint8_t trading_action, int64_t amount_to_reserve)
+int mastercore::ContractDex_ADD_MARKET_PRICE(const std::string& sender_addr, uint32_t contractId, int64_t amount, int block, const uint256& txid, unsigned int idx, uint8_t trading_action, int64_t amount_to_reserve, bool liquidation)
 {
 
     int rc = METADEX_ERROR -1;
-    const int MAX = 10; // max number of orders to match at market price in the other side (depth)
+    // const int MAX = 10; // max number of orders to match at market price in the other side (depth)
 
     if(trading_action != buy && trading_action != sell){
         PrintToLog("%s(): ERROR: invalid trading action: %d\n",__func__, trading_action);
@@ -2275,28 +2283,22 @@ int mastercore::ContractDex_ADD_MARKET_PRICE(const std::string& sender_addr, uin
     }
 
     uint64_t edge = edgeOrderbook(contractId, trading_action);
-    CMPContractDex new_cdex(sender_addr, block, contractId, amount, 0, 0, txid, idx, CMPTransaction::ADD, edge, trading_action, 0);
+    CMPContractDex new_cdex(sender_addr, block, contractId, amount, 0, 0, txid, idx, CMPTransaction::ADD, edge, trading_action, 0, liquidation);
     if(msc_debug_contract_add_market) PrintToLog("%s(): effective price of new_cdex : %d, edge price : %d, trading_action: %d\n",__func__, new_cdex.getEffectivePrice(), edge, trading_action);
     if (0 >= new_cdex.getEffectivePrice()) return METADEX_ERROR -66;
 
-    int count = 0;
-    while(count <= MAX)
+    x_Trade(&new_cdex);
+
+    if (new_cdex.getAmountForSale() > 0)
     {
-        x_Trade(&new_cdex);
-        count++;
-
-        if (new_cdex.getAmountForSale() == 0)
+        if (!ContractDex_INSERT(new_cdex))
         {
-            rc = 0;
-            break;
+            PrintToLog("%s() ERROR: ALREADY EXISTS, line %d, file: %s\n", __FUNCTION__, __LINE__, __FILE__);
+            return CONTRACTDEX_ERROR -70;
         }
-
-        uint64_t price = edgeOrderbook(contractId, trading_action);
-        new_cdex.setPrice(price);
-
     }
 
-    if(msc_debug_contract_add_market) PrintToLog("%s(): final amount in order : %d\n",__func__, new_cdex.getAmountForSale());
+    if(msc_debug_contract_add_market) PrintToLog("%s(): final amount in order : %d, contractId: %d\n",__func__, new_cdex.getAmountForSale(), contractId);
 
     return rc;
 }
@@ -2558,7 +2560,7 @@ int mastercore::ContractDex_CANCEL_IN_ORDER(const std::string& sender_addr, uint
     return rc;
 }
 
-int mastercore::ContractDex_ADD_ORDERBOOK_EDGE(const std::string& sender_addr, uint32_t contractId, int64_t amount, int block, const uint256& txid, unsigned int idx, uint8_t trading_action, int64_t amount_to_reserve)
+int mastercore::ContractDex_ADD_ORDERBOOK_EDGE(const std::string& sender_addr, uint32_t contractId, int64_t amount, int block, const uint256& txid, unsigned int idx, uint8_t trading_action, int64_t amount_to_reserve, bool liquidation)
 {
     int rc = METADEX_ERROR -1;
     uint64_t price;
@@ -2568,7 +2570,7 @@ int mastercore::ContractDex_ADD_ORDERBOOK_EDGE(const std::string& sender_addr, u
 
     if (price != 0)
     {
-        CMPContractDex new_cdex(sender_addr, block, contractId, amount, 0, 0, txid, idx, CMPTransaction::ADD, price, trading_action, 0);
+        CMPContractDex new_cdex(sender_addr, block, contractId, amount, 0, 0, txid, idx, CMPTransaction::ADD, price, trading_action, 0, liquidation);
         if (!ContractDex_INSERT(new_cdex))
         {
             if (msc_debug_add_orderbook_edge) PrintToLog("%s() ERROR: ALREADY EXISTS, line %d, file: %s\n", __FUNCTION__, __LINE__, __FILE__);
@@ -2587,7 +2589,7 @@ int mastercore::ContractDex_ADD_ORDERBOOK_EDGE(const std::string& sender_addr, u
 }
 
 /*NEW FUNCTION*/
-int mastercore::ContractDex_CLOSE_POSITION(const uint256& txid, unsigned int block, const std::string& sender_addr, uint32_t contractId, uint32_t collateralCurrency)
+int mastercore::ContractDex_CLOSE_POSITION(const uint256& txid, unsigned int block, const std::string& sender_addr, uint32_t contractId, uint32_t collateralCurrency, bool liquidation)
 {
     int rc = -1;
 
@@ -2606,7 +2608,7 @@ int mastercore::ContractDex_CLOSE_POSITION(const uint256& txid, unsigned int blo
 
     if(msc_debug_close_position) PrintToLog("%s(): result.first: %d, result.second: %d\n",__func__, result.first, result.second);
 
-    rc = ContractDex_ADD_MARKET_PRICE(sender_addr, contractId, result.first, block, txid, idx, result.second, 0);
+    rc = ContractDex_ADD_MARKET_PRICE(sender_addr, contractId, result.first, block, txid, idx, result.second, 0, liquidation);
 
     const int64_t positionAf = getContractRecord(sender_addr, contractId, CONTRACT_POSITION);
     if(msc_debug_close_position) PrintToLog("%s(): position after: %d, rc: %d\n",__func__, positionAf, rc);
@@ -2645,6 +2647,10 @@ uint64_t mastercore::edgeOrderbook(uint32_t contractId, uint8_t tradingAction)
             if(msc_debug_sp) PrintToLog("%s(): choosen price: %d\n",__func__, price);
         }
     }
+
+    // just for testing
+    if (candPrice == 0 && RegTest()) candPrice = 1000 * COIN;
+
 
     return candPrice;
 }
@@ -2978,6 +2984,84 @@ int mastercore::MetaDEx_CANCEL_ALL_FOR_PAIR(const uint256& txid, unsigned int bl
      return rc;
  }
 
+
+ /**
+  * Scans the orderbook for liquidation orders
+  */
+  bool mastercore::ContractDex_LIQUIDATION_VOLUME(uint32_t contractId, int64_t& volume, int64_t& vwap, int64_t& bankruptcyVWAP, bool& sign)
+  {
+      bool bValid{false};
+      arith_uint256 iVWAP = 0;
+      arith_uint256 iBankrupcyVWAP = 0;
+
+      for (cd_PropertiesMap::iterator my_it = contractdex.begin(); my_it != contractdex.end(); ++my_it) {
+          uint32_t prop = my_it->first;
+
+          if (prop != contractId) continue;
+
+          PrintToLog(" ## contractId: %d\n", prop);
+          cd_PricesMap &prices = my_it->second;
+
+          for (cd_PricesMap::iterator it = prices.begin(); it != prices.end(); ++it)
+          {
+              const uint64_t& price = it->first;
+              PrintToLog(" ## price: %d\n", price);
+              cd_Set &indexes = it->second;
+
+              for (cd_Set::iterator itt = indexes.begin(); itt != indexes.end();)
+              {
+                  if (itt->isLiquidationOrder()) PrintToLog("%s(): YOU HAVE LIQUIDATION ORDERS HERE\n",__func__);
+
+                  if (!itt->isLiquidationOrder() || 0 == itt->getAmountForSale()) {
+                      ++itt;
+                      continue;
+                  }
+
+                  // const std::string getstring = (itt->getHash()).ToString();
+                  PrintToLog("%s(): getAddr: %s\n",__func__, itt->getAddr());
+                  PrintToLog("%s(): propertyid: %d\n",__func__, itt->getProperty());
+                  PrintToLog("%s(): amount for sale: %d\n",__func__, itt->getAmountForSale());
+                  PrintToLog("%s(): price: %d\n",__func__, itt->getEffectivePrice());
+                  // PrintToLog("%s(): getHash: %s\n",__func__, getstring);
+                  volume += itt->getAmountForSale();
+                  iVWAP += ConvertTo256(itt->getAmountForSale() * itt->getEffectivePrice());
+
+                  // bankruptcyVWAP calculations
+                  int64_t bankruptcyPrice = getContractRecord(itt->getAddr(), contractId, BANKRUPTCY_PRICE);
+                  iBankrupcyVWAP += ConvertTo256(itt->getAmountForSale() * bankruptcyPrice);
+
+                  const int64_t position = getContractRecord(itt->getAddr(), contractId, CONTRACT_POSITION);
+
+                  // sign of liquidation orders
+                  if (!bValid && 0 < position) {
+                      sign = true;
+                  }
+
+                  // deleting small orders (later it's gonna add a big one)
+                  indexes.erase(itt++);
+
+
+                  bValid = true;
+              }
+
+          }
+      }
+
+      if (!bValid)
+      {
+         PrintToLog("%s(): You DON'T have LIQUIDATION ORDERS\n",__func__);
+      } else {
+           iVWAP /= ConvertTo256(volume);
+           iBankrupcyVWAP /= ConvertTo256(volume);
+           vwap = ConvertTo64(iVWAP);
+           bankruptcyVWAP = ConvertTo64(iBankrupcyVWAP);
+           PrintToLog("%s(): final vwap: %d, final volume: %d, bankruptcyVWAP: %d\n",__func__, vwap, volume, bankruptcyVWAP);
+      }
+
+
+      return bValid;
+}
+
 bool mastercore::checkReserve(const std::string& address, int64_t amount, uint32_t propertyId, int64_t& nBalance)
 {
     arith_uint256 am = ConvertTo256(amount) + DivideAndRoundUp(ConvertTo256(amount) * ConvertTo256(5), ConvertTo256(BASISPOINT) * ConvertTo256(BASISPOINT));
@@ -3038,11 +3122,6 @@ int64_t mastercore::getTotalLives(uint32_t contractId)
     int64_t totalShorts = 0;
 
     LOCK(cs_register);
-
-    CDInfo::Entry cd;
-    if (!_my_cds->getCD(contractId, cd)) {
-        return 0; // contract does not exist
-    }
 
     // for each tally account, we sum just contracts (all shorts, or all longs)
     for_each(mp_register_map.begin(), mp_register_map.end(), [&totalLongs, &totalShorts, contractId](const std::pair<std::string, Register>& elem){ addLives(totalLongs, totalShorts, contractId, elem.second); });
