@@ -3706,24 +3706,18 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
         LOCK(cs_register);
 
         if (!_my_cds->getCD(contractId, sp)) {
-            PrintToLog(" %s() : Property identifier %d does not exist\n",
+            PrintToLog(" %s() : Contract identifier %d does not exist\n",
                 __func__,
                 contractId);
             return (PKT_ERROR_SEND -24);
 
-        // if(!sp.isContract()) {
-        //     PrintToLog(" %s() : Property related is not a contract\n",
-        //         __func__);
-        //     return (PKT_ERROR_CONTRACTDEX -21);
+        // } else if (sp.collateral_currency != propertyId) {
+        //     PrintToLog(" %s() : Future contract has not this collateral currency %d\n",
+        //     __func__,
+        //     propertyId);
+        //     return (PKT_ERROR_CONTRACTDEX -22);
+        //
         // }
-
-        } else if (sp.collateral_currency != propertyId) {
-            PrintToLog(" %s() : Future contract has not this collateral currency %d\n",
-            __func__,
-            propertyId);
-            return (PKT_ERROR_CONTRACTDEX -22);
-
-        }
 
         notSize = static_cast<int64_t>(sp.notional_size);
         // den = sp.denominator;
@@ -3735,7 +3729,7 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
     amountNeeded = ConvertTo64(rAmount);
     contracts = ConvertTo64(Contracts * ConvertTo256(COIN));
 
-    if (nBalance < amountNeeded || position < contracts) {
+    if (position < 0 || nBalance < amountNeeded || position < contracts) {
         PrintToLog("%s(): rejected:Sender has not required short position on this contract or balance enough\n",__func__);
         return (PKT_ERROR_CONTRACTDEX -23);
     }

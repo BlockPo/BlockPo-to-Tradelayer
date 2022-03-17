@@ -1283,35 +1283,30 @@ UniValue tl_send_pegged(const JSONRPCRequest& request)
 			"\nArguments:\n"
 			"1. fromaddress          (string, required) the address to send from\n"
 			"2. toaddress            (string, required) the address of the receiver\n"
-			"3. property name        (string, required) the identifier of the tokens to send\n"
-			"4. amount               (string, required) the amount to send\n"
+			"3. contractid           (number, required) the identifier of future contract\n"
+			"4. amount               (string, required) the amount of dMoney to send\n"
 
 			"\nResult:\n"
 			"\"hash\"                  (string) the hex-encoded transaction hash\n"
 
 			"\nExamples:\n"
-			+ HelpExampleCli("tl_send_pegged", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\" \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\"  \"Contract1\" \"100.0\"")
-			+ HelpExampleRpc("tl_send_pegged", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\", \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\", \"Contract1\", \"100.0\"")
+			+ HelpExampleCli("tl_send_pegged", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\" \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\"  \"1\" \"100.0\"")
+			+ HelpExampleRpc("tl_send_pegged", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\", \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\", \"1\", \"100.0\"")
 			);
 
   // obtain parameters & info
   const std::string fromAddress = ParseAddress(request.params[0]);
   const std::string toAddress = ParseAddress(request.params[1]);
-  std::string name_pegged = ParseText(request.params[2]);
-
-  struct FutureContractObject *pfuture = getFutureContractObject(name_pegged);
-  uint32_t propertyId = (pfuture) ? pfuture->fco_propertyId : 0;
-
-  RequirePeggedCurrency(propertyId);
+  const uint32_t contractId = ParsePropertyId(request.params[2]);
 
   int64_t amount = ParseAmount(request.params[3], true);
 
   // perform checks
-  RequireExistingProperty(propertyId);
-  RequireBalance(fromAddress, propertyId, amount);
+  // RequireExistingProperty(propertyId);
+  // RequireBalance(fromAddress, propertyId, amount);
 
   // create a payload for the transaction
-  std::vector<unsigned char> payload = CreatePayload_SendPeggedCurrency(propertyId, amount);
+  std::vector<unsigned char> payload = CreatePayload_SendPeggedCurrency(contractId, amount);
 
   // request the wallet build the transaction (and if needed commit it)
   uint256 txid;
@@ -1325,7 +1320,7 @@ UniValue tl_send_pegged(const JSONRPCRequest& request)
     if (!autoCommit) {
       return rawHex;
     } else {
-      PendingAdd(txid, fromAddress, MSC_TYPE_SEND_PEGGED_CURRENCY, propertyId, amount);
+      PendingAdd(txid, fromAddress, MSC_TYPE_SEND_PEGGED_CURRENCY, contractId, amount);
       return txid.GetHex();
     }
   }
