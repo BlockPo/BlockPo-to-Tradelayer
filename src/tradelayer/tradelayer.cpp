@@ -3901,7 +3901,7 @@ bool nodeReward::nextReward(const int& nHeight)
 
    if (p_Reward < MIN_REWARD) p_Reward = MIN_REWARD;
 
-   PrintToLog("%s():p_Reward after: %d, f_nextReward: %d\n", __func__, p_Reward, f_nextReward);
+   // PrintToLog("%s():p_Reward after: %d, f_nextReward: %d\n", __func__, p_Reward, f_nextReward);
 
    return !result;
 }
@@ -3917,7 +3917,7 @@ void nodeReward::sendNodeReward(const std::string& consensusHash, const int& nHe
             // counting winners on this block
             count++;
             const int64_t rewardSize = p_Reward / count;
-            PrintToLog("%s(): winner: %s, reward: %d, count: %d\n",__func__, addr.first, rewardSize, count);
+            // PrintToLog("%s(): winner: %s, reward: %d, count: %d\n",__func__, addr.first, rewardSize, count);
             // we need to save the winners and the prize here!
             winners[addr.first] = rewardSize;
 
@@ -3928,19 +3928,16 @@ void nodeReward::sendNodeReward(const std::string& consensusHash, const int& nHe
 
     // using 10 blocks as block limit
     const int result = nHeight % BLOCK_LIMIT;
-    PrintToLog("%s(): result: %d\n",__func__, result);
-
     // after that we share the reward with all winners
     if(0 == result)
     {
-        PrintToLog("%s(): SENDING REWARD NOW!!!, result: %d\n",__func__, result);
         for(const auto& w : winners)
         {
             auto it = nodeRewardsAddrs.find(w.first);
             // if address is claiming reward, we update tally
             if (it != nodeRewardsAddrs.end() && it->second){
                 update_tally_map(w.first, ALL, w.second, BALANCE);
-                PrintToLog("%s(): address: %s, reward: %d\n",__func__, w.first, w.second);
+                // PrintToLog("%s(): address: %s, reward: %d\n",__func__, w.first, w.second);
                 // cleaning claiming status for this block
                 if (!fTest) it->second = false;
             }
@@ -3971,7 +3968,7 @@ bool nodeReward::isWinnerAddress(const std::string& consensusHash, const std::st
     const std::string LastThreeCharAddr = vchStr.substr(vchStr.size() - lastNterms);
     const std::string lastThreeCharConsensus = consensusHash.substr(consensusHash.size() - lastNterms);
 
-    PrintToLog("%s(): lastThreeCharConsensus: %s, LastThreeCharAddr (decoded): %s\n",__func__, lastThreeCharConsensus, LastThreeCharAddr);
+    // PrintToLog("%s(): lastThreeCharConsensus: %s, LastThreeCharAddr (decoded): %s\n",__func__, lastThreeCharConsensus, LastThreeCharAddr);
 
     return (LastThreeCharAddr == lastThreeCharConsensus) ? true : false;
 
@@ -3979,7 +3976,6 @@ bool nodeReward::isWinnerAddress(const std::string& consensusHash, const std::st
 
 void nodeReward::updateAddressStatus(const std::string& address, bool newStatus)
 {
-    PrintToLog("%s(): address: %s\n",__func__, address);
     nodeRewardsAddrs[address] = newStatus;
 }
 

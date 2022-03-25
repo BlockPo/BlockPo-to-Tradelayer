@@ -34,7 +34,7 @@ bool msc_debug_exo                              = 0;
 bool msc_debug_tally                            = 0;
 bool msc_debug_sp                               = 0;
 bool msc_debug_txdb                             = 0;
-bool msc_debug_persistence                      = 1;
+bool msc_debug_persistence                      = 0;
 bool msc_debug_ui                               = 0;
 bool msc_debug_pending                          = 0;
 bool msc_debug_packets                          = 0;
@@ -60,7 +60,7 @@ bool msc_debug_metadex2                         = 0;
 bool msc_debug_metadex3                         = 0;
 bool msc_debug_metadex_add                      = 0;
 bool msc_debug_contractdex_add                  = 0;
-bool msc_debug_contract_add_market              = 1;
+bool msc_debug_contract_add_market              = 0;
 bool msc_debug_contract_cancel_every            = 0;
 bool msc_debug_contract_cancel_forblock         = 0;
 bool msc_debug_contract_cancel_inorder          = 0;
@@ -75,7 +75,7 @@ bool msc_debug_set_oracle                       = 0;
 bool msc_debug_send_pegged                      = 0;
 bool msc_debug_commit_channel                   = 0;
 bool msc_debug_instant_trade                    = 0;
-bool msc_debug_contract_instant_trade           = 0;
+bool msc_debug_contract_instant_trade           = 1;
 bool msc_create_channel                         = 0;
 bool msc_debug_new_id_registration              = 0;
 bool msc_debug_wallettxs                        = 0;
@@ -116,7 +116,7 @@ bool msc_debug_withdrawal_from_channel          = 0;
 bool msc_debug_populate_rpc_transaction_obj     = 0;
 bool msc_debug_fill_tx_input_cache              = 0;
 bool msc_debug_try_add_second                   = 0;
-bool msc_debug_liquidation_enginee              = 1;
+bool msc_debug_liquidation_enginee              = 0;
 
 /**
  * LogPrintf() has been broken a couple of times now
