@@ -7,6 +7,7 @@
 #include <tradelayer/register.h>
 #include <tradelayer/rules.h>
 #include <tradelayer/sp.h>
+#include <tradelayer/fees.h>
 #include <tradelayer/tradelayer.h>
 #include <tradelayer/tradelayer_matrices.h>
 #include <tradelayer/tx.h>
@@ -1287,7 +1288,7 @@ bool mastercore::ContractDex_Fees(const CMPContractDex* maker, const CMPContract
         if (cd.collateral_currency == 4) //ALLS
         {
             //0.5 basis point to feecache
-            cachefees_oracles[cd.collateral_currency] += cacheFee;
+            g_fees->oracle_fees[cd.collateral_currency] += cacheFee;
 
         }else {
             // Create the metadex object with specific params
@@ -1320,7 +1321,7 @@ bool mastercore::ContractDex_Fees(const CMPContractDex* maker, const CMPContract
           // assert(takerFee == (makerFee + cacheFee));
 
           // 0.5 basis point to feecache
-          cachefees[cd.collateral_currency] += cacheFee;
+          g_fees->native_fees[cd.collateral_currency] += cacheFee;
 
           const int64_t reserveMaker =  getMPbalance(maker->getAddr(), cd.collateral_currency, CONTRACTDEX_RESERVE);
           const int64_t reserveTaker =  getMPbalance(taker->getAddr(), cd.collateral_currency, CONTRACTDEX_RESERVE);
@@ -1408,7 +1409,7 @@ bool mastercore::MetaDEx_Fees(const CMPMetaDEx *pnew,const CMPMetaDEx *pold, int
     {
          assert(update_tally_map(pnew->getAddr(), pnew->getDesProperty(), -takerFee, BALANCE));
          assert(update_tally_map(pold->getAddr(), pold->getProperty(), makerFee, BALANCE));
-         cachefees[pnew->getProperty()] += cacheFee;
+         g_fees->native_fees[pnew->getProperty()] += cacheFee;
          return true;
     }
 
@@ -2713,7 +2714,7 @@ bool mastercore::MetaDEx_Search_ALL(uint64_t& amount, uint32_t propertyOffered)
 
                 // taking ALLs from seller
                 assert(update_tally_map(it->getAddr(), it->getProperty(), -nCouldBuy, METADEX_RESERVE));
-                cachefees_oracles[ALL] = nCouldBuy;
+                g_fees->oracle_fees[ALL] = nCouldBuy;
 
                 // giving the tokens from cache
                 assert(update_tally_map(it->getAddr(), it->getDesProperty(), nWouldPay, BALANCE));

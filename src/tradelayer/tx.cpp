@@ -19,6 +19,7 @@
 #include <tradelayer/uint256_extensions.h>
 #include <tradelayer/utilsbitcoin.h>
 #include <tradelayer/varint.h>
+#include <tradelayer/insurancefund.h>
 
 #include <amount.h>
 #include <sync.h>
@@ -5147,7 +5148,7 @@ int CMPTransaction::logicMath_SendDonation()
     // Move the tokens
     assert(update_tally_map(sender, property, -nValue, BALANCE));
     //update insurance here!
-    bS.update_Insurance(property, nValue);
+    g_fund->AddSpotFees(property, nValue);
 
     return 0;
 }

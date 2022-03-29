@@ -14,6 +14,7 @@
 #include <tradelayer/persistence.h>
 #include <tradelayer/register.h>
 #include <tradelayer/sp.h>
+#include <tradelayer/fees.h>
 #include <tradelayer/tradelayer.h>
 #include <tradelayer/tradelayer_matrices.h>
 
@@ -436,10 +437,10 @@ uint256 GetConsensusHash()
     // Attestation list
     // Placeholders: "address|name|website|block|kycid"
     t_tradelistdb->attConsensusHash(hasher);
-
+    
     // Cache fee (natives)
     // Placeholders: "propertyid|cacheamount"
-    for (const auto& cf : cachefees)
+    for (const auto& cf : g_fees->native_fees)
     {
         const uint32_t& propertyId = cf.first;
         const int64_t& cache = cf.second;
@@ -451,13 +452,25 @@ uint256 GetConsensusHash()
 
     // Cache fee (oracles)
     // Placeholders: "propertyid|cacheamount"
-    for (const auto& cf : cachefees_oracles)
+    for (const auto& cf : g_fees->oracle_fees)
     {
         const uint32_t& propertyId = cf.first;
         const int64_t& cache = cf.second;
         std::string dataStr = feeGenerateConsensusString(propertyId, cache);
         if (msc_debug_consensus_hash) PrintToLog("Adding Fee cache (oracles) entry to consensus hash: %s\n", dataStr);
         // map ordered by propertyId key
+        hasher.Write((unsigned char*)dataStr.c_str(), dataStr.length());
+    }
+    
+    // Cache fee (spot)
+    // Placeholders: "propertyid|cacheamount"
+    for (const auto& cf : g_fees->spot_fees)
+    {
+        const uint32_t& propertyId = cf.first;
+        const int64_t& cache = cf.second;
+        std::string dataStr = feeGenerateConsensusString(propertyId, cache);
+        if (msc_debug_consensus_hash) PrintToLog("Adding Fee cache (spot) entry to consensus hash: %s\n", dataStr);
+        // cache fee is a map (ordered by propertyId key)
         hasher.Write((unsigned char*)dataStr.c_str(), dataStr.length());
     }
 
