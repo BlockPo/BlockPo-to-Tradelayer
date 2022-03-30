@@ -2031,7 +2031,7 @@ bool CMPTransaction::interpret_Contract_Instant()
       PrintToLog("\t version: %d\n", version);
       PrintToLog("\t messageType: %d\n",type);
       PrintToLog("\t property: %d\n", property);
-      PrintToLog("\t amount : %d\n", amount_forsale);
+      PrintToLog("\t amount : %d\n", instant_amount);
       PrintToLog("\t blockfor_expiry : %d\n", block_forexpiry);
       PrintToLog("\t price : %d\n", price);
       PrintToLog("\t trading action : %d\n", itrading_action);
@@ -4790,6 +4790,8 @@ int CMPTransaction::logicMath_Contract_Instant()
         return (PKT_ERROR_SP -22);
     }
 
+    // PrintToLog("%s(): SENDER (multisig address): %s, SPECIAL REF (first address): %s,  RECEIVER (second address): %s\n",__func__, sender, special, receiver);
+
     Channel chn;
     auto it = channels_Map.find(sender);
     if(it != channels_Map.end()){
@@ -4803,9 +4805,9 @@ int CMPTransaction::logicMath_Contract_Instant()
     }
 
     CDInfo::Entry sp;
-    if (!_my_cds->getCD(property, sp))
+    if (!_my_cds->getCD(property, sp)) {
         return (PKT_ERROR_CHANNELS -13);
-
+    }
 
     if (block > sp.init_block + static_cast<int>(sp.blocks_until_expiration) || block < sp.init_block)
     {
@@ -4817,7 +4819,7 @@ int CMPTransaction::logicMath_Contract_Instant()
 
     int kyc_id;
 
-    if(!t_tradelistdb->checkAttestationReg(sender,kyc_id))
+    if(!t_tradelistdb->checkAttestationReg(chn.getFirst(),kyc_id))
     {
         PrintToLog("%s(): rejected: kyc ckeck failed\n", __func__);
         return (PKT_ERROR_KYC -10);
@@ -4830,11 +4832,10 @@ int CMPTransaction::logicMath_Contract_Instant()
     }
 
     const int64_t marginRe = static_cast<int64_t>(sp.margin_requirement);
-    const int nBalance = chn.getRemaining(sender, sp.collateral_currency);
-    arith_uint256 amountTR = (ConvertTo256(instant_amount)*ConvertTo256(marginRe))/ConvertTo256(ileverage);
-    int64_t amountToReserve = ConvertTo64(amountTR);
+    const arith_uint256 amountTR = (ConvertTo256(instant_amount) * ConvertTo256(marginRe)) / (ConvertTo256(ileverage) * COIN);
+    const int64_t amountToReserve = ConvertTo64(amountTR);
 
-    if(msc_debug_contract_instant_trade) PrintToLog("%s: AmountToReserve: %d, channel Balance: %d\n", __func__, amountToReserve, nBalance);
+    if(msc_debug_contract_instant_trade) PrintToLog("%s: AmountToReserve: %d\n", __func__, amountToReserve);
 
     if(msc_debug_contract_instant_trade) PrintToLog("%s: sender: %s, channel Address: %s\n", __func__, sender, chn.getMultisig());
 
@@ -4851,15 +4852,18 @@ int CMPTransaction::logicMath_Contract_Instant()
             return 0;
         }
 
-        assert(update_tally_map(chn.getFirst(), sp.collateral_currency, ConvertTo64(amountTR), CONTRACTDEX_RESERVE));
-        assert(update_tally_map(chn.getSecond(), sp.collateral_currency, ConvertTo64(amountTR), CONTRACTDEX_RESERVE));
+        assert(update_tally_map(chn.getFirst(), sp.collateral_currency, amountToReserve, CONTRACTDEX_RESERVE));
+        if (msc_debug_contract_instant_trade) PrintToLog("%s(): first address reserve done\n", __func__);
+        assert(update_tally_map(chn.getSecond(), sp.collateral_currency, amountToReserve, CONTRACTDEX_RESERVE));
+        if (msc_debug_contract_instant_trade) PrintToLog("%s(): second address reserve done\n", __func__);
+
+        mastercore::Instant_x_Trade(txid, itrading_action, chn.getMultisig(), chn.getFirst(), chn.getSecond(), property, instant_amount / COIN, price, sp.collateral_currency, sp.prop_type, block, tx_idx);
+
+        // t_tradelistdb->recordNewInstContTrade(txid, receiver, sender, propertyId, amount_commited, price, block, tx_idx);
+
+        if (msc_debug_contract_instant_trade)PrintToLog("%s(): End of Logic Instant Contract Trade\n\n",__func__);
+
     }
-
-    mastercore::Instant_x_Trade(txid, itrading_action, chn.getMultisig(), chn.getFirst(), chn.getSecond(), property, instant_amount, price, sp.collateral_currency, sp.prop_type, block, tx_idx);
-
-    t_tradelistdb->recordNewInstContTrade(txid, receiver, sender, propertyId, amount_commited, price, block, tx_idx);
-
-    if (msc_debug_contract_instant_trade)PrintToLog("%s(): End of Logic Instant Contract Trade\n\n",__func__);
 
 
     return rc;

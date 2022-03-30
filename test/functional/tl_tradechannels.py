@@ -431,22 +431,22 @@ class ChannelsBasicsTest (BitcoinTestFramework):
         hex = out['result']['hex']
         # self.log.info(out)
 
-        self.log.info("decoding trade layer raw transaction")
-        params = str([hex]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, False, "tl_decodetransaction", params)
-        assert_equal(out['error'], None)
+        # self.log.info("decoding trade layer raw transaction")
+        # params = str([hex]).replace("'",'"')
+        # out = tradelayer_HTTP(conn, headers, False, "tl_decodetransaction", params)
+        # assert_equal(out['error'], None)
         # self.log.info(out)
 
-        assert_equal(out['result']['fee'], '0.60000000')
+        # assert_equal(out['result']['fee'], '0.60000000')
         # assert_equal(out['result']['sendingaddress'], multisig)
         # assert_equal(out['result']['referenceaddress'], addresses[0])
-        assert_equal(out['result']['type_int'], 110)
-        assert_equal(out['result']['type'], 'Channel Instant Trade')
-        assert_equal(out['result']['propertyId'], 4)
-        assert_equal(out['result']['amount for sale'], '1000.00000000')
-        assert_equal(out['result']['desired property'], 5)
-        assert_equal(out['result']['desired value'], '2000.00000000')
-
+        # assert_equal(out['result']['type_int'], 110)
+        # assert_equal(out['result']['type'], 'Channel Instant Trade')
+        # assert_equal(out['result']['propertyId'], 4)
+        # assert_equal(out['result']['amount for sale'], '1000.00000000')
+        # assert_equal(out['result']['desired property'], 5)
+        # assert_equal(out['result']['desired value'], '2000.00000000')
+        #
 
         self.log.info("Signing raw transaction with address 1")
         params = '["'+hex+'",[{"txid":"'+txid+'","vout":'+str(vout)+', "scriptPubKey":"'+scriptPubKey+'","redeemScript":"'+redeemScript+'","amount":2}],["'+privatekey1+'"]]'
@@ -599,16 +599,16 @@ class ChannelsBasicsTest (BitcoinTestFramework):
         # self.log.info(hex)
 
 
-        self.log.info("decoding trade layer raw transaction")
-        params = str([hex]).replace("'",'"')
-        out = tradelayer_HTTP(conn, headers, False, "tl_decodetransaction", params)
-        assert_equal(out['error'], None)
-        # self.log.info(out)
-        assert_equal(out['result']['fee'], '0.01000000')
-        assert_equal(out['result']['sendingaddress'], multisig)
-        assert_equal(out['result']['referenceaddress'],multisig1)
-        assert_equal(out['result']['type_int'], 112)
-        assert_equal(out['result']['type'], 'Channel Transfer')
+        # self.log.info("decoding trade layer raw transaction")
+        # params = str([hex]).replace("'",'"')
+        # out = tradelayer_HTTP(conn, headers, False, "tl_decodetransaction", params)
+        # assert_equal(out['error'], None)
+        # # self.log.info(out)
+        # assert_equal(out['result']['fee'], '0.01000000')
+        # assert_equal(out['result']['sendingaddress'], multisig)
+        # assert_equal(out['result']['referenceaddress'],multisig1)
+        # assert_equal(out['result']['type_int'], 112)
+        # assert_equal(out['result']['type'], 'Channel Transfer')
 
 
         self.log.info("Signing raw transaction with address 1")

@@ -4928,7 +4928,7 @@ int mastercore_handler_block_end(int nBlockNow, CBlockIndex const * pBlockIndex,
        if (nBlockNow > params.MSC_CONTRACTDEX_BLOCK)
        {
            LiquidationEngine(nBlockNow);
-           bS.makeSettlement();
+           // bS.makeSettlement();
        }
 
        // deleting Expired DEx accepts
@@ -5917,6 +5917,7 @@ bool CMPTradeList::kycContractMatch(uint32_t contractId, int kyc_id)
 {
     CDInfo::Entry sp;
     if (!_my_cds->getCD(contractId, sp)) {
+       PrintToLog("%s(): contract ID  (%d)does not exist\n",__func__, contractId);
        return false; // contract ID does not exist
     }
 
@@ -7696,83 +7697,34 @@ bool mastercore::ContInst_Fees(const std::string& firstAddr, const std::string& 
 bool mastercore::Instant_x_Trade(const uint256& txid, uint8_t tradingAction, const std::string& channelAddr, const std::string& firstAddr, const std::string& secondAddr, uint32_t property, int64_t amount_forsale, uint64_t price, uint32_t collateral, uint16_t type, int& block, int tx_idx)
 {
 
-    int64_t firstPoss = getMPbalance(firstAddr, property, CONTRACT_BALANCE);
-    int64_t firstNeg = getMPbalance(firstAddr, property, CONTRACT_BALANCE);
-    int64_t secondPoss = getMPbalance(secondAddr, property, CONTRACT_BALANCE);
-    int64_t secondNeg = getMPbalance(secondAddr, property, CONTRACT_BALANCE);
+    const int64_t firstPoss = getContractRecord(firstAddr, property, CONTRACT_POSITION);
+    const int64_t secondPoss = getContractRecord(secondAddr, property, CONTRACT_POSITION);
 
-    if(tradingAction == sell)
-        amount_forsale = -amount_forsale;
+    const int64_t amount = (tradingAction == buy) ? -amount_forsale : amount_forsale;
+    assert(update_register_map(firstAddr, property,  amount, CONTRACT_POSITION));
+    assert(update_register_map(secondAddr, property, -amount, CONTRACT_POSITION));
 
-    int64_t first_p = firstPoss - firstNeg + amount_forsale;
-    int64_t second_p = secondPoss - secondNeg - amount_forsale;
+    const int64_t newFirstPoss = getContractRecord(firstAddr, property, CONTRACT_POSITION);
+    const int64_t newSecondPoss = getContractRecord(secondAddr, property, CONTRACT_POSITION);
 
-    if(first_p > 0)
-    {
-        assert(update_tally_map(firstAddr, property, first_p - firstPoss, CONTRACT_BALANCE));
-        if(firstNeg != 0)
-            assert(update_tally_map(firstAddr, property, -firstNeg, CONTRACT_BALANCE));
-
-    } else if (first_p < 0){
-        assert(update_tally_map(firstAddr, property, -first_p - firstNeg, CONTRACT_BALANCE));
-        if(firstPoss != 0)
-            assert(update_tally_map(firstAddr, property, -firstPoss, CONTRACT_BALANCE));
-
-    } else {  //cleaning the tally
-
-        if(firstPoss != 0)
-            assert(update_tally_map(firstAddr, property, -firstPoss, CONTRACT_BALANCE));
-        else if (firstNeg != 0)
-            assert(update_tally_map(firstAddr, property, -firstNeg, CONTRACT_BALANCE));
-
-    }
-
-    if(second_p > 0){
-        assert(update_tally_map(secondAddr, property, second_p - secondPoss, CONTRACT_BALANCE));
-        if (secondNeg != 0)
-            assert(update_tally_map(secondAddr, property, -secondNeg, CONTRACT_BALANCE));
-
-    } else if (second_p < 0){
-        assert(update_tally_map(secondAddr, property, -second_p - secondNeg, CONTRACT_BALANCE));
-        if (secondPoss != 0)
-            assert(update_tally_map(secondAddr, property, -secondPoss, CONTRACT_BALANCE));
-
-    } else {
-
-        if (secondPoss != 0)
-            assert(update_tally_map(secondAddr, property, -secondPoss, CONTRACT_BALANCE));
-        else if (secondNeg != 0)
-            assert(update_tally_map(secondAddr, property, -secondNeg, CONTRACT_BALANCE));
-    }
-
-    // old positions
-    int64_t oldFrs = setPosition(firstPoss,firstNeg);
-    int64_t oldSec = setPosition(secondPoss,secondNeg);
-
-    std::string Status_maker0 = mastercore::updateStatus(oldFrs,first_p);
-    std::string Status_taker0 = mastercore::updateStatus(oldSec,second_p);
+    std::string Status_maker0 = mastercore::updateStatus(firstPoss, newFirstPoss);
+    std::string Status_taker0 = mastercore::updateStatus(secondPoss, newSecondPoss);
 
     if(msc_debug_instant_x_trade)
     {
-        PrintToLog("%s: old first position: %d, old second position: %d \n", __func__, oldFrs, oldSec);
-        PrintToLog("%s: new first position: %d, new second position: %d \n", __func__, first_p, second_p);
+        PrintToLog("%s: old first position: %d, new first position: %d \n", __func__, firstPoss, newFirstPoss);
+        PrintToLog("%s: old second position: %d, new second position: %d \n", __func__, secondPoss, newSecondPoss);
         PrintToLog("%s: Status_marker0: %s, Status_taker0: %s \n",__func__,Status_maker0, Status_taker0);
         PrintToLog("%s: amount_forsale: %d\n", __func__, amount_forsale);
     }
 
-    uint64_t amountTraded ,newPosMaker ,newPosTaker;
-
-    (amount_forsale < 0) ? amountTraded = static_cast<uint64_t>(-amount_forsale) : amountTraded = static_cast<uint64_t>(amount_forsale);
-
-    (first_p < 0) ? newPosMaker = static_cast<uint64_t>(-first_p) : newPosMaker = static_cast<uint64_t>(first_p);
-
-    (second_p < 0) ? newPosTaker = static_cast<uint64_t>(-second_p) : newPosTaker = static_cast<uint64_t>(second_p);
+    int64_t newPosMaker = 0;
+    int64_t newPosTaker = 0;
 
     if(msc_debug_instant_x_trade)
     {
         PrintToLog("%s: newPosMaker: %d\n", __func__, newPosMaker);
         PrintToLog("%s: newPosTaker: %d\n", __func__, newPosTaker);
-        PrintToLog("%s: amountTraded: %d\n", __func__, amountTraded);
     }
 
     /**
@@ -7781,15 +7733,15 @@ bool mastercore::Instant_x_Trade(const uint256& txid, uint8_t tradingAction, con
     */
     mastercore::ContractDex_ADD_LTCVolume(amount_forsale, property);
 
-    mastercore::ContInst_Fees(firstAddr, secondAddr, channelAddr, amountTraded, type, collateral);
+    mastercore::ContInst_Fees(firstAddr, secondAddr, channelAddr, amount_forsale, type, collateral);
 
     t_tradelistdb->recordMatchedTrade(txid,
            txid,
            firstAddr,
            secondAddr,
            price,
-           amountTraded,
-           amountTraded,
+           amount_forsale,
+           amount_forsale,
            block,
            block,
            property,
@@ -7810,12 +7762,12 @@ bool mastercore::Instant_x_Trade(const uint256& txid, uint8_t tradingAction, con
            "EmptyStr",
            "EmptyStr",
            "EmptyStr",
-           amountTraded,
+           amount_forsale,
            0,
            0,
            0,
-           amountTraded,
-           amountTraded);
+           amount_forsale,
+           amount_forsale);
 
     return true;
 }
