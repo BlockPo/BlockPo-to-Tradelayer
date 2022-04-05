@@ -21,7 +21,7 @@ public:
 
     //! Get treasury cache
     FeesCache& GetFees() const;
-    
+
     //! Given a property id returns grand fees total
     int64_t GetFeesTotal(uint32_t pid) const;
 
@@ -31,8 +31,8 @@ public:
     //! Given a property id and a loss value, pays out what is available
     int64_t PayOut(uint32_t pid, int64_t loss_amount);
 
-    //! Rebalance orderbook based on how many contracts needed to sell 
-    //! at each tick to keep the asset value of the fund 50/50 between 
+    //! Rebalance orderbook based on how many contracts needed to sell
+    //! at each tick to keep the asset value of the fund 50/50 between
     //! long ALL and sLTC (or short contract positions x1)
     void Rebalance();
 };

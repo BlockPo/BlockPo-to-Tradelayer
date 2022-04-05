@@ -16,7 +16,8 @@ static const std::string FUND_ADDRESS{"fund_address"};
 std::unique_ptr<FeesCache> g_fees(MakeUnique<FeesCache>());
 
 //! Implementation details
-struct FundInternals {
+struct FundInternals
+{
 };
 
 //! Must be explicitly instantiated as it relies on the register cache: mp_register_map

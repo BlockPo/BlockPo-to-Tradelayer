@@ -567,9 +567,7 @@ UniValue tl_createpayload_sendissuance_pegged(const JSONRPCRequest& request)
   uint32_t propertyId = ParsePropertyId(request.params[3]);
   std::string name_traded = ParseText(request.params[4]);
   uint64_t amount = ParseAmount(request.params[5], isPropertyDivisible(propertyId));
-
-  struct FutureContractObject *pfuture = getFutureContractObject(name_traded);
-  uint32_t contractId = (pfuture) ? pfuture->fco_propertyId : 0;
+  uint32_t contractId = getFutureContractObject(name_traded).fco_propertyId;
 
   std::vector<unsigned char> payload = CreatePayload_IssuancePegged(type, previousId, name, propertyId, contractId, amount);
 
@@ -597,10 +595,7 @@ UniValue tl_createpayload_send_pegged(const JSONRPCRequest& request)
 			);
 
   std::string name_pegged = ParseText(request.params[0]);
-
-  struct FutureContractObject *pfuture = getFutureContractObject(name_pegged);
-  uint32_t propertyId = (pfuture) ? pfuture->fco_propertyId : 0;
-
+  uint32_t propertyId = getFutureContractObject(name_pegged).fco_propertyId;
   int64_t amount = ParseAmount(request.params[1], true);
 
   std::vector<unsigned char> payload = CreatePayload_SendPeggedCurrency(propertyId, amount);
@@ -631,13 +626,10 @@ UniValue tl_createpayload_redemption_pegged(const JSONRPCRequest& request)
 
     std::string name_pegged = ParseText(request.params[0]);
     std::string name_contract = ParseText(request.params[2]);
-    struct FutureContractObject *pfuture_pegged = getFutureContractObject(name_pegged);
-    uint32_t propertyId = (pfuture_pegged) ?pfuture_pegged->fco_propertyId : 0;
+    uint32_t propertyId = getFutureContractObject(name_pegged).fco_propertyId;
+    uint32_t contractId = getFutureContractObject(name_contract).fco_propertyId;
 
     uint64_t amount = ParseAmount(request.params[1], true);
-
-    struct FutureContractObject *pfuture_contract = getFutureContractObject(name_contract);
-    uint32_t contractId = (pfuture_contract) ? pfuture_contract->fco_propertyId : 0;
 
     std::vector<unsigned char> payload = CreatePayload_RedemptionPegged(propertyId, contractId, amount);
 

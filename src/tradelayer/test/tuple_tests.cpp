@@ -16,7 +16,7 @@ BOOST_AUTO_TEST_CASE(mighty_tuple)
 
     // max:int64_t 9223372036854775807
     // max:int32_t 2147483647
-    auto t = NC::Parse<int,std::string,bool,char,short,A,int64_t,float>("10,20,1,65,-2;A::s_; -9223372036854775807;1.1754e-38");
+    auto t = NC::Parse<int,std::string,bool,uint8_t,short,A,int64_t,float>("10,20,-3,65,-2;A::s_; -9223372036854775807;1.1754e-38");
 
     BOOST_CHECK_EQUAL(10, std::get<0>(t));
     BOOST_CHECK_EQUAL("20", std::get<1>(t));
@@ -30,15 +30,34 @@ BOOST_AUTO_TEST_CASE(mighty_tuple)
 
 BOOST_AUTO_TEST_CASE(lexical_conversion)
 {
-    // lexical conversion, i.e. char conversion might throw
-    using LC = Convertor<ConversionPolicy<std::false_type, std::true_type>>;
-    
-    auto pt = LC::ParseEx<char,uint32_t,int64_t>("A;1,10");
+    // lexical conversion nothrow policy
+    using LC = Convertor<ConversionPolicy<std::false_type, std::false_type>>;
+    auto t = LC::Parse<char,uint8_t,bool>("65;66,3");
 
-    BOOST_CHECK_EQUAL(3, pt.first);
-    BOOST_CHECK_EQUAL('A',  std::get<0>(pt.second));
-    BOOST_CHECK_EQUAL(1, std::get<1>(pt.second));
-    BOOST_CHECK_EQUAL(10, std::get<2>(pt.second));
+    BOOST_CHECK_EQUAL(0, std::get<0>(t));
+    BOOST_CHECK_EQUAL(0, std::get<1>(t));
+    BOOST_CHECK_EQUAL(false, std::get<2>(t));
+}
+
+BOOST_AUTO_TEST_CASE(fringe_conversion)
+{
+    auto p1 = NC::ParseEx<char,bool,int>("66");
+    auto tuple_size1 = std::tuple_size<decltype(p1.second)>::value;
+    auto tuple_size2 = p1.first;
+    
+    BOOST_CHECK_NE(tuple_size1, tuple_size2);
+    BOOST_CHECK_EQUAL(3, tuple_size1);
+    BOOST_CHECK_EQUAL(1, tuple_size2);
+
+    BOOST_CHECK_EQUAL('B', std::get<0>(p1.second));
+    BOOST_CHECK_EQUAL(false, std::get<1>(p1.second));
+    BOOST_CHECK_EQUAL(0, std::get<2>(p1.second));
+
+    auto p2 = NC::ParseEx<char>("67,20,30");
+    
+    BOOST_CHECK_EQUAL(p2.first, std::tuple_size<decltype(p2.second)>::value);
+    BOOST_CHECK_EQUAL(1, p2.first);
+    BOOST_CHECK_EQUAL('C', std::get<0>(p2.second));
 }
 
 BOOST_AUTO_TEST_SUITE_END()

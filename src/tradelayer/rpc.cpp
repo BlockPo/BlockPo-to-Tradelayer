@@ -2696,7 +2696,7 @@ UniValue tl_getcache(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() < 1)
         throw runtime_error(
-            "tl_getcache \"propertyid\" \n"
+            "tl_getcache \"propertyid\" \"cacheType\" \n"
 
             "\nReturns the fee cache for a given property.\n"
 
@@ -2721,17 +2721,18 @@ UniValue tl_getcache(const JSONRPCRequest& request)
     auto n2 = get_fees_balance(g_fees->oracle_fees, pid);
     auto n3 = get_fees_balance(g_fees->spot_fees, pid);
     
-    UniValue balanceObj(UniValue::VOBJ);
-    
+    int64_t n = 0L;
     if (type == 0)
-        balanceObj.pushKV("amount", FormatByType(n1, pid));
+        n = n1;
     else if (type == 1)
-        balanceObj.pushKV("amount", FormatByType(n2, pid));
+        n = n2;
     else if (type == 2)
-        balanceObj.pushKV("amount", FormatByType(n3, pid));
+        n = n3;
     else
-        balanceObj.pushKV("amount", FormatByType(n1 + n2 + n3, pid));
-
+        n = n1 + n2 + n3;
+    
+    UniValue balanceObj(UniValue::VOBJ);
+    balanceObj.pushKV("amount", FormatByType(n, pid));
     return balanceObj;
 }
 

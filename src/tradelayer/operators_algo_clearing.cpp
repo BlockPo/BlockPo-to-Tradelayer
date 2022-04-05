@@ -1081,15 +1081,11 @@ void calculate_pnltrk_bypath(std::vector<std::map<std::string, std::string>> &pa
 
 	      std::string addrssr = edge_path["addrs_src"];
 	      int64_t PNL_trkInt64 = mastercore::DoubleToInt64(PNL_trk);
-
-	      struct FutureContractObject *pfuture = getFutureContractObject("ALL F18");
-	      uint32_t NotionalSize = pfuture->fco_notional_size;
+	      uint32_t NotionalSize = getFutureContractObject("ALL F18").fco_notional_size;
 
 	      arith_uint256 volumeALL256_t = mastercore::ConvertTo256(NotionalSize)*mastercore::ConvertTo256(PNL_trkInt64)/COIN;
 	      int64_t volumeALL64_t = mastercore::ConvertTo64(volumeALL256_t);
-
-	      struct TokenDataByName *pfuture_ALL = getTokenDataByName("ALL");
-	      uint32_t ALLId = pfuture_ALL->data_propertyId;
+	      uint32_t ALLId = getTokenDataByName("ALL").data_propertyId;
 
 	      // int64_t entry_priceh =  mastercore::StrToInt64(edge_path["entry_price"], true);
 	      // PrintToLog("\nInterest Payment: Entry Price = %s, Twap Price = %s\n",

@@ -412,8 +412,7 @@ uint32_t ParseNameOrId(const UniValue& value)
         return am;
     }
 
-    struct FutureContractObject *pfuture = getFutureContractObject(value.get_str());
-    uint32_t contractId = pfuture->fco_propertyId;
+    uint32_t contractId = getFutureContractObject(value.get_str()).fco_propertyId;
 
     if (contractId == 0) {
         throw JSONRPCError(RPC_TYPE_ERROR, "Contract not found!");

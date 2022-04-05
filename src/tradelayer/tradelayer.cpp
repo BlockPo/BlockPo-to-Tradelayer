@@ -2758,9 +2758,9 @@ static int write_mp_cachefees(std::ofstream& file, CHash256& hasher)
 
     for (auto k : keys)
     {
-        auto b1 = get_fees_balance(g_fees->native_fees,-1);
-        auto b2 = get_fees_balance(g_fees->oracle_fees,-1);
-        auto b3 = get_fees_balance(g_fees->spot_fees,-1);
+        auto b1 = get_fees_balance(g_fees->native_fees, k, -1);
+        auto b2 = get_fees_balance(g_fees->oracle_fees, k, -1);
+        auto b3 = get_fees_balance(g_fees->spot_fees, k, -1);
 
         // format:{pid:native,oracle,spot}
         auto e = strprintf("%d;%d,%d,%d", k, b1, b2, b3);
@@ -5999,12 +5999,9 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
 
       /****************************************************/
       /** Building TWAP vector MDEx **/
-
-      struct TokenDataByName *pfuture_ALL = getTokenDataByName("ALL");
-      struct TokenDataByName *pfuture_USD = getTokenDataByName("dUSD");
-
-      uint32_t property_all = pfuture_ALL->data_propertyId;
-      uint32_t property_usd = pfuture_USD->data_propertyId;
+      
+      uint32_t property_all = getTokenDataByName("ALL").data_propertyId;
+      uint32_t property_usd = getTokenDataByName("dUSD").data_propertyId;
 
       Filling_Twap_Vec(mdextwap_ele, mdextwap_vec, property_all, property_usd, market_priceMap[property_all][property_usd]);
       PrintToLog("\nMDExtwap_ele.size() = %d\t property_all = %d\t property_usd = %d\t market_priceMap = %s\n",
@@ -8377,44 +8374,6 @@ int64_t blocksettlement::getTotalLoss(const uint32_t& contractId, const uint32_t
     return systemicLoss;
 
 }
-
-// int64_t blocksettlement::getInsurance(const uint32_t& propertyId) const
-// {
-//      int64_t money = 0;
-//      auto it = insurance_fund.find(propertyId);
-//      if (it != insurance_fund.end()) {
-//          money = it->second;
-//      }
-
-//      return money;
-// }
-
-// bool blocksettlement::update_Insurance(const uint32_t& propertyId, int64_t amount)
-// {
-//     auto it = insurance_fund.find(propertyId);
-//     if (it == insurance_fund.end()) {
-//         PrintToLog("%s(): ERROR: propertyId not found!\n", __func__);
-//         return false;
-//     }
-
-//     const int64_t& amount_remaining = it->second;
-
-//     if (isOverflow(amount_remaining, amount)) {
-//         PrintToLog("%s(): ERROR: arithmetic overflow [%d + %d]\n", __func__, amount_remaining, amount);
-//         return false;
-//     }
-
-//     if ((amount_remaining + amount) < 0)
-//     {
-//           PrintToLog("%s(): insufficient funds! (amount_remaining: %d, amount: %d)\n", __func__, amount_remaining, amount);
-//           return false;
-
-//     }
-
-//     it->second += amount;
-
-//     return true;
-// }
 
 void blocksettlement::lossSocialization(const uint32_t& contractId, int64_t fullAmount)
 {

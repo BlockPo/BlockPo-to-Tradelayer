@@ -58,17 +58,18 @@ template
 struct ConversionPolicy
 {
     constexpr static bool ThrowingPolicy = X::value;
+    constexpr static bool NumericPolicy = N::value;
 
     template<typename T>
     struct IsChar
     {
-        constexpr static bool Value = std::is_same<T,bool>::value || std::is_same<T,char>::value;
+        constexpr static bool value = std::is_same<T,bool>::value || std::is_same<T,char>::value || std::is_same<T,uint8_t>::value;
     };
 
     template<typename T>
     struct Target
     {
-        using Type = conditional_t<N::value && IsChar<T>::Value, int, T>;
+        using type = conditional_t<N::value && IsChar<T>::value, int, T>;
     };
 };
 
@@ -92,7 +93,7 @@ class Convertor
     {
         static_assert(std::is_arithmetic<T>::value);
         
-        using N = typename P::template Target<T>::Type;
+        using N = typename P::template Target<T>::type;
         N n{};
         if (!boost::conversion::detail::try_lexical_convert(s, n)) {
             if (P::ThrowingPolicy) BOOST_THROW_EXCEPTION(boost::bad_lexical_cast(typeid(s),typeid(n)));
@@ -135,7 +136,8 @@ public:
         using R = TupleTraits<Args...>;
         using I = typename make_indices<R::Size>::type;
         const auto& v = split_string(s, delimiter);
-        return std::make_pair(v.size(), make_tuple<Args...>(v, I()));
+        size_t n = v.size() > R::Size ? R::Size : v.size();
+        return std::make_pair(n, make_tuple<Args...>(v, I()));
     }
 };
 

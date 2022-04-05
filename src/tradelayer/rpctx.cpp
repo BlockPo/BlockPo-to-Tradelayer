@@ -1298,9 +1298,7 @@ UniValue tl_send_pegged(const JSONRPCRequest& request)
   const std::string fromAddress = ParseAddress(request.params[0]);
   const std::string toAddress = ParseAddress(request.params[1]);
   std::string name_pegged = ParseText(request.params[2]);
-
-  struct FutureContractObject *pfuture = getFutureContractObject(name_pegged);
-  uint32_t propertyId = (pfuture) ? pfuture->fco_propertyId : 0;
+  uint32_t propertyId = getFutureContractObject(name_pegged).fco_propertyId;
 
   RequirePeggedCurrency(propertyId);
 
@@ -1357,8 +1355,7 @@ UniValue tl_redemption_pegged(const JSONRPCRequest& request)
   const std::string fromAddress = ParseAddress(request.params[0]);
   std::string name_pegged = ParseText(request.params[1]);
   uint32_t contractId = ParseNameOrId(request.params[3]);
-  struct FutureContractObject *pfuture_pegged = getFutureContractObject(name_pegged);
-  uint32_t propertyId = (pfuture_pegged) ? pfuture_pegged->fco_propertyId : 0;
+  uint32_t propertyId = getFutureContractObject(name_pegged).fco_propertyId;
 
   uint64_t amount = ParseAmount(request.params[2], true);
 
