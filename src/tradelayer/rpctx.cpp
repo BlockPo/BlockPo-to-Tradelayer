@@ -1210,12 +1210,12 @@ UniValue tl_sendissuance_pegged(const JSONRPCRequest& request)
 
 			"\nArguments:\n"
 			"1. fromaddress           (string, required) the address to send from\n"
-			"3. type                  (number, required) the type of the pegged to create: (1 for indivisible tokens, 2 for divisible tokens)\n"
-			"4. previousid            (number, required) an identifier of a predecessor token (use 0 for new tokens)\n"
-			"5. name                  (string, required) the name of the new pegged to create\n"
-			"6. collateralcurrency    (number, required) the collateral currency for the new pegged \n"
-			"7. contract name or id   (string, required) the future contract name (or id) for the new pegged \n"
-			"8. amount of pegged      (number, required) amount of pegged to create \n"
+			"2. type                  (number, required) the type of the pegged to create: (1 for indivisible tokens, 2 for divisible tokens)\n"
+			"3. previousid            (number, required) an identifier of a predecessor token (use 0 for new tokens)\n"
+			"4. name                  (string, required) the name of the new pegged to create\n"
+			"5. collateralcurrency    (number, required) the collateral currency for the new pegged \n"
+			"6. contract name or id   (string, required) the future contract name (or id) for the new pegged \n"
+			"7. amount of pegged      (number, required) amount of pegged to create \n"
 
 			"\nResult:\n"
 			"\"hash\"                 (string) the hex-encoded transaction hash\n"
@@ -1250,7 +1250,7 @@ UniValue tl_sendissuance_pegged(const JSONRPCRequest& request)
   RequireShort(fromAddress, contractId, amount);
 
   // checking for collateral balance, checking for short position in given contract
-  RequireForPegged(fromAddress, propertyId, contractId, amount);
+  // RequireForPegged(fromAddress, propertyId, contractId, amount);
 
   // create a payload for the transaction
   std::vector<unsigned char> payload = CreatePayload_IssuancePegged(type, previousId, name, propertyId, contractId, amount);

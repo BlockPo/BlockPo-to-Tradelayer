@@ -285,20 +285,20 @@ void RequireShort(std::string& fromAddress, uint32_t contractId, uint64_t amount
 
     int64_t notionalSize = static_cast<int64_t>(cd.notional_size);
     int64_t position = getContractRecord(fromAddress, contractId, CONTRACT_POSITION);
-    
+
     if (position >= 0) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Must have short position\n");
     }
 
-    rational_t conv = rational_t(1,1);
-    int64_t num = conv.numerator().convert_to<int64_t>();
-    int64_t denom = conv.denominator().convert_to<int64_t>();
-    arith_uint256 Amount = ConvertTo256(num) * ConvertTo256(amount) / ConvertTo256(denom); // Alls needed
-    arith_uint256 contracts = DivideAndRoundUp(Amount * ConvertTo256(notionalSize), ConvertTo256(1)) ;
-    contractsNeeded = ConvertTo64(contracts);
-    if (contractsNeeded > position) {
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "Not enough short position\n");
-    }
+    // rational_t conv = rational_t(1,1);
+    // int64_t num = conv.numerator().convert_to<int64_t>();
+    // int64_t denom = conv.denominator().convert_to<int64_t>();
+    // arith_uint256 Amount = ConvertTo256(num) * ConvertTo256(amount) / ConvertTo256(denom); // Alls needed
+    // arith_uint256 contracts = DivideAndRoundUp(Amount * ConvertTo256(notionalSize), ConvertTo256(1)) ;
+    // contractsNeeded = ConvertTo64(contracts);
+    // if (contractsNeeded > position) {
+    //     throw JSONRPCError(RPC_INVALID_PARAMETER, "Not enough short position\n");
+    // }
 
 }
 

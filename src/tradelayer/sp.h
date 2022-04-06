@@ -82,6 +82,7 @@ public:
 
         // for pegged currency
         uint32_t contract_associated;
+        uint32_t currency_associated;
 
         // For crowdsale properties:
         //   txid -> amount invested, crowdsale deadline, user issued tokens, issuer issued tokens

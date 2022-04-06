@@ -3653,11 +3653,10 @@ int CMPTransaction::logicMath_MetaDExCancel_ByPrice()
 int CMPTransaction::logicMath_CreatePeggedCurrency()
 {
     uint256 blockHash;
-    // uint32_t den;
     uint32_t notSize = 0;
     uint32_t npropertyId = 0;
-    int64_t amountNeeded;
-    int64_t contracts;
+    int64_t amountNeeded = 0;
+    int64_t contracts = 0;
 
     {
         LOCK(cs_main);
@@ -3681,10 +3680,10 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
         return (PKT_ERROR_SP -22);
     }
 
-    if (ALL_PROPERTY_TYPE_INDIVISIBLE != prop_type && ALL_PROPERTY_TYPE_DIVISIBLE != prop_type && ALL_PROPERTY_TYPE_PEGGEDS != prop_type) {
-        PrintToLog("%s(): rejected: invalid property type: %d\n", __func__, prop_type);
-        return (PKT_ERROR_SP -36);
-    }
+    // if (ALL_PROPERTY_TYPE_INDIVISIBLE != prop_type && ALL_PROPERTY_TYPE_DIVISIBLE != prop_type && ALL_PROPERTY_TYPE_PEGGEDS != prop_type) {
+    //     PrintToLog("%s(): rejected: invalid property type: %d\n", __func__, prop_type);
+    //     return (PKT_ERROR_SP -36);
+    // }
 
     if ('\0' == name[0]) {
         PrintToLog("%s(): rejected: property name must not be empty\n", __func__);
@@ -3701,26 +3700,25 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
         return (PKT_ERROR_SEND -25);
     }
 
-    CDInfo::Entry sp;
+    CDInfo::Entry cd;
     {
         LOCK(cs_register);
 
-        if (!_my_cds->getCD(contractId, sp)) {
+        if (!_my_cds->getCD(contractId, cd)) {
             PrintToLog(" %s() : Contract identifier %d does not exist\n",
                 __func__,
                 contractId);
             return (PKT_ERROR_SEND -24);
 
-        // } else if (sp.collateral_currency != propertyId) {
-        //     PrintToLog(" %s() : Future contract has not this collateral currency %d\n",
-        //     __func__,
-        //     propertyId);
-        //     return (PKT_ERROR_CONTRACTDEX -22);
-        //
-        // }
+        } else if (cd.collateral_currency != propertyId) {
+            PrintToLog(" %s() : Future contract has not this collateral currency %d\n",
+            __func__,
+            propertyId);
+            return (PKT_ERROR_CONTRACTDEX -22);
 
-        notSize = static_cast<int64_t>(sp.notional_size);
-        // den = sp.denominator;
+        }
+
+        notSize = static_cast<int64_t>(cd.notional_size);
     }
 
     const int64_t position = getMPbalance(sender, contractId, CONTRACT_BALANCE);
@@ -3729,10 +3727,10 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
     amountNeeded = ConvertTo64(rAmount);
     contracts = ConvertTo64(Contracts * ConvertTo256(COIN));
 
-    if (position < 0 || nBalance < amountNeeded || position < contracts) {
-        PrintToLog("%s(): rejected:Sender has not required short position on this contract or balance enough\n",__func__);
-        return (PKT_ERROR_CONTRACTDEX -23);
-    }
+    // if (position < 0 || nBalance < amountNeeded || position < contracts) {
+    //     PrintToLog("%s(): rejected:Sender has not required short position on this contract or balance enough\n",__func__);
+    //     return (PKT_ERROR_CONTRACTDEX -23);
+    // }
 
     {
         LOCK(cs_tally);
@@ -3741,7 +3739,10 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
             CMPSPInfo::Entry sp;
             if (_my_sps->getSP(propertyId, sp)) {
                 if (sp.prop_type == ALL_PROPERTY_TYPE_PEGGEDS){
+                    // checking if there's a synthetic property created by this contract yet
+                    if (sp.contract_associated != contractId && sp.currency_associated != propertyId)
                     npropertyId = propertyId;
+                    PrintToLog("%() Creating New synthetic currency (propertyId: %d, contract associated: %d, currency associated: %d)\n",__func__, npropertyId, sp.contract_associated, sp.currency_associated);
                     break;
                 }
             }
@@ -3754,7 +3755,7 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
         CMPSPInfo::Entry newSP;
         newSP.issuer = sender;
         newSP.txid = txid;
-        newSP.prop_type = prop_type;
+        newSP.prop_type = ALL_PROPERTY_TYPE_PEGGEDS;
         newSP.subcategory.assign(subcategory);
         newSP.name.assign(name);
         newSP.fixed = true;
@@ -3764,17 +3765,13 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
         newSP.num_tokens = amountNeeded;
         newSP.contracts_needed = contracts;
         newSP.contract_associated = contractId;
-        // newSP.denominator = den;
-        // newSP.series = strprintf("Nº 1 - %d",(amountNeeded / COIN));
+        newSP.currency_associated = cd.collateral_currency; // we need to see the real currency associated to this syntetic
         npropertyId = _my_sps->putSP(newSP);
 
     } else {
         CMPSPInfo::Entry newSP;
         _my_sps->getSP(npropertyId, newSP);
-        // int64_t inf = (newSP.num_tokens) / COIN + 1 ;
         newSP.num_tokens += ConvertTo64(rAmount);
-        // int64_t sup = (newSP.num_tokens) / COIN ;
-        // newSP.series = strprintf("Nº %d - %d",inf,sup);
         _my_sps->updateSP(npropertyId, newSP);
     }
 
@@ -3789,14 +3786,15 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
 
     if (msc_debug_create_pegged)
     {
-        PrintToLog("Pegged currency Id: %d\n",npropertyId);
+        PrintToLog("Pegged currency Id: %d\n", npropertyId);
+        PrintToLog("associated currency Id: %d\n", propertyId);
         PrintToLog("CREATED PEGGED PROPERTY id: %d admin: %s\n", npropertyId, sender);
     }
 
 
     //putting into reserve contracts and collateral currency
-    assert(update_tally_map(sender, contractId, -contracts, CONTRACT_BALANCE));
-    assert(update_tally_map(sender, contractId, contracts, CONTRACTDEX_RESERVE));
+    assert(update_register_map(sender, contractId, -contracts, CONTRACT_POSITION));
+    assert(update_register_map(sender, contractId, contracts, CONTRACT_RESERVE));
     assert(update_tally_map(sender, propertyId, -amountNeeded, BALANCE));
     assert(update_tally_map(sender, propertyId, amountNeeded, CONTRACTDEX_RESERVE));
 
@@ -3814,6 +3812,9 @@ int CMPTransaction::logicMath_SendPeggedCurrency()
             block);
         return (PKT_ERROR_SP -22);
     }
+
+    // NOTE: we need to check if property is a synthetic/pegged currency here
+
 
     if (!IsPropertyIdValid(propertyId)) {
         PrintToLog("%s(): rejected: property %d does not exist\n", __func__, property);
