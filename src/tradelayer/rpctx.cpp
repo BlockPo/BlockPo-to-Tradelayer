@@ -1240,9 +1240,6 @@ UniValue tl_sendissuance_pegged(const JSONRPCRequest& request)
   // Checking existing
   RequireExistingProperty(propertyId);
 
-  // Property must not be a future contract
-  // RequireNotContract(propertyId);
-
   // Checking for future contract
   // RequireContract(contractId);
 
@@ -1283,7 +1280,7 @@ UniValue tl_send_pegged(const JSONRPCRequest& request)
 			"\nArguments:\n"
 			"1. fromaddress          (string, required) the address to send from\n"
 			"2. toaddress            (string, required) the address of the receiver\n"
-			"3. contractid           (number, required) the identifier of future contract\n"
+			"3. propertyid           (number, required) the identifier the dMoney\n"
 			"4. amount               (string, required) the amount of dMoney to send\n"
 
 			"\nResult:\n"
@@ -1297,16 +1294,16 @@ UniValue tl_send_pegged(const JSONRPCRequest& request)
   // obtain parameters & info
   const std::string fromAddress = ParseAddress(request.params[0]);
   const std::string toAddress = ParseAddress(request.params[1]);
-  const uint32_t contractId = ParsePropertyId(request.params[2]);
+  const uint32_t propertyId = ParsePropertyId(request.params[2]);
 
   int64_t amount = ParseAmount(request.params[3], true);
 
   // perform checks
-  // RequireExistingProperty(propertyId);
-  // RequireBalance(fromAddress, propertyId, amount);
+  RequirePeggedCurrency(propertyId);
+  RequireBalance(fromAddress, propertyId, amount);
 
   // create a payload for the transaction
-  std::vector<unsigned char> payload = CreatePayload_SendPeggedCurrency(contractId, amount);
+  std::vector<unsigned char> payload = CreatePayload_SendPeggedCurrency(propertyId, amount);
 
   // request the wallet build the transaction (and if needed commit it)
   uint256 txid;
@@ -1320,7 +1317,7 @@ UniValue tl_send_pegged(const JSONRPCRequest& request)
     if (!autoCommit) {
       return rawHex;
     } else {
-      PendingAdd(txid, fromAddress, MSC_TYPE_SEND_PEGGED_CURRENCY, contractId, amount);
+      PendingAdd(txid, fromAddress, MSC_TYPE_SEND_PEGGED_CURRENCY, propertyId, amount);
       return txid.GetHex();
     }
   }

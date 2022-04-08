@@ -114,8 +114,8 @@ class PeggedBasicsTest (BitcoinTestFramework):
 
         self.nodes[0].generate(1)
 
-        self.log.info("Sending 2000 tokens to receiver (sendgrant)")
-        params = str([addresses[0], addresses[1], 4, "2000"]).replace("'",'"')
+        self.log.info("Sending 20000 tokens to receiver (sendgrant)")
+        params = str([addresses[0], addresses[1], 4, "20000"]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_sendgrant",params)
         # self.log.info(out)
 
@@ -127,7 +127,7 @@ class PeggedBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
         # self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['balance'],'2000.00000000')
+        assert_equal(out['result']['balance'],'20000.00000000')
         assert_equal(out['result']['reserve'],'0.00000000')
 
         self.log.info("Creating native Contract")

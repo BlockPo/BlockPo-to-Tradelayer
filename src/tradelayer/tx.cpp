@@ -3655,7 +3655,6 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
     uint256 blockHash;
     uint32_t notSize = 0;
     uint32_t npropertyId = 0;
-    int64_t amountNeeded = 0;
     int64_t contracts = 0;
 
     {
@@ -3680,10 +3679,10 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
         return (PKT_ERROR_SP -22);
     }
 
-    // if (ALL_PROPERTY_TYPE_INDIVISIBLE != prop_type && ALL_PROPERTY_TYPE_DIVISIBLE != prop_type && ALL_PROPERTY_TYPE_PEGGEDS != prop_type) {
-    //     PrintToLog("%s(): rejected: invalid property type: %d\n", __func__, prop_type);
-    //     return (PKT_ERROR_SP -36);
-    // }
+    if (ALL_PROPERTY_TYPE_INDIVISIBLE != prop_type && ALL_PROPERTY_TYPE_DIVISIBLE != prop_type && ALL_PROPERTY_TYPE_PEGGEDS != prop_type) {
+        PrintToLog("%s(): rejected: invalid property type: %d\n", __func__, prop_type);
+        return (PKT_ERROR_SP -36);
+    }
 
     if ('\0' == name[0]) {
         PrintToLog("%s(): rejected: property name must not be empty\n", __func__);
@@ -3691,7 +3690,7 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
     }
 
     // checking collateral currency
-    int64_t nBalance = getMPbalance(sender, propertyId, BALANCE);
+    uint64_t nBalance = (uint64_t) getMPbalance(sender, propertyId, BALANCE);
     if (nBalance == 0) {
         PrintToLog("%s(): rejected: sender %s has insufficient collateral currency in balance %d \n",
              __func__,
@@ -3721,16 +3720,17 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
         notSize = static_cast<int64_t>(cd.notional_size);
     }
 
-    const int64_t position = getMPbalance(sender, contractId, CONTRACT_BALANCE);
-    arith_uint256 rAmount = ConvertTo256(amount); // Alls needed
-    arith_uint256 Contracts = DivideAndRoundUp(rAmount * ConvertTo256(notSize), ConvertTo256(COIN));
-    amountNeeded = ConvertTo64(rAmount);
-    contracts = ConvertTo64(Contracts * ConvertTo256(COIN));
+    const int64_t position = getContractRecord(sender, contractId, CONTRACT_POSITION);
+    const arith_uint256 Contracts = ConvertTo256(amount) * ConvertTo256(notSize) / (ConvertTo256(COIN) * ConvertTo256(COIN));
+    contracts = ConvertTo64(Contracts);
 
-    // if (position < 0 || nBalance < amountNeeded || position < contracts) {
-    //     PrintToLog("%s(): rejected:Sender has not required short position on this contract or balance enough\n",__func__);
-    //     return (PKT_ERROR_CONTRACTDEX -23);
-    // }
+    PrintToLog("%s(): position: %d, contracts: %d, amount: %d, nBalance: %d\n",__func__, position, contracts, amount, nBalance);
+
+    if (position >= 0 || nBalance < amount || abs(position) < contracts) {
+        PrintToLog("%s(): rejected:Sender has not required short position on this contract or balance enough\n",__func__);
+        return (PKT_ERROR_CONTRACTDEX -23);
+    }
+
 
     {
         LOCK(cs_tally);
@@ -3762,7 +3762,7 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
         newSP.manual = true;
         newSP.creation_block = blockHash;
         newSP.update_block = newSP.creation_block;
-        newSP.num_tokens = amountNeeded;
+        newSP.num_tokens = amount;
         newSP.contracts_needed = contracts;
         newSP.contract_associated = contractId;
         newSP.currency_associated = cd.collateral_currency; // we need to see the real currency associated to this syntetic
@@ -3771,7 +3771,7 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
     } else {
         CMPSPInfo::Entry newSP;
         _my_sps->getSP(npropertyId, newSP);
-        newSP.num_tokens += ConvertTo64(rAmount);
+        newSP.num_tokens += amount;
         _my_sps->updateSP(npropertyId, newSP);
     }
 
@@ -3795,8 +3795,8 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
     //putting into reserve contracts and collateral currency
     assert(update_register_map(sender, contractId, -contracts, CONTRACT_POSITION));
     assert(update_register_map(sender, contractId, contracts, CONTRACT_RESERVE));
-    assert(update_tally_map(sender, propertyId, -amountNeeded, BALANCE));
-    assert(update_tally_map(sender, propertyId, amountNeeded, CONTRACTDEX_RESERVE));
+    assert(update_tally_map(sender, propertyId, -amount, BALANCE));
+    assert(update_tally_map(sender, propertyId, amount, CONTRACTDEX_RESERVE));
 
     return 0;
 }
