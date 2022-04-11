@@ -3724,7 +3724,7 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
     const arith_uint256 Contracts = ConvertTo256(amount) * ConvertTo256(notSize) / (ConvertTo256(COIN) * ConvertTo256(COIN));
     contracts = ConvertTo64(Contracts);
 
-    PrintToLog("%s(): position: %d, contracts: %d, amount: %d, nBalance: %d\n",__func__, position, contracts, amount, nBalance);
+    PrintToLog("%s(): position: %d, contracts: %d, amount: %d, nBalance: %d, contractId: %d\n",__func__, position, contracts, amount, nBalance, contractId);
 
     if (position >= 0 || nBalance < amount || abs(position) < contracts) {
         PrintToLog("%s(): rejected:Sender has not required short position on this contract or balance enough\n",__func__);
@@ -3735,15 +3735,21 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
     {
         LOCK(cs_tally);
         uint32_t nextSPID = _my_sps->peekNextSPID();
-        for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++) {
+        for (uint32_t prop = 1; prop < nextSPID; prop++) {
             CMPSPInfo::Entry sp;
-            if (_my_sps->getSP(propertyId, sp)) {
+            if (_my_sps->getSP(prop, sp)) {
                 if (sp.prop_type == ALL_PROPERTY_TYPE_PEGGEDS){
                     // checking if there's a synthetic property created by this contract yet
-                    if (sp.contract_associated != contractId && sp.currency_associated != propertyId)
-                    npropertyId = propertyId;
-                    PrintToLog("%() Creating New synthetic currency (propertyId: %d, contract associated: %d, currency associated: %d)\n",__func__, npropertyId, sp.contract_associated, sp.currency_associated);
+                    if (sp.contract_associated == contractId && sp.currency_associated == prop)
+                    {
+                        PrintToLog("%() Creating more currency (propertyId: %d, contract associated: %d, currency associated: %d)\n",__func__, npropertyId, sp.contract_associated, sp.currency_associated);
+                    } else {
+                        PrintToLog("%() Creating New synthetic currency (propertyId: %d, contract associated: %d, currency associated: %d)\n",__func__, npropertyId, sp.contract_associated, sp.currency_associated);
+                        npropertyId = prop;
+                    }
+
                     break;
+
                 }
             }
         }
