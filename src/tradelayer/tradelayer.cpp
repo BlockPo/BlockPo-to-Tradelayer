@@ -7694,18 +7694,18 @@ bool mastercore::ContInst_Fees(const std::string& firstAddr, const std::string& 
 }
 
 
-bool mastercore::Instant_x_Trade(const uint256& txid, uint8_t tradingAction, const std::string& channelAddr, const std::string& firstAddr, const std::string& secondAddr, uint32_t property, int64_t amount_forsale, uint64_t price, uint32_t collateral, uint16_t type, int& block, int tx_idx)
+bool mastercore::Instant_x_Trade(const uint256& txid, uint8_t tradingAction, const std::string& channelAddr, const std::string& firstAddr, const std::string& secondAddr, uint32_t contractId, int64_t amount_forsale, uint64_t price, uint32_t collateral, uint16_t type, int& block, int tx_idx)
 {
 
-    const int64_t firstPoss = getContractRecord(firstAddr, property, CONTRACT_POSITION);
-    const int64_t secondPoss = getContractRecord(secondAddr, property, CONTRACT_POSITION);
+    const int64_t firstPoss = getContractRecord(firstAddr, contractId, CONTRACT_POSITION);
+    const int64_t secondPoss = getContractRecord(secondAddr, contractId, CONTRACT_POSITION);
 
     const int64_t amount = (tradingAction == buy) ? -amount_forsale : amount_forsale;
-    assert(update_register_map(firstAddr, property,  amount, CONTRACT_POSITION));
-    assert(update_register_map(secondAddr, property, -amount, CONTRACT_POSITION));
+    assert(update_register_map(firstAddr, contractId,  amount, CONTRACT_POSITION));
+    assert(update_register_map(secondAddr, contractId, -amount, CONTRACT_POSITION));
 
-    const int64_t newFirstPoss = getContractRecord(firstAddr, property, CONTRACT_POSITION);
-    const int64_t newSecondPoss = getContractRecord(secondAddr, property, CONTRACT_POSITION);
+    const int64_t newFirstPoss = getContractRecord(firstAddr, contractId, CONTRACT_POSITION);
+    const int64_t newSecondPoss = getContractRecord(secondAddr, contractId, CONTRACT_POSITION);
 
     std::string Status_maker0 = mastercore::updateStatus(firstPoss, newFirstPoss);
     std::string Status_taker0 = mastercore::updateStatus(secondPoss, newSecondPoss);
@@ -7731,7 +7731,7 @@ bool mastercore::Instant_x_Trade(const uint256& txid, uint8_t tradingAction, con
     * Adding LTC volume traded in contracts.
     *
     */
-    mastercore::ContractDex_ADD_LTCVolume(amount_forsale, property);
+    mastercore::ContractDex_ADD_LTCVolume(amount_forsale, contractId);
 
     mastercore::ContInst_Fees(firstAddr, secondAddr, channelAddr, amount_forsale, type, collateral);
 
@@ -7744,7 +7744,7 @@ bool mastercore::Instant_x_Trade(const uint256& txid, uint8_t tradingAction, con
            amount_forsale,
            block,
            block,
-           property,
+           contractId,
            "Matched",
            newPosMaker,
            0,

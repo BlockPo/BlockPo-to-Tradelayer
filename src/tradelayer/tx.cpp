@@ -2002,7 +2002,7 @@ bool CMPTransaction::interpret_Contract_Instant()
   } else return false;
 
   if (!vecContractId.empty()) {
-      property = DecompressInteger(vecContractId);
+      contractId = DecompressInteger(vecContractId);
   } else return false;
 
   if (!vecAmount.empty()) {
@@ -2030,7 +2030,7 @@ bool CMPTransaction::interpret_Contract_Instant()
   {
       PrintToLog("\t version: %d\n", version);
       PrintToLog("\t messageType: %d\n",type);
-      PrintToLog("\t property: %d\n", property);
+      PrintToLog("\t contractId: %d\n", contractId);
       PrintToLog("\t amount : %d\n", instant_amount);
       PrintToLog("\t blockfor_expiry : %d\n", block_forexpiry);
       PrintToLog("\t price : %d\n", price);
@@ -4782,7 +4782,7 @@ int CMPTransaction::logicMath_Contract_Instant()
     int rc = 0;
 
     if (!IsTransactionTypeAllowed(block, type, version)) {
-        PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+        PrintToLog("%s(): rejected: type %d or version %d not permitted at block %d\n",
             __func__,
             type,
             version,
@@ -4805,7 +4805,8 @@ int CMPTransaction::logicMath_Contract_Instant()
     }
 
     CDInfo::Entry sp;
-    if (!_my_cds->getCD(property, sp)) {
+    if (!_my_cds->getCD(contractId, sp)) {
+        PrintToLog("%s(): rejected: contractId doesn't exist (contractId: %d)\n", __func__, contractId);
         return (PKT_ERROR_CHANNELS -13);
     }
 
@@ -4825,14 +4826,14 @@ int CMPTransaction::logicMath_Contract_Instant()
         return (PKT_ERROR_KYC -10);
     }
 
-    if(!t_tradelistdb->kycContractMatch(property,kyc_id))
+    if(!t_tradelistdb->kycContractMatch(contractId, kyc_id))
     {
-       PrintToLog("%s(): rejected: contract %d can't be traded with this kyc\n", __func__, property);
+       PrintToLog("%s(): rejected: contract %d can't be traded with this kyc\n", __func__, contractId);
        return (PKT_ERROR_KYC -20);
     }
 
     const int64_t marginRe = static_cast<int64_t>(sp.margin_requirement);
-    const arith_uint256 amountTR = (ConvertTo256(instant_amount) * ConvertTo256(marginRe)) / (ConvertTo256(ileverage) * COIN);
+    const arith_uint256 amountTR = (ConvertTo256(instant_amount) * ConvertTo256(marginRe)) / (ConvertTo256(ileverage));
     const int64_t amountToReserve = ConvertTo64(amountTR);
 
     if(msc_debug_contract_instant_trade) PrintToLog("%s: AmountToReserve: %d\n", __func__, amountToReserve);
@@ -4857,7 +4858,7 @@ int CMPTransaction::logicMath_Contract_Instant()
         assert(update_tally_map(chn.getSecond(), sp.collateral_currency, amountToReserve, CONTRACTDEX_RESERVE));
         if (msc_debug_contract_instant_trade) PrintToLog("%s(): second address reserve done\n", __func__);
 
-        mastercore::Instant_x_Trade(txid, itrading_action, chn.getMultisig(), chn.getFirst(), chn.getSecond(), property, instant_amount / COIN, price, sp.collateral_currency, sp.prop_type, block, tx_idx);
+        mastercore::Instant_x_Trade(txid, itrading_action, chn.getMultisig(), chn.getFirst(), chn.getSecond(), contractId, instant_amount, price, sp.collateral_currency, sp.prop_type, block, tx_idx);
 
         // t_tradelistdb->recordNewInstContTrade(txid, receiver, sender, propertyId, amount_commited, price, block, tx_idx);
 
