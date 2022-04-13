@@ -31,7 +31,7 @@ BOOST_AUTO_TEST_CASE(mighty_tuple)
 BOOST_AUTO_TEST_CASE(lexical_conversion)
 {
     // lexical conversion nothrow policy
-    using LC = Convertor<ConversionPolicy<std::false_type, std::false_type>>;
+    using LC = Convertor<NoThrowPolicy, LexicalTraits>;
     auto t = LC::Parse<char,uint8_t,bool>("65;66,3");
 
     BOOST_CHECK_EQUAL(0, std::get<0>(t));

@@ -33,8 +33,9 @@
 #include <tradelayer/version.h>
 #include <tradelayer/walletcache.h>
 #include <tradelayer/wallettxs.h>
-#include <tradelayer/insurancefund.h>
 #include <tradelayer/tupleutils.hpp>
+
+#include <tradelayer/insurancefund.h>
 
 #include <arith_uint256.h>
 #include <base58.h>
