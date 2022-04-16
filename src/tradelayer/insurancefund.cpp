@@ -1,34 +1,55 @@
 #include <util/system.h>
+#include <numeric>
 
+#include <util/system.h>
+#include <tradelayer/ce.h>
 #include <tradelayer/fees.h>
 #include <tradelayer/insurancefund.h>
 #include <tradelayer/log.h>
+#include <tradelayer/mdex.h>
 #include <tradelayer/register.h>
+#include <tradelayer/tradelayer.h>
 #include <tradelayer/tupleutils.hpp>
 
 // TODO: refactor out of tally.cpp to math_util.hpp or smth
 extern bool isOverflow(int64_t a, int64_t b);
 
 //! Dummy fund smart contract address
-static const std::string FUND_ADDRESS{"fund_address"};
+static const std::string FUND_ADDRESS{"Wdj12J6FZgaY34ZNx12pVpTeF9NQdmpGzj"};
+static const uint32_t CONTRACT_ID = 1;
 
 //! Futures contracts native/oracle and spot fees
 std::unique_ptr<FeesCache> g_fees(MakeUnique<FeesCache>());
 
+namespace mc = mastercore;
+
 //! Implementation details
 struct FundInternals
 {
+    // std::shared_ptr<CDInfo::Entry> contract_entry;
+
+    // static std::shared_ptr<CDInfo::Entry> MakeContractEntry()
+    // {
+    //     CDInfo::Entry cd;
+    //     return mc::_my_cds->getCD(1, cd), std::make_shared<CDInfo::Entry>(cd);
+    // }
+
+    // FundInternals() : contract_entry(MakeContractEntry())
+    // {
+    // }
 };
 
 //! Must be explicitly instantiated as it relies on the register cache: mp_register_map
 InsuranceFund::InsuranceFund() : m_internals(MakeUnique<FundInternals>())
 {
-    namespace mc = mastercore;
+    // Ensure we have an entry on the register
     if (mc::mp_register_map.find(FUND_ADDRESS) == mc::mp_register_map.end())
         mc::mp_register_map.insert(std::make_pair(FUND_ADDRESS, Register()));
 }
 
-InsuranceFund::~InsuranceFund() {}
+InsuranceFund::~InsuranceFund()
+{
+}
 
 int64_t InsuranceFund::GetFeesTotal(uint32_t pid) const
 {
@@ -38,13 +59,15 @@ int64_t InsuranceFund::GetFeesTotal(uint32_t pid) const
     return n1 + n2 + n3;
 }
 
-Register& InsuranceFund::GetRegister() const
+ContractInfo InsuranceFund::GetContractInfo() const
 {
-    static Register null_register;
-    namespace mc = mastercore;
-    auto p = mc::mp_register_map.find(FUND_ADDRESS);
-    assert(p != mc::mp_register_map.end());
-    return p == mc::mp_register_map.end() ? null_register : p->second;
+    ContractInfo ci;
+    ci.contract_id = CONTRACT_ID;
+    ci.collateral_currency = ALL;
+    ci.collateral_balance = getMPbalance(FUND_ADDRESS, 1, CONTRACTDEX_RESERVE);
+    ci.short_position = mc::getContractRecord(FUND_ADDRESS, CONTRACT_ID, CONTRACT_POSITION);
+    ci.is_native = true;
+    return ci;
 }
 
 FeesCache& InsuranceFund::GetFees() const
@@ -52,7 +75,7 @@ FeesCache& InsuranceFund::GetFees() const
     return *g_fees;
 }
 
-bool InsuranceFund::AddSpotFees(uint32_t pid, int64_t amount)
+bool InsuranceFund::UpdateFees(uint32_t pid, int64_t amount)
 {
     auto p = g_fees->spot_fees.find(pid);
     if (p == g_fees->spot_fees.end()) {
@@ -60,59 +83,113 @@ bool InsuranceFund::AddSpotFees(uint32_t pid, int64_t amount)
         return false;
     }
 
-    auto amount_remaining = p->second;
+    auto& fees_available = p->second;
 
-    if (isOverflow(amount_remaining, amount)) {
-        PrintToLog("%s(): ERROR: arithmetic overflow [%d + %d]\n", __func__, amount_remaining, amount);
+    if (isOverflow(fees_available, amount)) {
+        PrintToLog("%s(): ERROR: arithmetic overflow [%d + %d]\n", __func__, fees_available, amount);
         return false;
     }
 
-    if (amount_remaining + amount < 0) {
-        PrintToLog("%s(): insufficient funds! (amount_remaining: %d, amount: %d)\n", __func__, amount_remaining, amount);
-        return false;
-    }
+    // if (fees_available + amount < 0) {
+    //     PrintToLog("%s(): insufficient funds! (amount_remaining: %d, amount: %d)\n", __func__, fees_available, amount);
+    //     return false;
+    // }
 
-    return p->second += amount, true;
+    return fees_available += amount, true;
 }
 
-int64_t InsuranceFund::PayOut(uint32_t pid, int64_t loss_amount)
+std::tuple<bool, int64_t> InsuranceFund::PayOut(uint32_t pid, int64_t amount)
 {
-    assert(loss_amount > 0);
+    assert(amount > 0);
 
     auto p1 = g_fees->spot_fees.find(pid);
     auto a1 = p1 == g_fees->spot_fees.end() ? 0 : p1->second;
-    if (a1 >= loss_amount) {
-        return p1->second -= loss_amount, loss_amount;
+    if (a1 >= amount) {
+        return p1->second -= amount,
+               std::make_tuple(true, amount);
     }
 
     auto p2 = g_fees->native_fees.find(pid);
     auto a2 = p2 == g_fees->native_fees.end() ? 0 : p2->second;
-    if (a1 + a2 >= loss_amount) {
+    if (a1 + a2 >= amount) {
         return p1->second = 0,
-               p2->second -= loss_amount - a1,
-               loss_amount;
+               p2->second -= amount - a1,
+               std::make_tuple(true, amount);
     }
 
     auto p3 = g_fees->oracle_fees.find(pid);
-    auto a3 = a1 + a2 + (p3 == g_fees->oracle_fees.end() ? 0 : p3->second);
-    if (a3 >= loss_amount) {
+    auto a3 = p3 == g_fees->oracle_fees.end() ? 0 : p3->second;
+    auto fees_total = a1 + a2 + a3;
+    if (fees_total >= amount) {
         return p1->second = 0,
                p2->second = 0,
-               p3->second -= loss_amount - a2 - a1,
-               loss_amount;
+               p3->second -= amount - a2 - a1,
+               std::make_tuple(true, amount);
     }
 
-    if (a3 <= 0) {
-        PrintToLog("%s(): insufficient funds! (amount available: %d, amount needed: %d)\n", __func__, a3, loss_amount);
-        return 0;
+    if (fees_total <= 0) {
+        PrintToLog("%s(): insufficient funds, propertyId=%d! (fees amount available: %d, amount needed: %d)\n", __func__, fees_total, amount);
+        return std::make_tuple(false, 0);
     }
-
-    auto amount = loss_amount - a3;
-    p1->second = p2->second = p3->second = 0;
-    return amount;
+    
+    PrintToLog("%s(): partial payout, propertyId=%d! (fees amount available: %d, amount needed: %d)\n", __func__, fees_total, amount);
+    
+    return p1->second = p2->second = p3->second = 0, std::make_tuple(false, amount);
 }
 
-void InsuranceFund::Rebalance()
+//! Number of contracts on the register
+static inline uint32_t get_registered_contracts(uint32_t cid)
 {
-    throw std::runtime_error("InsuranceFund::Rebalance(): NotImplemented!");
+    auto p = mc::mp_register_map.find(FUND_ADDRESS);
+    if (p == mc::mp_register_map.end()) return 0;
+
+    // Get position entries from the register   
+    auto e = p->second.getEntries(cid);
+    return !e ? 0 :
+        std::accumulate(e->cbegin(), e->cend(), 0L, [](long a, const Entries::value_type& b) { return a + b.first; });
+}
+
+//! Last traded price of a contract
+static inline uint32_t get_contract_price(uint32_t cid)
+{
+    auto p = mc::cdexlastprice.find(cid);
+    return p == mc::cdexlastprice.end() ? 0 : p->second;
+}
+
+//! Market order
+static inline void dex_sumbit_morder(uint32_t cid, int block, int64_t amount)
+{
+    mc::ContractDex_ADD_MARKET_PRICE(FUND_ADDRESS, cid, amount, block, uint256(), 0, (amount > 0) ? sell : buy, 0, false);
+}
+
+//! Limit order trade
+static inline void dex_sumbit_lorder(int block, uint32_t cid, int64_t amount)
+{
+    mc::ContractDex_ADD_ORDERBOOK_EDGE(FUND_ADDRESS, cid, amount, block, uint256(), 0, (amount > 0) ? sell : buy, 0, false);
+}
+
+void InsuranceFund::UpdateFundOrders(int block)
+{
+    auto fees = GetFeesTotal(ALL);
+    if (fees == 0) return;
+        
+    // we need to hedge/cover 1/2 of ALL units/fees
+    auto price = get_contract_price(CONTRACT_ID);
+    auto n1 = get_registered_contracts(CONTRACT_ID);
+    auto n2 = fees / 2 / price;
+    auto n = n2 - n1;
+
+    if (n) {
+        PrintToLog("%s(): placing limit order to trade %d ALL contracts\n", __func__, n);
+        
+        // buy if negative (to reduce position), and sell otherwise
+        dex_sumbit_lorder(block, CONTRACT_ID, n);
+    }
+}
+
+void InsuranceFund::CoverContracts(int block, uint32_t amount)
+{
+    PrintToLog("%s(): placing limit order to sell %d ALL contracts at price %d\n", __func__, amount);
+
+    dex_sumbit_lorder(block, CONTRACT_ID, amount);
 }

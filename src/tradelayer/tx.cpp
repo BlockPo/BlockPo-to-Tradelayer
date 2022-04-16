@@ -5152,7 +5152,7 @@ int CMPTransaction::logicMath_SendDonation()
     // Move the tokens
     assert(update_tally_map(sender, property, -nValue, BALANCE));
     //update insurance here!
-    g_fund->AddSpotFees(property, nValue);
+    g_fund->UpdateFees(property, nValue);
 
     return 0;
 }

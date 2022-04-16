@@ -150,7 +150,7 @@ public:
     }
 };
 
-// Numeric Convertor: NC::Parse<bool,int64_t>("1;65536);
+// Numeric Convertor: NC::Parse<bool,int64_t>("1;65536");
 using NC = Convertor<BadCastPolicy, NumericTraits>;
 using LC = Convertor<BadCastPolicy, LexicalTraits>;
 

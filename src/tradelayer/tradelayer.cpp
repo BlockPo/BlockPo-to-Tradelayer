@@ -8346,7 +8346,7 @@ void blocksettlement::makeSettlement()
               }
 
               //update_Insurance(cd.collateral_currency, loss);
-              g_fund->AddSpotFees(cd.collateral_currency, loss);
+              g_fund->UpdateFees(cd.collateral_currency, loss);
 
           }
      }
