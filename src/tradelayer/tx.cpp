@@ -3784,6 +3784,8 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
     assert(npropertyId > 0);
     CMPSPInfo::Entry SP;
     _my_sps->getSP(npropertyId, SP);
+
+    // synthetic tokens update
     assert(update_tally_map(sender, npropertyId, amount, BALANCE));
     // t_tradelistdb->NotifyPeggedCurrency(txid, sender, npropertyId, amount,SP.series); //TODO: Watch this function!
 
@@ -3879,12 +3881,7 @@ int CMPTransaction::logicMath_RedemptionPegged()
         return (PKT_ERROR_SEND -24);
     }
 
-    int64_t negContracts = 0;
-    int64_t posContracts = 0;
     const int64_t nBalance = getMPbalance(sender, propertyId, BALANCE);
-    const int64_t position = getMPbalance(sender, contractId, CONTRACT_BALANCE);
-
-    (position > 0) ? posContracts = position : negContracts = position;
 
     if (nBalance < (int64_t) amount) {
         PrintToLog("%s(): rejected: sender %s has insufficient balance of pegged currency %d [%s < %s]\n",
@@ -3914,19 +3911,29 @@ int CMPTransaction::logicMath_RedemptionPegged()
         // sp.num_tokens -= amount;
     }
 
-    arith_uint256 conNeeded = ConvertTo256(amount) / ConvertTo256(notSize);
-    int64_t contractsNeeded = ConvertTo64(conNeeded);
+    const arith_uint256 conNeeded = ConvertTo256(amount) * ConvertTo256(notSize) / (ConvertTo256(COIN) * ConvertTo256(COIN));
+    const int64_t contractsNeeded = -ConvertTo64(conNeeded);
 
-    if (contractsNeeded > 0 && amount > 0)
+    const int64_t position = getContractRecord(sender, contractId, CONTRACT_RESERVE);
+
+
+    if (contractsNeeded < position) {
+        PrintToLog("%s(): rejected: sender %s has insufficient short position reserved\n",
+                __func__,
+                sender);
+        return (PKT_ERROR_SEND -26);
+    }
+
+    if (contractsNeeded != 0 && amount > 0)
     {
        // Delete the tokens
        assert(update_tally_map(sender, propertyId, -amount, BALANCE));
        // delete contracts in reserve
-       assert(update_tally_map(sender, contractId, -contractsNeeded, CONTRACTDEX_RESERVE));
-        // get back the collateral
-       assert(update_tally_map(sender, collateralId, -amount, CONTRACTDEX_RESERVE));
+       assert(update_register_map(sender, contractId, -contractsNeeded, CONTRACT_RESERVE));
+       assert(update_register_map(sender, contractId, contractsNeeded, CONTRACT_POSITION));
+       // get back the collateral
        assert(update_tally_map(sender, collateralId, amount, BALANCE));
-       assert(update_tally_map(sender, contractId, -contractsNeeded, CONTRACT_BALANCE));
+
 
     } else {
         PrintToLog("amount redeemed must be equal at least to value of 1 future contract \n");

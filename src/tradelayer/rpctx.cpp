@@ -1333,9 +1333,9 @@ UniValue tl_redemption_pegged(const JSONRPCRequest& request)
 
 			"\nArguments:\n"
 			"1. redeemaddress        (string, required) the address of owner \n"
-			"2. name of pegged       (string, required) name of the tokens to redeem\n"
+			"2. peggedId             (number, required) id of pegged tokens to redeem\n"
 			"3. amount               (number, required) the amount of pegged currency for redemption"
-			"4. name of contract     (string, required) the identifier of the future contract involved\n"
+			"4. contractId    (string, required) the identifier of the future contract involved\n"
 
 			"\nResult:\n"
 			"\"hash\"                  (string) the hex-encoded transaction hash\n"
@@ -1347,10 +1347,8 @@ UniValue tl_redemption_pegged(const JSONRPCRequest& request)
 
   // obtain parameters & info
   const std::string fromAddress = ParseAddress(request.params[0]);
-  std::string name_pegged = ParseText(request.params[1]);
+  const uint32_t propertyId = ParsePropertyId(request.params[1]);
   uint32_t contractId = ParseNameOrId(request.params[3]);
-  struct FutureContractObject *pfuture_pegged = getFutureContractObject(name_pegged);
-  uint32_t propertyId = (pfuture_pegged) ? pfuture_pegged->fco_propertyId : 0;
 
   uint64_t amount = ParseAmount(request.params[2], true);
 

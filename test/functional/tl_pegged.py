@@ -199,7 +199,7 @@ class PeggedBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['balance'],'20.00000000')
         assert_equal(out['result']['reserve'],'0.00000000')
 
-        conn.close()
+
 
 
         self.log.info("Creating more pegged currency")
@@ -218,6 +218,28 @@ class PeggedBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['balance'],'50.00000000')
         assert_equal(out['result']['reserve'],'0.00000000')
 
+
+
+        self.log.info("Redemption pegged currency for address1")
+        array = [0]
+        params = str([addresses[1], 1, "50"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, False, "tl_redemption_pegged",params)
+        self.log.info(out)
+
+        self.nodes[0].generate(1)
+
+
+        self.log.info("Checking pegged currency on address")
+        params = str([addresses[1], 5]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
+        self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['balance'],'0.00000000')
+        assert_equal(out['result']['reserve'],'0.00000000')
+
+
+
+        conn.close()
         self.stop_nodes()
 
 if __name__ == '__main__':
