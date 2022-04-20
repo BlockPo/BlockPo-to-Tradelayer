@@ -3801,7 +3801,7 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
 
 
     //putting into reserve contracts and collateral currency
-    assert(update_register_map(sender, contractId, -contracts, CONTRACT_POSITION));
+    assert(update_register_map(sender, contractId, contracts, CONTRACT_POSITION));
     assert(update_register_map(sender, contractId, contracts, CONTRACT_RESERVE));
     assert(update_tally_map(sender, propertyId, -amount, BALANCE));
     assert(update_tally_map(sender, propertyId, amount, CONTRACTDEX_RESERVE));
@@ -3912,12 +3912,14 @@ int CMPTransaction::logicMath_RedemptionPegged()
     }
 
     const arith_uint256 conNeeded = ConvertTo256(amount) * ConvertTo256(notSize) / (ConvertTo256(COIN) * ConvertTo256(COIN));
-    const int64_t contractsNeeded = -ConvertTo64(conNeeded);
+    const int64_t contractsNeeded = ConvertTo64(conNeeded);
 
     const int64_t position = getContractRecord(sender, contractId, CONTRACT_RESERVE);
 
+    PrintToLog("%s(): position reserved: %d, contractsNeeded: %d\n",__func__, position, contractsNeeded);
 
-    if (contractsNeeded < position) {
+
+    if (position < contractsNeeded) {
         PrintToLog("%s(): rejected: sender %s has insufficient short position reserved\n",
                 __func__,
                 sender);
@@ -3930,8 +3932,9 @@ int CMPTransaction::logicMath_RedemptionPegged()
        assert(update_tally_map(sender, propertyId, -amount, BALANCE));
        // delete contracts in reserve
        assert(update_register_map(sender, contractId, -contractsNeeded, CONTRACT_RESERVE));
-       assert(update_register_map(sender, contractId, contractsNeeded, CONTRACT_POSITION));
-       // get back the collateral
+       // getting back short position
+       assert(update_register_map(sender, contractId, -contractsNeeded, CONTRACT_POSITION));
+       // getting back the collateral
        assert(update_tally_map(sender, collateralId, amount, BALANCE));
 
 

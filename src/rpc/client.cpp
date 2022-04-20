@@ -304,8 +304,9 @@ static const CRPCConvertParam vRPCConvertParams[] =
     {"tl_sendcanceltradesbypair", 1, "arg1"},
     {"tl_sendcanceltradesbypair", 2, "arg2"},
 
-    {"tl_sendcanceltradesbyprice", 1, "arg1"},
-    {"tl_sendcanceltradesbyprice", 3, "arg3"},
+    {"tl_redemption_pegged ", 1, "arg1"},
+    {"tl_redemption_pegged ", 3, "arg3"},
+
 
     /* Trade Layer - data retrieval calls */
     { "tl_setautocommit", 0, "arg0" },

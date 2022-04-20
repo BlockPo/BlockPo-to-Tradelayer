@@ -34,10 +34,6 @@ class PeggedBasicsTest (BitcoinTestFramework):
         # mining 200 blocks
         self.nodes[0].generate(200)
 
-        ################################################################################
-        # Checking RPC tl_sendissuancemanaged and tl_sendgrant (in the first 200 blocks of the chain) #
-        ################################################################################
-
         url = urllib.parse.urlparse(self.nodes[0].url)
 
         #Old authpair
@@ -200,8 +196,6 @@ class PeggedBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['reserve'],'0.00000000')
 
 
-
-
         self.log.info("Creating more pegged currency")
         array = [0]
         params = str([addresses[1], 2, 0, "sLTC", 4, "1", "30"]).replace("'",'"')
@@ -219,10 +213,16 @@ class PeggedBasicsTest (BitcoinTestFramework):
         assert_equal(out['result']['reserve'],'0.00000000')
 
 
+        self.log.info("Checking position in first address")
+        params = str([addresses[1], "ALL/Lhk"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getposition",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['position'], -950)
 
         self.log.info("Redemption pegged currency for address1")
         array = [0]
-        params = str([addresses[1], 1, "50"]).replace("'",'"')
+        params = str([addresses[1], 5, "25", "1"]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, False, "tl_redemption_pegged",params)
         self.log.info(out)
 
@@ -234,10 +234,16 @@ class PeggedBasicsTest (BitcoinTestFramework):
         out = tradelayer_HTTP(conn, headers, True, "tl_getbalance",params)
         self.log.info(out)
         assert_equal(out['error'], None)
-        assert_equal(out['result']['balance'],'0.00000000')
+        assert_equal(out['result']['balance'],'25.00000000')
         assert_equal(out['result']['reserve'],'0.00000000')
 
 
+        self.log.info("Checking position in first address")
+        params = str([addresses[1], "ALL/Lhk"]).replace("'",'"')
+        out = tradelayer_HTTP(conn, headers, True, "tl_getposition",params)
+        # self.log.info(out)
+        assert_equal(out['error'], None)
+        assert_equal(out['result']['position'], -975)
 
         conn.close()
         self.stop_nodes()

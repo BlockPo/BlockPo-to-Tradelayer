@@ -1335,7 +1335,7 @@ UniValue tl_redemption_pegged(const JSONRPCRequest& request)
 			"1. redeemaddress        (string, required) the address of owner \n"
 			"2. peggedId             (number, required) id of pegged tokens to redeem\n"
 			"3. amount               (number, required) the amount of pegged currency for redemption"
-			"4. contractId    (string, required) the identifier of the future contract involved\n"
+			"4. contractId          (string, required) the identifier of the future contract involved\n"
 
 			"\nResult:\n"
 			"\"hash\"                  (string) the hex-encoded transaction hash\n"
