@@ -785,6 +785,8 @@ namespace mastercore
 
   int64_t getOracleTwap(uint32_t contractId, int nBlocks);
 
+  int64_t getContractTradesVWAP(uint32_t contractId, int nBlocks);
+
   // check for vesting
   bool sanityChecks(const std::string& sender, int& aBlock);
 
