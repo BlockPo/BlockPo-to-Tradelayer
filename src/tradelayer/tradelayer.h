@@ -653,7 +653,7 @@ extern std::set<std::string> vestingAddresses;
 //!Contract upnls
 extern std::map<std::string, int64_t> sum_upnls;
 
-//! Last unit price for token/BTC
+//! Last unit price for token/LTC
 extern std::map<uint32_t, int64_t> lastPrice;
 
 extern std::map<uint32_t, std::map<uint32_t, int64_t>> market_priceMap;

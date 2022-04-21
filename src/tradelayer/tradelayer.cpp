@@ -4870,9 +4870,12 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
     }
 
     /** Node rewards **/
-    if (nHeight > params.MSC_NODE_REWARD_BLOCK)
-    {
+    if (nHeight > params.MSC_NODE_REWARD_BLOCK){
         nR.clearWinners();
+    }
+
+    if (nHeight > params.MSC_PEGGED_CURRENCY_BLOCK && nHeight % 24 == 0) {
+        addInterestPegged(nHeight);
     }
 
     // marginMain(pBlockIndex->nHeight);

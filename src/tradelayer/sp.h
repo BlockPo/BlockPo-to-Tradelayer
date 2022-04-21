@@ -181,7 +181,7 @@ bool isPropertyContract(uint32_t propertyId);
 
 bool getEntryFromName(const std::string& name, uint32_t& propertyId, CMPSPInfo::Entry& sp);
 
-int addInterestPegged(int nBlockPrev, const CBlockIndex* pBlockIndex);
+int addInterestPegged(int nBlock);
 }
 
 #endif // TRADELAYER_SP_H

@@ -596,10 +596,8 @@ bool mastercore::getEntryFromName(const std::string& name, uint32_t& propertyId,
     return false;
 }
 
-int mastercore::addInterestPegged(int nBlockPrev, const CBlockIndex* pBlockIndex)
+int mastercore::addInterestPegged(int nBlock)
 {
-
-    int64_t allPrice = 777; // we need to retrieve the actual all price
     int64_t priceIndex = 0;
     int64_t nMarketPrice = 0;
 
@@ -619,12 +617,11 @@ int mastercore::addInterestPegged(int nBlockPrev, const CBlockIndex* pBlockIndex
                 CDInfo::Entry cd;
                 _my_cds->getCD(newSp.contract_associated, cd);
 
-                const int actualBlock = static_cast<int>(pBlockIndex->nHeight);
-                const int deadline = static_cast<int>(cd.blocks_until_expiration) + cd.init_block;
-                if (deadline != actualBlock) { continue; }
+                const int deadline = cd.blocks_until_expiration + cd.init_block;
+                if (deadline != nBlock) { continue; }
 
                 // natives or oracles?
-                if(cd.isNative()) {
+                if(cd.isOracle()) {
                     priceIndex = getOracleTwap(newSp.contract_associated, 24);
                     nMarketPrice = getContractTradesVWAP(newSp.contract_associated, 24);
                 } else {
@@ -634,11 +631,41 @@ int mastercore::addInterestPegged(int nBlockPrev, const CBlockIndex* pBlockIndex
                 const int64_t diff = priceIndex - nMarketPrice;
                 arith_uint256 interest = ConvertTo256(diff) / ConvertTo256(nMarketPrice);
 
+                if(msc_debug_interest_pegged) {
+                    PrintToLog("%s(): diff: %d, priceIndex: %d, nMarketPrice: %d, diff: %d, interest: %d\n",__func__, diff, priceIndex, nMarketPrice, diff, ConvertTo64(interest));
+                }
+
+                //price of ALL expresed in id property
+                int64_t allPrice = 0;
+                auto it = market_priceMap.find(ALL);
+                if (it != market_priceMap.end())
+                {
+                    const auto &auxMap = it->second;
+                    auto itt = auxMap.find(id);
+                    if (itt != auxMap.end()){
+                       allPrice = itt->second;
+                    }
+
+                }
+
                 //adding interest to pegged
                 const int64_t nPegged = getMPbalance(address, id, BALANCE);
-                const arith_uint256 all = ConvertTo256(nPegged) * interest / ConvertTo256(allPrice);
-                const int64_t intAll = ConvertTo64(all);
-                assert(update_tally_map(address, id, intAll, BALANCE));
+
+
+
+                if (allPrice > 0)
+                {
+                    const arith_uint256 all = (ConvertTo256(nPegged) * interest) / ConvertTo256(allPrice);
+                    const int64_t intAll = ConvertTo64(all);
+
+                    if(msc_debug_interest_pegged) {
+                        PrintToLog("%s(): allPrice: %d, nPegged: %d, intAll: %d\n",__func__, allPrice, nPegged, intAll);
+                    }
+
+                    // updating pegged currency interest (id: pegged currency id)
+                    assert(update_tally_map(address, id, intAll, BALANCE));
+                }
+
 
             }
 

@@ -71,9 +71,9 @@ std::vector<TransactionRestriction> CConsensusParams::GetRestrictions() const
     v.push_back( { MSC_TYPE_CONTRACTDEX_CANCEL_ECOSYSTEM,          MP_TX_PKT_V0,      true, MSC_CONTRACTDEX_BLOCK } );
     v.push_back( { MSC_TYPE_CREATE_CONTRACT,                       MP_TX_PKT_V0,      true, MSC_CONTRACTDEX_BLOCK } );
     v.push_back( { MSC_TYPE_PEGGED_CURRENCY,                       MP_TX_PKT_V0,      true, MSC_CONTRACTDEX_BLOCK } );
-    v.push_back( { MSC_TYPE_REDEMPTION_PEGGED,                     MP_TX_PKT_V0,      true, MSC_CONTRACTDEX_BLOCK } );
-    v.push_back( { MSC_TYPE_SEND_PEGGED_CURRENCY,                  MP_TX_PKT_V0,      true, MSC_CONTRACTDEX_BLOCK } );
-    v.push_back( { MSC_TYPE_CONTRACTDEX_CLOSE_POSITION,            MP_TX_PKT_V0,      true, MSC_CONTRACTDEX_BLOCK } );
+    v.push_back( { MSC_TYPE_REDEMPTION_PEGGED,                     MP_TX_PKT_V0,      true, MSC_PEGGED_CURRENCY_BLOCK } );
+    v.push_back( { MSC_TYPE_SEND_PEGGED_CURRENCY,                  MP_TX_PKT_V0,      true, MSC_PEGGED_CURRENCY_BLOCK } );
+    v.push_back( { MSC_TYPE_CONTRACTDEX_CLOSE_POSITION,            MP_TX_PKT_V0,      true, MSC_PEGGED_CURRENCY_BLOCK } );
     v.push_back( { MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK,    MP_TX_PKT_V0,      true, MSC_CONTRACTDEX_BLOCK } );
     v.push_back( { MSC_TYPE_CHANGE_ORACLE_REF,                     MP_TX_PKT_V0,      true, MSC_CONTRACTDEX_ORACLES_BLOCK } );
     v.push_back( { MSC_TYPE_SET_ORACLE,                            MP_TX_PKT_V0,      true, MSC_CONTRACTDEX_ORACLES_BLOCK } );
@@ -99,8 +99,9 @@ std::vector<TransactionRestriction> CConsensusParams::GetRestrictions() const
     v.push_back( { MSC_TYPE_CLOSE_CHANNEL,                         MP_TX_PKT_V0,      true, MSC_TRADECHANNEL_TOKENS_BLOCK } );
     v.push_back( { MSC_TYPE_SUBMIT_NODE_ADDRESS,                   MP_TX_PKT_V0,      true, MSC_NODE_REWARD_BLOCK } );
     v.push_back( { MSC_TYPE_CLAIM_NODE_REWARD,                     MP_TX_PKT_V0,      true, MSC_NODE_REWARD_BLOCK } );
-    v.push_back( { MSC_TYPE_SEND_DONATION,                         MP_TX_PKT_V0,      true, MSC_SEND_DONATION_BLOCK} );
+    v.push_back( { MSC_TYPE_SEND_DONATION,                         MP_TX_PKT_V0,      true, MSC_SEND_DONATION_BLOCK } );
     //---
+
     return v;
 }
 
@@ -184,6 +185,7 @@ CMainConsensusParams::CMainConsensusParams()
     MSC_MULTISEND_BLOCK = 99999999;
     MSC_HEDGEDCURRENCY_BLOCK = 99999999;
     MSC_SEND_DONATION_BLOCK = 99999999;
+    MSC_PEGGED_CURRENCY_BLOCK = 99999999,
     INFLEXION_BLOCK = 25000;
 
     ONE_YEAR = 210240;
@@ -240,8 +242,8 @@ CMainConsensusParams::CMainConsensusParams()
      MSC_MULTISEND_BLOCK = 99999999;
      MSC_HEDGEDCURRENCY_BLOCK = 99999999;
      MSC_SEND_DONATION_BLOCK = 99999999;
+     MSC_PEGGED_CURRENCY_BLOCK = 99999999,
      INFLEXION_BLOCK = 25000;
-
      ONE_YEAR = 2650;  // just for testing
  }
 
@@ -301,6 +303,7 @@ CRegTestConsensusParams::CRegTestConsensusParams()
     MSC_MULTISEND_BLOCK = 99999999;
     MSC_HEDGEDCURRENCY_BLOCK = 99999999;
     MSC_SEND_DONATION_BLOCK = 99999999;
+    MSC_PEGGED_CURRENCY_BLOCK = 99999999,
     INFLEXION_BLOCK = 1000;
 
     ONE_YEAR = 930;
@@ -557,6 +560,10 @@ bool ActivateFeature(uint16_t featureId, int activationBlock, uint32_t minClient
           params.MSC_SEND_MANY_BLOCK = activationBlock;
           break;
 
+      case FEATURE_PEGGED_CURRENCY:
+          params.MSC_PEGGED_CURRENCY_BLOCK = activationBlock;
+          break;
+
       default:
            supported = false;
            break;
@@ -704,6 +711,10 @@ bool DeactivateFeature(uint16_t featureId, int transactionBlock)
           MutableConsensusParams().MSC_SEND_MANY_BLOCK = 99999999;
           break;
 
+      case FEATURE_PEGGED_CURRENCY:
+          MutableConsensusParams().MSC_PEGGED_CURRENCY_BLOCK = 99999999;
+          break;
+
       default:
             return false;
 
@@ -751,6 +762,7 @@ std::string GetFeatureName(uint16_t featureId)
         case FEATURE_MASSPAYMENT: return "Mass Payment";
         case FEATURE_SEND_MANY: return "Send to Many";
         case FEATURE_HEDGEDCURRENCY: return "Hedge Currency";
+        case FEATURE_PEGGED_CURRENCY: return "Pegged Currency";
         default: return "Unknown feature";
     }
 }
@@ -870,6 +882,10 @@ bool IsFeatureActivated(uint16_t featureId, int transactionBlock)
 
       case FEATURE_SEND_MANY:
           activationBlock = params.MSC_SEND_MANY_BLOCK;
+          break;
+
+      case FEATURE_PEGGED_CURRENCY:
+          activationBlock = params.MSC_VESTING_BLOCK;
           break;
 
         default:
