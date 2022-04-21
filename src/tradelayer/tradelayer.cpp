@@ -3901,7 +3901,7 @@ bool nodeReward::nextReward(const int& nHeight)
 
    if (p_Reward < MIN_REWARD) p_Reward = MIN_REWARD;
 
-   PrintToLog("%s():p_Reward after: %d, f_nextReward: %d\n", __func__, p_Reward, f_nextReward);
+   // PrintToLog("%s():p_Reward after: %d, f_nextReward: %d\n", __func__, p_Reward, f_nextReward);
 
    return !result;
 }
@@ -3917,7 +3917,7 @@ void nodeReward::sendNodeReward(const std::string& consensusHash, const int& nHe
             // counting winners on this block
             count++;
             const int64_t rewardSize = p_Reward / count;
-            PrintToLog("%s(): winner: %s, reward: %d, count: %d\n",__func__, addr.first, rewardSize, count);
+            // PrintToLog("%s(): winner: %s, reward: %d, count: %d\n",__func__, addr.first, rewardSize, count);
             // we need to save the winners and the prize here!
             winners[addr.first] = rewardSize;
 
@@ -3928,19 +3928,16 @@ void nodeReward::sendNodeReward(const std::string& consensusHash, const int& nHe
 
     // using 10 blocks as block limit
     const int result = nHeight % BLOCK_LIMIT;
-    PrintToLog("%s(): result: %d\n",__func__, result);
-
     // after that we share the reward with all winners
     if(0 == result)
     {
-        PrintToLog("%s(): SENDING REWARD NOW!!!, result: %d\n",__func__, result);
         for(const auto& w : winners)
         {
             auto it = nodeRewardsAddrs.find(w.first);
             // if address is claiming reward, we update tally
             if (it != nodeRewardsAddrs.end() && it->second){
                 update_tally_map(w.first, ALL, w.second, BALANCE);
-                PrintToLog("%s(): address: %s, reward: %d\n",__func__, w.first, w.second);
+                // PrintToLog("%s(): address: %s, reward: %d\n",__func__, w.first, w.second);
                 // cleaning claiming status for this block
                 if (!fTest) it->second = false;
             }
@@ -3971,7 +3968,7 @@ bool nodeReward::isWinnerAddress(const std::string& consensusHash, const std::st
     const std::string LastThreeCharAddr = vchStr.substr(vchStr.size() - lastNterms);
     const std::string lastThreeCharConsensus = consensusHash.substr(consensusHash.size() - lastNterms);
 
-    PrintToLog("%s(): lastThreeCharConsensus: %s, LastThreeCharAddr (decoded): %s\n",__func__, lastThreeCharConsensus, LastThreeCharAddr);
+    // PrintToLog("%s(): lastThreeCharConsensus: %s, LastThreeCharAddr (decoded): %s\n",__func__, lastThreeCharConsensus, LastThreeCharAddr);
 
     return (LastThreeCharAddr == lastThreeCharConsensus) ? true : false;
 
@@ -3979,7 +3976,6 @@ bool nodeReward::isWinnerAddress(const std::string& consensusHash, const std::st
 
 void nodeReward::updateAddressStatus(const std::string& address, bool newStatus)
 {
-    PrintToLog("%s(): address: %s\n",__func__, address);
     nodeRewardsAddrs[address] = newStatus;
 }
 
@@ -4935,7 +4931,7 @@ int mastercore_handler_block_end(int nBlockNow, CBlockIndex const * pBlockIndex,
        if (nBlockNow > params.MSC_CONTRACTDEX_BLOCK)
        {
            LiquidationEngine(nBlockNow);
-           bS.makeSettlement();
+           // bS.makeSettlement();
        }
 
        // deleting Expired DEx accepts
@@ -5924,6 +5920,7 @@ bool CMPTradeList::kycContractMatch(uint32_t contractId, int kyc_id)
 {
     CDInfo::Entry sp;
     if (!_my_cds->getCD(contractId, sp)) {
+       PrintToLog("%s(): contract ID  (%d)does not exist\n",__func__, contractId);
        return false; // contract ID does not exist
     }
 
@@ -7700,106 +7697,57 @@ bool mastercore::ContInst_Fees(const std::string& firstAddr, const std::string& 
 }
 
 
-bool mastercore::Instant_x_Trade(const uint256& txid, uint8_t tradingAction, const std::string& channelAddr, const std::string& firstAddr, const std::string& secondAddr, uint32_t property, int64_t amount_forsale, uint64_t price, uint32_t collateral, uint16_t type, int& block, int tx_idx)
+bool mastercore::Instant_x_Trade(const uint256& txid, uint8_t tradingAction, const std::string& channelAddr, const std::string& firstAddr, const std::string& secondAddr, uint32_t contractId, int64_t amount_forsale, uint64_t price, uint32_t collateral, uint16_t type, int& block, int tx_idx)
 {
 
-    int64_t firstPoss = getMPbalance(firstAddr, property, CONTRACT_BALANCE);
-    int64_t firstNeg = getMPbalance(firstAddr, property, CONTRACT_BALANCE);
-    int64_t secondPoss = getMPbalance(secondAddr, property, CONTRACT_BALANCE);
-    int64_t secondNeg = getMPbalance(secondAddr, property, CONTRACT_BALANCE);
+    const int64_t firstPoss = getContractRecord(firstAddr, contractId, CONTRACT_POSITION);
+    const int64_t secondPoss = getContractRecord(secondAddr, contractId, CONTRACT_POSITION);
 
-    if(tradingAction == sell)
-        amount_forsale = -amount_forsale;
+    const int64_t amount = (tradingAction == buy) ? -amount_forsale : amount_forsale;
+    assert(update_register_map(firstAddr, contractId,  amount, CONTRACT_POSITION));
+    assert(update_register_map(secondAddr, contractId, -amount, CONTRACT_POSITION));
 
-    int64_t first_p = firstPoss - firstNeg + amount_forsale;
-    int64_t second_p = secondPoss - secondNeg - amount_forsale;
+    const int64_t newFirstPoss = getContractRecord(firstAddr, contractId, CONTRACT_POSITION);
+    const int64_t newSecondPoss = getContractRecord(secondAddr, contractId, CONTRACT_POSITION);
 
-    if(first_p > 0)
-    {
-        assert(update_tally_map(firstAddr, property, first_p - firstPoss, CONTRACT_BALANCE));
-        if(firstNeg != 0)
-            assert(update_tally_map(firstAddr, property, -firstNeg, CONTRACT_BALANCE));
-
-    } else if (first_p < 0){
-        assert(update_tally_map(firstAddr, property, -first_p - firstNeg, CONTRACT_BALANCE));
-        if(firstPoss != 0)
-            assert(update_tally_map(firstAddr, property, -firstPoss, CONTRACT_BALANCE));
-
-    } else {  //cleaning the tally
-
-        if(firstPoss != 0)
-            assert(update_tally_map(firstAddr, property, -firstPoss, CONTRACT_BALANCE));
-        else if (firstNeg != 0)
-            assert(update_tally_map(firstAddr, property, -firstNeg, CONTRACT_BALANCE));
-
-    }
-
-    if(second_p > 0){
-        assert(update_tally_map(secondAddr, property, second_p - secondPoss, CONTRACT_BALANCE));
-        if (secondNeg != 0)
-            assert(update_tally_map(secondAddr, property, -secondNeg, CONTRACT_BALANCE));
-
-    } else if (second_p < 0){
-        assert(update_tally_map(secondAddr, property, -second_p - secondNeg, CONTRACT_BALANCE));
-        if (secondPoss != 0)
-            assert(update_tally_map(secondAddr, property, -secondPoss, CONTRACT_BALANCE));
-
-    } else {
-
-        if (secondPoss != 0)
-            assert(update_tally_map(secondAddr, property, -secondPoss, CONTRACT_BALANCE));
-        else if (secondNeg != 0)
-            assert(update_tally_map(secondAddr, property, -secondNeg, CONTRACT_BALANCE));
-    }
-
-    // old positions
-    int64_t oldFrs = setPosition(firstPoss,firstNeg);
-    int64_t oldSec = setPosition(secondPoss,secondNeg);
-
-    std::string Status_maker0 = mastercore::updateStatus(oldFrs,first_p);
-    std::string Status_taker0 = mastercore::updateStatus(oldSec,second_p);
+    std::string Status_maker0 = mastercore::updateStatus(firstPoss, newFirstPoss);
+    std::string Status_taker0 = mastercore::updateStatus(secondPoss, newSecondPoss);
 
     if(msc_debug_instant_x_trade)
     {
-        PrintToLog("%s: old first position: %d, old second position: %d \n", __func__, oldFrs, oldSec);
-        PrintToLog("%s: new first position: %d, new second position: %d \n", __func__, first_p, second_p);
+        PrintToLog("%s: old first position: %d, new first position: %d \n", __func__, firstPoss, newFirstPoss);
+        PrintToLog("%s: old second position: %d, new second position: %d \n", __func__, secondPoss, newSecondPoss);
         PrintToLog("%s: Status_marker0: %s, Status_taker0: %s \n",__func__,Status_maker0, Status_taker0);
         PrintToLog("%s: amount_forsale: %d\n", __func__, amount_forsale);
     }
 
-    uint64_t amountTraded ,newPosMaker ,newPosTaker;
-
-    (amount_forsale < 0) ? amountTraded = static_cast<uint64_t>(-amount_forsale) : amountTraded = static_cast<uint64_t>(amount_forsale);
-
-    (first_p < 0) ? newPosMaker = static_cast<uint64_t>(-first_p) : newPosMaker = static_cast<uint64_t>(first_p);
-
-    (second_p < 0) ? newPosTaker = static_cast<uint64_t>(-second_p) : newPosTaker = static_cast<uint64_t>(second_p);
+    int64_t newPosMaker = 0;
+    int64_t newPosTaker = 0;
 
     if(msc_debug_instant_x_trade)
     {
         PrintToLog("%s: newPosMaker: %d\n", __func__, newPosMaker);
         PrintToLog("%s: newPosTaker: %d\n", __func__, newPosTaker);
-        PrintToLog("%s: amountTraded: %d\n", __func__, amountTraded);
     }
 
     /**
     * Adding LTC volume traded in contracts.
     *
     */
-    mastercore::ContractDex_ADD_LTCVolume(amount_forsale, property);
+    mastercore::ContractDex_ADD_LTCVolume(amount_forsale, contractId);
 
-    mastercore::ContInst_Fees(firstAddr, secondAddr, channelAddr, amountTraded, type, collateral);
+    mastercore::ContInst_Fees(firstAddr, secondAddr, channelAddr, amount_forsale, type, collateral);
 
     t_tradelistdb->recordMatchedTrade(txid,
            txid,
            firstAddr,
            secondAddr,
            price,
-           amountTraded,
-           amountTraded,
+           amount_forsale,
+           amount_forsale,
            block,
            block,
-           property,
+           contractId,
            "Matched",
            newPosMaker,
            0,
@@ -7817,12 +7765,12 @@ bool mastercore::Instant_x_Trade(const uint256& txid, uint8_t tradingAction, con
            "EmptyStr",
            "EmptyStr",
            "EmptyStr",
-           amountTraded,
+           amount_forsale,
            0,
            0,
            0,
-           amountTraded,
-           amountTraded);
+           amount_forsale,
+           amount_forsale);
 
     return true;
 }

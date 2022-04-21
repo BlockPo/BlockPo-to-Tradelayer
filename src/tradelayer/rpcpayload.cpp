@@ -873,7 +873,7 @@ UniValue tl_createpayload_contract_instant_trade(const JSONRPCRequest& request)
 
   // obtain parameters & info
   uint32_t contractId = ParsePropertyId(request.params[0]);
-  int64_t amount = ParseAmount(request.params[1], true);
+  int64_t amount = ParseAmountContract(request.params[1]);
   uint32_t blockheight_expiry = request.params[2].get_int();
   uint64_t price = ParseAmount(request.params[3],true);
   uint8_t trading_action = ParseContractDexAction(request.params[4]);
