@@ -653,7 +653,7 @@ extern std::set<std::string> vestingAddresses;
 //!Contract upnls
 extern std::map<std::string, int64_t> sum_upnls;
 
-//! Last unit price for token/BTC
+//! Last unit price for token/LTC
 extern std::map<uint32_t, int64_t> lastPrice;
 
 extern std::map<uint32_t, std::map<uint32_t, int64_t>> market_priceMap;
@@ -784,6 +784,8 @@ namespace mastercore
   void twapForLiquidation(uint32_t contractId, int blocks);
 
   int64_t getOracleTwap(uint32_t contractId, int nBlocks);
+
+  int64_t getContractTradesVWAP(uint32_t contractId, int nBlocks);
 
   // check for vesting
   bool sanityChecks(const std::string& sender, int& aBlock);

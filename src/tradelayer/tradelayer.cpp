@@ -4866,9 +4866,12 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
     }
 
     /** Node rewards **/
-    if (nHeight > params.MSC_NODE_REWARD_BLOCK)
-    {
+    if (nHeight > params.MSC_NODE_REWARD_BLOCK){
         nR.clearWinners();
+    }
+
+    if (nHeight > params.MSC_PEGGED_CURRENCY_BLOCK && nHeight % 24 == 0) {
+        addInterestPegged(nHeight);
     }
 
     // marginMain(pBlockIndex->nHeight);
@@ -7886,6 +7889,28 @@ int64_t mastercore::getOracleTwap(uint32_t contractId, int nBlocks)
          sum = ConvertTo64(aSum);
          if(msc_debug_oracle_twap) PrintToLog("%s(): sum: %d\n", __func__, sum);
      }
+
+     return sum;
+}
+
+
+int64_t mastercore::getContractTradesVWAP(uint32_t contractId, int nBlocks)
+{
+     int64_t sum = 0;
+     auto it = cdexlastprice.find(contractId);
+
+     if (it != cdexlastprice.end())
+     {
+         const auto& blockMap = it->second;
+         for(auto itt = blockMap.rbegin() ; itt != blockMap.rend(), nBlocks > 0; itt++){
+             const auto& v = itt->second;
+             sum += std::accumulate(v.begin(), v.end(), 0);
+             nBlocks--;
+         }
+
+     }
+
+     PrintToLog("%s(): sum: %d\n", __func__, sum);
 
      return sum;
 }

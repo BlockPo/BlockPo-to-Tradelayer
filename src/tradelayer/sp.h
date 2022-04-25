@@ -82,6 +82,7 @@ public:
 
         // for pegged currency
         uint32_t contract_associated;
+        uint32_t currency_associated;
 
         // For crowdsale properties:
         //   txid -> amount invested, crowdsale deadline, user issued tokens, issuer issued tokens
@@ -179,6 +180,8 @@ bool IsPropertyIdValid(uint32_t propertyId);
 bool isPropertyContract(uint32_t propertyId);
 
 bool getEntryFromName(const std::string& name, uint32_t& propertyId, CMPSPInfo::Entry& sp);
+
+int addInterestPegged(int nBlock);
 }
 
 #endif // TRADELAYER_SP_H

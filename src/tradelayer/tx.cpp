@@ -3653,11 +3653,9 @@ int CMPTransaction::logicMath_MetaDExCancel_ByPrice()
 int CMPTransaction::logicMath_CreatePeggedCurrency()
 {
     uint256 blockHash;
-    // uint32_t den;
     uint32_t notSize = 0;
     uint32_t npropertyId = 0;
-    int64_t amountNeeded;
-    int64_t contracts;
+    int64_t contracts = 0;
 
     {
         LOCK(cs_main);
@@ -3692,7 +3690,7 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
     }
 
     // checking collateral currency
-    int64_t nBalance = getMPbalance(sender, propertyId, BALANCE);
+    uint64_t nBalance = (uint64_t) getMPbalance(sender, propertyId, BALANCE);
     if (nBalance == 0) {
         PrintToLog("%s(): rejected: sender %s has insufficient collateral currency in balance %d \n",
              __func__,
@@ -3701,23 +3699,17 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
         return (PKT_ERROR_SEND -25);
     }
 
-    CDInfo::Entry sp;
+    CDInfo::Entry cd;
     {
         LOCK(cs_register);
 
-        if (!_my_cds->getCD(contractId, sp)) {
-            PrintToLog(" %s() : Property identifier %d does not exist\n",
+        if (!_my_cds->getCD(contractId, cd)) {
+            PrintToLog(" %s() : Contract identifier %d does not exist\n",
                 __func__,
                 contractId);
             return (PKT_ERROR_SEND -24);
 
-        // if(!sp.isContract()) {
-        //     PrintToLog(" %s() : Property related is not a contract\n",
-        //         __func__);
-        //     return (PKT_ERROR_CONTRACTDEX -21);
-        // }
-
-        } else if (sp.collateral_currency != propertyId) {
+        } else if (cd.collateral_currency != propertyId) {
             PrintToLog(" %s() : Future contract has not this collateral currency %d\n",
             __func__,
             propertyId);
@@ -3725,30 +3717,39 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
 
         }
 
-        notSize = static_cast<int64_t>(sp.notional_size);
-        // den = sp.denominator;
+        notSize = static_cast<int64_t>(cd.notional_size);
     }
 
-    const int64_t position = getMPbalance(sender, contractId, CONTRACT_BALANCE);
-    arith_uint256 rAmount = ConvertTo256(amount); // Alls needed
-    arith_uint256 Contracts = DivideAndRoundUp(rAmount * ConvertTo256(notSize), ConvertTo256(COIN));
-    amountNeeded = ConvertTo64(rAmount);
-    contracts = ConvertTo64(Contracts * ConvertTo256(COIN));
+    const int64_t position = getContractRecord(sender, contractId, CONTRACT_POSITION);
+    const arith_uint256 Contracts = ConvertTo256(amount) * ConvertTo256(notSize) / (ConvertTo256(COIN) * ConvertTo256(COIN));
+    contracts = ConvertTo64(Contracts);
 
-    if (nBalance < amountNeeded || position < contracts) {
+    PrintToLog("%s(): position: %d, contracts: %d, amount: %d, nBalance: %d, contractId: %d\n",__func__, position, contracts, amount, nBalance, contractId);
+
+    if (position >= 0 || nBalance < amount || abs(position) < contracts) {
         PrintToLog("%s(): rejected:Sender has not required short position on this contract or balance enough\n",__func__);
         return (PKT_ERROR_CONTRACTDEX -23);
     }
 
+
     {
         LOCK(cs_tally);
         uint32_t nextSPID = _my_sps->peekNextSPID();
-        for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++) {
+        for (uint32_t prop = 1; prop < nextSPID; prop++) {
             CMPSPInfo::Entry sp;
-            if (_my_sps->getSP(propertyId, sp)) {
+            if (_my_sps->getSP(prop, sp)) {
                 if (sp.prop_type == ALL_PROPERTY_TYPE_PEGGEDS){
-                    npropertyId = propertyId;
+                    // checking if there's a synthetic property created by this contract yet
+                    if (sp.contract_associated == contractId && sp.currency_associated == prop)
+                    {
+                        PrintToLog("%() Creating more currency (propertyId: %d, contract associated: %d, currency associated: %d)\n",__func__, npropertyId, sp.contract_associated, sp.currency_associated);
+                    } else {
+                        PrintToLog("%() Creating New synthetic currency (propertyId: %d, contract associated: %d, currency associated: %d)\n",__func__, npropertyId, sp.contract_associated, sp.currency_associated);
+                        npropertyId = prop;
+                    }
+
                     break;
+
                 }
             }
         }
@@ -3760,33 +3761,31 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
         CMPSPInfo::Entry newSP;
         newSP.issuer = sender;
         newSP.txid = txid;
-        newSP.prop_type = prop_type;
+        newSP.prop_type = ALL_PROPERTY_TYPE_PEGGEDS;
         newSP.subcategory.assign(subcategory);
         newSP.name.assign(name);
         newSP.fixed = true;
         newSP.manual = true;
         newSP.creation_block = blockHash;
         newSP.update_block = newSP.creation_block;
-        newSP.num_tokens = amountNeeded;
+        newSP.num_tokens = amount;
         newSP.contracts_needed = contracts;
         newSP.contract_associated = contractId;
-        // newSP.denominator = den;
-        // newSP.series = strprintf("Nº 1 - %d",(amountNeeded / COIN));
+        newSP.currency_associated = cd.collateral_currency; // we need to see the real currency associated to this syntetic
         npropertyId = _my_sps->putSP(newSP);
 
     } else {
         CMPSPInfo::Entry newSP;
         _my_sps->getSP(npropertyId, newSP);
-        // int64_t inf = (newSP.num_tokens) / COIN + 1 ;
-        newSP.num_tokens += ConvertTo64(rAmount);
-        // int64_t sup = (newSP.num_tokens) / COIN ;
-        // newSP.series = strprintf("Nº %d - %d",inf,sup);
+        newSP.num_tokens += amount;
         _my_sps->updateSP(npropertyId, newSP);
     }
 
     assert(npropertyId > 0);
     CMPSPInfo::Entry SP;
     _my_sps->getSP(npropertyId, SP);
+
+    // synthetic tokens update
     assert(update_tally_map(sender, npropertyId, amount, BALANCE));
     // t_tradelistdb->NotifyPeggedCurrency(txid, sender, npropertyId, amount,SP.series); //TODO: Watch this function!
 
@@ -3795,16 +3794,17 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
 
     if (msc_debug_create_pegged)
     {
-        PrintToLog("Pegged currency Id: %d\n",npropertyId);
+        PrintToLog("Pegged currency Id: %d\n", npropertyId);
+        PrintToLog("associated currency Id: %d\n", propertyId);
         PrintToLog("CREATED PEGGED PROPERTY id: %d admin: %s\n", npropertyId, sender);
     }
 
 
     //putting into reserve contracts and collateral currency
-    assert(update_tally_map(sender, contractId, -contracts, CONTRACT_BALANCE));
-    assert(update_tally_map(sender, contractId, contracts, CONTRACTDEX_RESERVE));
-    assert(update_tally_map(sender, propertyId, -amountNeeded, BALANCE));
-    assert(update_tally_map(sender, propertyId, amountNeeded, CONTRACTDEX_RESERVE));
+    assert(update_register_map(sender, contractId, contracts, CONTRACT_POSITION));
+    assert(update_register_map(sender, contractId, contracts, CONTRACT_RESERVE));
+    assert(update_tally_map(sender, propertyId, -amount, BALANCE));
+    assert(update_tally_map(sender, propertyId, amount, CONTRACTDEX_RESERVE));
 
     return 0;
 }
@@ -3820,6 +3820,9 @@ int CMPTransaction::logicMath_SendPeggedCurrency()
             block);
         return (PKT_ERROR_SP -22);
     }
+
+    // NOTE: we need to check if property is a synthetic/pegged currency here
+
 
     if (!IsPropertyIdValid(propertyId)) {
         PrintToLog("%s(): rejected: property %d does not exist\n", __func__, property);
@@ -3878,12 +3881,7 @@ int CMPTransaction::logicMath_RedemptionPegged()
         return (PKT_ERROR_SEND -24);
     }
 
-    int64_t negContracts = 0;
-    int64_t posContracts = 0;
     const int64_t nBalance = getMPbalance(sender, propertyId, BALANCE);
-    const int64_t position = getMPbalance(sender, contractId, CONTRACT_BALANCE);
-
-    (position > 0) ? posContracts = position : negContracts = position;
 
     if (nBalance < (int64_t) amount) {
         PrintToLog("%s(): rejected: sender %s has insufficient balance of pegged currency %d [%s < %s]\n",
@@ -3913,19 +3911,32 @@ int CMPTransaction::logicMath_RedemptionPegged()
         // sp.num_tokens -= amount;
     }
 
-    arith_uint256 conNeeded = ConvertTo256(amount) / ConvertTo256(notSize);
-    int64_t contractsNeeded = ConvertTo64(conNeeded);
+    const arith_uint256 conNeeded = ConvertTo256(amount) * ConvertTo256(notSize) / (ConvertTo256(COIN) * ConvertTo256(COIN));
+    const int64_t contractsNeeded = ConvertTo64(conNeeded);
 
-    if (contractsNeeded > 0 && amount > 0)
+    const int64_t position = getContractRecord(sender, contractId, CONTRACT_RESERVE);
+
+    PrintToLog("%s(): position reserved: %d, contractsNeeded: %d\n",__func__, position, contractsNeeded);
+
+
+    if (position < contractsNeeded) {
+        PrintToLog("%s(): rejected: sender %s has insufficient short position reserved\n",
+                __func__,
+                sender);
+        return (PKT_ERROR_SEND -26);
+    }
+
+    if (contractsNeeded != 0 && amount > 0)
     {
        // Delete the tokens
        assert(update_tally_map(sender, propertyId, -amount, BALANCE));
        // delete contracts in reserve
-       assert(update_tally_map(sender, contractId, -contractsNeeded, CONTRACTDEX_RESERVE));
-        // get back the collateral
-       assert(update_tally_map(sender, collateralId, -amount, CONTRACTDEX_RESERVE));
+       assert(update_register_map(sender, contractId, -contractsNeeded, CONTRACT_RESERVE));
+       // getting back short position
+       assert(update_register_map(sender, contractId, -contractsNeeded, CONTRACT_POSITION));
+       // getting back the collateral
        assert(update_tally_map(sender, collateralId, amount, BALANCE));
-       assert(update_tally_map(sender, contractId, -contractsNeeded, CONTRACT_BALANCE));
+
 
     } else {
         PrintToLog("amount redeemed must be equal at least to value of 1 future contract \n");

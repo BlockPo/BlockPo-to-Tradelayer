@@ -277,8 +277,8 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_getmax_peggedcurrency", 1, "arg1" },
     { "tl_sendissuance_pegged", 1, "arg1" },
     { "tl_sendissuance_pegged", 2, "arg2" },
-    { "tl_sendissuance_pegged", 4, "arg3" },
-    { "tl_sendissuance_pegged", 6, "arg5" },
+    { "tl_sendissuance_pegged", 4, "arg4" },
+    { "tl_sendissuance_pegged", 5, "arg5" },
     { "tl_send_pegged", 3, "arg3" },
     { "tl_senddexoffer", 1, "arg1" },
     { "tl_senddexoffer", 4, "arg4" },
@@ -304,8 +304,9 @@ static const CRPCConvertParam vRPCConvertParams[] =
     {"tl_sendcanceltradesbypair", 1, "arg1"},
     {"tl_sendcanceltradesbypair", 2, "arg2"},
 
-    {"tl_sendcanceltradesbyprice", 1, "arg1"},
-    {"tl_sendcanceltradesbyprice", 3, "arg3"},
+    {"tl_redemption_pegged ", 1, "arg1"},
+    {"tl_redemption_pegged ", 3, "arg3"},
+
 
     /* Trade Layer - data retrieval calls */
     { "tl_setautocommit", 0, "arg0" },

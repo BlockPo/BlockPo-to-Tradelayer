@@ -116,7 +116,8 @@ bool msc_debug_withdrawal_from_channel          = 0;
 bool msc_debug_populate_rpc_transaction_obj     = 0;
 bool msc_debug_fill_tx_input_cache              = 0;
 bool msc_debug_try_add_second                   = 0;
-bool msc_debug_liquidation_enginee              = 0;
+bool msc_debug_liquidation_enginee              = 1;
+bool msc_debug_interest_pegged                  = 1;
 
 /**
  * LogPrintf() has been broken a couple of times now

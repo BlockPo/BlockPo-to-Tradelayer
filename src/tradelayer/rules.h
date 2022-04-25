@@ -38,6 +38,7 @@ const uint16_t FEATURE_INTERESTRATESWAPS        = 24; //activates term native IR
 const uint16_t FEATURE_MINERFEECONTRACTS        = 25; //activates term native futures for on-chain miner fee averages
 const uint16_t FEATURE_MASSPAYMENT              = 26; //unencumbered version of sent-to-owners, can pay n units of property A to all holders of propery B (which can also be A)
 const uint16_t FEATURE_HEDGEDCURRENCY           = 27; //Enables 1x short positions against ALL to mint sLTC, and 1x shorts against sLTC or rLTC (if activated) to mint USDL, EURL, JPYL, CNYL
+const uint16_t FEATURE_PEGGED_CURRENCY          = 28; // Pegged Currency
 
 //This is the entire roadmap. If we missed anything, well, clearly we tried not to.
 
@@ -105,6 +106,7 @@ public:
 
     int MSC_VESTING_CREATION_BLOCK;
     int MSC_VESTING_BLOCK;
+    int MSC_PEGGED_CURRENCY_BLOCK;
     int MSC_KYC_BLOCK;
     int MSC_METADEX_BLOCK;
     int MSC_DEXSELL_BLOCK;

@@ -1199,7 +1199,16 @@ UniValue tl_list_natives(const JSONRPCRequest& request)
           const int64_t openInterest = getTotalLives(contractId);
           propertyObj.pushKV("open interest", FormatDivisibleMP(openInterest));
           auto it = cdexlastprice.find(contractId);
-          const int64_t& lastPrice = it->second;
+          int64_t lastPrice = 0;
+          if (it != cdexlastprice.end()){
+              const auto& blockMap = it->second;
+              const auto& itt = std::prev(blockMap.end());
+              if (itt != blockMap.end()) {
+                 const auto& prices = itt->second;
+                 const auto& ix = std::prev(prices.end());
+                 lastPrice = *ix;
+              }
+          }
           propertyObj.pushKV("last traded price", FormatDivisibleMP(lastPrice));
           const int64_t fundBalance = 0; // NOTE: we need to write this after fundbalance logic is done
           propertyObj.pushKV("insurance fund balance", fundBalance);
@@ -1256,7 +1265,16 @@ UniValue tl_list_oracles(const JSONRPCRequest& request)
           const int64_t openInterest = getTotalLives(contractId);
           propertyObj.pushKV("open interest", FormatDivisibleMP(openInterest));
           auto it = cdexlastprice.find(contractId);
-          const int64_t& lastPrice = it->second;
+          int64_t lastPrice = 0;
+          if (it != cdexlastprice.end()){
+              const auto& blockMap = it->second;
+              const auto& itt = std::prev(blockMap.end());
+              if (itt != blockMap.end()) {
+                 const auto& prices = itt->second;
+                 const auto& ix = std::prev(prices.end());
+                 lastPrice = *ix;
+              }
+          }
           propertyObj.pushKV("last traded price", FormatDivisibleMP(lastPrice));
           const int64_t fundBalance = 0; // NOTE: we need to write this after fundbalance logic is done
           propertyObj.pushKV("insurance fund balance", fundBalance);
@@ -3153,7 +3171,16 @@ UniValue tl_getcontract(const JSONRPCRequest& request)
     ContractToJSON(cd, response); // name, data, url,
     KYCToJSON(cd, response);
     auto it = cdexlastprice.find(contractId);
-    const int64_t& lastPrice = it->second;
+    int64_t lastPrice = 0;
+    if (it != cdexlastprice.end()){
+        const auto& blockMap = it->second;
+        const auto& itt = std::prev(blockMap.end());
+        if (itt != blockMap.end()) {
+           const auto& prices = itt->second;
+           const auto& ix = std::prev(prices.end());
+           lastPrice = *ix;
+        }
+    }
     response.pushKV("last traded price", FormatDivisibleMP(lastPrice));
     const int64_t fundBalance = 0; // NOTE: we need to write this after fundbalance logic
     response.pushKV("insurance fund balance", fundBalance);
