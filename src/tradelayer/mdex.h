@@ -240,7 +240,7 @@ namespace mastercore
   cd_Set *get_IndexesCd(cd_PricesMap *p, uint64_t price);
 
   void LoopBiDirectional(cd_PricesMap* const ppriceMap, uint8_t trdAction, MatchReturnType &NewReturn, CMPContractDex* const pnew, const uint32_t propertyForSale);
-  void x_TradeBidirectional(typename cd_PricesMap::iterator &it_fwdPrices, typename cd_PricesMap::reverse_iterator &it_bwdPrices, uint8_t trdAction, CMPContractDex* const pnew, const uint64_t sellerPrice, const uint32_t propertyForSale, MatchReturnType &NewReturn);
+  void x_TradeBidirectional(cd_Set& pofferSet, uint8_t trdAction, CMPContractDex* const pnew, const uint64_t sellerPrice, const uint32_t propertyForSale, MatchReturnType &NewReturn);
   int ContractDex_ADD(const std::string& sender_addr, uint32_t prop, int64_t amount, int block, const uint256& txid, unsigned int idx, uint64_t effective_price, uint8_t trading_action, int64_t amountToReserve);
   bool ContractDex_INSERT(const CMPContractDex &objContractDex);
   void ContractDex_debug_print(bool bShowPriceLevel, bool bDisplay);

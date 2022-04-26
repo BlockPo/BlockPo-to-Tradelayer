@@ -79,14 +79,14 @@ bool InsuranceFund::UpdateFees(uint32_t pid, int64_t amount)
 {
     auto p = g_fees->spot_fees.find(pid);
     if (p == g_fees->spot_fees.end()) {
-        PrintToLog("%s(): ERROR: propertyId: <%d> not found!\n", __func__, pid);
+        LOG("ERROR: propertyId=<%d> not found!\n", pid);
         return false;
     }
 
     auto& fees_available = p->second;
 
     if (isOverflow(fees_available, amount)) {
-        PrintToLog("%s(): ERROR: arithmetic overflow [%d + %d]\n", __func__, fees_available, amount);
+        LOG("ERROR: arithmetic overflow [%d + %d]\n", fees_available, amount);
         return false;
     }
 
@@ -128,11 +128,11 @@ std::tuple<bool, int64_t> InsuranceFund::PayOut(uint32_t pid, int64_t amount)
     }
 
     if (fees_total <= 0) {
-        PrintToLog("%s(): insufficient funds, propertyId=%d! (fees amount available: %d, amount needed: %d)\n", __func__, fees_total, amount);
+        LOG("Insufficient funds, propertyId=<%d>! (fees amount available: %d, amount needed: %d)\n", pid, fees_total, amount);
         return std::make_tuple(false, 0);
     }
     
-    PrintToLog("%s(): partial payout, propertyId=%d! (fees amount available: %d, amount needed: %d)\n", __func__, fees_total, amount);
+    LOG("Partial payout, propertyId=<%d> (fees amount available: %d, amount needed: %d)\n", pid, fees_total, amount);
     
     return p1->second = p2->second = p3->second = 0, std::make_tuple(false, amount);
 }
@@ -180,7 +180,7 @@ void InsuranceFund::UpdateFundOrders(int block)
     auto n = n2 - n1;
 
     if (n) {
-        PrintToLog("%s(): placing limit order to trade %d ALL contracts\n", __func__, n);
+        LOG("Placing limit order to trade %d ALL contracts\n", n);
         
         // buy if negative (to reduce position), and sell otherwise
         dex_sumbit_lorder(block, CONTRACT_ID, n);
@@ -189,7 +189,7 @@ void InsuranceFund::UpdateFundOrders(int block)
 
 void InsuranceFund::CoverContracts(int block, uint32_t amount)
 {
-    PrintToLog("%s(): placing limit order to sell %d ALL contracts at price %d\n", __func__, amount);
+    LOG("Placing limit order to sell %d ALL contracts\n", amount);
 
     dex_sumbit_lorder(block, CONTRACT_ID, amount);
 }
