@@ -3792,6 +3792,72 @@ UniValue tl_getchannel_historyforpair(const JSONRPCRequest& request)
     return response;
 }
 
+UniValue tl_getinsurancepayouts(const JSONRPCRequest& request)
+{
+    if (request.fHelp)
+        throw runtime_error(
+            "tl_getinsurancepayouts \n"
+
+            "\nReturns insurance fund payouts.\n"
+
+            "\nResult:\n"
+            "{\n"
+            "  \"amount\" : \"n.nnnnnnnn\",  (number) the payouts\n"
+            "}\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("tl_getinsurancepayouts", "1")
+            + HelpExampleRpc("tl_getinsurancepayouts", "2")
+        );
+
+    UniValue balanceObj(UniValue::VOBJ);
+    return balanceObj;
+}
+
+UniValue tl_getinsuranceordersnapshot(const JSONRPCRequest& request)
+{
+    if (request.fHelp)
+        throw runtime_error(
+            "tl_getinsuranceordersnapshot \n"
+
+            "\nReturns insurance fund order snapshot.\n"
+
+            "\nResult:\n"
+            "{\n"
+            "  \"amount\" : \"n.nnnnnnnn\",  (number) the payouts\n"
+            "}\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("tl_getinsuranceordersnapshot", "1")
+            + HelpExampleRpc("tl_getinsuranceordersnapshot", "2")
+        );
+
+    UniValue balanceObj(UniValue::VOBJ);
+    return balanceObj;
+}
+
+UniValue tl_getsocializations(const JSONRPCRequest& request)
+{
+    if (request.fHelp)
+        throw runtime_error(
+            "tl_getsocializations \n"
+
+            "\nReturns socialization payouts.\n"
+
+            "\nResult:\n"
+            "{\n"
+            "  \"amount\" : \"n.nnnnnnnn\",  (number) the payouts\n"
+            "}\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("tl_getsocializations", "1")
+            + HelpExampleRpc("tl_getsocializations", "2")
+        );
+
+    UniValue balanceObj(UniValue::VOBJ);
+    return balanceObj;
+}
+
 static const CRPCCommand commands[] =
 { //  category                             name                            actor (function)               okSafeMode
   //  ------------------------------------ ------------------------------- ------------------------------ ----------

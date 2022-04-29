@@ -8345,9 +8345,7 @@ void blocksettlement::makeSettlement()
                   lossSocialization(contractId, -difference);
               }
 
-              //update_Insurance(cd.collateral_currency, loss);
-              g_fund->UpdateFees(cd.collateral_currency, loss);
-
+              g_fund->AccrueFees(cd.collateral_currency, loss);
           }
      }
 }

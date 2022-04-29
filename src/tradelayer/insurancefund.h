@@ -33,8 +33,11 @@ public:
     //! Given a property id returns grand total
     int64_t GetFeesTotal(uint32_t pid) const;
 
+    //! 
+    bool IsFundAddress(std::string address) const;
+
     //! Given a property id and a loss value, payout what is available
-    bool UpdateFees(uint32_t pid, int64_t amount);
+    bool AccrueFees(uint32_t pid, int64_t amount);
 
     //! Return true if there was enough in the fund balance or 
     //! false if it was a partial coverage or empty fund along with

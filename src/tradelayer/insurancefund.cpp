@@ -75,7 +75,12 @@ FeesCache& InsuranceFund::GetFees() const
     return *g_fees;
 }
 
-bool InsuranceFund::UpdateFees(uint32_t pid, int64_t amount)
+bool InsuranceFund::IsFundAddress(std::string address) const
+{
+    return FUND_ADDRESS == address; 
+}
+
+bool InsuranceFund::AccrueFees(uint32_t pid, int64_t amount)
 {
     auto p = g_fees->spot_fees.find(pid);
     if (p == g_fees->spot_fees.end()) {
@@ -183,7 +188,7 @@ void InsuranceFund::UpdateFundOrders(int block)
         LOG("Placing limit order to trade %d ALL contracts\n", n);
         
         // buy if negative (to reduce position), and sell otherwise
-        dex_sumbit_lorder(block, CONTRACT_ID, n);
+        //dex_sumbit_lorder(block, CONTRACT_ID, n);
     }
 }
 
@@ -191,5 +196,5 @@ void InsuranceFund::CoverContracts(int block, uint32_t amount)
 {
     LOG("Placing limit order to sell %d ALL contracts\n", amount);
 
-    dex_sumbit_lorder(block, CONTRACT_ID, amount);
+    //dex_sumbit_lorder(block, CONTRACT_ID, amount);
 }
