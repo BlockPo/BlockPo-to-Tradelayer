@@ -2007,7 +2007,7 @@ bool CMPTransaction::interpret_Contract_Instant()
   } else return false;
 
   if (!vecContractId.empty()) {
-      property = DecompressInteger(vecContractId);
+      contractId = DecompressInteger(vecContractId);
   } else return false;
 
   if (!vecAmount.empty()) {
@@ -2035,8 +2035,8 @@ bool CMPTransaction::interpret_Contract_Instant()
   {
       PrintToLog("\t version: %d\n", version);
       PrintToLog("\t messageType: %d\n",type);
-      PrintToLog("\t property: %d\n", property);
-      PrintToLog("\t amount : %d\n", amount_forsale);
+      PrintToLog("\t contractId: %d\n", contractId);
+      PrintToLog("\t amount : %d\n", instant_amount);
       PrintToLog("\t blockfor_expiry : %d\n", block_forexpiry);
       PrintToLog("\t price : %d\n", price);
       PrintToLog("\t trading action : %d\n", itrading_action);
@@ -3658,11 +3658,9 @@ int CMPTransaction::logicMath_MetaDExCancel_ByPrice()
 int CMPTransaction::logicMath_CreatePeggedCurrency()
 {
     uint256 blockHash;
-    // uint32_t den;
     uint32_t notSize = 0;
     uint32_t npropertyId = 0;
-    int64_t amountNeeded;
-    int64_t contracts;
+    int64_t contracts = 0;
 
     {
         LOCK(cs_main);
@@ -3697,7 +3695,7 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
     }
 
     // checking collateral currency
-    int64_t nBalance = getMPbalance(sender, propertyId, BALANCE);
+    uint64_t nBalance = (uint64_t) getMPbalance(sender, propertyId, BALANCE);
     if (nBalance == 0) {
         PrintToLog("%s(): rejected: sender %s has insufficient collateral currency in balance %d \n",
              __func__,
@@ -3706,23 +3704,17 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
         return (PKT_ERROR_SEND -25);
     }
 
-    CDInfo::Entry sp;
+    CDInfo::Entry cd;
     {
         LOCK(cs_register);
 
-        if (!_my_cds->getCD(contractId, sp)) {
-            PrintToLog(" %s() : Property identifier %d does not exist\n",
+        if (!_my_cds->getCD(contractId, cd)) {
+            PrintToLog(" %s() : Contract identifier %d does not exist\n",
                 __func__,
                 contractId);
             return (PKT_ERROR_SEND -24);
 
-        // if(!sp.isContract()) {
-        //     PrintToLog(" %s() : Property related is not a contract\n",
-        //         __func__);
-        //     return (PKT_ERROR_CONTRACTDEX -21);
-        // }
-
-        } else if (sp.collateral_currency != propertyId) {
+        } else if (cd.collateral_currency != propertyId) {
             PrintToLog(" %s() : Future contract has not this collateral currency %d\n",
             __func__,
             propertyId);
@@ -3730,30 +3722,39 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
 
         }
 
-        notSize = static_cast<int64_t>(sp.notional_size);
-        // den = sp.denominator;
+        notSize = static_cast<int64_t>(cd.notional_size);
     }
 
-    const int64_t position = getMPbalance(sender, contractId, CONTRACT_BALANCE);
-    arith_uint256 rAmount = ConvertTo256(amount); // Alls needed
-    arith_uint256 Contracts = DivideAndRoundUp(rAmount * ConvertTo256(notSize), ConvertTo256(COIN));
-    amountNeeded = ConvertTo64(rAmount);
-    contracts = ConvertTo64(Contracts * ConvertTo256(COIN));
+    const int64_t position = getContractRecord(sender, contractId, CONTRACT_POSITION);
+    const arith_uint256 Contracts = ConvertTo256(amount) * ConvertTo256(notSize) / (ConvertTo256(COIN) * ConvertTo256(COIN));
+    contracts = ConvertTo64(Contracts);
 
-    if (nBalance < amountNeeded || position < contracts) {
+    PrintToLog("%s(): position: %d, contracts: %d, amount: %d, nBalance: %d, contractId: %d\n",__func__, position, contracts, amount, nBalance, contractId);
+
+    if (position >= 0 || nBalance < amount || abs(position) < contracts) {
         PrintToLog("%s(): rejected:Sender has not required short position on this contract or balance enough\n",__func__);
         return (PKT_ERROR_CONTRACTDEX -23);
     }
 
+
     {
         LOCK(cs_tally);
         uint32_t nextSPID = _my_sps->peekNextSPID();
-        for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++) {
+        for (uint32_t prop = 1; prop < nextSPID; prop++) {
             CMPSPInfo::Entry sp;
-            if (_my_sps->getSP(propertyId, sp)) {
+            if (_my_sps->getSP(prop, sp)) {
                 if (sp.prop_type == ALL_PROPERTY_TYPE_PEGGEDS){
-                    npropertyId = propertyId;
+                    // checking if there's a synthetic property created by this contract yet
+                    if (sp.contract_associated == contractId && sp.currency_associated == prop)
+                    {
+                        PrintToLog("%() Creating more currency (propertyId: %d, contract associated: %d, currency associated: %d)\n",__func__, npropertyId, sp.contract_associated, sp.currency_associated);
+                    } else {
+                        PrintToLog("%() Creating New synthetic currency (propertyId: %d, contract associated: %d, currency associated: %d)\n",__func__, npropertyId, sp.contract_associated, sp.currency_associated);
+                        npropertyId = prop;
+                    }
+
                     break;
+
                 }
             }
         }
@@ -3765,33 +3766,31 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
         CMPSPInfo::Entry newSP;
         newSP.issuer = sender;
         newSP.txid = txid;
-        newSP.prop_type = prop_type;
+        newSP.prop_type = ALL_PROPERTY_TYPE_PEGGEDS;
         newSP.subcategory.assign(subcategory);
         newSP.name.assign(name);
         newSP.fixed = true;
         newSP.manual = true;
         newSP.creation_block = blockHash;
         newSP.update_block = newSP.creation_block;
-        newSP.num_tokens = amountNeeded;
+        newSP.num_tokens = amount;
         newSP.contracts_needed = contracts;
         newSP.contract_associated = contractId;
-        // newSP.denominator = den;
-        // newSP.series = strprintf("Nº 1 - %d",(amountNeeded / COIN));
+        newSP.currency_associated = cd.collateral_currency; // we need to see the real currency associated to this syntetic
         npropertyId = _my_sps->putSP(newSP);
 
     } else {
         CMPSPInfo::Entry newSP;
         _my_sps->getSP(npropertyId, newSP);
-        // int64_t inf = (newSP.num_tokens) / COIN + 1 ;
-        newSP.num_tokens += ConvertTo64(rAmount);
-        // int64_t sup = (newSP.num_tokens) / COIN ;
-        // newSP.series = strprintf("Nº %d - %d",inf,sup);
+        newSP.num_tokens += amount;
         _my_sps->updateSP(npropertyId, newSP);
     }
 
     assert(npropertyId > 0);
     CMPSPInfo::Entry SP;
     _my_sps->getSP(npropertyId, SP);
+
+    // synthetic tokens update
     assert(update_tally_map(sender, npropertyId, amount, BALANCE));
     // t_tradelistdb->NotifyPeggedCurrency(txid, sender, npropertyId, amount,SP.series); //TODO: Watch this function!
 
@@ -3800,16 +3799,17 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
 
     if (msc_debug_create_pegged)
     {
-        PrintToLog("Pegged currency Id: %d\n",npropertyId);
+        PrintToLog("Pegged currency Id: %d\n", npropertyId);
+        PrintToLog("associated currency Id: %d\n", propertyId);
         PrintToLog("CREATED PEGGED PROPERTY id: %d admin: %s\n", npropertyId, sender);
     }
 
 
     //putting into reserve contracts and collateral currency
-    assert(update_tally_map(sender, contractId, -contracts, CONTRACT_BALANCE));
-    assert(update_tally_map(sender, contractId, contracts, CONTRACTDEX_RESERVE));
-    assert(update_tally_map(sender, propertyId, -amountNeeded, BALANCE));
-    assert(update_tally_map(sender, propertyId, amountNeeded, CONTRACTDEX_RESERVE));
+    assert(update_register_map(sender, contractId, contracts, CONTRACT_POSITION));
+    assert(update_register_map(sender, contractId, contracts, CONTRACT_RESERVE));
+    assert(update_tally_map(sender, propertyId, -amount, BALANCE));
+    assert(update_tally_map(sender, propertyId, amount, CONTRACTDEX_RESERVE));
 
     return 0;
 }
@@ -3825,6 +3825,9 @@ int CMPTransaction::logicMath_SendPeggedCurrency()
             block);
         return (PKT_ERROR_SP -22);
     }
+
+    // NOTE: we need to check if property is a synthetic/pegged currency here
+
 
     if (!IsPropertyIdValid(propertyId)) {
         PrintToLog("%s(): rejected: property %d does not exist\n", __func__, property);
@@ -3883,12 +3886,7 @@ int CMPTransaction::logicMath_RedemptionPegged()
         return (PKT_ERROR_SEND -24);
     }
 
-    int64_t negContracts = 0;
-    int64_t posContracts = 0;
     const int64_t nBalance = getMPbalance(sender, propertyId, BALANCE);
-    const int64_t position = getMPbalance(sender, contractId, CONTRACT_BALANCE);
-
-    (position > 0) ? posContracts = position : negContracts = position;
 
     if (nBalance < (int64_t) amount) {
         PrintToLog("%s(): rejected: sender %s has insufficient balance of pegged currency %d [%s < %s]\n",
@@ -3918,19 +3916,32 @@ int CMPTransaction::logicMath_RedemptionPegged()
         // sp.num_tokens -= amount;
     }
 
-    arith_uint256 conNeeded = ConvertTo256(amount) / ConvertTo256(notSize);
-    int64_t contractsNeeded = ConvertTo64(conNeeded);
+    const arith_uint256 conNeeded = ConvertTo256(amount) * ConvertTo256(notSize) / (ConvertTo256(COIN) * ConvertTo256(COIN));
+    const int64_t contractsNeeded = ConvertTo64(conNeeded);
 
-    if (contractsNeeded > 0 && amount > 0)
+    const int64_t position = getContractRecord(sender, contractId, CONTRACT_RESERVE);
+
+    PrintToLog("%s(): position reserved: %d, contractsNeeded: %d\n",__func__, position, contractsNeeded);
+
+
+    if (position < contractsNeeded) {
+        PrintToLog("%s(): rejected: sender %s has insufficient short position reserved\n",
+                __func__,
+                sender);
+        return (PKT_ERROR_SEND -26);
+    }
+
+    if (contractsNeeded != 0 && amount > 0)
     {
        // Delete the tokens
        assert(update_tally_map(sender, propertyId, -amount, BALANCE));
        // delete contracts in reserve
-       assert(update_tally_map(sender, contractId, -contractsNeeded, CONTRACTDEX_RESERVE));
-        // get back the collateral
-       assert(update_tally_map(sender, collateralId, -amount, CONTRACTDEX_RESERVE));
+       assert(update_register_map(sender, contractId, -contractsNeeded, CONTRACT_RESERVE));
+       // getting back short position
+       assert(update_register_map(sender, contractId, -contractsNeeded, CONTRACT_POSITION));
+       // getting back the collateral
        assert(update_tally_map(sender, collateralId, amount, BALANCE));
-       assert(update_tally_map(sender, contractId, -contractsNeeded, CONTRACT_BALANCE));
+
 
     } else {
         PrintToLog("amount redeemed must be equal at least to value of 1 future contract \n");
@@ -4787,26 +4798,15 @@ int CMPTransaction::logicMath_Contract_Instant()
     int rc = 0;
 
     if (!IsTransactionTypeAllowed(block, type, version)) {
-        PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+        PrintToLog("%s(): rejected: type %d or version %d not permitted at block %d\n",
             __func__,
             type,
             version,
-            property,
             block);
         return (PKT_ERROR_SP -22);
     }
 
-    if (!IsPropertyIdValid(property))
-    {
-        PrintToLog("%s(): rejected: property for sale %d does not exist\n", __func__, property);
-        return (PKT_ERROR_CHANNELS -13);
-    }
-
-    if (!IsPropertyIdValid(desired_property))
-    {
-        PrintToLog("%s(): rejected: desired property %d does not exist\n", __func__, desired_property);
-        return (PKT_ERROR_CHANNELS -14);
-    }
+    // PrintToLog("%s(): SENDER (multisig address): %s, SPECIAL REF (first address): %s,  RECEIVER (second address): %s\n",__func__, sender, special, receiver);
 
     Channel chn;
     auto it = channels_Map.find(sender);
@@ -4821,68 +4821,66 @@ int CMPTransaction::logicMath_Contract_Instant()
     }
 
     CDInfo::Entry sp;
-    if (!_my_cds->getCD(property, sp))
+    if (!_my_cds->getCD(contractId, sp)) {
+        PrintToLog("%s(): rejected: contractId doesn't exist (contractId: %d)\n", __func__, contractId);
         return (PKT_ERROR_CHANNELS -13);
-
+    }
 
     if (block > sp.init_block + static_cast<int>(sp.blocks_until_expiration) || block < sp.init_block)
     {
-         int initblock = sp.init_block ;
-         int deadline = initblock + static_cast<int>(sp.blocks_until_expiration);
+         const int& initblock = sp.init_block;
+         const int deadline = initblock + static_cast<int>(sp.blocks_until_expiration);
          PrintToLog("\nTrade out of deadline!!: actual block: %d, deadline: %d\n", initblock, deadline);
          return (PKT_ERROR_CHANNELS -16);
     }
 
     int kyc_id;
 
-    if(!t_tradelistdb->checkAttestationReg(sender,kyc_id))
+    if(!t_tradelistdb->checkAttestationReg(chn.getFirst(),kyc_id))
     {
         PrintToLog("%s(): rejected: kyc ckeck failed\n", __func__);
         return (PKT_ERROR_KYC -10);
     }
 
-    if(!t_tradelistdb->kycContractMatch(property,kyc_id))
+    if(!t_tradelistdb->kycContractMatch(contractId, kyc_id))
     {
-       PrintToLog("%s(): rejected: contract %d can't be traded with this kyc\n", __func__, property);
+       PrintToLog("%s(): rejected: contract %d can't be traded with this kyc\n", __func__, contractId);
        return (PKT_ERROR_KYC -20);
     }
 
     const int64_t marginRe = static_cast<int64_t>(sp.margin_requirement);
-    const int nBalance = chn.getRemaining(sender, sp.collateral_currency);
-    arith_uint256 amountTR = (ConvertTo256(instant_amount)*ConvertTo256(marginRe))/ConvertTo256(ileverage);
-    int64_t amountToReserve = ConvertTo64(amountTR);
+    const arith_uint256 amountTR = (ConvertTo256(instant_amount) * ConvertTo256(marginRe)) / (ConvertTo256(ileverage));
+    const int64_t amountToReserve = ConvertTo64(amountTR);
 
-    if(msc_debug_contract_instant_trade) PrintToLog("%s: AmountToReserve: %d, channel Balance: %d\n", __func__, amountToReserve, nBalance);
+    if(msc_debug_contract_instant_trade) PrintToLog("%s: AmountToReserve: %d\n", __func__, amountToReserve);
 
     if(msc_debug_contract_instant_trade) PrintToLog("%s: sender: %s, channel Address: %s\n", __func__, sender, chn.getMultisig());
 
     if (amountToReserve > 0)
     {
-        assert(chn.updateChannelBal(sender, sp.collateral_currency, -amountToReserve));
-        assert(update_tally_map(chn.getFirst(), sp.collateral_currency, ConvertTo64(amountTR), CONTRACTDEX_RESERVE));
-        assert(update_tally_map(chn.getSecond(), sp.collateral_currency, ConvertTo64(amountTR), CONTRACTDEX_RESERVE));
+
+        if(!chn.updateChannelBal(chn.getFirst(), sp.collateral_currency, -amountToReserve)){
+            if (msc_debug_contract_instant_trade) PrintToLog("%s: first Address: %s\n, has not enough collateral", __func__, chn.getFirst());
+            return 0;
+        }
+
+        if(!chn.updateChannelBal(chn.getSecond(), sp.collateral_currency, -amountToReserve)){
+            if (msc_debug_contract_instant_trade) PrintToLog("%s: second Address: %s\n, has not enough collateral", __func__, chn.getSecond());
+            return 0;
+        }
+
+        assert(update_tally_map(chn.getFirst(), sp.collateral_currency, amountToReserve, CONTRACTDEX_RESERVE));
+        if (msc_debug_contract_instant_trade) PrintToLog("%s(): first address reserve done\n", __func__);
+        assert(update_tally_map(chn.getSecond(), sp.collateral_currency, amountToReserve, CONTRACTDEX_RESERVE));
+        if (msc_debug_contract_instant_trade) PrintToLog("%s(): second address reserve done\n", __func__);
+
+        mastercore::Instant_x_Trade(txid, itrading_action, chn.getMultisig(), chn.getFirst(), chn.getSecond(), contractId, instant_amount, price, sp.collateral_currency, sp.prop_type, block, tx_idx);
+
+        // t_tradelistdb->recordNewInstContTrade(txid, receiver, sender, propertyId, amount_commited, price, block, tx_idx);
+
+        if (msc_debug_contract_instant_trade)PrintToLog("%s(): End of Logic Instant Contract Trade\n\n",__func__);
+
     }
-
-
-    /*********************************************/
-    /**Logic for Node Reward**/
-
-    // const CConsensusParams &params = ConsensusParams();
-    // int BlockInit = params.MSC_NODE_REWARD;
-    // int nBlockNow = GetHeight();
-    //
-    // BlockClass NodeRewardObj(BlockInit, nBlockNow);
-    // NodeRewardObj.SendNodeReward(sender);
-
-    /********************************************************/
-    // updating last exchange block
-    // assert(chn.updateLastExBlock(block));
-
-    mastercore::Instant_x_Trade(txid, itrading_action, chn.getMultisig(), chn.getFirst(), chn.getSecond(), property, instant_amount, price, sp.collateral_currency, sp.prop_type, block, tx_idx);
-
-    t_tradelistdb->recordNewInstContTrade(txid, receiver, sender, propertyId, amount_commited, price, block, tx_idx);
-
-    if (msc_debug_contract_instant_trade)PrintToLog("%s(): End of Logic Instant Contract Trade\n\n",__func__);
 
 
     return rc;

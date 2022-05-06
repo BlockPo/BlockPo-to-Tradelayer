@@ -21,6 +21,7 @@ enum RecordType {
   UPNL = 3,
   MARGIN = 4,
   LEVERAGE = 5,
+  CONTRACT_RESERVE = 6, // for synthetic/pegged currency
   RECORD_TYPE_COUNT
 };
 

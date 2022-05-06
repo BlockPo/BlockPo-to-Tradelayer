@@ -596,45 +596,83 @@ bool mastercore::getEntryFromName(const std::string& name, uint32_t& propertyId,
     return false;
 }
 
-// int mastercore::addInterestPegged(int nBlockPrev, const CBlockIndex* pBlockIndex)
-// {
-//     allPrice = 888;
-//     for (std::unordered_map<std::string, CMPTally>::iterator it = mp_tally_map.begin(); it != mp_tally_map.end(); ++it) {
-//             uint32_t id = 0;
-//             std::string address = it->first;
-//             (it->second).init();
-//
-//             // searching for pegged currency
-//             while (0 != (id = (it->second).next())) {
-//                 CMPSPInfo::Entry newSp;
-//                 if (!_my_sps->getSP(id, newSp) || newSp.prop_type != ALL_PROPERTY_TYPE_PEGGEDS) {
-//                     continue;
-//                 }
-//
-//                 // checking for deadline block
-//                 CMPSPInfo::Entry spp;
-//                 _my_sps->getSP(newSp.contract_associated, spp);
-//                 int actualBlock = static_cast<int>(pBlockIndex->nHeight);
-//                 int deadline = static_cast<int>(spp.blocks_until_expiration) + spp.init_block;
-//                 if (deadline != actualBlock) { continue; }
-//
-//                 int64_t diff = priceIndex - nMarketPrice;
-//                 // int64_t tokens = static_cast<int64_t>(newSp.num_tokens);
-//                 // arith_uint256 num_tokens = ConvertTo256(tokens) / ConvertTo256(factorE);
-//                 arith_uint256 interest = ConvertTo256(diff) / ConvertTo256(nMarketPrice);
-//
-//                 //adding interest to pegged
-//                 int64_t nPegged = getMPbalance(address, id, BALANCE);
-//                 arith_uint256 all = ConvertTo256(nPegged) * interest / ConvertTo256(allPrice);
-//                 int64_t intAll = ConvertTo64(all);
-//                 assert(update_tally_map(address, id, intAll, BALANCE));
-//
-//             }
-//
-//         }
-//
-//     return 1;
-// }
+int mastercore::addInterestPegged(int nBlock)
+{
+    int64_t priceIndex = 0;
+    int64_t nMarketPrice = 0;
+
+    for (std::unordered_map<std::string, CMPTally>::iterator it = mp_tally_map.begin(); it != mp_tally_map.end(); ++it) {
+            uint32_t id = 0;
+            std::string address = it->first;
+            (it->second).init();
+
+            // searching for pegged currency
+            while (0 != (id = (it->second).next())) {
+                CMPSPInfo::Entry newSp;
+                if (!_my_sps->getSP(id, newSp) || newSp.prop_type != ALL_PROPERTY_TYPE_PEGGEDS) {
+                    continue;
+                }
+
+                // checking for deadline block
+                CDInfo::Entry cd;
+                _my_cds->getCD(newSp.contract_associated, cd);
+
+                const int deadline = cd.blocks_until_expiration + cd.init_block;
+                if (deadline != nBlock) { continue; }
+
+                // natives or oracles?
+                if(cd.isOracle()) {
+                    priceIndex = getOracleTwap(newSp.contract_associated, 24);
+                    nMarketPrice = getContractTradesVWAP(newSp.contract_associated, 24);
+                } else {
+                    // we need to include natives here
+                }
+
+                const int64_t diff = priceIndex - nMarketPrice;
+                arith_uint256 interest = ConvertTo256(diff) / ConvertTo256(nMarketPrice);
+
+                if(msc_debug_interest_pegged) {
+                    PrintToLog("%s(): diff: %d, priceIndex: %d, nMarketPrice: %d, diff: %d, interest: %d\n",__func__, diff, priceIndex, nMarketPrice, diff, ConvertTo64(interest));
+                }
+
+                //price of ALL expresed in id property
+                int64_t allPrice = 0;
+                auto it = market_priceMap.find(ALL);
+                if (it != market_priceMap.end())
+                {
+                    const auto &auxMap = it->second;
+                    auto itt = auxMap.find(id);
+                    if (itt != auxMap.end()){
+                       allPrice = itt->second;
+                    }
+
+                }
+
+                //adding interest to pegged
+                const int64_t nPegged = getMPbalance(address, id, BALANCE);
+
+
+
+                if (allPrice > 0)
+                {
+                    const arith_uint256 all = (ConvertTo256(nPegged) * interest) / ConvertTo256(allPrice);
+                    const int64_t intAll = ConvertTo64(all);
+
+                    if(msc_debug_interest_pegged) {
+                        PrintToLog("%s(): allPrice: %d, nPegged: %d, intAll: %d\n",__func__, allPrice, nPegged, intAll);
+                    }
+
+                    // updating pegged currency interest (id: pegged currency id)
+                    assert(update_tally_map(address, id, intAll, BALANCE));
+                }
+
+
+            }
+
+        }
+
+    return 1;
+}
 
 std::string mastercore::strPropertyType(uint16_t propertyType)
 {

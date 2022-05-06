@@ -47,7 +47,7 @@ md_PropertiesMap mastercore::metadex;
 //! Global map for  tokens volume
 std::map<int, std::map<uint32_t,int64_t>> mastercore::metavolume;
 //! Global map for last contract price
-std::map<uint32_t,int64_t> mastercore::cdexlastprice;
+std::map<uint32_t, std::map<int,std::vector<int64_t>>> mastercore::cdexlastprice;
 
 extern MatrixTLS *pt_ndatabase;
 
@@ -1100,7 +1100,7 @@ void mastercore::updateAllEntry(int64_t oldPosition, int64_t newPosition, int64_
                                            amountpold);
          /********************************************************/
 
-         cdexlastprice[property_traded] = pold->getEffectivePrice();
+         cdexlastprice[property_traded][pnew->getBlock()].push_back(pold->getEffectivePrice());
          // if(msc_debug_x_trade_bidirectional) PrintToLog("%s: marketPrice = %d\n",__func__, pold->getEffectivePrice());
          // t_tradelistdb->recordForUPNL(pnew->getHash(),pnew->getAddr(),property_traded,pold->getEffectivePrice());
 
@@ -1110,6 +1110,7 @@ void mastercore::updateAllEntry(int64_t oldPosition, int64_t newPosition, int64_
          if (0 < remaining) offerSet.insert(contract_replacement);
      }
  }
+
 
 static const std::string getTradeReturnType(MatchReturnType ret)
 {
@@ -2872,6 +2873,7 @@ int mastercore::MetaDEx_CANCEL_ALL_FOR_PAIR(const uint256& txid, unsigned int bl
           PrintToLog(" ## contractId: %d\n", prop);
           cd_PricesMap &prices = my_it->second;
 
+       
           for (cd_PricesMap::iterator it = prices.begin(); it != prices.end(); ++it)
           {
               const uint64_t& price = it->first;

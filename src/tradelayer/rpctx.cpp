@@ -1210,12 +1210,12 @@ UniValue tl_sendissuance_pegged(const JSONRPCRequest& request)
 
 			"\nArguments:\n"
 			"1. fromaddress           (string, required) the address to send from\n"
-			"3. type                  (number, required) the type of the pegged to create: (1 for indivisible tokens, 2 for divisible tokens)\n"
-			"4. previousid            (number, required) an identifier of a predecessor token (use 0 for new tokens)\n"
-			"5. name                  (string, required) the name of the new pegged to create\n"
-			"6. collateralcurrency    (number, required) the collateral currency for the new pegged \n"
-			"7. contract name or id   (string, required) the future contract name (or id) for the new pegged \n"
-			"8. amount of pegged      (number, required) amount of pegged to create \n"
+			"2. type                  (number, required) the type of the pegged to create: (1 for indivisible tokens, 2 for divisible tokens)\n"
+			"3. previousid            (number, required) an identifier of a predecessor token (use 0 for new tokens)\n"
+			"4. name                  (string, required) the name of the new pegged to create\n"
+			"5. collateralcurrency    (number, required) the collateral currency for the new pegged \n"
+			"6. contract name or id   (string, required) the future contract name (or id) for the new pegged \n"
+			"7. amount of pegged      (number, required) amount of pegged to create \n"
 
 			"\nResult:\n"
 			"\"hash\"                 (string) the hex-encoded transaction hash\n"
@@ -1240,9 +1240,6 @@ UniValue tl_sendissuance_pegged(const JSONRPCRequest& request)
   // Checking existing
   RequireExistingProperty(propertyId);
 
-  // Property must not be a future contract
-  // RequireNotContract(propertyId);
-
   // Checking for future contract
   // RequireContract(contractId);
 
@@ -1250,7 +1247,7 @@ UniValue tl_sendissuance_pegged(const JSONRPCRequest& request)
   RequireShort(fromAddress, contractId, amount);
 
   // checking for collateral balance, checking for short position in given contract
-  RequireForPegged(fromAddress, propertyId, contractId, amount);
+  // RequireForPegged(fromAddress, propertyId, contractId, amount);
 
   // create a payload for the transaction
   std::vector<unsigned char> payload = CreatePayload_IssuancePegged(type, previousId, name, propertyId, contractId, amount);
@@ -1283,29 +1280,27 @@ UniValue tl_send_pegged(const JSONRPCRequest& request)
 			"\nArguments:\n"
 			"1. fromaddress          (string, required) the address to send from\n"
 			"2. toaddress            (string, required) the address of the receiver\n"
-			"3. property name        (string, required) the identifier of the tokens to send\n"
-			"4. amount               (string, required) the amount to send\n"
+			"3. propertyid           (number, required) the identifier the dMoney\n"
+			"4. amount               (string, required) the amount of dMoney to send\n"
 
 			"\nResult:\n"
 			"\"hash\"                  (string) the hex-encoded transaction hash\n"
 
 			"\nExamples:\n"
-			+ HelpExampleCli("tl_send_pegged", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\" \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\"  \"Contract1\" \"100.0\"")
-			+ HelpExampleRpc("tl_send_pegged", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\", \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\", \"Contract1\", \"100.0\"")
+			+ HelpExampleCli("tl_send_pegged", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\" \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\"  \"1\" \"100.0\"")
+			+ HelpExampleRpc("tl_send_pegged", "\"3M9qvHKtgARhqcMtM5cRT9VaiDJ5PSfQGY\", \"37FaKponF7zqoMLUjEiko25pDiuVH5YLEa\", \"1\", \"100.0\"")
 			);
 
   // obtain parameters & info
   const std::string fromAddress = ParseAddress(request.params[0]);
   const std::string toAddress = ParseAddress(request.params[1]);
-  std::string name_pegged = ParseText(request.params[2]);
-  uint32_t propertyId = getFutureContractObject(name_pegged).fco_propertyId;
-
-  RequirePeggedCurrency(propertyId);
+  const uint32_t propertyId = ParsePropertyId(request.params[2]);
 
   int64_t amount = ParseAmount(request.params[3], true);
 
   // perform checks
-  RequireExistingProperty(propertyId);
+  Require
+    Currency(propertyId);
   RequireBalance(fromAddress, propertyId, amount);
 
   // create a payload for the transaction
@@ -1339,9 +1334,9 @@ UniValue tl_redemption_pegged(const JSONRPCRequest& request)
 
 			"\nArguments:\n"
 			"1. redeemaddress        (string, required) the address of owner \n"
-			"2. name of pegged       (string, required) name of the tokens to redeem\n"
+			"2. peggedId             (number, required) id of pegged tokens to redeem\n"
 			"3. amount               (number, required) the amount of pegged currency for redemption"
-			"4. name of contract     (string, required) the identifier of the future contract involved\n"
+			"4. contractId          (string, required) the identifier of the future contract involved\n"
 
 			"\nResult:\n"
 			"\"hash\"                  (string) the hex-encoded transaction hash\n"
@@ -1353,10 +1348,9 @@ UniValue tl_redemption_pegged(const JSONRPCRequest& request)
 
   // obtain parameters & info
   const std::string fromAddress = ParseAddress(request.params[0]);
-  std::string name_pegged = ParseText(request.params[1]);
+  const uint32_t propertyId = ParsePropertyId(request.params[1]);
   uint32_t contractId = ParseNameOrId(request.params[3]);
-  uint32_t propertyId = getFutureContractObject(name_pegged).fco_propertyId;
-
+  uint32_t propertyId = getFutureContractObject(name_pegged).fco_propertyId
   uint64_t amount = ParseAmount(request.params[2], true);
 
   // perform checks

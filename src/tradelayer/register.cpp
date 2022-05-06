@@ -178,6 +178,7 @@ bool Register::setBankruptcyPrice(const uint32_t contractId, const uint32_t noti
 bool Register::updateRecord(uint32_t contractId, int64_t amount, RecordType ttype)
 {
     if (RECORD_TYPE_COUNT <= ttype || amount == 0) {
+        PrintToLog("%s(): ERROR: ttype (%d) is wrong, or updating amount is zero (%d)\n", __func__, ttype, amount);
         return false;
     }
 
@@ -197,7 +198,6 @@ bool Register::updateRecord(uint32_t contractId, int64_t amount, RecordType ttyp
 
         now64 += amount;
         mp_record[contractId].balance[ttype] = now64;
-
         fUpdated = true;
     }
 
@@ -529,9 +529,10 @@ bool mastercore::update_register_map(const std::string& who, uint32_t contractId
     bRet = reg.updateRecord(contractId, amount, ttype);
 
     after = getContractRecord(who, contractId, ttype);
+
     if (!bRet) {
         assert(before == after);
-        PrintToLog("%s(%s, %u=0x%X, %+d, ttype=%d) ERROR: insufficient balance (=%d)\n", __func__, who, contractId, contractId, amount, ttype, before);
+        PrintToLog("%s(): ERROR: no position updated for (%s), before (%d), after(%d)\n", __func__, who, before, after);
     }
 
     return bRet;
