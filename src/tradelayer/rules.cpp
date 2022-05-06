@@ -57,8 +57,6 @@ std::vector<TransactionRestriction> CConsensusParams::GetRestrictions() const
     v.push_back( { MSC_TYPE_CREATE_CONTRACT,                       MP_TX_PKT_V0,      true, MSC_CONTRACTDEX_BLOCK } );
     v.push_back( { MSC_TYPE_CONTRACTDEX_TRADE,                     MP_TX_PKT_V0,      true, MSC_CONTRACTDEX_BLOCK } );
     v.push_back( { MSC_TYPE_CONTRACTDEX_CANCEL_ECOSYSTEM,          MP_TX_PKT_V0,      true, MSC_CONTRACTDEX_BLOCK } );
-    v.push_back( { MSC_TYPE_PEGGED_CURRENCY,                       MP_TX_PKT_V0,      true, MSC_CONTRACTDEX_BLOCK } );
-    v.push_back( { MSC_TYPE_SEND_PEGGED_CURRENCY,                  MP_TX_PKT_V0,      true, MSC_CONTRACTDEX_BLOCK } );
     v.push_back( { MSC_TYPE_SEND_ALL,                              MP_TX_PKT_V0,      true, MSC_SEND_ALL_BLOCK } );
     v.push_back( { MSC_TYPE_CONTRACTDEX_CLOSE_POSITION,            MP_TX_PKT_V0,      true, MSC_CONTRACTDEX_BLOCK } );
     v.push_back( { MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK,    MP_TX_PKT_V0,      true, MSC_CONTRACTDEX_BLOCK } );
@@ -303,7 +301,7 @@ CRegTestConsensusParams::CRegTestConsensusParams()
     MSC_MULTISEND_BLOCK = 99999999;
     MSC_HEDGEDCURRENCY_BLOCK = 99999999;
     MSC_SEND_DONATION_BLOCK = 99999999;
-    MSC_PEGGED_CURRENCY_BLOCK = 99999999,
+    MSC_PEGGED_CURRENCY_BLOCK = 200,
     INFLEXION_BLOCK = 1000;
 
     ONE_YEAR = 930;

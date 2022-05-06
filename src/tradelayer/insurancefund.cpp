@@ -77,7 +77,7 @@ FeesCache& InsuranceFund::GetFees() const
 
 bool InsuranceFund::IsFundAddress(std::string address) const
 {
-    return FUND_ADDRESS == address; 
+    return FUND_ADDRESS == address;
 }
 
 bool InsuranceFund::AccrueFees(uint32_t pid, int64_t amount)
@@ -136,9 +136,9 @@ std::tuple<bool, int64_t> InsuranceFund::PayOut(uint32_t pid, int64_t amount)
         LOG("Insufficient funds, propertyId=<%d>! (fees amount available: %d, amount needed: %d)\n", pid, fees_total, amount);
         return std::make_tuple(false, 0);
     }
-    
+
     LOG("Partial payout, propertyId=<%d> (fees amount available: %d, amount needed: %d)\n", pid, fees_total, amount);
-    
+
     return p1->second = p2->second = p3->second = 0, std::make_tuple(false, amount);
 }
 
@@ -148,7 +148,7 @@ static inline uint32_t get_registered_contracts(uint32_t cid)
     auto p = mc::mp_register_map.find(FUND_ADDRESS);
     if (p == mc::mp_register_map.end()) return 0;
 
-    // Get position entries from the register   
+    // Get position entries from the register
     auto e = p->second.getEntries(cid);
     return !e ? 0 :
         std::accumulate(e->cbegin(), e->cend(), 0L, [](long a, const Entries::value_type& b) { return a + b.first; });
@@ -158,7 +158,22 @@ static inline uint32_t get_registered_contracts(uint32_t cid)
 static inline uint32_t get_contract_price(uint32_t cid)
 {
     auto p = mc::cdexlastprice.find(cid);
-    return p == mc::cdexlastprice.end() ? 0 : p->second;
+
+    // small change (we've changeg cdexlastprice map)
+    if (p != mc::cdexlastprice.end()) {
+        const auto& bMap = p->second;
+        const auto& it = bMap.rbegin();
+        if (it != bMap.rend()) {
+            const auto& vPrices = it->second;
+            const auto& itt = vPrices.rbegin();
+            if (itt != vPrices.rend()) {
+                return *(itt);
+            }
+        }
+
+    }
+
+    return 0;
 }
 
 //! Market order
@@ -177,7 +192,7 @@ void InsuranceFund::UpdateFundOrders(int block)
 {
     auto fees = GetFeesTotal(ALL);
     if (fees == 0) return;
-        
+
     // we need to hedge/cover 1/2 of ALL units/fees
     auto price = get_contract_price(CONTRACT_ID);
     auto n1 = get_registered_contracts(CONTRACT_ID);
@@ -186,7 +201,7 @@ void InsuranceFund::UpdateFundOrders(int block)
 
     if (n) {
         LOG("Placing limit order to trade %d ALL contracts\n", n);
-        
+
         // buy if negative (to reduce position), and sell otherwise
         //dex_sumbit_lorder(block, CONTRACT_ID, n);
     }
