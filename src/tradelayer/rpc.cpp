@@ -24,6 +24,7 @@
 #include <tradelayer/rpcvalues.h>
 #include <tradelayer/rules.h>
 #include <tradelayer/sp.h>
+#include <tradelayer/fees.h>
 #include <tradelayer/tally.h>
 #include <tradelayer/tradelayer.h>
 #include <tradelayer/tx.h>
@@ -2711,14 +2712,15 @@ UniValue tl_check_kyc(const JSONRPCRequest& request)
 
 UniValue tl_getcache(const JSONRPCRequest& request)
 {
-    if (request.fHelp || request.params.size() != 1)
+    if (request.fHelp || request.params.size() < 1)
         throw runtime_error(
-            "tl_getmargin \"address\" \"propertyid\" \n"
+            "tl_getcache \"propertyid\" \"cacheType\" \n"
 
             "\nReturns the fee cache for a given property.\n"
 
             "\nArguments:\n"
-            "1. collateral                   (number, required) the contract collateral\n"
+            "1. collateral                  (number, required) the contract collateral\n"
+            "2. cache type                  (number, optional) zero based index {0:native,1:oracle,2:spot} (default: total)\n"
 
             "\nResult:\n"
             "{\n"
@@ -2726,20 +2728,29 @@ UniValue tl_getcache(const JSONRPCRequest& request)
             "}\n"
 
             "\nExamples:\n"
-            + HelpExampleCli("tl_getcache", "\"2\"")
-            + HelpExampleRpc("tl_getcache", "\"2\"")
+            + HelpExampleCli("tl_getcache", "\"2\" \"0\"")
+            + HelpExampleRpc("tl_getcache", "\"2\" \"1\"")
         );
 
-    uint32_t propertyId = ParsePropertyId(request.params[0]);
+    auto pid = ParsePropertyId(request.params[0]);
+    int type = request.params.size() == 1 ? -1 : request.params[1].get_int();
 
-    // geting data from cache!
-    auto it =  cachefees.find(propertyId);
-    int64_t amount = (it != cachefees.end())? it->second : 0;
-
+    auto n1 = get_fees_balance(g_fees->native_fees, pid);
+    auto n2 = get_fees_balance(g_fees->oracle_fees, pid);
+    auto n3 = get_fees_balance(g_fees->spot_fees, pid);
+    
+    int64_t n = 0L;
+    if (type == 0)
+        n = n1;
+    else if (type == 1)
+        n = n2;
+    else if (type == 2)
+        n = n3;
+    else
+        n = n1 + n2 + n3;
+    
     UniValue balanceObj(UniValue::VOBJ);
-
-    balanceObj.pushKV("amount", FormatByType(amount, 2));
-
+    balanceObj.pushKV("amount", FormatByType(n, pid));
     return balanceObj;
 }
 
@@ -2747,7 +2758,7 @@ UniValue tl_getoraclecache(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 1)
         throw runtime_error(
-            "tl_getoraclecache \"address\" \"propertyid\" \n"
+            "tl_getoraclecache \"propertyid\" \n"
 
             "\nReturns the oracle fee cache for a given property.\n"
 
@@ -2764,16 +2775,12 @@ UniValue tl_getoraclecache(const JSONRPCRequest& request)
             + HelpExampleRpc("tl_getcache", "\"1\"")
         );
 
-    uint32_t propertyId = ParsePropertyId(request.params[0]);
-
-    // geting data from cache!
-    auto it =  cachefees_oracles.find(propertyId);
-    int64_t amount = (it != cachefees_oracles.end()) ? it->second : 0;
-
+    
+    auto pid = ParsePropertyId(request.params[0]);
+    auto amount = get_fees_balance(g_fees->oracle_fees, pid);
+    
     UniValue balanceObj(UniValue::VOBJ);
-
-    balanceObj.pushKV("amount", FormatByType(amount,2));
-
+    balanceObj.pushKV("amount", FormatByType(amount, 2));
     return balanceObj;
 }
 
@@ -3812,6 +3819,72 @@ UniValue tl_getchannel_historyforpair(const JSONRPCRequest& request)
     return response;
 }
 
+UniValue tl_getinsurancepayouts(const JSONRPCRequest& request)
+{
+    if (request.fHelp)
+        throw runtime_error(
+            "tl_getinsurancepayouts \n"
+
+            "\nReturns insurance fund payouts.\n"
+
+            "\nResult:\n"
+            "{\n"
+            "  \"amount\" : \"n.nnnnnnnn\",  (number) the payouts\n"
+            "}\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("tl_getinsurancepayouts", "1")
+            + HelpExampleRpc("tl_getinsurancepayouts", "2")
+        );
+
+    UniValue balanceObj(UniValue::VOBJ);
+    return balanceObj;
+}
+
+UniValue tl_getinsuranceordersnapshot(const JSONRPCRequest& request)
+{
+    if (request.fHelp)
+        throw runtime_error(
+            "tl_getinsuranceordersnapshot \n"
+
+            "\nReturns insurance fund order snapshot.\n"
+
+            "\nResult:\n"
+            "{\n"
+            "  \"amount\" : \"n.nnnnnnnn\",  (number) the payouts\n"
+            "}\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("tl_getinsuranceordersnapshot", "1")
+            + HelpExampleRpc("tl_getinsuranceordersnapshot", "2")
+        );
+
+    UniValue balanceObj(UniValue::VOBJ);
+    return balanceObj;
+}
+
+UniValue tl_getsocializations(const JSONRPCRequest& request)
+{
+    if (request.fHelp)
+        throw runtime_error(
+            "tl_getsocializations \n"
+
+            "\nReturns socialization payouts.\n"
+
+            "\nResult:\n"
+            "{\n"
+            "  \"amount\" : \"n.nnnnnnnn\",  (number) the payouts\n"
+            "}\n"
+
+            "\nExamples:\n"
+            + HelpExampleCli("tl_getsocializations", "1")
+            + HelpExampleRpc("tl_getsocializations", "2")
+        );
+
+    UniValue balanceObj(UniValue::VOBJ);
+    return balanceObj;
+}
+
 static const CRPCCommand commands[] =
 { //  category                             name                            actor (function)               okSafeMode
   //  ------------------------------------ ------------------------------- ------------------------------ ----------
@@ -3867,7 +3940,7 @@ static const CRPCCommand commands[] =
   { "trade layer (data retrieval)" , "tl_getmdexvolume",                        &tl_getmdexvolume,                     {} },
   { "trade layer (data retrieval)" , "tl_getcurrencytotal",                     &tl_getcurrencytotal,                  {} },
   { "trade layer (data retrieval)" , "tl_listkyc",                              &tl_listkyc,                           {} },
-  { "trade layer (data retrieval)" , "tl_getoraclecache",                       &tl_getoraclecache,                    {} },
+  //{ "trade layer (data retrieval)" , "tl_getoraclecache",                       &tl_getoraclecache,                    {} },
   { "trade layer (data retrieval)",  "tl_getmax_peggedcurrency",                &tl_getmax_peggedcurrency,             {} },
   { "trade layer (data retrieval)",  "tl_getunvested",                          &tl_getunvested,                       {} },
   { "trade layer (data retrieval)",  "tl_list_attestation",                     &tl_list_attestation,                  {} },

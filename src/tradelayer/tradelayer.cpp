@@ -24,6 +24,7 @@
 #include <tradelayer/rules.h>
 #include <tradelayer/script.h>
 #include <tradelayer/sp.h>
+#include <tradelayer/fees.h>
 #include <tradelayer/tally.h>
 #include <tradelayer/tradelayer_matrices.h>
 #include <tradelayer/tx.h>
@@ -32,6 +33,9 @@
 #include <tradelayer/version.h>
 #include <tradelayer/walletcache.h>
 #include <tradelayer/wallettxs.h>
+#include <tradelayer/tupleutils.hpp>
+
+#include <tradelayer/insurancefund.h>
 
 #include <arith_uint256.h>
 #include <base58.h>
@@ -81,6 +85,8 @@
 #include <vector>
 
 #include <boost/algorithm/string.hpp>
+#include <boost/range/adaptors.hpp>
+#include <boost/range/algorithm.hpp>
 #include <boost/exception/to_string.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/math/special_functions/sign.hpp>
@@ -117,10 +123,8 @@ std::set<uint32_t> global_wallet_property_list;
 std::map<std::string,Channel> channels_Map;
 //! Vesting receivers
 std::set<std::string> vestingAddresses;
-//! Futures contracts fees
-std::map<uint32_t, int64_t> cachefees;
-//! Futures oracle contracts fees
-std::map<uint32_t, int64_t> cachefees_oracles;
+//! Insurance fund instance
+std::unique_ptr<InsuranceFund> g_fund;
 //! Last unit price for token/BTC
 std::map<uint32_t, int64_t> lastPrice;
 
@@ -1677,45 +1681,41 @@ static int input_mp_token_ltc_string(const std::string& s)
 
 static int input_cachefees_string(const std::string& s)
 {
-   std::vector<std::string> vstr;
-   boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
+    auto t = NC::Parse<uint32_t,int64_t,int64_t,int64_t>(s);
+    
+    // format:{pid:native,oracle,spot}
+    auto key= std::get<0>(t);
+    auto b1 = std::get<1>(t);
+    auto b2 = std::get<2>(t);
+    auto b3 = std::get<3>(t);
 
-   uint32_t propertyId = 0;
-   int64_t amount = 0;
-
-   try {
-       propertyId = boost::lexical_cast<uint32_t>(vstr[0]);
-       amount = boost::lexical_cast<int64_t>(vstr[1]);
-   } catch (...) {
-       PrintToLog("%s(): lexical_cast issue \n",__func__);
-       return -1;
-   }
-
-   if (!cachefees.insert(std::make_pair(propertyId, amount)).second) return -1;
+    if (b1 > -1) g_fees->native_fees.insert(std::make_pair(key, b1));
+    if (b2 > -1) g_fees->oracle_fees.insert(std::make_pair(key, b2));
+    if (b3 > -1) g_fees->spot_fees.insert(std::make_pair(key, b3));
 
    return 0;
 }
 
-static int input_cachefees_oracles_string(const std::string& s)
-{
-   std::vector<std::string> vstr;
-   boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
-   uint32_t propertyId = 0;
-   int64_t amount = 0;
+// static int input_cachefees_oracles_string(const std::string& s)
+// {
+//    std::vector<std::string> vstr;
+//    boost::split(vstr, s, boost::is_any_of(" ,="), boost::token_compress_on);
+//    uint32_t propertyId = 0;
+//    int64_t amount = 0;
 
-   try {
-       propertyId = boost::lexical_cast<uint32_t>(vstr[0]);
-       amount = boost::lexical_cast<int64_t>(vstr[1]);
-   } catch (...) {
-       PrintToLog("%s(): lexical_cast issue \n",__func__);
-       return -1;
-   }
+//    try {
+//        propertyId = boost::lexical_cast<uint32_t>(vstr[0]);
+//        amount = boost::lexical_cast<int64_t>(vstr[1]);
+//    } catch (...) {
+//        PrintToLog("%s(): lexical_cast issue \n",__func__);
+//        return -1;
+//    }
 
 
-   if (!cachefees_oracles.insert(std::make_pair(propertyId, amount)).second) return -1;
+//    if (!g_fees->oracle_fees.insert(std::make_pair(propertyId, amount)).second) return -1;
 
-   return 0;
-}
+//    return 0;
+// }
 
 static int input_withdrawals_string(const std::string& s)
 {
@@ -2223,14 +2223,16 @@ static int msc_file_load(const string &filename, int what, bool verifyHash = fal
         break;
 
     case FILETYPE_CACHEFEES:
-        cachefees.clear();
+        g_fees->native_fees.clear();
+        g_fees->oracle_fees.clear();
+        g_fees->spot_fees.clear();
         inputLineFunc = input_cachefees_string;
         break;
 
-    case FILETYPE_CACHEFEES_ORACLES:
-        cachefees_oracles.clear();
-        inputLineFunc = input_cachefees_oracles_string;
-        break;
+    // case FILETYPE_CACHEFEES_ORACLES:
+    //     g_fees->oracle_fees.clear();
+    //     inputLineFunc = input_cachefees_oracles_string;
+    //     break;
 
     case FILETYPE_WITHDRAWALS:
         withdrawal_Map.clear();
@@ -2366,7 +2368,7 @@ static char const * const statePrefix[NUM_FILETYPES] = {
   "offers",
   "accepts",
   "cachefees",
-  "cachefeesoracles",
+  //"cachefeesoracles",
   "withdrawals",
   "activechannels",
   "dexvolume",
@@ -2750,39 +2752,25 @@ static int write_mp_token_ltc_prices(std::ofstream& file, CHash256& hasher)
 
 static int write_mp_cachefees(std::ofstream& file, CHash256& hasher)
 {
-    for (const auto &ca :  cachefees)
-    {
-        // decompose the key
-        const uint32_t& propertyId = ca.first;
-        const int64_t& cache = ca.second;
+    std::set<uint32_t> keys;
+    boost::copy(g_fees->native_fees | boost::adaptors::map_keys, std::inserter(keys, keys.begin()));
+    boost::copy(g_fees->oracle_fees | boost::adaptors::map_keys, std::inserter(keys, keys.begin()));
+    boost::copy(g_fees->spot_fees   | boost::adaptors::map_keys, std::inserter(keys, keys.begin()));
 
-        const std::string lineOut = strprintf("%d,%d",propertyId, cache);
-        // add the line to the hash
-        hasher.Write((unsigned char*)lineOut.c_str(), lineOut.length());
-        // write the line
-        file << lineOut << endl;
+    for (auto k : keys)
+    {
+        auto b1 = get_fees_balance(g_fees->native_fees, k, -1);
+        auto b2 = get_fees_balance(g_fees->oracle_fees, k, -1);
+        auto b3 = get_fees_balance(g_fees->spot_fees, k, -1);
+
+        // format:{pid:native,oracle,spot}
+        auto e = strprintf("%d;%d,%d,%d", k, b1, b2, b3);
+        hasher.Write((unsigned char*)e.c_str(), e.length());
+        file << e << endl;
     }
 
     return 0;
 }
-
-static int write_mp_cachefees_oracles(std::ofstream& file, CHash256& hasher)
-{
-    for (const auto &ca : cachefees_oracles)
-    {
-        const uint32_t& propertyId = ca.first;
-        const int64_t& cache = ca.second;
-
-        const std::string lineOut = strprintf("%d,%d",propertyId, cache);
-        // add the line to the hash
-        hasher.Write((unsigned char*)lineOut.c_str(), lineOut.length());
-        // write the line
-        file << lineOut << std::endl;
-    }
-
-    return 0;
-}
-
 
 static void savingLine(const withdrawalAccepted&  w, const std::string chnAddr, std::ofstream& file,  CHash256& hasher)
 {
@@ -3089,9 +3077,9 @@ static int write_state_file(CBlockIndex const *pBlockIndex, int what)
         result = write_mp_cachefees(file, hasher);
         break;
 
-    case FILETYPE_CACHEFEES_ORACLES:
-        result = write_mp_cachefees_oracles(file, hasher);
-        break;
+    // case FILETYPE_CACHEFEES_ORACLES:
+    //     result = write_mp_cachefees_oracles(file, hasher);
+    //     break;
 
     case FILETYPE_WITHDRAWALS:
         result = write_mp_withdrawals(file, hasher);
@@ -3231,7 +3219,7 @@ int mastercore_save_state(CBlockIndex const *pBlockIndex)
     write_state_file(pBlockIndex, FILETYPE_OFFERS);
     write_state_file(pBlockIndex, FILETYPE_ACCEPTS);
     write_state_file(pBlockIndex, FILETYPE_CACHEFEES);
-    write_state_file(pBlockIndex, FILETYPE_CACHEFEES_ORACLES);
+    //write_state_file(pBlockIndex, FILETYPE_CACHEFEES_ORACLES);
     write_state_file(pBlockIndex, FILETYPE_WITHDRAWALS);
     write_state_file(pBlockIndex, FILETYPE_ACTIVE_CHANNELS);
     write_state_file(pBlockIndex, FILETYPE_DEX_VOLUME);
@@ -3261,8 +3249,8 @@ void clear_all_state()
     LOCK2(cs_tally, cs_pending);
 
     // Memory based storage
-    cachefees.clear();
-    cachefees_oracles.clear();
+    g_fees->native_fees.clear();
+    g_fees->oracle_fees.clear();
     mp_tally_map.clear();
     my_pending.clear();
     my_offers.clear();
@@ -3358,8 +3346,11 @@ int mastercore_init()
   ++mastercoreInitialized;
 
   PrintToLog("%s(): mastercoreInitialized: %d\n",__func__, mastercoreInitialized);
-
+   
   nWaterlineBlock = load_most_relevant_state();
+     
+  // Initialize after loading state as the fund relies on the register
+  g_fund = MakeUnique<InsuranceFund>();
 
   bool noPreviousState = (nWaterlineBlock <= 0);
 
@@ -6009,12 +6000,9 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
 
       /****************************************************/
       /** Building TWAP vector MDEx **/
-
-      struct TokenDataByName *pfuture_ALL = getTokenDataByName("ALL");
-      struct TokenDataByName *pfuture_USD = getTokenDataByName("dUSD");
-
-      uint32_t property_all = pfuture_ALL->data_propertyId;
-      uint32_t property_usd = pfuture_USD->data_propertyId;
+      
+      uint32_t property_all = getTokenDataByName("ALL").data_propertyId;
+      uint32_t property_usd = getTokenDataByName("dUSD").data_propertyId;
 
       Filling_Twap_Vec(mdextwap_ele, mdextwap_vec, property_all, property_usd, market_priceMap[property_all][property_usd]);
       PrintToLog("\nMDExtwap_ele.size() = %d\t property_all = %d\t property_usd = %d\t market_priceMap = %s\n",
@@ -7688,10 +7676,10 @@ bool mastercore::ContInst_Fees(const std::string& firstAddr, const std::string& 
     // update_tally_map(channelAddr, colateral, -2 * uFee, CHANNEL_RESERVE);
 
     // % to native feecache
-    cachefees[colateral] += uFee;
+    g_fees->native_fees[colateral] += uFee;
 
     // % to oracle feecache
-    cachefees_oracles[colateral] += uFee;
+    g_fees->oracle_fees[colateral] += uFee;
 
     return true;
 }
@@ -7940,14 +7928,14 @@ bool mastercore::feeCacheBuy()
 {
     bool result = false;
 
-    if(cachefees_oracles.empty())
+    if(g_fees->oracle_fees.empty())
     {
         if (msc_debug_fee_cache_buy) PrintToLog("%s(): cachefees_oracles is empty\n",__func__);
         return result;
     }
 
 
-    for(auto &ca : cachefees_oracles)
+    for(auto &ca : g_fees->oracle_fees)
     {
         const uint32_t& propertyId = ca.first;
 
@@ -8295,7 +8283,7 @@ bool mastercore::Token_LTC_Fees(int64_t& buyer_amountGot, uint32_t propertyId)
 
     if(cacheFee > 0)
     {
-         cachefees[propertyId] += cacheFee;
+         g_fees->native_fees[propertyId] += cacheFee;
          return true;
     }
 
@@ -8322,15 +8310,15 @@ void blocksettlement::makeSettlement()
          if(0 == loss) {
              realize_pnl(contractId, cd.notional_size, cd.isOracle(), cd.isInverseQuoted());
          } else if (loss > 0) {
-              const int64_t difference = getInsurance(cd.collateral_currency) - loss;
+              //const int64_t difference = getInsurance(cd.collateral_currency) - loss;
+              const int64_t difference = get_fees_balance(g_fees->spot_fees, cd.collateral_currency) - loss;
 
               if (0 > difference) {
                   // we need socialization of loss
                   lossSocialization(contractId, -difference);
               }
 
-              update_Insurance(cd.collateral_currency, loss);
-
+              g_fund->AccrueFees(cd.collateral_currency, loss);
           }
      }
 }
@@ -8347,7 +8335,7 @@ int64_t blocksettlement::getTotalLoss(const uint32_t& contractId, const uint32_t
         return 0;
     }
 
-    const int64_t oracleTwap = getOracleTwap(contractId, OBLOCKS);
+    const int64_t oracleTwap = mastercore::getOracleTwap(contractId, OBLOCKS);
 
     //! Systemic Loss in a Block = the volume-weighted avg. price of bankruptcy (for each position we need the bankruptcy price, and the volume of liquidation) for unfilled liquidations
     // * the sign of the liquidated contracts * their notional value (this depends of contract denomination) * the # of contracts (number of contract in liquidation) * (Liq. VWAP - Mark Price)
@@ -8357,44 +8345,6 @@ int64_t blocksettlement::getTotalLoss(const uint32_t& contractId, const uint32_t
     // return totalLoss;
     return systemicLoss;
 
-}
-
-int64_t blocksettlement::getInsurance(const uint32_t& propertyId) const
-{
-     int64_t money = 0;
-     auto it = insurance_fund.find(propertyId);
-     if (it != insurance_fund.end()) {
-         money = it->second;
-     }
-
-     return money;
-}
-
-bool blocksettlement::update_Insurance(const uint32_t& propertyId, int64_t amount)
-{
-    auto it = insurance_fund.find(propertyId);
-    if (it == insurance_fund.end()){
-        PrintToLog("%s(): ERROR: propertyId not found!\n", __func__);
-        return false;
-    }
-
-    const int64_t& amount_remaining = it->second;
-
-    if (isOverflow(amount_remaining, amount)) {
-        PrintToLog("%s(): ERROR: arithmetic overflow [%d + %d]\n", __func__, amount_remaining, amount);
-        return false;
-    }
-
-    if ((amount_remaining + amount) < 0)
-    {
-          PrintToLog("%s(): insufficient funds! (amount_remaining: %d, amount: %d)\n", __func__, amount_remaining, amount);
-          return false;
-
-    }
-
-    it->second += amount;
-
-    return true;
 }
 
 void blocksettlement::lossSocialization(const uint32_t& contractId, int64_t fullAmount)

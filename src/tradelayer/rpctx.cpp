@@ -1299,7 +1299,8 @@ UniValue tl_send_pegged(const JSONRPCRequest& request)
   int64_t amount = ParseAmount(request.params[3], true);
 
   // perform checks
-  RequirePeggedCurrency(propertyId);
+  Require
+    Currency(propertyId);
   RequireBalance(fromAddress, propertyId, amount);
 
   // create a payload for the transaction
@@ -1349,7 +1350,7 @@ UniValue tl_redemption_pegged(const JSONRPCRequest& request)
   const std::string fromAddress = ParseAddress(request.params[0]);
   const uint32_t propertyId = ParsePropertyId(request.params[1]);
   uint32_t contractId = ParseNameOrId(request.params[3]);
-
+  uint32_t propertyId = getFutureContractObject(name_pegged).fco_propertyId
   uint64_t amount = ParseAmount(request.params[2], true);
 
   // perform checks

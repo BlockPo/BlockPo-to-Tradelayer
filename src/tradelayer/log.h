@@ -127,7 +127,6 @@ extern bool msc_debug_try_add_second;
 extern bool msc_debug_liquidation_enginee;
 extern bool msc_debug_interest_pegged;
 
-
 template<typename Arg>
 static inline int PrintToLog(Arg arg)
 {
@@ -151,5 +150,13 @@ static inline int PrintToConsole(const char* format, Args... args)
 {
     return ConsolePrint(tfm::format(format, args...));
 }
+
+template<typename... Args>
+static inline void LogWrapper(const char* func, const char* format, const Args&... args)
+{
+    PrintToLog((tfm::format("%s(): ", func) + format).c_str(), args...);
+}
+
+#define LOG(format,...) LogWrapper(__func__, format, __VA_ARGS__)
 
 #endif // TRADELAYER_LOG_H

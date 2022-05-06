@@ -180,7 +180,7 @@ enum FILETYPES {
   FILETYPE_OFFERS,
   FILETYPE_ACCEPTS,
   FILETYPE_CACHEFEES,
-  FILETYPE_CACHEFEES_ORACLES,
+  //FILETYPE_CACHEFEES_ORACLES,
   FILETYPE_WITHDRAWALS,
   FILETYPE_ACTIVE_CHANNELS,
   FILETYPE_DEX_VOLUME,
@@ -419,14 +419,13 @@ class nodeReward
 
  };
 
- class blocksettlement
+ class  blocksettlement
  {
   private:
     int last_block;
     //! Available settlement prices
     std::map<std::string,map<uint32_t, int64_t>> prices;
-    //! Insurance fund to pay the losses on settlements
-    std::map<uint32_t, int64_t> insurance_fund;
+
   public:
     blocksettlement() : last_block(0) {}
     ~blocksettlement() {}
@@ -438,15 +437,7 @@ class nodeReward
 
     int64_t getTotalLoss(const uint32_t& contractId, const uint32_t& notionalSize);
 
-    //! insurance funds are either in ALL which is the numerator of native insurance funds
-    //(with 50% short the contracts as a hedge as well) or they are in e.g. USDC on a linear BTC/USDC contract, where some % (to be decided by contract operator when they create it) is held as a long hedge for any short blow-outs
-    int64_t getInsurance(const uint32_t& propertyId) const;
-
     void lossSocialization(const uint32_t& contractId, int64_t fullAmount);
-
-    //! more auxilar functions here!
-    bool update_Insurance(const uint32_t& propertyId, int64_t amount);
-
   };
 
 extern blocksettlement bS;

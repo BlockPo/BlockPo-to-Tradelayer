@@ -38,7 +38,8 @@ TRADELAYER_H = \
   tradelayer/version.h \
   tradelayer/walletcache.h \
   tradelayer/wallettxs.h \
-  tradelayer/walletutils.h
+  tradelayer/walletutils.h \
+  tradelayer/insurancefund.h
 
 TRADELAYER_CPP = \
   tradelayer/activation.cpp \
@@ -75,7 +76,8 @@ TRADELAYER_CPP = \
   tradelayer/externfns.cpp \
   tradelayer/wallettxs.cpp \
   tradelayer/fetchwallettx.cpp \
-  tradelayer/varint.cpp
+  tradelayer/varint.cpp \
+  tradelayer/insurancefund.cpp
 
 if ENABLE_WALLET
 TRADELAYER_CPP += tradelayer/rpctx.cpp

@@ -514,6 +514,8 @@ int ParseTransaction(const CTransaction& tx, int nBlock, unsigned int idx, CMPTr
 
 struct FutureContractObject
 {
+  static FutureContractObject Empty;
+
   uint32_t fco_numerator;
   uint32_t fco_denominator;
   uint32_t fco_blocks_until_expiration;
@@ -532,14 +534,15 @@ struct FutureContractObject
   std::string fco_backup_address;
 
   FutureContractObject():fco_numerator(0), fco_denominator(0),
-  fco_blocks_until_expiration(0), fco_notional_size(0), fco_collateral_currency(0),
-  fco_margin_requirement(0), fco_propertyId(0), fco_prop_type(0), fco_expirated(false),
-  fco_quoted(false), fco_init_block(0), fco_name(""), fco_issuer(""), fco_backup_address("")  {}
-
+    fco_blocks_until_expiration(0), fco_notional_size(0), fco_collateral_currency(0),
+    fco_margin_requirement(0), fco_propertyId(0), fco_prop_type(0), fco_expirated(false),
+    fco_quoted(false), fco_init_block(0), fco_name(""), fco_issuer(""), fco_backup_address("")  {}
 };
 
 struct TokenDataByName
 {
+  static TokenDataByName Empty;
+
   uint32_t data_denominator;
   uint32_t data_blocks_until_expiration;
   uint32_t data_notional_size;
@@ -551,6 +554,9 @@ struct TokenDataByName
   std::string data_name;
   std::string data_subcategory;
   std::string data_issuer;
+
+  TokenDataByName() : data_denominator(), data_blocks_until_expiration(), data_notional_size(), 
+    data_collateral_currency(), data_margin_requirement(), data_propertyId(), data_init_block() {}
 };
 
 /**********************************************************************/
@@ -611,8 +617,8 @@ extern std::map<uint32_t,std::map<int,oracledata>> oraclePrices;
 //! Pending withdrawals
 extern std::map<std::string,vector<withdrawalAccepted>> withdrawal_Map;
 
-struct FutureContractObject *getFutureContractObject(std::string identifier);
-struct TokenDataByName *getTokenDataByName(std::string identifier);
-struct TokenDataByName *getTokenDataById(uint32_t propertyId);
+FutureContractObject getFutureContractObject(std::string identifier);
+TokenDataByName getTokenDataByName(std::string identifier);
+TokenDataByName getTokenDataById(uint32_t propertyId);
 
 #endif // TRADELAYER_TX_H

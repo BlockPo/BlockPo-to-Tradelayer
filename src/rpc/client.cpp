@@ -335,9 +335,10 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "tl_getmarketprice", 0, "arg0" },
     {"tl_getaverage_entry",1,"arg1" },
     { "tl_getcache", 0, "arg0" }, // NOTE: only to test persistence
+    { "tl_getcache", 1, "arg1" },
     { "tl_get_channelreserve", 1, "arg1" },
     { "tl_check_kyc", 1, "arg1" },
-    { "tl_getoraclecache", 0, "arg0" },
+    //{ "tl_getoraclecache", 0, "arg0" },
 
     { "tl_get_ltcvolume", 0, "arg1" },
     { "tl_get_ltcvolume", 1, "arg2" },

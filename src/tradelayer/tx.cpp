@@ -19,6 +19,7 @@
 #include <tradelayer/uint256_extensions.h>
 #include <tradelayer/utilsbitcoin.h>
 #include <tradelayer/varint.h>
+#include <tradelayer/insurancefund.h>
 
 #include <amount.h>
 #include <sync.h>
@@ -57,6 +58,10 @@ std::map<std::string,vector<withdrawalAccepted>> withdrawal_Map;
 mutex mReward;
 using mastercore::StrToInt64;
 
+
+//! Empty FutureContractObject && TokenDataByName
+FutureContractObject FutureContractObject::Empty;
+TokenDataByName TokenDataByName::Empty;
 
 /* Mapping of a transaction type to a textual description. */
 std::string mastercore::strTransactionType(unsigned int txType)
@@ -3413,10 +3418,10 @@ int CMPTransaction::logicMath_CreateContractDex()
 
 int CMPTransaction::logicMath_ContractDexTrade()
 {
-  struct FutureContractObject *pfuture = getFutureContractObject(name_traded);
-  const uint32_t contractId = (pfuture) ? pfuture->fco_propertyId : 0;
-  const uint32_t expiration = (pfuture) ? pfuture->fco_blocks_until_expiration : 0;
-  const uint32_t colateralh = (pfuture) ? pfuture->fco_collateral_currency : 0;
+  auto fco = getFutureContractObject(name_traded);
+  const uint32_t contractId = fco.fco_propertyId;
+  const uint32_t expiration = fco.fco_blocks_until_expiration;
+  const uint32_t colateralh = fco.fco_collateral_currency;
   // (pfuture->fco_prop_type == ALL_PROPERTY_TYPE_NATIVE_CONTRACT) ? result = 5 : result = 6;
 
   int kyc_id;
@@ -3431,7 +3436,7 @@ int CMPTransaction::logicMath_ContractDexTrade()
     return (PKT_ERROR_KYC -20);
   }
 
-  if ((block > pfuture->fco_init_block + static_cast<int>(pfuture->fco_blocks_until_expiration) || block < pfuture->fco_init_block) && expiration > 0)
+  if ((block > fco.fco_init_block + static_cast<int>(fco.fco_blocks_until_expiration) || block < fco.fco_init_block) && expiration > 0)
   {
       PrintToLog("%s(): ERROR: Contract expirated \n", __func__);
       return PKT_ERROR_SP -38;
@@ -5145,16 +5150,15 @@ int CMPTransaction::logicMath_SendDonation()
     // Move the tokens
     assert(update_tally_map(sender, property, -nValue, BALANCE));
     //update insurance here!
-    bS.update_Insurance(property, nValue);
+    g_fund->AccrueFees(property, nValue);
 
     return 0;
 }
 
-struct FutureContractObject *getFutureContractObject(std::string identifier)
+FutureContractObject getFutureContractObject(std::string identifier)
 {
-  struct FutureContractObject *pt_fco = new FutureContractObject;
-
   LOCK(cs_register);
+  
   const uint32_t nextCDID = _my_cds->peekNextContractID();
   for (uint32_t contractId = 1; contractId < nextCDID; contractId++)
   {
@@ -5163,20 +5167,22 @@ struct FutureContractObject *getFutureContractObject(std::string identifier)
 	    {
 	        if (sp.name == identifier )
 	        {
-              pt_fco->fco_denominator = sp.numerator;
-	            pt_fco->fco_denominator = sp.denominator;
-	            pt_fco->fco_blocks_until_expiration = sp.blocks_until_expiration;
-	            pt_fco->fco_notional_size = sp.notional_size;
-	            pt_fco->fco_collateral_currency = sp.collateral_currency;
-	            pt_fco->fco_margin_requirement = sp.margin_requirement;
-	            pt_fco->fco_name = sp.name;
-	            pt_fco->fco_issuer = sp.issuer;
-	            pt_fco->fco_init_block = sp.init_block;
-              pt_fco->fco_backup_address = sp.backup_address;
-	            pt_fco->fco_propertyId = contractId;
-              pt_fco->fco_prop_type = sp.prop_type;
-              pt_fco->fco_expirated = sp.expirated;
-              pt_fco->fco_quoted = sp.inverse_quoted;
+                auto fco = FutureContractObject();
+                fco.fco_denominator = sp.numerator;
+	            fco.fco_denominator = sp.denominator;
+	            fco.fco_blocks_until_expiration = sp.blocks_until_expiration;
+	            fco.fco_notional_size = sp.notional_size;
+	            fco.fco_collateral_currency = sp.collateral_currency;
+	            fco.fco_margin_requirement = sp.margin_requirement;
+	            fco.fco_name = sp.name;
+	            fco.fco_issuer = sp.issuer;
+	            fco.fco_init_block = sp.init_block;
+                fco.fco_backup_address = sp.backup_address;
+	            fco.fco_propertyId = contractId;
+                fco.fco_prop_type = sp.prop_type;
+                fco.fco_expirated = sp.expirated;
+                fco.fco_quoted = sp.inverse_quoted;
+                return fco;
           }
 	        // } else if ( sp.isPegged() && sp.name == identifier ){
 	        //     pt_fco->fco_denominator = sp.denominator;
@@ -5192,59 +5198,57 @@ struct FutureContractObject *getFutureContractObject(std::string identifier)
 	        // }
 	    }
   }
-
-  return pt_fco;
-
+  return FutureContractObject::Empty;
 }
 
-struct TokenDataByName *getTokenDataByName(std::string identifier)
+TokenDataByName getTokenDataByName(std::string identifier)
 {
-  struct TokenDataByName *pt_data = new TokenDataByName;
+    LOCK(cs_tally);
 
-  LOCK(cs_tally);
-  uint32_t nextSPID = _my_sps->peekNextSPID();
-  for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
+    uint32_t nextSPID = _my_sps->peekNextSPID();
+    for (uint32_t propertyId = 1; propertyId < nextSPID; propertyId++)
     {
-      CMPSPInfo::Entry sp;
-      if (_my_sps->getSP(propertyId, sp) && sp.name == identifier)
-	{
-	  // pt_data->data_denominator = sp.denominator;
-	  // pt_data->data_blocks_until_expiration = sp.blocks_until_expiration;
-	  // pt_data->data_notional_size = sp.notional_size;
-	  // pt_data->data_collateral_currency = sp.collateral_currency;
-	  // pt_data->data_margin_requirement = sp.margin_requirement;
-	  pt_data->data_name = sp.name;
-	  pt_data->data_subcategory = sp.subcategory;
-	  pt_data->data_issuer = sp.issuer;
-	  pt_data->data_init_block = sp.init_block;
-	  pt_data->data_propertyId = propertyId;
-	}
+        CMPSPInfo::Entry sp;
+        if (_my_sps->getSP(propertyId, sp) && sp.name == identifier)
+        {
+            // pt_data->data_denominator = sp.denominator;
+            // pt_data->data_blocks_until_expiration = sp.blocks_until_expiration;
+            // pt_data->data_notional_size = sp.notional_size;
+            // pt_data->data_collateral_currency = sp.collateral_currency;
+            // pt_data->data_margin_requirement = sp.margin_requirement;
+            TokenDataByName token;
+            token.data_name = sp.name;
+            token.data_subcategory = sp.subcategory;
+            token.data_issuer = sp.issuer;
+            token.data_init_block = sp.init_block;
+            token.data_propertyId = propertyId;
+            return token;
+        }
     }
-  return pt_data;
+    return TokenDataByName::Empty;
 }
 
-struct TokenDataByName *getTokenDataById(uint32_t propertyId)
+TokenDataByName getTokenDataById(uint32_t propertyId)
 {
-  struct TokenDataByName *pt_data = new TokenDataByName;
+    LOCK(cs_tally);
 
-  LOCK(cs_tally);
-  // uint32_t nextSPID = _my_sps->peekNextSPID(1);
-  CMPSPInfo::Entry sp;
-  if (_my_sps->getSP(propertyId, sp))
-	{
-	  // pt_data->data_denominator = sp.denominator;
-	  // pt_data->data_blocks_until_expiration = sp.blocks_until_expiration;
-	  // pt_data->data_notional_size = sp.notional_size;
-	  // pt_data->data_collateral_currency = sp.collateral_currency;
-	  // pt_data->data_margin_requirement = sp.margin_requirement;
-	  pt_data->data_name = sp.name;
-	  pt_data->data_subcategory = sp.subcategory;
-	  pt_data->data_issuer = sp.issuer;
-	  pt_data->data_init_block = sp.init_block;
-	  pt_data->data_propertyId = propertyId;
+    CMPSPInfo::Entry sp;
+    if (_my_sps->getSP(propertyId, sp))
+    {
+        // pt_data->data_denominator = sp.denominator;
+        // pt_data->data_blocks_until_expiration = sp.blocks_until_expiration;
+        // pt_data->data_notional_size = sp.notional_size;
+        // pt_data->data_collateral_currency = sp.collateral_currency;
+        // pt_data->data_margin_requirement = sp.margin_requirement;
+        TokenDataByName token;
+        token.data_name = sp.name;
+        token.data_subcategory = sp.subcategory;
+        token.data_issuer = sp.issuer;
+        token.data_init_block = sp.init_block;
+        token.data_propertyId = propertyId;
+        return token;
 	}
-
-  return pt_data;
+    return TokenDataByName::Empty;
 }
 
 /**********************************************************************/

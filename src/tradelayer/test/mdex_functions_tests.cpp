@@ -70,7 +70,7 @@ int64_t lgetVWap(uint32_t propertyId, int aBlock, const std::map<uint32_t,std::m
     // calculating the volume
     // BOOST_TEST_MESSAGE("rollback:" << rollback);
     // BOOST_TEST_MESSAGE("aBlock:" << aBlock);
-    literVolume(volume, propertyId, rollback, aBlock, MapLTCVolume);
+    iterVolume(volume, propertyId, rollback, aBlock, MapLTCVolume);
 
     if (volume == 0) BOOST_TEST_MESSAGE("volume here is 0");
 
