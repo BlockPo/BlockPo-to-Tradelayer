@@ -1682,7 +1682,7 @@ static int input_mp_token_ltc_string(const std::string& s)
 static int input_cachefees_string(const std::string& s)
 {
     auto t = NC::Parse<uint32_t,int64_t,int64_t,int64_t>(s);
-    
+
     // format:{pid:native,oracle,spot}
     auto key= std::get<0>(t);
     auto b1 = std::get<1>(t);
@@ -3346,9 +3346,9 @@ int mastercore_init()
   ++mastercoreInitialized;
 
   PrintToLog("%s(): mastercoreInitialized: %d\n",__func__, mastercoreInitialized);
-   
+
   nWaterlineBlock = load_most_relevant_state();
-     
+
   // Initialize after loading state as the fund relies on the register
   g_fund = MakeUnique<InsuranceFund>();
 
@@ -4922,7 +4922,7 @@ int mastercore_handler_block_end(int nBlockNow, CBlockIndex const * pBlockIndex,
        if (nBlockNow > params.MSC_CONTRACTDEX_BLOCK)
        {
            LiquidationEngine(nBlockNow);
-           // bS.makeSettlement();
+           bS.makeSettlement();
        }
 
        // deleting Expired DEx accepts
@@ -6000,7 +6000,7 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
 
       /****************************************************/
       /** Building TWAP vector MDEx **/
-      
+
       uint32_t property_all = getTokenDataByName("ALL").data_propertyId;
       uint32_t property_usd = getTokenDataByName("dUSD").data_propertyId;
 
@@ -6853,7 +6853,7 @@ int64_t getMinMargin(const uint32_t contractId, const int64_t& position, uint64_
 }
 
 //check position for a given address of this contractId
-bool checkContractPositions(int Block, const std::string &address, const uint32_t contractId, const CDInfo::Entry& sp, const Register& reg)
+bool checkContractPositions(int Block, const std::string &address, const uint32_t contractId, const CDInfo::Entry& sp, Register& reg)
 {
     if(msc_debug_liquidation_enginee)
     {
@@ -6938,7 +6938,7 @@ bool mastercore::LiquidationEngine(int Block)
          // we check each position for this contract Id
          LOCK(cs_register);
 
-         for_each(mp_register_map.begin(),mp_register_map.end(), [contractId, Block, &sp](const std::unordered_map<std::string, Register>::value_type& unmap){ checkContractPositions(Block, unmap.first, contractId, sp, unmap.second);});
+         for_each(mp_register_map.begin(),mp_register_map.end(), [contractId, Block, &sp](std::unordered_map<std::string, Register>::value_type& unmap){ checkContractPositions(Block, unmap.first, contractId, sp, unmap.second);});
 
    }
 
@@ -8308,16 +8308,20 @@ void blocksettlement::makeSettlement()
 
          // if there's no liquidation orders
          if(0 == loss) {
+             PrintToLog("%s(): realize_pnl stage\n",__func__);
              realize_pnl(contractId, cd.notional_size, cd.isOracle(), cd.isInverseQuoted());
          } else if (loss > 0) {
               //const int64_t difference = getInsurance(cd.collateral_currency) - loss;
+              PrintToLog("%s(): get_fees_balance stage\n",__func__);
               const int64_t difference = get_fees_balance(g_fees->spot_fees, cd.collateral_currency) - loss;
 
               if (0 > difference) {
                   // we need socialization of loss
+                  PrintToLog("%s(): lossSocialization stage\n",__func__);
                   lossSocialization(contractId, -difference);
               }
 
+              PrintToLog("%s(): AccrueFees stage\n",__func__);
               g_fund->AccrueFees(cd.collateral_currency, loss);
           }
      }
@@ -8332,15 +8336,20 @@ int64_t blocksettlement::getTotalLoss(const uint32_t& contractId, const uint32_t
     int64_t bankruptcyVWAP = 0;
 
     if (!mastercore::ContractDex_LIQUIDATION_VOLUME(contractId, volume, vwap, bankruptcyVWAP, sign)) {
+        PrintToLog("%s():ContractDex_LIQUIDATION_VOLUME is zero\n",__func__);
         return 0;
     }
+
+    PrintToLog("%s():volume: %d, vwap: %d, bankruptcyVWAP: %d\n",__func__, volume, vwap, bankruptcyVWAP);
 
     const int64_t oracleTwap = mastercore::getOracleTwap(contractId, OBLOCKS);
 
     //! Systemic Loss in a Block = the volume-weighted avg. price of bankruptcy (for each position we need the bankruptcy price, and the volume of liquidation) for unfilled liquidations
     // * the sign of the liquidated contracts * their notional value (this depends of contract denomination) * the # of contracts (number of contract in liquidation) * (Liq. VWAP - Mark Price)
     // Mark Price: (oracle: TWAP of oracle, native: spot price)
-    systemicLoss = ((bankruptcyVWAP * notionalSize) / COIN) * ((volume * vwap * oracleTwap) / COIN);
+    systemicLoss = ((bankruptcyVWAP * notionalSize) / COIN) * ((volume * vwap * oracleTwap) / (COIN * COIN));
+
+    PrintToLog("%s(): systemicLoss: %d\n",__func__, systemicLoss);
 
     // return totalLoss;
     return systemicLoss;

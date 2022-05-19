@@ -102,7 +102,7 @@ int64_t Register::getLiquidationPrice(const uint32_t contractId, const uint32_t 
 
 }
 
-int64_t Register::getUPNL(const uint32_t contractId, const uint32_t notionalSize, bool isOracle, bool quoted) const
+int64_t Register::getUPNL(const uint32_t contractId, const uint32_t notionalSize, bool isOracle, bool quoted)
 {
 
     const int64_t position = getRecord(contractId, CONTRACT_POSITION);
@@ -113,10 +113,10 @@ int64_t Register::getUPNL(const uint32_t contractId, const uint32_t notionalSize
 
     if(msc_debug_liquidation_enginee)
     {
-         PrintToLog("%s(): inside getUPNL, position: %d. entryPrice: %d, exitPrice: %d\n",__func__, position, entryPrice, exitPrice);
+         PrintToLog("%s(): inside getUPNL, position: %d. entryPrice: %d, exitPrice: %d, notionalSize: %d\n",__func__, position, entryPrice, exitPrice, notionalSize);
     }
 
-    const arith_uint256 factor = ConvertTo256((abs(position) * notionalSize) / COIN);
+    const arith_uint256 factor = ConvertTo256((abs(position) * notionalSize) / COIN );
     const arith_uint256 dEntryPrice = ConvertTo256(entryPrice / COIN);
     const arith_uint256 dExitPrice = ConvertTo256(exitPrice / COIN);
     const int64_t diff = exitPrice - entryPrice;
@@ -124,25 +124,35 @@ int64_t Register::getUPNL(const uint32_t contractId, const uint32_t notionalSize
 
     PrintToLog("%s(): dEntryPrice: %d, dExitPrice: %d, factor: %d, diff: %d\n",__func__, ConvertTo64(dEntryPrice), ConvertTo64(dExitPrice), ConvertTo64(factor), diff);
 
-    arith_uint256 UPNL = 0;
+    arith_uint256 aUPNL = 0;
 
     if(quoted)
     {
 
-        UPNL = (entryPrice != 0 && exitPrice != 0) ?  (dDiff * (factor / dEntryPrice)) / dExitPrice : 0;
+        aUPNL = (entryPrice != 0 && exitPrice != 0) ?  (dDiff * (factor / dEntryPrice)) / dExitPrice : 0;
 
     } else {
-        UPNL  = factor * dDiff ;
+        aUPNL  = (factor * dDiff);
     }
 
     // re-converting to int64_t
-    const uint64_t uiUPNL = ConvertTo64(UPNL);
+    const uint64_t uiUPNL = ConvertTo64(aUPNL);
     int64_t iUPNL = 0;
 
     if ((diff > 0 && position < 0) || (diff < 0 && position > 0)) {
         iUPNL = (int64_t) -uiUPNL;
     } else {
         iUPNL = (int64_t) uiUPNL;
+    }
+
+    // updating UPNL Register
+    const int64_t oldUPNL = getRecord(contractId, UPNL);
+    PrintToLog("%s():oldUPNL: %d, iUPNL: %d\n",__func__, oldUPNL, iUPNL);
+
+    if(oldUPNL != iUPNL) {
+        updateRecord(contractId, iUPNL, UPNL);
+        PrintToLog("%s():updating record, contractId: %d\n",__func__, contractId);
+
     }
 
     if(msc_debug_liquidation_enginee)
@@ -185,24 +195,25 @@ bool Register::updateRecord(uint32_t contractId, int64_t amount, RecordType ttyp
     bool fUpdated = false;
     int64_t now64 = mp_record[contractId].balance[ttype];
 
-    if (isOverflow(now64, amount)) {
+    if (isOverflow(now64, amount) && ttype != PNL) {
         PrintToLog("%s(): ERROR: arithmetic overflow [%d + %d]\n", __func__, now64, amount);
         return false;
     }
 
-    if (CONTRACT_POSITION != ttype && UPNL != ttype && (now64 + amount) < 0) {
+    if (CONTRACT_POSITION != ttype && UPNL != ttype && PNL != ttype && (now64 + amount) < 0) {
         // NOTE:
         PrintToLog("%s(): ERROR: Negative balances are only permitted for contracts amount, or UPNL\n",__func__);
         return false;
     } else {
 
         now64 += amount;
-        mp_record[contractId].balance[ttype] = now64;
+        mp_record[contractId].balance[ttype] = (ttype == PNL) ? amount : now64;
         fUpdated = true;
     }
 
     return fUpdated;
 }
+
 
 /**
  *  Inserting price and amount
@@ -463,7 +474,7 @@ int64_t mastercore::getContractRecord(const std::string& address, uint32_t contr
     }
 
     LOCK(cs_register);
-    const std::unordered_map<std::string, Register>::iterator my_it = mp_register_map.find(address);
+    std::unordered_map<std::string, Register>::const_iterator my_it = mp_register_map.find(address);
     if (my_it != mp_register_map.end()) {
         balance = (my_it->second).getRecord(contractId, ttype);
     }
@@ -474,9 +485,9 @@ int64_t mastercore::getContractRecord(const std::string& address, uint32_t contr
 bool mastercore::getFullContractRecord(const std::string& address, uint32_t contractId, UniValue& position_obj, const CDInfo::Entry& cd)
 {
     LOCK(cs_register);
-    const std::unordered_map<std::string, Register>::const_iterator my_it = mp_register_map.find(address);
+    std::unordered_map<std::string, Register>::iterator my_it = mp_register_map.find(address);
     if (my_it != mp_register_map.end()) {
-        const Register& reg = my_it->second;
+        Register& reg = my_it->second;
         //entry price
         const int64_t entryPrice = reg.getPosEntryPrice(contractId);
         position_obj.pushKV("entry_price", FormatDivisibleMP(entryPrice));
@@ -571,6 +582,7 @@ bool mastercore::realize_pnl(uint32_t contractId, uint32_t notional_size, bool i
         if (0 != upnl)
         {
             assert(update_register_map(who, contractId, upnl, MARGIN));
+            assert(update_register_map(who, contractId, upnl, PNL));
             bRet = true;
         }
     }
