@@ -183,11 +183,14 @@ void mastercore::updateAllEntry(int64_t oldPosition, int64_t newPosition, int64_
        // resetting the LEVERAGE
        assert(reset_leverage_register(elem->getAddr(), contract_traded));
 
+       // reseting PNL
+       assert(update_register_map(elem->getAddr(), contract_traded, 0, PNL));
+
        // passing  from margin to balance
        assert(update_register_map(elem->getAddr(), contract_traded, -remainingMargin, MARGIN));
        assert(update_tally_map(elem->getAddr(), cd.collateral_currency, remainingMargin, BALANCE));
 
-      assert(decrease_entry(elem->getAddr(), contract_traded, nCouldBuy));
+       assert(decrease_entry(elem->getAddr(), contract_traded, nCouldBuy));
 
      // closing position and opening another from different side
    } else if (signOld != signNew && (signOld != 0 && signNew != 0)) {
@@ -2873,7 +2876,7 @@ int mastercore::MetaDEx_CANCEL_ALL_FOR_PAIR(const uint256& txid, unsigned int bl
           PrintToLog(" ## contractId: %d\n", prop);
           cd_PricesMap &prices = my_it->second;
 
-       
+
           for (cd_PricesMap::iterator it = prices.begin(); it != prices.end(); ++it)
           {
               const uint64_t& price = it->first;

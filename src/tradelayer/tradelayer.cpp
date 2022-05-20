@@ -8275,11 +8275,11 @@ bool mastercore::Token_LTC_Fees(int64_t& buyer_amountGot, uint32_t propertyId)
         cacheFee = buyer_amountGot;
     }
 
-    PrintToLog("%s(): cacheFee = %d, buyer_amountGot (before) = %d\n",__func__, cacheFee, buyer_amountGot);
+    // PrintToLog("%s(): cacheFee = %d, buyer_amountGot (before) = %d\n",__func__, cacheFee, buyer_amountGot);
 
     buyer_amountGot -= cacheFee;
 
-    PrintToLog("%s(): cacheFee = %d, buyer_amountGot (after) = %d\n",__func__, cacheFee, buyer_amountGot);
+    // PrintToLog("%s(): cacheFee = %d, buyer_amountGot (after) = %d\n",__func__, cacheFee, buyer_amountGot);
 
     if(cacheFee > 0)
     {
@@ -8307,21 +8307,18 @@ void blocksettlement::makeSettlement()
          PrintToLog("%s(): total loss: %d\n",__func__, loss);
 
          // if there's no liquidation orders
-         if(0 == loss) {
-             PrintToLog("%s(): realize_pnl stage\n",__func__);
+         if(0 == loss)
+         {
              realize_pnl(contractId, cd.notional_size, cd.isOracle(), cd.isInverseQuoted());
          } else if (loss > 0) {
-              //const int64_t difference = getInsurance(cd.collateral_currency) - loss;
-              PrintToLog("%s(): get_fees_balance stage\n",__func__);
-              const int64_t difference = get_fees_balance(g_fees->spot_fees, cd.collateral_currency) - loss;
+              const int64_t allFees = get_fees_balance(g_fees->spot_fees, cd.collateral_currency);
+              const int64_t difference = allFees - loss;
 
-              if (0 > difference) {
-                  // we need socialization of loss
-                  PrintToLog("%s(): lossSocialization stage\n",__func__);
-                  lossSocialization(contractId, -difference);
-              }
+              const int64_t amountShared = (0 > difference) ? difference : allFees;
 
-              PrintToLog("%s(): AccrueFees stage\n",__func__);
+              // we need socialization of loss
+              lossSocialization(contractId, cd.collateral_currency, amountShared);
+
               g_fund->AccrueFees(cd.collateral_currency, loss);
           }
      }
@@ -8329,10 +8326,9 @@ void blocksettlement::makeSettlement()
 
 int64_t blocksettlement::getTotalLoss(const uint32_t& contractId, const uint32_t& notionalSize)
 {
-    bool sign = false;
+    bool sign{false};
     int64_t vwap = 0;
     int64_t volume = 0;
-    int64_t systemicLoss = 0;
     int64_t bankruptcyVWAP = 0;
 
     if (!mastercore::ContractDex_LIQUIDATION_VOLUME(contractId, volume, vwap, bankruptcyVWAP, sign)) {
@@ -8347,16 +8343,11 @@ int64_t blocksettlement::getTotalLoss(const uint32_t& contractId, const uint32_t
     //! Systemic Loss in a Block = the volume-weighted avg. price of bankruptcy (for each position we need the bankruptcy price, and the volume of liquidation) for unfilled liquidations
     // * the sign of the liquidated contracts * their notional value (this depends of contract denomination) * the # of contracts (number of contract in liquidation) * (Liq. VWAP - Mark Price)
     // Mark Price: (oracle: TWAP of oracle, native: spot price)
-    systemicLoss = ((bankruptcyVWAP * notionalSize) / COIN) * ((volume * vwap * oracleTwap) / (COIN * COIN));
-
-    PrintToLog("%s(): systemicLoss: %d\n",__func__, systemicLoss);
-
-    // return totalLoss;
-    return systemicLoss;
+    return ((bankruptcyVWAP * notionalSize) / COIN) * ((volume * vwap * oracleTwap) / (COIN * COIN));
 
 }
 
-void blocksettlement::lossSocialization(const uint32_t& contractId, int64_t fullAmount)
+void blocksettlement::lossSocialization(const uint32_t& contractId, const uint32_t& collateral, int64_t fullAmount)
 {
     int count = 0;
     LOCK(cs_register);
@@ -8385,17 +8376,22 @@ void blocksettlement::lossSocialization(const uint32_t& contractId, int64_t full
     {
         auto it = find (zeroposition.begin(), zeroposition.end(), q.first);
         if (it == zeroposition.end()) {
-            Register& reg = q.second;
-            reg.updateRecord(contractId, -fraction, MARGIN);
+            // Register& reg = q.second;
+            const int64_t available = getMPbalance(q.first, collateral, BALANCE);
+            const int64_t amount = (available >= fraction) ? fraction : available;
+            PrintToLog("%s(): available: %d, amount: %d\n",__func__, available, amount);
+            // reg.updateRecord(contractId, amount, MARGIN);
+            assert(update_tally_map(q.first, collateral, amount, BALANCE));
         }
 
     }
+
 
 }
 
 /**
  * @return The marker for class D transactions.
- */
+*/
 const std::vector<uint8_t> GetTLMarker()
 {
     std::vector<uint8_t> marker{0x74, 0x74};  /* 'tt' hex-encoded */

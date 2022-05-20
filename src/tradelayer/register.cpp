@@ -187,7 +187,9 @@ bool Register::setBankruptcyPrice(const uint32_t contractId, const uint32_t noti
  */
 bool Register::updateRecord(uint32_t contractId, int64_t amount, RecordType ttype)
 {
-    if (RECORD_TYPE_COUNT <= ttype || amount == 0) {
+    bool fPNL = (ttype == PNL)? true : false;
+
+    if (RECORD_TYPE_COUNT <= ttype || (amount == 0  && fPNL)) {
         PrintToLog("%s(): ERROR: ttype (%d) is wrong, or updating amount is zero (%d)\n", __func__, ttype, amount);
         return false;
     }
@@ -195,19 +197,21 @@ bool Register::updateRecord(uint32_t contractId, int64_t amount, RecordType ttyp
     bool fUpdated = false;
     int64_t now64 = mp_record[contractId].balance[ttype];
 
-    if (isOverflow(now64, amount) && ttype != PNL) {
+    PrintToLog("%s(): now64: %d\n", __func__, now64);
+
+    if (isOverflow(now64, amount) && fPNL) {
         PrintToLog("%s(): ERROR: arithmetic overflow [%d + %d]\n", __func__, now64, amount);
         return false;
     }
 
-    if (CONTRACT_POSITION != ttype && UPNL != ttype && PNL != ttype && (now64 + amount) < 0) {
+    if (CONTRACT_POSITION != ttype && UPNL != ttype && fPNL && (now64 + amount) < 0) {
         // NOTE:
         PrintToLog("%s(): ERROR: Negative balances are only permitted for contracts amount, or UPNL\n",__func__);
         return false;
     } else {
 
         now64 += amount;
-        mp_record[contractId].balance[ttype] = (ttype == PNL) ? amount : now64;
+        mp_record[contractId].balance[ttype] = (fPNL) ? amount : now64;
         fUpdated = true;
     }
 
@@ -513,8 +517,8 @@ bool mastercore::getFullContractRecord(const std::string& address, uint32_t cont
 // return true if everything is ok
 bool mastercore::update_register_map(const std::string& who, uint32_t contractId, int64_t amount, RecordType ttype)
 {
-    if (0 == amount) {
-        PrintToLog("%s(%s, %u=0x%X, %+d, ttype=%d) ERROR: amount of contracts is zero\n", __func__, who, contractId, contractId, amount, ttype);
+    if (0 == amount && ttype != PNL) {
+        PrintToLog("%s(%s, %u=0x%X, %+d, ttype=%d) ERROR: amount is zero\n", __func__, who, contractId, contractId, amount, ttype);
         return false;
     }
     if (ttype >= RECORD_TYPE_COUNT) {
@@ -576,13 +580,15 @@ bool mastercore::realize_pnl(uint32_t contractId, uint32_t notional_size, bool i
         const std::string& who = my_it->first;
         Register& reg = my_it->second;
         const int64_t upnl = reg.getUPNL(contractId, notional_size, isOracle, isInverseQuoted);
+        const int64_t oldPNL = reg.getRecord(contractId, PNL);
+        const int64_t newUPNL = upnl - oldPNL;
 
-        PrintToLog("%s(): upnl: %d\n",__func__, upnl);
+        PrintToLog("%s(): upnl: %d, oldPNL: %d, newUPNL: %d\n",__func__, upnl, oldPNL, newUPNL);
 
-        if (0 != upnl)
+        if (0 != newUPNL)
         {
-            assert(update_register_map(who, contractId, upnl, MARGIN));
-            assert(update_register_map(who, contractId, upnl, PNL));
+            assert(update_register_map(who, contractId, newUPNL, MARGIN));
+            assert(update_register_map(who, contractId, newUPNL + oldPNL, PNL));
             bRet = true;
         }
     }
