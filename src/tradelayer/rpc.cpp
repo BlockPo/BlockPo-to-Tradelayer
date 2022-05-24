@@ -242,8 +242,23 @@ bool BalanceToJSON(const std::string& address, uint32_t property, UniValue& bala
 
 void ReserveToJSON(const std::string& address, uint32_t contractId, UniValue& balance_obj)
 {
-    int64_t margin = getContractRecord(address, contractId, MARGIN);
+    const int64_t margin = getContractRecord(address, contractId, MARGIN);
     balance_obj.pushKV("reserve", FormatDivisibleMP(margin));
+}
+
+
+void UPNLToJSON(const std::string& address, uint32_t contractId, UniValue& balance_obj)
+{
+    const int64_t upnl = getContractRecord(address, contractId, UPNL);
+    PrintToLog("%s(): upnl: %d,\n",__func__, upnl);
+    balance_obj.pushKV("upnl", upnl);
+}
+
+void PNLToJSON(const std::string& address, uint32_t contractId, UniValue& balance_obj)
+{
+    const int64_t pnl = getContractRecord(address, contractId, PNL);
+    PrintToLog("%s(): pnl: %d,\n",__func__, pnl);
+    balance_obj.pushKV("pnl", pnl);
 }
 
 void UnvestedToJSON(const std::string& address, uint32_t property, UniValue& balance_obj, bool divisible)
@@ -2285,7 +2300,7 @@ UniValue tl_getupnl(const JSONRPCRequest& request)
 
   const std::string address = ParseAddress(request.params[0]);
   uint32_t contractId = ParseNameOrId(request.params[1]);
-  bool showVerbose = (request.params.size() > 2 && ParseBinary(request.params[2]) == 1) ? true : false;
+  // bool showVerbose = (request.params.size() > 2 && ParseBinary(request.params[2]) == 1) ? true : false;
 
 
   RequireExistingProperty(contractId);
@@ -2295,10 +2310,9 @@ UniValue tl_getupnl(const JSONRPCRequest& request)
   RequirePosition(address, contractId);
 
   // request trade history from trade db
-  UniValue response(UniValue::VARR);
+  UniValue response(UniValue::VOBJ);
 
-  t_tradelistdb->getUpnInfo(address, contractId, response, showVerbose);
-
+  UPNLToJSON(address, contractId, response);
 
   return response;
 }
@@ -2337,26 +2351,14 @@ UniValue tl_getpnl(const JSONRPCRequest& request)
 			);
 
   const std::string address = ParseAddress(request.params[0]);
-  uint32_t contractId = ParsePropertyId(request.params[1]);
+  const uint32_t contractId = ParseNameOrId(request.params[1]);
 
   RequireExistingProperty(contractId);
 
   UniValue balanceObj(UniValue::VOBJ);
 
-  // note: we need to retrieve last realized pnl
-  int64_t upnl  = 0;
-  int64_t nupnl  = 0;
+  PNLToJSON(address, contractId, balanceObj);
 
-  if (upnl > 0 && nupnl == 0) {
-    balanceObj.pushKV("positivepnl", FormatByType(static_cast<uint64_t>(upnl),2));
-    balanceObj.pushKV("negativepnl", FormatByType(0,2));
-  } else if (nupnl > 0 && upnl == 0) {
-    balanceObj.pushKV("positivepnl", FormatByType(0,2));
-    balanceObj.pushKV("negativepnl", FormatByType(static_cast<uint64_t>(nupnl),2));
-  } else{
-    balanceObj.pushKV("positivepnl", FormatByType(0,2));
-    balanceObj.pushKV("negativepnl", FormatByType(0,2));
-  }
   return balanceObj;
 }
 
@@ -2738,7 +2740,7 @@ UniValue tl_getcache(const JSONRPCRequest& request)
     auto n1 = get_fees_balance(g_fees->native_fees, pid);
     auto n2 = get_fees_balance(g_fees->oracle_fees, pid);
     auto n3 = get_fees_balance(g_fees->spot_fees, pid);
-    
+
     int64_t n = 0L;
     if (type == 0)
         n = n1;
@@ -2748,7 +2750,7 @@ UniValue tl_getcache(const JSONRPCRequest& request)
         n = n3;
     else
         n = n1 + n2 + n3;
-    
+
     UniValue balanceObj(UniValue::VOBJ);
     balanceObj.pushKV("amount", FormatByType(n, pid));
     return balanceObj;
@@ -2775,10 +2777,10 @@ UniValue tl_getoraclecache(const JSONRPCRequest& request)
             + HelpExampleRpc("tl_getcache", "\"1\"")
         );
 
-    
+
     auto pid = ParsePropertyId(request.params[0]);
     auto amount = get_fees_balance(g_fees->oracle_fees, pid);
-    
+
     UniValue balanceObj(UniValue::VOBJ);
     balanceObj.pushKV("amount", FormatByType(amount, 2));
     return balanceObj;

@@ -437,7 +437,7 @@ class nodeReward
 
     int64_t getTotalLoss(const uint32_t& contractId, const uint32_t& notionalSize);
 
-    void lossSocialization(const uint32_t& contractId, int64_t fullAmount);
+    void lossSocialization(const uint32_t& contractId, const uint32_t& collateral, int64_t fullAmount);
   };
 
 extern blocksettlement bS;

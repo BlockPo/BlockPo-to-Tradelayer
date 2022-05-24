@@ -19,9 +19,10 @@ enum RecordType {
   CONTRACT_POSITION = 1,
   BANKRUPTCY_PRICE = 2,
   UPNL = 3,
-  MARGIN = 4,
-  LEVERAGE = 5,
-  CONTRACT_RESERVE = 6, // for synthetic/pegged currency
+  PNL = 4,
+  MARGIN = 5,
+  LEVERAGE = 6,
+  CONTRACT_RESERVE = 7, // for synthetic/pegged currency
   RECORD_TYPE_COUNT
 };
 
@@ -75,7 +76,7 @@ public:
 
     int64_t getPosExitPrice(const uint32_t contractId, bool isOracle) const;
 
-    int64_t getUPNL(const uint32_t contractId, const uint32_t notionalSize, bool isOracle = false, bool quoted = false) const;
+    int64_t getUPNL(const uint32_t contractId, const uint32_t notionalSize, bool isOracle = false, bool quoted = false);
 
     bool setBankruptcyPrice(const uint32_t contractId, const uint32_t notionalSize, int64_t initMargin, bool isOracle = false, bool quoted = false);
 
