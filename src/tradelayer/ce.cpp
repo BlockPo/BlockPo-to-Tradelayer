@@ -118,6 +118,7 @@ uint32_t CDInfo::peekNextContractID() const
     return nextId;
 }
 
+
 bool CDInfo::updateCD(uint32_t contractId, const Entry& info)
 {
 
@@ -419,6 +420,23 @@ void CDInfo::printAll() const
 //   return true;
 // }
 
+bool mastercore::IsContractIdValid(uint32_t contractId)
+{
+
+  if (contractId == 0) {
+      return false;
+  }
+
+  uint32_t nextId = 0;
+
+  nextId = _my_cds->peekNextContractID();
+
+  if (contractId < nextId) {
+    return true;
+  }
+
+  return false;
+}
 
 std::string mastercore::getContractName(uint32_t contractId)
 {

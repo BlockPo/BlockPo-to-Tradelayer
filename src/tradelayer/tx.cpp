@@ -1676,7 +1676,7 @@ bool CMPTransaction::interpret_Set_Oracle()
         PrintToLog("\t oracle high price: %d\n",oracle_high);
         PrintToLog("\t oracle low price: %d\n",oracle_low);
         PrintToLog("\t oracle close price: %d\n",oracle_close);
-        PrintToLog("\t propertyId: %d\n", propertyId);
+        PrintToLog("\t contractId: %d\n", contractId);
     }
 
     return true;
@@ -4286,17 +4286,17 @@ int CMPTransaction::logicMath_Change_OracleAdm()
 int CMPTransaction::logicMath_Set_Oracle()
 {
     if (!IsTransactionTypeAllowed(block, type, version)) {
-        PrintToLog("%s(): rejected: type %d or version %d not permitted for property %d at block %d\n",
+        PrintToLog("%s(): rejected: type %d or version %d not permitted for contractId %d at block %d\n",
                 __func__,
                 type,
                 version,
-                property,
+                contractId,
                 block);
         return (PKT_ERROR_SP -22);
     }
 
-    if (!IsPropertyIdValid(contractId)) {
-        PrintToLog("%s(): rejected: oracle %d does not exist\n", __func__, property);
+    if (!IsContractIdValid(contractId)) {
+        PrintToLog("%s(): rejected: oracle %d does not exist\n", __func__, contractId);
         return (PKT_ERROR_ORACLE -11);
     }
 
@@ -5158,7 +5158,7 @@ int CMPTransaction::logicMath_SendDonation()
 FutureContractObject getFutureContractObject(std::string identifier)
 {
   LOCK(cs_register);
-  
+
   const uint32_t nextCDID = _my_cds->peekNextContractID();
   for (uint32_t contractId = 1; contractId < nextCDID; contractId++)
   {

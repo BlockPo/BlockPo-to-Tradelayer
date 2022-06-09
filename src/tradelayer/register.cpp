@@ -182,7 +182,7 @@ bool Register::setBankruptcyPrice(const uint32_t contractId, const uint32_t noti
 /**
  * Updates amount for the given record type.
  *
- * Negative balances are only permitted for contracts amount.
+ * Negative balances are only permitted for contracts amount, PNL and UPNL.
  *
  */
 bool Register::updateRecord(uint32_t contractId, int64_t amount, RecordType ttype)
@@ -204,7 +204,7 @@ bool Register::updateRecord(uint32_t contractId, int64_t amount, RecordType ttyp
         return false;
     }
 
-    if (CONTRACT_POSITION != ttype && UPNL != ttype && fPNL && (now64 + amount) < 0) {
+    if ((CONTRACT_POSITION != ttype) && (UPNL != ttype) && (PNL != ttype) && fPNL && (now64 + amount) < 0) {
         // NOTE:
         PrintToLog("%s(): ERROR: Negative balances are only permitted for contracts amount, or UPNL\n",__func__);
         return false;
