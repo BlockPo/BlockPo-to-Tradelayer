@@ -116,7 +116,7 @@ void mastercore::takeMargin(int64_t amount, uint32_t contract_traded, const CDIn
     const uint64_t& allreserved = elem->getAmountReserved();
     const uint32_t& colateral = cd.collateral_currency;
     const int64_t leverage = getContractRecord(elem->getAddr(), contract_traded, LEVERAGE);
-    PrintToLog("%s(): leverage: %d\n",__func__, leverage);
+    PrintToLog("%s(): leverage: %d, amount_of_contracts: %d\n",__func__, leverage, amount);
     const arith_uint256 aMarginRequirement = ConvertTo256(cd.margin_requirement);
     const arith_uint256 aAmount = ConvertTo256(amount);
     const arith_uint256 aLeverage = ConvertTo256(leverage);
@@ -128,8 +128,8 @@ void mastercore::takeMargin(int64_t amount, uint32_t contract_traded, const CDIn
 
     // if we need more margin, we add the difference.
     // updating amount reserved for the order
-    assert(update_tally_map(elem->getAddr(), colateral, -amountOfMoney, CONTRACTDEX_RESERVE));
-    elem->updateAmountReserved(-amountOfMoney);
+    assert(update_tally_map(elem->getAddr(), colateral, -amountOfMoney, BALANCE));
+    elem->updateAmountReserved(amountOfMoney);
 
     // passing colateral to margin position
     assert(update_register_map(elem->getAddr(), contract_traded, amountOfMoney, MARGIN));
@@ -146,7 +146,7 @@ void mastercore::updateAllEntry(int64_t oldPosition, int64_t newPosition, int64_
     // open position
     if (signOld == 0 && signNew != 0)
     {
-        PrintToLog("%s() open position\n",__func__);
+        PrintToLog("%s() open position, nCouldBuy: %d\n",__func__, nCouldBuy);
         // updating entries (amount of contracts , price)
         assert(insert_entry(elem->getAddr(), contract_traded, nCouldBuy, elem->getEffectivePrice()));
         //taking margin
@@ -162,7 +162,7 @@ void mastercore::updateAllEntry(int64_t oldPosition, int64_t newPosition, int64_
         // if position increasing -> we add a new entry
         if(abs(newPosition) > abs(oldPosition))
         {
-            PrintToLog("%s() increasing position\n",__func__);
+            PrintToLog("%s() increasing position, nCouldBuy: %d\n",__func__, nCouldBuy);
             // updating entries (amount of contracts , price)
             assert(insert_entry(elem->getAddr(), contract_traded, nCouldBuy, elem->getEffectivePrice()));
             //taking margin

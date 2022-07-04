@@ -227,13 +227,13 @@ class OraclesBasicsTest (BitcoinTestFramework):
         self.log.info("Checking full position for first address")
         params = str([addresses[0], "Oracle 1"]).replace("'",'"')
         out = tradelayer_HTTP(conn, headers, True, "tl_getfullposition",params)
-        # self.log.info(out)
+        self.log.info(out)
 
         assert_equal(out['error'], None)
         assert_equal(out['result']['entry_price'], '80.50000000')
         assert_equal(out['result']['position'], '-1000')
-        assert_equal(out['result']['liquidation_price'], '0.00000000')
-        assert_equal(out['result']['position_margin'], '100.00000000')
+        assert_equal(out['result']['BANKRUPTCY_PRICE'], '0.00000000')
+        assert_equal(out['result']['position_margin'], '144.60392156')
         assert_equal(out['result']['upnl'], '+44.60392156')
 
         self.log.info("Checking full position for second address")
@@ -244,8 +244,8 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         assert_equal(out['result']['entry_price'], '80.50000000')
         assert_equal(out['result']['position'], '1000')
-        assert_equal(out['result']['liquidation_price'], '0.00000000')
-        assert_equal(out['result']['position_margin'], '100.00000000')
+        assert_equal(out['result']['BANKRUPTCY_PRICE'], '0.00000000')
+        assert_equal(out['result']['position_margin'], '55.39607844')
         assert_equal(out['result']['upnl'], '-44.60392156')
 
 
@@ -314,8 +314,8 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         assert_equal(out['result']['entry_price'], '60.23333334')
         assert_equal(out['result']['position'], '3000')
-        assert_equal(out['result']['liquidation_price'], '0.00000000')
-        assert_equal(out['result']['position_margin'], '300.00000000')
+        assert_equal(out['result']['BANKRUPTCY_PRICE'], '0.00000000')
+        assert_equal(out['result']['position_margin'], '173.75816992')
         assert_equal(out['result']['upnl'], '-126.24183008')
 
 
@@ -378,8 +378,8 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         assert_equal(out['result']['entry_price'], '57.98148149')
         assert_equal(out['result']['position'], '2700')
-        assert_equal(out['result']['liquidation_price'], '0.00000000')
-        assert_equal(out['result']['position_margin'], '300.00000000')
+        assert_equal(out['result']['BANKRUPTCY_PRICE'], '0.00000000')
+        assert_equal(out['result']['position_margin'], '187.55838778')
         assert_equal(out['result']['upnl'], '-112.44161222')
 
 
@@ -391,8 +391,8 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         assert_equal(out['result']['entry_price'], '57.98148149')
         assert_equal(out['result']['position'], '-2700')
-        assert_equal(out['result']['liquidation_price'], '0.00000000')
-        assert_equal(out['result']['position_margin'], '300.00000000')
+        assert_equal(out['result']['BANKRUPTCY_PRICE'], '0.00000000')
+        assert_equal(out['result']['position_margin'], '412.44161222')
         assert_equal(out['result']['upnl'], '+112.44161222')
 
 
@@ -446,8 +446,8 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         assert_equal(out['result']['entry_price'], '30.00000000')
         assert_equal(out['result']['position'], '-1000')
-        assert_equal(out['result']['liquidation_price'], '0.00000000')
-        assert_equal(out['result']['position_margin'], '100.00000000')
+        assert_equal(out['result']['BANKRUPTCY_PRICE'], '0.00000000')
+        assert_equal(out['result']['position_margin'], '237.07298477')
         assert_equal(out['result']['upnl'], '+24.63137255')
 
 
@@ -459,8 +459,8 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         assert_equal(out['result']['entry_price'], '30.00000000')
         assert_equal(out['result']['position'], '1000')
-        assert_equal(out['result']['liquidation_price'], '0.00000000')
-        assert_equal(out['result']['position_margin'], '100.00000000')
+        assert_equal(out['result']['BANKRUPTCY_PRICE'], '0.00000000')
+        assert_equal(out['result']['position_margin'], '37.07298477')
         assert_equal(out['result']['upnl'], '-24.63137255')
 
         #Positions to zero:
@@ -513,7 +513,7 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         assert_equal(out['result']['entry_price'], '0.00000000')
         assert_equal(out['result']['position'], '0')
-        assert_equal(out['result']['liquidation_price'], '0.00000000')
+        assert_equal(out['result']['BANKRUPTCY_PRICE'], '0.00000000')
         assert_equal(out['result']['position_margin'], '0.00000000')
         assert_equal(out['result']['upnl'], '+0.00000000')
 
@@ -527,7 +527,7 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         assert_equal(out['result']['entry_price'], '0.00000000')
         assert_equal(out['result']['position'], '0')
-        assert_equal(out['result']['liquidation_price'], '0.00000000')
+        assert_equal(out['result']['BANKRUPTCY_PRICE'], '0.00000000')
         assert_equal(out['result']['position_margin'], '0.00000000')
         assert_equal(out['result']['upnl'], '+0.00000000')
 
@@ -592,8 +592,8 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         assert_equal(out['result']['entry_price'], '80.50000000')
         assert_equal(out['result']['position'], '-1000')
-        assert_equal(out['result']['liquidation_price'], '0.00000000')
-        assert_equal(out['result']['position_margin'], '10.00000000')
+        assert_equal(out['result']['BANKRUPTCY_PRICE'], '0.00000000')
+        assert_equal(out['result']['position_margin'], '54.60392156')
         assert_equal(out['result']['upnl'], '+44.60392156')
 
         self.log.info("Checking full position for second address")
@@ -604,8 +604,8 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         assert_equal(out['result']['entry_price'], '80.50000000')
         assert_equal(out['result']['position'], '1000')
-        assert_equal(out['result']['liquidation_price'], '0.00000000')
-        assert_equal(out['result']['position_margin'], '10.00000000')
+        assert_equal(out['result']['BANKRUPTCY_PRICE'], '0.00000000')
+        assert_equal(out['result']['position_margin'], '34.60392156')
         assert_equal(out['result']['upnl'], '-44.60392156')
 
 
@@ -674,8 +674,8 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         assert_equal(out['result']['entry_price'], '60.23333334')
         assert_equal(out['result']['position'], '3000')
-        assert_equal(out['result']['liquidation_price'], '0.00000000')
-        assert_equal(out['result']['position_margin'], '30.00000000')
+        assert_equal(out['result']['BANKRUPTCY_PRICE'], '0.00000000')
+        assert_equal(out['result']['position_margin'], '96.24183008')
         assert_equal(out['result']['upnl'], '-126.24183008')
 
 
@@ -738,8 +738,8 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         assert_equal(out['result']['entry_price'], '57.98148149')
         assert_equal(out['result']['position'], '2700')
-        assert_equal(out['result']['liquidation_price'], '0.00000000')
-        assert_equal(out['result']['position_margin'], '30.00000000')
+        assert_equal(out['result']['BANKRUPTCY_PRICE'], '0.00000000')
+        assert_equal(out['result']['position_margin'], '82.44161222')
         assert_equal(out['result']['upnl'], '-112.44161222')
 
 
@@ -751,8 +751,8 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         assert_equal(out['result']['entry_price'], '57.98148149')
         assert_equal(out['result']['position'], '-2700')
-        assert_equal(out['result']['liquidation_price'], '0.00000000')
-        assert_equal(out['result']['position_margin'], '30.00000000')
+        assert_equal(out['result']['BANKRUPTCY_PRICE'], '0.00000000')
+        assert_equal(out['result']['position_margin'], '142.44161222')
         assert_equal(out['result']['upnl'], '+112.44161222')
 
 
@@ -806,8 +806,8 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         assert_equal(out['result']['entry_price'], '30.00000000')
         assert_equal(out['result']['position'], '-1000')
-        assert_equal(out['result']['liquidation_price'], '0.00000000')
-        assert_equal(out['result']['position_margin'], '10.00000000')
+        assert_equal(out['result']['BANKRUPTCY_PRICE'], '0.00000000')
+        assert_equal(out['result']['position_margin'], '147.07298477')
         assert_equal(out['result']['upnl'], '+24.63137255')
 
 
@@ -819,8 +819,8 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         assert_equal(out['result']['entry_price'], '30.00000000')
         assert_equal(out['result']['position'], '1000')
-        assert_equal(out['result']['liquidation_price'], '0.00000000')
-        assert_equal(out['result']['position_margin'], '10.00000000')
+        assert_equal(out['result']['BANKRUPTCY_PRICE'], '0.00000000')
+        assert_equal(out['result']['position_margin'], '127.07298477')
         assert_equal(out['result']['upnl'], '-24.63137255')
 
         #Positions to zero:
@@ -873,7 +873,7 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         assert_equal(out['result']['entry_price'], '0.00000000')
         assert_equal(out['result']['position'], '0')
-        assert_equal(out['result']['liquidation_price'], '0.00000000')
+        assert_equal(out['result']['BANKRUPTCY_PRICE'], '0.00000000')
         assert_equal(out['result']['position_margin'], '0.00000000')
         assert_equal(out['result']['upnl'], '+0.00000000')
 
@@ -887,7 +887,7 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         assert_equal(out['result']['entry_price'], '0.00000000')
         assert_equal(out['result']['position'], '0')
-        assert_equal(out['result']['liquidation_price'], '0.00000000')
+        assert_equal(out['result']['BANKRUPTCY_PRICE'], '0.00000000')
         assert_equal(out['result']['position_margin'], '0.00000000')
         assert_equal(out['result']['upnl'], '+0.00000000')
 
@@ -953,8 +953,8 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         assert_equal(out['result']['entry_price'], '80.50000000')
         assert_equal(out['result']['position'], '-1000')
-        assert_equal(out['result']['liquidation_price'], '0.00000000')
-        assert_equal(out['result']['position_margin'], '20.00000000')
+        assert_equal(out['result']['BANKRUPTCY_PRICE'], '0.00000000')
+        assert_equal(out['result']['position_margin'], '64.60392156')
         assert_equal(out['result']['upnl'], '+44.60392156')
 
         self.log.info("Checking full position for second address")
@@ -965,8 +965,8 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         assert_equal(out['result']['entry_price'], '80.50000000')
         assert_equal(out['result']['position'], '1000')
-        assert_equal(out['result']['liquidation_price'], '0.00000000')
-        assert_equal(out['result']['position_margin'], '20.00000000')
+        assert_equal(out['result']['BANKRUPTCY_PRICE'], '0.00000000')
+        assert_equal(out['result']['position_margin'], '24.60392156')
         assert_equal(out['result']['upnl'], '-44.60392156')
 
 
@@ -1035,8 +1035,8 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         assert_equal(out['result']['entry_price'], '60.23333334')
         assert_equal(out['result']['position'], '3000')
-        assert_equal(out['result']['liquidation_price'], '0.00000000')
-        assert_equal(out['result']['position_margin'], '60.00000000')
+        assert_equal(out['result']['BANKRUPTCY_PRICE'], '0.00000000')
+        assert_equal(out['result']['position_margin'], '66.24183008')
         assert_equal(out['result']['upnl'], '-126.24183008')
 
 
@@ -1099,8 +1099,8 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         assert_equal(out['result']['entry_price'], '57.98148149')
         assert_equal(out['result']['position'], '2700')
-        assert_equal(out['result']['liquidation_price'], '0.00000000')
-        assert_equal(out['result']['position_margin'], '60.00000000')
+        assert_equal(out['result']['BANKRUPTCY_PRICE'], '0.00000000')
+        assert_equal(out['result']['position_margin'], '52.44161222')
         assert_equal(out['result']['upnl'], '-112.44161222')
 
 
@@ -1112,8 +1112,8 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         assert_equal(out['result']['entry_price'], '57.98148149')
         assert_equal(out['result']['position'], '-2700')
-        assert_equal(out['result']['liquidation_price'], '0.00000000')
-        assert_equal(out['result']['position_margin'], '60.00000000')
+        assert_equal(out['result']['BANKRUPTCY_PRICE'], '0.00000000')
+        assert_equal(out['result']['position_margin'], '172.44161222')
         assert_equal(out['result']['upnl'], '+112.44161222')
 
 
@@ -1167,8 +1167,8 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         assert_equal(out['result']['entry_price'], '30.00000000')
         assert_equal(out['result']['position'], '-1000')
-        assert_equal(out['result']['liquidation_price'], '0.00000000')
-        assert_equal(out['result']['position_margin'], '20.00000000')
+        assert_equal(out['result']['BANKRUPTCY_PRICE'], '0.00000000')
+        assert_equal(out['result']['position_margin'], '157.07298477')
         assert_equal(out['result']['upnl'], '+24.63137255')
 
 
@@ -1180,8 +1180,8 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         assert_equal(out['result']['entry_price'], '30.00000000')
         assert_equal(out['result']['position'], '1000')
-        assert_equal(out['result']['liquidation_price'], '0.00000000')
-        assert_equal(out['result']['position_margin'], '20.00000000')
+        assert_equal(out['result']['BANKRUPTCY_PRICE'], '0.00000000')
+        assert_equal(out['result']['position_margin'], '117.07298477')
         assert_equal(out['result']['upnl'], '-24.63137255')
 
         #Positions to zero:
@@ -1234,7 +1234,7 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         assert_equal(out['result']['entry_price'], '0.00000000')
         assert_equal(out['result']['position'], '0')
-        assert_equal(out['result']['liquidation_price'], '0.00000000')
+        assert_equal(out['result']['BANKRUPTCY_PRICE'], '0.00000000')
         assert_equal(out['result']['position_margin'], '0.00000000')
         assert_equal(out['result']['upnl'], '+0.00000000')
 
@@ -1248,7 +1248,7 @@ class OraclesBasicsTest (BitcoinTestFramework):
         assert_equal(out['error'], None)
         assert_equal(out['result']['entry_price'], '0.00000000')
         assert_equal(out['result']['position'], '0')
-        assert_equal(out['result']['liquidation_price'], '0.00000000')
+        assert_equal(out['result']['BANKRUPTCY_PRICE'], '0.00000000')
         assert_equal(out['result']['position_margin'], '0.00000000')
         assert_equal(out['result']['upnl'], '+0.00000000')
 

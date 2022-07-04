@@ -189,7 +189,7 @@ bool Register::updateRecord(uint32_t contractId, int64_t amount, RecordType ttyp
 {
     bool fPNL = (ttype == PNL)? true : false;
 
-    if (RECORD_TYPE_COUNT <= ttype || (amount == 0  && fPNL)) {
+    if (RECORD_TYPE_COUNT <= ttype || (amount == 0  && !fPNL)) {
         PrintToLog("%s(): ERROR: ttype (%d) is wrong, or updating amount is zero (%d)\n", __func__, ttype, amount);
         return false;
     }
