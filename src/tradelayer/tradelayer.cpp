@@ -8305,7 +8305,7 @@ void blocksettlement::makeSettlement()
          if (!_my_cds->getCD(contractId, cd)) {
              continue; // contract does not exist
          }
-
+         //this would be a great spot to call liquidationEngine()
          const int64_t loss = getTotalLoss(contractId, cd.notional_size);
          PrintToLog("%s(): total loss: %d\n",__func__, loss);
 
