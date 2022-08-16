@@ -210,6 +210,14 @@ void InsuranceFund::UpdateFundOrders(int block)
 void InsuranceFund::CoverContracts(int block, uint32_t amount)
 {
     LOG("Placing limit order to sell %d ALL contracts\n", amount);
+    
+    //this should be called in the Settlement function in TradeLayer.cpp when there are net-losses
+    //we calculate the avg. liquidation order price in that function so this function should have a price parameter also
+    //the conventional method is to do a ContractDex_ADD function as in the UpdateFundOrders, but the matching has already happened.
+    //so what this does is reduces the amount of short contracts in the fund's inventory to 0 or whatever is left after liquidations are matched
+    //the insurance fund gains the ALL profits, and initial margin for the short contracts becomes available ALL balance for the fund to calculate future orders
+    //so we're going to bypass mdex functions and directly assert that the insurance fund address has fewer short positions matching the liquidated orders
+    //the liquidated orders are already removing their positions from the register in LiquidationEngine()
 
     //dex_sumbit_lorder(block, CONTRACT_ID, amount);
 }
