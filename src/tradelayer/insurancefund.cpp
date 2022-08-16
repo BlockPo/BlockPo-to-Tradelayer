@@ -199,11 +199,11 @@ void InsuranceFund::UpdateFundOrders(int block)
     auto n2 = fees / 2 / price;
     auto n = n2 - n1;
 
-    if (n) {
+    if (n>0) {
         LOG("Placing limit order to trade %d ALL contracts\n", n);
-
+        //https://github.com/BlockPo/BlockPo-to-Tradelayer/blob/master/src/tradelayer/mdex.cpp#L2115
+        //mastercore::ContractDex_ADD(const std::string& sender_addr, uint32_t prop, int64_t amount, int block, const uint256& txid, unsigned int idx, uint64_t effective_price, uint8_t trading_action, int64_t amountToReserve)
         // buy if negative (to reduce position), and sell otherwise
-        //dex_sumbit_lorder(block, CONTRACT_ID, n);
     }
 }
 
@@ -219,5 +219,4 @@ void InsuranceFund::CoverContracts(int block, uint32_t amount)
     //so we're going to bypass mdex functions and directly assert that the insurance fund address has fewer short positions matching the liquidated orders
     //the liquidated orders are already removing their positions from the register in LiquidationEngine()
 
-    //dex_sumbit_lorder(block, CONTRACT_ID, amount);
 }
