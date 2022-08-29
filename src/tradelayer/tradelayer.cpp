@@ -6905,6 +6905,9 @@ bool checkContractPositions(int Block, const std::string &address, const uint32_
         if(msc_debug_liquidation_enginee) PrintToLog("%s(): here trying to liquidate 50 percent of position, contractId: %d, icontracts : %d, Block: %d\n",__func__,  contractId, icontracts, Block);
 
         // if whe don't have pending liquidation orders here! then we add the order
+	//it may be more appropriate to replace this with Insert or ADD, right now the Market sell function is using orderbook edge price so the behavior
+	//may well not post any liquidation sell orders if there are not other orders already on the book
+	//specifying the price while calling ADD may fix the problem where liquidation orders aren't passing through
         ContractDex_ADD_MARKET_PRICE(address, contractId, icontracts, Block, txid, idx, (position > 0) ? sell : buy, 0, true);
 
         // TODO: add here a position checking in order to see if we are above the margin limits.
@@ -8303,7 +8306,7 @@ void blocksettlement::makeSettlement()
          if (!_my_cds->getCD(contractId, cd)) {
              continue; // contract does not exist
          }
-
+         //this would be a great spot to call liquidationEngine()
          const int64_t loss = getTotalLoss(contractId, cd.notional_size);
          PrintToLog("%s(): total loss: %d\n",__func__, loss);
 
