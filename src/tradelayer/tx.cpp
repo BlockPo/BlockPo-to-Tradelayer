@@ -1985,7 +1985,7 @@ bool CMPTransaction::interpret_Instant_LTC_Trade()
 /** Tx 114 */
 bool CMPTransaction::interpret_Contract_Instant()
 {
-  PrintToLog("s%(): inside interpret function!!!!!\n",__func__);
+
   int i = 0;
 
   std::vector<uint8_t> vecVersionBytes = GetNextVarIntBytes(i);
@@ -2030,7 +2030,6 @@ bool CMPTransaction::interpret_Contract_Instant()
       ileverage = DecompressInteger(vecLeverage);
   } else return false;
 
-  PrintToLog("s%(): function returning !!!!!\n",__func__);
   if ((!rpcOnly && msc_debug_packets) || msc_debug_packets_readonly || true)
   {
       PrintToLog("\t version: %d\n", version);

@@ -7688,35 +7688,36 @@ bool mastercore::ContInst_Fees(const std::string& firstAddr, const std::string& 
 bool mastercore::Instant_x_Trade(const uint256& txid, uint8_t tradingAction, const std::string& channelAddr, const std::string& firstAddr, const std::string& secondAddr, uint32_t contractId, int64_t amount_forsale, uint64_t price, uint32_t collateral, uint16_t type, int& block, int tx_idx)
 {
 
-    const int64_t firstPoss = getContractRecord(firstAddr, contractId, CONTRACT_POSITION);
-    const int64_t secondPoss = getContractRecord(secondAddr, contractId, CONTRACT_POSITION);
+    // const int64_t firstPoss = getContractRecord(firstAddr, contractId, CONTRACT_POSITION);
+    // const int64_t secondPoss = getContractRecord(secondAddr, contractId, CONTRACT_POSITION);
 
     const int64_t amount = (tradingAction == buy) ? -amount_forsale : amount_forsale;
+
     assert(update_register_map(firstAddr, contractId,  amount, CONTRACT_POSITION));
     assert(update_register_map(secondAddr, contractId, -amount, CONTRACT_POSITION));
 
-    const int64_t newFirstPoss = getContractRecord(firstAddr, contractId, CONTRACT_POSITION);
-    const int64_t newSecondPoss = getContractRecord(secondAddr, contractId, CONTRACT_POSITION);
+    // const int64_t newFirstPoss = getContractRecord(firstAddr, contractId, CONTRACT_POSITION);
+    // const int64_t newSecondPoss = getContractRecord(secondAddr, contractId, CONTRACT_POSITION);
 
-    std::string Status_maker0 = mastercore::updateStatus(firstPoss, newFirstPoss);
-    std::string Status_taker0 = mastercore::updateStatus(secondPoss, newSecondPoss);
-
-    if(msc_debug_instant_x_trade)
-    {
-        PrintToLog("%s: old first position: %d, new first position: %d \n", __func__, firstPoss, newFirstPoss);
-        PrintToLog("%s: old second position: %d, new second position: %d \n", __func__, secondPoss, newSecondPoss);
-        PrintToLog("%s: Status_marker0: %s, Status_taker0: %s \n",__func__,Status_maker0, Status_taker0);
-        PrintToLog("%s: amount_forsale: %d\n", __func__, amount_forsale);
-    }
-
-    int64_t newPosMaker = 0;
-    int64_t newPosTaker = 0;
-
-    if(msc_debug_instant_x_trade)
-    {
-        PrintToLog("%s: newPosMaker: %d\n", __func__, newPosMaker);
-        PrintToLog("%s: newPosTaker: %d\n", __func__, newPosTaker);
-    }
+    // std::string Status_maker0 = mastercore::updateStatus(firstPoss, newFirstPoss);
+    // std::string Status_taker0 = mastercore::updateStatus(secondPoss, newSecondPoss);
+    //
+    // if(msc_debug_instant_x_trade)
+    // {
+    //     PrintToLog("%s: old first position: %d, new first position: %d \n", __func__, firstPoss, newFirstPoss);
+    //     PrintToLog("%s: old second position: %d, new second position: %d \n", __func__, secondPoss, newSecondPoss);
+    //     PrintToLog("%s: Status_marker0: %s, Status_taker0: %s \n",__func__,Status_maker0, Status_taker0);
+    //     PrintToLog("%s: amount_forsale: %d\n", __func__, amount_forsale);
+    // }
+    //
+    // int64_t newPosMaker = 0;
+    // int64_t newPosTaker = 0;
+    //
+    // if(msc_debug_instant_x_trade)
+    // {
+    //     PrintToLog("%s: newPosMaker: %d\n", __func__, newPosMaker);
+    //     PrintToLog("%s: newPosTaker: %d\n", __func__, newPosTaker);
+    // }
 
     /**
     * Adding LTC volume traded in contracts.
@@ -7726,39 +7727,39 @@ bool mastercore::Instant_x_Trade(const uint256& txid, uint8_t tradingAction, con
 
     mastercore::ContInst_Fees(firstAddr, secondAddr, channelAddr, amount_forsale, type, collateral);
 
-    t_tradelistdb->recordMatchedTrade(txid,
-           txid,
-           firstAddr,
-           secondAddr,
-           price,
-           amount_forsale,
-           amount_forsale,
-           block,
-           block,
-           contractId,
-           "Matched",
-           newPosMaker,
-           0,
-           0,
-           0,
-           newPosTaker,
-           0,
-           0,
-           0,
-           Status_maker0,
-           Status_taker0,
-           "EmptyStr",
-           "EmptyStr",
-           "EmptyStr",
-           "EmptyStr",
-           "EmptyStr",
-           "EmptyStr",
-           amount_forsale,
-           0,
-           0,
-           0,
-           amount_forsale,
-           amount_forsale);
+    // t_tradelistdb->recordMatchedTrade(txid,
+    //        txid,
+    //        firstAddr,
+    //        secondAddr,
+    //        price,
+    //        amount_forsale,
+    //        amount_forsale,
+    //        block,
+    //        block,
+    //        contractId,
+    //        "Matched",
+    //        newPosMaker,
+    //        0,
+    //        0,
+    //        0,
+    //        newPosTaker,
+    //        0,
+    //        0,
+    //        0,
+    //        Status_maker0,
+    //        Status_taker0,
+    //        "EmptyStr",
+    //        "EmptyStr",
+    //        "EmptyStr",
+    //        "EmptyStr",
+    //        "EmptyStr",
+    //        "EmptyStr",
+    //        amount_forsale,
+    //        0,
+    //        0,
+    //        0,
+    //        amount_forsale,
+    //        amount_forsale);
 
     return true;
 }
