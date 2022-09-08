@@ -4771,23 +4771,24 @@ int CMPTransaction::logicMath_Instant_LTC_Trade()
       return (PKT_ERROR_CHANNELS -13);
   }
 
+/*
   std::string chnAddr;
   if(!t_tradelistdb->checkChannelRelation(receiver, chnAddr)){
         PrintToLog("%s(): seller addresses (%s) are not related with any channel\n", __func__, receiver);
         return (PKT_ERROR_CHANNELS -15);
   }
-
+*/
   if(block_forexpiry < block) {
       PrintToLog("%s(): rejected: tx expired (actual block: %d, expiry: %d\n", __func__, block , block_forexpiry);
       return (PKT_ERROR_CHANNELS -16);
   }
-
+/*
   auto it = channels_Map.find(chnAddr);
   if (it == channels_Map.end()){
       PrintToLog("%s(): rejected: channel not found\n", __func__);
       return (PKT_ERROR_CHANNELS -19);
   }
-
+*/
   return rc;
 }
 
