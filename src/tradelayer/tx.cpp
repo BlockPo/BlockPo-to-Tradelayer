@@ -4482,11 +4482,12 @@ int CMPTransaction::logicMath_Withdrawal_FromChannel()
         PrintToLog("%s(): rejected: property %d does not exist\n", __func__, property);
         return (PKT_ERROR_TOKENS -24);
     }
-
+/*
     if (!checkChannelAddress(receiver)) {
         PrintToLog("%s(): rejected: receiver: %s is not multisig channel\n", __func__, receiver);
         return (PKT_ERROR_CHANNELS -10);
     }
+    */
 
     // checking the amount remaining in the channel
     auto it = channels_Map.find(receiver);
