@@ -4919,7 +4919,7 @@ int mastercore_handler_block_end(int nBlockNow, CBlockIndex const * pBlockIndex,
        }
 
       // running settlement only if contracts are activated.
-       if (nBlockNow > params.MSC_CONTRACTDEX_BLOCK)
+       if (nBlockNow > params.MSC_CONTRACTDEX_BLOCK||nBlockNow>params.MSC_CONTRACTDEX_ORACLES_BLOCK)
        {
          PrintToLog("%s(): Running LiquidationEngine and Settlement (actual block: %d)\n",
            __func__, nBlockNow);
