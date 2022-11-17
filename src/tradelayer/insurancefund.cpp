@@ -84,14 +84,14 @@ bool InsuranceFund::AccrueFees(uint32_t pid, int64_t amount)
 {
     auto p = g_fees->spot_fees.find(pid);
     if (p == g_fees->spot_fees.end()) {
-        LOG("ERROR: propertyId=<%d> not found!\n", pid);
+        PrintToLog("%s(): ERROR: propertyId=%d not found!\n",__func__, pid);
         return false;
     }
 
     auto& fees_available = p->second;
 
     if (isOverflow(fees_available, amount)) {
-        LOG("ERROR: arithmetic overflow [%d + %d]\n", fees_available, amount);
+        PrintToLog("%s():ERROR: arithmetic overflow [%d + %d]\n",__func__, fees_available, amount);
         return false;
     }
 
@@ -99,6 +99,8 @@ bool InsuranceFund::AccrueFees(uint32_t pid, int64_t amount)
     //     PrintToLog("%s(): insufficient funds! (amount_remaining: %d, amount: %d)\n", __func__, fees_available, amount);
     //     return false;
     // }
+
+    PrintToLog("%s(): amount: %d \n",__func__, amount);
 
     return fees_available += amount, true;
 }

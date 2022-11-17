@@ -4918,9 +4918,11 @@ int mastercore_handler_block_end(int nBlockNow, CBlockIndex const * pBlockIndex,
            nR.sendNodeReward(blockhash, nBlockNow, RegTest());
        }
 
-       /** Contracts **/
+      // running settlement only if contracts are activated.
        if (nBlockNow > params.MSC_CONTRACTDEX_BLOCK)
        {
+         PrintToLog("%s(): Running LiquidationEngine and Settlement (actual block: %d)\n",
+           __func__, nBlockNow);
            LiquidationEngine(nBlockNow);
            bS.makeSettlement();
        }
@@ -8308,7 +8310,7 @@ void blocksettlement::makeSettlement()
          }
          //this would be a great spot to call liquidationEngine()
          const int64_t loss = getTotalLoss(contractId, cd.notional_size);
-         PrintToLog("%s(): total loss: %d\n",__func__, loss);
+         PrintToLog("%s(): total loss: %d, contractId: %d\n",__func__, loss, contractId);
 
          // if there's no liquidation orders
          if(0 == loss)
@@ -8318,7 +8320,11 @@ void blocksettlement::makeSettlement()
               const int64_t allFees = get_fees_balance(g_fees->spot_fees, cd.collateral_currency);
               const int64_t difference = allFees - loss;
 
+
+
               const int64_t amountShared = (0 > difference) ? difference : allFees;
+
+              PrintToLog("%s(): difference =  %d, allFees = %d, loss = %d, amountShared = %d\n",__func__,  difference, allFees, loss, amountShared);
 
               // we need socialization of loss
               lossSocialization(contractId, cd.collateral_currency, amountShared);
@@ -8340,13 +8346,15 @@ int64_t blocksettlement::getTotalLoss(const uint32_t& contractId, const uint32_t
         return 0;
     }
 
-    PrintToLog("%s():volume: %d, vwap: %d, bankruptcyVWAP: %d\n",__func__, volume, vwap, bankruptcyVWAP);
-
     const int64_t oracleTwap = mastercore::getOracleTwap(contractId, OBLOCKS);
 
     //! Systemic Loss in a Block = the volume-weighted avg. price of bankruptcy (for each position we need the bankruptcy price, and the volume of liquidation) for unfilled liquidations
     // * the sign of the liquidated contracts * their notional value (this depends of contract denomination) * the # of contracts (number of contract in liquidation) * (Liq. VWAP - Mark Price)
     // Mark Price: (oracle: TWAP of oracle, native: spot price)
+
+    // NOTE: i've made this log in order to check all variables before calculate the total Loss
+    PrintToLog("%s():volume: %d, vwap: %d, bankruptcyVWAP: %d, notionalSize: %d, oracleTwap: %d \n",__func__, volume, vwap, bankruptcyVWAP, notionalSize, oracleTwap);
+
     return ((bankruptcyVWAP * notionalSize) / COIN) * ((volume * vwap * oracleTwap) / (COIN * COIN));
 
 }
@@ -8362,6 +8370,7 @@ void blocksettlement::lossSocialization(const uint32_t& contractId, const uint32
         const Register& reg = p.second;
         const int64_t position = reg.getRecord(contractId, CONTRACT_POSITION);
 
+        PrintToLog("%s(): position: %d, contractId: %d \n",__func__, position, contractId);
         // not counting these addresses
         if (0 == position) {
             zeroposition.push_back(p.first);
@@ -8376,6 +8385,8 @@ void blocksettlement::lossSocialization(const uint32_t& contractId, const uint32
 
     const int64_t fraction = fullAmount / count;
 
+    PrintToLog("%s(): fraction: %d, fullAmount: %d, count : %d\n",__func__, fraction, fullAmount, count);
+
     for(auto& q : mp_register_map)
     {
         auto it = find (zeroposition.begin(), zeroposition.end(), q.first);
@@ -8383,7 +8394,7 @@ void blocksettlement::lossSocialization(const uint32_t& contractId, const uint32
             // Register& reg = q.second;
             const int64_t available = getMPbalance(q.first, collateral, BALANCE);
             const int64_t amount = (available >= fraction) ? fraction : available;
-            PrintToLog("%s(): available: %d, amount: %d\n",__func__, available, amount);
+            PrintToLog("%s(): available: %d, amount: %d, collateralId : %d\n",__func__, available, amount, collateral);
             // reg.updateRecord(contractId, amount, MARGIN);
             assert(update_tally_map(q.first, collateral, amount, BALANCE));
         }

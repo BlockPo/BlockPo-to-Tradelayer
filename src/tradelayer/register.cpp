@@ -587,6 +587,8 @@ bool mastercore::realize_pnl(uint32_t contractId, uint32_t notional_size, bool i
 
         if (0 != newUPNL)
         {
+            PrintToLog("%s(): updating register map (because newUPNL is not zero)\n",__func__);
+
             assert(update_register_map(who, contractId, newUPNL, MARGIN));
             assert(update_register_map(who, contractId, newUPNL + oldPNL, PNL));
             bRet = true;
