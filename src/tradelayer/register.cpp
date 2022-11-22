@@ -569,7 +569,7 @@ bool mastercore::set_bankruptcy_price_onmap(const std::string& who, const uint32
 
 }
 
-bool mastercore::realize_pnl(uint32_t contractId, uint32_t notional_size, bool isOracle, bool isInverseQuoted)
+bool mastercore::realize_pnl(uint32_t contractId, uint32_t notional_size, bool isOracle, bool isInverseQuoted, uint32_t collateral_currency)
 {
     bool bRet = false;
 
@@ -591,6 +591,7 @@ bool mastercore::realize_pnl(uint32_t contractId, uint32_t notional_size, bool i
 
             assert(update_register_map(who, contractId, newUPNL, MARGIN));
             assert(update_register_map(who, contractId, newUPNL + oldPNL, PNL));
+            assert(update_tally_map(who, collateral_currency, newUPNL, BALANCE));
             bRet = true;
         }
     }
