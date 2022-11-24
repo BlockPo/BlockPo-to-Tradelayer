@@ -549,7 +549,7 @@ bool mastercore::update_register_map(const std::string& who, uint32_t contractId
 
     if (!bRet) {
         if(before != after){
-            PrintToLog("%s(): ERROR: Positions should be the same (%s), before (%d), after(%d)\n", __func__, who, before, after);  
+            PrintToLog("%s(): ERROR: Positions should be the same (%s), before (%d), after(%d)\n", __func__, who, before, after);
         }
 
         PrintToLog("%s(): ERROR: no position updated for (%s), before (%d), after(%d)\n", __func__, who, before, after);
@@ -574,7 +574,7 @@ bool mastercore::set_bankruptcy_price_onmap(const std::string& who, const uint32
 
 }
 
-bool mastercore::realize_pnl(uint32_t contractId, uint32_t notional_size, bool isOracle, bool isInverseQuoted)
+bool mastercore::realize_pnl(uint32_t contractId, uint32_t notional_size, bool isOracle, bool isInverseQuoted, uint32_t collateral_currency)
 {
     bool bRet = false;
 
@@ -596,6 +596,7 @@ bool mastercore::realize_pnl(uint32_t contractId, uint32_t notional_size, bool i
 
             update_register_map(who, contractId, newUPNL, MARGIN);
             update_register_map(who, contractId, newUPNL + oldPNL, PNL);
+            update_tally_map(who, collateral_currency, newUPNL, BALANCE);
             bRet = true;
         }
     }

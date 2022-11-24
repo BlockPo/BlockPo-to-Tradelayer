@@ -106,7 +106,7 @@ namespace mastercore
 
   bool reset_leverage_register(const std::string& who, uint32_t contractId);
 
-  bool realize_pnl(uint32_t contractId, uint32_t notional_size, bool isOracle, bool isInverseQuoted);
+  bool realize_pnl(uint32_t contractId, uint32_t notional_size, bool isOracle, bool isInverseQuoted, uint32_t collateral_currency);
 
   bool set_bankruptcy_price_onmap(const std::string& who, const uint32_t& contractId, const uint32_t& notionalSize, const int64_t& initMargin);
 }

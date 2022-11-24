@@ -4919,7 +4919,7 @@ int mastercore_handler_block_end(int nBlockNow, CBlockIndex const * pBlockIndex,
        }
 
       // running settlement only if contracts are activated.
-       if (nBlockNow > params.MSC_CONTRACTDEX_BLOCK)
+       if (nBlockNow > params.MSC_CONTRACTDEX_BLOCK||nBlockNow>params.MSC_CONTRACTDEX_ORACLES_BLOCK)
        {
          PrintToLog("%s(): Running LiquidationEngine and Settlement (actual block: %d)\n",
            __func__, nBlockNow);
@@ -8318,14 +8318,13 @@ void blocksettlement::makeSettlement()
          if (!_my_cds->getCD(contractId, cd)) {
              continue; // contract does not exist
          }
-         //this would be a great spot to call liquidationEngine()
          const int64_t loss = getTotalLoss(contractId, cd.notional_size);
          PrintToLog("%s(): total loss: %d, contractId: %d\n",__func__, loss, contractId);
 
          // if there's no liquidation orders
          if(0 == loss)
          {
-             realize_pnl(contractId, cd.notional_size, cd.isOracle(), cd.isInverseQuoted());
+             realize_pnl(contractId, cd.notional_size, cd.isOracle(), cd.isInverseQuoted(), cd.collateral_currency);
          } else if (loss > 0) {
               const int64_t allFees = get_fees_balance(g_fees->spot_fees, cd.collateral_currency);
               const int64_t difference = allFees - loss;
