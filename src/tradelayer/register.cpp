@@ -462,8 +462,10 @@ bool Register::operator==(const Register& rhs) const
         ++pc2;
     }
 
-    assert(pc1 == mp_record.end());
-    assert(pc2 == rhs.mp_record.end());
+    if((pc1 != mp_record.end()) || (pc2 != rhs.mp_record.end())) {
+         return false;
+    }
+
 
     return true;
 }
@@ -546,7 +548,10 @@ bool mastercore::update_register_map(const std::string& who, uint32_t contractId
     after = getContractRecord(who, contractId, ttype);
 
     if (!bRet) {
-        assert(before == after);
+        if(before != after){
+            PrintToLog("%s(): ERROR: Positions should be the same (%s), before (%d), after(%d)\n", __func__, who, before, after);  
+        }
+
         PrintToLog("%s(): ERROR: no position updated for (%s), before (%d), after(%d)\n", __func__, who, before, after);
     }
 
@@ -589,8 +594,8 @@ bool mastercore::realize_pnl(uint32_t contractId, uint32_t notional_size, bool i
         {
             PrintToLog("%s(): updating register map (because newUPNL is not zero)\n",__func__);
 
-            assert(update_register_map(who, contractId, newUPNL, MARGIN));
-            assert(update_register_map(who, contractId, newUPNL + oldPNL, PNL));
+            update_register_map(who, contractId, newUPNL, MARGIN);
+            update_register_map(who, contractId, newUPNL + oldPNL, PNL);
             bRet = true;
         }
     }
@@ -632,8 +637,8 @@ bool mastercore::insert_entry(const std::string& who, uint32_t contractId, int64
         return bRet;
     }
 
-    if (0 == price) {
-        PrintToLog("%s(%s, %u=0x%X, %+d) ERROR: price of contracts is zero\n", __func__, who, contractId, contractId, amount);
+    if (0 >= price) {
+        PrintToLog("%s(%s, %u=0x%X, %+d) ERROR: price of contracts is zero or less\n", __func__, who, contractId, contractId, amount);
         return bRet;
     }
 

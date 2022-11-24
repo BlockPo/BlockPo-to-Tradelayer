@@ -2751,9 +2751,12 @@ int CMPTransaction::logicMath_SendAll()
 
             }
 
-            assert(update_tally_map(sender, propertyId, -moneyAvailable, BALANCE));
-            assert(update_tally_map(receiver, propertyId, moneyAvailable, BALANCE));
-            p_txlistdb->recordSendAllSubRecord(txid, numberOfPropertiesSent, propertyId, moneyAvailable);
+            if (moneyAvailable > 0) {
+                update_tally_map(sender, propertyId, -moneyAvailable, BALANCE);
+                update_tally_map(receiver, propertyId, moneyAvailable, BALANCE);
+                p_txlistdb->recordSendAllSubRecord(txid, numberOfPropertiesSent, propertyId, moneyAvailable);
+
+            }
         }
     }
 
@@ -2829,7 +2832,8 @@ int CMPTransaction::logicMath_CreatePropertyFixed()
 
     const uint32_t propertyId = _my_sps->putSP(newSP);
     assert(propertyId > 0);
-    assert(update_tally_map(sender, propertyId, nValue, BALANCE));
+
+    if (nValue > 0) update_tally_map(sender, propertyId, nValue, BALANCE);
 
     NotifyTotalTokensChanged(propertyId);
 
@@ -2890,7 +2894,7 @@ int CMPTransaction::logicMath_CreatePropertyManaged()
 
     for_each(kyc_Ids.begin(), kyc_Ids.end(), [&newSP] (const int64_t& aux) { if (aux != 0) newSP.kyc.push_back(aux);});
 
-    uint32_t propertyId = _my_sps->putSP(newSP);
+    const uint32_t& propertyId = _my_sps->putSP(newSP);
     assert(propertyId > 0);
 
     PrintToLog("CREATED MANUAL PROPERTY id: %d admin: %s\n", propertyId, sender);
@@ -3008,9 +3012,11 @@ int CMPTransaction::logicMath_GrantTokens()
   }
 
   // Move the tokens
-  assert(update_tally_map(receiver, property, nValue, BALANCE));
+  if (nValue > 0) {
+      update_tally_map(receiver, property, nValue, BALANCE);
+      NotifyTotalTokensChanged(property);
+  }
 
-  NotifyTotalTokensChanged(property);
 
   return 0;
 }
@@ -3087,10 +3093,13 @@ int CMPTransaction::logicMath_RevokeTokens()
     sp.historicalData.insert(std::make_pair(txid, dataPt));
     sp.update_block = blockHash;
 
-    assert(update_tally_map(sender, property, -nValue, BALANCE));
-    assert(_my_sps->updateSP(property, sp));
+    if (nValue > 0) {
+        update_tally_map(sender, property, -nValue, BALANCE);
+        _my_sps->updateSP(property, sp);
 
-    NotifyTotalTokensChanged(property);
+        NotifyTotalTokensChanged(property);
+    }
+
 
     return 0;
 }
@@ -3107,6 +3116,7 @@ int CMPTransaction::logicMath_ChangeIssuer()
             PrintToLog("%s(): ERROR: block %d not in the active chain\n", __func__, block);
             return (PKT_ERROR_TOKENS -20);
         }
+
         blockHash = pindex->GetBlockHash();
     }
 
@@ -3449,7 +3459,7 @@ int CMPTransaction::logicMath_ContractDexTrade()
   if (position == 0 && rleverage == 0) {
       //setting leverage
       PrintToLog("%s(): setting leverage: %d \n", __func__, leverage);
-      assert(update_register_map(sender, contractId, leverage, LEVERAGE));
+      update_register_map(sender, contractId, leverage, LEVERAGE);
 
   } else if(rleverage != leverage &&  0 < position) {
       PrintToLog("%s(): ERROR: Bad leverage \n", __func__);
@@ -3472,8 +3482,8 @@ int CMPTransaction::logicMath_ContractDexTrade()
       if (amountToReserve > 0)
 	    {
            //NOTE: this amount is transfered to position margin when exist matches in x_TradeBidirectional function
-	        assert(update_tally_map(sender, colateralh, -amountToReserve, BALANCE));
-	        assert(update_tally_map(sender, colateralh,  amountToReserve, CONTRACTDEX_RESERVE));
+	        update_tally_map(sender, colateralh, -amountToReserve, BALANCE);
+	        update_tally_map(sender, colateralh,  amountToReserve, CONTRACTDEX_RESERVE);
 	    }
 
   }
@@ -3790,7 +3800,7 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
     _my_sps->getSP(npropertyId, SP);
 
     // synthetic tokens update
-    assert(update_tally_map(sender, npropertyId, amount, BALANCE));
+    update_tally_map(sender, npropertyId, amount, BALANCE);
     // t_tradelistdb->NotifyPeggedCurrency(txid, sender, npropertyId, amount,SP.series); //TODO: Watch this function!
 
     // Adding the element to map of pegged currency owners
@@ -3805,10 +3815,10 @@ int CMPTransaction::logicMath_CreatePeggedCurrency()
 
 
     //putting into reserve contracts and collateral currency
-    assert(update_register_map(sender, contractId, contracts, CONTRACT_POSITION));
-    assert(update_register_map(sender, contractId, contracts, CONTRACT_RESERVE));
-    assert(update_tally_map(sender, propertyId, -amount, BALANCE));
-    assert(update_tally_map(sender, propertyId, amount, CONTRACTDEX_RESERVE));
+    update_register_map(sender, contractId, contracts, CONTRACT_POSITION);
+    update_register_map(sender, contractId, contracts, CONTRACT_RESERVE);
+    update_tally_map(sender, propertyId, -amount, BALANCE);
+    update_tally_map(sender, propertyId, amount, CONTRACTDEX_RESERVE);
 
     return 0;
 }
@@ -3859,8 +3869,8 @@ int CMPTransaction::logicMath_SendPeggedCurrency()
 
     // Move the tokensss
 
-    assert(update_tally_map(sender, propertyId, -amount, BALANCE));
-    assert(update_tally_map(receiver, propertyId, amount, BALANCE));
+    update_tally_map(sender, propertyId, -amount, BALANCE);
+    update_tally_map(receiver, propertyId, amount, BALANCE);
 
     // Adding the element to map of pegged currency owners
     peggedIssuers.insert (std::pair<std::string,uint32_t>(receiver,propertyId));
@@ -3933,13 +3943,13 @@ int CMPTransaction::logicMath_RedemptionPegged()
     if (contractsNeeded != 0 && amount > 0)
     {
        // Delete the tokens
-       assert(update_tally_map(sender, propertyId, -amount, BALANCE));
+       update_tally_map(sender, propertyId, -amount, BALANCE);
        // delete contracts in reserve
-       assert(update_register_map(sender, contractId, -contractsNeeded, CONTRACT_RESERVE));
+       update_register_map(sender, contractId, -contractsNeeded, CONTRACT_RESERVE);
        // getting back short position
-       assert(update_register_map(sender, contractId, -contractsNeeded, CONTRACT_POSITION));
+       update_register_map(sender, contractId, -contractsNeeded, CONTRACT_POSITION);
        // getting back the collateral
-       assert(update_tally_map(sender, collateralId, amount, BALANCE));
+       update_tally_map(sender, collateralId, amount, BALANCE);
 
 
     } else {
@@ -4482,7 +4492,7 @@ int CMPTransaction::logicMath_Withdrawal_FromChannel()
         PrintToLog("%s(): rejected: property %d does not exist\n", __func__, property);
         return (PKT_ERROR_TOKENS -24);
     }
-	
+
     if (!checkChannelAddress(receiver)) {
         PrintToLog("%s(): rejected: receiver: %s is not multisig channel\n", __func__, receiver);
         return (PKT_ERROR_CHANNELS -10);
@@ -4655,11 +4665,11 @@ int CMPTransaction::logicMath_Instant_Trade()
       PrintToLog("%s(): sender: %s, receiver: %s, special: %s, multisig: %s, first: %s, second: %s,  property: %d, amount_forsale: %d, desired_property: %d, desired_value: %d, block: %d\n",__func__, sender, receiver, special, chn.getMultisig(), chn.getFirst(), chn.getSecond(), property, amount_forsale, desired_property, desired_value, block);
 
       // updating channel balance for each address
-      assert(chn.updateChannelBal(special, property, -amount_forsale));
-      assert(chn.updateChannelBal(receiver, desired_property, -desired_value));
+      chn.updateChannelBal(special, property, -amount_forsale);
+      chn.updateChannelBal(receiver, desired_property, -desired_value);
 
-      assert(update_tally_map(special, desired_property, desired_value, BALANCE));
-      assert(update_tally_map(receiver, property, amount_forsale, BALANCE));
+      update_tally_map(special, desired_property, desired_value, BALANCE);
+      update_tally_map(receiver, property, amount_forsale, BALANCE);
 
   }
 
@@ -4689,7 +4699,7 @@ int CMPTransaction::logicMath_Update_PNL()
 
   //logic for PNLS
   // assert(update_tally_map(sender, propertyId, -pnl_amount, CHANNEL_RESERVE));
-  assert(update_tally_map(receiver, propertyId, pnl_amount, BALANCE));
+  update_tally_map(receiver, propertyId, pnl_amount, BALANCE);
 
 
   return 0;
@@ -4869,9 +4879,9 @@ int CMPTransaction::logicMath_Contract_Instant()
             return 0;
         }
 
-        assert(update_tally_map(chn.getFirst(), sp.collateral_currency, amountToReserve, CONTRACTDEX_RESERVE));
+        update_tally_map(chn.getFirst(), sp.collateral_currency, amountToReserve, CONTRACTDEX_RESERVE);
         if (msc_debug_contract_instant_trade) PrintToLog("%s(): first address reserve done\n", __func__);
-        assert(update_tally_map(chn.getSecond(), sp.collateral_currency, amountToReserve, CONTRACTDEX_RESERVE));
+        update_tally_map(chn.getSecond(), sp.collateral_currency, amountToReserve, CONTRACTDEX_RESERVE);
         if (msc_debug_contract_instant_trade) PrintToLog("%s(): second address reserve done\n", __func__);
 
         mastercore::Instant_x_Trade(txid, itrading_action, chn.getMultisig(), chn.getFirst(), chn.getSecond(), contractId, instant_amount, price, sp.collateral_currency, sp.prop_type, block, tx_idx);
@@ -5148,7 +5158,7 @@ int CMPTransaction::logicMath_SendDonation()
     // ------------------------------------------
 
     // Move the tokens
-    assert(update_tally_map(sender, property, -nValue, BALANCE));
+    update_tally_map(sender, property, -nValue, BALANCE);
     //update insurance here!
     g_fund->AccrueFees(property, nValue);
 

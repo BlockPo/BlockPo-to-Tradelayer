@@ -1143,8 +1143,8 @@ static bool Instant_payment(const uint256& txid, const std::string& buyer, const
         return status;
     }
 
-    assert(update_tally_map(buyer, property, amount_purchased, BALANCE));
-    assert(sChn.updateChannelBal(seller, property, -selleramount));
+    update_tally_map(buyer, property, amount_purchased, BALANCE);
+    sChn.updateChannelBal(seller, property, -selleramount);
 
     p_txlistdb->recordNewInstantLTCTrade(txid, sender, seller , buyer, property, amount_purchased, price, block, idx);
 
@@ -2106,7 +2106,7 @@ static int input_register_string(const std::string& s)
                 return -1;
             }
 
-            assert(insert_entry(strAddress, contractId, amount, price));
+            insert_entry(strAddress, contractId, amount, price);
 
         }
 
@@ -7105,14 +7105,14 @@ bool mastercore::closeChannel(const std::string& sender, const std::string& chan
 
             if (first_rem > 0)
             {
-                assert(chn.updateChannelBal(chn.getFirst(), propertyId, -first_rem));
-                assert(update_tally_map(chn.getFirst(), propertyId, first_rem, BALANCE));
+                chn.updateChannelBal(chn.getFirst(), propertyId, -first_rem);
+                update_tally_map(chn.getFirst(), propertyId, first_rem, BALANCE);
             }
 
             if (second_rem > 0)
             {
-                assert(chn.updateChannelBal(chn.getSecond(), propertyId, -second_rem));
-                assert(update_tally_map(chn.getSecond(), propertyId, second_rem, BALANCE));
+                chn.updateChannelBal(chn.getSecond(), propertyId, -second_rem);
+                update_tally_map(chn.getSecond(), propertyId, second_rem, BALANCE);
             }
 
         }
@@ -7698,8 +7698,12 @@ bool mastercore::Instant_x_Trade(const uint256& txid, uint8_t tradingAction, con
 
     const int64_t amount = (tradingAction == buy) ? -amount_forsale : amount_forsale;
 
-    assert(update_register_map(firstAddr, contractId,  amount, CONTRACT_POSITION));
-    assert(update_register_map(secondAddr, contractId, -amount, CONTRACT_POSITION));
+    if (amount == 0) {
+        return false;
+    }
+
+    update_register_map(firstAddr, contractId,  amount, CONTRACT_POSITION);
+    update_register_map(secondAddr, contractId, -amount, CONTRACT_POSITION);
 
     // const int64_t newFirstPoss = getContractRecord(firstAddr, contractId, CONTRACT_POSITION);
     // const int64_t newSecondPoss = getContractRecord(secondAddr, contractId, CONTRACT_POSITION);
@@ -7785,7 +7789,10 @@ void mastercore::iterVolume(int64_t& amount, uint32_t propertyId, const int& fbl
         if (itt != blockMap.end()){
             const int64_t& newAmount = itt->second;
             // overflows?
-            assert(!isOverflow(amount, newAmount));
+            if(isOverflow(amount, newAmount)){
+                PrintToLog("%s() something is wrong with amount (Overflow) \n",__func__);
+                return;
+            }
             amount += newAmount;
         }
 
@@ -8180,7 +8187,10 @@ bool CMPTradeList::tryAddSecond(const std::string& candidate, const std::string&
         const std::string& frAddr = vstr[0];
         // const std::string& scAddr = vstr[1];
 
-        assert(frAddr == chn.getFirst());
+        if(frAddr != chn.getFirst()) {
+            PrintToLog("%s(): frAddr != chn.getFirst() \n",__func__);
+            return false;
+        }
 
         newValue = strprintf("%s:%s:%s:%s",frAddr, candidate, ACTIVE_CHANNEL, TYPE_CREATE_CHANNEL);
 
@@ -8396,7 +8406,8 @@ void blocksettlement::lossSocialization(const uint32_t& contractId, const uint32
             const int64_t amount = (available >= fraction) ? fraction : available;
             PrintToLog("%s(): available: %d, amount: %d, collateralId : %d\n",__func__, available, amount, collateral);
             // reg.updateRecord(contractId, amount, MARGIN);
-            assert(update_tally_map(q.first, collateral, amount, BALANCE));
+            if (amount > 0)
+                update_tally_map(q.first, collateral, amount, BALANCE);
         }
 
     }

@@ -128,11 +128,18 @@ void mastercore::takeMargin(int64_t amount, uint32_t contract_traded, const CDIn
 
     // if we need more margin, we add the difference.
     // updating amount reserved for the order
-    assert(update_tally_map(elem->getAddr(), colateral, -amountOfMoney, BALANCE));
-    elem->updateAmountReserved(amountOfMoney);
+    if(!update_tally_map(elem->getAddr(), colateral, -amountOfMoney, BALANCE)){
+        elem->updateAmountReserved(amountOfMoney);
+    } else {
+        PrintToLog("%s(): updating amount reserved for the order Failed\n",__func__);
+    }
 
     // passing colateral to margin position
-    assert(update_register_map(elem->getAddr(), contract_traded, amountOfMoney, MARGIN));
+    if(!update_register_map(elem->getAddr(), contract_traded, amountOfMoney, MARGIN))
+    {
+        PrintToLog("%s(): passing colateral to margin position Failed\n",__func__);
+        return;
+    }
 
     PrintToLog("%s(): taking more margin: allreserved: %d, amountOfMoney: %d, colateral: %d\n",__func__, allreserved, amountOfMoney, colateral);
 }
@@ -148,7 +155,7 @@ void mastercore::updateAllEntry(int64_t oldPosition, int64_t newPosition, int64_
     {
         PrintToLog("%s() open position, nCouldBuy: %d\n",__func__, nCouldBuy);
         // updating entries (amount of contracts , price)
-        assert(insert_entry(elem->getAddr(), contract_traded, nCouldBuy, elem->getEffectivePrice()));
+        insert_entry(elem->getAddr(), contract_traded, nCouldBuy, elem->getEffectivePrice());
         //taking margin
         takeMargin(nCouldBuy, contract_traded, cd, elem);
 
@@ -164,45 +171,50 @@ void mastercore::updateAllEntry(int64_t oldPosition, int64_t newPosition, int64_
         {
             PrintToLog("%s() increasing position, nCouldBuy: %d\n",__func__, nCouldBuy);
             // updating entries (amount of contracts , price)
-            assert(insert_entry(elem->getAddr(), contract_traded, nCouldBuy, elem->getEffectivePrice()));
+            insert_entry(elem->getAddr(), contract_traded, nCouldBuy, elem->getEffectivePrice());
             //taking margin
             takeMargin(nCouldBuy, contract_traded, cd, elem);
 
         // decreasing -> delete some contracts in entry
         } else {
-            PrintToLog("%s() decreasing position\n",__func__);
-            assert(decrease_entry(elem->getAddr(), contract_traded, nCouldBuy));
+
+            if(!decrease_entry(elem->getAddr(), contract_traded, nCouldBuy)){
+                PrintToLog("%s() decreasing position Failed\n",__func__);
+            }
         }
 
     // closing position
    } else if (signOld != 0 && signNew == 0) {
        //releasing margin
-       PrintToLog("%s() closing position\n",__func__);
        const int64_t remainingMargin = getContractRecord(elem->getAddr(), contract_traded, MARGIN);
 
        // resetting the LEVERAGE
-       assert(reset_leverage_register(elem->getAddr(), contract_traded));
+       if(!reset_leverage_register(elem->getAddr(), contract_traded)){
+            PrintToLog("%s() resetting Leverage Failed\n",__func__);
+       }
 
-       // reseting PNL
-       assert(update_register_map(elem->getAddr(), contract_traded, 0, PNL));
+       // resetting PNL
+       if(!update_register_map(elem->getAddr(), contract_traded, 0, PNL)){
+           PrintToLog("%s() resetting PNL Failed\n",__func__);
+       }
 
        // passing  from margin to balance
-       assert(update_register_map(elem->getAddr(), contract_traded, -remainingMargin, MARGIN));
-       assert(update_tally_map(elem->getAddr(), cd.collateral_currency, remainingMargin, BALANCE));
+       update_register_map(elem->getAddr(), contract_traded, -remainingMargin, MARGIN);
+       update_tally_map(elem->getAddr(), cd.collateral_currency, remainingMargin, BALANCE);
 
-       assert(decrease_entry(elem->getAddr(), contract_traded, nCouldBuy));
+       decrease_entry(elem->getAddr(), contract_traded, nCouldBuy);
 
      // closing position and opening another from different side
    } else if (signOld != signNew && (signOld != 0 && signNew != 0)) {
 
          PrintToLog("%s() closing position and opening another from different side\n",__func__);
-         assert(decrease_entry(elem->getAddr(), contract_traded, nCouldBuy, elem->getEffectivePrice()));
+         decrease_entry(elem->getAddr(), contract_traded, nCouldBuy, elem->getEffectivePrice());
 
          const int64_t remainingMargin = getContractRecord(elem->getAddr(), contract_traded, MARGIN);
 
          // passing  from margin to balance
-         assert(update_register_map(elem->getAddr(), contract_traded, -remainingMargin, MARGIN));
-         assert(update_tally_map(elem->getAddr(), cd.collateral_currency, remainingMargin, BALANCE));
+         update_register_map(elem->getAddr(), contract_traded, -remainingMargin, MARGIN);
+         update_tally_map(elem->getAddr(), cd.collateral_currency, remainingMargin, BALANCE);
 
          //here we adapt the margin to the new position
          const int64_t newAmount = abs(newPosition);
@@ -1153,10 +1165,16 @@ bool mastercore::ContractDex_Fees(const CMPContractDex* maker, const CMPContract
         if (msc_debug_contractdex_fees) PrintToLog("%s: oracles cacheFee: %d, oracles takerFee: %d, oracles makerFee: %d\n",__func__,cacheFee, takerFee, makerFee);
 
         // sumcheck: 2.5 bsp  =  1 bsp +  1 bsp + 0.5
-        assert(takerFee == (makerFee + oracleOp + cacheFee));
+        if(!(takerFee == (makerFee + oracleOp + cacheFee)))
+        {
+             PrintToLog("%s: sumcheck: 2.5 bsp  =  1 bsp +  1 bsp + 0.5, Failed \n",__func__);
+        }
 
         // 0.5 basis point to oracle maintaineer
-        assert(update_tally_map(cd.issuer,cd.collateral_currency, oracleOp, BALANCE));
+        if(!update_tally_map(cd.issuer,cd.collateral_currency, oracleOp, BALANCE))
+        {
+          PrintToLog("%s: 0.5 basis point to oracle maintaineer Failed \n",__func__);
+        }
 
         if (cd.collateral_currency == 4) //ALLS
         {
@@ -1205,8 +1223,8 @@ bool mastercore::ContractDex_Fees(const CMPContractDex* maker, const CMPContract
     }
 
     // - to taker, + to maker ( do we need to take fee when positions are decreasing?)
-    assert(update_tally_map(taker->getAddr(), cd.collateral_currency, -takerFee, CONTRACTDEX_RESERVE));
-    assert(update_tally_map(maker->getAddr(), cd.collateral_currency, makerFee, BALANCE));
+    update_tally_map(taker->getAddr(), cd.collateral_currency, -takerFee, CONTRACTDEX_RESERVE);
+    update_tally_map(maker->getAddr(), cd.collateral_currency, makerFee, BALANCE);
 
 
     return true;
@@ -1271,17 +1289,24 @@ bool mastercore::MetaDEx_Fees(const CMPMetaDEx *pnew,const CMPMetaDEx *pold, int
 
     if(msc_debug_metadex_fees) PrintToLog("%s: buyer_amountGot: %d, cacheFee: %d, takerFee: %d, makerFee: %d\n",__func__, buyer_amountGot, cacheFee, takerFee, makerFee);
     //sum check
-    assert(takerFee == makerFee + cacheFee);
+    if(!(takerFee == makerFee + cacheFee))
+    {
+        PrintToLog("%s: (takerFee == makerFee + cacheFee) Failed \n",__func__);
+    }
 
     // checking the same property for both
-    assert(pnew->getDesProperty() == pold->getProperty());
+    if(!(pnew->getDesProperty() == pold->getProperty()))
+    {
+        PrintToLog("%s: (pnew->getDesProperty() == pold->getProperty()) Failed \n",__func__);
+    }
+
     if(msc_debug_metadex_fees) PrintToLog("%s: propertyId: %d\n",__func__,pold->getProperty());
 
     // -% to taker, +% to maker
     if(cacheFee != 0)
     {
-         assert(update_tally_map(pnew->getAddr(), pnew->getDesProperty(), -takerFee, BALANCE));
-         assert(update_tally_map(pold->getAddr(), pold->getProperty(), makerFee, BALANCE));
+         update_tally_map(pnew->getAddr(), pnew->getDesProperty(), -takerFee, BALANCE);
+         update_tally_map(pold->getAddr(), pold->getProperty(), makerFee, BALANCE);
          g_fees->native_fees[pnew->getProperty()] += cacheFee;
          return true;
     }
