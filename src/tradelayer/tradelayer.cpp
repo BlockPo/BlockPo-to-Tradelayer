@@ -4178,7 +4178,7 @@ int mastercore::WalletTxBuilderEx(const std::string& senderAddress, const std::v
 
 void CtlTransactionDB::RecordTransaction(const uint256& txid, uint32_t posInBlock)
 {
-     assert(pdb);
+     if(pdb ==true){}else{PrintToLog("%s(%s, %u=0x%X, %+d, ttype=%d) ERROR: pdb assert failed \n", __func__, pdb)};
 
      const std::string key = txid.ToString();
      const std::string value = strprintf("%d", posInBlock);
@@ -4188,7 +4188,7 @@ void CtlTransactionDB::RecordTransaction(const uint256& txid, uint32_t posInBloc
 
 uint32_t CtlTransactionDB::FetchTransactionPosition(const uint256& txid)
 {
-    assert(pdb);
+    if(pdb ==true){}else{PrintToLog("%s(%s, %u=0x%X, %+d, ttype=%d) ERROR: pdb assert failed \n", __func__, pdb)};
 
     const std::string key = txid.ToString();
     std::string strValue;
