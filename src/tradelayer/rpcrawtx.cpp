@@ -183,7 +183,7 @@ UniValue tl_createrawtx_reference(const JSONRPCRequest& request)
     const std::string destination = ParseAddress(request.params[1]);
     if(request.params.size() > 2){
         int64_t amount = AmountFromValue(request.params[2]);
-    }else{int64_t amount = 5470}
+    }else{int64_t amount = 5470;}
 
     // extend the transaction
     tx = TLTxBuilder(tx)
