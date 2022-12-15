@@ -4836,13 +4836,13 @@ int CMPTransaction::logicMath_Contract_Instant()
         return (PKT_ERROR_CHANNELS -13);
     }
 
-    if (block > sp.init_block + static_cast<int>(sp.blocks_until_expiration) || block < sp.init_block)
+    /*if (block > sp.init_block + static_cast<int>(sp.blocks_until_expiration) || block < sp.init_block)
     {
          const int& initblock = sp.init_block;
          const int deadline = initblock + static_cast<int>(sp.blocks_until_expiration);
          PrintToLog("\nTrade out of deadline!!: actual block: %d, deadline: %d\n", initblock, deadline);
          return (PKT_ERROR_CHANNELS -16);
-    }
+    }*/
 
     int kyc_id;
 
