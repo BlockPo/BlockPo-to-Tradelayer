@@ -7869,6 +7869,7 @@ int64_t mastercore::getOracleTwap(uint32_t contractId, int nBlocks)
 {
      int64_t sum = 0;
      auto it = oraclePrices.find(contractId);
+     if(nBlocks==0){nBlocks=3};
 
      if (it != oraclePrices.end())
      {
