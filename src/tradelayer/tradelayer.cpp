@@ -4870,7 +4870,7 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
 
     /****************************************************************************/
     // Calling The Settlement Algorithm
-    // NOTE: now we are checking all contracts
+    // NOTE: Deprecated, new Settlement from 2021 is in the handler end function
     // CallingSettlement();
 
     /*****************************************************************************/
@@ -7949,8 +7949,7 @@ bool mastercore::feeCacheBuy()
     {
         if (msc_debug_fee_cache_buy) PrintToLog("%s(): cachefees_oracles is empty\n",__func__);
         return result;
-    }
-
+    }	
 
     for(auto &ca : g_fees->oracle_fees)
     {
