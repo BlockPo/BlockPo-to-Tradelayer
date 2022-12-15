@@ -4865,7 +4865,7 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
         addInterestPegged(nHeight);
     }
 
-    // marginMain(pBlockIndex->nHeight);
+    // These two functions are deprecated as part of the 2019 version, marginMain(pBlockIndex->nHeight);
     // addInterestPegged(nBlockPrev,pBlockIndex);
 
     /****************************************************************************/
