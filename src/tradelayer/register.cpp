@@ -389,7 +389,7 @@ int64_t Register::getPosEntryPrice(uint32_t contractId) const
         }
 
         const arith_uint256 aAmount = ConvertTo64(amount);
-        if(amount==0){return "");
+        if(amount==0){return 1);
         const arith_uint256 aPrice = (amount != 0) ? DivideAndRoundUp(total, aAmount) : arith_uint256(0);
         price = ConvertTo64(aPrice);
 
