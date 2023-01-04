@@ -715,7 +715,7 @@ int mastercore::GetEncodingClass(const CTransaction& tx, int nBlock)
 
     if (hasOpReturn) {
 
-        PrintToLog("%s(): HAS OP RETURN!\n",__func__);
+        //PrintToLog("%s(): HAS OP RETURN!\n",__func__);
         return TL_CLASS_D;
     }
 
