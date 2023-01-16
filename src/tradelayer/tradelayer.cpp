@@ -6304,8 +6304,8 @@ void fillingMatrix(MatrixTLS &M_file, MatrixTLS &ndatabase, std::vector<std::map
 double PNL_function(double entry_price, double exit_price, int64_t amount_trd, std::string netted_status)
 {
     double PNL = 0;
-    if(entry_price==0){entry_price=1};
-    if(exit_price==0){exit_price=1};  
+    if(entry_price==0){return 0;}
+    if(exit_price==0){return 0;}  
 
 	
     if ( finding_string("Long", netted_status) )
@@ -7869,7 +7869,7 @@ int64_t mastercore::getOracleTwap(uint32_t contractId, int nBlocks)
 {
      int64_t sum = 0;
      auto it = oraclePrices.find(contractId);
-     if(nBlocks==0){nBlocks=3};
+     if(nBlocks==0){nBlocks=3;}
 
      if (it != oraclePrices.end())
      {
