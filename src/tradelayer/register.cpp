@@ -661,7 +661,7 @@ bool mastercore::insert_entry(const std::string& who, uint32_t contractId, int64
     bRet = reg.insertEntry(contractId, amount, price);
 
     // entry price of full position
-    const int64_t entryPrice = reg.getPosEntryPrice(contractId);
+    reg.getPosEntryPrice(contractId);
 
     //PrintToLog("%s(): entryPrice(full position): %d, contractId: %d, address: %s\n",__func__, entryPrice, contractId, who);
 
