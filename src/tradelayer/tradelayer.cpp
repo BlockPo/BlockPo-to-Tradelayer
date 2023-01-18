@@ -715,7 +715,7 @@ int mastercore::GetEncodingClass(const CTransaction& tx, int nBlock)
 
     if (hasOpReturn) {
 
-        PrintToLog("%s(): HAS OP RETURN!\n",__func__);
+        //PrintToLog("%s(): HAS OP RETURN!\n",__func__);
         return TL_CLASS_D;
     }
 
@@ -4178,7 +4178,7 @@ int mastercore::WalletTxBuilderEx(const std::string& senderAddress, const std::v
 
 void CtlTransactionDB::RecordTransaction(const uint256& txid, uint32_t posInBlock)
 {
-     assert(pdb);
+     //if(pdb ==true){}else{PrintToLog("%s(%s, %u=0x%X, %+d, ttype=%d) ERROR: pdb assert failed \n", __func__, pdb)};
 
      const std::string key = txid.ToString();
      const std::string value = strprintf("%d", posInBlock);
@@ -4188,7 +4188,7 @@ void CtlTransactionDB::RecordTransaction(const uint256& txid, uint32_t posInBloc
 
 uint32_t CtlTransactionDB::FetchTransactionPosition(const uint256& txid)
 {
-    assert(pdb);
+    //if(pdb ==true){}else{PrintToLog("%s(%s, %u=0x%X, %+d, ttype=%d) ERROR: pdb assert failed \n", __func__, pdb)};
 
     const std::string key = txid.ToString();
     std::string strValue;
@@ -4865,12 +4865,12 @@ int mastercore_handler_block_begin(int nBlockPrev, CBlockIndex const * pBlockInd
         addInterestPegged(nHeight);
     }
 
-    // marginMain(pBlockIndex->nHeight);
+    // These two functions are deprecated as part of the 2019 version, marginMain(pBlockIndex->nHeight);
     // addInterestPegged(nBlockPrev,pBlockIndex);
 
     /****************************************************************************/
     // Calling The Settlement Algorithm
-    // NOTE: now we are checking all contracts
+    // NOTE: Deprecated, new Settlement from 2021 is in the handler end function
     // CallingSettlement();
 
     /*****************************************************************************/
@@ -6304,7 +6304,10 @@ void fillingMatrix(MatrixTLS &M_file, MatrixTLS &ndatabase, std::vector<std::map
 double PNL_function(double entry_price, double exit_price, int64_t amount_trd, std::string netted_status)
 {
     double PNL = 0;
+    if(entry_price==0){return 0;}
+    if(exit_price==0){return 0;}  
 
+	
     if ( finding_string("Long", netted_status) )
         PNL = (double)amount_trd*(1/(double)entry_price-1/(double)exit_price);
     else if ( finding_string("Short", netted_status) )
@@ -7871,6 +7874,7 @@ int64_t mastercore::getOracleTwap(uint32_t contractId, int nBlocks)
 {
      int64_t sum = 0;
      auto it = oraclePrices.find(contractId);
+     if(nBlocks==0){nBlocks=3;}
 
      if (it != oraclePrices.end())
      {
@@ -7950,8 +7954,7 @@ bool mastercore::feeCacheBuy()
     {
         if (msc_debug_fee_cache_buy) PrintToLog("%s(): cachefees_oracles is empty\n",__func__);
         return result;
-    }
-
+    }	
 
     for(auto &ca : g_fees->oracle_fees)
     {
