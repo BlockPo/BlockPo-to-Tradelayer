@@ -389,7 +389,7 @@ int64_t Register::getPosEntryPrice(uint32_t contractId) const
         }
 
         const arith_uint256 aAmount = ConvertTo64(amount);
-        if(amount==0){return 1};
+        if(amount==0){return 0;}
         const arith_uint256 aPrice = (amount != 0) ? DivideAndRoundUp(total, aAmount) : arith_uint256(0);
         price = ConvertTo64(aPrice);
 
@@ -497,7 +497,7 @@ bool mastercore::getFullContractRecord(const std::string& address, uint32_t cont
         Register& reg = my_it->second;
         //entry price
         const int64_t entryPrice = reg.getPosEntryPrice(contractId);
-        if(entryPrice==""){return false}
+        if(entryPrice==0){return false;}
         position_obj.pushKV("entry_price", FormatDivisibleMP(entryPrice));
         // position
         const int64_t position = reg.getRecord(contractId, CONTRACT_POSITION);
