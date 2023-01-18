@@ -632,8 +632,8 @@ void creatingVestingTokens(int block)
    if(msc_debug_vesting) PrintToLog("%s(): admin_addrs : %s, propertyIdVesting: %d \n",__func__, getVestingAdmin(), propertyIdVesting);
 
 
-   assert(update_tally_map(getVestingAdmin(), propertyIdVesting, 500000 * COIN, BALANCE));
-   assert(update_tally_map(getVestingAdmin(), ALL, 500000 * COIN, UNVESTED));
+   update_tally_map(getVestingAdmin(), propertyIdVesting, 500000 * COIN, BALANCE);
+   update_tally_map(getVestingAdmin(), ALL, 500000 * COIN, UNVESTED);
 
    std::vector<std::string> investors;
    investors.push_back("MVNp1xa6ZrQoxokyKoB6oT279z4ezV95oM");
@@ -643,12 +643,12 @@ void creatingVestingTokens(int block)
    investors.push_back("MJ5F3QMDbhNbVNhmKxrQy7MVMQxrGt1muV");
 
    for (const auto& addr : investors) {
-       assert(update_tally_map(addr, propertyIdVesting, 200000 * COIN, BALANCE));
-       assert(update_tally_map(addr, ALL, 200000 * COIN, UNVESTED));
+       update_tally_map(addr, propertyIdVesting, 200000 * COIN, BALANCE);
+       update_tally_map(addr, ALL, 200000 * COIN, UNVESTED);
    }
 
    // only for testing
-   if (RegTest()) assert(update_tally_map(getVestingAdmin(), ALL, totalVesting, BALANCE));
+   if (RegTest()) update_tally_map(getVestingAdmin(), ALL, totalVesting, BALANCE);
 }
 
 /**
@@ -3718,8 +3718,8 @@ bool VestingTokens(int block)
 
             if (difference > 0 && unVestedALLBal >= difference)
             {
-                assert(update_tally_map(addr, ALL, -difference, UNVESTED));
-                assert(update_tally_map(addr, ALL, difference, BALANCE));
+                update_tally_map(addr, ALL, -difference, UNVESTED);
+                update_tally_map(addr, ALL, difference, BALANCE);
 
             }
 
@@ -3730,7 +3730,7 @@ bool VestingTokens(int block)
     sp.last_vesting = accumVesting;
     sp.last_vesting_block = block;
 
-    assert(_my_sps->updateSP(VT, sp));
+    _my_sps->updateSP(VT, sp);
 
 
     if(msc_debug_handler_tx)
@@ -6036,20 +6036,20 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   //std::vector<std::map<std::string, std::string>> path_eleh;
   // bool savedata_bool = false;
   std::string sblockNum2 = std::to_string(blockNum2);
-  double UPNL1 = 0, UPNL2 = 0;
+  // double UPNL1 = 0, UPNL2 = 0;
   /********************************************************************/
   const string key =  sblockNum2 + "+" + txid1.ToString() + "+" + txid2.ToString(); //order with block of taker.
   const string value = strprintf("%s:%s:%lu:%lu:%lu:%d:%d:%s:%s:%d:%d:%d:%s:%s:%d:%d:%d", address1, address2, effective_price, amount_maker, amount_taker, blockNum1, blockNum2, s_maker0, s_taker0, lives_s0, lives_b0, property_traded, txid1.ToString(), txid2.ToString(), nCouldBuy0,amountpold, amountpnew);
 
-  const string line0 = gettingLineOut(address1, s_maker0, lives_s0, address2, s_taker0, lives_b0, nCouldBuy0, effective_price);
-  const string line1 = gettingLineOut(address1, s_maker1, lives_s1, address2, s_taker1, lives_b1, nCouldBuy1, effective_price);
-  const string line2 = gettingLineOut(address1, s_maker2, lives_s2, address2, s_taker2, lives_b2, nCouldBuy2, effective_price);
-  const string line3 = gettingLineOut(address1, s_maker3, lives_s3, address2, s_taker3, lives_b3, nCouldBuy3, effective_price);
+  // const string line0 = gettingLineOut(address1, s_maker0, lives_s0, address2, s_taker0, lives_b0, nCouldBuy0, effective_price);
+  // const string line1 = gettingLineOut(address1, s_maker1, lives_s1, address2, s_taker1, lives_b1, nCouldBuy1, effective_price);
+  // const string line2 = gettingLineOut(address1, s_maker2, lives_s2, address2, s_taker2, lives_b2, nCouldBuy2, effective_price);
+  // const string line3 = gettingLineOut(address1, s_maker3, lives_s3, address2, s_taker3, lives_b3, nCouldBuy3, effective_price);
+  //
+  // bool status_bool1 = s_maker0 == "OpenShortPosByLongPosNetted" || s_maker0 == "OpenLongPosByShortPosNetted";
+  // bool status_bool2 = s_taker0 == "OpenShortPosByLongPosNetted" || s_taker0 == "OpenLongPosByShortPosNetted";
 
-  bool status_bool1 = s_maker0 == "OpenShortPosByLongPosNetted" || s_maker0 == "OpenLongPosByShortPosNetted";
-  bool status_bool2 = s_taker0 == "OpenShortPosByLongPosNetted" || s_taker0 == "OpenLongPosByShortPosNetted";
-
-  std::fstream fileSixth;
+  // std::fstream fileSixth;
   // fileSixth.open ("graphInfoSixth.txt", std::fstream::in | std::fstream::out | std::fstream::app);
   // if ( status_bool1 || status_bool2 )
   //   {
@@ -6060,43 +6060,43 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   // fileSixth.close();
 
   /********************************************************************/
-  int number_lines = 0;
-  if ( status_bool1 || status_bool2 )
-    {
-      buildingEdge(edgeEle, address1, address2, s_maker1, s_taker1, lives_s1, lives_b1, nCouldBuy1, effective_price, idx_q, 0);
-      //path_ele.push_back(edgeEle);
-      //path_eleh.push_back(edgeEle);
-
-      path_elef.push_back(edgeEle);
-      buildingEdge(edgeEle, address1, address2, s_maker2, s_taker2, lives_s2, lives_b2, nCouldBuy2, effective_price, idx_q, 0);
-      //path_ele.push_back(edgeEle);
-      //path_eleh.push_back(edgeEle);
-
-      path_elef.push_back(edgeEle);
-      // PrintToLog("Line 1: %s\n", line1);
-      // PrintToLog("Line 2: %s\n", line2);
-      number_lines += 2;
-      if ( s_maker3 != "EmptyStr" && s_taker3 != "EmptyStr" )
-	{
-	  buildingEdge(edgeEle, address1, address2, s_maker3, s_taker3, lives_s3, lives_b3,nCouldBuy3,effective_price,idx_q,0);
-	  //path_ele.push_back(edgeEle);
-	  //path_eleh.push_back(edgeEle);
-
-	  path_elef.push_back(edgeEle);
-	  // PrintToLog("Line 3: %s\n", line3);
-	  number_lines += 1;
-	}
-    }
-  else
-    {
-      buildingEdge(edgeEle, address1, address2, s_maker0, s_taker0, lives_s0, lives_b0, nCouldBuy0, effective_price, idx_q, 0);
-      //path_ele.push_back(edgeEle);
-      //path_eleh.push_back(edgeEle);
-
-      path_elef.push_back(edgeEle);
-      // PrintToLog("Line 0: %s\n", line0);
-      number_lines += 1;
-    }
+  // int number_lines = 0;
+  // if ( status_bool1 || status_bool2 )
+  //   {
+  //     buildingEdge(edgeEle, address1, address2, s_maker1, s_taker1, lives_s1, lives_b1, nCouldBuy1, effective_price, idx_q, 0);
+  //     //path_ele.push_back(edgeEle);
+  //     //path_eleh.push_back(edgeEle);
+  //
+  //     path_elef.push_back(edgeEle);
+  //     buildingEdge(edgeEle, address1, address2, s_maker2, s_taker2, lives_s2, lives_b2, nCouldBuy2, effective_price, idx_q, 0);
+  //     //path_ele.push_back(edgeEle);
+  //     //path_eleh.push_back(edgeEle);
+  //
+  //     path_elef.push_back(edgeEle);
+  //     // PrintToLog("Line 1: %s\n", line1);
+  //     // PrintToLog("Line 2: %s\n", line2);
+  //     number_lines += 2;
+  //     if ( s_maker3 != "EmptyStr" && s_taker3 != "EmptyStr" )
+	// {
+	//   buildingEdge(edgeEle, address1, address2, s_maker3, s_taker3, lives_s3, lives_b3,nCouldBuy3,effective_price,idx_q,0);
+	//   //path_ele.push_back(edgeEle);
+	//   //path_eleh.push_back(edgeEle);
+  //
+	//   path_elef.push_back(edgeEle);
+	//   // PrintToLog("Line 3: %s\n", line3);
+	//   number_lines += 1;
+	// }
+  //   }
+  // else
+  //   {
+  //     buildingEdge(edgeEle, address1, address2, s_maker0, s_taker0, lives_s0, lives_b0, nCouldBuy0, effective_price, idx_q, 0);
+  //     //path_ele.push_back(edgeEle);
+  //     //path_eleh.push_back(edgeEle);
+  //
+  //     path_elef.push_back(edgeEle);
+  //     // PrintToLog("Line 0: %s\n", line0);
+  //     number_lines += 1;
+  //   }
 
   // PrintToLog("\nPath Ele inside recordMatchedTrade. Length last match = %d\n", number_lines);
   // for (it_path_ele = path_ele.begin(); it_path_ele != path_ele.end(); ++it_path_ele) printing_edges_database(*it_path_ele);
@@ -6104,8 +6104,8 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   /********************************************/
   /** Building TWAP vector CDEx **/
 
-  Filling_Twap_Vec(cdextwap_ele, cdextwap_vec, property_traded, 0, effective_price);
-  PrintToLog("\ncdextwap_ele.size() = %d\n", cdextwap_ele[property_traded].size());
+  // Filling_Twap_Vec(cdextwap_ele, cdextwap_vec, property_traded, 0, effective_price);
+  // PrintToLog("\ncdextwap_ele.size() = %d\n", cdextwap_ele[property_traded].size());
   // PrintToLog("\nVector CDExtwap_ele =\n");
   // for (unsigned int i = 0; i < cdextwap_ele[property_traded].size(); i++)
   //   PrintToLog("%s\n", FormatDivisibleMP(cdextwap_ele[property_traded][i]));
@@ -6165,26 +6165,26 @@ void CMPTradeList::recordMatchedTrade(const uint256 txid1, const uint256 txid2, 
   // 	}
 
   // unsigned int contractId = static_cast<unsigned int>(property_traded);
-  CDInfo::Entry cd;
-  assert(_my_cds->getCD(property_traded, cd));
-  uint32_t NotionalSize = cd.notional_size;
+  // CDInfo::Entry cd;
+  // _my_cds->getCD(property_traded, cd);
+  // uint32_t NotionalSize = cd.notional_size;
+  //
+  // globalPNLALL_DUSD += UPNL1 + UPNL2;
+  // globalVolumeALL_DUSD += nCouldBuy0;
 
-  globalPNLALL_DUSD += UPNL1 + UPNL2;
-  globalVolumeALL_DUSD += nCouldBuy0;
-
-  arith_uint256 volumeALL256_t = mastercore::ConvertTo256(NotionalSize)*mastercore::ConvertTo256(nCouldBuy0)/COIN;
+  // arith_uint256 volumeALL256_t = mastercore::ConvertTo256(NotionalSize)*mastercore::ConvertTo256(nCouldBuy0)/COIN;
   // PrintToLog("ALLs involved in the traded 256 Bits ~ %s ALL\n", volumeALL256_t.ToString());
 
-  int64_t volumeALL64_t = mastercore::ConvertTo64(volumeALL256_t);
+  // int64_t volumeALL64_t = mastercore::ConvertTo64(volumeALL256_t);
   // PrintToLog("ALLs involved in the traded 64 Bits ~ %s ALL\n", FormatDivisibleMP(volumeALL64_t));
 
-  arith_uint256 volumeLTC256_t = mastercore::ConvertTo256(factorALLtoLTC)*mastercore::ConvertTo256(volumeALL64_t)/COIN;
+  // arith_uint256 volumeLTC256_t = mastercore::ConvertTo256(factorALLtoLTC)*mastercore::ConvertTo256(volumeALL64_t)/COIN;
   // PrintToLog("LTCs involved in the traded 256 Bits ~ %s LTC\n", volumeLTC256_t.ToString());
 
-  int64_t volumeLTC64_t = mastercore::ConvertTo64(volumeLTC256_t);
+  // int64_t volumeLTC64_t = mastercore::ConvertTo64(volumeLTC256_t);
   // PrintToLog("LTCs involved in the traded 64 Bits ~ %d LTC\n", FormatDivisibleMP(volumeLTC64_t));
 
-  globalVolumeALL_LTC += volumeLTC64_t;
+  // globalVolumeALL_LTC += volumeLTC64_t;
   // PrintToLog("\nGlobal LTC Volume Updated: CMPContractDEx = %d \n", FormatDivisibleMP(globalVolumeALL_LTC));
 
   // int64_t volumeToCompare = 0;
@@ -6907,9 +6907,9 @@ bool checkContractPositions(int Block, const std::string &address, const uint32_
         if(msc_debug_liquidation_enginee) PrintToLog("%s(): here trying to liquidate 50 percent of position, contractId: %d, icontracts : %d, Block: %d\n",__func__,  contractId, icontracts, Block);
 
         // if whe don't have pending liquidation orders here! then we add the order
-	//it may be more appropriate to replace this with Insert or ADD, right now the Market sell function is using orderbook edge price so the behavior
-	//may well not post any liquidation sell orders if there are not other orders already on the book
-	//specifying the price while calling ADD may fix the problem where liquidation orders aren't passing through
+      	//it may be more appropriate to replace this with Insert or ADD, right now the Market sell function is using orderbook edge price so the behavior
+	      //may well not post any liquidation sell orders if there are not other orders already on the book
+	      //specifying the price while calling ADD may fix the problem where liquidation orders aren't passing through
         ContractDex_ADD_MARKET_PRICE(address, contractId, icontracts, Block, txid, idx, (position > 0) ? sell : buy, 0, true);
 
         // TODO: add here a position checking in order to see if we are above the margin limits.
@@ -7013,7 +7013,12 @@ bool mastercore::makeWithdrawals(int Block)
 
             //checking channel
             auto it = channels_Map.find(channelAddress);
-            assert(it != channels_Map.end());
+
+            if(it == channels_Map.end()){
+                ++itt;
+                continue;
+            }
+
             Channel &chn = it->second;
 
             if(!chn.updateChannelBal(address, propertyId, -amount))
@@ -7026,7 +7031,7 @@ bool mastercore::makeWithdrawals(int Block)
             if(msc_debug_make_withdrawal) PrintToLog("%s(): withdrawal: actual block: %d, deadline: %d, address: %s, propertyId: %d, amount: %d, txid: %s \n", __func__, Block, deadline, address, propertyId, amount, wthd.txid.ToString());
 
             // updating tally map
-            assert(update_tally_map(address, propertyId, amount, BALANCE));
+            update_tally_map(address, propertyId, amount, BALANCE);
 
             // deleting element from vector
             itt = accepted.erase(itt++);
@@ -8024,8 +8029,10 @@ void calculateUPNL(std::vector<double>& sum_upnl, uint64_t entry_price, uint64_t
 void CMPTradeList::getUpnInfo(const std::string& address, uint32_t contractId, UniValue& response, bool showVerbose)
 {
     if (!pdb) return;
+
     CDInfo::Entry sp;
-    assert(_my_cds->getCD(contractId, sp));
+    if(!_my_cds->getCD(contractId, sp))
+       return;
 
     //twap of last 3 blocks
     const uint64_t exitPrice = getOracleTwap(contractId, OBLOCKS);

@@ -189,7 +189,7 @@ bool Register::updateRecord(uint32_t contractId, int64_t amount, RecordType ttyp
 {
     bool fPNL = (ttype == PNL)? true : false;
 
-    if (RECORD_TYPE_COUNT <= ttype || (amount == 0  && !fPNL)) {
+    if (RECORD_TYPE_COUNT <= ttype || (amount == 0  && !fPNL) ) {
         PrintToLog("%s(): ERROR: ttype (%d) is wrong, or updating amount is zero (%d)\n", __func__, ttype, amount);
         return false;
     }
@@ -204,7 +204,7 @@ bool Register::updateRecord(uint32_t contractId, int64_t amount, RecordType ttyp
         return false;
     }
 
-    if ((CONTRACT_POSITION != ttype) && (UPNL != ttype) && (PNL != ttype) && fPNL && (now64 + amount) < 0) {
+    if ((CONTRACT_POSITION != ttype) && (UPNL != ttype) && (PNL != ttype) && fPNL && ((now64 + amount) < 0)) {
         // NOTE:
         PrintToLog("%s(): ERROR: Negative balances are only permitted for contracts amount, or UPNL\n",__func__);
         return false;
@@ -403,11 +403,14 @@ int64_t Register::getPosEntryPrice(uint32_t contractId) const
  */
 int64_t Register::getRecord(uint32_t contractId, RecordType ttype) const
 {
-    if (RECORD_TYPE_COUNT <= ttype) {
-        return 0;
-    }
 
     int64_t amount = 0;
+
+    if (RECORD_TYPE_COUNT <= ttype) {
+        return amount;
+    }
+
+
     RecordMap::const_iterator it = mp_record.find(contractId);
 
     if (it != mp_record.end()) {
