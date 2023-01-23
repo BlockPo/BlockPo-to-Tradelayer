@@ -83,7 +83,9 @@ int64_t Register::getLiquidationPrice(const uint32_t contractId, const uint32_t 
 
     const int64_t marginNeeded = (int64_t) position *  marginRequirement;
     const double firstFactor = (double) marginNeeded / (position * notionalSize);
-    const double secondFactor = (double) COIN / entryPrice;
+    if(entryprice == 0){
+        const double secondFactor = 0;
+    }else{const double secondFactor = (double) COIN / entryPrice;}
     const double denominator =  firstFactor + secondFactor;
 
     const double dliqPrice = (denominator != 0) ? 1 / denominator : 0;
@@ -108,8 +110,6 @@ int64_t Register::getUPNL(const uint32_t contractId, const uint32_t notionalSize
     const int64_t position = getRecord(contractId, CONTRACT_POSITION);
     const int64_t entryPrice = getPosEntryPrice(contractId);
     const int64_t exitPrice  = getPosExitPrice(contractId, isOracle);
-
-    if (entryPrice == 0 || exitPrice == 0) return 0;
 
     if(msc_debug_liquidation_enginee)
     {
