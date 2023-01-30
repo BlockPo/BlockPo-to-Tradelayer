@@ -83,7 +83,7 @@ int64_t Register::getLiquidationPrice(const uint32_t contractId, const uint32_t 
 
     const int64_t marginNeeded = (int64_t) position *  marginRequirement;
     const double firstFactor = (double) marginNeeded / (position * notionalSize);
-    if(entryprice == 0){
+    if(entryPrice == 0){
         const double secondFactor = 0;
     }else{const double secondFactor = (double) COIN / entryPrice;}
     const double denominator =  firstFactor + secondFactor;
