@@ -6913,7 +6913,12 @@ bool checkContractPositions(int Block, const std::string &address, const uint32_
       	//it may be more appropriate to replace this with Insert or ADD, right now the Market sell function is using orderbook edge price so the behavior
 	      //may well not post any liquidation sell orders if there are not other orders already on the book
 	      //specifying the price while calling ADD may fix the problem where liquidation orders aren't passing through
-        ContractDex_ADD_MARKET_PRICE(address, contractId, icontracts, Block, txid, idx, (position > 0) ? sell : buy, 0, true);
+        
+	 //CMPContractDex mdexObj(address, Block, property, amount_forsale, desired_property,
+         //   amount_desired, txid, idx, subaction, 0, effective_price, trading_action, amount_reserved);
+
+         //if (!ContractDex_INSERT(mdexObj)) return -1;
+	 ContractDex_ADD_MARKET_PRICE(address, contractId, icontracts, Block, txid, idx, (position > 0) ? sell : buy, 0, true);
 
         // TODO: add here a position checking in order to see if we are above the margin limits.
     } else  {
