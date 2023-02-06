@@ -2187,7 +2187,7 @@ int mastercore::ContractDex_ADD_MARKET_PRICE(const std::string& sender_addr, uin
     }
     if(liquidation==true{
 	      // uint64_t mark = function to get mark price ;
-	      uint64_t mark = 0
+	      const int64_t mark = mastercore::getOracleTwap(contractId, 1);
     CMPContractDex new_cdex(sender_addr, block, contractId, amount, 0, 0, txid, idx, CMPTransaction::ADD, mark, trading_action, 0, liquidation);
     }
     if(msc_debug_contract_add_market) PrintToLog("%s(): effective price of new_cdex : %d, edge price : %d, trading_action: %d\n",__func__, new_cdex.getEffectivePrice(), edge, trading_action);
