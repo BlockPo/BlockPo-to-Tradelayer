@@ -2181,9 +2181,17 @@ int mastercore::ContractDex_ADD_MARKET_PRICE(const std::string& sender_addr, uin
         return -1;
     }
 
-    uint64_t edge = edgeOrderbook(contractId, trading_action);
+    if(liquidation==false){
+	    uint64_t edge = edgeOrderbook(contractId, trading_action);
     CMPContractDex new_cdex(sender_addr, block, contractId, amount, 0, 0, txid, idx, CMPTransaction::ADD, edge, trading_action, 0, liquidation);
+    }
+    if(liquidation==true{
+	      // uint64_t mark = function to get mark price ;
+	      uint64_t mark = 0
+    CMPContractDex new_cdex(sender_addr, block, contractId, amount, 0, 0, txid, idx, CMPTransaction::ADD, mark, trading_action, 0, liquidation);
+    }
     if(msc_debug_contract_add_market) PrintToLog("%s(): effective price of new_cdex : %d, edge price : %d, trading_action: %d\n",__func__, new_cdex.getEffectivePrice(), edge, trading_action);
+    
     if (0 >= new_cdex.getEffectivePrice()) return METADEX_ERROR -66;
 
     x_Trade(&new_cdex);
