@@ -2172,7 +2172,9 @@ int mastercore::ContractDex_ADD(const std::string& sender_addr, uint32_t prop, i
 
 int mastercore::ContractDex_ADD_MARKET_PRICE(const std::string& sender_addr, uint32_t contractId, int64_t amount, int block, const uint256& txid, unsigned int idx, uint8_t trading_action, int64_t amount_to_reserve, bool liquidation)
 {
-
+    //just to smooth along this call ambiguity
+    liquidation = true
+	    
     int rc = METADEX_ERROR -1;
     // const int MAX = 10; // max number of orders to match at market price in the other side (depth)
 
@@ -2180,15 +2182,16 @@ int mastercore::ContractDex_ADD_MARKET_PRICE(const std::string& sender_addr, uin
         PrintToLog("%s(): ERROR: invalid trading action: %d\n",__func__, trading_action);
         return -1;
     }
+	// uint64_t mark = function to get mark price ;
+	      const int64_t mark = mastercore::getOracleTwap(contractId, 1);
 
     //if(liquidation==false){
     //	    uint64_t edge = edgeOrderbook(contractId, trading_action);
-    //CMPContractDex new_cdex(sender_addr, block, contractId, amount, 0, 0, txid, idx, CMPTransaction::ADD, edge, trading_action, 0, liquidation);
+    CMPContractDex new_cdex(sender_addr, block, contractId, amount, 0, 0, txid, idx, CMPTransaction::ADD, edge, trading_action, 0, liquidation);
     //}
     //if(liquidation==true{
-	      // uint64_t mark = function to get mark price ;
-	      const int64_t mark = mastercore::getOracleTwap(contractId, 1);
-    CMPContractDex new_cdex(sender_addr, block, contractId, amount, 0, 0, txid, idx, CMPTransaction::ADD, mark, trading_action, 0, liquidation);
+	      
+    //CMPContractDex new_cdex(sender_addr, block, contractId, amount, 0, 0, txid, idx, CMPTransaction::ADD, mark, trading_action, 0, liquidation);
     //}
     if(msc_debug_contract_add_market) PrintToLog("%s(): effective price of new_cdex : %d, edge price : %d, trading_action: %d\n",__func__, new_cdex.getEffectivePrice(), mark, trading_action);
     
