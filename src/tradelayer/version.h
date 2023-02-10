@@ -11,8 +11,6 @@
 // During the configuration, this information are used for other places.
 //
 
-//! In this version, 'getheaders' was introduced.
-static const int GETHEADERS_VERSION = 70002;
 
 // Increase with every consensus affecting change
 #define TL_VERSION_MAJOR       0
