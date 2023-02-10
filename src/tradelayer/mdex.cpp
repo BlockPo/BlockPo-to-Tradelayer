@@ -2172,9 +2172,7 @@ int mastercore::ContractDex_ADD(const std::string& sender_addr, uint32_t prop, i
 
 int mastercore::ContractDex_ADD_MARKET_PRICE(const std::string& sender_addr, uint32_t contractId, int64_t amount, int block, const uint256& txid, unsigned int idx, uint8_t trading_action, int64_t amount_to_reserve, bool liquidation)
 {
-    //just to smooth along this call ambiguity
-    liquidation = true
-	    
+
     int rc = METADEX_ERROR -1;
     // const int MAX = 10; // max number of orders to match at market price in the other side (depth)
 
