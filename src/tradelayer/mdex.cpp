@@ -2190,7 +2190,7 @@ int mastercore::ContractDex_ADD_MARKET_PRICE(const std::string& sender_addr, uin
 	      const int64_t mark = mastercore::getOracleTwap(contractId, 1);
     CMPContractDex new_cdex(sender_addr, block, contractId, amount, 0, 0, txid, idx, CMPTransaction::ADD, mark, trading_action, 0, liquidation);
     //}
-    if(msc_debug_contract_add_market) PrintToLog("%s(): effective price of new_cdex : %d, edge price : %d, trading_action: %d\n",__func__, new_cdex.getEffectivePrice(), edge, trading_action);
+    if(msc_debug_contract_add_market) PrintToLog("%s(): effective price of new_cdex : %d, edge price : %d, trading_action: %d\n",__func__, new_cdex.getEffectivePrice(), mark, trading_action);
     
     if (0 >= new_cdex.getEffectivePrice()) return METADEX_ERROR -66;
 
