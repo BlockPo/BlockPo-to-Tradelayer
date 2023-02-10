@@ -2184,7 +2184,7 @@ int mastercore::ContractDex_ADD_MARKET_PRICE(const std::string& sender_addr, uin
     //if(liquidation==false){
     //	    uint64_t edge = edgeOrderbook(contractId, trading_action);
     //CMPContractDex new_cdex(sender_addr, block, contractId, amount, 0, 0, txid, idx, CMPTransaction::ADD, edge, trading_action, 0, liquidation);
-    }
+    //}
     //if(liquidation==true{
 	      // uint64_t mark = function to get mark price ;
 	      const int64_t mark = mastercore::getOracleTwap(contractId, 1);
