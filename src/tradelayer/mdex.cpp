@@ -2916,12 +2916,12 @@ int mastercore::MetaDEx_CANCEL_ALL_FOR_PAIR(const uint256& txid, unsigned int bl
           for (cd_PricesMap::iterator it = prices.begin(); it != prices.end(); ++it)
           {
               const uint64_t& price = it->first;
-              PrintToLog(" ## price: %d\n", price);
+              //PrintToLog(" ## price: %d\n", price);
               cd_Set &indexes = it->second;
 
               for (cd_Set::iterator itt = indexes.begin(); itt != indexes.end();)
               {
-                  if (itt->isLiquidationOrder()) PrintToLog("%s(): YOU HAVE LIQUIDATION ORDERS HERE\n",__func__);
+                  //if (itt->isLiquidationOrder()) PrintToLog("%s(): YOU HAVE LIQUIDATION ORDERS HERE\n",__func__);
 
                   if (!itt->isLiquidationOrder() || 0 == itt->getAmountForSale()) {
                       ++itt;
@@ -2929,10 +2929,10 @@ int mastercore::MetaDEx_CANCEL_ALL_FOR_PAIR(const uint256& txid, unsigned int bl
                   }
 
                   // const std::string getstring = (itt->getHash()).ToString();
-                  PrintToLog("%s(): getAddr: %s\n",__func__, itt->getAddr());
-                  PrintToLog("%s(): propertyid: %d\n",__func__, itt->getProperty());
-                  PrintToLog("%s(): amount for sale: %d\n",__func__, itt->getAmountForSale());
-                  PrintToLog("%s(): price: %d\n",__func__, itt->getEffectivePrice());
+                  //PrintToLog("%s(): getAddr: %s\n",__func__, itt->getAddr());
+                  //PrintToLog("%s(): propertyid: %d\n",__func__, itt->getProperty());
+                  //PrintToLog("%s(): amount for sale: %d\n",__func__, itt->getAmountForSale());
+                  //PrintToLog("%s(): price: %d\n",__func__, itt->getEffectivePrice());
                   // PrintToLog("%s(): getHash: %s\n",__func__, getstring);
                   volume += itt->getAmountForSale();
                   iVWAP += ConvertTo256(itt->getAmountForSale() * itt->getEffectivePrice());
