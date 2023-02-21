@@ -6894,6 +6894,7 @@ bool checkContractPositions(int Block, const std::string &address, const uint32_
     // if sum is less than zero, it can cause problems. To simplify debugging this, we will filter so all neg sum PNL assumes catastrophic failure and throws (but not crashes)
     if(sum<0){
 	     PrintToLog("negative numbers! Socialize and liquidate 100%");
+	     ContractDex_ADD_MARKET_PRICE(address, contractId, position, Block, txid, idx, (position > 0) ? sell : buy, 0, true);
 	     return false;
     }
 	
