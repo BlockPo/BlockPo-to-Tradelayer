@@ -6891,6 +6891,12 @@ bool checkContractPositions(int Block, const std::string &address, const uint32_
         PrintToLog("%s(): min_margin: %d, upnl: %d, sum: %d, reserve: %d\n",__func__, min_margin, upnl, sum, reserve);
     }
 
+    // if sum is less than zero, it can cause problems. To simplify debugging this, we will filter so all neg sum PNL assumes catastrophic failure and throws (but not crashes)
+    if(sum<0){
+	     PrintToLog("negative numbers! Socialize and liquidate 100%");
+	     return false;
+    }
+	
     // if sum is less than min margin, liquidate the half position
     if(sum < min_margin)
     {
