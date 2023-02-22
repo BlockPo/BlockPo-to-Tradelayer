@@ -67,7 +67,14 @@ int64_t Register::getPosExitPrice(const uint32_t contractId, bool isOracle) cons
 {
     if(isOracle)
     {
-        return getOracleTwap(contractId, OL_BLOCKS);
+        int64_t oracleTwap = mastercore::getOracleTwap(contractId, 1);
+        int64_t oracleLag = mastercore::getOracleTwap(contractId, 3);
+
+        if(oracleLag*0.965>=oracleTwap){
+            oracleTwap = oracleLag*0.965;
+        }
+            
+        return oracleTwap;
     }
 
     // refine this: native contracts mark price
