@@ -8373,7 +8373,7 @@ int64_t blocksettlement::getTotalLoss(const uint32_t& contractId, const uint32_t
     int64_t bankruptcyVWAP = 0;
 
     if (!mastercore::ContractDex_LIQUIDATION_VOLUME(contractId, volume, vwap, bankruptcyVWAP, sign)) {
-        PrintToLog("%s():ContractDex_LIQUIDATION_VOLUME is zero\n",__func__);
+        //PrintToLog("%s():ContractDex_LIQUIDATION_VOLUME is zero\n",__func__);
         return 0;
     }
 
@@ -8401,7 +8401,7 @@ void blocksettlement::lossSocialization(const uint32_t& contractId, const uint32
         const Register& reg = p.second;
         const int64_t position = reg.getRecord(contractId, CONTRACT_POSITION);
 
-        PrintToLog("%s(): position: %d, contractId: %d \n",__func__, position, contractId);
+        //PrintToLog("%s(): position: %d, contractId: %d \n",__func__, position, contractId);
         // not counting these addresses
         if (0 == position) {
             zeroposition.push_back(p.first);
