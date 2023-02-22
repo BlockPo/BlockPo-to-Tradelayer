@@ -6862,7 +6862,7 @@ bool checkContractPositions(int Block, const std::string &address, const uint32_
 {
     if(msc_debug_liquidation_enginee)
     {
-        PrintToLog("%s(): inside checkContractPositions \n",__func__);
+        //PrintToLog("%s(): inside checkContractPositions \n",__func__);
     }
 
     int64_t position =  reg.getRecord(contractId, CONTRACT_POSITION);
