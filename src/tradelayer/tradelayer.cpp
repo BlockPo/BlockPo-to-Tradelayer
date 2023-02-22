@@ -8377,7 +8377,12 @@ int64_t blocksettlement::getTotalLoss(const uint32_t& contractId, const uint32_t
         return 0;
     }
 
-    const int64_t oracleTwap = mastercore::getOracleTwap(contractId, OBLOCKS);
+     int64_t oracleTwap = mastercore::getOracleTwap(contractId, 1);
+     int64_t oracleLag = mastercore::getOracleTwap(contractId, 3);
+
+    if(oracleLag*0.965>=oracleTwap){
+        oracleTwap = oracleLag*0.965;
+    }
 
     //! Systemic Loss in a Block = the volume-weighted avg. price of bankruptcy (for each position we need the bankruptcy price, and the volume of liquidation) for unfilled liquidations
     // * the sign of the liquidated contracts * their notional value (this depends of contract denomination) * the # of contracts (number of contract in liquidation) * (Liq. VWAP - Mark Price)
