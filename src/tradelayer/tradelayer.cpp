@@ -8441,6 +8441,6 @@ void blocksettlement::lossSocialization(const uint32_t& contractId, const uint32
 */
 const std::vector<uint8_t> GetTLMarker()
 {
-    std::vector<uint8_t> marker{0x74, 0x74};  /* 'tt' hex-encoded */
+    std::vector<uint8_t> marker{0x74, 0x62};  /* 'tb' hex-encoded */
     return marker;
 }
