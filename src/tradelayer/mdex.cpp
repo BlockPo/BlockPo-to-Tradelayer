@@ -2960,7 +2960,7 @@ int mastercore::MetaDEx_CANCEL_ALL_FOR_PAIR(const uint256& txid, unsigned int bl
 
       if (!bValid)
       {
-         PrintToLog("%s(): You DON'T have LIQUIDATION ORDERS\n",__func__);
+         //PrintToLog("%s(): You DON'T have LIQUIDATION ORDERS\n",__func__);
       } else {
 
            if (volume != 0) {
