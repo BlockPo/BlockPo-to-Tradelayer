@@ -90,9 +90,9 @@ int64_t Register::getLiquidationPrice(const uint32_t contractId, const uint32_t 
 
     const int64_t marginNeeded = (int64_t) position *  marginRequirement;
     const double firstFactor = (double) marginNeeded / (position * notionalSize);
-    const double secondFactor = 0;
+    double secondFactor = 0;
     if(entryPrice != 0){
-      const double secondFactor = (double) COIN / entryPrice;
+      double secondFactor = (double) COIN / entryPrice;
     }
     const double denominator =  firstFactor + secondFactor;
 
@@ -127,7 +127,8 @@ int64_t Register::getUPNL(const uint32_t contractId, const uint32_t notionalSize
     const arith_uint256 factor = ConvertTo256((abs(position) * notionalSize) / COIN );
     const arith_uint256 dEntryPrice = ConvertTo256(entryPrice / COIN);
     const arith_uint256 dExitPrice = ConvertTo256(exitPrice / COIN);
-    const int64_t diff = exitPrice - entryPrice;
+    int64_t diff = exitPrice - entryPrice;
+    if(diff==exitPrice){diff=0;}
     const arith_uint256 dDiff = ConvertTo256(abs(diff));
 
     PrintToLog("%s(): dEntryPrice: %d, dExitPrice: %d, factor: %d, diff: %d\n",__func__, ConvertTo64(dEntryPrice), ConvertTo64(dExitPrice), ConvertTo64(factor), diff);
@@ -177,8 +178,13 @@ bool Register::setBankruptcyPrice(const uint32_t contractId, const uint32_t noti
 {
     const int64_t position = getRecord(contractId, CONTRACT_POSITION);
     const int64_t entryPrice = getPosEntryPrice(contractId);
-    const double dBankruptcyPrice  =  (double) 1 / (initMargin / (position * notionalSize) + (1/entryPrice));
-
+    double dBankruptcyPrice = 0;
+    if(entryPrice!=0){
+        dBankruptcyPrice  =  (double) 1 / (initMargin / (position * notionalSize) + (1/entryPrice));
+    }else if(entryPrice==0){
+        dBankruptcyPrice=0;
+    }
+    
     PrintToLog("%s(): bankruptcyPrice: %d\n",__func__, dBankruptcyPrice);
 
     const int bankruptcyPrice = DoubleToInt64(dBankruptcyPrice);
