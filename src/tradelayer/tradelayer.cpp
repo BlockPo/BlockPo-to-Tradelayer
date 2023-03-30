@@ -6862,7 +6862,7 @@ bool checkContractPositions(int Block, const std::string &address, const uint32_
 {
     if(msc_debug_liquidation_enginee)
     {
-        PrintToLog("%s(): inside checkContractPositions \n",__func__);
+        //PrintToLog("%s(): inside checkContractPositions \n",__func__);
     }
 
     int64_t position =  reg.getRecord(contractId, CONTRACT_POSITION);
@@ -6891,6 +6891,15 @@ bool checkContractPositions(int Block, const std::string &address, const uint32_
         PrintToLog("%s(): min_margin: %d, upnl: %d, sum: %d, reserve: %d\n",__func__, min_margin, upnl, sum, reserve);
     }
 
+    // if sum is less than zero, it can cause problems. To simplify debugging this, we will filter so all neg sum PNL assumes catastrophic failure and throws (but not crashes)
+    if(sum<0){
+	     PrintToLog("negative numbers! Socialize and liquidate 100%");
+	     uint256 txid;
+             unsigned int idx = 0;
+	     ContractDex_ADD_MARKET_PRICE(address, contractId, position, Block, txid, idx, (position > 0) ? sell : buy, 0, true);
+	     return false;
+    }
+	
     // if sum is less than min margin, liquidate the half position
     if(sum < min_margin)
     {
@@ -8366,11 +8375,16 @@ int64_t blocksettlement::getTotalLoss(const uint32_t& contractId, const uint32_t
     int64_t bankruptcyVWAP = 0;
 
     if (!mastercore::ContractDex_LIQUIDATION_VOLUME(contractId, volume, vwap, bankruptcyVWAP, sign)) {
-        PrintToLog("%s():ContractDex_LIQUIDATION_VOLUME is zero\n",__func__);
+        //PrintToLog("%s():ContractDex_LIQUIDATION_VOLUME is zero\n",__func__);
         return 0;
     }
 
-    const int64_t oracleTwap = mastercore::getOracleTwap(contractId, OBLOCKS);
+     int64_t oracleTwap = mastercore::getOracleTwap(contractId, 1);
+     int64_t oracleLag = mastercore::getOracleTwap(contractId, 3);
+
+    if(oracleLag*0.965>=oracleTwap){
+        oracleTwap = oracleLag*0.965;
+    }
 
     //! Systemic Loss in a Block = the volume-weighted avg. price of bankruptcy (for each position we need the bankruptcy price, and the volume of liquidation) for unfilled liquidations
     // * the sign of the liquidated contracts * their notional value (this depends of contract denomination) * the # of contracts (number of contract in liquidation) * (Liq. VWAP - Mark Price)
@@ -8394,7 +8408,7 @@ void blocksettlement::lossSocialization(const uint32_t& contractId, const uint32
         const Register& reg = p.second;
         const int64_t position = reg.getRecord(contractId, CONTRACT_POSITION);
 
-        PrintToLog("%s(): position: %d, contractId: %d \n",__func__, position, contractId);
+        //PrintToLog("%s(): position: %d, contractId: %d \n",__func__, position, contractId);
         // not counting these addresses
         if (0 == position) {
             zeroposition.push_back(p.first);
@@ -8434,6 +8448,6 @@ void blocksettlement::lossSocialization(const uint32_t& contractId, const uint32
 */
 const std::vector<uint8_t> GetTLMarker()
 {
-    std::vector<uint8_t> marker{0x74, 0x74};  /* 'tt' hex-encoded */
+    std::vector<uint8_t> marker{0x74, 0x62};  /* 'tb' hex-encoded */
     return marker;
 }
