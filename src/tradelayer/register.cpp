@@ -675,6 +675,9 @@ bool Register::decreasePosRecord(uint32_t contractId, int64_t amount, int64_t pr
                 // there's nothing left
                 ramount -= remaining;
                 remaining = 0;
+                entries.erase(itt);
+                std::pair<int64_t,int64_t> p (ramount, rprice);
+                entries.push_back(p);
                 PrintToLog("%s() there's nothing else (remaining == 0), ramount left: %d, at price: %d\n",__func__, ramount, rprice);
             }
 
@@ -708,6 +711,9 @@ int64_t Register::getPosExitPrice(const uint32_t contractId, std::string& addres
 int64_t Register::realizePNL(uint32_t contractId, uint32_t notional_size, bool isOracle, bool isInverseQuoted, uint32_t collateral_currency) const
 {
             //we want to do what settlementPNL does but with actual exit prices instead of mark prices
+          //this is called when the logic of xTrade or instant trade in mdex.cpp notes a reduction in position. 
+          //it's probable that a version simply referring to the mark price of the last block, being parsed this block in the tx_handler, would capture any
+          //excess PNL or loss since the last block would only be updating, this makes sense (vs. calculating the whole trade PNL)
       bool bRet = false;
 
     LOCK(cs_register);
