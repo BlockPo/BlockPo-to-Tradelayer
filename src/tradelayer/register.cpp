@@ -636,13 +636,13 @@ bool mastercore::decrease_entry(const std::string& who, uint32_t contractId, int
 
     Register& reg = my_it->second;
 
-    bRet = reg.decreasePosRecord(contractId, amount, price);
+    bRet = reg.decreasePosRecord(who,contractId, amount, price, inverse, collateral_currency);
 
     return bRet;
 }
 
-/ Decrease Position Record
-bool Register::decreasePosRecord(uint32_t contractId, int64_t amount, int64_t price, bool inverse, int64_t collateral_currency)
+// Decrease Position Record
+bool Register::decreasePosRecord(const std::string& who, uint32_t contractId, int64_t amount, int64_t price, bool inverse, int64_t collateral_currency)
 {
     bool bRet = false;
     RecordMap::iterator it = mp_record.find(contractId);
@@ -670,11 +670,13 @@ bool Register::decreasePosRecord(uint32_t contractId, int64_t amount, int64_t pr
                 // smaller remaining
                 remaining -= ramount;
                 PrintToLog("%s():deleting full entry: amount: %d, price: %d\n",__func__, ramount, rprice);
+                realizePNL(who, contractId, ramount,price, inverse, collateral_currency);
                 entries.erase(itt);
             } else {
                 // there's nothing left
                 ramount -= remaining;
                 remaining = 0;
+                realizePNL(who, contractId, ramount,price, inverse, collateral_currency);
                 entries.erase(itt);
                 std::pair<int64_t,int64_t> p (ramount, rprice);
                 entries.push_back(p);
@@ -700,15 +702,8 @@ bool Register::decreasePosRecord(uint32_t contractId, int64_t amount, int64_t pr
     return bRet;
 }
 
-int64_t Register::getPosExitPrice(const uint32_t contractId, std::string& address) const
-{
-            //here we want to look up all the trades on an address for this block for this contract id 
-    
-            return 0; //placeholder
 
-}  
-
-int64_t Register::realizePNL(uint32_t contractId, uint32_t notional_size, bool isOracle, bool isInverseQuoted, uint32_t collateral_currency) const
+int64_t Register::realizePNL(const std::string& who, uint32_t contractId, int64_t amount, int64_t price, bool isInverseQuoted, uint32_t collateral_currency) const
 {
             //we want to do what settlementPNL does but with actual exit prices instead of mark prices
           //this is called when the logic of xTrade or instant trade in mdex.cpp notes a reduction in position. 
@@ -718,13 +713,9 @@ int64_t Register::realizePNL(uint32_t contractId, uint32_t notional_size, bool i
 
     LOCK(cs_register);
     
-    for(auto my_it = mp_register_map.begin(); my_it != mp_register_map.end(); ++my_it)
-    {
-        const std::string& who = my_it->first;
-        Register& reg = my_it->second;
         //pass the string into the new function
         const int64_t entry = getPosEntryPrice(contractId, who);
-        const int64_t exit = getPosExitPrice(contractId, who);
+        const int64_t exit = price
         if(entry||exit==0){
             const int64_t realizedPNL = 0;
         }else{
@@ -736,7 +727,7 @@ int64_t Register::realizePNL(uint32_t contractId, uint32_t notional_size, bool i
             }
         }
 
-        PrintToLog("%s(): upnl: %d, oldPNL: %d, newUPNL: %d\n",__func__, upnl, oldPNL, newUPNL);
+        //PrintToLog("%s(): upnl: %d, oldPNL: %d, newUPNL: %d\n",__func__, upnl, oldPNL, newUPNL);
 
         if (0 != realizedPNL)
         {
@@ -747,7 +738,6 @@ int64_t Register::realizePNL(uint32_t contractId, uint32_t notional_size, bool i
             update_tally_map(who, collateral_currency, newUPNL, BALANCE);
             bRet = true;
         }
-    }
 
     return bRet;
 }
