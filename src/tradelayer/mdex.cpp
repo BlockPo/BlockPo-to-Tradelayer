@@ -178,7 +178,7 @@ void mastercore::updateAllEntry(int64_t oldPosition, int64_t newPosition, int64_
         // decreasing -> delete some contracts in entry
         } else {
 
-            if(!decrease_entry(elem->getAddr(), contract_traded, nCouldBuy)){
+            if(!decrease_entry(elem->getAddr(), contract_traded, nCouldBuy, cd.isInverseQuoted(), cd.collateral_currency){
                 PrintToLog("%s() decreasing position Failed\n",__func__);
             }
         }
@@ -202,13 +202,13 @@ void mastercore::updateAllEntry(int64_t oldPosition, int64_t newPosition, int64_
        update_register_map(elem->getAddr(), contract_traded, -remainingMargin, MARGIN);
        update_tally_map(elem->getAddr(), cd.collateral_currency, remainingMargin, BALANCE);
 
-       decrease_entry(elem->getAddr(), contract_traded, nCouldBuy);
+       decrease_entry(elem->getAddr(), contract_traded, nCouldBuy, cd.isInverseQuoted(), cd.collateral_currency);
 
      // closing position and opening another from different side
    } else if (signOld != signNew && (signOld != 0 && signNew != 0)) {
 
          PrintToLog("%s() closing position and opening another from different side\n",__func__);
-         decrease_entry(elem->getAddr(), contract_traded, nCouldBuy, elem->getEffectivePrice());
+         decrease_entry(elem->getAddr(), contract_traded, nCouldBuy, elem->getEffectivePrice(), cd.isInverseQuoted(), cd.collateral_currency);
 
          const int64_t remainingMargin = getContractRecord(elem->getAddr(), contract_traded, MARGIN);
 
