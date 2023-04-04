@@ -618,7 +618,7 @@ bool mastercore::insert_entry(const std::string& who, uint32_t contractId, int64
 
 
 
-bool mastercore::decrease_entry(const std::string& who, uint32_t contractId, int64_t amount, int64_t price)
+bool mastercore::decrease_entry(const std::string& who, uint32_t contractId, int64_t amount, int64_t price, bool inverse, int64_t collateral_currency)
 {
     bool bRet = false;
     if (0 == amount) {
@@ -642,7 +642,7 @@ bool mastercore::decrease_entry(const std::string& who, uint32_t contractId, int
 }
 
 / Decrease Position Record
-bool Register::decreasePosRecord(uint32_t contractId, int64_t amount, int64_t price)
+bool Register::decreasePosRecord(uint32_t contractId, int64_t amount, int64_t price, bool inverse, int64_t collateral_currency)
 {
     bool bRet = false;
     RecordMap::iterator it = mp_record.find(contractId);
