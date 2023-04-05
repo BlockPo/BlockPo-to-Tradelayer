@@ -1,36 +1,3 @@
-
-Skip to content
-Pull requests
-Issues
-Codespaces
-Marketplace
-Explore
-@patrickdugan
-BlockPo /
-BlockPo-to-Tradelayer
-Public
-
-Fork your own copy of BlockPo/BlockPo-to-Tradelayer
-
-Code
-Issues 14
-Pull requests 1
-Actions
-Projects
-Wiki
-Security 6
-
-    Insights
-
-BlockPo-to-Tradelayer/src/tradelayer/register.cpp
-@patrickdugan
-patrickdugan Added refresh of position record when remainder = 0
-Latest commit 7f11203 Apr 4, 2023
-History
-2 contributors
-@santos177
-@patrickdugan
-executable file 753 lines (576 sloc) 22.8 KB
 #include <tradelayer/register.h>
 #include <tradelayer/ce.h>
 #include <tradelayer/log.h>
@@ -151,8 +118,11 @@ int64_t Register::getUPNL(const uint32_t contractId, const uint32_t notionalSize
 
     const arith_uint256 factor = ConvertTo256((abs(position) * notionalSize) / COIN );
     const arith_uint256 dEntryPrice = ConvertTo256(entryPrice / COIN);
+
     const arith_uint256 dMarkPrice = ConvertTo256(markPrice / COIN);
     const int64_t diff = markPrice - entryPrice;
+    if(diff==markPrice){diff=0;}
+
     const arith_uint256 dDiff = ConvertTo256(abs(diff));
 
     PrintToLog("%s(): dEntryPrice: %d, dExitPrice: %d, factor: %d, diff: %d\n",__func__, ConvertTo64(dEntryPrice), ConvertTo64(dMarkPrice), ConvertTo64(factor), diff);
@@ -162,7 +132,8 @@ int64_t Register::getUPNL(const uint32_t contractId, const uint32_t notionalSize
     if(quoted)
     {
 
-        aUPNL = (entryPrice != 0 && markPrice != 0) ?  (dDiff * (factor / dEntryPrice)) / dExitPrice : 0;
+
+        aUPNL = (entryPrice != 0 && markPrice != 0) ?  (dDiff * (factor / dEntryPrice)) / dMarkPrice : 0;
 
     } else {
         aUPNL  = (factor * dDiff);
@@ -560,8 +531,9 @@ bool mastercore::set_bankruptcy_price_onmap(const std::string& who, const uint32
 
 }
 
+
 bool mastercore::settlement_pnl(uint32_t contractId, uint32_t notional_size, bool isOracle, bool isInverseQuoted, uint32_t collateral_currency, bool swap)
-{
+
     bool bRet = false;
 
     LOCK(cs_register);
@@ -742,6 +714,103 @@ bool Register::decreasePosRecord(const std::string& who, uint32_t contractId, in
     }
 
 
+    return bRet;
+}
+
+
+int64_t Register::realizePNL(const std::string& who, uint32_t contractId, int64_t amount, int64_t price, bool isInverseQuoted, uint32_t collateral_currency) const
+{
+            //we want to do what settlementPNL does but with actual exit prices instead of mark prices
+          //this is called when the logic of xTrade or instant trade in mdex.cpp notes a reduction in position. 
+          //it's probable that a version simply referring to the mark price of the last block, being parsed this block in the tx_handler, would capture any
+          //excess PNL or loss since the last block would only be updating, this makes sense (vs. calculating the whole trade PNL)
+      bool bRet = false;
+
+    LOCK(cs_register);
+    
+        //pass the string into the new function
+        const int64_t entry = getPosMarkPrice(contractId, true);
+        const int64_t exit = price;
+        if(entry||exit==0){
+            const int64_t realizedPNL = 0;
+        }else{
+       
+            if(isInverseQuoted){
+                const int64_t realizedPNL = 1/exit - 1/entry *notionalsize;
+            }else{
+                const int64_t realizedPNL = exit - entry *notionalsize;
+            }
+        }
+
+        //PrintToLog("%s(): upnl: %d, oldPNL: %d, newUPNL: %d\n",__func__, upnl, oldPNL, newUPNL);
+
+        if (0 != realizedPNL)
+        {
+            PrintToLog("%s(): updating register map (because newUPNL is not zero)\n",__func__);
+
+            update_register_map(who, contractId, newUPNL, MARGIN);
+            update_register_map(who, contractId, realizedPNL, PNL);
+            update_tally_map(who, collateral_currency, newUPNL, BALANCE);
+            bRet = true;
+        }
+
+    return bRet;
+}
+
+// Decrease Position Record
+bool Register::decreasePosRecord(const std::string& who, uint32_t contractId, int64_t amount, int64_t price, bool inverse, int64_t collateral_currency)
+{
+    bool bRet = false;
+    RecordMap::iterator it = mp_record.find(contractId);
+
+    if (it != mp_record.end())
+    {
+        PositionRecord& record = it->second;
+        Entries& entries = record.entries;
+
+        // setting remaining
+        int64_t& remaining = amount;
+
+        auto itt = entries.begin();
+
+        while(remaining > 0 && itt != entries.end())
+        {
+            // process to calculate it
+            std::pair<int64_t,int64_t>& p = *itt;
+
+            int64_t& ramount = p.first;
+            const int64_t& rprice = p.second;
+
+            if(remaining - ramount >= 0)
+            {
+                // smaller remaining
+                remaining -= ramount;
+                PrintToLog("%s():deleting full entry: amount: %d, price: %d\n",__func__, ramount, rprice);
+                realizePNL(who, contractId, ramount,price, inverse, collateral_currency);
+                entries.erase(itt);
+            } else {
+                // there's nothing left
+                ramount -= remaining;
+                remaining = 0;
+                realizePNL(who, contractId, ramount,price, inverse, collateral_currency);
+                entries.erase(itt);
+                std::pair<int64_t,int64_t> p (ramount, rprice);
+                entries.push_back(p);
+                PrintToLog("%s() there's nothing else (remaining == 0), ramount left: %d, at price: %d\n",__func__, ramount, rprice);
+            }
+
+        }
+
+        // closing position and then open a new one on the other side
+        if (remaining > 0)
+        {
+            entries.clear();
+            PrintToLog("%s(): closing position and then open a new one on the other side, remaining: %d, price: %d\n",__func__, remaining, price);
+            std::pair<int64_t,int64_t> p (remaining, price);
+            entries.push_back(p);
+        }
+        bRet = true;
+    }
     return bRet;
 }
 
