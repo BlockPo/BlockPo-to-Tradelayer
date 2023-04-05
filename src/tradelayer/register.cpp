@@ -714,8 +714,8 @@ int64_t Register::realizePNL(const std::string& who, uint32_t contractId, int64_
     LOCK(cs_register);
     
         //pass the string into the new function
-        const int64_t entry = getPosEntryPrice(contractId, who);
-        const int64_t exit = price
+        const int64_t entry = getPosMarkPrice(contractId, true);
+        const int64_t exit = price;
         if(entry||exit==0){
             const int64_t realizedPNL = 0;
         }else{
