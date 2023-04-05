@@ -120,6 +120,7 @@ int64_t Register::getUPNL(const uint32_t contractId, const uint32_t notionalSize
     const arith_uint256 dEntryPrice = ConvertTo256(entryPrice / COIN);
     const arith_uint256 dMarkPrice = ConvertTo256(markPrice / COIN);
     const int64_t diff = markPrice - entryPrice;
+    if(diff==markPrice){diff=0;}
     const arith_uint256 dDiff = ConvertTo256(abs(diff));
 
     PrintToLog("%s(): dEntryPrice: %d, dExitPrice: %d, factor: %d, diff: %d\n",__func__, ConvertTo64(dEntryPrice), ConvertTo64(dMarkPrice), ConvertTo64(factor), diff);
@@ -129,7 +130,7 @@ int64_t Register::getUPNL(const uint32_t contractId, const uint32_t notionalSize
     if(quoted)
     {
 
-        aUPNL = (entryPrice != 0 && markPrice != 0) ?  (dDiff * (factor / dEntryPrice)) / dExitPrice : 0;
+        aUPNL = (entryPrice != 0 && markPrice != 0) ?  (dDiff * (factor / dEntryPrice)) / dMarkPrice : 0;
 
     } else {
         aUPNL  = (factor * dDiff);
