@@ -2259,172 +2259,165 @@ bool CMPTransaction::interpret_SendDonation()
  * @return  0  if the transaction is fully valid
  *         <0  if the transaction is invalid
  */
-int CMPTransaction::interpretPacket()
+bool CMPTransaction::interpret_Transaction(2ndGo)
 {
-    if (rpcOnly) {
-        PrintToLog("%s(): ERROR: attempt to execute logic in RPC mode\n", __func__);
-        return (PKT_ERROR -1);
-    }
-
-    if (!interpret_Transaction())
-    {
-        return (PKT_ERROR -2);
-    }
-
-    LOCK(cs_tally);
-
+  if (!interpret_TransactionType()) {
+    PrintToLog("Failed to interpret type and version\n");
+    return false;
+  }
+  if(2ndGo==true&&type==MSC_TYPE_SET_ORACLE){
+    return interpret_Set_Oracle();
+  }else if(2ndGo==false){
     switch (type)
     {
         case MSC_TYPE_SIMPLE_SEND:
-            return logicMath_SimpleSend();
+            return interpret_SimpleSend();
 
-        case MSC_TYPE_SEND_MANY:
-            return logicMath_SendMany();
+      case MSC_TYPE_SEND_MANY:
+            return interpret_SendMany();
 
         case MSC_TYPE_SEND_ALL:
-            return logicMath_SendAll();
+            return interpret_SendAll();
 
         case MSC_TYPE_SEND_VESTING:
-            return logicMath_SendVestingTokens();
+            return interpret_SendVestingTokens();
 
         case MSC_TYPE_CREATE_PROPERTY_FIXED:
-            return logicMath_CreatePropertyFixed();
+            return interpret_CreatePropertyFixed();
 
         case MSC_TYPE_CREATE_PROPERTY_MANUAL:
-            return logicMath_CreatePropertyManaged();
+            return interpret_CreatePropertyManaged();
 
         case MSC_TYPE_GRANT_PROPERTY_TOKENS:
-            return logicMath_GrantTokens();
+           return interpret_GrantTokens();
 
         case MSC_TYPE_REVOKE_PROPERTY_TOKENS:
-            return logicMath_RevokeTokens();
+            return interpret_RevokeTokens();
 
         case MSC_TYPE_CHANGE_ISSUER_ADDRESS:
-            return logicMath_ChangeIssuer();
+            return interpret_ChangeIssuer();
 
         case TL_MESSAGE_TYPE_DEACTIVATION:
-            return logicMath_Deactivation();
+            return interpret_Deactivation();
 
         case TL_MESSAGE_TYPE_ACTIVATION:
-            return logicMath_Activation();
+            return interpret_Activation();
 
         case TL_MESSAGE_TYPE_ALERT:
-            return logicMath_Alert();
-
-        case MSC_TYPE_CREATE_CONTRACT:
-            return logicMath_CreateContractDex();
-
-        case MSC_TYPE_CONTRACTDEX_TRADE:
-            return logicMath_ContractDexTrade();
-
-        case MSC_TYPE_CONTRACTDEX_CANCEL_ECOSYSTEM:
-            return logicMath_ContractDexCancelEcosystem();
-
-        case MSC_TYPE_PEGGED_CURRENCY:
-            return logicMath_CreatePeggedCurrency();
-
-        case MSC_TYPE_SEND_PEGGED_CURRENCY:
-            return logicMath_SendPeggedCurrency();
-
-        case MSC_TYPE_REDEMPTION_PEGGED:
-            return logicMath_RedemptionPegged();
-
-        case MSC_TYPE_CONTRACTDEX_CLOSE_POSITION:
-            return logicMath_ContractDexClosePosition();
-
-        case MSC_TYPE_CONTRACTDEX_CANCEL:
-            return logicMath_ContractDExCancel();
-
-        case MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK:
-            return logicMath_ContractDex_Cancel_Orders_By_Block();
-
-        case MSC_TYPE_DEX_SELL_OFFER:
-            return logicMath_DExSell();
-
-        case MSC_TYPE_DEX_BUY_OFFER:
-            return logicMath_DExBuy();
-
-        case MSC_TYPE_ACCEPT_OFFER_BTC:
-            return logicMath_AcceptOfferBTC();
+            return interpret_Alert();
 
         case MSC_TYPE_METADEX_TRADE:
-            return logicMath_MetaDExTrade();
+            return interpret_MetaDExTrade();
 
         case MSC_TYPE_METADEX_CANCEL_ALL:
-            return logicMath_MetaDExCancelAll();
+            return interpret_MetaDExCancelAll();
+
+        case MSC_TYPE_CREATE_CONTRACT:
+            return interpret_CreateContractDex();
 
         case MSC_TYPE_CREATE_ORACLE_CONTRACT:
-            return logicMath_CreateOracleContract();
+            return interpret_CreateOracleContract();
+
+        case MSC_TYPE_CONTRACTDEX_TRADE:
+            return interpret_ContractDexTrade();
+
+        case MSC_TYPE_CONTRACTDEX_CANCEL_ECOSYSTEM:
+            return interpret_ContractDexCancelEcosystem();
+
+        case MSC_TYPE_CONTRACTDEX_CANCEL:
+            return interpret_ContractDExCancel();
+
+        case MSC_TYPE_PEGGED_CURRENCY:
+            return interpret_CreatePeggedCurrency();
+
+        case MSC_TYPE_SEND_PEGGED_CURRENCY:
+            return interpret_SendPeggedCurrency();
+
+        case MSC_TYPE_REDEMPTION_PEGGED:
+            return interpret_RedemptionPegged();
+
+        case MSC_TYPE_CONTRACTDEX_CLOSE_POSITION:
+            return interpret_ContractDexClosePosition();
+
+        case MSC_TYPE_CONTRACTDEX_CANCEL_ORDERS_BY_BLOCK:
+            return interpret_ContractDex_Cancel_Orders_By_Block();
+
+        case MSC_TYPE_DEX_SELL_OFFER:
+            return interpret_DExSell();
+
+        case MSC_TYPE_DEX_BUY_OFFER:
+            return interpret_DExBuy();
+
+        case MSC_TYPE_ACCEPT_OFFER_BTC:
+            return interpret_AcceptOfferBTC();
 
         case MSC_TYPE_CHANGE_ORACLE_REF:
-            return logicMath_Change_OracleAdm();
-
-        case MSC_TYPE_SET_ORACLE:
-            return logicMath_Set_Oracle();
+            return interpret_Change_OracleAdm();
 
         case MSC_TYPE_ORACLE_BACKUP:
-            return logicMath_OracleBackup();
+            return interpret_OracleBackup();
 
         case MSC_TYPE_CLOSE_ORACLE:
-            return logicMath_CloseOracle();
+            return interpret_CloseOracle();
 
         case MSC_TYPE_COMMIT_CHANNEL:
-            return logicMath_CommitChannel();
+            return interpret_CommitChannel();
 
         case MSC_TYPE_WITHDRAWAL_FROM_CHANNEL:
-            return logicMath_Withdrawal_FromChannel();
+            return interpret_Withdrawal_FromChannel();
 
         case MSC_TYPE_INSTANT_TRADE:
-            return logicMath_Instant_Trade();
+            return interpret_Instant_Trade();
 
         case MSC_TYPE_TRANSFER:
-            return logicMath_Transfer();
+            return interpret_Transfer();
 
         case MSC_TYPE_CONTRACT_INSTANT:
-            return logicMath_Contract_Instant();
+            return interpret_Contract_Instant();
 
         case MSC_TYPE_NEW_ID_REGISTRATION:
-            return logicMath_New_Id_Registration();
+            return interpret_New_Id_Registration();
 
         case MSC_TYPE_UPDATE_ID_REGISTRATION:
-            return logicMath_Update_Id_Registration();
+            return interpret_Update_Id_Registration();
 
         case MSC_TYPE_DEX_PAYMENT:
-            return logicMath_DEx_Payment();
+            return interpret_DEx_Payment();
 
         case MSC_TYPE_ATTESTATION:
-            return logicMath_Attestation();
+            return interpret_Attestation();
 
         case MSC_TYPE_REVOKE_ATTESTATION:
-            return logicMath_Revoke_Attestation();
+            return interpret_Revoke_Attestation();
 
         case MSC_TYPE_INSTANT_LTC_TRADE:
-            return logicMath_Instant_LTC_Trade();
+            return interpret_Instant_LTC_Trade();
 
         case MSC_TYPE_METADEX_CANCEL:
-            return logicMath_MetaDExCancel();
+            return interpret_MetaDExCancel();
 
         case MSC_TYPE_METADEX_CANCEL_BY_PAIR:
-            return logicMath_MetaDExCancel_ByPair();
-
-        case MSC_TYPE_CLOSE_CHANNEL:
-            return logicMath_Close_Channel();
+            return interpret_MetaDExCancel_ByPair();
 
         case MSC_TYPE_METADEX_CANCEL_BY_PRICE:
-            return logicMath_MetaDExCancel_ByPrice();
+            return interpret_MetaDExCancel_ByPrice();
 
-				case MSC_TYPE_SUBMIT_NODE_ADDRESS:
-						return logicMath_SubmitNodeAddr();
+        case MSC_TYPE_CLOSE_CHANNEL:
+            return interpret_SimpleSend();
 
-				case MSC_TYPE_CLAIM_NODE_REWARD:
-						return logicMath_ClaimNodeReward();
+        case MSC_TYPE_SUBMIT_NODE_ADDRESS:
+            return interpret_SubmitNodeAddr();
+
+        case MSC_TYPE_CLAIM_NODE_REWARD:
+            return interpret_ClaimNodeReward();
 
         case MSC_TYPE_SEND_DONATION:
-            return logicMath_SendDonation();
-
-        default:
-            return -1;
+            return interpret_SendDonation();
+      }
     }
+  return false;
+}
+
 
     return (PKT_ERROR -100);
 }

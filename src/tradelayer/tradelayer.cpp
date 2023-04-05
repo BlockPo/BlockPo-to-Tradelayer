@@ -1362,10 +1362,17 @@ static int msc_initial_scan(int nFirstBlock)
         mastercore_handler_block_begin(nBlock, pblockindex);
 
         CBlock block;
-        if (!ReadBlockFromDisk(block, pblockindex, Params().GetConsensus())) break;
+        if (!ReadBlockFromDisk(block, pblockindex, Params().GetConsensus())){
+                PrintToLog("Shutdown due to consensus break");
+                break;
+        } 
           for(const CTransactionRef& tx : block.vtx) {
-             if (mastercore_handler_tx(*tx, nBlock, nTxNum, pblockindex, nullptr)) ++nTxsFoundInBlock;
+             if (mastercore_handler_tx(*tx, nBlock, nTxNum, pblockindex, nullptr,false)) ++nTxsFoundInBlock;
              ++nTxNum;
+          }
+          //now we uhh do it again to filter oracle set tx
+          for(const CTransactionRef& tx : block.vtx) {
+             mastercore_handler_tx(*tx, nBlock, nTxNum, pblockindex, nullptr,true) 
           }
 
         nTxsFoundTotal += nTxsFoundInBlock;
@@ -3753,7 +3760,7 @@ bool VestingTokens(int block)
  *
  * @return True, if the transaction was a valid Trade Layer transaction
  */
-bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx, const CBlockIndex* pBlockIndex, const std::shared_ptr<std::map<COutPoint, Coin>> removedCoins)
+bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx, const CBlockIndex* pBlockIndex, const std::shared_ptr<std::map<COutPoint, Coin>> removedCoins, bool 2ndGo)
 {
 
     if (!mastercoreInitialized) {
@@ -3792,7 +3799,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
         assert(mp_obj.getEncodingClass() != NO_MARKER);
         assert(mp_obj.getSender().empty() == false);
 
-        int interp_ret = mp_obj.interpretPacket();
+        int interp_ret = mp_obj.interpretPacket(2ndGo);
 
         if(msc_debug_handler_tx) PrintToLog("%s(): interp_ret: %d\n",__func__, interp_ret);
 
@@ -3801,7 +3808,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
         {
             HandleLtcInstantTrade(tx, nBlock, mp_obj.getIndexInBlock(), mp_obj.getSender(), mp_obj.getSpecial(), mp_obj.getReceiver(), mp_obj.getProperty(), mp_obj.getAmountForSale(), mp_obj.getPrice());
 
-        } else if (interp_ret == 2) {
+        } else if (interp_ret == 2 && 2ndGo == false) {
             HandleDExPayments(tx, nBlock, mp_obj.getSender());
 
         }
@@ -8348,7 +8355,7 @@ void blocksettlement::makeSettlement()
          // if there's no liquidation orders
          if(0 == loss)
          {
-             realize_pnl(contractId, cd.notional_size, cd.isOracle(), cd.isInverseQuoted(), cd.collateral_currency);
+             settlement_pnl(contractId, cd.notional_size, cd.isOracle(), cd.isInverseQuoted(), cd.collateral_currency);
          } else if (loss > 0) {
               const int64_t allFees = get_fees_balance(g_fees->spot_fees, cd.collateral_currency);
               const int64_t difference = allFees - loss;
