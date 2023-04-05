@@ -8337,10 +8337,10 @@ bool mastercore::Token_LTC_Fees(int64_t& buyer_amountGot, uint32_t propertyId)
     return false;
 
 }
-
 void blocksettlement::makeSettlement()
 {
     const uint32_t nextCDID = _my_cds->peekNextContractID();
+    bool swap = false;
 
     // checking expiration block for each contract
     for (uint32_t contractId = 1; contractId < nextCDID; contractId++)
@@ -8349,13 +8349,21 @@ void blocksettlement::makeSettlement()
          if (!_my_cds->getCD(contractId, cd)) {
              continue; // contract does not exist
          }
+         _my_cds->getCD(contractId, cd);
+
+         const int deadline = cd.blocks_until_expiration + cd.init_block;
+         if (deadline == nBlock) {expireContracts();}
+         if (cd.blocks_until_expiration>100000000&&nHeight%24==0){swap=true;} //this is an ad-hoc system to differentiate swaps and futures. Swaps have such long expiry
+         //that in 1000 years the blocks until expiration will still be well over 100000000 blocks. You make a swap putting in 1B block height expiry or such
+         if(cd.blocks_until_expiration<100000000){swap=false;}
+
          const int64_t loss = getTotalLoss(contractId, cd.notional_size);
          PrintToLog("%s(): total loss: %d, contractId: %d\n",__func__, loss, contractId);
 
          // if there's no liquidation orders
          if(0 == loss)
          {
-             settlement_pnl(contractId, cd.notional_size, cd.isOracle(), cd.isInverseQuoted(), cd.collateral_currency);
+             settlement_pnl(contractId, cd.notional_size, cd.isOracle(), cd.isInverseQuoted(), cd.collateral_currency, swap);
          } else if (loss > 0) {
               const int64_t allFees = get_fees_balance(g_fees->spot_fees, cd.collateral_currency);
               const int64_t difference = allFees - loss;
@@ -8367,7 +8375,7 @@ void blocksettlement::makeSettlement()
               PrintToLog("%s(): difference =  %d, allFees = %d, loss = %d, amountShared = %d\n",__func__,  difference, allFees, loss, amountShared);
 
               // we need socialization of loss
-              lossSocialization(contractId, cd.collateral_currency, amountShared);
+              lossSocialization(contractId, cd.collateral_currency, amountShared, cd.isOracle(), swap);
 
               g_fund->AccrueFees(cd.collateral_currency, loss);
           }
@@ -8404,7 +8412,7 @@ int64_t blocksettlement::getTotalLoss(const uint32_t& contractId, const uint32_t
 
 }
 
-void blocksettlement::lossSocialization(const uint32_t& contractId, const uint32_t& collateral, int64_t fullAmount)
+void blocksettlement::lossSocialization(const uint32_t& contractId, const uint32_t& collateral, int64_t fullAmount, bool isOracle, bool swap)
 {
     int count = 0;
     LOCK(cs_register);
@@ -8415,12 +8423,22 @@ void blocksettlement::lossSocialization(const uint32_t& contractId, const uint32
         const Register& reg = p.second;
         const int64_t position = reg.getRecord(contractId, CONTRACT_POSITION);
 
-        //PrintToLog("%s(): position: %d, contractId: %d \n",__func__, position, contractId);
+        PrintToLog("%s(): position: %d, contractId: %d \n",__func__, position, contractId);
         // not counting these addresses
         if (0 == position) {
             zeroposition.push_back(p.first);
         } else {
             count++;
+        }
+
+        const rate = calcSwapRate(contractId,isOracle);
+        const payment = rate * position*-1;
+
+        if (payment !=0&& swap==true){
+                //PrintToLog("%s(): updating register map (because newUPNL is not zero)\n",__func__);
+                //great place to save payment data
+                update_register_map(who, contractId, payment, MARGIN);
+                update_tally_map(who, collateral_currency, payment, BALANCE);
         }
     }
 
