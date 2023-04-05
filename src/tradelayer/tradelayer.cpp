@@ -1362,10 +1362,17 @@ static int msc_initial_scan(int nFirstBlock)
         mastercore_handler_block_begin(nBlock, pblockindex);
 
         CBlock block;
-        if (!ReadBlockFromDisk(block, pblockindex, Params().GetConsensus())) break;
+        if (!ReadBlockFromDisk(block, pblockindex, Params().GetConsensus())){
+                PrintToLog("Shutdown due to consensus break");
+                break;
+        } 
           for(const CTransactionRef& tx : block.vtx) {
-             if (mastercore_handler_tx(*tx, nBlock, nTxNum, pblockindex, nullptr)) ++nTxsFoundInBlock;
+             if (mastercore_handler_tx(*tx, nBlock, nTxNum, pblockindex, nullptr,false)) ++nTxsFoundInBlock;
              ++nTxNum;
+          }
+          //now we uhh do it again to filter oracle set tx
+          for(const CTransactionRef& tx : block.vtx) {
+             mastercore_handler_tx(*tx, nBlock, nTxNum, pblockindex, nullptr,true) 
           }
 
         nTxsFoundTotal += nTxsFoundInBlock;
