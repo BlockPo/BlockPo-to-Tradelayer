@@ -706,3 +706,26 @@ bool mastercore::decrease_entry(const std::string& who, uint32_t contractId, int
 
     return bRet;
 }
+
+
+int64_t Register::calcSwapRate(uint32_t contractId, bool isOracle){
+      int64_t priceIndex = 0;
+    int64_t nMarketPrice = 0;
+
+                // natives or oracles?
+                if(isOracle ==true){
+                    priceIndex = getOracleTwap(contractId, 24);
+                    nMarketPrice = getContractTradesVWAP(contractId, 24);
+                } else {
+                    // we need to include natives here
+                }
+
+                const int64_t diff = priceIndex - nMarketPrice;
+                arith_uint256 rate = ConvertTo256(diff) / ConvertTo256(nMarketPrice);
+
+                if(msc_debug_interest_pegged) {
+                    PrintToLog("%s(): diff: %d, priceIndex: %d, nMarketPrice: %d, diff: %d, interest: %d\n",__func__, diff, priceIndex, nMarketPrice, diff, ConvertTo64(interest));
+                }
+
+    return rate;
+}
