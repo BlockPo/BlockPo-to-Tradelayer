@@ -8341,7 +8341,7 @@ void blocksettlement::makeSettlement()
          // if there's no liquidation orders
          if(0 == loss)
          {
-             realize_pnl(contractId, cd.notional_size, cd.isOracle(), cd.isInverseQuoted(), cd.collateral_currency);
+             settlement_pnl(contractId, cd.notional_size, cd.isOracle(), cd.isInverseQuoted(), cd.collateral_currency);
          } else if (loss > 0) {
               const int64_t allFees = get_fees_balance(g_fees->spot_fees, cd.collateral_currency);
               const int64_t difference = allFees - loss;
