@@ -67,7 +67,14 @@ int64_t Register::getPosMarkPrice(const uint32_t contractId, bool isOracle) cons
 {
     if(isOracle)
     {
-        return getOracleTwap(contractId, OL_BLOCKS);
+        int64_t oracleTwap = mastercore::getOracleTwap(contractId, 1);
+        int64_t oracleLag = mastercore::getOracleTwap(contractId, 3);
+
+        if(oracleLag*0.965>=oracleTwap){
+            oracleTwap = oracleLag*0.965;
+        }
+            
+        return oracleTwap;
     }
 
     // refine this: native contracts mark price
@@ -83,9 +90,10 @@ int64_t Register::getLiquidationPrice(const uint32_t contractId, const uint32_t 
 
     const int64_t marginNeeded = (int64_t) position *  marginRequirement;
     const double firstFactor = (double) marginNeeded / (position * notionalSize);
-    if(entryprice == 0){
-        const double secondFactor = 0;
-    }else{const double secondFactor = (double) COIN / entryPrice;}
+    double secondFactor = 0;
+    if(entryPrice != 0){
+      double secondFactor = (double) COIN / entryPrice;
+    }
     const double denominator =  firstFactor + secondFactor;
 
     const double dliqPrice = (denominator != 0) ? 1 / denominator : 0;
@@ -118,9 +126,11 @@ int64_t Register::getUPNL(const uint32_t contractId, const uint32_t notionalSize
 
     const arith_uint256 factor = ConvertTo256((abs(position) * notionalSize) / COIN );
     const arith_uint256 dEntryPrice = ConvertTo256(entryPrice / COIN);
+    
     const arith_uint256 dMarkPrice = ConvertTo256(markPrice / COIN);
     const int64_t diff = markPrice - entryPrice;
     if(diff==markPrice){diff=0;}
+
     const arith_uint256 dDiff = ConvertTo256(abs(diff));
 
     PrintToLog("%s(): dEntryPrice: %d, dExitPrice: %d, factor: %d, diff: %d\n",__func__, ConvertTo64(dEntryPrice), ConvertTo64(dMarkPrice), ConvertTo64(factor), diff);
@@ -170,8 +180,13 @@ bool Register::setBankruptcyPrice(const uint32_t contractId, const uint32_t noti
 {
     const int64_t position = getRecord(contractId, CONTRACT_POSITION);
     const int64_t entryPrice = getPosEntryPrice(contractId);
-    const double dBankruptcyPrice  =  (double) 1 / (initMargin / (position * notionalSize) + (1/entryPrice));
-
+    double dBankruptcyPrice = 0;
+    if(entryPrice!=0){
+        dBankruptcyPrice  =  (double) 1 / (initMargin / (position * notionalSize) + (1/entryPrice));
+    }else if(entryPrice==0){
+        dBankruptcyPrice=0;
+    }
+    
     PrintToLog("%s(): bankruptcyPrice: %d\n",__func__, dBankruptcyPrice);
 
     const int bankruptcyPrice = DoubleToInt64(dBankruptcyPrice);

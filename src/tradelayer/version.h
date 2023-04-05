@@ -11,6 +11,7 @@
 // During the configuration, this information are used for other places.
 //
 
+
 // Increase with every consensus affecting change
 #define TL_VERSION_MAJOR       0
 
