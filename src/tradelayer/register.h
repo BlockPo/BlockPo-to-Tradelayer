@@ -66,7 +66,7 @@ public:
 
     bool insertEntry(uint32_t contractId, int64_t amount, int64_t price);
 
-    bool decreasePosRecord(uint32_t contractId, int64_t amount, int64_t price = 0);
+    bool decreasePosRecord(uint32_t contractId, int64_t amount, int64_t price = 0, bool inverse, int64_t collateral_currency);
 
     int64_t getEntryPrice(uint32_t contractId, int64_t amount) const;
 
@@ -100,14 +100,13 @@ namespace mastercore
 
   bool insert_entry(const std::string& who, uint32_t contractId, int64_t amount, int64_t price);
 
-  bool decrease_entry(const std::string& who, uint32_t contractId, int64_t amount, int64_t price = 0);
+  bool decrease_entry(const std::string& who, uint32_t contractId, int64_t amount, int64_t price = 0, bool inverse, int64_t collateral_currency);
 
   bool getFullContractRecord(const std::string& address, uint32_t contractId, UniValue& position_obj, const CDInfo::Entry& cd);
 
   bool reset_leverage_register(const std::string& who, uint32_t contractId);
-
-  bool realize_pnl(uint32_t contractId, uint32_t notional_size, bool isOracle, bool isInverseQuoted, uint32_t collateral_currency);
-
+  bool realize_pnl(const std::string& who, uint32_t contractId, int64_t amount, int64_t price, bool isInverseQuoted, uint32_t collateral_currency);
+  bool settlement_pnl(uint32_t contractId, uint32_t notional_size, bool isOracle, bool isInverseQuoted, uint32_t collateral_currency);
   bool set_bankruptcy_price_onmap(const std::string& who, const uint32_t& contractId, const uint32_t& notionalSize, const int64_t& initMargin);
 }
 
