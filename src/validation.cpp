@@ -2432,7 +2432,9 @@ bool CChainState::ConnectTip(CValidationState& state, const CChainParams& chainp
 
     for(const CTransactionRef& tx : blockConnecting.vtx){
         //! Trade Layer: new confirmed transaction notification
-        if (mastercore_handler_tx(*tx, pindexNew->nHeight, nTxIdx++, pindexNew, removedCoins)) ++nNumMetaTxs;
+        if (mastercore_handler_tx(*tx, pindexNew->nHeight, nTxIdx++, pindexNew, removedCoins,false)) ++nNumMetaTxs;
+        //now we do it again for the oracle tx
+        if (mastercore_handler_tx(*tx, pindexNew->nHeight, nTxIdx++, pindexNew, removedCoins,true)) ++nNumMetaTxs;
     }
 
     mastercore_handler_block_end(pindexNew->nHeight, pindexNew, nNumMetaTxs);
