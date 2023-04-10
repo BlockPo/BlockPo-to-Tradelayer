@@ -3760,7 +3760,7 @@ bool VestingTokens(int block)
  *
  * @return True, if the transaction was a valid Trade Layer transaction
  */
-bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx, const CBlockIndex* pBlockIndex, const std::shared_ptr<std::map<COutPoint, Coin>> removedCoins, bool 2ndGo)
+bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx, const CBlockIndex* pBlockIndex, const std::shared_ptr<std::map<COutPoint, Coin>> removedCoins, bool setOracle)
 {
 
     if (!mastercoreInitialized) {
@@ -3799,7 +3799,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
         assert(mp_obj.getEncodingClass() != NO_MARKER);
         assert(mp_obj.getSender().empty() == false);
 
-        int interp_ret = mp_obj.interpretPacket(2ndGo);
+        int interp_ret = mp_obj.interpretPacket(setOracle);
 
         if(msc_debug_handler_tx) PrintToLog("%s(): interp_ret: %d\n",__func__, interp_ret);
 
@@ -3808,7 +3808,7 @@ bool mastercore_handler_tx(const CTransaction& tx, int nBlock, unsigned int idx,
         {
             HandleLtcInstantTrade(tx, nBlock, mp_obj.getIndexInBlock(), mp_obj.getSender(), mp_obj.getSpecial(), mp_obj.getReceiver(), mp_obj.getProperty(), mp_obj.getAmountForSale(), mp_obj.getPrice());
 
-        } else if (interp_ret == 2 && 2ndGo == false) {
+        } else if (interp_ret == 2 && setOracle == false) {
             HandleDExPayments(tx, nBlock, mp_obj.getSender());
 
         }
