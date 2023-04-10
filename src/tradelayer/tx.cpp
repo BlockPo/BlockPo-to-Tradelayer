@@ -2259,13 +2259,13 @@ bool CMPTransaction::interpret_SendDonation()
  * @return  0  if the transaction is fully valid
  *         <0  if the transaction is invalid
  */
-bool CMPTransaction::interpret_Transaction(2ndGo)
+bool CMPTransaction::interpret_Transaction(setOracle)
 {
   if (!interpret_TransactionType()) {
     PrintToLog("Failed to interpret type and version\n");
     return false;
   }
-  if(2ndGo==true&&type==MSC_TYPE_SET_ORACLE){
+  if(setOracle==true&&type==MSC_TYPE_SET_ORACLE){
     return interpret_Set_Oracle();
   }else if(2ndGo==false){
     switch (type)
