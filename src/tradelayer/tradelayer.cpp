@@ -1372,7 +1372,7 @@ static int msc_initial_scan(int nFirstBlock)
           }
           //now we uhh do it again to filter oracle set tx
           for(const CTransactionRef& tx : block.vtx) {
-             mastercore_handler_tx(*tx, nBlock, nTxNum, pblockindex, nullptr,true) 
+             if (mastercore_handler_tx(*tx, nBlock, nTxNum, pblockindex, nullptr,true)) ++nTxsFoundInBlock;
           }
 
         nTxsFoundTotal += nTxsFoundInBlock;
