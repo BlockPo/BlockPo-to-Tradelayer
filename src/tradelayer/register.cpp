@@ -662,7 +662,8 @@ bool Register::decreasePosRecord(const std::string& who, uint32_t contractId, in
 {
     bool bRet = false;
     RecordMap::iterator it = mp_record.find(contractId);
-
+    //add logic where if who==null then do a general sweep for the contract, but otherwise we're doing a specific position
+    //the logic doesn't currently reflect this
     if (it != mp_record.end())
     {
         PositionRecord& record = it->second;
