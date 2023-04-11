@@ -66,7 +66,7 @@ public:
 
     bool insertEntry(uint32_t contractId, int64_t amount, int64_t price);
 
-    bool decreasePosRecord(uint32_t contractId, int64_t amount, int64_t price = 0, bool inverse, int64_t collateral_currency);
+    bool decreasePosRecord(const std::string& who, uint32_t contractId, int64_t amount, int64_t price = 0, bool inverse, int64_t collateral_currency);
 
     int64_t getEntryPrice(uint32_t contractId, int64_t amount) const;
 
