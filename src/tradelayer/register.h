@@ -100,7 +100,7 @@ namespace mastercore
 
   bool insert_entry(const std::string& who, uint32_t contractId, int64_t amount, int64_t price);
 
-  bool decrease_entry(const std::string& who, uint32_t contractId, int64_t amount, int64_t price = 0, bool inverse, int64_t collateral_currency);
+  bool decrease_entry(const std::string& who, uint32_t contractId, int64_t amount, int64_t price, bool inverse, int64_t collateral_currency);
 
   bool getFullContractRecord(const std::string& address, uint32_t contractId, UniValue& position_obj, const CDInfo::Entry& cd);
 
