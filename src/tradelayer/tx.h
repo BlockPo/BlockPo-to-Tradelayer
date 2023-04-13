@@ -496,7 +496,7 @@ public:
     bool interpret_Transaction(bool setOracle);
 
     /** Interprets the payload and executes the logic. */
-    int interpretPacket();
+    int interpretPacket(bool set Oracle);
 
     /** Enables access of interpretPacket. */
     void unlockLogic() { rpcOnly = false; };
