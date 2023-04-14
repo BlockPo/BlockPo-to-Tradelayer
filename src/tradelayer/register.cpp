@@ -116,7 +116,7 @@ int64_t Register::getUPNL(const uint32_t contractId, const uint32_t notionalSize
 {
 
     const int64_t position = getRecord(contractId, CONTRACT_POSITION);
-    const int64_t entryPrice = getPosEntryPrice(contractId);
+    const int64_t entryPrice = getPosEntryPrice(contractId, isOracle);
     const int64_t markPrice  = getPosMarkPrice(contractId, isOracle);
 
     if(msc_debug_liquidation_enginee)
@@ -128,7 +128,7 @@ int64_t Register::getUPNL(const uint32_t contractId, const uint32_t notionalSize
     const arith_uint256 dEntryPrice = ConvertTo256(entryPrice / COIN);
     
     const arith_uint256 dMarkPrice = ConvertTo256(markPrice / COIN);
-    const int64_t diff = markPrice - entryPrice;
+    int64_t diff = markPrice - entryPrice;
     if(diff==markPrice){diff=0;}
 
     const arith_uint256 dDiff = ConvertTo256(abs(diff));
@@ -322,9 +322,6 @@ int64_t Register::getEntryPrice(uint32_t contractId, int64_t amount) const
 
     return false;
 }
-
-
-/
 
 // Entry price for full position
 int64_t Register::getPosEntryPrice(uint32_t contractId, std::string& address) const
@@ -687,13 +684,13 @@ bool Register::decreasePosRecord(const std::string& who, uint32_t contractId, in
                 // smaller remaining
                 remaining -= ramount;
                 PrintToLog("%s():deleting full entry: amount: %d, price: %d\n",__func__, ramount, rprice);
-                realizePNL(who, contractId, ramount,price, inverse, collateral_currency);
+                Register::realizePNL(who, contractId, ramount,price, inverse, collateral_currency);
                 entries.erase(itt);
             } else {
-                // there's nothing left
+                //there's nothing left
                 ramount -= remaining;
                 remaining = 0;
-                realizePNL(who, contractId, ramount,price, inverse, collateral_currency);
+                Register::realizePNL(who, contractId, ramount,price, inverse, collateral_currency);
                 entries.erase(itt);
                 std::pair<int64_t,int64_t> p (ramount, rprice);
                 entries.push_back(p);
@@ -720,7 +717,7 @@ bool Register::decreasePosRecord(const std::string& who, uint32_t contractId, in
 }
 
 
-int64_t Register::realizePNL(const std::string& who, uint32_t contractId, int64_t amount, int64_t price, bool isInverseQuoted, uint32_t collateral_currency) const
+bool Register::realizePNL(const std::string& who, uint32_t contractId, int64_t amount, int64_t price, bool isInverseQuoted, uint32_t collateral_currency) const
 {
             //we want to do what settlementPNL does but with actual exit prices instead of mark prices
           //this is called when the logic of xTrade or instant trade in mdex.cpp notes a reduction in position. 
@@ -731,7 +728,7 @@ int64_t Register::realizePNL(const std::string& who, uint32_t contractId, int64_
     LOCK(cs_register);
     
         //pass the string into the new function
-        const int64_t entry = getPosMarkPrice(contractId, true);
+        const int64_t entry = Register::getPosMarkPrice(contractId, true);
         const int64_t exit = price;
         if(entry||exit==0){
             const int64_t realizedPNL = 0;
