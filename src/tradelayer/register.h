@@ -75,6 +75,8 @@ public:
     int64_t getRecord(uint32_t contractId, RecordType ttype) const;
 
     int64_t getPosExitPrice(const uint32_t contractId, bool isOracle) const;
+  
+    int64_t getPosMarkPrice(const uint32_t contractId, bool isOracle) const;
 
     int64_t getUPNL(const uint32_t contractId, const uint32_t notionalSize, bool isOracle = false, bool quoted = false);
 
