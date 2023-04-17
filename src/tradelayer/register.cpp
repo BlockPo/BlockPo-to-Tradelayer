@@ -86,7 +86,7 @@ int64_t Register::getLiquidationPrice(const uint32_t contractId, const uint32_t 
     int64_t liqPrice  = 0;
 
     const int64_t position = getRecord(contractId, CONTRACT_POSITION);
-    const int64_t entryPrice = getPosEntryPrice(contractId);
+    const int64_t entryPrice = getPosEntryPrice(contractId, null);
 
     const int64_t marginNeeded = (int64_t) position *  marginRequirement;
     const double firstFactor = (double) marginNeeded / (position * notionalSize);
@@ -179,7 +179,7 @@ int64_t Register::getUPNL(const uint32_t contractId, const uint32_t notionalSize
 bool Register::setBankruptcyPrice(const uint32_t contractId, const uint32_t notionalSize, int64_t initMargin, bool isOracle, bool quoted)
 {
     const int64_t position = getRecord(contractId, CONTRACT_POSITION);
-    const int64_t entryPrice = getPosEntryPrice(contractId);
+    const int64_t entryPrice = getPosEntryPrice(contractId,);
     double dBankruptcyPrice = 0;
     if(entryPrice!=0){
         dBankruptcyPrice  =  (double) 1 / (initMargin / (position * notionalSize) + (1/entryPrice));
@@ -460,7 +460,7 @@ bool mastercore::getFullContractRecord(const std::string& address, uint32_t cont
     if (my_it != mp_register_map.end()) {
         Register& reg = my_it->second;
         //entry price
-        const int64_t entryPrice = reg.getPosEntryPrice(contractId);
+        const int64_t entryPrice = reg.getPosEntryPrice(contractId, who);
         if(entryPrice==0){return false;}
         position_obj.pushKV("entry_price", FormatDivisibleMP(entryPrice));
         // position
@@ -622,7 +622,7 @@ bool mastercore::insert_entry(const std::string& who, uint32_t contractId, int64
     bRet = reg.insertEntry(contractId, amount, price);
 
     // entry price of full position
-    reg.getPosEntryPrice(contractId);
+    reg.getPosEntryPrice(contractId, who);
 
     //PrintToLog("%s(): entryPrice(full position): %d, contractId: %d, address: %s\n",__func__, entryPrice, contractId, who);
 
@@ -684,13 +684,13 @@ bool Register::decreasePosRecord(const std::string& who, uint32_t contractId, in
                 // smaller remaining
                 remaining -= ramount;
                 PrintToLog("%s():deleting full entry: amount: %d, price: %d\n",__func__, ramount, rprice);
-                Register::realizePNL(who, contractId, ramount,price, inverse, collateral_currency);
+                realizePNL(who, contractId, ramount,price, inverse, collateral_currency);
                 entries.erase(itt);
             } else {
                 //there's nothing left
                 ramount -= remaining;
                 remaining = 0;
-                Register::realizePNL(who, contractId, ramount,price, inverse, collateral_currency);
+                realizePNL(who, contractId, ramount,price, inverse, collateral_currency);
                 entries.erase(itt);
                 std::pair<int64_t,int64_t> p (ramount, rprice);
                 entries.push_back(p);
@@ -728,7 +728,7 @@ bool Register::realizePNL(const std::string& who, uint32_t contractId, int64_t a
     LOCK(cs_register);
     
         //pass the string into the new function
-        const int64_t entry = Register::getPosMarkPrice(contractId, true);
+        const int64_t entry = getPosMarkPrice(contractId, true);
         const int64_t exit = price;
         if(entry||exit==0){
             const int64_t realizedPNL = 0;
