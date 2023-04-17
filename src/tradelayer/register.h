@@ -70,7 +70,7 @@ public:
 
     int64_t getEntryPrice(uint32_t contractId, int64_t amount) const;
 
-    int64_t getPosEntryPrice(uint32_t contractId) const;
+    int64_t getPosEntryPrice(uint32_t contractId, std::string& address) const;
 
     int64_t getRecord(uint32_t contractId, RecordType ttype) const;
 
@@ -81,7 +81,7 @@ public:
     int64_t getUPNL(const uint32_t contractId, const uint32_t notionalSize, bool isOracle = false, bool quoted = false);
 
     bool setBankruptcyPrice(const uint32_t contractId, const uint32_t notionalSize, int64_t initMargin, bool isOracle = false, bool quoted = false);
-    bool realize_pnl(const std::string& who, uint32_t contractId, int64_t amount, int64_t price, bool isInverseQuoted, uint32_t collateral_currency);
+    bool realizePNL(const std::string& who, uint32_t contractId, int64_t amount, int64_t price, bool isInverseQuoted, uint32_t collateral_currency);
     int64_t getLiquidationPrice(const uint32_t contractId, const uint32_t notionalSize, const uint64_t marginRequirement) const;
 
     const Entries* getEntries(const uint32_t contractId) const;
