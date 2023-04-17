@@ -4314,7 +4314,7 @@ void CMPTxList::LoadActivations(int blockHeight)
          }
 
          mp_obj.unlockLogic();
-         if (0 != mp_obj.interpretPacket()) {
+         if (0 != mp_obj.interpretPacket(false)) {
              PrintToLog("ERROR: While loading activation transaction %s: non-zero return from interpretPacket\n", hash.GetHex());
              continue;
          }
