@@ -121,7 +121,7 @@ int64_t Register::getUPNL(const uint32_t contractId, const uint32_t notionalSize
 
     if(msc_debug_liquidation_enginee)
     {
-         PrintToLog("%s(): inside getUPNL, position: %d. entryPrice: %d, exitPrice: %d, notionalSize: %d\n",__func__, position, entryPrice, Price, notionalSize);
+         PrintToLog("%s(): inside getUPNL, position: %d. entryPrice: %d, exitPrice: %d, notionalSize: %d\n",__func__, position, entryPrice, markPrice, notionalSize);
     }
 
     const arith_uint256 factor = ConvertTo256((abs(position) * notionalSize) / COIN );
