@@ -324,7 +324,7 @@ int64_t Register::getEntryPrice(uint32_t contractId, int64_t amount) const
 }
 
 // Entry price for full position
-int64_t Register::getPosEntryPrice(uint32_t contractId, std::string& address) const
+int64_t Register::getPosEntryPrice(uint32_t contractId, std::string& address)
 {
     //this is getting the avg. entry price of all open interest in a contract isn't it?
     //we should add the address string
@@ -622,7 +622,7 @@ bool mastercore::insert_entry(const std::string& who, uint32_t contractId, int64
     bRet = reg.insertEntry(contractId, amount, price);
 
     // entry price of full position
-    reg.getPosEntryPrice(contractId, who);
+    //reg.getPosEntryPrice(contractId, who);
 
     //PrintToLog("%s(): entryPrice(full position): %d, contractId: %d, address: %s\n",__func__, entryPrice, contractId, who);
 
