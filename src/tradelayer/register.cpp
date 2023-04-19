@@ -716,8 +716,7 @@ bool Register::decreasePosRecord(const std::string& who, uint32_t contractId, in
     return bRet;
 }
 
-
-bool Register::realizePNL(const std::string& who, uint32_t contractId, int64_t amount, int64_t price, bool isInverseQuoted, uint32_t collateral_currency) const
+bool Register::realizePNL(const std::string& who, uint32_t contractId, int64_t amount, int64_t price, bool isInverseQuoted, uint32_t collateral_currency) 
 {
             //we want to do what settlementPNL does but with actual exit prices instead of mark prices
           //this is called when the logic of xTrade or instant trade in mdex.cpp notes a reduction in position. 
