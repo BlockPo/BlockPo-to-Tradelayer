@@ -460,7 +460,7 @@ bool mastercore::getFullContractRecord(const std::string& address, uint32_t cont
     if (my_it != mp_register_map.end()) {
         Register& reg = my_it->second;
         //entry price
-        const int64_t entryPrice = reg.getPosEntryPrice(contractId, who);
+        const int64_t entryPrice = reg.getPosEntryPrice(contractId, address);
         if(entryPrice==0){return false;}
         position_obj.pushKV("entry_price", FormatDivisibleMP(entryPrice));
         // position
