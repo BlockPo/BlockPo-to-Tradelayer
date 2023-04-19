@@ -71,6 +71,7 @@ public:
     int64_t getEntryPrice(uint32_t contractId, int64_t amount) const;
 
     int64_t getPosEntryPrice(uint32_t contractId, std::string& address) const;
+    int64_t getPosEntryPrice(uint32_t contractId) const;
 
     int64_t getRecord(uint32_t contractId, RecordType ttype) const;
 
