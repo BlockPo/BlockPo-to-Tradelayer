@@ -86,7 +86,7 @@ int64_t Register::getLiquidationPrice(const uint32_t contractId, const uint32_t 
     int64_t liqPrice  = 0;
 
     const int64_t position = getRecord(contractId, CONTRACT_POSITION);
-    const int64_t entryPrice = getPosEntryPrice(contractId, "");
+    const int64_t entryPrice = getPosEntryPrice(contractId);
 
     const int64_t marginNeeded = (int64_t) position *  marginRequirement;
     const double firstFactor = (double) marginNeeded / (position * notionalSize);
@@ -116,7 +116,7 @@ int64_t Register::getUPNL(const uint32_t contractId, const uint32_t notionalSize
 {
 
     const int64_t position = getRecord(contractId, CONTRACT_POSITION);
-    const int64_t entryPrice = getPosEntryPrice(contractId, "");
+    const int64_t entryPrice = getPosEntryPrice(contractId);
     const int64_t markPrice  = getPosMarkPrice(contractId, isOracle);
 
     if(msc_debug_liquidation_enginee)
@@ -179,7 +179,7 @@ int64_t Register::getUPNL(const uint32_t contractId, const uint32_t notionalSize
 bool Register::setBankruptcyPrice(const uint32_t contractId, const uint32_t notionalSize, int64_t initMargin, bool isOracle, bool quoted)
 {
     const int64_t position = getRecord(contractId, CONTRACT_POSITION);
-    const int64_t entryPrice = getPosEntryPrice(contractId,"");
+    const int64_t entryPrice = getPosEntryPrice(contractId);
     double dBankruptcyPrice = 0;
     if(entryPrice!=0){
         dBankruptcyPrice  =  (double) 1 / (initMargin / (position * notionalSize) + (1/entryPrice));
@@ -358,6 +358,42 @@ int64_t Register::getPosEntryPrice(uint32_t contractId, std::string& address)
 
     return price;
 }
+
+nt64_t Register::getPosEntryPrice(uint32_t contractId)
+{
+    //this is getting the avg. entry price of all open interest in a contract isn't it?
+    //we should add the address string
+    int64_t price = 0;
+    RecordMap::const_iterator it = mp_record.find(contractId);
+    //insert use of the address as part of the if logic for the loop
+    if (it != mp_record.end())
+    {
+        const PositionRecord& record = it->second;
+        const Entries& entries = record.entries;
+        arith_uint256 total = 0;  // contracts * price
+        int64_t amount = 0; // sum of contracts
+
+        for(const auto& i : entries)
+        {
+            const int64_t& ramount = i.first;
+            const int64_t& rprice = i.second;
+
+            PrintToLog("%s(): ramount: %d, rprice: %d\n",__func__, ramount, rprice);
+
+            total += ConvertTo256(ramount * rprice);
+            amount += ramount;
+        }
+
+        const arith_uint256 aAmount = ConvertTo64(amount);
+        if(amount==0){return 0;}
+        const arith_uint256 aPrice = (amount != 0) ? DivideAndRoundUp(total, aAmount) : arith_uint256(0);
+        price = ConvertTo64(aPrice);
+
+    }
+
+    return price;
+}
+
 
 /**
  * Returns any record.
