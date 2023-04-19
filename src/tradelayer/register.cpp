@@ -86,7 +86,7 @@ int64_t Register::getLiquidationPrice(const uint32_t contractId, const uint32_t 
     int64_t liqPrice  = 0;
 
     const int64_t position = getRecord(contractId, CONTRACT_POSITION);
-    const int64_t entryPrice = getPosEntryPrice(contractId, null);
+    const int64_t entryPrice = getPosEntryPrice(contractId, "");
 
     const int64_t marginNeeded = (int64_t) position *  marginRequirement;
     const double firstFactor = (double) marginNeeded / (position * notionalSize);
@@ -116,7 +116,7 @@ int64_t Register::getUPNL(const uint32_t contractId, const uint32_t notionalSize
 {
 
     const int64_t position = getRecord(contractId, CONTRACT_POSITION);
-    const int64_t entryPrice = getPosEntryPrice(contractId, isOracle);
+    const int64_t entryPrice = getPosEntryPrice(contractId, "");
     const int64_t markPrice  = getPosMarkPrice(contractId, isOracle);
 
     if(msc_debug_liquidation_enginee)
@@ -179,7 +179,7 @@ int64_t Register::getUPNL(const uint32_t contractId, const uint32_t notionalSize
 bool Register::setBankruptcyPrice(const uint32_t contractId, const uint32_t notionalSize, int64_t initMargin, bool isOracle, bool quoted)
 {
     const int64_t position = getRecord(contractId, CONTRACT_POSITION);
-    const int64_t entryPrice = getPosEntryPrice(contractId,);
+    const int64_t entryPrice = getPosEntryPrice(contractId,"");
     double dBankruptcyPrice = 0;
     if(entryPrice!=0){
         dBankruptcyPrice  =  (double) 1 / (initMargin / (position * notionalSize) + (1/entryPrice));
