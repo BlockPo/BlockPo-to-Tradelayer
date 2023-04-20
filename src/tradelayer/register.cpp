@@ -759,20 +759,21 @@ bool Register::realizePNL(const std::string& who, uint32_t contractId, int64_t a
           //it's probable that a version simply referring to the mark price of the last block, being parsed this block in the tx_handler, would capture any
           //excess PNL or loss since the last block would only be updating, this makes sense (vs. calculating the whole trade PNL)
       bool bRet = false;
-
+      int64_t notionalsize = 1; //this is a temporary measure for testing, really I need to route this parameter into this function flow 
     LOCK(cs_register);
     
         //pass the string into the new function
         const int64_t entry = getPosMarkPrice(contractId, true);
         const int64_t exit = price;
+        const int64_t realizedPNL = 0;
+        
         if(entry||exit==0){
-            const int64_t realizedPNL = 0;
+            realizedPNL = 0;
         }else{
-       
             if(isInverseQuoted){
-                const int64_t realizedPNL = 1/exit - 1/entry *notionalsize;
+                realizedPNL = 1/exit - 1/entry *notionalsize;
             }else{
-                const int64_t realizedPNL = exit - entry *notionalsize;
+                realizedPNL = exit - entry *notionalsize;
             }
         }
 
@@ -782,9 +783,9 @@ bool Register::realizePNL(const std::string& who, uint32_t contractId, int64_t a
         {
             PrintToLog("%s(): updating register map (because newUPNL is not zero)\n",__func__);
 
-            update_register_map(who, contractId, newUPNL, MARGIN);
+            update_register_map(who, contractId, realizedPNL, MARGIN);
             update_register_map(who, contractId, realizedPNL, PNL);
-            update_tally_map(who, collateral_currency, newUPNL, BALANCE);
+            update_tally_map(who, collateral_currency, realizedPNL, BALANCE);
             bRet = true;
         }
 
