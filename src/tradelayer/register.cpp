@@ -359,7 +359,7 @@ int64_t Register::getPosEntryPrice(uint32_t contractId, std::string& address)
     return price;
 }
 
-nt64_t Register::getPosEntryPrice(uint32_t contractId)
+int64_t Register::getPosEntryPrice(uint32_t contractId)
 {
     //this is getting the avg. entry price of all open interest in a contract isn't it?
     //we should add the address string
