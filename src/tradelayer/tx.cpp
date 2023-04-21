@@ -2259,7 +2259,7 @@ bool CMPTransaction::interpret_SendDonation()
  * @return  0  if the transaction is fully valid
  *         <0  if the transaction is invalid
  */
-bool CMPTransaction::interpret_Transaction(setOracle)
+int CMPTransaction::interpretPacket(bool setOracle)
 {
   if (!interpret_TransactionType()) {
     PrintToLog("Failed to interpret type and version\n");
@@ -2267,7 +2267,7 @@ bool CMPTransaction::interpret_Transaction(setOracle)
   }
   if(setOracle==true&&type==MSC_TYPE_SET_ORACLE){
     return interpret_Set_Oracle();
-  }else if(2ndGo==false){
+  }else if(true){
     switch (type)
     {
         case MSC_TYPE_SIMPLE_SEND:
@@ -2415,11 +2415,7 @@ bool CMPTransaction::interpret_Transaction(setOracle)
             return interpret_SendDonation();
       }
     }
-  return false;
-}
-
-
-    return (PKT_ERROR -100);
+  return (PKT_ERROR -100);
 }
 
 /** Tx 0 */
@@ -4831,11 +4827,11 @@ int CMPTransaction::logicMath_Contract_Instant()
    const int& initblock = sp.init_block;
    const int deadline = initblock + static_cast<int>(sp.blocks_until_expiration);
 	
-    if(block > deadline || block < init_block)
+    if(block > deadline || block < initblock)
     {
        
          PrintToLog("\nTrade out of deadline!!: actual block: %d, deadline: %d\n", initblock, deadline);
-         return null //(PKT_ERROR_CHANNELS -16);
+         return (PKT_ERROR_CHANNELS -16);
     }
 
     int kyc_id;
