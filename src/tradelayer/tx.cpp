@@ -2267,7 +2267,7 @@ int CMPTransaction::interpretPacket(bool setOracle)
   }
   if(setOracle==true&&type==MSC_TYPE_SET_ORACLE){
     return interpret_Set_Oracle();
-  }else if(true){
+  }else if(setOracle==false){
     switch (type)
     {
         case MSC_TYPE_SIMPLE_SEND:
