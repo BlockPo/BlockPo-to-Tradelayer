@@ -663,7 +663,7 @@ int mastercore::GetEncodingClass(const CTransaction& tx, int nBlock)
      * Perform a string comparison on hex for each scriptPubKey & look directly for Trade Layer marker bytes
      * This allows to drop non- Trade Layer transactions with less work
      */
-    std::string strClassD = "7474"; /*the tt marker*/
+    std::string strClassD = "7462"; /*the tt marker*/
     bool examineClosely = false;
     for (unsigned int n = 0; n < tx.vout.size(); ++n) {
         const CTxOut& output = tx.vout[n];
