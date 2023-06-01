@@ -4303,7 +4303,7 @@ void CMPTxList::LoadActivations(int blockHeight)
              continue;
          }
 
-         if (!mp_obj.interpret_Transaction(false)) {
+         if (!mp_obj.interpret_Transaction()) {
              PrintToLog("ERROR: While loading activation transaction %s: failed interpret_Transaction.\n", hash.GetHex());
              continue;
          }
@@ -4360,7 +4360,7 @@ void CMPTxList::LoadAlerts(int blockHeight)
              PrintToLog("ERROR: While loading alert %s: failed ParseTransaction.\n", txid.GetHex());
              continue;
          }
-         if (!mp_obj.interpret_Transaction(false)) {
+         if (!mp_obj.interpret_Transaction()) {
              PrintToLog("ERROR: While loading alert %s: failed interpret_Transaction.\n", txid.GetHex());
              continue;
          }

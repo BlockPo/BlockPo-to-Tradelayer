@@ -493,7 +493,7 @@ public:
     }
 
     /** Parses the packet or payload. */
-    bool interpret_Transaction(bool setOracle);
+    bool interpret_Transaction();
 
     /** Interprets the payload and executes the logic. */
     int interpretPacket(bool setOracle);

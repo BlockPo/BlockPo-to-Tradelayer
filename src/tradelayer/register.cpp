@@ -324,7 +324,7 @@ int64_t Register::getEntryPrice(uint32_t contractId, int64_t amount) const
 }
 
 // Entry price for full position
-int64_t Register::getPosEntryPrice(uint32_t contractId, std::string& address)
+int64_t Register::getPosEntryPrice(uint32_t contractId, std::string& address) const
 {
     //this is getting the avg. entry price of all open interest in a contract isn't it?
     //we should add the address string
@@ -359,7 +359,7 @@ int64_t Register::getPosEntryPrice(uint32_t contractId, std::string& address)
     return price;
 }
 
-int64_t Register::getPosEntryPrice(uint32_t contractId)
+int64_t Register::getPosEntryPrice(uint32_t contractId) const
 {
     //this is getting the avg. entry price of all open interest in a contract isn't it?
     //we should add the address string
@@ -765,7 +765,7 @@ bool Register::realizePNL(const std::string& who, uint32_t contractId, int64_t a
         //pass the string into the new function
         const int64_t entry = getPosMarkPrice(contractId, true);
         const int64_t exit = price;
-        const int64_t realizedPNL = 0;
+        int64_t realizedPNL = 0;
         
         if(entry||exit==0){
             realizedPNL = 0;
