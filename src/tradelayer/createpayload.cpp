@@ -243,8 +243,8 @@ std::vector<unsigned char> CreatePayload_DeactivateFeature(uint16_t featureId)
 {
     std::vector<unsigned char> payload;
 
-    uint64_t messageVer = 65535;
-    uint64_t messageType = 65533;
+    uint64_t messageVer = 0;
+    uint64_t messageType = 0;
 
     std::vector<uint8_t> vecMessageType = CompressInteger(messageType);
     std::vector<uint8_t> vecMessageVer = CompressInteger(messageVer);
@@ -261,8 +261,8 @@ std::vector<unsigned char> CreatePayload_ActivateFeature(uint16_t featureId, uin
 {
     std::vector<unsigned char> payload;
 
-    uint64_t messageVer = 65535;
-    uint64_t messageType = 65534;
+    uint64_t messageVer = 0;
+    uint64_t messageType = 0;
 
     std::vector<uint8_t> vecMessageType = CompressInteger(messageType);
     std::vector<uint8_t> vecMessageVer = CompressInteger(messageVer);
