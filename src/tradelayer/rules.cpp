@@ -139,7 +139,7 @@ TODO : New chain checkpoints
  */
 CMainConsensusParams::CMainConsensusParams()
 {
-    GENESIS_BLOCK = 2484750;
+    GENESIS_BLOCK = 2484900;
     // Notice range for feature activations:
     MIN_ACTIVATION_BLOCKS = 0;  // ~2 weeks
     MAX_ACTIVATION_BLOCKS = 99999999; // ~12 weeks
@@ -149,7 +149,7 @@ CMainConsensusParams::CMainConsensusParams()
     NULLDATA_BLOCK = 0;
     MULTISIG_BLOCK = 0;
     // Transaction restrictions:
-    MSC_ALERT_BLOCK = 2484750;
+    MSC_ALERT_BLOCK = 2484900;
     MSC_SEND_BLOCK = 2485000;
     MSC_SEND_MANY_BLOCK = 2485000;
     MSC_SP_BLOCK = 2485000;
@@ -157,8 +157,8 @@ CMainConsensusParams::CMainConsensusParams()
     MSC_SEND_ALL_BLOCK = 2485000;
     MSC_CONTRACTDEX_BLOCK = 99999999;
     MSC_CONTRACTDEX_ORACLES_BLOCK = 2485000;
-    MSC_VESTING_BLOCK = 2484750;
-    MSC_VESTING_CREATION_BLOCK = 2484750;
+    MSC_VESTING_BLOCK = 2484900;
+    MSC_VESTING_CREATION_BLOCK = 2484900;
     MSC_NODE_REWARD_BLOCK = 99999999;
     MSC_KYC_BLOCK = 2485000;
     MSC_DEXSELL_BLOCK = 2485000;
